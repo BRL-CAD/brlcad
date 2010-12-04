@@ -45,7 +45,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . $1/regress/library.sh
 
-MGED="`ensearch mged/mged`"
+MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
     echo "Unable to find mged, aborting"
     exit 1

@@ -42,27 +42,27 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . $1/regress/library.sh
 
-RT="`ensearch rt/rt`"
+RT="`ensearch rt`"
 if test ! -f "$RT" ; then
     echo "Unable to find rt, aborting"
     exit 1
 fi
-MGED="`ensearch mged/mged`"
+MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
     echo "Unable to find mged, aborting"
     exit 1
 fi
-A2P="`ensearch conv/asc2pix`"
+A2P="`ensearch asc2pix`"
 if test ! -f "$A2P" ; then
     echo "Unable to find asc2pix, aborting"
     exit 1
 fi
-GENCOLOR="`ensearch util/gencolor`"
+GENCOLOR="`ensearch gencolor`"
 if test ! -f "$GENCOLOR" ; then
     echo "Unable to find gencolor, aborting"
     exit 1
 fi
-PIXDIFF="`ensearch util/pixdiff`"
+PIXDIFF="`ensearch pixdiff`"
 if test ! -f "$PIXDIFF" ; then
     echo "Unable to find pixdiff, aborting"
     exit 1
