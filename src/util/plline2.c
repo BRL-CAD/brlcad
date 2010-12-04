@@ -41,7 +41,7 @@ int
 main(int argc, char **argv)
 {
     int c;
-    double x1, y1, x2, y2;
+    double x_1, y_1, x_2, y_2;
     int r = 0;
     int g = 0;
     int b = 0;
@@ -56,10 +56,10 @@ main(int argc, char **argv)
 	    putchar(c);
     }
 
-    x1 = atof(argv[1]);
-    y1 = atof(argv[2]);
-    x2 = atof(argv[3]);
-    y2 = atof(argv[4]);
+    x_1 = atof(argv[1]);
+    y_1 = atof(argv[2]);
+    x_2 = atof(argv[3]);
+    y_2 = atof(argv[4]);
 
     if (argc > 5)
 	r = atoi(argv[5]);
@@ -71,7 +71,7 @@ main(int argc, char **argv)
     if (argc > 5)
 	pl_color(stdout, r, g, b);
 
-    pd_line(stdout, x1, y1, x2, y2);
+    pd_line(stdout, x_1, y_1, x_2, y_2);
 
     return 0;
 }

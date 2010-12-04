@@ -1,0 +1,12 @@
+# test for failure on out-of-bounds vertex reference
+
+v 0 0 0
+v 0 1 0
+v 0 1 1
+
+f 1 2 3
+
+v 1 0 0
+
+f -5 -2 -1
+

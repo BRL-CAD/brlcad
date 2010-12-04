@@ -1,0 +1,2 @@
+parse_check: $SRCDIR/data/negative_smooth_failcheck.obj
+SYNTAX ERROR: $SRCDIR/data/negative_smooth_failcheck.obj:36: negative smoothing group id

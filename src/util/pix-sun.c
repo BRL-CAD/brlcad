@@ -45,13 +45,13 @@ int dither = 0;
 /* Description of header for files containing raster images */
 struct rasterfile {
     long ras_magic;	/* magic number */
-    int ras_width;	/* width (pixels) of image */
-    int ras_height;	/* height (pixels) of image */
-    int ras_depth;	/* depth (1, 8, or 24 bits) of pixel */
-    int ras_length;	/* length (bytes) of image */
+    size_t ras_width;	/* width (pixels) of image */
+    size_t ras_height;	/* height (pixels) of image */
+    size_t ras_depth;	/* depth (1, 8, or 24 bits) of pixel */
+    size_t ras_length;	/* length (bytes) of image */
     int ras_type;	/* type of file; see RT_* below */
     int ras_maptype;	/* type of colormap; see RMT_* below */
-    int ras_maplength;	/* length (bytes) of following map */
+    size_t ras_maplength;	/* length (bytes) of following map */
     /* color map follows for ras_maplength bytes, followed by image */
 } ras = {
     0x59a66a95,	/* Magic Number */
@@ -206,40 +206,38 @@ double *end_table = &table[10];
 /*
  * D O I T --- convert stdin pix file to stdout rasterfile
  */
-void doit(void)
+void
+doit(void)
 {
-    int i, cx, cy;
+    size_t ret;
+    long i, cx, cy;
     unsigned char *pix, *rast;
     unsigned char red, green, blue;
 
     if (((ras.ras_width/2)*2) != ras.ras_width) {
-	(void)fprintf(stderr, "%s: Cannot handle odd x dimension\n", progname);
-	bu_exit (1, NULL);
+	bu_exit(1, "%s: Cannot handle odd x dimension\n", progname);
     }
 
     i = ras.ras_width * ras.ras_height;
     /* allocate buffer for the pix file */
     if ((pix=(unsigned char *)malloc(i*3)) == (unsigned char *)NULL) {
-	(void)fprintf(stderr, "%s: cannot get memory for a %d x %d pix file\n",
-		      progname, ras.ras_width, ras.ras_height);
-	bu_exit (1, NULL);
+	bu_exit(1, "%s: cannot get memory for a %d x %d pix file\n",
+		progname, ras.ras_width, ras.ras_height);
     }
 
     if ((rast=(unsigned char *)malloc(i)) == (unsigned char *)NULL) {
-	(void)fprintf(stderr, "%s: cannot get memory for a %d x %d pixrect\n",
-		      progname, ras.ras_width, ras.ras_height);
-	bu_exit (1, NULL);
+	bu_exit(1, "%s: cannot get memory for a %d x %d pixrect\n",
+		progname, ras.ras_width, ras.ras_height);
     }
 
     /* load the pix file into memory (What's Virtual Memory for anyway?)
      * we reverse the order of the scan lines to compensate
      * for differences of origin location in rasterfiles vs. PIX files
      */
-    for (i=ras.ras_height-1; i >= 0; i--)
+    for (i=(long)ras.ras_height-1; i >= 0; i--)
 	if (fread(&pix[i*ras.ras_width*3], ras.ras_width*3, 1, stdin) != 1) {
-	    (void)fprintf(stderr, "%s: error reading %d x %d pix file scanline %d\n",
-			  progname, ras.ras_width, ras.ras_height, i);
-	    bu_exit (1, NULL);
+	    bu_exit(1, "%s: error reading %d x %d pix file scanline %d\n",
+		    progname, ras.ras_width, ras.ras_height, i);
 	}
 
     /* convert 24 bit pixels to 8 bits,
@@ -247,16 +245,16 @@ void doit(void)
      * representations of PIX files and Sun pixrects
      */
     if (dither) {
-	for (cy=0; cy < ras.ras_height; cy++)
-	    for (cx=0; cx < ras.ras_width; cx++) {
+	for (cy=0; cy < (long)ras.ras_height; cy++)
+	    for (cx=0; cx < (long)ras.ras_width; cx++) {
 		red = pix[(cx + cy * ras.ras_width)*3];
 		green = pix[1 + (cx + cy * ras.ras_width)*3];
 		blue = pix[2 + (cx + cy * ras.ras_width)*3];
 		DITHERMAP(red, green, blue, rast[cx + cy * ras.ras_width]);
 	    }
     } else {
-	for (cy=0; cy < ras.ras_height; cy++)
-	    for (cx=0; cx < ras.ras_width; cx++) {
+	for (cy=0; cy < (long)ras.ras_height; cy++)
+	    for (cx=0; cx < (long)ras.ras_width; cx++) {
 		red = pix[(cx + cy * ras.ras_width)*3];
 		green = pix[1 + (cx + cy * ras.ras_width)*3];
 		blue = pix[2 + (cx + cy * ras.ras_width)*3];
@@ -274,36 +272,33 @@ void doit(void)
 
     /* write the rasterfile header */
     if (fwrite(&ras, sizeof(ras), 1, stdout) != 1) {
-	(void)fprintf(stderr, "%s: error writing rasterfile header to stdout\n", progname);
-	bu_exit (1, NULL);
+	bu_exit(1, "%s: error writing rasterfile header to stdout\n", progname);
     }
 
     /* write the colormap */
     if (fwrite(redmap, MAPSIZE, 1, stdout) != 1) {
-	(void)fprintf(stderr, "%s: error writing colormap\n", progname);
-	bu_exit (1, NULL);
+	bu_exit(1, "%s: error writing colormap\n", progname);
     }
 
     if (fwrite(grnmap, MAPSIZE, 1, stdout) != 1) {
-	(void)fprintf(stderr, "%s: error writing colormap\n", progname);
-	bu_exit (1, NULL);
+	bu_exit(1, "%s: error writing colormap\n", progname);
     }
 
     if (fwrite(blumap, MAPSIZE, 1, stdout) != 1) {
-	(void)fprintf(stderr, "%s: error writing colormap\n", progname);
-	bu_exit (1, NULL);
+	bu_exit(1, "%s: error writing colormap\n", progname);
     }
 
     /* write out the actual pixels */
-    if (fwrite(rast, ras.ras_width, ras.ras_height, stdout) != ras.ras_height) {
-	(void)fprintf(stderr, "%s: error writing image\n", progname);
-	bu_exit (1, NULL);
+    ret = fwrite(rast, ras.ras_width, ras.ras_height, stdout);
+    if (ret != ras.ras_height) {
+	bu_exit(1, "%s: error writing image\n", progname);
     }
     free(rast);
 }
 
 
-void usage(void)
+void
+usage(void)
 {
 
     (void)fprintf(stderr, "Usage: %s [-s squaresize] [-w width] [-n height] [ -d ]\n", progname);
@@ -318,7 +313,8 @@ void usage(void)
  * Perform miscelaneous tasks such as argument parsing and
  * I/O setup and then call "doit" to perform the task at hand
  */
-int main(int ac, char **av)
+int
+main(int ac, char **av)
 {
     int c, optlen;
 

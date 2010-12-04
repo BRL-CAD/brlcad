@@ -1,0 +1,2 @@
+parse_check: $SRCDIR/data/partial_face_failcheck.obj
+SYNTAX ERROR: $SRCDIR/data/partial_face_failcheck.obj:38: Faces must contain at least 3 references

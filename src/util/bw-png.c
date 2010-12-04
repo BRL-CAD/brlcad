@@ -27,13 +27,15 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include "zlib.h"
 #include "bio.h"
 
 #include "png.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "zlib.h"
+#include "fb.h"
+
 
 static long int file_width = 512;		/* default input width */
 static long int file_height = 512;		/* default input height */

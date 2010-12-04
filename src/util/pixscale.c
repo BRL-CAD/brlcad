@@ -59,85 +59,10 @@ int iny = 512;
 int outx = 512;
 int outy = 512;
 
-void init_buffer(int scanlen), fill_buffer(int y), binterp(FILE *ofp, int ix, int iy, int ox, int oy), ninterp(FILE *ofp, int ix, int iy, int ox, int oy);
 
 static char usage[] = "\
 Usage: pixscale [-h] [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix\n";
-
-int
-get_args(int argc, char **argv)
-{
-    int c;
-
-    while ((c = bu_getopt(argc, argv, "rhs:w:n:S:W:N:")) != EOF) {
-	switch (c) {
-	    case 'r':
-		/* pixel replication */
-		rflag = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		inx = iny = 1024;
-		break;
-	    case 'S':
-		/* square size */
-		outx = outy = atoi(bu_optarg);
-		break;
-	    case 's':
-		/* square size */
-		inx = iny = atoi(bu_optarg);
-		break;
-	    case 'W':
-		outx = atoi(bu_optarg);
-		break;
-	    case 'w':
-		inx = atoi(bu_optarg);
-		break;
-	    case 'N':
-		outy = atoi(bu_optarg);
-		break;
-	    case 'n':
-		iny = atoi(bu_optarg);
-		break;
-
-	    default:		/* '?' */
-		return 0;
-	}
-    }
-
-    /* XXX - backward compatability hack */
-    if (bu_optind+5 == argc) {
-	file_name = argv[bu_optind++];
-	if ((buffp = fopen(file_name, "r")) == NULL) {
-	    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name);
-	    return 0;
-	}
-	inx = atoi(argv[bu_optind++]);
-	iny = atoi(argv[bu_optind++]);
-	outx = atoi(argv[bu_optind++]);
-	outy = atoi(argv[bu_optind++]);
-	return 1;
-    }
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
-	    return 0;
-	file_name = "-";
-	buffp = stdin;
-    } else {
-	file_name = argv[bu_optind];
-	if ((buffp = fopen(file_name, "r")) == NULL) {
-	    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name);
-	    return 0;
-	}
-    }
-
-    if (argc > ++bu_optind)
-	bu_log("pixscale: excess argument(s) ignored\n");
-
-    return 1;		/* OK */
-}
-
 
 /****** THIS PROBABLY SHOULD BE ELSEWHERE *******/
 
@@ -145,6 +70,138 @@ get_args(int argc, char **argv)
 #define CEILING(x)	(((x) > (int)(x)) ? (int)(x)+1 : (int)(x))
 #define FLOOR(x)	((int)(x))
 #define MIN(x, y)	(((x) > (y)) ? (y) : (x))
+
+
+/*
+ * Load the buffer with scan lines centered around
+ * the given y coordinate.
+ */
+void
+fill_buffer(int y)
+{
+    static int file_pos = 0;
+
+    buf_start = y - buflines/2;
+    if (buf_start < 0) buf_start = 0;
+
+    if (file_pos != buf_start * scanlen) {
+	if (fseek(buffp, buf_start * scanlen, 0) < 0) {
+	    bu_exit(3, "pixscale: Can't seek to input pixel! y=%d\n", y);
+	}
+	file_pos = buf_start * scanlen;
+    }
+    fread(buffer, scanlen, buflines, buffp);
+    file_pos += buflines * scanlen;
+}
+
+
+/*
+ * Nearest Neighbor Interpolate a file of pixels.
+ *
+ * This version preserves the outside pixels and interps inside only.
+ */
+void
+ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
+{
+    int i, j;
+    double x, y;
+    double xstep, ystep;
+    unsigned char *op, *lp;
+
+    xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
+    ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
+
+    /* For each output pixel */
+    for (j = 0; j < oy; j++) {
+	y = j * ystep;
+	/*
+	 * Make sure we have this row (and the one after it)
+	 * in the buffer
+	 */
+	bufy = (int)y - buf_start;
+	if (bufy < 0 || bufy >= buflines-1) {
+	    fill_buffer((int)y);
+	    bufy = (int)y - buf_start;
+	}
+
+	op = outbuf;
+
+	for (i = 0; i < ox; i++) {
+	    x = i * xstep;
+	    lp = &buffer[bufy*scanlen+(int)x*3];
+	    *op++ = lp[0];
+	    *op++ = lp[1];
+	    *op++ = lp[2];
+	}
+
+	(void) fwrite(outbuf, 3, ox, ofp);
+    }
+}
+
+
+/*
+ * Bilinear Interpolate a file of pixels.
+ *
+ * This version preserves the outside pixels and interps inside only.
+ */
+void
+binterp(FILE *ofp, int ix, int iy, int ox, int oy)
+{
+    int i, j;
+    double x, y, dx, dy, mid1, mid2;
+    double xstep, ystep;
+    unsigned char *op, *up, *lp;
+
+    xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
+    ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
+
+    /* For each output pixel */
+    for (j = 0; j < oy; j++) {
+	y = j * ystep;
+	/*
+	 * Make sure we have this row (and the one after it)
+	 * in the buffer
+	 */
+	bufy = (int)y - buf_start;
+	if (bufy < 0 || bufy >= buflines-1) {
+	    fill_buffer((int)y);
+	    bufy = (int)y - buf_start;
+	}
+
+	op = outbuf;
+
+	for (i = 0; i < ox; i++) {
+	    x = i * xstep;
+	    dx = x - (int)x;
+	    dy = y - (int)y;
+
+	    /* Note: (1-a)*foo + a*bar = foo + a*(bar-foo) */
+
+	    lp = &buffer[bufy*scanlen+(int)x*3];
+	    up = &buffer[(bufy+1)*scanlen+(int)x*3];
+
+	    /* Red */
+	    mid1 = lp[0] + dx * ((double)lp[3] - (double)lp[0]);
+	    mid2 = up[0] + dx * ((double)up[3] - (double)up[0]);
+	    *op++ = mid1 + dy * (mid2 - mid1);
+	    lp++; up++;
+
+	    /* Green */
+	    mid1 = lp[0] + dx * ((double)lp[3] - (double)lp[0]);
+	    mid2 = up[0] + dx * ((double)up[3] - (double)up[0]);
+	    *op++ = mid1 + dy * (mid2 - mid1);
+	    lp++; up++;
+
+	    /* Blue */
+	    mid1 = lp[0] + dx * ((double)lp[3] - (double)lp[0]);
+	    mid2 = up[0] + dx * ((double)up[3] - (double)up[0]);
+	    *op++ = mid1 + dy * (mid2 - mid1);
+	}
+
+	(void) fwrite(outbuf, 3, ox, ofp);
+    }
+}
+
 
 /*
  * Scale a file of pixels to a different size.
@@ -238,6 +295,106 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 }
 
 
+/*
+ * Determine max number of lines to buffer.
+ * and malloc space for it.
+ * XXX - CHECK FILE SIZE
+ */
+void
+init_buffer(int len)
+{
+    int max;
+
+    /* See how many we could buffer */
+    max = MAXBUFBYTES / len;
+
+    /*
+     * Do a max of 512.  We really should see how big
+     * the input file is to decide if we should buffer
+     * less than our max.
+     */
+    if (max > 4096) max = 4096;
+
+    buflines = max;
+    buf_start = (-buflines);
+    buffer = bu_malloc(buflines * len, "buffer");
+}
+
+
+int
+get_args(int argc, char **argv)
+{
+    int c;
+
+    while ((c = bu_getopt(argc, argv, "rhs:w:n:S:W:N:")) != EOF) {
+	switch (c) {
+	    case 'r':
+		/* pixel replication */
+		rflag = 1;
+		break;
+	    case 'h':
+		/* high-res */
+		inx = iny = 1024;
+		break;
+	    case 'S':
+		/* square size */
+		outx = outy = atoi(bu_optarg);
+		break;
+	    case 's':
+		/* square size */
+		inx = iny = atoi(bu_optarg);
+		break;
+	    case 'W':
+		outx = atoi(bu_optarg);
+		break;
+	    case 'w':
+		inx = atoi(bu_optarg);
+		break;
+	    case 'N':
+		outy = atoi(bu_optarg);
+		break;
+	    case 'n':
+		iny = atoi(bu_optarg);
+		break;
+
+	    default:		/* '?' */
+		return 0;
+	}
+    }
+
+    /* XXX - backward compatability hack */
+    if (bu_optind+5 == argc) {
+	file_name = argv[bu_optind++];
+	if ((buffp = fopen(file_name, "r")) == NULL) {
+	    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name);
+	    return 0;
+	}
+	inx = atoi(argv[bu_optind++]);
+	iny = atoi(argv[bu_optind++]);
+	outx = atoi(argv[bu_optind++]);
+	outy = atoi(argv[bu_optind++]);
+	return 1;
+    }
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin)))
+	    return 0;
+	file_name = "-";
+	buffp = stdin;
+    } else {
+	file_name = argv[bu_optind];
+	if ((buffp = fopen(file_name, "r")) == NULL) {
+	    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name);
+	    return 0;
+	}
+    }
+
+    if (argc > ++bu_optind)
+	bu_log("pixscale: excess argument(s) ignored\n");
+
+    return 1;		/* OK */
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -264,163 +421,6 @@ main(int argc, char **argv)
     bu_free(outbuf, "outbuf");
     bu_free(buffer, "buffer");
     return 0;
-}
-
-
-/*
- * Determine max number of lines to buffer.
- * and malloc space for it.
- * XXX - CHECK FILE SIZE
- */
-void
-init_buffer(int scanlen)
-{
-    int max;
-
-    /* See how many we could buffer */
-    max = MAXBUFBYTES / scanlen;
-
-    /*
-     * Do a max of 512.  We really should see how big
-     * the input file is to decide if we should buffer
-     * less than our max.
-     */
-    if (max > 4096) max = 4096;
-
-    buflines = max;
-    buf_start = (-buflines);
-    buffer = bu_malloc(buflines * scanlen, "buffer");
-}
-
-
-/*
- * Load the buffer with scan lines centered around
- * the given y coordinate.
- */
-void
-fill_buffer(int y)
-{
-    static int file_pos = 0;
-
-    buf_start = y - buflines/2;
-    if (buf_start < 0) buf_start = 0;
-
-    if (file_pos != buf_start * scanlen) {
-	if (fseek(buffp, buf_start * scanlen, 0) < 0) {
-	    bu_exit(3, "pixscale: Can't seek to input pixel! y=%d\n", y);
-	}
-	file_pos = buf_start * scanlen;
-    }
-    fread(buffer, scanlen, buflines, buffp);
-    file_pos += buflines * scanlen;
-}
-
-
-/*
- * Bilinear Interpolate a file of pixels.
- *
- * This version preserves the outside pixels and interps inside only.
- */
-void
-binterp(FILE *ofp, int ix, int iy, int ox, int oy)
-{
-    int i, j;
-    double x, y, dx, dy, mid1, mid2;
-    double xstep, ystep;
-    unsigned char *op, *up, *lp;
-
-    xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
-    ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
-
-    /* For each output pixel */
-    for (j = 0; j < oy; j++) {
-	y = j * ystep;
-	/*
-	 * Make sure we have this row (and the one after it)
-	 * in the buffer
-	 */
-	bufy = (int)y - buf_start;
-	if (bufy < 0 || bufy >= buflines-1) {
-	    fill_buffer((int)y);
-	    bufy = (int)y - buf_start;
-	}
-
-	op = outbuf;
-
-	for (i = 0; i < ox; i++) {
-	    x = i * xstep;
-	    dx = x - (int)x;
-	    dy = y - (int)y;
-
-	    /* Note: (1-a)*foo + a*bar = foo + a*(bar-foo) */
-
-	    lp = &buffer[bufy*scanlen+(int)x*3];
-	    up = &buffer[(bufy+1)*scanlen+(int)x*3];
-
-	    /* Red */
-	    mid1 = lp[0] + dx * ((double)lp[3] - (double)lp[0]);
-	    mid2 = up[0] + dx * ((double)up[3] - (double)up[0]);
-	    *op++ = mid1 + dy * (mid2 - mid1);
-	    lp++; up++;
-
-	    /* Green */
-	    mid1 = lp[0] + dx * ((double)lp[3] - (double)lp[0]);
-	    mid2 = up[0] + dx * ((double)up[3] - (double)up[0]);
-	    *op++ = mid1 + dy * (mid2 - mid1);
-	    lp++; up++;
-
-	    /* Blue */
-	    mid1 = lp[0] + dx * ((double)lp[3] - (double)lp[0]);
-	    mid2 = up[0] + dx * ((double)up[3] - (double)up[0]);
-	    *op++ = mid1 + dy * (mid2 - mid1);
-	}
-
-	(void) fwrite(outbuf, 3, ox, ofp);
-    }
-}
-
-
-/*
- * Nearest Neighbor Interpolate a file of pixels.
- *
- * This version preserves the outside pixels and interps inside only.
- */
-void
-ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
-{
-    int i, j;
-    double x, y;
-    double xstep, ystep;
-    unsigned char *op, *lp;
-
-    xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
-    ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
-
-    /* For each output pixel */
-    for (j = 0; j < oy; j++) {
-	y = j * ystep;
-	/*
-	 * Make sure we have this row (and the one after it)
-	 * in the buffer
-	 */
-	bufy = (int)y - buf_start;
-	if (bufy < 0 || bufy >= buflines-1) {
-	    fill_buffer((int)y);
-	    bufy = (int)y - buf_start;
-	}
-
-	op = outbuf;
-
-	for (i = 0; i < ox; i++) {
-	    x = i * xstep;
-	    lp = &buffer[bufy*scanlen+(int)x*3];
-	    *op++ = lp[0];
-	    *op++ = lp[1];
-	    *op++ = lp[2];
-	}
-
-	(void) fwrite(outbuf, 3, ox, ofp);
-    }
 }
 
 

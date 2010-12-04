@@ -1,0 +1,2 @@
+parse_check: $SRCDIR/data/bounds_index_failcheck.obj
+SYNTAX ERROR: $SRCDIR/data/bounds_index_failcheck.obj:11: index '-5': Invalid vertex reference

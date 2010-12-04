@@ -1434,7 +1434,7 @@ struct resource {
     struct directory *	re_directory_hd;
     struct bu_ptbl	re_directory_blocks;	/**< @brief  Table of malloc'ed blocks */
 };
-RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined in librt/shoot.c */
+RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined in librt/globals.c */
 #define RESOURCE_NULL	((struct resource *)0)
 #define RT_CK_RESOURCE(_p)	BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 
@@ -1669,11 +1669,11 @@ struct application_bundle
  * of how many different models are being worked on
  */
 struct rt_g {
-    int			debug;		/**< @brief  !0 for debug, see librt/debug.h */
+    uint32_t		debug;		/**< @brief  !0 for debug, see librt/debug.h */
     /* DEPRECATED:  rtg_parallel is not used by LIBRT any longer (and will be removed) */
-    int			rtg_parallel;	/**< @brief  !0 = trying to use multi CPUs */
+    int8_t		rtg_parallel;	/**< @brief  !0 = trying to use multi CPUs */
     struct bu_list	rtg_vlfree;	/**< @brief  head of bn_vlist freelist */
-    int			NMG_debug;	/**< @brief  debug bits for NMG's see nmg.h */
+    uint32_t		NMG_debug;	/**< @brief  debug bits for NMG's see nmg.h */
     struct rt_wdb	rtg_headwdb;	/**< @brief  head of database object list */
 };
 RT_EXPORT extern struct rt_g rt_g;

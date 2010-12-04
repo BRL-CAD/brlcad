@@ -1,0 +1,2 @@
+parse_check: $SRCDIR/data/negative_lod_failcheck.obj
+SYNTAX ERROR: $SRCDIR/data/negative_lod_failcheck.obj:36: LOD value must be between 0 and 100

@@ -1,0 +1,140 @@
+2010-11-25  Clifford Yapp
+
+	- reworked directory structure slightly, switch to always using
+	  local copy of boost header for portability
+
+2010-03-08  Mike Tegtmeyer
+
+	* obj_grammar.yy:
+	- fixed bracket initializers to remove pedantic warning messages
+	- Added obj_parser_error definition above index_check
+
+	* configure.ac: 
+	- Moved aclocal macros into m4
+	- Bumped release to 0.5
+
+	* README: 
+	* obj_grammar.yy: 
+	* obj_parser.h: 
+	* obj_parser.cc: 
+	* obj_parser.h: 
+	* obj_parser_state.h: 
+	* obj_rules.ll: 
+	* COPYING: 
+	* TESTS (all)
+	- added BRLCAD-style copyright notice
+
+2008-11-17  Mike Tegtmeyer 
+
+	* acinclude.m4: 
+	- renamed __AC_FLIPPER_FIX_DARWIN_LIBTOOL to
+	__AC_ARL_FIX_DARWIN_LIBTOOL
+
+	* obj_rules.ll: 
+	- changed real regex to that supported by C99 flaoting point constant
+	fixes #26
+	- changed newline reges to support all printable characters in comment
+	fixes #25
+
+	* tests/data/comment_check.obj: 
+	- added testing of all printable characters in comments
+
+	* tests/fail_check.sh: 
+	* tests/pass_check.sh: 
+	* tests/diff_check.sh: 
+	- new file
+	- broke out tests to common files
+	
+
+2008-11-15  Mike Tegtmeyer 
+
+	* tests
+	- added checking all tests against CRLF version	of input
+	- renamed tests that are expected to fail with *_'failcheck'
+	
+	* tests/parse_check.cc: 
+	* tests/content_check.cc: 
+	- added support for using stdin if no arguments
+
+	* obj_parser.{h/cc}: 
+	- added new stream-based parse function obj_fparse
+	- renamed obj_parse_file to obj_parse
+
+2008-11-14  Mike Tegtmeyer 
+
+	* obj_rules.ll: 
+	- added NO_POSIX_READ macro guarding C implementation of YY_INPUT
+	- removed noread option
+	- removed nounistd option, fixes bug #22
+	- added CRLF line ending support, references #24
+
+	* obj_parser.cc:
+	- added feature request #21
+
+2008-11-06  Mike Tegtmeyer 
+
+	* tests/empty_id_check.sh: new file
+	- added tests for empty ID
+
+	* obj_rules.ll: 
+	- fixed subtle bug in id regex allowing for empty ID
+
+2008-11-05  Mike Tegtmeyer 
+
+	* cruise.sh: new file
+	- added continuous integration build file
+
+	* obj_rules.ll:
+	- added flex options to remove unix requirements (unistd,isatty,read)
+
+	* tests/Makefile.am (TESTS): 
+	* tests/data/id_check.obj: 
+	* tests/id_check.sh: 
+	- new test for issue #10
+
+	* obj_rules.ll: 
+	- fixed id to accept all ASCII except space and newline. see #10
+
+2008-11-03  Mike Tegtmeyer 
+
+	* tests:
+	- added numerious new test cases
+
+	* obj_parser_state.h: 
+	- Added point and line support
+	- parsing adds point, line, and face info directly to obj_contents
+
+	* obj_parser.cc:
+	- Added point and line support
+
+	* obj_rules.ll: 
+	- Added point and line support
+	- Minor formatting changes
+
+	* obj_grammar.yy:
+	- Added point and line support
+	- added additional nonterminals for point and lines to support
+	  new parsing datastructures
+	- parsing adds point, line, and face info directly to obj_contents
+	  eliminating need for intermediate copying
+
+	* obj_parser.h: Added headers for point and line support, issue #3
+	and issue #4
+
+	* acinclude.m4: Updated AX_BOOST_BASE to latest
+
+	* Makefile.am (EXTRA_DIST): Added missing COPYING ChangeLog INSTALL
+	and README files to distribution
+
+	* configure.ac:
+	- New checks for shared_ptr. issue #8
+	- Dropped boost requirement to 1.31. issue #9
+
+2008-10-21  Mike Tegtmeyer 
+
+	* configure.ac: regenerated build to address #4 and bumped version
+
+2008-10-16  Mike Tegtmeyer 
+
+	* All: Initial Release
+

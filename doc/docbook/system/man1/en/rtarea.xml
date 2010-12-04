@@ -63,17 +63,142 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Rtarea</emphasis> calculates the exposed, presented and centers of 
+      The <emphasis remap='I'>rtarea</emphasis> command calculates the exposed, presented and centers of 
       surface areas of specified geometry objects from a particular view.  The summary 
       output includes details for individual regions, assemblies (combinations that contain
-      regions), and summarized totals.  The exposed area is the occluded 2D
-      projection of the specified geometry.  That is, if another
-      object is in front, it will reduce the amount of exposed area.  The
-      presented area is the unoccluded 2D projection of the geometry, where
-      hidden objects will report their presented area regardless of any
-      objects that are in front.
+      regions), and summarized totals.  
     </para>
-    
+    <para>
+      The <emphasis remap='B'>exposed </emphasis> area corresponds to what a human observer would see looking at the object(s)
+      in question, if all the objects were non-transparent.  For example, say rays were cast towards two cubes, each one of which
+      is a region, one in front of the other, grouped into an assembly, with the ray direction pointed into the page:
+      <screen>
+|----------------| Rear Cube
+|                |
+|                |
+|        |--------------| Front Cube
+|        |       |      |
+|        |       |      |
+|--------|-------|      |
+         |              |
+         |              |
+         |--------------|
+      </screen>
+
+      The exposed area of the Front Cube corresponds to the total area of the sheet, since it is not
+      occluded by any other object:
+       <screen>
+|----------------| Rear Cube
+|                |
+|                |
+|        |--------------| Front Cube
+|        |**************|
+|        |**************|
+|--------|**************|
+         |**************|
+         |**************|
+         |--------------|
+      </screen>
+
+     
+
+      The Rear Cube, on the other hand, IS occluded by the Front Cube and would thus report only a fraction
+      of its area as exposed:
+       <screen>
+|----------------| Rear Cube
+|****************|
+|****************|
+|********|--------------| Front Cube
+|********|       |      |
+|********|       |      |
+|--------|-------|      |
+         |              |
+         |              |
+         |--------------|
+      </screen>
+
+     
+
+      An object that combines both of these sheets would thus report as its exposed area the
+      sum of the exposed areas of the individual sheets:
+      <screen>
+|----------------| Rear Cube
+|****************|
+|****************|
+|****************|------| Front Cube
+|***********************|
+|***********************|
+|--------|**************|
+         |**************|
+         |**************|
+         |--------------|
+      </screen>
+
+
+   </para>
+   <para>
+      <emphasis remap='B'>Presented</emphasis> area, unlike exposed area, does not take occlusion into account.  It is the
+      equalivent of taking each object and considering it in isolation.  So for the previous
+      case of two sheets of metal, the Front Cube would report the same area:
+
+       <screen>
+|----------------| Rear Cube
+|                |
+|                |
+|        |--------------| Front Cube
+|        |**************|
+|        |**************|
+|--------|**************|
+         |**************|
+         |**************|
+         |--------------|
+      </screen>
+
+
+
+      the Rear Cube, on the other hand, ALSO reports its full area:
+      <screen>
+|----------------| Rear Cube
+|****************|
+|****************|
+|****************-------| Front Cube
+|****************|      |
+|****************|      |
+|--------|-------|      |
+         |              |
+         |              |
+         |--------------|
+      </screen>
+
+
+      When reporting the presented area of the group, there is a subtle point - rtarea does not count area covered
+      by multiple regions multiple times when totaling the presented area.  So for the group containing both cubes,
+      the presented area is NOT the cumulative area of both regions' presented areas but the area of the union of those
+      two areas.  In this case, that works out to be the same as the exposed area.
+       <screen>
+|----------------| Rear Cube
+|****************|
+|****************|
+|****************|------| Front Cube
+|***********************|
+|***********************|
+|--------|**************|
+         |**************|
+         |**************|
+         |--------------|
+      </screen>
+
+          
+    </para>
+
+    <para>
+      It should be noted that rtarea only counts surfaces with a surface normal that
+      has a component looking back in the direction of the ray.  So, for example, a
+      cube with only one face looking "back toward" the ray will not report area from
+      other faces as "presented", since their surface normals will indicate they are
+      not surfaces being presented to the ray.
+    </para>
+
     <para>
       WARNING: <emphasis remap='I'>Rtarea</emphasis> may not correctly report area or 
       center when instancing is done at the group level. Using <command>xpush</command> 

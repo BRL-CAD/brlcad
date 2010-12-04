@@ -45,11 +45,6 @@ int
 main(int argc, char *argv[])
 {
     static int verbose;
-    static char *out_file = NULL;	/* Output filename */
-    static FILE *fp_out;		/* Output file pointer */
-    static FILE *fp_in;			/* input file pointer */
-    
-    static struct rt_tess_tol ttol;
     static struct bn_tol tol;
     
     static const char usage[] = "Usage: %s [-v] [-xX lvl] < brlcad_db.g > new db.g\n\
@@ -78,14 +73,17 @@ main(int argc, char *argv[])
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "vx:X:")) != EOF) {
 	switch (c) {
+	    unsigned int debug;
 	    case 'v':
 		verbose++;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", &rt_g.debug);
+		sscanf(bu_optarg, "%x", &debug);
+		rt_g.debug = debug;
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", &rt_g.NMG_debug);
+		sscanf(bu_optarg, "%x", &debug);
+		rt_g.NMG_debug = debug;
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
@@ -162,6 +160,8 @@ main(int argc, char *argv[])
 	}
     }
     bu_ptbl_free(&faces);
+
+    return 0;
 }
 
 

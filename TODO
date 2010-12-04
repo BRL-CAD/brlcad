@@ -19,13 +19,13 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * make sure 'preview' works, particularly the 'tree' subcommand.
 
-* verify 'solids_on_ray' command works ('Ray Pick' menu option)
-
 * verify rt/benchmark on windows doesn't crash
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* update g-xxx_facets to use libgcv
 
 * rename all the g_* tools sans "_"
 
@@ -45,6 +45,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* upgrade source repository back-end to the latest SVN 1.5 so we can
+  benefit from proper merge tracking.
 
 * make sure mged/archer behave properly with relative paths to dbopen.
   Windows in particular is doing something different in

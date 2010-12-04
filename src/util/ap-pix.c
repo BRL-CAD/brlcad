@@ -50,6 +50,7 @@ int verbose = 0;
 int
 main(int argc, char **argv)
 {
+    size_t ret;
     int i, bit;
     int line;
 
@@ -74,8 +75,13 @@ main(int argc, char **argv)
 
     line = 0;
     while ((int)fread(&cyaline, sizeof(cyaline), 1, cyafp) > 0) {
-	fread(&magline, sizeof(magline), 1, magfp);
-	fread(&yelline, sizeof(yelline), 1, yelfp);
+	ret = fread(&magline, sizeof(magline), 1, magfp);
+	ret += fread(&yelline, sizeof(yelline), 1, yelfp);
+	if (ret == 0) {
+	    perror("fread");
+	    bu_exit(1, "%s: read failure\n");
+	}
+
 	line++;
 
 	for (i = 0; i < 432; i++) {
@@ -83,7 +89,11 @@ main(int argc, char **argv)
 		out.red = ((cyaline.cl[i]>>bit)&1) ? 0 : 255;
 		out.green = ((magline.ml[i]>>bit)&1) ? 0 : 255;
 		out.blue = ((yelline.yl[i]>>bit)&1) ? 0 : 255;
-		fwrite(&out, sizeof(out), 1, stdout);
+		ret = fwrite(&out, sizeof(out), 1, stdout);
+		if (ret == 0) {
+		    perror("fwrite");
+		    bu_exit(1, "%s: read failure\n");
+		}
 	    }
 	}
 	if (verbose)

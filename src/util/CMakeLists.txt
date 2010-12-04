@@ -123,7 +123,6 @@ BRLCAD_ADDEXEC(pl-asc pl-asc.c libbu)
 BRLCAD_ADDEXEC(pl-hpgl pl-hpgl.c libbu)
 BRLCAD_ADDEXEC(pl-pl pl-pl.c libbu)
 BRLCAD_ADDEXEC(pl-ps pl-ps.c libbu)
-BRLCAD_ADDEXEC(pl-sgi pl-sgi.c libbu)
 BRLCAD_ADDEXEC(pl-tek pl-tek.c libbu)
 BRLCAD_ADDEXEC(plcolor plcolor.c libbn)
 BRLCAD_ADDEXEC(pldebug pldebug libbu)
@@ -229,7 +228,6 @@ set(util_MANS
   pl-hpgl.1 
   pl-pl.1 
   pl-ps.1 
-  pl-sgi.1 
   pl-tek.1 
   plcolor.1 
   pldebug.1 

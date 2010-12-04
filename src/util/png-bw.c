@@ -53,7 +53,7 @@ main(int argc, char **argv)
     int bit_depth;
     int color_type;
     png_color_16p input_backgrd;
-    double gamma;
+    double gammaval;
     int file_width, file_height;
     unsigned char *image;
     unsigned char **rows;
@@ -193,10 +193,10 @@ main(int argc, char **argv)
     } else
 	png_set_background(png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0);
 
-    if (png_get_gAMA(png_p, info_p, &gamma)) {
+    if (png_get_gAMA(png_p, info_p, &gammaval)) {
 	if (verbose)
-	    bu_log("gamma: %g\n", gamma);
-	png_set_gAMA(png_p, info_p, gamma);
+	    bu_log("gamma: %g\n", gammaval);
+	png_set_gAMA(png_p, info_p, gammaval);
     }
 
     if (verbose) {
@@ -238,17 +238,17 @@ main(int argc, char **argv)
     /* Following code modified from pix-bw.c */
 
     /* Hack for multiple color planes */
-    if (red + green + blue > 1 || rweight != 0.0 || gweight != 0.0 || bweight != 0.0)
+    if (red + green + blue > 1 || rweight > 0.0 || gweight > 0.0 || bweight > 0.0)
 	multiple_colors = 1;
     else
 	multiple_colors = 0;
 
     num_color_planes = red + green + blue;
-    if (red != 0 && rweight == 0.0)
+    if (red != 0 && !(rweight > 0.0))
 	rweight = 1.0 / (double)num_color_planes;
-    if (green != 0 && gweight == 0.0)
+    if (green != 0 && !(gweight > 0.0))
 	gweight = 1.0 / (double)num_color_planes;
-    if (blue != 0 && bweight == 0.0)
+    if (blue != 0 && !(bweight > 0.0))
 	bweight = 1.0 / (double)num_color_planes;
 
     clip_high = clip_low = 0;
@@ -299,8 +299,6 @@ main(int argc, char **argv)
 
 	png_read_end(png_p, info_p);
 	if (png_get_text(png_p, info_p, &text, &num_text)) {
-	    int i;
-
 	    for (i=0; i<num_text; i++)
 		bu_log("%s: %s\n", text[i].key, text[i].text);
 	}

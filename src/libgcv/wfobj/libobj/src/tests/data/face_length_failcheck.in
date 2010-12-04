@@ -1,0 +1,2 @@
+parse_check: $SRCDIR/data/face_length_failcheck.obj
+SYNTAX ERROR: $SRCDIR/data/face_length_failcheck.obj:5: Faces must contain at least 3 references

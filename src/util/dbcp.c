@@ -68,8 +68,8 @@ int
 main(int argc, char **argv)
 {
     char *buffer;
-    unsigned int size;
-    unsigned int nread;
+    size_t size;
+    long nread;
     int rfd;		/* pipe to read message from */
     int wfd;		/* pipe to write message to */
     int exitval=0;
@@ -134,7 +134,8 @@ main(int argc, char **argv)
     exitval = 0;
     count = 0L;
     while (1) {
-	if ((nread = bu_mread (0, buffer, size)) != size) {
+	nread = bu_mread (0, buffer, size);
+	if ((size_t)nread != size) {
 	    saverrno = errno;
 	    msgchar = STOP;
 	} else
@@ -144,7 +145,7 @@ main(int argc, char **argv)
 	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
 	    bu_log("Can't send READ message\n");
 	}
-	if ((int)nread == (-1)) {
+	if (nread == -1) {
 	    errno = saverrno;
 	    perror("dbcp input read:");
 	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
@@ -158,9 +159,9 @@ main(int argc, char **argv)
 	    }
 	    break;
 	}
-	if (nread != size) {
+	if ((size_t)nread != size) {
 	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-	    bu_log("partial read (nread = %u)\n", nread);
+	    bu_log("partial read (nread = %ld)\n", nread);
 	}
 	if (read(rfd, &msgchar, 1) != 1) {
 	    perror("dbcp: WRITE message error");
@@ -188,7 +189,7 @@ main(int argc, char **argv)
 	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
 	    bu_log("wrote %d\n", nread);
 	}
-	if (nread != size) {
+	if ((size_t)nread != size) {
 	    break;
 	}
     childstart:

@@ -119,6 +119,7 @@ main(int argc, char **argv)
     struct uplot *up;
     int desired_frame = 0;
     int current_frame = 0;
+    size_t ret;
 
     while (argc > 1) {
 	if (strcmp(argv[1], "-v") == 0) {
@@ -166,16 +167,40 @@ main(int argc, char **argv)
 		case TNONE:
 		    break;
 		case TCHAR:
-		    fread(buf, 1, up->narg, stdin);
-		    fwrite(buf, 1, up->narg, stdout);
+		    ret = fread(buf, 1, up->narg, stdin);
+		    if (ret == 0) {
+			perror("fread");
+			break;
+		    }
+		    ret = fwrite(buf, 1, up->narg, stdout);
+		    if (ret == 0) {
+			perror("fwrite");
+			break;
+		    }
 		    break;
 		case TSHORT:
-		    fread(buf, 2, up->narg, stdin);
-		    fwrite(buf, 2, up->narg, stdout);
+		    ret = fread(buf, 2, up->narg, stdin);
+		    if (ret == 0) {
+			perror("fread");
+			break;
+		    }
+		    ret = fwrite(buf, 2, up->narg, stdout);
+		    if (ret == 0) {
+			perror("fwrite");
+			break;
+		    }
 		    break;
 		case TIEEE:
-		    fread(buf, 8, up->narg, stdin);
-		    fwrite(buf, 8, up->narg, stdout);
+		    ret = fread(buf, 8, up->narg, stdin);
+		    if (ret == 0) {
+			perror("fread");
+			break;
+		    }
+		    ret = fwrite(buf, 8, up->narg, stdout);
+		    if (ret == 0) {
+			perror("fwrite");
+			break;
+		    }
 		    break;
 		case TSTRING:
 		    while ((c = getchar()) != '\n' && c != EOF)
@@ -191,13 +216,25 @@ main(int argc, char **argv)
 		case TNONE:
 		    break;
 		case TCHAR:
-		    fread(buf, 1, up->narg, stdin);
+		    ret = fread(buf, 1, up->narg, stdin);
+		    if (ret == 0) {
+			perror("fread");
+			break;
+		    }
 		    break;
 		case TSHORT:
-		    fread(buf, 2, up->narg, stdin);
+		    ret = fread(buf, 2, up->narg, stdin);
+		    if (ret == 0) {
+			perror("fread");
+			break;
+		    }
 		    break;
 		case TIEEE:
-		    fread(buf, 8, up->narg, stdin);
+		    ret = fread(buf, 8, up->narg, stdin);
+		    if (ret == 0) {
+			perror("fread");
+			break;
+		    }
 		    break;
 		case TSTRING:
 		    while ((c = getchar()) != '\n' && c != EOF)

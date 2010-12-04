@@ -1,0 +1,2 @@
+parse_check: $SRCDIR/data/inconsistent_face_failcheck.obj
+SYNTAX ERROR: $SRCDIR/data/inconsistent_face_failcheck.obj:37: Faces must contain at least 3 references

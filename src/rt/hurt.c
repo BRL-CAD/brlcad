@@ -269,7 +269,7 @@ int main(int argc, char **argv)
     }
 
     if ( bu_optind >= argc )  {
-	fprintf(stderr, "%s:  MGED database not specified\n", argv[0]);
+	fprintf(stderr, "%s:  BRL-CAD geometry database not specified\n", argv[0]);
 	(void)fputs(usage, stderr);
 	return 1;
     }

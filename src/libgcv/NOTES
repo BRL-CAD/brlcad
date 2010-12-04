@@ -36,6 +36,15 @@ storage format seems to be close to their data structures, it might be worth
 contacting the project and asking specifically about the parsing code, if they
 have the flexibility to sub-license just that piece as LGPL.
 
+Update: From discussions at SIGGRAPH Blender forum, unlikely they have flexibility to
+relicense anything.  Much more interestingly, Gamekit was announced there which DOES
+import Blender files and is MIT licensed:
+
+http://code.google.com/p/gamekit/
+
+Exporting Blender may be impractical (i.e. no well defined format to target) but as Blender
+has importers for a wide variety of formats exporting to Blender directly may not be necessary
+
 Universal 3D (Apache 2.0 license)
 http://sourceforge.net/projects/u3d/
 

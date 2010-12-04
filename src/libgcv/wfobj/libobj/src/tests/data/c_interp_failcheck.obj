@@ -1,0 +1,40 @@
+c_interp on
+v 0 0 0
+v 0 1 0
+v 1 1 0
+v 1 0 0
+c_interp off
+vt 0 0 0
+vt 0 1 0
+vt 1 1 0
+vt 1 0 0
+c_interp off
+vn 0 0 0
+vn 0 1 0
+vn 1 1 0
+vn 1 0 0
+c_interp on
+f 1 2 3
+c_interp on
+c_interp off
+f 1 3 4
+
+v 0 0 1
+v 0 1 1
+v 1 1 1
+v 1 0 1
+
+vt 0 0 1
+vt 0 1 1
+vt 1 1 1
+vt 1 0 1
+
+vn 0 0 1
+vn 0 1 1
+vn 1 1 1
+vn 1 0 1
+
+c_interp off
+f 5 6 7
+c_interp foo
+f 5 7 8

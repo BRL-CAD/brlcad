@@ -1,0 +1,2 @@
+parse_check: $SRCDIR/data/bevel_failcheck.obj
+SYNTAX ERROR: $SRCDIR/data/bevel_failcheck.obj:39: syntax error

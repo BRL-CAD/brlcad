@@ -1,0 +1,9 @@
+SUBDIRS=\
+	src	
+
+EXTRA_DIST=\
+	COPYING \
+	ChangeLog \
+	INSTALL \
+	README
+

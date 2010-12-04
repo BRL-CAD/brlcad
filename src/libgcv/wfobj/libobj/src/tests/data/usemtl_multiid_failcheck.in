@@ -1,0 +1,2 @@
+parse_check: $SRCDIR/data/usemtl_multiid_failcheck.obj
+SYNTAX ERROR: $SRCDIR/data/usemtl_multiid_failcheck.obj:14: syntax error

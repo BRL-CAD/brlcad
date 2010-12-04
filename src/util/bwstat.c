@@ -55,14 +55,14 @@ static const char *Usage = "usage: bwstat [-v] [file.bw]\n";
  * Display the histogram values.
  */
 void
-show_hist(long int *bin, int sum)
+show_hist(long int *histogram, int sum)
 {
     int i;
 
     printf("Histogram:\n");
 
     for (i = 0; i < 256; i++) {
-	printf("%3d: %10ld (%10f)\n", i, bin[i], (float)bin[i]/sum * 100.0);
+	printf("%3d: %10ld (%10f)\n", i, histogram[i], (float)histogram[i]/sum * 100.0);
     }
 }
 

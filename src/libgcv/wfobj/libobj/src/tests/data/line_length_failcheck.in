@@ -1,0 +1,2 @@
+parse_check: $SRCDIR/data/line_length_failcheck.obj
+SYNTAX ERROR: $SRCDIR/data/line_length_failcheck.obj:5: Lines must contain at least 2 references

@@ -35,6 +35,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
+#include "fb.h"
 
 
 #define BELIEVE_NAME 0
@@ -164,7 +165,8 @@ main (int argc, char **argv)
 	bu_exit (0, NULL);
 
  done:
-    bu_exit (0, "%lu %lu\n", width, height);
+    bu_log("%lu %lu\n", width, height);
+    return 0;
 }
 
 

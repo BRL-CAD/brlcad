@@ -1,0 +1,2 @@
+parse_check: $SRCDIR/data/empty_id_failcheck.obj
+SYNTAX ERROR: $SRCDIR/data/empty_id_failcheck.obj:4: syntax error

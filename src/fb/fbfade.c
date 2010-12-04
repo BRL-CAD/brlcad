@@ -1,4 +1,4 @@
-/* F B F A D E . C
+/*                        F B F A D E . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2010 United States Government as represented by
@@ -68,7 +68,7 @@
 #define USAGE1 "fbfade [ -s size ] [ -w width ] [ -n height ] [ -f in_fb_file ]"
 #define USAGE2	\
 	"\t[ -h ] [ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
-#define OPTSTR	"f:F:hn:N:s:S:w:W:"
+#define OPTSTR "f:F:hn:N:s:S:w:W:"
 
 
 typedef int bool_t;
@@ -77,16 +77,16 @@ static bool_t hires = 0;		/* set for 1Kx1K; clear for 512x512 */
 static char *in_fb_file = NULL;		/* input image name */
 static char *out_fb_file = NULL;	/* output frame buffer name */
 static FBIO *fbp = FBIO_NULL;		/* libfb input/output handle */
-static int src_width = 0,
-    src_height = 0;			/* input image size */
-static int dst_width = 0,
-    dst_height = 0;			/* output frame buffer size */
+static int src_width = 0;		/* input image width */
+static int src_height = 0;		/* input image height */
+static int dst_width = 0;		/* output frame buffer size */
+static int dst_height = 0;		/* output frame buffer size */
 static RGBpixel *pix;			/* input image */
 static RGBpixel bg = { 0, 0, 0 };	/* background */
 
 /* in ioutil.c */
-void Message(const char *format, ...);
-void Fatal(FBIO *fbiop, const char *format, ...);
+extern void Message(const char *format, ...);
+extern void Fatal(FBIO *fbiop, const char *format, ...);
 
 
 static void
@@ -229,7 +229,7 @@ main(int argc, char **argv)
 	    if (ht < src_height)
 		src_height = ht;
 
-	    if ((pix = (RGBpixel *)malloc((size_t)src_width * (size_t)src_height * sizeof(RGBpixel) ) ) == NULL)
+	    if ((pix = (RGBpixel *)malloc((size_t)src_width * (size_t)src_height * sizeof(RGBpixel))) == NULL)
 		Fatal(fbp, "Not enough memory for pixel array");
 
 	    for (y = 0; y < src_height; ++y) {
@@ -319,8 +319,9 @@ main(int argc, char **argv)
 	Fatal(fbp, "Error closing output frame buffer");
     }
 
-    bu_exit(EXIT_SUCCESS, NULL);
+    return 0;
 }
+
 
 /*
  * Local Variables:

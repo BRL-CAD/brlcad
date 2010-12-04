@@ -65,15 +65,16 @@
 	variable mMemberDataRotArb ""
 	variable mMemberDataTra ""
 	variable mMemberDataSca ""
-	variable mMemberHeadings {Op Name Az El Tw Tx Ty Tz Sa Sx Sy Sz Kx Ky Kz}
-	variable mMemberHeadingsRotAet {Op Name Az El Tw Kx Ky Kz}
-	variable mMemberHeadingsRotXyz {Op Name Rx Ry Rz Kx Ky Kz}
-	variable mMemberHeadingsRotArb {Op Name Kx Ky Kz Dx Dy Dz Ang}
-	variable mMemberHeadingsTra {Op Name Tx Ty Tz}
-	variable mMemberHeadingsSca {Op Name Sa Sx Sy Sz Kx Ky Kz}
+	variable mMemberHeadings {"" Op Name Az El Tw Tx Ty Tz Sa Sx Sy Sz Kx Ky Kz}
+	variable mMemberHeadingsRotAet {"" Op Name Az El Tw Kx Ky Kz}
+	variable mMemberHeadingsRotXyz {"" Op Name Rx Ry Rz Kx Ky Kz}
+	variable mMemberHeadingsRotArb {"" Op Name Kx Ky Kz Dx Dy Dz Ang}
+	variable mMemberHeadingsTra {"" Op Name Tx Ty Tz}
+	variable mMemberHeadingsSca {"" Op Name Sa Sx Sy Sz Kx Ky Kz}
 	variable mMemberDataOrder {RotAet RotXyz RotArb Tra Sca}
 	variable mLastTabIndex -1
-	variable mTableData {RotAet 8 "Rot (AET)" RotXyz 8 "Rot (XYZ)" RotArb 9 "Rot (Arbitrary)" Tra 5 Translation Sca 9 Scale}
+	variable mTableData {RotAet 9 "Rot (AET)" RotXyz 9 "Rot (XYZ)" RotArb 10 "Rot (Arbitrary)" Tra 6 Translation Sca 10 Scale}
+	variable mToggleSelectMode 0
 
 	method buildGeneralGUI {}
 	method buildShaderGUI {}
@@ -92,13 +93,17 @@
 	method handleTablePopup {_win _x _y _X _Y}
 	method populateMembersMenu {_type _index _X _Y}
 	method addMemberCreationMenuEntries {_type _row}
-	method setOperator {_op _tname _index}
+	method setTableCol {_tname _col _val}
+	method setTableVal {_tname _index _val}
 	method selectName  {args}
+	method invertSelect {_tname}
+	method toggleSelect {_tname _win _x _y}
 	method appendRow  {_tname}
 	method insertRow  {_type _row}
 	method deleteRow  {_type _row}
 	method setKeypoint  {args}
 	method setKeypointVC  {_tname _row _col}
+	method syncColumn {_tname _row _col _val}
 	method validateTableEntry {_row _col _newval _tname}
 
 	# Override what's in GeometryEditFrame
@@ -525,6 +530,8 @@
     grid $itk_component(combTreeT) \
 	-row 0 \
 	-sticky nsew
+    grid columnconfigure $parent 0 -weight 1
+    grid rowconfigure $parent 0 -weight 1
 
     #    bind $itk_component(combTreeT) <Leave> [::itcl::code $this updateGeometryIfMod]
     #    bind $itk_component(combTreeT) <Return> [::itcl::code $this updateGeometryIfMod]
@@ -564,12 +571,18 @@
 		-width 0 \
 		-rows 100000 \
 		-cols $cols \
+		-titlecols 1 \
 		-titlerows 1 \
 		-colstretchmode all \
 		-variable [::itcl::scope mMemberData$tname] \
 		-validate 1 \
 		-validatecommand [::itcl::code $this validateTableEntry %r %c %S $tname]
 	} {}
+
+	# Set width of columns 0, 1 and 2
+	$itk_component(combMembers$tname) width 0 3
+	$itk_component(combMembers$tname) width 1 4
+	$itk_component(combMembers$tname) width 2 20
 
 	# Create scrollbars
 	itk_component add tableHScroll$tname {
@@ -596,8 +609,15 @@
 
 	$itk_component(combMembersTabs) add $itk_component(combMembers$tname\F) -text $text
 
+	bind $itk_component(combMembers$tname) <Button-1> [::itcl::code $this toggleSelect $tname %W %x %y]
 	bind $itk_component(combMembers$tname) <Button-3> [::itcl::code $this handleTablePopup %W %x %y %X %Y]
 	bind $itk_component(combMembers$tname) <B3-Motion> {break}
+
+	$itk_component(combMembers$tname) tag col select_col 0
+	$itk_component(combMembers$tname) tag configure select_col \
+	    -relief raised
+	$itk_component(combMembers$tname) tag configure title \
+	    -relief raised
     }
 
     grid columnconfigure $itk_component(combMembersTabs) 0 -weight 1
@@ -667,7 +687,7 @@
     unset mMemberData$_tname
     set col 0
     foreach heading [subst $[subst mMemberHeadings$_tname]] {
-	set mMemberData$_tname\(0,$col) $heading
+	set mMemberData$_tname\(0,$col\) $heading
 	incr col
     }
 }
@@ -687,9 +707,24 @@
     set tname [lindex $mMemberDataOrder $dtype]
     set mdata [packMemberDataIntoString $tname]
 
+    # Save table row selection state
+    set row 1
+    set rsslist {}
+    while {[info exists mMemberData$tname\($row,0\)]} {
+	lappend rsslist [subst $[subst mMemberData$tname\($row,0\)]]
+	incr row
+    }
+
     incr dtype 2
     catch {eval $itk_option(-mged) combmem -r $dtype $itk_option(-geometryObject) [regsub -all {\n} $mdata " "]}
     GeometryEditFrame::updateGeometry
+
+    # Restore table row selection state
+    set row 1
+    foreach item $rsslist {
+	set mMemberData$tname\($row,0\) $item
+	incr row
+    }
 }
 
 ::itcl::body CombEditFrame::getCurrentMemberDataType {} {
@@ -714,9 +749,15 @@
 ::itcl::body CombEditFrame::initMemberDataTable {_tname _mdata} {
     set i 1
     foreach row [split $_mdata "\n"] {
-	set j 0
+	if {$row == ""} {
+	    incr i
+	    continue
+	}
+
+	set mMemberData$_tname\($i,0\) ""
+	set j 1
 	foreach col $row {
-	    set mMemberData$_tname\($i,$j) $col
+	    set mMemberData$_tname\($i,$j\) $col
 	    incr j
 	}
 
@@ -732,8 +773,11 @@
 	}
 
 	set ipair [regsub {,} $index " "]
-	set new_row [lindex $ipair 0]
 	set col [lindex $ipair 1]
+	if {$col == 0} {
+	    continue
+	}
+	set new_row [lindex $ipair 0]
 
 	if {$row != $new_row} {
 	    set row $new_row
@@ -741,7 +785,7 @@
 
 	# Skip headings
 	if {$row} {
-	    lappend curr_mdata($row) [subst $[subst mMemberData$_tname\($index)]]
+	    lappend curr_mdata($row) [subst $[subst mMemberData$_tname\($index\)]]
 	}
     }
 
@@ -792,34 +836,57 @@
 	    -label "Append Row" \
 	    -command [::itcl::code $this appendRow $_type]
     } else {
+
 	if {$col == 0} {
+	    if {[subst $[subst mMemberData$tname\($_index\)]] == "*"} {
+		$itk_component(combMembersMenu) add command \
+		    -label "Deselect" \
+		    -command [::itcl::code $this setTableVal $tname $_index ""]
+	    } else {
+		$itk_component(combMembersMenu) add command \
+		    -label "Select" \
+		    -command [::itcl::code $this setTableVal $tname $_index *]
+	    }
+
+	    $itk_component(combMembersMenu) add separator
+	    $itk_component(combMembersMenu) add command \
+		-label "Deselect All" \
+		-command [::itcl::code $this setTableCol $tname $col ""]
+	    $itk_component(combMembersMenu) add command \
+		-label "Select All" \
+		-command [::itcl::code $this setTableCol $tname $col *]
+	    $itk_component(combMembersMenu) add command \
+		-label "Invert All" \
+		-command [::itcl::code $this invertSelect $tname]
+	    $itk_component(combMembersMenu) add separator
+	} elseif {$col == 1} {
 	    $itk_component(combMembersMenu) add cascade \
 		-label "Select Op" \
 		-menu $itk_component(combMembersOpMenu)
 	    
 	    $itk_component(combMembersOpMenu) add command \
 		-label "Union" \
-		-command [::itcl::code $this setOperator u $tname $_index]
+		-command [::itcl::code $this setTableVal $tname $_index u]
 	    $itk_component(combMembersOpMenu) add command \
 		-label "Intersection" \
-		-command [::itcl::code $this setOperator + $tname $_index]
+		-command [::itcl::code $this setTableVal $tname $_index +]
 	    $itk_component(combMembersOpMenu) add command \
 		-label "Subtraction" \
-		-command [::itcl::code $this setOperator - $tname $_index]
-	} elseif {$col == 1} {
+		-command [::itcl::code $this setTableVal $tname $_index -]
+	} elseif {$col == 2} {
 #	    $itk_component(combMembersMenu) add command \
 		-label "Select Name" \
 		-command [::itcl::code $this selectName $_type]
-	} elseif {($_type == 0 && 5 <= $col && $col <= 7) ||
-		  ($_type == 1 && 5 <= $col && $col <= 7)} {
+	} elseif {($_type == 0 && 6 <= $col && $col <= 8) ||
+		  ($_type == 1 && 6 <= $col && $col <= 8)} {
 	    $itk_component(combMembersMenu) add command \
 		-label "Set Keypoint (View Center)" \
 		-command [::itcl::code $this setKeypointVC $tname $row 5]
-	} elseif {$_type == 2 && 2 <= $col && $col <= 4} {
+	} elseif {$_type == 2 && 3 <= $col && $col <= 5} {
 	    $itk_component(combMembersMenu) add command \
 		-label "Set Keypoint (View Center)" \
 		-command [::itcl::code $this setKeypointVC $tname $row 2]
-	} elseif {$_type == 4 && 6 <= $col && $col <= 8} {
+	} elseif {$_type == 4 && 7 <= $col && $col <= 9} {
 	    $itk_component(combMembersMenu) add command \
 		-label "Set Keypoint (View Center)" \
 		-command [::itcl::code $this setKeypointVC $tname $row 6]
@@ -843,12 +910,67 @@
 	-command [::itcl::code $this deleteRow $_type $_row]
 }
 
-::itcl::body CombEditFrame::setOperator {_op _tname _index} {
-    set mMemberData$_tname\($_index) $_op
+::itcl::body CombEditFrame::setTableCol {_tname _col _val} {
+    set row 1
+    while {[info exists mMemberData$_tname\($row,$_col\)]} {
+	set mMemberData$_tname\($row,$_col\) $_val
+	incr row
+    }
+
+    if {$_col == 0} {
+	if {$_val == "*"} {
+	    set mToggleSelectMode 1
+	} else {
+	    set mToggleSelectMode 0
+	}
+    }
+}
+
+::itcl::body CombEditFrame::setTableVal {_tname _index _val} {
+    set mMemberData$_tname\($_index\) $_val
 }
 
 ::itcl::body CombEditFrame::selectName {args} {
     puts "CombEditFrame::selectName: implement me"
+}
+
+::itcl::body CombEditFrame::invertSelect {_tname} {
+    set row 1
+    while {[info exists mMemberData$_tname\($row,0\)]} {
+	if {[subst $[subst mMemberData$_tname\($row,0\)]] == "*"} {
+	    set mMemberData$_tname\($row,0\) ""
+	} else {
+	    set mMemberData$_tname\($row,0\) "*"
+	}
+	incr row
+    }
+}
+
+::itcl::body CombEditFrame::toggleSelect {_tname _win _x _y} {
+    set index [$_win index @$_x,$_y]
+    set ilist [split $index ,]
+    set col [lindex $ilist 1] 
+
+    if {$col != 0} {
+	return
+    }
+
+    set row [lindex $ilist 0] 
+    if {$row != 0} {
+	if {[subst $[subst mMemberData$_tname\($index\)]] == "*"} {
+	    setTableVal $_tname $index ""
+	} else {
+	    setTableVal $_tname $index "*"
+	}
+    } else {
+	if {$mToggleSelectMode} {
+	    set mToggleSelectMode 0
+	    setTableCol $_tname 0 ""
+	} else {
+	    set mToggleSelectMode 1
+	    setTableCol $_tname 0 "*"
+	}
+    }
 }
 
 ::itcl::body CombEditFrame::appendRow {_type} {
@@ -871,11 +993,12 @@
     set row [lindex $dlist 0]
 
     incr lastRow
-    set mMemberData$tname\($lastRow,0) u
-    set mMemberData$tname\($lastRow,1) edit_me
-    set j 2
+    set mMemberData$tname\($lastRow,0\) ""
+    set mMemberData$tname\($lastRow,1\) u
+    set mMemberData$tname\($lastRow,2\) edit_me
+    set j 3
     foreach col [lrange $row 2 end] {
-	set mMemberData$tname\($lastRow,$j) $col
+	set mMemberData$tname\($lastRow,$j\) $col
 	incr j
     }
 }
@@ -891,6 +1014,19 @@
     set rowData [lindex $tmplist 0]
     set rowData [lreplace $rowData 0 1 u edit_me]
 
+    # Save table row selection state
+    set row 1
+    set rsslist {}
+    while {[info exists mMemberData$tname\($row,0\)]} {
+	# Append extra state for the new row
+	if {$row == $_row} {
+	    lappend rsslist ""
+	}
+
+	lappend rsslist [subst $[subst mMemberData$tname\($row,0\)]]
+	incr row
+    }
+
     incr _row -1
     set mlist [split $mdata "\n"]
     set mlist [linsert $mlist $_row $rowData]
@@ -901,11 +1037,30 @@
 
     clearMemberDataTable $tname
     initMemberDataTable $tname $mdata
+
+    # Restore table row selection state
+    set row 1
+    foreach item $rsslist {
+	set mMemberData$tname\($row,0\) $item
+	incr row
+    }
 }
 
 ::itcl::body CombEditFrame::deleteRow {_type _row} {
     set tname [lindex $mMemberDataOrder $_type]
     set mdata [packMemberDataIntoString $tname]
+
+    # Save table row selection state
+    set row 1
+    set rsslist {}
+    while {[info exists mMemberData$tname\($row,0\)]} {
+	# Effectively skip/delete state for the deleted row
+	if {$row != $_row} {
+	    lappend rsslist [subst $[subst mMemberData$tname\($row,0\)]]
+	}
+
+	incr row
+    }
 
     incr _row -1
     set mlist [split $mdata "\n"]
@@ -917,6 +1072,13 @@
 
     clearMemberDataTable $tname
     initMemberDataTable $tname $mdata
+
+    # Restore table row selection state
+    set row 1
+    foreach item $rsslist {
+	set mMemberData$tname\($row,0\) $item
+	incr row
+    }
 }
 
 ::itcl::body CombEditFrame::setKeypoint {args} {
@@ -932,13 +1094,38 @@
 
     set j $_col
     foreach n $center {
-	set mMemberData$_tname\($_row,$j) $n
+	set mMemberData$_tname\($_row,$j\) $n
 	incr j
     }
 }
 
+::itcl::body CombEditFrame::syncColumn {_tname _row _col _val} {
+    set anames [lsort -dictionary [array names mMemberData$_tname]]
+    foreach aindex [lsearch -all -regexp $anames "\[0-9\]+,$_col"] {
+	set index [lindex $anames $aindex]
+	set ilist [split $index ,]
+	set row [lindex $ilist 0] 
+	if {$row == 0 || $row == $_row} {
+	    # Ignore if in header
+	    continue
+	}
+
+	if {![info exists mMemberData$_tname\($row,0\)]} {
+	    continue
+	}
+
+	if {[subst $[subst mMemberData$_tname\($row,0\)]] == "*"} {
+	    set mMemberData$_tname\($row,$_col\) $_val
+	}
+    }
+
+#    puts "CombEditFrame::syncColumn: set column $_col values to $_val"
+#    puts "CombEditFrame::syncColumn: anames - $anames"
+#    puts "CombEditFrame::syncColumn: colnames - $colnames"
+}
+
 ::itcl::body CombEditFrame::validateTableEntry {_row _col _newval _tname} {
-    if {$_col == 0 || ![info exists mMemberData$_tname\($_row,0)]} {
+    if {$_col == 0 || $_col == 1 || ![info exists mMemberData$_tname\($_row,0\)]} {
 	return 0
     }
 
@@ -951,6 +1138,7 @@
     }
 
     if {[string is double $_newval]} {
+	syncColumn $_tname $_row $_col $_newval
 	return 1
     }
 

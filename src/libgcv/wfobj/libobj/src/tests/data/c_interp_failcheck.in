@@ -1,0 +1,2 @@
+parse_check: $SRCDIR/data/c_interp_failcheck.obj
+SYNTAX ERROR: $SRCDIR/data/c_interp_failcheck.obj:39: syntax error
