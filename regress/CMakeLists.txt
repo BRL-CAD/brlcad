@@ -38,7 +38,7 @@ IF(SH_EXEC)
 		)
 	ADD_CUSTOM_TARGET(fastgen-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/fastgen.sh ${CMAKE_SOURCE_DIR}
-		DEPENDS fastgen-g
+		DEPENDS fast4-g
 		)
 	ADD_CUSTOM_TARGET(bots-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/bots.sh ${CMAKE_SOURCE_DIR}
