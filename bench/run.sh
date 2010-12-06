@@ -496,6 +496,7 @@ look_for executable "the BRL-CAD raytracer" RT \
     ${PATH_TO_THIS}/../src/rt/rt \
     ${PATH_TO_THIS}/src/rt/rt \
     ./rt \
+    ../brlcadInstall/bin/rt.exe \
     ../src/rt/rt
 
 look_for file "a benchmark geometry directory" DB \
@@ -508,6 +509,7 @@ look_for file "a benchmark geometry directory" DB \
     ${PATH_TO_THIS}/../db/moss.g \
     ${PATH_TO_THIS}/db/moss.g \
     ./db/moss.g \
+    ../brlcadInstall/share/brlcad/*.*.*/db/moss.g \
     ../db/moss.g
 DB=`echo $DB | sed 's,/moss.g$,,'`
 
@@ -538,6 +540,7 @@ look_for executable "a pixel comparison utility" CMP \
     ${PATH_TO_THIS}/pixcmp \
     ${PATH_TO_THIS}/../bin/pixcmp \
     ${PATH_TO_THIS}/../bench/pixcmp \
+    ../brlcadInstall/bin/pixcmp.exe \
     ./pixcmp
 
 look_for script "a time elapsed utility" ELP \
