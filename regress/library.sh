@@ -50,7 +50,7 @@ export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
 ensearch ( ) {
     ensearch_file="$1"
-    ensearch_dirs="../src $ARG1/src $PATH_TO_THIS/../src"
+    ensearch_dirs="$ARG1/../cmake-build/bin ../src $ARG1/src $PATH_TO_THIS/../src"
 
     if test "x$ensearch_file" = "x" ; then
 	# nothing to do

@@ -48,6 +48,17 @@ if test ! -f "$MGED" ; then
     exit 1
 fi
 
+GIGES="`ensearch g-iges`"
+if test ! -f "$MGED" ; then
+    echo "Unable to find g-iges, aborting"
+    exit 1
+fi
+
+IGESG="`ensearch iges-g`"
+if test ! -f "$MGED" ; then
+    echo "Unable to find iges-g, aborting"
+    exit 1
+fi
 
 rm -f iges.log iges.g iges_file.iges iges_stdout_new.g iges_new.g iges_stdout.iges iges_file.iges
 
@@ -64,10 +75,10 @@ kill box.s
 q
 EOF
 
-../src/conv/iges/g-iges -o iges_file.iges iges.g box.nmg 2>> iges.log> /dev/null
-../src/conv/iges/g-iges iges.g box.nmg > iges_stdout.iges 2>> iges.log
+$GIGES -o iges_file.iges iges.g box.nmg 2>> iges.log> /dev/null
+$GIGES iges.g box.nmg > iges_stdout.iges 2>> iges.log
 
-../src/conv/iges/iges-g -o iges_new.g -p iges_file.iges 2>> iges.log
+$IGESG -o iges_new.g -p iges_file.iges 2>> iges.log
 
 if [ $? != 0 ] ; then
     echo g-iges/iges-g FAILED
@@ -77,7 +88,7 @@ else
 fi
 
 
-../src/conv/iges/iges-g -o iges_stdout_new.g -p iges_stdout.iges 2>> iges.log
+$IGESG -o iges_stdout_new.g -p iges_stdout.iges 2>> iges.log
 
 if [ $? != 0 ] ; then
     echo g-iges/iges-g FAILED

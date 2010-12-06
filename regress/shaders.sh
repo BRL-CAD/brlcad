@@ -66,8 +66,6 @@ if test ! -f "$ASC2PIX" ; then
     exit 1
 fi
 
-pwd
-
 EAGLECAD=eagleCAD-512x438.pix
 rm -f shaders.rt shaders.g shaders.rt.pix shaders.pixdiff.log shaders.rt.log shaders.log shaders.txt shaders.dat $EAGLECAD shaders.mged
 
