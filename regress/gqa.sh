@@ -48,6 +48,11 @@ if test ! -f "$MGED" ; then
     exit 1
 fi
 
+GQABIN="`ensearch g_qa`"
+if test ! -f "$GQABIN" ; then
+    echo "Unable to find g_qa, aborting"
+    exit 1
+fi
 
 rm -f gqa.g density_table.txt gqa.log gqa_mged.log gqa.mged
 
@@ -121,7 +126,7 @@ EOF
 # open_box.r = 1000-576 = 424 m^3
 
 
-GQA="../src/gtools/g_qa -u m,m^3,kg -g 250mm-50mm -p"
+GQA="$GQABIN -u m,m^3,kg -g 250mm-50mm -p"
 export GQA
 
 STATUS=0

@@ -34,7 +34,7 @@ IF(SH_EXEC)
 		)
 	ADD_CUSTOM_TARGET(gqa-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/gqa.sh ${CMAKE_SOURCE_DIR}
-		DEPENDS gqa
+		DEPENDS g_qa
 		)
 	ADD_CUSTOM_TARGET(fastgen-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/fastgen.sh ${CMAKE_SOURCE_DIR}
