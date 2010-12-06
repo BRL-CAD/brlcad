@@ -51,7 +51,7 @@
 #    matches that of the current platform.  If X11_GRAPHICS
 #    is on, a match is reported only if the windowing system
 #    reports X11.  If neither option is ON, the windowing
-#    system is not a factor is deciding to report
+#    system is not a factor in deciding to report
 #    FOUND or NOTFOUND.  If BOTH are ON (why??) NATIVE_GRAPHICS
 #    will override the TK_X11_GRAPHICS setting and set it
 #    to OFF.
@@ -98,7 +98,7 @@
 #    TCL_NEED_HEADERS
 #
 # 9. FindTCL will also typically require the stub libraries be present
-#    If that is not true, the parent CMakeLists.txt file can disable
+#    If they are not needed, the parent CMakeLists.txt file can disable
 #    the following variable (defaults to ON)
 #
 #    TCL_NEED_STUB_LIBS
@@ -114,17 +114,23 @@
 # The following "results" variables will be set (Tk variables only
 # set when TCKTK_REQUIRE_TK is ON):
 #
-#   TCL_FOUND          = Tcl (and Tk) found (see TCKTK_REQUIRE_TK)
-#   TCL_CONF_PREFIX         = path to parent dir of tclConfig.sh
+#   TCL_FOUND          = Tcl (and Tk) found (see TCL_REQUIRE_TK)
+#   TCL_CONF_PREFIX    = path to parent dir of tclConfig.sh
 #   TCL_LIBRARY        = path to Tcl library
 #   TCL_STUB_LIBRARY   = path to Tcl stub library
 #   TCL_INCLUDE_PATH   = path to directory containing tcl.h
-#   TK_CONF_PREFIX          = path to parent dir of tkConfig.sh
+#   TK_CONF_PREFIX     = path to parent dir of tkConfig.sh
 #   TK_LIBRARY         = path to Tk library
 #   TK_STUB_LIBRARY    = path to Tk stub library
 #   TK_INCLUDE_PATH    = path to directory containing tk.h
 #   TCL_TCLSH          = full path to tclsh binary
 #   TK_WISH            = full path wo wish binary
+#
+# Note:  In the special case where headers are not required, the *LIBRARY,
+# *CONF_PREFIX, and *_INCLUDE_PATH variables are also not required- if
+# all that is required is tclsh and/or wish, those are the only fixed
+# requirements.  In most cases the other variables will also be populated
+# but it is not guaranteed.
 
 # Tcl/Tk tends to name things using version numbers, so we need a
 # list of numbers to check 
@@ -241,8 +247,8 @@ ENDMACRO()
 # In various loops, we don't want to waste time checking for paths containing
 # version numbers incompatible with restrictions imposed by the min/max/exact
 # variables.  Define a version to validate a given version against those
-# variables, if they are defined.
-include(CompareVersions)
+# variables, if they are defined.  Requires CompareVersions.cmake
+INCLUDE(CompareVersions)
 MACRO(VALIDATE_VERSION vstatus versionnum)
 	SET(${vstatus} "NOTFOUND")
 	SET(vcompare "NOTFOUND")
