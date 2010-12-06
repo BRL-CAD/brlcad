@@ -19,8 +19,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * make sure 'preview' works, particularly the 'tree' subcommand.
 
-* verify rt/benchmark on windows doesn't crash
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------

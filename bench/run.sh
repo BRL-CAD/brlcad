@@ -496,6 +496,7 @@ look_for executable "the BRL-CAD raytracer" RT \
     ${PATH_TO_THIS}/../src/rt/rt \
     ${PATH_TO_THIS}/src/rt/rt \
     ./rt \
+    ../brlcadInstall/bin/rt.exe \
     ../src/rt/rt
 
 look_for file "a benchmark geometry directory" DB \
@@ -508,6 +509,7 @@ look_for file "a benchmark geometry directory" DB \
     ${PATH_TO_THIS}/../db/moss.g \
     ${PATH_TO_THIS}/db/moss.g \
     ./db/moss.g \
+    ../brlcadInstall/share/brlcad/*.*.*/db/moss.g \
     ../db/moss.g
 DB=`echo $DB | sed 's,/moss.g$,,'`
 
@@ -538,6 +540,7 @@ look_for executable "a pixel comparison utility" CMP \
     ${PATH_TO_THIS}/pixcmp \
     ${PATH_TO_THIS}/../bin/pixcmp \
     ${PATH_TO_THIS}/../bench/pixcmp \
+    ../brlcadInstall/bin/pixcmp.exe \
     ./pixcmp
 
 look_for script "a time elapsed utility" ELP \
@@ -598,7 +601,13 @@ if test ! "x${ret}" = "x0" ; then
     $ECHO "ERROR:  RT does not seem to work as expected"
     exit 2
 fi
-$CMP /dev/null /dev/null >/dev/null 2>&1
+
+# create a temporary file named "null", fopen("/dev/null") does not work on
+# windows (using cygwin), so punt.
+> null
+$CMP null null >/dev/null 2>&1
+rm -f null
+
 ret=$?
 if test ! "x${ret}" = "x0" ; then
     $ECHO
@@ -1146,15 +1155,23 @@ perf ( ) {
 	perf_have_dc=no
     fi
 
+    perf_have_bc=yes
+    echo "1 + 1" | bc >/dev/null 2>&1
+    if test ! x$? = x0 ; then
+	perf_have_bc=no
+    fi
+
     for perf_ref in $perf_VGRREF ; do
 	perf_cur=$1
 	shift
 
 	if test "x$perf_have_dc" = "xyes" ; then
 	    perf_RATIO=`echo "2k $perf_cur $perf_ref / p" | dc`
-	else
+	elif test "x$perf_have_bc" = "xyes" ; then
 	    # presume bc as an alternate (tsk tsk)
 	    perf_RATIO=`echo "scale=2; $perf_cur / $perf_ref" | bc`
+	else
+	    perf_RATIO=`echo $perf_cur $perf_ref | awk '{printf "%.2f", $1/$2}'`
 	fi
 	# Note: append new value and a trail TAB to existing list.
 	perf_RATIO_LIST="${perf_RATIO_LIST}$perf_RATIO	"
@@ -1164,7 +1181,7 @@ perf ( ) {
     if test "x$perf_have_dc" = "xyes" ; then
 	perf_MEAN_ABS=`echo 2k $perf_CURVALS +++++ 6/ p | dc`
 	perf_MEAN_REL=`echo 2k $perf_RATIO_LIST +++++ 6/ p | dc`
-    else
+    elif test "x$perf_have_bc" = "xyes" ; then
 	perf_expr="scale=2; ( 0"
 	for perf_val in $perf_CURVALS ; do
 	    perf_expr="$perf_expr + $perf_val"
@@ -1178,6 +1195,9 @@ perf ( ) {
 	done
 	perf_expr="$perf_expr ) / 6"
 	perf_MEAN_REL=`echo $perf_expr | bc`
+    else
+	perf_MEAN_ABS=`echo $perf_CURVALS | awk '{printf "%.2f", ($1+$2+$3+$4+$5+$6)/6}'`
+	perf_MEAN_REL=`echo $perf_RATIO_LIST | awk '{printf "%.2f", ($1+$2+$3+$4+$5+$6)/6}'`
     fi
 
     # Note: Both perf_RATIO_LIST and perf_CURVALS have an extra
