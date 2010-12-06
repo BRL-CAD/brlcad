@@ -188,7 +188,7 @@ main(int argc, char *argv[])
     if (strcmp(argv[0], "-") == 0) {
 	f1 = stdin;
     } else if ((f1 = fopen(argv[0], "rb")) == NULL) {
-	perror(argv[1]);
+	perror(argv[0]);
 	exit(FILE_ERROR);
     }
     if ((argc < 2) || (strcmp(argv[1], "-") == 0)) {
