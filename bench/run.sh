@@ -601,7 +601,13 @@ if test ! "x${ret}" = "x0" ; then
     $ECHO "ERROR:  RT does not seem to work as expected"
     exit 2
 fi
-$CMP /dev/null /dev/null >/dev/null 2>&1
+
+# create a temporary file named "null", fopen("/dev/null") does not work on
+# windows (using cygwin), so punt.
+> null
+$CMP null null >/dev/null 2>&1
+rm -f null
+
 ret=$?
 if test ! "x${ret}" = "x0" ; then
     $ECHO
