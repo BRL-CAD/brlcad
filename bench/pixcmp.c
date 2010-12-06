@@ -152,8 +152,8 @@ main(int argc, char *argv[])
 		exit(OPTS_ERROR);
 	}
     }
-    argc -= optind;
-    argv += optind;
+    argc -= bu_optind;
+    argv += bu_optind;
 
     /* validate what is left over */
     if (argc < 1 || argc > 4) {
