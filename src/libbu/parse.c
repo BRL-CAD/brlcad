@@ -768,12 +768,11 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 		retval = _bu_parse_double(value, sdp->sp_count, (double *)loc);
 		break;
 	    case 'p':
-		if((retval = _bu_struct_lookup((struct bu_structparse *)sdp->sp_count, name, base, value)) == 0) {
-			return retval;
-		} else {
-			continue;
+		retval = _bu_struct_lookup((struct bu_structparse *)sdp->sp_count, name, base, value);
+		if (retval == 0) {
+		    return 0; /* found */
 		}
-		break;
+		continue;
 	    default:
 		bu_log("_bu_struct_lookup(%s): unknown format '%s'\n",
 		       name, sdp->sp_fmt);
