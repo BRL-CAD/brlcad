@@ -773,7 +773,10 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 		} else {
 			continue;
 		}
-		break;
+		if (retval == 0) {
+		    return 0; /* found */
+		}
+		continue;
 	    default:
 		bu_log("_bu_struct_lookup(%s): unknown format '%s'\n",
 		       name, sdp->sp_fmt);

@@ -44,6 +44,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make nreed's new bot cleanup interface update interactively without
+  resorting to calls to Tcl_DoOneEvent() down in librt.
+
 * upgrade source repository back-end to the latest SVN 1.5 so we can
   benefit from proper merge tracking.
 
