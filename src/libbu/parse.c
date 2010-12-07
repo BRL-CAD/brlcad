@@ -1299,7 +1299,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 				    bu_vls_putc(&tmpstr, '\\');
 			    }
 			    bu_vls_putc(&tmpstr, *loc);
-			    *loc = *loc + 1;
+			    *loc++;
 		    }
 		    bu_vls_printf(vls, "%s=\"%s\"", sdp->sp_name, bu_vls_addr(&tmpstr));
 		    bu_vls_free(&tmpstr);
