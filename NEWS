@@ -20,7 +20,7 @@ numerous BoT editing commands and processing steps into one unified
 easy-to-use interface.  The new GUI grealy simplifies BoT processing
 steps and can save modelers considerable time.
 
-* Benchmark now works on Windows - Erik Greenwald
+* ported benchmark suite to Windows (requires 'sh') - Erik Greenwald
 * improved NURBS wireframes with interior surface lines - Keith Bowman
 * additional NURBS raytracing robustness improvements - Keith Bowman
 * removed pl-sgi plot tool - Sean Morrison
