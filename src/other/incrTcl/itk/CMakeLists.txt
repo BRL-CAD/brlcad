@@ -494,6 +494,8 @@ include_directories(
 add_library(itk ${ITK_GENERIC_SRCS})
 target_link_libraries(itk ${M_LIBRARY} ${TCL_LIBRARY} ${TK_LIBRARY} ${ITCL_LIBRARY})
 install(TARGETS itk DESTINATION lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
+set_target_properties(itk PROPERTIES INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
+set_target_properties(itk PROPERTIES INSTALL_NAME_DIR ${CMAKE_INSTALL_PREFIX}/lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
 
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded Itk ${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION} [list load [file join $dir libitk${CMAKE_SHARED_LIBRARY_SUFFIX}] Itk]")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})

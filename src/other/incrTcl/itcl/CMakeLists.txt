@@ -465,6 +465,8 @@ include_directories(
 add_library(itcl ${ITCL_GENERIC_SRCS})
 target_link_libraries(itcl ${M_LIBRARY} ${TCL_LIBRARY})
 install(TARGETS itcl DESTINATION lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
+set_target_properties(itcl PROPERTIES INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
+set_target_properties(itcl PROPERTIES INSTALL_NAME_DIR ${CMAKE_INSTALL_PREFIX}/lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
 
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded Itcl ${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION} [list load [file join $dir libitcl${CMAKE_SHARED_LIBRARY_SUFFIX}] Itcl]")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
