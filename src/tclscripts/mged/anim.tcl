@@ -56,8 +56,8 @@ proc sketch_init_main {} {
     uplevel #0 set mged_sketch_temp1 "./_mged_sketch_temp1_"
     uplevel #0 set mged_sketch_temp2 "./_mged_sketch_temp2_"
 
-    uplevel #0 {set mged_sketch_anim_path [bu_brlcad_root "bin"]}
-    uplevel #0 {set mged_sketch_tab_path [bu_brlcad_root "bin"]}
+    uplevel #0 {set mged_sketch_anim_path [bu_brlcad_root "bin/"]}
+    uplevel #0 {set mged_sketch_tab_path [bu_brlcad_root "bin/"]}
 
     #variable shared between draw and table
     uplevel #0 set mged_sketch_fps "30"
@@ -1363,12 +1363,13 @@ proc sketch_vupdate {} {
 			   [expr $i + $mged_sketch_cmdlen($cmd) - 1] ]
 	    set str [concat $str $cmd $cargs]
 	    incr i $mged_sketch_cmdlen($cmd)
+    	eval view $str
+    	set str ""
 	}
 	if { $i != $len } {
 	    puts "sketch_vupdate: expected $i columns, got $len"
 	    return
 	}
-	eval view $str
     }
 
     #highlight the current line
