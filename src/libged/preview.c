@@ -55,7 +55,7 @@ ged_cm_anim(int argc, char **argv)
     if (_ged_current_gedp->ged_wdbp->dbip == DBI_NULL)
 	return 0;
 
-    if ( db_parse_anim( _ged_current_gedp->ged_wdbp->dbip, argc, (const char **)argv ) < 0 )  {
+    if (db_parse_anim(_ged_current_gedp->ged_wdbp->dbip, argc, (const char **)argv) < 0) {
 	bu_vls_printf(&_ged_current_gedp->ged_result_str, "cm_anim:  %s %s failed\n", argv[1], argv[2]);
 	return -1;		/* BAD */
     }
@@ -65,13 +65,14 @@ ged_cm_anim(int argc, char **argv)
     return 0;
 }
 
+
 int
-ged_cm_clean(int argc, char **argv)
+ged_cm_clean(int UNUSED(argc), char **UNUSED(argv))
 {
     if (_ged_current_gedp->ged_wdbp->dbip == DBI_NULL)
 	return 0;
 
-    /*f_zap( (ClientData)NULL, interp, 0, (char **)0 );*/
+    /*f_zap((ClientData)NULL, interp, 0, (char **)0);*/
 
     /* Free animation structures */
     db_free_anim(_ged_current_gedp->ged_wdbp->dbip);
@@ -80,24 +81,25 @@ ged_cm_clean(int argc, char **argv)
     return 0;
 }
 
+
 int
-ged_cm_end(int argc, char **argv)
+ged_cm_end(int UNUSED(argc), char **UNUSED(argv))
 {
-    vect_t	xlate;
-    vect_t	new_cent;
-    vect_t	xv, yv;			/* view x, y */
-    vect_t	xm, ym;			/* model x, y */
-    struct bu_list		*vhead = &preview_vbp->head[0];
+    vect_t xlate;
+    vect_t new_cent;
+    vect_t xv, yv;			/* view x, y */
+    vect_t xm, ym;			/* model x, y */
+    struct bu_list *vhead = &preview_vbp->head[0];
 
     /* Only display the frames the user is interested in */
-    if ( preview_currentframe < preview_desiredframe )  return 0;
-    if ( preview_finalframe && preview_currentframe > preview_finalframe )  return 0;
+    if (preview_currentframe < preview_desiredframe) return 0;
+    if (preview_finalframe && preview_currentframe > preview_finalframe) return 0;
 
     /* Record eye path as a polyline.  Move, then draws */
-    if ( BU_LIST_IS_EMPTY( vhead ) )  {
-	RT_ADD_VLIST( vhead, _ged_eye_model, BN_VLIST_LINE_MOVE );
+    if (BU_LIST_IS_EMPTY(vhead)) {
+	RT_ADD_VLIST(vhead, _ged_eye_model, BN_VLIST_LINE_MOVE);
     } else {
-	RT_ADD_VLIST( vhead, _ged_eye_model, BN_VLIST_LINE_DRAW );
+	RT_ADD_VLIST(vhead, _ged_eye_model, BN_VLIST_LINE_DRAW);
     }
 
     /* First step:  put eye at view center (view 0, 0, 0) */
@@ -118,8 +120,8 @@ ged_cm_end(int argc, char **argv)
     RT_ADD_VLIST(vhead, ym, BN_VLIST_LINE_DRAW);
     RT_ADD_VLIST(vhead, _ged_eye_model, BN_VLIST_LINE_MOVE);
 
-    /*  Second step:  put eye at view 0, 0, 1.
-     *  For eye to be at 0, 0, 1, the old 0, 0, -1 needs to become 0, 0, 0.
+    /* Second step:  put eye at view 0, 0, 1.
+     * For eye to be at 0, 0, 1, the old 0, 0, -1 needs to become 0, 0, 0.
      */
     VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
     MAT4X3PNT(new_cent, _ged_current_gedp->ged_gvp->gv_view2model, xlate);
@@ -127,13 +129,13 @@ ged_cm_end(int argc, char **argv)
     ged_view_update(_ged_current_gedp->ged_gvp);
 
     /* If new treewalk is needed, get new objects into view. */
-    if ( preview_tree_walk_needed )  {
+    if (preview_tree_walk_needed) {
 	const char *av[2];
 
 	av[0] = "zap";
 	av[1] = NULL;
 
-	(void)ged_zap(_ged_current_gedp, 1, av );
+	(void)ged_zap(_ged_current_gedp, 1, av);
 	_ged_drawtrees(_ged_current_gedp, _ged_current_gedp->ged_gdp->gd_rt_cmd_len, (const char **)_ged_current_gedp->ged_gdp->gd_rt_cmd, preview_mode, (struct _ged_client_data *)0);
 	ged_color_soltab(&_ged_current_gedp->ged_gdp->gd_headDisplay);
     }
@@ -141,7 +143,7 @@ ged_cm_end(int argc, char **argv)
     if (_ged_current_gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
 	(*_ged_current_gedp->ged_refresh_handler)(_ged_current_gedp->ged_refresh_clientdata);
 
-    if ( preview_delay > 0 )  {
+    if (preview_delay > 0) {
 	struct timeval tv;
 	fd_set readfds;
 
@@ -149,17 +151,19 @@ ged_cm_end(int argc, char **argv)
 	FD_SET(fileno(stdin), &readfds);
 	tv.tv_sec = (long)preview_delay;
 	tv.tv_usec = (long)((preview_delay - tv.tv_sec) * 1000000);
-	select( fileno(stdin)+1, &readfds, (fd_set *)0, (fd_set *)0, &tv );
+	select(fileno(stdin)+1, &readfds, (fd_set *)0, (fd_set *)0, &tv);
     }
 
     return 0;
 }
 
+
 int
-ged_cm_multiview(int argc, char **argv)
+ged_cm_multiview(int UNUSED(argc), char **UNUSED(argv))
 {
     return -1;
 }
+
 
 int
 ged_cm_start(int argc, char **argv)
@@ -172,13 +176,14 @@ ged_cm_start(int argc, char **argv)
     return 0;
 }
 
+
 int
 ged_cm_tree(int argc, char **argv)
 {
-    int	i = 1;
+    int i = 1;
     char *cp = rt_cmd_storage;
 
-    for ( i = 1;  i < argc && i < MAXARGS; i++ )  {
+    for (i = 1;  i < argc && i < MAXARGS; i++) {
 	bu_strlcpy(cp, argv[i], MAXARGS*9);
 	_ged_current_gedp->ged_gdp->gd_rt_cmd[i] = cp;
 	cp += strlen(cp) + 1;
@@ -191,12 +196,13 @@ ged_cm_tree(int argc, char **argv)
     return 0;
 }
 
+
 void
 _ged_setup_rt(struct ged *gedp, char **vp, int printcmd)
 {
     _ged_current_gedp->ged_gdp->gd_rt_cmd_len = vp - _ged_current_gedp->ged_gdp->gd_rt_cmd;
     _ged_current_gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, 
-				     vp, &_ged_current_gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
+								vp, &_ged_current_gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
 
     if (printcmd) {
 	/* Print out the command we are about to run */
@@ -242,23 +248,24 @@ struct command_tab ged_preview_cmdtab[] = {
      0,		0, 0}	/* END */
 };
 
+
 /**
- *  Preview a new style RT animation script.
- *  Note that the RT command parser code is used, rather than the
- *  MGED command parser, because of the differences in format.
- *  The RT parser expects command handlers of the form "ged_cm_xxx()",
- *  and all communications are done via global variables.
+ * Preview a new style RT animation script.
+ * Note that the RT command parser code is used, rather than the
+ * MGED command parser, because of the differences in format.
+ * The RT parser expects command handlers of the form "ged_cm_xxx()",
+ * and all communications are done via global variables.
  *
- *  For the moment, the only preview mode is the normal one,
- *  moving the eyepoint as directed.
- *  However, as a bonus, the eye path is left behind as a vector plot.
+ * For the moment, the only preview mode is the normal one,
+ * moving the eyepoint as directed.
+ * However, as a bonus, the eye path is left behind as a vector plot.
  */
 int
 ged_preview(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
     char *cmd;
-    int	c;
+    int c;
     vect_t temp;
     static const char *usage = "[-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file";
 
@@ -289,7 +296,7 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     /* Parse options */
     bu_optind = 1;			/* re-init bu_getopt() */
     while ((c=bu_getopt(argc, (char * const *)argv, "d:vD:K:")) != EOF) {
-	switch (c)  {
+	switch (c) {
 	    case 'd':
 		preview_delay = atof(bu_optarg);
 		break;
@@ -303,15 +310,15 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 		preview_mode = 3;	/* Like "ev" */
 		break;
 	    default:
-	    {
-		bu_vls_printf(&gedp->ged_result_str, "option '%c' unknown\n", c);
-		bu_vls_printf(&gedp->ged_result_str, "        -d#     inter-frame delay\n");
-		bu_vls_printf(&gedp->ged_result_str, "        -v      polygon rendering (visual)\n");
-		bu_vls_printf(&gedp->ged_result_str, "        -D#     desired starting frame\n");
-		bu_vls_printf(&gedp->ged_result_str, "        -K#     final frame\n");
-	    }
+		{
+		    bu_vls_printf(&gedp->ged_result_str, "option '%c' unknown\n", c);
+		    bu_vls_printf(&gedp->ged_result_str, "        -d#     inter-frame delay\n");
+		    bu_vls_printf(&gedp->ged_result_str, "        -v      polygon rendering (visual)\n");
+		    bu_vls_printf(&gedp->ged_result_str, "        -D#     desired starting frame\n");
+		    bu_vls_printf(&gedp->ged_result_str, "        -K#     final frame\n");
+		}
 
-	    break;
+		break;
 	}
     }
     argc -= bu_optind-1;
