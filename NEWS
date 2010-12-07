@@ -1941,9 +1941,10 @@ release.  The entire history of the project is available through
 Subversion revision control on Sourceforge.
 
 NEWS items should be formatted to column 70 (default M-q in Emacs),
-use no tabs, and include credits to all significant contributors.
-Multiple contributors may be listed on the following line but the
-summary description itself should never exceed column 70 or one line.
+include credits to all significant contributors, and be descriptively
+succient.  NEWS items should be ONE LINE per user-visible change with
+the description not exceeding column 70.  Multiple contributors may be
+listed on the same or following line.
 
 // Local Variables:
 // mode: Text
