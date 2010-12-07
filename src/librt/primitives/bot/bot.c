@@ -2953,8 +2953,6 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
     for (i=0; i<num_faces; i++) {
 	j = i+1;
 
-	Tcl_DoOneEvent(TCL_DONT_WAIT);
-
 	while (j<num_faces) {
 	    /* each pass through this loop either increments j or
 	     * decrements num_faces

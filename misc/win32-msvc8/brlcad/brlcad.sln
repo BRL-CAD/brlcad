@@ -1872,6 +1872,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libadrt", "..\adrt\adrt.vcp
 		Release.AspNetCompiler.Debug = "False"
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pixcmp", "..\pixcmp\pixcmp.vcproj", "{8AAF9606-7C95-4BB1-8EB7-DDD3304D03C1}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|Win32 = Release|Win32
@@ -2602,6 +2608,10 @@ Global
 		{43DF8660-74E7-4371-BEC3-602E2E6481B5}.Release|Win32.Build.0 = Release|Win32
 		{43DF8660-74E7-4371-BEC3-602E2E6481B5}.Release|x64.ActiveCfg = Release|x64
 		{43DF8660-74E7-4371-BEC3-602E2E6481B5}.Release|x64.Build.0 = Release|x64
+		{8AAF9606-7C95-4BB1-8EB7-DDD3304D03C1}.Release|Win32.ActiveCfg = Release|Win32
+		{8AAF9606-7C95-4BB1-8EB7-DDD3304D03C1}.Release|Win32.Build.0 = Release|Win32
+		{8AAF9606-7C95-4BB1-8EB7-DDD3304D03C1}.Release|x64.ActiveCfg = Release|x64
+		{8AAF9606-7C95-4BB1-8EB7-DDD3304D03C1}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

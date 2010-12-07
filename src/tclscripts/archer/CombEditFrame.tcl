@@ -881,15 +881,15 @@
 		  ($_type == 1 && 6 <= $col && $col <= 8)} {
 	    $itk_component(combMembersMenu) add command \
 		-label "Set Keypoint (View Center)" \
-		-command [::itcl::code $this setKeypointVC $tname $row 5]
+		-command [::itcl::code $this setKeypointVC $tname $row 6]
 	} elseif {$_type == 2 && 3 <= $col && $col <= 5} {
 	    $itk_component(combMembersMenu) add command \
 		-label "Set Keypoint (View Center)" \
-		-command [::itcl::code $this setKeypointVC $tname $row 2]
+		-command [::itcl::code $this setKeypointVC $tname $row 3]
 	} elseif {$_type == 4 && 7 <= $col && $col <= 9} {
 	    $itk_component(combMembersMenu) add command \
 		-label "Set Keypoint (View Center)" \
-		-command [::itcl::code $this setKeypointVC $tname $row 6]
+		-command [::itcl::code $this setKeypointVC $tname $row 7]
 	}
 
 	addMemberCreationMenuEntries $_type $row
