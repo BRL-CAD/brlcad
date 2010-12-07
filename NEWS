@@ -21,8 +21,7 @@ easy-to-use interface.  The new GUI grealy simplifies BoT processing
 steps and can save modelers considerable time.
 
 * Benchmark now works on Windows - Erik Greenwald
-* Added special wire-frame drawing routines for surfaces who's 
-  3D edges tend to yield a poor graphical representation. -Keith Bowman
+* improved NURBS wireframes with interior surface lines - Keith Bowman
 * additional NURBS raytracing robustness improvements - Keith Bowman
 * removed pl-sgi plot tool - Sean Morrison
 * expanded rtarea documentation with examples and detail - Cliff Yapp
