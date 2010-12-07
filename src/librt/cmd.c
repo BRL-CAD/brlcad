@@ -41,68 +41,69 @@
 #include "raytrace.h"
 
 /*
- *			R T _ R E A D _ C M D
+ * R T _ R E A D _ C M D
  *
- *  Read one semi-colon terminated string of arbitrary length from
- *  the given file into a dynamicly allocated buffer.
- *  Various commenting and escaping conventions are implemented here.
+ * Read one semi-colon terminated string of arbitrary length from the
+ * given file into a dynamicly allocated buffer.  Various commenting
+ * and escaping conventions are implemented here.
  *
- *  Returns:
- *	NULL	On EOF
- *	char *	On good read
+ * Returns:
+ * NULL on EOF
+ * char * on good read
  */
 char *
 rt_read_cmd(register FILE *fp)
 {
-    register int	c;
-    register char	*buf;
-    register int	curpos;
-    register int	curlen;
+    register int c;
+    register char *buf;
+    register int curpos;
+    register int curlen;
 
     curpos = 0;
     curlen = 400;
-    buf = bu_malloc( curlen, "rt_read_cmd command buffer" );
+    buf = bu_malloc(curlen, "rt_read_cmd command buffer");
 
-    do  {
+    do {
 	c = fgetc(fp);
-	if ( c == EOF )  {
+	if (c == EOF) {
 	    c = '\0';
-	} else if ( c == '#' )  {
+	} else if (c == '#') {
 	    /* All comments run to the end of the line */
-	    while ( (c = fgetc(fp)) != EOF && c != '\n' )
+	    while ((c = fgetc(fp)) != EOF && c != '\n')
 		;
 	    continue;
-	} else if ( c == '\n' )  {
+	} else if (c == '\n') {
 	    c = ' ';
-	} else if ( c == ';' )  {
+	} else if (c == ';') {
 	    c = '\0';
-	} else if ( c == '\\' )  {
-	    /*  Backslash takes next character literally.
-	     *  EOF detection here is not a problem, next
-	     *  pass will detect it.
+	} else if (c == '\\') {
+	    /* Backslash takes next character literally.
+	     * EOF detection here is not a problem, next
+	     * pass will detect it.
 	     */
 	    c = fgetc(fp);
 	}
-	if ( c != '\0' && curpos == 0 && isspace(c) )  {
-	    /*  Dispose of leading white space.
-	     *  Necessary to slurp up what newlines turn into.
+	if (c != '\0' && curpos == 0 && isspace(c)) {
+	    /* Dispose of leading white space.
+	     * Necessary to slurp up what newlines turn into.
 	     */
 	    continue;
 	}
-	if ( curpos >= curlen )  {
+	if (curpos >= curlen) {
 	    curlen *= 2;
-	    buf = bu_realloc( buf, curlen, "rt_read_cmd command buffer" );
+	    buf = bu_realloc(buf, curlen, "rt_read_cmd command buffer");
 	}
 	buf[curpos++] = c;
-    } while ( c != '\0' );
-    if ( curpos <= 1 )  {
-	bu_free( buf, "rt_read_cmd command buffer (EOF)" );
+    } while (c != '\0');
+    if (curpos <= 1) {
+	bu_free(buf, "rt_read_cmd command buffer (EOF)");
 	return (char *)0;		/* EOF */
     }
     return buf;				/* OK */
 }
 
-#define MAXWORDS	4096	/* Max # of args per command */
+
+#define MAXWORDS 4096	/* Max # of args per command */
 
 
 /**
@@ -119,49 +120,51 @@ rt_split_cmd(char **argv, int lim, char *lp)
 
 
 /*
- *			R T _ D O _ C M D
+ * R T _ D O _ C M D
  *
- *  Slice up input buffer into whitespace separated "words",
- *  look up the first word as a command, and if it has the
- *  correct number of args, call that function.
+ * Slice up input buffer into whitespace separated "words", look up
+ * the first word as a command, and if it has the correct number of
+ * args, call that function.
  *
- *  Expected to return -1 to halt command processing loop.
+ * Expected to return -1 to halt command processing loop.
  *
- *  Based heavily on mged/cmd.c by Chuck Kennedy.
+ * Based heavily on mged/cmd.c by Chuck Kennedy.
+ *
+ * DEPRECATED: needs to migrate to libbu
  */
 int
 rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab *tp)
-    /* FUTURE:  for globbing */
+/* FUTURE:  for globbing */
 
 
 {
-    register int	nwords;			/* number of words seen */
-    char		*cmd_args[MAXWORDS+1];	/* array of ptrs to args */
-    char 		*lp;
-    int		retval;
+    register int nwords;			/* number of words seen */
+    char *cmd_args[MAXWORDS+1];	/* array of ptrs to args */
+    char *lp;
+    int retval;
 
     if (rtip)
 	RT_CK_RTI(rtip);
 
     lp = bu_strdup(ilp);
 
-    nwords = bu_argv_from_string( cmd_args, MAXWORDS, lp );
-    if ( nwords <= 0 )
+    nwords = bu_argv_from_string(cmd_args, MAXWORDS, lp);
+    if (nwords <= 0)
 	return 0;	/* No command to process */
 
 
-    for (; tp->ct_cmd != (char *)0; tp++ )  {
-	if ( cmd_args[0][0] != tp->ct_cmd[0] ||
-	     /* the length of "n" is not significant, just needs to be big enough */
-	     strncmp( cmd_args[0], tp->ct_cmd, MAXWORDS ) != 0 )
+    for (; tp->ct_cmd != (char *)0; tp++) {
+	if (cmd_args[0][0] != tp->ct_cmd[0] ||
+	    /* the length of "n" is not significant, just needs to be big enough */
+	    strncmp(cmd_args[0], tp->ct_cmd, MAXWORDS) != 0)
 	    continue;
-	if ( (nwords >= tp->ct_min) && (nwords <= tp->ct_max) ) {
-	    retval = tp->ct_func( nwords, cmd_args );
+	if ((nwords >= tp->ct_min) && (nwords <= tp->ct_max)) {
+	    retval = tp->ct_func(nwords, cmd_args);
 	    bu_free(lp, "rt_do_cmd lp");
 	    return retval;
 	}
 	bu_log("rt_do_cmd Usage: %s %s\n\t%s\n",
-	       tp->ct_cmd, tp->ct_parms, tp->ct_comment );
+	       tp->ct_cmd, tp->ct_parms, tp->ct_comment);
 	bu_free(lp, "rt_do_cmd lp");
 	return -1;		/* ERROR */
     }
@@ -169,6 +172,7 @@ rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab 
     bu_free(lp, "rt_do_cmd lp");
     return -1;			/* ERROR */
 }
+
 
 /*
  * Local Variables:
