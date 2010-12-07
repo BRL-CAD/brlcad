@@ -124,7 +124,8 @@ rt_split_cmd(char **argv, int lim, char *lp)
  *
  * Slice up input buffer into whitespace separated "words", look up
  * the first word as a command, and if it has the correct number of
- * args, call that function.
+ * args, call that function.  Negative min/max values in the tp
+ * command table effectively mean that they're not bounded.
  *
  * Expected to return -1 to halt command processing loop.
  *
@@ -158,7 +159,9 @@ rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab 
 	    /* the length of "n" is not significant, just needs to be big enough */
 	    strncmp(cmd_args[0], tp->ct_cmd, MAXWORDS) != 0)
 	    continue;
-	if ((nwords >= tp->ct_min) && (nwords <= tp->ct_max)) {
+	if ((nwords >= tp->ct_min)
+	    && ((tp->ct_max < 0) || (nwords <= tp->ct_max)))
+	{
 	    retval = tp->ct_func(nwords, cmd_args);
 	    bu_free(lp, "rt_do_cmd lp");
 	    return retval;
