@@ -20,6 +20,8 @@ numerous BoT editing commands and processing steps into one unified
 easy-to-use interface.  The new GUI grealy simplifies BoT processing
 steps and can save modelers considerable time.
 
+* Added special wire-frame drawing routines for surfaces who's 
+  3D edges tend to yield a poor graphical representation. -Keith Bowman
 * additional NURBS raytracing robustness improvements - Keith Bowman
 * removed pl-sgi plot tool - Sean Morrison
 * expanded rtarea documentation with examples and detail - Cliff Yapp
