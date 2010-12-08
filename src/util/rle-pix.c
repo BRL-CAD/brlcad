@@ -161,6 +161,7 @@ main(int argc, char **argv)
     int screen_xbase;		/* screen X of l.h.s. of rectangle */
     int screen_xlen;		/* clipped len of rectangle */
     int ncolors;
+    size_t ret;
 
     infp = stdin;
     outfp = stdout;
@@ -298,8 +299,11 @@ main(int argc, char **argv)
 	rle_getrow(&rle_dflt_hdr, rows);
 
     /* Background-fill any lines above 0, below ymin */
-    for (i=0; i < rle_dflt_hdr.ymin; i++)
-	fwrite((char *)bg_buf, sizeof(RGBpixel), (size_t)screen_xlen, outfp);
+    for (i=0; i < rle_dflt_hdr.ymin; i++) {
+	ret = fwrite((char *)bg_buf, sizeof(RGBpixel), (size_t)screen_xlen, outfp);
+	if (ret == 0)
+	    perror("fwrite");
+    }
 
     for (; i <= rle_dflt_hdr.ymax; i++) {
 	unsigned char *pp = (unsigned char *)scan_buf;
@@ -324,13 +328,18 @@ main(int argc, char **argv)
 		*pp++ = cmap.cm_blue[*bp++]>>8;
 	    }
 	}
-	fwrite((char *)scan_buf, sizeof(RGBpixel), (size_t)screen_xlen, outfp);
+	ret = fwrite((char *)scan_buf, sizeof(RGBpixel), (size_t)screen_xlen, outfp);
+	if (ret == 0)
+	    perror("fwrite");
     }
 
 
     /* Background-fill any lines above ymax, below screen_height */
-    for (; i < screen_height; i++)
-	fwrite((char *)bg_buf, sizeof(RGBpixel), (size_t)screen_xlen, outfp);
+    for (; i < screen_height; i++) {
+	ret = fwrite((char *)bg_buf, sizeof(RGBpixel), (size_t)screen_xlen, outfp);
+	if (ret == 0)
+	    perror("fwrite");
+    }
  done:
 
     for (i=0; i < ncolors; i++)
