@@ -567,6 +567,7 @@
 	} {}
 	itk_component add combMembers$tname {
 	    ::table $itk_component(combMembers$tname\F).members$tname \
+		-cursor arrow \
 		-height 0 \
 		-maxheight 2000 \
 		-width 0 \
