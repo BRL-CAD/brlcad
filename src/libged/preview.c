@@ -197,24 +197,6 @@ ged_cm_tree(int argc, char **argv)
 }
 
 
-void
-_ged_setup_rt(struct ged *gedp, char **vp, int printcmd)
-{
-    _ged_current_gedp->ged_gdp->gd_rt_cmd_len = vp - _ged_current_gedp->ged_gdp->gd_rt_cmd;
-    _ged_current_gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, 
-								vp, &_ged_current_gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
-
-    if (printcmd) {
-	/* Print out the command we are about to run */
-	vp = &_ged_current_gedp->ged_gdp->gd_rt_cmd[0];
-	while (*vp)
-	    bu_vls_printf(&gedp->ged_result_str, "%s ", *vp++);
-
-	bu_vls_printf(&gedp->ged_result_str, "\n");
-    }
-}
-
-
 struct command_tab ged_preview_cmdtab[] = {
     {"start", "frame number", "start a new frame",
      ged_cm_start,	2, 2},
@@ -263,11 +245,14 @@ struct command_tab ged_preview_cmdtab[] = {
 int
 ged_preview(struct ged *gedp, int argc, const char *argv[])
 {
+    static const char *usage = "[-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file";
+
     FILE *fp;
     char *cmd;
     int c;
     vect_t temp;
-    static const char *usage = "[-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file";
+    char **vp;
+    const char *argv0 = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -292,6 +277,7 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     preview_desiredframe = 0;
     preview_finalframe = 0;
     _ged_current_gedp = gedp;
+    argv0 = argv[0]; /* temp stash */
 
     /* Parse options */
     bu_optind = 1;			/* re-init bu_getopt() */
@@ -330,7 +316,17 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Build list of top-level objects in view, in _ged_current_gedp->ged_gdp->gd_rt_cmd[] */
-    _ged_setup_rt(gedp, _ged_current_gedp->ged_gdp->gd_rt_cmd, 1);
+    vp = _ged_current_gedp->ged_gdp->gd_rt_cmd;
+    _ged_current_gedp->ged_gdp->gd_rt_cmd_len = vp - _ged_current_gedp->ged_gdp->gd_rt_cmd;
+    _ged_current_gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, 
+								vp, &_ged_current_gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
+
+    /* Print out the command we are about to run */
+    vp = &_ged_current_gedp->ged_gdp->gd_rt_cmd[0];
+    while (*vp)
+	bu_vls_printf(&gedp->ged_result_str, "%s ", *vp++);
+    
+    bu_vls_printf(&gedp->ged_result_str, "\n");
 
     preview_vbp = rt_vlblock_init();
 
