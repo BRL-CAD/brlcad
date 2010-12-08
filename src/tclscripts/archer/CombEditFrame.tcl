@@ -957,6 +957,10 @@
     }
 
     set row [lindex $ilist 0] 
+    if {![info exists mMemberData$_tname\($row,$col\)]} {
+	return
+    }
+
     if {$row != 0} {
 	if {[subst $[subst mMemberData$_tname\($index\)]] == "*"} {
 	    setTableVal $_tname $index ""
