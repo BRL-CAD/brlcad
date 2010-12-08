@@ -1,3 +1,212 @@
+2010-12-07 23:29  brlcad
+
+	* [r41556] src/librt/cmd.c:
+	  allow the command table to have a negative max count, effectively
+	  implying unlimited.
+
+2010-12-07 23:25  brlcad
+
+	* [r41555] src/librt/cmd.c:
+	  ws indent cleanup. rt_do_cmd() is precariously out of place
+	  residing in librt. make a note that it needs to move to libbu,
+	  even though it'll likely be minimally impacting.
+
+2010-12-07 23:14  brlcad
+
+	* [r41554] src/libged/preview.c:
+	  working towards repair. first step: the benign ws changes.
+
+2010-12-07 23:05  starseeker
+
+	* [r41553] TODO:
+	  Reverted preview, will need to sort out after release. Final
+	  release process now beginning.
+
+2010-12-07 22:55  starseeker
+
+	* [r41552] src/libged/preview.c:
+	  Revert preview to the state of commit 37421 (plus a local
+	  definition of MAXARGS) - will need more work after release.
+
+2010-12-07 22:01  brlcad
+
+	* [r41551] NEWS:
+	  erik (re)ported the benchmark suite (pixcmp, benchmark script) to
+	  windows, albeit still requiring a posix shell and probably more
+	  (works on cygwin).
+
+2010-12-07 21:56  brlcad
+
+	* [r41550] NEWS:
+	  original comment from keith was closer to the user-visible
+	  feature mark. improved NURBS wireframes. he added special
+	  wire-frame drawing routines for surfaces whose 3d edges tend to
+	  yield a poor graphical representation.
+
+2010-12-07 21:51  brlcad
+
+	* [r41549] NEWS:
+	  reiterate the format. NEWS items should be just one line per
+	  user-visible change. clarify credits.
+
+2010-12-07 21:41  bob1961
+
+	* [r41548] src/tclscripts/archer/CombEditFrame.tcl:
+	  This update affects setting the keypoint in any of the "Relative
+	  Edit" tables. If the row in question has been selected, all
+	  selected rows will have their keypoints set using the view
+	  center.
+
+2010-12-07 21:24  brlcad
+
+	* [r41547] src/tclscripts/mged/anim.tcl:
+	  shouldn't directly use path separators on paths. use file join
+	  for portability, passing the buck down to the callers since we
+	  need to join individual command names.
+
+2010-12-07 21:01  indianlarry
+
+	* [r41546] src/tclscripts/mged/anim.tcl:
+	  Added path separator to sketch paths, also forced single command
+	  evaluation
+
+2010-12-07 20:57  starseeker
+
+	* [r41545] src/libbu/parse.c:
+	  Switch loc in the main branch too.
+
+2010-12-07 19:54  erikgreenwald
+
+	* [r41541] NEWS:
+	  mention windows benchmark
+
+2010-12-07 19:47  bob1961
+
+	* [r41539] src/tclscripts/lib/Ged.tcl:
+	  Fixed a typo in Ged::apropos.
+
+2010-12-07 19:42  indianlarry
+
+	* [r41538] src/libbu/image.c:
+	  Add 'depth' parameter to png_save() for RGB and RGBA formats.
+
+2010-12-07 17:15  indianlarry
+
+	* [r41535] NEWS:
+	  Added news item for improved NURBS wire-frame
+
+2010-12-07 15:43  indianlarry
+
+	* [r41533] include/opennurbs_ext.h, src/librt/opennurbs_ext.cpp,
+	  src/librt/primitives/brep/brep.cpp,
+	  src/librt/primitives/brep/brep_debug.cpp:
+	  Added special wire-frame drawing routines for surfaces who's 3D
+	  edges tend to yield a poor graphical representation. These
+	  special drawing routines relate to extruded, revolved and closed
+	  surfaces and use the surface subdivision tree. To improve
+	  performance added a 'depthLimit' parameter to surface subdivision
+	  routines for use in wire-frame approximation.
+
+2010-12-07 01:26  brlcad
+
+	* [r41530] src/libbu/parse.c:
+	  simplify, break unreached. msvc complains about set statements
+	  within expressions, prefer moving them to separate lines.
+
+2010-12-07 00:30  brlcad
+
+	* [r41528] TODO, src/librt/primitives/bot/bot.c:
+	  the Tcl_DoOneEvent() event calls make the new bot interface
+	  update interactively. this will make the interface stall/hang
+	  until the task (bot_decimate, bot_vertex_fuse, etc) completes,
+	  but there shouldn't be tcl event calls down in librt regardless.
+
+2010-12-06 23:26  starseeker
+
+	* [r41527] src/librt/primitives/bot/bot.c:
+	  Remove the known troublemaker from trunk, too
+
+2010-12-06 22:27  starseeker
+
+	* [r41520] src/libbu/parse.c:
+	  Bad developer - don't wipe out old fixes when committing new
+	  ones.
+
+2010-12-06 22:07  starseeker
+
+	* [r41519] src/libbu/parse.c:
+	  Add parser rework to trunk.
+
+2010-12-06 21:16  r_weiss
+
+	* [r41517] include/bn.h:
+	  Updated macro BN_VECT_ARE_PARALLEL in file 'bn.h'. The macro now
+	  can identify parallel vectors pointing in the same direction and
+	  in opposite directions. This change should improve the results
+	  from the mged commands 'facetize' and 'ev'. Initial test results
+	  look good but still in process of full testing.
+
+2010-12-06 20:54  erikgreenwald
+
+	* [r41516] TODO:
+	  TODO rt/bench confirmed on vista.
+
+2010-12-06 20:53  erikgreenwald
+
+	* [r41515] bench/run.sh:
+	  Don't assume bc if dc is not found (but do assume awk as a last
+	  ditch attempt, because that's somehow better).
+
+2010-12-06 19:06  bob1961
+
+	* [r41514] src/tclscripts/archer/CombEditFrame.tcl:
+	  Update calls to setKeypointVC to account for the selection
+	  column.
+
+2010-12-06 18:17  starseeker
+
+	* [r41513] src/libbu/parse.c:
+	  The %p option needs to continue if the lookup didn't succeed -
+	  fixes the failure in shaders regression test.
+
+2010-12-06 16:04  erikgreenwald
+
+	* [r41511] bench/run.sh:
+	  Use a temp file to do the pixcmp test instead of /dev/null.
+	  Cygwin fakes a /dev and does not allow opening /dev/null for
+	  reading.
+
+2010-12-06 15:58  erikgreenwald
+
+	* [r41510] bench/pixcmp.c:
+	  report the right filename when fopen errors
+
+2010-12-06 15:52  erikgreenwald
+
+	* [r41509] misc/win32-msvc8/pixcmp,
+	  misc/win32-msvc8/pixcmp/pixcmp.vcproj:
+	  Add pixcmp
+
+2010-12-06 15:48  erikgreenwald
+
+	* [r41508] misc/win32-msvc8/brlcad/brlcad.sln:
+	  Add pixcmp
+
+2010-12-06 15:41  erikgreenwald
+
+	* [r41507] bench/run.sh:
+	  add path info for the msvc build (using cygwin's sh)
+
+2010-12-06 15:38  erikgreenwald
+
+	* [r41506] bench/pixcmp.c:
+	  use bu_optind instead of optind (win32 fix)
+
+2010-12-03 23:59  starseeker
+
+	* [r41501] ChangeLog:
+	  Update the ChangeLog
+
 2010-12-03 23:41  brlcad
 
 	* [r41500] TODO:
