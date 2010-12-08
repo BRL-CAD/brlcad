@@ -1115,20 +1115,7 @@ brep_trim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_inte
 }
 
 /* a binary predicate for std:list implemented as a function */
-bool near_equal (double first, double second)
-{
-	struct bn_tol tol;
-	struct bn_tol *ptr_tol;
-
-    tol.magic = BN_TOL_MAGIC;
-    tol.dist = 1e-6;
-    tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-6;
-    tol.para = 1 - tol.perp;
-
-    ptr_tol = &tol;
-	return BN_APPROXEQUAL(first,second,ptr_tol);
-}
+extern bool near_equal (double first, double second);
 
 void
 plotFace(SurfaceTree* st, struct bn_vlblock *vbp, int isocurveres, int gridres)
@@ -1634,10 +1621,11 @@ int brep_isosurface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
 	if (index == -1) {
 		for (index = 0; index < brep->m_F.Count(); index++) {
 			ON_BrepFace& face = brep->m_F[index];
-			SurfaceTree* st = new SurfaceTree(&face);
+			SurfaceTree* st = new SurfaceTree(&face, true, 0);
 #if 0
 			plotFace(st, vbp, plotres, plotres);
 #else
+			plottrim(face, vbp, plotres, true);
 			plotFaceFromSurfaceTree(st,vbp,plotres,plotres);
 #endif
 			delete st;
@@ -1646,10 +1634,11 @@ int brep_isosurface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
 		ON_BrepFaceArray& faces = brep->m_F;
 		if (index < faces.Count()) {
 			ON_BrepFace& face = faces[index];
-			SurfaceTree* st = new SurfaceTree(&face);
+			SurfaceTree* st = new SurfaceTree(&face, true, 0);
 #if 0
 			plotFace(st, vbp, plotres, plotres);
 #else
+			plottrim(face, vbp, plotres, true);
 			plotFaceFromSurfaceTree(st,vbp,plotres,plotres);
 #endif
 			delete st;

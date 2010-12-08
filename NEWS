@@ -10,7 +10,7 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2010-09-XX  Release 7.18.0                                     ---
+--- 2010-12-07  Release 7.18.0                                     ---
 ----------------------------------------------------------------------
 
 This release includes the initial release of a new Bag of Triangle
@@ -20,6 +20,8 @@ numerous BoT editing commands and processing steps into one unified
 easy-to-use interface.  The new GUI grealy simplifies BoT processing
 steps and can save modelers considerable time.
 
+* ported benchmark suite to Windows (requires 'sh') - Erik Greenwald
+* improved NURBS wireframes with interior surface lines - Keith Bowman
 * additional NURBS raytracing robustness improvements - Keith Bowman
 * removed pl-sgi plot tool - Sean Morrison
 * expanded rtarea documentation with examples and detail - Cliff Yapp
@@ -1938,9 +1940,10 @@ release.  The entire history of the project is available through
 Subversion revision control on Sourceforge.
 
 NEWS items should be formatted to column 70 (default M-q in Emacs),
-use no tabs, and include credits to all significant contributors.
-Multiple contributors may be listed on the following line but the
-summary description itself should never exceed column 70 or one line.
+include credits to all significant contributors, and be descriptively
+succient.  NEWS items should be ONE LINE per user-visible change with
+the description not exceeding column 70.  Multiple contributors may be
+listed on the same or following line.
 
 // Local Variables:
 // mode: Text

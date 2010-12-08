@@ -1396,7 +1396,7 @@ private:
     bool m_removeTrimmed;
 
 public:
-    SurfaceTree(ON_BrepFace* face, bool removeTrimmed=true);
+    SurfaceTree(ON_BrepFace* face, bool removeTrimmed=true, int depthLimit = BREP_MAX_FT_DEPTH);
     ~SurfaceTree();
 
     CurveTree* ctree;
@@ -1427,8 +1427,8 @@ private:
     bool isFlat(const ON_Surface* surf, ON_Plane frames[], ON_3dVector normals[], ON_3dPoint corners[], const ON_Interval& u, const ON_Interval& v);
     fastf_t isFlatU(const ON_Surface* surf, ON_Plane frames[], ON_3dVector normals[], ON_3dPoint corners[], const ON_Interval& u, const ON_Interval& v);
     fastf_t isFlatV(const ON_Surface* surf, ON_Plane frames[], ON_3dVector normals[], ON_3dPoint corners[], const ON_Interval& u, const ON_Interval& v);
-    BBNode* subdivideSurfaceByKnots(const ON_Surface *localsurf, const ON_Interval& u, const ON_Interval& v, ON_Plane frames[], ON_3dPoint corners[], ON_3dVector normals[], int depth);
-    BBNode* subdivideSurface(const ON_Surface *localsurf, const ON_Interval& u, const ON_Interval& v, ON_Plane frames[], ON_3dPoint corners[], ON_3dVector normals[], int depth);
+    BBNode* subdivideSurfaceByKnots(const ON_Surface *localsurf, const ON_Interval& u, const ON_Interval& v, ON_Plane frames[], ON_3dPoint corners[], ON_3dVector normals[], int depth, int depthLimit);
+    BBNode* subdivideSurface(const ON_Surface *localsurf, const ON_Interval& u, const ON_Interval& v, ON_Plane frames[], ON_3dPoint corners[], ON_3dVector normals[], int depth, int depthLimit);
     BBNode* surfaceBBox(const ON_Surface *localsurf, bool leaf, ON_3dPoint corners[], ON_3dVector normals[], const ON_Interval& u, const ON_Interval& v);
 
     ON_BrepFace* m_face;
