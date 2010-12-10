@@ -129,7 +129,7 @@
       <term><emphasis remap='B' role='bold'>-mindepth</emphasis> <emphasis remap='I'>n</emphasis></term>
       <listitem>
 	<para>
-	  True if the depth of the object in the gree is greater than 
+	  True if the depth of the object in the tree is greater than 
 	  or equal to <emphasis remap='I'>n</emphasis>.
 	</para>
       </listitem>
