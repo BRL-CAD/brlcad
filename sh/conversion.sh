@@ -171,7 +171,7 @@ for arg in $ARGS ; do
 	    shift
 	    ;;
 	x*=*)
-	    VAR=`echo $arg | sed 's/=.*//g'`
+	    VAR=`echo $arg | sed 's/=.*//g' | sed 's/^[-]*//g'`
 	    if test ! "x$VAR" = "x" ; then
 		VAL=`echo $arg | sed 's/.*=//g'`
 		CMD="$VAR=$VAL"
@@ -209,14 +209,31 @@ will convert, what percentage, and how long the conversion will take.
 There are several environment variables that will modify how this
 script behaves:
 
-  GED - pathname to the BRL-CAD geometry editor (i.e., mged)
+  GED - path to BRL-CAD geometry editor (i.e., mged) for converting
+  SEARCH - path to BRL-CAD geometry editor to use for searching
+  OBJECTS - parameters for selecting objects to convert
   MAXTIME - maximum number of seconds allowed for each conversion
-  VERBOSE - turn on extra debug output for testing/development
   QUIET - turn off all printing output (writes results to log file)
+  VERBOSE - turn on extra debug output for testing/development
   INSTRUCTIONS - display these more detailed instructions
 
 The GED option allows you to specify a specific pathname for MGED.
 The default is to search the system path for 'mged'.
+
+The SEARCH option allows you to specify a different MGED that will be
+used for finding objects.  As MGED's "search" command was added in
+release 7.14.0, this option allows you to find objects using a 7.14.0+
+version of MGED but then attempt to convert geometry with a
+potentially older version of MGED.  The default is to use the same
+mged (specified by the GED option) being used for conversions.
+
+The OBJECTS option allows you to specify which objects you want to
+convert.  Any of the parameters recognized by the GED 'search' command
+can be used.  See the 'search' manual page for details on all
+available parameters.  For example, to only convert regions:
+OBJECTS="-type regions" ; to only convert top-level objects:
+OBJECTS="-depth=0" ; to convert everything at or below the region
+level: OBJECTS="-below -type regions -or -type regions"
 
 The MAXTIME option specifies how many seconds are allowed to elapse
 before the conversion is aborted.  Some conversions can take days or
@@ -247,6 +264,8 @@ if test "x$HELP" = "x1" ; then
     echo ""
     echo "Available options:"
     echo "  GED=/path/to/geometry/editor (default mged)"
+    echo "  SEARCH=/path/to/new/editor (default mged)"
+    echo "  OBJECTS=params (default "" for all objects)"
     echo "  MAXTIME=#seconds (default 300)"
     echo ""
     echo "BRL-CAD is a powerful cross-platform open source solid modeling system."
@@ -305,6 +324,7 @@ set_if_unset ( ) {
 
 # approximate maximum time in seconds that a given conversion is allowed to take
 set_if_unset GED mged
+set_if_unset SEARCH $GED
 set_if_unset MAXTIME 300
 
 # commands that this script expects, make sure we can find MGED
@@ -354,7 +374,7 @@ while test $# -gt 0 ; do
     eval $cmd
 
     # execute in a coprocess
-    cmd="$GED -c \"$work\" search ."
+    cmd="$SEARCH -c \"$work\" search . $OBJECTS"
     objects=`eval $cmd 2>&1 | grep -v Using`
     $VERBOSE_ECHO "\$ $cmd"
     $VERBOSE_ECHO "$objects"
@@ -371,7 +391,7 @@ EOF
     while read object ; do
 
 	obj="`basename \"$object\"`"
-	found=`$GED -c "$work" search . -name \"${obj}\" 2>&1 | grep -v Using`
+	found=`$SEARCH -c "$work" search . -name \"${obj}\" 2>&1 | grep -v Using`
 	if test "x$found" != "x$object" ; then
 	    $ECHO "INTERNAL ERROR: Failed to find [$object] with [$obj] (got [$found])"
 	    continue
@@ -411,7 +431,7 @@ EOF
 	real_nmg="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
 	# verify NMG
-	found=`$GED -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
+	found=`$SEARCH -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
 	if test "x$found" = "x${object}.nmg" ; then
 	    nmg=pass
 	    nmg_count=`expr $nmg_count + 1`
@@ -445,7 +465,7 @@ EOF
 	real_bot="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
 	# verify BoT
-	found=`$GED -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
+	found=`$SEARCH -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
 	if test "x$found" = "x${object}.bot" ; then
 	    bot=pass
 	    bot_count=`expr $bot_count + 1`
