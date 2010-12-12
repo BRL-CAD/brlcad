@@ -61,7 +61,7 @@ ged_debugnmg(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    bu_vls_printb(&gedp->ged_result_str, "librt rt_g.NMG_debug", bu_debug, NMG_DEBUG_FORMAT );
+    bu_vls_printb(&gedp->ged_result_str, "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
     bu_vls_printf(&gedp->ged_result_str, "\n");
 
     return GED_OK;
