@@ -301,7 +301,8 @@ EXTRA_DIST = \
 	timer-nt.c \
 	timer52brl.c \
 	timerhep.c \
-	timerunix.c
+	timerunix.c \
+	uvpoints.cpp
 
 if BUILD_REGEX
 DEPADD = src/other/libregex

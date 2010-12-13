@@ -57,6 +57,7 @@ main(int argc, char **argv)
     int left[256], right[256];
     double hint, havg;
     long r;
+    size_t ret;
 
     if (argc > 1 && strcmp(argv[1], "-v") == 0) {
 	verbose++;
@@ -119,7 +120,11 @@ main(int argc, char **argv)
 #endif /* Not METHOD2 */
 	    }
 	}
-	fwrite(obuf, 1, n, stdout);
+	ret = fwrite(obuf, 1, n, stdout);
+	if (ret == 0) {
+	    perror("fwrite");
+	    break;
+	}
     }
     return 0;
 }

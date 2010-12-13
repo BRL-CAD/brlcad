@@ -103,6 +103,7 @@
 	method deleteRow  {_type _row}
 	method setKeypoint  {args}
 	method setKeypointVC  {_tname _row _col}
+	method setKeypointVC_doit  {_tname _row _col}
 	method syncColumn {_tname _row _col _val}
 	method validateTableEntry {_row _col _newval _tname}
 
@@ -566,6 +567,7 @@
 	} {}
 	itk_component add combMembers$tname {
 	    ::table $itk_component(combMembers$tname\F).members$tname \
+		-cursor arrow \
 		-height 0 \
 		-maxheight 2000 \
 		-width 0 \
@@ -956,6 +958,10 @@
     }
 
     set row [lindex $ilist 0] 
+    if {![info exists mMemberData$_tname\($row,$col\)]} {
+	return
+    }
+
     if {$row != 0} {
 	if {[subst $[subst mMemberData$_tname\($index\)]] == "*"} {
 	    setTableVal $_tname $index ""
@@ -1086,6 +1092,26 @@
 }
 
 ::itcl::body CombEditFrame::setKeypointVC {_tname _row _col} {
+    if {[subst $[subst mMemberData$_tname\($_row,0\)]] == "*"} {
+	set anames [lsort -dictionary [array names mMemberData$_tname]]
+	set rows {}
+	foreach aindex [lsearch -all -regexp $anames "\[0-9\]+,0"] {
+	    set aname [lindex $anames $aindex]
+	    if {[subst $[subst mMemberData$_tname\($aname\)]] == "*"} {
+		set alist [split $aname ,]
+		lappend rows [lindex $alist 0]
+	    }
+	}
+    } else {
+	set rows $_row
+    }
+
+    foreach row $rows {
+	setKeypointVC_doit $_tname $row $_col
+    }
+}
+
+::itcl::body CombEditFrame::setKeypointVC_doit {_tname _row _col} {
     if {$itk_option(-mged) == ""} {
 	return
     }

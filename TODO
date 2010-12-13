@@ -17,7 +17,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* make sure 'preview' works, particularly the 'tree' subcommand.
+* conversion.sh using signals for child->parent communication
+
+* conversion.sh --not and --only options
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -43,6 +45,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* make sure 'preview' works, particularly the 'tree' subcommand.
 
 * make nreed's new bot cleanup interface update interactively without
   resorting to calls to Tcl_DoOneEvent() down in librt.
@@ -415,6 +419,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * add support to 'rtxray' for outputting inverted pixel values so that
   we have pixel values that are directly related to material thickness
+
+* gqa semaphore locking on results is very slow and gets worse as the
+  number of cores and speed of cpu increases.  resource contention on
+  semaphores slows everything down substantially.
 
 * g_qa (gqa in mged) needs to be more informative when it runs - 
   needs a header letting you know what it's doing, and if possible

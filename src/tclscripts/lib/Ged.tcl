@@ -501,7 +501,7 @@ package provide cadwidgets::Ged 1.0
 	method zoom {args}
 
 	method ? {}
-	method apropos {key}
+	method apropos {args}
 	method begin_data_arrow {_pane _x _y}
 	method begin_data_line {_pane _x _y}
 	method begin_data_move {_pane _x _y}
@@ -2605,7 +2605,7 @@ package provide cadwidgets::Ged 1.0
     return [$help ? 20 8]
 }
 
-::itcl::body cadwidgets::Ged::apropos {key} {
+::itcl::body cadwidgets::Ged::apropos {args} {
     return [eval $help apropos $args]
 }
 
