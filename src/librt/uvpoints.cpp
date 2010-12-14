@@ -35,50 +35,49 @@
 
 using namespace std;
 
+/* Number of subdivisions to perform */
+#define MAX_TREE_DEPTH 6
+#define TREE_DEBUG 0
+int rejected = 0;
+int counting = 0;
+
 /* For memory management stuff see the tutorial at
  * http://www.ibm.com/developerworks/aix/tutorials/au-memorymanager/section9.html */
 class MemoryManager
 {
-	private:
-		std::list<void*> QuadNodePtrList;
-		std::vector<void*> MemoryPoolList;
-	public:
-		MemoryManager( ) {}
-		~MemoryManager( ) {}
-		void* allocate(size_t);
-		void  free(void*);
+       private:
+               std::list<void*> QuadNodePtrList;
+               std::vector<void*> MemoryPoolList;
+       public:
+               MemoryManager( ) {}
+               ~MemoryManager( ) {}
+               void* allocate(size_t);
+               void  free(void*);
 };
 
 void* MemoryManager::allocate(size_t size)
 {
-	void* base = 0;
-	if (QuadNodePtrList.empty()) {
-		base = new char[size * POOL_SIZE];
-		MemoryPoolList.push_back(base);
-		for(int i = 0; i < POOL_SIZE; ++i) {
-			QuadNodePtrList.push_front(&(static_cast<char*>(base)[i*size]));
-		}
-	}
-	void* blockPtr = QuadNodePtrList.front();
-/*	*((static_cast<QuadNode*>(blockPtr)) + sizeof(QuadNode) - 2) = sizeof(QuadNode);
-	*((static_cast<QuadNode*>(blockPtr)) + sizeof(QuadNode) - 1) = 0;*/
-	QuadNodePtrList.pop_front();
-	return blockPtr;
+       void* base = 0;
+       if (QuadNodePtrList.empty()) {
+               base = new char[size * POOL_SIZE];
+               MemoryPoolList.push_back(base);
+               for(int i = 0; i < POOL_SIZE; ++i) {
+                       QuadNodePtrList.push_front(&(static_cast<char*>(base)[i*size]));
+               }
+       }
+       void* blockPtr = QuadNodePtrList.front();
+/*     *((static_cast<QuadNode*>(blockPtr)) + sizeof(QuadNode) - 2) = sizeof(QuadNode);
+       *((static_cast<QuadNode*>(blockPtr)) + sizeof(QuadNode) - 1) = 0;*/
+       QuadNodePtrList.pop_front();
+       return blockPtr;
 }
 
 void MemoryManager::free(void* object)
 {
-	QuadNodePtrList.push_front(object);
+       QuadNodePtrList.push_front(object);
 }
 
 MemoryManager QuadMemoryManager;
-
-/* Number of subdivisions to perform */
-#define MAX_TREE_DEPTH 6
-
-int rejected = 0;
-int counting = 0;
-using namespace std;
 
 /**
  * UVKey Class - minimal class for holding UV space coordinate keys
@@ -148,14 +147,14 @@ class QuadNode {
 		size_t PV[9];
 		int depth;
 		QuadNode *Children[4];
-		inline void* operator new(size_t size)
-		{
-			return QuadMemoryManager.allocate(sizeof(QuadNode));
-		}
-		inline void operator delete(void* object)
-		{
-			QuadMemoryManager.free(object);
-		}
+                inline void* operator new(size_t size)
+                {
+                        return QuadMemoryManager.allocate(sizeof(QuadNode));
+                }
+                inline void operator delete(void* object)
+                {
+                        QuadMemoryManager.free(object);
+                }
 };	
 
 int ints_to_key(string *cppstr, int left, int right) 
@@ -164,7 +163,7 @@ int ints_to_key(string *cppstr, int left, int right)
 	char maxkeystr[20];
 	char finalstring[20];
 	int max_key_length;
-	int max_key = pow(2, MAX_TREE_DEPTH + 2);
+	int max_key = pow(2, MAX_TREE_DEPTH + 1);
 	sprintf(maxkeystr, "%d", max_key);
 	max_key_length = strlen(maxkeystr);
 	sprintf(formatstring, "%%\'0%dd%%\'0%dd", max_key_length, max_key_length);
@@ -237,18 +236,19 @@ void QuadNode::SubDivide()
 		Children[0]->PV[2] = PV[4];
 		Children[0]->PU[3] = PU[0];
 		Children[0]->PV[3] = PV[4];
-		Children[0]->PU[4] = (Children[0]->PU[1] - Children[0]->PU[0])/2 + Children[0]->PU[0];
-		Children[0]->PV[4] = (Children[0]->PV[2] - Children[0]->PV[1])/2 + Children[0]->PV[0];
-		Children[0]->PU[5] = (Children[0]->PU[1] - Children[0]->PU[0])/4 + Children[0]->PU[0];
-		Children[0]->PV[5] = (Children[0]->PV[3] - Children[0]->PV[0])/4 + Children[0]->PV[0];
+		Children[0]->PU[4] = PU[5];
+		Children[0]->PV[4] = PV[5];
+		Children[0]->PU[5] = (Children[0]->PU[4] - Children[0]->PU[0])/2 + Children[0]->PU[0];
+		Children[0]->PV[5] = (Children[0]->PV[4] - Children[0]->PV[0])/2 + Children[0]->PV[0];
 		Children[0]->PU[6] = Children[0]->PU[5];
-		Children[0]->PV[6] = 3*(Children[0]->PV[3] - Children[0]->PV[0])/4 + Children[0]->PV[0];
-		Children[0]->PU[7] = 3*(Children[0]->PU[1] - Children[0]->PU[0])/4 + Children[0]->PU[0];
+		Children[0]->PV[6] = 3*(Children[0]->PV[4] - Children[0]->PV[0])/2 + Children[0]->PV[0];
+		Children[0]->PU[7] = 3*(Children[0]->PU[4] - Children[0]->PU[0])/2 + Children[0]->PU[0];
 		Children[0]->PV[7] = Children[0]->PV[5];
 		Children[0]->PU[8] = Children[0]->PU[7];
 		Children[0]->PV[8] = Children[0]->PV[6];
 		Children[0]->AppendKeys(keys);
-	/*	cout << "Q0 Depth: " << depth + 1 << "\n";
+#if TREE_DEBUG
+		cout << "Q0 Depth: " << depth + 1 << "\n";
 		cout << "PU: {";
 		for( int i = 0; i < 9; i++ ) {
 			cout << Children[0]->PU[i] << ",";
@@ -258,7 +258,8 @@ void QuadNode::SubDivide()
 		for( int i = 0; i < 9; i++ ) {
 			cout << Children[0]->PV[i] << ",";
 		}
-		cout << "}\n";*/
+		cout << "}\n";
+#endif
 		if (Children[0]->depth < MAX_TREE_DEPTH)
 			Children[0]->SubDivide();
 
@@ -275,18 +276,19 @@ void QuadNode::SubDivide()
 		Children[1]->PV[2] = PV[4];
 		Children[1]->PU[3] = PU[4];
 		Children[1]->PV[3] = PV[4];
-		Children[1]->PU[4] = (Children[1]->PU[1] - Children[1]->PU[0])/2 + Children[1]->PU[0];   
-		Children[1]->PV[4] = (Children[1]->PV[2] - Children[1]->PV[1])/2 + Children[1]->PV[0];   
-		Children[1]->PU[5] = (Children[1]->PU[1] - Children[1]->PU[0])/4 + Children[1]->PU[0];   
-		Children[1]->PV[5] = (Children[1]->PV[3] - Children[1]->PV[0])/4 + Children[1]->PV[0];   
+		Children[1]->PU[4] = PU[7];   
+		Children[1]->PV[4] = PV[7];   
+		Children[1]->PU[5] = (Children[1]->PU[4] - Children[1]->PU[0])/2 + Children[1]->PU[0];   
+		Children[1]->PV[5] = (Children[1]->PV[4] - Children[1]->PV[0])/2 + Children[1]->PV[0];   
 		Children[1]->PU[6] = Children[1]->PU[5];                            
-		Children[1]->PV[6] = 3*(Children[1]->PV[3] - Children[1]->PV[0])/4 + Children[1]->PV[0]; 
-		Children[1]->PU[7] = 3*(Children[1]->PU[1] - Children[1]->PU[0])/4 + Children[1]->PU[0]; 
+		Children[1]->PV[6] = 3*(Children[1]->PV[4] - Children[1]->PV[0])/2 + Children[1]->PV[0]; 
+		Children[1]->PU[7] = 3*(Children[1]->PU[4] - Children[1]->PU[0])/2 + Children[1]->PU[0]; 
 		Children[1]->PV[7] = Children[1]->PV[5];                            
 		Children[1]->PU[8] = Children[1]->PU[7];                            
 		Children[1]->PV[8] = Children[1]->PV[6];                            
 		Children[1]->AppendKeys(keys);
-/*		cout << "Q1 Depth: " << depth + 1 << "\n";
+#if TREE_DEBUG
+		cout << "Q1 Depth: " << depth + 1 << "\n";
 		cout << "PU: {";
 		for( int i = 0; i < 9; i++ ) {
 			cout << Children[1]->PU[i] << ",";
@@ -296,7 +298,8 @@ void QuadNode::SubDivide()
 		for( int i = 0; i < 9; i++ ) {
 			cout << Children[1]->PV[i] << ",";
 		}
-		cout << "}\n";*/
+		cout << "}\n";
+#endif
 		if (Children[1]->depth < MAX_TREE_DEPTH)
 			Children[1]->SubDivide();
 	
@@ -312,18 +315,19 @@ void QuadNode::SubDivide()
 		Children[2]->PV[2] = PV[2];
 		Children[2]->PU[3] = PU[4];
 		Children[2]->PV[3] = PV[2];
-		Children[2]->PU[4] = (Children[2]->PU[1] - Children[2]->PU[0])/2 + Children[2]->PU[0];
-		Children[2]->PV[4] = (Children[2]->PV[2] - Children[2]->PV[1])/2 + Children[2]->PV[0];
-		Children[2]->PU[5] = (Children[2]->PU[1] - Children[2]->PU[0])/4 + Children[2]->PU[0];
-		Children[2]->PV[5] = (Children[2]->PV[3] - Children[2]->PV[0])/4 + Children[2]->PV[0];
+		Children[2]->PU[4] = PU[8];
+		Children[2]->PV[4] = PV[8];
+		Children[2]->PU[5] = (Children[2]->PU[4] - Children[2]->PU[0])/2 + Children[2]->PU[0];
+		Children[2]->PV[5] = (Children[2]->PV[4] - Children[2]->PV[0])/2 + Children[2]->PV[0];
 		Children[2]->PU[6] = Children[2]->PU[5];
-		Children[2]->PV[6] = 3*(Children[2]->PV[3] - Children[2]->PV[0])/4 + Children[2]->PV[0];
-		Children[2]->PU[7] = 3*(Children[2]->PU[1] - Children[2]->PU[0])/4 + Children[2]->PU[0];
+		Children[2]->PV[6] = 3*(Children[2]->PV[4] - Children[2]->PV[0])/2 + Children[2]->PV[0];
+		Children[2]->PU[7] = 3*(Children[2]->PU[4] - Children[2]->PU[0])/2 + Children[2]->PU[0];
 		Children[2]->PV[7] = Children[2]->PV[5];
 		Children[2]->PU[8] = Children[2]->PU[7];
 		Children[2]->PV[8] = Children[2]->PV[6];
 		Children[2]->AppendKeys(keys);
-/*		cout << "Q2 Depth: " << depth + 1 << "\n";
+#if TREE_DEBUG
+		cout << "Q2 Depth: " << depth + 1 << "\n";
 		cout << "PU: {";
 		for( int i = 0; i < 9; i++ ) {
 			cout << Children[2]->PU[i] << ",";
@@ -333,7 +337,8 @@ void QuadNode::SubDivide()
 		for( int i = 0; i < 9; i++ ) {
 			cout << Children[2]->PV[i] << ",";
 		}
-		cout << "}\n";*/
+		cout << "}\n";
+#endif
 
 		if (Children[2]->depth < MAX_TREE_DEPTH)
 		Children[2]->SubDivide();
@@ -348,20 +353,21 @@ void QuadNode::SubDivide()
 		Children[3]->PV[1] = PV[4];
 		Children[3]->PU[2] = PU[4];
 		Children[3]->PV[2] = PV[3];
-		Children[3]->PU[3] = PV[3];
+		Children[3]->PU[3] = PU[3];
 		Children[3]->PV[3] = PV[3];
-		Children[3]->PU[4] = (Children[3]->PU[1] - Children[3]->PU[0])/2 + Children[3]->PU[0];
-		Children[3]->PV[4] = (Children[3]->PV[2] - Children[3]->PV[1])/2 + Children[3]->PV[0];
-		Children[3]->PU[5] = (Children[3]->PU[1] - Children[3]->PU[0])/4 + Children[3]->PU[0];
-		Children[3]->PV[5] = (Children[3]->PV[3] - Children[3]->PV[0])/4 + Children[3]->PV[0];
+		Children[3]->PU[4] = PU[6];
+		Children[3]->PV[4] = PV[6];
+		Children[3]->PU[5] = (Children[3]->PU[4] - Children[3]->PU[0])/2 + Children[3]->PU[0];
+		Children[3]->PV[5] = (Children[3]->PV[4] - Children[3]->PV[0])/2 + Children[3]->PV[0];
 		Children[3]->PU[6] = Children[3]->PU[5];
-		Children[3]->PV[6] = 3*(Children[3]->PV[3] - Children[3]->PV[0])/4 + Children[3]->PV[0];
-		Children[3]->PU[7] = 3*(Children[3]->PU[1] - Children[3]->PU[0])/4 + Children[3]->PU[0];
+		Children[3]->PV[6] = 3*(Children[3]->PV[4] - Children[3]->PV[0])/2 + Children[3]->PV[0];
+		Children[3]->PU[7] = 3*(Children[3]->PU[4] - Children[3]->PU[0])/2 + Children[3]->PU[0];
 		Children[3]->PV[7] = Children[3]->PV[5];
 		Children[3]->PU[8] = Children[3]->PU[7];
 		Children[3]->PV[8] = Children[3]->PV[6];
 		Children[3]->AppendKeys(keys);
-/*		cout << "Q3 Depth: " << depth + 1 << "\n";
+#if TREE_DEBUG
+		cout << "Q3 Depth: " << depth + 1 << "\n";
 		cout << "PU: {";
 		for( int i = 0; i < 9; i++ ) {
 			cout << Children[3]->PU[i] << ",";
@@ -371,7 +377,8 @@ void QuadNode::SubDivide()
 		for( int i = 0; i < 9; i++ ) {
 			cout << Children[3]->PV[i] << ",";
 		}
-		cout << "}\n";*/
+		cout << "}\n";
+#endif
 
 		if (Children[3]->depth < MAX_TREE_DEPTH)
 		Children[3]->SubDivide();
@@ -404,24 +411,25 @@ UVKeyQuadTree::UVKeyQuadTree(set<UVKey, UVKeyComp> *keys)
 	root->keys = keys;
 	root->PU[0] = 0;
 	root->PV[0] = 0;
-	root->PU[1] = pow(2, MAX_TREE_DEPTH + 2);
+	root->PU[1] = pow(2, MAX_TREE_DEPTH + 1);
 	root->PV[1] = 0;
-	root->PU[2] = pow(2, MAX_TREE_DEPTH + 2);
-	root->PV[2] = pow(2, MAX_TREE_DEPTH + 2);
+	root->PU[2] = pow(2, MAX_TREE_DEPTH + 1);
+	root->PV[2] = pow(2, MAX_TREE_DEPTH + 1);
 	root->PU[3] = 0;
-	root->PV[3] = pow(2, MAX_TREE_DEPTH + 2);
-	root->PU[4] = pow(2, MAX_TREE_DEPTH + 2)/2;
-	root->PV[4] = pow(2, MAX_TREE_DEPTH + 2)/2;
-	root->PU[5] = pow(2, MAX_TREE_DEPTH + 2)/4;
-	root->PV[5] = pow(2, MAX_TREE_DEPTH + 2)/4;
-	root->PU[6] = pow(2, MAX_TREE_DEPTH + 2)/4;
-	root->PV[6] = 3*pow(2, MAX_TREE_DEPTH + 2)/4;
-	root->PU[7] = 3*pow(2, MAX_TREE_DEPTH + 2)/4;
-	root->PV[7] = pow(2, MAX_TREE_DEPTH + 2)/4;
-	root->PU[8] = 3*pow(2, MAX_TREE_DEPTH + 2)/4; 
-	root->PV[8] = 3*pow(2, MAX_TREE_DEPTH + 2)/4;
+	root->PV[3] = pow(2, MAX_TREE_DEPTH + 1);
+	root->PU[4] = pow(2, MAX_TREE_DEPTH + 1)/2;
+	root->PV[4] = pow(2, MAX_TREE_DEPTH + 1)/2;
+	root->PU[5] = pow(2, MAX_TREE_DEPTH + 1)/4;
+	root->PV[5] = pow(2, MAX_TREE_DEPTH + 1)/4;
+	root->PU[6] = pow(2, MAX_TREE_DEPTH + 1)/4;
+	root->PV[6] = 3*pow(2, MAX_TREE_DEPTH + 1)/4;
+	root->PU[7] = 3*pow(2, MAX_TREE_DEPTH + 1)/4;
+	root->PV[7] = pow(2, MAX_TREE_DEPTH + 1)/4;
+	root->PU[8] = 3*pow(2, MAX_TREE_DEPTH + 1)/4; 
+	root->PV[8] = 3*pow(2, MAX_TREE_DEPTH + 1)/4;
 	for( int i = 0; i < 9; i++ ) {
 		counting++;
+		cout << root->PU[i] << "," << root->PV[i] << "\n";
 		ints_to_key(&keynum, root->PU[i], root->PV[i]);
 		item = keys->find(keynum);
 		if(item == keys->end()) {
@@ -435,7 +443,7 @@ UVKeyQuadTree::UVKeyQuadTree(set<UVKey, UVKeyComp> *keys)
 int main()
 {
 	int matsize;
-	matsize = pow(2, MAX_TREE_DEPTH + 2) + 1;
+	matsize = pow(2, MAX_TREE_DEPTH + 1) + 1;
 	vector<vector<int> > matitems ( matsize , vector<int> ( matsize ) );
 	int k = 0;
 
@@ -447,9 +455,9 @@ int main()
 			matitems[i][j] = k++;
 	}
 
-	for ( int i = 0; i < matsize; i++ ) {
+	for ( int i = matsize - 1; i >= 0; i-- ) {
 		for ( int j = 0; j < matsize; j++ )
-			cout<< setw ( 3 ) << i << j <<' ';
+			cout<< setw ( MAX_TREE_DEPTH ) << setfill( '0' ) << j << "," << setw ( MAX_TREE_DEPTH ) << setfill( '0' ) << i <<' ';
 		cout<<'\n';
 	}
 	cout<<'\n';

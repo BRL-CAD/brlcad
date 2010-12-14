@@ -148,45 +148,43 @@ elapsed ( ) {
 ####################
 
 # process the argument list for commands
-for arg in $ARGS ; do
+while test $# -gt 0 ; do
+    arg="$1"
     case "x$arg" in
 	x*[hH])
 	    HELP=1
-	    shift
 	    ;;
 	x*[hH][eE][lL][pP])
 	    HELP=1
-	    shift
 	    ;;
 	x*[iI][nN][sS][tT][rR][uU][cC][tT]*)
 	    INSTRUCTIONS=1
-	    shift
 	    ;;
 	x*[qQ][uU][iI][eE][tT])
 	    QUIET=1
-	    shift
 	    ;;
 	x*[vV][eE][rR][bB][oO][sS][eE])
 	    VERBOSE=1
-	    shift
 	    ;;
 	x*=*)
 	    VAR=`echo $arg | sed 's/=.*//g' | sed 's/^[-]*//g'`
 	    if test ! "x$VAR" = "x" ; then
 		VAL=`echo $arg | sed 's/.*=//g'`
-		CMD="$VAR=$VAL"
+		CMD="$VAR=\"$VAL\""
 		eval $CMD
 		export $VAR
 	    fi
-	    shift
 	    ;;
 	x*)
+	    echo "Ignoring unrecognized option [$arg]"
 	    ;;
     esac
+    shift
 done
 
 # validate and clean up options (all default to 0)
 booleanize HELP INSTRUCTIONS VERBOSE
+
 
 ###
 # handle instructions before main processing
@@ -230,10 +228,11 @@ mged (specified by the GED option) being used for conversions.
 The OBJECTS option allows you to specify which objects you want to
 convert.  Any of the parameters recognized by the GED 'search' command
 can be used.  See the 'search' manual page for details on all
-available parameters.  For example, to only convert regions:
-OBJECTS="-type regions" ; to only convert top-level objects:
-OBJECTS="-depth=0" ; to convert everything at or below the region
-level: OBJECTS="-below -type regions -or -type regions"
+available parameters.  Examples:
+
+OBJECTS="-type region"  # only convert regions
+OBJECTS="-not -type comb"  # only convert primitives
+OBJECTS="-depth=0"  # only convert top-level objects
 
 The MAXTIME option specifies how many seconds are allowed to elapse
 before the conversion is aborted.  Some conversions can take days or
@@ -263,10 +262,26 @@ if test "x$HELP" = "x1" ; then
     echo "  verbose"
     echo ""
     echo "Available options:"
-    echo "  GED=/path/to/geometry/editor (default mged)"
-    echo "  SEARCH=/path/to/new/editor (default mged)"
-    echo "  OBJECTS=params (default "" for all objects)"
-    echo "  MAXTIME=#seconds (default 300)"
+    if test "x$GED" = "x" ; then
+	echo "  GED=/path/to/mged (default mged)"
+    else
+	echo "  GED=/path/to/mged (using $GED)"
+    fi
+    if test "x$SEARCH" = "x" ; then
+	echo "  SEARCH=/path/to/search-enabled/mged (default mged)"
+    else
+	echo "  SEARCH=/path/to/search-enabled/mged (using $SEARCH)"
+    fi
+    if test "x$OBJECTS" = "x" ; then
+	echo "  OBJECTS=\"search params\" (default \"\" for all objects)"
+    else
+	echo "  OBJECTS=\"search params\" (using \"$OBJECTS\")"
+    fi
+    if test "x$MAXTIME" = "x" ; then
+	echo "  MAXTIME=#seconds (default 300)"
+    else
+	echo "  MAXTIME=#seconds (using $MAXTIME)"
+    fi
     echo ""
     echo "BRL-CAD is a powerful cross-platform open source solid modeling system."
     echo "For more information about BRL-CAD, see http://brlcad.org"
