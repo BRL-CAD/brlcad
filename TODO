@@ -514,6 +514,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * implement -param support for 'search' command
 
+* make "search ." return object lists (no leading "/") but still
+  process hierarchically so things like "search . -maxdepth 0" return
+  a list of the top-level objects.  The "." implies returning only
+  unique names (i.e., a list).
+
 * make ged command names aware of object arguments for automatic
   globbing and regular expression expansion:
 	attr set t 1 [regex .*\.r]
