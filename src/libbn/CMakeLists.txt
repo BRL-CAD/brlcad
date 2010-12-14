@@ -46,4 +46,4 @@ SET_TARGET_PROPERTIES(libbn PROPERTIES VERSION 19.0.1 SOVERSION 19)
 install(FILES libplot3.3 DESTINATION ${MAN_DIR}/man3)
 
 add_executable(bntester bntester.c)
-target_link_libraries(bntester libbu)
+target_link_libraries(bntester libbu libbn)
