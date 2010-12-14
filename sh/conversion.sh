@@ -228,10 +228,11 @@ mged (specified by the GED option) being used for conversions.
 The OBJECTS option allows you to specify which objects you want to
 convert.  Any of the parameters recognized by the GED 'search' command
 can be used.  See the 'search' manual page for details on all
-available parameters.  For example, to only convert regions:
-OBJECTS="-type regions" ; to only convert top-level objects:
-OBJECTS="-depth=0" ; to convert everything at or below the region
-level: OBJECTS="-below -type regions -or -type regions"
+available parameters.  Examples:
+
+OBJECTS="-type region"  # only convert regions
+OBJECTS="-not -type comb"  # only convert primitives
+OBJECTS="-depth=0"  # only convert top-level objects
 
 The MAXTIME option specifies how many seconds are allowed to elapse
 before the conversion is aborted.  Some conversions can take days or
