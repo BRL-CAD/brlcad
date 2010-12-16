@@ -1264,6 +1264,18 @@ SetHelpMenu(
      TkMenu *menuPtr)		/* The menu we are checking */
 {
     TkMenuEntry *cascadeEntryPtr;
+    int useMotifHelp = 0;
+    const char *option = NULL;
+    if (menuPtr->tkwin) {
+	option = Tk_GetOption(menuPtr->tkwin, "useMotifHelp", "UseMotifHelp");
+	if (option != NULL) {
+	    Tcl_GetBoolean(NULL, option, &useMotifHelp);
+	}
+    }
+
+    if (!useMotifHelp) {
+	return;
+    }
 
     for (cascadeEntryPtr = menuPtr->menuRefPtr->parentEntryPtr;
 	    cascadeEntryPtr != NULL;

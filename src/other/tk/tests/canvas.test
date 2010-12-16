@@ -367,6 +367,15 @@ test canvas-10.12 {multple events bound to same tag expr} -setup {
     .c bind {a && b} <Enter> {puts Enter}
     .c bind {a && b} <Leave> {puts Leave}
 } -result {}
+test canvas-10.13 {more long tag searches; Bug 2931374} -setup {
+    catch {destroy .c}
+    canvas .c
+} -body {
+    .c find withtag {(A&&B&&C&&D)&&area&&!text}
+    # memory errors on failure
+} -cleanup {
+    destroy .c
+} -result {}
 
 test canvas-11.1 {canvas poly fill check, bug 5783} -setup {
     destroy .c

@@ -90,6 +90,11 @@ the data is to be returned and should be an atom name such as STRING
 or FILE_NAME.  \fIType\fR defaults to STRING.  This command is
 equivalent to
 .QW "\fBselection get \-selection CLIPBOARD\fR" .
+.RS
+.PP
+Note that on modern X11 systems, the most useful type to retrieve for
+transferred strings is not \fBSTRING\fR, but rather \fBUTF8_STRING\fR.
+.RE
 .SH EXAMPLES
 Get the current contents of the clipboard.
 .CS

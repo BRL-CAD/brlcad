@@ -39,9 +39,7 @@ proc ::tk::panedwindow::MarkSash {w x y proxy} {
     if {[$w cget -opaqueresize]} {
 	set proxy 0
     }
-    if {[catch {$w identify $x $y} what]} {
-       return
-    }
+    set what [$w identify $x $y]
     if { [llength $what] == 2 } {
 	lassign $what index which
 	if {!$::tk_strictMotif || $which eq "handle"} {
@@ -125,9 +123,7 @@ proc ::tk::panedwindow::ReleaseSash {w proxy} {
 #
 proc ::tk::panedwindow::Motion {w x y} {
     variable ::tk::Priv
-    if {[catch {$w identify $x $y} id]} {
-	return
-    }
+    set id [$w identify $x $y]
     if {([llength $id] == 2) && \
 	    (!$::tk_strictMotif || [lindex $id 1] eq "handle")} {
 	if {![info exists Priv($w,panecursor)]} {

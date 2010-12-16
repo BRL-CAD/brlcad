@@ -535,6 +535,6 @@ a selection.
 The behavior of listboxes can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 .SH "SEE ALSO"
-ttk_listbox(n)
+ttk_treeview(n)
 .SH KEYWORDS
 listbox, widget
