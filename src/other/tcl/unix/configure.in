@@ -6,7 +6,7 @@ dnl	to configure the system for the local environment.
 # RCS: @(#) $Id$
 
 AC_INIT([tcl],[8.5])
-AC_PREREQ(2.52)
+AC_PREREQ(2.59)
 
 dnl This is only used when included from macosx/configure.ac
 m4_ifdef([SC_USE_CONFIG_HEADERS], [
@@ -27,7 +27,7 @@ m4_ifdef([SC_USE_CONFIG_HEADERS], [
 TCL_VERSION=8.5
 TCL_MAJOR_VERSION=8
 TCL_MINOR_VERSION=5
-TCL_PATCH_LEVEL=".8"
+TCL_PATCH_LEVEL=".9"
 VERSION=${TCL_VERSION}
 
 #------------------------------------------------------------------------
@@ -244,11 +244,13 @@ fi
 SC_TIME_HANDLER
 
 #--------------------------------------------------------------------
-#	Some systems (e.g., IRIX 4.0.5) lack the st_blksize field
-#	in struct stat.  But we might be able to use fstatfs instead.
+#	Some systems (e.g., IRIX 4.0.5) lack some fields in struct stat. But
+#	we might be able to use fstatfs instead. Some systems (OpenBSD?) also
+#	lack blkcnt_t.
 #--------------------------------------------------------------------
 
-AC_STRUCT_ST_BLKSIZE
+AC_CHECK_MEMBERS([struct stat.st_blocks, struct stat.st_blksize])
+AC_CHECK_TYPES([blkcnt_t])
 AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS, 1, [Do we have fstatfs()?])])
 
 #--------------------------------------------------------------------
@@ -755,9 +757,6 @@ if test "`uname -s`" = "Darwin" ; then
     TCL_YEAR="`date +%Y`"
 fi
 
-EXTRA_INSTALL_BINARIES=":"
-EXTRA_BUILD_HTML=":"
-
 if test "$FRAMEWORK_BUILD" = "1" ; then
     AC_DEFINE(TCL_FRAMEWORK, 1, [Is Tcl built as a framework?])
     # Construct a fake local framework structure to make linking with
@@ -796,31 +795,17 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
 else
     # libdir must be a fully qualified path and not ${exec_prefix}/lib
     eval libdir="$libdir"
-    if test "$SHARED_BUILD" = "0" || test "$TCL_NEEDS_EXP_FILE" = "0"; then
-        if test "${TCL_LIB_VERSIONS_OK}" = "ok"; then
-            TCL_LIB_FLAG="-ltcl${TCL_VERSION}"
-        else
-            TCL_LIB_FLAG="-ltcl`echo ${TCL_VERSION} | tr -d .`"
-        fi
-        TCL_BUILD_LIB_SPEC="-L`pwd | sed -e 's/ /\\\\ /g'` ${TCL_LIB_FLAG}"
-        TCL_LIB_SPEC="-L${libdir} ${TCL_LIB_FLAG}"
+    if test "${TCL_LIB_VERSIONS_OK}" = "ok"; then
+        TCL_LIB_FLAG="-ltcl${TCL_VERSION}"
     else
-        TCL_BUILD_EXP_FILE="lib.exp"
-        eval "TCL_EXP_FILE=libtcl${TCL_EXPORT_FILE_SUFFIX}"
-    
-        if test "$GCC" = "yes" ; then
-            TCL_BUILD_LIB_SPEC="-Wl,-bI:`pwd | sed -e 's/ /\\\\ /g'`/${TCL_BUILD_EXP_FILE} -L`pwd | sed -e 's/ /\\\\ /g'`"
-            TCL_LIB_SPEC="-Wl,-bI:${libdir}/${TCL_EXP_FILE} -L${libdir}"
-        else
-            TCL_BUILD_LIB_SPEC="-bI:`pwd | sed -e 's/ /\\\\ /g'`/${TCL_BUILD_EXP_FILE}"
-            TCL_LIB_SPEC="-bI:${libdir}/${TCL_EXP_FILE}"
-        fi
+        TCL_LIB_FLAG="-ltcl`echo ${TCL_VERSION} | tr -d .`"
     fi
+    TCL_BUILD_LIB_SPEC="-L`pwd | sed -e 's/ /\\\\ /g'` ${TCL_LIB_FLAG}"
+    TCL_LIB_SPEC="-L${libdir} ${TCL_LIB_FLAG}"
 fi
 VERSION='${VERSION}'
 eval "CFG_TCL_SHARED_LIB_SUFFIX=${TCL_SHARED_LIB_SUFFIX}"
 eval "CFG_TCL_UNSHARED_LIB_SUFFIX=${TCL_UNSHARED_LIB_SUFFIX}"
-eval "CFG_TCL_EXPORT_FILE_SUFFIX=${TCL_EXPORT_FILE_SUFFIX}"
 VERSION=${TCL_VERSION}
 
 #--------------------------------------------------------------------
@@ -893,15 +878,11 @@ AC_SUBST(TCL_BUILD_STUB_LIB_PATH)
 AC_SUBST(TCL_SRC_DIR)
 AC_SUBST(CFG_TCL_SHARED_LIB_SUFFIX)
 AC_SUBST(CFG_TCL_UNSHARED_LIB_SUFFIX)
-AC_SUBST(CFG_TCL_EXPORT_FILE_SUFFIX)
 
 AC_SUBST(TCL_SHARED_BUILD)
 AC_SUBST(LD_LIBRARY_PATH_VAR)
 
 AC_SUBST(TCL_BUILD_LIB_SPEC)
-AC_SUBST(TCL_NEEDS_EXP_FILE)
-AC_SUBST(TCL_BUILD_EXP_FILE)
-AC_SUBST(TCL_EXP_FILE)
 
 AC_SUBST(TCL_LIB_VERSIONS_OK)
 AC_SUBST(TCL_SHARED_LIB_SUFFIX)

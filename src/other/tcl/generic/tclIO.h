@@ -43,7 +43,7 @@ typedef struct CopyState {
     int readFlags;		/* Original read channel flags. */
     int writeFlags;		/* Original write channel flags. */
     int toRead;			/* Number of bytes to copy, or -1. */
-    int total;			/* Total bytes transferred (written). */
+    Tcl_WideInt total;		/* Total bytes transferred (written). */
     Tcl_Interp *interp;		/* Interp that started the copy. */
     Tcl_Obj *cmdPtr;		/* Command to be invoked at completion. */
     int bufSize;		/* Size of appended buffer. */

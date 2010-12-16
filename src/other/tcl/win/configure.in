@@ -6,7 +6,7 @@
 # RCS: @(#) $Id$
 
 AC_INIT(../generic/tcl.h)
-AC_PREREQ(2.52)
+AC_PREREQ(2.59)
 
 # The following define is needed when building with Cygwin since newer
 # versions of autoconf incorrectly set SHELL to /bin/bash instead of
@@ -16,7 +16,7 @@ SHELL=/bin/sh
 TCL_VERSION=8.5
 TCL_MAJOR_VERSION=8
 TCL_MINOR_VERSION=5
-TCL_PATCH_LEVEL=".8"
+TCL_PATCH_LEVEL=".9"
 VER=$TCL_MAJOR_VERSION$TCL_MINOR_VERSION
 
 TCL_DDE_VERSION=1.3
@@ -353,6 +353,12 @@ SC_CONFIG_CFLAGS
 SC_ENABLE_SYMBOLS
 
 TCL_DBGX=${DBGX}
+
+#--------------------------------------------------------------------
+# Embed the manifest if we can determine how
+#--------------------------------------------------------------------
+
+SC_EMBED_MANIFEST
 
 #------------------------------------------------------------------------
 # tclConfig.sh refers to this by a different name

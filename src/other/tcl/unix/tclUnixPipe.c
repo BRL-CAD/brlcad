@@ -25,8 +25,8 @@
  * the same as NULL.
  */
 
-#define MakeFile(fd)	((TclFile)INT2PTR(((int)(fd))+1))
-#define GetFd(file)	(PTR2INT(file)-1)
+#define MakeFile(fd)	((TclFile) INT2PTR(((int) (fd)) + 1))
+#define GetFd(file)	(PTR2INT(file) - 1)
 
 /*
  * This structure describes per-instance state of a pipe based channel.
@@ -85,7 +85,7 @@ static Tcl_ChannelType pipeChannelType = {
     NULL,			/* handler proc. */
     NULL,			/* wide seek proc */
     NULL,			/* thread action proc */
-    NULL,                       /* truncation */
+    NULL			/* truncation */
 };
 
 /*
@@ -436,6 +436,7 @@ TclpCreateProcess(
      * might corrupt the parent: so ensure standard channels are initialized in
      * the parent, otherwise SetupStdFile() might initialize them in the child.
      */
+
     if (!inputFile) {
 	Tcl_GetStdChannel(TCL_STDIN);
     }
@@ -446,8 +447,10 @@ TclpCreateProcess(
         Tcl_GetStdChannel(TCL_STDERR);
     }
 #endif
+
     pid = fork();
     if (pid == 0) {
+	size_t len;
 	int joinThisError = errorFile && (errorFile == outputFile);
 
 	fd = GetFd(errPipeOut);
@@ -463,7 +466,10 @@ TclpCreateProcess(
 			((dup2(1,2) == -1) || (fcntl(2, F_SETFD, 0) != 0)))) {
 	    sprintf(errSpace,
 		    "%dforked process couldn't set up input/output: ", errno);
-	    (void)write(fd, errSpace, (size_t) strlen(errSpace));
+	    len = strlen(errSpace);
+	    if (len != (size_t) write(fd, errSpace, len)) {
+		    Tcl_Panic("TclpCreateProcess: unable to write to errPipeOut");
+	    }
 	    _exit(1);
 	}
 
@@ -474,7 +480,10 @@ TclpCreateProcess(
 	RestoreSignals();
 	execvp(newArgv[0], newArgv);			/* INTL: Native. */
 	sprintf(errSpace, "%dcouldn't execute \"%.150s\": ", errno, argv[0]);
-	(void)write(fd, errSpace, (size_t) strlen(errSpace));
+	len = strlen(errSpace);
+    if (len != (size_t) write(fd, errSpace, len)) {
+	    Tcl_Panic("TclpCreateProcess: unable to write to errPipeOut");
+    }
 	_exit(1);
     }
 
@@ -1148,9 +1157,8 @@ Tcl_WaitPid(
     int options)
 {
     int result;
-    pid_t real_pid;
+    pid_t real_pid = (pid_t) PTR2INT(pid);
 
-    real_pid = (pid_t) PTR2INT(pid);
     while (1) {
 	result = (int) waitpid(real_pid, statPtr, options);
 	if ((result != -1) || (errno != EINTR)) {
@@ -1188,9 +1196,13 @@ Tcl_PidObjCmd(
 	Tcl_WrongNumArgs(interp, 1, objv, "?channelId?");
 	return TCL_ERROR;
     }
+
     if (objc == 1) {
 	Tcl_SetObjResult(interp, Tcl_NewLongObj((long) getpid()));
     } else {
+	/*
+	 * Get the channel and make sure that it refers to a pipe.
+	 */
 	Tcl_Channel chan;
 	const Tcl_ChannelType *chanTypePtr;
 	PipeState *pipePtr;
@@ -1205,6 +1217,11 @@ Tcl_PidObjCmd(
 	if (chanTypePtr != &pipeChannelType) {
 	    return TCL_OK;
 	}
+
+	/*
+	 * Extract the process IDs from the pipe structure.
+	 */
+
 	pipePtr = (PipeState *) Tcl_GetChannelInstanceData(chan);
 	resultPtr = Tcl_NewObj();
 	for (i = 0; i < pipePtr->numPids; i++) {

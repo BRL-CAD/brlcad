@@ -1128,7 +1128,7 @@ Tcl_OpenObjCmd(
 		break;
 	    }
 	    chan = Tcl_OpenCommandChannel(interp, cmdObjc, cmdArgv, flags);
-	    if (binary) {
+	    if (binary && chan) {
 		Tcl_SetChannelOption(interp, chan, "-translation", "binary");
 	    }
 	}

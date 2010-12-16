@@ -380,6 +380,9 @@ test iocmd-11.2 {I/O to command pipelines} {unixOrPc unixExecs} {
 test iocmd-11.3 {I/O to command pipelines} {unixOrPc unixExecs} {
     list [catch {open "| echo > \"$path(test5)\"" r+} msg] $msg $::errorCode
 } {1 {can't read output from command: standard output was redirected} NONE}
+test iocmd-11.4 {I/O to command pipelines} unixOrPc {
+    list [catch {open "| no_such_command_exists" rb} msg] $msg $::errorCode
+} {1 {couldn't execute "no_such_command_exists": no such file or directory} {POSIX ENOENT {no such file or directory}}}
 
 test iocmd-12.1 {POSIX open access modes: RDONLY} {
     file delete $path(test1)
@@ -1152,6 +1155,40 @@ test iocmd-24.13 {chan write, failed write, level is ignored} -match glob -body 
     rename foo {}
     set res
 } -result {{write rc* snarfsnarfsnarf} 1 *bad code* {-code 1 -level 0 -errorcode NONE -errorline 1 -errorinfo *bad code*subcommand "write"*}}
+test iocmd-24.14 {chan write, no EAGAIN means that writing is allowed at this time, bug 2936225} -match glob -setup {
+    set res {}
+    proc foo {args} {
+	oninit; onfinal; track
+	return 3
+    }
+    set c [chan create {r w} foo]
+} -body {
+    note [puts -nonewline $c ABC ; flush $c]
+    set res
+} -cleanup {
+    close $c
+    rename foo {}
+    unset res
+} -result {{write rc* ABC} {}}
+test iocmd-24.15 {chan write, EAGAIN means that writing is not allowed at this time, bug 2936225} -match glob -setup {
+    set res {}
+    proc foo {args} {
+	oninit; onfinal; track
+	# Note: The EAGAIN signals that the channel cannot accept
+	# write requests right now, this in turn causes the IO core to
+	# request the generation of writable events (see expected
+	# result below, and compare to case 24.14 above).
+	error EAGAIN
+    }
+    set c [chan create {r w} foo]
+} -body {
+    note [puts -nonewline $c ABC ; flush $c]
+    set res
+} -cleanup {
+    close $c
+    rename foo {}
+    unset res
+} -result {{write rc* ABC} {watch rc* write} {}}
 
 # --- === *** ###########################
 # method cgetall
@@ -1933,6 +1970,19 @@ test iocmd-32.1 {origin interpreter of moved channel destroyed during access} -m
 } -constraints {testchannel impossible} \
     -result {Owner lost}
 
+test iocmd-32.2 {delete interp of reflected chan} {
+    # Bug 3034840
+    # Run this test in an interp with memory debugging to panic
+    # on the double free
+    interp create slave
+    slave eval {
+	proc no-op args {}
+	proc driver {sub args} {return {initialize finalize watch read}}
+	chan event [chan create read driver] readable no-op
+    }
+    interp delete slave
+} {}
+
 # ### ### ### ######### ######### #########
 ## Same tests as above, but exercising the code forwarding and
 ## receiving driver operations to the originator thread.
@@ -2468,6 +2518,48 @@ test iocmd.tf-24.13 {chan write, failed write, level is ignored} -match glob -bo
     rename foo {}
     set res
 } -result {{write rc* snarfsnarfsnarf} 1 *bad code* {-code 1 -level 0 -errorcode NONE -errorline 1 -errorinfo *bad code*subcommand "write"*}} \
+    -constraints {testchannel testthread}
+test iocmd.tf-24.14 {chan write, no EAGAIN means that writing is allowed at this time, bug 2936225} -match glob -setup {
+    set res {}
+    proc foo {args} {
+	oninit; onfinal; track
+	return 3
+    }
+    set c [chan create {r w} foo]
+} -body {
+    notes [inthread $c {
+	note [puts -nonewline $c ABC ; flush $c]
+	close $c
+	notes
+    } c]
+    set res
+} -cleanup {
+    rename foo {}
+    unset res
+} -result {{write rc* ABC} {}} \
+    -constraints {testchannel testthread}
+test iocmd.tf-24.15 {chan write, EAGAIN means that writing is not allowed at this time, bug 2936225} -match glob -setup {
+    set res {}
+    proc foo {args} {
+	oninit; onfinal; track
+	# Note: The EAGAIN signals that the channel cannot accept
+	# write requests right now, this in turn causes the IO core to
+	# request the generation of writable events (see expected
+	# result below, and compare to case 24.14 above).
+	error EAGAIN
+    }
+    set c [chan create {r w} foo]
+} -body {
+    notes [inthread $c {
+	note [puts -nonewline $c ABC ; flush $c]
+	close $c
+	notes
+    } c]
+    set res
+} -cleanup {
+    rename foo {}
+    unset res
+} -result {{write rc* ABC} {watch rc* write} {}} \
     -constraints {testchannel testthread}
 
 # --- === *** ###########################

@@ -1348,6 +1348,20 @@ test filename-14.30 {Bug 2710920} {unixOrPc} {
     file rootname [lindex [lsort [glob globTest/*/]] 0]
 } globTest/a1/
 
+test filename-14.31 {Bug 2918610} -setup {
+    set d [makeDirectory foo]
+    makeFile {} bar.soom $d
+} -body {
+    foreach fn [glob $d/bar.soom] {
+	set root [file rootname $fn]
+	close [open $root {WRONLY CREAT}]
+    }
+    llength [glob -directory $d *]
+} -cleanup {
+    file delete -force $d/bar
+    removeFile bar.soom $d
+    removeDirectory foo
+} -result 2
 
 unset globname
 

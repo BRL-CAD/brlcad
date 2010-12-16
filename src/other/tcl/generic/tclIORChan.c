@@ -586,6 +586,7 @@ TclChanCreateObjCmd(
      */
 
     modeObj = DecodeEventMask(mode);
+    /* assert modeObj.refCount == 1 */
     result = InvokeTclMethod(rcPtr, "initialize", modeObj, NULL, &resObj);
     Tcl_DecrRefCount(modeObj);
     if (result != TCL_OK) {
@@ -1082,7 +1083,7 @@ ReflectClose(
 	}
 #endif
 
-	FreeReflectedChannel(rcPtr);
+        Tcl_EventuallyFree (rcPtr, (Tcl_FreeProc *) FreeReflectedChannel);
 	return EOK;
     }
 
@@ -1094,7 +1095,7 @@ ReflectClose(
      */
 
     if (rcPtr->methods == 0) {
-	FreeReflectedChannel(rcPtr);
+        Tcl_EventuallyFree (rcPtr, (Tcl_FreeProc *) FreeReflectedChannel);
 	return EOK;
     }
 
@@ -1157,7 +1158,7 @@ ReflectClose(
 	}
 #endif
 
-	FreeReflectedChannel(rcPtr);
+        Tcl_EventuallyFree (rcPtr, (Tcl_FreeProc *) FreeReflectedChannel);
 #ifdef TCL_THREADS
     }
 #endif
@@ -1238,29 +1239,28 @@ ReflectInput(
     /* ASSERT: rcPtr->method & FLAG(METH_READ) */
     /* ASSERT: rcPtr->mode & TCL_READABLE */
 
+    Tcl_Preserve(rcPtr);
+
     toReadObj = Tcl_NewIntObj(toRead);
+    Tcl_IncrRefCount(toReadObj);
+
     if (InvokeTclMethod(rcPtr, "read", toReadObj, NULL, &resObj)!=TCL_OK) {
 	int code = ErrnoReturn (rcPtr, resObj);
 
 	if (code < 0) {
-	    Tcl_DecrRefCount(resObj);	/* Remove reference held from invoke */
 	    *errorCodePtr = -code;
-	    return -1;
+            goto error;
 	}
 
 	Tcl_SetChannelError(rcPtr->chan, resObj);
-	Tcl_DecrRefCount(resObj);	/* Remove reference held from invoke */
-	*errorCodePtr = EINVAL;
-	return -1;
+        goto invalid;
     }
 
     bytev = Tcl_GetByteArrayFromObj(resObj, &bytec);
 
     if (toRead < bytec) {
-	Tcl_DecrRefCount(resObj);	/* Remove reference held from invoke */
 	SetChannelErrorStr(rcPtr->chan, msg_read_toomuch);
-	*errorCodePtr = EINVAL;
-	return -1;
+        goto invalid;
     }
 
     *errorCodePtr = EOK;
@@ -1269,8 +1269,16 @@ ReflectInput(
 	memcpy(buf, bytev, (size_t)bytec);
     }
 
+ stop:
+    Tcl_DecrRefCount(toReadObj);
     Tcl_DecrRefCount(resObj);		/* Remove reference held from invoke */
+    Tcl_Release(rcPtr);
     return bytec;
+ invalid:
+    *errorCodePtr = EINVAL;
+ error:
+    bytec = -1;
+    goto stop;
 }
 
 /*
@@ -1327,8 +1335,13 @@ ReflectOutput(
 	ForwardOpToOwnerThread(rcPtr, ForwardedOutput, &p);
 
 	if (p.base.code != TCL_OK) {
-	    PassReceivedError(rcPtr->chan, &p);
-	    *errorCodePtr = EINVAL;
+	    if (p.base.code < 0) {
+		/* No error message, this is an errno signal. */
+		*errorCodePtr = -p.base.code;
+	    } else {
+                PassReceivedError(rcPtr->chan, &p);
+                *errorCodePtr = EINVAL;
+            }
 	    p.output.toWrite = -1;
 	} else {
 	    *errorCodePtr = EOK;
@@ -1341,22 +1354,27 @@ ReflectOutput(
     /* ASSERT: rcPtr->method & FLAG(METH_WRITE) */
     /* ASSERT: rcPtr->mode & TCL_WRITABLE */
 
+    Tcl_Preserve(rcPtr);
+
     bufObj = Tcl_NewByteArrayObj((unsigned char *) buf, toWrite);
+    Tcl_IncrRefCount(bufObj);
+
     if (InvokeTclMethod(rcPtr, "write", bufObj, NULL, &resObj) != TCL_OK) {
+	int code = ErrnoReturn(rcPtr, resObj);
+
+	if (code < 0) {
+	    *errorCodePtr = -code;
+            goto error;
+	}
+
 	Tcl_SetChannelError(rcPtr->chan, resObj);
-	Tcl_DecrRefCount(resObj);	/* Remove reference held from invoke */
-	*errorCodePtr = EINVAL;
-	return -1;
+        goto invalid;
     }
 
     if (Tcl_GetIntFromObj(rcPtr->interp, resObj, &written) != TCL_OK) {
-	Tcl_DecrRefCount(resObj);	/* Remove reference held from invoke */
 	Tcl_SetChannelError(rcPtr->chan, MarshallError(rcPtr->interp));
-	*errorCodePtr = EINVAL;
-	return -1;
+        goto invalid;
     }
-
-    Tcl_DecrRefCount(resObj);		/* Remove reference held from invoke */
 
     if ((written == 0) && (toWrite > 0)) {
 	/*
@@ -1365,8 +1383,7 @@ ReflectOutput(
 	 */
 
 	SetChannelErrorStr(rcPtr->chan, msg_write_nothing);
-	*errorCodePtr = EINVAL;
-	return -1;
+        goto invalid;
     }
     if (toWrite < written) {
 	/*
@@ -1376,12 +1393,20 @@ ReflectOutput(
 	 */
 
 	SetChannelErrorStr(rcPtr->chan, msg_write_toomuch);
-	*errorCodePtr = EINVAL;
-	return -1;
+        goto invalid;
     }
 
     *errorCodePtr = EOK;
+ stop:
+    Tcl_DecrRefCount(bufObj);
+    Tcl_DecrRefCount(resObj);		/* Remove reference held from invoke */
+    Tcl_Release(rcPtr);
     return written;
+ invalid:
+    *errorCodePtr = EINVAL;
+ error:
+    written = -1;
+    goto stop;
 }
 
 /*
@@ -1439,33 +1464,40 @@ ReflectSeekWide(
 
     /* ASSERT: rcPtr->method & FLAG(METH_SEEK) */
 
+    Tcl_Preserve(rcPtr);
+
     offObj = Tcl_NewWideIntObj(offset);
     baseObj = Tcl_NewStringObj((seekMode == SEEK_SET) ? "start" :
 	    ((seekMode == SEEK_CUR) ? "current" : "end"), -1);
+    Tcl_IncrRefCount(offObj);
+    Tcl_IncrRefCount(baseObj);
+
     if (InvokeTclMethod(rcPtr, "seek", offObj, baseObj, &resObj)!=TCL_OK) {
 	Tcl_SetChannelError(rcPtr->chan, resObj);
-	Tcl_DecrRefCount(resObj);	/* Remove reference held from invoke */
-	*errorCodePtr = EINVAL;
-	return -1;
+        goto invalid;
     }
 
     if (Tcl_GetWideIntFromObj(rcPtr->interp, resObj, &newLoc) != TCL_OK) {
-	Tcl_DecrRefCount(resObj);	/* Remove reference held from invoke */
 	Tcl_SetChannelError(rcPtr->chan, MarshallError(rcPtr->interp));
-	*errorCodePtr = EINVAL;
-	return -1;
+        goto invalid;
     }
-
-    Tcl_DecrRefCount(resObj);		/* Remove reference held from invoke */
 
     if (newLoc < Tcl_LongAsWide(0)) {
 	SetChannelErrorStr(rcPtr->chan, msg_seek_beforestart);
-	*errorCodePtr = EINVAL;
-	return -1;
+        goto invalid;
     }
 
     *errorCodePtr = EOK;
+ stop:
+    Tcl_DecrRefCount(offObj);
+    Tcl_DecrRefCount(baseObj);
+    Tcl_DecrRefCount(resObj);		/* Remove reference held from invoke */
+    Tcl_Release(rcPtr);
     return newLoc;
+ invalid:
+    *errorCodePtr = EINVAL;
+    newLoc = -1;
+    goto stop;
 }
 
 static int
@@ -1551,9 +1583,14 @@ ReflectWatch(
     }
 #endif
 
+    Tcl_Preserve(rcPtr);
+
     maskObj = DecodeEventMask(mask);
+    /* assert maskObj.refCount == 1 */
     (void) InvokeTclMethod(rcPtr, "watch", maskObj, NULL, NULL);
     Tcl_DecrRefCount(maskObj);
+
+    Tcl_Release(rcPtr);
 }
 
 /*
@@ -1605,6 +1642,9 @@ ReflectBlock(
 #endif
 
     blockObj = Tcl_NewBooleanObj(!nonblocking);
+    Tcl_IncrRefCount(blockObj);
+
+    Tcl_Preserve(rcPtr);
 
     if (InvokeTclMethod(rcPtr, "blocking", blockObj, NULL, &resObj) != TCL_OK) {
 	Tcl_SetChannelError(rcPtr->chan, resObj);
@@ -1613,7 +1653,10 @@ ReflectBlock(
 	errorNum = EOK;
     }
 
+    Tcl_DecrRefCount(blockObj);
     Tcl_DecrRefCount(resObj);		/* Remove reference held from invoke */
+
+    Tcl_Release(rcPtr);
     return errorNum;
 }
 
@@ -1669,15 +1712,23 @@ ReflectSetOption(
 	return p.base.code;
     }
 #endif
+    Tcl_Preserve(rcPtr);
 
     optionObj = Tcl_NewStringObj(optionName, -1);
     valueObj = Tcl_NewStringObj(newValue, -1);
+
+    Tcl_IncrRefCount(optionObj);
+    Tcl_IncrRefCount(valueObj);
+
     result = InvokeTclMethod(rcPtr, "configure",optionObj,valueObj, &resObj);
     if (result != TCL_OK) {
 	UnmarshallErrorResult(interp, resObj);
     }
 
+    Tcl_DecrRefCount(optionObj);
+    Tcl_DecrRefCount(valueObj);
     Tcl_DecrRefCount(resObj);		/* Remove reference held from invoke */
+    Tcl_Release(rcPtr);
     return result;
 }
 
@@ -1712,7 +1763,7 @@ ReflectGetOption(
     ReflectedChannel *rcPtr = (ReflectedChannel*) clientData;
     Tcl_Obj *optionObj;
     Tcl_Obj *resObj;		/* Result data for 'configure' */
-    int listc;
+    int listc, result = TCL_OK;
     Tcl_Obj **listv;
     const char *method;
 
@@ -1762,12 +1813,14 @@ ReflectGetOption(
 
 	method = "cget";
 	optionObj = Tcl_NewStringObj(optionName, -1);
+        Tcl_IncrRefCount(optionObj);
     }
+
+    Tcl_Preserve(rcPtr);
 
     if (InvokeTclMethod(rcPtr, method, optionObj, NULL, &resObj)!=TCL_OK) {
 	UnmarshallErrorResult(interp, resObj);
-	Tcl_DecrRefCount(resObj);	/* Remove reference held from invoke */
-	return TCL_ERROR;
+        goto error;
     }
 
     /*
@@ -1777,8 +1830,7 @@ ReflectGetOption(
 
     if (optionObj != NULL) {
 	Tcl_DStringAppend(dsPtr, TclGetString(resObj), -1);
-	Tcl_DecrRefCount(resObj);	/* Remove reference held from invoke */
-	return TCL_OK;
+        goto ok;
     }
 
     /*
@@ -1793,8 +1845,7 @@ ReflectGetOption(
      */
 
     if (Tcl_ListObjGetElements(interp, resObj, &listc, &listv) != TCL_OK) {
-	Tcl_DecrRefCount(resObj);	/* Remove reference held from invoke */
-	return TCL_ERROR;
+        goto error;
     }
 
     if ((listc % 2) == 1) {
@@ -1807,8 +1858,7 @@ ReflectGetOption(
 		"Expected list with even number of "
 		"elements, got %d element%s instead", listc,
 		(listc == 1 ? "" : "s")));
-	Tcl_DecrRefCount(resObj);	/* Remove reference held from invoke */
-	return TCL_ERROR;
+        goto error;
     } else {
 	int len;
 	char *str = Tcl_GetStringFromObj(resObj, &len);
@@ -1817,9 +1867,21 @@ ReflectGetOption(
 	    Tcl_DStringAppend(dsPtr, " ", 1);
 	    Tcl_DStringAppend(dsPtr, str, len);
 	}
-	Tcl_DecrRefCount(resObj);	/* Remove reference held from invoke */
-	return TCL_OK;
+        goto ok;
     }
+
+ ok:
+    result = TCL_OK;
+ stop:
+    if (optionObj) {
+        Tcl_DecrRefCount(optionObj);
+    }
+    Tcl_DecrRefCount(resObj);	/* Remove reference held from invoke */
+    Tcl_Release(rcPtr);
+    return result;
+ error:
+    result = TCL_ERROR;
+    goto stop;
 }
 
 /*
@@ -2117,6 +2179,11 @@ FreeReflectedChannel(
  * Side effects:
  *	Arbitrary, as it calls upon a Tcl script.
  *
+ * Contract:
+ *	argOneObj.refCount >= 1 on entry and exit, if argOneObj != NULL
+ *	argTwoObj.refCount >= 1 on entry and exit, if argTwoObj != NULL
+ *	resObj.refCount in {0, 1, ...}
+ *
  *----------------------------------------------------------------------
  */
 
@@ -2146,16 +2213,10 @@ InvokeTclMethod(
 	    Tcl_IncrRefCount(resObj);
 	}
 
-	/*
-	 * Cleanup of the dynamic parts of the command.
-	 */
-
-	if (argOneObj) {
-	    Tcl_DecrRefCount(argOneObj);
-	    if (argTwoObj) {
-		Tcl_DecrRefCount(argTwoObj);
-	    }
-	}
+        /*
+         * Not touching argOneObj, argTwoObj, they have not been used.
+         * See the contract as well.
+         */
 
 	return TCL_ERROR;
     }
@@ -2182,11 +2243,9 @@ InvokeTclMethod(
 
     cmdc = rcPtr->argc;
     if (argOneObj) {
-	Tcl_IncrRefCount(argOneObj);
 	rcPtr->argv[cmdc] = argOneObj;
 	cmdc++;
 	if (argTwoObj) {
-	    Tcl_IncrRefCount(argTwoObj);
 	    rcPtr->argv[cmdc] = argTwoObj;
 	    cmdc++;
 	}
@@ -2249,15 +2308,13 @@ InvokeTclMethod(
 
     /*
      * Cleanup of the dynamic parts of the command.
+     *
+     * The detail objects survived the Tcl_EvalObjv without change because of
+     * the contract. Therefore there is no need to decrement the refcounts. Only
+     * the internal method object has to be disposed of.
      */
 
     Tcl_DecrRefCount(methObj);
-    if (argOneObj) {
-	Tcl_DecrRefCount(argOneObj);
-	if (argTwoObj) {
-	    Tcl_DecrRefCount(argTwoObj);
-	}
-    }
 
     /*
      * The resObj has a ref count of 1 at this location. This means that the
@@ -2291,8 +2348,8 @@ InvokeTclMethod(
  *	None.
  *
  * Users:
- *	Currently only ReflectInput(), to enable the signaling of EAGAIN.
- *	by non-blocking channels at buffer-empty, but not EOF.
+ *	ReflectInput/Output(), to enable the signaling of EAGAIN
+ *	on 0-sized short reads/writes.
  *
  *----------------------------------------------------------------------
  */
@@ -2803,12 +2860,14 @@ ForwardProc(
 				  Tcl_GetChannelName (rcPtr->chan));
 	Tcl_DeleteHashEntry (hPtr);
 
-	FreeReflectedChannel(rcPtr);
+        Tcl_EventuallyFree (rcPtr, (Tcl_FreeProc *) FreeReflectedChannel);
 	break;
 
     case ForwardedInput: {
 	Tcl_Obj *toReadObj = Tcl_NewIntObj(paramPtr->input.toRead);
+        Tcl_IncrRefCount(toReadObj);
 
+        Tcl_Preserve(rcPtr);
 	if (InvokeTclMethod(rcPtr, "read", toReadObj, NULL, &resObj)!=TCL_OK){
 	    int code = ErrnoReturn (rcPtr, resObj);
 
@@ -2838,15 +2897,25 @@ ForwardProc(
 		paramPtr->input.toRead = bytec;
 	    }
 	}
+        Tcl_Release(rcPtr);
+        Tcl_DecrRefCount(toReadObj);
 	break;
     }
 
     case ForwardedOutput: {
 	Tcl_Obj *bufObj = Tcl_NewByteArrayObj((unsigned char *)
 		paramPtr->output.buf, paramPtr->output.toWrite);
+        Tcl_IncrRefCount(bufObj);
 
+        Tcl_Preserve(rcPtr);
 	if (InvokeTclMethod(rcPtr, "write", bufObj, NULL, &resObj) != TCL_OK) {
-	    ForwardSetObjError(paramPtr, resObj);
+	    int code = ErrnoReturn(rcPtr, resObj);
+
+	    if (code < 0) {
+		paramPtr->base.code = code;
+	    } else {
+		ForwardSetObjError(paramPtr, resObj);
+	    }
 	    paramPtr->output.toWrite = -1;
 	} else {
 	    /*
@@ -2865,6 +2934,8 @@ ForwardProc(
 		paramPtr->output.toWrite = written;
 	    }
 	}
+        Tcl_Release(rcPtr);
+        Tcl_DecrRefCount(bufObj);
 	break;
     }
 
@@ -2874,6 +2945,10 @@ ForwardProc(
 		(paramPtr->seek.seekMode==SEEK_SET) ? "start" :
 		(paramPtr->seek.seekMode==SEEK_CUR) ? "current" : "end", -1);
 
+        Tcl_IncrRefCount(offObj);
+        Tcl_IncrRefCount(baseObj);
+
+        Tcl_Preserve(rcPtr);
 	if (InvokeTclMethod(rcPtr, "seek", offObj, baseObj, &resObj)!=TCL_OK){
 	    ForwardSetObjError(paramPtr, resObj);
 	    paramPtr->seek.offset = -1;
@@ -2897,24 +2972,34 @@ ForwardProc(
 		paramPtr->seek.offset = -1;
 	    }
 	}
+        Tcl_Release(rcPtr);
+        Tcl_DecrRefCount(offObj);
+        Tcl_DecrRefCount(baseObj);
 	break;
     }
 
     case ForwardedWatch: {
 	Tcl_Obj *maskObj = DecodeEventMask(paramPtr->watch.mask);
+        /* assert maskObj.refCount == 1 */
 
+        Tcl_Preserve(rcPtr);
 	(void) InvokeTclMethod(rcPtr, "watch", maskObj, NULL, NULL);
 	Tcl_DecrRefCount(maskObj);
+        Tcl_Release(rcPtr);
 	break;
     }
 
     case ForwardedBlock: {
 	Tcl_Obj *blockObj = Tcl_NewBooleanObj(!paramPtr->block.nonblocking);
+        Tcl_IncrRefCount(blockObj);
 
+        Tcl_Preserve(rcPtr);
 	if (InvokeTclMethod(rcPtr, "blocking", blockObj, NULL,
 		&resObj) != TCL_OK) {
 	    ForwardSetObjError(paramPtr, resObj);
 	}
+        Tcl_Release(rcPtr);
+        Tcl_DecrRefCount(blockObj);
 	break;
     }
 
@@ -2922,10 +3007,16 @@ ForwardProc(
 	Tcl_Obj *optionObj = Tcl_NewStringObj(paramPtr->setOpt.name, -1);
 	Tcl_Obj *valueObj = Tcl_NewStringObj(paramPtr->setOpt.value, -1);
 
+        Tcl_IncrRefCount(optionObj);
+        Tcl_IncrRefCount(valueObj);
+        Tcl_Preserve(rcPtr);
 	if (InvokeTclMethod(rcPtr, "configure", optionObj, valueObj,
 		&resObj) != TCL_OK) {
 	    ForwardSetObjError(paramPtr, resObj);
 	}
+        Tcl_Release(rcPtr);
+        Tcl_DecrRefCount(optionObj);
+        Tcl_DecrRefCount(valueObj);
 	break;
     }
 
@@ -2935,13 +3026,17 @@ ForwardProc(
 	 */
 
 	Tcl_Obj *optionObj = Tcl_NewStringObj(paramPtr->getOpt.name, -1);
+        Tcl_IncrRefCount(optionObj);
 
+        Tcl_Preserve(rcPtr);
 	if (InvokeTclMethod(rcPtr, "cget", optionObj, NULL, &resObj)!=TCL_OK){
 	    ForwardSetObjError(paramPtr, resObj);
 	} else {
 	    Tcl_DStringAppend(paramPtr->getOpt.value,
 		    TclGetString(resObj), -1);
 	}
+        Tcl_Release(rcPtr);
+        Tcl_DecrRefCount(optionObj);
 	break;
     }
 
@@ -2950,6 +3045,7 @@ ForwardProc(
 	 * Retrieve all options.
 	 */
 
+        Tcl_Preserve(rcPtr);
 	if (InvokeTclMethod(rcPtr, "cgetall", NULL, NULL, &resObj) != TCL_OK){
 	    ForwardSetObjError(paramPtr, resObj);
 	} else {
@@ -2985,6 +3081,7 @@ ForwardProc(
 		}
 	    }
 	}
+        Tcl_Release(rcPtr);
 	break;
 
     default:
@@ -3088,5 +3185,7 @@ ForwardSetObjError(
  * mode: c
  * c-basic-offset: 4
  * fill-column: 78
+ * tab-width: 8
+ * indent-tabs-mode: nil
  * End:
  */

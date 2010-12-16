@@ -1221,7 +1221,7 @@ TestcmdtraceCmd(
 	} else {
 	    return result;
 	}
-    } else if ( strcmp(argv[1], "doubletest" ) == 0 ) {
+    } else if (strcmp(argv[1], "doubletest") == 0) {
 	Tcl_Trace t1, t2;
 
 	Tcl_DStringInit(&buffer);
@@ -2212,9 +2212,13 @@ ExitProcOdd(
     ClientData clientData)	/* Integer value to print. */
 {
     char buf[16 + TCL_INTEGER_SPACE];
+    size_t len;
 
     sprintf(buf, "odd %d\n", PTR2INT(clientData));
-    (void)write(1, buf, strlen(buf));
+    len = strlen(buf);
+    if (len != (size_t) write(1, buf, len)) {
+	Tcl_Panic("ExitProcOdd: unable to write to stdout");
+    }
 }
 
 static void
@@ -2222,9 +2226,13 @@ ExitProcEven(
     ClientData clientData)	/* Integer value to print. */
 {
     char buf[16 + TCL_INTEGER_SPACE];
+    size_t len;
 
     sprintf(buf, "even %d\n", PTR2INT(clientData));
-    (void)write(1, buf, strlen(buf));
+    len = strlen(buf);
+    if (len != (size_t) write(1, buf, len)) {
+	Tcl_Panic("ExitProcEven: unable to write to stdout");
+    }
 }
 
 /*
@@ -4365,7 +4373,7 @@ TestfeventCmd(
  *	Calls the panic routine.
  *
  * Results:
- *      Always returns TCL_OK.
+ *	Always returns TCL_OK.
  *
  * Side effects:
  *	May exit application.
@@ -5101,7 +5109,7 @@ PretendTclpStat(
 	 */
 
 	if (OUT_OF_URANGE(realBuf.st_ino) || OUT_OF_RANGE(realBuf.st_size)
-#   ifdef HAVE_ST_BLOCKS
+#   ifdef HAVE_STRUCT_STAT_ST_BLOCKS
 		|| OUT_OF_RANGE(realBuf.st_blocks)
 #   endif
 	    ) {
@@ -5139,8 +5147,10 @@ PretendTclpStat(
 	buf->st_atime   = realBuf.st_atime;
 	buf->st_mtime   = realBuf.st_mtime;
 	buf->st_ctime   = realBuf.st_ctime;
-#   ifdef HAVE_ST_BLOCKS
+#   ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
 	buf->st_blksize = realBuf.st_blksize;
+#   endif
+#   ifdef HAVE_STRUCT_STAT_ST_BLOCKS
 	buf->st_blocks  = (blkcnt_t) realBuf.st_blocks;
 #   endif
     }
@@ -7099,19 +7109,19 @@ TestconcatobjCmd(
      * Set the start of the error message as obj result; it will be cleared at
      * the end if no errors were found.
      */
-    
+
     Tcl_SetObjResult(interp,
 	    Tcl_NewStringObj("Tcl_ConcatObj is unsafe:", -1));
-    
+
     emptyPtr = Tcl_NewObj();
-    
+
     list1Ptr = Tcl_NewStringObj("foo bar sum", -1);
     Tcl_ListObjLength(NULL, list1Ptr, &len);
     if (list1Ptr->bytes != NULL) {
 	ckfree((char *) list1Ptr->bytes);
 	list1Ptr->bytes = NULL;
     }
-    
+
     list2Ptr = Tcl_NewStringObj("eeny meeny", -1);
     Tcl_ListObjLength(NULL, list2Ptr, &len);
     if (list2Ptr->bytes != NULL) {
@@ -7125,27 +7135,29 @@ TestconcatobjCmd(
      */
 
     tmpPtr = Tcl_DuplicateObj(list1Ptr);
-    
+
     objv[0] = tmpPtr;
     objv[1] = emptyPtr;
     concatPtr = Tcl_ConcatObj(2, objv);
     if (concatPtr->refCount != 0) {
 	result = TCL_ERROR;
-	Tcl_AppendResult(interp, "\n\t* (a) concatObj does not have refCount 0", NULL);
+	Tcl_AppendResult(interp,
+		"\n\t* (a) concatObj does not have refCount 0", NULL);
     }
     if (concatPtr == tmpPtr) {
 	result = TCL_ERROR;
-	Tcl_AppendResult(interp, "\n\t* (a) concatObj is not a new obj ", NULL);
+	Tcl_AppendResult(interp, "\n\t* (a) concatObj is not a new obj ",
+		NULL);
 	switch (tmpPtr->refCount) {
-	    case 0:
-		Tcl_AppendResult(interp, "(no new refCount)", NULL);
-		break;
-	    case 1:
-		Tcl_AppendResult(interp, "(refCount added)", NULL);
-		break;
-	    default:
-		Tcl_AppendResult(interp, "(more than one refCount added!)", NULL);
-		Tcl_Panic("extremely unsafe behaviour by Tcl_ConcatObj()");
+	case 0:
+	    Tcl_AppendResult(interp, "(no new refCount)", NULL);
+	    break;
+	case 1:
+	    Tcl_AppendResult(interp, "(refCount added)", NULL);
+	    break;
+	default:
+	    Tcl_AppendResult(interp, "(more than one refCount added!)", NULL);
+	    Tcl_Panic("extremely unsafe behaviour by Tcl_ConcatObj()");
 	}
 	tmpPtr = Tcl_DuplicateObj(list1Ptr);
 	objv[0] = tmpPtr;
@@ -7156,32 +7168,33 @@ TestconcatobjCmd(
     concatPtr = Tcl_ConcatObj(2, objv);
     if (concatPtr->refCount != 0) {
 	result = TCL_ERROR;
-	Tcl_AppendResult(interp, "\n\t* (b) concatObj does not have refCount 0", NULL);
+	Tcl_AppendResult(interp,
+		"\n\t* (b) concatObj does not have refCount 0", NULL);
     }
     if (concatPtr == tmpPtr) {
 	result = TCL_ERROR;
-	Tcl_AppendResult(interp, "\n\t* (b) concatObj is not a new obj ", NULL);
+	Tcl_AppendResult(interp, "\n\t* (b) concatObj is not a new obj ",
+		NULL);
 	switch (tmpPtr->refCount) {
-	    case 0:
-		Tcl_AppendResult(interp, "(refCount removed?)", NULL);
-		Tcl_Panic("extremely unsafe behaviour by Tcl_ConcatObj()");
-		break;
-	    case 1:
-		Tcl_AppendResult(interp, "(no new refCount)", NULL);
-		break;
-	    case 2:
-		Tcl_AppendResult(interp, "(refCount added)", NULL);
-		Tcl_DecrRefCount(tmpPtr);
-		break;
-	    default:
-		Tcl_AppendResult(interp, "(more than one refCount added!)", NULL);
-		Tcl_Panic("extremely unsafe behaviour by Tcl_ConcatObj()");
+	case 0:
+	    Tcl_AppendResult(interp, "(refCount removed?)", NULL);
+	    Tcl_Panic("extremely unsafe behaviour by Tcl_ConcatObj()");
+	    break;
+	case 1:
+	    Tcl_AppendResult(interp, "(no new refCount)", NULL);
+	    break;
+	case 2:
+	    Tcl_AppendResult(interp, "(refCount added)", NULL);
+	    Tcl_DecrRefCount(tmpPtr);
+	    break;
+	default:
+	    Tcl_AppendResult(interp, "(more than one refCount added!)", NULL);
+	    Tcl_Panic("extremely unsafe behaviour by Tcl_ConcatObj()");
 	}
 	tmpPtr = Tcl_DuplicateObj(list1Ptr);
 	objv[0] = tmpPtr;
     }
     Tcl_DecrRefCount(concatPtr);
-
 
     objv[0] = emptyPtr;
     objv[1] = tmpPtr;
@@ -7189,51 +7202,55 @@ TestconcatobjCmd(
     concatPtr = Tcl_ConcatObj(3, objv);
     if (concatPtr->refCount != 0) {
 	result = TCL_ERROR;
-	Tcl_AppendResult(interp, "\n\t* (c) concatObj does not have refCount 0", NULL);
+	Tcl_AppendResult(interp,
+		"\n\t* (c) concatObj does not have refCount 0", NULL);
     }
     if (concatPtr == tmpPtr) {
 	result = TCL_ERROR;
-	Tcl_AppendResult(interp, "\n\t* (c) concatObj is not a new obj ", NULL);
+	Tcl_AppendResult(interp, "\n\t* (c) concatObj is not a new obj ",
+		NULL);
 	switch (tmpPtr->refCount) {
-	    case 0:
-		Tcl_AppendResult(interp, "(no new refCount)", NULL);
-		break;
-	    case 1:
-		Tcl_AppendResult(interp, "(refCount added)", NULL);
-		break;
-	    default:
-		Tcl_AppendResult(interp, "(more than one refCount added!)", NULL);
-		Tcl_Panic("extremely unsafe behaviour by Tcl_ConcatObj()");
+	case 0:
+	    Tcl_AppendResult(interp, "(no new refCount)", NULL);
+	    break;
+	case 1:
+	    Tcl_AppendResult(interp, "(refCount added)", NULL);
+	    break;
+	default:
+	    Tcl_AppendResult(interp, "(more than one refCount added!)", NULL);
+	    Tcl_Panic("extremely unsafe behaviour by Tcl_ConcatObj()");
 	}
 	tmpPtr = Tcl_DuplicateObj(list1Ptr);
 	objv[1] = tmpPtr;
     }
     Tcl_DecrRefCount(concatPtr);
-	
+
     Tcl_IncrRefCount(tmpPtr);
     concatPtr = Tcl_ConcatObj(3, objv);
     if (concatPtr->refCount != 0) {
 	result = TCL_ERROR;
-	Tcl_AppendResult(interp, "\n\t* (d) concatObj does not have refCount 0", NULL);
+	Tcl_AppendResult(interp,
+		"\n\t* (d) concatObj does not have refCount 0", NULL);
     }
     if (concatPtr == tmpPtr) {
 	result = TCL_ERROR;
-	Tcl_AppendResult(interp, "\n\t* (d) concatObj is not a new obj ", NULL);
+	Tcl_AppendResult(interp, "\n\t* (d) concatObj is not a new obj ",
+		NULL);
 	switch (tmpPtr->refCount) {
-	    case 0:
-		Tcl_AppendResult(interp, "(refCount removed?)", NULL);
-		Tcl_Panic("extremely unsafe behaviour by Tcl_ConcatObj()");
-		break;
-	    case 1:
-		Tcl_AppendResult(interp, "(no new refCount)", NULL);
-		break;
-	    case 2:
-		Tcl_AppendResult(interp, "(refCount added)", NULL);
-		Tcl_DecrRefCount(tmpPtr);
-		break;
-	    default:
-		Tcl_AppendResult(interp, "(more than one refCount added!)", NULL);
-		Tcl_Panic("extremely unsafe behaviour by Tcl_ConcatObj()");
+	case 0:
+	    Tcl_AppendResult(interp, "(refCount removed?)", NULL);
+	    Tcl_Panic("extremely unsafe behaviour by Tcl_ConcatObj()");
+	    break;
+	case 1:
+	    Tcl_AppendResult(interp, "(no new refCount)", NULL);
+	    break;
+	case 2:
+	    Tcl_AppendResult(interp, "(refCount added)", NULL);
+	    Tcl_DecrRefCount(tmpPtr);
+	    break;
+	default:
+	    Tcl_AppendResult(interp, "(more than one refCount added!)", NULL);
+	    Tcl_Panic("extremely unsafe behaviour by Tcl_ConcatObj()");
 	}
 	tmpPtr = Tcl_DuplicateObj(list1Ptr);
 	objv[1] = tmpPtr;
@@ -7250,26 +7267,28 @@ TestconcatobjCmd(
     concatPtr = Tcl_ConcatObj(2, objv);
     if (concatPtr->refCount != 0) {
 	result = TCL_ERROR;
-	Tcl_AppendResult(interp, "\n\t* (e) concatObj does not have refCount 0", NULL);
+	Tcl_AppendResult(interp,
+		"\n\t* (e) concatObj does not have refCount 0", NULL);
     }
     if (concatPtr == tmpPtr) {
 	int len;
-	
+
 	result = TCL_ERROR;
-	Tcl_AppendResult(interp, "\n\t* (e) concatObj is not a new obj ", NULL);
+	Tcl_AppendResult(interp, "\n\t* (e) concatObj is not a new obj ",
+		NULL);
 
 	(void) Tcl_ListObjLength(NULL, concatPtr, &len);
 	switch (tmpPtr->refCount) {
-	    case 3:
-		Tcl_AppendResult(interp, "(failed to concat)", NULL);
-		break;
-	    default:
-		Tcl_AppendResult(interp, "(corrupted input!)", NULL);
+	case 3:
+	    Tcl_AppendResult(interp, "(failed to concat)", NULL);
+	    break;
+	default:
+	    Tcl_AppendResult(interp, "(corrupted input!)", NULL);
 	}
 	if (Tcl_IsShared(tmpPtr)) {
 	    Tcl_DecrRefCount(tmpPtr);
 	}
-	tmpPtr = Tcl_DuplicateObj(list1Ptr);    
+	tmpPtr = Tcl_DuplicateObj(list1Ptr);
 	objv[0] = tmpPtr;
     }
     Tcl_DecrRefCount(concatPtr);
@@ -7280,26 +7299,28 @@ TestconcatobjCmd(
     concatPtr = Tcl_ConcatObj(2, objv);
     if (concatPtr->refCount != 0) {
 	result = TCL_ERROR;
-	Tcl_AppendResult(interp, "\n\t* (f) concatObj does not have refCount 0", NULL);
+	Tcl_AppendResult(interp,
+		"\n\t* (f) concatObj does not have refCount 0", NULL);
     }
     if (concatPtr == tmpPtr) {
 	int len;
-	
+
 	result = TCL_ERROR;
-	Tcl_AppendResult(interp, "\n\t* (f) concatObj is not a new obj ", NULL);
+	Tcl_AppendResult(interp, "\n\t* (f) concatObj is not a new obj ",
+		NULL);
 
 	(void) Tcl_ListObjLength(NULL, concatPtr, &len);
 	switch (tmpPtr->refCount) {
-	    case 3:
-		Tcl_AppendResult(interp, "(failed to concat)", NULL);
-		break;
-	    default:
-		Tcl_AppendResult(interp, "(corrupted input!)", NULL);
+	case 3:
+	    Tcl_AppendResult(interp, "(failed to concat)", NULL);
+	    break;
+	default:
+	    Tcl_AppendResult(interp, "(corrupted input!)", NULL);
 	}
 	if (Tcl_IsShared(tmpPtr)) {
 	    Tcl_DecrRefCount(tmpPtr);
 	}
-	tmpPtr = Tcl_DuplicateObj(list1Ptr);    
+	tmpPtr = Tcl_DuplicateObj(list1Ptr);
 	objv[0] = tmpPtr;
     }
     Tcl_DecrRefCount(concatPtr);
@@ -7311,35 +7332,45 @@ TestconcatobjCmd(
     concatPtr = Tcl_ConcatObj(2, objv);
     if (concatPtr->refCount != 0) {
 	result = TCL_ERROR;
-	Tcl_AppendResult(interp, "\n\t* (g) concatObj does not have refCount 0", NULL);
+	Tcl_AppendResult(interp,
+		"\n\t* (g) concatObj does not have refCount 0", NULL);
     }
     if (concatPtr == tmpPtr) {
 	int len;
-	
+
 	result = TCL_ERROR;
-	Tcl_AppendResult(interp, "\n\t* (g) concatObj is not a new obj ", NULL);
+	Tcl_AppendResult(interp, "\n\t* (g) concatObj is not a new obj ",
+		NULL);
 
 	(void) Tcl_ListObjLength(NULL, concatPtr, &len);
 	switch (tmpPtr->refCount) {
-	    case 3:
-		Tcl_AppendResult(interp, "(failed to concat)", NULL);
-		break;
-	    default:
-		Tcl_AppendResult(interp, "(corrupted input!)", NULL);
+	case 3:
+	    Tcl_AppendResult(interp, "(failed to concat)", NULL);
+	    break;
+	default:
+	    Tcl_AppendResult(interp, "(corrupted input!)", NULL);
 	}
 	Tcl_DecrRefCount(tmpPtr);
 	if (Tcl_IsShared(tmpPtr)) {
 	    Tcl_DecrRefCount(tmpPtr);
 	}
-	tmpPtr = Tcl_DuplicateObj(list1Ptr);    
+	tmpPtr = Tcl_DuplicateObj(list1Ptr);
 	objv[0] = tmpPtr;
     }
     Tcl_DecrRefCount(concatPtr);
 
+    /*
+     * Clean everything up. Note that we don't actually know how many
+     * references there are to tmpPtr here; in the no-error case, it should be
+     * five... [Bug 2895367]
+     */
 
     Tcl_DecrRefCount(list1Ptr);
     Tcl_DecrRefCount(list2Ptr);
     Tcl_DecrRefCount(emptyPtr);
+    while (tmpPtr->refCount > 1) {
+	Tcl_DecrRefCount(tmpPtr);
+    }
     Tcl_DecrRefCount(tmpPtr);
 
     if (result == TCL_OK) {

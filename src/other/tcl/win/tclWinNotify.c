@@ -500,7 +500,7 @@ Tcl_WaitForEvent(
 
 	    PostQuitMessage((int) msg.wParam);
 	    status = -1;
-	} else if (result == -1) {
+	} else if (result == (DWORD)-1) {
 	    /*
 	     * We got an error from the system. I have no idea why this would
 	     * happen, so we'll just unwind.

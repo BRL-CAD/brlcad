@@ -754,7 +754,7 @@ TestplatformChmod(
 
   done:
     if (secDesc) {
-	ckfree(secDesc);
+	ckfree((char *) secDesc);
     }
     if (newAcl) {
 	ckfree((char *) newAcl);

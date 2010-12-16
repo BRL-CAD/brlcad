@@ -305,7 +305,7 @@ Also notifies the driver if the \fBTcl_ChannelType\fR version is
 \fBTcl_DriverThreadActionProc\fR is defined for it.
 .VE 8.5
 .PP
-\fBTcl_ClearChannelHandlers\fR removes all channelhandlers and event
+\fBTcl_ClearChannelHandlers\fR removes all channel handlers and event
 scripts associated with the specified \fIchannel\fR, thus shutting
 down all event processing for this channel.
 .SH TCL_CHANNELTYPE
@@ -384,11 +384,11 @@ a pointer to the string.
 
 The \fIversion\fR field should be set to the version of the structure
 that you require. \fBTCL_CHANNEL_VERSION_2\fR is the minimum recommended.
-\fBTCL_CHANNEL_VERSION_3\fR must be set to specifiy the \fIwideSeekProc\fR member.
-\fBTCL_CHANNEL_VERSION_4\fR must be set to specifiy the \fIthreadActionProc\fR member
+\fBTCL_CHANNEL_VERSION_3\fR must be set to specify the \fIwideSeekProc\fR member.
+\fBTCL_CHANNEL_VERSION_4\fR must be set to specify the \fIthreadActionProc\fR member
 (includes \fIwideSeekProc\fR).
 .VS 8.5
-\fBTCL_CHANNEL_VERSION_5\fR must be set to specifiy the
+\fBTCL_CHANNEL_VERSION_5\fR must be set to specify the
 \fItruncateProc\fR members (includes
 \fIwideSeekProc\fR and \fIthreadActionProc\fR).
 .VE 8.5
@@ -439,7 +439,7 @@ A channel driver \fBnot\fR supplying a \fIblockModeProc\fR has to be
 very, very careful. It has to tell the generic layer exactly which
 blocking mode is acceptable to it, and should this also document for
 the user so that the blocking mode of the channel is not changed to an
-inacceptable value. Any confusion here may lead the interpreter into a
+unacceptable value. Any confusion here may lead the interpreter into a
 (spurious and difficult to find) deadlock.
 .SS "CLOSEPROC AND CLOSE2PROC"
 .PP

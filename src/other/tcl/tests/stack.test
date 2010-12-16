@@ -23,15 +23,15 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 # This doesn't catch all cases, for example threads of lower stacksize
 # can still squeak through.  A core check is really needed. -- JH
 
-testConstraint minStack2400 1
+testConstraint minStack2034 1
 if {[testConstraint unix]} {
     set stackSize [exec /bin/sh -c "ulimit -s"]
-    if {[string is integer $stackSize] && ($stackSize < 2400)} {
+    if {[string is integer $stackSize] && ($stackSize < 2034)} {
         puts stderr "WARNING: the default application stacksize of $stackSize\
                 may cause Tcl to\ncrash due to stack overflow before the\
-                recursion limit is reached.\nA minimum stacksize of 2400\
+                recursion limit is reached.\nA minimum stacksize of 2034\
                 kbytes is recommended.\nSkipping infinite recursion test."
-        testConstraint minStack2400 0
+        testConstraint minStack2034 0
     }
 }
 
@@ -49,7 +49,7 @@ proc StackOverflow {- res} {
 }
 
 test stack-1.1 {maxNestingDepth reached on infinite recursion} -constraints {
-    minStack2400
+    minStack2034
 } -body {
     # do this in a sub process in case it segfaults
     exec [interpreter] << {
@@ -60,7 +60,7 @@ test stack-1.1 {maxNestingDepth reached on infinite recursion} -constraints {
 } -match stackOverflow
 
 test stack-2.1 {maxNestingDepth reached on infinite recursion} -constraints {
-    minStack2400
+    minStack2034
 } -body {
     # do this in a sub process in case it segfaults
     exec [interpreter] << {

@@ -12,7 +12,7 @@ item: Global
   Log Pathname=%MAINDIR%\INSTALL.LOG
   Message Font=MS Sans Serif
   Font Size=8
-  Disk Label=tcl8.5.8
+  Disk Label=tcl8.5.9
   Disk Filename=setup
   Patch Flags=0000000000000001
   Patch Threshold=85

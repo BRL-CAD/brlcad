@@ -18,6 +18,8 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import -force ::tcltest::*
 }
 
+testConstraint exec [llength [info commands exec]]
+
 catch {unset foo}
 test regexp-1.1 {basic regexp operation} {
     regexp ab*c abbbc
@@ -457,8 +459,6 @@ test regexp-14.2 {CompileRegexp: regexp cache, different flags} {
     append x *a
     regexp -nocase $x bbba
 } 1
-
-testConstraint exec [llength [info commands exec]]
 test regexp-14.3 {CompileRegexp: regexp cache, empty regexp and empty cache} -constraints {
 	exec
 } -setup {
@@ -622,7 +622,7 @@ test regexp-20.1 {regsub shared object shimmering} {
     set c abcdefghijklmnopqurstuvwxyz0123456789 
     regsub $a $c $b d 
     list $d [string length $d] [string bytelength $d]
-} [list abcdefghijklmnopqurstuvwxyz0123456789 37 37]
+} {abcdefghijklmnopqurstuvwxyz0123456789 37 37}
 test regexp-20.2 {regsub shared object shimmering with -about} {
     eval regexp -about abc
 } {0 {}}
@@ -630,63 +630,291 @@ test regexp-20.2 {regsub shared object shimmering with -about} {
 test regexp-21.1 {regsub works with empty string} {
     regsub -- ^ {} foo
 } {foo}
-
 test regexp-21.2 {regsub works with empty string} {
     regsub -- \$ {} foo
 } {foo}
-
 test regexp-21.3 {regsub works with empty string offset} {
     regsub -start 0 -- ^ {} foo
 } {foo}
-
 test regexp-21.4 {regsub works with empty string offset} {
     regsub -start 0 -- \$ {} foo
 } {foo}
-
 test regexp-21.5 {regsub works with empty string offset} {
     regsub -start 3 -- \$ {123} foo
 } {123foo}
-
 test regexp-21.6 {regexp works with empty string} {
     regexp -- ^ {}
 } {1}
-
 test regexp-21.7 {regexp works with empty string} {
     regexp -start 0 -- ^ {}
 } {1}
-
 test regexp-21.8 {regexp works with empty string offset} {
     regexp -start 3 -- ^ {123}
 } {0}
-
 test regexp-21.9 {regexp works with empty string offset} {
     regexp -start 3 -- \$ {123}
 } {1}
-
 test regexp-21.10 {multiple matches handle newlines} {
     regsub -all -lineanchor -- {^#[^\n]*\n} "#one\n#two\n#three\n" foo\n
 } "foo\nfoo\nfoo\n"
-
 test regexp-21.11 {multiple matches handle newlines} {
     regsub -all -line -- ^ "a\nb\nc" \#
 } "\#a\n\#b\n\#c"
-
 test regexp-21.12 {multiple matches handle newlines} {
     regsub -all -line -- ^ "\n\n" \#
 } "\#\n\#\n\#"
-
 test regexp-21.13 {multiple matches handle newlines} {
     regexp -all -inline -indices -line -- ^ "a\nb\nc"
 } {{0 -1} {2 1} {4 3}}
 
-
 test regexp-22.1 {Bug 1810038} {
     regexp ($|^X)* {}
 } 1
-
 test regexp-22.2 {regexp compile and backrefs, Bug 1857126} {
     regexp -- {([bc])\1} bb
 } 1
+
+test regexp-23.1 {regexp -all and -line} {
+    set string ""
+    list \
+	[regexp -all -inline -indices -line -- {^} $string] \
+	[regexp -all -inline -indices -line -- {^$} $string] \
+	[regexp -all -inline -indices -line -- {$} $string]
+} {{{0 -1}} {{0 -1}} {{0 -1}}}
+test regexp-23.2 {regexp -all and -line} {
+    set string "\n"
+    list \
+	[regexp -all -inline -indices -line -- {^} $string] \
+	[regexp -all -inline -indices -line -- {^$} $string] \
+	[regexp -all -inline -indices -line -- {$} $string]
+} {{{0 -1}} {{0 -1}} {{0 -1}}}
+test regexp-23.3 {regexp -all and -line} {
+    set string "\n\n"
+    list \
+	[regexp -all -inline -indices -line -- {^} $string] \
+	[regexp -all -inline -indices -line -- {^$} $string] \
+	[regexp -all -inline -indices -line -- {$} $string]
+} {{{0 -1} {1 0}} {{0 -1} {1 0}} {{0 -1} {1 0}}}
+test regexp-23.4 {regexp -all and -line} {
+    set string "a"
+    list \
+	[regexp -all -inline -indices -line -- {^} $string] \
+	[regexp -all -inline -indices -line -- {^.*$} $string] \
+	[regexp -all -inline -indices -line -- {$} $string]
+} {{{0 -1}} {{0 0}} {{1 0}}}
+test regexp-23.5 {regexp -all and -line} {knownBug} {
+    set string "a\n"
+    list \
+	[regexp -all -inline -indices -line -- {^} $string] \
+	[regexp -all -inline -indices -line -- {^.*$} $string] \
+	[regexp -all -inline -indices -line -- {$} $string]
+} {{{0 -1} {2 1}} {{0 0} {2 1}} {{1 0} {2 1}}}
+test regexp-23.6 {regexp -all and -line} {
+    set string "\na"
+    list \
+	[regexp -all -inline -indices -line -- {^} $string] \
+	[regexp -all -inline -indices -line -- {^.*$} $string] \
+	[regexp -all -inline -indices -line -- {$} $string]
+} {{{0 -1} {1 0}} {{0 -1} {1 1}} {{0 -1} {2 1}}}
+test regexp-23.7 {regexp -all and -line} {knownBug} {
+    set string "ab\n"
+    list \
+	[regexp -all -inline -indices -line -- {^} $string] \
+	[regexp -all -inline -indices -line -- {^.*$} $string] \
+	[regexp -all -inline -indices -line -- {$} $string]
+} {{{0 -1} {3 2}} {{0 1} {3 2}} {{2 1} {3 2}}}
+test regexp-23.8 {regexp -all and -line} {
+    set string "a\nb"
+    list \
+	[regexp -all -inline -indices -line -- {^} $string] \
+	[regexp -all -inline -indices -line -- {^.*$} $string] \
+	[regexp -all -inline -indices -line -- {$} $string]
+} {{{0 -1} {2 1}} {{0 0} {2 2}} {{1 0} {3 2}}}
+test regexp-23.9 {regexp -all and -line} {knownBug} {
+    set string "a\nb\n"
+    list \
+	[regexp -all -inline -indices -line -- {^} $string] \
+	[regexp -all -inline -indices -line -- {^.*$} $string] \
+	[regexp -all -inline -indices -line -- {$} $string]
+} {{{0 -1} {2 1} {4 3}} {{0 0} {2 2} {4 3}} {{1 0} {3 2} {4 3}}}
+test regexp-23.10 {regexp -all and -line} {
+    set string "a\nb\nc"
+    list \
+	[regexp -all -inline -indices -line -- {^} $string] \
+	[regexp -all -inline -indices -line -- {^.*$} $string] \
+	[regexp -all -inline -indices -line -- {$} $string]
+} {{{0 -1} {2 1} {4 3}} {{0 0} {2 2} {4 4}} {{1 0} {3 2} {5 4}}}
+test regexp-23.11 {regexp -all and -line} {
+    regexp -all -inline -indices -line -- {b} "abb\nb"
+} {{1 1} {2 2} {4 4}}
+
+test regexp-24.1 {regsub -all and -line} {
+    foreach {v1 v2 v3} {{} {} {}} {}
+    set string ""
+    list \
+	[regsub -line -all {^} $string {<&>} v1] $v1 \
+	[regsub -line -all {^$} $string {<&>} v2] $v2 \
+	[regsub -line -all {$} $string {<&>} v3] $v3
+} {1 <> 1 <> 1 <>}
+test regexp-24.2 {regsub -all and -line} {
+    foreach {v1 v2 v3} {{} {} {}} {}
+    set string "\n"
+    list \
+	[regsub -line -all {^} $string {<&>} v1] $v1 \
+	[regsub -line -all {^$} $string {<&>} v2] $v2 \
+	[regsub -line -all {$} $string {<&>} v3] $v3
+} "2 {<>\n<>} 2 {<>\n<>} 2 {<>\n<>}"
+test regexp-24.3 {regsub -all and -line} {
+    foreach {v1 v2 v3} {{} {} {}} {}
+    set string "\n\n"
+    list \
+	[regsub -line -all {^} $string {<&>} v1] $v1 \
+	[regsub -line -all {^$} $string {<&>} v2] $v2 \
+	[regsub -line -all {$} $string {<&>} v3] $v3
+} "3 {<>\n<>\n<>} 3 {<>\n<>\n<>} 3 {<>\n<>\n<>}"
+test regexp-24.4 {regsub -all and -line} {
+    foreach {v1 v2 v3} {{} {} {}} {}
+    set string "a"
+    list \
+	[regsub -line -all {^} $string {<&>} v1] $v1 \
+	[regsub -line -all {^.*$} $string {<&>} v2] $v2 \
+	[regsub -line -all {$} $string {<&>} v3] $v3
+} {1 <>a 1 <a> 1 a<>}
+test regexp-24.5 {regsub -all and -line} {
+    foreach {v1 v2 v3} {{} {} {}} {}
+    set string "a\n"
+    list \
+	[regsub -line -all {^} $string {<&>} v1] $v1 \
+	[regsub -line -all {^.*$} $string {<&>} v2] $v2 \
+	[regsub -line -all {$} $string {<&>} v3] $v3
+} "2 {<>a\n<>} 2 {<a>\n<>} 2 {a<>\n<>}"
+test regexp-24.6 {regsub -all and -line} {
+    foreach {v1 v2 v3} {{} {} {}} {}
+    set string "\na"
+    list \
+	[regsub -line -all {^} $string {<&>} v1] $v1 \
+	[regsub -line -all {^.*$} $string {<&>} v2] $v2 \
+	[regsub -line -all {$} $string {<&>} v3] $v3
+} "2 {<>\n<>a} 2 {<>\n<a>} 2 {<>\na<>}"
+test regexp-24.7 {regsub -all and -line} {
+    foreach {v1 v2 v3} {{} {} {}} {}
+    set string "ab\n"
+    list \
+	[regsub -line -all {^} $string {<&>} v1] $v1 \
+	[regsub -line -all {^.*$} $string {<&>} v2] $v2 \
+	[regsub -line -all {$} $string {<&>} v3] $v3
+} "2 {<>ab\n<>} 2 {<ab>\n<>} 2 {ab<>\n<>}"
+test regexp-24.8 {regsub -all and -line} {
+    foreach {v1 v2 v3} {{} {} {}} {}
+    set string "a\nb"
+    list \
+	[regsub -line -all {^} $string {<&>} v1] $v1 \
+	[regsub -line -all {^.*$} $string {<&>} v2] $v2 \
+	[regsub -line -all {$} $string {<&>} v3] $v3
+} "2 {<>a\n<>b} 2 {<a>\n<b>} 2 {a<>\nb<>}"
+test regexp-24.9 {regsub -all and -line} {
+    foreach {v1 v2 v3} {{} {} {}} {}
+    set string "a\nb\n"
+    list \
+	[regsub -line -all {^} $string {<&>} v1] $v1 \
+	[regsub -line -all {^.*$} $string {<&>} v2] $v2 \
+	[regsub -line -all {$} $string {<&>} v3] $v3
+} "3 {<>a\n<>b\n<>} 3 {<a>\n<b>\n<>} 3 {a<>\nb<>\n<>}"
+test regexp-24.10 {regsub -all and -line} {
+    foreach {v1 v2 v3} {{} {} {}} {}
+    set string "a\nb\nc"
+    list \
+	[regsub -line -all {^} $string {<&>} v1] $v1 \
+	[regsub -line -all {^.*$} $string {<&>} v2] $v2 \
+	[regsub -line -all {$} $string {<&>} v3] $v3
+} "3 {<>a\n<>b\n<>c} 3 {<a>\n<b>\n<c>} 3 {a<>\nb<>\nc<>}"
+test regexp-24.11 {regsub -all and -line} {
+    regsub -line -all {b} "abb\nb" {<&>}
+} "a<b><b>\n<b>"
+
+test regexp-25.1 {regexp without -line option} {
+    set foo ""
+    list [regexp {a.*b} "dabc\naxyb\n" foo] $foo
+} "1 {abc\naxyb}"
+test regexp-25.2 {regexp without -line option} {
+    set foo ""
+    list [regexp {^a.*b$} "dabc\naxyb\n" foo] $foo
+} {0 {}}
+test regexp-25.3 {regexp with -line option} {
+    set foo ""
+    list [regexp -line {^a.*b$} "dabc\naxyb\n" foo] $foo
+} {1 axyb}
+test regexp-25.4 {regexp with -line option} {
+    set foo ""
+    list [regexp -line {^a.*b$} "dabc\naxyb\nxb" foo] $foo
+} {1 axyb}
+test regexp-25.5 {regexp without -line option} {
+    set foo ""
+    list [regexp {^a.*b$} "dabc\naxyb\nxb" foo] $foo
+} {0 {}}
+test regexp-25.6 {regexp without -line option} {
+    set foo ""
+    list [regexp {a.*b$} "dabc\naxyb\nxb" foo] $foo
+} "1 {abc\naxyb\nxb}"
+test regexp-25.7 {regexp with -lineanchor option} {
+    set foo ""
+    list [regexp -lineanchor {^a.*b$} "dabc\naxyb\nxb" foo] $foo
+} "1 {axyb\nxb}"
+test regexp-25.8 {regexp with -lineanchor and -linestop option} {
+    set foo ""
+    list [regexp -lineanchor -linestop {^a.*b$} "dabc\naxyb\nxb" foo] $foo
+} {1 axyb}
+test regexp-25.9 {regexp with -linestop option} {
+    set foo ""
+    list [regexp -linestop {a.*b} "ab\naxyb\nxb" foo] $foo
+} {1 ab}
+
+test regexp-26.1 {matches start of line 1 time} {
+    regexp -all -inline -- {^a+} "aab\naaa"
+} {aa}
+test regexp-26.2 {matches start of line(s) 2 times} {
+    regexp -all -inline -line -- {^a+} "aab\naaa"
+} {aa aaa}
+test regexp-26.3 {effect of -line -all and -start} {
+    list \
+	[regexp -all -inline -line -start 0 -- {^a+} "aab\naaa"] \
+	[regexp -all -inline -line -start 1 -- {^a+} "aab\naaa"] \
+	[regexp -all -inline -line -start 3 -- {^a+} "aab\naaa"] \
+	[regexp -all -inline -line -start 4 -- {^a+} "aab\naaa"] \
+} {{aa aaa} aaa aaa aaa}
+test regexp-26.5 {match length 0, match length 1} {
+    regexp -all -inline -line -- {^b*} "a\nb"
+} {{} b}
+test regexp-26.6 {non reporting capture group} {
+    regexp -all -inline -line -- {^(?:a+|b)} "aab\naaa"
+} {aa aaa}
+test regexp-26.7 {Tcl bug 2826551: -line sensitive regexp and -start} {
+    set match1 {}
+    set match2 {}
+    list \
+	[regexp -start 0 -indices -line {^a} "\nab" match1] $match1 \
+	[regexp -start 1 -indices -line {^a} "\nab" match2] $match2
+} {1 {1 1} 1 {1 1}}
+test regexp-26.8 {Tcl bug 2826551: diff regexp with -line option} {
+    set data "@1\n2\n+3\n@4\n-5\n+6\n7\n@8\n9\n"
+    regexp -all -inline -line {^@.*\n(?:[^@].*\n?)*} $data
+} "{@1\n2\n+3\n} {@4\n-5\n+6\n7\n} {@8\n9\n}"
+test regexp-26.9 {Tcl bug 2826551: diff regexp with embedded -line option} {
+    set data "@1\n2\n+3\n@4\n-5\n+6\n7\n@8\n9\n"
+    regexp -all -inline {(?n)^@.*\n(?:[^@].*\n?)*} $data
+} "{@1\n2\n+3\n} {@4\n-5\n+6\n7\n} {@8\n9\n}"
+test regexp-26.10 {regexp with -line option} {
+    regexp -all -inline -line -- {a*} "a\n"
+} {a {}}
+test regexp-26.11 {regexp without -line option} {
+    regexp -all -inline -- {a*} "a\n"
+} {a {}}
+test regexp-26.12 {regexp with -line option} {
+    regexp -all -inline -line -- {a*} "b\n"
+} {{} {}}
+test regexp-26.13 {regexp without -line option} {
+    regexp -all -inline -- {a*} "b\n"
+} {{} {}}
 
 # cleanup
 ::tcltest::cleanupTests

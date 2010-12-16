@@ -516,7 +516,10 @@ proc long-toc {text} {
 proc option-toc {name class switch} {
     global manual
     if {[string match "*OPTIONS" $manual(section)]} {
-	if {$manual(name) ne "ttk_widget"} {
+	if {
+	    $manual(name) ne "ttk_widget"
+	    && $manual(section) ne "WIDGET-SPECIFIC OPTIONS"
+	} then {
 	    # link the defined option into the long table of contents
 	    set link [long-toc "$switch, $name, $class"]
 	    regsub -- "$switch, $name, $class" $link "$switch" link
