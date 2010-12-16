@@ -95,6 +95,12 @@ extern "C" {
 #define TK_USE_INPUT_METHODS
 #endif
 
+/* quell shadow warnings */
+#ifdef index
+#  undef index
+#endif
+#define index tcl_scoped_index
+
 /*
  * Dummy types that are used by clients:
  */
@@ -1589,6 +1595,9 @@ typedef int (Tk_SelectionProc) _ANSI_ARGS_((ClientData clientData,
 /*
  * end block for C++
  */
+
+/* quell shadow warnings */
+#undef index
 
 #ifdef __cplusplus
 }

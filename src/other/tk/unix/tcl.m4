@@ -1113,7 +1113,6 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
     AC_CHECK_LIB(dl, dlopen, have_dl=yes, have_dl=no)
 
     # Require ranlib early so we can override it in special cases below.
-    AS_IF([test x"${SHLIB_VERSION}" = x], [SHLIB_VERSION="1.0"])
 
     AC_REQUIRE([AC_PROG_RANLIB])
 
@@ -1132,7 +1131,8 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
     CFLAGS_DEBUG=-g
     CFLAGS_OPTIMIZE=-O
     AS_IF([test "$GCC" = yes], [
-	CFLAGS_WARNING="-Wall"
+#	CFLAGS_WARNING="-Wall -Wno-implicit-int"
+	CFLAGS_WARNING="-w"
     ], [CFLAGS_WARNING=""])
 dnl FIXME: Replace AC_CHECK_PROG with AC_CHECK_TOOL once cross compiling is fixed.
 dnl AC_CHECK_TOOL(AR, ar)
@@ -1150,12 +1150,11 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    AS_IF([test "${TCL_THREADS}" = "1" -a "$GCC" != "yes"], [
 		# AIX requires the _r compiler when gcc isn't being used
 		case "${CC}" in
-		    *_r|*_r\ *)
+		    *_r)
 			# ok ...
 			;;
 		    *)
-			# Make sure only first arg gets _r
-		    	CC=`echo "$CC" | sed -e 's/^\([[^ ]]*\)/\1_r/'`
+			CC=${CC}_r
 			;;
 		esac
 		AC_MSG_RESULT([Using $CC for compiling with threads])
@@ -1169,10 +1168,6 @@ dnl AC_CHECK_TOOL(AR, ar)
 
 	    DL_OBJS="tclLoadDl.o"
 	    LD_LIBRARY_PATH_VAR="LIBPATH"
-
-	    # ldAix No longer needed with use of -bexpall/-brtl
-	    # but some extensions may still reference it
-	    LDAIX_SRC='$(UNIX_DIR)/ldAix'
 
 	    # Check to enable 64-bit flags for compiler/linker
 	    AS_IF([test "$do64bit" = yes], [
@@ -1267,6 +1262,16 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    DL_LIBS="-ldl"
 	    CC_SEARCH_FLAGS=""
 	    LD_SEARCH_FLAGS=""
+	    ;;
+	Haiku*)
+	    LDFLAGS="$LDFLAGS -Wl,--export-dynamic"
+	    SHLIB_CFLAGS="-fPIC"
+	    SHLIB_LD_LIBS='${LIBS}'
+	    SHLIB_SUFFIX=".so"
+	    SHLIB_LD='${CC} -shared ${CFLAGS} ${LDFLAGS}'
+	    DL_OBJS="tclLoadDl.o"
+	    DL_LIBS="-lroot"
+	    AC_CHECK_LIB(network, inet_ntoa, [LIBS="$LIBS -lnetwork"])
 	    ;;
 	Haiku*)
 	    LDFLAGS="$LDFLAGS -Wl,--export-dynamic"
@@ -1513,7 +1518,7 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    AS_IF([test $tcl_cv_ld_elf = yes], [
 		SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so'
 	    ], [
-		SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.${SHLIB_VERSION}'
+		SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.1.0'
 	    ])
 
 	    # Ancient FreeBSD doesn't handle version numbers with dots.
@@ -1522,7 +1527,6 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    TCL_LIB_VERSIONS_OK=nodots
 	    ;;
 	OpenBSD-*)
-	    CFLAGS_OPTIMIZE='-O2'
 	    SHLIB_CFLAGS="-fPIC"
 	    SHLIB_LD='${CC} -shared ${SHLIB_CFLAGS}'
 	    SHLIB_LD_LIBS='${LIBS}'
@@ -1532,7 +1536,7 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    AS_IF([test $doRpath = yes], [
 		CC_SEARCH_FLAGS='-Wl,-rpath,${LIB_RUNTIME_DIR}'])
 	    LD_SEARCH_FLAGS=${CC_SEARCH_FLAGS}
-	    SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.${SHLIB_VERSION}'
+	    SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.1.0'
 	    AC_CACHE_CHECK([for ELF], tcl_cv_ld_elf, [
 		AC_EGREP_CPP(yes, [
 #ifdef __ELF__
@@ -1687,6 +1691,7 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    LD_SEARCH_FLAGS=""
 	    LD_LIBRARY_PATH_VAR="DYLD_LIBRARY_PATH"
 	    AC_DEFINE(MAC_OSX_TCL, 1, [Is this a Mac I see before me?])
+	    AC_DEFINE(MODULE_SCOPE, extern, [module scope is visible])
 	    PLAT_OBJS='${MAC_OSX_OBJS}'
 	    PLAT_SRCS='${MAC_OSX_SRCS}'
 	    AC_MSG_CHECKING([whether to use CoreFoundation])
@@ -1870,7 +1875,7 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    # requires an extra version number at the end of .so file names.
 	    # So, the library has to have a name like libtcl75.so.1.0
 
-	    SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.${SHLIB_VERSION}'
+	    SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.1.0'
 	    UNSHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.a'
 	    TCL_LIB_VERSIONS_OK=nodots
 	    ;;
@@ -2135,7 +2140,6 @@ dnl # preprocessing tests use only CPPFLAGS.
     AC_SUBST(DL_OBJS)
     AC_SUBST(PLAT_OBJS)
     AC_SUBST(PLAT_SRCS)
-    AC_SUBST(LDAIX_SRC)
     AC_SUBST(CFLAGS)
     AC_SUBST(CFLAGS_DEBUG)
     AC_SUBST(CFLAGS_OPTIMIZE)

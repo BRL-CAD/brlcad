@@ -92,12 +92,6 @@ HTML_DIR		= @HTML_DIR@
 # Directory in which to install html documentation:
 HTML_INSTALL_DIR	= $(INSTALL_ROOT)$(HTML_DIR)
 
-# Directory in which to install the configuration file tkConfig.sh:
-CONFIG_INSTALL_DIR	= $(INSTALL_ROOT)$(libdir)
-
-# Directory in which to install the demo files:
-DEMO_INSTALL_DIR	= $(INSTALL_ROOT)$(TK_LIBRARY)/demos
-
 # The directory containing the Tcl sources and headers appropriate
 # for this version of Tk ("srcdir" will be replaced or has already
 # been replaced by the configure script):
@@ -193,7 +187,7 @@ NO_DEPRECATED_FLAGS	= -DTCL_NO_DEPRECATED
 
 # Some versions of make, like SGI's, use the following variable to
 # determine which shell to use for executing commands:
-SHELL			= @SHELL@
+SHELL			= /bin/sh
 
 # BUILD_TCLSH is the fully qualified path name of the tclsh shell
 # in the Tcl build directory. Test that need to be run in the
@@ -219,9 +213,9 @@ INSTALL_STRIP_PROGRAM   = -s
 INSTALL_STRIP_LIBRARY   = -S -x
 
 INSTALL			= @srcdir@/install-sh -c
-INSTALL_PROGRAM		= ${INSTALL}
-INSTALL_LIBRARY		= ${INSTALL}
-INSTALL_DATA		= ${INSTALL} -m 644
+INSTALL_PROGRAM		= ${INSTALL} -m 775
+INSTALL_LIBRARY		= ${INSTALL} -m 775
+INSTALL_DATA		= ${INSTALL} -m 664
 
 # The symbol below provides support for dynamic loading and shared
 # libraries.  See configure.in for a description of what it means.
@@ -272,6 +266,8 @@ STLIB_LD		= @STLIB_LD@
 SHLIB_LD		= @SHLIB_LD@
 SHLIB_LD_LIBS		= @SHLIB_LD_LIBS@
 TK_SHLIB_LD_EXTRAS	= @TK_SHLIB_LD_EXTRAS@
+
+SHLIB_SUFFIX            = @SHLIB_SUFFIX@
 
 # Additional search flags needed to find the various shared libraries
 # at run-time.  The first symbol is for use when creating a binary
@@ -554,7 +550,7 @@ PRIVATE_HDRS = $(GENERIC_DIR)/tkInt.h $(GENERIC_DIR)/tkIntDecls.h \
 	$(GENERIC_DIR)/tkIntPlatDecls.h $(GENERIC_DIR)/tkPort.h \
 	$(TTK_HDRS) $(@TK_WINDOWINGSYSTEM@_PRIVATE_HDRS)
 
-DEMOPROGS = browse hello ixset rmt rolodex tcolor timer widget
+DEMOPROGS = browse hello ixset rmt rolodex square tcolor timer widget
 
 SHELL_ENV = \
 	@LD_LIBRARY_PATH_VAR@="`pwd`:${TCL_BIN_DIR}:$${@LD_LIBRARY_PATH_VAR@}"; \
@@ -569,7 +565,7 @@ binaries: ${LIB_FILE} ${STUB_LIB_FILE} wish@EXEEXT@
 libraries:
 
 $(TOP_DIR)/doc/man.macros:
-	chmod +x $(UNIX_DIR)/install-sh
+	chmod 775 $(UNIX_DIR)/install-sh
 	$(INSTALL_DATA) @TCL_SRC_DIR@/doc/man.macros $(TOP_DIR)/doc/man.macros
 
 doc: $(TOP_DIR)/doc/man.macros
@@ -579,10 +575,20 @@ doc: $(TOP_DIR)/doc/man.macros
 ${LIB_FILE}: ${OBJS} ${STUB_LIB_FILE} @LIB_RSRC_FILE@
 	rm -f $@
 	@MAKE_LIB@
+	@if test -f $(LIB_FILE) ; then \
+	 if test ! -f libtk$(SHLIB_SUFFIX) ; then \
+            ln -s $(LIB_FILE) libtk$(SHLIB_SUFFIX) ; \
+	 fi;\
+	fi
 
 ${STUB_LIB_FILE}: ${STUB_LIB_OBJS}
 	rm -f $@
 	@MAKE_STUB_LIB@
+	@if test -f $(STUB_LIB_FILE) ; then \
+	  if test ! -f libtkstub.a ; then \
+	    ln -s $(STUB_LIB_FILE) libtkstub.a ; \
+	 fi;\
+	fi
 
 # Build Aqua resource files
 ${TK_RSRC_FILE}: $(AQUA_RESOURCES)
@@ -639,6 +645,7 @@ xttest: test.o tkTest.o tkSquare.o $(TK_LIB_FILE)
 #	% make test TESTFLAGS="-verbose bps -file fileName.test"
 
 test: test-classic test-ttk
+	@
 
 test-classic: tktest@EXEEXT@
 	$(SHELL_ENV) ./tktest@EXEEXT@ $(TEST_DIR)/all.tcl -geometry +0+0 $(TESTFLAGS)
@@ -699,13 +706,12 @@ install-strip:
 # possible (e.g. if installing as root).
 
 install-binaries: $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) wish@EXEEXT@
-	@for i in "$(LIB_INSTALL_DIR)" "$(BIN_INSTALL_DIR)" \
-	    "$(PKG_INSTALL_DIR)" "$(CONFIG_INSTALL_DIR)" ; \
+	@for i in "$(LIB_INSTALL_DIR)" "$(BIN_INSTALL_DIR)" "$(PKG_INSTALL_DIR)"; \
 	    do \
 	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 755 "$$i"; \
+		chmod 775 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -716,7 +722,7 @@ install-binaries: $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) wish@EXEEXT@
 	    echo "Creating package index $(PKG_INDEX)"; \
 	    rm -f "$(PKG_INDEX)"; \
 	    (\
-	    echo "if {[catch {package present Tcl 8.5.0}]} { return }";\
+	    echo "if {[catch {package present Tcl 8.5.0-8.6}]} { return }";\
 	    relative=`echo | awk '{ORS=" "; split("$(TK_PKG_DIR)",a,"/"); for (f in a) {print ".."}}'`;\
 	    echo "package ifneeded Tk $(MAJOR_VERSION).$(MINOR_VERSION)$(PATCH_LEVEL)\
 		[list load [file join \$$dir $${relative}$(TK_LIB_FILE)] Tk]";\
@@ -724,14 +730,25 @@ install-binaries: $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) wish@EXEEXT@
 	    fi
 	@echo "Installing $(LIB_FILE) to $(LIB_INSTALL_DIR)/"
 	@@INSTALL_LIB@
-	@chmod 555 "$(LIB_INSTALL_DIR)"/$(LIB_FILE)
+	@chmod 775 "$(LIB_INSTALL_DIR)"/$(LIB_FILE)
+	if test -f libtk$(SHLIB_SUFFIX) ; then \
+	   $(INSTALL_LIBRARY) libtk$(SHLIB_SUFFIX) $(LIB_INSTALL_DIR)/libtk$(SHLIB_SUFFIX);\
+	   chmod 775 $(LIB_INSTALL_DIR)/libtk$(SHLIB_SUFFIX) ; \
+	fi
 	@echo "Installing wish@EXEEXT@ as $(BIN_INSTALL_DIR)/wish$(VERSION)@EXEEXT@"
 	@$(INSTALL_PROGRAM) wish@EXEEXT@ "$(BIN_INSTALL_DIR)"/wish$(VERSION)@EXEEXT@
-	@echo "Installing tkConfig.sh to $(CONFIG_INSTALL_DIR)/"
-	@$(INSTALL_DATA) tkConfig.sh "$(CONFIG_INSTALL_DIR)"/tkConfig.sh
+	@echo "Installing wish@EXEEXT@ as $(BIN_INSTALL_DIR)/wish@EXEEXT@"
+	@$(INSTALL_PROGRAM) wish@EXEEXT@ "$(BIN_INSTALL_DIR)"/wish@EXEEXT@
+	@echo "Installing tkConfig.sh to $(LIB_INSTALL_DIR)/"
+	@$(INSTALL_DATA) tkConfig.sh "$(LIB_INSTALL_DIR)"/tkConfig.sh
 	@if test "$(STUB_LIB_FILE)" != "" ; then \
 	    echo "Installing $(STUB_LIB_FILE) to $(LIB_INSTALL_DIR)/"; \
 	    @INSTALL_STUB_LIB@ ; \
+	    chmod 775 $(LIB_INSTALL_DIR)/$(STUB_LIB_FILE) ; \
+	    if test -f libtkstub.a ; then \
+	        $(INSTALL_LIBRARY) libtkstub.a $(LIB_INSTALL_DIR)/libtkstub.a ; \
+		chmod 775 $(LIB_INSTALL_DIR)/libtkstub.a ; \
+	    fi;\
 	fi
 	@EXTRA_INSTALL_BINARIES@
 
@@ -745,7 +762,7 @@ install-libraries: libraries
 	    if [ -n "$$i" -a ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 755 "$$i"; \
+		chmod 775 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -762,7 +779,7 @@ install-libraries: libraries
 	    $(INSTALL_DATA) $$i "$(INCLUDE_INSTALL_DIR)"/X11; \
 	    done;
 	@echo "Installing library files to $(SCRIPT_INSTALL_DIR)";
-	@for i in $(TOP_DIR)/library/*.tcl \
+	@for i in $(TOP_DIR)/library/*.tcl $(GENERIC_DIR)/prolog.ps \
 	        $(TOP_DIR)/library/tclIndex $(UNIX_DIR)/tkAppInit.c; \
 	    do \
 	    $(INSTALL_DATA) $$i "$(SCRIPT_INSTALL_DIR)"; \
@@ -790,58 +807,63 @@ install-libraries: libraries
 	    done;
 
 install-demos:
-	@for i in "$(DEMO_INSTALL_DIR)" "$(DEMO_INSTALL_DIR)"/images ; \
+	@for i in "$(SCRIPT_INSTALL_DIR)" \
+		"$(SCRIPT_INSTALL_DIR)"/demos \
+		"$(SCRIPT_INSTALL_DIR)"/demos/images ; \
 	    do \
 	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 755 "$$i"; \
+		chmod 775 "$$i"; \
 		else true; \
 		fi; \
 	    done;
-	@echo "Installing demos to $(DEMO_INSTALL_DIR)/";
+	@echo "Installing demos to $(SCRIPT_INSTALL_DIR)/demos/";
 	@for i in $(TOP_DIR)/library/demos/*; \
 	    do \
 	    if [ -f $$i ] ; then \
 		sed -e '3 s|exec wish|exec wish$(VERSION)|' \
-			$$i > "$(DEMO_INSTALL_DIR)"/`basename $$i`; \
+			$$i > "$(SCRIPT_INSTALL_DIR)"/demos/`basename $$i`; \
 	    fi; \
 	    done;
 	@for i in $(DEMOPROGS); \
 	    do \
-	    chmod 755 "$(DEMO_INSTALL_DIR)"/$$i; \
+	    chmod 775 "$(SCRIPT_INSTALL_DIR)"/demos/$$i; \
 	    done;
 	@echo "Installing demo images";
 	@for i in $(TOP_DIR)/library/demos/images/*; \
 	    do \
 	    if [ -f $$i ] ; then \
-		$(INSTALL_DATA) $$i "$(DEMO_INSTALL_DIR)"/images; \
+		$(INSTALL_DATA) $$i "$(SCRIPT_INSTALL_DIR)"/demos/images; \
 		fi; \
 	    done;
 
 install-doc:
+	@if test ! -x $(UNIX_DIR)/installManPage; then \
+	    chmod +x $(UNIX_DIR)/installManPage; \
+	    fi
 	@for i in "$(MAN_INSTALL_DIR)" "$(MAN1_INSTALL_DIR)" "$(MAN3_INSTALL_DIR)" "$(MANN_INSTALL_DIR)" ; \
 	    do \
 	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 755 "$$i"; \
+		chmod 775 "$$i"; \
 		else true; \
 		fi; \
 	    done;
 	@echo "Installing and cross-linking top-level (.1) docs";
 	@for i in $(TOP_DIR)/doc/*.1; do \
-	    $(SHELL) $(UNIX_DIR)/installManPage $(MAN_FLAGS) $$i "$(MAN1_INSTALL_DIR)"; \
+	     [ ! -e $(TOP_DIR)/doc/$$i ] || $(UNIX_DIR)/installManPage $(MAN_FLAGS) $(TOP_DIR)/doc/$$i $(MAN1_INSTALL_DIR); \
 	done
 
 	@echo "Installing and cross-linking C API (.3) docs";
 	@for i in $(TOP_DIR)/doc/*.3; do \
-	    $(SHELL) $(UNIX_DIR)/installManPage $(MAN_FLAGS) $$i "$(MAN3_INSTALL_DIR)"; \
+	    [ ! -e $(TOP_DIR)/doc/$$i ] || $(UNIX_DIR)/installManPage $(MAN_FLAGS) $(TOP_DIR)/doc/$$i $(MAN3_INSTALL_DIR); \
 	done
 
 	@echo "Installing and cross-linking command (.n) docs";
 	@for i in $(TOP_DIR)/doc/*.n; do \
-	    $(SHELL) $(UNIX_DIR)/installManPage $(MAN_FLAGS) $$i "$(MANN_INSTALL_DIR)"; \
+	    [ ! -e $(TOP_DIR)/doc/$$i ] || $(UNIX_DIR)/installManPage $(MAN_FLAGS) $(TOP_DIR)/doc/$$i $(MANN_INSTALL_DIR); \
 	done
 
 # Optional target to install private headers
@@ -851,7 +873,7 @@ install-private-headers: libraries
 	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 755 "$$i"; \
+		chmod 775 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -1517,7 +1539,7 @@ dist:   $(UNIX_DIR)/configure $(UNIX_DIR)/tkConfig.h.in $(MAC_OSX_DIR)/configure
 		$(UNIX_DIR)/README $(UNIX_DIR)/installManPage \
 		$(UNIX_DIR)/tkConfig.h.in $(DISTDIR)/unix
 	chmod 775 $(DISTDIR)/unix/configure $(DISTDIR)/unix/configure.in
-	chmod +x $(DISTDIR)/unix/install-sh
+	chmod 775 $(DISTDIR)/unix/install-sh
 	mkdir $(DISTDIR)/bitmaps
 	@(cd $(TOP_DIR); for i in bitmaps/* ; do \
 	    if [ -f $$i ] ; then \
@@ -1526,7 +1548,7 @@ dist:   $(UNIX_DIR)/configure $(UNIX_DIR)/tkConfig.h.in $(MAC_OSX_DIR)/configure
 	    fi; \
 	done;)
 	mkdir $(DISTDIR)/generic
-	cp -p $(GENERIC_DIR)/*.[ch] $(DISTDIR)/generic
+	cp -p $(GENERIC_DIR)/*.[ch] $(GENERIC_DIR)/prolog.ps $(DISTDIR)/generic
 	cp -p $(GENERIC_DIR)/*.decls $(DISTDIR)/generic
 	cp -p $(GENERIC_DIR)/README $(DISTDIR)/generic
 	cp -p $(TOP_DIR)/changes $(TOP_DIR)/ChangeLog \
@@ -1732,7 +1754,7 @@ package-common:
 	sed -e "s/TCLVERSION/$(TCLVERSION)/g" \
 		-e "s/TKVERSION/$(VERSION)/g" < $(UNIX_DIR)/wish.sh \
 		> $(DISTDIR)/SUNWtcl/$(TCLVERSION)/bin/wish$(VERSION)
-	chmod 755 $(DISTDIR)/SUNWtcl/$(TCLVERSION)/bin/wish$(VERSION)
+	chmod 775 $(DISTDIR)/SUNWtcl/$(TCLVERSION)/bin/wish$(VERSION)
 
 #
 # Build and install the architecture specific files in the dist directory.
