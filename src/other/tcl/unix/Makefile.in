@@ -392,7 +392,7 @@ GENERIC_SRCS = \
 	$(GENERIC_DIR)/tclNamesp.c \
 	$(GENERIC_DIR)/tclNotify.c \
 	$(GENERIC_DIR)/tclObj.c \
-        $(GENERIC_DIR)/tclParse.c \
+	$(GENERIC_DIR)/tclParse.c \
 	$(GENERIC_DIR)/tclPathObj.c \
 	$(GENERIC_DIR)/tclPipe.c \
 	$(GENERIC_DIR)/tclPkg.c \
@@ -744,15 +744,15 @@ install-binaries: binaries
 	@$(INSTALL_PROGRAM) ${TCL_EXE} "$(BIN_INSTALL_DIR)"/tclsh$(VERSION)@EXEEXT@
 	@echo "Installing ${TCL_EXE} as $(BIN_INSTALL_DIR)/tclsh"
 	@$(INSTALL_PROGRAM) ${TCL_EXE} "$(BIN_INSTALL_DIR)"/tclsh
-        @echo "Installing tclConfig.sh to $(LIB_INSTALL_DIR)/"
-        @$(INSTALL_DATA) tclConfig.sh "$(LIB_INSTALL_DIR)"/tclConfig.sh
+	@echo "Installing tclConfig.sh to $(LIB_INSTALL_DIR)/"
+	@$(INSTALL_DATA) tclConfig.sh "$(LIB_INSTALL_DIR)"/tclConfig.sh
 	@if test "$(STUB_LIB_FILE)" != "" ; then \
 	    echo "Installing $(STUB_LIB_FILE) to $(LIB_INSTALL_DIR)/"; \
 	    @INSTALL_STUB_LIB@ ; \
 	    chmod 775 $(LIB_INSTALL_DIR)/$(STUB_LIB_FILE) ; \
 	    if test -f libtclstub.a ; then \
-	        $(INSTALL_LIBRARY) libtclstub.a $(LIB_INSTALL_DIR)/libtclstub.a ; \
-	        chmod 775 $(LIB_INSTALL_DIR)/libtclstub.a ; \
+		$(INSTALL_LIBRARY) libtclstub.a $(LIB_INSTALL_DIR)/libtclstub.a ; \
+		chmod 775 $(LIB_INSTALL_DIR)/libtclstub.a ; \
 	    fi ; \
 	fi
 	@EXTRA_INSTALL_BINARIES@
