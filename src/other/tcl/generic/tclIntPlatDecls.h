@@ -99,12 +99,12 @@ EXTERN Tcl_DirEntry *	TclpReaddir(DIR *dir);
 #ifndef TclpLocaltime_unix_TCL_DECLARED
 #define TclpLocaltime_unix_TCL_DECLARED
 /* 11 */
-EXTERN struct tm *	TclpLocaltime_unix(CONST time_t *clock);
+EXTERN struct tm *	TclpLocaltime_unix(CONST time_t *t);
 #endif
 #ifndef TclpGmtime_unix_TCL_DECLARED
 #define TclpGmtime_unix_TCL_DECLARED
 /* 12 */
-EXTERN struct tm *	TclpGmtime_unix(CONST time_t *clock);
+EXTERN struct tm *	TclpGmtime_unix(CONST time_t *t);
 #endif
 #ifndef TclpInetNtoa_TCL_DECLARED
 #define TclpInetNtoa_TCL_DECLARED
@@ -317,12 +317,12 @@ EXTERN Tcl_DirEntry *	TclpReaddir(DIR *dir);
 #ifndef TclpLocaltime_unix_TCL_DECLARED
 #define TclpLocaltime_unix_TCL_DECLARED
 /* 11 */
-EXTERN struct tm *	TclpLocaltime_unix(CONST time_t *clock);
+EXTERN struct tm *	TclpLocaltime_unix(CONST time_t *t);
 #endif
 #ifndef TclpGmtime_unix_TCL_DECLARED
 #define TclpGmtime_unix_TCL_DECLARED
 /* 12 */
-EXTERN struct tm *	TclpGmtime_unix(CONST time_t *clock);
+EXTERN struct tm *	TclpGmtime_unix(CONST time_t *t);
 #endif
 #ifndef TclpInetNtoa_TCL_DECLARED
 #define TclpInetNtoa_TCL_DECLARED
@@ -389,8 +389,8 @@ typedef struct TclIntPlatStubs {
     int (*tclUnixWaitForFile) (int fd, int mask, int timeout); /* 8 */
     TclFile (*tclpCreateTempFile) (CONST char *contents); /* 9 */
     Tcl_DirEntry * (*tclpReaddir) (DIR *dir); /* 10 */
-    struct tm * (*tclpLocaltime_unix) (CONST time_t *clock); /* 11 */
-    struct tm * (*tclpGmtime_unix) (CONST time_t *clock); /* 12 */
+    struct tm * (*tclpLocaltime_unix) (CONST time_t *t); /* 11 */
+    struct tm * (*tclpGmtime_unix) (CONST time_t *t); /* 12 */
     char * (*tclpInetNtoa) (struct in_addr addr); /* 13 */
     int (*tclUnixCopyFile) (CONST char *src, CONST char *dst, CONST Tcl_StatBuf *statBufPtr, int dontCopyAtts); /* 14 */
 #endif /* UNIX */
@@ -438,8 +438,8 @@ typedef struct TclIntPlatStubs {
     int (*tclUnixWaitForFile) (int fd, int mask, int timeout); /* 8 */
     TclFile (*tclpCreateTempFile) (CONST char *contents); /* 9 */
     Tcl_DirEntry * (*tclpReaddir) (DIR *dir); /* 10 */
-    struct tm * (*tclpLocaltime_unix) (CONST time_t *clock); /* 11 */
-    struct tm * (*tclpGmtime_unix) (CONST time_t *clock); /* 12 */
+    struct tm * (*tclpLocaltime_unix) (CONST time_t *t); /* 11 */
+    struct tm * (*tclpGmtime_unix) (CONST time_t *t); /* 12 */
     char * (*tclpInetNtoa) (struct in_addr addr); /* 13 */
     int (*tclUnixCopyFile) (CONST char *src, CONST char *dst, CONST Tcl_StatBuf *statBufPtr, int dontCopyAtts); /* 14 */
     int (*tclMacOSXGetFileAttribute) (Tcl_Interp *interp, int objIndex, Tcl_Obj *fileName, Tcl_Obj **attributePtrPtr); /* 15 */

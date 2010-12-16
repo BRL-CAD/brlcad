@@ -20,6 +20,10 @@
 #include <windows.h>
 #undef WIN32_LEAN_AND_MEAN
 
+#ifdef INCL_WINSOCK_API_TYPEDEFS
+#undef INCL_WINSOCK_API_TYPEDEFS
+#endif
+
 /*
  * Ask for the winsock function typedefs, also.
  */
