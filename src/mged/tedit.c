@@ -51,7 +51,7 @@
 extern int classic_mged;
 
 /* editors to test, in order of discovery preference (EDITOR overrides) */
-#define WIN_EDITOR "c:/Program Files/Windows NT/Accessories/wordpad"
+#define WIN_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""
 #define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
 #define EMACS_EDITOR "emacs"
 #define JOVE_EDITOR "jove"
