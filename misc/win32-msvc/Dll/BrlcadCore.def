@@ -34,6 +34,7 @@ bu_bitv_new
 bu_bitv_shift
 bu_bitv_to_hex
 bu_bomb
+bu_booleanize
 bu_brlcad_data
 bu_byteorder
 bu_calloc
