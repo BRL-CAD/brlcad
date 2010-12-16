@@ -32,11 +32,11 @@
 int
 main(int argc, char **argv)
 {
+    bu_log("%s: %d args\n", argv[0], argc);
 
-    bu_log("bntester\n");
-
-    exit(0);
+    return 0;
 }
+
 
 /** @} */
 /*
