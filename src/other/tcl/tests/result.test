@@ -132,8 +132,10 @@ test result-6.2 {Bug 1649062} -setup {
 } -cleanup {
     rename foo {}
 } -result {foo {} {}}
-
-
+test result-6.3 {Bug 2383005} {
+    catch {return -code error -errorcode {{}a} eek} m
+    set m
+} {bad -errorcode value: expected a list but got "{}a"}
 # cleanup
 cleanupTests
 return

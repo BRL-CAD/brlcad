@@ -67,7 +67,7 @@ static Ttk_ElementOptionSpec TextElementOptions[] = {
 	Tk_Offset(TextElement,wrapLengthObj), "0" },
     { "-embossed", TK_OPTION_INT,
 	Tk_Offset(TextElement,embossedObj), "0"},
-    {NULL}
+    { NULL, 0, 0, NULL }
 };
 
 static int TextSetup(TextElement *text, Tk_Window tkwin)
@@ -236,7 +236,7 @@ static Ttk_ElementOptionSpec ImageElementOptions[] = {
 	Tk_Offset(ImageElement,stippleObj), "gray50" },
     { "-background", TK_OPTION_COLOR,
 	Tk_Offset(ImageElement,backgroundObj), DEFAULT_BACKGROUND },
-    {NULL}
+    { NULL, 0, 0, NULL }
 };
 
 /*
@@ -452,8 +452,7 @@ static Ttk_ElementOptionSpec LabelElementOptions[] = {
 	Tk_Offset(LabelElement,image.stippleObj), "gray50" },
     { "-background", TK_OPTION_COLOR,
 	Tk_Offset(LabelElement,image.backgroundObj), DEFAULT_BACKGROUND },
-
-    {NULL}
+    { NULL, 0, 0, NULL }
 };
 
 /*

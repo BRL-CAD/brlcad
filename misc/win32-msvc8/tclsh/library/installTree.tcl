@@ -191,6 +191,7 @@ catch {
   copy_stuff [file join $rootDir src archer archer] [file join $installDir bin]
   copy_stuff [file join $rootDir src mged mged.bat] [file join $installDir bin]
   copy_stuff [file join $rootDir src tclscripts rtwizard rtwizard.bat] [file join $installDir bin]
+  copy_stuff [file join $rootDir src tclscripts rtwizard rtwizard.tcl] [file join $installDir bin]
 }
 
 

@@ -14,8 +14,6 @@
 
 #include "tclWinInt.h"
 
-#include <fcntl.h>
-#include <io.h>
 #include <sys/stat.h>
 
 /*
@@ -43,8 +41,10 @@ static CRITICAL_SECTION initLock;
 
 #ifdef TCL_THREADS
 
-static CRITICAL_SECTION allocLock;
-static Tcl_Mutex allocLockPtr = (Tcl_Mutex) &allocLock;
+static struct Tcl_Mutex_ {
+    CRITICAL_SECTION crit;
+} allocLock;
+static Tcl_Mutex allocLockPtr = &allocLock;
 static int allocOnce = 0;
 
 #endif /* TCL_THREADS */
@@ -155,7 +155,7 @@ TclpThreadCreate(
     EnterCriticalSection(&joinLock);
 
     *idPtr = 0; /* must initialize as Tcl_Thread is a pointer and
-		 * on WIN64 sizeof void* != sizeof unsigned
+                 * on WIN64 sizeof void* != sizeof unsigned
 		 */
 
 #if defined(_MSC_VER) || defined(__MSVCRT__) || defined(__BORLANDC__)
@@ -412,7 +412,7 @@ Tcl_GetAllocMutex(void)
 {
 #ifdef TCL_THREADS
     if (!allocOnce) {
-	InitializeCriticalSection(&allocLock);
+	InitializeCriticalSection(&allocLock.crit);
 	allocOnce = 1;
     }
     return &allocLockPtr;
@@ -454,7 +454,7 @@ TclFinalizeLock(void)
 
 #ifdef TCL_THREADS
     if (allocOnce) {
-	DeleteCriticalSection(&allocLock);
+	DeleteCriticalSection(&allocLock.crit);
 	allocOnce = 0;
     }
 #endif
@@ -495,6 +495,7 @@ Tcl_MutexLock(
     Tcl_Mutex *mutexPtr)	/* The lock */
 {
     CRITICAL_SECTION *csPtr;
+
     if (*mutexPtr == NULL) {
 	MASTER_LOCK;
 
@@ -535,6 +536,7 @@ Tcl_MutexUnlock(
     Tcl_Mutex *mutexPtr)	/* The lock */
 {
     CRITICAL_SECTION *csPtr = *((CRITICAL_SECTION **)mutexPtr);
+
     LeaveCriticalSection(csPtr);
 }
 
@@ -560,6 +562,7 @@ TclpFinalizeMutex(
     Tcl_Mutex *mutexPtr)
 {
     CRITICAL_SECTION *csPtr = *(CRITICAL_SECTION **)mutexPtr;
+
     if (csPtr != NULL) {
 	DeleteCriticalSection(csPtr);
 	ckfree((char *) csPtr);
@@ -645,11 +648,11 @@ Tcl_ConditionWait(
 	 */
 
 	if (*condPtr == NULL) {
-	    winCondPtr = (WinCondition *)ckalloc(sizeof(WinCondition));
+	    winCondPtr = (WinCondition *) ckalloc(sizeof(WinCondition));
 	    InitializeCriticalSection(&winCondPtr->condLock);
 	    winCondPtr->firstPtr = NULL;
 	    winCondPtr->lastPtr = NULL;
-	    *condPtr = (Tcl_Condition)winCondPtr;
+	    *condPtr = (Tcl_Condition) winCondPtr;
 	    TclRememberCondition(condPtr);
 	}
 	MASTER_UNLOCK;
@@ -759,6 +762,7 @@ Tcl_ConditionNotify(
 {
     WinCondition *winCondPtr;
     ThreadSpecificData *tsdPtr;
+
     if (*condPtr != NULL) {
 	winCondPtr = *((WinCondition **)condPtr);
 
@@ -815,6 +819,7 @@ FinalizeConditionEvent(
     ClientData data)
 {
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *) data;
+
     tsdPtr->flags = WIN_THREAD_UNINIT;
     CloseHandle(tsdPtr->condEvent);
 }
@@ -857,6 +862,9 @@ TclpFinalizeCondition(
 	*condPtr = NULL;
     }
 }
+
+
+
 
 /*
  * Additions by AOL for specialized thread memory allocator.

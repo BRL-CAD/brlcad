@@ -1891,7 +1891,7 @@ TclGlob(
 	 * for existence and type.
 	 */
 	if (types == NULL) {
-	    /* 
+	    /*
 	     * We just want to check for existence.  In this case we
 	     * make it easy on Tcl_FSMatchInDirectory and its
 	     * sub-implementations by not bothering them (even though
@@ -1903,7 +1903,7 @@ TclGlob(
 	    }
 	    result = TCL_OK;
 	} else {
-	    /* 
+	    /*
 	     * We want to check for the correct type.  Tcl_FSMatchInDirectory
 	     * is documented to do this for us, if we give it a NULL pattern.
 	     */
@@ -1952,7 +1952,7 @@ TclGlob(
 	if (pathPrefix == NULL) {
 	    Tcl_Panic("Called TclGlob with TCL_GLOBMODE_TAILS and pathPrefix==NULL");
 	}
-	
+
 	pre = Tcl_GetStringFromObj(pathPrefix, &prefixLen);
 	if (prefixLen > 0
 		&& (strchr(separators, pre[prefixLen-1]) == NULL)) {
@@ -2434,7 +2434,6 @@ DoGlob(
 
 #if defined(__CYGWIN__) && defined(__WIN32__)
 	    {
-		extern int cygwin_conv_to_win32_path(const char *, char *);
 		char winbuf[MAX_PATH+1];
 
 		cygwin_conv_to_win32_path(Tcl_DStringValue(&append), winbuf);

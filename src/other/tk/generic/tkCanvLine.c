@@ -1151,7 +1151,7 @@ LineDeleteCoords(
     double *coordPtr;
     Tk_State state = itemPtr->state;
 
-    if(state == TK_STATE_NULL) {
+    if (state == TK_STATE_NULL) {
 	state = ((TkCanvas *)canvas)->canvas_state;
     }
 
@@ -1175,15 +1175,24 @@ LineDeleteCoords(
 	linePtr->coordPtr[length-2] = linePtr->lastArrowPtr[0];
 	linePtr->coordPtr[length-1] = linePtr->lastArrowPtr[1];
     }
-    first1 = first; last1 = last;
-    if(first1>0) first1 -= 2;
-    if(last1<length-2) last1 += 2;
+    first1 = first;
+    last1 = last;
+    if (first1 > 0) {
+	first1 -= 2;
+    }
+    if (last1 < length-2) {
+	last1 += 2;
+    }
     if (linePtr->smooth) {
-	if(first1>0) first1 -= 2;
-	if(last1<length-2) last1 += 2;
+	if (first1 > 0) {
+	    first1 -= 2;
+	}
+	if (last1 < length-2) {
+	    last1 += 2;
+	}
     }
 
-    if((first1<2) && (last1 >= length-2)) {
+    if (!(first1 < 2) && (last1 >= length-2)) {
 	/*
 	 * This is some optimizing code that will result that only the part of
 	 * the line that changed (and the objects that are overlapping with
@@ -1196,7 +1205,7 @@ LineDeleteCoords(
 	itemPtr->redraw_flags |= TK_ITEM_DONT_REDRAW;
 	itemPtr->x1 = itemPtr->x2 = (int) linePtr->coordPtr[first1];
 	itemPtr->y1 = itemPtr->y2 = (int) linePtr->coordPtr[first1+1];
-	if ((linePtr->firstArrowPtr != NULL) && (first1<2)) {
+	if ((linePtr->firstArrowPtr != NULL) && (first1 < 2)) {
 	    /*
 	     * Include old first arrow.
 	     */
@@ -1206,7 +1215,7 @@ LineDeleteCoords(
 		TkIncludePoint(itemPtr, coordPtr);
 	    }
 	}
-	if ((linePtr->lastArrowPtr != NULL) && (last1>=length-2)) {
+	if ((linePtr->lastArrowPtr != NULL) && (last1 >= length-2)) {
 	    /*
 	     * Include old last arrow.
 	     */
@@ -1219,7 +1228,7 @@ LineDeleteCoords(
 	coordPtr = linePtr->coordPtr+first1+2;
 	for (i=first1+2; i<=last1; i+=2) {
 	    TkIncludePoint(itemPtr, coordPtr);
-	    coordPtr+=2;
+	    coordPtr += 2;
 	}
     }
 
@@ -1237,13 +1246,13 @@ LineDeleteCoords(
 	linePtr->lastArrowPtr = NULL;
     }
     if (linePtr->arrow != ARROWS_NONE) {
-	    ConfigureArrows(canvas, linePtr);
+	ConfigureArrows(canvas, linePtr);
     }
-    if(itemPtr->redraw_flags & TK_ITEM_DONT_REDRAW) {
+    if (itemPtr->redraw_flags & TK_ITEM_DONT_REDRAW) {
 	double width;
 	int intWidth;
 
-	if ((linePtr->firstArrowPtr != NULL) && (first1<4)) {
+	if ((linePtr->firstArrowPtr != NULL) && (first1 < 4)) {
 	    /*
 	     * Include new first arrow.
 	     */
@@ -1253,7 +1262,7 @@ LineDeleteCoords(
 		TkIncludePoint(itemPtr, coordPtr);
 	    }
 	}
-	if ((linePtr->lastArrowPtr != NULL) && (last1>(length-4))) {
+	if ((linePtr->lastArrowPtr != NULL) && (last1 > length-4)) {
 	    /*
 	     * Include new right arrow.
 	     */
@@ -1265,20 +1274,22 @@ LineDeleteCoords(
 	}
 	width = linePtr->outline.width;
 	if (((TkCanvas *)canvas)->currentItemPtr == itemPtr) {
-		if (linePtr->outline.activeWidth>width) {
-		    width = linePtr->outline.activeWidth;
-		}
+	    if (linePtr->outline.activeWidth > width) {
+		width = linePtr->outline.activeWidth;
+	    }
 	} else if (state==TK_STATE_DISABLED) {
-		if (linePtr->outline.disabledWidth>0) {
-		    width = linePtr->outline.disabledWidth;
-		}
+	    if (linePtr->outline.disabledWidth > 0) {
+		width = linePtr->outline.disabledWidth;
+	    }
 	}
 	intWidth = (int) (width + 0.5);
 	if (intWidth < 1) {
 	    intWidth = 1;
 	}
-	itemPtr->x1 -= intWidth; itemPtr->y1 -= intWidth;
-	itemPtr->x2 += intWidth; itemPtr->y2 += intWidth;
+	itemPtr->x1 -= intWidth;
+	itemPtr->y1 -= intWidth;
+	itemPtr->x2 += intWidth;
+	itemPtr->y2 += intWidth;
 	Tk_CanvasEventuallyRedraw(canvas, itemPtr->x1, itemPtr->y1,
 		itemPtr->x2, itemPtr->y2);
     }

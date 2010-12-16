@@ -414,6 +414,7 @@ test encoding-24.2 {EscapeFreeProc on open channels} -constraints {
 } -setup {
     # Bug #524674 output
     set file [makeFile {
+	encoding system cp1252;	# Bug #2891556 crash revelator
 	fconfigure stdout -encoding iso2022-jp
 	puts ab\u4e4e\u68d9g
 	exit

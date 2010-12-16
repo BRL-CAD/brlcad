@@ -168,9 +168,43 @@ negative value implies that the write failed. Returning a value
 greater than the number of bytes given to the handler, or zero, is
 forbidden and will cause the Tcl core to throw an error.
 .PP
-If the subcommand throws an error the command which caused its
+To signal that the channel is not able to accept data for writing
+right now, it is necessary to throw the error "EAGAIN", i.e. to either
+.PP
+.CS
+return -code error EAGAIN
+.CE
+or
+.CS
+error EAGAIN
+.CE
+.PP
+For extensibility any error whose value is a negative integer number
+will cause the higher layers to set the C-level variable "\fBerrno\fR"
+to the absolute value of this number, signaling a system error.
+However, note that the exact mapping between these error numbers and
+their meanings is operating system dependent.
+.PP
+For example, while on Linux both
+.PP
+.CS
+return -code error -11
+.CE
+and
+.CS
+error -11
+.CE
+.PP
+are equivalent to the examples above, using the more readable string "EAGAIN",
+this is not true for BSD, where the equivalent number is -35.
+.PP
+The symbolic string however is the same across systems, and internally
+translated to the correct number. No other error value has such a mapping
+to a symbolic string.
+.PP
+If the subcommand throws any other error the command which caused its
 invocation (usually \fBputs\fR) will appear to have thrown this error.
-Any exception beyond \fIerror\fR (e.g. \fIbreak\fR, etc.) is treated
+Any exception beyond \fIerror\fR (e.g.\ \fIbreak\fR, etc.) is treated
 as and converted to an error.
 .RE
 .TP

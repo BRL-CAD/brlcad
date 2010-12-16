@@ -407,9 +407,9 @@ Tcl_CreateInterp(void)
      * the Tcl_CallFrame structure (or vice versa).
      */
 
-    if (sizeof(Tcl_CallFrame) != sizeof(CallFrame)) {
+    if (sizeof(Tcl_CallFrame) < sizeof(CallFrame)) {
 	/*NOTREACHED*/
-	Tcl_Panic("Tcl_CallFrame and CallFrame are not the same size");
+	Tcl_Panic("Tcl_CallFrame must not be smaller than CallFrame");
     }
 
     /*
@@ -6463,40 +6463,61 @@ ExprAbsFunc(
 
     if (type == TCL_NUMBER_LONG) {
 	long l = *((const long *) ptr);
-	if (l <= (long)0) {
-	    if (l == LONG_MIN) {
-		TclBNInitBignumFromLong(&big, l);
-		goto tooLarge;
+
+	if (l > (long)0) {
+	    goto unChanged;
+	} else if (l == (long)0) {
+	    const char *string = objv[1]->bytes;
+	    if (!string) {
+	    /* There is no string representation, so internal one is correct */
+		goto unChanged;
 	    }
-	    Tcl_SetObjResult(interp, Tcl_NewLongObj(-l));
-	} else {
-	    Tcl_SetObjResult(interp, objv[1]);
+	    while (isspace(UCHAR(*string))) {
+	    	++string;
+	    }
+	    if (*string != '-') {
+		goto unChanged;
+	    }
+	} else if (l == LONG_MIN) {
+	    TclBNInitBignumFromLong(&big, l);
+	    goto tooLarge;
 	}
+	Tcl_SetObjResult(interp, Tcl_NewLongObj(-l));
 	return TCL_OK;
     }
 
     if (type == TCL_NUMBER_DOUBLE) {
 	double d = *((const double *) ptr);
-	if (d <= 0.0) {
-	    Tcl_SetObjResult(interp, Tcl_NewDoubleObj(-d));
+	static const double poszero = 0.0;
+
+	/* We need to distinguish here between positive 0.0 and
+	 * negative -0.0, see Bug ID #2954959.
+	 */
+	if (d == -0.0) {
+		if (!memcmp(&d, &poszero, sizeof(double))) {
+	    goto unChanged;
+	    }
 	} else {
-	    Tcl_SetObjResult(interp, objv[1]);
+	    if (d > -0.0) {
+		goto unChanged;
+	    }
 	}
+	Tcl_SetObjResult(interp, Tcl_NewDoubleObj(-d));
 	return TCL_OK;
     }
 
 #ifndef NO_WIDE_TYPE
     if (type == TCL_NUMBER_WIDE) {
 	Tcl_WideInt w = *((const Tcl_WideInt *) ptr);
-	if (w < (Tcl_WideInt)0) {
-	    if (w == LLONG_MIN) {
-		TclBNInitBignumFromWideInt(&big, w);
-		goto tooLarge;
-	    }
-	    Tcl_SetObjResult(interp, Tcl_NewWideIntObj(-w));
-	} else {
-	    Tcl_SetObjResult(interp, objv[1]);
+
+	if (w >= (Tcl_WideInt)0) {
+	    goto unChanged;
 	}
+	if (w == LLONG_MIN) {
+	    TclBNInitBignumFromWideInt(&big, w);
+	    goto tooLarge;
+	}
+	Tcl_SetObjResult(interp, Tcl_NewWideIntObj(-w));
 	return TCL_OK;
     }
 #endif
@@ -6509,6 +6530,7 @@ ExprAbsFunc(
 	    mp_neg(&big, &big);
 	    Tcl_SetObjResult(interp, Tcl_NewBignumObj(&big));
 	} else {
+	unChanged:
 	    Tcl_SetObjResult(interp, objv[1]);
 	}
 	return TCL_OK;

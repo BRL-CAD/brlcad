@@ -13,10 +13,10 @@
 ttk::notebook \- Multi-paned container widget
 .SH SYNOPSIS
 .nf
-\fBttk::notebook\fR \fIpathName \fR?\fIoptions...\fR?
+\fBttk::notebook\fR \fIpathname \fR?\fIoptions...\fR?
 .br
-\fIpathName \fBadd\fR \fIwindow\fR ?\fIoptions...\fR?
-\fIpathName \fBinsert\fR \fIindex\fR \fIwindow\fR ?\fIoptions...\fR?
+\fIpathname \fBadd\fR \fIwindow\fR ?\fIoptions...\fR?
+\fIpathname \fBinsert\fR \fIindex\fR \fIwindow\fR ?\fIoptions...\fR?
 .fi
 .BE
 .SH DESCRIPTION
@@ -124,9 +124,18 @@ The tab will not be displayed, but the associated window
 remains managed by the notebook and its configuration remembered.
 Hidden tabs may be restored with the \fBadd\fR command.
 .TP
-\fIpathName \fBidentify\fR \fIx y\fR
-Returns the name of the element at position \fIx\fR, \fIy\fR.
-See \fIttk::widget(n)\fR.
+\fIpathname \fBidentify\fR \fIcomponent\fR \fIx\fR \fIy\fR
+Returns the name of the element under the point given by \fIx\fR and \fIy\fR,
+or the empty string if no component is present at that location.
+The following subcommands are supported:
+.RS
+.TP
+\fIpathname \fBidentify\fR \fBelement\fR \fIx\fR \fIy\fR
+Returns the name of the element at the specified location.
+.TP
+\fIpathname \fBidentify\fR \fBtab\fR \fIx\fR \fIy\fR
+Returns the index of the tab at the specified location.
+.RE
 .TP
 \fIpathname \fBindex\fR \fItabid\fR
 Returns the numeric index of the tab specified by \fItabid\fR,
@@ -201,3 +210,6 @@ ttk::notebook::enableTraversal .nb
 ttk::widget(n), grid(n)
 .SH "KEYWORDS"
 pane, tab
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

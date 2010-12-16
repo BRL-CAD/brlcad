@@ -299,6 +299,7 @@ typedef struct {
  */
 
 MODULE_SCOPE Tk_ClassProcs tkpButtonProcs;
+MODULE_SCOPE char tkDefButtonBorderWidth[TCL_INTEGER_SPACE];
 
 /*
  * Declaration of functions used in the implementation of the button widget.

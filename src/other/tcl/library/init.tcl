@@ -17,7 +17,7 @@
 if {[info commands package] == ""} {
     error "version mismatch: library\nscripts expect Tcl version 7.5b1 or later but the loaded version is\nonly [info patchlevel]"
 }
-package require -exact Tcl 8.5.8
+package require -exact Tcl 8.5.9
 
 # Compute the auto path to use in this interpreter.
 # The values on the path come from several locations:
@@ -659,7 +659,7 @@ proc auto_execok name {
 	# Add an initial ; to have the {} extension check first.
 	set execExtensions [split ";$env(PATHEXT)" ";"]
     } else {
-	set execExtensions [list {} .com .exe .bat]
+	set execExtensions [list {} .com .exe .bat .cmd]
     }
 
     if {$name in $shellBuiltins} {

@@ -176,7 +176,8 @@ while test $# -gt 0 ; do
 	    fi
 	    ;;
 	x*)
-	    echo "Ignoring unrecognized option [$arg]"
+	    # should be geometry database files, so stop
+	    break
 	    ;;
     esac
     shift
@@ -232,7 +233,6 @@ available parameters.  Examples:
 
 OBJECTS="-type region"  # only convert regions
 OBJECTS="-not -type comb"  # only convert primitives
-OBJECTS="-depth=0"  # only convert top-level objects
 
 The MAXTIME option specifies how many seconds are allowed to elapse
 before the conversion is aborted.  Some conversions can take days or
@@ -386,11 +386,11 @@ while test $# -gt 0 ; do
     work="${file}.conversion"
     cmd="cp \"$file\" \"$work\""
     $VERBOSE_ECHO "\$ $cmd"
-    eval $cmd
+    eval "$cmd"
 
     # execute in a coprocess
     cmd="$SEARCH -c \"$work\" search . $OBJECTS"
-    objects=`eval $cmd 2>&1 | grep -v Using`
+    objects=`eval "$cmd" 2>&1 | grep -v Using`
     $VERBOSE_ECHO "\$ $cmd"
     $VERBOSE_ECHO "$objects"
 
@@ -425,7 +425,7 @@ EOF
 	nmg=fail
 	cmd="$GED -c "$work" facetize -n \"${obj}.nmg\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
-	output=`eval time $cmd 2>&1 | grep -v Using`
+	output=`eval time "$cmd" 2>&1 | grep -v Using`
 
 	# stop the limit timer.  when we get here, see if there is a
 	# sleep process still running.  if any found, the sleep
@@ -464,7 +464,7 @@ EOF
 	bot=fail
 	cmd="$GED -c "$work" facetize \"${obj}.bot\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
-	output=`eval time $cmd 2>&1 | grep -v Using`
+	output=`eval time "$cmd" 2>&1 | grep -v Using`
 
 	# stop the limit timer, same as above.
 	for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do

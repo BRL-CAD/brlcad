@@ -433,74 +433,83 @@ test interp-11.7 {testing interp target} {
 test interp-12.1 {testing interp issafe} {
     interp issafe
 } 0
-test interp-12.2 {testing interp issafe} {
+test interp-12.2 {testing interp issafe} -setup {
     catch {interp delete a}
+} -body {
     interp create a
     interp issafe a
-} 0
-test interp-12.3 {testing interp issafe} {
+} -result 0
+test interp-12.3 {testing interp issafe} -setup {
     catch {interp delete a}
+} -body {
     interp create a
     interp create {a x3} -safe
     interp issafe {a x3}
-} 1
-test interp-12.4 {testing interp issafe} {
+} -result 1
+test interp-12.4 {testing interp issafe} -setup {
     catch {interp delete a}
+} -body {
     interp create a
     interp create {a x3} -safe
     interp create {a x3 foo}
     interp issafe {a x3 foo}
-} 1
+} -result 1
 
 # Part 12: testing interpreter object command "issafe" sub-command
-test interp-13.1 {testing foo issafe} {
+test interp-13.1 {testing foo issafe} -setup {
     catch {interp delete a}
+} -body {
     interp create a
     a issafe
-} 0
-test interp-13.2 {testing foo issafe} {
+} -result 0
+test interp-13.2 {testing foo issafe} -setup {
     catch {interp delete a}
+} -body {
     interp create a
     interp create {a x3} -safe
     a eval x3 issafe
-} 1
-test interp-13.3 {testing foo issafe} {
+} -result 1
+test interp-13.3 {testing foo issafe} -setup {
     catch {interp delete a}
+} -body {
     interp create a
     interp create {a x3} -safe
     interp create {a x3 foo}
     a eval x3 eval foo issafe
-} 1
-test interp-13.4 {testing issafe arg checking} {
+} -result 1
+test interp-13.4 {testing issafe arg checking} -body {
     catch {interp create a}
-    list [catch {a issafe too many args} msg] $msg
-} {1 {wrong # args: should be "a issafe"}}
+    a issafe too many args
+} -returnCodes error -result {wrong # args: should be "a issafe"}
 
 # part 14: testing interp aliases
 test interp-14.1 {testing interp aliases} {
     interp aliases
 } ""
-test interp-14.2 {testing interp aliases} {
+test interp-14.2 {testing interp aliases} -setup {
     catch {interp delete a}
+} -body {
     interp create a
     a alias a1 puts
     a alias a2 puts
     a alias a3 puts
     lsort [interp aliases a]
-} {a1 a2 a3}
-test interp-14.3 {testing interp aliases} {
+} -result {a1 a2 a3}
+test interp-14.3 {testing interp aliases} -setup {
     catch {interp delete a}
+} -body {
     interp create a
     interp create {a x3}
     interp alias {a x3} froboz "" puts
     interp aliases {a x3}
-} froboz
-test interp-14.4 {testing interp alias - alias over master} {
-    # SF Bug 641195
+} -result froboz
+test interp-14.4 {testing interp alias - alias over master} -setup {
     catch {interp delete a}
+} -body {
+    # SF Bug 641195
     interp create a
     list [catch {interp alias "" a a eval} msg] $msg [info commands a]
-} {1 {cannot define or rename alias "a": interpreter deleted} {}}
+} -result {1 {cannot define or rename alias "a": interpreter deleted} {}}
 test interp-14.5 {testing interp-alias: wrong # args} -body {
     proc setx x {set x}
     interp alias {} a {} setx
@@ -1791,11 +1800,11 @@ test interp-23.2 {testing hiding vs aliases} {unixOrPc} {
     lappend l [lsort [interp aliases a]]
     lappend l [lsort [interp hidden a]]
     a alias bar {}
-    lappend l [interp aliases a]
+    lappend l [lsort [interp aliases a]]
     lappend l [lsort [interp hidden a]]
     interp delete a
     set l
-} {{cd encoding exec exit fconfigure file glob load open pwd socket source unload} {bar clock} {cd encoding exec exit fconfigure file glob load open pwd socket source unload} {bar clock} {bar cd encoding exec exit fconfigure file glob load open pwd socket source unload} clock {cd encoding exec exit fconfigure file glob load open pwd socket source unload}} 
+} {{cd encoding exec exit fconfigure file glob load open pwd socket source unload} {::tcl::mathfunc::max ::tcl::mathfunc::min bar clock} {cd encoding exec exit fconfigure file glob load open pwd socket source unload} {::tcl::mathfunc::max ::tcl::mathfunc::min bar clock} {bar cd encoding exec exit fconfigure file glob load open pwd socket source unload} {::tcl::mathfunc::max ::tcl::mathfunc::min clock} {cd encoding exec exit fconfigure file glob load open pwd socket source unload}} 
 
 test interp-24.1 {result resetting on error} {
     catch {interp delete a}
@@ -3275,6 +3284,18 @@ test interp-34.12 {time limit extension in callbacks} -setup {
 } -result {cb1 cb1 0 {} ok} -cleanup {
     rename cb1 {}
 }
+test interp-34.13 {time limit granularity and vwait: Bug 2891362} -setup {
+    set i [interp create -safe]
+} -body {
+    $i limit time -seconds [clock add [clock seconds] 1 second]
+    $i eval {
+	after 2000 set x timeout
+	vwait x
+	return $x
+    }
+} -cleanup {
+    interp delete $i
+} -returnCodes error -result {limit exceeded}
 
 test interp-35.1 {interp limit syntax} -body {
     interp limit
@@ -3468,6 +3489,19 @@ test interp-36.7 {SlaveBgerror sets error handler of slave [1999035]} -setup {
     unset result
     interp delete slave
 } -result foo
+
+test interp-37.1 {safe interps and min() and max(): Bug 2895741} -setup {
+    catch {interp delete a}
+    interp create a
+    set result {}
+} -body {
+    interp create {a b} -safe
+    lappend result [interp eval a {expr min(5,2,3)*max(7,13,11)}]
+    lappend result [interp eval {a b} {expr min(5,2,3)*max(7,13,11)}]
+} -cleanup {
+    unset result
+    interp delete a
+} -result {26 26}
 
 # cleanup
 foreach i [interp slaves] {

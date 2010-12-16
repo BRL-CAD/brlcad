@@ -1441,6 +1441,98 @@ TclCompEvalObj(
 	}
 
 	/*
+	 * #280.
+	 * Literal sharing fix. This part of the fix is not required by 8.4
+	 * because it eval-directs any literals, so just saving the argument
+	 * locations per command in bytecode is enough, embedded 'eval'
+	 * commands, etc. get the correct information.
+	 *
+	 * It had be backported for 8.5 because we can force the separate
+	 * compiling of a literal (in a proc body) by putting it into a control
+	 * command with dynamic pieces, and then such literal may be shared
+	 * and require their line-information to be reset, as for 8.6, as
+	 * described below.
+	 *
+	 * In 8.6 all the embedded script are compiled, and the resulting
+	 * bytecode stored in the literal. Now the shared literal has bytecode
+	 * with location data for _one_ particular location this literal is
+	 * found at. If we get executed from a different location the bytecode
+	 * has to be recompiled to get the correct locations. Not doing this
+	 * will execute the saved bytecode with data for a different location,
+	 * causing 'info frame' to point to the wrong place in the sources.
+	 *
+	 * Future optimizations ...
+	 * (1) Save the location data (ExtCmdLoc) keyed by start line. In that
+	 *     case we recompile once per location of the literal, but not
+	 *     continously, because the moment we have all locations we do not
+	 *     need to recompile any longer.
+	 *
+	 * (2) Alternative: Do not recompile, tell the execution engine the
+	 *     offset between saved starting line and actual one. Then modify
+	 *     the users to adjust the locations they have by this offset.
+	 *
+	 * (3) Alternative 2: Do not fully recompile, adjust just the location
+	 *     information.
+	 */
+
+	{
+	    Tcl_HashEntry *hePtr =
+		    Tcl_FindHashEntry(iPtr->lineBCPtr, (char *) codePtr);
+
+	    if (hePtr) {
+		ExtCmdLoc *eclPtr = Tcl_GetHashValue(hePtr);
+		int redo = 0;
+
+		if (invoker) {
+		    CmdFrame *ctxPtr = TclStackAlloc(interp,sizeof(CmdFrame));
+		    *ctxPtr = *invoker;
+
+		    if (invoker->type == TCL_LOCATION_BC) {
+			/*
+			 * Note: Type BC => ctx.data.eval.path    is not used.
+			 *		    ctx.data.tebc.codePtr used instead
+			 */
+
+			TclGetSrcInfoForPc(ctxPtr);
+			if (ctxPtr->type == TCL_LOCATION_SOURCE) {
+			    /*
+			     * The reference made by 'TclGetSrcInfoForPc' is
+			     * dead.
+			     */
+
+			    Tcl_DecrRefCount(ctxPtr->data.eval.path);
+			    ctxPtr->data.eval.path = NULL;
+			}
+		    }
+
+		    if (word < ctxPtr->nline) {
+			/*
+			 * Note: We do not care if the line[word] is -1. This
+			 * is a difference and requires a recompile (location
+			 * changed from absolute to relative, literal is used
+			 * fixed and through variable)
+			 *
+			 * Example:
+			 * test info-32.0 using literal of info-24.8
+			 *     (dict with ... vs           set body ...).
+			 */
+
+			redo = ((eclPtr->type == TCL_LOCATION_SOURCE)
+				    && (eclPtr->start != ctxPtr->line[word]))
+				|| ((eclPtr->type == TCL_LOCATION_BC)
+				    && (ctxPtr->type == TCL_LOCATION_SOURCE));
+		    }
+
+		    TclStackFree(interp, ctxPtr);
+		}
+
+		if (redo) {
+		    goto recompileObj;
+		}
+	    }
+	}
+
+	/*
 	 * Increment the code's ref count while it is being executed. If
 	 * afterwards no references to it remain, free the code.
 	 */
@@ -2793,14 +2885,14 @@ TclExecuteByteCode(
 	valuePtr = OBJ_AT_TOS; /* value to append */
 	part2Ptr = NULL;
 	storeFlags = (TCL_LEAVE_ERR_MSG | TCL_APPEND_VALUE
-		| TCL_LIST_ELEMENT | TCL_TRACE_READS);
+		| TCL_LIST_ELEMENT);
 	goto doStoreStk;
 
     case INST_LAPPEND_ARRAY_STK:
 	valuePtr = OBJ_AT_TOS; /* value to append */
 	part2Ptr = OBJ_UNDER_TOS;
 	storeFlags = (TCL_LEAVE_ERR_MSG | TCL_APPEND_VALUE
-		| TCL_LIST_ELEMENT | TCL_TRACE_READS);
+		| TCL_LIST_ELEMENT);
 	goto doStoreStk;
 
     case INST_APPEND_STK:
@@ -2855,14 +2947,14 @@ TclExecuteByteCode(
 	opnd = TclGetUInt4AtPtr(pc+1);
 	pcAdjustment = 5;
 	storeFlags = (TCL_LEAVE_ERR_MSG | TCL_APPEND_VALUE
-		| TCL_LIST_ELEMENT | TCL_TRACE_READS);
+		| TCL_LIST_ELEMENT);
 	goto doStoreArray;
 
     case INST_LAPPEND_ARRAY1:
 	opnd = TclGetUInt1AtPtr(pc+1);
 	pcAdjustment = 2;
 	storeFlags = (TCL_LEAVE_ERR_MSG | TCL_APPEND_VALUE
-		| TCL_LIST_ELEMENT | TCL_TRACE_READS);
+		| TCL_LIST_ELEMENT);
 	goto doStoreArray;
 
     case INST_APPEND_ARRAY4:
@@ -2904,14 +2996,14 @@ TclExecuteByteCode(
 	opnd = TclGetUInt4AtPtr(pc+1);
 	pcAdjustment = 5;
 	storeFlags = (TCL_LEAVE_ERR_MSG | TCL_APPEND_VALUE
-		| TCL_LIST_ELEMENT | TCL_TRACE_READS);
+		| TCL_LIST_ELEMENT);
 	goto doStoreScalar;
 
     case INST_LAPPEND_SCALAR1:
 	opnd = TclGetUInt1AtPtr(pc+1);
 	pcAdjustment = 2;
 	storeFlags = (TCL_LEAVE_ERR_MSG | TCL_APPEND_VALUE
-		| TCL_LIST_ELEMENT | TCL_TRACE_READS);
+		| TCL_LIST_ELEMENT);
 	goto doStoreScalar;
 
     case INST_APPEND_SCALAR4:
@@ -7609,6 +7701,7 @@ IllegalExprOperandType(
 
     Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 	    "can't use %s as operand of \"%s\"", description, operator));
+    Tcl_SetErrorCode(interp, "ARITH", "DOMAIN", description, NULL);
 }
 
 /*

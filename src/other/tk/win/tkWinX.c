@@ -298,7 +298,7 @@ TkWinXInit(
      * Initialize input language info
      */
 
-    if (GetLocaleInfo(LANGIDFROMLCID(GetKeyboardLayout(0)),
+    if (GetLocaleInfo(LANGIDFROMLCID((DWORD)GetKeyboardLayout(0)),
 	       LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
 	       (LPTSTR) &lpCP, sizeof(lpCP)/sizeof(TCHAR))
 	    && TranslateCharsetInfo((DWORD *)lpCP, &lpCs, TCI_SRCCODEPAGE)) {
@@ -405,7 +405,7 @@ TkWinGetPlatformId(void)
 		    KEY_READ, &hKey) != ERROR_SUCCESS) {
 		tkWinTheme = TK_THEME_WIN_XP;
 	    } else {
-		RegQueryValueEx(hKey, szCurrent, NULL, NULL, pBuffer, &dwSize);
+		RegQueryValueEx(hKey, szCurrent, NULL, NULL, (LPBYTE) pBuffer, &dwSize);
 		RegCloseKey(hKey);
 		if (strcmp(pBuffer, "Windows Standard") == 0) {
 		    tkWinTheme = TK_THEME_WIN_CLASSIC;
@@ -1002,14 +1002,16 @@ GenerateXEvent(
     LPARAM lParam)
 {
     XEvent event;
-    TkWindow *winPtr = (TkWindow *)Tk_HWNDToWindow(hwnd);
+    TkWindow *winPtr;
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
+    winPtr = (TkWindow *)Tk_HWNDToWindow(hwnd);
     if (!winPtr || winPtr->window == None) {
 	return;
     }
 
+    memset(&event, 0, sizeof(XEvent));
     event.xany.serial = winPtr->display->request++;
     event.xany.send_event = False;
     event.xany.display = winPtr->display;
@@ -1117,17 +1119,15 @@ GenerateXEvent(
 	unsigned int state = GetState(message, wParam, lParam);
 	Time time = TkpGetMS();
 	POINT clientPoint;
-	POINTS rootPoint;	/* Note: POINT and POINTS are different */
-	DWORD msgPos;
+	union {DWORD msgpos; POINTS point;} root;	/* Note: POINT and POINTS are different */
 
 	/*
 	 * Compute the screen and window coordinates of the event.
 	 */
 
-	msgPos = GetMessagePos();
-	rootPoint = MAKEPOINTS(msgPos);
-	clientPoint.x = rootPoint.x;
-	clientPoint.y = rootPoint.y;
+	root.msgpos = GetMessagePos();
+	clientPoint.x = root.point.x;
+	clientPoint.y = root.point.y;
 	ScreenToClient(hwnd, &clientPoint);
 
 	/*
@@ -1138,8 +1138,8 @@ GenerateXEvent(
 	event.xbutton.subwindow = None;
 	event.xbutton.x = clientPoint.x;
 	event.xbutton.y = clientPoint.y;
-	event.xbutton.x_root = rootPoint.x;
-	event.xbutton.y_root = rootPoint.y;
+	event.xbutton.x_root = root.point.x;
+	event.xbutton.y_root = root.point.y;
 	event.xbutton.state = state;
 	event.xbutton.time = time;
 	event.xbutton.same_screen = True;
@@ -1627,10 +1627,14 @@ HandleIMEComposition(
 	 * We set send_event to the special value of -2, so that TkpGetString
 	 * in tkWinKey.c knows that trans_chars[] already contains a UNICODE
 	 * char and there's no need to do encoding conversion.
+	 *
+	 * Note that the event *must* be zeroed out first; Tk plays cunning
+	 * games with the overalls structure. [Bug 2992129]
 	 */
 
 	winPtr = (TkWindow *) Tk_HWNDToWindow(hwnd);
 
+	memset(&event, 0, sizeof(XEvent));
 	event.xkey.serial = winPtr->display->request++;
 	event.xkey.send_event = -2;
 	event.xkey.display = winPtr->display;

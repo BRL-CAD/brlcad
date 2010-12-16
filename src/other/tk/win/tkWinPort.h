@@ -42,21 +42,39 @@
 #endif
 
 #include <time.h>
-#ifdef __CYGWIN__
-#    define _T(x) L##x
-#else
-#    include <tchar.h>
-#endif
 
 #ifdef _MSC_VER
-#    ifndef hypot
-#       define hypot _hypot
-#    endif
+#   ifndef hypot
+#	define hypot _hypot
+#   endif
 #endif /* _MSC_VER */
 
-#ifndef __GNUC__
-#    define strncasecmp strnicmp
-#    define strcasecmp stricmp
+/*
+ *  Pull in the typedef of TCHAR for windows.
+ */
+#if !defined(_TCHAR_DEFINED)
+#   include <tchar.h>
+#   ifndef _TCHAR_DEFINED
+	/* Borland seems to forget to set this. */
+	typedef _TCHAR TCHAR;
+#	define _TCHAR_DEFINED
+#   endif
+#endif
+
+#ifdef __CYGWIN__
+#   ifndef _vsnprintf
+#	define _vsnprintf vsnprintf
+#   endif
+#   ifndef _wcsicmp
+#	define _wcsicmp wcscasecmp
+#   endif
+#else
+#   ifndef strncasecmp
+#	define strncasecmp strnicmp
+#   endif
+#   ifndef strcasecmp
+#	define strcasecmp stricmp
+#   endif
 #endif
 
 #define NBBY 8
@@ -120,23 +138,5 @@
 #define TkpDefineNativeBitmaps()
 #define TkpCreateNativeBitmap(display, source) None
 #define TkpGetNativeAppBitmap(display, name, w, h) None
-
-/*
- * Define timezone for gettimeofday.
- */
-
-struct timezone {
-    int tz_minuteswest;
-    int tz_dsttime;
-};
-
-/*
- * Disabled inclusion of Tcl's private header in hope of discovering we
- * no longer need it.
- *
-#ifndef _TCLINT
-#include <tclInt.h>
-#endif
- */
 
 #endif /* _WINPORT */

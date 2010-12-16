@@ -40,8 +40,9 @@ characters explicitly.  This option may not be used in conjunction with
 whose names may contain glob-sensitive characters.
 .TP
 \fB\-join\fR
-The remaining pattern arguments are treated as a single pattern
-obtained by joining the arguments with directory separators.
+The remaining pattern arguments, after option processing, are treated
+as a single pattern obtained by joining the arguments with directory
+separators.
 .TP
 \fB\-nocomplain\fR
 Allows an empty list to be returned without error;  without this

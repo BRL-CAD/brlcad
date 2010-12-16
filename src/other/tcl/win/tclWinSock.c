@@ -1768,7 +1768,7 @@ TcpSetOptionProc(
     sock = infoPtr->socket;
 
 #ifdef TCL_FEATURE_KEEPALIVE_NAGLE
-    if (!stricmp(optionName, "-keepalive")) {
+    if (!strcasecmp(optionName, "-keepalive")) {
 	BOOL val = FALSE;
 	int boolVar, rtn;
 
@@ -1789,7 +1789,7 @@ TcpSetOptionProc(
 	    return TCL_ERROR;
 	}
 	return TCL_OK;
-    } else if (!stricmp(optionName, "-nagle")) {
+    } else if (!strcasecmp(optionName, "-nagle")) {
 	BOOL val = FALSE;
 	int boolVar, rtn;
 

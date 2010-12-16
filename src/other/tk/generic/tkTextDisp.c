@@ -2902,8 +2902,9 @@ AsyncUpdateLineMetrics(
     }
 
     lineNum = dInfoPtr->currentMetricUpdateLine;
-    if (lineNum == -1) {
-	dInfoPtr->lastMetricUpdateLine = 0;
+    if (dInfoPtr->lastMetricUpdateLine == -1) {
+	dInfoPtr->lastMetricUpdateLine =
+		TkBTreeNumLines(textPtr->sharedTextPtr->tree, textPtr);
     }
 
     /*

@@ -139,7 +139,7 @@ test wm-attributes-1.2.3 {usage} -constraints win -returnCodes error -body {
 } -result {wrong # args: should be "wm attributes window ?-alpha ?double?? ?-transparentcolor ?color?? ?-disabled ?bool?? ?-fullscreen ?bool?? ?-toolwindow ?bool?? ?-topmost ?bool??"}
 test wm-attributes-1.2.4 {usage} -constraints {unix notAqua} -returnCodes error -body {
     wm attributes . _
-} -result {bad attribute "_": must be -alpha, -topmost, -zoomed, or -fullscreen}
+} -result {bad attribute "_": must be -alpha, -topmost, -zoomed, -fullscreen, or -type}
 test wm-attributes-1.2.5 {usage} -constraints aqua -returnCodes error -body {
     wm attributes . _
 } -result {bad attribute "_": must be -alpha, -modified, -notify, or -titlepath}
@@ -1892,6 +1892,23 @@ test wm-transient-7.5 {Reassign transient, destroy transient} -body {
 } -cleanup {
     deleteWindows
 }
+
+test wm-transient-8.1 {transient to withdrawn window, Bug 1163496} -setup {
+    deleteWindows
+    set result {}
+} -body {
+    # Verifies that transients stay on top of their masters, even if they were
+    # made transients when those masters were withdrawn.
+    toplevel .t1; wm withdraw  .t1;     update
+    toplevel .t2; wm transient .t2 .t1; update
+    lappend result [winfo ismapped .t1] [winfo ismapped .t2]
+    wm deiconify .t1; update
+    lappend result [winfo ismapped .t1] [winfo ismapped .t2]
+    raise .t1; update
+    lappend result [lsearch -all -inline -glob [wm stackorder .] ".t?"]
+} -cleanup {
+    deleteWindows
+} -result {0 0 1 1 {.t1 .t2}}
 
 
 ### wm state ###

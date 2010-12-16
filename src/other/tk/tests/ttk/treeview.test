@@ -245,7 +245,7 @@ test treeview-3.15 "Consecutive duplicate entries in children list" -body {
 } -result [list x1 x2 x3]
 
 test treeview-3.16 "Insert child after self" -body {
-    .tv move x2 newfirstone 1 
+    .tv move x2 newfirstone 1
     consistencyCheck .tv
     .tv children newfirstone
 } -result [list x1 x2 x3]
@@ -261,7 +261,6 @@ test treeview-3.18 "Insert last child after end" -body {
     consistencyCheck .tv
     .tv children newfirstone
 } -result [list x1 x2 x3]
-
 
 test treeview-4.1 "opened - initial state" -body {
     .tv item newnode -open
@@ -290,12 +289,12 @@ test treeview-5.3 "Heading" -body {
 test treeview-5.4 "get cell" -body {
     set l [list a b c]
     .tv item newnode -values $l
-    .tv set newnode 1 
+    .tv set newnode 1
 } -result b
 
 test treeview-5.5 "set cell" -body {
     .tv set newnode 1 XXX
-    .tv item newnode -values 
+    .tv item newnode -values
 } -result [list a XXX c]
 
 test treeview-5.6 "set illegal cell" -body {
@@ -408,11 +407,11 @@ test treeview-7.1 "move" -body {
 
 test treeview-7.2 "illegal move" -body {
    .tv move d d2 end
-} -returnCodes 1 -result "Cannot insert d as a descendant of d2" 
+} -returnCodes 1 -result "Cannot insert d as a descendant of d2"
 
 test treeview-7.3 "illegal move has no effect" -body {
     consistencyCheck .tv
-    .tv children d 
+    .tv children d
 } -result [list d3 d1 d2]
 
 test treeview-7.4 "Replace children" -body {
@@ -474,8 +473,128 @@ test treeview-9.0 "scroll callback - empty tree" -body {
     set ::scrolldata
 } -result [list 0.0 1.0]
 
-### NEED: tests for focus item, selection
+### identify tests:
+#
+proc identify* {tv comps args} {
+    foreach {x y} $args {
+	foreach comp $comps {
+	    lappend result [$tv identify $comp $x $y]
+	}
+    }
+    return $result
+}
 
+# get list of column IDs from list of display column ids.
+#
+proc columnids {tv dcols} {
+    set result [list]
+    foreach dcol $dcols {
+	if {[catch {
+	    lappend result [$tv column $dcol -id]
+	}]} {
+	    lappend result ERROR
+	}
+    }
+    return $result
+}
+
+test treeview-identify-setup "identify series - setup" -body {
+    destroy .tv
+    ttk::setTheme default
+    ttk::treeview .tv -columns [list A B C]
+    .tv insert {} end -id branch -text branch -open true
+    .tv insert branch end -id item1 -text item1
+    .tv insert branch end -id item2 -text item2
+    .tv insert branch end -id item3 -text item3
+
+    .tv column #0 -width 50	;# 0-50
+    .tv column A -width 50	;# 50-100
+    .tv column B -width 50	;# 100-150
+    .tv column C -width 50	;# 150-200 (plus slop for margins)
+
+    wm geometry . {} ; pack .tv ; update
+}
+
+test treeview-identify-1 "identify heading" -body {
+    .tv configure -show {headings tree}
+    update idletasks
+    identify* .tv {region column} 10 10
+} -result [list heading #0]
+
+test treeview-identify-2 "identify columns" -body {
+    .tv configure -displaycolumns #all
+    update idletasks
+    columnids .tv [identify* .tv column 25 10  75 10  125 10  175 10]
+} -result [list {} A B C]
+
+test treeview-identify-3 "reordered columns" -body {
+    .tv configure -displaycolumns {B A C}
+    update idletasks
+    columnids .tv [identify* .tv column 25 10  75 10  125 10  175 10]
+} -result [list {} B A C]
+
+test treeview-identify-4 "no tree column" -body {
+    .tv configure -displaycolumns #all -show {headings}
+    update idletasks
+    identify* .tv {region column} 25 10  75 10  125 10  175 10
+} -result [list heading #1 heading #2 heading #3 nothing {}]
+
+# Item height in default theme is 20px
+test treeview-identify-5 "vertical scan - no headings" -body {
+    .tv configure -displaycolumns #all -show {tree}
+    update idletasks
+    identify* .tv {region item} 25 10  25 30  25 50  25 70  25 90
+} -result [list tree branch tree item1 tree item2 tree item3 nothing {}]
+
+test treeview-identify-6 "vertical scan - with headings" -body {
+    .tv configure -displaycolumns #all -show {tree headings}
+    update idletasks
+    identify* .tv {region item} 25 10  25 30  25 50  25 70  25 90
+} -result [list heading {} tree branch tree item1 tree item2 tree item3]
+
+test treeview-identify-7 "vertical scan - headings, no tree" -body {
+    .tv configure -displaycolumns #all -show {headings}
+    update idletasks
+    identify* .tv {region item} 25 10  25 30  25 50  25 70  25 90
+} -result [list heading {} cell branch cell item1 cell item2 cell item3]
+
+# In default theme, -indent and -itemheight both 20px
+# Disclosure element name is "Treeitem.indicator"
+set disclosure "*.indicator"
+test treeview-identify-8 "identify element" -body {
+    .tv configure -show {tree}
+    .tv insert branch  0 -id branch2 -open true
+    .tv insert branch2 0 -id branch3 -open true
+    .tv insert branch3 0 -id leaf3
+    update idletasks;
+    identify* .tv {item element} 10 10  30 30  50 50
+} -match glob -result [list \
+	branch $disclosure branch2 $disclosure branch3 $disclosure]
+
+# See #2381555 
+test treeview-identify-9 "identify works when horizontally scrolled" -setup {
+    .tv configure -show {tree headings}
+    foreach column {#0 A B C} {
+	.tv column $column -stretch 0 -width 50
+    }
+    place .tv -x 0 -y 0 -width 100
+} -body {
+    set result [list]
+    foreach xoffs {0 50 100} {
+	.tv xview $xoffs ; update
+	lappend result [identify* .tv {region column} 10 10 60 10]
+    }
+    set result
+} -result [list \
+	[list heading #0 heading #1] \
+	[list heading #1 heading #2] \
+	[list heading #2 heading #3] ]
+
+test treeview-identify-cleanup "identify - cleanup" -body {
+    destroy .tv
+}
+
+### NEED: tests for focus item, selection
 
 ### Misc. tests:
 
@@ -485,6 +604,17 @@ test treeview-10.1 "Root node properly initialized (#1541739)" -setup {
     .tv insert {} end -id a
     .tv see a
 } -cleanup {
+    destroy .tv
+}
+
+test treeview-3006842 "Null bindings" -setup {
+    ttk::treeview .tv -show tree
+} -body {
+    .tv tag bind empty <ButtonPress-1> {}
+    .tv insert {} end -text "Click me" -tags empty
+    event generate .tv <ButtonPress-1> -x 10 -y 10
+    .tv tag bind empty
+} -result {} -cleanup {
     destroy .tv
 }
 

@@ -365,6 +365,8 @@ addFormattedText {
     @@demo hscale	Horizontal scale
     @@demo vscale	Vertical scale
     @@new
+    @@demo ttkscale	Themed scale linked to a label with traces
+    @@new
     @@demo ttkprogress	Progress bar
 
     @@subtitle	Paned Windows and Notebooks
@@ -471,6 +473,7 @@ proc positionWindow w {
 proc showVars {w args} {
     catch {destroy $w}
     toplevel $w
+    if {[tk windowingsystem] eq "x11"} {wm attributes $w -type dialog}
     wm title $w [mc "Variable values"]
 
     set b [ttk::frame $w.frame]
@@ -572,6 +575,7 @@ proc showCode w {
     set top .code
     if {![winfo exists $top]} {
 	toplevel $top
+	if {[tk windowingsystem] eq "x11"} {wm attributes $top -type dialog}
 
 	set t [frame $top.f]
 	set text [text $t.text -font fixedFont -height 24 -wrap word \

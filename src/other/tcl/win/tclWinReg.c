@@ -615,17 +615,17 @@ GetKeyNames(
 	return TCL_ERROR;
     }
 
-    /* 
+    /*
      * Determine how big a buffer is needed for enumerating subkeys, and
      * how many subkeys there are
      */
 
     result = (*regWinProcs->regQueryInfoKeyProc)
-	(key, NULL, NULL, NULL, &subKeyCount, &maxSubKeyLen, NULL, NULL, 
+	(key, NULL, NULL, NULL, &subKeyCount, &maxSubKeyLen, NULL, NULL,
 	 NULL, NULL, NULL, NULL);
     if (result != ERROR_SUCCESS) {
 	Tcl_SetObjResult(interp, Tcl_NewObj());
-	Tcl_AppendResult(interp, "unable to query key \"", 
+	Tcl_AppendResult(interp, "unable to query key \"",
 			 Tcl_GetString(keyNameObj), "\": ", NULL);
 	AppendSystemError(interp, result);
 	RegCloseKey(key);
@@ -744,7 +744,7 @@ GetType(
      * know about the type, just use the numeric value.
      */
 
-    if (type > lastType || type < 0) {
+    if (type > lastType) {
 	Tcl_SetObjResult(interp, Tcl_NewIntObj((int) type));
     } else {
 	Tcl_SetObjResult(interp, Tcl_NewStringObj(typeNames[type], -1));
@@ -878,7 +878,7 @@ GetValue(
 	 */
 
 	Tcl_SetObjResult(interp, Tcl_NewByteArrayObj(
-		Tcl_DStringValue(&data), (int) length));
+		(BYTE *) Tcl_DStringValue(&data), (int) length));
     }
     Tcl_DStringFree(&data);
     return result;
@@ -1375,9 +1375,9 @@ SetValue(
 	Tcl_DStringFree(&buf);
     } else if (type == REG_SZ || type == REG_EXPAND_SZ) {
 	Tcl_DString buf;
-	char *data = Tcl_GetStringFromObj(dataObj, &length);
+	CONST char *data = Tcl_GetStringFromObj(dataObj, &length);
 
-	data = (char *) Tcl_WinUtfToTChar(data, length, &buf);
+	data = Tcl_WinUtfToTChar(data, length, &buf);
 
 	/*
 	 * Include the null in the length, padding if needed for Unicode.
@@ -1392,15 +1392,15 @@ SetValue(
                 (DWORD) type, (BYTE *) data, (DWORD) length);
 	Tcl_DStringFree(&buf);
     } else {
-	char *data;
+	BYTE *data;
 
 	/*
 	 * Store binary data in the registry.
 	 */
 
-	data = Tcl_GetByteArrayFromObj(dataObj, &length);
+	data = (BYTE *) Tcl_GetByteArrayFromObj(dataObj, &length);
 	result = (*regWinProcs->regSetValueExProc)(key, valueName, 0,
-                (DWORD) type, (BYTE *) data, (DWORD) length);
+                (DWORD) type, data, (DWORD) length);
     }
 
     Tcl_DStringFree(&nameBuf);
@@ -1438,10 +1438,11 @@ BroadcastValue(
     int objc,			/* Number of arguments. */
     Tcl_Obj *CONST objv[])	/* Argument values. */
 {
-    LRESULT result, sendResult;
+    LRESULT result;
+    DWORD sendResult;
     UINT timeout = 3000;
     int len;
-    char *str;
+    CONST char *str;
     Tcl_Obj *objPtr;
 
     if ((objc != 3) && (objc != 5)) {
@@ -1600,8 +1601,8 @@ ConvertDWORD(
      * Check to see if the low bit is in the first byte.
      */
 
-    localType = (*((char*)(&order)) == 1) ? REG_DWORD : REG_DWORD_BIG_ENDIAN;
-    return (type != localType) ? SWAPLONG(value) : value;
+    localType = (*((char*) &order) == 1) ? REG_DWORD : REG_DWORD_BIG_ENDIAN;
+    return (type != localType) ? (DWORD) SWAPLONG(value) : value;
 }
 
 /*

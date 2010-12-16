@@ -89,7 +89,7 @@ Tcl_RegexpObjCmd(
     Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     int i, indices, match, about, offset, all, doinline, numMatchesSaved;
-    int cflags, eflags, stringLength;
+    int cflags, eflags, stringLength, matchLength;
     Tcl_RegExp regExpr;
     Tcl_Obj *objPtr, *startIndex = NULL, *resultPtr = NULL;
     Tcl_RegExpInfo info;
@@ -231,15 +231,6 @@ Tcl_RegexpObjCmd(
 	return TCL_ERROR;
     }
 
-    if (offset > 0) {
-	/*
-	 * Add flag if using offset (string is part of a larger string), so
-	 * that "^" won't match.
-	 */
-
-	eflags |= TCL_REG_NOTBOL;
-    }
-
     objc -= 2;
     objv += 2;
 
@@ -267,12 +258,23 @@ Tcl_RegexpObjCmd(
      */
 
     while (1) {
-	match = Tcl_RegExpExecObj(interp, regExpr, objPtr,
-		offset /* offset */, numMatchesSaved, eflags
-		| ((offset > 0 &&
-		(Tcl_GetUniChar(objPtr,offset-1) != (Tcl_UniChar)'\n'))
-		? TCL_REG_NOTBOL : 0));
+	/*
+	 * Pass either 0 or TCL_REG_NOTBOL in the eflags. Passing
+	 * TCL_REG_NOTBOL indicates that the character at offset should not be
+	 * considered the start of the line. If for example the pattern {^} is
+	 * passed and -start is positive, then the pattern will not match the
+	 * start of the string unless the previous character is a newline.
+	 */
 
+	if ((offset == 0) || ((offset > 0) &&
+		(Tcl_GetUniChar(objPtr, offset-1) == (Tcl_UniChar)'\n'))) {
+	    eflags = 0;
+	} else {
+	    eflags = TCL_REG_NOTBOL;
+	}
+
+	match = Tcl_RegExpExecObj(interp, regExpr, objPtr, offset,
+		numMatchesSaved, eflags);
 	if (match < 0) {
 	    return TCL_ERROR;
 	}
@@ -389,12 +391,18 @@ Tcl_RegexpObjCmd(
 	 * offset never changes).
 	 */
 
-	if (info.matches[0].end == 0) {
+	matchLength = info.matches[0].end - info.matches[0].start;
+	offset += info.matches[0].end;
+
+	/*
+	 * A match of length zero could happen for {^} {$} or {.*} and in
+	 * these cases we always want to bump the index up one.
+	 */
+
+	if (matchLength == 0) {
 	    offset++;
 	}
-	offset += info.matches[0].end;
 	all++;
-	eflags |= TCL_REG_NOTBOL;
 	if (offset >= stringLength) {
 	    break;
 	}
@@ -1166,7 +1174,12 @@ StringFirstCmd(
 	}
     }
 
-    if (length1 > 0) {
+    /*
+     * If the length of the needle is more than the length of the haystack, it
+     * cannot be contained in there so we can avoid searching. [Bug 2960021]
+     */
+
+    if (length1 > 0 && length1 <= length2) {
 	register Tcl_UniChar *p, *end;
 
 	end = ustring2 + length2 - length1 + 1;
@@ -1269,7 +1282,12 @@ StringLastCmd(
 	p = ustring2 + length2 - length1;
     }
 
-    if (length1 > 0) {
+    /*
+     * If the length of the needle is more than the length of the haystack, it
+     * cannot be contained in there so we can avoid searching. [Bug 2960021]
+     */
+
+    if (length1 > 0 && length1 <= length2) {
 	for (; p >= ustring2; p--) {
 	    /*
 	     * Scan backwards to find the first character.

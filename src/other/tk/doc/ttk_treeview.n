@@ -7,14 +7,15 @@
 '\" RCS: @(#) $Id$
 '\" 
 .so man.macros
-.TH ttk::treeview n 8.5 Tk "Tk Themed Widget"
+.TH ttk::treeview n 8.5.9 Tk "Tk Themed Widget"
 .BS
 .SH NAME
 ttk::treeview \- hierarchical multicolumn data display widget
 .SH SYNOPSIS
-\fBttk::treeview\fR \fIpathname \fR?\fIoptions\fR?
+\fBttk::treeview \fIpathname \fR?\fIoptions\fR?
 .BE
 .SH DESCRIPTION
+.PP
 The \fBttk::treeview\fR widget displays a hierarchical collection of items.
 Each item has a textual label, an optional image, 
 and an optional list of data values.
@@ -58,11 +59,8 @@ A list of column identifiers
 specifying which data columns are displayed 
 and the order in which they appear, 
 or the string \fB#all\fP.
-.RS
-.PP
-If set to \fB#all\fP (the default), all columns are shown in the order
-given.
-.RE
+If set to \fB#all\fP (the default),
+all columns are shown in the order given.
 .OP \-height height Height
 Specifies the number of rows which should be visible.
 Note:
@@ -98,20 +96,21 @@ The default is \fBtree headings\fR, i.e., show all elements.
 even if \fB\-show tree\fR is not specified.
 .RE
 .SH "WIDGET COMMAND"
+.PP
 .TP
-\fIpathname \fBbbox\fR \fIitem\fR ?\fIcolumn\fR?
+\fIpathname \fBbbox \fIitem\fR ?\fIcolumn\fR?
 Returns the bounding box (relative to the treeview widget's window)
 of the specified \fIitem\fR
 in the form \fIx y width height\fR.
 If \fIcolumn\fR is specified, returns the bounding box of that cell.
-If the \fIitem\fR is not visible 
+If the \fIitem\fR is not visible
 (i.e., if it is a descendant of a closed item or is scrolled offscreen),
 returns the empty list.
 .TP
-\fIpathname \fBcget\fR \fIoption\fR
+\fIpathname \fBcget \fIoption\fR
 Returns the current value of the specified \fIoption\fR; see \fIttk::widget(n)\fR.
 .TP
-\fIpathname \fBchildren\fR \fIitem\fR ?\fInewchildren\fR?
+\fIpathname \fBchildren \fIitem\fR ?\fInewchildren\fR?
 If \fInewchildren\fR is not specified,
 returns the list of children belonging to \fIitem\fR.
 .RS
@@ -124,7 +123,7 @@ None of the items in \fInewchildren\fR may be an ancestor
 of \fIitem\fR.
 .RE
 .TP
-\fIpathname \fBcolumn\fR \fIcolumn\fR ?\fI\-option \fR?\fIvalue \-option value...\fR?
+\fIpathname \fBcolumn \fIcolumn\fR ?\fI\-option \fR?\fIvalue \-option value...\fR?
 Query or modify the options for the specified \fIcolumn\fR.
 If no \fI\-option\fR is specified,
 returns a dictionary of option/value pairs.
@@ -165,16 +164,17 @@ Use \fIpathname column #0\fR to configure the tree column.
 \fIpathname \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
 Modify or query widget options; see \fIttk::widget(n)\fR.
 .TP
-\fIpathname \fBdelete\fR \fIitemList\fR
+\fIpathname \fBdelete \fIitemList\fR
 Deletes each of the items in \fIitemList\fR and all of their descendants.
 The root item may not be deleted.
 See also: \fBdetach\fR.
 .TP
-\fIpathname \fBdetach\fR \fIitemList\fR
+\fIpathname \fBdetach \fIitemList\fR
 Unlinks all of the specified items in \fIitemList\fR from the tree.
 The items and all of their descendants are still present
 and may be reinserted at another point in the tree
-but will not be displayed.
+with the \fBmove\fR operation,
+but will not be displayed until that is done.
 The root item may not be detached.
 See also: \fBdelete\fR.
 .TP
@@ -187,7 +187,7 @@ If \fIitem\fR is specified, sets the focus item to \fIitem\fR.
 Otherwise, returns the current focus item, or \fB{}\fR if there is none.
 .\" Need: way to clear the focus item.  {} works for this...
 .TP 
-\fIpathname \fBheading\fR \fIcolumn\fR ?\fI\-option \fR?\fIvalue \-option value...\fR?
+\fIpathname \fBheading \fIcolumn\fR ?\fI\-option \fR?\fIvalue \-option value...\fR?
 Query or modify the heading options for the specified \fIcolumn\fR.
 Valid options are:
 .RS
@@ -215,12 +215,35 @@ or the empty string if no such \fIcomponent\fR is present at that position.
 The following subcommands are supported:
 .RS
 .TP
-\fIpathname \fBidentify row\fR \fIx y\fR
+\fIpathname \fBidentify region \fIx y\fR
+.RS
+Returns one of:
+.IP heading
+Tree heading area;
+use [\fBpathname identify column \fIx y\fR]
+to determine the heading number.
+.IP separator
+Space between two column headings;
+[\fBpathname identify column \fIx y\fR]
+will return the display column identifier
+of the heading to left of the separator.
+.IP tree
+The tree area.
+.IP cell
+A data cell.
+.RE
+\fIpathname \fBidentify item \fIx y\fR
 Returns the item ID of the item at position \fIy\fR.
 .TP
-\fIpathname \fBidentify column\fR \fIx y\fR
+\fIpathname \fBidentify column \fIx y\fR
 Returns the data column identifier of the cell at position \fIx\fR.
 The tree column has ID \fB#0\fR.
+.TP
+\fIpathname \fBidentify element \fIx y\fR
+The element at position \fIx,y\fR.
+.TP
+\fIpathname \fBidentify row \fIx y\fR
+Obsolescent synonym for \fIpathname \fBidentify item\fR.
 .PP
 See \fBCOLUMN IDENTIFIERS\fR for a discussion of display columns
 and data columns.
@@ -229,7 +252,7 @@ and data columns.
 \fIpathname \fBindex \fIitem\fR
 Returns the integer index of \fIitem\fR within its parent's list of children.
 .TP
-\fIpathname \fBinsert\fR \fIparent\fR \fIindex\fR ?\fB\-id \fIid\fR? \fIoptions...\fR
+\fIpathname \fBinsert \fIparent index\fR ?\fB\-id \fIid\fR? \fIoptions...\fR
 Creates a new item.  
 \fIparent\fR is the item ID of the parent item,
 or the empty string \fB{}\fR
@@ -253,7 +276,7 @@ See \fBITEM OPTIONS\fR for the list of available options.
 \fIpathname \fBinstate \fIstatespec\fR ?\fIscript\fR?
 Test the widget state; see \fIttk::widget(n)\fR.
 .TP
-\fIpathname \fBitem\fR \fIitem\fR ?\fI\-option \fR?\fIvalue \-option value...\fR?
+\fIpathname \fBitem \fIitem\fR ?\fI\-option \fR?\fIvalue \-option value...\fR?
 Query or modify the options for the specified \fIitem\fR.
 If no \fI\-option\fR is specified, 
 returns a dictionary of option/value pairs.
@@ -284,13 +307,13 @@ or \fB{}\fR if \fIitem\fR is at the top level of the hierarchy.
 Returns the identifier of \fIitem\fR's previous sibling,
 or \fB{}\fR if \fIitem\fR is the first child of its parent.
 .TP
-\fIpathname \fBsee\fR \fIitem\fR
+\fIpathname \fBsee \fIitem\fR
 Ensure that \fIitem\fR is visible:
 sets all of \fIitem\fR's ancestors to \fB\-open true\fR,
 and scrolls the widget if necessary so that \fIitem\fR is 
 within the visible portion of the tree.
 .TP
-\fIpathname \fBselection\fR ?\fIselop\fR \fIitemList\fR?
+\fIpathname \fBselection\fR ?\fIselop itemList\fR?
 If \fIselop\fR is not specified, returns the list of selected items.
 Otherwise, \fIselop\fR is one of the following:
 .RS
@@ -308,9 +331,9 @@ Remove \fIitemList\fR from the selection
 Toggle the selection state of each item in \fIitemList\fR.
 .RE
 .TP
-\fIpathname \fBset\fR \fIitem\fR ?\fIcolumn\fR? ?\fIvalue\fR?
+\fIpathname \fBset \fIitem\fR ?\fIcolumn\fR? ?\fIvalue\fR?
 With one argument, returns a dictionary of column/value pairs
-for the specified \fIitem\fR.  
+for the specified \fIitem\fR.
 With two arguments, returns the current value of the specified \fIcolumn\fR.
 With three arguments, sets the value of column \fIcolumn\fR
 in item \fIitem\fR to the specified \fIvalue\fR.
@@ -339,7 +362,7 @@ The binding \fIscript\fR undergoes \fB%\fR-substitutions before
 evaluation; see \fBbind(n)\fR for details.
 .RE
 .TP
-\fIpathName \fBtag configure\fR \fItagName\fR ?\fIoption\fR? ?\fIvalue option value...\fR?
+\fIpathName \fBtag configure \fItagName\fR ?\fIoption\fR? ?\fIvalue option value...\fR?
 Query or modify the options for the specified \fItagName\fR.
 If one or more \fIoption/value\fR pairs are specified,
 sets the value of those options for the specified tag.
@@ -349,6 +372,26 @@ returns the value of that option
 With no additional arguments, 
 returns a dictionary of the option settings for \fItagName\fR.
 See \fBTAG OPTIONS\fR for the list of available options.
+.TP
+\fIpathName \fBtag has \fItagName\fR ?\fIitem\fR?
+If \fIitem\fR is specified, returns 1 or 0
+depending on whether the specified item has the named tag.
+Otherwise, returns a list of all items which have
+the specified tag.
+.TP
+\fIpathName \fBtag names\fR
+Returns a list of all tags used by the widget.
+.TP
+\fIpathName \fBtag add\fR \fItag\fR \fIitems\fR
+Adds the specified \fItag\fR to each of the listed \fIitems\fR.
+If \fItag\fR is already present for a particular item,
+then the \fB-tags\fR for that item are unchanged.
+.TP
+\fIpathName \fBtag remove\fR \fItag\fR ?\fIitems\fR?
+Removes the specified \fItag\fR from each of the listed \fIitems\fR.
+If \fIitems\fR is omitted, removes \fItag\fR from each item in the tree.
+If \fItag\fR is not present for a particular item,
+then the \fB-tags\fR for that item are unchanged.
 .RE
 .TP
 \fIpathName \fBxview \fIargs\fR
@@ -357,6 +400,7 @@ Standard command for horizontal scrolling; see \fIwidget(n)\fR.
 \fIpathName \fByview \fIargs\fR
 Standard command for vertical scrolling; see \fIttk::widget(n)\fR.
 .SH "ITEM OPTIONS"
+.PP
 The following item options may be specified for items
 in the \fBinsert\fR and \fBitem\fR widget commands.
 .OP \-text text Text
@@ -380,6 +424,7 @@ should be displayed (\fB\-open true\fR) or hidden (\fB\-open false\fR).
 .OP \-tags tags Tags
 A list of tags associated with this item.  
 .SH "TAG OPTIONS"
+.PP
 The following options may be specified on tags:
 .IP \fB\-foreground\fR
 Specifies the text foreground color.
@@ -392,9 +437,10 @@ Specifies the font to use when drawing text.
 .\" ??? Maybe: .IP \-text
 .IP \fB\-image\fR
 Specifies the item image, in case the item's \fB\-image\fR option is empty.
-.PP
-\fI(@@@ TODO: sort out order of precedence for options)\fR
+.\" .PP
+.\" \fI(@@@ TODO: sort out order of precedence for options)\fR
 .SH "COLUMN IDENTIFIERS"
+.PP
 Column identifiers take any of the following forms:
 .IP \(bu
 A symbolic name from the list of \fB\-columns\fR.
@@ -419,6 +465,7 @@ If \fB\-displaycolumns\fR is not set,
 then data column \fIn\fR is displayed in display column \fB#\fIn+1\fR.
 Again, \fBcolumn #0 always refers to the tree column\fR.
 .SH "VIRTUAL EVENTS"
+.PP
 The treeview widget generates the following virtual events.
 .IP <<TreeviewSelect>>
 Generated whenever the selection changes.
@@ -434,3 +481,6 @@ to determine the affected item or items.
 '\" of the virtual event.
 .SH "SEE ALSO"
 ttk::widget(n), listbox(n), image(n), bind(n)
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

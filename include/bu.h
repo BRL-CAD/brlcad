@@ -3859,6 +3859,23 @@ BU_EXPORT BU_EXTERN(int bu_structparse_argv,
 }
 
 
+/** @file libbu/booleanize.c
+ *
+ * @brief routines for parsing boolean values
+ */
+
+/**
+ * B U _ B O O L E A N I Z E
+ *
+ * Returns the boolean value of a given input string.
+ *
+ * Input values that are null, empty, begin with the letter 'n', or
+ * are 0-valued return as false.  Any other input value returns as
+ * true.
+ */
+BU_EXPORT BU_EXTERN(int bu_booleanize, (const char *str));
+
+
 /** @} */
 /** @addtogroup bitv */
 /** @{ */

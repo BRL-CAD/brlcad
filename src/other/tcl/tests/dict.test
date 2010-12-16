@@ -130,6 +130,8 @@ test dict-3.15 {compiled dict get error cleanliness - Bug 2431847} -body {
 	dict get $a(z) d
     }}
 } -returnCodes error -result {key "d" not known in dictionary}
+test dict-3.16 {dict/list shimmering - Bug 3004007} {set l [list p 1 p 2 q 3];dict get $l q;set l} {p 1 p 2 q 3}
+test dict-3.17 {dict/list shimmering - Bug 3004007} {set l [list p 1 p 2 q 3];dict get $l q;llength $l} 6
 
 test dict-4.1 {dict replace command} {
     getOrder [dict replace {a b c d}] a c

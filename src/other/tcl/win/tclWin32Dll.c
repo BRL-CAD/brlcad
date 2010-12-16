@@ -106,7 +106,7 @@ static TclWinProcs asciiProcs = {
     (DWORD (WINAPI *)(DWORD, WCHAR *)) GetTempPathA,
     (BOOL (WINAPI *)(CONST TCHAR *, WCHAR *, DWORD, LPDWORD, LPDWORD, LPDWORD,
 	    WCHAR *, DWORD)) GetVolumeInformationA,
-    (HINSTANCE (WINAPI *)(CONST TCHAR *)) LoadLibraryA,
+    (HINSTANCE (WINAPI *)(CONST TCHAR *, HANDLE, DWORD)) LoadLibraryExA,
     (TCHAR (WINAPI *)(WCHAR *, CONST TCHAR *)) lstrcpyA,
     (BOOL (WINAPI *)(CONST TCHAR *, CONST TCHAR *)) MoveFileA,
     (BOOL (WINAPI *)(CONST TCHAR *)) RemoveDirectoryA,
@@ -165,7 +165,7 @@ static TclWinProcs unicodeProcs = {
     (DWORD (WINAPI *)(DWORD, WCHAR *)) GetTempPathW,
     (BOOL (WINAPI *)(CONST TCHAR *, WCHAR *, DWORD, LPDWORD, LPDWORD, LPDWORD,
 	    WCHAR *, DWORD)) GetVolumeInformationW,
-    (HINSTANCE (WINAPI *)(CONST TCHAR *)) LoadLibraryW,
+    (HINSTANCE (WINAPI *)(CONST TCHAR *, HANDLE, DWORD)) LoadLibraryExW,
     (TCHAR (WINAPI *)(WCHAR *, CONST TCHAR *)) lstrcpyW,
     (BOOL (WINAPI *)(CONST TCHAR *, CONST TCHAR *)) MoveFileW,
     (BOOL (WINAPI *)(CONST TCHAR *)) RemoveDirectoryW,
@@ -319,7 +319,7 @@ DllMain(
 	 * an exception handler and the state of the stack might be unstable.
 	 */
 
-#ifdef HAVE_NO_SEH
+#if defined(HAVE_NO_SEH) && !defined(_WIN64)
 	__asm__ __volatile__ (
 
 	    /*
@@ -389,12 +389,16 @@ DllMain(
 	    "%eax", "%ebx", "%ecx", "%edx", "%esi", "%edi", "memory"
 	    );
 
-#else /* HAVE_NO_SEH */
+#else
+#ifndef HAVE_NO_SEH
 	__try {
+#endif
 	    Tcl_Finalize();
+#ifndef HAVE_NO_SEH
 	} __except (EXCEPTION_EXECUTE_HANDLER) {
 	    /* empty handler body. */
 	}
+#endif
 #endif
 
 	break;
