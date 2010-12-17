@@ -435,6 +435,8 @@ SET(TK_WIN_SRCS
 	xlib/xgc.c
 	xlib/ximage.c
 	xlib/xutil.c
+	win/stubs.c
+	win/winMain.c
 	win/tkWin32Dll.c
 	win/tkWin3d.c
 	win/tkWinButton.c
