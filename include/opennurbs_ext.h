@@ -77,7 +77,8 @@ bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 #define BREP_MAX_LN_DEPTH 20
 #define SIGN(x) ((x) >= 0 ? 1 : -1)
 /* Surface flatness parameter, Abert says between 0.8-0.9 */
-#define BREP_SURFACE_FLATNESS 0.8
+#define BREP_SURFACE_FLATNESS 0.85
+#define BREP_SURFACE_STRAIGHTNESS 0.75
 /* Max newton iterations when finding closest point */
 #define BREP_MAX_FCP_ITERATIONS 50
 /* Root finding epsilon */
@@ -1425,6 +1426,7 @@ public:
 
 private:
     bool isFlat(const ON_Surface* surf, ON_Plane frames[], ON_3dVector normals[], ON_3dPoint corners[], const ON_Interval& u, const ON_Interval& v);
+    bool isStraight(const ON_Surface* surf, ON_Plane frames[], ON_3dVector normals[], ON_3dPoint corners[], const ON_Interval& u, const ON_Interval& v);
     fastf_t isFlatU(const ON_Surface* surf, ON_Plane frames[], ON_3dVector normals[], ON_3dPoint corners[], const ON_Interval& u, const ON_Interval& v);
     fastf_t isFlatV(const ON_Surface* surf, ON_Plane frames[], ON_3dVector normals[], ON_3dPoint corners[], const ON_Interval& u, const ON_Interval& v);
     BBNode* subdivideSurfaceByKnots(const ON_Surface *localsurf, const ON_Interval& u, const ON_Interval& v, ON_Plane frames[], ON_3dPoint corners[], ON_3dVector normals[], int depth, int depthLimit);
