@@ -12,6 +12,7 @@ set(LIBBU_SOURCES
     basename.c
     bitv.c
     bomb.c
+	 booleanize.c
     brlcad_path.c
     cmd.c
     cmdhist.c
