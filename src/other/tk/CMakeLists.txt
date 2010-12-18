@@ -62,7 +62,9 @@ SET(TK_PATCH_LEVEL 8)
 SET(TK_VERSION "${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}.${TK_PATCH_LEVEL}")
 
 # For Windows, we need the Resource Compiler language
-ENABLE_LANGUAGE(RC)
+IF(WIN32)
+	ENABLE_LANGUAGE(RC)
+ENDIF(WIN32)
 
 #-----------------------------------------------------------------------------
 # Output directories.
