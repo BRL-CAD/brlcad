@@ -532,7 +532,7 @@ ENDIF(WIN32)
 IF(NOT WIN32)
 	SET(WISH_SRCS unix/tkAppInit.c)
 ELSE(NOT WIN32)
-        SET(WISH_SRCS win/winMain.c)
+        SET(WISH_SRCS win/winMain.c win/wish.rc)
 ENDIF(NOT WIN32)
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TK_CFLAGS}") 

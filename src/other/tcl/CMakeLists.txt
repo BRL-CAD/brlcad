@@ -63,6 +63,12 @@ SET(TCL_PATCH_LEVEL 8)
 
 SET(TCL_VERSION "${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}.${TCL_PATCH_LEVEL}")
 
+# For Windows, we need the Resource Compiler language
+IF(WIN32)
+	ENABLE_LANGUAGE(RC)
+ENDIF(WIN32)
+
+
 #-----------------------------------------------------------------------------
 # Output directories.
 IF(NOT LIBRARY_OUTPUT_PATH)
@@ -627,6 +633,7 @@ SET(TCL_OSX_SRCS
 )
 
 SET(TCL_WIN_SRCS
+	win/tcl.rc
 	win/tclAppInit.c
 	win/tclWin32Dll.c
 	win/tclWinChan.c
@@ -699,7 +706,7 @@ include_directories(
 )
 
 IF(WIN32)
-	SET(TCLSH_SRCS win/tclAppInit.c)
+	SET(TCLSH_SRCS win/tclAppInit.c win/tclsh.rc)
 ELSE(WIN32)
 	SET(TCLSH_SRCS unix/tclAppInit.c)
 ENDIF(WIN32)
