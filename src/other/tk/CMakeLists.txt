@@ -276,7 +276,6 @@ SET(TK_GENERIC_SRCS
 	generic/tkImgGIF.c
 	generic/tkImgPPM.c
 	generic/tkImgPhoto.c
-	generic/tkImgUtil.c
 	generic/tkListbox.c
 	generic/tkMain.c
 	generic/tkMenu.c
@@ -447,6 +446,7 @@ SET(TK_WIN_SRCS
 	generic/tkFileFilter.c
 	generic/tkMacWinMenu.c
 	generic/tkPointer.c
+	generic/tkImgUtil.c
 	unix/tkUnixMenubu.c
 	unix/tkUnixScale.c
 	win/tkWin32Dll.c
