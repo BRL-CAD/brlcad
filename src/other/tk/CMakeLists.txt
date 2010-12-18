@@ -61,6 +61,9 @@ SET(TK_PATCH_LEVEL 8)
 
 SET(TK_VERSION "${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}.${TK_PATCH_LEVEL}")
 
+# For Windows, we need the Resource Compiler language
+ENABLE_LANGUAGE(RC)
+
 #-----------------------------------------------------------------------------
 # Output directories.
 IF(NOT LIBRARY_OUTPUT_PATH)
@@ -115,7 +118,7 @@ SET(TK_CFLAGS "${TK_CFLAGS} -DPACKAGE_BUGREPORT=\\\"\\\"")
 SET(TK_CFLAGS "${TK_CFLAGS} -DSTDC_HEADERS=1")
 
 IF(WIN32)
-	SET(TK_CFLAGS "${TK_CFLAGS} -c -W3 -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -Ot -Oi -fp:strict -Gs -GS -GL -MD -DBUILD_tk -BUILD_ttk -DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1 -DUSE_TCL_STUBS")
+	SET(TK_CFLAGS "${TK_CFLAGS} -c -W3 -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -Ot -Oi -fp:strict -Gs -GS -GL -MD -DBUILD_tk -BUILD_ttk -DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1" -DUSE_TCL_STUBS)
 ENDIF(WIN32)
 
 IF(APPLE)
@@ -271,6 +274,7 @@ SET(TK_GENERIC_SRCS
 	generic/tkImgGIF.c
 	generic/tkImgPPM.c
 	generic/tkImgPhoto.c
+	generic/tkImgUtil.c
 	generic/tkListbox.c
 	generic/tkMain.c
 	generic/tkMenu.c
@@ -437,6 +441,12 @@ SET(TK_WIN_SRCS
 	xlib/xutil.c
 	win/stubs.c
 	win/winMain.c
+	win/rc/tk.rc
+	generic/tkFileFilter.c
+	generic/tkMacWinMenu.c
+	generic/tkPointer.c
+	unix/tkUnixMenubu.c
+	unix/tkUnixScale.c
 	win/tkWin32Dll.c
 	win/tkWin3d.c
 	win/tkWinButton.c
@@ -555,7 +565,11 @@ IF(TK-ENABLE_FREETYPE)
 ENDIF(TK-ENABLE_FREETYPE)
 
 add_library(tk ${TK_SRCS})
+IF(WIN32)
+target_link_libraries(tk tclstub ${COREFOUNDATION_FRAMEWORK} ${X11_TK_LIBS} ${TK_FREETYPE_LIBRARIES} ${TK_FONTCONFIG_LIBRARY})
+ELSE(WIN32)
 target_link_libraries(tk tcl ${COREFOUNDATION_FRAMEWORK} ${X11_TK_LIBS} ${TK_FREETYPE_LIBRARIES} ${TK_FONTCONFIG_LIBRARY})
+ENDIF(WIN32)
 install(TARGETS tk DESTINATION lib)
 SET_TARGET_PROPERTIES(tk PROPERTIES VERSION ${TK_VERSION} SOVERSION ${TK_MAJOR_VERSION}.${TK_MINOR_VERSION})
 
