@@ -3325,7 +3325,7 @@ MODULE_SCOPE Var *	TclLookupArrayElement(Tcl_Interp *interp,
 			    Tcl_Obj *arrayNamePtr, Tcl_Obj *elNamePtr,
 			    const int flags, const char *msg,
 			    const int createPart1, const int createPart2,
-			    Var *arrayPtr, int index);
+			    Var *arrayPtr, int idx);
 MODULE_SCOPE Tcl_Obj *	TclPtrGetVar(Tcl_Interp *interp,
 			    Var *varPtr, Var *arrayPtr, Tcl_Obj *part1Ptr,
 			    Tcl_Obj *part2Ptr, const int flags, int idx);
