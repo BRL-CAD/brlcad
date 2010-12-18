@@ -18,7 +18,8 @@ SET(fbed_SOURCES
   squash.c 
   try.c
 )
+IF(CURSES_HAVE_CURSES_H)
+   BRLCAD_ADDEXEC(fbed "${fbed_SOURCES}" "libfb libvfont libtermio libcursor ${TERMLIB_LIBRARY}")
 
-BRLCAD_ADDEXEC(fbed "${fbed_SOURCES}" "libfb libvfont libtermio libcursor ${TERMLIB_LIBRARY}")
-
-install(FILES fbed.1 DESTINATION ${MAN_DIR}/man1)
+   install(FILES fbed.1 DESTINATION ${MAN_DIR}/man1)
+ENDIF(CURSES_HAVE_CURSES_H)

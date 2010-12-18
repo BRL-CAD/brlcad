@@ -23,7 +23,9 @@ SET(burst_SOURCES
 	ui.c
 )
 
-BRLCAD_ADDEXEC(burst "${burst_SOURCES}" "librt libfb libtermio ${TERMLIB_LIBRARY}")
+if(CURSES_HAVE_CURSES_H)
+   BRLCAD_ADDEXEC(burst "${burst_SOURCES}" "librt libfb libtermio ${TERMLIB_LIBRARY}")
+endif(CURSES_HAVE_CURSES_H)
 
 
 SET(burst_noinst_HEADERS

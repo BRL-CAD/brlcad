@@ -24,7 +24,9 @@ SET(lgt_SOURCES
   trie.c
 )
 
-BRLCAD_ADDEXEC(lgt "${lgt_SOURCES}" "librt libfb libtermio libvfont libcursor")
-SET_TARGET_PROPERTIES(lgt PROPERTIES COMPILE_DEFINITIONS "BEHIND_ME_TOL=0.05")
+IF(CURSES_HAVE_CURSES_H)
+   BRLCAD_ADDEXEC(lgt "${lgt_SOURCES}" "librt libfb libtermio libvfont libcursor")
+   SET_TARGET_PROPERTIES(lgt PROPERTIES COMPILE_DEFINITIONS "BEHIND_ME_TOL=0.05")
 
-install(FILES lgt.1  DESTINATION ${MAN_DIR}/man1)
+   install(FILES lgt.1  DESTINATION ${MAN_DIR}/man1)
+ENDIF(CURSES_HAVE_CURSES_H)
