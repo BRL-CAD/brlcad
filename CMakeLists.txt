@@ -346,6 +346,13 @@ INSTALL_DIR(DOXYGEN ${DOC_DIR}/doxygen)
 
 SET(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/brlcad_config.h.in")
 FILE(WRITE ${CONFIG_H_FILE} "/**** Define statements for CMake ****/\n")
+FILE(APPEND ${CONFIG_H_FILE} "#ifndef __CONFIG_H__\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define __CONFIG_H__\n")
+
+# If we're building on Windows, start off with the config_win.h file
+IF(WIN32)
+	FILE(APPEND ${CONFIG_H_FILE} "#include \"config_win.h\"\n")
+ENDIF(WIN32)
 
 # Set up some of the define statements for path information and other basics
 FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE \"brlcad\"\n")
@@ -917,6 +924,7 @@ FILE(APPEND  ${CONFIG_H_FILE} "#define BUILD_BINARY_DIR \"${CMAKE_BINARY_DIR}\"\
 FILE(APPEND  ${CONFIG_H_FILE} "#define BUILD_SOURCE_DIR \"${CMAKE_SOURCE_DIR}\"\n")
 
 # Now that all the tests are done, configure the brlcad_config.h file:
+FILE(APPEND ${CONFIG_H_FILE} "#endif /* __CONFIG_H__ */\n")
 configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
 
 

@@ -26,9 +26,6 @@
  *
  */
 
-#ifndef __CONFIG_H__
-#define __CONFIG_H__
-
 #ifndef IGNORE_CONFIG_H
 #if defined(_WIN32)
 
@@ -61,12 +58,6 @@
 #  define EXPAND_IN_STRING(x) EXPAND_IN_STRING_INTERN(x)
 #  define EXPAND_IN_STRING_INTERN(x) #x
 #endif
-
-/* FIXME: this is bogus, fixed path should not be in any source file */
-#define INSTALL_DIRECTORY    "C:/brlcad" MAJOR_VERSION_STRING "_" MINOR_VERSION_STRING "_" PATCH_VERSION_STRING
-
-/* FIXME: this is bogus, should not need to manually set the version in here */
-#define IWIDGETS_VERSION  "4.0.2"
 
 /*
  * declare results of configure tests
@@ -311,7 +302,6 @@ typedef unsigned int uid_t;
 #endif /* if defined(_WIN32) */
 #endif /* ifndef IGNORE_CONFIG_H */
 
-#endif /* __CONFIG_H__ */
 /** @} */
 /*
  * Local Variables:
