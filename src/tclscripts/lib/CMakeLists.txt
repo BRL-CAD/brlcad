@@ -18,6 +18,7 @@ SET(lib_TCLSCRIPTS
 	Splash.tcl 
 	Table.tcl 
 	TableView.tcl 
+	TkTable.tcl
 	View.tcl 
 	ViewAxesControl.tcl
 )
