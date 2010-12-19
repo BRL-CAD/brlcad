@@ -927,6 +927,11 @@ FILE(APPEND  ${CONFIG_H_FILE} "#define BUILD_SOURCE_DIR \"${CMAKE_SOURCE_DIR}\"\
 FILE(APPEND ${CONFIG_H_FILE} "#endif /* __CONFIG_H__ */\n")
 configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
 
+# Before we finalize, set some specific global compiler flags
+IF(MSVC)
+	SET(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -nologo -c -W3 -D_CRT_SECURE_NO_WARNINGS)
+	SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -nologo -c -W3 -D_CRT_SECURE_NO_WARNINGS)
+ENDIF(MSVC)
 
 # *******************************************************************
 # ***              Summarize Results - Stage 9 of 9               ***
