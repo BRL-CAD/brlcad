@@ -74,7 +74,6 @@
 	variable mMemberDataOrder {RotAet RotXyz RotArb Tra Sca}
 	variable mLastTabIndex -1
 	variable mTableData {RotAet 9 "Rot (AET)" RotXyz 9 "Rot (XYZ)" RotArb 10 "Rot (Arbitrary)" Tra 6 Translation Sca 10 Scale}
-	variable mToggleSelectMode 0
 
 	method buildGeneralGUI {}
 	method buildShaderGUI {}
@@ -90,14 +89,11 @@
 	method packMemberDataIntoString {_tname}
 	method resetData {}
 
-	method handleTablePopup {_win _x _y _X _Y}
+	method handleTablePopup {_index _X _Y}
 	method populateMembersMenu {_type _index _X _Y}
 	method addMemberCreationMenuEntries {_type _row}
-	method setTableCol {_tname _col _val}
-	method setTableVal {_tname _index _val}
 	method selectName  {args}
 	method invertSelect {_tname}
-	method toggleSelect {_tname _win _x _y}
 	method appendRow  {_tname}
 	method insertRow  {_type _row}
 	method deleteRow  {_type _row}
@@ -566,19 +562,20 @@
 	    ::ttk::frame $itk_component(tabs).members$tname\F
 	} {}
 	itk_component add combMembers$tname {
-	    ::table $itk_component(combMembers$tname\F).members$tname \
+	    ::cadwidgets::TkTable $itk_component(combMembers$tname\F).members$tname \
+		[::itcl::scope mMemberData$tname] \
+		[subst $[subst mMemberHeadings$tname]] \
 		-cursor arrow \
 		-height 0 \
 		-maxheight 2000 \
 		-width 0 \
 		-rows 100000 \
-		-cols $cols \
 		-titlecols 1 \
 		-titlerows 1 \
-		-colstretchmode all \
-		-variable [::itcl::scope mMemberData$tname] \
+		-colstretchmode unset \
 		-validate 1 \
-		-validatecommand [::itcl::code $this validateTableEntry %r %c %S $tname]
+		-validatecommand [::itcl::code $this validateTableEntry %r %c %S $tname] \
+		-tablePopupHandler [::itcl::code $this handleTablePopup]
 	} {}
 
 	# Set width of columns 0, 1 and 2
@@ -586,40 +583,11 @@
 	$itk_component(combMembers$tname) width 1 4
 	$itk_component(combMembers$tname) width 2 20
 
-	# Create scrollbars
-	itk_component add tableHScroll$tname {
-	    ::ttk::scrollbar $itk_component(combMembers$tname\F).tableHScroll \
-		-orient horizontal
-	} {}
-
-	itk_component add tableVScroll$tname {
-	    ::ttk::scrollbar $itk_component(combMembers$tname\F).tableVScroll \
-		-orient vertical
-	} {}
-
-	# Hook up scrollbars
-	$itk_component(combMembers$tname) configure -xscrollcommand "$itk_component(tableHScroll$tname) set"
-	$itk_component(combMembers$tname) configure -yscrollcommand "$itk_component(tableVScroll$tname) set"
-	$itk_component(tableHScroll$tname) configure -command "$itk_component(combMembers$tname) xview"
-	$itk_component(tableVScroll$tname) configure -command "$itk_component(combMembers$tname) yview"
-
-	grid $itk_component(combMembers$tname) $itk_component(tableVScroll$tname) -sticky nsew
-	grid $itk_component(tableHScroll$tname) - -sticky nsew
-
+	grid $itk_component(combMembers$tname) -sticky nsew
 	grid columnconfigure $itk_component(combMembers$tname\F) 0 -weight 1
 	grid rowconfigure $itk_component(combMembers$tname\F) 0 -weight 1
 
 	$itk_component(combMembersTabs) add $itk_component(combMembers$tname\F) -text $text
-
-	bind $itk_component(combMembers$tname) <Button-1> [::itcl::code $this toggleSelect $tname %W %x %y]
-	bind $itk_component(combMembers$tname) <Button-3> [::itcl::code $this handleTablePopup %W %x %y %X %Y]
-	bind $itk_component(combMembers$tname) <B3-Motion> {break}
-
-	$itk_component(combMembers$tname) tag col select_col 0
-	$itk_component(combMembers$tname) tag configure select_col \
-	    -relief raised
-	$itk_component(combMembers$tname) tag configure title \
-	    -relief raised
     }
 
     grid columnconfigure $itk_component(combMembersTabs) 0 -weight 1
@@ -804,10 +772,9 @@
     initGeometry $gdata
 }
 
-::itcl::body CombEditFrame::handleTablePopup {_win _x _y _X _Y} {
-    set index [$_win index @$_x,$_y]
+::itcl::body CombEditFrame::handleTablePopup {_index _X _Y} {
     set type [getCurrentMemberDataType]
-    populateMembersMenu $type $index $_X $_Y
+    populateMembersMenu $type $_index $_X $_Y
 }
 
 ::itcl::body CombEditFrame::populateMembersMenu {_type _index _X _Y} {
@@ -843,20 +810,20 @@
 	    if {[subst $[subst mMemberData$tname\($_index\)]] == "*"} {
 		$itk_component(combMembersMenu) add command \
 		    -label "Deselect" \
-		    -command [::itcl::code $this setTableVal $tname $_index ""]
+		    -command "$itk_component(combMembers$tname) setTableVal $_index \"\""
 	    } else {
 		$itk_component(combMembersMenu) add command \
 		    -label "Select" \
-		    -command [::itcl::code $this setTableVal $tname $_index *]
+		    -command "$itk_component(combMembers$tname) setTableVal $_index *"
 	    }
 
 	    $itk_component(combMembersMenu) add separator
 	    $itk_component(combMembersMenu) add command \
 		-label "Deselect All" \
-		-command [::itcl::code $this setTableCol $tname $col ""]
+		-command "$itk_component(combMembers$tname) setTableCol $col \"\""
 	    $itk_component(combMembersMenu) add command \
 		-label "Select All" \
-		-command [::itcl::code $this setTableCol $tname $col *]
+		-command "$itk_component(combMembers$tname) setTableCol $col *"
 	    $itk_component(combMembersMenu) add command \
 		-label "Invert All" \
 		-command [::itcl::code $this invertSelect $tname]
@@ -868,13 +835,13 @@
 	    
 	    $itk_component(combMembersOpMenu) add command \
 		-label "Union" \
-		-command [::itcl::code $this setTableVal $tname $_index u]
+		-command "$itk_component(combMembers$tname) setTableVal $_index u"
 	    $itk_component(combMembersOpMenu) add command \
 		-label "Intersection" \
-		-command [::itcl::code $this setTableVal $tname $_index +]
+		-command "$itk_component(combMembers$tname) setTableVal $_index +"
 	    $itk_component(combMembersOpMenu) add command \
 		-label "Subtraction" \
-		-command [::itcl::code $this setTableVal $tname $_index -]
+		-command "$itk_component(combMembers$tname) setTableVal $_index -"
 	} elseif {$col == 2} {
 #	    $itk_component(combMembersMenu) add command \
 		-label "Select Name" \
@@ -912,26 +879,6 @@
 	-command [::itcl::code $this deleteRow $_type $_row]
 }
 
-::itcl::body CombEditFrame::setTableCol {_tname _col _val} {
-    set row 1
-    while {[info exists mMemberData$_tname\($row,$_col\)]} {
-	set mMemberData$_tname\($row,$_col\) $_val
-	incr row
-    }
-
-    if {$_col == 0} {
-	if {$_val == "*"} {
-	    set mToggleSelectMode 1
-	} else {
-	    set mToggleSelectMode 0
-	}
-    }
-}
-
-::itcl::body CombEditFrame::setTableVal {_tname _index _val} {
-    set mMemberData$_tname\($_index\) $_val
-}
-
 ::itcl::body CombEditFrame::selectName {args} {
     puts "CombEditFrame::selectName: implement me"
 }
@@ -945,37 +892,6 @@
 	    set mMemberData$_tname\($row,0\) "*"
 	}
 	incr row
-    }
-}
-
-::itcl::body CombEditFrame::toggleSelect {_tname _win _x _y} {
-    set index [$_win index @$_x,$_y]
-    set ilist [split $index ,]
-    set col [lindex $ilist 1] 
-
-    if {$col != 0} {
-	return
-    }
-
-    set row [lindex $ilist 0] 
-    if {![info exists mMemberData$_tname\($row,$col\)]} {
-	return
-    }
-
-    if {$row != 0} {
-	if {[subst $[subst mMemberData$_tname\($index\)]] == "*"} {
-	    setTableVal $_tname $index ""
-	} else {
-	    setTableVal $_tname $index "*"
-	}
-    } else {
-	if {$mToggleSelectMode} {
-	    set mToggleSelectMode 0
-	    setTableCol $_tname 0 ""
-	} else {
-	    set mToggleSelectMode 1
-	    setTableCol $_tname 0 "*"
-	}
     }
 }
 

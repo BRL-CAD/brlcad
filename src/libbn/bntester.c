@@ -32,12 +32,10 @@
 static char *usage="Usage: bntester [-c test_case_number] [-f function_number] -i input_file -o output_file\n";
 
 int
-parse_case(char *buf_p, int *i, long *l, double *d, unsigned long *u, char *fmt_str, int line_num, int case_idx)
+parse_case(char *buf_p, long *l, double *d, char *fmt_str, int line_num, int case_idx)
 {
-    int i_idx;
     int l_idx;
     int d_idx;
-    int u_idx;
     int idx;
     int fmt_str_len;
     char *endp;
@@ -107,11 +105,8 @@ main(int argc, char **argv)
     char c;
     int early_exit = 0;
     int found_eof = 0;
-    int i[50];
     long l[50];
     double d[50];
-    unsigned long u[50];
-    char io_fmt[50];  /* input-output format string */
     char dt_fmt[50];  /* data type format string */
     int ret = 0;
 
@@ -156,7 +151,8 @@ main(int argc, char **argv)
                 }
                 break;
             case 'i': /* input file name */
-                if (string_length = strlen(bu_optarg) >= BUFSIZ) {
+		string_length = strlen(bu_optarg);
+                if (string_length >= BUFSIZ) {
                     bu_log("Input file name too long, length was %d but must be less than %d\n",
                             string_length, BUFSIZ);
                     bu_exit(EXIT_FAILURE, usage);
@@ -165,7 +161,8 @@ main(int argc, char **argv)
                 input_file_name_defined = 1;
                 break;
             case 'o': /* output file name */
-                if (string_length = strlen(bu_optarg) >= BUFSIZ) {
+		string_length = strlen(bu_optarg);
+                if (string_length >= BUFSIZ) {
                     bu_log("Output file name too long, length was %d but must be less than %d\n",
                             string_length, BUFSIZ);
                     bu_exit(EXIT_FAILURE, usage);
@@ -263,7 +260,7 @@ main(int argc, char **argv)
                              */
                             strcpy(dt_fmt, "dddddddddd");
 
-                            if (parse_case(buf_p, i, l, d, u, dt_fmt, line_num, case_idx)) {
+                            if (parse_case(buf_p, l, d, dt_fmt, line_num, case_idx)) {
                                 bu_log("skipped line %d test case %d\n", line_num, case_idx); 
                                 ret = 1;
                             } else {
