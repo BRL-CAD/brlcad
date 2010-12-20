@@ -552,6 +552,10 @@ MARK_AS_ADVANCED(BRLCAD-ENABLE_64BIT)
 
 # Take advantage of parallel processors if available - highly recommended
 OPTION(BRLCAD-ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
+IF(WIN32)
+	MESSAGE("SMP Support is not ready on Windows - disabling")
+	SET(BRLCAD-ENABLE_SMP OFF)
+ENDIF(WIN32)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_SMP)
 if (BRLCAD-ENABLE_SMP)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define PARALLEL 1\n")
