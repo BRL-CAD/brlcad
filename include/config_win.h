@@ -50,10 +50,6 @@
 #	error "STDC is not properly set on WIN32 build, add /Za to Project Settings / Project Options"
 # endif
 
-/* include standard c99 types via compatibility header */
-#include "pstdint.h"
-
-
 #ifndef EXPAND_IN_STRING
 #  define EXPAND_IN_STRING(x) EXPAND_IN_STRING_INTERN(x)
 #  define EXPAND_IN_STRING_INTERN(x) #x
