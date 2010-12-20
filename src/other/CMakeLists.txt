@@ -311,11 +311,3 @@ ENDIF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 # to build (I think?)
 ADD_SUBDIRECTORY(tnt)
 SET(TNT_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/tnt" CACHE STRING "Directory containing tnt headers" FORCE)
-
-# Build Berkeley Yacc - guarantees certain extensions added originally by GNU
-# Bison are supported, as well as yacc itself (problematic on, say, Windows.)
-# Need to upgrade FindYacc.cmake to test for advanced Bison options
-# options and be smarter - in the meantime just turn this on.  Not used yet,
-# for now just testing the build - the CMake script is basic and doesn't
-# implement any of the checks in byacc's aclocal.m4 or use a config.h file.
-ADD_SUBDIRECTORY(byacc)
