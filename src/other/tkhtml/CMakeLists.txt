@@ -1,3 +1,12 @@
+# Minimum required version of CMake
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+IF(COMMAND CMAKE_POLICY)
+  CMAKE_POLICY(SET CMP0003 NEW)
+ENDIF(COMMAND CMAKE_POLICY)
+
+# set CMake project name
+PROJECT(TKHTML)
+
 include_directories(
 		  ${CMAKE_CURRENT_SOURCE_DIR}/src
 		  ${CMAKE_CURRENT_BINARY_DIR}
@@ -8,6 +17,14 @@ include_directories(
 
 SET(TKHTML_PKGNAME Tkhtml)
 SET(TKHTML_PKGVERSION "3.0")
+
+# Windows specific flags
+IF(WIN32)
+	SET(TKHTML_CFLAGS "${TKHTML_CFLAGS} -c -W3 -D _CRT_SECURE_NO_DEPRECATE -D _CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD")
+	SET(TKHTML_CFLAGS "${TKHTML_CFLAGS} -Dinline=__inline -DBUILD_tkhtml")
+ENDIF(WIN32)
+
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TKHTML_CFLAGS}")
 
 ADD_CUSTOM_COMMAND(
 		  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/htmldefaultstyle.c
@@ -54,7 +71,7 @@ SET(TKHTML_SRCS
 )
 
 add_library(Tkhtml SHARED ${TKHTML_SRCS})
-target_link_libraries(Tkhtml ${TCL_LIBRARY} ${TK_LIBRARY} ${X11_LIBRARIES})
+target_link_libraries(Tkhtml ${TCL_LIBRARY} ${TK_LIBRARY} ${TK_STUB_LIBRARY} ${X11_LIBRARIES})
 install(TARGETS Tkhtml DESTINATION lib)
 
 # Create the pkgIndex.tcl file.
