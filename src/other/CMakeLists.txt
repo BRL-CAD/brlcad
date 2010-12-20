@@ -319,11 +319,3 @@ SET(TNT_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/tnt" CACHE STRING "Directory
 # for now just testing the build - the CMake script is basic and doesn't
 # implement any of the checks in byacc's aclocal.m4 or use a config.h file.
 ADD_SUBDIRECTORY(byacc)
-
-# Preparing to build flex as well - modern implementations apparently are
-# heavily dependent on m4, so the simplest path is to get the simplest
-# m4 that can compile flex working.  Using NetBSD's port of the OpenBSD
-# m4 implementation - very small, about 280K for m4 plus portability files,
-# and that will be smaller once we hook into byacc to generate a couple
-# of the files.
-ADD_SUBDIRECTORY(m4)
