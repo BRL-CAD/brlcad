@@ -91,6 +91,7 @@ OPTICAL_EXPORT extern struct mfuncs light_mfuncs[];
 OPTICAL_EXPORT extern struct mfuncs stk_mfuncs[];
 OPTICAL_EXPORT extern struct mfuncs phg_mfuncs[];
 OPTICAL_EXPORT extern struct mfuncs noise_mfuncs[];
+OPTICAL_EXPORT extern struct bn_table *spectrum;
 
 OPTICAL_EXPORT extern int	rdebug;
 
