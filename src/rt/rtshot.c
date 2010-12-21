@@ -41,17 +41,6 @@
 #include "plot3.h"
 
 
-extern void rt_raybundle_maker(struct xray *rp,
-			       double radius,
-			       const vect_t avec,
-			       const vect_t bvec,
-			       int rays_per_ring,
-			       int nring);
-
-extern int rt_shootray_bundle(struct application *ap,
-			      struct xray *rays,
-			      int nrays);
-
 char usage[] = "\
 Usage:  rtshot [options] model.g objects...\n\
  -U #		Set reporting of air regions (default=1)\n\
