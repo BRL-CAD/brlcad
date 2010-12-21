@@ -37,6 +37,7 @@
 #include "shadefuncs.h"
 #include "shadework.h"
 #include "rtprivate.h"
+#include "optical.h"
 
 
 #define MFUNCS(_name)	\
