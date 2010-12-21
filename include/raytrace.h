@@ -2395,11 +2395,6 @@ RT_EXPORT BU_EXTERN(int rt_shootray,
 /* Shoot a bundle of rays */
 RT_EXPORT BU_EXTERN(int rt_shootrays,
 		    (struct application_bundle *bundle));
-RT_EXPORT BU_EXTERN(int rt_shootray_bundle,
-		    (struct application *ap, struct xray *rays, int nrays));
-RT_EXPORT BU_EXTERN(int rt_raybundle_maker,
-		    (struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring));
-
 /* Get expr tree for object */
 RT_EXPORT BU_EXTERN(void rt_free_soltab,
 		    (struct soltab   *stp));
