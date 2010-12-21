@@ -113,8 +113,6 @@ SET(remaining_dirs
 	mged 
 	nirt 
 	proc-db 
-	remrt 
-	rttherm 
 	shapes 
 	sig 
 	tab 
@@ -122,6 +120,13 @@ SET(remaining_dirs
 	util 
 	vdeck
 )
+
+# FIXME: Ideally these should all be in the above list,
+# need to fix them on Windows.
+SET(non_win32_dirs
+	remrt
+	rttherm
+	)
 
 #######################
 # put it all together #
@@ -150,5 +155,10 @@ IF(NOT BRLCAD-ENABLE_BENCHMARK_ONLY AND NOT BRLCAD-ENABLE_RTSERVER_ONLY)
 		  FOREACH(subdir ${remaining_dirs})
 					 ADD_SUBDIRECTORY(${subdir})
 		  ENDFOREACH(subdir ${remaining_dirs})
+		  IF(NOT WIN32)
+			  FOREACH(subdir ${non_win32_dirs})
+					 ADD_SUBDIRECTORY(${subdir})
+			  ENDFOREACH(subdir ${non_win32_dirs})
+		  ENDIF(NOT WIN32)
 ENDIF(NOT BRLCAD-ENABLE_BENCHMARK_ONLY AND NOT BRLCAD-ENABLE_RTSERVER_ONLY)
 	
