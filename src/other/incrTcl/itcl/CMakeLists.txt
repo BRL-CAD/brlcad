@@ -482,7 +482,7 @@ set_target_properties(itcl PROPERTIES INSTALL_NAME_DIR ${CMAKE_INSTALL_PREFIX}/l
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded Itcl ${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION} [list load [file join $dir libitcl${CMAKE_SHARED_LIBRARY_SUFFIX}] Itcl]")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
 
-FILE(WRITE ${CMAKE_BINARY_DIR}/lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION}/pkgIndex.tcl "package ifneeded Itcl ${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION} [list load [file join $dir .. libitcl${CMAKE_SHARED_LIBRARY_SUFFIX}] Itcl]")
+FILE(WRITE ${CMAKE_BINARY_DIR}/lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION}/pkgIndex.tcl "package ifneeded Itcl ${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION} [list load [file join $dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} libitcl${CMAKE_SHARED_LIBRARY_SUFFIX}] Itcl]")
 
 install(FILES library/itcl.tcl DESTINATION lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/library/itcl.tcl ${CMAKE_BINARY_DIR}/lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION}/itcl.tcl COPYONLY)
