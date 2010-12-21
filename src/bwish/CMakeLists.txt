@@ -5,11 +5,22 @@ include_directories(
   ${TK_INCLUDE_PATH}
 )
 
-BRLCAD_ADDEXEC(btclsh "cmd.c input.c main.c tcl.c" "libbu libtclcad libtermio")
+IF(WIN32)
+	BRLCAD_ADDEXEC(btclsh "cadAppInit.c consoleMain.c" "libtclcad libged")
+ELSE(WIN32)
+	BRLCAD_ADDEXEC(btclsh "cmd.c input.c main.c tcl.c" "libbu libtclcad libtermio")
+ENDIF(WIN32)
 
 IF(BRLCAD-ENABLE_TK)
-   BRLCAD_ADDEXEC(bwish "cmd.c input.c main.c tcl.c" "libtclcad libdm libtermio ${X11_LIBRARIES} ${X11_Xi_LIB} libdm")
-   SET_TARGET_PROPERTIES(bwish PROPERTIES COMPILE_DEFINITIONS "BWISH=1")
+	IF(WIN32)
+		add_executable(bwish WIN32 cadAppInit.c winMain.c)
+		target_link_libraries(bwish libtclcad libdm imm32.lib comctl32.lib)
+		install(TARGETS bwish RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+		SET_TARGET_PROPERTIES(bwish PROPERTIES COMPILE_DEFINITIONS "BWISH=1")
+	ELSE(WIN32)
+		BRLCAD_ADDEXEC(bwish "cmd.c input.c main.c tcl.c" "libtclcad libdm libtermio ${X11_LIBRARIES} ${X11_Xi_LIB} libdm")
+		SET_TARGET_PROPERTIES(bwish PROPERTIES COMPILE_DEFINITIONS "BWISH=1")
+	ENDIF(WIN32)
 ENDIF(BRLCAD-ENABLE_TK)
 
 IF(ITCL_LIBRARY MATCHES "^itcl$")

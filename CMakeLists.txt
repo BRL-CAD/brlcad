@@ -280,12 +280,18 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # files will be placed after building but prior to install.
 IF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
 	SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
+	SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${BRLCAD_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
+	SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${BRLCAD_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
 ENDIF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
 IF(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
 	SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
+	SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${BRLCAD_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
+	SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${BRLCAD_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
 ENDIF(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
 IF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 	SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BRLCAD_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
+	SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${BRLCAD_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
+	SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${BRLCAD_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
 ENDIF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
 #---------------------------------------------------------------------

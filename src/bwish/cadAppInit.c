@@ -31,10 +31,10 @@
 #endif
 #include "bio.h"
 
-#include "itcl.h"
+#include "tcl.h"
 
 #ifdef BWISH
-#  include "itk.h"
+#  include "tk.h"
 #  include "dm.h"
 #  include "fb.h"
 #endif
@@ -58,16 +58,16 @@ Cad_AppInit(Tcl_Interp *interp)
 /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
     tclcad_auto_path(interp);
 
-/* Initialize [incr Tcl] */
-    if (Itcl_Init(interp) == TCL_ERROR) {
-	bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+    /* Initialize Itcl */
+    if (Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
+	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 
 #ifdef BWISH
-/* Initialize [incr Tk] */
-    if (Itk_Init(interp) == TCL_ERROR) {
-	bu_log("Itk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+   /* Initialize Itk */
+    if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
+	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 #endif
@@ -82,7 +82,11 @@ Cad_AppInit(Tcl_Interp *interp)
 #endif /* IMPORT_ITCL */
 
 #ifdef BWISH
-
+    /* Initialize Itk */
+    if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
+	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
 #  ifdef IMPORT_ITK
 /* Import [incr Tk] commands into the global namespace */
     if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),

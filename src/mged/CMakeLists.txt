@@ -5,7 +5,6 @@ ENDIF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/points
   ${TERMLIB_INCLUDE_DIR}
   ${PNG_INCLUDE_DIR}
   ${X11_INCLUDE_DIR}
@@ -14,6 +13,13 @@ include_directories(
   ${TCL_INCLUDE_PATH}
   ${TK_INCLUDE_PATH}
 )
+
+# process.h in points dir makes Windows unhappy
+IF(NOT WIN32)
+	include_directories(
+		${CMAKE_CURRENT_SOURCE_DIR}/points
+		)
+ENDIF(NOT WIN32)
 
 IF(WIN32 AND BRLCAD-ENABLE_OPENGL)
   SET(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-wgl.c")
@@ -100,10 +106,16 @@ SET(MGED_SOURCES
   usepen.c 
   utility1.c 
   vparse.c 
-  vrlink.c
 )
+IF(NOT WIN32)
+	SET(MGED_SOURCES ${MGED_SOURCES} vrlink.c)
+ENDIF(NOT WIN32)
 
-BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm libtermio ${pointstarget}")
+IF(NOT WIN32)
+	BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm libtermio ${pointstarget}")
+ELSE(NOT WIN32)
+	BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm ws2_32.lib opengl32.lib")
+ENDIF(NOT WIN32)
 
 BRLCAD_ADDEXEC(cad_boundp cad_boundp.c libbu)
 
