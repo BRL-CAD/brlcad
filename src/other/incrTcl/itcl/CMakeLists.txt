@@ -474,6 +474,7 @@ include_directories(
 )
 
 add_library(itcl ${ITCL_GENERIC_SRCS})
+SET_TARGET_PROPERTIES(itcl PROPERTIES PREFIX "lib")
 target_link_libraries(itcl ${M_LIBRARY} ${TCL_LIBRARY} ${TCL_STUB_LIBRARY})
 install(TARGETS itcl DESTINATION lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
 set_target_properties(itcl PROPERTIES INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})

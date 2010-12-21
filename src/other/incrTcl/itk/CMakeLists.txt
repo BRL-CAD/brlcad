@@ -501,6 +501,7 @@ include_directories(
 )
 
 add_library(itk ${ITK_GENERIC_SRCS})
+SET_TARGET_PROPERTIES(itk PROPERTIES PREFIX "lib")
 target_link_libraries(itk ${M_LIBRARY} ${TCL_LIBRARY} ${TK_LIBRARY} ${ITCL_LIBRARY})
 install(TARGETS itk DESTINATION lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
 set_target_properties(itk PROPERTIES INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
