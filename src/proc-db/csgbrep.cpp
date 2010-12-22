@@ -91,6 +91,7 @@ main(int argc, char** argv)
 	VMOVE( arb4->pt[i], ptarb4[i] );
     }
     tmp_internal->idb_ptr = (genptr_t)arb4;
+    tmp_internal->idb_meth = &rt_functab[ID_ARB8];
     tmp_internal->idb_meth->ft_brep(&arb4brep, tmp_internal, tol);
     const char* arb4_name = "arb4_nurb.s";
     mk_brep(outfp, arb4_name, arb4brep);
@@ -114,6 +115,7 @@ main(int argc, char** argv)
 	VMOVE( arb5->pt[i], ptarb5[i] );
     }
     tmp_internal->idb_ptr = (genptr_t)arb5;
+    tmp_internal->idb_meth = &rt_functab[ID_ARB8];
     tmp_internal->idb_meth->ft_brep(&arb5brep, tmp_internal, tol);
     const char* arb5_name = "arb5_nurb.s";
     mk_brep(outfp, arb5_name, arb5brep);
@@ -137,6 +139,7 @@ main(int argc, char** argv)
 	VMOVE( arb6->pt[i], ptarb6[i] );
     }
     tmp_internal->idb_ptr = (genptr_t)arb6;
+    tmp_internal->idb_meth = &rt_functab[ID_ARB8];
     tmp_internal->idb_meth->ft_brep(&arb6brep, tmp_internal, tol);
     const char* arb6_name = "arb6_nurb.s";
     mk_brep(outfp, arb6_name, arb6brep);
@@ -160,6 +163,7 @@ main(int argc, char** argv)
 	VMOVE( arb7->pt[i], ptarb7[i] );
     }
     tmp_internal->idb_ptr = (genptr_t)arb7;
+    tmp_internal->idb_meth = &rt_functab[ID_ARB8];
     tmp_internal->idb_meth->ft_brep(&arb7brep, tmp_internal, tol);
     const char* arb7_name = "arb7_nurb.s";
     mk_brep(outfp, arb7_name, arb7brep);
@@ -183,6 +187,7 @@ main(int argc, char** argv)
 	VMOVE( arb8->pt[i], pt8[i] );
     }
     tmp_internal->idb_ptr = (genptr_t)arb8;
+    tmp_internal->idb_meth = &rt_functab[ID_ARB8];
     tmp_internal->idb_meth->ft_brep(&arb8brep, tmp_internal, tol);
     const char* arb8_name = "arb8_nurb.s";
     mk_brep(outfp, arb8_name, arb8brep);
@@ -216,6 +221,8 @@ main(int argc, char** argv)
     arbn->eqn[6][3] = 1000;
     VSET(arbn->eqn[7], -0.57735, -0.57735, -0.57735);
     arbn->eqn[7][3] = 1000;
+    tmp_internal->idb_ptr = (genptr_t)arbn;
+    tmp_internal->idb_meth = &rt_functab[ID_ARBN];
     tmp_internal->idb_meth->ft_brep(&arbnbrep, &arbninternal, tol);
     const char* arbn_name = "arbn_nurb.s";
     mk_brep(outfp, arbn_name, arbnbrep);
@@ -250,8 +257,11 @@ main(int argc, char** argv)
     // Now, need nmg form of the arb
     struct model *m = nmg_mm();
     struct nmgregion *r;
+    tmp_internal->idb_ptr = (genptr_t)arbnmg8;
+    tmp_internal->idb_meth = &rt_functab[ID_ARB8];
     tmp_internal->idb_meth->ft_tessellate(&r, m, tmp_internal, ttol, tol);
     tmp_internal->idb_ptr = (genptr_t)m;
+    tmp_internal->idb_meth = &rt_functab[ID_ARBN];
     tmp_internal->idb_meth->ft_brep(&nmgbrep, tmp_internal, tol);
     const char* nmg_name = "nmg_nurb.s";
     mk_brep(outfp, nmg_name, nmgbrep);
@@ -273,6 +283,7 @@ main(int argc, char** argv)
     VMOVE(sph->b, b);
     VMOVE(sph->c, c);
     tmp_internal->idb_ptr = (genptr_t)sph;
+    tmp_internal->idb_meth = &rt_functab[ID_SPH];
     tmp_internal->idb_meth->ft_brep(&sphbrep, tmp_internal, tol);
     const char* sph_name = "sph_nurb.s";
     mk_brep(outfp, sph_name, sphbrep);
@@ -292,6 +303,7 @@ main(int argc, char** argv)
     VMOVE(ell->b, b);
     VMOVE(ell->c, c);
     tmp_internal->idb_ptr = (genptr_t)ell;
+    tmp_internal->idb_meth = &rt_functab[ID_ELL];
     tmp_internal->idb_meth->ft_brep(&ellbrep, tmp_internal, tol);
     const char* ell_name = "ell_nurb.s";
     mk_brep(outfp, ell_name, ellbrep);
@@ -308,6 +320,7 @@ main(int argc, char** argv)
     rhc->rhc_r = 1000;
     rhc->rhc_c = 400;
     tmp_internal->idb_ptr = (genptr_t)rhc;
+    tmp_internal->idb_meth = &rt_functab[ID_RHC];
     tmp_internal->idb_meth->ft_brep(&rhcbrep, tmp_internal, tol);
     const char* rhc_name = "rhc_nurb.s";
     mk_brep(outfp, rhc_name, rhcbrep);
@@ -325,6 +338,7 @@ main(int argc, char** argv)
     VSCALE(rpc->rpc_B, rpc->rpc_B, 2000);
     rpc->rpc_r = 1000;
     tmp_internal->idb_ptr = (genptr_t)rpc;
+    tmp_internal->idb_meth = &rt_functab[ID_RPC];
     tmp_internal->idb_meth->ft_brep(&rpcbrep, tmp_internal, tol);
     const char* rpc_name = "rpc_nurb.s";
     mk_brep(outfp, rpc_name, rpcbrep);
@@ -341,6 +355,7 @@ main(int argc, char** argv)
     epa->epa_r1 = 1000;
     epa->epa_r2 = 500;
     tmp_internal->idb_ptr = (genptr_t)epa;
+    tmp_internal->idb_meth = &rt_functab[ID_EPA];
     tmp_internal->idb_meth->ft_brep(&epabrep, tmp_internal, tol);
     const char* epa_name = "epa_nurb.s";
     mk_brep(outfp, epa_name, epabrep);
@@ -358,6 +373,7 @@ main(int argc, char** argv)
     ehy->ehy_r2 = 500;
     ehy->ehy_c = 400;
     tmp_internal->idb_ptr = (genptr_t)ehy;
+    tmp_internal->idb_meth = &rt_functab[ID_EHY];
     tmp_internal->idb_meth->ft_brep(&ehybrep, tmp_internal, tol);
     const char* ehy_name = "ehy_nurb.s";
     mk_brep(outfp, ehy_name, ehybrep);
@@ -374,6 +390,7 @@ main(int argc, char** argv)
     hyp->hyp_b = 50;
     hyp->hyp_bnr = 0.5;
     tmp_internal->idb_ptr = (genptr_t)hyp;
+    tmp_internal->idb_meth = &rt_functab[ID_HYP];
     tmp_internal->idb_meth->ft_brep(&hypbrep, tmp_internal, tol);
     const char* hyp_name = "hyp_nurb.s";
     mk_brep(outfp, hyp_name, hypbrep);
@@ -391,6 +408,7 @@ main(int argc, char** argv)
     VSET(tgc->c, 250, 0, 0);
     VSET(tgc->d, 0, 500, 0);
     tmp_internal->idb_ptr = (genptr_t)tgc;
+    tmp_internal->idb_meth = &rt_functab[ID_TGC];
     tmp_internal->idb_meth->ft_brep(&tgcbrep, tmp_internal, tol);
     const char* tgc_name = "tgc_nurb.s";
     mk_brep(outfp, tgc_name, tgcbrep);
@@ -408,6 +426,7 @@ main(int argc, char** argv)
     tor->r_a = 5.0;
     tor->r_h = 2.0;
     tmp_internal->idb_ptr = (genptr_t)tor;
+    tmp_internal->idb_meth = &rt_functab[ID_TOR];
     tmp_internal->idb_meth->ft_brep(&torbrep, tmp_internal, tol);
     const char* tor_name = "tor_nurb.s";
     mk_brep(outfp, tor_name, torbrep);
@@ -427,6 +446,7 @@ main(int argc, char** argv)
     eto->eto_r = 800;
     eto->eto_rd = 100;
     tmp_internal->idb_ptr = (genptr_t)eto;
+    tmp_internal->idb_meth = &rt_functab[ID_ETO];
     tmp_internal->idb_meth->ft_brep(&etobrep, tmp_internal, tol);
     const char* eto_name = "eto_nurb.s";
     mk_brep(outfp, eto_name, etobrep);
@@ -467,6 +487,7 @@ main(int argc, char** argv)
 	BU_LIST_INSERT(&pipe->pipe_segs_head, &pipe1[i].l);
     }
     tmp_internal->idb_ptr = (genptr_t)pipe;
+    tmp_internal->idb_meth = &rt_functab[ID_PIPE];
     tmp_internal->idb_meth->ft_brep(&pipebrep, tmp_internal, tol);
     const char* pipe_name = "pipe_nurb.s";
     mk_brep(outfp, pipe_name, pipebrep);
@@ -559,6 +580,7 @@ main(int argc, char** argv)
     
        
     tmp_internal->idb_ptr = (genptr_t)skt;
+    tmp_internal->idb_meth = &rt_functab[ID_SKETCH];
     tmp_internal->idb_meth->ft_brep(&sketchbrep, tmp_internal, tol);
     const char* sketch_name = "sketch_nurb.s";
     mk_brep(outfp, sketch_name, sketchbrep);
@@ -663,6 +685,7 @@ main(int argc, char** argv)
     extrude->sketch_name = esketch_name;
     extrude->skt = eskt;
     tmp_internal->idb_ptr = (genptr_t)extrude;
+    tmp_internal->idb_meth = &rt_functab[ID_EXTRUDE];
     tmp_internal->idb_meth->ft_brep(&extrudebrep, tmp_internal, tol);
     const char* extrude_name = "extrude_nurb.s";
     mk_brep(outfp, extrude_name, extrudebrep);
@@ -763,6 +786,7 @@ main(int argc, char** argv)
     //revolve->sketch_name = rsketch_name;
     revolve->sk = rskt;
     tmp_internal->idb_ptr = (genptr_t)revolve;
+    tmp_internal->idb_meth = &rt_functab[ID_REVOLVE];
     tmp_internal->idb_meth->ft_brep(&revolvebrep, tmp_internal, tol);
     const char* revolve_name = "revolve_nurb.s";
     mk_brep(outfp, revolve_name, revolvebrep);
@@ -784,6 +808,7 @@ main(int argc, char** argv)
     MAT_IDN(dsp->dsp_mtos);
     MAT_IDN(dsp->dsp_stom);
     tmp_internal->idb_ptr = (genptr_t)dsp;
+    tmp_internal->idb_meth = &rt_functab[ID_DSP];
     tmp_internal->idb_meth->ft_brep(&dspbrep, tmp_internal, tol);
     const char* dsp_name = "dsp_nurb.s";
     mk_brep(outfp, dsp_name, dspbrep);
