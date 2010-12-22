@@ -2518,12 +2518,17 @@ mged_finish(int exitcode)
     log_event("CEASE", place);
 
     /* Release all displays */
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	curr_dm_list = p;
-
-	if (curr_dm_list && dmp) {
-	    DM_CLOSE(dmp);
+    struct dm_list *dml;
+    while (BU_LIST_WHILE(p, dm_list, &(head_dm_list.l))) {
+	BU_LIST_DEQUEUE(&(p->l));
+	if (p && p->dml_dmp) {
+	    DM_CLOSE(p->dml_dmp);
 	}
+
+	RT_FREE_VLIST(&p->dml_p_vlist);
+	mged_slider_free_vls(p);
+	bu_free((genptr_t) p, "release: curr_dm_list");
+	curr_dm_list = DM_LIST_NULL;
     }
 
     for (BU_LIST_FOR (c, cmd_list, &head_cmd_list.l)) {
