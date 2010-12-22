@@ -38,6 +38,7 @@
 	method setDataEntry {_index _val}
 	method setTableCol {_col _val}
 	method setTableVal {_index _val}
+	method updateTitleCol {}
 	method width {args}
     }
 
@@ -164,12 +165,13 @@
     bind $itk_component(table) <Key-Down> "[::itcl::code $this handleUpDown %W %K]; break"
 
     set bg [$itk_component(table) tag cget title -background]
-    $itk_component(table) tag col select_col 0
+#    $itk_component(table) tag col select_col 0
     $itk_component(table) tag configure select_col \
-	-background $bg \
-	-relief raised
+	-background \#9999ff
+    $itk_component(table) tag col title 0
     $itk_component(table) tag configure title \
 	-relief raised
+    $itk_component(table) tag raise select_col
 
     eval itk_initialize $args
     set mNumRows [$itk_component(table) cget -rows]
@@ -192,6 +194,14 @@
     while {[info exists $mTableDataVar\($row,$_col\)]} {
 	set $mTableDataVar\($row,$_col\) $_val
 
+	if {$_col == 0} {
+	    if {$_val == "*"} {
+		$itk_component(table) tag cell select_col $row,$_col
+	    } else {
+		$itk_component(table) tag cell {} $row,$_col
+	    }
+	}
+
 	incr row
     }
 
@@ -209,6 +219,24 @@
 }
 
 
+::itcl::body cadwidgets::TkTable::updateTitleCol {} {
+    set row 1
+    while {[info exists $mTableDataVar\($row,0\)]} {
+	if {[set [subst $mTableDataVar\($row,0\)]] == "*"} {
+	    $itk_component(table) tag cell select_col $row,0
+	} else {
+	    $itk_component(table) tag cell {} $row,0
+	}
+
+	incr row
+    }
+
+    # Do the rest of the rows. Note - these have NO data
+    for {} {$row < $mNumRows} {incr row} {
+	$itk_component(table) tag cell {} $row,0
+    }
+}
+
 ::itcl::body cadwidgets::TkTable::width {args} {
     eval $itk_component(table) width $args
 }
@@ -224,16 +252,23 @@
 ::itcl::body cadwidgets::TkTable::handleKey {_win _key} {
     set index [$_win index active]
     set ilist [split $index ,]
+    set row [lindex $ilist 0]
     set col [lindex $ilist 1]
 
-    if {$col != 0 && $_key != "Down" && $_key != "Up" && !$mInsertMode} {
+    if {$row == 0} {
+	set mDoBreak 1
+	return
+    }
+
+    # Don't need to check for Left/Right/Down/Up
+    # (i.e. these get swallowed up by more specific bindings).
+    if {$col != 0 && !$mInsertMode} {
 	set mDoBreak 1
 	setInsertMode 1
 
 	# Overwrite what's in the cell
 	if {[keyVisible $_key]} {
 	    if {$itk_option(-validatecommand) != ""} {
-		set row [lindex $ilist 0]
 		if {[catch {$itk_option(-validatecommand) $row $col $_key $itk_option(-vclientdata)} isvalid]} {
 		    set isvalid 0
 		}
@@ -258,8 +293,10 @@
 
 	    if {[set [subst $mTableDataVar\($index\)]] == "*"} {
 		setTableVal $index ""
+		$itk_component(table) tag cell {} $index
 	    } else {
 		setTableVal $index "*"
+		$itk_component(table) tag cell select_col $index
 	    }
 	} else {
 	    set mDoBreak 0
@@ -272,6 +309,10 @@
     set ilist [split $index ,]
     set row [lindex $ilist 0]
     set col [lindex $ilist 1]
+
+    if {$row == 0} {
+	return
+    }
 
     # This is a <<PrevWindow>> or <Shift-Tab>
     if {$_sflag} {
@@ -323,6 +364,10 @@
     set ilist [split $index ,]
     set row [lindex $ilist 0]
     set col [lindex $ilist 1]
+
+    if {$row == 0} {
+	return
+    }
 
     if {$_key == "Up"} {
 	incr row -1
@@ -391,7 +436,7 @@
 	return
     }
 
-    set mDoBreak 1
+    set mDoBreak 0
     if {![info exists $mTableDataVar\($row,$col\)]} {
 	return
     }
@@ -403,10 +448,13 @@
 	# Using "set" instead.
 	if {[set [subst $mTableDataVar\($index\)]] == "*"} {
 	    setTableVal $index ""
+	    $itk_component(table) tag cell {} $index
 	} else {
 	    setTableVal $index "*"
+	    $itk_component(table) tag cell select_col $index
 	}
     } else {
+	set mDoBreak 1
 	if {$mToggleSelectMode} {
 	    set mToggleSelectMode 0
 	    setTableCol 0 ""
