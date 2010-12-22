@@ -570,11 +570,10 @@
 		-maxheight 2000 \
 		-width 0 \
 		-rows 100000 \
-		-titlecols 1 \
-		-titlerows 1 \
 		-colstretchmode unset \
 		-validate 1 \
-		-validatecommand [::itcl::code $this validateTableEntry %r %c %S $tname] \
+		-validatecommand [::itcl::code $this validateTableEntry] \
+		-vclientdata $tname \
 		-tablePopupHandler [::itcl::code $this handleTablePopup]
 	} {}
 
