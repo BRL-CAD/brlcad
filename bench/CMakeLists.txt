@@ -9,6 +9,13 @@ add_definitions(
   -DBRLCADBUILD
 )
 
+IF(MSVC)
+	add_definitions(
+		-DCONSOLE
+		-DBRLCAD_DLL
+		)
+ENDIF(MSVC)
+
 BRLCAD_ADDEXEC(pixcmp pixcmp.c libbu)
 
 configure_file(run.sh ${CMAKE_BINARY_DIR}/bin/benchmark COPYONLY)
