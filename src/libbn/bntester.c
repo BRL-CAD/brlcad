@@ -362,7 +362,7 @@ main(int argc, char **argv)
                      * function to be tested.
                      */
                     switch (u[0]) {
-                        case 1: /* function number 'bn_distsq_line3_pt3' */
+                        case 1: /* function 'bn_distsq_line3_pt3' */
                             (void)strcpy(dt_fmt, "dddddddddd"); /* defines parameter data types */
                             if (parse_case(buf_p, i, l, d, u, dt_fmt, line_num, stream)) {
                                 /* Parse failed, skipping test case */
@@ -389,15 +389,29 @@ main(int argc, char **argv)
                                 } BU_UNSETJUMP;
                             }
                             break;
-                        case 2: /* function number 2 (template) */
-                            (void)strcpy(dt_fmt, "uu");
+                        case 2: /* function 'bn_2line3_colinear' */
+                            (void)strcpy(dt_fmt, "ddddddddddddduddddi");
                             if (parse_case(buf_p, i, l, d, u, dt_fmt, line_num, stream)) {
                                 /* Parse failed, skipping test case */
                                 ret = 1;
                             } else {
+                                int result;
                                 if (!BU_SETJUMP) {
                                     /* try */
-                                    (void)fprintf(stream, "Processing function %lu\n", u[0]);
+                                    tol.magic = u[1];
+                                    tol.dist = d[13];
+                                    tol.dist_sq = d[14];
+                                    tol.perp = d[15];
+                                    tol.para = d[16];
+                                    result = bn_2line3_colinear(&d[0], &d[3], &d[6], &d[9], d[12], &tol);
+                                    if (result != i[0]) {
+                                        ret = 1;
+                                        failed_cnt++;
+                                        (void)fprintf(stream, "Failed function %lu test case on line %lu expected = %d result = %d\n",
+                                               u[0], line_num, i[0], result); 
+                                    } else {
+                                        success_cnt++;
+                                    }
                                 } else {
                                     /* catch */
                                     BU_UNSETJUMP;
