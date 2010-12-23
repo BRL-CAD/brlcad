@@ -61,9 +61,6 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
 #include "bio.h"
 
 #include "vmath.h"
@@ -88,7 +85,6 @@ char	*cmd[] = {
     "remove [object[s]]             Remove an object from current list.",
     "sort                           Sort table of contents alphabetically.",
     "toc [object[s]]                Table of contents of solids database.",
-    "! [shell command]              Execute a UNIX shell command.",
     "",
     "NOTE:",
     "First letter of command is sufficient, and all arguments are optional.",
@@ -177,7 +173,6 @@ extern int		insert();
 extern int		col_prt();
 extern int		match();
 extern int		delete();
-extern int		shell();
 extern int		cgarbs();
 extern int		redoarb();
 
@@ -323,14 +318,6 @@ main( int argc, char *argv[] )
 	    case RETURN :
 		prompt( PROMPT );
 		continue;
-	    case SHELL :
-		if ( arg_list[1] == 0 )
-		{
-		    prompt( "enter shell command: " );
-		    (void) getcmd( arg_list, arg_ct );
-		}
-		(void) shell( arg_list );
-		break;
 	    case SORT_TOC :
 		qsort( (genptr_t)toc_list, (unsigned)ndir,
 		       sizeof(char *), sortFunc );
@@ -1348,65 +1335,6 @@ deck( char *prefix )
     delsol = delreg = 0;
     /* XXX should free soltab list */
 }
-
-
-/**
- * s h e l l
- *
- * Execute shell command.
- */
-int
-shell(char *args[])
-{
-    char	*from, *to;
-    char		*argv[4], cmdbuf[MAXLN];
-    int		pid, ret, status;
-    int	i;
-
-    (void) signal( SIGINT, SIG_IGN );
-
-    /* Build arg vector.						*/
-    argv[0] = "Shell( deck )";
-    argv[1] = "-c";
-    to = argv[2] = cmdbuf;
-    for ( i = 1; i < arg_ct; i++ ) {
-	from = args[i];
-	if ( (to + strlen( args[i] )) - argv[2] > MAXLN - 1 ) {
-	    (void) fprintf( stderr, "\ncommand line too long\n" );
-	    bu_exit( 10, NULL );
-	}
-	(void) printf( "%s ", args[i] );
-	while ( *from )
-	    *to++ = *from++;
-	*to++ = ' ';
-    }
-    to[-1] = '\0';
-    (void) printf( "\n" );
-    argv[3] = 0;
-    if ( (pid = fork()) == -1 ) {
-	perror( "shell()" );
-	return -1;
-    } else	if ( pid == 0 ) {
-	/*
-	 * CHILD process - execs a shell command
-	 */
-	(void) signal( SIGINT, SIG_DFL );
-	(void) execv( "/bin/sh", argv );
-	perror( "/bin/sh -c" );
-	bu_exit( 99, NULL );
-    } else	/*
-		 * PARENT process - waits for shell command
-		 * to finish.
-		 */
-	do {
-	    if ( (ret = wait( &status )) == -1 ) {
-		perror( "wait( /bin/sh -c )" );
-		break;
-	    }
-	} while ( ret != pid );
-    return 0;
-}
-
 
 /**
  * t o c

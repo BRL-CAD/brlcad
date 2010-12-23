@@ -46,6 +46,14 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* investigate why solids.sh fails on three pixels on some 64-bit
+  platforms. it grazingly hits/misses a tgc causing a regression
+  failure.
+
+  havoc.g s.nos5g reliably exhibits the grazing edge bug where only
+  one hit point is being returned.  to reproduce:
+  e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
+
 * deprecate rtg3 and burst
 
 * make sure 'preview' works, particularly the 'tree' subcommand.
@@ -605,10 +613,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   segments)
 
 * address the TODO items in src/mged/clone.c
-
-* investigate why solids.sh fails on three pixels on some 64-bit
-  platforms. it grazingly hits/misses a tgc causing a regression
-  failure.
 
 * develop a low-level tool for investigating, reporting statistics on,
   and repairing geometry database files.  the tool should nominally
