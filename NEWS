@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2010-12-XX  Release 7.18.2                                     ---
 ----------------------------------------------------------------------
 
+* remove shell execution from vdeck - Cliff Yapp
 
 ----------------------------------------------------------------------
 --- 2010-12-07  Release 7.18.0                                     ---
