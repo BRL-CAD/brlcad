@@ -64,13 +64,6 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-#ifdef _WIN32
-#  include <windows.h>
-inline int wait(int *sec){
-    Sleep(*sec * 1000);
-    return 1;
-}
-#endif
 #include "bio.h"
 
 #include "vmath.h"
