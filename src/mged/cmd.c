@@ -593,7 +593,7 @@ cmd_ged_view_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
  * Usage:  loadtk [displayname[.screennum]]
  */
 int
-cmd_tk(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+cmd_tk(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
 {
     int status;
 
@@ -623,7 +623,7 @@ cmd_tk(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
  * output hook!
  */
 int
-cmd_output_hook(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+cmd_output_hook(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
 {
     struct bu_vls infocommand;
     int status;
@@ -679,7 +679,7 @@ cmd_output_hook(ClientData clientData, Tcl_Interp *interpreter, int argc, char *
  * C M D _ N O P
  */
 int
-cmd_nop(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+cmd_nop(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
 {
     return TCL_OK;
 }
@@ -692,11 +692,11 @@ cmd_nop(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
  * reinterpreted (using atol() and a cast) as a a pointer.
  */
 int
-cmd_get_ptr(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+cmd_get_ptr(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
 {
     char buf[128] = {0};
 
-    if (dbip == DBI_NULL) {
+    if (dbip == DBI_NULL || argc < 0 || !argv) {
 	return TCL_ERROR;
     }
 
@@ -707,7 +707,7 @@ cmd_get_ptr(ClientData clientData, Tcl_Interp *interpreter, int argc, char **arg
 
 
 int
-cmd_cmd_win(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     struct bu_vls vls;
 
@@ -844,10 +844,12 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interpreter, int argc, char **arg
 
 
 int
-cmd_get_more_default(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+cmd_get_more_default(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
 {
     if (argc != 1) {
 	struct bu_vls vls;
+
+	bu_log("Unrecognized option [%s]\n", argv[1]);
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel get_more_default");
@@ -862,7 +864,7 @@ cmd_get_more_default(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 
 
 int
-cmd_set_more_default(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+cmd_set_more_default(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
 {
     if (argc != 2) {
 	struct bu_vls vls;
@@ -1178,7 +1180,7 @@ end:
 
 
 void
-mged_print_result(int status)
+mged_print_result(int UNUSED(status))
 {
     size_t len;
     const char *result = Tcl_GetStringResult(interp);
@@ -1262,7 +1264,7 @@ mged_cmd(
  * Let the user temporarily escape from the editor Format: %
  */
 int
-f_comm(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+f_comm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
 
     if (argc != 1 || !classic_mged || curr_cmd_list != &head_cmd_list) {
@@ -1303,7 +1305,7 @@ f_comm(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
  * Quit and exit gracefully. Format: q
  */
 int
-f_quit(ClientData clientData, Tcl_Interp *interpreter, int argc, const char **argv)
+f_quit(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char **argv)
 {
     if (argc < 1 || 1 < argc) {
 	struct bu_vls vls;
@@ -1423,7 +1425,7 @@ f_fhelp2(int argc, char **argv, struct funtab *functions)
  * tie -u cw1 ---> removes the association, if it exists, cw1 has with a display manager
  */
 int
-f_tie(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
 {
     int uflag = 0;		/* untie flag */
     struct cmd_list *clp;
@@ -1654,7 +1656,7 @@ f_pl(ClientData clientData, Tcl_Interp *interpreter, int argc, const char **argv
 
 
 int
-f_winset(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
 {
     struct dm_list *p;
 
@@ -1726,7 +1728,7 @@ mged_global_variable_teardown(Tcl_Interp *interpreter)
 
 
 int
-f_bomb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+f_bomb(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
     char buffer[1024] = {0};
     struct bu_vls vls;
@@ -1749,7 +1751,7 @@ f_bomb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
 
 
 int
-cmd_rt_gettrees(ClientData clientData,
+cmd_rt_gettrees(ClientData UNUSED(clientData),
 		Tcl_Interp *interpreter,
 		int argc,
 		char **argv)
@@ -1791,7 +1793,7 @@ cmd_nmg_collapse(ClientData clientData, Tcl_Interp *interpreter, int argc, char 
  * in.
  */
 int
-cmd_units(ClientData clientData,
+cmd_units(ClientData UNUSED(clientData),
 	  Tcl_Interp *interpreter,
 	  int argc,
 	  char **argv)
@@ -1830,7 +1832,7 @@ cmd_units(ClientData clientData,
  * objects.
  */
 int
-cmd_search(ClientData clientData,
+cmd_search(ClientData UNUSED(clientData),
 	   Tcl_Interp *interpreter,
 	   int argc,
 	   char **argv)
@@ -1857,7 +1859,7 @@ cmd_search(ClientData clientData,
  * List regions based on values of their MUVES_Component attribute
  */
 int
-cmd_lm(ClientData clientData,
+cmd_lm(ClientData UNUSED(clientData),
        Tcl_Interp *interpreter,
        int argc,
        char **argv)
@@ -1946,7 +1948,7 @@ cmd_lm(ClientData clientData,
  * "tol perp #" sets calculational normal tolerance.
  */
 int
-cmd_tol(ClientData clientData,
+cmd_tol(ClientData UNUSED(clientData),
 	Tcl_Interp *interpreter,
 	int argc,
 	char **argv)
@@ -1981,7 +1983,7 @@ extern int edit_com(int argc, const char *argv[], int kind, int catch_sigint);
  * Format: B object
  */
 int
-cmd_blast(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
     const char *av[2];
     int ret;
@@ -2007,23 +2009,23 @@ cmd_blast(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
  * Edit something (add to visible display).  Format: e object
  */
 int
-cmd_draw(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
     return edit_com(argc, argv, 1, 1);
 }
 
 
-extern int emuves_com(int argc, char **argv);	/* from chgview.c */
+extern int emuves_com(int argc, const char *argv[]);	/* from chgview.c */
 
 /**
  * Add regions with attribute MUVES_Component haveing the specified values
  * Format: em value [value value ...]
  */
 int
-cmd_emuves(ClientData clientData,
-	   Tcl_Interp *interpreter,
+cmd_emuves(ClientData UNUSED(clientData),
+	   Tcl_Interp *UNUSED(interpreter),
 	   int argc,
-	   char **argv)
+	   const char *argv[])
 {
     return emuves_com(argc, argv);
 }
@@ -2033,8 +2035,8 @@ cmd_emuves(ClientData clientData,
  * Format: ev objects
  */
 int
-cmd_ev(ClientData clientData,
-       Tcl_Interp *interpreter,
+cmd_ev(ClientData UNUSED(clientData),
+       Tcl_Interp *UNUSED(interpreter),
        int argc,
        const char *argv[])
 {
@@ -2049,8 +2051,8 @@ cmd_ev(ClientData clientData,
  * display).  Usage: E object(s)
  */
 int
-cmd_E(ClientData clientData,
-      Tcl_Interp *interpreter,
+cmd_E(ClientData UNUSED(clientData),
+      Tcl_Interp *UNUSED(interpreter),
       int argc,
       const char **argv)
 {
@@ -2059,7 +2061,7 @@ cmd_E(ClientData clientData,
 
 
 int
-cmd_shaded_mode(ClientData clientData,
+cmd_shaded_mode(ClientData UNUSED(clientData),
 		Tcl_Interp *interpreter,
 		int argc,
 		char **argv)
@@ -2119,10 +2121,10 @@ cmd_parse_points(ClientData clientData,
 
 
 int
-cmd_has_embedded_fb(ClientData clientData,
+cmd_has_embedded_fb(ClientData UNUSED(clientData),
 		    Tcl_Interp *interpreter,
-		    int argc,
-		    char **argv)
+		    int UNUSED(argc),
+		    char **UNUSED(argv))
 {
 #ifdef USE_FBSERV
     Tcl_AppendResult(interpreter, "1", NULL);
@@ -2135,7 +2137,7 @@ cmd_has_embedded_fb(ClientData clientData,
 
 
 int
-cmd_stub(ClientData clientData,
+cmd_stub(ClientData UNUSED(clientData),
 	 Tcl_Interp *interpreter,
 	 int argc,
 	 char **argv)

@@ -234,11 +234,11 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 
     /* Ugh. This needs much repair/cleanup. */
     if (state->updpos == 0) {
-	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%512s", &prefix, &num, &suffix, &suffix2); /* CLONE_BUFSIZE */
+	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%512s", prefix, &num, suffix, suffix2); /* CLONE_BUFSIZE */
 	snprintf(suffix, CLONE_BUFSIZE, "%s", suffix2);
     } else if (state->updpos == 1) {
 	int num2 = 0;
-	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num2, &suffix2, &num, &suffix);
+	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%d%[!-/,:-~]", prefix, &num2, suffix2, &num, suffix);
 	snprintf(prefix, CLONE_BUFSIZE, "%s%d%s", prefix, num2, suffix2);
     } else
 	bu_exit(EXIT_FAILURE, "multiple -c options not supported yet.");
