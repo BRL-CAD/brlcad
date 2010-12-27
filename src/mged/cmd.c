@@ -1303,7 +1303,7 @@ f_comm(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
  * Quit and exit gracefully. Format: q
  */
 int
-f_quit(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+f_quit(ClientData clientData, Tcl_Interp *interpreter, int argc, const char **argv)
 {
     if (argc < 1 || 1 < argc) {
 	struct bu_vls vls;

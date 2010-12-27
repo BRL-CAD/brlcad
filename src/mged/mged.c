@@ -2585,11 +2585,7 @@ mged_finish(int exitcode)
  * NOT opened (and the user didn't abort).
  */
 int
-f_opendb(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    char **argv)
+f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char **argv)
 {
     struct ged *save_gedp;
     struct db_i *save_dbip = DBI_NULL;
@@ -2899,21 +2895,18 @@ f_opendb(
  * Close the current database, if open.
  */
 int
-f_closedb(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    char **UNUSED(argv))
+f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char **argv)
 {
     const char *av[2];
 
     if (argc != 1) {
+	Tcl_AppendResult(interpreter, "Unexpected argument [%s]\n", (const char *)argv[1], NULL);
 	Tcl_Eval(interpreter, "help closedb");
 	return TCL_ERROR;
     }
 
     if (dbip == DBI_NULL ) {
-	Tcl_AppendResult(interpreter, "No database is open\n", (char *)NULL);
+	Tcl_AppendResult(interpreter, "No database is open\n", NULL);
 	return TCL_OK;
     }
 
