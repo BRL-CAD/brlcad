@@ -289,26 +289,9 @@ struct hit {
 #define RT_CK_HIT(_p)	BU_CKMAG(_p, RT_HIT_MAGIC, "struct hit")
 
 /**
- * Old macro: DEPRECATED, use RT_HIT_NORMAL
- *
- * Only the hit_dist field of pt_inhit and pt_outhit are valid when
- * a_hit() is called; to compute both hit_point and hit_normal, use
- * RT_HIT_NORMAL() macro; to compute just hit_point, use
- * VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
- */
-#define RT_HIT_NORM(_hitp, _stp, _unused) { \
-	RT_CK_HIT(_hitp); \
-	RT_CK_SOLTAB(_stp); \
-	RT_CK_FUNCTAB((_stp)->st_meth); \
-	if ((_stp)->st_meth->ft_norm) { \
-		(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
-	} \
-}
-
-/**
- * New macro: Compute normal into (_hitp)->hit_normal, but leave it
- * un-flipped, as one hit may be shared between multiple partitions
- * with different flip status.
+ * Compute normal into (_hitp)->hit_normal.  Set flip-flag accordingly
+ * depending on boolean logic, as one hit may be shared between
+ * multiple partitions with different flip status.
  *
  * Example: box.r = box.s - sph.s; sph.r = sph.s
  *
@@ -1434,7 +1417,7 @@ struct resource {
     struct directory *	re_directory_hd;
     struct bu_ptbl	re_directory_blocks;	/**< @brief  Table of malloc'ed blocks */
 };
-RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined in librt/shoot.c */
+RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined in librt/globals.c */
 #define RESOURCE_NULL	((struct resource *)0)
 #define RT_CK_RESOURCE(_p)	BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 
@@ -1669,11 +1652,11 @@ struct application_bundle
  * of how many different models are being worked on
  */
 struct rt_g {
-    int			debug;		/**< @brief  !0 for debug, see librt/debug.h */
+    uint32_t		debug;		/**< @brief  !0 for debug, see librt/debug.h */
     /* DEPRECATED:  rtg_parallel is not used by LIBRT any longer (and will be removed) */
-    int			rtg_parallel;	/**< @brief  !0 = trying to use multi CPUs */
+    int8_t		rtg_parallel;	/**< @brief  !0 = trying to use multi CPUs */
     struct bu_list	rtg_vlfree;	/**< @brief  head of bn_vlist freelist */
-    int			NMG_debug;	/**< @brief  debug bits for NMG's see nmg.h */
+    uint32_t		NMG_debug;	/**< @brief  debug bits for NMG's see nmg.h */
     struct rt_wdb	rtg_headwdb;	/**< @brief  head of database object list */
 };
 RT_EXPORT extern struct rt_g rt_g;

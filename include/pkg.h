@@ -66,7 +66,7 @@ typedef void (*pkg_errlog)PKG_ARGS((char *msg));
 struct pkg_switch {
     unsigned short pks_type;	/**< @brief Type code */
     pkg_callback pks_handler;	/**< @brief Message Handler */
-    char *pks_title;		/**< @brief Description of message type */
+    const char *pks_title;	/**< @brief Description of message type */
     void *pks_user_data;        /**< @brief User defined pointer to data */
 };
 

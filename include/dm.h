@@ -164,6 +164,28 @@
 	(_dr) == (_sr) &&\
 	(_dg) == (_sg) &&\
 	(_db) == (_sb))
+#if defined(DM_X) || defined(DM_OGL)
+#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask) {	\
+	_shift = 24 - _shift;				\
+	switch (_shift) {				\
+	    case 0:					\
+		_mask >>= 24;				\
+		break;					\
+	    case 8:					\
+		_mask >>= 8;				\
+		break;					\
+	    case 16:					\
+		_mask <<= 8;				\
+		break;					\
+	    case 24:					\
+		_mask <<= 24;				\
+		break;					\
+	}						\
+    }
+#else
+/* Do nothing */
+#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask)
+#endif
 
 /* Command parameter to dmr_viewchange() */
 #define DM_CHGV_REDO	0	/* Display has changed substantially */
@@ -217,6 +239,7 @@ struct dm {
     int (*dm_endDList)();
     int (*dm_drawDList)();
     int (*dm_freeDLists)();
+    int (*dm_getDisplayImage)(struct dm *dmp, unsigned char **image);
     unsigned long dm_id;          /**< @brief window id */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */
@@ -228,6 +251,8 @@ struct dm {
     int dm_top;                   /**< @brief !0 means toplevel window */
     int dm_width;
     int dm_height;
+    int dm_bytes_per_pixel;
+    int dm_bits_per_channel;  /* bits per color channel */
     int dm_lineWidth;
     int dm_lineStyle;
     fastf_t dm_aspect;
@@ -299,6 +324,7 @@ struct dm_obj {
 #define DM_ENDDLIST(_dmp) _dmp->dm_endDList(_dmp)
 #define DM_DRAWDLIST(_dmp, _list) _dmp->dm_drawDList(_dmp, _list)
 #define DM_FREEDLISTS(_dmp, _list, _range) _dmp->dm_freeDLists(_dmp, _list, _range)
+#define DM_GET_DISPLAY_IMAGE(_dmp, _image) _dmp->dm_getDisplayImage(_dmp, _image)
 
 DM_EXPORT extern struct dm dm_Null;
 
@@ -440,7 +466,8 @@ DM_EXPORT BU_EXTERN(const char *dm_version, (void));
    HIDDEN int _dmtype##_beginDList(struct dm *dmp, unsigned int list); \
    HIDDEN int _dmtype##_endDList(struct dm *dmp); \
    HIDDEN int _dmtype##_drawDList(struct dm *dmp, unsigned int list); \
-   HIDDEN int _dmtype##_freeDLists(struct dm *dmp, unsigned int list, int range); 
+   HIDDEN int _dmtype##_freeDLists(struct dm *dmp, unsigned int list, int range); \
+   HIDDEN int _dmtype##_getDisplayImage(struct dm *dmp, unsigned char **image);
 
 #endif /* __DM_H__ */
 

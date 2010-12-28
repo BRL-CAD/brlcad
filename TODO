@@ -17,15 +17,15 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* make sure 'preview' works, particularly the 'tree' subcommand.
+* conversion.sh using signals for child->parent communication
 
-* verify 'solids_on_ray' command works ('Ray Pick' menu option)
-
-* verify rt/benchmark on windows doesn't crash
+* conversion.sh --not and --only options
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* update g-xxx_facets to use libgcv
 
 * rename all the g_* tools sans "_"
 
@@ -45,6 +45,24 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* investigate why solids.sh fails on three pixels on some 64-bit
+  platforms. it grazingly hits/misses a tgc causing a regression
+  failure.
+
+  havoc.g s.nos5g reliably exhibits the grazing edge bug where only
+  one hit point is being returned.  to reproduce:
+  e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
+
+* deprecate rtg3 and burst
+
+* make sure 'preview' works, particularly the 'tree' subcommand.
+
+* make nreed's new bot cleanup interface update interactively without
+  resorting to calls to Tcl_DoOneEvent() down in librt.
+
+* upgrade source repository back-end to the latest SVN 1.5 so we can
+  benefit from proper merge tracking.
 
 * make sure mged/archer behave properly with relative paths to dbopen.
   Windows in particular is doing something different in
@@ -412,6 +430,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * add support to 'rtxray' for outputting inverted pixel values so that
   we have pixel values that are directly related to material thickness
 
+* gqa semaphore locking on results is very slow and gets worse as the
+  number of cores and speed of cpu increases.  resource contention on
+  semaphores slows everything down substantially.
+
 * g_qa (gqa in mged) needs to be more informative when it runs - 
   needs a header letting you know what it's doing, and if possible
   a "progress report" for longer runs that provides some notion of
@@ -502,6 +524,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * implement -param support for 'search' command
 
+* make "search ." return object lists (no leading "/") but still
+  process hierarchically so things like "search . -maxdepth 0" return
+  a list of the top-level objects.  The "." implies returning only
+  unique names (i.e., a list).
+
 * make ged command names aware of object arguments for automatic
   globbing and regular expression expansion:
 	attr set t 1 [regex .*\.r]
@@ -586,10 +613,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   segments)
 
 * address the TODO items in src/mged/clone.c
-
-* investigate why solids.sh fails on three pixels on some 64-bit
-  platforms. it grazingly hits/misses a tgc causing a regression
-  failure.
 
 * develop a low-level tool for investigating, reporting statistics on,
   and repairing geometry database files.  the tool should nominally

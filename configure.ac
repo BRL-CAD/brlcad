@@ -1544,6 +1544,8 @@ dnl fi
 # math.h, setjmp.h, signal.h, stdarg.h, stddef.h, stdio.h, stdlib.h,
 # string.h, time.h
 
+# non-C89 headers that seem to be cross-platform safe: fcntl.h
+
 # C95 headers: wchar.h, wctype.h, iso646.h
 
 # C99 headers: complex.h, fenv.h, inttypes.h, stdbool.h, stdint.h,
