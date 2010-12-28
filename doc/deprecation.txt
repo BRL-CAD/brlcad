@@ -322,6 +322,8 @@ Included in following are various minimally impacting API changes that
 have been identified in reverse chronological order.  As expressions
 are not extensively tested, use with caution.
 
+s/VAPPROXEQUAL(/VNEAR_EQUAL(/g
+        VAPPROXEQUAL() renamed to VNEAR_EQUAL() [7.18]
 
 s/bu_vlb_getBufferLength(/bu_vlb_buflen(/g
         bu_vlb_getBufferLength() remamed to bu_vlb_buflen() [7.18]
