@@ -289,26 +289,9 @@ struct hit {
 #define RT_CK_HIT(_p)	BU_CKMAG(_p, RT_HIT_MAGIC, "struct hit")
 
 /**
- * Old macro: DEPRECATED, use RT_HIT_NORMAL
- *
- * Only the hit_dist field of pt_inhit and pt_outhit are valid when
- * a_hit() is called; to compute both hit_point and hit_normal, use
- * RT_HIT_NORMAL() macro; to compute just hit_point, use
- * VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
- */
-#define RT_HIT_NORM(_hitp, _stp, _unused) { \
-	RT_CK_HIT(_hitp); \
-	RT_CK_SOLTAB(_stp); \
-	RT_CK_FUNCTAB((_stp)->st_meth); \
-	if ((_stp)->st_meth->ft_norm) { \
-		(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
-	} \
-}
-
-/**
- * New macro: Compute normal into (_hitp)->hit_normal, but leave it
- * un-flipped, as one hit may be shared between multiple partitions
- * with different flip status.
+ * Compute normal into (_hitp)->hit_normal.  Set flip-flag accordingly
+ * depending on boolean logic, as one hit may be shared between
+ * multiple partitions with different flip status.
  *
  * Example: box.r = box.s - sph.s; sph.r = sph.s
  *

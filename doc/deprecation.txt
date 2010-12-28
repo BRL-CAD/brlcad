@@ -176,7 +176,6 @@ include/raytrace.h
 pre 7.0
 -------
 include/raytrace.h
-	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
 	struct hit.hit_point -> RT_HIT_POINT [deprecated pre-7.0]
 	struct hit.hit_normal -> RT_HIT_NORMAL [deprecated pre-7.0]
 
@@ -184,6 +183,10 @@ include/raytrace.h
 ************
 * OBSOLETE *
 ************
+
+7.18.2
+------
+	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
 
 7.18.0
 ------
