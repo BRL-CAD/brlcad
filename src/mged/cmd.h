@@ -48,6 +48,7 @@ BU_EXTERN(int cmd_ged_inside, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int cmd_ged_more_wrapper, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int cmd_ged_plain_wrapper, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int cmd_ged_view_wrapper, (ClientData, Tcl_Interp *, int, const char *[]));
+BU_EXTERN(int cmd_ged_dm_wrapper, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int cmd_E, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int cmd_arot, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int cmd_autoview, (ClientData, Tcl_Interp *, int, const char *[]));

@@ -611,6 +611,12 @@ HIDDEN int go_view_func(struct ged *gedp,
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
+HIDDEN int go_dm_func(struct ged *gedp,
+			int argc,
+			const char *argv[],
+			ged_func_ptr func,
+			const char *usage,
+			int maxargs);
 
 /* Utility Functions */
 HIDDEN void go_drawSolid(struct dm *dmp, struct solid *sp);
@@ -840,7 +846,7 @@ static struct go_cmdtab go_cmds[] = {
     {"pov",	"center quat scale eye_pos perspective", 7, go_view_func, ged_pmat},
     {"prcolor",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_prcolor},
     {"prefix",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_prefix},
-    {"preview",	"[options] script", GO_UNLIMITED, go_view_func, ged_preview},
+    {"preview",	"[options] script", GO_UNLIMITED, go_dm_func, ged_preview},
     {"prim_label",	"[prim_1 prim_2 ... prim_N]", GO_UNLIMITED, go_prim_label, GED_FUNC_PTR_NULL},
     {"ps",	"[options] file.ps", 16, go_view_func, ged_ps},
     {"protate",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_protate},
@@ -894,6 +900,7 @@ static struct go_cmdtab go_cmds[] = {
     {"scale_mode",	"x y", GO_UNLIMITED, go_scale_mode, GED_FUNC_PTR_NULL},
     {"screen2model",	"x y", GO_UNLIMITED, go_screen2model, GED_FUNC_PTR_NULL},
     {"screen2view",	"x y", GO_UNLIMITED, go_screen2view, GED_FUNC_PTR_NULL},
+    {"screengrab",	"imagename.ext", GO_UNLIMITED, go_dm_func, ged_screen_grab},
     {"sdata_arrows",	"???", GO_UNLIMITED, go_data_arrows, GED_FUNC_PTR_NULL},
     {"sdata_axes",	"???", GO_UNLIMITED, go_data_axes, GED_FUNC_PTR_NULL},
     {"sdata_labels",	"???", GO_UNLIMITED, go_data_labels, GED_FUNC_PTR_NULL},
@@ -8299,6 +8306,63 @@ go_view_func(struct ged *gedp,
     return ret;
 }
 
+HIDDEN int
+go_dm_func(struct ged *gedp,
+	     int argc,
+	     const char *argv[],
+	     ged_func_ptr func,
+	     const char *usage,
+	     int maxargs)
+{
+    register int i;
+    int ret;
+    int ac;
+    char **av;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    av = bu_calloc(argc+1, sizeof(char *), "alloc av copy");
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (maxargs != GO_UNLIMITED && maxargs < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    /* Copy argv into av while skipping argv[1] (i.e. the view name) */
+    gedp->ged_gvp = gdvp->gdv_view;
+    gedp->ged_dmp = (void *)gdvp->gdv_dmp;
+    gedp->ged_refresh_clientdata = (void *)gdvp;
+    av[0] = (char *)argv[0];
+    ac = argc-1;
+    for (i = 2; i < argc; ++i)
+	av[i-1] = (char *)argv[i];
+    av[i-1] = (char *)0;
+    ret = (*func)(gedp, ac, (const char **)av);
+
+    bu_free(av, "free av copy");
+
+    /* Keep the view's perspective in sync with its corresponding display manager */
+    gdvp->gdv_dmp->dm_perspective = gdvp->gdv_view->gv_perspective;
+
+    return ret;
+}
 
 /*************************** Local Utility Functions ***************************/
 HIDDEN void

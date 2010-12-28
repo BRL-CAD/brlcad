@@ -2331,29 +2331,6 @@ dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **
 
 #if defined(DM_X) || defined(DM_OGL)
 
-#if 1
-#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask) {	\
-	_shift = 24 - _shift;				\
-	switch (_shift) {				\
-	    case 0:					\
-		_mask >>= 24;				\
-		break;					\
-	    case 8:					\
-		_mask >>= 8;				\
-		break;					\
-	    case 16:					\
-		_mask <<= 8;				\
-		break;					\
-	    case 24:					\
-		_mask <<= 24;				\
-		break;					\
-	}						\
-    }
-#else
-/* Do nothing */
-#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask)
-#endif
-
 HIDDEN int
 dmo_png_cmd(struct dm_obj *dmop,
 	    Tcl_Interp *interp,

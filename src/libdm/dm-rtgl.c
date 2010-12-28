@@ -115,6 +115,7 @@ HIDDEN_DM_FUNCTION_PROTOTYPES(rtgl)
     rtgl_endDList,
     rtgl_drawDList,
     rtgl_freeDLists,
+    Nu_int0, /* display to image function */
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */
@@ -126,6 +127,8 @@ HIDDEN_DM_FUNCTION_PROTOTYPES(rtgl)
     1,
     0,
     0,
+    0,/* bytes per pixel */
+    0,/* bits per channel */
     0,
     0,
     1.0, /* aspect ratio */

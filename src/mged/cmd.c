@@ -584,6 +584,35 @@ cmd_ged_view_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
     return TCL_OK;
 }
 
+int
+cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+{
+    int ret;
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+
+    if (gedp == GED_NULL)
+	return TCL_OK;
+
+    if (setjmp(jmp_env) == 0)
+	(void)signal(SIGINT, sig3);  /* allow interrupts */
+    else
+	return TCL_OK;
+
+    if (!gedp->ged_gvp)
+	gedp->ged_gvp = view_state->vs_gvp;
+    gedp->ged_dmp = (void *)curr_dm_list->dml_dmp;
+
+    ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
+    Tcl_AppendResult(interpreter, bu_vls_addr(&gedp->ged_result_str), NULL);
+
+    (void)signal(SIGINT, SIG_IGN);
+
+    if (ret & GED_HELP || ret == GED_OK)
+	return TCL_OK;
+
+    return TCL_ERROR;
+}
+
 
 /**
  * C M D _ T K
@@ -2146,7 +2175,6 @@ cmd_stub(ClientData UNUSED(clientData),
 
     return wdb_stub_cmd(wdbp, interpreter, argc, argv);
 }
-
 
 /*
  * Local Variables:
