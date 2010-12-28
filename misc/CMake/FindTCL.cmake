@@ -1,4 +1,4 @@
-# - Find Tcl/Tk includes and libraries.
+# - Find Tcl/Tk commands, includes and libraries.
 #
 # Copyright (c) 2010 United States Government as represented by
 # the U.S. Army Research Laboratory.
@@ -55,14 +55,14 @@
 #    below TCL_PREFIX and other installations are present.
 #    Report NOTFOUND instead.
 #
-# 2. There will be three possible variables for controlling
-#    which versions to report:
+# 2. There will be two variables for controlling which versions to
+#    report, above and beyond the standard version option to
+#    find_package:
 #
 #    TCL_MIN_VERSION
 #    TCL_MAX_VERSION
-#    TCL_EXACT_VERSION
 #
-#    All of these will be expected to have the form:
+#    These will be expected to have the form:
 #
 #    TCL_MAJOR_VERSION.TCL_MINOR_VERSION.TCL_PATCH_VERSION
 #
@@ -149,23 +149,48 @@
 #
 #    TCL_PATH_NOMATCH_PATTERNS
 #
-# The following "results" variables will be set (Tk variables only
-# set when TCKTK_REQUIRE_TK is ON):
 #
-#   TCL_FOUND          = Tcl (and Tk) found (see TCL_REQUIRE_TK)
-#   TCL_CONF_PREFIX    = path to parent dir of tclConfig.sh
-#   TCL_LIBRARY        = path to Tcl library
-#   TCL_STUB_LIBRARY   = path to Tcl stub library
-#   TCL_INCLUDE_PATH   = path to directory containing tcl.h
-#   TK_CONF_PREFIX     = path to parent dir of tkConfig.sh
-#   TK_LIBRARY         = path to Tk library
-#   TK_STUB_LIBRARY    = path to Tk stub library
-#   TK_INCLUDE_PATH    = path to directory containing tk.h
-#   TCL_TCLSH          = full path to tclsh binary
-#   TK_WISH            = full path wo wish binary
+# The following variables are set as the "standard" results from
+# this script:
 #
-# Note:  In the special case where headers are not required, the *LIBRARY,
-# *CONF_PREFIX, and *_INCLUDE_PATH variables are also not required- if
+# TCL_INCLUDE_DIRS         (will also include Tk header paths if Tk is enabled)
+# TCL_LIBRARIES            (will also include Tk libraries if Tk is enabled)
+# TCL_STUB_LIBRARIES       (will also include Tk stub libraries if Tk is enabled)
+# TCL_TCLSH_EXECUTABLE     (path to tclsh binary)
+# TCL_WISH_EXECUTABLE      (path to wish binary, set only if Tk is enabled)
+# TCL_ROOT_PATH 
+# TCL_FOUND                (set if all required features (Tk, threads, etc.) are found)
+#
+# The following are not specifically called out by readme.txt but are
+# useful when building TEA based extensions to Tcl/Tk
+#
+# TCL_CONF_PREFIX          (path to parent dir of tclConfig.sh file)
+# TCL_TK_CONF_PREFIX       (path to parent dir of tkConfig.sh file)
+#
+# The readme.txt file discourages the use of XXX_LIBRARY settings in CMakeLists.txt files,
+# but in the specific case of Tcl/Tk it is quite plausible to desire to specifically use
+# only (say) the Tcl library, even if in the broader system Tk usage is also present.  
+# For that reason, the following variables will be maintained:
+#
+# TCL_LIBRARY              (path to just the Tcl library)
+# TCL_TK_LIBRARY           (path to just the Tk library, set only if Tk is enabled)
+# TCL_STUB_LIBRARY         (path to just the Tcl stub library)
+# TCL_TK_STUB_LIBRARY      (path to just the Tk stub library)
+#
+# Previous FindTCL implementations set a series of less verbose
+# variables that did not strictly conform to the format defined by
+# the readme.txt file in the CMake modules directory.  These are set,
+# but should be regarded as deprecated.
+#
+# TK_LIBRARY         = path to Tk library
+# TK_STUB_LIBRARY    = path to Tk stub library
+# TCL_INCLUDE_PATH   = path to directory containing tcl.h
+# TK_INCLUDE_PATH    = path to directory containing tk.h
+# TCL_TCLSH          = full path to tclsh binary
+# TK_WISH            = full path wo wish binary
+#
+# Note:  In the special case where headers are not required, the *LIBRARIES, *LIBRARY,
+# *CONF_PREFIX, and *_INCLUDE_DIRS variables are also not required. If
 # all that is required is tclsh and/or wish, those are the only fixed
 # requirements.  In most cases the other variables will also be populated
 # but it is not guaranteed.
