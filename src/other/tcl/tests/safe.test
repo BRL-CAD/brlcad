@@ -72,8 +72,8 @@ test safe-2.3 {creating safe interpreters, should have no unexpected aliases} {
     interp create a -safe
     set l [a aliases]
     interp delete a
-    set l
-} {clock}
+    lsort $l
+} {::tcl::mathfunc::max ::tcl::mathfunc::min clock}
 
 test safe-3.1 {calling safe::interpInit is safe} {
     catch {safe::interpDelete a}
@@ -89,7 +89,7 @@ test safe-3.2 {calling safe::interpCreate on trusted interp} {
     set l [lsort [a aliases]]
     safe::interpDelete a
     set l
-} {clock encoding exit file glob load source}
+} {::tcl::info::nameofexecutable clock encoding exit file glob load source}
 test safe-3.3 {calling safe::interpCreate on trusted interp} {
     catch {safe::interpDelete a}
     safe::interpCreate a
@@ -117,23 +117,7 @@ test safe-4.2 {safe::interpDelete, indirectly} {
     a alias exit safe::interpDelete a
     a eval exit
 } ""
-test safe-4.3 {safe::interpDelete, state array (not a public api)} {
-    catch {safe::interpDelete a}
-    namespace eval safe {set [InterpStateName a](foo) 33}
-    # not an error anymore to call it if interp is already
-    # deleted, to make trhings smooth if it's called twice...
-    catch {safe::interpDelete a} m1
-    catch {namespace eval safe {set [InterpStateName a](foo)}} m2
-    list $m1 $m2
-} "{}\
-   {can't read \"[safe::InterpStateName a](foo)\": no such variable}"
-test safe-4.4 {safe::interpDelete, state array, indirectly (not a public api)} {
-    catch {safe::interpDelete a}
-    safe::interpCreate a
-    namespace eval safe {set [InterpStateName a](foo) 33}
-    a eval exit
-    catch {namespace eval safe {set [InterpStateName a](foo)}} msg
-} 1
+
 test safe-4.5 {safe::interpDelete} {
     catch {safe::interpDelete a}
     safe::interpCreate a
@@ -316,6 +300,17 @@ test safe-8.8 {safe source forbids -rsrc} {
 	    $msg \
 	    [safe::interpDelete $i] ;
 } {1 {wrong # args: should be "source ?-encoding E? fileName"} {}}
+test safe-8.9 {safe source and return} -setup {
+    set returnScript [makeFile {return "ok"} return.tcl]
+    catch {safe::interpDelete $i}
+} -body {
+    safe::interpCreate $i
+    set token [safe::interpAddToAccessPath $i [file dirname $returnScript]]
+    $i eval [list source $token/[file tail $returnScript]]
+} -cleanup {
+    catch {safe::interpDelete $i}
+    removeFile $returnScript
+} -result ok
 
 test safe-9.1 {safe interps' deleteHook} {
     set i "a";
@@ -428,7 +423,7 @@ test safe-11.1 {testing safe encoding} {
 	    [catch {interp eval $i encoding} msg] \
 	    $msg \
 	    [safe::interpDelete $i];
-} {1 {wrong # args: should be "encoding option ?arg ...?"} {}}
+} {1 {wrong # args: should be "encoding option ..."} {}}
 test safe-11.2 {testing safe encoding} {
     set i [safe::interpCreate]
     list \
@@ -479,6 +474,48 @@ test safe-11.8 {testing safe encoding} {
 	    [safe::interpDelete $i];
 } {1 {wrong # args: should be "encoding convertto ?encoding? data"} {}}
 
+test safe-12.1 {glob is restricted [Bug 2906841]} -setup {
+    set i [safe::interpCreate]
+} -body {
+    $i eval glob ../*
+} -returnCodes error -cleanup {
+    safe::interpDelete $i
+} -result "permission denied"
+test safe-12.2 {glob is restricted [Bug 2906841]} -setup {
+    set i [safe::interpCreate]
+} -body {
+    $i eval glob -directory .. *
+} -returnCodes error -cleanup {
+    safe::interpDelete $i
+} -result "permission denied"
+test safe-12.3 {glob is restricted [Bug 2906841]} -setup {
+    set i [safe::interpCreate]
+} -body {
+    $i eval glob -join .. *
+} -returnCodes error -cleanup {
+    safe::interpDelete $i
+} -result "permission denied"
+test safe-12.4 {glob is restricted [Bug 2906841]} -setup {
+    set i [safe::interpCreate]
+} -body {
+    $i eval glob -nocomplain ../*
+} -cleanup {
+    safe::interpDelete $i
+} -result {}
+test safe-12.5 {glob is restricted [Bug 2906841]} -setup {
+    set i [safe::interpCreate]
+} -body {
+    $i eval glob -directory .. -nocomplain *
+} -cleanup {
+    safe::interpDelete $i
+} -result {}
+test safe-12.6 {glob is restricted [Bug 2906841]} -setup {
+    set i [safe::interpCreate]
+} -body {
+    $i eval glob -nocomplain -join .. *
+} -cleanup {
+    safe::interpDelete $i
+} -result {}
 
 set ::auto_path $saveAutoPath
 # cleanup

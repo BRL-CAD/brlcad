@@ -34,10 +34,6 @@
 #include "bu.h"
 
 
-unsigned char obuf[3*1024];
-unsigned char red[1024], green[1024], blue[1024];
-
-
 void
 open_file(FILE **fp, char *name)
 {
@@ -59,6 +55,9 @@ open_file(FILE **fp, char *name)
 int
 main(int argc, char **argv)
 {
+    unsigned char obuf[3*1024];
+    unsigned char red[1024], green[1024], blue[1024];
+
     int i;
     int nr, ng, nb, num;
     unsigned char *obufp;
@@ -95,7 +94,11 @@ main(int argc, char **argv)
 	    *obufp++ = green[i];
 	    *obufp++ = blue[i];
 	}
-	fwrite(obuf, sizeof(char), num*3, stdout);
+	num = fwrite(obuf, sizeof(char), num*3, stdout);
+	if (num <= 0) {
+	    perror("fwrite");
+	    break;
+	}
     }
     return 0;
 }

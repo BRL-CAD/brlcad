@@ -2784,7 +2784,6 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 		j++;
 	    }
 	}
-	Tcl_DoOneEvent(TCL_DONT_WAIT);
     }
 #else
     /* THE NEW WAY .. possibly O(n) with basic bin sorting */
@@ -2967,8 +2966,6 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
     for (i=0; i<num_faces; i++) {
 	j = i+1;
 
-	Tcl_DoOneEvent(TCL_DONT_WAIT);
-
 	while (j<num_faces) {
 	    /* each pass through this loop either increments j or
 	     * decrements num_faces
@@ -3095,8 +3092,6 @@ rt_bot_condense(struct rt_bot_internal *bot)
     i = 0;
     while (i < num_verts-dead_verts) {
 	while (!verts[i] && i < num_verts-dead_verts) {
-	    Tcl_DoOneEvent(TCL_DONT_WAIT);
-
 	    dead_verts++;
 	    for (j=i; j<num_verts-dead_verts; j++) {
 		k = j+1;
@@ -3468,7 +3463,6 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, int tris_per_piece)
 		max_verts--;
 	    }
 	}
-	Tcl_DoOneEvent(TCL_DONT_WAIT);
     }
 
     bu_free(old_faces, "old_faces");
@@ -3822,8 +3816,6 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
 	    }
 	}
     }
-
-    Tcl_DoOneEvent(TCL_DONT_WAIT);
 
     /* if only one face will be deleted, do not decimate this may be a
      * free edge

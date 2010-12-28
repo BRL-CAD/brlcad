@@ -214,7 +214,7 @@ main(int argc, char **argv)
     if (verbose)
 	fprintf(stderr, "Max = %d,  Min = %d\n", max, min);
 
-    bu_exit (0, NULL);
+    return 0;
 }
 
 

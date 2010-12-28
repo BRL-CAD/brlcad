@@ -97,7 +97,7 @@ void free_pixel (struct pixel *pp)
  * P R I N T _ P I X E L ()
  *
  */
-void print_pixel (void *p, int depth)
+void print_pixel (void *p, int UNUSED(depth))
 {
     int i;
     struct pixel *pp = (struct pixel *) p;

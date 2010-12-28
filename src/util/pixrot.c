@@ -143,6 +143,7 @@ main(int argc, char **argv)
 {
     int x, y, j;
     long outbyte, outplace;
+    size_t ret;
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	bu_exit(1, "%s", usage);
@@ -194,7 +195,11 @@ main(int argc, char **argv)
 		    }
 		    outplace = outbyte;
 		}
-		fwrite(obuf, pixbytes, buflines, ofp);
+		ret = fwrite(obuf, pixbytes, buflines, ofp);
+		if (ret == 0) {
+		    perror("fwrite");
+		    break;
+		}
 		outplace += (pixbytes * buflines);
 	    }
 	} else if (minus90) {
@@ -215,7 +220,11 @@ main(int argc, char **argv)
 		    }
 		    outplace = outbyte;
 		}
-		fwrite(obuf, pixbytes, buflines, ofp);
+		ret = fwrite(obuf, pixbytes, buflines, ofp);
+		if (ret == 0) {
+		    perror("fwrite");
+		    break;
+		}
 		outplace += (pixbytes * buflines);
 	    }
 	} else if (invert) {
@@ -228,13 +237,21 @@ main(int argc, char **argv)
 		    }
 		    outplace = outbyte;
 		}
-		fwrite(&buffer[(y-firsty)*scanbytes], 1, scanbytes, ofp);
+		ret = fwrite(&buffer[(y-firsty)*scanbytes], 1, scanbytes, ofp);
+		if (ret == 0) {
+		    perror("fwrite");
+		    break;
+		}
 		outplace += scanbytes;
 	    }
 	} else {
 	    /* Reverse only */
 	    for (y = 0; y < buflines; y++) {
-		fwrite(&buffer[y*scanbytes], 1, scanbytes, ofp);
+		ret = fwrite(&buffer[y*scanbytes], 1, scanbytes, ofp);
+		if (ret == 0) {
+		    perror("fwrite");
+		    break;
+		}
 	    }
 	}
 

@@ -42,6 +42,9 @@
 #define TCHAR	4	/* unsigned chars */
 #define TSTRING	5	/* linefeed terminated string */
 
+#define COMMA ','
+
+
 struct uplot {
     int targ;	/* type of args */
     int narg;	/* number or args */
@@ -128,7 +131,7 @@ outchar(int n)
     putchar('(');
     for (i = 0; i < n; i++) {
 	if (i != 0)
-	    putchar(', ');
+	    putchar(COMMA);
 	c = getc(fp);
 	printf("%3d", c);
     }
@@ -137,7 +140,7 @@ outchar(int n)
 
 
 void
-outstring(int n)
+outstring(int UNUSED(n))
 {
     int c;
 
@@ -173,7 +176,7 @@ outshort(int n)
     putchar('(');
     for (i = 0; i < n; i++) {
 	if (i != 0)
-	    putchar(', ');
+	    putchar(COMMA);
 	s = getshort();
 	printf("%d", s);
     }
@@ -194,7 +197,7 @@ outfloat(int n)
     putchar('(');
     for (i = 0; i < n; i++) {
 	if (i != 0)
-	    putchar(', ');
+	    putchar(COMMA);
 	printf("%g", out[i]);
     }
     putchar(')');

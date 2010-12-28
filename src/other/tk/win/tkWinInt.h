@@ -39,6 +39,9 @@
 #ifndef WS_EX_TOOLWINDOW
 #define WS_EX_TOOLWINDOW	0x00000080L
 #endif
+#ifndef SPI_SETKEYBOARDCUES
+#define SPI_SETKEYBOARDCUES 0x100B
+#endif
 
 /*
  * The TkWinDCState is used to save the state of a device context so that it
@@ -128,8 +131,8 @@ typedef struct {
  * Win32 raster and BitBlt op modes.
  */
 
-extern int tkpWinRopModes[];
-extern int tkpWinBltModes[];
+MODULE_SCOPE int tkpWinRopModes[];
+MODULE_SCOPE int tkpWinBltModes[];
 
 /*
  * The following defines are used with TkWinGetBorderPixels to get the extra 2
@@ -145,18 +148,10 @@ extern int tkpWinBltModes[];
 
 #include "tkIntPlatDecls.h"
 
-/*
- * We need to specially add the TkWinChildProc because of the special
- * prototype it has (doesn't fit into stubs schema)
- */
-
 #ifdef BUILD_tk
 #undef TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLEXPORT
 #endif
-
-EXTERN LRESULT CALLBACK	TkWinChildProc(HWND hwnd, UINT message,
-			    WPARAM wParam, LPARAM lParam);
 
 /*
  * Special proc needed as tsd accessor function between
@@ -177,7 +172,7 @@ EXTERN HICON		TkWinGetIcon(Tk_Window tkw, DWORD iconsize);
  */
 
 EXTERN void		TkWinDisplayChanged(Display *display);
-void			TkWinCleanupContainerList(void);
+MODULE_SCOPE void TkWinCleanupContainerList(void);
 
 /*
  * Used by tkWinWm.c for embedded menu handling. May become public.
@@ -223,9 +218,9 @@ EXTERN TkWinProcs *tkWinProcs;
  */
 
 
-extern Tcl_Encoding	TkWinGetKeyInputEncoding(void);
-extern Tcl_Encoding	TkWinGetUnicodeEncoding(void);
-extern void		TkWinSetupSystemFonts(TkMainInfo *mainPtr);
+MODULE_SCOPE Tcl_Encoding	TkWinGetKeyInputEncoding(void);
+MODULE_SCOPE Tcl_Encoding	TkWinGetUnicodeEncoding(void);
+MODULE_SCOPE void		TkWinSetupSystemFonts(TkMainInfo *mainPtr);
 
 /*
  * Values returned by TkWinGetPlatformTheme.

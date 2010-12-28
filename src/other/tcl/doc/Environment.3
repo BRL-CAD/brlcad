@@ -19,19 +19,22 @@ int
 \fBTcl_PutEnv\fR(\fIassignment\fR)
 .SH ARGUMENTS
 .AS "const char" *assignment
-.AP "const char" *assignnment in
-Info about environment variable in the format NAME=value.
+.AP "const char" *assignment in
+Info about environment variable in the format
+.QW \fINAME\fB=\fIvalue\fR .
 The \fIassignment\fR argument is in the system encoding.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTcl_PutEnv\fR sets an environment variable. The information is
-passed in a single string of the form NAME=value.  This procedure is
+passed in a single string of the form
+.QW \fINAME\fB=\fIvalue\fR .
+This procedure is
 intended to be a stand-in for the UNIX \fBputenv\fR system call. All
 Tcl-based applications using \fBputenv\fR should redefine it to
 \fBTcl_PutEnv\fR so that they will interface properly to the Tcl
 runtime.
-
+.SH "SEE ALSO"
+tclvars(n)
 .SH KEYWORDS
 environment, variable

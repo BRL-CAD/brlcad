@@ -501,6 +501,7 @@ bu_argv_from_string(char *argv[], int lim, char *lp)
 {
     int argc = 0; /* number of words seen */
     int skip = 0;
+    int quoted = 0;
 
     if (UNLIKELY(!argv)) {
 	/* do this instead of crashing */
@@ -528,8 +529,33 @@ bu_argv_from_string(char *argv[], int lim, char *lp)
 
     for (; *lp != '\0'; lp++) {
 
+	if (*lp == '"') {
+	    if (!quoted) {
+		/* start collecting quoted string */
+		quoted = 1;
+
+		/* skip past the quote character */
+		argv[argc] = lp + 1;
+		continue;
+	    }
+
+	    /* end qoute */
+	    quoted = 0;
+	    *lp++ = '\0';
+
+	    /* skip leading whitespace */
+	    while (*lp != '\0' && isspace(*lp)) {
+		/* null out spaces */
+		*lp = '\0';
+		lp++;
+	    }
+
+	    skip = 0;
+	    goto nextword;
+	}
+
 	/* skip over current word */
-	if (!isspace(*lp))
+	if (quoted || !isspace(*lp))
 	    continue;
 
 	skip = 0;
@@ -545,6 +571,7 @@ bu_argv_from_string(char *argv[], int lim, char *lp)
 	if (*(lp + skip) == '\0')
 	    break;
 
+    nextword:
 	/* make sure argv[] isn't full, need room for NULL */
 	if (argc >= lim-1)
 	    break;

@@ -204,7 +204,7 @@ main(int argc, char **argv)
 	fwrite(buf, sizeof(*buf), outbytes, ofp);
     }
 
-    bu_exit (0, NULL);
+    return 0;
 }
 
 

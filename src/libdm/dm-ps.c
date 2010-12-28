@@ -85,6 +85,7 @@ struct dm dm_ps = {
     Nu_int0,
     Nu_int0,
     Nu_int0,
+    Nu_int0, /* display to image function */
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */
@@ -96,6 +97,8 @@ struct dm dm_ps = {
     0,
     0,
     0,
+    0,/* bytes per pixel */
+    0,/* bits per channel */
     0,
     0,
     1.0, /* aspect ratio */

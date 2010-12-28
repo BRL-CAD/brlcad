@@ -594,7 +594,7 @@ CurveTree::isLinear(const ON_Curve* curve, double min, double max)
 
 //--------------------------------------------------------------------------------
 // SurfaceTree
-SurfaceTree::SurfaceTree(ON_BrepFace* face, bool removeTrimmed)
+SurfaceTree::SurfaceTree(ON_BrepFace* face, bool removeTrimmed, int depthLimit)
     : m_removeTrimmed(removeTrimmed),
       m_face(face)
 {
@@ -615,16 +615,39 @@ SurfaceTree::SurfaceTree(ON_BrepFace* face, bool removeTrimmed)
     ON_3dVector normals[9];
     double uq = u.Length()*0.25;
     double vq = v.Length()*0.25;
-    surf->EvNormal(u.Min(), v.Min(), corners[0], normals[0]);
-    surf->EvNormal(u.Max(), v.Min(), corners[1], normals[1]);
-    surf->EvNormal(u.Max(), v.Max(), corners[2], normals[2]);
-    surf->EvNormal(u.Min(), v.Max(), corners[3], normals[3]);
-    surf->EvNormal(u.Mid(), v.Mid(), corners[4], normals[4]);
-    surf->EvNormal(u.Mid() - uq, v.Mid() - vq, corners[5], normals[5]);
-    surf->EvNormal(u.Mid() - uq, v.Mid() + vq, corners[6], normals[6]);
-    surf->EvNormal(u.Mid() + uq, v.Mid() - vq, corners[7], normals[7]);
-    surf->EvNormal(u.Mid() + uq, v.Mid() + vq, corners[8], normals[8]);
-    m_root = subdivideSurface(u, v, corners, normals, 0);
+
+    ///////////////////////////////////////////////////////////////////////
+    ON_Plane frames[9];
+    surf->FrameAt( u.Min(), v.Min(), frames[0]);
+    surf->FrameAt( u.Max(), v.Min(), frames[1]);
+    surf->FrameAt( u.Max(), v.Max(), frames[2]);
+    surf->FrameAt( u.Min(), v.Max(), frames[3]);
+    surf->FrameAt( u.Mid(), v.Mid(), frames[4]);
+    surf->FrameAt(u.Mid() - uq, v.Mid() - vq, frames[5]);
+    surf->FrameAt(u.Mid() - uq, v.Mid() + vq, frames[6]);
+    surf->FrameAt(u.Mid() + uq, v.Mid() - vq, frames[7]);
+    surf->FrameAt(u.Mid() + uq, v.Mid() + vq, frames[8]);
+
+    corners[0] = frames[0].origin;
+    normals[0] = frames[0].zaxis;
+    corners[1] = frames[1].origin;
+    normals[1] = frames[1].zaxis;
+    corners[2] = frames[2].origin;
+    normals[2] = frames[2].zaxis;
+    corners[3] = frames[3].origin;
+    normals[3] = frames[3].zaxis;
+    corners[4] = frames[4].origin;
+    normals[4] = frames[4].zaxis;
+    corners[5] = frames[5].origin;
+    normals[5] = frames[5].zaxis;
+    corners[6] = frames[6].origin;
+    normals[6] = frames[6].zaxis;
+    corners[7] = frames[7].origin;
+    normals[7] = frames[7].zaxis;
+    corners[8] = frames[8].origin;
+    normals[8] = frames[8].zaxis;
+
+    m_root = subdivideSurfaceByKnots(surf, u, v, frames, corners, normals, 0, depthLimit);
     m_root->BuildBBox();
     TRACE("u: [" << u[0] << ", " << u[1] << "]");
     TRACE("v: [" << v[0] << ", " << v[1] << "]");
@@ -716,17 +739,27 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
     return -1;
 }
 
-
+//static int bb_cnt=0;
 BBNode*
-SurfaceTree::surfaceBBox(bool isLeaf, ON_3dPoint *m_corners, ON_3dVector *m_normals, const ON_Interval& u, const ON_Interval& v)
+SurfaceTree::surfaceBBox(const ON_Surface *localsurf, bool isLeaf, ON_3dPoint *m_corners, ON_3dVector *m_normals, const ON_Interval& u, const ON_Interval& v)
 {
     point_t min, max, buffer;
+    ON_BoundingBox bbox = localsurf->BoundingBox();
 
     VSETALL(buffer, BREP_EDGE_MISS_TOLERANCE);
-    VSETALL(min, MAX_FASTF);
-    VSETALL(max, -MAX_FASTF);
-    for (int i = 0; i < 9; i++)
-	VMINMAX(min, max, ((double*)m_corners[i]));
+    //VSETALL(min, MAX_FASTF);
+    //VSETALL(max, -MAX_FASTF);
+    //for (int i = 0; i < 9; i++) {
+	//VMINMAX(min, max, ((double*)m_corners[i]));
+	//bu_log("in c%d_%d sph %f %f %f %f\n", bb_cnt, i, m_corners[i].x, m_corners[i].y, m_corners[i].z, 1.0);
+    //}
+
+	//bu_log("in bb%d rpp %f %f %f %f %f %f\n", bb_cnt, min[0], max[0], min[1], max[1], min[2], max[2]);
+    VMOVE(min,bbox.Min());
+    VMOVE(max,bbox.Max());
+
+	//bu_log("in b%d rpp %f %f %f %f %f %f\n", bb_cnt++, bbox.m_min.x, bbox.m_max.x, bbox.m_min.y, bbox.m_max.y, bbox.m_min.z, bbox.m_max.z);
+	//bu_log("in bc%d rpp %f %f %f %f %f %f\n", bb_cnt++, min[0], max[0], min[1], max[1], min[2], max[2]);
 
     // calculate the estimate point on the surface: i.e. use the point
     // on the surface defined by (u.Mid(), v.Mid()) as a heuristic for
@@ -744,10 +777,11 @@ SurfaceTree::surfaceBBox(bool isLeaf, ON_3dPoint *m_corners, ON_3dVector *m_norm
 
 	VSUB2(min, min, buffer);
 	VADD2(max, max, buffer);
-	VSUB2(delta, max, min);
+/*	VSUB2(delta, max, min);
 	VSCALE(delta, delta, BBOX_GROW_3D);
 	VSUB2(min, min, delta);
 	VADD2(max, max, delta);
+*/
 	TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() <<
 	      ") v(" << v.Min() << ", " << v.Max() << ")");
 	node = new BBNode(ctree, ON_BoundingBox(ON_3dPoint(min),
@@ -784,182 +818,1210 @@ initialBBox(CurveTree* ctree, const ON_Surface* surf, const ON_BrepFace* face, c
     return node;
 }
 
-
 BBNode*
-SurfaceTree::subdivideSurface(const ON_Interval& u,
-			      const ON_Interval& v,
-			      ON_3dPoint corners[],
-			      ON_3dVector normals[],
-			      int divDepth)
+SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
+	const ON_Interval& u,
+	const ON_Interval& v,
+	ON_Plane frames[],
+	ON_3dPoint corners[],
+	ON_3dVector normals[],
+	int divDepth,
+	int depthLimit)
 {
-    const ON_Surface* surf = m_face->SurfaceOf();
-    ON_Interval usurf = surf->Domain(0);
-    ON_Interval vsurf = surf->Domain(1);
-    point_t a, b;
-    VSET(a, usurf[0], vsurf[0], 0.0);
-    VSET(b, usurf[1], vsurf[1], 0.0);
-    double dsurf = DIST_PT_PT(a, b);
-    VSET(a, u[0], v[0], 0.0);
-    VSET(b, u[1], v[1], 0.0);
-    double dsubsurf = DIST_PT_PT(a, b);
-    double uq = u.Length()*0.25;
-    double vq = v.Length()*0.25;
-    surf->EvNormal(u.Mid() - uq, v.Mid() - vq, corners[5], normals[5]);
-    surf->EvNormal(u.Mid() - uq, v.Mid() + vq, corners[6], normals[6]);
-    surf->EvNormal(u.Mid() + uq, v.Mid() - vq, corners[7], normals[7]);
-    surf->EvNormal(u.Mid() + uq, v.Mid() + vq, corners[8], normals[8]);
-
-    if ((dsubsurf/dsurf < BREP_SURF_SUB_FACTOR) && (isFlat(surf, normals, u, v) || divDepth >= BREP_MAX_FT_DEPTH)) {
-	return surfaceBBox(true, corners, normals, u, v);
-    } else {
-	BBNode* parent = (divDepth == 0) ? initialBBox(ctree, surf, m_face, u, v) : surfaceBBox(false, corners, normals, u, v);
+	const ON_Surface* surf = m_face->SurfaceOf();
+	ON_Interval usurf = surf->Domain(0);
+	ON_Interval vsurf = surf->Domain(1);
+	BBNode* parent = initialBBox(ctree, localsurf, m_face, u, v);
 	BBNode* quads[4];
-	ON_Interval first(0, 0.5);
-	ON_Interval second(0.5, 1.0);
+	int spanu_cnt = localsurf->SpanCount(0);
+	int spanv_cnt = localsurf->SpanCount(1);
+	double *spanu = NULL;
+	double *spanv = NULL;
+	spanu = new double[spanu_cnt+1];
+	spanv = new double[spanv_cnt+1];
+	localsurf->GetSpanVector(0,spanu);
+	localsurf->GetSpanVector(1,spanv);
 
+	///////////////////////////////////
+	double uq = u.Length()*0.25;
+	double vq = v.Length()*0.25;
+	surf->FrameAt(u.Mid() - uq, v.Mid() - vq, frames[5]);
+	surf->FrameAt(u.Mid() - uq, v.Mid() + vq, frames[6]);
+	surf->FrameAt(u.Mid() + uq, v.Mid() - vq, frames[7]);
+	surf->FrameAt(u.Mid() + uq, v.Mid() + vq, frames[8]);
 
-	/*********************************************************************
-	 * In order to avoid fairly expensive re-calculation of 3d points at
-	 * uv coordinates, all values that are shared between children at
-	 * the same depth of a surface subdivision are pre-computed and
-	 * passed as paramters.
-	 *
-	 * The majority of these points are already evaluated in the process
-	 * of testing whether a subdivision has produced a leaf node.  These
-	 * values are in the normals and corners arrays and have index values
-	 * corresponding to the values of the figure on the left below.  There
-	 * are four other shared values that are precomputed in the sharedcorners
-	 * and sharednormals arrays; their index values in those arrays are
-	 * illustrated in the figure on the right:
-	 *
-	 *
-	 *   3-------------------2      +---------2---------+
-	 *   |                   |      |                   |
-	 *   |    6         8    |      |                   |
-	 *   |                   |      |                   |
-	 *  V|         4         |      1                   3
-	 *   |                   |      |                   |
-	 *   |    5         7    |      |                   |
-	 *   |                   |      |                   |
-	 *   0-------------------1      +---------0---------+
-	 *             U                          U
-	 *
-	 *   Values inherited from      Values pre-prepared in
-	 *   parent subdivision         shared arrays
-	 *
-	 *
-	 * When the four subdivisions are made, the parent parameters
-	 * are passed to the children as follows (values from the
-	 * shared arrays are prefaced with an s):
-	 *
-	 *    3--------------S2     S2--------------2
-	 *    |               |     |               |
-	 *    |               |     |               |
-	 *  V |       6       |     |       8       |
-	 *    |               |     |               |
-	 *    |               |     |               |
-	 *    S1--------------4     4--------------S3
-	 *            U                     U
-	 *
-	 *        Quadrant 3            Quadrant 2
-	 *
-	 *    S1--------------4     4--------------S3
-	 *    |               |     |               |
-	 *    |               |     |               |
-	 *  V |       5       |     |       7       |
-	 *    |               |     |               |
-	 *    |               |     |               |
-	 *    0--------------S0     S0--------------1
-	 *             U                         U
-	 *
-	 *        Quadrant 0            Quadrant 1
-	 *
-	 *
-	 **********************************************************************/
+	corners[5] = frames[5].origin;
+	normals[5] = frames[5].zaxis;
+	corners[6] = frames[6].origin;
+	normals[6] = frames[6].zaxis;
+	corners[7] = frames[7].origin;
+	normals[7] = frames[7].zaxis;
+	corners[8] = frames[8].origin;
+	normals[8] = frames[8].zaxis;
 
+	if ((spanu_cnt > 1) && (spanv_cnt > 1)) {
+		double usplit = spanu[(spanu_cnt+1)/2];
+		double vsplit = spanv[(spanv_cnt+1)/2];
+		ON_Interval firstu(u.Min(), usplit);
+		ON_Interval secondu(usplit, u.Max());
+		ON_Interval firstv(v.Min(), vsplit);
+		ON_Interval secondv(vsplit, v.Max());
 
-	ON_3dPoint sharedcorners[4];
-	ON_3dVector sharednormals[4];
-	surf->EvNormal(u.Mid(), v.Min(), sharedcorners[0], sharednormals[0]);
-	surf->EvNormal(u.Min(), v.Mid(), sharedcorners[1], sharednormals[1]);
-	surf->EvNormal(u.Mid(), v.Max(), sharedcorners[2], sharednormals[2]);
-	surf->EvNormal(u.Max(), v.Mid(), sharedcorners[3], sharednormals[3]);
+		ON_Surface *north = NULL;
+		ON_Surface *south = NULL;
+		ON_Surface *q2surf = NULL;
+		ON_Surface *q3surf = NULL;
+		ON_Surface *q1surf = NULL;
+		ON_Surface *q0surf = NULL;
 
-	ON_3dPoint *newcorners;
-	ON_3dVector *newnormals;
-	newcorners = (ON_3dPoint *)bu_malloc(9*sizeof(ON_3dPoint), "new corners");
-	newnormals = (ON_3dVector *)bu_malloc(9*sizeof(ON_3dVector), "new normals");
-	newcorners[0] = corners[0];
-	newnormals[0] = normals[0];
-	newcorners[1] = sharedcorners[0];
-	newnormals[1] = sharednormals[0];
-	newcorners[2] = corners[4];
-	newnormals[2] = normals[4];
-	newcorners[3] = sharedcorners[1];
-	newnormals[3] = sharednormals[1];
-	newcorners[4] = corners[5];
-	newnormals[4] = normals[5];
-	quads[0] = subdivideSurface(u.ParameterAt(first), v.ParameterAt(first), newcorners, newnormals, divDepth+1);
-	newcorners[0] = sharedcorners[0];
-	newnormals[0] = sharednormals[0];
-	newcorners[1] = corners[1];
-	newnormals[1] = normals[1];
-	newcorners[2] = sharedcorners[3];
-	newnormals[2] = sharednormals[3];
-	newcorners[3] = corners[4];
-	newnormals[3] = normals[4];
-	newcorners[4] = corners[7];
-	newnormals[4] = normals[7];
-	quads[1] = subdivideSurface(u.ParameterAt(second), v.ParameterAt(first), newcorners, newnormals, divDepth+1);
-	newcorners[0] = corners[4];
-	newnormals[0] = normals[4];
-	newcorners[1] = sharedcorners[3];
-	newnormals[1] = sharednormals[3];
-	newcorners[2] = corners[2];
-	newnormals[2] = normals[2];
-	newcorners[3] = sharedcorners[2];
-	newnormals[3] = sharednormals[2];
-	newcorners[4] = corners[8];
-	newnormals[4] = normals[8];
-	quads[2] = subdivideSurface(u.ParameterAt(second), v.ParameterAt(second), newcorners, newnormals, divDepth+1);
-	newcorners[0] = sharedcorners[1];
-	newnormals[0] = sharednormals[1];
-	newcorners[1] = corners[4];
-	newnormals[1] = normals[4];
-	newcorners[2] = sharedcorners[2];
-	newnormals[2] = sharednormals[2];
-	newcorners[3] = corners[3];
-	newnormals[3] = normals[3];
-	newcorners[4] = corners[6];
-	newnormals[4] = normals[6];
-	quads[3] = subdivideSurface(u.ParameterAt(first), v.ParameterAt(second), newcorners, newnormals, divDepth+1);
-	bu_free(newcorners, "free subsurface corners array");
-	bu_free(newnormals, "free subsurface normals array");
+		ON_BoundingBox box = localsurf->BoundingBox();
 
-	parent->m_trimmed = true;
-	parent->m_checkTrim = false;
+		int dir = 1;
+		localsurf->Split(dir, localsurf->Domain(dir).Mid(), south, north);
+		localsurf->Split(dir, vsplit, south, north);
+		south->ClearBoundingBox();
+		north->ClearBoundingBox();
 
-	for (int i = 0; i < 4; i++) {
-	    if (!(quads[i]->m_trimmed)) {
-		parent->m_trimmed = false;
-	    }
-	    if (quads[i]->m_checkTrim) {
-		parent->m_checkTrim = true;
-	    }
-	}
-	if (m_removeTrimmed) {
-	    for (int i = 0; i < 4; i++) {
-		if (!(quads[i]->m_trimmed))
-		    parent->addChild(quads[i]);
-	    }
+		dir = 0;
+		south->Split(dir, usplit, q0surf, q1surf);
+		delete south;
+		q0surf->ClearBoundingBox();
+		q1surf->ClearBoundingBox();
+		north->Split(dir, usplit, q3surf, q2surf);
+		delete north;
+		q3surf->ClearBoundingBox();
+		q2surf->ClearBoundingBox();
+
+		/*********************************************************************
+		 * In order to avoid fairly expensive re-calculation of 3d points at
+		 * uv coordinates, all values that are shared between children at
+		 * the same depth of a surface subdivision are pre-computed and
+		 * passed as paramters.
+		 *
+		 * The majority of these points are already evaluated in the process
+		 * of testing whether a subdivision has produced a leaf node.  These
+		 * values are in the normals and corners arrays and have index values
+		 * corresponding to the values of the figure on the left below.  There
+		 * are four other shared values that are precomputed in the sharedcorners
+		 * and sharednormals arrays; their index values in those arrays are
+		 * illustrated in the figure on the right:
+		 *
+		 *
+		 *   3-------------------2      +---------2---------+
+		 *   |                   |      |                   |
+		 *   |    6         8    |      |                   |
+		 *   |                   |      |                   |
+		 *  V|         4         |      1                   3
+		 *   |                   |      |                   |
+		 *   |    5         7    |      |                   |
+		 *   |                   |      |                   |
+		 *   0-------------------1      +---------0---------+
+		 *             U                          U
+		 *
+		 *   Values inherited from      Values pre-prepared in
+		 *   parent subdivision         shared arrays
+		 *
+		 *
+		 * When the four subdivisions are made, the parent parameters
+		 * are passed to the children as follows (values from the
+		 * shared arrays are prefaced with an s):
+		 *
+		 *    3--------------S2     S2--------------2
+		 *    |               |     |               |
+		 *    |               |     |               |
+		 *  V |       6       |     |       8       |
+		 *    |               |     |               |
+		 *    |               |     |               |
+		 *    S1--------------4     4--------------S3
+		 *            U                     U
+		 *
+		 *        Quadrant 3            Quadrant 2
+		 *
+		 *    S1--------------4     4--------------S3
+		 *    |               |     |               |
+		 *    |               |     |               |
+		 *  V |       5       |     |       7       |
+		 *    |               |     |               |
+		 *    |               |     |               |
+		 *    0--------------S0     S0--------------1
+		 *             U                         U
+		 *
+		 *        Quadrant 0            Quadrant 1
+		 *
+		 *
+		 **********************************************************************/
+
+		ON_Plane sharedframes[4];
+		ON_3dPoint sharedcorners[4];
+		ON_3dVector sharednormals[4];
+		localsurf->FrameAt(usplit, v.Min(), sharedframes[0]);
+		localsurf->FrameAt(u.Min(), vsplit, sharedframes[1]);
+		localsurf->FrameAt(usplit, v.Max(), sharedframes[2]);
+		localsurf->FrameAt(u.Max(), vsplit, sharedframes[3]);
+		localsurf->FrameAt(usplit, vsplit, frames[4]);
+
+		sharedcorners[0] = sharedframes[0].origin;
+		sharednormals[0] = sharedframes[0].zaxis;
+		sharedcorners[1] = sharedframes[1].origin;
+		sharednormals[1] = sharedframes[1].zaxis;
+		sharedcorners[2] = sharedframes[2].origin;
+		sharednormals[2] = sharedframes[2].zaxis;
+		sharedcorners[3] = sharedframes[3].origin;
+		sharednormals[3] = sharedframes[3].zaxis;
+		corners[4] = frames[4].origin;
+		normals[4] = frames[4].zaxis;
+
+		ON_Plane *newframes;
+		ON_3dPoint *newcorners;
+		ON_3dVector *newnormals;
+		newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
+		newcorners = (ON_3dPoint *)bu_malloc(9*sizeof(ON_3dPoint), "new corners");
+		newnormals = (ON_3dVector *)bu_malloc(9*sizeof(ON_3dVector), "new normals");
+		newframes[0] = frames[0];
+		newcorners[0] = corners[0];
+		newnormals[0] = normals[0];
+		newframes[1] = sharedframes[0];
+		newcorners[1] = sharedcorners[0];
+		newnormals[1] = sharednormals[0];
+		newframes[2] = frames[4];
+		newcorners[2] = corners[4];
+		newnormals[2] = normals[4];
+		newframes[3] = sharedframes[1];
+		newcorners[3] = sharedcorners[1];
+		newnormals[3] = sharednormals[1];
+		newframes[4] = frames[5];
+		newcorners[4] = corners[5];
+		newnormals[4] = normals[5];
+		quads[0] = subdivideSurfaceByKnots(q0surf, firstu, firstv, newframes, newcorners, newnormals, divDepth+1, depthLimit);
+		delete q0surf;
+		newframes[0] = sharedframes[0];
+		newcorners[0] = sharedcorners[0];
+		newnormals[0] = sharednormals[0];
+		newframes[1] = frames[1];
+		newcorners[1] = corners[1];
+		newnormals[1] = normals[1];
+		newframes[2] = sharedframes[3];
+		newcorners[2] = sharedcorners[3];
+		newnormals[2] = sharednormals[3];
+		newframes[3] = frames[4];
+		newcorners[3] = corners[4];
+		newnormals[3] = normals[4];
+		newframes[4] = frames[7];
+		newcorners[4] = corners[7];
+		newnormals[4] = normals[7];
+		quads[1] = subdivideSurfaceByKnots(q1surf, secondu, firstv, newframes, newcorners, newnormals, divDepth+1, depthLimit);
+		delete q1surf;
+		newframes[0] = frames[4];
+		newcorners[0] = corners[4];
+		newnormals[0] = normals[4];
+		newframes[1] = sharedframes[3];
+		newcorners[1] = sharedcorners[3];
+		newnormals[1] = sharednormals[3];
+		newframes[2] = frames[2];
+		newcorners[2] = corners[2];
+		newnormals[2] = normals[2];
+		newframes[3] = sharedframes[2];
+		newcorners[3] = sharedcorners[2];
+		newnormals[3] = sharednormals[2];
+		newframes[4] = frames[8];
+		newcorners[4] = corners[8];
+		newnormals[4] = normals[8];
+		quads[2] = subdivideSurfaceByKnots(q2surf, secondu, secondv, newframes, newcorners, newnormals, divDepth+1, depthLimit);
+		delete q2surf;
+		newframes[0] = sharedframes[1];
+		newcorners[0] = sharedcorners[1];
+		newnormals[0] = sharednormals[1];
+		newframes[1] = frames[4];
+		newcorners[1] = corners[4];
+		newnormals[1] = normals[4];
+		newframes[2] = sharedframes[2];
+		newcorners[2] = sharedcorners[2];
+		newnormals[2] = sharednormals[2];
+		newframes[3] = frames[3];
+		newcorners[3] = corners[3];
+		newnormals[3] = normals[3];
+		newframes[4] = frames[6];
+		newcorners[4] = corners[6];
+		newnormals[4] = normals[6];
+		quads[3] = subdivideSurfaceByKnots(q3surf, firstu, secondv, newframes, newcorners, newnormals, divDepth+1, depthLimit);
+		delete q3surf;
+		bu_free(newframes, "free subsurface frames array");
+		bu_free(newcorners, "free subsurface corners array");
+		bu_free(newnormals, "free subsurface normals array");
+
+		parent->m_trimmed = true;
+		parent->m_checkTrim = false;
+
+		for (int i = 0; i < 4; i++) {
+			if (!(quads[i]->m_trimmed)) {
+				parent->m_trimmed = false;
+			}
+			if (quads[i]->m_checkTrim) {
+				parent->m_checkTrim = true;
+			}
+		}
+		if (m_removeTrimmed) {
+			for (int i = 0; i < 4; i++) {
+				if (!(quads[i]->m_trimmed))
+				parent->addChild(quads[i]);
+			}
+		} else {
+			for (int i = 0; i < 4; i++) {
+				parent->addChild(quads[i]);
+			}
+		}
+	} else if (spanu_cnt > 1) {
+		double usplit = spanu[(spanu_cnt+1)/2];
+		ON_Interval firstu(u.Min(), usplit);
+		ON_Interval secondu(usplit, u.Max());
+		//////////////////////////////////////
+		ON_Surface *east = NULL;
+		ON_Surface *west = NULL;
+
+		ON_BoundingBox box = localsurf->BoundingBox();
+
+		int dir = 0;
+		localsurf->Split(dir, usplit, east, west);
+		east->ClearBoundingBox();
+		west->ClearBoundingBox();
+
+		//////////////////////////////////
+		/*********************************************************************
+		 * In order to avoid fairly expensive re-calculation of 3d points at
+		 * uv coordinates, all values that are shared between children at
+		 * the same depth of a surface subdivision are pre-computed and
+		 * passed as paramters.
+		 *
+		 * The majority of these points are already evaluated in the process
+		 * of testing whether a subdivision has produced a leaf node.  These
+		 * values are in the normals and corners arrays and have index values
+		 * corresponding to the values of the figure on the left below.  There
+		 * are four other shared values that are precomputed in the sharedcorners
+		 * and sharednormals arrays; their index values in those arrays are
+		 * illustrated in the figure on the right:
+		 *
+		 *
+		 *   3-------------------2      +---------2---------+
+		 *   |                   |      |                   |
+		 *   |    6         8    |      |                   |
+		 *   |                   |      |                   |
+		 *  V|         4         |      1                   3
+		 *   |                   |      |                   |
+		 *   |    5         7    |      |                   |
+		 *   |                   |      |                   |
+		 *   0-------------------1      +---------0---------+
+		 *             U                          U
+		 *
+		 *   Values inherited from      Values pre-prepared in
+		 *   parent subdivision         shared arrays
+		 *
+		 *
+		 * When the four subdivisions are made, the parent parameters
+		 * are passed to the children as follows (values from the
+		 * shared arrays are prefaced with an s):
+		 *
+		 *    3--------------S1     S1--------------2
+		 *    |               |     |               |
+		 *    |               |     |               |
+		 *  V |       4       |     |       5       |
+		 *    |               |     |               |
+		 *    |               |     |               |
+		 *    0--------------S0     S0--------------1
+		 *             U                         U
+		 *
+		 *        East                 West
+		 *
+		 *
+		 **********************************************************************/
+		/* When the four subdivisions are made, the parent parameters
+		 * are passed to the children as follows (values from the
+		 * shared arrays are prefaced with an s):
+		 *
+		 *    3--------------S2     S2--------------2
+		 *    |               |     |               |
+		 *    |               |     |               |
+		 *  V |       6       |     |       8       |
+		 *    |               |     |               |
+		 *    |               |     |               |
+		 *    S1--------------4     4--------------S3
+		 *            U                     U
+		 *
+		 *        Quadrant 3            Quadrant 2
+		 *
+		 *    S1--------------4     4--------------S3
+		 *    |               |     |               |
+		 *    |               |     |               |
+		 *  V |       5       |     |       7       |
+		 *    |               |     |               |
+		 *    |               |     |               |
+		 *    0--------------S0     S0--------------1
+		 *             U                         U
+		 *
+		 *        Quadrant 0            Quadrant 1
+		 *
+		 *
+		 **********************************************************************/
+
+		ON_Plane sharedframes[4];
+		ON_3dPoint sharedcorners[4];
+		ON_3dVector sharednormals[4];
+		localsurf->FrameAt(usplit, v.Min(), sharedframes[0]);
+		localsurf->FrameAt(usplit, v.Max(), sharedframes[1]);
+
+		sharedcorners[0] = sharedframes[0].origin;
+		sharednormals[0] = sharedframes[0].zaxis;
+		sharedcorners[1] = sharedframes[1].origin;
+		sharednormals[1] = sharedframes[1].zaxis;
+
+		ON_Plane *newframes;
+		ON_3dPoint *newcorners;
+		ON_3dVector *newnormals;
+		newframes = (ON_Plane *) bu_malloc(9 * sizeof(ON_Plane),
+				"new frames");
+		newcorners = (ON_3dPoint *) bu_malloc(9 * sizeof(ON_3dPoint),
+				"new corners");
+		newnormals = (ON_3dVector *) bu_malloc(9 * sizeof(ON_3dVector),
+				"new normals");
+		newframes[0] = frames[0];
+		newcorners[0] = corners[0];
+		newnormals[0] = normals[0];
+		newframes[1] = sharedframes[0];
+		newcorners[1] = sharedcorners[0];
+		newnormals[1] = sharednormals[0];
+		newframes[2] = sharedframes[1];
+		newcorners[2] = sharedcorners[1];
+		newnormals[2] = sharednormals[1];
+		newframes[3] = frames[3];
+		newcorners[3] = corners[3];
+		newnormals[3] = normals[3];
+		localsurf->FrameAt(firstu.Mid(), v.Mid(), newframes[4]);
+
+		newcorners[4] = newframes[4].origin;
+		newnormals[4] = newframes[4].zaxis;
+
+		//ON_BoundingBox bbox = q0surf->BoundingBox();
+		//bu_log("%d - in bbq0 rpp %f %f %f %f %f %f\n", divDepth, bbox.m_min.x, bbox.m_max.x, bbox.m_min.y, bbox.m_max.y, bbox.m_min.z, bbox.m_max.z);
+		quads[0] = subdivideSurfaceByKnots(east, firstu, v, newframes, newcorners, newnormals, divDepth+1, depthLimit);
+		delete east;
+
+		newframes[0] = sharedframes[0];
+		newcorners[0] = sharedcorners[0];
+		newnormals[0] = sharednormals[0];
+		newframes[1] = frames[1];
+		newcorners[1] = corners[1];
+		newnormals[1] = normals[1];
+		newframes[2] = frames[2];
+		newcorners[2] = corners[2];
+		newnormals[2] = normals[2];
+		newframes[3] = sharedframes[1];
+		newcorners[3] = sharedcorners[1];
+		newnormals[3] = sharednormals[1];
+		localsurf->FrameAt(secondu.Mid(), v.Mid(), newframes[4]);
+
+		newcorners[4] = newframes[4].origin;
+		newnormals[4] = newframes[4].zaxis;
+
+		//bbox = q1surf->BoundingBox();
+		//bu_log("%d - in bbq1 rpp %f %f %f %f %f %f\n", divDepth, bbox.m_min.x, bbox.m_max.x, bbox.m_min.y, bbox.m_max.y, bbox.m_min.z, bbox.m_max.z);
+		quads[1] = subdivideSurfaceByKnots(west, secondu, v, newframes, newcorners, newnormals, divDepth+1, depthLimit);
+		delete west;
+
+		bu_free(newframes, "free subsurface frames array");
+		bu_free(newcorners, "free subsurface corners array");
+		bu_free(newnormals, "free subsurface normals array");
+
+		parent->m_trimmed = true;
+		parent->m_checkTrim = false;
+
+		for (int i = 0; i < 2; i++) {
+			if (!(quads[i]->m_trimmed)) {
+				parent->m_trimmed = false;
+			}
+			if (quads[i]->m_checkTrim) {
+				parent->m_checkTrim = true;
+			}
+		}
+		if (m_removeTrimmed) {
+			for (int i = 0; i < 2; i++) {
+				if (!(quads[i]->m_trimmed))
+				parent->addChild(quads[i]);
+			}
+		} else {
+			for (int i = 0; i < 2; i++) {
+				parent->addChild(quads[i]);
+			}
+		}
+	} else if (spanv_cnt > 1) {
+		double vsplit = spanv[(spanv_cnt+1)/2];
+		ON_Interval firstv(v.Min(), vsplit);
+		ON_Interval secondv(vsplit, v.Max());
+
+		//////////////////////////////////////
+		ON_Surface *north = NULL;
+		ON_Surface *south = NULL;
+
+		ON_BoundingBox box = localsurf->BoundingBox();
+
+		int dir = 1;
+		localsurf->Split(dir, vsplit, south, north);
+		south->ClearBoundingBox();
+		north->ClearBoundingBox();
+
+		//////////////////////////////////
+		/*********************************************************************
+		 * In order to avoid fairly expensive re-calculation of 3d points at
+		 * uv coordinates, all values that are shared between children at
+		 * the same depth of a surface subdivision are pre-computed and
+		 * passed as paramters.
+		 *
+		 * The majority of these points are already evaluated in the process
+		 * of testing whether a subdivision has produced a leaf node.  These
+		 * values are in the normals and corners arrays and have index values
+		 * corresponding to the values of the figure on the left below.  There
+		 * are four other shared values that are precomputed in the sharedcorners
+		 * and sharednormals arrays; their index values in those arrays are
+		 * illustrated in the figure on the right:
+		 *
+		 *
+		 *   3-------------------2      +---------2---------+
+		 *   |                   |      |                   |
+		 *   |    6         8    |      |                   |
+		 *   |                   |      |                   |
+		 *  V|         4         |      1                   3
+		 *   |                   |      |                   |
+		 *   |    5         7    |      |                   |
+		 *   |                   |      |                   |
+		 *   0-------------------1      +---------0---------+
+		 *             U                          U
+		 *
+		 *   Values inherited from      Values pre-prepared in
+		 *   parent subdivision         shared arrays
+		 *
+		 *
+		 * When the four subdivisions are made, the parent parameters
+		 * are passed to the children as follows (values from the
+		 * shared arrays are prefaced with an s):
+		 *
+		 *    3--------------------2
+		 *    |                    |
+		 *    |                    |
+		 *  V |         5          |
+		 *    |                    |
+		 *    |                    |
+		 *    S0-------------------S1
+		 *            U
+		 *
+		 *        North
+		 *
+		 *    S0-------------------S1
+		 *    |                    |
+		 *    |                    |
+		 *  V |         4          |
+		 *    |                    |
+		 *    |                    |
+		 *    0--------------------1
+		 *             U
+		 *
+		 *        South
+		 *
+		 *
+		 **********************************************************************/
+
+		ON_Plane sharedframes[2];
+		ON_3dPoint sharedcorners[2];
+		ON_3dVector sharednormals[2];
+		localsurf->FrameAt(u.Min(), vsplit, sharedframes[0]);
+		localsurf->FrameAt(u.Max(), vsplit, sharedframes[1]);
+
+		sharedcorners[0] = sharedframes[0].origin;
+		sharednormals[0] = sharedframes[0].zaxis;
+		sharedcorners[1] = sharedframes[1].origin;
+		sharednormals[1] = sharedframes[1].zaxis;
+
+		ON_Plane *newframes;
+		ON_3dPoint *newcorners;
+		ON_3dVector *newnormals;
+		newframes = (ON_Plane *) bu_malloc(9 * sizeof(ON_Plane),
+				"new frames");
+		newcorners = (ON_3dPoint *) bu_malloc(9 * sizeof(ON_3dPoint),
+				"new corners");
+		newnormals = (ON_3dVector *) bu_malloc(9 * sizeof(ON_3dVector),
+				"new normals");
+		newframes[0] = frames[0];
+		newcorners[0] = corners[0];
+		newnormals[0] = normals[0];
+		newframes[1] = frames[1];
+		newcorners[1] = corners[1];
+		newnormals[1] = normals[1];
+		newframes[2] = sharedframes[1];
+		newcorners[2] = sharedcorners[1];
+		newnormals[2] = sharednormals[1];
+		newframes[3] = sharedframes[0];
+		newcorners[3] = sharedcorners[0];
+		newnormals[3] = sharednormals[0];
+		localsurf->FrameAt(u.Mid(), firstv.Mid(), newframes[4]);
+
+		newcorners[4] = newframes[4].origin;
+		newnormals[4] = newframes[4].zaxis;
+		//ON_BoundingBox bbox = q0surf->BoundingBox();
+		//bu_log("%d - in bbq0 rpp %f %f %f %f %f %f\n", divDepth, bbox.m_min.x, bbox.m_max.x, bbox.m_min.y, bbox.m_max.y, bbox.m_min.z, bbox.m_max.z);
+		quads[0] = subdivideSurfaceByKnots(south, u, firstv, newframes, newcorners, newnormals, divDepth+1, depthLimit);
+		delete south;
+
+		newframes[0] = sharedframes[0];
+		newcorners[0] = sharedcorners[0];
+		newnormals[0] = sharednormals[0];
+		newframes[1] = sharedframes[1];
+		newcorners[1] = sharedcorners[1];
+		newnormals[1] = sharednormals[1];
+		newframes[2] = frames[2];
+		newcorners[2] = corners[2];
+		newnormals[2] = normals[2];
+		newframes[3] = frames[3];
+		newcorners[3] = corners[3];
+		newnormals[3] = normals[3];
+		localsurf->FrameAt(u.Mid(), secondv.Mid(), newframes[4]);
+
+		newcorners[4] = newframes[4].origin;
+		newnormals[4] = newframes[4].zaxis;
+		//bbox = q1surf->BoundingBox();
+		//bu_log("%d - in bbq1 rpp %f %f %f %f %f %f\n", divDepth, bbox.m_min.x, bbox.m_max.x, bbox.m_min.y, bbox.m_max.y, bbox.m_min.z, bbox.m_max.z);
+		quads[1] = subdivideSurfaceByKnots(north, u, secondv, newframes, newcorners, newnormals, divDepth+1, depthLimit);
+		delete north;
+
+		bu_free(newframes, "free subsurface frames array");
+		bu_free(newcorners, "free subsurface corners array");
+		bu_free(newnormals, "free subsurface normals array");
+
+		parent->m_trimmed = true;
+		parent->m_checkTrim = false;
+
+		for (int i = 0; i < 2; i++) {
+			if (!(quads[i]->m_trimmed)) {
+				parent->m_trimmed = false;
+			}
+			if (quads[i]->m_checkTrim) {
+				parent->m_checkTrim = true;
+			}
+		}
+		if (m_removeTrimmed) {
+			for (int i = 0; i < 2; i++) {
+				if (!(quads[i]->m_trimmed))
+				parent->addChild(quads[i]);
+			}
+		} else {
+			for (int i = 0; i < 2; i++) {
+				parent->addChild(quads[i]);
+			}
+		}
 	} else {
-	    for (int i = 0; i < 4; i++) {
-		parent->addChild(quads[i]);
-	    }
+		//return surfaceBBox(localsurf, true, corners, normals, u, v);
+		//parent->addChild(subdivideSurface(localsurf, u, v, frames, corners, normals,0));
+	    ((ON_Surface *)localsurf)->ClearBoundingBox();
+		return subdivideSurface(localsurf, u, v, frames, corners, normals,0, depthLimit);
 	}
+	delete [] spanu;
+	delete [] spanv;
+
 	parent->BuildBBox();
 	return parent;
-    }
+
+}
+
+BBNode*
+SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
+	const ON_Interval& u,
+	const ON_Interval& v,
+	ON_Plane frames[],
+	ON_3dPoint corners[],
+	ON_3dVector normals[],
+	int divDepth,
+	int depthLimit)
+{
+	const ON_Surface* surf = m_face->SurfaceOf();
+	ON_Interval usurf = surf->Domain(0);
+	ON_Interval vsurf = surf->Domain(1);
+	fastf_t ufactor = (u[1] - u[0]) / (usurf[1] - usurf[0]);
+	fastf_t vfactor = (v[1] - v[0]) / (vsurf[1] - vsurf[0]);
+	point_t a, b;
+	VSET(a, usurf[0], vsurf[0], 0.0);
+	VSET(b, usurf[1], vsurf[1], 0.0);
+	double dsurf = DIST_PT_PT(a, b);
+	VSET(a, u[0], v[0], 0.0);
+	VSET(b, u[1], v[1], 0.0);
+	double dsubsurf = DIST_PT_PT(a, b);
+	double uq = u.Length()*0.25;
+	double vq = v.Length()*0.25;
+	localsurf->FrameAt(u.Mid() - uq, v.Mid() - vq, frames[5]);
+	localsurf->FrameAt(u.Mid() - uq, v.Mid() + vq, frames[6]);
+	localsurf->FrameAt(u.Mid() + uq, v.Mid() - vq, frames[7]);
+	localsurf->FrameAt(u.Mid() + uq, v.Mid() + vq, frames[8]);
+
+	corners[5] = frames[5].origin;
+	normals[5] = frames[5].zaxis;
+	corners[6] = frames[6].origin;
+	normals[6] = frames[6].zaxis;
+	corners[7] = frames[7].origin;
+	normals[7] = frames[7].zaxis;
+	corners[8] = frames[8].origin;
+	normals[8] = frames[8].zaxis;
+
+	double width,height;
+	double ratio = 5.0;
+	localsurf->GetSurfaceSize(&width, &height);
+	if ((((width/height < ratio) && (width/height > 1.0/ratio))
+					&& isFlat(localsurf, frames, normals, corners, u, v)
+					&& isStraight(localsurf, frames, normals, corners, u, v)) || (divDepth >= depthLimit)) { //BREP_MAX_FT_DEPTH))) {
+		return surfaceBBox(localsurf, true, corners, normals, u, v);
+	} else {
+		fastf_t uflat = isFlatU(localsurf, frames, normals, corners, u, v);
+		fastf_t vflat = isFlatV(localsurf, frames, normals, corners, u, v);
+		bool isUFlat = uflat >= BREP_SURFACE_FLATNESS;
+		bool isVFlat = vflat >= BREP_SURFACE_FLATNESS;
+		BBNode* parent = (divDepth == 0) ? initialBBox(ctree, localsurf, m_face, u, v) :
+		surfaceBBox(localsurf, false, corners, normals, u, v);
+		BBNode* quads[4];
+		ON_Interval first(0, 0.5);
+		ON_Interval second(0.5, 1.0);
+
+		if ((!isVFlat || (width/height > ratio)) && (!isUFlat || (height/width > ratio))) {
+			ON_Surface *north = NULL;
+			ON_Surface *south = NULL;
+			ON_Surface *q2surf = NULL;
+			ON_Surface *q3surf = NULL;
+			ON_Surface *q1surf = NULL;
+			ON_Surface *q0surf = NULL;
+
+			ON_BoundingBox box = localsurf->BoundingBox();
+
+			int dir = 1;
+			localsurf->Split(dir, localsurf->Domain(dir).Mid(), south, north);
+			south->ClearBoundingBox();
+			north->ClearBoundingBox();
+
+			dir = 0;
+			south->Split(dir, south->Domain(dir).Mid(), q0surf, q1surf);
+			delete south;
+			q0surf->ClearBoundingBox();
+			q1surf->ClearBoundingBox();
+			north->Split(dir, north->Domain(dir).Mid(), q3surf, q2surf);
+			delete north;
+			q3surf->ClearBoundingBox();
+			q2surf->ClearBoundingBox();
+			/*********************************************************************
+			 * In order to avoid fairly expensive re-calculation of 3d points at
+			 * uv coordinates, all values that are shared between children at
+			 * the same depth of a surface subdivision are pre-computed and
+			 * passed as paramters.
+			 *
+			 * The majority of these points are already evaluated in the process
+			 * of testing whether a subdivision has produced a leaf node.  These
+			 * values are in the normals and corners arrays and have index values
+			 * corresponding to the values of the figure on the left below.  There
+			 * are four other shared values that are precomputed in the sharedcorners
+			 * and sharednormals arrays; their index values in those arrays are
+			 * illustrated in the figure on the right:
+			 *
+			 *
+			 *   3-------------------2      +---------2---------+
+			 *   |                   |      |                   |
+			 *   |    6         8    |      |                   |
+			 *   |                   |      |                   |
+			 *  V|         4         |      1                   3
+			 *   |                   |      |                   |
+			 *   |    5         7    |      |                   |
+			 *   |                   |      |                   |
+			 *   0-------------------1      +---------0---------+
+			 *             U                          U
+			 *
+			 *   Values inherited from      Values pre-prepared in
+			 *   parent subdivision         shared arrays
+			 *
+			 *
+			 * When the four subdivisions are made, the parent parameters
+			 * are passed to the children as follows (values from the
+			 * shared arrays are prefaced with an s):
+			 *
+			 *    3--------------S2     S2--------------2
+			 *    |               |     |               |
+			 *    |               |     |               |
+			 *  V |       6       |     |       8       |
+			 *    |               |     |               |
+			 *    |               |     |               |
+			 *    S1--------------4     4--------------S3
+			 *            U                     U
+			 *
+			 *        Quadrant 3            Quadrant 2
+			 *
+			 *    S1--------------4     4--------------S3
+			 *    |               |     |               |
+			 *    |               |     |               |
+			 *  V |       5       |     |       7       |
+			 *    |               |     |               |
+			 *    |               |     |               |
+			 *    0--------------S0     S0--------------1
+			 *             U                         U
+			 *
+			 *        Quadrant 0            Quadrant 1
+			 *
+			 *
+			 **********************************************************************/
+
+			ON_Plane sharedframes[4];
+			ON_3dPoint sharedcorners[4];
+			ON_3dVector sharednormals[4];
+			localsurf->FrameAt(u.Mid(), v.Min(), sharedframes[0]);
+			localsurf->FrameAt(u.Min(), v.Mid(), sharedframes[1]);
+			localsurf->FrameAt(u.Mid(), v.Max(), sharedframes[2]);
+			localsurf->FrameAt(u.Max(), v.Mid(), sharedframes[3]);
+
+			sharedcorners[0] = sharedframes[0].origin;
+			sharednormals[0] = sharedframes[0].zaxis;
+			sharedcorners[1] = sharedframes[1].origin;
+			sharednormals[1] = sharedframes[1].zaxis;
+			sharedcorners[2] = sharedframes[2].origin;
+			sharednormals[2] = sharedframes[2].zaxis;
+			sharedcorners[3] = sharedframes[3].origin;
+			sharednormals[3] = sharedframes[3].zaxis;
+
+			ON_Plane *newframes;
+			ON_3dPoint *newcorners;
+			ON_3dVector *newnormals;
+			newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
+			newcorners = (ON_3dPoint *)bu_malloc(9*sizeof(ON_3dPoint), "new corners");
+			newnormals = (ON_3dVector *)bu_malloc(9*sizeof(ON_3dVector), "new normals");
+			newframes[0] = frames[0];
+			newcorners[0] = corners[0];
+			newnormals[0] = normals[0];
+			newframes[1] = sharedframes[0];
+			newcorners[1] = sharedcorners[0];
+			newnormals[1] = sharednormals[0];
+			newframes[2] = frames[4];
+			newcorners[2] = corners[4];
+			newnormals[2] = normals[4];
+			newframes[3] = sharedframes[1];
+			newcorners[3] = sharedcorners[1];
+			newnormals[3] = sharednormals[1];
+			newframes[4] = frames[5];
+			newcorners[4] = corners[5];
+			newnormals[4] = normals[5];
+			quads[0] = subdivideSurface(q0surf, u.ParameterAt(first), v.ParameterAt(first), newframes, newcorners, newnormals, divDepth+1, depthLimit);
+			delete q0surf;
+			newframes[0] = sharedframes[0];
+			newcorners[0] = sharedcorners[0];
+			newnormals[0] = sharednormals[0];
+			newframes[1] = frames[1];
+			newcorners[1] = corners[1];
+			newnormals[1] = normals[1];
+			newframes[2] = sharedframes[3];
+			newcorners[2] = sharedcorners[3];
+			newnormals[2] = sharednormals[3];
+			newframes[3] = frames[4];
+			newcorners[3] = corners[4];
+			newnormals[3] = normals[4];
+			newframes[4] = frames[7];
+			newcorners[4] = corners[7];
+			newnormals[4] = normals[7];
+			quads[1] = subdivideSurface(q1surf, u.ParameterAt(second), v.ParameterAt(first), newframes, newcorners, newnormals, divDepth+1, depthLimit);
+			delete q1surf;
+			newframes[0] = frames[4];
+			newcorners[0] = corners[4];
+			newnormals[0] = normals[4];
+			newframes[1] = sharedframes[3];
+			newcorners[1] = sharedcorners[3];
+			newnormals[1] = sharednormals[3];
+			newframes[2] = frames[2];
+			newcorners[2] = corners[2];
+			newnormals[2] = normals[2];
+			newframes[3] = sharedframes[2];
+			newcorners[3] = sharedcorners[2];
+			newnormals[3] = sharednormals[2];
+			newframes[4] = frames[8];
+			newcorners[4] = corners[8];
+			newnormals[4] = normals[8];
+			quads[2] = subdivideSurface(q2surf, u.ParameterAt(second), v.ParameterAt(second), newframes, newcorners, newnormals, divDepth+1, depthLimit);
+			delete q2surf;
+			newframes[0] = sharedframes[1];
+			newcorners[0] = sharedcorners[1];
+			newnormals[0] = sharednormals[1];
+			newframes[1] = frames[4];
+			newcorners[1] = corners[4];
+			newnormals[1] = normals[4];
+			newframes[2] = sharedframes[2];
+			newcorners[2] = sharedcorners[2];
+			newnormals[2] = sharednormals[2];
+			newframes[3] = frames[3];
+			newcorners[3] = corners[3];
+			newnormals[3] = normals[3];
+			newframes[4] = frames[6];
+			newcorners[4] = corners[6];
+			newnormals[4] = normals[6];
+			quads[3] = subdivideSurface(q3surf, u.ParameterAt(first), v.ParameterAt(second), newframes, newcorners, newnormals, divDepth+1, depthLimit);
+			delete q3surf;
+			bu_free(newframes, "free subsurface frames array");
+			bu_free(newcorners, "free subsurface corners array");
+			bu_free(newnormals, "free subsurface normals array");
+
+			parent->m_trimmed = true;
+			parent->m_checkTrim = false;
+
+			for (int i = 0; i < 4; i++) {
+				if (!(quads[i]->m_trimmed)) {
+					parent->m_trimmed = false;
+				}
+				if (quads[i]->m_checkTrim) {
+					parent->m_checkTrim = true;
+				}
+			}
+			if (m_removeTrimmed) {
+				for (int i = 0; i < 4; i++) {
+					if (!(quads[i]->m_trimmed))
+					parent->addChild(quads[i]);
+				}
+			} else {
+				for (int i = 0; i < 4; i++) {
+					parent->addChild(quads[i]);
+				}
+			}
+		} else if (!isUFlat || (width/height > ratio)) {
+			//////////////////////////////////////
+			ON_Surface *east = NULL;
+			ON_Surface *west = NULL;
+
+			ON_BoundingBox box = localsurf->BoundingBox();
+
+			int dir = 0;
+			localsurf->Split(dir, localsurf->Domain(dir).Mid(), east, west);
+			east->ClearBoundingBox();
+			west->ClearBoundingBox();
+
+			//////////////////////////////////
+			/*********************************************************************
+			 * In order to avoid fairly expensive re-calculation of 3d points at
+			 * uv coordinates, all values that are shared between children at
+			 * the same depth of a surface subdivision are pre-computed and
+			 * passed as paramters.
+			 *
+			 * The majority of these points are already evaluated in the process
+			 * of testing whether a subdivision has produced a leaf node.  These
+			 * values are in the normals and corners arrays and have index values
+			 * corresponding to the values of the figure on the left below.  There
+			 * are four other shared values that are precomputed in the sharedcorners
+			 * and sharednormals arrays; their index values in those arrays are
+			 * illustrated in the figure on the right:
+			 *
+			 *
+			 *   3-------------------2      +---------2---------+
+			 *   |                   |      |                   |
+			 *   |    6         8    |      |                   |
+			 *   |                   |      |                   |
+			 *  V|         4         |      1                   3
+			 *   |                   |      |                   |
+			 *   |    5         7    |      |                   |
+			 *   |                   |      |                   |
+			 *   0-------------------1      +---------0---------+
+			 *             U                          U
+			 *
+			 *   Values inherited from      Values pre-prepared in
+			 *   parent subdivision         shared arrays
+			 *
+			 *
+			 * When the four subdivisions are made, the parent parameters
+			 * are passed to the children as follows (values from the
+			 * shared arrays are prefaced with an s):
+			 *
+			 *    3--------------S1     S1--------------2
+			 *    |               |     |               |
+			 *    |               |     |               |
+			 *  V |       4       |     |       5       |
+			 *    |               |     |               |
+			 *    |               |     |               |
+			 *    0--------------S0     S0--------------1
+			 *             U                         U
+			 *
+			 *        East                 West
+			 *
+			 *
+			 **********************************************************************/
+			/* When the four subdivisions are made, the parent parameters
+			 * are passed to the children as follows (values from the
+			 * shared arrays are prefaced with an s):
+			 *
+			 *    3--------------S2     S2--------------2
+			 *    |               |     |               |
+			 *    |               |     |               |
+			 *  V |       6       |     |       8       |
+			 *    |               |     |               |
+			 *    |               |     |               |
+			 *    S1--------------4     4--------------S3
+			 *            U                     U
+			 *
+			 *        Quadrant 3            Quadrant 2
+			 *
+			 *    S1--------------4     4--------------S3
+			 *    |               |     |               |
+			 *    |               |     |               |
+			 *  V |       5       |     |       7       |
+			 *    |               |     |               |
+			 *    |               |     |               |
+			 *    0--------------S0     S0--------------1
+			 *             U                         U
+			 *
+			 *        Quadrant 0            Quadrant 1
+			 *
+			 *
+			 **********************************************************************/
+
+			ON_Plane sharedframes[4];
+			ON_3dPoint sharedcorners[4];
+			ON_3dVector sharednormals[4];
+			localsurf->FrameAt(u.Mid(), v.Min(), sharedframes[0]);
+			localsurf->FrameAt(u.Mid(), v.Max(), sharedframes[1]);
+
+			sharedcorners[0] = sharedframes[0].origin;
+			sharednormals[0] = sharedframes[0].zaxis;
+			sharedcorners[1] = sharedframes[1].origin;
+			sharednormals[1] = sharedframes[1].zaxis;
+
+			ON_Plane *newframes;
+			ON_3dPoint *newcorners;
+			ON_3dVector *newnormals;
+			newframes = (ON_Plane *) bu_malloc(9 * sizeof(ON_Plane),
+					"new frames");
+			newcorners = (ON_3dPoint *) bu_malloc(9 * sizeof(ON_3dPoint),
+					"new corners");
+			newnormals = (ON_3dVector *) bu_malloc(9 * sizeof(ON_3dVector),
+					"new normals");
+			newframes[0] = frames[0];
+			newcorners[0] = corners[0];
+			newnormals[0] = normals[0];
+			newframes[1] = sharedframes[0];
+			newcorners[1] = sharedcorners[0];
+			newnormals[1] = sharednormals[0];
+			newframes[2] = sharedframes[1];
+			newcorners[2] = sharedcorners[1];
+			newnormals[2] = sharednormals[1];
+			newframes[3] = frames[3];
+			newcorners[3] = corners[3];
+			newnormals[3] = normals[3];
+			localsurf->FrameAt(u.Mid() - uq, v.Mid(), newframes[4]);
+
+			newcorners[4] = newframes[4].origin;
+			newnormals[4] = newframes[4].zaxis;
+			//ON_BoundingBox bbox = q0surf->BoundingBox();
+			//bu_log("%d - in bbq0 rpp %f %f %f %f %f %f\n", divDepth, bbox.m_min.x, bbox.m_max.x, bbox.m_min.y, bbox.m_max.y, bbox.m_min.z, bbox.m_max.z);
+			quads[0] = subdivideSurface(east, u.ParameterAt(first), v, newframes, newcorners, newnormals, divDepth + 1, depthLimit);
+			delete east;
+
+			newframes[0] = sharedframes[0];
+			newcorners[0] = sharedcorners[0];
+			newnormals[0] = sharednormals[0];
+			newframes[1] = frames[1];
+			newcorners[1] = corners[1];
+			newnormals[1] = normals[1];
+			newframes[2] = frames[2];
+			newcorners[2] = corners[2];
+			newnormals[2] = normals[2];
+			newframes[3] = sharedframes[1];
+			newcorners[3] = sharedcorners[1];
+			newnormals[3] = sharednormals[1];
+			localsurf->FrameAt(u.Mid() + uq, v.Mid(), newframes[4]);
+
+			newcorners[4] = newframes[4].origin;
+			newnormals[4] = newframes[4].zaxis;
+			//bbox = q1surf->BoundingBox();
+			//bu_log("%d - in bbq1 rpp %f %f %f %f %f %f\n", divDepth, bbox.m_min.x, bbox.m_max.x, bbox.m_min.y, bbox.m_max.y, bbox.m_min.z, bbox.m_max.z);
+			quads[1] = subdivideSurface(west, u.ParameterAt(second), v, newframes, newcorners, newnormals, divDepth + 1, depthLimit);
+			delete west;
+
+			bu_free(newframes, "free subsurface frames array");
+			bu_free(newcorners, "free subsurface corners array");
+			bu_free(newnormals, "free subsurface normals array");
+
+			parent->m_trimmed = true;
+			parent->m_checkTrim = false;
+
+			for (int i = 0; i < 2; i++) {
+				if (!(quads[i]->m_trimmed)) {
+					parent->m_trimmed = false;
+				}
+				if (quads[i]->m_checkTrim) {
+					parent->m_checkTrim = true;
+				}
+			}
+			if (m_removeTrimmed) {
+				for (int i = 0; i < 2; i++) {
+					if (!(quads[i]->m_trimmed))
+					parent->addChild(quads[i]);
+				}
+			} else {
+				for (int i = 0; i < 2; i++) {
+					parent->addChild(quads[i]);
+				}
+			}
+		} else { /* assume uflat */ //if (!isVFlat || (height/width > 2.0)) {
+			//////////////////////////////////////
+			ON_Surface *north = NULL;
+			ON_Surface *south = NULL;
+
+			ON_BoundingBox box = localsurf->BoundingBox();
+
+			int dir = 1;
+			localsurf->Split(dir, localsurf->Domain(dir).Mid(), south, north);
+			south->ClearBoundingBox();
+			north->ClearBoundingBox();
+
+			//////////////////////////////////
+			/*********************************************************************
+			 * In order to avoid fairly expensive re-calculation of 3d points at
+			 * uv coordinates, all values that are shared between children at
+			 * the same depth of a surface subdivision are pre-computed and
+			 * passed as paramters.
+			 *
+			 * The majority of these points are already evaluated in the process
+			 * of testing whether a subdivision has produced a leaf node.  These
+			 * values are in the normals and corners arrays and have index values
+			 * corresponding to the values of the figure on the left below.  There
+			 * are four other shared values that are precomputed in the sharedcorners
+			 * and sharednormals arrays; their index values in those arrays are
+			 * illustrated in the figure on the right:
+			 *
+			 *
+			 *   3-------------------2      +---------2---------+
+			 *   |                   |      |                   |
+			 *   |    6         8    |      |                   |
+			 *   |                   |      |                   |
+			 *  V|         4         |      1                   3
+			 *   |                   |      |                   |
+			 *   |    5         7    |      |                   |
+			 *   |                   |      |                   |
+			 *   0-------------------1      +---------0---------+
+			 *             U                          U
+			 *
+			 *   Values inherited from      Values pre-prepared in
+			 *   parent subdivision         shared arrays
+			 *
+			 *
+			 * When the four subdivisions are made, the parent parameters
+			 * are passed to the children as follows (values from the
+			 * shared arrays are prefaced with an s):
+			 *
+			 *    3--------------------2
+			 *    |                    |
+			 *    |                    |
+			 *  V |         5          |
+			 *    |                    |
+			 *    |                    |
+			 *    S0-------------------S1
+			 *            U
+			 *
+			 *        North
+			 *
+			 *    S0-------------------S1
+			 *    |                    |
+			 *    |                    |
+			 *  V |         4          |
+			 *    |                    |
+			 *    |                    |
+			 *    0--------------------1
+			 *             U
+			 *
+			 *        South
+			 *
+			 *
+			 **********************************************************************/
+
+			ON_Plane sharedframes[2];
+			ON_3dPoint sharedcorners[2];
+			ON_3dVector sharednormals[2];
+			localsurf->FrameAt(u.Min(), v.Mid(), sharedframes[0]);
+			localsurf->FrameAt(u.Max(), v.Mid(), sharedframes[1]);
+
+			sharedcorners[0] = sharedframes[0].origin;
+			sharednormals[0] = sharedframes[0].zaxis;
+			sharedcorners[1] = sharedframes[1].origin;
+			sharednormals[1] = sharedframes[1].zaxis;
+
+			ON_Plane *newframes;
+			ON_3dPoint *newcorners;
+			ON_3dVector *newnormals;
+			newframes = (ON_Plane *) bu_malloc(9 * sizeof(ON_Plane),
+					"new frames");
+			newcorners = (ON_3dPoint *) bu_malloc(9 * sizeof(ON_3dPoint),
+					"new corners");
+			newnormals = (ON_3dVector *) bu_malloc(9 * sizeof(ON_3dVector),
+					"new normals");
+			newframes[0] = frames[0];
+			newcorners[0] = corners[0];
+			newnormals[0] = normals[0];
+			newframes[1] = frames[1];
+			newcorners[1] = corners[1];
+			newnormals[1] = normals[1];
+			newframes[2] = sharedframes[1];
+			newcorners[2] = sharedcorners[1];
+			newnormals[2] = sharednormals[1];
+			newframes[3] = sharedframes[0];
+			newcorners[3] = sharedcorners[0];
+			newnormals[3] = sharednormals[0];
+			localsurf->FrameAt(u.Mid(), v.Mid() - vq, newframes[4]);
+
+			newcorners[4] = newframes[4].origin;
+			newnormals[4] = newframes[4].zaxis;
+			//ON_BoundingBox bbox = q0surf->BoundingBox();
+			//bu_log("%d - in bbq0 rpp %f %f %f %f %f %f\n", divDepth, bbox.m_min.x, bbox.m_max.x, bbox.m_min.y, bbox.m_max.y, bbox.m_min.z, bbox.m_max.z);
+			quads[0] = subdivideSurface(south, u, v.ParameterAt(first), newframes, newcorners, newnormals, divDepth + 1, depthLimit);
+			delete south;
+
+			newframes[0] = sharedframes[0];
+			newcorners[0] = sharedcorners[0];
+			newnormals[0] = sharednormals[0];
+			newframes[1] = sharedframes[1];
+			newcorners[1] = sharedcorners[1];
+			newnormals[1] = sharednormals[1];
+			newframes[2] = frames[2];
+			newcorners[2] = corners[2];
+			newnormals[2] = normals[2];
+			newframes[3] = frames[3];
+			newcorners[3] = corners[3];
+			newnormals[3] = normals[3];
+			localsurf->FrameAt(u.Mid(), v.Mid() + vq, newframes[4]);
+
+			newcorners[4] = newframes[4].origin;
+			newnormals[4] = newframes[4].zaxis;
+			//bbox = q1surf->BoundingBox();
+			//bu_log("%d - in bbq1 rpp %f %f %f %f %f %f\n", divDepth, bbox.m_min.x, bbox.m_max.x, bbox.m_min.y, bbox.m_max.y, bbox.m_min.z, bbox.m_max.z);
+			quads[1] = subdivideSurface(north, u, v.ParameterAt(second), newframes, newcorners, newnormals, divDepth + 1, depthLimit);
+			delete north;
+
+			bu_free(newframes, "free subsurface frames array");
+			bu_free(newcorners, "free subsurface corners array");
+			bu_free(newnormals, "free subsurface normals array");
+
+			parent->m_trimmed = true;
+			parent->m_checkTrim = false;
+
+			for (int i = 0; i < 2; i++) {
+				if (!(quads[i]->m_trimmed)) {
+					parent->m_trimmed = false;
+				}
+				if (quads[i]->m_checkTrim) {
+					parent->m_checkTrim = true;
+				}
+			}
+			if (m_removeTrimmed) {
+				for (int i = 0; i < 2; i++) {
+					if (!(quads[i]->m_trimmed))
+					parent->addChild(quads[i]);
+				}
+			} else {
+				for (int i = 0; i < 2; i++) {
+					parent->addChild(quads[i]);
+				}
+			}
+		}
+		parent->BuildBBox();
+		return parent;
+	}
 }
 
 
@@ -1016,8 +2078,9 @@ SurfaceTree::subdivideSurface(const ON_Interval& u,
 #define SE 4
 
 bool
-SurfaceTree::isFlat(const ON_Surface* UNUSED(surf), ON_3dVector *m_normals, const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
+SurfaceTree::isFlat(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *m_normals, ON_3dPoint *corners, const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
 {
+	/*
     ON_3dVector normals[8];
     for (int i = 0; i < 4; i++) {
 	normals[i] = m_normals[i];
@@ -1066,8 +2129,135 @@ SurfaceTree::isFlat(const ON_Surface* UNUSED(surf), ON_3dVector *m_normals, cons
 	product *= dots.foldr(1, dvec<4>::mul(), 3);
     }
     return product >= BREP_SURFACE_FLATNESS;
+    */
+
+    double Ndot = frames[0].zaxis * frames[1].zaxis;
+    Ndot = Ndot * (frames[0].zaxis * frames[2].zaxis);
+    Ndot = Ndot * (frames[0].zaxis * frames[3].zaxis);
+    Ndot = Ndot * (frames[0].zaxis * frames[4].zaxis);
+    Ndot = Ndot * (frames[0].zaxis * frames[5].zaxis);
+    Ndot = Ndot * (frames[0].zaxis * frames[6].zaxis);
+    Ndot = Ndot * (frames[0].zaxis * frames[7].zaxis);
+    Ndot = Ndot * (frames[0].zaxis * frames[8].zaxis);
+    Ndot = Ndot * (frames[1].zaxis * frames[2].zaxis);
+    Ndot = Ndot * (frames[1].zaxis * frames[3].zaxis);
+    Ndot = Ndot * (frames[1].zaxis * frames[4].zaxis);
+    Ndot = Ndot * (frames[1].zaxis * frames[5].zaxis);
+    Ndot = Ndot * (frames[1].zaxis * frames[6].zaxis);
+    Ndot = Ndot * (frames[1].zaxis * frames[7].zaxis);
+    Ndot = Ndot * (frames[1].zaxis * frames[8].zaxis);
+    Ndot = Ndot * (frames[2].zaxis * frames[3].zaxis);
+    Ndot = Ndot * (frames[2].zaxis * frames[4].zaxis);
+    Ndot = Ndot * (frames[2].zaxis * frames[5].zaxis);
+    Ndot = Ndot * (frames[2].zaxis * frames[6].zaxis);
+    Ndot = Ndot * (frames[2].zaxis * frames[7].zaxis);
+    Ndot = Ndot * (frames[2].zaxis * frames[8].zaxis);
+    Ndot = Ndot * (frames[3].zaxis * frames[4].zaxis);
+    Ndot = Ndot * (frames[3].zaxis * frames[5].zaxis);
+    Ndot = Ndot * (frames[3].zaxis * frames[6].zaxis);
+    Ndot = Ndot * (frames[3].zaxis * frames[7].zaxis);
+    Ndot = Ndot * (frames[3].zaxis * frames[8].zaxis);
+    Ndot = Ndot * (frames[4].zaxis * frames[5].zaxis);
+    Ndot = Ndot * (frames[4].zaxis * frames[6].zaxis);
+    Ndot = Ndot * (frames[4].zaxis * frames[7].zaxis);
+    Ndot = Ndot * (frames[4].zaxis * frames[8].zaxis);
+    Ndot = Ndot * (frames[5].zaxis * frames[6].zaxis);
+    Ndot = Ndot * (frames[5].zaxis * frames[7].zaxis);
+    Ndot = Ndot * (frames[5].zaxis * frames[8].zaxis);
+    Ndot = Ndot * (frames[6].zaxis * frames[7].zaxis);
+    Ndot = Ndot * (frames[6].zaxis * frames[8].zaxis);
+    Ndot = Ndot * (frames[7].zaxis * frames[8].zaxis);
+
+    return (fabs(Ndot) >= BREP_SURFACE_FLATNESS); // && fabs(uvdot) >= BREP_SURFACE_FLATNESS;
+
 }
 
+bool
+SurfaceTree::isStraight(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *m_normals, ON_3dPoint *corners, const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
+{
+    double Xdot = frames[0].xaxis * frames[1].xaxis;
+    Xdot = Xdot * (frames[0].xaxis * frames[2].xaxis);
+    Xdot = Xdot * (frames[0].xaxis * frames[3].xaxis);
+    Xdot = Xdot * (frames[0].xaxis * frames[4].xaxis);
+    Xdot = Xdot * (frames[0].xaxis * frames[5].xaxis);
+    Xdot = Xdot * (frames[0].xaxis * frames[6].xaxis);
+    Xdot = Xdot * (frames[0].xaxis * frames[7].xaxis);
+    Xdot = Xdot * (frames[0].xaxis * frames[8].xaxis);
+    Xdot = Xdot * (frames[1].xaxis * frames[2].xaxis);
+    Xdot = Xdot * (frames[1].xaxis * frames[3].xaxis);
+    Xdot = Xdot * (frames[1].xaxis * frames[4].xaxis);
+    Xdot = Xdot * (frames[1].xaxis * frames[5].xaxis);
+    Xdot = Xdot * (frames[1].xaxis * frames[6].xaxis);
+    Xdot = Xdot * (frames[1].xaxis * frames[7].xaxis);
+    Xdot = Xdot * (frames[1].xaxis * frames[8].xaxis);
+    Xdot = Xdot * (frames[2].xaxis * frames[3].xaxis);
+    Xdot = Xdot * (frames[2].xaxis * frames[4].xaxis);
+    Xdot = Xdot * (frames[2].xaxis * frames[5].xaxis);
+    Xdot = Xdot * (frames[2].xaxis * frames[6].xaxis);
+    Xdot = Xdot * (frames[2].xaxis * frames[7].xaxis);
+    Xdot = Xdot * (frames[2].xaxis * frames[8].xaxis);
+    Xdot = Xdot * (frames[3].xaxis * frames[4].xaxis);
+    Xdot = Xdot * (frames[3].xaxis * frames[5].xaxis);
+    Xdot = Xdot * (frames[3].xaxis * frames[6].xaxis);
+    Xdot = Xdot * (frames[3].xaxis * frames[7].xaxis);
+    Xdot = Xdot * (frames[3].xaxis * frames[8].xaxis);
+    Xdot = Xdot * (frames[4].xaxis * frames[5].xaxis);
+    Xdot = Xdot * (frames[4].xaxis * frames[6].xaxis);
+    Xdot = Xdot * (frames[4].xaxis * frames[7].xaxis);
+    Xdot = Xdot * (frames[4].xaxis * frames[8].xaxis);
+    Xdot = Xdot * (frames[5].xaxis * frames[6].xaxis);
+    Xdot = Xdot * (frames[5].xaxis * frames[7].xaxis);
+    Xdot = Xdot * (frames[5].xaxis * frames[8].xaxis);
+    Xdot = Xdot * (frames[6].xaxis * frames[7].xaxis);
+    Xdot = Xdot * (frames[6].xaxis * frames[8].xaxis);
+    Xdot = Xdot * (frames[7].xaxis * frames[8].xaxis);
+
+    return (fabs(Xdot) >= BREP_SURFACE_STRAIGHTNESS);
+}
+
+fastf_t
+SurfaceTree::isFlatU(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *m_normals, ON_3dPoint *corners, const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
+{
+    fastf_t product = 1.0;
+    product *= m_normals[0]*m_normals[1];
+    product *= m_normals[2]*m_normals[3];
+    product *= m_normals[5]*m_normals[7];
+    product *= m_normals[6]*m_normals[8];
+
+    double Xdot = frames[0].xaxis * frames[1].xaxis;
+    Xdot = Xdot * (frames[2].xaxis * frames[3].xaxis);
+    Xdot = Xdot * (frames[5].xaxis * frames[7].xaxis);
+    Xdot = Xdot * (frames[6].xaxis * frames[8].xaxis);
+
+    double Ndot = frames[0].zaxis * frames[1].zaxis;
+    Ndot = Ndot * (frames[2].zaxis * frames[3].zaxis);
+    Ndot = Ndot * (frames[5].zaxis * frames[7].zaxis);
+    Ndot = Ndot * (frames[6].zaxis * frames[8].zaxis);
+
+    return product*fabs(Ndot*Xdot);
+}
+
+fastf_t
+SurfaceTree::isFlatV(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *m_normals, ON_3dPoint *corners, const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
+{
+	fastf_t product = 1.0;
+    product *= m_normals[0]*m_normals[3];
+    product *= m_normals[1]*m_normals[2];
+    product *= m_normals[5]*m_normals[6];
+    product *= m_normals[7]*m_normals[8];
+
+    double Xdot = frames[0].xaxis * frames[3].xaxis;
+    Xdot = Xdot * (frames[1].xaxis * frames[2].xaxis);
+    Xdot = Xdot * (frames[5].xaxis * frames[6].xaxis);
+    Xdot = Xdot * (frames[7].xaxis * frames[8].xaxis);
+
+    double Ndot = frames[0].zaxis * frames[3].zaxis;
+    Ndot = Ndot * (frames[1].zaxis * frames[2].zaxis);
+    Ndot = Ndot * (frames[5].zaxis * frames[6].zaxis);
+    Ndot = Ndot * (frames[7].zaxis * frames[8].zaxis);
+
+    return product*fabs(Ndot*Xdot);
+}
 
 //--------------------------------------------------------------------------------
 // get_closest_point implementation

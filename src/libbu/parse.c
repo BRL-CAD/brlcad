@@ -769,7 +769,10 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 		break;
 	    case 'p':
 		retval = _bu_struct_lookup((struct bu_structparse *)sdp->sp_count, name, base, value);
-		break;
+		if (retval == 0) {
+		    return 0; /* found */
+		}
+		continue;
 	    default:
 		bu_log("_bu_struct_lookup(%s): unknown format '%s'\n",
 		       name, sdp->sp_fmt);
@@ -1281,39 +1284,22 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 				 (vls->vls_len?" ":""),
 				 sdp->sp_name,
 				 *loc);
+		    vls->vls_len += (int)strlen(cp);
 		} else {
-		    register char *p;
-		    register int count=0;
+		    struct bu_vls tmpstr;
+		    bu_vls_init(&tmpstr);
 
-		    /* count the quote characters */
-		    p = loc;
-		    while ((p=strchr(p, '"')) != (char *)NULL) {
-			++p;
-			++count;
+		    /* quote the quote characters */
+		    while(*loc) {
+			    if (*loc == '"') {
+				    bu_vls_putc(&tmpstr, '\\');
+			    }
+			    bu_vls_putc(&tmpstr, *loc);
+			    loc++;
 		    }
-		    increase = strlen(sdp->sp_name)+strlen(loc)+5+count;
-		    bu_vls_extend(vls, (unsigned int)increase);
-
-		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
-		    if (vls->vls_len) (void)strcat(cp, " ");
-		    (void)strncat(cp, sdp->sp_name, increase-1);
-		    (void)strncat(cp, "=\"", increase-strlen(sdp->sp_name)-1);
-		    cp[vls->vls_offset + vls->vls_len - 1] = '\0';
-
-		    /* copy the string, escaping all the internal
-		     * double quote (") characters
-		     */
-		    p = &cp[strlen(cp)];
-		    while (*loc) {
-			if (*loc == '"') {
-			    *p++ = '\\';
-			}
-			*p++ = *loc++;
-		    }
-		    *p++ = '"';
-		    *p = '\0';
+		    bu_vls_printf(vls, "%s=\"%s\"", sdp->sp_name, bu_vls_addr(&tmpstr));
+		    bu_vls_free(&tmpstr);
 		}
-		vls->vls_len += (int)strlen(cp);
 		break;
 	    case 'S': /* XXX - DEPRECATED [7.14] */
 		printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
@@ -1362,23 +1348,11 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		{
 		    register size_t i = sdp->sp_count;
 		    register int *dp = (int *)loc;
-		    register int tmpi;
-
-		    increase = 64 * i + strlen(sdp->sp_name) + 3;
-		    bu_vls_extend(vls, (unsigned int)increase);
-
-		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
-		    snprintf(cp, increase, "%s%s=%d",
-			     (vls->vls_len?" ":""),
-			     sdp->sp_name, *dp++);
-		    tmpi = (int)strlen(cp);
-		    vls->vls_len += tmpi;
+		    
+		    bu_vls_printf(vls, "%s%s=%d", " ", sdp->sp_name, *dp++);
 
 		    while (--i > 0) {
-			cp += tmpi;
-			sprintf(cp, "%c%d", COMMA, *dp++);
-			tmpi = (int)strlen(cp);
-			vls->vls_len += tmpi;
+			bu_vls_printf(vls, "%c%d", COMMA, *dp++);
 		    }
 		}
 		break;

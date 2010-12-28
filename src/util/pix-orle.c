@@ -39,8 +39,8 @@ static char *infile;
 
 static int background[3];
 
-static int file_width = 512;
-static int file_height = 512;
+static size_t file_width = 512;
+static size_t file_height = 512;
 
 static char usage[] = "\
 Usage: pix-rle [-h -d -v] [-s squarefilesize]  [-C r/g/b]\n\
@@ -136,7 +136,7 @@ int
 main(int argc, char **argv)
 {
     RGBpixel *scan_buf;
-    int y;
+    size_t y;
 
     infp = stdin;
     outfp = stdout;
@@ -155,11 +155,11 @@ main(int argc, char **argv)
 
     /* Read image a scanline at a time, and encode it */
     for (y = 0; y < file_height; y++) {
-	if (rle_debug)fprintf(stderr, "encoding line %d\n", y);
-	if (fread((char *)scan_buf, sizeof(RGBpixel), file_width, infp) != file_width) {
-	    (void) fprintf(stderr,
-			   "read of %d pixels on line %d failed!\n",
-			   file_width, y);
+	size_t ret;
+	if (rle_debug)fprintf(stderr, "encoding line %lu\n", (unsigned long)y);
+	ret = fread((char *)scan_buf, sizeof(RGBpixel), file_width, infp);
+	if (ret != file_width) {
+	    (void) fprintf(stderr, "read of %lu pixels on line %lu failed!\n", (unsigned long)file_width, (unsigned long)y);
 	    return 1;
 	}
 

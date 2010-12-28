@@ -1,4 +1,4 @@
-'\" -*- nroff -*-
+'\"
 '\" Copyright (c) 2008 Pat Thoyts
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
@@ -15,6 +15,7 @@ ttk_vsapi \- Define a Microsoft Visual Styles element
 \fBttk::style element create \fIname\fR \fBvsapi\fR \fIclassName\fR \fIpartId\fR ?\fIstateMap\fR? ?\fIoptions\fR?
 .BE
 .SH DESCRIPTION
+.PP
 The \fIvsapi\fR element factory creates a new element
 in the current theme whose visual appearance is drawn using the
 Microsoft Visual Styles API which is reponsible for the themed styles
@@ -27,6 +28,7 @@ the Visual Styles class and part as given in the Microsoft
 documentation. The \fIstateMap\fR may be provided to map ttk states to
 Visual Styles API states (see \fBSTATE MAP\fR).
 .SH "OPTIONS"
+.PP
 Valid \fIoptions\fR are:
 .TP
 \fB\-padding\fR \fIpadding\fR
@@ -51,6 +53,7 @@ be mixed with the \fI-padding\fR or \fI-margins\fR options.
 \fB\-height\fR \fIheight\fR
 Specifies the height of the element. See the comments for \fI-width\fR.
 .SH "STATE MAP"
+.PP
 The \fIstateMap\fR parameter is a list of ttk states and the
 corresponding Visual Styles API state value.
 This permits the element appearence to respond to changes in the
@@ -66,6 +69,7 @@ versions of the Windows Development Kit this is \fIvssym32.h\fR.
 If no \fIstateMap\fR parameter is given there is an implicit default
 map of {{} 1}
 .SH "EXAMPLE"
+.PP
 Create a correctly themed close button by changing the layout of 
 a \fBttk::button\fR(n). This uses the WINDOW part WP_SMALLCLOSEBUTTON
 and as documented the states CBS_DISABLED, CBS_HOT, CBS_NORMAL and
@@ -95,3 +99,6 @@ pack [ttk::checkbutton .pin -style Explorer.Pin]
 ttk::intro(n), ttk::widget(n), ttk::style(n), ttk_image(n)
 .SH "KEYWORDS"
 style, theme, appearance, windows
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

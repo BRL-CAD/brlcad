@@ -624,27 +624,21 @@ dissect(
     case '=':			/* terminal node */
 	assert(t->left == NULL && t->right == NULL);
 	return REG_OKAY;	/* no action, parent did the work */
-	break;
     case '|':			/* alternation */
 	assert(t->left != NULL);
 	return altdissect(v, t, begin, end);
-	break;
     case 'b':			/* back ref -- shouldn't be calling us! */
 	return REG_ASSERT;
-	break;
     case '.':			/* concatenation */
 	assert(t->left != NULL && t->right != NULL);
 	return condissect(v, t, begin, end);
-	break;
     case '(':			/* capturing */
 	assert(t->left != NULL && t->right == NULL);
 	assert(t->subno > 0);
 	subset(v, t, begin, end);
 	return dissect(v, t->left, begin, end);
-	break;
     default:
 	return REG_ASSERT;
-	break;
     }
 }
 
@@ -802,19 +796,15 @@ cdissect(
     case '=':			/* terminal node */
 	assert(t->left == NULL && t->right == NULL);
 	return REG_OKAY;	/* no action, parent did the work */
-	break;
     case '|':			/* alternation */
 	assert(t->left != NULL);
 	return caltdissect(v, t, begin, end);
-	break;
     case 'b':			/* back ref -- shouldn't be calling us! */
 	assert(t->left == NULL && t->right == NULL);
 	return cbrdissect(v, t, begin, end);
-	break;
     case '.':			/* concatenation */
 	assert(t->left != NULL && t->right != NULL);
 	return ccondissect(v, t, begin, end);
-	break;
     case '(':			/* capturing */
 	assert(t->left != NULL && t->right == NULL);
 	assert(t->subno > 0);
@@ -823,10 +813,8 @@ cdissect(
 	    subset(v, t, begin, end);
 	}
 	return er;
-	break;
     default:
 	return REG_ASSERT;
-	break;
     }
 }
 
@@ -843,8 +831,7 @@ ccondissect(
     chr *begin,			/* beginning of relevant substring */
     chr *end)			/* end of same */
 {
-    struct dfa *d;
-    struct dfa *d2;
+    struct dfa *d, *d2;
     chr *mid;
     int er;
 
@@ -894,15 +881,26 @@ ccondissect(
 	 * Try this midpoint on for size.
 	 */
 
-	er = cdissect(v, t->left, begin, mid);
-	if ((er == REG_OKAY) && (longest(v, d2, mid, end, NULL) == end)
-		&& (er = cdissect(v, t->right, mid, end)) == REG_OKAY) {
-	    break;		/* NOTE BREAK OUT */
-	}
-	if ((er != REG_OKAY) && (er != REG_NOMATCH)) {
-	    freedfa(d);
-	    freedfa(d2);
-	    return er;
+	if (longest(v, d2, mid, end, NULL) == end) {
+	    er = cdissect(v, t->left, begin, mid);
+	    if (er == REG_OKAY) {
+		er = cdissect(v, t->right, mid, end);
+		if (er == REG_OKAY) {
+		    /*
+		     * Satisfaction.
+		     */
+		    
+		    MDEBUG(("successful\n"));
+		    freedfa(d);
+		    freedfa(d2);
+		    return REG_OKAY;
+		}
+	    }
+	    if ((er != REG_OKAY) && (er != REG_NOMATCH)) {
+		freedfa(d);
+		freedfa(d2);
+		return er;
+	    }
 	}
 
 	/*
@@ -935,15 +933,6 @@ ccondissect(
 	zapmem(v, t->left);
 	zapmem(v, t->right);
     }
-
-    /*
-     * Satisfaction.
-     */
-
-    MDEBUG(("successful\n"));
-    freedfa(d);
-    freedfa(d2);
-    return REG_OKAY;
 }
 
 /*
@@ -1011,15 +1000,26 @@ crevdissect(
 	 * Try this midpoint on for size.
 	 */
 
-	er = cdissect(v, t->left, begin, mid);
-	if ((er == REG_OKAY) && (longest(v, d2, mid, end, NULL) == end)
-		&& (er = cdissect(v, t->right, mid, end)) == REG_OKAY) {
-	    break;		/* NOTE BREAK OUT */
-	}
-	if (er != REG_OKAY && er != REG_NOMATCH) {
-	    freedfa(d);
-	    freedfa(d2);
-	    return er;
+	if (longest(v, d2, mid, end, NULL) == end) {
+	    er = cdissect(v, t->left, begin, mid);
+	    if (er == REG_OKAY) {
+		er = cdissect(v, t->right, mid, end);
+		if (er == REG_OKAY) {
+		    /*
+		     * Satisfaction.
+		     */
+
+		    MDEBUG(("successful\n"));
+		    freedfa(d);
+		    freedfa(d2);
+		    return REG_OKAY;
+		}
+	    }
+	    if (er != REG_OKAY && er != REG_NOMATCH) {
+		freedfa(d);
+		freedfa(d2);
+		return er;
+	    }
 	}
 
 	/*
@@ -1052,15 +1052,6 @@ crevdissect(
 	zapmem(v, t->left);
 	zapmem(v, t->right);
     }
-
-    /*
-     * Satisfaction.
-     */
-
-    MDEBUG(("successful\n"));
-    freedfa(d);
-    freedfa(d2);
-    return REG_OKAY;
 }
 
 /*

@@ -13,6 +13,8 @@
 # RCS: @(#) $Id$
 
 library tk
+
+##############################################################################
 
 # Define the unsupported generic interfaces.
 
@@ -129,8 +131,9 @@ declare 29 generic {
     void TkpFreeCursor(TkCursor *cursorPtr)
 }
 declare 30 generic {
-    char *TkGetBitmapData(Tcl_Interp *interp, char *string, char *fileName,
-	    int *widthPtr, int *heightPtr, int *hotXPtr, int *hotYPtr)
+    char *TkGetBitmapData(Tcl_Interp *interp, char *string,
+	    char *fileName, int *widthPtr, int *heightPtr,
+	    int *hotXPtr, int *hotYPtr)
 }
 declare 31 generic {
     void TkGetButtPoints(double p1[], double p2[],
@@ -522,7 +525,7 @@ declare 157 generic {
 # as to match 8.6 branch/HEAD.
 declare 169 generic {
     int TkStateParseProc(ClientData clientData, Tcl_Interp *interp,
-	    Tk_Window tkwin, const char *value, char *widgRec, int offset)
+	    Tk_Window tkwin, CONST char *value, char *widgRec, int offset)
 }
 declare 170 generic {
     char *TkStatePrintProc(ClientData clientData, Tk_Window tkwin,
@@ -530,7 +533,7 @@ declare 170 generic {
 }
 declare 171 generic {
     int TkCanvasDashParseProc(ClientData clientData, Tcl_Interp *interp,
-	    Tk_Window tkwin, const char *value, char *widgRec, int offset)
+	    Tk_Window tkwin, CONST char *value, char *widgRec, int offset)
 }
 declare 172 generic {
     char *TkCanvasDashPrintProc(ClientData clientData, Tk_Window tkwin,
@@ -538,7 +541,7 @@ declare 172 generic {
 }
 declare 173 generic {
     int TkOffsetParseProc(ClientData clientData, Tcl_Interp *interp,
-	    Tk_Window tkwin, const char *value, char *widgRec, int offset)
+	    Tk_Window tkwin, CONST char *value, char *widgRec, int offset)
 }
 declare 174 generic {
     char *TkOffsetPrintProc(ClientData clientData, Tk_Window tkwin,
@@ -546,7 +549,7 @@ declare 174 generic {
 }
 declare 175 generic {
     int TkPixelParseProc(ClientData clientData, Tcl_Interp *interp,
-	    Tk_Window tkwin, const char *value, char *widgRec, int offset)
+	    Tk_Window tkwin, CONST char *value, char *widgRec, int offset)
 }
 declare 176 generic {
     char *TkPixelPrintProc(ClientData clientData, Tk_Window tkwin,
@@ -568,7 +571,7 @@ declare 180 generic {
     char *TkSmoothPrintProc(ClientData clientData, Tk_Window tkwin,
 	    char *widgRec, int offset, Tcl_FreeProc **freeProcPtr)
 }
-
+
 ##############################################################################
 
 # Define the platform specific internal Tcl interface. These functions are
@@ -741,6 +744,13 @@ declare 34 win {
 }
 declare 35 win {
     int TkWinGetPlatformTheme(void)
+}
+
+# Exported through stub table since Tk 8.5.9
+
+declare 36 win {
+    LRESULT CALLBACK TkWinChildProc(HWND hwnd,
+	    UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 ################################
@@ -1630,3 +1640,7 @@ declare 90 aqua {
 declare 91 aqua {
     int XSync(Display *display, Bool flag)
 }
+
+# Local Variables:
+# mode: tcl
+# End:

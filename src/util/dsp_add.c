@@ -146,7 +146,7 @@ void
 add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 {
     int int_value;
-    int i;
+    unsigned long i;
     unsigned short s;
 
     for (i=0; i < count; i++) {

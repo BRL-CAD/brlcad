@@ -133,10 +133,10 @@ double mged_nrm_tol;			/* normal ang tol, radians */
 /* DEBUG -- force view center */
 /* Format: C x y z */
 int
-cmd_center(ClientData clientData,
+cmd_center(ClientData UNUSED(clientData),
 	   Tcl_Interp *interp,
 	   int argc,
-	   char **argv)
+	   const char *argv[])
 {
     int ret;
     Tcl_DString ds;
@@ -483,7 +483,7 @@ edit_com(int argc,
 
 
 int
-emuves_com(int argc, char **argv)
+emuves_com(int argc, const char *argv[])
 {
     int i;
     struct bu_ptbl *tbl;
@@ -4068,7 +4068,7 @@ cmd_vrot(ClientData clientData,
 
 
 int
-cmd_rot(ClientData clientData,
+cmd_rot(ClientData UNUSED(clientData),
 	Tcl_Interp *interp,
 	int argc,
 	char **argv)
@@ -4115,7 +4115,7 @@ int
 cmd_arot(ClientData clientData,
 	 Tcl_Interp *interp,
 	 int argc,
-	 char **argv)
+	 const char *argv[])
 {
     Tcl_DString ds;
     static const char *usage = "x y z angle";

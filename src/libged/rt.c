@@ -517,15 +517,18 @@ ged_build_tops(struct ged *gedp, char **start, char **end)
 	if (gdlp->gdl_dp->d_addr == RT_DIR_PHONY_ADDR)
 	    continue;
 
-	if (vp < end)
-	    *vp++ = bu_vls_addr(&gdlp->gdl_path);
+	if ((vp != NULL) && (vp < end))
+	    *vp++ = bu_strdup(bu_vls_addr(&gdlp->gdl_path));
 	else {
 	    bu_vls_printf(&gedp->ged_result_str, "libged: ran out of command vector space at %s\n", gdlp->gdl_dp->d_namep);
 	    break;
 	}
     }
 
-    *vp = (char *) 0;
+    if ((vp != NULL) && (vp < end)) {
+    	*vp = (char *) 0;
+    }
+
     return vp-start;
 }
 

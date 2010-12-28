@@ -131,7 +131,6 @@ bin_PROGRAMS = \
 	pl-hpgl \
 	pl-pl \
 	pl-ps \
-	pl-sgi \
 	pl-tek \
 	plcolor \
 	pldebug \
@@ -469,9 +468,6 @@ pl_pl_LDADD = ${BU}
 pl_ps_SOURCES = pl-ps.c
 pl_ps_LDADD = ${BU}
 
-pl_sgi_SOURCES = pl-sgi.c
-pl_sgi_LDADD = ${BU} ${LIBSGIGL}
-
 pl_tek_SOURCES = pl-tek.c
 pl_tek_LDADD = ${BU}
 
@@ -622,7 +618,6 @@ man_MANS = \
 	pl-hpgl.1 \
 	pl-pl.1 \
 	pl-ps.1 \
-	pl-sgi.1 \
 	pl-tek.1 \
 	plcolor.1 \
 	pldebug.1 \

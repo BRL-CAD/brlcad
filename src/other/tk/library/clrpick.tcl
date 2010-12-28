@@ -74,6 +74,7 @@ proc ::tk::dialog::color:: {args} {
 	    destroy $w
 	}
 	toplevel $w -class TkColorDialog -screen $sc
+	if {[tk windowingsystem] eq "x11"} {wm attributes $w -type dialog}
 	BuildDialog $w
     }
 

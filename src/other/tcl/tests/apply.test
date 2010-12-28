@@ -104,12 +104,12 @@ test apply-4.1 {error in arguments to lambda expression} {
     set lambda [list x {set x 1}]
     set res [catch {apply $lambda} msg]
     list $res $msg
-} {1 {wrong # args: should be "apply {x {set x 1}} x"}}
+} {1 {wrong # args: should be "apply lambdaExpr x"}}
 test apply-4.2 {error in arguments to lambda expression} {
     set lambda [list x {set x 1}]
     set res [catch {apply $lambda a b} msg]
     list $res $msg
-} {1 {wrong # args: should be "apply {x {set x 1}} x"}}
+} {1 {wrong # args: should be "apply lambdaExpr x"}}
 test apply-4.3 {error in arguments to lambda expression} {
     set lambda [list x {set x 1}]
     interp alias {} foo {} ::apply $lambda

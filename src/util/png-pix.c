@@ -53,7 +53,7 @@ main(int argc, char **argv)
     int bit_depth;
     int color_type;
     png_color_16p input_backgrd;
-    double gamma;
+    double gammaval;
     int file_width, file_height;
     unsigned char *image;
     unsigned char **rows;
@@ -156,10 +156,10 @@ main(int argc, char **argv)
     } else
 	png_set_background(png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0);
 
-    if (png_get_gAMA(png_p, info_p, &gamma)) {
+    if (png_get_gAMA(png_p, info_p, &gammaval)) {
 	if (verbose)
-	    bu_log("gamma: %g\n", gamma);
-	png_set_gAMA(png_p, info_p, gamma);
+	    bu_log("gamma: %g\n", gammaval);
+	png_set_gAMA(png_p, info_p, gammaval);
     }
 
     if (verbose) {
@@ -190,8 +190,6 @@ main(int argc, char **argv)
 
 	png_read_end(png_p, info_p);
 	if (png_get_text(png_p, info_p, &text, &num_text)) {
-	    int i;
-
 	    for (i=0; i<num_text; i++)
 		bu_log("%s: %s\n", text[i].key, text[i].text);
 	}

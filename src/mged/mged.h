@@ -454,9 +454,6 @@ extern struct run_rt head_run_rt;
 #define MORE_ARGS_STR "more arguments needed::"
 
 
-/* adc.c */
-int f_adc (ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
-
 /* attach.c */
 int is_dm_null(void);
 int mged_attach(struct w_dm *wp, int argc, const char **argv);
@@ -521,27 +518,6 @@ int cmd_name(
     char **argv);
 
 /* chgview.c */
-void eraseobjpath(
-    Tcl_Interp *interpreter,
-    int argc,
-    char **argv,
-    int noisy,
-    int all);
-int f_erase(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    char **argv);
-int f_erase_all(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    char **argv);
-int f_zap(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    char **argv);
 int mged_erot_xyz(char origin, vect_t rvec);
 int mged_svbase(void);
 int mged_vrot_xyz(char origin, char coords, vect_t rvec);
@@ -553,11 +529,6 @@ extern void view_ring_destroy(struct dm_list *dlp);
 
 /* cmd.c */
 int cmdline(struct bu_vls *vp, int record);
-int f_quit(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    char **argv);
 int mged_cmd(
     int argc,
     char **argv,
@@ -640,16 +611,6 @@ void find_nearest_ars_pt();
 
 /* mged.c */
 int event_check(int non_blocking);
-int f_opendb(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    char **argv);
-int f_closedb(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    char **argv);
 void new_edit_mats(void);
 void new_mats(void);
 void pr_beep(void);
@@ -668,33 +629,15 @@ extern void draw_grid(void);
 /* menu.c */
 int mmenu_select(int pen_y, int do_func);
 
-/* overlay.c */
-int f_overlay(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    char **argv);
-
 /* predictor.c */
 extern void predictor_frame(void);
 extern void predictor_init(void);
 
 /* usepen.c */
-int f_mouse(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    char **argv);
-int f_aip(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    char **argv);
 void buildHrot(mat_t mat, double alpha, double beta, double ggamma);
 void wrt_view(mat_t out, const mat_t change, const mat_t in);
 void wrt_point(mat_t out, const mat_t change, const mat_t in, const point_t point);
 void wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t point, const vect_t direc);
-int f_matpick(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
 
 /* tedit.c */
 int get_editor_string(struct bu_vls *editstring);

@@ -44,26 +44,26 @@ static char usage[] = "\
 Usage: decimate nbytes/pixel width height [outwidth outheight]\n\
 ";
 
-int nbytes;
-int iwidth;
-int iheight;
-int owidth = 512;
-int oheight = 512;
+size_t nbytes;
+size_t iwidth;
+size_t iheight;
+size_t owidth = 512;
+size_t oheight = 512;
 
 unsigned char *iline;
 unsigned char *oline;
 
-int discard;
-int wpad;
+size_t discard;
+size_t wpad;
 
 int
 main(int argc, char **argv)
 {
-    int i;
-    int j;
-    int nh, nw;
-    int dh, dw;
-    int todo;
+    size_t i;
+    size_t j;
+    size_t nh, nw;
+    size_t dh, dw;
+    size_t todo;
 
     if (argc < 4) {
 	fputs(usage, stderr);
@@ -99,16 +99,14 @@ main(int argc, char **argv)
     todo = iwidth / (discard+1) * (discard+1);
     if (owidth < todo) todo = owidth;
     if (todo > iwidth/(discard+1)) todo = iwidth/(discard+1);
-#if 0
-    fprintf(stderr, "dh=%d dw=%d, discard=%d\n", dh, dw, discard);
-    fprintf(stderr, "todo=%d\n", todo);
-#endif
 
     while (!feof(stdin)) {
+	size_t ret;
 	unsigned char *ip, *op;
 
 	/* Scrunch down first scanline of input data */
-	if (fread(iline, nbytes, iwidth, stdin) != iwidth) break;
+	ret = fread(iline, nbytes, iwidth, stdin);
+	if (ret != iwidth) break;
 	ip = iline;
 	op = oline;
 	for (i=0; i < todo; i++) {

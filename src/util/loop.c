@@ -40,6 +40,7 @@
 #include <math.h>
 
 #include "bu.h"
+#include "vmath.h"
 
 
 #define INTEGER 0
@@ -72,7 +73,9 @@ main(int argc, char *argv[])
 
     /* determine if any arguments are real */
     for (i = 1; i < argc; i++) {
-	if (atof(argv[i]) != ((double)atoi(argv[i]))) {
+	double dval = atof(argv[i]);
+	int ival = atoi(argv[i]);
+	if (!NEAR_ZERO(dval - (double)ival, SMALL_FASTF)) {
 	    status = REAL;
 	    break;
 	}

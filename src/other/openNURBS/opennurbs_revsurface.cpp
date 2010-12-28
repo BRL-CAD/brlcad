@@ -1493,7 +1493,13 @@ ON_BOOL32 ON_RevSurface::GetBBox(    // returns true if successful
     rc = m_curve->GetBoundingBox( cbox );
     if (rc)
     {
-      bbox = cbox;
+#if 1
+      /*
+       * does not account for start angle of revolve
+      */
+#else
+        bbox = cbox;
+#endif
       ON_3dPointArray corners;
       cbox.GetCorners(corners);
       ON_3dPoint P;
@@ -1522,7 +1528,21 @@ ON_BOOL32 ON_RevSurface::GetBBox(    // returns true if successful
           if ( arc.IsValid() )
           {
             abox = arc.BoundingBox();
-            bbox.Union(abox);
+#if 1
+            /*
+             * modified so that first time through corner loop arc bbox initializes
+             * overall surface bbox since arc already accounts for start and stop angles
+             * of revolve
+             */
+            if (i==0) {
+            	bbox = abox;
+            } else {
+            	bbox.Union(abox);
+            }
+
+#else
+        	bbox.Union(abox);
+#endif
           }
         }
       }

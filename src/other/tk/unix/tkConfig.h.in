@@ -181,9 +181,6 @@
 /* Are TkAqua debug messages enabled? */
 #undef TK_MAC_DEBUG
 
-/* Do we need a special AIX hack for timezones? */
-#undef USE_DELTA_FOR_TZ
-
 /* Do we want to use the threaded memory allocator? */
 #undef USE_THREAD_ALLOC
 

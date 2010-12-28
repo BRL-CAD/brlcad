@@ -264,7 +264,8 @@ main (int argc, char **argv)
 	fprintf(outPtr, "%g\t%g\t%s\n", V2, W2, Tail);
 	LineNm++;
     }
-    bu_exit (0, NULL);
+
+    return 0;
 }
 
 

@@ -1190,6 +1190,9 @@ f_type(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		type_match = 1;
 	    }
 	    break;
+	case DB5_MINORTYPE_BRLCAD_BREP:
+	    type_match = (!bu_fnmatch(plan->type_data, "brep", 0));
+	    break;
 	default:
 	    type_match = (!bu_fnmatch(plan->type_data, "other", 0));
 	    break;

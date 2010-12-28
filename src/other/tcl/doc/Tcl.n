@@ -56,14 +56,15 @@ If a word starts with the string
 .QW {*}
 followed by a non-whitespace character, then the leading
 .QW {*}
-is removed
-and the rest of the word is parsed and substituted as any other
-word. After substitution, the word is parsed again without
-substitutions, and its words are added to the command being
+is removed and the rest of the word is parsed and substituted as any other
+word. After substitution, the word is parsed as a list (without command or
+variable substitutions; backslash substitutions are performed as is normal for
+a list and individual internal words may be surrounded by either braces or
+double-quote characters), and its words are added to the command being
 substituted. For instance,
-.QW "cmd a {*}{b c} d {*}{e f}"
+.QW "cmd a {*}{b [c]} d {*}{$e f \N'34'g h\N'34'}"
 is equivalent to
-.QW "cmd a b c d e f" .
+.QW "cmd a b {[c]} d {$e} f \N'34'g h\N'34'" .
 .VE 8.5
 .IP "[6] \fBBraces.\fR"
 If the first character of a word is an open brace

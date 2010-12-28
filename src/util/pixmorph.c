@@ -86,7 +86,7 @@ double weightlookup[MAXLEN];
  */
 
 struct ldata {
-    double x1, y1, x2, y2;
+    double x_1, y_1, x_2, y_2;
     double xdelta, ydelta;
     double oolensq, oolen, len;
     double len_pb;
@@ -131,7 +131,7 @@ warp_image(unsigned char *dest, unsigned char *src,
 	   struct lineseg *lines, int which,
 	   long int width, long int height,
 	   long int numlines,
-	   double a, double b, double p)
+	   double a, double b)
 {
     long int i, j, k, width3;
     struct lineseg *tlines;
@@ -159,8 +159,8 @@ warp_image(unsigned char *dest, unsigned char *src,
 		   We work only with vector components here... note that
 		   Perpindicular((a, b)) = (b, -a). */
 
-		x_minus_p_x = x_x - tlines->s[MIDDLE].x1;
-		x_minus_p_y = x_y - tlines->s[MIDDLE].y1;
+		x_minus_p_x = x_x - tlines->s[MIDDLE].x_1;
+		x_minus_p_y = x_y - tlines->s[MIDDLE].y_1;
 
 		u = x_minus_p_x * tlines->s[MIDDLE].xdelta +
 		    x_minus_p_y * tlines->s[MIDDLE].ydelta;
@@ -171,12 +171,12 @@ warp_image(unsigned char *dest, unsigned char *src,
 		v *= tlines->s[MIDDLE].oolen;
 
 		if (u < 0) {
-		    tmpx = tlines->s[MIDDLE].x1 - x_x;
-		    tmpy = tlines->s[MIDDLE].y1 - x_y;
+		    tmpx = tlines->s[MIDDLE].x_1 - x_x;
+		    tmpy = tlines->s[MIDDLE].y_1 - x_y;
 		    dist = sqrt(tmpx*tmpx+tmpy*tmpy);
 		} else if (u > 1) {
-		    tmpx = tlines->s[MIDDLE].x2 - x_x;
-		    tmpy = tlines->s[MIDDLE].y2 - x_y;
+		    tmpx = tlines->s[MIDDLE].x_2 - x_x;
+		    tmpy = tlines->s[MIDDLE].y_2 - x_y;
 		    dist = sqrt(tmpx*tmpx+tmpy*tmpy);
 		} else
 		    dist = fabs(v);
@@ -191,9 +191,9 @@ warp_image(unsigned char *dest, unsigned char *src,
 
 		weight *= tlines->s[MIDDLE].len_pb;
 
-		x = tlines->s[which].x1 + u*tlines->s[which].xdelta +
+		x = tlines->s[which].x_1 + u*tlines->s[which].xdelta +
 		    v*tlines->s[which].oolen*tlines->s[which].ydelta - x_x;
-		y = tlines->s[which].y1 + u*tlines->s[which].ydelta -
+		y = tlines->s[which].y_1 + u*tlines->s[which].ydelta -
 		    v*tlines->s[which].oolen*tlines->s[which].xdelta - x_y;
 
 		dsum_x += x * weight;
@@ -277,45 +277,44 @@ lines_read(FILE *fp, long int numlines,
 	   double warpfrac, double pb)
 {
     long int i, j;
-    double x1, y1, x2, y2, x3, y3, x4, y4;
+    double x_1, y_1, x_2, y_2, x_3, y_3, x_4, y_4;
 
     for (i = 0; i < numlines; i++, lines++) {
 	if (fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf %lf ",
-		   &x1, &y1, &x2, &y2, &x3, &y3, &x4, &y4) < 4) {
-	    fprintf(stderr, "pixmorph: lines_read: failure\n");
-	    bu_exit (1, NULL);
+		   &x_1, &y_1, &x_2, &y_2, &x_3, &y_3, &x_4, &y_4) < 4) {
+	    bu_exit(1, "pixmorph: lines_read: failure\n");
 	}
 
-	if ((fabs(x1-x2) < EPSILON && fabs(y1-y2) < EPSILON) ||
-	    (fabs(x3-x4) < EPSILON && fabs(y3-y4) < EPSILON)) {
+	if ((fabs(x_1-x_2) < EPSILON && fabs(y_1-y_2) < EPSILON) ||
+	    (fabs(x_3-x_4) < EPSILON && fabs(y_3-y_4) < EPSILON)) {
 	    fprintf(stderr, "pixmorph: warning: zero-length line segment\n");
 	    --numlines;
 	    continue;
 	}
 
-	lines->s[FIRST].x1 = (double)width*x1;
-	lines->s[FIRST].y1 = (double)height*y1;
-	lines->s[FIRST].x2 = (double)width*x2;
-	lines->s[FIRST].y2 = (double)height*y2;
-	lines->s[LAST].x1 = (double)width*x3;
-	lines->s[LAST].y1 = (double)height*y3;
-	lines->s[LAST].x2 = (double)width*x4;
-	lines->s[LAST].y2 = (double)height*y4;
+	lines->s[FIRST].x_1 = (double)width*x_1;
+	lines->s[FIRST].y_1 = (double)height*y_1;
+	lines->s[FIRST].x_2 = (double)width*x_2;
+	lines->s[FIRST].y_2 = (double)height*y_2;
+	lines->s[LAST].x_1 = (double)width*x_3;
+	lines->s[LAST].y_1 = (double)height*y_3;
+	lines->s[LAST].x_2 = (double)width*x_4;
+	lines->s[LAST].y_2 = (double)height*y_4;
 
 	/* Now, the other useful information. */
 
-	lines->s[MIDDLE].x1 = DBLEND(lines->s[FIRST].x1,
-				     lines->s[LAST].x1, warpfrac);
-	lines->s[MIDDLE].y1 = DBLEND(lines->s[FIRST].y1,
-				     lines->s[LAST].y1, warpfrac);
-	lines->s[MIDDLE].x2 = DBLEND(lines->s[FIRST].x2,
-				     lines->s[LAST].x2, warpfrac);
-	lines->s[MIDDLE].y2 = DBLEND(lines->s[FIRST].y2,
-				     lines->s[LAST].y2, warpfrac);
+	lines->s[MIDDLE].x_1 = DBLEND(lines->s[FIRST].x_1,
+				     lines->s[LAST].x_1, warpfrac);
+	lines->s[MIDDLE].y_1 = DBLEND(lines->s[FIRST].y_1,
+				     lines->s[LAST].y_1, warpfrac);
+	lines->s[MIDDLE].x_2 = DBLEND(lines->s[FIRST].x_2,
+				     lines->s[LAST].x_2, warpfrac);
+	lines->s[MIDDLE].y_2 = DBLEND(lines->s[FIRST].y_2,
+				     lines->s[LAST].y_2, warpfrac);
 
 	for (j = 0; j < 3; j++) {
-	    lines->s[j].xdelta = lines->s[j].x2 - lines->s[j].x1;
-	    lines->s[j].ydelta = lines->s[j].y2 - lines->s[j].y1;
+	    lines->s[j].xdelta = lines->s[j].x_2 - lines->s[j].x_1;
+	    lines->s[j].ydelta = lines->s[j].y_2 - lines->s[j].y_1;
 	    lines->s[j].oolensq = 1.0/(lines->s[j].xdelta*lines->s[j].xdelta +
 				       lines->s[j].ydelta*lines->s[j].ydelta);
 	    lines->s[j].oolen = sqrt(lines->s[j].oolensq);
@@ -338,8 +337,7 @@ void
 lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, long int *np)
 {
     if (fscanf(fp, "%lf %lf %lf %ld ", ap, bp, pp, np) < 4) {
-	fprintf(stderr, "pixmorph: cannot read header info in lines file\n");
-	bu_exit (1, NULL);
+	bu_exit(1, "pixmorph: cannot read header info in lines file\n");
     }
 }
 
@@ -519,10 +517,10 @@ main(int argc, char **argv)
 
     fprintf(stderr,
 	    "pixmorph: Warping first image into first intermediate image.\n");
-    warp_image(wa, pa, lines, FIRST, pa_width, pa_height, numlines, a, b, p);
+    warp_image(wa, pa, lines, FIRST, pa_width, pa_height, numlines, a, b);
     fprintf(stderr,
 	    "pixmorph: Warping second image into second intermediate image.\n");
-    warp_image(wb, pb, lines, LAST, pa_width, pa_height, numlines, a, b, p);
+    warp_image(wb, pb, lines, LAST, pa_width, pa_height, numlines, a, b);
 
     /* Do the dissolve */
 

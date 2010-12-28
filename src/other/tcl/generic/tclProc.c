@@ -1092,13 +1092,15 @@ ProcWrongNumArgs(
     desiredObjs = (Tcl_Obj **) TclStackAlloc(interp,
 	    (int) sizeof(Tcl_Obj *) * (numArgs+1));
 
+    if (framePtr->isProcCallFrame & FRAME_IS_LAMBDA) {
+	desiredObjs[0] = Tcl_NewStringObj("lambdaExpr", -1);
+    } else {
 #ifdef AVOID_HACKS_FOR_ITCL
-    desiredObjs[0] = framePtr->objv[skip-1];
+	desiredObjs[0] = framePtr->objv[skip-1];
 #else
-    desiredObjs[0] = ((framePtr->isProcCallFrame & FRAME_IS_LAMBDA)
-	    ? framePtr->objv[skip-1]
-	    : Tcl_NewListObj(skip, framePtr->objv));
+	desiredObjs[0] = Tcl_NewListObj(skip, framePtr->objv);
 #endif /* AVOID_HACKS_FOR_ITCL */
+    }
     Tcl_IncrRefCount(desiredObjs[0]);
 
     defPtr = (Var *) (&framePtr->localCachePtr->varName0 + localCt);

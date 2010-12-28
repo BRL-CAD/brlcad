@@ -364,7 +364,7 @@
 
 ::itcl::body AttrGroupsDisplayUtility::exportToPng {} {
     set typelist {
-	{"Text" {".png"}}
+	{"PNG" {".png"}}
 	{"All Files" {*}}
     }
 

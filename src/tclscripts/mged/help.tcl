@@ -219,13 +219,14 @@ set mged_help_data(paths)	$helplib_data(wdb_paths)
 set mged_help_data(permute)	{{tuple}	{permute vertices of an ARB}}
 set mged_help_data(plot)	{{[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]}	{make UNIX-plot of view}}
 set mged_help_data(pl)		{{[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]}	{Experimental - uses dm-plot:make UNIX-plot of view}}
+set mged_help_data(png)		{{[-c r/g/b] [-s size] file}	{save graphics window to PNG image file}}
 set mged_help_data(polybinout)	{{file}	{store vlist polygons into polygon file (experimental)}}
 set mged_help_data(pov)		$helplib_data(vo_pov)
 set mged_help_data(prcolor)	$helplib_data(wdb_prcolor)
 set mged_help_data(prefix)	{{new_prefix object(s)}	{prefix each occurrence of object name(s)}}
 set mged_help_data(press)	{{button_label}	{emulate button press}}
 set mged_help_data(prj_add)	{{ [-t] [-b] [-n] shaderfile [image_file] [image_width] [image_height]} {Appends image filename + current view parameters to shaderfile}}
-set mged_help_data(preview)	{{[-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file}	{preview new style RT animation script}}
+set mged_help_data(preview)	{{[-v] [-o imagename.ext] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file}	{preview new style RT animation script}}
 set mged_help_data(ps)		{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file}	{creates a postscript file of the current view}}
 set mged_help_data(push)	$helplib_data(wdb_push)
 set mged_help_data(put)		$helplib_data(wdb_put)
@@ -282,6 +283,7 @@ Save the current view to specified 'file' as an rt render script
       -i inputfile   specify input data file (default is opendb filepath)
 }}
 set mged_help_data(sca)		$helplib_data(vo_sca)
+set mged_help_data(screengrab)	{{imagename.ext}	{output active graphics window to image file typed by extension(i.e. mged> screengrab imagename.png)\n");}}
 set mged_help_data(search)	$helplib_data(wdb_search)
 set mged_help_data(sed)		{{<path>}	{solid-edit named solid}}
 set mged_help_data(setview)	$helplib_data(vo_setview)

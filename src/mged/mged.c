@@ -2518,12 +2518,17 @@ mged_finish(int exitcode)
     log_event("CEASE", place);
 
     /* Release all displays */
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	curr_dm_list = p;
-
-	if (curr_dm_list && dmp) {
-	    DM_CLOSE(dmp);
+    struct dm_list *dml;
+    while (BU_LIST_WHILE(p, dm_list, &(head_dm_list.l))) {
+	BU_LIST_DEQUEUE(&(p->l));
+	if (p && p->dml_dmp) {
+	    DM_CLOSE(p->dml_dmp);
 	}
+
+	RT_FREE_VLIST(&p->dml_p_vlist);
+	mged_slider_free_vls(p);
+	bu_free((genptr_t) p, "release: curr_dm_list");
+	curr_dm_list = DM_LIST_NULL;
     }
 
     for (BU_LIST_FOR (c, cmd_list, &head_cmd_list.l)) {
@@ -2580,11 +2585,7 @@ mged_finish(int exitcode)
  * NOT opened (and the user didn't abort).
  */
 int
-f_opendb(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    char **argv)
+f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char **argv)
 {
     struct ged *save_gedp;
     struct db_i *save_dbip = DBI_NULL;
@@ -2894,21 +2895,18 @@ f_opendb(
  * Close the current database, if open.
  */
 int
-f_closedb(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int argc,
-    char **UNUSED(argv))
+f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char **argv)
 {
     const char *av[2];
 
     if (argc != 1) {
+	Tcl_AppendResult(interpreter, "Unexpected argument [%s]\n", (const char *)argv[1], NULL);
 	Tcl_Eval(interpreter, "help closedb");
 	return TCL_ERROR;
     }
 
     if (dbip == DBI_NULL ) {
-	Tcl_AppendResult(interpreter, "No database is open\n", (char *)NULL);
+	Tcl_AppendResult(interpreter, "No database is open\n", NULL);
 	return TCL_OK;
     }
 

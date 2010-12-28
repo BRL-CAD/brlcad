@@ -160,7 +160,7 @@ As for \fIpathPtr\fR, but used for the destination filename for a copy or
 rename operation.
 .AP "const char" *encodingName in
 The encoding of the data stored in the
-file identified by \fIpathPtr\fR and to be evaluted.
+file identified by \fIpathPtr\fR and to be evaluated.
 .AP "const char" *pattern in
 Only files or directories matching this pattern will be returned.
 .AP Tcl_GlobTypeData *types in
@@ -881,7 +881,7 @@ static Tcl_Filesystem vfsFilesystem = {
     NULL,
     /* Core will use stat for lstat */
     NULL,
-    /* No load; use the core fallback mechansism */
+    /* No load; use the core fallback mechanism */
     NULL,
     /* We don't need a getcwd or chdir; the core's own
      * internal value is suitable */
@@ -1292,7 +1292,7 @@ will take that list and first increment its reference count before using it.
 On completion of that use, Tcl will decrement its reference count.  Hence if
 the list should be disposed of by Tcl when done, it should have a
 reference count of zero, and if the list should not be disposed of, the
-filesystem should ensure it returns an object with a refererence count
+filesystem should ensure it returns an object with a reference count
 of at least one.
 .SS FILEATTRSGETPROC
 .PP
@@ -1362,7 +1362,7 @@ occurred in the process.  If successful, the directory specified by
 deleted without error.  If this flag is not given, then and the
 directory is non-empty a POSIX
 .QW EEXIST
-error should be signalled.  If an
+error should be signaled.  If an
 error does occur, the name of the file or directory which caused the
 error should be placed in \fIerrorPtr\fR.
 .SS DELETEFILEPROC

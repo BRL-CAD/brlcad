@@ -349,6 +349,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_savekey {_pane args}
 	method pane_saveview {_pane args}
 	method pane_sca {_pane args}
+	method pane_screengrab {_pane args}
 	method pane_scale_mode {_pane args}
 	method pane_screen2view {args}
 	method pane_set_coord {_pane args}
@@ -429,6 +430,7 @@ package provide cadwidgets::Ged 1.0
 	method savekey {args}
 	method saveview {args}
 	method sca {args}
+	method screengrab {args}
 	method protate {args}
 	method protate_mode {args}
 	method pscale {args}
@@ -501,7 +503,7 @@ package provide cadwidgets::Ged 1.0
 	method zoom {args}
 
 	method ? {}
-	method apropos {key}
+	method apropos {args}
 	method begin_data_arrow {_pane _x _y}
 	method begin_data_line {_pane _x _y}
 	method begin_data_move {_pane _x _y}
@@ -1924,6 +1926,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed sca $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_screengrab {_pane args} {
+    eval $mGed screengrab $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_scale_mode {_pane args} {
     eval $mGed scale_mode $itk_component($_pane) $args
 }
@@ -2279,6 +2285,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed sca $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::screengrab {args} {
+    eval $mGed screengrab $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::screen2view {args} {
     eval $mGed screen2view $itk_component($itk_option(-pane)) $args
 }
@@ -2605,7 +2615,7 @@ package provide cadwidgets::Ged 1.0
     return [$help ? 20 8]
 }
 
-::itcl::body cadwidgets::Ged::apropos {key} {
+::itcl::body cadwidgets::Ged::apropos {args} {
     return [eval $help apropos $args]
 }
 
@@ -2804,7 +2814,8 @@ package provide cadwidgets::Ged 1.0
     set mLastMousePos ""
 
     # If a point has not been selected via the pane_mouse_3dpoint call
-    # above and gridSnap is active, apply snap to grid to the data point
+    # above (i.e. neither a geometry object nor a data point was hit)
+    # and gridSnap is active, apply snap to grid to the data point
     # currently being moved.
     if {$point == "" && $itk_option(-gridSnap)} {
 	# First, get the data point being moved.
@@ -2820,11 +2831,11 @@ package provide cadwidgets::Ged 1.0
 	# Convert point to view coordinates and call snap_view. Then convert
 	# back to model coordinates. Note - vZ is saved so that the movement
 	# stays in a plane parallel to the view plane.
-	set view [m2v_point $point]
+	set view [pane_m2v_point $_pane $point]
 	set vZ [lindex $view 2]
 	set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
 	lappend view $vZ
-	set point [v2m_point $view]
+	set point [pane_v2m_point $_pane $view]
     }
 
     # Replace the mLastDataIndex point with this point
@@ -2834,12 +2845,11 @@ package provide cadwidgets::Ged 1.0
 	    set label [lindex $labels $mLastDataIndex]
 	    set label [lreplace $label 1 1 $point]
 	    set labels [lreplace $labels $mLastDataIndex $mLastDataIndex $label]
-	    $mGed $mLastDataType $itk_component($_pane) labels $labels
+	    $mLastDataType labels $labels
 	} else {
-
 	    set points [$mGed $mLastDataType $itk_component($_pane) points]
 	    set points [lreplace $points $mLastDataIndex $mLastDataIndex $point]
-	    $mGed $mLastDataType $itk_component($_pane) points $points
+	    $mLastDataType points $points
 	}
     }
 
@@ -3324,7 +3334,7 @@ package provide cadwidgets::Ged 1.0
 	}
     } else {
 	foreach callback $mMouseRayCallbacks {
-	    catch {$callback $mLastMouseRayStart $mLastMouseRayTarget $partitions}
+	    catch {$callback $_pane $mLastMouseRayStart $mLastMouseRayTarget $partitions}
 	}
     }
 }
@@ -4137,6 +4147,7 @@ package provide cadwidgets::Ged 1.0
     $help add savekey		{{file [time]} {save key frame data to file}}
     $help add saveview		{{[-e] [-i] [-l] [-o] filename [args]} {save the current view to file}}
     $help add sca		{{sfactor} {scale by sfactor}}
+    $help add screengrab	{{imagename.ext}	{output active graphics window to image file typed by extension(i.e. mged> screengrab imagename.png)\n");}}
     $help add search		{{options} {see search man page}}
     $help add select		{{vx vy {vr | vw vh}} {select objects within the specified circle or rectangle}}
     $help add setview		{{x y z} {set the view given angles x, y, and z in degrees}}

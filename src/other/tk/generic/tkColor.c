@@ -129,8 +129,8 @@ Tk_AllocColorFromObj(
      */
 
     if (tkColPtr != NULL) {
-	TkColor *firstColorPtr = (TkColor *)
-		Tcl_GetHashValue(tkColPtr->hashPtr);
+	TkColor *firstColorPtr = Tcl_GetHashValue(tkColPtr->hashPtr);
+
 	FreeColorObjProc(objPtr);
 	for (tkColPtr = firstColorPtr; tkColPtr != NULL;
 		tkColPtr = tkColPtr->nextPtr) {
@@ -204,7 +204,7 @@ Tk_GetColor(
 
     nameHashPtr = Tcl_CreateHashEntry(&dispPtr->colorNameTable, name, &isNew);
     if (!isNew) {
-	existingColPtr = (TkColor *) Tcl_GetHashValue(nameHashPtr);
+	existingColPtr = Tcl_GetHashValue(nameHashPtr);
 	for (tkColPtr = existingColPtr; tkColPtr != NULL;
 		tkColPtr = tkColPtr->nextPtr) {
 	    if ((tkColPtr->screen == Tk_Screen(tkwin))
@@ -300,8 +300,11 @@ Tk_GetColorByValue(
 
     /*
      * First, check to see if there's already a mapping for this color name.
+     * Must clear the structure first; it's not tightly packed on 64-bit
+     * systems. [Bug 2911570]
      */
 
+    memset(&valueKey, 0, sizeof(ValueKey));
     valueKey.red = colorPtr->red;
     valueKey.green = colorPtr->green;
     valueKey.blue = colorPtr->blue;
@@ -310,7 +313,7 @@ Tk_GetColorByValue(
     valueHashPtr = Tcl_CreateHashEntry(&dispPtr->colorValueTable,
 	    (char *) &valueKey, &isNew);
     if (!isNew) {
-	tkColPtr = (TkColor *) Tcl_GetHashValue(valueHashPtr);
+	tkColPtr = Tcl_GetHashValue(valueHashPtr);
 	tkColPtr->resourceRefCount++;
 	return &tkColPtr->color;
     }
@@ -474,7 +477,7 @@ Tk_FreeColor(
     }
     TkpFreeColor(tkColPtr);
 
-    prevPtr = (TkColor *) Tcl_GetHashValue(tkColPtr->hashPtr);
+    prevPtr = Tcl_GetHashValue(tkColPtr->hashPtr);
     if (prevPtr == tkColPtr) {
 	if (tkColPtr->nextPtr == NULL) {
 	    Tcl_DeleteHashEntry(tkColPtr->hashPtr);
@@ -664,7 +667,7 @@ Tk_GetColorFromObj(
     if (hashPtr == NULL) {
 	goto error;
     }
-    for (tkColPtr = (TkColor *) Tcl_GetHashValue(hashPtr);
+    for (tkColPtr = Tcl_GetHashValue(hashPtr);
 	    (tkColPtr != NULL); tkColPtr = tkColPtr->nextPtr) {
 	if ((Tk_Screen(tkwin) == tkColPtr->screen)
 		&& (Tk_Colormap(tkwin) == tkColPtr->colormap)) {
@@ -780,7 +783,7 @@ TkDebugColor(
     resultPtr = Tcl_NewObj();
     hashPtr = Tcl_FindHashEntry(&dispPtr->colorNameTable, name);
     if (hashPtr != NULL) {
-	TkColor *tkColPtr = (TkColor *) Tcl_GetHashValue(hashPtr);
+	TkColor *tkColPtr = Tcl_GetHashValue(hashPtr);
 
 	if (tkColPtr == NULL) {
 	    Tcl_Panic("TkDebugColor found empty hash table entry");

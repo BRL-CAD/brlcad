@@ -219,6 +219,7 @@ main(int argc, char **argv)
     int y1, y2, y3;		/* y zone widths */
     int first_x;		/* x: first pixel to be output in pix[] */
     int first_y;		/* y: first pixel to be output in pix[] */
+    size_t ret;
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);
@@ -231,7 +232,11 @@ main(int argc, char **argv)
     if (scr_height == 0)
 	scr_height = file_height;
 
-    fread((char *)&hdr, sizeof(hdr), 1, infp);
+    ret = fread((char *)&hdr, sizeof(hdr), 1, infp);
+    if (ret == 0) {
+	perror("fread");
+	bu_exit (1, NULL);
+    }
 
     /* x and y are in terms of 1st quadrant coordinates */
     /* Very first bit input is in upper right of screen */
@@ -296,36 +301,82 @@ main(int argc, char **argv)
     x3 = scr_width - x1 - x2;
 
     if (bwflag) {
-	for (y = 0; y < y1; y++)
-	    fwrite(black, scr_width, 1, stdout);
-	for (y = 0; y < y2; y++) {
-	    fwrite(black, x1, 1, stdout);
-	    fwrite(&pix[(file_width*(y+first_y))+first_x],
-		   x2, 1, stdout);
-	    fwrite(black, x3, 1, stdout);
+	for (y = 0; y < y1; y++) {
+	    ret = fwrite(black, scr_width, 1, stdout);
+	    if (ret == 0) {
+		perror("fwrite");
+		break;
+	    }
 	}
-	for (y = 0; y < y3; y++)
-	    fwrite(black, scr_width, 1, stdout);
+	for (y = 0; y < y2; y++) {
+	    ret = fwrite(black, x1, 1, stdout);
+	    if (ret == 0) {
+		perror("fwrite");
+		break;
+	    }
+	    ret = fwrite(&pix[(file_width*(y+first_y))+first_x], x2, 1, stdout);
+	    if (ret == 0) {
+		perror("fwrite");
+		break;
+	    }
+
+	    ret = fwrite(black, x3, 1, stdout);
+	    if (ret == 0) {
+		perror("fwrite");
+		break;
+	    }
+	}
+	for (y = 0; y < y3; y++) {
+	    ret = fwrite(black, scr_width, 1, stdout);
+	    if (ret == 0) {
+		perror("fwrite");
+		break;
+	    }
+	}
     } else {
-	for (y = 0; y < y1; y++)
-	    fwrite(black, scr_width, 3, stdout);
+	for (y = 0; y < y1; y++) {
+	    ret = fwrite(black, scr_width, 3, stdout);
+	    if (ret == 0) {
+		perror("fwrite");
+		break;
+	    }
+	}
 	for (y = 0; y < y2; y++) {
 	    unsigned char *cp;
 
-	    fwrite(black, x1, 3, stdout);
+	    ret = fwrite(black, x1, 3, stdout);
+	    if (ret == 0) {
+		perror("fwrite");
+		break;
+	    }
 	    cp = &pix[(file_width*(y+first_y))+first_x];
 	    for (x = 0; x < x2; x++) {
 		if (*cp++)
-		    fwrite(color, 3, 1, stdout);
+		    ret = fwrite(color, 3, 1, stdout);
 		else
-		    fwrite(black, 3, 1, stdout);
+		    ret = fwrite(black, 3, 1, stdout);
+
+		if (ret == 0) {
+		    perror("fwrite");
+		    break;
+		}
 	    }
-	    fwrite(black, x3, 3, stdout);
+	    ret = fwrite(black, x3, 3, stdout);
+	    if (ret == 0) {
+		perror("fwrite");
+		break;
+	    }
 	}
-	for (y = 0; y < y3; y++)
-	    fwrite(black, scr_width, 3, stdout);
+	for (y = 0; y < y3; y++) {
+	    ret = fwrite(black, scr_width, 3, stdout);
+	    if (ret == 0) {
+		perror("fwrite");
+		break;
+	    }
+	}
     }
-    bu_exit (0, NULL);
+
+    return 0;
 }
 
 

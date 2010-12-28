@@ -496,6 +496,7 @@ InitKeyEvent(
 	return -1;
     }
 
+    memset(eventPtr, 0, sizeof(XEvent));
     eventPtr->xany.send_event = false;
     eventPtr->xany.serial = Tk_Display(tkwin)->request;
 

@@ -16,16 +16,8 @@
  * RCS: @(#) $Id$
  */
 
-#include <ctype.h>
-#include <stdio.h>
-#include <string.h>
 #include "tclInt.h"
 #include "tkInt.h"
-#ifdef NO_STDLIB_H
-#   include "../compat/stdlib.h"
-#else
-#   include <stdlib.h>
-#endif
 #ifdef __WIN32__
 #include "tkWinInt.h"
 #endif

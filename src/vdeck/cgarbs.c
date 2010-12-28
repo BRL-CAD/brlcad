@@ -71,7 +71,7 @@ cgarbs( cgtype, gp, uniq, svec, dist_tol )
 	if (done == NO)
 	    svec[si] = i;
 	for (j=i+1; j<8; j++) {
-	    if ( VAPPROXEQUAL( gp->pt[i], gp->pt[j], dist_tol ) )  {
+	    if ( VNEAR_EQUAL( gp->pt[i], gp->pt[j], dist_tol ) )  {
 		if ( done == NO ) svec[++si] = j;
 		unique = NO;
 	    }

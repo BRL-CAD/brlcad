@@ -602,6 +602,14 @@ SetDictFromAny(
 	    if (!isNew) {
 		Tcl_Obj *discardedValue = Tcl_GetHashValue(hPtr);
 
+		/*
+		 * Not really a well-formed dictionary as there are duplicate
+		 * keys, so better get the string rep here so that we can
+		 * convert back.
+		 */
+
+		(void) Tcl_GetString(objPtr);
+
 		TclDecrRefCount(discardedValue);
 	    }
 	    Tcl_SetHashValue(hPtr, objv[i+1]);

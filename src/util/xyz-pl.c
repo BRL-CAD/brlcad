@@ -45,6 +45,9 @@ main(int argc, char *argv[])
     int debug = 0;
     int first = 1;
 
+    if (argc > 1)
+	bu_exit(1, "%s: unexpected argument(s)\n", argv[0]);
+
     for (;;) {
 	xyz[0] = xyz[1] = xyz[2] = 0.0;
 

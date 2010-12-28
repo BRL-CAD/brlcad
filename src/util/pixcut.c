@@ -40,6 +40,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
+#include "fb.h"
 
 
 static long int org_width = 512L;	/* Default file sizes 512x512 */

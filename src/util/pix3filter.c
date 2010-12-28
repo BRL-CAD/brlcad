@@ -215,6 +215,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
+    size_t ret;
     int x, y, color;
     int value, r1, r2, r3, r4, r5, r6, r7, r8, r9;
     int max, min;
@@ -246,25 +247,40 @@ main(int argc, char **argv)
     bottomnew = l31;
     middlenew = l32;
     topnew    = l33;
+
 /*
  * Read in the bottom and middle rows of the old picture.
  */
-    fread(bottomold, sizeof(char), 3*width, oldfp);
-    fread(middleold, sizeof(char), 3*width, oldfp);
-/*
- * Read in the bottom and middle rows of the current picture.
- */
-    fread(bottomcur, sizeof(char), 3*width, curfp);
-    fread(middlecur, sizeof(char), 3*width, curfp);
-/*
- * Read in the bottom and middle rows of the new picture.
- */
-    fread(bottomnew, sizeof(char), 3*width, newfp);
-    fread(middlenew, sizeof(char), 3*width, newfp);
-/*
- * Write out the bottome row.
- */
-    fwrite(bottomcur, sizeof(char), 3*width, stdout);
+    ret = fread(bottomold, sizeof(char), 3*width, oldfp);
+    if (ret == 0)
+	perror("fread");
+    ret = fread(middleold, sizeof(char), 3*width, oldfp);
+    if (ret == 0)
+	perror("fread");
+    /*
+     * Read in the bottom and middle rows of the current picture.
+     */
+    ret = fread(bottomcur, sizeof(char), 3*width, curfp);
+    if (ret == 0)
+	perror("fread");
+    ret = fread(middlecur, sizeof(char), 3*width, curfp);
+    if (ret == 0)
+	perror("fread");
+    /*
+     * Read in the bottom and middle rows of the new picture.
+     */
+    ret = fread(bottomnew, sizeof(char), 3*width, newfp);
+    if (ret == 0)
+	perror("fread");
+    ret = fread(middlenew, sizeof(char), 3*width, newfp);
+    if (ret == 0)
+	perror("fread");
+    /*
+     * Write out the bottome row.
+     */
+    ret = fwrite(bottomcur, sizeof(char), 3*width, stdout);
+    if (ret == 0)
+	perror("fwrite");
 
     if (verbose) {
 	for (x = 0; x < 29; x++)
@@ -276,9 +292,15 @@ main(int argc, char **argv)
 
     for (y = 1; y < height-1; y++) {
 	/* read in top lines */
-	fread(topold, sizeof(char), 3*width, oldfp);
-	fread(topcur, sizeof(char), 3*width, curfp);
-	fread(topnew, sizeof(char), 3*width, newfp);
+	ret = fread(topold, sizeof(char), 3*width, oldfp);
+	if (ret == 0)
+	    perror("fread");
+	ret = fread(topcur, sizeof(char), 3*width, curfp);
+	if (ret == 0)
+	    perror("fread");
+	ret = fread(topnew, sizeof(char), 3*width, newfp);
+	if (ret == 0)
+	    perror("fread");
 
 	for (color = 0; color < 3; color++) {
 	    obuf[0+color] = middlecur[0+color];
@@ -328,7 +350,10 @@ main(int argc, char **argv)
 	    }
 	    obuf[3*(width-1)+color] = middlecur[3*(width-1)+color];
 	}
-	fwrite(obuf, sizeof(char), 3*width, stdout);
+	ret = fwrite(obuf, sizeof(char), 3*width, stdout);
+	if (ret == 0)
+	    perror("fwrite");
+
 	/* Adjust row pointers */
 	temp = bottomold;
 	bottomold = middleold;
@@ -347,13 +372,15 @@ main(int argc, char **argv)
 
     }
     /* write out last line untouched */
-    fwrite(topcur, sizeof(char), 3*width, stdout);
+    ret = fwrite(topcur, sizeof(char), 3*width, stdout);
+    if (ret == 0)
+	perror("fwrite");
 
     /* Give advise on scaling factors */
     if (verbose)
 	fprintf(stderr, "Max = %d,  Min = %d\n", max, min);
 
-    bu_exit (0, NULL);
+    return 0;
 }
 
 

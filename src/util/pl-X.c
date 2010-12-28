@@ -174,8 +174,9 @@ getieee(void)
 {
     unsigned char in[8];
     double d;
+    size_t ret;
 
-    fread(in, 8, 1, stdin);
+    ret = fread(in, 8, 1, stdin);
     ntohd((unsigned char *)&d, in, 1);
     return d;
 }
@@ -210,25 +211,25 @@ getargs(struct uplot *up)
 
 
 void
-draw(double x1, double y1, double z1, double x2, double y2, double z2)
+draw(double x_1, double y_1, double UNUSED(z_1), double x_2, double y_2, double z_2)
     /* from point */
     /* to point */
 {
-    int sx1, sy1, sx2, sy2;
+    int sx_1, sy_1, sx_2, sy_2;
 
-    sx1 = (x1 - sp[0]) / (sp[3] - sp[0]) * width;
-    sy1 = height - (y1 - sp[1]) / (sp[4] - sp[1]) * height;
-    sx2 = (x2 - sp[0]) / (sp[3] - sp[0]) * width;
-    sy2 = height - (y2 - sp[1]) / (sp[4] - sp[1]) * height;
+    sx_1 = (x_1 - sp[0]) / (sp[3] - sp[0]) * width;
+    sy_1 = height - (y_1 - sp[1]) / (sp[4] - sp[1]) * height;
+    sx_2 = (x_2 - sp[0]) / (sp[3] - sp[0]) * width;
+    sy_2 = height - (y_2 - sp[1]) / (sp[4] - sp[1]) * height;
 
-    if (sx1 == sx2 && sy1 == sy2)
-	XDrawPoint(dpy, win, gc, sx1, sy1);
+    if (sx_1 == sx_2 && sy_1 == sy_2)
+	XDrawPoint(dpy, win, gc, sx_1, sy_1);
     else
-	XDrawLine(dpy, win, gc, sx1, sy1, sx2, sy2);
+	XDrawLine(dpy, win, gc, sx_1, sy_1, sx_2, sy_2);
 
-    cx = x2;
-    cy = y2;
-    cz = z2;
+    cx = x_2;
+    cy = y_2;
+    cz = z_2;
 }
 
 

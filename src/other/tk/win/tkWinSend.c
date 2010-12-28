@@ -16,6 +16,10 @@
 #include "tkInt.h"
 #include "tkWinSendCom.h"
 
+#ifdef _MSC_VER
+#define vsnprintf _vsnprintf
+#endif
+
 /*
  * Should be defined in WTypes.h but mingw 1.0 is missing them.
  */
@@ -63,13 +67,17 @@ static Tcl_ThreadDataKey dataKey;
  * Functions internal to this file.
  */
 
+#ifdef TK_SEND_ENABLED_ON_WINDOWS
 static void		CmdDeleteProc(ClientData clientData);
 static void		InterpDeleteProc(ClientData clientData,
 			    Tcl_Interp *interp);
 static void		RevokeObjectRegistration(RegisteredInterp *riPtr);
+#endif
 static HRESULT		BuildMoniker(const char *name, LPMONIKER *pmk);
+#ifdef TK_SEND_ENABLED_ON_WINDOWS
 static HRESULT		RegisterInterp(const char *name,
 			    RegisteredInterp *riPtr);
+#endif
 static int		FindInterpreterObject(Tcl_Interp *interp,
 			    const char *name, LPDISPATCH *ppdisp);
 static int		Send(LPDISPATCH pdispInterp, Tcl_Interp *interp,
@@ -471,6 +479,7 @@ FindInterpreterObject(
  *--------------------------------------------------------------
  */
 
+#ifdef TK_SEND_ENABLED_ON_WINDOWS
 static void
 CmdDeleteProc(
     ClientData clientData)
@@ -550,6 +559,7 @@ RevokeObjectRegistration(
 	riPtr->name = NULL;
     }
 }
+#endif
 
 /*
  * ----------------------------------------------------------------------
@@ -568,6 +578,7 @@ RevokeObjectRegistration(
  * ----------------------------------------------------------------------
  */
 
+#ifdef TK_SEND_ENABLED_ON_WINDOWS
 static void
 InterpDeleteProc(
     ClientData clientData,
@@ -575,6 +586,7 @@ InterpDeleteProc(
 {
     CoUninitialize();
 }
+#endif
 
 /*
  * ----------------------------------------------------------------------
@@ -638,6 +650,7 @@ BuildMoniker(
  * ----------------------------------------------------------------------
  */
 
+#ifdef TK_SEND_ENABLED_ON_WINDOWS
 static HRESULT
 RegisterInterp(
     const char *name,
@@ -694,6 +707,7 @@ RegisterInterp(
     Tcl_DStringFree(&dString);
     return hr;
 }
+#endif
 
 /*
  * ----------------------------------------------------------------------
@@ -833,11 +847,11 @@ Win32ErrorObj(
 
     if (lpBuffer == NULL) {
 	lpBuffer = sBuffer;
-	wsprintf(sBuffer, _T("Error Code: %08lX"), hrError);
+	wsprintf(sBuffer, TEXT("Error Code: %08lX"), hrError);
     }
 
-    if ((p = _tcsrchr(lpBuffer, _T('\r'))) != NULL) {
-	*p = _T('\0');
+    if ((p = _tcsrchr(lpBuffer, TEXT('\r'))) != NULL) {
+	*p = TEXT('\0');
     }
 
 #ifdef _UNICODE
@@ -1024,7 +1038,7 @@ SendTrace(
     static char buffer[1024];
 
     va_start(args, format);
-    _vsnprintf(buffer, 1023, format, args);
+    vsnprintf(buffer, 1023, format, args);
     OutputDebugString(buffer);
     va_end(args);
 }

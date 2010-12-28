@@ -202,9 +202,10 @@ TTKAPI Ttk_Box Ttk_PositionBox(Ttk_Box *cavity, int w, int h, Ttk_PositionSpec);
 MODULE_SCOPE void Ttk_StylePkgInit(Tcl_Interp *);
 
 typedef struct Ttk_Theme_ *Ttk_Theme;
-typedef struct Ttk_ElementImpl_ *Ttk_ElementImpl;
+typedef struct Ttk_ElementClass_ Ttk_ElementClass;
 typedef struct Ttk_Layout_ *Ttk_Layout;
-typedef struct Ttk_LayoutNode_ Ttk_LayoutNode;
+typedef struct Ttk_LayoutNode_ *Ttk_Element;
+typedef struct Ttk_Style_ *Ttk_Style;
 
 TTKAPI Ttk_Theme Ttk_GetTheme(Tcl_Interp *interp, const char *name);
 TTKAPI Ttk_Theme Ttk_GetDefaultTheme(Tcl_Interp *interp);
@@ -235,10 +236,10 @@ typedef void (Ttk_ElementDrawProc)(void *clientData, void *elementRecord,
 
 typedef struct Ttk_ElementOptionSpec
 {
-    char *optionName;		/* Command-line name of the widget option */
+    const char *optionName;		/* Command-line name of the widget option */
     Tk_OptionType type; 	/* Accepted option types */
     int offset;			/* Offset of Tcl_Obj* field in element record */
-    char *defaultValue;		/* Default value to used if resource missing */
+    const char *defaultValue;		/* Default value to used if resource missing */
 } Ttk_ElementOptionSpec;
 
 #define TK_OPTION_ANY TK_OPTION_STRING
@@ -251,7 +252,7 @@ typedef struct Ttk_ElementSpec {
     Ttk_ElementDrawProc *draw;  	/* Draw the element */
 } Ttk_ElementSpec;
 
-TTKAPI Ttk_ElementImpl Ttk_RegisterElement(
+TTKAPI Ttk_ElementClass *Ttk_RegisterElement(
 	Tcl_Interp *interp, Ttk_Theme theme, const char *elementName,
 	Ttk_ElementSpec *, void *clientData);
 
@@ -327,19 +328,26 @@ MODULE_SCOPE void Ttk_DrawLayout(Ttk_Layout, Ttk_State, Drawable);
 
 MODULE_SCOPE void Ttk_RebindSublayout(Ttk_Layout, void *recordPtr);
 
-MODULE_SCOPE Ttk_LayoutNode *Ttk_LayoutIdentify(Ttk_Layout, int x, int y);
-MODULE_SCOPE Ttk_LayoutNode *Ttk_LayoutFindNode(Ttk_Layout, const char *nodeName);
+MODULE_SCOPE Ttk_Element Ttk_IdentifyElement(Ttk_Layout, int x, int y);
+MODULE_SCOPE Ttk_Element Ttk_FindElement(Ttk_Layout, const char *nodeName);
 
-MODULE_SCOPE const char *Ttk_LayoutNodeName(Ttk_LayoutNode *);
-MODULE_SCOPE Ttk_Box Ttk_LayoutNodeParcel(Ttk_LayoutNode *);
-MODULE_SCOPE Ttk_Box Ttk_LayoutNodeInternalParcel(Ttk_Layout,Ttk_LayoutNode *);
-MODULE_SCOPE Ttk_Padding Ttk_LayoutNodeInternalPadding(Ttk_Layout,Ttk_LayoutNode *);
-MODULE_SCOPE void Ttk_LayoutNodeReqSize(Ttk_Layout, Ttk_LayoutNode *, int *w, int *h);
+MODULE_SCOPE const char *Ttk_ElementName(Ttk_Element);
+MODULE_SCOPE Ttk_Box Ttk_ElementParcel(Ttk_Element);
 
-MODULE_SCOPE void Ttk_PlaceLayoutNode(Ttk_Layout,Ttk_LayoutNode *, Ttk_Box);
-MODULE_SCOPE void Ttk_ChangeElementState(Ttk_LayoutNode *,unsigned set,unsigned clr);
+MODULE_SCOPE Ttk_Box Ttk_ClientRegion(Ttk_Layout, const char *elementName);
+
+MODULE_SCOPE Ttk_Box Ttk_LayoutNodeInternalParcel(Ttk_Layout,Ttk_Element);
+MODULE_SCOPE Ttk_Padding Ttk_LayoutNodeInternalPadding(Ttk_Layout,Ttk_Element);
+MODULE_SCOPE void Ttk_LayoutNodeReqSize(Ttk_Layout, Ttk_Element, int *w, int *h);
+
+MODULE_SCOPE void Ttk_PlaceElement(Ttk_Layout, Ttk_Element, Ttk_Box);
+MODULE_SCOPE void Ttk_ChangeElementState(Ttk_Element,unsigned set,unsigned clr);
 
 MODULE_SCOPE Tcl_Obj *Ttk_QueryOption(Ttk_Layout, const char *, Ttk_State);
+
+TTKAPI Ttk_Style Ttk_LayoutStyle(Ttk_Layout);
+TTKAPI Tcl_Obj *Ttk_StyleDefault(Ttk_Style, const char *optionName);
+TTKAPI Tcl_Obj *Ttk_StyleMap(Ttk_Style, const char *optionName, Ttk_State);
 
 /*------------------------------------------------------------------------
  * +++ Resource cache.
@@ -400,7 +408,23 @@ typedef enum { 		/* -orient option values */
 } Ttk_Orient;
 
 /*------------------------------------------------------------------------
- * +++ Stub table declarations:
+ * +++ Utilities.
+ */
+
+typedef struct TtkEnsemble {
+    const char *name;			/* subcommand name */
+    Tcl_ObjCmdProc *command; 		/* subcommand implementation, OR: */
+    const struct TtkEnsemble *ensemble;	/* subcommand ensemble */
+} Ttk_Ensemble;
+
+MODULE_SCOPE int Ttk_InvokeEnsemble(	/* Run an ensemble command */
+    const Ttk_Ensemble *commands, int cmdIndex,
+    void *clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
+
+MODULE_SCOPE int TtkEnumerateHashTable(Tcl_Interp *, Tcl_HashTable *);
+
+/*------------------------------------------------------------------------
+ * +++ Stub table declarations.
  */
 
 #include "ttkDecls.h"
