@@ -2025,32 +2025,32 @@ arb_is_rpp( arb )
     for ( i=5; i<8; i++ )
     {
 	VSUB2( v1, arb->pt[i], arb->pt[i-4] );
-	if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+	if ( !VNEAR_EQUAL( v0, v1, tol.dist ) )
 	    return 0;
     }
 
     /* check the width vectors */
     VSUB2( v0, arb->pt[1], arb->pt[0] );
     VSUB2( v1, arb->pt[2], arb->pt[3] );
-    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VNEAR_EQUAL( v0, v1, tol.dist ) )
 	return 0;
     VSUB2( v1, arb->pt[6], arb->pt[7] );
-    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VNEAR_EQUAL( v0, v1, tol.dist ) )
 	return 0;
     VSUB2( v1, arb->pt[5], arb->pt[4] );
-    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VNEAR_EQUAL( v0, v1, tol.dist ) )
 	return 0;
 
     /* check the depth vectors */
     VSUB2( v0, arb->pt[3], arb->pt[0] );
     VSUB2( v1, arb->pt[2], arb->pt[1] );
-    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VNEAR_EQUAL( v0, v1, tol.dist ) )
 	return 0;
     VSUB2( v1, arb->pt[6], arb->pt[5] );
-    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VNEAR_EQUAL( v0, v1, tol.dist ) )
 	return 0;
     VSUB2( v1, arb->pt[7], arb->pt[4] );
-    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VNEAR_EQUAL( v0, v1, tol.dist ) )
 	return 0;
 
     /* check for a right angle corner */

@@ -2432,27 +2432,27 @@ VertexLoop::LoadONBrep(ON_Brep *brep)
 
     ON_2dPoint start, end;
     ON_Surface::ISO iso;
-    if (VAPPROXEQUAL(vertex, corner[0], POINT_CLOSENESS_TOLERANCE)) {
+    if (VNEAR_EQUAL(vertex, corner[0], POINT_CLOSENESS_TOLERANCE)) {
 	start = ON_2dPoint(U.m_t[0], V.m_t[0]);
-	if (VAPPROXEQUAL(vertex, corner[1], POINT_CLOSENESS_TOLERANCE)) {
+	if (VNEAR_EQUAL(vertex, corner[1], POINT_CLOSENESS_TOLERANCE)) {
 	    //south;
 	    end = ON_2dPoint(U.m_t[1], V.m_t[0]);
 	    iso = ON_Surface::S_iso;
-	} else if (VAPPROXEQUAL(vertex, corner[2], POINT_CLOSENESS_TOLERANCE)) {
+	} else if (VNEAR_EQUAL(vertex, corner[2], POINT_CLOSENESS_TOLERANCE)) {
 	    //west
 	    end = ON_2dPoint(U.m_t[0], V.m_t[1]);
 	    iso = ON_Surface::W_iso;
 	}
-    } else if (VAPPROXEQUAL(vertex, corner[1], POINT_CLOSENESS_TOLERANCE)) {
+    } else if (VNEAR_EQUAL(vertex, corner[1], POINT_CLOSENESS_TOLERANCE)) {
 	start = ON_2dPoint(U.m_t[1], V.m_t[0]);
-	if (VAPPROXEQUAL(vertex, corner[3], POINT_CLOSENESS_TOLERANCE)) {
+	if (VNEAR_EQUAL(vertex, corner[3], POINT_CLOSENESS_TOLERANCE)) {
 	    //east
 	    end = ON_2dPoint(U.m_t[1], V.m_t[1]);
 	    iso = ON_Surface::E_iso;
 	}
-    } else if (VAPPROXEQUAL(vertex, corner[2], POINT_CLOSENESS_TOLERANCE)) {
+    } else if (VNEAR_EQUAL(vertex, corner[2], POINT_CLOSENESS_TOLERANCE)) {
 	start = ON_2dPoint(U.m_t[0], V.m_t[1]);
-	if (VAPPROXEQUAL(vertex, corner[3], POINT_CLOSENESS_TOLERANCE)) {
+	if (VNEAR_EQUAL(vertex, corner[3], POINT_CLOSENESS_TOLERANCE)) {
 	    //north
 	    end = ON_2dPoint(U.m_t[1], V.m_t[1]);
 	    iso = ON_Surface::N_iso;

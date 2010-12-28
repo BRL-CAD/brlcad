@@ -506,7 +506,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    vect_t pca;
 	    int code;
 
-	    if (VAPPROXEQUAL(ARS_PT(0, -2), ARS_PT(0, -1), tol->dist))
+	    if (VNEAR_EQUAL(ARS_PT(0, -2), ARS_PT(0, -1), tol->dist))
 		continue;
 
 	    code = bn_dist_pt3_lseg3(&dist, pca, ARS_PT(0, -2), ARS_PT(0, -1), ARS_PT(0, 0), tol);
@@ -548,9 +548,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	int double_ended;
 
 	if (k != 1
-	    && VAPPROXEQUAL(&arip->curves[i][1*ELEMENTS_PER_VECT],
-			    &arip->curves[i][k*ELEMENTS_PER_VECT],
-			    tol->dist))
+	    && VNEAR_EQUAL(&arip->curves[i][1*ELEMENTS_PER_VECT], &arip->curves[i][k*ELEMENTS_PER_VECT], tol->dist))
 	{
 	    double_ended = 1;
 	} else {

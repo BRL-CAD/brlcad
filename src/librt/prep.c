@@ -1870,8 +1870,8 @@ rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 
     bu_ptbl_free(&rtip->rti_new_solids);
 
-    if (!VAPPROXEQUAL(rtip->mdl_min, old_min, SMALL_FASTF)
-	|| !VAPPROXEQUAL(rtip->mdl_max, old_min, SMALL_FASTF))
+    if (!VNEAR_EQUAL(rtip->mdl_min, old_min, SMALL_FASTF)
+	|| !VNEAR_EQUAL(rtip->mdl_max, old_min, SMALL_FASTF))
     {
 	/* fill out BSP, it must completely fill the model BB */
 	fastf_t bb[6];
