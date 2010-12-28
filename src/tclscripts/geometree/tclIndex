@@ -24,7 +24,6 @@ set auto_index(::GeometryBrowser::setDisplayedToColor) [list source [file join $
 set auto_index(::GeometryBrowser::setNodeColor) [list source [file join $dir GeometryBrowser.tcl]]
 set auto_index(::GeometryBrowser::toggleAutorender) [list source [file join $dir GeometryBrowser.tcl]]
 set auto_index(::GeometryBrowser::toggleAutosizing) [list source [file join $dir GeometryBrowser.tcl]]
-set auto_index(::GeometryBrowser::toggleDebug) [list source [file join $dir GeometryBrowser.tcl]]
 set auto_index(::GeometryBrowser::toggleNode) [list source [file join $dir GeometryBrowser.tcl]]
 set auto_index(::GeometryBrowser::undisplayNode) [list source [file join $dir GeometryBrowser.tcl]]
 set auto_index(::GeometryBrowser::updateGeometryLists) [list source [file join $dir GeometryBrowser.tcl]]

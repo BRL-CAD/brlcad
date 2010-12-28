@@ -7,7 +7,6 @@
 # a script that loads the command.
 
 set auto_index(::RtWizard::DbPage) [list source [file join $dir DbPage.itk]]
-set auto_index(::RtWizard::DbPage::activateOKButton) [list source [file join $dir DbPage.itk]]
 set auto_index(::RtWizard::DbPage::constructor) [list source [file join $dir DbPage.itk]]
 set auto_index(::RtWizard::DbPage::getDbFile) [list source [file join $dir DbPage.itk]]
 set auto_index(::RtWizard::DbPage::getStepInfo) [list source [file join $dir DbPage.itk]]
@@ -117,6 +116,8 @@ set auto_index(::RtWizard::MGEDpage::intensityDialogOK) [list source [file join 
 set auto_index(::RtWizard::MGEDpage::intensityDialogReveal) [list source [file join $dir MGEDpage.itk]]
 set auto_index(::RtWizard::MGEDpage::lineColorChooser) [list source [file join $dir MGEDpage.itk]]
 set auto_index(::RtWizard::MGEDpage::nonLineColorChooser) [list source [file join $dir MGEDpage.itk]]
+set auto_index(::RtWizard::MGEDpage::occModeDialogApply) [list source [file join $dir MGEDpage.itk]]
+set auto_index(::RtWizard::MGEDpage::occModeDialogCancel) [list source [file join $dir MGEDpage.itk]]
 set auto_index(::RtWizard::MGEDpage::occModeDialogOK) [list source [file join $dir MGEDpage.itk]]
 set auto_index(::RtWizard::MGEDpage::occModeDialogReveal) [list source [file join $dir MGEDpage.itk]]
 set auto_index(::RtWizard::MGEDpage::onDeselect) [list source [file join $dir MGEDpage.itk]]
@@ -179,7 +180,6 @@ set auto_index(::RtWizard::PictureTypeF::fullSize) [list source [file join $dir 
 set auto_index(::RtWizard::PictureTypeF::makeImage) [list source [file join $dir PictureTypeF.itcl]]
 set auto_index(::RtWizard::PictureTypeF::preview) [list source [file join $dir PictureTypeF.itcl]]
 set auto_index(::RtWizard::Wizard) [list source [file join $dir Wizard.itk]]
-set auto_index(::RtWizard::Wizard::activateMenu) [list source [file join $dir Wizard.itk]]
 set auto_index(::RtWizard::Wizard::add) [list source [file join $dir Wizard.itk]]
 set auto_index(::RtWizard::Wizard::closeSteps) [list source [file join $dir Wizard.itk]]
 set auto_index(::RtWizard::Wizard::constructor) [list source [file join $dir Wizard.itk]]
