@@ -1002,10 +1002,11 @@ initialize ( ) {
 	    $VERBOSE_ECHO "${_marker_found_message}`basename \"$CONFIGURE\"`"
 	    break
 	fi
-	if test -f "`dirname \"$CONFIGURE\"/Makefile.am`" ; then
-	    _marker_found="`grep 'AUTOMAKE_OPTIONS.*'${marker} Makefile.am`"
+	__makefile=`dirname \"$CONFIGURE\"/Makefile.am`
+	if test -f "$__makefile" ; then
+	    _marker_found="`grep 'AUTOMAKE_OPTIONS.*'${marker} $__makefile`"
 	    if [ ! "x$_marker_found" = "x" ] ; then
-		$VERBOSE_ECHO "${_marker_found_message}Makefile.am"
+		$VERBOSE_ECHO "${_marker_found_message}${__makefile}"
 		break
 	    fi
 	fi
@@ -1027,7 +1028,8 @@ initialize ( ) {
 	    $ECHO "for you since you do not have a 'foreign' declaration specified."
 	    $ECHO
 	    $ECHO "Consider adding 'foreign' to AM_INIT_AUTOMAKE in `basename \"$CONFIGURE\"`"
-	    if test -f "`dirname \"$CONFIGURE\"/Makefile.am`" ; then
+	    __makefile=`dirname \"$CONFIGURE\"/Makefile.am`
+	    if test -f "$__makefile" ; then
 		$ECHO "or to AUTOMAKE_OPTIONS in your top-level Makefile.am file."
 	    fi
 	    $ECHO
