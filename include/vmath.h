@@ -305,7 +305,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * Return truthfully whether two values are within a specified epsilon
  * distance from each other.
  */
-#define NEAR_EQUAL(_a, _b, _tol) NEAR_ZERO((_a) - (_b), (_tol)) || NEAR_ZERO((_b) - (_a), (_tol))
+#define NEAR_EQUAL(_a, _b, _tol) NEAR_ZERO((_a) - (_b), (_tol))
 
 /**
  * Return truthfully whether two vectors are approximately equal,
