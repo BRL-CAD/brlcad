@@ -1131,7 +1131,7 @@ rt_arbn_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
  *		"P+" - add a new plane to the list of planes
  */
 int
-rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_arbn_internal *arbn;
     unsigned char *c;

@@ -3767,7 +3767,7 @@ rt_pipe_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 
 
 int
-rt_pipe_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_pipe_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_pipe_internal *pip;
     struct wdb_pipept *ptp;

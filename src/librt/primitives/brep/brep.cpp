@@ -73,7 +73,7 @@ extern "C" {
     void rt_brep_ifree(struct rt_db_internal *ip);
     int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
     int rt_brep_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr);
-    int rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv);
+    int rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, const char **argv);
     int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
 #ifdef __cplusplus
 }
@@ -3125,7 +3125,7 @@ rt_brep_tclget(Tcl_Interp *, const struct rt_db_internal *, const char *)
  * R T _ B R E P _ T C L A D J U S T
  */
 int
-rt_brep_tcladjust(Tcl_Interp *, struct rt_db_internal *, int, char **)
+rt_brep_tcladjust(Tcl_Interp *, struct rt_db_internal *, int, const char **)
 {
     return 0;
 }

@@ -1902,7 +1902,7 @@ bot_check_vertex_indices(struct bu_vls *logstr, struct rt_bot_internal *bot)
  * db adjust name flags		set flags
  */
 int
-rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_bot_internal *bot;
     Tcl_Obj *obj, **obj_array;

@@ -1257,7 +1257,7 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 
 
 int
-rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_ars_internal *ars;
     int i, j, k;
@@ -1355,36 +1355,32 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
 				      "WARNING: incorrect number of parameters provided for a point\n");
 		    }
 		} else {
+		    char *dupstr;
+
 		    /* one complete curve */
 		    i = atoi(&argv[0][1]);
 		    len = ars->pts_per_curve * 3;
-		    ptr = argv[1];
+		    dupstr = bu_strdup(argv[1]);
+		    ptr = dupstr;
 		    while (*ptr) {
 			if (*ptr == '{' || *ptr == '}')
 			    *ptr = ' ';
 			ptr++;
 		    }
 		    if (!ars->curves[i]) {
-			ars->curves[i] = (fastf_t *)bu_calloc(
-			    ars->pts_per_curve * 3,
-			    sizeof(fastf_t),
-			    "ars->curves[i]");
+			ars->curves[i] = (fastf_t *)bu_calloc(ars->pts_per_curve * 3, sizeof(fastf_t), "ars->curves[i]");
 		    }
-		    if (tcl_list_to_fastf_array(brlcad_interp, argv[1],
-						&ars->curves[i],
-						&len) != len) {
-			bu_vls_printf(logstr,
-				      "WARNING: incorrect number of parameters provided for a curve\n");
+		    if (tcl_list_to_fastf_array(brlcad_interp, dupstr,	&ars->curves[i], &len) != len) {
+			bu_vls_printf(logstr, "WARNING: incorrect number of parameters provided for a curve\n");
 		    }
+		    bu_free(dupstr, "bu_strdup ars curve");
 		}
 	    } else {
-		bu_vls_printf(logstr,
-			      "ERROR: Illegal argument, must be NC, PPC, C#, or C#P#\n");
+		bu_vls_printf(logstr, "ERROR: Illegal argument, must be NC, PPC, C#, or C#P#\n");
 		return BRLCAD_ERROR;
 	    }
 	} else {
-	    bu_vls_printf(logstr,
-			  "ERROR: Illegal argument, must be NC, PPC, C#, or C#P#\n");
+	    bu_vls_printf(logstr, "ERROR: Illegal argument, must be NC, PPC, C#, or C#P#\n");
 	    return BRLCAD_ERROR;
 	}
 	argc -= 2;

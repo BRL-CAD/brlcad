@@ -918,10 +918,10 @@ rt_metaball_get(struct bu_vls *logstr, const struct rt_db_internal *intern, cons
  * used for db put/asc2g
  */
 int
-rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_metaball_internal *mb;
-    char *pts, *pend;;
+    const char *pts, *pend;;
 
     if(argc != 3)  {
 	bu_vls_printf(logstr, "Invalid number of arguments: %d\n", argc);

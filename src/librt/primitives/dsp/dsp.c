@@ -4721,7 +4721,7 @@ rt_dsp_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
  * rt_functab[].ft_adjust()
  */
 int
-rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     register const struct bu_structparse *sp = NULL;
     const struct rt_dsp_internal *dsp_ip;
@@ -4742,8 +4742,7 @@ rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
 
     if (! sp) return BRLCAD_ERROR;
 
-    return bu_structparse_argv(logstr, argc, argv, sp,
-			       (char *)intern->idb_ptr);
+    return bu_structparse_argv(logstr, argc, argv, sp, (char *)intern->idb_ptr);
 }
 
 

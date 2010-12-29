@@ -1623,7 +1623,7 @@ rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
  * "M" - matrix to transform EBM solid into model coordinates
  */
 int
-rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_ebm_internal *ebm;
 

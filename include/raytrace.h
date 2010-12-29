@@ -2017,7 +2017,7 @@ struct rt_functab {
     size_t ft_internal_size;	/**< @brief  sizeof(struct rt_xxx_internal) */
     unsigned long ft_internal_magic;	/**< @brief  RT_XXX_INTERNAL_MAGIC */
     int	(*ft_get) BU_ARGS((struct bu_vls *, const struct rt_db_internal *, const char *item));
-    int	(*ft_adjust) BU_ARGS((struct bu_vls *, struct rt_db_internal *, int /*argc*/, char ** /*argv*/));
+    int	(*ft_adjust) BU_ARGS((struct bu_vls *, struct rt_db_internal *, int /*argc*/, const char ** /*argv*/));
     int	(*ft_form) BU_ARGS((struct bu_vls *, const struct rt_functab *));
 
     void (*ft_make) BU_ARGS((const struct rt_functab *, struct rt_db_internal */*ip*/));
@@ -4848,7 +4848,7 @@ RT_EXPORT BU_EXTERN(int tcl_list_to_int_array,
 
 RT_EXPORT BU_EXTERN(int tcl_list_to_fastf_array,
 		    (Tcl_Interp *interp,
-		     char *char_list,
+		     const char *char_list,
 		     fastf_t **array,
 		     int *array_len));
 
