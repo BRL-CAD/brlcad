@@ -2511,14 +2511,13 @@ void
 mged_finish(int exitcode)
 {
     char place[64];
-    struct dm_list *p;
+    struct dm_list *p, *dml;
     struct cmd_list *c;
 
     (void)sprintf(place, "exit_status=%d", exitcode);
     log_event("CEASE", place);
 
     /* Release all displays */
-    struct dm_list *dml;
     while (BU_LIST_WHILE(p, dm_list, &(head_dm_list.l))) {
 	BU_LIST_DEQUEUE(&(p->l));
 	if (p && p->dml_dmp) {
