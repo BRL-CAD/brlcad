@@ -366,7 +366,7 @@ static void
 ged_rect_image2view(struct ged_rect_state *grsp)
 {
     grsp->grs_x = (grsp->grs_pos[X] / (fastf_t)grsp->grs_cdim[X] - 0.5) * 2.0;
-    grsp->grs_y = (grsp->grs_pos[Y] / (fastf_t)grsp->grs_cdim[Y] / grsp->grs_aspect - 0.5) * 2.0;
+    grsp->grs_y = ((0.5 - (grsp->grs_cdim[Y] - grsp->grs_pos[Y]) / (fastf_t)grsp->grs_cdim[Y]) / grsp->grs_aspect * 2.0);
     grsp->grs_width = grsp->grs_dim[X] * 2.0 / (fastf_t)grsp->grs_cdim[X];
     grsp->grs_height = grsp->grs_dim[Y] * 2.0 / (fastf_t)grsp->grs_cdim[X];
 }
