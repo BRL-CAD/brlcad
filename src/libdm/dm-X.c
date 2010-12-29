@@ -1407,9 +1407,8 @@ X_getDisplayImage(struct dm *dmp, unsigned char **image)
     int bytes_per_pixel;
     int bytes_per_pixel_output = 3; /* limit for current bu_image raw pix usage */
     int bytes_per_line_output;
-    int bits_per_channel = 8;  /* bits per color channel */
     int i, j, k;
-    unsigned char *dbyte0, *dbyte1, *dbyte2, *dbyte3;
+    unsigned char *dbyte0, *dbyte1, *dbyte2;
     int red_shift;
     int green_shift;
     int blue_shift;

@@ -94,6 +94,12 @@ Nu_bg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 }
 
 
+HIDDEN int
+Nu_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image))
+{
+    return 0;
+}
+
 struct dm dm_Null = {
     Nu_int0,
     Nu_int0,
@@ -122,7 +128,7 @@ struct dm dm_Null = {
     Nu_int0,
     Nu_int0,
     Nu_int0,
-    Nu_int0, /* display to image function */
+    Nu_getDisplayImage, /* display to image function */
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
