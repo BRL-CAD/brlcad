@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="libbn"
 	ProjectGUID="{2794FD11-F9A6-4145-92DE-A05F5A2E6361}"
+	RootNamespace="libbn"
 	>
 	<Platforms>
 		<Platform
@@ -554,26 +555,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libbn\scale.c"
-				>
-				<FileConfiguration
-					Name="$(PlatformName)\$(ConfigurationName)|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="$(PlatformName)\$(ConfigurationName)|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\..\src\libbn\screengrab.c"
 				>
 				<FileConfiguration
 					Name="$(PlatformName)\$(ConfigurationName)|Win32"
