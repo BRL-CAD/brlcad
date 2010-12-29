@@ -2192,14 +2192,15 @@ bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse
 int
 bu_structparse_argv(struct bu_vls *logstr,
 		    int argc,
-		    char **argv,
+		    const char **argv,
 		    const struct bu_structparse *desc,
 		    char *base)
 {
-    register char *cp, *loc;
-    register const struct bu_structparse *sdp;
+    register const struct bu_structparse *sdp = NULL;
     register size_t j;
     register size_t ii;
+    const char *cp = NULL;
+    char *loc = NULL;
     struct bu_vls str;
 
     if (UNLIKELY(desc == (struct bu_structparse *)NULL)) {
@@ -2414,7 +2415,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 		    int dot_seen;
 		    double tmp_double;
 		    register double *dp;
-		    char *numstart;
+		    const char *numstart;
 
 		    dp = (double *)loc;
 

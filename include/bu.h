@@ -3842,7 +3842,7 @@ BU_EXPORT BU_EXTERN(void bu_structparse_get_terse_form,
 BU_EXPORT BU_EXTERN(int bu_structparse_argv,
 		    (struct bu_vls *logstr,
 		     int argc,
-		     char **argv,
+		     const char **argv,
 		     const struct bu_structparse *desc,
 		     char *base));
 
@@ -5302,7 +5302,7 @@ BU_EXPORT BU_EXTERN(void bu_tcl_structparse_get_terse_form,
 BU_EXPORT BU_EXTERN(int bu_tcl_structparse_argv,
 		    (Tcl_Interp *interp,
 		     int argc,
-		     char **argv,
+		     const char **argv,
 		     const struct bu_structparse *desc,
 		     char *base));
 
