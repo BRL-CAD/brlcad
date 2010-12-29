@@ -141,6 +141,8 @@ tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, unsigned int tri_num)
     g = ((tie_geom_t *)(tie->kdtree->data));
     g->tri_num = 0;
     g->tri_list = (tie_tri_t **)bu_malloc(sizeof(tie_tri_t *) * tri_num, __FUNCTION__);
+    VSETALL(tie->min.v, +INFINITY);
+    VSETALL(tie->max.v, -INFINITY);
 
     /* form bounding box of scene */
     for (i = 0; i < tri_num; i++) {
