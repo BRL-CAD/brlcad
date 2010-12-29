@@ -69,7 +69,7 @@
 
 
 /* forward declarations needed for the included routines below */
-HIDDEN int
+int
 rt_bot_makesegs(
     struct hit *hits,
     int nhits,
@@ -263,7 +263,7 @@ rt_bot_unoriented_segs(struct hit *hits,
  * Given an array of hits, make segments out of them.  Exactly how
  * this is to be done depends on the mode of the BoT.
  */
-HIDDEN int
+int
 rt_bot_makesegs(struct hit *hits, int nhits, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp)
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
