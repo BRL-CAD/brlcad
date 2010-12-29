@@ -375,7 +375,7 @@ main(int argc, char **argv)
                                     if (!NEAR_ZERO(result - d[9], VUNITIZE_TOL)) {
                                         ret = 1;
                                         failed_cnt++;
-                                        (void)fprintf(stream, "Failed function %lu test case on line %lu expected = %.15lf result = %.15lf\n",
+                                        (void)fprintf(stream, "Failed function %lu test case on line %lu expected = %.15f result = %.15f\n",
                                                u[0], line_num, d[9], result); 
                                     } else {
                                         success_cnt++;
