@@ -98,6 +98,7 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
 struct hitdata_s {
     int nhits;
     struct hit hits[MAXHITS];
+    struct tri_specific ts[MAXHITS];
     struct xray *rp;
 };
 
@@ -105,9 +106,11 @@ static void *
 hitfunc(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
 {
     struct hitdata_s *h = (struct hitdata_s *)ptr;
+    struct tri_specific *tsp;
     struct hit *hp;
 
     hp = &h->hits[h->nhits];
+    tsp = hp->hit_private = &h->ts[h->nhits];
     h->nhits++;
 
     if(h->nhits > MAXHITS) {
@@ -117,7 +120,7 @@ hitfunc(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
 
     hp->hit_magic = RT_HIT_MAGIC;
     hp->hit_dist = id->dist;
-    hp->hit_private = tri->ptr;
+    VMOVE(tsp->tri_N, id->norm.v);
 
     /* add hitdist into array and add one to nhits */
     return NULL;	/* continue firing */
@@ -147,8 +150,6 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     /* use hitfunc to build the hit list */
     if(hitdata.nhits == 0)
 	return 0;
-
-    bu_log("Bang!\n");
 
     /* this func is in ars, for some reason. All it needs is the dist. */
     rt_hitsort(hitdata.hits, hitdata.nhits);
