@@ -607,8 +607,6 @@ BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
 	Tb = m_t[0];
     }
 
-    bool xincreasing = !((B[X] - A[X]) < 0.0);
-
     fastf_t dV = B[Y] - A[Y];
     if (NEAR_ZERO(dV, tol)) {  //horizontal
 	return A[X];
