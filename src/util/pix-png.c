@@ -62,7 +62,7 @@ double out_gamma = -1.0;
 
 
 int
-get_args(int argc, char **argv, long *width, long *height, FILE **infp, FILE **outfp)
+get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE **outfp)
 {
     int c;
 
@@ -179,8 +179,8 @@ write_png(FILE *outfp, unsigned char **scanlines, long int width, long int heigh
 int
 main(int argc, char *argv[])
 {
-    int i;
-    unsigned long int w, h;
+    size_t i;
+    size_t w, h;
     unsigned char *scanbuf;
     unsigned char **rows;
     struct stat sb;
@@ -188,8 +188,8 @@ main(int argc, char *argv[])
     FILE *infp = (FILE *)NULL;
     FILE *outfp = (FILE *)NULL;
 
-    long int file_width = 512L; /* default input width */
-    long int file_height = 512L; /* default input height */
+    size_t file_width = 512; /* default input width */
+    size_t file_height = 512; /* default input height */
 
     char usage[] = "Usage: pix-png [-a] [-w file_width] [-n file_height]\n\
 	[-s square_file_size] [-o file.png] [file.pix] [> file.png]\n";
@@ -210,8 +210,8 @@ main(int argc, char *argv[])
     /* autosize input? */
     if (fileinput && autosize) {
 	if (fb_common_file_size(&w, &h, file_name, 3)) {
-	    file_width = (long)w;
-	    file_height = (long)h;
+	    file_width = w;
+	    file_height = h;
 	} else {
 	    bu_log("%s: unable to autosize\n", bu_getprogname());
 	}
@@ -234,7 +234,7 @@ main(int argc, char *argv[])
 	perror("unable to stat file:");
 	bu_exit(1, "ERROR: %s cannot proceed.", bu_getprogname());
     }
-    if (SIZE * sizeof(unsigned char) < sb.st_size) {
+    if (SIZE * sizeof(unsigned char) < (size_t)sb.st_size) {
 	bu_log("WARNING: Output PNG image dimensions are smaller than the PIX input image\n");
 	bu_log("Input image is %lu pixels, output image is %ld pixels\n", (unsigned long)sb.st_size / 3, SIZE * sizeof(unsigned char) / 3);
 	if (fb_common_file_size(&w, &h, file_name, 3)) {
