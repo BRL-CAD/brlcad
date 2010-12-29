@@ -150,7 +150,7 @@ bin_PROGRAMS = \
 	xyz-pl \
 	yuv-pix
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = ${TCL_CPPFLAGS} ${STRICT_FLAGS}
 
 noinst_PROGRAMS = \
 	${PC_TEST} \
