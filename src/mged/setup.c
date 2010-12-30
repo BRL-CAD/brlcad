@@ -523,8 +523,9 @@ mged_setup(Tcl_Interp **interpreter)
 	init_tcl=0;
 
 	/* Initialize [incr Tcl] */
-	if (Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
-	  return TCL_ERROR;
+	if (Tcl_Eval(*interpreter, "package require Itcl") != TCL_OK) {
+	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
+	    break;
 	}
 
 	/* don't actually want to loop forever */
