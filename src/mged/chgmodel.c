@@ -83,11 +83,11 @@ f_make(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	char center[512];
 	char scale[128];
 
-	sprintf(center, "%lf %lf %lf",
+	sprintf(center, "%f %f %f",
 		-view_state->vs_gvp->gv_center[MDX],
 		-view_state->vs_gvp->gv_center[MDY],
 		-view_state->vs_gvp->gv_center[MDZ]);
-	sprintf(scale, "%lf", view_state->vs_gvp->gv_scale * 2.0);
+	sprintf(scale, "%f", view_state->vs_gvp->gv_scale * 2.0);
 
 	av[0] = argv[0];
 	av[1] = "-o";

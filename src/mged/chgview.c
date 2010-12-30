@@ -172,9 +172,9 @@ mged_center(point_t center)
     if (gedp == GED_NULL)
 	return;
 
-    snprintf(xbuf, 32, "%lf", center[X]);
-    snprintf(ybuf, 32, "%lf", center[Y]);
-    snprintf(zbuf, 32, "%lf", center[Z]);
+    snprintf(xbuf, 32, "%f", center[X]);
+    snprintf(ybuf, 32, "%f", center[Y]);
+    snprintf(zbuf, 32, "%f", center[Z]);
 
     av[0] = "center";
     av[1] = xbuf;
@@ -2696,7 +2696,7 @@ mged_zoom(double val)
     if (gedp == GED_NULL)
 	return TCL_OK;
 
-    snprintf(buf, 32, "%lf", val);
+    snprintf(buf, 32, "%f", val);
 
     av[0] = "zoom";
     av[1] = buf;
@@ -3023,9 +3023,9 @@ setview(double a1,
     if (gedp == GED_NULL)
 	return;
 
-    snprintf(xbuf, 32, "%lf", a1);
-    snprintf(ybuf, 32, "%lf", a2);
-    snprintf(zbuf, 32, "%lf", a3);
+    snprintf(xbuf, 32, "%f", a1);
+    snprintf(ybuf, 32, "%f", a2);
+    snprintf(zbuf, 32, "%f", a3);
 
     av[0] = "setview";
     av[1] = xbuf;
@@ -3069,9 +3069,9 @@ slewview(vect_t view_pos)
     /* this is for the ModelDelta calculation below */
     MAT_DELTAS_GET_NEG(old_model_center, view_state->vs_gvp->gv_center);
 
-    snprintf(xbuf, 32, "%lf", view_pos[X]);
-    snprintf(ybuf, 32, "%lf", view_pos[Y]);
-    snprintf(zbuf, 32, "%lf", view_pos[Z]);
+    snprintf(xbuf, 32, "%f", view_pos[X]);
+    snprintf(ybuf, 32, "%f", view_pos[Y]);
+    snprintf(zbuf, 32, "%f", view_pos[Z]);
 
     av[0] = "slew";
     av[1] = xbuf;

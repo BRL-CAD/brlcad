@@ -2511,7 +2511,7 @@ void
 mged_finish(int exitcode)
 {
     char place[64];
-    struct dm_list *p, *dml;
+    struct dm_list *p;
     struct cmd_list *c;
 
     (void)sprintf(place, "exit_status=%d", exitcode);

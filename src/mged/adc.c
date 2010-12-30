@@ -36,7 +36,7 @@
 #include "./mged_dm.h"
 
 
-static char adc_syntax[] = "\
+static char adc_syntax1[] = "\
  adc			toggle display of angle/distance cursor\n\
  adc vars		print a list of all variables (i.e. var = val)\n\
  adc draw [0|1]		set or get the draw parameter\n\
@@ -46,6 +46,9 @@ static char adc_syntax[] = "\
  adc odst [#]		set or get radius (distance) of tick (+-2047)\n\
  adc hv [# #]		set or get position (grid coordinates)\n\
  adc xyz [# # #]	set or get position (model coordinates)\n\
+";
+
+static char adc_syntax2[] = "\
  adc x [#]		set or get horizontal position (+-2047)\n\
  adc y [#]		set or get vertical position (+-2047)\n\
  adc dh #		add to horizontal position (grid coordinates)\n\
@@ -53,6 +56,9 @@ static char adc_syntax[] = "\
  adc dx #		add to X position (model coordinates)\n\
  adc dy #		add to Y position (model coordinates)\n\
  adc dz #		add to Z position (model coordinates)\n\
+";
+
+static char adc_syntax3[] = "\
  adc anchor_pos	[0|1]	anchor ADC to current position in model coordinates\n\
  adc anchor_a1	[0|1]	anchor angle1 to go through anchorpoint_a1\n\
  adc anchor_a2	[0|1]	anchor angle2 to go through anchorpoint_a2\n\
@@ -60,6 +66,9 @@ static char adc_syntax[] = "\
  adc anchorpoint_a1 [# # #]	set or get anchor point for angle1\n\
  adc anchorpoint_a2 [# # #]	set or get anchor point for angle2\n\
  adc anchorpoint_dst [# # #]	set or get anchor point for tick distance\n\
+";
+
+static char adc_syntax4[] = "\
  adc -i			any of the above appropriate commands will interpret parameters as increments\n\
  adc reset		reset angles, location, and tick distance\n\
  adc help		prints this help message\n\
@@ -1050,12 +1059,12 @@ f_adc (
     }
 
     if (strcmp(parameter, "help") == 0) {
-	Tcl_AppendResult(interp, "Usage:\n", adc_syntax, (char *)NULL);
+	Tcl_AppendResult(interp, "Usage:\n", adc_syntax1, adc_syntax2, adc_syntax3, adc_syntax4, (char *)NULL);
 	return TCL_OK;
     }
 
     Tcl_AppendResult(interp, "ADC: unrecognized command: '",
-		     argv[1], "'\nUsage:\n", adc_syntax, (char *)NULL);
+		     argv[1], "'\nUsage:\n", adc_syntax1, adc_syntax2, adc_syntax3, adc_syntax4, (char *)NULL);
     return TCL_ERROR;
 }
 

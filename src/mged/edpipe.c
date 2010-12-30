@@ -369,7 +369,7 @@ ins_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const point_t
     struct wdb_pipept *first;
     struct wdb_pipept *new;
 
-    RT_PIPE_CK_MAGIC(pipe);
+    RT_PIPE_CK_MAGIC(pipeip);
     if (pp)
 	BU_CKMAG(pp, WDB_PIPESEG_MAGIC, "pipe point");
 
@@ -465,7 +465,7 @@ move_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *ps, const point_
 {
     point_t old_pt;
 
-    RT_PIPE_CK_MAGIC(pipe);
+    RT_PIPE_CK_MAGIC(pipeip);
     BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "pipe segment");
 
     VMOVE(old_pt, ps->pp_coord);
