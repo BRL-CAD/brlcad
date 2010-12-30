@@ -51,17 +51,15 @@
 /* defined in chgview.c */
 extern int edit_com(int argc, const char *argv[], int kind, int catch_sigint);
 
-void set_tran();
-void aexists(char *name);
-
-int newedge;		/* new edge for arb editing */
+/* defined in buttons.c */
+extern int be_s_trans();
 
 
 /* tell him it already exists */
 void
-aexists(char *name)
+aexists(const char *name)
 {
-    Tcl_AppendResult(interp, name, ":  already exists\n", (char *)NULL);
+    Tcl_AppendResult(INTERP, name, ":  already exists\n", (char *)NULL);
 }
 
 
@@ -72,10 +70,7 @@ aexists(char *name)
  * (Generic, or explicit)
  */
 int
-f_make(ClientData clientData,
-       Tcl_Interp *interp,
-       int argc,
-       char **argv)
+f_make(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     Tcl_DString ds;
     int ret;
@@ -84,7 +79,7 @@ f_make(ClientData clientData,
     CHECK_READ_ONLY;
 
     if (argc == 3) {
-	char *av[8];
+	const char *av[8];
 	char center[512];
 	char scale[128];
 
@@ -128,7 +123,7 @@ f_make(ClientData clientData,
 
 
 int
-mged_rot_obj(Tcl_Interp *interp, int iflag, fastf_t *argvect)
+mged_rot_obj(int iflag, fastf_t *argvect)
 {
     point_t model_pt;
     point_t point;
@@ -191,7 +186,7 @@ mged_rot_obj(Tcl_Interp *interp, int iflag, fastf_t *argvect)
 
 /* allow precise changes to object rotation */
 int
-f_rot_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_rot_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int iflag = 0;
     vect_t argvect;
@@ -226,13 +221,13 @@ f_rot_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     argvect[1] = atof(argv[2]);
     argvect[2] = atof(argv[3]);
 
-    return mged_rot_obj(interp, iflag, argvect);
+    return mged_rot_obj(iflag, argvect);
 }
 
 
 /* allow precise changes to object scaling, both local & global */
 int
-f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_sc_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     mat_t incr;
     vect_t point, temp;
@@ -318,7 +313,7 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Allow precise changes to object translation
  */
 int
-f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     int i;
     mat_t incr, old;
@@ -337,11 +332,11 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if (state == ST_S_EDIT) {
+    if (STATE == ST_S_EDIT) {
 	/* In solid edit mode,
 	 * perform the equivalent of "press sxy" and "p xyz"
 	 */
-	if (be_s_trans(clientData, interp, argc, argv) == TCL_ERROR)
+	if (be_s_trans() == TCL_ERROR)
 	    return TCL_ERROR;
 	return f_param(clientData, interp, argc, argv);
     }
@@ -419,7 +414,7 @@ mged_add_nmg_part(char *newname, struct model *m)
     if (rt_db_put_internal(new_dp, dbip, &new_intern, &rt_uniresource) < 0) {
 	/* Free memory */
 	nmg_km(m);
-	Tcl_AppendResult(interp, "rt_db_put_internal() failure\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "rt_db_put_internal() failure\n", (char *)NULL);
 	frac_stat = 1;
 	return;
     }
@@ -438,7 +433,7 @@ mged_add_nmg_part(char *newname, struct model *m)
  * about a specified ray.
  */
 int
-f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_qorot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     mat_t temp;
     vect_t specified_pt, direc;
@@ -476,7 +471,7 @@ f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
     VUNITIZE(direc);
 
-    ang = atof(argv[7]) * bn_degtorad;
+    ang = atof(argv[7]) * DEG2RAD;
 
     /* Get matrix for rotation about a point, direction vector and apply to
      * modelchanges matrix
@@ -510,7 +505,7 @@ set_localunit_TclVar(void)
 	bu_vls_printf(&units_vls, "%gmm", dbip->dbi_local2base);
 
     bu_vls_strcpy(&vls, "localunit");
-    Tcl_SetVar(interp, bu_vls_addr(&vls), bu_vls_addr(&units_vls), TCL_GLOBAL_ONLY);
+    Tcl_SetVar(INTERP, bu_vls_addr(&vls), bu_vls_addr(&units_vls), TCL_GLOBAL_ONLY);
 
     bu_vls_free(&vls);
     bu_vls_free(&units_vls);

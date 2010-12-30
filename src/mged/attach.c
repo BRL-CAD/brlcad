@@ -63,8 +63,8 @@
 
 
 /* All systems can compile these! */
-extern int Plot_dm_init(struct dm_list *o_dm_list, int argc, char **argv);
-extern int PS_dm_init(struct dm_list *o_dm_list, int argc, char **argv);
+extern int Plot_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[]);
+extern int PS_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[]);
 
 #ifdef DM_X
 extern int X_dm_init();
@@ -213,7 +213,7 @@ release(char *name, int need_close)
 	}
 
 	if (p == &head_dm_list) {
-	    Tcl_AppendResult(interp, "release: ", name,
+	    Tcl_AppendResult(INTERP, "release: ", name,
 			     " not found\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -265,7 +265,7 @@ release(char *name, int need_close)
 
 
 int
-f_release(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
+f_release(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls;
@@ -334,7 +334,7 @@ print_valid_dm(Tcl_Interp *interpreter)
 
 
 int
-f_attach(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char **argv)
+f_attach(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     struct w_dm *wp;
 
@@ -370,7 +370,7 @@ f_attach(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 
 
 int
-gui_setup(char *dstr)
+gui_setup(const char *dstr)
 {
     Tk_GenericProc *handler = doEvent;
 
@@ -378,11 +378,11 @@ gui_setup(char *dstr)
     if (tkwin != NULL)
 	return TCL_OK;
 
-    Tcl_ResetResult(interp);
+    Tcl_ResetResult(INTERP);
 
     /* set DISPLAY to dstr */
     if (dstr != (char *)NULL) {
-	Tcl_SetVar(interp, "env(DISPLAY)", dstr, TCL_GLOBAL_ONLY);
+	Tcl_SetVar(INTERP, "env(DISPLAY)", dstr, TCL_GLOBAL_ONLY);
 #ifdef HAVE_SETENV
 	setenv("DISPLAY", dstr, 0);
 #endif
@@ -390,56 +390,56 @@ gui_setup(char *dstr)
 
 #ifdef HAVE_TK
     /* This runs the tk.tcl script */
-    if (Tk_Init(interp) == TCL_ERROR) {
-	const char *result = Tcl_GetStringResult(interp);
+    if (Tk_Init(INTERP) == TCL_ERROR) {
+	const char *result = Tcl_GetStringResult(INTERP);
 	/* hack to avoid a stupid Tk error */
 	if (strncmp(result, "this isn't a Tk applicationcouldn't", 35) == 0) {
 	    result = (result + 27);
-	    Tcl_ResetResult(interp);
-	    Tcl_AppendResult(interp, result, (char *)NULL);
+	    Tcl_ResetResult(INTERP);
+	    Tcl_AppendResult(INTERP, result, (char *)NULL);
 	}
 	return TCL_ERROR;
     }
 
     /* Initialize [incr Tk] */
-    if (Itk_Init(interp) == TCL_ERROR) {
+    if (Itk_Init(INTERP) == TCL_ERROR) {
 	return TCL_ERROR;
     }
 
     /* Import [incr Tk] commands into the global namespace */
-    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
+    if (Tcl_Import(INTERP, Tcl_GetGlobalNamespace(INTERP),
 		   "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
 	return TCL_ERROR;
     }
 #endif
 
     /* Initialize the Iwidgets package */
-    if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
+    if (Tcl_Eval(INTERP, "package require Iwidgets") != TCL_OK) {
 	return TCL_ERROR;
     }
 
     /* Import iwidgets into the global namespace */
-    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
+    if (Tcl_Import(INTERP, Tcl_GetGlobalNamespace(INTERP),
 		   "::iwidgets::*", /* allowOverwrite */ 1) != TCL_OK) {
 	return TCL_ERROR;
     }
 
     /* Initialize libdm */
-    (void)Dm_Init(interp);
+    (void)Dm_Init(INTERP);
 
     /* Initialize libfb */
-    (void)Fb_Init(interp);
+    (void)Fb_Init(INTERP);
 
 #ifdef HAVE_TK
-    if ((tkwin = Tk_MainWindow(interp)) == NULL) {
+    if ((tkwin = Tk_MainWindow(INTERP)) == NULL) {
 	return TCL_ERROR;
     }
 
     /* create the event handler */
     Tk_CreateGenericHandler(handler, (ClientData)NULL);
 
-    Tcl_Eval(interp, "wm withdraw .");
-    Tcl_Eval(interp, "tk appname mged");
+    Tcl_Eval(INTERP, "wm withdraw .");
+    Tcl_Eval(INTERP, "tk appname mged");
 #endif
 
     return TCL_OK;
@@ -514,8 +514,8 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 
     mged_link_vars(curr_dm_list);
 
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "ATTACHING ", dmp->dm_name, " (", dmp->dm_lname,
+    Tcl_ResetResult(INTERP);
+    Tcl_AppendResult(INTERP, "ATTACHING ", dmp->dm_name, " (", dmp->dm_lname,
 		     ")\n", (char *)NULL);
 
     share_dlist(curr_dm_list);
@@ -531,7 +531,7 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
     return TCL_OK;
 
  Bad:
-    Tcl_AppendResult(interp, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
+    Tcl_AppendResult(INTERP, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
 
     if (dmp != (struct dm *)0)
 	release((char *)NULL, 1);  /* release() will call dm_close */
@@ -619,7 +619,7 @@ get_attached(void)
  * Run a display manager specific command(s).
  */
 int
-f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
+f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
 
     if (argc < 2) {
@@ -781,7 +781,7 @@ mged_link_vars(struct dm_list *p)
 
 
 int
-f_get_dm_list(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
+f_get_dm_list(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     struct dm_list *dlp;
 

@@ -57,7 +57,7 @@ char *p_arb3pt[] = {
  * 3.  thickness
  */
 int
-f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     int i, solve;
     vect_t vec1;
@@ -107,7 +107,7 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
     VCROSS(norm, vec1, vec2);
     length = MAGNITUDE(norm);
-    if (length == 0.0) {
+    if (NEAR_ZERO(length, SMALL_FASTF)) {
 	Tcl_AppendResult(interp, "points are colinear\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -122,7 +122,7 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     switch (argv[11][0]) {
 
 	case 'x':
-	    if (norm[0] == 0.0) {
+	    if (NEAR_ZERO(norm[0], SMALL_FASTF)) {
 		Tcl_AppendResult(interp, "X not unique in this face\n", (char *)NULL);
 		return TCL_ERROR;
 	    }
@@ -143,7 +143,7 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    break;
 
 	case 'y':
-	    if (norm[1] == 0.0) {
+	    if (NEAR_ZERO(norm[1], SMALL_FASTF)) {
 		Tcl_AppendResult(interp, "Y not unique in this face\n", (char *)NULL);
 		return TCL_ERROR;
 	    }
@@ -165,7 +165,7 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    break;
 
 	case 'z':
-	    if (norm[2] == 0.0) {
+	    if (NEAR_ZERO(norm[2], SMALL_FASTF)) {
 		Tcl_AppendResult(interp, "Z not unique in this face\n", (char *)NULL);
 		return TCL_ERROR;
 	    }
@@ -197,7 +197,8 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if ((thick = (atof(argv[14]))) == 0.0) {
+    thick = atof(argv[14]);
+    if (NEAR_ZERO(thick, SMALL_FASTF)) {
 	Tcl_AppendResult(interp, "thickness = 0.0\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -303,7 +304,7 @@ char *p_rfin[] = {
  * 4. thickness
  */
 int
-f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct directory *dp;
     int i;
@@ -351,14 +352,14 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    rota = atof(argv[5]) * degtorad;
+    rota = atof(argv[5]) * DEG2RAD;
 
     if (argc < 7) {
 	Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter FALL BACK angle (deg): ", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    fba = atof(argv[6]) * degtorad;
+    fba = atof(argv[6]) * DEG2RAD;
 
     /* calculate plane defined by these angles */
     norm[0] = cos(fba) * cos(rota);
@@ -378,7 +379,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	switch (argv[7+3*i][0]) {
 	    case 'x':
-		if (norm[0] == 0.0) {
+		if (NEAR_ZERO(norm[0], SMALL_FASTF)) {
 		    Tcl_AppendResult(interp, "X not unique in this face\n", (char *)NULL);
 		    return TCL_ERROR;
 		}
@@ -399,7 +400,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		break;
 
 	    case 'y':
-		if (norm[1] == 0.0) {
+		if (NEAR_ZERO(norm[1], SMALL_FASTF)) {
 		    Tcl_AppendResult(interp, "Y not unique in this face\n", (char *)NULL);
 		    return TCL_ERROR;
 		}
@@ -420,7 +421,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		break;
 
 	    case 'z':
-		if (norm[2] == 0.0) {
+		if (NEAR_ZERO(norm[2], SMALL_FASTF)) {
 		    Tcl_AppendResult(interp, "Z not unique in this face\n", (char *)NULL);
 		    return TCL_ERROR;
 		}
@@ -451,7 +452,8 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			 "Enter thickness for this arb: ", (char *)NULL);
 	return TCL_ERROR;
     }
-    if ((thick = (atof(argv[7+3*3]))) == 0.0) {
+    thick = atof(argv[7+3*3]);
+    if (NEAR_ZERO(thick, SMALL_FASTF)) {
 	Tcl_AppendResult(interp, "thickness = 0.0\n", (char *)NULL);
 	return TCL_ERROR;
     }

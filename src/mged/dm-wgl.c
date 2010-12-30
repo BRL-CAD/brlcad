@@ -188,7 +188,7 @@ Wgl_doevent(ClientData clientData,
  */
 static int
 Wgl_dm(int argc,
-       char **argv)
+       const char *argv[])
 {
     if (!strcmp(argv[0], "set")) {
 	struct bu_vls vls;

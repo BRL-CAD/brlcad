@@ -137,7 +137,7 @@ history_journalize(struct mged_hist *hptr)
  */
 
 int
-f_journal(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_journal(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     if (argc < 1 || 3 < argc) {
 	struct bu_vls vls;
@@ -195,7 +195,7 @@ f_journal(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  */
 
 int
-f_delay(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_delay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct timeval tv;
 
@@ -224,7 +224,7 @@ f_delay(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  */
 
 int
-f_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     FILE *fp;
     int with_delays = 0;
@@ -361,7 +361,7 @@ history_next(const char *pat)
 
 
 int
-cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct bu_vls *vp;
     struct bu_vls vls;

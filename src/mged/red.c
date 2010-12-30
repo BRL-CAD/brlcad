@@ -473,7 +473,7 @@ int
 cmd_get_comb(ClientData clientData,
 	     Tcl_Interp *interp,
 	     int argc,
-	     char **argv)
+	     const char *argv[])
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -1410,7 +1410,7 @@ restore_comb(struct directory *dp)
  * shader inherit boolean_expr
  */
 int
-cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct rt_db_internal intern;

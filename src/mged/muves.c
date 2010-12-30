@@ -101,8 +101,23 @@ struct muves_sys
 static char *regionmap_delims=" \t";
 static char *sysdef_delims=" \t\n@?!~&-^><|*+";
 
-static struct muves_sys muves_sys_head={ {BU_LIST_HEAD_MAGIC, &muves_sys_head.l, &muves_sys_head.l}, (char *)NULL, { {BU_LIST_HEAD_MAGIC, &muves_sys_head.member_head.l, &muves_sys_head.member_head.l} }};
-static struct muves_comp muves_comp_head={ {BU_LIST_HEAD_MAGIC, &muves_comp_head.l, &muves_comp_head.l}, (char *)NULL, {{BU_LIST_HEAD_MAGIC, &muves_comp_head.comp_head.l, &muves_comp_head.comp_head.l}, (struct directory *)NULL}};
+static struct muves_sys muves_sys_head = { 
+    {BU_LIST_HEAD_MAGIC, &muves_sys_head.l, &muves_sys_head.l}, /* l */
+    (char *)NULL,  /* muves_name */
+    {
+	{BU_LIST_HEAD_MAGIC, &muves_sys_head.member_head.l, &muves_sys_head.member_head.l}, /* member_head.l */
+	0, /* member_head.object_type */
+	{NULL} /* member_head.mem */
+    }
+};
+static struct muves_comp muves_comp_head = { 
+    {BU_LIST_HEAD_MAGIC, &muves_comp_head.l, &muves_comp_head.l}, /* l */
+    (char *)NULL, /* muves_name */
+    {
+	{BU_LIST_HEAD_MAGIC, &muves_comp_head.comp_head.l, &muves_comp_head.comp_head.l}, /* comp_head.l */
+	(struct directory *)NULL /* comp_head.dp */
+    }
+};
 
 
 void
@@ -154,7 +169,7 @@ Free_muves_comp(struct bu_list *hp)
  * routine to read MUVES input files and create structures to hold the data
  */
 int
-f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     FILE *muves_in;
     char line[MUVES_LINE_LEN];
@@ -346,7 +361,6 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	char *c;
 	int is_constant=1;
 	int is_def = 0;
-	int i;
 	int in_subscript;
 	char *equal_sign=(char *)NULL;
 
@@ -555,7 +569,7 @@ Display_muves_sys(struct muves_sys *sys, int *e_argc, char ***e_argv, int *e_arg
 		Display_muves_sys(member->mem.sys, e_argc, e_argv, e_argv_len);
 		break;
 	    default:	/* error */
-		Tcl_AppendResult(interp, "unrecognized member type in system ",
+		Tcl_AppendResult(INTERP, "unrecognized member type in system ",
 				 sys->muves_name, " \n", (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -572,7 +586,7 @@ Display_muves_sys(struct muves_sys *sys, int *e_argc, char ***e_argv, int *e_arg
  */
 
 int
-f_e_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_e_muves(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int argc, const char *argv[])
 {
     struct muves_comp *comp;
     struct muves_sys *sys;
@@ -618,7 +632,7 @@ f_e_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * routine to list the muves comoponents
  */
 int
-f_l_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_l_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int i;
 
@@ -692,7 +706,7 @@ f_l_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * routine to list the muves comoponents
  */
 int
-f_t_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_t_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc), const char *UNUSED(argv[]))
 {
     struct muves_comp *comp;
     struct muves_sys *sys;

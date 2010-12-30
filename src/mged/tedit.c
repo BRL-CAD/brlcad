@@ -82,7 +82,7 @@ static int j;
 int writesolid(void), readsolid(void);
 
 int
-f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_tedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     FILE *fp;
 
@@ -138,17 +138,17 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * return 0 if this vertex is a duplicate of one of the above
  */
 static int
-useThisVertex(int index)
+useThisVertex(int idx)
 {
     int i;
 
     for (i=0; i<8 && uvec[i] != -1; i++) {
-	if (uvec[i] == index) return 1;
+	if (uvec[i] == idx) return 1;
     }
 
-    if (svec[0] != 0 && index == svec[2]) return 1;
+    if (svec[0] != 0 && idx == svec[2]) return 1;
 
-    if (svec[1] != 0 && index == svec[2+svec[0]]) return 1;
+    if (svec[1] != 0 && idx == svec[2+svec[0]]) return 1;
 
     return 0;
 }
@@ -184,7 +184,7 @@ writesolid(void)
 	struct rt_superell_internal *superell;
 
 	default:
-	    Tcl_AppendResult(interp, "Cannot text edit this solid type\n", (char *)NULL);
+	    Tcl_AppendResult(INTERP, "Cannot text edit this solid type\n", (char *)NULL);
 	    (void)fclose(fp);
 	    return 1;
 	case ID_TOR:
@@ -362,7 +362,7 @@ readsolid(void)
 	double a, b, c, d;
 
 	default:
-	    Tcl_AppendResult(interp, "Cannot text edit this solid type\n", (char *)NULL);
+	    Tcl_AppendResult(INTERP, "Cannot text edit this solid type\n", (char *)NULL);
 	    ret_val = 1;
 	    break;
 	case ID_TOR:
@@ -873,10 +873,7 @@ readsolid(void)
 int
 get_editor_string(struct bu_vls *editstring)
 {
-    int pid = 0;
-    int xpid = 0;
     char buffer[RT_MAXLINE] = {0};
-    int stat = 0;
     int count = 0;
     const char *os = (char *)NULL;
     const char *terminal = (char *)NULL;
@@ -884,10 +881,10 @@ get_editor_string(struct bu_vls *editstring)
     const char *editor = (char *)NULL;
     const char *editor_opt = (char *)NULL;
 
-    os = Tcl_GetVar(interp, "::tcl_platform(os)", TCL_GLOBAL_ONLY);
-    editor = Tcl_GetVar(interp, "editor", TCL_GLOBAL_ONLY);
+    os = Tcl_GetVar(INTERP, "::tcl_platform(os)", TCL_GLOBAL_ONLY);
+    editor = Tcl_GetVar(INTERP, "editor", TCL_GLOBAL_ONLY);
     if (!editor || editor[0] == '\0')
-	editor = Tcl_GetVar(interp, "EDITOR", TCL_GLOBAL_ONLY);
+	editor = Tcl_GetVar(INTERP, "EDITOR", TCL_GLOBAL_ONLY);
 
     if (!editor || editor[0] == '\0')
 	editor = getenv("EDITOR");

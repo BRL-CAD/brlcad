@@ -109,7 +109,7 @@ cmpdirname(const genptr_t a, const genptr_t b)
  * in that list, sort and print that list in column order over four columns.
  */
 void
-vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_list)
+vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, size_t num_in_list)
 {
     size_t lines, i, j, namelen, this_one;
     size_t k,
@@ -118,7 +118,7 @@ vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_li
 	numcol;         /* number of columns */
 
     qsort((genptr_t)list_of_names,
-	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+	  num_in_list, (unsigned)sizeof(struct directory *),
 	  (int (*)(const void *, const void *))cmpdirname);
 
     /*

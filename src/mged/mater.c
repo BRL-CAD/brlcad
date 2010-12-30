@@ -23,6 +23,10 @@
  * region ID codes into worthwhile material information (colors and
  * outboard database "handles").
  *
+ * It is expected that entries on this mater list will be sorted in
+ * strictly ascending order, with no overlaps (ie, monotonicly
+ * increasing).
+ *
  */
 
 #include "common.h"
@@ -38,17 +42,6 @@
 
 #include "./mged.h"
 #include "./mged_dm.h"
-
-/*
- * It is expected that entries on this mater list will be sorted in
- * strictly ascending order, with no overlaps (ie, monotonicly
- * increasing).
- */
-
-void color_soltab(void);
-void color_putrec(struct mater *mp), color_zaprec(struct mater *mp);
-
-static char tmpfil[MAXPATHLEN];
 
 
 /*

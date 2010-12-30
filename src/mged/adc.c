@@ -158,7 +158,7 @@ calc_adc_a1(void)
 	dx = view_pt[X] * GED_MAX - adc_state->adc_dv_x;
 	dy = view_pt[Y] * GED_MAX - adc_state->adc_dv_y;
 
-	if (dx != 0.0 || dy != 0.0) {
+	if (!NEAR_ZERO(dx, SMALL_FASTF) || !NEAR_ZERO(dy, SMALL_FASTF)) {
 	    adc_state->adc_a1 = RAD2DEG*atan2(dy, dx);
 	    adc_state->adc_dv_a1 = (1.0 - (adc_state->adc_a1 / 45.0)) * GED_MAX;
 	}
@@ -177,7 +177,7 @@ calc_adc_a2(void)
 	dx = view_pt[X] * GED_MAX - adc_state->adc_dv_x;
 	dy = view_pt[Y] * GED_MAX - adc_state->adc_dv_y;
 
-	if (dx != 0.0 || dy != 0.0) {
+	if (!NEAR_ZERO(dx, SMALL_FASTF) || !NEAR_ZERO(dy, SMALL_FASTF)) {
 	    adc_state->adc_a2 = RAD2DEG*atan2(dy, dx);
 	    adc_state->adc_dv_a2 = (1.0 - (adc_state->adc_a2 / 45.0)) * GED_MAX;
 	}
@@ -422,7 +422,7 @@ adc_print_vars(void)
 		  adc_state->adc_anchor_pt_dst[X] * base2local,
 		  adc_state->adc_anchor_pt_dst[Y] * base2local,
 		  adc_state->adc_anchor_pt_dst[Z] * base2local);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 }
 
@@ -432,14 +432,14 @@ adc_print_vars(void)
  */
 int
 f_adc (
-    ClientData clientData,
+    ClientData UNUSED(clientData),
     Tcl_Interp *interp,
     int argc,
-    char **argv)
+    const char *argv[])
 {
     struct bu_vls vls;
-    char *parameter;
-    char **argp = argv;
+    const char *parameter;
+    const char **argp = argv;
     point_t user_pt;		/* Value(s) provided by user */
     point_t scaled_pos;
     int incr_flag;

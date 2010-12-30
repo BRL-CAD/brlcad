@@ -36,11 +36,11 @@
 
 void
 mged_vls_struct_parse(struct bu_vls *vls,
-		      char *title,
+		      const char *title,
 		      struct bu_structparse *how_to_parse,
 		      const char *structp,
 		      int argc,
-		      char *argv[])
+		      const char *argv[])
 {
     if (argc < 2) {
 	/* Bare set command, print out current settings */
@@ -67,7 +67,7 @@ mged_vls_struct_parse_old(
     struct bu_structparse *how_to_parse,
     char *structp,
     int argc,
-    char *argv[])
+    const char *argv[])
 {
     if (argc < 2) {
 	/* Bare set command, print out current settings */

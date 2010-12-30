@@ -46,6 +46,10 @@ void ext4to6(int pt1, int pt2, int pt3, struct rt_arb_internal *arb), old_ext4to
 extern struct rt_db_internal es_int;
 extern struct rt_db_internal es_int_orig;
 
+
+int newedge;
+
+
 /*
  * E D I T A R B
  *
@@ -114,7 +118,7 @@ editarb(vect_t pos_model)
 	    break;
 
 	default:
-	    Tcl_AppendResult(interp, "edarb: unknown ARB type\n", (char *)NULL);
+	    Tcl_AppendResult(INTERP, "edarb: unknown ARB type\n", (char *)NULL);
 
 	    return 1;
     }
@@ -141,7 +145,7 @@ editarb(vect_t pos_model)
 	    /* must calculate edge direction */
 	    VSUB2(edge_dir, arb->pt[pt2], arb->pt[pt1]);
 	}
-	if (MAGNITUDE(edge_dir) == 0.0)
+	if (NEAR_ZERO(MAGNITUDE(edge_dir), SMALL_FASTF))
 	    goto err;
 	/* bounding planes bp1, bp2 */
 	bp1 = *edptr++;
@@ -162,7 +166,7 @@ editarb(vect_t pos_model)
 
 	bu_vls_init(&error_msg);
 	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol)) {
-	    Tcl_AppendResult(interp, bu_vls_addr(&error_msg), (char *)0);
+	    Tcl_AppendResult(INTERP, bu_vls_addr(&error_msg), (char *)0);
 	    bu_vls_free(&error_msg);
 	    goto err;
 	}
@@ -254,7 +258,7 @@ editarb(vect_t pos_model)
 
 	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "cannot move edge: %d%d\n", pt1+1, pt2+1);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
     }
 
@@ -282,7 +286,7 @@ mv_edge(
 
     if (bn_isect_line3_plane(&t1, thru, dir, es_peqn[bp1], &mged_tol) < 0 ||
 	bn_isect_line3_plane(&t2, thru, dir, es_peqn[bp2], &mged_tol) < 0) {
-	Tcl_AppendResult(interp, "edge (direction) parallel to face normal\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "edge (direction) parallel to face normal\n", (char *)NULL);
 	return 1;
     }
 
@@ -299,7 +303,7 @@ mv_edge(
 /* Extrude command - project an arb face */
 /* Format: extrude face distance */
 int
-f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_extrude(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int i, j;
     static int face;
@@ -508,7 +512,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 /* define an arb8 using rot fb angles to define a face */
 /* Format: a name rot fb	*/
 int
-f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct rt_db_internal internal;
@@ -536,10 +540,10 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     /* get rotation angle */
-    rota = atof(argv[2]) * degtorad;
+    rota = atof(argv[2]) * DEG2RAD;
 
     /* get fallback angle */
-    fb = atof(argv[3]) * degtorad;
+    fb = atof(argv[3]) * DEG2RAD;
 
     BU_GETSTRUCT(arb, rt_arb_internal);
     RT_INIT_DB_INTERNAL(&internal);
@@ -608,7 +612,7 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 /* Mirface command - mirror an arb face */
 /* Format: mirror face axis */
 int
-f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_mirface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int i, j, k;
     static int face;
@@ -798,7 +802,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Format: edgedir deltax deltay deltaz OR edgedir rot fb
 */
 int
-f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_edgedir(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int i;
     vect_t slope;
@@ -832,8 +836,8 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
      * else assume delta_x, delta_y, delta_z
      */
     if (argc == 3) {
-	rot = atof(argv[1]) * degtorad;
-	fb = atof(argv[2]) * degtorad;
+	rot = atof(argv[1]) * DEG2RAD;
+	fb = atof(argv[2]) * DEG2RAD;
 	slope[0] = cos(fb) * cos(rot);
 	slope[1] = cos(fb) * sin(rot);
 	slope[2] = sin(fb);
@@ -844,7 +848,7 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
     }
 
-    if (MAGNITUDE(slope) == 0) {
+    if (NEAR_ZERO(MAGNITUDE(slope), SMALL_FASTF)) {
 	Tcl_AppendResult(interp, "BAD slope\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -906,7 +910,7 @@ ext4to6(int pt1, int pt2, int pt3, struct rt_arb_internal *arb)
  *     ------------------------------------------------
  */
 int
-f_permute(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_permute(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     /*
      * 1) Why were all vars declared static?
@@ -914,12 +918,12 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
      */
     int vertex, i, k;
     size_t arglen;
-    int face_size;	/* # vertices in THE face */
+    size_t face_size;	/* # vertices in THE face */
     char **p;
     struct rt_arb_internal *arb;
     struct rt_arb_internal larb;		/* local copy of solid */
     struct rt_arb_internal tarb;		/* temporary copy of solid */
-    static int min_tuple_size[9] = {0, 0, 0, 0, 3, 2, 2, 1, 3};
+    static size_t min_tuple_size[9] = {0, 0, 0, 0, 3, 2, 2, 1, 3};
     /*
      * The Permutations
      *

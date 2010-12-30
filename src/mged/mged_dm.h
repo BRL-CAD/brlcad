@@ -589,7 +589,7 @@ extern int doEvent(ClientData, void *);
 #endif
 
 /* defined in dm-generic.c */
-extern int common_dm(int argc, char *argv[]);
+extern int common_dm(int argc, const char *argv[]);
 
 /* defined in setup.c */
 extern void mged_rtCmdNotify();
