@@ -17,6 +17,9 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty.cmake)
 #---------------------------------------------------------------------------------
 
 # zlib Library
+# The autotools build needs this file, but the CMake zlib build doesn't tolerate 
+# it - remove it if it's there. 
+FILE(REMOVE ${CMAKE_CURRENT_SOURCE_DIR}/libz/zconf.h)
 THIRD_PARTY_OPTION(ZLIB zlib)
 THIRD_PARTY_SUBDIR(ZLIB libz)
 
