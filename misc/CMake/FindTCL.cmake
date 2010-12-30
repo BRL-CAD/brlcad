@@ -294,22 +294,25 @@ ENDMACRO()
 #
 #-----------------------------------------------------------------------------
 
-# If an exact version is set, peg min and max at the same value and restrict the possible
-# TCL version numbers to match exactly the required version.  
-IF(TCL_EXACT_VERSION)
-	SET(TCL_MIN_VERSION ${TCL_EXACT_VERSION})
-	SET(TCL_MAX_VERSION ${TCL_EXACT_VERSION})
-	SPLIT_TCL_VERSION_NUM(TCL_EXACT_VERSION)
-	SET(TCL_POSSIBLE_MAJOR_VERSIONS ${TCL_EXACT_VERSION_MAJOR})
-	SET(TCL_POSSIBLE_MINOR_VERSIONS ${TCL_EXACT_VERSION_MINOR})
-ENDIF(TCL_EXACT_VERSION)
-
 # A routine to chop version numbers up into individual variables
 MACRO(SPLIT_TCL_VERSION_NUM versionnum)
 	STRING(REGEX REPLACE "([0-9]*).[0-9]*.?[0-9]*" "\\1" ${versionnum}_MAJOR "${${versionnum}}")
 	STRING(REGEX REPLACE "[0-9]*.([0-9]*).?[0-9]*" "\\1" ${versionnum}_MINOR "${${versionnum}}")
 	STRING(REGEX REPLACE "[0-9]*.[0-9]*.?([0-9]*)" "\\1" ${versionnum}_PATCH "${${versionnum}}")
 ENDMACRO()    
+
+# If version information is supplied, use it to restrict the search space.  If EXACT,
+# peg min and max at the same value.  
+IF(TCL_FIND_VERSION_MAJOR)
+	SET(TCL_POSSIBLE_MAJOR_VERSIONS ${TCL_FIND_VERSION_MAJOR})
+ENDIF(TCL_FIND_VERSION_MAJOR)
+IF(TCL_FIND_VERSION_MINOR)
+	SET(TCL_POSSIBLE_MINOR_VERSIONS ${TCL_FIND_VERSION_MINOR})
+ENDIF(TCL_FIND_VERSION_MINOR)
+IF(TCL_FIND_VERSION_EXACT)
+	SET(TCL_MIN_VERSION ${TCL_FIND_VERSION})
+	SET(TCL_MAX_VERSION ${TCL_FIND_VERSION})
+ENDIF(TCL_FIND_VERSION_EXACT)
 
 # In various loops, we don't want to waste time checking for paths containing
 # version numbers incompatible with restrictions imposed by the min/max/exact
