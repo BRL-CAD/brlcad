@@ -35,6 +35,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "solid.h"
+#include "dm.h"
 
 #include "./ged_private.h"
 
@@ -478,7 +479,6 @@ ged_png(struct ged *gedp, int argc, const char *argv[])
 
     return ret;
 }
-
 
 /*
  * Local Variables:

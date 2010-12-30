@@ -8,7 +8,6 @@ AM_CFLAGS = \
 	-I${top_srcdir}/src/adrt/librender \
 	${TCL_CPPFLAGS}
 
-bin_PROGRAMS = adrt_master adrt_slave
 lib_LTLIBRARIES = libtie.la librender.la
 
 libtie_la_LIBADD = libtie0.la libtie1.la ${BU} ${BU_LIBS}
@@ -56,31 +55,6 @@ librender_la_LIBADD = \
 	${GCV} \
 	${GCV_LIBS}
 
-adrt_master_SOURCES = \
-	master/compnet.c \
-	master/dispatcher.c \
-	master/tienet_master.c \
-	master/master.c
-
-adrt_master_LDADD = \
-	libtie.la \
-	${BU} \
-	${LIBNETWORK} \
-	${LIBTHREAD} \
-	${LIBBSD} \
-	${LIBM} \
-	${LIBZ}
-
-adrt_slave_SOURCES = \
-	slave/slave.c \
-	slave/tienet_slave.c
-
-adrt_slave_LDADD = \
-	${LIBNETWORK} \
-	${LIBTHREAD} \
-	librender.la \
-	libtie.la
-
 tieincludedir = $(includedir)/tie
 tieinclude_HEADERS = \
 	adrt.h  \
@@ -95,13 +69,7 @@ tieinclude_HEADERS = \
 
 noinst_HEADERS = \
 	load.h \
-	tienet.h \
-	master/compnet.h \
-	master/dispatcher.h \
-	master/tienet_master.h \
-	master/master.h \
-	slave/slave.h \
-	slave/tienet_slave.h
+	tienet.h
 
 pkglibdir = $(libdir)/isst
 
@@ -127,7 +95,19 @@ pkglibdir = $(libdir)/isst
 EXTRA_DIST = \
 	isst.h \
 	isst.tcl \
-	isst_tcltk.c
+	isst_tcltk.c \
+	master/compnet.h \
+	master/master.h \
+	master/tienet_master.c \
+	master/dispatcher.c \
+	master/master.c \
+	master/dispatcher.h \
+	master/tienet_master.h \
+	master/compnet.c \
+	slave/tienet_slave.h \
+	slave/slave.h \
+	slave/slave.c \
+	slave/tienet_slave.c
 
 LINT=splint $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
 lint:

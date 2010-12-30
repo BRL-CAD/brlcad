@@ -110,8 +110,8 @@ Axis2Placement3D::FirstProjAxis(double *proj,double *zaxis, double *refdir) {
     if (refdir == NULL) {
     	double xplus[3]=  {1.0,0.0,0.0};
     	double xminus[3]=  {-1.0,0.0,0.0};
-    	if (!VAPPROXEQUAL(z, xplus, TOL) &&
-    			!VAPPROXEQUAL(z, xminus, TOL))  {
+    	if (!VNEAR_EQUAL(z, xplus, TOL) &&
+    			!VNEAR_EQUAL(z, xminus, TOL))  {
     		VSET(v,1.0,0.0,0.0);
     	} else {
     		VSET(v,0.0,1.0,0.0);

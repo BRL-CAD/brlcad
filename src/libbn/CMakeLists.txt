@@ -22,6 +22,7 @@ set(LIBBN_SOURCES
     rand.c
     randmt.c
     scale.c
+    screengrab.c
     sphmap.c
     symbol.c
     tabdata.c

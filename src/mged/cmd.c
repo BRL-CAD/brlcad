@@ -62,7 +62,7 @@
 extern void update_grids(fastf_t sf);		/* in grid.c */
 extern void set_localunit_TclVar(void);		/* in chgmodel.c */
 extern void init_qray(void);			/* in qray.c */
-extern int gui_setup(char *dstr);		/* in attach.c */
+extern int gui_setup(const char *dstr);		/* in attach.c */
 extern int mged_default_dlist;			/* in attach.c */
 extern int classic_mged;
 struct cmd_list head_cmd_list;
@@ -104,32 +104,6 @@ output_catch(genptr_t clientdata, genptr_t str)
 
 
 /**
- * S T A R T _ C A T C H I N G _ O U T P U T
- *
- * Sets up hooks to bu_log so that all output is caught in the given
- * vls.
- *
- */
-void
-start_catching_output(struct bu_vls *vp)
-{
-    bu_log_add_hook(output_catch, (genptr_t)vp);
-}
-
-
-/**
- * S T O P _ C A T C H I N G _ O U T P U T
- *
- * Turns off the output catch hook.
- */
-void
-stop_catching_output(struct bu_vls *vp)
-{
-    bu_log_delete_hook(output_catch, (genptr_t)vp);
-}
-
-
-/**
  * G U I _ O U T P U T
  *
  * Used as a hook for bu_log output.  Sends output to the Tcl
@@ -155,12 +129,12 @@ gui_output(genptr_t clientData, genptr_t str)
     (void)Tcl_DStringAppendElement(&tclcommand, bu_vls_addr(&tcl_output_hook));
     (void)Tcl_DStringAppendElement(&tclcommand, str);
 
-    save_result = Tcl_GetObjResult(interp);
+    save_result = Tcl_GetObjResult(INTERP);
     Tcl_IncrRefCount(save_result);
     ++level;
     Tcl_Eval((Tcl_Interp *)clientData, Tcl_DStringValue(&tclcommand));
     --level;
-    Tcl_SetObjResult(interp, save_result);
+    Tcl_SetObjResult(INTERP, save_result);
     Tcl_DecrRefCount(save_result);
 
     Tcl_DStringFree(&tclcommand);
@@ -212,7 +186,7 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
         ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
         Tcl_AppendResult(interpreter, bu_vls_addr(&gedp->ged_result_str), NULL);
     } else {
-        if ((argc == 1) && (state == ST_S_EDIT)) {
+        if ((argc == 1) && (STATE == ST_S_EDIT)) {
 	    argc = 2;
 	    av = (const char **)bu_malloc(sizeof(char *)*(argc + 1), "f_list: av");
 	    av[0] = (const char *)argv[0];
@@ -421,7 +395,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 
     RT_INIT_DB_INTERNAL(&intern);
 
-    if (state == ST_S_EDIT) {
+    if (STATE == ST_S_EDIT) {
 	/* solid edit mode */
 	/* apply es_mat editing to parameters */
 	transform_editing_solid(&intern, es_mat, &es_int, 0);
@@ -435,7 +409,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 
 	arg = 1;
 	ret = ged_inside_internal(gedp, &intern, argc, argv, arg, outdp->d_namep);
-    }  else if (state == ST_O_EDIT) {
+    }  else if (STATE == ST_O_EDIT) {
 	mat_t newmat;
 
 	/* object edit mode */
@@ -582,6 +556,35 @@ cmd_ged_view_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
     return TCL_OK;
 }
 
+int
+cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+{
+    int ret;
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+
+    if (gedp == GED_NULL)
+	return TCL_OK;
+
+    if (setjmp(jmp_env) == 0)
+	(void)signal(SIGINT, sig3);  /* allow interrupts */
+    else
+	return TCL_OK;
+
+    if (!gedp->ged_gvp)
+	gedp->ged_gvp = view_state->vs_gvp;
+    gedp->ged_dmp = (void *)curr_dm_list->dml_dmp;
+
+    ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
+    Tcl_AppendResult(interpreter, bu_vls_addr(&gedp->ged_result_str), NULL);
+
+    (void)signal(SIGINT, SIG_IGN);
+
+    if (ret & GED_HELP || ret == GED_OK)
+	return TCL_OK;
+
+    return TCL_ERROR;
+}
+
 
 /**
  * C M D _ T K
@@ -591,7 +594,7 @@ cmd_ged_view_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
  * Usage:  loadtk [displayname[.screennum]]
  */
 int
-cmd_tk(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+cmd_tk(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     int status;
 
@@ -621,7 +624,7 @@ cmd_tk(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
  * output hook!
  */
 int
-cmd_output_hook(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+cmd_output_hook(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     struct bu_vls infocommand;
     int status;
@@ -677,35 +680,14 @@ cmd_output_hook(ClientData clientData, Tcl_Interp *interpreter, int argc, char *
  * C M D _ N O P
  */
 int
-cmd_nop(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+cmd_nop(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), const char *UNUSED(argv[]))
 {
     return TCL_OK;
 }
 
 
-/**
- * C M D _ G E T _ P T R
- *
- * Returns an appropriately-formatted string that can later be
- * reinterpreted (using atol() and a cast) as a a pointer.
- */
 int
-cmd_get_ptr(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
-{
-    char buf[128] = {0};
-
-    if (dbip == DBI_NULL) {
-	return TCL_ERROR;
-    }
-
-    sprintf(buf, "%llu", (unsigned long long)(uintptr_t)dbip);
-    Tcl_AppendResult(interpreter, buf, (char *)NULL);
-    return TCL_OK;
-}
-
-
-int
-cmd_cmd_win(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     struct bu_vls vls;
 
@@ -842,10 +824,12 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interpreter, int argc, char **arg
 
 
 int
-cmd_get_more_default(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+cmd_get_more_default(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     if (argc != 1) {
 	struct bu_vls vls;
+
+	bu_log("Unrecognized option [%s]\n", argv[1]);
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel get_more_default");
@@ -860,7 +844,7 @@ cmd_get_more_default(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 
 
 int
-cmd_set_more_default(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+cmd_set_more_default(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     if (argc != 2) {
 	struct bu_vls vls;
@@ -1084,9 +1068,9 @@ cmdline(struct bu_vls *vp, int record)
     }
 
     gettimeofday(&start, (struct timezone *)NULL);
-    status = Tcl_Eval(interp, bu_vls_addr(&globbed));
+    status = Tcl_Eval(INTERP, bu_vls_addr(&globbed));
     gettimeofday(&finish, (struct timezone *)NULL);
-    result = Tcl_GetStringResult(interp);
+    result = Tcl_GetStringResult(INTERP);
 
     /* Contemplate the result reported by the Tcl interpreter. */
 
@@ -1112,8 +1096,8 @@ cmdline(struct bu_vls *vp, int record)
 		if (record && tkwin != NULL) {
 		    bu_vls_printf(&tmp_vls, "distribute_text {} {%s} {%s}",
 				  bu_vls_addr(&save_vp), result);
-		    Tcl_Eval(interp, bu_vls_addr(&tmp_vls));
-		    Tcl_SetResult(interp, "", TCL_STATIC);
+		    Tcl_Eval(INTERP, bu_vls_addr(&tmp_vls));
+		    Tcl_SetResult(INTERP, "", TCL_STATIC);
 		}
 
 		if (record)
@@ -1176,10 +1160,10 @@ end:
 
 
 void
-mged_print_result(int status)
+mged_print_result(int UNUSED(status))
 {
     size_t len;
-    const char *result = Tcl_GetStringResult(interp);
+    const char *result = Tcl_GetStringResult(INTERP);
 
     len = strlen(result);
     if (len > 0) {
@@ -1189,7 +1173,7 @@ mged_print_result(int status)
 	pr_prompt(interactive);
     }
 
-    Tcl_ResetResult(interp);
+    Tcl_ResetResult(INTERP);
 }
 
 
@@ -1204,7 +1188,7 @@ mged_print_result(int status)
 int
 mged_cmd(
     int argc,
-    char **argv,
+    const char *argv[],
     struct funtab in_functions[])
 {
     struct funtab *ftp;
@@ -1237,19 +1221,19 @@ mged_cmd(
 		case CMD_MORE:
 		    return CMD_MORE;
 		default:
-		    Tcl_AppendResult(interp, "mged_cmd(): Invalid return from ",
+		    Tcl_AppendResult(INTERP, "mged_cmd(): Invalid return from ",
 				     ftp->ft_name, "\n", (char *)NULL);
 		    return CMD_BAD;
 	    }
 	}
 
-	Tcl_AppendResult(interp, "Usage: ", functions[0].ft_name, ftp->ft_name,
+	Tcl_AppendResult(INTERP, "Usage: ", functions[0].ft_name, ftp->ft_name,
 			 " ", ftp->ft_parms, "\n\t(", ftp->ft_comment,
 			 ")\n", (char *)NULL);
 	return CMD_BAD;
     }
 
-    Tcl_AppendResult(interp, functions[0].ft_name, argv[0],
+    Tcl_AppendResult(INTERP, functions[0].ft_name, argv[0],
 		     ": no such command, type '", functions[0].ft_name,
 		     "?' for help\n", (char *)NULL);
     return CMD_BAD;
@@ -1260,7 +1244,7 @@ mged_cmd(
  * Let the user temporarily escape from the editor Format: %
  */
 int
-f_comm(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+f_comm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
 
     if (argc != 1 || !classic_mged || curr_cmd_list != &head_cmd_list) {
@@ -1291,7 +1275,7 @@ f_comm(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
     }
 #endif
 
-    Tcl_AppendResult(interp, "Returning to MGED\n", (char *)NULL);
+    Tcl_AppendResult(INTERP, "Returning to MGED\n", (char *)NULL);
 
     return TCL_OK;
 }
@@ -1301,7 +1285,7 @@ f_comm(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
  * Quit and exit gracefully. Format: q
  */
 int
-f_quit(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+f_quit(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     if (argc < 1 || 1 < argc) {
 	struct bu_vls vls;
@@ -1313,7 +1297,7 @@ f_quit(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if (state != ST_VIEW)
+    if (STATE != ST_VIEW)
 	button(BE_REJECT);
 
     quit();			/* Exiting time */
@@ -1328,7 +1312,7 @@ f_quit(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
  * Common code for help commands
  */
 HIDDEN int
-helpcomm(int argc, char **argv, struct funtab *functions)
+helpcomm(int argc, const char *argv[], struct funtab *functions)
 {
     struct funtab *ftp;
     int i, bad;
@@ -1341,12 +1325,12 @@ helpcomm(int argc, char **argv, struct funtab *functions)
 	    if (strcmp(ftp->ft_name, argv[i]) != 0)
 		continue;
 
-	    Tcl_AppendResult(interp, "Usage: ", functions->ft_name, ftp->ft_name,
+	    Tcl_AppendResult(INTERP, "Usage: ", functions->ft_name, ftp->ft_name,
 			     " ", ftp->ft_parms, "\n\t(", ftp->ft_comment, ")\n", (char *)NULL);
 	    break;
 	}
 	if (!ftp->ft_name) {
-	    Tcl_AppendResult(interp, functions->ft_name, argv[i],
+	    Tcl_AppendResult(INTERP, functions->ft_name, argv[i],
 			     ": no such command, type '", functions->ft_name,
 			     "?' for help\n", (char *)NULL);
 	    bad = 1;
@@ -1364,14 +1348,14 @@ helpcomm(int argc, char **argv, struct funtab *functions)
  * the indicated commands.
  */
 int
-f_help2(int argc, char **argv, struct funtab *functions)
+f_help2(int argc, const char *argv[], struct funtab *functions)
 {
     struct funtab *ftp;
 
     if (argc <= 1) {
-	Tcl_AppendResult(interp, "The following commands are available:\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "The following commands are available:\n", (char *)NULL);
 	for (ftp = functions+1; ftp->ft_name; ftp++) {
-	    Tcl_AppendResult(interp,  functions->ft_name, ftp->ft_name, " ",
+	    Tcl_AppendResult(INTERP,  functions->ft_name, ftp->ft_name, " ",
 			     ftp->ft_parms, "\n\t(", ftp->ft_comment, ")\n", (char *)NULL);
 	}
 	return TCL_OK;
@@ -1381,20 +1365,20 @@ f_help2(int argc, char **argv, struct funtab *functions)
 
 
 int
-f_fhelp2(int argc, char **argv, struct funtab *functions)
+f_fhelp2(int argc, const char *argv[], struct funtab *functions)
 {
     struct funtab *ftp;
     struct bu_vls str;
 
     if (argc <= 1) {
 	bu_vls_init(&str);
-	Tcl_AppendResult(interp, "The following ", functions->ft_name,
+	Tcl_AppendResult(INTERP, "The following ", functions->ft_name,
 			 " commands are available:\n", (char *)NULL);
 	for (ftp = functions+1; ftp->ft_name; ftp++) {
 	    vls_col_item(&str, ftp->ft_name);
 	}
 	vls_col_eol(&str);
-	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&str), (char *)NULL);
 	bu_vls_free(&str);
 	return TCL_OK;
     }
@@ -1421,7 +1405,7 @@ f_fhelp2(int argc, char **argv, struct funtab *functions)
  * tie -u cw1 ---> removes the association, if it exists, cw1 has with a display manager
  */
 int
-f_tie(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     int uflag = 0;		/* untie flag */
     struct cmd_list *clp;
@@ -1544,10 +1528,10 @@ f_tie(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
 
 
 int
-f_ps(ClientData clientData, Tcl_Interp *interpreter, int argc, const char **argv)
+f_ps(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     int status;
-    char *av[2];
+    const char *av[2];
     struct dm_list *dml;
     struct _view_state *vsp;
 
@@ -1599,10 +1583,10 @@ f_ps(ClientData clientData, Tcl_Interp *interpreter, int argc, const char **argv
  * along any arguments.
  */
 int
-f_pl(ClientData clientData, Tcl_Interp *interpreter, int argc, const char **argv)
+f_pl(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     int status;
-    char *av[2];
+    const char *av[2];
     struct dm_list *dml;
     struct _view_state *vsp;
 
@@ -1652,7 +1636,7 @@ f_pl(ClientData clientData, Tcl_Interp *interpreter, int argc, const char **argv
 
 
 int
-f_winset(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     struct dm_list *p;
 
@@ -1724,7 +1708,7 @@ mged_global_variable_teardown(Tcl_Interp *interpreter)
 
 
 int
-f_bomb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+f_bomb(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
     char buffer[1024] = {0};
     struct bu_vls vls;
@@ -1747,10 +1731,7 @@ f_bomb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *arg
 
 
 int
-cmd_rt_gettrees(ClientData clientData,
-		Tcl_Interp *interpreter,
-		int argc,
-		char **argv)
+cmd_rt_gettrees(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     CHECK_DBI_NULL;
 
@@ -1759,7 +1740,7 @@ cmd_rt_gettrees(ClientData clientData,
 
 
 int
-cmd_nmg_collapse(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+cmd_nmg_collapse(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     const char *av[3];
     int ret;
@@ -1789,10 +1770,7 @@ cmd_nmg_collapse(ClientData clientData, Tcl_Interp *interpreter, int argc, char 
  * in.
  */
 int
-cmd_units(ClientData clientData,
-	  Tcl_Interp *interpreter,
-	  int argc,
-	  char **argv)
+cmd_units(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     int ret;
     fastf_t sf;
@@ -1828,10 +1806,7 @@ cmd_units(ClientData clientData,
  * objects.
  */
 int
-cmd_search(ClientData clientData,
-	   Tcl_Interp *interpreter,
-	   int argc,
-	   char **argv)
+cmd_search(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     int ret;
 
@@ -1855,10 +1830,7 @@ cmd_search(ClientData clientData,
  * List regions based on values of their MUVES_Component attribute
  */
 int
-cmd_lm(ClientData clientData,
-       Tcl_Interp *interpreter,
-       int argc,
-       char **argv)
+cmd_lm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     struct bu_attribute_value_set avs;
     struct bu_vls vls;
@@ -1944,10 +1916,7 @@ cmd_lm(ClientData clientData,
  * "tol perp #" sets calculational normal tolerance.
  */
 int
-cmd_tol(ClientData clientData,
-	Tcl_Interp *interpreter,
-	int argc,
-	char **argv)
+cmd_tol(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     int ret;
 
@@ -1979,7 +1948,7 @@ extern int edit_com(int argc, const char *argv[], int kind, int catch_sigint);
  * Format: B object
  */
 int
-cmd_blast(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
     const char *av[2];
     int ret;
@@ -2005,23 +1974,23 @@ cmd_blast(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
  * Edit something (add to visible display).  Format: e object
  */
 int
-cmd_draw(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
     return edit_com(argc, argv, 1, 1);
 }
 
 
-extern int emuves_com(int argc, char **argv);	/* from chgview.c */
+extern int emuves_com(int argc, const char *argv[]);	/* from chgview.c */
 
 /**
  * Add regions with attribute MUVES_Component haveing the specified values
  * Format: em value [value value ...]
  */
 int
-cmd_emuves(ClientData clientData,
-	   Tcl_Interp *interpreter,
+cmd_emuves(ClientData UNUSED(clientData),
+	   Tcl_Interp *UNUSED(interpreter),
 	   int argc,
-	   char **argv)
+	   const char *argv[])
 {
     return emuves_com(argc, argv);
 }
@@ -2031,8 +2000,8 @@ cmd_emuves(ClientData clientData,
  * Format: ev objects
  */
 int
-cmd_ev(ClientData clientData,
-       Tcl_Interp *interpreter,
+cmd_ev(ClientData UNUSED(clientData),
+       Tcl_Interp *UNUSED(interpreter),
        int argc,
        const char *argv[])
 {
@@ -2047,20 +2016,20 @@ cmd_ev(ClientData clientData,
  * display).  Usage: E object(s)
  */
 int
-cmd_E(ClientData clientData,
-      Tcl_Interp *interpreter,
+cmd_E(ClientData UNUSED(clientData),
+      Tcl_Interp *UNUSED(interpreter),
       int argc,
-      const char **argv)
+      const char *argv[])
 {
     return edit_com(argc, argv, 2, 1);
 }
 
 
 int
-cmd_shaded_mode(ClientData clientData,
+cmd_shaded_mode(ClientData UNUSED(clientData),
 		Tcl_Interp *interpreter,
 		int argc,
-		char **argv)
+		const char *argv[])
 {
     int ret;
 
@@ -2093,13 +2062,13 @@ cmd_shaded_mode(ClientData clientData,
 
 
 /* XXX needs to be provided from points header */
-extern int parse_point_file(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
+extern int parse_point_file(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[]);
 
 int
 cmd_parse_points(ClientData clientData,
 		 Tcl_Interp *interpreter,
 		 int argc,
-		 char **argv)
+		 const char *argv[])
 {
 
 #ifndef BC_WITH_PARSERS
@@ -2117,10 +2086,7 @@ cmd_parse_points(ClientData clientData,
 
 
 int
-cmd_has_embedded_fb(ClientData clientData,
-		    Tcl_Interp *interpreter,
-		    int argc,
-		    char **argv)
+cmd_has_embedded_fb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int UNUSED(argc), const char **UNUSED(argv))
 {
 #ifdef USE_FBSERV
     Tcl_AppendResult(interpreter, "1", NULL);
@@ -2133,16 +2099,12 @@ cmd_has_embedded_fb(ClientData clientData,
 
 
 int
-cmd_stub(ClientData clientData,
-	 Tcl_Interp *interpreter,
-	 int argc,
-	 char **argv)
+cmd_stub(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     CHECK_DBI_NULL;
 
     return wdb_stub_cmd(wdbp, interpreter, argc, argv);
 }
-
 
 /*
  * Local Variables:

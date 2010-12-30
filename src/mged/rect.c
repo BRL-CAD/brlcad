@@ -43,28 +43,28 @@ static void adjust_rect_for_zoom(void);
 
 struct _rubber_band default_rubber_band = {
     /* rb_rc */		1,
-    /* rb_active */		0,
-    /* rb_draw */		0,
+    /* rb_active */	0,
+    /* rb_draw */	0,
     /* rb_linewidth */	0,
     /* rb_linestyle */	's',
-    /* rb_pos */		{ 0, 0 },
-    /* rb_dim */		{ 0, 0 },
+    /* rb_pos */	{ 0, 0 },
+    /* rb_dim */	{ 0, 0 },
     /* rb_x */		0.0,
     /* rb_y */		0.0,
-    /* rb_width */		0.0,
-    /* rb_height */		0.0
+    /* rb_width */	0.0,
+    /* rb_height */	0.0
 };
 
 
 #define RB_O(_m) bu_offsetof(struct _rubber_band, _m)
 #define RB_OA(_m) bu_offsetofarray(struct _rubber_band, _m)
 struct bu_structparse rubber_band_vparse[] = {
-    {"%d",	1, "draw",	RB_O(rb_draw),		rb_set_dirty_flag },
-    {"%d",	1, "linewidth",	RB_O(rb_linewidth),	rb_set_dirty_flag },
-    {"%c",	1, "linestyle",	RB_O(rb_linestyle),	rb_set_dirty_flag },
-    {"%d",	2, "pos",	RB_OA(rb_pos),		set_rect },
-    {"%d",	2, "dim",	RB_OA(rb_dim),		set_rect },
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%d",	1, "draw",	RB_O(rb_draw),		rb_set_dirty_flag, NULL, NULL },
+    {"%d",	1, "linewidth",	RB_O(rb_linewidth),	rb_set_dirty_flag, NULL, NULL },
+    {"%c",	1, "linestyle",	RB_O(rb_linestyle),	rb_set_dirty_flag, NULL, NULL },
+    {"%d",	2, "pos",	RB_OA(rb_pos),		set_rect, NULL, NULL },
+    {"%d",	2, "dim",	RB_OA(rb_dim),		set_rect, NULL, NULL },
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -249,8 +249,8 @@ rt_rect_area(void)
 		  dmp->dm_width, dmp->dm_height, dmp->dm_aspect,
 		  mged_variables->mv_port, xmin, ymin, xmax, ymax,
 		  color_scheme->cs_bg[0], color_scheme->cs_bg[1], color_scheme->cs_bg[2]);
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-    (void)Tcl_ResetResult(interp);
+    (void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
+    (void)Tcl_ResetResult(INTERP);
     bu_vls_free(&vls);
 }
 

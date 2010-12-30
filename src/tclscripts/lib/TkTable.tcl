@@ -35,6 +35,7 @@
     itk_option define -vclientdata vclientdata VClientData ""
 
     public {
+	method handlePaste {}
 	method setDataEntry {_index _val}
 	method setTableCol {_col _val}
 	method setTableVal {_index _val}
@@ -54,10 +55,12 @@
 	variable mDoBreak 0
 
 	method doBreak {}
+	method handleCopy {_win}
+	method handleCut {_win}
 	method handleKey {_win _key}
 	method handleLeftRight {_win _sflag}
 	method handleTablePopup {_win _x _y _X _Y}
-	method handleUpDown {_win _key}
+	method handleUpDown {_win _up}
 	method keyVisible {_key}
 	method setInsertMode {_imode}
 	method toggleSelect {_win _x _y}
@@ -96,19 +99,24 @@
 	keep -anchor -autoclear -background -bordercursor -borderwidth \
 	    -browsecommand -cache -colorigin -colseparator \
 	    -colstretchmode -coltagcommand -colwidth -command -cursor -drawmode \
-	    -ellipsis -exportselection -flashmode -flashtime -font -foreground \
+	    -ellipsis -flashmode -flashtime -font -foreground \
 	    -height -highlightbackground -highlightcolor -highlightthickness \
 	    -insertbackground -insertborderwidth -insertofftime -insertontime \
 	    -insertwidth -invertselected -ipadx -ipady -justify -maxheight \
 	    -maxwidth -multiline -padx -pady -relief -resizeborders -rowheight \
 	    -roworigin -rows -rowseparator -rowstretchmode -rowtagcommand \
-	    -selectioncommand -selectmode -selecttitles -selecttype -sparsearray \
+	    -selectioncommand \
 	    -takefocus -usecommand -validate \
 	    -width -wrap
     }
 
 # Hide these options from users of TkTable
 #-cols
+#-exportselection
+#-selecttitles
+#-selectmode
+#-selecttype
+#-sparsearray
 #-state
 #-titlecols
 #-titlerows
@@ -161,17 +169,29 @@
     bind $itk_component(table) <Key-Right> "[::itcl::code $this handleLeftRight %W 0]; break"
     bind $itk_component(table) <Control-Key-Left> {%W icursor [expr {[%W icursor]-1}]; break}
     bind $itk_component(table) <Control-Key-Right> {%W icursor [expr {[%W icursor]+1}]; break}
-    bind $itk_component(table) <Key-Up> "[::itcl::code $this handleUpDown %W %K]; break"
-    bind $itk_component(table) <Key-Down> "[::itcl::code $this handleUpDown %W %K]; break"
+    bind $itk_component(table) <Key-Up> "[::itcl::code $this handleUpDown %W 1]; break"
+    bind $itk_component(table) <Key-Down> "[::itcl::code $this handleUpDown %W 0]; break"
+    bind $itk_component(table) <Control-b> {%W icursor [expr {[%W icursor]-1}]; break}
+    bind $itk_component(table) <Control-c> [::itcl::code $this handleCopy %W]
+    bind $itk_component(table) <Control-d> {%W delete active insert; break}
+    bind $itk_component(table) <Control-f> {%W icursor [expr {[%W icursor]+1}]; break}
+    bind $itk_component(table) <Control-i> [::itcl::code $this setInsertMode 1]
+    bind $itk_component(table) <Control-k> "[::itcl::code $this handleCut %W]; break"
+    bind $itk_component(table) <Control-n> "[::itcl::code $this handleUpDown %W 0]; break"
+    bind $itk_component(table) <Control-p> "[::itcl::code $this handleUpDown %W 1]; break"
+    bind $itk_component(table) <Control-v> "[::itcl::code $this handlePaste]; break"
+    bind $itk_component(table) <Control-y> "[::itcl::code $this handlePaste]; break"
+
+    bind $itk_component(table) <Control-Key> "\# nothing; break"
+    bind $itk_component(table) <Key-Insert> [::itcl::code $this setInsertMode 1]
 
     set bg [$itk_component(table) tag cget title -background]
-#    $itk_component(table) tag col select_col 0
     $itk_component(table) tag configure select_col \
 	-background \#9999ff
+    $itk_component(table) tag raise select_col
     $itk_component(table) tag col title 0
     $itk_component(table) tag configure title \
 	-relief raised
-    $itk_component(table) tag raise select_col
 
     eval itk_initialize $args
     set mNumRows [$itk_component(table) cget -rows]
@@ -181,6 +201,57 @@
 # ------------------------------------------------------------
 #                      PUBLIC METHODS
 # ------------------------------------------------------------
+
+::itcl::body cadwidgets::TkTable::handlePaste {} {
+    #
+    # Don't allow pasting into the title cells
+    #
+    if {[$itk_component(table) tag includes title active]} {
+        return
+    }
+
+    set savestate [$itk_component(table) cget -state]
+    setInsertMode 1
+
+    if {[catch {::tk::table::GetSelection $itk_component(table) CLIPBOARD} data]} {
+	return
+    }
+
+    set newinsert [string length $data]
+
+    if {$savestate == "normal"} {
+	set curval [$itk_component(table) curvalue]
+	set insert [$itk_component(table) icursor]
+	set first [string range $curval 0 $insert-1]
+	set last [string range $curval $insert end]
+
+	set index [$itk_component(table) index active]
+
+	append first $data $last
+	set data $first
+	set newinsert [expr {$insert + $newinsert}]
+    }
+
+    if {$itk_option(-validatecommand) != ""} {
+	set index [$itk_component(table) index active]
+	set ilist [split $index ,]
+	set row [lindex $ilist 0]
+	set col [lindex $ilist 1]
+
+	if {[catch {$itk_option(-validatecommand) $row $col $data $itk_option(-vclientdata)} isvalid]} {
+	    set isvalid 0
+	}
+    } else {
+	set isvalid 1
+    }
+
+    if {$isvalid} {
+	$itk_component(table) set active $data
+	$itk_component(table) icursor $newinsert
+    }
+
+#    focus $itk_component(table)
+}
 
 ::itcl::body cadwidgets::TkTable::setDataEntry {_index _val} {
     set $mTableDataVar\($_index\) $_val
@@ -249,6 +320,34 @@
     return $mDoBreak
 }
 
+::itcl::body cadwidgets::TkTable::handleCopy {_win} {
+    set index [$_win index active]
+    set ilist [split $index ,]
+    set row [lindex $ilist 0]
+    set col [lindex $ilist 1]
+
+    if {$row == 0} {
+	return
+    }
+
+    $_win selection clear all
+    $_win activate $row,$col
+    $_win selection set $row,$col
+    tk_tableCopy $_win
+}
+
+::itcl::body cadwidgets::TkTable::handleCut {_win} {
+    # First, grab the piece of string about to be cut
+    # and stuff it into the clipboard.
+    set curval [$_win curvalue]
+    set begin [$_win icursor]
+    clipboard clear -displayof $_win
+    catch {clipboard append -displayof $_win [string range $curval $begin end]}
+
+    $_win delete active insert end
+}
+
+
 ::itcl::body cadwidgets::TkTable::handleKey {_win _key} {
     set index [$_win index active]
     set ilist [split $index ,]
@@ -264,10 +363,11 @@
     # (i.e. these get swallowed up by more specific bindings).
     if {$col != 0 && !$mInsertMode} {
 	set mDoBreak 1
-	setInsertMode 1
 
 	# Overwrite what's in the cell
 	if {[keyVisible $_key]} {
+	    setInsertMode 1
+
 	    if {$itk_option(-validatecommand) != ""} {
 		if {[catch {$itk_option(-validatecommand) $row $col $_key $itk_option(-vclientdata)} isvalid]} {
 		    set isvalid 0
@@ -341,9 +441,9 @@
 	}
     }
 
-    $itk_component(table) selection clear all
-    $itk_component(table) activate $row,$col
-    $itk_component(table) selection set $row,$col
+    $_win selection clear all
+    $_win activate $row,$col
+    $_win selection set $row,$col
 
     if {$mInsertMode} {
 	setInsertMode 0
@@ -359,7 +459,7 @@
     catch {$itk_option(-tablePopupHandler) $index $_X $_Y}
 }
 
-::itcl::body cadwidgets::TkTable::handleUpDown {_win _key} {
+::itcl::body cadwidgets::TkTable::handleUpDown {_win _up} {
     set index [$_win index active]
     set ilist [split $index ,]
     set row [lindex $ilist 0]
@@ -369,7 +469,7 @@
 	return
     }
 
-    if {$_key == "Up"} {
+    if {$_up} {
 	incr row -1
 	if {$row < 1} {
 	    set row 1
@@ -381,9 +481,9 @@
 	}
     }
 
-    $itk_component(table) selection clear all
-    $itk_component(table) activate $row,$col
-    $itk_component(table) selection set $row,$col
+    $_win selection clear all
+    $_win activate $row,$col
+    $_win selection set $row,$col
 
     if {$mInsertMode} {
 	setInsertMode 0
@@ -448,10 +548,10 @@
 	# Using "set" instead.
 	if {[set [subst $mTableDataVar\($index\)]] == "*"} {
 	    setTableVal $index ""
-	    $itk_component(table) tag cell {} $index
+	    $_win tag cell {} $index
 	} else {
 	    setTableVal $index "*"
-	    $itk_component(table) tag cell select_col $index
+	    $_win tag cell select_col $index
 	}
     } else {
 	set mDoBreak 1
@@ -483,6 +583,7 @@
     # Always valid
     return 1
 }
+
 
 
 # Local Variables:

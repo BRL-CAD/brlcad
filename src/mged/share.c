@@ -95,7 +95,7 @@ void free_all_resources(struct dm_list *dlp);
  *	share -u res_type p	--->	causes 'p' to no longer share resource of type 'res_type'
  */
 int
-f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
+f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     int uflag = 0;		/* unshare flag */
     struct dm_list *dlp1 = (struct dm_list *)NULL;
@@ -273,7 +273,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char *
  *	rset c bg 0 0 50	--->	sets the background color to dark blue
  */
 int
-f_rset (ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
+f_rset (ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     struct bu_vls vls;
 

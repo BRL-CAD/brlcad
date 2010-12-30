@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="libbn"
 	ProjectGUID="{2794FD11-F9A6-4145-92DE-A05F5A2E6361}"
+	RootNamespace="libbn"
 	>
 	<Platforms>
 		<Platform

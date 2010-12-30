@@ -408,35 +408,36 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 }
 
 
-int
+size_t
 bu_struct_put(FILE *fp, const struct bu_external *ext)
 {
     BU_CK_GETPUT(ext);
 
-    /* FIXME: possible loss of data here */
-    return (int)(fwrite(ext->ext_buf, 1, ext->ext_nbytes, fp));
+    return fwrite(ext->ext_buf, 1, ext->ext_nbytes, fp);
 }
 
 
-int
+size_t
 bu_struct_get(struct bu_external *ext, FILE *fp)
 {
-    register long i, len;
+    size_t i;
+    uint32_t len;
 
     BU_INIT_EXTERNAL(ext);
     ext->ext_buf = (genptr_t) bu_malloc(6, "bu_struct_get buffer head");
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 
-    i=(long)fread((char *) ext->ext_buf, 1, 6, fp);	/* res_syscall */
+    i = fread((char *) ext->ext_buf, 1, 6, fp);	/* res_syscall */
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
     if (i != 6) {
 	if (i == 0)
 	    return 0;
 
+	perror("fread");
 	bu_log("ERROR: bu_struct_get bad fread (%ld), file %s, line %d\n",
 	       i, __FILE__, __LINE__);
-	bu_bomb("Bad fread");
+	return 0;
     }
 
     i = (((unsigned char *)(ext->ext_buf))[0] << 8)
@@ -457,22 +458,32 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     ext->ext_buf = (genptr_t) bu_realloc((char *) ext->ext_buf, len,
 					 "bu_struct_get full buffer");
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    i=(long)fread((char *) ext->ext_buf + 6, 1, len-6, fp);	/* res_syscall */
+    i = fread((char *) ext->ext_buf + 6, 1, len-6, fp);	/* res_syscall */
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
+
     if (UNLIKELY(i != len-6)) {
 	bu_log("ERROR: bu_struct_get bad fread (%ld), file %s, line %d\n",
 	       i, __FILE__, __LINE__);
-	bu_bomb("Bad fread");
+	ext->ext_nbytes = 0;
+	bu_free(ext->ext_buf, "bu_struct_get full buffer");
+	ext->ext_buf = NULL;
+	return 0;
     }
-    i = (((unsigned char *)(ext->ext_buf))[len-2] <<8) |
-	((unsigned char *)(ext->ext_buf))[len-1];
+
+    i = (((unsigned char *)(ext->ext_buf))[len-2] << 8)
+	| ((unsigned char *)(ext->ext_buf))[len-1];
+
     if (UNLIKELY(i != BU_GETPUT_MAGIC_2)) {
 	bu_log("ERROR: bad getput buffer %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
 	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_2,
 	       bu_identify_magic(i), i, __FILE__, __LINE__);
-	bu_bomb("Bad getput buffer");
+	ext->ext_nbytes = 0;
+	bu_free(ext->ext_buf, "bu_struct_get full buffer");
+	ext->ext_buf = NULL;
+	return 0;
     }
-    return 1;
+
+    return (size_t)len;
 }
 
 
@@ -2196,14 +2207,15 @@ bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse
 int
 bu_structparse_argv(struct bu_vls *logstr,
 		    int argc,
-		    char **argv,
+		    const char **argv,
 		    const struct bu_structparse *desc,
 		    char *base)
 {
-    register char *cp, *loc;
-    register const struct bu_structparse *sdp;
+    register const struct bu_structparse *sdp = NULL;
     register size_t j;
     register size_t ii;
+    const char *cp = NULL;
+    char *loc = NULL;
     struct bu_vls str;
 
     if (UNLIKELY(desc == (struct bu_structparse *)NULL)) {
@@ -2418,7 +2430,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 		    int dot_seen;
 		    double tmp_double;
 		    register double *dp;
-		    char *numstart;
+		    const char *numstart;
 
 		    dp = (double *)loc;
 

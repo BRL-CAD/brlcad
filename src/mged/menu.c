@@ -41,7 +41,7 @@ void set_menucurrent();
 int set_arrowloc();
 
 int
-cmd_mmenu_get(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_mmenu_get(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int index;
 
@@ -126,7 +126,7 @@ mmenu_set(int index, struct menu_item *value)
 
     bu_vls_printf(&menu_string, "mmenu_set %V %d ", &curr_cmd_list->cl_name, index);
 
-    (void)Tcl_Eval(interp, bu_vls_addr(&menu_string));
+    (void)Tcl_Eval(INTERP, bu_vls_addr(&menu_string));
 
     Tcl_DStringFree(&ds_menu);
     bu_vls_free(&menu_string);
@@ -332,23 +332,6 @@ mmenu_select(int pen_y, int do_func)
 	}
     }
     return 0;		/* pen below menu area */
-}
-
-
-/*
- * M M E N U _ P N T R
- *
- * Routine to allow user to reset the arrow to any menu & item desired.
- * Example:  menu_pntr(MENU_L1, 3).
- * The arrow can always be eliminated by setting menu_state->ms_flag=0, view_state->flag=1.
- */
-void
-mmenu_pntr(int menu, int item)
-{
-    menu_state->ms_cur_menu = menu;
-    menu_state->ms_cur_item = item;
-    if (menu_state->ms_cur_menu >= 0)
-	menu_state->ms_flag = 1;
 }
 
 

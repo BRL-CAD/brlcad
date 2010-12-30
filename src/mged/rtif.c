@@ -62,10 +62,10 @@
  * rt, rtarea, rtweight, rtcheck, and rtedge all use this.
  */
 int
-cmd_rt(ClientData clientData,
+cmd_rt(ClientData UNUSED(clientData),
        Tcl_Interp *interp,
        int argc,
-       char **argv)
+       const char *argv[])
 {
     int doRtcheck;
     int ret;
@@ -108,7 +108,7 @@ cmd_rt(ClientData clientData,
  * Typically used to invoke a remote RT (hence the name).
  */
 int
-cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_rrt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
     Tcl_DString ds;
@@ -180,7 +180,7 @@ rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
  * 1 leave view alone, animate solid named "EYE"
  */
 int
-f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
@@ -360,7 +360,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Invoke nirt with the current view & stuff
  */
 int
-f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_nirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
     Tcl_DString ds;
@@ -402,7 +402,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 
 int
-f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_vnirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
     Tcl_DString ds;

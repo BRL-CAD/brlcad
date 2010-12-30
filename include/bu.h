@@ -3618,8 +3618,12 @@ BU_EXPORT BU_EXTERN(int bu_struct_import,
  *
  * Put a structure in external form to a stdio file.  All formatting
  * must have been accomplished previously.
+ *
+ * Returns number of bytes written.  On error, a short byte count (or
+ * zero) is returned.  Use feof(3) or ferror(3) to determine which
+ * errors occur.
  */
-BU_EXPORT BU_EXTERN(int bu_struct_put,
+BU_EXPORT BU_EXTERN(size_t bu_struct_put,
 		    (FILE *fp,
 		     const struct bu_external *ext));
 
@@ -3627,8 +3631,11 @@ BU_EXPORT BU_EXTERN(int bu_struct_put,
  * B U _ S T R U C T _ G E T
  *
  * Obtain the next structure in external form from a stdio file.
+ *
+ * Returns number of bytes read into the bu_external.  On error, zero
+ * is returned.
  */
-BU_EXPORT BU_EXTERN(int bu_struct_get,
+BU_EXPORT BU_EXTERN(size_t bu_struct_get,
 		    (struct bu_external *ext,
 		     FILE *fp));
 
@@ -3842,7 +3849,7 @@ BU_EXPORT BU_EXTERN(void bu_structparse_get_terse_form,
 BU_EXPORT BU_EXTERN(int bu_structparse_argv,
 		    (struct bu_vls *logstr,
 		     int argc,
-		     char **argv,
+		     const char **argv,
 		     const struct bu_structparse *desc,
 		     char *base));
 
@@ -5302,7 +5309,7 @@ BU_EXPORT BU_EXTERN(void bu_tcl_structparse_get_terse_form,
 BU_EXPORT BU_EXTERN(int bu_tcl_structparse_argv,
 		    (Tcl_Interp *interp,
 		     int argc,
-		     char **argv,
+		     const char **argv,
 		     const struct bu_structparse *desc,
 		     char *base));
 

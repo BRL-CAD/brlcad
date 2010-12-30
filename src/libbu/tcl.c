@@ -138,7 +138,7 @@ bu_tcl_structparse_get_terse_form(Tcl_Interp *interp,
 int
 bu_tcl_structparse_argv(Tcl_Interp *interp,
 			int argc,
-			char **argv,
+			const char **argv,
 			const struct bu_structparse *desc,
 			char *base)
 {

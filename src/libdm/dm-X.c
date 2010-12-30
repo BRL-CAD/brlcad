@@ -1397,6 +1397,219 @@ X_setZBuffer(struct dm *dmp, int zbuffer_on)
     return TCL_OK;
 }
 
+HIDDEN int
+X_getDisplayImage(struct dm *dmp, unsigned char **image)
+{
+    XImage *ximage_p;
+    unsigned char **rows;
+    unsigned char *idata;
+    unsigned char *irow;
+    int bytes_per_pixel;
+    int bytes_per_pixel_output = 3; /* limit for current bu_image raw pix usage */
+    int bytes_per_line_output;
+    int i, j, k;
+    unsigned char *dbyte0, *dbyte1, *dbyte2;
+    int red_shift;
+    int green_shift;
+    int blue_shift;
+    int red_bits;
+    int green_bits;
+    int blue_bits;
+
+
+    ximage_p = XGetImage(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			 ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+			 0, 0,
+			 dmp->dm_width,
+			 dmp->dm_height,
+			 ~0, ZPixmap);
+
+    if (!ximage_p) {
+	bu_log("png: could not get XImage\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    bytes_per_pixel = ximage_p->bytes_per_line / ximage_p->width;
+
+    if (bytes_per_pixel == 4) {
+	unsigned long mask;
+	unsigned long tmask;
+
+	/* This section assumes 8 bits per channel */
+
+	mask = ximage_p->red_mask;
+	tmask = 1;
+	for (red_shift = 0; red_shift < 32; red_shift++) {
+	    if (tmask & mask)
+		break;
+	    tmask = tmask << 1;
+	}
+
+	mask = ximage_p->green_mask;
+	tmask = 1;
+	for (green_shift = 0; green_shift < 32; green_shift++) {
+	    if (tmask & mask)
+		break;
+	    tmask = tmask << 1;
+	}
+
+	mask = ximage_p->blue_mask;
+	tmask = 1;
+	for (blue_shift = 0; blue_shift < 32; blue_shift++) {
+	    if (tmask & mask)
+		break;
+	    tmask = tmask << 1;
+	}
+
+	/*
+	 * We need to reverse things if the image byte order
+	 * is different from the system's byte order.
+	 */
+	if (((bu_byteorder() == BU_BIG_ENDIAN) && (ximage_p->byte_order == LSBFirst)) ||
+	    ((bu_byteorder() == BU_LITTLE_ENDIAN) && (ximage_p->byte_order == MSBFirst))) {
+	    DM_REVERSE_COLOR_BYTE_ORDER(red_shift, ximage_p->red_mask);
+	    DM_REVERSE_COLOR_BYTE_ORDER(green_shift, ximage_p->green_mask);
+	    DM_REVERSE_COLOR_BYTE_ORDER(blue_shift, ximage_p->blue_mask);
+	}
+
+    } else if (bytes_per_pixel == 2) {
+	unsigned long mask;
+	unsigned long tmask;
+	int bpb = 8;   /* bits per byte */
+
+	/*XXX
+	 * This section probably needs logic similar
+	 * to the previous section (i.e. bytes_per_pixel == 4).
+	 * That is we may need to reverse things depending on
+	 * the image byte order and the system's byte order.
+	 */
+
+	mask = ximage_p->red_mask;
+	tmask = 1;
+	for (red_shift = 0; red_shift < 16; red_shift++) {
+	    if (tmask & mask)
+		break;
+	    tmask = tmask << 1;
+	}
+	for (red_bits = red_shift; red_bits < 16; red_bits++) {
+	    if (!(tmask & mask))
+		break;
+	    tmask = tmask << 1;
+	}
+
+	red_bits = red_bits - red_shift;
+	if (red_shift == 0)
+	    red_shift = red_bits - bpb;
+	else
+	    red_shift = red_shift - (bpb - red_bits);
+
+	mask = ximage_p->green_mask;
+	tmask = 1;
+	for (green_shift = 0; green_shift < 16; green_shift++) {
+	    if (tmask & mask)
+		break;
+	    tmask = tmask << 1;
+	}
+	for (green_bits = green_shift; green_bits < 16; green_bits++) {
+	    if (!(tmask & mask))
+		break;
+	    tmask = tmask << 1;
+	}
+
+	green_bits = green_bits - green_shift;
+	green_shift = green_shift - (bpb - green_bits);
+
+	mask = ximage_p->blue_mask;
+	tmask = 1;
+	for (blue_shift = 0; blue_shift < 16; blue_shift++) {
+	    if (tmask & mask)
+		break;
+	    tmask = tmask << 1;
+	}
+	for (blue_bits = blue_shift; blue_bits < 16; blue_bits++) {
+	    if (!(tmask & mask))
+		break;
+	    tmask = tmask << 1;
+	}
+	blue_bits = blue_bits - blue_shift;
+
+	if (blue_shift == 0)
+	    blue_shift = blue_bits - bpb;
+	else
+	    blue_shift = blue_shift - (bpb - blue_bits);
+    } else {
+	bu_log("png: %d bytes per pixel is not yet supported\n", bytes_per_pixel);
+	return TCL_ERROR;
+    }
+
+    rows = (unsigned char **)bu_calloc(ximage_p->height, sizeof(unsigned char *), "rows");
+    idata = (unsigned char *)bu_calloc(ximage_p->height * ximage_p->width, bytes_per_pixel_output, "png data");
+    *image = idata;
+
+    /* for each scanline */
+    bytes_per_line_output = ximage_p->width * bytes_per_pixel_output;
+    for (i = ximage_p->height - 1, j = 0; 0 <= i; --i, ++j) {
+	/* irow points to the current scanline in ximage_p */
+	irow = (unsigned char *)(ximage_p->data + ((ximage_p->height-i-1)*ximage_p->bytes_per_line));
+
+	if (bytes_per_pixel == 4) {
+	    unsigned int pixel;
+
+	    /* rows[j] points to the current scanline in idata */
+	    rows[j] = (unsigned char *)(idata + ((ximage_p->height-i-1)*bytes_per_line_output));
+
+	    /* for each pixel in current scanline of ximage_p */
+	    for (k = 0; k < ximage_p->width; k++) {
+		pixel = *((unsigned int *)(irow + k*bytes_per_pixel));
+
+		dbyte0 = rows[j] + k*bytes_per_pixel_output;
+		dbyte1 = dbyte0 + 1;
+		dbyte2 = dbyte0 + 2;
+
+		*dbyte0 = (pixel & ximage_p->red_mask) >> red_shift;
+		*dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		*dbyte2 = (pixel & ximage_p->blue_mask) >> blue_shift;
+	    }
+	} else if (bytes_per_pixel == 2) {
+	    unsigned short spixel;
+	    unsigned long pixel;
+
+	    /* rows[j] points to the current scanline in idata */
+	    rows[j] = (unsigned char *)(idata + ((ximage_p->height-i-1)*bytes_per_line_output));
+
+	    /* for each pixel in current scanline of ximage_p */
+	    for (k = 0; k < ximage_p->width; k++) {
+		spixel = *((unsigned short *)(irow + k*bytes_per_pixel));
+		pixel = spixel;
+
+		dbyte0 = rows[j] + k*bytes_per_pixel_output;
+		dbyte1 = dbyte0 + 1;
+		dbyte2 = dbyte0 + 2;
+
+		if (0 <= red_shift)
+		    *dbyte0 = (pixel & ximage_p->red_mask) >> red_shift;
+		else
+		    *dbyte0 = (pixel & ximage_p->red_mask) << -red_shift;
+
+		*dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+
+		if (0 <= blue_shift)
+		    *dbyte2 = (pixel & ximage_p->blue_mask) >> blue_shift;
+		else
+		    *dbyte2 = (pixel & ximage_p->blue_mask) << -blue_shift;
+	    }
+	} else {
+	    bu_free(rows, "rows");
+	    bu_free(idata, "image data");
+
+	    bu_log("png: not supported for this platform\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+    }
+
+    bu_free(rows, "rows");
+    return TCL_OK;
+}
 
 /* Display Manager package interface */
 struct dm dm_X = {
@@ -1427,6 +1640,7 @@ struct dm dm_X = {
     Nu_int0,
     Nu_int0,
     Nu_int0,
+    X_getDisplayImage, /* display to image function */
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */
@@ -1438,6 +1652,8 @@ struct dm dm_X = {
     1,
     0,
     0,
+    0,/* bytes per pixel */
+    0,/* bits per channel */
     0,
     0,
     1.0, /* aspect ratio */

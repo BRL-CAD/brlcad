@@ -495,6 +495,7 @@ struct ged {
     struct ged_drawable		*ged_gdp;
     struct ged_view		*ged_gvp;
 
+    void			*ged_dmp;
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
     void			(*ged_refresh_handler)();	/**< @brief  function for handling refresh requests */
     void			(*ged_output_handler)();	/**< @brief  function for handling output */
@@ -686,12 +687,12 @@ GED_EXPORT BU_EXTERN(int	wdb_put_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_adjust_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_form_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
@@ -706,7 +707,7 @@ GED_EXPORT BU_EXTERN(int	wdb_rt_gettrees_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_dump_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
@@ -801,7 +802,7 @@ GED_EXPORT BU_EXTERN(int	wdb_stub_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_region_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
@@ -958,11 +959,6 @@ GED_EXPORT BU_EXTERN(int wdb_bot_smooth_cmd,
 		     int argc,
 		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_importFg4Section_cmd,
-		    (struct rt_wdb *wdbp,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char *argv[]));
-GED_EXPORT BU_EXTERN(int	wdb_stub_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
@@ -2387,6 +2383,7 @@ GED_EXPORT BU_EXTERN(int ged_pmodel2view, (struct ged *gedp, int argc, const cha
  *     png [-s size] file.png
  */
 GED_EXPORT BU_EXTERN(int ged_png, (struct ged *gedp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_screen_grab, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Set point of view

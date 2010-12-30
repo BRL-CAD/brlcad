@@ -2449,7 +2449,7 @@ rt_extrude_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 
 
 int
-rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_extrude_internal *extr;
     fastf_t *new;

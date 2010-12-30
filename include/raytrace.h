@@ -289,26 +289,9 @@ struct hit {
 #define RT_CK_HIT(_p)	BU_CKMAG(_p, RT_HIT_MAGIC, "struct hit")
 
 /**
- * Old macro: DEPRECATED, use RT_HIT_NORMAL
- *
- * Only the hit_dist field of pt_inhit and pt_outhit are valid when
- * a_hit() is called; to compute both hit_point and hit_normal, use
- * RT_HIT_NORMAL() macro; to compute just hit_point, use
- * VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
- */
-#define RT_HIT_NORM(_hitp, _stp, _unused) { \
-	RT_CK_HIT(_hitp); \
-	RT_CK_SOLTAB(_stp); \
-	RT_CK_FUNCTAB((_stp)->st_meth); \
-	if ((_stp)->st_meth->ft_norm) { \
-		(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
-	} \
-}
-
-/**
- * New macro: Compute normal into (_hitp)->hit_normal, but leave it
- * un-flipped, as one hit may be shared between multiple partitions
- * with different flip status.
+ * Compute normal into (_hitp)->hit_normal.  Set flip-flag accordingly
+ * depending on boolean logic, as one hit may be shared between
+ * multiple partitions with different flip status.
  *
  * Example: box.r = box.s - sph.s; sph.r = sph.s
  *
@@ -2037,7 +2020,7 @@ struct rt_functab {
     size_t ft_internal_size;	/**< @brief  sizeof(struct rt_xxx_internal) */
     unsigned long ft_internal_magic;	/**< @brief  RT_XXX_INTERNAL_MAGIC */
     int	(*ft_get) BU_ARGS((struct bu_vls *, const struct rt_db_internal *, const char *item));
-    int	(*ft_adjust) BU_ARGS((struct bu_vls *, struct rt_db_internal *, int /*argc*/, char ** /*argv*/));
+    int	(*ft_adjust) BU_ARGS((struct bu_vls *, struct rt_db_internal *, int /*argc*/, const char ** /*argv*/));
     int	(*ft_form) BU_ARGS((struct bu_vls *, const struct rt_functab *));
 
     void (*ft_make) BU_ARGS((const struct rt_functab *, struct rt_db_internal */*ip*/));
@@ -4868,7 +4851,7 @@ RT_EXPORT BU_EXTERN(int tcl_list_to_int_array,
 
 RT_EXPORT BU_EXTERN(int tcl_list_to_fastf_array,
 		    (Tcl_Interp *interp,
-		     char *char_list,
+		     const char *char_list,
 		     fastf_t **array,
 		     int *array_len));
 
