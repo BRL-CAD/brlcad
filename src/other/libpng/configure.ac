@@ -32,6 +32,7 @@ dnl End of version number stuff
 
 AC_CONFIG_SRCDIR([pngget.c])
 AM_CONFIG_HEADER(config.h)
+AC_CONFIG_MACRO_DIR([../../../m4])
 
 # Checks for programs.
 AC_PROG_CC
@@ -56,7 +57,7 @@ AC_STRUCT_TM
 AC_FUNC_STRTOD
 AC_CHECK_FUNCS([memset], , AC_ERROR([memset not found in libc]))
 AC_CHECK_FUNCS([pow], , AC_CHECK_LIB(m, pow, , AC_ERROR([cannot find pow])) )
-AC_CHECK_LIB(z, zlibVersion, , AC_ERROR([zlib not installed]))
+#AC_CHECK_LIB(z, zlibVersion, , AC_ERROR([zlib not installed]))
 
 case $host_os in
   aix*)
@@ -136,5 +137,9 @@ AC_SUBST([binconfigs])
 AC_CONFIG_FILES([Makefile libpng.pc:libpng.pc.in])
 AC_CONFIG_FILES([libpng-config:libpng-config.in],
 		[chmod +x libpng-config])
+
+# provides convenience argument handlers for specifying CFLAGS,
+# LDFLAGS, CPPFLAGS, and LIBS using --with argument handlers.
+BC_WITH_SUB_FLAG_ARGS
 
 AC_OUTPUT
