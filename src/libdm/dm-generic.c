@@ -76,7 +76,7 @@ Nu_open(Tcl_Interp *interp, int argc, char *argv[])
 
 
 struct dm *
-dm_open(Tcl_Interp *interp, int type, int argc, char **argv)
+dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
 {
     switch (type) {
 	case DM_TYPE_NULL:

@@ -334,7 +334,7 @@ DM_EXPORT BU_EXTERN(struct dm *dm_open,
 		    (Tcl_Interp *interp,
 		     int type,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 DM_EXPORT BU_EXTERN(int dm_share_dlist,
 		    (struct dm *dmp1,
 		     struct dm *dmp2));
