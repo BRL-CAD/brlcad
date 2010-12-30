@@ -98,7 +98,7 @@
 	if (min > rad || max < -rad) return 0;
 
 
-tfloat TIE_PREC;
+tfloat TIE_VAL(TIE_PREC);
 
 /*************************************************************
  **************** PRIVATE FUNCTIONS **************************
