@@ -47,14 +47,12 @@ minigzip_LDADD = libz.la
 EXTRA_DIST = \
 	$(man_MANS) \
         CMakeLists.txt \
-	ChangeLog \
 	FAQ \
 	INDEX \
 	amiga \
 	configure \
 	contrib \
 	doc \
-	example.c \
 	examples \
 	make_vms.com \
 	minigzip.c \
