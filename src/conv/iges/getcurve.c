@@ -729,9 +729,9 @@ Getcurve(int curve, struct ptlist **curv_pts)
 			    ptr = ptr->next;
 			ptr->next = tmp_ptr;
 			ptr->next->prev = ptr;
-			if (EQUAL(ptr->pt[X], tmp_ptr->pt[X]) &&
-			    EQUAL(ptr->pt[Y], tmp_ptr->pt[Y]) &&
-			    EQUAL(ptr->pt[Z], tmp_ptr->pt[Z])) {
+			if (NEAR_EQUAL(ptr->pt[X], tmp_ptr->pt[X], TOL) &&
+			    NEAR_EQUAL(ptr->pt[Y], tmp_ptr->pt[Y], TOL) &&
+			    NEAR_EQUAL(ptr->pt[Z], tmp_ptr->pt[Z], TOL)) {
 			    ptr->next = ptr->next->next;
 			    if (ptr->next != NULL)
 				ptr->next->prev = ptr;

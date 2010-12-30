@@ -39,10 +39,6 @@
 #define	NAMESIZE	16	/* from db.h */
 
 #define	TOL		0.0005
-#define EQUAL( a, b )		((brlabs( (a)-(b) ) < TOL) ? 1 : 0 )
-#define	SAMEPT( pt1, pt2 )	(EQUAL( pt1[X], pt2[X] ) && \
-				 EQUAL( pt1[Y], pt2[Y] ) && \
-				 EQUAL( pt1[Z], pt2[Z] ) )
 
 #define	Union		1
 #define	Intersect	2
