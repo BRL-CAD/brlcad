@@ -16,34 +16,32 @@ dnl should not be necessary to regenerate configure if the time
 dnl stamps are correct
 AC_PREREQ(2.59)
 
-dnl Version number stuff here:
-
-AC_INIT([libpng], [1.4.3], [png-mng-implement@lists.sourceforge.net])
+AC_INIT([libpng], [1.4.5], [png-mng-implement@lists.sourceforge.net])
 AM_INIT_AUTOMAKE
 dnl stop configure from automagically running automake
 AM_MAINTAINER_MODE
 
-PNGLIB_VERSION=1.4.3
+dnl Version number stuff here:
+
+PNGLIB_VERSION=1.4.5
 PNGLIB_MAJOR=1
 PNGLIB_MINOR=4
-PNGLIB_RELEASE=3
+PNGLIB_RELEASE=5
 
 dnl End of version number stuff
 
 AC_CONFIG_SRCDIR([pngget.c])
 AM_CONFIG_HEADER(config.h)
-AC_CONFIG_MACRO_DIR([../../../m4])
 
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_LD
 AC_PROG_CPP
 AC_CHECK_TOOL(SED, sed, :)
-AC_LIBTOOL_WIN32_DLL
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_PROG_LIBTOOL
+LT_INIT([win32-dll])
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -58,7 +56,7 @@ AC_STRUCT_TM
 AC_FUNC_STRTOD
 AC_CHECK_FUNCS([memset], , AC_ERROR([memset not found in libc]))
 AC_CHECK_FUNCS([pow], , AC_CHECK_LIB(m, pow, , AC_ERROR([cannot find pow])) )
-#AC_CHECK_LIB(z, zlibVersion, , AC_ERROR([zlib not installed]))
+AC_CHECK_LIB(z, zlibVersion, , AC_ERROR([zlib not installed]))
 
 case $host_os in
   aix*)
@@ -70,6 +68,15 @@ LIBPNG_DEFINES=$LIBPNG_DEFINES
 AC_SUBST(LIBPNG_DEFINES)
 
 AC_MSG_CHECKING([if libraries can be versioned])
+# Special case for PE/COFF platforms: ld reports
+# support for version-script, but doesn't actually
+# DO anything with it.
+case $host in
+*cygwin* | *mingw32* )
+    have_ld_version_script=no
+    AC_MSG_RESULT(no)
+;;
+* )
 GLD=`$LD --help < /dev/null 2>/dev/null | grep version-script`
 if test "$GLD"; then
     have_ld_version_script=yes
@@ -79,6 +86,9 @@ else
     AC_MSG_RESULT(no)
     AC_MSG_WARN(*** You have not enabled versioned symbols.)
 fi
+;;
+esac
+
 AM_CONDITIONAL(HAVE_LD_VERSION_SCRIPT, test "$have_ld_version_script" = "yes")
 
 if test "$have_ld_version_script" = "yes"; then
@@ -126,9 +136,5 @@ AC_SUBST([binconfigs])
 AC_CONFIG_FILES([Makefile libpng.pc:libpng.pc.in])
 AC_CONFIG_FILES([libpng-config:libpng-config.in],
 		[chmod +x libpng-config])
-
-# provides convenience argument handlers for specifying CFLAGS,
-# LDFLAGS, CPPFLAGS, and LIBS using --with argument handlers.
-BC_WITH_SUB_FLAG_ARGS
 
 AC_OUTPUT
