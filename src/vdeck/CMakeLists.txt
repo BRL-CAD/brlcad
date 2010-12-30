@@ -3,5 +3,5 @@ include_directories(
   ${TCL_INCLUDE_PATH}
 )
 
-BRLCAD_ADDEXEC(vdeck "cgarbs.c match.c parsarg.c vdeck.c" librt)
+BRLCAD_ADDEXEC(vdeck "cgarbs.c match.c parsarg.c vdeck.c" librt STRICT)
 install(FILES vdeck.1 DESTINATION ${MAN_DIR}/man1)
