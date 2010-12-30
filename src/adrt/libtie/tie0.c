@@ -23,6 +23,8 @@
  *
  */
 
+int tie_check_degenerate = 0;
+
 #define TIE_PRECISION 0
 #include "./tie.c"
 #undef TIE_PRECISION
