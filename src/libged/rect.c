@@ -39,7 +39,6 @@
 
 /* Defined in rect.c */
 static void ged_rect_vls_print(struct ged *gedp);
-static void ged_rect_view2image(struct ged_rect_state *grsp);
 static void ged_rect_image2view(struct ged_rect_state *grsp);
 static void ged_rect_adjust_for_zoom(struct ged_rect_state *grsp);
 static int ged_rect_rt(struct ged *gedp, int port);
@@ -346,19 +345,6 @@ ged_rect_vls_print(struct ged *gedp)
 }
 
 /*
- * Given position and dimensions in normalized view coordinates, calculate
- * position and dimensions in image coordinates.
- */
-static void
-ged_rect_view2image(struct ged_rect_state *grsp)
-{
-    grsp->grs_pos[X] = (grsp->grs_x * 0.5 + 0.5) * grsp->grs_cdim[X];
-    grsp->grs_pos[Y] = (grsp->grs_y * 0.5 + 0.5) * grsp->grs_cdim[Y] * grsp->grs_aspect;
-    grsp->grs_dim[X] = grsp->grs_width * grsp->grs_cdim[X] * 0.5;
-    grsp->grs_dim[Y] = grsp->grs_height * grsp->grs_cdim[X] * 0.5;
-}
-
-/*
  * Given position and dimensions in image coordinates, calculate
  * position and dimensions in normalized view coordinates.
  */
@@ -552,15 +538,6 @@ ged_rect_zoom(struct ged *gedp)
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_model_center);
     gedp->ged_gvp->gv_scale *= sf;
     ged_view_update(gedp->ged_gvp);
-
-#if 0
-    gedp->ged_gvp->gv_rect.grs_x = -1.0;
-    gedp->ged_gvp->gv_rect.grs_y = -1.0 / gedp->ged_gvp->gv_rect.grs_aspect);
-    gedp->ged_gvp->gv_rect.grs_width = 2.0;
-    gedp->ged_gvp->gv_rect.grs_height = 2.0 / gedp->ged_gvp->gv_rect.grs_aspect);
-
-    ged_rect_view2image(grsp, gedp->ged_gvp->gv_rect.grs_cdim[X], gedp->ged_gvp->gv_rect.grs_cdim[Y], gedp->ged_gvp->gv_rect.grs_aspect);
-#endif
 
     return GED_OK;
 }

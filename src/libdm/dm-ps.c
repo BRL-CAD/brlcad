@@ -53,7 +53,6 @@
 /* Display Manager package interface */
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
-struct dm *ps_open(Tcl_Interp *interp, int argc, char **argv);
 
 HIDDEN_DM_FUNCTION_PROTOTYPES(ps)
 
@@ -136,7 +135,7 @@ static mat_t psmat;
  *
  */
 struct dm *
-ps_open(Tcl_Interp *interp, int argc, char **argv)
+ps_open(Tcl_Interp *interp, int argc, const char *argv[])
 {
     static int count = 0;
     struct dm *dmp;

@@ -35,8 +35,8 @@
 #include "dm.h"
 
 
-extern struct dm *plot_open(Tcl_Interp *interp, int argc, char **argv);
-extern struct dm *ps_open(Tcl_Interp *interp, int argc, char **argv);
+extern struct dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
+extern struct dm *ps_open(Tcl_Interp *interp, int argc, const char *argv[]);
 
 #ifdef DM_X
 extern struct dm *X_open_dm();
@@ -66,7 +66,7 @@ extern int wgl_share_dlist();
 
 
 HIDDEN struct dm *
-Nu_open(Tcl_Interp *interp, int argc, char *argv[])
+Nu_open(Tcl_Interp *interp, int argc, const char *argv[])
 {
     if (interp || argc < 0 || !argv)
 	return DM_NULL;

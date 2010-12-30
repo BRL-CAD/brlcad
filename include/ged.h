@@ -687,12 +687,12 @@ GED_EXPORT BU_EXTERN(int	wdb_put_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_adjust_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_form_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
