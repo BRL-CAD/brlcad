@@ -3,7 +3,8 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="librender"
-	ProjectGUID="{43DF8660-74E7-4371-BEC3-602E2E6481B5}"
+	ProjectGUID="{DF9092D4-42CA-4532-BB96-EB5BBFA8308A}"
+	RootNamespace="librender"
 	>
 	<Platforms>
 		<Platform
@@ -51,7 +52,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../src/other/tcl/win;../../../src/other/tcl/generic;../../../include;../../../src/render/librender;../../../src/render/libtie;../../../src/render;../../../src/other/libz"
+				AdditionalIncludeDirectories="../../../src/other/tcl/win;../../../src/other/tcl/generic;../../../include;../../../src/adrt/librender;../../../src/adrt/libtie;../../../src/adrt;../../../src/other/libz"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;BU_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
@@ -229,107 +230,99 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
-				RelativePath="..\..\..\src\render\librender\camera.c"
+				RelativePath="..\..\..\src\adrt\librender\camera.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\component.c"
+				RelativePath="..\..\..\src\adrt\librender\component.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\cut.c"
+				RelativePath="..\..\..\src\adrt\librender\cut.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\depth.c"
+				RelativePath="..\..\..\src\adrt\librender\depth.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\flat.c"
+				RelativePath="..\..\..\src\adrt\librender\flat.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\flos.c"
+				RelativePath="..\..\..\src\adrt\librender\flos.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\grid.c"
+				RelativePath="..\..\..\src\adrt\librender\grid.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\hit.c"
+				RelativePath="..\..\..\src\adrt\librender\hit.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\load.c"
+				RelativePath="..\..\..\src\adrt\librender\normal.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\load_g.c"
+				RelativePath="..\..\..\src\adrt\librender\path.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\normal.c"
+				RelativePath="..\..\..\src\adrt\librender\phong.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\path.c"
+				RelativePath="..\..\..\src\adrt\librender\render_util.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\phong.c"
+				RelativePath="..\..\..\src\adrt\librender\spall.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\render_util.c"
+				RelativePath="..\..\..\src\adrt\librender\surfel.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\spall.c"
+				RelativePath="..\..\..\src\adrt\librender\texture_blend.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\surfel.c"
+				RelativePath="..\..\..\src\adrt\librender\texture_bump.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\texture_blend.c"
+				RelativePath="..\..\..\src\adrt\librender\texture_camo.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\texture_bump.c"
+				RelativePath="..\..\..\src\adrt\librender\texture_checker.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\texture_camo.c"
+				RelativePath="..\..\..\src\adrt\librender\texture_clouds.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\texture_checker.c"
+				RelativePath="..\..\..\src\adrt\librender\texture_gradient.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\texture_clouds.c"
+				RelativePath="..\..\..\src\adrt\librender\texture_image.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\texture_gradient.c"
+				RelativePath="..\..\..\src\adrt\librender\texture_mix.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\texture_image.c"
+				RelativePath="..\..\..\src\adrt\librender\texture_perlin.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\render\librender\texture_mix.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\render\librender\texture_perlin.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\render\librender\texture_stack.c"
+				RelativePath="..\..\..\src\adrt\librender\texture_stack.c"
 				>
 			</File>
 		</Filter>
