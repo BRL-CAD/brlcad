@@ -1866,13 +1866,25 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tktable", "..\tktable\tktab
 		{055F2F38-D3AB-4A30-A8C6-A7C9A393BB30} = {055F2F38-D3AB-4A30-A8C6-A7C9A393BB30}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libadrt", "..\adrt\adrt.vcproj", "{43DF8660-74E7-4371-BEC3-602E2E6481B5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "librender", "..\render\render.vcproj", "{069BA3F2-838A-4401-ACE6-BC687C57A243}"
 	ProjectSection(WebsiteProperties) = preProject
 		Debug.AspNetCompiler.Debug = "True"
 		Release.AspNetCompiler.Debug = "False"
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pixcmp", "..\pixcmp\pixcmp.vcproj", "{8AAF9606-7C95-4BB1-8EB7-DDD3304D03C1}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libtie", "..\libtie\libtie.vcproj", "{43DF8660-74E7-4371-BEC3-602E2E6481B5}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "librender", "..\librender\librender.vcproj", "{DF9092D4-42CA-4532-BB96-EB5BBFA8308A}"
 	ProjectSection(WebsiteProperties) = preProject
 		Debug.AspNetCompiler.Debug = "True"
 		Release.AspNetCompiler.Debug = "False"
@@ -2604,14 +2616,18 @@ Global
 		{20B5188B-0423-45FA-B97A-33266A9EC8FB}.Release|Win32.Build.0 = Release|Win32
 		{20B5188B-0423-45FA-B97A-33266A9EC8FB}.Release|x64.ActiveCfg = Release|x64
 		{20B5188B-0423-45FA-B97A-33266A9EC8FB}.Release|x64.Build.0 = Release|x64
-		{43DF8660-74E7-4371-BEC3-602E2E6481B5}.Release|Win32.ActiveCfg = Release|Win32
-		{43DF8660-74E7-4371-BEC3-602E2E6481B5}.Release|Win32.Build.0 = Release|Win32
-		{43DF8660-74E7-4371-BEC3-602E2E6481B5}.Release|x64.ActiveCfg = Release|x64
-		{43DF8660-74E7-4371-BEC3-602E2E6481B5}.Release|x64.Build.0 = Release|x64
 		{8AAF9606-7C95-4BB1-8EB7-DDD3304D03C1}.Release|Win32.ActiveCfg = Release|Win32
 		{8AAF9606-7C95-4BB1-8EB7-DDD3304D03C1}.Release|Win32.Build.0 = Release|Win32
 		{8AAF9606-7C95-4BB1-8EB7-DDD3304D03C1}.Release|x64.ActiveCfg = Release|x64
 		{8AAF9606-7C95-4BB1-8EB7-DDD3304D03C1}.Release|x64.Build.0 = Release|x64
+		{43DF8660-74E7-4371-BEC3-602E2E6481B5}.Release|Win32.ActiveCfg = Release|Win32
+		{43DF8660-74E7-4371-BEC3-602E2E6481B5}.Release|Win32.Build.0 = Release|Win32
+		{43DF8660-74E7-4371-BEC3-602E2E6481B5}.Release|x64.ActiveCfg = Release|x64
+		{43DF8660-74E7-4371-BEC3-602E2E6481B5}.Release|x64.Build.0 = Release|x64
+		{DF9092D4-42CA-4532-BB96-EB5BBFA8308A}.Release|Win32.ActiveCfg = Release|Win32
+		{DF9092D4-42CA-4532-BB96-EB5BBFA8308A}.Release|Win32.Build.0 = Release|Win32
+		{DF9092D4-42CA-4532-BB96-EB5BBFA8308A}.Release|x64.ActiveCfg = Release|x64
+		{DF9092D4-42CA-4532-BB96-EB5BBFA8308A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -2649,5 +2665,6 @@ Global
 		{65AE6C9B-AFA3-46FB-BB13-ED37D6E0042E} = {3DBD91F0-4343-45F4-A0AA-BB7E8CCF334F}
 		{2794FD11-F9A6-4145-92DE-A05F5A2E6361} = {3DBD91F0-4343-45F4-A0AA-BB7E8CCF334F}
 		{43DF8660-74E7-4371-BEC3-602E2E6481B5} = {3DBD91F0-4343-45F4-A0AA-BB7E8CCF334F}
+		{DF9092D4-42CA-4532-BB96-EB5BBFA8308A} = {3DBD91F0-4343-45F4-A0AA-BB7E8CCF334F}
 	EndGlobalSection
 EndGlobal

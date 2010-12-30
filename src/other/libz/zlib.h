@@ -1561,6 +1561,7 @@ ZEXTERN int ZEXPORT inflateBackInit_ OF((z_streamp strm, int windowBits,
  * both are true, the application gets the *64 functions, and the regular
  * functions are changed to 64 bits) -- in case these are set on systems
  * without large file support, _LFS64_LARGEFILE must also be true
+ */
 #if defined(_LARGEFILE64_SOURCE) && _LFS64_LARGEFILE-0
    ZEXTERN gzFile ZEXPORT gzopen64 OF((const char *, const char *));
    ZEXTERN z_off64_t ZEXPORT gzseek64 OF((gzFile, z_off64_t, int));
@@ -1569,7 +1570,6 @@ ZEXTERN int ZEXPORT inflateBackInit_ OF((z_streamp strm, int windowBits,
    ZEXTERN uLong ZEXPORT adler32_combine64 OF((uLong, uLong, z_off64_t));
    ZEXTERN uLong ZEXPORT crc32_combine64 OF((uLong, uLong, z_off64_t));
 #endif
- */
 
 #if !defined(ZLIB_INTERNAL) && _FILE_OFFSET_BITS-0 == 64 && _LFS64_LARGEFILE-0
 #  define gzopen gzopen64

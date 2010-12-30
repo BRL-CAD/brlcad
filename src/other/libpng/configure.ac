@@ -42,6 +42,7 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 LT_INIT([win32-dll])
+LT_INIT([win32-dll])
 
 # Checks for header files.
 AC_HEADER_STDC

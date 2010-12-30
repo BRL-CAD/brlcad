@@ -2,8 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="libz"
-	ProjectGUID="{02BD806D-906C-4B4A-98CA-165337BCD533}"
+	Name="libtie"
+	ProjectGUID="{43DF8660-74E7-4371-BEC3-602E2E6481B5}"
+	RootNamespace="libtie"
 	>
 	<Platforms>
 		<Platform
@@ -44,26 +45,26 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/libz.tlb"
+				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/libtie.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;ZLIB_DLL;BUILD_zlibtcl;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;PACKAGE_NAME=\&quot;libz\&quot;;VERSION=\&quot;1.2.1\&quot;;_CRT_SECURE_NO_WARNINGS"
+				AdditionalIncludeDirectories="../../../src/other/tcl/win;../../../src/other/tcl/generic;../../../include;../../../src/adrt/libtie/libtie;../../../src/adrt/libtie;../../../src/other/libz"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;BU_EXPORT_DLL;TIEBUILD;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/libz.pch"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/libtie.pch"
 				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
 				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
 				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
-				WarningLevel="0"
+				WarningLevel="3"
 				SuppressStartupBanner="true"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="0"
@@ -82,13 +83,14 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libz.dll"
+				AdditionalDependencies="tcl85.lib libz.lib libpng.lib libbu.lib"
+				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libtie.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/libz.pdb"
-				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/libz.lib"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/libtie.pdb"
+				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/libtie.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -114,7 +116,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;libz.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;libtie.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -145,22 +147,22 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/libz.tlb"
+				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/libtie.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;ZLIB_DLL;BUILD_zlibtcl;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;PACKAGE_NAME=\&quot;libz\&quot;;VERSION=\&quot;1.2.1\&quot;;_CRT_SECURE_NO_WARNINGS"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libpng;../../../src/other/libz;../../../src/tie/libtie;../../../src/tie/librender;../../../src/tie"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;BU_EXPORT_DLL;TIEBUILD;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/libz.pch"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/libtie.pch"
 				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
 				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
 				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
@@ -183,13 +185,14 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libz.dll"
+				AdditionalDependencies="tcl85.lib libz.lib libpng.lib libbu.lib"
+				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libtie.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall$(PlatformName)/lib"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/libz.pdb"
-				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/libz.lib"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/libtie.pdb"
+				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/libtie.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -215,7 +218,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall$(PlatformName)\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;libz.lib ..\..\..\brlcadInstall$(PlatformName)\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall$(PlatformName)\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;libtie.lib ..\..\..\brlcadInstall$(PlatformName)\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
@@ -227,63 +230,19 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
-				RelativePath="..\..\..\src\other\libz\adler32.c"
+				RelativePath="..\..\..\src\adrt\libtie\tie0.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libz\compress.c"
+				RelativePath="..\..\..\src\adrt\libtie\tie1.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libz\crc32.c"
+				RelativePath="..\..\..\src\adrt\libtie\tie_kdtree0.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libz\deflate.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libz\gzclose.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libz\gzlib.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libz\gzread.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libz\gzwrite.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libz\infback.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libz\inffast.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libz\inflate.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libz\inftrees.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libz\trees.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libz\uncompr.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libz\zutil.c"
+				RelativePath="..\..\..\src\adrt\libtie\tie_kdtree1.c"
 				>
 			</File>
 		</Filter>

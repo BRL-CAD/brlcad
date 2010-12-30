@@ -62,17 +62,19 @@ pkgconfig_DATA = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.pc
 EXTRA_DIST= \
 	ANNOUNCE CHANGES INSTALL LICENSE README TODO \
 	pngtest.png pngbar.png pngnow.png pngbar.jpg autogen.sh \
-	${srcdir}/projects/visualc6/* \
-	${srcdir}/projects/visualc71/* \
-	${srcdir}/projects/xcode/* \
-	${srcdir}/scripts/* \
-	${srcdir}/contrib/gregbook/* \
-	${srcdir}/contrib/pngminim/* \
-	${srcdir}/contrib/pngminus/* \
-	${srcdir}/contrib/pngsuite/* \
-	${srcdir}/contrib/visupng/* \
+	projects/visualc6 \
+	projects/visualc71 \
+	projects/vstudio \
+	projects/xcode \
+	scripts \
+	contrib/gregbook \
+	contrib/pngminim \
+	contrib/pngminus \
+	contrib/pngsuite \
+	contrib/visupng \
 	$(TESTS) \
-	example.c libpng-*.txt
+	CMakeLists.txt \
+	example.c libpng-1.4.5.txt
 
 CLEANFILES= pngout.png libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.pc libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@-config libpng.vers \
 libpng.sym

@@ -10,17 +10,12 @@ AM_CFLAGS = \
 
 lib_LTLIBRARIES = libtie.la librender.la
 
-libtie_la_LIBADD = libtie0.la libtie1.la ${BU} ${BU_LIBS}
-libtie_la_SOURCES =
-
-SOURCES = libtie/tie.c libtie/tie_kdtree.c
-libtie0_la_SOURCES = $(SOURCES)
-libtie1_la_SOURCES = $(SOURCES)
-
-libtie0_la_CFLAGS = -DTIE_PRECISION=0
-libtie1_la_CFLAGS = -DTIE_PRECISION=1
-
-noinst_LTLIBRARIES = libtie0.la libtie1.la
+libtie_la_LIBADD = ${BU} ${BU_LIBS}
+libtie_la_SOURCES = \
+	libtie/tie0.c \
+	libtie/tie1.c \
+	libtie/tie_kdtree0.c \
+	libtie/tie_kdtree1.c
 
 librender_la_SOURCES = \
 	load.c \
@@ -96,6 +91,8 @@ EXTRA_DIST = \
 	isst.h \
 	isst.tcl \
 	isst_tcltk.c \
+	libtie/tie.c \
+	libtie/tie_kdtree.c \
 	master/compnet.h \
 	master/master.h \
 	master/tienet_master.c \

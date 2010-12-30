@@ -2,8 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="libadrt"
-	ProjectGUID="{43DF8660-74E7-4371-BEC3-602E2E6481B5}"
+	Name="librender"
+	ProjectGUID="{DF9092D4-42CA-4532-BB96-EB5BBFA8308A}"
+	RootNamespace="librender"
 	>
 	<Platforms>
 		<Platform
@@ -44,7 +45,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/libadrt.tlb"
+				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/librender.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -59,7 +60,7 @@
 				EnableFunctionLevelLinking="true"
 				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/libadrt.pch"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/librender.pch"
 				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
 				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
 				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
@@ -82,14 +83,14 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl85.lib libz.lib libpng.lib libbu.lib libbn.lib librt.lib libgcv.lib"
-				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libadrt.dll"
+				AdditionalDependencies="tcl85.lib libz.lib libpng.lib libbu.lib libbn.lib librt.lib libgcv.lib libtie.lib"
+				OutputFile=".\$(PlatformName)\$(ConfigurationName)/librender.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/libadrt.pdb"
-				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/libadrt.lib"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/librender.pdb"
+				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/librender.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -115,7 +116,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;libadrt.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;librender.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -146,14 +147,14 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/libadrt.tlb"
+				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/librender.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libpng;../../../src/other/libz;../../../src/adrt/libtie;../../../src/adrt/librender;../../../src/adrt"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libpng;../../../src/other/libz;../../../src/render/libtie;../../../src/render/librender;../../../src/render"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;BU_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
@@ -161,7 +162,7 @@
 				EnableFunctionLevelLinking="true"
 				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/libadrt.pch"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/librender.pch"
 				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
 				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
 				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
@@ -184,14 +185,14 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl85.lib libz.lib libpng.lib libbu.lib libbn.lib librt.lib libgcv.lib"
-				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libadrt.dll"
+				AdditionalDependencies="tcl85.lib libz.lib libpng.lib libbu.lib libbn.lib librt.lib libgcv.lib libtie.lib"
+				OutputFile=".\$(PlatformName)\$(ConfigurationName)/librender.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall$(PlatformName)/lib"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/libadrt.pdb"
-				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/libadrt.lib"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/librender.pdb"
+				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/librender.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -217,7 +218,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall$(PlatformName)\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;libadrt.lib ..\..\..\brlcadInstall$(PlatformName)\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall$(PlatformName)\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;librender.lib ..\..\..\brlcadInstall$(PlatformName)\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
@@ -258,14 +259,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\adrt\librender\hit.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\adrt\load.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\adrt\load_g.c"
 				>
 			</File>
 			<File
@@ -330,14 +323,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\adrt\librender\texture_stack.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\adrt\libtie\tie.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\adrt\libtie\tie_kdtree.c"
 				>
 			</File>
 		</Filter>

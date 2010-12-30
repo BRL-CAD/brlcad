@@ -47,13 +47,13 @@
 #endif
 
 #define TIE_DEGENERATE_THRESHOLD 0.0001
-TIE_VAL(int tie_check_degenerate) = 1;
 
 /*************************************************************
  **************** PRIVATE FUNCTIONS **************************
  *************************************************************/
 
-static void tie_tri_prep(tie_t *tie)
+static void
+TIE_VAL(tie_tri_prep)(tie_t *tie)
 {
     TIE_3 v1, v2, u, v;
     unsigned int i, i1, i2;
@@ -170,7 +170,7 @@ void TIE_VAL(tie_prep)(tie_t *tie)
     tie_kdtree_prep (tie);
 
 /* Prep all the triangles */
-    tie_tri_prep (tie);
+    TIE_VAL(tie_tri_prep) (tie);
     bu_log("total tri: %ld\n", tie->tri_num);
 }
 
