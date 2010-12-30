@@ -81,7 +81,7 @@ Do_showmats(struct db_i			*dbip,
 }
 
 static int
-Run_showmats(struct ged *gedp, char *path, int aflag)
+Run_showmats(struct ged *gedp, const char *path, int aflag)
 {
     struct showmats_data sm_data;
     char *parent;

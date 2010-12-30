@@ -2678,7 +2678,7 @@ maxEdge(struct rt_bot_internal *bot)
  * Returns -1 on error.
  */
 fastf_t
-rt_bot_propget(struct rt_bot_internal *bot, char *property)
+rt_bot_propget(struct rt_bot_internal *bot, const char *property)
 {
     size_t len;
 

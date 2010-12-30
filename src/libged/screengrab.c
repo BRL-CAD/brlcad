@@ -93,7 +93,7 @@ ged_screen_grab(struct ged *gedp,int argc, const char *argv[])
 
     for (i = 0; i < height; ++i) {
 	rows[i] = (unsigned char *)(idata + ((height-i-1)*bytes_per_line));
-	bu_image_save_writeline(bif, i, (const unsigned char *)rows[i]);
+	bu_image_save_writeline(bif, i, (unsigned char *)rows[i]);
     }
 
     if (bif != NULL)
