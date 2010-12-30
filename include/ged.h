@@ -707,7 +707,7 @@ GED_EXPORT BU_EXTERN(int	wdb_rt_gettrees_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_dump_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
@@ -802,7 +802,7 @@ GED_EXPORT BU_EXTERN(int	wdb_stub_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_region_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
@@ -959,11 +959,6 @@ GED_EXPORT BU_EXTERN(int wdb_bot_smooth_cmd,
 		     int argc,
 		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_importFg4Section_cmd,
-		    (struct rt_wdb *wdbp,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char *argv[]));
-GED_EXPORT BU_EXTERN(int	wdb_stub_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,

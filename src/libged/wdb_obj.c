@@ -1484,7 +1484,7 @@ int
 wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
 		    Tcl_Interp *interp,
 		    int argc,
-		    char *argv[])
+		    const char *argv[])
 {
     struct rt_i *rtip;
     struct application *ap;
@@ -1930,7 +1930,7 @@ int
 wdb_stub_cmd(struct rt_wdb *UNUSED(wdbp),
 	     Tcl_Interp *interp,
 	     int argc,
-	     char *argv[])
+	     const char *argv[])
 {
     if (argc != 1) {
 	struct bu_vls vls;
