@@ -74,30 +74,6 @@ FILE *tabptr;
 char ctemp[7];
 
 
-HIDDEN int
-id_compare(const void *p1, const void *p2)
-{
-    int id1, id2;
-
-    id1 = atoi(*(char **)p1);
-    id2 = atoi(*(char **)p2);
-
-    return id1 - id2;
-}
-
-
-HIDDEN int
-reg_compare(const void *p1, const void *p2)
-{
-    char *reg1, *reg2;
-
-    reg1 = strchr(*(char **)p1, '/');
-    reg2 = strchr(*(char **)p2, '/');
-
-    return strcmp(reg1, reg2);
-}
-
-
 /*
  *
  * E D I T I T
@@ -551,83 +527,6 @@ struct id_to_names {
     int id;				/* starting id (i.e. region id or air code) */
     struct id_names headName;	/* head of list of names */
 };
-
-
-/* F _ W H I C H _ S H A D E R
- *
- * Finds all combinations using the given shaders
- */
-int
-f_which_shader(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
-{
-    int j;
-    struct directory *dp;
-    struct rt_db_internal intern;
-    struct rt_comb_internal *comb;
-    int sflag;
-    int myArgc;
-    const char **myArgv;
-
-    CHECK_DBI_NULL;
-
-    if (setjmp(jmp_env) == 0)
-	(void)signal(SIGINT, sig3);  /* allow interrupts */
-    else
-	return TCL_OK;
-
-    myArgc = argc;
-    myArgv = argv;
-    sflag = 0;
-
-    if (myArgc > 1 && strcmp(myArgv[1], "-s") == 0) {
-	--myArgc;
-	++myArgv;
-	sflag = 1;
-    }
-
-    if (myArgc < 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help which_shader");
-	Tcl_Eval(interpreter, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	(void)signal(SIGINT, SIG_IGN);
-	return TCL_ERROR;
-    }
-
-    for (j=1; j<myArgc; j++) {
-
-	if (!sflag)
-	    Tcl_AppendResult(interpreter, "Combination[s] with shader ", myArgv[j],
-			     ":\n", (char *)NULL);
-
-	/* Examine all COMB nodes */
-	FOR_ALL_DIRECTORY_START(dp, dbip) {
-	    if (!(dp->d_flags & DIR_COMB))
-		continue;
-
-	    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-		(void)signal(SIGINT, SIG_IGN);
-		TCL_READ_ERR_return;
-	    }
-	    comb = (struct rt_comb_internal *)intern.idb_ptr;
-
-	    if (!strstr(bu_vls_addr(&comb->shader), myArgv[j]))
-		continue;
-
-	    if (sflag)
-		Tcl_AppendElement(interpreter, dp->d_namep);
-	    else
-		Tcl_AppendResult(interpreter, "   ", dp->d_namep,
-				 "\n", (char *)NULL);
-	    intern.idb_meth->ft_ifree(&intern);
-	} FOR_ALL_DIRECTORY_END;
-    }
-
-    (void)signal(SIGINT, SIG_IGN);
-    return TCL_OK;
-}
 
 
 HIDDEN int

@@ -215,48 +215,6 @@ wrt_point(mat_t out, const mat_t change, const mat_t in, const point_t point)
 
 
 /*
- * W R T _ P O I N T _ D I R E C
- *
- * Given a model-space transformation matrix "change", return a matrix
- * which applies the change with-respect-to given "point" and "direc".
- */
-void
-wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t point, const vect_t direc)
-{
-    static mat_t t1;
-    static mat_t pt_to_origin, origin_to_pt;
-    static mat_t d_to_zaxis, zaxis_to_d;
-    static vect_t zaxis;
-
-    /* build "point to origin" matrix */
-    MAT_IDN(pt_to_origin);
-    MAT_DELTAS_VEC_NEG(pt_to_origin, point);
-
-    /* build "origin to point" matrix */
-    MAT_IDN(origin_to_pt);
-    MAT_DELTAS_VEC_NEG(origin_to_pt, point);
-
-    /* build "direc to zaxis" matrix */
-    VSET(zaxis, 0.0, 0.0, 1.0);
-    bn_mat_fromto(d_to_zaxis, direc, zaxis);
-
-    /* build "zaxis to direc" matrix */
-    bn_mat_inv(zaxis_to_d, d_to_zaxis);
-
-    /* apply change matrix...
-     * t1 = change * d_to_zaxis * pt_to_origin * in
-     */
-    bn_mat_mul4(t1, change, d_to_zaxis, pt_to_origin, in);
-
-    /* apply origin_to_pt matrix:
-     * out = origin_to_pt * zaxis_to_d *
-     * change * d_to_zaxis * pt_to_origin * in
-     */
-    bn_mat_mul3(out, origin_to_pt, zaxis_to_d, t1);
-}
-
-
-/*
  * F _ M A T P I C K
  *
  * When in O_PATH state, select the arc which contains the matrix

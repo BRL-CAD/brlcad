@@ -173,19 +173,6 @@ no_op(struct application *UNUSED(ap), struct partition *UNUSED(ph), struct regio
 }
 
 
-/*
- * B U I L D _ P A T H _ N A M E _ O F _ S O L I D ()
- *
- * Builds the slash-separated path name for a struct solid.
- */
-void
-build_path_name_of_solid(struct bu_vls *vp, struct solid *sp)
-{
-    bu_vls_trunc(vp, 0);
-    db_path_to_vls(vp, &sp->s_fullpath);
-}
-
-
 #ifdef OLD_RPT
 /*
  * R P T _ S O L I D S

@@ -197,25 +197,6 @@ f_prefix(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 }
 
 
-HIDDEN void
-Change_name(struct db_i *dbi, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t old_ptr, genptr_t new_ptr)
-{
-    char *old_name, *new_name;
-
-    RT_CK_DBI(dbi);
-    RT_CK_TREE(comb_leaf);
-
-    old_name = (char *)old_ptr;
-    new_name = (char *)new_ptr;
-
-    if (strcmp(comb_leaf->tr_l.tl_name, old_name))
-	return;
-
-    bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");
-    comb_leaf->tr_l.tl_name = bu_strdup(new_name);
-}
-
-
 /*
  * Local Variables:
  * mode: C

@@ -48,16 +48,6 @@ mat_t identity;
 extern unsigned char geometry_default_color[];		/* defined in dodraw.c */
 
 
-/* Just a test function for testing the DM_DRAW callback - should go away
- * and be replaced with NULL if a vlist is already present once testing is
- * complete.
- */
-struct bn_vlist * 
-return_vlist(void *data) {
-    return (struct bn_vlist *)data;
-}
-
-
 /*
  * P E R S P _ M A T
  *
@@ -676,30 +666,6 @@ createDListALL(struct solid *sp)
     }
 
     curr_dm_list = save_dlp;
-}
-
-
-/*
- * Call createDListALL for all solids. See createDListALL above
- * for a description.
- */
-void
-createDListsAll(struct bu_list *hdlp)
-{
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
-    struct solid *sp;
-
-    gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
-    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    createDListALL(sp);
-	}
-
-	gdlp = next_gdlp;
-    }
 }
 
 

@@ -336,23 +336,6 @@ mmenu_select(int pen_y, int do_func)
 
 
 /*
- * M M E N U _ P N T R
- *
- * Routine to allow user to reset the arrow to any menu & item desired.
- * Example:  menu_pntr(MENU_L1, 3).
- * The arrow can always be eliminated by setting menu_state->ms_flag=0, view_state->flag=1.
- */
-void
-mmenu_pntr(int menu, int item)
-{
-    menu_state->ms_cur_menu = menu;
-    menu_state->ms_cur_item = item;
-    if (menu_state->ms_cur_menu >= 0)
-	menu_state->ms_flag = 1;
-}
-
-
-/*
  * Local Variables:
  * mode: C
  * tab-width: 8

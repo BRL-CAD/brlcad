@@ -106,32 +106,6 @@ output_catch(genptr_t clientdata, genptr_t str)
 
 
 /**
- * S T A R T _ C A T C H I N G _ O U T P U T
- *
- * Sets up hooks to bu_log so that all output is caught in the given
- * vls.
- *
- */
-void
-start_catching_output(struct bu_vls *vp)
-{
-    bu_log_add_hook(output_catch, (genptr_t)vp);
-}
-
-
-/**
- * S T O P _ C A T C H I N G _ O U T P U T
- *
- * Turns off the output catch hook.
- */
-void
-stop_catching_output(struct bu_vls *vp)
-{
-    bu_log_delete_hook(output_catch, (genptr_t)vp);
-}
-
-
-/**
  * G U I _ O U T P U T
  *
  * Used as a hook for bu_log output.  Sends output to the Tcl
@@ -710,27 +684,6 @@ cmd_output_hook(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc
 int
 cmd_nop(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), const char *UNUSED(argv[]))
 {
-    return TCL_OK;
-}
-
-
-/**
- * C M D _ G E T _ P T R
- *
- * Returns an appropriately-formatted string that can later be
- * reinterpreted (using atol() and a cast) as a a pointer.
- */
-int
-cmd_get_ptr(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
-{
-    char buf[128] = {0};
-
-    if (dbip == DBI_NULL || argc < 0 || !argv) {
-	return TCL_ERROR;
-    }
-
-    sprintf(buf, "%llu", (unsigned long long)(uintptr_t)dbip);
-    Tcl_AppendResult(interpreter, buf, (char *)NULL);
     return TCL_OK;
 }
 

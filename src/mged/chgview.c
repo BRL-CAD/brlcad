@@ -660,33 +660,6 @@ f_regdebug(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 
 
 /*
- * D O _ L I S T
- */
-void
-do_list(struct bu_vls *outstrp, struct directory *dp, int verbose)
-{
-    int id;
-    struct rt_db_internal intern;
-
-    if (dbip == DBI_NULL)
-	return;
-
-    if ((id = rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource)) < 0) {
-	Tcl_AppendResult(INTERP, "rt_db_get_internal(", dp->d_namep,
-			 ") failure\n", (char *)NULL);
-	return;
-    }
-
-    bu_vls_printf(outstrp, "%s:  ", dp->d_namep);
-
-    if (rt_functab[id].ft_describe(outstrp, &intern,
-				   verbose, base2local, &rt_uniresource, dbip) < 0)
-	Tcl_AppendResult(INTERP, dp->d_namep, ": describe error\n", (char *)NULL);
-    rt_db_free_internal(&intern);
-}
-
-
-/*
  * To return all the free "struct bn_vlist" and "struct solid" items
  * lurking on their respective freelists, back to bu_malloc().
  * Primarily as an aid to tracking memory leaks.
@@ -875,104 +848,6 @@ f_refresh(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
     view_state->vs_flag = 1;
     return TCL_OK;
-}
-
-
-/*
- * P R _ S C H A I N
- *
- * Given a pointer to a member of the circularly linked list of solids
- * (typically the head), chase the list and print out the information
- * about each solid structure.
- */
-void
-pr_schain(struct solid *startp, int lvl)
-
-    /* debug level */
-{
-    struct solid *sp;
-    struct bn_vlist *vp;
-    int nvlist;
-    int npts;
-    struct bu_vls vls;
-
-    if (dbip == DBI_NULL)
-	return;
-
-    bu_vls_init(&vls);
-
-    if (setjmp(jmp_env) == 0)
-	(void)signal(SIGINT, sig3);
-    else {
-	bu_vls_free(&vls);
-	return;
-    }
-
-    FOR_ALL_SOLIDS(sp, &startp->l) {
-	if (lvl <= -2) {
-	    /* print only leaves */
-	    bu_vls_printf(&vls, "%s ", LAST_SOLID(sp)->d_namep);
-	    continue;
-	}
-
-	if (lvl != -1)
-	    bu_vls_printf(&vls, "%s", sp->s_flag == UP ? "VIEW " : "-no- ");
-	db_path_to_vls(&vls, &sp->s_fullpath);
-	if ((lvl != -1) && (sp->s_iflag == UP))
-	    bu_vls_printf(&vls, " ILLUM");
-
-	bu_vls_printf(&vls, "\n");
-
-	if (lvl <= 0) continue;
-
-	/* convert to the local unit for printing */
-	bu_vls_printf(&vls, "  cent=(%.3f,%.3f,%.3f) sz=%g ",
-		      sp->s_center[X]*base2local,
-		      sp->s_center[Y]*base2local,
-		      sp->s_center[Z]*base2local,
-		      sp->s_size*base2local);
-	bu_vls_printf(&vls, "reg=%d\n", sp->s_regionid);
-	bu_vls_printf(&vls, "  basecolor=(%d,%d,%d) color=(%d,%d,%d)%s%s%s\n",
-		      sp->s_basecolor[0],
-		      sp->s_basecolor[1],
-		      sp->s_basecolor[2],
-		      sp->s_color[0],
-		      sp->s_color[1],
-		      sp->s_color[2],
-		      sp->s_uflag?" U":"",
-		      sp->s_dflag?" D":"",
-		      sp->s_cflag?" C":"");
-
-	if (lvl <= 1) continue;
-
-	/* Print the actual vector list */
-	nvlist = 0;
-	npts = 0;
-	for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-	    int i;
-	    int nused = vp->nused;
-	    int *cmd = vp->cmd;
-	    point_t *pt = vp->pt;
-
-	    BN_CK_VLIST(vp);
-	    nvlist++;
-	    npts += nused;
-	    if (lvl <= 2) continue;
-
-	    for (i = 0; i < nused; i++, cmd++, pt++) {
-		bu_vls_printf(&vls, "  %s (%g, %g, %g)\n",
-			      rt_vlist_cmd_descriptions[*cmd],
-			      V3ARGS(*pt));
-	    }
-	}
-
-	bu_vls_printf(&vls, "  %d vlist structures, %d pts\n", nvlist, npts);
-	bu_vls_printf(&vls, "  %d pts (via rt_ck_vlist)\n", rt_ck_vlist(&(sp->s_vlist)));
-    }
-
-    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
-    bu_vls_free(&vls);
-    (void)signal(SIGINT, SIG_IGN);
 }
 
 
@@ -2985,23 +2860,6 @@ usejoy(double xangle, double yangle, double zangle)
 
 
 /*
- * A B S V I E W _ V
- *
- * The "angle" ranges from -1 to +1.
- * Assume rotation around view center, for now.
- */
-void
-absview_v(const fastf_t *ang)
-{
-    point_t rad;
-
-    VSCALE(rad, ang, bn_pi);	/* range from -pi to +pi */
-    bn_mat_angles_rad(view_state->vs_gvp->gv_rotation, rad[X], rad[Y], rad[Z]);
-    new_mats();
-}
-
-
-/*
  * S E T V I E W
  *
  * Set the view.  Angles are DOUBLES, in degrees.
@@ -3094,54 +2952,6 @@ slewview(vect_t view_pos)
 
 
 /*
- * F _ M O D E L 2 V I E W _ L U
- *
- * Given a point in model coordinates (local units),
- * convert it to view coordinates (local units).
- */
-int
-f_model2view_lu(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
-{
-    struct bu_vls vls;
-    fastf_t f;
-    point_t view_pt;
-    point_t model_pt;
-
-    CHECK_DBI_NULL;
-
-    if (argc != 4)
-	goto bad;
-
-    if (sscanf(argv[1], "%lf", &model_pt[X]) != 1)
-	goto bad;
-    if (sscanf(argv[2], "%lf", &model_pt[Y]) != 1)
-	goto bad;
-    if (sscanf(argv[3], "%lf", &model_pt[Z]) != 1)
-	goto bad;
-
-    VSCALE(model_pt, model_pt, local2base);
-    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, model_pt);
-    f = view_state->vs_gvp->gv_scale * base2local;
-    VSCALE(view_pt, view_pt, f);
-
-    bu_vls_init(&vls);
-    bn_encode_vect(&vls, view_pt);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-    bu_vls_free(&vls);
-
-    return TCL_OK;
-
- bad:
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helpdevel model2view_lu");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-}
-
-
-/*
  * F _ V I E W 2 M O D E L _ L U
  *
  * Given a point in view coordinates (local units),
@@ -3182,117 +2992,6 @@ f_view2model_lu(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
  bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helpdevel view2model_lu");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-}
-
-
-/*
- * F _ M O D E L 2 G R I D _ L U
- *
- * Given a point in model coordinates (local units),
- * convert it to grid coordinates (local units).
- */
-int
-f_model2grid_lu(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
-{
-    struct bu_vls vls;
-    fastf_t f;
-    point_t view_pt;
-    point_t model_pt;
-    point_t mo_view_pt;           /* model origin in view space */
-    point_t diff;
-
-    CHECK_DBI_NULL;
-
-
-    if (argc != 4)
-	goto bad;
-
-    VSETALL(model_pt, 0.0);
-    MAT4X3PNT(mo_view_pt, view_state->vs_gvp->gv_model2view, model_pt);
-
-    if (sscanf(argv[1], "%lf", &model_pt[X]) != 1)
-	goto bad;
-    if (sscanf(argv[2], "%lf", &model_pt[Y]) != 1)
-	goto bad;
-    if (sscanf(argv[3], "%lf", &model_pt[Z]) != 1)
-	goto bad;
-
-    VSCALE(model_pt, model_pt, local2base);
-    MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, model_pt);
-
-    VSUB2(diff, view_pt, mo_view_pt);
-    f = view_state->vs_gvp->gv_scale * base2local;
-    VSCALE(diff, diff, f);
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "%.15e %.15e", diff[X], diff[Y]);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-
-    bu_vls_free(&vls);
-    return TCL_OK;
-
- bad:
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helpdevel model2grid_lu");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-}
-
-
-/*
- * F _ G R I D 2 M O D E L _ L U
- *
- * Given a point in grid coordinates (local units),
- * convert it to model coordinates (local units).
- */
-int
-f_grid2model_lu(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
-{
-    struct bu_vls vls;
-    fastf_t f;
-    point_t view_pt;
-    point_t model_pt;
-    point_t mo_view_pt;           /* model origin in view space */
-    point_t diff;
-
-    CHECK_DBI_NULL;
-
-
-    if (argc != 3)
-	goto bad;
-
-    if (sscanf(argv[1], "%lf", &diff[X]) != 1)
-	goto bad;
-    if (sscanf(argv[2], "%lf", &diff[Y]) != 1)
-	goto bad;
-    diff[Z] = 0.0;
-
-    f = 1.0 / (view_state->vs_gvp->gv_scale * base2local);
-    VSCALE(diff, diff, f);
-
-    VSETALL(model_pt, 0.0);
-    MAT4X3PNT(mo_view_pt, view_state->vs_gvp->gv_model2view, model_pt);
-
-    VADD2(view_pt, mo_view_pt, diff);
-    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
-    VSCALE(model_pt, model_pt, base2local);
-
-    bu_vls_init(&vls);
-    bn_encode_vect(&vls, model_pt);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-
-    bu_vls_free(&vls);
-    return TCL_OK;
-
- bad:
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helpdevel grid2model_lu");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -3345,56 +3044,6 @@ f_view2grid_lu(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, cons
  bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helpdevel view2grid_lu");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-}
-
-
-/*
- * F _ G R I D 2 V I E W _ L U
- *
- * Given a point in grid coordinates (local units),
- * convert it to view coordinates (local units).
- */
-int
-f_grid2view_lu(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
-{
-    struct bu_vls vls;
-    fastf_t f;
-    point_t view_pt;
-    point_t model_pt;
-    point_t mo_view_pt;           /* model origin in view space */
-    point_t diff;
-
-    CHECK_DBI_NULL;
-
-    if (argc != 3)
-	goto bad;
-
-    if (sscanf(argv[1], "%lf", &diff[X]) != 1)
-	goto bad;
-    if (sscanf(argv[2], "%lf", &diff[Y]) != 1)
-	goto bad;
-    diff[Z] = 0.0;
-
-    VSETALL(model_pt, 0.0);
-    MAT4X3PNT(mo_view_pt, view_state->vs_gvp->gv_model2view, model_pt);
-    f = view_state->vs_gvp->gv_scale * base2local;
-    VSCALE(mo_view_pt, mo_view_pt, f);
-    VADD2(view_pt, mo_view_pt, diff);
-
-    bu_vls_init(&vls);
-    bn_encode_vect(&vls, view_pt);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-
-    bu_vls_free(&vls);
-    return TCL_OK;
-
- bad:
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helpdevel grid2view_lu");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -4444,17 +4093,6 @@ mged_vscale(fastf_t sfactor)
 
     new_mats();
     return TCL_OK;
-}
-
-
-int
-mged_scale(fastf_t sfactor)
-{
-    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
-	mged_variables->mv_transform == 'e')
-	return mged_escale(sfactor);
-
-    return mged_vscale(sfactor);
 }
 
 

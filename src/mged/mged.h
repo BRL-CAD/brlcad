@@ -179,7 +179,6 @@ extern void mged_global_variable_teardown(Tcl_Interp *interpreter); /* cmd.c */
 extern void dir_build();
 extern void buildHrot(fastf_t *, double, double, double);
 extern void dozoom(int which_eye);
-extern void pr_schain(struct solid *startp, int lvl);
 #ifndef _WIN32
 extern void itoa(int n, char *s, int w);
 #endif
@@ -230,17 +229,11 @@ BU_EXTERN(int not_state, (int desired, char *str));
 BU_EXTERN(int chg_state, (int from, int to, char *str));
 BU_EXTERN(void state_err, (char *str));
 
-BU_EXTERN(void do_list, (struct bu_vls *outstrp, struct directory *dp, int verbose));
 BU_EXTERN(int invoke_db_wrapper, (Tcl_Interp *interpreter, int argc, const char *argv[]));
 
 /* history.c */
 void history_record(struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status); /* Either CMD_OK or CMD_BAD */
 void history_setup(void);
-
-/* cmd.c */
-extern void start_catching_output(struct bu_vls *vp);
-extern void stop_catching_output(struct bu_vls *vp);
-
 
 /* defined in usepen.c */
 #define RARROW   001
@@ -488,23 +481,6 @@ void cs_set_dirty_flag(void);
 /* columns.c */
 void vls_col_item(struct bu_vls *str, const char *cp);
 void vls_col_eol(struct bu_vls *str);
-void vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, size_t num_in_list);
-void vls_line_dpp(
-    struct bu_vls *vls,
-    struct directory **list_of_names,
-    int num_in_list,
-    int aflag,	/* print all objects */
-    int cflag,	/* print combinations */
-    int rflag,	/* print regions */
-    int sflag);	/* print solids */
-void vls_long_dpp(
-    struct bu_vls *vls,
-    struct directory **list_of_names,
-    int num_in_list,
-    int aflag,	/* print all objects */
-    int cflag,	/* print combinations */
-    int rflag,	/* print regions */
-    int sflag);	/* print solids */
 
 /* dir.c */
 void dir_summary(int flag);
@@ -537,7 +513,6 @@ void add_solid_path_to_result(Tcl_Interp *interpreter, struct solid *sp);
 void createDList(struct solid *sp);
 void createDLists(struct bu_list *hdlp);
 void createDListALL(struct solid *sp);
-void createDListsAll(struct bu_list *hsp);
 void freeDListsAll(unsigned int dlist, int range);
 
 /* edarb.c */
@@ -580,7 +555,6 @@ extern void predictor_init(void);
 void buildHrot(mat_t mat, double alpha, double beta, double ggamma);
 void wrt_view(mat_t out, const mat_t change, const mat_t in);
 void wrt_point(mat_t out, const mat_t change, const mat_t in, const point_t point);
-void wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t point, const vect_t direc);
 
 /* tedit.c */
 int get_editor_string(struct bu_vls *editstring);
@@ -603,10 +577,6 @@ void rb_set_dirty_flag(void);
 
 /* track.c */
 int wrobj(char name[], int flags);
-
-/* red.c */
-int writecomb(const struct rt_comb_internal *comb, const char *name);
-int checkcomb(void);
 
 /* edsol.c */
 extern int inpara;	/* parameter input from keyboard flag */

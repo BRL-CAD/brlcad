@@ -188,36 +188,6 @@ f_journal(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
 
 /*
- * F _ D E L A Y
- *
- * Uses select to delay for the specified amount of seconds and
- * microseconds.
- */
-
-int
-f_delay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
-{
-    struct timeval tv;
-
-    if (argc < 3 || 3 < argc) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help delay");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    tv.tv_sec = atoi(argv[1]);
-    tv.tv_usec = atoi(argv[2]);
-    select(0, NULL, NULL, NULL, &tv);
-
-    return TCL_OK;
-}
-
-
-/*
  * F _ H I S T O R Y
  *
  * Prints out the command history, either to bu_log or to a file.

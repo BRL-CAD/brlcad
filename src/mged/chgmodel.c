@@ -375,55 +375,6 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 }
 
 
-static int frac_stat;
-void
-mged_add_nmg_part(char *newname, struct model *m)
-{
-    struct rt_db_internal new_intern;
-    struct directory *new_dp;
-    struct nmgregion *r;
-
-    if (dbip == DBI_NULL)
-	return;
-
-    if (db_lookup(dbip,  newname, LOOKUP_QUIET) != DIR_NULL) {
-	aexists(newname);
-	/* Free memory here */
-	nmg_km(m);
-	frac_stat = 1;
-	return;
-    }
-
-    if ((new_dp=db_diradd(dbip, newname, -1, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL) {
-	TCL_ALLOC_ERR;
-	return;
-    }
-
-    /* make sure the geometry/bounding boxes are up to date */
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
-	nmg_region_a(r, &mged_tol);
-
-
-    /* Export NMG as a new solid */
-    RT_INIT_DB_INTERNAL(&new_intern);
-    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    new_intern.idb_type = ID_NMG;
-    new_intern.idb_meth = &rt_functab[ID_NMG];
-    new_intern.idb_ptr = (genptr_t)m;
-
-    if (rt_db_put_internal(new_dp, dbip, &new_intern, &rt_uniresource) < 0) {
-	/* Free memory */
-	nmg_km(m);
-	Tcl_AppendResult(INTERP, "rt_db_put_internal() failure\n", (char *)NULL);
-	frac_stat = 1;
-	return;
-    }
-    /* Internal representation has been freed by rt_db_put_internal */
-    new_intern.idb_ptr = (genptr_t)NULL;
-    frac_stat = 0;
-}
-
-
 /*
  * F _ Q O R O T
  *
