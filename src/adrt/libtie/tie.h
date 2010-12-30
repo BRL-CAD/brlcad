@@ -83,6 +83,20 @@ typedef double tfloat;
 # error "Unknown precision"
 #endif
 
+/*
+ * The BU_EXPORT macro is unable to cope with building a windows DLL that uses
+ * exported global variables from another DLL, so we punt.
+ */
+#if WIN32
+# ifdef TIEBUILD
+#  define WINHACK __declspec(dllexport)
+# else
+#  define WINHACK __declspec(dllimport)
+# endif
+#else
+# define WINHACK
+#endif
+
 /* TCOPY(type, source base, source offset, dest base, dest offset) */
 #define TCOPY(_t, _fv, _fi, _tv, _ti) { \
 	*(_t *)&((uint8_t *)_tv)[_ti] = *(_t *)&((uint8_t *)_fv)[_fi]; }
@@ -150,7 +164,7 @@ BU_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_free), (tie_t *tie));
 BU_EXPORT BU_EXTERN(uint32_t TIE_VAL(tie_kdtree_cache_free), (tie_t *tie, void **cache));
 BU_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_cache_load), (tie_t *tie, void *cache, uint32_t size));
 BU_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_prep), (tie_t *tie));
-BU_EXPORT extern tfloat TIE_VAL(TIE_PREC);
+WINHACK extern tfloat TIE_VAL(TIE_PREC);
 
 /* compatability macros */
 #define tie_kdtree_free TIE_VAL(tie_kdtree_free)
@@ -159,7 +173,7 @@ BU_EXPORT extern tfloat TIE_VAL(TIE_PREC);
 #define tie_kdtree_prep TIE_VAL(tie_kdtree_prep)
 #define TIE_PREC TIE_VAL(TIE_PREC)
 
-BU_EXPORT extern int tie_check_degenerate;
+WINHACK extern int tie_check_degenerate;
 
 BU_EXPORT BU_EXTERN(void TIE_VAL(tie_init), (tie_t *tie, unsigned int tri_num, unsigned int kdmethod));
 BU_EXPORT BU_EXTERN(void TIE_VAL(tie_free), (tie_t *tie));
