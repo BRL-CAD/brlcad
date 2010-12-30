@@ -1,7 +1,6 @@
 # Makefile.am:
 #   Source file for Makefile.in (and hence Makefile)
 #
-ACLOCAL_AMFLAGS = -I ../../../m4
 
 PNGLIB_BASENAME= libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@
 
@@ -13,13 +12,13 @@ check_PROGRAMS= pngtest
 pngtest_SOURCES = pngtest.c
 pngtest_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
 TESTS = test-pngtest.sh
-TESTS_ENVIRONMENT= srcdir=$(srcdir) 
+TESTS_ENVIRONMENT= srcdir=$(srcdir)
 
 # man pages
 dist_man_MANS= libpng.3 libpngpf.3 png.5
 
 # generate the -config scripts if required
-binconfigs= libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@-config 
+binconfigs= libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@-config
 EXTRA_SCRIPTS= libpng-config libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@-config
 bin_SCRIPTS= @binconfigs@
 
@@ -32,19 +31,18 @@ libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES = png.c pngset.c pngget.c pngrutil
 	pngwtran.c pngmem.c pngerror.c pngpread.c \
 	png.h pngconf.h pngpriv.h
 
-# support automake 1.7+, no target-specific CPPFLAGS
-AM_CPPFLAGS = @LIBPNG_DEFINES@
+libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_CPPFLAGS = @LIBPNG_DEFINES@
 
-libpng_la_LDFLAGS = -no-undefined -export-dynamic \
+libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LDFLAGS = -no-undefined -export-dynamic \
 	-version-number @PNGLIB_MAJOR@@PNGLIB_MINOR@:@PNGLIB_RELEASE@:0
 
 if HAVE_LD_VERSION_SCRIPT
   # Versioned symbols and restricted exports
-  libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LDFLAGS = $(libpng_la_LDFLAGS) -Wl,--version-script=libpng.vers
+  libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LDFLAGS += -Wl,--version-script=libpng.vers
   libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_DEPENDENCIES = libpng.vers
 else
   # Only restricted exports when possible
-  libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LDFLAGS = $(libpng_la_LDFLAGS) -export-symbols libpng.sym
+  libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LDFLAGS += -export-symbols libpng.sym
   libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_DEPENDENCIES = libpng.sym
 endif
 
@@ -63,21 +61,18 @@ pkgconfig_DATA = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.pc
 #extra source distribution files.
 EXTRA_DIST= \
 	ANNOUNCE CHANGES INSTALL LICENSE README TODO \
-	pngtest.png pngbar.png pngnow.png pngbar.jpg \
-	projects/visualc6 \
-	projects/visualc71 \
-	projects/vstudio \
-	projects/xcode \
-	scripts \
-	contrib/gregbook \
-	contrib/pngminim \
-	contrib/pngminus \
-	contrib/pngsuite \
-	contrib/visupng \
+	pngtest.png pngbar.png pngnow.png pngbar.jpg autogen.sh \
+	${srcdir}/projects/visualc6/* \
+	${srcdir}/projects/visualc71/* \
+	${srcdir}/projects/xcode/* \
+	${srcdir}/scripts/* \
+	${srcdir}/contrib/gregbook/* \
+	${srcdir}/contrib/pngminim/* \
+	${srcdir}/contrib/pngminus/* \
+	${srcdir}/contrib/pngsuite/* \
+	${srcdir}/contrib/visupng/* \
 	$(TESTS) \
-	CMakeLists.txt \
-	new_push_process_row.c \
-	example.c libpng-1.4.3.txt
+	example.c libpng-*.txt
 
 CLEANFILES= pngout.png libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.pc libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@-config libpng.vers \
 libpng.sym
@@ -124,7 +119,7 @@ install-exec-hook:
 	cd $(DESTDIR)$(bindir); $(LN_S) $(PNGLIB_BASENAME)-config libpng-config
 	@set -x;\
 	cd $(DESTDIR)$(libdir);\
-	for ext in a la so so.@PNGLIB_MAJOR@@PNGLIB_MINOR@.@PNGLIB_RELEASE@ sl dylib; do\
+	for ext in a la so so.@PNGLIB_MAJOR@@PNGLIB_MINOR@.@PNGLIB_RELEASE@ sl dylib dll.a; do\
 		rm -f libpng.$$ext;\
                 if test -f $(PNGLIB_BASENAME).$$ext; then\
                        $(LN_S) $(PNGLIB_BASENAME).$$ext libpng.$$ext;\

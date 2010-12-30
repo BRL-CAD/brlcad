@@ -12,10 +12,6 @@
 #ifndef MINRDPNGCONF_H
 #define MINRDPNGCONF_H
 
-#ifdef NJET
-  /* No 16-bit support beyond reading with strip_16 */
-#endif
-
 #define PNG_NO_WARNINGS
 #define png_warning(s1,s2) ""
 #define png_chunk_warning(s1,s2) ""
@@ -42,6 +38,7 @@
 #define PNG_NO_READ_gAMA
 #define PNG_NO_READ_hIST
 #define PNG_NO_READ_iCCP
+#define PNG_NO_READ_oFFs
 #define PNG_NO_READ_pCAL
 #define PNG_NO_READ_pHYs
 #define PNG_NO_READ_sBIT
@@ -55,7 +52,6 @@
 #define PNG_NO_READ_EMPTY_PLTE
 #define PNG_NO_READ_OPT_PLTE
 #define PNG_NO_READ_STRIP_ALPHA
-#define PNG_NO_READ_oFFs
 
 #define PNG_NO_WRITE_SUPPORTED
 
