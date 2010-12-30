@@ -163,8 +163,12 @@ endif()
 if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL )
     install(FILES ${ZLIB_PUBLIC_HDRS} DESTINATION include)
 endif()
+
+IF(NOT MAN_DIR)
+  SET(MAN_DIR "share/man")
+ENDIF(NOT MAN_DIR)
 if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
-    install(FILES zlib.3 DESTINATION share/man/man3)
+    install(FILES zlib.3 DESTINATION ${MAN_DIR}/man3)
 endif()
 
 #============================================================================
