@@ -243,7 +243,19 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libz\gzio.c"
+				RelativePath="..\..\..\src\other\libz\gzclose.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\libz\gzlib.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\libz\gzread.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\libz\gzwrite.c"
 				>
 			</File>
 			<File

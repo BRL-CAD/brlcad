@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2010-12-XX  Release 7.18.2                                     ---
 ----------------------------------------------------------------------
 
+* upgraded zlib to version 1.2.5 - Cliff Yapp
 * removed shell execution ! command from vdeck - Cliff Yapp
 
 ----------------------------------------------------------------------
