@@ -93,7 +93,7 @@ struct bu_structparse Ogl_vparse[] = {
 int
 Ogl_dm_init(struct dm_list *o_dm_list,
 	    int argc,
-	    char *argv[])
+	    const char *argv[])
 {
     struct bu_vls vls;
 
@@ -104,7 +104,7 @@ Ogl_dm_init(struct dm_list *o_dm_list,
 
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
 
-    if ((dmp = dm_open(INTERP, DM_TYPE_OGL, argc-1, (const char **)argv)) == DM_NULL)
+    if ((dmp = dm_open(INTERP, DM_TYPE_OGL, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
     /*XXXX this eventually needs to move into Ogl's private structure */
