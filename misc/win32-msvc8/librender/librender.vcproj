@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="libadrt"
+	Name="librender"
 	ProjectGUID="{43DF8660-74E7-4371-BEC3-602E2E6481B5}"
 	>
 	<Platforms>
@@ -44,14 +44,14 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/libadrt.tlb"
+				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/librender.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../src/other/tcl/win;../../../src/other/tcl/generic;../../../include;../../../src/adrt/librender;../../../src/adrt/libtie;../../../src/adrt;../../../src/other/libz"
+				AdditionalIncludeDirectories="../../../src/other/tcl/win;../../../src/other/tcl/generic;../../../include;../../../src/render/librender;../../../src/render/libtie;../../../src/render;../../../src/other/libz"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;BU_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
@@ -59,7 +59,7 @@
 				EnableFunctionLevelLinking="true"
 				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/libadrt.pch"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/librender.pch"
 				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
 				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
 				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
@@ -82,14 +82,14 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl85.lib libz.lib libpng.lib libbu.lib libbn.lib librt.lib libgcv.lib"
-				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libadrt.dll"
+				AdditionalDependencies="tcl85.lib libz.lib libpng.lib libbu.lib libbn.lib librt.lib libgcv.lib libtie.lib"
+				OutputFile=".\$(PlatformName)\$(ConfigurationName)/librender.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/libadrt.pdb"
-				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/libadrt.lib"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/librender.pdb"
+				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/librender.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -115,7 +115,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;libadrt.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;librender.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -146,14 +146,14 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/libadrt.tlb"
+				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/librender.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libpng;../../../src/other/libz;../../../src/adrt/libtie;../../../src/adrt/librender;../../../src/adrt"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libpng;../../../src/other/libz;../../../src/render/libtie;../../../src/render/librender;../../../src/render"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;BU_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
@@ -161,7 +161,7 @@
 				EnableFunctionLevelLinking="true"
 				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/libadrt.pch"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/librender.pch"
 				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
 				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
 				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
@@ -184,14 +184,14 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl85.lib libz.lib libpng.lib libbu.lib libbn.lib librt.lib libgcv.lib"
-				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libadrt.dll"
+				AdditionalDependencies="tcl85.lib libz.lib libpng.lib libbu.lib libbn.lib librt.lib libgcv.lib libtie.lib"
+				OutputFile=".\$(PlatformName)\$(ConfigurationName)/librender.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall$(PlatformName)/lib"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/libadrt.pdb"
-				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/libadrt.lib"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/librender.pdb"
+				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/librender.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -217,7 +217,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall$(PlatformName)\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;libadrt.lib ..\..\..\brlcadInstall$(PlatformName)\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall$(PlatformName)\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;librender.lib ..\..\..\brlcadInstall$(PlatformName)\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
@@ -229,115 +229,107 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\camera.c"
+				RelativePath="..\..\..\src\render\librender\camera.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\component.c"
+				RelativePath="..\..\..\src\render\librender\component.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\cut.c"
+				RelativePath="..\..\..\src\render\librender\cut.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\depth.c"
+				RelativePath="..\..\..\src\render\librender\depth.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\flat.c"
+				RelativePath="..\..\..\src\render\librender\flat.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\flos.c"
+				RelativePath="..\..\..\src\render\librender\flos.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\grid.c"
+				RelativePath="..\..\..\src\render\librender\grid.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\hit.c"
+				RelativePath="..\..\..\src\render\librender\hit.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\load.c"
+				RelativePath="..\..\..\src\render\load.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\load_g.c"
+				RelativePath="..\..\..\src\render\load_g.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\normal.c"
+				RelativePath="..\..\..\src\render\librender\normal.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\path.c"
+				RelativePath="..\..\..\src\render\librender\path.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\phong.c"
+				RelativePath="..\..\..\src\render\librender\phong.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\render_util.c"
+				RelativePath="..\..\..\src\render\librender\render_util.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\spall.c"
+				RelativePath="..\..\..\src\render\librender\spall.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\surfel.c"
+				RelativePath="..\..\..\src\render\librender\surfel.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\texture_blend.c"
+				RelativePath="..\..\..\src\render\librender\texture_blend.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\texture_bump.c"
+				RelativePath="..\..\..\src\render\librender\texture_bump.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\texture_camo.c"
+				RelativePath="..\..\..\src\render\librender\texture_camo.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\texture_checker.c"
+				RelativePath="..\..\..\src\render\librender\texture_checker.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\texture_clouds.c"
+				RelativePath="..\..\..\src\render\librender\texture_clouds.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\texture_gradient.c"
+				RelativePath="..\..\..\src\render\librender\texture_gradient.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\texture_image.c"
+				RelativePath="..\..\..\src\render\librender\texture_image.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\texture_mix.c"
+				RelativePath="..\..\..\src\render\librender\texture_mix.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\texture_perlin.c"
+				RelativePath="..\..\..\src\render\librender\texture_perlin.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\librender\texture_stack.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\adrt\libtie\tie.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\adrt\libtie\tie_kdtree.c"
+				RelativePath="..\..\..\src\render\librender\texture_stack.c"
 				>
 			</File>
 		</Filter>
