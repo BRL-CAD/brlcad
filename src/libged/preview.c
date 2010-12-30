@@ -405,7 +405,7 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     while (ged_loadframe(gedp, fp) == GED_OK) {
 	if (image_name) {
 	    struct bu_vls fullname;
-	    char *screengrab_args[3];
+	    const char *screengrab_args[3];
 	    int screengrab_argc = 0;
 	    struct view_obj *vop;
 

@@ -6002,7 +6002,7 @@ struct bu_image_file {
 };
 
 BU_EXPORT BU_EXTERN(struct bu_image_file *bu_image_save_open,
-		    (char *filename,
+		    (const char *filename,
 		     int format,
 		     int width,
 		     int height,
