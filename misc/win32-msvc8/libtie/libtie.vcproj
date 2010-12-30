@@ -229,11 +229,19 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
-				RelativePath="..\..\..\src\tie\libtie\tie.c"
+				RelativePath="..\..\..\src\tie\libtie\tie0.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\tie\libtie\tie_kdtree.c"
+				RelativePath="..\..\..\src\tie\libtie\tie1.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\tie\libtie\tie_kdtree0.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\tie\libtie\tie_kdtree1.c"
 				>
 			</File>
 		</Filter>
