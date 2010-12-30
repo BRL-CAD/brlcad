@@ -2065,26 +2065,32 @@ cmd_shaded_mode(ClientData UNUSED(clientData),
 
 /* XXX needs to be provided from points header */
 extern int parse_point_file(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[]);
+#ifndef BC_WITH_PARSERS
+int
+cmd_parse_points(ClientData UNUSED(clientData),
+		 Tcl_Interp *UNUSED(interpreter),
+		 int UNUSED(argc),
+		 const char *UNUSED(argv[]))
+{
 
+    bu_log("parse_points was disabled in this compilation of mged due to system limitations\n");
+    return TCL_ERROR;
+}
+#else
 int
 cmd_parse_points(ClientData clientData,
 		 Tcl_Interp *interpreter,
 		 int argc,
 		 const char *argv[])
 {
-
-#ifndef BC_WITH_PARSERS
-    bu_log("parse_points was disabled in this compilation of mged due to system limitations\n");
-    return TCL_ERROR;
-#else
-    if (argc != 2) {
+   if (argc != 2) {
 	bu_log("parse_points only supports a single file name right now\n");
 	bu_log("doing nothing\n");
 	return TCL_ERROR;
     }
     return parse_point_file(clientData, interpreter, argc-1, &(argv[1]));
-#endif
 }
+#endif
 
 
 int
