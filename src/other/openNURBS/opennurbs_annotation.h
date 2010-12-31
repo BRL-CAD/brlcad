@@ -159,7 +159,7 @@ class ON_CLASS ON_Annotation : public ON_Geometry
     degreesym = 176,
     radiussym = 'R',
     diametersym = 216,
-    plusminussym = 177,
+    plusminussym = 177
   };
 
 

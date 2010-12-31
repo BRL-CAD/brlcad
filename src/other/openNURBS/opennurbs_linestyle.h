@@ -93,7 +93,7 @@ public:
   enum eSegType
   {
     stLine,
-    stSpace,
+    stSpace
   };
 
   void Dump( class ON_TextLog& ) const;
