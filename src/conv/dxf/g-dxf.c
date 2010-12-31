@@ -129,7 +129,7 @@ find_closest_color( float color[3] )
 
 
 static void
-nmg_to_dxf( struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3] )
+nmg_to_dxf( struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float color[3] )
 {
     struct model *m;
     struct shell *s;
@@ -218,7 +218,7 @@ nmg_to_dxf( struct nmgregion *r, const struct db_full_path *pathp, int region_id
 	int i;
 
 
-	fprintf( fp, "0\nPOLYLINE\n8\n%s\n62\n%d\n70\n64\n71\n%d\n72\n%d\n",
+	fprintf( fp, "0\nPOLYLINE\n8\n%s\n62\n%d\n70\n64\n71\n%lu\n72\n%d\n",
 		 region_name, color_num, BU_PTBL_LEN( &verts), tri_count );
 	for ( i=0; i<BU_PTBL_LEN( &verts ); i++ ) {
 	    fprintf( fp, "0\nVERTEX\n8\n%s\n", region_name );
@@ -344,7 +344,7 @@ nmg_to_dxf( struct nmgregion *r, const struct db_full_path *pathp, int region_id
 }
 
 
-union tree *get_layer(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *get_layer(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *UNUSED(curtree), genptr_t UNUSED(client_data))
 {
     char *layer_name;
     int color_num;
@@ -390,9 +390,6 @@ main(int argc, char *argv[])
 
     bu_setlinebuf( stderr );
 
-#if MEMORY_LEAK_CHECKING
-    rt_g.debug |= DEBUG_MEM_FULL;
-#endif
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
@@ -569,10 +566,6 @@ main(int argc, char *argv[])
     nmg_km(the_model);
     rt_vlist_cleanup();
     db_close(dbip);
-
-#if MEMORY_LEAK_CHECKING
-    bu_prmem("After complete G-DXF conversion");
-#endif
 
     return 0;
 }

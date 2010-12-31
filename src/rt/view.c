@@ -503,7 +503,7 @@ view_pixel(struct application *ap)
 	    }
 	    if (bif != NULL) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		bu_image_save_writeline(bif, ap->a_y, (const unsigned char *)scanline[ap->a_y].sl_buf);
+		bu_image_save_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf);
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	    } else if (outfp != NULL) {
 		size_t count;

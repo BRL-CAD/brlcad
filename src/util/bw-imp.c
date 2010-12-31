@@ -70,8 +70,8 @@ static int (*pattern)[8] = dither;	/* -> dither or halftone */
 static FILE *infp;			/* input file handle */
 static char *file_name = "-";	/* name of input file, for banner */
 
-static int height;			/* input height */
-static int width;			/* input width */
+static size_t height;			/* input height */
+static size_t width;			/* input width */
 
 static int thresh = -1;		/* Threshold */
 
@@ -83,9 +83,9 @@ long swath[32][MAXWIDTH/32];	/* assumes long has 32 bits */
 unsigned char line[MAXWIDTH];		/* grey-scale input buffer */
 
 static int im_mag;			/* magnification (1, 2 or 4) */
-static int im_width;		/* image size (in Imagen dots) */
-static int im_wpatches;		/* # 32-bit patches width */
-static int im_hpatches;		/* # 32-bit patches height */
+static size_t im_width;		/* image size (in Imagen dots) */
+static size_t im_wpatches;		/* # 32-bit patches width */
+static size_t im_hpatches;		/* # 32-bit patches height */
 
 bool get_args(int argc, char **argv);
 bool im_close(void);
@@ -161,7 +161,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    int y;
+    size_t y;
 
     height = width = 512;		/* Defaults */
 
@@ -183,7 +183,7 @@ main(int argc, char **argv)
     im_wpatches = (im_width+31) / 32;
     im_hpatches = ((height * im_mag)+31) / 32;
     if (im_wpatches*32 > 2560) {
-	fprintf(stderr, "bw-imp:  output %d too wide, limit is 2560\n",
+	fprintf(stderr, "bw-imp:  output %ld too wide, limit is 2560\n",
 		im_wpatches*32);
 	return 1;
     }
@@ -239,11 +239,11 @@ im_header(void)
 void
 im_write(int y)
 {
-    int y1;
+    size_t y1;
 
     /* Process one 32-bit high output swath */
     for (y1 = 0; y1 < 32; y1 += im_mag) {
-	int x;
+	size_t x;
 
 	/* Obtain a single line of 8-bit pixels */
 	if (fread(line, 1, width, infp) != width) {
@@ -292,7 +292,7 @@ im_write(int y)
 
     /* output the swath */
     {
-	int xx, yy;
+	size_t xx, yy;
 	for (xx = 0; xx < im_wpatches; ++xx) {
 	    for (yy = 0; yy < 32; ++yy) {
 		long b = swath[yy][xx];

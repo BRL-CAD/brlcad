@@ -51,8 +51,8 @@ HIDDEN struct bu_cmdhist *currHist;
 /***************************** BWISH/BTCLSH COMMANDS *****************************/
 
 HIDDEN int
-cmd_quit(ClientData clientData,
-	 Tcl_Interp *interp,
+cmd_quit(ClientData UNUSED(clientData),
+	 Tcl_Interp *UNUSED(interp),
 	 int argc,
 	 char **argv)
 {
@@ -69,6 +69,7 @@ cmd_quit(ClientData clientData,
     return TCL_OK;
 }
 
+
 /***************************** BWISH/BTCLSH COMMAND HISTORY *****************************/
 
 HIDDEN int historyInitialized=0;
@@ -83,6 +84,7 @@ historyInit(void)
     currHist = &histHead;
     historyInitialized=1;
 }
+
 
 /*
  * H I S T O R Y _ R E C O R D
@@ -150,7 +152,7 @@ timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
  * Prints out the command history, either to bu_log or to a file.
  */
 int
-cmd_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     FILE *fp;
     int with_delays = 0;
@@ -275,7 +277,7 @@ history_next(void)
 
 
 int
-cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls *vp;
     struct bu_vls vls;
@@ -352,6 +354,7 @@ HIDDEN struct bu_cmdtab bwish_cmds[] =
     {"q",		cmd_quit},
     {(char *)NULL,	CMD_NULL}
 };
+
 
 #ifdef BWISH
 /* structure provided in libtclcad. provides -format pix-n-w support.

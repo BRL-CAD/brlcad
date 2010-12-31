@@ -1,22 +1,22 @@
 
 COUNT: DATE HOST PATH USER
-	test -f $@ && expr `cat COUNT` + 1 > $@ || $(ECHO) "1" > $@
+	test -f $@ && expr `cat COUNT` + 1 > $@ || echo "1" > $@
 
 DATE: HOST PATH USER $(top_builddir)/include/brlcad_config.h
-	$(ECHO) "\"`LANG=C date -R 2>/dev/null || date +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null || date`\"" > $@
+	echo "\"`LANG=C date -R 2>/dev/null || date +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null || date`\"" > $@
 
 HOST: $(top_builddir)/include/brlcad_config.h
-	$(ECHO) "\"`hostname`\"" > $@
+	echo "\"`hostname`\"" > $@
 
 PATH: $(top_builddir)/include/brlcad_config.h
-	$(ECHO) "\"$(DESTDIR)$(prefix)\"" > $@
+	echo "\"$(DESTDIR)$(prefix)\"" > $@
 
 USER: $(top_builddir)/include/brlcad_config.h
-	$(ECHO) "\"`whoami`\"" > $@
+	echo "\"`whoami`\"" > $@
 
 # updated every time make is invoked for timing the compile
 TS:
-	@$(ECHO) "\"`LANG=C date -R 2>/dev/null || date +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null || date`\"" > $@
+	@echo "\"`LANG=C date -R 2>/dev/null || date +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null || date`\"" > $@
 	@cat TS
 
 .PHONY: TS

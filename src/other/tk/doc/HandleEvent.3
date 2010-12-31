@@ -20,14 +20,15 @@ Tk_HandleEvent \- invoke event handlers for window system events
 .SH ARGUMENTS
 .AS XEvent *eventPtr
 .AP XEvent *eventPtr in
-Pointer to X event to dispatch to relevant handler(s).
+Pointer to X event to dispatch to relevant handler(s). It is important
+that all unused fields of the structure be set to zero.
 .BE
 
 .SH DESCRIPTION
 .PP
 \fBTk_HandleEvent\fR is a lower-level procedure that deals with window
 events.  It is called by \fBTcl_ServiceEvent\fR (and indirectly by
-\fBTk_DoOneEvent\fR), and in a few other cases within Tk.
+\fBTcl_DoOneEvent\fR), and in a few other cases within Tk.
 It makes callbacks to any window event
 handlers (created by calls to \fBTk_CreateEventHandler\fR)
 that match \fIeventPtr\fR and then returns.  In some cases

@@ -101,7 +101,7 @@ with three additional arguments: the name of the new channel, the
 address, in network address notation, of the client's host, and
 the client's port number.
 .PP
-The following additional option may also be specified before \fIhost\fR:
+The following additional option may also be specified before \fIport\fR:
 .TP
 \fB\-myaddr\fI addr\fR
 \fIAddr\fR gives the domain-style name or numerical IP address of

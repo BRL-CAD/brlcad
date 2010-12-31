@@ -47,7 +47,7 @@ main(int argc, char **argv)
     int bit_depth;
     int color_type;
     png_color_16p input_backgrd;
-    double gamma;
+    double gammaval;
     int file_width, file_height;
     png_int_32 xoff, yoff;
     png_uint_32 xres, yres;
@@ -175,8 +175,8 @@ main(int argc, char **argv)
 	}
     }
 
-    if (png_get_gAMA(png_p, info_p, &gamma))
-	bu_log("gamma: %g\n", gamma);
+    if (png_get_gAMA(png_p, info_p, &gammaval))
+	bu_log("gamma: %g\n", gammaval);
 
 #if defined(PNG_READ_cHRM_SUPPORTED)
     if (png_get_cHRM(png_p, info_p, &white_x, &white_y, &red_x, &red_y, &green_x, &green_y, &blue_x, &blue_y)) {

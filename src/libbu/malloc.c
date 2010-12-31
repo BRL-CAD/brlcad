@@ -354,36 +354,59 @@ bu_free(genptr_t ptr, const char *str)
 
 
 genptr_t
-bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
+bu_realloc(register genptr_t ptr, size_t siz, const char *str)
 {
     struct memdebug *mp=NULL;
     genptr_t original_ptr;
     const size_t MINSIZE = sizeof(uint32_t) > sizeof(intptr_t) ? sizeof(uint32_t) : sizeof(intptr_t);
 
-    if (UNLIKELY(cnt < MINSIZE)) {
-        cnt = MINSIZE;
+    /* If bu_realloc receives a NULL pointer and zero size then bomb
+     * because the behavior of realloc is undefined for these inputs.
+     */
+    if (UNLIKELY(ptr == NULL && siz == 0)) {
+	bu_bomb("bu_realloc(): invalid input, NULL pointer and zero size\n");
     }
 
-    if (UNLIKELY(!ptr)) {
-	/* This is so we are compatible with system realloc.  It seems
-	 * like an odd behaviour, but some non-BRL-CAD code relies on
-	 * this.
-	 */
-	return bu_malloc(cnt, str);
+    /* If bu_realloc receives a NULL pointer and non-zero size then
+     * allocate new memory.
+     */
+    if (UNLIKELY(ptr == NULL && siz > 0)) {
+	return bu_malloc(siz, str);
+    }
+
+    /* If bu_realloc receives a non-NULL pointer and zero size then
+     * free the memory.  Instead of returning NULL, though, the
+     * standard says we can return a small allocation suitable for
+     * passing to bu_free().  Do that so we can maintain are LIBBU
+     * guarantee of worry-free memory management.
+     */
+    if (UNLIKELY(ptr != NULL && siz == 0)) {
+	bu_free(ptr, str);
+	return bu_malloc(MINSIZE, str);
+    }
+
+    /* If the new allocation size is smaller than the minimum size
+     * to store a pointer then set the size to this minimum size.
+     * This is necessary so that the function bu_free can place a
+     * value in the memory before it is freed. The size allocated
+     * needs to be large enough to hold this value.
+     */
+    if (UNLIKELY(siz < MINSIZE)) {
+        siz = MINSIZE;
     }
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_CHECK)) {
 	mp = _bu_memdebug_check(ptr, str);
 	if (UNLIKELY(mp == MEMDEBUG_NULL)) {
 	    fprintf(stderr, "%p realloc%6d %s ** barrier check failure\n",
-		    ptr, (int)cnt, str);
+		    ptr, (int)siz, str);
 	}
 	/* Pad, plus full long for magic number */
-	cnt = (cnt+2*sizeof(long)-1)&(~(sizeof(long)-1));
+	siz = (siz+2*sizeof(long)-1)&(~(sizeof(long)-1));
     } else if (UNLIKELY(bu_debug&BU_DEBUG_MEM_QCHECK)) {
 	struct memqdebug *mqp = ((struct memqdebug *)ptr)-1;
 
-	cnt = (cnt + 2*sizeof(struct memqdebug) - 1)
+	siz = (siz + 2*sizeof(struct memqdebug) - 1)
 	    &(~(sizeof(struct memqdebug)-1));
 
 	if (UNLIKELY(BU_LIST_MAGIC_WRONG(&(mqp->q), MDB_MAGIC))) {
@@ -391,8 +414,12 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 		    "or not allocated with bu_malloc!  Ignored.\n",
 		    ptr, str);
 	    /*
-	     * Since we're ignoring this, atleast return the pointer
-	     * that was passed in. We should probably return NULL.
+	     * Since we're ignoring this, at least return the pointer
+	     * that was passed in.  Standard says behavior is
+	     * undefined when reallocating memory not allocated with
+	     * the matching allocation routines (i.e., bu_malloc() or
+	     * bu_calloc() in our situation), so we are fair game to
+	     * just return the pointer we were given.
 	     */
 	    return ptr;
 	}
@@ -400,48 +427,48 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 	BU_LIST_DEQUEUE(&(mqp->q));
     }
 
-    if (UNLIKELY(cnt == 0)) {
-	fprintf(stderr, "ERROR: bu_realloc cnt=0 (ptr=%p) %s\n", ptr, str);
-	bu_bomb("ERROR: bu_realloc(0)\n");
-    }
-
     original_ptr = ptr;
 
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 #endif
-    ptr = realloc(ptr, cnt);
+    ptr = realloc(ptr, siz);
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_release(BU_SEM_SYSCALL);
 #endif
+
+    /* If realloc returns NULL then it failed to allocate the
+     * requested memory and we need to bomb.
+     */
+    if (UNLIKELY(!ptr)) {
+	fprintf(stderr, "bu_realloc(): unable to allocate requested memory of size %ld, %s\n", (long int)siz, str);
+	bu_bomb("bu_realloc(): unable to allocate requested memory.\n");
+    }
 
     if (UNLIKELY(ptr==(char *)0 || bu_debug&BU_DEBUG_MEM_LOG)) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	if (ptr == original_ptr) {
 	    fprintf(stderr, "%p realloc%6d %s [grew in place]\n",
-		    ptr, (int)cnt, str);
+		    ptr, (int)siz, str);
 	} else {
 	    fprintf(stderr, "%p realloc%6d %s [moved from %p]\n",
-		    ptr, (int)cnt, str, original_ptr);
+		    ptr, (int)siz, str, original_ptr);
 	}
 
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
-    if (UNLIKELY(ptr==(char *)0 && cnt > 0)) {
-	fprintf(stderr, "bu_realloc: Insufficient memory available\n");
-	bu_bomb("bu_realloc: malloc failure");
-    }
+
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_CHECK && ptr)) {
-	/* Even if ptr didn't change, need to update cnt & barrier */
+	/* Even if ptr didn't change, need to update siz & barrier */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	mp->mdb_addr = ptr;
-	mp->mdb_len = cnt;
+	mp->mdb_len = siz;
 
 	/* Install a barrier word at the new end of the dynamic
-	 * arena. Correct location depends on 'cnt' being rounded up,
+	 * arena. Correct location depends on 'siz' being rounded up,
 	 * above.
 	 */
-	*((long *)(((char *)ptr)+cnt-sizeof(long))) = MDB_MAGIC;
+	*((long *)(((char *)ptr)+siz-sizeof(long))) = MDB_MAGIC;
 	bu_semaphore_release(BU_SEM_SYSCALL);
     } else if (UNLIKELY(bu_debug&BU_DEBUG_MEM_QCHECK && ptr)) {
 	struct memqdebug *mqp;
@@ -450,7 +477,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 	ptr = (genptr_t)(((struct memqdebug *)ptr)+1);
 	mqp->m.magic = MDB_MAGIC;
 	mqp->m.mdb_addr = ptr;
-	mqp->m.mdb_len = cnt;
+	mqp->m.mdb_len = siz;
 	mqp->m.mdb_str = str;
 	BU_ASSERT(bu_memq != BU_LIST_NULL);
 	BU_LIST_APPEND(bu_memq, &(mqp->q));

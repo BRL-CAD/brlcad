@@ -94,6 +94,7 @@ AC_INIT(STEP Class Libraries, [SCL_VERSION], [http://brlcad.org], scl)
 AC_REVISION($Revision: 33887 $)
 
 AC_CONFIG_AUX_DIR(misc)
+AC_CONFIG_MACRO_DIR([m4])
 
 # keep track of cmd-line options for later
 BC_ARG0="$0"

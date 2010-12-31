@@ -26,5 +26,6 @@ SCLP23(Model_contents_ptr) GetModelContents(char *schemaName)
 {
     if(!strcmp(schemaName, "config_control_design"))
         return (SCLP23(Model_contents_ptr)) new SdaiModel_contents_config_control_design; 
+    return (SCLP23(Model_contents_ptr))NULL;
 }
 #endif

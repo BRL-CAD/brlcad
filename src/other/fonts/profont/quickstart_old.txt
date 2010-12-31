@@ -1,0 +1,45 @@
+ProFont Quick Start
+21 July 1997
+SQ Software
+
+* What happens if I have problems with ProFont Distribution?
+"ProFont Distribution" is provided in the hope that it will be useful.
+However, it is provided AS IS and carries NO WARRANTY that it will do
+anything good and NO WARRANTY that it will not do anything bad. Your
+use of the fonts and software that make up "ProFont Distribution" is
+ENTIRELY AT YOUR OWN RISK. SQ Software, Stephen C. Gilardi and
+Carl R. Osterwald hereby disclaim any and all liability for any difficulty you
+may have as a result of using any part of "ProFont Distribution". If these
+terms are not acceptable to you, then you must not use any part of "ProFont
+Distribution".
+
+That being said, if you do have any difficulties or any suggestions, I'll be very
+appreciative if you let me know about them so I can attempt to improve future
+releases of ProFont Distribution.
+
+* How can I contact you?
+
+You can contact me by e-mail at "squeegee@usa.net" You can reach
+Carl at "carl_osterwald@usa.net" In addition to hearing about any
+problems you have, we'd be very pleased to hear from you if you like ProFont
+Distribution!
+
+* How can I get started with ProFont immediately?
+
+If you want to install the latest version of the ProFont font, open the
+"ProFont 2.2 f" folder and drag the "ProFont" suitcase to your System Folder
+icon. When asked if it's OK to put it in the "Fonts Folder", say "OK".
+If you want to use ProFont as a replacement for Monaco 9, then first install
+ProFont as outlined above. Then, open the "Monaco Tuner 1.1.1 f" folder and
+drag the "Monaco Tuner" control panel to your System Folder icon. When
+asked if it's OK to put it in the "Control Panels Folder", say "OK". Then
+restart your Macintosh.
+
+After following the above instructions, you'll see ProFont 9 wherever you
+would otherwise have seen Monaco 9. Enjoy.
+
+--Steve
+
+Stephen C. Gilardi
+SQ Software
+21 July 1997

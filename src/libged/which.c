@@ -68,14 +68,6 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (MAXARGS < argc) {
-	if (isAir) 
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usageAir);
-	else
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usageIds);
-	return GED_ERROR;
-    }
-
     if (strcmp(argv[1], "-s") == 0) {
 	--argc;
 	++argv;

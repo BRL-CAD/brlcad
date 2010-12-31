@@ -34,10 +34,10 @@
 #include "bu.h"
 
 
-int out_width = 64;	/* width of input sub-images in pixels (64) */
-int out_height = 64;	/* height of input sub-images in scanlines (64) */
-int in_width = 512;	/* number of output pixels/line (512, 1024) */
-int in_height = 512;	/* number of output lines (512, 1024) */
+size_t out_width = 64;	/* width of input sub-images in pixels (64) */
+size_t out_height = 64;	/* height of input sub-images in scanlines (64) */
+size_t in_width = 512;	/* number of output pixels/line (512, 1024) */
+size_t in_height = 512;	/* number of output lines (512, 1024) */
 char *base_name;		/* basename of input file(s) */
 int framenumber = 0;	/* starting frame number (default is 0) */
 int islist = 0;
@@ -123,7 +123,7 @@ main(int argc, char **argv)
     }
 
     if (in_width < 1) {
-	fprintf(stderr, "pixuntile: width of %d out of range\n", in_width);
+	fprintf(stderr, "pixuntile: width of %lu out of range\n", in_width);
 	bu_exit (12, NULL);
     }
 
@@ -161,7 +161,8 @@ main(int argc, char **argv)
     }
  done:
     fprintf(stderr, "\n");
-    bu_exit (0, NULL);
+
+    return 0;
 }
 
 

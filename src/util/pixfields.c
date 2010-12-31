@@ -37,8 +37,8 @@
 
 #define DEFAULT_WIDTH 512
 
-int width = DEFAULT_WIDTH;
-int height = DEFAULT_WIDTH;
+size_t width = DEFAULT_WIDTH;
+size_t height = DEFAULT_WIDTH;
 int verbose = 0;
 
 char *file_name;
@@ -111,6 +111,7 @@ main(int argc, char **argv)
     char *line1;
     char *line2;
     int line_number;
+    size_t ret;
 
     if (!get_args(argc, argv)) {
 	fputs(usage, stderr);
@@ -122,9 +123,11 @@ main(int argc, char **argv)
 
     line_number = 0;
     for (;;) {
-	if (fread(line1, 3*sizeof(char), width, fldonefp) != width)
+	ret = fread(line1, 3*sizeof(char), width, fldonefp);
+	if (ret != width)
 	    break;
-	if (fread(line2, 3*sizeof(char), width, fldtwofp) != width) {
+	ret = fread(line2, 3*sizeof(char), width, fldtwofp);
+	if (ret != width) {
 	    fprintf(stderr, "pixfields: premature EOF on 2nd file?\n");
 	    bu_exit (2, NULL);
 	}
@@ -141,7 +144,8 @@ main(int argc, char **argv)
 	}
 	line_number++;
     }
-    bu_exit (0, NULL);
+
+    return 0;
 }
 
 

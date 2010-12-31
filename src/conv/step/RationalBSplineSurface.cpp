@@ -67,8 +67,6 @@ RationalBSplineSurface::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) 
 	// the actual entity and not a complex/supertype parent
 	sse = step->getEntity(sse,ENTITYNAME);
 
-	SdaiRational_b_spline_surface *rbs = (SdaiRational_b_spline_surface*)sse;
-
 	if (weights_data.empty()) {
 		SCLstring attrval;
 		STEPattribute *attr = step->getAttribute(sse,"weights_data");

@@ -22,20 +22,13 @@ REM
 
 SETLOCAL
 
-REM XXX FIXME: SHOULD NOT NEED TO SET BRLCAD_DATA OR CAD_VERSION XXX
-SET CAD_VERSION=7.16.10
-
-SET SAVE_CD=%CD%
-SET PATH=%~dp0
-CD %PATH%\..
-SET BRLCAD_DATA=%CD%\share\brlcad\%CAD_VERSION%
-CD %SAVE_CD%
+SET MGED=%~dp0mged
 SET WEB_BROWSER=C:\Program Files\Internet Explorer\IEXPLORE.EXE
 
 IF "%1"=="-g" (
-    START /B mged.exe %2
+    START /B %MGED% %2
 ) ELSE (
-    START /B mged.exe %1
+    START /B %MGED% %1
 )
 
 CLS

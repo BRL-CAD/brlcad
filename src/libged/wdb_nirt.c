@@ -61,6 +61,7 @@
 extern void dgo_qray_data_to_vlist(struct dg_obj *dgop, struct bn_vlblock *vbp, struct dg_qray_dataList *headp, fastf_t *dir, int do_overlaps);
 
 /* defined in dg_obj.c */
+extern int dgo_count_tops(struct solid *headsp);
 extern int dgo_build_tops(Tcl_Interp *interp, struct solid *hsp, char **start, char **end);
 extern void dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, Tcl_Interp *interp, struct bn_vlblock *vbp, char *name, int copy);
 extern void dgo_pr_wait_status(Tcl_Interp *interp, int status);
@@ -112,6 +113,10 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     struct bn_vlblock *vbp;
     struct dg_qray_dataList *ndlp;
     struct dg_qray_dataList HeadQRayData;
+    int args;
+
+    args = argc + 20 + 2 + dgo_count_tops((struct solid *)&dgop->dgo_headSolid);
+    dgop->dgo_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc dgo_rt_cmd");
 
     vp = &dgop->dgo_rt_cmd[0];
     *vp++ = "nirt";
@@ -243,7 +248,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     dgop->dgo_rt_cmd_len += dgo_build_tops(interp,
 					   (struct solid *)&dgop->dgo_headSolid,
 					   vp,
-					   &dgop->dgo_rt_cmd[RT_MAXARGS]);
+					   &dgop->dgo_rt_cmd[args]);
 
     if (dgop->dgo_qray_cmd_echo) {
 	/* Print out the command we are about to run */
@@ -379,6 +384,8 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	    snprintf(name, 1024, "\"%s\" ", dgop->dgo_rt_cmd[i]);
 	    if (rem - strlen(name) < 1) {
 		bu_log("Ran out of buffer space!");
+		bu_free(dgop->dgo_rt_cmd, "free dgo_rt_cmd");
+		dgop->dgo_rt_cmd = NULL;
 		return TCL_ERROR;
 	    }
 	    bu_strlcat(line1, name, sizeof(line1));
@@ -504,6 +511,9 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
 	sp->s_wflag = DOWN;
 
+    bu_free(dgop->dgo_rt_cmd, "free dgo_rt_cmd");
+    dgop->dgo_rt_cmd = NULL;
+
     return TCL_OK;
 }
 
@@ -523,7 +533,7 @@ dgo_vnirt_cmd(struct dg_obj	*dgop,
     struct bu_vls z_vls;
     char **av;
 
-    if (argc < 3 || MAXARGS < argc) {
+    if (argc < 3) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -548,7 +558,7 @@ dgo_vnirt_cmd(struct dg_obj	*dgop,
     view_ray_orig[Z] = DG_GED_MAX;
     argc -= 2;
 
-    av = (char **)bu_malloc(sizeof(char *) * (argc + 4), "dgo_vnirt_cmd: av");
+    av = (char **)bu_calloc(1, sizeof(char *) * (argc + 4), "dgo_vnirt_cmd: av");
 
     /* Calculate point from which to fire ray */
     VSCALE(view_ray_orig, view_ray_orig, sf);
@@ -579,6 +589,7 @@ dgo_vnirt_cmd(struct dg_obj	*dgop,
     bu_vls_free(&y_vls);
     bu_vls_free(&z_vls);
     bu_free((genptr_t)av, "dgo_vnirt_cmd: av");
+    av = NULL;
 
     return status;
 }

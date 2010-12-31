@@ -231,6 +231,56 @@ test append-7.5 {append var does not trigger read trace} {
     info exists ::result
 } {0}
 
+# New tests for bug 3057639 to show off the more consistent behaviour
+# of lappend in both direct-eval and bytecompiled code paths (see
+# appendComp.test for the compiled variants). lappend now behaves like
+# append. 9.0/1 lappend - 9.2/3 append
+
+test append-9.0 {bug 3057639, lappend direct eval, read trace on non-existing array variable element} {
+    catch {unset myvar}
+    array set myvar {}
+    proc nonull {var key val} {
+	upvar 1 $var lvar
+	if {![info exists lvar($key)]} {
+	    return -code error "no such variable"
+	}
+    }
+    trace add variable myvar read nonull
+    list [catch {
+	lappend myvar(key) "new value"
+    } msg] $msg
+} {0 {{new value}}}
+
+test append-9.1 {bug 3057639, lappend direct eval, read trace on non-existing env element} {
+    catch {unset ::env(__DUMMY__)}
+    list [catch {
+	lappend ::env(__DUMMY__) "new value"
+    } msg] $msg
+} {0 {{new value}}}
+
+test append-9.2 {bug 3057639, append direct eval, read trace on non-existing array variable element} {
+    catch {unset myvar}
+    array set myvar {}
+    proc nonull {var key val} {
+	upvar 1 $var lvar
+	if {![info exists lvar($key)]} {
+	    return -code error "no such variable"
+	}
+    }
+    trace add variable myvar read nonull
+    list [catch {
+	append myvar(key) "new value"
+    } msg] $msg
+} {0 {new value}}
+
+test append-9.3 {bug 3057639, append direct eval, read trace on non-existing env element} {
+    catch {unset ::env(__DUMMY__)}
+    list [catch {
+	append ::env(__DUMMY__) "new value"
+    } msg] $msg
+} {0 {new value}}
+
+
 
 catch {unset i x result y}
 catch {rename foo ""}

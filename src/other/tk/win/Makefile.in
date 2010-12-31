@@ -446,7 +446,7 @@ runtest: binaries $(TKTEST)
 shell: binaries
 	$(SHELL_ENV) ./$(WISH) $(SCRIPT)
 
-demo:
+demo: $(WISH)
 	$(SHELL_ENV) ./$(WISH) $(ROOT_DIR)/library/demos/widget
 
 # This target can be used to run wish inside either gdb or insight
@@ -598,6 +598,7 @@ install-private-headers: libraries
 $(WISH): $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) $(WISH_OBJS) wish.$(RES)
 	$(CC) $(CFLAGS) $(WISH_OBJS) $(TCL_LIB_FILE) $(TK_LIB_FILE) $(LIBS) \
 	wish.$(RES) $(CC_EXENAME) $(LDFLAGS_WINDOW)
+	@VC_MANIFEST_EMBED_EXE@
 
 tktest : $(TKTEST)
 
@@ -605,6 +606,7 @@ $(TKTEST): $(TK_LIB_FILE) $(TKTEST_OBJS) wish.$(RES) $(CAT32)
 	$(CC) $(CFLAGS) $(TKTEST_OBJS) $(TCL_LIB_FILE) \
 	$(TK_LIB_FILE) $(LIBS) \
 	wish.$(RES) $(CC_EXENAME) $(LDFLAGS_WINDOW)
+	@VC_MANIFEST_EMBED_EXE@
 
 # Msys make requires this next rule for some reason.
 $(TCL_SRC_DIR)/win/cat.c:
@@ -626,6 +628,7 @@ ${TK_STUB_LIB_FILE}: ${STUB_OBJS}
 ${TK_DLL_FILE}: ${TK_OBJS} $(TK_RES)
 	@$(RM) ${TK_DLL_FILE}
 	@MAKE_DLL@ ${TK_OBJS} $(TK_RES) $(SHLIB_LD_LIBS)
+	@VC_MANIFEST_EMBED_DLL@
 
 ${TK_LIB_FILE}: ${TK_OBJS}
 	@$(RM) ${TK_LIB_FILE}
@@ -666,7 +669,7 @@ tkWindow.$(OBJEXT): configure Makefile
 
 # Implicit rule for all object files that will end up in the Tcl library
 
-.c.$(OBJEXT):
+%.$(OBJEXT): %.c
 	$(CC) -c $(STUB_CC_SWITCHES) -DBUILD_tk -DBUILD_ttk @DEPARG@ $(CC_OBJNAME)
 
 .rc.$(RES):

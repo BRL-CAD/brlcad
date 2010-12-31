@@ -55,8 +55,9 @@ struct Node {
     
     /** Branch Methods */
     virtual std::size_t branchSize() const { return 0; }
-    virtual Stack * branch(std::size_t) { return 0; }
+    virtual Stack *branch(std::size_t) { return 0; }
 };
+
 
 /** Stack object: A collection of Node pointers and associated methods */
 class Stack
@@ -75,7 +76,7 @@ public:
     /** Data access/mnodification methods */
     size_type size() const;
     bool empty() const;
-    void push_back(Node * n);
+    void push_back(Node *n);
     void clear();
 
     /** Stack iterator methods */
@@ -87,7 +88,7 @@ public:
     iterator erase(iterator location);
     iterator erase(iterator begin, iterator end);
 
-    iterator insert(iterator location, Node * n);
+    iterator insert(iterator location, Node *n);
 
     /** Operator overloading */
     Stack & operator=(Stack const & other);
@@ -97,6 +98,7 @@ private:
     container_t data;
     void copy(Stack::container_t const &);
 };
+
 
 struct MathFunction;
 
@@ -109,7 +111,8 @@ struct MathVM
     void display();
 };
 
-/** Stack evaluation function ( TODO: Consider shifting to Stack object )*/
+
+/** Stack evaluation function (TODO: Consider shifting to Stack object)*/
 double evaluate(Stack s);
 
 struct UserFunction;
@@ -120,7 +123,7 @@ struct MathFunction
     MathFunction(std::string const &);
     virtual ~MathFunction() {}
     
-    virtual UserFunction * asUserFunction();
+    virtual UserFunction *asUserFunction();
 
     /** Data access methods */
     std::string const & getName() const;
@@ -137,6 +140,7 @@ private:
 
 };
 
+
 /** Implemation of various convenience Function types*/
 
 /** Unary function */
@@ -146,8 +150,8 @@ struct MathF1 : public MathFunction
     /* function pointer to a function taking a unary argument */
     typedef T (* function_ptr) (T);
 
-    MathF1(std::string const & name, function_ptr fp)
-	: MathFunction(name),
+    MathF1(std::string const & function_name, function_ptr fp)
+	: MathFunction(function_name),
 	  funct(fp)
     {}
     
@@ -163,17 +167,18 @@ private:
     function_ptr funct;
 };
 
+
 /** Binary function */
 template<typename T>
 struct MathF2 : public MathFunction
 {
     /* function pointer to a function taking two arguments */
     typedef T (* function_ptr) (T, T);
-    MathF2(std::string const & name, function_ptr fp)
-	: MathFunction(name),
+    MathF2(std::string const & function_name, function_ptr fp)
+	: MathFunction(function_name),
 	  funct(fp)
     {
-	std::cout << "Constructed " << name << std::endl;
+	std::cout << "Constructed " << function_name << std::endl;
     }
     /** arity return method */
     std::size_t arity() const { return 2; }
@@ -184,6 +189,7 @@ private:
     }
     function_ptr funct;
 };
+
 
 /** UserFunction Defintion */
 struct UserFuncExpression;
@@ -199,7 +205,7 @@ struct UserFunction : public MathFunction
     UserFunction & operator=(UserFuncExpression const & ufe);
 
     /** Data access methods */
-    UserFunction * asUserFunction();
+    UserFunction *asUserFunction();
     boost::spirit::symbols<double> const & localvariables() const;
 
     /** Arity return method */
@@ -214,6 +220,7 @@ private:
     UserFunction & operator=(UserFunction const &);
 };
 
+
 /** Node Implementations */
 
 struct NumberNode : public Node
@@ -221,16 +228,19 @@ struct NumberNode : public Node
     virtual double getValue() const = 0;
 };
 
+
 struct FunctionNode : public Node
 {
     virtual MathFunction const & func() const = 0;
 };
+
 
 struct AssignNode : public Node
 {
     boost::shared_ptr<Node> clone() const;
     void assign(double & var, double val) const;
 };
+
 
 struct ConstantNode : public NumberNode
 {
@@ -241,17 +251,19 @@ private:
     double value;
 };
 
+
 struct VariableNode : public NumberNode
 {
-    VariableNode(double * p);
+    VariableNode(double *p);
     boost::shared_ptr<Node> clone() const;
 
     /** Data access methods */
     double getValue() const; /* Get the variable value */
     double & getVar() const; /* Get the variable reference */
 
-    double * pd;
+    double *pd;
 };
+
 
 struct sysFunctionNode : public FunctionNode
 {
@@ -262,6 +274,7 @@ private:
     boost::shared_ptr<MathFunction> fp;
 };
 
+
 struct OrNode : public FunctionNode
 {
     OrNode(Stack const &);
@@ -269,7 +282,7 @@ struct OrNode : public FunctionNode
 
     MathFunction const & func() const;
     std::size_t nbranches() const;
-    Stack * branch(std::size_t);
+    Stack *branch(std::size_t);
 private:
     struct OrFunc : public MathFunction {
     	OrFunc(Stack const &);
@@ -283,6 +296,7 @@ private:
     OrFunc func_;
 };
 
+
 struct BranchNode : public FunctionNode
 {
     BranchNode(Stack const & stack1, Stack const & stack2);
@@ -290,7 +304,7 @@ struct BranchNode : public FunctionNode
     MathFunction const & func() const;
 
     std::size_t nbranches() const;
-    Stack * branch(std::size_t i);
+    Stack *branch(std::size_t i);
 private:
     struct BranchFunc : public MathFunction {
 	BranchFunc(Stack const & stack1, Stack const & stack2);
@@ -304,21 +318,23 @@ private:
     BranchFunc func_;
 };
 
+
 struct UserFuncExpression
 {
     UserFuncExpression(std::vector<std::string> const & arnam, \
-    	boost::shared_ptr<boost::spirit::symbols<double> > const & locvar,
-	Stack const & s)
+		       boost::shared_ptr<boost::spirit::symbols<double> > const & locvar,
+		       Stack const & s)
     	: argnames(arnam), localvars(locvar), stack(s)
-	{}
+    {}
     std::vector<std::string> argnames;
     boost::shared_ptr<boost::spirit::symbols<double> > localvars;
     Stack stack;
 };
 
+
 struct FuncDefNode : public Node
 {
-    FuncDefNode(boost::shared_ptr<MathFunction> const & funcptr,\
+    FuncDefNode(boost::shared_ptr<MathFunction> const & funcptr, \
     		UserFuncExpression const & value);
     boost::shared_ptr<Node> clone() const;
     void assign() const;
@@ -326,6 +342,7 @@ private:
     boost::shared_ptr<MathFunction> funcptr_;
     UserFuncExpression value_;
 };
+
 
 #endif
 /** @} */

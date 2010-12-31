@@ -132,18 +132,6 @@ comm_error(str)
 }
 
 
-/*
- * This is where we go for message types we don't understand.
- */
-void
-pkgfoo(pcp, buf)
-    struct pkg_conn *pcp;
-    char *buf;
-{
-    return;
-}
-
-
 /******** Here's where the hooks lead *********/
 
 void

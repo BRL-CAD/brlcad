@@ -1,7 +1,6 @@
 
 EXTRA_DIST= \
 	3dm2g/3dm2g.vcproj \
-	adrt/adrt.vcproj \
 	asc2g/asc2g.vcproj \
 	asc2nmg/asc2nmg.vcproj \
 	asc2pix/asc2pix.vcproj \
@@ -106,10 +105,12 @@ EXTRA_DIST= \
 	libpkg/libpkg.vcproj \
 	libpng/libpng.vcproj \
 	libregex/libregex.vcproj \
+	librender/librender.vcproj \
 	librt/librt.vcproj \
 	libsysv/libsysv.vcproj \
 	libtcl/libtcl.vcproj \
 	libtclcad/libtclcad.vcproj \
+	libtie/libtie.vcproj \
 	libtk/libtk.vcproj \
 	libutahrle/libutahrle.vcproj \
 	libwdb/libwdb.vcproj \

@@ -110,8 +110,8 @@ Axis2Placement3D::FirstProjAxis(double *proj,double *zaxis, double *refdir) {
     if (refdir == NULL) {
     	double xplus[3]=  {1.0,0.0,0.0};
     	double xminus[3]=  {-1.0,0.0,0.0};
-    	if (!VAPPROXEQUAL(z, xplus, TOL) &&
-    			!VAPPROXEQUAL(z, xminus, TOL))  {
+    	if (!VNEAR_EQUAL(z, xplus, TOL) &&
+    			!VNEAR_EQUAL(z, xminus, TOL))  {
     		VSET(v,1.0,0.0,0.0);
     	} else {
     		VSET(v,0.0,1.0,0.0);
@@ -271,7 +271,7 @@ Axis2Placement3D::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 }
 
 bool
-Axis2Placement3D::LoadONBrep(ON_Brep *brep)
+Axis2Placement3D::LoadONBrep(ON_Brep *UNUSED(brep))
 {
 	//TODO: check other axis2placement3d usage notice being loaded from advanced brep in some instances
 	//std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;

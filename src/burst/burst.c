@@ -19,7 +19,7 @@
  *
  */
 /** @file burst.c
- *  Author:		Gary S. Moss
+ *
  */
 
 #include "common.h"
@@ -40,7 +40,7 @@
 #  define SIGTSTP 18
 #endif
 
-#define DEBUG_BURST	0	/* 1 enables debugging for this module */
+#define DEBUG_BURST 0 /* 1 enables debugging for this module */
 
 /*
   int getCommand(char *name, char *buf, int len, FILE *fp)
@@ -63,17 +63,18 @@ getCommand(char *name, char *buf, int len, FILE *fp)
 	    if (sscanf(buf, "%1330s", name) == 1) {
 		/* LNBUFSZ */
 		buf[strlen(buf)-1] = NUL; /* clobber newline */
-		return	1;
+		return 1;
 	    } else /* Skip over blank lines. */
 		continue;
 	} else {
 	    /* Generate comment command. */
 	    bu_strlcpy(name, CMD_COMMENT, LNBUFSZ);
-	    return	1;
+	    return 1;
 	}
     }
-    return	0; /* EOF */
+    return 0; /* EOF */
 }
+
 
 /*
   void setupSigs(void)
@@ -109,6 +110,7 @@ setupSigs(void)
     return;
 }
 
+
 /*
   int parsArgv(int argc, char **argv)
 
@@ -125,11 +127,12 @@ parsArgv(int argc, char **argv)
 		tty = 0;
 		break;
 	    case '?' :
-		return	0;
+		return 0;
 	}
     }
     return 1;
 }
+
 
 /*
   void readBatchInput(FILE *fp)
@@ -142,7 +145,7 @@ readBatchInput(FILE *fp)
     assert(fp != (FILE *) NULL);
     batchmode = 1;
     while (getCommand(cmdname, cmdbuf, LNBUFSZ, fp)) {
-	Func	*cmdfunc;
+	Func *cmdfunc;
 	if ((cmdfunc = getTrie(cmdname, cmdtrie)) == NULL) {
 	    int i, len = strlen(cmdname);
 	    brst_log("ERROR -- command syntax:\n");
@@ -167,6 +170,7 @@ readBatchInput(FILE *fp)
     batchmode = 0;
     return;
 }
+
 
 /*
   int main(int argc, char *argv[])
@@ -206,6 +210,7 @@ main(int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
+
 /*
   void exitCleanly(int code)
 
@@ -221,6 +226,7 @@ exitCleanly(int code)
 	locPerror(tmpfname);
     exit(code);
 }
+
 
 /*
  * Local Variables:

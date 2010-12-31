@@ -2342,7 +2342,7 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
 
 int
-rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_sketch_internal *skt;
     int ret, array_len;
@@ -2381,11 +2381,14 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	    fastf_t *new_verts=(fastf_t *)NULL;
 	    int len;
 	    char *ptr;
+	    char *dupstr;
 
 	    /* the vertex list is a list of lists (each element is a list of two coordinates)
 	     * so eliminate all the '{' and '}' chars in the list
 	     */
-	    ptr = argv[1];
+	    dupstr = bu_strdup(argv[1]);
+
+	    ptr = dupstr;
 	    while (*ptr != '\0') {
 		if (*ptr == '{' || *ptr == '}')
 		    *ptr = ' ';
@@ -2393,7 +2396,9 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	    }
 
 	    len = 0;
-	    (void)tcl_list_to_fastf_array(brlcad_interp, argv[1], &new_verts, &len);
+	    (void)tcl_list_to_fastf_array(brlcad_interp, dupstr, &new_verts, &len);
+	    bu_free(dupstr, "sketch adjust strdup");
+
 	    if (len%2) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertices\n");
 		return BRLCAD_ERROR;

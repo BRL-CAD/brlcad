@@ -580,18 +580,13 @@ HIDDEN int go_zclip(struct ged *gedp,
 		    int maxargs);
 
 /* Wrapper Functions */
+
 HIDDEN int go_autoview_func(struct ged *gedp,
 			    int argc,
 			    const char *argv[],
 			    ged_func_ptr func,
 			    const char *usage,
 			    int maxargs);
-HIDDEN int go_edit_redraw_func(struct ged *gedp,
-			       int argc,
-			       const char *argv[],
-			       ged_func_ptr func,
-			       const char *usage,
-			       int maxargs);
 HIDDEN int go_more_args_func(struct ged *gedp,
 			     int argc,
 			     const char *argv[],
@@ -616,6 +611,12 @@ HIDDEN int go_view_func(struct ged *gedp,
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
+HIDDEN int go_dm_func(struct ged *gedp,
+			int argc,
+			const char *argv[],
+			ged_func_ptr func,
+			const char *usage,
+			int maxargs);
 
 /* Utility Functions */
 HIDDEN void go_drawSolid(struct dm *dmp, struct solid *sp);
@@ -634,6 +635,8 @@ HIDDEN void go_rt_end_callback_internal(int aborted);
 
 HIDDEN void go_output_handler(struct ged *gedp, char *line);
 
+HIDDEN int go_edit_redraw(struct ged *gedp, int argc, const char *argv[]);
+
 /*XXX these belong in libdm/data.c */
 static void go_dm_draw_arrows(struct dm *dmp, struct ged_data_arrow_state *gdasp);
 static void go_dm_draw_labels(struct dm *dmp, struct ged_data_label_state *gdlsp, matp_t m2vmat);
@@ -648,6 +651,7 @@ static struct ged_obj HeadGedObj;
 static struct ged_obj *go_current_gop = GED_OBJ_NULL;
 
 #define GO_MAX_RT_ARGS 64
+#define GO_UNLIMITED -1
 
 struct go_cmdtab {
     char *go_name;
@@ -658,233 +662,233 @@ struct go_cmdtab {
 };
 
 static struct go_cmdtab go_cmds[] = {
-    {"3ptarb",	(char *)0, MAXARGS, go_more_args_func, ged_3ptarb},
+    {"3ptarb",	(char *)0, GO_UNLIMITED, go_more_args_func, ged_3ptarb},
     {"adc",	"args", 7, go_view_func, ged_adc},
-    {"adjust",	(char *)0, MAXARGS, go_pass_through_func, ged_adjust},
-    {"ae2dir",	(char *)0, MAXARGS, go_pass_through_func, ged_ae2dir},
+    {"adjust",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_adjust},
+    {"ae2dir",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_ae2dir},
     {"aet",	"[[-i] az el [tw]]", 6, go_view_func, ged_aet},
-    {"analyze",	(char *)0, MAXARGS, go_pass_through_func, ged_analyze},
-    {"arb",	(char *)0, MAXARGS, go_pass_through_func, ged_arb},
-    {"arced",	(char *)0, MAXARGS, go_pass_through_func, ged_arced},
+    {"analyze",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_analyze},
+    {"arb",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_arb},
+    {"arced",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_arced},
     {"arot",	"x y z angle", 6, go_view_func, ged_arot},
-    {"attr",	(char *)0, MAXARGS, go_pass_through_func, ged_attr},
-    {"autoview",	"vname", MAXARGS, go_autoview, GED_FUNC_PTR_NULL},
-    {"bb",	(char *)0, MAXARGS, go_pass_through_func, ged_bb},
-    {"bev",	(char *)0, MAXARGS, go_pass_through_func, ged_bev},
-    {"base2local",	(char *)0, MAXARGS, go_base2local, GED_FUNC_PTR_NULL},
-    {"bg",	"[r g b]", MAXARGS, go_bg, GED_FUNC_PTR_NULL},
-    {"blast",	(char *)0, MAXARGS, go_blast, GED_FUNC_PTR_NULL},
-    {"bo",	(char *)0, MAXARGS, go_pass_through_func, ged_bo},
-    {"bot",	(char *)0, MAXARGS, go_pass_through_func, ged_bot},
-    {"bot_condense",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_condense},
-    {"bot_decimate",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_decimate},
-    {"bot_dump",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_dump},
-    {"bot_face_fuse",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_face_fuse},
-    {"bot_face_sort",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_face_sort},
-    {"bot_flip",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_flip},
-    {"bot_merge",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_merge},
-    {"bot_smooth",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_smooth},
-    {"bot_split",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_split},
-    {"bot_sync",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_sync},
-    {"bot_vertex_fuse",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_vertex_fuse},
-    {"bounds",	"[\"minX maxX minY maxY minZ maxZ\"]", MAXARGS, go_bounds, GED_FUNC_PTR_NULL},
-    {"c",	(char *)0, MAXARGS, go_pass_through_func, ged_comb_std},
-    {"cat",	(char *)0, MAXARGS, go_pass_through_func, ged_cat},
+    {"attr",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_attr},
+    {"autoview",	"vname", GO_UNLIMITED, go_autoview, GED_FUNC_PTR_NULL},
+    {"bb",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_bb},
+    {"bev",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_bev},
+    {"base2local",	(char *)0, GO_UNLIMITED, go_base2local, GED_FUNC_PTR_NULL},
+    {"bg",	"[r g b]", GO_UNLIMITED, go_bg, GED_FUNC_PTR_NULL},
+    {"blast",	(char *)0, GO_UNLIMITED, go_blast, GED_FUNC_PTR_NULL},
+    {"bo",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_bo},
+    {"bot",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_bot},
+    {"bot_condense",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_bot_condense},
+    {"bot_decimate",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_bot_decimate},
+    {"bot_dump",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_bot_dump},
+    {"bot_face_fuse",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_bot_face_fuse},
+    {"bot_face_sort",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_bot_face_sort},
+    {"bot_flip",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_bot_flip},
+    {"bot_merge",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_bot_merge},
+    {"bot_smooth",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_bot_smooth},
+    {"bot_split",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_bot_split},
+    {"bot_sync",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_bot_sync},
+    {"bot_vertex_fuse",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_bot_vertex_fuse},
+    {"bounds",	"[\"minX maxX minY maxY minZ maxZ\"]", GO_UNLIMITED, go_bounds, GED_FUNC_PTR_NULL},
+    {"c",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_comb_std},
+    {"cat",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_cat},
     {"center",	"[x y z]", 5, go_view_func, ged_center},
-    {"clear",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_zap},
-    {"clone",	(char *)0, MAXARGS, go_pass_through_func, ged_clone},
-    {"color",	(char *)0, MAXARGS, go_pass_through_func, ged_color},
-    {"comb",	(char *)0, MAXARGS, go_pass_through_func, ged_comb},
-    {"comb_color",	(char *)0, MAXARGS, go_pass_through_func, ged_comb_color},
-    {"combmem",	(char *)0, MAXARGS, go_pass_through_func, ged_combmem},
-    {"configure",	"vname", MAXARGS, go_configure, GED_FUNC_PTR_NULL},
-    {"constrain_rmode",	"x|y|z x y", MAXARGS, go_constrain_rmode, GED_FUNC_PTR_NULL},
-    {"constrain_tmode",	"x|y|z x y", MAXARGS, go_constrain_tmode, GED_FUNC_PTR_NULL},
-    {"copyeval",	(char *)0, MAXARGS, go_pass_through_func, ged_copyeval},
-    {"copymat",	(char *)0, MAXARGS, go_pass_through_func, ged_copymat},
-    {"cp",	"[-f] from to", MAXARGS, go_copy, GED_FUNC_PTR_NULL},
-    {"cpi",	(char *)0, MAXARGS, go_pass_through_func, ged_cpi},
-    {"d",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase},
-    {"dall",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase_all},
-    {"data_arrows",	"???", MAXARGS, go_data_arrows, GED_FUNC_PTR_NULL},
-    {"data_axes",	"???", MAXARGS, go_data_axes, GED_FUNC_PTR_NULL},
-    {"data_labels",	"???", MAXARGS, go_data_labels, GED_FUNC_PTR_NULL},
-    {"data_lines",	"???", MAXARGS, go_data_lines, GED_FUNC_PTR_NULL},
-    {"data_move",	"???", MAXARGS, go_data_move, GED_FUNC_PTR_NULL},
-    {"data_pick",	"???", MAXARGS, go_data_pick, GED_FUNC_PTR_NULL},
-    {"dbconcat",	(char *)0, MAXARGS, go_pass_through_func, ged_concat},
-    {"dbfind",	(char *)0, MAXARGS, go_pass_through_func, ged_find},
-    {"dbip",	(char *)0, MAXARGS, go_pass_through_func, ged_dbip},
-    {"dbot_dump",	(char *)0, MAXARGS, go_pass_through_func, ged_dbot_dump},
-    {"decompose",	(char *)0, MAXARGS, go_pass_through_func, ged_decompose},
-    {"delay",	(char *)0, MAXARGS, go_pass_through_func, ged_delay},
-    {"delete_view",	"vname", MAXARGS, go_delete_view, GED_FUNC_PTR_NULL},
-    {"dir2ae",	(char *)0, MAXARGS, go_pass_through_func, ged_dir2ae},
-    {"draw",	(char *)0, MAXARGS, go_autoview_func, ged_draw},
-    {"dump",	(char *)0, MAXARGS, go_pass_through_func, ged_dump},
-    {"dup",	(char *)0, MAXARGS, go_pass_through_func, ged_dup},
-    {"E",	(char *)0, MAXARGS, go_autoview_func, ged_E},
-    {"e",	(char *)0, MAXARGS, go_autoview_func, ged_draw},
-    {"eac",	(char *)0, MAXARGS, go_autoview_func, ged_eac},
-    {"echo",	(char *)0, MAXARGS, go_pass_through_func, ged_echo},
-    {"edcodes",	(char *)0, MAXARGS, go_pass_through_func, ged_edcodes},
-    {"edcolor",	(char *)0, MAXARGS, go_pass_through_func, ged_edcolor},
-    {"edcomb",	(char *)0, MAXARGS, go_pass_through_func, ged_edcomb},
-    {"edmater",	(char *)0, MAXARGS, go_pass_through_func, ged_edmater},
-    {"erase",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase},
-    {"erase_all",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase_all},
-    {"ev",	(char *)0, MAXARGS, go_autoview_func, ged_ev},
-    {"expand",	(char *)0, MAXARGS, go_pass_through_func, ged_expand},
+    {"clear",	(char *)0, GO_UNLIMITED, go_pass_through_and_refresh_func, ged_zap},
+    {"clone",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_clone},
+    {"color",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_color},
+    {"comb",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_comb},
+    {"comb_color",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_comb_color},
+    {"combmem",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_combmem},
+    {"configure",	"vname", GO_UNLIMITED, go_configure, GED_FUNC_PTR_NULL},
+    {"constrain_rmode",	"x|y|z x y", GO_UNLIMITED, go_constrain_rmode, GED_FUNC_PTR_NULL},
+    {"constrain_tmode",	"x|y|z x y", GO_UNLIMITED, go_constrain_tmode, GED_FUNC_PTR_NULL},
+    {"copyeval",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_copyeval},
+    {"copymat",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_copymat},
+    {"cp",	"[-f] from to", GO_UNLIMITED, go_copy, GED_FUNC_PTR_NULL},
+    {"cpi",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_cpi},
+    {"d",	(char *)0, GO_UNLIMITED, go_pass_through_and_refresh_func, ged_erase},
+    {"dall",	(char *)0, GO_UNLIMITED, go_pass_through_and_refresh_func, ged_erase_all},
+    {"data_arrows",	"???", GO_UNLIMITED, go_data_arrows, GED_FUNC_PTR_NULL},
+    {"data_axes",	"???", GO_UNLIMITED, go_data_axes, GED_FUNC_PTR_NULL},
+    {"data_labels",	"???", GO_UNLIMITED, go_data_labels, GED_FUNC_PTR_NULL},
+    {"data_lines",	"???", GO_UNLIMITED, go_data_lines, GED_FUNC_PTR_NULL},
+    {"data_move",	"???", GO_UNLIMITED, go_data_move, GED_FUNC_PTR_NULL},
+    {"data_pick",	"???", GO_UNLIMITED, go_data_pick, GED_FUNC_PTR_NULL},
+    {"dbconcat",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_concat},
+    {"dbfind",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_find},
+    {"dbip",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_dbip},
+    {"dbot_dump",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_dbot_dump},
+    {"decompose",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_decompose},
+    {"delay",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_delay},
+    {"delete_view",	"vname", GO_UNLIMITED, go_delete_view, GED_FUNC_PTR_NULL},
+    {"dir2ae",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_dir2ae},
+    {"draw",	(char *)0, GO_UNLIMITED, go_autoview_func, ged_draw},
+    {"dump",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_dump},
+    {"dup",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_dup},
+    {"E",	(char *)0, GO_UNLIMITED, go_autoview_func, ged_E},
+    {"e",	(char *)0, GO_UNLIMITED, go_autoview_func, ged_draw},
+    {"eac",	(char *)0, GO_UNLIMITED, go_autoview_func, ged_eac},
+    {"echo",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_echo},
+    {"edcodes",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_edcodes},
+    {"edcolor",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_edcolor},
+    {"edcomb",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_edcomb},
+    {"edmater",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_edmater},
+    {"erase",	(char *)0, GO_UNLIMITED, go_pass_through_and_refresh_func, ged_erase},
+    {"erase_all",	(char *)0, GO_UNLIMITED, go_pass_through_and_refresh_func, ged_erase_all},
+    {"ev",	(char *)0, GO_UNLIMITED, go_autoview_func, ged_ev},
+    {"expand",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_expand},
     {"eye",	"[x y z]", 5, go_view_func, ged_eye},
     {"eye_pos",	"[x y z]", 5, go_view_func, ged_eye_pos},
-    {"faceplate",	"center_dot|prim_labels|view_params|view_scale color|draw [val(s)]", MAXARGS, go_faceplate, GED_FUNC_PTR_NULL},
-    {"facetize",	(char *)0, MAXARGS, go_pass_through_func, ged_facetize},
-    {"form",	(char *)0, MAXARGS, go_pass_through_func, ged_form},
-    {"fracture",	(char *)0, MAXARGS, go_pass_through_func, ged_fracture},
-    {"g",	(char *)0, MAXARGS, go_pass_through_func, ged_group},
-    {"get",	(char *)0, MAXARGS, go_pass_through_func, ged_get},
-    {"get_autoview",	(char *)0, MAXARGS, go_pass_through_func, ged_get_autoview},
-    {"get_comb",	(char *)0, MAXARGS, go_pass_through_func, ged_get_comb},
+    {"faceplate",	"center_dot|prim_labels|view_params|view_scale color|draw [val(s)]", GO_UNLIMITED, go_faceplate, GED_FUNC_PTR_NULL},
+    {"facetize",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_facetize},
+    {"form",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_form},
+    {"fracture",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_fracture},
+    {"g",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_group},
+    {"get",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_get},
+    {"get_autoview",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_get_autoview},
+    {"get_comb",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_get_comb},
     {"get_eyemodel",	"vname", 2, go_view_func, ged_get_eyemodel},
-    {"get_type",	(char *)0, MAXARGS, go_pass_through_func, ged_get_type},
-    {"glob",	(char *)0, MAXARGS, go_pass_through_func, ged_glob},
-    {"gqa",	(char *)0, MAXARGS, go_pass_through_func, ged_gqa},
+    {"get_type",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_get_type},
+    {"glob",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_glob},
+    {"gqa",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_gqa},
     {"grid",	"args", 6, go_view_func, ged_grid},
-    {"handle_expose",	"vname count", MAXARGS, go_handle_expose, GED_FUNC_PTR_NULL},
-    {"hide",	(char *)0, MAXARGS, go_pass_through_func, ged_hide},
-    {"how",	(char *)0, MAXARGS, go_pass_through_func, ged_how},
-    {"human",	(char *)0, MAXARGS, go_pass_through_func, ged_human},
-    {"i",	(char *)0, MAXARGS, go_pass_through_func, ged_instance},
-    {"idents",	(char *)0, MAXARGS, go_pass_through_func, ged_tables},
-    {"idle_mode",	"vname", MAXARGS, go_idle_mode, GED_FUNC_PTR_NULL},
-    {"illum",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_illum},
-    {"importFg4Section",	(char *)0, MAXARGS, go_pass_through_func, ged_importFg4Section},
-    {"in",	(char *)0, MAXARGS, go_more_args_func, ged_in},
-    {"init_view_bindings",	"vname", MAXARGS, go_init_view_bindings, GED_FUNC_PTR_NULL},
-    {"inside",	(char *)0, MAXARGS, go_more_args_func, ged_inside},
+    {"handle_expose",	"vname count", GO_UNLIMITED, go_handle_expose, GED_FUNC_PTR_NULL},
+    {"hide",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_hide},
+    {"how",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_how},
+    {"human",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_human},
+    {"i",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_instance},
+    {"idents",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_tables},
+    {"idle_mode",	"vname", GO_UNLIMITED, go_idle_mode, GED_FUNC_PTR_NULL},
+    {"illum",	(char *)0, GO_UNLIMITED, go_pass_through_and_refresh_func, ged_illum},
+    {"importFg4Section",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_importFg4Section},
+    {"in",	(char *)0, GO_UNLIMITED, go_more_args_func, ged_in},
+    {"init_view_bindings",	"vname", GO_UNLIMITED, go_init_view_bindings, GED_FUNC_PTR_NULL},
+    {"inside",	(char *)0, GO_UNLIMITED, go_more_args_func, ged_inside},
     {"isize",	"vname", 2, go_view_func, ged_isize},
-    {"item",	(char *)0, MAXARGS, go_pass_through_func, ged_item},
-    {"keep",	(char *)0, MAXARGS, go_pass_through_func, ged_keep},
+    {"item",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_item},
+    {"keep",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_keep},
     {"keypoint",	"[x y z]", 5, go_view_func, ged_keypoint},
-    {"kill",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_kill},
-    {"killall",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_killall},
-    {"killrefs",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_killrefs},
-    {"killtree",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_killtree},
-    {"l",	(char *)0, MAXARGS, go_pass_through_func, ged_list},
-    {"light",	"[0|1]", MAXARGS, go_light, GED_FUNC_PTR_NULL},
-    {"list_views",	(char *)0, MAXARGS, go_list_views, GED_FUNC_PTR_NULL},
-    {"listen",	"[port]", MAXARGS, go_listen, GED_FUNC_PTR_NULL},
-    {"listeval",	(char *)0, MAXARGS, go_pass_through_func, ged_pathsum},
+    {"kill",	(char *)0, GO_UNLIMITED, go_pass_through_and_refresh_func, ged_kill},
+    {"killall",	(char *)0, GO_UNLIMITED, go_pass_through_and_refresh_func, ged_killall},
+    {"killrefs",	(char *)0, GO_UNLIMITED, go_pass_through_and_refresh_func, ged_killrefs},
+    {"killtree",	(char *)0, GO_UNLIMITED, go_pass_through_and_refresh_func, ged_killtree},
+    {"l",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_list},
+    {"light",	"[0|1]", GO_UNLIMITED, go_light, GED_FUNC_PTR_NULL},
+    {"list_views",	(char *)0, GO_UNLIMITED, go_list_views, GED_FUNC_PTR_NULL},
+    {"listen",	"[port]", GO_UNLIMITED, go_listen, GED_FUNC_PTR_NULL},
+    {"listeval",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_pathsum},
     {"loadview",	"filename", 3, go_view_func, ged_loadview},
-    {"local2base",	(char *)0, MAXARGS, go_local2base, GED_FUNC_PTR_NULL},
-    {"log",	(char *)0, MAXARGS, go_pass_through_func, ged_log},
+    {"local2base",	(char *)0, GO_UNLIMITED, go_local2base, GED_FUNC_PTR_NULL},
+    {"log",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_log},
     {"lookat",	"x y z", 5, go_view_func, ged_lookat},
-    {"ls",	(char *)0, MAXARGS, go_pass_through_func, ged_ls},
-    {"lt",	(char *)0, MAXARGS, go_pass_through_func, ged_lt},
+    {"ls",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_ls},
+    {"lt",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_lt},
     {"m2v_point",	"x y z", 5, go_view_func, ged_m2v_point},
-    {"make",	(char *)0, MAXARGS, go_make, GED_FUNC_PTR_NULL},
-    {"make_bb",	(char *)0, MAXARGS, go_pass_through_func, ged_make_bb},
-    {"make_name",	(char *)0, MAXARGS, go_pass_through_func, ged_make_name},
-    {"make_pnts",	(char *)0, MAXARGS, go_more_args_func, ged_make_pnts},
-    {"match",	(char *)0, MAXARGS, go_pass_through_func, ged_match},
-    {"mater",	(char *)0, MAXARGS, go_pass_through_func, ged_mater},
-    {"mirror",	(char *)0, MAXARGS, go_mirror, GED_FUNC_PTR_NULL},
+    {"make",	(char *)0, GO_UNLIMITED, go_make, GED_FUNC_PTR_NULL},
+    {"make_bb",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_make_bb},
+    {"make_name",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_make_name},
+    {"make_pnts",	(char *)0, GO_UNLIMITED, go_more_args_func, ged_make_pnts},
+    {"match",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_match},
+    {"mater",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_mater},
+    {"mirror",	(char *)0, GO_UNLIMITED, go_mirror, GED_FUNC_PTR_NULL},
     {"model2view",	"vname", 2, go_view_func, ged_model2view},
-    {"model_axes",	"???", MAXARGS, go_model_axes, GED_FUNC_PTR_NULL},
-    {"more_args_callback",	"set/get the \"more args\" callback", MAXARGS, go_more_args_callback, GED_FUNC_PTR_NULL},
-    {"move_arb_edge",	(char *)0, MAXARGS, go_pass_through_func, ged_move_arb_edge},
-    {"move_arb_edge_mode",	"obj edge x y", MAXARGS, go_move_arb_edge_mode, GED_FUNC_PTR_NULL},
-    {"move_arb_face",	(char *)0, MAXARGS, go_pass_through_func, ged_move_arb_face},
-    {"move_arb_face_mode",	"obj face x y", MAXARGS, go_move_arb_face_mode, GED_FUNC_PTR_NULL},
-    {"mouse_constrain_rot",	"coord x y", MAXARGS, go_mouse_constrain_rot, GED_FUNC_PTR_NULL},
-    {"mouse_constrain_trans",	"coord x y", MAXARGS, go_mouse_constrain_trans, GED_FUNC_PTR_NULL},
-    {"mouse_move_arb_edge",	"obj edge x y", MAXARGS, go_mouse_move_arb_edge, GED_FUNC_PTR_NULL},
-    {"mouse_move_arb_face",	"obj face x y", MAXARGS, go_mouse_move_arb_face, GED_FUNC_PTR_NULL},
-    {"mouse_orotate",	"obj x y", MAXARGS, go_mouse_orotate, GED_FUNC_PTR_NULL},
-    {"mouse_oscale",	"obj x y", MAXARGS, go_mouse_oscale, GED_FUNC_PTR_NULL},
-    {"mouse_otranslate",	"obj x y", MAXARGS, go_mouse_otranslate, GED_FUNC_PTR_NULL},
-    {"mouse_ray",	"x y", MAXARGS, go_mouse_ray, GED_FUNC_PTR_NULL},
-    {"mouse_rect",	"x y", MAXARGS, go_mouse_rect, GED_FUNC_PTR_NULL},
-    {"mouse_rot",	"x y", MAXARGS, go_mouse_rot, GED_FUNC_PTR_NULL},
-    {"mouse_rotate_arb_face",	"obj face v x y", MAXARGS, go_mouse_rotate_arb_face, GED_FUNC_PTR_NULL},
-    {"mouse_scale",	"x y", MAXARGS, go_mouse_scale, GED_FUNC_PTR_NULL},
-    {"mouse_protate",	"obj attribute x y", MAXARGS, go_mouse_protate, GED_FUNC_PTR_NULL},
-    {"mouse_pscale",	"obj attribute x y", MAXARGS, go_mouse_pscale, GED_FUNC_PTR_NULL},
-    {"mouse_ptranslate",	"obj attribute x y", MAXARGS, go_mouse_ptranslate, GED_FUNC_PTR_NULL},
-    {"mouse_trans",	"x y", MAXARGS, go_mouse_trans, GED_FUNC_PTR_NULL},
-    {"mv",	(char *)0, MAXARGS, go_pass_through_func, ged_move},
-    {"mvall",	(char *)0, MAXARGS, go_pass_through_func, ged_move_all},
-    {"new_view",	"vname type [args]", MAXARGS, go_new_view, GED_FUNC_PTR_NULL},
+    {"model_axes",	"???", GO_UNLIMITED, go_model_axes, GED_FUNC_PTR_NULL},
+    {"more_args_callback",	"set/get the \"more args\" callback", GO_UNLIMITED, go_more_args_callback, GED_FUNC_PTR_NULL},
+    {"move_arb_edge",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_move_arb_edge},
+    {"move_arb_edge_mode",	"obj edge x y", GO_UNLIMITED, go_move_arb_edge_mode, GED_FUNC_PTR_NULL},
+    {"move_arb_face",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_move_arb_face},
+    {"move_arb_face_mode",	"obj face x y", GO_UNLIMITED, go_move_arb_face_mode, GED_FUNC_PTR_NULL},
+    {"mouse_constrain_rot",	"coord x y", GO_UNLIMITED, go_mouse_constrain_rot, GED_FUNC_PTR_NULL},
+    {"mouse_constrain_trans",	"coord x y", GO_UNLIMITED, go_mouse_constrain_trans, GED_FUNC_PTR_NULL},
+    {"mouse_move_arb_edge",	"obj edge x y", GO_UNLIMITED, go_mouse_move_arb_edge, GED_FUNC_PTR_NULL},
+    {"mouse_move_arb_face",	"obj face x y", GO_UNLIMITED, go_mouse_move_arb_face, GED_FUNC_PTR_NULL},
+    {"mouse_orotate",	"obj x y", GO_UNLIMITED, go_mouse_orotate, GED_FUNC_PTR_NULL},
+    {"mouse_oscale",	"obj x y", GO_UNLIMITED, go_mouse_oscale, GED_FUNC_PTR_NULL},
+    {"mouse_otranslate",	"obj x y", GO_UNLIMITED, go_mouse_otranslate, GED_FUNC_PTR_NULL},
+    {"mouse_ray",	"x y", GO_UNLIMITED, go_mouse_ray, GED_FUNC_PTR_NULL},
+    {"mouse_rect",	"x y", GO_UNLIMITED, go_mouse_rect, GED_FUNC_PTR_NULL},
+    {"mouse_rot",	"x y", GO_UNLIMITED, go_mouse_rot, GED_FUNC_PTR_NULL},
+    {"mouse_rotate_arb_face",	"obj face v x y", GO_UNLIMITED, go_mouse_rotate_arb_face, GED_FUNC_PTR_NULL},
+    {"mouse_scale",	"x y", GO_UNLIMITED, go_mouse_scale, GED_FUNC_PTR_NULL},
+    {"mouse_protate",	"obj attribute x y", GO_UNLIMITED, go_mouse_protate, GED_FUNC_PTR_NULL},
+    {"mouse_pscale",	"obj attribute x y", GO_UNLIMITED, go_mouse_pscale, GED_FUNC_PTR_NULL},
+    {"mouse_ptranslate",	"obj attribute x y", GO_UNLIMITED, go_mouse_ptranslate, GED_FUNC_PTR_NULL},
+    {"mouse_trans",	"x y", GO_UNLIMITED, go_mouse_trans, GED_FUNC_PTR_NULL},
+    {"mv",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_move},
+    {"mvall",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_move_all},
+    {"new_view",	"vname type [args]", GO_UNLIMITED, go_new_view, GED_FUNC_PTR_NULL},
     {"nirt",	"[args]", GO_MAX_RT_ARGS, go_view_func, ged_nirt},
-    {"nmg_collapse",	(char *)0, MAXARGS, go_pass_through_func, ged_nmg_collapse},
-    {"nmg_simplify",	(char *)0, MAXARGS, go_pass_through_func, ged_nmg_simplify},
-    {"ocenter",	(char *)0, MAXARGS, go_pass_through_func, ged_ocenter},
-    {"open",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_reopen},
+    {"nmg_collapse",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_nmg_collapse},
+    {"nmg_simplify",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_nmg_simplify},
+    {"ocenter",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_ocenter},
+    {"open",	(char *)0, GO_UNLIMITED, go_pass_through_and_refresh_func, ged_reopen},
     {"orient",	"quat", 6, go_view_func, ged_orient},
-    {"orotate",	(char *)0, MAXARGS, go_pass_through_func, ged_orotate},
-    {"orotate_mode",	"obj x y", MAXARGS, go_orotate_mode, GED_FUNC_PTR_NULL},
-    {"oscale",	(char *)0, MAXARGS, go_pass_through_func, ged_oscale},
-    {"oscale_mode",	"obj x y", MAXARGS, go_oscale_mode, GED_FUNC_PTR_NULL},
-    {"otranslate",	(char *)0, MAXARGS, go_pass_through_func, ged_otranslate},
-    {"otranslate_mode",	"obj x y", MAXARGS, go_otranslate_mode, GED_FUNC_PTR_NULL},
-    {"overlay",	(char *)0, MAXARGS, go_autoview_func, ged_overlay},
-    {"paint_rect_area",	"vname", MAXARGS, go_paint_rect_area, GED_FUNC_PTR_NULL},
-    {"pathlist",	(char *)0, MAXARGS, go_pass_through_func, ged_pathlist},
-    {"paths",	(char *)0, MAXARGS, go_pass_through_func, ged_pathsum},
+    {"orotate",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_orotate},
+    {"orotate_mode",	"obj x y", GO_UNLIMITED, go_orotate_mode, GED_FUNC_PTR_NULL},
+    {"oscale",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_oscale},
+    {"oscale_mode",	"obj x y", GO_UNLIMITED, go_oscale_mode, GED_FUNC_PTR_NULL},
+    {"otranslate",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_otranslate},
+    {"otranslate_mode",	"obj x y", GO_UNLIMITED, go_otranslate_mode, GED_FUNC_PTR_NULL},
+    {"overlay",	(char *)0, GO_UNLIMITED, go_autoview_func, ged_overlay},
+    {"paint_rect_area",	"vname", GO_UNLIMITED, go_paint_rect_area, GED_FUNC_PTR_NULL},
+    {"pathlist",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_pathlist},
+    {"paths",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_pathsum},
     {"perspective",	"[angle]", 3, go_view_func, ged_perspective},
     {"plot",	"[options] file.pl", 16, go_view_func, ged_plot},
     {"pmat",	"[mat]", 3, go_view_func, ged_pmat},
     {"pmodel2view",	"vname", 2, go_view_func, ged_pmodel2view},
 #if defined(DM_OGL) || defined(DM_WGL)
-    {"png",	"file", MAXARGS, go_png, GED_FUNC_PTR_NULL},
+    {"png",	"file", GO_UNLIMITED, go_png, GED_FUNC_PTR_NULL},
 #endif
     {"pngwf",	"[options] file.png", 16, go_view_func, ged_png},
     {"pov",	"center quat scale eye_pos perspective", 7, go_view_func, ged_pmat},
-    {"prcolor",	(char *)0, MAXARGS, go_pass_through_func, ged_prcolor},
-    {"prefix",	(char *)0, MAXARGS, go_pass_through_func, ged_prefix},
-    {"preview",	"[options] script", MAXARGS, go_view_func, ged_preview},
-    {"prim_label",	"[prim_1 prim_2 ... prim_N]", MAXARGS, go_prim_label, GED_FUNC_PTR_NULL},
+    {"prcolor",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_prcolor},
+    {"prefix",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_prefix},
+    {"preview",	"[options] script", GO_UNLIMITED, go_dm_func, ged_preview},
+    {"prim_label",	"[prim_1 prim_2 ... prim_N]", GO_UNLIMITED, go_prim_label, GED_FUNC_PTR_NULL},
     {"ps",	"[options] file.ps", 16, go_view_func, ged_ps},
-    {"protate",	(char *)0, MAXARGS, go_pass_through_func, ged_protate},
-    {"protate_mode",	"obj attribute x y", MAXARGS, go_protate_mode, GED_FUNC_PTR_NULL},
-    {"pscale",	(char *)0, MAXARGS, go_pass_through_func, ged_pscale},
-    {"pscale_mode",	"obj attribute x y", MAXARGS, go_pscale_mode, GED_FUNC_PTR_NULL},
-    {"ptranslate",	(char *)0, MAXARGS, go_pass_through_func, ged_ptranslate},
-    {"ptranslate_mode",	"obj attribute x y", MAXARGS, go_ptranslate_mode, GED_FUNC_PTR_NULL},
-    {"push",	(char *)0, MAXARGS, go_pass_through_func, ged_push},
-    {"put",	(char *)0, MAXARGS, go_pass_through_func, ged_put},
-    {"put_comb",	(char *)0, MAXARGS, go_pass_through_func, ged_put_comb},
-    {"putmat",	(char *)0, MAXARGS, go_pass_through_func, ged_putmat},
-    {"qray",	(char *)0, MAXARGS, go_pass_through_func, ged_qray},
+    {"protate",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_protate},
+    {"protate_mode",	"obj attribute x y", GO_UNLIMITED, go_protate_mode, GED_FUNC_PTR_NULL},
+    {"pscale",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_pscale},
+    {"pscale_mode",	"obj attribute x y", GO_UNLIMITED, go_pscale_mode, GED_FUNC_PTR_NULL},
+    {"ptranslate",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_ptranslate},
+    {"ptranslate_mode",	"obj attribute x y", GO_UNLIMITED, go_ptranslate_mode, GED_FUNC_PTR_NULL},
+    {"push",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_push},
+    {"put",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_put},
+    {"put_comb",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_put_comb},
+    {"putmat",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_putmat},
+    {"qray",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_qray},
     {"quat",	"a b c d", 6, go_view_func, ged_quat},
     {"qvrot",	"x y z angle", 6, go_view_func, ged_qvrot},
-    {"r",	(char *)0, MAXARGS, go_pass_through_func, ged_region},
-    {"rcodes",	(char *)0, MAXARGS, go_pass_through_func, ged_rcodes},
+    {"r",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_region},
+    {"rcodes",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_rcodes},
     {"rect",	"args", 6, go_view_func, ged_rect},
-    {"rect_mode",	"x y", MAXARGS, go_rect_mode, GED_FUNC_PTR_NULL},
-    {"red",	(char *)0, MAXARGS, go_pass_through_func, ged_red},
-    {"refresh",	"vname", MAXARGS, go_refresh, GED_FUNC_PTR_NULL},
-    {"refresh_all",	(char *)0, MAXARGS, go_refresh_all, GED_FUNC_PTR_NULL},
-    {"refresh_on",	"[0|1]", MAXARGS, go_refresh_on, GED_FUNC_PTR_NULL},
-    {"regdef",	(char *)0, MAXARGS, go_pass_through_func, ged_regdef},
-    {"regions",	(char *)0, MAXARGS, go_pass_through_func, ged_tables},
-    {"report",	(char *)0, MAXARGS, go_pass_through_func, ged_report},
-    {"rfarb",	(char *)0, MAXARGS, go_pass_through_func, ged_rfarb},
-    {"rm",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_remove},
-    {"rmap",	(char *)0, MAXARGS, go_pass_through_func, ged_rmap},
+    {"rect_mode",	"x y", GO_UNLIMITED, go_rect_mode, GED_FUNC_PTR_NULL},
+    {"red",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_red},
+    {"refresh",	"vname", GO_UNLIMITED, go_refresh, GED_FUNC_PTR_NULL},
+    {"refresh_all",	(char *)0, GO_UNLIMITED, go_refresh_all, GED_FUNC_PTR_NULL},
+    {"refresh_on",	"[0|1]", GO_UNLIMITED, go_refresh_on, GED_FUNC_PTR_NULL},
+    {"regdef",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_regdef},
+    {"regions",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_tables},
+    {"report",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_report},
+    {"rfarb",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_rfarb},
+    {"rm",	(char *)0, GO_UNLIMITED, go_pass_through_and_refresh_func, ged_remove},
+    {"rmap",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_rmap},
     {"rmat",	"[mat]", 3, go_view_func, ged_rmat},
-    {"rmater",	(char *)0, MAXARGS, go_pass_through_func, ged_rmater},
+    {"rmater",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_rmater},
     {"rot",	"[-m|-v] x y z", 6, go_view_func, ged_rot},
     {"rot_about",	"[e|k|m|v]", 3, go_view_func, ged_rotate_about},
     {"rot_point",	"x y z", 5, go_view_func, ged_rot_point},
-    {"rotate_arb_face",	(char *)0, MAXARGS, go_pass_through_func, ged_rotate_arb_face},
-    {"rotate_arb_face_mode",	"obj face v x y", MAXARGS, go_rotate_arb_face_mode, GED_FUNC_PTR_NULL},
-    {"rotate_mode",	"x y", MAXARGS, go_rotate_mode, GED_FUNC_PTR_NULL},
+    {"rotate_arb_face",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_rotate_arb_face},
+    {"rotate_arb_face_mode",	"obj face v x y", GO_UNLIMITED, go_rotate_arb_face_mode, GED_FUNC_PTR_NULL},
+    {"rotate_mode",	"x y", GO_UNLIMITED, go_rotate_mode, GED_FUNC_PTR_NULL},
     {"rrt",	"[args]", GO_MAX_RT_ARGS, go_view_func, ged_rrt},
-    {"rselect",		(char *)0, MAXARGS, go_view_func, ged_rselect},
+    {"rselect",		(char *)0, GO_UNLIMITED, go_view_func, ged_rselect},
     {"rt",	"[args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
     {"rt_end_callback",	"[args]", GO_MAX_RT_ARGS, go_rt_end_callback, GED_FUNC_PTR_NULL},
-    {"rt_gettrees",	"[-i] [-u] pname object", MAXARGS, go_rt_gettrees, GED_FUNC_PTR_NULL},
+    {"rt_gettrees",	"[-i] [-u] pname object", GO_UNLIMITED, go_rt_gettrees, GED_FUNC_PTR_NULL},
     {"rtabort",	(char *)0, GO_MAX_RT_ARGS, go_pass_through_func, ged_rtabort},
     {"rtarea",	"[args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
     {"rtcheck",	"[args]", GO_MAX_RT_ARGS, go_view_func, ged_rtcheck},
@@ -893,66 +897,67 @@ static struct go_cmdtab go_cmds[] = {
     {"savekey",	"filename", 3, go_view_func, ged_savekey},
     {"saveview",	"filename", 3, go_view_func, ged_saveview},
     {"sca",	"sf", 3, go_view_func, ged_scale},
-    {"scale_mode",	"x y", MAXARGS, go_scale_mode, GED_FUNC_PTR_NULL},
-    {"screen2model",	"x y", MAXARGS, go_screen2model, GED_FUNC_PTR_NULL},
-    {"screen2view",	"x y", MAXARGS, go_screen2view, GED_FUNC_PTR_NULL},
-    {"sdata_arrows",	"???", MAXARGS, go_data_arrows, GED_FUNC_PTR_NULL},
-    {"sdata_axes",	"???", MAXARGS, go_data_axes, GED_FUNC_PTR_NULL},
-    {"sdata_labels",	"???", MAXARGS, go_data_labels, GED_FUNC_PTR_NULL},
-    {"sdata_lines",	"???", MAXARGS, go_data_lines, GED_FUNC_PTR_NULL},
-    {"search",		(char *)0, MAXARGS, go_pass_through_func, ged_search},
-    {"select",		(char *)0, MAXARGS, go_view_func, ged_select},
-    {"set_coord",	"[m|v]", MAXARGS, go_set_coord, GED_FUNC_PTR_NULL},
-    {"set_fb_mode",	"[mode]", MAXARGS, go_set_fb_mode, GED_FUNC_PTR_NULL},
-    {"set_output_script",	"[script]", MAXARGS, go_pass_through_func, ged_set_output_script},
-    {"set_transparency",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_set_transparency},
-    {"set_uplotOutputMode",	(char *)0, MAXARGS, go_pass_through_func, ged_set_uplotOutputMode},
+    {"scale_mode",	"x y", GO_UNLIMITED, go_scale_mode, GED_FUNC_PTR_NULL},
+    {"screen2model",	"x y", GO_UNLIMITED, go_screen2model, GED_FUNC_PTR_NULL},
+    {"screen2view",	"x y", GO_UNLIMITED, go_screen2view, GED_FUNC_PTR_NULL},
+    {"screengrab",	"imagename.ext", GO_UNLIMITED, go_dm_func, ged_screen_grab},
+    {"sdata_arrows",	"???", GO_UNLIMITED, go_data_arrows, GED_FUNC_PTR_NULL},
+    {"sdata_axes",	"???", GO_UNLIMITED, go_data_axes, GED_FUNC_PTR_NULL},
+    {"sdata_labels",	"???", GO_UNLIMITED, go_data_labels, GED_FUNC_PTR_NULL},
+    {"sdata_lines",	"???", GO_UNLIMITED, go_data_lines, GED_FUNC_PTR_NULL},
+    {"search",		(char *)0, GO_UNLIMITED, go_pass_through_func, ged_search},
+    {"select",		(char *)0, GO_UNLIMITED, go_view_func, ged_select},
+    {"set_coord",	"[m|v]", GO_UNLIMITED, go_set_coord, GED_FUNC_PTR_NULL},
+    {"set_fb_mode",	"[mode]", GO_UNLIMITED, go_set_fb_mode, GED_FUNC_PTR_NULL},
+    {"set_output_script",	"[script]", GO_UNLIMITED, go_pass_through_func, ged_set_output_script},
+    {"set_transparency",	(char *)0, GO_UNLIMITED, go_pass_through_and_refresh_func, ged_set_transparency},
+    {"set_uplotOutputMode",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_set_uplotOutputMode},
     {"setview",	"x y z", 5, go_view_func, ged_setview},
-    {"shaded_mode",	(char *)0, MAXARGS, go_pass_through_func, ged_shaded_mode},
-    {"shader",	(char *)0, MAXARGS, go_pass_through_func, ged_shader},
-    {"shells",	(char *)0, MAXARGS, go_pass_through_func, ged_shells},
-    {"showmats",	(char *)0, MAXARGS, go_pass_through_func, ged_showmats},
+    {"shaded_mode",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_shaded_mode},
+    {"shader",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_shader},
+    {"shells",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_shells},
+    {"showmats",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_showmats},
     {"size",	"[size]", 3, go_view_func, ged_size},
     {"slew",	"x y [z]", 5, go_view_func, ged_slew},
     {"snap_view",	"vx vy", 4, go_snap_view, GED_FUNC_PTR_NULL},
-    {"solids",	(char *)0, MAXARGS, go_pass_through_func, ged_tables},
-    {"solids_on_ray",	(char *)0, MAXARGS, go_pass_through_func, ged_solids_on_ray},
-    {"summary",	(char *)0, MAXARGS, go_pass_through_func, ged_summary},
-    {"sync",	(char *)0, MAXARGS, go_pass_through_func, ged_sync},
-    {"tire",	(char *)0, MAXARGS, go_pass_through_func, ged_tire},
-    {"title",	(char *)0, MAXARGS, go_pass_through_func, ged_title},
-    {"tol",	(char *)0, MAXARGS, go_pass_through_func, ged_tol},
-    {"tops",	(char *)0, MAXARGS, go_pass_through_func, ged_tops},
+    {"solids",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_tables},
+    {"solids_on_ray",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_solids_on_ray},
+    {"summary",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_summary},
+    {"sync",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_sync},
+    {"tire",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_tire},
+    {"title",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_title},
+    {"tol",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_tol},
+    {"tops",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_tops},
     {"tra",	"[-m|-v] x y z", 6, go_view_func, ged_tra},
-    {"track",	(char *)0, MAXARGS, go_pass_through_func, ged_track},
-    {"translate_mode",	"x y", MAXARGS, go_translate_mode, GED_FUNC_PTR_NULL},
-    {"transparency",	"[val]", MAXARGS, go_transparency, GED_FUNC_PTR_NULL},
-    {"tree",	(char *)0, MAXARGS, go_pass_through_func, ged_tree},
-    {"unhide",	(char *)0, MAXARGS, go_pass_through_func, ged_unhide},
-    {"units",	(char *)0, MAXARGS, go_pass_through_func, ged_units},
+    {"track",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_track},
+    {"translate_mode",	"x y", GO_UNLIMITED, go_translate_mode, GED_FUNC_PTR_NULL},
+    {"transparency",	"[val]", GO_UNLIMITED, go_transparency, GED_FUNC_PTR_NULL},
+    {"tree",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_tree},
+    {"unhide",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_unhide},
+    {"units",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_units},
     {"v2m_point",	"x y z", 5, go_view_func, ged_v2m_point},
-    {"vdraw",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_vdraw},
-    {"version",	(char *)0, MAXARGS, go_pass_through_func, ged_version},
+    {"vdraw",	(char *)0, GO_UNLIMITED, go_pass_through_and_refresh_func, ged_vdraw},
+    {"version",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_version},
     {"view",	"quat|ypr|aet|center|eye|size [args]", 3, go_view_func, ged_view},
-    {"view_axes",	"vname [args]", MAXARGS, go_view_axes, GED_FUNC_PTR_NULL},
+    {"view_axes",	"vname [args]", GO_UNLIMITED, go_view_axes, GED_FUNC_PTR_NULL},
     {"view_win_size",	"[s] | [x y]", 4, go_view_win_size, GED_FUNC_PTR_NULL},
     {"view2model",	"vname", 2, go_view_func, ged_view2model},
     {"viewdir",	"[-i]", 3, go_view_func, ged_viewdir},
-    {"vmake",	"pname ptype", MAXARGS, go_vmake, GED_FUNC_PTR_NULL},
+    {"vmake",	"pname ptype", GO_UNLIMITED, go_vmake, GED_FUNC_PTR_NULL},
     {"vnirt",	"[args]", GO_MAX_RT_ARGS, go_view_func, ged_vnirt},
-    {"vslew",	"x y", MAXARGS, go_vslew, GED_FUNC_PTR_NULL},
-    {"wcodes",	(char *)0, MAXARGS, go_pass_through_func, ged_wcodes},
-    {"whatid",	(char *)0, MAXARGS, go_pass_through_func, ged_whatid},
-    {"which_shader",	(char *)0, MAXARGS, go_pass_through_func, ged_which_shader},
-    {"whichair",	(char *)0, MAXARGS, go_pass_through_func, ged_which},
-    {"whichid",	(char *)0, MAXARGS, go_pass_through_func, ged_which},
-    {"who",	(char *)0, MAXARGS, go_pass_through_func, ged_who},
-    {"wmater",	(char *)0, MAXARGS, go_pass_through_func, ged_wmater},
-    {"xpush",	(char *)0, MAXARGS, go_pass_through_func, ged_xpush},
+    {"vslew",	"x y", GO_UNLIMITED, go_vslew, GED_FUNC_PTR_NULL},
+    {"wcodes",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_wcodes},
+    {"whatid",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_whatid},
+    {"which_shader",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_which_shader},
+    {"whichair",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_which},
+    {"whichid",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_which},
+    {"who",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_who},
+    {"wmater",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_wmater},
+    {"xpush",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_xpush},
     {"ypr",	"yaw pitch roll", 5, go_view_func, ged_ypr},
-    {"zap",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_zap},
-    {"zbuffer",	"[0|1]", MAXARGS, go_zbuffer, GED_FUNC_PTR_NULL},
-    {"zclip",	"[0|1]", MAXARGS, go_zclip, GED_FUNC_PTR_NULL},
+    {"zap",	(char *)0, GO_UNLIMITED, go_pass_through_and_refresh_func, ged_zap},
+    {"zbuffer",	"[0|1]", GO_UNLIMITED, go_zbuffer, GED_FUNC_PTR_NULL},
+    {"zclip",	"[0|1]", GO_UNLIMITED, go_zclip, GED_FUNC_PTR_NULL},
     {"zoom",	"sf", 3, go_view_func, ged_zoom},
     {(char *)0,	(char *)0, 0, GO_WRAPPER_FUNC_PTR_NULL, GED_FUNC_PTR_NULL}
 };
@@ -1233,7 +1238,7 @@ go_autoview(struct ged *gedp,
 	    const char *argv[],
 	    ged_func_ptr func,
 	    const char *usage,
-	    int maxargs)
+	    int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
 
@@ -1674,7 +1679,7 @@ go_base2local(struct ged *gedp,
 	      const char *argv[],
 	      ged_func_ptr func,
 	      const char *usage,
-	      int maxargs)
+	      int UNUSED(maxargs))
 {
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -1690,7 +1695,7 @@ go_bg(struct ged *gedp,
       const char *argv[],
       ged_func_ptr func,
       const char *usage,
-      int maxargs)
+      int UNUSED(maxargs))
 {
     int r, g, b;
     struct ged_dm_view *gdvp;
@@ -1760,7 +1765,7 @@ go_blast(struct ged *gedp,
 	 const char *argv[],
 	 ged_func_ptr func,
 	 const char *usage,
-	 int maxargs)
+	 int UNUSED(maxargs))
 {
     int ret;
 
@@ -1780,7 +1785,7 @@ go_bounds(struct ged *gedp,
 	  const char *argv[],
 	  ged_func_ptr func,
 	  const char *usage,
-	  int maxargs)
+	  int UNUSED(maxargs))
 {
     vect_t clipmin;
     vect_t clipmax;
@@ -1853,7 +1858,7 @@ go_configure(struct ged *gedp,
 	     const char *argv[],
 	     ged_func_ptr func,
 	     const char *usage,
-	     int maxargs)
+	     int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
     int status;
@@ -1917,7 +1922,7 @@ go_constrain_rmode(struct ged *gedp,
 		   const char *argv[],
 		   ged_func_ptr func,
 		   const char *usage,
-		   int maxargs)
+		   int UNUSED(maxargs))
 {
     fastf_t x, y;
     struct bu_vls bindings;
@@ -1982,7 +1987,7 @@ go_constrain_tmode(struct ged *gedp,
 		   const char *argv[],
 		   ged_func_ptr func,
 		   const char *usage,
-		   int maxargs)
+		   int UNUSED(maxargs))
 {
     fastf_t x, y;
     struct bu_vls bindings;
@@ -2047,7 +2052,7 @@ go_copy(struct ged *gedp,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
-	int maxargs)
+	int UNUSED(maxargs))
 {
     struct ged *from_gedp = GED_NULL;
     struct ged *to_gedp = GED_NULL;
@@ -2176,7 +2181,7 @@ go_data_arrows(struct ged *gedp,
 	       const char *argv[],
 	       ged_func_ptr func,
 	       const char *usage,
-	       int maxargs)
+	       int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
     struct ged_data_arrow_state *gdasp;
@@ -2403,7 +2408,7 @@ go_data_axes(struct ged *gedp,
 	     const char *argv[],
 	     ged_func_ptr func,
 	     const char *usage,
-	     int maxargs)
+	     int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
     struct ged_data_axes_state *gdasp;
@@ -2604,7 +2609,7 @@ go_data_labels(struct ged *gedp,
 	       const char *argv[],
 	       ged_func_ptr func,
 	       const char *usage,
-	       int maxargs)
+	       int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
     struct ged_data_label_state *gdlsp;
@@ -2742,6 +2747,13 @@ go_data_labels(struct ged *gedp,
 		const char **sub_av;
 
 		if (Tcl_SplitList(go_current_gop->go_interp, av[i], &sub_ac, &sub_av) != TCL_OK) {
+		    /*XXX Need a macro for the following lines. Do something similar for the rest. */
+		    bu_free((genptr_t)gdlsp->gdls_labels, "data labels");
+		    bu_free((genptr_t)gdlsp->gdls_points, "data points");
+		    gdlsp->gdls_labels = (char **)0;
+		    gdlsp->gdls_points = (point_t *)0;
+		    gdlsp->gdls_num_labels = 0;
+
 		    bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(go_current_gop->go_interp));
 		    Tcl_Free((char *)av);
 		    go_refresh_view(gdvp);
@@ -2749,6 +2761,13 @@ go_data_labels(struct ged *gedp,
 		}
 
 		if (sub_ac != 2) {
+		    /*XXX Need a macro for the following lines. Do something similar for the rest. */
+		    bu_free((genptr_t)gdlsp->gdls_labels, "data labels");
+		    bu_free((genptr_t)gdlsp->gdls_points, "data points");
+		    gdlsp->gdls_labels = (char **)0;
+		    gdlsp->gdls_points = (point_t *)0;
+		    gdlsp->gdls_num_labels = 0;
+
 		    bu_vls_printf(&gedp->ged_result_str, "Each list element must contain a label and a point (i.e. {{some label} {0 0 0}})");
 		    Tcl_Free((char *)sub_av);
 		    Tcl_Free((char *)av);
@@ -2762,6 +2781,7 @@ go_data_labels(struct ged *gedp,
 			   &gdlsp->gdls_points[i][Z]) != 3) {
 		    bu_vls_printf(&gedp->ged_result_str, "bad data point - %s\n", sub_av[1]);
 
+		    /*XXX Need a macro for the following lines. Do something similar for the rest. */
 		    bu_free((genptr_t)gdlsp->gdls_labels, "data labels");
 		    bu_free((genptr_t)gdlsp->gdls_points, "data points");
 		    gdlsp->gdls_labels = (char **)0;
@@ -2817,7 +2837,7 @@ go_data_lines(struct ged *gedp,
 	      const char *argv[],
 	      ged_func_ptr func,
 	      const char *usage,
-	      int maxargs)
+	      int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
     struct ged_data_line_state *gdlsp;
@@ -3005,7 +3025,7 @@ go_data_move(struct ged *gedp,
 	     const char *argv[],
 	     ged_func_ptr func,
 	     const char *usage,
-	     int maxargs)
+	     int UNUSED(maxargs))
 {
     int mx, my;
     int dindex;
@@ -3039,7 +3059,7 @@ go_data_move(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[3], "%d", &dindex) != 1)
+    if (sscanf(argv[3], "%d", &dindex) != 1 || dindex < 0)
 	goto bad;
 
     if (argc == 5) {
@@ -3207,7 +3227,7 @@ go_data_pick(struct ged *gedp,
 	     const char *argv[],
 	     ged_func_ptr func,
 	     const char *usage,
-	     int maxargs)
+	     int UNUSED(maxargs))
 {
     int mx, my;
     fastf_t cx, cy;
@@ -3697,7 +3717,7 @@ go_init_view_bindings(struct ged *gedp,
 		      const char *argv[],
 		      ged_func_ptr func,
 		      const char *usage,
-		      int maxargs)
+		      int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
 
@@ -3736,7 +3756,7 @@ go_delete_view(struct ged *gedp,
 	       const char *argv[],
 	       ged_func_ptr func,
 	       const char *usage,
-	       int maxargs)
+	       int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
 
@@ -3775,7 +3795,7 @@ go_faceplate(struct ged *gedp,
 	     const char *argv[],
 	     ged_func_ptr func,
 	     const char *usage,
-	     int maxargs)
+	     int UNUSED(maxargs))
 {
     int i;
     struct ged_dm_view *gdvp;
@@ -3973,7 +3993,7 @@ go_handle_expose(struct ged *gedp,
 		 const char *argv[],
 		 ged_func_ptr func,
 		 const char *usage,
-		 int maxargs)
+		 int UNUSED(maxargs))
 {
     int count;
 
@@ -4026,7 +4046,7 @@ go_idle_mode(struct ged *gedp,
 	     const char *argv[],
 	     ged_func_ptr func,
 	     const char *usage,
-	     int maxargs)
+	     int UNUSED(maxargs))
 {
     struct bu_vls bindings;
     struct ged_dm_view *gdvp;
@@ -4085,7 +4105,7 @@ go_light(struct ged *gedp,
 	 const char *argv[],
 	 ged_func_ptr func,
 	 const char *usage,
-	 int maxargs)
+	 int UNUSED(maxargs))
 {
     int light;
     struct ged_dm_view *gdvp;
@@ -4143,7 +4163,7 @@ go_list_views(struct ged *gedp,
 	      const char *argv[],
 	      ged_func_ptr func,
 	      const char *usage,
-	      int maxargs)
+	      int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
 
@@ -4167,7 +4187,7 @@ go_listen(struct ged *gedp,
 	  const char *argv[],
 	  ged_func_ptr func,
 	  const char *usage,
-	  int maxargs)
+	  int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
 
@@ -4233,7 +4253,7 @@ go_local2base(struct ged *gedp,
 	      const char *argv[],
 	      ged_func_ptr func,
 	      const char *usage,
-	      int maxargs)
+	      int UNUSED(maxargs))
 {
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -4249,7 +4269,7 @@ go_make(struct ged *gedp,
 	const char *argv[],
 	ged_func_ptr func,
 	const char *usage,
-	int maxargs)
+	int UNUSED(maxargs))
 {
     int ret;
     char *av[3];
@@ -4260,7 +4280,7 @@ go_make(struct ged *gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[argc-2];
 	av[2] = (char *)0;
-	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, GO_UNLIMITED);
     }
 
     return ret;
@@ -4272,7 +4292,7 @@ go_mirror(struct ged *gedp,
 	  const char *argv[],
 	  ged_func_ptr func,
 	  const char *usage,
-	  int maxargs)
+	  int UNUSED(maxargs))
 {
     int ret;
     char *av[3];
@@ -4283,7 +4303,7 @@ go_mirror(struct ged *gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[argc-1];
 	av[2] = (char *)0;
-	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, GO_UNLIMITED);
     }
 
     return ret;
@@ -4295,7 +4315,7 @@ go_model_axes(struct ged *gedp,
 	      const char *argv[],
 	      ged_func_ptr func,
 	      const char *usage,
-	      int maxargs)
+	      int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
 
@@ -4332,7 +4352,7 @@ go_more_args_callback(struct ged *gedp,
 		      const char *argv[],
 		      ged_func_ptr func,
 		      const char *usage,
-		      int maxargs)
+		      int UNUSED(maxargs))
 {
     register int i;
 
@@ -4360,7 +4380,7 @@ go_mouse_constrain_rot(struct ged *gedp,
 		       const char *argv[],
 		       ged_func_ptr func,
 		       const char *usage,
-		       int maxargs)
+		       int UNUSED(maxargs))
 {
     int ret;
     int ac;
@@ -4462,7 +4482,7 @@ go_mouse_constrain_trans(struct ged *gedp,
 			 const char *argv[],
 			 ged_func_ptr func,
 			 const char *usage,
-			 int maxargs)
+			 int UNUSED(maxargs))
 {
     int ret;
     int ac;
@@ -4566,7 +4586,7 @@ go_mouse_move_arb_edge(struct ged *gedp,
 		       const char *argv[],
 		       ged_func_ptr func,
 		       const char *usage,
-		       int maxargs)
+		       int UNUSED(maxargs))
 {
     int ret;
     char *av[6];
@@ -4651,7 +4671,7 @@ go_mouse_move_arb_edge(struct ged *gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw(gedp, 2, (const char **)av);
     }
 
     return BRLCAD_OK;
@@ -4663,7 +4683,7 @@ go_mouse_move_arb_face(struct ged *gedp,
 		       const char *argv[],
 		       ged_func_ptr func,
 		       const char *usage,
-		       int maxargs)
+		       int UNUSED(maxargs))
 {
     int ret;
     char *av[6];
@@ -4748,7 +4768,7 @@ go_mouse_move_arb_face(struct ged *gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw(gedp, 2, (const char **)av);
     }
 
     return BRLCAD_OK;
@@ -4760,7 +4780,7 @@ go_mouse_orotate(struct ged *gedp,
 		 const char *argv[],
 		 ged_func_ptr func,
 		 const char *usage,
-		 int maxargs)
+		 int UNUSED(maxargs))
 {
     int ret;
     char *av[6];
@@ -4851,7 +4871,7 @@ go_mouse_orotate(struct ged *gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw(gedp, 2, (const char **)av);
     }
 
     return BRLCAD_OK;
@@ -4863,7 +4883,7 @@ go_mouse_oscale(struct ged *gedp,
 		const char *argv[],
 		ged_func_ptr func,
 		const char *usage,
-		int maxargs)
+		int UNUSED(maxargs))
 {
     int ret;
     char *av[6];
@@ -4945,7 +4965,7 @@ go_mouse_oscale(struct ged *gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw(gedp, 2, (const char **)av);
     }
 
     return BRLCAD_OK;
@@ -4957,7 +4977,7 @@ go_mouse_otranslate(struct ged *gedp,
 		    const char *argv[],
 		    ged_func_ptr func,
 		    const char *usage,
-		    int maxargs)
+		    int UNUSED(maxargs))
 {
     int ret;
     char *av[6];
@@ -5050,7 +5070,7 @@ go_mouse_otranslate(struct ged *gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw(gedp, 2, (const char **)av);
     }
 
     return BRLCAD_OK;
@@ -5062,7 +5082,7 @@ go_mouse_ray(struct ged *gedp,
 	     const char *argv[],
 	     ged_func_ptr func,
 	     const char *usage,
-	     int maxargs)
+	     int UNUSED(maxargs))
 {
 #if 0
     int ret;
@@ -5143,7 +5163,7 @@ go_mouse_rect(struct ged *gedp,
 	      const char *argv[],
 	      ged_func_ptr func,
 	      const char *usage,
-	      int maxargs)
+	      int UNUSED(maxargs))
 {
     int ret;
     int ac;
@@ -5216,7 +5236,7 @@ go_mouse_rot(struct ged *gedp,
 	     const char *argv[],
 	     ged_func_ptr func,
 	     const char *usage,
-	     int maxargs)
+	     int UNUSED(maxargs))
 {
     int ret;
     int ac;
@@ -5300,7 +5320,7 @@ go_mouse_rotate_arb_face(struct ged *gedp,
 			 const char *argv[],
 			 ged_func_ptr func,
 			 const char *usage,
-			 int maxargs)
+			 int UNUSED(maxargs))
 {
     int ret;
     char *av[6];
@@ -5383,7 +5403,7 @@ go_mouse_rotate_arb_face(struct ged *gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw(gedp, 2, (const char **)av);
     }
 
     return BRLCAD_OK;
@@ -5395,7 +5415,7 @@ go_mouse_scale(struct ged *gedp,
 	       const char *argv[],
 	       ged_func_ptr func,
 	       const char *usage,
-	       int maxargs)
+	       int UNUSED(maxargs))
 {
     int ret;
     char *av[3];
@@ -5484,7 +5504,7 @@ go_mouse_protate(struct ged *gedp,
 		 const char *argv[],
 		 ged_func_ptr func,
 		 const char *usage,
-		 int maxargs)
+		 int UNUSED(maxargs))
 {
     int ret;
     char *av[6];
@@ -5566,7 +5586,7 @@ go_mouse_protate(struct ged *gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw(gedp, 2, (const char **)av);
     }
 
     return BRLCAD_OK;
@@ -5578,7 +5598,7 @@ go_mouse_pscale(struct ged *gedp,
 		const char *argv[],
 		ged_func_ptr func,
 		const char *usage,
-		int maxargs)
+		int UNUSED(maxargs))
 {
     int ret;
     char *av[6];
@@ -5662,7 +5682,7 @@ go_mouse_pscale(struct ged *gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw(gedp, 2, (const char **)av);
     }
 
     return BRLCAD_OK;
@@ -5674,7 +5694,7 @@ go_mouse_ptranslate(struct ged *gedp,
 		    const char *argv[],
 		    ged_func_ptr func,
 		    const char *usage,
-		    int maxargs)
+		    int UNUSED(maxargs))
 {
     int ret;
     char *av[6];
@@ -5759,7 +5779,7 @@ go_mouse_ptranslate(struct ged *gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
-	go_edit_redraw_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_edit_redraw(gedp, 2, (const char **)av);
     }
 
     return BRLCAD_OK;
@@ -5771,7 +5791,7 @@ go_mouse_trans(struct ged *gedp,
 	       const char *argv[],
 	       ged_func_ptr func,
 	       const char *usage,
-	       int maxargs)
+	       int UNUSED(maxargs))
 {
     int ret;
     int ac;
@@ -5866,7 +5886,7 @@ go_move_arb_edge_mode(struct ged *gedp,
 		      const char *argv[],
 		      ged_func_ptr func,
 		      const char *usage,
-		      int maxargs)
+		      int UNUSED(maxargs))
 {
     fastf_t x, y;
     struct bu_vls bindings;
@@ -5925,7 +5945,7 @@ go_move_arb_face_mode(struct ged *gedp,
 		      const char *argv[],
 		      ged_func_ptr func,
 		      const char *usage,
-		      int maxargs)
+		      int UNUSED(maxargs))
 {
     fastf_t x, y;
     struct bu_vls bindings;
@@ -5984,7 +6004,7 @@ go_new_view(struct ged *gedp,
 	    const char *argv[],
 	    ged_func_ptr func,
 	    const char *usage,
-	    int maxargs)
+	    int UNUSED(maxargs))
 {
     struct ged_dm_view *new_gdvp = BU_LIST_LAST(ged_dm_view, &go_current_gop->go_head_views.l);
     HIDDEN const int name_index = 1;
@@ -6041,22 +6061,22 @@ go_new_view(struct ged *gedp,
 	int arg_start = 3;
 	int newargs = 0;
 	int ac;
-	char **av;
+	const char **av;
 
 	ac = argc + newargs;
-	av = (char **)bu_malloc(sizeof(char *) * (ac+1), "go_new_view: av");
-	av[0] = (char *)argv[0];
+	av = (const char **)bu_malloc(sizeof(char *) * (ac+1), "go_new_view: av");
+	av[0] = argv[0];
 
 	/*
 	 * Stuff name into argument list.
 	 */
 	av[1] = "-n";
-	av[2] = (char *)argv[name_index];
+	av[2] = argv[name_index];
 
 	/* copy the rest */
 	for (i = arg_start; i < argc; ++i)
-	    av[i+newargs] = (char *)argv[i];
-	av[i+newargs] = (char *)NULL;
+	    av[i+newargs] = argv[i];
+	av[i+newargs] = (const char *)NULL;
 
 	new_gdvp->gdv_dmp = dm_open(go_current_gop->go_interp, type, ac, av);
 	if (new_gdvp->gdv_dmp == DM_NULL) {
@@ -6116,7 +6136,7 @@ go_orotate_mode(struct ged *gedp,
 		const char *argv[],
 		ged_func_ptr func,
 		const char *usage,
-		int maxargs)
+		int UNUSED(maxargs))
 {
     fastf_t x, y;
     struct bu_vls bindings;
@@ -6174,7 +6194,7 @@ go_oscale_mode(struct ged *gedp,
 	       const char *argv[],
 	       ged_func_ptr func,
 	       const char *usage,
-	       int maxargs)
+	       int UNUSED(maxargs))
 {
     fastf_t x, y;
     struct bu_vls bindings;
@@ -6232,7 +6252,7 @@ go_otranslate_mode(struct ged *gedp,
 		   const char *argv[],
 		   ged_func_ptr func,
 		   const char *usage,
-		   int maxargs)
+		   int UNUSED(maxargs))
 {
     fastf_t x, y;
     struct bu_vls bindings;
@@ -6290,7 +6310,7 @@ go_paint_rect_area(struct ged *gedp,
 		   const char *argv[],
 		   ged_func_ptr func,
 		   const char *usage,
-		   int maxargs)
+		   int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
 
@@ -6331,7 +6351,7 @@ go_png(struct ged *gedp,
        const char *argv[],
        ged_func_ptr func,
        const char *usage,
-       int maxargs)
+       int UNUSED(maxargs))
 {
     png_structp png_p;
     png_infop info_p;
@@ -6533,7 +6553,7 @@ go_prim_label(struct ged *gedp,
 	      const char *argv[],
 	      ged_func_ptr func,
 	      const char *usage,
-	      int maxargs)
+	      int UNUSED(maxargs))
 {
     register int i;
 
@@ -6569,7 +6589,7 @@ go_rect_mode(struct ged *gedp,
 	     const char *argv[],
 	     ged_func_ptr func,
 	     const char *usage,
-	     int maxargs)
+	     int UNUSED(maxargs))
 {
     int ac;
     char *av[5];
@@ -6661,7 +6681,7 @@ go_refresh(struct ged *gedp,
 	   const char *argv[],
 	   ged_func_ptr func,
 	   const char *usage,
-	   int maxargs)
+	   int UNUSED(maxargs))
 {
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -6686,7 +6706,7 @@ go_refresh_all(struct ged *gedp,
 	       const char *argv[],
 	       ged_func_ptr func,
 	       const char *usage,
-	       int maxargs)
+	       int UNUSED(maxargs))
 {
     if (argc != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
@@ -6704,7 +6724,7 @@ go_refresh_on(struct ged *gedp,
 	      const char *argv[],
 	      ged_func_ptr func,
 	      const char *usage,
-	      int maxargs)
+	      int UNUSED(maxargs))
 {
     int on;
 
@@ -6736,7 +6756,7 @@ go_rotate_arb_face_mode(struct ged *gedp,
 			const char *argv[],
 			ged_func_ptr func,
 			const char *usage,
-			int maxargs)
+			int UNUSED(maxargs))
 {
     fastf_t x, y;
     struct bu_vls bindings;
@@ -6796,7 +6816,7 @@ go_rotate_mode(struct ged *gedp,
 	       const char *argv[],
 	       ged_func_ptr func,
 	       const char *usage,
-	       int maxargs)
+	       int UNUSED(maxargs))
 {
     fastf_t x, y;
     struct bu_vls bindings;
@@ -6875,7 +6895,7 @@ go_rt_end_callback(struct ged *gedp,
 		   const char *argv[],
 		   ged_func_ptr func,
 		   const char *usage,
-		   int maxargs)
+		   int UNUSED(maxargs))
 {
     register int i;
 
@@ -6914,7 +6934,7 @@ go_rt_gettrees(struct ged *gedp,
 	       const char *argv[],
 	       ged_func_ptr func,
 	       const char *usage,
-	       int maxargs)
+	       int UNUSED(maxargs))
 {
     struct rt_i *rtip;
     struct application *ap;
@@ -7005,7 +7025,7 @@ go_protate_mode(struct ged *gedp,
 		const char *argv[],
 		ged_func_ptr func,
 		const char *usage,
-		int maxargs)
+		int UNUSED(maxargs))
 {
     fastf_t x, y;
     struct bu_vls bindings;
@@ -7064,7 +7084,7 @@ go_pscale_mode(struct ged *gedp,
 	       const char *argv[],
 	       ged_func_ptr func,
 	       const char *usage,
-	       int maxargs)
+	       int UNUSED(maxargs))
 {
     fastf_t x, y;
     struct bu_vls bindings;
@@ -7123,7 +7143,7 @@ go_ptranslate_mode(struct ged *gedp,
 		   const char *argv[],
 		   ged_func_ptr func,
 		   const char *usage,
-		   int maxargs)
+		   int UNUSED(maxargs))
 {
     fastf_t x, y;
     struct bu_vls bindings;
@@ -7182,7 +7202,7 @@ go_scale_mode(struct ged *gedp,
 	      const char *argv[],
 	      ged_func_ptr func,
 	      const char *usage,
-	      int maxargs)
+	      int UNUSED(maxargs))
 {
     fastf_t x, y;
     struct bu_vls bindings;
@@ -7239,7 +7259,7 @@ go_screen2model(struct ged *gedp,
 		const char *argv[],
 		ged_func_ptr func,
 		const char *usage,
-		int maxargs)
+		int UNUSED(maxargs))
 {
     fastf_t x, y;
     fastf_t inv_width;
@@ -7298,7 +7318,7 @@ go_screen2view(struct ged *gedp,
 	       const char *argv[],
 	       ged_func_ptr func,
 	       const char *usage,
-	       int maxargs)
+	       int UNUSED(maxargs))
 {
     fastf_t x, y;
     fastf_t inv_width;
@@ -7355,7 +7375,7 @@ go_set_coord(struct ged *gedp,
 	     const char *argv[],
 	     ged_func_ptr func,
 	     const char *usage,
-	     int maxargs)
+	     int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
 
@@ -7406,7 +7426,7 @@ go_set_fb_mode(struct ged *gedp,
 	       const char *argv[],
 	       ged_func_ptr func,
 	       const char *usage,
-	       int maxargs)
+	       int UNUSED(maxargs))
 {
     int mode;
     struct ged_dm_view *gdvp;
@@ -7464,7 +7484,7 @@ go_snap_view(struct ged *gedp,
 	     const char *argv[],
 	     ged_func_ptr func,
 	     const char *usage,
-	     int maxargs)
+	     int UNUSED(maxargs))
 {
     fastf_t vx, vy;
     struct ged_dm_view *gdvp;
@@ -7517,7 +7537,7 @@ go_translate_mode(struct ged *gedp,
 		  const char *argv[],
 		  ged_func_ptr func,
 		  const char *usage,
-		  int maxargs)
+		  int UNUSED(maxargs))
 {
     fastf_t x, y;
     struct bu_vls bindings;
@@ -7574,7 +7594,7 @@ go_transparency(struct ged *gedp,
 		const char *argv[],
 		ged_func_ptr func,
 		const char *usage,
-		int maxargs)
+		int UNUSED(maxargs))
 {
     int transparency;
     struct ged_dm_view *gdvp;
@@ -7629,7 +7649,7 @@ go_view_axes(struct ged *gedp,
 	     const char *argv[],
 	     ged_func_ptr func,
 	     const char *usage,
-	     int maxargs)
+	     int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
 
@@ -7666,7 +7686,7 @@ go_view_win_size(struct ged *gedp,
 		 const char *argv[],
 		 ged_func_ptr func,
 		 const char *usage,
-		 int maxargs)
+		 int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
     int width, height;
@@ -7733,7 +7753,7 @@ go_vmake(struct ged *gedp,
 	 const char *argv[],
 	 ged_func_ptr func,
 	 const char *usage,
-	 int maxargs)
+	 int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
 
@@ -7788,7 +7808,7 @@ go_vmake(struct ged *gedp,
 	    av[0] = "draw";
 	    av[1] = (char *)argv[2];
 	    av[2] = (char *)0;
-	    go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	    go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, GO_UNLIMITED);
 	}
 
 	return ret;
@@ -7801,7 +7821,7 @@ go_vslew(struct ged *gedp,
 	 const char *argv[],
 	 ged_func_ptr func,
 	 const char *usage,
-	 int maxargs)
+	 int UNUSED(maxargs))
 {
     int ret;
     int ac;
@@ -7879,7 +7899,7 @@ go_zbuffer(struct ged *gedp,
 	   const char *argv[],
 	   ged_func_ptr func,
 	   const char *usage,
-	   int maxargs)
+	   int UNUSED(maxargs))
 {
     int zbuffer;
     struct ged_dm_view *gdvp;
@@ -7937,7 +7957,7 @@ go_zclip(struct ged *gedp,
 	 const char *argv[],
 	 ged_func_ptr func,
 	 const char *usage,
-	 int maxargs)
+	 int UNUSED(maxargs))
 {
     int zclip;
     struct ged_dm_view *gdvp;
@@ -7998,7 +8018,7 @@ go_autoview_func(struct ged *gedp,
 		 const char *argv[],
 		 ged_func_ptr func,
 		 const char *usage,
-		 int maxargs)
+		 int UNUSED(maxargs))
 {
     int ret;
     char *av[2];
@@ -8024,12 +8044,9 @@ go_autoview_func(struct ged *gedp,
 }
 
 HIDDEN int
-go_edit_redraw_func(struct ged *gedp,
+go_edit_redraw(struct ged *gedp,
 		    int argc,
-		    const char *argv[],
-		    ged_func_ptr func,
-		    const char *usage,
-		    int maxargs)
+		    const char *argv[])
 {
     register int i;
     register struct ged_display_list *gdlp;
@@ -8075,8 +8092,8 @@ go_edit_redraw_func(struct ged *gedp,
 			snprintf(mflag, 7, "-m%d", sp->s_dmode);
 			snprintf(xflag, 7, "-x%.2g", sp->s_transparency);
 
-			ret = (*func)(gedp, 4, (const char **)av);
-			bu_free((genptr_t)av[3], "go_edit_redraw_func");
+			ret = ged_draw(gedp, 4, (const char **)av);
+			bu_free((genptr_t)av[3], "go_edit_redraw");
 
 			/* The function call above causes gdlp to be
 			 * removed from the display list. A new one is
@@ -8114,7 +8131,7 @@ go_more_args_func(struct ged *gedp,
 		  const char *argv[],
 		  ged_func_ptr func,
 		  const char *usage,
-		  int maxargs)
+		  int UNUSED(maxargs))
 {
     register int i;
     int ac;
@@ -8206,7 +8223,7 @@ go_pass_through_func(struct ged *gedp,
 		     const char *argv[],
 		     ged_func_ptr func,
 		     const char *usage,
-		     int maxargs)
+		     int UNUSED(maxargs))
 {
     return (*func)(gedp, argc, argv);
 }
@@ -8217,7 +8234,7 @@ go_pass_through_and_refresh_func(struct ged *gedp,
 				 const char *argv[],
 				 ged_func_ptr func,
 				 const char *usage,
-				 int maxargs)
+				 int UNUSED(maxargs))
 {
     int ret;
 
@@ -8240,11 +8257,12 @@ go_view_func(struct ged *gedp,
     register int i;
     int ret;
     int ac;
-    char *av[MAXARGS];
+    char **av;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
+    av = bu_calloc(argc+1, sizeof(char *), "alloc av copy");
 
     /* must be wanting help */
     if (argc == 1) {
@@ -8252,7 +8270,7 @@ go_view_func(struct ged *gedp,
 	return GED_HELP;
     }
 
-    if (MAXARGS < maxargs || maxargs < argc) {
+    if (maxargs != GO_UNLIMITED && maxargs < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
@@ -8277,6 +8295,8 @@ go_view_func(struct ged *gedp,
     av[i-1] = (char *)0;
     ret = (*func)(gedp, ac, (const char **)av);
 
+    bu_free(av, "free av copy");
+
     /* Keep the view's perspective in sync with its corresponding display manager */
     gdvp->gdv_dmp->dm_perspective = gdvp->gdv_view->gv_perspective;
 
@@ -8286,6 +8306,63 @@ go_view_func(struct ged *gedp,
     return ret;
 }
 
+HIDDEN int
+go_dm_func(struct ged *gedp,
+	     int argc,
+	     const char *argv[],
+	     ged_func_ptr func,
+	     const char *usage,
+	     int maxargs)
+{
+    register int i;
+    int ret;
+    int ac;
+    char **av;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    av = bu_calloc(argc+1, sizeof(char *), "alloc av copy");
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (maxargs != GO_UNLIMITED && maxargs < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    /* Copy argv into av while skipping argv[1] (i.e. the view name) */
+    gedp->ged_gvp = gdvp->gdv_view;
+    gedp->ged_dmp = (void *)gdvp->gdv_dmp;
+    gedp->ged_refresh_clientdata = (void *)gdvp;
+    av[0] = (char *)argv[0];
+    ac = argc-1;
+    for (i = 2; i < argc; ++i)
+	av[i-1] = (char *)argv[i];
+    av[i-1] = (char *)0;
+    ret = (*func)(gedp, ac, (const char **)av);
+
+    bu_free(av, "free av copy");
+
+    /* Keep the view's perspective in sync with its corresponding display manager */
+    gdvp->gdv_dmp->dm_perspective = gdvp->gdv_view->gv_perspective;
+
+    return ret;
+}
 
 /*************************** Local Utility Functions ***************************/
 HIDDEN void

@@ -17,6 +17,12 @@ if {[testConstraint testwinevent]} {
     catch {testwinevent debug 1}
 }
 
+# Locale identifier LANG_ENGLISH is 0x09
+testConstraint english [expr {
+    [llength [info commands testwinlocale]]
+    && (([testwinlocale] & 0xff) == 9)
+}]
+
 proc start {arg} {
     set ::tk_dialog 0
     set ::iter_after 0
@@ -46,16 +52,24 @@ proc afterbody {} {
 }
 
 proc Click {button} {
+    switch -exact -- $button {
+        ok     { set button 1 }
+        cancel { set button 2 }
+    }
     testwinevent $::tk_dialog $button WM_LBUTTONDOWN 1 0x000a000b
     testwinevent $::tk_dialog $button WM_LBUTTONUP 0 0x000a000b
 }
 
-proc GetText {button} {
-    return [testwinevent $::tk_dialog $button WM_GETTEXT]
+proc GetText {id} {
+    switch -exact -- $id {
+        ok     { set id 1 }
+        cancel { set id 2 }
+    }
+    return [testwinevent $::tk_dialog $id WM_GETTEXT]
 }
 
-proc SetText {button text} {
-    return [testwinevent $::tk_dialog $button WM_SETTEXT $text]
+proc SetText {id text} {
+    return [testwinevent $::tk_dialog $id WM_SETTEXT $text]
 }
 
 test winDialog-1.1.0 {Tk_ChooseColorObjCmd} -constraints {
@@ -80,7 +94,7 @@ test winDialog-1.1.2 {Tk_ChooseColorObjCmd} -constraints {
 } -body {
     start {set clr [tk_chooseColor -initialcolor "#ff9933"]}
     then {
-        set x [Click 1]
+        set x [Click ok]
     }
     list $x $clr
 } -result [list 0 "#ff9933"]
@@ -94,7 +108,7 @@ test winDialog-1.1.3 {Tk_ChooseColorObjCmd: -title} -constraints {
             array set a [testgetwindowinfo $::tk_dialog]
             if {[info exists a(text)]} {lappend x $a(text)}
         } err]} { lappend x $err }
-        lappend x [Click 1]
+        lappend x [Click ok]
     }
     lappend x $clr
 } -result [list Hello 0 "#ff9933"]
@@ -111,7 +125,7 @@ test winDialog-1.1.4 {Tk_ChooseColorObjCmd: -title} -constraints {
             array set a [testgetwindowinfo $::tk_dialog]
             if {[info exists a(text)]} {lappend x $a(text)}
         } err]} { lappend x $err }
-        lappend x [Click 1]
+        lappend x [Click ok]
     }
     lappend x $clr
 } -result [list "\u041f\u0440\u0438\u0432\u0435\u0442" 0 "#ff9933"]
@@ -127,7 +141,7 @@ test winDialog-1.1.5 {Tk_ChooseColorObjCmd: -parent} -constraints {
                 append x [expr {$a(parent) == [wm frame .]}]
             }
         } err]} {lappend x $err}
-        Click 1
+        Click ok
     }
     list $x $clr
 } -result [list 1 "#ff9933"]
@@ -140,20 +154,20 @@ test winDialog-1.1.6 {Tk_ChooseColorObjCmd: -parent} -constraints {
 test winDialog-2.1 {ColorDlgHookProc} {emptyTest nt} {
 } {}
 
-test winDialog-3.1 {Tk_GetOpenFileObjCmd} {nt testwinevent} {
+test winDialog-3.1 {Tk_GetOpenFileObjCmd} {nt testwinevent english} {
     start {tk_getOpenFile}
     then {
-	set x [GetText 2]
-	Click 2
+	set x [GetText cancel]
+	Click cancel
     }
     set x
 } {Cancel}
 
-test winDialog-4.1 {Tk_GetSaveFileObjCmd} {nt testwinevent} {
+test winDialog-4.1 {Tk_GetSaveFileObjCmd} {nt testwinevent english} {
     start {tk_getSaveFile}
     then {
-	set x [GetText 2]
-	Click 2
+	set x [GetText cancel]
+	Click cancel
     }
     set x
 } {Cancel}
@@ -193,7 +207,7 @@ test winDialog-5.8 {GetFileName: extension begins with .} {nt testwinevent} {
     start {set x [tk_getSaveFile -defaultextension .foo -title Save]}
     then {
 	SetText 0x480 bar
-	Click 1
+	Click ok
     }
     string totitle $x
 } [string totitle [file join [pwd] bar.foo]]
@@ -201,7 +215,7 @@ test winDialog-5.9 {GetFileName: extension doesn't begin with .} {nt testwineven
     start {set x [tk_getSaveFile -defaultextension foo -title Save]}
     then {
 	SetText 0x480 bar
-	Click 1
+	Click ok
     }
     string totitle $x
 } [string totitle [file join [pwd] bar.foo]]
@@ -228,7 +242,7 @@ test winDialog-5.12 {GetFileName: initial directory} {nt testwinevent} {
                       -initialdir [file normalize $::env(TEMP)] \
                       -initialfile "12x 455" -title Foo]}
     then {
-	Click 1
+	Click ok
     }
     set x
 } [file join [file normalize $::env(TEMP)] "12x 455"]
@@ -244,7 +258,7 @@ test winDialog-5.14 {GetFileName: initial file} {nt testwinevent} {
 
     start {set x [tk_getSaveFile -initialfile "12x 456" -title Foo]}
     then {
-	Click 1
+	Click ok
     }
     string totitle $x
 } [string totitle [file join [pwd] "12x 456"]]
@@ -259,7 +273,7 @@ test winDialog-5.16 {GetFileName: initial file: long name} {nt testwinevent} {
         } x]
     }
     then {
-	Click 1
+	Click ok
     }
     list $dialogresult [string match "invalid filename *" $x]
 } {1 1}
@@ -279,7 +293,7 @@ test winDialog-5.18 {GetFileName: title} {nt testwinevent} {
     
     start {tk_getOpenFile -title Narf}
     then {
-	Click 2
+	Click cancel
     }
 } {0}
 test winDialog-5.19 {GetFileName: no filter specified} {nt testwinevent} {
@@ -288,7 +302,7 @@ test winDialog-5.19 {GetFileName: no filter specified} {nt testwinevent} {
     start {tk_getOpenFile -title Filter} 
     then {
 	set x [GetText 0x470]
-	Click 2
+	Click cancel
     }
     set x
 } {All Files (*.*)}
@@ -309,23 +323,23 @@ test winDialog-5.21 {GetFileName: parent HWND already exists} {nt} {
 	destroy .t
     }
 } {}
-test winDialog-5.22 {GetFileName: call GetOpenFileName} {nt testwinevent} {
+test winDialog-5.22 {GetFileName: call GetOpenFileName} {nt testwinevent english} {
 #	    winCode = GetOpenFileName(&ofn);
     
     start {tk_getOpenFile -title Open}
     then {
-	set x [GetText 1]
-	Click 2
+	set x [GetText ok]
+	Click cancel
     }
     set x
 } {&Open}
-test winDialog-5.23 {GetFileName: call GetSaveFileName} {nt testwinevent} {
+test winDialog-5.23 {GetFileName: call GetSaveFileName} {nt testwinevent english} {
 #	    winCode = GetSaveFileName(&ofn);
 
     start {tk_getSaveFile -title Save}
     then {
-	set x [GetText 1]
-	Click 2
+	set x [GetText ok]
+	Click cancel
     }
     set x
 } {&Save}
@@ -333,8 +347,9 @@ if {[info exists ::env(TEMP)]} {
 test winDialog-5.24 {GetFileName: convert \ to /} {nt testwinevent} {
     start {set x [tk_getSaveFile -title Back]}
     then {
-	SetText 0x480 "$::env(TEMP)\\12x 457"
-	Click 1
+	SetText 0x480 [file nativename \
+                           [file join [file normalize $::env(TEMP)] "12x 457"]]
+	Click ok
     }
     set x
 } [file join [file normalize $::env(TEMP)] "12x 457"]
@@ -344,7 +359,7 @@ test winDialog-5.25 {GetFileName: file types: MakeFilter() succeeds} {nt} {
 
     start {set x [catch {tk_getSaveFile -filetypes {{"foo" .foo {\0\0\0\0}}}}]}
     then {
-	Click 2
+	Click cancel
     }
     set x
 } {0}
@@ -353,7 +368,7 @@ test winDialog-5.26 {GetFileName: file types: MakeFilter() succeeds} {nt} {
 
     start {set x [catch {tk_getSaveFile -filetypes {{"foo" .foo {\u2022\u2022\u2022\u2022}}}}]}
     then {
-	Click 2
+	Click cancel
     }
     set x
 } {0}
@@ -405,7 +420,7 @@ test winDialog-9.7 {Tk_ChooseDirectoryObjCmd: -initialdir} {nt testwinevent} {
 
     start {set x [tk_chooseDirectory -initialdir c:/ -title Foo]}
     then {
-	Click 1
+	Click ok
     }
     string tolower [set x]
 } {c:/}

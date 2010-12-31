@@ -19,7 +19,7 @@
  *
  */
 /** @file extern.h
- * Author:		Gary S. Moss
+ *
  */
 
 #ifndef __EXTERN_H__
@@ -90,7 +90,7 @@ extern void prntTimer();
 extern void prompt();
 extern void readCmdFile();
 extern void prntScr(const char *, ...);
-extern void brst_log(const char *, ... );
+extern void brst_log(const char *, ...);
 extern void warning();
 extern void prntUsage();
 extern void clr_Tabs();

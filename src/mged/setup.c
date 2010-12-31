@@ -53,11 +53,11 @@ extern void mged_global_variable_setup(Tcl_Interp *interpreter);
 
 static struct cmdtab mged_cmdtab[] = {
     {"%", f_comm, GED_FUNC_PTR_NULL},
-    {"35, 25", bv_35_25, GED_FUNC_PTR_NULL},
+    {"35,25", f_bv_35_25, GED_FUNC_PTR_NULL},
     {"3ptarb", cmd_ged_more_wrapper, ged_3ptarb},
-    {"45, 45", bv_45_45, GED_FUNC_PTR_NULL},
+    {"45,45", f_bv_45_45, GED_FUNC_PTR_NULL},
     {"B", cmd_blast, GED_FUNC_PTR_NULL},
-    {"accept", be_accept, GED_FUNC_PTR_NULL},
+    {"accept", f_be_accept, GED_FUNC_PTR_NULL},
     {"adc", f_adc, GED_FUNC_PTR_NULL},
     {"adjust", cmd_ged_plain_wrapper, ged_adjust},
     {"ae", cmd_ged_view_wrapper, ged_aet},
@@ -91,8 +91,8 @@ static struct cmdtab mged_cmdtab[] = {
     {"bot_split", cmd_ged_plain_wrapper, ged_bot_split},
     {"bot_sync", cmd_ged_plain_wrapper, ged_bot_sync},
     {"bot_vertex_fuse", cmd_ged_plain_wrapper, ged_bot_vertex_fuse},
-    {"bottom",	bv_bottom, GED_FUNC_PTR_NULL},
-    {"brep",	cmd_ged_view_wrapper, ged_brep},
+    {"bottom", f_bv_bottom, GED_FUNC_PTR_NULL},
+    {"brep", cmd_ged_view_wrapper, ged_brep},
     {"c", cmd_ged_plain_wrapper, ged_comb_std},
     {"cat", cmd_ged_info_wrapper, ged_cat},
     {"cc", cmd_ged_plain_wrapper, ged_cc},
@@ -151,7 +151,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"facetize", cmd_ged_plain_wrapper, ged_facetize},
     {"form", cmd_ged_plain_wrapper, ged_form},
     {"fracture", cmd_ged_plain_wrapper, ged_fracture},
-    {"front", bv_front, GED_FUNC_PTR_NULL},
+    {"front", f_bv_front, GED_FUNC_PTR_NULL},
     {"g", cmd_ged_plain_wrapper, ged_group},
     {"get", cmd_ged_plain_wrapper, ged_get},
     {"get_autoview", cmd_ged_plain_wrapper, ged_get_autoview},
@@ -190,7 +190,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"l", cmd_ged_info_wrapper, ged_list},
     {"l_muves", f_l_muves, GED_FUNC_PTR_NULL},
     {"labelvert", f_labelvert, GED_FUNC_PTR_NULL},
-    {"left",		bv_left, GED_FUNC_PTR_NULL},
+    {"left", f_bv_left, GED_FUNC_PTR_NULL},
     {"lm", cmd_lm, GED_FUNC_PTR_NULL},
     {"lt", cmd_ged_plain_wrapper, ged_lt},
     {"loadtk", cmd_tk, GED_FUNC_PTR_NULL},
@@ -224,24 +224,24 @@ static struct cmdtab mged_cmdtab[] = {
     {"nmg_collapse", cmd_nmg_collapse, GED_FUNC_PTR_NULL},
     {"nmg_fix_normals", cmd_ged_plain_wrapper, ged_nmg_fix_normals},
     {"nmg_simplify", cmd_ged_plain_wrapper, ged_nmg_simplify},
-    {"o_rotate",		be_o_rotate, GED_FUNC_PTR_NULL},
-    {"o_scale",	be_o_scale, GED_FUNC_PTR_NULL},
+    {"o_rotate", f_be_o_rotate, GED_FUNC_PTR_NULL},
+    {"o_scale", f_be_o_scale, GED_FUNC_PTR_NULL},
     {"oed", cmd_oed, GED_FUNC_PTR_NULL},
     {"oed_apply", f_oedit_apply, GED_FUNC_PTR_NULL},
     {"oed_reset", f_oedit_reset, GED_FUNC_PTR_NULL},
-    {"oill",		be_o_illuminate, GED_FUNC_PTR_NULL},
+    {"oill", f_be_o_illuminate, GED_FUNC_PTR_NULL},
     {"opendb", f_opendb, GED_FUNC_PTR_NULL},
     {"orientation", cmd_ged_view_wrapper, ged_orient},
     {"orot", f_rot_obj, GED_FUNC_PTR_NULL},
     {"oscale", f_sc_obj, GED_FUNC_PTR_NULL},
     {"output_hook", cmd_output_hook, GED_FUNC_PTR_NULL},
     {"overlay", cmd_overlay, GED_FUNC_PTR_NULL},
-    {"ox",		be_o_x, GED_FUNC_PTR_NULL},
-    {"oxscale",	be_o_xscale, GED_FUNC_PTR_NULL},
-    {"oxy",		be_o_xy, GED_FUNC_PTR_NULL},
-    {"oy",		be_o_y, GED_FUNC_PTR_NULL},
-    {"oyscale",	be_o_yscale, GED_FUNC_PTR_NULL},
-    {"ozscale",	be_o_zscale, GED_FUNC_PTR_NULL},
+    {"ox", f_be_o_x, GED_FUNC_PTR_NULL},
+    {"oxscale", f_be_o_xscale, GED_FUNC_PTR_NULL},
+    {"oxy", f_be_o_xy, GED_FUNC_PTR_NULL},
+    {"oy", f_be_o_y, GED_FUNC_PTR_NULL},
+    {"oyscale", f_be_o_yscale, GED_FUNC_PTR_NULL},
+    {"ozscale", f_be_o_zscale, GED_FUNC_PTR_NULL},
     {"p", f_param, GED_FUNC_PTR_NULL},
     {"parse_points", cmd_parse_points, GED_FUNC_PTR_NULL},
     {"pathlist", cmd_ged_plain_wrapper, ged_pathlist},
@@ -249,12 +249,13 @@ static struct cmdtab mged_cmdtab[] = {
     {"permute", f_permute, GED_FUNC_PTR_NULL},
     {"pl", f_pl, GED_FUNC_PTR_NULL},
     {"plot", cmd_ged_plain_wrapper, ged_plot},
+    {"png", cmd_ged_plain_wrapper, ged_png},
     {"polybinout", f_polybinout, GED_FUNC_PTR_NULL},
     {"pov", cmd_pov, GED_FUNC_PTR_NULL},
     {"prcolor", cmd_ged_plain_wrapper, ged_prcolor},
     {"prefix", cmd_ged_plain_wrapper, ged_prefix},
     {"press", f_press, GED_FUNC_PTR_NULL},
-    {"preview", cmd_ged_view_wrapper, ged_preview},
+    {"preview", cmd_ged_dm_wrapper, ged_preview},
     {"ps", f_ps, GED_FUNC_PTR_NULL},
     {"push", cmd_ged_plain_wrapper, ged_push},
     {"put", cmd_ged_plain_wrapper, ged_put},
@@ -268,22 +269,22 @@ static struct cmdtab mged_cmdtab[] = {
     {"quit", f_quit, GED_FUNC_PTR_NULL},
     {"qvrot", cmd_ged_view_wrapper, ged_qvrot},
     {"r", cmd_ged_plain_wrapper, ged_region},
-    {"rate",		bv_rate_toggle, GED_FUNC_PTR_NULL},
+    {"rate", f_bv_rate_toggle, GED_FUNC_PTR_NULL},
     {"rcodes", cmd_ged_plain_wrapper, ged_rcodes},
     {"read_muves", f_read_muves, GED_FUNC_PTR_NULL},
-    {"rear",	bv_rear, GED_FUNC_PTR_NULL},
+    {"rear", f_bv_rear, GED_FUNC_PTR_NULL},
     {"red", f_red, GED_FUNC_PTR_NULL},
     {"redraw_vlist", cmd_redraw_vlist, GED_FUNC_PTR_NULL},
     {"refresh", f_refresh, GED_FUNC_PTR_NULL},
     {"regdebug", f_regdebug, GED_FUNC_PTR_NULL},
     {"regdef", cmd_ged_plain_wrapper, ged_regdef},
     {"regions", cmd_ged_plain_wrapper, ged_tables},
-    {"reject",	be_reject, GED_FUNC_PTR_NULL},
+    {"reject", f_be_reject, GED_FUNC_PTR_NULL},
     {"release", f_release, GED_FUNC_PTR_NULL},
-    {"reset",	bv_reset, GED_FUNC_PTR_NULL},
-    {"restore",	bv_vrestore, GED_FUNC_PTR_NULL},
+    {"reset", f_bv_reset, GED_FUNC_PTR_NULL},
+    {"restore", f_bv_vrestore, GED_FUNC_PTR_NULL},
     {"rfarb", f_rfarb, GED_FUNC_PTR_NULL},
-    {"right",	bv_right, GED_FUNC_PTR_NULL},
+    {"right", f_bv_right, GED_FUNC_PTR_NULL},
     {"rm", cmd_ged_plain_wrapper, ged_remove},
     {"rmater", cmd_ged_plain_wrapper, ged_rmater},
     {"rmats", f_rmats, GED_FUNC_PTR_NULL},
@@ -298,15 +299,16 @@ static struct cmdtab mged_cmdtab[] = {
     {"rtcheck", cmd_rt, GED_FUNC_PTR_NULL},
     {"rtedge", cmd_rt, GED_FUNC_PTR_NULL},
     {"rtweight", cmd_rt, GED_FUNC_PTR_NULL},
-    {"save",		bv_vsave, GED_FUNC_PTR_NULL},
+    {"save", f_bv_vsave, GED_FUNC_PTR_NULL},
     {"savekey", cmd_ged_plain_wrapper, ged_savekey},
     {"saveview", cmd_ged_plain_wrapper, ged_saveview},
     {"sca", cmd_sca, GED_FUNC_PTR_NULL},
+    {"screengrab", cmd_ged_dm_wrapper, ged_screen_grab},
     {"search", cmd_search, GED_FUNC_PTR_NULL},
     {"sed", f_sed, GED_FUNC_PTR_NULL},
     {"sed_apply", f_sedit_apply, GED_FUNC_PTR_NULL},
     {"sed_reset", f_sedit_reset, GED_FUNC_PTR_NULL},
-    {"sedit",	be_s_edit, GED_FUNC_PTR_NULL},
+    {"sedit", f_be_s_edit, GED_FUNC_PTR_NULL},
     {"set_more_default", cmd_set_more_default, GED_FUNC_PTR_NULL},
     {"setview", cmd_setview, GED_FUNC_PTR_NULL},
     {"shaded_mode", cmd_shaded_mode, GED_FUNC_PTR_NULL},
@@ -314,19 +316,19 @@ static struct cmdtab mged_cmdtab[] = {
     {"share", f_share, GED_FUNC_PTR_NULL},
     {"shells", cmd_ged_plain_wrapper, ged_shells},
     {"showmats", cmd_ged_plain_wrapper, ged_showmats},
-    {"sill",		be_s_illuminate, GED_FUNC_PTR_NULL},
+    {"sill", f_be_s_illuminate, GED_FUNC_PTR_NULL},
     {"size", cmd_size, GED_FUNC_PTR_NULL},
     {"solid_report", cmd_ged_plain_wrapper, ged_report},
     {"solids", cmd_ged_plain_wrapper, ged_tables},
     {"solids_on_ray", cmd_ged_plain_wrapper, ged_solids_on_ray},
-    {"srot",		be_s_rotate, GED_FUNC_PTR_NULL},
-    {"sscale",	be_s_scale, GED_FUNC_PTR_NULL},
+    {"srot", f_be_s_rotate, GED_FUNC_PTR_NULL},
+    {"sscale", f_be_s_scale, GED_FUNC_PTR_NULL},
     {"status", f_status, GED_FUNC_PTR_NULL},
     {"stuff_str", cmd_stuff_str, GED_FUNC_PTR_NULL},
     {"summary", cmd_ged_plain_wrapper, ged_summary},
     {"sv", f_slewview, GED_FUNC_PTR_NULL},
     {"svb", f_svbase, GED_FUNC_PTR_NULL},
-    {"sxy",		be_s_trans, GED_FUNC_PTR_NULL},
+    {"sxy", f_be_s_trans, GED_FUNC_PTR_NULL},
     {"sync", cmd_ged_plain_wrapper, ged_sync},
     {"t", cmd_ged_plain_wrapper, ged_ls},
     {"t_muves", f_t_muves, GED_FUNC_PTR_NULL},
@@ -335,7 +337,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"tire", cmd_ged_plain_wrapper, ged_tire},
     {"title", cmd_ged_plain_wrapper, ged_title},
     {"tol", cmd_tol, GED_FUNC_PTR_NULL},
-    {"top",		bv_top, GED_FUNC_PTR_NULL},
+    {"top", f_bv_top, GED_FUNC_PTR_NULL},
     {"tops", cmd_ged_plain_wrapper, ged_tops},
     {"tra", cmd_tra, GED_FUNC_PTR_NULL},
     {"track", f_amtrack, GED_FUNC_PTR_NULL},
@@ -358,7 +360,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"view2model_lu", cmd_ged_plain_wrapper, ged_view2model_lu},
     {"view2model_vec", cmd_ged_plain_wrapper, ged_view2model_vec},
     {"viewdir", cmd_ged_plain_wrapper, ged_viewdir},
-    {"viewsize", cmd_size, GED_FUNC_PTR_NULL},		/* alias "size" for saveview scripts */
+    {"viewsize", cmd_size, GED_FUNC_PTR_NULL}, /* alias "size" for saveview scripts */
     {"vnirt", f_vnirt, GED_FUNC_PTR_NULL},
     {"vquery_ray", f_vnirt, GED_FUNC_PTR_NULL},
 #if 0
@@ -380,9 +382,9 @@ static struct cmdtab mged_cmdtab[] = {
     {"xpush", cmd_ged_plain_wrapper, ged_xpush},
     {"Z", cmd_zap, GED_FUNC_PTR_NULL},
     {"zoom", cmd_zoom, GED_FUNC_PTR_NULL},
-    {"zoomin",	bv_zoomin, GED_FUNC_PTR_NULL},
-    {"zoomout",	bv_zoomout, GED_FUNC_PTR_NULL},
-    {NULL, NULL}
+    {"zoomin", f_bv_zoomin, GED_FUNC_PTR_NULL},
+    {"zoomout", f_bv_zoomout, GED_FUNC_PTR_NULL},
+    {NULL, NULL, GED_FUNC_PTR_NULL}
 };
 
 
@@ -408,9 +410,9 @@ cmd_setup(void)
 	bu_vls_strcpy(&temp, "_mged_");
 	bu_vls_strcat(&temp, ctp->name);
 
-	(void)Tcl_CreateCommand(interp, ctp->name, ctp->tcl_func,
+	(void)Tcl_CreateCommand(INTERP, ctp->name, ctp->tcl_func,
 				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, bu_vls_addr(&temp), ctp->tcl_func,
+	(void)Tcl_CreateCommand(INTERP, bu_vls_addr(&temp), ctp->tcl_func,
 				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
     }
 
@@ -434,20 +436,20 @@ cmd_setup(void)
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "source %s/mged/tree.tcl", buffer);
-	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
 #endif
 
     /* link some tcl variables to these corresponding globals */
-    Tcl_LinkVar(interp, "glob_compat_mode", (char *)&glob_compat_mode, TCL_LINK_BOOLEAN);
-    Tcl_LinkVar(interp, "output_as_return", (char *)&output_as_return, TCL_LINK_BOOLEAN);
+    Tcl_LinkVar(INTERP, "glob_compat_mode", (char *)&glob_compat_mode, TCL_LINK_BOOLEAN);
+    Tcl_LinkVar(INTERP, "output_as_return", (char *)&output_as_return, TCL_LINK_BOOLEAN);
 
     /* Provide Tcl interfaces to the fundamental BRL-CAD libraries */
-    Bu_Init(interp);
-    Bn_Init(interp);
-    Rt_Init(interp);
-    Go_Init(interp);
+    Bu_Init(INTERP);
+    Bn_Init(INTERP);
+    Rt_Init(INTERP);
+    Go_Init(INTERP);
 
     tkwin = NULL;
 
@@ -464,7 +466,7 @@ mged_output_handler(struct ged *UNUSED(gp), char *line)
 
 
 static void
-mged_refresh_handler(void *clientdata)
+mged_refresh_handler(void *UNUSED(clientdata))
 {
     view_state->vs_flag = 1;
     refresh();
@@ -610,7 +612,7 @@ mged_setup(Tcl_Interp **interpreter)
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_init(&str);
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);
-    Tcl_SetVar(*interpreter, bu_vls_addr(&str), state_str[state], TCL_GLOBAL_ONLY);
+    Tcl_SetVar(*interpreter, bu_vls_addr(&str), state_str[STATE], TCL_GLOBAL_ONLY);
 
     /* Set defaults for view status variables */
     bu_vls_trunc(&str, 0);

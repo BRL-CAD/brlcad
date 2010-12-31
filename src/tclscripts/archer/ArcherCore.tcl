@@ -711,7 +711,7 @@ Popup Menu    Right or Ctrl-Left
 	# db/display commands
 	method getNodeChildren  {_node}
 	method getTreeFromGData  {_gdata}
-	method getTreeMembers  {_tlist}
+	method getTreeMembers  {_tlist {_mlist {}}}
 	method getTreeOp {_parent _child}
 	method renderComp        {_node}
 	method render             {_node _state _trans _updateTree {_wflag 1}}
@@ -762,9 +762,9 @@ Popup Menu    Right or Ctrl-Left
 	method initCompSelect {}
 	method compSelectCallback {_mstring}
 
-	method mrayCallback_cvo {_start _target _partitions}
-	method mrayCallback_erase {_start _target _partitions}
-	method mrayCallback_pick {_start _target _partitions}
+	method mrayCallback_cvo {_pane _start _target _partitions}
+	method mrayCallback_erase {_pane _start _target _partitions}
+	method mrayCallback_pick {_pane _start _target _partitions}
 
 	method initViewMeasure {}
 	method endViewMeasure {_mstring}
@@ -2528,7 +2528,7 @@ Popup Menu    Right or Ctrl-Left
     putString $_mstring
 }
 
-::itcl::body ArcherCore::mrayCallback_cvo {_start _target _partitions} {
+::itcl::body ArcherCore::mrayCallback_cvo {_pane _start _target _partitions} {
     if {$_partitions == ""} {
 	set rpos [$itk_component(ged) lastMouseRayPos]
 	eval $itk_component(ged) vslew $rpos
@@ -2550,10 +2550,10 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set point [vscale $point [$itk_component(ged) base2local]]
-    $itk_component(ged) center $point
+    $itk_component(ged) pane_center $_pane $point
 }
 
-::itcl::body ArcherCore::mrayCallback_erase {_start _target _partitions} {
+::itcl::body ArcherCore::mrayCallback_erase {_pane _start _target _partitions} {
     if {$_partitions == ""} {
 	return
     }
@@ -2581,7 +2581,7 @@ Popup Menu    Right or Ctrl-Left
     set mStatusStr "erase $path"
 }
 
-::itcl::body ArcherCore::mrayCallback_pick {_start _target _partitions} {
+::itcl::body ArcherCore::mrayCallback_pick {_pane _start _target _partitions} {
     set partition [lindex $_partitions 0]
     if {$partition == {}} {
 	putString "Missed!"
@@ -2884,24 +2884,23 @@ Popup Menu    Right or Ctrl-Left
     return {}
 }
 
-::itcl::body ArcherCore::getTreeMembers {_tlist} {
-    # first remove any matrices
-    regsub -all -- {\{-?[0-9]+[^\}]+-?[0-9]+\}} $_tlist "" _tlist
-
-    # remove all other unwanted stuff
-    regsub -all {^[lun!GXN^-] |\{[lun!GXN^-]|\}} $_tlist "" _tlist
-
-    return $_tlist
-
-    # finally, remove any duplicates
-    set ntlist {}
-    foreach item $_tlist {
-	if {[lsearch $ntlist $item] == -1} {
-	    lappend ntlist $item
-	}
+::itcl::body ArcherCore::getTreeMembers {_tlist {_mlist {}}} {
+    set len [llength $_tlist]
+    set op [lindex $_tlist 0]
+    if {$op == "l"} {
+	set name [lindex $_tlist 1]
+	lappend _mlist $name
+	return $_mlist
     }
 
-    return $ntlist
+    if {$len == 3} {
+	set _mlist [getTreeMembers [lindex $_tlist 1] $_mlist]
+	set _mlist [getTreeMembers [lindex $_tlist 2] $_mlist]
+	return $_mlist
+    }
+
+    puts "ArcherCore::getTreeMembers: faulty tree - $_tlist"
+    return $_mlist
 }
 
 
@@ -3287,6 +3286,8 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::fillTree {_pnode _ctext _flat {_allow_multiple 0}} {
+    global no_tree_decorate
+
     set cnodes [getCNodesFromCText $_pnode $_ctext]
 
     # Atleast one node for _pnode/_ctext already exists
@@ -3303,12 +3304,18 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set ptext $mNode2Text($_pnode)
-    set op [getTreeOp $ptext $_ctext]
-    set img [getTreeImage $_ctext $ctype $op $isregion]
-    set cnode [$itk_component(newtree) insert $_pnode end \
-		   -tags $TREE_POPUP_TAG \
-		   -text $_ctext \
-		   -image $img]
+    if {[info exists no_tree_decorate] && $no_tree_decorate} {
+	set cnode [$itk_component(newtree) insert $_pnode end \
+		       -tags $TREE_POPUP_TAG \
+		       -text $_ctext]
+    } else {
+	set op [getTreeOp $ptext $_ctext]
+	set img [getTreeImage $_ctext $ctype $op $isregion]
+	set cnode [$itk_component(newtree) insert $_pnode end \
+		       -tags $TREE_POPUP_TAG \
+		       -text $_ctext \
+		       -image $img]
+    }
     fillTreeColumns $cnode $_ctext
 
     if {!$_flat && $ctype == "comb"} {

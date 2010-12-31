@@ -19,7 +19,7 @@
  *
  */
 /** @file idents.c
- *	Author:		Gary S. Moss
+ *
  */
 
 #include "common.h"
@@ -36,140 +36,124 @@
 #include "./extern.h"
 
 
-#define DEBUG_IDENTS	0
+#define DEBUG_IDENTS 0
 
 int
-findIdents( ident, idp )
-    int		ident;
-    Ids	*idp;
+findIdents(ident, idp)
+    int ident;
+    Ids *idp;
 {
 #if DEBUG_IDENTS
-    brst_log( "findIdents(%d)\n", ident );
+    brst_log("findIdents(%d)\n", ident);
 #endif
-    for ( idp = idp->i_next; idp != IDS_NULL; idp = idp->i_next )
-    {
+    for (idp = idp->i_next; idp != IDS_NULL; idp = idp->i_next) {
 #if DEBUG_IDENTS
-	brst_log( "lower=%d, upper=%d\n", (int) idp->i_lower,
-		  (int) idp->i_upper );
+	brst_log("lower=%d, upper=%d\n", (int) idp->i_lower,
+		 (int) idp->i_upper);
 #endif
-	if (	ident >= (int) idp->i_lower
-		&&	ident <= (int) idp->i_upper
+	if (ident >= (int) idp->i_lower
+	    &&	ident <= (int) idp->i_upper
 	    )
-	    return	1;
+	    return 1;
     }
 #if DEBUG_IDENTS
-    brst_log( "returned 0\n" );
+    brst_log("returned 0\n");
 #endif
-    return	0;
+    return 0;
 }
+
 
 Colors *
-findColors( ident, colp )
-    int ident;
-    Colors	*colp;
+findColors(int ident, Colors *colp)
 {
-    for ( colp = colp->c_next; colp != COLORS_NULL; colp = colp->c_next )
-    {
-	if (	ident >= (int) colp->c_lower
-		&&	ident <= (int) colp->c_upper
-	    )
-	    return	colp;
+    for (colp = colp->c_next; colp != COLORS_NULL; colp = colp->c_next) {
+	if (ident >= (int) colp->c_lower && ident <= (int) colp->c_upper)
+	    return colp;
     }
-    return	COLORS_NULL;
+    return COLORS_NULL;
 }
 
+
 /*
-  void freeIdents( Ids *idp )
+  void freeIdents(Ids *idp)
 
   Free up linked list, except for the head node.
 */
 void
-freeIdents( idp )
-    Ids *idp;
+freeIdents(Ids *idp)
 {
-    if ( idp->i_next == NULL )
+    if (idp->i_next == NULL)
 	return;	/* finished */
-    freeIdents( idp->i_next );
-    free( (char *) idp->i_next );
+    freeIdents(idp->i_next);
+    free((char *) idp->i_next);
 }
 
+
 int
-readIdents( idlist, fp )
-    Ids *idlist;
-    FILE *fp;
+readIdents(Ids *idlist, FILE *fp)
 {
     char input_buf[BUFSIZ];
     int lower, upper;
     Ids *idp;
-    freeIdents( idlist ); /* free old list if it exists */
-    for (	idp = idlist;
-		bu_fgets( input_buf, BUFSIZ, fp ) != NULL;
-	)
-    {
+    freeIdents(idlist); /* free old list if it exists */
+    for (idp = idlist;
+	 bu_fgets(input_buf, BUFSIZ, fp) != NULL;
+	) {
 	char *token;
-	token = strtok( input_buf, ",-:; \t" );
-	if ( token == NULL || sscanf( token, "%d", &lower ) < 1 )
+	token = strtok(input_buf, ", -:; \t");
+	if (token == NULL || sscanf(token, "%d", &lower) < 1)
 	    continue;
-	token = strtok( NULL, " \t" );
-	if ( token == NULL || sscanf( token, "%d", &upper ) < 1 )
+	token = strtok(NULL, " \t");
+	if (token == NULL || sscanf(token, "%d", &upper) < 1)
 	    upper = lower;
-	if ( (idp->i_next = (Ids *) malloc( sizeof(Ids) )) == NULL )
-	{
-	    Malloc_Bomb( sizeof(Ids) );
-	    return	0;
+	if ((idp->i_next = (Ids *) malloc(sizeof(Ids))) == NULL) {
+	    Malloc_Bomb(sizeof(Ids));
+	    return 0;
 	}
 	idp = idp->i_next;
 	idp->i_lower = lower;
 	idp->i_upper = upper;
     }
     idp->i_next = NULL;
-    return	1;
+    return 1;
 }
 
+
 int
-readColors( colorlist, fp )
-    Colors	*colorlist;
-    FILE	*fp;
+readColors(Colors *colorlist, FILE *fp)
 {
     char input_buf[BUFSIZ];
     int lower, upper;
     int rgb[3];
-    Colors	*colp;
-    for (	colp = colorlist;
-		bu_fgets( input_buf, BUFSIZ, fp ) != NULL;
-	)
-    {
-	int items;
-	if ( (items =
-	      sscanf(	input_buf,
-			"%d %d %d %d %d\n",
-			&lower, &upper, &rgb[0], &rgb[1], &rgb[2]
-		  )) < 5
-	    )
-	{
-	    if ( items == EOF )
+    Colors *colp;
+    for (colp = colorlist;
+	 bu_fgets(input_buf, BUFSIZ, fp) != NULL;
+	) {
+	int items = sscanf(input_buf, "%d %d %d %d %d\n", &lower, &upper, &rgb[0], &rgb[1], &rgb[2]);
+	if (items < 5) {
+	    if (items == EOF)
 		break;
-	    else
-	    {
-		brst_log( "readColors(): only %d items read\n",
-			  items );
+	    else {
+		brst_log("readColors(): only %d items read\n",
+			 items);
 		continue;
 	    }
 	}
-	if ( (colp->c_next = (Colors *) malloc( sizeof(Colors) ))
-	     == NULL )
-	{
-	    Malloc_Bomb( sizeof(Colors) );
-	    return	0;
+
+	colp->c_next = (Colors *) malloc(sizeof(Colors));
+	if (colp->c_next == NULL) {
+	    Malloc_Bomb(sizeof(Colors));
+	    return 0;
 	}
 	colp = colp->c_next;
 	colp->c_lower = lower;
 	colp->c_upper = upper;
-	VMOVE( colp->c_rgb, rgb );
+	VMOVE(colp->c_rgb, rgb);
     }
     colp->c_next = NULL;
-    return	1;
+    return 1;
 }
+
 
 /*
  * Local Variables:

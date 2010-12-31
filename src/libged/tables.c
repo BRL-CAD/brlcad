@@ -102,7 +102,7 @@ tables_sol_number(matp_t matrix, char *name, int *old, long *numsol)
 	    return idbuf2.i_index;
 	}
     }
-    *numsol++;
+    (*numsol)++;
     idbuf1.i_index = *numsol;
 
     (void)lseek(idfd, (off_t)0L, 2);
@@ -162,7 +162,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
     BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 
     if (dp->d_flags & DIR_REGION) {
-	*numreg++;
+	(*numreg)++;
 	(void)fprintf(tabptr, " %-4ld %4ld %4ld %4ld %4ld  ",
 		      *numreg, comb->region_id, comb->aircode, comb->GIFTmater,
 		      comb->los);

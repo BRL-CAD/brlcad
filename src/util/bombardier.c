@@ -44,7 +44,13 @@
 
 /* here be bombardier's gui in all its glory
  */
-static char *crash_reporter="\
+static void
+init_crash_reporter(struct bu_vls *s)
+{
+    if (!s)
+	return;
+
+    bu_vls_printf(s, "\
 catch {console hide} meh \n\
 \n\
 update \n\
@@ -58,7 +64,9 @@ event add <<Redo>> <Command-Key-y> <Control-Key-y> <Control-Key-Z> \n\
 bind . <Command-Key-q> {destroy .} \n\
 bind . <Control-Key-q> {destroy .} \n\
 bind . <Command-Key-w> {destroy .} \n\
-\n\
+\n");
+
+    bu_vls_printf(s, "\
 wm withdraw . \n\
 update \n\
 set msg \"The application $application quit rather unexpectedly.\n\nWe hate it when that happens at least as much as you do.  Please let us know about it so we can fix the problem.\" \n\
@@ -69,14 +77,20 @@ if {$response == 0} { \n\
 } \n\
 tk appname \"BRL-CAD Crash Report\" \n\
 wm title . \"BRL-CAD Crash Report\" \n\
-\n\
+\n");
+
+    bu_vls_printf(s, "\
 frame .f \n\
 frame .f_top \n\
-frame .f_bottom \n\
+frame .f_bottom \n");
+
+    bu_vls_printf(s, "\
 label .l_top -text {Crash details and system information:} \n\
 label .l_bottom -text {Please describe what you were doing when the crash occurred:} \n\
 label .l_info -justify left -text {Your crash report will help BRL-CAD improve.  No other information is sent with this report other that what is shown.  You will not be contacted in response to this report unless you file a formal bug report to the project bug tracker.  See http://brlcad.org for details.} \n\
-.l_info configure -wraplength 500 \n\
+.l_info configure -wraplength 500 \n");
+
+    bu_vls_printf(s, "\
 text .t_top -width 80 -height 24 -borderwidth 1 -relief sunken -maxundo 0 -undo 1 \n\
 text .t_bottom -width 80 -height 8 -borderwidth 1 -relief sunken -maxundo 0 -undo 1 \n\
 scrollbar .s_top -orient vert \n\
@@ -85,8 +99,10 @@ scrollbar .s_bottom -orient vert \n\
 .s_top conf -command {.t_top yview} \n\
 .t_bottom conf -yscrollcommand {.s_bottom set} \n\
 .s_bottom conf -command {.t_bottom yview} \n\
-button .button_yes -text {Send to BRL-CAD developers...} -command {deploy; destroy .} \n\
-\n\
+button .button_yes -text {Send to BRL-CAD developers...} -command {sendlog; destroy .} \n\
+\n");
+
+    bu_vls_printf(s, "\
 pack .t_top -in .f_top -side left -expand 1 -fill both \n\
 pack .s_top -in .f_top -side right -fill y \n\
 pack .l_top -in .f -anchor w \n\
@@ -98,7 +114,9 @@ pack .f_bottom -in .f -pady {0 10} -fill both \n\
 pack .l_info -in .f -fill x \n\
 pack .button_yes -in .f -pady 10 -side right \n\
 pack .f -padx 16 -pady 16 -expand 1 -fill both \n\
-\n\
+\n");
+
+    bu_vls_printf(s, "\
 update \n\
 .t_top insert end $report \n\
 \n\
@@ -106,8 +124,8 @@ wm deiconify . \n\
 update \n\
 wm minsize . [lindex [split [wm geometry .] x+] 0] [lindex [split [wm geometry .] x+] 1] \n\
 .l_info configure -wraplength [expr [lindex [split [wm geometry .] x+] 0] - 20] \n\
-wm state . normal \n\
-";
+wm state . normal \n");
+}
 
 
 /* crash report file(s) specified on the command line are stored in
@@ -173,13 +191,13 @@ load_file(const char *filename)
 
 /* the workhorse that actually sends the report in
  */
-int
-deploy(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
+static int
+sendlog(ClientData data, Tcl_Interp *UNUSED(interp), int UNUSED(argc), const char *UNUSED(argv[]))
 {
     struct bu_vls *daBomb = (struct bu_vls *)data;
 
-    /* bu_log("REPORT:\n%V\n", daBomb); */
     bu_log("Pretending that we're sending the log file to brlcad.org\n");
+    bu_log("REPORT:\n%V\n", daBomb);
 
     return TCL_OK;
 }
@@ -193,6 +211,7 @@ init(Tcl_Interp *interp)
 {
     char *c;
     struct bu_vls appname;
+    struct bu_vls crash_reporter;
 
     /* locate brl-cad specific scripts (or uninstalled tcl/tk stuff) */
     tclcad_auto_path(interp);
@@ -207,7 +226,7 @@ init(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
-    Tk_DefineBitmap(interp, "bombardier", bomb_icon_bits, bomb_icon_width, bomb_icon_height);
+    Tk_DefineBitmap(interp, "bombardier", (const char *)bomb_icon_bits, bomb_icon_width, bomb_icon_height);
 
     if (!report) {
 	bu_log("Initialization error, report is NULL\n");
@@ -246,11 +265,15 @@ init(Tcl_Interp *interp)
 	Tcl_SetVar(interp, "report", "ERROR", 0);
     }
 
-    Tcl_SetVar(interp, "script", crash_reporter, 0);
+    /* FIXME: why are we stashing this in a variable? */
+    bu_vls_init(&crash_reporter);
+    init_crash_reporter(&crash_reporter);
+    Tcl_SetVar(interp, "script", bu_vls_addr(&crash_reporter), 0);
+    bu_vls_free(&crash_reporter);
 
-    Tcl_CreateCommand(interp, "deploy", deploy, (ClientData)report, NULL);
+    Tcl_CreateCommand(interp, "sendlog", sendlog, (ClientData)report, NULL);
 
-    if (Tcl_Eval(interp, crash_reporter) != TCL_OK) {
+    if (Tcl_Eval(interp, bu_vls_addr(&crash_reporter)) != TCL_OK) {
 	bu_log("ERROR: Unable to initialize\n");
 	return TCL_ERROR;
     }

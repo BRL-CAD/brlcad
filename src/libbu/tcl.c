@@ -138,7 +138,7 @@ bu_tcl_structparse_get_terse_form(Tcl_Interp *interp,
 int
 bu_tcl_structparse_argv(Tcl_Interp *interp,
 			int argc,
-			char **argv,
+			const char **argv,
 			const struct bu_structparse *desc,
 			char *base)
 {
@@ -278,11 +278,11 @@ bu_tcl_get_value_by_keyword(ClientData clientData,
 			    int argc,
 			    const char **argv)
 {
-    int listc;
-    const char **listv;
-    const char *iwant;
+    int i = 0;
+    int listc = 0;
+    const char *iwant = (const char *)NULL;
+    const char **listv = (const char **)NULL;
     const char **tofree = (const char **)NULL;
-    int i;
 
     /* quell usage warning */
     clientData = clientData;
@@ -302,10 +302,7 @@ bu_tcl_get_value_by_keyword(ClientData clientData,
 
     if (argc == 3) {
 	if (Tcl_SplitList(interp, argv[2], &listc, (const char ***)&listv) != TCL_OK) {
-	    Tcl_AppendResult(interp,
-			     "bu_get_value_by_keyword: iwant='", iwant,
-			     "', unable to split '",
-			     argv[2], "'\n", (char *)NULL);
+	    Tcl_AppendResult(interp, "bu_get_value_by_keyword: iwant='", iwant, "', unable to split '", argv[2], "'\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
 	tofree = listv;
@@ -318,10 +315,9 @@ bu_tcl_get_value_by_keyword(ClientData clientData,
     if ((listc & 1) != 0) {
 	char buf[TINYBUFSIZ];
 	snprintf(buf, TINYBUFSIZ, "%d", listc);
-	Tcl_AppendResult(interp,
-			 "bu_get_value_by_keyword: odd # of items in list (", buf, ").\n",
-			 (char *)NULL);
-	if (tofree) free((char *)tofree);	/* not bu_free() */
+	Tcl_AppendResult(interp, "bu_get_value_by_keyword: odd # of items in list (", buf, ").\n", (char *)NULL);
+	if (tofree)
+	    Tcl_Free((char *)tofree); /* not bu_free() */
 	return TCL_ERROR;
     }
 
@@ -335,21 +331,21 @@ bu_tcl_get_value_by_keyword(ClientData clientData,
 		bu_vls_strcat(&str, &listv[i+1][1]);
 		/* Trim trailing } */
 		bu_vls_trunc(&str, -1);
-		Tcl_AppendResult(interp,
-				 bu_vls_addr(&str), (char *)NULL);
+		Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
 		bu_vls_free(&str);
 	    } else {
 		Tcl_AppendResult(interp, listv[i+1], (char *)NULL);
 	    }
-	    if (tofree) free((char *)tofree);	/* not bu_free() */
+	    if (tofree)
+		Tcl_Free((char *)tofree); /* not bu_free() */
 	    return TCL_OK;
 	}
     }
 
     /* Not found */
-    Tcl_AppendResult(interp, "bu_get_value_by_keyword: keyword '",
-		     iwant, "' not found in list\n", (char *)NULL);
-    if (tofree) free((char *)tofree);	/* not bu_free() */
+    Tcl_AppendResult(interp, "bu_get_value_by_keyword: keyword '", iwant, "' not found in list\n", (char *)NULL);
+    if (tofree)
+	Tcl_Free((char *)tofree); /* not bu_free() */
     return TCL_ERROR;
 }
 

@@ -97,7 +97,7 @@
 #define FM_BURST (1<<4) /* bit 4: ON = discrete burst points, OFF = shots */
 
 /* flags for notify() */
-#define	NOTIFY_APPEND	1
+#define NOTIFY_APPEND	1
 #define NOTIFY_DELETE	2
 #define NOTIFY_ERASE	4
 
@@ -176,44 +176,45 @@
 #define OutsideAir(rp)	((rp)->reg_aircode == OUTSIDE_AIR)
 #define InsideAir(rp)	(Air(rp)&& !OutsideAir(rp))
 
-#define Malloc_Bomb( _bytes_ ) \
-		brst_log( "\"%s\"(%d) : allocation of %d bytes failed.\n", \
-				__FILE__, __LINE__, _bytes_ )
+#define Malloc_Bomb(_bytes_) \
+		brst_log("\"%s\"(%d) : allocation of %d bytes failed.\n", \
+				__FILE__, __LINE__, _bytes_)
 
-#define Swap_Doubles( a_, b_ ) \
-		{	fastf_t	f_ = a_; \
+#define Swap_Doubles(a_, b_) \
+		{	fastf_t f_ = a_; \
 		a_ = b_; \
 		b_ = f_; \
 		}
 #define Toggle(f)	(f) = !(f)
 
-typedef struct ids	Ids;
+typedef struct ids Ids;
 struct ids
 {
-    short	i_lower;
-    short	i_upper;
-    Ids	*i_next;
+    short i_lower;
+    short i_upper;
+    Ids *i_next;
 };
-#define IDS_NULL	(Ids *) 0
+#define IDS_NULL (Ids *) 0
 
-typedef struct colors	Colors;
+typedef struct colors Colors;
 struct colors
 {
-    short	c_lower;
-    short	c_upper;
-    unsigned char	c_rgb[3];
-    Colors	*c_next;
+    short c_lower;
+    short c_upper;
+    unsigned char c_rgb[3];
+    Colors *c_next;
 };
-#define COLORS_NULL	(Colors *) 0
+#define COLORS_NULL (Colors *) 0
 
-typedef struct pt_queue	Pt_Queue;
+typedef struct pt_queue Pt_Queue;
 struct pt_queue
 {
-    struct partition	*q_part;
-    Pt_Queue		*q_next;
+    struct partition *q_part;
+    Pt_Queue *q_next;
 };
 
-#define PT_Q_NULL	(Pt_Queue *) 0
+
+#define PT_Q_NULL (Pt_Queue *) 0
 
 #endif  /* __BURST_H__ */
 

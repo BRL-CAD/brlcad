@@ -107,6 +107,7 @@ main(int argc, char **argv)
     char *ptr;
     int attr_count=0, i;
     char **attrs = (char **)NULL;
+    const char *argv0 = argv[0];
 
     if (argc < 3) {
 	bu_exit(1, usage);
@@ -281,7 +282,7 @@ main(int argc, char **argv)
     }
     if (argc < 2) {
 	(void)fputs(usage, stderr);
-	bu_exit(1, "rtshot: MGED database not specified\n");
+	bu_exit(1, "%s: BRL-CAD geometry database not specified\n", argv0);
     }
 
     if (set_dir + set_pt + set_at != 2) goto err;

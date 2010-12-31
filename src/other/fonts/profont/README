@@ -1,0 +1,27 @@
+This directory contains the fonts from ProFont Distribution 2.2
+as stored at http://www.tobias-jung.de/seekingprofont/
+
+On June 14, 2010 Carl Osterwald gave permission to place ProFont
+under the SIL Open Font License - the COPYING file has been added
+to reflect this change/clarification.
+
+The original StuffIt archive has been opened and reorganized as
+follows:
+
+The About ProFont Distribution 2 rich text file has been converted
+to a pdf file and named about_old.pdf
+
+The ProFont Quick Start rich text file has been converted to a
+text file and named quickstart_old.txt
+
+The original contents of the ProFont, ProFontWindows, and ProFontISOLatin1
+directories have been preserved in original.tar
+
+For each of the three directories above, fontforge was used to
+open the font and save *.sfd and *.ttf files.  These are currently
+naive open-and-save outputs with none of the corrective fixes
+present in the other versions on the tobias-jung website.  Ideally,
+a unified version with proper permissions from all copyright holders
+can be assembled that contains the proper settings and fixes - that
+would be the next step to attempt.
+

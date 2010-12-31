@@ -179,7 +179,7 @@ static char *usage[] = {
  *
  * Reports a usage message on stderr.
  */
-void printusage (void)
+void printusage(void)
 {
     char **u;
 
@@ -191,7 +191,7 @@ void printusage (void)
 /**
  * C R E A T E _ S E G M E N T
  */
-struct g_lint_seg *create_segment (void)
+struct g_lint_seg *create_segment(void)
 {
     struct g_lint_seg *sp;
 
@@ -210,7 +210,7 @@ struct g_lint_seg *create_segment (void)
  * This routine writes one overlap segent to stdout.
  * It's the workhorse of the reporting process for overlaps.
  */
-void print_segment (const char *r1name, const char *r2name, double seg_length, point_t origin, point_t entrypt, point_t exitpt)
+void print_segment(const char *r1name, const char *r2name, double seg_length, point_t origin, point_t entrypt, point_t exitpt)
 {
     printf("overlap ");
     if (origin)
@@ -223,7 +223,7 @@ void print_segment (const char *r1name, const char *r2name, double seg_length, p
 /**
  * C R E A T E _ O V E R L A P
  */
-struct g_lint_ovlp *create_overlap (struct region *r1, struct region *r2)
+struct g_lint_ovlp *create_overlap(struct region *r1, struct region *r2)
 {
     struct g_lint_ovlp *op;
 
@@ -254,7 +254,7 @@ struct g_lint_ovlp *create_overlap (struct region *r1, struct region *r2)
 /**
  * F R E E _ O V E R L A P
  */
-void free_overlap (struct g_lint_ovlp *op)
+void free_overlap(struct g_lint_ovlp *op)
 {
     BU_CKMAG(op, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
 
@@ -273,7 +273,7 @@ void free_overlap (struct g_lint_ovlp *op)
  * The call-back for finally outputting data for all the overlap
  * segments between any two regions.
  */
-void _print_overlap (void *v, int show_origin)
+void _print_overlap(void *v, int show_origin)
 {
     const char *r1name, *r2name;
     struct g_lint_ovlp *op = (struct g_lint_ovlp *) v;
@@ -299,7 +299,7 @@ void _print_overlap (void *v, int show_origin)
  * A wrapper for _print_overlap() for use when you don't want to print
  * the ray origin.
  */
-void print_overlap (void *v, int depth)
+void print_overlap(void *v, int UNUSED(depth))
 {
     _print_overlap(v, 0);
 }
@@ -311,7 +311,7 @@ void print_overlap (void *v, int depth)
  * A wrapper for _print_overlap() for use when you do want to print
  * the ray origin.
  */
-void print_overlap_o (void *v, int depth)
+void print_overlap_o(void *v, int UNUSED(depth))
 {
     _print_overlap(v, 1);
 }
@@ -322,7 +322,7 @@ void print_overlap_o (void *v, int depth)
  *
  * The red-black-tree comparison callback for the overlap log.
  */
-int compare_overlaps (void *v1, void *v2)
+int compare_overlaps(void *v1, void *v2)
 {
     struct g_lint_ovlp *o1 = (struct g_lint_ovlp *) v1;
     struct g_lint_ovlp *o2 = (struct g_lint_ovlp *) v2;
@@ -349,7 +349,7 @@ int compare_overlaps (void *v1, void *v2)
  * The red-black-tree comparison callback for the final re-sorting of
  * the overlaps by volume.
  */
-int compare_by_vol (void *v1, void *v2)
+int compare_by_vol(void *v1, void *v2)
 {
     struct g_lint_ovlp *o1 = (struct g_lint_ovlp *) v1;
     struct g_lint_ovlp *o2 = (struct g_lint_ovlp *) v2;
@@ -372,7 +372,7 @@ int compare_by_vol (void *v1, void *v2)
  * The call-back, used in traversing the overlap log, to insert
  * overlaps into the sorted-by-volume tree.
  */
-void insert_by_vol (void *v, int depth)
+void insert_by_vol(void *v, int UNUSED(depth))
 {
     int rc;	/* Return code from bu_rb_insert() */
     struct g_lint_ovlp *op = (struct g_lint_ovlp *) v;
@@ -392,7 +392,7 @@ void insert_by_vol (void *v, int depth)
  * routine creates a new entry in the overlap log.  Either way, it
  * then modifies their entry to record this particular find.
  */
-void update_ovlp_log (struct region *r1, struct region *r2, double seg_length, fastf_t *origin, fastf_t *entrypt, fastf_t *exitpt)
+void update_ovlp_log(struct region *r1, struct region *r2, double seg_length, fastf_t *origin, fastf_t *entrypt, fastf_t *exitpt)
 {
     int rc;	/* Return code from bu_rb_insert() */
     struct g_lint_ovlp *op;
@@ -429,14 +429,14 @@ void update_ovlp_log (struct region *r1, struct region *r2, double seg_length, f
     op->glo_seg_last = sp;
 }
 
-unsigned char *get_color (unsigned char *ucp, unsigned long x)
+unsigned char *get_color(unsigned char *ucp, unsigned long x)
 {
-    int index;
+    int idx;
 
-    for (index = 0; x > 1; ++index)
+    for (idx = 0; x > 1; ++idx)
 	x >>= 1;
 
-    return ucp + (index * 3);
+    return ucp + (idx * 3);
 }
 
 
@@ -459,7 +459,7 @@ unsigned char *get_color (unsigned char *ucp, unsigned long x)
  *
  * The function returns the number of possible problems it discovers.
  */
-static int rpt_hit (struct application *ap, struct partition *ph, struct seg *dummy)
+static int rpt_hit(struct application *ap, struct partition *ph, struct seg *UNUSED(dummy))
 {
     struct partition *pp;
     vect_t delta;
@@ -700,7 +700,7 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *du
  *
  * Null event handler for use by rt_shootray().
  */
-static int no_op_overlap (struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp)
+static int no_op_overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct region *UNUSED(r1), struct region *UNUSED(r2), struct partition *UNUSED(hp))
 {
     return 0;
 }
@@ -711,7 +711,7 @@ static int no_op_overlap (struct application *ap, struct partition *pp, struct r
  *
  * Null event handler for use by rt_shootray().
  */
-static int no_op_hit (struct application *ap, struct partition *ph, struct seg *dummy)
+static int no_op_hit(struct application *UNUSED(ap), struct partition *UNUSED(ph), struct seg *UNUSED(dummy))
 {
     return 1;
 }
@@ -722,7 +722,7 @@ static int no_op_hit (struct application *ap, struct partition *ph, struct seg *
  *
  * Null event handler for use by rt_shootray().
  */
-static int no_op_miss (struct application *ap)
+static int no_op_miss(struct application *UNUSED(ap))
 {
     return 1;
 }
@@ -737,7 +737,7 @@ static int no_op_miss (struct application *ap)
  * greater than tolerance.  The function returns 1 if the overlap was
  * large enough to report, otherwise 0.
  */
-static int rpt_ovlp (struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp)
+static int rpt_ovlp(struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *UNUSED(hp))
 {
     vect_t delta;
     fastf_t mag_del;
@@ -782,7 +782,7 @@ static int rpt_ovlp (struct application *ap, struct partition *pp, struct region
     return mag_del > tolerance;
 }
 
-void init_plot3 (struct application *ap)
+void init_plot3(struct application *ap)
 {
     struct rt_i *rtip;
     struct g_lint_ctrl *cp;
@@ -798,7 +798,7 @@ void init_plot3 (struct application *ap)
 
 
 int
-main (int argc, char **argv)
+main(int argc, char **argv)
 {
     struct application ap;
     char db_title[TITLE_LEN+1];	/* Title of database */
@@ -1044,7 +1044,7 @@ main (int argc, char **argv)
 	    bu_rb_walk1(ovlps_by_vol, print_overlap, INORDER);
     }
 
-    bu_exit (0, NULL);
+    return 0;
 }
 
 /*

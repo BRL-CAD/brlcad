@@ -47,13 +47,13 @@ static int fileinput = 0;	/* Is input a file (not stdin)? */
 static int autosize = 0;	/* Try to guess input dimensions? */
 static int tol_using_rgb = 1; /* Compare via RGB, not HSV? */
 
-static long int file_width = 512L;
-static long int file_height = 512L;
+static size_t file_width = 512;
+static size_t file_height = 512;
 
-static int left_edge = -1;
-static int right_edge = -1;
-static int bottom_edge = -1;
-static int top_edge = -1;
+static ssize_t left_edge = -1;
+static ssize_t right_edge = -1;
+static ssize_t bottom_edge = -1;
+static ssize_t top_edge = -1;
 
 #define COLORS_NEITHER 0
 #define COLORS_INTERIOR 1
@@ -96,7 +96,7 @@ static int read_hsv (fastf_t *hsvp, char *buf)
 	|| (tmp[SAT] < 0.0) || (tmp[SAT] > 1.0)
 	|| (tmp[VAL] < 0.0) || (tmp[VAL] > 1.0))
 	return 0;
-    if (tmp[SAT] == 0.0)
+    if (NEAR_ZERO(tmp[SAT], SMALL_FASTF))
 	tmp[HUE] = ACHROMATIC;
     VMOVE(hsvp, tmp);
     return 1;
@@ -106,9 +106,11 @@ static int read_hsv (fastf_t *hsvp, char *buf)
 /*
  * R E A D _ R O W ()
  */
-static int read_row (unsigned char *rp, long int width, FILE *infp)
+static int
+read_row(unsigned char *rp, size_t width, FILE *fp)
 {
-    if (fread(rp + 3, 3, width, infp) != width)
+    size_t ret = fread(rp + 3, 3, width, fp);
+    if (ret != width)
 	return 0;
     *(rp + RED) = *(rp + GRN) = *(rp + BLU) = 0;
     *(rp + 3 * (width + 1) + RED) =
@@ -174,14 +176,14 @@ static void rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
     /*
      * Compute hue
      */
-    if (*sat == 0.0)
+    if (NEAR_ZERO(*sat, SMALL_FASTF))
 	*hue = ACHROMATIC;
     else {
-	if (red == max)
+	if (NEAR_ZERO(red - max, SMALL_FASTF)) /* red == max */
 	    *hue = (grn - blu) / delta;
-	else if (grn == max)
+	else if (NEAR_ZERO(grn - max, SMALL_FASTF)) /* grn == max */
 	    *hue = 2.0 + (blu - red) / delta;
-	else if (blu == max)
+	else if (NEAR_ZERO(blu - max, SMALL_FASTF)) /* blu == max */
 	    *hue = 4.0 + (red - grn) / delta;
 
 	/*
@@ -209,8 +211,8 @@ int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
     sat = hsv[SAT];
     val = hsv[VAL];
 
-    if (sat == 0.0) {
-	if (hue == ACHROMATIC) {
+    if (NEAR_ZERO(sat, SMALL_FASTF)) {
+	if (NEAR_ZERO(hue - ACHROMATIC, SMALL_FASTF)) { /* hue == ACHROMATIC */
 	    VSETALL(float_rgb, val);
 	} else {
 	    (void) fprintf(stderr, "Illegal HSV (%g, %g, %g)\n",
@@ -218,7 +220,7 @@ int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 	    return 0;
 	}
     } else {
-	if (hue == 360.0)
+	if (NEAR_ZERO(hue - 360.0, SMALL_FASTF)) /* hue == 360.0 */
 	    hue = 0.0;
 	hue /= 60.0;
 	hue_int = floor((double) hue);
@@ -473,7 +475,8 @@ get_args (int argc, char **argv)
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((infp = fopen(file_name, "r")) == NULL) {
+	infp = fopen(file_name, "r");
+	if (infp == NULL) {
 	    perror(file_name);
 	    (void) fprintf(stderr, "Cannot open file '%s'\n", file_name);
 	    return 0;
@@ -504,12 +507,12 @@ main (int argc, char **argv)
 {
     char *outbuf;
     unsigned char *inrow[3];
-    long int i;
-    long int next_row;
-    long int prev_row;
-    long int col_nm;
-    long int row_nm;
-    long int this_row;
+    size_t i;
+    ssize_t next_row;
+    ssize_t prev_row;
+    ssize_t this_row;
+    size_t col_nm;
+    size_t row_nm;
 
     VSETALL(border_rgb,     1);
     rgb_to_hsv(border_rgb, border_hsv);
@@ -523,18 +526,6 @@ main (int argc, char **argv)
 	(void) fputs(usage, stderr);
 	bu_exit (1, NULL);
     }
-
-#if 0
-    (void) fprintf(stderr,
-		   "We'll put a border of %d/%d/%d around regions of %d/%d/%d\n",
-		   V3ARGS(border_rgb), V3ARGS(interior_rgb));
-    if (tol_using_rgb)
-	(void) fprintf(stderr, "With an RGB tol of %d/%d/%d\n",
-		       V3ARGS(rgb_tol));
-    else
-	(void) fprintf(stderr, "With an HSV tol of %g/%g/%g\n",
-		       V3ARGS(hsv_tol));
-#endif
 
     /*
      * Autosize the input if appropriate
@@ -573,7 +564,7 @@ main (int argc, char **argv)
 	|| (! read_row(inrow[next_row], file_width, infp)))
     {
 	perror(file_name);
-	(void) fprintf(stderr, "pixborder:  fread() error\n");
+	fprintf(stderr, "pixborder:  fread() error\n");
 	bu_exit (1, NULL);
     }
 
@@ -581,11 +572,14 @@ main (int argc, char **argv)
      * Do the filtering
      */
     for (row_nm = 0; row_nm < file_height; ++row_nm) {
+	size_t ret;
+
 	/*
 	 * Fill the output-scanline buffer
 	 */
-	if ((row_nm < bottom_edge) || (row_nm > top_edge)) {
-	    if (fwrite(inrow[this_row] + 3, 3, file_width, stdout) != file_width) {
+	if (((ssize_t)row_nm < bottom_edge) || ((ssize_t)row_nm > top_edge)) {
+	    ret = fwrite(inrow[this_row] + 3, 3, file_width, stdout);
+	    if (ret != file_width) {
 		perror("stdout");
 		bu_exit (2, NULL);
 	    }
@@ -593,7 +587,7 @@ main (int argc, char **argv)
 	    for (col_nm = 0; col_nm < file_width; ++col_nm) {
 		unsigned char *color_ptr;
 
-		if ((col_nm >= left_edge) && (col_nm <= right_edge)
+		if (((ssize_t)col_nm >= left_edge) && ((ssize_t)col_nm <= right_edge)
 		    && is_border(inrow[prev_row], inrow[this_row],
 				 inrow[next_row], col_nm))
 		    color_ptr = border_rgb;
@@ -606,7 +600,8 @@ main (int argc, char **argv)
 	    /*
 	     * Write the output scanline
 	     */
-	    if (fwrite(outbuf, 3, file_width, stdout) != file_width) {
+	    ret = fwrite(outbuf, 3, file_width, stdout);
+	    if (ret != file_width) {
 		perror("stdout");
 		bu_exit (2, NULL);
 	    }
@@ -617,7 +612,8 @@ main (int argc, char **argv)
 	 */
 	prev_row = this_row;
 	this_row = next_row;
-	next_row = ++next_row % 3;
+	i = next_row;
+	next_row = ++i % 3;
 
 	/*
 	 * Grab the next input scanline

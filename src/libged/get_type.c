@@ -189,6 +189,9 @@ ged_get_type(struct ged *gedp, int argc, const char *argv[])
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
 	    bu_vls_printf(&gedp->ged_result_str, "comb");
 	    break;
+	case DB5_MINORTYPE_BRLCAD_BREP:
+	    bu_vls_printf(&gedp->ged_result_str, "brep");
+	    break;
 	default:
 	    bu_vls_printf(&gedp->ged_result_str, "other");
 	    break;

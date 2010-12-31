@@ -25,10 +25,7 @@
 #include "./iges_extern.h"
 
 struct shell *
-Add_inner_shell( r, entityno, shell_orient )
-    struct nmgregion *r;
-    int entityno;
-    int shell_orient;
+Add_inner_shell(struct nmgregion *r, int entityno)
 {
 
     int		sol_num;		/* IGES solid type number */

@@ -632,12 +632,14 @@ may be imported by other namespaces.
 If a \fBnamespace import\fR command specifies a command
 that is not exported, the command is not imported.
 .SH "SCOPED SCRIPTS"
+.PP
 The \fBnamespace code\fR command is the means by which a script may be
 packaged for evaluation in a namespace other than the one in which it
 was created.  It is used most often to create event handlers, Tk bindings,
 and traces for evaluation in the global context.  For instance, the following
-code indicates how to direct a variable trace callback into the current
+code indicates how to direct a variable \fBtrace\fR callback into the current
 namespace:
+.PP
 .CS
 \fBnamespace eval\fR a {
    variable b
@@ -646,11 +648,13 @@ namespace:
       puts "the value of $n1 has changed to $var"
       return
    }
-   trace variable b w [\fBnamespace code\fR theTraceCallback]
+   trace add variable b write [\fBnamespace code\fR theTraceCallback]
 }
 set a::b c
 .CE
+.PP
 When executed, it prints the message:
+.PP
 .CS
 the value of a::b has changed to c
 .CE

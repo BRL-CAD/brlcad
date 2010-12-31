@@ -445,7 +445,7 @@ main(int argc, char **argv)
 	    ptr = &curves[y+1][x*3];
 
 	    r = data[INDEX(y,x)];
-	    if ((r << rshift) == VOIDVAL) {
+	    if ((r << rshift) == (short)VOIDVAL) {
 		/* skip void values */
 		continue;
 	    } else if (r < 0) {

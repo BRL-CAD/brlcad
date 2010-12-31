@@ -77,7 +77,8 @@ bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 #define BREP_MAX_LN_DEPTH 20
 #define SIGN(x) ((x) >= 0 ? 1 : -1)
 /* Surface flatness parameter, Abert says between 0.8-0.9 */
-#define BREP_SURFACE_FLATNESS 0.95
+#define BREP_SURFACE_FLATNESS 0.85
+#define BREP_SURFACE_STRAIGHTNESS 0.75
 /* Max newton iterations when finding closest point */
 #define BREP_MAX_FCP_ITERATIONS 50
 /* Root finding epsilon */
@@ -605,8 +606,6 @@ BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
 	Ta = m_t[1];
 	Tb = m_t[0];
     }
-
-    bool xincreasing = !((B[X] - A[X]) < 0.0);
 
     fastf_t dV = B[Y] - A[Y];
     if (NEAR_ZERO(dV, tol)) {  //horizontal
@@ -1396,7 +1395,7 @@ private:
     bool m_removeTrimmed;
 
 public:
-    SurfaceTree(ON_BrepFace* face, bool removeTrimmed=true);
+    SurfaceTree(ON_BrepFace* face, bool removeTrimmed=true, int depthLimit = BREP_MAX_FT_DEPTH);
     ~SurfaceTree();
 
     CurveTree* ctree;
@@ -1424,9 +1423,13 @@ public:
     int depth();
 
 private:
-    bool isFlat(const ON_Surface* surf, ON_3dVector normals[], const ON_Interval& u, const ON_Interval& v);
-    BBNode* subdivideSurface(const ON_Interval& u, const ON_Interval& v, ON_3dPoint corners[], ON_3dVector normals[], int depth);
-    BBNode* surfaceBBox(bool leaf, ON_3dPoint corners[], ON_3dVector normals[], const ON_Interval& u, const ON_Interval& v);
+    bool isFlat(const ON_Surface* surf, ON_Plane frames[], ON_3dVector normals[], ON_3dPoint corners[], const ON_Interval& u, const ON_Interval& v);
+    bool isStraight(const ON_Surface* surf, ON_Plane frames[], ON_3dVector normals[], ON_3dPoint corners[], const ON_Interval& u, const ON_Interval& v);
+    fastf_t isFlatU(const ON_Surface* surf, ON_Plane frames[], ON_3dVector normals[], ON_3dPoint corners[], const ON_Interval& u, const ON_Interval& v);
+    fastf_t isFlatV(const ON_Surface* surf, ON_Plane frames[], ON_3dVector normals[], ON_3dPoint corners[], const ON_Interval& u, const ON_Interval& v);
+    BBNode* subdivideSurfaceByKnots(const ON_Surface *localsurf, const ON_Interval& u, const ON_Interval& v, ON_Plane frames[], ON_3dPoint corners[], ON_3dVector normals[], int depth, int depthLimit);
+    BBNode* subdivideSurface(const ON_Surface *localsurf, const ON_Interval& u, const ON_Interval& v, ON_Plane frames[], ON_3dPoint corners[], ON_3dVector normals[], int depth, int depthLimit);
+    BBNode* surfaceBBox(const ON_Surface *localsurf, bool leaf, ON_3dPoint corners[], ON_3dVector normals[], const ON_Interval& u, const ON_Interval& v);
 
     ON_BrepFace* m_face;
     BBNode* m_root;

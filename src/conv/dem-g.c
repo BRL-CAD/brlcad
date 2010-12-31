@@ -1563,30 +1563,32 @@ convert_load_order(
     FILE *fp4;
     long int offset = 0;
     long int column = 0;
+    unsigned short int *buf3;
     unsigned short int buf4 = 0;
 
-    /* size of buf3 determined at run time */
-    unsigned short int buf3[*in_ydim];
+    buf3 = bu_malloc(sizeof(unsigned short int) * (*in_ydim), "buf3");
 
     if ((fp4=fopen(in_dsp_output_filename, "wb")) == NULL) {
         bu_log("Could not open '%s' for write.\n", in_dsp_output_filename);
+	bu_free(buf3, "buf3");
         return BRLCAD_ERROR;
     }
     for (offset = 0; offset <= *in_ydim-1; offset++) {
         if ((fp3=fopen(in_temp_filename, "rb")) == NULL) {
             bu_log("Could not open '%s' for read.\n", in_temp_filename);
             fclose(fp4);
-            return BRLCAD_ERROR;
+	    bu_free(buf3, "buf3");
+	    return BRLCAD_ERROR;
         } 
         for (column = 1; column <= *in_xdim; column++) {
-            fread(buf3, sizeof(buf3[0]), sizeof(buf3)/sizeof(buf3[0]), fp3);
-            buf4 = buf3[offset];
+            fread(buf3, sizeof(unsigned short int), sizeof(unsigned short int) * (*in_ydim)/sizeof(unsigned short int), fp3);
+            buf4 = *(buf3 + offset);
             fwrite(&buf4, sizeof(buf4), 1, fp4);   
         }
         fclose(fp3);
     }
     fclose(fp4);
-
+    bu_free(buf3, "buf3");
     return BRLCAD_OK;
 }
 
@@ -1651,6 +1653,18 @@ create_model(
 int
 main(int ac, char *av[])
 {
+    double raw_dem_2_raw_dsp_manual_scale_factor = 0;  /* user specified raw dem-to-dsp scale factor */
+    long int manual_dem_max_raw_elevation = 0;         /* user specified max raw elevation */
+    double manual_dem_max_real_elevation = 0;          /* user specified max real elevation in meters */
+    long int xdim = 0;                                 /* x dimension of dem (w cells) */
+    long int ydim = 0;                                 /* y dimension of dem (n cells) */
+    double dsp_elevation = 0;                          /* datum elevation in milimeters (dsp V z coordinate) */
+    double x_cell_size = 0;                            /* x scaling factor in milimeters */
+    double y_cell_size = 0;                            /* y scaling factor in milimeters */
+    double unit_elevation = 0;                         /* z scaling factor in milimeters */
+    char *tmp_ptr = '\0';
+    int string_length = 0;
+
     /*
      * element_counts[]
      * element_counts[record_type] = number of elements in each record type
@@ -2058,18 +2072,6 @@ main(int ac, char *av[])
 
     progname = *av;
 
-    double raw_dem_2_raw_dsp_manual_scale_factor = 0;  /* user specified raw dem-to-dsp scale factor */
-    long int manual_dem_max_raw_elevation = 0;         /* user specified max raw elevation */
-    double manual_dem_max_real_elevation = 0;          /* user specified max real elevation in meters */
-    long int xdim = 0;                                 /* x dimension of dem (w cells) */
-    long int ydim = 0;                                 /* y dimension of dem (n cells) */
-    double dsp_elevation = 0;                          /* datum elevation in milimeters (dsp V z coordinate) */
-    double x_cell_size = 0;                            /* x scaling factor in milimeters */
-    double y_cell_size = 0;                            /* y scaling factor in milimeters */
-    double unit_elevation = 0;                         /* z scaling factor in milimeters */
-    char *tmp_ptr = '\0';
-    int string_length = 0;
-
     if (ac < 2) {
         usage();
         bu_exit(BRLCAD_ERROR, "Exiting.\n");
@@ -2077,10 +2079,16 @@ main(int ac, char *av[])
 
     remove_whitespace(av[1]);
     string_length = strlen(av[1]) + 5;
-    char input_filename[string_length];          /* dem input file path and file name */
-    char temp_filename[string_length];           /* temp file path and file name */
-    char dsp_output_filename[string_length];     /* dsp output file path and file name */
-    char model_output_filename[string_length];   /* model output file path and file name */
+
+    char *input_filename;
+    char *temp_filename;
+    char *dsp_output_filename;
+    char *model_output_filename;
+
+    input_filename = bu_malloc(sizeof(char *) * string_length, "input_filename");
+    temp_filename = bu_malloc(sizeof(char *) * string_length, "temp_filename");
+    dsp_output_filename = bu_malloc(sizeof(char *) * string_length, "dsp_output_filename");
+    model_output_filename = bu_malloc(sizeof(char *) * string_length, "model_output_filename");
 
     tmp_ptr = strcpy(input_filename, av[1]);
     tmp_ptr = strcpy(temp_filename, input_filename);
@@ -2113,10 +2121,18 @@ main(int ac, char *av[])
 	    &x_cell_size,
 	    &y_cell_size,
 	    &unit_elevation) == BRLCAD_ERROR) {
+	    bu_free(input_filename, "input_filename");
+	    bu_free(temp_filename, "temp_filename");
+	    bu_free(dsp_output_filename, "dsp_output_filename");
+	    bu_free(model_output_filename, "model_output_filename");
         bu_exit(BRLCAD_ERROR, "Error occured within function 'read_dem'. Import can not continue.\n");
     }
 
     if (convert_load_order(temp_filename, dsp_output_filename, &xdim, &ydim) == BRLCAD_ERROR) {
+	    bu_free(input_filename, "input_filename");
+	    bu_free(temp_filename, "temp_filename");
+	    bu_free(dsp_output_filename, "dsp_output_filename");
+	    bu_free(model_output_filename, "model_output_filename");
         bu_exit(BRLCAD_ERROR, "Error occured within function 'convert_load_order'. Import can not continue.\n");
     }
 
@@ -2129,9 +2145,16 @@ main(int ac, char *av[])
 	    &x_cell_size,
 	    &y_cell_size,
 	    &unit_elevation) == BRLCAD_ERROR) {
+	    bu_free(input_filename, "input_filename");
+	    bu_free(temp_filename, "temp_filename");
+	    bu_free(dsp_output_filename, "dsp_output_filename");
+	    bu_free(model_output_filename, "model_output_filename");
         bu_exit(BRLCAD_ERROR, "Error occured within function 'create_model'. Model creation can not continue.\n");
     }
-
+    bu_free(input_filename, "input_filename");
+    bu_free(temp_filename, "temp_filename");
+    bu_free(dsp_output_filename, "dsp_output_filename");
+    bu_free(model_output_filename, "model_output_filename");
     return 0;
 }
 

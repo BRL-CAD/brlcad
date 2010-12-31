@@ -28,7 +28,7 @@
  * tables. Usage:
  *
 
-channel -i infile1 id id id ... [-i infile2 ...] -o outfile1 id id ... [-o outfile2 ...]
+ channel -i infile1 id id id ... [-i infile2 ...] -o outfile1 id id ... [-o outfile2 ...]
 
  *
  * where infiles are files to be read from, outfiles are files to be
@@ -66,16 +66,16 @@ int
 main(int argc, char *argv[])
 {
     int i, j, maxlength, num_done;
-    int icount, ocount;
+    int count, icount, ocount;
     struct unit *x, *y;
     Word *arrayd;
 
     i=j=icount = ocount = maxlength = 0;
     for (i=1;i<argc;i++) {
-	if ( !strncmp(argv[i], ihead, 2) ) {
+	if (!strncmp(argv[i], ihead, 2)) {
 	    j=0;
 	    icount++;
-	} else if ( !strncmp(argv[i], ohead, 2) ) {
+	} else if (!strncmp(argv[i], ohead, 2)) {
 	    j=0;
 	    ocount++;
 	} else
@@ -85,23 +85,23 @@ main(int argc, char *argv[])
     y = (struct unit *) bu_calloc(icount+ocount, sizeof(struct unit), "struct unit");
     x = y - 1;
     for (i=1;i<argc;i++) {
-	if ( !strncmp(argv[i], "-", 1) ) {
+	if (!strncmp(argv[i], "-", 1)) {
 	    j=0;
 	    x++;
 	    x->list = (short *) bu_calloc(maxlength, sizeof(short), "short array");
 	    if (argv[i][1] == 'i') {
 		i++;
 		(x)->i_o = 1;
-		if ( ! strcmp(argv[i], "stdin") )
+		if (! strcmp(argv[i], "stdin"))
 		    x->file = stdin;
-		else if ( !(x->file = fopen(argv[i], "rb")) )
+		else if (!(x->file = fopen(argv[i], "rb")))
 		    fprintf(stderr, "Channel: can't open %s\n", argv[i]);
 	    } else if (argv[i][1] == 'o') {
 		i++;
 		(x)->i_o = 0;
-		if ( ! strcmp(argv[i], "stdout") )
+		if (! strcmp(argv[i], "stdout"))
 		    x->file = stdout;
-		else if ( !(x->file = fopen(argv[i], "wb")) )
+		else if (!(x->file = fopen(argv[i], "wb")))
 		    fprintf(stderr, "Channel: can't write to %s\n", argv[i]);
 	    } else {
 		fprintf(stderr, "Illegal option %c\n", argv[i][1]);
@@ -114,7 +114,7 @@ main(int argc, char *argv[])
     }
     arrayd = (Word *) bu_calloc(argc, sizeof(Word), "Word"); /*may use more memory than absolutely necessary*/
     num_done = 0;
-    while (num_done < icount ) {
+    while (num_done < icount) {
 	/* go until all in files are done */
 	num_done = 0;
 	for (x=y;x<y+ocount+icount;x++) {
@@ -122,11 +122,13 @@ main(int argc, char *argv[])
 	    if (num_done >= icount)
 		;/*chill - all in files done */
 	    else if (x->i_o == 1) {
-		if (feof(x->file))
+		if (feof(x->file)) {
 		    num_done += 1;
-		else
-		    for (j=0;j<x->channels;j++)
-			fscanf(x->file, "%40s ", arrayd[x->list[j]]);
+		} else {
+		    for (j=0;j<x->channels;j++) {
+			count = fscanf(x->file, "%40s ", arrayd[x->list[j]]);
+		    }
+		}
 	    } else if (x->i_o == 0) {
 		for (j=0;j<x->channels;j++)
 		    fprintf(x->file, "%s\t", arrayd[x->list[j]]);

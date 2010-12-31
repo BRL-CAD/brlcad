@@ -1609,11 +1609,10 @@ struct bu_vls  {
  */
 struct bu_vlb {
     unsigned long magic;
-    unsigned char *buf;  /**< @brief Dynamic memory for the buffer */
-    int bufCapacity;     /**< @brief Current capacity of the buffer */
-    int nextByte;        /**< @brief Number of bytes currently used in the buffer */
+    unsigned char *buf;     /**< @brief Dynamic memory for the buffer */
+    size_t bufCapacity;     /**< @brief Current capacity of the buffer */
+    size_t nextByte;        /**< @brief Number of bytes currently used in the buffer */
 };
-#define BU_VLB_BLOCK_SIZE 512
 #define BU_CK_VLB(_vp)		BU_CKMAG(_vp, BU_VLB_MAGIC, "bu_vlb")
 #define BU_VLB_IS_INITIALIZED(_vp)	\
 	((_vp) && ((_vp)->magic == BU_VLB_MAGIC))
@@ -3234,13 +3233,18 @@ BU_EXPORT BU_EXTERN(void bu_free,
  *
  * bu_malloc()/bu_free() compatible wrapper for realloc().
  *
+ * this routine mimics the C99 standard behavior of realloc() except
+ * that NULL will never be returned.  it will bomb if siz is zero and
+ * ptr is NULL.  it will return a minimum allocation suitable for
+ * bu_free() if siz is zero and ptr is non-NULL.
+ *
  * While the string 'str' is provided for the log messages, don't
- * disturb the mdb_str value, so that this storage allocation can be
+ * disturb the str value, so that this storage allocation can be
  * tracked back to it's original creator.
  */
 BU_EXPORT BU_EXTERN(genptr_t bu_realloc,
 		    (genptr_t ptr,
-		     size_t cnt,
+		     size_t siz,
 		     const char *str));
 
 /**
@@ -3614,8 +3618,12 @@ BU_EXPORT BU_EXTERN(int bu_struct_import,
  *
  * Put a structure in external form to a stdio file.  All formatting
  * must have been accomplished previously.
+ *
+ * Returns number of bytes written.  On error, a short byte count (or
+ * zero) is returned.  Use feof(3) or ferror(3) to determine which
+ * errors occur.
  */
-BU_EXPORT BU_EXTERN(int bu_struct_put,
+BU_EXPORT BU_EXTERN(size_t bu_struct_put,
 		    (FILE *fp,
 		     const struct bu_external *ext));
 
@@ -3623,8 +3631,11 @@ BU_EXPORT BU_EXTERN(int bu_struct_put,
  * B U _ S T R U C T _ G E T
  *
  * Obtain the next structure in external form from a stdio file.
+ *
+ * Returns number of bytes read into the bu_external.  On error, zero
+ * is returned.
  */
-BU_EXPORT BU_EXTERN(int bu_struct_get,
+BU_EXPORT BU_EXTERN(size_t bu_struct_get,
 		    (struct bu_external *ext,
 		     FILE *fp));
 
@@ -3838,7 +3849,7 @@ BU_EXPORT BU_EXTERN(void bu_structparse_get_terse_form,
 BU_EXPORT BU_EXTERN(int bu_structparse_argv,
 		    (struct bu_vls *logstr,
 		     int argc,
-		     char **argv,
+		     const char **argv,
 		     const struct bu_structparse *desc,
 		     char *base));
 
@@ -3853,6 +3864,23 @@ BU_EXPORT BU_EXTERN(int bu_structparse_argv,
 	while (*(_cp) && (*(_cp) == ' ' || *(_cp) == '\n' || \
 	*(_cp) == '\t' || *(_cp) == '{'))  ++(_cp); \
 }
+
+
+/** @file libbu/booleanize.c
+ *
+ * @brief routines for parsing boolean values
+ */
+
+/**
+ * B U _ B O O L E A N I Z E
+ *
+ * Returns the boolean value of a given input string.
+ *
+ * Input values that are null, empty, begin with the letter 'n', or
+ * are 0-valued return as false.  Any other input value returns as
+ * true.
+ */
+BU_EXPORT BU_EXTERN(int bu_booleanize, (const char *str));
 
 
 /** @} */
@@ -4934,7 +4962,7 @@ BU_EXPORT BU_EXTERN(void bu_vlb_init,
  */
 BU_EXPORT BU_EXTERN(void bu_vlb_initialize,
 		    (struct bu_vlb *vlb,
-		     int initialSize));
+		     size_t initialSize));
 
 /**
  * Write some bytes to the end of the bu_vlb structure. If necessary,
@@ -4947,7 +4975,7 @@ BU_EXPORT BU_EXTERN(void bu_vlb_initialize,
 BU_EXPORT BU_EXTERN(void bu_vlb_write,
 		    (struct bu_vlb *vlb,
 		     unsigned char *start,
-		     int len));
+		     size_t len));
 
 /**
  * Reset the bu_vlb counter to the start of its byte array. This
@@ -4965,7 +4993,7 @@ BU_EXPORT BU_EXTERN(void bu_vlb_reset,
  * @param vlb Pointer to the bu_vlb structure
  * @return A pointer to the byte array contained by the bu_vlb structure
  */
-BU_EXPORT BU_EXTERN(unsigned char *bu_vlb_getBuffer,
+BU_EXPORT BU_EXTERN(unsigned char *bu_vlb_addr,
 		    (struct bu_vlb *vlb));
 
 /**
@@ -4974,7 +5002,7 @@ BU_EXPORT BU_EXTERN(unsigned char *bu_vlb_getBuffer,
  * @param vlb Pointer to the bu_vlb structure
  * @return The number of bytes written to the bu_vlb structure
  */
-BU_EXPORT BU_EXTERN(int bu_vlb_getBufferLength,
+BU_EXPORT BU_EXTERN(size_t bu_vlb_buflen,
 		    (struct bu_vlb *vlb));
 
 /**
@@ -5281,7 +5309,7 @@ BU_EXPORT BU_EXTERN(void bu_tcl_structparse_get_terse_form,
 BU_EXPORT BU_EXTERN(int bu_tcl_structparse_argv,
 		    (Tcl_Interp *interp,
 		     int argc,
-		     char **argv,
+		     const char **argv,
 		     const struct bu_structparse *desc,
 		     char *base));
 
@@ -5974,7 +6002,7 @@ struct bu_image_file {
 };
 
 BU_EXPORT BU_EXTERN(struct bu_image_file *bu_image_save_open,
-		    (char *filename,
+		    (const char *filename,
 		     int format,
 		     int width,
 		     int height,

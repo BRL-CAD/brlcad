@@ -223,9 +223,13 @@ main(int argc, char *argv[])
 
     /* read first two lines of table to determine the time step used */
     /* (a constant time step is assumed throughout the rest of the file)*/
-    scanf("%lf %lf %lf %lf", first, first+1, first+2, first+3);
-    scanf("%lf %lf %lf %lf", second, second+1, second+2, second+3);
+    count = scanf("%lf %lf %lf %lf", first, first+1, first+2, first+3);
+    count += scanf("%lf %lf %lf %lf", second, second+1, second+2, second+3);
     stepsize = second[0]-first[0];
+    
+    if (count != 8) {
+	bu_exit(1, "%s: ERROR: expecting at least eight values (in the first two lines of the table) to determine the time step used\n", argv[0]);
+    }
 
     /* determine n, the number of points to store ahead and behind the
      * current point. 2n points are stored, minimum enn=2

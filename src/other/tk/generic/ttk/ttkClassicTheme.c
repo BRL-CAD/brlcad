@@ -30,7 +30,7 @@ static Ttk_ElementOptionSpec HighlightElementOptions[] = {
 	Tk_Offset(HighlightElement,highlightColorObj), DEFAULT_BACKGROUND },
     { "-highlightthickness",TK_OPTION_PIXELS,
 	Tk_Offset(HighlightElement,highlightThicknessObj), "0" },
-    {NULL}
+    { NULL, 0, 0, NULL }
 };
 
 static void HighlightElementSize(
@@ -95,7 +95,7 @@ static Ttk_ElementOptionSpec ButtonBorderElementOptions[] =
 	Tk_Offset(ButtonBorderElement,reliefObj), "flat" },
     { "-default", TK_OPTION_ANY, 
 	Tk_Offset(ButtonBorderElement,defaultStateObj), "disabled" },
-    {NULL}
+    { NULL, 0, 0, NULL }
 };
 
 static void ButtonBorderElementSize(
@@ -208,7 +208,7 @@ static Ttk_ElementOptionSpec ArrowElementOptions[] =
     { "-borderwidth", TK_OPTION_PIXELS, Tk_Offset(ArrowElement,borderWidthObj),
     	DEFAULT_BORDERWIDTH },
     { "-relief", TK_OPTION_RELIEF, Tk_Offset(ArrowElement,reliefObj),"raised" },
-    { NULL }
+    { NULL, 0, 0, NULL }
 };
 
 static void ArrowElementSize(
@@ -320,7 +320,7 @@ static Ttk_ElementOptionSpec SashOptions[] = {
 	Tk_Offset(SashElement,handleSizeObj), "8" },
     { "-handlepad", TK_OPTION_PIXELS,
 	Tk_Offset(SashElement,handlePadObj), "8" },
-    {0,0,0}
+    { NULL, 0, 0, NULL }
 };
 
 static void SashElementSize(

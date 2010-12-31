@@ -62,8 +62,7 @@ ged_free_tokens(struct bu_list *hp)
     while (BU_LIST_WHILE(tok, tokens, hp)) {
 	BU_LIST_DEQUEUE(&tok->l);
 	if (tok->type == GED_TOK_TREE) {
-	    if (tok->tp)
-		db_free_tree(tok->tp, &rt_uniresource);
+	    db_free_tree(tok->tp, &rt_uniresource);
 	}
     }
 }
@@ -455,7 +454,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc < 3 || RT_MAXARGS < argc) {
+    if (argc < 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -627,7 +626,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		case GED_TOK_SUBTR:
 		    break;
 		case GED_TOK_TREE:
-		    if (!strcmp(tok->tp->tr_l.tl_name, comb_name)) {
+		    if (tok->tp && !strcmp(tok->tp->tr_l.tl_name, comb_name)) {
 			db_free_tree( tok->tp, &rt_uniresource );
 			GED_DB_GET_INTERNAL(gedp, &intern1, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 			comb1 = (struct rt_comb_internal *)intern1.idb_ptr;

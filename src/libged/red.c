@@ -534,7 +534,7 @@ build_comb(struct ged *gedp, struct directory *dp)
     else
 	tp = (union tree *)NULL;
 
-    if (comb && comb->tree) {
+    if (comb) {
 	db_free_tree(comb->tree, &rt_uniresource);
 	comb->tree = NULL;
     }

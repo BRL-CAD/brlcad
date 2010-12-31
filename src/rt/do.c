@@ -266,7 +266,7 @@ int cm_lookat_pt(int argc, char **argv)
      * from the lookat point or the lookat point will be from the
      * "front"
      */
-    if (VAPPROXEQUAL(pt, eye_model, VDIVIDE_TOL)) {
+    if (VNEAR_EQUAL(pt, eye_model, VDIVIDE_TOL)) {
 	VSETALLN(quat, 0.5, 4);
 	quat_quat2mat(Viewrotscale, quat); /* front */
     } else {

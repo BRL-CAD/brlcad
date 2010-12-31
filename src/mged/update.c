@@ -49,10 +49,7 @@ mged_update(int non_blocking)
 
 
 int
-f_update(ClientData clientData,
-	 Tcl_Interp *interp,
-	 int argc,
-	 char **argv)
+f_update(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int non_blocking;
 
@@ -78,10 +75,10 @@ f_update(ClientData clientData,
  */
 static char *
 WaitVariableProc(ClientData clientData,	/* Pointer to integer to set to 1. */
-		 Tcl_Interp *interp,	/* Interpreter containing variable. */
-		 char *name1,		/* Name of variable. */
-		 char *name2,		/* Second part of variable name. */
-		 int flags)		/* Information about what happened. */
+		 Tcl_Interp *UNUSED(interp),	/* Interpreter containing variable. */
+		 char *UNUSED(name1),		/* Name of variable. */
+		 char *UNUSED(name2),		/* Second part of variable name. */
+		 int UNUSED(flags))		/* Information about what happened. */
 {
     int *donePtr = (int *) clientData;
 
@@ -142,10 +139,10 @@ WaitWindowProc(ClientData clientData, void *eventPtr)
  * would get refreshed.
  */
 int
-f_wait(ClientData clientData,	/* Main window associated with interpreter. */
-       Tcl_Interp *interp,	/* Current interpreter. */
-       int argc,		/* Number of arguments. */
-       char **argv)		/* Argument strings. */
+f_wait(ClientData UNUSED(clientData),	/* Main window associated with interpreter. */
+       Tcl_Interp *interp,		/* Current interpreter. */
+       int argc,			/* Number of arguments. */
+       const char *argv[])		/* Argument strings. */
 {
 #ifdef HAVE_TK
     int c, done;

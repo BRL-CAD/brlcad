@@ -56,7 +56,7 @@ static int cmp_ind(const void *p1, const void *p2)
 {
     if (((struct individual *)p2)->fitness > ((struct individual *)p1)->fitness)
 	return -1;
-    else if (((struct individual *)p2)->fitness == ((struct individual *)p1)->fitness)
+    else if (EQUAL(((struct individual *)p2)->fitness, ((struct individual *)p1)->fitness))
 	return 0;
     else
 	return 1;
@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
     struct fitness_state fstate;
     struct population pop = {NULL, NULL, NULL, NULL, NULL, 0};
     char dbname[256] = {0};
-    struct beset_options opts = {DEFAULT_POP_SIZE, DEFAULT_GENS, DEFAULT_RES, 0, 0};
+    struct beset_options opts = {DEFAULT_POP_SIZE, DEFAULT_GENS, DEFAULT_RES, 0, 0, 0, 0};
     struct individual *tmp = NULL;
     int  ac;
     struct db_i *source_db;

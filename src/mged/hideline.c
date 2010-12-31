@@ -52,10 +52,10 @@
 
 #define MOVE(v) VMOVE(last_move, (v))
 
-#define DRAW(v) { vect_t a, b;\
-		  MAT4X3PNT(a, view_state->vs_gvp->gv_model2view, last_move);\
-		  MAT4X3PNT(b, view_state->vs_gvp->gv_model2view, (v));\
-		  pdv_3line(plotfp, a, b); }
+#define DRAW(v) { vect_t _a, _b;\
+		  MAT4X3PNT(_a, view_state->vs_gvp->gv_model2view, last_move);\
+		  MAT4X3PNT(_b, view_state->vs_gvp->gv_model2view, (v));\
+		  pdv_3line(plotfp, _a, _b); }
 
 extern struct db_i *dbip;	/* current database instance */
 
@@ -67,7 +67,7 @@ vect_t aim_point;
  * hit_headon - routine called by rt_shootray if ray hits model
  */
 static int
-hit_headon(struct application *ap, struct partition *PartHeadp, struct seg *segp)
+hit_headon(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     char diff_solid;
     vect_t diff;
@@ -75,7 +75,7 @@ hit_headon(struct application *ap, struct partition *PartHeadp, struct seg *segp
     struct solid *sp;
 
     if (PartHeadp->pt_forw->pt_forw != PartHeadp)
-	Tcl_AppendResult(interp, "hit_headon: multiple partitions\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "hit_headon: multiple partitions\n", (char *)NULL);
 
     VJOIN1(PartHeadp->pt_forw->pt_inhit->hit_point, ap->a_ray.r_pt,
 	   PartHeadp->pt_forw->pt_inhit->hit_dist, ap->a_ray.r_dir);
@@ -102,7 +102,7 @@ hit_headon(struct application *ap, struct partition *PartHeadp, struct seg *segp
  * a "hit" routine.
  */
 static int
-hit_tangent(struct application *ap)
+hit_tangent(struct application *UNUSED(ap))
 {
     return 1;		/* always a hit */
 }
@@ -112,7 +112,7 @@ hit_tangent(struct application *ap)
  * hit_overlap - called by rt_shootray if ray hits an overlap
  */
 static int
-hit_overlap(struct application *ap, struct partition *ph, struct region *r1, struct region *r2, struct partition *hp)
+hit_overlap(struct application *UNUSED(ap), struct partition *UNUSED(ph), struct region *UNUSED(r1), struct region *UNUSED(r2), struct partition *UNUSED(hp))
 {
     return 0;		/* never a hit */
 }
@@ -122,7 +122,7 @@ hit_overlap(struct application *ap, struct partition *ph, struct region *r1, str
  * F _ H I D E L I N E
  */
 int
-f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_hideline(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
@@ -210,10 +210,11 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	epsilon = 0.1*view_state->vs_gvp->gv_scale;
     }
 
-    for (i = 0; i < numobjs; i++)
-	if (rt_gettree(rtip, objname[i]) == -1)
-	    Tcl_AppendResult(interp, "f_hideline: rt_gettree failed on \"",
-			     objname[i], "\"\n", (char *)NULL);
+    for (i = 0; i < numobjs; i++) {
+	if (rt_gettree(rtip, objname[i]) == -1) {
+	    Tcl_AppendResult(interp, "f_hideline: rt_gettree failed on \"", objname[i], "\"\n", (char *)NULL);
+	}
+    }
 
     /* Crawl along the vectors raytracing as we go */
     VSET(temp, 0.0, 0.0, -1.0);				/* looking at model */
@@ -232,7 +233,6 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    Tcl_AppendResult(interp, "Primitive\n", (char *)NULL);
 	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-		int i;
 		int nused = vp->nused;
 		int *cmd = vp->cmd;
 		point_t *pt = vp->pt;

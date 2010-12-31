@@ -38,7 +38,7 @@
 #include "./qray.h"
 
 int
-f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_qray(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
     Tcl_DString ds;

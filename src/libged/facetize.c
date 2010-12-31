@@ -194,26 +194,26 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	/* Now, evaluate the boolean tree into ONE region */
 	bu_vls_printf(&gedp->ged_result_str, "facetize:  evaluating boolean expressions\n");
 
-	if (BU_SETJUMP) {
+	if (!BU_SETJUMP) {
+	    /* try */
+	    failed = nmg_boolean(facetize_tree, nmg_model, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
+	} else {
+	    /* catch */
 	    BU_UNSETJUMP;
 	    bu_vls_printf(&gedp->ged_result_str, "WARNING: facetization failed!!!\n");
-	    if (facetize_tree)
-		db_free_tree(facetize_tree, &rt_uniresource);
+	    db_free_tree(facetize_tree, &rt_uniresource);
 	    facetize_tree = (union tree *)NULL;
 	    nmg_km(nmg_model);
 	    nmg_model = (struct model *)NULL;
 	    return GED_ERROR;
-	}
+	} BU_UNSETJUMP;
 
-	failed = nmg_boolean(facetize_tree, nmg_model, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
-	BU_UNSETJUMP;
     } else
 	failed = 1;
 
     if (failed) {
 	bu_vls_printf(&gedp->ged_result_str, "facetize:  no resulting region, aborting\n");
-	if (facetize_tree)
-	    db_free_tree(facetize_tree, &rt_uniresource);
+	db_free_tree(facetize_tree, &rt_uniresource);
 	facetize_tree = (union tree *)NULL;
 	nmg_km(nmg_model);
 	nmg_model = (struct model *)NULL;
@@ -226,21 +226,22 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     /* Triangulate model, if requested */
     if (triangulate && !make_bot) {
 	bu_vls_printf(&gedp->ged_result_str, "facetize:  triangulating resulting object\n");
-	if (BU_SETJUMP) {
+	if (!BU_SETJUMP) {
+	    /* try */
+	    if (marching_cube == 1)
+		nmg_triangulate_model_mc(nmg_model, &gedp->ged_wdbp->wdb_tol);
+	    else
+		nmg_triangulate_model(nmg_model, &gedp->ged_wdbp->wdb_tol);
+	} else {
+	    /* catch */
 	    BU_UNSETJUMP;
 	    bu_vls_printf(&gedp->ged_result_str, "WARNING: triangulation failed!!!\n");
-	    if (facetize_tree)
-		db_free_tree(facetize_tree, &rt_uniresource);
+	    db_free_tree(facetize_tree, &rt_uniresource);
 	    facetize_tree = (union tree *)NULL;
 	    nmg_km(nmg_model);
 	    nmg_model = (struct model *)NULL;
 	    return GED_ERROR;
-	}
-	if (marching_cube == 1)
-	    nmg_triangulate_model_mc(nmg_model, &gedp->ged_wdbp->wdb_tol);
-	else
-	    nmg_triangulate_model(nmg_model, &gedp->ged_wdbp->wdb_tol);
-	BU_UNSETJUMP;
+	} BU_UNSETJUMP;
     }
 
     if (make_bot) {
@@ -250,9 +251,30 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
 	bu_vls_printf(&gedp->ged_result_str, "facetize:  converting to BOT format\n");
 
+	/* WTF, FIXME: this is only dumping the first shell of the first region */
+
 	r = BU_LIST_FIRST(nmgregion, &nmg_model->r_hd);
+	if (r && BU_LIST_NEXT(nmgregion, &r->l) !=  (struct nmgregion *)&nmg_model->r_hd)
+	    bu_vls_printf(&gedp->ged_result_str, "WARNING: model has more than one region, only facetizing the first\n");
+
 	s = BU_LIST_FIRST(shell, &r->s_hd);
-	bot = (struct rt_bot_internal *)nmg_bot(s, &gedp->ged_wdbp->wdb_tol);
+	if (s && BU_LIST_NEXT(shell, &s->l) != (struct shell *)&r->s_hd)
+	    bu_vls_printf(&gedp->ged_result_str, "WARNING: model has more than one shell, only facetizing the first\n");
+
+	if (!BU_SETJUMP) {
+	    /* try */
+	    bot = (struct rt_bot_internal *)nmg_bot(s, &gedp->ged_wdbp->wdb_tol);
+	} else {
+	    /* catch */
+	    BU_UNSETJUMP;
+	    bu_vls_printf(&gedp->ged_result_str, "WARNING: conversion to BOT failed!\n");
+	    db_free_tree(facetize_tree, &rt_uniresource);
+	    facetize_tree = (union tree *)NULL;
+	    nmg_km(nmg_model);
+	    nmg_model = (struct model *)NULL;
+	    return GED_ERROR;
+	} BU_UNSETJUMP;
+
 	nmg_km(nmg_model);
 	nmg_model = (struct model *)NULL;
 

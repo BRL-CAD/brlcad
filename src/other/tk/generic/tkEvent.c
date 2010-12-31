@@ -193,6 +193,7 @@ TCL_DECLARE_MUTEX(exitMutex)
  * Prototypes for functions that are only referenced locally within this file.
  */
 
+static void		CleanUpTkEvent(XEvent *eventPtr);
 static void		DelayedMotionProc(ClientData clientData);
 static int		GetButtonMask(unsigned int Button);
 static unsigned long    GetEventMaskFromXEvent(XEvent *eventPtr);
@@ -212,7 +213,6 @@ static int		TkXErrorHandler(ClientData clientData,
 static void		UpdateButtonEventState(XEvent *eventPtr);
 static int		WindowEventProc(Tcl_Event *evPtr, int flags);
 #ifdef TK_USE_INPUT_METHODS
-static int		InvokeInputMethods(TkWindow *winPtr, XEvent *eventPtr);
 static void		CreateXIC(TkWindow *winPtr);
 #endif /* TK_USE_INPUT_METHODS */
 
@@ -375,62 +375,6 @@ CreateXIC(
     }
 }
 #endif
-
-/*
- *----------------------------------------------------------------------
- *
- * InvokeInputMethods --
- *
- *	Pass the event to the input method(s), if there are any, and discard
- *	the event if the input method(s) insist. Create the input context for
- *	the window if it hasn't already been done (XFilterEvent needs this
- *	context).
- *
- *	When the event is a FocusIn event, set the input context focus to the
- *	receiving window.
- *
- * Results:
- *	1 when we are done with the event.
- *	0 when the event can be processed further.
- *
- * Side effects:
- *	Input contexts/methods may be created.
- *
- *----------------------------------------------------------------------
- */
-
-#ifdef TK_USE_INPUT_METHODS
-static int
-InvokeInputMethods(
-    TkWindow *winPtr,
-    XEvent *eventPtr)
-{
-    TkDisplay *dispPtr = winPtr->dispPtr;
-
-    if ((dispPtr->flags & TK_DISPLAY_USE_IM)) {
-	if (!(winPtr->flags & (TK_CHECKED_IC|TK_ALREADY_DEAD))) {
-	    winPtr->flags |= TK_CHECKED_IC;
-	    if (dispPtr->inputMethod != NULL) {
-		CreateXIC(winPtr);
-	    }
-	}
-	switch (eventPtr->type) {
-	    case FocusIn:
-		if (winPtr->inputContext != NULL) {
-		    XSetICFocus(winPtr->inputContext);
-		}
-		break;
-	    case KeyPress:
-	    case KeyRelease:
-		if (XFilterEvent(eventPtr, None)) {
-		    return 1;
-		}
-		break;
-	}
-    }
-    return 0;
-}
-#endif /*TK_USE_INPUT_METHODS*/
 
 /*
  *----------------------------------------------------------------------
@@ -1292,7 +1236,7 @@ Tk_HandleEvent(
      */
 
     if (InvokeGenericHandlers(tsdPtr, eventPtr)) {
-	goto releaseUserData;
+	goto releaseEventResources;
     }
 
     if (RefreshKeyboardMappingIfNeeded(eventPtr)) {
@@ -1300,14 +1244,14 @@ Tk_HandleEvent(
 	 * We are done with a MappingNotify event.
 	 */
 
-	goto releaseUserData;
+	goto releaseEventResources;
     }
 
     mask = GetEventMaskFromXEvent(eventPtr);
     winPtr = GetTkWindowFromXEvent(eventPtr);
 
     if (winPtr == NULL) {
-	goto releaseUserData;
+	goto releaseEventResources;
     }
 
     /*
@@ -1321,7 +1265,7 @@ Tk_HandleEvent(
 
     if ((winPtr->flags & TK_ALREADY_DEAD)
 	    && (eventPtr->type != DestroyNotify)) {
-	goto releaseUserData;
+	goto releaseEventResources;
     }
 
     if (winPtr->mainPtr != NULL) {
@@ -1346,9 +1290,24 @@ Tk_HandleEvent(
 	}
     }
 
+    /*
+     * Create the input context for the window if it hasn't already been done
+     * (XFilterEvent needs this context). When the event is a FocusIn event,
+     * set the input context focus to the receiving window. This code is only
+     * ever active for X11.
+     */
+
 #ifdef TK_USE_INPUT_METHODS
-    if (InvokeInputMethods(winPtr, eventPtr)) {
-	goto releaseInterpreter;
+    if ((winPtr->dispPtr->flags & TK_DISPLAY_USE_IM)) {
+	if (!(winPtr->flags & (TK_CHECKED_IC|TK_ALREADY_DEAD))) {
+	    winPtr->flags |= TK_CHECKED_IC;
+	    if (winPtr->dispPtr->inputMethod != NULL) {
+		CreateXIC(winPtr);
+	    }
+	}
+	if (eventPtr->type == FocusIn && winPtr->inputContext != NULL) {
+	    XSetICFocus(winPtr->inputContext);
+	}
     }
 #endif
 
@@ -1430,18 +1389,11 @@ Tk_HandleEvent(
      * Release the user_data from the event (if it is a virtual event and the
      * field was non-NULL in the first place.) Note that this is done using a
      * Tcl_Obj interface, and we set the field back to NULL afterwards out of
-     * paranoia.
+     * paranoia. Also clean up any cached %A substitutions from key events.
      */
 
-  releaseUserData:
-    if (eventPtr->type == VirtualEvent) {
-	XVirtualEvent *vePtr = (XVirtualEvent *) eventPtr;
-
-	if (vePtr->user_data != NULL) {
-	    Tcl_DecrRefCount(vePtr->user_data);
-	    vePtr->user_data = NULL;
-	}
-    }
+  releaseEventResources:
+    CleanUpTkEvent(eventPtr);
 }
 
 /*
@@ -1803,12 +1755,62 @@ WindowEventProc(
 		 * even though we didn't do anything at all.
 		 */
 
+		CleanUpTkEvent(&wevPtr->event);
 		return 1;
 	    }
 	}
     }
     Tk_HandleEvent(&wevPtr->event);
+    CleanUpTkEvent(&wevPtr->event);
     return 1;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * CleanUpTkEvent --
+ *
+ *	This function is called to remove and deallocate any information in
+ *	the event which is not directly in the event structure itself. It may
+ *	be called multiple times per event, so it takes care to set the
+ *	cleared pointer fields to NULL afterwards.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Makes the event no longer have any external resources.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static void
+CleanUpTkEvent(
+    XEvent *eventPtr)
+{
+    switch (eventPtr->type) {
+    case KeyPress:
+    case KeyRelease: {
+	TkKeyEvent *kePtr = (TkKeyEvent *) eventPtr;
+
+	if (kePtr->charValuePtr != NULL) {
+	    ckfree(kePtr->charValuePtr);
+	    kePtr->charValuePtr = NULL;
+	    kePtr->charValueLen = 0;
+	}
+	break;
+    }
+
+    case VirtualEvent: {
+	XVirtualEvent *vePtr = (XVirtualEvent *) eventPtr;
+
+	if (vePtr->user_data != NULL) {
+	    Tcl_DecrRefCount(vePtr->user_data);
+	    vePtr->user_data = NULL;
+	}
+	break;
+    }
+    }
 }
 
 /*

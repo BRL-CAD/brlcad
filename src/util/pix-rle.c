@@ -49,15 +49,14 @@ static char host[128];
 static rle_pixel **rows;
 static time_t now;
 static char *who;
-extern char *getenv(const char *);
 
 static FILE *infp;
 static char *infile;
 
 static int background[3];
 
-static int file_width = 512;
-static int file_height = 512;
+static size_t file_width = 512;
+static size_t file_height = 512;
 
 static char usage[] = "\
 Usage: pix-rle [-h] [-s squarefilesize]  [-C r/g/b]\n\
@@ -146,7 +145,7 @@ int
 main(int argc, char **argv)
 {
     RGBpixel *scan_buf;
-    int y;
+    size_t y;
 
     infp = stdin;
     outfp = stdout;
@@ -197,9 +196,10 @@ main(int argc, char **argv)
 
     /* Read image a scanline at a time, and encode it */
     for (y = 0; y < file_height; y++) {
-	if (fread((char *)scan_buf, sizeof(RGBpixel), (size_t)file_width, infp) != file_width) {
+	size_t ret = fread((char *)scan_buf, sizeof(RGBpixel), (size_t)file_width, infp);
+	if (ret != file_width) {
 	    (void) fprintf(stderr,
-			   "pix-rle: read of %d pixels on line %d failed!\n",
+			   "pix-rle: read of %lu pixels on line %lu failed!\n",
 			   file_width, y);
 	    bu_exit (1, NULL);
 	}
@@ -210,7 +210,7 @@ main(int argc, char **argv)
 	    rle_pixel *rp = rows[0];
 	    rle_pixel *gp = rows[1];
 	    rle_pixel *bp = rows[2];
-	    int i;
+	    size_t i;
 
 	    for (i=0; i<file_width; i++) {
 		*rp++ = *pp++;
@@ -224,7 +224,8 @@ main(int argc, char **argv)
 
     fclose(infp);
     fclose(outfp);
-    bu_exit (0, NULL);
+
+    return 0;
 }
 
 

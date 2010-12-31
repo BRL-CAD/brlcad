@@ -109,10 +109,16 @@ main(int argc, char *argv[])
 
     if (!angle_set) {
 	/* set angle if not yet done */
-	scanf("%*f%*[^-0123456789]");
-	VSCAN(temp1);
-	scanf("%*f%*[^-0123456789]");
-	VSCAN(temp2);
+	count = scanf("%*f%*[^-0123456789]");
+	count = VSCAN(temp1);
+	if (count != 3)
+	    return 1;
+
+	count = scanf("%*f%*[^-0123456789]");
+	count = VSCAN(temp2);
+	if (count != 3)
+	    return 1;
+
 	angle = bn_atan2((temp2[1]-temp1[1]), (temp2[0]-temp1[0]));
 	rewind(stdin);
     }

@@ -210,7 +210,8 @@ main(int argc, char **argv)
     if (rel != 0)
 	(void)write(1, obuf, swathbytes);
     fprintf(stderr, "\n");
-    bu_exit (0, NULL);
+
+    return 0;
 }
 
 

@@ -39,37 +39,37 @@ void rfbunknown(struct pkg_conn *pcp, char *buf);
 void rfbscursor(struct pkg_conn *pcp, char *buf), rfbwindow(struct pkg_conn *pcp, char *buf), rfbzoom(struct pkg_conn *pcp, char *buf);
 
 static struct pkg_switch pkg_switch[] = {
-    { MSG_FBOPEN,		rfbopen,	"Open Framebuffer" },
-    { MSG_FBCLOSE,		rfbclose,	"Close Framebuffer" },
-    { MSG_FBCLEAR,		rfbclear,	"Clear Framebuffer" },
-    { MSG_FBREAD,		rfbread,	"Read Pixels" },
-    { MSG_FBWRITE,		rfbwrite,	"Write Pixels" },
-    { MSG_FBWRITE + MSG_NORETURN,	rfbwrite,	"Asynch write" },
-    { MSG_FBCURSOR,		rfbcursor,	"Cursor" },
-    { MSG_FBGETCURSOR,	rfbgetcursor,	"Get Cursor" },	   /*NEW*/
-    { MSG_FBSCURSOR,	rfbscursor,	"Screen Cursor" }, /*OLD*/
-    { MSG_FBWINDOW,		rfbwindow,	"Window" },	   /*OLD*/
-    { MSG_FBZOOM,		rfbzoom,	"Zoom" },	   /*OLD*/
-    { MSG_FBVIEW,		rfbview,	"View" },	   /*NEW*/
-    { MSG_FBGETVIEW,	rfbgetview,	"Get View" },	   /*NEW*/
-    { MSG_FBRMAP,		rfbrmap,	"R Map" },
-    { MSG_FBWMAP,		rfbwmap,	"W Map" },
-    { MSG_FBHELP,		rfbhelp,	"Help Request" },
-    { MSG_ERROR,		rfbunknown,	"Error Message" },
-    { MSG_CLOSE,		rfbunknown,	"Close Connection" },
-    { MSG_FBREADRECT, 	rfbreadrect,	"Read Rectangle" },
-    { MSG_FBWRITERECT,	rfbwriterect,	"Write Rectangle" },
-    { MSG_FBWRITERECT + MSG_NORETURN, rfbwriterect, "Write Rectangle" },
-    { MSG_FBBWREADRECT, 	rfbbwreadrect, "Read BW Rectangle" },
-    { MSG_FBBWWRITERECT,	rfbbwwriterect, "Write BW Rectangle" },
-    { MSG_FBBWWRITERECT+MSG_NORETURN, rfbbwwriterect, "Write BW Rectangle" },
-    { MSG_FBFLUSH,		rfbflush,	"Flush Output" },
-    { MSG_FBFLUSH + MSG_NORETURN, rfbflush, "Flush Output" },
-    { MSG_FBFREE,		rfbfree,	"Free Resources" },
-    { MSG_FBPOLL,		rfbpoll,	"Handle Events" },
-    { MSG_FBSETCURSOR,	rfbsetcursor,	"Set Cursor Shape" },
-    { MSG_FBSETCURSOR + MSG_NORETURN, rfbsetcursor, "Set Cursor Shape" },
-    { 0,			NULL,		NULL }
+    { MSG_FBOPEN,			rfbopen,	"Open Framebuffer", NULL },
+    { MSG_FBCLOSE,			rfbclose,	"Close Framebuffer", NULL },
+    { MSG_FBCLEAR,			rfbclear,	"Clear Framebuffer", NULL },
+    { MSG_FBREAD,			rfbread,	"Read Pixels", NULL },
+    { MSG_FBWRITE,			rfbwrite,	"Write Pixels", NULL },
+    { MSG_FBWRITE + MSG_NORETURN,	rfbwrite,	"Asynch write", NULL },
+    { MSG_FBCURSOR,			rfbcursor,	"Cursor", NULL },
+    { MSG_FBGETCURSOR,			rfbgetcursor,	"Get Cursor", NULL },	   /*NEW*/
+    { MSG_FBSCURSOR,			rfbscursor,	"Screen Cursor", NULL }, /*OLD*/
+    { MSG_FBWINDOW,			rfbwindow,	"Window", NULL },	   /*OLD*/
+    { MSG_FBZOOM,			rfbzoom,	"Zoom", NULL },	   /*OLD*/
+    { MSG_FBVIEW,			rfbview,	"View", NULL },	   /*NEW*/
+    { MSG_FBGETVIEW,			rfbgetview,	"Get View", NULL },	   /*NEW*/
+    { MSG_FBRMAP,			rfbrmap,	"R Map", NULL },
+    { MSG_FBWMAP,			rfbwmap,	"W Map", NULL },
+    { MSG_FBHELP,			rfbhelp,	"Help Request", NULL },
+    { MSG_ERROR,			rfbunknown,	"Error Message", NULL },
+    { MSG_CLOSE,			rfbunknown,	"Close Connection", NULL },
+    { MSG_FBREADRECT,			rfbreadrect,	"Read Rectangle", NULL },
+    { MSG_FBWRITERECT,			rfbwriterect,	"Write Rectangle", NULL },
+    { MSG_FBWRITERECT + MSG_NORETURN,	rfbwriterect,	"Write Rectangle", NULL },
+    { MSG_FBBWREADRECT, 		rfbbwreadrect,	"Read BW Rectangle", NULL },
+    { MSG_FBBWWRITERECT,		rfbbwwriterect,	"Write BW Rectangle", NULL },
+    { MSG_FBBWWRITERECT + MSG_NORETURN,	rfbbwwriterect,	"Write BW Rectangle", NULL },
+    { MSG_FBFLUSH,			rfbflush,	"Flush Output", NULL },
+    { MSG_FBFLUSH + MSG_NORETURN, 	rfbflush,	"Flush Output", NULL },
+    { MSG_FBFREE,			rfbfree,	"Free Resources", NULL },
+    { MSG_FBPOLL,			rfbpoll,	"Handle Events", NULL },
+    { MSG_FBSETCURSOR,			rfbsetcursor,	"Set Cursor Shape", NULL },
+    { MSG_FBSETCURSOR + MSG_NORETURN,	rfbsetcursor,	"Set Cursor Shape", NULL },
+    { 0,				NULL,		NULL, NULL }
 };
 
 

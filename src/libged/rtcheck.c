@@ -116,6 +116,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 
     const char *bin;
     char rtcheck[256] = {0};
+    size_t args = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -134,13 +135,24 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 #endif
     }
 
-#ifndef _WIN32
+    args = argc + 7 + 2 + ged_count_tops(gedp);
+    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
     *vp++ = rtcheck;
     *vp++ = "-M";
     for (i=1; i < argc; i++)
 	*vp++ = (char *)argv[i];
+
+#ifndef _WIN32
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
+#else
+    {
+	char buf[512];
+	snprintf(buf, 512, "\"%s\"", gedp->ged_wdbp->dbip->dbi_filename);
+	*vp++ = buf;
+    }
+#endif
 
     /*
      * Now that we've grabbed all the options, if no args remain,
@@ -149,9 +161,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
      */
     if (i == argc) {
 	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
-					       vp,
-					       &gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
+	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->ged_gdp->gd_rt_cmd[args]);
     } else {
 	while (i < argc)
 	    *vp++ = (char *)argv[i++];
@@ -162,6 +172,8 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 
 	Tcl_AppendResult(brlcad_interp, "\n", (char *)NULL);
     }
+
+#ifndef _WIN32
 
     (void)pipe(i_pipe);
     (void)pipe(o_pipe);
@@ -229,43 +241,8 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 			  ged_rtcheck_output_handler,
 			  (ClientData)rtcop);
 
-    return GED_OK;
 #else
     /* _WIN32 */
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
-    *vp++ = rtcheck;
-    *vp++ = "-M";
-    for (i=1; i < argc; i++)
-	*vp++ = (char *)argv[i];
-
-    {
-	char buf[512];
-
-	snprintf(buf, 512, "\"%s\"", gedp->ged_wdbp->dbip->dbi_filename);
-	*vp++ = buf;
-    }
-
-    /*
-     * Now that we've grabbed all the options, if no args remain,
-     * append the names of all stuff currently displayed.
-     * Otherwise, simply append the remaining args.
-     */
-    if (i == argc) {
-	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
-					       vp,
-					       &gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
-    } else {
-	while (i < argc)
-	    *vp++ = (char *)argv[i++];
-	*vp = 0;
-	vp = &gedp->ged_gdp->gd_rt_cmd[0];
-	while (*vp)
-	    Tcl_AppendResult(brlcad_interp, *vp++, " ", (char *)NULL);
-
-	Tcl_AppendResult(brlcad_interp, "\n", (char *)NULL);
-    }
-
 
     memset((void *)&si, 0, sizeof(STARTUPINFO));
     memset((void *)&pi, 0, sizeof(PROCESS_INFORMATION));
@@ -370,8 +347,12 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 			     TCL_READABLE,
 			     ged_rtcheck_output_handler,
 			     (ClientData)rtcop);
-    return GED_OK;
 #endif
+
+    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
+    gedp->ged_gdp->gd_rt_cmd = NULL;
+
+    return GED_OK;
 }
 
 #ifndef _WIN32

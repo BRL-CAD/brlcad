@@ -67,8 +67,7 @@ wdb_free_tokens(struct bu_list *hp)
     while (BU_LIST_WHILE(tok, tokens, hp)) {
 	BU_LIST_DEQUEUE(&tok->l);
 	if (tok->type == WDB_TOK_TREE) {
-	    if (tok->tp)
-		db_free_tree(tok->tp, &rt_uniresource);
+	    db_free_tree(tok->tp, &rt_uniresource);
 	}
     }
 }
@@ -472,7 +471,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (argc < 3 || RT_MAXARGS < argc) {
+    if (argc < 3) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -659,7 +658,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 		case WDB_TOK_SUBTR:
 		    break;
 		case WDB_TOK_TREE:
-		    if (!strcmp(tok->tp->tr_l.tl_name, comb_name)) {
+		    if (tok->tp && !strcmp(tok->tp->tr_l.tl_name, comb_name)) {
 			db_free_tree(tok->tp, &rt_uniresource);
 			if (rt_db_get_internal(&intern1, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 			    Tcl_AppendResult(interp, "Cannot get records for ", comb_name, "\n", (char *)NULL);

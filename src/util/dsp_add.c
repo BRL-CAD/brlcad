@@ -146,7 +146,7 @@ void
 add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 {
     int int_value;
-    int i;
+    unsigned long i;
     unsigned short s;
 
     for (i=0; i < count; i++) {
@@ -175,7 +175,7 @@ main(int ac, char *av[])
     int next_arg;
     FILE *in1, *in2;
     unsigned short *buf1, *buf2;
-    unsigned long count;
+    size_t count;
     int in_cookie, out_cookie;
     int conv;
     struct stat sb;
@@ -195,7 +195,7 @@ main(int ac, char *av[])
 	return -1;
     }
 
-    count = (unsigned long)sb.st_size;
+    count = sb.st_size;
     buf1 = bu_malloc((size_t)sb.st_size, "buf1");
 
     next_arg++;
@@ -206,7 +206,7 @@ main(int ac, char *av[])
 	return -1;
     }
 
-    if (sb.st_size != count)
+    if ((size_t)sb.st_size != count)
 	bu_exit(EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
 
     buf2 = bu_malloc((size_t)sb.st_size, "buf2");

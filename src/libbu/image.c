@@ -84,7 +84,7 @@ image_flip(unsigned char *buf, int width, int height)
  * I suck. I'll fix this later. Honest.
  */
 HIDDEN int
-guess_file_format(char *filename, char *trimmedname)
+guess_file_format(const char *filename, char *trimmedname)
 {
     /* look for the FMT: header */
 #define CMP(name) if (!strncmp(filename, #name":", strlen(#name))) {bu_strlcpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return BU_IMAGE_##name; }
@@ -110,11 +110,12 @@ guess_file_format(char *filename, char *trimmedname)
 }
 
 HIDDEN int
-png_save(int fd, unsigned char *rgb, int width, int height)
+png_save(int fd, unsigned char *rgb, int width, int height, int depth)
 {
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
     int i = 0;
+	int png_color_type = PNG_COLOR_TYPE_RGB;
     FILE *fh;
 
     fh = fdopen(fd, "wb");
@@ -135,13 +136,17 @@ png_save(int fd, unsigned char *rgb, int width, int height)
 	return 0;
     }
 
+    if (depth == 4) {
+    	png_color_type = PNG_COLOR_TYPE_RGBA;
+    }
+
     png_init_io(png_ptr, fh);
-    png_set_IHDR(png_ptr, info_ptr, (unsigned)width, (unsigned)height, 8, PNG_COLOR_TYPE_RGB,
+    png_set_IHDR(png_ptr, info_ptr, (unsigned)width, (unsigned)height, 8, png_color_type,
 		  PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
 		  PNG_FILTER_TYPE_BASE);
     png_write_info(png_ptr, info_ptr);
     for (i = height-1; i >= 0; --i)
-	png_write_row(png_ptr, (png_bytep) (rgb + width*3*i));
+	png_write_row(png_ptr, (png_bytep) (rgb + width*depth*i));
     png_write_end(png_ptr, info_ptr);
 
     png_destroy_write_struct(&png_ptr, &info_ptr);
@@ -255,7 +260,7 @@ bu_image_save(unsigned char *data, int width, int height, int depth, char *filen
 }
 
 struct bu_image_file *
-bu_image_save_open(char *filename, int format, int width, int height, int depth)
+bu_image_save_open(const char *filename, int format, int width, int height, int depth)
 {
     struct bu_image_file *bif = (struct bu_image_file *)bu_malloc(sizeof(struct bu_image_file), "bu_image_save_open");
     bif->magic = BU_IMAGE_FILE_MAGIC;
@@ -320,7 +325,7 @@ bu_image_save_close(struct bu_image_file *bif)
 	    r = bmp_save(bif->fd, bif->data, bif->width, bif->height);
 	    break;
 	case BU_IMAGE_PNG:
-	    r = png_save(bif->fd, bif->data, bif->width, bif->height);
+	    r = png_save(bif->fd, bif->data, bif->width, bif->height, bif->depth);
 	    break;
 	case BU_IMAGE_PPM:
 	    r = ppm_save(bif->fd, bif->data, bif->width, bif->height);

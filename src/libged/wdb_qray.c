@@ -553,7 +553,7 @@ dgo_qray_data_to_vlist(struct dg_obj *dgop,
 	RT_ADD_VLIST(vhead, in_pt, BN_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead, out_pt, BN_VLIST_LINE_DRAW);
 
-	if (!do_overlaps && i > 1 && !VAPPROXEQUAL(last_out_pt, in_pt, SQRT_SMALL_FASTF)) {
+	if (!do_overlaps && i > 1 && !VNEAR_EQUAL(last_out_pt, in_pt, SQRT_SMALL_FASTF)) {
 	    vhead = rt_vlblock_find(vbp,
 				    dgop->dgo_qray_void_color.r,
 				    dgop->dgo_qray_void_color.g,

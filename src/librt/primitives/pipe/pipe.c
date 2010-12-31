@@ -3109,7 +3109,7 @@ rt_pipe_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     
     /* find max diameter */
     for (BU_LIST_FOR(pp1, wdb_pipept, &pip->pipe_segs_head)) {
-        if (pp1->pp_od > 0.0 && pp1->pp_od > max_diam)
+        if (pp1->pp_od > SMALL_FASTF && pp1->pp_od > max_diam)
             max_diam = pp1->pp_od;
         
         VMINMAX(min_pt, max_pt, pp1->pp_coord);
@@ -3123,17 +3123,17 @@ rt_pipe_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     pipe_size = MAGNITUDE(min_to_max);
     
     /* calculate number of segments for circles */
-    if (ttol->abs > 0.0 && ttol->abs * 2.0 < max_diam) {
+    if (ttol->abs > SMALL_FASTF && ttol->abs * 2.0 < max_diam) {
         tol_segs = ceil(bn_pi/acos(1.0 - 2.0 * ttol->abs/max_diam));
         if (tol_segs > arc_segs)
             arc_segs = tol_segs;
     }
-    if (ttol->rel > 0.0 && 2.0 * ttol->rel * pipe_size < max_diam) {
+    if (ttol->rel > SMALL_FASTF && 2.0 * ttol->rel * pipe_size < max_diam) {
         tol_segs = ceil(bn_pi/acos(1.0 - 2.0 * ttol->rel*pipe_size/max_diam));
         if (tol_segs > arc_segs)
             arc_segs = tol_segs;
     }
-    if (ttol->norm > 0.0) {
+    if (ttol->norm > SMALL_FASTF) {
         tol_segs = ceil(bn_pi/ttol->norm);
         if (tol_segs > arc_segs)
             arc_segs = tol_segs;
@@ -3173,7 +3173,7 @@ rt_pipe_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
         point_t bend_start, bend_end, bend_center;
         
         VSUB2(n1, curr_pt, pp2->pp_coord);
-        if (VNEAR_ZERO(n1, SQRT_SMALL_FASTF)) {
+        if (VNEAR_ZERO(n1, VUNITIZE_TOL)) {
             /* duplicate point, skip to next point */
             goto next_pt;
         }
@@ -3188,7 +3188,7 @@ rt_pipe_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
         
         VSUB2(n2, pp3->pp_coord, pp2->pp_coord);
         VCROSS(norm, n1, n2);
-        if (VNEAR_ZERO(norm, SQRT_SMALL_FASTF)) {
+        if (VNEAR_ZERO(norm, VUNITIZE_TOL)) {
             /* points are colinear, treat as a linear segment */
             tesselate_pipe_linear(curr_pt, curr_od/2.0, curr_id/2.0,
 				  pp2->pp_coord, pp2->pp_od/2.0, pp2->pp_id/2.0,
@@ -3767,7 +3767,7 @@ rt_pipe_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 
 
 int
-rt_pipe_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_pipe_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_pipe_internal *pip;
     struct wdb_pipept *ptp;

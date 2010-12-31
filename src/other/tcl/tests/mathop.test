@@ -777,8 +777,12 @@ test mathop-20.6 { one arg, error } {
         # skipping - for now, knownbug...
         foreach op {+ * / & | ^ **} {
             lappend res [TestOp $op {*}$vals]
-            lappend exp "can't use non-numeric string as operand of \"$op\" NONE"
+            lappend exp "can't use non-numeric string as operand of \"$op\" ARITH DOMAIN {non-numeric string}"
         }
+    }
+    foreach op {+ * / & | ^ **} {
+	lappend res [TestOp $op NaN 1]
+	lappend exp "can't use non-numeric floating-point value as operand of \"$op\" ARITH DOMAIN {non-numeric floating-point value}"
     }
     expr {$res eq $exp ? 0 : $res}
 } 0
@@ -846,15 +850,15 @@ test mathop-21.5 { unary ops, bad values } {
     set res {}
     set exp {}
     lappend res [TestOp / x]
-    lappend exp "can't use non-numeric string as operand of \"/\" NONE"
+    lappend exp "can't use non-numeric string as operand of \"/\" ARITH DOMAIN {non-numeric string}"
     lappend res [TestOp - x]
-    lappend exp "can't use non-numeric string as operand of \"-\" NONE"
+    lappend exp "can't use non-numeric string as operand of \"-\" ARITH DOMAIN {non-numeric string}"
     lappend res [TestOp ~ x]
-    lappend exp "can't use non-numeric string as operand of \"~\" NONE"
+    lappend exp "can't use non-numeric string as operand of \"~\" ARITH DOMAIN {non-numeric string}"
     lappend res [TestOp ! x]
-    lappend exp "can't use non-numeric string as operand of \"!\" NONE"
+    lappend exp "can't use non-numeric string as operand of \"!\" ARITH DOMAIN {non-numeric string}"
     lappend res [TestOp ~ 5.0]
-    lappend exp "can't use floating-point value as operand of \"~\" NONE"
+    lappend exp "can't use floating-point value as operand of \"~\" ARITH DOMAIN {floating-point value}"
     expr {$res eq $exp ? 0 : $res}
 } 0
 test mathop-21.6 { unary ops, too many } {
@@ -961,9 +965,9 @@ test mathop-22.4 { unary ops, bad values } {
     set exp {}
     foreach op {& | ^} {
         lappend res [TestOp $op x 5]
-        lappend exp "can't use non-numeric string as operand of \"$op\" NONE"
+        lappend exp "can't use non-numeric string as operand of \"$op\" ARITH DOMAIN {non-numeric string}"
         lappend res [TestOp $op 5 x]
-        lappend exp "can't use non-numeric string as operand of \"$op\" NONE"
+        lappend exp "can't use non-numeric string as operand of \"$op\" ARITH DOMAIN {non-numeric string}"
     }
     expr {$res eq $exp ? 0 : $res}
 } 0
@@ -1076,15 +1080,15 @@ test mathop-24.3 { binary ops, bad values } {
     set exp {}
     foreach op {% << >>} {
         lappend res [TestOp $op x 1]
-        lappend exp "can't use non-numeric string as operand of \"$op\" NONE"
+        lappend exp "can't use non-numeric string as operand of \"$op\" ARITH DOMAIN {non-numeric string}"
         lappend res [TestOp $op 1 x]
-        lappend exp "can't use non-numeric string as operand of \"$op\" NONE"
+        lappend exp "can't use non-numeric string as operand of \"$op\" ARITH DOMAIN {non-numeric string}"
     }
     foreach op {% << >>} {
         lappend res [TestOp $op 5.0 1]
-        lappend exp "can't use floating-point value as operand of \"$op\" NONE"
+        lappend exp "can't use floating-point value as operand of \"$op\" ARITH DOMAIN {floating-point value}"
         lappend res [TestOp $op 1 5.0]
-        lappend exp "can't use floating-point value as operand of \"$op\" NONE"
+        lappend exp "can't use floating-point value as operand of \"$op\" ARITH DOMAIN {floating-point value}"
     }
     foreach op {in ni} {
         lappend res [TestOp $op 5 "a b \{ c"]
@@ -1236,9 +1240,9 @@ test mathop-25.23 { exp operator errors } {
     lappend res [TestOp ** $huge 2.1]
     lappend exp "Inf"
     lappend res [TestOp ** 2 foo]
-    lappend exp "can't use non-numeric string as operand of \"**\" NONE"
+    lappend exp "can't use non-numeric string as operand of \"**\" ARITH DOMAIN {non-numeric string}"
     lappend res [TestOp ** foo 2]
-    lappend exp "can't use non-numeric string as operand of \"**\" NONE"
+    lappend exp "can't use non-numeric string as operand of \"**\" ARITH DOMAIN {non-numeric string}"
 
     expr {$res eq $exp ? 0 : $res}
 } 0

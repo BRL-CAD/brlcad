@@ -36,7 +36,7 @@
 #include "./mged_dm.h"
 
 
-static char adc_syntax[] = "\
+static char adc_syntax1[] = "\
  adc			toggle display of angle/distance cursor\n\
  adc vars		print a list of all variables (i.e. var = val)\n\
  adc draw [0|1]		set or get the draw parameter\n\
@@ -46,6 +46,9 @@ static char adc_syntax[] = "\
  adc odst [#]		set or get radius (distance) of tick (+-2047)\n\
  adc hv [# #]		set or get position (grid coordinates)\n\
  adc xyz [# # #]	set or get position (model coordinates)\n\
+";
+
+static char adc_syntax2[] = "\
  adc x [#]		set or get horizontal position (+-2047)\n\
  adc y [#]		set or get vertical position (+-2047)\n\
  adc dh #		add to horizontal position (grid coordinates)\n\
@@ -53,6 +56,9 @@ static char adc_syntax[] = "\
  adc dx #		add to X position (model coordinates)\n\
  adc dy #		add to Y position (model coordinates)\n\
  adc dz #		add to Z position (model coordinates)\n\
+";
+
+static char adc_syntax3[] = "\
  adc anchor_pos	[0|1]	anchor ADC to current position in model coordinates\n\
  adc anchor_a1	[0|1]	anchor angle1 to go through anchorpoint_a1\n\
  adc anchor_a2	[0|1]	anchor angle2 to go through anchorpoint_a2\n\
@@ -60,6 +66,9 @@ static char adc_syntax[] = "\
  adc anchorpoint_a1 [# # #]	set or get anchor point for angle1\n\
  adc anchorpoint_a2 [# # #]	set or get anchor point for angle2\n\
  adc anchorpoint_dst [# # #]	set or get anchor point for tick distance\n\
+";
+
+static char adc_syntax4[] = "\
  adc -i			any of the above appropriate commands will interpret parameters as increments\n\
  adc reset		reset angles, location, and tick distance\n\
  adc help		prints this help message\n\
@@ -158,7 +167,7 @@ calc_adc_a1(void)
 	dx = view_pt[X] * GED_MAX - adc_state->adc_dv_x;
 	dy = view_pt[Y] * GED_MAX - adc_state->adc_dv_y;
 
-	if (dx != 0.0 || dy != 0.0) {
+	if (!NEAR_ZERO(dx, SMALL_FASTF) || !NEAR_ZERO(dy, SMALL_FASTF)) {
 	    adc_state->adc_a1 = RAD2DEG*atan2(dy, dx);
 	    adc_state->adc_dv_a1 = (1.0 - (adc_state->adc_a1 / 45.0)) * GED_MAX;
 	}
@@ -177,7 +186,7 @@ calc_adc_a2(void)
 	dx = view_pt[X] * GED_MAX - adc_state->adc_dv_x;
 	dy = view_pt[Y] * GED_MAX - adc_state->adc_dv_y;
 
-	if (dx != 0.0 || dy != 0.0) {
+	if (!NEAR_ZERO(dx, SMALL_FASTF) || !NEAR_ZERO(dy, SMALL_FASTF)) {
 	    adc_state->adc_a2 = RAD2DEG*atan2(dy, dx);
 	    adc_state->adc_dv_a2 = (1.0 - (adc_state->adc_a2 / 45.0)) * GED_MAX;
 	}
@@ -422,7 +431,7 @@ adc_print_vars(void)
 		  adc_state->adc_anchor_pt_dst[X] * base2local,
 		  adc_state->adc_anchor_pt_dst[Y] * base2local,
 		  adc_state->adc_anchor_pt_dst[Z] * base2local);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 }
 
@@ -432,14 +441,14 @@ adc_print_vars(void)
  */
 int
 f_adc (
-    ClientData clientData,
+    ClientData UNUSED(clientData),
     Tcl_Interp *interp,
     int argc,
-    char **argv)
+    const char *argv[])
 {
     struct bu_vls vls;
-    char *parameter;
-    char **argp = argv;
+    const char *parameter;
+    const char **argp = argv;
     point_t user_pt;		/* Value(s) provided by user */
     point_t scaled_pos;
     int incr_flag;
@@ -1050,12 +1059,12 @@ f_adc (
     }
 
     if (strcmp(parameter, "help") == 0) {
-	Tcl_AppendResult(interp, "Usage:\n", adc_syntax, (char *)NULL);
+	Tcl_AppendResult(interp, "Usage:\n", adc_syntax1, adc_syntax2, adc_syntax3, adc_syntax4, (char *)NULL);
 	return TCL_OK;
     }
 
     Tcl_AppendResult(interp, "ADC: unrecognized command: '",
-		     argv[1], "'\nUsage:\n", adc_syntax, (char *)NULL);
+		     argv[1], "'\nUsage:\n", adc_syntax1, adc_syntax2, adc_syntax3, adc_syntax4, (char *)NULL);
     return TCL_ERROR;
 }
 

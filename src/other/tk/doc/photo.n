@@ -257,8 +257,8 @@ format handler to read the data.
 .TP
 \fB\-to \fIx1 y1\fR ?\fIx2 y2\fR?
 Specifies the coordinates of the top-left corner (\fIx1\fR,\fIy1\fR)
-of the region of \fIimageName\fR into which data from \fIfilename\fR
-are to be read.  The default is (0,0).  If \fIx2\fR,\fIy2\fR is given
+of the region of \fIimageName\fR into which the image data will be
+copied.  The default position is (0,0).  If \fIx2\fR,\fIy2\fR is given
 and \fIdata\fR is not large enough to cover the rectangle specified by
 this option, the image data extracted will be tiled so it covers the
 entire destination rectangle.  Note that if \fIdata\fR specifies a

@@ -2052,6 +2052,7 @@ struct dm dm_wgl = {
     wgl_endDList,
     wgl_drawDList,
     wgl_freeDLists,
+    Nu_int0, /* display to image function */
     0,
     1,				/* has displaylist */
     0,                            /* no stereo by default */
@@ -2063,6 +2064,8 @@ struct dm dm_wgl = {
     1,
     0,
     0,
+    0,/* bytes per pixel */
+    0,/* bits per channel */
     1,
     0,
     1.0, /* aspect ratio */

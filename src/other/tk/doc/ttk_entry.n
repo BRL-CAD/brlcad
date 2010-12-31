@@ -88,6 +88,7 @@ in average-size characters of the widget's font.
 .\" Not in ttk: If the value is less than or equal to zero, the widget picks a
 .\" Not in ttk: size just large enough to hold its current text.
 .SH NOTES
+.PP
 A portion of the entry may be selected as described below.
 If an entry is exporting its selection (see the \fBexportSelection\fR
 option), then it will observe the standard X11 protocols for handling the
@@ -105,6 +106,7 @@ the standard \fBxScrollCommand\fR mechanism for interacting with
 scrollbars (see the description of the \fBxScrollCommand\fR option
 for details).
 .SH "INDICES"
+.PP
 Many of the \fBentry\fR widget commands take one or more indices as
 arguments.  An index specifies a particular character in the entry's
 string, in any of the following ways:
@@ -132,15 +134,15 @@ Indicates the character just after the last one in the selection.
 It is an error to use this form if the selection is not in the
 entry window.
 .LP
-Abbreviations may be used for any of the forms above, e.g.
+Abbreviations may be used for any of the forms above, e.g.\|
 .QW \fBe\fR
 or
-.QW \fBsel.f\fR .
+.QW \fBsel.l\fR .
 In general, out-of-range indices are automatically rounded to the
 nearest legal value.
 .SH "WIDGET COMMAND"
 .PP
-The following commands are possible for entry widgets:
+The following subcommands are possible for entry widgets:
 .TP
 \fIpathName \fBbbox \fIindex\fR
 Returns a list of four numbers describing the bounding box of the
@@ -151,14 +153,14 @@ the upper-left corner of the screen area covered by the character
 the width and height of the character, in pixels.
 The bounding box may refer to a region outside the visible area
 of the window.
-.TP
-\fIpathName \fBcget\fR \fIoption\fR
-Returns the current value of the specified \fIoption\fR.
-See \fIttk::widget(n)\fR.
-.TP
-\fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
-Modify or query widget options.
-See \fIttk::widget(n)\fR.
+'\".TP
+'\"\fIpathName \fBcget\fR \fIoption\fR
+'\"Returns the current value of the specified \fIoption\fR.
+'\"See \fIttk::widget(n)\fR.
+'\".TP
+'\"\fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
+'\"Modify or query widget options.
+'\"See \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBdelete \fIfirst \fR?\fIlast\fR?
 Delete one or more elements of the entry.
@@ -175,10 +177,10 @@ Returns the entry's string.
 \fIpathName \fBicursor \fIindex\fR
 Arrange for the insert cursor to be displayed just before the character
 given by \fIindex\fR.  Returns the empty string.
-.TP
-\fIpathName \fBidentify \fIx y\fR
-Returns the name of the element at position \fIx\fR, \fIy\fR,
-or the empty string if the coordinates are outside the window.
+'\".TP
+'\"\fIpathName \fBidentify \fIx y\fR
+'\"Returns the name of the element at position \fIx\fR, \fIy\fR,
+'\"or the empty string if the coordinates are outside the window.
 .TP
 \fIpathName \fBindex\fI index\fR
 Returns the numerical index corresponding to \fIindex\fR.
@@ -186,10 +188,10 @@ Returns the numerical index corresponding to \fIindex\fR.
 \fIpathName \fBinsert \fIindex string\fR
 Insert \fIstring\fR just before the character
 indicated by \fIindex\fR.  Returns the empty string.
-.TP
-\fIpathName \fBinstate \fIstatespec\fR ?\fIscript\fR?
-Test the widget state.
-See \fIttk::widget(n)\fR.
+'\".TP
+'\"\fIpathName \fBinstate \fIstatespec\fR ?\fIscript\fR?
+'\"Test the widget state.
+'\"See \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBselection \fIoption arg\fR
 This command is used to adjust the selection within an entry.  It
@@ -212,16 +214,17 @@ before \fIend\fR.
 If \fIend\fR refers to the same character as \fIstart\fR or an
 earlier one, then the entry's selection is cleared.
 .RE
-.TP
-\fIpathName \fBstate\fR ?\fIstateSpec\fR?
-Modify or query the widget state.
-See \fIttk::widget(n)\fR.
+'\".TP
+'\"\fIpathName \fBstate\fR ?\fIstateSpec\fR?
+'\"Modify or query the widget state.
+'\"See \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBvalidate\fR
 Force revalidation, independent of the conditions specified 
 by the \fB\-validate\fR option.
 Returns 0 if validation fails, 1 if it succeeds.
 Sets or clears the \fBinvalid\fR state accordingly.
+See \fBVALIDATION\fR below for more details.
 .TP
 \fIpathName \fBxview \fIargs\fR
 This command is used to query and change the horizontal position of the
@@ -261,10 +264,20 @@ If \fInumber\fR is negative then characters farther to the left
 become visible;  if it is positive then characters farther to the right
 become visible.
 .RE
+.PP
+The entry widget also supports the following generic \fBttk::widget\fR
+widget subcommands (see \fIttk::widget(n)\fR for details):
+.DS
+.ta 5.5c 11c
+\fBcget\fR	\fBconfigure\fR	\fBidentify\fR
+\fBinstate\fR	\fBstate\fR
+.DE
 .SH VALIDATION
+.PP
 The \fB\-validate\fR, \fB\-validatecommand\fR, and \fB\-invalidcommand\fR
 options are used to enable entry widget validation.
 .SS "VALIDATION MODES"
+.PP
 There are two main validation modes: \fIprevalidation\fR,
 in which the \fB\-validatecommand\fR is evaluated prior to each edit
 and the return value is used to determine whether to accept 
@@ -274,6 +287,7 @@ evaluated to determine whether the current value is valid.
 .PP
 The \fB\-validate\fR option determines when validation occurs;
 it may be set to any of the following values:
+.RS
 .IP \fBnone\fR
 Default.  This means validation will only occur when 
 specifically requested by the \fBvalidate\fR widget command.
@@ -290,6 +304,7 @@ The entry is revalidated when the entry receives focus.
 The entry is revalidated when the entry loses focus.
 .IP \fBall\fR
 Validation is performed for all above conditions.
+.RE
 .PP
 The \fB\-invalidcommand\fR is evaluated whenever
 the \fB\-validatecommand\fR returns a false value.
@@ -305,10 +320,12 @@ regardless of the value returned by the \fB\-validatecommand\fR.
 If \fB\-validatecommand\fR is empty (the default), 
 validation always succeeds.
 .SS "VALIDATION SCRIPT SUBSTITUTIONS"
+.PP
 It is possible to perform percent substitutions on the 
-\fB\-validatecommand\fR and \fBinvalidCommand\fR,
+\fB\-validatecommand\fR and \fB\-invalidcommand\fR,
 just as in a \fBbind\fR script.
 The following substitutions are recognized:
+.RS
 .IP \fB%d\fR
 Type of action: 1 for \fBinsert\fR prevalidation, 
 0 for \fBdelete\fR prevalidation,
@@ -329,8 +346,9 @@ The validation condition that triggered the callback
 (\fBkey\fR, \fBfocusin\fR, \fBfocusout\fR, or \fBforced\fR).
 .IP \fB%W\fR
 The name of the entry widget.
+.RE
 .SS "DIFFERENCES FROM TK ENTRY WIDGET VALIDATION"
-.IP \(bu
+.PP
 The standard Tk entry widget automatically disables validation
 (by setting \fB\-validate\fR to \fBnone\fR)
 if the \fB\-validatecommand\fR or \fB\-invalidcommand\fR modifies 
@@ -338,53 +356,54 @@ the entry's value.
 The Tk themed entry widget only disables validation if one
 of the validation scripts raises an error, or if \fB\-validatecommand\fR
 does not return a valid boolean value.
-(Thus, it is not necessary to reenable validation after 
+(Thus, it is not necessary to re-enable validation after 
 modifying the entry value in a validation script).
-.IP \(bu
-The standard entry widget invokes validation whenever the linked
+.PP
+In addition, the standard entry widget invokes validation whenever the linked
 \fB\-textvariable\fR is modified; the Tk themed entry widget does not.
 .SH "DEFAULT BINDINGS"
+.PP
 The entry widget's default bindings enable the following behavior.  
 In the descriptions below,
 .QW word
 refers to a contiguous group of letters, digits, or
 .QW _
 characters, or any single character other than these.
-.IP \(bu
+.IP \0\(bu 4
 Clicking mouse button 1 positions the insert cursor
 just before the character underneath the mouse cursor, sets the
 input focus to this widget, and clears any selection in the widget.
 Dragging with mouse button 1 down strokes out a selection between
 the insert cursor and the character under the mouse.
-.IP \(bu
+.IP \0\(bu 4
 Double-clicking with mouse button 1 selects the word under the mouse
 and positions the insert cursor at the end of the word.
 Dragging after a double click strokes out a selection consisting
 of whole words.
-.IP \(bu
+.IP \0\(bu 4
 Triple-clicking with mouse button 1 selects all of the text in the
 entry and positions the insert cursor at the end of the line.
-.IP \(bu
+.IP \0\(bu 4
 The ends of the selection can be adjusted by dragging with mouse
 button 1 while the Shift key is down.
 If the button is double-clicked before dragging then the selection
 will be adjusted in units of whole words.
-.IP \(bu
+.IP \0\(bu 4
 Clicking mouse button 1 with the Control key down will position the
 insert cursor in the entry without affecting the selection.
-.IP \(bu
+.IP \0\(bu 4
 If any normal printing characters are typed in an entry, they are
 inserted at the point of the insert cursor.
-.IP \(bu
+.IP \0\(bu 4
 The view in the entry can be adjusted by dragging with mouse button 2.
 If mouse button 2 is clicked without moving the mouse, the selection
 is copied into the entry at the position of the mouse cursor.
-.IP \(bu
+.IP \0\(bu 4
 If the mouse is dragged out of the entry on the left or right sides
 while button 1 is pressed, the entry will automatically scroll to
 make more text visible (if there is more text off-screen on the side
 where the mouse left the window).
-.IP \(bu
+.IP \0\(bu 4
 The Left and Right keys move the insert cursor one character to the
 left or right;  they also clear any selection in the entry.
 If Left or Right is typed with the Shift key down, then the insertion
@@ -393,38 +412,39 @@ Control-Left and Control-Right move the insert cursor by words, and
 Control-Shift-Left and Control-Shift-Right move the insert cursor
 by words and also extend the selection.
 Control-b and Control-f behave the same as Left and Right, respectively.
-.IP \(bu
+.IP \0\(bu 4
 The Home key and Control-a move the insert cursor to the
 beginning of the entry and clear any selection in the entry.
 Shift-Home moves the insert cursor to the beginning of the entry
 and extends the selection to that point.
-.IP \(bu
+.IP \0\(bu 4
 The End key and Control-e move the insert cursor to the
 end of the entry and clear any selection in the entry.
 Shift-End moves the cursor to the end and extends the selection
 to that point.
-.IP \(bu
+.IP \0\(bu 4
 Control-/ selects all the text in the entry.
-.IP \(bu
+.IP \0\(bu 4
 Control-\e clears any selection in the entry.
-.IP \(bu
+.IP \0\(bu 4
 The standard Tk <<Cut>>, <<Copy>>, <<Paste>>, and <<Clear>>
 virtual events operate on the selection in the expected manner.
-.IP \(bu
+.IP \0\(bu 4
 The Delete key deletes the selection, if there is one in the entry.
 If there is no selection, it deletes the character to the right of
 the insert cursor.
-.IP \(bu
+.IP \0\(bu 4
 The BackSpace key and Control-h delete the selection, if there is one
 in the entry.
 If there is no selection, it deletes the character to the left of
 the insert cursor.
-.IP \(bu
+.IP \0\(bu 4
 Control-d deletes the character to the right of the insert cursor.
-.IP \(bu
+.IP \0\(bu 4
 Control-k deletes all the characters to the right of the insertion
 cursor.
 .SH "WIDGET STATES"
+.PP
 In the \fBdisabled\fR state, 
 the entry cannot be edited and the text cannot be selected.
 In the \fBreadonly\fR state,
@@ -448,3 +468,6 @@ and clears it whenever validation succeeds.
 ttk::widget(n), entry(n)
 .SH KEYWORDS
 entry, widget, text field
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

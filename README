@@ -1,5 +1,5 @@
 			    BRL-CAD
-			 Release 7.18.0
+			 Release 7.18.2
 		       http://brlcad.org/
 
 BRL-CAD is a powerful cross-platform open source combinatorial
@@ -35,6 +35,14 @@ GETTING STARTED
 
 This README file exists only to provide you a brief roadmap to the
 contents of the BRL-CAD distribution.
+
+Some platforms have additional platform-specific documentation that
+should be consulted after reading this file:
+
+  doc/README.MacOSX	-- Apple Mac OS X
+  doc/README.IRIX	-- SGI IRIX and IRIX64
+  doc/README.Linux	-- Various Linux distributions
+  doc/README.Windows    -- Microsoft Windows
 
 The information on how to install and operate the software, to become
 involved with the development of the package, or to run the benchmark

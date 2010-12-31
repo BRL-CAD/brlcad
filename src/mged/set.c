@@ -71,66 +71,67 @@ struct _mged_variables default_mged_variables = {
     /* mv_linestyle */		's',
     /* mv_hot_key */		0,
     /* mv_context */		1,
-    /* mv_dlist */			0,
+    /* mv_dlist */		0,
     /* mv_use_air */		0,
-    /* mv_listen */			0,
-    /* mv_port */			0,
+    /* mv_listen */		0,
+    /* mv_port */		0,
     /* mv_fb */			0,
-    /* mv_fb_all */			1,
+    /* mv_fb_all */		1,
     /* mv_fb_overlay */		0,
-    /* mv_mouse_behavior */		'd',
-    /* mv_coords */			'v',
-    /* mv_rotate_about */		'v',
+    /* mv_mouse_behavior */	'd',
+    /* mv_coords */		'v',
+    /* mv_rotate_about */	'v',
     /* mv_transform */		'v',
     /* mv_predictor */		0,
     /* mv_predictor_advance */	1.0,
     /* mv_predictor_length */	2.0,
-    /* mv_perspective */		-1,
+    /* mv_perspective */	-1,
     /* mv_perspective_mode */	0,
     /* mv_toggle_perspective */	1,
-    /* mv_nmg_eu_dist */		0.05,
-    /* mv_eye_sep_dist */		0.0,
-    /* mv_union lexeme */		"u",
-    /* mv_intersection lexeme */	"n",
+    /* mv_nmg_eu_dist */	0.05,
+    /* mv_eye_sep_dist */	0.0,
+    /* mv_union lexeme */	"u",
+    /* mv_intersection lexeme */"n",
     /* mv_difference lexeme */	"-"
 };
 
 
 #define MV_O(_m) bu_offsetof(struct _mged_variables, _m)
 #define MV_OA(_m) bu_offsetofarray(struct _mged_variables, _m)
+#define LINE RT_MAXLINE
 struct bu_structparse mged_vparse[] = {
-    {"%d",	1, "autosize",		MV_O(mv_autosize),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "rateknobs",		MV_O(mv_rateknobs),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "sliders",		MV_O(mv_sliders),	set_scroll_private },
-    {"%d",	1, "faceplate",		MV_O(mv_faceplate),	set_dirty_flag },
-    {"%d",	1, "orig_gui",		MV_O(mv_orig_gui),	        set_dirty_flag },
-    {"%d",	1, "linewidth",		MV_O(mv_linewidth),	set_dirty_flag },
-    {"%c",	1, "linestyle",		MV_O(mv_linestyle),	set_dirty_flag },
-    {"%d",  1, "hot_key",		MV_O(mv_hot_key),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "context",		MV_O(mv_context),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "dlist",		MV_O(mv_dlist),		set_dlist },
-    {"%d",  1, "use_air",		MV_O(mv_use_air),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "listen",		MV_O(mv_listen),		fbserv_set_port },
-    {"%d",  1, "port",		MV_O(mv_port),		fbserv_set_port },
-    {"%d",  1, "fb",		MV_O(mv_fb),		set_dirty_flag },
-    {"%d",  1, "fb_all",		MV_O(mv_fb_all),		set_dirty_flag },
-    {"%d",  1, "fb_overlay",	MV_O(mv_fb_overlay),	set_dirty_flag },
-    {"%c",  1, "mouse_behavior",	MV_O(mv_mouse_behavior),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%c",  1, "coords",            MV_O(mv_coords),	set_coords },
-    {"%c",  1, "rotate_about",      MV_O(mv_rotate_about),     set_rotate_about },
-    {"%c",  1, "transform",         MV_O(mv_transform),        BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "predictor",		MV_O(mv_predictor),	predictor_hook },
-    {"%f",	1, "predictor_advance",	MV_O(mv_predictor_advance), predictor_hook },
-    {"%f",	1, "predictor_length",	MV_O(mv_predictor_length),	predictor_hook },
-    {"%f",	1, "perspective",	MV_O(mv_perspective),	set_perspective },
-    {"%d",  1, "perspective_mode",  MV_O(mv_perspective_mode), establish_perspective },
-    {"%d",  1, "toggle_perspective", MV_O(mv_toggle_perspective), toggle_perspective },
-    {"%f",  1, "nmg_eu_dist",	MV_O(mv_nmg_eu_dist),	nmg_eu_dist_set },
-    {"%f",  1, "eye_sep_dist",	MV_O(mv_eye_sep_dist),	set_dirty_flag },
-    {"%s",  RT_MAXLINE, "union_op",	MV_O(mv_union_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%s",  RT_MAXLINE, "intersection_op", MV_O(mv_intersection_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%s",  RT_MAXLINE, "difference_op",	MV_O(mv_difference_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%d", 1, "autosize",		MV_O(mv_autosize),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "rateknobs",		MV_O(mv_rateknobs),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "sliders",		MV_O(mv_sliders),		set_scroll_private, NULL, NULL },
+    {"%d", 1, "faceplate",		MV_O(mv_faceplate),		set_dirty_flag, NULL, NULL },
+    {"%d", 1, "orig_gui",		MV_O(mv_orig_gui),	        set_dirty_flag, NULL, NULL },
+    {"%d", 1, "linewidth",		MV_O(mv_linewidth),		set_dirty_flag, NULL, NULL },
+    {"%c", 1, "linestyle",		MV_O(mv_linestyle),		set_dirty_flag, NULL, NULL },
+    {"%d", 1, "hot_key",		MV_O(mv_hot_key),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "context",		MV_O(mv_context),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "dlist",			MV_O(mv_dlist),			set_dlist, NULL, NULL },
+    {"%d", 1, "use_air",		MV_O(mv_use_air),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "listen",			MV_O(mv_listen),		fbserv_set_port, NULL, NULL },
+    {"%d", 1, "port",			MV_O(mv_port),			fbserv_set_port, NULL, NULL },
+    {"%d", 1, "fb",			MV_O(mv_fb),			set_dirty_flag, NULL, NULL },
+    {"%d", 1, "fb_all",			MV_O(mv_fb_all),		set_dirty_flag, NULL, NULL },
+    {"%d", 1, "fb_overlay",		MV_O(mv_fb_overlay),		set_dirty_flag, NULL, NULL },
+    {"%c", 1, "mouse_behavior",		MV_O(mv_mouse_behavior),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%c", 1, "coords",			MV_O(mv_coords),		set_coords, NULL, NULL },
+    {"%c", 1, "rotate_about",		MV_O(mv_rotate_about),		set_rotate_about, NULL, NULL },
+    {"%c", 1, "transform",		MV_O(mv_transform),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "predictor",		MV_O(mv_predictor),		predictor_hook, NULL, NULL },
+    {"%f", 1, "predictor_advance",	MV_O(mv_predictor_advance),	predictor_hook, NULL, NULL },
+    {"%f", 1, "predictor_length",	MV_O(mv_predictor_length),	predictor_hook, NULL, NULL },
+    {"%f", 1, "perspective",		MV_O(mv_perspective),		set_perspective, NULL, NULL },
+    {"%d", 1, "perspective_mode",	MV_O(mv_perspective_mode),	establish_perspective, NULL, NULL },
+    {"%d", 1, "toggle_perspective",	MV_O(mv_toggle_perspective),	toggle_perspective, NULL, NULL },
+    {"%f", 1, "nmg_eu_dist",		MV_O(mv_nmg_eu_dist),		nmg_eu_dist_set, NULL, NULL },
+    {"%f", 1, "eye_sep_dist",		MV_O(mv_eye_sep_dist),		set_dirty_flag, NULL, NULL },
+    {"%s", LINE, "union_op",		MV_O(mv_union_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", LINE, "intersection_op",	MV_O(mv_intersection_lexeme[0]),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", LINE, "difference_op",	MV_O(mv_difference_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",   0, NULL,			0,				BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -155,7 +156,7 @@ nmg_eu_dist_set(void)
 
     bu_vls_init(&tmp_vls);
     bu_vls_printf(&tmp_vls, "New nmg_eue_dist = %g\n", nmg_eue_dist);
-    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
     bu_vls_free(&tmp_vls);
 }
 
@@ -169,7 +170,7 @@ nmg_eu_dist_set(void)
  **/
 
 static char *
-read_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags)
+read_var(ClientData clientData, Tcl_Interp *interp, char *UNUSED(name1), char *UNUSED(name2), int flags)
     /* Contains pointer to bu_struct_parse entry */
 
 
@@ -278,7 +279,7 @@ mged_variable_setup(Tcl_Interp *interp)
 
 
 int
-f_set(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_set(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct bu_vls vls;
 

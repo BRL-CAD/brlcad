@@ -42,50 +42,60 @@ Parameter::iterator makeIterator(Parameter::Varlist::iterator i)
     return boost::make_indirect_iterator(i);
 }
 
+
 Parameter::const_iterator makeIterator(Parameter::Varlist::const_iterator i)
 {
     return boost::make_indirect_iterator(i);
 }
+
 
 Parameter::iterator Parameter::begin()
 {
     return makeIterator(Variables.begin());
 }
 
+
 Parameter::iterator Parameter::end()
 {
     return makeIterator(Variables.end());
 }
+
 
 Parameter::const_iterator Parameter::begin() const
 {
     return makeIterator(Variables.begin());
 }
 
+
 Parameter::const_iterator Parameter::end() const
 {
     return makeIterator(Variables.end());
 }
+
 
 Parameter::iterator Parameter::erase(iterator location)
 {
     return makeIterator(Variables.erase(location.base()));
 }
 
-Parameter::iterator Parameter::erase(iterator begin, iterator end)
+
+Parameter::iterator Parameter::erase(iterator beginning, iterator ending)
 {
-    return makeIterator(Variables.erase(begin.base(), end.base()));
+    return makeIterator(Variables.erase(beginning.base(), ending.base()));
 }
+
 
 std::string Parameter::getName() const
 {
     return name;
 }
 
+
 int Parameter::getType() const
 {
     return type;
 }
+
 
 void Parameter::display() const
 {
@@ -104,18 +114,19 @@ void Parameter::setConst(bool t)
     }
 }
 
+
 /**
  * Vector Methods
  *
  */
-Vector::Vector(VCSet & vcs, std::string n, void * ptr)
+Vector::Vector(VCSet & vcs, std::string n, void *ptr)
     : Parameter(vcs, n)
 {
     Parameter::setType(PC_DB_VECTOR_T);
     vectp_t p = vectp_t (ptr);
     if (ptr) {
 	std::string t;
-	VariableAbstract* var;
+	VariableAbstract *var;
 
 	t = Parameter::name; 
 	t += "[x]";
@@ -134,18 +145,19 @@ Vector::Vector(VCSet & vcs, std::string n, void * ptr)
     }
 }
 
+
 /**
  * Point Methods
  *
  */
-Point::Point(VCSet & vcs, std::string n, void * ptr)
+Point::Point(VCSet & vcs, std::string n, void *ptr)
     : Parameter(vcs, n)
 {
     Parameter::setType(PC_DB_POINT_T);
     pointp_t p = pointp_t (ptr);
     if (ptr) {
 	std::string t;
-	VariableAbstract* var;
+	VariableAbstract *var;
 
 	t = Parameter::name; 
 	t += "[x]";
@@ -164,22 +176,24 @@ Point::Point(VCSet & vcs, std::string n, void * ptr)
     }
 }
 
+
 /**
  * FastF Methods
  *
  */
 
-FastF::FastF(VCSet & vcs, std::string n, void * ptr)
+FastF::FastF(VCSet & vcs, std::string n, void *ptr)
     : Parameter(vcs, n)
 {
     Parameter::setType(PC_DB_FASTF_T);
     fastf_t *p = (fastf_t *) ptr;
     if (ptr) {
 	std::string t = Parameter::name; 
-	VariableAbstract* var = vcset.addVariable<double>(t, *(p+0), -10.0, 10.0, 0.1);
+	VariableAbstract *var = vcset.addVariable<double>(t, *(p+0), -10.0, 10.0, 0.1);
 	Variables.push_back(var);
     }
 }
+
 
 /** @} */
 /*

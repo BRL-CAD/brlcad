@@ -48,8 +48,6 @@
 
 #include "bu.h"
 
-
-#define MAXARGS 9000
 #define CMD_NULL (int (*)(ClientData, Tcl_Interp *, int, const char **))NULL
 #define CMDHIST_NULL (struct bu_cmdhist *)NULL
 #define CMDHIST_OBJ_NULL (struct bu_cmdhist_obj *)NULL

@@ -52,14 +52,13 @@ struct cmdtab {
 };
 
 
-#define MAXARGS 9000
 #define MOUSE_MODE_IDLE 0
 #define MOUSE_MODE_ROTATE 1
 #define MOUSE_MODE_TRANSLATE 3
 #define MOUSE_MODE_ZOOM 4
 #define APP_SCALE 180.0 / 512.0
 
-Tcl_Interp *interp;
+Tcl_Interp *INTERP;
 struct dm *dmp;
 mat_t toViewcenter;
 mat_t Viewrot;
@@ -352,7 +351,7 @@ new_mats()
  * Event handler for the X display manager.
  */
 static int
-X_doEvent(ClientData clientData, XEvent *eventPtr)
+X_doEvent(ClientData UNUSED(clientData), XEvent *eventPtr)
 {
     double app_scale = APP_SCALE;
 
@@ -398,7 +397,7 @@ X_doEvent(ClientData clientData, XEvent *eventPtr)
 		    val = 1.0 + (omy - my) /
 			(fastf_t)dmp->dm_height;
 
-		    zoom(interp, val);
+		    zoom(INTERP, val);
 		    new_mats();
 		    refresh();
 		}
@@ -432,7 +431,7 @@ X_dm(int argc, char *argv[])
 	start_catching_output(&tmp_vls);
 
 	stop_catching_output(&tmp_vls);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
 	return TCL_OK;
     }
@@ -441,7 +440,7 @@ X_dm(int argc, char *argv[])
 	vect_t view_pos;
 
 	if (argc < 4) {
-	    Tcl_AppendResult(interp, "dm m: need more parameters\n",
+	    Tcl_AppendResult(INTERP, "dm m: need more parameters\n",
 			     "dm m button 1|0 xpos ypos\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -460,7 +459,7 @@ X_dm(int argc, char *argv[])
 	int buttonpress;
 
 	if (argc < 5) {
-	    Tcl_AppendResult(interp, "dm am: need more parameters\n",
+	    Tcl_AppendResult(INTERP, "dm am: need more parameters\n",
 			     "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -567,7 +566,7 @@ size_reset()
  * Open one or more plot files.
  */
 static int
-cmd_openpl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_openpl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     static int not_first = 0;
     int i;
@@ -654,7 +653,7 @@ cmd_openpl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Rotate the view.
  */
 static int
-cmd_vrot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_vrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     if (argc != 4) {
 	struct bu_vls vls;
@@ -678,9 +677,9 @@ cmd_vrot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Do display manager specific commands.
  */
 static int
-cmd_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_dm(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -701,7 +700,7 @@ cmd_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Clear the screen.
  */
 static int
-cmd_clear(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_clear(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **UNUSED(argv))
 {
     struct plot_list *plp;
 
@@ -727,7 +726,7 @@ cmd_clear(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Close the specified plots.
  */
 static int
-cmd_closepl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_closepl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     int i;
     struct plot_list *plp;
@@ -763,7 +762,7 @@ cmd_closepl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Draw the specified plots.
  */
 static int
-cmd_draw(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     int i;
     struct plot_list *plp;
@@ -796,7 +795,7 @@ cmd_draw(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Erase the specified plots.
  */
 static int
-cmd_erase(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_erase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     int i;
     struct plot_list *plp;
@@ -829,7 +828,7 @@ cmd_erase(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Print a list of the load plot objects.
  */
 static int
-cmd_list(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_list(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **UNUSED(argv))
 {
     struct plot_list *plp;
     int len;
@@ -872,7 +871,7 @@ cmd_list(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * (i.e., a zoom out) which is accomplished by reducing Viewscale in half.
  */
 static int
-cmd_zoom(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_zoom(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     int status;
     double val;
@@ -897,7 +896,7 @@ cmd_zoom(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 
 static int
-cmd_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_reset(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char **UNUSED(argv))
 {
     size_reset();
     new_mats();
@@ -914,7 +913,7 @@ cmd_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * make that point the new view center.
  */
 static int
-cmd_slewview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_slewview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     int status;
     vect_t view_pos;
@@ -943,7 +942,7 @@ cmd_slewview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 /* set view using azimuth, elevation and twist angles */
 static int
-cmd_aetview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_aetview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     fastf_t azimuth = (fastf_t)0.0;
     fastf_t elevation = (fastf_t)0.0;
@@ -1006,7 +1005,7 @@ cmd_aetview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Exit.
  */
 static int
-cmd_exit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_exit(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char **UNUSED(argv))
 {
     if (dmp != DM_NULL)
 	DM_CLOSE(dmp);
@@ -1065,15 +1064,15 @@ static int
 X_dmInit()
 {
     int windowbounds[6] = { 2047, -2048, 2047, -2048, 2047, -2048 };
-    char *av[4];
+    const char *av[4];
 
     av[0] = "X_open";
     av[1] = "-i";
     av[2] = "sampler_bind_dm";
     av[3] = (char *)NULL;
 
-    if ((dmp = DM_OPEN(interp, DM_TYPE_X, 3, av)) == DM_NULL) {
-	Tcl_AppendResult(interp, "Failed to open a display manager\n", (char *)NULL);
+    if ((dmp = DM_OPEN(INTERP, DM_TYPE_X, 3, av)) == DM_NULL) {
+	Tcl_AppendResult(INTERP, "Failed to open a display manager\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
@@ -1098,8 +1097,8 @@ Ogl_dmInit()
     av[2] = "sampler_bind_dm";
     av[3] = (char *)NULL;
 
-    if ((dmp = DM_OPEN(interp, DM_TYPE_OGL, 3, av)) == DM_NULL) {
-	Tcl_AppendResult(interp, "Failed to open a display manager\n", (char *)NULL);
+    if ((dmp = DM_OPEN(INTERP, DM_TYPE_OGL, 3, (const char **)av)) == DM_NULL) {
+	Tcl_AppendResult(INTERP, "Failed to open a display manager\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
@@ -1119,7 +1118,7 @@ appInit(Tcl_Interp *_interp)
     struct bu_vls str2;
 
     /* libdm uses interp */
-    interp = _interp;
+    INTERP = _interp;
 
     switch (dm_type) {
 	case DM_TYPE_OGL:
@@ -1130,17 +1129,17 @@ appInit(Tcl_Interp *_interp)
     }
 
     /* Evaluates init.tcl */
-    if (Tcl_Init(interp) == TCL_ERROR)
-	bu_exit (1, "Tcl_Init error %s\n", Tcl_GetStringResult(interp));
+    if (Tcl_Init(_interp) == TCL_ERROR)
+	bu_exit (1, "Tcl_Init error %s\n", Tcl_GetStringResult(_interp));
 
     /*
      * Creates the main window and registers all of Tk's commands
      * into the interpreter.
      */
-    if (Tk_Init(interp) == TCL_ERROR)
-	bu_exit (1, "Tk_Init error %s\n", Tcl_GetStringResult(interp));
+    if (Tk_Init(_interp) == TCL_ERROR)
+	bu_exit (1, "Tk_Init error %s\n", Tcl_GetStringResult(_interp));
 
-    if ((tkwin = Tk_MainWindow(interp)) == NULL)
+    if ((tkwin = Tk_MainWindow(_interp)) == NULL)
 	bu_exit (1, "appInit: Failed to get main window.\n");
 
     /* Locate the BRL-CAD-specific Tcl scripts */
@@ -1151,12 +1150,12 @@ appInit(Tcl_Interp *_interp)
     bu_vls_printf(&str2, "%s/pl-dm", filename);
     bu_vls_printf(&str, "wm withdraw .; set auto_path [linsert $auto_path 0 %s %s]",
 		  bu_vls_addr(&str2), filename);
-    (void)Tcl_Eval(interp, bu_vls_addr(&str));
+    (void)Tcl_Eval(_interp, bu_vls_addr(&str));
     bu_vls_free(&str);
     bu_vls_free(&str2);
 
     /* application commands */
-    cmd_setup(interp, cmdtab);
+    cmd_setup(_interp, cmdtab);
 
     /* open display manager */
     switch (dm_type) {
@@ -1185,14 +1184,13 @@ main(int argc, char *argv[])
     MAT_IDN(model2view);
     MAT_IDN(view2model);
 
-    if (cmd_openpl((ClientData)NULL, (Tcl_Interp *)NULL,
-		   argc-bu_optind+1, argv+bu_optind-1) == TCL_ERROR)
+    if (cmd_openpl((ClientData)NULL, (Tcl_Interp *)NULL, argc-bu_optind+1, argv+bu_optind-1) == TCL_ERROR)
 	bu_exit (1, NULL);
 
     argv[1] = (char *)NULL;
     Tk_Main(1, argv, appInit);
 
-    bu_exit (0, NULL);
+    return 0;
 }
 
 

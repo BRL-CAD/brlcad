@@ -230,15 +230,16 @@ menubars, they may not be drawn with indicators on some platforms, due
 to system restrictions.
 .SS "SPECIAL MENUS IN MENUBARS"
 .PP
-Certain menus in a menubar will be treated specially.  On the Macintosh,
-access to the special Application and Help menus is provided. On Windows,
-access to the Windows System menu in each window is provided. On X Windows,
-a special right-justified help menu is provided. In all cases, these
-menus must be created with the command name of the menubar menu concatenated
-with the special name. So for a menubar named .menubar, on the Macintosh,
-the special menus would be .menubar.apple and .menubar.help; on Windows,
-the special menu would be .menubar.system; on X Windows, the help
-menu would be .menubar.help.
+Certain menus in a menubar will be treated specially.  On the
+Macintosh, access to the special Application and Help menus is
+provided. On Windows, access to the Windows System menu in each window
+is provided. On X Windows, a special right-justified help menu may be
+provided if Motif menu compatibility is enabled. In all cases, these
+menus must be created with the command name of the menubar menu
+concatenated with the special name. So for a menubar named .menubar,
+on the Macintosh, the special menus would be .menubar.apple
+and .menubar.help; on Windows, the special menu would be .menubar.system;
+on X Windows, the help menu would be .menubar.help.
 .PP
 When Tk sees a .menubar.apple menu on the Macintosh, that menu's contents
 make up the first items of the Application menu whenever the window
@@ -258,8 +259,11 @@ Alt+Spacebar.  Due to limitations in the Windows API, any font changes,
 colors, images, bitmaps, or tearoff images will not appear in the
 system menu.
 .PP
-When Tk see a Help menu on X Windows, the menu is moved to be last in
-the menubar and is right justified.
+When Tk sees a Help menu on X Windows and Motif menu compatibility is
+enabled the menu is moved to be last in the menubar and is right
+justified. Motif menu compatibility is enabled by setting the Tk option
+\fB*Menu.useMotifHelp\fR to true or by calling
+\fBtk::classic::restore menu\fR.
 .SH "CLONES"
 .PP
 When a menu is set as a menubar for a toplevel window, or when a menu
@@ -269,7 +273,7 @@ configuration of the original are reflected in the
 clone. Additionally, any cascades that are pointed to are also cloned
 so that menu traversal will work right. Clones are destroyed when
 either the tearoff or menubar goes away, or when the original menu is
-destroyed. 
+destroyed.
 .SH "WIDGET COMMAND"
 .PP
 The \fBmenu\fR command creates a new Tcl command whose

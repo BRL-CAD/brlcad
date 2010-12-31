@@ -38,21 +38,21 @@ cyl( entityno )
     vect_t		height;
     vect_t		hdir;		/* direction in which to grow height */
     fastf_t		scale_height=0.0;
-    fastf_t		x1;
-    fastf_t		y1;
-    fastf_t		z1;
-    fastf_t		x2;
-    fastf_t		y2;
-    fastf_t		z2;
+    fastf_t		x_1;
+    fastf_t		y_1;
+    fastf_t		z_1;
+    fastf_t		x_2;
+    fastf_t		y_2;
+    fastf_t		z_2;
     int		sol_num;		/* IGES solid type number */
 
     /* Default values */
-    x1 = 0.0;
-    y1 = 0.0;
-    z1 = 0.0;
-    x2 = 0.0;
-    y2 = 0.0;
-    z2 = 1.0;
+    x_1 = 0.0;
+    y_1 = 0.0;
+    z_1 = 0.0;
+    x_2 = 0.0;
+    y_2 = 0.0;
+    z_2 = 1.0;
 
     /* Acquiring Data */
     if ( dir[entityno]->param <= pstart )
@@ -65,23 +65,23 @@ cyl( entityno )
     Readint( &sol_num, "" );
     Readcnv( &scale_height, "" );
     Readcnv( &radius, "" );
-    Readcnv( &x1, "" );
-    Readcnv( &y1, "" );
-    Readcnv( &z1, "" );
-    Readcnv( &x2, "" );
-    Readcnv( &y2, "" );
-    Readcnv( &z2, "" );
+    Readcnv( &x_1, "" );
+    Readcnv( &y_1, "" );
+    Readcnv( &z_1, "" );
+    Readcnv( &x_2, "" );
+    Readcnv( &y_2, "" );
+    Readcnv( &z_2, "" );
 
-    if ( radius <= 0.0 || scale_height <= 0.0 )
+    if ( radius < SMALL_FASTF || scale_height < SMALL_FASTF )
     {
 	bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	if ( radius == 0.0 )
+	if ( NEAR_ZERO(radius, SMALL_FASTF) )
 	{
 	    bu_log( "\tradius of cylinder is zero!!!\n" );
 	    return 0;
 	}
-	if ( scale_height == 0.0 )
+	if ( NEAR_ZERO(scale_height, SMALL_FASTF) )
 	{
 	    bu_log( "\theight of cylinder is zero!!!\n" );
 	    return 0;
@@ -97,9 +97,9 @@ cyl( entityno )
 	{
 	    bu_log( "\tUsing absolute value of a negative height and reversing axis direction\n" );
 	    scale_height = (-scale_height);
-	    x2 = (-x2);
-	    y2 = (-y2);
-	    z2 = (-z2);
+	    x_2 = (-x_2);
+	    y_2 = (-y_2);
+	    z_2 = (-z_2);
 	}
 
     }
@@ -112,8 +112,8 @@ cyl( entityno )
      * solid is called.
      */
 
-    VSET(base, x1, y1, z1);
-    VSET(hdir, x2, y2, z2);
+    VSET(base, x_1, y_1, z_1);
+    VSET(hdir, x_2, y_2, z_2);
     VUNITIZE(hdir);
 
     /* Multiply the hdir * scale_height to obtain height. */

@@ -991,11 +991,11 @@ dnl Determine whether we are using the MIPSpro compiler on SGI systems
 if test "x$build_vendor" = "xsgi" ; then
     AC_MSG_CHECKING([whether we are using the MIPSpro compiler])
     using_mipspro=no
-    AC_LINK_IFELSE([#if defined(sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__)
+    AC_LINK_IFELSE([AC_LANG_SOURCE([#if defined(sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__)
 If we get here, we are using the MIPSPro compiler (and the link should fail).
 #endif
 int main() { return 0; }
-    ], [using_mipspro=no], [using_mipspro=yes])
+    ])], [using_mipspro=no], [using_mipspro=yes])
     AC_MSG_RESULT($using_mipspro)
     if test "x$using_mipspro" = "xyes" ; then
 	compiler=sgi
@@ -1006,11 +1006,11 @@ dnl Determine whether we are using the SUNWspro Sun Workshop compiler
 if test "x$build_vendor" = "xsun" ; then
     AC_MSG_CHECKING([whether we are using the SUNWspro compiler])
     using_sunpro=no
-    AC_LINK_IFELSE([#if defined(sun) && defined(__SUNPRO_C) && !defined(__GNUC__)
+    AC_LINK_IFELSE([AC_LANG_SOURCE([#if defined(sun) && defined(__SUNPRO_C) && !defined(__GNUC__)
 If we get here, we are using the SUNWspro compiler (and the link should fail).
 #endif
 int main() { return 0; }
-    ], [using_sunpro=no], [using_sunpro=yes])
+    ], [using_sunpro=no], [using_sunpro=yes])])
     AC_MSG_RESULT($using_sunpro)
     if test "x$using_sunpro" = "xyes" ; then
 	AR="CC -xar"
@@ -1520,6 +1520,8 @@ dnl fi
 # math.h, setjmp.h, signal.h, stdarg.h, stddef.h, stdio.h, stdlib.h,
 # string.h, time.h
 
+# non-C89 headers that seem to be cross-platform safe: fcntl.h
+
 # C95 headers: wchar.h, wctype.h, iso646.h
 
 # C99 headers: complex.h, fenv.h, inttypes.h, stdbool.h, stdint.h,
@@ -1560,7 +1562,6 @@ AC_CHECK_HEADERS( \
 	pwd.h \
 	rle.h \
 	sched.h \
-	sgtty.h \
 	stdint.h \
 	sys/file.h \
 	sys/_ioctl.h \
@@ -1600,6 +1601,7 @@ AC_CHECK_HEADERS( \
 	ieeefp.h \
 )
 
+# these are needed to test for boost (used by BUILD_BOOST test)
 AC_LANG_PUSH([C++])
 AC_CHECK_HEADERS( \
 	limits \
@@ -2098,6 +2100,7 @@ if test "x$bc_build_warnings" != "xno" ; then
 	# -Wstrict-prototypes -Wold-style-definition -Wshorten-64-to-32 -Wmissing-field-initializers
 	# -Wmissing-noreturn -Wredundant-decls
 	# -Wformat=2 (after bu_fopen_uniq() is obsolete)
+	# -Wparentheses -Wswitch-default -Wswitch-enum
 
 	if test "x$bc_warning_flag_works" = "xno" ; then
 		AC_MSG_WARN([Don't know how to output verbose warnings with this compiler])
@@ -2222,7 +2225,6 @@ AC_CHECK_FUNCS(\
 	mkstemp \
 	pipe \
 	popen \
-	random \
 	sbrk \
 	setenv \
 	setpgid \
@@ -3830,7 +3832,7 @@ AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_OPENNURBS, [test "x$build_brlcad_opennurbs" = "xyes"])
-AM_CONDITIONAL(BUILD_BOOST, [test "x$ac_cv_header_limit" = "xyes" && test "x$ac_cv_header_istream" = "xyes"])
+AM_CONDITIONAL(BUILD_BOOST, [test "x$ac_cv_header_limits" = "xyes" && test "x$ac_cv_header_istream" = "xyes"])
 AM_CONDITIONAL(BUILD_STEP, [test "x$build_brlcad_step" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_TNT, [test "x$build_brlcad_tnt" = "xyes"])

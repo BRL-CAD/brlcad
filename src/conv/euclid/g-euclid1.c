@@ -68,11 +68,11 @@ struct facets
 };
 
 void
-fastf_print(FILE *fp_out, int length, fastf_t f)
+fastf_print(FILE *fp_out, size_t length, fastf_t f)
 {
     char buffer[128];
     char *ptr;
-    int i;
+    size_t i;
     size_t buf_len;
 
     sprintf( &buffer[1], "%f", f );
@@ -93,7 +93,7 @@ fastf_print(FILE *fp_out, int length, fastf_t f)
     }
 
     ptr = strchr( buffer, '.' );
-    if ( (ptr - buffer) > length )
+    if ( (size_t)(ptr - buffer) > length )
     {
 	bu_exit(1, "ERROR: Value (%f) too large for format length (%d)\n", f, length );
     }
@@ -104,7 +104,7 @@ fastf_print(FILE *fp_out, int length, fastf_t f)
 
 /* only used with SIGALRM */
 void
-handler(int code)
+handler(int UNUSED(code))
 {
     bu_exit( EXIT_FAILURE, "ALARM boolean evaluation aborted\n" );
 }
@@ -421,7 +421,7 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp, FILE *fp_out
  *  This routine must be prepared to run in parallel.
  */
 union tree *
-do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
     FILE			*fp_out;
     struct nmgregion	*r;
@@ -491,11 +491,6 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
 	/* Now, make a new, clean model structure for next pass. */
 	*tsp->ts_m = nmg_mm();
-
-#if MEMORY_LEAK_CHECKING
-	bu_prmem("After Failure:");
-#endif
-
 
 	bu_log( "FAILED: %s\n", dir->d_namep );
 
@@ -578,10 +573,6 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
-#if MEMORY_LEAK_CHECKING
-    bu_prmem("After Success:");
-#endif
-
  out:
     /* close any output file */
     if ( fp_out )
@@ -604,10 +595,6 @@ main(int argc, char **argv)
     double		percent;
 
     bu_setlinebuf( stderr );
-
-#if MEMORY_LEAK_CHECKING
-    rt_g.debug |= DEBUG_MEM_FULL;
-#endif
 
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
@@ -702,10 +689,6 @@ main(int argc, char **argv)
 
     nmg_km( the_model );
 
-#if MEMORY_LEAK_CHECKING
-    bu_prmem("After conversions");
-#endif
-
     percent = 0;
     if ( regions_tried > 0 )
 	percent = ((double)regions_converted * 100) / regions_tried;
@@ -720,10 +703,6 @@ main(int argc, char **argv)
     /* Release dynamic storage */
     rt_vlist_cleanup();
     db_close(dbip);
-
-#if MEMORY_LEAK_CHECKING
-    bu_prmem("After complete G-EUCLID conversion");
-#endif
 
     return 0;
 }

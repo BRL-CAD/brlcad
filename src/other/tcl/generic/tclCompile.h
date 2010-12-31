@@ -139,6 +139,10 @@ typedef struct ECL {
 
 typedef struct ExtCmdLoc {
     int type;			/* Context type. */
+    int start;                  /* Starting line for compiled script. Needed
+				 * for the extended recompile check in
+				 * TclCompEvalObj. */
+
     Tcl_Obj *path;		/* Path of the sourced file the command is
 				 * in. */
     ECL *loc;			/* Command word locations (lines). */

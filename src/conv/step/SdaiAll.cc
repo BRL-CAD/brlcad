@@ -9,9 +9,6 @@
 void
 InitSchemasAndEnts (Registry & reg)
 {
-    Interface_spec_ptr is;
-    Used_item_ptr ui;
-    Referenced_item_ptr ri;
     Uniqueness_rule_ptr ur;
     Where_rule_ptr wr;
     Global_rule_ptr gr;

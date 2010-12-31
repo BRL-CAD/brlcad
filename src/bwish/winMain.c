@@ -20,7 +20,7 @@
  */
 /** @file winMain.c
  *
- *  This file provides the WinMain() function for BWISH.
+ * This file provides the WinMain() function for BWISH.
  *
  */
 /*
@@ -77,13 +77,13 @@ extern int Cad_AppInit(Tcl_Interp *interp);
  *
  * WinMain --
  *
- *	Main entry point from Windows.
+ * Main entry point from Windows.
  *
  * Results:
- *	Returns false if initialization fails, otherwise it never returns.
+ * Returns false if initialization fails, otherwise it never returns.
  *
  * Side effects:
- *	Just about anything, since from here we call arbitrary Tcl code.
+ * Just about anything, since from here we call arbitrary Tcl code.
  *
  *----------------------------------------------------------------------
  */
@@ -91,8 +91,8 @@ extern int Cad_AppInit(Tcl_Interp *interp);
 int APIENTRY
 WinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
-	LPSTR	  lpszCmdLine,
-	int	  nCmdShow)
+	LPSTR lpszCmdLine,
+	int nCmdShow)
 {
     char **argv;
     int argc;
@@ -140,21 +140,22 @@ WinMain(HINSTANCE hInstance,
     return 1;
 }
 
+
 /*
  *----------------------------------------------------------------------
  *
  * Tcl_AppInit --
  *
- *	This procedure performs application-specific initialization. Most
- *	applications, especially those that incorporate additional packages,
- *	will have their own version of this procedure.
+ * This procedure performs application-specific initialization. Most
+ * applications, especially those that incorporate additional packages,
+ * will have their own version of this procedure.
  *
  * Results:
- *	Returns a standard Tcl completion code, and leaves an error message in
- *	the interp's result if an error occurs.
+ * Returns a standard Tcl completion code, and leaves an error message in
+ * the interp's result if an error occurs.
  *
  * Side effects:
- *	Depends on the startup script.
+ * Depends on the startup script.
  *
  *----------------------------------------------------------------------
  */
@@ -185,7 +186,7 @@ Tcl_AppInit(Tcl_Interp *interp)
     Tcl_SetVar(interp, "tcl_rcFileName", "~/bwishrc.tcl", TCL_GLOBAL_ONLY);
     return TCL_OK;
 
- error:
+error:
     MessageBeep(MB_ICONEXCLAMATION);
     MessageBox(NULL, (LPCWSTR)Tcl_GetStringResult(interp), (LPCWSTR)"Error in bwish",
 	       MB_ICONSTOP | MB_OK | MB_TASKMODAL | MB_SETFOREGROUND);
@@ -198,18 +199,19 @@ Tcl_AppInit(Tcl_Interp *interp)
     return TCL_ERROR;
 }
 
+
 /*
  *----------------------------------------------------------------------
  *
  * BwishPanic --
  *
- *	Display a message and exit.
+ * Display a message and exit.
  *
  * Results:
- *	None.
+ * None.
  *
  * Side effects:
- *	Exits the program.
+ * Exits the program.
  *
  *----------------------------------------------------------------------
  */
@@ -231,6 +233,7 @@ BwishPanic(const char *format, ...)
 #endif
     ExitProcess(1);
 }
+
 
 /*
  * Local Variables:

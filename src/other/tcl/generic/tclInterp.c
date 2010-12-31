@@ -2817,8 +2817,25 @@ Tcl_MakeSafe(
 {
     Tcl_Channel chan;		/* Channel to remove from safe interpreter. */
     Interp *iPtr = (Interp *) interp;
+    Tcl_Interp *master = ((InterpInfo*) iPtr->interpInfo)->slave.masterInterp;
 
     TclHideUnsafeCommands(interp);
+
+    if (master != NULL) {
+	/*
+	 * Alias these function implementations in the slave to those in the
+	 * master; the overall implementations are safe, but they're normally
+	 * defined by init.tcl which is not sourced by safe interpreters.
+	 * Assume these functions all work. [Bug 2895741]
+	 */
+
+	(void) Tcl_Eval(interp,
+		"namespace eval ::tcl {namespace eval mathfunc {}}");
+	(void) Tcl_CreateAlias(interp, "::tcl::mathfunc::min", master,
+		"::tcl::mathfunc::min", 0, NULL);
+	(void) Tcl_CreateAlias(interp, "::tcl::mathfunc::max", master,
+		"::tcl::mathfunc::max", 0, NULL);
+    }
 
     iPtr->flags |= SAFE_INTERP;
 
@@ -3603,10 +3620,20 @@ TimeLimitCallback(
     ClientData clientData)
 {
     Tcl_Interp *interp = clientData;
+    Interp *iPtr = clientData;
     int code;
 
     Tcl_Preserve(interp);
-    ((Interp *)interp)->limit.timeEvent = NULL;
+    iPtr->limit.timeEvent = NULL;
+
+    /*
+     * Must reset the granularity ticker here to force an immediate full
+     * check. This is OK because we're swallowing the cost in the overall cost
+     * of the event loop. [Bug 2891362]
+     */
+
+    iPtr->limit.granularityTicker = 0;
+
     code = Tcl_LimitCheck(interp);
     if (code != TCL_OK) {
 	Tcl_AddErrorInfo(interp, "\n    (while waiting for event)");

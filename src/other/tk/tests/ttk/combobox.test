@@ -56,8 +56,8 @@ test combobox-1890211 "ComboboxSelected event after listbox unposted" -body {
     lappend result Start 0 [.cb get]
     ttk::combobox::Post .cb
     lappend result Post [winfo ismapped .cb.popdown] [.cb get]
-    .cb.popdown.l selection clear 0 end; .cb.popdown.l selection set 1
-    ttk::combobox::LBSelected .cb.popdown.l
+    .cb.popdown.f.l selection clear 0 end; .cb.popdown.f.l selection set 1
+    ttk::combobox::LBSelected .cb.popdown.f.l
     lappend result Select [winfo ismapped .cb.popdown] [.cb get]
     update
     set result

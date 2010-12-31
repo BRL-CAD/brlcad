@@ -39,12 +39,12 @@ int scanlen;			/* length of infile (and buffer) scanlines */
 FILE *buffp;
 static char *file_name;
 
-int xin = 512;
-int yin = 512;
-int xout = 512;
-int yout = 512;
+size_t xin = 512;
+size_t yin = 512;
+size_t xout = 512;
+size_t yout = 512;
 
-int border_inset = 0;		/* Sometimes border pixels are bad */
+size_t border_inset = 0;	/* Sometimes border pixels are bad */
 
 void load_buffer(void), write_buffer(void);
 
@@ -124,9 +124,9 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    int ydup;
-    int i;
-    int y;
+    size_t ydup;
+    size_t i;
+    size_t y;
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);
@@ -142,7 +142,7 @@ main(int argc, char **argv)
 	bu_exit (3, NULL);
     }
 
-    if (border_inset < 0 || border_inset >= xin) {
+    if (border_inset >= xin) {
 	fprintf(stderr, "pixembed: border inset out of range\n");
 	bu_exit (4, NULL);
     }
@@ -182,14 +182,16 @@ main(int argc, char **argv)
 void
 load_buffer(void)
 {
+    size_t ret;
     unsigned char r, g, b;
     unsigned char *cp;
-    int i;
-    int inbase;
+    size_t i;
+    size_t inbase;
 
     inbase = (xout - xin) / 2;
 
-    if (fread(obuf + inbase*3, 3, xin, buffp) != xin) {
+    ret = fread(obuf + inbase*3, 3, xin, buffp);
+    if (ret != xin) {
 	perror("pixembed fread");
 	bu_exit (7, NULL);
     }

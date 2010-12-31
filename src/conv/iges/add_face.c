@@ -104,7 +104,7 @@ Add_face_to_shell( s, entityno, face_orient )
 
 	for ( loop=0; loop<no_of_loops; loop++ )
 	{
-	    if ( !Add_nurb_loop_to_face( s, fu, ((loop_de[loop]-1)/2), face_orient ))
+	    if ( !Add_nurb_loop_to_face( s, fu, ((loop_de[loop]-1)/2) ))
 		goto err;
 	}
 	NMG_CK_FACE_G_SNURB( fu->f_p->g.snurb_p );

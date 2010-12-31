@@ -35,8 +35,8 @@ FILE *out1;
 FILE *out2;
 
 char *buf;
-int file_width = 720;
-int bytes_per_sample = 3;
+size_t file_width = 720;
+size_t bytes_per_sample = 3;
 int doubleit = 0;
 
 char *even_file = "even.pix";
@@ -89,7 +89,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    int i;
+    size_t ret;
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
@@ -109,25 +109,40 @@ main(int argc, char **argv)
 
     for (;;) {
 	/* Even line */
-	if (fread(buf, bytes_per_sample, file_width, stdin) != file_width)
+	ret = fread(buf, bytes_per_sample, file_width, stdin);
+	if (ret != file_width)
 	    break;
-	for (i=0; i <= doubleit; i++) {
-	    if (fwrite(buf, bytes_per_sample, file_width, out1) != file_width) {
+	ret = fwrite(buf, bytes_per_sample, file_width, out1);
+	if (ret != file_width) {
+	    perror("fwrite even");
+	    bu_exit (1, NULL);
+	}
+	if (doubleit) {
+	    ret = fwrite(buf, bytes_per_sample, file_width, out1);
+	    if (ret != file_width) {
 		perror("fwrite even");
 		bu_exit (1, NULL);
 	    }
 	}
 	/* Odd line */
-	if (fread(buf, bytes_per_sample, file_width, stdin) != file_width)
+	ret = fread(buf, bytes_per_sample, file_width, stdin);
+	if (ret != file_width)
 	    break;
-	for (i=0; i <= doubleit; i++) {
-	    if (fwrite(buf, bytes_per_sample, file_width, out2) != file_width) {
+	ret = fwrite(buf, bytes_per_sample, file_width, out2);
+	if (ret != file_width) {
+	    perror("fwrite odd");
+	    bu_exit (1, NULL);
+	}
+	if (doubleit) {
+	    ret = fwrite(buf, bytes_per_sample, file_width, out2);
+	    if (ret != file_width) {
 		perror("fwrite odd");
 		bu_exit (1, NULL);
 	    }
 	}
     }
-    bu_exit (0, NULL);
+
+    return 0;
 }
 
 

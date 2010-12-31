@@ -18,6 +18,7 @@ set(LIBBN_SOURCES
     rand.c
     randmt.c
     scale.c
+    screengrab.c
     sphmap.c
     symbol.c
     tabdata.c
@@ -41,3 +42,10 @@ add_definitions(
 )
 
 add_library(libbn ${LIBBN_SOURCES})
+
+set(BNTESTER_SOURCES
+    bntester.c
+)
+
+add_executable(bntester ${BNTESTER_SOURCES})
+target_link_libraries(bntester libbu libbn)

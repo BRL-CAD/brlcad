@@ -143,11 +143,6 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (argc > MAXARGS) {
-	bu_vls_printf(&gedp->ged_result_str, "ERROR: too many arguments\n");
-	return GED_ERROR;
-    }
-
     /* First, clear any existing counts */
     for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)

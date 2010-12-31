@@ -20,54 +20,53 @@
  */
 /** @file pl-fb.c
  *
- *	Program to take 3-D UNIX plot data and output on a framebuffer.
- *
- *  Authors -
- *	Joseph C. Pistritto
- *	Michael John Muuss
- *	Douglas A. Gwyn
+ * Program to take 3-D UNIX plot data and output on a framebuffer.
  *
  * Function:
- * 	Reads device-independent plot data from specified input file;
- * 	for each frame, builds an image file containing raster data then
- * 	sends the frame output to the output device.
  *
- * 	Edge-limiting is done here; use "rot" if clipping is desired.
+ * Reads device-independent plot data from specified input file; for
+ * each frame, builds an image file containing raster data then sends
+ * the frame output to the output device.
+ *
+ * Edge-limiting is done here; use "rot" if clipping is desired.
  *
  * Method:
- * 	Inputs vector data and builds a rasterization descriptor for
- * 	each visible stroke.  (Strokes are limited to frame boundaries.)
- * 	X goes down the page, Y goes from left to right.  To obtain a
- * 	different orientation, pre-process data with the "rot" filter.
- * 	(Quadrant 1 graphics devices)
  *
- * 	The frame image file of SCANS scans is considered artificially
- * 	divided into BANDS bands, each containing lines_per_band scans.
- * 	Each band has a linked list of descriptors for
- * 	not-yet-rasterized strokes that start in the band.
+ * Inputs vector data and builds a rasterization descriptor for each
+ * visible stroke.  (Strokes are limited to frame boundaries.)  X goes
+ * down the page, Y goes from left to right.  To obtain a different
+ * orientation, pre-process data with the "rot" filter.  (Quadrant 1
+ * graphics devices)
  *
- * 	Space for descriptors is obtained via "malloc".  When no more
- * 	space is available, the image file is updated as follows, then
- * 	"malloc" is tried again ("must" work the second time):
+ * The frame image file of SCANS scans is considered artificially
+ * divided into BANDS bands, each containing lines_per_band scans.
+ * Each band has a linked list of descriptors for not-yet-rasterized
+ * strokes that start in the band.
  *
- * 	Each band in increasing X order becomes "active"; if no
- * 	descriptors exist for the band it is skipped, otherwise its
- * 	existing raster data is re-read from the image file into a
- * 	buffer and each descriptor is processed to rasterize its stroke.
- * 	If the stroke terminates in the band its descriptor is freed,
- * 	otherwise the descriptor is linked into the following band's
- * 	list.  When the descriptor list for the active band becomes
- * 	empty (must happen), the band's raster data is flushed back to
- * 	the image file and the next band becomes active.  This process
- * 	continues until all vectors have been input and rasterized.
+ * Space for descriptors is obtained via "malloc".  When no more space
+ * is available, the image file is updated as follows, then "malloc"
+ * is tried again ("must" work the second time):
+ *
+ * Each band in increasing X order becomes "active"; if no descriptors
+ * exist for the band it is skipped, otherwise its existing raster
+ * data is re-read from the image file into a buffer and each
+ * descriptor is processed to rasterize its stroke.  If the stroke
+ * terminates in the band its descriptor is freed, otherwise the
+ * descriptor is linked into the following band's list.  When the
+ * descriptor list for the active band becomes empty (must happen),
+ * the band's raster data is flushed back to the image file and the
+ * next band becomes active.  This process continues until all vectors
+ * have been input and rasterized.
  *
  * Acknowledgment:
- * 	Based rather heavily on Doug Gwyn's Versatec PLOT rasterizer VPL.C
- * 	which was based on Mike Muuss's Versatec TIGpack interpreter.
  *
- *  Note:
- *	UNIX-Plot files are defined to be machine-independent, with
- *	"little-endian" (eg, VAX) byte-ordering.
+ * Based rather heavily on Doug Gwyn's Versatec PLOT rasterizer VPL.C
+ * which was based on Mike Muuss's Versatec TIGpack interpreter.
+ *
+ * Note:
+ *
+ * UNIX-Plot files are defined to be machine-independent, with
+ * "little-endian" (eg, VAX) byte-ordering.
  *
  */
 
@@ -115,184 +114,186 @@
 
 */
 
-/*	Device Parameters				 */
+/* Device Parameters */
 
 /* the following parameter should be tweaked for fine-tuning */
-#define	X_CHAR_SIZE	(8)		/* pixels per char horizontal */
-#define	Y_CHAR_SIZE	(10)		/* pixels per char vertical */
+#define X_CHAR_SIZE (8)		/* pixels per char horizontal */
+#define Y_CHAR_SIZE (10)	/* pixels per char vertical */
 
-#define	CLEAR	0			/* value for no intensity */
+#define CLEAR 0 /* value for no intensity */
 
 
-/*	Program constants computed from device parameters:	*/
-#define BANDS	(Nscanlines / lines_per_band)		/* # of "bands" */
-#define BANDSLOP	(BANDS+2)		/* # bands in array */
-#define BYTES	(Npixels * sizeof(RGBpixel))	/* max data bytes per scan */
-#define XMAX	(Npixels - 1)
-#define YMAX	(Nscanlines - 1)
+/* Program constants computed from device parameters:	*/
+#define BANDS (Nscanlines / lines_per_band)	/* # of "bands" */
+#define BANDSLOP (BANDS+2)			/* # bands in array */
+#define BYTES (Npixels * sizeof(RGBpixel))	/* max data bytes per scan */
+#define XMAX (Npixels - 1)
+#define YMAX (Nscanlines - 1)
 
 /* helper macros */
-#define GET_STROKE(vp)    { \
-			while ( ((vp)=freep) == STROKE_NULL ) \
+#define GET_STROKE(vp) { \
+			while (((vp)=freep) == STROKE_NULL) \
 				get_strokes(); \
 			freep = (vp)->freep; \
 			CK_STROKE(vp); \
 			(vp)->freep = STROKE_NULL; }
 
-#define FREE_STROKE(vp)  { \
+#define FREE_STROKE(vp) { \
 			CK_STROKE(vp); \
 			(vp)->freep = freep; \
 			freep = (vp); }
 
 
-/*	Data structure definitions:	*/
+/* Data structure definitions:	*/
 
 #ifdef pdp11
-typedef char	tiny;			/* for very small numbers */
+typedef char tiny;		/* for very small numbers */
 #else
-typedef	short	tiny;			/* for very small numbers */
+typedef short tiny;		/* for very small numbers */
 #endif
 
-typedef int	bool;			/* boolean data type */
-#define false	0
-#define true	1
+typedef int bool;		/* boolean data type */
+#define false 0
+#define true 1
 
-RGBpixel	cur_color = { 255, 255, 255 };
+RGBpixel cur_color = { 255, 255, 255 };
 
 typedef struct {
-    short		x;
-    short		y;
-} coords; 				/* Cartesian coordinates */
+    short x;
+    short y;
+} coords; 			/* Cartesian coordinates */
 
 typedef struct descr {
-    long		magic;
-    struct descr	*next;		/* next in list, or NULL */
-    coords		pixel;		/* starting scan, nib */
-    tiny		xsign;		/* 0 or +1 */
-    tiny		ysign;		/* -1, 0, or +1 */
-    bool		ymajor; 	/* true iff Y is major dir. */
+    long magic;
+    struct descr *next;		/* next in list, or NULL */
+    coords pixel;		/* starting scan, nib */
+    tiny xsign;			/* 0 or +1 */
+    tiny ysign;			/* -1, 0, or +1 */
+    bool ymajor; 		/* true iff Y is major dir. */
 #undef major
 #undef minor
-    short		major;		/* major dir delta (nonneg) */
-    short		minor;		/* minor dir delta (nonneg) */
-    short		e;		/* DDA error accumulator */
-    short		de;		/* increment for `e' */
-    RGBpixel	col;		/* COLOR of this vector */
-    struct descr	*freep;		/* next in free list, or NULL */
-} stroke; 				/* rasterization descriptor */
-#define STROKE_MAGIC	0x12997601	/* Magic number */
+    short major;		/* major dir delta (nonneg) */
+    short minor;		/* minor dir delta (nonneg) */
+    short e;			/* DDA error accumulator */
+    short de;			/* increment for `e' */
+    RGBpixel col;		/* COLOR of this vector */
+    struct descr *freep;	/* next in free list, or NULL */
+} stroke; 			/* rasterization descriptor */
+#define STROKE_MAGIC 0x12997601	/* Magic number */
 
-#define	CK_STROKE(_sp)	{ \
-	if ((_sp)->magic != STROKE_MAGIC)  {  \
+#define CK_STROKE(_sp) { \
+	if ((_sp)->magic != STROKE_MAGIC) {  \
 		fprintf(stderr, "Bad stroke struct, ptr=%p, magic was x%lx, s/b=x%lx, at file %s, line %d\n",  \
 			(void *)(_sp), (long)((_sp)->magic), (long)STROKE_MAGIC,  \
-			__FILE__, __LINE__ );  \
+			__FILE__, __LINE__);  \
 		abort();  \
 	} }
 
-/*	Global data allocations:	*/
+/* Global data allocations:	*/
 
 /* Space is used strictly to compute delta and deltao2
  * and to compute integer screen coordinates from them.
  * We thus make these variables only floating point.
  */
 static struct {
-    double		left;		/* window edges */
-    double		bottom;
-    double		right;
-    double		top;
+    double left;		/* window edges */
+    double bottom;
+    double right;
+    double top;
 } space;
-static double	delta;			/* larger window dimension */
-static double	deltao2;		/* delta / 2 */
+static double delta;		/* larger window dimension */
+static double deltao2;		/* delta / 2 */
 
-struct	relvect {
-    short	x, y;			/* x, y values (255, 255 is end) */
+struct relvect {
+    short x, y;			/* x, y values (255, 255 is end) */
 };
 
-#define	END	-1, -1			/* end of stroke description */
-#define	NIL	0, 0
+
+#define END -1, -1		/* end of stroke description */
+#define NIL 0, 0
 #define min(a, b)	((a)<(b)?(a):(b))
 /*
- *  These character sets are taken from the Motorola MC6575 Pattern Generator,
- *  page 5-119 of 'The Complete Motorola Microcomputer Data Library'
+ * These character sets are taken from the Motorola MC6575 Pattern Generator,
+ * page 5-119 of 'The Complete Motorola Microcomputer Data Library'
  */
 static struct vectorchar {
-    char		ascii;		/* ASCII character emulated */
-    struct	relvect	r[10];		/* maximum # of vectors 1 char */
+    char ascii;		/* ASCII character emulated */
+    struct relvect r[10];	/* maximum # of vectors 1 char */
 } charset[] = {
-    /*ASCII <1>    <2>    <3>    <4>    <5>    <6>    <7>    <8>    <9>    <10> */
-    {'0', {{5,0},   {1,0},   {0,1},   {0,7},   {6,1},   {6,7},   {5,8},   {1,8},   {END},   {NIL}}},
-    {'1', {{1,2},   {3,0},   {3,8},   {5,8},   {1,8},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
-    {'2', {{0,1},   {1,0},   {5,0},   {6,1},   {6,2},   {4,4},   {2,4},   {0,6},   {0,8},   {6,8}}},
-    {'3', {{1,0},   {5,0},   {6,1},   {6,4},   {2,4},   {6,4},   {6,7},   {5,8},   {1,8},   {END}}},
-    {'4', {{5,8},   {5,0},   {0,5},   {0,6},   {6,6},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
-    {'5', {{6,0},   {0,0},   {0,3},   {4,3},   {6,5},   {6,6},   {4,8},   {1,8},   {0,7},   {END}}},
-    {'6', {{5,0},   {2,0},   {0,2},   {0,7},   {1,8},   {5,8},   {6,7},   {6,5},   {5,4},   {1,4}}},
-    {'7', {{0,1},   {0,0},   {6,0},   {6,1},   {2,5},   {2,8},   {END},   {NIL},   {NIL},   {NIL}}},
-    {'8', {{1,0},   {5,0},   {6,1},   {6,7},   {5,8},   {1,8},   {0,7},   {0,1},   {0,4},   {6,4}}},
-    {'9', {{1,8},   {4,8},   {6,6},   {6,1},   {5,0},   {1,0},   {0,1},   {0,3},   {1,4},   {6,4}}},
-    {'A', {{0,8},   {0,2},   {2,0},   {4,0},   {6,2},   {6,8},   {6,5},   {0,5},   {END},   {NIL}}},
-    {'B', {{6,5},   {6,7},   {5,8},   {0,8},   {0,0},   {5,0},   {6,1},   {6,3},   {5,4},   {0,4}}},
-    {'C', {{6,1},   {5,0},   {2,0},   {0,2},   {0,6},   {2,8},   {5,8},   {6,7},   {END},   {NIL}}},
-    {'D', {{0,0},   {4,0},   {6,2},   {6,6},   {4,8},   {0,8},   {0,0},   {END},   {NIL},   {NIL}}},
-    {'E', {{6,0},   {0,0},   {0,4},   {3,4},   {0,4},   {0,8},   {6,8},   {END},   {NIL},   {NIL}}},
-    {'F', {{6,0},   {0,0},   {0,4},   {3,4},   {0,4},   {0,8},   {END},   {NIL},   {NIL},   {NIL}}},
-    {'G', {{6,1},   {5,0},   {2,0},   {0,2},   {0,6},   {2,8},   {5,8},   {6,7},   {6,5},   {3,5}}},
-    {'H', {{0,0},   {0,8},   {0,4},   {6,4},   {6,0},   {6,8},   {END},   {NIL},   {NIL},   {NIL}}},
-    {'I', {{1,0},   {5,0},   {3,0},   {3,8},   {1,8},   {5,8},   {END},   {NIL},   {NIL},   {NIL}}},
-    {'J', {{2,0},   {6,0},   {4,0},   {4,7},   {3,8},   {1,8},   {0,7},   {END},   {NIL},   {NIL}}},
-    {'K', {{0,0},   {0,8},   {0,6},   {6,0},   {2,4},   {6,8},   {END},   {NIL},   {NIL},   {NIL}}},
-    {'L', {{0,0},   {0,8},   {6,8},   {END},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL}}},
-    {'M', {{0,8},   {0,0},   {3,3},   {3,4},   {3,3},   {6,0},   {6,8},   {END},   {NIL},   {NIL}}},
-    {'N', {{0,8},   {0,0},   {6,6},   {6,8},   {6,0},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
-    {'O', {{0,6},   {0,2},   {2,0},   {4,0},   {6,2},   {6,6},   {4,8},   {2,8},   {0,6},   {END}}},
-    {'P', {{0,8},   {0,0},   {5,0},   {6,1},   {6,3},   {5,4},   {0,4},   {END},   {NIL},   {NIL}}},
-    {'Q', {{6,6},   {6,2},   {4,0},   {2,0},   {0,2},   {0,6},   {2,8},   {4,8},   {4,6},   {6,8}}},
-    {'R', {{0,8},   {0,0},   {5,0},   {6,1},   {6,3},   {5,4},   {0,4},   {2,4},   {6,8},   {END}}},
-    {'S', {{6,1},   {5,0},   {1,0},   {0,1},   {0,4},   {5,4},   {6,5},   {6,7},   {5,8},   {0,8}}},
-    {'T', {{0,0},   {6,0},   {3,0},   {3,8},   {END},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL}}},
-    {'U', {{0,0},   {0,7},   {1,8},   {5,8},   {6,7},   {6,0},   {END},   {NIL},   {NIL},   {NIL}}},
-    {'V', {{0,0},   {0,2},   {3,8},   {6,2},   {6,0},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
-    {'W', {{0,0},   {0,8},   {3,5},   {3,4},   {3,5},   {6,8},   {6,0},   {END},   {NIL},   {NIL}}},
-    {'X', {{0,0},   {6,8},   {3,4},   {0,8},   {6,0},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
-    {'Y', {{0,0},   {0,1},   {3,4},   {3,8},   {3,4},   {6,1},   {6,0},   {END},   {NIL},   {NIL}}},
-    {'Z', {{0,0},   {6,0},   {6,1},   {0,7},   {0,8},   {6,8},   {END},   {NIL},   {NIL},   {NIL}}},
-    {'+', {{0,4},   {6,4},   {3,4},   {3,1},   {3,7},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
-    {'-', {{0,4},   {6,4},   {END},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL}}},
-    {'/', {{0,7},   {6,1},   {END},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL}}},
-    {'(', {{4,0},   {2,2},   {2,6},   {4,8},   {END},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL}}},
-    {')', {{2,0},   {4,2},   {4,6},   {2,8},   {END},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL}}},
-    {'<', {{4,0},   {0,4},   {4,8},   {END},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL}}},
-    {'>', {{2,0},   {6,4},   {2,8},   {END},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL}}},
+    /*ASCII <1> <2> <3> <4> <5> <6> <7> <8> <9> <10> */
+    {'0', {{5, 0},   {1, 0},   {0, 1},   {0, 7},   {6, 1},   {6, 7},   {5, 8},   {1, 8},   {END},   {NIL}}},
+    {'1', {{1, 2},   {3, 0},   {3, 8},   {5, 8},   {1, 8},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
+    {'2', {{0, 1},   {1, 0},   {5, 0},   {6, 1},   {6, 2},   {4, 4},   {2, 4},   {0, 6},   {0, 8},   {6, 8}}},
+    {'3', {{1, 0},   {5, 0},   {6, 1},   {6, 4},   {2, 4},   {6, 4},   {6, 7},   {5, 8},   {1, 8},   {END}}},
+    {'4', {{5, 8},   {5, 0},   {0, 5},   {0, 6},   {6, 6},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
+    {'5', {{6, 0},   {0, 0},   {0, 3},   {4, 3},   {6, 5},   {6, 6},   {4, 8},   {1, 8},   {0, 7},   {END}}},
+    {'6', {{5, 0},   {2, 0},   {0, 2},   {0, 7},   {1, 8},   {5, 8},   {6, 7},   {6, 5},   {5, 4},   {1, 4}}},
+    {'7', {{0, 1},   {0, 0},   {6, 0},   {6, 1},   {2, 5},   {2, 8},   {END},   {NIL},   {NIL},   {NIL}}},
+    {'8', {{1, 0},   {5, 0},   {6, 1},   {6, 7},   {5, 8},   {1, 8},   {0, 7},   {0, 1},   {0, 4},   {6, 4}}},
+    {'9', {{1, 8},   {4, 8},   {6, 6},   {6, 1},   {5, 0},   {1, 0},   {0, 1},   {0, 3},   {1, 4},   {6, 4}}},
+    {'A', {{0, 8},   {0, 2},   {2, 0},   {4, 0},   {6, 2},   {6, 8},   {6, 5},   {0, 5},   {END},   {NIL}}},
+    {'B', {{6, 5},   {6, 7},   {5, 8},   {0, 8},   {0, 0},   {5, 0},   {6, 1},   {6, 3},   {5, 4},   {0, 4}}},
+    {'C', {{6, 1},   {5, 0},   {2, 0},   {0, 2},   {0, 6},   {2, 8},   {5, 8},   {6, 7},   {END},   {NIL}}},
+    {'D', {{0, 0},   {4, 0},   {6, 2},   {6, 6},   {4, 8},   {0, 8},   {0, 0},   {END},   {NIL},   {NIL}}},
+    {'E', {{6, 0},   {0, 0},   {0, 4},   {3, 4},   {0, 4},   {0, 8},   {6, 8},   {END},   {NIL},   {NIL}}},
+    {'F', {{6, 0},   {0, 0},   {0, 4},   {3, 4},   {0, 4},   {0, 8},   {END},   {NIL},   {NIL},   {NIL}}},
+    {'G', {{6, 1},   {5, 0},   {2, 0},   {0, 2},   {0, 6},   {2, 8},   {5, 8},   {6, 7},   {6, 5},   {3, 5}}},
+    {'H', {{0, 0},   {0, 8},   {0, 4},   {6, 4},   {6, 0},   {6, 8},   {END},   {NIL},   {NIL},   {NIL}}},
+    {'I', {{1, 0},   {5, 0},   {3, 0},   {3, 8},   {1, 8},   {5, 8},   {END},   {NIL},   {NIL},   {NIL}}},
+    {'J', {{2, 0},   {6, 0},   {4, 0},   {4, 7},   {3, 8},   {1, 8},   {0, 7},   {END},   {NIL},   {NIL}}},
+    {'K', {{0, 0},   {0, 8},   {0, 6},   {6, 0},   {2, 4},   {6, 8},   {END},   {NIL},   {NIL},   {NIL}}},
+    {'L', {{0, 0},   {0, 8},   {6, 8},   {END},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL}}},
+    {'M', {{0, 8},   {0, 0},   {3, 3},   {3, 4},   {3, 3},   {6, 0},   {6, 8},   {END},   {NIL},   {NIL}}},
+    {'N', {{0, 8},   {0, 0},   {6, 6},   {6, 8},   {6, 0},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
+    {'O', {{0, 6},   {0, 2},   {2, 0},   {4, 0},   {6, 2},   {6, 6},   {4, 8},   {2, 8},   {0, 6},   {END}}},
+    {'P', {{0, 8},   {0, 0},   {5, 0},   {6, 1},   {6, 3},   {5, 4},   {0, 4},   {END},   {NIL},   {NIL}}},
+    {'Q', {{6, 6},   {6, 2},   {4, 0},   {2, 0},   {0, 2},   {0, 6},   {2, 8},   {4, 8},   {4, 6},   {6, 8}}},
+    {'R', {{0, 8},   {0, 0},   {5, 0},   {6, 1},   {6, 3},   {5, 4},   {0, 4},   {2, 4},   {6, 8},   {END}}},
+    {'S', {{6, 1},   {5, 0},   {1, 0},   {0, 1},   {0, 4},   {5, 4},   {6, 5},   {6, 7},   {5, 8},   {0, 8}}},
+    {'T', {{0, 0},   {6, 0},   {3, 0},   {3, 8},   {END},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL}}},
+    {'U', {{0, 0},   {0, 7},   {1, 8},   {5, 8},   {6, 7},   {6, 0},   {END},   {NIL},   {NIL},   {NIL}}},
+    {'V', {{0, 0},   {0, 2},   {3, 8},   {6, 2},   {6, 0},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
+    {'W', {{0, 0},   {0, 8},   {3, 5},   {3, 4},   {3, 5},   {6, 8},   {6, 0},   {END},   {NIL},   {NIL}}},
+    {'X', {{0, 0},   {6, 8},   {3, 4},   {0, 8},   {6, 0},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
+    {'Y', {{0, 0},   {0, 1},   {3, 4},   {3, 8},   {3, 4},   {6, 1},   {6, 0},   {END},   {NIL},   {NIL}}},
+    {'Z', {{0, 0},   {6, 0},   {6, 1},   {0, 7},   {0, 8},   {6, 8},   {END},   {NIL},   {NIL},   {NIL}}},
+    {'+', {{0, 4},   {6, 4},   {3, 4},   {3, 1},   {3, 7},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
+    {'-', {{0, 4},   {6, 4},   {END},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL}}},
+    {'/', {{0, 7},   {6, 1},   {END},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL}}},
+    {'(', {{4, 0},   {2, 2},   {2, 6},   {4, 8},   {END},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL}}},
+    {')', {{2, 0},   {4, 2},   {4, 6},   {2, 8},   {END},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL}}},
+    {'<', {{4, 0},   {0, 4},   {4, 8},   {END},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL}}},
+    {'>', {{2, 0},   {6, 4},   {2, 8},   {END},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL},   {NIL}}},
 
     /* Some needed chars, hastily drawn -MJM */
-    {'.', {{4,7},   {3,7},   {3,6},   {4,6},   {4,7},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
-    {',', {{4,6},   {3,6},   {3,5},   {4,5},   {4,8},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
+    {'.', {{4, 7},   {3, 7},   {3, 6},   {4, 6},   {4, 7},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
+    {',', {{4, 6},   {3, 6},   {3, 5},   {4, 5},   {4, 8},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
 
-    {'\0'}
+    {'\0', {{NIL}, {NIL}, {NIL}, {NIL}, {NIL}, {NIL}, {NIL}, {NIL}, {NIL}, {NIL}}}
 };
 
-static int	Nscanlines = 512;
-static int	Npixels = 512;
-static char	*framebuffer = NULL;
-static char	*filename = NULL;
 
-struct band  {
-    stroke	*first;
-    stroke	*last;
+static int Nscanlines = 512;
+static int Npixels = 512;
+static char *framebuffer = NULL;
+static char *filename = NULL;
+
+struct band {
+    stroke *first;
+    stroke *last;
 };
-static struct band	*band;		/* array of descriptor lists */
-static struct band	*bandEnd;
+static struct band *band;		/* array of descriptor lists */
+static struct band *bandEnd;
 
-static unsigned char	*buffer;		/* ptr to active band buffer */
-static long	buffersize;		/* active band buffer bytes */
-static short	ystart = 0;		/* active band starting scan */
-static int	debug  = 0;
-static int	over = 0;		/* !0 to overlay on existing image */
-static int	immediate = 0;		/* !0 to plot immediately */
-static int	single_banded = 0;	/* !0 if one fullscreen band */
-static short	lines_per_band = 16;	/* scan lines per band */
-static short	line_thickness = 1;
+static unsigned char *buffer;		/* ptr to active band buffer */
+static long buffersize;			/* active band buffer bytes */
+static short ystart = 0;		/* active band starting scan */
+static int debug  = 0;
+static int over = 0;			/* !0 to overlay on existing image */
+static int immediate = 0;		/* !0 to plot immediately */
+static int single_banded = 0;		/* !0 if one fullscreen band */
+static short lines_per_band = 16;	/* scan lines per band */
+static short line_thickness = 1;
 
 /* signals to be caught */
 static int sigs[] = {
@@ -311,25 +312,26 @@ static int sigs[] = {
     0
 };
 
-static FILE	*pfin;		/* input file FIO block ptr */
-FBIO	*fbp;			/* Current framebuffer */
+
+static FILE *pfin;		/* input file FIO block ptr */
+FBIO *fbp;			/* Current framebuffer */
 
 
 /*
- *  Stroke descriptor management.
- *  We malloc these in large blocks and keep our own free list.
- *  Last I looked it took 32 bytes per stroke, so every 32 strokes
- *  is 1KB, or 32K strokes / MByte.
+ * Stroke descriptor management.
+ * We malloc these in large blocks and keep our own free list.
+ * Last I looked it took 32 bytes per stroke, so every 32 strokes
+ * is 1KB, or 32K strokes / MByte.
  */
-#define	STROKE_NULL	((stroke *)0)
+#define STROKE_NULL ((stroke *)0)
 
-static struct descr	*freep = STROKE_NULL;	/* head of free stroke list */
+static struct descr *freep = STROKE_NULL;	/* head of free stroke list */
 
 
 /*
- *	Dequeue - remove descriptor from band list (do not free space)
+ * Dequeue - remove descriptor from band list (do not free space)
  *
- *  Returns addr of descriptor, or NULL if none left.
+ * Returns addr of descriptor, or NULL if none left.
  */
 static stroke *
 Dequeue(struct band *bp, stroke **hp)
@@ -337,10 +339,10 @@ Dequeue(struct band *bp, stroke **hp)
 {
     stroke *vp;		/* -> descriptor */
 
-    if ( (vp = *hp) != NULL )
+    if ((vp = *hp) != NULL)
 	*hp = vp->next; 	/* -> next element in list */
 
-    if ( vp == NULL )
+    if (vp == NULL)
 	bp->last = NULL;
 
     return vp;			/* may be NULL */
@@ -348,14 +350,14 @@ Dequeue(struct band *bp, stroke **hp)
 
 
 /*
- * 	Requeue - enqueue descriptor at END of band list
+ * Requeue - enqueue descriptor at END of band list
  */
 static void
 Requeue(struct band *bp, stroke *vp)
 {
     CK_STROKE(vp);
     vp->next = NULL;
-    if ( bp->last )
+    if (bp->last)
 	bp->last->next = vp;
     else
 	bp->first = vp;
@@ -365,55 +367,55 @@ Requeue(struct band *bp, stroke *vp)
 
 
 /*
- *	Raster - rasterize stroke.
+ * Raster - rasterize stroke.
  *
- *  If immediate mode, draw the individual pixel on the frame buffer.
- *  If banded buffered mode, draw the portion in this band.  If it
- *     overflows into next band, requeue; else free the descriptor.
+ * If immediate mode, draw the individual pixel on the frame buffer.
+ * If banded buffered mode, draw the portion in this band.  If it
+ * overflows into next band, requeue; else free the descriptor.
  *
- *  Method:
- *	Modified Bresenham algorithm.  Guaranteed to mark a dot for
- *	a zero-length stroke.  Please do not try to "improve" this code
- *	as it is extremely hard to get all aspects just right.
+ * Method:
+ * Modified Bresenham algorithm.  Guaranteed to mark a dot for
+ * a zero-length stroke.  Please do not try to "improve" this code
+ * as it is extremely hard to get all aspects just right.
  */
 static void
 Raster(stroke *vp, struct band *np)
     /* -> rasterization descr */
     /* *np -> next band 1st descr */
 {
-    short	dy;		/* raster within active band */
+    short dy;		/* raster within active band */
 
     CK_STROKE(vp);
 
     /*
-     *  Draw the portion within this band.
+     * Draw the portion within this band.
      */
-    for ( dy = vp->pixel.y - ystart; dy < lines_per_band; ) {
+    for (dy = vp->pixel.y - ystart; dy < lines_per_band;) {
 
 	/* set the appropriate pixel in the buffer */
-	if ( immediate )  {
-	    fb_write( fbp, vp->pixel.x, dy, vp->col, 1 );
-	}  else  {
+	if (immediate) {
+	    fb_write(fbp, vp->pixel.x, dy, vp->col, 1);
+	} else {
 	    unsigned char *pp;
 
 	    pp = (unsigned char *)&buffer[((dy*Npixels) + vp->pixel.x)*sizeof(RGBpixel)];
-	    COPYRGB( pp, vp->col );
+	    COPYRGB(pp, vp->col);
 	}
 
-	if ( vp->major-- == 0 ) {
+	if (vp->major-- == 0) {
 	    /* done! */
-	    FREE_STROKE( vp );	/* return to "malloc" */
+	    FREE_STROKE(vp);	/* return to "malloc" */
 	    return;
 	}
 
-	if ( vp->e < 0 ) {
+	if (vp->e < 0) {
 	    /* advance major & minor */
 	    dy += vp->ysign;
 	    vp->pixel.x += vp->xsign;
 	    vp->e += vp->de;
 	} else {
 	    /* advance major only */
-	    if ( vp->ymajor )	/* Y is major dir */
+	    if (vp->ymajor)	/* Y is major dir */
 		++dy;
 	    else			/* X is major dir */
 		vp->pixel.x += vp->xsign;
@@ -423,12 +425,12 @@ Raster(stroke *vp, struct band *np)
 
     /* overflow into next band; re-queue */
     vp->pixel.y = ystart + lines_per_band;
-    Requeue( np, vp );       /* DDA parameters already set */
+    Requeue(np, vp);       /* DDA parameters already set */
 }
 
 
 /*
- *	OutBuild - rasterize all strokes into raster frame image
+ * OutBuild - rasterize all strokes into raster frame image
  */
 static bool
 OutBuild(void)				/* returns true if successful */
@@ -437,47 +439,47 @@ OutBuild(void)				/* returns true if successful */
     struct band *np;	/* `hp' for next band */
     stroke *vp;		/* -> rasterization descr */
 
-    if ( single_banded ) {
-	if ( debug ) fprintf(stderr, "OutBuild:  band y=%d\n", ystart);
-	if ( fb_write( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+    if (single_banded) {
+	if (debug) fprintf(stderr, "OutBuild:  band y=%d\n", ystart);
+	if (fb_write(fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel)) <= 0)
 	    return false;	/* can't write image file */
-	if ( over )  {
+	if (over) {
 	    /* Read back the composite image */
-	    if ( fb_read( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+	    if (fb_read(fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel)) <= 0)
 		fprintf(stderr, "pl-fb:  band read error\n");
 	}
 	return true;
     }
 
-    for ( hp = &band[0]; hp < bandEnd; ++hp )
-	if ( hp->first != NULL )
+    for (hp = &band[0]; hp < bandEnd; ++hp)
+	if (hp->first != NULL)
 	    break;
 
-    if ( hp == bandEnd )
+    if (hp == bandEnd)
 	return true;		/* nothing to do */
 
-    for ( hp = &band[0], np = &band[1], ystart = 0;
-	  hp < bandEnd;
-	  hp = np++, ystart += lines_per_band
-	)	{
+    for (hp = &band[0], np = &band[1], ystart = 0;
+	 hp < bandEnd;
+	 hp = np++, ystart += lines_per_band
+	) {
 	if (debug) fprintf(stderr, "OutBuild:  band y=%d\n", ystart);
-	if ( over )  {
+	if (over) {
 	    /* Read in current band */
-	    if ( fb_read( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+	    if (fb_read(fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel)) <= 0)
 		fprintf(stderr, "pl-fb:  band read error\n");
 	} else {
 	    /* clear pixels in the band */
 	    memset((char *)buffer, 0, buffersize);
 	}
 
-	while ( (vp = Dequeue( hp, &hp->first )) != NULL )
-	    Raster( vp, np );      /* rasterize stroke */
+	while ((vp = Dequeue(hp, &hp->first)) != NULL)
+	    Raster(vp, np);      /* rasterize stroke */
 
 	/* Raster() either re-queued the descriptor onto the
 	   next band list or else it freed the descriptor */
 
 	if (debug) fprintf(stderr, "OutBuild:  fbwrite y=%d\n", ystart);
-	if ( fb_write( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+	if (fb_write(fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel)) <= 0)
 	    return false;	/* can't write image file */
     }
 
@@ -489,23 +491,23 @@ OutBuild(void)				/* returns true if successful */
 static void
 get_strokes(void)
 {
-    stroke	*sp;
-    char	*cp;
-    int	bytes;
+    stroke *sp;
+    char *cp;
+    size_t bytes;
 
     /* ~32 strokes/KB */
     bytes = 640 * sizeof(stroke);
-    if ( (cp = malloc(bytes)) == (char *)0 ) {
+    if ((cp = malloc(bytes)) == (char *)0) {
 	/* Attempt to draw/free some vectors and try again */
 	OutBuild();
-	if ( (cp = malloc(bytes)) == (char *)0 ) {
+	if ((cp = malloc(bytes)) == (char *)0) {
 	    fprintf(stderr, "pl-fb: malloc failed!\n");
-	    bu_exit( 2, NULL );
+	    bu_exit(2, NULL);
 	}
     }
     /* link them all into the free list */
     sp = (stroke *)cp;
-    while ( bytes >= sizeof(stroke) ) {
+    while (bytes >= sizeof(stroke)) {
 	sp->freep = freep;
 	sp->magic = STROKE_MAGIC;
 	freep = sp++;
@@ -515,32 +517,33 @@ get_strokes(void)
 
 
 /*
- *			S X T 1 6
+ * S X T 1 6
  *
- *  Take a value which is currently considered "unsigned" with 16 bits
- *  of significance, and sign-extend it in a reasonably portable way.
- *  We assume the machine is twos-compliment.
+ * Take a value which is currently considered "unsigned" with 16 bits
+ * of significance, and sign-extend it in a reasonably portable way.
+ * We assume the machine is twos-compliment.
  */
 long
 sxt16(long int v)
 {
     long w;
-    if ( v <= 0x7FFF )  return v;
+    if (v <= 0x7FFF) return v;
     w = -1;
     w &= ~0x7FFF;
     return w | v;
 }
+
 
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "hdoOit:F:s:S:w:W:n:N:" )) != EOF ) {
-	switch ( c ) {
+    while ((c = bu_getopt(argc, argv, "hdoOit:F:s:S:w:W:n:N:")) != EOF) {
+	switch (c) {
 	    case 't':
 		line_thickness = atoi(bu_optarg);
-		if ( line_thickness <= 0 )
+		if (line_thickness <= 0)
 		    line_thickness = 1;
 		break;
 	    case 'i':
@@ -577,27 +580,28 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if ( bu_optind >= argc ) {
+    if (bu_optind >= argc) {
 	/* no file name given, use stdin */
-	if ( isatty(fileno(stdin)) )
+	if (isatty(fileno(stdin)))
 	    return 0;
 	filename = "-";
 	pfin = stdin;
     } else {
 	/* open file */
 	filename = argv[bu_optind];
-	if ( (pfin = fopen(filename, "rb")) == NULL ) {
-	    fprintf( stderr,
-		     "pl-fb: Can't open file \"%s\"\n", filename );
+	if ((pfin = fopen(filename, "rb")) == NULL) {
+	    fprintf(stderr,
+		    "pl-fb: Can't open file \"%s\"\n", filename);
 	    return 0;
 	}
     }
 
-    if ( argc > ++bu_optind )
-	(void)fprintf( stderr, "pl-fb: excess argument(s) ignored\n" );
+    if (argc > ++bu_optind)
+	(void)fprintf(stderr, "pl-fb: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
+
 
 static char usage[] = "\
 Usage: pl-fb [-h -d -o -i] [-t thickness] [-F framebuffer]\n\
@@ -612,7 +616,7 @@ InitDesc(void)
 {
     struct band *bp;	/* *bp -> start of descr list */
 
-    for ( bp = &band[0]; bp < &band[BANDSLOP]; ++bp )  {
+    for (bp = &band[0]; bp < &band[BANDSLOP]; ++bp) {
 	bp->first = NULL;		/* nothing in band yet */
 	bp->last  = NULL;
     }
@@ -628,8 +632,8 @@ FreeUp(void)
     struct band *bp;
     stroke *vp;		/* -> rasterization descr */
 
-    for ( bp = &band[0]; bp < bandEnd; ++bp )
-	while ( (vp = Dequeue( bp, &bp->first )) != NULL )
+    for (bp = &band[0]; bp < bandEnd; ++bp)
+	while ((vp = Dequeue(bp, &bp->first)) != NULL)
 	    FREE_STROKE(vp);	/* free storage */
 }
 
@@ -640,8 +644,8 @@ FreeUp(void)
 static int
 Foo(int code)				/* returns status code */
 {
-    if ( debug ) fprintf(stderr, "Foo(%d)\n", code);
-    fb_close( fbp );		/* release framebuffer */
+    if (debug) fprintf(stderr, "Foo(%d)\n", code);
+    fb_close(fbp);		/* release framebuffer */
 
     FreeUp();			/* deallocate descriptors */
 
@@ -650,9 +654,9 @@ Foo(int code)				/* returns status code */
 
 
 /*
- *			P R E P _ D D A
+ * P R E P _ D D A
  *
- *  Set up multi-band DDA parameters for stroke
+ * Set up multi-band DDA parameters for stroke
  */
 static void
 prep_dda(stroke *vp, coords *pt1, coords *pt2)
@@ -662,13 +666,13 @@ prep_dda(stroke *vp, coords *pt1, coords *pt2)
     vp->major = pt2->y - vp->pixel.y;	/* always nonnegative */
     vp->ysign = vp->major ? 1 : 0;
     vp->minor = pt2->x - vp->pixel.x;
-    COPYRGB( vp->col, cur_color );
-    if ( (vp->xsign = vp->minor ? (vp->minor > 0 ? 1 : -1) : 0) < 0 )
+    COPYRGB(vp->col, cur_color);
+    if ((vp->xsign = vp->minor ? (vp->minor > 0 ? 1 : -1) : 0) < 0)
 	vp->minor = -vp->minor;
 
     /* if Y is not really major, correct the assignments */
-    if ( !(vp->ymajor = vp->minor <= vp->major) )  {
-	short	temp;	/* temporary for swap */
+    if (!(vp->ymajor = vp->minor <= vp->major)) {
+	short temp;	/* temporary for swap */
 
 	temp = vp->minor;
 	vp->minor = vp->major;
@@ -681,24 +685,24 @@ prep_dda(stroke *vp, coords *pt1, coords *pt2)
 
 
 /*
- *	BuildStr - set up DDA parameters and queue stroke
+ * BuildStr - set up DDA parameters and queue stroke
  *
- *  Given two end points of a line, allocate and intialize a stroke
- *  descriptor for it.  If we are drawing "thick" lines we generate
- *  several extra stroke descriptors as well.  In immediate or memory
- *  buffered mode we rasterize it and free it right away.  In "regular"
- *  banded buffered mode, we link the descriptor(s) into its starting
- *  point band(s).
+ * Given two end points of a line, allocate and intialize a stroke
+ * descriptor for it.  If we are drawing "thick" lines we generate
+ * several extra stroke descriptors as well.  In immediate or memory
+ * buffered mode we rasterize it and free it right away.  In "regular"
+ * banded buffered mode, we link the descriptor(s) into its starting
+ * point band(s).
  */
 static bool
 BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
     /* endpoints */
 {
     stroke *vp;		/* -> rasterization descr */
-    int	thick;
+    int thick;
 
     /* arrange for pt1 to have the smaller Y-coordinate: */
-    if ( pt1->y > pt2->y )  {
+    if (pt1->y > pt2->y) {
 	coords *temp;	/* temporary for swap */
 
 	temp = pt1;		/* swap pointers */
@@ -707,15 +711,15 @@ BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
     }
 
     GET_STROKE(vp);			/* alloc a descriptor */
-    prep_dda( vp, pt1, pt2 );	/* prep it */
+    prep_dda(vp, pt1, pt2);	/* prep it */
 
     /* Thicken by advancing alternating pixels in minor direction */
     thick = line_thickness - 1;	/* number of "extra" pixels */
-    if ( thick >= vp->major && vp->major > 0 )  thick = vp->major-1;
-    for (; thick >= 0; thick-- )  {
+    if (thick >= vp->major && vp->major > 0) thick = vp->major-1;
+    for (; thick >= 0; thick--) {
 	stroke *v2;
 
-	if ( thick == 0 ) {
+	if (thick == 0) {
 	    /* last pass, use vp */
 	    v2 = vp;
 	} else {
@@ -725,19 +729,19 @@ BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
 	}
 
 	/* Advance minor only */
-	if ( vp->ymajor )
+	if (vp->ymajor)
 	    v2->pixel.x += (vp->xsign!=0 ? vp->xsign : 1) *
-		((thick&1)==0 ? (thick+1)/2 : (thick+1)/-2 );
+		((thick&1)==0 ? (thick+1)/2 : (thick+1)/-2);
 	else
 	    v2->pixel.y += (vp->ysign!=0 ? vp->ysign : 1) *
-		((thick&1)==0 ? (thick+1)/2 : (thick+1)/-2 );
+		((thick&1)==0 ? (thick+1)/2 : (thick+1)/-2);
 
-	if ( immediate || single_banded )  {
+	if (immediate || single_banded) {
 	    ystart = 0;
-	    Raster( v2, (struct band *)0 );
+	    Raster(v2, (struct band *)0);
 	}  else
 	    /* link descriptor into band corresponding to starting scan */
-	    Requeue( &band[v2->pixel.y / lines_per_band], v2 );
+	    Requeue(&band[v2->pixel.y / lines_per_band], v2);
     }
     return true;
 }
@@ -748,21 +752,21 @@ GetCoords(coords *coop)
     /* -> input coordinates */
 {
     unsigned char buf[4];
-    double	x, y;
+    double x, y;
 
     /* read coordinates */
-    if ( fread( (char *)buf, (int)sizeof (buf), 1, pfin ) != 1 )
+    if (fread((char *)buf, (int)sizeof (buf), 1, pfin) != 1)
 	return false;
 
 
     x = sxt16((long)(buf[1]<<8) | buf[0]);
     y = sxt16((long)(buf[3]<<8) | buf[2]);
-    if ( debug )  fprintf(stderr, "Coord: (%g,%g) ", x, y);
+    if (debug) fprintf(stderr, "Coord: (%g, %g) ", x, y);
 
     /* limit left, bottom */
-    if ( (x -= space.left) < 0 )
+    if ((x -= space.left) < 0)
 	x = 0;
-    if ( (y -= space.bottom) < 0 )
+    if ((y -= space.bottom) < 0)
 	y = 0;
 
     /* convert to device pixels */
@@ -770,13 +774,13 @@ GetCoords(coords *coop)
     coop->y = (short)(y * Nscanlines / (double)delta + 0.5);
 
     /* limit right, top */
-    if ( coop->x > XMAX )
+    if (coop->x > XMAX)
 	coop->x = XMAX;
-    if ( coop->y > YMAX )
+    if (coop->y > YMAX)
 	coop->y = YMAX;
 
-    if ( debug )
-	fprintf( stderr, "Pixel: (%d,%d)\n", coop->x, coop->y);
+    if (debug)
+	fprintf(stderr, "Pixel: (%d, %d)\n", coop->x, coop->y);
 
     return true;
 }
@@ -787,11 +791,11 @@ GetCoords(coords *coop)
 */
 bool Get3Coords(coords *coop)
 {
-    char	trash[2];
-    bool	ret;
+    char trash[2];
+    bool ret;
 
-    ret = GetCoords( coop );
-    fread( trash, sizeof(trash), 1, pfin );
+    ret = GetCoords(coop);
+    fread(trash, sizeof(trash), 1, pfin);
     return ret;
 }
 
@@ -800,20 +804,20 @@ bool Get3Coords(coords *coop)
 bool Get3DCoords(coords *coop)
 {
     static unsigned char in[3*8];
-    static double	out[2];
-    double	x, y;
+    static double out[2];
+    double x, y;
 
     /* read coordinates */
-    if ( fread( in, sizeof(in), 1, pfin ) != 1 )
+    if (fread(in, sizeof(in), 1, pfin) != 1)
 	return false;
-    ntohd( (unsigned char *)out, in, 2 );
+    ntohd((unsigned char *)out, in, 2);
     x = out[0];
     y = out[1];
 
     /* limit left, bottom */
-    if ( (x -= space.left) < 0 )
+    if ((x -= space.left) < 0)
 	x = 0;
-    if ( (y -= space.bottom) < 0 )
+    if ((y -= space.bottom) < 0)
 	y = 0;
 
     /* convert to device pixels */
@@ -821,14 +825,14 @@ bool Get3DCoords(coords *coop)
     coop->y = (short)(y * Nscanlines / (double)delta + 0.5);
 
     /* limit right, top */
-    if ( coop->x > XMAX )
+    if (coop->x > XMAX)
 	coop->x = XMAX;
-    if ( coop->y > YMAX )
+    if (coop->y > YMAX)
 	coop->y = YMAX;
 
-    if ( debug )  {
-	fprintf(stderr, "Coord3: (%g,%g) ", out[0], out[1]);
-	fprintf(stderr, "Pixel3: (%d,%d)\n", coop->x, coop->y);
+    if (debug) {
+	fprintf(stderr, "Coord3: (%g, %g) ", out[0], out[1]);
+	fprintf(stderr, "Pixel3: (%d, %d)\n", coop->x, coop->y);
     }
     return true;
 }
@@ -838,21 +842,21 @@ bool
 GetDCoords(coords *coop)
     /* -> input coordinates */
 {
-    static unsigned char	in[2*8];
-    static double	out[2];
-    double	x, y;
+    static unsigned char in[2*8];
+    static double out[2];
+    double x, y;
 
     /* read coordinates */
-    if ( fread( in, sizeof(in), 1, pfin ) != 1 )
+    if (fread(in, sizeof(in), 1, pfin) != 1)
 	return false;
-    ntohd( (unsigned char *)out, in, 2 );
+    ntohd((unsigned char *)out, in, 2);
     x = out[0];
     y = out[1];
 
     /* limit left, bottom */
-    if ( (x -= space.left) < 0 )
+    if ((x -= space.left) < 0)
 	x = 0;
-    if ( (y -= space.bottom) < 0 )
+    if ((y -= space.bottom) < 0)
 	y = 0;
 
     /* convert to device pixels */
@@ -860,57 +864,57 @@ GetDCoords(coords *coop)
     coop->y = (short)(y * Nscanlines / (double)delta + 0.5);
 
     /* limit right, top */
-    if ( coop->x > XMAX )
+    if (coop->x > XMAX)
 	coop->x = XMAX;
-    if ( coop->y > YMAX )
+    if (coop->y > YMAX)
 	coop->y = YMAX;
 
-    if ( debug )  {
-	fprintf(stderr, "Coord2: (%g,%g) ", out[0], out[1]);
-	fprintf(stderr, "Pixel2: (%d,%d)\n", coop->x, coop->y);
+    if (debug) {
+	fprintf(stderr, "Coord2: (%g, %g) ", out[0], out[1]);
+	fprintf(stderr, "Pixel2: (%d, %d)\n", coop->x, coop->y);
     }
     return true;
 }
 
 
 /*
- *	E D G E L I M I T
+ * E D G E L I M I T
  *
- *	Limit generated positions to edges of screen
+ * Limit generated positions to edges of screen
  */
 void
 edgelimit(coords *ppos)
 {
-    if ( ppos->x >= Npixels )
+    if (ppos->x >= Npixels)
 	ppos->x = Npixels -1;
 
-    if ( ppos->y >= Nscanlines )
+    if (ppos->y >= Nscanlines)
 	ppos->y = Nscanlines -1;
 }
 
 
 /*
- *	PutVectorChar - Put vectors corresponding to this character out
- * 	into plotting space
- *	Update position to reflect character width.
+ * PutVectorChar - Put vectors corresponding to this character out
+ * into plotting space
+ * Update position to reflect character width.
  */
 void
 put_vector_char(char c, coords *pos)
 {
-    static coords	start, end;
-    struct vectorchar	*vc;
-    struct relvect		*rv;
+    static coords start, end;
+    struct vectorchar *vc;
+    struct relvect *rv;
 
-    if ( !isascii(c) )
+    if (!isascii(c))
 	c = '?';
-    if ( islower(c) )
+    if (islower(c))
 	c = toupper(c);
 
-    for ( vc = &charset[0]; vc->ascii; vc++)
-	if ( vc->ascii == c )
+    for (vc = &charset[0]; vc->ascii; vc++)
+	if (vc->ascii == c)
 	    break;
 
-    if ( !vc->ascii )  {
+    if (!vc->ascii) {
 	/* Character not found in table -- space over 1/2 char */
 	pos->x += X_CHAR_SIZE/2;
 	return;
@@ -920,12 +924,12 @@ put_vector_char(char c, coords *pos)
     start.x = vc->r[0].x + pos->x;
     start.y = Y_CHAR_SIZE - vc->r[0].y + pos->y;
 
-    for ( rv = &vc->r[1]; (rv < &vc->r[10]) && rv->x >= 0; rv++ )  {
+    for (rv = &vc->r[1]; (rv < &vc->r[10]) && rv->x >= 0; rv++) {
 	end.x = rv->x + pos->x;
 	end.y = Y_CHAR_SIZE - rv->y + pos->y;
-	edgelimit( &start );
-	edgelimit( &end );
-	BuildStr( &start, &end );	/* pixels */
+	edgelimit(&start);
+	edgelimit(&end);
+	BuildStr(&start, &end);	/* pixels */
 	start = end;
     }
     pos->x += X_CHAR_SIZE;
@@ -948,67 +952,66 @@ put_vector_char(char c, coords *pos)
 static int
 DoFile(void)	/* returns vpl status code */
 {
-    bool	plotted;	/* false => empty frame image */
-    int	c;		/* input character */
-    static coords	newpos; 	/* current input coordinates */
-    static coords	virpos; 	/* virtual pen position */
+    bool plotted;	/* false => empty frame image */
+    int c;		/* input character */
+    static coords newpos; 	/* current input coordinates */
+    static coords virpos; 	/* virtual pen position */
     static unsigned char buf3[6*2];
     static unsigned char buf2[4*2];
-    static	bool	firsterase = true;
+    static bool firsterase = true;
 
     /* process each frame into a raster image file */
 
-    for (;;)			/* for each frame */
-    {
+    for (;;) {
+	/* for each frame */
 	InitDesc();		/* empty descriptor lists */
 
 	virpos.x = virpos.y = 0;
 	plotted = false;
 
-	for (;;)		/* read until EOF*/
-	{
-	    c = getc( pfin );
-	    if ( debug > 1 )  fprintf(stderr, "%c\n", c);
-	    switch ( c )
-	    {
+	for (;;) {
+	    /* read until EOF*/
+	    c = getc(pfin);
+	    if (debug > 1) fprintf(stderr, "%c\n", c);
+	    switch (c) {
 		/* record type */
 		case EOF:
-		    if ( debug ) fprintf( stderr, "EOF\n");
+		    if (debug) fprintf(stderr, "EOF\n");
 
-		    if ( plotted )  {
+		    if (plotted) {
 			/* flush strokes */
-			if ( debug ) fprintf( stderr, "flushing\n");
-			if ( !OutBuild() )
-			    return Foo( -6 );
+			if (debug) fprintf(stderr, "flushing\n");
+			if (!OutBuild())
+			    return Foo(-6);
 		    }
-		    return Foo( 0 );/* success */
+		    return Foo(0);/* success */
 
 		case 'e':	/* erase */
-		    if ( debug )  fprintf( stderr, "Erase\n");
+		    if (debug) fprintf(stderr, "Erase\n");
 
-		    if ( plotted )  {
+		    if (plotted) {
 			/* flush strokes */
-			if ( debug ) fprintf( stderr, "flushing\n");
-			if ( !OutBuild() )
-			    return Foo( -6 );
+			if (debug) fprintf(stderr, "flushing\n");
+			if (!OutBuild())
+			    return Foo(-6);
 		    }
-		    if ( !firsterase ) {
-			if ( immediate )
-			    fb_clear( fbp, RGBPIXEL_NULL );
+		    if (!firsterase) {
+			if (immediate)
+			    fb_clear(fbp, RGBPIXEL_NULL);
 			over = 0;
 		    }
 		    firsterase = false;
 		    break;	/* next frame */
 
 		case 'F':	/* flush */
-		    if ( debug )  fprintf( stderr, "Flush\n");
+		    if (debug) fprintf(stderr, "Flush\n");
 
-		    if ( plotted )  {
+		    if (plotted) {
 			/* flush strokes */
-			if ( debug ) fprintf( stderr, "flushing\n");
-			if ( !OutBuild() )
-			    return Foo( -6 );
-			if ( !immediate )
+			if (debug) fprintf(stderr, "flushing\n");
+			if (!OutBuild())
+			    return Foo(-6);
+			if (!immediate)
 			    over = 1;
 		    }
 		    firsterase = false;
@@ -1016,73 +1019,73 @@ DoFile(void)	/* returns vpl status code */
 
 		case 'f':	/* linemod */
 		    if (debug)
-			fprintf( stderr, "linemod\n");
+			fprintf(stderr, "linemod\n");
 		    /* ignore for time being */
-		    while ( (c = getc( pfin )) != EOF
-			    && c != '\n'
+		    while ((c = getc(pfin)) != EOF
+			   && c != '\n'
 			)
 			;	/* eat string */
 		    continue;
 
 		case 'L':
 		case 'M':
-		    if ( !Get3Coords( &newpos ) )
-			return Foo( -8 );
+		    if (!Get3Coords(&newpos))
+			return Foo(-8);
 		    virpos = newpos;
-		    if ( c == 'M'  )  {
-			if ( debug )
-			    fprintf( stderr, "Move3\n");
+		    if (c == 'M') {
+			if (debug)
+			    fprintf(stderr, "Move3\n");
 			continue;
 		    }
-		    if ( debug )
-			fprintf( stderr, "Line3\n");
+		    if (debug)
+			fprintf(stderr, "Line3\n");
 
 		case 'N':	/* continue3 */
 		case 'P':	/* point3 */
-		    if ( !Get3Coords( &newpos ) )
-			return Foo( -9 );
-		    if ( c == 'P' )  {
-			if ( debug )
-			    fprintf( stderr, "point3\n");
+		    if (!Get3Coords(&newpos))
+			return Foo(-9);
+		    if (c == 'P') {
+			if (debug)
+			    fprintf(stderr, "point3\n");
 			virpos = newpos;
 		    } else
-			if ( debug )
-			    fprintf( stderr, "cont3\n");
+			if (debug)
+			    fprintf(stderr, "cont3\n");
 
-		    if ( !BuildStr( &virpos, &newpos ) )
-			return Foo( -10 );
+		    if (!BuildStr(&virpos, &newpos))
+			return Foo(-10);
 		    plotted = true;
 		    virpos = newpos;
 		    continue;
 
 		case 'l':	/* line */
 		case 'm':	/* move */
-		    if ( !GetCoords( &newpos ) )
-			return Foo( -8 );
+		    if (!GetCoords(&newpos))
+			return Foo(-8);
 		    virpos = newpos;
-		    if ( c == 'm' )  {
-			if ( debug )
-			    fprintf( stderr, "move\n");
+		    if (c == 'm') {
+			if (debug)
+			    fprintf(stderr, "move\n");
 			continue;
 		    }
 		    /* line: fall through */
-		    if ( debug )
-			fprintf( stderr, "line\n");
+		    if (debug)
+			fprintf(stderr, "line\n");
 
 		case 'n':	/* cont */
 		case 'p':	/* point */
-		    if ( !GetCoords( &newpos ) )
-			return Foo( -9 );
-		    if ( c == 'p' )  {
-			if ( debug )
-			    fprintf( stderr, "point\n");
+		    if (!GetCoords(&newpos))
+			return Foo(-9);
+		    if (c == 'p') {
+			if (debug)
+			    fprintf(stderr, "point\n");
 			virpos = newpos;
 		    } else
-			if ( debug )
-			    fprintf( stderr, "cont\n");
+			if (debug)
+			    fprintf(stderr, "cont\n");
 
-		    if ( !BuildStr( &virpos, &newpos ) )
-			return Foo( -10 );
+		    if (!BuildStr(&virpos, &newpos))
+			return Foo(-10);
 		    plotted = true;
 		    virpos = newpos;
 		    continue;
@@ -1090,76 +1093,75 @@ DoFile(void)	/* returns vpl status code */
 		    /* IEEE */
 		case 'V':
 		case 'O':
-		    if ( !Get3DCoords( &newpos ) )
-			return Foo( -8 );
+		    if (!Get3DCoords(&newpos))
+			return Foo(-8);
 		    virpos = newpos;
-		    if ( c == 'O'  )  {
-			if ( debug )
-			    fprintf( stderr, "dMove3\n");
+		    if (c == 'O') {
+			if (debug)
+			    fprintf(stderr, "dMove3\n");
 			continue;
 		    }
-		    if ( debug )
-			fprintf( stderr, "dLine3\n");
+		    if (debug)
+			fprintf(stderr, "dLine3\n");
 
 		case 'Q':	/* continue3 */
 		case 'X':	/* point3 */
-		    if ( !Get3DCoords( &newpos ) )
-			return Foo( -9 );
-		    if ( c == 'X' )  {
-			if ( debug )
-			    fprintf( stderr, "dpoint3\n");
+		    if (!Get3DCoords(&newpos))
+			return Foo(-9);
+		    if (c == 'X') {
+			if (debug)
+			    fprintf(stderr, "dpoint3\n");
 			virpos = newpos;
 		    } else
-			if ( debug )
-			    fprintf( stderr, "dcont3\n");
+			if (debug)
+			    fprintf(stderr, "dcont3\n");
 
-		    if ( !BuildStr( &virpos, &newpos ) )
-			return Foo( -10 );
+		    if (!BuildStr(&virpos, &newpos))
+			return Foo(-10);
 		    plotted = true;
 		    virpos = newpos;
 		    continue;
 
 		case 'v':	/* line */
 		case 'o':	/* move */
-		    if ( !GetDCoords( &newpos ) )
-			return Foo( -8 );
+		    if (!GetDCoords(&newpos))
+			return Foo(-8);
 		    virpos = newpos;
-		    if ( c == 'o' )  {
-			if ( debug )
-			    fprintf( stderr, "dmove\n");
+		    if (c == 'o') {
+			if (debug)
+			    fprintf(stderr, "dmove\n");
 			continue;
 		    }
 		    /* line: fall through */
-		    if ( debug )
-			fprintf( stderr, "dline\n");
+		    if (debug)
+			fprintf(stderr, "dline\n");
 
 		case 'q':	/* cont */
 		case 'x':	/* point */
-		    if ( !GetDCoords( &newpos ) )
-			return Foo( -9 );
-		    if ( c == 'x' )  {
-			if ( debug )
-			    fprintf( stderr, "dpoint\n");
+		    if (!GetDCoords(&newpos))
+			return Foo(-9);
+		    if (c == 'x') {
+			if (debug)
+			    fprintf(stderr, "dpoint\n");
 			virpos = newpos;
 		    } else
-			if ( debug )
-			    fprintf( stderr, "dcont\n");
+			if (debug)
+			    fprintf(stderr, "dcont\n");
 
-		    if ( !BuildStr( &virpos, &newpos ) )
-			return Foo( -10 );
+		    if (!BuildStr(&virpos, &newpos))
+			return Foo(-10);
 		    plotted = true;
 		    virpos = newpos;
 		    continue;
 
-		case 'W':
-		{
-		    unsigned char	in[6*8];
-		    double	out[6];
-		    if ( debug )
-			fprintf( stderr, "dspace3\n");
-		    if ( fread( in, sizeof(in), 1, pfin) != 1 )
-			return Foo( -11 );
-		    ntohd( (unsigned char *)out, in, 5 );
+		case 'W': {
+		    unsigned char in[6*8];
+		    double out[6];
+		    if (debug)
+			fprintf(stderr, "dspace3\n");
+		    if (fread(in, sizeof(in), 1, pfin) != 1)
+			return Foo(-11);
+		    ntohd((unsigned char *)out, in, 5);
 		    /* Only need X and Y, ignore Z */
 		    space.left  = out[0]; /* x1 */
 		    space.bottom= out[1]; /* y1 */
@@ -1170,15 +1172,15 @@ DoFile(void)	/* returns vpl status code */
 		    goto spacend;
 		}
 
-		case 'w':	/* space */
-		{
-		    unsigned char	in[4*8];
-		    double	out[4];
-		    if ( debug )
-			fprintf( stderr, "dspace\n");
-		    if ( fread( in, sizeof(in), 1, pfin) != 1 )
-			return Foo( -11 );
-		    ntohd( (unsigned char *)out, in, 4 );
+		case 'w': {
+		    /* space */
+		    unsigned char in[4*8];
+		    double out[4];
+		    if (debug)
+			fprintf(stderr, "dspace\n");
+		    if (fread(in, sizeof(in), 1, pfin) != 1)
+			return Foo(-11);
+		    ntohd((unsigned char *)out, in, 4);
 		    space.left  = out[0]; /* x1 */
 		    space.bottom= out[1]; /* y1 */
 		    space.right = out[2]; /* x2 */
@@ -1186,15 +1188,14 @@ DoFile(void)	/* returns vpl status code */
 		    goto spacend;
 		}
 
-		case 'S':
-		{
-		    if ( debug )
-			fprintf( stderr, "space3\n");
-		    if ( fread( (char *)buf3,
-				(int)sizeof buf3, 1, pfin)
-			 != 1
+		case 'S': {
+		    if (debug)
+			fprintf(stderr, "space3\n");
+		    if (fread((char *)buf3,
+			      (int)sizeof buf3, 1, pfin)
+			!= 1
 			)
-			return Foo( -11 );
+			return Foo(-11);
 		    /* Only need X and Y, ignore Z */
 		    space.left  = sxt16((long)(buf3[1]<<8) | buf3[0]); /* x1 */
 		    space.bottom= sxt16((long)(buf3[3]<<8) | buf3[2]); /* y1 */
@@ -1206,14 +1207,13 @@ DoFile(void)	/* returns vpl status code */
 		}
 
 		case 's':	/* space */
-		    if ( debug )
-			fprintf( stderr, "space\n");
-		    {
-			if ( fread( (char *)buf2,
-				    (int)sizeof buf2, 1, pfin
-				 ) != 1
+		    if (debug)
+			fprintf(stderr, "space\n"); {
+			if (fread((char *)buf2,
+				  (int)sizeof buf2, 1, pfin
+				) != 1
 			    )
-			    return Foo( -11 );
+			    return Foo(-11);
 			space.left  = sxt16((long)(buf2[1]<<8) | buf2[0]); /* x1 */
 			space.bottom= sxt16((long)(buf2[3]<<8) | buf2[2]); /* y1 */
 			space.right = sxt16((long)(buf2[5]<<8) | buf2[4]); /* x2 */
@@ -1223,42 +1223,42 @@ DoFile(void)	/* returns vpl status code */
 	    spacend:
 		    delta = space.right - space.left;
 		    deltao2 = space.top - space.bottom;
-		    if ( deltao2 > delta )
+		    if (deltao2 > delta)
 			delta = deltao2;
-		    if ( delta <= 0 )  {
-			fprintf( stderr, "pl-fb: delta = %g, bad space()\n", delta );
-			return Foo( -42 );
+		    if (delta <= 0) {
+			fprintf(stderr, "pl-fb: delta = %g, bad space()\n", delta);
+			return Foo(-42);
 		    }
 		    deltao2 = delta / 2.0;
-		    if ( debug )
-			fprintf( stderr, "Space: X=(%g,%g) Y=(%g,%g) delta=%g\n",
-				 space.left, space.right,
-				 space.bottom, space.top,
-				 delta );
+		    if (debug)
+			fprintf(stderr, "Space: X=(%g, %g) Y=(%g, %g) delta=%g\n",
+				space.left, space.right,
+				space.bottom, space.top,
+				delta);
 		    continue;
 
 		case 'C':	/* color */
-		    if ( fread( cur_color, 1, 3, pfin) != 3 )
-			return Foo( -11 );
-		    if ( debug )
-			fprintf( stderr, "Color is R%d G%d B%d\n",
-				 cur_color[RED],
-				 cur_color[GRN],
-				 cur_color[BLU]);
+		    if (fread(cur_color, 1, 3, pfin) != 3)
+			return Foo(-11);
+		    if (debug)
+			fprintf(stderr, "Color is R%d G%d B%d\n",
+				cur_color[RED],
+				cur_color[GRN],
+				cur_color[BLU]);
 		    continue;
 
 		case 't':	/* label */
-		    if ( debug )
-			fprintf( stderr, "label: ");
+		    if (debug)
+			fprintf(stderr, "label: ");
 
 		    newpos = virpos;
-		    while ( (c = getc( pfin )) != EOF && c != '\n'
-			)  {
+		    while ((c = getc(pfin)) != EOF && c != '\n'
+			) {
 			/* vectorize the characters */
-			put_vector_char( c, &newpos);
+			put_vector_char(c, &newpos);
 
-			if ( debug )
-			    putc( c, stderr );
+			if (debug)
+			    putc(c, stderr);
 		    }
 
 		    plotted = true;
@@ -1266,47 +1266,43 @@ DoFile(void)	/* returns vpl status code */
 		    continue;
 
 		    /* discard the deadwood */
-		case 'c':
-		{
+		case 'c': {
 		    char buf[3*2];
-		    if ( fread(buf, sizeof(buf), 1, pfin) != 1 )
-			return Foo( -11 );
-		    if ( debug )
-			fprintf( stderr, "circle ignored\n" );
+		    if (fread(buf, sizeof(buf), 1, pfin) != 1)
+			return Foo(-11);
+		    if (debug)
+			fprintf(stderr, "circle ignored\n");
 		    continue;
 		}
-		case 'i':
-		{
+		case 'i': {
 		    char buf[3*8];
-		    if ( fread(buf, sizeof(buf), 1, pfin) != 1 )
-			return Foo( -11 );
-		    if ( debug )
-			fprintf( stderr, "d_circle ignored\n" );
+		    if (fread(buf, sizeof(buf), 1, pfin) != 1)
+			return Foo(-11);
+		    if (debug)
+			fprintf(stderr, "d_circle ignored\n");
 		    continue;
 		}
-		case 'a':
-		{
+		case 'a': {
 		    char buf[6*2];
-		    if ( fread(buf, sizeof(buf), 1, pfin) != 1 )
-			return Foo( -11 );
-		    if ( debug )
-			fprintf( stderr, "arc ignored\n" );
+		    if (fread(buf, sizeof(buf), 1, pfin) != 1)
+			return Foo(-11);
+		    if (debug)
+			fprintf(stderr, "arc ignored\n");
 		    continue;
 		}
-		case 'r':
-		{
+		case 'r': {
 		    char buf[6*8];
-		    if ( fread(buf, sizeof(buf), 1, pfin) != 1 )
-			return Foo( -11 );
-		    if ( debug )
-			fprintf( stderr, "d_arc ignored\n" );
+		    if (fread(buf, sizeof(buf), 1, pfin) != 1)
+			return Foo(-11);
+		    if (debug)
+			fprintf(stderr, "d_arc ignored\n");
 		    continue;
 		}
 
 		default:
-		    fprintf( stderr, "bad command '%c' (0x%02x)\n", c, c );
+		    fprintf(stderr, "bad command '%c' (0x%02x)\n", c, c);
 
-		    return Foo( -12 );	/* bad input */
+		    return Foo(-12);	/* bad input */
 	    }
 	    break;
 	}		/* next input record */
@@ -1327,16 +1323,16 @@ Catch(int sig)
     for (i = 0; sigs[i]; ++i)
 	(void)signal(sigs[i], SIG_IGN);
 
-    (void)Foo( -13 );		/* clean up */
+    (void)Foo(-13);		/* clean up */
 
-    (void)signal( sig, SIG_DFL );
+    (void)signal(sig, SIG_DFL);
 
     pid = bu_process_id();
 
-    if ( pid > 1 ) {
+    if (pid > 1) {
 #ifdef HAVE_KILL
 	/* (re)signal process */
-	(void)kill( pid, sig );
+	(void)kill(pid, sig);
 #endif
     }
 }
@@ -1358,36 +1354,36 @@ SetSigs(void)
 
 
 /*
- *  M A I N
+ * M A I N
  *
- *	Parse arguments, valid ones are:
- *		name of file to plot (instead of STDIN)
- *		-d for debugging statements
+ * Parse arguments, valid ones are:
+ * name of file to plot (instead of STDIN)
+ * -d for debugging statements
  *
- *	Default (no arguments) action is to plot STDIN on current FB.
+ * Default (no arguments) action is to plot STDIN on current FB.
  */
 int
 main(int argc, char **argv)
 {
     Nscanlines = Npixels = 512;
 
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
-	bu_exit( 1, NULL );
+	bu_exit(1, NULL);
     }
 
     /* Open frame buffer, adapt to slightly smaller ones */
-    if ( (fbp = fb_open(framebuffer, Npixels, Nscanlines)) == FBIO_NULL ) {
+    if ((fbp = fb_open(framebuffer, Npixels, Nscanlines)) == FBIO_NULL) {
 	fprintf(stderr, "pl-fb: fb_open failed\n");
 	bu_exit(1, NULL);
     }
     Npixels = fb_getwidth(fbp);
     Nscanlines = fb_getheight(fbp);
-    if ( immediate )  {
+    if (immediate) {
 	lines_per_band = Nscanlines;
-	if ( !over )
-	    fb_clear( fbp, RGBPIXEL_NULL );
-    } else if ( Nscanlines <= 512 ) {
+	if (!over)
+	    fb_clear(fbp, RGBPIXEL_NULL);
+    } else if (Nscanlines <= 512) {
 	/* make one full size band */
 	lines_per_band = Nscanlines;
 	single_banded = 1;
@@ -1396,7 +1392,7 @@ main(int argc, char **argv)
     /*
      * Handle image-size specific initializations
      */
-    if ( (Nscanlines % lines_per_band) != 0 )  {
+    if ((Nscanlines % lines_per_band) != 0) {
 	/* round it down - only necessary if buffered? */
 	Nscanlines = (Nscanlines / lines_per_band) * lines_per_band;
     }
@@ -1407,30 +1403,31 @@ main(int argc, char **argv)
     deltao2 = Nscanlines/2;
 
     buffersize = lines_per_band*Npixels*sizeof(RGBpixel);
-    if ( (buffer = (unsigned char *)malloc(buffersize)) == RGBPIXEL_NULL)  {
+    if ((buffer = (unsigned char *)malloc(buffersize)) == RGBPIXEL_NULL) {
 	fprintf(stderr, "pl-fb:  malloc error\n");
 	bu_exit(1, NULL);
     }
     /* Extra band protects against requeueing off the top */
     band = (struct band *)malloc((BANDSLOP)*sizeof(struct band));
-    if ( band == (struct band *)0 )  {
+    if (band == (struct band *)0) {
 	fprintf(stderr, "pl-fb: malloc error2\n");
 	bu_exit(1, NULL);
     }
     memset((char *)band, 0, (BANDSLOP)*sizeof(struct band));
     bandEnd = &band[BANDS];
-    if ( single_banded && over ) {
+    if (single_banded && over) {
 	/* Read in initial screen */
-	if ( fb_read( fbp, 0, 0, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+	if (fb_read(fbp, 0, 0, buffer, buffersize/sizeof(RGBpixel)) <= 0)
 	    fprintf(stderr, "pl-fb: band read error\n");
     }
-    if ( debug )
+    if (debug)
 	fprintf(stderr, "pl-fb output of %s\n", filename);
 
     SetSigs();			/* set signal catchers */
 
-    (void)DoFile( );	/* plot it */
-    bu_exit(0, NULL);
+    (void)DoFile();	/* plot it */
+
+    return 0;
 }
 
 

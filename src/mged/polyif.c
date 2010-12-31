@@ -46,19 +46,19 @@ struct polygon_header {
 
 
 struct bu_structparse polygon_desc[] = {
-    {"%d", 1, "magic", bu_offsetof(struct polygon_header, magic), BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "ident", bu_offsetof(struct polygon_header, ident), BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "interior", bu_offsetof(struct polygon_header, interior), BU_STRUCTPARSE_FUNC_NULL },
-    {"%f", 3, "normal", bu_offsetofarray(struct polygon_header, normal), BU_STRUCTPARSE_FUNC_NULL },
-    {"%c", 3, "color", bu_offsetofarray(struct polygon_header, color), BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "npts", bu_offsetof(struct polygon_header, npts), BU_STRUCTPARSE_FUNC_NULL },
-    {"",   0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
+    {"%d", 1, "magic", bu_offsetof(struct polygon_header, magic), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "ident", bu_offsetof(struct polygon_header, ident), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "interior", bu_offsetof(struct polygon_header, interior), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "normal", bu_offsetofarray(struct polygon_header, normal), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%c", 3, "color", bu_offsetofarray(struct polygon_header, color), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "npts", bu_offsetof(struct polygon_header, npts), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",   0, NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 struct bu_structparse vertex_desc[] = {
-    {"%f", 3, "vertex", 0, BU_STRUCTPARSE_FUNC_NULL },
-    {"",   0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
+    {"%f", 3, "vertex", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",   0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -71,7 +71,7 @@ struct bu_structparse vertex_desc[] = {
  * Usage:  polybinout file
  */
 int
-f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_polybinout(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;

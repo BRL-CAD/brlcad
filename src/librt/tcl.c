@@ -928,7 +928,7 @@ tcl_obj_to_fastf_array(Tcl_Interp *interp, Tcl_Obj *list, fastf_t **array, int *
  * returns the number of elements converted.
  */
 int
-tcl_list_to_fastf_array(Tcl_Interp *interp, char *char_list, fastf_t **array, int *array_len)
+tcl_list_to_fastf_array(Tcl_Interp *interp, const char *char_list, fastf_t **array, int *array_len)
 {
     Tcl_Obj *obj;
     int ret;

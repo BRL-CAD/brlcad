@@ -19,7 +19,7 @@
  *
  */
 /** @file plot.c
- *	Author:		Gary S. Moss
+ *
  */
 
 #include "common.h"
@@ -40,7 +40,7 @@
 void
 plotInit()
 {
-    int	x_1, y_1, z_1, x_2, y_2, z_2;
+    int x_1, y_1, z_1, x_2, y_2, z_2;
     if (plotfp == NULL)
 	return;
     x_1 = (int) rtip->mdl_min[X] - 1;
@@ -53,9 +53,9 @@ plotInit()
     return;
 }
 
+
 void
-plotGrid(r_pt)
-    fastf_t	*r_pt;
+plotGrid(fastf_t *r_pt)
 {
     if (plotfp == NULL)
 	return;
@@ -64,24 +64,24 @@ plotGrid(r_pt)
     return;
 }
 
+
 void
-plotRay(rayp)
-    struct xray	*rayp;
+plotRay(struct xray *rayp)
 {
-    int	endpoint[3];
+    int endpoint[3];
     if (plotfp == NULL)
 	return;
     VJOIN1(endpoint, rayp->r_pt, cellsz, rayp->r_dir);
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     pl_color(plotfp, R_BURST, G_BURST, B_BURST);
 #if 0
-    pl_3line(	plotfp,
-		(int) rayp->r_pt[X],
-		(int) rayp->r_pt[Y],
-		(int) rayp->r_pt[Z],
-		endpoint[X],
-		endpoint[Y],
-		endpoint[Z]
+    pl_3line(plotfp,
+	     (int) rayp->r_pt[X],
+	     (int) rayp->r_pt[Y],
+	     (int) rayp->r_pt[Z],
+	     endpoint[X],
+	     endpoint[Y],
+	     endpoint[Z]
 	);
 #else
     pl_3point(plotfp, (int) endpoint[X], (int) endpoint[Y], (int) endpoint[Z]);
@@ -90,25 +90,25 @@ plotRay(rayp)
     return;
 }
 
+
 void
-plotPartition(ihitp, ohitp)
-    struct hit		*ihitp;
-    struct hit	*ohitp;
+plotPartition(struct hit *ihitp, struct hit *ohitp)
 {
     if (plotfp == NULL)
 	return;
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    pl_3line(	plotfp,
-		(int) ihitp->hit_point[X],
-		(int) ihitp->hit_point[Y],
-		(int) ihitp->hit_point[Z],
-		(int) ohitp->hit_point[X],
-		(int) ohitp->hit_point[Y],
-		(int) ohitp->hit_point[Z]
+    pl_3line(plotfp,
+	     (int) ihitp->hit_point[X],
+	     (int) ihitp->hit_point[Y],
+	     (int) ihitp->hit_point[Z],
+	     (int) ohitp->hit_point[X],
+	     (int) ohitp->hit_point[Y],
+	     (int) ohitp->hit_point[Z]
 	);
     bu_semaphore_release(BU_SEM_SYSCALL);
     return;
 }
+
 
 /*
  * Local Variables:

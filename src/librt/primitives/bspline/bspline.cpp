@@ -1212,7 +1212,7 @@ rt_nurb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 }
 
 int
-rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_nurb_internal *nurb;
     int srf_no;

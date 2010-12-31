@@ -45,6 +45,41 @@ new names should be listed for reference.
 * DEPRECATED *
 **************
 
+7.18
+----
+mged
+        ?(*) -> ? -(*)
+        apropos(*) -> apropos -(*)
+        dbconcat -> db concat
+        dbupgrade -> db upgrade
+        dbversion -> db version
+        dbfind -> search
+        debug* -> debug
+        comb_std -> comb
+        comb_color -> comb
+        combmem -> comb
+        kill(*) -> kill
+        rotobj -> rot
+        qvrot -> rot -q -v
+        qorot -> rot -q
+        ([amov])rot -> rot -([amv])
+        ([op])scale -> sca -(p)
+        ([op])translate -> tra -(p)
+        nmg_(*) -> nmg (*)
+        bot_(*) -> bot (*)
+        [so]ed -> edit
+        [tr]ed -> edit -t
+        ls -oA -> ls -O
+        draw -oA -> draw -O
+        erase -oA -> erase -O
+        erase_all -> erase -r
+        move_all -> move -r
+        query_ray -> nirt
+        vdraw -> draw -v
+        vnirt -> nirt -v
+        vquery_ray -> nirt -v
+        xpush -> push -x
+
 7.16
 ----
 struct bu_structparse 'i' format
@@ -141,8 +176,6 @@ include/raytrace.h
 pre 7.0
 -------
 include/raytrace.h
-	db_free_external -> bu_free_external [deprecated pre-7.0]
-	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
 	struct hit.hit_point -> RT_HIT_POINT [deprecated pre-7.0]
 	struct hit.hit_normal -> RT_HIT_NORMAL [deprecated pre-7.0]
 
@@ -150,6 +183,10 @@ include/raytrace.h
 ************
 * OBSOLETE *
 ************
+
+7.18.2
+------
+	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
 
 7.18.0
 ------
@@ -284,6 +321,15 @@ regular expression search-and-replace is all that is needed to update.
 Included in following are various minimally impacting API changes that
 have been identified in reverse chronological order.  As expressions
 are not extensively tested, use with caution.
+
+s/VAPPROXEQUAL(/VNEAR_EQUAL(/g
+        VAPPROXEQUAL() renamed to VNEAR_EQUAL() [7.18]
+
+s/bu_vlb_getBufferLength(/bu_vlb_buflen(/g
+        bu_vlb_getBufferLength() remamed to bu_vlb_buflen() [7.18]
+
+s/bu_vlb_getBuffer(/bu_vlb_addr(/g
+        bu_vlb_getBuffer() remamed to bu_vlb_addr() [7.18]
 
 s/nmg_struct_counts(/nmg_pr_m_struct_counts(/g
         nmg_struct_counts() renamed to nmg_pr_m_struct_counts() [7.18]

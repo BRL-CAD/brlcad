@@ -44,6 +44,8 @@
 
 #include "pkg.h"
 
+
+/* in cmap-crunch.c */
 extern void cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *colormap);
 
 
@@ -122,6 +124,7 @@ get_args(int argc, char **argv)
 
     return 1;		/* OK */
 }
+
 
 int
 main(int argc, char **argv)
@@ -233,8 +236,9 @@ Usage: fb-png [-h -i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
     }
     fb_close(fbp);
     png_write_end(png_p, NULL);
-    bu_exit(0, NULL);
+    return 0;
 }
+
 
 /*
  * Local Variables:

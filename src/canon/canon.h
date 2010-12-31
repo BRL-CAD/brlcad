@@ -105,7 +105,7 @@ extern char scsi_device[];
 extern char ipu_gamma;
 extern int  ipu_filetype;
 extern int  ipu_bytes_per_pixel;
-extern char tray;
+extern int tray;
 extern char conv;
 extern char clear;
 extern unsigned long width;

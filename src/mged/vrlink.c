@@ -53,9 +53,9 @@ static char *tcp_port = "5555";	/* "gedd", remote mged */
 void ph_cmd(struct pkg_conn *pc, char *buf);
 void ph_vlist(struct pkg_conn *pc, char *buf);
 static struct pkg_switch pkgswitch[] = {
-    { VRMSG_CMD,		ph_cmd,		"Command" },
-    { VRMSG_VLIST,		ph_vlist,	"Import vlist" },
-    { 0,			0,		(char *)0 }
+    { VRMSG_CMD,		ph_cmd,		"Command", NULL },
+    { VRMSG_VLIST,		ph_vlist,	"Import vlist", NULL },
+    { 0,			0,		NULL, NULL }
 };
 
 
@@ -167,10 +167,10 @@ vr_viewpoint_hook(void)
  * Syntax:  vrmgr host role
  */
 int
-f_vrmgr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_vrmgr(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct bu_vls str;
-    char *role;
+    const char *role;
 
     if (argc < 3) {
 	struct bu_vls vls;
@@ -253,8 +253,8 @@ ph_cmd(struct pkg_conn *pc, char *buf)
 #define CMD_BUFSIZE 1024
     char buffer[CMD_BUFSIZE] = {0};
 
-    status = Tcl_Eval(interp, buf);
-    result = Tcl_GetStringResult(interp);
+    status = Tcl_Eval(INTERP, buf);
+    result = Tcl_GetStringResult(INTERP);
 
     snprintf(buffer, CMD_BUFSIZE, "%s", result);
 
@@ -277,7 +277,7 @@ ph_cmd(struct pkg_conn *pc, char *buf)
  * Install whatever phantom solids he wants.
  */
 void
-ph_vlist(struct pkg_conn *pc, char *buf)
+ph_vlist(struct pkg_conn *UNUSED(pc), char *buf)
 {
     struct bu_list vhead;
     struct bu_vls name;
