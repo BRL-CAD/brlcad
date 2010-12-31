@@ -226,7 +226,7 @@ WinLink(
 {
     WCHAR tempFileName[MAX_PATH];
     TCHAR *tempFilePart;
-    int attr;
+    DWORD attr;
 
     /*
      * Get the full path referenced by the target.
@@ -247,7 +247,7 @@ WinLink(
      */
 
     attr = (*tclWinProcs->getFileAttributesProc)(linkSourcePath);
-    if (attr != 0xffffffff) {
+    if (attr != INVALID_FILE_ATTRIBUTES) {
 	Tcl_SetErrno(EEXIST);
 	return -1;
     }
@@ -271,7 +271,7 @@ WinLink(
      */
 
     attr = (*tclWinProcs->getFileAttributesProc)(linkTargetPath);
-    if (attr == 0xffffffff) {
+    if (attr == INVALID_FILE_ATTRIBUTES) {
 	/*
 	 * The target doesn't exist.
 	 */
@@ -347,7 +347,7 @@ WinReadLink(
 {
     WCHAR tempFileName[MAX_PATH];
     TCHAR *tempFilePart;
-    int attr;
+    DWORD attr;
 
     /*
      * Get the full path referenced by the target.
@@ -368,7 +368,7 @@ WinReadLink(
      */
 
     attr = (*tclWinProcs->getFileAttributesProc)(linkSourcePath);
-    if (attr == 0xffffffff) {
+    if (attr == INVALID_FILE_ATTRIBUTES) {
 	/*
 	 * The source doesn't exist.
 	 */
@@ -1262,8 +1262,8 @@ WinIsReserved(
 	    }
 	}
 
-    } else if (!stricmp(path, "prn") || !stricmp(path, "nul")
-	    || !stricmp(path, "aux")) {
+    } else if (!strcasecmp(path, "prn") || !strcasecmp(path, "nul")
+	    || !strcasecmp(path, "aux")) {
 	/*
 	 * Have match for 'prn', 'nul' or 'aux'.
 	 */
@@ -1627,7 +1627,7 @@ NativeAccess(
 	}
 
 	/*
-	 * Now size contains the size of buffer needed
+	 * Now size contains the size of buffer needed.
 	 */
 
 	sdPtr = (SECURITY_DESCRIPTOR *) HeapAlloc(GetProcessHeap(), 0, size);
@@ -1637,7 +1637,7 @@ NativeAccess(
 	}
 
 	/*
-	 * Call GetFileSecurity() for real
+	 * Call GetFileSecurity() for real.
 	 */
 
 	if (!(*tclWinProcs->getFileSecurityProc)(nativePath,
@@ -1797,9 +1797,9 @@ NativeIsExec(
 	     * executable, whereas access did not.
 	     */
 
-	    if ((stricmp(p, "exe") == 0)
-		    || (stricmp(p, "com") == 0)
-		    || (stricmp(p, "bat") == 0)) {
+	    if ((strcasecmp(p, "exe") == 0)
+		    || (strcasecmp(p, "com") == 0)
+		    || (strcasecmp(p, "bat") == 0)) {
 		/*
 		 * File that ends with .exe, .com, or .bat is executable.
 		 */

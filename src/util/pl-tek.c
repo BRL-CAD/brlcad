@@ -26,16 +26,18 @@
 
 #include "common.h"
 
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h> /* for sleep(3) */
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
-#include "common.h"
-
-
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
+
 
 struct uplot {
     int targ;	/* type of args */
@@ -44,18 +46,6 @@ struct uplot {
     int t3d;	/* non-zero if 3D */
 };
 
-
-void getstring(void);
-void getargs(struct uplot *up);
-double getieee(void);
-void doscale(void);
-
-static void tekmove(int xi, int yi);
-static void tekcont(int x, int y);
-static void tekerase(void);
-static void teklabel(char *s);
-static void teklinemod(char *s);
-static void tekpoint(int xi, int yi);
 
 #define BELL 007
 #define FF 014
@@ -71,7 +61,7 @@ static void tekpoint(int xi, int yi);
 #define TCHAR 4 /* unsigned chars */
 #define TSTRING 5 /* linefeed terminated string */
 
-struct uplot uerror = { 0, 0, 0 };
+struct uplot uerror = { 0, 0, NULL, 0 };
 struct uplot letters[] = {
     /*A*/	{ 0, 0, 0, 0 },
     /*B*/	{ 0, 0, 0, 0 },
@@ -144,6 +134,232 @@ int expand_it = 0;		/* expand plot to 4k, beyond what will fit on real Tek scree
 
 static const char usage[] = "\
 Usage: pl-tek [-e] [-v] < file.pl > file.tek\n";
+
+
+int
+getshort(void)
+{
+    long v, w;
+
+    v = getchar();
+    v |= (getchar()<<8);	/* order is important! */
+
+    /* worry about sign extension - sigh */
+    if (v <= 0x7FFF) return v;
+    w = -1;
+    w &= ~0x7FFF;
+    return w | v;
+}
+
+
+void
+getstring(void)
+{
+    int c;
+    char *cp;
+
+    cp = strarg;
+    while ((c = getchar()) != '\n' && c != EOF)
+	*cp++ = c;
+    *cp = 0;
+}
+
+
+double
+getieee(void)
+{
+    unsigned char in[8];
+    double d;
+
+    fread(in, 8, 1, stdin);
+    ntohd((unsigned char *)&d, in, 1);
+    return d;
+}
+
+
+void
+getargs(struct uplot *up)
+{
+    int i;
+
+    for (i = 0; i < up->narg; i++) {
+	switch (up->targ) {
+	    case TSHORT:
+		arg[i] = getshort();
+		break;
+	    case TIEEE:
+		arg[i] = getieee();
+		break;
+	    case TSTRING:
+		getstring();
+		break;
+	    case TCHAR:
+		arg[i] = getchar();
+		break;
+	    case TNONE:
+	    default:
+		arg[i] = 0;	/* ? */
+		break;
+	}
+    }
+}
+
+
+/*
+ * Establish display coordinate conversion:
+ * Input ranges from min=(sp[0], sp[1]) to max=(sp[3], sp[4]).
+ * Tektronix is using 0..4096, but not all is visible.
+ * So, use a little less.
+ * To convert, subtract the min val, and multiply by 'scale'.
+ * Out of range detection is converters problem.
+ */
+void
+doscale(void)
+{
+    double dx, dy, dz;
+    double max;
+
+    dx = (sp[3] - sp[0]);
+    dy = (sp[4] - sp[1]);
+    dz = (sp[5] - sp[2]);
+
+    max = dx;
+    if (dy > max) max = dy;
+    if (dz > max) max = dz;
+
+    if (expand_it)
+	scale = 4096 / max;
+    else
+	scale = (4096-1000) / max;
+    if (verbose) {
+	fprintf(stderr, "doscale: min=(%g, %g), max=(%g, %g), scale=%g\n",
+		sp[0], sp[1],
+		sp[3], sp[4],
+		scale);
+    }
+}
+
+
+/*
+ * Perform the interface functions
+ * for the Tektronix 4014-1 with Extended Graphics Option.
+ * The Extended Graphics Option makes available a field of
+ * 10 inches vertical, and 14 inches horizontal, with a resolution
+ * of 287 points per inch.
+ *
+ * The Tektronix is Quadrant I, 4096x4096 (not all visible).
+ */
+static int oloy = -1;
+static int ohiy = -1;
+static int ohix = -1;
+static int oextra = -1;
+
+/* Continue motion from last position */
+static void
+tekcont(int x, int y)
+{
+    int hix, hiy, lox, loy, extra;
+    int n;
+
+    if (verbose) fprintf(stderr, " tekcont(%d, %d)\n", x, y);
+    hix=(x>>7) & 037;
+    hiy=(y>>7) & 037;
+    lox = (x>>2)&037;
+    loy=(y>>2)&037;
+    extra = (x & 03) + ((y<<2) & 014);
+    n = (abs(hix-ohix) + abs(hiy-ohiy) + 6) / 12;
+    if (hiy != ohiy) {
+	(void)putc(hiy|040, stdout);
+	ohiy=hiy;
+    }
+    if (hix != ohix) {
+	if (extra != oextra) {
+	    (void)putc(extra|0140, stdout);
+	    oextra=extra;
+	}
+	(void)putc(loy|0140, stdout);
+	(void)putc(hix|040, stdout);
+	ohix=hix;
+	oloy=loy;
+    } else {
+	if (extra != oextra) {
+	    (void)putc(extra|0140, stdout);
+	    (void)putc(loy|0140, stdout);
+	    oextra=extra;
+	    oloy=loy;
+	} else if (loy != oloy) {
+	    (void)putc(loy|0140, stdout);
+	    oloy=loy;
+	}
+    }
+    (void)putc(lox|0100, stdout);
+    while (n--)
+	(void)putc(0, stdout);
+}
+
+
+static void
+tekmove(int xi, int yi)
+{
+    (void)putc(GS, stdout);			/* Next vector blank */
+    tekcont(xi, yi);
+}
+
+
+static void
+tekerase(void)
+{
+    (void)putc(ESC, stdout);
+    (void)putc(FF, stdout);
+    ohix = ohiy = oloy = oextra = -1;
+    (void)fflush(stdout);
+
+    (void)sleep(3);
+}
+
+
+static void
+teklabel(char *s)
+{
+    (void)putc(US, stdout);
+    for (; *s; s++)
+	(void)putc(*s, stdout);
+    ohix = ohiy = oloy = oextra = -1;
+}
+
+
+static void
+teklinemod(char *s)
+{
+    int c;				/* DAG -- was char */
+
+    (void)putc(ESC, stdout);
+    switch (s[0]) {
+	case 'l':
+	    c = 'd';
+	    break;
+	case 'd':
+	    if (s[3] != 'd')c='a';
+	    else c='b';
+	    break;
+	case 's':
+	    if (s[5] != '\0')c='c';
+	    else c='`';
+	    break;
+	default:			/* DAG -- added support for colors */
+	    c = '`';
+	    break;
+    }
+    (void)putc(c, stdout);
+}
+
+
+static void
+tekpoint(int xi, int yi) {
+    tekmove(xi, yi);
+    tekcont(xi, yi);
+}
+
 
 int
 main(int argc, char **argv)
@@ -318,235 +534,6 @@ main(int argc, char **argv)
     }
 
     return 0;
-}
-
-
-/*** Input args ***/
-
-int
-getshort(void)
-{
-    long v, w;
-
-    v = getchar();
-    v |= (getchar()<<8);	/* order is important! */
-
-    /* worry about sign extension - sigh */
-    if (v <= 0x7FFF) return v;
-    w = -1;
-    w &= ~0x7FFF;
-    return w | v;
-}
-
-
-void
-getargs(struct uplot *up)
-{
-    int i;
-
-    for (i = 0; i < up->narg; i++) {
-	switch (up->targ) {
-	    case TSHORT:
-		arg[i] = getshort();
-		break;
-	    case TIEEE:
-		arg[i] = getieee();
-		break;
-	    case TSTRING:
-		getstring();
-		break;
-	    case TCHAR:
-		arg[i] = getchar();
-		break;
-	    case TNONE:
-	    default:
-		arg[i] = 0;	/* ? */
-		break;
-	}
-    }
-}
-
-
-void
-getstring(void)
-{
-    int c;
-    char *cp;
-
-    cp = strarg;
-    while ((c = getchar()) != '\n' && c != EOF)
-	*cp++ = c;
-    *cp = 0;
-}
-
-
-double
-getieee(void)
-{
-    unsigned char in[8];
-    double d;
-
-    fread(in, 8, 1, stdin);
-    ntohd((unsigned char *)&d, in, 1);
-    return d;
-}
-
-
-/*
- * Establish display coordinate conversion:
- * Input ranges from min=(sp[0], sp[1]) to max=(sp[3], sp[4]).
- * Tektronix is using 0..4096, but not all is visible.
- * So, use a little less.
- * To convert, subtract the min val, and multiply by 'scale'.
- * Out of range detection is converters problem.
- */
-void
-doscale(void)
-{
-    double dx, dy, dz;
-    double max;
-
-    dx = (sp[3] - sp[0]);
-    dy = (sp[4] - sp[1]);
-    dz = (sp[5] - sp[2]);
-
-    max = dx;
-    if (dy > max) max = dy;
-    if (dz > max) max = dz;
-
-    if (expand_it)
-	scale = 4096 / max;
-    else
-	scale = (4096-1000) / max;
-    if (verbose) {
-	fprintf(stderr, "doscale: min=(%g, %g), max=(%g, %g), scale=%g\n",
-		sp[0], sp[1],
-		sp[3], sp[4],
-		scale);
-    }
-}
-
-
-/*
- * Perform the interface functions
- * for the Tektronix 4014-1 with Extended Graphics Option.
- * The Extended Graphics Option makes available a field of
- * 10 inches vertical, and 14 inches horizontal, with a resolution
- * of 287 points per inch.
- *
- * The Tektronix is Quadrant I, 4096x4096 (not all visible).
- */
-static int oloy = -1;
-static int ohiy = -1;
-static int ohix = -1;
-static int oextra = -1;
-
-/* Continue motion from last position */
-static void
-tekcont(int x, int y)
-{
-    int hix, hiy, lox, loy, extra;
-    int n;
-
-    if (verbose) fprintf(stderr, " tekcont(%d, %d)\n", x, y);
-    hix=(x>>7) & 037;
-    hiy=(y>>7) & 037;
-    lox = (x>>2)&037;
-    loy=(y>>2)&037;
-    extra = (x & 03) + ((y<<2) & 014);
-    n = (abs(hix-ohix) + abs(hiy-ohiy) + 6) / 12;
-    if (hiy != ohiy) {
-	(void)putc(hiy|040, stdout);
-	ohiy=hiy;
-    }
-    if (hix != ohix) {
-	if (extra != oextra) {
-	    (void)putc(extra|0140, stdout);
-	    oextra=extra;
-	}
-	(void)putc(loy|0140, stdout);
-	(void)putc(hix|040, stdout);
-	ohix=hix;
-	oloy=loy;
-    } else {
-	if (extra != oextra) {
-	    (void)putc(extra|0140, stdout);
-	    (void)putc(loy|0140, stdout);
-	    oextra=extra;
-	    oloy=loy;
-	} else if (loy != oloy) {
-	    (void)putc(loy|0140, stdout);
-	    oloy=loy;
-	}
-    }
-    (void)putc(lox|0100, stdout);
-    while (n--)
-	(void)putc(0, stdout);
-}
-
-
-static void
-tekmove(int xi, int yi)
-{
-    (void)putc(GS, stdout);			/* Next vector blank */
-    tekcont(xi, yi);
-}
-
-
-static void
-tekerase(void)
-{
-    extern unsigned sleep(unsigned int);	/* DAG -- was missing */
-
-    (void)putc(ESC, stdout);
-    (void)putc(FF, stdout);
-    ohix = ohiy = oloy = oextra = -1;
-    (void)fflush(stdout);
-
-    (void)sleep(3);
-}
-
-
-static void
-teklabel(char *s)
-{
-    (void)putc(US, stdout);
-    for (; *s; s++)
-	(void)putc(*s, stdout);
-    ohix = ohiy = oloy = oextra = -1;
-}
-
-
-static void
-teklinemod(char *s)
-{
-    int c;				/* DAG -- was char */
-
-    (void)putc(ESC, stdout);
-    switch (s[0]) {
-	case 'l':
-	    c = 'd';
-	    break;
-	case 'd':
-	    if (s[3] != 'd')c='a';
-	    else c='b';
-	    break;
-	case 's':
-	    if (s[5] != '\0')c='c';
-	    else c='`';
-	    break;
-	default:			/* DAG -- added support for colors */
-	    c = '`';
-	    break;
-    }
-    (void)putc(c, stdout);
-}
-
-
-static void
-tekpoint(int xi, int yi) {
-    tekmove(xi, yi);
-    tekcont(xi, yi);
 }
 
 

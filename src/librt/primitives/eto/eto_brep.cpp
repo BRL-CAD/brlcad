@@ -38,7 +38,7 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     struct rt_eto_internal *eip;
 
-    *b = NULL; 
+    *b = NULL;
 
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_eto_internal *)ip->idb_ptr;
@@ -50,7 +50,7 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     ON_3dVector plane_x_dir, plane_y_dir;
 
     double ell_axis_len_1, ell_axis_len_2;
-    
+
     //  First, find a plane in 3 space with x and y axes
     //  along an axis of the ellipse to be rotated, and its
     //  coordinate origin at the center of the ellipse.
@@ -72,8 +72,8 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     plane_origin = ON_3dPoint(p_origin);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
-   
-    const ON_Plane* ell_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
+
+    const ON_Plane* ell_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
 
 
     //  Once the plane has been created, create the ellipse
@@ -84,8 +84,8 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 
 
     //  Generate an ON_Curve from the ellipse and revolve it
-    //  around eto_N 
- 
+    //  around eto_N
+
     ON_NurbsCurve ellcurve;
     ellipse->GetNurbForm(ellcurve);
     ON_3dPoint eto_vertex_pt = ON_3dPoint(eip->eto_V);
@@ -112,4 +112,3 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

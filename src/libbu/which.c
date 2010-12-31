@@ -46,11 +46,11 @@ bu_which(const char *cmd)
     char *directory = NULL;
     char *position = NULL;
 
-    if (bu_debug & BU_DEBUG_PATHS) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	bu_log("bu_which: [%s]\n", cmd);
     }
 
-    if (!cmd || (strlen(cmd) == 0)) {
+    if (UNLIKELY(!cmd || (strlen(cmd) == 0))) {
 	return NULL;
     }
 
@@ -61,7 +61,7 @@ bu_which(const char *cmd)
     /* check for full/relative path match */
     bu_strlcpy(bu_which_result, cmd, MAXPATHLEN);
     if (strcmp(bu_which_result, cmd) != 0) {
-	if (bu_debug & BU_DEBUG_PATHS) {
+	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("command [%s] is too long\n", cmd);
 	}
 	return NULL;
@@ -83,18 +83,18 @@ bu_which(const char *cmd)
 		position = '\0';
 	    } else {
 		/* too much and no separator? wtf. */
-		if (bu_debug & BU_DEBUG_PATHS) {
+		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		    bu_log("path contains invalid data?\n");
 		}
 		return NULL;
 	    }
 	}
 
-	if (bu_debug & BU_DEBUG_PATHS) {
+	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("PATH is %s\n", PATH);
 	}
     } else {
-	if (bu_debug & BU_DEBUG_PATHS) {
+	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("PATH is NULL\n");
 	}
 	return NULL;
@@ -126,7 +126,7 @@ bu_which(const char *cmd)
     } while (directory); /* iterate over PATH directories */
 
     /* no path or no match */
-    if (bu_debug & BU_DEBUG_PATHS) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	bu_log("no %s in %s\n", cmd, gotpath ? gotpath : "(no path)");
     }
 

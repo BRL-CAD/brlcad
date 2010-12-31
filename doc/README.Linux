@@ -60,10 +60,22 @@ headers installed:
 
 apt-get install xserver-xorg-dev libx11-dev libxi-dev
 
+Required: make (>= 3.8.0), bison, flex, xserver-xorg-dev, libx11-dev, libxi-dev
+Optional: libpng-dev, zlib1g-dev, tcl8.5-dev (>= 8.5), tk8.5-dev (>= 8.5), tcl3-dev, itk3-dev, iwidgets4, blt-dev
+
+Redhat/Fedora
+-------------
+
+To determine what particular version of Redhat or Fedora you are using, check
+these files:
+
+cat /etc/redhat-release
+cat /etc/fedora-release
 
 PPC64 Linux
 -----------
 
 If you happen to be installing on a ppc64 Linux system, the binaries
-will not correctly resolve without being installed first.  Be sure to
-install before testing applications.
+may not resolve correctly without being installed first.  Be sure to
+install before testing applications (i.e., even before running the
+benchmark or "make test").

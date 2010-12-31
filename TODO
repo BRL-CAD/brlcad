@@ -17,17 +17,21 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* test and verify 'red' command
+* conversion.sh using signals for child->parent communication
+
+* conversion.sh --not and --only options
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* update g-xxx_facets to use libgcv
+
+* rename all the g_* tools sans "_"
+
 * explore the g_qa/plot issue
 
 * release dm X get_color() memory
-
-* fix archer/libdm labels/axes to not use pointer printing
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
@@ -38,8 +42,81 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   or simply have an rt_*() for each function (e.g., rt_mirror(),
   rt_shot(), rt_describe(), etc).
 
-* investigate tessellation failures (Stryker, et al), possibily due to
-  recent tolerance checks.
+
+THESE ARE UNSCHEDULED BACKLOG TASKS
+-----------------------------------
+
+* investigate why solids.sh fails on three pixels on some 64-bit
+  platforms. it grazingly hits/misses a tgc causing a regression
+  failure.
+
+  havoc.g s.nos5g reliably exhibits the grazing edge bug where only
+  one hit point is being returned.  to reproduce:
+  e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
+
+* deprecate rtg3 and burst
+
+* make sure 'preview' works, particularly the 'tree' subcommand.
+
+* make nreed's new bot cleanup interface update interactively without
+  resorting to calls to Tcl_DoOneEvent() down in librt.
+
+* upgrade source repository back-end to the latest SVN 1.5 so we can
+  benefit from proper merge tracking.
+
+* make sure mged/archer behave properly with relative paths to dbopen.
+  Windows in particular is doing something different in
+  src/librt/db_open.c that should be a problem as it only records the
+  file name (so gui will work, but dbopen + cd + rt will not).
+
+* convert all calls to BU_SETJUMP/BU_UNSETJUMP into familiar try/catch
+  logic layout using if/else.
+
+* facetize creates BoTs crappily by only looking at first region,
+  first shell, instead of the whole nmg model.
+
+* nmg_bot() and nmg_from_bot() only work with shells.  verify that all
+  callers iterate over all shells or write a model version that does a
+  complete conversion correctly.
+
+* bu_cv_optimize() should be using bu_byteorder().
+
+* render annotated images to the OpenDocument format.  this is
+  particularly useful for rtedge-style renderings with object
+  annotations where we can leverage layout components and scalable
+  vector graphics.
+
+* Cache objects.  These are proper non-geometric geometry database
+  objects intended to store binary results that have a dependency on
+  other object(s).  A named hash (e.g. md5) is recorded for each
+  dependent object along with the computed results.
+
+  Three potential candidates for leveraging cache objects are 1) prep
+  objects containing the final prepped state of a given object
+  hierarchy (particularly useful for BoT and BREP geometry), 2)
+  raytrace objects containing the intersection results for a given
+  view (i.e., a grid of primary rays), and 3) rtgl point samples
+  (which is a variant of 2 but potentially view independent).
+
+* investigate OpenEXR (BSD licensed HDE image format)
+
+* the 'cp' command no longer draws the object that was copied --
+  undoubtedly a libged change -- so restore previous functionality.
+  as that behavior was not intentional and is undesirable for large
+  objects, have some means to determine that something is "large and
+  complex" or at a minimum, provide an option to not draw on copy.
+
+* rt/rtedge command-line options for overriding object colors
+
+* rtwizard enhancement to allow color overrides to be specified for
+  selected objects.
+
+* plate mode NURBS/BREP objects.  Similar, if not identical, to plate
+  mode BoTs, 'brep' objects need the ability to have a thickness
+  described so you could automatically handle non-solid NURBS and
+  sheet-metal style geometry without requiring surface solidity.
+
+* fix archer/libdm labels/axes to not use pointer printing
 
 * annotation primitive.  specifically a means to create an object in
   the database that can optionally be associated with an object and/or
@@ -52,19 +129,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   also be useful to allow an optional "thickness" so that the
   annotations can represent physical geometry (so they raytrace).
 
-
-THESE ARE UNSCHEDULED BACKLOG TASKS
------------------------------------
-
-* fix forum links to point to the sourceforge forums, not the nabble
-  forums
+* add support for a custom unit conversion factor to the units command
+  (e.g. 'units 9.3120223' or 'units metertons 9.3120223')
 
 * write up a brief DSP overview on the wiki
-
-* the 'cp' command no longer displays the object that was copied (and
-  it reportedly did at some point prior to 7.14.8 at least).
-  undoubtedly a libged change, but an interesting consideration for
-  default behavior.
 
 * merge conv-vg2g into dbupgrade
 
@@ -103,8 +171,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * implement rt_volume() API for computing geometry volume (g_qa style
   for complex, direct for primitives)
-
-* implement parallel prep
 
 * improve compile-time version management -- port brlcad-version to
   windows, reconsider providing compile-time header constants.
@@ -253,9 +319,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * make fbclear and raytrace control panel obey a -F advanced option,
   i.e., better remote framebuffer support.
 
-* MINOR: rename bu_ptbl(), nmg_struct_counts()
-  (c++ portability, hides struct constructor)
-
 * MINOR: add tolerance parameters to the bn_*() functions that have
   near-zero tests.
 
@@ -273,9 +336,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   architecture type.
 
 * complete conversion of existing manual pages into docbook format
-
-* expose all manual page documentation from within mged through
-  searchable viewer interface (GUI)
 
 * add an option to bot_dump for outputting surface normals.  Make sure
   all supported dump formats (obj, dxf, etc) optionally write out
@@ -370,6 +430,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * add support to 'rtxray' for outputting inverted pixel values so that
   we have pixel values that are directly related to material thickness
 
+* gqa semaphore locking on results is very slow and gets worse as the
+  number of cores and speed of cpu increases.  resource contention on
+  semaphores slows everything down substantially.
+
 * g_qa (gqa in mged) needs to be more informative when it runs - 
   needs a header letting you know what it's doing, and if possible
   a "progress report" for longer runs that provides some notion of
@@ -446,8 +510,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * refactor mged/bwish/g_diff initialization to all use the same routine
 
-* rename all the g_* tools sans _ next minor update
-
 * deprecate either orot or rotobj
 
 * refactor mged's signal handling to make it possible to safely
@@ -461,6 +523,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * implement -exec support for 'search' command
 
 * implement -param support for 'search' command
+
+* make "search ." return object lists (no leading "/") but still
+  process hierarchically so things like "search . -maxdepth 0" return
+  a list of the top-level objects.  The "." implies returning only
+  unique names (i.e., a list).
 
 * make ged command names aware of object arguments for automatic
   globbing and regular expression expansion:
@@ -486,7 +553,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   they want v2 (default) or previous v1 output format via a
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901 
 
-* VRML importer
+* X3D/VRML importer
 
 * make Mac OS X universal binaries actually work.
 
@@ -546,10 +613,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   segments)
 
 * address the TODO items in src/mged/clone.c
-
-* investigate why solids.sh fails on three pixels on some 64-bit
-  platforms. it grazingly hits/misses a tgc causing a regression
-  failure.
 
 * develop a low-level tool for investigating, reporting statistics on,
   and repairing geometry database files.  the tool should nominally
@@ -685,13 +748,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   of memory requirements for a geometry database can be computed on
   the fly via a pre-prep phase.
 
-* support to the raytracers for multiple image file formats,
-  recognizing an option and/or the file suffix of the -o filename.
-
 * libfb + font rendering (perhaps through libbn's plot interface) for
   a posix terminal.
 
-* gpgpu for enhanced performance boolweave sorting
+* OpenCL for enhanced performance boolweave sorting
 
 * getexecname, "/proc/self/cmdline", program_invocation_short_name.
   separate out into new file.
@@ -732,8 +792,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * add support for filesystem-based geometry collections
 
-* modify the raytracers to use common fb and file output code
-
 * add missing manual pages (jra generated list on 04.2007):
 	a-d archer asc2g asc2pix bot-bldxf bottest brep_cube brep_simple brickwall btclsh burst bw-a bw-d bwish c-d chan_add clutter contours d-a damdf dauto dauto2 d-bw dconv ddisp d-f dfft d-i dmod double-asc dpeak dsel dsp_add dstat d-u dwin euclid_format euclid_unformat fbgammamod f-d fence fhor f-i g-adrt g-euclid1 g-jack globe g-off i-a i-d i-f ihist imod istat jack-g kurt lowp molecule nmgmodel nmg-sgp off-g pipe pipetest pix2g pix3filter pixcount pixelswap pixembed pixfields pixfieldsep pixflip-fb pixpaste pix-spm pix-yuv plstat pyramid rawbot remapid rlesortmap rletovcr room rtcell rtexample rtfrac rtrad rtsil rtsrv script-tab sketch solshoot sphflake spltest spm-fb ssampview syn tea tea_nmg testfree texturescale torii ttcp tube txyz-pl u-a u-bw u-d u-f umod ustat vcrtorle vegitation wall wdb_example xbmtorle xyz-pl yuv-pix
 
@@ -756,6 +814,29 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   NURBS format, trims surfaces, evaluates boolean expressions, and
   then generates tool paths on resulting surfaces and interior paths.
 
+* identify useful concepts implemented in the old NURBS code that are not
+  present in openNURBS, and port that code to openNURBS data structures
+  and routines.  This will eventually allow us to remove the old NURBS code.
+
+* incorporate some variety of spatial partitioning into the facetize command
+  (may involve just rewriting it) to try and realize MUCH faster tessellation
+  of CSG geometry.  Current routines are doing a lot of unnecessary work that
+  tends to result in explosive completion times for worst-case scenarios - 
+  try to get closer to the "only do the work we need to" ideal.  Once a new
+  idea is proven in that command, it should be made into a libgcv routine
+  and convertors/other commands retargted to use it.
+
+NMG Concepts to Explore
+-----------------------
+Ensure robust and fast nmg->bot conversion, and enhance the bot data structure
+to contain a generic pointer that could be used to point back to the NMG it was 
+generated from.  This could allow ALL raytracing of polygonal models to use 
+libtie/BoT raytracing routines, speeding up NMG raytracing and simplifying the
+raytracing code.
+
+Break NMG out into its own libnmg library.  Over time, consider moving other polygonal
+specific logic to libnmg, eventually moving all polygonal logic out of librt/libtie/etc
+and into libnmg.  Would involve code and API cleanup.
 
 RTGL ITEMS
 __________
@@ -820,6 +901,8 @@ ODDITIES
 THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 --------------------------------------------------
 
+* remove the hf primitive (fully)
+
 * support for features either as primitives or operations or both
   e.g. chamfer, fillet, round, cut, etc
 
@@ -864,6 +947,13 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
   relying on the raw wrapper to encode it, so that proper
   import/export can be performed without relying on minor_type hacks
   in the API.
+
+* implement support for binary attributes.  the idea is to allow
+  arrays of {u,s}int{8,16,32,64}, float, double, and strings, typed as
+  such when written out to storage.  this idea overlaps with what
+  binunif objects provide, so need to reconcile and consolidate into
+  one attribute object entity that can do everything a binunif can do,
+  then allow attributes on objects to provide that same flexibility.
 
 
 FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING

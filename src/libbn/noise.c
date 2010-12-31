@@ -112,9 +112,9 @@ filter_args(fastf_t *src, fastf_t *p, fastf_t *f, int *ip)
 static double RTable[MAXSIZE];
 
 #define INCRSUM(m, s, x, y, z)	((s)*(RTable[m]*0.5		\
-					+ RTable[m+1]*(x)	\
-					+ RTable[m+2]*(y)	\
-					+ RTable[m+3]*(z)))
+				      + RTable[m+1]*(x)		\
+				      + RTable[m+2]*(y)		\
+				      + RTable[m+3]*(z)))
 
 
 /**
@@ -138,16 +138,16 @@ static struct str_ht ht;
 #define MAGIC_STRHT2 1651771
 #define MAGIC_TAB1 9823
 #define MAGIC_TAB2 784642
-#define CK_HT() { \
-	BU_CKMAG(&ht.magic, MAGIC_STRHT1, "struct str_ht ht 1"); \
-	BU_CKMAG(&ht.magic_end, MAGIC_STRHT2, "struct str_ht ht 2"); \
-	BU_CKMAG(ht.hashTableMagic1, MAGIC_TAB1, "hashTable Magic 1"); \
-	BU_CKMAG(ht.hashTableMagic2, MAGIC_TAB2, "hashTable Magic 2"); \
-	if (ht.hashTable != (short *)&ht.hashTableMagic1[1]) \
-		bu_bomb("ht.hashTable changed rel ht.hashTableMagic1"); \
-	if (ht.hashTableMagic2 != (long *)&ht.hashTable[4096]) \
-		bu_bomb("ht.hashTable changed rel ht.hashTableMagic2"); \
-}
+#define CK_HT() {							\
+	BU_CKMAG(&ht.magic, MAGIC_STRHT1, "struct str_ht ht 1");	\
+	BU_CKMAG(&ht.magic_end, MAGIC_STRHT2, "struct str_ht ht 2");	\
+	BU_CKMAG(ht.hashTableMagic1, MAGIC_TAB1, "hashTable Magic 1");	\
+	BU_CKMAG(ht.hashTableMagic2, MAGIC_TAB2, "hashTable Magic 2");	\
+	if (ht.hashTable != (short *)&ht.hashTableMagic1[1])		\
+	    bu_bomb("ht.hashTable changed rel ht.hashTableMagic1");	\
+	if (ht.hashTableMagic2 != (long *)&ht.hashTable[4096])		\
+	    bu_bomb("ht.hashTable changed rel ht.hashTableMagic2");	\
+    }
 
 /**
  * Map integer point into repeatable random number [0..4095].  We
@@ -156,11 +156,11 @@ static struct str_ht ht;
  * a table.  The extra size does provide some extra randomness for
  * intermediate results.
  */
-#define Hash3d(a, b, c) \
-	ht.hashTable[  \
-		ht.hashTable[  \
-			ht.hashTable[(a) & 0xfff] ^ ((b) & 0xfff) \
-		]  ^ ((c) & 0xfff) \
+#define Hash3d(a, b, c)					\
+    ht.hashTable[					\
+	ht.hashTable[					\
+	    ht.hashTable[(a) & 0xfff] ^ ((b) & 0xfff)	\
+	    ]  ^ ((c) & 0xfff)				\
 	]
 
 

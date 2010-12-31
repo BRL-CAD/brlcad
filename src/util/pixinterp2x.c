@@ -34,12 +34,12 @@
 
 FILE *infp;
 
-int file_width = 512;
-int file_height = 512;
+size_t file_width = 512;
+size_t file_height = 512;
 
-int inbytes;			/* # bytes of one input scanline */
-int outbytes;			/* # bytes of one output scanline */
-int outsize;			/* size of output buffer */
+size_t inbytes;			/* # bytes of one input scanline */
+size_t outbytes;		/* # bytes of one output scanline */
+size_t outsize;			/* size of output buffer */
 unsigned char *outbuf;		/* ptr to output image buffer */
 void widen_line(unsigned char *cp, int y);
 
@@ -99,8 +99,9 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    int iny, outy;
+    size_t iny, outy;
     unsigned char *inbuf;
+    size_t ret;
 
     infp = stdin;
     if (!get_args(argc, argv)) {
@@ -120,7 +121,8 @@ main(int argc, char **argv)
 
     outy = -2;
     for (iny = 0; iny < file_height; iny++) {
-	if (fread((char *)inbuf, 1, inbytes, infp) != inbytes) {
+	ret = fread((char *)inbuf, 1, inbytes, infp);
+	if (ret != inbytes) {
 	    fprintf(stderr, "pixinterp2x fread error\n");
 	    break;
 	}
@@ -133,11 +135,13 @@ main(int argc, char **argv)
 	else
 	    interp_lines(outy-1, outy, outy-2);
     }
-    if (write(1, (char *)outbuf, outsize) != outsize) {
+    ret = write(1, (char *)outbuf, outsize);
+    if (ret != outsize) {
 	perror("pixinterp2x write");
 	bu_exit (1, NULL);
     }
-    bu_exit (0, NULL);
+
+    return 0;
 }
 
 
@@ -145,7 +149,7 @@ void
 widen_line(unsigned char *cp, int y)
 {
     unsigned char *op;
-    int i;
+    size_t i;
 
     op = (unsigned char *)outbuf + (y * outbytes);
     /* Replicate first pixel */
@@ -174,7 +178,7 @@ interp_lines(int out, int i1, int i2)
 {
     unsigned char *a, *b;	/* inputs */
     unsigned char *op;
-    int i;
+    size_t i;
 
     a = (unsigned char *)outbuf + (i1 * outbytes);
     b = (unsigned char *)outbuf + (i2 * outbytes);

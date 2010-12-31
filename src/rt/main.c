@@ -59,6 +59,7 @@ extern const char usage[];
 /***** Variables shared with viewing model *** */
 FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
 FILE		*outfp = NULL;		/* optional pixel output file */
+struct bu_image_file *bif = NULL;	/* optional bu image for saving non-PIX formats */
 mat_t		view2model;
 mat_t		model2view;
 /***** end of sharing with viewing model *****/
@@ -215,7 +216,7 @@ int main(int argc, char **argv)
     }
 
     if ( bu_optind >= argc )  {
-	fprintf(stderr, "%s:  MGED database not specified\n", argv[0]);
+	fprintf(stderr, "%s:  BRL-CAD geometry database not specified\n", argv[0]);
 	(void)fputs(usage, stderr);
 	return 1;
     }

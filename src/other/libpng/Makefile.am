@@ -1,185 +1,136 @@
+# Makefile.am:
+#   Source file for Makefile.in (and hence Makefile)
+#
+ACLOCAL_AMFLAGS = -I ../../../m4
 
-lib_LTLIBRARIES = libpng.la
+PNGLIB_BASENAME= libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@
 
-# NOTE: either PNG_NO_MMX_CODE or PNG_NO_ASSEMBLER_CODE are required
-# for successful compilation on AMD64 Linux with gcc due to linking of
-# 32-bit assembly with 64-bit object files.  Compiling with -m32 also
-# avoids the problem.
-libpng_la_CFLAGS = ${LIBZ_CPPFLAGS} -DPNG_NO_MMX_CODE
-libpng_la_LDFLAGS = -version-info 3:5:2
-libpng_la_LIBADD = ${LIBZ}
-libpng_la_SOURCES = \
-	png.c \
-	pngerror.c \
-	pngget.c \
-	pngmem.c \
-	pngpread.c \
-	pngread.c \
-	pngrio.c \
-	pngrtran.c \
-	pngrutil.c \
-	pngset.c \
-	pngtrans.c \
-	pngwio.c \
-	pngwrite.c \
-	pngwtran.c \
-	pngwutil.c
+# libpng does not follow GNU file name conventions
+AUTOMAKE_OPTIONS = foreign
 
-noinst_PROGRAMS = pngtest
-
+# test programs - run on make check, make distcheck
+check_PROGRAMS= pngtest
 pngtest_SOURCES = pngtest.c
-pngtest_CFLAGS = ${LIBZ_CPPFLAGS}
-pngtest_LDADD = \
-	${lib_LTLIBRARIES} \
-	${LIBZ} \
-	${LIBM}
+pngtest_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+TESTS = test-pngtest.sh
+TESTS_ENVIRONMENT= srcdir=$(srcdir)
 
-include_HEADERS = \
-	png.h \
-	pngconf.h \
-	pngpriv.h
+# man pages
+dist_man_MANS= libpng.3 libpngpf.3 png.5
 
-dist_man_MANS = \
-	libpng.3 \
-	libpngpf.3 \
-	png.5
+# generate the -config scripts if required
+binconfigs= libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@-config
+EXTRA_SCRIPTS= libpng-config libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@-config
+bin_SCRIPTS= @binconfigs@
 
-EXTRA_DIST = \
-	ANNOUNCE \
-	CHANGES \
-	CMakeLists.txt \
-	LICENSE \
-	README \
-	TODO \
-	contrib/gregbook/COPYING \
-	contrib/gregbook/LICENSE \
-	contrib/gregbook/Makefile.mingw32 \
-	contrib/gregbook/Makefile.sgi \
-	contrib/gregbook/Makefile.unx \
-	contrib/gregbook/Makefile.w32 \
-	contrib/gregbook/README \
-	contrib/gregbook/makevms.com \
-	contrib/gregbook/readpng.c \
-	contrib/gregbook/readpng.h \
-	contrib/gregbook/readpng2.c \
-	contrib/gregbook/readpng2.h \
-	contrib/gregbook/readppm.c \
-	contrib/gregbook/rpng-win.c \
-	contrib/gregbook/rpng-x.c \
-	contrib/gregbook/rpng2-win.c \
-	contrib/gregbook/rpng2-x.c \
-	contrib/gregbook/wpng.c \
-	contrib/gregbook/writepng.c \
-	contrib/gregbook/writepng.h \
-	contrib/pngminim/decoder/README \
-	contrib/pngminim/decoder/gather.sh \
-	contrib/pngminim/decoder/makefile \
-	contrib/pngminim/decoder/pngusr.h \
-	contrib/pngminim/encoder/README \
-	contrib/pngminim/encoder/dummy_inflate.c \
-	contrib/pngminim/encoder/gather.sh \
-	contrib/pngminim/encoder/makefile \
-	contrib/pngminim/encoder/pngusr.h \
-	contrib/pngminim/preader/README \
-	contrib/pngminim/preader/gather.sh \
-	contrib/pngminim/preader/makefile \
-	contrib/pngminim/preader/pngusr.h \
-	contrib/pngminus/README \
-	contrib/pngminus/makefile.std \
-	contrib/pngminus/makefile.tc3 \
-	contrib/pngminus/makevms.com \
-	contrib/pngminus/png2pnm.bat \
-	contrib/pngminus/png2pnm.c \
-	contrib/pngminus/png2pnm.sh \
-	contrib/pngminus/pngminus.bat \
-	contrib/pngminus/pngminus.sh \
-	contrib/pngminus/pnm2png.bat \
-	contrib/pngminus/pnm2png.c \
-	contrib/pngminus/pnm2png.sh \
-	contrib/visupng/PngFile.c \
-	contrib/visupng/PngFile.h \
-	contrib/visupng/README.txt \
-	contrib/visupng/VisualPng.c \
-	contrib/visupng/VisualPng.dsp \
-	libpng-1.4.1.txt \
-	libpng-config.in \
-	libpng.pc.in \
-	projects/visualc6/README.txt \
-	projects/visualc6/libpng.dsp \
-	projects/visualc6/pngtest.dsp \
-	projects/visualc71/PRJ0041.mak \
-	projects/visualc71/README.txt \
-	projects/visualc71/README_zlib.txt \
-	projects/visualc71/libpng.sln \
-	projects/visualc71/libpng.vcproj \
-	projects/visualc71/pngtest.vcproj \
-	projects/visualc71/zlib.vcproj \
-	projects/xcode/Info.plist \
-	projects/xcode/README.txt \
-	projects/xcode/libpng.xcodeproj/.gitignore \
-	projects/xcode/libpng.xcodeproj/project.pbxproj \
-	scripts/README.txt \
-	scripts/descrip.mms \
-	scripts/libpng-config-head.in \
-	scripts/libpng.pc.in \
-	scripts/makefile.32sunu \
-	scripts/makefile.64sunu \
-	scripts/makefile.acorn \
-	scripts/makefile.aix \
-	scripts/makefile.amiga \
-	scripts/makefile.atari \
-	scripts/makefile.bc32 \
-	scripts/makefile.beos \
-	scripts/makefile.bor \
-	scripts/makefile.cegcc \
-	scripts/makefile.cygwin \
-	scripts/makefile.darwin \
-	scripts/makefile.dec \
-	scripts/makefile.dj2 \
-	scripts/makefile.elf \
-	scripts/makefile.freebsd \
-	scripts/makefile.gcc \
-	scripts/makefile.hp64 \
-	scripts/makefile.hpgcc \
-	scripts/makefile.hpux \
-	scripts/makefile.ibmc \
-	scripts/makefile.intel \
-	scripts/makefile.knr \
-	scripts/makefile.linux \
-	scripts/makefile.mingw \
-	scripts/makefile.mips \
-	scripts/makefile.msc \
-	scripts/makefile.ne12bsd \
-	scripts/makefile.netbsd \
-	scripts/makefile.openbsd \
-	scripts/makefile.os2 \
-	scripts/makefile.sco \
-	scripts/makefile.sggcc \
-	scripts/makefile.sgi \
-	scripts/makefile.so9 \
-	scripts/makefile.solaris \
-	scripts/makefile.solaris-x86 \
-	scripts/makefile.std \
-	scripts/makefile.sunos \
-	scripts/makefile.tc3 \
-	scripts/makefile.vcwin32 \
-	scripts/makefile.watcom \
-	scripts/makevms.com \
-	scripts/png32ce.def \
-	scripts/pngos2.def \
-	scripts/pngwin.def \
-	scripts/pngwin.rc \
-	scripts/smakefile.ppc
+# rules to build libpng, only build the old library on request
+lib_LTLIBRARIES=libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+# EXTRA_LTLIBRARIES= libpng.la
+libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES = png.c pngset.c pngget.c pngrutil.c \
+	pngtrans.c pngwutil.c \
+	pngread.c pngrio.c pngwio.c pngwrite.c pngrtran.c \
+	pngwtran.c pngmem.c pngerror.c pngpread.c \
+	png.h pngconf.h pngpriv.h
 
-.PHONY : test
-test:	pngtest
-	./pngtest ${top_srcdir}/src/other/libpng/pngtest.png
+# support automake 1.7+, no target-specific CPPFLAGS
+AM_CPPFLAGS = @LIBPNG_DEFINES@
 
-if BUILD_ZLIB
-DEPADD = src/other/libz
+libpng_la_LDFLAGS = -no-undefined -export-dynamic \
+	-version-number @PNGLIB_MAJOR@@PNGLIB_MINOR@:@PNGLIB_RELEASE@:0
+
+if HAVE_LD_VERSION_SCRIPT
+  # Versioned symbols and restricted exports
+  libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LDFLAGS = $(libpng_la_LDFLAGS) -Wl,--version-script=libpng.vers
+  libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_DEPENDENCIES = libpng.vers
+else
+  # Only restricted exports when possible
+  libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LDFLAGS = $(libpng_la_LDFLAGS) -export-symbols libpng.sym
+  libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_DEPENDENCIES = libpng.sym
 endif
 
-DEPENDS = ${DEPADD}
+# Avoid depending upon Character Ranges.
+AN = '_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 
-include $(top_srcdir)/misc/Makefile.defs
+#distribute headers in /usr/include/libpng/*
+pkgincludedir= $(includedir)/$(PNGLIB_BASENAME)
+pkginclude_HEADERS= png.h pngconf.h
 
+# pkg-config stuff, note that libpng.pc is always required in order
+# to get the correct library
+pkgconfigdir = @pkgconfigdir@
+pkgconfig_DATA = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.pc
+
+#extra source distribution files.
+EXTRA_DIST= \
+	ANNOUNCE CHANGES INSTALL LICENSE README TODO \
+	pngtest.png pngbar.png pngnow.png pngbar.jpg autogen.sh \
+	projects/visualc6 \
+	projects/visualc71 \
+	projects/vstudio \
+	projects/xcode \
+	scripts \
+	contrib/gregbook \
+	contrib/pngminim \
+	contrib/pngminus \
+	contrib/pngsuite \
+	contrib/visupng \
+	$(TESTS) \
+	CMakeLists.txt \
+	example.c libpng-1.4.5.txt
+
+CLEANFILES= pngout.png libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.pc libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@-config libpng.vers \
+libpng.sym
+
+MAINTAINERCLEANFILES = Makefile.in aclocal.m4 config.guess config.h.in \
+config.sub configure depcomp install-sh ltmain.sh missing
+
+$(PNGLIB_BASENAME).pc: libpng.pc
+	cp libpng.pc $@
+
+$(PNGLIB_BASENAME)-config: libpng-config
+	cp libpng-config $@
+
+libpng.sym: png.h pngconf.h
+	rm -f $@ $@.new
+	$(CPP) @LIBPNG_DEFINES@ $(CPPFLAGS) -DPNG_BUILDSYMS $(srcdir)/png.h | \
+		$(SED) -n -e \
+		's|^.*PNG_FUNCTION_EXPORT[ 	]*\([$(AN)]*\).*$$|$(SYMBOL_PREFIX)\1|p' \
+		-e 's|^.*PNG_DATA_EXPORT[ 	]*\([$(AN)]*\).*$$|$(SYMBOL_PREFIX)\1|p' \
+			>$@.new
+	mv $@.new $@
+
+libpng.vers: libpng.sym
+	rm -f $@ $@.new
+	echo PNG@PNGLIB_MAJOR@@PNGLIB_MINOR@_0 '{global:' > $@.new
+	$(SED) s/$$/\;/ libpng.sym >> $@.new
+	echo 'local: *; };' >> $@.new
+	mv $@.new $@
+
+test: check
+
+# install the .../include headers as links to the new ones
+install-data-hook:
+	cd $(DESTDIR)$(includedir); rm -f png.h pngconf.h
+	cd $(DESTDIR)$(includedir); $(LN_S) $(PNGLIB_BASENAME)/png.h png.h
+	cd $(DESTDIR)$(includedir); $(LN_S) $(PNGLIB_BASENAME)/pngconf.h \
+		pngconf.h
+	cd $(DESTDIR)$(pkgconfigdir); rm -f libpng.pc
+	cd $(DESTDIR)$(pkgconfigdir); $(LN_S) $(PNGLIB_BASENAME).pc libpng.pc
+
+# do evil things to libpng to cause libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@ to be used
+install-exec-hook:
+	cd $(DESTDIR)$(bindir); rm -f libpng-config
+	cd $(DESTDIR)$(bindir); $(LN_S) $(PNGLIB_BASENAME)-config libpng-config
+	@set -x;\
+	cd $(DESTDIR)$(libdir);\
+	for ext in a la so so.@PNGLIB_MAJOR@@PNGLIB_MINOR@.@PNGLIB_RELEASE@ sl dylib dll.a; do\
+		rm -f libpng.$$ext;\
+                if test -f $(PNGLIB_BASENAME).$$ext; then\
+                       $(LN_S) $(PNGLIB_BASENAME).$$ext libpng.$$ext;\
+                fi;\
+	done
+
+uninstall-hook:
+	cd $(DESTDIR)$(includedir); rm -f png.h pngconf.h
+	rm -f $(DESTDIR)$(pkgconfigdir)/libpng.pc
+	rm -f $(DESTDIR)$(bindir)/libpng-config

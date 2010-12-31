@@ -53,7 +53,7 @@
 extern int kill(pid_t, int);
 #endif
 
-#ifndef fileno 
+#ifndef fileno
 extern int fileno(FILE*);
 #endif
 
@@ -87,7 +87,7 @@ static const char *locate_gdb = NULL;
 HIDDEN void
 backtrace_sigchld(int signum)
 {
-    if (signum) {
+    if (LIKELY(signum)) {
 	backtrace_done = 1;
 	interrupt_wait = 1;
     }
@@ -98,7 +98,7 @@ backtrace_sigchld(int signum)
 HIDDEN void
 backtrace_sigint(int signum)
 {
-    if (signum) {
+    if (LIKELY(signum)) {
 	interrupt_wait = 1;
     }
 }
@@ -121,7 +121,7 @@ backtrace(char * const *args, int fd)
     signal(SIGINT, backtrace_sigint);
 #endif
 
-    if ((pipe(input) == -1) || (pipe(output) == -1)) {
+    if (UNLIKELY((pipe(input) == -1) || (pipe(output) == -1))) {
 	perror("unable to open pipe");
 	fflush(stderr);
 	/* can't call bu_bomb()/bu_exit(), recursive */
@@ -200,7 +200,7 @@ backtrace(char * const *args, int fd)
 	    if (read(output[0], &c, 1)) {
 		switch (c) {
 		    case '\n':
-			if (bu_debug & BU_DEBUG_BACKTRACE) {
+			if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 			    bu_log("BACKTRACE DEBUG: [%s]\n", buffer);
 			}
 			if (position+1 < BT_BUFSIZE) {
@@ -249,7 +249,7 @@ backtrace(char * const *args, int fd)
 		    buffer[position++] = c;
 		    buffer[position] = '\0';
 		} else {
-		    if (!warned && (bu_debug & BU_DEBUG_ATTACH)) {
+		    if (UNLIKELY(!warned && (bu_debug & BU_DEBUG_ATTACH))) {
 			bu_log("Warning: debugger output overflow\n");
 			warned = 1;
 		    }
@@ -269,7 +269,7 @@ backtrace(char * const *args, int fd)
     close(output[0]);
     close(output[1]);
 
-    if (bu_debug & BU_DEBUG_ATTACH) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_ATTACH)) {
 	bu_log("\nBacktrace complete.\nAttach debugger or interrupt to continue...\n");
     } else {
 #  ifdef HAVE_KILL
@@ -298,16 +298,16 @@ bu_backtrace(FILE *fp)
     /* make sure the debugger exists */
     if ((locate_gdb = bu_which("gdb"))) {
 	debugger_args[0] = bu_strdup(locate_gdb);
-	if (bu_debug & BU_DEBUG_BACKTRACE) {
+	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("Found gdb in USER path: %s\n", locate_gdb);
 	}
     } else if ((locate_gdb = bu_whereis("gdb"))) {
 	debugger_args[0] = bu_strdup(locate_gdb);
-	if (bu_debug & BU_DEBUG_BACKTRACE) {
+	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("Found gdb in SYSTEM path: %s\n", locate_gdb);
 	}
     } else {
-	if (bu_debug & BU_DEBUG_BACKTRACE) {
+	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("gdb was NOT found, no backtrace available\n");
 	}
 	return 0;
@@ -323,7 +323,7 @@ bu_backtrace(FILE *fp)
     debugger_args[1] = (char*) bu_argv0_full_path();
     debugger_args[2] = buffer;
 
-    if (bu_debug & BU_DEBUG_BACKTRACE) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	bu_log("CALL STACK BACKTRACE REQUESTED\n");
 	bu_log("Invoking Debugger: %s %s %s\n\n", debugger_args[0], debugger_args[1], debugger_args[2]);
     }
@@ -373,7 +373,7 @@ bu_backtrace(FILE *fp)
     sleep(10);
 #endif
 
-    if (bu_debug & BU_DEBUG_BACKTRACE) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	bu_log("\nContinuing.\n");
     }
 

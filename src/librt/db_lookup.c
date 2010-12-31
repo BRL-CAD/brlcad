@@ -581,7 +581,7 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 		bu_log("ERROR: failed to get attributes for %s\n", dp->d_namep);
 		return (struct bu_ptbl *)NULL;
 	    }
-	    
+
 	    draw = 0;
 	    match_count = 0;
 	    for (i=0; (size_t)i<(size_t)avs->count; i++) {

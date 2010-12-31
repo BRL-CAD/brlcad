@@ -1,0 +1,375 @@
+\chapter{TUTORIALS}
+Eleven tutorials with illustrations are provided to give the user a
+step-by-step walk-through of the basic capabilities of the graphics
+editor. Standard login and logout procedures should be followed prior to
+beginning and after ending the tutorials.
+
+Tutorial one describes accessing of each of the MGED states.
+Tutorials two through six describe the use of
+{\bf SOL EDIT}
+(solid edit) to alter the shapes of several primitives (solids).
+Tutorials seven and eight describe the use of
+{\bf OBJ EDIT}
+(object edit) to alter the shape of objects (which are made of other objects
+and ultimately solids).
+Tutorial nine describes the use of
+{\bf OBJ PATH}
+(object matrix selection) control the extent of the effects of an object edit.
+Tutorial ten describes the use of the viewing functions.
+Tutorial eleven describes the construction of an object from solids and
+other objects.
+
+Each of the tutorials will use the solids contained the MGED database called
+``prim.g''.
+These can be obtained by making a copy of ``db/prim.g''
+from the BRL-CAD Package distribution tree.  It is important to make
+a copy of the database and work with that, rather than using the
+supplied one.  Changes made during the editing process are written
+to the database when they are {\sl accepted}.
+
+The first tutorial shows a sample invocation dialogue.  All other
+tutorials start at the first MGED prompt ({\tt mged> }). If the user
+wishes to continue from one tutorial to the next without leaving MGED, issue
+the {\bf press reset} command before starting each tutorial.
+User input will be shown in an
+{\em emphasized} font, and MGED output will appear in a {\tt typewriter}
+font.  If the user input is shown on the same line as a prompt, the
+input is literal.  If the user input is shown on a line by itself,
+it is a directive, and is entered in an appropriate fashion.
+
+\section{States Within the Edit Process}
+
+In this tutorial, the user will invoke MGED on a file called ``prim.g'';
+attach a {\sl display manager\/}; explore the various MGED states;
+and finally, exit MGED.  A MGED database has a treelike structure.  The
+leaves are the individual solids, and the other nodes are groupings
+of those solids.  The solid editing functions are concerned with defining
+and modifying the leaves, and the object editing functions operate
+on groups, which are Boolean combinations of solids.  One useful mental
+model is to envision solid editing as operating directly on a leaf and
+object editing as operating on the arc connecting a pair of nodes.  The
+object edit will affect everything below the selected arc (this is why
+there is an additional state transition when object editing).
+
+\subsection{Viewing State}
+
+The first task is to invoke MGED.  This tutorial will assume the user
+has a copy of the ``prim.g'' database in the current directory.
+
+\noindent
+{\tt \$ }{\em mged prim.g}\\
+{\tt BRL-CAD Release 3.0 Graphics Editor (MGED) Compilation 82}\\
+{\tt Thu Sep 22 08:08:39 EDT 1988}\\
+{\tt mike@video.brl.mil:/cad/.mged.4d2}\\
+
+\noindent
+{\tt attach (nu|tek|tek4109|ps|plot|sgi)[nu]? }{\em sgi}\\
+{\tt ATTACHING sgi (SGI 4d)}\\
+{\tt Primitive Objects (units=mm)}\\
+{\tt mged> }\\
+
+The first three lines give information about which version of MGED is running,
+when it was compiled, and who compiled it.  The next line is the display
+manager attach prompt.  This prompt provides a list of available display
+managers, then shows what the default will be (selected if the user answers
+with a carriage return).  In this case, the Silicon Graphics 4d display
+manager was selected, as is noted by the following line.
+Next the title of the database and
+the unit of measurement used in the database are printed,
+and finally, the first prompt is issued.
+At this point MGED has loaded ``prim.g''; attached the SGI display;
+and is awaiting commands.  Attaching a display also causes what
+is known as the MGED {\sl faceplate} to be drawn on the graphics display.
+
+The faceplate has several features of interest.  In the upper left corner
+of the display, is a box which always shows the current MGED {\sl state}.
+This can be one of six states:  {\bf VIEWING}, {\bf SOL PICK},
+{\bf SOL EDIT}, {\bf OBJ PICK}, {\bf OBJ PATH}, or {\bf OBJ EDIT}.
+
+Immediately below, is the menu area.  The only menu item initially shown is
+one labeled {\bf BUTTON MENU}.  This menu item toggles the display of the
+button menu entries when {\sl selected} (more on selection later).
+
+At the bottom of the display are two status lines.  The first line
+contains information about the current view.
+The entry labeled {\bf cent=} gives the {\sl model space} coordinates
+of the dot in the center of the display.
+The entry labeled {\bf sz=} reflects the current size in model units of
+the {\sl viewing cube}.  The viewing cube is a mathematical construct
+centered on the the dot in the center of the display.  The {\bf ang=}
+display shows the current rate of rotation in each of the three axes.
+The bottom line is used for several kinds of information.
+In the {\bf VIEWING} state, it displays the title of the database.
+
+\noindent
+{\tt mged>\ }{\em e arb8}\\
+{\tt vectorized in 0 sec}\\
+{\tt mged>\ }{\em size 12}\\
+{\tt mged> }\\
+
+\begin{figure}
+\centering \includegraphics{t1-top-vw.ps}
+\caption{``arb8'' Top View.}
+\label{t1-top-vw}
+\end{figure}
+
+The {\bf e} command causes the named object(s) -- a solid named ``arb8''
+in this case
+-- to be displayed, and the {\bf size} command sets the size of the
+viewing cube. Figure \ref{t1-top-vw} shows what the display currently
+looks like.  In this view, the X-axis is to the right, the Y-axis points
+up, and the Z-axis is perpendicular to (poking out of) the screen.
+
+\noindent
+{\em Twist the {\bf Y ROT} knob clockwise and back.}\\
+{\em Twist the {\bf X ROT} knob counterclockwise and back.}\\
+
+These knobs, along with the {\bf Z ROT} knob, rotate the viewing cube.
+Use of the rotation
+knobs allows the user to view the model from any orientation.
+Turning a knob clockwise causes a rotation in the positive direction,
+while turning a knob counterclockwise causes a negative rotation
+(right-hand rule).  The knobs are rate based, not position based;
+once a rotation has been started, it will continue until the
+knob is returned to zero (or the {\bf zeroknobs} button is pressed).
+Rotations are about the viewing cube (screen) axes, not the model axes.
+Systems without knobs can use the {\bf knob} command.
+
+\noindent
+{\em Move the mouse (or pen) until the cursor is in the {\bf BUTTON MENU}
+block and then press the middle mouse button (depress the pen).}\\
+
+\begin{figure}
+\centering \includegraphics{t1-rot-vw.ps}
+\caption{``arb8'' Rotated View.}
+\label{t1-rot-vw}
+\end{figure}
+
+Pressing the middle mouse button (or the pen) {\sl selects} something.
+When the cursor is inside the menu area, a selection
+causes the event described by the menu item to occur.
+Selecting {\bf BUTTON MENU} causes the button menu to appear on the left
+side of the screen. The {\bf BUTTON MENU} menu item is
+a toggle; subsequent selection of this item will cause the button menu
+to disappear.
+Figure \ref{t1-rot-vw} shows the new display.
+
+\noindent
+{\em Move the cursor from the menu area to a point near the
+upper left corner of the solid and select it (press the center mouse
+button).}\\
+
+In the {\bf VIEWING} state, making a selection while outside of the menu
+area will move the selected point to the center of the display.  Look
+carefully at the center of the display; the point just selected is now
+located at the center dot. Use the {\bf center} command to reset any
+translations made with the mouse.
+
+\noindent
+{\tt mged> }{\em center 0 0 0}\\
+{\tt mged> }\\
+
+From the {\bf VIEWING} state, the user will normally transition to either the
+{\bf SOL PICK} or {\bf OBJ PICK} state.
+The {\bf SOL PICK} state is selected by:
+\begin{itemize}
+\item Selecting the {\bf Solid Illum} button menu entry, or,
+\item Pressing the {\bf sill} button (this button may be labeled
+using some variation of ``Solid Illum''), or,
+\item Typing {\bf press sill}.
+\end{itemize}
+Similar entries ({\bf Object Illum}) and ({\bf oill}) exist for transitioning
+into the {\bf OBJ PICK} state.
+In general, the {\bf press} command is the basic mechanism (type
+{\bf press help} for a list of available commands).  Most of the press
+commands have been mapped onto a button box if it is available,
+ and some of the
+most common are also mapped into the {\bf BUTTON MENU} so they can
+accessed without letting go of the mouse.
+
+\subsection{Solid Pick State}
+
+\noindent
+{\em Place MGED in the {\bf SOL PICK} state using one of the
+above mechanisms.}\\
+
+\begin{figure}
+\centering \includegraphics{t1-sol-pk.ps}
+\caption{MGED In Solid Pick State.}
+\label{t1-sol-pk}
+\end{figure}
+
+Upon entering the {\bf SOL PICK} state, the display will look similar to
+Figure \ref{t1-sol-pk}.  The {\bf SOL PICK} state used to select which
+of the displayed solids is to be edited.  Note that the color of the
+solid has changed from red to white.  The screen is divided into as many
+horizontal zones as there are solids displayed, and each zone is
+assigned to one solid.  As the mouse is moved vertically through each
+zone, the corresponding solid is highlighted (``illuminated'') by
+drawing it in white.   In this instance, there is only one solid being
+displayed, so this state is relatively uninteresting.
+If the system being used has no mouse, there is no reason to enter the
+{\bf SOL PICK} state.  The user will instead transition directly to
+the {\bf SOL EDIT} state using the {\bf sed} command.
+
+\noindent
+{\tt mged> }{\em press reject}\\
+{\tt mged> }{\em e ellg}\\
+{\tt mged> }\\
+{\em Press the {\bf sill} button}\\
+
+\begin{figure}
+\centering \includegraphics{t1-2s-pk.ps}
+\caption{MGED In Solid Pick with Two Solids.}
+\label{t1-2s-pk}
+\end{figure}
+
+Note that the first action taken was to {\sl reject} the edit.  Any time MGED
+is not in the {\bf VIEWING} state, a {\sl reject} command (via
+{\bf press}, button, or mouse) discards all editing changes accumulated
+since the last transition out of the {\bf VIEWING} state, and places
+MGED in the {\bf VIEWING} state.
+The display should now look similar to Figure \ref{t1-2s-pk}.
+Notice that one solid is white and
+the name of that solid is displayed in the upper left corner of the
+display, as well as in the bottom status line. The solid to be edited is
+selected by moving the mouse up and down until the zone corresponding to
+the desired solid is reached. Once the appropriate zone is reached, select it.
+This selects a solid, and once a solid is selected,
+MGED enters the {\bf SOL EDIT} state.
+
+\subsection{Solid Edit State}
+
+\noindent
+{\tt mged> }{\em d ellg}\\
+{\tt mged> }\\
+{\em Select the solid called ``arb8''.}\\
+
+\begin{figure}
+\centering \includegraphics{t1-sol-ed.ps}
+\caption{Solid Edit State.}
+\label{t1-sol-ed}
+\end{figure}
+
+The {\bf d} commmand removes something from the display.  In this
+case, the solid ``ellg'' was removed to reduce clutter.
+The display should now look like Figure \ref{t1-sol-ed}.
+When MGED enters the solid edit state, the following occurs:
+\begin{itemize}
+\item The solid selected for editing remains illuminated,
+\item The solid is labeled,
+\item The coordinates (or dimensions) associated with the labels,
+and other information is displayed to the right of the menu area,.
+\item If the solid is a member of one or more groups, a similar set
+of coordinates called the {\sl PATH} is displayed immediately below
+the the first set of coordinates,
+\item The {\bf *SOLID EDIT*} menu is displayed, and,
+\item A solid specific edit menu (in this case the {\bf ARB MENU})
+is displayed.
+\end{itemize}
+
+The {\bf *SOLID EDIT*} menu provides access to generic operations (translation, rotation
+and scaling) common to all solids.
+The solid specific edit menu is a list of solid type specific editing operations.
+Selecting one of the solid specific edit menus causes a submenu with solid type specific
+choices to be displayed.  To remove this submenu, select either the
+{\bf RETURN} item in the submenu, or the {\bf edit menu} item in the
+{\bf *SOLID EDIT*} menu.
+
+It is in this state that the solid is altered to meet the modeler's
+requirements. The shape, positioning, and orientation of the solid is
+changed using numeric keyboard input, positioning of the mouse, or by
+use of the knobs.  Once the solid has been altered, the edit is
+either accepted or rejected.  Accepting the edit causes all changes
+made to be written to the database; rejecting the edit ``throws them
+away''. Either operation will terminate the edit session and return MGED
+to the {\bf VIEWING} state.
+
+\noindent
+{\em Reject the edit.}\\
+
+\subsection{Object Pick State}
+
+\noindent
+{\em Place MGED in the {\bf OBJ PICK} state.}\\
+
+\begin{figure}
+\centering \includegraphics{t1-obj-pk.ps}
+\caption{Object Pick State.}
+\label{t1-obj-pk}
+\end{figure}
+
+Figure \ref{t1-obj-pk} shows what the display looks like when in the
+{\bf OBJ PICK} state. As with the {\bf SOL PICK} state, a single solid is
+selected.  This solid becomes the reference solid for the object edit.
+In the {\bf OBJ PICK} state, the solid will be shown
+as a member of one or more objects.  Less obvious is the fact that the
+local axes associated with the selected solid are the axes used for the
+entire object during the object edit.
+
+\subsection{Object Path State}
+
+\noindent
+{\em Select ``arb8''.}\\
+
+\begin{figure}
+\centering \includegraphics{t1-obj-ph.ps}
+\caption{Object Path Selection State.}
+\label{t1-obj-ph}
+\end{figure}
+
+MGED transitions into the {\bf OBJ PATH} state once a solid has been
+picked from {\bf OBJ PICK}. Figure \ref{t1-obj-ph} is the display in
+the {\bf OBJ PATH} state.  When in this state the extent of the editing
+operation is set.  Everything below the editing point is affected by the
+edit.  The editing point is shown by the {\sl MATRIX} label in the
+display.  It is shown as {\bf [MATRIX]} in the upper left part of the
+display and as {\bf \_\_MATRIX\_\_} in the second status line.  The editing
+point is chosen with the same mechanism used by {\bf SOL PICK} and
+{\bf OBJ PICK}.  This time, there is one horizontal zone for each node in
+the path between the root and selected leaf.  Moving the mouse up and down
+moves the editing point up and down in the tree.  Once again, having a
+simple database and only one object in view makes for a relatively
+uninteresting situation.
+
+\subsection{Object Edit State}
+
+\noindent
+{\em Select the editing point above ``arb8''.}\\
+
+\begin{figure}
+\centering \includegraphics{t1-obj-ed.ps}
+\caption{Object Edit State.}
+\label{t1-obj-ed}
+\end{figure}
+
+MGED is now in the {\bf OBJ EDIT} state and the display should look like
+Figure \ref{t1-obj-ed}.
+When MGED enters the object edit state, the following occurs:
+\begin{itemize}
+\item The reference solid remains illuminated,
+\item The reference solid is labeled,
+\item The information associated with the labels is displayed to the right
+of the menu area, and
+\item The {\bf *OBJ EDIT*} menu is displayed.
+\end{itemize}
+
+The {\bf OBJ EDIT} state is used to modify the
+Homogeneous Transform Matrix selected during the {\bf OBJ PATH} state.
+Permissible operations include uniform and affine scaling of the objects,
+as well as translation and rotation.
+As with the {\bf SOL EDIT} state, MGED accepts changes entered using
+the keyboard, mouse or knobs.
+
+This concludes the first tutorial.  Examples of the appearance of MGED
+in each of the six states have been given, along with some idea of what
+each of the states is used for.  All that remains is to reject the current
+edit, and exit MGED.  Strictly speaking the {\bf q} command could be entered
+directly, but doing so, can become a dangerous habit.
+
+\noindent
+{\em Select {\bf REJECT Edit} using the mouse.}\\
+{\em Press the {\bf reject} button.}\\
+{\tt mged> }{\em d arb8}\\
+{\tt mged> }{\em q}\\
+{\tt \$ }\\

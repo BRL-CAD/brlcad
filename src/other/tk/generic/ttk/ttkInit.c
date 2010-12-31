@@ -46,7 +46,7 @@ int Ttk_GetCompoundFromObj(
  * Legal values for the -orient option.
  * See also: enum Ttk_Orient.
  */
-CONST char *ttkOrientStrings[] = {
+const char *ttkOrientStrings[] = {
     "horizontal", "vertical", NULL
 };
 
@@ -114,17 +114,17 @@ void TtkCheckStateOption(WidgetCore *corePtr, Tcl_Obj *objPtr)
  */
 void TtkSendVirtualEvent(Tk_Window tgtWin, const char *eventName)
 {
-    XEvent event;
+    union {XEvent general; XVirtualEvent virtual;} event;
 
     memset(&event, 0, sizeof(event));
-    event.xany.type = VirtualEvent;
-    event.xany.serial = NextRequest(Tk_Display(tgtWin));
-    event.xany.send_event = False;
-    event.xany.window = Tk_WindowId(tgtWin);
-    event.xany.display = Tk_Display(tgtWin);
-    ((XVirtualEvent *) &event)->name = Tk_GetUid(eventName);
+    event.general.xany.type = VirtualEvent;
+    event.general.xany.serial = NextRequest(Tk_Display(tgtWin));
+    event.general.xany.send_event = False;
+    event.general.xany.window = Tk_WindowId(tgtWin);
+    event.general.xany.display = Tk_Display(tgtWin);
+    event.virtual.name = Tk_GetUid(eventName);
 
-    Tk_QueueWindowEvent(&event, TCL_QUEUE_TAIL);
+    Tk_QueueWindowEvent(&event.general, TCL_QUEUE_TAIL);
 }
 
 /* TtkEnumerateOptions, TtkGetOptionValue --
@@ -185,7 +185,7 @@ Tk_OptionSpec ttkCoreOptionSpecs[] =
 	Tk_Offset(WidgetCore,styleObj), -1, 0,0,STYLE_CHANGED},
     {TK_OPTION_STRING, "-class", "", "", NULL,
 	Tk_Offset(WidgetCore,classObj), -1, 0,0,READONLY_OPTION},
-    {TK_OPTION_END}
+    {TK_OPTION_END, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0}
 };
 
 /*------------------------------------------------------------------------
@@ -259,7 +259,7 @@ static void RegisterThemes(Tcl_Interp *interp)
  * Ttk initialization.
  */
 
-extern TtkStubs ttkStubs;
+extern const TtkStubs ttkStubs;
 
 MODULE_SCOPE int
 Ttk_Init(Tcl_Interp *interp)
@@ -276,7 +276,7 @@ Ttk_Init(Tcl_Interp *interp)
 
     Ttk_PlatformInit(interp);
 
-    Tcl_PkgProvideEx(interp, "Ttk", TTK_PATCH_LEVEL, (void*)&ttkStubs);
+    Tcl_PkgProvideEx(interp, "Ttk", TTK_PATCH_LEVEL, (ClientData)&ttkStubs);
 
     return TCL_OK;
 }

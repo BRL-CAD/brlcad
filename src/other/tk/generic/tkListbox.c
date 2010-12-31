@@ -439,6 +439,8 @@ static void		MigrateHashEntries(Tcl_HashTable *table,
 static Tk_ClassProcs listboxClass = {
     sizeof(Tk_ClassProcs),	/* size */
     ListboxWorldChanged,	/* worldChangedProc */
+    NULL,					/* createProc */
+    NULL					/* modalProc */
 };
 
 /*
@@ -673,7 +675,7 @@ ListboxWidgetObjCmd(
 	    break;
 	}
 
-	objPtr = Tk_GetOptionValue(interp, (char *)listPtr,
+	objPtr = Tk_GetOptionValue(interp, (char *) listPtr,
 		listPtr->optionTable, objv[2], listPtr->tkwin);
 	if (objPtr == NULL) {
 	    result = TCL_ERROR;
@@ -884,7 +886,7 @@ ListboxWidgetObjCmd(
 
 	attrPtr = ListboxGetItemAttributes(interp, listPtr, index);
 
-	objPtr = Tk_GetOptionValue(interp, (char *)attrPtr,
+	objPtr = Tk_GetOptionValue(interp, (char *) attrPtr,
 		listPtr->itemAttrOptionTable, objv[3], listPtr->tkwin);
 	if (objPtr == NULL) {
 	    result = TCL_ERROR;
@@ -920,7 +922,7 @@ ListboxWidgetObjCmd(
 
 	attrPtr = ListboxGetItemAttributes(interp, listPtr, index);
 	if (objc <= 4) {
-	    objPtr = Tk_GetOptionInfo(interp, (char *)attrPtr,
+	    objPtr = Tk_GetOptionInfo(interp, (char *) attrPtr,
 		    listPtr->itemAttrOptionTable,
 		    (objc == 4) ? objv[3] : NULL, listPtr->tkwin);
 	    if (objPtr == NULL) {
@@ -1755,9 +1757,7 @@ ListboxWorldChanged(
     XGCValues gcValues;
     GC gc;
     unsigned long mask;
-    Listbox *listPtr;
-
-    listPtr = (Listbox *) instanceData;
+    Listbox *listPtr = (Listbox *) instanceData;
 
     if (listPtr->state & STATE_NORMAL) {
 	gcValues.foreground = listPtr->fgColorPtr->pixel;
@@ -2748,7 +2748,7 @@ GetListboxIndex(
 	char *start, *end;
 
 	start = stringRep + 1;
-	strtol(start, &end, 0);
+	y = strtol(start, &end, 0);
 	if ((start == end) || (*end != ',')) {
 	    Tcl_AppendResult(interp, "bad listbox index \"", stringRep,
 		    "\": must be active, anchor, end, @x,y, or a number",
@@ -2930,7 +2930,7 @@ ListboxScanTo(
      * scan started.
      */
 
-    newOffset = listPtr->scanMarkXOffset - (10*(x - listPtr->scanMarkX));
+    newOffset = listPtr->scanMarkXOffset - 10*(x - listPtr->scanMarkX);
     if (newOffset > maxOffset) {
 	newOffset = listPtr->scanMarkXOffset = maxOffset;
 	listPtr->scanMarkX = x;
@@ -3412,7 +3412,7 @@ ListboxListVarProc(
 	if (Tcl_ListObjLength(listPtr->interp, varListObj, &i) != TCL_OK) {
 	    Tcl_SetVar2Ex(interp, listPtr->listVarName, NULL, oldListObj,
 		    TCL_GLOBAL_ONLY);
-	    return "invalid listvar value";
+	    return (char *) "invalid listvar value";
 	}
 
 	listPtr->listObj = varListObj;

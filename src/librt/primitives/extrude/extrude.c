@@ -2230,7 +2230,7 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     extrude_ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 
     ptr = (unsigned char *)ep->ext_buf;
-    sketch_name = (char *)ptr + ELEMENTS_PER_VECT*4*SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG; 
+    sketch_name = (char *)ptr + ELEMENTS_PER_VECT*4*SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG;
     if (!dbip) {
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
     } else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL) {
@@ -2449,7 +2449,7 @@ rt_extrude_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 
 
 int
-rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_extrude_internal *extr;
     fastf_t *new;

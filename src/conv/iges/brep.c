@@ -40,8 +40,11 @@ brep( entityno )
     struct shell	**void_shells;		/* List of void shells */
     struct shell	*s_outer;		/* Outer shell */
     struct iges_vertex_list *v_list;
+    struct iges_vertex_list *v_list_tmp;
     struct iges_edge_list	*e_list;
+    struct iges_edge_list	*e_list_tmp;
     int		i;
+    int		mk_nmg_executed_flag = 0;	/* Boolean indicating if mk_nmg was executed */
 
     /* Acquiring Data */
 
@@ -80,13 +83,13 @@ brep( entityno )
     r = BU_LIST_FIRST( nmgregion, &m->r_hd );
 
     /* Put outer shell in region */
-    if ( (s_outer=Get_outer_shell( r, (shell_de - 1)/2, orient )) == (struct shell *)NULL )
+    if ( (s_outer=Get_outer_shell( r, (shell_de - 1)/2 )) == (struct shell *)NULL )
 	goto err;
 
     /* Put voids in */
     for ( i=0; i<num_of_voids; i++ )
     {
-	if ( (void_shells[i]=Add_inner_shell( r, (void_shell_de[i] - 1)/2, void_orient[i] ))
+	if ( (void_shells[i]=Add_inner_shell( r, (void_shell_de[i] - 1)/2))
 	     == (struct shell *)NULL )
 	    goto err;
     }
@@ -118,6 +121,7 @@ brep( entityno )
 	nmg_region_a( r, &tol );
 
 	/* Write NMG solid */
+	mk_nmg_executed_flag = 1;
 	if ( mk_nmg( fdout, dir[entityno]->name, m ) )
 	    goto err;
     }
@@ -132,20 +136,30 @@ brep( entityno )
     v_list = vertex_root;
     while ( v_list != NULL )
     {
+	v_list_tmp = v_list->next;
 	bu_free( (char *)v_list->i_verts, "brep: iges_vertex" );
 	bu_free( (char *)v_list, "brep: vertex list" );
-	v_list = v_list->next;
+	v_list = v_list_tmp;
     }
     vertex_root = NULL;
 
     e_list = edge_root;
     while ( e_list != NULL )
     {
+	e_list_tmp = e_list->next;
 	bu_free( (char *)e_list->i_edge, "brep:iges_edge" );
 	bu_free( (char *)e_list, "brep: edge list" );
-	e_list = e_list->next;
+	e_list = e_list_tmp;
     }
     edge_root = NULL;
+
+    /* perform nmg kill model if make nmg was not executed since
+     * make nmg will have already performed an nmg kill model
+     */
+    if (!mk_nmg_executed_flag) {
+        nmg_km(m);
+    }
+
     return 1;
 
     err :
@@ -155,7 +169,14 @@ brep( entityno )
 	    bu_free( (char *)void_orient, "BREP: void shell orients" );
 	    bu_free( (char *)void_shells, "brep: void shell list" );
 	}
-    nmg_km( m );
+
+    /* perform nmg kill model if make nmg was not executed since
+     * make nmg will have already performed an nmg kill model
+     */
+    if (!mk_nmg_executed_flag) {
+        nmg_km(m);
+    }
+
     return 0;
 }
 

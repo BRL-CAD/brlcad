@@ -30,7 +30,6 @@
 #include "brep.h"
 
 
-
 /**
  * R T _ D S P _ B R E P
  */
@@ -39,7 +38,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     struct rt_dsp_internal *dsp_ip;
     struct bu_mapped_file *mf;
-    
+
     RT_CK_DB_INTERNAL(ip);
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
@@ -52,24 +51,24 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     mf->apbuf = bu_malloc(mf->apbuflen, "apbuf");
     bu_cv_w_cookie(mf->apbuf, out_cookie, mf->apbuflen, mf->buf, in_cookie, count);
     dsp_ip->dsp_buf = (short unsigned int*)mf->apbuf;
-    
+
     *b = ON_Brep::New();
 
     switch (dsp_ip->dsp_datasrc) {
-  	case RT_DSP_SRC_V4_FILE:
+	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
 	    if (!dsp_ip->dsp_mp) {
 		bu_log("WARNING: Cannot find data file for displacement map (DSP)\n");
 		if (bu_vls_addr(&dsp_ip->dsp_name)) {
-                    bu_log("         DSP data file [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name));
-                } else {
+		    bu_log("         DSP data file [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name));
+		} else {
 		    bu_log("         DSP data file not found or not specified\n");
-                }
-                return;
+		}
+		return;
 	    }
 	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 	    break;
-     	case RT_DSP_SRC_OBJ:
+	case RT_DSP_SRC_OBJ:
 	    if (!dsp_ip->dsp_bip) {
 		bu_log("WARNING: Cannot find data object for displacement map (DSP)\n");
 		if (bu_vls_addr(&dsp_ip->dsp_name)) {
@@ -81,7 +80,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	    }
 	    RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
 	    RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
-	    break; 
+	    break;
     }
 
 
@@ -107,15 +106,15 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
      * curves. Surface topology is deduced as a function of the height
      * values.
      */
-   
+
     // Step 1 - create the bottom face.
-    
+
     point_t p_origin, p2, p3;
     ON_3dPoint plane_origin, plane_x_dir, plane_y_dir, pt2, pt3, pt4;
-    
+
     VSETALL(p_origin, 0.0);
     plane_origin = ON_3dPoint(p_origin);
-    
+
     VSET(p2, (dsp_ip->dsp_xcnt-1)*1000 , 0, 0);
     plane_x_dir = ON_3dPoint(p2);
 
@@ -130,17 +129,17 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     bottom_surf->SetExtents(1, bottom_surf->Domain(1));
     ON_BrepFace *bottomface = (*b)->NewFace(*bottom_surf);
     (*b)->FlipFace(*bottomface);
-   
+
     // Second step, the "walls"
 
     ON_SimpleArray<ON_Curve *> boundary;
-	
+
     // side 1
-    
+
     point_t s1p1, s1p2, s1p3, s1p4;
     ON_3dPoint s1pt1, s1pt2, s1pt3, s1pt4;
     ON_3dPointArray *bezpoints1 = new ON_3dPointArray(256);
-    
+
     VSET(s1p1, 0, 0, 0);
     VSET(s1p2, (dsp_ip->dsp_xcnt - 1)*1000, 0, 0);
     VSET(s1p3, (dsp_ip->dsp_xcnt - 1)*1000, 0, DSP(dsp_ip, dsp_ip->dsp_xcnt-1, 0));
@@ -176,14 +175,14 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     s1_surf->SetExtents(0, s1_surf->Domain(0));
     s1_surf->SetExtents(1, s1_surf->Domain(1));
     (*b)->SetTrimIsoFlags(s1f);
- 
+
     // side 2
-   
+
     point_t s2p1, s2p2, s2p3, s2p4;
     ON_3dPoint s2pt1, s2pt2, s2pt3, s2pt4;
     ON_3dPointArray *bezpoints2 = new ON_3dPointArray(256);
-    
-    boundary.Empty(); 
+
+    boundary.Empty();
     VSET(s1p1, 0, 0, 0);
     VSET(s2p2, 0, (dsp_ip->dsp_ycnt - 1)*1000, 0);
     VSET(s2p3, 0, (dsp_ip->dsp_ycnt - 1)*1000, DSP(dsp_ip, 0, dsp_ip->dsp_ycnt-1));
@@ -220,13 +219,13 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     s2_surf->SetExtents(1, s2_surf->Domain(1));
     (*b)->SetTrimIsoFlags(s2f);
     (*b)->FlipFace(s2f);
- 
+
     // side 3
- 
+
     point_t s3p1, s3p2, s3p3, s3p4;
     ON_3dPoint s3pt1, s3pt2, s3pt3, s3pt4;
     ON_3dPointArray *bezpoints3 = new ON_3dPointArray(256);
-    
+
     boundary.Empty();
     VSET(s3p1, (dsp_ip->dsp_xcnt - 1)*1000, (dsp_ip->dsp_ycnt - 1)*1000, 0);
     VSET(s3p2, 0, (dsp_ip->dsp_ycnt - 1)*1000, 0);
@@ -263,13 +262,13 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     s3_surf->SetExtents(0, s3_surf->Domain(0));
     s3_surf->SetExtents(1, s3_surf->Domain(1));
     (*b)->SetTrimIsoFlags(s3f);
- 
+
     // side 4
-  
+
     point_t s4p1, s4p2, s4p3, s4p4;
     ON_3dPoint s4pt1, s4pt2, s4pt3, s4pt4;
     ON_3dPointArray *bezpoints4 = new ON_3dPointArray(256);
-    
+
     boundary.Empty();
     VSET(s4p1, (dsp_ip->dsp_xcnt - 1)*1000, (dsp_ip->dsp_ycnt - 1)*1000, 0);
     VSET(s4p2, (dsp_ip->dsp_xcnt - 1)*1000, 0, 0);
@@ -306,12 +305,12 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     s4_surf->SetExtents(0, s4_surf->Domain(0));
     s4_surf->SetExtents(1, s4_surf->Domain(1));
     (*b)->SetTrimIsoFlags(s4f);
-    (*b)->FlipFace(s4f); 
-    
+    (*b)->FlipFace(s4f);
+
     // Next, define the top face with full resultion.
 
     ON_BezierSurface *bezsurf = new ON_BezierSurface(3, false, dsp_ip->dsp_xcnt, dsp_ip->dsp_ycnt);
-      
+
     for (unsigned int y=0; y < (dsp_ip->dsp_ycnt); y++) {
 	for (unsigned int x=0; x < (dsp_ip->dsp_xcnt); x++) {
 	    ON_3dPoint *ctrlpt = new ON_3dPoint(x*1000, y*1000, DSP(dsp_ip, x, y));
@@ -333,4 +332,3 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

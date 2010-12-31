@@ -1,0 +1,7 @@
+#!/bin/sh
+set -v
+latex all.tex
+bibtex all
+latex all.tex
+
+#dvialw all.dvi

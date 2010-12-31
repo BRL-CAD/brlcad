@@ -24,7 +24,7 @@
 
 
 int
-rt_obj_adjust(struct bu_vls *logstr, struct rt_db_internal *ip, int argc, char **argv)
+rt_obj_adjust(struct bu_vls *logstr, struct rt_db_internal *ip, int argc, const char **argv)
 {
     int id;
     const struct rt_functab *ft;

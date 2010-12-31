@@ -44,7 +44,7 @@ int
 bu_fchmod(FILE *fp,
 	  unsigned long pmode)
 {
-    if (!fp) {
+    if (UNLIKELY(!fp)) {
 	return 0;
     }
 

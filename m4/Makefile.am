@@ -1,6 +1,5 @@
 
 brlcad_m4 = \
-	OpenGL.m4 \
 	args.m4 \
 	cache.m4 \
 	compiler.m4 \

@@ -1,0 +1,449 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"../../resources/standard/dtd/docbookx.dtd">
+<article xmlns:xi="http://www.w3.org/2001/XInclude">
+  <articleinfo>
+    <title>Crear una esfera en una caja exhibidora transparente</title>
+
+    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+
+    <legalnotice>
+       <para>Aprobado para su publicación. Su distribución es ilimitada</para>
+   </legalnotice>
+  </articleinfo>
+
+  <para id="globe_in_display_overviewlist">
+    En este tutorial aprenderá a:
+
+    <itemizedlist mark='bullet'>
+      <listitem>
+	<para>
+	  Utilizar la GUI para crear una caja exhibidora usando formas arb8.
+	</para>
+      </listitem>
+      <listitem>
+	<para>Crear una esfera dentro de la caja exhibidora.</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Asignar propiedades del material para hacer que los objetos  
+	  parezcan más reales.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Rotar un objeto 180'0 usando la opción Rotate (Rotación) del menú 
+	  Edit (Editar)
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Utilizar la opción de color del Combination Editor para producir 
+	  colores personalizados.
+	</para>
+      </listitem>
+    </itemizedlist>
+  </para>
+    
+    <sect1 id="globe_in_display_newdb">
+      <title>Crear una nueva base de datos</title>
+      <para>
+	Comience creando una nueva base de datos llamada cube.g.
+      </para>
+    </sect1>
+    
+    <sect1 id="globe_create_display_box">
+      <title>Creando la caja exhibidora</title>
+      <para>
+	Vaya al menú Create (Crear), seleccione la categoría Arbs, y luego 
+	seleccione un arb8 (polihedro arbitrario convexo de ocho vértices). 
+	Cuando se le pregunte por un nombre para el arb8, nómbrelo cube1.s. 
+	Cliquee en Apply (Aplicar). Vaya al menú Edit (Editar) y cliquee en 
+	Accept (Aceptar). Ahora tiene un cubo para el exterior de la caja, 
+	como se muestra en la siguiente figura:
+ 
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged09_globe_outside_display_box.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      El exterior de la caja exhibidora
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      
+      <para>
+	Repita la primera parte de este proceso para producir otro arb8, esta 
+	vez llame esta forma cube2.s. Vaya al menú Edit (Editar) y cliquee en 
+	Scale (Escala). Coloque el puntero del mouse en la mitad inferior de la 
+	ventana gráfica y cliquee el botón central del mouse hasta que el 
+	segundo cubo sea apenas menor que el primero, como el siguiente:
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged09_globe_inside_outside_box.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      El interior y exterior de la caja exhibidora
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      
+      <para>
+	En el menu View (Vista) y cambie la vista a Front (Frontal). 
+	Luego, en el menú Edit (Editar)	cliquee en Translate (Traslación). 	
+	Mantenga apretada la tecla SHIFT y arrastre el cubo interior hacia la 
+	posición en el centro del cubo exterior. Repita este proceso desde la 
+	vista superior e izquierda hasta que el cubo más pequeño este ubicado 
+	en el centro del cubo exterior viéndolo desde todas las perspectivas. 	
+	Cuando haya terminado, regrese a Edit (Editar) y cliquee en Accept 
+	(Aceptar).
+      </para>
+    </sect1>
+
+    <sect1 id="create_globe_in_box">
+      <title>Crear una esfera dentro de la caja exhibidora</title>
+      <para>
+	Vaya al menú Create (Crear) y seleccione sph de la lista Ellipsoid 
+	(Elipsoides). 
+	Nombre la forma como globe1.s y cliquee en Apply (Aplicar).
+      </para>
+      
+      <para>
+	Una esfera debería aparecer dentro del cubo en la Graphics Window. 
+	Cambie a la vista frontal.
+      </para>
+      
+      <para>
+	Vaya al menú Edit (Editar) y seleccione Scale (Escalar). Reduzca el 
+	tamaño de la esfera hasta que se ajuste dentro del cubo y luego 
+	arrástrela hacia el centro del cubo. Vaya a Edit y Acepte los cambios. 
+	La esfera y la caja deberían ser similares a la siguiente imagen, en 
+	una vista az35 y el25:
+	
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged09_globe_wireframe.png" 
+format="PNG">
+</imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Representación en malla de alambre de la 
+	      esfera y la caja exhibidora
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      
+      <para>
+	Para ver el contenido de la base de datos, tipee en el prompt de la 
+	línea de comandos:
+	
+	<command>ls[Enter]</command>
+      </para>
+      
+      <para>
+	Debería ver listados a cube1.s, cube2.s y globe1.s, que son las formas 
+	que ha creado.
+	Para hacer regiones con estas formas, tipee en el prompt:
+
+	
+	<command>r cube1.r u cube1.s - cube2.s[Enter]</command>
+	
+	<command>r globe1.r u globe1.s[Enter]</command>
+      </para>
+    </sect1>
+    
+    <sect1 id="globe_assign_mater_prop">
+      <title>
+	Utilizar el Combitation Editor para asignar propiedades de los 	
+	materiales que hacen a los objetos parecer más reales
+      </title>
+      
+      <para>
+	En el menú Edit (Editar) seleccione Combination Editor (Editor de 
+	combinaciones). En la caja de diálogo, cliquee el botón al lado de la 
+	caja de ingreso del Nommbre. Seleccione globe1.r desde Select From All 
+	o Select From All Regions (Seleccionar de todas las regiones). Haga un 
+	doble click sobre el nombre globe1.r.
+	Asigne a esta región un sombreado de nube. Chequee la caja de entrada 
+	de expresiones booleanas para asegurarse que la región está hecha de u 
+	globe1.s. 
+	Cliquee en Apply para aceptar su elección. Cambie la vista en el menú 
+	View a az35, el25.
+      </para>
+      
+      <para>
+	Regrese a Name (Nombre) y seleccione cube1.r desde el menú Select From 
+	All. Asigne a esta región un sombreado de vidrio. El sombreado de vidrio 
+	es un acceso directo para cambiar individualmente los atributos del 
+	sombreado plástico para que se parezca al del vidrio.
+      </para>
+      
+      <para>
+	Vaya a la opción Color e ingrese lo valores 244 255 255. Esto le dará 
+	a su caja de vidrio un color de luz cian. Cliquee en Apply para aceptar 
+	los cambios.
+      </para>
+      
+      <para>
+	Antes que pueda generar el Raytrace de su diseño, necesitará limpiar 
+	la ventana gráfica tipenado Z en el prompt de la ventana de comandos. 	
+	Ambas formas y regiones son mostradas en este punto. Luego, tipee en 
+	la ventana de comandos:
+	
+	<command>draw cube1.r globe1.r[Enter]</command>
+      </para>
+      
+      <para>
+	La caja y la esfera deberían reaparecer en la ventana gráfica. En el 
+	menú File (Archivo) seleccione Raytrace. Luego, seleccione la opción 
+	blanca para el Background Color (Color de fondo). Cliquee en Raytrace.
+      </para>
+      
+      <para>
+	Su diseño debería mostrar un cubo de vidrio cian claro con una esfera 
+	azul dentro. Diríjase a Framebuffer (en el Raytrace Panel) y seleccione 
+	Overlay (Superposición), para quitar la vista en malla de alambre. La 
+	pantalla debería parecerse a la de la siguiente ilustración:
+	
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged09_globe_raytraced.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Trazado de la caja y la esfera
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      
+      <para>
+	Para hacer este diseño más interesante, puede colocar la esfera sobre 
+	una base.
+	Regrese a Framebuffer y cliquee en Active para desactivarlo. Luego, 
+	en el menú Create (Crear), en la categoría Cones and Cylinders (Conos 
+	y cilindros) seleccione el trc (cono truncado recto). Nombre la forma 
+	como base1.s. Trabajando desde una vista frontal, vaya al menú Edit 
+	(Editar) y seleccione Scale (Escala). Cliquee el botón central del 
+	mouse para reducir el trc a un tamaño apropiado, acorde a la base de 
+	la esfera. (Puede necesitar incrementar el tamaño de la ventana 
+	gráfica o disminuir la vista de la figura para ver la parte inferior 
+	del trc). A continuación reduzca la altura seleccionando Set H en el 
+	menú Edit (Editar) y cliquee con el botón central del mouse. Es 
+	probable que tenga que alternar entre estas dos opciones varias veces 
+	para obtener el tamaño adecuado. Cuando haya terminado no haga clic en 
+	Accept aún, ya que debemos hacer más cambios.
+      </para>
+    </sect1>
+    
+    <sect1 id="globe_move_rotate">
+      <title>Mover y rotar un objeto</title>
+      <para>
+	Así junto a otras características en <application>MGED</application>, 
+	mover y rotar objetos puede ser realizado de distintas maneras, de 	
+	acuerdo a la precisión deseada.
+	Como fue descripto previamente, las funciones Shift Grip (Arrastrar 
+	utilizadno el mouse) pueden ser usadas como una manera rápida para 
+	cambiar un objeto cuando su ángulo exacto y localización no son
+	importantes. Alternativamente, para alcanzar una mayor precisión, 
+	pueden aplicarse los comandos Translate (Traslación) y Rotate 
+	(Rotación) del menú Edit (Editar), ingresando los números de los 
+	parámetros específicos en la línea de comandos. En este tutorial,
+	experimentaremos con ambos métodos.
+      </para>
+      
+      <para>
+	Con su trc aún en modo de edición y con una vista frontal, use la 
+	tecla SHIFT y el botón izquierdo del mouse para arrastrar la forma 
+	hasta situarla en el piso del cubo, apenas tocando la caja interior.
+	Note que podría haber seleccionado Translate (Trasladar) desde el menú 
+	Edit (Editar) ingresando los parámetros en la línea de comandos para 
+	mover el trc a un lugar exacto; sin embargo, en este caso es suficiente 
+	alinear la forma con el método de arrastrar-y-soltar. En este punto, ud 
+	puede notar que su trc necesita ser apenas redimensionado para 
+	ajustarse mejor a la esfera. Use Scale (Escalar) y Set H (Ajuste h) de 
+	ser necesario y luego acepte los cambios.
+      </para>
+      
+      <para>
+	Ahora necesitamos hacer un segundo trc llamado base2.s, el cual 
+	usaremos para el techo de la base. En el prompt de la línea de 
+	comandos, tipee:
+	
+	<command>cp base1.s base2.s</command>
+      </para>
+      
+      <para>
+	El segundo trc aparecerá directamente encima del primer trc. 
+	Utilizaremos el Primitive Selection (Selección de primitivos) desde el 
+	menú Edit (Editar) para nombrarlo base2.s, girarlo y posicionarlo 
+	sobre el trc previamente creado.
+      </para>
+      
+      <para>
+	Para ello, podemos utilizar las teclas CTRL y ALT (para limitar la 
+	rotación) y el botón izquierdo del mouse moviéndolo hacia arriba y 
+	abajo hasta que el trc quede invertido. (Si utiliza este método, tenga 
+	en cuenta que puede soltar el botón del ratón y liberar el objeto, 
+	tomándolo nuevamente para posicionarlo como sea deseado). Sin embargo, 
+	como sabemos que queremos rotar la forma en un valor exacto de 180'0 
+	sobre el eje x, utilizaremos un método más preciso para rotarla. 
+	Seleccione Rotate (Rotación) desde el menú Edit (Editar) y luego tipee 	
+	los parámetros (abreviado con la p) en la línea de comandos, como se 
+	muestra a continuación:
+	
+	<command>p 180 0 0[Enter]</command>
+      </para>
+      
+      <para>
+	Nuestra forma debería haberse dado vuelta y pasado a la parte inferior 
+	de la primera trc. (Los dos ceros que ingresó indican que no hay 
+	rotación a lo largo de los ejes Y y Z). Ahora presione la tecla SHIFT 
+	y el botón izquierdo del mouse para arrastrar base2.s y apoyarla en la 
+	parte superior de base1.s. Las dos formas deberían constituir una base 
+	para sostener su globo. Compruebe la alineación utilizando múltiples 
+	vistas y luego acepte los cambios.	
+      </para>
+      
+      <para>
+	En el menú Edit (Editar) y diríjase al Primitive Selection (Selección 
+	de primitivos) y cliquee en globe1.r/globe1.s. Como hizo con las 
+	formas trc, arrastre la esfera con el mouse y la tecla SHIFT hacia 
+	abajo hasta que esté en su lugar sobre la base. Regrese a Edit 
+	(Editar) y cliquee en Accept (Aceptar).
+	Su diseño debería verse como el siguiente:
+	
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged09_globe_base_box_wireframe.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Representación en malla de alambre de 
+	      la esfera y la base en la caja
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+      </para>
+      
+      <para>
+	Para hacer la región de la base, tipee en el prompt de la línea de 
+	comandos:
+	
+	<command>r base1.r u base1.s u base2.s[Enter]</command>
+      </para>
+    </sect1>
+    
+    <sect1 id="globe_use_color_tool">
+      <title>
+	Utilizar el Color Tool (Herramientas de color) del Combination 
+	Editor (Editor de combinaciones) para producir colores personalizados.
+      </title>
+      
+      <para>
+	En la ventana del editor de combinaciones, cliquee sobre la caja de 
+	texto a la derecha de Nombre y luego desde Select From All elija 
+	base1.r. 
+	Asigne a la base una textura de plástico. En la caja de color, 
+	ingrese los números:
+	
+	<command>217 217 217</command>
+      </para>
+      
+      <para>
+	Aplique sus cambios. Antes que pueda generar el Raytrace de su diseño 
+	completo, deberá despejar primero la ventana gráfica y reconstruir su 
+	diseño tipeando en el prompt de la línea de comandos:
+	
+	<command>Z[Enter]</command>
+	
+	<command>draw cube1.r globe1.r base1.r[Enter]</command>
+      </para>
+      
+      <para>
+	Cambie la vista a az35, el25 y luego genere el Raytrace, 
+	el cual deberá ser similar al siguiente:
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged09_globe_base_box_raytraced.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	</mediaobject>
+      </informalfigure>
+ 
+
+     </para>
+    </sect1>
+    
+    <sect1 id="globe_in_display_box_review">
+      <title>Repasemos...</title>
+      <para>
+	En este tutorial aprendió a:
+	<itemizedlist mark='bullet'>
+	  <listitem>
+	    <para>
+	      Utilizar la GUI para crear una caja usando las formas arb8.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>Crear una esfera dentro de la caja.</para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Utilizar el Combination Editor para asignar propiedades de los 
+	      materiales que hacen a los objetos parecer más reales.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Rotar un objeto 180'0 usando la opción rotar del menú Edit.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Utilizar la opción de color del Combination Editor para producir 
+	      colores pesonalizados.
+	    </para>
+	  </listitem>
+	</itemizedlist>
+      </para>
+    </sect1>
+
+  </article>

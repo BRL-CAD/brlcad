@@ -1,6 +1,7 @@
 
 SUBDIRS = \
 	archer \
+	boteditor \
 	geometree \
 	hv3 \
 	lib \

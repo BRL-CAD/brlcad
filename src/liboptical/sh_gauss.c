@@ -126,7 +126,7 @@ struct bu_structparse gauss_print_tab[] = {
 
 };
 struct bu_structparse gauss_parse_tab[] = {
-    {"i",	bu_byteoffset(gauss_print_tab[0]), "gauss_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
+    {"%p",	bu_byteoffset(gauss_print_tab[0]), "gauss_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
     {"%f",  1, "s",			SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL },
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };

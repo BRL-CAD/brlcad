@@ -75,23 +75,27 @@ protected:
     Varlist Variables;
 };
 
+
 class Vector : public Parameter
 {
 public:
-    Vector(VCSet & vcs, std::string n = "default Vector", void * ptr = NULL);
+    Vector(VCSet & vcs, std::string n = "default Vector", void *ptr = NULL);
 };
+
 
 class Point : public Parameter
 {
 public:
-    Point(VCSet & vcs, std::string n = "default Point", void * ptr = NULL);
+    Point(VCSet & vcs, std::string n = "default Point", void *ptr = NULL);
 };
+
 
 class FastF : public Parameter
 {
 public:
-    FastF(VCSet & vcs, std::string n = "default FastF", void * ptr = NULL);
+    FastF(VCSet & vcs, std::string n = "default FastF", void *ptr = NULL);
 };
+
 
 #endif
 /** @} */

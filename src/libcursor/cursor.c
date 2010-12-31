@@ -51,7 +51,9 @@
 #  endif
 #endif
 
-#include <sys/ioctl.h>
+#ifdef HAVE_SYS_IOCTL_H
+#  include <sys/ioctl.h>
+#endif
 #define _winsize winsize	/* For compat with _ioctl.h. */
 
 #define TBUFSIZ		1024

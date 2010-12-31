@@ -97,7 +97,7 @@ void free_pixel (struct pixel *pp)
  * P R I N T _ P I X E L ()
  *
  */
-void print_pixel (void *p, int depth)
+void print_pixel (void *p, int UNUSED(depth))
 {
     int i;
     struct pixel *pp = (struct pixel *) p;
@@ -193,9 +193,6 @@ main (int argc, char **argv)
     FILE *infp = NULL;	/* input stream */
     int ch;		/* current char in command line */
     struct pixel *pp;
-
-    extern int bu_optind;			/* index from bu_getopt(3C) */
-    extern char *bu_optarg;		/* argument from bu_getopt(3C) */
 
     /*
      * Process the command line

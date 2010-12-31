@@ -293,7 +293,7 @@ get_props( props, comb )
     memset(props->material_name, 0, sizeof(props->material_name));
     memset(props->material_params, 0, sizeof(props->material_params));
     if ( endp )  {
-	int	len;
+	size_t	len;
 	len = endp - bu_vls_addr(&comb->shader);
 	if( len > sizeof(props->material_name) ) len = sizeof(props->material_name);
 	bu_strlcpy( props->material_name, bu_vls_addr(&comb->shader), len );
@@ -1203,10 +1203,7 @@ nmg_fu_to_tsurf( fu, fp_dir, fp_param )
 
 }
 
-int nmgregion_to_tsurf( name, r, fp_dir, fp_param )
-    char *name;
-    struct nmgregion *r;
-    FILE *fp_dir, *fp_param;
+int nmgregion_to_tsurf(char *UNUSED(name), struct nmgregion *r, FILE *fp_dir, FILE *fp_param)
 {
     struct shell *s;
 
@@ -2028,32 +2025,32 @@ arb_is_rpp( arb )
     for ( i=5; i<8; i++ )
     {
 	VSUB2( v1, arb->pt[i], arb->pt[i-4] );
-	if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+	if ( !VNEAR_EQUAL( v0, v1, tol.dist ) )
 	    return 0;
     }
 
     /* check the width vectors */
     VSUB2( v0, arb->pt[1], arb->pt[0] );
     VSUB2( v1, arb->pt[2], arb->pt[3] );
-    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VNEAR_EQUAL( v0, v1, tol.dist ) )
 	return 0;
     VSUB2( v1, arb->pt[6], arb->pt[7] );
-    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VNEAR_EQUAL( v0, v1, tol.dist ) )
 	return 0;
     VSUB2( v1, arb->pt[5], arb->pt[4] );
-    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VNEAR_EQUAL( v0, v1, tol.dist ) )
 	return 0;
 
     /* check the depth vectors */
     VSUB2( v0, arb->pt[3], arb->pt[0] );
     VSUB2( v1, arb->pt[2], arb->pt[1] );
-    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VNEAR_EQUAL( v0, v1, tol.dist ) )
 	return 0;
     VSUB2( v1, arb->pt[6], arb->pt[5] );
-    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VNEAR_EQUAL( v0, v1, tol.dist ) )
 	return 0;
     VSUB2( v1, arb->pt[7], arb->pt[4] );
-    if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
+    if ( !VNEAR_EQUAL( v0, v1, tol.dist ) )
 	return 0;
 
     /* check for a right angle corner */
@@ -2811,10 +2808,7 @@ sketch_to_iges( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_pa
 
 
 int
-null_to_iges( ip, name, fp_dir, fp_param )
-    struct rt_db_internal *ip;
-    char *name;
-    FILE *fp_dir, *fp_param;
+null_to_iges(struct rt_db_internal *UNUSED(ip), char *UNUSED(name), FILE *UNUSED(fp_dir), FILE *UNUSED(fp_param))
 {
     return 0;
 }

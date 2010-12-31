@@ -35,18 +35,15 @@
 #include "fb.h"
 #include "pkg.h"
 
-void		usage(char **argv);
-int		pars_Argv(int argc, char **argv);
 
-static char	*framebuffer = NULL;
-static int	scr_width = 0;
-static int	scr_height = 0;
+static char *framebuffer = NULL;
+static int scr_width = 0;
+static int scr_height = 0;
 
 
-static ColorMap cmap;
-static int	flavor = 0;
-extern unsigned char	utah8[], utah9[];	/* defined at end of file */
-static unsigned char	utah_cmap[256] = {
+static int flavor = 0;
+
+static unsigned char utah_cmap[256] = {
     0,  4,  9, 13, 17, 21, 25, 29, 32, 36, 39, 42, 45, 48, 51, 54,
     57, 59, 62, 64, 67, 69, 72, 74, 76, 78, 81, 83, 85, 87, 89, 91,
     92, 94, 96, 98, 100, 101, 103, 105, 106, 108, 110, 111, 113, 114, 116, 117,
@@ -65,232 +62,6 @@ static unsigned char	utah_cmap[256] = {
     249, 249, 249, 250, 250, 251, 251, 251, 252, 252, 252, 253, 253, 254, 254, 255
 };
 
-int
-main(int argc, char **argv)
-{
-    int		i;
-    int		fudge;
-    ColorMap	*cp = &cmap;
-    FBIO *fbp;
-
-    if ( ! pars_Argv( argc, argv ) ) {
-	usage( NULL );
-	return	1;
-    }
-
-    if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
-	return	1;
-
-    switch ( flavor )  {
-
-	case 0 : /* Standard - Linear color map */
-	    (void) fprintf( stderr, "Color map #0, linear (standard).\n" );
-	    cp = (ColorMap *) NULL;
-	    break;
-
-	case 1 : /* Reverse linear color map */
-	    (void) fprintf( stderr, "Color map #1, reverse-linear (negative).\n" );
-	    for ( i = 0; i < 256; i++ ) {
-		cp->cm_red[255-i] =
-		    cp->cm_green[255-i] =
-		    cp->cm_blue[255-i] = i << 8;
-	    }
-	    break;
-
-	case 2 :
-	    /* Experimental correction, for POLAROID 8x10 print film */
-	    (void) fprintf( stderr,
-			    "Color map #2, corrected for POLAROID 809/891 film.\n" );
-	    /* First entry black */
-#define BOOST(point, bias) \
-	((int)((bias)+((float)(point)/256.*(255-(bias)))))
-	    for ( i = 1; i < 256; i++ )  {
-		fudge = BOOST(i, 70);
-		cp->cm_red[i] = fudge << 8;		/* B */
-	    }
-	    for ( i = 1; i < 256; i++ )  {
-		fudge = i;
-		cp->cm_green[i] = fudge << 8;	/* G */
-	    }
-	    for ( i = 1; i < 256; i++ )  {
-		fudge = BOOST( i, 30 );
-		cp->cm_blue[i] = fudge << 8;	/* R */
-	    }
-	    break;
-
-	case 3 : /* Standard, with low intensities set to black */
-	    (void) fprintf( stderr, "Color map #3, low 100 entries black.\n" );
-	    for ( i = 100; i < 256; i++ )  {
-		cp->cm_red[i] =
-		    cp->cm_green[i] =
-		    cp->cm_blue[i] = i << 8;
-	    }
-	    break;
-
-	case 4 : /* Amplify middle of the range, for Moss's dim pictures */
-#define UPSHIFT	64
-	    (void) fprintf( stderr,
-			    "Color map #4, amplify middle range to boost dim pictures.\n" );
-	    /* First entry black */
-	    for ( i = 1; i< 256-UPSHIFT; i++ )  {
-		int j = i + UPSHIFT;
-		cp->cm_red[i] =
-		    cp->cm_green[i] =
-		    cp->cm_blue[i] = j << 8;
-	    }
-	    for ( i = 256-UPSHIFT; i < 256; i++ )  {
-		cp->cm_red[i] =
-		    cp->cm_green[i] =
-		    cp->cm_blue[i] = 255 << 8;	/* Full Scale */
-	    }
-	    break;
-
-	case 5 : /* University of Utah's color map */
-	    (void) fprintf( stderr,
-			    "Color map #5, University of Utah's gamma correcting map.\n" );
-	    for ( i = 0; i < 256; i++ )
-		cp->cm_red[i] =
-		    cp->cm_green[i] =
-		    cp->cm_blue[i] = utah_cmap[i] << 8;
-	    break;
-
-	case 6 :	/* Delta's */
-	    (void) fprintf( stderr, "Color map #6, color deltas.\n" );
-	    /* white at zero */
-	    cp->cm_red[0] = 65535;
-	    cp->cm_green[0] = 65535;
-	    cp->cm_blue[0] = 65535;
-	    /* magenta at 32 */
-	    cp->cm_red[32] = 65535;
-	    cp->cm_blue[32] = 65535;
-	    /* Red at 64 */
-	    cp->cm_red[32*2] = 65535;
-	    /* Yellow ... */
-	    cp->cm_red[32*3] = 65535;
-	    cp->cm_green[32*3] = 65535;
-	    /* Green */
-	    cp->cm_green[32*4] = 65535;
-	    /* Cyan */
-	    cp->cm_green[32*5] = 65535;
-	    cp->cm_blue[32*5] = 65535;
-	    /* Blue */
-	    cp->cm_blue[32*6] = 65535;
-	    break;
-
-	case 8:
-	    (void) fprintf( stderr, "Color map #8, Ikcmap 8.\n" );
-	    for ( i = 0; i < 256; i++ ) {
-		cp->cm_red[i] = utah8[3*i] << 8;
-		cp->cm_green[i] = utah8[3*i+1] << 8;
-		cp->cm_blue[i] = utah8[3*i+2] << 8;
-	    }
-	    break;
-
-	case 9:
-	    (void) fprintf( stderr, "Color map #9, Ikcmap 9.\n" );
-	    for ( i = 0; i < 256; i++ ) {
-		cp->cm_red[i] = utah9[3*i] << 8;
-		cp->cm_green[i] = utah9[3*i+1] << 8;
-		cp->cm_blue[i] = utah9[3*i+2] << 8;
-	    }
-	    break;
-
-	case 10:	/* Black */
-	    (void) fprintf( stderr, "Color map #10, solid black.\n" );
-	    break;
-
-	case 11:	/* White */
-	    (void) fprintf( stderr, "Color map #11, solid white.\n" );
-	    for ( i = 0; i < 256; i++ )  {
-		cp->cm_red[i] =
-		    cp->cm_green[i] =
-		    cp->cm_blue[i] = 255 << 8;
-	    }
-	    break;
-
-	case 12:	/* 18% Grey */
-	    (void) fprintf( stderr, "Color map #12, 18%% neutral grey.\n" );
-	    for ( i = 0; i < 256; i++ )  {
-		cp->cm_red[i] =
-		    cp->cm_green[i] =
-		    cp->cm_blue[i] = 46 << 8;
-	    }
-	    break;
-
-	default:
-	    (void) fprintf(	stderr,
-				"Color map #%d, flavor not implemented!\n",
-				flavor );
-	    usage( NULL );
-	    return	1;
-    }
-    fb_wmap( fbp, cp );
-    return fb_close( fbp );
-}
-
-/*	p a r s _ A r g v ( )
- */
-int
-pars_Argv(int argc, char **argv)
-{
-    int	c;
-    extern int	bu_optind;
-
-    while ( (c = bu_getopt( argc, argv, "hF:s:S:w:W:n:N:" )) != EOF ) {
-	switch ( c ) {
-	    case 'h' :
-		scr_width = scr_height = 1024;
-		break;
-	    case 'F':
-		framebuffer = bu_optarg;
-		break;
-	    case 'S':
-	    case 's':
-		/* square file size */
-		scr_height = scr_width = atoi(bu_optarg);
-		break;
-	    case 'w':
-	    case 'W':
-		scr_width = atoi(bu_optarg);
-		break;
-	    case 'n':
-	    case 'N':
-		scr_height = atoi(bu_optarg);
-		break;
-	    case '?' :
-		return	0;
-	}
-    }
-    if ( argv[bu_optind] != NULL )
-	flavor = atoi( argv[bu_optind] );
-    return	1;
-}
-
-void
-usage(char **argv)
-{
-    (void) fprintf(stderr, "Usage : fbcmap [-h] [-F framebuffer]\n");
-    (void) fprintf(stderr, "	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n");
-    (void) fprintf(stderr, "	[map_number]\n" );
-    (void) fprintf( stderr,
-		    "Color map #0, linear (standard).\n" );
-    (void) fprintf( stderr,
-		    "Color map #1, reverse-linear (negative).\n" );
-    (void) fprintf( stderr,
-		    "Color map #2, corrected for POLAROID 809/891 film.\n" );
-    (void) fprintf( stderr,
-		    "Color map #3, low 100 entries black.\n" );
-    (void) fprintf( stderr,
-		    "Color map #4, amplify middle range to boost dim pictures.\n" );
-    (void) fprintf( stderr,
-		    "Color map #5, University of Utah's gamma correcting map.\n" );
-    (void) fprintf( stderr, "Color map #6, color deltas.\n" );
-    (void) fprintf( stderr, "Color map #8, ikcmap 8.\n" );
-    (void) fprintf( stderr, "Color map #9, ikcmap 9.\n" );
-    (void) fprintf( stderr, "Color map #10, solid black.\n" );
-    (void) fprintf( stderr, "Color map #11, solid white.\n" );
-    (void) fprintf( stderr, "Color map #12, 18%% neutral grey.\n" );
-}
 
 /* Ikcmap 8 & 9 colormaps */
 unsigned char utah8[256*3] = {
@@ -811,6 +582,237 @@ unsigned char utah9[256*3] = {
     0, 0, 0,
     255, 255, 255,
 };
+
+
+/* p a r s _ A r g v ()
+ */
+static int
+pars_Argv(int argc, char **argv)
+{
+    int c;
+
+    while ((c = bu_getopt(argc, argv, "hF:s:S:w:W:n:N:")) != EOF) {
+	switch (c) {
+	    case 'h' :
+		scr_width = scr_height = 1024;
+		break;
+	    case 'F':
+		framebuffer = bu_optarg;
+		break;
+	    case 'S':
+	    case 's':
+		/* square file size */
+		scr_height = scr_width = atoi(bu_optarg);
+		break;
+	    case 'w':
+	    case 'W':
+		scr_width = atoi(bu_optarg);
+		break;
+	    case 'n':
+	    case 'N':
+		scr_height = atoi(bu_optarg);
+		break;
+	    case '?' :
+		return 0;
+	}
+    }
+    if (argv[bu_optind] != NULL)
+	flavor = atoi(argv[bu_optind]);
+    return 1;
+}
+
+
+static void
+usage()
+{
+    (void) fprintf(stderr, "Usage : fbcmap [-h] [-F framebuffer]\n");
+    (void) fprintf(stderr, "	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n");
+    (void) fprintf(stderr, "	[map_number]\n");
+    (void) fprintf(stderr,
+		   "Color map #0, linear (standard).\n");
+    (void) fprintf(stderr,
+		   "Color map #1, reverse-linear (negative).\n");
+    (void) fprintf(stderr,
+		   "Color map #2, corrected for POLAROID 809/891 film.\n");
+    (void) fprintf(stderr,
+		   "Color map #3, low 100 entries black.\n");
+    (void) fprintf(stderr,
+		   "Color map #4, amplify middle range to boost dim pictures.\n");
+    (void) fprintf(stderr,
+		   "Color map #5, University of Utah's gamma correcting map.\n");
+    (void) fprintf(stderr, "Color map #6, color deltas.\n");
+    (void) fprintf(stderr, "Color map #8, ikcmap 8.\n");
+    (void) fprintf(stderr, "Color map #9, ikcmap 9.\n");
+    (void) fprintf(stderr, "Color map #10, solid black.\n");
+    (void) fprintf(stderr, "Color map #11, solid white.\n");
+    (void) fprintf(stderr, "Color map #12, 18%% neutral grey.\n");
+}
+
+
+int
+main(int argc, char **argv)
+{
+    int i;
+    int fudge;
+    ColorMap cmap;
+    ColorMap *cp = &cmap;
+    FBIO *fbp;
+
+    if (! pars_Argv(argc, argv)) {
+	usage();
+	return 1;
+    }
+
+    if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == NULL)
+	return 1;
+
+    switch (flavor) {
+
+	case 0 : /* Standard - Linear color map */
+	    (void) fprintf(stderr, "Color map #0, linear (standard).\n");
+	    cp = (ColorMap *) NULL;
+	    break;
+
+	case 1 : /* Reverse linear color map */
+	    (void) fprintf(stderr, "Color map #1, reverse-linear (negative).\n");
+	    for (i = 0; i < 256; i++) {
+		cp->cm_red[255-i] =
+		    cp->cm_green[255-i] =
+		    cp->cm_blue[255-i] = i << 8;
+	    }
+	    break;
+
+	case 2 :
+	    /* Experimental correction, for POLAROID 8x10 print film */
+	    (void) fprintf(stderr,
+			   "Color map #2, corrected for POLAROID 809/891 film.\n");
+	    /* First entry black */
+#define BOOST(point, bias) \
+	((int)((bias)+((float)(point)/256.*(255-(bias)))))
+	    for (i = 1; i < 256; i++) {
+		fudge = BOOST(i, 70);
+		cp->cm_red[i] = fudge << 8;		/* B */
+	    }
+	    for (i = 1; i < 256; i++) {
+		fudge = i;
+		cp->cm_green[i] = fudge << 8;	/* G */
+	    }
+	    for (i = 1; i < 256; i++) {
+		fudge = BOOST(i, 30);
+		cp->cm_blue[i] = fudge << 8;	/* R */
+	    }
+	    break;
+
+	case 3 : /* Standard, with low intensities set to black */
+	    (void) fprintf(stderr, "Color map #3, low 100 entries black.\n");
+	    for (i = 100; i < 256; i++) {
+		cp->cm_red[i] =
+		    cp->cm_green[i] =
+		    cp->cm_blue[i] = i << 8;
+	    }
+	    break;
+
+	case 4 : /* Amplify middle of the range, for Moss's dim pictures */
+#define UPSHIFT 64
+	    (void) fprintf(stderr,
+			   "Color map #4, amplify middle range to boost dim pictures.\n");
+	    /* First entry black */
+	    for (i = 1; i< 256-UPSHIFT; i++) {
+		int j = i + UPSHIFT;
+		cp->cm_red[i] =
+		    cp->cm_green[i] =
+		    cp->cm_blue[i] = j << 8;
+	    }
+	    for (i = 256-UPSHIFT; i < 256; i++) {
+		cp->cm_red[i] =
+		    cp->cm_green[i] =
+		    cp->cm_blue[i] = 255 << 8;	/* Full Scale */
+	    }
+	    break;
+
+	case 5 : /* University of Utah's color map */
+	    (void) fprintf(stderr,
+			   "Color map #5, University of Utah's gamma correcting map.\n");
+	    for (i = 0; i < 256; i++)
+		cp->cm_red[i] =
+		    cp->cm_green[i] =
+		    cp->cm_blue[i] = utah_cmap[i] << 8;
+	    break;
+
+	case 6 :	/* Delta's */
+	    (void) fprintf(stderr, "Color map #6, color deltas.\n");
+	    /* white at zero */
+	    cp->cm_red[0] = 65535;
+	    cp->cm_green[0] = 65535;
+	    cp->cm_blue[0] = 65535;
+	    /* magenta at 32 */
+	    cp->cm_red[32] = 65535;
+	    cp->cm_blue[32] = 65535;
+	    /* Red at 64 */
+	    cp->cm_red[32*2] = 65535;
+	    /* Yellow ... */
+	    cp->cm_red[32*3] = 65535;
+	    cp->cm_green[32*3] = 65535;
+	    /* Green */
+	    cp->cm_green[32*4] = 65535;
+	    /* Cyan */
+	    cp->cm_green[32*5] = 65535;
+	    cp->cm_blue[32*5] = 65535;
+	    /* Blue */
+	    cp->cm_blue[32*6] = 65535;
+	    break;
+
+	case 8:
+	    (void) fprintf(stderr, "Color map #8, Ikcmap 8.\n");
+	    for (i = 0; i < 256; i++) {
+		cp->cm_red[i] = utah8[3*i] << 8;
+		cp->cm_green[i] = utah8[3*i+1] << 8;
+		cp->cm_blue[i] = utah8[3*i+2] << 8;
+	    }
+	    break;
+
+	case 9:
+	    (void) fprintf(stderr, "Color map #9, Ikcmap 9.\n");
+	    for (i = 0; i < 256; i++) {
+		cp->cm_red[i] = utah9[3*i] << 8;
+		cp->cm_green[i] = utah9[3*i+1] << 8;
+		cp->cm_blue[i] = utah9[3*i+2] << 8;
+	    }
+	    break;
+
+	case 10:	/* Black */
+	    (void) fprintf(stderr, "Color map #10, solid black.\n");
+	    break;
+
+	case 11:	/* White */
+	    (void) fprintf(stderr, "Color map #11, solid white.\n");
+	    for (i = 0; i < 256; i++) {
+		cp->cm_red[i] =
+		    cp->cm_green[i] =
+		    cp->cm_blue[i] = 255 << 8;
+	    }
+	    break;
+
+	case 12:	/* 18% Grey */
+	    (void) fprintf(stderr, "Color map #12, 18%% neutral grey.\n");
+	    for (i = 0; i < 256; i++) {
+		cp->cm_red[i] =
+		    cp->cm_green[i] =
+		    cp->cm_blue[i] = 46 << 8;
+	    }
+	    break;
+
+	default:
+	    (void) fprintf(stderr,
+			   "Color map #%d, flavor not implemented!\n",
+			   flavor);
+	    usage();
+	    return 1;
+    }
+    fb_wmap(fbp, cp);
+    return fb_close(fbp);
+}
+
 
 /*
  * Local Variables:

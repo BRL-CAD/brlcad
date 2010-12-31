@@ -83,7 +83,7 @@
 /* isblank appears to be obsolete in newer ctype.h files so use
  * fnblank instead when looking for the "blank" character class.
  */
-HIDDEN inline int
+static inline int
 fnblank(int c)
 {
 #ifdef isblank
@@ -94,77 +94,77 @@ fnblank(int c)
 }
 
 
-HIDDEN inline int
+static inline int
 fnalnum(int c)
 {
     return isalnum(c);
 }
 
 
-HIDDEN inline int
+static inline int
 fnalpha(int c)
 {
     return isalpha(c);
 }
 
 
-HIDDEN inline int
+static inline int
 fncntrl(int c)
 {
     return iscntrl(c);
 }
 
 
-HIDDEN inline int
+static inline int
 fndigit(int c)
 {
     return isdigit(c);
 }
 
 
-HIDDEN inline int
+static inline int
 fngraph(int c)
 {
     return isgraph(c);
 }
 
 
-HIDDEN inline int
+static inline int
 fnlower(int c)
 {
     return islower(c);
 }
 
 
-HIDDEN inline int
+static inline int
 fnprint(int c)
 {
     return isprint(c);
 }
 
 
-HIDDEN inline int
+static inline int
 fnpunct(int c)
 {
     return ispunct(c);
 }
 
 
-HIDDEN inline int
+static inline int
 fnspace(int c)
 {
     return isspace(c);
 }
 
 
-HIDDEN inline int
+static inline int
 fnupper(int c)
 {
     return isupper(c);
 }
 
 
-HIDDEN inline int
+static inline int
 fnxdigit(int c)
 {
     return isxdigit(c);
@@ -222,7 +222,7 @@ charclassmatch(const char *pattern, char test, int *s)
 	if (c == BU_FNM_EOS) resultholder = -1;
 	counter++;
 
-        c = *pattern++; /* next */
+	c = *pattern++; /* next */
     }
     c = *pattern++;
     if (c != ']') resultholder = -1;
@@ -399,7 +399,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 		}
 		/* FALLTHROUGH */
 	    default:
-	normal:
+	    normal:
 		if (c != *string && !((flags & BU_CASEFOLD) &&
 				      (tolower((unsigned char)c) ==
 				       tolower((unsigned char)*string))))

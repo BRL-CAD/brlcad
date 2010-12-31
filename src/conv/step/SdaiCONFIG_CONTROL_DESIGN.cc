@@ -4,6 +4,8 @@
 // it since your modifications will be lost if fedex_plus is used to
 // regenerate it.
 /* $Id$  */
+#include "common.h"
+
 #ifndef  SCHEMA_H
 #include <schema.h>
 #endif
@@ -1437,7 +1439,7 @@ SdaiCharacterized_product_definition::NewSelect ()
 // STEP Part 21
 
 void
-SdaiCharacterized_product_definition::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiCharacterized_product_definition::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition)
 	_app_inst -> STEPwrite_reference (out);
@@ -1496,7 +1498,7 @@ SdaiCharacterized_product_definition::STEPwrite_verbose (ostream& out, const cha
 
 Severity
 SdaiCharacterized_product_definition::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition)   {
 	// set Underlying Type in Select class
@@ -1537,7 +1539,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiCharacterized_product_definition::StrToVal_content (const char * str, InstMgr * instances)
+SdaiCharacterized_product_definition::StrToVal_content (const char * UNUSED(str), InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -2051,7 +2053,7 @@ SdaiShape_definition::NewSelect ()
 // STEP Part 21
 
 void
-SdaiShape_definition::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiShape_definition::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition_shape)
 	_app_inst -> STEPwrite_reference (out);
@@ -2120,7 +2122,7 @@ SdaiShape_definition::STEPwrite_verbose (ostream& out, const char *currSch) cons
 
 Severity
 SdaiShape_definition::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition_shape)   {
 	// set Underlying Type in Select class
@@ -2174,7 +2176,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiShape_definition::StrToVal_content (const char * str, InstMgr * instances)
+SdaiShape_definition::StrToVal_content (const char * UNUSED(str), InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -2832,7 +2834,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiCharacterized_definition::StrToVal_content (const char * str, InstMgr * instances)
+SdaiCharacterized_definition::StrToVal_content (const char * UNUSED(str), InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -3134,7 +3136,7 @@ SdaiChange_request_item::NewSelect ()
 // STEP Part 21
 
 void
-SdaiChange_request_item::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiChange_request_item::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)
 	_app_inst -> STEPwrite_reference (out);
@@ -3183,7 +3185,7 @@ SdaiChange_request_item::STEPwrite_verbose (ostream& out, const char *currSch) c
 
 Severity
 SdaiChange_request_item::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+                                           const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)   {
 	// set Underlying Type in Select class
@@ -3211,7 +3213,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiChange_request_item::StrToVal_content (const char * str, InstMgr * instances)
+SdaiChange_request_item::StrToVal_content (const char * UNUSED(str), InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -3563,7 +3565,7 @@ SdaiReversible_topology_item::NewSelect ()
 // STEP Part 21
 
 void
-SdaiReversible_topology_item::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiReversible_topology_item::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_edge)
 	_app_inst -> STEPwrite_reference (out);
@@ -3662,7 +3664,7 @@ SdaiReversible_topology_item::STEPwrite_verbose (ostream& out, const char *currS
 
 Severity
 SdaiReversible_topology_item::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+                                                const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_edge)   {
 	// set Underlying Type in Select class
@@ -3755,7 +3757,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiReversible_topology_item::StrToVal_content (const char * str, InstMgr * instances)
+SdaiReversible_topology_item::StrToVal_content (const char * UNUSED(str), InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -4531,7 +4533,7 @@ SdaiAxis2_placement::NewSelect ()
 // STEP Part 21
 
 void
-SdaiAxis2_placement::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiAxis2_placement::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_axis2_placement_2d)
 	_app_inst -> STEPwrite_reference (out);
@@ -4590,7 +4592,7 @@ SdaiAxis2_placement::STEPwrite_verbose (ostream& out, const char *currSch) const
 
 Severity
 SdaiAxis2_placement::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+                                       const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_axis2_placement_2d)   {
 	// set Underlying Type in Select class
@@ -4631,7 +4633,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiAxis2_placement::StrToVal_content (const char * str, InstMgr * instances)
+SdaiAxis2_placement::StrToVal_content (const char * UNUSED(str), InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -5063,7 +5065,7 @@ SdaiSpecified_item::NewSelect ()
 // STEP Part 21
 
 void
-SdaiSpecified_item::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiSpecified_item::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition)
 	_app_inst -> STEPwrite_reference (out);
@@ -5122,7 +5124,7 @@ SdaiSpecified_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 
 Severity
 SdaiSpecified_item::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+                                      const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition)   {
 	// set Underlying Type in Select class
@@ -5163,7 +5165,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiSpecified_item::StrToVal_content (const char * str, InstMgr * instances)
+SdaiSpecified_item::StrToVal_content (const char * UNUSED(str), InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -5619,7 +5621,7 @@ SCLLOG(Logical) SdaiSpecified_item::IsShape_aspect() const
 //////////  SELECT TYPE measure_value
 
 const TypeDescriptor *
-SdaiMeasure_value::AssignEntity (SCLP23(Application_instance) * se)
+SdaiMeasure_value::AssignEntity (SCLP23(Application_instance) * UNUSED(se))
 {
   // should never be here - done in Select class
 
@@ -5651,7 +5653,7 @@ SdaiMeasure_value::NewSelect ()
 // STEP Part 21
 
 void
-SdaiMeasure_value::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiMeasure_value::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designt_length_measure)
 	WriteReal(_real,out);
@@ -5809,8 +5811,8 @@ SdaiMeasure_value::STEPwrite_verbose (ostream& out, const char *currSch) const
 }
 
 Severity
-SdaiMeasure_value::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+SdaiMeasure_value::STEPread_content (istream& in, InstMgr * UNUSED(instances),
+			const char *UNUSED(utype), int UNUSED(addFileId), const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designt_length_measure)   {
 	ReadReal (_real, in, &_error, "),");
@@ -5873,7 +5875,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiMeasure_value::StrToVal_content (const char * str, InstMgr * instances)
+SdaiMeasure_value::StrToVal_content (const char * str, InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   case sdaiSTRING :
@@ -6337,7 +6339,7 @@ SdaiPerson_organization_select::NewSelect ()
 // STEP Part 21
 
 void
-SdaiPerson_organization_select::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiPerson_organization_select::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_person)
 	_app_inst -> STEPwrite_reference (out);
@@ -6406,7 +6408,7 @@ SdaiPerson_organization_select::STEPwrite_verbose (ostream& out, const char *cur
 
 Severity
 SdaiPerson_organization_select::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+                                                  const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_person)   {
 	// set Underlying Type in Select class
@@ -6460,7 +6462,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiPerson_organization_select::StrToVal_content (const char * str, InstMgr * instances)
+SdaiPerson_organization_select::StrToVal_content (const char * UNUSED(str), InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -7096,7 +7098,7 @@ SdaiPcurve_or_surface::NewSelect ()
 // STEP Part 21
 
 void
-SdaiPcurve_or_surface::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiPcurve_or_surface::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_pcurve)
 	_app_inst -> STEPwrite_reference (out);
@@ -7155,7 +7157,7 @@ SdaiPcurve_or_surface::STEPwrite_verbose (ostream& out, const char *currSch) con
 
 Severity
 SdaiPcurve_or_surface::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_pcurve)   {
 	// set Underlying Type in Select class
@@ -7196,7 +7198,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiPcurve_or_surface::StrToVal_content (const char * str, InstMgr * instances)
+SdaiPcurve_or_surface::StrToVal_content (const char * UNUSED(str), InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -7584,7 +7586,7 @@ SdaiClassified_item::NewSelect ()
 // STEP Part 21
 
 void
-SdaiClassified_item::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiClassified_item::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)
 	_app_inst -> STEPwrite_reference (out);
@@ -7643,7 +7645,7 @@ SdaiClassified_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 
 Severity
 SdaiClassified_item::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)   {
 	// set Underlying Type in Select class
@@ -7684,7 +7686,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiClassified_item::StrToVal_content (const char * str, InstMgr * instances)
+SdaiClassified_item::StrToVal_content (const char * UNUSED(str), InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -8192,7 +8194,7 @@ SdaiFounded_item_select::NewSelect ()
 // STEP Part 21
 
 void
-SdaiFounded_item_select::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiFounded_item_select::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_founded_item)
 	_app_inst -> STEPwrite_reference (out);
@@ -8251,7 +8253,7 @@ SdaiFounded_item_select::STEPwrite_verbose (ostream& out, const char *currSch) c
 
 Severity
 SdaiFounded_item_select::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_founded_item)   {
 	// set Underlying Type in Select class
@@ -8292,7 +8294,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiFounded_item_select::StrToVal_content (const char * str, InstMgr * instances)
+SdaiFounded_item_select::StrToVal_content (const char * UNUSED(str), InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -8616,7 +8618,7 @@ SdaiVector_or_direction::NewSelect ()
 // STEP Part 21
 
 void
-SdaiVector_or_direction::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiVector_or_direction::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_vector)
 	_app_inst -> STEPwrite_reference (out);
@@ -8675,7 +8677,7 @@ SdaiVector_or_direction::STEPwrite_verbose (ostream& out, const char *currSch) c
 
 Severity
 SdaiVector_or_direction::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_vector)   {
 	// set Underlying Type in Select class
@@ -8716,7 +8718,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiVector_or_direction::StrToVal_content (const char * str, InstMgr * instances)
+SdaiVector_or_direction::StrToVal_content (const char * UNUSED(str), InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -9132,7 +9134,7 @@ SdaiWireframe_model::NewSelect ()
 // STEP Part 21
 
 void
-SdaiWireframe_model::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiWireframe_model::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_shell_based_wireframe_model)
 	_app_inst -> STEPwrite_reference (out);
@@ -9191,7 +9193,7 @@ SdaiWireframe_model::STEPwrite_verbose (ostream& out, const char *currSch) const
 
 Severity
 SdaiWireframe_model::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_shell_based_wireframe_model)   {
 	// set Underlying Type in Select class
@@ -9232,7 +9234,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiWireframe_model::StrToVal_content (const char * str, InstMgr * instances)
+SdaiWireframe_model::StrToVal_content (const char * UNUSED(str), InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -9626,7 +9628,7 @@ SdaiGeometric_set_select::NewSelect ()
 // STEP Part 21
 
 void
-SdaiGeometric_set_select::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiGeometric_set_select::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_point)
 	_app_inst -> STEPwrite_reference (out);
@@ -9695,7 +9697,7 @@ SdaiGeometric_set_select::STEPwrite_verbose (ostream& out, const char *currSch) 
 
 Severity
 SdaiGeometric_set_select::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_point)   {
 	// set Underlying Type in Select class
@@ -9749,7 +9751,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiGeometric_set_select::StrToVal_content (const char * str, InstMgr * instances)
+SdaiGeometric_set_select::StrToVal_content (const char * UNUSED(str), InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -10135,7 +10137,7 @@ SdaiStart_request_item::NewSelect ()
 // STEP Part 21
 
 void
-SdaiStart_request_item::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiStart_request_item::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)
 	_app_inst -> STEPwrite_reference (out);
@@ -10184,7 +10186,7 @@ SdaiStart_request_item::STEPwrite_verbose (ostream& out, const char *currSch) co
 
 Severity
 SdaiStart_request_item::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)   {
 	// set Underlying Type in Select class
@@ -10212,7 +10214,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiStart_request_item::StrToVal_content (const char * str, InstMgr * instances)
+SdaiStart_request_item::StrToVal_content (const char * UNUSED(str), InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -10588,7 +10590,7 @@ SdaiPerson_organization_item::NewSelect ()
 // STEP Part 21
 
 void
-SdaiPerson_organization_item::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiPerson_organization_item::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_change)
 	_app_inst -> STEPwrite_reference (out);
@@ -10727,7 +10729,7 @@ SdaiPerson_organization_item::STEPwrite_verbose (ostream& out, const char *currS
 
 Severity
 SdaiPerson_organization_item::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_change)   {
 	// set Underlying Type in Select class
@@ -10872,7 +10874,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiPerson_organization_item::StrToVal_content (const char * str, InstMgr * instances)
+SdaiPerson_organization_item::StrToVal_content (const char * UNUSED(str), InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -12111,7 +12113,7 @@ SdaiDate_time_item::NewSelect ()
 // STEP Part 21
 
 void
-SdaiDate_time_item::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiDate_time_item::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition)
 	_app_inst -> STEPwrite_reference (out);
@@ -12240,7 +12242,7 @@ SdaiDate_time_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 
 Severity
 SdaiDate_time_item::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition)   {
 	// set Underlying Type in Select class
@@ -12372,7 +12374,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiDate_time_item::StrToVal_content (const char * str, InstMgr * instances)
+SdaiDate_time_item::StrToVal_content (const char * UNUSED(str), InstMgr * UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -13496,7 +13498,7 @@ SdaiShell::NewSelect ()
 // STEP Part 21
 
 void
-SdaiShell::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiShell::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_vertex_shell)
 	_app_inst -> STEPwrite_reference (out);
@@ -13575,7 +13577,7 @@ SdaiShell::STEPwrite_verbose (ostream& out, const char *currSch) const
 
 Severity
 SdaiShell::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_vertex_shell)   {
 	// set Underlying Type in Select class
@@ -13642,7 +13644,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiShell::StrToVal_content (const char * str, InstMgr * instances)
+SdaiShell::StrToVal_content (const char *UNUSED(str), InstMgr *UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -14186,7 +14188,7 @@ SdaiTransformation::NewSelect ()
 // STEP Part 21
 
 void
-SdaiTransformation::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiTransformation::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_item_defined_transformation)
 	_app_inst -> STEPwrite_reference (out);
@@ -14245,7 +14247,7 @@ SdaiTransformation::STEPwrite_verbose (ostream& out, const char *currSch) const
 
 Severity
 SdaiTransformation::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_item_defined_transformation)   {
 	// set Underlying Type in Select class
@@ -14286,7 +14288,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiTransformation::StrToVal_content (const char * str, InstMgr * instances)
+SdaiTransformation::StrToVal_content (const char *UNUSED(str), InstMgr *UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -14704,7 +14706,7 @@ SdaiBoolean_operand::NewSelect ()
 // STEP Part 21
 
 void
-SdaiBoolean_operand::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiBoolean_operand::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_solid_model)
 	_app_inst -> STEPwrite_reference (out);
@@ -14753,7 +14755,7 @@ SdaiBoolean_operand::STEPwrite_verbose (ostream& out, const char *currSch) const
 
 Severity
 SdaiBoolean_operand::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_solid_model)   {
 	// set Underlying Type in Select class
@@ -14781,7 +14783,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiBoolean_operand::StrToVal_content (const char * str, InstMgr * instances)
+SdaiBoolean_operand::StrToVal_content (const char *UNUSED(str), InstMgr *UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -15047,7 +15049,7 @@ SdaiCertified_item::NewSelect ()
 // STEP Part 21
 
 void
-SdaiCertified_item::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiCertified_item::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_supplied_part_relationship)
 	_app_inst -> STEPwrite_reference (out);
@@ -15096,7 +15098,7 @@ SdaiCertified_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 
 Severity
 SdaiCertified_item::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_supplied_part_relationship)   {
 	// set Underlying Type in Select class
@@ -15124,7 +15126,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiCertified_item::StrToVal_content (const char * str, InstMgr * instances)
+SdaiCertified_item::StrToVal_content (const char *UNUSED(str), InstMgr *UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -15514,7 +15516,7 @@ SdaiDate_time_select::NewSelect ()
 // STEP Part 21
 
 void
-SdaiDate_time_select::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiDate_time_select::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_date)
 	_app_inst -> STEPwrite_reference (out);
@@ -15583,7 +15585,7 @@ SdaiDate_time_select::STEPwrite_verbose (ostream& out, const char *currSch) cons
 
 Severity
 SdaiDate_time_select::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_date)   {
 	// set Underlying Type in Select class
@@ -15637,7 +15639,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiDate_time_select::StrToVal_content (const char * str, InstMgr * instances)
+SdaiDate_time_select::StrToVal_content (const char *UNUSED(str), InstMgr *UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -16187,7 +16189,7 @@ SdaiCurve_on_surface::NewSelect ()
 // STEP Part 21
 
 void
-SdaiCurve_on_surface::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiCurve_on_surface::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_pcurve)
 	_app_inst -> STEPwrite_reference (out);
@@ -16256,7 +16258,7 @@ SdaiCurve_on_surface::STEPwrite_verbose (ostream& out, const char *currSch) cons
 
 Severity
 SdaiCurve_on_surface::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_pcurve)   {
 	// set Underlying Type in Select class
@@ -16310,7 +16312,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiCurve_on_surface::StrToVal_content (const char * str, InstMgr * instances)
+SdaiCurve_on_surface::StrToVal_content (const char *UNUSED(str), InstMgr *UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -16896,7 +16898,7 @@ SdaiTrimming_select::NewSelect ()
 // STEP Part 21
 
 void
-SdaiTrimming_select::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiTrimming_select::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_cartesian_point)
 	_app_inst -> STEPwrite_reference (out);
@@ -16955,7 +16957,7 @@ SdaiTrimming_select::STEPwrite_verbose (ostream& out, const char *currSch) const
 
 Severity
 SdaiTrimming_select::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_cartesian_point)   {
 	// set Underlying Type in Select class
@@ -16987,7 +16989,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiTrimming_select::StrToVal_content (const char * str, InstMgr * instances)
+SdaiTrimming_select::StrToVal_content (const char *UNUSED(str), InstMgr *UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -17336,7 +17338,7 @@ SdaiContracted_item::NewSelect ()
 // STEP Part 21
 
 void
-SdaiContracted_item::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiContracted_item::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)
 	_app_inst -> STEPwrite_reference (out);
@@ -17385,7 +17387,7 @@ SdaiContracted_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 
 Severity
 SdaiContracted_item::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)   {
 	// set Underlying Type in Select class
@@ -17413,7 +17415,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiContracted_item::StrToVal_content (const char * str, InstMgr * instances)
+SdaiContracted_item::StrToVal_content (const char *UNUSED(str), InstMgr *UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -17735,7 +17737,7 @@ SdaiUnit::NewSelect ()
 // STEP Part 21
 
 void
-SdaiUnit::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiUnit::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_named_unit)
 	_app_inst -> STEPwrite_reference (out);
@@ -17784,7 +17786,7 @@ SdaiUnit::STEPwrite_verbose (ostream& out, const char *currSch) const
 
 Severity
 SdaiUnit::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_named_unit)   {
 	// set Underlying Type in Select class
@@ -17812,7 +17814,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiUnit::StrToVal_content (const char * str, InstMgr * instances)
+SdaiUnit::StrToVal_content (const char *UNUSED(str), InstMgr *UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -18504,7 +18506,7 @@ SdaiWork_item::NewSelect ()
 // STEP Part 21
 
 void
-SdaiWork_item::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiWork_item::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)
 	_app_inst -> STEPwrite_reference (out);
@@ -18553,7 +18555,7 @@ SdaiWork_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 
 Severity
 SdaiWork_item::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)   {
 	// set Underlying Type in Select class
@@ -18581,7 +18583,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiWork_item::StrToVal_content (const char * str, InstMgr * instances)
+SdaiWork_item::StrToVal_content (const char *UNUSED(str), InstMgr *UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -18915,7 +18917,7 @@ SdaiSupported_item::NewSelect ()
 // STEP Part 21
 
 void
-SdaiSupported_item::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiSupported_item::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_action_directive)
 	_app_inst -> STEPwrite_reference (out);
@@ -18984,7 +18986,7 @@ SdaiSupported_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 
 Severity
 SdaiSupported_item::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_action_directive)   {
 	// set Underlying Type in Select class
@@ -19038,7 +19040,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiSupported_item::StrToVal_content (const char * str, InstMgr * instances)
+SdaiSupported_item::StrToVal_content (const char *UNUSED(str), InstMgr *UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -19696,7 +19698,7 @@ SdaiApproved_item::NewSelect ()
 // STEP Part 21
 
 void
-SdaiApproved_item::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiApproved_item::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)
 	_app_inst -> STEPwrite_reference (out);
@@ -19845,7 +19847,7 @@ SdaiApproved_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 
 Severity
 SdaiApproved_item::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)   {
 	// set Underlying Type in Select class
@@ -20003,7 +20005,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiApproved_item::StrToVal_content (const char * str, InstMgr * instances)
+SdaiApproved_item::StrToVal_content (const char *UNUSED(str), InstMgr *UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class
@@ -21297,7 +21299,7 @@ SdaiSurface_model::NewSelect ()
 // STEP Part 21
 
 void
-SdaiSurface_model::STEPwrite_content (ostream& out, const char * currSch) const
+SdaiSurface_model::STEPwrite_content (ostream& out, const char * UNUSED(currSch)) const
 {
   if (CurrentUnderlyingType () == config_control_designe_shell_based_surface_model)
 	_app_inst -> STEPwrite_reference (out);
@@ -21346,7 +21348,7 @@ SdaiSurface_model::STEPwrite_verbose (ostream& out, const char *currSch) const
 
 Severity
 SdaiSurface_model::STEPread_content (istream& in, InstMgr * instances,
-			const char *utype, int addFileId, const char *currSch)
+			const char *UNUSED(utype), int addFileId, const char *UNUSED(currSch))
 {
   if (CurrentUnderlyingType () == config_control_designe_shell_based_surface_model)   {
 	// set Underlying Type in Select class
@@ -21374,7 +21376,7 @@ std::cerr << instances << "  " << addFileId << std::endl;
 }
 
 Severity
-SdaiSurface_model::StrToVal_content (const char * str, InstMgr * instances)
+SdaiSurface_model::StrToVal_content (const char *UNUSED(str), InstMgr *UNUSED(instances))
 {
   switch (base_type)  {
   default:  // should never be here - done in Select class

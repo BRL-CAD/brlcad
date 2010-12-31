@@ -230,8 +230,6 @@ struct bu_vls occlusion_objects;
 struct rt_i *occlusion_rtip = NULL;
 struct application **occlusion_apps;
 
-static struct bu_image_file *bif = NULL;
-
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
@@ -271,22 +269,23 @@ const char title[] = "RT Hidden-Line Renderer";
 const char usage[] = "\
 Usage:  rtedge [options] model.g objects... >file.pix\n\
 Options:\n\
- -s #               Grid size in pixels, (default 512)\n\
- -w # -n #          Grid size width and height in pixels\n\
- -V #               View (pixel) aspect ratio (width/height)\n\
- -a #               Azimuth in deg\n\
- -e #               Elevation in deg\n\
- -M                 Read matrix+cmds on stdin\n\
- -N #               NMG debug flags\n\
- -o model.pix       Output file, .pix format (default=fb)\n\
- -x #               librt debug flags\n\
- -X #               rt debug flags\n\
- -p #               Perspsective, degrees side to side\n\
- -P #               Set number of processors\n\
- -T #/#             Tolerance: distance/angular\n\
- -r                 Report overlaps\n\
- -R                 Do not report overlaps\n\
- -c                 Auxillary commands (see man page)\n\
+ -r		Report overlaps (default)\n\
+ -R		Do not report overlaps\n\
+ -M		Read matrix+commands on stdin\n\
+ -o model.pix	Output .pix format file (default is window)\n\
+ -s #		Square grid size in pixels (default is 512)\n\
+ -w # -n #	Grid size width (w) and height (n) in pixels\n\
+ -a # -e #	Azimuth (a) and elevation (e) in degrees\n\
+ -V #		View (pixel) aspect ratio (width/height)\n\
+ -p #		Perspective angle, degrees side to side\n\
+ -P #		Set number of processors\n\
+ -T #/#		Tolerance: distance/angular\n\
+ -l #		Set lighting model rendering style\n\
+ -U #		Use air if # is greater than 0\n\
+ -x #		librt debug flags\n\
+ -N #		NMG debug flags\n\
+ -X #		rt debug flags\n\
+ -c		Auxillary commands (see man page)\n\
 ";
 
 

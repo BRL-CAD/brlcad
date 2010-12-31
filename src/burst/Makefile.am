@@ -19,7 +19,11 @@ burst_SOURCES = \
 	trie.c \
 	ui.c
 
-burst_CFLAGS = ${TERMLIB_CPPFLAGS} ${TCL_CPPFLAGS}
+burst_CFLAGS = \
+	${STRICT_FLAGS} \
+	${TERMLIB_CPPFLAGS} \
+	${TCL_CPPFLAGS}
+
 burst_LDADD = \
 	${RT} \
 	${FB} \

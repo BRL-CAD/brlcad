@@ -50,10 +50,13 @@ int
 main(int argc, char *argv[])
 {
     FILE *fp;
-    int count;
+    long count;
     int tfd;
 
-    if ((count = bu_mread(0, buf, sizeof(buf))) < sizeof(buf)) {
+    if (argc > 1)
+	bu_log("%s: unrecognized argument(s)\n", argv[0]);
+
+    if ((count = bu_mread(0, buf, sizeof(buf))) < (long)sizeof(buf)) {
 	if (count < 0) {
 	    perror("buffer: mem read");
 	    exit(1);

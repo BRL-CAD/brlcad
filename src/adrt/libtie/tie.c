@@ -47,13 +47,13 @@
 #endif
 
 #define TIE_DEGENERATE_THRESHOLD 0.0001
-TIE_VAL(int tie_check_degenerate) = 1;
 
 /*************************************************************
  **************** PRIVATE FUNCTIONS **************************
  *************************************************************/
 
-static void tie_tri_prep(tie_t *tie)
+static void
+TIE_VAL(tie_tri_prep)(tie_t *tie)
 {
     TIE_3 v1, v2, u, v;
     unsigned int i, i1, i2;
@@ -148,7 +148,7 @@ void TIE_VAL(tie_free)(tie_t *tie)
 
 /* Free Triangle Data */
     for (i = 0; i < tie->tri_num; i++)
-	bu_free ((void *)((intptr_t)(tie->tri_list[i].v) & ~0x7L), "tri_list.v in tie_free");
+	free ((void *)((intptr_t)(tie->tri_list[i].v) & ~0x7L));
     bu_free (tie->tri_list, "tie_free");
 
 /* Free KDTREE Nodes */
@@ -170,7 +170,7 @@ void TIE_VAL(tie_prep)(tie_t *tie)
     tie_kdtree_prep (tie);
 
 /* Prep all the triangles */
-    tie_tri_prep (tie);
+    TIE_VAL(tie_tri_prep) (tie);
     bu_log("total tri: %ld\n", tie->tri_num);
 }
 
@@ -449,7 +449,7 @@ void TIE_VAL(tie_push)(tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plist
 	    plist = (void *)((intptr_t)plist + pstride);
 
 /* ??? this looks like it might cause fragmentation? use a memory pool? */
-	tie->tri_list[tie->tri_num].v = (tfloat *)bu_malloc(2*sizeof(tfloat),"");
+	tie->tri_list[tie->tri_num].v = (tfloat *)malloc(2*sizeof(tfloat));
 	tie->tri_num++;
     }
     return;

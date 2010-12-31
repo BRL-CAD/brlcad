@@ -1321,7 +1321,9 @@ test cmdAH-28.2 {Tcl_FileObjCmd: stat} {
 } {1 {wrong # args: should be "file stat name varName"} NONE}
 test cmdAH-28.3 {Tcl_FileObjCmd: stat} {
     catch {unset stat}
+    set stat(blocks) [set stat(blksize) {}]
     file stat $gorpfile stat
+    unset stat(blocks) stat(blksize)
     lsort [array names stat]
 } {atime ctime dev gid ino mode mtime nlink size type uid}
 test cmdAH-28.4 {Tcl_FileObjCmd: stat} {

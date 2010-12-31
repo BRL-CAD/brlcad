@@ -1,6 +1,6 @@
 /*
  * $Id$
- *      Ttk theme engine, resource cache.
+ *      Theme engine resource cache.
  *
  * Copyright (c) 2004, Joe English
  *
@@ -77,7 +77,7 @@ static void Ttk_ClearCache(Ttk_ResourceCache cache)
      */
     entryPtr = Tcl_FirstHashEntry(&cache->fontTable, &search);
     while (entryPtr != NULL) {
-	Tcl_Obj *fontObj = (Tcl_Obj*)Tcl_GetHashValue(entryPtr);
+	Tcl_Obj *fontObj = Tcl_GetHashValue(entryPtr);
 	if (fontObj) {
 	    Tk_FreeFontFromObj(cache->tkwin, fontObj);
 	    Tcl_DecrRefCount(fontObj);
@@ -92,7 +92,7 @@ static void Ttk_ClearCache(Ttk_ResourceCache cache)
      */
     entryPtr = Tcl_FirstHashEntry(&cache->colorTable, &search);
     while (entryPtr != NULL) {
-	Tcl_Obj *colorObj = (Tcl_Obj*)Tcl_GetHashValue(entryPtr);
+	Tcl_Obj *colorObj = Tcl_GetHashValue(entryPtr);
 	if (colorObj) {
 	    Tk_FreeColorFromObj(cache->tkwin, colorObj);
 	    Tcl_DecrRefCount(colorObj);
@@ -107,7 +107,7 @@ static void Ttk_ClearCache(Ttk_ResourceCache cache)
      */
     entryPtr = Tcl_FirstHashEntry(&cache->borderTable, &search);
     while (entryPtr != NULL) {
-	Tcl_Obj *borderObj = (Tcl_Obj*)Tcl_GetHashValue(entryPtr);
+	Tcl_Obj *borderObj = Tcl_GetHashValue(entryPtr);
 	if (borderObj) {
 	    Tk_Free3DBorderFromObj(cache->tkwin, borderObj);
 	    Tcl_DecrRefCount(borderObj);
@@ -122,7 +122,7 @@ static void Ttk_ClearCache(Ttk_ResourceCache cache)
      */
     entryPtr = Tcl_FirstHashEntry(&cache->imageTable, &search);
     while (entryPtr != NULL) {
-	Tk_Image image = (Tk_Image)Tcl_GetHashValue(entryPtr);
+	Tk_Image image = Tcl_GetHashValue(entryPtr);
 	if (image) {
 	    Tk_FreeImage(image);
 	}
@@ -141,7 +141,7 @@ static void Ttk_ClearCache(Ttk_ResourceCache cache)
 
 void Ttk_FreeResourceCache(Ttk_ResourceCache cache)
 {
-    Tcl_HashEntry *entryPtr; 
+    Tcl_HashEntry *entryPtr;
     Tcl_HashSearch search;
 
     Ttk_ClearCache(cache);
@@ -155,7 +155,7 @@ void Ttk_FreeResourceCache(Ttk_ResourceCache cache)
      */
     entryPtr = Tcl_FirstHashEntry(&cache->namedColors, &search);
     while (entryPtr != NULL) {
-	Tcl_Obj *colorNameObj = (Tcl_Obj*)Tcl_GetHashValue(entryPtr);
+	Tcl_Obj *colorNameObj = Tcl_GetHashValue(entryPtr);
 	Tcl_DecrRefCount(colorNameObj);
 	entryPtr = Tcl_NextHashEntry(&search);
     }
@@ -170,7 +170,7 @@ void Ttk_FreeResourceCache(Ttk_ResourceCache cache)
  */
 static void CacheWinEventHandler(ClientData clientData, XEvent *eventPtr)
 {
-    Ttk_ResourceCache cache = (Ttk_ResourceCache)clientData;
+    Ttk_ResourceCache cache = clientData;
 
     if (eventPtr->type != DestroyNotify) {
 	return;
@@ -192,7 +192,7 @@ static void InitCacheWindow(Ttk_ResourceCache cache, Tk_Window tkwin)
     if (cache->tkwin == NULL) {
 	cache->tkwin = tkwin;
 	Tk_CreateEventHandler(tkwin, StructureNotifyMask,
-		CacheWinEventHandler, (ClientData)cache);
+		CacheWinEventHandler, cache);
     }
 }
 
@@ -200,10 +200,9 @@ static void InitCacheWindow(Ttk_ResourceCache cache, Tk_Window tkwin)
  * Ttk_RegisterNamedColor --
  *	Specify an RGB triplet as a named color.
  *	Overrides any previous named color specification.
- *	
  */
 void Ttk_RegisterNamedColor(
-    Ttk_ResourceCache cache, 
+    Ttk_ResourceCache cache,
     const char *colorName,
     XColor *colorPtr)
 {
@@ -212,18 +211,18 @@ void Ttk_RegisterNamedColor(
     char nameBuf[14];
     Tcl_Obj *colorNameObj;
 
-    sprintf(nameBuf, "#%04X%04X%04X", 
+    sprintf(nameBuf, "#%04X%04X%04X",
     	colorPtr->red, colorPtr->green, colorPtr->blue);
     colorNameObj = Tcl_NewStringObj(nameBuf, -1);
     Tcl_IncrRefCount(colorNameObj);
 
     entryPtr = Tcl_CreateHashEntry(&cache->namedColors, colorName, &newEntry);
     if (!newEntry) {
-    	Tcl_Obj *oldColor = (Tcl_Obj*)Tcl_GetHashValue(entryPtr);
+    	Tcl_Obj *oldColor = Tcl_GetHashValue(entryPtr);
 	Tcl_DecrRefCount(oldColor);
     }
 
-    Tcl_SetHashValue(entryPtr, (ClientData)colorNameObj);
+    Tcl_SetHashValue(entryPtr, colorNameObj);
 }
 
 /*
@@ -234,10 +233,10 @@ void Ttk_RegisterNamedColor(
  */
 static Tcl_Obj *CheckNamedColor(Ttk_ResourceCache cache, Tcl_Obj *objPtr)
 {
-    Tcl_HashEntry *entryPtr = 
+    Tcl_HashEntry *entryPtr =
     	Tcl_FindHashEntry(&cache->namedColors, Tcl_GetString(objPtr));
     if (entryPtr) {	/* Use named color instead */
-    	objPtr = (Tcl_Obj *)Tcl_GetHashValue(entryPtr);
+    	objPtr = Tcl_GetHashValue(entryPtr);
     }
     return objPtr;
 }
@@ -249,7 +248,7 @@ typedef void *(*Allocator)(Tcl_Interp *, Tk_Window, Tcl_Obj *);
 
 static Tcl_Obj *Ttk_Use(
     Tcl_Interp *interp,
-    Tcl_HashTable *table, 
+    Tcl_HashTable *table,
     Allocator allocate,
     Tk_Window tkwin,
     Tcl_Obj *objPtr)
@@ -260,7 +259,7 @@ static Tcl_Obj *Ttk_Use(
     Tcl_Obj *cacheObj;
 
     if (!newEntry) {
-	return (Tcl_Obj*)Tcl_GetHashValue(entryPtr);
+	return Tcl_GetHashValue(entryPtr);
     }
 
     cacheObj = Tcl_DuplicateObj(objPtr);
@@ -336,7 +335,7 @@ Tk_Image Ttk_UseImage(Ttk_ResourceCache cache, Tk_Window tkwin, Tcl_Obj *objPtr)
     InitCacheWindow(cache, tkwin);
 
     if (!newEntry) {
-	return (Tk_Image)Tcl_GetHashValue(entryPtr);
+	return Tcl_GetHashValue(entryPtr);
     }
 
     image = Tk_GetImage(cache->interp, tkwin, imageName, NullImageChanged,0);

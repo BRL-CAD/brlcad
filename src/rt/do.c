@@ -105,6 +105,7 @@ void do_ae(double azim, double elev);
 void res_pr(void);
 void memory_summary(void);
 
+extern struct bu_image_file *bif;
 
 /**
  * O L D _ F R A M E
@@ -265,7 +266,7 @@ int cm_lookat_pt(int argc, char **argv)
      * from the lookat point or the lookat point will be from the
      * "front"
      */
-    if (VAPPROXEQUAL(pt, eye_model, VDIVIDE_TOL)) {
+    if (VNEAR_EQUAL(pt, eye_model, VDIVIDE_TOL)) {
 	VSETALLN(quat, 0.5, 4);
 	quat_quat2mat(Viewrotscale, quat); /* front */
     } else {
@@ -440,7 +441,7 @@ struct bu_structparse set_parse[] = {
     {"%f",  1, "rt_cline_radius", bu_byteoffset(rt_cline_radius), BU_STRUCTPARSE_FUNC_NULL },
 #endif
     {"%V",  1, "ray_data_file", bu_byteoffset(ray_data_file), BU_STRUCTPARSE_FUNC_NULL },
-    {"i", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
+    {"%p", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
     {"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -771,10 +772,13 @@ do_frame(int framenumber)
 #endif
 
 	/* Ordinary case for creating output file */
-	if (outfp == NULL && (outfp = fopen(framename, "w+b")) == NULL) {
-	    perror(framename);
-	    if (matflag) return 0;	/* OK */
-	    return -1;			/* Bad */
+	if (outfp == NULL) {
+	    bif = bu_image_save_open(framename, BU_IMAGE_AUTO_NO_PIX, width, height, 3);
+	    if (bif == NULL && (outfp = fopen(framename, "w+b")) == NULL) {
+		perror(framename);
+		if (matflag) return 0;	/* OK */
+		return -1;			/* Bad */
+	    }
 	}
 
 	if (rt_verbosity & VERBOSE_OUTPUTFILE)
@@ -896,6 +900,9 @@ do_frame(int framenumber)
 	       rtip->rti_nrays,
 	       wallclock, ((double)(rtip->rti_nrays))/wallclock);
     }
+    if (bif != NULL)
+	bu_image_save_close(bif);
+    bif = NULL;
     if (outfp != NULL) {
 	/* Protect finished product */
 	if (outputfile != (char *)0)

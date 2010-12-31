@@ -930,7 +930,7 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		bu_log("dsp(%s): no data file or data file empty\n", bu_vls_addr(&dsp_ip->dsp_name));
 		return 1; /* BAD */
 	    }
-    	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
+	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 
 	    /* we do this here and now because we will need it for the
 	     * dsp_specific structure in a few lines
@@ -2669,7 +2669,7 @@ compute_normal_at_gridpoint(vect_t N,
     VSET(tmp, x, y, DSP(&dsp->dsp_i, x, y));
 
     if (x == 0) {
- 	VMOVE(A, tmp);
+	VMOVE(A, tmp);
     } else {
 	VSET(A, x-1, y, DSP(&dsp->dsp_i, x-1, y));
     }
@@ -2681,7 +2681,7 @@ compute_normal_at_gridpoint(vect_t N,
     }
 
     if (y == 0) {
- 	VMOVE(D, tmp);
+	VMOVE(D, tmp);
     } else {
 	VSET(D, x, y-1, DSP(&dsp->dsp_i, x, y-1));
     }
@@ -3123,7 +3123,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    if (!dsp_ip->dsp_mp) {
 		bu_log("WARNING: Cannot find data file for displacement map (DSP)\n");
 		if (bu_vls_addr(&dsp_ip->dsp_name)) {
-		    bu_log("         DSP data file [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name)); 
+		    bu_log("         DSP data file [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name));
 		} else {
 		    bu_log("         DSP data file not found or not specified\n");
 		}
@@ -3412,7 +3412,7 @@ get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
 	/* not using adpative cut type, so just return the cut type */
 	return dsp_ip->dsp_cuttype;
     }
-    
+
     /* fill in the height array */
     xx = x;
     yy = y;
@@ -3439,7 +3439,7 @@ get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
     xx = x-1;
     if (xx < 0) xx = 0;
     height[7] = DSP(dsp_ip, xx, yy);
-    
+
     /* compute curvature along the 0<->2 direction */
     c02 = fabs(height[2] + height[4] - 2*height[0]) + fabs(height[6] + height[0] - 2*height[2]);
 
@@ -3502,20 +3502,20 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     RT_DSP_CK_MAGIC(dsp_ip);
 
     switch(dsp_ip->dsp_datasrc) {
-        case RT_DSP_SRC_FILE:
-        case RT_DSP_SRC_V4_FILE:
+	case RT_DSP_SRC_FILE:
+	case RT_DSP_SRC_V4_FILE:
 	    if (!dsp_ip->dsp_mp) {
 		bu_log("WARNING: Cannot find data file for displacement map (DSP)\n");
 		if (bu_vls_addr(&dsp_ip->dsp_name)) {
-		    bu_log("         DSP data file [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name)); 
+		    bu_log("         DSP data file [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name));
 		} else {
 		    bu_log("         DSP data file not found or not specified\n");
-		} 
+		}
 		return -1;
 	    }
 	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
-            break;
-        case RT_DSP_SRC_OBJ:
+	    break;
+	case RT_DSP_SRC_OBJ:
 	    if (!dsp_ip->dsp_bip) {
 		bu_log("WARNING: Cannot find data object for displacement map (DSP)\n");
 		if (bu_vls_addr(&dsp_ip->dsp_name)) {
@@ -3527,7 +3527,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    }
 	    RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
 	    RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
-            break;
+	    break;
     }
 
 
@@ -3552,7 +3552,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      * strip2Verts is copied to strip1Verts and strip2Verts is set to
      * all NULLs.
      */
-    
+
     /* malloc space for the vertices */
     base_vert_count = 2*xlim + 2*ylim;
     base_verts = bu_calloc(base_vert_count, sizeof(struct vertex *), "base verts");
@@ -3659,7 +3659,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      */
     for (x=0 ; x<xlim ; x++) {
 	/* set strip2Verts to base_verts values where the strip2Vert
-         * is above a base_vert and DSP value is 0
+	 * is above a base_vert and DSP value is 0
 	 */
 	if ((x+1) == xlim) {
 	    for (y=0 ; y<=ylim ; y++) {
@@ -3676,7 +3676,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    }
 	}
 
-        /* make the faces at y=0 for this strip */
+	/* make the faces at y=0 for this strip */
 	if (x == 0) {
 	    base_vert_no1 = 0;
 	    base_vert_no2 = 2*(ylim+xlim)-1;
@@ -3720,9 +3720,9 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		nmg_vertex_gv(strip2Verts[0], pt[0]);
 	    }
 	}
-        
-        /* make the top faces for this strip */
-        for (y=0 ; y<ylim ; y++) {
+
+	/* make the top faces for this strip */
+	for (y=0 ; y<ylim ; y++) {
 	    int dir;
 	    /* get the cut direction for this cell */
 	    dir = get_cut_dir(dsp_ip, x, y, xlim, ylim);
@@ -3846,7 +3846,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    }
 	}
 
-        /* make the faces at the y=ylim plane for this strip */
+	/* make the faces at the y=ylim plane for this strip */
 	verts[0] = &strip1Verts[ylim];
 	verts[1] = &strip2Verts[ylim];
 	verts[2] = &base_verts[ylim+x+1];
@@ -3874,14 +3874,14 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		return -1; /* FAIL */
 	    }
 	}
-        
-        /* copy strip2 to strip1, set strip2 to all NULLs */
-        for (y=0 ; y<=ylim ; y++) {
-            strip1Verts[y] = strip2Verts[y];
-            strip2Verts[y] = (struct vertex *)NULL;
-        }
+
+	/* copy strip2 to strip1, set strip2 to all NULLs */
+	for (y=0 ; y<=ylim ; y++) {
+	    strip1Verts[y] = strip2Verts[y];
+	    strip2Verts[y] = (struct vertex *)NULL;
+	}
     }
-    
+
     /* make faces at x=xlim plane */
     for (y=0 ; y<ylim ; y++) {
 	base_vert_no1 = 2*ylim+xlim-y;
@@ -4721,7 +4721,7 @@ rt_dsp_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
  * rt_functab[].ft_adjust()
  */
 int
-rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     register const struct bu_structparse *sp = NULL;
     const struct rt_dsp_internal *dsp_ip;
@@ -4742,8 +4742,7 @@ rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
 
     if (! sp) return BRLCAD_ERROR;
 
-    return bu_structparse_argv(logstr, argc, argv, sp,
-			       (char *)intern->idb_ptr);
+    return bu_structparse_argv(logstr, argc, argv, sp, (char *)intern->idb_ptr);
 }
 
 

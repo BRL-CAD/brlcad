@@ -41,7 +41,7 @@ _bu_lex_getone(int *used, struct bu_vls *rtstr)
 
     BU_CK_VLS(rtstr);
     cp = bu_vls_addr(rtstr);
- top:
+top:
     if (bu_lex_reading_comment) {
 	for (;;) {
 	    register char tc;

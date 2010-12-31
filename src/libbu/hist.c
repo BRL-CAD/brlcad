@@ -32,8 +32,8 @@
 void
 bu_hist_free(struct bu_hist *histp)
 {
-    if ((histp==(struct bu_hist *)NULL) ||
-	(histp && (histp->magic == 0 || histp->magic == (unsigned int)-1)))
+    if (UNLIKELY((histp==(struct bu_hist *)NULL) ||
+		 (histp && (histp->magic == 0 || histp->magic == (unsigned int)-1))))
     {
 	return;
     }

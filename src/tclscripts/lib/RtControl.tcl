@@ -463,13 +463,20 @@
 }
 
 ::itcl::body RtControl::clear {} {
+    global tcl_platform
+
     if {!$isaMged && !$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
 
     set cooked_dest [get_cooked_dest]
 
-    set fbclear [bu_brlcad_root "bin/fbclear"]
+    if {$tcl_platform(platform) == "windows"} {
+	set fbclear [bu_brlcad_root "bin/fbclear.exe"]
+	regsub -all {\\} $fbclear {/} fbclear
+    } else {
+	set fbclear [bu_brlcad_root "bin/fbclear"]
+    }
     set result [catch {eval exec $fbclear -F $cooked_dest $rtColor &} rt_error]
 
     if {$result} {

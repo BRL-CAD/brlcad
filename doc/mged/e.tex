@@ -1,0 +1,1378 @@
+\chapter{KEYBOARD COMMANDS}
+
+The MGED keyboard commands are used to maintain overall control of the
+system and to perform general housekeeping functions.
+They are summarized in Figure \ref{cmd-summary}.
+
+\begin{figure}[tb]
+\begin{tabular}{l l l}
+Key	& Argument[s]	& Description \\
+\\
+  e	& obj1* obj2* ... objn*	& display objects on the screen \\
+  E	& obj1* obj2* ... objn*	& display objects evaluating regions \\
+  B	& obj1* obj2* ... objn*	& Zap screen, display objects \\
+  d	& obj1* obj2* ... objn*	& delete objects from screen \\
+  cp	& oldobj newobj	& copy 'oldobj' to 'newobj' \\
+  cpi	& oldtgc newtgc	& copy 'oldtgc' to 'newtgc' inverted \\
+  Z	& -none-	& Zap (clear) the screen \\
+  g	& groupname obj1* obj2*....objn*	& group objects \\
+  r	& region op1 sol1....opn soln	& create/modify a region \\
+  i	& object instname	& create instance of an object \\
+  mv	& oldname newname	& rename object \\
+  mvall	& oldname newname	& rename all occurences of an object \\
+  l	& object*	& list object information \\
+  kill	& obj1* obj2* ... objn*	& remove objects from the file \\
+  killall	& obj1* obj2* ... objn*	& remove object[s] + references from file \\
+  killtree	& obj1* objn* ... objn*	& remove complete paths  **CAREFUL** \\
+  t	& object*	& table of contents \\
+  mirror	& oldobj newobj axis	& mirror image of an object \\
+  mirface	& \#\#\#\# axis	& mirror face \#\#\#\# about an axis \\
+  extrude	& \#\#\#\# distance	& extrude an arb face \\
+  item	& region item air	& change region item/air codes \\
+  mater	& region material los	& change region mat/los codes \\
+  rm	& comb mem1* mem2*....memn*	& delete members from combination \\
+  units	& mm|cm|m|in|ft	& change the units of the objectfile \\
+  title	& new-title	& change the title of the description \\
+  p	& dx [dy dz]	& precise commands for solid editing \\
+  rotobj	& xdeg ydeg zdeg	& rotate(absolute) an edited object \\
+  scale	& factor	& scale(absolute) an edited object \\
+  translate	& x y z	& translate an edited object \\
+  arb	& name rot fb	& make arb8 with rot and fb \\
+  analyze	& solids	& print much info about a solid \\
+  summary	& s|r|g	& solid/region/group summary \\
+  tops	& -none-	& list all top level objects \\
+  find	& obj1* obj2* ... objn*	& find all references to an object \\
+  area	& [endpoint-tolerance]	& find presented area of E'd objects \\
+\end{tabular}
+\caption{MGED Command Summary 1 \label{cmd-summary} }
+\end{figure}
+
+\begin{figure}
+\begin{tabular}{l l l}
+Key	& Argument[s]	& Description \\
+\\
+  plot	& [-zclip] [-2d] [out-file] [| filter]	& make UNIX-plot of view \\
+  color	& low high r g b str	& assign color(r g b) to item range \\
+  edcolor	& -none-	& text edit the color/item assignments \\
+  prcolor	& -none-	& print the current color/item assignments \\
+  make	& name type	& create and display a primitive \\
+  fix	& -none-	& restart the display after hangup \\
+  rt	& [options]	& raytrace view onto framebuffer \\
+  release	& -none-	& release current display processor \\
+  attach	& nu|tek|tek4109|plot|mg|vg|rat	& attach new display processor \\
+  ae	& az elev	& rotate view w/azim and elev angles \\
+  regdef	& item [air los mat]	& set default codes for next region created \\
+  ted	& -none-	& text edit a solids parameters \\
+  vrot	& xdeg ydeg zdeg	& rotate view \\
+  ill	& name	& illuminate object \\
+  sed	& solidname	& solid edit the named solid \\
+  center	& x y z	& set view center \\
+  press	& button-label	& emulate button press \\
+  knob	& id value	& emulate knob twist \\
+  size	& value	& set view size \\
+  x	& -none-	& debug list of objects displayed \\
+  status	& -none-	& print view status \\
+  refresh	& -none-	& send new control list \\
+  edcomb	& comb flag item air mat los	& edit comb record info \\
+  edgedir	& delta\_x delta\_y delta\_z	& define direction of an ARB edge being moved \\
+  in	& name type {parameters}	& type-in a new solid directly \\
+  prefix	& string obj1* obj2* ... objn*	& prefix objects with 'string' \\
+  keep	& file.g obj1* obj2* ... objn*	& keep objects in 'file.g' \\
+  tree	& obj1* obj2* ... objn*	& list tree for objects \\
+  inside	& --prompted for input--	& find inside solid \\
+\end{tabular}
+\caption{MGED Command Summary 2 }
+\end{figure}
+
+\begin{figure}
+\begin{tabular}{l l l}
+Key	& Argument[s]	& Description \\
+\\
+  solids	& file obj1* obj2* ... objn*	& make ascii solid parameter summary in 'file' \\
+  regions	& file obj1* obj2* ... objn*	& make ascii region summary in 'file' \\
+  idents	& file obj1* obj2* ... objn*	& make ascii region ident summary in 'file' \\
+  edcodes	& obj1* obj2* ... objn*	& edit region ident codes \\
+  dup	& file {prefix}	& checks for dup names in 'file' \& current file \\
+  cat	& file {prefix}	& cat's 'file' onto end of current file \\
+  track	& --prompted for input--	& builds track given appropriate 'wheel' data \\
+  3ptarb	& --prompted for input--	& makes arb8 given 3 pts, etc. \\
+  rfarb	& --prompted for input--	& makes arb8 given point, rot, fallback, etc \\
+  whichid	& ident1 ident2 ... identn	& list all regions with given ident \\
+  paths	& --prompted for input--	& lists all paths matching input path \\
+  listeval	& -prompted for input--	& gives 'evaluated' path summary \\
+  copyeval	& --prompted for input--	& copy an 'evaluated' path-solid \\
+  tab	& obj1* obj2* ... objn*	& list objects as stored in data file \\
+  push	& obj1* obj2* ... objn*	& push object transformations to solids \\
+  facedef	& \#\#\#\# {data}	& define plane of an edited ARB face \\
+  eqn	& A B C	& define plane coefficients of rotating ARB face \\
+  q	& -none-	& quit \\
+  %	& -none-	& escape to shell \\
+  ?	& -none-	& help message \\
+\end{tabular}
+\caption{MGED Command Summary 3 }
+\end{figure}
+
+\section{Copy Object}
+
+{\em \center cp oldobj newobj}
+
+This command is used to produce a copy of an object (solid or comb).
+In this case, the
+object "oldobj" will be copied into an object called "newobj".
+
+Examples:
+{\em
+              cp arb8 hullbot.s \\
+              cp tgc wheelrim.s \\
+              cp torso.r driver\_torso \\
+              cp proto.man driver \\
+}
+
+\section{Zap Screen}
+
+{\em \center Z}
+
+This is the Zap command.  It clears all objects from the screen.
+
+\section{Drop objects from display screen}
+
+{\em \center d obj1 obj2 ... objn}
+
+This command allows one to remove objects from the display screen.  In
+this case "obj1" thru "objn" will be removed from the display.
+
+\section{Move (rename) object}
+
+{\em \center mv old new}
+
+This command is used to rename objects in the data file.  In this
+case, the object "old" will be renamed "new".
+A note of caution:  the name is changed only in the object record itself, not
+in any member records.  Thus if the object "old" appears as a member
+of any other object, the name will not be changed there.
+To rename all occurrences of an object, use the "mvall" command.
+
+Examples:
+{\em
+              mv test hull \\
+              mv g00 air \\
+              mv g1 turret \\
+}
+
+\section{Set Local Working Units}
+
+{\em \center units ab}
+
+This command allows one to change the local or working units at ANY time.
+The only allowable values for "ab" are "mm", "cm", "m", "in", or "ft".
+
+Examples:
+{\em
+           units mm \\
+           units in \\
+}
+
+\section{Group objects}
+
+{\em \center g group obj1 obj2 ..... objn}
+
+This command creates or appends to a combination record and
+is used to group objects together either for editing or displaying
+purposes.  In this case, "obj1" through "objn" are added as members
+to the combination "group".  If "group" does not exist, it is
+created and "obj1" through "objn" are added as members.
+NOTE: no checking to see if "obji" is already a member of "group".
+
+Examples:
+{\em
+            g shell hull turret \\
+            g tank wheels engine crew shell \\
+            g tank track \\
+}
+
+\section{Create Region}
+
+{\em \center
+r region op1 sol1 op2 sol2 .... opn soln
+}
+
+This command is used to create regions or append to regions.
+If "region" exists, then solids "sol1" through "soln" are
+added as members with "op1" through "opn" as the defining operations.
+If "region" does not exist, then it is created and solids "sol1" through
+"soln" are added as members with "op1" through "opn" as the
+defining operations.  A region is merely a combination
+record with a flag set and is distinguished from other combinations (groups)
+since it has meaning to the COMGEOM solid modeling system.
+Note that "+" or "u" must be the first operations in a region.
+
+When a region is created, the item and air codes are set equal to default values.
+If the "regdef" command has been used, then those values will be used,
+otherwise the values "1000 0 100 1" will be used respectively.
+To change
+the item and air codes use the "item" command.
+The "edcodes" command is probably the easiest and fastest way to change these
+identifing codes.
+Note:  In the past, all members of a region had to be solids, but
+recently combinations have been allowed as members of regions.  Hence,
+the names "soli" can also be combinations (groups) now.
+Also, as in grouping, no checking for members already in a region.
+
+Examples:
+{\em
+             r hulltop.r + hulltop.s -- hullleft.s -- hullright.s \\
+             r gun + gun.s -- gunin.s \\
+             r gunair + gunin.s \\
+}
+
+\section{Instance an object}
+
+{\em \center
+i object combname
+}
+
+This command is used to make an instance of an object.
+An instance of an object is produced by creating a combination
+and making the object a member.
+In this case, an instance of "object" is made by
+creating the combination record "combname" (if "combname" does not
+already exist) and adding "object" as a member.
+If "combname" already exists, then "object" is added as the next member.
+
+An instance is used to refer to an object, without making actual copies
+of the object.  Instances are useful when one is adding a certain
+component to a target description many times.
+Furthermore, any modifications to an object which has been instanced need only be
+done in the original (prototype) object.
+These modifications will then be automatically reflected in all the
+instances of the object.
+
+Examples:
+{\em
+                i heround he1 .he1. \\
+                i heround he2 .he2. \\
+                i heat heat1 .heat1. \\
+                i heat heat2 .heat2. \\
+}
+
+\section{Change Title of Database}
+
+{\em \center
+title newtitle
+}
+
+This command allows one to change the title of the model database at any time.
+The string "newtitle" will become the new title, and may contain blanks.
+The title is limited to 72 characters including blanks.
+
+Examples:
+{\em
+          title XM89A -- New version of tank \\
+          title M345 (groups are m345 and m345a) \\
+}
+
+\section{Extrude}
+
+{\em \center
+extrude \#\#\#\# distance
+}
+
+This command allows the user to project
+a face(\#\#\#\#) of an arb being edited a normal distance to create a new arb.
+The value of "face" is 4 digits such as 1256. If the face is projected
+in the wrong direction use a negative "distance".
+One common use for this command is
+for producing armor plates of a desired thickness.
+
+Examples:
+{\em
+              extrude 1234 20 \\
+              extrude 2367 34.75 \\
+              extrude 2367 -34.75 \\
+}
+
+\section{Remove members from Combination}
+
+{\em \center
+rm comb mem1 mem2 .... memN
+}
+
+This command allows one to delete members from a combination (group or region) record.
+In this case, members "mem1" through "memn" will be deleted from
+the combination "comb".
+
+Examples:
+{\em
+              rm tank hull wheels \\
+              rm region1 solid8 solid112 \\
+              rm turtop.r tursidel.s tursider.s  \\
+}
+
+\section{List Object Information}
+
+{\em \center
+l object
+}
+
+This command is used to list information about objects in the data file.
+The information listed depends on what type of record "object" is.
+If "object" is a combination record, then the members are listed.
+If "object" is a solid record, then the MGED general solid type and
+the parameters as presently in the data file are listed.
+Note:  only the solid parameters as they exist in the solid record are
+listed, no transformation matrix is applied.
+Hence, if the solid was edited as a member of a combination, the "l"
+command will not reflect the editing in the listed parameters.
+To produce this type of listing, see the "listeval" command.
+
+Examples:
+{\em
+               l hull \\
+               l turret \\
+               l turtop.s \\
+               l arb8 \\
+}
+
+\section{Analyze Solid}
+
+{\em \center
+analyze solid
+}
+
+This command produces information about a solid (all except ARS).
+The information includes surface area(s) and volume.
+Also, in the case of ARBs, edge lengths and rot and fallback angles
+and plane equations are given for each face.
+If "solid" is present that solid name will be used and analyzed.
+If "solid" is absent, the solid at the bottom of the present path
+being edited will be analyzed.
+
+\section{Mirror Object}
+
+{\em \center
+mirror oldobj newobj axis
+}
+
+This command is used to create a new object which is
+the mirror image of an existing object about an axis.
+The object may be either a solid or a combination.
+In this case, a mirror image of the object "oldobj" will created
+about the axis indicated by "axis" and the new object record will
+be called "newobj".
+The only acceptable values for the parameter "axis" are "x", "y", and "z".
+
+Examples:
+{\em
+              mirror tur.left.s tur.right.s y
+              mirror tur.top.s tur.bot.s z
+              mirror tur.front.s tur.back.s x
+              mirror lt\_gun rt\_gun y
+}
+
+\section{Create ARB8}
+
+{\em \center
+arb name rot fb
+}
+
+This command allows one to create an arb8
+with the desired rotation and fallback angles.
+In this case, an arb8 with the name of "name" will be created with the desired
+rotation angle of "rot" degrees and the fallback angle of "fb" degrees.
+
+Examples:
+{\em
+           arb top1.s 0 90 \\
+           arb sidelt.s 90 0 \\
+           arb upglacis.s 0 60 \\
+}
+
+\section{Change Item (Ident) and Air codes of Region}
+
+{\em \center
+item region ident air
+}
+
+This command allows one to change the item or
+air code numbers of a region.  If the air code ("air") is not included,
+a zero is assumed.
+To change the air code, a zero item code must be used (see second
+example below).
+
+Examples:
+{\em
+            item region1 105 \\
+            item region7 0 2 \\
+            item region11 129 0 \\
+}
+
+\section{Specify Material Properties}
+
+{\em \center
+mater comb [material]
+}
+
+This command is used to change the material properties specification for
+a combination.
+
+\section{Edit Combination Record Info}
+
+{\em \center
+edcomb comb regionflag regionid air los GIFTmater
+}
+
+This command is used to change the material and the los percent for
+a region.
+
+\section{Edit (Display) an object on the screen}
+
+{\em \center
+e obj1 obj2 ... objn
+}
+
+This command allows one to display objects on the screen.
+In this case, "obj1" thru "objn" will be displayed on the screen.
+
+\section{Evaluated Display of Object on the screen}
+
+{\em \center
+E obj1 obj2 ... objn
+}
+
+This command is the same as the "e" command, except the regions will
+be evaluated before being displayed.
+
+\section{Zap screen and Display Object}
+
+{\em \center
+B obj1 obj2 ... objn
+}
+
+This command is the same as the "e" command, except that the screen
+is cleared (Zap) before the objects are displayed.
+
+\section{Kill (delete) object from database}
+
+{\em \center
+kill obj1 obj2 ... objn
+}
+
+This command allows one to remove objects from the file itself.
+Only the object records themselves are removed, any references made
+to these objects still will exist.
+To remove the references also, see the "killall" command.
+
+\section{List Table of Contents}
+
+{\em \center
+t obj1 obj2 ... objn
+}
+
+This is the table of contents command.  If arguments are present, a list
+of all objects in the file matching these names will be printed.
+If there are no arguments, then a listing of all objects will be printed.
+
+\section{List Tree Tops}
+
+{\em \center
+tops
+}
+
+This command will search the target file hierarchy, and list all "top level"
+objects (objects which are not members of any other object).
+This command is useful to make sure objects have been grouped properly.
+
+\section{Make prototypical solid}
+
+{\em \center
+make name type
+}
+
+This command will create a solid of a specified type.
+This solid will be named "name" and the solid type will be "type".
+The acceptable types are: arb8, arb7, arb6, arb5, arb4, tor, tgc, tec,
+rec, trc, rcc, ellg, ell, sph.
+This new solid will be drawn at the center of the screen.
+This command should be used to create
+solids for editing.
+
+\section{Mirror ARB Face}
+
+{\em \center
+mirface \#\#\#\# axis
+}
+
+This command allows one to mirror a face of an edited arb about an axis.
+This command is quite useful for adding air to a "symmetric" target.
+
+\section{Print Summary of Objects}
+
+{\em \center
+summary s|r|g
+}
+
+This command will produce a summary of objects in the target file.
+If the options s, r, or g are entered a listing of the solids, regions,
+or groups will also be presented.
+
+\section{Specify Numeric Parameter(s)}
+
+{\em \center
+p dx [dy dz]
+}
+
+This is the parameter modification command and is used during solid
+editing to make precise changes.
+The actual meaning of the values typed after the "p", depend on what
+editing option is being performed.
+If one were translating a solid, then the values would be the x,y,z
+coordinates of the vertex of the solid.
+
+\section{Release Current Display}
+
+{\em \center
+release
+}
+This command releases the current display device,
+and attaches the null device.
+
+\section{Attach to Display Device}
+
+{\em \center
+attach device
+}
+
+This command allows one to attach a display device (the present display device
+is released first).
+The present acceptable values for "device" are vg, mg, tek, rat, plot, tek4109, ir, sgi, and nu.
+The "plot" device will produce a UNIX-plot of the present view (including the
+faceplate) on a display device using a specific filter.
+You will be asked which filter to use.
+Sample filters include "tplot" and "plot-fb".
+
+\section{Numeric Object Rotation Edit}
+
+{\em \center
+rotobj xdeg ydeg zdeg
+}
+
+This command allows one to make precise rotations of an object during
+object editing.
+MGED must be in the "object edit" state for this command to have effect.
+If "object rotation" is not in effect, MGED will select this option for you
+and perform the rotation.
+The object will be rotated "xdeg" about the x-axis, "ydeg" about the
+y-axis, and "zdeg" about the z-axis.
+The rotation is "absolute"....the total rotation since the beginning
+of object editing will be equal to the input values.
+The rotation is done about the "KEY" point for the object being edited.
+
+\section{Scale Edited Object}
+
+{\em \center
+scale xxx.xx
+}
+
+This command allows one to make precise scaling changes to an object
+during object editing.
+MGED must be in the "object edit" state for this command to have effect.
+If one of the object scale options is not in effect, the "global scale"
+options will be selected.
+The object will be scaled by a TOTAL amount equal to the input value.
+If one of the local scale options is in effect, the object will be
+scaled in the selected axis direction by an amount equal to the input value.
+The scaling is done about the "KEY" point of the object being edited.
+
+\section{Translate Edited Object}
+
+{\em \center
+translate xxx.xx yyy.yy zzz.zz
+}
+
+This command allows one to make precise translation changes to an object
+during object editing.
+MGED must be in the "object edit" state for this command to have effect.
+If the object translation option is not in effect, this option will be
+selected and the translation performed.
+The "KEY" point of the object being edited will move to the input coordinates.
+
+\section{Fix Broken Hardware (sometimes)}
+
+{\em \center
+fix
+}
+
+This command will "fix" (restart) the display device after a hardware error.
+
+\section{Ray-Trace Current View}
+
+{\em \center
+rt [-s\#]
+}
+
+This command will run the {\bf rt}(1) program
+to produce a color shaded iamge of objects on the currently
+selected framebuffer.
+The resolution of the iamge (number of rays) is equal to "\#" from the "-s"
+(square view resolution) option.
+If the -s option is absent, 50x50 ray resolution will be used.
+
+\section{Emulate Knob Twist}
+
+{\em \center
+knob id value
+}
+
+This command is used to emulate a "knob twist".
+Generally this command is used for display devices which have no actual
+knob peripherals (eg. tek).
+Any non-zero number entered for "value" is converted to 1 (if "value" is
+greater than zero) or is converted to -1 (if "value is less than zero).
+The user must enter the same command with "value" equal to zero to
+stop the action envoked by the knob twist.
+
+The "id" defines which knob is to be "twisted":
+
+\begin{tabular}{rl}
+	x	& rotates about x-axis \\
+	y	& rotates about y-axis \\
+	z	& rotates about z-axis \\
+	X	& slew view in x direction \\
+	Y	& slew view in y direction \\
+	Z	& zoom the view \\
+\end{tabular}
+
+Examples:
+{\em
+       knob x 1 \\
+       knob x 0 \\
+       knob Z -1 \\
+       knob Z 0 \\
+}
+
+\section{Solid\_Edit Named Solid}
+
+{\em\center
+sed name
+}
+
+This command allows one to immediately enter the solid edit mode
+with the solid "name" as the edited solid.
+Note that the solid must be displayed but not multiply referenced.
+
+\section{Illuminate Named Object}
+
+{\em\center
+ill name
+}
+
+This command is used to illuminate an object ... a path containing this
+object ("name") will be illuminated.
+This command is primarily used with display devices which do not have
+a tablet to pick objects for editing.
+
+\section{Rotate the View}
+
+{\em\center
+vrot xdeg ydeg zdeg
+}
+
+This command rotates the VIEW "xdeg" degrees about the screen x-axis,
+"ydeg" degrees about the screen y-axis, and "zdeg" degrees about the
+screen z-axis.
+
+This command is useful when the precise rotation desired is known.
+It is also useful when in a rotation edit mode, and the viewing
+rotation needs to be changed, without affecting the current edit.
+
+\section{Move Screen Center}
+
+{\em\center
+center xx.xx yy.yy zz.zz
+}
+
+This command moves the screen center to (xx.xx, yy.yy, zz.zz).
+Using this command is one way of slewing the view.
+
+\section{Set View Size}
+
+{\em\center
+size xx.xx
+}
+
+This command sets the view size to xx.xx and is one way of zooming
+the display.
+Making the view size smaller has the effect of zooming in on the view.
+
+\section{Extended List of all Objects in Displaylist}
+
+{\em\center
+x
+}
+
+This command produces a list of all objects displayed, listing the center
+of the object, its size, and if it is in the present view.
+It is intended primarily for software debugging.
+
+\section{Refresh Display}
+
+{\em\center
+refresh
+}
+
+This command will send a new display list to the display device.
+
+\section{Print View Status}
+
+{\em\center
+status
+}
+
+This is a debug command which prints the status of the current view,
+including all viewing and editing matrices.
+
+\section{Simulate Button Press}
+
+{\em\center
+press button-label
+}
+
+This command allows one to emulate a button press and is generally used
+on display devices which do not have actual button peripherals.
+The following are the strings allowed for "button-label" and all produce
+the indicated view on the device screen:
+        top, bottom, right, left, front, rear, 90,90, 35,25
+
+The following is a listing of the remaining acceptable strings for
+"button-label" and the resulting action:
+
+\begin{tabular}{rl}
+       reset         &  reset the view \\
+       save          &  save the present view \\
+       restore       &  restor the saved view \\
+       adc           & display the angle-distance cursor \\
+       oill          &  begin object illumination (pick) \\
+       sill          & begin solid illumination (pick) \\
+       oscale        & object scale \\
+       ox            & object translat ion in x direction only \\
+       oy            & object translation in y direction only \\
+       oxy           & object translation \\
+       orot          & object rotation \\
+       sedit         & put up solid parameter menu \\
+       srot          & solid rotation \\
+       sxy           & solid translation \\
+       sscale        & solid scale \\
+       accept        & accept editing done \\
+       reject        & reject editing done \\
+\end{tabular}
+
+Examples:
+{\em
+         press 90,90 \\
+         press front \\
+         press oill \\
+         press orot \\
+         press reject \\
+}
+
+\section{Escape to the Shell}
+
+{\em\center
+%
+}
+
+This command allows one to escape to the shell to perform multiple commands
+without having to terminate the current MGED session.
+To return to mged, enter a control-d to the Shell.
+Note that the "!" escape at the beginning of a line can be used
+to send a single command to the shell.
+
+\section{Get Short Help Listing}
+
+{\em\center
+?
+}
+
+This is the short form of the help command,
+that lists the names of all MGED commands.
+
+\section{Get Long Help Listing}
+
+{\em\center
+help
+}
+
+This is the long form of the help command,
+that produces a listing of all the available commands and their
+arguments, and a one sentence summary of the commands purpose.
+
+\section{Exit (Quit) MGED}
+
+{\em\center
+q
+}
+
+Running the "q" command, or entering an End-Of-File (EOF) (typ. Control/D)
+is the normal way of exiting MGED.
+
+\section{Copy and Translate TGC}
+
+{\em \center
+cpi oldtgc newtgc
+}
+
+This command is a specialized copy command and is designed to be used when one
+is "running wires" in a description.
+The object being copied must a cylindrical solid (TGC).
+The following occurs when cpi is used:  first the cylinder ("oldtgc") is
+copied to "newtgc"; then "newtgc" is translated to the end of "oldtgc";
+then "newtgc" is displayed; and finally, MGED is put in the SOLID EDIT state
+with "newtgc" as the edited solid.
+
+\section{Remove Object and All References}
+
+{\em \center
+killall obj1 obj2 ... objn
+}
+
+This command will accomplish two things:  first, the object[s] will be
+removed from the data file just as in the "kill" command;  second, all
+references to the object[s] will also be removed.
+
+\section{Remove Complete Tree}
+
+{\em \center
+killtree obj1 obj2 ... objn
+}
+
+This command will remove from the file complete trees originating with
+obj1, obj2, ..., objn.
+Every object in the designated paths will be removed from the file, hence
+CAUTION is urged.
+Make sure that "killtree" is what you want to do.
+Using the "paths" or "tree" command on an object before "killtree" will
+show what objects will be killed.
+
+\section{Add Color To Display}
+
+{\em \center
+color low high r g b string
+}
+
+This command allows one to make color assignments to a range of item codes.
+The arguments "low" and "high" are the item ranges.
+The arguments "r", "g", and "b" are the red, green, and blue values
+respectively (the range of these numbers is generally 0-255).
+The argument "string" is a string describing this class of items.
+A blank is considered a terminator, so there can be no blanks in
+this string.
+
+\section{Edit Display Colors}
+
+{\em \center
+edcolor
+}
+
+This command allows one to edit the existing color assignments (table).
+The changes are made using the user's "selected" text editor
+found in environment variable EDITOR.
+Note that this method of specifying object colors is obsolete,
+and has been replaced by the {\em mater} command.
+
+\section{Print Display Colors}
+
+{\em \center
+prcolor
+}
+
+This command prints the color assignments as they presently exist.
+
+\section{Find Objects}
+
+{\em \center
+find obj1 obj2 ... objn
+}
+
+This command will find ALL references of obj1 obj2 ... objn in the file.
+
+\section{Estimate Presented Area}
+
+{\em \center
+area [tolerance]
+}
+
+This command finds an estimate of the presented area of all E'd objects
+in the present view from that aspect.
+The argument "tolerance" is the tolerance for the endpoints of
+line segments being "equal" and is optional.
+
+\section{Produce UNIX Plot}
+
+{\em \center
+plot [-zclip] [-2d] [out-file] [| filter]
+}
+
+This command is used to produce a UNIX-plot hardcopy of the present view of
+the 'geometry' on the display device.
+The MGED faceplate will not be drawn.
+Some useful examples are:
+
+\begin{tabular}{rl}
+plot-fb & LIBFB framebuffer (low res) \\
+plot-fb -h & LIBFB framebuffer (high res) \\
+tplot -Ti10 & Imagen laser printer \\
+tplot -Tmeg & Megatek 7250 \\
+tplot -T4014 & Tek4014 \\
+tplot -Thpgl & HP7550A plotter
+\end{tabular}
+
+\section{Text Edit Solid Parameters}
+
+{\em \center
+ted
+}
+
+This command allows one to edit a solid's parameters using the text editor
+defined by the users's path.
+The solid being edited (solid edit mode) will be the one that will be
+"text edited".
+
+\section{Keyboard Input of Solid Parameters}
+
+{\em \center
+in name type {parameters}
+}
+
+This command allows one to enter a new solid directly via the keyboard.
+The user will be prompted for any missing input and the solid will be
+displayed on the screen.  WARNING: only minimal checking of parameters
+is done.
+
+\section{Change View Azimuth, Elevation}
+
+{\em \center
+ae az elev
+}
+
+This command sets the display viewing angles using the input azimuth (az)
+and elevation (elev) angles.
+
+\section{Define Region Identifiers}
+
+{\em \center
+regdef item [air los mat]
+}
+
+This command allows one to change the default codes which will be given
+to the next region created.
+If the "air" code is non-zero, then the "item" code will be set to zero.
+
+\section{Change Edge Direction}
+
+{\em \center
+edgedir delta\_x delta\_y delta\_z
+}
+
+This command allows one to define the direction of an ARB edge being moved.
+If only two arguments are input, the code assumes these to be the
+rotation and fallback angles for the edge.
+If three arguments are present, the code will use them as "deltas" to
+define the direction of the edge.
+Note that this command can be useful to find the intersection of
+a line (edge) with planes (faces).
+
+\section{Prefix Object Names}
+
+{\em \center
+prefix string obj1 obj2 ... objn
+}
+
+This command will prefix obj1, obj2, .... objn with "string".  All occurences
+of these names will be prefixed.  String matching is allowed for the objects
+to prefix.
+
+\section{Keep Objects in Another File}
+
+{\em \center
+keep file.g obj1 obj2 ... objn
+}
+
+This command allows one to keep the listed objects in the file "file.g".
+This command is useful for pulling out parts of a description.
+
+\section{List Object Hierarchy}
+
+{\em \center
+tree obj1 obj2 ... objn
+}
+
+This command will print the tree structure for the objects listed.
+
+\section{Create Inside Solid}
+
+{\em \center
+inside
+}
+
+This command is used to define a solid (inside solid) such that when it is subtracted
+from another certain solid (outside solid), the resulting region will have desired
+thicknesses.
+To invoke this option, enter "inside".
+You will then be prompted for the required data.
+If you are in the solid edit mode, the "outside solid" will default to the
+solid presently being edited.
+If you are in the object edit mode, the "outside solid" will default to the
+"key solid" of the object path being edited.
+If you are not in an edit mode, you will then be asked for the name of
+the "outside solid".
+Next, you will be asked what name you wish to call the new "inside solid"
+to be calculated.
+Finally, you will be asked to enter the thickness[es], depending on the
+solid type.
+The "inside solid" will then be displayed on the screen.
+If the thickness values input are negative, then the thickness will be
+directed to the "outside" of the solid.
+
+\section{Produce ASCII Summary of Solids}
+
+{\em \center
+solids file obj1 obj2 ... objn
+}
+
+This command will produce an ascii summary of all solids involved with
+objects obj1, obj2, ..., objn.  This summary will be written in 'file'.
+In this file, all regions and solids are numbered and will match the
+numbers of a COMGEOM deck produced by VDECK or GIFT if the objects are
+entered in the same order.
+The file 'file' will be overwritten if it already exists.
+String matching is allowed for the objects.
+
+\section{Produce ASCII Summary of Regions}
+
+{\em \center
+regions file obj1 obj2 ... objn
+}
+
+This command will produce an ascii summary table of all regions involved with
+objects obj1, obj2,...,objn.
+This summary table will be written in 'file'.
+In this file, all regions and solids will be numbered and will match the numbers
+of a COMGEOM description produced by VDECK or GIFT if the objects are entered
+in the same order.
+This file will be identical to the "solids" command except the actual
+parameters are not listed.
+The file 'file' will be overwritten if it already exists.
+String matching is allowed for the object names.
+
+\section{Produce ASCII Summary of Idents}
+
+{\em \center
+idents file obj1 obj2 ... objn
+}
+
+This command will produce an ascii summary table of all region idents involved with
+objects obj1, obj2,...,objn.
+This summary table will be written in 'file'.
+In this file, all regions will be numbered and will match the region numbers
+of a COMGEOM description produced by VDECK or GIFT if the objects are entered
+in the same order.
+At the end of this file will be the same region information, but ordered
+by ident number.
+The file 'file' will be overwritten if it already exists.
+String matching is allowed for the object names.
+
+\section{List Objects Paths}
+
+{\em \center
+paths
+}
+
+This command will print ALL paths matching an "input" path.
+You will be asked to enter the path to match.
+The path members are entered on ONE line, seperated by spaces.
+The input path need not be a complete path, but must contain at least one object.
+All paths with the same first members as the input path will be listed.
+This command is useful for finding complete paths which begin with certain objects.
+
+\section{List Evaluated Path Solid}
+
+{\em \center
+listeval
+}
+
+This command will "evaluate" and list ALL paths matching an input path, including the
+parameters of the solids at the bottom of each path.
+These parameters will reflect any editing contained in the path listed.
+You will be asked to enter the path to match.
+The path members are entered on ONE line, seperated by spaces.
+The input path need not be a complete path, but must contain at least
+one object.
+Note that since the solid parameters are printed, this could be a
+rather lengthy listing depending on the completeness of the input path.
+
+\section{Evaluate Path and Copy Solid}
+
+{\em \center
+copyeval
+}
+
+This command allows one to copy an "evaluated solid", that is a complete path
+ending in a solid.
+You will be asked to enter a complete path.
+Again, this path is entered on ONE line with the members seperated by spaces.
+If you do not know the complete path, use the "paths" command above to find it.
+Next, you will be asked to enter the name of this copied solid.
+The input path will be traversed and the accumulated path transformations will
+be applied to the parameters of the bottom solid.
+These new parameters will then be the copied solid.
+Note:  this command is useful for making "dummy solids" to subtract for
+overlaps between objects which have been "object" edited.
+
+\section{Edit Objects Region Identifiers}
+
+{\em \center
+edcodes obj1 obj2 ... objn
+}
+
+This command provides for an easy way to modify the code numbers (item, air, material, and los)
+of ALL regions found in paths beginning with an object.
+For each object, all paths beginning with that object are traversed until a region
+is encountered...at which time the following is listed:
+
+item  air  mat  los      /obj1/.../region.n
+
+The cursor then jumps back to "item" at the beginning of the line.
+At this time the cursor can be advanced only by entering a new item code
+(only digits are allowed) or by hitting the "space bar" or "tab key".
+The space and tab will move the cursor to the next position in the line.
+Pressing the "backspace key" will move the cursor to the beginning of
+the next location to the left.
+Moving the cursor "past" the los location
+will return it to the beginning of the line.
+When the code numbers are as you desire,
+a RETURN will print the next line
+for editing.
+At any time, pressing the "R" key will restore the idents on the current
+line to the way they were originally.
+A Control/C or a "q" will abort the process at the current line.
+String matching is allowed for the object names.
+
+\section{List Object As Stored}
+
+{\em \center
+tab obj1 obj2 ... objn
+}
+
+This command will produce a listing of objects as they are stored in
+the MGED object data file.
+String matching is allowed for the objects.
+
+\section{List Regions With Given Ident}
+
+{\em \center
+whichid item1 item2 ... itemn
+}
+
+This command will list ALL regions in the data file which have certain
+item codes.
+
+\section{Create ARB Given 3 Points}
+
+{\em \center
+3ptarb
+}
+
+This command will produce a "plate mode" arb8 given 3 points on one face, 2 coordinates
+of the 4th point on that face, and a thickness.
+The 3rd coordinate of the 4th point will be solved for and the "other" face
+will be a normal distance (== the desired thickness) away.
+You will be asked for all necessary input.
+
+\section{Create ARB Given Point and Angles}
+
+{\em \center
+rfarb
+}
+
+This command will produce a "plate mode" arb8 given a point on one face,
+rotation and fallback angles for that face, 2 coordinates of the 3
+remaining points on that face, and a thickness.
+The 3rd coordinates of the three points will be solved for, and the other
+face will be a normal distance equal to "thickness" away.
+You will be asked for all necessary input.
+
+\section{Push Editing Down Paths}
+
+{\em \center
+push obj1 obj2 ... objn
+}
+
+This command will "push" an object's path transformations to the solid's parameters
+located at the bottom of each path.
+If a conflict is encountered, then an error message is printed and NOTHING is done.
+A conflict occurs when the same solid "ends" different paths but the transformations
+are different.
+Conflicts could occur when "instanced" or "copied" groups occur in an object's
+paths or when a solid is a member of 2 regions which have been edited separately.
+A complication of this command, which will not be listed as a conflict, is when a solid's parameters have been
+changed by a push, yet this solid is referenced by another object which was NOT
+included in the push.
+The user should beware of this situation.
+This command can be very useful when "adding" parts from another file.
+Once the "object editing" of these new parts is completed, the push command
+will put the editing done to the solid level.
+Since the added parts should have no cross-references with the existing
+objects, there should be no problems.
+
+\section{Check For Duplicate Names}
+
+{\em \center
+dup file.g {string}
+}
+
+This command will compare the current object data file with another
+MGED file "file.g" and list any object names common to both files.
+If "string" is present, all object names in "file.g" will be prefixed with
+"string" before comparing for duplicate names.
+Generally, one uses "string" only when duplicate names are found without it.
+
+\section{Concat Files}
+
+{\em \center
+concat file.g {string}
+}
+
+This command will concatenate another MGED file "file.g" onto the present
+object data file.
+If "string" is present, all names in "file.g" will be prefixed with this
+string.
+No objects from "file.g" will be added if the name already occurs in the
+current object file...the object names will be listed and skipped.
+However, this command should be used in conjunction with the "dup" command to
+eliminate any problems with duplicate names.
+
+\section{Create Pseudo-Track}
+
+{\em \center
+track
+}
+
+This command adds track components to the data file to fit specified
+"wheel" data.
+Solids, regions, and a group containing the regions will be created and
+displayed on the screen.
+You will be prompted for all required data.
+
+\section{Define ARB Face}
+
+{\em \center
+facedef \#\#\#\#
+}
+
+This command is used to define the face plane of an ARB that is being edited.
+The following is the option menu displayed when this command is used:
+        a     planar equation
+        b     3 points
+        c     rot and fb angles + fixed point
+        d     same plane thru fixed point
+        q     quit
+To select any of these methods of defining a plane, enter the appropriate
+letter.  You will then be asked for the desired input.
+
+\section{Define Plane Equation of ARB Face}
+
+{\em \center
+eqn [A B C]
+}
+
+This command is used when one is rotating the face of an edited ARB and defines
+the coefficients of the face planar equation (Ax + By + Cz).
+
+\section{Move (Rename) Everywhere}
+
+{\em \center
+mvall old new
+}
+
+This command is used to rename all occurrences of an object in the data file.  In this
+case, the object "old" will be renamed "new" for every occurence.
+
+\section{Miscellaneous Commands}
+
+It is possible to view, specify, and text-edit
+information pertaining to the material type and color of various
+parts of the model tree.  This is an interim capability
+intended to provide enough material properties information for
+current rendering and analysis purposes until the design of a
+full material properties database can be finalized.
+
+In addition to a variety of usual database manipulation
+and status commands, there are commands to
+compare the current database for name overlap (conflicts)
+with another database, as well as commands to import and export
+subtrees to/from the current database.
+If name conflicts between the two databases
+do exist, there are commands to rename an individual node without
+changing any of the references to it (``mv''), or to rename
+a node and change all the references to it (``mvall'').
+Another command which is useful for preparing to move subtrees between
+databases is the ``push'' command,
+which adjusts the transformation matrices from the indicated point
+down to the leaves of the directed acyclic graph, leaving the higher
+level arcs with identity matrices.
+
+\section{UNIX-Plot Output}
+
+The ``plot'' command can store an exact image of the current
+(non-faceplate) display on the screen, either using the
+System V standard 2-D monochrome UNIX-Plot ({\em plot(4)}) format,
+or the BRL 3-D color extended-UNIX-Plot format.
+These plots can be sent to a disk file,
+or ``piped'' directly to a filter process.
+This can be useful for making hard copies of the current MGED view
+for showing to others,
+using a local pen plotter or laser printer.
+
+\section{Ray-Tracing the Current View}
+
+An important capability even beyond the ability to generate an
+evaluated boundary wireframe is the ability of MGED to initiate a
+quick ray-trace rendering of the current view on any nearby framebuffer!
+This is implemented by using the MGED ``rt'' command to fork off
+an instance of the RT program, and sending the RT program
+a description of the current view
+with any user-specified options.
+This allows the designer to
+use the power of MGED to select the desired view, and then to
+quickly verify the geometry and light source placement.
+A 50 by 50 pixel rendering of the current view can usually be done
+in less than a minute (on a DEC VAX-780 class processor), and allows
+for general verification before the designer uses the ``saveview''
+command to submit a batch job for a high resolution ray-trace of
+the same view.
+
+\section{Animation}
+
+The MGED editor includes a number of features which are useful
+for developing animation tools and scripts.
+The full description of the current viewing transformation and eye position
+can be saved in a file,
+and such a previously saved view can be read back at any time,
+immediately changing the editor's view.
+In addition, the current viewing transformation and eye position can be
+appended to a file containing a collection of keyframes.
+Most importantly, a file full of keyframe information, either raw keyframe
+positions or smoothly interpolated keyframe sequences, can
+by ``played'' in real time using MGED,
+providing a powerful and fast animation preview capability.
+
+As a separate animation capability intended
+for developing demonstrations and instructional material relating to the
+use of the MGED editor,
+all user interactions with the editor can be recorded in a file,
+along with an indication of the time elapsed between user actions.
+This file can be  adjusted using a normal text editor to remove any errors,
+or to eliminate dead time where the user stopped to think.
+Once created, this session script can be replayed through the editor
+at any time, either to provide a smooth ``canned'' demonstration
+before a live audience, or to create a film or videotape.

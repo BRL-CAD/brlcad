@@ -63,8 +63,6 @@
 
 /* declarations to support use of bu_getopt() system call */
 char *options = "W:S:s:w:n:t:#:D:12drR:";
-extern char *bu_optarg;
-extern int bu_optind, bu_opterr, bu_getopt(int, char *const *, const char *);
 
 char *progname = "(noname)";
 int img_space=1;
@@ -87,13 +85,11 @@ usage(char *s)
 {
     if (s) (void)fputs(s, stderr);
 
-    (void) fprintf(stderr,
-		   "Usage:\n\
+    bu_exit(1,
+	    "Usage:\n\
 	%s {-d | -r} [-2] [-t datatype] [-# channels]\n\
 	[-w width] [-n scanlines] [-s number_of_samples]\n\
-	< datastream > wavelets\n",
-		   progname);
-    bu_exit (1, NULL);
+	< datastream > wavelets\n", progname);
 }
 
 
@@ -170,6 +166,7 @@ parse_args(int ac, char **av)
 void
 wlt_decompose_1d(void)
 {
+    size_t ret;
     genptr_t buf, tbuf;
     unsigned long int i, n;
     unsigned long int sample_size;	/* size of data type x #values/sample */
@@ -190,10 +187,7 @@ wlt_decompose_1d(void)
 
 	n = fread(buf, sample_size, width, stdin);
 	if (n != width) {
-	    fprintf(stderr,
-		    "read failed line %lu got %lu not %lu\n",
-		    i, n, width);
-	    bu_exit (-1, NULL);
+	    bu_exit(1, "read failed line %lu got %lu not %lu\n", i, n, width);
 	}
 
 	switch (value_type) {
@@ -223,7 +217,11 @@ wlt_decompose_1d(void)
 		break;
 	}
 
-	fwrite(buf, sample_size, width, stdout);
+	ret = fwrite(buf, sample_size, width, stdout);
+	if (ret == 0) {
+	    perror("fwrite");
+	    break;
+	}
     }
 }
 
@@ -231,6 +229,7 @@ wlt_decompose_1d(void)
 void
 wlt_decompose_2d(void)
 {
+    size_t ret;
     genptr_t buf, tbuf;
     unsigned long int sample_size;
     unsigned long int scanline_size;
@@ -248,13 +247,11 @@ wlt_decompose_2d(void)
 
     if (width != height) {
 	fprintf(stderr, "Two dimensional decomposition requires square image\n");
-	fprintf(stderr, "%lu x %lu image specified\n", width, height);
-	bu_exit (-1, NULL);
+	bu_exit(1, "%lu x %lu image specified\n", width, height);
     }
 
     if (fread(buf, scanline_size, height, stdin) != height) {
-	fprintf(stderr, "read error getting %lux%lu bytes\n", scanline_size, height);
-	bu_exit (-1, NULL);
+	bu_exit(1, "read error getting %lux%lu bytes\n", scanline_size, height);
     }
 
     switch (value_type) {
@@ -283,13 +280,17 @@ wlt_decompose_2d(void)
 					  channels, limit);
 	    break;
     }
-    fwrite(buf, scanline_size, width, stdout);
+    ret = fwrite(buf, scanline_size, width, stdout);
+    if (ret == 0) {
+	perror("fwrite");
+    }
 }
 
 
 void
 wlt_reconstruct_1d(void)
 {
+    size_t ret;
     genptr_t buf, tbuf;
     unsigned long int i, n;
     unsigned long int sample_size;	/* size of data type x #values/sample */
@@ -311,10 +312,7 @@ wlt_reconstruct_1d(void)
 
 	n = fread(buf, sample_size, width, stdin);
 	if (n != width) {
-	    fprintf(stderr,
-		    "read failed line %lu got %lu not %lu\n",
-		    i, n, width);
-	    bu_exit (-1, NULL);
+	    bu_exit(-1, "read failed line %lu got %lu not %lu\n", i, n, width);
 	}
 
 	switch (value_type) {
@@ -344,7 +342,11 @@ wlt_reconstruct_1d(void)
 		break;
 	}
 
-	fwrite(buf, sample_size, width, stdout);
+	ret = fwrite(buf, sample_size, width, stdout);
+	if (ret == 0) {
+	    perror("fwrite");
+	    break;
+	}
     }
 }
 
@@ -352,6 +354,7 @@ wlt_reconstruct_1d(void)
 void
 wlt_reconstruct_2d(void)
 {
+    size_t ret;
     genptr_t buf, tbuf;
     unsigned long int sample_size;
     unsigned long int scanline_size;
@@ -368,13 +371,11 @@ wlt_reconstruct_2d(void)
 
     if (width != height) {
 	fprintf(stderr, "Two dimensional decomposition requires square image\n");
-	fprintf(stderr, "%lu x %lu image specified\n", width, height);
-	bu_exit (-1, NULL);
+	bu_exit(1, "%lu x %lu image specified\n", width, height);
     }
 
     if (fread(buf, scanline_size, height, stdin) != height) {
-	fprintf(stderr, "read error getting %lux%lu bytes\n", scanline_size, height);
-	bu_exit (-1, NULL);
+	bu_exit(1, "read error getting %lux%lu bytes\n", scanline_size, height);
     }
 
     switch (value_type) {
@@ -403,7 +404,10 @@ wlt_reconstruct_2d(void)
 					    channels, avg_size, limit);
 	    break;
     }
-    fwrite(buf, scanline_size, width, stdout);
+    ret = fwrite(buf, scanline_size, width, stdout);
+    if (ret == 0) {
+	perror("fwrite");
+    }
 }
 
 

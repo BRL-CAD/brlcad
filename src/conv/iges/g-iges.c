@@ -103,8 +103,8 @@ static int	solid_error=0;	/* Count indicating how many solids were not converted
 static int	comb_error=0;	/* Count indicating  how many combinations were not converted */
 static int	ncpu = 1;	/* Number of processors */
 static char	*output_file = NULL;	/* output filename */
-static FILE	*fp_dir;	/* IGES start, global, and directory sections */
-static FILE	*fp_param;	/* IGES parameter section */
+static FILE	*fp_dir = NULL;		/* IGES start, global, and directory sections */
+static FILE	*fp_param = NULL;	/* IGES parameter section */
 static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
 static struct model		*the_model;

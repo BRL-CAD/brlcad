@@ -36,13 +36,21 @@ VariableAbstract::VariableAbstract(std::string vid) :
 {
 }
 
+
+VariableAbstract::~VariableAbstract()
+{
+}
+
+
 void VariableAbstract::display()
 {
 }
 
+
 void VariableAbstract::store()
 {
 }
+
 
 void VariableAbstract::restore()
 {
@@ -65,6 +73,7 @@ Variable<int>::Variable(std::string vid, int vvalue) :
     addInterval(Interval<int>(min, max, 1));
 }
 
+
 template<>
 Variable<double>::Variable(std::string vid, double vvalue) :
     VariableAbstract(vid),
@@ -81,6 +90,7 @@ Variable<double>::Variable(std::string vid, double vvalue) :
 #endif
     addInterval(Interval<double>(min, max, .00001));
 }
+
 
 /** @} */
 

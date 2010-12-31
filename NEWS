@@ -10,9 +10,76 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2010-05-XX  Release 7.16.10                                    ---
+--- 2010-12-XX  Release 7.18.2                                     ---
 ----------------------------------------------------------------------
 
+* upgraded libpng to version 1.4.5 - Cliff Yapp
+* upgraded zlib to version 1.2.5 - Cliff Yapp
+* removed shell execution ! command from vdeck - Cliff Yapp
+
+----------------------------------------------------------------------
+--- 2010-12-07  Release 7.18.0                                     ---
+----------------------------------------------------------------------
+
+This release includes the initial release of a new Bag of Triangle
+(BoT) editing interface for MGED and Archer.  Nicholas Reed developed
+the new graphical user interface (GUI) in order to consolidate the
+numerous BoT editing commands and processing steps into one unified
+easy-to-use interface.  The new GUI grealy simplifies BoT processing
+steps and can save modelers considerable time.
+
+* ported benchmark suite to Windows (requires 'sh') - Erik Greenwald
+* improved NURBS wireframes with interior surface lines - Keith Bowman
+* additional NURBS raytracing robustness improvements - Keith Bowman
+* removed pl-sgi plot tool - Sean Morrison
+* expanded rtarea documentation with examples and detail - Cliff Yapp
+* improved support for unlimited object counts in mged - Sean Morrison
+* fixed 'erase_all' behavior so 'who' gives correct lists - Bob Parker
+* fixed idents, solids, and regions output - Bob Parker
+* increased performance of facetization and export - Sean Morrison
+* fixed NURBS raytrace bug grazing nearly flat surfaces - Keith Bowman
+* fixed infinite loop bug converting to NMG and BoT - Sean Morrison
+* improved Windows installer desktop shortcut creation - Bob Parker
+* fixed running mged external tools (e.g., rt) after 'cd' - Bob Parker
+* fixed 'pnts' point cloud primitive memory access bug - Richard Weiss
+* new BoT editing interface for mged and archer - Nicholas Reed
+* fixed crash during BoT decimation - Nicholas Reed
+* improved robustness of CSG boolean tree processing - Sean Morrison
+* improved loading of Pro/E export plugin on Windows - Bob Parker
+* added ray bundle shooting capability to rtshot - Keith Bowman
+* improved robustness of facetization and export - Richard Weiss
+* cleaner logging of facetize command BoT failures - Sean Morrison
+* removed 'query' command line prompting tool - Sean Morrison
+* increased optimized package run-time performance - Sean Morrison
+* fixed crash when raytracing multiple frames - Keith Bowman
+* fixed mged zap crash while using preview - Keith Bowman, Bob Parker
+* added ability to toggle mged status bar via .mgedrc - Rob Shinn
+* new mged 'bot' command for accessing BoT properties - Nicholas Reed
+
+
+----------------------------------------------------------------------
+--- 2010-08-04  Release 7.16.10                                    ---
+----------------------------------------------------------------------
+
+The release concludes a phenomenal effort by Jesica Guidice who
+meticulously translated approximately 150 pages of MGED tutorial
+documentation from English to Spanish.  The 16 tutorials are now fully
+converted and work continues on the technical side to develop
+stylesheets for publishing corresponding PDF documents on the BRL-CAD
+website.
+
+* fixed nirt output formatting in MGED - Cliff Yapp
+* rt can now output directly to PNG, among others - Erik Greenwald
+* fixed crash-on-exit bug with iges-g importer - Richard Weiss
+* fixed framebuffer shutdown and memory management bugs - Bob Parker
+* added all remaining shape tools to the Windows build - Sean Morrison
+* libpng updated from version 1.4.1 to 1.4.3 - Sean Morrison
+* fixed crash tessellating pipes with maximum bends - John Anderson
+* mged 'red' command no longer deletes custom attributes - Cliff Yapp
+* fixed pixhalve memory leak and corruption on exit - Sean Morrison
+* spanish translation for tutorial 9 - Jesica Giudice, Luciano Lamaita
+* Tcl/Tk updated from 8.5.6 to 8.5.8 - Cliff Yapp
+* spanish translations for tutorials 4-5, 7-8, 10-16 - Jesica Giudice
 * fixed extrude object tessellation failures - Östen Lundahl
 * added manual page for 'random' number generator tool - Sean Morrison
 * added Tktable 2.10 external dependency for archer - Cliff Yapp
@@ -99,6 +166,7 @@ alpha release status as BRL-CAD's next generation geometry editor.
 * fix rtweight bug where incorrect units were reported - Cliff Yapp
 * added initial manual page documentation for rtwizard - Sean Morrison
 * support for metaball conversion to polygonal format - Erik Greenwald
+* Tcl/Tk updated from 8.5.1 to 8.5.6 - Cliff Yapp
 
 
 ----------------------------------------------------------------------
@@ -1880,9 +1948,10 @@ release.  The entire history of the project is available through
 Subversion revision control on Sourceforge.
 
 NEWS items should be formatted to column 70 (default M-q in Emacs),
-use no tabs, and include credits to all significant contributors.
-Multiple contributors may be listed on the following line but the
-summary description itself should never exceed column 70 or one line.
+include credits to all significant contributors, and be descriptively
+succient.  NEWS items should be ONE LINE per user-visible change with
+the description not exceeding column 70.  Multiple contributors may be
+listed on the same or following line.
 
 // Local Variables:
 // mode: Text

@@ -1,6 +1,6 @@
-.TH LIBPNG 3 "February 25, 2010"
+.TH LIBPNG 3 "December 9, 2010"
 .SH NAME
-libpng \- Portable Network Graphics (PNG) Reference Library 1.4.1
+libpng \- Portable Network Graphics (PNG) Reference Library 1.4.5
 .SH SYNOPSIS
 \fI\fB
 
@@ -454,10 +454,6 @@ libpng \- Portable Network Graphics (PNG) Reference Library 1.4.1
 
 \fI\fB
 
-\fBvoid png_set_dither (png_structp \fP\fIpng_ptr\fP\fB, png_colorp \fP\fIpalette\fP\fB, int \fP\fInum_palette\fP\fB, int \fP\fImaximum_colors\fP\fB, png_uint_16p \fP\fIhistogram\fP\fB, int \fIfull_dither\fP\fB);\fP
-
-\fI\fB
-
 \fBvoid png_set_error_fn (png_structp \fP\fIpng_ptr\fP\fB, png_voidp \fP\fIerror_ptr\fP\fB, png_error_ptr \fP\fIerror_fn\fP\fB, png_error_ptr \fIwarning_fn\fP\fB);\fP
 
 \fI\fB
@@ -579,6 +575,10 @@ libpng \- Portable Network Graphics (PNG) Reference Library 1.4.1
 \fI\fB
 
 \fBvoid png_set_PLTE (png_structp \fP\fIpng_ptr\fP\fB, png_infop \fP\fIinfo_ptr\fP\fB, png_colorp \fP\fIpalette\fP\fB, int \fInum_palette\fP\fB);\fP
+
+\fI\fB
+
+\fBvoid png_set_quantize (png_structp \fP\fIpng_ptr\fP\fB, png_colorp \fP\fIpalette\fP\fB, int \fP\fInum_palette\fP\fB, int \fP\fImaximum_colors\fP\fB, png_uint_16p \fP\fIhistogram\fP\fB, int \fIfull_quantize\fP\fB);\fP
 
 \fI\fB
 
@@ -785,10 +785,10 @@ Following is a copy of the libpng.txt file that accompanies libpng.
 .SH LIBPNG.TXT
 libpng.txt - A description on how to use and modify libpng
 
- libpng version 1.4.1 - February 25, 2010
+ libpng version 1.4.5 - December 9, 2010
  Updated and distributed by Glenn Randers-Pehrson
  <glennrp at users.sourceforge.net>
- Copyright (c) 1998-2009 Glenn Randers-Pehrson
+ Copyright (c) 1998-2010 Glenn Randers-Pehrson
 
  This document is released under the libpng license.
  For conditions of distribution and use, see the disclaimer
@@ -796,9 +796,9 @@ libpng.txt - A description on how to use and modify libpng
 
  Based on:
 
- libpng versions 0.97, January 1998, through 1.4.1 - February 25, 2010
+ libpng versions 0.97, January 1998, through 1.4.5 - December 9, 2010
  Updated and distributed by Glenn Randers-Pehrson
- Copyright (c) 1998-2009 Glenn Randers-Pehrson
+ Copyright (c) 1998-2010 Glenn Randers-Pehrson
 
  libpng 1.0 beta 6  version 0.96 May 28, 1997
  Updated and distributed by Andreas Dilger
@@ -1026,8 +1026,12 @@ free any memory.
     }
 
 If you would rather avoid the complexity of setjmp/longjmp issues,
-you can compile libpng with PNG_SETJMP_NOT_SUPPORTED, in which case
+you can compile libpng with PNG_NO_SETJMP, in which case
 errors will result in a call to PNG_ABORT() which defaults to abort().
+
+You can #define PNG_ABORT() to a function that does something
+more useful than abort(), as long as your function does not
+return.
 
 Now you need to set up the input code.  The default for libpng is to
 use the C function fread().  If you use this, you will need to pass a
@@ -1260,7 +1264,7 @@ you want to do are limited to the following set:
                                 to RGB (or GA to RGBA)
 
 (This excludes setting a background color, doing gamma transformation,
-dithering, and setting filler.)  If this is the case, simply do this:
+quantizing, and setting filler.)  If this is the case, simply do this:
 
     png_read_png(png_ptr, info_ptr, png_transforms, NULL)
 
@@ -1684,7 +1688,7 @@ things.
 As of libpng version 1.2.9, png_set_expand_gray_1_2_4_to_8() was
 added.  It expands the sample depth without changing tRNS to alpha.
 
-As of libpng version 1.4.1, not all possible expansions are supported.
+As of libpng version 1.4.5, not all possible expansions are supported.
 
 In the following table, the 01 means grayscale with depth<8, 31 means
 indexed with depth<8, other numerals represent the color type, "T" means
@@ -1943,6 +1947,40 @@ recommended that PNG viewers support gamma correction.
       png_set_gamma(png_ptr, screen_gamma, gamma);
    else
       png_set_gamma(png_ptr, screen_gamma, 0.45455);
+
+If you need to reduce an RGB file to a paletted file, or if a paletted
+file has more entries then will fit on your screen, png_set_quantize()
+will do that.  Note that this is a simple match dither that merely
+finds the closest color available.  This should work fairly well with
+optimized palettes, and fairly badly with linear color cubes.  If you
+pass a palette that is larger then maximum_colors, the file will
+reduce the number of colors in the palette so it will fit into
+maximum_colors.  If there is a histogram, it will use it to make
+more intelligent choices when reducing the palette.  If there is no
+histogram, it may not do as good a job.
+
+   if (color_type & PNG_COLOR_MASK_COLOR)
+   {
+      if (png_get_valid(png_ptr, info_ptr,
+         PNG_INFO_PLTE))
+      {
+         png_uint_16p histogram = NULL;
+
+         png_get_hIST(png_ptr, info_ptr,
+            &histogram);
+         png_set_quantize(png_ptr, palette, num_palette,
+            max_screen_colors, histogram, 1);
+      }
+      else
+      {
+         png_color std_color_cube[MAX_SCREEN_COLORS] =
+            { ... colors ... };
+
+         png_set_quantize(png_ptr, std_color_cube,
+            MAX_SCREEN_COLORS, MAX_SCREEN_COLORS,
+            NULL,0);
+      }
+   }
 
 PNG files describe monochrome as black being zero and white being one.
 The following code will reverse this (make black be one and white be
@@ -2473,8 +2511,12 @@ section below for more information on the libpng error handling.
     return;
 
 If you would rather avoid the complexity of setjmp/longjmp issues,
-you can compile libpng with PNG_SETJMP_NOT_SUPPORTED, in which case
+you can compile libpng with PNG_NO_SETJMP, in which case
 errors will result in a call to PNG_ABORT() which defaults to abort().
+
+You can #define PNG_ABORT() to a function that does something
+more useful than abort(), as long as your function does not
+return.
 
 Now you need to set up the output code.  The default for libpng is to
 use the C function fwrite().  If you use this, you will need to pass a
@@ -3336,8 +3378,9 @@ Error handling in libpng is done through png_error() and png_warning().
 Errors handled through png_error() are fatal, meaning that png_error()
 should never return to its caller.  Currently, this is handled via
 setjmp() and longjmp() (unless you have compiled libpng with
-PNG_SETJMP_NOT_SUPPORTED, in which case it is handled via PNG_ABORT()),
-but you could change this to do things like exit() if you should wish.
+PNG_NO_SETJMP, in which case it is handled via PNG_ABORT()),
+but you could change this to do things like exit() if you should wish,
+as long as your function does not return.
 
 On non-fatal errors, png_warning() is called
 to print a warning message, and then control returns to the calling code.
@@ -3864,6 +3907,12 @@ deprecated since libpng-1.0.18 and 1.2.9, when it was replaced with
 png_set_expand_gray_1_2_4_to_8() because the former function also
 expanded palette images.
 
+Macros for png_get_uint_16, png_get_uint_32, and png_get_int_32
+were added and are used by default instead of the corresponding
+functions. Unfortunately,
+from libpng-1.4.0 until 1.4.4, the png_get_uint_16 macro (but not the  
+function) incorrectly returned a value of type png_uint_32.
+
 We changed the prototype for png_malloc() from
     png_malloc(png_structp png_ptr, png_uint_32 size)
 to
@@ -3889,6 +3938,15 @@ png_set_strip_error_numbers() was removed from the library by default.
 The png_zalloc() and png_zfree() functions are no longer exported.
 The png_zalloc() function no longer zeroes out the memory that it
 allocates.
+
+Support for dithering was disabled by default in libpng-1.4.0, because
+been well tested and doesn't actually "dither".  The code was not
+removed, however, and could be enabled by building libpng with
+PNG_READ_DITHER_SUPPORTED defined.  In libpng-1.4.2, this support
+was reenabled, but the function was renamed png_set_quantize() to
+reflect more accurately what it actually does.  At the same time,
+the PNG_DITHER_[RED,GREEN_BLUE]_BITS macros were also renamed to
+PNG_QUANTIZE_[RED,GREEN,BLUE]_BITS.
 
 We removed the trailing '.' from the warning and error messages.
 
@@ -3959,12 +4017,12 @@ the statement that follows the comment:
     /* Single-line comment */
     statement;
 
-    /* Multiple-line
-     * comment
+    /* This is a multiple-line
+     * comment.
      */
     statement;
 
-Very short comments can be placed at the end of the statement
+Very short comments can be placed after the end of the statement
 to which they pertain:
 
     statement;    /* comment */
@@ -4011,9 +4069,9 @@ macros begin with "PNG_".
 
 We put a space after each comma and after each semicolon
 in "for" statments, and we put spaces before and after each
-C binary operator and after "for" or "while".  We don't
-put a space between a typecast and the expression being
-cast, nor do we put one between a function name and the
+C binary operator and after "for" or "while", and before
+"?".  We don't put a space between a typecast and the expression
+being cast, nor do we put one between a function name and the
 left parenthesis that follows it:
 
     for (i = 2; i > 0; --i)
@@ -4030,13 +4088,13 @@ Other rules can be inferred by inspecting the libpng source.
 
 .SH XIII. Y2K Compliance in libpng
 
-February 25, 2010
+December 9, 2010
 
 Since the PNG Development group is an ad-hoc body, we can't make
 an official declaration.
 
 This is your unofficial assurance that libpng from version 0.71 and
-upward through 1.4.1 are Y2K compliant.  It is my belief that earlier
+upward through 1.4.5 are Y2K compliant.  It is my belief that earlier
 versions were also Y2K compliant.
 
 Libpng only has three year fields.  One is a 2-byte unsigned integer that
@@ -4214,6 +4272,20 @@ the first widely used release:
  1.4.1beta04-12      14    10401  14.so.14.1[.0]
  1.4.1rc02-04        14    10401  14.so.14.1[.0]
  1.4.1               14    10401  14.so.14.1[.0]
+ 1.4.2beta01         14    10402  14.so.14.2[.0]
+ 1.4.2rc02-06        14    10402  14.so.14.2[.0]
+ 1.4.2               14    10402  14.so.14.2[.0]
+ 1.4.3beta01-05      14    10403  14.so.14.3[.0]
+ 1.4.3rc01-03        14    10403  14.so.14.3[.0]
+ 1.4.3               14    10403  14.so.14.3[.0]
+ 1.4.4beta01-08      14    10404  14.so.14.4[.0]
+ 1.4.4rc01-05        14    10404  14.so.14.4[.0]
+ 1.4.4               14    10404  14.so.14.4[.0]
+ 1.4.5beta01-04      14    10405  14.so.14.5[.0]
+ 1.4.5rc01           14    10405  14.so.14.5[.0]
+ 1.4.5beta05-07      14    10405  14.so.14.5[.0]
+ 1.4.5rc02-03        14    10405  14.so.14.5[.0]
+ 1.4.5               14    10405  14.so.14.5[.0]
 
 Henceforth the source version will match the shared-library minor
 and patch numbers; the shared-library major version number will be
@@ -4226,7 +4298,7 @@ version 1.0.6j; from then on they were given the upcoming public
 release number plus "betaNN" or "rcN".
 
 .SH "SEE ALSO"
-libpngpf(3), png(5)
+.BR "png"(5), " libpngpf"(3), " zlib"(3), " deflate"(5), " " and " zlib"(5)
 .LP
 .IR libpng :
 .IP
@@ -4269,7 +4341,7 @@ possible without all of you.
 
 Thanks to Frank J. T. Wojcik for helping with the documentation.
 
-Libpng version 1.4.1 - February 25, 2010:
+Libpng version 1.4.5 - December 9, 2010:
 Initially created in 1995 by Guy Eric Schalnat, then of Group 42, Inc.
 Currently maintained by Glenn Randers-Pehrson (glennrp at users.sourceforge.net).
 
@@ -4292,7 +4364,7 @@ this sentence.
 
 This code is released under the libpng license.
 
-libpng versions 1.2.6, August 15, 2004, through 1.4.1, February 25, 2010, are
+libpng versions 1.2.6, August 15, 2004, through 1.4.5, December 9, 2010, are
 Copyright (c) 2004,2006-2007 Glenn Randers-Pehrson, and are
 distributed according to the same disclaimer and license as libpng-1.2.5
 with the following individual added to the list of Contributing Authors
@@ -4391,7 +4463,7 @@ certification mark of the Open Source Initiative.
 
 Glenn Randers-Pehrson
 glennrp at users.sourceforge.net
-February 25, 2010
+December 9, 2010
 
 .\" end of man page
 

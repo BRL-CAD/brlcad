@@ -1,7 +1,7 @@
 
 /* pngrutil.c - utilities to read a PNG file
  *
- * Last changed in libpng 1.4.1 [February 25, 2010]
+ * Last changed in libpng 1.4.5 [December 9, 2010]
  * Copyright (c) 1998-2010 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
@@ -23,49 +23,97 @@
 png_uint_32 PNGAPI
 png_get_uint_31(png_structp png_ptr, png_bytep buf)
 {
-   png_uint_32 i = png_get_uint_32(buf);
-   if (i > PNG_UINT_31_MAX)
-     png_error(png_ptr, "PNG unsigned integer out of range");
-   return (i);
-}
-#ifndef PNG_USE_READ_MACROS
-/* Grab an unsigned 32-bit integer from a buffer in big-endian format. */
-png_uint_32 PNGAPI
-png_get_uint_32(png_bytep buf)
-{
-   png_uint_32 i = ((png_uint_32)(*buf) << 24) +
-      ((png_uint_32)(*(buf + 1)) << 16) +
-      ((png_uint_32)(*(buf + 2)) << 8) +
-      (png_uint_32)(*(buf + 3));
+   png_uint_32 val = png_get_uint_32(buf);
 
-   return (i);
+   if (val > PNG_UINT_31_MAX)
+     png_error(png_ptr, "PNG unsigned integer out of range");
+   return (val);
+}
+
+#ifndef PNG_USE_READ_MACROS
+/* The parentheses around "PNGAPI function_name" in the following three
+ * functions are necessary because they allow the macros to co-exist with
+ * these (unused but exported) functions.
+ */
+
+/* Grab an unsigned 32-bit integer from a buffer in big-endian format. */
+png_uint_32 (PNGAPI
+png_get_uint_32)(png_bytep buf)
+{
+   png_uint_32 uval = png_get_uint_32(buf);
+   if ((uval & 0x80000000L) == 0) /* non-negative */
+      return uval;
+
+   uval = (uval ^ 0xffffffffL) + 1;  /* 2's complement: -x = ~x+1 */
+   return -(png_int_32)uval;
 }
 
 /* Grab a signed 32-bit integer from a buffer in big-endian format.  The
- * data is stored in the PNG file in two's complement format, and it is
- * assumed that the machine format for signed integers is the same.
+ * data is stored in the PNG file in two's complement format and there
+ * is no guarantee that a 'png_int_32' is exactly 32 bits, therefore
+ * the following code does a two's complement to native conversion.
  */
-png_int_32 PNGAPI
-png_get_int_32(png_bytep buf)
+png_int_32 (PNGAPI
+png_get_int_32)(png_bytep buf)
 {
-   png_int_32 i = ((png_int_32)(*buf) << 24) +
-      ((png_int_32)(*(buf + 1)) << 16) +
-      ((png_int_32)(*(buf + 2)) << 8) +
-      (png_int_32)(*(buf + 3));
+   png_uint_32 uval = png_get_uint_32(buf);
+   if ((uval & 0x80000000L) == 0) /* non-negative */
+      return uval;
 
-   return (i);
+   uval = (uval ^ 0xffffffffL) + 1;  /* 2's complement: -x = ~x+1 */
+   return -(png_int_32)uval;
 }
 
 /* Grab an unsigned 16-bit integer from a buffer in big-endian format. */
-png_uint_16 PNGAPI
-png_get_uint_16(png_bytep buf)
+png_uint_16 (PNGAPI
+png_get_uint_16)(png_bytep buf)
 {
-   png_uint_16 i = (png_uint_16)(((png_uint_16)(*buf) << 8) +
-      (png_uint_16)(*(buf + 1)));
+   /* ANSI-C requires an int value to accomodate at least 16 bits so this
+    * works and allows the compiler not to worry about possible narrowing
+    * on 32 bit systems.  (Pre-ANSI systems did not make integers smaller
+    * than 16 bits either.)
+    */
+   unsigned int val =
+       ((unsigned int)(*buf) << 8) +
+       ((unsigned int)(*(buf + 1)));
 
-   return (i);
+   return (png_uint_16)val;
 }
 #endif /* PNG_USE_READ_MACROS */
+
+/* Read and check the PNG file signature */
+void /* PRIVATE */
+png_read_sig(png_structp png_ptr, png_infop info_ptr)
+{
+   png_size_t num_checked, num_to_check;
+
+   /* Exit if the user application does not expect a signature. */
+   if (png_ptr->sig_bytes >= 8)
+      return;
+
+   num_checked = png_ptr->sig_bytes;
+   num_to_check = 8 - num_checked;
+
+#ifdef PNG_IO_STATE_SUPPORTED
+   png_ptr->io_state = PNG_IO_READING | PNG_IO_SIGNATURE;
+#endif
+
+   /* The signature must be serialized in a single I/O call. */
+   png_read_data(png_ptr, &(info_ptr->signature[num_checked]), num_to_check);
+   png_ptr->sig_bytes = 8;
+
+   if (png_sig_cmp(info_ptr->signature, num_checked, num_to_check))
+   {
+      if (num_checked < 4 &&
+          png_sig_cmp(info_ptr->signature, num_checked, num_to_check - 4))
+         png_error(png_ptr, "Not a PNG file");
+
+      else
+         png_error(png_ptr, "PNG file corrupted by ASCII conversion");
+   }
+   if (num_checked < 3)
+      png_ptr->mode |= PNG_HAVE_PNG_SIGNATURE;
+}
 
 /* Read the chunk header (length + type name).
  * Put the type name into png_ptr->chunk_name, and return the length.
@@ -77,32 +125,31 @@ png_read_chunk_header(png_structp png_ptr)
    png_uint_32 length;
 
 #ifdef PNG_IO_STATE_SUPPORTED
-   /* Inform the I/O callback that the chunk header is being read.
-    * PNG_IO_CHUNK_HDR requires a single I/O call.
-    */
    png_ptr->io_state = PNG_IO_READING | PNG_IO_CHUNK_HDR;
 #endif
 
-   /* Read the length and the chunk name */
+   /* Read the length and the chunk name.
+    * This must be performed in a single I/O call.
+    */
    png_read_data(png_ptr, buf, 8);
    length = png_get_uint_31(png_ptr, buf);
 
-   /* Put the chunk name into png_ptr->chunk_name */
+   /* Put the chunk name into png_ptr->chunk_name. */
    png_memcpy(png_ptr->chunk_name, buf + 4, 4);
 
    png_debug2(0, "Reading %s chunk, length = %lu",
       png_ptr->chunk_name, length);
 
-   /* Reset the crc and run it over the chunk name */
+   /* Reset the crc and run it over the chunk name. */
    png_reset_crc(png_ptr);
    png_calculate_crc(png_ptr, png_ptr->chunk_name, 4);
 
-   /* Check to see if chunk name is valid */
+   /* Check to see if chunk name is valid. */
    png_check_chunk_name(png_ptr, png_ptr->chunk_name);
 
 #ifdef PNG_IO_STATE_SUPPORTED
-   /* Inform the I/O callback that chunk data will (possibly) be read.
-    * PNG_IO_CHUNK_DATA does NOT require a specific number of I/O calls.
+   /* It is unspecified how many I/O calls will be performed
+    * during the serialization of the chunk data.
     */
    png_ptr->io_state = PNG_IO_READING | PNG_IO_CHUNK_DATA;
 #endif
@@ -116,6 +163,7 @@ png_crc_read(png_structp png_ptr, png_bytep buf, png_size_t length)
 {
    if (png_ptr == NULL)
       return;
+
    png_read_data(png_ptr, buf, length);
    png_calculate_crc(png_ptr, buf, length);
 }
@@ -135,6 +183,7 @@ png_crc_finish(png_structp png_ptr, png_uint_32 skip)
    {
       png_crc_read(png_ptr, png_ptr->zbuf, png_ptr->zbuf_size);
    }
+
    if (i)
    {
       png_crc_read(png_ptr, png_ptr->zbuf, i);
@@ -149,11 +198,13 @@ png_crc_finish(png_structp png_ptr, png_uint_32 skip)
       {
          png_chunk_warning(png_ptr, "CRC error");
       }
+
       else
       {
          png_chunk_benign_error(png_ptr, "CRC error");
          return (0);
       }
+
       return (1);
    }
 
@@ -176,6 +227,7 @@ png_crc_error(png_structp png_ptr)
           (PNG_FLAG_CRC_ANCILLARY_USE | PNG_FLAG_CRC_ANCILLARY_NOWARN))
          need_crc = 0;
    }
+
    else                                                    /* critical */
    {
       if (png_ptr->flags & PNG_FLAG_CRC_CRITICAL_IGNORE)
@@ -183,11 +235,10 @@ png_crc_error(png_structp png_ptr)
    }
 
 #ifdef PNG_IO_STATE_SUPPORTED
-   /* Inform the I/O callback that the chunk CRC is being read */
-   /* PNG_IO_CHUNK_CRC requires the I/O to be done at once */
    png_ptr->io_state = PNG_IO_READING | PNG_IO_CHUNK_CRC;
 #endif
 
+   /* The chunk CRC must be serialized in a single I/O call. */
    png_read_data(png_ptr, crc_bytes, 4);
 
    if (need_crc)
@@ -195,6 +246,7 @@ png_crc_error(png_structp png_ptr)
       crc = png_get_uint_32(crc_bytes);
       return ((int)(crc != png_ptr->crc));
    }
+
    else
       return (0);
 }
@@ -203,7 +255,7 @@ png_crc_error(png_structp png_ptr)
     defined(PNG_READ_iCCP_SUPPORTED)
 static png_size_t
 png_inflate(png_structp png_ptr, const png_byte *data, png_size_t size,
-	png_bytep output, png_size_t output_size)
+        png_bytep output, png_size_t output_size)
 {
    png_size_t count = 0;
 
@@ -229,11 +281,12 @@ png_inflate(png_structp png_ptr, const png_byte *data, png_size_t size,
       if ((ret == Z_OK || ret == Z_STREAM_END) && avail > 0)
       {
          if (output != 0 && output_size > count)
-	 {
-	    int copy = output_size - count;
-	    if (avail < copy) copy = avail;
-	    png_memcpy(output + count, png_ptr->zbuf, copy);
-	 }
+         {
+            int copy = output_size - count;
+            if (avail < copy) copy = avail;
+            png_memcpy(output + count, png_ptr->zbuf, copy);
+         }
+
          count += avail;
       }
 
@@ -254,31 +307,35 @@ png_inflate(png_structp png_ptr, const png_byte *data, png_size_t size,
        * buffer if available.
        */
       {
-         char *msg, umsg[52];
-	 if (png_ptr->zstream.msg != 0)
-	    msg = png_ptr->zstream.msg;
-	 else
-	 {
+         PNG_CONST char *msg;
+         if (png_ptr->zstream.msg != 0)
+            msg = png_ptr->zstream.msg;
+         else
+         {
 #ifdef PNG_STDIO_SUPPORTED
-	    switch (ret)
-	    {
-	 case Z_BUF_ERROR:
-	    msg = "Buffer error in compressed datastream in %s chunk";
-	    break;
-	 case Z_DATA_ERROR:
-	    msg = "Data error in compressed datastream in %s chunk";
-	    break;
-	 default:
-	    msg = "Incomplete compressed datastream in %s chunk";
-	    break;
-	    }
+            char umsg[52];
 
-	    png_snprintf(umsg, sizeof umsg, msg, png_ptr->chunk_name);
-	    msg = umsg;
+            switch (ret)
+            {
+               case Z_BUF_ERROR:
+                  msg = "Buffer error in compressed datastream in %s chunk";
+                  break;
+
+               case Z_DATA_ERROR:
+                  msg = "Data error in compressed datastream in %s chunk";
+                  break;
+
+               default:
+                  msg = "Incomplete compressed datastream in %s chunk";
+                  break;
+            }
+
+            png_snprintf(umsg, sizeof umsg, msg, png_ptr->chunk_name);
+            msg = umsg;
 #else
-	    msg = "Damaged compressed datastream in chunk other than IDAT";
+            msg = "Damaged compressed datastream in chunk other than IDAT";
 #endif
-	 }
+         }
 
          png_warning(png_ptr, msg);
       }
@@ -313,9 +370,9 @@ png_decompress_chunk(png_structp png_ptr, int comp_type,
    else if (comp_type == PNG_COMPRESSION_TYPE_BASE)
    {
       png_size_t expanded_size = png_inflate(png_ptr,
-		(png_bytep)(png_ptr->chunkdata + prefix_size),
+                (png_bytep)(png_ptr->chunkdata + prefix_size),
                 chunklength - prefix_size,
-		0/*output*/, 0/*output size*/);
+                0/*output*/, 0/*output size*/);
 
       /* Now check the limits on this chunk - if the limit fails the
        * compressed data will be removed, the prefix will remain.
@@ -324,8 +381,10 @@ png_decompress_chunk(png_structp png_ptr, int comp_type,
       if (png_ptr->user_chunk_malloc_max &&
           (prefix_size + expanded_size >= png_ptr->user_chunk_malloc_max - 1))
 #else
+#  ifdef PNG_USER_CHUNK_MALLOC_MAX
       if ((PNG_USER_CHUNK_MALLOC_MAX > 0) &&
           prefix_size + expanded_size >= PNG_USER_CHUNK_MALLOC_MAX - 1)
+#  endif
 #endif
          png_warning(png_ptr, "Exceeded size limit while expanding chunk");
 
@@ -334,44 +393,50 @@ png_decompress_chunk(png_structp png_ptr, int comp_type,
        * and we have nothing to do - the code will exit through the
        * error case below.
        */
-      else if (expanded_size > 0)
+#if defined(PNG_SET_CHUNK_MALLOC_LIMIT_SUPPORTED) || \
+    defined(PNG_USER_CHUNK_MALLOC_MAX)
+      else
+#endif
+      if (expanded_size > 0)
       {
          /* Success (maybe) - really uncompress the chunk. */
-	 png_size_t new_size = 0;
-	 png_charp text = png_malloc_warn(png_ptr,
-			prefix_size + expanded_size + 1);
+         png_size_t new_size = 0;
+         png_charp text = png_malloc_warn(png_ptr,
+                        prefix_size + expanded_size + 1);
 
          if (text != NULL)
          {
-	    png_memcpy(text, png_ptr->chunkdata, prefix_size);
-	    new_size = png_inflate(png_ptr,
+            png_memcpy(text, png_ptr->chunkdata, prefix_size);
+            new_size = png_inflate(png_ptr,
                 (png_bytep)(png_ptr->chunkdata + prefix_size),
-		chunklength - prefix_size,
+                chunklength - prefix_size,
                 (png_bytep)(text + prefix_size), expanded_size);
-	    text[prefix_size + expanded_size] = 0; /* just in case */
+            text[prefix_size + expanded_size] = 0; /* just in case */
 
-	    if (new_size == expanded_size)
-	    {
-	       png_free(png_ptr, png_ptr->chunkdata);
-	       png_ptr->chunkdata = text;
-	       *newlength = prefix_size + expanded_size;
-	       return; /* The success return! */
-	    }
-      
-	    png_warning(png_ptr, "png_inflate logic error");
-	    png_free(png_ptr, text);
-	 }
-	 else
+            if (new_size == expanded_size)
+            {
+               png_free(png_ptr, png_ptr->chunkdata);
+               png_ptr->chunkdata = text;
+               *newlength = prefix_size + expanded_size;
+               return; /* The success return! */
+            }
+
+            png_warning(png_ptr, "png_inflate logic error");
+            png_free(png_ptr, text);
+         }
+
+         else
           png_warning(png_ptr, "Not enough memory to decompress chunk");
       }
    }
 
    else /* if (comp_type != PNG_COMPRESSION_TYPE_BASE) */
    {
+#ifdef PNG_STDIO_SUPPORTED
       char umsg[50];
 
-#ifdef PNG_STDIO_SUPPORTED
-      png_snprintf(umsg, sizeof umsg, "Unknown zTXt compression type %d", comp_type);
+      png_snprintf(umsg, sizeof umsg, "Unknown zTXt compression type %d",
+          comp_type);
       png_warning(png_ptr, umsg);
 #else
       png_warning(png_ptr, "Unknown zTXt compression type");
@@ -388,13 +453,13 @@ png_decompress_chunk(png_structp png_ptr, int comp_type,
       png_charp text = png_malloc_warn(png_ptr, prefix_size + 1);
       if (text != NULL)
       {
-	 if (prefix_size > 0)
+         if (prefix_size > 0)
             png_memcpy(text, png_ptr->chunkdata, prefix_size);
-	 png_free(png_ptr, png_ptr->chunkdata);
-	 png_ptr->chunkdata = text;
+         png_free(png_ptr, png_ptr->chunkdata);
+         png_ptr->chunkdata = text;
 
-	 /* This is an extra zero in the 'uncompressed' part. */
-	 *(png_ptr->chunkdata + prefix_size) = 0x00;
+         /* This is an extra zero in the 'uncompressed' part. */
+         *(png_ptr->chunkdata + prefix_size) = 0x00;
       }
       /* Ignore a malloc error here - it is safe. */
    }
@@ -890,9 +955,11 @@ png_handle_cHRM(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
                green_x, green_y, blue_x, blue_y);
 #else
             fprintf(stderr, "wx=%ld, wy=%ld, rx=%ld, ry=%ld\n",
-               int_x_white, int_y_white, int_x_red, int_y_red);
+               (long)int_x_white, (long)int_y_white,
+               (long)int_x_red, (long)int_y_red);
             fprintf(stderr, "gx=%ld, gy=%ld, bx=%ld, by=%ld\n",
-               int_x_green, int_y_green, int_x_blue, int_y_blue);
+               (long)int_x_green, (long)int_y_green,
+               (long)int_x_blue, (long)int_y_blue);
 #endif
 #endif /* PNG_CONSOLE_IO_SUPPORTED */
          }
@@ -1117,20 +1184,20 @@ png_handle_iCCP(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
 
    if (profile_size > profile_length)
    {
+#ifdef PNG_STDIO_SUPPORTED
+         char umsg[50];
+#endif
       png_free(png_ptr, png_ptr->chunkdata);
       png_ptr->chunkdata = NULL;
       png_warning(png_ptr, "Ignoring truncated iCCP profile");
 #ifdef PNG_STDIO_SUPPORTED
- {
-    char umsg[50];
 
-    png_snprintf(umsg, 50, "declared profile size = %lu",
-        (unsigned long)profile_size);
-    png_warning(png_ptr, umsg);
-    png_snprintf(umsg, 50, "actual profile length = %lu",
-        (unsigned long)profile_length);
-    png_warning(png_ptr, umsg);
- }
+      png_snprintf(umsg, 50, "declared profile size = %lu",
+          (unsigned long)profile_size);
+      png_warning(png_ptr, umsg);
+      png_snprintf(umsg, 50, "actual profile length = %lu",
+          (unsigned long)profile_length);
+      png_warning(png_ptr, umsg);
 #endif
       return;
    }
@@ -1802,6 +1869,7 @@ png_handle_sCAL(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
    if (png_ptr->chunkdata == NULL)
    {
       png_warning(png_ptr, "Out of memory while processing sCAL chunk");
+      png_crc_finish(png_ptr, length);
       return;
    }
    slength = (png_size_t)length;
@@ -1823,6 +1891,8 @@ png_handle_sCAL(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
    if (*vp)
    {
       png_warning(png_ptr, "malformed width string in sCAL chunk");
+      png_free(png_ptr, png_ptr->chunkdata);
+      png_ptr->chunkdata = NULL;
       return;
    }
 #else
@@ -1831,6 +1901,8 @@ png_handle_sCAL(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
    if (swidth == NULL)
    {
       png_warning(png_ptr, "Out of memory while processing sCAL chunk width");
+      png_free(png_ptr, png_ptr->chunkdata);
+      png_ptr->chunkdata = NULL;
       return;
    }
    png_memcpy(swidth, ep, png_strlen(ep));
@@ -1844,8 +1916,7 @@ png_handle_sCAL(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
    if (png_ptr->chunkdata + slength < ep)
    {
       png_warning(png_ptr, "Truncated sCAL chunk");
-#if defined(PNG_FIXED_POINT_SUPPORTED) && \
-    !defined(PNG_FLOATING_POINT_SUPPORTED)
+#if defined(PNG_FIXED_POINT_SUPPORTED) && !defined(PNG_FLOATING_POINT_SUPPORTED)
       png_free(png_ptr, swidth);
 #endif
       png_free(png_ptr, png_ptr->chunkdata);
@@ -1858,6 +1929,8 @@ png_handle_sCAL(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
    if (*vp)
    {
       png_warning(png_ptr, "malformed height string in sCAL chunk");
+      png_free(png_ptr, png_ptr->chunkdata);
+      png_ptr->chunkdata = NULL;
       return;
    }
 #else
@@ -1866,6 +1939,9 @@ png_handle_sCAL(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
    if (sheight == NULL)
    {
       png_warning(png_ptr, "Out of memory while processing sCAL chunk height");
+      png_free(png_ptr, png_ptr->chunkdata);
+      png_ptr->chunkdata = NULL;
+      png_free(png_ptr, swidth);
       return;
    }
    png_memcpy(sheight, ep, png_strlen(ep));
@@ -3086,17 +3162,10 @@ png_read_finish_row(png_structp png_ptr)
          {
             while (!png_ptr->idat_size)
             {
-               png_byte chunk_length[4];
-
                png_crc_finish(png_ptr, 0);
-
-               png_read_data(png_ptr, chunk_length, 4);
-               png_ptr->idat_size = png_get_uint_31(png_ptr, chunk_length);
-               png_reset_crc(png_ptr);
-               png_crc_read(png_ptr, png_ptr->chunk_name, 4);
+               png_ptr->idat_size = png_read_chunk_header(png_ptr);
                if (png_memcmp(png_ptr->chunk_name, png_IDAT, 4))
                   png_error(png_ptr, "Not enough image data");
-
             }
             png_ptr->zstream.avail_in = (uInt)png_ptr->zbuf_size;
             png_ptr->zstream.next_in = png_ptr->zbuf;

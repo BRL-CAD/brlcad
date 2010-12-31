@@ -1,0 +1,85 @@
+%!PS-Adobe-1.0
+%begin(plot)
+%%DocumentFonts:  Courier
+%%Title: es8-scale.ps
+%%Creator: MGED dm-ps.c
+%%BoundingBox: 0 0 324 324	% 4.5in square, for TeX
+%%EndComments
+
+4 setlinewidth
+
+% Sizes, made functions to avoid scaling if not needed
+/FntH /Courier findfont 80 scalefont def
+/DFntL { /FntL /Courier findfont 73.4 scalefont def } def
+/DFntM { /FntM /Courier findfont 50.2 scalefont def } def
+/DFntS { /FntS /Courier findfont 44 scalefont def } def
+
+% line styles
+/NV { [] 0 setdash } def	% normal vectors
+/DV { [8] 0 setdash } def	% dotted vectors
+/DDV { [8 8 32 8] 0 setdash } def	% dot-dash vectors
+/SDV { [32 8] 0 setdash } def	% short-dash vectors
+/LDV { [64 8] 0 setdash } def	% long-dash vectors
+
+/NEWPG {
+	.0791 .0791 scale	% 0-4096 to 324 units (4.5 inches)
+} def
+
+FntH  setfont
+NEWPG
+NV newpath 2048 2048 moveto 2049 2049 lineto stroke
+NV newpath 2306 1526 moveto 2306 3115 lineto stroke
+newpath 2306 3115 moveto 2824 3489 lineto stroke
+newpath 2824 3489 moveto 2824 1899 lineto stroke
+newpath 798 1647 moveto 2306 1526 lineto stroke
+newpath 2306 1526 moveto 2824 1899 lineto stroke
+newpath 2824 1899 moveto 1271 2023 lineto stroke
+newpath 798 1683 moveto 1271 2023 lineto stroke
+newpath 1271 2023 moveto 1271 3613 lineto stroke
+newpath 2306 3115 moveto 798 3236 lineto stroke
+newpath 798 3272 moveto 1271 3613 lineto stroke
+newpath 1271 3613 moveto 2824 3489 lineto stroke
+NV newpath 0 0 moveto 4095 0 lineto stroke
+NV newpath 4095 0 moveto 4095 4095 lineto stroke
+NV newpath 4095 4095 moveto 0 4095 lineto stroke
+NV newpath 0 4095 moveto 0 0 lineto stroke
+NV newpath 0 218 moveto 4095 218 lineto stroke
+DFntM (SOL EDIT) 115 3968 moveto show
+NV newpath 798 3893 moveto 0 3893 lineto stroke
+NV newpath 798 3893 moveto 798 4095 lineto stroke
+NV newpath 798 3908 moveto 0 3908 lineto stroke
+DFntS (*SOLID EDIT*) 115 3848 moveto show
+NV newpath 798 3788 moveto 0 3788 lineto stroke
+DFntS (edit menu) 115 3728 moveto show
+NV newpath 798 3668 moveto 0 3668 lineto stroke
+DFntS (Rotate) 115 3608 moveto show
+NV newpath 798 3548 moveto 0 3548 lineto stroke
+DFntS (Translate) 115 3488 moveto show
+NV newpath 798 3428 moveto 0 3428 lineto stroke
+DFntS (Scale) 115 3368 moveto show
+NV newpath 798 3308 moveto 0 3308 lineto stroke
+DFntS ((BUTTON MENU)) 115 3248 moveto show
+NV newpath 798 3188 moveto 0 3188 lineto stroke
+DFntS (==>) 0 3248 moveto show
+NV newpath 798 3907 moveto 798 3188 lineto stroke
+DFntS (1) 2321 1541 moveto show
+DFntS (2) 2321 3131 moveto show
+DFntS (3) 2840 3504 moveto show
+DFntS (4) 2840 1915 moveto show
+DFntS (5) 768 1666 moveto show
+DFntS (6) 768 3255 moveto show
+DFntS (7) 1287 3629 moveto show
+DFntS (8) 1287 2039 moveto show
+DFntM (** SOLID -- arb8:) 798 3968 moveto show
+DFntS (	1 (1.0000, -1.0000, -1.0000)) 798 3878 moveto show
+DFntS (	2 (1.0000, 3.0000, -1.0000)) 798 3818 moveto show
+DFntS (	3 (1.0000, 3.0000, 3.0000)) 798 3758 moveto show
+DFntS (	4 (1.0000, -1.0000, 3.0000)) 798 3698 moveto show
+DFntS (	5 (-3.0000, -1.0000, -1.0000)) 798 3638 moveto show
+DFntS (	6 (-3.0000, 3.0000, -1.0000)) 798 3578 moveto show
+DFntS (	7 (-3.0000, 3.0000, 3.0000)) 798 3518 moveto show
+DFntS (	8 (-3.0000, -1.0000, 3.0000)) 798 3458 moveto show
+DFntM ( cent=(0.000, 0.000, 0.000), sz=10.000 MILLIMETERS, ang=(0.00, 0.00, 0.00)) 0 128 moveto show
+DFntM ( Path: /arb8) 0 38 moveto show
+% showpage	% uncomment to use raw file
+%end(plot)

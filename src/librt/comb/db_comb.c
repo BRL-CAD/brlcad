@@ -357,7 +357,7 @@ rt_comb_import4(
 	comb->GIFTmater = rp[0].c.c_material;
 	comb->los = rp[0].c.c_los;
     } else {
- 	/* set some reasonable defaults */
+	/* set some reasonable defaults */
 	comb->region_id = 0;
 	comb->aircode = 0;
 	comb->GIFTmater = 0;
@@ -880,7 +880,7 @@ rt_comb_ifree(struct rt_db_internal *ip)
 
     if (comb) {
 	/* If tree hasn't been stolen, release it */
-	if (comb->tree) db_free_tree(comb->tree, &rt_uniresource);
+	db_free_tree(comb->tree, &rt_uniresource);
 	comb->tree = NULL;
 
 	bu_vls_free(&comb->shader);

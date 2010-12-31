@@ -36,7 +36,7 @@
 
 
 /*
- *			M K _ E B M
+ * M K _ E B M
  */
 int
 mk_ebm(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim, fastf_t tallness, const matp_t mat)
@@ -46,18 +46,19 @@ mk_ebm(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim
     /* Z extrusion height (mm) */
     /* convert local coords to model space */
 {
-    struct rt_ebm_internal	*ebm;
+    struct rt_ebm_internal *ebm;
 
-    BU_GETSTRUCT( ebm, rt_ebm_internal );
+    BU_GETSTRUCT(ebm, rt_ebm_internal);
     ebm->magic = RT_EBM_INTERNAL_MAGIC;
-    bu_strlcpy( ebm->file, file, RT_EBM_NAME_LEN );
+    bu_strlcpy(ebm->file, file, RT_EBM_NAME_LEN);
     ebm->xdim = xdim;
     ebm->ydim = ydim;
     ebm->tallness = tallness;
-    MAT_COPY( ebm->mat, mat );
+    MAT_COPY(ebm->mat, mat);
 
-    return wdb_export( fp, name, (genptr_t)ebm, ID_EBM, mk_conv2mm );
+    return wdb_export(fp, name, (genptr_t)ebm, ID_EBM, mk_conv2mm);
 }
+
 
 /*
  * Local Variables:

@@ -2128,7 +2128,9 @@ GetFontFamilyName(
 
     /*
      * QuickDraw font names are encoded with the script that the font uses.
-     * So we determine that encoding and than we reencode the name.
+     * So we determine that encoding and than we reencode the name.  We
+     * pre-set the encoding with the default value, so we do not need to
+     * check result codes here.
      */
 
     encoding = kTextEncodingMacRoman;
@@ -2145,12 +2147,20 @@ GetFontFamilyName(
      * have seen CFStringGetCString() crash with invalid encoding ids. But
      * than if that happens it would be a bug in
      * FMGetFontFamilyTextEncoding() or RevertTextEncodingToScriptInfo().
+     * Another problem is that users have seen CFStringCreate return null
+     * (Bug #2548661).  This is due to font names with a bad encoding.
      */
 
     cfString = CFStringCreateWithPascalStringNoCopy(
 	    NULL, nativeName, nameencoding, kCFAllocatorNull);
-    CFStringGetCString(
-	    cfString, name, numBytes, kCFStringEncodingUTF8);
+    if (cfString == NULL) {
+        TkMacOSXDbgMsg("CFStringCreate: "
+                "'%.*s' could not be decoded with encoding %d",
+                nativeName[0], nativeName+1, (int) nameencoding);
+        return kTextMalformedInputErr;
+    }
+
+    CFStringGetCString(cfString, name, numBytes, kCFStringEncodingUTF8);
     CFRelease(cfString);
 
     return noErr;

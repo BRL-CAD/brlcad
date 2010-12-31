@@ -3108,6 +3108,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    bu_vls_printf(&gedp->ged_result_str, "%s", argv[1]);
     return GED_OK;
 }
 

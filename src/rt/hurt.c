@@ -174,7 +174,7 @@ struct bu_structparse set_parse[] = {
     {"%d",	1, "height",	bu_byteoffset(height),		BU_STRUCTPARSE_FUNC_NULL, "height", &height },
     {"%f",	1, "perspective", bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL, "perspective", &rt_perspective },
     {"%f",	1, "angle",	bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL, "angle", &rt_perspective },
-    {"i", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL, "params", NULL },
+    {"%p", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL, "params", NULL },
     {"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -269,7 +269,7 @@ int main(int argc, char **argv)
     }
 
     if ( bu_optind >= argc )  {
-	fprintf(stderr, "%s:  MGED database not specified\n", argv[0]);
+	fprintf(stderr, "%s:  BRL-CAD geometry database not specified\n", argv[0]);
 	(void)fputs(usage, stderr);
 	return 1;
     }
@@ -760,7 +760,7 @@ int cm_lookat_pt(int argc, char **argv)
      *  different from the lookat point or the lookat point will
      *  be from the "front"
      */
-    if (VAPPROXEQUAL(pt, eye_model, VDIVIDE_TOL)) {
+    if (VNEAR_EQUAL(pt, eye_model, VDIVIDE_TOL)) {
 	VSETALLN(quat, 0.5, 4);
 	quat_quat2mat(Viewrotscale, quat); /* front */
     } else {

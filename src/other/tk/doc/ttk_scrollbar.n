@@ -17,6 +17,7 @@ ttk::scrollbar \- Control the viewport of a scrollable widget
 \fBttk::scrollbar\fR \fIpathName \fR?\fIoptions...\fR?
 .BE
 .SH DESCRIPTION
+.PP
 \fBttk::scrollbar\fR widgets are typically linked to an associated window
 that displays a document of some sort, such as a file being edited or a
 drawing.
@@ -48,6 +49,7 @@ or \fByview\fR (for vertical scrollbars).
 One of \fBhorizontal\fR or \fBvertical\fR.
 Specifies the orientation of the scrollbar.
 .SH "WIDGET COMMAND"
+.PP
 .TP
 \fIpathName \fBcget\fR \fIoption\fR
 Returns the current value of the specified \fIoption\fR; see \fIttk::widget(n)\fR.
@@ -75,6 +77,7 @@ Specifies the visible range to be displayed.
 \fIpathName \fBstate\fR ?\fIstateSpec\fR?
 Modify or query the widget state; see \fIttk::widget(n)\fR.
 .SH "INTERNAL COMMANDS"
+.PP
 The following widget commands are used internally
 by the TScrollbar widget class bindings.
 .TP
@@ -99,6 +102,7 @@ widget.
 If \fIx\fR and \fIy\fR refer to a point outside the trough, the closest
 point in the trough is used.
 .SH "SCROLLING COMMANDS"
+.PP
 When the user interacts with the scrollbar, for example by dragging
 the thumb, the scrollbar notifies the associated widget that it
 must change its view.
@@ -134,12 +138,14 @@ is a slight overlap between the old and new views.
 become visible, or \-1, which means that the previous page should
 become visible.
 .SH "WIDGET STATES"
+.PP
 The scrollbar automatically sets the \fBdisabled\fR state bit.
 when the entire range is visible (range is 0.0 to 1.0),
 and clears it otherwise.
 It also sets the \fBactive\fR and \fBpressed\fR state flags
 of individual elements, based on the position and state of the mouse pointer.
 .SH EXAMPLE
+.PP
 .CS
 set f [frame .f]
 ttk::scrollbar $f.hsb \-orient horizontal \-command [list $f.t xview]
@@ -155,3 +161,6 @@ grid rowconfigure $f 0 \-weight 1
 ttk::widget(n), scrollbar(n)
 .SH KEYWORDS
 scrollbar, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

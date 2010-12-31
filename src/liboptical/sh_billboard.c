@@ -115,7 +115,7 @@ struct bu_structparse bbd_print_tab[] = {
     {"",    0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 struct bu_structparse bbd_parse_tab[] = {
-    {"i", bu_byteoffset(bbd_print_tab[0]), "bbd_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
+    {"%p", bu_byteoffset(bbd_print_tab[0]), "bbd_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
     {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -347,7 +347,7 @@ plot_ray_img(struct application	*ap,
     /* red line from ray origin to hit point */
     VJOIN1(pp->pt_inhit->hit_point, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
 	   ap->a_ray.r_dir);
-    if (VAPPROXEQUAL(ap->a_ray.r_pt, pp->pt_inhit->hit_point, 0.125)) {
+    if (VNEAR_EQUAL(ap->a_ray.r_pt, pp->pt_inhit->hit_point, 0.125)) {
 	/* start and hit point identical, make special allowance */
 	vect_t vtmp;
 

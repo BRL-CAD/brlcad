@@ -77,11 +77,11 @@ the build instructions.
 #
 #		static  =  Builds a static library of the core instead of a
 #			   dll.  The shell will be static (and large), as well.
-#		msvcrt  =  Effects the static option only to switch it from
+#		msvcrt  =  Affects the static option only to switch it from
 #			   using libcmt(d) as the C runtime [by default] to
 #			   msvcrt(d). This is useful for static embedding
 #			   support.
-#		staticpkg = Effects the static option only to switch
+#		staticpkg = Affects the static option only to switch
 #			   tclshXX.exe to have the dde and reg extension linked
 #			   inside it.
 #		threads =  Turns on full multithreading support.
@@ -574,12 +574,8 @@ $(TCLPIPEDLL): $(WINDIR)\stub16.c
 	$(_VC_MANIFEST_EMBED_DLL)
 
 !if $(STATIC_BUILD)
-!if $(TCL_USE_STATIC_PACKAGES)
-$(TCLDDELIB):
-!else
 $(TCLDDELIB): $(TMP_DIR)\tclWinDde.obj
-	$(lib32) -nologo -out:$@ $(TMP_DIR)\tclWinDde.obj
-!endif
+	$(lib32) -nologo -out:$@ $**
 !else
 $(TCLDDELIB): $(TMP_DIR)\tclWinDde.obj $(TCLSTUBLIB)
 	$(link32) $(dlllflags) -base:@$(WINDIR)\coffbase.txt,tcldde -out:$@ \
@@ -590,12 +586,8 @@ $(TCLDDELIB): $(TMP_DIR)\tclWinDde.obj $(TCLSTUBLIB)
 !endif
 
 !if $(STATIC_BUILD)
-!if $(TCL_USE_STATIC_PACKAGES)
-$(TCLREGLIB):
-!else
 $(TCLREGLIB): $(TMP_DIR)\tclWinReg.obj
-	$(lib32) -nologo -out:$@ $(TMP_DIR)\tclWinReg.obj
-!endif
+	$(lib32) -nologo -out:$@ $**
 !else
 $(TCLREGLIB): $(TMP_DIR)\tclWinReg.obj $(TCLSTUBLIB)
 	$(link32) $(dlllflags) -base:@$(WINDIR)\coffbase.txt,tclreg -out:$@ \

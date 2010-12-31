@@ -681,6 +681,17 @@ test menu-3.29 {MenuWidgetCmd procedure, "delete" option} {
     .m1 activate 3
     list [catch {.m1 delete 1} msg] $msg [destroy .m1]
 } {0 {} {}}
+test menu-3.29+1 {MenuWidgetCmd, "delete", Bug 220950} -setup {
+    destroy .m1
+} -body {
+    menu .m1
+    .m1 add command -label "bogus"
+    .m1 add command -label "ok"
+    .m1 delete 10 20
+    .m1 entrycget last -label
+} -cleanup {
+    destroy .m1
+} -result ok
 test menu-3.30 {MenuWidgetCmd procedure, "entrycget" option} {
     catch {destroy .m1}
     menu .m1
@@ -2132,6 +2143,38 @@ test menu-22.2 {GetIndexFromCoords} {
     .m1 add command -label "test"
     .m1 configure -tearoff 0
     list [catch {.m1 index @5,5} msg] $msg [destroy .m1]
+} {0 0 {}}
+test menu-22.3 {GetIndexFromCoords: mapped window, y only} unix {
+    catch {destroy .m1}
+    menu .m1
+    .m1 add command -label "test"
+    .m1 configure -tearoff 0
+    tk_popup .m1 0 0
+    tkwait visibility .m1
+    list [catch {.m1 index @5} msg] $msg [destroy .m1]
+} {0 0 {}}
+test menu-22.4 {GetIndexFromCoords: mapped window x,y} unix {
+    catch {destroy .m1}
+    menu .m1
+    .m1 add command -label "test"
+    .m1 configure -tearoff 0
+    tk_popup .m1 0 0
+    tkwait visibility .m1
+    update
+    set x [expr {[winfo width .m1] - [.m1 cget -borderwidth] - 1}]
+    list [catch {.m1 index @$x,5} msg] $msg [destroy .m1]
+} {0 0 {}}
+test menu-22.5 {GetIndexFromCoords: mapped wide window} unix {
+    catch {destroy .m1}
+    menu .m1
+    .m1 add command -label "test"
+    .m1 configure -tearoff 0
+    tk_popup .m1 0 0
+    tkwait visibility .m1
+    wm geometry .m1 200x100
+    update
+    set x [expr {[winfo width .m1] - [.m1 cget -borderwidth] - 1}]
+    list [catch {.m1 index @$x,5} msg] $msg [destroy .m1]
 } {0 0 {}}
 
 test menu-23.1 {RecursivelyDeleteMenu} {

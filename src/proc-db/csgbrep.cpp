@@ -43,6 +43,9 @@ extern "C" {
 
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
+    /* FIXME: go through the table interface since these are not
+     * external symbols available to calling applications.
+     */
     extern void rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol,const struct bn_tol *tol);
     extern void rt_arb8_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
     extern void rt_arbn_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);

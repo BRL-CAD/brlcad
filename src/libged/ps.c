@@ -90,7 +90,7 @@ ged_draw_ps_header(FILE *fp, char *font, char *title, char *creator, int linewid
 FntH  setfont\n\
 NEWPG\n\
 ",
-	    linewidth, font, font, font, font, scale, scale, xoffset, yoffset);
+	    linewidth, font, font, font, font, xoffset, yoffset, scale, scale);
 }
 
 static void
@@ -248,7 +248,7 @@ ged_draw_ps_body(struct ged *gedp, FILE *fp)
 	VSET(l, -1.0, -1.0, -1.0);
 	VSET(h, 1.0, 1.0, 200.0);
 
-	if (gedp->ged_gvp->gv_eye_pos[Z] == 1.0) {
+	if (NEAR_ZERO(gedp->ged_gvp->gv_eye_pos[Z] - 1.0, SMALL_FASTF)) {
 	    /* This way works, with reasonable Z-clipping */
 	    ged_persp_mat(perspective_mat, gedp->ged_gvp->gv_perspective,
 			  (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
@@ -345,7 +345,7 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 	    border = 1;
 	    break;
 	case 'c':
-	    if (sscanf(bu_optarg, "%d/%d/%d", &r, &g, &b) != 3) {
+	    if (sscanf(bu_optarg, "%d%*c%d%*c%d", &r, &g, &b) != 3) {
 		bu_vls_printf(&gedp->ged_result_str, "%s: bad color - %s", argv[0], bu_optarg);
 		return GED_ERROR;
 	    }

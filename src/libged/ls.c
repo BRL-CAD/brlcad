@@ -421,11 +421,6 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
-    if (MAXARGS < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
     bu_vls_init(&vls);
 
     bu_optind = 1;	/* re-init bu_getopt() */

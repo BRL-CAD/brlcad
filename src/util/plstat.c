@@ -226,7 +226,7 @@ outchar(int n)
 
 
 void
-outstring(int n)
+outstring(int UNUSED(n))
 {
     int c;
 

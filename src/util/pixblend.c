@@ -35,7 +35,9 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <sys/time.h>
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+#endif
 #include <string.h>
 #include "bio.h"
 
@@ -234,39 +236,43 @@ main(int argc, char **argv)
 		    double d;
 		    extern double drand48(void);
 		    d = drand48();
-		    if (d >= value) {
+		    if (d >= value)
 #else
-			int r;
-			r = random() & 0xffff;
-			if (r >= threshold) {
+		    int r;
+		    r = random() & 0xffff;
+		    if (r >= threshold)
 #endif
-			    cb3[0] = cb1[0];
-			    cb3[1] = cb1[1];
-			    cb3[2] = cb1[2];
-			} else {
+		    {
+			cb3[0] = cb1[0];
+			cb3[1] = cb1[1];
+			cb3[2] = cb1[2];
+		    } else {
+			if (
 #ifdef HAVE_DRAND48
-			    if (d >= gvalue) {
+			    d >= gvalue
 #else
-				if (r >= gthreshold) {
+			    r >= gthreshold
 #endif
-				    cb3[0] = cb2[0];
-				    cb3[1] = cb2[1];
-				    cb3[2] = cb2[2];
-				} else {
-				    cb3[0] = cb3[1] = cb3[2] = 255;
-				}
+			    ) {
+				cb3[0] = cb2[0];
+				cb3[1] = cb2[1];
+				cb3[2] = cb2[2];
+			    } else {
+				cb3[0] = cb3[1] = cb3[2] = 255;
 			    }
-			    cb1 += 3;
-			    cb2 += 3;
-			    cb3 += 3;
-			    todo -= 3;
-			}
 		    }
+		    cb1 += 3;
+		    cb2 += 3;
+		    cb3 += 3;
+		    todo -= 3;
 		}
-		fwrite(b3, 1, len, stdout);
 	    }
-	    bu_exit (0, NULL);
 	}
+	fwrite(b3, 1, len, stdout);
+    }
+
+    return 0;
+}
 
 /*
  * Local Variables:

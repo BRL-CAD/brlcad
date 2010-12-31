@@ -42,11 +42,12 @@
 extern void dm_var_init(struct dm_list *initial_dm_list);
 
 int
-Plot_dm_init(struct dm_list *o_dm_list, int argc, char **argv)
+Plot_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[])
 {
     dm_var_init(o_dm_list);
 
-    if ((dmp = dm_open(interp, DM_TYPE_PLOT, argc, argv)) == DM_NULL)
+    dmp = dm_open(INTERP, DM_TYPE_PLOT, argc, argv);
+    if (dmp == DM_NULL)
 	return TCL_ERROR;
 
     return TCL_OK;

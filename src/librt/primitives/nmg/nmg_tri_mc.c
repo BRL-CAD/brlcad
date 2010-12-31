@@ -432,14 +432,15 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
 	valids++;
 
 	memset((char *)vertl, 0, sizeof(vertl));
-
 	/* LOCK */
+	bu_semaphore_acquire(RT_SEM_WORKER);
+
 	fu = nmg_cmface(s, f_vertl, 3);
 
 	nmg_vertex_gv(vertl[0], edges[vi[0]]);
 	nmg_vertex_gv(vertl[1], edges[vi[1]]);
 	nmg_vertex_gv(vertl[2], edges[vi[2]]);
-	if (nmg_calc_face_g(fu))
+	if (nmg_calc_face_g(fu))	/* this flips out and spins. */
 	    nmg_kfu(fu);
 
 	if(nmg_fu_planeeqn(fu, tol))
@@ -449,6 +450,7 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
 		    DIST_PT_PT(edges[vi[0]],edges[vi[2]]),
 		    DIST_PT_PT(edges[vi[1]],edges[vi[2]]));
 	/* UNLOCK */
+	bu_semaphore_release(RT_SEM_WORKER);
 
 	vi+=3;
     }
@@ -649,43 +651,41 @@ rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, f
     return count;
 }
 
-/* rtip needs to be valid, s is where the results are stashed */
-int
-nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
-{
-    struct application a;
-    fastf_t x, y, z, endx, endy;
-    fastf_t step = 0.0;
+
+struct mci_s {
+    struct shell *s;	/* where to put it. */
+    double step;
+    struct rt_i *rtip;
+    const struct bn_tol *tol;
+    struct resource *resources;
+    fastf_t endx, endy;
+    unsigned long count;
     int ncpu;
-    int count = 0;
+};
+
+static void
+fire_row(int cpu, void * ptr)
+{
+    struct mci_s *m = (struct mci_s *)ptr;
+    struct application a;
     struct whack prim[4][MAX_INTERSECTS];
     struct whack *primp[4];
+    fastf_t x, y, z;
+    unsigned long count = 0;
 
     RT_APPLICATION_INIT(&a);
-    a.a_rt_i = rtip;
+    a.a_rt_i = m->rtip;
     a.a_rt_i->useair = 1;
     a.a_hit = bangbang;
     a.a_miss = missed;
     a.a_onehit = MAX_INTERSECTS;
+    a.a_resource = m->resources + cpu;
 
-    ncpu = bu_avail_cpus();
+    x=bin(a.a_rt_i->mdl_min[X], m->step) - m->step + (m->step * cpu);
 
-    rt_gettree( a.a_rt_i, db_path_to_string(pathp) );
-    rt_prep( a.a_rt_i );
-
-    /* use rel value * bounding spheres diameter or the abs tolerance */
-    step = NEAR_ZERO(ttol->abs, tol->dist) ? 0.5 * a.a_rt_i->rti_radius * ttol->rel : ttol->abs;
-
-    x=bin(a.a_rt_i->mdl_min[X], step) - step;
-    endx=bin(a.a_rt_i->mdl_max[X], step) + step;
-    endy=bin(a.a_rt_i->mdl_max[Y], step) + step;
-
-    bu_log("Firing %s at %g\n", db_path_to_string(pathp), step);
-
-    /* TODO: throw "ncpu" threads here? */
-    for(; x<endx; x+=step) {
-	y=bin(a.a_rt_i->mdl_min[Y], step) - step;
-	for(; y<endy; y+=step) {
+    for(; x<m->endx; x += m->step * (fastf_t)m->ncpu) {
+	y=bin(a.a_rt_i->mdl_min[Y], m->step) - m->step;
+	for(; y<m->endy; y+=m->step) {
 	    int i, j;
 
 	    for(i=0;i<4;i++)
@@ -693,37 +693,69 @@ nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *
 
 	    for(i=0;i<4;i++)
 		for(j=0;j<MAX_INTERSECTS-1;j++) {
-		    prim[i][j].in = 0; 
+		    prim[i][j].in = 0;
 		    VSETALL(prim[i][j].hit, VOODOO);
 		}
 
-	    z = bin(a.a_rt_i->mdl_min[Z] - tol->dist - step, step);
+	    z = bin(a.a_rt_i->mdl_min[Z] - m->tol->dist - m->step, m->step);
 
 	    VSET(a.a_ray.r_dir, 0, 0, 1);
-	    a.a_uptr = primp[0]; 
-	    VSET(a.a_ray.r_pt, x, y, z); 
+	    a.a_uptr = primp[0];
+	    VSET(a.a_ray.r_pt, x, y, z);
 	    rt_shootray(&a);
 
-	    a.a_uptr = primp[1]; 
-	    VSET(a.a_ray.r_pt, x+step, y, z); 
+	    a.a_uptr = primp[1];
+	    VSET(a.a_ray.r_pt, x+m->step, y, z);
 	    rt_shootray(&a);
 
-	    a.a_uptr = primp[2]; 
-	    VSET(a.a_ray.r_pt, x, y+step, z); 
+	    a.a_uptr = primp[2];
+	    VSET(a.a_ray.r_pt, x, y+m->step, z);
 	    rt_shootray(&a);
 
-	    a.a_uptr = primp[3]; 
-	    VSET(a.a_ray.r_pt, x+step, y+step, z); 
+	    a.a_uptr = primp[3];
+	    VSET(a.a_ray.r_pt, x+m->step, y+m->step, z);
 	    rt_shootray(&a);
 
 	    z = +INFINITY;
 
-	    count += rt_nmg_mc_pew(s, primp, &a, x, y, z, step, tol);
+	    count += rt_nmg_mc_pew(m->s, primp, &a, x, y, z, m->step, m->tol);
 	}
     }
+    bu_log("%d done, %d\n", cpu, count);
+    m->count += count;
     /* free the rt stuff we don't need anymore */
+}
 
-    return count;
+/* rtip needs to be valid, s is where the results are stashed */
+int
+nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+{
+    struct mci_s m;
+    int i;
+
+    m.s = s;
+    m.rtip = rtip;
+    m.tol = tol;
+    m.count = 0;
+
+    m.ncpu = bu_avail_cpus();
+    m.ncpu = 1; /* seems to be an issue with confused loop calculation in the NMG code. */
+    m.resources = bu_malloc(m.ncpu * sizeof(struct resource), "Resource array");
+    for(i=0;i<m.ncpu;i++)
+	rt_init_resource(&m.resources[i], i, rtip);
+
+    rt_gettree( rtip, db_path_to_string(pathp) );
+    rt_prep_parallel(rtip, m.ncpu);
+
+    /* use rel value * bounding spheres diameter or the abs tolerance */
+    m.step = NEAR_ZERO(ttol->abs, tol->dist) ? 0.5 * rtip->rti_radius * ttol->rel : ttol->abs;
+
+    m.endx=bin(rtip->mdl_max[X], m.step) + m.step;
+    m.endy=bin(rtip->mdl_max[Y], m.step) + m.step;
+
+    bu_parallel(fire_row, m.ncpu, &m);
+
+    return m.count;
 }
 
 void

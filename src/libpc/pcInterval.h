@@ -39,7 +39,7 @@ public:
     Interval(const T l, const T h, const T s);
     
     /** Data access & modification methods */
-    void assign(const T l, const T h,const T s);
+    void assign(const T l, const T h, const T s);
     void setLow(const T l);
     void setHigh(const T h);
     void setStep(const T s);
@@ -61,6 +61,7 @@ private:
     T step;
 };
 
+
 /* Interval Class Functions */
 
 template<class T>
@@ -68,6 +69,7 @@ Interval<T>::Interval()
 {
 
 }
+
 
 template<class T>
 Interval<T>::Interval(T l, T h, T s) : 
@@ -77,6 +79,7 @@ Interval<T>::Interval(T l, T h, T s) :
 {
 }
 
+
 template<class T>
 void Interval<T>::assign(const T l, const T h, const T s)
 {
@@ -85,11 +88,13 @@ void Interval<T>::assign(const T l, const T h, const T s)
     step = s;
 }
 
+
 template<class T>
 void Interval<T>::setLow(const T l)
 {
     low = l;
 }
+
 
 template<class T>
 void Interval<T>::setHigh(const T h)
@@ -97,11 +102,13 @@ void Interval<T>::setHigh(const T h)
     high = h;
 }
 
+
 template<class T>
 void Interval<T>::setStep(const T s)
 {
     step = s;
 }
+
 
 template<class T>
 T Interval<T>::getLow()
@@ -109,11 +116,13 @@ T Interval<T>::getLow()
     return low;
 }
 
+
 template<class T>
 T Interval<T>::getHigh()
 {
     return high;
 }
+
 
 template<class T>
 T Interval<T>::getStep()
@@ -121,11 +130,13 @@ T Interval<T>::getStep()
     return step;
 }
 
+
 template<class T>
 T Interval<T>::getWidth()
 {
     return high-low;
 }
+
 
 template<class T>
 bool Interval<T>::inInterval(T t)
@@ -136,6 +147,7 @@ bool Interval<T>::inInterval(T t)
 	return false;
 }
 
+
 template<class T>
 bool Interval<T>::isUnique()
 {
@@ -145,12 +157,13 @@ bool Interval<T>::isUnique()
 	return false;
 }
 
+
 template<class T>
 bool Interval<T>::operator<(Interval<T> &U) const
 {
-    /*  Ensure high<low etc. here?
-	if(low<U.getLow()) {
-	if(high<U.getLow())
+    /* Ensure high<low etc. here?
+	if (low<U.getLow()) {
+	if (high<U.getLow())
 	return true;
 	else {
 	return false;
@@ -163,6 +176,7 @@ bool Interval<T>::operator<(Interval<T> &U) const
 	return false;
 }
 
+
 template<class T>
 bool Interval<T>::operator>(Interval<T> &U) const
 {
@@ -171,6 +185,7 @@ bool Interval<T>::operator>(Interval<T> &U) const
     else
 	return false;
 }
+
 
 #endif
 /** @} */

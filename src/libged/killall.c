@@ -41,6 +41,7 @@ ged_killall(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[-n] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
@@ -51,11 +52,6 @@ ged_killall(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
-    }
-
-    if (MAXARGS < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
     }
 
     /* Process the -n option */

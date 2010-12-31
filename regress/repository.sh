@@ -50,11 +50,11 @@ FAILED=0
 # make sure nobody includes bio.h in a public header
 echo "running bio.h public header check..."
 
-if test ! -f "$TOPSRC/include/bio.h" ; then
+if test ! -f "${TOPSRC}/include/bio.h" ; then
     echo "Unable to find include/bio.h, aborting"
     exit 1
 fi
-FOUND="`grep '[^f]bio.h' $TOPSRC/include/*.h | grep -v 'include/bio.h'`"
+FOUND="`grep '[^f]bio.h' ${TOPSRC}/include/*.h | grep -v 'include/bio.h'`"
 if test "x$FOUND" = "x" ; then
     echo "-> bio.h check succeeded"
 else
@@ -66,7 +66,7 @@ fi
 # make sure common.h is always included first
 echo "running common.h inclusion order check..."
 
-if test ! -f "$TOPSRC/include/common.h" ; then
+if test ! -f "${TOPSRC}/include/common.h" ; then
     echo "Unable to find include/common.h, aborting"
     exit 1
 fi
@@ -99,7 +99,7 @@ fi
 
 # make sure every configure option is documented
 FOUND=
-for i in `grep ARG_ENABLE configure.ac | sed 's/[^,]*,\([^,]*\).*/\1/' | awk '{print $1}' | sed 's/\[\(.*\)\]/\1/g'` ; do
+for i in `grep ARG_ENABLE ${TOPSRC}/configure.ac | sed 's/[^,]*,\([^,]*\).*/\1/' | awk '{print $1}' | sed 's/\[\(.*\)\]/\1/g'` ; do
     if test "x`grep "enable-$i" INSTALL`" = "x" ; then
 	echo "--enable-$i is not documented in INSTALL"
 	FOUND=1
@@ -117,12 +117,12 @@ fi
 # support for per-target CPPFLAGS wasn't added until automake 1.7
 echo "running CPPFLAGS check..."
 
-if test ! -f "$TOPSRC/Makefile.am" ; then
+if test ! -f "${TOPSRC}/Makefile.am" ; then
     echo "Unable to find the top-level Makefile.am, aborting"
     exit 1
 fi
 
-AMFILES="`find $TOPSRC -type f -name Makefile.am -exec grep -n -I -e '_CPPFLAGS[[:space:]]*=' {} /dev/null \; | grep -v 'AM_CPPFLAGS' | grep -v 'BREP_CPPFLAGS' | grep -v 'DM_RTGL_CPPFLAGS' | awk '{print $1}'`"
+AMFILES="`find ${TOPSRC} -type f -name Makefile.am -exec grep -n -I -e '_CPPFLAGS[[:space:]]*=' {} /dev/null \; | grep -v 'AM_CPPFLAGS' | grep -v 'BREP_CPPFLAGS' | grep -v 'DM_RTGL_CPPFLAGS' | awk '{print $1}'`"
 
 FOUND=
 for file in $AMFILES ; do

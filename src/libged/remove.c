@@ -45,6 +45,7 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "comb object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
@@ -57,7 +58,7 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc < 3 || MAXARGS < argc) {
+    if (argc < 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -86,6 +87,12 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str, "  ERROR_deleting %s/%s\n", dp->d_namep, argv[i]);
 	    ret = GED_ERROR;
 	} else {
+	    struct bu_vls path;
+
+	    bu_vls_init(&path);
+	    bu_vls_printf(&path, "%s/%s", dp->d_namep, argv[i]);
+	    _ged_eraseAllPathsFromDisplay(gedp, bu_vls_addr(&path), 0);
+	    bu_vls_free(&path);
 	    bu_vls_printf(&gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[i]);
 	    num_deleted++;
 	}

@@ -248,7 +248,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #  define BU_ASSERT(_equation)
 #else
 #  define BU_ASSERT(_equation)	\
-	if (!(_equation)) { \
+	if (UNLIKELY(!(_equation))) { \
 		bu_log("BU_ASSERT(" #_equation ") failed, file %s, line %d\n", \
 			__FILE__, __LINE__); \
 		bu_bomb("BU_ASSERT failure\n"); \
@@ -259,7 +259,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #  define BU_ASSERT_PTR(_lhs, _relation, _rhs)
 #else
 #  define BU_ASSERT_PTR(_lhs, _relation, _rhs)	\
-	if (!((_lhs) _relation (_rhs))) { \
+	if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
 		bu_log("BU_ASSERT_PTR(" #_lhs #_relation #_rhs ") failed, lhs=%p, rhs=%p, file %s, line %d\n", \
 			(void *)(_lhs), (void *)(_rhs), \
 			__FILE__, __LINE__); \
@@ -272,7 +272,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #  define BU_ASSERT_LONG(_lhs, _relation, _rhs)
 #else
 #  define BU_ASSERT_LONG(_lhs, _relation, _rhs)	\
-	if (!((_lhs) _relation (_rhs))) { \
+	if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
 		bu_log("BU_ASSERT_LONG(" #_lhs #_relation #_rhs ") failed, lhs=%ld, rhs=%ld, file %s, line %d\n", \
 			(long)(_lhs), (long)(_rhs), \
 			__FILE__, __LINE__); \
@@ -285,7 +285,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)
 #else
 #  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)	\
-	if (!((_lhs) _relation (_rhs))) { \
+	if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
 		bu_log("BU_ASSERT_SIZE_T(" #_lhs #_relation #_rhs ") failed, lhs=%zd, rhs=%zd, file %s, line %d\n", \
 			(size_t)(_lhs), (size_t)(_rhs), \
 			__FILE__, __LINE__); \
@@ -298,7 +298,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)
 #else
 #  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)	\
-	if (!((_lhs) _relation (_rhs))) { \
+	if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
 		bu_log("BU_ASSERT_DOUBLE(" #_lhs #_relation #_rhs ") failed, lhs=%lf, rhs=%lf, file %s, line %d\n", \
 			(double)(_lhs), (double)(_rhs), \
 			__FILE__, __LINE__); \
@@ -804,16 +804,15 @@ typedef struct bu_list bu_list_t;
 
 #define BU_LIST_POP(structure, hp, p)				\
 	{							\
-		if (BU_LIST_NON_EMPTY(hp))				\
-		{							\
-		    (p) = ((struct structure *)((hp)->forw));		\
-		    BU_LIST_DEQUEUE((struct bu_list *)(p));		\
-		}							\
-		else							\
-		     (p) = (struct structure *) 0;			\
+		if (BU_LIST_NON_EMPTY(hp)) {			\
+		    (p) = ((struct structure *)((hp)->forw));	\
+		    BU_LIST_DEQUEUE((struct bu_list *)(p));	\
+		} else {					\
+		     (p) = (struct structure *) 0;		\
+		}						\
 	}
 
-#define BU_LIST_POP_T(hp, type)				\
+#define BU_LIST_POP_T(hp, type)					\
 	(type *)bu_list_pop(hp)
 
 /**
@@ -825,7 +824,7 @@ typedef struct bu_list bu_list_t;
  * BU_LIST_APPEND_LIST places src_hd elements at end of dest_hd list.
  */
 #define BU_LIST_INSERT_LIST(dest_hp, src_hp) \
-	if (BU_LIST_NON_EMPTY(src_hp)) { \
+	if (LIKELY(BU_LIST_NON_EMPTY(src_hp))) { \
 		struct bu_list *_first = (src_hp)->forw; \
 		struct bu_list *_last = (src_hp)->back; \
 		(dest_hp)->forw->back = _last; \
@@ -836,7 +835,7 @@ typedef struct bu_list bu_list_t;
 	}
 
 #define BU_LIST_APPEND_LIST(dest_hp, src_hp) \
-	if (BU_LIST_NON_EMPTY(src_hp)) {\
+	if (LIKELY(BU_LIST_NON_EMPTY(src_hp))) {\
 		struct bu_list *_first = (src_hp)->forw; \
 		struct bu_list *_last = (src_hp)->back; \
 		_first->back = (dest_hp)->back; \
@@ -858,8 +857,8 @@ typedef struct bu_list bu_list_t;
 			(hp)->back == BU_LIST_NULL)
 
 /* Handle list initialization */
-#define BU_LIST_UNINITIALIZED(hp)	((hp)->forw == BU_LIST_NULL)
-#define BU_LIST_IS_INITIALIZED(hp)	((hp)->forw != BU_LIST_NULL)
+#define BU_LIST_UNINITIALIZED(hp)	(UNLIKELY((hp)->forw == BU_LIST_NULL))
+#define BU_LIST_IS_INITIALIZED(hp)	(LIKELY((hp)->forw != BU_LIST_NULL))
 #define BU_LIST_INIT(hp) { \
 	(hp)->forw = (hp)->back = (hp); \
 	(hp)->magic = BU_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
@@ -1234,7 +1233,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
  */
 #define BU_BITV_ZEROALL(_bv)	\
 { \
-	if ((_bv) && (_bv)->nbits != 0) { \
+	if (LIKELY((_bv) && (_bv)->nbits != 0)) { \
 		unsigned char *bvp = (unsigned char *)(_bv)->bits; \
 		size_t nbytes = BU_BITS2BYTES((_bv)->nbits); \
 		do { \
@@ -1249,7 +1248,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 #  define BU_BITV_BITNUM_CHECK(_bv, _bit)
 #else
 #  define BU_BITV_BITNUM_CHECK(_bv, _bit)	/* Validate bit number */ \
-	if (((unsigned)(_bit)) >= (_bv)->nbits) {\
+	if (UNLIKELY(((unsigned)(_bit)) >= (_bv)->nbits)) {\
 		bu_log("BU_BITV_BITNUM_CHECK bit number (%u) out of range (0..%u)\n", \
 			((unsigned)(_bit)), (_bv)->nbits); \
 		bu_bomb("process self-terminating\n");\
@@ -1260,7 +1259,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 #  define BU_BITV_NBITS_CHECK(_bv, _nbits)
 #else
 #  define BU_BITV_NBITS_CHECK(_bv, _nbits)	/* Validate number of bits */ \
-	if (((unsigned)(_nbits)) > (_bv)->nbits) {\
+	if (UNLIKELY(((unsigned)(_nbits)) > (_bv)->nbits)) {\
 		bu_log("BU_BITV_NBITS_CHECK number of bits (%u) out of range (> %u)", \
 			((unsigned)(_nbits)), (_bv)->nbits); \
 		bu_bomb("process self-terminating"); \
@@ -1395,15 +1394,6 @@ struct bu_ptbl {
 };
 #define BU_CK_PTBL(_p)		BU_CKMAG(_p, BU_PTBL_MAGIC, "bu_ptbl")
 
-#define BU_PTBL_INIT	0	/**< @brief initialize table pointer struct & get storage */
-#define BU_PTBL_INS	1	/**< @brief insert an item (long *) into a table */
-#define BU_PTBL_LOC 	2	/**< @brief locate a (long *) in an existing table */
-#define BU_PTBL_FREE	3	/**< @brief deallocate buffer associated with a table */
-#define BU_PTBL_RST	4	/**< @brief empty a table, but keep storage on hand */
-#define BU_PTBL_CAT	5	/**< @brief catenate one table onto another */
-#define BU_PTBL_RM	6	/**< @brief remove all occurrences of an item from a table */
-#define BU_PTBL_INS_UNIQUE 7	/**< @brief insert item into table, if not present */
-#define BU_PTBL_ZERO	8	/**< @brief replace all occurrences of an item by 0 */
 /*
  * For those routines that have to "peek" into the ptbl a little bit.
  */
@@ -1619,11 +1609,10 @@ struct bu_vls  {
  */
 struct bu_vlb {
     unsigned long magic;
-    unsigned char *buf;  /**< @brief Dynamic memory for the buffer */
-    int bufCapacity;     /**< @brief Current capacity of the buffer */
-    int nextByte;        /**< @brief Number of bytes currently used in the buffer */
+    unsigned char *buf;     /**< @brief Dynamic memory for the buffer */
+    size_t bufCapacity;     /**< @brief Current capacity of the buffer */
+    size_t nextByte;        /**< @brief Number of bytes currently used in the buffer */
 };
-#define BU_VLB_BLOCK_SIZE 512
 #define BU_CK_VLB(_vp)		BU_CKMAG(_vp, BU_VLB_MAGIC, "bu_vlb")
 #define BU_VLB_IS_INITIALIZED(_vp)	\
 	((_vp) && ((_vp)->magic == BU_VLB_MAGIC))
@@ -3244,13 +3233,18 @@ BU_EXPORT BU_EXTERN(void bu_free,
  *
  * bu_malloc()/bu_free() compatible wrapper for realloc().
  *
+ * this routine mimics the C99 standard behavior of realloc() except
+ * that NULL will never be returned.  it will bomb if siz is zero and
+ * ptr is NULL.  it will return a minimum allocation suitable for
+ * bu_free() if siz is zero and ptr is non-NULL.
+ *
  * While the string 'str' is provided for the log messages, don't
- * disturb the mdb_str value, so that this storage allocation can be
+ * disturb the str value, so that this storage allocation can be
  * tracked back to it's original creator.
  */
 BU_EXPORT BU_EXTERN(genptr_t bu_realloc,
 		    (genptr_t ptr,
-		     size_t cnt,
+		     size_t siz,
 		     const char *str));
 
 /**
@@ -3624,8 +3618,12 @@ BU_EXPORT BU_EXTERN(int bu_struct_import,
  *
  * Put a structure in external form to a stdio file.  All formatting
  * must have been accomplished previously.
+ *
+ * Returns number of bytes written.  On error, a short byte count (or
+ * zero) is returned.  Use feof(3) or ferror(3) to determine which
+ * errors occur.
  */
-BU_EXPORT BU_EXTERN(int bu_struct_put,
+BU_EXPORT BU_EXTERN(size_t bu_struct_put,
 		    (FILE *fp,
 		     const struct bu_external *ext));
 
@@ -3633,8 +3631,11 @@ BU_EXPORT BU_EXTERN(int bu_struct_put,
  * B U _ S T R U C T _ G E T
  *
  * Obtain the next structure in external form from a stdio file.
+ *
+ * Returns number of bytes read into the bu_external.  On error, zero
+ * is returned.
  */
-BU_EXPORT BU_EXTERN(int bu_struct_get,
+BU_EXPORT BU_EXTERN(size_t bu_struct_get,
 		    (struct bu_external *ext,
 		     FILE *fp));
 
@@ -3848,7 +3849,7 @@ BU_EXPORT BU_EXTERN(void bu_structparse_get_terse_form,
 BU_EXPORT BU_EXTERN(int bu_structparse_argv,
 		    (struct bu_vls *logstr,
 		     int argc,
-		     char **argv,
+		     const char **argv,
 		     const struct bu_structparse *desc,
 		     char *base));
 
@@ -3863,6 +3864,23 @@ BU_EXPORT BU_EXTERN(int bu_structparse_argv,
 	while (*(_cp) && (*(_cp) == ' ' || *(_cp) == '\n' || \
 	*(_cp) == '\t' || *(_cp) == '{'))  ++(_cp); \
 }
+
+
+/** @file libbu/booleanize.c
+ *
+ * @brief routines for parsing boolean values
+ */
+
+/**
+ * B U _ B O O L E A N I Z E
+ *
+ * Returns the boolean value of a given input string.
+ *
+ * Input values that are null, empty, begin with the letter 'n', or
+ * are 0-valued return as false.  Any other input value returns as
+ * true.
+ */
+BU_EXPORT BU_EXTERN(int bu_booleanize, (const char *str));
 
 
 /** @} */
@@ -4027,16 +4045,6 @@ BU_EXPORT BU_EXTERN(void bu_ptbl_cat_uniq,
  */
 BU_EXPORT BU_EXTERN(void bu_ptbl_free,
 		    (struct bu_ptbl *b));
-
-/**
- * B U _ P T B L
- *
- * This version maintained for source compatibility with existing NMG
- * code.
- */
-BU_EXPORT BU_EXTERN(int bu_ptbl,
-		    (struct bu_ptbl *b,
-		     int func, long *p));
 
 /**
  * B U _ P R _ P T B L
@@ -4954,7 +4962,7 @@ BU_EXPORT BU_EXTERN(void bu_vlb_init,
  */
 BU_EXPORT BU_EXTERN(void bu_vlb_initialize,
 		    (struct bu_vlb *vlb,
-		     int initialSize));
+		     size_t initialSize));
 
 /**
  * Write some bytes to the end of the bu_vlb structure. If necessary,
@@ -4967,7 +4975,7 @@ BU_EXPORT BU_EXTERN(void bu_vlb_initialize,
 BU_EXPORT BU_EXTERN(void bu_vlb_write,
 		    (struct bu_vlb *vlb,
 		     unsigned char *start,
-		     int len));
+		     size_t len));
 
 /**
  * Reset the bu_vlb counter to the start of its byte array. This
@@ -4985,7 +4993,7 @@ BU_EXPORT BU_EXTERN(void bu_vlb_reset,
  * @param vlb Pointer to the bu_vlb structure
  * @return A pointer to the byte array contained by the bu_vlb structure
  */
-BU_EXPORT BU_EXTERN(unsigned char *bu_vlb_getBuffer,
+BU_EXPORT BU_EXTERN(unsigned char *bu_vlb_addr,
 		    (struct bu_vlb *vlb));
 
 /**
@@ -4994,7 +5002,7 @@ BU_EXPORT BU_EXTERN(unsigned char *bu_vlb_getBuffer,
  * @param vlb Pointer to the bu_vlb structure
  * @return The number of bytes written to the bu_vlb structure
  */
-BU_EXPORT BU_EXTERN(int bu_vlb_getBufferLength,
+BU_EXPORT BU_EXTERN(size_t bu_vlb_buflen,
 		    (struct bu_vlb *vlb));
 
 /**
@@ -5301,7 +5309,7 @@ BU_EXPORT BU_EXTERN(void bu_tcl_structparse_get_terse_form,
 BU_EXPORT BU_EXTERN(int bu_tcl_structparse_argv,
 		    (Tcl_Interp *interp,
 		     int argc,
-		     char **argv,
+		     const char **argv,
 		     const struct bu_structparse *desc,
 		     char *base));
 
@@ -5966,6 +5974,7 @@ BU_EXPORT BU_EXTERN(struct bu_hash_entry *bu_hash_tbl_next,
 
 enum {
     BU_IMAGE_AUTO,
+    BU_IMAGE_AUTO_NO_PIX,
     BU_IMAGE_PIX,
     BU_IMAGE_BW,
     BU_IMAGE_ALIAS,
@@ -5993,7 +6002,7 @@ struct bu_image_file {
 };
 
 BU_EXPORT BU_EXTERN(struct bu_image_file *bu_image_save_open,
-		    (char *filename,
+		    (const char *filename,
 		     int format,
 		     int width,
 		     int height,
@@ -6001,6 +6010,12 @@ BU_EXPORT BU_EXTERN(struct bu_image_file *bu_image_save_open,
 
 BU_EXPORT BU_EXTERN(int bu_image_save_writeline,
 		    (struct bu_image_file *bif,
+		     int y,
+		     unsigned char *data));
+
+BU_EXPORT BU_EXTERN(int bu_image_save_writepixel,
+		    (struct bu_image_file *bif,
+		     int x,
 		     int y,
 		     unsigned char *data));
 

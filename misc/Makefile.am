@@ -1,11 +1,8 @@
 
 SUBDIRS = \
-	archlinux \
 	enigma \
 	macosx \
-	nsis \
 	pkgconfig \
-	win32-msvc \
 	win32-msvc8
 
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
@@ -19,21 +16,50 @@ DATAFILES = \
 	NIST_DENSITIES
 
 EXTRA_DIST = \
-	${DATAFILES} \
 	$(man_MANS) \
 	$(sample_applications_DATA) \
-	Cakefile.defs \
+	${DATAFILES} \
 	Description.txt \
 	Doxyfile \
 	Makefile.defs \
+	archlinux/PKGBUILD \
+	archlinux/brlcad.install \
+	archlinux/brlcad.sh \
 	batch-indent-region.el \
 	brlcad-config \
 	brlcad-config.in \
 	brlcad.spec \
 	brlcad.spec.in \
+	debian/brlcad-bin.docs \
+	debian/brlcad-bin.install \
+	debian/brlcad-bin.lintian-overrides \
+	debian/brlcad-data.install \
+	debian/brlcad-dev.install \
+	debian/brlcad-doc.install \
+	debian/changelog \
+	debian/compat \
+	debian/control \
+	debian/copyright \
+	debian/rules \
+	debian/source/format \
+	debian/watch \
 	doxygen_structure \
 	flawfinder \
-	libtool.m4
+	libtool.m4 \
+	nsis/brlcad.ico \
+	nsis/brlcad.nsi \
+	nsis/header.bmp \
+	nsis/side.bmp \
+	nsis/uninstall.ico \
+	nsis/updateVersion.tcl \
+	win32-msvc/CMakeLists.txt \
+	win32-msvc/Dll/BrlcadCore.def \
+	win32-msvc/Dll/BrlcadCore.rc \
+	win32-msvc/Dll/CMakeLists.txt \
+	win32-msvc/Dll/brlcad.def \
+	win32-msvc/Dll/brlcad.rc \
+	win32-msvc/Dll/TclDummies.c
+
 
 datafilesdir = $(BRLCAD_DATA)/data
 

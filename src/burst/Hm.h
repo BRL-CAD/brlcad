@@ -19,7 +19,7 @@
  *
  */
 /** @file Hm.h
- * Author:	Gary S. Moss
+ *
  */
 /**
    <Hm.h> -- MUVES "Hm" (hierarchical menu) package definitions
@@ -43,13 +43,12 @@ emulator, the menus can be controlled with the mouse.
 /**
    Each menu is defined by the following structure:
 
-   typedef struct
-   {
-   HmItem	*item;
-   HmItem	*(*generator)();
-   short	prevtop;
-   short	prevhit;
-   boolean	sticky;
+   typedef struct {
+   HmItem *item;
+   HmItem *(*generator)();
+   short prevtop;
+   short prevhit;
+   int sticky;
    }
    HmMenu;
 
@@ -81,28 +80,27 @@ struct HmMenu;
 
 typedef struct
 {
-    char	*text;		/* menu item string			*/
-    char	*help;		/* help string				*/
-    struct HmMenu *next;	/* sub-menu pointer or NULL		*/
-    void	(*dfn)();
-    void	(*bfn)();
-    void	(*hfn)();
-    long	data;
+    char *text;			/* menu item string */
+    char *help;			/* help string */
+    struct HmMenu *next;	/* sub-menu pointer or NULL */
+    void (*dfn)();
+    void (*bfn)();
+    void (*hfn)();
+    long data;
 }
 HmItem;
 
 /**
    Menu items are defined by the following structure:
 
-   typedef struct
-   {
-   char	*text;
-   char	*help;
-   HmMenu	*next;
-   void	(*dfn)();
-   void	(*bfn)();
-   void	(*hfn)();
-   long	data;
+   typedef struct {
+   char *text;
+   char *help;
+   HmMenu *next;
+   void (*dfn)();
+   void (*bfn)();
+   void (*hfn)();
+   long data;
    }
    HmItem;
 
@@ -115,7 +113,7 @@ HmItem;
    must be terminated by a NULL text field.  The help string will be
    displayed when the user presses the help key.  If next is not
    equal to (HmMenu *) 0, it is assumed to point to a submenu,
-   "dfn()" if non-zero is called just  before the submenu is invoked,
+   "dfn()" if non-zero is called just before the submenu is invoked,
    and "bfn()" likewise just afterwards.  These functions are passed
    the current menu item.  If the menu item is selected and next is
    0, "hfn()" is called (if non-zero), also with the current menu
@@ -125,12 +123,12 @@ HmItem;
 **/
 typedef struct HmMenu
 {
-    HmItem	*item;		/* List of menu items or 0.		*/
-    HmItem	*(*generator)();/* If item == 0, generates items.	*/
-    short	prevtop;	/* Top entry currently visable		*/
-    short	prevhit;	/* Offset from top of last select	*/
-    boolean	sticky;		/* If true, menu stays around after SELECT,
-				   and until QUIT. */
+    HmItem *item;		/* List of menu items or 0.		*/
+    HmItem *(*generator)();	/* If item == 0, generates items.	*/
+    short prevtop;		/* Top entry currently visable */
+    short prevhit;		/* Offset from top of last select */
+    int sticky;			/* If true, menu stays around after
+			   	   SELECT, and until QUIT. */
 }
 HmMenu;
 
@@ -142,19 +140,19 @@ HmMenu;
 typedef struct HmWin
 {
     struct HmWin *next;	/* Parent of this menu.			*/
-    HmMenu	*menup;		/* Address of menu data structure.	*/
-    int	menux;		/* Position on screen where top-left	*/
-    int	menuy;		/*    corner of menu will be displayed.	*/
-    int	width;		/* Width of menu, not including border.	*/
-    int	height;		/* Number of menu entries.		*/
-    int	*dirty;		/* Dynamically allocated bitmap. ON bits
+    HmMenu *menup;	/* Address of menu data structure.	*/
+    int menux;		/* Position on screen where top-left */
+    int menuy;		/* corner of menu will be displayed.	*/
+    int width;		/* Width of menu, not including border.	*/
+    int height;		/* Number of menu entries.		*/
+    int *dirty;		/* Dynamically allocated bitmap. ON bits
 			   mean character needs a redraw.	*/
 }
 HmWindow;
 
 /**
 
-boolean	HmInit( int x, int y, int maxvis )
+int HmInit(int x, int y, int maxvis)
 
 HmInit() must be called before any other routines in the
 Hm package to initialize the screen position of the top-left
@@ -164,31 +162,31 @@ time to maxvis.  If the number of entries in a menu exceeds
 maxvis, the menu will scroll to accommodate them.  The values
 of x, y and maxvis are stored in these external variables:
 
-int	HmLftMenu
-int	HmTopMenu
-int	HmMaxVis
+int HmLftMenu
+int HmTopMenu
+int HmMaxVis
 
 If this routine is not called, default parameters will be used.
 
 HmInit() also opens "/dev/tty" for input and stores it's file
 descriptor in HmTtyFd and associated stream handle in HmTtyFp.
 
-int	HmTtyFd
-FILE	*HmTtyFp
+int HmTtyFd
+FILE *HmTtyFp
 
 This routine returns true or false on success or failure to open
 "/dev/tty".
 **/
-extern boolean	HmInit( int x, int y, int maxvis );
-extern FILE	*HmTtyFp;
-extern int	HmLftMenu;
-extern int	HmTopMenu;
-extern int	HmMaxVis;
-extern int	HmLastMaxVis;
-extern int	HmTtyFd;
+extern int HmInit(int x, int y, int maxvis);
+extern FILE *HmTtyFp;
+extern int HmLftMenu;
+extern int HmTopMenu;
+extern int HmMaxVis;
+extern int HmLastMaxVis;
+extern int HmTtyFd;
 /**
 
-HmItem	*HmHit( HmMenu	*menup )
+HmItem *HmHit(HmMenu *menup)
 
 HmHit() presents the user with a menu specified by HmMenu
 pointer menup and returns a pointer to the selected HmItem
@@ -248,11 +246,11 @@ if not, that menu will exit.  If on the bottom border,
 that menu will scroll upward if possible and beep if not.
 
 **/
-    extern HmItem	*HmHit( HmMenu *menup );
+    extern HmItem *HmHit(HmMenu *menup);
 
 /**
 
-void	HmRedraw( void )
+void HmRedraw(void)
 
 HmRedraw() will force the entire set of active menus to
 be redrawn on the next call to HmHit().  This is useful
@@ -260,25 +258,25 @@ when an application interferes with the portion of the
 screen used by the Hm package (from HmTopMenu to HmYCOMMO).
 
 **/
-extern void	HmRedraw( void );
+extern void HmRedraw(void);
 
 /**
 
-void	HmError( const char *string )
+void HmError(const char *string)
 
 HmError() will display string on line HmYCOMMO.
 
 **/
-extern void	HmError( const char *str );
+extern void HmError(const char *str);
 
-#define HmYCOMMO	(HmTopMenu+HmMaxVis+HmHGTBORDER)
-#define HmYPROMPT	(HmYCOMMO+1)
-#define HmXPROMPT	1
-#define HmYBORDER	(HmYPROMPT+1)
+#define HmYCOMMO (HmTopMenu+HmMaxVis+HmHGTBORDER)
+#define HmYPROMPT (HmYCOMMO+1)
+#define HmXPROMPT 1
+#define HmYBORDER (HmYPROMPT+1)
 /**
 
-int	HmGetchar( void )
-int	HmUngetchar( int c )
+int HmGetchar(void)
+int HmUngetchar(int c)
 
 HmGetchar() and HmUngetchar() are used by the Hm package to
 read a character from the keyboard and to stuff one character
@@ -293,12 +291,12 @@ character assuming that something has already been read with
 HmGetchar() and the input stream is buffered.
 
 **/
-extern int	HmGetchar( void );
-extern int	HmUngetchar( int c );
+extern int HmGetchar(void);
+extern int HmUngetchar(int c);
 
 /**
-   void	HmTtySet( void )
-   void	HmTtyReset( void )
+   void HmTtySet(void)
+   void HmTtyReset(void)
 
    HmTtySet() and HmTtyReset() set/restore the terminal modes for
    the menus to work properly.  These are mainly internal routines
@@ -309,12 +307,12 @@ extern int	HmUngetchar( int c );
    handler.
 
 **/
-extern void	HmTtySet();
-extern void	HmTtyReset();
+extern void HmTtySet();
+extern void HmTtyReset();
 
 
-#define HmMAXLINE 	132
-#define HmHGTBORDER	2
+#define HmMAXLINE 132
+#define HmHGTBORDER 2
 
 #endif		/* Hm_H_INCLUDE */
 

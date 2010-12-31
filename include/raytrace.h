@@ -250,6 +250,20 @@ struct xray {
 #define RT_CK_RAY(_p)	BU_CKMAG(_p, RT_RAY_MAGIC, "struct xray");
 
 /**
+ * X R A Y S
+ *
+ * This plural xrays structure is a bu_list based container designed
+ * to hold a list or bundle of xray(s). This bundle is utilized by
+ * rt_shootrays() through its application bundle input.
+ *
+ */
+struct xrays
+{
+    struct bu_list l;
+    struct xray ray;
+};
+
+/**
  * H I T
  *
  * Information about where a ray hits the surface
@@ -275,26 +289,9 @@ struct hit {
 #define RT_CK_HIT(_p)	BU_CKMAG(_p, RT_HIT_MAGIC, "struct hit")
 
 /**
- * Old macro: DEPRECATED, use RT_HIT_NORMAL
- *
- * Only the hit_dist field of pt_inhit and pt_outhit are valid when
- * a_hit() is called; to compute both hit_point and hit_normal, use
- * RT_HIT_NORMAL() macro; to compute just hit_point, use
- * VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
- */
-#define RT_HIT_NORM(_hitp, _stp, _unused) { \
-	RT_CK_HIT(_hitp); \
-	RT_CK_SOLTAB(_stp); \
-	RT_CK_FUNCTAB((_stp)->st_meth); \
-	if ((_stp)->st_meth->ft_norm) { \
-		(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
-	} \
-}
-
-/**
- * New macro: Compute normal into (_hitp)->hit_normal, but leave it
- * un-flipped, as one hit may be shared between multiple partitions
- * with different flip status.
+ * Compute normal into (_hitp)->hit_normal.  Set flip-flag accordingly
+ * depending on boolean logic, as one hit may be shared between
+ * multiple partitions with different flip status.
  *
  * Example: box.r = box.s - sph.s; sph.r = sph.s
  *
@@ -678,6 +675,35 @@ struct partition {
 
 /** Dequeue "cur" partition from doubly-linked list */
 #define DEQUEUE_PT(_cur)	BU_LIST_DEQUEUE((struct bu_list *)_cur)
+
+/**
+ * P A R T I T I O N _ L I S T
+ *
+ * The partition_list structure - bu_list based structure for
+ * holding ray bundles.
+ *
+ */
+struct partition_list {
+    struct bu_list l;
+    struct application	*ap;
+    struct partition PartHeadp;
+    struct seg segHeadp;
+    genptr_t		userptr;
+};
+
+/**
+ * P A R T I T I O N _ B U N D L E
+ *
+ * Partition bundle.  Passed from rt_shootrays() into user's bundle_hit()
+ * function.
+ *
+ */
+struct partition_bundle {
+    int hits;
+    int misses;
+    struct partition_list *list;
+    struct application	*ap;
+};
 
 /**
  * C U T
@@ -1152,8 +1178,7 @@ struct rt_tree_array
 
 #define TREE_LIST_NULL	((struct tree_list *)0)
 
-/* Some dubious defines, to support the wdb_obj.c evolution */
-#define RT_MAXARGS		9000
+/* FIXME: this is a dubious define that should be removed */
 #define RT_MAXLINE		10240
 
 /**
@@ -1392,7 +1417,7 @@ struct resource {
     struct directory *	re_directory_hd;
     struct bu_ptbl	re_directory_blocks;	/**< @brief  Table of malloc'ed blocks */
 };
-RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined in librt/shoot.c */
+RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined in librt/globals.c */
 #define RESOURCE_NULL	((struct resource *)0)
 #define RT_CK_RESOURCE(_p)	BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 
@@ -1560,6 +1585,48 @@ struct application  {
     int			a_flag;		/**< @brief  application-specific flag */
     int			a_zero2;	/**< @brief  must be zero (sanity check) */
 };
+
+/**
+ * A P P L I C A T I O N _ B U N D L E
+ *
+ * This structure is the only parameter to rt_shootrays().  The entire
+ * structure should be zeroed (e.g. by memset) before it is used the
+ * first time.
+ *
+ * When calling rt_shootrays(), these fields are mandatory:
+ *
+ *	- b_ap		Members in this single ray application structure should be set
+ *	 		in a similar fashion as when used with rt_shootray() with the
+ *	 		exception of a_hit() and a_miss(). Default implementaions of
+ *	 		these routines are provided that simple update hit/miss counters
+ *	 		and attach the hit partitions and segments to the
+ *	 		partition_bundle structure. Users can still override this default
+ *	 		functionality but have to make sure to move the partition and
+ *	 		segment list to the new partition_bundle structure.
+ *	- b_hit()	Routine to call when something is hit by the ray bundle.
+ *	- b_miss()	Routine to call when ray bundle misses everything.
+ *
+ *  Note that rt_shootrays() returns the (int) return of the
+ *  b_hit()/b_miss() function called, as well as placing it in
+ *  b_return.
+ *
+ *  An integer field b_user and a genptr_t field b_uptr are
+ *  provided in the structure for custome user data.
+ *
+ */
+struct application_bundle
+{
+    unsigned long b_magic;
+    /* THESE ELEMENTS ARE MANDATORY */
+    struct xrays b_rays; /**< @brief  Actual bundle of rays to be shot */
+    struct application b_ap; /**< @brief  application setting to be applied to each ray */
+    int (*b_hit)BU_ARGS((struct application_bundle *, struct partition_bundle *)); /**< @brief  called when bundle hits model */
+    int (*b_miss)BU_ARGS((struct application_bundle *)); /**< @brief  called when entire bundle misses */
+    int b_user; /**< @brief  application_bundle-specific value */
+    genptr_t b_uptr; /**< @brief  application_bundle-specific pointer */
+    int b_return;
+};
+
 #define RT_AFN_NULL	((int (*)(struct application *, struct partition *, struct region *, struct region *, struct partition *))NULL)
 #define RT_CK_AP(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_CK_APPLICATION(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
@@ -1585,11 +1652,11 @@ struct application  {
  * of how many different models are being worked on
  */
 struct rt_g {
-    int			debug;		/**< @brief  !0 for debug, see librt/debug.h */
+    uint32_t		debug;		/**< @brief  !0 for debug, see librt/debug.h */
     /* DEPRECATED:  rtg_parallel is not used by LIBRT any longer (and will be removed) */
-    int			rtg_parallel;	/**< @brief  !0 = trying to use multi CPUs */
+    int8_t		rtg_parallel;	/**< @brief  !0 = trying to use multi CPUs */
     struct bu_list	rtg_vlfree;	/**< @brief  head of bn_vlist freelist */
-    int			NMG_debug;	/**< @brief  debug bits for NMG's see nmg.h */
+    uint32_t		NMG_debug;	/**< @brief  debug bits for NMG's see nmg.h */
     struct rt_wdb	rtg_headwdb;	/**< @brief  head of database object list */
 };
 RT_EXPORT extern struct rt_g rt_g;
@@ -1950,7 +2017,7 @@ struct rt_functab {
     size_t ft_internal_size;	/**< @brief  sizeof(struct rt_xxx_internal) */
     unsigned long ft_internal_magic;	/**< @brief  RT_XXX_INTERNAL_MAGIC */
     int	(*ft_get) BU_ARGS((struct bu_vls *, const struct rt_db_internal *, const char *item));
-    int	(*ft_adjust) BU_ARGS((struct bu_vls *, struct rt_db_internal *, int /*argc*/, char ** /*argv*/));
+    int	(*ft_adjust) BU_ARGS((struct bu_vls *, struct rt_db_internal *, int /*argc*/, const char ** /*argv*/));
     int	(*ft_form) BU_ARGS((struct bu_vls *, const struct rt_functab *));
 
     void (*ft_make) BU_ARGS((const struct rt_functab *, struct rt_db_internal */*ip*/));
@@ -2287,9 +2354,30 @@ RT_EXPORT BU_EXTERN(void rt_default_logoverlap,
 		     const struct partition *pp,
 		     const struct bu_ptbl *regiontable,
 		     const struct partition *InputHdp));
+
+/**
+ * Initial set of 'xrays' pattern generators that can
+ * used to feed a bundle set of rays to rt_shootrays()
+ */
+RT_EXPORT BU_EXTERN(int rt_gen_elliptical_grid,
+		    (struct xrays *rays,
+		     const struct xray *center_ray,
+		     const fastf_t *avec,
+		     const fastf_t *bvec,
+		     fastf_t gridsize));
+RT_EXPORT BU_EXTERN(int rt_gen_circular_grid,
+		    (struct xrays *ray_bundle,
+		     const struct xray *center_ray,
+		     fastf_t radius,
+		     const fastf_t *up_vector,
+		     fastf_t gridsize));
+
 /* Shoot a ray */
 RT_EXPORT BU_EXTERN(int rt_shootray,
 		    (struct application *ap));
+/* Shoot a bundle of rays */
+RT_EXPORT BU_EXTERN(int rt_shootrays,
+		    (struct application_bundle *bundle));
 /* Get expr tree for object */
 RT_EXPORT BU_EXTERN(void rt_free_soltab,
 		    (struct soltab   *stp));
@@ -2907,10 +2995,6 @@ RT_EXPORT BU_EXTERN(int db_put_external,
 		    (struct bu_external *ep,
 		     struct directory *dp,
 		     struct db_i *dbip));
-
-/* DEPRECATED - use bu_free_external instead */
-RT_EXPORT BU_EXTERN(void db_free_external,
-		    (struct bu_external *ep));
 
 /* db_scan.c */
 /* read db (to build directory) */
@@ -4629,6 +4713,9 @@ RT_EXPORT BU_EXTERN(int rt_bot_find_e_nearest_pt2,
 		     const struct rt_bot_internal *bot,
 		     const point_t	pt2,
 		     const mat_t	mat));
+RT_EXPORT BU_EXTERN(fastf_t rt_bot_propget,
+		    (struct rt_bot_internal *bot,
+		    const char *property));
 RT_EXPORT BU_EXTERN(int rt_bot_vertex_fuse,
 		    (struct rt_bot_internal *bot));
 RT_EXPORT BU_EXTERN(int rt_bot_face_fuse,
@@ -4761,7 +4848,7 @@ RT_EXPORT BU_EXTERN(int tcl_list_to_int_array,
 
 RT_EXPORT BU_EXTERN(int tcl_list_to_fastf_array,
 		    (Tcl_Interp *interp,
-		     char *char_list,
+		     const char *char_list,
 		     fastf_t **array,
 		     int *array_len));
 
@@ -5477,7 +5564,7 @@ RT_EXPORT BU_EXTERN(void nmg_pr_struct_counts,
 RT_EXPORT BU_EXTERN(unsigned long **nmg_m_struct_count,
 		    (struct nmg_struct_counts *ctr,
 		     const struct model *m));
-RT_EXPORT BU_EXTERN(void nmg_struct_counts,
+RT_EXPORT BU_EXTERN(void nmg_pr_m_struct_counts,
 		    (const struct model	*m,
 		     const char		*str));
 RT_EXPORT BU_EXTERN(void nmg_merge_models,
@@ -5790,6 +5877,12 @@ RT_EXPORT BU_EXTERN(size_t db5_type_sizeof_h_binu,
 RT_EXPORT BU_EXTERN(size_t db5_type_sizeof_n_binu,
 		    (const int minor));
 
+/* these two functions may not be appropriate to export, but windows requires the export notation. */
+RT_EXPORT BU_EXTERN(size_t db5_is_standard_attribute,
+		    (const char *attrname));
+RT_EXPORT BU_EXTERN(void db5_standardize_avs,
+		    (struct bu_attribute_value_set *avs));
+
 #endif
 
 /* defined in binary_obj.c */
@@ -5820,6 +5913,40 @@ RT_EXPORT BU_EXTERN(int rt_bot_decimate,
 		     fastf_t max_chord_error,
 		     fastf_t max_normal_error,
 		     fastf_t min_edge_length));
+
+/*
+ *  Utility functions for standard attributes
+ */
+
+/**
+ * D B 5  _ A P P L Y _ S T D _ A T T R I B U T E S
+ *
+ * Because standard attributes in BRL-CAD databases may involve
+ * more data and structures than just the avs, provide a helper
+ * function that checks the avs structures associated with a
+ * comb and automatically syncs any other relevant data structures
+ * to conform to the attribute values on the comb.  When using this
+ * function, attribute/value pairs are "senior" to other values
+ * and other values will be updated to match the attributes.
+ */
+RT_EXPORT BU_EXTERN(void db5_apply_std_attributes,
+                         (struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb));
+
+
+/**
+ * D B 5  _ U P D A T E _ S T D _ A T T R I B U T E S
+ *
+ * Because standard attributes in BRL-CAD databases may involve
+ * more data and structures than just the avs, provide a helper
+ * function that checks the avs structures associated with a
+ * comb and automatically syncs any other relevant data structures
+ * to conform to the attribute values on the comb.  When using this
+ * function, attribute/value pairs are "junior" to other values
+ * and attributes will be updated to reflect those values.
+ */
+RT_EXPORT BU_EXTERN(void db5_update_std_attributes,
+                         (struct db_i *dbip, struct directory *dp, const struct rt_comb_internal *comb));
+
 
 /*
  *  Constants provided and used by the RT library.

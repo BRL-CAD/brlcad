@@ -47,12 +47,17 @@
 #include <ctype.h>
 #include <errno.h>
 #include <sys/types.h>
-#include <sys/socket.h>
+#ifndef _WIN32
+#  include <sys/socket.h>
+#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/time.h>		/* struct timeval */
-
-#include <netdb.h>
+#ifndef _WIN32
+#  include <sys/time.h>		/* struct timeval */
+#  include <netdb.h>
+#else
+#  include <windows.h>
+#endif
 
 #if defined(SYSV) || defined(__HAIKU__)
 #  include <sys/times.h>
@@ -76,11 +81,6 @@ struct sockaddr_in frominet;
 
 int domain;
 socklen_t fromlen;
-int fd;				/* fd of network socket */
-
-int buflen = 1024;		/* length of buffer */
-char *buf;			/* ptr to dynamic buffer */
-int nbuf = 1024;		/* number of buffers to send in sinkmode */
 
 int udp = 0;			/* 0 = tcp, !0 = udp */
 int options = 0;		/* socket options */
@@ -111,7 +111,6 @@ Usage: ttcp -r [-options] >out\n\
 ";
 
 char stats[128];
-double t;			/* transmission time */
 long nbytes;			/* bytes on net */
 int b_flag = 0;			/* use mread() */
 
@@ -127,9 +126,7 @@ double cput, realt;		/* user, real time (seconds) */
  * grouping as it is written with.  Written by Robert S. Miles, BRL.
  */
 int
-mread(int fd,
-      char *bufp,
-      unsigned n)
+mread(int fd, char *bufp, unsigned n)
 {
     unsigned count = 0;
     int nread;
@@ -228,7 +225,6 @@ read_timer(char *str, int len)
     realt = now-time0;
     (void)times(&tmsnow);
     cput = tmsnow.tms_utime - tms0.tms_utime;
-    cput /= 1.0;//HZ;
     if (cput < 0.00001) cput = 0.01;
     if (realt < 0.00001) realt = cput;
     sprintf(line, "%g CPU secs in %g elapsed secs (%g%%)",
@@ -479,6 +475,12 @@ Nwrite(int fd, char *buf, int count)
 int
 main(int argc, char **argv)
 {
+    int fd;			/* fd of network socket */
+
+    char *buf;			/* ptr to dynamic buffer */
+    int buflen = 1024;		/* length of buffer */
+    int nbuf = 1024;		/* number of buffers to send in sinkmode */
+
     unsigned long addr_tmp;
 
     if (argc < 2) goto usage;

@@ -393,7 +393,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
      * cut the step size in half and start over...
      */
     {
-	int stat = 0, segsleft = abs(ap->a_onehit);
+	int mb_stat = 0, segsleft = abs(ap->a_onehit);
 	point_t delta;
 
 #define STEPBACK { distleft += step; VSUB2(p, p, inc); step *= .5; VSCALE(inc, inc, .5); }
@@ -403,19 +403,19 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     VSUB2(delta, p, rp->r_pt); \
     segp->seg_##x.hit_dist = fhin * MAGNITUDE(delta); \
     segp->seg_##x.hit_surfno = 0; }
-	while (stat == 0 && distleft >= -0) {
+	while (mb_stat == 0 && distleft >= -0) {
 	    int in;
 
 	    distleft -= step;
 	    VADD2(p, p, inc);
 	    in = rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold;
-	    if (stat == 1)
+	    if (mb_stat == 1)
 		if ( !in )
 		    if (step<=mb->finalstep) {
 			STEPIN(out)
 			VMOVE(inc, inco);
 			step = mb->initstep;
-			stat = 0;
+			mb_stat = 0;
 			if (ap->a_onehit != 0 || segsleft <= 0)
 			    return retval;
 		    } else
@@ -429,7 +429,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 			fhin = 1;
 			BU_LIST_INSERT(&(seghead->l), &(segp->l));
 			/* reset the ray-walk shtuff */
-			stat = 1;
+			mb_stat = 1;
 			VADD2(p, p, inc);	/* set p to a point inside */
 			VMOVE(inc, inco);
 			step = mb->initstep;
@@ -441,15 +441,15 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 #undef STEPIN
 #elif SHOOTALGO == 3
     {
-	int stat = 0, segsleft = abs(ap->a_onehit);
+	int mb_stat = 0, segsleft = abs(ap->a_onehit);
 	point_t lastpoint;
 
-	while (distleft >= 0.0 || stat == 1) {
+	while (distleft >= 0.0 || mb_stat == 1) {
 	    /* advance to the next point */
 	    distleft -= step;
 	    VMOVE(lastpoint, p);
 	    VADD2(p, p, inc);
-	    if (stat == 1) {
+	    if (mb_stat == 1) {
 		if (rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold) {
 		    point_t intersect, delta;
 		    rt_metaball_find_intersection(&intersect, mb, (const point_t *)&lastpoint, (const point_t *)&p, step, mb->finalstep);
@@ -459,7 +459,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		    VSUB2(delta, intersect, rp->r_pt);
 		    segp->seg_out.hit_dist = MAGNITUDE(delta);
 		    segp->seg_out.hit_surfno = 0;
-		    stat = 0;
+		    mb_stat = 0;
 		    if (ap->a_onehit != 0 && segsleft <= 0)
 			return retval;
 		}
@@ -477,7 +477,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		    segp->seg_in.hit_surfno = 0;
 		    BU_LIST_INSERT(&(seghead->l), &(segp->l));
 
-		    stat = 1;
+		    mb_stat = 1;
 		    step = mb->initstep;
 		}
 	    }
@@ -567,6 +567,8 @@ void
 rt_metaball_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)stp->st_specific;
+    vect_t work, pprime;
+    fastf_t r;
 
     if (ap) RT_CK_APPLICATION(ap);
     if (stp) RT_CK_SOLTAB(stp);
@@ -574,7 +576,27 @@ rt_metaball_uv(struct application *ap, struct soltab *stp, struct hit *hitp, str
     if (!uvp) return;
     if (!metaball) return;
 
-    bu_log("ERROR: rt_metaball_uv() is not implemented\n");
+    /* stuff stolen from sph */
+    VSUB2(work, hitp->hit_point, stp->st_center);
+    VSCALE(pprime, work, 1.0/MAGNITUDE(work));
+    /* Assert that pprime has unit length */
+
+    /* U is azimuth, atan() range: -pi to +pi */
+    uvp->uv_u = bn_atan2(pprime[Y], pprime[X]) * bn_inv2pi;
+    if (uvp->uv_u < 0)
+	uvp->uv_u += 1.0;
+    /*
+     * V is elevation, atan() range: -pi/2 to +pi/2, because sqrt()
+     * ensures that X parameter is always >0
+     */
+    uvp->uv_v = bn_atan2(pprime[Z],
+			 sqrt(pprime[X] * pprime[X] + pprime[Y] * pprime[Y])) *
+	bn_invpi + 0.5;
+
+    /* approximation: r / (circumference, 2 * pi * aradius) */
+    r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
+    uvp->uv_du = uvp->uv_dv =
+	bn_inv2pi * r / stp->st_aradius;
     return;
 }
 
@@ -896,10 +918,10 @@ rt_metaball_get(struct bu_vls *logstr, const struct rt_db_internal *intern, cons
  * used for db put/asc2g
  */
 int
-rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_metaball_internal *mb;
-    char *pts, *pend;;
+    const char *pts, *pend;;
 
     if(argc != 3)  {
 	bu_vls_printf(logstr, "Invalid number of arguments: %d\n", argc);

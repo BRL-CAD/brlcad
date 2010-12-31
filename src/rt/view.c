@@ -63,23 +63,22 @@ const char title[] = "The BRL-CAD Raytracer RT";
 const char usage[] = "\
 Usage:  rt [options] model.g objects...\n\
 Options:\n\
- -s #		Square grid size in pixels (default 512)\n\
- -w # -n #	Grid size width and height in pixels\n\
+ -r		Report overlaps (default)\n\
+ -R		Do not report overlaps\n\
+ -M		Read matrix+commands on stdin\n\
+ -o model.pix	Output .pix format file (default is window)\n\
+ -s #		Square grid size in pixels (default is 512)\n\
+ -w # -n #	Grid size width (w) and height (n) in pixels\n\
+ -a # -e #	Azimuth (a) and elevation (e) in degrees\n\
  -V #		View (pixel) aspect ratio (width/height)\n\
- -a #		Azimuth in deg\n\
- -e #		Elevation in deg\n\
- -M		Read matrix+cmds on stdin\n\
- -N #		NMG debug flags\n\
- -o model.pix	Output file, .pix format (default=fb)\n\
- -x #		librt debug flags\n\
- -X #		rt debug flags\n\
- -p #		Perspective, degrees side to side\n\
+ -p #		Perspective angle, degrees side to side\n\
  -P #		Set number of processors\n\
  -T #/#		Tolerance: distance/angular\n\
- -r		Report overlaps\n\
- -R		Do not report overlaps\n\
- -l #		Set the light model\n\
+ -l #		Set lighting model rendering style\n\
  -U #		Use air if # is greater than 0\n\
+ -x #		librt debug flags\n\
+ -N #		NMG debug flags\n\
+ -X #		rt debug flags\n\
 ";
 
 
@@ -93,6 +92,7 @@ extern int do_kut_plane;           /* from opt.c */
 extern plane_t kut_plane;              /* from opt.c */
 vect_t kut_norm;
 struct soltab *kut_soltab = NULL;
+extern struct bu_image_file *bif;
 
 extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
 
@@ -289,7 +289,11 @@ view_pixel(struct application *ap)
 		p[1] = g;
 		p[2] = b;
 
-		if (outfp != NULL) {
+		if (bif != NULL) {
+		    bu_semaphore_acquire(BU_SEM_SYSCALL);
+		    bu_image_save_writepixel(bif, ap->a_y, ap->a_x, p);
+		    bu_semaphore_release(BU_SEM_SYSCALL);
+		} else if (outfp != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
 		    if (fseek(outfp, (ap->a_y*width*pwidth) + (ap->a_x*pwidth), 0) != 0)
 			fprintf(stderr, "fseek error\n");
@@ -497,7 +501,11 @@ view_pixel(struct application *ap)
 			bu_exit(EXIT_FAILURE, "scanline fb_write error");
 		}
 	    }
-	    if (outfp != NULL) {
+	    if (bif != NULL) {
+		bu_semaphore_acquire(BU_SEM_SYSCALL);
+		bu_image_save_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf);
+		bu_semaphore_release(BU_SEM_SYSCALL);
+	    } else if (outfp != NULL) {
 		size_t count;
 
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -564,7 +572,10 @@ view_end(struct application *ap)
 	}
     }
 
-    if (scanline) free_scanlines(height, scanline);
+    if (scanline) {
+    	free_scanlines(height, scanline);
+    	scanline = NULL;
+    }
 }
 
 

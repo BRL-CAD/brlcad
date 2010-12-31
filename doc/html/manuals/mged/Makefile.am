@@ -49,7 +49,6 @@ htmldocs_DATA = \
 	mged_tcl_vars.html \
 	mug \
 	mug.gif \
-	mug.jpg \
 	mug_camo \
 	mug_camo.gif \
 	mug_camo.jpg \

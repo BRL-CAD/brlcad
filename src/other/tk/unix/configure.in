@@ -27,7 +27,7 @@ m4_ifdef([SC_USE_CONFIG_HEADERS], [
 TK_VERSION=8.5
 TK_MAJOR_VERSION=8
 TK_MINOR_VERSION=5
-TK_PATCH_LEVEL=".8"
+TK_PATCH_LEVEL=".9"
 VERSION=${TK_VERSION}
 LOCALES="cs da de el en en_gb eo es fr hu it nl pl pt ru sv"
 
@@ -682,26 +682,13 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
 else
     # libdir must be a fully qualified path and not ${exec_prefix}/lib
     eval libdir="$libdir"
-    if test "$SHARED_BUILD" = "0" || test "$TCL_NEEDS_EXP_FILE" = "0"; then
-        if test "${TCL_LIB_VERSIONS_OK}" = "ok"; then
-            TK_LIB_FLAG="-ltk${TK_VERSION}"
-        else
-            TK_LIB_FLAG="-ltk`echo ${TK_VERSION} | tr -d .`"
-        fi
-        TK_BUILD_LIB_SPEC="-L`pwd | sed -e 's/ /\\\\ /g'` ${TK_LIB_FLAG}"
-        TK_LIB_SPEC="-L${libdir} ${TK_LIB_FLAG}"
+    if test "${TCL_LIB_VERSIONS_OK}" = "ok"; then
+        TK_LIB_FLAG="-ltk${TK_VERSION}"
     else
-        TK_BUILD_EXP_FILE="lib.exp"
-        eval "TK_EXP_FILE=libtk${TCL_EXPORT_FILE_SUFFIX}"
-    
-        if test "$GCC" = "yes" ; then
-            TK_BUILD_LIB_SPEC="-Wl,-bI:`pwd | sed -e 's/ /\\\\ /g'`/${TK_BUILD_EXP_FILE} -L`pwd | sed -e 's/ /\\\\ /g'`"
-            TK_LIB_SPEC="-Wl,-bI:${libdir}/${TK_EXP_FILE} -L${libdir}"
-        else
-            TK_BUILD_LIB_SPEC="-bI:`pwd | sed -e 's/ /\\\\ /g'`/${TK_BUILD_EXP_FILE}"
-            TK_LIB_SPEC="-bI:${libdir}/${TK_EXP_FILE}"
-        fi
+        TK_LIB_FLAG="-ltk`echo ${TK_VERSION} | tr -d .`"
     fi
+    TK_BUILD_LIB_SPEC="-L`pwd | sed -e 's/ /\\\\ /g'` ${TK_LIB_FLAG}"
+    TK_LIB_SPEC="-L${libdir} ${TK_LIB_FLAG}"
 fi
 
 # Support for building the Aqua resource files
@@ -771,8 +758,6 @@ AC_SUBST(TK_SHARED_BUILD)
 AC_SUBST(LD_LIBRARY_PATH_VAR)
 
 AC_SUBST(TK_BUILD_LIB_SPEC)
-AC_SUBST(TK_BUILD_EXP_FILE)
-AC_SUBST(TK_EXP_FILE)
 
 AC_SUBST(TCL_STUB_FLAGS)
 AC_SUBST(XINCLUDES)

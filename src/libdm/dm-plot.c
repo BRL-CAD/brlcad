@@ -53,7 +53,6 @@
 /* Display Manager package interface */
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
-struct dm *plot_open(Tcl_Interp *interp, int argc, char **argv);
 
 HIDDEN_DM_FUNCTION_PROTOTYPES(plot)
 
@@ -85,6 +84,7 @@ struct dm dm_plot = {
     Nu_int0,
     Nu_int0,
     Nu_int0,
+    Nu_int0, /* display to image function */
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
@@ -96,6 +96,8 @@ struct dm dm_plot = {
     0,
     0,
     0,
+    0,/* bytes per pixel */
+    0,/* bits per channel */
     0,
     0,
     1.0, /* aspect ratio */
@@ -130,7 +132,7 @@ static mat_t plotmat;
  *
  */
 struct dm *
-plot_open(Tcl_Interp *interp, int argc, char **argv)
+plot_open(Tcl_Interp *interp, int argc, const char *argv[])
 {
     static int count = 0;
     struct dm *dmp;

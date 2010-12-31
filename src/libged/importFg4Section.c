@@ -55,23 +55,15 @@ static int	group_id=(-1);		/* Group identification number from SECTION card */
 static int	comp_id=(-1);		/* Component identification number from SECTION card */
 static int	region_id=0;		/* Region id number (group id no X 1000 + component id no) */
 static char	field[9];		/* Space for storing one field from an input line */
-static int	name_count;		/* Count of number of times this name_name has been used */
+
 static int	bot=0;			/* Flag: >0 -> There are BOT's in current component */
-static int	warnings=0;		/* Flag: >0 -> Print warning messages */
 static int	debug=0;		/* Debug flag */
-static int	rt_debug=0;		/* RT_G_DEBUG */
-static int	quiet=0;		/* flag to not blather */
-static int	comp_count=0;		/* Count of components in FASTGEN4 file */
 
 static int	*faces=NULL;	/* one triplet per face indexing three grid points */
 static fastf_t	*thickness;	/* thickness of each face */
 static char	*facemode;	/* mode for each face */
 static int	face_size=0;	/* actual length of above arrays */
 static int	face_count=0;	/* number of faces in above arrays */
-
-static int	*int_list;		/* Array of integers */
-static int	int_list_count=0;	/* Number of ints in above array */
-static int	int_list_length=0;	/* Length of int_list array */
 
 #define		PLATE_MODE	1
 #define		VOLUME_MODE	2
@@ -111,24 +103,30 @@ static int
 rt_mk_bot_w_normals(
     struct rt_wdb *fp,
     const char *name,
-    unsigned char	mode,
-    unsigned char	orientation,
-    unsigned char	flags,
-    int		num_vertices,
-    int		num_faces,
-    fastf_t		*vertices,	/* array of floats for vertices [num_vertices*3] */
-    int		*faces,		/* array of ints for faces [num_faces*3] */
-    fastf_t		*thickness,	/* array of plate mode thicknesses (corresponds to array of faces)
-					 * NULL for modes RT_BOT_SURFACE and RT_BOT_SOLID.
-					 */
-    struct bu_bitv	*face_mode,	/* a flag for each face indicating thickness is appended to hit point,
-					 * otherwise thickness is centered about hit point
-					 */
-    int		num_normals,	/* number of unit normals in normals array */
-    fastf_t		*normals,	/* array of floats for normals [num_normals*3] */
-    int		*face_normals )	/* array of ints (indices into normals array), must have 3*num_faces entries */
+    unsigned char botmode,
+    unsigned char orientation,
+    unsigned char flags,
+    int num_vertices,
+    int num_faces,
+    fastf_t *vertices,		/* array of floats for vertices [num_vertices*3] */
+    int *botfaces,		/* array of ints for faces [num_faces*3] */
+    fastf_t *platethickness,	/* array of plate mode thicknesses
+				 * (corresponds to array of faces)
+				 * NULL for modes RT_BOT_SURFACE and
+				 * RT_BOT_SOLID.
+				 */
+    struct bu_bitv *face_mode,	/* a flag for each face indicating
+				 * thickness is appended to hit point,
+				 * otherwise thickness is centered
+				 * about hit point
+				 */
+    int num_normals,		/* number of unit normals in normals array */
+    fastf_t *normals,		/* array of floats for normals [num_normals*3] */
+    int *face_normals )		/* array of ints (indices into normals
+				 * array), must have 3*num_faces
+				 * entries */
 {
-    struct rt_bot_internal *bot;
+    struct rt_bot_internal *botip;
     int i;
 
     if ( (num_normals > 0) && (fp->dbip->dbi_version < 5 ) ) {
@@ -138,70 +136,75 @@ rt_mk_bot_w_normals(
 	bu_log( "Please upgrade to the current database format by using \"dbupgrade\"\n" );
     }
 
-    BU_GETSTRUCT( bot, rt_bot_internal );
-    bot->magic = RT_BOT_INTERNAL_MAGIC;
-    bot->mode = mode;
-    bot->orientation = orientation;
-    bot->bot_flags = flags;
-    bot->num_vertices = num_vertices;
-    bot->num_faces = num_faces;
-    bot->vertices = (fastf_t *)bu_calloc( num_vertices * 3, sizeof( fastf_t ), "bot->vertices" );
+    BU_GETSTRUCT( botip, rt_bot_internal );
+    botip->magic = RT_BOT_INTERNAL_MAGIC;
+    botip->mode = botmode;
+    botip->orientation = orientation;
+    botip->bot_flags = flags;
+    botip->num_vertices = num_vertices;
+    botip->num_faces = num_faces;
+    botip->vertices = (fastf_t *)bu_calloc( num_vertices * 3, sizeof( fastf_t ), "botip->vertices" );
     for ( i=0; i<num_vertices*3; i++ )
-	bot->vertices[i] = vertices[i];
-    bot->faces = (int *)bu_calloc( num_faces * 3, sizeof( int ), "bot->faces" );
+	botip->vertices[i] = vertices[i];
+    botip->faces = (int *)bu_calloc( num_faces * 3, sizeof( int ), "botip->faces" );
     for ( i=0; i<num_faces*3; i++ )
-	bot->faces[i] = faces[i];
+	botip->faces[i] = botfaces[i];
     if ( mode == RT_BOT_PLATE )
     {
-	bot->thickness = (fastf_t *)bu_calloc( num_faces, sizeof( fastf_t ), "bot->thickness" );
+	botip->thickness = (fastf_t *)bu_calloc( num_faces, sizeof( fastf_t ), "botip->thickness" );
 	for ( i=0; i<num_faces; i++ )
-	    bot->thickness[i] = thickness[i];
-	bot->face_mode = bu_bitv_dup( face_mode );
+	    botip->thickness[i] = platethickness[i];
+	botip->face_mode = bu_bitv_dup( face_mode );
     }
     else
     {
-	bot->thickness = (fastf_t *)NULL;
-	bot->face_mode = (struct bu_bitv *)NULL;
+	botip->thickness = (fastf_t *)NULL;
+	botip->face_mode = (struct bu_bitv *)NULL;
     }
 
     if ( (num_normals > 0) && (fp->dbip->dbi_version >= 5 ) ) {
-	bot->num_normals = num_normals;
-	bot->num_face_normals = bot->num_faces;
-	bot->normals = (fastf_t *)bu_calloc( bot->num_normals * 3, sizeof( fastf_t ), "BOT normals" );
-	bot->face_normals = (int *)bu_calloc( bot->num_faces * 3, sizeof( int ), "BOT face normals" );
-	memcpy(bot->normals, normals, bot->num_normals * 3 * sizeof( fastf_t ));
-	memcpy(bot->face_normals, face_normals, bot->num_faces * 3 * sizeof( int ));
+	botip->num_normals = num_normals;
+	botip->num_face_normals = botip->num_faces;
+	botip->normals = (fastf_t *)bu_calloc( botip->num_normals * 3, sizeof( fastf_t ), "BOT normals" );
+	botip->face_normals = (int *)bu_calloc( botip->num_faces * 3, sizeof( int ), "BOT face normals" );
+	memcpy(botip->normals, normals, botip->num_normals * 3 * sizeof( fastf_t ));
+	memcpy(botip->face_normals, face_normals, botip->num_faces * 3 * sizeof( int ));
     } else {
-	bot->bot_flags = 0;
-	bot->num_normals = 0;
-	bot->num_face_normals = 0;
-	bot->normals = (fastf_t *)NULL;
-	bot->face_normals = (int *)NULL;
+	botip->bot_flags = 0;
+	botip->num_normals = 0;
+	botip->num_face_normals = 0;
+	botip->normals = (fastf_t *)NULL;
+	botip->face_normals = (int *)NULL;
     }
 
-    return wdb_export(fp, name, (genptr_t)bot, ID_BOT, 1.0);
+    return wdb_export(fp, name, (genptr_t)botip, ID_BOT, 1.0);
 }
+
 
 static int
 rt_mk_bot(
     struct rt_wdb *fp,
     const char *name,
-    unsigned char	mode,
-    unsigned char	orientation,
-    unsigned char	flags,
-    int		num_vertices,
-    int		num_faces,
-    fastf_t		*vertices,	/* array of floats for vertices [num_vertices*3] */
-    int		*faces,		/* array of ints for faces [num_faces*3] */
-    fastf_t		*thickness,	/* array of plate mode thicknesses (corresponds to array of faces)
-					 * NULL for modes RT_BOT_SURFACE and RT_BOT_SOLID.
-					 */
-    struct bu_bitv	*face_mode )	/* a flag for each face indicating thickness is appended to hit point,
-					 * otherwise thickness is centered about hit point
-					 */
+    unsigned char botmode,
+    unsigned char orientation,
+    unsigned char flags,
+    int num_vertices,
+    int num_faces,
+    fastf_t *vertices,		/* array of floats for vertices [num_vertices*3] */
+    int *botfaces,		/* array of ints for faces [num_faces*3] */
+    fastf_t *platethickness,	/* array of plate mode thicknesses
+				 * (corresponds to array of faces)
+				 * NULL for modes RT_BOT_SURFACE and
+				 * RT_BOT_SOLID.
+				 */
+    struct bu_bitv *face_mode )	/* a flag for each face indicating
+				 * thickness is appended to hit point,
+				 * otherwise thickness is centered
+				 * about hit point
+				 */
 {
-    return( rt_mk_bot_w_normals( fp, name, mode, orientation, flags, num_vertices, num_faces, vertices,
-				 faces, thickness, face_mode, 0, NULL, NULL ) );
+    return( rt_mk_bot_w_normals( fp, name, botmode, orientation, flags, num_vertices, num_faces, vertices,
+				 botfaces, platethickness, face_mode, 0, NULL, NULL ) );
 }
 
 /*************************** code from conv/fast4-g.c ***************************/
@@ -489,9 +492,6 @@ make_bot_object(const char	*name,
     bot_ip.bot_flags = 0;
 
     count = rt_bot_vertex_fuse( &bot_ip );
-    if ( count )
-	(void)rt_bot_condense( &bot_ip );
-
     count = rt_bot_face_fuse( &bot_ip );
     if ( count )
 	bu_log( "WARNING: %d duplicate faces eliminated from group %d component %d\n", count, group_id, comp_id );

@@ -48,16 +48,6 @@ mat_t identity;
 extern unsigned char geometry_default_color[];		/* defined in dodraw.c */
 
 
-/* Just a test function for testing the DM_DRAW callback - should go away
- * and be replaced with NULL if a vlist is already present once testing is
- * complete.
- */
-struct bn_vlist * 
-return_vlist(void *data) {
-    return (struct bn_vlist *)data;
-}
-
-
 /*
  * P E R S P _ M A T
  *
@@ -68,7 +58,7 @@ return_vlist(void *data) {
 static void
 persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fastf_t backoff)
 {
-    mat_t m2, tran;
+    mat_t m2, tra;
 
     fovy *= 3.1415926535/180.0;
 
@@ -82,9 +72,9 @@ persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fa
     m2[15] = 0;
 
     /* Move eye to origin, then apply perspective */
-    MAT_IDN(tran);
-    tran[11] = -backoff;
-    bn_mat_mul(m, m2, tran);
+    MAT_IDN(tra);
+    tra[11] = -backoff;
+    bn_mat_mul(m, m2, tra);
 }
 
 
@@ -294,7 +284,7 @@ dozoom(int which_eye)
     /*
      * Draw all solids not involved in an edit.
      */
-    if (view_state->vs_gvp->gv_perspective <= 0 && view_state->vs_gvp->gv_eye_pos[Z] == 1.0) {
+    if (view_state->vs_gvp->gv_perspective < SMALL_FASTF && EQUAL(view_state->vs_gvp->gv_eye_pos[Z], 1.0)) {
 	mat = view_state->vs_gvp->gv_model2view;
     } else {
 	/*
@@ -310,7 +300,7 @@ dozoom(int which_eye)
 	point_t l, h, eye;
 
 	/* Determine where eye should be */
-	to_eye_scr = 1 / tan(view_state->vs_gvp->gv_perspective * bn_degtorad * 0.5);
+	to_eye_scr = 1 / tan(view_state->vs_gvp->gv_perspective * DEG2RAD * 0.5);
 
 #define SCR_WIDTH_PHYS 330	/* Assume a 330 mm wide screen */
 
@@ -332,7 +322,7 @@ dozoom(int which_eye)
 		/* XXX hack */
 		/* if (mged_variables->mv_faceplate > 0) */
 		if (1) {
-		    if (view_state->vs_gvp->gv_eye_pos[Z] == 1.0) {
+		    if (EQUAL(view_state->vs_gvp->gv_eye_pos[Z], 1.0)) {
 			/* This way works, with reasonable Z-clipping */
 			persp_mat(perspective_mat, view_state->vs_gvp->gv_perspective,
 				  (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
@@ -442,7 +432,7 @@ dozoom(int which_eye)
 		    continue;
 
 		/* already drawn above */
-		if (sp->s_transparency == 1.0)
+		if (EQUAL(sp->s_transparency, 1.0))
 		    continue;
 
 		/*
@@ -537,7 +527,7 @@ dozoom(int which_eye)
      * Draw all solids involved in editing.
      * They may be getting transformed away from the other solids.
      */
-    if (state == ST_VIEW)
+    if (STATE == ST_VIEW)
 	return;
 
     if (view_state->vs_gvp->gv_perspective <= 0) {
@@ -676,30 +666,6 @@ createDListALL(struct solid *sp)
     }
 
     curr_dm_list = save_dlp;
-}
-
-
-/*
- * Call createDListALL for all solids. See createDListALL above
- * for a description.
- */
-void
-createDListsAll(struct bu_list *hdlp)
-{
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
-    struct solid *sp;
-
-    gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
-    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    createDListALL(sp);
-	}
-
-	gdlp = next_gdlp;
-    }
 }
 
 

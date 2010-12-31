@@ -68,18 +68,6 @@ void three_coord_out(FILE *fp, fastf_t *m);
 void two_dcoord_out(FILE *fp, fastf_t *m);
 void three_dcoord_out(FILE *fp, fastf_t *m);
 
-static char usage[] = "\
-Usage: plrot [options] [file1 ... fileN] > file.plot\n\
-   -x# -y# -z#    Rotation about axis in degrees\n\
-   -X# -Y# -Z#    Translation along axis\n\
-   -s#            Scale factor\n\
-   -a# -e#        Azimuth/Elevation from front view\n\
-		  (usually first, in this order, implies -M)\n\
-   -g             MGED front view to display coordinates (usually last)\n\
-   -M             Autoscale space command like RT model RPP\n\
-   -m#            Takes a 4X4 matrix as an argument\n\
-   -v             Verbose\n\
-   -S#            Space: takes a quoted string of six floats\n";
 
 /*
  * M O D E L _ R P P
@@ -323,8 +311,22 @@ main(int argc, char **argv)
 {
     FILE *fp=NULL;
 
+static char opts[] = "\
+   -x# -y# -z#    Rotation about axis in degrees\n\
+   -X# -Y# -Z#    Translation along axis\n\
+   -s#            Scale factor\n\
+   -a# -e#        Azimuth/Elevation from front view\n\
+		  (usually first, in this order, implies -M)\n\
+   -g             MGED front view to display coordinates (usually last)\n\
+   -M             Autoscale space command like RT model RPP\n\
+   -m#            Takes a 4X4 matrix as an argument\n\
+   -v             Verbose\n\
+   -S#            Space: takes a quoted string of six floats\n";
+
     if (!get_args(argc, argv)) {
-	(void)fputs(usage, stderr);
+	fputs("Usage: plrot [options] [file1 ... fileN] > file.plot\n", stderr);
+
+	(void)fputs(opts, stderr);
 	bu_exit (1, NULL);
     }
 

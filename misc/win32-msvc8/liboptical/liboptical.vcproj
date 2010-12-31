@@ -789,6 +789,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\liboptical\sh_toon.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\liboptical\sh_toyota.c"
 				>
 				<FileConfiguration

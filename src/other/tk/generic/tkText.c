@@ -240,7 +240,7 @@ static const Tk_OptionSpec optionSpecs[] = {
     {TK_OPTION_STRING, "-yscrollcommand", "yScrollCommand", "ScrollCommand",
 	DEF_TEXT_YSCROLL_COMMAND, -1, Tk_Offset(TkText, yScrollCmd),
 	TK_OPTION_NULL_OK, 0, 0},
-    {TK_OPTION_END}
+    {TK_OPTION_END, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0}
 };
 
 /*
@@ -417,6 +417,8 @@ static SearchLineIndexProc	TextSearchGetLineIndex;
 static Tk_ClassProcs textClass = {
     sizeof(Tk_ClassProcs),	/* size */
     TextWorldChangedCallback,	/* worldChangedProc */
+    NULL,					/* createProc */
+    NULL					/* modalProc */
 };
 
 /*
@@ -3392,16 +3394,16 @@ TkTextSelectionEvent(
      *     event generate $textWidget <<Selection>>
      */
 
-    XEvent event;
+    union {XEvent general; XVirtualEvent virtual;} event;
 
     memset(&event, 0, sizeof(event));
-    event.xany.type = VirtualEvent;
-    event.xany.serial = NextRequest(Tk_Display(textPtr->tkwin));
-    event.xany.send_event = False;
-    event.xany.window = Tk_WindowId(textPtr->tkwin);
-    event.xany.display = Tk_Display(textPtr->tkwin);
-    ((XVirtualEvent *) &event)->name = Tk_GetUid("Selection");
-    Tk_HandleEvent(&event);
+    event.general.xany.type = VirtualEvent;
+    event.general.xany.serial = NextRequest(Tk_Display(textPtr->tkwin));
+    event.general.xany.send_event = False;
+    event.general.xany.window = Tk_WindowId(textPtr->tkwin);
+    event.general.xany.display = Tk_Display(textPtr->tkwin);
+    event.virtual.name = Tk_GetUid("Selection");
+    Tk_HandleEvent(&event.general);
 }
 
 /*
@@ -4647,17 +4649,17 @@ DumpLine(
 	int currentSize = segPtr->size;
 
 	if ((what & TK_DUMP_TEXT) && (segPtr->typePtr == &tkTextCharType) &&
-		(offset + segPtr->size > startByte)) {
-	    int last = segPtr->size;	/* Index of last char in seg. */
+		(offset + currentSize > startByte)) {
+	    int last = currentSize;	/* Index of last char in seg. */
 	    int first = 0;		/* Index of first char in seg. */
 
-	    if (offset + segPtr->size > endByte) {
+	    if (offset + currentSize > endByte) {
 		last = endByte - offset;
 	    }
 	    if (startByte > offset) {
 		first = startByte - offset;
 	    }
-	    if (last != segPtr->size) {
+	    if (last != currentSize) {
 		/*
 		 * To avoid modifying the string in place we copy over just
 		 * the segment that we want. Since DumpSegment can modify the
@@ -4692,14 +4694,19 @@ DumpLine(
 		    name = "insert";
 		} else if (segPtr == textPtr->currentMarkPtr) {
 		    name = "current";
+		} else if (markPtr->hPtr == NULL) {
+		    name = NULL;
+		    lineChanged = 0;
 		} else {
 		    name = Tcl_GetHashKey(&textPtr->sharedTextPtr->markTable,
 			    markPtr->hPtr);
 		}
-		TkTextMakeByteIndex(textPtr->sharedTextPtr->tree, textPtr,
-			lineno, offset, &index);
-		lineChanged = DumpSegment(textPtr, interp, "mark", name,
-			command, &index, what);
+		if (name != NULL) {
+		    TkTextMakeByteIndex(textPtr->sharedTextPtr->tree, textPtr,
+			    lineno, offset, &index);
+		    lineChanged = DumpSegment(textPtr, interp, "mark", name,
+			    command, &index, what);
+		}
 	    } else if ((what & TK_DUMP_TAG) &&
 		    (segPtr->typePtr == &tkTextToggleOnType)) {
 		TkTextMakeByteIndex(textPtr->sharedTextPtr->tree, textPtr,
@@ -4761,7 +4768,7 @@ DumpLine(
 	    } else {
 		while ((newOffset < endByte) && (newOffset < offset)
 			&& (newSegPtr != NULL)) {
-		    newOffset += segPtr->size;
+		    newOffset += currentSize;
 		    newSegPtr = newSegPtr->nextPtr;
 		    if (segPtr == newSegPtr) {
 			break;
@@ -4998,7 +5005,7 @@ TextEditCmd(
 	    Tcl_WrongNumArgs(interp, 3, objv, "?boolean?");
 	    return TCL_ERROR;
 	} else {
-	    int setModified;
+	    int setModified, oldModified;
 
 	    if (Tcl_GetBooleanFromObj(interp, objv[3],
 		    &setModified) != TCL_OK) {
@@ -5011,13 +5018,22 @@ TextEditCmd(
 
 	    setModified = setModified ? 1 : 0;
 
+	    oldModified = textPtr->sharedTextPtr->isDirty;
 	    textPtr->sharedTextPtr->isDirty = setModified;
 	    if (setModified) {
 		textPtr->sharedTextPtr->dirtyMode = TK_TEXT_DIRTY_FIXED;
 	    } else {
 		textPtr->sharedTextPtr->dirtyMode = TK_TEXT_DIRTY_NORMAL;
 	    }
-	    GenerateModifiedEvent(textPtr);
+
+	    /*
+	     * Only issue the <<Modified>> event if the flag actually changed.
+	     * However, degree of modified-ness doesn't matter. [Bug 1799782]
+	     */
+
+	    if ((!oldModified) != (!setModified)) {
+		GenerateModifiedEvent(textPtr);
+	    }
 	}
 	break;
     case EDIT_REDO:
@@ -5166,18 +5182,18 @@ static void
 GenerateModifiedEvent(
     TkText *textPtr)	/* Information about text widget. */
 {
-    XEvent event;
+    union {XEvent general; XVirtualEvent virtual;} event;
 
     Tk_MakeWindowExist(textPtr->tkwin);
 
     memset(&event, 0, sizeof(event));
-    event.xany.type = VirtualEvent;
-    event.xany.serial = NextRequest(Tk_Display(textPtr->tkwin));
-    event.xany.send_event = False;
-    event.xany.window = Tk_WindowId(textPtr->tkwin);
-    event.xany.display = Tk_Display(textPtr->tkwin);
-    ((XVirtualEvent *) &event)->name = Tk_GetUid("Modified");
-    Tk_HandleEvent(&event);
+    event.general.xany.type = VirtualEvent;
+    event.general.xany.serial = NextRequest(Tk_Display(textPtr->tkwin));
+    event.general.xany.send_event = False;
+    event.general.xany.window = Tk_WindowId(textPtr->tkwin);
+    event.general.xany.display = Tk_Display(textPtr->tkwin);
+    event.virtual.name = Tk_GetUid("Modified");
+    Tk_HandleEvent(&event.general);
 }
 
 /*

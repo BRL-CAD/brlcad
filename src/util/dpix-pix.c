@@ -45,8 +45,8 @@ static unsigned char cha[NUM];
 int
 main(int argc, char **argv)
 {
-    int count;			/* count of items */
-    int got;			/* count of bytes */
+    size_t count;			/* count of items */
+    ssize_t got;			/* count of bytes */
     int fd;			/* UNIX file descriptor */
     double *dp;			/* ptr to d */
     double *ep;
@@ -137,7 +137,7 @@ main(int argc, char **argv)
 
 	/* fd 1 is stdout */
 	got = write(1, (char *)&cha[0], count*sizeof(cha[0]));
-	if (got != count*sizeof(cha[0])) {
+	if (got < 0 || (size_t)got != count*sizeof(cha[0])) {
 	    perror("write");
 	    exit(2);
 	}

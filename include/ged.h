@@ -95,6 +95,7 @@ __BEGIN_DECLS
 #define GED_PROTATE_MODE 12
 #define GED_PSCALE_MODE 13
 #define GED_PTRANSLATE_MODE 14
+#define GED_RECTANGLE_MODE 15
 
 /**
  * S E M A P H O R E S
@@ -406,7 +407,7 @@ struct ged_drawable {
     struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
     struct solid		*gd_freeSolids;		/**< @brief  ptr to head of free solid list */
 
-    char			*gd_rt_cmd[RT_MAXARGS];
+    char			**gd_rt_cmd;
     int				gd_rt_cmd_len;
     struct ged_run_rt		gd_headRunRt;		/**< @brief  head of forked rt processes */
 
@@ -494,6 +495,7 @@ struct ged {
     struct ged_drawable		*ged_gdp;
     struct ged_view		*ged_gvp;
 
+    void			*ged_dmp;
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
     void			(*ged_refresh_handler)();	/**< @brief  function for handling refresh requests */
     void			(*ged_output_handler)();	/**< @brief  function for handling output */
@@ -615,6 +617,7 @@ GED_EXPORT BU_EXTERN(int ged_build_tops,
 		     (struct ged	*gedp,
 		      char		**start,
 		      char		**end));
+GED_EXPORT BU_EXTERN(size_t ged_count_tops, (struct ged *gedp));
 
 
 /* FIXME: wdb routines do not belong in libged.  need to be
@@ -684,12 +687,12 @@ GED_EXPORT BU_EXTERN(int	wdb_put_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_adjust_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_form_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
@@ -704,7 +707,7 @@ GED_EXPORT BU_EXTERN(int	wdb_rt_gettrees_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_dump_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
@@ -799,7 +802,7 @@ GED_EXPORT BU_EXTERN(int	wdb_stub_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_region_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
@@ -956,11 +959,6 @@ GED_EXPORT BU_EXTERN(int wdb_bot_smooth_cmd,
 		     int argc,
 		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_importFg4Section_cmd,
-		    (struct rt_wdb *wdbp,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char *argv[]));
-GED_EXPORT BU_EXTERN(int	wdb_stub_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
@@ -1372,6 +1370,14 @@ GED_EXPORT BU_EXTERN(int ged_bo, (struct ged *gedp, int argc, const char *argv[]
 GED_EXPORT BU_EXTERN(int ged_blast, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Query or manipulate properties of bot
+ *
+ * Usage:
+ *     bot subcommand args bot 
+ */
+GED_EXPORT BU_EXTERN(int ged_bot, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Create new_bot by condensing old_bot
  *
  * Usage:
@@ -1540,6 +1546,14 @@ GED_EXPORT BU_EXTERN(int ged_comb, (struct ged *gedp, int argc, const char *argv
  *     c [-cr] comb_name <boolean_expr>
  */
 GED_EXPORT BU_EXTERN(int ged_comb_std, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set/get comb's members.
+ *
+ * Usage:
+ *     combmem comb_name <az el tw tx ty tz sa sx sy sz ...>
+ */
+GED_EXPORT BU_EXTERN(int ged_combmem, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Import a database into the current database using an auto-incrementing or custom affix
@@ -2084,14 +2098,6 @@ GED_EXPORT BU_EXTERN(int ged_lookat, (struct ged *gedp, int argc, const char *ar
 GED_EXPORT BU_EXTERN(int ged_ls, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
- * List the constraint objects in this database
- *
- * Usage:
- *     lscon
- */
-GED_EXPORT BU_EXTERN(int ged_lscon, (struct ged *gedp, int argc, const char *argv[]));
-
-/**
  * List object's tree as a tcl list of {operator object} pairs
  *
  * Usage:
@@ -2377,6 +2383,7 @@ GED_EXPORT BU_EXTERN(int ged_pmodel2view, (struct ged *gedp, int argc, const cha
  *     png [-s size] file.png
  */
 GED_EXPORT BU_EXTERN(int ged_png, (struct ged *gedp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_screen_grab, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Set point of view
@@ -2634,6 +2641,14 @@ GED_EXPORT BU_EXTERN(int ged_rot_point, (struct ged *gedp, int argc, const char 
 GED_EXPORT BU_EXTERN(int ged_rrt, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Returns a list of items within the previously defined rectangle.
+ *
+ * Usage:
+ *     rselect
+ */
+GED_EXPORT BU_EXTERN(int ged_rselect, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Run the raytracing application.
  *
  * Usage:
@@ -2689,6 +2704,14 @@ GED_EXPORT BU_EXTERN(int ged_scale, (struct ged *gedp, int argc, const char *arg
  *     search [options] (see search man page)
  */
 GED_EXPORT BU_EXTERN(int ged_search, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Returns a list of items within the specified rectangle or circle.
+ *
+ * Usage:
+ *     select vx vy {vr | vw vh}
+ */
+GED_EXPORT BU_EXTERN(int ged_select, (struct ged *gedp, int argc, const char *argv[]));
 
 
 /**

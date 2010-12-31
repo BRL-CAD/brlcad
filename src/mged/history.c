@@ -137,7 +137,7 @@ history_journalize(struct mged_hist *hptr)
  */
 
 int
-f_journal(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_journal(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     if (argc < 1 || 3 < argc) {
 	struct bu_vls vls;
@@ -188,43 +188,13 @@ f_journal(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 
 /*
- * F _ D E L A Y
- *
- * Uses select to delay for the specified amount of seconds and
- * microseconds.
- */
-
-int
-f_delay(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-    struct timeval tv;
-
-    if (argc < 3 || 3 < argc) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help delay");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    tv.tv_sec = atoi(argv[1]);
-    tv.tv_usec = atoi(argv[2]);
-    select(0, NULL, NULL, NULL, &tv);
-
-    return TCL_OK;
-}
-
-
-/*
  * F _ H I S T O R Y
  *
  * Prints out the command history, either to bu_log or to a file.
  */
 
 int
-f_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     FILE *fp;
     int with_delays = 0;
@@ -361,7 +331,7 @@ history_next(const char *pat)
 
 
 int
-cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct bu_vls *vp;
     struct bu_vls vls;

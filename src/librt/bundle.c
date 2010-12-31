@@ -55,6 +55,18 @@ extern int	rt_find_nugrid(struct nugridnode *nugnp, int axis, fastf_t val);
 extern const union cutter *rt_advance_to_next_cell(register struct rt_shootray_status *ssp);
 
 /*
+ * Static hit/miss function declarations used as default a_hit()/a_miss() single
+ * ray hit functions by rt_shootrays(). Along with updating some bundle hit/miss
+ * counters these functions differ from their general user defined counterparts
+ * by dettaching the ray hit partition list and segment list and attaching it to
+ * a partition bundle. Users can define there own functions but should remember to
+ * hi-jack the partition and segment list or the single ray handling funtion will
+ * return memory allocated to these list prior to the bundle b_hit() routine.
+ */
+static int bundle_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
+static int bundle_miss(register struct application *ap);
+
+/*
  *			R T _ S H O O T R A Y _ B U N D L E
  *
  *  Note that the direction vector r_dir
@@ -540,6 +552,180 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	       status, ap->a_return);
     }
     return ap->a_return;
+}
+
+/*
+ *			R T _ S H O O T R A Y S
+ *
+ *  Function for shooting a bundle of rays. Iteratively walks list of rays
+ *  contained in the application bundles xrays field 'b_rays' passing each
+ *  single ray to r_shootray().
+ *
+ *  Input:
+ *  	bundle		Pointer to an application_bundle structure.
+ *			b_ap	Members in this single ray application structure should be set
+ *	 				in a similar fashion as when used with rt_shootray() with the
+ *	 				exception of a_hit() and a_miss(). Default implementaions of
+ *	 				these routines are provided that simple update hit/miss counters
+ *	 				and attach the hit partitions and segments to the
+ *	 				partition_bundle structure. Users can still override this default
+ *	 				functionality but have to make sure to move the partition and
+ *	 				segment list to the new partition_bundle structure.
+ *			b_hit()	Routine to call when something is hit by the ray bundle.
+ *			b_miss()	Routine to call when ray bundle misses everything.
+ *
+ */
+int rt_shootrays(struct application_bundle *bundle)
+{
+	char *status;
+    struct partition_bundle *pb = NULL;
+    genptr_t a_uptr_backup = NULL;
+    struct xray a_ray;
+    int (*a_hit)BU_ARGS((struct application *, struct partition *, struct seg *));
+    int	(*a_miss)BU_ARGS((struct application *));
+
+    struct application *ray_ap = NULL;
+    int hit;
+    struct rt_i	*	rt_i = bundle->b_ap.a_rt_i;		/**< @brief  this librt instance */
+    struct resource *	resource = bundle->b_ap.a_resource;	/**< @brief  dynamic memory resources */
+    struct xrays *r;
+    struct partition_list *pl;
+
+    /*
+     * temporarily hijack ap->a_uptr,ap->a_ray,ap->a_hit(),ap->a_miss()
+     */
+    a_uptr_backup = bundle->b_ap.a_uptr;
+    a_ray = bundle->b_ap.a_ray;
+    a_hit = bundle->b_ap.a_hit;
+    a_miss = bundle->b_ap.a_miss;
+
+    /* Shoot bundle of Rays */
+    bundle->b_ap.a_purpose = "bundled ray";
+    if (!bundle->b_ap.a_hit)
+	bundle->b_ap.a_hit = bundle_hit;
+    if (!bundle->b_ap.a_miss)
+	bundle->b_ap.a_miss = bundle_miss;
+
+    pb = (struct partition_bundle *)bu_calloc( 1, sizeof( struct partition_bundle), "partition bundle" );
+    pb->ap = &bundle->b_ap;
+    pb->hits = pb->misses = 0;
+
+    bundle->b_uptr = (genptr_t)pb;
+
+	for (BU_LIST_FOR (r,xrays,&bundle->b_rays.l)) {
+		ray_ap = (struct application *)bu_calloc( 1, sizeof( struct application), "ray application structure" );
+		*ray_ap = bundle->b_ap; /* structure copy */
+
+		ray_ap->a_ray = r->ray;
+		ray_ap->a_ray.magic = RT_RAY_MAGIC;
+		ray_ap->a_uptr = (genptr_t)pb;
+		ray_ap->a_rt_i = rt_i;
+		ray_ap->a_resource = resource;
+
+		hit = rt_shootray(ray_ap);
+
+		rt_i = ray_ap->a_rt_i;
+		resource = ray_ap->a_resource;
+
+		if (hit == 0)
+			bu_free((genptr_t)(ray_ap), "ray application structure");
+    }
+
+    if ((bundle->b_hit) && (pb->hits > 0)) {
+	bundle->b_return = bundle->b_hit(bundle, pb);
+	status = "HIT";
+    } else if (bundle->b_miss) {
+	bundle->b_return = bundle->b_miss(bundle);
+	status = "MISS";
+    } else {
+	bundle->b_return = 0;
+	status = "MISS (unexpected)";
+    }
+
+	 if (pb->list != NULL) {
+		 while (BU_LIST_WHILE(pl, partition_list, &(pb->list->l))) {
+			BU_LIST_DEQUEUE(&(pl->l));
+			RT_FREE_SEG_LIST(&pl->segHeadp, resource);
+			RT_FREE_PT_LIST(&pl->PartHeadp, resource);
+			bu_free(pl->ap, "ray application structure");
+			bu_free(pl, "free partition_list pl");
+		 }
+		 bu_free(pb->list,"free partition_list header");
+	 }
+	 bu_free(pb, "partition bundle" );
+    /*
+     * set back to original values before exiting
+     */
+	bundle->b_ap.a_uptr = a_uptr_backup;
+	bundle->b_ap.a_ray = a_ray;
+	bundle->b_ap.a_hit = a_hit;
+	bundle->b_ap.a_miss = a_miss;
+
+    return bundle->b_return;
+}
+
+/*
+ *			B U N D L E _ H I T
+ *
+ *  'static' local hit function that simply adds hit partition to a ray bundle structure
+ *  passed in through ap->a_uptr and updates hit/miss stats.
+ *
+ */
+static int
+bundle_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
+{
+    register struct partition *pp;
+    struct partition_bundle *bundle = (struct partition_bundle *)ap->a_uptr;
+    struct partition_list *new_shotline;
+
+    if ( (pp=PartHeadp->pt_forw) == PartHeadp ) {
+	bundle->misses++;
+	return 0;		/* Nothing hit?? */
+    }
+
+    bundle->hits++;
+
+    if (bundle->list == NULL) {
+	/*
+	 * setup partition collection
+	 */
+	BU_GETSTRUCT(bundle->list, partition_list);
+	BU_LIST_INIT(&(bundle->list->l));
+    }
+
+    /* add a new partition to list */
+    BU_GETSTRUCT(new_shotline, partition_list);
+
+    /* steal partition list */
+    BU_LIST_INIT((struct bu_list *)&new_shotline->PartHeadp);
+    BU_LIST_MAGIC_SET((struct bu_list *)&new_shotline->PartHeadp, PT_HD_MAGIC);
+    BU_LIST_APPEND_LIST((struct bu_list *)&new_shotline->PartHeadp, (struct bu_list *)PartHeadp);
+
+    BU_LIST_INIT(&new_shotline->segHeadp.l);
+    BU_LIST_MAGIC_SET(&new_shotline->segHeadp.l, RT_SEG_MAGIC);
+    BU_LIST_APPEND_LIST(&new_shotline->segHeadp.l, &segp->l);
+
+    new_shotline->ap = ap;
+    BU_LIST_PUSH(&(bundle->list->l), &(new_shotline->l));
+
+    return 1;
+
+}
+
+/*
+ *			B U N D L E _ M I S S
+ *
+ *  'static' local hit function that simply miss stats for bundled rays.
+ *
+ */
+static int
+bundle_miss(register struct application *ap)
+{
+    struct partition_bundle *bundle = (struct partition_bundle *)ap->a_uptr;
+
+    bundle->misses++;
+
+    return 0;
 }
 
 /*

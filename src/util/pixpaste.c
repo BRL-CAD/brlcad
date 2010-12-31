@@ -40,6 +40,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
+#include "fb.h"
 
 
 static long int org_width = 512L;	/* Default file sizes 512x512 */
@@ -294,7 +295,10 @@ pixpaste: new image == original image.\n");
 	result=fread(origbuf, num_bytes, org_width, orig);
 	if (result != org_width) {
 	    (void)fprintf(stderr, "pixpaste: original image is short.\n");
-	    (void)fwrite(origbuf, num_bytes, result, stdout);
+	    result = fwrite(origbuf, num_bytes, result, stdout);
+	    if (result == 0) {
+		perror("fwrite");
+	    }
 	    bu_exit (0, NULL);
 	}
 	result = fwrite(origbuf, num_bytes, org_width, stdout);
@@ -325,7 +329,7 @@ pixpaste: new image == original image.\n");
 	result = fwrite(origbuf, num_bytes, org_width, stdout);
 	if (result != org_width) {
 	    perror("pixpaste: fwrite3");
-	    bu_exit (3, NULL);
+	    bu_exit(3, NULL);
 	}
 	row++;
     }
@@ -344,7 +348,7 @@ pixpaste: new image == original image.\n");
 	result = fwrite(origbuf, num_bytes, org_width, stdout);
 	if (result != org_width) {
 	    perror("pixpaste: fwrite4");
-	    bu_exit (3, NULL);
+	    bu_exit(3, NULL);
 	}
 	row++;
     }

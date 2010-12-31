@@ -1,3 +1,5 @@
+#!/bin/sh
+
 cp ../../pngminus/pnm2png.c pnm2pngm.c
 cp ../../../*.h .
 cp ../../../*.c .
@@ -6,4 +8,4 @@ rm example.c pngtest.c pngr*.c pngpread.c
 cp ../../../../zlib/*.h .
 cp ../../../../zlib/*.c .
 rm inf*.[ch]
-rm minigzip.c example.c gz*
+rm uncompr.c minigzip.c example.c gz*

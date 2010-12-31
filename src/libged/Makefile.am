@@ -20,6 +20,7 @@ libged_nil_la_SOURCES = \
 	bigE.c \
 	blast.c \
 	bo.c \
+	bot.c \
 	bot_condense.c \
 	bot_decimate.c \
 	bot_dump.c \
@@ -39,6 +40,7 @@ libged_nil_la_SOURCES = \
 	clone.c \
 	color.c \
 	comb.c \
+	combmem.c \
 	comb_color.c \
 	comb_std.c \
 	concat.c \
@@ -110,7 +112,6 @@ libged_nil_la_SOURCES = \
 	log.c \
 	lookat.c \
 	ls.c \
-	lscon.c \
 	lt.c \
 	m2v_point.c \
 	make.c \
@@ -199,7 +200,9 @@ libged_nil_la_SOURCES = \
 	scale_superell.c \
 	scale_tgc.c \
 	scale_tor.c \
+	screengrab.c \
 	search.c \
+	select.c \
 	set_output_script.c \
 	set_transparency.c \
 	set_uplotOutputMode.c \

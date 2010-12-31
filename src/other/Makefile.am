@@ -62,9 +62,9 @@ TERMLIBDIR=
 endif
 
 if BUILD_DOCS
-if BUILD_TKHTML3
+if BUILD_TKHTML
 if WITH_TK
-TKHTMLDIR=tkhtml3
+TKHTMLDIR=tkhtml
 else
 TKHTMLDIR=
 endif
@@ -75,15 +75,15 @@ else
 TKHTMLDIR=
 endif
 
-if BUILD_TOGL
-if WITH_TK
-TOGLDIR=togl
-else
-TOGLDIR=
-endif
-else
-TOGLDIR=
-endif
+#if BUILD_TOGL
+#if WITH_TK
+#TOGLDIR=togl
+#else
+#TOGLDIR=
+#endif
+#else
+#TOGLDIR=
+#endif
 
 if BUILD_TKPNG
 if WITH_TK
@@ -161,7 +161,6 @@ SUBDIRS = \
 	${STEPDIR} \
 	${TKPNGDIR} \
 	${TKHTMLDIR} \
-	${TOGLDIR} \
 	${TKTABLEDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
@@ -174,7 +173,8 @@ endif
 # end ONLY_BENCHMARK
 
 EXTRA_DIST = \
-	boost
+	boost \
+	togl
 
 # FIXME: need to only traverse tcl/tk if configured
 DIST_SUBDIRS = \
@@ -193,8 +193,7 @@ DIST_SUBDIRS = \
 	tcl \
 	tk \
 	tkpng \
-	tkhtml3 \
-	togl \
+	tkhtml \
 	tktable \
 	tnt
 

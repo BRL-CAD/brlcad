@@ -1,0 +1,58 @@
+%!PS-Adobe-1.0
+%begin(plot)
+%%DocumentFonts:  Courier
+%%Title: ex.box.ps
+%%Creator: MGED dm-ps.c
+%%BoundingBox: 0 0 324 324	% 4.5in square, for TeX
+%%EndComments
+
+4 setlinewidth
+
+% Sizes, made functions to avoid scaling if not needed
+/FntH /Courier findfont 80 scalefont def
+/DFntL { /FntL /Courier findfont 73.4 scalefont def } def
+/DFntM { /FntM /Courier findfont 50.2 scalefont def } def
+/DFntS { /FntS /Courier findfont 44 scalefont def } def
+
+% line styles
+/NV { [] 0 setdash } def	% normal vectors
+/DV { [8] 0 setdash } def	% dotted vectors
+/DDV { [8 8 32 8] 0 setdash } def	% dot-dash vectors
+/SDV { [32 8] 0 setdash } def	% short-dash vectors
+/LDV { [64 8] 0 setdash } def	% long-dash vectors
+
+/NEWPG {
+	.0791 .0791 scale	% 0-4096 to 324 units (4.5 inches)
+} def
+
+FntH  setfont
+NEWPG
+NV newpath 2048 2048 moveto 2049 2049 lineto stroke
+NV newpath 2048 2048 moveto 2958 1778 lineto stroke
+newpath 2958 1778 moveto 2639 1586 lineto stroke
+newpath 2639 1586 moveto 1729 1855 lineto stroke
+newpath 2048 4062 moveto 2048 2048 lineto stroke
+newpath 2048 2048 moveto 1729 1855 lineto stroke
+newpath 1729 1855 moveto 1729 3870 lineto stroke
+newpath 2958 3793 moveto 2048 4062 lineto stroke
+newpath 2048 4062 moveto 1729 3870 lineto stroke
+newpath 1729 3870 moveto 2639 3601 lineto stroke
+newpath 2958 1778 moveto 2958 3793 lineto stroke
+newpath 2958 3793 moveto 2639 3601 lineto stroke
+newpath 2639 3601 moveto 2639 1586 lineto stroke
+NV newpath 0 0 moveto 4095 0 lineto stroke
+NV newpath 4095 0 moveto 4095 4095 lineto stroke
+NV newpath 4095 4095 moveto 0 4095 lineto stroke
+NV newpath 0 4095 moveto 0 0 lineto stroke
+NV newpath 0 218 moveto 4095 218 lineto stroke
+DFntM (VIEWING) 115 3968 moveto show
+NV newpath 798 3893 moveto 0 3893 lineto stroke
+NV newpath 798 3893 moveto 798 4095 lineto stroke
+NV newpath 798 3908 moveto 0 3908 lineto stroke
+DFntS ((BUTTON MENU)) 115 3848 moveto show
+NV newpath 798 3788 moveto 0 3788 lineto stroke
+NV newpath 798 3907 moveto 798 3788 lineto stroke
+DFntM ( cent=(0.000, 0.000, 0.000), sz=184.152 MILLIMETERS, ang=(0.00, 0.00, 0.00)) 0 128 moveto show
+DFntM ( Untitled MGED Database) 0 38 moveto show
+% showpage	% uncomment to use raw file
+%end(plot)

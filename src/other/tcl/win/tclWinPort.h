@@ -16,6 +16,20 @@
 #ifndef _TCLWINPORT
 #define _TCLWINPORT
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#undef WIN32_LEAN_AND_MEAN
+
+#ifdef INCL_WINSOCK_API_TYPEDEFS
+#undef INCL_WINSOCK_API_TYPEDEFS
+#endif
+
+/*
+ * Ask for the winsock function typedefs, also.
+ */
+#define INCL_WINSOCK_API_TYPEDEFS   1
+#include <winsock2.h>
+
 #ifdef CHECK_UNICODE_CALLS
 #   define _UNICODE
 #   define UNICODE
@@ -32,26 +46,35 @@
  *---------------------------------------------------------------------------
  */
 
+#ifdef __CYGWIN__
+#   include <unistd.h>
+#   include <wchar.h>
+#else
+#   include <io.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <errno.h>
 #include <fcntl.h>
 #include <float.h>
-#include <io.h>
 #include <malloc.h>
 #include <process.h>
 #include <signal.h>
 #include <string.h>
+#include <limits.h>
 
-/*
- * These string functions are not defined with the same names on Windows.
- */
-#ifndef strcasecmp
-#   define strcasecmp stricmp
-#endif
-#ifndef strncasecmp
-#   define strncasecmp strnicmp
+#ifdef __CYGWIN__
+#   include <unistd.h>
+#   ifndef _wcsicmp
+#	define _wcsicmp wcscasecmp
+#   endif
+#else
+#   ifndef strncasecmp
+#	define strncasecmp strnicmp
+#   endif
+#   ifndef strcasecmp
+#	define strcasecmp stricmp
+#   endif
 #endif
 
 /*
@@ -70,20 +93,6 @@
 #endif /* __MWERKS__ */
 
 #include <time.h>
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
-
-#ifdef INCL_WINSOCK_API_TYPEDEFS
-#undef INCL_WINSOCK_API_TYPEDEFS
-#endif
-
-/*
- * Ask for the winsock function typedefs, also.
- */
-#define INCL_WINSOCK_API_TYPEDEFS   1
-#include <winsock2.h>
 
 /*
  * Define EINPROGRESS in terms of WSAEINPROGRESS.
@@ -305,7 +314,7 @@
  */
 
 #ifndef S_IFLNK
-#define S_IFLNK        0120000  /* Symbolic Link */
+#   define S_IFLNK        0120000  /* Symbolic Link */
 #endif
 
 #ifndef S_ISREG
@@ -357,11 +366,11 @@
  */
 
 #ifndef MAXPATH
-#define MAXPATH MAX_PATH
+#   define MAXPATH MAX_PATH
 #endif /* MAXPATH */
 
 #ifndef MAXPATHLEN
-#define MAXPATHLEN MAXPATH
+#   define MAXPATHLEN MAXPATH
 #endif /* MAXPATHLEN */
 
 /*
@@ -382,13 +391,13 @@
  */
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
-#    define environ _environ
-#    define hypot _hypot
-#    define exception _exception
-#    undef EDEADLOCK
-#    if defined(__MINGW32__) && !defined(__MSVCRT__)
+#   define environ _environ
+#   define hypot _hypot
+#   define exception _exception
+#   undef EDEADLOCK
+#   if defined(__MINGW32__) && !defined(__MSVCRT__)
 #	define timezone _timezone
-#    endif
+#   endif
 #endif /* _MSC_VER || __MINGW32__ */
 
 /*
@@ -400,17 +409,8 @@
 #   define environ  _environ
 #endif /* __BORLANDC__ */
 
-#ifdef __CYGWIN__
-/* On Cygwin, the environment is imported from the Cygwin DLL. */
-     DLLIMPORT extern char **__cygwin_environ;
-#    define environ __cygwin_environ
-#    define putenv TclCygwinPutenv
-#    define timezone _timezone
-#endif /* __CYGWIN__ */
-
-
 #ifdef __WATCOMC__
-    /* 
+    /*
      * OpenWatcom uses a wine derived winsock2.h that is missing the
      * LPFN_* typedefs.
      */
@@ -439,8 +439,8 @@
 
 /*
  *---------------------------------------------------------------------------
- * The following macros and declarations represent the interface between 
- * generic and windows-specific parts of Tcl.  Some of the macros may 
+ * The following macros and declarations represent the interface between
+ * generic and windows-specific parts of Tcl.  Some of the macros may
  * override functions declared in tclInt.h.
  *---------------------------------------------------------------------------
  */
@@ -514,14 +514,14 @@
 
 
 /*
- * The following macros have trivial definitions, allowing generic code to 
+ * The following macros have trivial definitions, allowing generic code to
  * address platform-specific issues.
  */
 
 #define TclpReleaseFile(file)	ckfree((char *) file)
 
 /*
- * The following macros and declarations wrap the C runtime library 
+ * The following macros and declarations wrap the C runtime library
  * functions.
  */
 

@@ -20,8 +20,8 @@
  */
 /** @file rle-fb.c
  *
- *  Decode a Utah Raster Toolkit RLE image, and display on a
- *  BRL libfb(3) framebuffer.
+ * Decode a Utah Raster Toolkit RLE image, and display on a
+ * BRL libfb(3) framebuffer.
  *
  */
 
@@ -32,50 +32,47 @@
 
 #include "bu.h"
 #include "fb.h"
-
-/* 
- * system installed RLE reports a re-define, so undef it to quell the
- * warning
- */
 #include "rle.h"
 
-static FILE	*infp;
-static char	*infile;
 
-static int	background[3];
-static int	override_background;
+static FILE *infp;
+static char *infile;
 
-unsigned char	*rows[4];		/* Character pointers for rle_getrow */
+static int background[3];
+static int override_background;
 
-static unsigned char	*scan_buf;		/* single scanline buffer */
-static ColorMap	cmap;
+unsigned char *rows[4];		/* Character pointers for rle_getrow */
 
-static char	*framebuffer = (char *)0;
-static int	screen_width = 0;
-static int	screen_height = 0;
-static int	scr_xoff = 0;
-static int	scr_yoff = 0;
+static unsigned char *scan_buf;		/* single scanline buffer */
+static ColorMap cmap;
 
-static int	crunch;
-static int	overlay;
-static int	r_debug;
+static char *framebuffer = (char *)0;
+static int screen_width = 0;
+static int screen_height = 0;
+static int scr_xoff = 0;
+static int scr_yoff = 0;
 
-static char	usage[] = "\
+static int crunch;
+static int overlay;
+static int r_debug;
+
+static char usage[] = "\
 Usage: rle-fb [-c -d -h -O] [-F framebuffer]  [-C r/g/b]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
 	[-X scr_xoff] [-Y scr_yoff] [file.rle]\n\
 ";
 
+
 /*
- *			G E T _ A R G S
+ * G E T _ A R G S
  */
 static int
 get_args(int argc, char **argv)
 {
-    int	c;
+    int c;
 
-    while ( (c = bu_getopt( argc, argv, "cOdhs:S:w:W:n:N:C:F:X:Y:" )) != EOF )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "cOdhs:S:w:W:n:N:C:F:X:Y:")) != EOF) {
+	switch (c) {
 	    case 'O':
 		overlay = 1;
 		break;
@@ -111,83 +108,83 @@ get_args(int argc, char **argv)
 	    case 'Y':
 		scr_yoff = atoi(bu_optarg);
 		break;
-	    case 'C':
-	    {
+	    case 'C': {
 		char *cp = bu_optarg;
 		int *conp = background;
 
 		/* premature null => atoi gives zeros */
-		for ( c=0; c < 3; c++ )  {
+		for (c=0; c < 3; c++) {
 		    *conp++ = atoi(cp);
-		    while ( *cp && *cp++ != '/' )
+		    while (*cp && *cp++ != '/')
 			;
 		}
 		override_background = 1;
 	    }
-	    break;
+		break;
 	    default:
 	    case '?':
-		return	0;
+		return 0;
 	}
     }
-    if ( argv[bu_optind] != NULL )  {
-	if ( (infp = fopen( (infile=argv[bu_optind]), "rb" )) == NULL )  {
+    if (argv[bu_optind] != NULL) {
+	if ((infp = fopen((infile=argv[bu_optind]), "rb")) == NULL) {
 	    perror(infile);
-	    return	0;
+	    return 0;
 	}
 	bu_optind++;
     } else {
 	infile = "-";
     }
-    if ( argc > ++bu_optind )
-	(void) fprintf( stderr, "rle-fb:  excess arguments ignored\n" );
+    if (argc > ++bu_optind)
+	(void) fprintf(stderr, "rle-fb:  excess arguments ignored\n");
 
-    if ( isatty(fileno(infp)) )
+    if (isatty(fileno(infp)))
 	return 0;
-    return	1;
+    return 1;
 }
 
+
 /*
- *			M A I N
+ * M A I N
  */
 int
 main(int argc, char **argv)
 {
-    FBIO	*fbp;
+    FBIO *fbp;
     int i;
-    int	file_width;		/* unclipped width of rectangle */
-    int	file_skiplen;		/* # of pixels to skip on l.h.s. */
-    int	screen_xbase;		/* screen X of l.h.s. of rectangle */
-    int	screen_xlen;		/* clipped len of rectangle */
-    int	ncolors;
+    int file_width;		/* unclipped width of rectangle */
+    int file_skiplen;		/* # of pixels to skip on l.h.s. */
+    int screen_xbase;		/* screen X of l.h.s. of rectangle */
+    int screen_xlen;		/* clipped len of rectangle */
+    int ncolors;
 
     infp = stdin;
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
-	bu_exit( 1, NULL );
+	bu_exit(1, NULL);
     }
 
     rle_dflt_hdr.rle_file = infp;
-    if ( rle_get_setup( &rle_dflt_hdr ) < 0 )  {
+    if (rle_get_setup(&rle_dflt_hdr) < 0) {
 	fprintf(stderr, "rle-fb: Error reading setup information\n");
 	bu_exit(1, NULL);
     }
 
-    if (r_debug)  {
-	fprintf( stderr, "Image bounds\n\tmin %d %d\n\tmax %d %d\n",
-		 rle_dflt_hdr.xmin, rle_dflt_hdr.ymin,
-		 rle_dflt_hdr.xmax, rle_dflt_hdr.ymax );
+    if (r_debug) {
+	fprintf(stderr, "Image bounds\n\tmin %d %d\n\tmax %d %d\n",
+		rle_dflt_hdr.xmin, rle_dflt_hdr.ymin,
+		rle_dflt_hdr.xmax, rle_dflt_hdr.ymax);
 	fprintf(stderr, "%d color channels\n", rle_dflt_hdr.ncolors);
 	fprintf(stderr, "%d color map channels\n", rle_dflt_hdr.ncmap);
-	if ( rle_dflt_hdr.alpha )
-	    fprintf( stderr, "Alpha Channel present in input, ignored.\n");
-	for ( i=0; i < rle_dflt_hdr.ncolors; i++ )
+	if (rle_dflt_hdr.alpha)
+	    fprintf(stderr, "Alpha Channel present in input, ignored.\n");
+	for (i=0; i < rle_dflt_hdr.ncolors; i++)
 	    fprintf(stderr, "Background channel %d = %d\n",
-		    i, rle_dflt_hdr.bg_color[i] );
+		    i, rle_dflt_hdr.bg_color[i]);
 	rle_debug(1);
     }
 
-    if ( rle_dflt_hdr.ncmap == 0 )
+    if (rle_dflt_hdr.ncmap == 0)
 	crunch = 0;
 
     /* Only interested in R, G, & B */
@@ -197,28 +194,28 @@ main(int argc, char **argv)
     ncolors = rle_dflt_hdr.ncolors > 3 ? 3 : rle_dflt_hdr.ncolors;
 
     /* Optional switch of library to overlay mode */
-    if ( overlay )  {
+    if (overlay) {
 	rle_dflt_hdr.background = 1;		/* overlay */
 	override_background = 0;
     }
 
     /* Optional background color override */
-    if ( override_background )  {
-	for ( i=0; i<ncolors; i++ )
+    if (override_background) {
+	for (i=0; i<ncolors; i++)
 	    rle_dflt_hdr.bg_color[i] = background[i];
     }
 
     file_width = rle_dflt_hdr.xmax - rle_dflt_hdr.xmin + 1;
 
     /* If screen sizes not specified, try to display rectangle part > 0 */
-    if ( screen_width == 0 )  {
+    if (screen_width == 0) {
 	screen_width = rle_dflt_hdr.xmax + 1;
-	if ( scr_xoff > 0 )
+	if (scr_xoff > 0)
 	    screen_width += scr_xoff;
     }
-    if ( screen_height == 0 )  {
+    if (screen_height == 0) {
 	screen_height = rle_dflt_hdr.ymax + 1;
-	if ( scr_yoff > 0 )
+	if (scr_yoff > 0)
 	    screen_height += scr_yoff;
     }
 
@@ -232,66 +229,66 @@ main(int argc, char **argv)
     rle_dflt_hdr.xmax -= screen_xbase;
     rle_dflt_hdr.xmin = 0;
 
-    if ( (fbp = fb_open( framebuffer, screen_width, screen_height )) == FBIO_NULL )
+    if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == FBIO_NULL)
 	bu_exit(12, NULL);
 
     /* Honor original screen size desires, if set, unless they shrank */
-    if ( screen_width > 0 && fb_getwidth(fbp) < screen_width )
+    if (screen_width > 0 && fb_getwidth(fbp) < screen_width)
 	screen_width = fb_getwidth(fbp);
-    if ( screen_height > 0 && fb_getheight(fbp) < screen_height )
+    if (screen_height > 0 && fb_getheight(fbp) < screen_height)
 	screen_height = fb_getheight(fbp);
 
     /* Discard any scanlines which exceed screen height */
-    if ( rle_dflt_hdr.ymax > screen_height-1 )
+    if (rle_dflt_hdr.ymax > screen_height-1)
 	rle_dflt_hdr.ymax = screen_height-1;
 
     /* Clip left edge */
     screen_xlen = rle_dflt_hdr.xmax + 1;
     file_skiplen = 0;
-    if ( screen_xbase < 0 )  {
+    if (screen_xbase < 0) {
 	file_skiplen = -screen_xbase;
 	screen_xbase = 0;
 	screen_xlen -= file_skiplen;
     }
     /* Clip right edge */
-    if ( screen_xbase + screen_xlen > screen_width )
+    if (screen_xbase + screen_xlen > screen_width)
 	screen_xlen = screen_width - screen_xbase;
-    if ( screen_xlen <= 0 ||
-	 rle_dflt_hdr.ymin > screen_height ||
-	 rle_dflt_hdr.ymax < 0 )  {
+    if (screen_xlen <= 0 ||
+	rle_dflt_hdr.ymin > screen_height ||
+	rle_dflt_hdr.ymax < 0) {
 	fprintf(stderr,
 		"rle-fb:  Warning:  RLE image rectangle entirely off screen\n");
 	goto done;
     }
 
-    scan_buf = (unsigned char *)malloc( sizeof(RGBpixel) * screen_width );
+    scan_buf = (unsigned char *)malloc(sizeof(RGBpixel) * screen_width);
 
-    for ( i=0; i < ncolors; i++ )
+    for (i=0; i < ncolors; i++)
 	rows[i] = (unsigned char *)malloc((size_t)file_width);
-    for (; i < 3; i++ )
+    for (; i < 3; i++)
 	rows[i] = rows[0];	/* handle monochrome images */
 
     /*
-     *  Import Utah color map, converting to libfb format.
-     *  Check for old format color maps, where high 8 bits
-     *  were zero, and correct them.
-     *  XXX need to handle < 3 channels of color map, by replication.
+     * Import Utah color map, converting to libfb format.
+     * Check for old format color maps, where high 8 bits
+     * were zero, and correct them.
+     * XXX need to handle < 3 channels of color map, by replication.
      */
-    if ( rle_dflt_hdr.ncmap > 0 )  {
+    if (rle_dflt_hdr.ncmap > 0) {
 	int maplen = (1 << rle_dflt_hdr.cmaplen);
 	int all = 0;
-	for ( i=0; i<256; i++ )  {
+	for (i=0; i<256; i++) {
 	    cmap.cm_red[i] = rle_dflt_hdr.cmap[i];
 	    cmap.cm_green[i] = rle_dflt_hdr.cmap[i+maplen];
 	    cmap.cm_blue[i] = rle_dflt_hdr.cmap[i+2*maplen];
 	    all |= cmap.cm_red[i] | cmap.cm_green[i] |
 		cmap.cm_blue[i];
 	}
-	if ( (all & 0xFF00) == 0 && (all & 0x00FF) != 0 )  {
-	    /*  This is an old (Edition 2) color map.
-	     *  Correct by shifting it left 8 bits.
+	if ((all & 0xFF00) == 0 && (all & 0x00FF) != 0) {
+	    /* This is an old (Edition 2) color map.
+	     * Correct by shifting it left 8 bits.
 	     */
-	    for ( i=0; i<256; i++ )  {
+	    for (i=0; i<256; i++) {
 		cmap.cm_red[i] <<= 8;
 		cmap.cm_green[i] <<= 8;
 		cmap.cm_blue[i] <<= 8;
@@ -300,25 +297,25 @@ main(int argc, char **argv)
 		    "rle-fb: correcting for old style colormap\n");
 	}
     }
-    if ( rle_dflt_hdr.ncmap > 0 && !crunch )
-	(void)fb_wmap( fbp, &cmap );
+    if (rle_dflt_hdr.ncmap > 0 && !crunch)
+	(void)fb_wmap(fbp, &cmap);
     else
-	(void)fb_wmap( fbp, COLORMAP_NULL );
+	(void)fb_wmap(fbp, COLORMAP_NULL);
 
     /* Handle any lines below zero in y.  Decode and discard. */
-    for ( i = rle_dflt_hdr.ymin; i < 0; i++ )
-	rle_getrow( &rle_dflt_hdr, rows );
+    for (i = rle_dflt_hdr.ymin; i < 0; i++)
+	rle_getrow(&rle_dflt_hdr, rows);
 
-    for (; i <= rle_dflt_hdr.ymax; i++)  {
-	unsigned char	*pp = (unsigned char *)scan_buf;
-	rle_pixel	*rp = &(rows[0][file_skiplen]);
-	rle_pixel	*gp = &(rows[1][file_skiplen]);
-	rle_pixel	*bp = &(rows[2][file_skiplen]);
-	int		j;
+    for (; i <= rle_dflt_hdr.ymax; i++) {
+	unsigned char *pp = (unsigned char *)scan_buf;
+	rle_pixel *rp = &(rows[0][file_skiplen]);
+	rle_pixel *gp = &(rows[1][file_skiplen]);
+	rle_pixel *bp = &(rows[2][file_skiplen]);
+	int j;
 
-	if ( overlay )  {
-	    fb_read( fbp, screen_xbase, i, scan_buf, screen_xlen );
-	    for ( j = 0; j < screen_xlen; j++ )  {
+	if (overlay) {
+	    fb_read(fbp, screen_xbase, i, scan_buf, screen_xlen);
+	    for (j = 0; j < screen_xlen; j++) {
 		*rp++ = *pp++;
 		*gp++ = *pp++;
 		*bp++ = *pp++;
@@ -329,28 +326,29 @@ main(int argc, char **argv)
 	    bp = &(rows[2][file_skiplen]);
 	}
 
-	rle_getrow(&rle_dflt_hdr, rows );
+	rle_getrow(&rle_dflt_hdr, rows);
 
 	/* Grumble, convert from Utah layout */
-	if ( !crunch )  {
-	    for ( j = 0; j < screen_xlen; j++)  {
+	if (!crunch) {
+	    for (j = 0; j < screen_xlen; j++) {
 		*pp++ = *rp++;
 		*pp++ = *gp++;
 		*pp++ = *bp++;
 	    }
 	} else {
-	    for ( j = 0; j < screen_xlen; j++)  {
+	    for (j = 0; j < screen_xlen; j++) {
 		*pp++ = cmap.cm_red[*rp++]>>8;
 		*pp++ = cmap.cm_green[*gp++]>>8;
 		*pp++ = cmap.cm_blue[*bp++]>>8;
 	    }
 	}
-	if ( fb_write( fbp, screen_xbase, i, scan_buf, screen_xlen ) != screen_xlen )  break;
+	if (fb_write(fbp, screen_xbase, i, scan_buf, screen_xlen) != screen_xlen) break;
     }
- done:
-    fb_close( fbp );
-    bu_exit(0, NULL);
+done:
+    fb_close(fbp);
+    return 0;
 }
+
 
 /*
  * Local Variables:

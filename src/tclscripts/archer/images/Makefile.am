@@ -77,7 +77,21 @@ dist_tcl_DATA = \
 	command.png \
 	component_pick.png \
 	component_erase.png \
+	component_select.png \
 	configure.png \
+	cycle_az.png \
+	cycle_el.png \
+	cycle_kx.png \
+	cycle_ky.png \
+	cycle_kz.png \
+	cycle_s.png \
+	cycle_sx.png \
+	cycle_sy.png \
+	cycle_sz.png \
+	cycle_tw.png \
+	cycle_tx.png \
+	cycle_ty.png \
+	cycle_tz.png \
 	dsp.png \
 	dsp_intersect.png \
 	dsp_labeled.png \

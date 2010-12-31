@@ -77,7 +77,7 @@ struct dm_xvars {
     Tk_Font tkfontstruct;
 #endif
 #ifdef DM_TOGL
-    Tcl_Obj *fontstruct;
+    Tcl_Obj *toglfontstruct;
 #endif
     int devmotionnotify;
     int devbuttonpress;

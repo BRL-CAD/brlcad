@@ -46,16 +46,16 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
 
     ON_TextLog dump_to_stdout;
     ON_TextLog* dump = &dump_to_stdout;
-    
+
     point_t p1_origin;
     ON_3dPoint plane1_origin, plane2_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
-    
+
     // First, find plane in 3 space corresponding to the bottom face
     // of the RPC.
-   
+
     vect_t x_dir, y_dir;
-    
+
     VCROSS(x_dir, eip->rpc_H, eip->rpc_B);
     VUNITIZE(x_dir);
     VSCALE(x_dir, x_dir, eip->rpc_r);
@@ -65,8 +65,8 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     plane1_origin = ON_3dPoint(p1_origin);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
-    const ON_Plane* rpc_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir); 
-   
+    const ON_Plane* rpc_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
+
     // Next, create a parabolic NURBS curve corresponding to the shape
     // of the parabola in the two planes.
     point_t x_rev_dir, ep1, ep2, ep3, tmppt;
@@ -95,15 +95,15 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     // Also need a staight line from the beginning to the end to
     // complete the loop.
 
-    ON_LineCurve* straightedge = new ON_LineCurve(onp3, onp1);   
+    ON_LineCurve* straightedge = new ON_LineCurve(onp3, onp1);
     bu_log("Valid curve: %d\n", straightedge->IsValid(dump));
     straightedge->Dump(*dump);
-   
-    // Generate the bottom cap 
+
+    // Generate the bottom cap
     ON_SimpleArray<ON_Curve*> boundary;
-    boundary.Append(ON_Curve::Cast(parabnurbscurve)); 
-    boundary.Append(ON_Curve::Cast(straightedge)); 
-    
+    boundary.Append(ON_Curve::Cast(parabnurbscurve));
+    boundary.Append(ON_Curve::Cast(straightedge));
+
     ON_PlaneSurface* bp = new ON_PlaneSurface();
     bp->m_plane = (*rpc_bottom_plane);
     bp->SetDomain(0, -100.0, 100.0);
@@ -113,14 +113,14 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     (*b)->m_S.Append(bp);
     const int bsi = (*b)->m_S.Count() - 1;
     ON_BrepFace& bface = (*b)->NewFace(bsi);
-    (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, boundary, true); 
+    (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, boundary, true);
     const ON_BrepLoop* bloop = (*b)->m_L.Last();
     bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x);
     bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y);
     bp->SetExtents(0, bp->Domain(0));
     bp->SetExtents(1, bp->Domain(1));
     (*b)->SetTrimIsoFlags(bface);
-    
+
     // Now the side face and top cap - extrude the bottom face and set
     // the cap flag to true.
     vect_t vp2;
@@ -128,7 +128,7 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(eip->rpc_V), ON_3dPoint(vp2));
     ON_Brep& brep = *(*b);
     ON_BrepExtrudeFace(brep, 0, *extrudepath, true);
-  
+
 }
 
 
@@ -140,4 +140,3 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

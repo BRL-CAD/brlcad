@@ -321,10 +321,10 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 	int arg_start = 3;
 	int newargs = 2;
 	int ac;
-	char **av;
+	const char **av;
 
 	ac = argc + newargs;
-	av = (char **)bu_malloc(sizeof(char *) * (ac+1), "dmo_open_tcl: av");
+	av = (const char **)bu_malloc(sizeof(char *) * (ac+1), "dmo_open_tcl: av");
 	av[0] = argv[0];
 
 	/* Insert new args (i.e. arrange to call init_dm_obj from dm_open()) */
@@ -340,7 +340,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 	/* copy the rest */
 	for (i = arg_start; i < argc; ++i)
 	    av[i+newargs] = argv[i];
-	av[i+newargs] = (char *)NULL;
+	av[i+newargs] = (const char *)NULL;
 
 	if ((dmp = dm_open(interp, type, ac, av)) == DM_NULL) {
 	    if (Tcl_IsShared(obj))
@@ -2340,29 +2340,6 @@ dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **
 
 
 #if defined(DM_X) || defined(DM_OGL)
-
-#if 1
-#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask) {	\
-	_shift = 24 - _shift;				\
-	switch (_shift) {				\
-	    case 0:					\
-		_mask >>= 24;				\
-		break;					\
-	    case 8:					\
-		_mask >>= 8;				\
-		break;					\
-	    case 16:					\
-		_mask <<= 8;				\
-		break;					\
-	    case 24:					\
-		_mask <<= 24;				\
-		break;					\
-	}						\
-    }
-#else
-/* Do nothing */
-#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask)
-#endif
 
 HIDDEN int
 dmo_png_cmd(struct dm_obj *dmop,

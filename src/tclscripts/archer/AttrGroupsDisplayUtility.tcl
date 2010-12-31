@@ -46,6 +46,7 @@
 	method exportAttrMap {}
 	method exportToObj {}
 	method exportToPng {}
+	method getCurrentGroup {}
 	method hideStatusbar {}
 	method hideToolbar {}
 	method highlightSelectedAttr {}
@@ -363,7 +364,7 @@
 
 ::itcl::body AttrGroupsDisplayUtility::exportToPng {} {
     set typelist {
-	{"Text" {".png"}}
+	{"PNG" {".png"}}
 	{"All Files" {*}}
     }
 
@@ -391,6 +392,10 @@
     if {$mHandleToplevel} {
 	wm deiconify $mToplevel
     }
+}
+
+::itcl::body AttrGroupsDisplayUtility::getCurrentGroup {} {
+    return $mCurrentGroup
 }
 
 ::itcl::body AttrGroupsDisplayUtility::hideStatusbar {} {

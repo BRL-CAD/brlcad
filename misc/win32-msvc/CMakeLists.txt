@@ -4,7 +4,10 @@ project(BRL-CAD)
 
 set(BUILD_SHARED_LIBS OFF)
 
-add_definitions(-DOBJ_BREP)
+add_definitions(
+    -DOBJ_BREP
+    -DSTDC_HEADERS
+)
 
 add_subdirectory(../../src/other/libregex ./libregex)
 add_subdirectory(../../src/other/libz ./libz)

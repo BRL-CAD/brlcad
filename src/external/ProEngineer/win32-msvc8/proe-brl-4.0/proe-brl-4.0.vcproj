@@ -69,6 +69,7 @@
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)\proe-brl.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\proeWildfire 4.0\protoolkit\i486_nt\obj&quot;;&quot;C:\Program Files\proeWildfire 4.0\prodevelop\i486_nt\obj&quot;;../../../../../brlcadInstall/lib"
+				GenerateManifest="true"
 				IgnoreAllDefaultLibraries="false"
 				IgnoreDefaultLibraryNames="libcmt.lib"
 				GenerateDebugInformation="false"
@@ -83,6 +84,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				EmbedManifest="false"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -155,6 +157,7 @@
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)\proe-brl.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\proeWildfire 4.0\protoolkit\x86e_win64\obj&quot;;&quot;C:\Program Files\proeWildfire 4.0\prodevelop\x86e_win64\obj&quot;;../../../../../brlcadInstallx64/lib"
+				GenerateManifest="true"
 				IgnoreAllDefaultLibraries="false"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="false"
@@ -169,6 +172,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				EmbedManifest="false"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"

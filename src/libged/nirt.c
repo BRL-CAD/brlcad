@@ -111,6 +111,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     const char *bin = NULL;
     char nirt[256] = {0};
+    int args;
 
     /* for bu_fgets space trimming */
     struct bu_vls v;
@@ -122,6 +123,9 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    args = argc + 20 + 2 + ged_count_tops(gedp);
+    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
@@ -262,9 +266,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
 
     /* Note - ged_build_tops sets the last vp to (char *)0 */
-    gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
-						   vp,
-						   &gedp->ged_gdp->gd_rt_cmd[RT_MAXARGS]);
+    gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->ged_gdp->gd_rt_cmd[args]);
 
     if (gedp->ged_gdp->gd_qray_cmd_echo) {
 	/* Print out the command we are about to run */
@@ -398,6 +400,8 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    snprintf(name, 1024, "\"%s\" ", gedp->ged_gdp->gd_rt_cmd[i]);
 	    if (rem - strlen(name) < 1) {
 		bu_log("Ran out of buffer space!");
+		bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
+		gedp->ged_gdp->gd_rt_cmd = NULL;
 		return TCL_ERROR;
 	    }
 	    bu_strlcat(line1, name, sizeof(line1));
@@ -507,7 +511,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_trunc(&v, 0);
 	    bu_vls_strcpy(&v, line);
 	    bu_vls_trimspace(&v);
-	    bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&v));
+	    bu_vls_printf(&gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
 	}
     }
 
@@ -517,7 +521,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_trunc(&v, 0);
 	bu_vls_strcpy(&v, line);
 	bu_vls_trimspace(&v);
-	bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&v));
+	bu_vls_printf(&gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
     }
     (void)fclose(fp_err);
 
@@ -546,6 +550,9 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
 	gdlp = next_gdlp;
     }
+
+    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
+    gedp->ged_gdp->gd_rt_cmd = NULL;
 
     return GED_OK;
 }
@@ -579,7 +586,7 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc < 3 || MAXARGS < argc) {
+    if (argc < 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -599,7 +606,7 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
     view_ray_orig[Z] = DG_GED_MAX;
     argc -= 2;
 
-    av = (char **)bu_malloc(sizeof(char *) * (argc + 4), "gd_vnirt_cmd: av");
+    av = (char **)bu_calloc(1, sizeof(char *) * (argc + 4), "gd_vnirt_cmd: av");
 
     /* Calculate point from which to fire ray */
     VSCALE(view_ray_orig, view_ray_orig, sf);
@@ -630,6 +637,7 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&y_vls);
     bu_vls_free(&z_vls);
     bu_free((genptr_t)av, "ged_vnirt: av");
+    av = NULL;
 
     return status;
 }

@@ -259,7 +259,7 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      */
     dot = VDOT(hf->hf_X, hf->hf_Y);
     if (fabs(dot) >tol->perp) {
- 	/* not perpendicular, bad hf */
+	/* not perpendicular, bad hf */
 	bu_log("Hf(%s): X not perpendicular to Y.\n", stp->st_name);
 	bu_free((genptr_t)hf, "struct hf");
 	stp->st_specific = (genptr_t) 0;
@@ -900,7 +900,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	cosine = VDOT(tmp, hf->hf_X);
     }
     if (fabs(cosine) <= SMALL_FASTF) {
- 	/* near enough to Z */
+	/* near enough to Z */
 	vect_t tmp;
 	int xCell, yCell, r;
 	if (RT_G_DEBUG & DEBUG_HF) {
@@ -914,7 +914,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	    nhits += r;
 	    if (nhits > MAXHITS)
 		bu_bomb("g_hf.c: too many hits.\n");
- 	    hp += r;
+	    hp += r;
 	}
     } else if (cosine*cosine > 0.5) {
 	double tmp;

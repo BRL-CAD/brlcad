@@ -49,7 +49,7 @@ _rb_select(struct bu_rb_node *root, int order, int k)
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
 
     rank = rb_size(rb_left_child(root, order), order) + 1;
-    if (root->rbn_tree->rbt_debug & BU_RB_DEBUG_OS)
+    if (UNLIKELY(root->rbn_tree->rbt_debug & BU_RB_DEBUG_OS))
 	bu_log("_rb_select(<%p>, %d, %d): rank=%d\n",
 	       root, order, k, rank);
 
@@ -71,13 +71,13 @@ bu_rb_select(bu_rb_tree *tree, int order, int k)
     RB_CKORDER(tree, order);
 
     if ((k < 1) || (k > tree->rbt_nm_nodes)) {
-	if (tree->rbt_debug & BU_RB_DEBUG_OS)
+	if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_OS))
 	    bu_log("bu_rb_select(<%p>, %d, %d): k out of bounds [1, %d]\n",
 		   tree, order, k, tree->rbt_nm_nodes);
 	rb_current(tree) = rb_null(tree);
 	return NULL;
     }
-    if (tree->rbt_debug & BU_RB_DEBUG_OS)
+    if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_OS))
 	bu_log("bu_rb_select(<%p>, %d, %d): root=<%p>\n",
 	       tree, order, k, rb_root(tree, order));
 

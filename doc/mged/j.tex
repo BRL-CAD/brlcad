@@ -1,0 +1,49 @@
+\chapter{BUILDING A SET OF COORDINATE AXES}
+
+\begin{figure}
+\centering \includegraphics{axis-3525.ps}
+\caption{The Model Axes Viewed from 35,25.}
+\label{axis-3525}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{rmit-3525}
+\caption{Example Axes Viewed form 35,25.}
+\label{rmit-3525}
+\end{figure}
+
+MGED does not display a set of XYZ co-ordinate axes on the
+screen.
+When you are in the 35,25 (isometric) viewing state the axes are
+positioned as in Figure \ref{axis-3525}.
+This database can be found in db/axis.g.
+
+If you would like a set of coordinate axes to assist in model building,
+the easiest thing to do is to
+construct three axes using "rcc" cylinder primitives via the "in" command;
+
+\noindent{\tt
+mged> {\em in x rcc 0 0 0  50 0 0  1} \\
+mged> {\em in y rcc 0 0 0  0 100 0  1} \\
+mged> {\em in z rcc 0 0 0  0 0 150  1} \\
+mged>
+}
+
+with the short leg as the "x" axis, next longer leg the "y" axis and longest
+leg the "z" axis,
+as in Figure \ref{rmit-3525}.
+Now, at any stage through construction of the model,
+the 'solid' or 'object illuminate' mode can be used
+to identify which axis cylinder is going where; they
+will have the solid names of "x", "y", and "z".
+The name of the solid will also be
+displayed in the top left hand corner of the graphics window
+and at the bottom of this window.
+
+Before going on to create a model, construct the three axes cylinders
+with the "in" commands mentioned above.
+Select the "button menu" in the
+upper left corner of the graphics window
+to enable the button menu, and
+select 35, 25 from this menu.
+Your axis will be displayed as shown in Figure \ref{rmit-3525}.

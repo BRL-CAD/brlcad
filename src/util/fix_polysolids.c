@@ -45,11 +45,6 @@ int
 main(int argc, char *argv[])
 {
     static int verbose;
-    static char *out_file = NULL;	/* Output filename */
-    static FILE *fp_out;		/* Output file pointer */
-    static FILE *fp_in;			/* input file pointer */
-    
-    static struct rt_tess_tol ttol;
     static struct bn_tol tol;
     
     static const char usage[] = "Usage: %s [-v] [-xX lvl] < brlcad_db.g > new db.g\n\
@@ -78,21 +73,24 @@ main(int argc, char *argv[])
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "vx:X:")) != EOF) {
 	switch (c) {
+	    unsigned int debug;
 	    case 'v':
 		verbose++;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", &rt_g.debug);
+		sscanf(bu_optarg, "%x", &debug);
+		rt_g.debug = debug;
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", &rt_g.NMG_debug);
+		sscanf(bu_optarg, "%x", &debug);
+		rt_g.NMG_debug = debug;
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
 	}
     }
 
-    bu_ptbl(&faces, BU_PTBL_INIT, (long *)NULL);
+    bu_ptbl_init(&faces, 64, "faces");
     m = nmg_mmr();
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);
     while (1) {
@@ -115,7 +113,7 @@ main(int argc, char *argv[])
 	    case ID_P_HEAD:
 		bu_log("Polysolid (%s)\n", rec.p.p_name);
 		s = nmg_msv(r);
-		bu_ptbl(&faces, BU_PTBL_RST, (long *)NULL);
+		bu_ptbl_reset(&faces);
 		while (!done) {
 		    struct faceuse *fu;
 		    struct loopuse *lu;
@@ -146,7 +144,7 @@ main(int argc, char *argv[])
 			bu_log("\tEliminating degenerate face\n");
 			nmg_kfu(fu);
 		    } else {
-			bu_ptbl(&faces, BU_PTBL_INS, (long *)fu);
+			bu_ptbl_ins(&faces, (long *)fu);
 		    }
 		}
 		nmg_rebound(m, &tol);
@@ -161,7 +159,9 @@ main(int argc, char *argv[])
 		break;
 	}
     }
-    bu_ptbl(&faces, BU_PTBL_FREE, (long *)NULL);
+    bu_ptbl_free(&faces);
+
+    return 0;
 }
 
 

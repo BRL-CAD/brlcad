@@ -100,12 +100,10 @@ static void ScaleVariableChanged(void *recordPtr, const char *value)
 /* ScaleInitialize --
  * 	Scale widget initialization hook.
  */
-static int ScaleInitialize(Tcl_Interp *interp, void *recordPtr)
+static void ScaleInitialize(Tcl_Interp *interp, void *recordPtr)
 {
     Scale *scalePtr = recordPtr;
-
     TtkTrackElementState(&scalePtr->core);
-    return TCL_OK;
 }
 
 static void ScaleCleanup(void *recordPtr)
@@ -189,15 +187,7 @@ ScaleGetLayout(Tcl_Interp *interp, Ttk_Theme theme, void *recordPtr)
  */
 static Ttk_Box TroughBox(Scale *scalePtr)
 {
-    WidgetCore *corePtr = &scalePtr->core;
-    Ttk_LayoutNode *node = Ttk_LayoutFindNode(corePtr->layout, "trough");
-
-    if (node) {
-	return Ttk_LayoutNodeInternalParcel(corePtr->layout, node);
-    } else {
-	return Ttk_MakeBox(
-		0,0, Tk_Width(corePtr->tkwin), Tk_Height(corePtr->tkwin));
-    }
+    return Ttk_ClientRegion(scalePtr->core.layout, "trough");
 }
 
 /*
@@ -208,13 +198,13 @@ static Ttk_Box TroughBox(Scale *scalePtr)
 static Ttk_Box TroughRange(Scale *scalePtr)
 {
     Ttk_Box troughBox = TroughBox(scalePtr);
-    Ttk_LayoutNode *slider=Ttk_LayoutFindNode(scalePtr->core.layout,"slider");
+    Ttk_Element slider = Ttk_FindElement(scalePtr->core.layout,"slider");
 
     /*
      * If this is a scale widget, adjust range for slider:
      */
     if (slider) {
-	Ttk_Box sliderBox = Ttk_LayoutNodeParcel(slider);
+	Ttk_Box sliderBox = Ttk_ElementParcel(slider);
 	if (scalePtr->scale.orient == TTK_ORIENT_HORIZONTAL) {
 	    troughBox.x += sliderBox.width / 2;
 	    troughBox.width -= sliderBox.width;
@@ -252,7 +242,7 @@ static double ScaleFraction(Scale *scalePtr, double value)
  */
 static int
 ScaleGetCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
+    void *recordPtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 {
     Scale *scalePtr = recordPtr;
     int x, y, r = TCL_OK;
@@ -280,7 +270,7 @@ ScaleGetCommand(
  */
 static int
 ScaleSetCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
+    void *recordPtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 {
     Scale *scalePtr = recordPtr;
     double from = 0.0, to = 1.0, value;
@@ -348,7 +338,7 @@ ScaleSetCommand(
 
 static int
 ScaleCoordsCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
+    void *recordPtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 {
     Scale *scalePtr = recordPtr;
     double value;
@@ -378,16 +368,16 @@ ScaleCoordsCommand(
 static void ScaleDoLayout(void *clientData)
 {
     WidgetCore *corePtr = clientData;
-    Ttk_LayoutNode *sliderNode = Ttk_LayoutFindNode(corePtr->layout, "slider");
+    Ttk_Element slider = Ttk_FindElement(corePtr->layout, "slider");
 
     Ttk_PlaceLayout(corePtr->layout,corePtr->state,Ttk_WinBox(corePtr->tkwin));
 
     /* Adjust the slider position:
      */
-    if (sliderNode) {
+    if (slider) {
 	Scale *scalePtr = clientData;
 	Ttk_Box troughBox = TroughBox(scalePtr);
-	Ttk_Box sliderBox = Ttk_LayoutNodeParcel(sliderNode);
+	Ttk_Box sliderBox = Ttk_ElementParcel(slider);
 	double value = 0.0;
 	double fraction;
 	int range;
@@ -402,7 +392,7 @@ static void ScaleDoLayout(void *clientData)
 	    range = troughBox.height - sliderBox.height;
 	    sliderBox.y += (int)(fraction * range);
 	}
-	Ttk_PlaceLayoutNode(corePtr->layout, sliderNode, sliderBox);
+	Ttk_PlaceElement(corePtr->layout, slider, sliderBox);
     }
 }
 
@@ -472,17 +462,16 @@ ValueToPoint(Scale *scalePtr, double value)
     return pt;
 }
 
-static WidgetCommandSpec ScaleCommands[] =
-{
-    { "configure",   TtkWidgetConfigureCommand },
-    { "cget",        TtkWidgetCgetCommand },
-    { "state",       TtkWidgetStateCommand },
-    { "instate",     TtkWidgetInstateCommand },
-    { "identify",    TtkWidgetIdentifyCommand },
-    { "set",         ScaleSetCommand },
-    { "get",         ScaleGetCommand },
-    { "coords",      ScaleCoordsCommand },
-    { 0, 0 }
+static const Ttk_Ensemble ScaleCommands[] = {
+    { "configure",   TtkWidgetConfigureCommand,0 },
+    { "cget",        TtkWidgetCgetCommand,0 },
+    { "state",       TtkWidgetStateCommand,0 },
+    { "instate",     TtkWidgetInstateCommand,0 },
+    { "identify",    TtkWidgetIdentifyCommand,0 },
+    { "set",         ScaleSetCommand,0 },
+    { "get",         ScaleGetCommand,0 },
+    { "coords",      ScaleCoordsCommand,0 },
+    { 0,0,0 }
 };
 
 static WidgetSpec ScaleWidgetSpec =

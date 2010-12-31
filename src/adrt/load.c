@@ -85,7 +85,7 @@ slave_load (tie_t *tie, void *data, uint32_t dlen)
 {
     char *meh = (char *)data;
 
-    TIE_VAL(tie_check_degenerate) = 0;
+    tie_check_degenerate = 0;
 
     meh += 3;	/* advance to the opcode */
 

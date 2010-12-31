@@ -40,7 +40,7 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal	intern;
     struct rt_comb_internal *comb;
     struct rt_tree_array	*rt_tree_array;
-    int i;
+    size_t i;
     size_t node_count;
     size_t actual_count;
     struct bu_vls vls;

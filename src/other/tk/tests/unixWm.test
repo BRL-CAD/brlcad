@@ -2446,7 +2446,7 @@ test unixWm-60.1 {wm attributes - test} -constraints unix -body {
     destroy .t
     toplevel .t
     wm attributes .t
-} -result [list -alpha 1.0 -topmost 0 -zoomed 0 -fullscreen 0]
+} -result [list -alpha 1.0 -topmost 0 -zoomed 0 -fullscreen 0 -type {}]
 
 test unixWm-60.2 {wm attributes - test} -constraints unix -body {
     destroy .t
@@ -2485,6 +2485,53 @@ test unixWm-61.2 {Tk_WmCmd procedure, "iconphoto" option} unix {
     wm iconphoto .t blank16 blank32
     image delete blank16 blank32
 } {}
+
+test unixWm-62.0 {wm attributes -type void} -constraints unix -setup {
+    destroy .t
+    toplevel .t
+} -body {
+    wm attributes .t -type {}
+} -cleanup {
+    destroy .t
+} -result {}
+
+test unixWm-62.1 {wm attributes -type name} -constraints unix -setup {
+    destroy .t
+    toplevel .t
+} -body {
+    wm attributes .t -type dialog
+} -cleanup {
+    destroy .t
+} -result {}
+
+test unixWm-62.2 {wm attributes -type name} -constraints unix -setup {
+    destroy .t
+    toplevel .t
+} -body {
+    tkwait visibility .t
+    wm attributes .t -type dialog
+} -cleanup {
+    destroy .t
+} -result {}
+
+test unixWm-62.3 {wm attributes -type list} -constraints unix -setup {
+    destroy .t
+    toplevel .t
+} -body {
+    wm attributes .t -type {xyzzy dialog}
+} -cleanup {
+    destroy .t
+} -result {}
+
+test unixWm-62.4 {wm attributes -type list} -constraints unix -setup {
+    destroy .t
+    toplevel .t
+} -body {
+    tkwait visibility .t
+    wm attributes .t -type {xyzzy dialog}
+} -cleanup {
+    destroy .t
+} -result {}
 
 # cleanup
 destroy .t

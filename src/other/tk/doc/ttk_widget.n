@@ -1,13 +1,13 @@
 '\"
 '\" Copyright (c) 2004 Joe English
-'\" 
+'\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
-.TH ttk::widget n 8.5 Tk "Tk Themed Widget"
+.TH ttk::widget n 8.5.9 Tk "Tk Themed Widget"
 .BS
 .SH NAME
 ttk::widget \- Standard options and commands supported by Tk themed widgets
@@ -18,11 +18,11 @@ This manual describes common widget options and commands.
 The following options are supported by all Tk themed widgets:
 .OP \-class undefined undefined
 Specifies the window class.
-The class is used when querying the option database 
+The class is used when querying the option database
 for the window's other options, to determine the default
 bindtags for the window, and to select the widget's default
 layout and style.
-This is a read-only option: 
+This is a read-only option:
 it may only be specified when the window is created,
 and may not be changed with the \fBconfigure\fR widget command.
 .OP \-cursor cursor Cursor
@@ -32,16 +32,16 @@ for the legal values.
 If set to the empty string (the default),
 the cursor is inherited from the parent widget.
 .OP \-takefocus takeFocus TakeFocus
-Determines whether the window accepts the focus during keyboard traversal.  
+Determines whether the window accepts the focus during keyboard traversal.
 Either \fB0\fR, \fB1\fR, a command prefix (to which the widget path
-is appended, and which should return \fB0\fR or \fB1\fR), 
+is appended, and which should return \fB0\fR or \fB1\fR),
 or the empty string.
 See \fIoptions(n)\fR in the Tk reference manual for the full description.
 .OP \-style style Style
 May be used to specify a custom widget style.
 .SH "SCROLLABLE WIDGET OPTIONS"
 The following options are supported by widgets that
-are controllable by a scrollbar.  
+are controllable by a scrollbar.
 See \fIscrollbar(n)\fR for more information
 .OP \-xscrollcommand xScrollCommand ScrollCommand
 A command prefix, used to communicate with horizontal scrollbars.
@@ -56,12 +56,12 @@ The first fraction indicates the first information in the widget
 that is visible in the window, and the second fraction indicates
 the information just after the last portion that is visible.
 .PP
-Typically the \fBxScrollCommand\fR option consists of the path name 
+Typically the \fBxScrollCommand\fR option consists of the path name
 of a \fBscrollbar\fR widget followed by
 .QW set ,
 e.g.
 .QW ".x.scrollbar set" .
-This will cause the scrollbar to be updated whenever the view in the 
+This will cause the scrollbar to be updated whenever the view in the
 window changes.
 .PP
 If this option is set to the empty string (the default),
@@ -80,7 +80,7 @@ Specifies a text string to be displayed inside the widget
 Specifies the name of variable whose value will be used
 in place of the \fB\-text\fR resource.
 .OP \-underline underline Underline
-If set, specifies the integer index (0-based) of a character to underline 
+If set, specifies the integer index (0-based) of a character to underline
 in the text string.
 The underlined character is used for mnemonic activation.
 .OP \-image image Image
@@ -94,7 +94,7 @@ All images in the list should have the same size.
 .OP \-compound compound Compound
 Specifies how to display the image relative to the text,
 in the case both \fB\-text\fR and \fB\-image\fR are present.
-Valid values are: 
+Valid values are:
 .RS
 .IP text
 Display text only.
@@ -111,8 +111,8 @@ Display image above, below, left of, or right of the text, respectively.
 The default; display the image if present, otherwise the text.
 .RE
 .OP \-width width Width
-If greater than zero, specifies how much space, in character widths, 
-to allocate for the text label.  
+If greater than zero, specifies how much space, in character widths,
+to allocate for the text label.
 If less than zero, specifies a minimum width.
 If zero or unspecified, the natural width of the text label is used.
 .SH "COMPATIBILITY OPTIONS"
@@ -120,10 +120,9 @@ If zero or unspecified, the natural width of the text label is used.
 May be set to \fBnormal\fR or \fBdisabled\fR
 to control the \fBdisabled\fR state bit.
 This is a write-only option:
-setting it changes the widget state, 
-but the \fBstate\fR widget command 
+setting it changes the widget state,
+but the \fBstate\fR widget command
 does not affect the \fB\-state\fR option.
-
 .SH COMMANDS
 .TP
 \fIpathName \fBcget\fR \fIoption\fR
@@ -133,36 +132,37 @@ by \fIoption\fR.
 \fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
 Query or modify the configuration options of the widget.
 If one or more \fIoption\-value\fR pairs are specified,
-then the command modifies the given widget option(s) 
-to have the given value(s); 
+then the command modifies the given widget option(s)
+to have the given value(s);
 in this case the command returns an empty string.
-If \fIoption\fR is specified with no \fIvalue\fR, 
+If \fIoption\fR is specified with no \fIvalue\fR,
 then the command returns a list describing the named option:
-the elements of the list are the 
-option name, database name, database class, default value, 
+the elements of the list are the
+option name, database name, database class, default value,
 and current value.
 .\" Note: Ttk widgets don't use TK_OPTION_SYNONYM.
 If no \fIoption\fR is specified, returns a list describing all of
 the available options for \fIpathName\fR.
 .TP
-\fIpathName \fBidentify\fR \fIx y\fR
-Returns the name of the element under the point given 
+\fIpathName \fBidentify\fR \fBelement\fR \fIx y\fR
+Returns the name of the element under the point given
 by \fIx\fR and \fIy\fR, or an empty string if the point does
 not lie within any element.
 \fIx\fR and \fIy\fR are pixel coordinates relative to the widget.
-.TP 
+Some widgets accept other \fBidentify\fR subcommands.
+.TP
 \fIpathName \fBinstate\fR \fIstatespec\fR ?\fIscript\fR?
 Test the widget's state.
-If \fIscript\fR is not specified, returns 1 if 
+If \fIscript\fR is not specified, returns 1 if
 the widget state matches \fIstatespec\fR and 0 otherwise.
 If \fIscript\fR is specified, equivalent to
 .CS
 if {[\fIpathName\fR instate \fIstateSpec\fR]} \fIscript\fR
 .CE
-.TP 
+.TP
 \fIpathName \fBstate\fR ?\fIstateSpec\fR?
 Modify or inquire widget state.
-If \fIstateSpec\fR is present, sets the widget state: 
+If \fIstateSpec\fR is present, sets the widget state:
 for each flag in \fIstateSpec\fR, sets the corresponding flag
 or clears it if prefixed by an exclamation point.
 .RS
@@ -172,7 +172,7 @@ set changes [\fIpathName \fRstate \fIspec\fR]
 \fIpathName \fRstate $changes
 .CE
 will restore \fIpathName\fR to the original state.
-If \fIstateSpec\fR is not specified, 
+If \fIstateSpec\fR is not specified,
 returns a list of the currently-enabled state flags.
 .RE
 .SH "WIDGET STATES"
@@ -180,7 +180,7 @@ The widget state is a bitmap of independent state flags.
 Widget state flags include:
 .TP
 \fBactive\fR
-The mouse cursor is over the widget 
+The mouse cursor is over the widget
 and pressing a mouse button will cause some action to occur. (aka
 .QW prelight
 (Gnome),
@@ -191,22 +191,22 @@ and pressing a mouse button will cause some action to occur. (aka
 \fBdisabled\fR
 Widget is disabled under program control (aka
 .QW unavailable ,
-.QW inactive ) 
+.QW inactive )
 .TP
 \fBfocus\fR
-Widget has keyboard focus 
+Widget has keyboard focus
 .TP
 \fBpressed\fR
 Widget is being pressed (aka
 .QW armed
-in Motif). 
+in Motif).
 .TP
 \fBselected\fR
 .QW On ,
 .QW true ,
 or
 .QW current
-for things like checkbuttons and radiobuttons. 
+for things like checkbuttons and radiobuttons.
 .TP
 \fBbackground\fR
 Windows and the Mac have a notion of an
@@ -228,7 +228,7 @@ state, and for buttons with \fB\-default active\fR.
 .TP
 \fBinvalid\fR
 The widget's value is invalid.
-(Potential uses: scale widget value out of bounds, 
+(Potential uses: scale widget value out of bounds,
 entry widget value failed validation.)
 .TP
 \fBhover\fR
@@ -256,6 +256,9 @@ $b instate {pressed !disabled} { .b invoke }
 $b state !disabled
 .CE
 .SH "SEE ALSO"
-ttk::intro(n), style(n)
+ttk::intro(n), ttk::style(n)
 .SH KEYWORDS
 state, configure, option
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

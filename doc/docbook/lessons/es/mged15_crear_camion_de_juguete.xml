@@ -1,0 +1,971 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"../../resources/standard/dtd/docbookx.dtd">
+<article xmlns:xi="http://www.w3.org/2001/XInclude">
+  <articleinfo>
+    <title>Crear un camión de juguete</title>
+
+    <xi:include 
+href="../../books/en/tutorial_series_authors.xml" 
+xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+    <legalnotice>
+       <para>Aprobado para su publicación. Su distribución es ilimitada.</para>
+   </legalnotice>
+  </articleinfo>
+
+    <para id="creating_toy_truck_overviewlist">
+	En este tutorial usted aprenderá a:
+      <itemizedlist mark='bullet'>
+	<listitem>
+	  <para>Crear un camión de juguete a partir de tres figuras.</para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Hacer copias de figuras utilizando el editor de primitivos.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>Hacer combinaciones y regiones de objetos más complejos.</para>
+	</listitem>
+	<listitem>
+	  <para>Controlar el árbol de datos y corregir de ser necesario.</para>
+	</listitem>
+	<listitem>
+	  <para>Listar los contenidos de la base de datos.</para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Asignar propiedades de los materiales utilizando el Combination 
+	    Editor.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Comprender las diferencias entre OK, Accept, Apply, Reset, 
+	    Cancel, y Dismiss. (OK, Aceptar, Aplicar, Restablecer, 
+	    Cancelar y Salir)
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>Identificar las opciones de ayuda en pantalla.</para>
+	</listitem>
+	<listitem>
+	  <para>Comprender la opción de Stacker (Apilador).</para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Probar los atributos de sombreado de camuflaje (camo shader).
+	  </para>
+	</listitem>
+      </itemizedlist>
+    </para>
+
+    <para id="creating_toy_truck_intro1">
+
+      En los tutoriales anteriores, ha creado y editado figuras para producir 
+      objetos simples. Este tutorial se centra en la creación de un objeto 
+      algo más complejo, un camión de juguete, utilizando la ventana de 
+      comandos. Su camión terminado deberá ser similar al siguiente:
+      
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged15_truck_design.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Raytrace del diseño del camión de juguete
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+    </para>
+
+    <para id="creating_toy_truck_intro2">
+      Comience creando una nueva base de datos llamada truck.g.
+    </para>
+
+    <sect1 id="truck_cab_in_cmd">
+      <title>
+	Crear una rpp para la cabina del camión utilizando el comando in
+      </title>
+      <para>
+	Para hacer la cabina del camión, cree un prisma recto paralelo 
+	(en inglés: right parallel piped > rpp) utilizando el comando in 
+	(de insert > insertar). En el prompt de la ventana de comandos tipee:
+	
+	<command>in cab1.s rpp[Enter]</command>
+	
+	<application>MGED</application> le preguntará los valores de XMIN, XMAX, 
+	YMIN, YMAX, ZMIN, y ZMAX. Tipee entonces:
+	
+	<command>0 1 0 1 0 1[Enter]</command>
+	
+	Esto le dirá a <application>MGED</application> que:
+	<informaltable>
+	  <tgroup cols='6'>
+	    <tbody>
+	      <row>
+		<entry>0</entry>
+		<entry>1</entry>
+		<entry>0</entry>
+		<entry>1</entry>
+		<entry>0</entry>
+		<entry>1</entry>
+	      </row>
+	      <row>
+		<entry>Dé el valor 0 al XMIN del rpp</entry>
+		<entry>Dé el valor 1 al XMAX del rpp</entry>
+		<entry>Dé el valor 0 al YMIN del rpp</entry>
+		<entry>Dé el valor 1 al YMAX del rpp</entry>
+		<entry>Dé el valor 0 al ZMIN del rpp</entry>
+		<entry>Dé el valor 1 al ZMAX del rpp</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+      </para>
+      <para>
+	Puede también utilizar el comando con formato de una sola línea:
+	
+	<command>in cab1.s rpp 0 1 0 1 0 1[Enter]</command>
+	
+	Una figura cúbica debería aparecer en la ventana gráfica, como muestra 
+	la siguiente imagen:
+	
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged15_truck_cab1s.png" 
+format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Diseño en Wireframe (malla de alambre) de la figura cab1.s
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+    </sect1>
+
+    <sect1 id="truck_hood_in_cmd">
+      <title>
+	Utilizar el comando inside para crear un rpp como frente de la cabina
+      </title>
+      <para>
+	Para hacer el capó del coche, deberá crear otra forma rpp utilizando 
+	el comando inside. Este comando fue creado originalmente para ahuecar 
+	objetos como tanques de gasolina y cajas, sin embargo, puede ser 
+	utilizado para crear cualquier nueva forma que tiene alguna relación 
+	con otra forma pre-existente. En este tutorial, se utilizará para 
+	cortar materiales por encima del capó y delante de la cabina. 
+      </para>
+      <para>
+	Si está utilizando la versión 6.0 de <application>BRL-CAD</application> 
+	o una posterior, en la línea de comandos tipee:
+	
+	<command>inside cab1.s caboff1.s .5 -.1 .7 -.1 -.1 -.1[Enter]</command>
+	
+	Este comando le dice a <application>MGED</application> que:
+	<informaltable>
+	  <tgroup cols='9'>
+	    <tbody>
+	      <row>
+		<entry>inside</entry>
+		<entry>cab1.s</entry>
+		<entry>caboff1.s</entry>
+		<entry>.5</entry>
+		<entry>-.1</entry>
+		<entry>7</entry>
+		<entry>-.1</entry>
+		<entry>-.1</entry>
+		<entry>-.1</entry>
+	      </row>
+	      <row>
+		<entry>Dentro de la figura...</entry>
+		<entry>llamada cab1.s...</entry>
+		<entry>cree un rpp llamado caboff1.s</entry>
+		<entry>
+		  Hacer la cara 1234 (inferior) de .5 unidades de espesor
+		</entry>
+		<entry>
+		  Hacer la cara 5678 (superior) de -.1 unidades de espesor
+		</entry>
+		<entry>
+		  Hacer la cara 1485 (trasera) de .7 unidades de espesor
+		</entry>
+		<entry>
+		  Hacer la cara 2376 (frontal) de -.1 unidades de espesor
+		</entry>
+		<entry>
+		  Hacer la cara 1265 (derecha) de -.1 unidades de espesor
+		</entry>
+		<entry>
+		  Hacer la cara 3478 (isquierda) de -.1 unidades de espesor
+		</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+	
+      </para>
+    	<para>
+	  En este ejemplo, cada espesor con valor negativo indica que caboff1.s 
+	  va a sobresalir de la cara que corresponde a cab1.s.
+	</para>
+  
+	<para>
+	  Nota:
+	  Tenga en cuenta que en las versiones de <application> BRL-CAD 
+	  </application> 6.0 en adelante las caras de un rpp son numeradas en 
+	  un orden diferente que en versiones anteriores. Así que, si va a 
+	  usar una versión anterior a 6.0, el siguiente orden es el que regirá 
+	  en el comando inside:
+
+	<command> 
+	  inside caboff1.s cab1.s un 0,7 -. -. -. 1 1 .5 -. 1 [Enter] 
+	</command>
+
+	(El orden de las caras en este caso es frontal, posterior, derecha, 	
+	izquierda, inferior y superior)
+
+	</para>
+      <para>
+
+	Cuando está en modo Multipane, el diseño debería verse como la 
+	siguiente ilustración:
+	
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged15_truck_cab_cutoff.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Corte de la cabina del camión
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+    </sect1>
+
+    <sect1 id="truck_cab_wheel_well">
+      <title>
+	Utilizar un rcc para crear la cavidad de la rueda en la cabina
+      </title>
+      <para>
+	Crear un cilindro (rcc) a utilizar para cortar un espacio para la 
+	primera rueda de la cabina. En la ventana de comandos del sistema, 
+	escriba:
+
+	<command> make well1.s rcc [Enter] </command>
+
+	En el menú Edit (Edición), diríjase a Primitive Seletion (Selección 
+	de primitivos) y luego seleccione well1.s. Aplique la vista izquierda, 		vuelva a Edit (Editar) y seleccione Scale (Escala). Reduzca el tamaño 
+	del rcc, hasta que su diámetro sea el indicado para la rueda. 
+	Regrese a Edit (Edición) y seleccione Rotate (Rotación). Como se ha 
+	dicho, un método sencillo para rotar el CCR es mediante el uso de la 
+	tecla CTRL y el botón izquierdo del mouse. Sin embargo, como sabemos 
+	que queremos voltear el objeto exactamente 90'0 a lo largo del eje x, 
+	una mejor opción es usar la línea de comandos. Tipee entonces:
+
+	<command> p 90 0 0 [Enter] </command>
+
+	Después de esto, todavía puede tener que utilizar Set H (Ajuste h - de 
+	altura) además de las opciones de escala para redimensionar y la tecla 
+	SHIFT + botón izquierdo del mouse para posicionar su rueda. Cuando 	
+	haya finalizado, seleccione Aceptar. Su diseño debe ser similar al 
+	siguiente en el modo Multipane:
+	
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged15_truck_multipane_1stwheel.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Vista multipanel del camión con su primer rueda posicionada
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+    </sect1>
+
+    <sect1 id="ok_accept_apply_reset_cancel_dismiss">
+      <title>
+	    Comprender las diferencias entre OK, Accept, Apply, Reset, 
+	    Cancel, y Dismiss. (OK, Aceptar, Aplicar, Restablecer, 
+	    Cancelar y Salir)
+      </title>
+      <para>
+	El entorno gráfico de <application> MGED </application> ofrece a los 
+	usuarios varias opciones: aplicar, aceptar o rechazar los cambios 
+	realizados a través de botones en la parte inferior de la ventanas de 
+	diálogo emergentes. Para usar cualquiera de estas opciones, basta con 
+	colocar el cursor sobre el botón deseado y cliquear con el botón 
+	izquierdo del ratón.
+      </para>
+      <para>
+	Al seleccionar el botón OK o Accept (Aceptar) le dirá a <application> 
+	MGED </application> que registre los cambios que ha hecho a una forma, 
+	una región o una combinación. <application> MGED </application> utiliza 
+	los botones OK y Accept (Aceptar) indistintamente. Al cliquear en 
+	cualquiera de estas dos opciones la ventana que está utilizando se 
+	cerrará automáticamente.
+      </para>
+      <para>
+	El botón Apply (Aplicar) le dice a <application> MGED </application> 
+	que registre los cambios que ha hecho y luego espere más instrucciones.
+	La ventana no se cierra automáticamente. Esta opción le permite 
+	realizar cambios en varios ítems sin tener que reabrir la ventana para 
+	cada cambio.
+      </para>
+      <para>
+	El botón Reset (Restablecer) le dice a <application> MGED </application> 
+	que regrese los valores que han sido modificados, a aquellos valores 
+	existentes previamente a la apertura de la ventana de diálogo. El botón 
+	Reset no cerrará el cuadro de diálogo. Los botones Cancel (Cancelar) o 
+	Dissmis (Salir) hace que no se tome en cuenta ningun cambio 
+	realizado en el cuadro de diálogo, dejando activos los últimos valores 
+	aceptados. Estos dos botones cierran el cuadro de diálogo al ser 
+	seleccionados.
+      </para>
+    </sect1>
+
+    <sect1 id="truck_wheel_well_prim_edit_cpy">
+      <title>
+	Uso del Primitive Editor (Editor de primitivos) para hacer una copia 
+	de la cavidad de la rueda
+      </title>
+      <para>
+	Para realizar una copia de la cavidad de la rueda, vaya al menú Edit 
+	(Edición) y seleccione Primitive Editor (Editor de primitivos), que 
+	contendrá la información de la última forma editada (o dirá 
+	myPrimitive si nada ha sido editado).
+	Borre el nombre de la figura anterior en el cuadro de entrada Nombre. 
+	Escriba well1.s y oprima Reset (Restablecer) (o pulse Enter mientras el 
+	cursor se encuentra todavía en el cuadro de entrada Nombre). Los 
+	valores de los parámetros de la forma antigua se sustituirán por las 
+	de la nueva forma. El editor va a cambiar y se verá similar al 
+	siguiente ejemplo: 
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged15_prim_ed_wheel_well.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      El Primitive Editor (Editor de primitivos)
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      <para>
+	Vuelva al cuadro de texto Nombre y cambie el 1 por un 2 y haga clic en 
+	OK. Cambie la vista al frente en el menú View (Vista). Diríjase a 
+	Edit/Primitive Selection (Edición/Selección de primitivos) y cliquee 
+	en well2.s. Utilice el SHIFT y botón izquierdo del mouse para 
+	arrastrar la nueva cavidad de la rueda a su posición, como se muestra 
+	en la ilustración siguiente. Verifique su alineación en el modo 
+	Multipane y presione Accept (Aceptar) cuando haya terminado.
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged15_truck_2nd_wheel_wheel_place.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Posicionamiento de la segunda rueda
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+    </sect1>
+
+    <sect1 id="truck_cab_shape_comb">
+      <title>Hacer una combinación con las figuras de la cabina</title>
+      <para>
+	Ahora es el momento de hacer una combinación de las ditintas figuras 
+	de la cabina.
+	
+	<command>
+	  comb cab1.c u cab1.s - caboff1.s - well1.s - well2.s[Enter]
+	</command>
+	
+	Este comando le dice a <application>MGED</application> que:
+	
+	<informaltable>
+	  <tgroup cols='10'>
+	    <tbody>
+	      <row>
+		<entry>comb</entry>
+		<entry>cab1.c</entry>
+		<entry>u</entry>
+		<entry>cab1.s</entry>
+		<entry>-</entry>
+		<entry>caboff1.s</entry>
+		<entry>-</entry>
+		<entry>well1.s</entry>
+		<entry>-</entry>
+		<entry>well2.s</entry>
+	      </row>
+	      <row>
+		<entry>Cree una cobinación</entry>
+		<entry>La nombre cab1.c</entry>
+		<entry>Haga una unión</entry>
+		<entry>de la figura cab1.s</entry>
+		<entry>menos...</entry>
+		<entry>la figura caboff1.s</entry>
+		<entry>menos...</entry>
+		<entry>la figura well1.s</entry>
+		<entry>menos...</entry>
+		<entry>la figura well2.s</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+      </para>
+      <para>
+	Antes de continuar, debería chequear su árbol de datos tipeando: tree 
+	cab1.c. El árbol debería ser:
+
+	<literallayout>
+   cab1.c/
+
+   u cab1.s
+
+   - caboff1.s
+
+   - well1.s
+
+   - well2.s
+	</literallayout>
+	
+      </para>
+      <para>
+	Si escribe ls (lista) en la ventana de comandos del sistema, encontrará 
+	que su base de datos se compone de la combinación cab1.c y las formas 
+	cab1.s, caboff1.s, well1.s y well2.s. A medida que cree objetos más 
+	complejos se acostumbrará a referirse a la lista de la base de datos 
+	para asegurarse de que esté compuesta por lo elementos que usted desea.
+      </para>
+    </sect1>
+
+    <sect1 id="truck_body_in_cmd">
+      <title>
+	Crear un rpp para el cuerpo del camión utilizando el comando in
+      </title>
+      <para>
+	Para hacer el cuerpo del camión, tipee en el prompt de la línea de 
+	comandos:
+	
+	<command>in body1.s rpp 0 2 0 1 0 1.5[Enter]</command>
+	
+	A esta altura ya debería saber qué es lo que este comando le dice a 
+	<application>MGED</application> que haga. Si lo ha olvidado, regrese 
+	al ejemplo de cuando creó la cabina del camión.
+      </para>
+      <para>
+	Edite el cuerpo de la camioneta para que su cara frontal se superponga 
+	ligeramente con la cara posterior de la cabina. Compruebe desde 
+	diferentes puntos de vista que el cuerpo esté correctamente alineado 
+	con la cabina. Acepte los cambios cuando haya terminado y, a 
+	continuación utilice el comando blast para dibujar su diseño. Su 
+	camión ahora debería tener el siguiente aspecto:
+   
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged15_truck_cab_body.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Cabina y cuerpo del camión
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+    </sect1>
+
+    <sect1 id="prim_ed_wheel_wells">
+      <title>
+	Utilizar el Primitive Editor para hacer las otras dos cavidades para 
+	las ruedas
+      </title>
+      <para>
+	Para hacer los dos huecos de las ruedas traseras en el cuerpo de la 
+	camioneta, repita los pasos utilizados en la creación de la segunda 	
+	cavidad. Nombre a las nuevas figuras well3.s y well4.s.
+	Utilice múltiples puntos de vista, y mueva las nuevas formas en la 
+	posición indicada hasta que su camión tenga una apariencia similar al 
+	siguiente:
+   
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged15_truck_wheel_wells_wireframe.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Representación en malla de alambre del camión con las cavidades 
+	      para las ruedas
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+    </sect1>
+
+    <sect1 id="truck_body_wheel_wells_comb">
+      <title>
+	Hacer una combinación con el cuerpo del camión y las cavidades
+      </title>
+      <para>
+
+	Cree una combinación con el cuerpo y ambas cavidades, nómbrela body1.c.
+	El árbol de body1.c debería decir:
+	
+	<literallayout>
+   body1.c/
+
+   u body1.s
+
+   - well3.s
+
+   - well4.s
+	</literallayout>
+      </para>
+    </sect1>
+
+    <sect1 id="truck_cab_body_region">
+      <title>Hacer una región con la cabina y el cuerpo del camión</title>
+      <para>
+	Antes de agregarle las ruedas al camión, debe crear una región con la 
+	cabina y el cuerpo. En el prompt de la línea de comandos tipee:
+	
+	<command>r truck1.r u cab1.c u body1.c[Enter]</command>
+      </para>
+    </sect1>
+
+    <sect1 id="truck_wheels">
+      <title>Crear ruedas para el camión</title>
+      <para>
+	Tal vez la mejor forma para la fabricación de ruedas es el toro. Puede 
+	crear esta forma a través de la ventana de comandos para darles un 
+	tamaño y una ubicación precisos a su diseño sin su posterior edición. 
+	Sin embargo, este tutorial está pensado para darle práctica sobre la 
+	rotación y traslación de las formas.
+      </para>
+      <para>
+	Cree la primera rueda tipeando en el prompt de la línea de comandos:
+	
+	<command>in wheel1.s tor 0 0 0 .5774 .5774 .5774 .18 .08[Enter]</command>
+	
+	Este comando le dice a <application>MGED</application> que:
+	<informaltable>
+	  <tgroup cols='7'>
+	    <tbody>
+	      <row>
+		<entry>in</entry>
+		<entry>wheel1.s</entry>
+		<entry>tor</entry>
+		<entry>0 0 0</entry>
+		<entry>.5774 .5774 .5774</entry>
+		<entry>.18</entry>
+		<entry>.08</entry>
+	      </row>
+	      <row>
+		<entry>Cree una figura</entry>
+		<entry>Nómbrela wheel1.s</entry>
+		<entry>Que la figura sea un toro</entry>
+		<entry>Asigne los valores 0 0 0 para el vértice</entry>
+		<entry>
+		  Asigne los valores .5774 .5774 .5774 a x, y, y z del vector 
+		  normal
+		</entry>
+		<entry>Asigne el valor .18 al radio externo</entry>
+		<entry>
+		  Asigne el valor .08 al radio 2 (el espesor del neumático)
+		</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+      </para>
+      <para>
+	Cambie a la vista izquierda y luego edite la posición de la rueda. 
+	Para una correcta alineación de la rueda con el camión, deberá girar el 
+	neumático con la tecla CTRL y cualquier botón del ratón. Escale y 
+	traslade la rueda a su posición y verifique la alineación desde varios 
+	puntos de vista distintos.
+	Acepte los cambios cuando haya terminado.
+      </para>
+      <para>
+	Utilice el Primitive Editor (Editor de Primitivos) de la misma forma con 
+	el resto de las ruedas.
+	Mueva cada una de las ruedas a su posición hasta que su camioneta sea 
+	similar a la siguiente:
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged15_truck_wheels.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Diseño en malla de alambre del camión con sus ruedas
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+    </sect1>
+
+    <sect1 id="truck_wheels_region">
+      <title>Hacer una región con las ruedas</title>
+      <para>
+	Cree una región con las ruedas. Cuando haya terminado, chequee su 
+	árbol de datos de wheel1.r. Deberá decir:
+
+	<literallayout>
+   wheel1.r/R
+
+   u wheel1.s
+
+   u wheel2.s
+
+   u wheel3.s
+
+   u wheel4.s
+	</literallayout>
+      </para>
+    </sect1>
+
+    <sect1 id="truck_regions_mater_props">
+      <title>
+	Asignar propiedades de los materiales a las regiones del camión
+      </title>
+      <para>
+	Su camión se compone de dos regiones: truck1.r y wheel1.r. Utilice el
+	Combinación Editor y seleccione truck1.r.
+      </para>
+      <para>
+	En el Combination Editor (Editor de combinaciones), el sombreado de 
+	camuflaje (camo shader) crea un patrón tricolor pseudo-aleatorio de 
+	camuflaje en el objeto utilizando un patrón de ruido fractal. El 
+	sombreado ofrece gran cantidad de atributos entre los que elegir.
+	Por ahora, seleccione un color de fondo de negro (0 0 0) y complete 
+	el Color #1 con verde (0 134 0), y el Color #2 con marrón pardo 
+	(164 96 38). Para hacer el patrón proporcional al diseño de la 
+	camioneta, seleccione un tamaño de .25 de ruido y, a continuación 
+	acepte las selecciones. La ventana del editor de sombreado debería 
+	tener este aspecto:
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged15_cameo_shader.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Camo Shader (Sombreado de camuflaje)
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      <para>
+	Aplique sombreado de plástico y color negro a las ruedas (wheel1.r) y 
+	cliquee OK.
+	Luego genere el Raytrace de su diseño.
+      </para>
+    </sect1>
+   <sect1 id="on_screen_help">
+      <title>Utilizar las opciones de ayuda disponibles en pantalla</title>
+      <para>
+	Probablemente habrá notado que muchos de los menús de aplicaciones de 
+	<application> MGED </application> ofrecen una amplia variedad de 
+	opciones de donde escoger. Con tantas opciones disponibles, es fácil 
+	olvidar lo que una selección en particular hace. Para ayudar a los 
+	usuarios a acceder rápidamente a la información básica sobre las 
+	diferentes opciones de <application> MGED </application>, el programa
+	ofrece funciones de ayuda en pantalla sensible al contexto, es decir, 
+	cambia según sobre lo que se esté trabajando.
+      </para>
+      <para>
+	Se puede acceder a la ayuda en pantalla desde cualquier menú 
+	desplegable, colocando el cursor sobre el nombre de cualquier opción 
+	en el menú o en la ventana y haciendo clic en el botón derecho del 
+	mouse. En el único lugar en que esta función no se puede aplicar es en 
+	la parte de la ventana gráfica, donde se encuentra el diseño.
+      </para>
+    </sect1>
+    <sect1 id="stacker_shading">
+      <title>La opción de apilado de sombreados (Stacker Option)</title>
+      <para>
+	En los tutoriales anteriores, se aplicó color y sombreado a un objeto 
+	para hacerlo ver más realista. Sin embargo, a veces tendrá que aplicar 
+	dos o tres sombreados a un objeto hasta obtener el resultado deseado.
+      </para>
+      <para>
+	<application> MGED </application> ofrece tres categorías de sombreado: 
+	pintura, plástico, y luz. Cualquier combinación de estos tres tipos de 
+	sombreados se puede aplicar a un mismo objeto utilizanso la opción del 
+	menú Stacker Option (Apilado).
+      </para>
+      <para>
+	Hay tres sombreados de plástico: glass, mirror, y plastic (vidrio, 
+	espejo, y  plástico). El sombreado de plástico se utiliza para dar una 
+	percepción del espacio. Para ello, toma la superficie del objeto y le 
+	da brillo para que pueda reflejar la luz. El sombreado plástico 
+	normalmente se aplica último en el proceso de apilación.
+      </para>
+      <para>
+	El sombreado de pintura se utiliza para aplicar pigmento y textura a 
+	la superficie de un objeto. El color es el pigmento y la textura es la 
+	calidad en tres dimensiones de la superficie del material (como la 
+	pintura de estuco).
+      </para>
+      <para>
+	Los sombreados de pigmento incluyen camo (camuflaje), textura (color), 
+	textura (negro/blanco), falsa estrella, nube, corrector, mapa de 
+	prueba y proyección. Los sombreados de textura incluyen bump map, fbm 
+	bump y tur bump. Los sombreados de pintura se aplican normalmente 
+	primeros en el proceso de apilado y se utilizan en combinación con el 	
+	sombreado de plástico.
+      </para>
+      <para>
+	El sombreado de luz se utiliza para producir la iluminación en la 
+	escena. Esto ayuda a producir el realismo necesario en la imagen final. 
+	El sombreado de luz es técnicamente complejo y no se analiza en este 
+	tutorial.
+      </para>
+      <para>
+	El sombreado de camuflaje consiste en aplicar pigmentos, con un patrón 
+	aleatorio, a la superficie de un objeto. El sombreado de camuflaje no 
+	indica la naturaleza tridimensional de un objeto. Si desea que su 
+	diseño muestre profundidad, necesitará apilar el sombreado de 
+	camuflaje y el de plástico.
+      </para>
+    </sect1>
+
+    <sect1 id="using_stacker_shading">
+      <title>El uso del Stacker Option (Apilado de sombreados)</title>
+      <para>
+	Para utilizar la opción Stacker, abra el editor de combinaciones y 	
+	seleccione truck1.r. Cliquee en el botón a la derecha del cuadro de 
+	entrada Shader y seleccione Stack en el menú desplegable. Un botón con 
+	las palabras Add Shader (Agregar sombreado) aparecerá en el cuadro de 
+	texto. Cliquee ese botón y luego seleccione camouflage (camuflaje). 
+	Ajuste el color de fondo a negro (0 0 0), Color #1 a verde (0 134 0), y 
+	Color #2 a la marrón pardo (164 96 38). En Noise Size (Tamaño de ruido) 
+	complete con .25. Cliquee en Add Shader (Añadir sombreado) una vez más 
+	y seleccione Plastic (plástico).
+      </para>
+      <para>
+	En este punto, la ventana del editor de combinaciones puede haberse 
+	movido hacia la parte baja de la pantalla. Si esto sucede, reduzca el 
+	tamaño de la ventana lo más que pueda y luego arrástrela hasta la 
+	parte superior. Deberán aparecer unos botones en parte inferior del 
+	cuadro para que pueda aplicar sus selecciones.
+      </para>
+      <caution>
+      <para>
+	Al utilizar la opción de apilación, necesita hacer un seguimiento del
+	número de caracteres y espacios en el cuadro de texto sombreado. Las 
+	versiones de <application> MGED </application> anteriores a la 6.0 sólo 
+	reconocen 64 caracteres (incluídos los espacios), por lo que debe tener 
+	cuidado con los sombreados demasiado complejos.
+	</para>
+      </caution>
+    </sect1>
+
+    <sect1 id="truck_combine_regions">
+      <title>Hacer una combinación con las regiones del camión</title>
+      <para>
+	Para hacer una combinación con las dos regiones del camión, tipee en 
+	el prompt de la línea de comandos:
+	
+	<command>comb truck1.c u truck1.r u wheel1.r[Enter]</command>
+	
+	<command>B truck1.c[Enter]</command>
+	
+	Su árbol de datos de truck1.c debería decir:
+	<literallayout>
+   truck1.c/
+
+   u truck1.r/R
+
+   u cab1.c/
+
+   u cab1.s
+
+   - caboff1.s
+
+   - well1.s
+
+   - well2.s
+
+   u body1.c
+
+   u body1.s
+
+   - well3.s
+
+   - well4.s
+
+   u wheel1.r/R
+
+   u wheel1.s
+
+   u wheel2.s
+
+   u wheel3.s
+
+   u wheel4.s
+	</literallayout>
+      </para>
+    </sect1>
+
+    <sect1 id="truck_raytracing">
+      <title>Generar el Raytrace del camión</title>
+      <para>
+	El último paso en la creación de su camión es generar el Raytrace de su 
+	diseño. Cuando el trazador de rayos haya terminado, observe que la parte 
+	superior de uno de los laterales del camión queda muy oscuro. Esto es 
+	porque hay muy poca luz sobre ese lado. Al no haber especificado 
+	ninguna fuente de luz para la escena, <application> MGED </application> 
+	le proporciona un conjunto de luces de forma predeterminada. Estos 
+	valores consisten en una luz tenue proveniente de la ubicación del 
+	espectador y un brillo situado a la izquierda y por debajo del mismo. 
+	Puesto que la luz principal no es realmente brillante, un lado de la 
+	camioneta queda oscuro.
+      </para>
+      <para>
+	Hay un ajuste especial que puede hacer para mejorar el brillo general 
+	de la escena, ajustando la cantidad de luz ambiente, que es la luz que 
+	no viene de una fuente de luz en particular, sino que es una medida de 
+	luz presente en toda la escena. Para ajustar la cantidad de la luz 
+	ambiental, haga clic en el botón Advanced Settings (Configuración 
+	avanzada) en el panel de control de Raytrace. Junto a la otras 
+	opciones preexistentes, tipee -A .9. Ahora cuando genere el Raytrace, 
+	obtendrá una imagen mucho más iluminada.
+      </para>
+      <para>
+
+	<informaltable frame='none' pgwide="1">
+	  <tgroup cols='2' align='center'>
+	    <tbody>
+	      <row>
+		<entry><inlinegraphic 
+fileref="../../lessons/es/images/mged15_truck_default_lighting.png" />
+		</entry>
+		<entry><inlinegraphic 
+fileref="../../lessons/es/images/mged15_truck_ambient_lighting.png" />
+		</entry>
+	      </row>
+	      <row>
+		<entry>Camión con iluminación predeterminada</entry>
+		<entry>Camión con luz ambiente agregada</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+
+      </para>
+    </sect1>
+
+    <sect1 id="creating_toy_truck_review">
+      <title>Repasemos...</title>
+      <para>
+		En este tutorial usted aprendió a:
+      <itemizedlist mark='bullet'>
+	<listitem>
+	  <para>Crear un camión de juguete a partir de tres figuras.</para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Hacer copias de figuras utilizando el editor de primitivos.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>Hacer combinaciones y regiones de objetos más complejos.</para>
+	</listitem>
+	<listitem>
+	  <para>Controlar el árbol de datos y corregir de ser necesario.</para>
+	</listitem>
+	<listitem>
+	  <para>Listar los contenidos de la base de datos.</para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Asignar propiedades de los materiales utilizando el Combination 
+	    Editor.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Comprender las diferencias entre OK, Accept, Apply, Reset, 
+	    Cancel, y Dismiss. (OK, Aceptar, Aplicar, Restablecer, 
+	    Cancelar y Salir)
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>Identificar las opciones de ayuda en pantalla.</para>
+	</listitem>
+	<listitem>
+	  <para>Comprender la opción de Stacker (Apilador).</para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Probar los atributos de sombreado de camuflaje (camo shader).
+	  </para>
+	  </listitem>
+	</itemizedlist>
+      </para>
+    </sect1>
+
+  </article>

@@ -26,7 +26,8 @@ Display for which to control motion event collapsing.
 .AP int collapse in
 Indicates whether motion events should be collapsed or not.
 .AP XEvent *eventPtr  in
-An event to add to the event queue.
+An event to add to the event queue. It is important
+that all unused fields of the structure be set to zero.
 .AP Tcl_QueuePosition position in
 Where to add the new event in the queue:  \fBTCL_QUEUE_TAIL\fR,
 \fBTCL_QUEUE_HEAD\fR, or \fBTCL_QUEUE_MARK\fR.

@@ -54,8 +54,8 @@ static char *infile;
 
 static int background[3];
 
-static int file_width = 512;
-static int file_height = 512;
+static size_t file_width = 512;
+static size_t file_height = 512;
 
 static char usage[] = "\
 Usage: pix-rle [-h] [-s squarefilesize]  [-C bg]\n\
@@ -144,7 +144,7 @@ int
 main(int argc, char **argv)
 {
     unsigned char *scan_buf;
-    int y;
+    size_t y;
 
     infp = stdin;
     outfp = stdout;
@@ -195,7 +195,7 @@ main(int argc, char **argv)
     for (y = 0; y < file_height; y++) {
 	if (fread((char *)scan_buf, sizeof(unsigned char), (size_t)file_width, infp) != file_width) {
 	    (void) fprintf(stderr,
-			   "pix-rle: read of %d pixels on line %d failed!\n",
+			   "pix-rle: read of %ld pixels on line %ld failed!\n",
 			   file_width, y);
 	    bu_exit (1, NULL);
 	}
@@ -204,7 +204,7 @@ main(int argc, char **argv)
 	{
 	    unsigned char *pp = scan_buf;
 	    rle_pixel *rp = rows[0];
-	    int i;
+	    size_t i;
 
 	    for (i=0; i<file_width; i++) {
 		*rp++ = *pp++;
@@ -216,7 +216,8 @@ main(int argc, char **argv)
 
     fclose(infp);
     fclose(outfp);
-    bu_exit (0, NULL);
+
+    return 0;
 }
 
 

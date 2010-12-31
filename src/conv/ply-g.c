@@ -734,22 +734,22 @@ read_ply_data( struct rt_bot_internal *bot )
 		    while ( p ) {
 			if ( p->type == PROP_LIST_TYPE ) {
 			    int vcount;
-			    int index;
+			    int idx;
 			    int v[4];
 
 			    vcount = get_int( p->index_type );
 
 			    if ( vcount < 3 || vcount > 4) {
 				bu_log( "ignoring face with %d vertices\n", vcount );
-				for ( index=0; index < vcount; index++ ) {
+				for ( idx=0; idx < vcount; idx++ ) {
 				    skip( p->list_type );
 				}
 				continue;
 			    }
 
-			    for ( index=0; index < vcount; index++ ) {
-				v[index] = get_int( p->list_type );
-				bot->faces[cur_face*3+index] = v[index];
+			    for ( idx=0; idx < vcount; idx++ ) {
+				v[idx] = get_int( p->list_type );
+				bot->faces[cur_face*3+idx] = v[idx];
 			    }
 
 			    if ( vcount == 4 ) {
@@ -759,7 +759,7 @@ read_ply_data( struct rt_bot_internal *bot )
 								bot->num_faces * 3 * sizeof( int ),
 								"bot_faces" );
 				cur_face++;
-				/* bot->faces[cur_face*3] was already set above when index == 4 */
+				/* bot->faces[cur_face*3] was already set above when idx == 4 */
 				bot->faces[cur_face*3+1] = v[0];
 				bot->faces[cur_face*3+2] = v[2];
 			    }

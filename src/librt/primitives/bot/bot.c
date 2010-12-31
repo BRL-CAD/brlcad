@@ -1902,7 +1902,7 @@ bot_check_vertex_indices(struct bu_vls *logstr, struct rt_bot_internal *bot)
  * db adjust name flags		set flags
  */
 int
-rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_bot_internal *bot;
     Tcl_Obj *obj, **obj_array;
@@ -2428,20 +2428,322 @@ rt_bot_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
  *
  *************************************************************************/
 
+struct bot_edge {
+    int v;
+    int use_count;
+    struct bot_edge *next;
+};
+
+/* Builds a table of all unique edges in bot, storing the result in edges.
+ * Returns number of edges.
+ *
+ * Edge i to j (i < j) is represented as the bot_edge struct with v = j,
+ * stored in the list headed by (struct bot_edge*) edges[i].
+ */
+int
+buildEdgeTable(struct rt_bot_internal *bot, struct bot_edge ***edges)
+{ 
+    int tmp, flen;
+    int currFace, currVert, nextVert, from, to;
+    int numVertices, numEdges = 0;
+    int *faces;
+    struct bot_edge *edge;
+
+    RT_BOT_CK_MAGIC(bot);
+
+    numVertices = bot->num_vertices;
+    faces = bot->faces;
+
+    /* allocate array with one index per vertex */
+    *edges = (struct bot_edge**)bu_calloc(numVertices, sizeof(struct bot_edge*),
+	    "edges");
+
+    /* for each face */
+    flen = bot->num_faces * 3;
+    for (currFace = 0; currFace < flen; currFace += 3) {
+
+	for (currVert = 0; currVert < 3; currVert++) {
+
+	    /* curr and next vertex form an edge of curr face */
+
+	    /* get relative indices */
+	    nextVert = currVert + 1;
+
+	    if (nextVert > 2) {
+		nextVert = 0;
+	    }
+
+	    /* get actual indices */
+	    from = faces[currFace + currVert];
+	    to = faces[currFace + nextVert];
+
+	    /* make sure 'from' is the lower index */
+	    if (to < from) {
+		tmp = from;
+		from = to;
+		to = tmp;
+	    }
+
+	    /* get the list for this index */
+	    edge = (*edges)[from];
+
+	    /* make new list */
+	    if (edge == (struct bot_edge*)NULL) {
+
+		edge = (struct bot_edge*)bu_calloc(1, sizeof(struct bot_edge),
+			"edges[from]");
+		(*edges)[from] = edge;
+	    }
+	    
+	    /* list already exists */
+	    else {
+
+		/* look for existing entry */
+		while (edge->next && edge->v != to) {
+		    edge = edge->next;
+		}
+
+		/* this edge found previously - update use count */
+		if (edge->v == to) {
+
+		    edge->use_count++;
+		    continue;
+		}
+
+		/* this edge is new - append a new entry for it */
+		edge->next = (struct bot_edge*)bu_calloc(1, sizeof(struct bot_edge),
+			"edge->next");
+
+		edge = edge->next;
+	    }
+
+	    /* initialize new entry */
+	    edge->v = to;
+	    edge->use_count = 1;
+	    edge->next = (struct bot_edge*)NULL;
+
+	    numEdges++;
+
+	} /* indices loop */
+    } /* faces loop */
+
+    return numEdges;
+}
+
+/**
+ * Routine for finding the smallest edge length in a BoT.
+ */
+float
+minEdge(struct rt_bot_internal *bot)
+{
+    int i;
+    int numVerts;
+    fastf_t epsilon = 1e-10;
+    fastf_t *vertices;
+    fastf_t currMag, minMag = MAX_FASTF;
+    struct bot_edge *edge, *tmp;
+    struct bot_edge **edges = NULL;
+    vect_t start, curr;
+
+    RT_BOT_CK_MAGIC(bot);
+
+    numVerts = bot->num_vertices;
+    vertices = bot->vertices;
+
+    /* build edge list */
+    buildEdgeTable(bot, &edges);
+
+    /* for each vertex */
+    for (i = 0; i < numVerts; i++) {
+
+	edge = edges[i];
+
+	/* make sure this list exists */
+	if (edge == (struct bot_edge*)NULL) {
+	    continue;
+	}
+
+	/* starting vertex for these edges */
+	VMOVE(start, &vertices[i]);
+
+	/* for each edge beginning with this index */
+	while (edge != (struct bot_edge*)NULL) {
+
+	    /* calculate edge vector using current end vertex */
+	    VSUB2(curr, start, &vertices[edge->v]);
+
+	    /* see if it has the smallest magnitude so far */
+	    currMag = MAGSQ(curr);
+
+	    if (currMag < minMag && currMag > epsilon) {
+		minMag = currMag;
+	    }
+
+	    edge = edge->next;
+	}
+    }
+
+    /* free table memory */
+    for (i = 0; i < numVerts; i++) {
+
+	edge = edges[i];
+
+	while (edge != (struct bot_edge*)NULL) {
+	    tmp = edge;
+	    edge = edge->next;
+	    bu_free(tmp, "struct bot_edge");
+	}
+    }
+    bu_free(edges, "bot edge table");
+    edges = NULL;
+
+    return sqrt(minMag);
+}
+
+/**
+ * Routine for finding the largest edge length in a BoT.
+ */
+float
+maxEdge(struct rt_bot_internal *bot)
+{
+    int i;
+    int numVerts;
+    fastf_t *vertices;
+    fastf_t currMag, maxMag = 0.0;
+    struct bot_edge *edge, *tmp;
+    struct bot_edge **edges = NULL;
+    vect_t start, curr;
+
+    RT_BOT_CK_MAGIC(bot);
+
+    numVerts = bot->num_vertices;
+    vertices = bot->vertices;
+
+    /* build edge list */
+    buildEdgeTable(bot, &edges);
+
+    /* for each vertex */
+    for (i = 0; i < numVerts; i++) {
+
+	edge = edges[i];
+
+	/* make sure this list exists */
+	if (edge == (struct bot_edge*)NULL) {
+	    continue;
+	}
+
+	/* starting vertex for these edges */
+	VMOVE(start, &vertices[i]);
+
+	/* for each edge beginning with this index */
+	while (edge != (struct bot_edge*)NULL) {
+
+	    /* calculate edge vector using current end vertex */
+	    VSUB2(curr, start, &vertices[edge->v]);
+
+	    /* see if it has the largest magnitude so far */
+	    currMag = MAGSQ(curr);
+
+	    if (currMag > maxMag) {
+		maxMag = currMag;
+	    }
+
+	    edge = edge->next;
+	}
+    }
+
+    /* free table memory */
+    for (i = 0; i < numVerts; i++) {
+
+	edge = edges[i];
+
+	while (edge != (struct bot_edge*)NULL) {
+	    tmp = edge;
+	    edge = edge->next;
+	    bu_free(tmp, "struct bot_edge");
+	}
+    }
+    bu_free(edges, "bot edge table");
+    edges = NULL;
+
+    return sqrt(maxMag);
+}
+
+/**
+ * RT_BOT_PROPGET
+ * 
+ * Command used to query BoT property values. Returns parseable
+ * values rather than formatted strings.
+ *
+ * Returns -1 on error.
+ */
+fastf_t
+rt_bot_propget(struct rt_bot_internal *bot, const char *property)
+{
+    size_t len;
+
+    RT_BOT_CK_MAGIC(bot);
+
+    len = strlen(property);
+
+    /* return value of requested property */
+    if (strncmp(property, "faces", len) == 0) {
+	return bot->num_faces;
+    }
+    else if (strncmp(property, "orientation", len) == 0) {
+	return bot->orientation;
+    }
+    else if (strncmp(property, "type", len) == 0 ||
+	     strncmp(property, "mode", len) == 0)
+    {
+	return bot->mode;
+    }
+    else if (strncmp(property, "vertices", len) == 0) {
+	return bot->num_vertices;
+    }
+    else if (strncmp(property, "minEdge", len) == 0 ||
+	     strncmp(property, "minedge", len) == 0)
+    {
+	return minEdge(bot);
+    }
+    else if (strncmp(property, "maxEdge", len) == 0 ||
+	     strncmp(property, "maxedge", len) == 0)
+    {
+	return maxEdge(bot);
+    }
+
+    return -1;
+}
+
 
 /**
  * This routine adjusts the vertex pointers in each face so that
  * pointers to duplicate vertices end up pointing to the same vertex.
- * The unused vertices are removed.  Returns the number of vertices
- * fused.
+ * The unused vertices are removed and the resulting bot is condensed.
+ * Returns the number of vertices fused.
  */
 int
 rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 {
     int i, j, k;
+    int slot;
     int count=0;
+    int total = 0;
+    long *bin[256];
+    long bin_capacity[256];
+    long bin_todonext[256];
+    const int DEFAULT_CAPACITY = 32;
+    fastf_t min_xval = (fastf_t)LONG_MAX;
+    fastf_t max_xval = (fastf_t)LONG_MIN;
+    fastf_t delta = (fastf_t)0.0;
+
+    vect_t deleted;
+    VSETALL(deleted, INFINITY);
 
     RT_BOT_CK_MAGIC(bot);
+
+#if 0
+    /* THE OLD WAY .. possibly O(n^3) with the vertex shifting */
 
     for (i=0; i<bot->num_vertices; i++) {
 	j = i + 1;
@@ -2449,9 +2751,15 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 	    /* specifically not using tolerances here (except underlying representation tolerance) */
 	    if (VEQUAL(&bot->vertices[i*3], &bot->vertices[j*3])) {
 		count++;
+
+		/* update bot */
 		bot->num_vertices--;
+
+		/* shift vertices down */
 		for (k=j; k<bot->num_vertices; k++)
 		    VMOVE(&bot->vertices[k*3], &bot->vertices[(k+1)*3]);
+
+		/* update face references */
 		for (k=0; k<bot->num_faces*3; k++) {
 		    if (bot->faces[k] == j) {
 			bot->faces[k] = i;
@@ -2463,6 +2771,148 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 	    }
 	}
     }
+#else
+    /* THE NEW WAY .. possibly O(n) with basic bin sorting */
+
+    /* initialize a simple 256-slot integer bin space partitioning */
+    for (slot=0; slot<256; slot++) {
+	bin_todonext[slot] = 0;
+	bin_capacity[slot] = DEFAULT_CAPACITY;
+	bin[slot] = bu_calloc(DEFAULT_CAPACITY, sizeof(long *), "vertices bin");
+    }
+
+    /* first pass to get the range of vertex values */
+    for (i=0; i<bot->num_vertices; i++) {
+	/* bins are assigned based on X value */
+	if ((&bot->vertices[i*3])[X] < min_xval)
+	    min_xval = (&bot->vertices[i*3])[X];
+	if ((&bot->vertices[i*3])[X] > max_xval)
+	    max_xval = (&bot->vertices[i*3])[X];
+
+	/* sanity to make sure our book-keeping doesn't go haywire */
+	if (NEAR_ZERO((&bot->vertices[i*3])[X] - deleted[X], SMALL_FASTF)) {
+	    bu_log("WARNING: Unable to fuse due to vertex with infinite value (idx=%ld)\n", i);
+	    return 0;
+	}
+    }
+    /* sanity swap */
+    if (min_xval > max_xval) {
+	fastf_t t;
+	t = min_xval;
+	min_xval = max_xval;
+	max_xval = t;
+    }
+    /* range sanity */
+    if (max_xval > (fastf_t)LONG_MAX) {
+	max_xval = (fastf_t)LONG_MAX;
+    }
+    if (min_xval < (fastf_t)LONG_MIN) {
+	min_xval = (fastf_t)LONG_MIN;
+    }
+    if (NEAR_ZERO(max_xval - min_xval, SMALL_FASTF)) {
+	if (NEAR_ZERO(max_xval - (fastf_t)LONG_MAX, SMALL_FASTF)) {
+	    max_xval += VDIVIDE_TOL;
+	} else {
+	    min_xval -= VDIVIDE_TOL;
+	}
+    }
+
+    /* calculate the width of a bin */
+    delta = fabs(max_xval - min_xval) / (fastf_t)256.0;
+    if (NEAR_ZERO(delta, SMALL_FASTF))
+	delta = (fastf_t)1.0;
+
+    /* second pass to sort the vertices into bins based on their X value */
+    for (i=0; i<bot->num_vertices; i++) {
+	if ((&bot->vertices[i*3])[X] > (fastf_t)LONG_MAX) {
+	    /* exceeds our range, put in last bin */
+	    slot = 255;
+	} else if ((&bot->vertices[i*3])[X] < (fastf_t)LONG_MIN) {
+	    /* exceeds our range, put in first bin */
+	    slot = 0;
+	} else {
+	    /* bins are assigned based on X value */
+	    slot = (long)(((&bot->vertices[i*3])[X] - min_xval) / delta);
+	}
+
+	/* extra sanity that we don't imagine non-existent bins */
+	if (slot < 0) {
+	    slot = 0;
+	} else if (slot > 255) {
+	    slot = 255;
+	}
+
+	if (bin_todonext[slot] + 1 > bin_capacity[slot]) {
+
+/* bu_log("increasing %i from capacity %ld given next is %ld\n", slot, bin_capacity[slot], bin_todonext[slot]); */
+
+	    BU_ASSERT_LONG(bin_capacity[slot], <, LONG_MAX / 2);
+
+	    bin[slot] = bu_realloc(bin[slot], bin_capacity[slot] * 2 * sizeof(long), "increase vertices bin");
+	    bin_capacity[slot] *= 2;
+
+	    /* init to zero for sanity */
+	    for (j=bin_todonext[slot]+1; j<bin_capacity[slot]; j++) {
+		bin[slot][j] = 0;
+	    }
+	}
+
+/* bu_log("setting bin[%d][%d] = %ld\n", slot, bin_todonext[slot], i); */
+
+	bin[slot][bin_todonext[slot]++] = i;
+    }
+
+    /* third pass to check the vertices in each bin */
+    for (slot=0; slot<256; slot++) {
+
+	/* iterate over all vertices in this bin */
+	for (i=0; i<bin_todonext[slot]; i++) {
+	    
+	    /* compare to the other vertices in this bin */
+	    for (j=i+1; j<bin_todonext[slot]; j++) {
+
+		/* specifically not using tolerances here (except underlying representation tolerance) */
+		if (VEQUAL(&bot->vertices[bin[slot][i]*3], &bot->vertices[bin[slot][j]*3])) {
+		    count++;
+
+		    /*  update face references */
+		    for (k=0; k<bot->num_faces*3; k++) {
+			if (bot->faces[k] == bin[slot][j]) {
+			    bot->faces[k] = bin[slot][i];
+			}
+		    }
+
+		    /* wipe out the vertex marking it for cleanup later */
+		    VMOVE(&bot->vertices[bin[slot][j]*3], deleted);
+		}
+	    }
+	}
+    }
+
+    /* clean up and compress */
+    k = rt_bot_condense(bot);
+    if (k < count) {
+	bu_log("WARNING: Condensed fewer vertices than expected (%ld < %ld)\n", k, count);
+    }
+
+    /* sanity check, there should be no deleted vertices */
+    for (i=0; i < bot->num_vertices; i++) {
+	if (VEQUAL(&bot->vertices[i*3], deleted)) {
+	    bu_bomb("INTERNAL ERROR: encountered unexpected state during vertex fusing\n");
+	}
+    }
+
+    /* clear and release the memory for our integer bin space partitioning */
+    for (slot=0; slot<256; slot++) {
+	total += bin_todonext[slot];
+/*	bu_log("[%d]: %ld (of %ld)\n", slot, bin_todonext[slot], bin_capacity[slot]); */
+	bu_free(bin[slot], "vertices bin");
+	bin_capacity[slot] = bin_todonext[slot] = 0;
+    }
+    memset(bin, 0, 256 * sizeof(long *));
+
+/*    bu_log("sorted %d of %d vertices\n", total, bot->num_vertices); */
+#endif
 
     return count;
 }
@@ -2501,6 +2951,7 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
     num_faces = bot->num_faces;
     for (i=0; i<num_faces; i++) {
 	j = i+1;
+
 	while (j<num_faces) {
 	    /* each pass through this loop either increments j or
 	     * decrements num_faces
@@ -2553,17 +3004,19 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 	    }
 
 	    /* we are eliminating face number "elim" */
-	    for (l=elim; l< num_faces-1; l++)
-		VMOVE(&bot->faces[l*3], &bot->faces[(l+1)*3])
-		    if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
-			for (l=elim; l<num_faces-1; l++) {
-			    bot->thickness[l] = bot->thickness[l+1];
-			    if (BU_BITTEST(bot->face_mode, l+1))
-				BU_BITSET(bot->face_mode, l);
-			    else
-				BU_BITCLR(bot->face_mode, l);
-			}
-		    }
+	    for (l=elim; l< num_faces-1; l++) {
+		VMOVE(&bot->faces[l*3], &bot->faces[(l+1)*3]);
+	    }
+
+	    if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
+		for (l=elim; l<num_faces-1; l++) {
+		    bot->thickness[l] = bot->thickness[l+1];
+		    if (BU_BITTEST(bot->face_mode, l+1))
+			BU_BITSET(bot->face_mode, l);
+		    else
+			BU_BITCLR(bot->face_mode, l);
+		}
+	    }
 	    num_faces--;
 	}
     }
@@ -3029,14 +3482,6 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, int tris_per_piece)
     return 0;
 }
 
-
-struct bot_edge {
-    int v;
-    int use_count;
-    struct bot_edge *next;
-};
-
-
 HIDDEN void
 delete_edge(int v1, int v2, struct bot_edge **edges)
 {
@@ -3146,7 +3591,7 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, int num_edges, int *faces
 		edges[edg->v] = edg;
 		edg->v = v2;
 	    }
-	} else {
+	} else if (edg->v > v2) {
 	    ptr = edges[v2];
 	    while (ptr) {
 		if (ptr->v == edg->v) {
@@ -3162,6 +3607,10 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, int num_edges, int *faces
 		edg->next = edges[v2];
 		edges[v2] = edg;
 	    }
+	} else {
+	    edg->v = -1;
+	    edg->next = NULL;
+	    bu_free(edg, "bot edge");
 	}
 
 	edg = next;
@@ -3212,7 +3661,7 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, int num_edges, int *faces
 			edges[v2] = edg;
 		    }
 		    edg = next;
-		} else {
+		} else if (v2 > i) {
 		    /* look for other occurences of this edge in this
 		     * list if found, just increment use count
 		     */
@@ -3243,6 +3692,18 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, int num_edges, int *faces
 			prev = edg;
 		    }
 		    edg = next;
+		} else {
+		    /* disconnect original from list */
+		    if (prev) {
+			prev->next = next;
+		    } else {
+			edges[i] = next;
+		    } 
+
+		    /* free it */
+		    edg->v = -1;
+		    edg->next = NULL;
+		    bu_free(edg, "bot edge");
 		}
 	    } else {
 		/* unaffected edge, just continue */
@@ -3478,8 +3939,7 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
     int face_count;
     int actual_count;
     int deleted;
-    int v1, v2;
-    int i, j;
+    int i;
     int done;
 
     RT_BOT_CK_MAGIC(bot);
@@ -3505,54 +3965,7 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
     /* make a list of edges in the BOT; each edge will be in the list
      * for its lower numbered vertex index
      */
-    edges = (struct bot_edge **)bu_calloc(bot->num_vertices,
-					  sizeof(struct bot_edge *), "edges");
-
-    /* loop through all the faces building the edge lists */
-    for (i=0; i<bot->num_faces*3; i += 3) {
-	for (j=0; j<3; j++) {
-	    struct bot_edge *ptr;
-	    int k;
-
-	    k = j + 1;
-	    if (k > 2) {
-		k = 0;
-	    }
-	    /* v1 is starting vertex index for this edge.
-	     * v2 is the ending vertex index.
-	     */
-	    v1 = faces[i+j];
-	    v2 = faces[i+k];
-
-	    /* make sure the lower index is v1 */
-	    if (v2 < v1) {
-		int tmp;
-
-		tmp = v1;
-		v1 = v2;
-		v2 = tmp;
-	    }
-
-	    /* store this edge in the appropiate list */
-	    ptr = edges[v1];
-	    if (!ptr) {
-		ptr = bu_calloc(1, sizeof(struct bot_edge), "edges[v1]");
-		edges[v1] = ptr;
-	    } else {
-		while (ptr->next && ptr->v != v2) ptr = ptr->next;
-		if (ptr->v == v2) {
-		    ptr->use_count++;
-		    continue;
-		}
-		ptr->next = bu_calloc(1, sizeof(struct bot_edge), "ptr->next");
-		ptr = ptr->next;
-	    }
-	    edge_count++;
-	    ptr->v = v2;
-	    ptr->use_count++;
-	    ptr->next = NULL;
-	}
-    }
+    edge_count = buildEdgeTable(bot, &edges);
 
     /* the decimation loop */
     done = 0;

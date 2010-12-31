@@ -61,10 +61,10 @@
 	BU_EXTERN(int rt_##name##_import4, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_export4, (struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(void rt_##name##_ifree, (struct rt_db_internal *ip)); \
-        BU_EXTERN(int rt_##name##_get, (struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)); \
-        BU_EXTERN(int rt_##name##_adjust, (struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)); \
+	BU_EXTERN(int rt_##name##_get, (struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)); \
+	BU_EXTERN(int rt_##name##_adjust, (struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)); \
 	BU_EXTERN(int rt_##name##_describe, (struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i)); \
-        BU_EXTERN(void rt_##name##_make, (const struct rt_functab *ftp, struct rt_db_internal *intern)); \
+	BU_EXTERN(void rt_##name##_make, (const struct rt_functab *ftp, struct rt_db_internal *intern)); \
 	BU_EXTERN(int rt_##name##_xform, (struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_params, (struct pc_pc_set *ps, const struct rt_db_internal *ip)); \
 	BU_EXTERN(int rt_##name##_mirror, (struct rt_db_internal *ip, const plane_t *plane)); \
@@ -115,7 +115,7 @@ RT_DECLARE_INTERFACE(brep);
 
 /* generics for object manipulation, in generic.c */
 extern int rt_generic_get(struct bu_vls *, const struct rt_db_internal *, const char *);
-extern int rt_generic_adjust(struct bu_vls *, struct rt_db_internal *, int, char **);
+extern int rt_generic_adjust(struct bu_vls *, struct rt_db_internal *, int, const char **);
 extern int rt_generic_form(struct bu_vls *, const struct rt_functab *);
 extern void rt_generic_make(const struct rt_functab *, struct rt_db_internal *);
 extern int rt_generic_xform(struct rt_db_internal *, const mat_t, struct rt_db_internal *, int, struct db_i *, struct resource *);
@@ -127,13 +127,13 @@ BU_EXTERN(void rt_binunif_ifree, (struct rt_db_internal *ip));
 BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i));
 BU_EXTERN(void rt_binunif_make, (const struct rt_functab *ftp, struct rt_db_internal *intern));
 BU_EXTERN(int rt_binunif_get, (struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr));
-BU_EXTERN(int rt_binunif_adjust, (struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv));
+BU_EXTERN(int rt_binunif_adjust, (struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv));
 
 /* from tcl.c and db5_comb.c */
 BU_EXTERN(int rt_comb_export5, (struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp));
 BU_EXTERN(int rt_comb_import5, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp));
 BU_EXTERN(int rt_comb_get, (struct bu_vls *logstr, const struct rt_db_internal *intern, const char *item));
-BU_EXTERN(int rt_comb_adjust, (struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv));
+BU_EXTERN(int rt_comb_adjust, (struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv));
 BU_EXTERN(int rt_comb_form, (struct bu_vls *logstr, const struct rt_functab *ftp));
 BU_EXTERN(void rt_comb_make, (const struct rt_functab *ftp, struct rt_db_internal *intern));
 BU_EXTERN(void rt_comb_ifree, (struct rt_db_internal *ip));
@@ -143,7 +143,6 @@ BU_EXTERN(int rt_bot_form, (struct bu_vls *logstr, const struct rt_functab *ftp)
 BU_EXTERN(int rt_sketch_form, (struct bu_vls *logstr, const struct rt_functab *ftp));
 BU_EXTERN(int rt_cline_form, (struct bu_vls *logstr, const struct rt_functab *ftp));
 BU_EXTERN(int rt_extrude_form, (struct bu_vls *logstr, const struct rt_functab *ftp));
-
 
 
 const struct rt_functab rt_functab[] = {

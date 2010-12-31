@@ -1,0 +1,236 @@
+\chapter{RT MATERIAL TYPE, PROPERTIES, and COLOR}
+
+First the solids must be formed into a "region", eg:
+
+{\em\center
+r ball u torus u tube-hole
+}
+
+To change material type, properties and color use the "mater" command:
+
+{\tt
+mged> {\em mater base} \\
+Material = \\
+Material?  (CR to skip) {\em plastic} \\
+Param = \\
+Parameter string? (CR to skip) {\em sh=10 dl=0.2 sp=0.8 re=0.75} \\
+Color = (No color specified) \\
+Color R G B (0..255)? (CR to skip) {\em 112 219 147} \\
+Inherit = 0:  lower nodes (towards leaves) override \\
+Inheritance (0|1)? (CR to skip) {\em 0} \\
+mged> \\
+}
+
+For the values in Parameter String for material ``Plastic'',
+you can enter such things as:
+"shinyness (sh)",
+"specular lighting fraction (sp)",
+"diffuse lighting fraction (di)",
+"transmission fraction (tr)",
+"reflection fraction (re)", and
+"refractive index (ri)".
+Two formulas must hold to keep the material ``physical'':
+sp + di=1.0, and tr + re=1.0.
+
+Suggested values for these properties are listed below:
+
+{\center sh=10, dl=0.2, sp=0.8, re=0.75}
+
+NOTE:  Not all of these fields need to be input, you
+can use the system defaults for the rest.
+
+To display objects in different colors on the screen, each object must
+be a region with its own material properties and colors.  All regions must be
+displayed on screen before a ray tracing can be performed (region objects can
+have cutouts to display other parts).
+
+\begin{tabular}{r r r l}
+R & G & B &         COLOR \\
+112 & 219 & 147 & aquamarine \\
+50 & 204 & 153 & med aquamarine \\
+0 & 0 & 0 & black  \\
+0 & 0 & 255 & blue  \\
+95 & 159 & 159 & cadet blue  \\
+66 & 66 & 111 & corn flower blue \\
+107 & 35 & 142 & dk slate blue  \\
+191 & 216 & 216 & light blue  \\
+143 & 143 & 188 & light steel blue \\
+50 & 50 & 204 & medium blue  \\
+127 & 0 & 255 & medium slate blue \\
+47 & 47 & 79 & midnight blue  \\
+35 & 35 & 142 & navy blue  \\
+50 & 153 & 204 & sky blue  \\
+0 & 127 & 255 & slate blue  \\
+35 & 107 & 142 & steel blue  \\
+255 & 127 & 0 & coral  \\
+0 & 255 & 255 & cyan  \\
+142 & 35 & 35 & firebrick  \\
+204 & 127 & 50 & gold  \\
+219 & 219 & 112 & golden rod  \\
+234 & 234 & 173 & med goldenrod  \\
+0 & 255 & 0 & green  \\
+47 & 79 & 47 & dark green  \\
+79 & 79 & 47 & dk olive green  \\
+35 & 142 & 35 & forest green  \\
+50 & 204 & 50 & lime green  \\
+107 & 142 & 35 & med forest green \\
+66 & 111 & 66 & medium sea green \\
+127 & 255 & 0 & med spring green \\
+143 & 188 & 143 & pale green  \\
+35 & 142 & 107 & sea green \\
+0 & 255 & 127 & spring green \\
+153 & 204 & 50 & yellow green \\
+47 & 79 & 79 & dk slate grey \\
+84 & 84 & 84 & dim grey \\
+168 & 168 & 168 & light grey \\
+\end{tabular}
+
+\begin{tabular}{r r r l}
+R & G & B &         COLOR \\
+159 & 159 & 95 & khaki  \\
+255 & 0 & 255 & magenta \\
+142 & 35 & 107 & maroon \\
+204 & 50 & 50 & orange \\
+219 & 112 & 219 & orchid \\
+153 & 50 & 204 & dark orchid \\
+147 & 112 & 219 & medium orchid \\
+188 & 143 & 143 & pink \\
+234 & 173 & 234 & plum \\
+255 & 0 & 0 & red \\
+79 & 47 & 47 & indian red \\
+219 & 112 & 147 & medium violet \\
+255 & 0 & 127 & orange red \\
+204 & 50 & 153 & violet red \\
+111 & 66 & 66 & salmon \\
+142 & 107 & 35 & sienna \\
+219 & 147 & 112 & tan \\
+216 & 191 & 216 & thistle \\
+173 & 234 & 234 & turquoise \\
+112 & 147 & 219 & dk turquoise \\
+112 & 219 & 219 & med turquoise \\
+79 & 47 & 79 & violet \\
+159 & 95 & 159 & blue violet \\
+216 & 216 & 191 & wheat \\
+252 & 252 & 252 & white \\
+255 & 255 & 0 & yellow \\
+147 & 219 & 112 & green yellow
+\end{tabular}
+
+material types are:  plastic
+                               mirror
+                               glass
+                               texture
+
+Shinyness (ie:  sh=16)
+
+Refractive index for:  crown glass = 1.52
+                              Flint glass = 1.65
+                              Rock salt = 1.54
+                              Water = 1.33
+                              Diamond = 2.42
+
+Transmission fraction for a mirror:  re=1.0 (tr=0)
+
+\chapter{RAYTRACING YOUR CREATION}
+
+Once you have finished creating all your solids, positioned them in
+their correct relationships to each other, formed all your regions (forming
+your finished object), created groups (if required), you can now do a ray-
+tracing of the view displayed on the screen.
+
+Note!  If you want to display solids or objects (collection of solids
+regioned together) of different colors, each of the solids or objects must be
+separate regions so you can give them a specific color.
+
+The raytracing command is
+{\em\center
+  rt [-s\#]
+}
+
+This command produces a color shaded image of the solids or objects on
+the display.  This color shaded image  will appear on a frame buffer display.
+The resolution of the image (number of rays) is equal to "\#" from the "-s"
+option.  If the "-s" option is absent, 50x50 ray solution will be used (very
+course raytrace).  The higher the "-s" option the better the raytracing, but
+it takes longer to display.
+Recommended optimun value of "-s" option for picture
+quality and speed of display is 256!.  Some examples follow:
+
+{\em
+             rt -s128 \\
+             rt \\
+             rt -s256 \\
+}
+
+When the rt command is given the text and graphic window will appear,
+then the frame buffer starts to appear (the picture window).  The first scaned
+display will be what was previously stored in it, it will then over write it
+with your picture; sometimes two buffer scans are displayed before yours.
+
+The default background color is blue with steel grey colored solids and
+objects.  The terminal will beep when the scanned picture is finished; press
+return to get back to the "text and graphic" window.
+
+With the blue background it is sometimes hard to visualize the raytraced
+picture; two things you can do to improve the situation is:
+     (a)  Make separate regions for all solids and objects, so that you can
+assign a specific color to each region; this can be a time consuming task if
+you have a lot of solids and objects.
+     (b)  Construct as a separate region, three thin flat plates to form two
+walls with a bottom, as shown below; using "make name arb8",
+then solid editing this arb8, using move faces to the required thickness,
+then use command "cp"
+(copy command) to make two more copies which you can rotate to their
+respective relationships, then translate all three into the correct positions
+relative to each other and the solids and objects you are displaying.
+
+The advantage of doing this is to give the light source something
+to reflect off, giving back lighting; improving contrast considerably.
+With the
+three plates formed into their own region you can delete them from the screen
+with the "d" command, rotate your creation then re-display your plates (walls)
+with the "e" command to do another rt, the walls need to be deleted from the
+display when you rotate your objects,
+otherwise everything will rotate together.
+
+                                   Figure
+
+A bonus of having constructed these three walls is that you can quickly
+change the material type to "mirror" so that you can get reflections of the
+three hidden faces.
+
+\chapter{CONCLUSIONS}
+
+MGED performs two basic functions:
+viewing and editing.
+The standard viewing capabilities of zooming, slewing,
+slicing, and rotation are available.
+Likewise, all the standard editing features are also available.
+The user easily traverses the hierarchical data structure, applying
+the editing functions of rotation, translation, and scaling to any
+position in the hierarchy.
+The hierarchical structure can be modified and regrouped and regions
+created and modified.
+Specific parameter editing can also be applied to the solids to produce
+any shape solid desired.
+
+For several decades, the production and modification of geometric models
+suitable for sophisticated engineering analysis
+has been a slow, labor-intensive procedure.
+In an effort to improve the response time of geometric models,
+the Ballistic
+Research Laboratory (BRL) has developed an interactive model editor
+for their combinatorial solid geometry modeling system (The BRL-CAD Package).
+The user interface to the geometry of these models
+is a program called the Multi-device Graphics Editor (MGED)
+that is designed to replace the
+traditional manual method
+for producing and modifying model databases.
+Using MGED, the geometric models
+are interactively viewed, modified, and constructed with immediate visual
+feedback at each step.
+When desired, the MGED editor can be operated without the need for
+explicit numerical input
+and opens a new dimension in the model building process.
+MGED has made great gains in reducing the bottleneck in
+the creation of high resolution geometric models.

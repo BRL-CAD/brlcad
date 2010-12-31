@@ -331,8 +331,8 @@ rt_sketch_contains(struct rt_sketch_internal *sk, point2d_t pt)
 			/* outside the circle - if it passes between the endpoints, count it as a hit */
 			/* otherwise, it will hit either twice or not at all, and can be ignored */
 			if (pt[Y] > FMIN(pt1[Y], pt2[Y]) && pt[Y] <= FMAX(pt1[Y], pt2[Y])) {
-			    if ((pt[X] >= 0 && pt[X] < FMIN(pt1[X], pt2[X])) 
-			    	|| (pt[X] < 0 && pt[X] > FMAX(pt1[X], pt2[X]))) hits++;
+			    if ((pt[X] >= 0 && pt[X] < FMIN(pt1[X], pt2[X]))
+				|| (pt[X] < 0 && pt[X] > FMAX(pt1[X], pt2[X]))) hits++;
 			}
 		    } else {
 			fastf_t angMin, angMax, angle;
@@ -2342,7 +2342,7 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
 
 int
-rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_sketch_internal *skt;
     int ret, array_len;
@@ -2381,11 +2381,14 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	    fastf_t *new_verts=(fastf_t *)NULL;
 	    int len;
 	    char *ptr;
+	    char *dupstr;
 
 	    /* the vertex list is a list of lists (each element is a list of two coordinates)
 	     * so eliminate all the '{' and '}' chars in the list
 	     */
-	    ptr = argv[1];
+	    dupstr = bu_strdup(argv[1]);
+
+	    ptr = dupstr;
 	    while (*ptr != '\0') {
 		if (*ptr == '{' || *ptr == '}')
 		    *ptr = ' ';
@@ -2393,7 +2396,9 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	    }
 
 	    len = 0;
-	    (void)tcl_list_to_fastf_array(brlcad_interp, argv[1], &new_verts, &len);
+	    (void)tcl_list_to_fastf_array(brlcad_interp, dupstr, &new_verts, &len);
+	    bu_free(dupstr, "sketch adjust strdup");
+
 	    if (len%2) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertices\n");
 		return BRLCAD_ERROR;
@@ -2532,7 +2537,7 @@ rt_curve_order_segments(struct curve *crv)
 	    tmp_seg = crv->segments[j];
 	    crv->segments[j] = crv->segments[k];
 	    crv->segments[k] = tmp_seg;
-	    
+
 	    tmp_reverse = crv->reverse[j];
 	    crv->reverse[j] = crv->reverse[k];
 	    crv->reverse[k] = tmp_reverse;
@@ -2550,13 +2555,13 @@ rt_curve_order_segments(struct curve *crv)
 		continue;
 
 	    rt_curve_reverse_segment(crv->segments[k]);
-		
+
 	    if (k != j) {
 		/* exchange j and k segments */
 		tmp_seg = crv->segments[j];
 		crv->segments[j] = crv->segments[k];
 		crv->segments[k] = tmp_seg;
-		
+
 		tmp_reverse = crv->reverse[j];
 		crv->reverse[j] = crv->reverse[k];
 		crv->reverse[k] = tmp_reverse;

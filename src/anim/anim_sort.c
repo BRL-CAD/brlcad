@@ -20,10 +20,10 @@
  */
 /** @file anim_sort.c
  *
- *	Combine multiple animation scripts on standard input into a
- *  single script on standard output. The output can be in natural order
- *  or in a scrambled order for incrementally increasing time
- *  resolution (-i option).
+ * Combine multiple animation scripts on standard input into a single
+ * script on standard output. The output can be in natural order or in
+ * a scrambled order for incrementally increasing time resolution (-i
+ * option).
  *
  */
 
@@ -36,22 +36,46 @@
 #include "bu.h"
 
 
-#define MAXLEN	50		/*maximum length of lines to be read */
+#define OPT_STR "ci"
+
+#define MAXLEN 50 /*maximum length of lines to be read */
 #define MAXLINES 30		/* maximum length of lines to be stored*/
 
 int suppressed;		/* flag: suppress printing of 'clean;' commands */
 int incremental;	/* flag: order for incremental time resolution */
 
-int get_args(int argc, char **argv);
+
+int get_args(int argc, char **argv)
+{
+
+    int c;
+    suppressed = 0;
+
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+	switch (c) {
+	    case 'c':
+		suppressed = 1;
+		break;
+	    case 'i':
+		incremental = 1;
+		break;
+	    default:
+		fprintf(stderr, "Unknown option: -%c\n", c);
+		return 0;
+	}
+    }
+    return 1;
+}
+
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
-    int	length, frame_number, number, success, maxnum;
-    int 	first_frame, spread, reserve;
-    long	last_pos;
-    char	line[MAXLEN];
-    char    pbuffer[MAXLEN*MAXLINES];
+    int length, frame_number, number, success, maxnum;
+    int first_frame, spread, reserve;
+    long last_pos;
+    char line[MAXLEN];
+    char pbuffer[MAXLEN*MAXLINES];
 
 
     if (!get_args(argc, argv))
@@ -63,13 +87,12 @@ main(int argc, char **argv)
 	if (strncmp(line, "start", 5)) {
 	    printf("%s", line);
 	    last_pos = ftell(stdin);
-	}
-	else
+	} else
 	    break;
     }
 
     /* read the frame number of the first "start" command */
-    sscanf( strpbrk(line, "0123456789"), "%d", &frame_number);
+    sscanf(strpbrk(line, "0123456789"), "%d", &frame_number);
 
     /* find the highest frame number in the file */
     maxnum = 0;
@@ -91,7 +114,7 @@ main(int argc, char **argv)
     success = 1;
     while (length--) {
 	number = -1;
-	success = 0; /* tells whether or not any frames have been found  which have the current frame number*/
+	success = 0; /* tells whether or not any frames have been found which have the current frame number*/
 	if (incremental) {
 	    fseek(stdin, 0L, 0);
 	} else {
@@ -102,13 +125,13 @@ main(int argc, char **argv)
 	pbuffer[0] = '\0'; /* delete old pbuffer */
 
 	/* inner loop: search through the entire file for frames */
-	/*  which have the current frame number */
+	/* which have the current frame number */
 	while (!feof(stdin)) {
 
 	    /*read to next "start" command*/
 	    while (bu_fgets(line, MAXLEN, stdin)!=NULL) {
 		if (!strncmp(line, "start", 5)) {
-		    sscanf( strpbrk(line, "0123456789"), "%d", &number);
+		    sscanf(strpbrk(line, "0123456789"), "%d", &number);
 		    break;
 		}
 	    }
@@ -160,30 +183,6 @@ main(int argc, char **argv)
 	}
     }
     return 0;
-}
-
-#define OPT_STR "ci"
-
-int get_args(int argc, char **argv)
-{
-
-    int c;
-    suppressed = 0;
-
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch (c) {
-	    case 'c':
-		suppressed = 1;
-		break;
-	    case 'i':
-		incremental = 1;
-		break;
-	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
-		return 0;
-	}
-    }
-    return 1;
 }
 
 

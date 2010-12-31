@@ -15,6 +15,31 @@ on-going issues.
 Recent Bugs
 -----------
 
+* compilation reportedly fails when building Tcl if the path to the
+  source directory includes a space.
+
+* mged/tcl "gets" command doesn't work if you run the "source" command
+  to read in a script that uses gets on stdin.  it just hangs until
+  muliple sigint's are received.
+
+* mged 'cd' on Windows results in the rt* commands failing.
+
+* menu invocation seems to be broken again (ArchLinux)
+
+* Report of copy/paste not working with Tk on Windows Vista - does
+  work on Windows XP.
+
+* Update/create .mgedrc results in bogus qray lines if a db is not
+  open when the file is created.
+
+* MGED doesn't initialize multipane view to the documented multipane
+  defaults if you just open a db with multipane already enabled.
+
+* Creating an 'extrude' via MGED gui crashes MGED.
+
+* edcomb command seems to be busted similar to red, doesn't seem to do
+  anything.
+
 * gqa manpage has the wrong indentation on the options write-up.
 
 * Detailed BoT model ray trace image had incorrect background pixel

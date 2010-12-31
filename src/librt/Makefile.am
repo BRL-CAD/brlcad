@@ -38,7 +38,6 @@ librt_nil_la_SOURCES = \
 	bezier_2d_isect.c \
 	binunif/binunif.c \
 	binunif/db5_bin.c \
-	bomb.c \
 	bool.c \
 	bundle.c \
 	cmd.c \
@@ -292,9 +291,9 @@ sample_applications_DATA = \
 # XXX need to fix these so the timers are selected by configure.ac
 EXTRA_DIST = \
 	$(sample_applications_DATA) \
-        CMakeLists.txt \
+	CMakeLists.txt \
 	brep_test.cpp \
-        columnparse.c \
+	columnparse.c \
 	namegen.c \
 	parse.c \
 	pmalloc.c \
@@ -302,7 +301,8 @@ EXTRA_DIST = \
 	timer-nt.c \
 	timer52brl.c \
 	timerhep.c \
-	timerunix.c
+	timerunix.c \
+	uvpoints.cpp
 
 if BUILD_REGEX
 DEPADD = src/other/libregex

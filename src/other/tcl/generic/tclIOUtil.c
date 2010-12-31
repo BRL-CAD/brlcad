@@ -66,20 +66,14 @@ Tcl_Stat(
 {
     int ret;
     Tcl_StatBuf buf;
-    Tcl_Obj *pathPtr = Tcl_NewStringObj(path,-1);
-
-#ifndef TCL_WIDE_INT_IS_LONG
-    Tcl_WideInt tmp1, tmp2;
-#ifdef HAVE_ST_BLOCKS
-    Tcl_WideInt tmp3;
-#endif
-#endif
+    Tcl_Obj *pathPtr = Tcl_NewStringObj(path, -1);
 
     Tcl_IncrRefCount(pathPtr);
     ret = Tcl_FSStat(pathPtr, &buf);
     Tcl_DecrRefCount(pathPtr);
     if (ret != -1) {
 #ifndef TCL_WIDE_INT_IS_LONG
+	Tcl_WideInt tmp1, tmp2, tmp3 = 0;
 # define OUT_OF_RANGE(x) \
 	(((Tcl_WideInt)(x)) < Tcl_LongAsWide(LONG_MIN) || \
 	 ((Tcl_WideInt)(x)) > Tcl_LongAsWide(LONG_MAX))
@@ -91,29 +85,24 @@ Tcl_Stat(
 	 *
 	 * Note that ino_t/ino64_t is unsigned...
 	 *
-	 * Workaround gcc warning of "comparison is always false due to limited range of
-	 * data type" by assigning to tmp var of type Tcl_WideInt.
+	 * Workaround gcc warning of "comparison is always false due to
+	 * limited range of data type" by assigning to tmp var of type
+	 * Tcl_WideInt.
 	 */
 
         tmp1 = (Tcl_WideInt) buf.st_ino;
         tmp2 = (Tcl_WideInt) buf.st_size;
-#ifdef HAVE_ST_BLOCKS
+#ifdef HAVE_STRUCT_STAT_ST_BLOCKS
         tmp3 = (Tcl_WideInt) buf.st_blocks;
 #endif
 
-	if (OUT_OF_URANGE(tmp1) || OUT_OF_RANGE(tmp2)
-#ifdef HAVE_ST_BLOCKS
-		|| OUT_OF_RANGE(tmp3)
-#endif
-	    ) {
-#ifdef EFBIG
+	if (OUT_OF_URANGE(tmp1) || OUT_OF_RANGE(tmp2) || OUT_OF_RANGE(tmp3)) {
+#if defined(EFBIG)
 	    errno = EFBIG;
-#else
-#  ifdef EOVERFLOW
+#elif defined(EOVERFLOW)
 	    errno = EOVERFLOW;
-#  else
-#    error "What status should be returned for file size out of range?"
-#  endif
+#else
+#error "What status should be returned for file size out of range?"
 #endif
 	    return -1;
 	}
@@ -141,9 +130,15 @@ Tcl_Stat(
 	oldStyleBuf->st_atime	= buf.st_atime;
 	oldStyleBuf->st_mtime	= buf.st_mtime;
 	oldStyleBuf->st_ctime	= buf.st_ctime;
-#ifdef HAVE_ST_BLOCKS
+#ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
 	oldStyleBuf->st_blksize	= buf.st_blksize;
+#endif
+#ifdef HAVE_STRUCT_STAT_ST_BLOCKS
+#ifdef HAVE_BLKCNT_T
 	oldStyleBuf->st_blocks	= (blkcnt_t) buf.st_blocks;
+#else
+	oldStyleBuf->st_blocks	= (unsigned long) buf.st_blocks;
+#endif
 #endif
     }
     return ret;
@@ -2002,8 +1997,10 @@ Tcl_FSStat(
 	buf->st_atime = oldStyleStatBuffer.st_atime;
 	buf->st_mtime = oldStyleStatBuffer.st_mtime;
 	buf->st_ctime = oldStyleStatBuffer.st_ctime;
-#ifdef HAVE_ST_BLOCKS
+#ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
 	buf->st_blksize = oldStyleStatBuffer.st_blksize;
+#endif
+#ifdef HAVE_STRUCT_STAT_ST_BLOCKS
 	buf->st_blocks = Tcl_LongAsWide(oldStyleStatBuffer.st_blocks);
 #endif
 	return retVal;

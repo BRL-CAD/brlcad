@@ -19,8 +19,8 @@
  */
 /** @file brep.c
  *
- *  Library for writing BREP objects into
- *  MGED databases from arbitrary procedures.
+ * Library for writing BREP objects into
+ * MGED databases from arbitrary procedures.
  *
  */
 
@@ -39,12 +39,12 @@
 
 
 /*
- *                        M K _ B R E P
+ * M K _ B R E P
  *
- *  Create a brep in the geometry file.
+ * Create a brep in the geometry file.
  */
 int
-mk_brep( struct rt_wdb* file, const char* name, ON_Brep* brep )
+mk_brep(struct rt_wdb* file, const char* name, ON_Brep* brep)
 {
     struct rt_brep_internal* bi;
 
@@ -57,6 +57,7 @@ mk_brep( struct rt_wdb* file, const char* name, ON_Brep* brep )
     }
     return wdb_export(file, name, (genptr_t)bi, ID_BREP, mk_conv2mm);
 }
+
 
 // Local Variables:
 // tab-width: 8

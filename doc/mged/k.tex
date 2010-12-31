@@ -1,0 +1,530 @@
+\chapter{BUILDING A TIN WOODSMAN}
+
+\begin{figure}
+\centering \includegraphics{wm-prims.ps}
+\caption{WoodsMan Primitives.}
+\label{wm-prims}
+\end{figure}
+
+The purpose of this tutorial is to demonstrate how to build a model using
+a few basic primitives.  The model to be constructed is a tin woodsman.
+The four primitives used in the construction of the tin woodsman
+are an ARB8, a cylinder, an ellipsoid, and a torus.
+These four primitives will be duplicated several times,
+and each copy will be modified using solid editing,
+to obtain the required shapes.
+The finished version of this database can be found in
+the BRL-CAD Package file ``db/woodsman.g''.
+
+\section{Create Primitives}
+
+\noindent{\tt
+\$ {\em mged woodsman.g} \\
+BRL-CAD Release 3.0 Graphics Editor (MGED) Compilation 82 \\
+    Thu Sep 22 08:08:39 EDT 1988 \\
+    mikel@video.br:/cad/.mged.4d2 \\
+ \\
+woodsman.g: No such file or directory \\
+Create new database (y|n)[n]? {\em y} \\
+attach (nu|tek|tek4109|ps|plot|sgi)[nu]? {\em sgi} \\
+ATTACHING sgi (SGI 4d) \\
+Untitled MGED Database (units=mm) \\
+mged> {\em size 20} \\
+mged> {\em title A Tin Woodsman} \\
+mged> {\em in solid8 rpp} \\
+Enter XMIN, XMAX, YMIN, YMAX, ZMIN, ZMAX: {\em -1 1  -1 1  -1 1} \\
+mged> {\em in torus tor} \\
+Enter X, Y, Z of vertex: {\em 0 0 0} \\
+Enter X, Y, Z of normal vector: {\em 0 1 0} \\
+Enter radius 1: {\em 1} \\
+Enter radius 2: {\em 0.2} \\
+mged> {\em in ellipsoid ellg} \\
+Enter X, Y, Z of vertex: {\em 0 0 0} \\
+Enter X, Y, Z of vector A: {\em 1 0 0} \\
+Enter X, Y, Z of vector B: {\em 0 0.5 0} \\
+Enter X, Y, Z of vector C: {\em 0 0 0.5} \\
+mged> {\em in cylinder rcc} \\
+Enter X, Y, Z of vertex: {\em 0 0 0} \\
+Enter X, Y, Z of height (H) vector: {\em 2 0 0} \\
+Enter radius: {\em 1} \\
+mged>
+}
+
+At this point, the screen should look like Figure \ref{wm-prims}.
+
+\section{Copy Primitives and Set Up for Edit}
+
+Although eight copies of the ellipsoid and two copies of the cylinder
+shall be used in the final solid, fewer copies are made initially since there
+is replication in the editing of these primitives.
+
+\noindent{\tt
+mged> {\em cp ellipsoid e.2} \\
+mged> {\em cp ellipsoid e.6} \\
+mged> {\em cp cylinder c.1} \\
+mged> {\em cp solid8 s.1} \\
+mged> {\em cp torus t.1} \\
+mged> {\em Z} \\
+mged> {\em e e.* c.1 t.1 s.1} \\
+vectorized in 0 sec \\
+mged>  \\
+}
+
+\begin{figure}
+\centering \includegraphics{wm-hat1.ps}
+\caption{Funnel Bowl Cylinder After Rotation.}
+\label{wm-hat1}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{wm-hat2.ps}
+\caption{Funnel Bowl Cylinder After End Scaling.}
+\label{wm-hat2}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{wm-hat3.ps}
+\caption{Funnel Bowl Cylinder After Moving.}
+\label{wm-hat3}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{wm-tube.ps}
+\caption{Funnel Tube Scaled and Positioned.}
+\label{wm-tube}
+\end{figure}
+
+\section{Create Funnel Hat}
+
+The solid ``cylinder'' has a height vector (``H'') which is 2mm
+long.
+This will be used to good advantage, to make the Tin Woodsman's
+funnel hat, with the bowl of the funnel being 2mm high,
+and the tube of the funnel being 2mm long.
+The tube of the funnel will point straight up the +Y axis.
+
+\noindent{\tt
+mged> {\em sed c.1} \\
+mged> {\em Select the ``Rotate'' entry in the solid edit menu} \\
+mged> {\em p 0 45 90} \\
+mged>
+}
+
+This places the cylinder so that the lines BD and AC are at the outer
+ends of the cylinder.  See Figure \ref{wm-hat1}.
+
+Next, the cylinder is shaped to look like the top of a funnel.
+The vectors c and d are scaled.
+
+\noindent{\tt
+{\em Select the ``edit menu'' entry in the solid edit menu} \\
+{\em Select the ``scale c'' entry in the TGC menu} \\
+mged> {\em p .1} \\
+{\em Select the ``scale d'' entry in the TGC menu} \\
+mged> {\em p .1} \\
+mged> \\
+}
+
+Figure \ref{wm-hat2} is the new shape of the cone.
+Note how the on-screen display records the new lengths of the ``c''
+and ``d'' vectors.
+This cone must be moved to the planned locations for the top of the head.
+
+\noindent{\tt
+{\em Select the ``Translate'' entry in the solid edit menu} \\
+mged> {\em p 0 2.2 0} \\
+{\em Select the ``ACCEPT Edit'' entry in the button menu} \\
+mged> \\
+}
+
+The bottom of the hat is now properly shaped and positioned.  The
+new version of the solid ``c.1'' has been saved in the model database.
+The editor returns to the viewing state.  See Figure \ref{wm-hat3}.
+
+A copy of the saved ``c.1'' cone is made.  A byproduct of the {\em cp}
+command is to display the new solid, as if the {\em cp c.1 c.2} command
+had been immediately followed by an {\em e c.2} command.
+This new solid will be edited to make the neck of the funnel,
+which is the top of the hat.
+The ``c.2'' copy of the cone must be
+scaled down to become a tube and the tube must be placed on top of the
+cone ``c.1''.
+
+\noindent{\tt
+mged> {\em cp c.1 c.2} \\
+mged> {\em sed c.2} \\
+{\em Select ``scale A,B'' in the TGC menu} \\
+mged> {\em p 0.1} \\
+{\em Select ``Translate'' in the Solid Edit menu} \\
+mged> {\em p 0 4.2 0} \\
+{\em Select ``ACCEPT Edit'' in the Button menu} \\
+mged>
+}
+
+Figure \ref{wm-tube} is the new shape of the funnel tube.
+The woodsman's hat is comprised of solids c.1 and c.2.
+
+\begin{figure}
+\centering \includegraphics{wm-head.ps}
+\caption{Head Sphere.}
+\label{wm-head}
+\end{figure}
+
+\section{Building the Head}
+
+The head of our Tin Woodsman is perfectly spherical, and will be located
+at coordinates (0, 2, 0).
+While it would be possible to duplicate the ellipsoid solid created above,
+and modifiy it to produce the desired sphere, since all the parameters
+of the head sphere are known, it is more economical simply to use
+the {\em in} command to construct it directly.
+Figure \ref{wm-head} shows the results of this operation.
+
+\noindent{\tt
+mged> {\em in e.1} \\
+Enter solid type: {\em sph} \\
+Enter X, Y, Z of vertex: {\em 0 2 0} \\
+Enter radius: {\em 1} \\
+mged>
+}
+
+\begin{figure}
+\centering \includegraphics{wm-collar.ps}
+\caption{The Woodsman's Collar.}
+\label{wm-collar}
+\end{figure}
+
+\section{Building the Collar}
+
+The torus (primitive t.1) is used to build a collar between the head and
+the body.
+The ring of the collar is scaled to 0.1 of its original size,
+and repositioned at the base of the head.
+The results of this step are shown in Figure \ref{wm-collar}.
+
+\noindent{\tt
+mged> {\em sed t.1} \\
+{\em Select ``scale radius 2'' in the TORUS menu} \\
+mged> {\em p 0.1} \\
+{\em Select ``Translate'' in the Solid Edit menu} \\
+mged> {\em p 0 1 0} \\
+{\em Select ``ACCEPT Edit'' in the Button menu} \\
+mged>
+}
+
+\begin{figure}
+\centering \includegraphics{wm-body.ps}
+\caption{The Woodsman's Body.}
+\label{wm-body}
+\end{figure}
+
+\section{Building the Body}
+
+The ARB8 (primitive s.1) is used to build the body.
+The original height of s.1 is only 2mm;  the required
+length of the body is 3mm, so the extrusion command is
+used to adjust the position of the lower (-Y) face of the solid.
+The result is shown in Figure \ref{wm-body}.
+
+\noindent{\tt
+mged> {\em sed s.1} \\
+mged> {\em extrude 2367 3} \\
+{\em Select ``ACCEPT Edit'' in the Button menu} \\
+mged>
+}
+
+\begin{figure}
+\centering \includegraphics{wm-arm1.ps}
+\caption{An Upper Arm Prototype.}
+\label{wm-arm1}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{wm-arm2.ps}
+\caption{The Woodsman's Arms.}
+\label{wm-arm2}
+\end{figure}
+
+\section{Building the Arms}
+
+The ellipsoid primitive (e.2) is used to build the upper and lower parts
+of the left and right arms.
+The original solid ``e.2'' is oriented with the major axis of the ellipse
+oriented along the X axis.
+The arms need to have the major axis oriented along the Y axis,
+so first the solid is rotated.
+A more graceful arm is obtained by decreasing the length of
+the B and C vectors, and the resulting upper arm solid can be
+seen in Figure \ref{wm-arm1}.
+
+\noindent{\tt
+mged> {\em sed e.2} \\
+{\em Select ``Rotate'' in the Solid Edit menu} \\
+mged> {\em p 0 45 90} \\
+{\em Select ``edit menu'' in the Solid Edit menu} \\
+{\em Select ``scale B'' in the ELLIPSOID menu} \\
+mged> {\em p 0.25} \\
+{\em Select ``scale C'' in the ELLIPSOID menu} \\
+mged> {\em p 0.25} \\
+mged>
+}
+
+This e.2 solid will now be moved into final position as the upper left arm.
+Then it will be duplicated three times
+to make the rest of the arm parts.  Finally, each new arm
+part will be translated into the proper position,
+as seen in Figure \ref{wm-arm2}.
+
+\noindent{\tt
+{\em Select ``Translate'' in the Solid Edit menu} \\
+mged> {\em p -1.3 0 0} \\
+{\em Select ``ACCEPT Edit'' in the Button menu -- This is the upper left arm} \\
+mged> {\em cp e.2 e.3} \\
+mged> {\em cp e.2 e.4} \\
+mged> {\em cp e.2 e.5} \\
+mged> {\em sed e.3} \\
+{\em Select ``Translate'' in the Solid Edit menu} \\
+mged> {\em p -1.3 -2 0} \\
+{\em Select ``ACCEPT Edit'' in the Button menu -- This is the lower left arm} \\
+mged> {\em sed e.4} \\
+{\em Select ``Translate'' in the Solid Edit menu} \\
+mged> {\em p 1.3 0 0} \\
+{\em Select ``ACCEPT Edit'' in the Button menu -- This is the upper right arm} \\
+mged> {\em sed e.5} \\
+{\em Select ``Translate'' in the Solid Edit menu} \\
+mged> {\em p 1.3 -2 0} \\
+{\em Select ``ACCEPT Edit'' in the Button menu -- This is the lower right arm} \\
+mged>
+}
+
+\begin{figure}
+\centering \includegraphics{wm-leg1.ps}
+\caption{The First Leg.}
+\label{wm-leg1}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{wm-final1.ps}
+\caption{The Tin Woodsman.}
+\label{wm-final1}
+\end{figure}
+
+\section{Building the Legs}
+
+The ellipsoid primitive (e.6) is used as a prototype
+to build the upper and lower parts of both legs from.
+The primitive e.6 is scaled, rotated, and translated
+into position as the upper left leg, as seen in Figure \ref{wm-leg1}.
+Then, copies are made and translated to the remaining positions,
+just like the arms were.
+
+\noindent{\tt
+mged> {\em sed e.6} \\
+{\em Select ``Rotate'' in the Solid Edit menu} \\
+mged> {\em p 0 45 90} \\
+{\em Select ``Translate'' in the Solid Edit menu} \\
+mged> {\em p -0.5 -3 0} \\
+{\em Select ``ACCEPT Edit'' in the Button menu -- This is the upper left leg} \\
+mged> {\em cp e.6 e.7} \\
+mged> {\em cp e.6 e.8} \\
+mged> {\em cp e.6 e.9} \\
+mged> {\em sed e.7} \\
+{\em Select ``Translate'' in the Solid Edit menu} \\
+mged> {\em p -0.5 -5 0} \\
+{\em Select ``ACCEPT Edit'' in the Button menu -- This is the lower left leg} \\
+mged> {\em sed e.8} \\
+{\em Select ``Translate'' in the Solid Edit menu} \\
+mged> {\em p 0.5 -3 0} \\
+{\em Select ``ACCEPT Edit'' in the Button menu -- This is the upper right leg} \\
+mged> {\em sed e.9} \\
+{\em Select ``Translate'' in the Solid Edit menu} \\
+mged> {\em p 0.5 -5 0} \\
+{\em Select ``ACCEPT Edit'' in the Button menu -- This is the lower right leg} \\
+}
+
+Figure \ref{wm-final1} is the view on the screen, the Tin Woodsman.
+Take a moment to use the rotation knobs to view the model from various
+angles.
+
+\section{Building Regions}
+
+So far, this example has concentrated on describing the basic shapes
+involved in making the Tin Woodsman, without concern for establishing
+a proper hierarchical structure.  To illustrate this point,
+the various solids will be grouped by purpose and composition.
+First, a region will be constructed to contain the torso,
+and the color of ``cadet blue'' will be assigned:
+
+\noindent{\tt
+mged> {\em r torso.r u s.1} \\
+Defaulting item number to 1001 \\
+Creating region id=1000, air=0, los=100, GIFTmaterial=1 \\
+mged> {\em mater torso.r} \\
+Material = \\
+Material?  (CR to skip) {\em plastic} \\
+Param = \\
+Parameter string? (CR to skip) {\em [RETURN]} \\
+Color = (No color specified) \\
+Color R G B (0..255)? (CR to skip) {\em 95 159 159} \\
+Inherit = 0:  lower nodes (towards leaves) override \\
+Inheritance (0|1)? (CR to skip) {\em [RETURN]} \\
+mged>
+}
+
+Second, a region will be constructed to contain the collar,
+which will be colored red:
+
+\noindent{\tt
+mged> {\em r collar.r u t.1} \\
+Defaulting item number to 1003 \\
+Creating region id=1002, air=0, los=100, GIFTmaterial=1 \\
+mged> {\em mater collar.r} \\
+Material = \\
+Material?  (CR to skip) {\em plastic} \\
+Param = \\
+Parameter string? (CR to skip)  {\em [RETURN]} \\
+Color = (No color specified) \\
+Color R G B (0..255)? (CR to skip) {\em 255 127 0} \\
+Inherit = 0:  lower nodes (towards leaves) override \\
+Inheritance (0|1)? (CR to skip)  {\em [RETURN]} \\
+mged>
+}
+
+Third, a region will be constructed to contain all the limbs,
+and a flesh color will be assigned.
+Even though none of the limbs touch each other, note how they
+are combined with the UNION operation, to create a single
+object of uniform composition and color.
+
+\noindent{\tt
+mged> {\em r limbs.r u e.2 u e.3 u e.4 u e.5 u e.6 u e.7 u e.8 u e.9} \\
+Defaulting item number to 1001 \\
+Creating region id=1000, air=0, los=100, GIFTmaterial=1 \\
+mged> {\em mater limbs.r} \\
+Material = \\
+Material?  (CR to skip) {\em plastic} \\
+Param = \\
+Parameter string? (CR to skip)  {\em [RETURN]} \\
+Color = 0 0 0 \\
+Color R G B (0..255)? (CR to skip) {\em 255 200 160} \\
+Inherit = 0:  lower nodes (towards leaves) override \\
+Inheritance (0|1)? (CR to skip)  {\em [RETURN]} \\
+mged>
+}
+
+Next, the funnel needs to be placed in a region.
+For the sake of simplicity, the funnel will be solid, rather
+than having a hollow center.
+Note that the interior of the funnel overlaps with the top
+of the Woodsman's head.
+The funnel can be made ``form fitting'' by subtracting out
+the overlap zone:
+
+\noindent{\tt
+mged> {\em r funnel.r u c.1 - e.1 u c.2 - e.1} \\
+Defaulting item number to 1004 \\
+Creating region id=1003, air=0, los=100, GIFTmaterial=1 \\
+mged> {\em mater funnel.r} \\
+Material = \\
+Material?  (CR to skip) {\em plastic} \\
+Param = \\
+Parameter string? (CR to skip) {\em sh=100} \\
+Color = (No color specified) \\
+Color R G B (0..255)? (CR to skip) {\em 35 107 142} \\
+Inherit = 0:  lower nodes (towards leaves) override \\
+Inheritance (0|1)? (CR to skip)
+mged> {\em l funnel.r} \\
+funnel.r (len 4) REGION id=1003  (air=0, los=100, GIFTmater=1) -- \\
+Material 'plastic' 'sh=100' \\
+Color 35 107 142 \\
+\ \ u c.1 \\
+\ \ - e.1 \\
+\ \ u c.2 \\
+\ \ - e.1 \\
+mged>
+}
+
+\begin{figure}
+\centering \includegraphics{wm-hat-E.ps}
+\caption{Evaluation of Funnel Hat Region.}
+\label{wm-hat-E}
+\end{figure}
+
+Note how the boolean expression was written.
+The concept that we need to express here is
+the combination of all the funnel parts, minus the
+portion of the head that overlaps with the inside of the funnel.
+The natural way to write this is
+\begin{center}
+(c.1 union c.2) - e.1
+\end{center}
+but note that there are no grouping operations permitted in the {\em r}
+command.
+Furthermore, for historic reasons, union operations bind more loosely than
+intersection and subtraction, ie, there are implied groups
+between union operations.  Thus, the expression above needs to be
+rewritten as the the formula:
+\begin{center}
+(c.1 - e.1) union (c.2 - e.1)
+\end{center}
+which with the binding precedence can be expressed as:
+\begin{center}
+c.1 - e.1 union c.2 - e.1
+\end{center}
+which is what was entered in the sequence above.
+To see the effect that this command had on the shape of ``funnel.r'',
+run these commands, the effect of which is shown in Figure \ref{wm-hat-E}:
+
+\noindent{\tt
+mged> {\em Z } \\
+mged> {\em E funnel.r } \\
+vectorized in 1 sec \\
+mged>
+}
+
+These regions should be grouped together into a group,
+for convenience in referencing.  This can be done with these commands:
+
+\noindent{\tt
+mged> {\em g man.g collar.r funnel.r limbs.r torso.r} \\
+mged> {\em Z} \\
+mged> {\em e man.g} \\
+vectorized in 1 sec \\
+mged>
+}
+
+The grouping {\em g} command combined the regions, the Zap command {\em Z}
+cleared the screen, and the edit {\em e man.g} command drew the whole
+object.
+As an exercise, run
+the database structure printing command {\em tree man.g}
+to obtain a simple depiction of the tree structure that has been created.
+For the final step of this example, the model will be ray-traced.
+Run the command:
+
+\noindent{\tt
+mged> {\em rt -s128} \\
+rt -s50 -M -s128 woodsman.g man.g  \\
+db title:  A Tin Woodsman \\
+Buffering single scanlines \\
+initial dynamic memory use=35152.\\
+Interpreting command stream in old format\\
+GETTREE: 0.01 CPU secs in 1 elapsed secs (1\%)\\
+                                              \\
+...................Frame     0...................\\
+PREP: 0.01 CPU secs in 0.01 elapsed secs (100\%)\\
+shooting at 13 solids in 4 regions              \\
+model X(-2,2), Y(-6,7), Z(-2,2)\\
+Beam radius=0.078125 mm, divergance=0 mm/1mm\\
+                                             \\
+SHOT: 3.73 CPU secs in 6 elapsed secs (62.1667\%)\\
+Additional dynamic memory used=29728. bytes\\
+3515 solid/ray intersections: 1005 hits + 2510 miss\\
+pruned 28.6\%:  13647 model RPP, 8197 dups, 10740 RPP\\
+Frame     0:    16384 pixels in       3.73 sec =    4392.49 pixels/sec\\
+Frame     0:    16384 rays   in       3.73 sec =    4392.49 rays/sec (RTFM)\\
+\\
+Press RETURN to reattach\\
+{\em [RETURN]} \\
+mged>
+}

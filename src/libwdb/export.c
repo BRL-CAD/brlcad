@@ -19,8 +19,8 @@
  */
 /** @file export.c
  *
- *  Routines to allow libwdb to use librt's import/export interface,
- *  rather than having to know about the database formats directly.
+ * Routines to allow libwdb to use librt's import/export interface,
+ * rather than having to know about the database formats directly.
  *
  */
 
@@ -36,7 +36,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-int	mk_version = 5;		/* which version of the database to write */
+int mk_version = 5;		/* which version of the database to write */
 
 /*
  * Local Variables:

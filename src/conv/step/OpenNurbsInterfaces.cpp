@@ -844,7 +844,7 @@ FaceSurface::LoadONBrep(ON_Brep *brep)
 
 
 void
-Point::AddVertex(ON_Brep *brep)
+Point::AddVertex(ON_Brep *UNUSED(brep))
 {
     std::cerr << "Warning: " << entityname << "::AddVertex() should be overridden by parent class." << std::endl;
 }
@@ -881,6 +881,8 @@ BSplineCurve::AddPolyLine(ON_Brep *brep)
 	    }
 	} else if (num_control_points > 2) {
 	    ON_NurbsCurve* c = ON_NurbsCurve::New(3, false, degree + 1, num_control_points);
+	    /* FIXME: do something with c */
+	    delete c;
 	} else {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading polyLine." << std::endl;
 	}
@@ -927,7 +929,6 @@ Face::LoadONBrep(ON_Brep *brep)
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;
 	}
-	ON_BrepFace& face = brep->m_F[GetONId()];
 	cnt++;
     }
     return true;
@@ -2167,7 +2168,6 @@ Parabola::LoadONBrep(ON_Brep *brep)
     double fd = focal_dist * LocalUnits::length;
     ON_3dPoint focus = center + fd * xaxis;
     ON_3dPoint directrix = center - fd * xaxis;
-    double eccentricity = 1.0; // for parabola eccentricity is always 1.0
 
     ON_3dPoint pnt1;
     ON_3dPoint pnt2;
@@ -2432,27 +2432,27 @@ VertexLoop::LoadONBrep(ON_Brep *brep)
 
     ON_2dPoint start, end;
     ON_Surface::ISO iso;
-    if (VAPPROXEQUAL(vertex, corner[0], POINT_CLOSENESS_TOLERANCE)) {
+    if (VNEAR_EQUAL(vertex, corner[0], POINT_CLOSENESS_TOLERANCE)) {
 	start = ON_2dPoint(U.m_t[0], V.m_t[0]);
-	if (VAPPROXEQUAL(vertex, corner[1], POINT_CLOSENESS_TOLERANCE)) {
+	if (VNEAR_EQUAL(vertex, corner[1], POINT_CLOSENESS_TOLERANCE)) {
 	    //south;
 	    end = ON_2dPoint(U.m_t[1], V.m_t[0]);
 	    iso = ON_Surface::S_iso;
-	} else if (VAPPROXEQUAL(vertex, corner[2], POINT_CLOSENESS_TOLERANCE)) {
+	} else if (VNEAR_EQUAL(vertex, corner[2], POINT_CLOSENESS_TOLERANCE)) {
 	    //west
 	    end = ON_2dPoint(U.m_t[0], V.m_t[1]);
 	    iso = ON_Surface::W_iso;
 	}
-    } else if (VAPPROXEQUAL(vertex, corner[1], POINT_CLOSENESS_TOLERANCE)) {
+    } else if (VNEAR_EQUAL(vertex, corner[1], POINT_CLOSENESS_TOLERANCE)) {
 	start = ON_2dPoint(U.m_t[1], V.m_t[0]);
-	if (VAPPROXEQUAL(vertex, corner[3], POINT_CLOSENESS_TOLERANCE)) {
+	if (VNEAR_EQUAL(vertex, corner[3], POINT_CLOSENESS_TOLERANCE)) {
 	    //east
 	    end = ON_2dPoint(U.m_t[1], V.m_t[1]);
 	    iso = ON_Surface::E_iso;
 	}
-    } else if (VAPPROXEQUAL(vertex, corner[2], POINT_CLOSENESS_TOLERANCE)) {
+    } else if (VNEAR_EQUAL(vertex, corner[2], POINT_CLOSENESS_TOLERANCE)) {
 	start = ON_2dPoint(U.m_t[0], V.m_t[1]);
-	if (VAPPROXEQUAL(vertex, corner[3], POINT_CLOSENESS_TOLERANCE)) {
+	if (VNEAR_EQUAL(vertex, corner[3], POINT_CLOSENESS_TOLERANCE)) {
 	    //north
 	    end = ON_2dPoint(U.m_t[1], V.m_t[1]);
 	    iso = ON_Surface::N_iso;
@@ -2462,7 +2462,8 @@ VertexLoop::LoadONBrep(ON_Brep *brep)
     int trimCurve = brep->m_C2.Count();
     brep->m_C2.Append(c2d);
 
-    ON_BrepTrim& trim = brep->NewSingularTrim(brep->m_V[loop_vertex->GetONId()], loop, iso, trimCurve);
+    (void)brep->NewSingularTrim(brep->m_V[loop_vertex->GetONId()], loop, iso, trimCurve);
+    /* FIXME: do something with this trim */
 
     return true;
 }

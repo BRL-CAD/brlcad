@@ -826,10 +826,10 @@ bu_vls_structprint(struct bu_vls *vls, register const struct bu_structparse *sdp
 	    case 'S':
 	    {
 		register struct bu_vls *vls_p = (struct bu_vls *)loc;
-			    
+
 		len =  bu_vls_strlen(vls_p) + 5 + strlen(sdp->sp_name);
 		bu_vls_extend(vls, len);
-			    
+
 		cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		snprintf(cp, len, "%s%s=\"%s\"",
 			 (vls->vls_len?" ":""),
@@ -843,7 +843,7 @@ bu_vls_structprint(struct bu_vls *vls, register const struct bu_structparse *sdp
 		register int i = sdp->sp_count;
 		register short *sp = (short *)loc;
 		register int tmpi;
-			    
+
 		len = 64 * i + strlen(sdp->sp_name) + 3;
 		bu_vls_extend(vls, len);
 
@@ -853,7 +853,7 @@ bu_vls_structprint(struct bu_vls *vls, register const struct bu_structparse *sdp
 			 sdp->sp_name, *sp++);
 		tmpi = strlen(cp);
 		vls->vls_len += tmpi;
-			    
+
 		while (--i > 0) {
 		    cp += tmpi;
 		    sprintf(cp, ",%d", *sp++);
@@ -867,17 +867,17 @@ bu_vls_structprint(struct bu_vls *vls, register const struct bu_structparse *sdp
 		register int i = sdp->sp_count;
 		register int *dp = (int *)loc;
 		register int tmpi;
-			    
+
 		len = 64 * i + strlen(sdp->sp_name) + 3;
 		bu_vls_extend(vls, len);
-					
+
 		cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		snprintf(cp, len, "%s%s=%d",
 			 (vls->vls_len?" ":""),
 			 sdp->sp_name, *dp++);
 		tmpi = strlen(cp);
 		vls->vls_len += tmpi;
-			    
+
 		while (--i > 0) {
 		    cp += tmpi;
 		    sprintf(cp, ",%d", *dp++);

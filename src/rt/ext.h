@@ -59,6 +59,7 @@ extern int		report_progress;	/* !0 = user wants progress report */
 extern struct application	ap;
 extern vect_t		left_eye_delta;
 extern int		save_overlaps;		/* flag for setting rti_save_overlaps */
+extern struct bu_image_file *bif;
 
 /***** variables shared with worker() ******/
 extern int		stereo;			/* stereo viewing */

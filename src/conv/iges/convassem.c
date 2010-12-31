@@ -46,7 +46,7 @@ void
 Convassem()
 {
     int			i, j, k, comblen, conv=0, totass=0;
-    struct solid_list	*root, *ptr;
+    struct solid_list	*root, *ptr, *ptr_tmp;
     struct wmember		head, *wmem;
     int			no_of_assoc=0;
     int			no_of_props=0;
@@ -208,8 +208,9 @@ Convassem()
 	ptr = root;
 	while ( ptr != NULL )
 	{
+	    ptr_tmp = ptr->next;
 	    bu_free( (char *)ptr, "convassem: ptr" );
-	    ptr = ptr->next;
+	    ptr = ptr_tmp;
 	}
     }
     bu_log( "Converted %d solid assemblies successfully out of %d total assemblies\n", conv, totass );

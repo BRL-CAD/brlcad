@@ -251,7 +251,7 @@ fb_close_existing(FBIO *ifp)
 #ifdef IF_X
     {
 	extern FBIO X24_interface;
-	if (strcasecmp(ifp->if_name, X24_interface.if_type) == 0) {
+	if (strcasecmp(ifp->if_name, X24_interface.if_name) == 0) {
 	    int status = -1;
 	    if ((status = X24_close_existing(ifp)) <= -1) {
 		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
@@ -270,7 +270,7 @@ fb_close_existing(FBIO *ifp)
 #ifdef IF_WGL
     {
 	extern FBIO wgl_interface;
-	if (strcasecmp(ifp->if_name, wgl_interface.if_type) == 0) {
+	if (strcasecmp(ifp->if_name, wgl_interface.if_name) == 0) {
 	    int status = -1;
 	    if ((status = wgl_close_existing(ifp)) <= -1) {
 		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
@@ -288,7 +288,7 @@ fb_close_existing(FBIO *ifp)
 #ifdef IF_OGL
     {
 	extern FBIO ogl_interface;
-	if (strcasecmp(ifp->if_name, ogl_interface.if_type) == 0) {
+	if (strcasecmp(ifp->if_name, ogl_interface.if_name) == 0) {
 	    int status = -1;
 	    if ((status = ogl_close_existing(ifp)) <= -1) {
 		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
@@ -306,7 +306,7 @@ fb_close_existing(FBIO *ifp)
 #ifdef IF_RTGL
     {
 	extern FBIO ogl_interface;
-	if (strcasecmp(ifp->if_name, ogl_interface.if_type) == 0) {
+	if (strcasecmp(ifp->if_name, ogl_interface.if_name) == 0) {
 	    int status = -1;
 	    if ((status = ogl_close_existing(ifp)) <= -1) {
 		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
@@ -324,7 +324,7 @@ fb_close_existing(FBIO *ifp)
 #ifdef IF_TK
     {
 	extern FBIO tk_interface;
-	if (strcasecmp(ifp->if_name, tk_interface.if_type) == 0) {
+	if (strcasecmp(ifp->if_name, tk_interface.if_name) == 0) {
 	    /* may need to close_existing here at some point */
 	    if (ifp->if_pbase != PIXEL_NULL)
 		free((void *)ifp->if_pbase);

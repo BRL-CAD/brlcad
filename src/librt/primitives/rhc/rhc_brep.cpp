@@ -46,16 +46,16 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
 
     ON_TextLog dump_to_stdout;
     ON_TextLog* dump = &dump_to_stdout;
-    
+
     point_t p1_origin;
     ON_3dPoint plane1_origin, plane2_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
-    
+
     // First, find plane in 3 space corresponding to the bottom face
-    // of the RHC.  
-   
+    // of the RHC.
+
     vect_t x_dir, y_dir;
-    
+
     VCROSS(x_dir, eip->rhc_H, eip->rhc_B);
     VUNITIZE(x_dir);
     VSCALE(x_dir, x_dir, eip->rhc_r);
@@ -65,8 +65,8 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     plane1_origin = ON_3dPoint(p1_origin);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
-    const ON_Plane* rhc_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir); 
-   
+    const ON_Plane* rhc_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
+
     // Next, create a hyperbolic curve corresponding to the shape of
     // the hyperboloid in the plane.  See if the following webpage
     // will help:
@@ -84,7 +84,7 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     double MP = MX + intercept_length;
     double w1 = (MX/MP)/(1-MX/MP);
     bu_log("weight: %f\n", w1);
-    
+
     VMOVE(tmppt, eip->rhc_B);
     VUNITIZE(tmppt);
     VSCALE(tmppt, tmppt, w1 * intercept_dist);
@@ -101,24 +101,24 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     ON_BezierCurve *bcurve = new ON_BezierCurve(cpts);
     bcurve->MakeRational();
     bcurve->SetWeight(1, w1);
-    
+
     ON_NurbsCurve* hypnurbscurve = ON_NurbsCurve::New();
-    
+
     bcurve->GetNurbForm(*hypnurbscurve);
-    
+
     bu_log("Valid nurbs curve: %d\n", hypnurbscurve->IsValid(dump));
     hypnurbscurve->Dump(*dump);
 
     // Also need a staight line from the beginning to the end to
     // complete the loop.
 
-    ON_LineCurve* straightedge = new ON_LineCurve(onp3, onp1);   
-   
-    // Generate the bottom cap 
+    ON_LineCurve* straightedge = new ON_LineCurve(onp3, onp1);
+
+    // Generate the bottom cap
     ON_SimpleArray<ON_Curve*> boundary;
-    boundary.Append(ON_Curve::Cast(hypnurbscurve)); 
-    boundary.Append(ON_Curve::Cast(straightedge)); 
-    
+    boundary.Append(ON_Curve::Cast(hypnurbscurve));
+    boundary.Append(ON_Curve::Cast(straightedge));
+
     ON_PlaneSurface* bp = new ON_PlaneSurface();
     bp->m_plane = (*rhc_bottom_plane);
     bp->SetDomain(0, -100.0, 100.0);
@@ -128,7 +128,7 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     (*b)->m_S.Append(bp);
     const int bsi = (*b)->m_S.Count() - 1;
     ON_BrepFace& bface = (*b)->NewFace(bsi);
-    (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, boundary, true); 
+    (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, boundary, true);
     const ON_BrepLoop* bloop = (*b)->m_L.Last();
     bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x);
     bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y);
@@ -143,7 +143,7 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(eip->rhc_V), ON_3dPoint(vp2));
     ON_Brep& brep = *(*b);
     ON_BrepExtrudeFace(brep, 0, *extrudepath, true);
-  
+
 }
 
 
@@ -155,4 +155,3 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

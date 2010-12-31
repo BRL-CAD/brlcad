@@ -43,11 +43,11 @@
 #define MAXBUFBYTES 1024*1024	/* max bytes to malloc in buffer space */
 
 unsigned char *buffer;
-int scanlen;			/* length of infile scanlines */
-int buflines;			/* Number of lines held in buffer */
+size_t scanlen;			/* length of infile scanlines */
+size_t buflines;		/* Number of lines held in buffer */
 int buf_start = -1000;		/* First line in buffer */
 
-float xnum, ynum;			/* Number of pixels in new file */
+float xnum, ynum;		/* Number of pixels in new file */
 float ulx, uly, urx, ury, lrx, lry, llx, lly;	/* Corners of original file */
 
 FILE *ifp, *ofp;
@@ -63,12 +63,12 @@ Usage: bwcrop in.bw out.bw (I prompt!)\n\
  * XXX - CHECK FILE SIZE
  */
 void
-init_buffer(int scanlen)
+init_buffer(int len)
 {
     int max;
 
     /* See how many we could buffer */
-    max = MAXBUFBYTES / scanlen;
+    max = MAXBUFBYTES / len;
 
     /*
      * Do a max of 512.  We really should see how big
@@ -78,7 +78,7 @@ init_buffer(int scanlen)
     if (max > 512) max = 512;
 
     buflines = max;
-    buffer = (unsigned char *)bu_malloc(buflines * scanlen, "buffer");
+    buffer = (unsigned char *)bu_malloc(buflines * len, "buffer");
 }
 
 
@@ -89,11 +89,15 @@ init_buffer(int scanlen)
 void
 fill_buffer(int y)
 {
+    size_t ret;
+
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
 
     fseek(ifp, buf_start * scanlen, 0);
-    fread(buffer, scanlen, buflines, ifp);
+    ret = fread(buffer, scanlen, buflines, ifp);
+    if (ret == 0)
+	perror("fread");
 }
 
 
@@ -101,8 +105,9 @@ int
 main(int argc, char **argv)
 {
     float row, col, x1, y1, x2, y2, x, y;
-    int yindex;
+    size_t yindex;
     char value;
+    size_t ret;
 
     if (argc < 3) {
 	bu_exit(1, "%s", usage);
@@ -127,22 +132,40 @@ main(int argc, char **argv)
 	llx = atoi(argv[12]);
 	lly = atoi(argv[13]);
     } else {
+	unsigned long len;
 	/* Get info */
 	printf("Scanline length in input file: ");
-	scanf("%d", &scanlen);
+	ret = scanf("%lu", &len);
+	if (ret != 1)
+	    perror("scanf");
+	scanlen = len;
 	if (scanlen <= 0) {
 	    bu_exit(4, "bwcrop: scanlen = %d, don't be ridiculous\n", scanlen);
 	}
 	printf("Line Length and Number of scan lines (in new file)?: ");
-	scanf("%f%f", &xnum, &ynum);
+	ret = scanf("%f%f", &xnum, &ynum);
+	if (ret != 1)
+	    perror("scanf");
+
 	printf("Upper left corner in input file (x, y)?: ");
-	scanf("%f%f", &ulx, &uly);
+	ret = scanf("%f%f", &ulx, &uly);
+	if (ret != 1)
+	    perror("scanf");
+
 	printf("Upper right corner (x, y)?: ");
-	scanf("%f%f", &urx, &ury);
+	ret = scanf("%f%f", &urx, &ury);
+	if (ret != 1)
+	    perror("scanf");
+
 	printf("Lower right (x, y)?: ");
-	scanf("%f%f", &lrx, &lry);
+	ret = scanf("%f%f", &lrx, &lry);
+	if (ret != 1)
+	    perror("scanf");
+
 	printf("Lower left (x, y)?: ");
-	scanf("%f%f", &llx, &lly);
+	ret = scanf("%f%f", &llx, &lly);
+	if (ret != 1)
+	    perror("scanf");
     }
 
     /* See how many lines we can buffer */
@@ -172,13 +195,15 @@ main(int argc, char **argv)
 
 	    /* Make sure we are in the buffer */
 	    yindex = round(y) - buf_start;
-	    if (yindex < 0 || yindex >= buflines) {
+	    if (yindex >= buflines) {
 		fill_buffer(round(y));
 		yindex = round(y) - buf_start;
 	    }
 
 	    value = buffer[ yindex * scanlen + round(x) ];
-	    fwrite(&value, sizeof(value), 1, ofp);
+	    ret = fwrite(&value, sizeof(value), 1, ofp);
+	    if (ret == 0)
+		perror("fwrite");
 	}
     }
 

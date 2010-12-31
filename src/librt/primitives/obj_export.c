@@ -60,7 +60,6 @@ rt_obj_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 }
 
 
-
 /*
  * Local Variables:
  * mode: C

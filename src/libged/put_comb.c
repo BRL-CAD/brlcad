@@ -33,6 +33,169 @@
 #include "./ged_private.h"
 
 
+const char _ged_tmpcomb[16] = { 'g', 'e', 'd', '_', 't', 'm', 'p', '.', 'a', 'X', 'X', 'X', 'X', 'X', '\0' };
+
+int
+_ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, size_t node_count, const char *old_name, const char *new_name, struct rt_tree_array *rt_tree_array, int tree_index)
+{
+    struct rt_db_internal intern;
+    union tree *final_tree;
+
+    if (tree_index)
+	final_tree = (union tree *)db_mkgift_tree(rt_tree_array, node_count, &rt_uniresource);
+    else
+	final_tree = (union tree *)NULL;
+
+    RT_INIT_DB_INTERNAL(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_COMBINATION;
+    intern.idb_meth = &rt_functab[ID_COMBINATION];
+    intern.idb_ptr = (genptr_t)comb;
+    comb->tree = final_tree;
+
+    if (strcmp(new_name, old_name)) {
+	int flags;
+
+	if (comb->region_flag)
+	    flags = DIR_COMB | DIR_REGION;
+	else
+	    flags = DIR_COMB;
+
+	if (dp != DIR_NULL) {
+	    if (db_delete(gedp->ged_wdbp->dbip, dp) || db_dirdelete(gedp->ged_wdbp->dbip, dp)) {
+		bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Unable to delete directory entry for %s\n", old_name);
+		intern.idb_meth->ft_ifree(&intern);
+		return GED_ERROR;
+	    }
+	}
+
+	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+	    bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Cannot add %s to directory, no changes made\n", new_name);
+	    intern.idb_meth->ft_ifree(&intern);
+	    return 1;
+	}
+    } else if (dp == DIR_NULL) {
+	int flags;
+
+	if (comb->region_flag)
+	    flags = DIR_COMB | DIR_REGION;
+	else
+	    flags = DIR_COMB;
+
+	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+	    bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Cannot add %s to directory, no changes made\n", new_name);
+	    intern.idb_meth->ft_ifree(&intern);
+	    return GED_ERROR;
+	}
+    } else {
+	if (comb->region_flag)
+	    dp->d_flags |= DIR_REGION;
+	else
+	    dp->d_flags &= ~DIR_REGION;
+    }
+
+    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+	bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Unable to write new combination into database.\n");
+	return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+static const char *
+mktemp_comb(struct ged *gedp, const char *str)
+{
+    /* Make a temporary name for a combination
+       a template name is expected as in "mk_temp()" with
+       5 trailing X's */
+
+    int counter, done;
+    char *ptr;
+    static char name[NAMESIZE] = {0};
+
+    if (gedp->ged_wdbp->dbip == DBI_NULL)
+	return NULL;
+
+    /* leave room for 5 digits */
+    bu_strlcpy(name, str, NAMESIZE - 5);
+    
+    ptr = name;
+    while (*ptr != '\0')
+	ptr++;
+
+    while (*(--ptr) == 'X')
+	;
+    ptr++;
+
+    counter = 1;
+    done = 0;
+    while (!done && counter < 99999) {
+	sprintf(ptr, "%d", counter);
+	if (db_lookup(gedp->ged_wdbp->dbip, str, LOOKUP_QUIET) == DIR_NULL)
+	    done = 1;
+	else
+	    counter++;
+    }
+
+    return name;
+}
+
+
+const char *
+_ged_save_comb(struct ged *gedp, struct directory *dpold)
+{
+    /* Save a combination under a temporory name */
+
+    struct directory *dp;
+    struct rt_db_internal intern;
+
+    /* Make a new name */
+    const char *name = mktemp_comb(gedp, _ged_tmpcomb);
+
+    if (rt_db_get_internal(&intern, dpold, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Database read error, aborting\n");
+	return NULL;
+    }
+
+    if ((dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, dpold->d_flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
+	return NULL;
+    }
+
+    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+	bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
+	return NULL;
+    }
+
+    return name;
+}
+
+
+/* restore a combination that was created during "_ged_save_comb" */
+void
+_ged_restore_comb(struct ged *gedp, struct directory *dp, const char *oldname)
+{
+    const char *av[4];
+    char *name;
+
+    /* get rid of previous comb */
+    name = bu_strdup(dp->d_namep);
+
+    av[0] = "kill";
+    av[1] = name;
+    av[2] = NULL;
+    av[3] = NULL;
+    (void)ged_kill(gedp, 2, (const char **)av);
+
+    av[0] = "mv";
+    av[1] = oldname;
+    av[2] = name;
+
+    (void)ged_move(gedp, 3, (const char **)av);
+
+    bu_free(name, "bu_strdup'd name");
+}
+
 struct line_list{
     struct bu_list l;
     char *line;
@@ -281,7 +444,7 @@ put_rgb_into_comb(struct rt_comb_internal *comb, const char *str)
 {
     int r, g, b;
 
-    if (sscanf(str, "%d%d%d", &r, &g, &b) != 3) {
+    if (sscanf(str, "%d%*c%d%*c%d", &r, &g, &b) != 3) {
 	comb->rgb_valid = 0;
 	return;
     }
@@ -342,6 +505,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
+    comb = (struct rt_comb_internal *)NULL;
     dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
     if (dp != DIR_NULL) {
 	if (!(dp->d_flags & DIR_COMB)) {
@@ -357,12 +521,10 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	saved_name = _ged_save_comb(gedp, dp); /* Save combination to a temp name */
 	save_comb_flag = 1;
-    } else {
-	comb = (struct rt_comb_internal *)NULL;
     }
 
     /* empty the existing combination */
-    if (comb && comb->tree) {
+    if (comb) {
 	db_free_tree(comb->tree, &rt_uniresource);
 	comb->tree = NULL;
     } else {

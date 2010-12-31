@@ -71,8 +71,8 @@ interpreter reference must not be NULL.
 .PP
 \fBTcl_GetChannelError\fR places either the error message held in the
 bypass area of the specified channel into \fImsgPtr\fR, or NULL; and
-resets the bypass. I.e. after an invokation all following invokations
-will return NULL, until an intervening invokation of
+resets the bypass. I.e. after an invocation all following invocations
+will return NULL, until an intervening invocation of
 \fBTcl_SetChannelError\fR with a non-NULL message. The \fImsgPtr\fR
 must not be NULL. The reference count of the message is not touched.
 The reference previously held by the channel is now held by the caller
@@ -81,8 +81,8 @@ when it is done with the object.
 .PP
 \fBTcl_GetChannelErrorInterp\fR places either the error message held
 in the bypass area of the specified interpreter into \fImsgPtr\fR, or
-NULL; and resets the bypass. I.e. after an invokation all following
-invokations will return NULL, until an intervening invokation of
+NULL; and resets the bypass. I.e. after an invocation all following
+invocations will return NULL, until an intervening invocation of
 \fBTcl_SetChannelErrorInterp\fR with a non-NULL message. The
 \fImsgPtr\fR must not be NULL. The reference count of the message is
 not touched.  The reference previously held by the interpreter is now

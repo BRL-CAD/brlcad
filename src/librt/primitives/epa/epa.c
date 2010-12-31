@@ -827,7 +827,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     /* connect ellipses */
     for (i = nell-2; i >= 0; i--) {
- 	/* skip top ellipse */
+	/* skip top ellipse */
 	int bottom, top;
 
 	top = i + 1;
@@ -1245,7 +1245,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* connect ellipses with triangles */
     for (i = nell-2; i >= 0; i--) {
- 	/* skip top ellipse */
+	/* skip top ellipse */
 	int bottom, top;
 
 	top = i + 1;

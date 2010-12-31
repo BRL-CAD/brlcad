@@ -752,7 +752,7 @@ ParseExpr(
 				    && (lastStart[2] <= '9')) {
 				const char *end = lastStart + 2;
 				Tcl_Obj* copy;
-				while (isdigit(*end)) {
+				while (isdigit(UCHAR(*end))) {
 				    end++;
 				}
 				copy = Tcl_NewStringObj(lastStart,

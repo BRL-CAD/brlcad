@@ -111,15 +111,15 @@ bu_putchar(int c)
 
     if (BU_LIST_IS_EMPTY(&(bu_log_hook_list.l))) {
 
-	if (stderr) {
+	if (LIKELY(stderr != NULL)) {
 	    ret = fputc(c, stderr);
 	}
 
-	if (ret == EOF && stdout) {
+	if (UNLIKELY(ret == EOF && stdout)) {
 	    ret = fputc(c, stdout);
 	}
 
-	if (ret == EOF) {
+	if (UNLIKELY(ret == EOF)) {
 	    bu_bomb("bu_putchar: write error");
 	}
 
@@ -150,7 +150,7 @@ bu_log(const char *fmt, ...)
 
     bu_vls_init(&output);
 
-    if (!fmt || strlen(fmt) == 0) {
+    if (UNLIKELY(!fmt || strlen(fmt) == 0)) {
 	bu_vls_free(&output);
 	return;
     }
@@ -174,25 +174,25 @@ bu_log(const char *fmt, ...)
 	int ret = EOF;
 	size_t len;
 
-	if (bu_log_first_time) {
+	if (UNLIKELY(bu_log_first_time)) {
 	    bu_setlinebuf(stderr);
 	    bu_log_first_time = 0;
 	}
 
 	len = bu_vls_strlen(&output);
-	if (len <= 0) {
+	if (UNLIKELY(len <= 0)) {
 	    bu_vls_free(&output);
 	    return;
 	}
 
-	if (stderr) {
+	if (LIKELY(stderr != NULL)) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    ret = fwrite(bu_vls_addr(&output), len, 1, stderr);
 	    fflush(stderr);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
 
-	if (!ret && stdout) {
+	if (UNLIKELY(!ret && stdout)) {
 	    /* if stderr fails, try stdout instead */
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    ret = fwrite(bu_vls_addr(&output), len, 1, stdout);
@@ -200,7 +200,7 @@ bu_log(const char *fmt, ...)
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
 
-	if (ret != 1) {
+	if (UNLIKELY(ret != 1)) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    perror("fwrite failed");
 	    bu_semaphore_release(BU_SEM_SYSCALL);
@@ -241,11 +241,13 @@ bu_flog(FILE *fp, const char *fmt, ...)
 	size_t len;
 
 	len = bu_vls_strlen(&output);
-	if (len) {
+	if (LIKELY(len)) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    ret = fwrite(bu_vls_addr(&output), len, 1, fp);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
-	    if (ret != 1)  bu_bomb("bu_flog: write error");
+
+	    if (UNLIKELY(ret != 1))
+		bu_bomb("bu_flog: write error");
 	}
 
     } else {

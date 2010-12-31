@@ -34,7 +34,8 @@
 #include "raytrace.h"
 #include "nurb.h"
 
-/* This uses the traditional De Boor-Cox algorithm,
+/**
+ * This uses the traditional De Boor-Cox algorithm,
  *
  *   D[k, i] (u) =
  *
@@ -42,9 +43,9 @@
  *	   ________________ D[k-1, i-1] (mu)+_________________  D[k-1, i] (mu)
  *	   U[i+n-k] - U[i-1]		     U[i+n-k] - U[i-1]
  *
- * For U[i-1]] <= mu < U[i] where U is the knot vector, k is the order,
- * and i is the interval. If the denominator is zero than the term is
- * zero.
+ * For U[i-1]] <= mu < U[i] where U is the knot vector, k is the
+ * order, and i is the interval. If the denominator is zero than the
+ * term is zero.
  *
  * Arguments -
  *	knts - knot vector of type (struct knot_vector *)
@@ -59,7 +60,6 @@
  *	Farin G., "Curves and Surfaces for Computer Aided Geometric Design",
  *	Academic Press, New York 1988.
  */
-
 fastf_t
 rt_nurb_basis_eval(register struct knot_vector *knts, int interval, int order, fastf_t mu)
 {
@@ -75,7 +75,7 @@ rt_nurb_basis_eval(register struct knot_vector *knts, int interval, int order, f
     k2 = *(kk + 1);
 
     if (order <= 1) {
-	if ( ( k1 <= mu) && (mu < k2))
+	if ((k1 <= mu) && (mu < k2))
 	    return 1.0;
 	else
 	    return 0.0;
@@ -83,21 +83,21 @@ rt_nurb_basis_eval(register struct knot_vector *knts, int interval, int order, f
 
     k3 = *(kk + order);
 
-    den = ( *(kk + order - 1) - k1);
+    den = (*(kk + order - 1) - k1);
 
     if (NEAR_ZERO(den, SMALL_FASTF))
 	b1 = 0.0;
     else
 	b1 = ((mu - k1) *
-	      rt_nurb_basis_eval( knts, interval, order - 1, mu)) / den;
+	      rt_nurb_basis_eval(knts, interval, order - 1, mu)) / den;
 
-    den = ( k3 - k2);
+    den = (k3 - k2);
 
     if (NEAR_ZERO(den, SMALL_FASTF))
 	b2 = 0.0;
     else
 	b2 = ((k3 - mu) *
-	      rt_nurb_basis_eval( knts, interval + 1, order - 1, mu)) / den;
+	      rt_nurb_basis_eval(knts, interval + 1, order - 1, mu)) / den;
 
     return b1 + b2;
 }

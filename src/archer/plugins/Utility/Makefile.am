@@ -1,12 +1,14 @@
 
 SUBDIRS = \
-	attrGroupsDisplayUtilityP
+	attrGroupsDisplayUtilityP \
+	botUtilityP
 
 pluginsdir = $(BRLCAD_DATA)/plugins/archer/Utility
 
 plugins_DATA = \
 	README \
-	attrGroupsDisplayUtilityP.tcl
+	attrGroupsDisplayUtilityP.tcl \
+	botUtilityP.tcl
 
 EXTRA_DIST = $(plugins_DATA)
 

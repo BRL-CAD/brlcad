@@ -35,14 +35,14 @@ bu_fgets(char *s, int size, FILE *stream)
     int isEOF = 0;
 
     /* if we are not asked to read anything, just return */
-    if (size < 1) {
+    if (UNLIKELY(size < 1)) {
 	return s;
     }
 
     /* if the buffer size is one, we have no space (we add a null)
      * so just return
      */
-    if (size == 1) {
+    if (UNLIKELY(size == 1)) {
 	*s = '\0';
 	return s;
     }

@@ -276,10 +276,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\bomb.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\librt\bool.c"
 				>
 			</File>

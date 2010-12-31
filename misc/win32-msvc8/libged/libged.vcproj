@@ -294,6 +294,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\bot.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\bot_condense.c"
 				>
 			</File>
@@ -375,6 +379,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\comb_std.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\combmem.c"
 				>
 			</File>
 			<File
@@ -647,10 +655,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\ls.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\libged\lscon.c"
 				>
 			</File>
 			<File
@@ -1006,7 +1010,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\screengrab.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\search.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\select.c"
 				>
 			</File>
 			<File

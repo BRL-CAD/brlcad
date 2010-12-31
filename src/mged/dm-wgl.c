@@ -106,7 +106,7 @@ Wgl_dm_init(struct dm_list *o_dm_list,
 
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
 
-    if ((dmp = dm_open(interp, DM_TYPE_WGL, argc-1, argv)) == DM_NULL)
+    if ((dmp = dm_open(INTERP, DM_TYPE_WGL, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
     /*XXXX this eventually needs to move into Wgl's private structure */
@@ -119,7 +119,7 @@ Wgl_dm_init(struct dm_list *o_dm_list,
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_OK;
@@ -132,7 +132,7 @@ Wgl_fb_open()
     char *wgl_name = "/dev/wgl";
 
     if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
-	Tcl_AppendResult(interp, "Wgl_fb_open: failed to allocate framebuffer memory\n",
+	Tcl_AppendResult(INTERP, "Wgl_fb_open: failed to allocate framebuffer memory\n",
 			 (char *)NULL);
 	return;
     }
@@ -188,7 +188,7 @@ Wgl_doevent(ClientData clientData,
  */
 static int
 Wgl_dm(int argc,
-       char **argv)
+       const char *argv[])
 {
     if (!strcmp(argv[0], "set")) {
 	struct bu_vls vls;
@@ -220,7 +220,7 @@ Wgl_dm(int argc,
 	    bu_vls_free(&tmp_vls);
 	}
 
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;

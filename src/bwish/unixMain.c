@@ -20,8 +20,8 @@
  */
 /** @file unixMain.c
  *
- *  This file provides the main() function for
- *  BWISH and BTCLSH on Unix platforms.
+ * This file provides the main() function for
+ * BWISH and BTCLSH on Unix platforms.
  *
  */
 /*
@@ -44,20 +44,20 @@
  *
  * main --
  *
- *	This is the main program for BWISH.
+ * This is the main program for BWISH.
  *
  * Results:
- *	None: Tk_Main never returns here, so this procedure never returns
- *	either.
+ * None: Tk_Main never returns here, so this procedure never returns
+ * either.
  *
  * Side effects:
- *	Whatever the application does.
+ * Whatever the application does.
  *
  *----------------------------------------------------------------------
  */
 
 int
-main(int  argc,
+main(int argc,
      char **argv)
 {
     /*
@@ -92,21 +92,22 @@ main(int  argc,
     return 0;			/* Needed only to prevent compiler warning. */
 }
 
+
 /*
  *----------------------------------------------------------------------
  *
  * Tcl_AppInit --
  *
- *	This procedure performs application-specific initialization. Most
- *	applications, especially those that incorporate additional packages,
- *	will have their own version of this procedure.
+ * This procedure performs application-specific initialization. Most
+ * applications, especially those that incorporate additional packages,
+ * will have their own version of this procedure.
  *
  * Results:
- *	Returns a standard Tcl completion code, and leaves an error message in
- *	the interp's result if an error occurs.
+ * Returns a standard Tcl completion code, and leaves an error message in
+ * the interp's result if an error occurs.
  *
  * Side effects:
- *	Depends on the startup script.
+ * Depends on the startup script.
  *
  *----------------------------------------------------------------------
  */
@@ -141,6 +142,7 @@ Tcl_AppInit(Tcl_Interp *interp)
 
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

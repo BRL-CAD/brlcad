@@ -26,16 +26,17 @@
 #ifndef SEEN_MGED_DM_H
 #define SEEN_MGED_DM_H
 
+#include "common.h"
+
 #include "dm.h"	/* struct dm */
-#include "./menu.h" /* struct menu_item */
-#include "./scroll.h" /* struct scroll_item */
+#include "dm_xvars.h"
+
 #include "fb.h" /* FBIO */
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
 
-#ifdef HAVE_TK
-#  include <tk.h>
-#endif
+#include "./menu.h" /* struct menu_item */
+#include "./scroll.h" /* struct scroll_item */
 
 
 #ifndef COMMA
@@ -588,7 +589,7 @@ extern int doEvent(ClientData, void *);
 #endif
 
 /* defined in dm-generic.c */
-extern int common_dm(int argc, char *argv[]);
+extern int common_dm(int argc, const char *argv[]);
 
 /* defined in setup.c */
 extern void mged_rtCmdNotify();

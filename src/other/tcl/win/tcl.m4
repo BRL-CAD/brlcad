@@ -922,3 +922,55 @@ AC_DEFUN([SC_TCL_CFG_ENCODING], [
 	AC_DEFINE(TCL_CFGVAL_ENCODING,"cp1252")
     fi
 ])
+
+#--------------------------------------------------------------------
+# SC_EMBED_MANIFEST
+#
+#	Figure out if we can embed the manifest where necessary
+#
+# Arguments:
+#	An optional manifest to merge into DLL/EXE.
+#
+# Results:
+#	Will define the following vars:
+#		VC_MANIFEST_EMBED_DLL
+#		VC_MANIFEST_EMBED_EXE
+#
+#--------------------------------------------------------------------
+
+AC_DEFUN([SC_EMBED_MANIFEST], [
+    AC_MSG_CHECKING(whether to embed manifest)
+    AC_ARG_ENABLE(embedded-manifest,
+	AC_HELP_STRING([--enable-embedded-manifest],
+		[embed manifest if possible (default: yes)]),
+	[embed_ok=$enableval], [embed_ok=yes])
+
+    VC_MANIFEST_EMBED_DLL=
+    VC_MANIFEST_EMBED_EXE=
+    result=no
+    if test "$embed_ok" = "yes" -a "${SHARED_BUILD}" = "1" \
+       -a "$GCC" != "yes" ; then
+	# Add the magic to embed the manifest into the dll/exe
+	AC_EGREP_CPP([manifest needed], [
+#if defined(_MSC_VER) && _MSC_VER >= 1400
+print("manifest needed")
+#endif
+	], [
+	# Could do a CHECK_PROG for mt, but should always be with MSVC8+
+	# Could add 'if test -f' check, but manifest should be created
+	# in this compiler case
+	# Add in a manifest argument that may be specified
+	# XXX Needs improvement so that the test for existence accounts
+	# XXX for a provided (known) manifest
+	VC_MANIFEST_EMBED_DLL="if test -f \[$]@.manifest ; then mt.exe -nologo -manifest \[$]@.manifest $1 -outputresource:\[$]@\;2 ; fi"
+	VC_MANIFEST_EMBED_EXE="if test -f \[$]@.manifest ; then mt.exe -nologo -manifest \[$]@.manifest $1 -outputresource:\[$]@\;1 ; fi"
+	result=yes
+	if test "x$1" != x ; then
+	    result="yes ($1)"
+	fi
+	])
+    fi
+    AC_MSG_RESULT([$result])
+    AC_SUBST(VC_MANIFEST_EMBED_DLL)
+    AC_SUBST(VC_MANIFEST_EMBED_EXE)
+])

@@ -1,5 +1,5 @@
 '\"
-'\" Copyright (c) 2004-2008 Andreas Kupries <andreas_kupries@users.sourceforge.net>
+'\" Copyright (c) 2004-2010 Andreas Kupries <andreas_kupries@users.sourceforge.net>
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -14,17 +14,18 @@
 tm \- Facilities for locating and loading of Tcl Modules
 .SH SYNOPSIS
 .nf
-\fB::tcl::tm::path\fR \fBadd\fR \fIpath\fR...
-\fB::tcl::tm::path\fR \fBremove\fR \fIpath\fR...
-\fB::tcl::tm::path\fR \fBlist\fR
-\fB::tcl::tm::roots\fR \fIpath\fR...
+\fB::tcl::tm::path add \fR?\fIpath\fR...?
+\fB::tcl::tm::path remove \fR?\fIpath\fR...?
+\fB::tcl::tm::path list\fR
+\fB::tcl::tm::roots \fR?\fIpath\fR...?
 .fi
 .BE
 .SH DESCRIPTION
 This document describes the facilities for locating and loading Tcl
-Modules. The following commands are supported:
+Modules (see \fBMODULE DEFINITION\fR for the definition of a Tcl Module).
+The following commands are supported:
 .TP
-\fB::tcl::tm::path\fR \fBadd\fR \fIpath\fR...
+\fB::tcl::tm::path add \fR?\fIpath\fR...?
 .
 The paths are added at the head to the list of module paths, in order
 of appearance. This means that the last argument ends up as the new
@@ -46,17 +47,17 @@ reverse order of addition. In other words, the paths added last are
 looked at first.
 .RE
 .TP
-\fB::tcl::tm::path\fR \fBremove\fR \fIpath\fR...
+\fB::tcl::tm::path remove \fR?\fIpath\fR...?
 .
 Removes the paths from the list of module paths. The command silently
 ignores all paths which are not on the list.
 .TP
-\fB::tcl::tm::path\fR \fBlist\fR
+\fB::tcl::tm::path list\fR
 .
 Returns a list containing all registered module paths, in the order
 that they are searched for modules.
 .TP
-\fB::tcl::tm::roots\fR \fIpath\fR...
+\fB::tcl::tm::roots \fR?\fIpath\fR...?
 .
 Similar to \fBpath add\fR, and layered on top of it. This command
 takes a list of paths, extends each with
@@ -93,7 +94,7 @@ package.
 .PP
 The name of a module file has to match the regular expression:
 .CS
-([[:alpha:]][:[:alnum:]]*)-([[:digit:]].*)\e.tm
+([_[:alpha:]][:_[:alnum:]]*)-([[:digit:]].*)\e.tm
 .CE
 .PP
 The first capturing parentheses provides the name of the package, the

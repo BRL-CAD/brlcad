@@ -36,27 +36,27 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
+#include "fb.h"
 
 
 static char *file_name;
 static FILE *infp;
 
-static int fileinput = 0;		/* file or pipe on input? */
-static int autosize = 0;		/* !0 to autosize input */
+static int fileinput = 0;	/* file or pipe on input? */
+static int autosize = 0;	/* !0 to autosize input */
 
-static long int file_width = 512L;	/* default input width */
+static size_t file_width = 512; /* default input width */
 
 static char usage[] = "\
 Usage: pixhalve [-h] [-a]\n\
 	[-s squaresize] [-w file_width] [-n file_height] [file.pix]\n";
 
-void separate(int *rop, int *gop, int *bop, unsigned char *cp, long int num);
-void combine(unsigned char *cp, int *rip, int *gip, int *bip, long int num);
-void ripple(int **array, int num);
-void filter3(int *op, int **lines, int num);
-void filter5(int *op, int **lines, int num);
+int *rlines[5];
+int *glines[5];
+int *blines[5];
 
-int
+
+static int
 get_args(int argc, char **argv)
 {
     int c;
@@ -113,21 +113,222 @@ get_args(int argc, char **argv)
 }
 
 
-int *rlines[5];
-int *glines[5];
-int *blines[5];
+/*
+ * S E P A R A T E
+ *
+ * Unpack RGB byte tripples into three separate arrays of integers.
+ * The first and last pixels are replicated twice, to handle border effects.
+ *
+ * Updated version:  the outputs are Y U V values, not R G B.
+ */
+static void
+separate(int *rop, int *gop, int *bop, unsigned char *cp, long int num)
+    /* Y */
+    /* U */
+    /* V */
+
+
+{
+    long int i;
+    int r, g, b;
+
+    r = cp[0];
+    g = cp[1];
+    b = cp[2];
+
+#define YCONV(_r, _g, _b)	(_r * 0.299 + _g * 0.587 + _b * 0.144 + 0.9)
+#define UCONV(_r, _g, _b)	(_r * -0.1686 + _g * -0.3311 + _b * 0.4997 + 0.9)
+#define VCONV(_r, _g, _b)	(_r * 0.4998 + _g * -0.4185 + _b * -0.0813 + 0.9)
+
+    rop[-1] = rop[-2] = YCONV(r, g, b);
+    gop[-1] = gop[-2] = UCONV(r, g, b);
+    bop[-1] = bop[-2] = VCONV(r, g, b);
+
+    for (i = num-1; i >= 0; i--) {
+	r = cp[0];
+	g = cp[1];
+	b = cp[2];
+	cp += 3;
+	*rop++ = YCONV(r, g, b);
+	*gop++ = UCONV(r, g, b);
+	*bop++ = VCONV(r, g, b);
+    }
+
+    r = cp[-3];
+    g = cp[-2];
+    b = cp[-1];
+
+    *rop++ = YCONV(r, g, b);
+    *gop++ = UCONV(r, g, b);
+    *bop++ = VCONV(r, g, b);
+
+    *rop++ = YCONV(r, g, b);
+    *gop++ = UCONV(r, g, b);
+    *bop++ = VCONV(r, g, b);
+}
+
 
 /*
- * M A I N
+ * C O M B I N E
+ *
+ * Combine three separate arrays of integers into a buffer of
+ * RGB byte tripples
  */
+static void
+combine(unsigned char *cp, int *rip, int *gip, int *bip, long int num)
+{
+    long int i;
+
+#define RCONV(_y, _u, _v)	(_y + 1.4026 * _v)
+#define GCONV(_y, _u, _v)	(_y - 0.3444 * _u - 0.7144 * _v)
+#define BCONV(_y, _u, _v)	(_y + 1.7730 * _u)
+
+#define CLIP(_v)	(((_v) <= 0) ? 0 : (((_v) >= 255) ? 255 : (_v)))
+
+    for (i = num-1; i >= 0; i--) {
+	int y, u, v;
+	int r, g, b;
+
+	y = *rip++;
+	u = *gip++;
+	v = *bip++;
+
+	r = RCONV(y, u, v);
+	g = GCONV(y, u, v);
+	b = BCONV(y, u, v);
+
+	*cp++ = CLIP(r);
+	*cp++ = CLIP(g);
+	*cp++ = CLIP(b);
+    }
+}
+
+
+/*
+ * R I P P L E
+ *
+ * Ripple all the scanlines down by one.
+ *
+ * Barrel shift all the pointers down, with [0] going back to the top.
+ */
+static void
+ripple(int **array, int num)
+{
+    int i;
+    int *temp;
+
+    temp = array[0];
+    for (i=0; i < num-1; i++)
+	array[i] = array[i+1];
+    array[num-1] = temp;
+}
+
+
+/*
+ * F I L T E R 5
+ *
+ * Apply a 5x5 image pyramid to the input scanline, taking every other
+ * input position to make an output.
+ *
+ * Code is arranged so as to vectorize, on machines that can.
+ */
+static void
+filter5(int *op, int **lines, int num)
+{
+    int i;
+    int *a, *b, *c, *d, *e;
+
+    a = lines[0];
+    b = lines[1];
+    c = lines[2];
+    d = lines[3];
+    e = lines[4];
+
+#ifdef VECTORIZE
+    /* This version vectorizes */
+    for (i=0; i < num; i++) {
+	j = i*2;
+	op[i] = (
+	    a[j+0] + 2*a[j+1] + 4*a[j+2] + 2*a[j+3] +   a[j+4] +
+	    2*b[j+0] + 4*b[j+1] + 8*b[j+2] + 4*b[j+3] + 2*b[j+4] +
+	    4*c[j+0] + 8*c[j+1] +16*c[j+2] + 8*c[j+3] + 4*c[j+4] +
+	    2*d[j+0] + 4*d[j+1] + 8*d[j+2] + 4*d[j+3] + 2*d[j+4] +
+	    e[j+0] + 2*e[j+1] + 4*e[j+2] + 2*e[j+3] +   e[j+4]
+	    ) / 100;
+    }
+#else
+    /* This version is better for non-vectorizing machines */
+    for (i=0; i < num; i++) {
+	op[i] = (
+	    a[0] + 2*a[1] + 4*a[2] + 2*a[3] +   a[4] +
+	    2*b[0] + 4*b[1] + 8*b[2] + 4*b[3] + 2*b[4] +
+	    4*c[0] + 8*c[1] +16*c[2] + 8*c[3] + 4*c[4] +
+	    2*d[0] + 4*d[1] + 8*d[2] + 4*d[3] + 2*d[4] +
+	    e[0] + 2*e[1] + 4*e[2] + 2*e[3] +   e[4]
+	    ) / 100;
+	a += 2;
+	b += 2;
+	c += 2;
+	d += 2;
+	e += 2;
+    }
+#endif
+}
+
+
+/*
+ * F I L T E R 3
+ *
+ * Apply a 3x3 image pyramid to the input scanline, taking every other
+ * input position to make an output.
+ *
+ * The filter coefficients are positioned so as to align the center
+ * of the filter with the same center used in filter5().
+ */
+static void
+filter3(int *op, int **lines, int num)
+{
+    int i;
+    int *b, *c, *d;
+
+    b = lines[1];
+    c = lines[2];
+    d = lines[3];
+
+#ifdef VECTORIZE
+    /* This version vectorizes */
+    for (i=0; i < num; i++) {
+	j = i*2;
+	op[i] = (
+	    b[j+1] + 2*b[j+2] +   b[j+3] +
+	    2*c[j+1] + 4*c[j+2] + 2*c[j+3] +
+	    d[j+1] + 2*d[j+2] +   d[j+3]
+	    ) / 16;
+    }
+#else
+    /* This version is better for non-vectorizing machines */
+    for (i=0; i < num; i++) {
+	op[i] = (
+	    b[1] + 2*b[2] +   b[3] +
+	    2*c[1] + 4*c[2] + 2*c[3] +
+	    d[1] + 2*d[2] +   d[3]
+	    ) / 16;
+	b += 2;
+	c += 2;
+	d += 2;
+    }
+#endif
+}
+
+
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     unsigned char *inbuf;
     unsigned char *outbuf;
     int *rout, *gout, *bout;
-    long int out_width;
-    long int i;
+    size_t out_width;
+    size_t i;
     int eof_seen;
 
     if (!get_args(argc, argv)) {
@@ -147,8 +348,8 @@ main(int argc, char **argv)
     out_width = file_width/2;
 
     /* Allocate 1-scanline input & output buffers */
-    inbuf = malloc(3*file_width+8);
-    outbuf = malloc(3*(out_width+2)+8);
+    inbuf = bu_malloc(3*file_width+8, "inbuf");
+    outbuf = bu_malloc(3*(out_width+2)+8, "outbuf");
 
     /* Allocate 5 integer arrays for each color */
     /* each width+2 elements wide */
@@ -223,220 +424,20 @@ main(int argc, char **argv)
 		 inbuf, file_width);
     }
 
-    bu_free(rlines, "rlines");
-    bu_free(glines, "glines");
-    bu_free(blines, "blines");
+    bu_free(inbuf, "inbuf");
+    bu_free(outbuf, "outbuf");
+
+    for (i=0; i<5; i++) {
+	bu_free(rlines[i], "rlines");
+	bu_free(glines[i], "glines");
+	bu_free(blines[i], "blines");
+    }
+
     bu_free(rout, "rout");
     bu_free(gout, "gout");
     bu_free(bout, "bout");
-}
 
-
-/*
- * S E P A R A T E
- *
- * Unpack RGB byte tripples into three separate arrays of integers.
- * The first and last pixels are replicated twice, to handle border effects.
- *
- * Updated version:  the outputs are Y U V values, not R G B.
- */
-void
-separate(int *rop, int *gop, int *bop, unsigned char *cp, long int num)
-    /* Y */
-    /* U */
-    /* V */
-
-
-{
-    long int i;
-    int r, g, b;
-
-    r = cp[0];
-    g = cp[1];
-    b = cp[2];
-
-#define YCONV(_r, _g, _b)	(_r * 0.299 + _g * 0.587 + _b * 0.144 + 0.9)
-#define UCONV(_r, _g, _b)	(_r * -0.1686 + _g * -0.3311 + _b * 0.4997 + 0.9)
-#define VCONV(_r, _g, _b)	(_r * 0.4998 + _g * -0.4185 + _b * -0.0813 + 0.9)
-
-    rop[-1] = rop[-2] = YCONV(r, g, b);
-    gop[-1] = gop[-2] = UCONV(r, g, b);
-    bop[-1] = bop[-2] = VCONV(r, g, b);
-
-    for (i = num-1; i >= 0; i--) {
-	r = cp[0];
-	g = cp[1];
-	b = cp[2];
-	cp += 3;
-	*rop++ = YCONV(r, g, b);
-	*gop++ = UCONV(r, g, b);
-	*bop++ = VCONV(r, g, b);
-    }
-
-    r = cp[-3];
-    g = cp[-2];
-    b = cp[-1];
-
-    *rop++ = YCONV(r, g, b);
-    *gop++ = UCONV(r, g, b);
-    *bop++ = VCONV(r, g, b);
-
-    *rop++ = YCONV(r, g, b);
-    *gop++ = UCONV(r, g, b);
-    *bop++ = VCONV(r, g, b);
-}
-
-
-/*
- * C O M B I N E
- *
- * Combine three separate arrays of integers into a buffer of
- * RGB byte tripples
- */
-void
-combine(unsigned char *cp, int *rip, int *gip, int *bip, long int num)
-{
-    long int i;
-
-#define RCONV(_y, _u, _v)	(_y + 1.4026 * _v)
-#define GCONV(_y, _u, _v)	(_y - 0.3444 * _u - 0.7144 * _v)
-#define BCONV(_y, _u, _v)	(_y + 1.7730 * _u)
-
-#define CLIP(_v)	(((_v) <= 0) ? 0 : (((_v) >= 255) ? 255 : (_v)))
-
-    for (i = num-1; i >= 0; i--) {
-	int y, u, v;
-	int r, g, b;
-
-	y = *rip++;
-	u = *gip++;
-	v = *bip++;
-
-	r = RCONV(y, u, v);
-	g = GCONV(y, u, v);
-	b = BCONV(y, u, v);
-
-	*cp++ = CLIP(r);
-	*cp++ = CLIP(g);
-	*cp++ = CLIP(b);
-    }
-}
-
-
-/*
- * R I P P L E
- *
- * Ripple all the scanlines down by one.
- *
- * Barrel shift all the pointers down, with [0] going back to the top.
- */
-void
-ripple(int **array, int num)
-{
-    int i;
-    int *temp;
-
-    temp = array[0];
-    for (i=0; i < num-1; i++)
-	array[i] = array[i+1];
-    array[num-1] = temp;
-}
-
-
-/*
- * F I L T E R 5
- *
- * Apply a 5x5 image pyramid to the input scanline, taking every other
- * input position to make an output.
- *
- * Code is arranged so as to vectorize, on machines that can.
- */
-void
-filter5(int *op, int **lines, int num)
-{
-    int i;
-    int *a, *b, *c, *d, *e;
-
-    a = lines[0];
-    b = lines[1];
-    c = lines[2];
-    d = lines[3];
-    e = lines[4];
-
-#ifdef VECTORIZE
-    /* This version vectorizes */
-    for (i=0; i < num; i++) {
-	j = i*2;
-	op[i] = (
-	    a[j+0] + 2*a[j+1] + 4*a[j+2] + 2*a[j+3] +   a[j+4] +
-	    2*b[j+0] + 4*b[j+1] + 8*b[j+2] + 4*b[j+3] + 2*b[j+4] +
-	    4*c[j+0] + 8*c[j+1] +16*c[j+2] + 8*c[j+3] + 4*c[j+4] +
-	    2*d[j+0] + 4*d[j+1] + 8*d[j+2] + 4*d[j+3] + 2*d[j+4] +
-	    e[j+0] + 2*e[j+1] + 4*e[j+2] + 2*e[j+3] +   e[j+4]
-	    ) / 100;
-    }
-#else
-    /* This version is better for non-vectorizing machines */
-    for (i=0; i < num; i++) {
-	op[i] = (
-	    a[0] + 2*a[1] + 4*a[2] + 2*a[3] +   a[4] +
-	    2*b[0] + 4*b[1] + 8*b[2] + 4*b[3] + 2*b[4] +
-	    4*c[0] + 8*c[1] +16*c[2] + 8*c[3] + 4*c[4] +
-	    2*d[0] + 4*d[1] + 8*d[2] + 4*d[3] + 2*d[4] +
-	    e[0] + 2*e[1] + 4*e[2] + 2*e[3] +   e[4]
-	    ) / 100;
-	a += 2;
-	b += 2;
-	c += 2;
-	d += 2;
-	e += 2;
-    }
-#endif
-}
-
-
-/*
- * F I L T E R 3
- *
- * Apply a 3x3 image pyramid to the input scanline, taking every other
- * input position to make an output.
- *
- * The filter coefficients are positioned so as to align the center
- * of the filter with the same center used in filter5().
- */
-void
-filter3(int *op, int **lines, int num)
-{
-    int i;
-    int *b, *c, *d;
-
-    b = lines[1];
-    c = lines[2];
-    d = lines[3];
-
-#ifdef VECTORIZE
-    /* This version vectorizes */
-    for (i=0; i < num; i++) {
-	j = i*2;
-	op[i] = (
-	    b[j+1] + 2*b[j+2] +   b[j+3] +
-	    2*c[j+1] + 4*c[j+2] + 2*c[j+3] +
-	    d[j+1] + 2*d[j+2] +   d[j+3]
-	    ) / 16;
-    }
-#else
-    /* This version is better for non-vectorizing machines */
-    for (i=0; i < num; i++) {
-	op[i] = (
-	    b[1] + 2*b[2] +   b[3] +
-	    2*c[1] + 4*c[2] + 2*c[3] +
-	    d[1] + 2*d[2] +   d[3]
-	    ) / 16;
-	b += 2;
-	c += 2;
-	d += 2;
-    }
-#endif
+    return 0;
 }
 
 

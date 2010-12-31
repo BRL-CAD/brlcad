@@ -30,7 +30,6 @@
 #define BREP_H
 
 #include "common.h"
-#include "bio.h"
 
 #ifdef __cplusplus
 extern "C++" {
@@ -59,6 +58,8 @@ typedef struct _on_brep_placeholder {
 #define BREP_MAX_ITERATIONS 100
 /** Root finding threshold */
 #define BREP_INTERSECTION_ROOT_EPSILON 1e-6
+/* if threshold not reached what will we settle for close enough */
+#define BREP_INTERSECTION_ROOT_SETTLE 1e-2
 /** Jungle Gym epsilon */
 
 /* Use vector operations? For debugging */

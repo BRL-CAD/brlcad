@@ -20,7 +20,7 @@
  */
 /** @file cadAppInit.c
  *
- *  This file initializes Itcl/Itk and various BRL-CAD libraries.
+ * This file initializes Itcl/Itk and various BRL-CAD libraries.
  *
  */
 
@@ -169,6 +169,7 @@ Cad_AppInit(Tcl_Interp *interp)
 
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

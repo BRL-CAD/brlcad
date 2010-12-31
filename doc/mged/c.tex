@@ -1,0 +1,305 @@
+\chapter{CREATING NEW OBJECTS}
+
+\section{Creating New Leaves (Solids/Primitives)}
+
+A family of commands exists to allow the user to
+add more actual solids (leaf nodes) to the model database.
+To obtain a precise duplicate of an existing solid (presumably to be
+changed by a subsequent editing command), the copy ({\em cp}) command
+can be used.  It is important to note that the copy operation is
+different from creating an {\em instance} of an existing solid;
+there are occasions to use both operations.
+If the precise configuration of the solid desired is not important, the
+{\em make} command can be used to create a stock prototype solid of the
+desired type with the given name, which can then be edited to suit.
+The {\em mirror} command makes a
+duplicate of an existing solid reflected about
+one of the coordinate axes.
+
+If the actual numeric parameters of a solid are known, then the {\em in}
+command can be used.  In addition to prompting for the descriptions of
+the full generic primitive solids, this command also accepts
+abbreviated input formats.  For example, a wedge or an RPP can be entered
+with a minimum of parameters, even though a database ARB8 is created.
+Similarly, the parameters for a right circular cylinder can be given,
+resulting in a truncated general cone (TGC) being stored.
+This is not a very sophisticated way to build solids, but it receives
+a surprising amount of use.
+
+A number of commands also exist to create new solids with some
+higher level description.  For example, the {\em inside} command
+creates a new solid inside an existing solid, separated from the
+existing solid by specified tolerances.  This is quite useful for
+creating hollow objects such as fuel tanks.
+It is possible to create a plate with a specified
+azimuthal orientation and fallback angle, or to create an ARB8 (plate)
+by specifying three points and a thickness, or to create an ARB8
+given one point, an azimuthal orientation, and a fallback angle.
+
+\section{Specific Cases}
+
+After having started MGED and created a new database, the next
+step is to use the {\em units} command to tell the system that you will
+be entering values in mm, cm, m, in or ft.  For our example we will
+work in mm:
+
+\begin{verbatim}
+     units mm
+\end{verbatim}
+
+Now you may give your database a title using the {\em title} command as in:
+
+\begin{verbatim}
+     title Mechanical Bracket
+\end{verbatim}
+
+This title (``Mechanical Bracket'') now appears at bottom left hand
+corner of graphics window.  Further examples:
+\begin{verbatim}
+     title six wheeled tank
+     title stub axle
+\end{verbatim}
+
+At this point you can start creating your solid objects using the ``arbs'',
+``sph'', ``tor'', {\em etc},
+arguments to the {\em make} or {\em in} command.
+The {\em make} command gives you a solid to a default size,
+you then have to use the
+solid edit mode to interactively edit the solid to the desired size.
+{\em make} command is entered as below:
+Examples:
+\begin{verbatim}
+make box arb8
+make cyl rcc
+make ball sph
+\end{verbatim}
+The first argument is the solid name, and the second argument is
+the primitive type.
+
+The {\em in} command expects you to key in a set of parameters to describe your
+solid; the parameters can be the x y and z of a vertex (such as the
+corner of an ARP8), or the x y and z of a vector (such as the height
+or H vector of a BOX) or the radius (such as for a torus).
+Below is a list of primitives
+with their {\em in} commands as requested by MGED and sample input.
+Reading an {\em in} file into a MGED data file will be discussed later.
+Note how providing incomplete input to the {\em in} command will result
+in MGED repeating the prompt for the missing information.
+
+\begin{figure}
+\centering \includegraphics{ex.rpp.ps}
+\caption{Example RPP.}
+\label{ex.rpp}
+\end{figure}
+
+\subsection{RPP (rectangular parallelepiped)}
+
+{\tt
+mged> {\em in name rpp}\\
+Enter XMIN, XMAX, YMIN, YMAX, ZMIN, ZMAX: {\em 0 25} \\
+Enter YMIN, YMAX, ZMIN, ZMAX: {\em 0 50} \\
+Enter ZMIN, ZMAX: {\em 0 100} \\
+}
+
+This sequence produces the RPP shown in Figure \ref{ex.rpp}.
+
+\begin{figure}
+\centering \includegraphics{ex.box.ps}
+\caption{Example BOX.}
+\label{ex.box}
+\end{figure}
+
+\subsection{BOX (BOX)}
+
+{\tt
+mged> {\em in my box} \\
+Enter X, Y, Z of vertex: {\em 0 0 0} \\
+Enter X, Y, Z of vector H: {\em 25 0 0} \\
+Enter X, Y, Z of vector W: {\em 0 50 0} \\
+Enter X, Y, Z of vector D: {\em 0 0 100} \\
+}
+This sequence produces the BOX shown in Figure \ref{ex.box}.
+
+\begin{figure}
+\centering \includegraphics{ex.arb8.ps}
+\caption{Example ARB8.}
+\label{ex.arb8}
+\end{figure}
+
+\subsection{ARB8: Arbitrary Convex Polyhedron, 8 Vertices}
+
+{\tt
+mged> {\em in poly arb8} \\
+Enter X, Y, Z for point 1: {\em 0 0 0} \\
+Enter X, Y, Z for point 2: {\em 0 150 0} \\
+Enter X, Y, Z for point 3: {\em 0 150 200} \\
+Enter X, Y, Z for point 4: {\em 0 0 200} \\
+Enter X, Y, Z for point 5: {\em 75 0 0} \\
+Enter X, Y, Z for point 6: {\em 75 150 0} \\
+Enter X, Y, Z for point 7: {\em 75 150 200} \\
+Enter X, Y, Z for point 8: {\em 75 0 200} \\
+}
+This sequence produces the ARB8 shown in Figure \ref{ex.arb8}.
+\begin{figure}
+\centering \includegraphics{ex.arb4.ps}
+\caption{Example ARB4.}
+\label{ex.arb4}
+\end{figure}
+
+\subsection{ARB4: Arbitrary Convex Polyhedron, 4 vertices}
+
+{\tt
+mged> {\em in a4 arb4} \\
+Enter X, Y, Z for point 1: {\em 0 0 0} \\
+Enter X, Y, Z for point 2: {\em 10 60 0} \\
+Enter X, Y, Z for point 3: {\em 40 20 0} \\
+Enter X, Y, Z for point 4: {\em 20 15 70} \\
+}
+This sequence produces the ARB4 shown in Figure \ref{ex.arb4}.
+\begin{figure}
+\centering \includegraphics{ex.rcc.ps}
+\caption{Example Right Circular Cylinder.}
+\label{ex.rcc}
+\end{figure}
+
+\subsection{RCC (Right Circular Cylinder)}
+
+{\tt
+mged> {\em in rcyl rcc} \\
+Enter X, Y, Z of vertex: {\em 0 0 0} \\
+Enter X, Y, Z of height (H) vector: {\em 0 0 60} \\
+Enter radius: {\em 15} \\
+}
+This sequence produces the RCC shown in Figure \ref{ex.rcc}.
+Note that in this case, the A,B,C, and D vectors have magnitude
+which equal the radius, 15.
+\begin{figure}
+\centering \includegraphics{ex.trc.ps}
+\caption{Example Truncated Right Cylinder.}
+\label{ex.trc}
+\end{figure}
+
+\subsection{TRC (Truncated Right Cylinder)}
+
+{\tt
+mged> {\em in trcyl trc} \\
+Enter X, Y, Z of vertex: {\em 0 0 0} \\
+Enter X, Y, Z of height (H) vector: {\em 40 0 0} \\
+Enter radius of base: {\em 20} \\
+Enter radius of top: {\em 10} \\
+}
+This sequence produces the TRC shown in Figure \ref{ex.trc}.
+Note that the magnitude of A and B equal the base radius, 20,
+\begin{figure}
+\centering \includegraphics{ex.raw.ps}
+\caption{Example Right Angle Wedge.}
+\label{ex.raw}
+\end{figure}
+
+\subsection{RAW (Right Angle Wedge)}
+
+{\tt
+mged> {\em in weg raw} \\
+Enter X, Y, Z of vertex: {\em 0 0 0} \\
+Enter X, Y, Z of vector H: {\em 40 0 0} \\
+Enter X, Y, Z of vector W: {\em 0 70 0} \\
+Enter X, Y, Z of vector D: {\em 0 0 100} \\
+}
+This sequence produces the RAW shown in Figure \ref{ex.raw}.
+\begin{figure}
+\centering \includegraphics{ex.sph.ps}
+\caption{Example Sphere.}
+\label{ex.sph}
+\end{figure}
+
+\subsection{SPH (Sphere)}
+
+{\tt
+mged> {\em in ball sph} \\
+Enter X, Y, Z of vertex: {\em 0 0 0} \\
+Enter radius: {\em 50} \\
+}
+This sequence produces the sphere shown in Figure \ref{ex.sph}.
+Note that the A, B, and C vectors all have magnitude equal to
+the radius, 50.
+\begin{figure}
+\centering \includegraphics{ex.ellg.ps}
+\caption{Example General Ellipsoid.}
+\label{ex.ellg}
+\end{figure}
+
+\subsection{ELLG (General Ellipsoid)}
+
+{\tt
+mged> {\em in egg ellg} \\
+Enter X, Y, Z of vertex: {\em 0 0 0} \\
+Enter X, Y, Z of vector A: {\em 20 0 0} \\
+Enter X, Y, Z of vector B: {\em 0 60 0} \\
+Enter X, Y, Z of vector C: {\em 0 0 40} \\
+}
+This sequence produces the ellipsoid shown in Figure \ref{ex.ellg}.
+\begin{figure}
+\centering \includegraphics{ex.tor.ps}
+\caption{Example Torus.}
+\label{ex.tor}
+\end{figure}
+
+\subsection{TOR (Torus)}
+
+{\tt
+mged> {\em in tube tor} \\
+Enter X, Y, Z of vertex: {\em 0 0 0} \\
+Enter X, Y, Z of normal vector: {\em 0 0 50} \\
+Enter radius 1: {\em 20} \\
+Enter radius 2: {\em 10} \\
+}
+This sequence produces the torus shown in Figure \ref{ex.tor}.
+
+\section{Creating New Combinations}
+
+Non-terminal nodes in the directed acyclic graph stored in the database
+are also called {\em combinations}.
+It is possible to extend the definition of a non-terminal node by
+adding an instance of an existing node to the non-terminal node
+with an associated boolean
+operation of union;  this is done by the {\em i}
+(instance) command.  To start with, such an instance has an identity
+matrix stored in the arc;  the user needs to separately edit the
+arc to move the instance to some other location.
+If the non-terminal node being extended does not exist, it is created first.
+
+The instance command provides the simplest way to create a reference to
+another node.  Instances of a whole list of nodes can be added to a
+non-terminal node by way of the group {\em g} command.
+If instances of a list of nodes with non-union boolean operations
+is to be added to a non-terminal node, the region {\em r} command
+accepts a list of (operation, name) pairs, where the single lower case
+character ``u'' indicates union, ``--'' indicates subtraction, and
+``+'' indicates intersection.  The first operation specified
+is not significant.  An example of this command might be:
+\begin{center}
+{\em r non-terminal u node1 -- node2 + node3}
+\end{center}
+For historical reasons,
+there is no explicit grouping possible, occasionally forcing
+the user to create intermediate non-terminal nodes to allow the
+realization of the desired boolean formula.
+It is also important to note that for the same reasons
+there is an {\em implicit} grouping between union terms, i.e.
+\begin{center}
+u n1 -- n2 + n3 u n4 -- n5
+\end{center}
+is evaluated as
+\begin{center}
+(n1 -- n2 + n3) union (n4 -- n5)
+\end{center}
+rather than
+\begin{center}
+((((n1 -- n2) + n3) union n4) -- n5)
+\end{center}
+Therefore, you can think of the solids
+on either side of the union operators as surrounded by parentheses.
+The order of the region members is
+critical, and must be scrutinized when members are added or deleted from a
+region.
+The order can be printed out using the {\em l} or {\em cat} commands.

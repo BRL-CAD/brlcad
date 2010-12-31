@@ -1,8 +1,8 @@
 /*
  * uce-dirent.h - operating system independent dirent implementation
- * 
+ *
  * Copyright (C) 1998-2002  Toni Ronkko
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * ``Software''), to deal in the Software without restriction, including
@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED ``AS IS'', WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -21,8 +21,8 @@
  * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
- * 
- * 
+ *
+ *
  * May 28 1998, Toni Ronkko <tronkko@messi.uku.fi>
  *
  * $Id$
@@ -58,7 +58,7 @@
  * Revision 1.1  1998/07/04 16:27:51  tr
  * Initial revision
  *
- * 
+ *
  * MSVC 1.0 scans automatic dependencies incorrectly when your project
  * contains this very header.  The problem is that MSVC cannot handle
  * include directives inside #if..#endif block those are never entered.
@@ -320,7 +320,7 @@ static void _setdirname (struct DIR *dirp);
  * internal working area that is used for retrieving individual directory
  * entries.  The internal working area has no fields of your interest.
  *
- * <ret>Returns a pointer to the internal working area or NULL in case the 
+ * <ret>Returns a pointer to the internal working area or NULL in case the
  * directory stream could not be opened.  Global `errno' variable will set
  * in case of error as follows:
  *
@@ -343,11 +343,11 @@ opendir(
 {
   DIR *dirp;
   assert (dirname != NULL);
-  
+
   dirp = (DIR*)malloc (sizeof (struct DIR));
   if (dirp != NULL) {
     char *p;
-    
+
     /* allocate room for directory name */
     dirp->dirname = (char*) malloc (strlen (dirname) + 1 + strlen ("\\*.*"));
     if (dirp->dirname == NULL) {
@@ -362,7 +362,7 @@ opendir(
     strcpy (dirp->dirname, dirname);
     p = strchr (dirp->dirname, '\0');
     if (dirp->dirname < p  &&
-        *(p - 1) != '\\'  &&  *(p - 1) != '/'  &&  *(p - 1) != ':')
+	*(p - 1) != '\\'  &&  *(p - 1) != '/'  &&  *(p - 1) != ':')
     {
       strcpy (p++, "\\");
     }
@@ -506,7 +506,7 @@ readdir (DIR *dirp)
  */
 static int
 closedir (DIR *dirp)
-{   
+{
   int retcode = 0;
 
   /* make sure that dirp points to legal structure */
@@ -515,7 +515,7 @@ closedir (DIR *dirp)
     errno = EBADF;
     return -1;
   }
- 
+
   /* free directory name and search handles */
   if (dirp->dirname != NULL) free (dirp->dirname);
 
@@ -527,7 +527,7 @@ closedir (DIR *dirp)
       errno = EBADF;
     }
   }
-#endif                     
+#endif
 
   /* clear dirp structure to make sure that it cannot be used anymore*/
   memset (dirp, 0, sizeof (*dirp));
@@ -563,7 +563,7 @@ closedir (DIR *dirp)
  */
 static void
 rewinddir (DIR *dirp)
-{   
+{
   /* make sure that dirp is legal */
   assert (dirp != NULL);
   if (dirp == NULL) {
@@ -571,7 +571,7 @@ rewinddir (DIR *dirp)
     return;
   }
   assert (dirp->dirname != NULL);
-  
+
   /* close previous stream */
 #if defined(DIRENT_WIN32_INTERFACE)
   if (dirp->search_handle != INVALID_HANDLE_VALUE) {
@@ -597,7 +597,7 @@ rewinddir (DIR *dirp)
  */
 static int
 _initdir (DIR *dirp)
-{ 
+{
   assert (dirp != NULL);
   assert (dirp->dirname != NULL);
   dirp->dirent_filled = 0;
@@ -615,10 +615,10 @@ _initdir (DIR *dirp)
 
 # elif defined(DIRENT_MSDOS_INTERFACE)
   if (_dos_findfirst (dirp->dirname,
-          _A_SUBDIR | _A_RDONLY | _A_ARCH | _A_SYSTEM | _A_HIDDEN,
-          &dirp->current.data) != 0)
+	  _A_SUBDIR | _A_RDONLY | _A_ARCH | _A_SYSTEM | _A_HIDDEN,
+	  &dirp->current.data) != 0)
   {
-    /* _dos_findfirst and findfirst will set errno to ENOENT when no 
+    /* _dos_findfirst and findfirst will set errno to ENOENT when no
      * more entries could be retrieved. */
     return 0;
   }
@@ -639,13 +639,13 @@ _getdirname (const struct dirent *dp)
 {
 #if defined(DIRENT_WIN32_INTERFACE)
   return dp->data.cFileName;
-  
+
 #elif defined(DIRENT_USE_FFBLK)
   return dp->data.ff_name;
-  
+
 #else
   return dp->data.name;
-#endif  
+#endif
 }
 
 
@@ -656,13 +656,13 @@ static void
 _setdirname (struct DIR *dirp) {
   /* make sure that d_name is long enough */
   assert (strlen (_getdirname (&dirp->current)) <= NAME_MAX);
-  
+
   strncpy (dirp->current.d_name,
       _getdirname (&dirp->current),
       NAME_MAX);
   dirp->current.d_name[NAME_MAX] = '\0'; /*char d_name[NAME_MAX+1]*/
 }
-  
+
 # ifdef __cplusplus
 }
 # endif
@@ -674,4 +674,3 @@ _setdirname (struct DIR *dirp) {
 
 
 #endif /*DIRENT_H*/
-

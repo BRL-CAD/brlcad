@@ -19,11 +19,11 @@
  */
 /** @file reg.c
  *
- *  Library for writing MGED databases from arbitrary procedures.
+ * Library for writing MGED databases from arbitrary procedures.
  *
- *  This module contains routines to create combinations, and regions.
+ * This module contains routines to create combinations, and regions.
  *
- *  It is expected that this library will grow as experience is gained.
+ * It is expected that this library will grow as experience is gained.
  *
  */
 
@@ -40,40 +40,39 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-/*
- *			M K _ T R E E _ P U R E
+/**
+ * M K _ T R E E _ P U R E
  *
- *  Given a list of wmember structures, build a tree that performs
- *  the boolean operations in the given sequence.
- *  No GIFT semantics or precedence is provided.
- *  For that, use mk_tree_gift().
+ * Given a list of wmember structures, build a tree that performs the
+ * boolean operations in the given sequence.  No GIFT semantics or
+ * precedence is provided.  For that, use mk_tree_gift().
  */
 void
-mk_tree_pure( struct rt_comb_internal *comb, struct bu_list *member_hd )
+mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 {
     struct wmember *wp;
 
-    for ( BU_LIST_FOR( wp, wmember, member_hd ) )  {
-	union tree	*leafp, *nodep;
+    for (BU_LIST_FOR(wp, wmember, member_hd)) {
+	union tree *leafp, *nodep;
 
 	WDB_CK_WMEMBER(wp);
 
-	BU_GETUNION( leafp, tree );
+	BU_GETUNION(leafp, tree);
 	leafp->tr_l.magic = RT_TREE_MAGIC;
 	leafp->tr_l.tl_op = OP_DB_LEAF;
-	leafp->tr_l.tl_name = bu_strdup( wp->wm_name );
-	if ( !bn_mat_is_identity( wp->wm_mat ) )  {
-	    leafp->tr_l.tl_mat = bn_mat_dup( wp->wm_mat );
+	leafp->tr_l.tl_name = bu_strdup(wp->wm_name);
+	if (!bn_mat_is_identity(wp->wm_mat)) {
+	    leafp->tr_l.tl_mat = bn_mat_dup(wp->wm_mat);
 	}
 
-	if ( !comb->tree )  {
+	if (!comb->tree) {
 	    comb->tree = leafp;
 	    continue;
 	}
 	/* Build a left-heavy tree */
-	BU_GETUNION( nodep, tree );
+	BU_GETUNION(nodep, tree);
 	nodep->tr_b.magic = RT_TREE_MAGIC;
-	switch ( wp->wm_op )  {
+	switch (wp->wm_op) {
 	    case WMOP_UNION:
 		nodep->tr_b.tb_op = OP_UNION;
 		break;
@@ -92,20 +91,21 @@ mk_tree_pure( struct rt_comb_internal *comb, struct bu_list *member_hd )
     }
 }
 
-/*
- *			M K _ T R E E _ G I F T
+
+/**
+ * M K _ T R E E _ G I F T
  *
- *  Add some nodes to a new or existing combination's tree,
- *  with GIFT precedence and semantics.
+ * Add some nodes to a new or existing combination's tree, with GIFT
+ * precedence and semantics.
  *
- *  NON-PARALLEL due to rt_uniresource
+ * NON-PARALLEL due to rt_uniresource
  *
- *  Returns -
- *	-1	ERROR
- *	0	OK
+ * Returns -
+ * -1 ERROR
+ * 0 OK
  */
 int
-mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
+mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 {
     struct wmember *wp;
     union tree *tp;
@@ -118,24 +118,23 @@ mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
     if (new_nodes <= 0)
 	return 0;	/* OK, nothing to do */
 
-    if ( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 ) {
-	db_non_union_push( comb->tree, &rt_uniresource );
-	if ( db_ck_v4gift_tree( comb->tree ) < 0 )
-	{
+    if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
+	db_non_union_push(comb->tree, &rt_uniresource);
+	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    bu_log("mk_tree_gift() Cannot flatten tree for editing\n");
 	    return -1;
 	}
     }
 
     /* make space for an extra leaf */
-    node_count = db_tree_nleaves( comb->tree );
-    tree_list = (struct rt_tree_array *)bu_calloc( (size_t)node_count + (size_t)new_nodes,
-						   sizeof( struct rt_tree_array ), "tree list" );
+    node_count = db_tree_nleaves(comb->tree);
+    tree_list = (struct rt_tree_array *)bu_calloc((size_t)node_count + (size_t)new_nodes,
+						  sizeof(struct rt_tree_array), "tree list");
 
     /* flatten tree */
-    if ( comb->tree )  {
+    if (comb->tree) {
 	/* Release storage for non-leaf nodes, steal leaves */
-	actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource ) - tree_list;
+	actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource) - tree_list;
 	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 	comb->tree = TREE_NULL;
     } else {
@@ -143,10 +142,10 @@ mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
     }
 
     /* Add new members to the array */
-    for ( BU_LIST_FOR( wp, wmember, member_hd ) )  {
+    for (BU_LIST_FOR(wp, wmember, member_hd)) {
 	WDB_CK_WMEMBER(wp);
 
-	switch ( wp->wm_op )  {
+	switch (wp->wm_op) {
 	    case WMOP_INTERSECT:
 		tree_list[node_count].tl_op = OP_INTERSECT;
 		break;
@@ -162,13 +161,13 @@ mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 	}
 
 	/* make new leaf node, and insert at end of array */
-	BU_GETUNION( tp, tree );
+	BU_GETUNION(tp, tree);
 	tree_list[node_count++].tl_tree = tp;
 	tp->tr_l.magic = RT_TREE_MAGIC;
 	tp->tr_l.tl_op = OP_DB_LEAF;
-	tp->tr_l.tl_name = bu_strdup( wp->wm_name );
-	if ( !bn_mat_is_identity( wp->wm_mat ) )  {
-	    tp->tr_l.tl_mat = bn_mat_dup( wp->wm_mat );
+	tp->tr_l.tl_name = bu_strdup(wp->wm_name);
+	if (!bn_mat_is_identity(wp->wm_mat)) {
+	    tp->tr_l.tl_mat = bn_mat_dup(wp->wm_mat);
 	} else {
 	    tp->tr_l.tl_mat = (matp_t)NULL;
 	}
@@ -176,38 +175,39 @@ mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
     BU_ASSERT_SIZE_T(node_count, ==, actual_count + (size_t)new_nodes);
 
     /* rebuild the tree with GIFT semantics */
-    comb->tree = (union tree *)db_mkgift_tree( tree_list, node_count, &rt_uniresource );
+    comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count, &rt_uniresource);
 
-    bu_free( (char *)tree_list, "mk_tree_gift: tree_list" );
+    bu_free((char *)tree_list, "mk_tree_gift: tree_list");
 
     return 0;	/* OK */
 }
 
-/*
- *			M K _ A D D M E M B E R
+
+/**
+ * M K _ A D D M E M B E R
  *
- *  Obtain dynamic storage for a new wmember structure, fill in the
- *  name, default the operation and matrix, and add to doubly linked
- *  list.  In typical use, a one-line call is sufficient.  To change
- *  the defaults, catch the pointer that is returned, and adjust the
- *  structure to taste.
+ * Obtain dynamic storage for a new wmember structure, fill in the
+ * name, default the operation and matrix, and add to doubly linked
+ * list.  In typical use, a one-line call is sufficient.  To change
+ * the defaults, catch the pointer that is returned, and adjust the
+ * structure to taste.
  *
- *  The caller is responsible for initializing the header structures
- *  forward and backward links.
+ * The caller is responsible for initializing the header structures
+ * forward and backward links.
  */
 struct wmember *
 mk_addmember(
-    const char	*name,
-    struct bu_list	*headp,
+    const char *name,
+    struct bu_list *headp,
     mat_t mat,
-    int		op)
+    int op)
 {
     struct wmember *wp;
 
-    BU_GETSTRUCT( wp, wmember );
+    BU_GETSTRUCT(wp, wmember);
     wp->l.magic = WMEMBER_MAGIC;
-    wp->wm_name = bu_strdup( name );
-    switch ( op )  {
+    wp->wm_name = bu_strdup(name);
+    switch (op) {
 	case WMOP_UNION:
 	case WMOP_INTERSECT:
 	case WMOP_SUBTRACT:
@@ -220,64 +220,66 @@ mk_addmember(
 
     /* if the user gave a matrix, use it.  otherwise use identity matrix*/
     if (mat) {
-	MAT_COPY( wp->wm_mat, mat );
+	MAT_COPY(wp->wm_mat, mat);
     } else {
-	MAT_IDN( wp->wm_mat );
+	MAT_IDN(wp->wm_mat);
     }
 
     /* Append to end of doubly linked list */
-    BU_LIST_INSERT( headp, &wp->l );
+    BU_LIST_INSERT(headp, &wp->l);
     return wp;
 }
 
-/*
- *			M K _ F R E E M E M B E R S
+
+/**
+ * M K _ F R E E M E M B E R S
  */
 void
-mk_freemembers( struct bu_list *headp )
+mk_freemembers(struct bu_list *headp)
 {
     struct wmember *wp;
 
-    while ( BU_LIST_WHILE( wp, wmember, headp ) )  {
+    while (BU_LIST_WHILE(wp, wmember, headp)) {
 	WDB_CK_WMEMBER(wp);
-	BU_LIST_DEQUEUE( &wp->l );
-	bu_free( (char *)wp->wm_name, "wm_name" );
-	bu_free( (char *)wp, "wmember" );
+	BU_LIST_DEQUEUE(&wp->l);
+	bu_free((char *)wp->wm_name, "wm_name");
+	bu_free((char *)wp, "wmember");
     }
 }
 
-/*
- *			M K _ C O M B
+
+/**
+ * M K _ C O M B
  *
- *  Make a combination, where the
- *  members are described by a linked list of wmember structs.
+ * Make a combination, where the members are described by a linked
+ * list of wmember structs.
  *
- *  The linked list is freed when it has been output.
+ * The linked list is freed when it has been output.
  *
- *  Has many operating modes.
+ * Has many operating modes.
  *
- *  Returns -
- *	-1	ERROR
- *	0	OK
+ * Returns -
+ * -1 ERROR
+ * 0 OK
  */
 int
 mk_comb(
-    struct rt_wdb		*wdbp,
-    const char		*combname,
-    struct bu_list		*headp,		/* Made by mk_addmember() */
-    int			region_kind,	/* 1 => region.  'P' and 'V' for FASTGEN */
-    const char		*shadername,	/* shader name, or NULL */
-    const char		*shaderargs,	/* shader args, or NULL */
-    const unsigned char	*rgb,		/* NULL => no color */
-    int			id,		/* region_id */
-    int			air,		/* aircode */
-    int			material,	/* GIFTmater */
-    int			los,
-    int			inherit,
-    int			append_ok,	/* 0 = obj must not exit */
-    int			gift_semantics)	/* 0 = pure, 1 = gift */
+    struct rt_wdb *wdbp,
+    const char *combname,
+    struct bu_list *headp,	/* Made by mk_addmember() */
+    int region_kind,		/* 1 => region.  'P' and 'V' for FASTGEN */
+    const char *shadername,	/* shader name, or NULL */
+    const char *shaderargs,	/* shader args, or NULL */
+    const unsigned char *rgb,	/* NULL => no color */
+    int id,			/* region_id */
+    int air,			/* aircode */
+    int material,		/* GIFTmater */
+    int los,
+    int inherit,
+    int append_ok,		/* 0 = obj must not exit */
+    int gift_semantics)		/* 0 = pure, 1 = gift */
 {
-    struct rt_db_internal	intern;
+    struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     int fresh_combination;
 
@@ -285,19 +287,19 @@ mk_comb(
 
     RT_INIT_DB_INTERNAL(&intern);
 
-    if ( append_ok &&
-	 wdb_import( wdbp, &intern, combname, (matp_t)NULL ) >= 0 )  {
+    if (append_ok &&
+	wdb_import(wdbp, &intern, combname, (matp_t)NULL) >= 0) {
 	/* We retrieved an existing object, append to it */
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
-	RT_CK_COMB( comb );
+	RT_CK_COMB(comb);
 
 	fresh_combination = 0;
     } else {
 	/* Create a fresh new object for export */
-	BU_GETSTRUCT( comb, rt_comb_internal );
+	BU_GETSTRUCT(comb, rt_comb_internal);
 	comb->magic = RT_COMB_MAGIC;
-	bu_vls_init( &comb->shader );
-	bu_vls_init( &comb->material );
+	bu_vls_init(&comb->shader);
+	bu_vls_init(&comb->material);
 
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
@@ -307,19 +309,19 @@ mk_comb(
 	fresh_combination = 1;
     }
 
-    if ( gift_semantics )
-	mk_tree_gift( comb, headp );
+    if (gift_semantics)
+	mk_tree_gift(comb, headp);
     else
-	mk_tree_pure( comb, headp );
+	mk_tree_pure(comb, headp);
 
     /* Release the wmember list dynamic storage */
-    mk_freemembers( headp );
+    mk_freemembers(headp);
 
     /* Don't change these things when appending to existing combination */
-    if ( fresh_combination )  {
-	if ( region_kind )  {
+    if (fresh_combination) {
+	if (region_kind) {
 	    comb->region_flag = 1;
-	    switch ( region_kind )  {
+	    switch (region_kind) {
 		case 'P':
 		    comb->is_fastgen = REGION_FASTGEN_PLATE;
 		    break;
@@ -335,24 +337,23 @@ mk_comb(
 			   combname, region_kind, region_kind);
 	    }
 	}
-	if ( shadername )  bu_vls_strcat( &comb->shader, shadername );
-	if ( shaderargs )  {
-	    bu_vls_strcat( &comb->shader, " " );
-	    bu_vls_strcat( &comb->shader, shaderargs );
+	if (shadername) bu_vls_strcat(&comb->shader, shadername);
+	if (shaderargs) {
+	    bu_vls_strcat(&comb->shader, " ");
+	    bu_vls_strcat(&comb->shader, shaderargs);
 	    /* Convert to Tcl form if necessary.  Use heuristics */
-	    if ( strchr( shaderargs, '=' ) != NULL &&
-		 strchr( shaderargs, '{' ) == NULL )
-	    {
+	    if (strchr(shaderargs, '=') != NULL &&
+		strchr(shaderargs, '{') == NULL) {
 		struct bu_vls old;
 		bu_vls_init(&old);
 		bu_vls_vlscatzap(&old, &comb->shader);
-		if ( bu_shader_to_tcl_list( bu_vls_addr(&old), &comb->shader) )
+		if (bu_shader_to_tcl_list(bu_vls_addr(&old), &comb->shader))
 		    bu_log("Unable to convert shader string '%s %s'\n", shadername, shaderargs);
 		bu_vls_free(&old);
 	    }
 	}
 
-	if ( rgb )  {
+	if (rgb) {
 	    comb->rgb_valid = 1;
 	    comb->rgb[0] = rgb[0];
 	    comb->rgb[1] = rgb[1];
@@ -368,35 +369,38 @@ mk_comb(
     }
 
     /* The internal representation will be freed */
-    return wdb_put_internal( wdbp, combname, &intern, mk_conv2mm );
+    return wdb_put_internal(wdbp, combname, &intern, mk_conv2mm);
 }
 
-/*
- *			M K _ C O M B 1
+
+/**
+ * M K _ C O M B 1
  *
- *  Convenience interface to make a combination with a single member.
+ * Convenience interface to make a combination with a single member.
  */
 int
-mk_comb1( struct rt_wdb *wdbp,
-	  const char *combname,
-	  const char *membname,
-	  int regflag )
+mk_comb1(struct rt_wdb *wdbp,
+	 const char *combname,
+	 const char *membname,
+	 int regflag)
 {
-    struct bu_list	head;
+    struct bu_list head;
 
-    BU_LIST_INIT( &head );
-    if ( mk_addmember( membname, &head, NULL, WMOP_UNION ) == WMEMBER_NULL )
+    BU_LIST_INIT(&head);
+    if (mk_addmember(membname, &head, NULL, WMOP_UNION) == WMEMBER_NULL)
 	return -2;
-    return mk_comb( wdbp, combname, &head, regflag,
-		    (char *)NULL, (char *)NULL, (unsigned char *)NULL,
-		    0, 0, 0, 0,
-		    0, 0, 0 );
+    return mk_comb(wdbp, combname, &head, regflag,
+		   (char *)NULL, (char *)NULL, (unsigned char *)NULL,
+		   0, 0, 0, 0,
+		   0, 0, 0);
 }
 
-/*
- *			M K _ R E G I O N 1
+
+/**
+ * M K _ R E G I O N 1
  *
- *  Convenience routine to make a region with shader and rgb possibly set.
+ * Convenience routine to make a region with shader and rgb possibly
+ * set.
  */
 int
 mk_region1(
@@ -405,16 +409,17 @@ mk_region1(
     const char *membname,
     const char *shadername,
     const char *shaderargs,
-    const unsigned char *rgb )
+    const unsigned char *rgb)
 {
-    struct bu_list	head;
+    struct bu_list head;
 
-    BU_LIST_INIT( &head );
-    if ( mk_addmember( membname, &head, NULL, WMOP_UNION ) == WMEMBER_NULL )
+    BU_LIST_INIT(&head);
+    if (mk_addmember(membname, &head, NULL, WMOP_UNION) == WMEMBER_NULL)
 	return -2;
-    return mk_comb( wdbp, combname, &head, 1, shadername, shaderargs,
-		    rgb, 0, 0, 0, 0, 0, 0, 0 );
+    return mk_comb(wdbp, combname, &head, 1, shadername, shaderargs,
+		   rgb, 0, 0, 0, 0, 0, 0, 0);
 }
+
 
 /*
  * Local Variables:

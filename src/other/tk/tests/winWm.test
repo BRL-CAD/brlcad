@@ -415,6 +415,51 @@ test winWm-9.0 "Bug #2799589 - delayed activation of destroyed window" -constrai
     destroy .tx .t .sd
 } -result {ok}
 
+test winWm-9.1 "delayed activation of grabbed destroyed window" -constraints win -setup {
+    proc winwm91click {w} {
+        if {![winfo ismapped $w]} { update }
+        event generate $w <Enter>
+        focus -force $w
+        event generate $w <ButtonPress-1> -x 5 -y 5
+        event generate $w <ButtonRelease-1> -x 5 -y 5
+    }
+    proc winwm91proc3 {} {
+        global winwm91done winwm91check
+        set w .sd
+        toplevel $w
+        pack [button $w.b -text "OK" -command {set winwm91check 1}]
+        bind $w.b <Map> {after idle {winwm91click %W}}
+        update idletasks
+        tkwait visibility $w
+        grab $w
+        tkwait variable winwm91check
+        #skip the release:  #grab release $w
+        destroy $w
+        after idle {set winwm91done ok}
+    }
+    proc winwm91proc2 {w} { winwm91proc3; destroy $w }
+    proc winwm91proc1 {w} {
+        toplevel $w
+        pack [button $w.b -text "Do dialog" -command [list winwm91proc2 $w]]
+        bind $w.b <Map> {bind %W <Map> {}; after idle {winwm91click %W}}
+    }
+    destroy .t
+    global winwm91done
+    set winwm91done wait
+    toplevel .t
+} -body {    
+    pack [button .t.b -text "Show" -command {winwm91proc1 .tx}]
+    bind .t.b <Map> {bind %W <Map> {}; after idle {winwm91click %W}}
+    after 5000 {set winwm91done timeout}
+    vwait winwm91done
+    set winwm91done
+} -cleanup {
+    foreach cmd {proc1 proc2 proc3 click} {
+        rename winwm91$cmd {}
+    }
+    destroy .tx .t .sd
+} -result {ok}
+
 destroy .t
 
 # cleanup

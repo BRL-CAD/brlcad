@@ -1825,7 +1825,7 @@ nmg_model_area(const struct model *m)
  * XXX Why are the calling sequences just slightly different?
  * XXX Can we pick the better one, and get rid of the other one?
  * XXX If not, can we document how they differ?
- */	
+ */
 int
 rt_dist_line3_line3(fastf_t *dist, const fastf_t *p1, const fastf_t *d1, const fastf_t *p2, const fastf_t *d2, const struct bn_tol *tol)
 {
@@ -1962,7 +1962,7 @@ rt_dist_line3_lseg3(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fas
 }
 
 
-/** 
+/**
  * N M G _ P U R G E _ U N W A N T E D _ I N T E R S E C T I O N _ P O I N T S
  *
  * Make sure that the list of intersection points doesn't contain any
@@ -2834,15 +2834,10 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
 		}
 	    }
 	    if (fu->f_p->g.plane_p) {
-#if 1
 		/* Do it this way if you expect to change the normals */
 		plane_t n;
 		NMG_GET_FU_PLANE(n, fu);
 		nmg_face_g(new_fu, n);
-#else
-		/* Do it this way to share fu's geometry struct */
-		nmg_jfg(fu, new_fu);
-#endif
 
 		/* XXX Perhaps this should be new_fu->f_p->g.plane_p ? */
 		if (fu->f_p->g.plane_p->index >= tbl_size) bu_bomb("nmg_dup_shell: trans table exceeded\n");
@@ -8466,7 +8461,7 @@ nmg_kill_cracks(struct shell *s)
 	bu_log("nmg_kill_cracks(s=%x)\n", s);
 
     NMG_CK_SHELL(s);
-#if 1
+
     /* Loops may be inadvertently connected with a crack,
      * this code is to dissconnect them and kill the connecting crack.
      * Look for cracks that are two EU's from one loop that
@@ -8538,7 +8533,7 @@ nmg_kill_cracks(struct shell *s)
 	    }
 	}
     }
-#endif
+
     fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
     while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
 	struct loopuse *lu;
@@ -10711,7 +10706,7 @@ nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_c
 		bu_log("\t\tnew tri (%g %g %g) (%g %g %g) (%g %g %g)\n",
 		       V3ARGS(v2->vg_p->coord),
 		       V3ARGS(vg1->coord),
-	    	       V3ARGS(vg2->coord));
+		       V3ARGS(vg2->coord));
 #endif
 		fu = nmg_find_fu_of_eu(edgeuse1);
 		if (fu->orientation == OT_SAME) {

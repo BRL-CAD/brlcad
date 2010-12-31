@@ -19,8 +19,8 @@
  */
 /** @file nurb.c
  *
- *  Library for writing NURB objects into
- *  MGED databases from arbitrary procedures.
+ * Library for writing NURB objects into
+ * MGED databases from arbitrary procedures.
  *
  */
 
@@ -40,26 +40,27 @@
 #include "rtgeom.h"
 #include "wdb.h"
 
-/*
- *			M K _ B S P L I N E
+/**
+ * M K _ B S P L I N E
  *
- *  Output an array of B-spline (NURBS) surfaces which comprise a solid.
- *  The surface is freed when it is written.
+ * Output an array of B-spline (NURBS) surfaces which comprise a
+ * solid.  The surface is freed when it is written.
  */
 int
-mk_bspline( struct rt_wdb *wdbp, const char *name, struct face_g_snurb **surfs )
+mk_bspline(struct rt_wdb *wdbp, const char *name, struct face_g_snurb **surfs)
 {
-    struct rt_nurb_internal	*ni;
+    struct rt_nurb_internal *ni;
 
-    BU_GETSTRUCT( ni, rt_nurb_internal );
+    BU_GETSTRUCT(ni, rt_nurb_internal);
     ni->magic = RT_NURB_INTERNAL_MAGIC;
     ni->srfs = surfs;
 
-    for ( ni->nsrf = 0; ni->srfs[ni->nsrf] != NULL; ni->nsrf++ )  
+    for (ni->nsrf = 0; ni->srfs[ni->nsrf] != NULL; ni->nsrf++)
 	; /* NIL */
 
-    return wdb_export( wdbp, name, (genptr_t)ni, ID_BSPLINE, mk_conv2mm );
+    return wdb_export(wdbp, name, (genptr_t)ni, ID_BSPLINE, mk_conv2mm);
 }
+
 
 /*
  * Local Variables:

@@ -111,7 +111,7 @@ extern struct solid _FreeSolid;
 BU_EXTERN (void _ged_print_node,
 	   (struct ged		*gedp,
 	    struct directory *dp,
-	    int			pathpos,
+	    size_t		pathpos,
 	    int			indentSize,
 	    char		prefix,
 	    int			cflag,

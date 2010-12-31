@@ -141,10 +141,9 @@ static void paint_face(struct faceuse *fu, char *paint_table, int paint_color, c
     struct edgeuse *eu;
     const struct edgeuse *eur;
 
-#if 1
     if (rt_g.NMG_debug & DEBUG_MANIF)
 	bu_log("nmg_paint_face(%08x, %d)\n", fu, paint_color);
-#endif
+
     if (NMG_INDEX_VALUE(paint_table, fu->index) != 0)
 	return;
 
@@ -224,10 +223,7 @@ static void set_loop_sub_manifold(char *tbl, struct loopuse *lu_p, char manifold
 {
     struct edgeuse *eu_p;
     struct vertexuse *vu_p;
-#if 0
-    if (rt_g.NMG_debug & DEBUG_MANIF)
-	bu_log("nmg_set_loop_sub_manifold(%08x)\n", lu_p);
-#endif
+
     NMG_CK_LOOPUSE(lu_p);
 
     NMG_SET_MANIFOLD(tbl, lu_p, manifold);

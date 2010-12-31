@@ -38,7 +38,7 @@ typedef struct
     double y;			/* Y coordinate */
 } point;			/* polygon vertex */
 
-static int GetArgs(int argc, char **argv), Input(point *coop);
+static int GetArgs(int argc, const char *argv[]), Input(point *coop);
 static void Output(double result), Usage(void);
 
 
@@ -50,7 +50,7 @@ Usage(void) 				/* print usage message */
 
 
 int
-main(int argc, char **argv)			/* "cad_parea" entry point */
+main(int argc, const char *argv[])			/* "cad_parea" entry point */
     /* argument count */
     /* argument strings */
 {
@@ -91,7 +91,7 @@ main(int argc, char **argv)			/* "cad_parea" entry point */
 
 
 static int
-GetArgs(int argc, char **argv)			/* process command arguments */
+GetArgs(int argc, const char *argv[])			/* process command arguments */
     /* argument count */
     /* argument strings */
 {
@@ -100,7 +100,7 @@ GetArgs(int argc, char **argv)			/* process command arguments */
     int c;		/* option letter */
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "i:o:")) != EOF)
+    while ((c = bu_getopt(argc, (char * const *)argv, "i:o:")) != EOF)
 	switch (c) {
 	    case 'i':
 		if (iflag) {

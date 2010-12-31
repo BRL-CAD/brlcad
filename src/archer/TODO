@@ -132,7 +132,7 @@ Help -> About MGED                  |   Dialog available, contents need to be me
 Help -> Command Manual Pages        |                           DONE
 Help -> Shift Grips                 |                           DONE
 Help -> Apropos                     |   INCOMPLETE, not working well in MGED either?
-Help -> Manual                      |   INCOMPLETE, even in MGED needs web browser, should use docbook/tkhtml3
+Help -> Manual                      |   INCOMPLETE, even in MGED needs web browser, should use docbook/tkhtml
 
 
 

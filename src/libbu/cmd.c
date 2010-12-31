@@ -34,7 +34,7 @@ bu_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv, s
     struct bu_cmdtab *ctp = NULL;
 
     /* sanity */
-    if (cmd_index >= argc) {
+    if (UNLIKELY(cmd_index >= argc)) {
 	Tcl_AppendResult(interp, "missing command; must be one of:", (char *)NULL);
 	goto missing_cmd;
     }
@@ -48,7 +48,7 @@ bu_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv, s
 
     Tcl_AppendResult(interp, "unknown command: ", argv[cmd_index], ";", " must be one of: ", (char *)NULL);
 
- missing_cmd:
+missing_cmd:
     for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
 	Tcl_AppendResult(interp, " ", ctp->ct_name, (char *)NULL);
     }

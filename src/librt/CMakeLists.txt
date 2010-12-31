@@ -3,7 +3,6 @@ set(LIBRT_SOURCES
     bezier_2d_isect.c
     binunif/binunif.c
     binunif/db5_bin.c
-    bomb.c
     bool.c
     bundle.c
     cmd.c
@@ -221,13 +220,13 @@ set(IGNORED_SOURCES
 
 if(MSVC)
     set(LIBRT_SOURCES
-        ${LIBRT_SOURCES}
-        timer-nt.c
+	${LIBRT_SOURCES}
+	timer-nt.c
     )
 else(MSVC)
     set(LIBRT_SOURCES
-        ${LIBRT_SOURCES}
-        timer42.c
+	${LIBRT_SOURCES}
+	timer42.c
     )
 endif(MSVC)
 

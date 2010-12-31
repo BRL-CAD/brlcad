@@ -81,7 +81,7 @@ int RegionCnt( std::string &name ) {
     }
 }
 
-void MapRegion(ONX_Model &model, std::string &region_name, int layer_index, ON_TextLog* dump) {
+void MapRegion(ONX_Model &model, std::string &region_name, int layer_index) {
     char uuidstr[50];
     std::string parent_uuid;
 
@@ -97,7 +97,7 @@ void MapRegion(ONX_Model &model, std::string &region_name, int layer_index, ON_T
     }
 }
 
-void MapLayer(std::string &layer_name, std::string &uuid, std::string &parent_uuid, ON_TextLog* dump) {
+void MapLayer(std::string &layer_name, std::string &uuid, std::string &parent_uuid) {
     layer_uuid_name_map.insert(std::pair<std::string,std::string>(uuid,layer_name));
     layer_name_uuid_map.insert(std::pair<std::string,std::string>(layer_name,uuid));
     MEMBER_MAP::iterator iter = member_map.find(uuid);
@@ -148,8 +148,8 @@ void BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump) {
 
 	    siter = layer_name_uuid_map.find(membername);
 	    if (siter != layer_name_uuid_map.end()) {
-		std::string uuid = siter->second;
-		BuildHierarchy(outfp, uuid, dump);
+		std::string uuid2 = siter->second;
+		BuildHierarchy(outfp, uuid2, dump);
 	    }
 	    viter++;
 	}
@@ -175,14 +175,13 @@ void ProcessLayers(ONX_Model &model, ON_TextLog* dump) {
     int i, count = model.m_layer_table.Count();
     dump->Print("Number of LAYERS - %d\n.", count);
     for ( i=0; i < count; i++) {
-	char name[256];
 	const ON_Layer& layer = model.m_layer_table[i];
 	ON_wString lname = layer.LayerName();
 	strncpy(name, ON_String( lname ),255);
 	layer_name = name;
 	uuid = ON_UuidToString( layer.m_layer_id, uuidstr );
 	parent_uuid = ON_UuidToString( layer.m_parent_layer_id, uuidstr );
-	MapLayer(layer_name, uuid, parent_uuid, dump);
+	MapLayer(layer_name, uuid, parent_uuid);
     }
 }
 
@@ -334,7 +333,7 @@ int main(int argc, char** argv) {
 	std::string region_name(geom_base+".r");
 
         /* add region to hierarchical containers */
-	MapRegion(model,region_name,myAttributes.m_layer_index, dump);
+	MapRegion(model,region_name,myAttributes.m_layer_index);
 
 	dump->Print("primitive is %s.\n", geom_name.c_str());
 	dump->Print("region created is %s.\n", region_name.c_str());

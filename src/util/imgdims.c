@@ -35,6 +35,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
+#include "fb.h"
 
 
 #define BELIEVE_NAME 0
@@ -105,9 +106,6 @@ main (int argc, char **argv)
     unsigned long int height;
     struct stat stat_buf;
 
-    extern int bu_optind;			/* index from bu_getopt(3C) */
-    extern char *bu_optarg;		/* argument from bu_getopt(3C) */
-
     /*
      * Process the command line
      */
@@ -167,7 +165,8 @@ main (int argc, char **argv)
 	bu_exit (0, NULL);
 
  done:
-    bu_exit (0, "%lu %lu\n", width, height);
+    bu_log("%lu %lu\n", width, height);
+    return 0;
 }
 
 

@@ -72,7 +72,7 @@ static void boundFlag_hook();
 static void do_fogHint();
 
 struct bu_structparse Ogl_vparse[] = {
-    {"%d",	1, "depthcue",		Ogl_MV_O(cueing_on),	Ogl_colorchange },
+    {"%d",  1, "depthcue",		Ogl_MV_O(cueing_on),	Ogl_colorchange },
     {"%d",  1, "zclip",		Ogl_MV_O(zclipping_on),	zclip_hook },
     {"%d",  1, "zbuffer",		Ogl_MV_O(zbuffer_on),	establish_zbuffer },
     {"%d",  1, "lighting",		Ogl_MV_O(lighting_on),	establish_lighting },
@@ -93,7 +93,7 @@ struct bu_structparse Ogl_vparse[] = {
 int
 Ogl_dm_init(struct dm_list *o_dm_list,
 	    int argc,
-	    char *argv[])
+	    const char *argv[])
 {
     struct bu_vls vls;
 
@@ -104,7 +104,7 @@ Ogl_dm_init(struct dm_list *o_dm_list,
 
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
 
-    if ((dmp = dm_open(interp, DM_TYPE_OGL, argc-1, argv)) == DM_NULL)
+    if ((dmp = dm_open(INTERP, DM_TYPE_OGL, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
     /*XXXX this eventually needs to move into Ogl's private structure */
@@ -117,7 +117,7 @@ Ogl_dm_init(struct dm_list *o_dm_list,
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_OK;
@@ -130,7 +130,7 @@ Ogl_fb_open()
     char *ogl_name = "/dev/ogl";
 
     if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
-	Tcl_AppendResult(interp, "Ogl_fb_open: failed to allocate framebuffer memory\n",
+	Tcl_AppendResult(INTERP, "Ogl_fb_open: failed to allocate framebuffer memory\n",
 			 (char *)NULL);
 	return;
     }
@@ -187,7 +187,7 @@ Ogl_doevent(ClientData clientData,
  */
 static int
 Ogl_dm(int argc,
-       char **argv)
+       const char *argv[])
 {
     if (!strcmp(argv[0], "set")) {
 	struct bu_vls vls;
@@ -219,7 +219,7 @@ Ogl_dm(int argc,
 	    bu_vls_free(&tmp_vls);
 	}
 
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;

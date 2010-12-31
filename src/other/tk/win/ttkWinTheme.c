@@ -104,10 +104,12 @@ typedef struct {
     Ttk_Padding margins;	/* additional placement padding */
 } FrameControlElementData;
 
-#define _FIXEDSIZE 0x8000
+#define _FIXEDSIZE  0x80000000L
+#define _HALFMETRIC 0x40000000L
 #define FIXEDSIZE(id) (id|_FIXEDSIZE)
+#define HALFMETRIC(id) (id|_HALFMETRIC)
 #define GETMETRIC(m) \
-    ((m) & _FIXEDSIZE ? (m) & ~_FIXEDSIZE : GetSystemMetrics(m))
+    ((m) & _FIXEDSIZE ? (int)((m) & ~_FIXEDSIZE) : GetSystemMetrics((m)&0x0fffffff))
 
 static FrameControlElementData FrameControlElements[] = {
     { "Checkbutton.indicator",
@@ -131,6 +133,12 @@ static FrameControlElementData FrameControlElements[] = {
     { "sizegrip",
     	DFC_SCROLL, DFCS_SCROLLSIZEGRIP, SM_CXVSCROLL, SM_CYHSCROLL,
 	arrow_statemap, {0,0,0,0} },
+    { "Spinbox.uparrow",
+	DFC_SCROLL, DFCS_SCROLLUP, SM_CXVSCROLL, HALFMETRIC(SM_CYVSCROLL),
+	arrow_statemap, {0,0,0,0} },
+    { "Spinbox.downarrow",
+	DFC_SCROLL, DFCS_SCROLLDOWN, SM_CXVSCROLL, HALFMETRIC(SM_CYVSCROLL),
+	arrow_statemap, {0,0,0,0} },
 
     { 0,0,0,0,0,0, {0,0,0,0} }
 };
@@ -142,8 +150,12 @@ static void FrameControlElementSize(
     int *widthPtr, int *heightPtr, Ttk_Padding *paddingPtr)
 {
     FrameControlElementData *p = clientData;
-    *widthPtr = GETMETRIC(p->cxId) + Ttk_PaddingWidth(p->margins);
-    *heightPtr = GETMETRIC(p->cyId) + Ttk_PaddingHeight(p->margins);
+    int cx = GETMETRIC(p->cxId);
+    int cy = GETMETRIC(p->cyId);
+    if (p->cxId & _HALFMETRIC) cx /= 2;
+    if (p->cyId & _HALFMETRIC) cy /= 2;
+    *widthPtr = cx + Ttk_PaddingWidth(p->margins);
+    *heightPtr = cy + Ttk_PaddingHeight(p->margins);
 }
 
 static void FrameControlElementDraw(
@@ -179,7 +191,7 @@ typedef struct {
 
 static Ttk_ElementOptionSpec BorderElementOptions[] = {
     { "-relief",TK_OPTION_RELIEF,Tk_Offset(BorderElement,reliefObj), "flat" },
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 static void BorderElementSize(
@@ -230,7 +242,7 @@ typedef struct {
 static Ttk_ElementOptionSpec FieldElementOptions[] = {
     { "-fieldbackground", TK_OPTION_BORDER,
     	Tk_Offset(FieldElement,backgroundObj), "white" },
-    {NULL}
+    { NULL, 0, 0, NULL }
 };
 
 static void FieldElementSize(
@@ -285,7 +297,7 @@ static Ttk_ElementOptionSpec ButtonBorderElementOptions[] = {
 	Tk_Offset(ButtonBorderElement,highlightColorObj), "black" },
     { "-default", TK_OPTION_ANY,
 	Tk_Offset(ButtonBorderElement,defaultStateObj), "disabled" },
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 static void ButtonBorderElementSize(
@@ -409,7 +421,7 @@ typedef struct {
 static Ttk_ElementOptionSpec FillFocusElementOptions[] = {
     { "-focusfill", TK_OPTION_COLOR,
 	Tk_Offset(FillFocusElement,fillColorObj), "white" },
-    { NULL }
+    {NULL, 0, 0, NULL}
 };
 
 	/* @@@ FIX THIS */
@@ -533,7 +545,7 @@ typedef struct {
 
 static Ttk_ElementOptionSpec ThumbElementOptions[] = {
     { "-orient", TK_OPTION_ANY,Tk_Offset(ThumbElement,orientObj),"horizontal"},
-    { NULL }
+    { NULL, 0, 0, NULL }
 };
 
 static void ThumbElementSize(
@@ -590,7 +602,7 @@ typedef struct {
 static Ttk_ElementOptionSpec SliderElementOptions[] = {
     { "-orient", TK_OPTION_ANY, Tk_Offset(SliderElement,orientObj),
       "horizontal" },
-    { NULL }
+      { NULL, 0, 0, NULL }
 };
 
 static void SliderElementSize(

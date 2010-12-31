@@ -48,8 +48,8 @@
 void
 tp_i2list(register FILE *fp, register int *x, register int *y, register int npoints)
 
-    /* array of points */
-    /* array of points */
+/* array of points */
+/* array of points */
 
 {
     if (npoints <= 0)
@@ -72,8 +72,8 @@ tp_i2list(register FILE *fp, register int *x, register int *y, register int npoi
 void
 tp_2list(register FILE *fp, register double *x, register double *y, register int npoints)
 
-    /* array of points */
-    /* array of points */
+/* array of points */
+/* array of points */
 
 {
     if (npoints <= 0)
@@ -156,12 +156,12 @@ void
 tp_2mlist(FILE *fp, register double *x, register double *y, int npoints, int flag, int mark, int interval, double size)
 
 
-    /* arrays of points */
+/* arrays of points */
 
-    /* TP_MARK|TP_LINE */
-    /* marker character to use */
-    /* marker drawn every N points */
-    /* marker size */
+/* TP_MARK|TP_LINE */
+/* marker character to use */
+/* marker drawn every N points */
+/* marker size */
 {
     register int i;			/* index variable */
     register int counter;		/* interval counter */

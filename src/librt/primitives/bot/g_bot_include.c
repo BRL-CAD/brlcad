@@ -303,7 +303,7 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip
 		}
 	    }
 	    if (default_normal < 0) {
- 		if (rt_botface(stp, bot, p1, p2, p3, tri_index, tol) > 0)
+		if (rt_botface(stp, bot, p1, p2, p3, tri_index, tol) > 0)
 		    ntri++;
 	    } else {
 		fastf_t normals[9];

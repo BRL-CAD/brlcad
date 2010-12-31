@@ -1,0 +1,24 @@
+Compiling the proe-brl.dll against prodevelop and protoolkit
+libs (BTW, these are static libs) has created potential problems
+when trying to deploy the proe-brl.dll to platforms that either
+don't have Visual Studio or an older version. The only symptom is
+that the plugin will fail to load and there will be no indication
+in the Proe trail file of why it failed to load.
+
+Digging in a bit turns up a side by side configuration error.
+It turns out that Proe's static libs are compiled with an old version
+of the C-runtime. So when the proe-brl.dll gets compiled it depends
+on both the C-runtime of Proe's static libs and the C-runtime of the
+Visual Studio used to compile the dll. In short, this causes the
+plugin load to fail. As near as I can tell, there are two possible
+solutions to this problem. The first is to install the latest vcredist
+on the hobbled machine. The second is to create a application/dll
+config file and do a binding redirect to a newer version of the
+C-runtime.
+
+Currently, the config file and the manifest file for the proe-brl.dll
+is not embedded. So both files must be copied with the proe-brl.dll
+to their place in the Proe hierarchy. I believe it's possible to
+embed both files in the dll. I can see how to embed the manifest, but
+am not sure about the config file.
+

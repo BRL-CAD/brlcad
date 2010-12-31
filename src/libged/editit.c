@@ -59,16 +59,29 @@ _ged_editit(char *editstring, const char *filename)
     void (*s3)();
 #endif
 
+    if (!file) {
+	bu_log("INTERNAL ERROR: editit filename missing\n");
+	return 0;
+    }
+
     /* convert the edit string into pieces suitable for arguments to execlp */
 
     avtmp = (char **)bu_malloc(sizeof(char *)*5, "ged_editit: editstring args");
     bu_argv_from_string(avtmp, 4, editstring);
 
+    if (avtmp[0] && strcmp(avtmp[0], "(null)"))
+	terminal = avtmp[0];
+    if (avtmp[1] && strcmp(avtmp[1], "(null)"))
+	terminal_opt = avtmp[1];
+    if (avtmp[2] && strcmp(avtmp[2], "(null)"))
+	editor = avtmp[2];
+    if (avtmp[3] && strcmp(avtmp[3], "(null)"))
+	editor_opt = avtmp[3];
 
-    if (avtmp[0]) terminal = avtmp[0];
-    if (avtmp[1]) terminal_opt = avtmp[1];
-    if (avtmp[2]) editor = avtmp[2];
-    if (avtmp[3]) editor_opt = avtmp[3];
+    if (!editor) {
+	bu_log("INTERNAL ERROR: editit editor missing\n");
+	return 0;
+    }
 
     /* print a message to let the user know they need to quit their
      * editor before the application will come back to life.
@@ -79,7 +92,15 @@ _ged_editit(char *editstring, const char *filename)
 	struct bu_vls sep;
 	bu_vls_init(&str);
 	bu_vls_init(&sep);
-	bu_log("Invoking %s on %s\n\n", editor, file);
+	if (terminal && editor_opt) {
+	    bu_log("Invoking [%s %s %s] via %s\n\n", editor, editor_opt, file, terminal);
+	} else if (terminal) {
+	    bu_log("Invoking [%s %s] via %s\n\n", editor, file, terminal);
+	} else if (editor_opt) {
+	    bu_log("Invoking [%s %s %s]\n\n", editor, editor_opt, file);
+	} else {
+	    bu_log("Invoking [%s %s]\n\n", editor, file);
+	}
 	bu_vls_sprintf(&str, "\nNOTE: You must QUIT %s before %s will respond and continue.\n", bu_basename(editor), bu_getprogname());
 	for (length = bu_vls_strlen(&str) - 2; length > 0; length--) {
 	    bu_vls_putc(&sep, '*');
@@ -128,13 +149,24 @@ _ged_editit(char *editstring, const char *filename)
 	    WaitForSingleObject(pi.hProcess, INFINITE);
 	    return 1;
 #else
-	    if (!strcmp(terminal, "(null)") && !strcmp(editor_opt, "(null)")) {
+
+	    if (!strcmp(bu_basename(editor), "TextEdit")) {
+		/* close stdout/stderr so we don't get blather from TextEdit about service registration failure */
+		close(fileno(stdout));
+		close(fileno(stderr));
+	    }
+
+	    if (!terminal && !editor_opt) {
     		(void)execlp(editor, editor, file, NULL);
-	    }
-	    if (!strcmp(terminal, "(null)") && strcmp(editor_opt, "(null)")) {
+	    } else if (!terminal) {
 		(void)execlp(editor, editor, editor_opt, file, NULL);
+	    } else if (terminal && !terminal_opt) {
+		(void)execlp(terminal, terminal, editor, file, NULL);
+	    } else if (terminal && !editor_opt) {
+		(void)execlp(terminal, terminal, terminal_opt, editor, file, NULL);
+	    } else {
+		(void)execlp(terminal, terminal, terminal_opt, editor, editor_opt, file, NULL);
 	    }
-	    (void)execlp(terminal, terminal, terminal_opt, editor, file, NULL);
 #endif
 	    /* should not reach */
 	    perror(editor);

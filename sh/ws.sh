@@ -195,7 +195,7 @@ for file in $files ; do
 
     # show progress
     if [ "x$WS_PROGRESS" = "xyes" ] ; then
-	echo -n "$file ... "
+	printf "$file ... "
     fi
 
     # sanity checks
@@ -232,21 +232,21 @@ for file in $files ; do
 	    x[aA])
 		# remove whitespace on lines with only whitespace
 	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
-		    echo -n "a"
+		    printf "a"
 		fi
 		perl -pi -e 's/^[ \t]*$//g' "$file.ws.new"
 		;;
 	    x[bB])
 		# remove whitespace at end of all lines
 	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
-		    echo -n "b"
+		    printf "b"
 		fi
 		perl -pi -e 's/[ \t]*$//g' "$file.ws.new"
 		;;
 	    x[cC])
 		# remove successive blank lines
 	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
-		    echo -n "c"
+		    printf "c"
 		fi
 		cmd="perl -0777 -pi -e $step_c_regex \"$file.ws.new\""
 		eval "$cmd"
@@ -254,21 +254,21 @@ for file in $files ; do
 	    x[dD])
 		# remove all blank lines from end of file
 	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
-		    echo -n "d"
+		    printf "d"
 		fi
 		perl -0777 -pi -e 's/\n\n*$/\n/' "$file.ws.new"
 		;;
 	    x[eE])
 		# ensure there is a trailing newline
 	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
-		    echo -n "e"
+		    printf "e"
 		fi
 		perl -0777 -pi -e 's/\([^\n]\)$/\1\n/' "$file.ws.new"
 		;;
 	    x[fF])
 		# convert embedded tabs to spaces
 	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
-		    echo -n "f"
+		    printf "f"
 		fi
 		if [ -f "$file.ws.expand" ] ; then
 		    echo "WARNING: $file.ws.expand was in the way (overwritten)"
@@ -282,7 +282,7 @@ for file in $files ; do
 	    x[gG])
 		# convert leading whitespace and tabs, insert tabs
 	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
-		    echo -n "g"
+		    printf "g"
 		fi
 		cmd1="perl -pi -e $step_g_regex1 \"$file.ws.new\""
 		cmd2="perl -pi -e $step_g_regex2 \"$file.ws.new\""

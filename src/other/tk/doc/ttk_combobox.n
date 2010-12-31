@@ -15,6 +15,7 @@ ttk::combobox \- text field with popdown selection list
 \fBttk::combobox\fR \fIpathName \fR?\fIoptions\fR?
 .BE
 .SH DESCRIPTION
+.PP
 A \fBttk::combobox\fR combines a text field with a pop-down list of values;
 the user may select the value of the text field from among the 
 values in the list.
@@ -29,7 +30,7 @@ Boolean value.
 If set, the widget selection is linked to the X selection.
 .OP \-justify justify Justify
 Specifies how the text is aligned within the widget.
-One of \fBleft\fR, \fBcenter\fR, or \fBright\fR.
+Must be one of \fBleft\fR, \fBcenter\fR, or \fBright\fR.
 .OP \-height height Height
 Specifies the height of the pop-down listbox, in rows.
 .OP \-postcommand postCommand PostCommand
@@ -55,14 +56,16 @@ Specifies the list of values to display in the drop-down listbox.
 Specifies an integer value indicating the desired width of the entry window,
 in average-size characters of the widget's font.
 .SH "WIDGET COMMAND"
-.TP
-\fIpathName \fBcget\fR \fIoption\fR
-Returns the current value of the specified \fIoption\fR.
-See \fIttk::widget(n)\fR.
-.TP
-\fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
-Modify or query widget options.
-See \fIttk::widget(n)\fR.
+.PP
+The following subcommands are possible for combobox widgets:
+'\".TP
+'\"\fIpathName \fBcget\fR \fIoption\fR
+'\"Returns the current value of the specified \fIoption\fR.
+'\"See \fIttk::widget(n)\fR.
+'\".TP
+'\"\fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
+'\"Modify or query widget options.
+'\"See \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBcurrent\fR ?\fInewIndex\fR?
 If \fInewIndex\fR is supplied, sets the combobox value 
@@ -72,31 +75,39 @@ Otherwise, returns the index of the current value in the list of
 .TP
 \fIpathName \fBget\fR
 Returns the current value of the combobox.
-.TP
-\fIpathName \fBidentify \fIx y\fR
-Returns the name of the element at position \fIx\fR, \fIy\fR.
-See \fIttk::widget(n)\fR.
-.TP
-\fIpathName \fBinstate \fIstateSpec\fR ?\fIscript\fR?
-Test the widget state.
-See \fIttk::widget(n)\fR.
+'\".TP
+'\"\fIpathName \fBidentify \fIx y\fR
+'\"Returns the name of the element at position \fIx\fR, \fIy\fR.
+'\"See \fIttk::widget(n)\fR.
+'\".TP
+'\"\fIpathName \fBinstate \fIstateSpec\fR ?\fIscript\fR?
+'\"Test the widget state.
+'\"See \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBset\fR \fIvalue\fR
 Sets the value of the combobox to \fIvalue\fR.
-.TP
-\fIpathName \fBstate\fR ?\fIstateSpec\fR?
-Modify or query the widget state.
-See \fIttk::widget(n)\fR.
+'\".TP
+'\"\fIpathName \fBstate\fR ?\fIstateSpec\fR?
+'\"Modify or query the widget state.
+'\"See \fIttk::widget(n)\fR.
 .PP
-The combobox widget also supports the following \fIttk::entry\fR
-widget commands (see \fIttk::entry(n)\fR for details):
+The combobox widget also supports the following \fBttk::entry\fR
+widget subcommands (see \fIttk::entry(n)\fR for details):
 .DS
 .ta 5.5c 11c
 \fBbbox\fR	\fBdelete\fR	\fBicursor\fR
 \fBindex\fR	\fBinsert\fR	\fBselection\fR
 \fBxview\fR
 .DE
+The combobox widget also supports the following generic \fBttk::widget\fR
+widget subcommands (see \fIttk::widget(n)\fR for details):
+.DS
+.ta 5.5c 11c
+\fBcget\fR	\fBconfigure\fR	\fBidentify\fR
+\fBinstate\fR	\fBstate\fR
+.DE
 .SH "VIRTUAL EVENTS"
+.PP
 The combobox widget generates a \fB<<ComboboxSelected>>\fR virtual event
 when the user selects an element from the list of values.
 If the selection action unposts the listbox,
@@ -105,3 +116,6 @@ this event is delivered after the listbox is unposted.
 ttk::widget(n), ttk::entry(n)
 .SH KEYWORDS
 choice, entry, list box, text box, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

@@ -282,4 +282,6 @@ TEA_PROG_TCLSH
 # which require substituting th AC variables in.  Include these here.
 #--------------------------------------------------------------------
 
-AC_OUTPUT([Makefile pkgIndex.tcl togl_ws.h])
+AC_CONFIG_FILES([Makefile pkgIndex.tcl togl_ws.h])
+
+AC_OUTPUT

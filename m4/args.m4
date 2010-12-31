@@ -72,6 +72,15 @@
 # --with-cflags, --with-cxxflags, --with-cppflags, --with-ldflags, and
 # --with-libs.
 #
+# BC_WITH_SUB_FLAG_ARGS
+#
+# provides convenience argument handlers for specifying CFLAGS,
+# CXXFLAGS, LDFLAGS, CPPFLAGS, and LIBS.  more specifically, it adds
+# --with-sub-cflags, --with-sub-cxxflags, --with-sub-cppflags,
+# --with-sub-ldflags, and --with-sub-libs intended for use by
+# subconfigure builds (so the flag settings do not propagate elsewhere
+# during reconfigure).
+#
 ###
 
 AC_DEFUN([BC_ARG_ENABLE], [
@@ -230,6 +239,49 @@ AC_ARG_WITH(ldflags, AC_HELP_STRING(--with-ldflags,
 	]
 )
 AC_ARG_WITH(libs, AC_HELP_STRING(--with-libs,
+		[Specify additional libraries to link against]),
+	[
+		if test "x$withval" != "xno" ; then
+			LIBS="$LIBS $withval"
+		fi
+	]
+)
+])
+
+AC_DEFUN([BC_WITH_SUB_FLAG_ARGS], [
+AC_ARG_WITH(sub-cflags, AC_HELP_STRING(--with-sub-cflags,
+		[Specify additional flags to pass to the C compiler]),
+	[
+		if test "x$withval" != "xno" ; then
+			CFLAGS="$CFLAGS $withval"
+		fi
+	]
+)
+AC_ARG_WITH(sub-cxxflags, AC_HELP_STRING(--with-sub-cxxflags,
+		[Specify additional flags to pass to the C++ compiler]),
+	[
+		if test "x$withval" != "xno" ; then
+			CXXFLAGS="$CXXFLAGS $withval"
+		fi
+	]
+)
+AC_ARG_WITH(sub-cppflags, AC_HELP_STRING(--with-sub-cppflags,
+		[Specify additional flags to pass to C preprocessor]),
+	[
+		if test "x$withval" != "xno"; then
+			CPPFLAGS="$CPPFLAGS $withval"
+		fi
+	]
+)
+AC_ARG_WITH(sub-ldflags, AC_HELP_STRING(--with-sub-ldflags,
+		[Specify additional flags to pass to linker]),
+	[
+		if test "x$withval" != "xno" ; then
+			LDFLAGS="$LDFLAGS $withval"
+		fi
+	]
+)
+AC_ARG_WITH(sub-libs, AC_HELP_STRING(--with-sub-libs,
 		[Specify additional libraries to link against]),
 	[
 		if test "x$withval" != "xno" ; then

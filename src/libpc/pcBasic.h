@@ -45,14 +45,16 @@ private:
     std::string str;
 };
 
+
 /* Structures for defining varios derived objects from
  * constrained_value template in Boost
  */
 
 struct is_even {
     bool operator () (int i) const
-	{ return (i % 2) == 0; }
+    { return (i % 2) == 0; }
 };
+
 
 #endif
 /** @} */

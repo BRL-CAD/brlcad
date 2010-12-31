@@ -15,6 +15,7 @@ ttk::separator \- Separator bar
 \fBttk::separator\fR \fIpathName \fR?\fIoptions\fR?
 .BE
 .SH DESCRIPTION
+.PP
 A \fBttk::separator\fR widget displays a horizontal or vertical separator
 bar.
 .SO ttk_widget
@@ -26,6 +27,7 @@ bar.
 One of \fBhorizontal\fR or \fBvertical\fR.
 Specifies the orientation of the separator.
 .SH "WIDGET COMMAND"
+.PP
 Separator widgets support the standard 
 \fBcget\fR, \fBconfigure\fR, \fBidentify\fR, \fBinstate\fR, and \fBstate\fR 
 methods.  No other widget methods are used.
@@ -33,3 +35,6 @@ methods.  No other widget methods are used.
 ttk::widget(n)
 .SH "KEYWORDS"
 widget, separator
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

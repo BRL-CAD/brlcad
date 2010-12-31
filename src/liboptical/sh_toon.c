@@ -38,7 +38,7 @@
 #include "rtprivate.h"
 #include "light.h"
 
-#define TOON_MAGIC 0x746F6F6E0A    /* make this a unique number for each shader */
+#define TOON_MAGIC 0x746F6F6E    /* make this a unique number for each shader */
 #define CK_TOON_SP(_p) BU_CKMAG(_p, TOON_MAGIC, "toon_specific")
 
 /*
@@ -69,7 +69,7 @@ struct bu_structparse toon_print_tab[] = {
 
 };
 struct bu_structparse toon_parse_tab[] = {
-    {"i",	bu_byteoffset(toon_print_tab[0]), "toon_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
+    {"%p",	bu_byteoffset(toon_print_tab[0]), "toon_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 

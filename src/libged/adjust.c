@@ -77,7 +77,7 @@ ged_adjust(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    status = intern.idb_meth->ft_adjust(&gedp->ged_result_str, &intern, argc-2, (char **)argv+2);
+    status = intern.idb_meth->ft_adjust(&gedp->ged_result_str, &intern, argc-2, argv+2);
     if (status == GED_OK && wdb_put_internal(gedp->ged_wdbp, name, &intern, 1.0) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "wdb_export(%s) failure", name);
 	rt_db_free_internal(&intern);

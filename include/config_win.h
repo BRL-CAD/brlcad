@@ -94,6 +94,7 @@
 #define HAVE_TIME		1
 #define HAVE_VFORK		1
 #define HAVE_WINSOCK_H		1
+#define HAVE_WINSOCK2_H		1
 
 #define HAVE_SBRK 1
 #define sbrk(i) (NULL)

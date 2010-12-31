@@ -131,7 +131,6 @@ bin_PROGRAMS = \
 	pl-hpgl \
 	pl-pl \
 	pl-ps \
-	pl-sgi \
 	pl-tek \
 	plcolor \
 	pldebug \
@@ -142,7 +141,6 @@ bin_PROGRAMS = \
 	png-bw \
 	png-pix \
 	png_info \
-	query \
 	rle-pix \
 	sun-pix \
 	terrain \
@@ -152,7 +150,7 @@ bin_PROGRAMS = \
 	xyz-pl \
 	yuv-pix
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = ${TCL_CPPFLAGS} ${STRICT_FLAGS}
 
 noinst_PROGRAMS = \
 	${PC_TEST} \
@@ -470,9 +468,6 @@ pl_pl_LDADD = ${BU}
 pl_ps_SOURCES = pl-ps.c
 pl_ps_LDADD = ${BU}
 
-pl_sgi_SOURCES = pl-sgi.c
-pl_sgi_LDADD = ${BU} ${LIBSGIGL}
-
 pl_tek_SOURCES = pl-tek.c
 pl_tek_LDADD = ${BU}
 
@@ -508,9 +503,6 @@ png_info_LDADD = ${BN} ${BU}
 png_pix_SOURCES = png-pix.c
 png_pix_CFLAGS = ${PNG_CPPFLAGS}
 png_pix_LDADD = ${BN} ${BU}
-
-query_SOURCES = query.c
-query_LDADD = ${BU}
 
 rle_pix_SOURCES = rle-pix.c
 rle_pix_LDADD = ${RLE} ${BU} ${SYSV}
@@ -626,7 +618,6 @@ man_MANS = \
 	pl-hpgl.1 \
 	pl-pl.1 \
 	pl-ps.1 \
-	pl-sgi.1 \
 	pl-tek.1 \
 	plcolor.1 \
 	pldebug.1 \
@@ -636,7 +627,6 @@ man_MANS = \
 	png-bw.1 \
 	png-pix.1 \
 	png_info.1 \
-	query.1 \
 	random.1 \
 	rle-pix.1 \
 	sun-pix.1 \
@@ -765,7 +755,6 @@ FAST_OBJECTS = \
 	$(png_bw_OBJECTS) \
 	$(png_pix_OBJECTS) \
 	$(png_info_OBJECTS) \
-	$(query_OBJECTS) \
 	$(random_OBJECTS) \
 	$(rle_pix_OBJECTS) \
 	$(sgi_pix_OBJECTS) \

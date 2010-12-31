@@ -82,7 +82,6 @@ noinst_HEADERS = \
 	bio.h \
 	conf.h \
 	fbmsg.h \
-	machine.h \
 	sysv.h
 
 EXTRA_DIST = \

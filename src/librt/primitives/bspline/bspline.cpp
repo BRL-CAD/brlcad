@@ -336,7 +336,7 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 		rt_nurb_add_hit(&hit_list, hit, tol);
 	    }
-	    
+
 	    /* surfaces are incrementally numbered based on the
 	     * face_g_snurb list for all nurbs in this nurb_specific.
 	     */
@@ -495,7 +495,7 @@ rt_nurb_free(register struct soltab *stp)
 #ifdef CONVERT_TO_BREP
     return rt_brep_free(stp);
 #else
-    
+
     register struct nurb_specific *nurb =
 	(struct nurb_specific *)stp->st_specific;
     register struct nurb_specific *next;
@@ -1212,7 +1212,7 @@ rt_nurb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 }
 
 int
-rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_nurb_internal *nurb;
     int srf_no;

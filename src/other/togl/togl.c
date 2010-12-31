@@ -68,7 +68,7 @@
 #elif defined(TOGL_X11)
 #  include <X11/Xlib.h>
 #  include <X11/Xutil.h>
-#include <GL/glext.h>
+#  include <GL/glext.h>
 #  include <X11/Xatom.h>        /* for XA_RGB_DEFAULT_MAP atom */
 #  if !defined(USE_SYSTEM_XMU)
 #    include "Xmu_StdCmap.h"
@@ -79,10 +79,12 @@
 #      include <X11/Xmu/StdCmap.h>      /* for XmuLookupStandardColormap */
 #    endif
 #  endif
+#  define GLX_GLXEXT_LEGACY
 #  include <GL/glx.h>
    /* we want the prototype typedefs from glxext.h */
 #  undef GLX_VERSION_1_3
 #  undef GLX_VERSION_1_4
+#  include <GL/glxext.h>
 #  ifdef UNDEF_GET_PROC_ADDRESS
 #    undef GLX_ARB_get_proc_address
 #  endif

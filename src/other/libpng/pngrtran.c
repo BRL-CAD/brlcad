@@ -1,7 +1,7 @@
 
 /* pngrtran.c - transforms the data in a row for PNG readers
  *
- * Last changed in libpng 1.4.1 [February 25, 2010]
+ * Last changed in libpng 1.4.5 [December 9, 2010]
  * Copyright (c) 1998-2010 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
@@ -26,7 +26,7 @@ void PNGAPI
 png_set_crc_action(png_structp png_ptr, int crit_action, int ancil_action)
 {
    png_debug(1, "in png_set_crc_action");
- 
+
    if (png_ptr == NULL)
       return;
 
@@ -98,7 +98,7 @@ png_set_background(png_structp png_ptr,
    int need_expand, double background_gamma)
 {
    png_debug(1, "in png_set_background");
- 
+
    if (png_ptr == NULL)
       return;
    if (background_gamma_code == PNG_BACKGROUND_GAMMA_UNKNOWN)
@@ -141,13 +141,13 @@ png_set_strip_alpha(png_structp png_ptr)
 }
 #endif
 
-#ifdef PNG_READ_DITHER_SUPPORTED
-/* Dither file to 8 bit.  Supply a palette, the current number
+#ifdef PNG_READ_QUANTIZE_SUPPORTED
+/* Quantize file to 8 bit.  Supply a palette, the current number
  * of elements in the palette, the maximum number of elements
  * allowed, and a histogram if possible.  If the current number
  * of colors is greater then the maximum number, the palette will be
- * modified to fit in the maximum number.  "full_dither" indicates
- * whether we need a dithering cube set up for RGB images, or if we
+ * modified to fit in the maximum number.  "full_quantize" indicates
+ * whether we need a quantizeing cube set up for RGB images, or if we
  * simply are reducing the number of colors in a paletted image.
  */
 
@@ -161,24 +161,24 @@ typedef png_dsort FAR *       png_dsortp;
 typedef png_dsort FAR * FAR * png_dsortpp;
 
 void PNGAPI
-png_set_dither(png_structp png_ptr, png_colorp palette,
+png_set_quantize(png_structp png_ptr, png_colorp palette,
    int num_palette, int maximum_colors, png_uint_16p histogram,
-   int full_dither)
+   int full_quantize)
 {
-   png_debug(1, "in png_set_dither");
+   png_debug(1, "in png_set_quantize");
 
    if (png_ptr == NULL)
       return;
-   png_ptr->transformations |= PNG_DITHER;
+   png_ptr->transformations |= PNG_QUANTIZE;
 
-   if (!full_dither)
+   if (!full_quantize)
    {
       int i;
 
-      png_ptr->dither_index = (png_bytep)png_malloc(png_ptr,
+      png_ptr->quantize_index = (png_bytep)png_malloc(png_ptr,
          (png_uint_32)(num_palette * png_sizeof(png_byte)));
       for (i = 0; i < num_palette; i++)
-         png_ptr->dither_index[i] = (png_byte)i;
+         png_ptr->quantize_index[i] = (png_byte)i;
    }
 
    if (num_palette > maximum_colors)
@@ -192,12 +192,12 @@ png_set_dither(png_structp png_ptr, png_colorp palette,
          int i;
 
          /* Initialize an array to sort colors */
-         png_ptr->dither_sort = (png_bytep)png_malloc(png_ptr,
+         png_ptr->quantize_sort = (png_bytep)png_malloc(png_ptr,
             (png_uint_32)(num_palette * png_sizeof(png_byte)));
 
-         /* Initialize the dither_sort array */
+         /* Initialize the quantize_sort array */
          for (i = 0; i < num_palette; i++)
-            png_ptr->dither_sort[i] = (png_byte)i;
+            png_ptr->quantize_sort[i] = (png_byte)i;
 
          /* Find the least used palette entries by starting a
           * bubble sort, and running it until we have sorted
@@ -214,14 +214,14 @@ png_set_dither(png_structp png_ptr, png_colorp palette,
             done = 1;
             for (j = 0; j < i; j++)
             {
-               if (histogram[png_ptr->dither_sort[j]]
-                   < histogram[png_ptr->dither_sort[j + 1]])
+               if (histogram[png_ptr->quantize_sort[j]]
+                   < histogram[png_ptr->quantize_sort[j + 1]])
                {
                   png_byte t;
 
-                  t = png_ptr->dither_sort[j];
-                  png_ptr->dither_sort[j] = png_ptr->dither_sort[j + 1];
-                  png_ptr->dither_sort[j + 1] = t;
+                  t = png_ptr->quantize_sort[j];
+                  png_ptr->quantize_sort[j] = png_ptr->quantize_sort[j + 1];
+                  png_ptr->quantize_sort[j + 1] = t;
                   done = 0;
                }
             }
@@ -230,7 +230,7 @@ png_set_dither(png_structp png_ptr, png_colorp palette,
          }
 
          /* Swap the palette around, and set up a table, if necessary */
-         if (full_dither)
+         if (full_quantize)
          {
             int j = num_palette;
 
@@ -239,11 +239,11 @@ png_set_dither(png_structp png_ptr, png_colorp palette,
              */
             for (i = 0; i < maximum_colors; i++)
             {
-               if ((int)png_ptr->dither_sort[i] >= maximum_colors)
+               if ((int)png_ptr->quantize_sort[i] >= maximum_colors)
                {
                   do
                      j--;
-                  while ((int)png_ptr->dither_sort[j] >= maximum_colors);
+                  while ((int)png_ptr->quantize_sort[j] >= maximum_colors);
                   palette[i] = palette[j];
                }
             }
@@ -258,32 +258,32 @@ png_set_dither(png_structp png_ptr, png_colorp palette,
             for (i = 0; i < maximum_colors; i++)
             {
                /* Only move the colors we need to */
-               if ((int)png_ptr->dither_sort[i] >= maximum_colors)
+               if ((int)png_ptr->quantize_sort[i] >= maximum_colors)
                {
                   png_color tmp_color;
 
                   do
                      j--;
-                  while ((int)png_ptr->dither_sort[j] >= maximum_colors);
+                  while ((int)png_ptr->quantize_sort[j] >= maximum_colors);
 
                   tmp_color = palette[j];
                   palette[j] = palette[i];
                   palette[i] = tmp_color;
                   /* Indicate where the color went */
-                  png_ptr->dither_index[j] = (png_byte)i;
-                  png_ptr->dither_index[i] = (png_byte)j;
+                  png_ptr->quantize_index[j] = (png_byte)i;
+                  png_ptr->quantize_index[i] = (png_byte)j;
                }
             }
 
             /* Find closest color for those colors we are not using */
             for (i = 0; i < num_palette; i++)
             {
-               if ((int)png_ptr->dither_index[i] >= maximum_colors)
+               if ((int)png_ptr->quantize_index[i] >= maximum_colors)
                {
                   int min_d, k, min_k, d_index;
 
                   /* Find the closest color to one we threw out */
-                  d_index = png_ptr->dither_index[i];
+                  d_index = png_ptr->quantize_index[i];
                   min_d = PNG_COLOR_DIST(palette[d_index], palette[0]);
                   for (k = 1, min_k = 0; k < maximum_colors; k++)
                   {
@@ -298,12 +298,12 @@ png_set_dither(png_structp png_ptr, png_colorp palette,
                      }
                   }
                   /* Point to closest color */
-                  png_ptr->dither_index[i] = (png_byte)min_k;
+                  png_ptr->quantize_index[i] = (png_byte)min_k;
                }
             }
          }
-         png_free(png_ptr, png_ptr->dither_sort);
-         png_ptr->dither_sort = NULL;
+         png_free(png_ptr, png_ptr->quantize_sort);
+         png_ptr->quantize_sort = NULL;
       }
       else
       {
@@ -410,19 +410,19 @@ png_set_dither(png_structp png_ptr, png_colorp palette,
                         num_new_palette--;
                         palette[png_ptr->index_to_palette[j]]
                           = palette[num_new_palette];
-                        if (!full_dither)
+                        if (!full_quantize)
                         {
                            int k;
 
                            for (k = 0; k < num_palette; k++)
                            {
-                              if (png_ptr->dither_index[k] ==
+                              if (png_ptr->quantize_index[k] ==
                                  png_ptr->index_to_palette[j])
-                                 png_ptr->dither_index[k] =
+                                 png_ptr->quantize_index[k] =
                                     png_ptr->index_to_palette[next_j];
-                              if ((int)png_ptr->dither_index[k] ==
+                              if ((int)png_ptr->quantize_index[k] ==
                                  num_new_palette)
-                                 png_ptr->dither_index[k] =
+                                 png_ptr->quantize_index[k] =
                                     png_ptr->index_to_palette[j];
                            }
                         }
@@ -475,15 +475,15 @@ png_set_dither(png_structp png_ptr, png_colorp palette,
    }
    png_ptr->num_palette = (png_uint_16)num_palette;
 
-   if (full_dither)
+   if (full_quantize)
    {
       int i;
       png_bytep distance;
-      int total_bits = PNG_DITHER_RED_BITS + PNG_DITHER_GREEN_BITS +
-         PNG_DITHER_BLUE_BITS;
-      int num_red = (1 << PNG_DITHER_RED_BITS);
-      int num_green = (1 << PNG_DITHER_GREEN_BITS);
-      int num_blue = (1 << PNG_DITHER_BLUE_BITS);
+      int total_bits = PNG_QUANTIZE_RED_BITS + PNG_QUANTIZE_GREEN_BITS +
+         PNG_QUANTIZE_BLUE_BITS;
+      int num_red = (1 << PNG_QUANTIZE_RED_BITS);
+      int num_green = (1 << PNG_QUANTIZE_GREEN_BITS);
+      int num_blue = (1 << PNG_QUANTIZE_BLUE_BITS);
       png_size_t num_entries = ((png_size_t)1 << total_bits);
 
       png_ptr->palette_lookup = (png_bytep )png_calloc(png_ptr,
@@ -496,16 +496,16 @@ png_set_dither(png_structp png_ptr, png_colorp palette,
       for (i = 0; i < num_palette; i++)
       {
          int ir, ig, ib;
-         int r = (palette[i].red >> (8 - PNG_DITHER_RED_BITS));
-         int g = (palette[i].green >> (8 - PNG_DITHER_GREEN_BITS));
-         int b = (palette[i].blue >> (8 - PNG_DITHER_BLUE_BITS));
+         int r = (palette[i].red >> (8 - PNG_QUANTIZE_RED_BITS));
+         int g = (palette[i].green >> (8 - PNG_QUANTIZE_GREEN_BITS));
+         int b = (palette[i].blue >> (8 - PNG_QUANTIZE_BLUE_BITS));
 
          for (ir = 0; ir < num_red; ir++)
          {
             /* int dr = abs(ir - r); */
             int dr = ((ir > r) ? ir - r : r - ir);
-            int index_r = (ir << (PNG_DITHER_BLUE_BITS +
-                PNG_DITHER_GREEN_BITS));
+            int index_r = (ir << (PNG_QUANTIZE_BLUE_BITS +
+                PNG_QUANTIZE_GREEN_BITS));
 
             for (ig = 0; ig < num_green; ig++)
             {
@@ -513,7 +513,7 @@ png_set_dither(png_structp png_ptr, png_colorp palette,
                int dg = ((ig > g) ? ig - g : g - ig);
                int dt = dr + dg;
                int dm = ((dr > dg) ? dr : dg);
-               int index_g = index_r | (ig << PNG_DITHER_BLUE_BITS);
+               int index_g = index_r | (ig << PNG_QUANTIZE_BLUE_BITS);
 
                for (ib = 0; ib < num_blue; ib++)
                {
@@ -536,7 +536,7 @@ png_set_dither(png_structp png_ptr, png_colorp palette,
       png_free(png_ptr, distance);
    }
 }
-#endif
+#endif /* PNG_READ_QUANTIZE_SUPPORTED */
 
 #if defined(PNG_READ_GAMMA_SUPPORTED) && defined(PNG_FLOATING_POINT_SUPPORTED)
 /* Transform the image from the file_gamma to the screen_gamma.  We
@@ -686,6 +686,11 @@ png_set_rgb_to_gray_fixed(png_structp png_ptr, int error_action,
               break;
 
       case 3: png_ptr->transformations |= PNG_RGB_TO_GRAY_ERR;
+         break;
+
+      default:
+         png_error(png_ptr, "invalid error action in png_set_rgb_to_gray");
+         break;
    }
    if (png_ptr->color_type == PNG_COLOR_TYPE_PALETTE)
 #ifdef PNG_READ_EXPAND_SUPPORTED
@@ -827,6 +832,8 @@ png_init_read_transformations(png_structp png_ptr)
                    = png_ptr->trans_color.blue = png_ptr->trans_color.gray;
                }
                break;
+
+            default:
 
             case 8:
 
@@ -1028,6 +1035,9 @@ png_init_read_transformations(png_structp png_ptr)
                   gs = 1.0 / (png_ptr->background_gamma *
                      png_ptr->screen_gamma);
                   break;
+
+               default:
+                  png_error(png_ptr, "invalid background gamma type");
             }
 
             png_ptr->background_1.gray = (png_uint_16)(pow(
@@ -1229,8 +1239,8 @@ png_read_transform_info(png_structp png_ptr, png_infop info_ptr)
       info_ptr->color_type &= ~PNG_COLOR_MASK_COLOR;
 #endif
 
-#ifdef PNG_READ_DITHER_SUPPORTED
-   if (png_ptr->transformations & PNG_DITHER)
+#ifdef PNG_READ_QUANTIZE_SUPPORTED
+   if (png_ptr->transformations & PNG_QUANTIZE)
    {
       if (((info_ptr->color_type == PNG_COLOR_TYPE_RGB) ||
           (info_ptr->color_type == PNG_COLOR_TYPE_RGB_ALPHA)) &&
@@ -1451,13 +1461,13 @@ png_do_read_transformations(png_structp png_ptr)
       png_do_chop(&(png_ptr->row_info), png_ptr->row_buf + 1);
 #endif
 
-#ifdef PNG_READ_DITHER_SUPPORTED
-   if (png_ptr->transformations & PNG_DITHER)
+#ifdef PNG_READ_QUANTIZE_SUPPORTED
+   if (png_ptr->transformations & PNG_QUANTIZE)
    {
-      png_do_dither((png_row_infop)&(png_ptr->row_info), png_ptr->row_buf + 1,
-         png_ptr->palette_lookup, png_ptr->dither_index);
+      png_do_quantize((png_row_infop)&(png_ptr->row_info), png_ptr->row_buf + 1,
+         png_ptr->palette_lookup, png_ptr->quantize_index);
       if (png_ptr->row_info.rowbytes == (png_uint_32)0)
-         png_error(png_ptr, "png_do_dither returned rowbytes=0");
+         png_error(png_ptr, "png_do_quantize returned rowbytes=0");
    }
 #endif
 
@@ -1626,6 +1636,9 @@ png_do_unpack(png_row_infop row_info, png_bytep row)
             }
             break;
          }
+
+         default:
+            break;
       }
       row_info->bit_depth = 8;
       row_info->pixel_depth = (png_byte)(8 * row_info->channels);
@@ -1682,6 +1695,9 @@ png_do_unshift(png_row_infop row_info, png_bytep row, png_color_8p sig_bits)
 
       switch (row_info->bit_depth)
       {
+         default:
+            break; 
+
          case 2:
          {
             png_bytep bp;
@@ -2798,6 +2814,9 @@ png_do_background(png_row_infop row_info, png_bytep row,
                   }
                   break;
                }
+
+               default:
+                  break;
             }
             break;
          }
@@ -3230,6 +3249,9 @@ png_do_background(png_row_infop row_info, png_bytep row,
             }
             break;
          }
+
+         default:
+            break;
       }
 
       if (row_info->color_type & PNG_COLOR_MASK_ALPHA)
@@ -3428,6 +3450,9 @@ png_do_gamma(png_row_infop row_info, png_bytep row,
             }
             break;
          }
+
+         default:
+            break;
       }
    }
 }
@@ -3522,6 +3547,9 @@ png_do_expand_palette(png_row_infop row_info, png_bytep row,
                }
                break;
             }
+
+            default:
+               break;
          }
          row_info->bit_depth = 8;
          row_info->pixel_depth = 8;
@@ -3672,6 +3700,9 @@ png_do_expand(png_row_infop row_info, png_bytep row,
                   }
                   break;
                }
+
+               default:
+                  break;
             }
 
             row_info->bit_depth = 8;
@@ -3790,16 +3821,16 @@ png_do_expand(png_row_infop row_info, png_bytep row,
 }
 #endif
 
-#ifdef PNG_READ_DITHER_SUPPORTED
+#ifdef PNG_READ_QUANTIZE_SUPPORTED
 void /* PRIVATE */
-png_do_dither(png_row_infop row_info, png_bytep row,
-    png_bytep palette_lookup, png_bytep dither_lookup)
+png_do_quantize(png_row_infop row_info, png_bytep row,
+    png_bytep palette_lookup, png_bytep quantize_lookup)
 {
    png_bytep sp, dp;
    png_uint_32 i;
    png_uint_32 row_width=row_info->width;
 
-   png_debug(1, "in png_do_dither");
+   png_debug(1, "in png_do_quantize");
 
    {
       if (row_info->color_type == PNG_COLOR_TYPE_RGB &&
@@ -3821,14 +3852,14 @@ png_do_dither(png_row_infop row_info, png_bytep row,
              *    (((g >> 3) & 0x1f) << 5) |
              *    ((b >> 3) & 0x1f);
              */
-            p = (((r >> (8 - PNG_DITHER_RED_BITS)) &
-               ((1 << PNG_DITHER_RED_BITS) - 1)) <<
-               (PNG_DITHER_GREEN_BITS + PNG_DITHER_BLUE_BITS)) |
-               (((g >> (8 - PNG_DITHER_GREEN_BITS)) &
-               ((1 << PNG_DITHER_GREEN_BITS) - 1)) <<
-               (PNG_DITHER_BLUE_BITS)) |
-               ((b >> (8 - PNG_DITHER_BLUE_BITS)) &
-               ((1 << PNG_DITHER_BLUE_BITS) - 1));
+            p = (((r >> (8 - PNG_QUANTIZE_RED_BITS)) &
+               ((1 << PNG_QUANTIZE_RED_BITS) - 1)) <<
+               (PNG_QUANTIZE_GREEN_BITS + PNG_QUANTIZE_BLUE_BITS)) |
+               (((g >> (8 - PNG_QUANTIZE_GREEN_BITS)) &
+               ((1 << PNG_QUANTIZE_GREEN_BITS) - 1)) <<
+               (PNG_QUANTIZE_BLUE_BITS)) |
+               ((b >> (8 - PNG_QUANTIZE_BLUE_BITS)) &
+               ((1 << PNG_QUANTIZE_BLUE_BITS) - 1));
 
             *dp++ = palette_lookup[p];
          }
@@ -3850,14 +3881,14 @@ png_do_dither(png_row_infop row_info, png_bytep row,
             b = *sp++;
             sp++;
 
-            p = (((r >> (8 - PNG_DITHER_RED_BITS)) &
-               ((1 << PNG_DITHER_RED_BITS) - 1)) <<
-               (PNG_DITHER_GREEN_BITS + PNG_DITHER_BLUE_BITS)) |
-               (((g >> (8 - PNG_DITHER_GREEN_BITS)) &
-               ((1 << PNG_DITHER_GREEN_BITS) - 1)) <<
-               (PNG_DITHER_BLUE_BITS)) |
-               ((b >> (8 - PNG_DITHER_BLUE_BITS)) &
-               ((1 << PNG_DITHER_BLUE_BITS) - 1));
+            p = (((r >> (8 - PNG_QUANTIZE_RED_BITS)) &
+               ((1 << PNG_QUANTIZE_RED_BITS) - 1)) <<
+               (PNG_QUANTIZE_GREEN_BITS + PNG_QUANTIZE_BLUE_BITS)) |
+               (((g >> (8 - PNG_QUANTIZE_GREEN_BITS)) &
+               ((1 << PNG_QUANTIZE_GREEN_BITS) - 1)) <<
+               (PNG_QUANTIZE_BLUE_BITS)) |
+               ((b >> (8 - PNG_QUANTIZE_BLUE_BITS)) &
+               ((1 << PNG_QUANTIZE_BLUE_BITS) - 1));
 
             *dp++ = palette_lookup[p];
          }
@@ -3867,12 +3898,12 @@ png_do_dither(png_row_infop row_info, png_bytep row,
          row_info->rowbytes = PNG_ROWBYTES(row_info->pixel_depth, row_width);
       }
       else if (row_info->color_type == PNG_COLOR_TYPE_PALETTE &&
-         dither_lookup && row_info->bit_depth == 8)
+         quantize_lookup && row_info->bit_depth == 8)
       {
          sp = row;
          for (i = 0; i < row_width; i++, sp++)
          {
-            *sp = dither_lookup[*sp];
+            *sp = quantize_lookup[*sp];
          }
       }
    }

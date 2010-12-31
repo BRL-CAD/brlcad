@@ -1,0 +1,36 @@
+% This is the main document for running through latex,
+% but it just gets things set up, and includes all the pieces.
+% Mike Muuss, 5-Sept-1988
+
+% latex all.tex
+% texsun all.dvi
+% dviimp all.dvi
+% dvialw all.dvi
+
+\documentstyle[twoside]{report}
+\pagestyle{headings}
+
+% ---------------------------------------------------------------------------
+
+\begin{document}                        % End of preamble and beginning of text.
+
+\include{macros}
+
+\hyphenation{non-smooth}
+
+% ---------------------------------------------------------------------------
+% The actual text
+%
+% Note:  The brain-damaged \include directive adds ".tex" to the argument!
+% ---------------------------------------------------------------------------
+\typein [\sectex] {Which section?}
+\include{\sectex}
+
+% ---------------------------------------------------------------------------
+% This must go after the text, to be properly page numbered
+% ---------------------------------------------------------------------------
+
+\bibliography{../tex}
+\bibliographystyle{alpha}
+
+\end{document}

@@ -61,8 +61,8 @@ void FindLoops(ON_Brep **b) {
 	loop_complete = 0;
 	while ((loop_complete != 1) && (allcurvesassigned != 1)) {
 	    curvearray[curvecount] = loopcount;
-    	    ptmatch = (*b)->m_C3[curvecount]->PointAtEnd();
-    	    ptterminate = (*b)->m_C3[curvecount]->PointAtStart();
+	    ptmatch = (*b)->m_C3[curvecount]->PointAtEnd();
+	    ptterminate = (*b)->m_C3[curvecount]->PointAtStart();
 	    for (int i = 0; i < allsegments.Count(); i++) {
 		pstart = (*b)->m_C3[i]->PointAtStart();
 		pend = (*b)->m_C3[i]->PointAtEnd();
@@ -85,7 +85,7 @@ void FindLoops(ON_Brep **b) {
 			if (allsegments.Count() == assignedcount) allcurvesassigned = 1;
 		    }
 		}
-	    }		
+	    }
 	}
     }
 
@@ -116,9 +116,9 @@ void FindLoops(ON_Brep **b) {
     }
 
     (*b)->NewPlanarFaceLoop(0, ON_BrepLoop::outer, loopsegments, false);
-    
+
     loopsegments.Empty();
-       
+
     // If there's anything left, make inner loops out of it
     for (int i = 0; i <= loopcount; i++) {
 	if (i != largest_loop_index) {
@@ -154,7 +154,7 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     plane_origin = ON_3dPoint(eip->V);
     plane_x_dir = ON_3dVector(eip->u_vec);
     plane_y_dir = ON_3dVector(eip->v_vec);
-    const ON_Plane* sketch_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
+    const ON_Plane* sketch_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
 
     //  For the brep, need the list of 3D vertex points.  In sketch, they
     //  are stored as 2D coordinates, so use the sketch_plane to define 3 space
@@ -241,7 +241,7 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
   const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(vo), ON_3dPoint(vh));
   ON_Brep& brep = *(*b);
   ON_BrepExtrudeFace(brep, 0, *extrudepath, true);
-*/  
+*/
 }
 
 
@@ -253,4 +253,3 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

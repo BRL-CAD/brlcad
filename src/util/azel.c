@@ -110,7 +110,6 @@ main (int argc, char **argv)
     char *outFname = "stdout";  /* Name of output destination */
     char *Label;             /* Names of input coordinates */
     char Tail[4096] = {0};   /* Rest of input line beyond coords */
-    extern char *bu_optarg;         /* argument from bu_getopt(3C) */
     FILE *inPtr = stdin;     /* Pointer to input */
     FILE *outPtr = stdout;   /* Pointer to output */
     double Azim = 0.0;         /* Azimuth angle (in degrees) */
@@ -141,7 +140,6 @@ main (int argc, char **argv)
     int LineNm = 0;         /* How far through input? */
     int Ch;                 /* Input character */
     int i;                  /* Dummy variable for loop indexing */
-    extern int bu_optind;             /* index from bu_getopt(3C) */
 
     /* Handle command-line options */
     while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
@@ -266,7 +264,8 @@ main (int argc, char **argv)
 	fprintf(outPtr, "%g\t%g\t%s\n", V2, W2, Tail);
 	LineNm++;
     }
-    bu_exit (0, NULL);
+
+    return 0;
 }
 
 

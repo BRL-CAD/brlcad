@@ -1468,16 +1468,16 @@ ogl_open_existing(FBIO *ifp, int argc, char **argv)
     if (argc != 10)
 	return -1;
 
-    if (sscanf(argv[1], "%p", (void *)&dpy) != 1)
+    if (sscanf(argv[1], "%p", (void **)&dpy) != 1)
 	return -1;
 
-    if (sscanf(argv[2], "%p", (void *)&win) != 1)
+    if (sscanf(argv[2], "%p", (void **)&win) != 1)
 	return -1;
 
-    if (sscanf(argv[3], "%p", (void *)&cmap) != 1)
+    if (sscanf(argv[3], "%p", (void **)&cmap) != 1)
 	return -1;
 
-    if (sscanf(argv[4], "%p", (void *)&vip) != 1)
+    if (sscanf(argv[4], "%p", (void **)&vip) != 1)
 	return -1;
 
     if (sscanf(argv[5], "%d", &width) != 1)
@@ -1486,7 +1486,7 @@ ogl_open_existing(FBIO *ifp, int argc, char **argv)
     if (sscanf(argv[6], "%d", &height) != 1)
 	return -1;
 
-    if (sscanf(argv[7], "%p", (void *)&glxc) != 1)
+    if (sscanf(argv[7], "%p", (void **)&glxc) != 1)
 	return -1;
 
     if (sscanf(argv[8], "%d", &double_buffer) != 1)

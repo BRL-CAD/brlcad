@@ -326,7 +326,7 @@ arbin(struct ged *gedp,
 	/* solve for new vertex geometry
 	 * This does all the vertices
 	 */
-	bu_ptbl(&vert_tab, BU_PTBL_INIT, (long *)NULL);
+	bu_ptbl_init(&vert_tab, 64, "vert_tab");
 	nmg_vertex_tabulate(&vert_tab, &m->magic);
 	for (i=0; i<BU_PTBL_END(&vert_tab); i++) {
 	    struct vertex *v;
@@ -337,11 +337,11 @@ arbin(struct ged *gedp,
 	    if (nmg_in_vert(v, 0, &gedp->ged_wdbp->wdb_tol)) {
 		bu_vls_printf(&gedp->ged_result_str, "Could not find coordinates for inside arb7\n");
 		nmg_km(m);
-		bu_ptbl(&vert_tab, BU_PTBL_FREE, (long *)NULL);
+		bu_ptbl_free(&vert_tab);
 		return GED_ERROR;
 	    }
 	}
-	bu_ptbl(&vert_tab, BU_PTBL_FREE, (long *)NULL);
+	bu_ptbl_free(&vert_tab);
 
 	/* rebound model */
 	nmg_rebound(m, &gedp->ged_wdbp->wdb_tol);
@@ -437,7 +437,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
     }
 
     /* Calculate new vertex from base thickness */
-    if (thick[0] != 0.0) {
+    if (!NEAR_ZERO(thick[0], SMALL_FASTF)) {
 	/* calculate new vertex using similar triangles */
 	ratio = thick[0]/normal_height;
 	VJOIN1(v, tgc->v, ratio, tgc->h);
@@ -453,7 +453,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
     }
 
     /* calculate new height vector */
-    if (thick[1] != 0.0) {
+    if (!NEAR_ZERO(thick[1], SMALL_FASTF)) {
 	/* calculate new height vector using simialr triangles */
 	ratio = thick[1]/normal_height;
 	VJOIN1(top, tgc->v, 1.0 - ratio, tgc->h);
@@ -471,7 +471,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
     /* calculate new height vector based on new vertex and top */
     VSUB2(h, top, v);
 
-    if (thick[2] != 0.0) {
+    if (!NEAR_ZERO(thick[2], SMALL_FASTF)) {
 	/* ther is a side thickness */
 	vect_t ctoa;	/* unit vector from tip of C to tip of A */
 	vect_t dtob;	/* unit vector from tip of D to tip of B */
@@ -543,7 +543,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 	    else
 		ratio = ratio2;
 
-	    if (ratio1 == ratio && ratio1 < 1.0) /* c vector must go to zero */
+	    if (NEAR_ZERO(ratio1 - ratio, SMALL_FASTF) && ratio1 < 1.0) /* c vector must go to zero */
 		new_mag_c = SQRT_SMALL_FASTF;
 	    else if (ratio1 > ratio && ratio < 1.0) {
 		/* vector d will go to zero, but vector c will not */
@@ -556,7 +556,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 	    } else /* just change c vector length by delta */
 		new_mag_c -= delta_ac;
 
-	    if (ratio2 == ratio && ratio2 < 1.0) /* vector d must go to zero */
+	    if (NEAR_ZERO(ratio2 - ratio, SMALL_FASTF) && ratio2 < 1.0) /* vector d must go to zero */
 		new_mag_d = SQRT_SMALL_FASTF;
 	    else if (ratio2 > ratio && ratio < 1.0) {
 		/* calculate vector length at new top vertex */
@@ -590,7 +590,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 	    else
 		ratio = ratio2;
 
-	    if (ratio1 == ratio && ratio1 < 1.0) /* vector a must go to zero */
+	    if (NEAR_ZERO(ratio1 - ratio, SMALL_FASTF) && ratio1 < 1.0) /* vector a must go to zero */
 		new_mag_a = SQRT_SMALL_FASTF;
 	    else if (ratio1 > ratio && ratio < 1.0) {
 		/* calculate length of vector a if it were at new base location */
@@ -601,7 +601,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 	    } else /* just subtract delta */
 		new_mag_a -= delta_ac;
 
-	    if (ratio2 == ratio && ratio2 < 1.0) /* vector b must go to zero */
+	    if (NEAR_ZERO(ratio2 - ratio, SMALL_FASTF) && ratio2 < 1.0) /* vector b must go to zero */
 		new_mag_b = SQRT_SMALL_FASTF;
 	    else if (ratio2 > ratio && ratio < 1.0) {
 		/* Calculate length of b if it were at new base vector */
@@ -645,7 +645,7 @@ torin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
     struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
 
     RT_TOR_CK_MAGIC(tor);
-    if (thick[0] == 0.0)
+    if (NEAR_ZERO(thick[0], SMALL_FASTF))
 	return GED_OK;
 
     if (thick[0] < 0) {
@@ -714,7 +714,7 @@ ellgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 
 /* find inside of particle solid */
 static int
-partin(struct ged *gedp, struct rt_db_internal *ip, fastf_t *thick)
+partin(struct ged *UNUSED(gedp), struct rt_db_internal *ip, fastf_t *thick)
 {
     struct rt_part_internal *part = (struct rt_part_internal *)ip->idb_ptr;
 
@@ -732,7 +732,7 @@ partin(struct ged *gedp, struct rt_db_internal *ip, fastf_t *thick)
 
 /* finds inside of rpc, not quite right - r needs to be smaller */
 static int
-rpcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[4])
+rpcin(struct ged *UNUSED(gedp), struct rt_db_internal *ip, fastf_t thick[4])
 {
     struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)ip->idb_ptr;
     fastf_t b;
@@ -772,7 +772,7 @@ rpcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[4])
 
 /* XXX finds inside of rhc, not quite right */
 static int
-rhcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[4])
+rhcin(struct ged *UNUSED(gedp), struct rt_db_internal *ip, fastf_t thick[4])
 {
     struct rt_rhc_internal *rhc = (struct rt_rhc_internal *)ip->idb_ptr;
     vect_t Bn, Hn, Bu, Hu, Ru;
@@ -801,7 +801,7 @@ rhcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[4])
 
 /* finds inside of epa, not quite right */
 static int
-epain(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[2])
+epain(struct ged *UNUSED(gedp), struct rt_db_internal *ip, fastf_t thick[2])
 {
     struct rt_epa_internal *epa = (struct rt_epa_internal *)ip->idb_ptr;
     vect_t Hu;
@@ -822,7 +822,7 @@ epain(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[2])
 
 /* finds inside of ehy, not quite right, */
 static int
-ehyin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[2])
+ehyin(struct ged *UNUSED(gedp), struct rt_db_internal *ip, fastf_t thick[2])
 {
     struct rt_ehy_internal *ehy = (struct rt_ehy_internal *)ip->idb_ptr;
     vect_t Hu;
@@ -843,7 +843,7 @@ ehyin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[2])
 
 /* finds inside of eto */
 static int
-etoin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[1])
+etoin(struct ged *UNUSED(gedp), struct rt_db_internal *ip, fastf_t thick[1])
 {
     fastf_t c;
     struct rt_eto_internal *eto = (struct rt_eto_internal *)ip->idb_ptr;
@@ -1162,6 +1162,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	return GED_ERROR;
     }
 
+    bu_vls_printf(&gedp->ged_result_str, "%s", argv[2]);
     return GED_OK;
 }
 
@@ -1172,7 +1173,6 @@ ged_inside(struct ged *gedp, int argc, const char *argv[])
     struct directory *outdp;
     struct rt_db_internal intern;
     int arg = 1;
-    static const char *usage = "out_prim in_prim th(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);

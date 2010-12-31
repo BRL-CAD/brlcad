@@ -30,30 +30,32 @@
 #include "vmath.h"
 #include "pc.h"
 
-/** 			PC_ISPERPENDICULAR
+/**
+ * PC_ISPERPENDICULAR
  * The double pointer is expected to point to a properly initialized array
  */
 
 int
-pc_isperpendicular(double ** v)
+pc_isperpendicular(double **v)
 {
     /*
-	bu_log("Dot product of the Vectors:\n%f %f %f \n%f %f %f\nis %f\n",\
-		v[0][0], v[0][1], v[0][2], v[1][0], v[1][1], v[1][2],\
-		(v[0][0]*v[1][0] + v[0][1]*v[1][1] +v[0][2]*v[1][2]));
+      bu_log("Dot product of the Vectors:\n%f %f %f \n%f %f %f\nis %f\n", \
+      v[0][0], v[0][1], v[0][2], v[1][0], v[1][1], v[1][2], \
+      (v[0][0]*v[1][0] + v[0][1]*v[1][1] +v[0][2]*v[1][2]));
     */
-    if (NEAR_ZERO( (VDOT(v[0],v[1])), SMALL_FASTF)) /* TODO: this needs to be toleranced properly */
+    if (NEAR_ZERO((VDOT(v[0], v[1])), SMALL_FASTF)) /* TODO: this needs to be toleranced properly */
     	return 0;
     else
     	return -1;
 }
 
+
 void
-pc_mk_isperpendicular(struct pc_constrnt ** c,const char * name, const char ** args)
+pc_mk_isperpendicular(struct pc_constrnt **c, const char *name, const char **args)
 {
     int i;
     
-    pc_getconstraint_struct(c,2);
+    pc_getconstraint_struct(c, 2);
     bu_vls_strcat(&((*c)->name), name);
     (*c)->data.cf.fp = &pc_isperpendicular;
     (*c)->data.cf.nargs = 2;
@@ -62,32 +64,36 @@ pc_mk_isperpendicular(struct pc_constrnt ** c,const char * name, const char ** a
 	(*c)->args[i] = args[i];
 }
 
+
 int
-pc_isfixed(double ** v)
+pc_isfixed(double **v)
 {
     
-    if ( NEAR_ZERO(MAGSQ(v[0]), SMALL_FASTF) ) /* TODO: this needs to be toleranced properly */
+    if (NEAR_ZERO(MAGSQ(v[0]), SMALL_FASTF)) /* TODO: this needs to be toleranced properly */
     	return 0;
     else
     	return -1;
 }
 
-/** 			PC_ISMODPOSITIVE
+
+/**
+ * PC_ISMODPOSITIVE
  *
  * Checks if the modulus of a given vector is positive
  * The double pointer is expected to point to a properly initialized array
  */
 
 void
-pc_mk_ismodpositive(struct pc_constrnt ** c,const char * name, const char ** args)
+pc_mk_ismodpositive(struct pc_constrnt **c, const char *name, const char **args)
 {
-    pc_getconstraint_struct(c,1);
+    pc_getconstraint_struct(c, 1);
     bu_vls_strcat(&((*c)->name), name);
     (*c)->data.cf.fp = &pc_isperpendicular;
     (*c)->data.cf.nargs = 1;
     (*c)->data.cf.dimension = 3;
     (*c)->args[0] = args[0];
 }
+
 
 /** @} */
 /*

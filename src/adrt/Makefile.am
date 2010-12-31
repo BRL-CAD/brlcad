@@ -8,20 +8,14 @@ AM_CFLAGS = \
 	-I${top_srcdir}/src/adrt/librender \
 	${TCL_CPPFLAGS}
 
-bin_PROGRAMS = adrt_master adrt_slave
 lib_LTLIBRARIES = libtie.la librender.la
 
-libtie_la_LIBADD = libtie0.la libtie1.la ${BU} ${BU_LIBS}
-libtie_la_SOURCES =
-
-SOURCES = libtie/tie.c libtie/tie_kdtree.c
-libtie0_la_SOURCES = $(SOURCES)
-libtie1_la_SOURCES = $(SOURCES)
-
-libtie0_la_CFLAGS = -DTIE_PRECISION=0
-libtie1_la_CFLAGS = -DTIE_PRECISION=1
-
-noinst_LTLIBRARIES = libtie0.la libtie1.la
+libtie_la_LIBADD = ${BU} ${BU_LIBS}
+libtie_la_SOURCES = \
+	libtie/tie0.c \
+	libtie/tie1.c \
+	libtie/tie_kdtree0.c \
+	libtie/tie_kdtree1.c
 
 librender_la_SOURCES = \
 	load.c \
@@ -56,31 +50,6 @@ librender_la_LIBADD = \
 	${GCV} \
 	${GCV_LIBS}
 
-adrt_master_SOURCES = \
-	master/compnet.c \
-	master/dispatcher.c \
-	master/tienet_master.c \
-	master/master.c
-
-adrt_master_LDADD = \
-	libtie.la \
-	${BU} \
-	${LIBNETWORK} \
-	${LIBTHREAD} \
-	${LIBBSD} \
-	${LIBM} \
-	${LIBZ}
-
-adrt_slave_SOURCES = \
-	slave/slave.c \
-	slave/tienet_slave.c
-
-adrt_slave_LDADD = \
-	${LIBNETWORK} \
-	${LIBTHREAD} \
-	librender.la \
-	libtie.la
-
 tieincludedir = $(includedir)/tie
 tieinclude_HEADERS = \
 	adrt.h  \
@@ -95,38 +64,47 @@ tieinclude_HEADERS = \
 
 noinst_HEADERS = \
 	load.h \
-	tienet.h \
-	master/compnet.h \
-	master/dispatcher.h \
-	master/tienet_master.h \
-	master/master.h \
-	slave/slave.h \
-	slave/tienet_slave.h
+	tienet.h
 
 pkglibdir = $(libdir)/isst
 
-if BUILD_TOGL
-pkglib_LTLIBRARIES = issttcltk.la
-
-issttcltk_la_SOURCES = isst_tcltk.c
-
-issttcltk_la_DEPENDENCIES = libtie.la librender.la
-
-issttcltk_la_LIBADD = ${TIE} ${RENDER} ${TCL} ${TK} -L$(top_builddir)/src/other/togl -lToglstub2.1
-issttcltk_la_CFLAGS = -I$(top_srcdir)/src/adrt/libtie -I$(top_srcdir)/src/adrt/librender  -DTIE_PRECISION=0 ${TCL_CPPFLAGS} ${TK_CPPFLAGS} -I$(top_srcdir)/src/other/togl -I$(top_builddir)/src/other/togl ${GL_CPPFLAGS}
-issttcltk_la_LDFLAGS = -module -shrext .plugin
-
-pkgIndex.tcl:
-	@echo 'package ifneeded isst 0.1 [list load [file join $(pkglibdir) issttcltk.plugin] isst]' > pkgIndex.tcl
-
-issttcltkscriptdir = $(pkglibdir)
-
-issttcltkscript_SCRIPTS = pkgIndex.tcl
-endif
+#if BUILD_TOGL
+#pkglib_LTLIBRARIES = issttcltk.la
+#
+#issttcltk_la_SOURCES = isst_tcltk.c
+#
+#issttcltk_la_DEPENDENCIES = libtie.la librender.la
+#
+#issttcltk_la_LIBADD = ${TIE} ${RENDER} ${TCL} ${TK} -L$(top_builddir)/src/other/togl -lToglstub2.1
+#issttcltk_la_CFLAGS = -I$(top_srcdir)/src/adrt/libtie -I$(top_srcdir)/src/adrt/librender  -DTIE_PRECISION=0 ${TCL_CPPFLAGS} ${TK_CPPFLAGS} -I$(top_srcdir)/src/other/togl -I$(top_builddir)/src/other/togl ${GL_CPPFLAGS}
+#issttcltk_la_LDFLAGS = -module -shrext .plugin
+#
+#pkgIndex.tcl:
+#	@echo 'package ifneeded isst 0.1 [list load [file join $(pkglibdir) issttcltk.plugin] isst]' > pkgIndex.tcl
+#
+#issttcltkscriptdir = $(pkglibdir)
+#
+#issttcltkscript_SCRIPTS = pkgIndex.tcl
+#endif
 
 EXTRA_DIST = \
+	isst.h \
 	isst.tcl \
-	isst.h
+	isst_tcltk.c \
+	libtie/tie.c \
+	libtie/tie_kdtree.c \
+	master/compnet.h \
+	master/master.h \
+	master/tienet_master.c \
+	master/dispatcher.c \
+	master/master.c \
+	master/dispatcher.h \
+	master/tienet_master.h \
+	master/compnet.c \
+	slave/tienet_slave.h \
+	slave/slave.h \
+	slave/slave.c \
+	slave/tienet_slave.c
 
 LINT=splint $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
 lint:

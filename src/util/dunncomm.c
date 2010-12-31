@@ -28,7 +28,9 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
-#include <sys/time.h>
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+#endif
 #ifdef __NetBSD__
 #  define USE_OLD_TTY
 #  include <sys/ioctl_compat.h>
@@ -93,7 +95,7 @@ fd_set readfds;
 int polaroid = 0;		/* 0 = aux camera, 1 = Polaroid 8x10 */
 
 void
-unsnooze(int x)
+unsnooze(int UNUSED(x))
 {
     bu_exit(1, "\007dunnsnap: request timed out, aborting\n");
 }

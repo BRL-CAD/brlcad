@@ -104,6 +104,11 @@ typedef off_t		Tcl_SeekOffset;
 #if HAVE_INTTYPES_H
 #   include <inttypes.h>
 #endif
+#ifdef NO_LIMITS_H
+#   include "../compat/limits.h"
+#else
+#   include <limits.h>
+#endif
 #if HAVE_STDINT_H
 #   include <stdint.h>
 #endif
@@ -627,10 +632,9 @@ EXTERN int pthread_getattr_np _ANSI_ARGS_((pthread_t, pthread_attr_t *));
  * known-to-be-MT-unsafe library calls.
  * Instead of returning pointers to the
  * static storage, those return pointers
- * to the TSD data. 
+ * to the TSD data.
  */
 
-#include <pwd.h>
 #include <grp.h>
 
 MODULE_SCOPE struct passwd*  TclpGetPwNam(const char *name);

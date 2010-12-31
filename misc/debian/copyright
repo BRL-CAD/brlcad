@@ -1,0 +1,61 @@
+This package was debianized by: Manuel A. Fernandez Montecelo
+<manuel.montezelo@gmail.com> on 2010-08-25 10:12:35 UTC
+
+It was downloaded from: http://brlcad.org/
+
+Upstream Authors: BRL-CAD Development Team <devs@brlcad.org>
+	See AUTHORS for more information.
+
+
+Copyright:
+
+	All contributions to BRL-CAD have been provided under agreement.  By
+	requiring all contributions be given back to the BRL-CAD developers,
+	this agreement allows the BRL-CAD project to continue to grow
+	unhindered.  As such, a majority of the source code is copyright by
+	the United States Government as represented by the United States Army
+	Research Laboratory.
+
+	Authors and other BRL-CAD contributors must comply with the copyright
+	terms for their respective contributions unless otherwise noted or
+	arranged.  This includes an implicit assignment of copyright for any
+	and all contributions being made.  The following notice should be
+	prominent in the BRL-CAD sources:
+
+	  Copyright (c) 1984-2010 United States Government as represented by
+	  the U.S. Army Research Laboratory.
+
+License:
+
+	BRL-CAD is Open Source software with copyright primarily held by the
+	U.S. Government.  The source code is controlled and maintained by a
+	core team of Open Source developers working around the world.  Those
+	core developers operate under a meritocracy organizational structure
+	adhering to developer guidelines outlined in the HACKING developer's
+	guide and to the legal conventions and requirements outlined in this
+	document.
+
+	As a unified work, BRL-CAD is made available under the terms of the
+	GNU Lesser General Public License (LGPL) as published by the Free
+	Software Foundation.
+
+	As distinctly organized and separate components, parts of BRL-CAD are
+	made available under different licenses for different portions
+	including the BSD license and files in the public domain. The Overview
+	section describes how the various licenses apply to the different
+	portions of BRL-CAD.
+
+	BRL-CAD is distributed in the hope that it will be useful, but WITHOUT
+	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+	FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+	License for more details.
+
+	You should have received a copy of the GNU Lesser General Public
+	License along with this file.  If you did not, please contact one of
+	the BRL-CAD project administrators listed at the SourceForge project
+	site http://sf.net/projects/brlcad/ or listed in the AUTHORS file
+	included as part of the distribution.
+
+On Debian GNU/Linux systems, the complete text of the GNU Lesser
+General Public License can be found in
+'/usr/share/common-licenses/LGPL-2.1'.
