@@ -6061,22 +6061,22 @@ go_new_view(struct ged *gedp,
 	int arg_start = 3;
 	int newargs = 0;
 	int ac;
-	char **av;
+	const char **av;
 
 	ac = argc + newargs;
-	av = (char **)bu_malloc(sizeof(char *) * (ac+1), "go_new_view: av");
-	av[0] = (char *)argv[0];
+	av = (const char **)bu_malloc(sizeof(char *) * (ac+1), "go_new_view: av");
+	av[0] = argv[0];
 
 	/*
 	 * Stuff name into argument list.
 	 */
 	av[1] = "-n";
-	av[2] = (char *)argv[name_index];
+	av[2] = argv[name_index];
 
 	/* copy the rest */
 	for (i = arg_start; i < argc; ++i)
-	    av[i+newargs] = (char *)argv[i];
-	av[i+newargs] = (char *)NULL;
+	    av[i+newargs] = argv[i];
+	av[i+newargs] = (const char *)NULL;
 
 	new_gdvp->gdv_dmp = dm_open(go_current_gop->go_interp, type, ac, av);
 	if (new_gdvp->gdv_dmp == DM_NULL) {
