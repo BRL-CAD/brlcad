@@ -690,7 +690,7 @@ view_pixel(register struct application *ap)
     }
     if (outputfile != NULL) {
 	    bu_semaphore_acquire (BU_SEM_SYSCALL);
-	    bu_image_save_writeline(bif, ap->a_y, scanline[ap->a_y].sl_buf);
+	    bu_image_save_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf);
             bu_semaphore_release(BU_SEM_SYSCALL);
     }
     bu_free(scanline[ap->a_y].sl_buf, "sl_buf scanline buffer");
