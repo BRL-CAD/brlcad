@@ -792,7 +792,7 @@ int process_manual_scale_factor(
         return BRLCAD_ERROR;
     }
 
-    if (*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr == *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr) {
+    if (EQUAL(*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr, *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr)) {
         /* manual scale factor = auto scale
 	 * factor. derived_dem_max_raw_elevation is any value
 	 * 0-999999
@@ -891,7 +891,7 @@ int process_manual_dem_max_raw_elevation(
         return BRLCAD_ERROR;
     }
 
-    if (*in_manual_dem_max_raw_elevation_ptr == *in_derived_dem_max_raw_elevation_ptr) {
+    if (EQUAL(*in_manual_dem_max_raw_elevation_ptr, *in_derived_dem_max_raw_elevation_ptr)) {
         /* user input 'dem max raw elevation' = 'derived dem max raw
          * elevation'.  the derived raw dem elevation must be derived
          * from the real elevation listed in the 'a' record.
@@ -998,7 +998,7 @@ int process_manual_dem_max_real_elevation(
     dem_max_raw_elevation = (adjusted_manual_dem_max_real_elevation - *in_datum_elevation_in_curr_b_record_ptr) / *in_z_spatial_resolution_ptr;
 
     /* report to user the actual max real elevation used if not the value the user entered */
-    if (adjusted_manual_dem_max_real_elevation != *in_manual_dem_max_real_elevation_ptr) {
+    if (!EQUAL(adjusted_manual_dem_max_real_elevation, *in_manual_dem_max_real_elevation_ptr)) {
         /* real elevations are processed in the unit milimeters, convert to meters before reporting to user */
         bu_log("Using max real elevation '%g' meters instead of '%g' meters to allow correct scaling.\n",
 	       (adjusted_manual_dem_max_real_elevation / conversion_factor_to_milimeters[2]),
@@ -1234,7 +1234,7 @@ read_dem(
          * record but this is not supported by this code.
 	 */
         if (curr_b_record > 1) {
-            if (datum_elevation_in_curr_b_record != datum_elevation_in_previous_b_record) {
+            if (!EQUAL(datum_elevation_in_curr_b_record, datum_elevation_in_previous_b_record)) {
                 bu_log("Datum elevation in 'B' record number '%ld' does not match previous 'B' record datum elevations.\n", 
 		       curr_b_record);
                 bu_log("Datum elevation in current b record is: %g\n", datum_elevation_in_curr_b_record);
@@ -1285,7 +1285,7 @@ read_dem(
             }
 
             /* test for zero to avoid divide by 0 math error */
-            if (derived_dem_max_raw_elevation != 0) {
+            if (!NEAR_ZERO(derived_dem_max_raw_elevation, SMALL_FASTF)) {
                 raw_dem_2_raw_dsp_auto_scale_factor = DSP_MAX_RAW_ELEVATION / (double)derived_dem_max_raw_elevation;
             } else {
                 raw_dem_2_raw_dsp_auto_scale_factor = 1;
@@ -1563,10 +1563,10 @@ convert_load_order(
     FILE *fp4;
     long int offset = 0;
     long int column = 0;
-    unsigned short int *buf3;
+    unsigned short int *buf3 = NULL;
     unsigned short int buf4 = 0;
 
-    buf3 = bu_malloc(sizeof(unsigned short int) * (*in_ydim), "buf3");
+    buf3 = bu_calloc(1, *in_ydim, "buf3");
 
     if ((fp4=fopen(in_dsp_output_filename, "wb")) == NULL) {
         bu_log("Could not open '%s' for write.\n", in_dsp_output_filename);
@@ -1589,6 +1589,7 @@ convert_load_order(
     }
     fclose(fp4);
     bu_free(buf3, "buf3");
+
     return BRLCAD_OK;
 }
 
@@ -1664,6 +1665,11 @@ main(int ac, char *av[])
     double unit_elevation = 0;                         /* z scaling factor in milimeters */
     char *tmp_ptr = '\0';
     int string_length = 0;
+
+    char *temp_filename;           /* temp file path and file name */
+    char *input_filename;          /* dem input file path and file name */
+    char *dsp_output_filename;     /* dsp output file path and file name */
+    char *model_output_filename;   /* model output file path and file name */
 
     /*
      * element_counts[]
@@ -2080,15 +2086,10 @@ main(int ac, char *av[])
     remove_whitespace(av[1]);
     string_length = strlen(av[1]) + 5;
 
-    char *input_filename;
-    char *temp_filename;
-    char *dsp_output_filename;
-    char *model_output_filename;
-
-    input_filename = bu_malloc(sizeof(char *) * string_length, "input_filename");
-    temp_filename = bu_malloc(sizeof(char *) * string_length, "temp_filename");
-    dsp_output_filename = bu_malloc(sizeof(char *) * string_length, "dsp_output_filename");
-    model_output_filename = bu_malloc(sizeof(char *) * string_length, "model_output_filename");
+    temp_filename = bu_calloc(1, string_length, "temp_filename");
+    input_filename = bu_calloc(1, string_length, "input_filename");
+    dsp_output_filename = bu_calloc(1, string_length, "dsp_output_filename");
+    model_output_filename = bu_calloc(1, string_length, "model_output_filename");
 
     tmp_ptr = strcpy(input_filename, av[1]);
     tmp_ptr = strcpy(temp_filename, input_filename);
@@ -2155,6 +2156,15 @@ main(int ac, char *av[])
     bu_free(temp_filename, "temp_filename");
     bu_free(dsp_output_filename, "dsp_output_filename");
     bu_free(model_output_filename, "model_output_filename");
+    bu_free(temp_filename, "temp_filename");
+    bu_free(input_filename, "input_filename");
+    bu_free(dsp_output_filename, "dsp_output_filename");
+    bu_free(model_output_filename, "model_output_filename");
+    temp_filename = NULL;
+    input_filename = NULL;
+    dsp_output_filename = NULL;
+    model_output_filename = NULL;
+
     return 0;
 }
 

@@ -48,7 +48,7 @@ int readMaterials(FILE *fp)
       return 1;
 
    char descr[LINELEN];
-   while (fscanf(fp, "%s%d%[^\n]", &name, &mat, &descr) != EOF)
+   while (fscanf(fp, "%s%d%[^\n]", name, &mat, descr) != EOF)
    {
       if (name[0] == '-')
          continue;

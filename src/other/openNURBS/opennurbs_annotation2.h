@@ -248,7 +248,7 @@ class ON_CLASS ON_Annotation2 : public ON_Geometry
     degreesym = 176,
     radiussym = L'R',
     diametersym = 216,
-    plusminussym = 177,
+    plusminussym = 177
   };
 
 public:
@@ -347,7 +347,7 @@ public:
     tjMiddleRight  = tjMiddle | tjRight,
     tjTopLeft      = tjTop    | tjLeft,
     tjTopCenter    = tjTop    | tjCenter,
-    tjTopRight     = tjTop    | tjRight,
+    tjTopRight     = tjTop    | tjRight
   };
 
   /*
@@ -1118,7 +1118,7 @@ public:
     dim_pt_count    = 4, // number of m_points[] in a radial dim
 
     // Points calculated from values in m_points[]
-    text_pivot_pt = 10000, // start/end of dimension text at tail
+    text_pivot_pt = 10000 // start/end of dimension text at tail
   };
 
   ON_RadialDimension2();
@@ -1611,7 +1611,7 @@ public:
   enum DIRECTION
   {
     x = 0,  // measures horizontally
-    y = 1,  // measures vertically
+    y = 1  // measures vertically
   };
 
   ON_OrdinateDimension2();

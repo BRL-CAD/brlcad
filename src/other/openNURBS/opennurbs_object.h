@@ -319,7 +319,7 @@ in a .CPP file.
     /* virtual bool CopyFrom( const ON_Object* src )      */    \
                                                                 \
   public:                                                       \
-    cls * Duplicate() const;                                    \
+    cls * Duplicate() const                                     \
     /*Description: Expert level tool - no support available.*/  \
     /*If this class is derived from CRhinoObject, use CRhinoObject::DuplicateRhinoObject instead*/
 
