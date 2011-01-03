@@ -1563,9 +1563,8 @@ convert_load_order(
     FILE *fp4;
     long int offset = 0;
     long int column = 0;
-    unsigned short int *buf3;
-    unsigned short int buf4 = 0;
     unsigned short int *buf3 = NULL;
+    unsigned short int buf4 = 0;
 
     buf3 = bu_calloc(1, *in_ydim, "buf3");
 
