@@ -109,14 +109,15 @@ hitfunc(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
     struct tri_specific *tsp;
     struct hit *hp;
 
+    if(h->nhits > (MAXHITS-1)) {
+	bu_log("Too many hits!\n");
+	return 1;
+    }
+
     hp = &h->hits[h->nhits];
     tsp = hp->hit_private = &h->ts[h->nhits];
     h->nhits++;
 
-    if(h->nhits > MAXHITS) {
-	bu_log("Too many hits!\n");
-	return 1;
-    }
 
     hp->hit_magic = RT_HIT_MAGIC;
     hp->hit_dist = id->dist;
@@ -150,9 +151,6 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     /* use hitfunc to build the hit list */
     if(hitdata.nhits == 0)
 	return 0;
-
-    /* this func is in ars, for some reason. All it needs is the dist. */
-    rt_hitsort(hitdata.hits, hitdata.nhits);
 
     return rt_bot_makesegs(hitdata.hits, hitdata.nhits, stp, rp, ap, seghead, NULL);
 }
