@@ -162,21 +162,30 @@ struct command_tab rt_cmdtab[];
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"%d",	1, "bounces",	bu_byteoffset(max_bounces),		BU_STRUCTPARSE_FUNC_NULL, "bounces", &max_bounces },
-    {"%d",	1, "ireflect",	bu_byteoffset(max_ireflect),		BU_STRUCTPARSE_FUNC_NULL, "max ireflect", &max_ireflect },
-    {"%d",	1, "a_onehit",	bu_byteoffset(a_onehit),		BU_STRUCTPARSE_FUNC_NULL, "one hit", &a_onehit },
-    {"%f", ELEMENTS_PER_VECT, "background", bu_byteoffset(background[0]),	BU_STRUCTPARSE_FUNC_NULL, "background color", &background },
-    {"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+	{"%f", 1, "gamma", 0, BU_STRUCTPARSE_FUNC_NULL},
+	{"%d", 1, "bounces", 0, BU_STRUCTPARSE_FUNC_NULL},
+	{"%d", 1, "ireflect", 0, BU_STRUCTPARSE_FUNC_NULL},
+	{"%d", 1, "a_onehit", 0, BU_STRUCTPARSE_FUNC_NULL},
+	{"%f", ELEMENTS_PER_VECT, "background", 0, BU_STRUCTPARSE_FUNC_NULL},
+	{"%d", 1, "overlay", 0, BU_STRUCTPARSE_FUNC_NULL},
+	{"%d", 1, "ov", 0, BU_STRUCTPARSE_FUNC_NULL},
+	{"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL}
 };
 
 struct bu_structparse set_parse[] = {
-    {"%d",	1, "width",	bu_byteoffset(width),		BU_STRUCTPARSE_FUNC_NULL, "width", &width },
-    {"%d",	1, "height",	bu_byteoffset(height),		BU_STRUCTPARSE_FUNC_NULL, "height", &height },
-    {"%f",	1, "perspective", bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL, "perspective", &rt_perspective },
-    {"%f",	1, "angle",	bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL, "angle", &rt_perspective },
-    {"%p", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL, "params", NULL },
-    {"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+	{"%d",      1, "width",     bu_byteoffset(width),           BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",      1, "height",    bu_byteoffset(height),          BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",      1, "perspective", bu_byteoffset(rt_perspective),        BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",      1, "angle",     bu_byteoffset(rt_perspective),  BU_STRUCTPARSE_FUNC_NULL },
+#if !defined(_WIN32) || defined(__CYGWIN__)
+	{"%d",  1, "rt_bot_minpieces", bu_byteoffset(rt_bot_minpieces), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "rt_bot_tri_per_piece", bu_byteoffset(rt_bot_tri_per_piece), BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  1, "rt_cline_radius", bu_byteoffset(rt_cline_radius), BU_STRUCTPARSE_FUNC_NULL },
+#endif
+	{"%p", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
+	{"",        0, (char *)0,   0,                              BU_STRUCTPARSE_FUNC_NULL }
 };
+
 
 /*
  * For certain hypersample values there is a particular advantage to subdividing
