@@ -10,6 +10,6 @@
   <!-- the base path below works. This referencing is needed so -->
   <!-- that xincluded sections of documents referenced across -->
   <!-- multiple directories can still find their target images. -->
-  <base>@CMAKE_SOURCE_DIR@/doc/docbook/system/man1</base>
+  <base>@srcdir@/system/man1</base>
 </fop>
 
