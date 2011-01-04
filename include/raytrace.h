@@ -1982,6 +1982,9 @@ struct rt_functab {
 			     struct model * /*m*/,
 			     struct rt_db_internal * /*ip*/,
 			     const struct bn_tol * /*tol*/));
+    void (*ft_brep) BU_ARGS((ON_Brep ** /*b*/,
+			    struct rt_db_internal * /*ip*/,
+			    const struct bn_tol * /*tol*/));
     int (*ft_import5) BU_ARGS((struct rt_db_internal * /*ip*/,
 			       const struct bu_external * /*ep*/,
 			       const mat_t /*mat*/,
