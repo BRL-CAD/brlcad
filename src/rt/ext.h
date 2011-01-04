@@ -26,6 +26,7 @@
  *	Michael John Muuss
  *
  */
+
 #include "optical.h"
 
 /***** Variables declared in opt.c *****/

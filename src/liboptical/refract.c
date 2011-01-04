@@ -49,7 +49,7 @@ int max_bounces = 5;	/* Maximum recursion level */
 
 
 #ifdef RT_MULTISPECTRAL
-extern const struct bn_table *spectrum;
+#include "spectrum.h"
 extern struct bn_tabdata *background;
 #else
 extern vect_t background;
