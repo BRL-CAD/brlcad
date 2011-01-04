@@ -6,12 +6,13 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/src/adrt/librender
 )
 
-SET(LIBTIE_PRECISION_SRCS "libtie/tie.c;libtie/tie_kdtree.c")
-add_library(libtie0 ${LIBTIE_PRECISION_SRCS})
-target_link_libraries(libtie0 libbu)
-SET_TARGET_PROPERTIES(libtie0 PROPERTIES COMPILE_DEFINITIONS "TIE_PRECISION=0")
-BRLCAD_ADDLIB(libtie "${LIBTIE_PRECISION_SRCS}" "libtie0 libbu")
-SET_TARGET_PROPERTIES(libtie PROPERTIES COMPILE_DEFINITIONS "TIE_PRECISION=1")
+SET(LIBTIE_SRCS 
+	libtie/tie0.c
+	libtie/tie1.c
+	libtie/tie_kdtree0.c
+	libtie/tie_kdtree1.c
+)
+BRLCAD_ADDLIB(libtie "${LIBTIE_SRCS}" libbu)
 
 SET(LIBRENDER_SRCS
   load.c 
@@ -42,20 +43,6 @@ SET(LIBRENDER_SRCS
   librender/texture_stack.c
 )
 BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" "libtie libgcv")
-
-SET(ADRT_MASTER_SRCS
-  master/compnet.c 
-  master/dispatcher.c 
-  master/tienet_master.c 
-  master/master.c
-)
-BRLCAD_ADDEXEC(adrt_master "${ADRT_MASTER_SRCS}" "libtie libbu ${M_LIBRARY} ${ZLIB_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${BSD_LIBRARY}")
-
-SET(ADRT_SLAVE_SRCS
-  slave/slave.c
-  slave/tienet_slave.c
-)
-BRLCAD_ADDEXEC(adrt_slave "${ADRT_MASTER_SRCS}" "libtie librender ${CMAKE_THREAD_LIBS_INIT}")
 
 SET(tie_HDRS
 	adrt.h  
