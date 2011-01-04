@@ -5,7 +5,8 @@ Changes include using directory named tkhtml instead of htmlwidget,
 not using tkhtml's make logic, and not including any of the test code.
 Only the tkhtml widget itself is included, not the hv browser code.
 
-Autotools logic has been replaced by a CMake script.
+The top-level Makefile.in file was converted to Makefile.am and
+modified to create a libtool library.
 
 The scripts that generate source files (src/*.tcl) were updated to
 generate sources in the correct location compatible with out-of-dir
