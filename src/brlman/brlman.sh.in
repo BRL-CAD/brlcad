@@ -35,9 +35,8 @@
 #
 ###
 #
-#  A substitute for the "man" command for those systems that do not
-#  have NROFF.  Henry Spencer's "nroff -man" replacement called AWF
-#  is used instead.
+#  A wrapper for the "man" command that sets up the BRL-CAD directories
+#  instead of requiring the user to specify them on the command line.
 #
 ###
 
