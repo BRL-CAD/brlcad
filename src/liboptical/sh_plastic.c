@@ -41,7 +41,6 @@
 
 #ifdef RT_MULTISPECTRAL
 #  include "spectrum.h"
-extern const struct bn_table	*spectrum;
 #endif
 
 

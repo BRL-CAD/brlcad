@@ -27,10 +27,7 @@
  *
  */
 
-/***** Variables declared in liboptical or multispectral *****/
-#ifdef RT_MULTISPECTRAL
-extern const struct bn_table		*spectrum;
-#endif  /* RT_MULTISPECTRAL */
+#include "optical.h"
 
 /***** Variables declared in opt.c *****/
 extern char		*framebuffer;		/* desired framebuffer */
