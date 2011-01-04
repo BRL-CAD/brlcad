@@ -284,10 +284,6 @@ split_trims_hv_tangent(const ON_Curve* curve, ON_Interval& t, std::list<double>&
 int
 brep_build_bvh(struct brep_specific* bs)
 {
-    int depth[101];
-    for(int i = 0; i < 101; i++){
-	    depth[i] = 0;
-    }
     // First, run the openNURBS validity check on the brep in question
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
@@ -321,7 +317,6 @@ brep_build_bvh(struct brep_specific* bs)
      */
     ON_BrepFaceArray& faces = brep->m_F;
     for (int i = 0; i < faces.Count(); i++) {
-	int currdepth;
 	ON_BrepFace& face = faces[i];
 	/*
 	 * bu_log("Prepping Face: %d of %d\n", i+1, faces.Count());
@@ -329,15 +324,6 @@ brep_build_bvh(struct brep_specific* bs)
 	SurfaceTree* st = new SurfaceTree(&face);
 	face.m_face_user.p = st;
 	bs->bvh->addChild(st->getRootNode());
-        currdepth = st->depth(); 
-	if (currdepth <= 100) {
-		depth[currdepth] = depth[currdepth] + 1;
-	} else {
-		bu_log("Error - depth > 100\n");
-	}
-    }
-    for (int i = 0; i < 40; i++) {
-	    bu_log("depth: %d count: %d\n", i, depth[i]);
     }
     bs->bvh->BuildBBox();
     return 0;
