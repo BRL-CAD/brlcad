@@ -57,7 +57,7 @@ static void render_camera_prep_ortho(render_camera_t *camera);
 static void render_camera_prep_persp(render_camera_t *camera);
 static void render_camera_prep_persp_dof(render_camera_t *camera);
 
-static struct render_shader_s *render_shader_register (const char *name, void (*init)(render_t *, char *));
+static struct render_shader_s *render_shader_register (const char *name, void (*init)(render_t *, const char *));
 
 void
 render_camera_init(render_camera_t *camera, int threads)
