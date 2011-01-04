@@ -1,7 +1,4 @@
 
-SUBDIRS = \
-	Themes
-
 tcldir = $(BRLCAD_DATA)/tclscripts/archer/images
 
 dist_tcl_DATA = \
