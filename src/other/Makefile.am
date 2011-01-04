@@ -163,8 +163,7 @@ SUBDIRS = \
 	${TKHTMLDIR} \
 	${TKTABLEDIR} \
 	${OPENNURBSDIR} \
-	${TNTDIR} \
-	awf
+	${TNTDIR} 
 
 endif
 # end ONLY_RTS
@@ -180,7 +179,6 @@ EXTRA_DIST = \
 # FIXME: need to only traverse tcl/tk if configured
 DIST_SUBDIRS = \
 	URToolkit \
-	awf \
 	incrTcl \
 	iwidgets \
 	jove \
