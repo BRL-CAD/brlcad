@@ -66,13 +66,19 @@ if test ! -f "$ASC2PIX" ; then
     exit 1
 fi
 
+GENCOLOR="`ensearch gencolor`"
+if test ! -f "$GENCOLOR" ; then
+    echo "Unable to find gencolor, aborting"
+    exit 1
+fi
+
 EAGLECAD=eagleCAD-512x438.pix
 rm -f shaders.rt shaders.g shaders.rt.pix shaders.pixdiff.log shaders.rt.log shaders.log shaders.txt shaders.dat $EAGLECAD shaders.mged
 
 TOP_SRCDIR=$1
 
 if [ ! -f ebm.bw ] ; then
-	../src/util/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1
+	$GENCOLOR -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1
 fi
 
 

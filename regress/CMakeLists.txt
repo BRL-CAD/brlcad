@@ -18,7 +18,7 @@ IF(SH_EXEC)
 		)
 	ADD_CUSTOM_TARGET(shaders-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/shaders.sh ${CMAKE_SOURCE_DIR}
-		DEPENDS rt mged pixdiff asc2pix
+		DEPENDS rt mged pixdiff asc2pix gencolor
 		)
 	ADD_CUSTOM_TARGET(spdi-regress
 		${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/spdi.sh ${CMAKE_SOURCE_DIR}
