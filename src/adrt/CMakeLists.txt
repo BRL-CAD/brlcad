@@ -6,6 +6,11 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/src/adrt/librender
 )
 
+#TODO - look at the Windows build logic that handles
+#the dllimport/dllexport magic needed for this lib - 
+#the standard ADDLIB macro probably isn't going to
+#cover it
+
 SET(LIBTIE_SRCS 
 	libtie/tie0.c
 	libtie/tie1.c
