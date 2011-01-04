@@ -1,2 +1,0 @@
-parse_check: $SRCDIR/data/zero_index_failcheck.obj
-SYNTAX ERROR: $SRCDIR/data/zero_index_failcheck.obj:8: index '0': Invalid vertex reference

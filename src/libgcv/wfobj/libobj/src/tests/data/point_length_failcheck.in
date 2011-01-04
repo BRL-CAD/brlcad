@@ -1,2 +1,0 @@
-parse_check: $SRCDIR/data/point_length_failcheck.obj
-SYNTAX ERROR: $SRCDIR/data/point_length_failcheck.obj:5: syntax error
