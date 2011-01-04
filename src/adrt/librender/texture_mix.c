@@ -52,8 +52,6 @@ void texture_mix_free(texture_t *texture) {
 void texture_mix_work(__TEXTURE_WORK_PROTOTYPE__) {
     texture_mix_t *td;
     TIE_3 t;
-    int i;
-
 
     td = (texture_mix_t *)texture->data;
 

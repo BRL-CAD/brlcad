@@ -94,9 +94,9 @@ render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 
     /* Draw spall Cone */
     if (tie_work(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
-	pixel->v[0] = 0.4;
-	pixel->v[1] = 0.4;
-	pixel->v[2] = 0.4;
+	pixel->v[0] = (tfloat)0.4;
+	pixel->v[1] = (tfloat)0.4;
+	pixel->v[2] = (tfloat)0.4;
     }
 
     /*
@@ -148,13 +148,13 @@ render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 
 
     if (hit.mesh->flags == 1) {
-	VSET(color.v, 0.9, 0.2, 0.2);
+	VSET(color.v, (tfloat)0.9, (tfloat)0.2, (tfloat)0.2);
     } else {
 	/* Mix actual color with white 4:1, shade 50% darker */
-	VSET(color.v, 1.0, 1.0, 1.0);
-	VSCALE(color.v,  color.v,  3.0);
+	VSET(color.v, (tfloat)1.0, (tfloat)1.0, (tfloat)1.0);
+	VSCALE(color.v,  color.v,  (tfloat)3.0);
 	VADD2(color.v,  color.v,  hit.mesh->attributes->color.v);
-	VSCALE(color.v,  color.v,  0.125);
+	VSCALE(color.v,  color.v,  (tfloat)0.125);
     }
 
 #if 0
@@ -173,9 +173,9 @@ render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
     }
 #endif
 
-    pixel->v[0] += 0.1;
-    pixel->v[1] += 0.1;
-    pixel->v[2] += 0.1;
+    pixel->v[0] += (tfloat)0.1;
+    pixel->v[1] += (tfloat)0.1;
+    pixel->v[2] += (tfloat)0.1;
 }
 
 int

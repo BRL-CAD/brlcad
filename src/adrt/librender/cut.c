@@ -148,7 +148,7 @@ render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
     dot = fabs(VDOT( ray->dir.v,  hit.id.norm.v));
 
     if (hit.mesh->flags & (ADRT_MESH_SELECT|ADRT_MESH_HIT)) {
-	VSET(color.v, hit.mesh->flags & ADRT_MESH_HIT ? 0.9 : 0.2, 0.2, hit.mesh->flags & ADRT_MESH_SELECT ? 0.9 : 0.2);
+	VSET(color.v, hit.mesh->flags & ADRT_MESH_HIT ? (tfloat)0.9 : (tfloat)0.2, (tfloat)0.2, hit.mesh->flags & ADRT_MESH_SELECT ? (tfloat)0.9 : (tfloat)0.2);
     } else {
 	/* Mix actual color with white 4:1, shade 50% darker */
 #if 0
@@ -157,7 +157,7 @@ render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 	VADD2(color.v,  color.v,  hit.mesh->attributes->color.v);
 	VSCALE(color.v,  color.v,  0.125);
 #else
-	VSET(color.v, 0.8, 0.8, 0.7);
+	VSET(color.v, (tfloat)0.8, (tfloat)0.8, (tfloat)0.7);
 #endif
     }
 
@@ -178,9 +178,9 @@ render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
     }
 #endif
 
-    pixel->v[0] += 0.1;
-    pixel->v[1] += 0.1;
-    pixel->v[2] += 0.1;
+    pixel->v[0] += (tfloat)0.1;
+    pixel->v[1] += (tfloat)0.1;
+    pixel->v[2] += (tfloat)0.1;
 }
 
 int
