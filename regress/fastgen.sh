@@ -45,12 +45,12 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . $1/regress/library.sh
 
-F4G="`ensearch conv/fast4-g`"
+F4G="`ensearch fast4-g`"
 if test ! -f "$F4G" ; then
     echo "Unable to find fast4-g, aborting"
     exit 1
 fi
-G_DIFF="`ensearch gtools/g_diff`"
+G_DIFF="`ensearch g_diff`"
 if test ! -f "$G_DIFF" ; then
     echo "Unable to find g_diff, aborting"
     exit 1

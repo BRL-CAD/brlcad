@@ -42,10 +42,28 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . $1/regress/library.sh
 
-MGED="`ensearch mged/mged`"
+MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
     echo "Unable to find mged, aborting"
     exit 1
+fi
+
+RT="`ensearch rt`"
+if test ! -f "$RT" ; then
+	echo "Unable to find rt, aborting"
+	exit 1
+fi
+
+PIXDIFF="`ensearch pixdiff`"
+if test ! -f "$PIXDIFF" ; then
+	echo "Unable to find pixdiff, aborting"
+	exit 1
+fi
+
+ASC2PIX="`ensearch asc2pix`"
+if test ! -f "$ASC2PIX" ; then
+	echo "Unable to find asc2pix, aborting"
+	exit 1
 fi
 
 
@@ -95,7 +113,7 @@ EOF
 
 echo "rendering..."
 
-../src/rt/rt -M -B -o spdi.pix spdi.g 'all.g' 2>> spdi.log <<EOF
+$RT -M -B -o spdi.pix spdi.g 'all.g' 2>> spdi.log <<EOF
 viewsize 3.200000000000000e+03;
 orientation 0.000000000000000e+00 0.000000000000000e+00 0.000000000000000e+00 1.000000000000000e+00;
 eye_pt 0.000000000000000e+00 0.000000000000000e+00 2.413000000000000e+03;
@@ -103,8 +121,8 @@ start 0; clean;
 end;
 
 EOF
-../src/conv/asc2pix < $1/regress/spdipix.asc > spdi_ref.pix
-../src/util/pixdiff spdi.pix spdi_ref.pix > spdi_diff.pix 2>> spdi.log
+$ASC2PIX < $1/regress/spdipix.asc > spdi_ref.pix
+$PIXDIFF spdi.pix spdi_ref.pix > spdi_diff.pix 2>> spdi.log
 NUMBER_WRONG=`tr , '\012' < spdi.log | awk '/many/ {print $1}'`
 echo "spdi.pix $NUMBER_WRONG off by many"
 
