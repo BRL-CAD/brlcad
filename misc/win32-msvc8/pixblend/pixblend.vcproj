@@ -79,6 +79,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="libbu.lib"
 				OutputFile="$(PlatformName)\$(ConfigurationName)/pixblend.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
