@@ -34,6 +34,7 @@
 #  endif
 static int64_t lastTime = 0;
 #else /* !defined(_WIN32) */
+#include <windows.h>
 #  include <mmsystem.h>
 static unsigned long int lastTime = 0;
 static LARGE_INTEGER     qpcLastTime;
@@ -81,17 +82,20 @@ int64_t bu_gettime(void)
 	}
 
 #else /* !defined(_WIN32) */
-	static bool inited = false;
+	{
+	static int inited = 0;
 	if (!inited) {
-		inited = true;
+		inited = 1;
+		/*
 		InitializeCriticalSection(&timer_critical);
+		*/
 	}
 
 	if (qpcFrequency != 0) {
 		/* main timer is qpc */
 		LARGE_INTEGER now;
 		QueryPerformanceCounter(&now);
-
+		{
 		LONGLONG diff     = now.QuadPart - qpcLastTime.QuadPart;
 		LONGLONG clkSpent = now.QuadPart - qpcLastCalibration;
 		qpcLastTime = now;
@@ -112,20 +116,21 @@ int64_t bu_gettime(void)
 		}
 
 		currentTime += (int64_t)((double) diff / (double) qpcFrequency);
+		}
 	}
 	else {
-		static bool sane = true;
+		static int sane = 1;
+		LARGE_INTEGER freq;
 
 		/* should only get into here once on app start */
 		if (!sane) {
 			bu_log("Sanity check failure in bu_gettime()\n");
 		}
-		sane = false;
+		sane = 0;
 
 		/* make sure we're at our best timer resolution possible */
 		timeBeginPeriod(1);
 
-		LARGE_INTEGER freq;
 		if (QueryPerformanceFrequency(&freq)) {
 			QueryPerformanceCounter(&qpcLastTime);
 			qpcFrequency	= freq.QuadPart;
@@ -135,15 +140,18 @@ int64_t bu_gettime(void)
 			currentTime += (int64_t)(1.0e3 * (double)timeLastCalibration); /* sync with system clock */
 		}
 		else {
+			/*
 			logDebugMessage(1,"QueryPerformanceFrequency failed with error %d\n", GetLastError());
-
+*/
 			lastTime = (unsigned long int)timeGetTime();
 			currentTime += (int64_t)(1.0e3 * (double)lastTime); /* sync with system clock */
 		}
 	}
 
+	/*
 	UNLOCK_TIMER_MUTEX
-
+	*/
+	}
 #endif /* !defined(_WIN32) */
 
 		return currentTime;
