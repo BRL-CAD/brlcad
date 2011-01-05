@@ -39,6 +39,7 @@
 #  include <sys/time.h>
 #endif
 #include <string.h>
+#include <time.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -65,9 +66,7 @@ Usage: pixblend [-{r|i} value] [-s [seed]] file1.pix file2.pix > out.pix\n";
 int
 timeseed(void)
 {
-    struct timeval tv;
-    gettimeofday(&tv, (struct timezone *)NULL);
-    return (int)tv.tv_usec;
+	return time(0);
 }
 
 
@@ -180,7 +179,7 @@ main(int argc, char **argv)
     }
 
     if (rflg) {
-#ifdef HAVE_SRAND48
+#ifdef HAVE_DRAND48
 	srand48((long)seed);
 #else
 	threshold = (int) (value * 65536.0);
@@ -199,7 +198,7 @@ main(int argc, char **argv)
     while (1) {
 	unsigned char *cb1, *cb2;	/* current input buf ptrs */
 	unsigned char *cb3; 	/* current output buf ptr */
-	int r1, r2, len, todo;
+	size_t r1, r2, len, todo;
 
 	++c;
 	r1 = fread(b1, 1, CHUNK, f1);
@@ -234,7 +233,6 @@ main(int argc, char **argv)
 		} else {
 #ifdef HAVE_DRAND48
 		    double d;
-		    extern double drand48(void);
 		    d = drand48();
 		    if (d >= value)
 #else
