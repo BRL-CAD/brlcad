@@ -4,8 +4,8 @@ lib_LTLIBRARIES = \
 	libitkstub@ITCL_VERSION@.la
 
 noinst_LTLIBRARIES = libitg.la
-
-AM_CFLAGS = ${X_CFLAGS}
+ 
+AM_CFLAGS = ${X_CFLAGS} -DSTDC_HEADERS
 
 # make sure we find Tcl's private headers
 if TCL_8_4_HEADERS

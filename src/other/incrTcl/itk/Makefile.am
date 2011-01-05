@@ -4,7 +4,7 @@ SUBDIRS = \
 	generic \
 	library
 
-AM_CFLAGS = ${X_CFLAGS}
+AM_CFLAGS = ${X_CFLAGS} -DSTDC_HEADERS
 
 brlcadscriptdir = $(libdir)/itk@ITCL_VERSION@
 brlcadscript_SCRIPTS = pkgIndex.tcl
