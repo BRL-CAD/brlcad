@@ -4315,7 +4315,6 @@ AC_CONFIG_FILES([
 	src/other/URToolkit/man/Makefile
 	src/other/URToolkit/tools/Makefile
 	src/other/URToolkit/tools/clock/Makefile
-	src/other/awf/Makefile
 	src/other/incrTcl/Makefile
 	src/other/incrTcl/doc/Makefile
 	src/other/incrTcl/itcl/Makefile
