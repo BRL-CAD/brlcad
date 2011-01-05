@@ -4315,9 +4315,7 @@ AC_CONFIG_FILES([
 	src/other/URToolkit/man/Makefile
 	src/other/URToolkit/tools/Makefile
 	src/other/URToolkit/tools/clock/Makefile
-	src/other/awf/Makefile
 	src/other/incrTcl/Makefile
-	src/other/incrTcl/doc/Makefile
 	src/other/incrTcl/itcl/Makefile
 	src/other/incrTcl/itcl/doc/Makefile
 	src/other/incrTcl/itcl/generic/Makefile
@@ -4329,11 +4327,11 @@ AC_CONFIG_FILES([
 	src/other/incrTcl/itk/library/Makefile
 	src/other/incrTcl/itk/pkgIndex.tcl
 	src/other/incrTcl/tools/Makefile
-	src/other/iwidgets/Makefile
-	src/other/iwidgets/doc/Makefile
-	src/other/iwidgets/generic/Makefile
-	src/other/iwidgets/iwidgets.tcl
-	src/other/iwidgets/pkgIndex.tcl
+	src/other/incrTcl/iwidgets/Makefile
+	src/other/incrTcl/iwidgets/doc/Makefile
+	src/other/incrTcl/iwidgets/generic/Makefile
+	src/other/incrTcl/iwidgets/iwidgets.tcl
+	src/other/incrTcl/iwidgets/pkgIndex.tcl
 	src/other/jove/Makefile
 	src/other/jove/teach-jove
 	src/other/libregex/Makefile
@@ -4356,10 +4354,6 @@ AC_CONFIG_FILES([
 	src/tclscripts/Makefile
 	src/tclscripts/archer/Makefile
 	src/tclscripts/archer/images/Makefile
-	src/tclscripts/archer/images/Themes/Makefile
-	src/tclscripts/archer/images/Themes/Crystal/Makefile
-	src/tclscripts/archer/images/Themes/Crystal_Large/Makefile
-	src/tclscripts/archer/images/Themes/Windows/Makefile
 	src/tclscripts/boteditor/Makefile
 	src/tclscripts/geometree/Makefile
 	src/tclscripts/hv3/Makefile

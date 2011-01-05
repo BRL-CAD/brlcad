@@ -49,12 +49,6 @@ else !BUILD_ITCL
 ITCLDIR=
 endif
 
-if BUILD_IWIDGETS
-IWIDGETSDIR=iwidgets
-else !BUILD_IWIDGETS
-IWIDGETSDIR=
-endif
-
 if BUILD_TERMLIB
 TERMLIBDIR=libtermlib
 else !BUILD_TERMLIB
@@ -155,7 +149,6 @@ SUBDIRS = \
 	${TCLDIR} \
 	${TKDIR} \
 	${ITCLDIR} \
-	${IWIDGETSDIR} \
 	${TERMLIBDIR} \
 	${JOVEDIR} \
 	${STEPDIR} \
@@ -180,7 +173,6 @@ EXTRA_DIST = \
 DIST_SUBDIRS = \
 	URToolkit \
 	incrTcl \
-	iwidgets \
 	jove \
 	libpng \
 	libregex \
