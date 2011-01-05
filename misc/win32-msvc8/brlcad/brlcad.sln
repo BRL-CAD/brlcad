@@ -1884,6 +1884,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "librender", "..\librender\l
 		Release.AspNetCompiler.Debug = "False"
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pixblend", "..\pixblend\pixblend.vcproj", "{20068CD5-F9D4-414C-A4AD-D7188108E593}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|Win32 = Release|Win32
@@ -2622,6 +2628,10 @@ Global
 		{DF9092D4-42CA-4532-BB96-EB5BBFA8308A}.Release|Win32.Build.0 = Release|Win32
 		{DF9092D4-42CA-4532-BB96-EB5BBFA8308A}.Release|x64.ActiveCfg = Release|x64
 		{DF9092D4-42CA-4532-BB96-EB5BBFA8308A}.Release|x64.Build.0 = Release|x64
+		{20068CD5-F9D4-414C-A4AD-D7188108E593}.Release|Win32.ActiveCfg = Release|Win32
+		{20068CD5-F9D4-414C-A4AD-D7188108E593}.Release|Win32.Build.0 = Release|Win32
+		{20068CD5-F9D4-414C-A4AD-D7188108E593}.Release|x64.ActiveCfg = Release|x64
+		{20068CD5-F9D4-414C-A4AD-D7188108E593}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -3,7 +3,8 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="pixblend"
-	ProjectGUID="{009F96D0-B85A-43E3-82ED-E0FA60AA9E00}"
+	ProjectGUID="{20068CD5-F9D4-414C-A4AD-D7188108E593}"
+	RootNamespace="pixblend"
 	>
 	<Platforms>
 		<Platform
@@ -47,7 +48,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
