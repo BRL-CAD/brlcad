@@ -44,6 +44,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* deprecate dbcp and merge functionality (and improved
+  double-buffering) with the buffer tool
+
 * make the converters export all top-level objects by default
 
 * investigate why solids.sh fails on three pixels on some 64-bit
