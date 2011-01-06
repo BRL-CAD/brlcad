@@ -173,7 +173,7 @@ TIE_EXPORT extern tfloat TIE_VAL(TIE_PREC);
 #define tie_kdtree_prep TIE_VAL(tie_kdtree_prep)
 #define TIE_PREC TIE_VAL(TIE_PREC)
 
-TIE_EXPORT extern int tie_check_degenerate;
+TIE_EXPORT BU_EXTERN(int tie_check_degenerate,);
 
 TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_init), (tie_t *tie, unsigned int tri_num, unsigned int kdmethod));
 TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_free), (tie_t *tie));
