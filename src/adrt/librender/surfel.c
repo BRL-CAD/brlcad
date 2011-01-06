@@ -77,7 +77,7 @@ render_surfel_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 	    }
 	}
 
-	VSET((*pixel).v, 0.8, 0.8, 0.8);
+	VSET((*pixel).v, (tfloat)0.8, (tfloat)0.8, (tfloat)0.8);
     }
 }
 

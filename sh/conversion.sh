@@ -61,7 +61,9 @@ fi
 LC_ALL=C
 
 # force posix behavior
-set -o posix >/dev/null 2>&1
+POSIX_PEDANTIC=1
+POSIXLY_CORRECT=1
+export POSIX_PEDANTIC POSIXLY_CORRECT
 
 
 #######################
@@ -497,7 +499,7 @@ EOF
 	fi
 
 	count=`expr $count + 1`
-	$ECHO "%-4s\tnmg: %s %s\tbot: %s %s %6lds %*s%ld %s:%s" $status $nmg $real_nmg $bot $real_bot $SECONDS \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
+	$ECHO "%-4s\tnmg: %s %s\tbot: %s %s %6.0fs %*s%.0f %s:%s" \"$status\" \"$nmg\" \"$real_nmg\" \"$bot\" \"$real_bot\" \"$SECONDS\" \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
     done
 
     # restore stdin

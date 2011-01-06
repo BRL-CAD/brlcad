@@ -44,20 +44,20 @@
 #define TIE_SEM_LAST (TIE_SEM_WORKER+1)
 
 struct render_shader_s {
-	char *name;
-	void (*init)(render_t *, char *);
+	const char *name;
+	void (*init)(render_t *, const char *);
 	void *dlh;	/* dynamic library handle */
 	struct render_shader_s *next;
 };
 
 static struct render_shader_s *shaders = NULL;
 
-void* render_camera_render_thread(int cpu, void *ptr);	/* for bu_parallel */
+void render_camera_render_thread(int cpu, genptr_t ptr);	/* for bu_parallel */
 static void render_camera_prep_ortho(render_camera_t *camera);
 static void render_camera_prep_persp(render_camera_t *camera);
 static void render_camera_prep_persp_dof(render_camera_t *camera);
 
-static struct render_shader_s *render_shader_register (const char *name, void (*init)(render_t *, char *));
+static struct render_shader_s *render_shader_register (const char *name, void (*init)(render_t *, const char *));
 
 void
 render_camera_init(render_camera_t *camera, int threads)
@@ -408,7 +408,7 @@ render_camera_prep(render_camera_t *camera)
 
 
 void
-*render_camera_render_thread(int cpu, void *ptr)
+render_camera_render_thread(int cpu, genptr_t ptr)
 {
     render_camera_thread_data_t *td;
     int d, n, res_ind, scanline, v_scanline;
@@ -436,7 +436,7 @@ void
 	if (*td->scanline == td->tile->size_y)
 	{
 	    bu_semaphore_release(TIE_SEM_WORKER);
-	    return 0;
+	    return;
 	}
 	else
 	{
@@ -479,7 +479,7 @@ void
 		    VSCALE(v1.v,  td->camera->view_list[d].step_x.v,  n);
 		    VADD2(ray.dir.v,  ray.dir.v,  v1.v);
 
-		    VSET(pixel.v, RENDER_CAMERA_BGR, RENDER_CAMERA_BGG, RENDER_CAMERA_BGB);
+		    VSET(pixel.v, (tfloat)RENDER_CAMERA_BGR, (tfloat)RENDER_CAMERA_BGG, (tfloat)RENDER_CAMERA_BGB);
 
 		    ray.pos = td->camera->view_list[d].pos;
 		    ray.depth = 0;
@@ -501,7 +501,7 @@ void
 		    VSCALE(v2.v,  td->camera->view_list[0].step_x.v,  n);
 		    VADD2(ray.dir.v,  v1.v,  v2.v);
 
-		    VSET(pixel.v, RENDER_CAMERA_BGR, RENDER_CAMERA_BGG, RENDER_CAMERA_BGB);
+		    VSET(pixel.v, (tfloat)RENDER_CAMERA_BGR, (tfloat)RENDER_CAMERA_BGG, (tfloat)RENDER_CAMERA_BGB);
 
 		    ray.pos = td->camera->view_list[0].pos;
 		    ray.depth = 0;
@@ -518,7 +518,7 @@ void
 		    VADD2(ray.pos.v,  ray.pos.v,  v1.v);
 		    VADD2(ray.pos.v,  ray.pos.v,  v2.v);
 
-		    VSET(pixel.v, RENDER_CAMERA_BGR, RENDER_CAMERA_BGG, RENDER_CAMERA_BGB);
+		    VSET(pixel.v, (tfloat)RENDER_CAMERA_BGR, (tfloat)RENDER_CAMERA_BGG, (tfloat)RENDER_CAMERA_BGB);
 		    ray.depth = 0;
 
 		    /* Compute pixel value using this ray */
@@ -554,8 +554,6 @@ void
 
 	}
     }
-
-    return 0;
 }
 
 
@@ -563,7 +561,7 @@ void
 render_camera_render(render_camera_t *camera, tie_t *tie, camera_tile_t *tile, tienet_buffer_t *result)
 {
     render_camera_thread_data_t td;
-    unsigned int i, scanline, ind;
+    unsigned int scanline, ind;
 
     ind = result->ind;
 
@@ -597,7 +595,7 @@ render_camera_render(render_camera_t *camera, tie_t *tie, camera_tile_t *tile, t
 }
 
 struct render_shader_s *
-render_shader_register(const char *name, void (*init)(render_t *, char *))
+render_shader_register(const char *name, void (*init)(render_t *, const char *))
 {
 	struct render_shader_s *shader = (struct render_shader_s *)bu_malloc(sizeof(struct render_shader_s), "shader");
 	if(shader == NULL)

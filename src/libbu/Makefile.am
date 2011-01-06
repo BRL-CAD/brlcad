@@ -2,7 +2,7 @@
 lib_LTLIBRARIES = libbu.la
 noinst_LTLIBRARIES = libbu_nil.la
 
-noinst_PROGRAMS = htester
+noinst_PROGRAMS = htester timetester
 
 libbu_nil_la_SOURCES = \
 	argv.c \
@@ -70,6 +70,7 @@ libbu_nil_la_SOURCES = \
 	str.c \
 	tcl.c \
 	temp.c \
+	timer.c \
 	units.c \
 	vers.c \
 	vfont.c \
@@ -90,6 +91,11 @@ htester_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
+timetester_SOURCES = timetester.c
+timetester_LDADD = \
+	libbu.la \
+	${BU_LIBS}
+
 noinst_HEADERS = \
 	rb_internals.h \
 	uce-dirent.h
@@ -101,6 +107,7 @@ man_MANS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
+	timetester.c
 	CMakeLists.txt
 
 AM_CPPFLAGS = \

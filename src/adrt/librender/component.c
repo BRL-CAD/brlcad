@@ -55,15 +55,15 @@ render_component_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
 
 	/* shade solid */
 	pixel->v[0] = mesh->flags & ADRT_MESH_HIT ? 0.8 : 0.2;
-	pixel->v[1] = 0.2;
+	pixel->v[1] = (tfloat)0.2;
 	pixel->v[2] = mesh->flags & ADRT_MESH_SELECT ? 0.8 : 0.2;
 	VSUB2(vec.v,  ray->pos.v,  id.pos.v);
 	VUNITIZE(vec.v);
 	VSCALE((*pixel).v, (*pixel).v, VDOT(vec.v, id.norm.v) * 0.8);
     } else if (ray->depth) {
-	pixel->v[0] += 0.2;
-	pixel->v[1] += 0.2;
-	pixel->v[2] += 0.2;
+	pixel->v[0] += (tfloat)0.2;
+	pixel->v[1] += (tfloat)0.2;
+	pixel->v[2] += (tfloat)0.2;
     }
 }
 

@@ -57,7 +57,7 @@ typedef struct render_s {
     render_free_t *free;
     void *data;
     struct render_s *next;
-    char *shader;
+    const char *shader;
 } render_t;
 
 #endif
