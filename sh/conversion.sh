@@ -534,14 +534,14 @@ $ECHO "... Done."
 $ECHO
 $ECHO "Summary:"
 $ECHO
-$ECHO "   Files:  %ld" $files
-$ECHO " Objects:  %ld" $count
-$ECHO "Failures:  %ld NMG, %ld BoT" $nmg_fail $bot_fail
-$ECHO "NMG conversion:  %.1f%%  (%ld of %ld objects)" $nmg_percent $nmg_count $count
-$ECHO "BoT conversion:  %.1f%%  (%ld of %ld objects)" $bot_percent $bot_count $count
+$ECHO "   Files:  %.0f" $files
+$ECHO " Objects:  %.0f" $count
+$ECHO "Failures:  %.0f NMG, %.0f BoT" $nmg_fail $bot_fail
+$ECHO "NMG conversion:  %.1f%%  (%.0f of %.0f objects)" $nmg_percent $nmg_count $count
+$ECHO "BoT conversion:  %.1f%%  (%.0f of %.0f objects)" $bot_percent $bot_count $count
 $ECHO "  Success rate:  %.1f%%" $rate
 $ECHO
-$ECHO "Elapsed:  %d seconds" $elp
+$ECHO "Elapsed:  %.0f seconds" $elp
 $ECHO "Average:  %.1f seconds per object" $avg
 $ECHO
 $ECHO "Finished running $THIS on `date`"
