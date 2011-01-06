@@ -12,13 +12,14 @@ IF(MSVC)
 		)
 ENDIF(MSVC)
 
-add_executable(iges
-    BrepHandler.cpp
-    brlcad_brep.cpp
-    n_iges.cpp
-    n_main.cpp
-)
-target_link_libraries(iges libwdb librt libbu ${OPENNURBS_LIBRARY} ${WIN32LIBS})
+
+#add_executable(iges
+#    BrepHandler.cpp
+#    brlcad_brep.cpp
+#    n_iges.cpp
+#    n_main.cpp
+#)
+#target_link_libraries(iges libwdb librt libbu ${OPENNURBS_LIBRARY} ${WIN32LIBS})
 #INSTALL(TARGETS iges RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 add_executable(iges-g
