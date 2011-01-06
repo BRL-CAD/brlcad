@@ -47,6 +47,19 @@ extern "C" {
 #define TIE_SINGLE_PRECISION 0
 #define TIE_DOUBLE_PRECISION 1
 
+#ifndef TIE_EXPORT
+#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#    ifdef TIE_EXPORT_DLL
+#      define TIE_EXPORT __declspec(dllexport)
+#    else
+#      define TIE_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define TIE_EXPORT
+#  endif
+#endif
+
+
 /*
  * define which precision to use, 0 is 'float' and 1 is 'double'.
  * Default to double precision to protect those not familiar.
@@ -83,19 +96,6 @@ typedef double tfloat;
 # error "Unknown precision"
 #endif
 
-/*
- * The BU_EXPORT macro is unable to cope with building a windows DLL that uses
- * exported global variables from another DLL, so we punt.
- */
-#if WIN32
-# ifdef TIEBUILD
-#  define WINHACK __declspec(dllexport)
-# else
-#  define WINHACK __declspec(dllimport)
-# endif
-#else
-# define WINHACK
-#endif
 
 /* TCOPY(type, source base, source offset, dest base, dest offset) */
 #define TCOPY(_t, _fv, _fi, _tv, _ti) { \
@@ -160,11 +160,11 @@ typedef struct tie_s {
 #endif
 } tie_t;
 
-BU_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_free), (tie_t *tie));
-BU_EXPORT BU_EXTERN(uint32_t TIE_VAL(tie_kdtree_cache_free), (tie_t *tie, void **cache));
-BU_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_cache_load), (tie_t *tie, void *cache, uint32_t size));
-BU_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_prep), (tie_t *tie));
-WINHACK extern tfloat TIE_VAL(TIE_PREC);
+TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_free), (tie_t *tie));
+TIE_EXPORT BU_EXTERN(uint32_t TIE_VAL(tie_kdtree_cache_free), (tie_t *tie, void **cache));
+TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_cache_load), (tie_t *tie, void *cache, uint32_t size));
+TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_prep), (tie_t *tie));
+TIE_EXPORT extern tfloat TIE_VAL(TIE_PREC);
 
 /* compatability macros */
 #define tie_kdtree_free TIE_VAL(tie_kdtree_free)
@@ -173,13 +173,13 @@ WINHACK extern tfloat TIE_VAL(TIE_PREC);
 #define tie_kdtree_prep TIE_VAL(tie_kdtree_prep)
 #define TIE_PREC TIE_VAL(TIE_PREC)
 
-WINHACK extern int tie_check_degenerate;
+TIE_EXPORT extern int tie_check_degenerate;
 
-BU_EXPORT BU_EXTERN(void TIE_VAL(tie_init), (tie_t *tie, unsigned int tri_num, unsigned int kdmethod));
-BU_EXPORT BU_EXTERN(void TIE_VAL(tie_free), (tie_t *tie));
-BU_EXPORT BU_EXTERN(void TIE_VAL(tie_prep), (tie_t *tie));
-BU_EXPORT BU_EXTERN(void* TIE_VAL(tie_work), (tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*, tie_id_t*, tie_tri_t*, void *ptr), void *ptr));
-BU_EXPORT BU_EXTERN(void TIE_VAL(tie_push), (tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride));
+TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_init), (tie_t *tie, unsigned int tri_num, unsigned int kdmethod));
+TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_free), (tie_t *tie));
+TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_prep), (tie_t *tie));
+TIE_EXPORT BU_EXTERN(void* TIE_VAL(tie_work), (tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*, tie_id_t*, tie_tri_t*, void *ptr), void *ptr));
+TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_push), (tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride));
 
 /* backwards compatible macros */
 #define tie_init TIE_VAL(tie_init)
