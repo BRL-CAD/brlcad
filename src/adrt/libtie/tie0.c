@@ -23,8 +23,13 @@
  *
  */
 #include <bu.h>
+#include "tie.h"
 
-BU_EXPORT int tie_check_degenerate = 0;
+TIE_EXPORT int tie_check_degenerate = 0;
+
+#ifdef TIE_PRECISION
+# undef TIE_PRECISION
+#endif
 
 #define TIE_PRECISION 0
 #include "./tie.c"

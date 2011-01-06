@@ -47,6 +47,8 @@ new names should be listed for reference.
 
 7.18
 ----
+dbcp
+        dbcp -> dd [deprecated 7.18]
 mged
         ?(*) -> ? -(*)
         apropos(*) -> apropos -(*)

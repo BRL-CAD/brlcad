@@ -6156,6 +6156,15 @@ BU_EXPORT BU_EXTERN(int bu_simd_level, ());
 
 /** @} */
 
+/** @addtogroup file */
+/** @{ */
+/** @file timer.c
+ * Return microsecond accuracy time information.
+ */
+BU_EXPORT BU_EXTERN(int64_t bu_gettime, ());
+
+/** @} */
+
 
 __END_DECLS
 
