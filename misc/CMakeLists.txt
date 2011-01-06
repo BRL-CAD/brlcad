@@ -6,7 +6,12 @@ SET(datarootdir "\${prefix}/share")
 SET(datadir "\${datarootdir}")
 
 ADD_SUBDIRECTORY(pkgconfig)
-ADD_SUBDIRECTORY(enigma)
+# FIXME - need to finish porting enigma to Windows - 
+# tried adding postgresql crypt function but it doesn't
+# seem to be working.
+IF(NOT WIN32)
+	ADD_SUBDIRECTORY(enigma)
+ENDIF(NOT WIN32)
 
 CONFIGURE_FILE(brlcad-config.in ${CMAKE_CURRENT_BINARY_DIR}/brlcad-config @ONLY)
 
