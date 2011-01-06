@@ -49,21 +49,20 @@ int64_t bu_gettime(void)
 	    + (int64_t)nowTime.tv_usec);
 #else /* !defined(_WIN32) */
     LARGE_INTEGER count;
-    static LARGE_INTEGER freq = 0;
-    int rval;
+	static LARGE_INTEGER freq = {0};
 
-    if(freq == 0)
+    if(freq.QuadPart == 0)
 	if(QueryPerformanceFrequency(&freq) == 0) {
 	    bu_log("QueryPerformanceFrequency failed\n");
 	    return -1;
 	}
 
-    if(QueryPerformanceCounter(&freq) == 0) {
+    if(QueryPerformanceCounter(&count) == 0) {
 	bu_log("QueryPerformanceCounter failed\n");
 	return -1;
     }
 
-    return 1e6*count/freq;
+    return 1e6*count.QuadPart/freq.QuadPart;
 
 #endif /* !defined(_WIN32) */
 
