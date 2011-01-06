@@ -32,129 +32,43 @@
 #  ifdef HAVE_SCHED_H
 #    include <sched.h>
 #  endif
-static int64_t lastTime = 0;
 #else /* !defined(_WIN32) */
-#include <windows.h>
+#  include <windows.h>
 #  include <mmsystem.h>
-static unsigned long int lastTime = 0;
-static LARGE_INTEGER     qpcLastTime;
-static LONGLONG          qpcFrequency = 0;
-static LONGLONG          qpcLastCalibration;
-static DWORD             timeLastCalibration;
 #endif /* !defined(_WIN32) */
 
-static int64_t currentTime = 0;
-
 #include "bu.h"
-
-#if !defined(_WIN32)
-static inline int64_t getEpochMicroseconds()
-{
-	struct timeval nowTime;
-	gettimeofday(&nowTime, NULL);
-	return ((int64_t)nowTime.tv_sec * (int64_t)1000000
-		+ (int64_t)nowTime.tv_usec);
-}
-#endif
 
 int64_t bu_gettime(void)
 {
 #if !defined(_WIN32)
-	if (lastTime == 0) {
-		lastTime = getEpochMicroseconds();
-		currentTime += lastTime; /* sync with system clock */
-	}
-	else {
-		const int64_t nowTime = getEpochMicroseconds();
+    struct timeval nowTime;
 
-		const int64_t diff = (nowTime - lastTime);
-
-		if (diff > 0) {
-			/* add to currentTime */
-			currentTime += diff;
-		}
-		else if (diff < 0) {
-			/* eh, how'd we go back in time? */
-			bu_log("WARNING: went back in time %lli microseconds\n", (long long int)diff);
-		}
-
-		lastTime = nowTime;
-	}
-
+    gettimeofday(&nowTime, NULL);
+    return ((int64_t)nowTime.tv_sec * (int64_t)1000000
+	    + (int64_t)nowTime.tv_usec);
 #else /* !defined(_WIN32) */
-	{
-	static int inited = 0;
-	if (!inited) {
-		inited = 1;
-		/*
-		InitializeCriticalSection(&timer_critical);
-		*/
+    LARGE_INTEGER count;
+    static LARGE_INTEGER freq = 0;
+    int rval;
+
+    if(freq == 0)
+	if(QueryPerformanceFrequency(&freq) == 0) {
+	    bu_log("QueryPerformanceFrequency failed\n");
+	    return -1;
 	}
 
-	if (qpcFrequency != 0) {
-		/* main timer is qpc */
-		LARGE_INTEGER now;
-		QueryPerformanceCounter(&now);
-		{
-		LONGLONG diff     = now.QuadPart - qpcLastTime.QuadPart;
-		LONGLONG clkSpent = now.QuadPart - qpcLastCalibration;
-		qpcLastTime = now;
+    if(QueryPerformanceCounter(&freq) == 0) {
+	bu_log("QueryPerformanceCounter failed\n");
+	return -1;
+    }
 
-		if (clkSpent > qpcFrequency) {
-			/* Recalibrate Frequency */
-			DWORD tgt	   = timeGetTime();
-			DWORD deltaTgt      = tgt - timeLastCalibration;
-			timeLastCalibration = tgt;
-			qpcLastCalibration  = now.QuadPart;
-			if (deltaTgt > 0) {
-				LONGLONG oldqpcfreq = qpcFrequency;
-				qpcFrequency	= (clkSpent * 1000) / deltaTgt;
-				if (qpcFrequency != oldqpcfreq)
-					bu_log("Recalibrated QPC frequency.  Old: %f ; New: %f\n",
-							(double)oldqpcfreq, (double)qpcFrequency);
-			}
-		}
+    return 1e6*count/freq;
 
-		currentTime += (int64_t)((double) diff / (double) qpcFrequency);
-		}
-	}
-	else {
-		static int sane = 1;
-		LARGE_INTEGER freq;
-
-		/* should only get into here once on app start */
-		if (!sane) {
-			bu_log("Sanity check failure in bu_gettime()\n");
-		}
-		sane = 0;
-
-		/* make sure we're at our best timer resolution possible */
-		timeBeginPeriod(1);
-
-		if (QueryPerformanceFrequency(&freq)) {
-			QueryPerformanceCounter(&qpcLastTime);
-			qpcFrequency	= freq.QuadPart;
-			logDebugMessage(4,"Actual reported QPC Frequency: %f\n", (double)qpcFrequency);
-			qpcLastCalibration  = qpcLastTime.QuadPart;
-			timeLastCalibration = timeGetTime();
-			currentTime += (int64_t)(1.0e3 * (double)timeLastCalibration); /* sync with system clock */
-		}
-		else {
-			/*
-			logDebugMessage(1,"QueryPerformanceFrequency failed with error %d\n", GetLastError());
-*/
-			lastTime = (unsigned long int)timeGetTime();
-			currentTime += (int64_t)(1.0e3 * (double)lastTime); /* sync with system clock */
-		}
-	}
-
-	/*
-	UNLOCK_TIMER_MUTEX
-	*/
-	}
 #endif /* !defined(_WIN32) */
 
-		return currentTime;
+    bu_log("This should never happen.\n");
+    return -1;
 }
 
 /*
