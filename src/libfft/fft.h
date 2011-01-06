@@ -35,8 +35,20 @@
 #  define M_SQRT2 1.41421356237309504880168872421
 #endif
 
-extern void splitdit(int N, int M);
-extern void ditsplit(int n /* length */, int m /* n = 2^m */);
+#ifndef FFT_EXPORT
+#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#    ifdef FFT_EXPORT_DLL
+#      define FFT_EXPORT __declspec(dllexport)
+#    else
+#      define FFT_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define FFT_EXPORT
+#  endif
+#endif
+
+FFT_EXPORT extern void splitdit(int N, int M);
+FFT_EXPORT extern void ditsplit(int n /* length */, int m /* n = 2^m */);
 
 /*
  * Local Variables:
