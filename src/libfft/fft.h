@@ -47,8 +47,8 @@
 #  endif
 #endif
 
-FFT_EXPORT extern void splitdit(int N, int M);
-FFT_EXPORT extern void ditsplit(int n /* length */, int m /* n = 2^m */);
+FFT_EXPORT BU_EXTERN(void splitdit, (int N, int M));
+FFT_EXPORT BU_EXTERN(void ditsplit, (int n /* length */, int m /* n = 2^m */));
 
 /*
  * Local Variables:
