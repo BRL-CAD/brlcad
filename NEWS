@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2010-12-XX  Release 7.18.2                                     ---
 ----------------------------------------------------------------------
 
+* disabled adrt_master and adrt_slave tools - Erik Greenwald
 * ported pixblend image processing tool to Windows - Erik Greenwald
 * upgraded libpng to version 1.4.5 - Cliff Yapp
 * upgraded zlib to version 1.2.5 - Cliff Yapp
