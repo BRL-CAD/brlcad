@@ -32,6 +32,18 @@
 #include <iostream>
 #include "vmath.h"
 
+#ifndef RT_EXPORT
+#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#    ifdef RT_EXPORT_DLL
+#      define RT_EXPORT __declspec(dllexport)
+#    else
+#      define RT_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define RT_EXPORT
+#  endif
+#endif
+
 /* These definitions were added to opennurbs_curve.h - they are
  * extensions of openNURBS, so add them here instead.  At some
  * point a more coherent structure should probably be set up for
@@ -1485,11 +1497,11 @@ bool get_closest_point(ON_2dPoint& outpt,
  * 3. If the curve is a line or an arc (determined with openNURBS routines),
  *    return the appropriate ON_Curve subclass (otherwise, return an ON_NurbsCurve).
  */
-extern ON_Curve* pullback_curve(ON_BrepFace* face,
+RT_EXPORT BU_EXTERN(ON_Curve* pullback_curve, (ON_BrepFace* face,
 				const ON_Curve* curve,
 				SurfaceTree* tree = NULL,
 				double tolerance = BREP_FCP_ROOT_EPSILON,
-				double flatness = 1.0e-3);
+				double flatness = 1.0e-3));
 
 
 }
