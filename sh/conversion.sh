@@ -60,9 +60,6 @@ fi
 # force locale setting to C so things like date output as expected
 LC_ALL=C
 
-# force posix behavior
-set -o posix >/dev/null 2>&1
-
 
 #######################
 # log to tty and file #
