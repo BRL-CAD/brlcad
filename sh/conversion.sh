@@ -60,6 +60,11 @@ fi
 # force locale setting to C so things like date output as expected
 LC_ALL=C
 
+# force posix behavior
+POSIX_PEDANTIC=1
+POSIXLY_CORRECT=1
+export POSIX_PEDANTIC POSIXLY_CORRECT
+
 
 #######################
 # log to tty and file #
