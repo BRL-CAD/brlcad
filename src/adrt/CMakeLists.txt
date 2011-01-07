@@ -17,7 +17,25 @@ SET(LIBTIE_SRCS
 	libtie/tie_kdtree0.c
 	libtie/tie_kdtree1.c
 )
-BRLCAD_ADDLIB(libtie "${LIBTIE_SRCS}" libbu)
+
+IF(BUILD_SHARED_LIBS)
+	add_library(libtie SHARED ${LIBTIE_SRCS})
+	target_link_libraries(libtie libbu)
+	INSTALL(TARGETS libtie DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+	SET_TARGET_PROPERTIES(libtie-static PROPERTIES COMPILE_FLAGS "-DTIE_EXPORT_DLL")
+ENDIF(BUILD_SHARED_LIBS)
+IF(BUILD_STATIC_LIBS AND NOT MSVC)
+	add_library(libtie-static STATIC ${LIBTIE_SRCS})
+	target_link_libraries(libtie-static libbu)
+	SET_TARGET_PROPERTIES(libtie-static PROPERTIES COMPILE_FLAGS "-DTIE_EXPORT_DLL")
+	IF(NOT WIN32)
+		SET_TARGET_PROPERTIES(libtie-static PROPERTIES OUTPUT_NAME "libtie")
+	ENDIF(NOT WIN32)
+	IF(WIN32)
+		SET_TARGET_PROPERTIES(libtie-static PROPERTIES PREFIX "lib")
+	ENDIF(WIN32)
+	INSTALL(TARGETS libtie-static DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+ENDIF(BUILD_STATIC_LIBS AND NOT MSVC)
 
 SET(LIBRENDER_SRCS
   load.c 
@@ -47,7 +65,24 @@ SET(LIBRENDER_SRCS
   librender/texture_perlin.c 
   librender/texture_stack.c
 )
-BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" "libtie libgcv")
+IF(BUILD_SHARED_LIBS)
+	add_library(librender SHARED ${LIBRENDER_SRCS})
+	target_link_libraries(librender libtie libgcv)
+	INSTALL(TARGETS librender DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+	SET_TARGET_PROPERTIES(librender-static PROPERTIES COMPILE_FLAGS "-DRENDER_EXPORT_DLL")
+ENDIF(BUILD_SHARED_LIBS)
+IF(BUILD_STATIC_LIBS AND NOT MSVC)
+	add_library(librender-static STATIC ${LIBRENDER_SRCS})
+	target_link_libraries(librender-static libtie libgcv)
+	SET_TARGET_PROPERTIES(librender-static PROPERTIES COMPILE_FLAGS "-DRENDER_EXPORT_DLL")
+	IF(NOT WIN32)
+		SET_TARGET_PROPERTIES(librender-static PROPERTIES OUTPUT_NAME "librender")
+	ENDIF(NOT WIN32)
+	IF(WIN32)
+		SET_TARGET_PROPERTIES(librender-static PROPERTIES PREFIX "lib")
+	ENDIF(WIN32)
+	INSTALL(TARGETS librender-static DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+ENDIF(BUILD_STATIC_LIBS AND NOT MSVC)
 
 SET(tie_HDRS
 	adrt.h  
