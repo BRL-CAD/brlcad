@@ -34,10 +34,17 @@
 #ifdef __cplusplus
 extern "C++" {
 #include "opennurbs.h"
-#include "opennurbs_ext.h"
 #include <iostream>
 #include <fstream>
+
+    namespace brlcad {
+	template <class T>
+	class BVNode;
+
+	typedef class BVNode<ON_BoundingBox> BBNode;
+    }
 }
+
 
 __BEGIN_DECLS
 
@@ -89,6 +96,7 @@ struct brep_specific {
     ON_Brep* brep;
     BrepBoundingVolume* bvh;
 };
+
 
 __END_DECLS
 
