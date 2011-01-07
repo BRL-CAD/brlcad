@@ -3978,7 +3978,7 @@ RT='${top_builddir}/src/librt/librt.la'
 SYSV='${top_builddir}/src/libsysv/libsysv.la'
 TCLCAD='${top_builddir}/src/libtclcad/libtclcad.la'
 TERMIO='${top_builddir}/src/libtermio/libtermio.la'
-TIE='${top_builddir}/src/adrt/libtie.la'
+TIE='${top_builddir}/src/libtie/libtie.la'
 WDB='${top_builddir}/src/libwdb/libwdb.la'
 BRLCAD='${top_builddir}/src/libbrlcad.la'
 
@@ -4302,6 +4302,7 @@ AC_CONFIG_FILES([
 	src/libsysv/Makefile
 	src/libtclcad/Makefile
 	src/libtermio/Makefile
+	src/libtie/Makefile
 	src/libwdb/Makefile
 	src/mged/Makefile
 	src/mged/points/Makefile

@@ -8,5 +8,6 @@
 # script is sourced, the variable $dir must contain the
 # full path name of this file's directory.
 
-package ifneeded snit 1.0 [list source [file join $dir snit.tcl]]
+package ifneeded combobox 2.3 [list source [file join $dir hv3_form.tcl]]\n[list source [file join $dir hv3.tcl]]\n[list source [file join $dir combobox.tcl]]
 package ifneeded hv3 0.1 [list source [file join $dir hv3.tcl]]
+package ifneeded snit 1.0 [list source [file join $dir snit.tcl]]
