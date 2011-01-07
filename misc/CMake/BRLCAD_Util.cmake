@@ -16,13 +16,11 @@ ENDMACRO()
 # uses a fairly standard convention - try and automate the addition of
 # the definition.
 MACRO(DLL_DEFINE libname)
-		  IF(MSVC)
-					 STRING(REGEX REPLACE "lib" "" LOWERCORE "${libname}")
-					 STRING(TOUPPER ${LOWERCORE} UPPER_CORE)
-					 add_definitions(
-								"-D${UPPER_CORE}_EXPORT_DLL"
-								)
-		  ENDIF(MSVC)
+	IF(MSVC)
+		STRING(REGEX REPLACE "lib" "" LOWERCORE "${libname}")
+		STRING(TOUPPER ${LOWERCORE} UPPER_CORE)
+		SET_TARGET_PROPERTIES(${libname} PROPERTIES COMPILE_FLAGS "-D${UPPER_CORE}_EXPORT_DLL")
+	ENDIF(MSVC)
 ENDMACRO()
 
 # Core routines for adding executables and libraries to the build and
