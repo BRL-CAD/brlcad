@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdint.h>
 #include <inttypes.h>
 
 #include "bu.h"
@@ -31,18 +30,27 @@
 int
 main(int argc, char **argv)
 {
-	int64_t time1, time2;
-	int i = 0;
-	time1 = bu_gettime();
-	while (i < 1.0e6) {
-		time2 = bu_gettime();
-		i = time2 - time1;
-	}
-	printf("Time delta: %i\n", i);
-	printf("time1: %" PRIi64 "\n", time1);
-	printf("time2: %" PRIi64 "\n", time2);
-	exit(0);
+    int64_t time1, time2;
+    int i = 0;
+    unsigned long counter = 1;
+
+    if (argc > 1)
+	bu_exit(1, "ERROR: Unexpected parameter [%s]\n", argv[0]);
+
+    time1 = bu_gettime();
+    while (i < 1.0e6) {
+	counter++;
+	time2 = bu_gettime();
+	i = time2 - time1;
+    }
+    bu_log("Called bu_gettime() %lu times\n", counter);
+    bu_log("Time delta: %d\n", i);
+    bu_log("time1: %lu\n", (unsigned long)time1);
+    bu_log("time2: %lu\n", (unsigned long)time2);
+
+    return 0;
 }
+
 
 /** @} */
 /*
