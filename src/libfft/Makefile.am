@@ -21,9 +21,6 @@ libfft_la_LIBADD = \
 
 AM_CFLAGS = ${STRICT_FLAGS}
 
-noinst_HEADERS = \
-	fft.h
-
 fftc_LDADD = ${LIBM}
 fftc_SOURCES = \
 	fftc.c \
