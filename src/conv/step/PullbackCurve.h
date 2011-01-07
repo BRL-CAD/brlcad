@@ -51,6 +51,11 @@
 #include "opennurbs.h"
 
 
+namespace brlcad {
+    class SurfaceTree;
+}
+
+
 /**
  * p u l l b a c k _ c u r v e
  */
