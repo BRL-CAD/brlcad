@@ -426,7 +426,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		a = A*C - B*B/4.0;
 		if (fabs(a) < 1.0  && fabs(a) > TOL) {
 		    a = fabs(A);
-		    if (fabs(B)<a && B != 0.0)
+		    if (fabs(B)<a && !NEAR_ZERO(B, SMALL_FASTF))
 			a = fabs(B);
 		    if (fabs(C)<a)
 			a = fabs(C);
@@ -443,7 +443,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		    /* check for type of conic */
 		    del = A*(C*F-E*E/4.0)-0.5*B*(B*F/2.0-D*E/4.0)+0.5*D*(B*E/4.0-C*D/2.0);
 		    I = A+C;
-		    if (del == 0.0) {
+		    if (NEAR_ZERO(del, SMALL_FASTF)) {
 			/* not a conic */
 			bu_log("Entity #%d, claims to be conic arc, but isn't\n", curve);
 			break;
@@ -451,7 +451,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 			type = 1; /* ellipse */
 		    else if (a < 0.0)
 			type = 2; /* hyperbola */
-		    else if (a == 0.0)
+		    else if (NEAR_ZERO(a, SMALL_FASTF))
 			type = 3; /* parabola */
 		    else {
 			/* imaginary ellipse */
@@ -467,7 +467,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		    case 3:	/* parabola */
 
 			/* make A+C == 1.0 */
-			if (A+C != 1.0) {
+			if (!EQUAL(A+C, 1.0)) {
 			    b = A+C;
 			    A = A/b;
 			    B = B/b;
@@ -571,7 +571,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 
 			    /* theta is angle that the curve axis is rotated about
 			       the origin from the x-axis */
-			    if (B != 0.0)
+			    if (!NEAR_ZERO(B, SMALL_FASTF))
 				theta = 0.5*atan2(B, A-C);
 			    else
 				theta = 0.0;
@@ -613,7 +613,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 			       beta = terminate angle
 			    */
 			    beta = 0.0;
-			    if (v2[0] == v1[0] && v2[1] == v1[1]) {
+			    if (EQUAL(v2[0], v1[0]) && EQUAL(v2[1], v1[1])) {
 				/* full circle */
 				alpha = 0.0;
 				beta = 2.0*pi;
@@ -624,7 +624,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 			    if (type == 1) {
 				/* ellipse */
 				alpha = atan2(a*v1[1], b*v1[0]);
-				if (beta == 0.0) {
+				if (NEAR_ZERO(beta, SMALL_FASTF)) {
 				    beta = atan2(a*v2[1], b*v2[0]);
 				    beta = beta - alpha;
 				}

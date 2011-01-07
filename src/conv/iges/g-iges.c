@@ -102,31 +102,31 @@ static int	scale_error=0;	/* Count indicating how many scaled objects were encou
 static int	solid_error=0;	/* Count indicating how many solids were not converted */
 static int	comb_error=0;	/* Count indicating  how many combinations were not converted */
 static int	ncpu = 1;	/* Number of processors */
-static char	*output_file = NULL;	/* output filename */
-static FILE	*fp_dir = NULL;		/* IGES start, global, and directory sections */
-static FILE	*fp_param = NULL;	/* IGES parameter section */
-static struct rt_tess_tol	ttol;
-static struct bn_tol		tol;
-static struct model		*the_model;
-struct db_i		*dbip;
+static char *output_file = NULL;	/* output filename */
+static FILE *fp_dir = NULL;	/* IGES start, global, and directory sections */
+static FILE *fp_param = NULL;	/* IGES parameter section */
+static struct rt_tess_tol ttol;
+static struct bn_tol tol;
+static struct model *the_model;
+struct db_i *DBIP;
 
 static struct db_tree_state	tree_state;	/* includes tol & model */
 
 /* function table for converting solids to iges */
-BU_EXTERN( int null_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
-BU_EXTERN( int arb_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
-BU_EXTERN( int ell_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
-BU_EXTERN( int sph_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
-BU_EXTERN( int tor_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
-BU_EXTERN( int tgc_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
-BU_EXTERN( int nmg_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
-BU_EXTERN( int sketch_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
-BU_EXTERN( void iges_init, ( struct bn_tol *set_tol, struct rt_tess_tol *set_ttol, int set_verbose, struct db_i *dbip_set ) );
-BU_EXTERN( void Print_stats, ( FILE *fp ) );
+BU_EXTERN( int null_to_iges, ( struct rt_db_internal *, char *, FILE *, FILE *));
+BU_EXTERN( int arb_to_iges, ( struct rt_db_internal *, char *, FILE *, FILE *));
+BU_EXTERN( int ell_to_iges, ( struct rt_db_internal *, char *, FILE *, FILE *));
+BU_EXTERN( int sph_to_iges, ( struct rt_db_internal *, char *, FILE *, FILE *));
+BU_EXTERN( int tor_to_iges, ( struct rt_db_internal *, char *, FILE *, FILE *));
+BU_EXTERN( int tgc_to_iges, ( struct rt_db_internal *, char *, FILE *, FILE *));
+BU_EXTERN( int nmg_to_iges, ( struct rt_db_internal *, char *, FILE *, FILE *));
+BU_EXTERN( int sketch_to_iges, ( struct rt_db_internal *, char *, FILE *, FILE *));
+BU_EXTERN( void iges_init, ( struct bn_tol *, struct rt_tess_tol *, int, struct db_i *) );
+BU_EXTERN( void Print_stats, ( FILE * ) );
 
 struct iges_functab
 {
-    int (*do_iges_write) BU_ARGS(( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
+    int (*do_iges_write) BU_ARGS(( struct rt_db_internal *, char *, FILE *, FILE * ));
 };
 
 struct iges_functab iges_write[ID_MAXIMUM+1]={
@@ -277,20 +277,20 @@ main(int argc, char *argv[])
     argc -= bu_optind;
     argv += bu_optind;
     db_name = argv[0];
-    if ((dbip = db_open(db_name, "r")) == DBI_NULL) {
+    if ((DBIP = db_open(db_name, "r")) == DBI_NULL) {
 	perror("g-iges");
 	bu_exit(1, "ERROR: unable to open geometry file (%s)\n", db_name);
     }
 
     /* Scan the database */
-    if ( db_dirbuild( dbip ) ) {
+    if ( db_dirbuild( DBIP ) ) {
 	bu_exit(1, "db_dirbuild failed\n" );
     }
 
     if ( !multi_file )
     {
 	/* let the IGES routines know the selected tolerances and the database pointer */
-	iges_init( &tol, &ttol, verbose, dbip );
+	iges_init( &tol, &ttol, verbose, DBIP );
 
 	/* Open the output file */
 	if ( output_file == NULL )
@@ -330,8 +330,8 @@ main(int argc, char *argv[])
     /* Count object references */
 /*	for ( i=1; i<argc; i++ )
 	{
-	dp = db_lookup( dbip, argv[i], 1 );
-	db_functree( dbip, dp, count_refs, 0, NULL );
+	dp = db_lookup( DBIP, argv[i], 1 );
+	db_functree( DBIP, dp, count_refs, 0, NULL );
 	}	*/
 
     /* tree tops must have independent status, so we need to remember them */
@@ -343,7 +343,7 @@ main(int argc, char *argv[])
 	/* Walk indicated tree(s).  Each region will be output
 	 * as a single manifold solid BREP object */
 
-	ret = db_walk_tree(dbip, argc-1, (const char **)(argv+1),
+	ret = db_walk_tree(DBIP, argc-1, (const char **)(argv+1),
 			   ncpu,
 			   &tree_state,
 			   0,			/* take all regions */
@@ -367,12 +367,12 @@ main(int argc, char *argv[])
 		} else {
 		    ptr = argv[i];
 		}
-		dp = db_lookup( dbip, ptr, 1 );
+		dp = db_lookup( DBIP, ptr, 1 );
 		if (!dp) {
 		    bu_log("WARNING: Unable to locate %s in %s\n, skipping\n", ptr, db_name);
 		    continue;
 		}
-		db_functree( dbip, dp, csg_comb_func, 0, &rt_uniresource, NULL );
+		db_functree( DBIP, dp, csg_comb_func, 0, &rt_uniresource, NULL );
 	    }
 	}
     }
@@ -384,12 +384,12 @@ main(int argc, char *argv[])
 
 	for ( i=1; i<(size_t)argc; i++ )
 	{
-	    dp = db_lookup( dbip, argv[i], 1 );
+	    dp = db_lookup( DBIP, argv[i], 1 );
 	    if (!dp) {
 		bu_log("WARNING: Unable to locate %s in %s\n, skipping\n", argv[i], db_name);
 		continue;
 	    }
-	    db_functree( dbip, dp, csg_comb_func, csg_leaf_func, &rt_uniresource, NULL );
+	    db_functree( DBIP, dp, csg_comb_func, csg_leaf_func, &rt_uniresource, NULL );
 	}
     }
     else if ( mode == TRIMMED_SURF_MODE )
@@ -397,7 +397,7 @@ main(int argc, char *argv[])
 	/* Walk the indicated tree(s). Each region is output as a collection
 	 * of trimmed NURBS */
 
-	ret = db_walk_tree(dbip, argc-1, (const char **)(argv+1),
+	ret = db_walk_tree(DBIP, argc-1, (const char **)(argv+1),
 			   ncpu,
 			   &tree_state,
 			   0,			/* take all regions */
@@ -461,7 +461,7 @@ main(int argc, char *argv[])
  *  This routine must be prepared to run in parallel.
  */
 union tree *
-do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
     union tree		*result;
     struct nmgregion	*r;
@@ -510,7 +510,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 	/* Get rid of (m)any other intermediate structures */
-	if ( (*tsp->ts_m)->magic != -1L )
+	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
 	    nmg_km(*tsp->ts_m);
 
 	/* Now, make a new, clean model structure for next pass. */
@@ -555,8 +555,6 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		suffix[0]--;
 		while ( !unique )
 		{
-		    size_t i;
-
 		    if ( stat( multi_name, &stat_ptr ) )
 		    {
 			unique = 1;
@@ -599,7 +597,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	    }
 
 	    /* let the IGES routines know the selected tolerances and the database pointer */
-	    iges_init( &tol, &ttol, verbose, dbip );
+	    iges_init( &tol, &ttol, verbose, DBIP );
 
 	    /* Write start and global sections of the IGES file */
 	    w_start_global( fp_dir, fp_param, db_name, prog_name, output_file, __DATE__, brlcad_version() );
@@ -687,7 +685,7 @@ get_de_pointers( tp, dp, de_len, de_pointers )
 	{
 	    struct directory *dp_M;
 
-	    dp_M = db_lookup( dbip, tp->tr_l.tl_name, LOOKUP_NOISY );
+	    dp_M = db_lookup( DBIP, tp->tr_l.tl_name, LOOKUP_NOISY );
 	    if ( dp_M == DIR_NULL )
 		return 1;
 
@@ -727,10 +725,7 @@ get_de_pointers( tp, dp, de_len, de_pointers )
 }
 
 void
-csg_comb_func( dbip, dp, ptr )
-    struct db_i *dbip;
-    struct directory *dp;
-    genptr_t	ptr;
+csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -820,10 +815,7 @@ csg_comb_func( dbip, dp, ptr )
 }
 
 void
-csg_leaf_func( dbip, dp, ptr )
-    struct db_i *dbip;
-    struct directory *dp;
-    genptr_t ptr;
+csg_leaf_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
 {
     struct rt_db_internal	ip;
 
@@ -855,11 +847,7 @@ csg_leaf_func( dbip, dp, ptr )
 }
 
 void
-incr_refs( dbip, comb, tp, user_ptr1, user_ptr2, user_ptr3 )
-    struct db_i		*dbip;
-    struct rt_comb_internal	*comb;
-    union tree		*tp;
-    genptr_t		user_ptr1, user_ptr2, user_ptr3;
+incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, genptr_t UNUSED(user_ptr1), genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3))
 {
     struct directory *dp;
 
@@ -873,11 +861,9 @@ incr_refs( dbip, comb, tp, user_ptr1, user_ptr2, user_ptr3 )
     dp->d_nref++;
 }
 
+
 void
-count_refs( dbip, dp, ptr )
-    struct db_i *dbip;
-    struct directory *dp;
-    genptr_t ptr;
+count_refs(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
