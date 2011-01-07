@@ -52,7 +52,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../src/other/tcl/win;../../../src/other/tcl/generic"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/win;../../../src/other/tcl/generic"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;TIE_EXPORT_DLL;TIEBUILD;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
