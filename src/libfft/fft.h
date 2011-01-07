@@ -47,8 +47,23 @@
 #  endif
 #endif
 
+/* The COMPLEX type used throughout */
+typedef struct {
+    double re;	/* Real Part */
+    double im;	/* Imaginary Part */
+} COMPLEX;
+
 FFT_EXPORT extern void splitdit(int N, int M);
 FFT_EXPORT extern void ditsplit(int n /* length */, int m /* n = 2^m */);
+FFT_EXPORT extern void rfft(double *X, int N);
+FFT_EXPORT extern void irfft(double *X, int n);
+FFT_EXPORT extern void cfft(COMPLEX *dat, int num);
+FFT_EXPORT extern void icfft(COMPLEX *dat, int num);
+
+/* These should come from a generated header, but until
+ * CMake is live we'll just add the ones used by our current code */
+FFT_EXPORT extern void rfft256(register double X[]);
+FFT_EXPORT extern void irfft256(register double X[]);
 
 /*
  * Local Variables:

@@ -30,12 +30,6 @@
 
 #include "fft.h"
 
-
-typedef struct {
-    double re;	/* Real Part */
-    double im;	/* Imaginary Part */
-} COMPLEX;
-
 /***** TEST ROUTINES *****/
 COMPLEX data[64];
 
