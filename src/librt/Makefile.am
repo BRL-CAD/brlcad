@@ -274,6 +274,7 @@ parsetest_LDADD = \
 
 
 noinst_HEADERS = \
+	opennurbs_ext.h \
 	primitives/fixpt.h \
 	primitives/brep/brep_debug.h \
 	primitives/metaball/metaball.h \

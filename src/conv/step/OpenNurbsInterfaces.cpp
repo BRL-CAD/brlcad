@@ -27,7 +27,6 @@
 #include "common.h"
 
 #include "opennurbs.h"
-#include "opennurbs_ext.h"
 
 #include "sdai.h"
 class SCLP23(Application_instance);
@@ -94,6 +93,12 @@ class SCLP23(Application_instance);
 
 #include "AdvancedBrepShapeRepresentation.h"
 #include "PullbackCurve.h"
+
+
+/* FIXME: should not be peeking into a private header and cannot be a
+ * public header (of librt).
+ */
+#include "../../librt/opennurbs_ext.h"
 
 
 ON_Brep *
