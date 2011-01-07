@@ -59,6 +59,7 @@ FFT_EXPORT extern void rfft(double *X, int N);
 FFT_EXPORT extern void irfft(double *X, int n);
 FFT_EXPORT extern void cfft(COMPLEX *dat, int num);
 FFT_EXPORT extern void icfft(COMPLEX *dat, int num);
+FFT_EXPORT extern void cdiv(COMPLEX *result, COMPLEX *val1, COMPLEX *val2)
 
 /* These should come from a generated header, but until
  * CMake is live we'll just add the ones used by our current code */
