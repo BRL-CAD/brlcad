@@ -72,11 +72,11 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis) {
 	    for (int i = 0; i < allsegments.Count(); i++) {
 		pstart = (*b)->m_C3[i]->PointAtStart();
 		pend = (*b)->m_C3[i]->PointAtEnd();
-		if (ON_NearZero(ptmatch.DistanceTo(pstart), ON_ZERO_TOLERANCE) && (curvearray[i] == -1)) {
+		if (NEAR_ZERO(ptmatch.DistanceTo(pstart), ON_ZERO_TOLERANCE) && (curvearray[i] == -1)) {
 		    curvecount = i;
 		    ptmatch = pend;
 		    i = allsegments.Count();
-		    if (ON_NearZero(pend.DistanceTo(ptterminate), ON_ZERO_TOLERANCE)) {
+		    if (NEAR_ZERO(pend.DistanceTo(ptterminate), ON_ZERO_TOLERANCE)) {
 			loop_complete = 1;
 			loopcount++;
 		    }
