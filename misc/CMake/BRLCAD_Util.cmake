@@ -20,7 +20,7 @@ MACRO(DLL_DEFINE libname)
 					 STRING(REGEX REPLACE "lib" "" LOWERCORE "${libname}")
 					 STRING(TOUPPER ${LOWERCORE} UPPER_CORE)
 					 add_definitions(
-								-D${UPPER_CORE}_EXPORT_DLL
+								"-D${UPPER_CORE}_EXPORT_DLL"
 								)
 		  ENDIF(MSVC)
 ENDMACRO()
