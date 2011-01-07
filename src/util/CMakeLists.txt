@@ -146,9 +146,9 @@ BRLCAD_ADDEXEC(terrain terrain.c "libbn libbu" STRICT)
 BRLCAD_ADDEXEC(texturescale texturescale.c "libfb libbn libbu" STRICT)
 #FIXME - Need to look at pcattcp port to Windows - ttcp should be
 #maintained and ported
-IF(WIN32)
+IF(NOT WIN32)
    BRLCAD_ADDEXEC(ttcp ttcp.c libbu STRICT)
-ENDIF(WIN32)
+ENDIF(NOT WIN32)
 BRLCAD_ADDEXEC(wavelet wavelet.c "libfb libbn libbu" STRICT)
 BRLCAD_ADDEXEC(xyz-pl xyz-pl.c "libbn libbu" STRICT)
 BRLCAD_ADDEXEC(yuv-pix yuv-pix.c "libfb libbn libbu" STRICT)
