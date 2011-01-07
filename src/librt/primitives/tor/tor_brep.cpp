@@ -31,7 +31,7 @@
 
 
 extern "C" void
-rt_tor_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_tor_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     struct rt_tor_internal *tip;
 
