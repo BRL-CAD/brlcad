@@ -43,13 +43,6 @@
 #define MAXSIZE 65536	/* Needed for sin/cos tables */
 int _init_size = 0;	/* Internal: shows last initialized size */
 
-
-/* The COMPLEX type used throughout */
-typedef struct {
-    double re;	/* Real Part */
-    double im;	/* Imaginary Part */
-} COMPLEX;
-
 void scramble(int numpoints, COMPLEX *dat);
 void butterflies(int numpoints, int inverse, COMPLEX *dat);
 int init_sintab(int size);

@@ -47,8 +47,17 @@
 #  endif
 #endif
 
+/* The COMPLEX type used throughout */
+typedef struct {
+    double re;	/* Real Part */
+    double im;	/* Imaginary Part */
+} COMPLEX;
+
 FFT_EXPORT extern void splitdit(int N, int M);
 FFT_EXPORT extern void ditsplit(int n /* length */, int m /* n = 2^m */);
+FFT_EXPORT extern void rfft(double *X, int N);
+FFT_EXPORT extern void cfft(COMPLEX *dat, int num);
+FFT_EXPORT extern void icfft(COMPLEX *dat, int num);
 
 /*
  * Local Variables:
