@@ -34,6 +34,12 @@ set(LIBBN_SOURCES
     wavelet.c
 )
 
+IF(MSVC)
+    add_definitions(
+	    -DBN_EXPORT_DLL
+	 )
+ENDIF(MSVC)
+
 BRLCAD_ADDLIB(libbn "${LIBBN_SOURCES}" libbu STRICT)
 SET_TARGET_PROPERTIES(libbn PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
