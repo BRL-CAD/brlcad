@@ -57,7 +57,7 @@ OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
 # version numbers
 SET(TK_MAJOR_VERSION 8)
 SET(TK_MINOR_VERSION 5)
-SET(TK_PATCH_LEVEL 8)
+SET(TK_PATCH_LEVEL 9)
 
 SET(TK_VERSION "${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}.${TK_PATCH_LEVEL}")
 
@@ -532,7 +532,7 @@ ENDIF(WIN32)
 IF(NOT WIN32)
 	SET(WISH_SRCS unix/tkAppInit.c)
 ELSE(NOT WIN32)
-        SET(WISH_SRCS win/winMain.c win/rc/wish.rc)
+        SET(WISH_SRCS win/winMain.c)# win/rc/wish.rc)
 ENDIF(NOT WIN32)
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TK_CFLAGS}") 
