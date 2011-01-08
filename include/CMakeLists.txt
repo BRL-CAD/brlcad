@@ -49,7 +49,6 @@ SET(brlcadinclude_wanted
 	mater.h 
 	nmg.h 
 	nurb.h 
-	opennurbs_ext.h 
 	optical.h 
 	orle.h 
 	photonmap.h 
