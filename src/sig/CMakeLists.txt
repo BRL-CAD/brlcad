@@ -1,5 +1,5 @@
 include_directories(
-  ${TCL_INCLUDE_PATH}
+  ${TCL_INCLUDE_DIRS}
 )
 
 BRLCAD_ADDEXEC(a-d a-d.c libbu)

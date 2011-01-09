@@ -436,44 +436,44 @@ SET(ITK_STUB_SRCS
 # When it comes to identification of the location of the Tcl
 # sources, the convention is as follows:
 #
-# 1.  If TCL_INCLUDE_PATH is defined, use it
+# 1.  If TCL_INCLUDE_DIRS is defined, use it
 # 2.  Else, if TCL_PREFIX is defined build include paths from it
-# 3.  If TCL_INCLUDE_PATH is not defined and TCL_BIN_PREFIX is,
+# 3.  If TCL_INCLUDE_DIRS is not defined and TCL_BIN_PREFIX is,
 #     add include directories based on the presumption of the
 #     binary build dir (and hence tclConfig.h) being in a non-src
 #     location.
 #
 # It's still possible, depending on how Tcl was built, to 
-# have a situation where TCL_INCLUDE_PATH has to be augmented
+# have a situation where TCL_INCLUDE_DIRS has to be augmented
 # manually.  However, the logic below should cover the most common cases.
 
-IF(NOT TCL_INCLUDE_PATH)
+IF(NOT TCL_INCLUDE_DIRS)
 	IF(TCL_PREFIX)
-		SET(TCL_INCLUDE_PATH ${TCL_PREFIX}/generic ${TCL_PREFIX}/libtommath)
+		SET(TCL_INCLUDE_DIRS ${TCL_PREFIX}/generic ${TCL_PREFIX}/libtommath)
 		IF(WIN32)
-			SET(TCL_INCLUDE_PATH ${TCL_INCLUDE_PATH} ${TCL_PREFIX}/win)
+			SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_PREFIX}/win)
 		ELSE(WIN32)
-			SET(TCL_INCLUDE_PATH ${TCL_INCLUDE_PATH} ${TCL_PREFIX}/unix)
+			SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_PREFIX}/unix)
 		ENDIF(WIN32)
 	ENDIF(TCL_PREFIX)
 	IF(TCL_BIN_PREFIX)
-		SET(TCL_INCLUDE_PATH ${TCL_INCLUDE_PATH} ${TCL_BIN_PREFIX}/include)
+		SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_BIN_PREFIX}/include)
 	ENDIF(TCL_BIN_PREFIX)
-ENDIF(NOT TCL_INCLUDE_PATH)
+ENDIF(NOT TCL_INCLUDE_DIRS)
 
-IF(NOT ITCL_INCLUDE_PATH)
+IF(NOT ITCL_INCLUDE_DIRS)
 	IF(ITCL_PREFIX)
-		SET(ITCL_INCLUDE_PATH ${ITCL_PREFIX}/generic ${ITCL_PREFIX}/libtommath)
+		SET(ITCL_INCLUDE_DIRS ${ITCL_PREFIX}/generic ${ITCL_PREFIX}/libtommath)
 		IF(WIN32)
-			SET(ITCL_INCLUDE_PATH ${ITCL_INCLUDE_PATH} ${ITCL_PREFIX}/win)
+			SET(ITCL_INCLUDE_DIRS ${ITCL_INCLUDE_DIRS} ${ITCL_PREFIX}/win)
 		ELSE(WIN32)
-			SET(ITCL_INCLUDE_PATH ${ITCL_INCLUDE_PATH} ${ITCL_PREFIX}/unix)
+			SET(ITCL_INCLUDE_DIRS ${ITCL_INCLUDE_DIRS} ${ITCL_PREFIX}/unix)
 		ENDIF(WIN32)
 	ENDIF(ITCL_PREFIX)
 	IF(ITCL_BIN_PREFIX)
-		SET(ITCL_INCLUDE_PATH ${ITCL_INCLUDE_PATH} ${ITCL_BIN_PREFIX}/include)
+		SET(ITCL_INCLUDE_DIRS ${ITCL_INCLUDE_DIRS} ${ITCL_BIN_PREFIX}/include)
 	ENDIF(ITCL_BIN_PREFIX)
-ENDIF(NOT ITCL_INCLUDE_PATH)
+ENDIF(NOT ITCL_INCLUDE_DIRS)
 
 IF(NOT TK_INCLUDE_PATH)
 	IF(TK_PREFIX)
@@ -493,16 +493,16 @@ ENDIF(NOT TK_INCLUDE_PATH)
 SET(ITK_INCLUDE_PATH ${ITK_SOURCE_DIR}/generic ${ITK_BINARY_DIR}/include)
 
 include_directories(
-	${TCL_INCLUDE_PATH}
+	${TCL_INCLUDE_DIRS}
 	${TK_INCLUDE_PATH}
-	${ITCL_INCLUDE_PATH}
+	${ITCL_INCLUDE_DIRS}
 	${ITK_INCLUDE_PATH}
 	${X11_INCLUDE_DIR}
 )
 
 add_library(itk ${ITK_GENERIC_SRCS})
 SET_TARGET_PROPERTIES(itk PROPERTIES PREFIX "lib")
-target_link_libraries(itk ${M_LIBRARY} ${TCL_LIBRARY} ${TK_LIBRARY} ${ITCL_LIBRARY})
+target_link_libraries(itk ${M_LIBRARY} ${TCL_LIBRARY} ${TCL_TK_LIBRARY} ${ITCL_LIBRARY})
 install(TARGETS itk DESTINATION lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
 set_target_properties(itk PROPERTIES INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
 set_target_properties(itk PROPERTIES INSTALL_NAME_DIR ${CMAKE_INSTALL_PREFIX}/lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})

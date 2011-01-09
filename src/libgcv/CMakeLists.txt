@@ -4,7 +4,7 @@ set(LIBGCV_SOURCES
 )
 
 include_directories(
-    ${TCL_INCLUDE_PATH}
+    ${TCL_INCLUDE_DIRS}
 )
 
 BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt libbu")

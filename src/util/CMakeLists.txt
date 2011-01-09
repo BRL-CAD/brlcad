@@ -4,7 +4,7 @@ include_directories(
   ${PNG_INCLUDE_DIR}
   ${UTAHRLE_INCLUDE_DIR}
   ${X11_INCLUDE_DIR}
-  ${TCL_INCLUDE_PATH}
+  ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
 )
 

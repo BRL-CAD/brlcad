@@ -55,11 +55,11 @@ OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
 OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
 
 # version numbers
-SET(TK_MAJOR_VERSION 8)
-SET(TK_MINOR_VERSION 5)
-SET(TK_PATCH_LEVEL 9)
+SET(TK_VERSION_MAJOR 8)
+SET(TK_VERSION_MINOR 5)
+SET(TK_VERSION_PATCH 9)
 
-SET(TK_VERSION "${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}.${TK_PATCH_LEVEL}")
+SET(TK_VERSION "${TK_VERSION_MAJOR}.${TK_VERSION_MINOR}.${TK_VERSION_PATCH}")
 
 # For Windows, we need the Resource Compiler language
 IF(WIN32)
@@ -112,9 +112,9 @@ INCLUDE(${TK_SOURCE_DIR}/CMake/tcl.cmake)
 # between various platforms or pertain to specific OS definitions
 SET(TK_CFLAGS "${TK_CFLAGS} -DPACKAGE_NAME=\\\"tk\\\"")
 SET(TK_CFLAGS "${TK_CFLAGS} -DPACKAGE_TARNAME=\\\"tk\\\"")
-SET(TK_CFLAGS "${TK_CFLAGS} -DPACKAGE_VERSION=\\\"${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}\\\"")
+SET(TK_CFLAGS "${TK_CFLAGS} -DPACKAGE_VERSION=\\\"${TK_VERSION_MAJOR}.${TK_VERSION_MINOR}\\\"")
 IF(NOT WIN32)
-	SET(TK_CFLAGS "${TK_CFLAGS} -DPACKAGE_STRING=\\\"tk\\ ${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}\\\"")
+	SET(TK_CFLAGS "${TK_CFLAGS} -DPACKAGE_STRING=\\\"tk\\ ${TK_VERSION_MAJOR}.${TK_VERSION_MINOR}\\\"")
 ENDIF(NOT WIN32)
 SET(TK_CFLAGS "${TK_CFLAGS} -DPACKAGE_BUGREPORT=\\\"\\\"")
 SET(TK_CFLAGS "${TK_CFLAGS} -DSTDC_HEADERS=1")
@@ -494,30 +494,30 @@ ENDIF(WIN32)
 # When it comes to identification of the location of the Tcl
 # sources, the convention is as follows:
 #
-# 1.  If TCL_INCLUDE_PATH is defined, use it
+# 1.  If TCL_INCLUDE_DIRS is defined, use it
 # 2.  Else, if TCL_PREFIX is defined build include paths from it
-# 3.  If TCL_INCLUDE_PATH is not defined and TCL_BIN_PREFIX is,
+# 3.  If TCL_INCLUDE_DIRS is not defined and TCL_BIN_PREFIX is,
 #     add include directories based on the presumption of the
 #     binary build dir (and hence tkConfig.h) being in a non-src
 #     location.
 #
 # It's still possible, depending on how Tcl was built, to 
-# have a situation where TCL_INCLUDE_PATH has to be augmented
+# have a situation where TCL_INCLUDE_DIRS has to be augmented
 # manually.  However, the logic below should cover the most common cases.
 
-IF(NOT TCL_INCLUDE_PATH)
+IF(NOT TCL_INCLUDE_DIRS)
 	IF(TCL_PREFIX)
-		SET(TCL_INCLUDE_PATH ${TCL_PREFIX}/generic ${TCL_PREFIX}/libtommath)
+		SET(TCL_INCLUDE_DIRS ${TCL_PREFIX}/generic ${TCL_PREFIX}/libtommath)
 		IF(WIN32)
-			SET(TCL_INCLUDE_PATH ${TCL_INCLUDE_PATH} ${TCL_PREFIX}/win)
+			SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_PREFIX}/win)
 		ELSE(WIN32)
-			SET(TCL_INCLUDE_PATH ${TCL_INCLUDE_PATH} ${TCL_PREFIX}/unix)
+			SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_PREFIX}/unix)
 		ENDIF(WIN32)
 	ENDIF(TCL_PREFIX)
 	IF(TCL_BIN_PREFIX)
-		SET(TCL_INCLUDE_PATH ${TCL_INCLUDE_PATH} ${TCL_BIN_PREFIX}/include)
+		SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_BIN_PREFIX}/include)
 	ENDIF(TCL_BIN_PREFIX)
-ENDIF(NOT TCL_INCLUDE_PATH)
+ENDIF(NOT TCL_INCLUDE_DIRS)
 
 SET(TK_INCLUDE_PATH ${TK_SOURCE_DIR}/generic ${TK_SOURCE_DIR}/bitmaps ${TK_BINARY_DIR}/include)
 IF(WIN32)
@@ -538,7 +538,7 @@ ENDIF(NOT WIN32)
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TK_CFLAGS}") 
 
 include_directories(
-   ${TCL_INCLUDE_PATH}	
+   ${TCL_INCLUDE_DIRS}	
    ${TK_INCLUDE_PATH}
    ${X11_INCLUDE_DIR}	
 )
@@ -573,12 +573,12 @@ ELSE(WIN32)
 target_link_libraries(tk tcl ${COREFOUNDATION_FRAMEWORK} ${X11_TK_LIBS} ${TK_FREETYPE_LIBRARIES} ${TK_FONTCONFIG_LIBRARY})
 ENDIF(WIN32)
 install(TARGETS tk DESTINATION lib)
-SET_TARGET_PROPERTIES(tk PROPERTIES VERSION ${TK_VERSION} SOVERSION ${TK_MAJOR_VERSION}.${TK_MINOR_VERSION})
+SET_TARGET_PROPERTIES(tk PROPERTIES VERSION ${TK_VERSION} SOVERSION ${TK_VERSION_MAJOR}.${TK_VERSION_MINOR})
 
-FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded Tk ${TK_MAJOR_VERSION}.${TK_MINOR_VERSION} [list load [file join $dir libtk${CMAKE_SHARED_LIBRARY_SUFFIX}] Tk]")
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/tk${TK_MAJOR_VERSION}.${TK_MINOR_VERSION})
+FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded Tk ${TK_VERSION_MAJOR}.${TK_VERSION_MINOR} [list load [file join $dir libtk${CMAKE_SHARED_LIBRARY_SUFFIX}] Tk]")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/tk${TK_VERSION_MAJOR}.${TK_VERSION_MINOR})
 
-FILE(WRITE ${CMAKE_BINARY_DIR}/lib/tk${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}/pkgIndex.tcl "package ifneeded Tk ${TK_MAJOR_VERSION}.${TK_MINOR_VERSION} [list load [file join $dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} libtk${CMAKE_SHARED_LIBRARY_SUFFIX}] Tk]")
+FILE(WRITE ${CMAKE_BINARY_DIR}/lib/tk${TK_VERSION_MAJOR}.${TK_VERSION_MINOR}/pkgIndex.tcl "package ifneeded Tk ${TK_VERSION_MAJOR}.${TK_VERSION_MINOR} [list load [file join $dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} libtk${CMAKE_SHARED_LIBRARY_SUFFIX}] Tk]")
 
 
 add_library(tkstub STATIC ${TK_STUB_SRCS})

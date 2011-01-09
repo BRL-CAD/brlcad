@@ -1,7 +1,7 @@
 include_directories(
 		  ${CMAKE_CURRENT_SOURCE_DIR}/src
 		  ${CMAKE_CURRENT_BINARY_DIR}
-		  ${TCL_INCLUDE_PATH}
+		  ${TCL_INCLUDE_DIRS}
 		  ${TK_INCLUDE_PATH}
 		  ${ZLIB_INCLUDE_DIR}
 		  ${X11_INCLUDE_DIR}
@@ -16,7 +16,7 @@ SET(TKPNG_SRCS
 )
 
 add_library(tkpng SHARED ${TKPNG_SRCS})
-target_link_libraries(tkpng ${TCL_LIBRARY} ${TK_LIBRARY} ${ZLIB_LIBRARY} ${X11_LIBRARIES})
+target_link_libraries(tkpng ${TCL_LIBRARY} ${TCL_TK_LIBRARY} ${ZLIB_LIBRARY} ${X11_LIBRARIES})
 install(TARGETS tkpng DESTINATION lib)
 
 # Create the pkgIndex.tcl file.

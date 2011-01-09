@@ -41,7 +41,7 @@ set(LIBOPTICAL_SOURCES
 include_directories(
     ${PNG_INCLUDE_DIR}
     ${ZLIB_INCLUDE_DIR}
-    ${TCL_INCLUDE_PATH}
+    ${TCL_INCLUDE_DIRS}
 )
 
 BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu")

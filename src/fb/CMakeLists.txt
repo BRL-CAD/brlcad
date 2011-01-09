@@ -2,7 +2,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${ZLIB_INCLUDE_DIR}
   ${PNG_INCLUDE_DIR}
-  ${TCL_INCLUDE_PATH}
+  ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
   ${UTAHRLE_INCLUDE_DIR}
   ${X11_INCLUDE_DIR}
@@ -47,7 +47,7 @@ ENDIF(CURSES_HAVE_CURSES_H)
 BRLCAD_ADDEXEC(fbscanplot fbscanplot.c libfb)
 BRLCAD_ADDEXEC(fbstretch "fbstretch.c ioutil.c" libfb)
 IF(BRLCAD-ENABLE_TK)
-	BRLCAD_ADDEXEC(fbthreadtest fbthreadtest "libfb ${TK_LIBRARY}")
+	BRLCAD_ADDEXEC(fbthreadtest fbthreadtest "libfb ${TCL_TK_LIBRARY}")
 	SET_TARGET_PROPERTIES(fbthreadtest PROPERTIES COMPILE_DEFINITIONS "IF_TK")
 ENDIF(BRLCAD-ENABLE_TK)
 IF(CURSES_HAVE_CURSES_H)

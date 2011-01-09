@@ -1,7 +1,7 @@
 include_directories(
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
-  ${TCL_INCLUDE_PATH}
+  ${TCL_INCLUDE_DIRS}
 )
 
 add_definitions(

@@ -16,7 +16,7 @@ IF(MSVC)
 	add_definitions(
 		-DIF_WGL
 	)
-   SET(LINKLIBS "${LINKLIBS} opengl32.lib ${TK_LIBRARY}")
+   SET(LINKLIBS "${LINKLIBS} opengl32.lib ${TCL_TK_LIBRARY}")
 ENDIF(MSVC)
 
 set(LIBFB_SOURCES
@@ -47,7 +47,7 @@ include_directories(
 	${X11_INCLUDE_DIR}
 	${OPENGL_INCLUDE_DIR_GL}
 	${OPENGL_INCLUDE_DIR_GLX}
-	${TCL_INCLUDE_PATH}
+	${TCL_INCLUDE_DIRS}
 	${TK_INCLUDE_PATH}
 	)
 

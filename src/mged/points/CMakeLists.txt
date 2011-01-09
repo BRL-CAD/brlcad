@@ -1,7 +1,7 @@
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${TCL_INCLUDE_PATH}
+  ${TCL_INCLUDE_DIRS}
 )
 
 YACC_TARGET(MGEDPointsParser points_parse.y

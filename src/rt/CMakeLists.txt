@@ -132,7 +132,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${PNG_INCLUDE_DIR}
     ${ZLIB_INCLUDE_DIR}
-    ${TCL_INCLUDE_PATH}
+    ${TCL_INCLUDE_DIRS}
 )
 
 add_executable(rtexample "${rtexample_SRCS}")

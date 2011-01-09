@@ -230,7 +230,7 @@ include_directories(
     ${REGEX_INCLUDE_DIR}
     ${ZLIB_INCLUDE_DIR}
     ${OPENNURBS_INCLUDE_DIR}
-	 ${TCL_INCLUDE_PATH}
+	 ${TCL_INCLUDE_DIRS}
 	 ${TNT_INCLUDE_DIR}
 )
 

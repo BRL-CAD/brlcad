@@ -4,7 +4,7 @@ set(LIBANALYZE_SOURCES
 )
 
 include_directories(
-    ${TCL_INCLUDE_PATH}
+    ${TCL_INCLUDE_DIRS}
 )
 
 BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" libbu)

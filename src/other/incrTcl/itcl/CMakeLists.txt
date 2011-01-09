@@ -440,42 +440,42 @@ SET(ITCL_STUB_SRCS
 # When it comes to identification of the location of the Tcl
 # sources, the convention is as follows:
 #
-# 1.  If TCL_INCLUDE_PATH is defined, use it
+# 1.  If TCL_INCLUDE_DIRS is defined, use it
 # 2.  Else, if TCL_PREFIX is defined build include paths from it
-# 3.  If TCL_INCLUDE_PATH is not defined and TCL_BIN_PREFIX is,
+# 3.  If TCL_INCLUDE_DIRS is not defined and TCL_BIN_PREFIX is,
 #     add include directories based on the presumption of the
 #     binary build dir (and hence tclConfig.h) being in a non-src
 #     location.
 #
 # It's still possible, depending on how Tcl was built, to 
-# have a situation where TCL_INCLUDE_PATH has to be augmented
+# have a situation where TCL_INCLUDE_DIRS has to be augmented
 # manually.  However, the logic below should cover the most common cases.
 
-IF(NOT TCL_INCLUDE_PATH)
+IF(NOT TCL_INCLUDE_DIRS)
 	IF(TCL_PREFIX)
-		SET(TCL_INCLUDE_PATH ${TCL_PREFIX}/generic ${TCL_PREFIX}/libtommath)
+		SET(TCL_INCLUDE_DIRS ${TCL_PREFIX}/generic ${TCL_PREFIX}/libtommath)
 		IF(WIN32)
-			SET(TCL_INCLUDE_PATH ${TCL_INCLUDE_PATH} ${TCL_PREFIX}/win)
+			SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_PREFIX}/win)
 		ELSE(WIN32)
-			SET(TCL_INCLUDE_PATH ${TCL_INCLUDE_PATH} ${TCL_PREFIX}/unix)
+			SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_PREFIX}/unix)
 		ENDIF(WIN32)
 	ENDIF(TCL_PREFIX)
 	IF(TCL_BIN_PREFIX)
-		SET(TCL_INCLUDE_PATH ${TCL_INCLUDE_PATH} ${TCL_BIN_PREFIX}/include)
+		SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_BIN_PREFIX}/include)
 	ENDIF(TCL_BIN_PREFIX)
-ENDIF(NOT TCL_INCLUDE_PATH)
+ENDIF(NOT TCL_INCLUDE_DIRS)
 
 
-SET(ITCL_INCLUDE_PATH ${ITCL_SOURCE_DIR}/generic ${ITCL_BINARY_DIR}/include)
+SET(ITCL_INCLUDE_DIRS ${ITCL_SOURCE_DIR}/generic ${ITCL_BINARY_DIR}/include)
 
 include_directories(
-	${TCL_INCLUDE_PATH}
-	${ITCL_INCLUDE_PATH}
+	${TCL_INCLUDE_DIRS}
+	${ITCL_INCLUDE_DIRS}
 )
 
 add_library(itcl ${ITCL_GENERIC_SRCS})
 SET_TARGET_PROPERTIES(itcl PROPERTIES PREFIX "lib")
-target_link_libraries(itcl ${M_LIBRARY} ${TCL_LIBRARY} ${TCL_STUB_LIBRARY})
+target_link_libraries(itcl ${M_LIBRARY} ${TCL_LIBRARY} ${TCL_STUB_LIBRARIES})
 install(TARGETS itcl DESTINATION lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
 set_target_properties(itcl PROPERTIES INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
 set_target_properties(itcl PROPERTIES INSTALL_NAME_DIR ${CMAKE_INSTALL_PREFIX}/lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})

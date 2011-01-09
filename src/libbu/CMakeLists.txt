@@ -1,7 +1,7 @@
 include_directories(
     ${PNG_INCLUDE_DIR}
     ${ZLIB_INCLUDE_DIR}
-    ${TCL_INCLUDE_PATH}
+    ${TCL_INCLUDE_DIRS}
 )
 
 set(LIBBU_SOURCES

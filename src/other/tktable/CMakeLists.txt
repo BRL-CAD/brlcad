@@ -10,7 +10,7 @@ PROJECT(TKTABLE)
 include_directories(
 		  ${CMAKE_CURRENT_SOURCE_DIR}/src
 		  ${CMAKE_CURRENT_BINARY_DIR}
-		  ${TCL_INCLUDE_PATH}
+		  ${TCL_INCLUDE_DIRS}
 		  ${TK_INCLUDE_PATH}
 		  ${X11_INCLUDE_DIR}
 		  )
@@ -29,7 +29,7 @@ SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TKTABLE_CFLAGS}")
 
 ADD_CUSTOM_COMMAND(
 		  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
-		  COMMAND ${TCL_TCLSH} ${CMAKE_CURRENT_SOURCE_DIR}/misc/tkTable_header.tcl ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
+		  COMMAND ${TCL_TCLSH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/misc/tkTable_header.tcl ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
 )
 ADD_CUSTOM_TARGET(tktable_header_gen ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h)
 
@@ -56,7 +56,7 @@ add_definitions(
 
 add_library(Tktable SHARED ${TKTABLE_SRCS})
 add_dependencies(Tktable tktable_header_gen)
-target_link_libraries(Tktable ${TCL_LIBRARY} ${TK_LIBRARY} ${X11_LIBRARIES})
+target_link_libraries(Tktable ${TCL_LIBRARY} ${TCL_TK_LIBRARY} ${X11_LIBRARIES})
 install(TARGETS Tktable DESTINATION lib)
 
 # Create the pkgIndex.tcl file.

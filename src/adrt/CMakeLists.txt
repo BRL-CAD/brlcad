@@ -1,5 +1,5 @@
 include_directories(
-  ${TCL_INCLUDE_PATH}
+  ${TCL_INCLUDE_DIRS}
   ${BRLCAD_SOURCE_DIR}/src/adrt
   ${BRLCAD_SOURCE_DIR}/src/adrt/libtie
   ${BRLCAD_SOURCE_DIR}/src/adrt/libcommon

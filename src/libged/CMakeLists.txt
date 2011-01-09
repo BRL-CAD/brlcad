@@ -263,7 +263,7 @@ include_directories(
     ${PNG_INCLUDE_DIR}
     ${ZLIB_INCLUDE_DIR}
     ${REGEX_INCLUDE_DIR}
-    ${TCL_INCLUDE_PATH}
+    ${TCL_INCLUDE_DIRS}
 )
 
 BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb librt libbu libanalyze ${REGEX_LIBRARY}")

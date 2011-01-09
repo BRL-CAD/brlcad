@@ -19,22 +19,22 @@ SET(tcl_library_toplevel
 	word.tcl
 	tclIndex
 )
-INSTALL(FILES ${tcl_library_toplevel} DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
-TCL_SCRIPTS_BUILD(tcl_library_toplevel lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+INSTALL(FILES ${tcl_library_toplevel} DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
+TCL_SCRIPTS_BUILD(tcl_library_toplevel lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
 
 SET(tcl_library_http1
 	http1.0/http.tcl
 	http1.0/pkgIndex.tcl
 )
-INSTALL(FILES ${tcl_library_http1} DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}/http1.0)
-TCL_SCRIPTS_BUILD(tcl_library_http1 lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}/http1.0)
+INSTALL(FILES ${tcl_library_http1} DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}/http1.0)
+TCL_SCRIPTS_BUILD(tcl_library_http1 lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}/http1.0)
 
 SET(tcl_library_opt04
 	opt/optparse.tcl
 	opt/pkgIndex.tcl
 )
-INSTALL(FILES ${tcl_library_opt04} DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}/opt0.4)
-TCL_SCRIPTS_BUILD(tcl_library_opt04 lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}/opt0.4)
+INSTALL(FILES ${tcl_library_opt04} DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}/opt0.4)
+TCL_SCRIPTS_BUILD(tcl_library_opt04 lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}/opt0.4)
 
 INSTALL(FILES http/http.tcl DESTINATION lib/tcl8/8.4 RENAME http-2.7.5.tm)
 INSTALL(FILES platform/platform.tcl DESTINATION lib/tcl8/8.4 RENAME platform-1.0.9.tm)
@@ -49,9 +49,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/msgcat/msgcat.tcl ${CMAKE_BINARY_DIR}
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tcltest/tcltest.tcl ${CMAKE_BINARY_DIR}/lib/tcl8/8.5/tcltest-2.3.2.tm COPYONLY)
 
 IF(NOT WIN32)
-	INSTALL(FILES ../unix/tclAppInit.c DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+	INSTALL(FILES ../unix/tclAppInit.c DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
 ELSE(NOT WIN32)
-	INSTALL(FILES ../win/tclAppInit.c DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+	INSTALL(FILES ../win/tclAppInit.c DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
 ENDIF(NOT WIN32)
 
 SET(tcl_msgs
@@ -184,8 +184,8 @@ SET(tcl_msgs
 	msgs/zh_tw.msg
 )
 
-INSTALL(FILES ${tcl_msgs} DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}/msgs)
-TCL_SCRIPTS_BUILD(tcl_msgs lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}/msgs)
+INSTALL(FILES ${tcl_msgs} DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}/msgs)
+TCL_SCRIPTS_BUILD(tcl_msgs lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}/msgs)
 
 SET(tcl_encoding
 	encoding/ascii.enc
@@ -267,5 +267,5 @@ SET(tcl_encoding
 	encoding/symbol.enc
 	encoding/tis-620.enc
 )
-INSTALL(FILES ${tcl_encoding} DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}/encoding)
-TCL_SCRIPTS_BUILD(tcl_encoding lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}/encoding)
+INSTALL(FILES ${tcl_encoding} DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}/encoding)
+TCL_SCRIPTS_BUILD(tcl_encoding lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}/encoding)
