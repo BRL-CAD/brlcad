@@ -196,14 +196,14 @@ struct rt_grip_internal {
  */
 struct rt_pg_internal {
     unsigned long magic;
-    size_t	npoly;
+    size_t npoly;
     struct rt_pg_face_internal {
-	int	npts;		/**< @brief  number of points for this polygon */
+	size_t npts;		/**< @brief  number of points for this polygon */
 	fastf_t	*verts;		/**< @brief  has 3*npts elements */
 	fastf_t	*norms;		/**< @brief  has 3*npts elements */
     } *poly;			/**< @brief  has npoly elements */
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
-    int	max_npts;		/**< @brief  maximum value of npts in poly[] */
+    size_t max_npts;		/**< @brief  maximum value of npts in poly[] */
 };
 #define RT_PG_CK_MAGIC(_p)	BU_CKMAG(_p, RT_PG_INTERNAL_MAGIC, "rt_pg_internal")
 
@@ -558,9 +558,9 @@ struct rt_bot_internal
     unsigned char bot_flags;	/**< @brief flags, (indicates surface
 				 * normals available, for example)
 				 */
-    int num_vertices;
-    int num_faces;
-    int *faces;			/**< @brief array of ints for faces
+    size_t num_vertices;
+    size_t num_faces;
+    size_t *faces;		/**< @brief array of ints for faces
 				 * [num_faces*3]
 				 */
     fastf_t *vertices;		/**< @brief array of floats for
@@ -579,15 +579,15 @@ struct rt_bot_internal
 				 * modes RT_BOT_SURFACE and
 				 * RT_BOT_SOLID).
 				 */
-    int num_normals;
+    size_t num_normals;
     fastf_t *normals;		/**< @brief array of unit surface
 				 * normals [num_normals*3]
 				 */
-    int num_face_normals;	/**< @brief current size of the
+    size_t num_face_normals;	/**< @brief current size of the
 				 * face_normals array below (number of
 				 * faces in the array)
 				 */
-    int *face_normals;		/**< @brief array of indices into the
+    size_t *face_normals;	/**< @brief array of indices into the
 				 * "normals" array, one per face
 				 * vertex [num_face_normals*3]
 				 */

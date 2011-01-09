@@ -49,8 +49,7 @@ rt_poly_mirror(struct rt_db_internal *ip, register const plane_t plane)
     point_t mirror_pt;
     fastf_t ang;
 
-    size_t i;
-    int j;
+    size_t i, j;
     fastf_t *verts;
     fastf_t *norms;
 
@@ -90,7 +89,7 @@ rt_poly_mirror(struct rt_db_internal *ip, register const plane_t plane)
     norms = (fastf_t *)bu_calloc(poly->max_npts*3, sizeof(fastf_t), "rt_mirror: norms");
 
     for (i=0; i<poly->npoly; i++) {
-	int last;
+	size_t last;
 
 	last = (poly->poly[i].npts - 1)*3;
 	/* mirror coords and temporarily store in reverse order */

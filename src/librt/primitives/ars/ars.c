@@ -60,8 +60,6 @@
 
 /* Describe algorithm here */
 
-extern int rt_bot_minpieces;
-
 /* from g_bot.c */
 extern int rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip);
 extern void rt_bot_ifree(struct rt_db_internal *ip);
