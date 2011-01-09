@@ -51,6 +51,7 @@ SET(mged_TCLSCRIPTS
 	lgt_mat.tcl 
 	list.tcl 
 	make_solid.tcl 
+	man.tcl
 	menu.tcl 
 	mged.tcl 
 	mgedrc.tcl 
