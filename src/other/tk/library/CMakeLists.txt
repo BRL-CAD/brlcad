@@ -95,6 +95,7 @@ SET(TTK_LIBRARY_FILES
 	ttk/scale.tcl
 	ttk/scrollbar.tcl
 	ttk/sizegrip.tcl
+	ttk/spinbox.tcl
 	ttk/treeview.tcl
 	ttk/ttk.tcl
 	ttk/utils.tcl
