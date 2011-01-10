@@ -1,3 +1,10 @@
+FILE(GLOB ALL_MANN_EN_XML_FULLPATH "*.xml")
+FOREACH(ITEM ${ALL_MANN_EN_XML_FULLPATH})
+	GET_FILENAME_COMPONENT(ITEM_NAME ${ITEM} NAME)
+	LIST(APPEND ALL_MANN_EN_XML ${ITEM_NAME})
+ENDFOREACH(ITEM ${ALL_MANN_EN_XML_FULLPATH})
+LIST(LENGTH ALL_MANN_EN_XML ALL_MANN_EN_XML_COUNT)
+
 SET(docbook_mann_EN 
 	3ptarb.xml 
 	B.xml 
@@ -226,21 +233,34 @@ SET(docbook_mann_EN
 	window.xml 
 	window_frame.xml 
 	wire.xml 
-	wmater.xml 
-	x.xml 
-	xpush.xml 
+	wmater.xml
+	x.xml
+	xpush.xml
 	zoom.xml
-)
+	)
 
 SET(docbook_mann_INTRO
-  Introduction.xml
-)
+	Introduction.xml
+	)
+
+SET(KNOWN_MANN_EN_XML ${docbook_mann_EN} ${docbook_mann_INTRO})
+LIST(LENGTH KNOWN_MANN_EN_XML KNOWN_MANN_EN_XML_COUNT)
+IF(NOT ALL_MANN_EN_XML_COUNT EQUAL KNOWN_MANN_EN_XML_COUNT)
+	FOREACH(ALL_ITEM ${ALL_MANN_EN_XML})
+		LIST(FIND KNOWN_MANN_EN_XML ${ALL_ITEM} ITEM_FOUND)
+		IF(ITEM_FOUND EQUAL -1)
+			SET(UNKNOWN_LIST "${UNKNOWN_LIST}\n${ALL_ITEM}")
+		ENDIF(ITEM_FOUND EQUAL -1)
+	ENDFOREACH(ALL_ITEM ${ALL_MANN_EN_XML})
+	MESSAGE(FATAL_ERROR "File(s) present in ${CMAKE_CURRENT_SOURCE_DIR} that are not in CMakeLists.txt build logic:
+	${UNKNOWN_LIST}")
+ENDIF(NOT ALL_MANN_EN_XML_COUNT EQUAL KNOWN_MANN_EN_XML_COUNT)
 
 DOCBOOK_TO_HTML(mann docbook_mann_EN ${BRLCAD_INSTALL_DATA_DIR}/html/mann/en)
 DOCBOOK_TO_HTML(mann docbook_mann_INTRO ${BRLCAD_INSTALL_DATA_DIR}/html/mann/en)
 DOCBOOK_TO_MAN(mann docbook_mann_EN n nged)
 
 IF(BRLCAD-BUILD_EXTRADOCS_PDF_MAN)
-   DOCBOOK_TO_PDF(mann docbook_mann_EN ${BRLCAD_INSTALL_DATA_DIR}/pdf/mann/en)
+	DOCBOOK_TO_PDF(mann docbook_mann_EN ${BRLCAD_INSTALL_DATA_DIR}/pdf/mann/en)
 ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF_MAN)
 
