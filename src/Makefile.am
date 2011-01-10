@@ -61,7 +61,6 @@ kitchensink_dirs = \
 	libmultispectral \
 	libtclcad \
 	libtermio \
-	libtie \
 	adrt \
 	anim \
 	archer \
