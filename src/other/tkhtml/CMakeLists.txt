@@ -20,7 +20,7 @@ SET(TKHTML_PKGVERSION "3.0")
 
 # Windows specific flags
 IF(WIN32)
-	SET(TKHTML_CFLAGS "${TKHTML_CFLAGS} -c -W3 -D _CRT_SECURE_NO_DEPRECATE -D _CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD")
+	SET(TKHTML_CFLAGS "${TKHTML_CFLAGS} -c -W3 -D _CRT_SECURE_NO_DEPRECATE -D _CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD -DUSE_TCL_STUBS -DUSE_TK_STUBS -D__WIN32__")
 	SET(TKHTML_CFLAGS "${TKHTML_CFLAGS} -Dinline=__inline -DBUILD_tkhtml")
 ENDIF(WIN32)
 
@@ -65,13 +65,16 @@ SET(TKHTML_SRCS
 		  src/htmltext.c
 		  src/htmltree.c
 		  src/htmlutil.c
-		  src/main.c
 		  src/restrack.c
 		  src/swproc.c
 )
 
 add_library(Tkhtml SHARED ${TKHTML_SRCS})
-target_link_libraries(Tkhtml ${TCL_LIBRARY} ${TCL_TK_LIBRARY} ${TCL_STUB_LIBRARIES} ${X11_LIBRARIES})
+IF(WIN32)
+   target_link_libraries(Tkhtml ${TCL_STUB_LIBRARIES} ${X11_LIBRARIES})
+ELSE(WIN32)
+   target_link_libraries(Tkhtml ${TCL_LIBRARY} ${TCL_TK_LIBRARY} ${TCL_STUB_LIBRARIES} ${X11_LIBRARIES})
+ENDIF(WIN32)
 install(TARGETS Tkhtml DESTINATION lib)
 
 # Create the pkgIndex.tcl file.
