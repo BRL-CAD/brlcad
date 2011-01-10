@@ -42,7 +42,7 @@ target_link_libraries(BrlcadCore
     librt
     libsysv
     libwdb
-    libz
+    zlib
     openNURBS
     tcl85
 )
@@ -66,7 +66,6 @@ set(BRLCAD_HEADERS
     ../../../include/db.h
     ../../../include/db5.h
     ../../../include/magic.h
-    ../../../include/opennurbs_ext.h
     ../../../include/nmg.h
     ../../../include/nurb.h
     ../../../include/pc.h
@@ -130,7 +129,7 @@ target_link_libraries(brlcad
     librt
     libsysv
     libwdb
-    libz
+    zlib
     openNURBS
 )
 
