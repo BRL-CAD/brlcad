@@ -2,22 +2,22 @@
 
 MACRO(pkgIndex_BUILD name srcdir targetdir)
 	ADD_CUSTOM_COMMAND(
-		OUTPUT ${srcdir}/pkgIndex.tcl
-		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ampi.tcl ${srcdir}
+		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl
+		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ampi.tcl ${srcdir} && ${CMAKE_COMMAND} -E rename ${srcdir}/pkgIndex.tcl ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl
 		DEPENDS btclsh
 		)
-	ADD_CUSTOM_TARGET(${name}_pkgIndex.tcl ALL DEPENDS ${srcdir}/pkgIndex.tcl)
-	INSTALL(FILES ${srcdir}/pkgIndex.tcl DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/${targetdir})
+	ADD_CUSTOM_TARGET(${name}_pkgIndex.tcl ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl)
+	INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/${targetdir})
 ENDMACRO(pkgIndex_BUILD name srcdir targetdir)
 
 MACRO(tclIndex_BUILD name srcdir targetdir)
 	ADD_CUSTOM_COMMAND(
-		OUTPUT ${srcdir}/tclIndex
-		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ami.tcl ${srcdir}
+		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tclIndex
+		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ami.tcl ${srcdir} && ${CMAKE_COMMAND} -E rename ${srcdir}/tclIndex ${CMAKE_CURRENT_BINARY_DIR}/tclIndex
 		DEPENDS btclsh
 		)
-	ADD_CUSTOM_TARGET(${name}_tclIndex ALL DEPENDS ${srcdir}/tclIndex)
-	INSTALL(FILES ${srcdir}/tclIndex DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/${targetdir})
+	ADD_CUSTOM_TARGET(${name}_tclIndex ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tclIndex)
+	INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/tclIndex DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/${targetdir})
 ENDMACRO(tclIndex_BUILD name srcdir targetdir)
 
 
