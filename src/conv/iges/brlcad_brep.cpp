@@ -28,6 +28,12 @@
 #include "brlcad_brep.hpp"
 #include "vmath.h"
 
+/* FIXME: should not be peeking into a private header and cannot be a
+ * public header (of librt).
+ */
+#include "../../librt/opennurbs_ext.h"
+
+
 namespace brlcad {
 
     BRLCADBrepHandler::BRLCADBrepHandler() {
