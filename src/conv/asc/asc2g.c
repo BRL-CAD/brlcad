@@ -1700,6 +1700,7 @@ main(int argc, char *argv[])
     struct bu_vls       str_title;
     struct bu_vls       str_put;
     struct bu_vls	line;
+    int                 isComment=1;
 
     bu_debug = BU_DEBUG_COREDUMP;
 
@@ -1726,10 +1727,29 @@ main(int argc, char *argv[])
     bu_vls_init(&str_put);
     bu_vls_strcpy( &str_put, "put ");
 
-    if (bu_vls_gets(&line, ifp) < 0) {
-	fclose(ifp); ifp = NULL;
-	wdb_close(ofp); ofp = NULL;
-	bu_exit(1, "Unexpected EOF\n");
+    while (isComment) {
+        char *str;
+        int charIndex;
+        int len;
+        bu_vls_trunc2(&line, 0);
+        if (bu_vls_gets(&line, ifp) < 0) {
+            fclose(ifp); ifp = NULL;
+            wdb_close(ofp); ofp = NULL;
+            bu_exit(1, "Unexpected EOF\n");
+        }
+        str = bu_vls_addr(&line);
+        len = strlen(str);
+        for (charIndex=0 ; charIndex<len ; charIndex++) {
+            if (str[charIndex] == '#') {
+                isComment = 1;
+                break;
+            } else if (isspace(str[charIndex])) {
+                continue;
+            } else {
+                isComment = 0;
+                break;
+            }
+        }
     }
 
     /* new style ascii database */
