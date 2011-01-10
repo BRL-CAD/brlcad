@@ -64,6 +64,7 @@ set(LIBBU_SOURCES
     str.c
     tcl.c
     temp.c
+    timer.c
     units.c
     vers.c
     vfont.c
