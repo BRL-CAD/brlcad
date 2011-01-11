@@ -121,7 +121,7 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     if (STATE == ST_O_PATH) {
 	if (argc == 1 || *argv[1] == 'f') {
 	    ++ipathpos;
-	    if (ipathpos >= illump->s_fullpath.fp_len)
+	    if ((size_t)ipathpos >= illump->s_fullpath.fp_len)
 		ipathpos = 0;
 	} else if (*argv[1] == 'b') {
 	    --ipathpos;
@@ -234,7 +234,7 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     struct ged_display_list *next_gdlp;
     struct solid *sp;
     char *cp;
-    int j;
+    size_t j;
     int illum_only = 0;
 
     CHECK_DBI_NULL;
@@ -289,7 +289,7 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     } else {
 	ipathpos = atoi(argv[1]);
 	if (ipathpos < 0) ipathpos = 0;
-	else if (ipathpos >= illump->s_fullpath.fp_len)
+	else if ((size_t)ipathpos >= illump->s_fullpath.fp_len)
 	    ipathpos = illump->s_fullpath.fp_len-1;
     }
  got:
@@ -299,13 +299,13 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    for (j = 0; j <= ipathpos; j++) {
+	    for (j = 0; j <= (size_t)ipathpos; j++) {
 		if (DB_FULL_PATH_GET(&sp->s_fullpath, j) !=
 		    DB_FULL_PATH_GET(&illump->s_fullpath, j))
 		    break;
 	    }
 	    /* Only accept if top of tree is identical */
-	    if (j == ipathpos+1)
+	    if (j == (size_t)ipathpos+1)
 		sp->s_iflag = UP;
 	    else
 		sp->s_iflag = DOWN;

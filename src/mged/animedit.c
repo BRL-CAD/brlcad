@@ -2328,7 +2328,7 @@ part_solve(struct hold *hp, double limits, double tol)
     }
 
     if (BU_LIST_IS_EMPTY(&hp->j_head)) {
-	int i, j;
+	size_t i, j;
 	int startjoint;
 	startjoint = -1;
 	if (joint_debug & DEBUG_J_SOLVE) {
@@ -2337,7 +2337,7 @@ part_solve(struct hold *hp, double limits, double tol)
 	}
 	for (BU_LIST_FOR(jp, joint, &joint_head)) {
 	    if (hp->j_set.path.type == ARC_LIST) {
-		for (i=0; i<= hp->j_set.path.arc_last; i++) {
+		for (i=0; i <= (size_t)hp->j_set.path.arc_last; i++) {
 		    if (strcmp(jp->name, hp->j_set.path.arc[i]) == 0) {
 			BU_GETSTRUCT(jh, jointH);
 			jh->l.magic = MAGIC_JOINT_HANDLE;
@@ -2356,12 +2356,12 @@ part_solve(struct hold *hp, double limits, double tol)
 			   hp->effector.path.fp_names[i]->d_namep)==0) break;
 	    }
 	    if (i+jp->path.arc_last >= hp->effector.path.fp_len) continue;
-	    for (j=1; j<=jp->path.arc_last;j++) {
+	    for (j=1; j <= (size_t)jp->path.arc_last;j++) {
 		if (strcmp(jp->path.arc[j],
 			   hp->effector.path.fp_names[i+j]->d_namep)
 		    != 0) break;
 	    }
-	    if (j>jp->path.arc_last) {
+	    if (j>(size_t)jp->path.arc_last) {
 		if (joint_debug & DEBUG_J_SOLVE) {
 		    Tcl_AppendResult(INTERP, "part_solve: found ",
 				     jp->name, "\n", (char *)NULL);
@@ -3410,7 +3410,7 @@ struct bu_list artic_head = {
 struct joint *
 findjoint(const struct db_full_path *pathp)
 {
-    int i, j;
+    size_t i, j;
     struct joint *jp;
     int best;
     struct joint *bestjp = NULL;
@@ -3427,7 +3427,7 @@ findjoint(const struct db_full_path *pathp)
 	for (i=0; i< pathp->fp_len; i++) {
 	    int good=1;
 	    if (jp->path.arc_last+i >= pathp->fp_len) break;
-	    for (j=0; j<=jp->path.arc_last;j++) {
+	    for (j=0; j<=(size_t)jp->path.arc_last;j++) {
 		if ((*pathp->fp_names[i+j]->d_namep != *jp->path.arc[j]) ||
 		    (strcmp(pathp->fp_names[i+j]->d_namep, jp->path.arc[j]) !=0)) {
 		    good=0;
@@ -3435,7 +3435,7 @@ findjoint(const struct db_full_path *pathp)
 		}
 	    }
 
-	    if (good && j>best) {
+	    if (good && (long)j>best) {
 		best = j;
 		bestjp = jp;
 	    }
