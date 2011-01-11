@@ -54,7 +54,7 @@ typedef struct render_cut_hit_s {
 } render_cut_hit_t;
 
 void *
-render_cut_hit_cutline(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr)
+render_cut_hit_cutline(struct tie_ray_s *UNUSED(ray), struct tie_id_s *UNUSED(id), struct tie_tri_s *tri, void *UNUSED(ptr))
 {
     ((adrt_mesh_t *)(tri->ptr))->flags |= ADRT_MESH_HIT;
     return NULL;
@@ -74,14 +74,14 @@ render_cut_free(render_t *render)
 
 
 static void *
-render_arrow_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr)
+render_arrow_hit(struct tie_ray_s *UNUSED(ray), struct tie_id_s *UNUSED(id), struct tie_tri_s *tri, void *UNUSED(ptr))
 {
     return tri;
 }
 
 
 void *
-render_cut_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr)
+render_cut_hit(struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, struct tie_tri_s *tri, void *ptr)
 {
     render_cut_hit_t *hit = (render_cut_hit_t *)ptr;
 
@@ -92,7 +92,7 @@ render_cut_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri
 
 
 void
-render_cut_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
+render_cut_work(render_t *render, struct tie_s *tiep, struct tie_ray_s *ray, TIE_3 *pixel)
 {
     render_cut_t *rd;
     render_cut_hit_t hit;
@@ -136,7 +136,7 @@ render_cut_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_
     HMOVE(hit.plane, rd->plane);
 
     /* Render Geometry */
-    if (!tie_work(tie, ray, &id, render_cut_hit, &hit))
+    if (!tie_work(tiep, ray, &id, render_cut_hit, &hit))
 	return;
 
     /*

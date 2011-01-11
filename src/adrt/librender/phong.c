@@ -28,13 +28,13 @@
 #include "adrt_struct.h"
 
 void
-render_phong_free(render_t *render)
+render_phong_free(render_t *UNUSED(render))
 {
     return;
 }
 
 void
-render_phong_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
+render_phong_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
 {
     struct tie_id_s		id;
     adrt_mesh_t		*mesh;
@@ -55,7 +55,7 @@ render_phong_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TI
 }
 
 int
-render_phong_init(render_t *render, const char *usr)
+render_phong_init(render_t *render, const char *UNUSED(usr))
 {
     render->work = render_phong_work;
     render->free = render_phong_free;

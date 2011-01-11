@@ -82,7 +82,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE
 	/* Terminate if depth is too great. */
 	while (propogate) {
 	    if ((new_mesh = (adrt_mesh_t *)tie_work(tie, &new_ray, &new_id, render_hit, NULL)) && new_ray.depth < RENDER_MAX_DEPTH) {
-		if (new_mesh->attributes->ior != 1.0) {
+		if (!EQUAL(new_mesh->attributes->ior, 1.0)) {
 		    /* Refractive Caustic */
 		    /* Deal with refractive-fu */
 		} else if (new_mesh->attributes->emission > 0.0) {

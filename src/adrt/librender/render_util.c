@@ -46,7 +46,7 @@ typedef struct render_shotline_s {
 
 
 /* Generate vector list for a spall cone given a reference angle */
-void render_util_spall_vec(vect_t dir, fastf_t angle, int vec_num, vect_t *vec_list) {
+void render_util_spall_vec(vect_t UNUSED(dir), fastf_t UNUSED(angle), int UNUSED(vec_num), vect_t *UNUSED(vec_list)) {
 #if 0
     TIE_3 vec;
     tfloat radius, t;
@@ -174,7 +174,7 @@ void render_util_shotline_list(struct tie_s *tie, struct tie_ray_s *ray, void **
 }
 
 
-void render_util_spall_list(struct tie_s *tie, struct tie_ray_s *ray, tfloat angle, void **data, int *dlen) {
+void render_util_spall_list(struct tie_s *UNUSED(tie), struct tie_ray_s *UNUSED(ray), tfloat UNUSED(angle), void **UNUSED(data), int *UNUSED(dlen)) {
 #if 0
     shotline_t shotline;
     struct tie_ray_s sray;

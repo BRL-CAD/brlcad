@@ -37,7 +37,7 @@ typedef struct render_flos_s {
 } render_flos_t;
 
 
-void render_flos_free(render_t *render) {
+void render_flos_free(render_t *UNUSED(render)) {
 }
 
 void render_flos_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel) {

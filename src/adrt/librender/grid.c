@@ -29,12 +29,12 @@
 
 
 void
-render_grid_free(render_t *render)
+render_grid_free(render_t *UNUSED(render))
 {
 }
 
 void
-render_grid_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
+render_grid_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
 {
     struct tie_id_s id;
     adrt_mesh_t *m;
@@ -68,7 +68,7 @@ render_grid_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE
 }
 
 int
-render_grid_init(render_t *render, const char *usr)
+render_grid_init(render_t *render, const char *UNUSED(usr))
 {
     render->work = render_grid_work;
     render->free = render_grid_free;

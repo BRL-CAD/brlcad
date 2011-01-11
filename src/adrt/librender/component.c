@@ -27,13 +27,13 @@
 #include "adrt_struct.h"
 
 void
-render_component_free(render_t *render)
+render_component_free(render_t *UNUSED(render))
 {
     return;
 }
 
 static void *
-component_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr)
+component_hit(struct tie_ray_s *ray, struct tie_id_s *UNUSED(id), struct tie_tri_s *tri, void *UNUSED(ptr))
 {
     adrt_mesh_t *mesh = (adrt_mesh_t *)(tri->ptr);
 
@@ -42,7 +42,7 @@ component_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri,
 }
 
 void
-render_component_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
+render_component_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
 {
     struct tie_id_s id;
     adrt_mesh_t *mesh;
@@ -68,7 +68,7 @@ render_component_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray
 }
 
 int
-render_component_init(render_t *render, const char *usr) {
+render_component_init(render_t *render, const char *UNUSED(usr)) {
     render->work = render_component_work;
     render->free = render_component_free;
     return 0;

@@ -25,17 +25,17 @@
 #include "adrt_struct.h"
 
 void
-render_normal_free(render_t *render) {
+render_normal_free(render_t *UNUSED(render)) {
     return;
 }
 
 static void *
-normal_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr) {
+normal_hit(struct tie_ray_s *UNUSED(ray), struct tie_id_s *UNUSED(id), struct tie_tri_s *tri, void *UNUSED(ptr)) {
     return (adrt_mesh_t *)(tri->ptr);
 }
 
 void
-render_normal_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel) {
+render_normal_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel) {
     struct tie_id_s	id;
     float	one[3] = { 1, 1, 1 };
 
@@ -45,7 +45,7 @@ render_normal_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, T
 }
 
 int
-render_normal_init(render_t *render, const char *usr) {
+render_normal_init(render_t *render, const char *UNUSED(usr)) {
     render->work = render_normal_work;
     render->free = render_normal_free;
     return 0;

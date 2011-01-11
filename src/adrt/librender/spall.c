@@ -63,14 +63,14 @@ render_spall_free(render_t *render)
 
 
 static void *
-render_arrow_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr)
+render_arrow_hit(struct tie_ray_s *UNUSED(ray), struct tie_id_s *UNUSED(id), struct tie_tri_s *tri, void *UNUSED(ptr))
 {
     return tri;
 }
 
 
 void *
-render_spall_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr)
+render_spall_hit(struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, struct tie_tri_s *tri, void *ptr)
 {
     struct render_spall_hit_s *hit = (struct render_spall_hit_s *)ptr;
 

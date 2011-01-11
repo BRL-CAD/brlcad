@@ -24,7 +24,7 @@
 #include "adrt_struct.h"
 
 
-void* render_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr) {
+void* render_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *UNUSED(ptr)) {
     /* Flip normal to face ray origin (via dot product check) */
     if (ray->dir[0] * id->norm[0] + ray->dir[1] * id->norm[1] + ray->dir[2] * id->norm[2] > 0)
 	VSCALE(id->norm,  id->norm,  -1.0);
