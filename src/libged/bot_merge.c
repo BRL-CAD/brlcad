@@ -42,7 +42,8 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_bot_internal **bots;
     int i, idx;
-    int avail_vert, avail_face, face;
+    int avail_vert, avail_face;
+    size_t face;
     static const char *usage = "bot_dest bot1_src [botn_src]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
