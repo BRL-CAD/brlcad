@@ -64,7 +64,7 @@ struct gcv_data {
     void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
     struct adrt_mesh_s **meshes;
 };
-static struct gcv_data gcvwriter = {nmg_to_adrt_gcvwrite};
+static struct gcv_data gcvwriter = {nmg_to_adrt_gcvwrite, NULL};
 
 
 /* load the region into the tie image */
@@ -142,7 +142,7 @@ nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 }
 
 int
-nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, const struct rt_comb_internal *rci, genptr_t client_data)
+nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, const struct rt_comb_internal *rci, genptr_t UNUSED(client_data))
 {
     /*
      * if it's a simple single bot region, just eat the bots and return -1.
@@ -150,7 +150,6 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
      */
     struct directory *dir;
     struct rt_db_internal intern;
-    struct rt_bot_internal *bot;
     struct adrt_mesh_s *mesh;
     unsigned char rgb[3] = { 0xc0, 0xc0, 0xc0 };
 
@@ -191,8 +190,8 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 	nmg_to_adrt_internal(mesh, (struct nmgregion *)intern.idb_ptr);
 	return -1;
     } else if (intern.idb_minor_type == ID_BOT) {
+	size_t i;
 	struct rt_bot_internal *bot = intern.idb_ptr;
-	int i;
 
 	RT_BOT_CK_MAGIC(bot);
 
@@ -213,10 +212,9 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 
 
 static void
-nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3])
+nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int material_id, float color[3])
 {
     struct model *m;
-    struct shell *s;
     struct adrt_mesh_s *mesh;
 
     NMG_CK_REGION(r);
@@ -247,12 +245,9 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int 
 int
 load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **meshes)
 {
-    int c;
-    double percent;
     struct model *the_model;
     struct rt_tess_tol ttol;		/* tesselation tolerance in mm */
     struct db_tree_state tree_state;	/* includes tol & model */
-    TIE_3 max;
 
     cur_tie = tie;	/* blehhh, global... need locking. */
 
