@@ -826,24 +826,24 @@ void TIE_VAL(tie_kdtree_cache_load)(struct tie_s *tie, void *cache, uint32_t siz
     struct tie_kdtree_s *node = 0, *temp_node = 0, *stack[64];
     struct tie_geom_s *geom = 0;
     TIE_3 min, max;
-    uint32_t i, index = 0, tri_ind = 0, stack_ind = 0;
+    uint32_t i, idx = 0, tri_ind = 0, stack_ind = 0;
     uint8_t type = 0, split;
 
 
     if (!cache)
 	return;
 
-    while (index < size) {
-	TCOPY(uint8_t, cache, index, &type, 0);
-	index += 1;
+    while (idx < size) {
+	TCOPY(uint8_t, cache, idx, &type, 0);
+	idx += 1;
 
 	if (type) {
 /* Geometry Node - Allocate a struct tie_geom_s and assign to node->data. */
 	    node->data = bu_malloc(sizeof(struct tie_geom_s), "cache node data");
 	    geom = (struct tie_geom_s *)node->data;
 
-	    TCOPY(uint32_t, cache, index, &(geom->tri_num), 0);
-	    index += sizeof(uint32_t);
+	    TCOPY(uint32_t, cache, idx, &(geom->tri_num), 0);
+	    idx += sizeof(uint32_t);
 
 	    if(geom->tri_num <= 0)
 		geom->tri_list = NULL;
@@ -851,8 +851,8 @@ void TIE_VAL(tie_kdtree_cache_load)(struct tie_s *tie, void *cache, uint32_t siz
 		geom->tri_list = (struct tie_tri_s **)bu_malloc(geom->tri_num * sizeof(struct tie_tri_s *), "cache geom tri_list");
 
 	    for (i = 0; i < geom->tri_num; i++) {
-		TCOPY(uint32_t, cache, index, &tri_ind, 0);
-		index += sizeof(uint32_t);
+		TCOPY(uint32_t, cache, idx, &tri_ind, 0);
+		idx += sizeof(uint32_t);
 
 /* Translate the numerical index to a pointer index into tie->tri_list. */
 		geom->tri_list[i] = &tie->tri_list[0] + tri_ind;
@@ -870,12 +870,12 @@ void TIE_VAL(tie_kdtree_cache_load)(struct tie_s *tie, void *cache, uint32_t siz
 	    }
 
 /* Assign splitting axis value */
-	    TCOPY(tfloat, cache, index, &node->axis, 0);
-	    index += sizeof(tfloat);
+	    TCOPY(tfloat, cache, idx, &node->axis, 0);
+	    idx += sizeof(tfloat);
 
 /* Get splitting plane */
-	    TCOPY(uint8_t, cache, index, &split, 0);
-	    index += 1;
+	    TCOPY(uint8_t, cache, idx, &split, 0);
+	    idx += 1;
 
 /* Allocate memory for 2 child nodes */
 	    node->data = bu_malloc(2 * sizeof(struct tie_kdtree_s), "kdtree node data");
@@ -939,7 +939,7 @@ void TIE_VAL(tie_kdtree_prep)(struct tie_s *tie)
  */
     VSUB2(delta.v,  tie->max.v,  tie->min.v);
     MATH_MAX3(TIE_PREC, delta.v[0], delta.v[1], delta.v[2]);
-#if TIE_PRECISION == TIE_PRECISION_SINGLE
+#if defined(TIE_PRECISION) && defined(TIE_PRECISION_SINGLE) && TIE_PRECISION == TIE_PRECISION_SINGLE
     TIE_PREC *= (float)0.000000001;
 #else
     TIE_PREC *= 0.000000000001;
