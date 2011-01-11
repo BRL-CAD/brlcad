@@ -184,7 +184,7 @@ render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 }
 
 int
-render_cut_init(render_t *render, char *buf)
+render_cut_init(render_t *render, const char *buf)
 {
     int i;
     render_cut_t *d;

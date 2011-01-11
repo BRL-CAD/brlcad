@@ -77,7 +77,7 @@ void render_flos_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
 }
 
 int
-render_flos_init(render_t *render, char *frag_pos)
+render_flos_init(render_t *render, const char *frag_pos)
 {
     render_flos_t *d;
 

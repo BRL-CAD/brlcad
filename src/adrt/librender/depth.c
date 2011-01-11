@@ -43,7 +43,7 @@ render_depth_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 }
 
 int
-render_depth_init(render_t *render, char *usr)
+render_depth_init(render_t *render, const char *usr)
 {
     render->work = render_depth_work;
     render->free = render_depth_free;

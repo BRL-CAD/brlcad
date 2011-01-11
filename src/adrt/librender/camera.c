@@ -79,7 +79,7 @@ render_camera_init(render_camera_t *camera, int threads)
     camera->rm = RENDER_METHOD_PHONG;
 
     if(shaders == NULL) {
-#define REGISTER(x) render_shader_register(#x, render_##x##_init);
+#define REGISTER(x) render_shader_register((const char *)#x, render_##x##_init);
 	REGISTER(component);
 	REGISTER(cut);
 	REGISTER(depth);

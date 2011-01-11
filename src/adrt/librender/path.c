@@ -159,7 +159,7 @@ render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 }
 
 int
-render_path_init(render_t *render, char *samples)
+render_path_init(render_t *render, const char *samples)
 {
     render_path_t *d;
 

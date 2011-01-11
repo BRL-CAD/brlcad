@@ -179,7 +179,7 @@ render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 }
 
 int
-render_spall_init(render_t *render, char *buf)
+render_spall_init(render_t *render, const char *buf)
 {
     render_spall_t *d;
     TIE_3 *tri_list, *vec_list, normal, up, ray_pos, ray_dir;

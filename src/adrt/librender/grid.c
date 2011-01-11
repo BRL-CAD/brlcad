@@ -68,7 +68,7 @@ render_grid_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 }
 
 int
-render_grid_init(render_t *render, char *usr)
+render_grid_init(render_t *render, const char *usr)
 {
     render->work = render_grid_work;
     render->free = render_grid_free;

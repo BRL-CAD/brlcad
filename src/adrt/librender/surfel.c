@@ -82,7 +82,7 @@ render_surfel_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 }
 
 int
-render_surfel_init(render_t *render, char *buf)
+render_surfel_init(render_t *render, const char *buf)
 {
     render_surfel_t *d;
 
