@@ -35,6 +35,11 @@ typedef struct tie_geom_s {
     unsigned int tri_num;
 } tie_geom_t;
 
+#ifdef _WIN32
+# undef near
+# undef far
+#endif
+
 typedef struct tie_stack_s {
     tie_kdtree_t *node;
     tfloat near;

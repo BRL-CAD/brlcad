@@ -43,11 +43,6 @@
 
 #include "tieprivate.h"
 
-#ifdef _WIN32
-# undef near
-# undef far
-#endif
-
 #define	TIE_TAB1		"\1\0\0\2\2\1"	/* Triangle Index Table */
 
 #define TIE_DEGENERATE_THRESHOLD 0.0001
