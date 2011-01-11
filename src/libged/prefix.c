@@ -147,7 +147,7 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
 }
 
 static void
-ged_do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t prefix_ptr, genptr_t obj_ptr, genptr_t user_ptr3)
+ged_do_prefix(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t prefix_ptr, genptr_t obj_ptr, genptr_t UNUSED(user_ptr3))
 {
     char *prefix, *obj;
     char tempstring_v4[NAMESIZE+1];

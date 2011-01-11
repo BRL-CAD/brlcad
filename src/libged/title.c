@@ -37,7 +37,6 @@ int
 ged_title(struct ged *gedp, int argc, const char *argv[])
 {
     struct bu_vls title;
-    static const char *usage = "description";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);

@@ -112,7 +112,7 @@ str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_re
 {
     struct bu_vls str;
     char *temp_string = (char *)NULL;
-    size_t index = 0;
+    size_t idx = 0;
     size_t format_string_length = 0;
     int ret = GED_OK;
 
@@ -125,9 +125,9 @@ str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_re
 	format_string_length = strlen(format_string);
 
 	/* remove any '?' from format string before testing for point-cloud type */
-	for (index = 0 ; index < format_string_length ; index++) {
-	    if (format_string[index] != '?') {
-		bu_vls_putc(&str, format_string[index]);
+	for (idx = 0 ; idx < format_string_length ; idx++) {
+	    if (format_string[idx] != '?') {
+		bu_vls_putc(&str, format_string[idx]);
 	    }
 	}
 

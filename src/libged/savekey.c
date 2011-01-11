@@ -39,8 +39,8 @@ int
 ged_savekey(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
-    fastf_t	time;
-    vect_t	eye_model;
+    fastf_t timearg;
+    vect_t eye_model;
     vect_t temp;
     static const char *usage = "file [time]";
 
@@ -67,8 +67,8 @@ ged_savekey(struct ged *gedp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
     if ( argc > 2 ) {
-	time = atof( argv[2] );
-	(void)fprintf(fp, "%f\n", time);
+	timearg = atof( argv[2] );
+	(void)fprintf(fp, "%f\n", timearg);
     }
     /*
      *  Eye is in conventional place.

@@ -297,7 +297,7 @@ f_expr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
  * to a N_EXPR node containing the expression and the ')' node is discarded.
  */
 int
-c_openparen(char *ignore, char ***ignored, int unused, PLAN **resultplan)
+c_openparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     (*resultplan) = (palloc(N_OPENPAREN, (int (*)(PLAN *, struct db_full_path *, struct ged *))-1));
     return GED_OK;
@@ -305,7 +305,7 @@ c_openparen(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 
 
 int
-c_closeparen(char *ignore, char ***ignored, int unused, PLAN **resultplan)
+c_closeparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     (*resultplan) = (palloc(N_CLOSEPAREN, (int (*)(PLAN *, struct db_full_path *, struct ged *))-1));
     return GED_OK;
@@ -331,7 +331,7 @@ f_not(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 
 
 int
-c_not(char *ignore, char ***ignored, int unused, PLAN **resultplan)
+c_not(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     (*resultplan) =  (palloc(N_NOT, f_not));
     return GED_OK;
@@ -377,7 +377,7 @@ f_above(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 
 
 int
-c_above(char *ignore, char ***ignored, int unused, PLAN **resultplan)
+c_above(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     (*resultplan) =  (palloc(N_ABOVE, f_above));
     return GED_OK;
@@ -587,7 +587,7 @@ f_below(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 
 
 int
-c_below(char *ignore, char ***ignored, int unused, PLAN **resultplan)
+c_below(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     (*resultplan) =  (palloc(N_BELOW, f_below));
     return GED_OK;
@@ -620,7 +620,7 @@ f_or(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 
 
 int
-c_or(char *ignore, char ***ignored, int unused, PLAN **resultplan)
+c_or(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     (*resultplan) = (palloc(N_OR, f_or));
     return GED_OK;
@@ -634,14 +634,14 @@ c_or(char *ignore, char ***ignored, int unused, PLAN **resultplan)
  * matches pattern using Pattern Matching Notation S3.14
  */
 int
-f_name(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
+f_name(PLAN *plan, struct db_full_path *entry, struct ged *UNUSED(gedp))
 {
     return !bu_fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, 0);
 }
 
 
 int
-c_name(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+c_name(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     PLAN *new;
 
@@ -659,14 +659,14 @@ c_name(char *pattern, char ***ignored, int unused, PLAN **resultplan)
  * matches pattern using case insensitive Pattern Matching Notation S3.14
  */
 int
-f_iname(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
+f_iname(PLAN *plan, struct db_full_path *entry, struct ged *UNUSED(gedp))
 {
     return !bu_fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, BU_CASEFOLD);
 }
 
 
 int
-c_iname(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+c_iname(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     PLAN *new;
 
@@ -685,7 +685,7 @@ c_iname(char *pattern, char ***ignored, int unused, PLAN **resultplan)
  * For -iregex, regexp is a case-insensitive (basic) regular expression.
  */
 int
-f_regex(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
+f_regex(PLAN *plan, struct db_full_path *entry, struct ged *UNUSED(gedp))
 {
     return !(regexec(&plan->regexp_data, db_path_to_string(entry), 0, NULL, 0));
 }
@@ -717,14 +717,14 @@ c_regex_common(enum ntype type, char *regexp, int icase, PLAN **resultplan)
 
 
 int
-c_regex(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+c_regex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     return c_regex_common(N_REGEX, pattern, 0, resultplan);
 }
 
 
 int
-c_iregex(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+c_iregex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
 
     return c_regex_common(N_IREGEX, pattern, 1, resultplan);
@@ -973,7 +973,7 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 
 
 int
-c_attr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+c_attr(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     PLAN *new;
 
@@ -993,7 +993,7 @@ c_attr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
  * associated with an object.
  */
 int
-f_stdattr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
+f_stdattr(PLAN *UNUSED(plan), struct db_full_path *entry, struct ged *gedp)
 {
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
@@ -1034,7 +1034,7 @@ f_stdattr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 
 
 int
-c_stdattr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+c_stdattr(char *UNUSED(pattern), char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     PLAN *new;
 
@@ -1204,7 +1204,7 @@ f_type(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 
 
 int
-c_type(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+c_type(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     PLAN *new;
 
@@ -1223,7 +1223,7 @@ c_type(char *pattern, char ***ignored, int unused, PLAN **resultplan)
  *
  */
 int
-f_maxdepth(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
+f_maxdepth(PLAN *plan, struct db_full_path *entry, struct ged *UNUSED(gedp))
 {
     struct db_full_path depthtest;
     int depthcount = -1;
@@ -1239,7 +1239,7 @@ f_maxdepth(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 
 
 int
-c_maxdepth(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+c_maxdepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     PLAN *new;
 
@@ -1258,7 +1258,7 @@ c_maxdepth(char *pattern, char ***ignored, int unused, PLAN **resultplan)
  *
  */
 int
-f_mindepth(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
+f_mindepth(PLAN *plan, struct db_full_path *entry, struct ged *UNUSED(gedp))
 {
     struct db_full_path depthtest;
     int depthcount = -1;
@@ -1274,7 +1274,7 @@ f_mindepth(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 
 
 int
-c_mindepth(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+c_mindepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     PLAN *new;
 
@@ -1401,7 +1401,7 @@ f_nnodes(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 
 
 int
-c_nnodes(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+c_nnodes(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     PLAN *new;
 
@@ -1420,14 +1420,14 @@ c_nnodes(char *pattern, char ***ignored, int unused, PLAN **resultplan)
  * use the -not option with this option.
  */
 int
-f_path(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
+f_path(PLAN *plan, struct db_full_path *entry, struct ged *UNUSED(gedp))
 {
     return !bu_fnmatch(plan->path_data, db_path_to_string(entry), 0);
 }
 
 
 int
-c_path(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     PLAN *new;
 
@@ -1445,7 +1445,7 @@ c_path(char *pattern, char ***ignored, int unused, PLAN **resultplan)
  * standard output.
  */
 int
-f_print(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
+f_print(PLAN *UNUSED(plan), struct db_full_path *entry, struct ged *gedp)
 {
     bu_vls_printf(&gedp->ged_result_str, "%s\n", db_path_to_string(entry));
     isoutput = 0;
@@ -1455,7 +1455,7 @@ f_print(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 
 /* ARGSUSED */
 int
-f_print0(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
+f_print0(PLAN *UNUSED(plan), struct db_full_path *entry, struct ged *gedp)
 {
     bu_vls_printf(&gedp->ged_result_str, "%s\0", db_path_to_string(entry));
     return 1;
@@ -1463,7 +1463,7 @@ f_print0(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 
 
 int
-c_print(char *ignore, char ***ignored, int unused, PLAN **resultplan)
+c_print(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     isoutput = 1;
 
@@ -1473,7 +1473,7 @@ c_print(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 
 
 int
-c_print0(char *ignore, char ***ignored, int unused, PLAN **resultplan)
+c_print0(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), PLAN **resultplan)
 {
     isoutput = 1;
 

@@ -517,7 +517,7 @@ ged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
 void
 _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name, int copy)
 {
-    int i;
+    size_t i;
     char shortname[32];
     char namebuf[64];
 

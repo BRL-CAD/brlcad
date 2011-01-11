@@ -236,8 +236,6 @@ int
 ged_loadframe(struct ged *gedp, FILE *fp)
 {
     char *cmd;
-    int	c;
-    vect_t temp;
 
     int end = 0;
     while (!end && ((cmd = rt_read_cmd(fp)) != NULL)) {
@@ -282,12 +280,10 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[-v] [-e] [-o image_name.ext]  [-d sec_delay] [-D start frame] [-K last frame] rt_script_file";
 
     FILE *fp;
-    char *cmd;
     int c;
     vect_t temp;
     char **vp;
     size_t args = 0;
-    genptr_t dmp = NULL;
     struct bu_vls extension;
     struct bu_vls name;
     char *dot;
@@ -407,7 +403,6 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 	    struct bu_vls fullname;
 	    const char *screengrab_args[3];
 	    int screengrab_argc = 0;
-	    struct view_obj *vop;
 
 	    bu_vls_init(&fullname);
 

@@ -53,23 +53,14 @@ static int group_id=(-1);	/* Group identification number from SECTION card */
 static int comp_id=(-1);	/* Component identification number from SECTION card */
 static int region_id=0;		/* Region id number (group id no X 1000 + component id no) */
 static char field[9];		/* Space for storing one field from an input line */
-static int name_count;		/* Count of number of times this name_name has been used */
 static int bot=0;		/* Flag: >0 -> There are BOT's in current component */
-static int warnings=0;		/* Flag: >0 -> Print warning messages */
 static int debug=0;		/* Debug flag */
-static int rt_debug=0;		/* RT_G_DEBUG */
-static int quiet=0;		/* flag to not blather */
-static int comp_count=0;	/* Count of components in FASTGEN4 file */
 
-static int *faces=NULL;		/* one triplet per face indexing three grid points */
-static fastf_t *thickness;	/* thickness of each face */
+static int *FACES=NULL;		/* one triplet per face indexing three grid points */
+static fastf_t *THICKNESS;	/* thickness of each face */
 static char *facemode;		/* mode for each face */
 static int face_size=0;		/* actual length of above arrays */
 static int face_count=0;	/* number of faces in above arrays */
-
-static int *int_list;		/* Array of integers */
-static int int_list_count=0;	/* Number of ints in above array */
-static int int_list_length=0;	/* Length of int_list array */
 
 #define PLATE_MODE 1
 #define VOLUME_MODE 2
@@ -109,7 +100,7 @@ static int
 rt_mk_bot_w_normals(
     struct rt_wdb *fp,
     const char *name,
-    unsigned char mode,
+    unsigned char botmode,
     unsigned char orientation,
     unsigned char flags,
     int num_vertices,
@@ -126,7 +117,7 @@ rt_mk_bot_w_normals(
     fastf_t *normals,	/* array of floats for normals [num_normals*3] */
     int *face_normals)	/* array of ints (indices into normals array), must have 3*num_faces entries */
 {
-    struct rt_bot_internal *bot;
+    struct rt_bot_internal *botip;
     int i;
 
     if ((num_normals > 0) && (fp->dbip->dbi_version < 5)) {
@@ -136,45 +127,45 @@ rt_mk_bot_w_normals(
 	bu_log("Please upgrade to the current database format by using \"dbupgrade\"\n");
     }
 
-    BU_GETSTRUCT(bot, rt_bot_internal);
-    bot->magic = RT_BOT_INTERNAL_MAGIC;
-    bot->mode = mode;
-    bot->orientation = orientation;
-    bot->bot_flags = flags;
-    bot->num_vertices = num_vertices;
-    bot->num_faces = num_faces;
-    bot->vertices = (fastf_t *)bu_calloc(num_vertices * 3, sizeof(fastf_t), "bot->vertices");
+    BU_GETSTRUCT(botip, rt_bot_internal);
+    botip->magic = RT_BOT_INTERNAL_MAGIC;
+    botip->mode = botmode;
+    botip->orientation = orientation;
+    botip->bot_flags = flags;
+    botip->num_vertices = num_vertices;
+    botip->num_faces = num_faces;
+    botip->vertices = (fastf_t *)bu_calloc(num_vertices * 3, sizeof(fastf_t), "botip->vertices");
     for (i=0; i<num_vertices*3; i++)
-	bot->vertices[i] = vertices[i];
-    bot->faces = (int *)bu_calloc(num_faces * 3, sizeof(int), "bot->faces");
+	botip->vertices[i] = vertices[i];
+    botip->faces = (int *)bu_calloc(num_faces * 3, sizeof(int), "botip->faces");
     for (i=0; i<num_faces*3; i++)
-	bot->faces[i] = faces[i];
-    if (mode == RT_BOT_PLATE) {
-	bot->thickness = (fastf_t *)bu_calloc(num_faces, sizeof(fastf_t), "bot->thickness");
+	botip->faces[i] = faces[i];
+    if (botmode == RT_BOT_PLATE) {
+	botip->thickness = (fastf_t *)bu_calloc(num_faces, sizeof(fastf_t), "botip->thickness");
 	for (i=0; i<num_faces; i++)
-	    bot->thickness[i] = thickness[i];
-	bot->face_mode = bu_bitv_dup(face_mode);
+	    botip->thickness[i] = thickness[i];
+	botip->face_mode = bu_bitv_dup(face_mode);
     } else {
-	bot->thickness = (fastf_t *)NULL;
-	bot->face_mode = (struct bu_bitv *)NULL;
+	botip->thickness = (fastf_t *)NULL;
+	botip->face_mode = (struct bu_bitv *)NULL;
     }
 
     if ((num_normals > 0) && (fp->dbip->dbi_version >= 5)) {
-	bot->num_normals = num_normals;
-	bot->num_face_normals = bot->num_faces;
-	bot->normals = (fastf_t *)bu_calloc(bot->num_normals * 3, sizeof(fastf_t), "BOT normals");
-	bot->face_normals = (int *)bu_calloc(bot->num_faces * 3, sizeof(int), "BOT face normals");
-	memcpy(bot->normals, normals, bot->num_normals * 3 * sizeof(fastf_t));
-	memcpy(bot->face_normals, face_normals, bot->num_faces * 3 * sizeof(int));
+	botip->num_normals = num_normals;
+	botip->num_face_normals = botip->num_faces;
+	botip->normals = (fastf_t *)bu_calloc(botip->num_normals * 3, sizeof(fastf_t), "BOT normals");
+	botip->face_normals = (int *)bu_calloc(botip->num_faces * 3, sizeof(int), "BOT face normals");
+	memcpy(botip->normals, normals, botip->num_normals * 3 * sizeof(fastf_t));
+	memcpy(botip->face_normals, face_normals, botip->num_faces * 3 * sizeof(int));
     } else {
-	bot->bot_flags = 0;
-	bot->num_normals = 0;
-	bot->num_face_normals = 0;
-	bot->normals = (fastf_t *)NULL;
-	bot->face_normals = (int *)NULL;
+	botip->bot_flags = 0;
+	botip->num_normals = 0;
+	botip->num_face_normals = 0;
+	botip->normals = (fastf_t *)NULL;
+	botip->face_normals = (int *)NULL;
     }
 
-    return wdb_export(fp, name, (genptr_t)bot, ID_BOT, 1.0);
+    return wdb_export(fp, name, (genptr_t)botip, ID_BOT, 1.0);
 }
 
 
@@ -182,7 +173,7 @@ static int
 rt_mk_bot(
     struct rt_wdb *fp,
     const char *name,
-    unsigned char mode,
+    unsigned char botmode,
     unsigned char orientation,
     unsigned char flags,
     int num_vertices,
@@ -196,7 +187,7 @@ rt_mk_bot(
 				 * otherwise thickness is centered about hit point
 				 */
 {
-    return(rt_mk_bot_w_normals(fp, name, mode, orientation, flags, num_vertices, num_faces, vertices,
+    return(rt_mk_bot_w_normals(fp, name, botmode, orientation, flags, num_vertices, num_faces, vertices,
 			       faces, thickness, face_mode, 0, NULL, NULL));
 }
 
@@ -265,23 +256,23 @@ Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
     if (face_count >= face_size) {
 	face_size += GRID_BLOCK;
 	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-	    bu_log("memory corrupted before realloc of faces, thickness, and facemode\n");
-	faces = (int *)bu_realloc((void *)faces,  face_size*3*sizeof(int), "faces");
-	thickness = (fastf_t *)bu_realloc((void *)thickness, face_size*sizeof(fastf_t), "thickness");
+	    bu_log("memory corrupted before realloc of faces, THICKNESS, and facemode\n");
+	FACES = (int *)bu_realloc((void *)FACES,  face_size*3*sizeof(int), "faces");
+	THICKNESS = (fastf_t *)bu_realloc((void *)THICKNESS, face_size*sizeof(fastf_t), "thickness");
 	facemode = (char *)bu_realloc((void *)facemode, face_size*sizeof(char), "facemode");
 	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
 	    bu_log("memory corrupted after realloc of faces, thickness, and facemode\n");
     }
 
-    faces[face_count*3] = pt1;
-    faces[face_count*3+1] = pt2;
-    faces[face_count*3+2] = pt3;
+    FACES[face_count*3] = pt1;
+    FACES[face_count*3+1] = pt2;
+    FACES[face_count*3+2] = pt3;
 
     if (mode == PLATE_MODE) {
-	thickness[face_count] = thick;
+	THICKNESS[face_count] = thick;
 	facemode[face_count] = pos;
     } else {
-	thickness[face_count] = 0;
+	THICKNESS[face_count] = 0;
 	facemode[face_count] = 0;
     }
 
@@ -309,11 +300,11 @@ do_tri(char *line)
     if (!bot)
 	bot = element_id;
 
-    if (faces == NULL) {
+    if (FACES == NULL) {
 	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
 	    bu_log("memory corrupted before malloc of faces\n");
-	faces = (int *)bu_malloc(GRID_BLOCK*3*sizeof(int), "faces");
-	thickness = (fastf_t *)bu_malloc(GRID_BLOCK*sizeof(fastf_t), "thickness");
+	FACES = (int *)bu_malloc(GRID_BLOCK*3*sizeof(int), "faces");
+	THICKNESS = (fastf_t *)bu_malloc(GRID_BLOCK*sizeof(fastf_t), "thickness");
 	facemode = (char *)bu_malloc(GRID_BLOCK*sizeof(char), "facemode");
 	face_size = GRID_BLOCK;
 	face_count = 0;
@@ -374,9 +365,9 @@ do_quad(char *line)
     if (!bot)
 	bot = element_id;
 
-    if (faces == NULL) {
-	faces = (int *)bu_malloc(GRID_BLOCK*3*sizeof(int), "faces");
-	thickness = (fastf_t *)bu_malloc(GRID_BLOCK*sizeof(fastf_t), "thickness");
+    if (FACES == NULL) {
+	FACES = (int *)bu_malloc(GRID_BLOCK*3*sizeof(int), "faces");
+	THICKNESS = (fastf_t *)bu_malloc(GRID_BLOCK*sizeof(fastf_t), "thickness");
 	facemode = (char *)bu_malloc(GRID_BLOCK*sizeof(char), "facemode");
 	face_size = GRID_BLOCK;
 	face_count = 0;
@@ -430,12 +421,12 @@ make_bot_object(char *name,
 
     bot_ip.magic = RT_BOT_INTERNAL_MAGIC;
     for (i=0; i<face_count; i++) {
-	V_MIN(min_pt, faces[i*3]);
-	V_MAX(max_pt, faces[i*3]);
-	V_MIN(min_pt, faces[i*3+1]);
-	V_MAX(max_pt, faces[i*3+1]);
-	V_MIN(min_pt, faces[i*3+2]);
-	V_MAX(max_pt, faces[i*3+2]);
+	V_MIN(min_pt, FACES[i*3]);
+	V_MAX(max_pt, FACES[i*3]);
+	V_MIN(min_pt, FACES[i*3+1]);
+	V_MAX(max_pt, FACES[i*3+1]);
+	V_MIN(min_pt, FACES[i*3+2]);
+	V_MAX(max_pt, FACES[i*3+2]);
     }
 
     num_vertices = max_pt - min_pt + 1;
@@ -445,11 +436,11 @@ make_bot_object(char *name,
 	VMOVE(&bot_ip.vertices[i*3], grid_pts[min_pt+i])
 
 	    for (i=0; i<face_count*3; i++)
-		faces[i] -= min_pt;
+		FACES[i] -= min_pt;
     bot_ip.num_faces = face_count;
     bot_ip.faces = bu_calloc(face_count*3, sizeof(int), "BOT faces");
     for (i=0; i<face_count*3; i++)
-	bot_ip.faces[i] = faces[i];
+	bot_ip.faces[i] = FACES[i];
 
     bot_ip.face_mode = (struct bu_bitv *)NULL;
     bot_ip.thickness = (fastf_t *)NULL;
@@ -463,7 +454,7 @@ make_bot_object(char *name,
 	bot_ip.face_mode = bv;
 	bot_ip.thickness = (fastf_t *)bu_calloc(face_count, sizeof(fastf_t), "BOT thickness");
 	for (i=0; i<face_count; i++)
-	    bot_ip.thickness[i] = thickness[i];
+	    bot_ip.thickness[i] = THICKNESS[i];
     } else
 	bot_mode = RT_BOT_SOLID;
 
@@ -570,12 +561,12 @@ wdb_importFg4Section_cmd(struct rt_wdb *wdbp,
     bu_free((void *)grid_pts, "importFg4Section: grid_pts");
 
     /* free memory associated with globals */
-    bu_free((void *)faces, "importFg4Section: faces");
-    bu_free((void *)thickness, "importFg4Section: thickness");
+    bu_free((void *)FACES, "importFg4Section: faces");
+    bu_free((void *)THICKNESS, "importFg4Section: thickness");
     bu_free((void *)facemode, "importFg4Section: facemode");
 
-    faces = NULL;
-    thickness = NULL;
+    FACES = NULL;
+    THICKNESS = NULL;
     facemode = NULL;
 
     return TCL_OK;

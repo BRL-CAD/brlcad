@@ -304,7 +304,7 @@ wdb_track_cmd(struct rt_wdb *wdbp,
     ++arg;
     tr[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
-    if (tr[0] == tr[1]) {
+    if (EQUAL(tr[0], tr[1])) {
 	Tcl_AppendResult(interp, "MIN == MAX ... STOP\n", (char *)NULL);
 	edit_result = TCL_ERROR;
 	goto end;

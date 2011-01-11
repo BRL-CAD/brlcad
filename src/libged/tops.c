@@ -52,7 +52,7 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
     /* DEPRECATED */
     int uflag = 0;
 
-    static const char *usage = "[-a|-h|-n|-p]";
+    /* static const char *usage = "[-a|-h|-n|-p]"; */
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);

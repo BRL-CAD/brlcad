@@ -121,7 +121,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
     struct rt_tree_array *tree_list;
     size_t node_count;
     size_t actual_count;
-    int i, k;
+    size_t i, k;
 
     RT_CK_DIR(dp);
     BU_CK_PTBL(cur_path);

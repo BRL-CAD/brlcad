@@ -385,6 +385,11 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
     size_t i;
     size_t node_count;
 
+    if (argc < 2) {
+	bu_vls_printf(&gedp->ged_result_str, "ERROR argument missing after [%s]\n", argv[0]);
+	return GED_ERROR;
+    }
+
     COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], dp, intern, ntp, rt_tree_array, node_count);
 
     for (i=0; i<node_count; i++) {
@@ -917,9 +922,11 @@ combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_comb_internal *comb;
     struct rt_db_internal intern;
-    union tree *ntp;
-    struct rt_tree_array *rt_tree_array;
-    size_t node_count;
+
+    if (argc < 2) {
+	bu_vls_printf(&gedp->ged_result_str, "ERROR argument missing after [%s]\n", argv[0]);
+	return GED_ERROR;
+    }
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], argv[1]);

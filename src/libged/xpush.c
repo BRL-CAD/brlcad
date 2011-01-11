@@ -47,9 +47,7 @@ struct object_use
  *
  */
 static void
-increment_uses(struct db_i *db_ip,
-	       struct directory *dp,
-	       genptr_t ptr)
+increment_uses(struct db_i *UNUSED(db_ip), struct directory *dp, genptr_t UNUSED(ptr))
 {
     RT_CK_DIR(dp);
 
@@ -61,9 +59,7 @@ increment_uses(struct db_i *db_ip,
  *
  */
 static void
-increment_nrefs(struct db_i *db_ip,
-		struct directory *dp,
-		genptr_t ptr)
+increment_nrefs(struct db_i *UNUSED(db_ip), struct directory *dp, genptr_t UNUSED(ptr))
 {
     RT_CK_DIR(dp);
 
@@ -215,12 +211,7 @@ static struct directory *Copy_object(struct ged *gedp, struct directory *dp, mat
  *
  */
 static void
-Do_copy_membs(struct db_i *dbip,
-	      struct rt_comb_internal *comb,
-	      union tree *comb_leaf,
-	      genptr_t user_ptr1,
-	      genptr_t user_ptr2,
-	      genptr_t user_ptr3)
+Do_copy_membs(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t UNUSED(user_ptr3))
 {
     struct directory *dp;
     struct directory *dp_new;
@@ -428,12 +419,7 @@ Copy_object(struct ged *gedp,
  *
  */
 static void
-Do_ref_incr(struct db_i *dbip,
-	    struct rt_comb_internal *comb,
-	    union tree *comb_leaf,
-	    genptr_t user_ptr1,
-	    genptr_t user_ptr2,
-	    genptr_t user_ptr3)
+Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t UNUSED(user_ptr1), genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3))
 {
     struct directory *dp;
 
@@ -511,9 +497,6 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp;
 
 	for (dp=gedp->ged_wdbp->dbip->dbi_Head[i]; dp!=DIR_NULL; dp=dp->d_forw) {
-	    struct rt_db_internal intern;
-	    struct rt_comb_internal *comb;
-
 	    if (dp->d_flags & DIR_SOLID)
 		continue;
 

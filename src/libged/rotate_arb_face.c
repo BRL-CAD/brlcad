@@ -199,7 +199,6 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
     (void)rt_arb_calc_points(arb, arb_type, planes, &gedp->ged_wdbp->wdb_tol);
 
     {
-	int i;
 	mat_t invmat;
 
 	bn_mat_inv(invmat, mat);

@@ -313,7 +313,7 @@ _ged_rt_write(struct ged *gedp,
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
-    int i;
+    size_t i;
     quat_t quat;
     struct solid *sp;
 
