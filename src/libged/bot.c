@@ -45,7 +45,6 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     const char *sub;
     const char *arg;
     const char *primitive = argv[argc - 1];
-    char prop = '\0';
     size_t len;
     fastf_t tmp;
     fastf_t propVal;
@@ -86,12 +85,12 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	propVal = rt_bot_propget(bot, arg);
 
 	/* print result string */
-	if (propVal != -1) {
+	if (!EQUAL(propVal, -1.0)) {
 
 	    tmp = (int) propVal;
 
 	    /* int result */
-	    if (propVal == tmp) {
+	    if (EQUAL(propVal, tmp)) {
 		bu_vls_printf(&gedp->ged_result_str, "%d", (int) propVal);
 	    }
 	    
