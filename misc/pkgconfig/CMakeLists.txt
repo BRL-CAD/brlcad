@@ -1,4 +1,4 @@
-SET(prefix "${BRLCAD_PREFIX}")
+SET(prefix "${CMAKE_INSTALL_PREFIX}")
 SET(exec_prefix "\${prefix}")
 SET(libdir "\${exec_prefix}/lib")
 SET(includedir "\${prefix}/include")

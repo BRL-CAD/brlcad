@@ -131,6 +131,10 @@ ENDIF(CMAKE_INSTALL_PREFIX AND BRLCAD_PREFIX)
 # the function names and call the _add_* functions to access the CMake
 # functionality previously available under the add_* functions. See
 # http://www.cmake.org/pipermail/cmake/2010-September/039388.html
+# Zero out the lists at the beginning of the run to avoid duplicate
+# and stale entries.
+SET(CMAKE_LIBRARY_TARGET_LIST "")
+SET(CMAKE_LIBRARY_TARGET_FILE_LIST "")
 function(add_library name)
    _add_library(${name} ${ARGN})
 	IF(${name} MATCHES "^lib*")
@@ -142,6 +146,8 @@ function(add_library name)
    SET(CMAKE_LIBRARY_TARGET_FILE_LIST "${CMAKE_LIBRARY_TARGET_FILE_LIST};${targetfile}" CACHE STRING "list of lib target files" FORCE)
 endfunction(add_library)
 
+SET(CMAKE_EXEC_TARGET_LIST "")
+SET(CMAKE_EXEC_TARGET_FILE_LIST "")
 function(add_executable name)
    SET(CMAKE_EXEC_TARGET_LIST "${CMAKE_EXEC_TARGET_LIST};${name}" CACHE STRING "list of exec targets" FORCE)
    _add_executable(${name} ${ARGN})
@@ -149,13 +155,14 @@ function(add_executable name)
    SET(CMAKE_EXEC_TARGET_FILE_LIST "${CMAKE_EXEC_TARGET_FILE_LIST};${targetfile}" CACHE STRING "list of exec target files" FORCE)
 endfunction(add_executable)
 
+SET(CMAKE_CUSTOM_TARGET_LIST "")
+SET(CMAKE_CUSTOM_TARGET_FILE_LIST "")
 function(add_custom_target name)
    SET(CMAKE_CUSTOM_TARGET_LIST "${CMAKE_CUSTOM_TARGET_LIST};${name}" CACHE STRING "list of custom targets" FORCE)
    _add_custom_target(${name} ${ARGN})
    get_target_property(targetfile ${name} LOCATION)
 	SET(CMAKE_CUSTOM_TARGET_FILE_LIST "${CMAKE_CUSTOM_TARGET_FILE_LIST};${targetfile}" CACHE STRING "list of custom target files" FORCE)
 endfunction(add_custom_target)
-
 
 
 #---------------------------------------------------------------------
@@ -242,47 +249,42 @@ ENDIF(TIME_RESULT MATCHES "^0$")
 BOX_PRINT("*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ***" "*")
 
 #---------------------------------------------------------------------
-# For NFS volumes, to ensure proper file creation.
+# For NFS volumes, to ensure proper file creation.  If UMASK is set
+# use it, but it's not a standard setting at the moment.
 IF(NOT WIN32)
-	EXEC_PROGRAM(umask ARGS 022 OUTPUT_VARIABLE exec_out)
+	IF(NOT UMASK)
+		EXEC_PROGRAM(umask ARGS 022 OUTPUT_VARIABLE exec_out)
+	ELSE(NOT UMASK)
+		EXEC_PROGRAM(umask ARGS ${UMASK} OUTPUT_VARIABLE exec_out)
+	ENDIF(NOT UMASK)
 ENDIF(NOT WIN32)
 
 #---------------------------------------------------------------------
 # We want to check /usr/local by default, so add it 
-SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH};/usr/local)
-SET(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES};/usr/local/include)
-
-#---------------------------------------------------------------------
-# Set build type here. Doing this wrong, see http://www.cmake.org/Wiki/CMake_Useful_Variables
-# for a more complete list of types and the mechanism to define new ones - dunno if 
-# set_property can be made to work here or not.  Reason to do this is in CMake gui it gives
-# the list of available build types as a drop-down menu
-set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Basic" "Debug" "Release")
-if (NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE "Basic" CACHE STRING "Set build type" FORCE)
-endif (NOT CMAKE_BUILD_TYPE)
+SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/local)
+SET(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
 
 #---------------------------------------------------------------------
 # The location in which to install BRLCAD. Need a good Debug location 
-# for Windows 
-IF(NOT BRLCAD_PREFIX)
+# for Windows.  Only do this if CMAKE_INSTALL_PREFIX hasn't been set
+# already, to try and allow parent builds (if any) some control.
+IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 	IF(NOT WIN32)
 		IF ("${CMAKE_BUILD_TYPE}" MATCHES "Release")
-			SET(BRLCAD_PREFIX "/usr/brlcad/rel-${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_VERSION}")
+			SET(CMAKE_INSTALL_PREFIX "/usr/brlcad/rel-${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_VERSION}")
 		ENDIF ("${CMAKE_BUILD_TYPE}" MATCHES "Release")
 		IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-			SET(BRLCAD_PREFIX "${BRLCAD_SOURCE_DIR}/../brlcad-install")
+			SET(CMAKE_INSTALL_PREFIX "${BRLCAD_SOURCE_DIR}/../brlcad-install")
 		ENDIF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-		if (NOT BRLCAD_PREFIX)
-			SET(BRLCAD_PREFIX "/usr/brlcad")
-		endif (NOT BRLCAD_PREFIX)
+		if (NOT CMAKE_INSTALL_PREFIX)
+			SET(CMAKE_INSTALL_PREFIX "/usr/brlcad")
+		endif (NOT CMAKE_INSTALL_PREFIX)
 	ELSE(NOT WIN32)
-		SET(BRLCAD_PREFIX "C:/BRL-CAD")
+		SET(CMAKE_INSTALL_PREFIX "C:/BRL-CAD")
 	ENDIF(NOT WIN32)
-ENDIF(NOT BRLCAD_PREFIX)
-SET(BRLCAD_PREFIX ${BRLCAD_PREFIX} CACHE STRING "BRL-CAD install prefix")
-SET(CMAKE_INSTALL_PREFIX "${BRLCAD_PREFIX}" CACHE STRING "BRL-CAD install prefix" FORCE)
-
+	SET(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "BRL-CAD install prefix" FORCE)
+ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+SET(BRLCAD_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "BRL-CAD install prefix")
 
 #---------------------------------------------------------------------
 # The following logic is what allows binaries to run successfully in 
@@ -412,8 +414,8 @@ FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_BUGREPORT \"http://brlcad.org\"\n"
 FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_NAME \"BRL-CAD\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_STRING \"BRL-CAD ${BRLCAD_VERSION}\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_TARNAME \"brlcad\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define BRLCAD_DATA \"${BRLCAD_INSTALL_DATA_DIR}\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define BRLCAD_ROOT \"${BRLCAD_PREFIX}\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define BRLCAD_DATA \"${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_VERSION \"${BRLCAD_VERSION}\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define VERSION \"${BRLCAD_VERSION}\"\n")
 
@@ -1012,12 +1014,12 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 
 	# Directory settings
 
-	SET(BRLCAD_PREFIX_LABEL "Prefix")
-	SET(BRLCAD_INSTALL_BIN_DIR_LABEL "Binaries")
-	SET(BRLCAD_INSTALL_MAN_DIR_LABEL "Manual pages")
-	SET(BRLCAD_INSTALL_CONF_DIR_LABEL "Configration files")
-	SET(BRLCAD_INSTALL_DATA_DIR_LABEL "Data resource files")
-	SET(PATHLABELS BRLCAD_PREFIX BRLCAD_INSTALL_BIN_DIR BRLCAD_INSTALL_MAN_DIR BRLCAD_INSTALL_CONF_DIR BRLCAD_INSTALL_DATA_DIR)
+	SET(CMAKE_INSTALL_PREFIX_LABEL "Prefix")
+	SET(${CMAKE_PROJECT_NAME}_INSTALL_BIN_DIR_LABEL "Binaries")
+	SET(${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR_LABEL "Manual pages")
+	SET(${CMAKE_PROJECT_NAME}_INSTALL_CONF_DIR_LABEL "Configration files")
+	SET(${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR_LABEL "Data resource files")
+	SET(PATHLABELS CMAKE_INSTALL_PREFIX ${CMAKE_PROJECT_NAME}_INSTALL_BIN_DIR ${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR ${CMAKE_PROJECT_NAME}_INSTALL_CONF_DIR ${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR)
 	SET(PATHLABELLENGTH 0)
 	FOREACH(path_label ${PATHLABELS})
 		STRING(LENGTH ${${path_label}_LABEL} CURRENTLENGTH)
@@ -1276,7 +1278,7 @@ TRY_RUN(TIME_RESULT TIME_COMPILED
 FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/USER "\n") 
 
 # PATH
-FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH "\"${BRLCAD_PREFIX}\"") 
+FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH "\"${CMAKE_INSTALL_PREFIX}\"") 
 FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/PATH "\n") 
 
 # COUNT - force CMake to look every time in case of manual removal of COUNT file
@@ -1306,7 +1308,7 @@ SET(toplevel_DOCFILES
   NEWS
   README
 )
-INSTALL(FILES ${toplevel_DOCFILES} DESTINATION ${BRLCAD_INSTALL_DATA_DIR})
+INSTALL(FILES ${toplevel_DOCFILES} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR})
 
 
 # CPack is used to produce tgz files, RPMS, etc.
