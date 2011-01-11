@@ -220,7 +220,7 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
  * this allows those divides to become fast multiplies.
  */
     for (i = 0; i < 3; i++) {
-	if (ray->dir.v[i] == 0.0)
+	if (NEAR_ZERO(ray->dir.v[i], SMALL_FASTF))
 	    ray->dir.v[i] = TIE_PREC;
 	dirinv[i] = 1.0 / ray->dir.v[i];
 	ab[i] = dirinv[i] < 0.0 ? 1.0 : 0.0;
