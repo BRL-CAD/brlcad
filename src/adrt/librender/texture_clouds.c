@@ -30,14 +30,14 @@
 
 #include "bu.h"
 
-void texture_clouds_init(texture_t *texture, tfloat size, int octaves, int absolute, TIE_3 scale, TIE_3 translate) {
-    texture_clouds_t *td;
+void texture_clouds_init(struct texture_s *texture, tfloat size, int octaves, int absolute, TIE_3 scale, TIE_3 translate) {
+    struct texture_clouds_s *td;
 
-    texture->data = bu_malloc(sizeof(texture_clouds_t), "cloud data");
+    texture->data = bu_malloc(sizeof(struct texture_clouds_s), "cloud data");
     texture->free = texture_clouds_free;
-    texture->work = (texture_work_t *)texture_clouds_work;
+    texture->work = (struct texture_work_s *)texture_clouds_work;
 
-    td = (texture_clouds_t*)texture->data;
+    td = (struct texture_clouds_s*)texture->data;
     td->size = size;
     td->octaves = octaves;
     td->absolute = absolute;
@@ -48,21 +48,21 @@ void texture_clouds_init(texture_t *texture, tfloat size, int octaves, int absol
 }
 
 
-void texture_clouds_free(texture_t *texture) {
-    texture_clouds_t *td;
+void texture_clouds_free(struct texture_s *texture) {
+    struct texture_clouds_s *td;
 
-    td = (texture_clouds_t*)texture->data;
+    td = (struct texture_clouds_s*)texture->data;
     texture_perlin_free(&td->perlin);
     bu_free(texture->data, "cloud data");
 }
 
 
 void texture_clouds_work(__TEXTURE_WORK_PROTOTYPE__) {
-    texture_clouds_t *td;
+    struct texture_clouds_s *td;
     TIE_3 p, pt;
 
 
-    td = (texture_clouds_t*)texture->data;
+    td = (struct texture_clouds_s*)texture->data;
 
     /* Transform the Point */
     if (td->absolute) {

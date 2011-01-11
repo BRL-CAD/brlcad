@@ -30,13 +30,13 @@ render_normal_free(render_t *render) {
 }
 
 static void *
-normal_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
+normal_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr) {
     return (adrt_mesh_t *)(tri->ptr);
 }
 
 void
-render_normal_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
-    tie_id_t	id;
+render_normal_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel) {
+    struct tie_id_s	id;
     float	one[3] = { 1, 1, 1 };
 
     if (tie_work(tie, ray, &id, normal_hit, NULL))

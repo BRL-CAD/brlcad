@@ -155,7 +155,7 @@ typedef struct tienet_buffer_s {
     uint32_t ind;
 } tienet_buffer_t;
 
-BU_EXPORT BU_EXTERN(int load_g, (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **));
+BU_EXPORT BU_EXTERN(int load_g, (struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **));
 
 #endif
 

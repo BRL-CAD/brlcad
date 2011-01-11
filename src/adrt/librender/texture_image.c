@@ -33,14 +33,14 @@
 
 #include "bu.h"
 
-void texture_image_init(texture_t *texture, short w, short h, unsigned char *image) {
-    texture_image_t *td;
+void texture_image_init(struct texture_s *texture, short w, short h, unsigned char *image) {
+    struct texture_image_s *td;
 
-    texture->data = bu_malloc(sizeof(texture_image_t), "texture data");
+    texture->data = bu_malloc(sizeof(struct texture_image_s), "texture data");
     texture->free = texture_image_free;
-    texture->work = (texture_work_t *)texture_image_work;
+    texture->work = (struct texture_work_s *)texture_image_work;
 
-    td = (texture_image_t *)texture->data;
+    td = (struct texture_image_s *)texture->data;
     td->w = w;
     td->h = h;
     td->image = (unsigned char *)bu_malloc(3*w*h, "texture image");
@@ -48,23 +48,23 @@ void texture_image_init(texture_t *texture, short w, short h, unsigned char *ima
 }
 
 
-void texture_image_free(texture_t *texture) {
-    texture_image_t *td;
+void texture_image_free(struct texture_s *texture) {
+    struct texture_image_s *td;
 
-    td = (texture_image_t *)texture->data;
+    td = (struct texture_image_s *)texture->data;
     bu_free(td->image, "texture image");
     bu_free(texture->data, "texture data");
 }
 
 
 void texture_image_work(__TEXTURE_WORK_PROTOTYPE__) {
-    texture_image_t *td;
+    struct texture_image_s *td;
     TIE_3 pt;
     tfloat u, v;
     int ind;
 
 
-    td = (texture_image_t *)texture->data;
+    td = (struct texture_image_s *)texture->data;
 
 
     /* Transform the Point */

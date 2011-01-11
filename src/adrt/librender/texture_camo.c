@@ -30,14 +30,14 @@
 
 #include "bu.h"
 
-void texture_camo_init(texture_t *texture, tfloat size, int octaves, int absolute, TIE_3 color1, TIE_3 color2, TIE_3 color3) {
-    texture_camo_t   *sd;
+void texture_camo_init(struct texture_s *texture, tfloat size, int octaves, int absolute, TIE_3 color1, TIE_3 color2, TIE_3 color3) {
+    struct texture_camo_s   *sd;
 
-    texture->data = bu_malloc(sizeof(texture_camo_t), "camo data");
+    texture->data = bu_malloc(sizeof(struct texture_camo_s), "camo data");
     texture->free = texture_camo_free;
-    texture->work = (texture_work_t *)texture_camo_work;
+    texture->work = (struct texture_work_s *)texture_camo_work;
 
-    sd = (texture_camo_t *)texture->data;
+    sd = (struct texture_camo_s *)texture->data;
     sd->size = size;
     sd->octaves = octaves;
     sd->absolute = absolute;
@@ -49,22 +49,22 @@ void texture_camo_init(texture_t *texture, tfloat size, int octaves, int absolut
 }
 
 
-void texture_camo_free(texture_t *texture) {
-    texture_camo_t *td;
+void texture_camo_free(struct texture_s *texture) {
+    struct texture_camo_s *td;
 
-    td = (texture_camo_t *)texture->data;
+    td = (struct texture_camo_s *)texture->data;
     texture_perlin_free(&td->perlin);
     bu_free(texture->data, "camo data");
 }
 
 
 void texture_camo_work(__TEXTURE_WORK_PROTOTYPE__) {
-    texture_camo_t *td;
+    struct texture_camo_s *td;
     TIE_3 p, pt;
     tfloat sum1, sum2;
 
 
-    td = (texture_camo_t *)texture->data;
+    td = (struct texture_camo_s *)texture->data;
 
     /* Transform the Point */
     MATH_VEC_TRANSFORM(pt, id->pos, ADRT_MESH(mesh)->matinv);

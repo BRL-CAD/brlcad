@@ -58,10 +58,10 @@ render_path_free(render_t *render)
 
 
 void
-render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
 {
-    tie_ray_t new_ray;
-    tie_id_t new_id;
+    struct tie_ray_s new_ray;
+    struct tie_id_s new_id;
     TIE_3 new_pix, accum, T, ref, bax, bay;
     adrt_mesh_t *new_mesh;
     tfloat sin_theta, cos_theta, sin_phi, cos_phi;

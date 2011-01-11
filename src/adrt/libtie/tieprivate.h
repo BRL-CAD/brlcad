@@ -30,21 +30,21 @@
 extern "C" {
 #endif
 
-typedef struct tie_geom_s {
-    tie_tri_t **tri_list;
+struct tie_geom_s {
+    struct tie_tri_s **tri_list;
     unsigned int tri_num;
-} tie_geom_t;
+};
 
 #ifdef _WIN32
 # undef near
 # undef far
 #endif
 
-typedef struct tie_stack_s {
-    tie_kdtree_t *node;
+struct tie_stack_s {
+    struct tie_kdtree_s *node;
     tfloat near;
     tfloat far;
-} tie_stack_t;
+};
 
 #ifdef __cplusplus
 }

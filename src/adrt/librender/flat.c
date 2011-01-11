@@ -31,9 +31,9 @@ render_flat_free(render_t *render)
 }
 
 void
-render_flat_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+render_flat_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
 {
-    tie_id_t id;
+    struct tie_id_s id;
     adrt_mesh_t *mesh;
 
     if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {

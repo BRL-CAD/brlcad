@@ -42,13 +42,13 @@
 #define	LERP(t, a, b) (a+t*(b-a))
 
 
-void	texture_perlin_init(texture_perlin_t *P);
-void	texture_perlin_free(texture_perlin_t *P);
-tfloat	texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, tfloat Size, int Depth);
-tfloat	texture_perlin_omega(texture_perlin_t *P, TIE_3 V);
+void	texture_perlin_init(struct texture_perlin_s *P);
+void	texture_perlin_free(struct texture_perlin_s *P);
+tfloat	texture_perlin_noise3(struct texture_perlin_s *P, TIE_3 V, tfloat Size, int Depth);
+tfloat	texture_perlin_omega(struct texture_perlin_s *P, TIE_3 V);
 
 
-void texture_perlin_init(texture_perlin_t *P) {
+void texture_perlin_init(struct texture_perlin_s *P) {
     int i, j, k;
 
     P->PV = (int *)bu_malloc(sizeof(int)*(2*B+2), "PV");
@@ -77,13 +77,13 @@ void texture_perlin_init(texture_perlin_t *P) {
 }
 
 
-void texture_perlin_free(texture_perlin_t *P) {
+void texture_perlin_free(struct texture_perlin_s *P) {
     bu_free(P->PV, "PV");
     bu_free(P->RV, "RV");
 }
 
 
-tfloat texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, tfloat Size, int Depth) {
+tfloat texture_perlin_noise3(struct texture_perlin_s *P, TIE_3 V, tfloat Size, int Depth) {
     int i;
     tfloat sum;
 
@@ -97,7 +97,7 @@ tfloat texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, tfloat Size, int Dept
 }
 
 
-tfloat texture_perlin_omega(texture_perlin_t *P, TIE_3 V) {
+tfloat texture_perlin_omega(struct texture_perlin_s *P, TIE_3 V) {
     TIE_3		q;
     tfloat	r0[3], r1[3], sy, sz, a, b, c, d, t, u, v;
     int		b0[3], b1[3], b00, b10, b01, b11;

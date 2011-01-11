@@ -40,14 +40,14 @@ typedef struct render_spall_s {
     TIE_3 ray_dir;
     tfloat plane[4];
     tfloat angle;
-    tie_t tie;
+    struct tie_s tie;
 } render_spall_t;
 
-void* render_spall_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
-void render_plane(tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
+void* render_spall_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr);
+void render_plane(struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel);
 
 typedef struct render_spall_hit_s {
-    tie_id_t id;
+    struct tie_id_s id;
     adrt_mesh_t *mesh;
     tfloat plane[4];
     tfloat mod;
@@ -63,14 +63,14 @@ render_spall_free(render_t *render)
 
 
 static void *
-render_arrow_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
+render_arrow_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr)
 {
     return tri;
 }
 
 
 void *
-render_spall_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
+render_spall_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr)
 {
     render_spall_hit_t *hit = (render_spall_hit_t *)ptr;
 
@@ -81,12 +81,12 @@ render_spall_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
 
 
 void
-render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
 {
     render_spall_t *rd;
     render_spall_hit_t hit;
     TIE_3 color;
-    tie_id_t id;
+    struct tie_id_s id;
     tfloat t, dot;
 
 

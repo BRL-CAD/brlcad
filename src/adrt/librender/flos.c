@@ -40,8 +40,8 @@ typedef struct render_flos_s {
 void render_flos_free(render_t *render) {
 }
 
-void render_flos_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
-    tie_id_t id, tid;
+void render_flos_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel) {
+    struct tie_id_s id, tid;
     adrt_mesh_t *mesh;
     TIE_3 vec;
     tfloat angle;

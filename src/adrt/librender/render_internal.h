@@ -47,12 +47,12 @@
 #define RENDER_SHADER(name) BU_EXTERN(int render_##name##_init, (render_t *, const char *));
 
 struct render_s;
-typedef void render_work_t(struct render_s *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
+typedef void render_work_t(struct render_s *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel);
 typedef void render_free_t(struct render_s *render);
 
 typedef struct render_s {
     char name[256];
-    tie_t *tie;
+    struct tie_s *tie;
     render_work_t *work;
     render_free_t *free;
     void *data;

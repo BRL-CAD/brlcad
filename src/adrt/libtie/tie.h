@@ -85,55 +85,52 @@ typedef struct TIE_3_s {
     tfloat v[3];
 } TIE_3;
 
-typedef struct tie_ray_s {
+struct tie_ray_s {
     TIE_3 pos;    /* Position */
     TIE_3 dir;    /* Direction */
     short depth;  /* Depth */
     short kdtree_depth;
-} tie_ray_t;
+};
 
-typedef struct tie_id_s {
+struct tie_id_s {
     TIE_3 pos;    /* Point */
     TIE_3 norm;   /* Normal */
     tfloat dist;   /* Distance */
     tfloat alpha;	/* Barycentric Coordinate Alpha */
     tfloat beta;	/* Barycentric Coordinate Beta */
-} tie_id_t;
+};
 
-typedef struct tie_tri_s {
+struct tie_tri_s {
     TIE_3 data[3];	/* 36-bytes, Data[0] = Point, Data[1] = Normal, Data[2] = DotProduct, VectorU, VectorV */
     tfloat *v;		/* 8-bytes */
     void *ptr;		/* 4-bytes */
-} tie_tri_t;
+};
 
-typedef struct tie_kdtree_s {
+struct tie_kdtree_s {
     tfloat axis;
     void *data;
-} tie_kdtree_t;
+};
 
 
-typedef struct tie_s {
+struct tie_s {
     uint64_t rays_fired;
-    tie_kdtree_t *kdtree;
+    struct tie_kdtree_s *kdtree;
     unsigned int max_depth;	/* Maximum depth allowed for given geometry */
     unsigned int tri_num;
     unsigned int tri_num_alloc;
-    tie_tri_t *tri_list;
+    struct tie_tri_s *tri_list;
     int stat;		/* used for testing various statistics */
     unsigned int kdmethod;		/* Optimal or Fast */
     /* all tfloat altered stuff should be at the end. */
     TIE_3 min, max;
     vect_t mid;
     fastf_t radius;
-#if TIE_PRECISION == 0
-    tfloat _pad[6];	/* so both float and double variants are the same size. */
-#endif
-} tie_t;
+};
 
-TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_free), (tie_t *tie));
-TIE_EXPORT BU_EXTERN(uint32_t TIE_VAL(tie_kdtree_cache_free), (tie_t *tie, void **cache));
-TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_cache_load), (tie_t *tie, void *cache, uint32_t size));
-TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_prep), (tie_t *tie));
+TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_free), (struct tie_s *tie));
+TIE_EXPORT BU_EXTERN(uint32_t TIE_VAL(tie_kdtree_cache_free), (struct tie_s *tie, void **cache));
+TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_cache_load), (struct tie_s *tie, void *cache, uint32_t size));
+TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_prep), (struct tie_s *tie));
 TIE_EXPORT extern tfloat TIE_VAL(TIE_PREC);
 
 /* compatability macros */
@@ -145,11 +142,11 @@ TIE_EXPORT extern tfloat TIE_VAL(TIE_PREC);
 
 TIE_EXPORT BU_EXTERN(int tie_check_degenerate,);
 
-TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_init), (tie_t *tie, unsigned int tri_num, unsigned int kdmethod));
-TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_free), (tie_t *tie));
-TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_prep), (tie_t *tie));
-TIE_EXPORT BU_EXTERN(void* TIE_VAL(tie_work), (tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*, tie_id_t*, tie_tri_t*, void *ptr), void *ptr));
-TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_push), (tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride));
+TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_init), (struct tie_s *tie, unsigned int tri_num, unsigned int kdmethod));
+TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_free), (struct tie_s *tie));
+TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_prep), (struct tie_s *tie));
+TIE_EXPORT BU_EXTERN(void* TIE_VAL(tie_work), (struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_s *id, void *(*hitfunc)(struct tie_ray_s*, struct tie_id_s*, struct tie_tri_s*, void *ptr), void *ptr));
+TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_push), (struct tie_s *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride));
 
 /* backwards compatible macros */
 #define tie_init TIE_VAL(tie_init)

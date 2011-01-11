@@ -30,13 +30,13 @@
 
 #include "tie.h"
 
-#define __TEXTURE_WORK_PROTOTYPE__ texture_t *texture, void *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel
+#define __TEXTURE_WORK_PROTOTYPE__ texture_t *texture, void *mesh, struct tie_ray_s *ray, struct tie_id_s *id, TIE_3 *pixel
 
 struct texture_s;
 struct mesh_s;
 typedef void texture_init_t(struct texture_s *texture);
 typedef void texture_free_t(struct texture_s *texture);
-typedef void texture_work_t(struct texture_s *texture, void *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
+typedef void texture_work_t(struct texture_s *texture, void *mesh, struct tie_ray_s *ray, struct tie_id_s *id, TIE_3 *pixel);
 
 
 typedef struct texture_s {

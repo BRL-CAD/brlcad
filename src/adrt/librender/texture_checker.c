@@ -30,30 +30,30 @@
 
 #include "bu.h"
 
-void texture_checker_init(texture_t *texture, int tile) {
-    texture_checker_t   *td;
+void texture_checker_init(struct texture_s *texture, int tile) {
+    struct texture_checker_s   *td;
 
-    texture->data = bu_malloc(sizeof(texture_checker_t), "checker data");
+    texture->data = bu_malloc(sizeof(struct texture_checker_s), "checker data");
     texture->free = texture_checker_free;
-    texture->work = (texture_work_t *)texture_checker_work;
+    texture->work = (struct texture_work_s *)texture_checker_work;
 
-    td = (texture_checker_t *)texture->data;
+    td = (struct texture_checker_s *)texture->data;
     td->tile = tile;
 }
 
 
-void texture_checker_free(texture_t *texture) {
+void texture_checker_free(struct texture_s *texture) {
     bu_free(texture->data, "checker data");
 }
 
 
 void texture_checker_work(__TEXTURE_WORK_PROTOTYPE__) {
-    texture_checker_t	*td;
+    struct texture_checker_s	*td;
     TIE_3			pt;
     int			u, v;
 
 
-    td = (texture_checker_t *)texture->data;
+    td = (struct texture_checker_s *)texture->data;
 
     /* Transform the Point */
     MATH_VEC_TRANSFORM(pt, id->pos, ADRT_MESH(mesh)->matinv);

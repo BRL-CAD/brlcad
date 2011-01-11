@@ -54,7 +54,7 @@
 
 
 static struct bn_tol tol;		/* calculation tolerance */
-static tie_t *cur_tie;
+static struct tie_s *cur_tie;
 static struct db_i *dbip;
 TIE_3 **tribuf;
 
@@ -245,7 +245,7 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int 
 
 
 int
-load_g (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **meshes)
+load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **meshes)
 {
     int c;
     double percent;

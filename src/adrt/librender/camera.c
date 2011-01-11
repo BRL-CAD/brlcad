@@ -413,7 +413,7 @@ render_camera_render_thread(int cpu, genptr_t ptr)
     render_camera_thread_data_t *td;
     int d, n, res_ind, scanline, v_scanline;
     TIE_3 pixel, accum, v1, v2;
-    tie_ray_t ray;
+    struct tie_ray_s ray;
     tfloat view_inv;
 
     VSETALL(v1.v, 0);
@@ -558,7 +558,7 @@ render_camera_render_thread(int cpu, genptr_t ptr)
 
 
 void
-render_camera_render(render_camera_t *camera, tie_t *tie, camera_tile_t *tile, tienet_buffer_t *result)
+render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *tile, tienet_buffer_t *result)
 {
     render_camera_thread_data_t td;
     unsigned int scanline, ind;

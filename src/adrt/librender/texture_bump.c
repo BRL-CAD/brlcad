@@ -29,30 +29,30 @@
 
 #include "bu.h"
 
-void texture_bump_init(texture_t *texture, TIE_3 coef) {
-    texture_bump_t *sd;
+void texture_bump_init(struct texture_s *texture, TIE_3 coef) {
+    struct texture_bump_s *sd;
 
-    texture->data = bu_malloc(sizeof(texture_bump_t), "texture data");
+    texture->data = bu_malloc(sizeof(struct texture_bump_s), "texture data");
     texture->free = texture_bump_free;
-    texture->work = (texture_work_t *)texture_bump_work;
+    texture->work = (struct texture_work_s *)texture_bump_work;
 
-    sd = (texture_bump_t *)texture->data;
+    sd = (struct texture_bump_s *)texture->data;
     sd->coef = coef;
 }
 
 
-void texture_bump_free(texture_t *texture) {
+void texture_bump_free(struct texture_s *texture) {
     bu_free(texture->data, "texture data");
 }
 
 
 void texture_bump_work(__TEXTURE_WORK_PROTOTYPE__) {
-    texture_bump_t *sd;
+    struct texture_bump_s *sd;
     TIE_3 n;
     tfloat d;
 
 
-    sd = (texture_bump_t *)texture->data;
+    sd = (struct texture_bump_s *)texture->data;
 
 
     n.v[0] = id->norm.v[0] + sd->coef.v[0]*(2*pixel->v[0]-1.0);

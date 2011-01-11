@@ -36,31 +36,31 @@
 #include "adrt_struct.h"
 #include "render.h"
 
-void* render_cut_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
-void render_cut(tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
+void* render_cut_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr);
+void render_cut(struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel);
 
 typedef struct render_cut_s {
     TIE_3 ray_pos;
     TIE_3 ray_dir;
     tfloat plane[4];
-    tie_t tie;
+    struct tie_s tie;
 } render_cut_t;
 
 typedef struct render_cut_hit_s {
-    tie_id_t id;
+    struct tie_id_s id;
     adrt_mesh_t *mesh;
     tfloat plane[4];
     tfloat mod;
 } render_cut_hit_t;
 
 void *
-render_cut_hit_cutline(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
+render_cut_hit_cutline(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr)
 {
     ((adrt_mesh_t *)(tri->ptr))->flags |= ADRT_MESH_HIT;
     return NULL;
 }
 
-extern tie_t *tie;
+extern struct tie_s *tie;
 
 void
 render_cut_free(render_t *render)
@@ -74,14 +74,14 @@ render_cut_free(render_t *render)
 
 
 static void *
-render_arrow_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
+render_arrow_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr)
 {
     return tri;
 }
 
 
 void *
-render_cut_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
+render_cut_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr)
 {
     render_cut_hit_t *hit = (render_cut_hit_t *)ptr;
 
@@ -92,12 +92,12 @@ render_cut_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
 
 
 void
-render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+render_cut_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
 {
     render_cut_t *rd;
     render_cut_hit_t hit;
     TIE_3 color;
-    tie_id_t id;
+    struct tie_id_s id;
     tfloat t, dot;
 
     rd = (render_cut_t *)render->data;
@@ -191,8 +191,8 @@ render_cut_init(render_t *render, const char *buf)
     static TIE_3 list[6];
     TIE_3 **tlist, up, ray_pos, ray_dir;
     fastf_t shot_len = 100, shot_width = .02;
-    tie_id_t id;
-    tie_ray_t ray;
+    struct tie_id_s id;
+    struct tie_ray_s ray;
     double step;
 
     if(buf == NULL)

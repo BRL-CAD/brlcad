@@ -57,7 +57,7 @@ slave_load_free ()
 }
 
 int
-slave_load_region (tie_t *tie, char *data)
+slave_load_region (struct tie_s *tie, char *data)
 {
     tie = NULL;
     data = NULL;
@@ -70,7 +70,7 @@ slave_load_region (tie_t *tie, char *data)
 }
 
 int
-slave_load_kdtree (tie_t *tie, char *data)
+slave_load_kdtree (struct tie_s *tie, char *data)
 {
     tie = NULL;
     data = NULL;
@@ -81,7 +81,7 @@ slave_load_kdtree (tie_t *tie, char *data)
 }
 
 int
-slave_load (tie_t *tie, void *data, uint32_t dlen)
+slave_load (struct tie_s *tie, void *data, uint32_t dlen)
 {
     char *meh = (char *)data;
 

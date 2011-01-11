@@ -82,7 +82,7 @@ typedef struct camera_tile_s
 typedef struct render_camera_thread_data_s
 {
     render_camera_t *camera;
-    tie_t *tie;
+    struct tie_s *tie;
     camera_tile_t *tile;
     void *res_buf;
     unsigned int *scanline;
@@ -92,7 +92,7 @@ typedef struct render_camera_thread_data_s
 BU_EXPORT BU_EXTERN(void render_camera_init, (render_camera_t *camera, int threads));
 BU_EXPORT BU_EXTERN(void render_camera_free, (render_camera_t *camera));
 BU_EXPORT BU_EXTERN(void render_camera_prep, (render_camera_t *camera));
-BU_EXPORT BU_EXTERN(void render_camera_render, (render_camera_t *camera, tie_t *tie, camera_tile_t *tile, tienet_buffer_t *result));
+BU_EXPORT BU_EXTERN(void render_camera_render, (render_camera_t *camera, struct tie_s *tie, camera_tile_t *tile, tienet_buffer_t *result));
 
 BU_EXPORT BU_EXTERN(int render_shader_init, (render_t *, const char *name, const char *buf));
 BU_EXPORT BU_EXTERN(const char *render_shader_load_plugin, (const char *filename));
