@@ -113,8 +113,8 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     struct rt_sketch_internal *skt;
     vect_t tmp, xyz[3];
     fastf_t tmp_f, ldir[3];
-    int i, j;
-    int vert_count;
+    size_t i, j;
+    size_t vert_count;
     int curr_vert;
 
     if (rtip) RT_CK_RTI(rtip);
@@ -570,7 +570,8 @@ int
 rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
-    int i, j, k;
+    size_t i;
+    int j, k;
     fastf_t dist_top, dist_bottom, to_bottom=0;
     fastf_t dist[2];
     fastf_t dot_pl1, dir_dot_z;
@@ -903,13 +904,14 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     }
 
     if (hits_before_bottom & 1) {
+	int counter;
 	if (hit_count >= MAX_HITS) {
 	    bu_log("Too many hits on extrusion (%s), limit is %d\n",
 		   stp->st_dp->d_namep, MAX_HITS);
 	    bu_bomb("Too many hits on extrusion\n");
 	}
-	for (i=hit_count-1; i>=0; i--)
-	    hits[i+1] = hits[i];
+	for (counter=hit_count-1; counter>=0; counter--)
+	    hits[counter+1] = hits[counter];
 	hits[0].hit_magic = RT_HIT_MAGIC;
 	hits[0].hit_dist = dist_bottom;
 	hits[0].hit_surfno = bot_face;
@@ -945,13 +947,14 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 
     /* build segments */
     {
+	int cnt;
 	struct seg *segp;
 
-	for (i=0; i < hit_count; i += 2) {
+	for (cnt=0; cnt < hit_count; cnt += 2) {
 	    RT_GET_SEG(segp, ap->a_resource);
 	    segp->seg_stp = stp;
-	    segp->seg_in = hits[i];	/* struct copy */
-	    segp->seg_out = hits[i+1];	/* struct copy */
+	    segp->seg_in = hits[cnt];	/* struct copy */
+	    segp->seg_out = hits[cnt+1];	/* struct copy */
 	    segp->seg_out.hit_surfno = -segp->seg_out.hit_surfno;	/* for exit hits */
 	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	}
@@ -1115,7 +1118,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     struct curve *crv=(struct curve *)NULL;
     struct rt_sketch_internal *sketch_ip;
     point_t end_of_h;
-    int i1, i2, nused1, nused2;
+    size_t i1, i2, nused1, nused2;
     struct bn_vlist *vp1, *vp2, *vp2_start;
 
     BU_CK_LIST_HEAD(vhead);
@@ -1745,15 +1748,15 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     struct faceuse *fu;
     struct vertex ***verts;
     struct vertex **vertsa;
-    int vert_count=0;
     struct rt_extrude_internal *extrude_ip;
     struct rt_sketch_internal *sketch_ip;
     struct curve *crv=(struct curve *)NULL;
     struct bu_ptbl *aloop=NULL, loops, **containing_loops, *outer_loop;
-    int i, j, k;
-    int *used_seg;
-    struct bn_vlist *vlp;
     plane_t pl;
+    int *used_seg;
+    size_t i, j, k;
+    size_t vert_count=0;
+    struct bn_vlist *vlp;
 
     RT_CK_DB_INTERNAL(ip);
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;

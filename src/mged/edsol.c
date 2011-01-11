@@ -3933,7 +3933,7 @@ sedit(void)
     struct rt_arb_internal *arb;
     fastf_t *eqp;
     static vect_t work;
-    int i;
+    size_t i;
     static int pnt5;		/* ECMD_ARB_SETUP_ROTFACE, special arb7 case */
     static float la, lb, lc, ld;	/* TGC: length of vectors */
     mat_t mat;

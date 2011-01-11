@@ -95,7 +95,7 @@ double dxtab[] = {
 
 double projectile_pos;
 point_t sample[1024];
-int nsamples;
+size_t nsamples;
 
 double iradius, oradius;
 double length;

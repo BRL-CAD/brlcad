@@ -66,7 +66,7 @@ rt_poly_eval_w_2derivatives(register bn_complex_t *cZ, register bn_poly_t *eqn, 
 /* input */
 /* outputs */
 {
-    register int n;
+    register size_t n;
     register int m;
 
     bn_cx_cons(b, eqn->cf[0], 0.0);
@@ -213,7 +213,7 @@ rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register int nr
 {
     register fastf_t er, ei;		/* "epoly" */
     register fastf_t zr, zi;		/* Z value to evaluate at */
-    register int n;
+    register size_t n;
     int m;
 
     for (m=0; m < nroots; ++m) {
@@ -297,7 +297,7 @@ rt_poly_roots(register bn_poly_t *eqn,	/* equation to be solved */
 	      register bn_complex_t roots[], /* space to put roots found */
 	      const char *name) /* name of the primitive being checked */
 {
-    register int n;		/* number of roots found */
+    register size_t n;		/* number of roots found */
     fastf_t factor;		/* scaling factor for copy */
 
     /* Remove leading coefficients which are too close to zero,

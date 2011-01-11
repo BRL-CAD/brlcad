@@ -36,7 +36,6 @@
 #include "bn.h"
 
 
-#define Abs(a)		((a) >= 0 ? (a) : -(a))
 #define Max(a, b)		((a) > (b) ? (a) : (b))
 
 #define PI_DIV_3 (M_PI/3.0)
@@ -95,7 +94,7 @@ bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1,
 
     /* Not one of the common (or easy) cases. */
     {
-	register int ct1, ct2;
+	register size_t ct1, ct2;
 
 	*product = bn_Zero_poly;
 
@@ -125,7 +124,7 @@ bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1,
 struct bn_poly *
 bn_poly_scale(register struct bn_poly *eqn, double factor)
 {
-    register int cnt;
+    register size_t cnt;
 
     for (cnt=0; cnt <= eqn->dgr; ++cnt) {
 	eqn->cf[cnt] *= factor;
@@ -143,9 +142,9 @@ struct bn_poly *
 bn_poly_add(register struct bn_poly *sum, register const struct bn_poly *poly1, register const struct bn_poly *poly2)
 {
     struct bn_poly tmp;
-    register int i, offset;
+    register size_t i, offset;
 
-    offset = Abs(poly1->dgr - poly2->dgr);
+    offset = abs((long)poly1->dgr - (long)poly2->dgr);
 
     tmp = bn_Zero_poly;
 
@@ -177,9 +176,9 @@ struct bn_poly *
 bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1, register const struct bn_poly *poly2)
 {
     struct bn_poly tmp;
-    register int i, offset;
+    register size_t i, offset;
 
-    offset = Abs(poly1->dgr - poly2->dgr);
+    offset = abs((long)poly1->dgr - (long)poly2->dgr);
 
     *diff = bn_Zero_poly;
     tmp = bn_Zero_poly;
@@ -213,14 +212,17 @@ bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1,
 void
 bn_poly_synthetic_division(register struct bn_poly *quo, register struct bn_poly *rem, register const struct bn_poly *dvdend, register const struct bn_poly *dvsor)
 {
-    register int divisor;
-    register int n;
+    register size_t divisor;
+    register size_t n;
 
     *quo = *dvdend;
     *rem = bn_Zero_poly;
 
-    if ((quo->dgr = dvdend->dgr - dvsor->dgr) < 0)
+    if (dvsor->dgr > dvdend->dgr) {
 	quo->dgr = -1;
+    } else {
+	quo->dgr = dvdend->dgr - dvsor->dgr;
+    }
     if ((rem->dgr = dvsor->dgr - 1) > dvdend->dgr)
 	rem->dgr = dvdend->dgr;
 
@@ -360,13 +362,13 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
     }
 
     c1 = eqn->cf[1];
-    if (Abs(c1) > SQRT_MAX_FASTF)  return 0;	/* FAIL */
+    if (abs(c1) > SQRT_MAX_FASTF)  return 0;	/* FAIL */
 
     c1_3rd = c1 * THIRD;
     a = eqn->cf[2] - c1*c1_3rd;
-    if (Abs(a) > SQRT_MAX_FASTF)  return 0;	/* FAIL */
+    if (abs(a) > SQRT_MAX_FASTF)  return 0;	/* FAIL */
     b = (2.0*c1*c1*c1 - 9.0*c1*eqn->cf[2] + 27.0*eqn->cf[3])*INV_TWENTYSEVEN;
-    if (Abs(b) > SQRT_MAX_FASTF)  return 0;	/* FAIL */
+    if (abs(b) > SQRT_MAX_FASTF)  return 0;	/* FAIL */
 
     if ((delta = a*a) > SQRT_MAX_FASTF) return 0;	/* FAIL */
     delta = b*b*0.25 + delta*a*INV_TWENTYSEVEN;
@@ -532,15 +534,15 @@ bn_poly_quartic_roots(register struct bn_complex *roots, register const struct b
 void
 bn_pr_poly(const char *title, register const struct bn_poly *eqn)
 {
-    register int n;
-    register int exponent;
+    register size_t n;
+    register size_t exponent;
     struct bu_vls str;
     char buf[48];
 
     bu_vls_init(&str);
     bu_vls_extend(&str, 196);
     bu_vls_strcat(&str, title);
-    snprintf(buf, 48, " polynomial, degree = %d\n", eqn->dgr);
+    snprintf(buf, 48, " polynomial, degree = %lu\n", eqn->dgr);
     bu_vls_strcat(&str, buf);
 
     exponent = eqn->dgr;

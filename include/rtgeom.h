@@ -460,7 +460,7 @@ struct rt_sketch_internal
     point_t		V;		/**< @brief  default embedding of sketch */
     vect_t		u_vec;		/**< @brief  u_vec and v_vec are unit vectors defining the plane of */
     vect_t		v_vec;		/**< @brief  the sketch */
-    int		vert_count;		/**< @brief  number of vertices in this sketch */
+    size_t		vert_count;		/**< @brief  number of vertices in this sketch */
     point2d_t	*verts;			/**< @brief array of 2D
 				 	 * vertices that may be used
 				 	 * as endpoints, centers, or
@@ -468,7 +468,7 @@ struct rt_sketch_internal
 					 */
 /* FIXME: this should have a distinctive name, like rt_curve */
     struct curve {
-	int		seg_count;	/**< @brief  number of segments in this curve */
+	size_t		seg_count;	/**< @brief  number of segments in this curve */
 	int		*reverse;	/**< @brief  array of ints indicating if segment should be reversed */
 	genptr_t	*segments;	/**< @brief  array of pointers to segments in this curve */
     } skt_curve;			/**< @brief  the curve in this sketch */
