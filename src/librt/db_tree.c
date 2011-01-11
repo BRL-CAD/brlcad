@@ -827,13 +827,13 @@ db_follow_path(
     struct db_full_path *total_path,
     const struct db_full_path *new_path,
     int noisy,
-    int depth)		/* # arcs in new_path to use */
+    long depth)		/* # arcs in new_path to use */
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct directory *comb_dp;	/* combination's dp */
     struct directory *dp;	/* element's dp */
-    int j;
+    size_t j;
 
     RT_CK_DBTS(tsp);
     RT_CHECK_DBI(tsp->ts_dbip);
@@ -853,7 +853,7 @@ db_follow_path(
     if (depth < 0) {
 	depth = new_path->fp_len-1 + depth;
 	if (depth < 0) bu_bomb("db_follow_path() depth exceeded provided path\n");
-    } else if (depth >= new_path->fp_len) {
+    } else if ((size_t)depth >= new_path->fp_len) {
 	depth = new_path->fp_len-1;
     } else if (depth == 0) {
 	/* depth of zero means "do it all". */
@@ -904,7 +904,7 @@ db_follow_path(
      */
     do {
 	/* j == depth is the last one, presumably a leaf */
-	if (j > depth) break;
+	if (j > (size_t)depth) break;
 	dp = new_path->fp_names[j];
 	RT_CK_DIR(dp);
 
@@ -959,7 +959,7 @@ db_follow_path(
 	/* Advance to next path element */
 	j++;
 	comb_dp = dp;
-    } while (j <= depth);
+    } while (j <= (size_t)depth);
 
 out:
     if (RT_G_DEBUG&DEBUG_TREEWALK) {

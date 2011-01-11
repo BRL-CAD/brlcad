@@ -221,8 +221,8 @@ struct rt_db_internal  {
  */
 struct db_full_path {
     unsigned long	magic;
-    int			fp_len;
-    int			fp_maxlen;
+    size_t		fp_len;
+    size_t		fp_maxlen;
     struct directory **	fp_names;	/**< @brief array of dir pointers */
 };
 #define DB_FULL_PATH_POP(_pp) { \
@@ -2690,14 +2690,14 @@ RT_EXPORT BU_EXTERN(void db_dup_full_path,
 		     const struct db_full_path *oldp));
 RT_EXPORT BU_EXTERN(void db_extend_full_path,
 		    (struct db_full_path *pathp,
-		     int incr));
+		     size_t incr));
 RT_EXPORT BU_EXTERN(void db_append_full_path,
 		    (struct db_full_path *dest,
 		     const struct db_full_path *src));
 RT_EXPORT BU_EXTERN(void db_dup_path_tail,
-		    (struct db_full_path	*newp,
-		     const struct db_full_path	*oldp,
-		     int			start));
+		    (struct db_full_path *newp,
+		     const struct db_full_path *oldp,
+		     off_t start));
 RT_EXPORT BU_EXTERN(char *db_path_to_string,
 		    (const struct db_full_path *pp));
 RT_EXPORT BU_EXTERN(void db_path_to_vls,
@@ -3230,11 +3230,11 @@ RT_EXPORT BU_EXTERN(void db_tree_funcleaf,
 		     genptr_t		user_ptr2,
 		     genptr_t		user_ptr3));
 RT_EXPORT BU_EXTERN(int db_follow_path,
-		    (struct db_tree_state	*tsp,
-		     struct db_full_path	*total_path,
-		     const struct db_full_path	*new_path,
-		     int			noisy,
-		     int			depth));
+		    (struct db_tree_state *tsp,
+		     struct db_full_path *total_path,
+		     const struct db_full_path *new_path,
+		     int noisy,
+		     long pdepth));
 RT_EXPORT BU_EXTERN(int db_follow_path_for_state,
 		    (struct db_tree_state *tsp,
 		     struct db_full_path *pathp,
@@ -4692,9 +4692,9 @@ RT_EXPORT BU_EXTERN(int nmg_edge_collapse,
 
 /* bot.c */
 RT_EXPORT BU_EXTERN(int rt_bot_edge_in_list,
-		    (const size_t v1,
-		     const size_t v2,
-		     const size_t edge_list[],
+		    (const int v1,
+		     const int v2,
+		     const int edge_list[],
 		     const size_t edge_count0));
 RT_EXPORT BU_EXTERN(int rt_bot_plot,
 		    (struct bu_list		*vhead,
@@ -4710,12 +4710,7 @@ RT_EXPORT BU_EXTERN(int rt_bot_find_v_nearest_pt2,
 		    (const struct rt_bot_internal *bot,
 		     const point_t	pt2,
 		     const mat_t	mat));
-RT_EXPORT BU_EXTERN(int rt_bot_find_e_nearest_pt2,
-		    (size_t *vert1,
-		     size_t *vert2,
-		     const struct rt_bot_internal *bot,
-		     const point_t	pt2,
-		     const mat_t	mat));
+RT_EXPORT BU_EXTERN(int rt_bot_find_e_nearest_pt2, (int *vert1, int *vert2, const struct rt_bot_internal *bot, const point_t pt2, const mat_t mat));
 RT_EXPORT BU_EXTERN(fastf_t rt_bot_propget,
 		    (struct rt_bot_internal *bot,
 		    const char *property));
@@ -4741,8 +4736,8 @@ RT_EXPORT BU_EXTERN(void rt_bot_list_free,
 		     int fbflag));
 
 RT_EXPORT BU_EXTERN(int rt_bot_same_orientation,
-		    (const size_t *a,
-		     const size_t *b));
+		    (const int *a,
+		     const int *b));
 
 /* From nmg_tri.c */
 RT_EXPORT BU_EXTERN(void nmg_triangulate_shell,

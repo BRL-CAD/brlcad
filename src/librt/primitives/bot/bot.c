@@ -461,7 +461,7 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	return 0;
 
     for (i=0; i<bot_ip->num_faces; i++) {
-	if (bot_ip->faces[i*3+2] > bot_ip->num_vertices)
+	if (bot_ip->faces[i*3+2] < 0 || (size_t)bot_ip->faces[i*3+2] > bot_ip->num_vertices)
 	    continue; /* sanity */
 
 	RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BN_VLIST_LINE_MOVE);
@@ -497,7 +497,7 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	vect_t ab, ac;
 	vect_t norm;
 
-	if (bot_ip->faces[i*3+2] > bot_ip->num_vertices)
+	if (bot_ip->faces[i*3+2] < 0 || (size_t)bot_ip->faces[i*3+2] > bot_ip->num_vertices)
 	    continue; /* sanity */
 
 	VMOVE(aa, &bot_ip->vertices[bot_ip->faces[i*3+0]*3]);
@@ -579,7 +579,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
             for (j=0 ; j<bot_ip->num_faces ; j++) {
                 size_t k;
                 for (k=0 ; k<3 ; k++) {
-                    if (bot_ip->faces[j*3+k] == i) {
+                    if ((size_t)bot_ip->faces[j*3+k] == i) {
                         /* this face uses vertex i */
                         faces[faceCount] = j;
                         faceCount++;
@@ -610,14 +610,13 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     *r = nmg_mrsv(m);     /* Make region, empty shell, vertex */
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
-    verts = (struct vertex **)bu_calloc(bot_ip->num_vertices, sizeof(struct vertex *),
-					"rt_bot_tess: *verts[]");
+    verts = (struct vertex **)bu_calloc(bot_ip->num_vertices, sizeof(struct vertex *), "rt_bot_tess: *verts[]");
 
     for (i=0; i<bot_ip->num_faces; i++) {
 	struct faceuse *fu;
 	struct vertex **corners[3];
 
-	if (bot_ip->faces[i*3+2] > bot_ip->num_vertices)
+	if (bot_ip->faces[i*3+2] < 0 || (size_t)bot_ip->faces[i*3+2] > bot_ip->num_vertices)
 	    continue; /* sanity */
 
 	if (bot_ip->orientation == RT_BOT_CW) {
@@ -718,7 +717,7 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bot_ip->bot_flags = 0;
 
     bot_ip->vertices = (fastf_t *)bu_calloc(bot_ip->num_vertices * 3, sizeof(fastf_t), "Bot vertices");
-    bot_ip->faces = (size_t *)bu_calloc(bot_ip->num_faces * 3, sizeof(size_t), "Bot faces");
+    bot_ip->faces = (int *)bu_calloc(bot_ip->num_faces * 3, sizeof(int), "Bot faces");
 
     if (mat == NULL) mat = bn_mat_identity;
     for (i=0; i<bot_ip->num_vertices; i++) {
@@ -894,9 +893,9 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     }
 
     if (bip->num_faces > 0) {
-	bip->faces = (size_t *)bu_calloc(bip->num_faces * 3, sizeof(size_t), "BOT faces");
+	bip->faces = (int *)bu_calloc(bip->num_faces * 3, sizeof(int), "BOT faces");
     } else {
-	bip->faces = (size_t *)NULL;
+	bip->faces = (int *)NULL;
     }
 
     if (bip->vertices == NULL || bip->faces == NULL)
@@ -947,7 +946,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    bip->normals = (fastf_t *)NULL;
 	}
 	if (bip->num_face_normals <= 0) {
-	    bip->face_normals = (size_t *)NULL;
+	    bip->face_normals = (int *)NULL;
 	}
 	if (bip->num_normals > 0) {
 	    bip->normals = (fastf_t *)bu_calloc(bip->num_normals * 3, sizeof(fastf_t), "BOT normals");
@@ -959,7 +958,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    }
 	}
 	if (bip->num_face_normals > 0) {
-	    bip->face_normals = (size_t *)bu_calloc(bip->num_face_normals * 3, sizeof(size_t), "BOT face normals");
+	    bip->face_normals = (int *)bu_calloc(bip->num_face_normals * 3, sizeof(int), "BOT face normals");
 
 	    for (i=0; i<bip->num_face_normals; i++) {
 		bip->face_normals[i*3 + 0] = bu_glong(cp);
@@ -972,7 +971,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	}
     } else {
 	bip->normals = (fastf_t *)NULL;
-	bip->face_normals = (size_t *)NULL;
+	bip->face_normals = (int *)NULL;
 	bip->num_normals = 0;
 	bip->num_face_normals = 0;
     }
@@ -1223,7 +1222,7 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		size_t idx;
 
 		idx = i*3 + k;
-		if (bot_ip->face_normals[idx] >= bot_ip->num_normals) {
+		if ((size_t)bot_ip->face_normals[idx] >= bot_ip->num_normals) {
 		    bu_vls_strcat(str, "none ");
 		} else {
 		    snprintf(buf, 256, "(%g %g %g) ", V3INTCLAMPARGS(&bot_ip->normals[bot_ip->face_normals[idx]*3]));
@@ -1326,17 +1325,14 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
 	botop->num_vertices = botip->num_vertices;
 	botop->num_faces = botip->num_faces;
 	if (botop->num_vertices > 0) {
-	    botop->vertices = (fastf_t *)bu_malloc(botip->num_vertices * 3 *
-						   sizeof(fastf_t), "botop->vertices");
+	    botop->vertices = (fastf_t *)bu_malloc(botip->num_vertices * 3 * sizeof(fastf_t), "botop->vertices");
 	}
 	if (botop->num_faces > 0) {
-	    botop->faces = (size_t *)bu_malloc(botip->num_faces * 3 *
-					    sizeof(size_t), "botop->faces");
-	    memcpy(botop->faces, botip->faces, botop->num_faces * 3 * sizeof(size_t));
+	    botop->faces = (int *)bu_malloc(botip->num_faces * 3 * sizeof(int), "botop->faces");
+	    memcpy(botop->faces, botip->faces, botop->num_faces * 3 * sizeof(int));
 	}
 	if (botip->thickness)
-	    botop->thickness = (fastf_t *)bu_malloc(botip->num_faces *
-						    sizeof(fastf_t), "botop->thickness");
+	    botop->thickness = (fastf_t *)bu_malloc(botip->num_faces * sizeof(fastf_t), "botop->thickness");
 	if (botip->face_mode)
 	    botop->face_mode = bu_bitv_dup(botip->face_mode);
 	if (botip->thickness) {
@@ -1347,8 +1343,8 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
 	if (botop->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 	    botop->num_normals = botip->num_normals;
 	    botop->normals = (fastf_t *)bu_calloc(botop->num_normals * 3, sizeof(fastf_t), "BOT normals");
-	    botop->face_normals = (size_t *)bu_calloc(botop->num_faces * 3, sizeof(size_t), "BOT face normals");
-	    memcpy(botop->face_normals, botip->face_normals, botop->num_faces * 3 * sizeof(size_t));
+	    botop->face_normals = (int *)bu_calloc(botop->num_faces * 3, sizeof(int), "BOT face normals");
+	    memcpy(botop->face_normals, botip->face_normals, botop->num_faces * 3 * sizeof(int));
 	}
 	op->idb_ptr = (genptr_t)botop;
 	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1414,9 +1410,10 @@ rt_bot_find_v_nearest_pt2(
 
 
 int
-rt_bot_edge_in_list(const size_t v1, const size_t v2, const size_t edge_list[], const size_t edge_count)
+rt_bot_edge_in_list(const int v1, const int v2, const int edge_list[], const size_t edge_count)
 {
-    size_t i, ev1, ev2;
+    size_t i;
+    int ev1, ev2;
 
     for (i=0; i<edge_count; i++) {
 	ev1 = edge_list[i*2 + 0];
@@ -1440,8 +1437,8 @@ rt_bot_edge_in_list(const size_t v1, const size_t v2, const size_t edge_list[], 
  */
 int
 rt_bot_find_e_nearest_pt2(
-    size_t *vert1,
-    size_t *vert2,
+    int *vert1,
+    int *vert2,
     const struct rt_bot_internal *bot,
     const point_t pt2,
     const mat_t mat)
@@ -1449,7 +1446,7 @@ rt_bot_find_e_nearest_pt2(
     size_t i;
     size_t v1, v2, v3;
     fastf_t dist=MAX_FASTF, tmp_dist;
-    size_t *edge_list;
+    int *edge_list;
     size_t edge_count=0;
     struct bn_tol tol;
 
@@ -1459,7 +1456,7 @@ rt_bot_find_e_nearest_pt2(
 	return -1;
 
     /* first build a list of edges */
-    edge_list = (size_t *)bu_calloc(bot->num_faces * 3 * 2, sizeof(size_t), "bot edge list");
+    edge_list = (int *)bu_calloc(bot->num_faces * 3 * 2, sizeof(int), "bot edge list");
 
     for (i=0; i<bot->num_faces; i++) {
 	v1 = bot->faces[i*3 + 0];
@@ -1870,9 +1867,9 @@ bot_check_vertex_indices(struct bu_vls *logstr, struct rt_bot_internal *bot)
     for (i=0 ; i<bot->num_faces ; i++) {
 	int k;
 	for (k=0 ; k<3 ; k++) {
-	    size_t vertex_no = bot->faces[i*3+k];
-	    if (vertex_no >= bot->num_vertices) {
-		bu_vls_printf(logstr, "WARNING: BOT has illegal vertex index (%lu) in face #(%lu)\n", vertex_no, i);
+	    int vertex_no = bot->faces[i*3+k];
+	    if (vertex_no < 0 || (size_t)vertex_no >= bot->num_vertices) {
+		bu_vls_printf(logstr, "WARNING: BOT has illegal vertex index (%d) in face #(%lu)\n", vertex_no, i);
 		badVertexCount++;
 	    }
 	}
@@ -1963,11 +1960,9 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		if ((size_t)new_num != old_num) {
 		    bot->num_normals = (size_t)new_num;
 		    if (bot->normals) {
-			bot->normals = (fastf_t *)bu_realloc((char *)bot->normals,
-							     bot->num_normals * 3 * sizeof(fastf_t), "BOT normals");
+			bot->normals = (fastf_t *)bu_realloc((char *)bot->normals, bot->num_normals * 3 * sizeof(fastf_t), "BOT normals");
 		    } else {
-			bot->normals = (fastf_t *)bu_calloc(bot->num_normals * 3, sizeof(fastf_t),
-							    "BOT normals");
+			bot->normals = (fastf_t *)bu_calloc(bot->num_normals * 3, sizeof(fastf_t), "BOT normals");
 		    }
 
 		    if ((size_t)new_num > old_num) {
@@ -1991,7 +1986,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		}
 		if (bot->face_normals)
 		    bu_free(bot->face_normals, "BOT face_normals");
-		bot->face_normals = (size_t *)bu_calloc(len*3, sizeof(size_t), "BOT face_normals");
+		bot->face_normals = (int *)bu_calloc(len*3, sizeof(int), "BOT face_normals");
 		bot->num_face_normals = len;
 		for (i=0; i<(size_t)len; i++) {
 		    f_str = Tcl_GetStringFromObj(obj_array[i], NULL);
@@ -2239,20 +2234,18 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		bot->num_faces = len;
 		if (bot->faces)
 		    bu_free(bot->faces, "BOT faces");
-		bot->faces = (size_t *)bu_calloc(len*3, sizeof(size_t), "BOT faces");
+		bot->faces = (int *)bu_calloc(len*3, sizeof(int), "BOT faces");
 		if (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 		    if (!bot->face_normals) {
-			bot->face_normals = (size_t *)bu_malloc(bot->num_faces * 3 * sizeof(size_t),
-							     "bot->face_normals");
+			bot->face_normals = (int *)bu_malloc(bot->num_faces * 3 * sizeof(int), "bot->face_normals");
 			bot->num_face_normals = bot->num_faces;
 			for (i=0; i<bot->num_face_normals; i++) {
-			    VSETALL(&bot->face_normals[i*3], (size_t)-1);
+			    VSETALL(&bot->face_normals[i*3], -1);
 			}
 		    } else if (bot->num_face_normals < bot->num_faces) {
-			bot->face_normals = (size_t *)bu_realloc(bot->face_normals,
-							      bot->num_faces * 3 * sizeof(size_t), "bot->face_normals");
+			bot->face_normals = (int *)bu_realloc(bot->face_normals, bot->num_faces * 3 * sizeof(int), "bot->face_normals");
 			for (i=bot->num_face_normals; i<bot->num_faces; i++) {
-			    VSETALL(&bot->face_normals[i*3], (size_t)-1);
+			    VSETALL(&bot->face_normals[i*3], -1);
 			}
 			bot->num_face_normals = bot->num_faces;
 		    }
@@ -2527,7 +2520,7 @@ rt_bot_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
  *************************************************************************/
 
 struct bot_edge {
-    size_t v;
+    int v;
     size_t use_count;
     struct bot_edge *next;
 };
@@ -2541,10 +2534,10 @@ struct bot_edge {
 int
 buildEdgeTable(struct rt_bot_internal *bot, struct bot_edge ***edges)
 { 
-    size_t tmp, flen;
-    size_t currFace, currVert, nextVert, from, to;
+    size_t tmp, flen, currFace;
+    int currVert, nextVert, from, to;
     size_t numVertices, numEdges = 0;
-    size_t *faces;
+    int *faces;
     struct bot_edge *edge;
 
     RT_BOT_CK_MAGIC(bot);
@@ -2553,8 +2546,7 @@ buildEdgeTable(struct rt_bot_internal *bot, struct bot_edge ***edges)
     faces = bot->faces;
 
     /* allocate array with one index per vertex */
-    *edges = (struct bot_edge**)bu_calloc(numVertices, sizeof(struct bot_edge*),
-	    "edges");
+    *edges = (struct bot_edge**)bu_calloc(numVertices, sizeof(struct bot_edge*), "edges");
 
     /* for each face */
     flen = bot->num_faces * 3;
@@ -2827,7 +2819,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
     long slot;
     size_t count=0;
     size_t total = 0;
-    size_t *bin[256];
+    long *bin[256];
     size_t bin_capacity[256];
     size_t bin_todonext[256];
     const int DEFAULT_CAPACITY = 32;
@@ -2876,7 +2868,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
     for (slot=0; slot<256; slot++) {
 	bin_todonext[slot] = 0;
 	bin_capacity[slot] = DEFAULT_CAPACITY;
-	bin[slot] = bu_calloc(DEFAULT_CAPACITY, sizeof(size_t *), "vertices bin");
+	bin[slot] = bu_calloc(DEFAULT_CAPACITY, sizeof(long *), "vertices bin");
     }
 
     /* first pass to get the range of vertex values */
@@ -2946,7 +2938,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 
 	    BU_ASSERT_LONG(bin_capacity[slot], <, LONG_MAX / 2);
 
-	    bin[slot] = bu_realloc(bin[slot], bin_capacity[slot] * 2 * sizeof(size_t), "increase vertices bin");
+	    bin[slot] = bu_realloc(bin[slot], bin_capacity[slot] * 2 * sizeof(int), "increase vertices bin");
 	    bin_capacity[slot] *= 2;
 
 	    /* init to zero for sanity */
@@ -3007,7 +2999,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 	bu_free(bin[slot], "vertices bin");
 	bin_capacity[slot] = bin_todonext[slot] = 0;
     }
-    memset(bin, 0, 256 * sizeof(size_t *));
+    memset(bin, 0, 256 * sizeof(long *));
 
 /*    bu_log("sorted %lu of %lu vertices\n", total, bot->num_vertices); */
 #endif
@@ -3017,9 +3009,9 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 
 
 int
-rt_bot_same_orientation(const size_t *a, const size_t *b)
+rt_bot_same_orientation(const int *a, const int *b)
 {
-    size_t i;
+    int i;
 
     for (i=0; i<3; i++) {
 	if (a[0] == b[i]) {
@@ -3054,8 +3046,8 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 	    /* each pass through this loop either increments j or
 	     * decrements num_faces
 	     */
-	    size_t match=0;
-	    size_t elim;
+	    int match=0;
+	    int elim;
 
 	    for (k=i*3; k<(i+1)*3; k++) {
 		for (l=j*3; l<(j+1)*3; l++) {
@@ -3072,7 +3064,7 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 	    }
 
 	    /* these two faces have the same vertices */
-	    elim = (size_t)-1;
+	    elim = -1;
 	    switch (bot->mode) {
 		case RT_BOT_PLATE:
 		case RT_BOT_PLATE_NOCOS:
@@ -3096,7 +3088,7 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 		    break;
 	    }
 
-	    if (elim == (size_t)-1) {
+	    if (elim == -1) {
 		j++;
 		continue;
 	    }
@@ -3123,7 +3115,7 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 
     if (count) {
 	bot->num_faces = num_faces;
-	bot->faces = (size_t *)bu_realloc(bot->faces, num_faces*3*sizeof(size_t), "BOT faces realloc");
+	bot->faces = (int *)bu_realloc(bot->faces, num_faces*3*sizeof(int), "BOT faces realloc");
 	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
 	    struct bu_bitv *new_mode;
 
@@ -3152,12 +3144,12 @@ rt_bot_condense(struct rt_bot_internal *bot)
     size_t i, j, k;
     size_t num_verts;
     size_t dead_verts=0;
-    size_t *verts;
+    int *verts;
 
     RT_BOT_CK_MAGIC(bot);
 
     num_verts = bot->num_vertices;
-    verts = (size_t *)bu_calloc(num_verts, sizeof(size_t), "VERTEX LIST");
+    verts = (int *)bu_calloc(num_verts, sizeof(int), "VERTEX LIST");
 
     /* walk the list of verticies, and mark each one if it is used */
 
@@ -3183,7 +3175,7 @@ rt_bot_condense(struct rt_bot_internal *bot)
 		verts[j] = verts[k];
 	    }
 	    for (j=0; j<bot->num_faces*3; j++) {
-		if (bot->faces[j] >= i)
+		if ((size_t)bot->faces[j] >= i)
 		    bot->faces[j]--;
 	    }
 	}
@@ -3204,14 +3196,14 @@ rt_bot_condense(struct rt_bot_internal *bot)
 
 
 int
-find_closest_face(fastf_t **centers, size_t *piece, size_t *old_faces, size_t num_faces, fastf_t *vertices)
+find_closest_face(fastf_t **centers, int *piece, int *old_faces, size_t num_faces, fastf_t *vertices)
 {
     pointp_t v0, v1, v2;
     point_t center;
     size_t i;
     fastf_t one_third = 1.0/3.0;
     fastf_t min_dist;
-    size_t min_face=(size_t)-1;
+    size_t min_face=-1;
 
     if ((*centers) == NULL) {
 	int count_centers=0;
@@ -3219,7 +3211,7 @@ find_closest_face(fastf_t **centers, size_t *piece, size_t *old_faces, size_t nu
 	/* need to build the centers array */
 	(*centers) = (fastf_t *)bu_malloc(num_faces * 3 * sizeof(fastf_t), "center");
 	for (i=0; i<num_faces; i++) {
-	    if (old_faces[i*3] == (size_t)-1) {
+	    if (old_faces[i*3] == -1) {
 		continue;
 	    }
 	    count_centers++;
@@ -3244,7 +3236,7 @@ find_closest_face(fastf_t **centers, size_t *piece, size_t *old_faces, size_t nu
 	vect_t diff;
 	fastf_t dist;
 
-	if (old_faces[i*3] == (size_t)-1) {
+	if (old_faces[i*3] == -1) {
 	    continue;
 	}
 
@@ -3261,19 +3253,19 @@ find_closest_face(fastf_t **centers, size_t *piece, size_t *old_faces, size_t nu
 
 
 void
-Add_unique_verts(size_t *piece_verts, size_t *v)
+Add_unique_verts(int *piece_verts, int *v)
 {
-    size_t i, j;
-    size_t *ptr=v;
+    int i, j;
+    int *ptr=v;
 
     for (j=0; j<3; j++) {
-	i = (size_t)-1;
-	while (piece_verts[++i] != (size_t)-1) {
+	i = -1;
+	while (piece_verts[++i] != -1) {
 	    if (piece_verts[i] == (*ptr)) {
 		break;
 	    }
 	}
-	if (piece_verts[i] == (size_t)-1) {
+	if (piece_verts[i] == -1) {
 	    piece_verts[i] = (*ptr);
 	}
 	ptr++;
@@ -3289,33 +3281,34 @@ Add_unique_verts(size_t *piece_verts, size_t *v)
 int
 rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 {
-    size_t *new_faces;				/* the sorted list of faces to be attached to the BOT at the end of this routine */
-    size_t new_face_count=0;			/* the current number of faces in the "new_faces" list */
-    size_t *new_norms = (size_t *)NULL;		/* the sorted list of vertex normals corrsponding to the "new_faces" list */
-    size_t *old_faces;				/* a copy of the original face list from the BOT */
-    size_t *piece;				/* a small face list, for just the faces in the current piece */
-    size_t *piece_norms = (size_t *)NULL;	/* vertex normals for faces in the current piece */
-    size_t *piece_verts;			/* a list of vertices in the current piece (each vertex appears only once) */
-    unsigned char *vert_count;			/* an array used to hold the number of piece vertices that appear in each BOT face */
-    size_t faces_left;				/* the number of faces in the "old_faces" array that have not yet been used */
-    size_t piece_len;				/* the current number of faces in the piece */
-    size_t max_verts;				/* the maximum number of piece_verts found in a single unused face */
-    fastf_t *centers;				/* triangle centers, used when all else fails */
-    size_t i, j;
+    fastf_t *centers = (fastf_t *)NULL;	/* triangle centers, used when all else fails */
+    int *new_faces = (int *)NULL;	/* the sorted list of faces to be attached to the BOT at the end of this routine */
+    int *new_norms = (int *)NULL;	/* the sorted list of vertex normals corrsponding to the "new_faces" list */
+    int *old_faces = (int *)NULL;	/* a copy of the original face list from the BOT */
+    int *piece = (int *)NULL;		/* a small face list, for just the faces in the current piece */
+    int *piece_norms = (int *)NULL;	/* vertex normals for faces in the current piece */
+    int *piece_verts = (int *)NULL;	/* a list of vertices in the current piece (each vertex appears only once) */
+    unsigned char *vert_count;		/* an array used to hold the number of piece vertices that appear in each BOT face */
+    size_t new_face_count=0;		/* the current number of faces in the "new_faces" list */
+    size_t faces_left;			/* the number of faces in the "old_faces" array that have not yet been used */
+    size_t piece_len;			/* the current number of faces in the piece */
+    size_t max_verts;			/* the maximum number of piece_verts found in a single unused face */
+    size_t i;
+    size_t j;
 
     RT_BOT_CK_MAGIC(bot);
 
     /* allocate memory for all the data */
-    new_faces = (size_t *)bu_calloc(bot->num_faces * 3, sizeof(size_t), "new_faces");
-    old_faces = (size_t *)bu_calloc(bot->num_faces * 3, sizeof(size_t), "old_faces");
-    piece = (size_t *)bu_calloc(tris_per_piece * 3, sizeof(size_t), "piece");
+    new_faces = (int *)bu_calloc(bot->num_faces * 3, sizeof(int), "new_faces");
+    old_faces = (int *)bu_calloc(bot->num_faces * 3, sizeof(int), "old_faces");
+    piece = (int *)bu_calloc(tris_per_piece * 3, sizeof(int), "piece");
     vert_count = (unsigned char *)bu_malloc(bot->num_faces * sizeof(unsigned char), "vert_count");
-    piece_verts = (size_t *)bu_malloc((tris_per_piece * 3 + 1) * sizeof(size_t), "piece_verts");
+    piece_verts = (int *)bu_malloc((tris_per_piece * 3 + 1) * sizeof(int), "piece_verts");
     centers = (fastf_t *)NULL;
 
     if (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
-	new_norms = (size_t *)bu_calloc(bot->num_faces * 3, sizeof(size_t), "new_norms");
-	piece_norms = (size_t *)bu_calloc(tris_per_piece * 3, sizeof(size_t), "piece_norms");
+	new_norms = (int *)bu_calloc(bot->num_faces * 3, sizeof(int), "new_norms");
+	piece_norms = (int *)bu_calloc(tris_per_piece * 3, sizeof(int), "piece_norms");
     }
 
     /* make a copy of the faces list, this list will be modified
@@ -3333,12 +3326,12 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 
 	/* initialize piece_verts */
 	for (i=0; i<tris_per_piece*3+1; i++) {
-	    piece_verts[i] = (size_t)-1;
+	    piece_verts[i] = -1;
 	}
 
 	/* choose first unused face on the list */
 	cur_face = 0;
-	while (cur_face < bot->num_faces && old_faces[cur_face*3] == (size_t)-1) {
+	while (cur_face < bot->num_faces && old_faces[cur_face*3] == -1) {
 	    cur_face++;
 	}
 
@@ -3357,7 +3350,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 	VMOVE(piece_verts, piece);
 
 	/* mark this face as used */
-	VSETALL(&old_faces[cur_face*3], (size_t)-1);
+	VSETALL(&old_faces[cur_face*3], -1);
 
 	/* update counts */
 	piece_len = 1;
@@ -3393,10 +3386,10 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 	    max_verts = 0;
 	    for (i=0; i<bot->num_faces; i++) {
 		size_t vert_num;
-		size_t v0, v1, v2;
+		int v0, v1, v2;
 
 		vert_num = i*3;
-		if (old_faces[vert_num] == (size_t)-1) {
+		if (old_faces[vert_num] == -1) {
 		    continue;
 		}
 		v0 = old_faces[vert_num];
@@ -3404,7 +3397,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 		v2 = old_faces[vert_num+2];
 
 		j = (size_t)-1;
-		while (piece_verts[++j] != (size_t)-1) {
+		while (piece_verts[++j] != -1) {
 		    if (v0 == piece_verts[j]
 			|| v1 == piece_verts[j]
 			|| v2 == piece_verts[j])
@@ -3424,7 +3417,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 		    Add_unique_verts(piece_verts, &old_faces[i*3]);
 
 		    /* mark this face as used */
-		    VSETALL(&old_faces[i*3], (size_t)-1);
+		    VSETALL(&old_faces[i*3], -1);
 
 		    /* update counts */
 		    piece_len++;
@@ -3478,7 +3471,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 		Add_unique_verts(piece_verts, &old_faces[face_to_add*3]);
 
 		/* mark this face as used */
-		VSETALL(&old_faces[face_to_add*3], (size_t)-1);
+		VSETALL(&old_faces[face_to_add*3], -1);
 
 		/* update counts */
 		piece_len++;
@@ -3523,7 +3516,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 			    VMOVE(&piece_norms[piece_len*3], &bot->face_normals[i*3]);
 			}
 			Add_unique_verts(piece_verts, &old_faces[i*3]);
-			VSETALL(&old_faces[i*3], (size_t)-1);
+			VSETALL(&old_faces[i*3], -1);
 
 			piece_len++;
 			faces_left--;
@@ -3582,7 +3575,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 }
 
 HIDDEN void
-delete_edge(size_t v1, size_t v2, struct bot_edge **edges)
+delete_edge(int v1, int v2, struct bot_edge **edges)
 {
     struct bot_edge *edg, *prev=NULL;
 
@@ -3597,7 +3590,7 @@ delete_edge(size_t v1, size_t v2, struct bot_edge **edges)
 		    } else {
 			edges[v1] = edg->next;
 		    }
-		    edg->v = (size_t)-1;
+		    edg->v = -1;
 		    edg->next = NULL;
 		    bu_free(edg, "bot_edge");
 		    return;
@@ -3617,7 +3610,7 @@ delete_edge(size_t v1, size_t v2, struct bot_edge **edges)
 		    } else {
 			edges[v2] = edg->next;
 		    }
-		    edg->v = (size_t)-1;
+		    edg->v = -1;
 		    edg->next = NULL;
 		    bu_free(edg, "bot_edge");
 		    return;
@@ -3639,7 +3632,7 @@ delete_edge(size_t v1, size_t v2, struct bot_edge **edges)
  * changed to v2.
  */
 HIDDEN int
-decimate_edge(size_t v1, size_t v2, struct bot_edge **edges, size_t num_edges, size_t *faces, size_t num_faces, size_t face_del1, size_t face_del2)
+decimate_edge(int v1, int v2, struct bot_edge **edges, size_t num_edges, int *faces, size_t num_faces, int face_del1, int face_del2)
 {
     size_t i;
     struct bot_edge *edg;
@@ -3654,8 +3647,8 @@ decimate_edge(size_t v1, size_t v2, struct bot_edge **edges, size_t num_edges, s
 
     /* do the decimation */
     for (i=0; i<3; i++) {
-	faces[face_del1*3 + i] = (size_t)-1;
-	faces[face_del2*3 + i] = (size_t)-1;
+	faces[face_del1*3 + i] = -1;
+	faces[face_del2*3 + i] = -1;
     }
     for (i=0; i<num_faces*3; i++) {
 	if (faces[i] == v1) {
@@ -3678,7 +3671,7 @@ decimate_edge(size_t v1, size_t v2, struct bot_edge **edges, size_t num_edges, s
 	    while (ptr) {
 		if (ptr->v == v2) {
 		    ptr->use_count++;
-		    edg->v = (size_t)-1;
+		    edg->v = -1;
 		    edg->next = NULL;
 		    bu_free(edg, "bot edge");
 		    break;
@@ -3695,7 +3688,7 @@ decimate_edge(size_t v1, size_t v2, struct bot_edge **edges, size_t num_edges, s
 	    while (ptr) {
 		if (ptr->v == edg->v) {
 		    ptr->use_count++;
-		    edg->v = (size_t)-1;
+		    edg->v = -1;
 		    edg->next = NULL;
 		    bu_free(edg, "bot edge");
 		    break;
@@ -3707,7 +3700,7 @@ decimate_edge(size_t v1, size_t v2, struct bot_edge **edges, size_t num_edges, s
 		edges[v2] = edg;
 	    }
 	} else {
-	    edg->v = (size_t)-1;
+	    edg->v = -1;
 	    edg->next = NULL;
 	    bu_free(edg, "bot edge");
 	}
@@ -3729,7 +3722,7 @@ decimate_edge(size_t v1, size_t v2, struct bot_edge **edges, size_t num_edges, s
 	    if (edg->v == v1) {
 		/* this one is affected */
 		edg->v = v2;	/* change v1 to v2 */
-		if (v2 < i) {
+		if ((size_t)v2 < i) {
 		    /* disconnect this edge from list #i */
 		    if (prev) {
 			prev->next = next;
@@ -3740,14 +3733,14 @@ decimate_edge(size_t v1, size_t v2, struct bot_edge **edges, size_t num_edges, s
 		    /* this edge must move to the "v2" list */
 		    ptr = edges[v2];
 		    while (ptr) {
-			if (ptr->v == i) {
+			if ((size_t)ptr->v == i) {
 			    /* found another occurence of this edge
 			     * increment use count
 			     */
 			    ptr->use_count++;
 
 			    /* delete the original */
-			    edg->v = (size_t)-1;
+			    edg->v = -1;
 			    edg->next = NULL;
 			    bu_free(edg, "bot edge");
 			    break;
@@ -3760,7 +3753,7 @@ decimate_edge(size_t v1, size_t v2, struct bot_edge **edges, size_t num_edges, s
 			edges[v2] = edg;
 		    }
 		    edg = next;
-		} else if (v2 > i) {
+		} else if ((size_t)v2 > i) {
 		    /* look for other occurences of this edge in this
 		     * list if found, just increment use count
 		     */
@@ -3779,7 +3772,7 @@ decimate_edge(size_t v1, size_t v2, struct bot_edge **edges, size_t num_edges, s
 			    }
 
 			    /* free it */
-			    edg->v = (size_t)-1;
+			    edg->v = -1;
 			    edg->next = NULL;
 			    bu_free(edg, "bot edge");
 
@@ -3800,7 +3793,7 @@ decimate_edge(size_t v1, size_t v2, struct bot_edge **edges, size_t num_edges, s
 		    } 
 
 		    /* free it */
-		    edg->v = (size_t)-1;
+		    edg->v = -1;
 		    edg->next = NULL;
 		    bu_free(edg, "bot edge");
 		}
@@ -3847,12 +3840,12 @@ decimate_edge(size_t v1, size_t v2, struct bot_edge **edges, size_t num_edges, s
  */
 HIDDEN int
 edge_can_be_decimated(struct rt_bot_internal *bot,
-		      size_t *faces,
+		      int *faces,
 		      struct bot_edge **edges,
-		      size_t v1,
-		      size_t v2,
-		      size_t *face_del1,
-		      size_t *face_del2,
+		      int v1,
+		      int v2,
+		      int *face_del1,
+		      int *face_del2,
 		      fastf_t max_chord_error,
 		      fastf_t max_normal_error,
 		      fastf_t min_edge_length_sq)
@@ -3866,13 +3859,13 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
     fastf_t *vertices = bot->vertices;
     size_t faces_affected[MAX_AFFECTED_FACES];
 
-    if (v1 == (size_t)-1 || v2 == (size_t)-1) {
+    if (v1 == -1 || v2 == -1) {
 	return 0;
     }
 
     /* find faces to be deleted or affected */
-    *face_del1 = (size_t)-1;
-    *face_del2 = (size_t)-1;
+    *face_del1 = -1;
+    *face_del2 = -1;
     for (i=0; i<num_faces*3; i += 3) {
 	count = 0;
 	v1_count = 0;
@@ -3889,7 +3882,7 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
 	}
 	if (count > 1) {
 	    /* this face will get deleted */
-	    if (*face_del1 != (size_t)-1) {
+	    if (*face_del1 != -1) {
 		*face_del2 = i/3;
 	    } else {
 		*face_del1 = i/3;
@@ -3907,7 +3900,7 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
     /* if only one face will be deleted, do not decimate this may be a
      * free edge
      */
-    if (*face_del2 == (size_t)-1) {
+    if (*face_del2 == -1) {
 	return 0;
     }
 
@@ -3926,7 +3919,7 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
 	for (i=0; i<num_edges; i++) {
 	    edg = edges[i];
 	    while (edg) {
-		if ((i == v1 || edg->v == v1) && edg->use_count < 2) {
+		if ((i == (size_t)v1 || edg->v == v1) && edg->use_count < 2) {
 		    return 0;
 		}
 		edg = edg->next;
@@ -3951,7 +3944,7 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
 	    fastf_t dist;
 	    fastf_t dot;
 	    plane_t pla, plb;
-	    size_t va, vb, vc;
+	    int va, vb, vc;
 
 	    /* calculate plane of this face before and after
 	     * adjustment if the normal changes too much, do not
@@ -4032,7 +4025,7 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
 		fastf_t max_normal_error,	/* maximum allowable normal error (degrees) */
 		fastf_t min_edge_length)	/* minimum allowed edge length */
 {
-    size_t *faces = NULL;
+    int *faces = NULL;
     struct bot_edge **edges = NULL;
     fastf_t min_edge_length_sq = 0.0;
     size_t edges_deleted = 0;
@@ -4057,7 +4050,7 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
     }
 
     /* make a working copy of the face list */
-    faces = (size_t *)bu_malloc(sizeof(size_t) * bot->num_faces * 3, "faces");
+    faces = (int *)bu_malloc(sizeof(int) * bot->num_faces * 3, "faces");
     for (i=0; i<bot->num_faces*3; i++) {
 	faces[i] = bot->faces[i];
     }
@@ -4076,7 +4069,7 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
 	/* visit each edge */
 	for (i=0; i<bot->num_vertices; i++) {
 	    struct bot_edge *ptr;
-	    size_t face_del1, face_del2;
+	    int face_del1, face_del2;
 
 	    ptr = edges[i];
 	    while (ptr) {
@@ -4133,7 +4126,7 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
     actual_count = 0;
     deleted = 0;
     for (i=0; i<bot->num_faces*3; i++) {
-	if (faces[i] == (size_t)-1) {
+	if (faces[i] == -1) {
 	    deleted++;
 	    continue;
 	}
@@ -4164,7 +4157,7 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
 
     if (bot->faces)
 	bu_free(bot->faces, "bot->faces");
-    bot->faces = (size_t *)bu_realloc(faces, sizeof(size_t) * face_count * 3, "bot->faces");
+    bot->faces = (int *)bu_realloc(faces, sizeof(int) * face_count * 3, "bot->faces");
     bot->num_faces = face_count;
 
     /* removed unused vertices */
@@ -4213,7 +4206,7 @@ bot_smooth_hit(struct application *ap, struct partition *PartHeadp, struct seg *
 int
 rt_bot_smooth(struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, fastf_t norm_tol_angle)
 {
-    size_t vert_no;
+    int vert_no;
     size_t i, j, k;
     struct rt_i *rtip;
     struct application ap;
@@ -4272,7 +4265,7 @@ rt_bot_smooth(struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, fa
 	    vect_t a, b;
 	    vect_t inv_dir;
 
-	    if (bot->faces[i*3+2] > bot->num_vertices)
+	    if (bot->faces[i*3+k] < 0 || (size_t)bot->faces[i*3+2] > bot->num_vertices)
 		continue; /* sanity */
 
 	    VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
@@ -4328,7 +4321,7 @@ rt_bot_smooth(struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, fa
 	for (i=0; i<bot->num_faces; i++) {
 	    vect_t a, b;
 
-	    if (bot->faces[i*3+2] > bot->num_vertices)
+	    if (bot->faces[i*3+2] < 0 || (size_t)bot->faces[i*3+2] > bot->num_vertices)
 		continue; /* sanity */
 
 	    VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
@@ -4345,7 +4338,7 @@ rt_bot_smooth(struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, fa
     bot->num_face_normals = bot->num_faces;
 
     bot->normals = (fastf_t *)bu_calloc(bot->num_normals * 3, sizeof(fastf_t), "bot->normals");
-    bot->face_normals = (size_t *)bu_calloc(bot->num_face_normals * 3, sizeof(size_t), "bot->face_normals");
+    bot->face_normals = (int *)bu_calloc(bot->num_face_normals * 3, sizeof(int), "bot->face_normals");
 
     /* process each face */
     for (i=0; i<bot->num_faces; i++) {
@@ -4433,10 +4426,10 @@ struct tri_edges {
 
 struct tri_pts {
     struct bu_list l;
-    size_t a;
-    size_t b;
-    size_t c;
-    size_t tri;
+    int a;
+    int b;
+    int c;
+    int tri;
 };
 
 
@@ -4646,16 +4639,12 @@ rt_bot_create(struct rt_bot_internal *bot, struct tri_pts *newTpp)
 
     {
 	size_t vcount;
-	size_t *vmap = (size_t *)bu_calloc(bot->num_vertices * 3,
-					 sizeof(size_t), "Bot vertices");
+	int *vmap = (int *)bu_calloc(bot->num_vertices * 3, sizeof(int), "Bot vertices");
 
-	newbot->vertices = (fastf_t *)bu_calloc(bot->num_vertices * 3,
-						sizeof(fastf_t), "Bot vertices");
-	newbot->faces = (size_t *)bu_calloc(newbot->num_faces * 3,
-					 sizeof(size_t), "Bot faces");
+	newbot->vertices = (fastf_t *)bu_calloc(bot->num_vertices * 3, sizeof(fastf_t), "Bot vertices");
+	newbot->faces = (int *)bu_calloc(newbot->num_faces * 3, sizeof(int), "Bot faces");
 	if (bot->mode == RT_BOT_PLATE) {
-	    newbot->thickness = (fastf_t *)bu_calloc(bot->num_faces,
-						     sizeof(fastf_t), "Bot thickness");
+	    newbot->thickness = (fastf_t *)bu_calloc(bot->num_faces, sizeof(fastf_t), "Bot thickness");
 	    newbot->face_mode = bu_bitv_new(newbot->num_faces);
 	}
 

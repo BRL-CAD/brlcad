@@ -956,7 +956,7 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
     ip_bot->face_mode = (struct bu_bitv *)NULL;
 
     ip_bot->vertices = (fastf_t *)bu_calloc(max_pts * 3, sizeof(fastf_t), "BOT vertices");
-    ip_bot->faces = (size_t *)bu_calloc(max_tri * 3, sizeof(size_t), "BOT faces");
+    ip_bot->faces = (int *)bu_calloc(max_tri * 3, sizeof(int), "BOT faces");
 
     for (p=0; p<ip_pg->npoly; p++) {
 	vect_t work[3], tmp;

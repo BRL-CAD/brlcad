@@ -115,7 +115,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     fastf_t tmp_f, ldir[3];
     size_t i, j;
     size_t vert_count;
-    int curr_vert;
+    size_t curr_vert;
 
     if (rtip) RT_CK_RTI(rtip);
 
@@ -570,8 +570,8 @@ int
 rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
-    size_t i;
-    int j, k;
+    size_t i, j, k;
+    long counter;
     fastf_t dist_top, dist_bottom, to_bottom=0;
     fastf_t dist[2];
     fastf_t dot_pl1, dir_dot_z;
@@ -582,9 +582,9 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     fastf_t dists_before[MAX_HITS];
     fastf_t dists_after[MAX_HITS];
     fastf_t *dists=NULL;
-    int dist_count=0;
-    int hit_count=0;
-    int hits_before_bottom=0, hits_after_top=0;
+    size_t dist_count=0;
+    size_t hit_count=0;
+    size_t hits_before_bottom=0, hits_after_top=0;
     int code;
     int check_inout=0;
     int top_face=TOP_FACE, bot_face=BOTTOM_FACE;
@@ -711,7 +711,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
 		verts = (point2d_t *)bu_calloc(bsg->degree + 1, sizeof(point2d_t), "Bezier verts");
-		for (j=0; j<=bsg->degree; j++) {
+		for (j=0; j<=(size_t)bsg->degree; j++) {
 		    V2MOVE(verts[j], extr->verts[bsg->ctl_points[j]]);
 		}
 		V2MOVE(ray_dir_unit, ray_dir);
@@ -750,7 +750,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    while (k < dist_count) {
 		diff = dists[k] - hits[j].hit_dist;
 		if (NEAR_ZERO(diff, extr_tol.dist)) {
-		    int n;
+		    size_t n;
 		    for (n=k; n<dist_count-1; n++) {
 			dists[n] = dists[n+1];
 			if (*lng == CURVE_BEZIER_MAGIC) {
@@ -772,8 +772,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    while (k < dist_count) {
 		diff = dists[k] - dists_before[j];
 		if (NEAR_ZERO(diff, extr_tol.dist)) {
-		    int n;
-
+		    size_t n;
 		    for (n=k; n<dist_count-1; n++) {
 			dists[n] = dists[n+1];
 			if (*lng == CURVE_BEZIER_MAGIC) {
@@ -795,8 +794,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    while (k < dist_count) {
 		diff = dists[k] - dists_after[j];
 		if (NEAR_ZERO(diff, extr_tol.dist)) {
-		    int n;
-
+		    size_t n;
 		    for (n=k; n<dist_count-1; n++)
 			dists[n] = dists[n+1];
 		    dist_count--;
@@ -904,7 +902,6 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     }
 
     if (hits_before_bottom & 1) {
-	int counter;
 	if (hit_count >= MAX_HITS) {
 	    bu_log("Too many hits on extrusion (%s), limit is %d\n",
 		   stp->st_dp->d_namep, MAX_HITS);
@@ -947,7 +944,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 
     /* build segments */
     {
-	int cnt;
+	size_t cnt;
 	struct seg *segp;
 
 	for (cnt=0; cnt < hit_count; cnt += 2) {
