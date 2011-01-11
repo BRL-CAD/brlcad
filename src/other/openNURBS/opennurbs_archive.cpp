@@ -9517,7 +9517,7 @@ bool ON_BinaryArchive::ReadV1_TCODE_ANNOTATION(
     DimDiameter = 7 ,
     DimRadius = 8,
     Leader = 9,
-    DimLinear = 10,
+    DimLinear = 10
   };
   
   bool rc = false;

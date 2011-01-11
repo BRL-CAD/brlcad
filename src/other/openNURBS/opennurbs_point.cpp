@@ -6711,7 +6711,7 @@ bool ON_BoundingBox::IsValid() const
           && ON_IS_VALID(m_min.z)
           && ON_IS_VALID(m_max.z)
          );
-};
+}
 
 bool ON_IsDegenrateConicHelper(double A, double B, double C, double D, double E)
 {
