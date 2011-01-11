@@ -52,8 +52,8 @@ rt_ars_mirror(struct rt_db_internal *ip, register const plane_t plane)
     point_t mirror_pt;
     fastf_t ang;
 
-    int i;
-    int j;
+    size_t i;
+    size_t j;
     fastf_t *tmp_curve;
 
     static point_t origin = {0.0, 0.0, 0.0};

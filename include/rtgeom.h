@@ -164,8 +164,8 @@ struct rt_arb_internal {
  */
 struct rt_ars_internal {
     unsigned long magic;
-    int	ncurves;
-    int	pts_per_curve;
+    size_t ncurves;
+    size_t pts_per_curve;
     fastf_t	**curves;
 };
 #define RT_ARS_CK_MAGIC(_p)	BU_CKMAG(_p, RT_ARS_INTERNAL_MAGIC, "rt_ars_internal")
