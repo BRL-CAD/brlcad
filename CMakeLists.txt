@@ -83,14 +83,44 @@ ENDIF(COMMAND CMAKE_POLICY)
 # set CMake project name
 PROJECT(BRLCAD)
 
-# Repeated runs of cmake wil result in this variable being set during
-# the Find* routines, which will return libraries from previous
-# installs. Even if never set using CACHE by the CMakeLists.txt file,
-# /usr/local gets written to the CACHE file.  If BRL-CAD happened to
-# be installed there, this would very probably cause the same trouble
-# being seen with detected CMAKE_INSTALL_PREFIX libs in other directories.
-# Hard erase this variable's setting in the cache.
-SET(CMAKE_INSTALL_PREFIX "" CACHE INTERNAL "Keep CMAKE_INSTALL_PREFIX unset in CACHE so repeated Find* operations return consistent results")
+# Searching the system for packages presents something of a dilemma -
+# in most situations it is Very Bad for a BRL-CAD build to be using
+# older versions of libraries in install directories as search results.
+# Generally, the desired behavior is to ignore whatever libraries are
+# in the install directories, and only use external library results if
+# they are something already found on the system due to non-BRL-CAD 
+# installation (source compile, package managers, etc.).  Unfortunately,
+# CMake's standard behavior is to add a CMAKE_INSTALL_PREFIX to the
+# search path once defined, resulting in (for us) an unexpected behavior
+# of returning old installed libraries when CMake is re-run in a
+# directory.  To work around this, alter the CMAKE_SYSTEM_PREFIX_PATH
+# variable identified by Maik Beckmann:
+#
+# http://www.cmake.org/pipermail/cmake/2010-October/040292.html
+#
+# The complication is if we are installing to a "legitimate" system
+# search path - i.e. our CMAKE_INSTALL_PREFIX value is standard
+# enough that it is a legitimate search target for find_package.
+# In this case, we can't exclude accidental hits on our libraries
+# without also excluding legitimate find_package results.  So the net
+# results are:
+#
+# 1.  If you are planning to install to a system directory (typically
+#     a bad idea but the settings are legal) clean out the old system
+#     first or accept that the old libraries will be found and used.
+#
+# 2.  For more custom paths, the logic below will strip out the value
+#     of CMAKE_INSTALL_PREFIX to avoid its use in find_package searches
+
+IF(CMAKE_INSTALL_PREFIX AND BRLCAD_PREFIX)
+	IF(NOT ${BRLCAD_PREFIX} MATCHES "^/usr$" AND NOT ${BRLCAD_PREFIX} MATCHES "^/usr/local$")
+		LIST(FIND CMAKE_SYSTEM_PREFIX_PATH ${BRLCAD_PREFIX} BRLCAD_PREFIX_IN_SEARCH)
+		IF(BRLCAD_PREFIX_IN_SEARCH)
+			LIST(REMOVE_AT CMAKE_SYSTEM_PREFIX_PATH ${BRLCAD_PREFIX_IN_SEARCH})
+			SET(CMAKE_SYSTEM_PREFIX_PATH ${CMAKE_SYSTEM_PREFIX_PATH} CACHE STRING "Tweaked to avoid inconsistent search results")
+		ENDIF(BRLCAD_PREFIX_IN_SEARCH)
+	ENDIF(NOT ${BRLCAD_PREFIX} MATCHES "^/usr$" AND NOT ${BRLCAD_PREFIX} MATCHES "^/usr/local$")
+ENDIF(CMAKE_INSTALL_PREFIX AND BRLCAD_PREFIX)
 
 #---------------------------------------------------------------------
 # By default (as of version 2.8.2) CMake does not provide access to 
@@ -251,7 +281,7 @@ IF(NOT BRLCAD_PREFIX)
 	ENDIF(NOT WIN32)
 ENDIF(NOT BRLCAD_PREFIX)
 SET(BRLCAD_PREFIX ${BRLCAD_PREFIX} CACHE STRING "BRL-CAD install prefix")
-SET(CMAKE_INSTALL_PREFIX "${BRLCAD_PREFIX}")
+SET(CMAKE_INSTALL_PREFIX "${BRLCAD_PREFIX}" CACHE STRING "BRL-CAD install prefix" FORCE)
 
 
 #---------------------------------------------------------------------
@@ -1280,13 +1310,15 @@ INSTALL(FILES ${toplevel_DOCFILES} DESTINATION ${BRLCAD_INSTALL_DATA_DIR})
 
 
 # CPack is used to produce tgz files, RPMS, etc.
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "BRL-CAD - a powerful cross-platform open source solid modeling system")
+SET(CPACK_PACKAGE_VENDOR "BRL-CAD Development Team")
+SET(CPACK_PACKAGE_DESCRIPTION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/README)
 SET(CPACK_PACKAGE_VERSION_MAJOR ${BRLCAD_MAJOR_VERSION})
 SET(CPACK_PACKAGE_VERSION_MINOR ${BRLCAD_MINOR_VERSION})
 SET(CPACK_PACKAGE_VERSION_PATCH ${BRLCAD_PATCH_VERSION})
 
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "BRL-CAD - a powerful cross-platform open source solid modeling system")
-SET(CPACK_PACKAGE_VENDOR "BRL-CAD Development Team")
-SET(CPACK_PACKAGE_DESCRIPTION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/README)
+SET(CPACK_SET_DESDIR ON)
+
 SET(CPACK_SOURCE_GENERATOR TGZ TBZ2 ZIP)
 SET(CPACK_SOURCE_PACKAGE_FILE_NAME
 "brlcad-${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_VERSION}")
