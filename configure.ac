@@ -357,7 +357,7 @@ BC_ARG_ENABLE([use_dtrace], [dtrace], [Enable dtrace support], [no])
 BC_ARG_ENABLE([build_verbose], [verbose], [Enable verbose compilation], [auto])
 
 # warnings
-BC_ARG_ENABLE([build_warnings], [warnings], [Enable verbose compilation warnings], [no])
+BC_ARG_ENABLE([build_warnings], [warnings], [Enable verbose compilation warnings], [yes])
 
 # build progress status
 BC_ARG_ENABLE([build_progress], [progress], [Enable verbose compilation progress], [no])
@@ -2118,7 +2118,7 @@ else
 fi
 AC_SUBST(NOWARN)
 if test "x$bc_build_warnings" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Winline], [warning])
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long], [warning])
 	# XXX also of interest
 	# -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
 	# -Wstrict-prototypes -Wold-style-definition -Wshorten-64-to-32 -Wmissing-field-initializers
@@ -2136,7 +2136,7 @@ fi
 
 dnl we are more strict on clean dirs by default (no-long-long needed due to tcl.h)
 if test "x$bc_build_strict" = "xyes" ; then
-   BC_COMPILER_AND_LINKER_RECOGNIZES([-w -pedantic -W -Wall -Werror -Wno-long-long], [strict], [no])
+   BC_COMPILER_AND_LINKER_RECOGNIZES([-w -pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long -Werror], [strict], [no])
    if test "x$bc_strict_works" = "xyes" ; then
        # do not include -w as that was just to suppress any test warnings
        STRICT_FLAGS="-pedantic -W -Wall -Werror -Wno-long-long"
