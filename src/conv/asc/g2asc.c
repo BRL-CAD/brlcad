@@ -28,8 +28,8 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <ctype.h>
 #include <string.h>
+#include <ctype.h>
 #include "bio.h"
 
 #include "vmath.h"
