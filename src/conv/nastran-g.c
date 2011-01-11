@@ -228,7 +228,7 @@ HIDDEN void
 get_large_field_input(FILE *fp, int write_flag)
 {
     char **tmp_rec;
-    int field_no;
+    size_t field_no;
     size_t card_len;
     size_t last_field;
     size_t i;
@@ -286,7 +286,7 @@ HIDDEN void
 get_small_field_input(FILE *fp, int write_flag)
 {
     char **tmp_rec;
-    int field_no;
+    size_t field_no;
     size_t card_len;
     size_t last_field;
 
@@ -337,7 +337,7 @@ HIDDEN void
 get_free_form_input(FILE *fp, int write_flag)
 {
     char **tmp_rec;
-    int field_no;
+    size_t field_no;
     int i, j;
 
     i = (-1);
@@ -609,29 +609,29 @@ convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt)
  */
 
 HIDDEN int
-convert_grid(int index)
+convert_grid(int idx)
 {
     struct coord_sys *cs;
     point_t tmp_pt;
 
-    if (!g_pts[index].cid)
+    if (!g_pts[idx].cid)
 	return 0;
 
     for (BU_LIST_FOR(cs, coord_sys, &coord_head.l)) {
-	if (cs->cid != g_pts[index].cid)
+	if (cs->cid != g_pts[idx].cid)
 	    continue;
 	break;
     }
 
     if (BU_LIST_IS_HEAD(&cs->l, &coord_head.l)) {
-	bu_exit(1, "No coordinate system defined for grid point #%d!\n", g_pts[index].gid);
+	bu_exit(1, "No coordinate system defined for grid point #%d!\n", g_pts[idx].gid);
     }
 
-    if (convert_pt(g_pts[index].pt, cs, tmp_pt))
+    if (convert_pt(g_pts[idx].pt, cs, tmp_pt))
 	return 1;
 
-    VMOVE(g_pts[index].pt, tmp_pt);
-    g_pts[index].cid = 0;
+    VMOVE(g_pts[idx].pt, tmp_pt);
+    g_pts[idx].cid = 0;
 
     return 0;
 }
@@ -835,15 +835,15 @@ HIDDEN int
 get_pid_index(int pid)
 {
     struct pshell *psh;
-    int index=0;
+    int idx=0;
 
     if (pid == 0)
 	return 0;
 
     for (BU_LIST_FOR(psh, pshell, &pshell_head.l)) {
-	index++;
+	idx++;
 	if (psh->pid == pid)
-	    return index;
+	    return idx;
     }
 
     return 0;
@@ -1098,7 +1098,7 @@ main(int argc, char **argv)
     int c;
     int i;
     struct pshell *psh;
-    struct pbar *pb;
+    struct pbar *pbp;
     struct wmember head;
     struct wmember all_head;
     char *nastran_file = "Converted from NASTRAN file (stdin)";
@@ -1372,14 +1372,14 @@ main(int argc, char **argv)
     }
 
     BU_LIST_INIT(&head.l);
-    for (BU_LIST_FOR(pb, pbar, &pbar_head.l)) {
+    for (BU_LIST_FOR(pbp, pbar, &pbar_head.l)) {
 	char name[NAMESIZE+1];
 
-	if (BU_LIST_IS_EMPTY(&pb->head.l))
+	if (BU_LIST_IS_EMPTY(&pbp->head.l))
 	    continue;
 
-	sprintf(name, "pbar_group.%d", pb->pid);
-	mk_lfcomb(fpout, name, &pb->head, 0);
+	sprintf(name, "pbar_group.%d", pbp->pid);
+	mk_lfcomb(fpout, name, &pbp->head, 0);
 
 	mk_addmember(name, &head.l, NULL, WMOP_UNION);
     }

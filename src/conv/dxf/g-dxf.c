@@ -55,29 +55,31 @@
 }
 
 
-static char	usage[] = "\
-Usage: %s [-v] [-i] [-p] [-xX lvl] \n\
+void
+usage(const char *argv0)
+{
+    bu_log("Usage: %s [-v] [-i] [-p] [-xX lvl] \n\
        [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] \n\
-       [-o output_file_name.dxf] brlcad_db.g object(s)\n\
-\n\
-Options:\n\
+       [-o output_file_name.dxf] brlcad_db.g object(s)\n\n", argv0);
+
+    bu_log("Options:\n\
  -v	Verbose output\n\
  -i	Output using inches (instead of default mm)\n\
- -p	Output POLYFACE MESH (instead of default 3DFACE) entities\n\
-\n\
+ -p	Output POLYFACE MESH (instead of default 3DFACE) entities\n\n");
+
+    bu_log("\
  -x #	Specifies an RT debug flag\n\
- -X #	Specifies an NMG debug flag\n\
-\n\
+ -X #	Specifies an NMG debug flag\n\n");
+
+    bu_log("\
  -a #	Specify an absolute tessellation tolerance (in mm)\n\
  -r #	Specify a relative tessellation tolerance (in mm)\n\
  -n #	Specify a surface normal tessellation tolerance (in degrees)\n\
- -D #	Specify a calculation distance tolerance (in mm)\n\
-\n\
- -o dxf	Output to the specified dxf filename\n\
-\n\
----\n\
-%s\n\
-";
+ -D #	Specify a calculation distance tolerance (in mm)\n\n");
+
+    bu_log("\
+ -o dxf	Output to the specified dxf filename\n\n---\n");
+}
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -219,7 +221,7 @@ nmg_to_dxf( struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(re
 
 
 	fprintf( fp, "0\nPOLYLINE\n8\n%s\n62\n%d\n70\n64\n71\n%lu\n72\n%d\n",
-		 region_name, color_num, BU_PTBL_LEN( &verts), tri_count );
+		 region_name, color_num, (unsigned long)BU_PTBL_LEN( &verts), tri_count );
 	for ( i=0; i<BU_PTBL_LEN( &verts ); i++ ) {
 	    fprintf( fp, "0\nVERTEX\n8\n%s\n", region_name );
 	    v = (struct vertex *)BU_PTBL_GET( &verts, i );
@@ -458,13 +460,15 @@ main(int argc, char *argv[])
 		inches = 1;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0], brlcad_ident("BRL-CAD to DXF Exporter"));
+		usage(argv[0]);
+		bu_exit(1, "%s\n", brlcad_ident("BRL-CAD to DXF Exporter"));
 		break;
 	}
     }
 
     if (bu_optind+1 >= argc) {
-	bu_exit(1, usage, argv[0], brlcad_ident("BRL-CAD to DXF Exporter"));
+	usage(argv[0]);
+	bu_exit(1, "%s\n", brlcad_ident("BRL-CAD to DXF Exporter"));
     }
 
     if (!output_file) {

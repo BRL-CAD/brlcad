@@ -54,8 +54,8 @@ struct Form {
         struct {
             size_t num_vertices;
             size_t num_faces;
-            int    vertices[MAX_NPTS * 3];   // points[3][num_vertices]
-            int    faces[MAX_TRIANGLES * 3]; // faces[3][num_faces]
+            int vertices[MAX_NPTS * 3];   // points[3][num_vertices]
+            int faces[MAX_TRIANGLES * 3]; // faces[3][num_faces]
         } bot;
     };
 

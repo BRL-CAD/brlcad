@@ -222,14 +222,14 @@ static int	bot=0;
  * overlaps are irrelevant to this application
  */
 static int
-a_overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp)
+a_overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct region *UNUSED(reg1), struct region *UNUSED(reg2), struct partition *UNUSED(pheadp))
 {
     return 1;
 }
 
 
 static int
-miss(struct application *ap)
+miss(struct application *UNUSED(ap))
 {
     return 0;
 }
@@ -469,7 +469,7 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss, 
 }
 
 static int
-shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
+shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     point_t hit1, hit2;
     point_t mhit1, mhit2;
@@ -827,9 +827,9 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 
 	    VSUB2( edge_dir, vgb->coord, vga->coord );
 
-	    if ( (cur_dir == X && (edge_dir[Y] != 0.0 || edge_dir[Z] != 0.0) ) ||
-		 (cur_dir == Y && (edge_dir[X] != 0.0 || edge_dir[Z] != 0.0) ) ||
-		 (cur_dir == Z && (edge_dir[Y] != 0.0 || edge_dir[X] != 0.0) ) )
+	    if ( (EQUAL(cur_dir, X) && (!EQUAL(edge_dir[Y], 0.0) || !EQUAL(edge_dir[Z], 0.0)) ) ||
+		 (EQUAL(cur_dir, Y) && (!EQUAL(edge_dir[X], 0.0) || !EQUAL(edge_dir[Z], 0.0)) ) ||
+		 (EQUAL(cur_dir, Z) && (!EQUAL(edge_dir[Y], 0.0) || !EQUAL(edge_dir[X], 0.0)) ) )
 		continue;
 
 	    if ( edge_dir[cur_dir] > 0.0 )
@@ -892,9 +892,9 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		eu_tmp = BU_LIST_PNEXT_CIRC( edgeuse, &eu1->l );
 		vg_tmp = eu_tmp->eumate_p->vu_p->v_p->vg_p;
 
-		if ( (cur_dir == X && (vg_tmp->coord[Y] == vg1b->coord[Y] && vg_tmp->coord[Z] == vg1b->coord[Z]) ) ||
-		     (cur_dir == Y && (vg_tmp->coord[X] == vg1b->coord[X] && vg_tmp->coord[Z] == vg1b->coord[Z]) ) ||
-		     (cur_dir == Z && (vg_tmp->coord[X] == vg1b->coord[X] && vg_tmp->coord[Y] == vg1b->coord[Y]) ) )
+		if ( (EQUAL(cur_dir, X) && (EQUAL(vg_tmp->coord[Y], vg1b->coord[Y]) && EQUAL(vg_tmp->coord[Z], vg1b->coord[Z])) ) ||
+		     (EQUAL(cur_dir, Y) && (EQUAL(vg_tmp->coord[X], vg1b->coord[X]) && EQUAL(vg_tmp->coord[Z], vg1b->coord[Z])) ) ||
+		     (EQUAL(cur_dir, Z) && (EQUAL(vg_tmp->coord[X], vg1b->coord[X]) && EQUAL(vg_tmp->coord[Y], vg1b->coord[Y])) ) )
 		{
 		    eu1 = eu_tmp;
 		    vg1a = vg1b;
@@ -913,9 +913,9 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		eu_tmp = BU_LIST_PNEXT_CIRC( edgeuse, &eu2->l );
 		vg_tmp = eu_tmp->eumate_p->vu_p->v_p->vg_p;
 
-		if ( (cur_dir == X && (vg_tmp->coord[Y] == vg2b->coord[Y] && vg_tmp->coord[Z] == vg2b->coord[Z]) ) ||
-		     (cur_dir == Y && (vg_tmp->coord[X] == vg2b->coord[X] && vg_tmp->coord[Z] == vg2b->coord[Z]) ) ||
-		     (cur_dir == Z && (vg_tmp->coord[X] == vg2b->coord[X] && vg_tmp->coord[Y] == vg2b->coord[Y]) ) )
+		if ( (EQUAL(cur_dir, X) && (EQUAL(vg_tmp->coord[Y], vg2b->coord[Y]) && EQUAL(vg_tmp->coord[Z], vg2b->coord[Z])) ) ||
+		     (EQUAL(cur_dir, Y) && (EQUAL(vg_tmp->coord[X], vg2b->coord[X]) && EQUAL(vg_tmp->coord[Z], vg2b->coord[Z])) ) ||
+		     (EQUAL(cur_dir, Z) && (EQUAL(vg_tmp->coord[X], vg2b->coord[X]) && EQUAL(vg_tmp->coord[Y], vg2b->coord[Y])) ) )
 		{
 		    eu2 = eu_tmp;
 		    vg2a = vg2b;
@@ -941,9 +941,9 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		vg1a = eu1->vu_p->v_p->vg_p;
 		vu1_cut = eu1->vu_p;
 	    }
-	    else if ( vg1a->coord[cur_dir] == cut_value )
+	    else if ( EQUAL(vg1a->coord[cur_dir], cut_value) )
 		vu1_cut = eu1->vu_p;
-	    else if ( vg1b->coord[cur_dir] == cut_value )
+	    else if ( EQUAL(vg1b->coord[cur_dir], cut_value) )
 		vu1_cut = BU_LIST_PNEXT_CIRC( edgeuse, &eu1->l )->vu_p;
 
 	    if ( IN_SEG( cut_value, vg2a->coord[cur_dir], vg2b->coord[cur_dir] ) )
@@ -967,7 +967,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		    }
 		}
 	    }
-	    else if ( vg2a->coord[cur_dir] == cut_value )
+	    else if ( EQUAL(vg2a->coord[cur_dir], cut_value) )
 	    {
 		vu_cut = (struct vertexuse *)NULL;
 		for ( BU_LIST_FOR( vu_cut, vertexuse, &eu2->vu_p->v_p->vu_hd ) )
@@ -979,7 +979,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		    }
 		}
 	    }
-	    else if ( vg2b->coord[cur_dir] == cut_value )
+	    else if ( EQUAL(vg2b->coord[cur_dir], cut_value) )
 	    {
 		vu_cut = (struct vertexuse *)NULL;
 		for ( BU_LIST_FOR( vu_cut, vertexuse, &eu2->eumate_p->vu_p->v_p->vu_hd ) )
@@ -1102,7 +1102,6 @@ shrink_wrap(struct shell *s)
     for ( vert_no=0; vert_no<BU_PTBL_END( &extra_verts ); vert_no++ )
     {
 	struct vertex *v;
-	struct faceuse *fu;
 	struct vertexuse *vu;
 	vect_t dir;
 	vect_t abs_dir;
@@ -1147,7 +1146,7 @@ shrink_wrap(struct shell *s)
 }
 
 static int
-refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
+refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     struct partition *pp;
     struct refine_data *ref_data;
@@ -1684,7 +1683,7 @@ Make_shell(void)
 }
 
 static int
-hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
+hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     struct partition *first_pp;
     struct partition *last_pp;

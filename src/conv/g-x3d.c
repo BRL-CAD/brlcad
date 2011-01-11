@@ -89,18 +89,18 @@ struct vrml_mat {
 #define PL_OA(_m)	bu_offsetofarray(struct vrml_mat, _m)
 
 struct bu_structparse vrml_mat_parse[]={
-    {"%s", TXT_NAME_SIZE, "ma_shader", PL_OA(shader), 	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "shine",		PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "sh",			PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f", 1, "transmit",		PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f", 1, "tr",			PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "angle",		PL_O(lt_angle),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "fract",		PL_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "aim",		PL_OA(lt_dir),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "w",         	PL_O(tx_w),             BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "n",         	PL_O(tx_n),             BU_STRUCTPARSE_FUNC_NULL },
-    {"%s",  TXT_NAME_SIZE, "file",	PL_OA(tx_file), 	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%s", TXT_NAME_SIZE, "ma_shader", PL_OA(shader),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "shine",		PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "sh",		PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "transmit",	PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "tr",		PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "angle",	PL_O(lt_angle),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "fract",	PL_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "aim",	PL_OA(lt_dir),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "w",         	PL_O(tx_w),             BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "n",         	PL_O(tx_n),             BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s",  TXT_NAME_SIZE, "file", PL_OA(tx_file), 	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",    0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
@@ -113,7 +113,7 @@ static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose=0;
 /* static int	ncpu = 1; */		/* Number of processors */
 static char	*out_file = NULL;	/* Output filename */
-static FILE	*fp_out;		/* Output file pointer */
+static FILE	*outfp;		/* Output file pointer */
 static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
@@ -176,7 +176,7 @@ struct rt_bot_internal *
 dup_bot( struct rt_bot_internal *bot_in )
 {
     struct rt_bot_internal *bot;
-    int i;
+    size_t i;
 
     RT_BOT_CK_MAGIC( bot_in );
 
@@ -206,7 +206,7 @@ dup_bot( struct rt_bot_internal *bot_in )
 }
 
 static int
-select_lights(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -301,8 +301,8 @@ leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt
 }
 
 void
-writeX3dHeader(FILE *fp_out,
-	       char *x3dFileName) {
+writeX3dHeader(FILE *fp_out, char *x3dFileName)
+{
     fprintf(fp_out, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     fprintf(fp_out, "<!DOCTYPE X3D PUBLIC \"http://www.web3D.org/TaskGroups/x3d/translation/x3d-compact.dtd\"\n\"/www.web3D.org/TaskGroups/x3d/translation/x3d-compact.dtd\">\n");
     fprintf(fp_out, "<X3D>\n");
@@ -429,7 +429,7 @@ main(int argc, char **argv)
 	    case 'u':
 		units = bu_strdup( bu_optarg );
 		scale_factor = bu_units_conversion( units );
-		if ( scale_factor == 0.0 )
+		if ( NEAR_ZERO(scale_factor, SMALL_FASTF) )
 		{
 		    bu_exit(1, "Unrecognized units (%s)\n", units );
 		}
@@ -459,19 +459,19 @@ main(int argc, char **argv)
     }
 
     if (out_file == NULL) {
-	fp_out = stdout;
+	outfp = stdout;
 #if defined(_WIN32) && !defined(__CYGWIN__)
-	setmode(fileno(fp_out), O_BINARY);
+	setmode(fileno(outfp), O_BINARY);
 #endif
     } else {
-	if ((fp_out = fopen( out_file, "wb")) == NULL)
+	if ((outfp = fopen( out_file, "wb")) == NULL)
 	{
 	    perror( argv[0] );
 	    bu_exit(2, "Cannot open %s\n", out_file );
 	}
     }
 
-    writeX3dHeader(fp_out, out_file);
+    writeX3dHeader(outfp, out_file);
     bu_optind++;
 
     BARRIER_CHECK;
@@ -525,7 +525,7 @@ main(int argc, char **argv)
     db_close(dbip);
 
     /* Now we need to close each group set */
-    writeX3dEnd(fp_out);
+    writeX3dEnd(outfp);
 
     if ( verbose )
 	bu_log( "Total of %d regions converted of %d regions attempted\n",
@@ -857,8 +857,8 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
     int appearance;
     struct rt_bot_internal *bot;
     int bot_num;
-    int i;
-    int vert_count=0;
+    size_t i;
+    size_t vert_count=0;
 
     BARRIER_CHECK;
 
@@ -866,35 +866,35 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
     /* replace all occurences of '.' with '_' */
     char_replace(path_str, '.', '_');
 
-    fprintf( fp_out, "\t<Shape DEF=\"%s\">\n", path_str);
+    fprintf( outfp, "\t<Shape DEF=\"%s\">\n", path_str);
     bu_free( path_str, "result of db_path_to_string" );
 
     appearance = region_id / 1000;
     appearance = appearance * 1000 + 999;
-    fprintf( fp_out, "\t\t<Appearance USE=\"Material_%d\">\n", appearance);
+    fprintf( outfp, "\t\t<Appearance USE=\"Material_%d\">\n", appearance);
 
-    fprintf( fp_out, "\t\t<IndexedFaceSet coordIndex=\"\n");
+    fprintf( outfp, "\t\t<IndexedFaceSet coordIndex=\"\n");
     vert_count = 0;
     for ( bot_num = 0; bot_num < pmp->num_bots; bot_num++ ) {
 	bot = pmp->bots[bot_num];
 	RT_BOT_CK_MAGIC( bot );
 	for ( i=0; i<bot->num_faces; i++ )
-	    fprintf( fp_out, "\t\t\t\t%d, %d, %d, -1,\n",
+	    fprintf( outfp, "\t\t\t\t%lu, %lu, %lu, -1,\n",
 		     vert_count+bot->faces[i*3],
 		     vert_count+bot->faces[i*3+1],
 		     vert_count+bot->faces[i*3+2]);
 	vert_count += bot->num_vertices;
     }
     /* close coordIndex */
-    fprintf( fp_out, "\" ");
-    fprintf( fp_out, "normalPerVertex=\"false\" ");
-    fprintf( fp_out, "convex=\"true\" ");
-    fprintf( fp_out, "creaseAngle=\"0.5\" ");
-    fprintf( fp_out, "solid=\"false\" ");
+    fprintf( outfp, "\" ");
+    fprintf( outfp, "normalPerVertex=\"false\" ");
+    fprintf( outfp, "convex=\"true\" ");
+    fprintf( outfp, "creaseAngle=\"0.5\" ");
+    fprintf( outfp, "solid=\"false\" ");
     /* close IndexedFaceSet open tag */
-    fprintf( fp_out, ">\n");
+    fprintf( outfp, ">\n");
 
-    fprintf( fp_out, "\t\t<Coordinate point=\"");
+    fprintf( outfp, "\t\t<Coordinate point=\"");
     for ( bot_num = 0; bot_num < pmp->num_bots; bot_num++ ) {
 	bot = pmp->bots[bot_num];
 	RT_BOT_CK_MAGIC( bot );
@@ -903,18 +903,18 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
 	    point_t pt;
 
 	    VSCALE( pt, &bot->vertices[i*3], scale_factor );
-	    fprintf( fp_out, "%10.10e %10.10e %10.10e, ", V3ARGS( pt ));
+	    fprintf( outfp, "%10.10e %10.10e %10.10e, ", V3ARGS( pt ));
 	    vert_count++;
 	}
     }
     /* close point */
-    fprintf(fp_out, "\"");
+    fprintf(outfp, "\"");
     /* close Coordinate */
-    fprintf(fp_out, "/>\n");
+    fprintf(outfp, "/>\n");
     /* IndexedFaceSet end tag */
-    fprintf( fp_out, "\t\t</IndexedFaceSet>\n");
+    fprintf( outfp, "\t\t</IndexedFaceSet>\n");
     /* Shape end tag */
-    fprintf( fp_out, "\t</Shape>\n");
+    fprintf( outfp, "\t</Shape>\n");
 
     BARRIER_CHECK;
 }
@@ -963,7 +963,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 }
 
 union tree *
-nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
     struct nmgregion	*r;
     struct bu_list		vhead;
@@ -1067,7 +1067,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	if ( !empty_region && !empty_model )
 	{
 	    /* Write the nmgregion to the output file */
-	    nmg_2_vrml( fp_out, pathp, r->m_p, &tsp->ts_mater );
+	    nmg_2_vrml( outfp, pathp, r->m_p, &tsp->ts_mater );
 	}
 
 	/* NMG region is no longer necessary */

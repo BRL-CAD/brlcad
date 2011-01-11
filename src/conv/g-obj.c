@@ -259,9 +259,9 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     struct bu_ptbl verts;
     struct bu_ptbl norms;
     char *region_name;
-    int numverts = 0;		/* Number of vertices to output */
-    int numtri   = 0;		/* Number of triangles to output */
-    int i;
+    size_t numverts = 0;		/* Number of vertices to output */
+    size_t numtri   = 0;		/* Number of triangles to output */
+    size_t i;
 
     NMG_CK_REGION( r );
     RT_CK_FULL_PATH(pathp);
@@ -322,14 +322,15 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		/* check vertex numbers for each triangle */
 		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 		{
+		    int loc;
 		    NMG_CK_EDGEUSE( eu );
 
 		    v = eu->vu_p->v_p;
 		    NMG_CK_VERTEX( v );
 
 		    vert_count++;
-		    i = bu_ptbl_locate( &verts, (long *)v );
-		    if ( i < 0 )
+		    loc = bu_ptbl_locate( &verts, (long *)v );
+		    if ( loc < 0 )
 		    {
 			bu_ptbl_free( &verts);
 			bu_free( region_name, "region name" );
@@ -446,14 +447,15 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		/* list vertex numbers for each triangle */
 		for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 		{
+		    int loc;
 		    NMG_CK_EDGEUSE( eu );
 
 		    v = eu->vu_p->v_p;
 		    NMG_CK_VERTEX( v );
 
 		    vert_count++;
-		    i = bu_ptbl_locate( &verts, (long *)v );
-		    if ( i < 0 )
+		    loc = bu_ptbl_locate( &verts, (long *)v );
+		    if ( loc < 0 )
 		    {
 			bu_ptbl_free( &verts);
 			bu_log( "Vertex from eu x%x is not in nmgregion x%x\n", eu, r );
