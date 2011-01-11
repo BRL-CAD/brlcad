@@ -6,8 +6,7 @@ AM_CFLAGS = \
 	-I${top_srcdir}/src/adrt/libcommon \
 	-I${top_srcdir}/src/adrt/librender \
 	-I${top_srcdir}/src/adrt/librender \
-	${TCL_CPPFLAGS} \
-	${STRICT_FLAGS}
+	${TCL_CPPFLAGS}
 
 lib_LTLIBRARIES = libtie.la librender.la
 
