@@ -30,7 +30,7 @@
 
 #include "bu.h"
 
-void texture_mix_init(struct texture_s *texture, struct texture_s *texture1, struct texture_s *texture2, tfloat coef) {
+void texture_mix_init(struct texture_s *texture, struct texture_s *texture1, struct texture_s *texture2, fastf_t coef) {
     struct texture_mix_s *td;
 
     texture->data = bu_malloc(sizeof(struct texture_mix_s), "texture data");
@@ -51,15 +51,15 @@ void texture_mix_free(struct texture_s *texture) {
 
 void texture_mix_work(__TEXTURE_WORK_PROTOTYPE__) {
     struct texture_mix_s *td;
-    TIE_3 t;
+    vect_t t;
 
     td = (struct texture_mix_s *)texture->data;
 
     td->texture1->work(td->texture1, ADRT_MESH(mesh), ray, id, pixel);
     td->texture2->work(td->texture2, ADRT_MESH(mesh), ray, id, &t);
-    VSCALE((*pixel).v,  (*pixel).v,  td->coef);
-    VSCALE(t.v,  t.v,  (1.0 - td->coef));
-    VADD2((*pixel).v,  (*pixel).v,  t.v);
+    VSCALE((*pixel),  (*pixel),  td->coef);
+    VSCALE(t,  t,  (1.0 - td->coef));
+    VADD2((*pixel),  (*pixel),  t);
 }
 
 /*

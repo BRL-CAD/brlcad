@@ -30,7 +30,7 @@
 
 #include "bu.h"
 
-void texture_camo_init(struct texture_s *texture, tfloat size, int octaves, int absolute, TIE_3 color1, TIE_3 color2, TIE_3 color3) {
+void texture_camo_init(struct texture_s *texture, fastf_t size, int octaves, int absolute, vect_t color1, vect_t color2, vect_t color3) {
     struct texture_camo_s   *sd;
 
     texture->data = bu_malloc(sizeof(struct texture_camo_s), "camo data");
@@ -41,9 +41,9 @@ void texture_camo_init(struct texture_s *texture, tfloat size, int octaves, int 
     sd->size = size;
     sd->octaves = octaves;
     sd->absolute = absolute;
-    sd->color1 = color1;
-    sd->color2 = color2;
-    sd->color3 = color3;
+    VMOVE(sd->color1, color1);
+    VMOVE(sd->color2, color2);
+    VMOVE(sd->color3, color3);
 
     texture_perlin_init(&sd->perlin);
 }
@@ -59,33 +59,34 @@ void texture_camo_free(struct texture_s *texture) {
 
 
 void texture_camo_work(__TEXTURE_WORK_PROTOTYPE__) {
-    struct texture_camo_s *td;
-    TIE_3 p, pt;
-    tfloat sum1, sum2;
+	struct texture_camo_s *td;
+	vect_t p, pt;
+	tfloat sum1, sum2;
 
 
-    td = (struct texture_camo_s *)texture->data;
+	td = (struct texture_camo_s *)texture->data;
 
-    /* Transform the Point */
-    MATH_VEC_TRANSFORM(pt, id->pos, ADRT_MESH(mesh)->matinv);
-    if (td->absolute)
-	p = id->pos;
-    else {
-	p.v[0] = ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0] > TIE_PREC ? (pt.v[0] - ADRT_MESH(mesh)->min.v[0]) / (ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0]) : 0.0;
-	p.v[1] = ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1] > TIE_PREC ? (pt.v[1] - ADRT_MESH(mesh)->min.v[1]) / (ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1]) : 0.0;
-	p.v[2] = ADRT_MESH(mesh)->max.v[2] - ADRT_MESH(mesh)->min.v[2] > TIE_PREC ? (pt.v[2] - ADRT_MESH(mesh)->min.v[2]) / (ADRT_MESH(mesh)->max.v[2] - ADRT_MESH(mesh)->min.v[2]) : 0.0;
-    }
+	/* Transform the Point */
+	MATH_VEC_TRANSFORM(pt, id->pos, ADRT_MESH(mesh)->matinv);
+	if (td->absolute) {
+		VMOVE(p, id->pos);
+	} else {
+		p[0] = ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[0] > TIE_PREC ? (pt[0] - ADRT_MESH(mesh)->min[0]) / (ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[0]) : 0.0;
+		p[1] = ADRT_MESH(mesh)->max[1] - ADRT_MESH(mesh)->min[1] > TIE_PREC ? (pt[1] - ADRT_MESH(mesh)->min[1]) / (ADRT_MESH(mesh)->max[1] - ADRT_MESH(mesh)->min[1]) : 0.0;
+		p[2] = ADRT_MESH(mesh)->max[2] - ADRT_MESH(mesh)->min[2] > TIE_PREC ? (pt[2] - ADRT_MESH(mesh)->min[2]) / (ADRT_MESH(mesh)->max[2] - ADRT_MESH(mesh)->min[2]) : 0.0;
+	}
 
-    sum1 = fabs(texture_perlin_noise3(&td->perlin, p, td->size*1.0, td->octaves));
-    sum2 = fabs(texture_perlin_noise3(&td->perlin, p, td->size*0.8, td->octaves+1));
+	sum1 = fabs(texture_perlin_noise3(&td->perlin, p, td->size*1.0, td->octaves));
+	sum2 = fabs(texture_perlin_noise3(&td->perlin, p, td->size*0.8, td->octaves+1));
 
-    if (sum1 < 0.3)
-	*pixel = td->color1;
-    else
-	*pixel = td->color2;
+	if (sum1 < 0.3) {
+		VMOVE(*pixel, td->color1);
+	} else {
+		VMOVE(*pixel, td->color2);
+	}
 
-    if (sum2 < 0.3)
-	*pixel = td->color3;
+	if (sum2 < 0.3)
+		VMOVE(*pixel, td->color3);
 }
 
 /*

@@ -86,18 +86,18 @@ typedef struct TIE_3_s {
 } TIE_3;
 
 struct tie_ray_s {
-    TIE_3 pos;    /* Position */
-    TIE_3 dir;    /* Direction */
+    point_t pos;    /* Position */
+    vect_t dir;    /* Direction */
     short depth;  /* Depth */
     short kdtree_depth;
 };
 
 struct tie_id_s {
-    TIE_3 pos;    /* Point */
-    TIE_3 norm;   /* Normal */
-    tfloat dist;   /* Distance */
-    tfloat alpha;	/* Barycentric Coordinate Alpha */
-    tfloat beta;	/* Barycentric Coordinate Beta */
+    point_t pos;    /* Point */
+    vect_t norm;   /* Normal */
+    fastf_t dist;   /* Distance */
+    fastf_t alpha;	/* Barycentric Coordinate Alpha */
+    fastf_t beta;	/* Barycentric Coordinate Beta */
 };
 
 struct tie_tri_s {
@@ -107,7 +107,7 @@ struct tie_tri_s {
 };
 
 struct tie_kdtree_s {
-    tfloat axis;
+    fastf_t axis;
     void *data;
 };
 
@@ -131,14 +131,13 @@ TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_free), (struct tie_s *tie));
 TIE_EXPORT BU_EXTERN(uint32_t TIE_VAL(tie_kdtree_cache_free), (struct tie_s *tie, void **cache));
 TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_cache_load), (struct tie_s *tie, void *cache, uint32_t size));
 TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_prep), (struct tie_s *tie));
-TIE_EXPORT extern tfloat TIE_VAL(TIE_PREC);
+TIE_EXPORT extern fastf_t TIE_PREC;
 
 /* compatability macros */
 #define tie_kdtree_free TIE_VAL(tie_kdtree_free)
 #define tie_kdtree_cache_free TIE_VAL(tie_kdtree_cache_free)
 #define tie_kdtree_cache_load TIE_VAL(tie_kdtree_cache_load)
 #define tie_kdtree_prep TIE_VAL(tie_kdtree_prep)
-#define TIE_PREC TIE_VAL(TIE_PREC)
 
 TIE_EXPORT BU_EXTERN(int tie_check_degenerate,);
 

@@ -42,45 +42,45 @@
 
 struct texture_perlin_s {
     int *PV;
-    TIE_3 *RV;
+    vect_t *RV;
 };
 
 BU_EXPORT BU_EXTERN(void texture_perlin_init, (struct texture_perlin_s *P));
 BU_EXPORT BU_EXTERN(void texture_perlin_free, (struct texture_perlin_s *P));
-BU_EXPORT BU_EXTERN(tfloat texture_perlin_noise3, (struct texture_perlin_s *P, TIE_3 V, tfloat Size, int Depth));
+BU_EXPORT BU_EXTERN(fastf_t texture_perlin_noise3, (struct texture_perlin_s *P, vect_t V, fastf_t Size, int Depth));
 
 
 struct texture_blend_s {
-    TIE_3 color1;
-    TIE_3 color2;
+    vect_t color1;
+    vect_t color2;
 };
 
-BU_EXPORT BU_EXTERN(void texture_blend_init, (struct texture_s *texture, TIE_3 color1, TIE_3 color2));
+BU_EXPORT BU_EXTERN(void texture_blend_init, (struct texture_s *texture, vect_t color1, vect_t color2));
 BU_EXPORT BU_EXTERN(void texture_blend_free, (struct texture_s *texture));
 BU_EXPORT BU_EXTERN(void texture_blend_work, (__TEXTURE_WORK_PROTOTYPE__));
 
 struct texture_bump_s {
-    TIE_3 coef;
+    vect_t coef;
 };
 
-BU_EXPORT BU_EXTERN(void texture_bump_init, (struct texture_s *texture, TIE_3 rgb));
+BU_EXPORT BU_EXTERN(void texture_bump_init, (struct texture_s *texture, vect_t rgb));
 BU_EXPORT BU_EXTERN(void texture_bump_free, (struct texture_s *texture));
 BU_EXPORT BU_EXTERN(void texture_bump_work, (__TEXTURE_WORK_PROTOTYPE__));
 
 
 
 struct texture_camo_s {
-    tfloat size;
+    fastf_t size;
     int octaves;
     int absolute;
-    TIE_3 color1;
-    TIE_3 color2;
-    TIE_3 color3;
+    vect_t color1;
+    vect_t color2;
+    vect_t color3;
     struct texture_perlin_s perlin;
 };
 
 
-BU_EXPORT BU_EXTERN(void texture_camo_init, (struct texture_s *texture, tfloat size, int octaves, int absolute, TIE_3 color1, TIE_3 color2, TIE_3 color3));
+BU_EXPORT BU_EXTERN(void texture_camo_init, (struct texture_s *texture, fastf_t size, int octaves, int absolute, vect_t color1, vect_t color2, vect_t color3));
 BU_EXPORT BU_EXTERN(void texture_camo_free, (struct texture_s *texture));
 BU_EXPORT BU_EXTERN(void texture_camo_work, (__TEXTURE_WORK_PROTOTYPE__));
 
@@ -95,15 +95,15 @@ BU_EXPORT BU_EXTERN(void texture_checker_work, (__TEXTURE_WORK_PROTOTYPE__));
 
 
 struct texture_clouds_s {
-    tfloat size;
+    fastf_t size;
     int octaves;
     int absolute;
-    TIE_3 scale;
-    TIE_3 translate;
+    vect_t scale;
+    vect_t translate;
     struct texture_perlin_s perlin;
 };
 
-BU_EXPORT BU_EXTERN(void texture_cloudts_inis, (struct texture_s *texture, tfloat size, int octaves, int absolute, TIE_3 scale, TIE_3 translate));
+BU_EXPORT BU_EXTERN(void texture_cloudts_inis, (struct texture_s *texture, fastf_t size, int octaves, int absolute, vect_t scale, vect_t translate));
 BU_EXPORT BU_EXTERN(void texture_clouds_free, (struct texture_s *texture));
 BU_EXPORT BU_EXTERN(void texture_clouds_work, (__TEXTURE_WORK_PROTOTYPE__));
 
@@ -130,11 +130,11 @@ BU_EXPORT BU_EXTERN(void texture_image_work, (__TEXTURE_WORK_PROTOTYPE__));
 struct texture_mix_s {
     struct texture_s *texture1;
     struct texture_s *texture2;
-    tfloat coef;
+    fastf_t coef;
 };
 
 
-BU_EXPORT BU_EXTERN(void texture_mix_init, (struct texture_s *texture, struct texture_s *texture1, struct texture_s *texture2, tfloat coef));
+BU_EXPORT BU_EXTERN(void texture_mix_init, (struct texture_s *texture, struct texture_s *texture1, struct texture_s *texture2, fastf_t coef));
 BU_EXPORT BU_EXTERN(void texture_mix_free, (struct texture_s *texture));
 BU_EXPORT BU_EXTERN(void texture_mix_work, (__TEXTURE_WORK_PROTOTYPE__));
 

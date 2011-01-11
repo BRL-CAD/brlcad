@@ -49,7 +49,7 @@ void texture_gradient_free(struct texture_s *texture) {
 
 void texture_gradient_work(__TEXTURE_WORK_PROTOTYPE__) {
     struct texture_gradient_s *td;
-    TIE_3 pt;
+    vect_t pt;
 
 
     td = (struct texture_gradient_s *)texture->data;
@@ -58,11 +58,11 @@ void texture_gradient_work(__TEXTURE_WORK_PROTOTYPE__) {
     MATH_VEC_TRANSFORM(pt, id->pos, ADRT_MESH(mesh)->matinv);
 
     if (td->axis == 1) {
-	pixel->v[0] = pixel->v[1] = pixel->v[2] = ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1] > TIE_PREC ? (pt.v[1] - ADRT_MESH(mesh)->min.v[1]) / (ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1]) : 0.0;
+	*pixel[0] = *pixel[1] = *pixel[2] = ADRT_MESH(mesh)->max[1] - ADRT_MESH(mesh)->min[1] > TIE_PREC ? (pt[1] - ADRT_MESH(mesh)->min[1]) / (ADRT_MESH(mesh)->max[1] - ADRT_MESH(mesh)->min[1]) : 0.0;
     } else if (td->axis == 2) {
-	pixel->v[0] = pixel->v[1] = pixel->v[2] = ADRT_MESH(mesh)->max.v[2] - ADRT_MESH(mesh)->min.v[2] > TIE_PREC ? (pt.v[2] - ADRT_MESH(mesh)->min.v[2]) / (ADRT_MESH(mesh)->max.v[2] - ADRT_MESH(mesh)->min.v[1]) : 0.0;
+	*pixel[0] = *pixel[1] = *pixel[2] = ADRT_MESH(mesh)->max[2] - ADRT_MESH(mesh)->min[2] > TIE_PREC ? (pt[2] - ADRT_MESH(mesh)->min[2]) / (ADRT_MESH(mesh)->max[2] - ADRT_MESH(mesh)->min[1]) : 0.0;
     } else {
-	pixel->v[0] = pixel->v[1] = pixel->v[2] = ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0] > TIE_PREC ? (pt.v[0] - ADRT_MESH(mesh)->min.v[0]) / (ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[1]) : 0.0;
+	*pixel[0] = *pixel[1] = *pixel[2] = ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[0] > TIE_PREC ? (pt[0] - ADRT_MESH(mesh)->min[0]) / (ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[1]) : 0.0;
     }
 }
 

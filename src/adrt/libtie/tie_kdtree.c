@@ -110,8 +110,6 @@
 	if (min > rad || max < -rad) return 0;
 
 
-TIE_EXPORT tfloat TIE_VAL(TIE_PREC);
-
 /*************************************************************
  **************** PRIVATE FUNCTIONS **************************
  *************************************************************/
@@ -940,7 +938,7 @@ void TIE_VAL(tie_kdtree_prep)(struct tie_s *tie)
     VSUB2(delta.v,  tie->max.v,  tie->min.v);
     MATH_MAX3(TIE_PREC, delta.v[0], delta.v[1], delta.v[2]);
 #if defined(TIE_PRECISION) && defined(TIE_PRECISION_SINGLE) && TIE_PRECISION == TIE_PRECISION_SINGLE
-    TIE_PREC *= (float)0.000000001;
+    TIE_PREC *= 0.000000001;
 #else
     TIE_PREC *= 0.000000000001;
 #endif

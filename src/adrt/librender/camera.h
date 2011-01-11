@@ -41,18 +41,18 @@
 
 typedef struct render_camera_view_s
 {
-    TIE_3 step_x;
-    TIE_3 step_y;
-    TIE_3 pos;
-    TIE_3 top_l;
+    vect_t step_x;
+    vect_t step_y;
+    vect_t pos;
+    vect_t top_l;
 } render_camera_view_t;
 
 
 typedef struct render_camera_s
 {
     uint8_t type;
-    TIE_3 pos;
-    TIE_3 focus;
+    point_t pos;
+    vect_t focus;
     fastf_t tilt;
     fastf_t fov;
     fastf_t gridsize;

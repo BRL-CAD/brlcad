@@ -47,9 +47,9 @@ render_phong_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TI
 	if (mesh->texture)
 	    mesh->texture->work(mesh->texture, mesh, ray, &id, pixel);
 
-	VSUB2(vec.v,  ray->pos.v,  id.pos.v);
+	VSUB2(vec.v,  ray->pos,  id.pos);
 	VUNITIZE(vec.v);
-	VSCALE((*pixel).v, (*pixel).v, VDOT( vec.v,  id.norm.v));
+	VSCALE((*pixel).v, (*pixel).v, VDOT( vec.v,  id.norm));
     }
     return;
 }

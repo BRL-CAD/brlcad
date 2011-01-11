@@ -39,14 +39,14 @@ typedef struct render_segment_s {
 
 typedef struct render_shotline_s {
     render_segment_t *seglist;
-    TIE_3 in_hit;
+    point_t in_hit;
     uint32_t segnum;
     uint32_t segind;
 } render_shotline_t;
 
 
 /* Generate vector list for a spall cone given a reference angle */
-void render_util_spall_vec(TIE_3 dir, tfloat angle, int vec_num, TIE_3 *vec_list) {
+void render_util_spall_vec(vect_t dir, fastf_t angle, int vec_num, vect_t *vec_list) {
 #if 0
     TIE_3 vec;
     tfloat radius, t;
@@ -111,9 +111,9 @@ static void* shot_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri
 
 	/* In-hit */
 	if (shotline->segnum == 0) {
-	    shotline->in_hit = ray->dir;
-	    VSCALE(shotline->in_hit.v,  shotline->in_hit.v,  id->dist);
-	    VADD2(shotline->in_hit.v,  shotline->in_hit.v,  ray->pos.v);
+	    VMOVE(shotline->in_hit, ray->dir);
+	    VSCALE(shotline->in_hit,  shotline->in_hit,  id->dist);
+	    VADD2(shotline->in_hit,  shotline->in_hit,  ray->pos);
 	}
 
 	/* Increment */

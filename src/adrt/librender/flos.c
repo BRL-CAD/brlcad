@@ -33,7 +33,7 @@
 #include "bu.h"
 
 typedef struct render_flos_s {
-    TIE_3 frag_pos;
+    point_t frag_pos;
 } render_flos_t;
 
 
@@ -55,19 +55,19 @@ void render_flos_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray
 	return;
     }
 
-    VSUB2(vec.v,  ray->pos.v,  id.pos.v);
+    VSUB2(vec.v,  ray->pos,  id.pos);
     VUNITIZE(vec.v);
-    angle = VDOT( vec.v,  id.norm.v);
+    angle = VDOT( vec.v,  id.norm);
 
     /* Determine if direct line of sight to fragment */
-    ray->pos = rd->frag_pos;
-    VSUB2(ray->dir.v,  id.pos.v,  rd->frag_pos.v);
-    VUNITIZE(ray->dir.v);
+    VMOVE(ray->pos, rd->frag_pos);
+    VSUB2(ray->dir,  id.pos,  rd->frag_pos);
+    VUNITIZE(ray->dir);
 
     if (tie_work(tie, ray, &tid, render_hit, NULL)) {
-	if (fabs (id.pos.v[0] - tid.pos.v[0]) < TIE_PREC &&
-	    fabs (id.pos.v[1] - tid.pos.v[1]) < TIE_PREC &&
-	    fabs (id.pos.v[2] - tid.pos.v[2]) < TIE_PREC)
+	if (fabs (id.pos[0] - tid.pos[0]) < TIE_PREC &&
+	    fabs (id.pos[1] - tid.pos[1]) < TIE_PREC &&
+	    fabs (id.pos[2] - tid.pos[2]) < TIE_PREC)
 	{
 	    VSET((*pixel).v, 1.0, 0.0, 0.0);
 	}
@@ -88,7 +88,7 @@ render_flos_init(render_t *render, const char *frag_pos)
     render->free = render_flos_free;
     render->data = (render_flos_t *)bu_malloc(sizeof(render_flos_t), "render_flos_init");
     d = (render_flos_t *)render->data;
-    sscanf(frag_pos, "#(%f %f %f)", &d->frag_pos.v[0], &d->frag_pos.v[1],  &d->frag_pos.v[2]);
+    sscanf(frag_pos, "#(%f %f %f)", &d->frag_pos[0], &d->frag_pos[1],  &d->frag_pos[2]);
     return 0;
 }
 

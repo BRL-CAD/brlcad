@@ -207,9 +207,6 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
     int ab[3], split, stack_ind;
     void *result;
 
-
-/*ErPLog( "ray: %f %f %f %f %f %f\n", ray->pos.v[0], ray->pos.v[1], ray->pos.v[2], ray->dir.v[0], ray->dir.v[1], ray->dir.v[2] );*/
-
     if (!tie->kdtree)
 	return NULL;
 
@@ -220,9 +217,9 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
  * this allows those divides to become fast multiplies.
  */
     for (i = 0; i < 3; i++) {
-	if (NEAR_ZERO(ray->dir.v[i], SMALL_FASTF))
-	    ray->dir.v[i] = TIE_PREC;
-	dirinv[i] = 1.0 / ray->dir.v[i];
+	if (NEAR_ZERO(ray->dir[i], SMALL_FASTF))
+	    ray->dir[i] = TIE_PREC;
+	dirinv[i] = 1.0 / ray->dir[i];
 	ab[i] = dirinv[i] < 0.0 ? 1.0 : 0.0;
     }
 
@@ -230,10 +227,10 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
     split = ((intptr_t)(((struct tie_kdtree_s *)((intptr_t)tie->kdtree & ~0x7L))->data)) & 0x3;
 
 /* Initialize ray segment */
-    if (ray->dir.v[split] < 0.0)
-	far = (tie->min.v[split] - ray->pos.v[split]) * dirinv[split];
+    if (ray->dir[split] < 0.0)
+	far = (tie->min.v[split] - ray->pos[split]) * dirinv[split];
     else
-	far = (tie->max.v[split] - ray->pos.v[split]) * dirinv[split];
+	far = (tie->max.v[split] - ray->pos[split]) * dirinv[split];
 
     stack_ind = 0;
     stack[0].node = tie->kdtree;
@@ -269,7 +266,7 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	    split = ((intptr_t)(node_aligned->data)) & 0x3;
 
 /* Calculate the projected 1d distance to splitting axis */
-	    dist = (node_aligned->axis - ray->pos.v[split]) * dirinv[split];
+	    dist = (node_aligned->axis - ray->pos[split]) * dirinv[split];
 
 	    temp[0] = &((struct tie_kdtree_s *)(node_aligned->data))[ab[split]];
 	    temp[1] = &((struct tie_kdtree_s *)(node_aligned->data))[1-ab[split]];
@@ -306,8 +303,8 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	    int i1, i2;
 
 	    tri = data->tri_list[i];
-	    u0 = VDOT( tri->data[1].v,  ray->pos.v);
-	    v0 = VDOT( tri->data[1].v,  ray->dir.v);
+	    u0 = VDOT( tri->data[1].v,  ray->pos);
+	    v0 = VDOT( tri->data[1].v,  ray->dir);
 	    t.dist = -(tri->data[2].v[0] + u0) / v0;
 
 /*
@@ -320,8 +317,8 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 		continue;
 
 /* Compute Intersection Point (P = O + Dt) */
-	    VSCALE(t.pos.v,  ray->dir.v,  t.dist);
-	    VADD2(t.pos.v,  ray->pos.v,  t.pos.v);
+	    VSCALE(t.pos,  ray->dir,  t.dist);
+	    VADD2(t.pos,  ray->pos,  t.pos);
 
 /* Extract i1 and i2 indices from lower bits of the v pointer */
 	    v = (tfloat *)((intptr_t)(tri->v) & ~0x7L);
@@ -330,8 +327,8 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	    i2 = TIE_TAB1[3 + ((intptr_t)(tri->v) & 0x7)];
 
 /* Compute U and V */
-	    u0 = t.pos.v[i1] - tri->data[0].v[i1];
-	    v0 = t.pos.v[i2] - tri->data[0].v[i2];
+	    u0 = t.pos[i1] - tri->data[0].v[i1];
+	    v0 = t.pos[i2] - tri->data[0].v[i2];
 
 /*
  * Compute the barycentric coordinates, and make sure the coordinates
@@ -376,7 +373,7 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 		}
 	    }
 
-	    id_list[i].norm = hit_list[i]->data[1];
+	    VMOVE(id_list[i].norm, hit_list[i]->data[1].v);
 	    result = hitfunc(ray, &id_list[i], hit_list[i], ptr);
 
 	    if (result) {

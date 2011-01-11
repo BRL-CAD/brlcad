@@ -49,7 +49,7 @@ void texture_checker_free(struct texture_s *texture) {
 
 void texture_checker_work(__TEXTURE_WORK_PROTOTYPE__) {
     struct texture_checker_s	*td;
-    TIE_3			pt;
+    vect_t			pt;
     int			u, v;
 
 
@@ -58,12 +58,12 @@ void texture_checker_work(__TEXTURE_WORK_PROTOTYPE__) {
     /* Transform the Point */
     MATH_VEC_TRANSFORM(pt, id->pos, ADRT_MESH(mesh)->matinv);
 
-    if (pt.v[0]+TIE_PREC > ADRT_MESH(mesh)->max.v[0]) pt.v[0] = ADRT_MESH(mesh)->max.v[0];
-    if (pt.v[1]+TIE_PREC > ADRT_MESH(mesh)->max.v[1]) pt.v[1] = ADRT_MESH(mesh)->max.v[1];
-    u = ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0] > 0 ? (int)((pt.v[0] - ADRT_MESH(mesh)->min.v[0]) / ((ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0])/td->tile))%2 : 0;
-    v = ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1] > 0 ? (int)((pt.v[1] - ADRT_MESH(mesh)->min.v[1]) / ((ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1])/td->tile))%2 : 0;
+    if (pt[0]+TIE_PREC > ADRT_MESH(mesh)->max[0]) pt[0] = ADRT_MESH(mesh)->max[0];
+    if (pt[1]+TIE_PREC > ADRT_MESH(mesh)->max[1]) pt[1] = ADRT_MESH(mesh)->max[1];
+    u = ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[0] > 0 ? (int)((pt[0] - ADRT_MESH(mesh)->min[0]) / ((ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[0])/td->tile))%2 : 0;
+    v = ADRT_MESH(mesh)->max[1] - ADRT_MESH(mesh)->min[1] > 0 ? (int)((pt[1] - ADRT_MESH(mesh)->min[1]) / ((ADRT_MESH(mesh)->max[1] - ADRT_MESH(mesh)->min[1])/td->tile))%2 : 0;
 
-    pixel->v[0] = pixel->v[1] = pixel->v[2] = u ^ v ? 1.0 : 0.0;
+    *pixel[0] = *pixel[1] = *pixel[2] = u ^ v ? 1.0 : 0.0;
 }
 
 /*

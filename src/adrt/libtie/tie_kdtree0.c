@@ -23,6 +23,11 @@
  */
 
 #define TIE_PRECISION 0
+
+#include "tie.h"
+
+TIE_EXPORT fastf_t TIE_PREC;
+
 #include "./tie_kdtree.c"
 #undef TIE_PRECISION
 

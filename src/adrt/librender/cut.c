@@ -40,8 +40,8 @@ void* render_cut_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_
 void render_cut(struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel);
 
 typedef struct render_cut_s {
-    TIE_3 ray_pos;
-    TIE_3 ray_dir;
+    point_t ray_pos;
+    vect_t ray_dir;
     tfloat plane[4];
     struct tie_s tie;
 } render_cut_t;
@@ -112,7 +112,7 @@ render_cut_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_
      * I don't think this needs to be done for every pixel?
      * Flip plane normal to face us.
      */
-    t = ray->pos.v[0]*rd->plane[0] + ray->pos.v[1]*rd->plane[1] + ray->pos.v[2]*rd->plane[2] + rd->plane[3];
+    t = ray->pos[0]*rd->plane[0] + ray->pos[1]*rd->plane[1] + ray->pos[2]*rd->plane[2] + rd->plane[3];
     hit.mod = t < 0 ? 1 : -1;
 
 
@@ -123,16 +123,16 @@ render_cut_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_
      * Ray = O + td
      * t = -(Pn · R0 + D) / (Pn · Rd)
      */
-    t = (rd->plane[0]*ray->pos.v[0] + rd->plane[1]*ray->pos.v[1] + rd->plane[2]*ray->pos.v[2] + rd->plane[3]) /
-	(rd->plane[0]*ray->dir.v[0] + rd->plane[1]*ray->dir.v[1] + rd->plane[2]*ray->dir.v[2]);
+    t = (rd->plane[0]*ray->pos[0] + rd->plane[1]*ray->pos[1] + rd->plane[2]*ray->pos[2] + rd->plane[3]) /
+	(rd->plane[0]*ray->dir[0] + rd->plane[1]*ray->dir[1] + rd->plane[2]*ray->dir[2]);
 
     /* Ray never intersects plane */
     if (t > 0)
 	return;
 
-    ray->pos.v[0] += -t * ray->dir.v[0];
-    ray->pos.v[1] += -t * ray->dir.v[1];
-    ray->pos.v[2] += -t * ray->dir.v[2];
+    ray->pos[0] += -t * ray->dir[0];
+    ray->pos[1] += -t * ray->dir[1];
+    ray->pos[2] += -t * ray->dir[2];
     HMOVE(hit.plane, rd->plane);
 
     /* Render Geometry */
@@ -145,7 +145,7 @@ render_cut_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_
      */
 
     /* flipped normal */
-    dot = fabs(VDOT( ray->dir.v,  hit.id.norm.v));
+    dot = fabs(VDOT( ray->dir,  hit.id.norm));
 
     if (hit.mesh->flags & (ADRT_MESH_SELECT|ADRT_MESH_HIT)) {
 	VSET(color.v, hit.mesh->flags & ADRT_MESH_HIT ? (tfloat)0.9 : (tfloat)0.2, (tfloat)0.2, hit.mesh->flags & ADRT_MESH_SELECT ? (tfloat)0.9 : (tfloat)0.2);
@@ -171,7 +171,7 @@ render_cut_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_
 	TIE_3 vec;
 	fastf_t angle;
 	/* shade solid */
-	VSUB2(vec.v,  ray->pos.v,  hit.id.pos.v);
+	VSUB2(vec.v,  ray->pos,  hit.id.pos);
 	VUNITIZE(vec.v);
 	angle = vec.v[0]*hit.mod*-hit.plane[0] + vec.v[1]*-hit.mod*hit.plane[1] + vec.v[2]*-hit.mod*hit.plane[2];
 	VSCALE((*pixel).v,  color.v,  (angle*0.90));
@@ -188,8 +188,8 @@ render_cut_init(render_t *render, const char *buf)
 {
     int i;
     render_cut_t *d;
-    static TIE_3 list[6];
-    TIE_3 **tlist, up, ray_pos, ray_dir;
+    static point_t list[6];
+    point_t **tlist, up, ray_pos, ray_dir;
     fastf_t shot_len = 100, shot_width = .02;
     struct tie_id_s id;
     struct tie_ray_s ray;
@@ -199,15 +199,15 @@ render_cut_init(render_t *render, const char *buf)
 	    return -1;
 
     sscanf(buf, "#(%f %f %f) #(%f %f %f)",
-	    ray_pos.v, ray_pos.v+1, ray_pos.v+2,
-	    ray_dir.v, ray_dir.v+1, ray_dir.v+2);
-    VUNITIZE(ray_dir.v);
+	    ray_pos, ray_pos+1, ray_pos+2,
+	    ray_dir, ray_dir+1, ray_dir+2);
+    VUNITIZE(ray_dir);
 
     shot_width = 0.01 * render->tie->radius;
     {
 	vect_t v;
 
-	VSUB2(v, ray_pos.v, render->tie->mid);
+	VSUB2(v, ray_pos, render->tie->mid);
 	shot_len = 2.0 * render->tie->radius + MAGNITUDE(v) - render->tie->radius;;
     }
 
@@ -215,8 +215,8 @@ render_cut_init(render_t *render, const char *buf)
      * fire through the entire geometry, marking each intersected mesh with
      * ADRT_MESH_HIT
      */
-    VMOVE(ray.pos.v, ray_pos.v);
-    VMOVE(ray.dir.v, ray_dir.v);
+    VMOVE(ray.pos, ray_pos);
+    VMOVE(ray.dir, ray_dir);
     ray.depth = 0;
     tie_work(render->tie, &ray, &id, render_cut_hit_cutline, &step);
 
@@ -233,33 +233,33 @@ render_cut_init(render_t *render, const char *buf)
     }
     d = (render_cut_t *)render->data;
 
-    d->ray_pos = ray_pos;
-    d->ray_dir = ray_dir;
+    VMOVE(d->ray_pos, ray_pos);
+    VMOVE(d->ray_dir, ray_dir);
 
     /* Calculate the normal to be used for the plane */
-    VSET(up.v, 0, 0, 1);
-    VCROSS(d->plane,  ray_dir.v,  up.v);
+    VSET(up, 0, 0, 1);
+    VCROSS(d->plane,  ray_dir,  up);
     VUNITIZE(d->plane);
 
     /* Construct the plane */
-    d->plane[3] = -VDOT( d->plane,  ray_pos.v); /* up is really new ray_pos */
+    d->plane[3] = -VDOT( d->plane,  ray_pos); /* up is really new ray_pos */
 
     /* generate the shtuff for the blue line */
     tie_init(&d->tie, 2, TIE_KDTREE_FAST);
 
     /* Triangle 1 */
-    VSET(list[0].v, ray_pos.v[0], ray_pos.v[1], ray_pos.v[2] - shot_width);
-    VSET(list[1].v, ray_pos.v[0] + shot_len*ray_dir.v[0], ray_pos.v[1] + shot_len*ray_dir.v[1], ray_pos.v[2] + shot_len*ray_dir.v[2] - shot_width);
-    VSET(list[2].v, ray_pos.v[0] + shot_len*ray_dir.v[0], ray_pos.v[1] + shot_len*ray_dir.v[1], ray_pos.v[2] + shot_len*ray_dir.v[2] + shot_width);
+    VSET(list[0], ray_pos[0], ray_pos[1], ray_pos[2] - shot_width);
+    VSET(list[1], ray_pos[0] + shot_len*ray_dir[0], ray_pos[1] + shot_len*ray_dir[1], ray_pos[2] + shot_len*ray_dir[2] - shot_width);
+    VSET(list[2], ray_pos[0] + shot_len*ray_dir[0], ray_pos[1] + shot_len*ray_dir[1], ray_pos[2] + shot_len*ray_dir[2] + shot_width);
 
     /* Triangle 2 */
-    VMOVE(list[3].v, ray_pos.v);
-    list[3].v[2] -= shot_width;
+    VMOVE(list[3], ray_pos);
+    list[3][2] -= shot_width;
 
-    VSET(list[4].v, ray_pos.v[0] + shot_len*ray_dir.v[0], ray_pos.v[1] + shot_len*ray_dir.v[1], ray_pos.v[2] + shot_len*ray_dir.v[2] + shot_width);
+    VSET(list[4], ray_pos[0] + shot_len*ray_dir[0], ray_pos[1] + shot_len*ray_dir[1], ray_pos[2] + shot_len*ray_dir[2] + shot_width);
 
-    VMOVE(list[5].v, ray_pos.v);
-    list[5].v[2] += shot_width;
+    VMOVE(list[5], ray_pos);
+    list[5][2] += shot_width;
 
     for(i=0;i<6;i++)
 	tlist[i] = &list[i];

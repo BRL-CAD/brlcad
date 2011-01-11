@@ -59,8 +59,8 @@ void texture_image_free(struct texture_s *texture) {
 
 void texture_image_work(__TEXTURE_WORK_PROTOTYPE__) {
     struct texture_image_s *td;
-    TIE_3 pt;
-    tfloat u, v;
+    vect_t pt;
+    fastf_t u, v;
     int ind;
 
 
@@ -69,14 +69,14 @@ void texture_image_work(__TEXTURE_WORK_PROTOTYPE__) {
 
     /* Transform the Point */
     MATH_VEC_TRANSFORM(pt, id->pos, ADRT_MESH(mesh)->matinv);
-    u = ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0] > TIE_PREC ? (pt.v[0] - ADRT_MESH(mesh)->min.v[0]) / (ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0]) : 0.0;
-    v = ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1] > TIE_PREC ? (pt.v[1] - ADRT_MESH(mesh)->min.v[1]) / (ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1]) : 0.0;
+    u = ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[0] > TIE_PREC ? (pt[0] - ADRT_MESH(mesh)->min[0]) / (ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[0]) : 0.0;
+    v = ADRT_MESH(mesh)->max[1] - ADRT_MESH(mesh)->min[1] > TIE_PREC ? (pt[1] - ADRT_MESH(mesh)->min[1]) / (ADRT_MESH(mesh)->max[1] - ADRT_MESH(mesh)->min[1]) : 0.0;
 
     ind = 3*((int)((1.0 - v)*td->h)*td->w + (int)(u*td->w));
 
-    pixel->v[0] = td->image[ind+2] / 255.0;
-    pixel->v[1] = td->image[ind+1] / 255.0;
-    pixel->v[2] = td->image[ind+0] / 255.0;
+    *pixel[0] = td->image[ind+2] / 255.0;
+    *pixel[1] = td->image[ind+1] / 255.0;
+    *pixel[2] = td->image[ind+0] / 255.0;
 }
 
 /*
