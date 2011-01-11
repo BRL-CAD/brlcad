@@ -45,7 +45,7 @@
 
 struct render_shader_s {
 	const char *name;
-	void (*init)(render_t *, const char *);
+	int (*init)(render_t *, const char *);
 	void *dlh;	/* dynamic library handle */
 	struct render_shader_s *next;
 };
@@ -57,7 +57,7 @@ static void render_camera_prep_ortho(render_camera_t *camera);
 static void render_camera_prep_persp(render_camera_t *camera);
 static void render_camera_prep_persp_dof(render_camera_t *camera);
 
-static struct render_shader_s *render_shader_register (const char *name, void (*init)(render_t *, const char *));
+static struct render_shader_s *render_shader_register (const char *name, int (*init)(render_t *, const char *));
 
 void
 render_camera_init(render_camera_t *camera, int threads)
@@ -97,7 +97,7 @@ render_camera_init(render_camera_t *camera, int threads)
 
 
 void
-render_camera_free(render_camera_t *camera)
+render_camera_free(render_camera_t *UNUSED(camera))
 {
 }
 
@@ -408,7 +408,7 @@ render_camera_prep(render_camera_t *camera)
 
 
 void
-render_camera_render_thread(int cpu, genptr_t ptr)
+render_camera_render_thread(int UNUSED(cpu), genptr_t ptr)
 {
     render_camera_thread_data_t *td;
     int d, n, res_ind, scanline, v_scanline;
@@ -595,7 +595,7 @@ render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *
 }
 
 struct render_shader_s *
-render_shader_register(const char *name, void (*init)(render_t *, const char *))
+render_shader_register(const char *name, int (*init)(render_t *, const char *))
 {
 	struct render_shader_s *shader = (struct render_shader_s *)bu_malloc(sizeof(struct render_shader_s), "shader");
 	if(shader == NULL)
@@ -613,7 +613,7 @@ const char *
 render_shader_load_plugin(const char *filename) {
 #ifdef HAVE_DLFCN_H
     void *lh;	/* library handle */
-    void (*init)(render_t *, char *);
+    int (*init)(render_t *, const char *);
     char *name;
     struct render_shader_s *s;
 
@@ -622,7 +622,8 @@ render_shader_load_plugin(const char *filename) {
     if(lh == NULL) { bu_log("Faulty plugin %s: %s\n", filename, dlerror()); return NULL; }
     name = dlsym(lh, "name");
     if(name == NULL) { bu_log("Faulty plugin %s: No name\n", filename); return NULL; }
-    init = dlsym(lh, "init");
+    /* assumes function pointers can be stored as a number, which ISO C does not guarantee */
+    init = (int (*) (render_t *, const char *))(intptr_t)dlsym(lh, "init");
     if(init == NULL) { bu_log("Faulty plugin %s: No init\n", filename); return NULL; }
     s = render_shader_register(name, init);
     s->dlh = lh;
