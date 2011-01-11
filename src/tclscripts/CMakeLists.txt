@@ -3,7 +3,8 @@
 MACRO(pkgIndex_BUILD name srcdir targetdir)
 	ADD_CUSTOM_COMMAND(
 		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl
-		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ampi.tcl ${srcdir} && ${CMAKE_COMMAND} -E rename ${srcdir}/pkgIndex.tcl ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl
+		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ampi.tcl ${srcdir}
+	   COMMAND ${CMAKE_COMMAND} -E rename ${srcdir}/pkgIndex.tcl ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl
 		DEPENDS btclsh
 		)
 	ADD_CUSTOM_TARGET(${name}_pkgIndex.tcl ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl)
@@ -13,7 +14,8 @@ ENDMACRO(pkgIndex_BUILD name srcdir targetdir)
 MACRO(tclIndex_BUILD name srcdir targetdir)
 	ADD_CUSTOM_COMMAND(
 		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tclIndex
-		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ami.tcl ${srcdir} && ${CMAKE_COMMAND} -E rename ${srcdir}/tclIndex ${CMAKE_CURRENT_BINARY_DIR}/tclIndex
+		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ami.tcl ${srcdir} 
+		COMMAND ${CMAKE_COMMAND} -E rename ${srcdir}/tclIndex ${CMAKE_CURRENT_BINARY_DIR}/tclIndex
 		DEPENDS btclsh
 		)
 	ADD_CUSTOM_TARGET(${name}_tclIndex ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tclIndex)
