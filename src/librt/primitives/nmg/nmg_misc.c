@@ -11133,7 +11133,7 @@ nmg_bot(struct shell *s, const struct bn_tol *tol)
     bot->num_faces = 0;
 
     /* count the number of triangles */
-    for (i=0; i<BU_PTBL_LEN(&nmg_faces); i++) {
+    for (i=0; i<(size_t)BU_PTBL_LEN(&nmg_faces); i++) {
 	struct face *f;
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -11168,7 +11168,7 @@ nmg_bot(struct shell *s, const struct bn_tol *tol)
     bot->face_mode = (struct bu_bitv *)NULL;
 
     /* fill in the vertices */
-    for (i=0; i<BU_PTBL_LEN(&nmg_vertices); i++) {
+    for (i=0; i<(size_t)BU_PTBL_LEN(&nmg_vertices); i++) {
 	struct vertex_g *vg;
 
 	v = (struct vertex *)BU_PTBL_GET(&nmg_vertices, i);
@@ -11182,7 +11182,7 @@ nmg_bot(struct shell *s, const struct bn_tol *tol)
 
     /* fill in the faces */
     face_no = 0;
-    for (i=0; i<BU_PTBL_LEN(&nmg_faces); i++) {
+    for (i=0; i<(size_t)BU_PTBL_LEN(&nmg_faces); i++) {
 	struct face *f;
 	struct faceuse *fu;
 	struct loopuse *lu;

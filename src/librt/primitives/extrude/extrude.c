@@ -1816,7 +1816,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 		bu_log("rt_extrude_tess: A loop is not closed in sketch %s\n",
 		       extrude_ip->sketch_name);
 		bu_log("\ttessellation failed!!\n");
-		for (j=0; j<BU_PTBL_END(&loops); j++) {
+		for (j=0; j<(size_t)BU_PTBL_END(&loops); j++) {
 		    aloop = (struct bu_ptbl *)BU_PTBL_GET(&loops, j);
 		    bu_ptbl_free(aloop);
 		    bu_free((char *)aloop, "aloop");
@@ -1833,16 +1833,16 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     /* sort the loops to find inside/outside relationships */
     containing_loops = (struct bu_ptbl **)bu_calloc(BU_PTBL_END(&loops),
 						    sizeof(struct bu_ptbl *), "containing_loops");
-    for (i=0; i<BU_PTBL_END(&loops); i++) {
+    for (i=0; i<(size_t)BU_PTBL_END(&loops); i++) {
 	containing_loops[i] = (struct bu_ptbl *)bu_calloc(1, sizeof(struct bu_ptbl), "containing_loops[i]");
 	bu_ptbl_init(containing_loops[i], BU_PTBL_END(&loops), "containing_loops[i]");
     }
 
-    for (i=0; i<BU_PTBL_END(&loops); i++) {
+    for (i=0; i<(size_t)BU_PTBL_END(&loops); i++) {
 	struct bu_ptbl *loopa;
 
 	loopa = (struct bu_ptbl *)BU_PTBL_GET(&loops, i);
-	for (j=i+1; j<BU_PTBL_END(&loops); j++) {
+	for (j=i+1; j<(size_t)BU_PTBL_END(&loops); j++) {
 	    struct bu_ptbl *loopb;
 
 	    loopb = (struct bu_ptbl *)BU_PTBL_GET(&loops, j);
@@ -1866,7 +1866,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 
     /* find an outermost loop */
     outer_loop = (struct bu_ptbl *)NULL;
-    for (i=0; i<BU_PTBL_END(&loops); i++) {
+    for (i=0; i<(size_t)BU_PTBL_END(&loops); i++) {
 	if (BU_PTBL_END(containing_loops[i]) == 0) {
 	    outer_loop = (struct bu_ptbl *)BU_PTBL_GET(&loops, i);
 	    break;
@@ -1876,7 +1876,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     if (!outer_loop) {
 	bu_log("No outer loop in sketch %s\n", extrude_ip->sketch_name);
 	bu_log("\ttessellation failed\n");
-	for (i=0; i<BU_PTBL_END(&loops); i++) {
+	for (i=0; i<(size_t)BU_PTBL_END(&loops); i++) {
 	    aloop = (struct bu_ptbl *)BU_PTBL_GET(&loops, i);
 	    bu_ptbl_free(aloop);
 	    bu_free((char *)aloop, "aloop");
@@ -1891,7 +1891,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     if (BU_LIST_UNINITIALIZED(&rt_g.rtg_vlfree)) {
 	BU_LIST_INIT(&rt_g.rtg_vlfree);
     }
-    for (i=0; i<BU_PTBL_END(outer_loop); i++) {
+    for (i=0; i<(size_t)BU_PTBL_END(outer_loop); i++) {
 	genptr_t seg;
 
 	seg = (genptr_t)BU_PTBL_GET(outer_loop, i);
@@ -1942,7 +1942,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     }
 
     /* add the rest of the loops */
-    for (i=0; i<BU_PTBL_END(&loops); i++) {
+    for (i=0; i<(size_t)BU_PTBL_END(&loops); i++) {
 	int fdir;
 	vect_t cross;
 	fastf_t pt_count=0.0;
@@ -1959,7 +1959,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	    fdir = OT_SAME;
 	}
 
-	for (j=0; j<BU_PTBL_END(aloop); j++) {
+	for (j=0; j<(size_t)BU_PTBL_END(aloop); j++) {
 	    genptr_t seg;
 
 	    seg = (genptr_t)BU_PTBL_GET(aloop, j);
@@ -2029,7 +2029,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     return 0;
 
  failed:
-    for (i=0; i<BU_PTBL_END(&loops); i++) {
+    for (i=0; i<(size_t)BU_PTBL_END(&loops); i++) {
 	bu_ptbl_free(containing_loops[i]);
 	bu_free((char *)containing_loops[i], "containing_loops[i]");
     }
