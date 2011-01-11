@@ -63,6 +63,7 @@ tieinclude_HEADERS = \
 	libtie/tie.h
 
 noinst_HEADERS = \
+	libtie/tieprivate.h \
 	load.h \
 	tienet.h
 

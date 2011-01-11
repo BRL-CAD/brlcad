@@ -37,6 +37,18 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
+#include "tieprivate.h"
+
+#define	MAX_SLICES	100
+#define	MIN_SLICES	35
+#define	MIN_DENSITY	0.01
+#define	MIN_SPAN	0.15
+#define	SCALE_COEF	1.80
+
+#define	TIE_KDTREE_NODE_MAX	4	/* Maximum number of triangles that can reside in a given node until it should be split */
+#define	TIE_KDTREE_DEPTH_K1	1.4	/* K1 Depth Constant Coefficient */
+#define	TIE_KDTREE_DEPTH_K2	1	/* K2 Contant */
+
 #define _MIN(a, b) (a)<(b)?(a):(b)
 #define _MAX(a, b) (a)>(b)?(a):(b)
 #define	MATH_MIN3(_a, _b, _c, _d) _a = _MIN((_b), _MIN((_c), (_d)))

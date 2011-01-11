@@ -28,21 +28,11 @@
 
 #include "common.h"
 
+#include "vmath.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#ifdef _WIN32
-# undef near
-# undef far
-#endif
-
-#include <math.h>
-#ifdef HAVE_STDINT_H
-#  include <stdint.h>
-#endif
-
-#include "vmath.h"
 
 #define TIE_SINGLE_PRECISION 0
 #define TIE_DOUBLE_PRECISION 1
@@ -70,20 +60,10 @@ extern "C" {
 # define TIE_PRECISION TIE_SINGLE_PRECISION
 #endif
 
-#define	TIE_TAB1		"\1\0\0\2\2\1"	/* Triangle Index Table */
-#define	TIE_KDTREE_NODE_MAX	4		/* Maximum number of triangles that can reside in a given node until it should be split */
-#define	TIE_KDTREE_DEPTH_K1	1.4		/* K1 Depth Constant Coefficient */
-#define	TIE_KDTREE_DEPTH_K2	1		/* K2 Contant */
 #define TIE_CHECK_DEGENERATE	1
 
 #define TIE_KDTREE_FAST		0x0
 #define TIE_KDTREE_OPTIMAL	0x1
-
-#define MAX_SLICES	100
-#define MIN_SLICES	35
-#define MIN_DENSITY	0.01
-#define MIN_SPAN	0.15
-#define SCALE_COEF	1.80
 
 /* Type to use for floating precision */
 #if TIE_PRECISION == TIE_SINGLE_PRECISION
@@ -131,16 +111,6 @@ typedef struct tie_kdtree_s {
     void *data;
 } tie_kdtree_t;
 
-typedef struct tie_geom_s {
-    tie_tri_t **tri_list;
-    unsigned int tri_num;
-} tie_geom_t;
-
-typedef struct tie_stack_s {
-    tie_kdtree_t *node;
-    tfloat near;
-    tfloat far;
-} tie_stack_t;
 
 typedef struct tie_s {
     uint64_t rays_fired;

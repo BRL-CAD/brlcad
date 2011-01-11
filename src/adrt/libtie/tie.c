@@ -22,16 +22,13 @@
  *
  */
 
+#include "tie.h"
+
 #include "common.h"
 
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "tie.h"
-#include "bio.h"
-
-#include "bu.h"
 
 #ifdef TIE_SSE
 # include <xmmintrin.h>
@@ -41,10 +38,17 @@
 # include <stdint.h>
 #endif
 
+#include "bio.h"
+#include "bu.h"
+
+#include "tieprivate.h"
+
 #ifdef _WIN32
 # undef near
 # undef far
 #endif
+
+#define	TIE_TAB1		"\1\0\0\2\2\1"	/* Triangle Index Table */
 
 #define TIE_DEGENERATE_THRESHOLD 0.0001
 
