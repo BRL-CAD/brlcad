@@ -31,7 +31,7 @@ MACRO(BRLCAD_ADDEXEC execname srcs libs)
   STRING(REGEX REPLACE "-framework;" "-framework " libslist "${libslist1}")
   add_executable(${execname} ${srcslist})
   target_link_libraries(${execname} ${libslist})
-  INSTALL(TARGETS ${execname} RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+  INSTALL(TARGETS ${execname} DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
   # Enable extra compiler flags if local executables and/or global options dictate
   SET(LOCAL_COMPILE_FLAGS "")
   FOREACH(extraarg ${ARGN})
