@@ -101,7 +101,7 @@ main (int argc, char **argv)
     int ch;
     int how = BELIEVE_NAME;
     int nm_bytes = -1;
-    int nm_pixels;
+    int nm_pixels = 0;
     unsigned long int width;
     unsigned long int height;
     struct stat stat_buf;
