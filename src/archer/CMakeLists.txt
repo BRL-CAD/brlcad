@@ -1,4 +1,10 @@
+IF(WIN32)
+	configure_file(archer.bat ${CMAKE_BINARY_DIR}/bin/archer.bat COPYONLY)
+	INSTALL(PROGRAMS archer.bat DESTINATION bin)
+ENDIF(WIN32)
+configure_file(archer ${CMAKE_BINARY_DIR}/bin/archer COPYONLY)
 INSTALL(PROGRAMS archer DESTINATION bin)
+configure_file(itk_redefines.tcl ${CMAKE_BINARY_DIR}/share/tclscripts/itk_redefines.tcl COPYONLY)
 INSTALL(FILES itk_redefines.tcl DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts)
 
 set(archer_plugins
