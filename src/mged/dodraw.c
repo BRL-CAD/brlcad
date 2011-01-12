@@ -514,7 +514,7 @@ mged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
     rt_db_free_internal(&intern);
     return 0;
 
- out:
+out:
     /* Successful fastpath drawing of this solid */
     {
 	struct db_full_path pp;
@@ -531,6 +531,60 @@ mged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
     rt_db_free_internal(&intern);
     mged_fastpath_count++;
     return -1;	/* SKIP THIS REGION */
+}
+
+
+int
+process_boolean(const struct db_full_path *pathp, union tree *curtree, struct db_tree_state *tsp)
+{
+    int failed = 1;
+
+    if (!BU_SETJUMP) {
+	/* try */
+
+	failed = nmg_boolean(curtree, *tsp->ts_m, tsp->ts_tol, &rt_uniresource);
+
+    } else {
+	/* catch */
+
+	char *sofar = db_path_to_string(pathp);
+
+	BU_UNSETJUMP;
+
+	Tcl_AppendResult(INTERP, "WARNING: Boolean evaluation of ", sofar,
+			 " failed!!!\n", (char *)NULL);
+	bu_free((genptr_t)sofar, "path string");
+	db_free_tree(curtree, &rt_uniresource);
+
+	return failed;
+
+    } BU_UNSETJUMP;
+
+    return failed;
+}
+
+
+void
+process_triangulate(const struct db_full_path *pathp, union tree *curtree, struct db_tree_state *tsp)
+{
+    if (!BU_SETJUMP) {
+	/* try */
+
+	nmg_triangulate_model(*tsp->ts_m, tsp->ts_tol);
+
+    } else {
+	/* catch */
+
+	char *sofar = db_path_to_string(pathp);
+
+	BU_UNSETJUMP;
+
+	Tcl_AppendResult(INTERP, "WARNING: Triangulation of ", sofar,
+			 " failed!!!\n", (char *)NULL);
+	bu_free((genptr_t)sofar, "path string");
+	db_free_tree(curtree, &rt_uniresource);
+	return;
+    } BU_UNSETJUMP;
 }
 
 
@@ -563,19 +617,9 @@ mged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
     if (curtree->tr_op == OP_NOP) return curtree;
 
     if (!mged_draw_nmg_only) {
-	if (BU_SETJUMP) {
-	    char *sofar = db_path_to_string(pathp);
 
-	    BU_UNSETJUMP;
+	failed = process_boolean(pathp, curtree, tsp);
 
-	    Tcl_AppendResult(INTERP, "WARNING: Boolean evaluation of ", sofar,
-			     " failed!!!\n", (char *)NULL);
-	    bu_free((genptr_t)sofar, "path string");
-	    db_free_tree(curtree, &rt_uniresource);
-	    return (union tree *)NULL;
-	}
-	failed = nmg_boolean(curtree, *tsp->ts_m, tsp->ts_tol, &rt_uniresource);
-	BU_UNSETJUMP;
 	if (failed) {
 	    db_free_tree(curtree, &rt_uniresource);
 	    return (union tree *)NULL;
@@ -594,19 +638,7 @@ mged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
     }
 
     if (mged_nmg_triangulate) {
-	if (BU_SETJUMP) {
-	    char *sofar = db_path_to_string(pathp);
-
-	    BU_UNSETJUMP;
-
-	    Tcl_AppendResult(INTERP, "WARNING: Triangulation of ", sofar,
-			     " failed!!!\n", (char *)NULL);
-	    bu_free((genptr_t)sofar, "path string");
-	    db_free_tree(curtree, &rt_uniresource);
-	    return (union tree *)NULL;
-	}
-	nmg_triangulate_model(*tsp->ts_m, tsp->ts_tol);
-	BU_UNSETJUMP;
+	process_triangulate(pathp, curtree, tsp);
     }
 
     if (r != 0) {
