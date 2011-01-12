@@ -496,7 +496,25 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     regions_tried++;
 
     /* Begin bomb protection */
-    if ( BU_SETJUMP )  {
+    if ( !BU_SETJUMP )  {
+	/* try */
+
+	if ( verbose )
+	    bu_log( "\ndoing boolean tree evaluate...\n" );
+	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	result = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
+
+	if ( result )
+	    r = result->tr_d.td_r;
+	else
+	    r = (struct nmgregion *)NULL;
+
+	if ( verbose )
+	    bu_log( "\nfinished boolean tree evaluate...\n" );
+
+    } else {
+	/* catch */
+
 	char *sofar;
 
 	/* Error, bail out */
@@ -521,20 +539,8 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	/* Now, make a new, clean model structure for next pass. */
 	*tsp->ts_m = nmg_mm();
 	goto out;
-    }
-    if ( verbose )
-	bu_log( "\ndoing boolean tree evaluate...\n" );
-    (void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-    result = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
+    } BU_UNSETJUMP;		/* Relinquish the protection */
 
-    if ( result )
-	r = result->tr_d.td_r;
-    else
-	r = (struct nmgregion *)NULL;
-
-    if ( verbose )
-	bu_log( "\nfinished boolean tree evaluate...\n" );
-    BU_UNSETJUMP;		/* Relinquish the protection */
     regions_done++;
     if (r != 0) {
 
