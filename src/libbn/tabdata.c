@@ -878,7 +878,7 @@ bn_table_write(const char *filename, const struct bn_table *tabp)
     }
 
     bu_semaphore_acquire( BU_SEM_SYSCALL );
-    fprintf(fp, "  %lu sample starts, and one end.\n", tabp->nx );
+    fprintf(fp, "  %lu sample starts, and one end.\n", (long unsigned int)tabp->nx );
     for ( j=0; j <= tabp->nx; j++ )  {
 	fprintf( fp, "%g\n", tabp->x[j] );
     }
@@ -919,7 +919,10 @@ bn_table_read(const char *filename)
     bu_vls_init(&line);
     bu_vls_gets( &line, fp );
     nw = 0;
-    sscanf( bu_vls_addr(&line), "%lu", &nw );
+    /* TODO: %lu to size_t isn't right. We may need a bu_sscanf() that can cope
+     * with native pointer width correctly, as %p is not ubiquitous and %z is a
+     * C99-ism */
+    sscanf( bu_vls_addr(&line), "%lu", (long unsigned int *)(&nw) );
     bu_vls_free(&line);
 
     if ( nw <= 0 ) bu_bomb("bn_table_read() bad nw value\n");

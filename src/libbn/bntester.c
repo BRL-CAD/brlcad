@@ -309,18 +309,20 @@ main(int argc, char **argv)
             return EXIT_FAILURE;
         }
         line_num++;
-        (void)fgets(buf, BUFSIZ, fp_in);
-        if (feof(fp_in)) {
-            if (ferror(fp_in)) {
-                perror("ERROR: Problem reading file, system error message");
-                if (fclose(fp_in) != 0) {
-                    (void)fprintf(stream, "Unable to close input file.\n");
-                }
-                return EXIT_FAILURE;
-            } else {
-                found_eof = 1;
-            }
-        } else {
+		if (fgets(buf, BUFSIZ, fp_in) == NULL) {
+			if (feof(fp_in)) {
+				found_eof = 1;
+			} else if (ferror(fp_in)) {
+				perror("ERROR: Problem reading file, system error message");
+				if (fclose(fp_in) != 0) {
+					(void)fprintf(stream, "Unable to close input file.\n");
+				}
+				return EXIT_FAILURE;
+			} else {
+				perror("Oddness reading input file");
+				return EXIT_FAILURE;
+			}
+		} else {
             /* Skip input data file lines which start with a '#' character
              * or a new line character.
              */
