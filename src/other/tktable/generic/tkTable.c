@@ -22,6 +22,7 @@
  * RCS: @(#) $Id$
  */
 
+#include "tktable_cfg.h"
 #include "tkTable.h"
 
 #ifdef DEBUG
