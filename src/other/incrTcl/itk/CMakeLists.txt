@@ -114,7 +114,7 @@ SET(ITK_CFLAGS "${ITK_CFLAGS} -DSTDC_HEADERS=1")
 #----------------------------------------------------------------------------
 
 IF(WIN32)
-	SET(ITK_CFLAGS "${ITK_CFLAGS} -c -W3 -D _CRT_SECURE_NO_DEPRECATE -D _CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD")
+	SET(ITK_CFLAGS "${ITK_CFLAGS} -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD")
 	SET(ITK_CFLAGS "${ITK_CFLAGS} -Dinline=__inline -DBUILD_itk")
 ENDIF(WIN32)
 
