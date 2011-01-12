@@ -44,7 +44,6 @@
 int
 main(int argc, char **argv)
 {
-    int ret;
     struct rt_wdb *fp;
     struct directory *dp;
     struct rt_db_internal ip;
@@ -111,7 +110,7 @@ main(int argc, char **argv)
 
     wdb_close(fp);
 
-    return ret;
+    return 0;
 }
 
 

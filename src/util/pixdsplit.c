@@ -72,7 +72,7 @@ main (int argc, char *argv[])
     int dwidth;		/* doubles/pixel (in bytes) */
     int pwidth;		/* bytes/pixel, total */
     int num;
-    int infd;		/* File descriptor */
+    int infd = 0;	/* File descriptor */
     int cfd = -1;	/*   "       "     */
     int dfd = -1;	/*   "       "     */
 

@@ -207,6 +207,8 @@ int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
     fastf_t p, q, t;
     int hue_int;
 
+    VSETALL(float_rgb, 0.0);
+
     hue = hsv[HUE];
     sat = hsv[SAT];
     val = hsv[VAL];

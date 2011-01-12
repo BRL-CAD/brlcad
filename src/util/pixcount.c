@@ -139,9 +139,9 @@ int compare_pixels (void *v1, void *v2)
  */
 struct pixel *lookup_pixel(bu_rb_tree *palette, unsigned char *color)
 {
-    int rc;	/* Return code from bu_rb_insert() */
-    struct pixel *qpp;	/* The query */
-    struct pixel *pp;	/* Value to return */
+    int rc = 0;	/* Return code from bu_rb_insert() */
+    struct pixel *qpp = NULL;	/* The query */
+    struct pixel *pp = NULL;	/* Value to return */
 
 #if 0
     bu_log("lookup_pixel(");
