@@ -182,19 +182,21 @@ rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
 int
 f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
-    FILE *fp;
-    struct directory *dp;
-    struct solid *sp;
-    vect_t eye_model;
-    vect_t xlate;
-    vect_t sav_center;
-    vect_t sav_start;
-    int mode;
-    fastf_t scale;
+    FILE *fp = NULL;
+    fastf_t scale = 0.0;
     mat_t rot;
-    struct bn_vlist *vp;
+    struct bn_vlist *vp = NULL;
+    struct directory *dp = NULL;
+    struct ged_display_list *gdlp = NULL;
+    struct ged_display_list *next_gdlp = NULL;
+    vect_t eye_model = {0.0, 0.0, 0.0};
+    vect_t sav_center = {0.0, 0.0, 0.0};
+    vect_t sav_start = {0.0, 0.0, 0.0};
+    vect_t xlate = {0.0, 0.0, 0.0};
+
+    /* static due to setjmp */
+    static int mode = 0;
+    static struct solid *sp;
 
     CHECK_DBI_NULL;
 
@@ -254,16 +256,13 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	    Tcl_AppendResult(interp, "rotation supressed, center is eyepoint\n", (char *)NULL);
 	    break;
     }
- work:
-#if 0
-    /* If user hits ^C, this will stop, but will leave hanging filedes */
-    (void)signal(SIGINT, cur_sigint);
-#else
+work:
+    /* FIXME: this isn't portable or seem well thought-out */
     if (setjmp(jmp_env) == 0)
 	(void)signal(SIGINT, sig3);  /* allow interrupts */
     else
 	return TCL_OK;
-#endif
+
     while (!feof(fp) &&
 	   rt_read(fp, &scale, eye_model, rot) >= 0) {
 	switch (mode) {
@@ -318,6 +317,7 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	view_state->vs_flag = 1;
 	refresh();	/* Draw new display */
     }
+
     if (mode == 1) {
 	VMOVE(sp->s_center, sav_center);
 	if (BU_LIST_NON_EMPTY(&(sp->s_vlist))) {
