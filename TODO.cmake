@@ -16,7 +16,6 @@ Remaining items:
     this is an issue for Tcl/Tk and packages, but CMake->Visual C++ solutions doesn't tolerate the
 	 spaces.
 
-11. Find out why make package from CPac isn't including much of anything, fix it.
 
 12. Try enabling the Aqua compile logic - it still won't work, but get the build logic to the point
     where the autotools logic is.
@@ -41,4 +40,4 @@ Done (to first order, all this needs testing)
 9.  Multiplatform testing.  Specifically, find a Windows box and conditionalize everything which
     doesn't work out-of-box (lex/yacc and sh based logic are obvious, other probables)
 
-
+11. Find out why make package from CPack isn't including much of anything, fix it.
