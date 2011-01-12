@@ -391,12 +391,12 @@ write_freeform(FILE *fp,	/* output file */
 				 * 'P' for parameter section
 				 * 'S' for start section */
 {
-    size_t paramlen;
+    size_t paramlen = 0;
     int start_seq;
     size_t str_len;
     size_t line_start=0;
     size_t line_end=0;
-    int *seq_no;
+    int *seq_no = NULL;
     size_t remaining_chars=0;
     size_t i;
 
