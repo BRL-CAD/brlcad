@@ -428,7 +428,7 @@ void TIE_VAL(tie_push)(struct tie_s *tie, TIE_3 **tlist, unsigned int tnum, void
 	    VCROSS(w.v,  u.v,  v.v);
 
 	    if (MAGNITUDE(w.v) < 0.0001 * 0.0001) {
-		bu_log("WARNING: degenerate triangle found: %f %f %f | %f %f %f | %f %f %f\n", 
+		bu_log("WARNING: degenerate triangle found: %f %f %f | %f %f %f | %f %f %f\n",
 			V3ARGS((*tlist[i*3+0]).v),  V3ARGS((*tlist[i*3+1]).v), V3ARGS((*tlist[i*3+2]).v));
 		continue;
 	    }

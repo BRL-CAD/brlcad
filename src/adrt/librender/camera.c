@@ -414,7 +414,7 @@ render_camera_render_thread(int UNUSED(cpu), genptr_t ptr)
     int d, n, res_ind, scanline, v_scanline;
     vect_t pixel, accum, v1, v2;
     struct tie_ray_s ray;
-    tfloat view_inv;
+    fastf_t view_inv;
 
     VSETALL(v1, 0);
 
@@ -655,7 +655,7 @@ LOADED:
 	if(s->dlh)
 	    dlclose(s->dlh);
 	bu_free(s, "unload first shader");
-	shaders = t; 
+	shaders = t;
 	return 0;
     }
 

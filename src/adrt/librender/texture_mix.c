@@ -30,12 +30,13 @@
 
 #include "bu.h"
 
-void texture_mix_init(struct texture_s *texture, struct texture_s *texture1, struct texture_s *texture2, fastf_t coef) {
+void
+texture_mix_init(struct texture_s *texture, struct texture_s *texture1, struct texture_s *texture2, fastf_t coef) {
     struct texture_mix_s *td;
 
     texture->data = bu_malloc(sizeof(struct texture_mix_s), "texture data");
     texture->free = texture_mix_free;
-    texture->work = (struct texture_work_s *)texture_mix_work;
+    texture->work = (texture_work_t *)texture_mix_work;
 
     td = (struct texture_mix_s *)texture->data;
     td->texture1 = texture1;
@@ -43,13 +44,13 @@ void texture_mix_init(struct texture_s *texture, struct texture_s *texture1, str
     td->coef = coef;
 }
 
-
-void texture_mix_free(struct texture_s *texture) {
+void
+texture_mix_free(struct texture_s *texture) {
     bu_free(texture->data, "texture data");
 }
 
-
-void texture_mix_work(__TEXTURE_WORK_PROTOTYPE__) {
+void
+texture_mix_work(struct texture_s *texture, void *mesh, struct tie_ray_s *ray, struct tie_id_s *id, vect_t *pixel) {
     struct texture_mix_s *td;
     vect_t t;
 

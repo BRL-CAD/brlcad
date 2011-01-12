@@ -47,8 +47,8 @@ void	texture_perlin_free(struct texture_perlin_s *P);
 fastf_t	texture_perlin_noise3(struct texture_perlin_s *P, vect_t V, fastf_t Size, int Depth);
 fastf_t	texture_perlin_omega(struct texture_perlin_s *P, vect_t V);
 
-
-void texture_perlin_init(struct texture_perlin_s *P) {
+void
+texture_perlin_init(struct texture_perlin_s *P) {
     int i, j, k;
 
     P->PV = (int *)bu_malloc(sizeof(int)*(2*B+2), "PV");
@@ -76,14 +76,14 @@ void texture_perlin_init(struct texture_perlin_s *P) {
     }
 }
 
-
-void texture_perlin_free(struct texture_perlin_s *P) {
+void
+texture_perlin_free(struct texture_perlin_s *P) {
     bu_free(P->PV, "PV");
     bu_free(P->RV, "RV");
 }
 
-
-fastf_t texture_perlin_noise3(struct texture_perlin_s *P, vect_t V, fastf_t Size, int Depth) {
+fastf_t
+texture_perlin_noise3(struct texture_perlin_s *P, vect_t V, fastf_t Size, int Depth) {
     int i;
     fastf_t sum;
 
@@ -96,8 +96,8 @@ fastf_t texture_perlin_noise3(struct texture_perlin_s *P, vect_t V, fastf_t Size
     return sum;
 }
 
-
-fastf_t texture_perlin_omega(struct texture_perlin_s *P, vect_t V) {
+fastf_t
+texture_perlin_omega(struct texture_perlin_s *P, vect_t V) {
     vect_t		q;
     fastf_t	r0[3], r1[3], sy, sz, a, b, c, d, t, u, v;
     int		b0[3], b1[3], b00, b10, b01, b11;

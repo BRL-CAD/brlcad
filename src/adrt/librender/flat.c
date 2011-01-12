@@ -31,13 +31,13 @@ render_flat_free(render_t *UNUSED(render))
 }
 
 void
-render_flat_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
+render_flat_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
 {
     struct tie_id_s id;
     adrt_mesh_t *mesh;
 
     if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {
-	*pixel = mesh->attributes->color;
+	VMOVE(*pixel, mesh->attributes->color.v);
 	if (mesh->texture)
 	    mesh->texture->work(mesh->texture, mesh, ray, &id, pixel);
     }
