@@ -2923,27 +2923,27 @@ dgo_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
     if (curtree->tr_op == OP_NOP)  return  curtree;
 
     if (!dgcdp->draw_nmg_only) {
-	if (BU_SETJUMP)
-	{
-	    char  *sofar = db_path_to_string(pathp);
-
+	if (!BU_SETJUMP) {
+	    /* try */
+	    failed = nmg_boolean(curtree, *tsp->ts_m, tsp->ts_tol, tsp->ts_resp);
+	    if (failed) {
+		db_free_tree(curtree, tsp->ts_resp);
+		return (union tree *)NULL;
+	    }
 	    BU_UNSETJUMP;
+	} else {
+	    /* catch */
+	    char  *sofar = db_path_to_string(pathp);
 
 	    Tcl_AppendResult(dgcdp->interp, "WARNING: Boolean evaluation of ", sofar,
 			     " failed!!!\n", (char *)NULL);
 	    bu_free((genptr_t)sofar, "path string");
 	    db_free_tree(curtree, tsp->ts_resp);
+
+	    BU_UNSETJUMP;
 	    return (union tree *)NULL;
 	}
-	failed = nmg_boolean(curtree, *tsp->ts_m, tsp->ts_tol, tsp->ts_resp);
-	BU_UNSETJUMP;
-	if (failed) {
-	    db_free_tree(curtree, tsp->ts_resp);
-	    return (union tree *)NULL;
-	}
-    }
-    else if (curtree->tr_op != OP_NMG_TESS)
-    {
+    } else if (curtree->tr_op != OP_NMG_TESS) {
 	Tcl_AppendResult(dgcdp->interp, "Cannot use '-d' option when Boolean evaluation is required\n", (char *)NULL);
 	db_free_tree(curtree, tsp->ts_resp);
 	return (union tree *)NULL;

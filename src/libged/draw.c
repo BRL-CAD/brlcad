@@ -1115,7 +1115,7 @@ ged_color_soltab(struct bu_list *hdlp)
 int
 ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 {
-    int i;
+    size_t i;
     int flag_A_attr=0;
     int flag_o_nonunique=1;
     int last_opt=0;

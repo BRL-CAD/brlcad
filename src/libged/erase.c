@@ -43,7 +43,7 @@ void ged_splitGDL(struct ged *gedp, struct ged_display_list *gdlp, struct db_ful
 int
 ged_erase(struct ged *gedp, int argc, const char *argv[])
 {
-    int i;
+    size_t i;
     int flag_A_attr=0;
     int flag_o_nonunique=1;
     int last_opt=0;

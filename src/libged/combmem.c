@@ -394,7 +394,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 
     for (i=0; i<node_count; i++) {
 	union tree *itp = rt_tree_array[i].tl_tree;
-	char op;
+	char op = '\0';
 
 	RT_CK_TREE(itp);
 	BU_ASSERT_LONG(itp->tr_op, ==, OP_DB_LEAF);

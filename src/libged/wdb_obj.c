@@ -2023,7 +2023,7 @@ wdb_ls_cmd(struct rt_wdb *wdbp,
 {
     struct bu_vls vls;
     struct directory *dp;
-    int i;
+    size_t i;
     int c;
     int aflag = 0;		/* print all objects without formatting */
     int cflag = 0;		/* print combinations */

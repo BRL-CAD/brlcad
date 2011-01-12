@@ -83,18 +83,21 @@ ged_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_
 int
 ged_bev(struct ged *gedp, int argc, const char *argv[])
 {
-    int			i;
-    int	c;
-    int			ncpu;
-    int			triangulate;
-    char			*cmdname;
-    char			*newname;
-    struct rt_db_internal	intern;
-    struct directory	*dp;
-    union tree		*tmp_tree;
-    char		op;
-    int			failed;
     static const char *usage = "[P|t] new_obj obj1 op obj2 op obj3 ...";
+
+    int i;
+    int	c;
+    int ncpu;
+    char *cmdname;
+    char *newname;
+    struct rt_db_internal intern;
+    struct directory *dp;
+    char op;
+    int failed;
+
+    /* static due to longjmp */
+    static int triangulate = 0;
+    static union tree *tmp_tree = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);

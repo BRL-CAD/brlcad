@@ -226,7 +226,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 							 */
 {
     struct bu_vls tmp_name;
-    int i, base_len, count=0;
+    size_t i, base_len, count=0;
     struct directory *dp;
     struct rt_db_internal intern;
     struct soltab *stp;

@@ -445,7 +445,7 @@ ged_png(struct ged *gedp, int argc, const char *argv[])
 
 		break;
 	    case 's':
-		if (sscanf(bu_optarg, "%d", &size) != 1) {
+		if (sscanf(bu_optarg, "%u", &size) != 1) {
 		    bu_vls_printf(&gedp->ged_result_str, "%s: bad size - %s", argv[0], bu_optarg);
 		    return GED_ERROR;
 		}
