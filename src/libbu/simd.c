@@ -26,7 +26,7 @@
 int
 bu_simd_level()
 {
-#if __GNUC__ && defined( __SSE__ )
+#if defined(__GNUC__) && defined(__SSE__)
     int d;
     /* since we're PIC, we need to stash EBX on ia32 */
 #ifdef __i386__
