@@ -139,7 +139,7 @@ target_link_libraries(g-xxx_facets librt libbu)
 
 BRLCAD_ADDEXEC(g-shell.rect g-shell.rect.c "libwdb librt libbu")
 
-install(PROGRAMS intaval-g.py DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+install(PROGRAMS intaval-g.py DESTINATION bin)
 
 INSTALL(FILES g-xxx.c DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
 INSTALL(FILES g-xxx_facets.c DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)

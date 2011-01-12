@@ -153,7 +153,7 @@ BRLCAD_ADDEXEC(wavelet wavelet.c "libfb libbn libbu" STRICT)
 BRLCAD_ADDEXEC(xyz-pl xyz-pl.c "libbn libbu" STRICT)
 BRLCAD_ADDEXEC(yuv-pix yuv-pix.c "libfb libbn libbu" STRICT)
 
-INSTALL(PROGRAMS morphedit.tcl DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+INSTALL(PROGRAMS morphedit.tcl DESTINATION bin)
 
 add_executable(roots_example roots_example.c)
 target_link_libraries(roots_example libbu librt)

@@ -96,14 +96,14 @@ add_executable(iges-g
     wedge.c
 )
 target_link_libraries(iges-g libwdb librt libbn libbu)
-INSTALL(TARGETS iges-g RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+INSTALL(TARGETS iges-g RUNTIME DESTINATION bin)
 
 add_executable(g-iges
     g-iges.c
     iges.c
 )
 target_link_libraries(g-iges librt libbu)
-INSTALL(TARGETS g-iges RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+INSTALL(TARGETS g-iges RUNTIME DESTINATION bin)
 
 SET(iges_MANS
   g-iges.1
