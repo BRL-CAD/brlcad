@@ -5,6 +5,9 @@ ENDIF(NOT MAN_DIR)
 FIND_PROGRAM(SH_EXEC NAMES sh dash bash DOC "path to shell executable")
 FIND_PROGRAM(SED_EXEC NAMES sed DOC "path to sed executable")
 
+# STILL not working for make package - examine why it's not
+# incorporating the output
+
 IF(SED_EXEC AND SH_EXEC AND NOT TCLMAN_GENERATED)
 	MESSAGE("Generating Tcl man pages...")
 
