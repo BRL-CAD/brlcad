@@ -1948,20 +1948,20 @@ void
 drawMtext( char *text, int attachPoint, int UNUSED(drawingDirection), double textHeight, double entityHeight,
 	   double charWidth, double UNUSED(rectWidth), double rotationAngle, double insertionPoint[3] )
 {
-    char *copyOfText = bu_calloc( (unsigned int)strlen( text )+1, 1, "copyOfText" );
+    struct bu_list vhead;
+    int done;
     char *c;
     char *cp;
     int lineCount;
-    int maxLineLen=0;
-    double scale;
     double lineSpace;
     double totalHeight;
-    double xdel, ydel;
-    double startx, starty;
-    double radians = rotationAngle * M_PI / 180.0;
     vect_t xdir, ydir;
-    struct bu_list vhead;
-    int done;
+    double startx, starty;
+    int maxLineLen=0;
+    double scale = 1.0;
+    double xdel = 0.0, ydel = 0.0;
+    double radians = rotationAngle * M_PI / 180.0;
+    char *copyOfText = bu_calloc( (unsigned int)strlen( text )+1, 1, "copyOfText" );
 
     BU_LIST_INIT( &vhead );
 
