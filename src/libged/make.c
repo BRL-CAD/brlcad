@@ -661,8 +661,8 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	extrude_ip->sketch_name = bu_strdup(bu_vls_addr(&gedp->ged_result_str));
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
 
-	sprintf(center_str, "%lf %lf %lf", V3ARGS(origin));
-	sprintf(scale_str, "%lf", scale);
+	sprintf(center_str, "%f %f %f", V3ARGS(origin));
+	sprintf(scale_str, "%f", scale);
 	av[0] = "make";
 	av[1] = "-o";
 	av[2] = center_str;

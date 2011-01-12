@@ -270,7 +270,7 @@ edit_com(int argc,
     int flag_R_noresize=0;
     int flag_o_nonunique=1;
 
-    int i;
+    size_t i;
     int last_opt=0;
     struct bu_vls vls;
 
@@ -483,7 +483,7 @@ edit_com(int argc,
 int
 emuves_com(int argc, const char *argv[])
 {
-    int i;
+    size_t i;
     struct bu_ptbl *tbl;
     struct bu_attribute_value_set avs;
     const char **objs;

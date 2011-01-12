@@ -217,7 +217,7 @@ nmg_to_dxf( struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(re
     color_num = find_closest_color( color );
 
     if ( polyface_mesh ) {
-	int i;
+	size_t i;
 
 
 	fprintf( fp, "0\nPOLYLINE\n8\n%s\n62\n%d\n70\n64\n71\n%lu\n72\n%d\n",

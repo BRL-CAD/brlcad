@@ -449,8 +449,8 @@ view_pixel(struct application *ap)
     switch (buf_mode) {
 	case BUFMODE_INCR:
 	    {
-		size_t dy, yy;
-		size_t spread;
+		long dy, yy;
+		long spread;
 		size_t npix = 0;
 
 		if (fbp == FBIO_NULL)
