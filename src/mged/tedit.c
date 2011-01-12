@@ -911,22 +911,22 @@ get_editor_string(struct bu_vls *editstring)
     }
 
     /* still unset? try vim */
-    if (!editor || editor[0] == '\0') {
+    if (!editor) {
 	editor = bu_which(VIM_EDITOR);
     }
 
     /* still unset? try vi */
-    if (!editor || editor[0] == '\0') {
+    if (!editor) {
 	editor = bu_which(VI_EDITOR);
     }
 
     /* still unset? try ed */
-    if (!editor || editor[0] == '\0') {
+    if (!editor) {
        	editor = bu_which(ED_EDITOR);
     }
 
     /* still unset? default to jove */
-    if (!editor || editor[0] == '\0') {
+    if (!editor) {
 	const char *jovepath = bu_brlcad_root("bin/jove", 1);
 	editor = JOVE_EDITOR;
 	if (jovepath) {
@@ -991,19 +991,19 @@ get_editor_string(struct bu_vls *editstring)
 	    /* start with emacs... */ 
 	    editor = bu_which(EMACS_EDITOR);
 	    /* if emacs is found, set editor_opt */
-	    if (editor && !strcmp(editor, bu_which(EMACS_EDITOR))) {
+	    if (editor) {
 		editor_opt = "-nw";
 	    }
-	    if (!editor || editor[0] == '\0') {
+	    if (!editor) {
 		editor = bu_which(VIM_EDITOR);
 	    }
-	    if (!editor || editor[0] == '\0') {
+	    if (!editor) {
 		editor = bu_which(VI_EDITOR);
 	    }
-	    if (!editor || editor[0] == '\0') {
+	    if (!editor) {
 		editor = bu_which(ED_EDITOR);
 	    }
-	    if (!editor || editor[0] == '\0') {
+	    if (!editor) {
 		const char *binpath = bu_brlcad_root("bin", 1);
 		editor = JOVE_EDITOR;
 		if (binpath) {
