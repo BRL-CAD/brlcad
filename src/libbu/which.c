@@ -68,6 +68,8 @@ bu_which(const char *cmd)
     }
 
     if (bu_file_exists(bu_which_result) && strchr(bu_which_result, BU_DIR_SEPARATOR)) {
+	if (bu_which_result[0] == '\0')
+	    return NULL; /* never return empty */
 	return bu_which_result;
     }
 
@@ -115,6 +117,8 @@ bu_which(const char *cmd)
 
 	snprintf(bu_which_result, MAXPATHLEN, "%s/%s", directory, cmd);
 	if (bu_file_exists(bu_which_result)) {
+	    if (bu_which_result[0] == '\0')
+		return NULL; /* never return empty */
 	    return bu_which_result;
 	}
 

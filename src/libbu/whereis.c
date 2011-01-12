@@ -76,6 +76,8 @@ bu_whereis(const char *cmd)
 	return NULL;
     }
     if (bu_file_exists(bu_whereis_result) && strchr(bu_whereis_result, BU_DIR_SEPARATOR)) {
+	if (bu_whereis_result[0] == '\0')
+	    return NULL; /* never return empty */
 	return bu_whereis_result;
     }
 
@@ -114,6 +116,8 @@ bu_whereis(const char *cmd)
 
 	snprintf(bu_whereis_result, MAXPATHLEN, "%s/%s", directory, cmd);
 	if (bu_file_exists(bu_whereis_result)) {
+	    if (bu_whereis_result[0] == '\0')
+		return NULL; /* never return empty */
 	    return bu_whereis_result;
 	}
 
