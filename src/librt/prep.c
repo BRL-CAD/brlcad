@@ -1600,7 +1600,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 
 	start = db_lookup(rtip->rti_dbip, objs->topobjs[i], 1);
 	if (start == DIR_NULL) {
-	    for (k=0; k<BU_PTBL_END(&objs->paths); k++) {
+	    for (k=0; k<BU_PTBL_LEN(&objs->paths); k++) {
 		path = (struct db_full_path *)BU_PTBL_GET(&objs->paths, k);
 		db_free_full_path(path);
 	    }
@@ -1610,7 +1610,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	for (j=0; j<objs->nunprepped; j++) {
 	    end = db_lookup(rtip->rti_dbip, objs->unprepped[j], 1);
 	    if (end == DIR_NULL) {
-		for (k=0; k<BU_PTBL_END(&objs->paths); k++) {
+		for (k=0; k<BU_PTBL_LEN(&objs->paths); k++) {
 		    path = (struct db_full_path *)BU_PTBL_GET(&objs->paths, k);
 		    db_free_full_path(path);
 		}
@@ -1652,7 +1652,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	path = (struct db_full_path *)BU_PTBL_GET(&objs->paths, i);
 	if (db_follow_path(tree_state, &another_path, path, 1, 0)) {
 	    bu_log("rt_unprep(): db_follow_path failed!!\n");
-	    for (k=0; k<BU_PTBL_END(&objs->paths); k++) {
+	    for (k=0; k<BU_PTBL_LEN(&objs->paths); k++) {
 		if (objs->tsp[k]) {
 		    db_free_db_tree_state(objs->tsp[k]);
 		    bu_free((char *)objs->tsp[k], "tree_state");
@@ -1675,7 +1675,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 			 unprep_reg_start, unprep_reg_end, unprep_leaf,
 			 (genptr_t)objs)) {
 	    bu_log("rt_unprep(): db_walk_tree failed!!!\n");
-	    for (k=0; k<BU_PTBL_END(&objs->paths); k++) {
+	    for (k=0; k<BU_PTBL_LEN(&objs->paths); k++) {
 		if (objs->tsp[k]) {
 		    db_free_db_tree_state(objs->tsp[k]);
 		    bu_free((char *)objs->tsp[k], "tree_state");
