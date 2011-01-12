@@ -1043,7 +1043,7 @@ main(int argc, char *argv[])
 
     Tcl_Channel chan;
     struct timeval timeout;
-    FILE *out;
+    FILE *out = stdout;
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
     fd_set read_set;
@@ -1133,6 +1133,8 @@ main(int argc, char *argv[])
 
     if (bu_debug > 0)
 	out = fopen("/tmp/stdout", "w+"); /* I/O testing */
+    if (!out)
+	out = stdout;
 
     if (argc > 1) {
 	/* if there is more than a file name remaining, mged is not interactive */
