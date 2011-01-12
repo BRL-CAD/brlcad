@@ -3,6 +3,7 @@
 MACRO(pkgIndex_BUILD name srcdir targetdir)
 	ADD_CUSTOM_COMMAND(
 		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl
+		COMMAND ${CMAKE_COMMAND} -E remove ${srcdir}/pkgIndex.tcl
 		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ampi.tcl ${srcdir}
 	   COMMAND ${CMAKE_COMMAND} -E copy ${srcdir}/pkgIndex.tcl ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl
 		COMMAND ${CMAKE_COMMAND} -E remove ${srcdir}/pkgIndex.tcl
@@ -15,6 +16,7 @@ ENDMACRO(pkgIndex_BUILD name srcdir targetdir)
 MACRO(tclIndex_BUILD name srcdir targetdir)
 	ADD_CUSTOM_COMMAND(
 		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tclIndex
+		COMMAND ${CMAKE_COMMAND} -E remove ${srcdir}/tclIndex
 		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ami.tcl ${srcdir} 
 		COMMAND ${CMAKE_COMMAND} -E copy ${srcdir}/tclIndex ${CMAKE_CURRENT_BINARY_DIR}/tclIndex
 		COMMAND ${CMAKE_COMMAND} -E remove ${srcdir}/tclIndex
