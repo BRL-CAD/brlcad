@@ -53,6 +53,13 @@ main(int argc, char *argv[])
 
     printf( "$03" );
 
+    if (argc != 1) {
+	if (argc > 1)
+	    bu_log("Unexpected paramter [%s]\n", argv[1]);
+
+	bu_log("Usage: %s < inputfile]\n  Primary input lines are as follows:\n    face# #npts face_type e ident a\n", argv[0]);
+    }
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);

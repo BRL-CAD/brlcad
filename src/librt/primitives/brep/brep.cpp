@@ -456,11 +456,11 @@ public:
 	CLEAN_MISS,
 	NEAR_HIT,
 	NEAR_MISS,
-	CRACK_HIT, //applied to first point of two near_miss points with same normal direction, second point removed
+	CRACK_HIT //applied to first point of two near_miss points with same normal direction, second point removed
     };
     enum hit_direction {
 	ENTERING,
-	LEAVING,
+	LEAVING
     };
 
     const ON_BrepFace& face;

@@ -40,7 +40,7 @@
 int
 ged_make(struct ged *gedp, int argc, const char *argv[])
 {
-    int i;
+    size_t i;
     int k;
     int save_bu_optind;
     struct directory *dp;
@@ -290,7 +290,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 		VDOT(view_center, arbn_ip->eqn[i]);
 	}
     } else if (strcmp(argv[bu_optind+1], "ars") == 0) {
-	int curve;
+	size_t curve;
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARS;
 	internal.idb_meth = &rt_functab[ID_ARS];

@@ -215,7 +215,7 @@ screen_vls(
 void
 dotitles(struct bu_vls *overlay_vls)
 {
-    int i = 0;
+    size_t i = 0;
 
     /* for menu computations */
     int x = 0;
@@ -258,7 +258,7 @@ dotitles(struct bu_vls *overlay_vls)
 
 	bu_vls_init(&path_lhs);
 	bu_vls_init(&path_rhs);
-	for (i = 0; i < ipathpos; i++) {
+	for (i = 0; i < (size_t)ipathpos; i++) {
 	    dp = DB_FULL_PATH_GET(dbfp, i);
 	    if (dp && dp->d_namep) {
 		bu_vls_printf(&path_lhs, "/%s", dp->d_namep);
@@ -362,7 +362,7 @@ dotitles(struct bu_vls *overlay_vls)
 		       color_scheme->cs_geo_label[0],
 		       color_scheme->cs_geo_label[1],
 		       color_scheme->cs_geo_label[2], 1, 1.0);
-	for (i=0; i<num_lines; i++)
+	for (i=0; i<(size_t)num_lines; i++)
 	    DM_DRAW_LINE_2D(dmp,
 			    GED2PM1(((int)(lines[i*2][X]*GED_MAX))),
 			    GED2PM1(((int)(lines[i*2][Y]*GED_MAX)) * dmp->dm_aspect),
@@ -425,7 +425,7 @@ dotitles(struct bu_vls *overlay_vls)
 	if (illump != SOLID_NULL &&
 	    (STATE==ST_O_PATH || STATE==ST_O_PICK || STATE==ST_S_PICK)) {
 	    for (i=0; i < illump->s_fullpath.fp_len; i++) {
-		if (i == ipathpos  &&  STATE == ST_O_PATH) {
+		if (i == (size_t)ipathpos  &&  STATE == ST_O_PATH) {
 		    DM_SET_FGCOLOR(dmp,
 				   color_scheme->cs_state_text1[0],
 				   color_scheme->cs_state_text1[1],
@@ -594,7 +594,7 @@ dotitles(struct bu_vls *overlay_vls)
 	    /* Illuminated path */
 	    bu_vls_strcat(&vls, " Path: ");
 	    for (i=0; i < illump->s_fullpath.fp_len; i++) {
-		if (i == ipathpos  &&
+		if (i == (size_t)ipathpos  &&
 		    (STATE == ST_O_PATH || STATE == ST_O_EDIT))
 		    bu_vls_strcat(&vls, "/__MATRIX__");
 		bu_vls_printf(&vls, "/%s",

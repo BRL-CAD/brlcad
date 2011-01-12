@@ -107,7 +107,7 @@ BU_EXTERN(void rt_vol_plate, (point_t a, point_t b, point_t c, point_t d,
 	 ((_yy)+VOL_YWIDEN))* ((_vip)->xdim + VOL_XWIDEN*2)+ \
 	  (_xx)+VOL_XWIDEN ]
 
-#define OK(_vip, _v)	((int)(_v) >= (_vip)->lo && (int)(_v) <= (_vip)->hi)
+#define OK(_vip, _v)	((_v) >= (_vip)->lo && (_v) <= (_vip)->hi)
 
 static int rt_vol_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
 
@@ -184,17 +184,17 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     igrid[Z] = (P[Z] - volp->vol_origin[Z]) / volp->vol_i.cellsize[Z];
     if (igrid[X] < 0) {
 	igrid[X] = 0;
-    } else if (igrid[X] >= volp->vol_i.xdim) {
+    } else if ((size_t)igrid[X] >= volp->vol_i.xdim) {
 	igrid[X] = volp->vol_i.xdim-1;
     }
     if (igrid[Y] < 0) {
 	igrid[Y] = 0;
-    } else if (igrid[Y] >= volp->vol_i.ydim) {
+    } else if ((size_t)igrid[Y] >= volp->vol_i.ydim) {
 	igrid[Y] = volp->vol_i.ydim-1;
     }
     if (igrid[Z] < 0) {
 	igrid[Z] = 0;
-    } else if (igrid[Z] >= volp->vol_i.zdim) {
+    } else if ((size_t)igrid[Z] >= volp->vol_i.zdim) {
 	igrid[Z] = volp->vol_i.zdim-1;
     }
     if (RT_G_DEBUG&DEBUG_VOL)bu_log("igrid=(%d, %d, %d)\n", igrid[X], igrid[Y], igrid[Z]);
@@ -308,7 +308,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 	if (t1 <= t0) bu_log("ERROR vol t1=%g < t0=%g\n", t1, t0);
 	if (!inside) {
-	    if (OK(&volp->vol_i, val)) {
+	    if (OK(&volp->vol_i, (size_t)val)) {
 		/* Handle the transition from vacuum to solid */
 		/* Start of segment (entering a full voxel) */
 		inside = 1;
@@ -334,7 +334,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		/* Do nothing, marching through void */
 	    }
 	} else {
-	    if (OK(&volp->vol_i, val)) {
+	    if (OK(&volp->vol_i, (size_t)val)) {
 		/* Do nothing, marching through solid */
 	    } else {
 		register struct seg *tail;
@@ -411,8 +411,8 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     struct bu_vls str;
     FILE *fp;
     int nbytes;
-    register int y;
-    register int z;
+    size_t y;
+    size_t z;
     mat_t tmat;
     size_t ret;
 
@@ -452,7 +452,7 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Check for reasonable values */
     if (vip->file[0] == '\0' || vip->xdim < 1 ||
 	vip->ydim < 1 || vip->zdim < 1 || vip->mat[15] <= 0.0 ||
-	vip->lo < 0 || vip->hi > 255) {
+	vip->hi > 255) {
 	bu_struct_print("Unreasonable VOL parameters", rt_vol_parse,
 			(char *)vip);
 	return -1;
@@ -555,8 +555,8 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     struct bu_vls str;
     FILE *fp;
     int nbytes;
-    register int y;
-    register int z;
+    size_t y;
+    size_t z;
     mat_t tmat;
     size_t ret;
 
@@ -591,7 +591,7 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Check for reasonable values */
     if (vip->file[0] == '\0' || vip->xdim < 1 ||
 	vip->ydim < 1 || vip->zdim < 1 || vip->mat[15] <= 0.0 ||
-	vip->lo < 0 || vip->hi > 255) {
+	vip->hi > 255) {
 	bu_struct_print("Unreasonable VOL parameters", rt_vol_parse,
 			(char *)vip);
 	return -1;
@@ -941,7 +941,7 @@ int
 rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     register struct rt_vol_internal *vip;
-    register short x, y, z;
+    size_t x, y, z;
     register short v1, v2;
     point_t a, b, c, d;
 
@@ -959,14 +959,14 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    for (y=-1; y<=vip->ydim; y++) {
 		v1 = VOL(vip, x, y, z);
 		v2 = VOL(vip, x+1, y, z);
-		if (OK(vip, v1) == OK(vip, v2)) continue;
+		if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2)) continue;
 		/* Note start point, continue scan */
 		VSET(a, x+0.5, y-0.5, z-0.5);
 		VSET(b, x+0.5, y-0.5, z+0.5);
 		for (++y; y<=vip->ydim; y++) {
 		    v1 = VOL(vip, x, y, z);
 		    v2 = VOL(vip, x+1, y, z);
-		    if (OK(vip, v1) == OK(vip, v2))
+		    if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2))
 			break;
 		}
 		/* End of run of edge.  One cell beyond. */
@@ -985,14 +985,14 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    for (x=-1; x<=vip->xdim; x++) {
 		v1 = VOL(vip, x, y, z);
 		v2 = VOL(vip, x, y+1, z);
-		if (OK(vip, v1) == OK(vip, v2)) continue;
+		if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2)) continue;
 		/* Note start point, continue scan */
 		VSET(a, x-0.5, y+0.5, z-0.5);
 		VSET(b, x-0.5, y+0.5, z+0.5);
 		for (++x; x<=vip->xdim; x++) {
 		    v1 = VOL(vip, x, y, z);
 		    v2 = VOL(vip, x, y+1, z);
-		    if (OK(vip, v1) == OK(vip, v2))
+		    if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2))
 			break;
 		}
 		/* End of run of edge.  One cell beyond */
@@ -1011,14 +1011,14 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    for (y=-1; y<=vip->ydim; y++) {
 		v1 = VOL(vip, x, y, z);
 		v2 = VOL(vip, x, y, z+1);
-		if (OK(vip, v1) == OK(vip, v2)) continue;
+		if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2)) continue;
 		/* Note start point, continue scan */
 		VSET(a, (x-0.5), (y-0.5), (z+0.5));
 		VSET(b, (x+0.5), (y-0.5), (z+0.5));
 		for (++y; y<=vip->ydim; y++) {
 		    v1 = VOL(vip, x, y, z);
 		    v2 = VOL(vip, x, y, z+1);
-		    if (OK(vip, v1) == OK(vip, v2))
+		    if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2))
 			break;
 		}
 		/* End of run of edge.  One cell beyond */
@@ -1070,7 +1070,7 @@ int
 rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct rt_vol_internal *vip;
-    register int x, y, z;
+    register size_t x, y, z;
     int i;
     struct shell *s;
     struct vertex *verts[4];

@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "tie.h"
+#include "libtie/tie.h"
 #include "load.h"
 
 uint32_t slave_load_mesh_num;
@@ -57,7 +57,7 @@ slave_load_free ()
 }
 
 int
-slave_load_region (tie_t *tie, char *data)
+slave_load_region (struct tie_s *tie, char *data)
 {
     tie = NULL;
     data = NULL;
@@ -70,7 +70,7 @@ slave_load_region (tie_t *tie, char *data)
 }
 
 int
-slave_load_kdtree (tie_t *tie, char *data)
+slave_load_kdtree (struct tie_s *tie, char *data)
 {
     tie = NULL;
     data = NULL;
@@ -81,7 +81,7 @@ slave_load_kdtree (tie_t *tie, char *data)
 }
 
 int
-slave_load (tie_t *tie, void *data, uint32_t dlen)
+slave_load(struct tie_s *tie, void *data)
 {
     char *meh = (char *)data;
 
@@ -93,7 +93,9 @@ slave_load (tie_t *tie, void *data, uint32_t dlen)
 	case ADRT_LOAD_FORMAT_G:	/* given a filename and 1 toplevel region, recursively load from a .g file */
 	    {
 		const char *db = NULL; /* FIXME */
-		const char *ugh[2] = { (char *)(meh + 1 + sizeof(int)), NULL };
+		const char *ugh[2];
+		ugh[0] = (char *)(meh + 1 + sizeof(int));
+		ugh[1] = NULL;
 		return load_g ( tie, db, *(int *)(meh + 1), ugh, NULL);
 	    }
 	case ADRT_LOAD_FORMAT_REG:	/* special magic for catching data on the pipe */

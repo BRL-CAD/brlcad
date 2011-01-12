@@ -46,7 +46,7 @@
  *	 0	OK
  */
 int
-mk_arbn(struct rt_wdb *filep, const char *name, int neqn, plane_t (*eqn))
+mk_arbn(struct rt_wdb *filep, const char *name, size_t neqn, plane_t (*eqn))
 {
     struct rt_arbn_internal	*arbn;
 

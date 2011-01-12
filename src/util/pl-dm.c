@@ -170,7 +170,7 @@ get_args(int argc, char **argv)
 
 static void
 refresh() {
-    int i;
+    size_t i;
     struct plot_list *plp;
 
     DM_DRAW_BEGIN(dmp);
@@ -501,7 +501,7 @@ X_dm(int argc, char *argv[])
 static void
 size_reset()
 {
-    int i;
+    size_t i;
     struct bn_vlist *tvp;
     vect_t min, max;
     vect_t center;

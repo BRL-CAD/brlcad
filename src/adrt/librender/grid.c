@@ -29,14 +29,14 @@
 
 
 void
-render_grid_free(render_t *render)
+render_grid_free(render_t *UNUSED(render))
 {
 }
 
 void
-render_grid_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+render_grid_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
 {
-    tie_id_t id;
+    struct tie_id_s id;
     adrt_mesh_t *m;
     TIE_3 vec;
     tfloat angle;
@@ -44,7 +44,7 @@ render_grid_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 
     if ((m = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {
 	/* if X or Y lie in the grid paint it white else make it gray */
-	if (fabs(GRID*id.pos.v[0] - (int)(GRID*id.pos.v[0])) < 0.2*LINE || fabs(GRID*id.pos.v[1] - (int)(GRID*id.pos.v[1])) < 0.2*LINE) {
+	if (fabs(GRID*id.pos[0] - (int)(GRID*id.pos[0])) < 0.2*LINE || fabs(GRID*id.pos[1] - (int)(GRID*id.pos[1])) < 0.2*LINE) {
 	    pixel->v[0] = (tfloat)0.9;
 	    pixel->v[1] = (tfloat)0.9;
 	    pixel->v[2] = (tfloat)0.9;
@@ -57,9 +57,9 @@ render_grid_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 	return;
     }
 
-    VSUB2(vec.v,  ray->pos.v,  id.pos.v);
+    VSUB2(vec.v,  ray->pos,  id.pos);
     VUNITIZE(vec.v);
-    angle = VDOT( vec.v,  id.norm.v);
+    angle = VDOT( vec.v,  id.norm);
     VSCALE((*pixel).v,  (*pixel).v,  (angle*0.9));
 
     pixel->v[0] += (tfloat)0.1;
@@ -68,7 +68,7 @@ render_grid_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 }
 
 int
-render_grid_init(render_t *render, char *usr)
+render_grid_init(render_t *render, const char *UNUSED(usr))
 {
     render->work = render_grid_work;
     render->free = render_grid_free;

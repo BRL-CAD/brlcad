@@ -30,6 +30,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "bio.h"
 
 #include "vmath.h"
@@ -272,8 +273,8 @@ void
 sktbld(void)
 {
     char *cp, *ptr;
-    int i, j;
-    int vert_count, seg_count;
+    size_t i, j;
+    size_t vert_count, seg_count;
     float fV[3], fu[3], fv[3];
     point_t V;
     vect_t u, v;
@@ -290,7 +291,7 @@ sktbld(void)
     cp++;
     cp++;
 
-    (void)sscanf(cp, "%200s %f %f %f %f %f %f %f %f %f %d %d", /* NAME_LEN */
+    (void)sscanf(cp, "%200s %f %f %f %f %f %f %f %f %f %lu %lu", /* NAME_LEN */
 		 name,
 		 &fV[0], &fV[1], &fV[2],
 		 &fu[0], &fu[1], &fu[2],
@@ -1378,22 +1379,23 @@ botbld(void)
 {
     char			my_name[NAME_LEN];
     char			type;
-    int			mode, orientation, error_mode, num_vertices, num_faces;
-    int			i, j;
+    int			mode, orientation, error_mode;
+    size_t num_vertices, num_faces;
+    size_t			i, j;
     double			a[3];
     fastf_t			*vertices;
     fastf_t			*thick=NULL;
-    int			*faces;
+    int				*faces;
     struct bu_bitv		*facemode=NULL;
 
-    sscanf(buf, "%c %200s %d %d %d %d %d", &type, my_name, &mode, &orientation, /* NAME_LEN */
+    sscanf(buf, "%c %200s %d %d %d %lu %lu", &type, my_name, &mode, &orientation, /* NAME_LEN */
 	   &error_mode, &num_vertices, &num_faces);
 
     /* get vertices */
     vertices = (fastf_t *)bu_calloc(num_vertices * 3, sizeof(fastf_t), "botbld: vertices");
     for (i=0; i<num_vertices; i++) {
 	bu_fgets(buf, BUFSIZE, ifp);
-	sscanf(buf, "%d: %le %le %le", &j, &a[0], &a[1], &a[2]);
+	sscanf(buf, "%lu: %le %le %le", &j, &a[0], &a[1], &a[2]);
 	if (i != j) {
 	    bu_log("Vertices out of order in solid %s (expecting %d, found %d)\n",
 		   my_name, i, j);
@@ -1413,9 +1415,9 @@ botbld(void)
     for (i=0; i<num_faces; i++) {
 	bu_fgets(buf, BUFSIZE, ifp);
 	if (mode == RT_BOT_PLATE)
-	    sscanf(buf, "%d: %d %d %d %le", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2], &a[0]);
+	    sscanf(buf, "%lu: %d %d %d %le", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2], &a[0]);
 	else
-	    sscanf(buf, "%d: %d %d %d", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2]);
+	    sscanf(buf, "%lu: %d %d %d", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2]);
 
 	if (i != j) {
 	    bu_log("Faces out of order in solid %s (expecting %d, found %d)\n",
@@ -1700,6 +1702,7 @@ main(int argc, char *argv[])
     struct bu_vls       str_title;
     struct bu_vls       str_put;
     struct bu_vls	line;
+    int                 isComment=1;
 
     bu_debug = BU_DEBUG_COREDUMP;
 
@@ -1726,10 +1729,29 @@ main(int argc, char *argv[])
     bu_vls_init(&str_put);
     bu_vls_strcpy( &str_put, "put ");
 
-    if (bu_vls_gets(&line, ifp) < 0) {
-	fclose(ifp); ifp = NULL;
-	wdb_close(ofp); ofp = NULL;
-	bu_exit(1, "Unexpected EOF\n");
+    while (isComment) {
+        char *str;
+        int charIndex;
+        int len;
+        bu_vls_trunc2(&line, 0);
+        if (bu_vls_gets(&line, ifp) < 0) {
+            fclose(ifp); ifp = NULL;
+            wdb_close(ofp); ofp = NULL;
+            bu_exit(1, "Unexpected EOF\n");
+        }
+        str = bu_vls_addr(&line);
+        len = strlen(str);
+        for (charIndex=0 ; charIndex<len ; charIndex++) {
+            if (str[charIndex] == '#') {
+                isComment = 1;
+                break;
+            } else if (isspace(str[charIndex])) {
+                continue;
+            } else {
+                isComment = 0;
+                break;
+            }
+        }
     }
 
     /* new style ascii database */

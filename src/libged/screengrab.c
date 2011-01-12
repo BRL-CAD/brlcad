@@ -38,7 +38,6 @@ int
 ged_screen_grab(struct ged *gedp,int argc, const char *argv[])
 {
 
-    FILE *fp;
     int i;
     int width = 0;
     int height = 0;

@@ -34,7 +34,7 @@
 #include "db.h"
 
 int
-mk_dsp(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim, const matp_t mat)
+mk_dsp(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_t ydim, const matp_t mat)
     /* name of file containing elevation data */
     /* X dimension of file (w cells) */
     /* Y dimension of file (n cells) */

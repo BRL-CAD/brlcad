@@ -34,7 +34,7 @@
 
 
 int
-mk_constraint(struct rt_wdb *wdbp, const char *name, const char *expr)
+mk_constraint(struct rt_wdb *wdbp, const char *name, const char *UNUSED(expr))
 {
     struct rt_db_internal intern;
     struct rt_constraint_internal *constraint;

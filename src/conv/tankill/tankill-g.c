@@ -111,15 +111,20 @@ Add_solid(int comp_code_num)
  *	Converts "tankill" format geometry to BRL-CAD model
  */
 
-static char *usage="Usage: tankill-g [-v] [-p] [-k] [-t tolerance] [-x lvl] [-X lvl] [-i input_tankill_file] [-o output_brlcad_model]\n\
-    where tolerance is the minimum distance (mm) between distinct vertices,\n\
-    input_tankill_file is the file name for input TANKILL model\n\
-    output_brlcad_model is the file name for output BRL-CAD model\n\
-	-v -> verbose\n\
-	-p -> write output as polysolids rather than NMG's\n\
-	-k -> keep components with id = 1001 (normally skipped)\n\
-	-x lvl -> sets the librt debug flag to lvl\n\
-	-X lvl -> sets the NMG debug flag to lvl\n";
+static void 
+usage()
+{
+    bu_log("Usage: tankill-g [-v] [-p] [-k] [-t tolerance] [-x lvl] [-X lvl] [-i input_tankill_file] [-o output_brlcad_model]\n");
+    bu_log("    where tolerance is the minimum distance (mm) between distinct vertices,\n");
+    bu_log("    input_tankill_file is the file name for input TANKILL model\n");
+    bu_log("    output_brlcad_model is the file name for output BRL-CAD model\n");
+    bu_log("	-v -> verbose\n");
+    bu_log("	-p -> write output as polysolids rather than NMG's\n");
+    bu_log("	-k -> keep components with id = 1001 (normally skipped)\n");
+    bu_log("	-x lvl -> sets the librt debug flag to lvl\n");
+    bu_log("	-X lvl -> sets the NMG debug flag to lvl\n");
+}
+
 
 int
 main(int argc, char **argv)
@@ -210,7 +215,8 @@ main(int argc, char **argv)
 		output_file = bu_optarg;
 		break;
 	    default:
-		bu_exit( EXIT_FAILURE,  usage );
+		usage(argv[0]);
+		bu_exit( EXIT_FAILURE,  NULL );
 		break;
 	}
     }

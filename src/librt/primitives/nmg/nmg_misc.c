@@ -11161,7 +11161,7 @@ nmg_bot(struct shell *s, const struct bn_tol *tol)
 	}
     }
 
-    bot->faces = (size_t *)bu_calloc(bot->num_faces * 3, sizeof(size_t), "BOT faces");
+    bot->faces = (int *)bu_calloc(bot->num_faces * 3, sizeof(int), "BOT faces");
     bot->vertices = (fastf_t *)bu_calloc(bot->num_vertices * 3, sizeof(fastf_t), "BOT vertices");
 
     bot->thickness = (fastf_t *)NULL;

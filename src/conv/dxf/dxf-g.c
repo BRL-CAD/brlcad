@@ -77,23 +77,23 @@ struct layer {
     int color_number;		/* color */
     struct vert_root *vert_tree_root; /* root of vertex tree */
     int *part_tris;			/* list of triangles for current part */
-    int max_tri;			/* number of triangles currently malloced */
-    int curr_tri;			/* number of triangles currently being used */
-    int line_count;
-    int solid_count;
-    int polyline_count;
-    int lwpolyline_count;
-    int ellipse_count;
-    int circle_count;
-    int spline_count;
-    int arc_count;
-    int text_count;
-    int mtext_count;
-    int attrib_count;
-    int dimension_count;
-    int leader_count;
-    int face3d_count;
-    int point_count;
+    size_t max_tri;			/* number of triangles currently malloced */
+    size_t curr_tri;			/* number of triangles currently being used */
+    size_t line_count;
+    size_t solid_count;
+    size_t polyline_count;
+    size_t lwpolyline_count;
+    size_t ellipse_count;
+    size_t circle_count;
+    size_t spline_count;
+    size_t arc_count;
+    size_t text_count;
+    size_t mtext_count;
+    size_t attrib_count;
+    size_t dimension_count;
+    size_t leader_count;
+    size_t face3d_count;
+    size_t point_count;
     struct bu_ptbl solids;
     struct model *m;
     struct shell *s;
@@ -258,12 +258,12 @@ static fastf_t units_conv[]={
 
 
 static char *
-make_brlcad_name( char *line )
+make_brlcad_name( const char *nameline )
 {
     char *name;
     char *c;
 
-    name = bu_strdup( line );
+    name = bu_strdup( nameline );
 
     c = name;
     while ( *c != '\0' ) {
@@ -308,8 +308,7 @@ get_layer()
 		bu_log( "Creating new block of layers\n" );
 	    }
 	    max_layers += 5;
-	    layers = (struct layer **)bu_realloc( layers,
-						  max_layers*sizeof( struct layer *), "layers" );
+	    layers = (struct layer **)bu_realloc( layers, max_layers*sizeof( struct layer *), "layers" );
 	    for ( i=0; i<5; i++ ) {
 		BU_GETSTRUCT( layers[max_layers-i-1], layer );
 	    }
@@ -369,7 +368,7 @@ add_triangle( int v1, int v2, int v3, int layer )
     if ( layers[layer]->curr_tri >= layers[layer]->max_tri ) {
 	/* allocate more memory for triangles */
 	layers[layer]->max_tri += TRI_BLOCK;
-	layers[layer]->part_tris = (int *)bu_realloc( layers[layer]->part_tris, sizeof( int ) * layers[layer]->max_tri * 3, "layers[layer]->part_tris" );
+	layers[layer]->part_tris = (int *)bu_realloc( layers[layer]->part_tris, sizeof(int) * layers[layer]->max_tri * 3, "layers[layer]->part_tris" );
     }
 
     /* fill in triangle info */
@@ -699,7 +698,7 @@ process_point_entities_code( int code )
 	    get_layer();
 	    layers[curr_layer]->point_count++;
 	    MAT4X3PNT( tmp_pt, curr_state->xform, pt );
-	    sprintf( tmp_name, "point.%d", layers[curr_layer]->point_count );
+	    sprintf( tmp_name, "point.%lu", layers[curr_layer]->point_count );
 	    (void)mk_sph( out_fp, tmp_name, tmp_pt, 0.1 );
 	    (void)bu_ptbl_ins( &(layers[curr_layer]->solids), (long *)bu_strdup( tmp_name ) );
 	    curr_state->sub_state = UNKNOWN_ENTITY_STATE;
@@ -1178,7 +1177,7 @@ process_insert_entities_code( int code )
 	    break;
 	case 70:
 	case 71:
-	    if ( atof( line ) != 1 ) {
+	    if ( atoi( line ) != 1 ) {
 		bu_log( "Cannot yet handle insertion of a pattern\n\tignoring\n" );
 	    }
 	    break;
@@ -1603,12 +1602,12 @@ process_ellipse_entities_code( int code )
 		r0 = majorRadius * cos( angle );
 		r1 = minorRadius * sin( angle );
 		VJOIN2( p1, center, r0, xdir, r1, ydir );
-		if ( angle == startAngle ) {
+		if ( EQUAL(angle, startAngle) ) {
 		    VMOVE( p0, p1 );
 		    angle += delta;
 		    continue;
 		}
-		if ( fullCircle && angle == endAngle ) {
+		if ( fullCircle && EQUAL(angle, endAngle) ) {
 		    v2 = v0;
 		}
 		eu = nmg_me( v1, v2, layers[curr_layer]->s );
@@ -1868,7 +1867,7 @@ convertSecretCodes( char *c, char *cp, int *maxLineLen )
 
 void
 drawString( char *theText, point_t firstAlignmentPoint, point_t secondAlignmentPoint,
-	    double textHeight, double textScale, double textRotation, int horizAlignment, int vertAlignment, int textFlag )
+	    double textHeight, double UNUSED(textScale), double textRotation, int horizAlignment, int vertAlignment, int UNUSED(textFlag) )
 {
     double stringLength=0.0;
     char *copyOfText;
@@ -1946,8 +1945,8 @@ drawString( char *theText, point_t firstAlignmentPoint, point_t secondAlignmentP
 }
 
 void
-drawMtext( char *text, int attachPoint, int drawingDirection, double textHeight, double entityHeight,
-	   double charWidth, double rectWidth, double rotationAngle, double insertionPoint[3] )
+drawMtext( char *text, int attachPoint, int UNUSED(drawingDirection), double textHeight, double entityHeight,
+	   double charWidth, double UNUSED(rectWidth), double rotationAngle, double insertionPoint[3] )
 {
     char *copyOfText = bu_calloc( (unsigned int)strlen( text )+1, 1, "copyOfText" );
     char *c;
@@ -3005,7 +3004,7 @@ nmg_wire_edges_to_sketch( struct model *m )
     struct edgeuse *eu;
     struct vertex *v;
     struct vert_root *vr;
-    int index;
+    size_t idx;
 
     skt = bu_calloc( 1, sizeof( struct rt_sketch_internal ), "rt_sketch_internal" );
     skt->magic = RT_SKETCH_INTERNAL_MAGIC;
@@ -3051,21 +3050,17 @@ nmg_wire_edges_to_sketch( struct model *m )
     }
     skt->vert_count = vr->curr_vert;
     skt->verts = (point2d_t *)bu_malloc(skt->vert_count * sizeof( point2d_t), "skt->verts");
-    for( index = 0 ; index < vr->curr_vert ; index++ ) {
-        skt->verts[index][0] = vr->the_array[index*3];
-        skt->verts[index][1] = vr->the_array[index*3 + 1];
+    for( idx = 0 ; idx < vr->curr_vert ; idx++ ) {
+        skt->verts[idx][0] = vr->the_array[idx*3];
+        skt->verts[idx][1] = vr->the_array[idx*3 + 1];
     }
     skt->skt_curve.seg_count = BU_PTBL_LEN(&segs);
-    skt->skt_curve.reverse = bu_realloc(skt->skt_curve.reverse,
-            skt->skt_curve.seg_count * sizeof ( int),
-            "curve segment reverse");
-    memset(skt->skt_curve.reverse, 0, skt->skt_curve.seg_count * sizeof ( int));
-    skt->skt_curve.segments = bu_realloc(skt->skt_curve.segments,
-            skt->skt_curve.seg_count * sizeof ( genptr_t),
-            "curve segments");
-    for (index = 0; index < BU_PTBL_LEN(&segs); index++) {
-        genptr_t ptr = BU_PTBL_GET(&segs, index);
-        skt->skt_curve.segments[index] = ptr;
+    skt->skt_curve.reverse = bu_realloc(skt->skt_curve.reverse, skt->skt_curve.seg_count * sizeof (int), "curve segment reverse");
+    memset(skt->skt_curve.reverse, 0, skt->skt_curve.seg_count * sizeof (int));
+    skt->skt_curve.segments = bu_realloc(skt->skt_curve.segments, skt->skt_curve.seg_count * sizeof ( genptr_t), "curve segments");
+    for (idx = 0; idx < BU_PTBL_LEN(&segs); idx++) {
+        genptr_t ptr = BU_PTBL_GET(&segs, idx);
+        skt->skt_curve.segments[idx] = ptr;
     }
 
     free_vert_tree(vr);

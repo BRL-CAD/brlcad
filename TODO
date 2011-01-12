@@ -44,6 +44,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* let the cp command take multiple arguments for simultaneously
+  creating multiple named copies
+
 * add support to the attr command for listing keys in a user-specified
   alphabetical (possibly case-insensitive) order in addition to or
   instead of generated order.

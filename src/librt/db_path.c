@@ -103,9 +103,9 @@ db_dup_full_path(struct db_full_path *newp, const struct db_full_path *oldp)
  * This is intended primarily as an internal method.
  */
 void
-db_extend_full_path( struct db_full_path *pathp, int incr )
+db_extend_full_path( struct db_full_path *pathp, size_t incr )
 {
-    int	newlen;
+    size_t newlen;
 
     RT_CK_FULL_PATH(pathp);
 
@@ -152,12 +152,13 @@ db_append_full_path( struct db_full_path *dest, const struct db_full_path *src )
  * Dup old path from starting index to end.
  */
 void
-db_dup_path_tail(struct db_full_path *newp, const struct db_full_path *oldp, int start)
+db_dup_path_tail(struct db_full_path *newp, const struct db_full_path *oldp, off_t start)
 {
     RT_CK_FULL_PATH(newp);
     RT_CK_FULL_PATH(oldp);
 
-    if ( start < 0 || start > oldp->fp_len-1 )  bu_bomb("db_dup_path_tail: start offset out of range\n");
+    if (start < 0 || (size_t)start > oldp->fp_len-1)
+	bu_bomb("db_dup_path_tail: start offset out of range\n");
 
     newp->fp_maxlen = newp->fp_len = oldp->fp_len - start;
     if ( newp->fp_len <= 0 )  {
@@ -182,16 +183,18 @@ db_path_to_string( const struct db_full_path *pp )
 {
     char *cp;
     char *buf;
-    int len;
-    int rem;
-    int i;
+    size_t len;
+    size_t rem;
+    size_t i;
+    long j;
 
     RT_CK_FULL_PATH( pp );
+    BU_ASSERT_SIZE_T(pp->fp_len, <, LONG_MAX);
 
     len = 3; /* leading slash, trailing null, spare */
-    for ( i=pp->fp_len-1; i >= 0; i-- )  {
-	if ( pp->fp_names[i] )
-	    len += (int)strlen( pp->fp_names[i]->d_namep ) + 1;
+    for ( j=pp->fp_len-1; j >= 0; j-- )  {
+	if ( pp->fp_names[j] )
+	    len += strlen( pp->fp_names[j]->d_namep ) + 1;
 	else
 	    len += 16;
     }
@@ -205,7 +208,7 @@ db_path_to_string( const struct db_full_path *pp )
 	rem--;
 	if ( pp->fp_names[i] ) {
 	    bu_strlcpy( cp, pp->fp_names[i]->d_namep, rem );
-	    rem -= (int)strlen(pp->fp_names[i]->d_namep);
+	    rem -= strlen(pp->fp_names[i]->d_namep);
 	} else {
 	    bu_strlcpy( cp, "**NULL**", rem );
 	    rem -= 8;
@@ -226,7 +229,7 @@ db_path_to_string( const struct db_full_path *pp )
 void
 db_path_to_vls( struct bu_vls *str, const struct db_full_path *pp )
 {
-    int i;
+    size_t i;
 
     BU_CK_VLS(str);
     RT_CK_FULL_PATH( pp );
@@ -269,13 +272,13 @@ db_pr_full_path( const char *msg, const struct db_full_path *pathp )
 int
 db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *str)
 {
-    char	*cp;
-    char	*slashp;
-    struct directory	*dp;
-    char		*copy;
-    int			nslash = 0;
-    int			ret = 0;
-    size_t		len;
+    char *cp;
+    char *slashp;
+    struct directory *dp;
+    char *copy;
+    size_t nslash = 0;
+    int ret = 0;
+    size_t len;
 
     RT_CK_DBI(dbip);
 
@@ -328,7 +331,7 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 	pp->fp_names[nslash++] = dp;
 	cp = slashp+1;
     }
-    BU_ASSERT_LONG( nslash, ==, pp->fp_len );
+    BU_ASSERT_SIZE_T(nslash, ==, pp->fp_len);
     bu_free( copy, "db_string_to_path() duplicate string");
     return ret;
 }
@@ -402,14 +405,13 @@ db_free_full_path(struct db_full_path *pp)
  *	0	different
  */
 int
-db_identical_full_paths(
-    const struct db_full_path *a,
-    const struct db_full_path *b )
+db_identical_full_paths(const struct db_full_path *a, const struct db_full_path *b)
 {
-    int i;
+    long i;
 
     RT_CK_FULL_PATH(a);
     RT_CK_FULL_PATH(b);
+    BU_ASSERT_SIZE_T(a->fp_len, <, LONG_MAX);
 
     if ( a->fp_len != b->fp_len )  return 0;
 
@@ -433,12 +435,13 @@ db_full_path_subset(
     const struct db_full_path *b,
     const int skip_first)
 {
-    int i;
+    size_t i = 0;
 
     RT_CK_FULL_PATH(a);
     RT_CK_FULL_PATH(b);
 
-    if ( b->fp_len > a->fp_len )  return 0;
+    if ( b->fp_len > a->fp_len )
+	return 0;
 
     if (skip_first)
 	i = 1;
@@ -446,7 +449,7 @@ db_full_path_subset(
 	i = 0;
 
     for (; i < a->fp_len; i++ )  {
-	int j;
+	size_t j;
 
 	if ( a->fp_names[i] != b->fp_names[0] )  continue;
 
@@ -480,7 +483,7 @@ db_full_path_match_top(
     const struct db_full_path *a,
     const struct db_full_path *b)
 {
-    int i;
+    size_t i;
 
     RT_CK_FULL_PATH(a);
     RT_CK_FULL_PATH(b);
@@ -505,10 +508,11 @@ db_full_path_match_top(
 int
 db_full_path_search( const struct db_full_path *a, const struct directory *dp )
 {
-    int i;
+    long i;
 
     RT_CK_FULL_PATH(a);
     RT_CK_DIR(dp);
+    BU_ASSERT_SIZE_T(a->fp_len, <, LONG_MAX);
 
     for ( i = a->fp_len-1; i >= 0; i-- )  {
 	if ( a->fp_names[i] == dp )  return 1;

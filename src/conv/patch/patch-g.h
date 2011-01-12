@@ -76,9 +76,7 @@ struct subtract_list{
 point_t pt[4];
 fastf_t vertice[5][3];
 fastf_t first[5][3];
-fastf_t normal[5][3];
 point_t ce[4];
-point_t centroid;
 point_t Centroid;	/* object, description centroids */
 unsigned char rgb[3];
 int debug = 0;
@@ -102,7 +100,6 @@ int rev_norms = 0;	/* reverse normals for plate mode triangles */
 int polysolid = 0;	/* convert triangle-facetted objects to polysolids */
 int arb6 = 0;		/* flag: convert plate-mode objects to arb6s */
 
-mat_t m;
 char *patchfile;
 char *labelfile=NULL;
 char *matfile;
@@ -117,11 +114,11 @@ int nthicks;				/* number of unique plate thicknesses
 					   for a single plate mode solid */
 
 struct patches list[15000];
-fastf_t x[1500];
-fastf_t y[1500];
-fastf_t z[1500];
+fastf_t XVAL[1500];
+fastf_t YVAL[1500];
+fastf_t ZVAL[1500];
 int mirror[1500];
-fastf_t radius[1500];
+fastf_t RADIUS[1500];
 fastf_t thk[1500];
 
 struct wmember head;			/* solids for current region */

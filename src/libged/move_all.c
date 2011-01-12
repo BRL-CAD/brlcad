@@ -187,8 +187,8 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 	    int first = 1;
 	    int found = 0;
 	    struct bu_vls new_path;
-	    char *dup = strdup(bu_vls_addr(&gdlp->gdl_path));
-	    char *tok = strtok(dup, "/");
+	    char *dupstr = strdup(bu_vls_addr(&gdlp->gdl_path));
+	    char *tok = strtok(dupstr, "/");
 
 	    bu_vls_init(&new_path);
 
@@ -217,7 +217,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 		bu_vls_printf(&gdlp->gdl_path, "%s", bu_vls_addr(&new_path));
 	    }
 
-	    free((void *)dup);
+	    free((void *)dupstr);
 	    bu_vls_free(&new_path);
 	}
     }

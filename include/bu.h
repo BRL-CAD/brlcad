@@ -1400,7 +1400,7 @@ struct bu_ptbl {
 #define BU_PTBL_BASEADDR(ptbl)	((ptbl)->buffer)
 #define BU_PTBL_LASTADDR(ptbl)	((ptbl)->buffer + (ptbl)->end - 1)
 #define BU_PTBL_END(ptbl)	((ptbl)->end)
-#define BU_PTBL_LEN(p)	((p)->end)
+#define BU_PTBL_LEN(ptbl)	((size_t)(ptbl)->end)
 #define BU_PTBL_GET(ptbl, i)	((ptbl)->buffer[(i)])
 #define BU_PTBL_SET(ptbl, i, val)	((ptbl)->buffer[(i)] = (long*)(val))
 #define BU_PTBL_TEST(ptbl)	((ptbl)->l.magic == BU_PTBL_MAGIC)

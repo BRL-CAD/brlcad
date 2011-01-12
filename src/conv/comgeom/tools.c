@@ -24,14 +24,23 @@
 
 #include "common.h"
 
+#include <stdlib.h>
+
 #define PADCHR		~(1<<15)		/* non data value.*/
 
 char *
 endstr(char *str)
 {
-    while ( *str != 0 )	*str++;
+    if (!str)
+	return NULL;
+
+    while ( *str != '\0' ) {
+	str++;
+    }
+
     return str;
 }
+
 
 void
 strappend(char *s, char *t)	/* === */

@@ -178,15 +178,13 @@ main(int argc, char *argv [])
 		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
 		break;
 	    default:
-		usage();
-		bu_exit(1, NULL);
+		usage(argv[0]);
 		break;
 	}
     }
 
     if (bu_optind >= argc || output_file == (char *)NULL || do_drawings+do_splines+trimmed_surf > 1) {
-	usage();
-	bu_exit(1, NULL);
+	usage(argv[0]);
     }
 
     if ( bu_debug & BU_DEBUG_MEM_CHECK )
@@ -225,8 +223,7 @@ main(int argc, char *argv [])
     {
 	bu_log( "Cannot open %s\n", output_file );
 	perror( "iges-g" );
-	usage();
-	bu_exit( 1, NULL );
+	usage(argv[0]);
     }
     bu_strlcpy( brlcad_file,  output_file, sizeof(brlcad_file) );
 
@@ -257,8 +254,7 @@ main(int argc, char *argv [])
 	{
 	    bu_log( "Cannot open %s\n", iges_file );
 	    perror( "iges-g" );
-	    usage();
-	    bu_exit( 1, NULL );
+	    usage(argv[0]);
 	}
 
 	bu_log( "\n\n\nIGES FILE: %s\n", iges_file );

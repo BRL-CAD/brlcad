@@ -62,7 +62,6 @@ static char *db_file = NULL;
 static char *object = NULL;
 
 static FILE *fp_out;
-static struct db_i *dbip;
 
 static char format_version = MESH_FORMAT_VERSION;
 static struct mesh *head = NULL;
@@ -72,7 +71,7 @@ static uint32_t total_vertex_count = 0;
 static uint32_t total_face_count = 0;
 
 
-void mesh_tracker(struct db_i *dbip, struct directory *dp, genptr_t ptr)
+void mesh_tracker(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
 {
     struct rt_db_internal internal;
 
@@ -222,7 +221,7 @@ void compute_normal(struct rt_bot_internal *bot, int p1, int p2,
 
 void get_normals(struct rt_bot_internal *bot, float *dest)
 {
-    int i;
+    size_t i;
     for (i=0; i < bot->num_faces; i++) {
 	compute_normal(curr->bot, bot->faces[3*i], bot->faces[3*i+1],
 		       bot->faces[3*i+2], dest);
@@ -248,7 +247,7 @@ void write_mesh_data()
     while (NULL != curr) {
 	size_t len;
 	uint32_t nvert, nface;
-	int i;
+	size_t i;
 	float vec[3];
 	char format;
 
@@ -258,7 +257,7 @@ void write_mesh_data()
 	uint32_t ind32[3] = {0, 0, 0};
 
 	if (verbose) {
-	    fprintf(stderr, ">> writing out mesh '%s' (%u, %u)\n", curr->name,
+	    fprintf(stderr, ">> writing out mesh '%s' (%lu, %lu)\n", curr->name,
 		    curr->bot->num_vertices, curr->bot->num_faces);
 	}
 
@@ -359,6 +358,7 @@ int main(int argc, char *argv[])
 {
     int c;
     struct directory* dp;
+    struct db_i *dbip;
 
     /* setup BRL-CAD environment */
     bu_setlinebuf(stderr);

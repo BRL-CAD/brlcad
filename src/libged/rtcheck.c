@@ -112,7 +112,6 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     struct ged_rtcheck *rtcp;
     struct ged_rtcheck_output *rtcop;
     vect_t eye_model;
-    static const char *usage = "options";
 
     const char *bin;
     char rtcheck[256] = {0};
@@ -357,7 +356,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 
 #ifndef _WIN32
 static void
-ged_rtcheck_vector_handler(ClientData clientData, int mask)
+ged_rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
@@ -412,7 +411,7 @@ ged_rtcheck_vector_handler(ClientData clientData, int mask)
 }
 
 static void
-ged_rtcheck_output_handler(ClientData clientData, int mask)
+ged_rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 {
     int count;
     char line[RT_MAXLINE] = {0};

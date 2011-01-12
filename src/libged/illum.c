@@ -77,7 +77,7 @@ ged_illum(struct ged *gedp, int argc, const char *argv[])
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    int i;
+	    size_t i;
 
 	    for (i = 0; i < sp->s_fullpath.fp_len; ++i) {
 		if (*argv[1] == *DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep &&

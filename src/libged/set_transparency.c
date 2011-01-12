@@ -45,7 +45,7 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
     struct solid *sp;
-    int i;
+    size_t i;
     struct directory **dpp;
     struct directory **tmp_dpp;
     fastf_t transparency;

@@ -27,12 +27,12 @@
 #include "adrt.h"
 #include "adrt_struct.h"
 
-int slave_load(tie_t *tie, void *, uint32_t dlen);
+int slave_load(struct tie_s *tie, void *);
 
 extern uint32_t slave_load_mesh_num;
 extern adrt_mesh_t *slave_load_mesh_list;
 
-int slave_load_g (tie_t *tie, char *data);
+int slave_load_g (struct tie_s *tie, char *data);
 
 #endif
 

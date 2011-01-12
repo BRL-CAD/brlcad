@@ -89,18 +89,18 @@ struct vrml_mat {
 #define PL_OA(_m)	bu_offsetofarray(struct vrml_mat, _m)
 
 const struct bu_structparse vrml_mat_parse[]={
-    {"%s", TXT_NAME_SIZE, "ma_shader", PL_OA(shader), 	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "shine",		PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "sh",			PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f", 1, "transmit",		PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f", 1, "tr",			PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "angle",		PL_O(lt_angle),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "fract",		PL_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "aim",		PL_OA(lt_dir),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "w",         	PL_O(tx_w),             BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "n",         	PL_O(tx_n),             BU_STRUCTPARSE_FUNC_NULL },
-    {"%s",  TXT_NAME_SIZE, "file",	PL_OA(tx_file), 	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%s", TXT_NAME_SIZE, "ma_shader", PL_OA(shader), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "shine",PL_O(shininess),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "sh",PL_O(shininess),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "transmit",PL_O(transparency),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "tr",PL_O(transparency),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "angle",PL_O(lt_angle),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "fract",PL_O(lt_fraction),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "aim",PL_OA(lt_dir),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "w", PL_O(tx_w), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "n", PL_O(tx_n), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", TXT_NAME_SIZE, "file",PL_OA(tx_file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",0, (char *)0,0,BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
@@ -156,7 +156,7 @@ struct rt_bot_internal *
 dup_bot( struct rt_bot_internal *bot_in )
 {
     struct rt_bot_internal *bot;
-    int i;
+    size_t i;
 
     RT_BOT_CK_MAGIC( bot_in );
 
@@ -186,7 +186,7 @@ dup_bot( struct rt_bot_internal *bot_in )
 }
 
 static int
-select_lights(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -591,7 +591,7 @@ main(int argc, char **argv)
 	    case 'u':
 		units = bu_strdup( bu_optarg );
 		scale_factor = bu_units_conversion( units );
-		if ( scale_factor == 0.0 )
+		if ( NEAR_ZERO(scale_factor, SMALL_FASTF) )
 		{
 		    bu_exit(1, "Unrecognized units (%s)\n", units );
 		}
@@ -818,7 +818,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 	path_2_vrml_id(&shape_name, full_path);
 	fprintf( fp, "\t\tDEF %s Shape { \n", bu_vls_addr(&shape_name));
 
-	fprintf( fp, "\t\t\t# Component_ID: %d   %s\n", comb->region_id, full_path);
+	fprintf( fp, "\t\t\t# Component_ID: %ld   %s\n", comb->region_id, full_path);
 	fprintf( fp, "\t\t\tappearance Appearance { \n");
 
 	if ( strncmp( "plastic", mat.shader, 7 ) == 0 )
@@ -1119,7 +1119,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 	mat.lt_angle = 180.0;
 	VSETALL( mat.lt_dir, 0.0 );
 
-	if ( mat.lt_dir[X] != 0.0 || mat.lt_dir[Y] != 0.0 ||mat.lt_dir[Z] != 0.0 )
+	if ( !NEAR_ZERO(mat.lt_dir[X], SMALL_FASTF) || !NEAR_ZERO(mat.lt_dir[Y], SMALL_FASTF) || !NEAR_ZERO(mat.lt_dir[Z], SMALL_FASTF) )
 	{
 	    fprintf( fp, "\t\tSpotLight {\n" );
 	    fprintf( fp, "\t\t\ton \tTRUE\n" );
@@ -1148,8 +1148,8 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
     int appearance;
     struct rt_bot_internal *bot;
     int bot_num;
-    int i;
-    int vert_count=0;
+    size_t i;
+    size_t vert_count=0;
 
     BARRIER_CHECK;
 
@@ -1177,7 +1177,7 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
 	    point_t pt;
 
 	    VSCALE( pt, &bot->vertices[i*3], scale_factor );
-	    fprintf( fp_out, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %d\n", V3ARGS( pt ), vert_count );
+	    fprintf( fp_out, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %lu\n", V3ARGS( pt ), vert_count );
 	    vert_count++;
 	}
     }
@@ -1187,7 +1187,7 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
 	bot = pmp->bots[bot_num];
 	RT_BOT_CK_MAGIC( bot );
 	for ( i=0; i<bot->num_faces; i++ )
-	    fprintf( fp_out, "\t\t\t\t\t%d, %d, %d, -1,\n",
+	    fprintf( fp_out, "\t\t\t\t\t%lu, %lu, %lu, -1,\n",
 		     vert_count+bot->faces[i*3],
 		     vert_count+bot->faces[i*3+1],
 		     vert_count+bot->faces[i*3+2]);
@@ -1244,7 +1244,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     return (union tree *)NULL;
 }
 
-union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
     struct nmgregion	*r;
     struct bu_list		vhead;

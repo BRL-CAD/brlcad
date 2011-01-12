@@ -128,7 +128,7 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
 		    v = eu->vu_p->v_p;
 		    NMG_CK_VERTEX(v);
-		    fprintf(fp, "    <Vertex> %d {\n      %lf %lf %lf\n      <Normal> { %lf %lf %lf }\n    }\n",
+		    fprintf(fp, "    <Vertex> %d {\n      %f %f %f\n      <Normal> { %f %f %f }\n    }\n",
 			    vert_count,
 			    V3ARGS(v->vg_p->coord),
 			    V3ARGS(facet_normal));

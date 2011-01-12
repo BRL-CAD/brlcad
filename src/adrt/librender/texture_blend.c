@@ -29,34 +29,34 @@
 
 #include "bu.h"
 
-void texture_blend_init(texture_t *texture, TIE_3 color1, TIE_3 color2) {
-    texture_blend_t *sd;
+void texture_blend_init(struct texture_s *texture, vect_t color1, vect_t color2) {
+    struct texture_blend_s *sd;
 
-    texture->data = bu_malloc(sizeof(texture_blend_t), "texture data");
+    texture->data = bu_malloc(sizeof(struct texture_blend_s), "texture data");
     texture->free = texture_blend_free;
-    texture->work = (texture_work_t *)texture_blend_work;
+    texture->work = (struct texture_work_s *)texture_blend_work;
 
-    sd = (texture_blend_t *)texture->data;
-    sd->color1 = color1;
-    sd->color2 = color2;
+    sd = (struct texture_blend_s *)texture->data;
+    VMOVE(sd->color1, color1);
+    VMOVE(sd->color2, color2);
 }
 
 
-void texture_blend_free(texture_t *texture) {
+void texture_blend_free(struct texture_s *texture) {
     bu_free(texture->data, "texture data");
 }
 
 
 void texture_blend_work(__TEXTURE_WORK_PROTOTYPE__) {
-    texture_blend_t *sd;
-    tfloat coef;
+    struct texture_blend_s *sd;
+    fastf_t coef;
 
-    sd = (texture_blend_t *)texture->data;
+    sd = (struct texture_blend_s *)texture->data;
 
-    coef = pixel->v[0];
-    pixel->v[0] = (1.0 - coef)*sd->color1.v[0] + coef*sd->color2.v[0];
-    pixel->v[1] = (1.0 - coef)*sd->color1.v[1] + coef*sd->color2.v[1];
-    pixel->v[2] = (1.0 - coef)*sd->color1.v[2] + coef*sd->color2.v[2];
+    coef = *pixel[0];
+    *pixel[0] = (1.0 - coef)*sd->color1[0] + coef*sd->color2[0];
+    *pixel[1] = (1.0 - coef)*sd->color1[1] + coef*sd->color2[1];
+    *pixel[2] = (1.0 - coef)*sd->color1[2] + coef*sd->color2[2];
 }
 
 /*

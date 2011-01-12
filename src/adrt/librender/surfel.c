@@ -32,9 +32,9 @@
 #include "adrt_struct.h"
 
 typedef struct render_surfel_pt_s {
-    TIE_3 pos;
+    point_t pos;
     tfloat radius;
-    TIE_3 color;
+    vect_t color;
 } render_surfel_pt_t;
 
 typedef struct render_surfel_s {
@@ -55,10 +55,10 @@ render_surfel_free(render_t *render)
 
 
 void
-render_surfel_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+render_surfel_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
 {
     render_surfel_t *d;
-    tie_id_t id;
+    struct tie_id_s id;
     adrt_mesh_t *mesh;
     uint32_t i;
     tfloat dist_sq;
@@ -67,12 +67,12 @@ render_surfel_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 
     if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {
 	for (i = 0; i < d->num; i++) {
-	    dist_sq = (d->list[i].pos.v[0]-id.pos.v[0]) * (d->list[i].pos.v[0]-id.pos.v[0]) +
-                (d->list[i].pos.v[1]-id.pos.v[1]) * (d->list[i].pos.v[1]-id.pos.v[1]) +
-                (d->list[i].pos.v[2]-id.pos.v[2]) * (d->list[i].pos.v[2]-id.pos.v[2]);
+	    dist_sq = (d->list[i].pos[0]-id.pos[0]) * (d->list[i].pos[0]-id.pos[0]) +
+                (d->list[i].pos[1]-id.pos[1]) * (d->list[i].pos[1]-id.pos[1]) +
+                (d->list[i].pos[2]-id.pos[2]) * (d->list[i].pos[2]-id.pos[2]);
 
 	    if (dist_sq < d->list[i].radius*d->list[i].radius) {
-		*pixel = d->list[i].color;
+		VMOVE((*pixel).v, d->list[i].color);
 		break;
 	    }
 	}
@@ -82,7 +82,7 @@ render_surfel_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 }
 
 int
-render_surfel_init(render_t *render, char *buf)
+render_surfel_init(render_t *render, const char *buf)
 {
     render_surfel_t *d;
 

@@ -27,7 +27,7 @@
 #define _ADRT_STRUCT_H
 
 #ifdef TIE_PRECISION
-# if TIE_PRECISION != TIE_SINGLE_PRECISION
+# if defined(TIE_SINGLE_PRECISION) && TIE_PRECISION != TIE_SINGLE_PRECISION
 #  error "Need single floating point precision out of tie"
 # endif
 #else
@@ -44,10 +44,10 @@
 /* Attributes */
 typedef struct adrt_mesh_attributes_s {
     TIE_3 color; /* base color of the material */
-    tfloat density; /* density of the material, x-ray/vulnerability stuff */
-    tfloat gloss; /* smoothness of the surface, ability to reflect */
-    tfloat emission; /* emission, power of light source */
-    tfloat ior; /* index of refraction */
+    fastf_t density; /* density of the material, x-ray/vulnerability stuff */
+    fastf_t gloss; /* smoothness of the surface, ability to reflect */
+    fastf_t emission; /* emission, power of light source */
+    fastf_t ior; /* index of refraction */
 } adrt_mesh_attributes_t;
 
 
@@ -57,9 +57,9 @@ typedef struct adrt_mesh_s {
     int flags;
     int matid;
     char name[256];
-    TIE_3 min, max;
-    tfloat matrix[16];
-    tfloat matinv[16];
+    vect_t min, max;
+    fastf_t matrix[16];
+    fastf_t matinv[16];
     adrt_mesh_attributes_t *attributes;
     struct texture_s *texture;
 } adrt_mesh_t;

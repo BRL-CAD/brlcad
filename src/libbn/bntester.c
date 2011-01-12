@@ -135,44 +135,44 @@ parse_case(char *buf_p, int *i, long *l, double *d, unsigned long *u, char *fmt_
 int
 main(int argc, char **argv)
 {
-    char buf[BUFSIZ];
-    FILE *fp_in; 
-    FILE *stream;
-    char *endp;
-    unsigned long line_num = 0; 
-    unsigned long failed_cnt = 0;
-    unsigned long bomb_cnt = 0;
-    unsigned long success_cnt = 0;
-    int string_length;
-    int argv_idx;
-    char c;
-    char dt_fmt[50];  /* data type format string */
-    char *buf_p1;
-    char *buf_p;
-    struct bn_tol tol;
-    int ret = 0;
+    static char buf[BUFSIZ];
+    static FILE *fp_in = NULL; 
+    static FILE *stream = NULL;
+    static char *endp = NULL;
+    static unsigned long line_num = 0; 
+    static unsigned long failed_cnt = 0;
+    static unsigned long bomb_cnt = 0;
+    static unsigned long success_cnt = 0;
+    static int string_length;
+    static int argv_idx;
+    static char c;
+    static char dt_fmt[50];  /* data type format string */
+    static char *buf_p1;
+    static char *buf_p;
+    static struct bn_tol tol;
+    static int ret = 0;
 
     /* command line parameters */
-    char input_file_name[BUFSIZ];
-    char output_file_name[BUFSIZ];
-    unsigned long test_case_line_num;
-    unsigned long function_num;
+    static char input_file_name[BUFSIZ] = {0};
+    static char output_file_name[BUFSIZ] = {0};
+    static unsigned long test_case_line_num = 0;
+    static unsigned long function_num = 0;
 
     /* function parameter arrays */
-    int i[50];
-    long l[50];
-    double d[50];
-    unsigned long u[50];
+    static int i[50] = {0};
+    static long l[50] = {0};
+    static double d[50] = {0.0};
+    static unsigned long u[50] = {0};
 
     /* boolean variables */
-    int input_file_name_defined = 0;
-    int output_file_name_defined = 0;
-    int process_single_test_case = 0;
-    int process_single_function = 0;
-    int valid_function_number = 0;
-    int process_test_case = 0;
-    int early_exit = 0;
-    int found_eof = 0;
+    static int input_file_name_defined = 0;
+    static int output_file_name_defined = 0;
+    static int process_single_test_case = 0;
+    static int process_single_function = 0;
+    static int valid_function_number = 0;
+    static int process_test_case = 0;
+    static int early_exit = 0;
+    static int found_eof = 0;
 
     /* set initial values in tol structure */
     tol.magic = BN_TOL_MAGIC;

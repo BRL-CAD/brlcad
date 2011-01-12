@@ -26,15 +26,15 @@
 
 
 void
-render_depth_free(render_t *render)
+render_depth_free(render_t *UNUSED(render))
 {
     return;
 }
 
 void
-render_depth_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+render_depth_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
 {
-    tie_id_t id;
+    struct tie_id_s id;
     adrt_mesh_t *mesh;
 
     /* Visualize ray depth, must put ray->depth++ hack into bsp for this to be of any use */
@@ -43,7 +43,7 @@ render_depth_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 }
 
 int
-render_depth_init(render_t *render, char *usr)
+render_depth_init(render_t *render, const char *UNUSED(usr))
 {
     render->work = render_depth_work;
     render->free = render_depth_free;

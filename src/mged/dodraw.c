@@ -1011,7 +1011,7 @@ cvt_vlblock_to_solids(
     const char *name,
     int copy)
 {
-    int i;
+    size_t i;
     char shortname[32];
     char namebuf[64];
     char *av[4];

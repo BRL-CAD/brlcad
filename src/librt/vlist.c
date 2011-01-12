@@ -55,7 +55,7 @@ bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists
 		int max_ent)
 {
     struct bn_vlblock *vbp;
-    int i;
+    size_t i;
 
     if (BU_LIST_UNINITIALIZED(free_vlist_hd))
 	BU_LIST_INIT(free_vlist_hd);
@@ -98,7 +98,7 @@ rt_vlblock_init(void)
 void
 rt_vlblock_free(struct bn_vlblock *vbp)
 {
-    int i;
+    size_t i;
 
     BN_CK_VLBLOCK(vbp);
     for (i=0; i < vbp->nused; i++) {
@@ -122,8 +122,8 @@ struct bu_list *
 rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
 {
     long new;
-    int n;
-    int omax;		/* old max */
+    size_t n;
+    size_t omax;		/* old max */
 
     BN_CK_VLBLOCK(vbp);
 
@@ -478,7 +478,7 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
 void
 rt_plot_vlblock(FILE *fp, const struct bn_vlblock *vbp)
 {
-    int i;
+    size_t i;
 
     BN_CK_VLBLOCK(vbp);
 

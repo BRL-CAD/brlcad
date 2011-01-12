@@ -41,12 +41,7 @@ struct showmats_data {
 };
 
 static void
-Do_showmats(struct db_i			*dbip,
-	    struct rt_comb_internal	*comb,
-	    union tree			*comb_leaf,
-	    genptr_t			user_ptr1,
-	    genptr_t			user_ptr2,
-	    genptr_t			user_ptr3)
+Do_showmats(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t UNUSED(user_ptr3))
 {
     struct showmats_data *smdp;
     int aflag;

@@ -23,6 +23,7 @@
 
 #include "render_util.h"
 #include "adrt_struct.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,14 +39,14 @@ typedef struct render_segment_s {
 
 typedef struct render_shotline_s {
     render_segment_t *seglist;
-    TIE_3 in_hit;
+    point_t in_hit;
     uint32_t segnum;
     uint32_t segind;
 } render_shotline_t;
 
 
 /* Generate vector list for a spall cone given a reference angle */
-void render_util_spall_vec(TIE_3 dir, tfloat angle, int vec_num, TIE_3 *vec_list) {
+void render_util_spall_vec(vect_t UNUSED(dir), fastf_t UNUSED(angle), int UNUSED(vec_num), vect_t *UNUSED(vec_list)) {
 #if 0
     TIE_3 vec;
     tfloat radius, t;
@@ -78,7 +79,7 @@ void render_util_spall_vec(TIE_3 dir, tfloat angle, int vec_num, TIE_3 *vec_list
 }
 
 
-static void* shot_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
+static void* shot_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr) {
     adrt_mesh_t *mesh = (adrt_mesh_t *)(tri->ptr);
     render_shotline_t *shotline = (render_shotline_t *)ptr;
     uint32_t i;
@@ -110,9 +111,9 @@ static void* shot_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
 
 	/* In-hit */
 	if (shotline->segnum == 0) {
-	    shotline->in_hit = ray->dir;
-	    VSCALE(shotline->in_hit.v,  shotline->in_hit.v,  id->dist);
-	    VADD2(shotline->in_hit.v,  shotline->in_hit.v,  ray->pos.v);
+	    VMOVE(shotline->in_hit, ray->dir);
+	    VSCALE(shotline->in_hit,  shotline->in_hit,  id->dist);
+	    VADD2(shotline->in_hit,  shotline->in_hit,  ray->pos);
 	}
 
 	/* Increment */
@@ -123,8 +124,8 @@ static void* shot_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
 }
 
 
-void render_util_shotline_list(tie_t *tie, tie_ray_t *ray, void **data, int *dlen) {
-    tie_id_t id;
+void render_util_shotline_list(struct tie_s *tie, struct tie_ray_s *ray, void **data, int *dlen) {
+    struct tie_id_s id;
     render_shotline_t shotline;
     uint32_t i;
     uint8_t c;
@@ -173,11 +174,11 @@ void render_util_shotline_list(tie_t *tie, tie_ray_t *ray, void **data, int *dle
 }
 
 
-void render_util_spall_list(tie_t *tie, tie_ray_t *ray, tfloat angle, void **data, int *dlen) {
+void render_util_spall_list(struct tie_s *UNUSED(tie), struct tie_ray_s *UNUSED(ray), tfloat UNUSED(angle), void **UNUSED(data), int *UNUSED(dlen)) {
 #if 0
     shotline_t shotline;
-    tie_ray_t sray;
-    tie_id_t id;
+    struct tie_ray_s sray;
+    struct tie_id_s id;
     int i, ind;
     unsigned char c;
     TIE_3 *vec_list, in, out;

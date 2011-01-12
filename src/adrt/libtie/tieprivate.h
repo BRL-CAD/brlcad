@@ -1,7 +1,7 @@
-/*                           H I T . C
- * BRL-CAD / ADRT
+/*                       T I E P R I V A T E . H
+ * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,25 +17,45 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file hit.c
+/** @file tieprivate.h
+ *
+ * private stuff for libtie/librender
  *
  */
 
-#include "adrt_struct.h"
+#ifndef _TIEPRIVATE_H
+#define _TIEPRIVATE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void* render_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *UNUSED(ptr)) {
-    /* Flip normal to face ray origin (via dot product check) */
-    if (ray->dir[0] * id->norm[0] + ray->dir[1] * id->norm[1] + ray->dir[2] * id->norm[2] > 0)
-	VSCALE(id->norm,  id->norm,  -1.0);
+struct tie_geom_s {
+    struct tie_tri_s **tri_list;
+    unsigned int tri_num;
+};
 
-    return (adrt_mesh_t *)(tri->ptr);
+#ifdef _WIN32
+# undef near
+# undef far
+#endif
+
+struct tie_stack_s {
+    struct tie_kdtree_s *node;
+    tfloat near;
+    tfloat far;
+};
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* _TIEPRIVATE_H */
 
 /*
  * Local Variables:
- * mode: C
  * tab-width: 8
+ * mode: C
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

@@ -1661,7 +1661,7 @@ Circle::LoadONBrep(ON_Brep *brep)
     double w = cos(dtheta/2.0);
     ON_3dPointArray cpts(2*narcs + 1);
     double angle = t_theta;
-    double W[2*narcs + 1];
+    double W[2 * 4 + 1]; /* 2 * max narcs + 1 */
     ON_3dPoint P0, P1, P2, PM, PT;
     ON_3dVector T0, T2;
 
@@ -1698,7 +1698,7 @@ Circle::LoadONBrep(ON_Brep *brep)
     int p = degree;
     int m = n + p - 1;
     int dimension = 3;
-    double u[narcs+1];
+    double u[4 + 1]; /* max narcs + 1 */
 
     for (int k = 0; k < narcs+1; k++) {
 	u[k] = ((double)k)/narcs;

@@ -1054,7 +1054,7 @@ bool ON_BoundingBox::IsPointIn( const ON_3dPoint& p, int bStrictlyIn ) const
 					m_min.z<=p.z && p.z<=m_max.z;
   }
   return bIn;
-};
+}
 
 ON_3dPoint ON_BoundingBox::ClosestPoint( 
   const ON_3dPoint& test_point

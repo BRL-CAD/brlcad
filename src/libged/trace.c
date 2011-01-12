@@ -30,7 +30,7 @@
 
 static void
 ged_do_trace(struct db_i		*dbip,
-	     struct rt_comb_internal	*comb,
+	     struct rt_comb_internal	*UNUSED(comb),
 	     union tree			*comb_leaf,
 	     genptr_t			user_ptr1,
 	     genptr_t			user_ptr2,

@@ -816,7 +816,7 @@ Rt_Init(Tcl_Interp *interp)
 void
 db_full_path_appendresult(Tcl_Interp *interp, const struct db_full_path *pp)
 {
-    register int i;
+    size_t i;
 
     RT_CK_FULL_PATH(pp);
 

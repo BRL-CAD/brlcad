@@ -214,10 +214,10 @@ vo_open_cmd(const char	*oname)
  * USAGE: v_open [name]
  */
 static int
-vo_open_tcl(ClientData	clientData,
-	    Tcl_Interp	*interp,
-	    int		argc,
-	    const char	*argv[])
+vo_open_tcl(ClientData UNUSED(clientData),
+	    Tcl_Interp *interp,
+	    int	argc,
+	    const char *argv[])
 {
     struct view_obj *vop;
 
@@ -1323,7 +1323,8 @@ vo_units_cmd(struct view_obj	*vop,
     if (argc == 2) {
 	double uval;
 
-	if ((uval = bu_units_conversion(argv[1])) == 0) {
+	uval = bu_units_conversion(argv[1]);
+	if (NEAR_ZERO(uval, SMALL_FASTF)) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "unrecognized unit type - %s\n", argv[1]);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -2584,8 +2585,6 @@ vo_viewDir_cmd(struct view_obj	*vop,
     int iflag = 0;
 
     if (2 < argc) {
-	struct bu_vls vls;
-
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias vo_viewDir %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -2634,10 +2633,7 @@ vo_viewDir_tcl(ClientData	clientData,
 
 /* skeleton functions for view_obj methods */
 int
-vo_ae2dir_cmd(struct view_obj	*vop,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char 		*argv[])
+vo_ae2dir_cmd(struct view_obj *UNUSED(vop), Tcl_Interp *interp, int argc, char *argv[])
 {
     fastf_t az, el;
     vect_t dir;
@@ -2723,10 +2719,7 @@ vo_ae2dir_tcl(ClientData	clientData,
  * guts to the dir2ae command
  */
 int
-vo_dir2ae_cmd(struct view_obj	*vop,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char 		*argv[])
+vo_dir2ae_cmd(struct view_obj *UNUSED(vop), Tcl_Interp *interp, int argc, char *argv[])
 {
     fastf_t az, el;
     vect_t dir;

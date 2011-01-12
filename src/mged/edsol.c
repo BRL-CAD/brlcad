@@ -1951,7 +1951,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 	    {
 		struct rt_arbn_internal *arbn =
 		    (struct rt_arbn_internal *)ip->idb_ptr;
-		int i, j, k;
+		size_t i, j, k;
 		int good_vert = 0;
 
 		RT_ARBN_CK_MAGIC(arbn);
@@ -1959,7 +1959,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		    for (j=i+1; j<arbn->neqn; j++) {
 			for (k=j+1; k<arbn->neqn; k++) {
 			    if (!bn_mkpoint_3planes(mpt, arbn->eqn[i], arbn->eqn[j], arbn->eqn[k])) {
-				int l;
+				size_t l;
 
 				good_vert = 1;
 				for (l=0; l<arbn->neqn; l++) {
@@ -3933,7 +3933,7 @@ sedit(void)
     struct rt_arb_internal *arb;
     fastf_t *eqp;
     static vect_t work;
-    int i;
+    size_t i;
     static int pnt5;		/* ECMD_ARB_SETUP_ROTFACE, special arb7 case */
     static float la, lb, lc, ld;	/* TGC: length of vectors */
     mat_t mat;
@@ -4164,9 +4164,6 @@ sedit(void)
 		    }
 		}
 
-		if (i < 0)
-		    i = 0;
-
 		if (i > 255)
 		    i = 255;
 
@@ -4192,9 +4189,6 @@ sedit(void)
 			i--;
 		    }
 		}
-
-		if (i < 0)
-		    i = 0;
 
 		if (i > 255)
 		    i = 255;
@@ -4307,7 +4301,7 @@ sedit(void)
 	    {
 		struct rt_bot_internal *bot =
 		    (struct rt_bot_internal *)es_int.idb_ptr;
-		int face_no;
+		size_t face_no;
 
 		RT_BOT_CK_MAGIC(bot);
 
@@ -4340,7 +4334,7 @@ sedit(void)
 		    if (!inpara)
 			break;
 
-		    face_no = -1;
+		    face_no = (size_t)-1;
 		    for (i=0; i < bot->num_faces; i++) {
 			if (bot_verts[0] == bot->faces[i*3] &&
 			    bot_verts[1] == bot->faces[i*3+1] &&
@@ -4350,7 +4344,7 @@ sedit(void)
 			    break;
 			}
 		    }
-		    if (face_no < 0) {
+		    if (face_no == (size_t)-1) {
 			bu_log("Cannot find face with vertices %d %d %d!\n",
 			       V3ARGS(bot_verts));
 			break;
@@ -4414,7 +4408,7 @@ sedit(void)
 		    (struct rt_bot_internal *)es_int.idb_ptr;
 		char fmode[10];
 		const char *radio_result;
-		int face_no;
+		size_t face_no;
 		int ret_tcl;
 
 		RT_BOT_CK_MAGIC(bot);
@@ -4435,10 +4429,10 @@ sedit(void)
 		    if (atoi(Tcl_GetStringResult(INTERP)))
 			break;
 
-		    face_no = -2;
+		    face_no = (size_t)-2;
 		} else {
 		    /* setting thickness for just one face */
-		    face_no = -1;
+		    face_no = (size_t)-1;
 		    for (i=0; i < bot->num_faces; i++) {
 			if (bot_verts[0] == bot->faces[i*3] &&
 			    bot_verts[1] == bot->faces[i*3+1] &&
@@ -4448,14 +4442,14 @@ sedit(void)
 			    break;
 			}
 		    }
-		    if (face_no < 0) {
+		    if (face_no == (size_t)-1 || face_no == (size_t)-2) {
 			bu_log("Cannot find face with vertices %d %d %d!\n",
 			       V3ARGS(bot_verts));
 			break;
 		    }
 		}
 
-		if (face_no > -1)
+		if (face_no != (size_t)-1)
 		    sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, face_no)?1:0);
 		else
 		    sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, 0)?1:0);
@@ -4472,7 +4466,7 @@ sedit(void)
 		}
 		radio_result = Tcl_GetVar(INTERP, "_bot_fmode_result", TCL_GLOBAL_ONLY);
 
-		if (face_no > -1) {
+		if (face_no != (size_t)-1) {
 		    if (atoi(radio_result))
 			BU_BITSET(bot->face_mode, face_no);
 		    else
@@ -4528,7 +4522,7 @@ sedit(void)
 		    struct bu_bitv *new_bitv;
 
 		    new_bitv = bu_bitv_new(bot->num_faces);
-		    for (i=0; i<face_no; i++) {
+		    for (i=0; i<(size_t)face_no; i++) {
 			if (BU_BITTEST(bot->face_mode, i))
 			    BU_BITSET(new_bitv, i);
 		    }
@@ -5986,7 +5980,7 @@ sedit(void)
 
 		if (es_ars_crv >= 0 && es_ars_col >= 0) {
 		    es_ars_col++;
-		    if (es_ars_col >= ars->pts_per_curve)
+		    if ((size_t)es_ars_col >= ars->pts_per_curve)
 			es_ars_col = 0;
 		    VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
 		    VSCALE(selected_pt, es_pt, base2local);
@@ -6036,7 +6030,7 @@ sedit(void)
 
 		if (es_ars_crv >= 0 && es_ars_col >= 0) {
 		    es_ars_crv++;
-		    if (es_ars_crv >= ars->ncurves)
+		    if ((size_t)es_ars_crv >= ars->ncurves)
 			es_ars_crv = 0;
 		    VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
 		    VSCALE(selected_pt, es_pt, base2local);
@@ -6092,12 +6086,12 @@ sedit(void)
 					       "new curves");
 
 		for (i=0; i<ars->ncurves+1; i++) {
-		    int j, k;
+		    size_t j, k;
 
 		    curves[i] = (fastf_t *)bu_malloc(ars->pts_per_curve * 3 * sizeof(fastf_t),
 						     "new curves[i]");
 
-		    if (i <= es_ars_crv)
+		    if (i <= (size_t)es_ars_crv)
 			k = i;
 		    else
 			k = i - 1;
@@ -6131,13 +6125,13 @@ sedit(void)
 					       "new curves");
 
 		for (i=0; i<ars->ncurves; i++) {
-		    int j, k;
+		    size_t j, k;
 
 		    curves[i] = (fastf_t *)bu_malloc((ars->pts_per_curve + 1) * 3 * sizeof(fastf_t),
 						     "new curves[i]");
 
 		    for (j=0; j<ars->pts_per_curve+1; j++) {
-			if (j <= es_ars_col)
+			if (j <= (size_t)es_ars_col)
 			    k = j;
 			else
 			    k = j - 1;
@@ -6170,7 +6164,7 @@ sedit(void)
 		    break;
 		}
 
-		if (es_ars_crv == 0 || es_ars_crv == ars->ncurves-1) {
+		if (es_ars_crv == 0 || (size_t)es_ars_crv == ars->ncurves-1) {
 		    bu_log("Cannot delete first or last curve\n");
 		    break;
 		}
@@ -6180,9 +6174,9 @@ sedit(void)
 
 		k = 0;
 		for (i=0; i<ars->ncurves; i++) {
-		    int j;
+		    size_t j;
 
-		    if (i == es_ars_crv)
+		    if (i == (size_t)es_ars_crv)
 			continue;
 
 		    curves[k] = (fastf_t *)bu_malloc(ars->pts_per_curve * 3 * sizeof(fastf_t),
@@ -6201,7 +6195,7 @@ sedit(void)
 		ars->curves = curves;
 		ars->ncurves--;
 
-		if (es_ars_crv >= ars->ncurves)
+		if ((size_t)es_ars_crv >= ars->ncurves)
 		    es_ars_crv = ars->ncurves - 1;
 	    }
 	    break;
@@ -6218,7 +6212,7 @@ sedit(void)
 		    break;
 		}
 
-		if (es_ars_col == 0 || es_ars_col == ars->ncurves - 1) {
+		if (es_ars_col == 0 || (size_t)es_ars_col == ars->ncurves - 1) {
 		    bu_log("Cannot delete first or last column\n");
 		    break;
 		}
@@ -6232,7 +6226,7 @@ sedit(void)
 					       "new curves");
 
 		for (i=0; i<ars->ncurves; i++) {
-		    int j, k;
+		    size_t j, k;
 
 
 		    curves[i] = (fastf_t *)bu_malloc((ars->pts_per_curve - 1) * 3 * sizeof(fastf_t),
@@ -6240,7 +6234,7 @@ sedit(void)
 
 		    k = 0;
 		    for (j=0; j<ars->pts_per_curve; j++) {
-			if (j == es_ars_col)
+			if (j == (size_t)es_ars_col)
 			    continue;
 
 			curves[i][k*3] = ars->curves[i][j*3];
@@ -6257,7 +6251,7 @@ sedit(void)
 		ars->curves = curves;
 		ars->pts_per_curve--;
 
-		if (es_ars_col >= ars->pts_per_curve)
+		if ((size_t)es_ars_col >= ars->pts_per_curve)
 		    es_ars_col = ars->pts_per_curve - 1;
 	    }
 	    break;
@@ -6971,7 +6965,8 @@ sedit_mouse(const vect_t mousevec)
 		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
 		point_t start_pt, tmp;
 		vect_t dir;
-		int i, hits, ret_tcl;
+		size_t i;
+		int hits, ret_tcl;
 		int v1, v2, v3;
 		point_t pt1, pt2, pt3;
 		struct bu_vls vls;

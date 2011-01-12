@@ -532,7 +532,7 @@ makeLowerTorso(struct rt_wdb *file, char *name, struct human_data_t *dude, fastf
 
 
 HIDDEN fastf_t
-makeShoulderJoint(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude, int showBoxes)
+makeShoulderJoint(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude, int showBoxes)
 {
     vect_t startVector, lengthVector;
     point_t leftFix, rightFix;
@@ -563,14 +563,14 @@ makeShoulderJoint(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_
 
 
 HIDDEN fastf_t
-makeShoulder(struct rt_wdb *file, fastf_t isLeft, char *partName, struct human_data_t *dude, int showBoxes)
+makeShoulder(struct rt_wdb *UNUSED(file), fastf_t UNUSED(isLeft), char *UNUSED(partName), struct human_data_t *UNUSED(dude), int UNUSED(showBoxes))
 {
     return 1;
 }
 
 
 HIDDEN fastf_t
-makeUpperArm(struct rt_wdb *file, fastf_t isLeft, char *partName, struct human_data_t *dude, int showBoxes)
+makeUpperArm(struct rt_wdb *file, int isLeft, char *partName, struct human_data_t *dude, int showBoxes)
 {
     vect_t startVector;
     mat_t rotMatrix;
@@ -607,7 +607,7 @@ makeUpperArm(struct rt_wdb *file, fastf_t isLeft, char *partName, struct human_d
 
 
 HIDDEN fastf_t
-makeElbow(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude)
+makeElbow(struct rt_wdb *file, int UNUSED(isLeft), char *name, struct human_data_t *dude)
 {
     vect_t a, b, c;
     VSET(a, (dude->arms.elbowWidth), 0, 0);
@@ -623,7 +623,7 @@ makeElbow(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *
 
 
 HIDDEN fastf_t
-makeLowerArm(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude, int showBoxes)
+makeLowerArm(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude, int showBoxes)
 {
     vect_t startVector;
     mat_t rotMatrix;
@@ -661,7 +661,7 @@ makeLowerArm(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_
 
 
 HIDDEN fastf_t
-makeWrist(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude)
+makeWrist(struct rt_wdb *file, int UNUSED(isLeft), char *name, struct human_data_t *dude)
 {
     mk_sph(file, name, dude->joints.wristJoint, dude->arms.wristWidth);
     return dude->arms.wristWidth;
@@ -669,7 +669,7 @@ makeWrist(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *
 
 
 HIDDEN void
-makeHand(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude, int showBoxes)
+makeHand(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude, int showBoxes)
 {
     mat_t rotMatrix;
     vect_t startVector;
@@ -689,7 +689,7 @@ makeHand(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *d
 
 
 HIDDEN fastf_t
-makeThighJoint(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude)
+makeThighJoint(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude)
 {
     if (isLeft)
 	mk_sph(file, name, dude->joints.leftThighJoint, dude->legs.thighWidth);
@@ -701,7 +701,7 @@ makeThighJoint(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_dat
 
 
 HIDDEN fastf_t
-makeThigh(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude, int showBoxes)
+makeThigh(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude, int showBoxes)
 {
     vect_t startVector;
     mat_t rotMatrix;
@@ -727,7 +727,7 @@ makeThigh(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *
 
 
 HIDDEN fastf_t
-makeKnee(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude)
+makeKnee(struct rt_wdb *file, int UNUSED(isLeft), char *name, struct human_data_t *dude)
 {
     mk_sph(file, name, dude->joints.kneeJoint, dude->legs.kneeWidth);	
     return dude->legs.kneeWidth;
@@ -735,7 +735,7 @@ makeKnee(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *d
 
 
 HIDDEN fastf_t
-makeCalf(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude, int showBoxes)
+makeCalf(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude, int showBoxes)
 {
     vect_t startVector;
     mat_t rotMatrix;
@@ -766,7 +766,7 @@ makeCalf(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *d
 
 
 HIDDEN fastf_t
-makeAnkle(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude)
+makeAnkle(struct rt_wdb *file, int UNUSED(isLeftr), char *name, struct human_data_t *dude)
 {
     mk_sph(file, name, dude->joints.ankleJoint, dude->legs.ankleWidth);
     return dude->legs.ankleWidth;
@@ -774,7 +774,7 @@ makeAnkle(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *
 
 
 HIDDEN fastf_t
-makeFoot(struct rt_wdb *file, fastf_t isLeft, char *name, struct human_data_t *dude, int showBoxes)
+makeFoot(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude, int showBoxes)
 {
     vect_t startVector, boxVector;
     mat_t rotMatrix;
@@ -1309,9 +1309,9 @@ Auto(struct human_data_t *dude)
 HIDDEN void
 RandAuto(struct human_data_t *dude)
 {
-    fastf_t X = 0;
-    X = ((rand()%12)+54);
-    dude->height = X;
+    fastf_t val = 0;
+    val = ((rand()%12)+54);
+    dude->height = val;
 }
 
 
@@ -1472,7 +1472,7 @@ Manual(struct human_data_t *dude)
  * measurements are set.
  */
 HIDDEN void
-setMeasurements(struct human_data_t *dude, fastf_t percentile)
+setMeasurements(struct human_data_t *UNUSED(dude), fastf_t percentile)
 {
     /* If percentile, load data from database or something */
 
@@ -2068,7 +2068,7 @@ verbose(struct human_data_t *dude)
  * inputs into the program, instead of manual mode or auto mode.
  */
 HIDDEN void
-getText(struct human_data_t *dude)
+getText(struct human_data_t *UNUSED(dude))
 {
     char buffer[80];
     FILE *input;
@@ -2424,7 +2424,6 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	int w=0;
 	int x=0;
 	char holder[10]={'0'};
-	char suffix[MAXLENGTH];	
 	int z=0;
 	char thing[10]="0";
 	char thing2[10]="0";
@@ -2435,8 +2434,8 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 					      "LeftLowerArm.s", "LeftWristJoint.s", "LeftHand.s", "RightShoulderJoint.s", "RightUpperArm.s", "RightElbowJoint.s", "RightLowerArm.s",
 					      "RightWristJoint.s", "RightHand.s", "LeftThighJoint.s", "LeftThigh.s", "LeftKneeJoint.s", "LeftCalf.s", "LeftAnkleJoint.s", "LeftFoot.s",
 					      "RightThighJoint.s", "RightThigh.s", "RightKneeJoint.s", "RightCalf.s", "RightAnkleJoint.s", "RightFoot.s", "0"};
-	    char body[MAXLENGTH][MAXLENGTH]={*topLevel};
-	    char box[MAXLENGTH][MAXLENGTH]={"Box.r", };
+	    char body[MAXLENGTH][MAXLENGTH]={{*topLevel}};
+	    char box[MAXLENGTH][MAXLENGTH]={"Box.r"};
 
 	    bu_log("%d\n", w);
 

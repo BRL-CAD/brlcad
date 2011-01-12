@@ -1055,7 +1055,7 @@ BN_EXPORT BU_EXTERN(int bn_hlf_class,
 BN_EXPORT BU_EXTERN(int bn_isect_planes,
 		    (point_t pt,
 		     const plane_t planes[],
-		     const int pl_count));
+		     const size_t pl_count));
 
 /** @} */
 /*----------------------------------------------------------------------*/
@@ -1071,7 +1071,7 @@ BN_EXPORT BU_EXTERN(int bn_isect_planes,
  */
 typedef struct bn_poly {
     unsigned long magic;
-    int dgr;
+    size_t dgr;
     double cf[BN_MAX_POLY_DEGREE+1];
 }  bn_poly_t;
 #define BN_CK_POLY(_p) BU_CKMAG(_p, BN_POLY_MAGIC, "struct bn_poly")
@@ -1634,7 +1634,7 @@ BN_EXPORT extern const double bn_radtodeg;
  */
 struct bn_table {
     unsigned long magic;
-    int nx;
+    size_t nx;
     fastf_t x[1];	/**< @brief array of nx+1 wavelengths, dynamically sized */
 };
 #define BN_CK_TABLE(_p)	BU_CKMAG(_p, BN_TABLE_MAGIC, "bn_table")
@@ -1660,7 +1660,7 @@ struct bn_table {
 
 struct bn_tabdata {
     unsigned long magic;
-    int ny;
+    size_t ny;
     const struct bn_table *table;	/**< @brief Up pointer to definition of X axis */
     fastf_t y[1];			/**< @brief array of ny samples, dynamically sized */
 };
@@ -1691,7 +1691,7 @@ BN_EXPORT BU_EXTERN(void bn_tabdata_free,
 BN_EXPORT BU_EXTERN(void bn_ck_table,
 		    (const struct bn_table *tabp));
 BN_EXPORT BU_EXTERN(struct bn_table *bn_table_make_uniform,
-		    (int num,
+		    (size_t num,
 		     double first,
 		     double last));
 BN_EXPORT BU_EXTERN(void bn_tabdata_add,
@@ -1788,11 +1788,11 @@ BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_read_table_and_tabdata,
 		    (const char *filename));
 BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_binary_read,
 		    (const char *filename,
-		     int num,
+		     size_t num,
 		     const struct bn_table *tabp));
 BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_malloc_array,
 		    (const struct bn_table *tabp,
-		     int num));
+		     size_t num));
 BN_EXPORT BU_EXTERN(void bn_tabdata_copy,
 		    (struct bn_tabdata *out,
 		     const struct bn_tabdata *in));
@@ -1819,8 +1819,8 @@ BN_EXPORT BU_EXTERN(int bn_table_interval_num_samples,
 		     double hi));
 BN_EXPORT BU_EXTERN(int bn_table_delete_sample_pts,
 		    (struct bn_table *tabp,
-		     int i,
-		     int j));
+		     unsigned int i,
+		     unsigned int j));
 BN_EXPORT BU_EXTERN(struct bn_table *bn_table_merge2,
 		    (const struct bn_table *a,
 		     const struct bn_table *b));
@@ -1860,7 +1860,7 @@ BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_mk_linear_filter,
  */
 struct bn_vlist  {
     struct bu_list l;		/**< @brief magic, forw, back */
-    int nused;			/**< @brief elements 0..nused active */
+    size_t nused;		/**< @brief elements 0..nused active */
     int cmd[BN_VLIST_CHUNK];	/**< @brief VL_CMD_* */
     point_t pt[BN_VLIST_CHUNK];	/**< @brief associated 3-point/vect */
 };
@@ -1923,8 +1923,8 @@ struct bn_vlist  {
  */
 struct bn_vlblock {
     unsigned long magic;
-    int nused;
-    int max;
+    size_t nused;
+    size_t max;
     long *rgb;		/**< @brief rgb[max] variable size array */
     struct bu_list *head;		/**< @brief head[max] variable size array */
     struct bu_list *free_vlist_hd;	/**< @brief where to get/put free vlists */
@@ -1959,11 +1959,11 @@ BN_EXPORT BU_EXTERN(void bn_vlist_2string,
  */
 struct vert_root {
     unsigned long magic;
-    int tree_type;			/**< @brief vertices or vertices with normals */
+    int tree_type;		/**< @brief vertices or vertices with normals */
     union vert_tree *the_tree;	/**< @brief the actual vertex tree */
     fastf_t *the_array;		/**< @brief the array of vertices */
-    unsigned long curr_vert;	/**< @brief the number of vertices currently in the array */
-    unsigned long max_vert;		/**< @brief the current maximum capacity of the array */
+    size_t curr_vert;		/**< @brief the number of vertices currently in the array */
+    size_t max_vert;		/**< @brief the current maximum capacity of the array */
 };
 
 #define TREE_TYPE_VERTS 1
@@ -2023,7 +2023,7 @@ __END_DECLS
 #define pl_A pl_points[0]		/* Synonym for A point */
 
 struct plane_specific  {
-    int pl_npts;			/* number of points on plane */
+    size_t pl_npts;			/* number of points on plane */
     point_t pl_points[MAXPTS];		/* Actual points on plane */
     vect_t pl_Xbasis;			/* X (B-A) vector (for 2d coords) */
     vect_t pl_Ybasis;			/* Y (C-A) vector (for 2d coords) */

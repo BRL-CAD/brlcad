@@ -159,7 +159,7 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     //  For the brep, need the list of 3D vertex points.  In sketch, they
     //  are stored as 2D coordinates, so use the sketch_plane to define 3 space
     //  points for the vertices.
-    for (int i = 0; i < eip->vert_count; i++) {
+    for (size_t i = 0; i < eip->vert_count; i++) {
 	(*b)->NewVertex(sketch_plane->PointAt(eip->verts[i][0], eip->verts[i][1]), 0.0);
     }
 
@@ -172,7 +172,7 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     struct carc_seg *csg;
     struct bezier_seg *bsg;
     long *lng;
-    for (int i = 0; i < (&eip->skt_curve)->seg_count; i++) {
+    for (size_t i = 0; i < (&eip->skt_curve)->seg_count; i++) {
 	lng = (long *)(&eip->skt_curve)->segments[i];
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:

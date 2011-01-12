@@ -47,7 +47,6 @@
 
 static	FILE *fd_in;
 static	struct rt_wdb *fd_out;
-static	char line[MAX_LINE_SIZE];
 static	fastf_t local_tol;
 static	fastf_t local_tol_sq;
 static	int ident;
@@ -77,7 +76,7 @@ struct obj_info {
     char *brlcad_comb;		/* unique BRL-CAD name for this region or assembly */
     char *brlcad_solid;		/* unique BRL-CAD name for the solid if this is a region */
     int obj_id;			/* id number (from ENF file) */
-    int part_count;			/* number of members (for assembly), number of faces (for part) */
+    size_t part_count;			/* number of members (for assembly), number of faces (for part) */
     struct obj_info **members;	/* pointer to array of member objects (only valid for assemblies) */
 };
 
@@ -87,8 +86,8 @@ struct obj_info {
 #define ASSEMBLY_TYPE	2
 
 static int *part_tris=NULL;		/* list of triangles for current part */
-static int max_tri=0;			/* number of triangles currently malloced */
-static int curr_tri=0;			/* number of triangles currently being used */
+static size_t max_tri=0;		/* number of triangles currently malloced */
+static size_t curr_tri=0;		/* number of triangles currently being used */
 
 #define TRI_BLOCK 512			/* number of triangles to malloc per call */
 
@@ -191,7 +190,7 @@ add_triangle( int v[3] )
     if ( curr_tri >= max_tri ) {
 	/* allocate more memory for triangles */
 	max_tri += TRI_BLOCK;
-	part_tris = (int *)bu_realloc( part_tris, sizeof( int ) * max_tri * 3, "part_tris" );
+	part_tris = (int *)bu_realloc( part_tris, sizeof(int) * max_tri * 3, "part_tris" );
     }
 
     /* fill in triangle info */
@@ -205,7 +204,7 @@ add_triangle( int v[3] )
 void
 List_assem( struct obj_info *assem )
 {
-    int i;
+    size_t i;
 
     if ( assem->obj_type != ASSEMBLY_TYPE ) {
 	bu_log( "ERROR: List_assem called for non-assembly\n" );
@@ -378,6 +377,7 @@ Make_brlcad_names( struct obj_info *part )
 struct obj_info *
 Part_import( int id_start )
 {
+    char line[MAX_LINE_SIZE];
     struct obj_info *part;
     struct wmember reg_head;
     unsigned char rgb[3];
@@ -517,10 +517,11 @@ Part_import( int id_start )
 struct obj_info *
 Assembly_import( int id_start )
 {
+    char line[MAX_LINE_SIZE];
     struct obj_info *this_assem, *member;
     struct wmember assem_head;
     int id_end, member_id;
-    int i;
+    size_t i;
 
     this_assem = (struct obj_info *)bu_calloc( 1, sizeof( struct obj_info ),
 					       "this_assem" );
@@ -601,6 +602,7 @@ Assembly_import( int id_start )
 int
 main( int argc, char *argv[] )
 {
+    char line[MAX_LINE_SIZE];
     char *input_file, *output_file;
     FILE *fd_parts;
     struct obj_info **top_level_assems=NULL;

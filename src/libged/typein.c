@@ -585,7 +585,7 @@ static char *p_pnts[] = {
 static int
 booleanize(const char *answer)
 {
-    int index = 0;
+    int idx = 0;
     const char *ap;
     static const char *noes[] = {
 	"0",
@@ -607,13 +607,13 @@ booleanize(const char *answer)
 	return 0;
     }
 
-    ap = noes[index];
+    ap = noes[idx];
     while (ap && ap[0] != '\0') {
 	if ((strcasecmp(ap, answer) == 0)) {
 	    return 0;
 	}
-	index++;
-	ap = noes[index];
+	idx++;
+	ap = noes[idx];
     }
 
     /* true! */
@@ -712,7 +712,7 @@ ebm_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
  *
  */
 static int
-submodel_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
+submodel_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_internal *intern)
 {
     struct rt_submodel_internal *sip;
 
@@ -1041,7 +1041,7 @@ arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 {
     struct rt_arbn_internal *arbn;
     int num_planes=0;
-    int i;
+    size_t i;
 
     if (argc < 4) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc-3]);
@@ -1083,7 +1083,7 @@ arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 static int
 pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
 {
-    struct rt_pipe_internal *pipe;
+    struct rt_pipe_internal *pipeip;
     int i, num_points;
 
     if (argc < 4) {
@@ -1111,9 +1111,9 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     intern->idb_type = ID_PIPE;
     intern->idb_meth = &rt_functab[ID_PIPE];
     intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_pipe_internal), "rt_pipe_internal");
-    pipe = (struct rt_pipe_internal *)intern->idb_ptr;
-    pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
-    BU_LIST_INIT(&pipe->pipe_segs_head);
+    pipeip = (struct rt_pipe_internal *)intern->idb_ptr;
+    pipeip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
+    BU_LIST_INIT(&pipeip->pipe_segs_head);
     for (i=4; i<argc; i+= 6) {
 	struct wdb_pipept *pipept;
 
@@ -1125,10 +1125,10 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 	pipept->pp_od = atof(argv[i+4]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	pipept->pp_bendradius = atof(argv[i+5]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
-	BU_LIST_INSERT(&pipe->pipe_segs_head, &pipept->l);
+	BU_LIST_INSERT(&pipeip->pipe_segs_head, &pipept->l);
     }
 
-    if (rt_pipe_ck(&pipe->pipe_segs_head)) {
+    if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
 	bu_vls_printf(&gedp->ged_result_str, "Illegal pipe, solid not made!!\n");
 	return GED_ERROR;
     }
@@ -1144,10 +1144,10 @@ static int
 ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
 {
     struct rt_ars_internal *arip;
-    int i;
-    int total_points;
+    size_t i;
+    size_t total_points;
     int cv;	/* current curve (waterline) # */
-    int axis;	/* current fastf_t in waterline */
+    size_t axis;	/* current fastf_t in waterline */
     int ncurves_minus_one;
     int num_pts = 0;
     int num_curves = 0;
@@ -1275,7 +1275,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     cv = 1;
     axis = 0;
     /* scan each of the other points we've already got */
-    for (i=8; i < argc && i < total_points * ELEMENTS_PER_POINT; ++i) {
+    for (i=8; i < (size_t)argc && i < total_points * ELEMENTS_PER_POINT; ++i) {
 	arip->curves[cv][axis] = atof(argv[i]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	if (++axis >= arip->pts_per_curve * ELEMENTS_PER_POINT) {
 	    axis = 0;

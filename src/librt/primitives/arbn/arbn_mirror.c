@@ -40,7 +40,7 @@ rt_arbn_mirror(struct rt_db_internal *ip, register const plane_t plane)
 {
     struct rt_arbn_internal *arbn;
 
-    int i;
+    size_t i;
     mat_t mirmat;
     mat_t rmat;
     mat_t temp;

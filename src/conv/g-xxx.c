@@ -51,8 +51,7 @@
 long debug = 0;
 int verbose = 0;
 
-static struct db_i		*dbip;
-static struct bn_tol		tol;
+static struct bn_tol tol;
 
 static const char usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 
@@ -168,11 +167,12 @@ int
 region_start(struct db_tree_state *tsp,
 	     const struct db_full_path *pathp,
 	     const struct rt_comb_internal *combp,
-	     genptr_t client_data)
+	     genptr_t UNUSED(client_data))
 {
-    struct rt_comb_internal *comb;
     struct directory *dp;
     struct bu_vls str;
+
+    RT_CK_DBTS(tsp);
 
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
@@ -222,8 +222,10 @@ union tree *
 region_end (struct db_tree_state *tsp,
 	    const struct db_full_path *pathp,
 	    union tree *curtree,
-	    genptr_t client_data)
+	    genptr_t UNUSED(client_data))
 {
+    RT_CK_DBTS(tsp);
+
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
 	bu_log("region_end   %s\n", name);
@@ -321,12 +323,14 @@ union tree *
 primitive_func(struct db_tree_state *tsp,
 	       const struct db_full_path *pathp,
 	       struct rt_db_internal *ip,
-	       genptr_t client_data)
+	       genptr_t UNUSED(client_data))
 {
     int i;
 
     struct directory *dp;
     dp = DB_FULL_PATH_CUR_DIR(pathp);
+
+    RT_CK_DBTS(tsp);
 
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
@@ -392,138 +396,49 @@ primitive_func(struct db_tree_state *tsp,
 			printf("\tpoint #%d: (%g %g %g)\n", i, V3ARGS(arb->pt[i]));
 		    break;
 		}
-	    case ID_BOT:	/* Bag O' Triangles */
-		{
-		    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
-		    break;
-		}
 
-		/* less commonly used primitives */
+		/* other primitives, left as an exercise to the reader */
+
+	    case ID_BOT:	/* Bag O' Triangles */
 	    case ID_ARS:
-		{
 		    /* series of curves
 		     * each with the same number of points
 		     */
-		    struct rt_ars_internal *ars = (struct rt_ars_internal *)ip->idb_ptr;
-		    break;
-		}
 	    case ID_HALF:
-		{
 		    /* half universe defined by a plane */
-		    struct rt_half_internal *half = (struct rt_half_internal *)ip->idb_ptr;
-		    break;
-		}
 	    case ID_POLY:
-		{
 		    /* polygons (up to 5 vertices per) */
-		    struct rt_pg_internal *pg = (struct rt_pg_internal *)ip->idb_ptr;
-		    break;
-		}
 	    case ID_BSPLINE:
-		{
 		    /* NURB surfaces */
-		    struct rt_nurb_internal *nurb = (struct rt_nurb_internal *)ip->idb_ptr;
-		    break;
-		}
 	    case ID_NMG:
-		{
 		    /* N-manifold geometry */
-		    struct model *m = (struct model *)ip->idb_ptr;
-		    break;
-		}
 	    case ID_ARBN:
-		{
-		    struct rt_arbn_internal *arbn = (struct rt_arbn_internal *)ip->idb_ptr;
-		    break;
-		}
-
 	    case ID_DSP:
-		{
 		    /* Displacement map (terrain primitive) */
-		    /* normally used for terrain only */
-		    /* the DSP primitive may reference an external file */
-		    struct rt_dsp_internal *dsp = (struct rt_dsp_internal *)ip->idb_ptr;
-		    break;
-		}
+		    /* the DSP primitive may reference an external file or binunif object */
 	    case ID_HF:
-		{
 		    /* height field (terrain primitive) */
 		    /* the HF primitive references an external file */
-		    struct rt_hf_internal *hf = (struct rt_hf_internal *)ip->idb_ptr;
-		    break;
-		}
-
-		/* rarely used primitives */
 	    case ID_EBM:
-		{
 		    /* extruded bit-map */
 		    /* the EBM primitive references an external file */
-		    struct rt_ebm_internal *ebm = (struct rt_ebm_internal *)ip->idb_ptr;
-		    break;
-		}
 	    case ID_VOL:
-		{
 		    /* the VOL primitive references an external file */
-		    struct rt_vol_internal *vol = (struct rt_vol_internal *)ip->idb_ptr;
-		    break;
-		}
 	    case ID_PIPE:
-		{
-		    struct rt_pipe_internal *pipe = (struct rt_pipe_internal *)ip->idb_ptr;
-		    break;
-		}
 	    case ID_PARTICLE:
-		{
-		    struct rt_part_internal *part = (struct rt_part_internal *)ip->idb_ptr;
-		    break;
-		}
 	    case ID_RPC:
-		{
-		    struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)ip->idb_ptr;
-		    break;
-		}
 	    case ID_RHC:
-		{
-		    struct rt_rhc_internal *rhc = (struct rt_rhc_internal *)ip->idb_ptr;
-		    break;
-		}
 	    case ID_EPA:
-		{
-		    struct rt_epa_internal *epa = (struct rt_epa_internal *)ip->idb_ptr;
-		    break;
-		}
 	    case ID_EHY:
-		{
-		    struct rt_ehy_internal *ehy = (struct rt_ehy_internal *)ip->idb_ptr;
-		    break;
-		}
 	    case ID_ETO:
-		{
-		    struct rt_eto_internal *eto = (struct rt_eto_internal *)ip->idb_ptr;
-		    break;
-		}
 	    case ID_GRIP:
-		{
-		    struct rt_grip_internal *grip = (struct rt_grip_internal *)ip->idb_ptr;
-		    break;
-		}
-
 	    case ID_SKETCH:
-		{
-		    struct rt_sketch_internal *sketch = (struct rt_sketch_internal *)ip->idb_ptr;
-		    break;
-		}
 	    case ID_EXTRUDE:
-		{
 		    /* note that an extrusion references a sketch, make sure you convert
 		     * the sketch also
 		     */
-		    struct rt_extrude_internal *extrude = (struct rt_extrude_internal *)ip->idb_ptr;
-		    break;
-		}
-
 	    default:
-		bu_log("Primitive %s is unrecognized type (%d)\n", dp->d_namep, ip->idb_type);
+		bu_log("Primitive %s is an unsupported or unrecognized type (%d)\n", dp->d_namep, ip->idb_type);
 		break;
 	}
     } else {
@@ -535,7 +450,8 @@ primitive_func(struct db_tree_state *tsp,
 		     */
 		    struct rt_binunif_internal *bin = (struct rt_binunif_internal *)ip->idb_ptr;
 
-		    printf("Found a binary object (%s)\n\n", dp->d_namep);
+		    if (bin)
+			printf("Found a binary object (%s)\n\n", dp->d_namep);
 		    break;
 		}
 	    default:

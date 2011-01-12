@@ -483,7 +483,7 @@ dgo_illum_cmd(struct dg_obj	*dgop,
 	goto bad;
 
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
-	int i;
+	size_t i;
 
 	for (i = 0; i < sp->s_fullpath.fp_len; ++i) {
 	    if (*argv[1] == *DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep &&
@@ -849,7 +849,7 @@ dgo_how_cmd(struct dg_obj	*dgop,
 {
     struct solid *sp;
     struct bu_vls vls;
-    int i;
+    size_t i;
     struct directory **dpp;
     struct directory **tmp_dpp;
     int both = 0;
@@ -2539,7 +2539,7 @@ dgo_set_transparency_cmd(struct dg_obj	*dgop,
 			 char 		*argv[])
 {
     struct solid *sp;
-    int i;
+    size_t i;
     struct directory **dpp;
     struct directory **tmp_dpp;
     fastf_t transparency;
@@ -3300,9 +3300,9 @@ dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], i
 void
 dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, Tcl_Interp *interp, struct bn_vlblock *vbp, char *name, int copy)
 {
-    int		i;
-    char		shortname[32];
-    char		namebuf[64];
+    size_t i;
+    char shortname[32];
+    char namebuf[64];
 
     bu_strlcpy(shortname, name, sizeof(shortname));
 
@@ -3755,7 +3755,7 @@ dgo_eraseobj(struct dg_obj		*dgop,
     struct directory **tmp_dpp;
     struct solid *sp;
     struct solid *nsp;
-    int i;
+    size_t i;
 
     if (dgop->dgo_wdbp->dbip == DBI_NULL)
 	return;
@@ -3892,8 +3892,8 @@ dgo_rt_write(struct dg_obj	*dgop,
 	     FILE		*fp,
 	     vect_t		eye_model)
 {
-    int	i;
-    quat_t		quat;
+    size_t i;
+    quat_t quat;
     struct solid *sp;
 
     (void)fprintf(fp, "viewsize %.15e;\n", vop->vo_size);
