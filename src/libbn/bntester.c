@@ -136,9 +136,9 @@ int
 main(int argc, char **argv)
 {
     char buf[BUFSIZ];
-    FILE *fp_in; 
-    FILE *stream;
-    char *endp;
+    FILE *fp_in = NULL; 
+    FILE *stream = NULL;
+    char *endp = NULL;
     unsigned long line_num = 0; 
     unsigned long failed_cnt = 0;
     unsigned long bomb_cnt = 0;
@@ -153,16 +153,16 @@ main(int argc, char **argv)
     int ret = 0;
 
     /* command line parameters */
-    char input_file_name[BUFSIZ];
-    char output_file_name[BUFSIZ];
-    unsigned long test_case_line_num;
-    unsigned long function_num;
+    char input_file_name[BUFSIZ] = {0};
+    char output_file_name[BUFSIZ] = {0};
+    unsigned long test_case_line_num = 0;
+    unsigned long function_num = 0;
 
     /* function parameter arrays */
-    int i[50];
-    long l[50];
-    double d[50];
-    unsigned long u[50];
+    int i[50] = {0};
+    long l[50] = {0};
+    double d[50] = {0.0};
+    unsigned long u[50] = {0};
 
     /* boolean variables */
     int input_file_name_defined = 0;
