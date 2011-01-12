@@ -2723,7 +2723,7 @@ rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
     struct vertexuse *vu;
     struct vertex *v;
     struct vertex_g *vg;
-    int i;
+    size_t i;
 
     NMG_CK_MODEL(m);
 
