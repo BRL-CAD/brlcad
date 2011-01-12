@@ -315,14 +315,14 @@ revolve(int entityno)
 	VUNITIZE(pdir);
 
 	if (fract < 0.5) {
-	    theta = 2.0*PI*fract;
+	    theta = 2.0*M_PI*fract;
 	    cutop = Intersect;
 	} else if (fract > 0.5) {
-	    theta = (-2.0*PI*(1.0-fract));
+	    theta = (-2.0*M_PI*(1.0-fract));
 	    cutop = Subtract;
 	} else {
 	    /* FIXME: fract == 0.5, a dangerous comparison (roundoff) */
-	    theta = PI;
+	    theta = M_PI;
 	    cutop = Intersect;
 	    /* Construct vertices for cutting solid */
 	    VJOIN2(pts[0], pt, hmin, adir, rmax, startdir);
