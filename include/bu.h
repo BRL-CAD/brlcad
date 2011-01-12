@@ -5074,9 +5074,13 @@ BU_EXPORT BU_EXTERN(char *bu_strdupm, (const char *cp, const char *label));
  *
  * bu_strcmp() is a macro that includes the current file name and line
  * number that can be used when bu debugging is enabled.
+ *
+ * BU_STR_EMPTY() is a macro that tests a string for emptiness, i.e. "" or
+ * NULL.
  */
 BU_EXPORT BU_EXTERN(int bu_strcmpm, (const char *string1, const char *string2, const char *label));
-#define bu_strcmp(s) bu_strcmpm(s, BU_FLSTR)
+#define bu_strcmp(s)    bu_strcmpm(s, BU_FLSTR)
+#define BU_STR_EMPTY(s) (bu_strcmpm(s, "", BU_FLSTR) == 0)
 
 /** @} */
 
