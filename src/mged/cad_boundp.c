@@ -388,10 +388,10 @@ Search(void)				/* output bounding polygon */
     /* Output point and look for next CCW point on periphery. */
 
     for (;;) {
-	coords first;	/* first output if -v */
-	double mindir; /* smallest from->to angle */
+	coords first = {0.0, 0.0}; /* first output if -v */
+	double mindir = 0.0; /* smallest from->to angle */
 	point *nextp = (point *)NULL; /* -> next perimeter point */
-	queue *endq;	/* -> endpoint queue entry */
+	queue *endq = NULL; /* -> endpoint queue entry */
 
 #ifdef DEBUG
 	fprintf(stderr, "from %g", from);
