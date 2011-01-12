@@ -141,7 +141,7 @@ rt_tcl_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 {
     static const char xyz[4] = "XYZ";
     struct bu_vls str;
-    int i;
+    size_t i;
 
     bu_vls_init(&str);
 
@@ -166,7 +166,7 @@ rt_tcl_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 	    bu_vls_printf(&str, "} pieces {");
 	    for (i = 0; i < cutp->bn.bn_piecelen; i++) {
 		struct rt_piecelist *plp = &cutp->bn.bn_piecelist[i];
-		int j;
+		size_t j;
 		RT_CK_PIECELIST(plp);
 		/* These can be taken by user positionally */
 		bu_vls_printf(&str, "{%s {", plp->stp->st_name);

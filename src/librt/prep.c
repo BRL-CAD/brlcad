@@ -1540,7 +1540,7 @@ unprep_leaf(struct db_tree_state *tsp,
 	    if (stp->st_rtip == rtip) {
 		long bit=stp->st_bit;
 		struct region *rp;
-		int i, j;
+		size_t i, j;
 
 		/* found soltab for this instance */
 
@@ -1589,7 +1589,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 {
     struct bu_ptbl unprep_regions;
     struct db_full_path *path;
-    int i, j, k;
+    size_t i, j, k;
 
     rt_res_pieces_clean(resp, rtip);
 
@@ -1784,12 +1784,12 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 int
 rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *resp)
 {
-    int i;
+    size_t i;
     char **argv;
     struct region *rp;
     struct soltab *stp;
     fastf_t old_min[3], old_max[3];
-    long bitno;
+    size_t bitno;
 
     VMOVE(old_min, rtip->mdl_min);
     VMOVE(old_max, rtip->mdl_max);

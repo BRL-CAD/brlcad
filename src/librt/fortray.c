@@ -340,18 +340,18 @@ BU_FORTRAN(frname, FRNAME)(char		*fbuf,
     int	i;
     int	len;
     int	offset;
-    int	rnum;
-    char	buf[512];
+    size_t rnum;
+    char buf[512];
 
     rnum = *region_num-1;
-    if ( rnum < 0 || rnum > (*rtip)->nregions )  {
+    if ( rnum > (*rtip)->nregions )  {
 	sprintf( buf, "Region id %d out of range, max=%ld",
 		 *region_num, (long)((*rtip)->nregions) );
 	fr_string_c2f( fbuf, buf, fbuflen );
 	return;
     }
     for ( BU_LIST_FOR( rp, region, &((*rtip)->HeadRegion) ) )  {
-	if ( rp->reg_bit != rnum )  continue;
+	if ( (size_t)rp->reg_bit != rnum )  continue;
 	len = (int)strlen( rp->reg_name );
 	offset = 0;
 	if ( len >= fbuflen )  {

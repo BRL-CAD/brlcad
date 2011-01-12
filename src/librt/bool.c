@@ -221,7 +221,8 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    VPRINT(" OPoint", pt);
 	    bu_log("***********\n");
 	}
-	if (segp->seg_stp->st_bit >= rtip->nsolids) bu_bomb("rt_boolweave: st_bit");
+	if ((size_t)segp->seg_stp->st_bit >= rtip->nsolids)
+	    bu_bomb("rt_boolweave: st_bit");
 
 	BU_LIST_DEQUEUE(&(segp->l));
 	BU_LIST_INSERT(&(out_hd->l), &(segp->l));

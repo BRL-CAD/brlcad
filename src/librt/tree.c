@@ -774,7 +774,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
     struct soltab *stp;
     struct region *regp;
     Tcl_HashTable *tbl;
-    int prev_sol_count;
+    size_t prev_sol_count;
     int i;
     int num_attrs=0;
     point_t region_min, region_max;

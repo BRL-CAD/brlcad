@@ -735,11 +735,11 @@ union cutter  {
 	fastf_t		bn_min[3];
 	fastf_t		bn_max[3];
 	struct soltab **bn_list;	/**< @brief bn_list[bn_len] */
-	int		bn_len;		/**< @brief # of solids in list */
-	int		bn_maxlen;	/**< @brief # of ptrs allocated to list */
+	size_t		bn_len;		/**< @brief # of solids in list */
+	size_t		bn_maxlen;	/**< @brief # of ptrs allocated to list */
 	struct rt_piecelist *bn_piecelist; /**< @brief [] solids with pieces */
-	int		bn_piecelen;	/**< @brief # of piecelists used */
-	int		bn_maxpiecelen; /**< @brief # of piecelists allocated */
+	size_t		bn_piecelen;	/**< @brief # of piecelists used */
+	size_t		bn_maxpiecelen; /**< @brief # of piecelists allocated */
     } bn;
     struct nugridnode {
 	int nu_type;
@@ -1339,7 +1339,7 @@ struct rt_piecestate  {
  */
 struct rt_piecelist  {
     unsigned long	magic;
-    long		npieces;	/**< @brief  number of pieces in pieces[] array */
+    size_t		npieces;	/**< @brief  number of pieces in pieces[] array */
     long		*pieces;	/**< @brief  pieces[npieces], piece indices */
     struct soltab	*stp;		/**< @brief  ref back to solid */
 };
@@ -1447,19 +1447,19 @@ RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined 
  * Structure used by the "reprep" routines
  */
 struct rt_reprep_obj_list {
-    int ntopobjs;		/**< @brief  number of objects in the original call to gettrees */
+    size_t ntopobjs;		/**< @brief  number of objects in the original call to gettrees */
     char **topobjs;		/**< @brief  list of the above object names */
-    int nunprepped;		/**< @brief  number of objects to be unprepped and re-prepped */
+    size_t nunprepped;		/**< @brief  number of objects to be unprepped and re-prepped */
     char **unprepped;		/**< @brief  list of the above objects */
     /* Above here must be filled in by application */
     /* Below here is used by dynamic geometry routines, should be zeroed by application before use */
     struct bu_ptbl paths;	/**< @brief  list of all paths from topobjs to unprepped objects */
     struct db_tree_state **tsp;	/**< @brief  tree state used by tree walker in "reprep" routines */
     struct bu_ptbl unprep_regions;	/**< @brief  list of region structures that will be "unprepped" */
-    long old_nsolids;		/**< @brief  rtip->nsolids before unprep */
-    long old_nregions;		/**< @brief  rtip->nregions before unprep */
-    long nsolids_unprepped;	/**< @brief  number of soltab structures eliminated by unprep */
-    long nregions_unprepped;	/**< @brief  number of region structures eliminated by unprep */
+    size_t old_nsolids;		/**< @brief  rtip->nsolids before unprep */
+    size_t old_nregions;	/**< @brief  rtip->nregions before unprep */
+    size_t nsolids_unprepped;	/**< @brief  number of soltab structures eliminated by unprep */
+    size_t nregions_unprepped;	/**< @brief  number of region structures eliminated by unprep */
 };
 
 
@@ -1738,17 +1738,17 @@ struct rt_i {
     genptr_t		Orca_hash_tbl;	/**< @brief  Hash table in matrices for ORCA */
     struct bu_ptbl	delete_regs;	/**< @brief  list of region pointers to delete after light_init() */
     /* Ray-tracing statistics */
-    long		nregions;	/**< @brief  total # of regions participating */
-    long		nsolids;	/**< @brief  total # of solids participating */
-    long		rti_nrays;	/**< @brief  # calls to rt_shootray() */
-    long		nmiss_model;	/**< @brief  rays missed model RPP */
-    long		nshots;		/**< @brief  # of calls to ft_shot() */
-    long		nmiss;		/**< @brief  solid ft_shot() returned a miss */
-    long		nhits;		/**< @brief  solid ft_shot() returned a hit */
-    long		nmiss_tree;	/**< @brief  shots missed sub-tree RPP */
-    long		nmiss_solid;	/**< @brief  shots missed solid RPP */
-    long		ndup;		/**< @brief  duplicate shots at a given solid */
-    long		nempty_cells;	/**< @brief  number of empty NUgrid cells */
+    size_t		nregions;	/**< @brief  total # of regions participating */
+    size_t		nsolids;	/**< @brief  total # of solids participating */
+    size_t		rti_nrays;	/**< @brief  # calls to rt_shootray() */
+    size_t		nmiss_model;	/**< @brief  rays missed model RPP */
+    size_t		nshots;		/**< @brief  # of calls to ft_shot() */
+    size_t		nmiss;		/**< @brief  solid ft_shot() returned a miss */
+    size_t		nhits;		/**< @brief  solid ft_shot() returned a hit */
+    size_t		nmiss_tree;	/**< @brief  shots missed sub-tree RPP */
+    size_t		nmiss_solid;	/**< @brief  shots missed solid RPP */
+    size_t		ndup;		/**< @brief  duplicate shots at a given solid */
+    size_t		nempty_cells;	/**< @brief  number of empty NUgrid cells */
     union cutter	rti_CutHead;	/**< @brief  Head of cut tree */
     union cutter	rti_inf_box;	/**< @brief  List of infinite solids */
     union cutter *	rti_CutFree;	/**< @brief  cut Freelist */
@@ -1769,13 +1769,13 @@ struct rt_i {
     struct bu_list	rti_solidheads[RT_DBNHASH]; /**< @brief  active solid lists */
     struct bu_ptbl	rti_resources;	/**< @brief  list of 'struct resource'es encountered */
     double		rti_nu_gfactor;	/**< @brief  constant in numcells computation */
-    int			rti_cutlen;	/**< @brief  goal for # solids per boxnode */
-    int			rti_cutdepth;	/**< @brief  goal for depth of NUBSPT cut tree */
+    size_t		rti_cutlen;	/**< @brief  goal for # solids per boxnode */
+    size_t		rti_cutdepth;	/**< @brief  goal for depth of NUBSPT cut tree */
     /* Parameters required for rt_submodel */
     char *		rti_treetop;	/**< @brief  bu_strduped, for rt_submodel rti's only */
-    int			rti_uses;	/**< @brief  for rt_submodel */
+    size_t		rti_uses;	/**< @brief  for rt_submodel */
     /* Parameters for accelerating "pieces" of solids */
-    int			rti_nsolids_with_pieces; /**< @brief  # solids using pieces */
+    size_t		rti_nsolids_with_pieces; /**< @brief  # solids using pieces */
     /* Parameters for dynamic geometry */
     int			rti_add_to_new_solids_list;
     struct bu_ptbl	rti_new_solids;
