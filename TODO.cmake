@@ -16,13 +16,14 @@ Remaining items:
     this is an issue for Tcl/Tk and packages, but CMake->Visual C++ solutions doesn't tolerate the
 	 spaces.
 
-
 12. Try enabling the Aqua compile logic - it still won't work, but get the build logic to the point
     where the autotools logic is.
 
 13. Enable any remaining things present in autotools but not CMake - RTGL and libpc come to mind.
 
 14. Apply lessons learned to the SCL build logic
+
+15. Try and get archer working in the build directory
 
 Done (to first order, all this needs testing)
 
