@@ -426,8 +426,8 @@ region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union t
     int			left;
     int			length;
     struct directory	*regdp = DIR_NULL;
-    int			i;
-    int			first;
+    size_t i;
+    int first;
 
     bu_vls_init( &ident );
     bu_vls_init( &reg );
@@ -783,7 +783,7 @@ addhalf(struct bu_vls *v, struct rt_half_internal *gp, char *name, int num )
 void
 addarbn(struct bu_vls *v, struct rt_arbn_internal *gp, char *name, int num )
 {
-    int	i;
+    size_t i;
 
     BU_CK_VLS(v);
     RT_ARBN_CK_MAGIC(gp);
@@ -1187,7 +1187,7 @@ ars_curve_out(struct bu_vls *v, fastf_t *fp, int todo, int curveno, int num )
 void
 addars(struct bu_vls *v, struct rt_ars_internal *gp, char *name, int num )
 {
-    int	i;
+    size_t i;
 
     RT_ARS_CK_MAGIC(gp);
 
