@@ -4265,7 +4265,7 @@ rt_bot_smooth(struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, fa
 	    vect_t a, b;
 	    vect_t inv_dir;
 
-	    if (bot->faces[i*3+k] < 0 || (size_t)bot->faces[i*3+2] > bot->num_vertices)
+	    if (bot->faces[i*3+2] < 0 || (size_t)bot->faces[i*3+2] > bot->num_vertices)
 		continue; /* sanity */
 
 	    VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
