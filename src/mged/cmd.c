@@ -1838,7 +1838,7 @@ cmd_lm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
     struct bu_vls vls;
     struct bu_ptbl *tbl;
     struct directory *dp;
-    int i;
+    size_t i;
     int last_opt=0;
     int new_arg_count=1;
     int new_argc;
