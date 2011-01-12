@@ -377,7 +377,7 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     /* Write vertexuse normals */
     if ( do_normals )
     {
-	for ( i=0; i<BU_PTBL_END( &norms ); i++ )
+	for ( i=0; i<BU_PTBL_LEN( &norms ); i++ )
 	{
 	    struct vertexuse_a_plane *va;
 

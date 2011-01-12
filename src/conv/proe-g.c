@@ -907,9 +907,9 @@ Rm_nulls(void)
 
     dbip = fd_out->dbip;
 
-    if (debug || BU_PTBL_END(&null_parts) ) {
+    if (debug || BU_PTBL_LEN(&null_parts) ) {
 	bu_log("Deleting references to the following null parts:\n");
-	for (i=0; i<BU_PTBL_END(&null_parts); i++) {
+	for (i=0; i<BU_PTBL_LEN(&null_parts); i++) {
 	    char *save_name;
 
 	    save_name = (char *)BU_PTBL_GET(&null_parts, i);
@@ -962,7 +962,7 @@ Rm_nulls(void)
 	    size_t k;
 	    int found=0;
 
-	    for (k=0; k<BU_PTBL_END(&null_parts); k++) {
+	    for (k=0; k<BU_PTBL_LEN(&null_parts); k++) {
 		char *save_name;
 
 		save_name = (char *)BU_PTBL_GET(&null_parts, k);

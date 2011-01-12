@@ -166,7 +166,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
 	(void)fprintf(tabptr, " %-4ld %4ld %4ld %4ld %4ld  ",
 		      *numreg, comb->region_id, comb->aircode, comb->GIFTmater,
 		      comb->los);
-	for (k=0; k<BU_PTBL_END(cur_path); k++) {
+	for (k=0; k<BU_PTBL_LEN(cur_path); k++) {
 	    struct directory *path_dp;
 
 	    path_dp = (struct directory *)BU_PTBL_GET(cur_path, k);
