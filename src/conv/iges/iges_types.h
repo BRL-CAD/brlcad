@@ -17,9 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file iges_types.h
- *
- */
 
 #define NTYPES 78
 
@@ -104,6 +101,7 @@ struct types typecount[NTYPES+1]={
     { 600, "MACRO Instance", 0 },
     { 700, "Transformation Matrix (4X4)", 0 }
 };
+
 
 /*
  * Local Variables:

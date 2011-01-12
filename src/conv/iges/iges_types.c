@@ -17,24 +17,18 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file iges_types.c
- *
- */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 char *
-iges_type( type )
-    int type;
+iges_type(int type)
 {
     int i;
     int type_no=0;
 
-    for ( i=1; i<ntypes; i++ )
-    {
-	if ( typecount[i].type == type )
-	{
+    for (i=1; i<ntypes; i++) {
+	if (typecount[i].type == type) {
 	    type_no = i;
 	    break;
 	}
@@ -42,6 +36,7 @@ iges_type( type )
 
     return typecount[type_no].name;
 }
+
 
 /*
  * Local Variables:

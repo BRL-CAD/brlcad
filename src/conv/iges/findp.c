@@ -26,11 +26,6 @@
  * directory.  This routine depends on "fseek" and "ftell" operating
  * with offsets given in bytes.
  *
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
  */
 
 #include "./iges_struct.h"
@@ -48,24 +43,23 @@ Findp()
 
     saverec = currec;	/* save current record number */
 
-    if ( fseek( fd, 0L, 2 ) )	/* go to end of file */
-    {
-	bu_log( "Cannot seek to end of file\n" );
-	perror( "Findp" );
-	bu_exit( 1, NULL );
+    if (fseek(fd, 0L, 2)) {
+	/* go to end of file */
+	bu_log("Cannot seek to end of file\n");
+	perror("Findp");
+	bu_exit(1, NULL);
     }
-    offset = ftell( fd );	/* get file length */
+    offset = ftell(fd);	/* get file length */
     rec2 = offset/reclen;	/* calculate record number for last record */
-    Readrec( rec2 );	/* read last record into "card" buffer */
+    Readrec(rec2);	/* read last record into "card" buffer */
     dstart = 0;
     pstart = 0;
-    for ( i=0; i<3; i++ )
-    {
+    for (i=0; i<3; i++) {
 	counter++;	/* skip the single letter section ID */
-	Readcols( str, 7 );	/* read the number of records in the section */
-	pstart += atoi( str );	/* increment pstart */
-	if ( i == 1 )	/* Global section */
-	{
+	Readcols(str, 7);	/* read the number of records in the section */
+	pstart += atoi(str);	/* increment pstart */
+	if (i == 1) {
+	    /* Global section */
 	    /* set record number for start of directory section */
 	    dstart = pstart;
 	}
@@ -73,24 +67,21 @@ Findp()
 
     /* restore current record */
     currec = saverec;
-    Readrec( currec );
+    Readrec(currec);
 
     /* make space for directory entries */
     totentities = (pstart - dstart)/2;
-    if ( totentities > 0 )
-    {
-	dir = (struct iges_directory **)bu_calloc( totentities ,
-						   sizeof( struct iges_directory *),
-						   "IGES directory*" );
+    if (totentities > 0) {
+	dir = (struct iges_directory **)bu_calloc(totentities ,
+						  sizeof(struct iges_directory *),
+						  "IGES directory*");
 
-	for ( i=0; i<totentities; i++ )
-	{
-	    dir[i] = (struct iges_directory *)bu_malloc( sizeof( struct iges_directory ), "IGES directory" );
+	for (i=0; i<totentities; i++) {
+	    dir[i] = (struct iges_directory *)bu_malloc(sizeof(struct iges_directory), "IGES directory");
 	    dir[i]->name = (char *)NULL;
 	    dir[i]->trans = (-1);
 	}
-    }
-    else
+    } else
 	totentities = 0;
 
     dirarraylen = totentities;
@@ -98,21 +89,22 @@ Findp()
     return pstart;
 }
 
+
 void
 Free_dir()
 {
     int i;
 
-    for ( i=0; i<totentities; i++ )
-    {
-	if ( dir[i]->type == 124 || dir[i]->type == 700 )
-	    bu_free( (char *)dir[i]->rot, "Free_dir: dir[i]->rot" );
-	bu_free( (char *)dir[i], "Free_dir: dir[i]" );
+    for (i=0; i<totentities; i++) {
+	if (dir[i]->type == 124 || dir[i]->type == 700)
+	    bu_free((char *)dir[i]->rot, "Free_dir: dir[i]->rot");
+	bu_free((char *)dir[i], "Free_dir: dir[i]");
     }
 
-    if ( totentities > 0 )
-	bu_free( (char *)dir, "Free_dir: dir" );
+    if (totentities > 0)
+	bu_free((char *)dir, "Free_dir: dir");
 }
+
 
 /*
  * Local Variables:

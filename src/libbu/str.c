@@ -158,6 +158,31 @@ bu_strdupm(register const char *cp, const char *label)
     return base;
 }
 
+
+int
+bu_strcmpm(const char *string1, const char *string2, const char *label)
+{
+    const char *s1 = "";
+    const char *s2 = "";
+
+    if ((!string1 || !string2) && label) {
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	fprintf(stderr, "WARNING: [%s] string comparison with NULL\n", label);
+	bu_semaphore_release(BU_SEM_SYSCALL);
+    }
+
+    /* "" and NULL are considered as equal */
+
+    if (string1)
+	s1 = string1;
+
+    if (string2)
+	s2 = string2;
+
+    return strcmp(s1, s2);
+}
+
+
 /*
  * Local Variables:
  * mode: C

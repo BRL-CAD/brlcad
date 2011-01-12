@@ -25,13 +25,8 @@
  * "id" is printed followed by "string".  A pointer to the string is
  * returned in "ptr".
  *
- *	"eof" is the "end-of-field" delimiter
- *	"eor" is the "end-of-record" delimiter
- *
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
+ * "eof" is the "end-of-field" delimiter
+ * "eor" is the "end-of-record" delimiter
  *
  */
 
@@ -39,73 +34,68 @@
 #include "./iges_extern.h"
 
 void
-Readname( ptr, id )
-    char *id, **ptr;
+Readname(char **ptr, char *id)
 {
     int i=(-1), length=0, done=0, lencard;
     char num[80], *ch;
 
 
-    if ( card[counter] == eof ) /* This is an empty field */
-    {
+    if (card[counter] == eof) {
+	/* This is an empty field */
 	*ptr = (char *)NULL;
 	counter++;
 	return;
-    }
-    else if ( card[counter] == eor ) /* Up against the end of record */
-    {
+    } else if (card[counter] == eor) {
+	/* Up against the end of record */
 	*ptr = (char *)NULL;
 	return;
     }
 
-    if ( card[72] == 'P' )
+    if (card[72] == 'P')
 	lencard = PARAMLEN;
     else
 	lencard = CARDLEN;
 
-    if ( counter > lencard )
-	Readrec( ++currec );
+    if (counter > lencard)
+	Readrec(++currec);
 
-    if ( *id != '\0' )
-	bu_log( "%s", id );
+    if (*id != '\0')
+	bu_log("%s", id);
 
-    while ( !done )
-    {
-	while ( (num[++i] = card[counter++]) != 'H' &&
-		counter <= lencard);
-	if ( counter > lencard )
-	    Readrec( ++currec );
+    while (!done) {
+	while ((num[++i] = card[counter++]) != 'H' &&
+	       counter <= lencard);
+	if (counter > lencard)
+	    Readrec(++currec);
 	else
 	    done = 1;
     }
     num[++i] = '\0';
-    length = atoi( num );
-    *ptr = (char *)bu_malloc( (length + 1)*sizeof( char ), "Readname: name" );
+    length = atoi(num);
+    *ptr = (char *)bu_malloc((length + 1)*sizeof(char), "Readname: name");
     ch = *ptr;
-    for ( i=0; i<length; i++ )
-    {
-	if ( counter > lencard )
-	    Readrec( ++currec );
+    for (i=0; i<length; i++) {
+	if (counter > lencard)
+	    Readrec(++currec);
 	ch[i] = card[counter++];
-	if ( *id != '\0' )
-	    bu_log( "%c", ch[i] );
+	if (*id != '\0')
+	    bu_log("%c", ch[i]);
     }
     ch[length] = '\0';
-    if ( *id != '\0' )
-	bu_log( "%c", '\n' );
+    if (*id != '\0')
+	bu_log("%c", '\n');
 
     done = 0;
-    while ( !done )
-    {
-	while ( card[counter++] != eof && card[counter] != eor &&
-		counter <= lencard );
-	if ( counter > lencard && card[counter] != eor && card[counter] != eof )
-	    Readrec( ++currec );
+    while (!done) {
+	while (card[counter++] != eof && card[counter] != eor &&
+	       counter <= lencard);
+	if (counter > lencard && card[counter] != eor && card[counter] != eof)
+	    Readrec(++currec);
 	else
 	    done = 1;
     }
 
-    if ( card[counter-1] == eor )
+    if (card[counter-1] == eor)
 	counter--;
 }
 

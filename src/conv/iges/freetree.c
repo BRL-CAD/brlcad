@@ -17,43 +17,34 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file freetree.c
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
- */
 
 #include "./iges_struct.h"
 
 void
-Freetree( root )
-    struct node *root;
+Freetree(struct node *root)
 {
     struct node *ptr;
 
     ptr = root;
-    while ( 1 )
-    {
-	while ( ptr != NULL )
-	{
-	    Push( (union tree *)ptr );
+    while (1) {
+	while (ptr != NULL) {
+	    Push((union tree *)ptr);
 	    ptr = ptr->left;
 	}
 	ptr = (struct node *)Pop();
-	bu_free( (char *)ptr, "Freetree: ptr" );
+	bu_free((char *)ptr, "Freetree: ptr");
 
-	if ( ptr->parent == NULL )
+	if (ptr->parent == NULL)
 	    return;
 
-	if ( ptr != ptr->parent->right )
+	if (ptr != ptr->parent->right)
 	    ptr = ptr->parent->right;
 	else
 	    ptr = NULL;
 
     }
 }
+
 
 /*
  * Local Variables:

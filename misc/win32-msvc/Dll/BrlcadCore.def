@@ -92,6 +92,7 @@ bu_vls_strlen
 bu_vls_strncmp
 bu_vls_trimspace
 bu_vls_trunc
+bu_vls_trunc2
 bu_vls_vlscat
 
 db5_get_attributes

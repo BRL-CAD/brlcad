@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file n_main.cpp
- *
- * Brief description
- *
- */
 
 #include "common.h"
 

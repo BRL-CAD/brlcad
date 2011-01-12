@@ -157,7 +157,7 @@ Makedir()
 	Readrec(saverec); /* restore previous record */
     }
 
- out:
+out:
     bu_log("\t%d\n\n", entcount+1);
     if (paramguess)
 	bu_log("Some entities did not have proper parameter pointers, so a resonable guess was made\n");

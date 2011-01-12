@@ -17,32 +17,24 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tor.c
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
- */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 int
-torus( entityno )
-    int entityno;
+torus(int entityno)
 {
-    fastf_t		rad=0.0;
-    fastf_t		rad2=0.0;	/* radius of disc */
-    point_t		center;		/* center point of torus */
-    vect_t		hdir;		/* direction in which to grow height */
-    fastf_t		x_1;
-    fastf_t		y_1;
-    fastf_t		z_1;
-    fastf_t		x_2;
-    fastf_t		y_2;
-    fastf_t		z_2;
-    int		sol_num;		/* IGES solid type number */
+    fastf_t rad=0.0;
+    fastf_t rad2=0.0;	/* radius of disc */
+    point_t center;		/* center point of torus */
+    vect_t hdir;		/* direction in which to grow height */
+    fastf_t x_1;
+    fastf_t y_1;
+    fastf_t z_1;
+    fastf_t x_2;
+    fastf_t y_2;
+    fastf_t z_2;
+    int sol_num;		/* IGES solid type number */
 
     /* Default values */
     x_1 = 0.0;
@@ -54,27 +46,25 @@ torus( entityno )
 
     /* Acquiring Data */
 
-    if ( dir[entityno]->param <= pstart )
-    {
-	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-		dir[entityno]->direct, dir[entityno]->name );
+    if (dir[entityno]->param <= pstart) {
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
-    Readrec( dir[entityno]->param );
-    Readint( &sol_num, "" );
-    Readcnv( &rad, "" );
-    Readcnv( &rad2, "" );
-    Readcnv( &x_1, "" );
-    Readcnv( &y_1, "" );
-    Readcnv( &z_1, "" );
-    Readcnv( &x_2, "" );
-    Readcnv( &y_2, "" );
-    Readcnv( &z_2, "" );
+    Readrec(dir[entityno]->param);
+    Readint(&sol_num, "");
+    Readcnv(&rad, "");
+    Readcnv(&rad2, "");
+    Readcnv(&x_1, "");
+    Readcnv(&y_1, "");
+    Readcnv(&z_1, "");
+    Readcnv(&x_2, "");
+    Readcnv(&y_2, "");
+    Readcnv(&z_2, "");
 
-    if ( rad <= 0.0 || rad2 <= 0.0 )
-    {
-	bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
-		dir[entityno]->direct, dir[entityno]->name );
+    if (rad <= 0.0 || rad2 <= 0.0) {
+	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
+	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
 
@@ -94,6 +84,7 @@ torus( entityno )
 
     return 1;
 }
+
 
 /*
  * Local Variables:

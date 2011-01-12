@@ -26,13 +26,8 @@
  * only action taken is to read the string (effectively skipping the
  * field).
  *
- *	"eof" is the "end-of-field" delimiter
- *	"eor" is the "end-of-record" delimiter
- *
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
+ * "eof" is the "end-of-field" delimiter
+ * "eor" is the "end-of-record" delimiter
  *
  */
 
@@ -45,64 +40,59 @@ Readstrg(char *id)
     int i=(-1), length=0, done=0, lencard;
     char num[80];
 
-    if ( card[counter] == eof ) /* This is an empty field */
-    {
+    if (card[counter] == eof) {
+	/* This is an empty field */
 	counter++;
 	return;
-    }
-    else if ( card[counter] == eor ) /* Up against the end of record */
+    } else if (card[counter] == eor) /* Up against the end of record */
 	return;
 
-    if ( card[72] == 'P' )
+    if (card[72] == 'P')
 	lencard = PARAMLEN;
     else
 	lencard = CARDLEN;
 
-    if ( counter > lencard )
-	Readrec( ++currec );
+    if (counter > lencard)
+	Readrec(++currec);
 
     if (!id) {
 	return;
     }
 
-    if ( *id != '\0' )
-	bu_log( "%s", id );
+    if (*id != '\0')
+	bu_log("%s", id);
 
-    while ( !done )
-    {
-	while ( (num[++i] = card[counter++]) != 'H' &&
-		counter <= lencard);
-	if ( counter > lencard )
-	    Readrec( ++currec );
-	if ( num[i] == 'H' )
+    while (!done) {
+	while ((num[++i] = card[counter++]) != 'H' &&
+	       counter <= lencard);
+	if (counter > lencard)
+	    Readrec(++currec);
+	if (num[i] == 'H')
 	    done = 1;
     }
     num[++i] = '\0';
-    length = atoi( num );
-    for ( i=0; i<length; i++ )
-    {
-	if ( counter > lencard )
-	    Readrec( ++currec );
-	if ( *id != '\0' )
-	    bu_log( "%c", card[counter] );
+    length = atoi(num);
+    for (i=0; i<length; i++) {
+	if (counter > lencard)
+	    Readrec(++currec);
+	if (*id != '\0')
+	    bu_log("%c", card[counter]);
 	counter++;
     }
-    if ( *id != '\0' )
-	bu_log( "%c", '\n' );
+    if (*id != '\0')
+	bu_log("%c", '\n');
 
-    while ( card[counter] != eof && card[counter] != eor )
-    {
-	if ( counter < lencard )
+    while (card[counter] != eof && card[counter] != eor) {
+	if (counter < lencard)
 	    counter++;
 	else
-	    Readrec( ++currec );
+	    Readrec(++currec);
     }
 
-    if ( card[counter] == eof )
-    {
+    if (card[counter] == eof) {
 	counter++;
-	if ( counter > lencard )
-	    Readrec( ++ currec );
+	if (counter > lencard)
+	    Readrec(++ currec);
     }
 }
 
