@@ -5091,7 +5091,7 @@ BU_EXPORT BU_EXTERN(int bu_strcmpm, (const char *string1, const char *string2, c
  * to (bu_strcmp(s1, s2) == 0) returning true if the strings match and
  * false if they do not.
  */
-#define BU_STR_EQUAL(s1, s2) (bu_strcmp((s1), (s2)) == 0)
+#define BU_STR_EQUAL(s1, s2) (bu_strcmpm((s1), (s2), BU_FLSTR) == 0)
 
 /** @} */
 
