@@ -75,23 +75,28 @@ BU_EXTERN( int write_solid_instance, ( int orig_de, mat_t mat, FILE *fp_dir, FIL
 BU_EXTERN( void get_props, ( struct iges_properties *props, struct rt_comb_internal *comb ) );
 BU_EXTERN( int comb_to_iges, ( struct rt_comb_internal *comb, int length, int dependent, struct iges_properties *props, int de_pointers[], FILE *fp_dir, FILE *fp_param ) );
 
-static char usage[] = "Usage: %s [-f|t|m] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-d dist_tol] [-o output_file] brlcad_db.g object(s)\n\
-	options:\n\
-		f - convert each region to facetted BREP before output\n\
-		t - produce a file of trimmed surfaces (experimental)\n\
-		m - produces a seperate IGES file for each region,\n\
-			implies -t, -o gives directory for output IGES file\n\
-		s - produce NURBS for faces of any BREP objects\n\
-		v - verbose\n\
-		a - absolute tolerance for tessellation (mm)\n\
-		r - relative tolerance for tessellation\n\
-		n - normal tolerance for tessellation\n\
-		d - distance tolerance (mm) (minimum distance between distinct points)\n\
-		x - librt debug flag\n\
-		X - nmg debug flag\n\
-		o - file to receive IGES output (or directory when '-m' option is used)\n\
-	The f and t options are mutually exclusive. If neither is specified,\n\
-	the default output is a CSG file to the maximum extent possible\n";
+static void
+usage(const char *argv0)
+{
+    bu_log("Usage: %s [-f|t|m] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-d dist_tol] [-o output_file] brlcad_db.g object(s)\n", argv0);
+    bu_log("	options:\n");
+    bu_log("		f - convert each region to facetted BREP before output\n");
+    bu_log("		t - produce a file of trimmed surfaces (experimental)\n");
+    bu_log("		m - produces a seperate IGES file for each region,\n");
+    bu_log("			implies -t, -o gives directory for output IGES file\n");
+    bu_log("		s - produce NURBS for faces of any BREP objects\n");
+    bu_log("		v - verbose\n");
+    bu_log("		a - absolute tolerance for tessellation (mm)\n");
+    bu_log("		r - relative tolerance for tessellation\n");
+    bu_log("		n - normal tolerance for tessellation\n");
+    bu_log("		d - distance tolerance (mm) (minimum distance between distinct points)\n");
+    bu_log("		x - librt debug flag\n");
+    bu_log("		X - nmg debug flag\n");
+    bu_log("		o - file to receive IGES output (or directory when '-m' option is used)\n");
+    bu_log("	The f and t options are mutually exclusive. If neither is specified,\n");
+    bu_log("	the default output is a CSG file to the maximum extent possible\n");
+    bu_exit(1, NULL);
+}
 
 int		verbose=0;
 static char	*db_name;	/* name of the BRL-CAD database */
@@ -264,13 +269,13 @@ main(int argc, char *argv[])
 		NMG_debug = rt_g.NMG_debug;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		usage(argv[0]);
 		break;
 	}
     }
 
     if (bu_optind+1 >= argc) {
-	bu_exit(1, usage, argv[0]);
+	usage(argv[0]);
     }
 
     /* Open BRL-CAD database */

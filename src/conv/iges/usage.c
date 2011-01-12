@@ -33,28 +33,28 @@
 #include "bu.h"
 
 
-char *message="Usage:  iges-g [-N solid_name] [-X nmg_debug_flag] [-x rt_debug_flag] [-n|d|t] -o file.g file.iges\n\
-	-n - Convert all rational B-spline surfaces to a single spline solid\n\
-	-d - Convert IGES drawings to NMG objects (and ignore solid objects)\n\
-	-3 - Convert IGES drawings to NMG objects, but don't project to 2D (and ignore solid objects)\n\
-	-t - Convert all trimmed surfaces to a single NMG trimmed NURBS solid\n\
-	-o - Specify BRL-CAD output file\n\
-	-p - Write BREP objects as NMG's rather than BOT's\n\
-	-X - Set debug flag for NMG routines\n\
-	-x - Set debug flag for librt\n\
-	-N - Specify name of solid to be created\n\
-The n, d (or 3), and t options are mutually exclusive.\n\
-With none of the n, d (or 3), or t options specified, the default action\n\
-is to convert only IGES solid model entities (CSG and planar face BREP)\n\
-The N option provides a name for the single solid created with the n or t\n\
-options, it is ignored for all other options\n";
-
-
 void
-usage()
+usage(const char *argv0)
 {
-    bu_exit( 1, message );
+    bu_log("Usage:  %s [-N solid_name] [-X nmg_debug_flag] [-x rt_debug_flag] [-n|d|t] -o file.g file.iges\n", argv0);
+    bu_log("	-n - Convert all rational B-spline surfaces to a single spline solid\n");
+    bu_log("	-d - Convert IGES drawings to NMG objects (and ignore solid objects)\n");
+    bu_log("	-3 - Convert IGES drawings to NMG objects, but don't project to 2D (and ignore solid objects)\n");
+    bu_log("	-t - Convert all trimmed surfaces to a single NMG trimmed NURBS solid\n");
+    bu_log("	-o - Specify BRL-CAD output file\n");
+    bu_log("	-p - Write BREP objects as NMG's rather than BOT's\n");
+    bu_log("	-X - Set debug flag for NMG routines\n");
+    bu_log("	-x - Set debug flag for librt\n");
+    bu_log("	-N - Specify name of solid to be created\n");
+    bu_log("The n, d (or 3), and t options are mutually exclusive.\n");
+    bu_log("With none of the n, d (or 3), or t options specified, the default action\n");
+    bu_log("is to convert only IGES solid model entities (CSG and planar face BREP)\n");
+    bu_log("The N option provides a name for the single solid created with the n or t\n");
+    bu_log("options, it is ignored for all other options\n");
+
+    bu_exit(1, NULL);
 }
+
 
 /*
  * Local Variables:
