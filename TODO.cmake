@@ -23,6 +23,8 @@ Remaining items:
 
 13. Enable any remaining things present in autotools but not CMake - RTGL and libpc come to mind.
 
+14. Apply lessons learned to the SCL build logic
+
 Done (to first order, all this needs testing)
 
 1.  Detect OpenGL properly on Apple - choose X11 vs Aqua, and get the ogl code working
