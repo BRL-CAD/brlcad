@@ -11,6 +11,7 @@
  */
 
 #include "tclInt.h"
+#include "tcl_cfg.h"
 #include <stddef.h>
 #include <locale.h>
 #ifdef HAVE_LANGINFO

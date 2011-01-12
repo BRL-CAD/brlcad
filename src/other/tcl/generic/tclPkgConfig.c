@@ -36,6 +36,7 @@
  */
 
 #include "tclInt.h"
+#include "tcl_cfg.h"
 
 /*
  * Use C preprocessor statements to define the various values for the embedded

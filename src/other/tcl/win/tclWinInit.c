@@ -14,6 +14,7 @@
  */
 
 #include "tclWinInt.h"
+#include "tcl_cfg.h"
 #include <winnt.h>
 #include <winbase.h>
 #include <lmcons.h>
