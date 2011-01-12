@@ -953,6 +953,8 @@ get_editor_string(struct bu_vls *editstring)
     }
 
     if (classic_mged) {
+	const char *which = NULL;
+
 	/* In this situation, make sure we're using an editor that will
 	 * work within the mged terminal (i.e. no launching a separate
 	 * gui, regardless of EDITOR settings. In this situation, emacs
@@ -971,17 +973,25 @@ get_editor_string(struct bu_vls *editstring)
 	 * Hence, check for known working AND known not-working up front - need
 	 * to satisfy both that there IS a working config already and that one
 	 * of the non-working configs isn't set.*/
-	count += (!strcmp(editor, bu_which(EMACS_EDITOR)) && (!editor_opt || editor_opt[0] == '\0'));
-	count += !(strcmp(editor, bu_which(VIM_EDITOR)));
-	count += !(strcmp(editor, bu_which(VI_EDITOR)));
-	count += !(strcmp(editor, bu_which(ED_EDITOR)));
+	which = bu_which(EMACS_EDITOR);
+	if (which)
+	    count += (!strcmp(editor, which) && (!editor_opt || editor_opt[0] == '\0'));
+	which = bu_which(VIM_EDITOR);
+	if (which)
+	    count += !(strcmp(editor, which));
+	which = bu_which(VI_EDITOR);
+	if (which)
+	    count += !(strcmp(editor, which));
+	which = bu_which(ED_EDITOR);
+	if (which)
+	    count += !(strcmp(editor, which));
 	count += !(strcmp(editor, JOVE_EDITOR));
 	count += !(!(!(strcmp(editor, MAC_EDITOR))));
 	if (count > 0) {
 	    /* start with emacs... */ 
 	    editor = bu_which(EMACS_EDITOR);
 	    /* if emacs is found, set editor_opt */
-	    if (!strcmp(editor, bu_which(EMACS_EDITOR))) {
+	    if (editor && !strcmp(editor, bu_which(EMACS_EDITOR))) {
 		editor_opt = "-nw";
 	    }
 	    if (!editor || editor[0] == '\0') {
