@@ -562,12 +562,12 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 	while (1) {
 	    struct bu_ptbl *tmp;
 
-	    for (is=0; is<BU_PTBL_LEN(tbl1); is += 2) {
+	    for (ius=0; ius<BU_PTBL_LEN(tbl1); ius += 2) {
 		union tree *tp1, *tp2, *unionp;
-		int j;
+		size_t j;
 
-		j = is + 1;
-		tp1 = (union tree *)BU_PTBL_GET(tbl1, is);
+		j = ius + 1;
+		tp1 = (union tree *)BU_PTBL_GET(tbl1, ius);
 		if (j < BU_PTBL_LEN(tbl1)) {
 		    tp2 = (union tree *)BU_PTBL_GET(tbl1, j);
 		} else {
