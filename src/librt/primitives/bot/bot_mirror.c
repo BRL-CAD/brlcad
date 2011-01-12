@@ -49,7 +49,7 @@ rt_bot_mirror(struct rt_db_internal *ip, register const plane_t plane)
     point_t mirror_pt;
     fastf_t ang;
 
-    int i;
+    size_t i;
 
     static point_t origin = {0.0, 0.0, 0.0};
 

@@ -4692,10 +4692,10 @@ RT_EXPORT BU_EXTERN(int nmg_edge_collapse,
 
 /* bot.c */
 RT_EXPORT BU_EXTERN(int rt_bot_edge_in_list,
-		    (const int v1,
-		     const int v2,
-		     const int edge_list[],
-		     const int edge_count0));
+		    (const size_t v1,
+		     const size_t v2,
+		     const size_t edge_list[],
+		     const size_t edge_count0));
 RT_EXPORT BU_EXTERN(int rt_bot_plot,
 		    (struct bu_list		*vhead,
 		     struct rt_db_internal	*ip,
@@ -4711,8 +4711,8 @@ RT_EXPORT BU_EXTERN(int rt_bot_find_v_nearest_pt2,
 		     const point_t	pt2,
 		     const mat_t	mat));
 RT_EXPORT BU_EXTERN(int rt_bot_find_e_nearest_pt2,
-		    (int *vert1,
-		     int *vert2,
+		    (size_t *vert1,
+		     size_t *vert2,
 		     const struct rt_bot_internal *bot,
 		     const point_t	pt2,
 		     const mat_t	mat));
@@ -4741,8 +4741,8 @@ RT_EXPORT BU_EXTERN(void rt_bot_list_free,
 		     int fbflag));
 
 RT_EXPORT BU_EXTERN(int rt_bot_same_orientation,
-		    (const int *a,
-		     const int *b));
+		    (const size_t *a,
+		     const size_t *b));
 
 /* From nmg_tri.c */
 RT_EXPORT BU_EXTERN(void nmg_triangulate_shell,
@@ -5906,11 +5906,11 @@ RT_EXPORT BU_EXTERN(void rt_binunif_dump,
 RT_EXPORT extern fastf_t rt_cline_radius;
 
 /* defined in bot.c */
-RT_EXPORT extern int rt_bot_minpieces;
-RT_EXPORT extern int rt_bot_tri_per_piece;
+RT_EXPORT extern size_t rt_bot_minpieces;
+RT_EXPORT extern size_t rt_bot_tri_per_piece;
 RT_EXPORT BU_EXTERN(int rt_bot_sort_faces,
 		    (struct rt_bot_internal *bot,
-		     int tris_per_piece));
+		     size_t tris_per_piece));
 RT_EXPORT BU_EXTERN(int rt_bot_decimate,
 		    (struct rt_bot_internal *bot,
 		     fastf_t max_chord_error,

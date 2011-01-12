@@ -52,7 +52,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../src/other/tcl/win;../../../src/other/tcl/generic;../../../include;../../../src/adrt/libtie/libtie;../../../src/adrt/libtie;../../../src/other/libz"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/win;../../../src/other/tcl/generic"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;TIE_EXPORT_DLL;TIEBUILD;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
@@ -154,7 +154,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libpng;../../../src/other/libz;../../../src/tie/libtie;../../../src/tie/librender;../../../src/tie"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libpng;../../../src/other/libz;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;BU_EXPORT_DLL;TIEBUILD;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
@@ -230,19 +230,19 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
-				RelativePath="..\..\..\src\adrt\libtie\tie0.c"
+				RelativePath="..\..\..\src\libtie\tie0.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\libtie\tie1.c"
+				RelativePath="..\..\..\src\libtie\tie1.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\libtie\tie_kdtree0.c"
+				RelativePath="..\..\..\src\libtie\tie_kdtree0.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\adrt\libtie\tie_kdtree1.c"
+				RelativePath="..\..\..\src\libtie\tie_kdtree1.c"
 				>
 			</File>
 		</Filter>
