@@ -1847,7 +1847,7 @@ cmd_lm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
 
     bu_vls_init(&vls);
     bu_vls_strcat(&vls, argv[0]);
-    for (i=1; i<argc; i++) {
+    for (i=1; i<(size_t)argc; i++) {
 	if (*argv[i] == '-') {
 	    bu_vls_putc(&vls, ' ');
 	    bu_vls_strcat(&vls, argv[i]);
@@ -1859,7 +1859,7 @@ cmd_lm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
     }
 
     bu_avs_init(&avs, argc - last_opt, "cmd_lm avs");
-    for (i=last_opt+1; i<argc; i++) {
+    for (i=last_opt+1; i<(size_t)argc; i++) {
 	bu_avs_add_nonunique(&avs, "MUVES_Component", argv[i]);
     }
 
