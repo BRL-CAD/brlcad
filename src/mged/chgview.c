@@ -292,7 +292,7 @@ edit_com(int argc,
     /* check args for "-A" (attributes) and "-o" and "-R" */
     bu_vls_init(&vls);
     bu_vls_strcpy(&vls, argv[0]);
-    for (i=1; i<argc; i++) {
+    for (i=1; i<(size_t)argc; i++) {
 	char *ptr_A=NULL;
 	char *ptr_o=NULL;
 	char *ptr_R=NULL;
@@ -344,7 +344,7 @@ edit_com(int argc,
 
 	bu_avs_init(&avs, (argc - last_opt)/2, "edit_com avs");
 	i = 1;
-	while (i < argc) {
+	while (i < (size_t)argc) {
 	    if (*argv[i] == '-') {
 		i++;
 		continue;
@@ -488,7 +488,7 @@ emuves_com(int argc, const char *argv[])
     struct bu_attribute_value_set avs;
     const char **objs;
     int ret;
-    int num_opts=0;
+    size_t num_opts=0;
 
     CHECK_DBI_NULL;
 
@@ -502,7 +502,7 @@ emuves_com(int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    for (i=1; i<argc; i++) {
+    for (i=1; i<(size_t)argc; i++) {
 	if (*argv[i] == '-') {
 	    num_opts++;
 	} else {
@@ -511,7 +511,7 @@ emuves_com(int argc, const char *argv[])
     }
 
     bu_avs_init(&avs, argc/2, "muves_avs");
-    for (i=1; i<argc; i++) {
+    for (i=1; i<(size_t)argc; i++) {
 	bu_avs_add_nonunique(&avs, "MUVES_Component", argv[i]);
     }
 
@@ -3860,7 +3860,7 @@ mged_etran(char coords,
 int
 mged_otran(const vect_t tvec)
 {
-    vect_t work;
+    vect_t work = {0.0, 0.0, 0.0};
 
     if (STATE == ST_S_EDIT || STATE == ST_O_EDIT) {
 	/* apply acc_rot_sol to tvec */

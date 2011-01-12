@@ -54,11 +54,11 @@ main(int argc, const char *argv[])			/* "cad_parea" entry point */
     /* argument count */
     /* argument strings */
 {
-    point previous;	/* previous point */
-    point current;	/* current point */
-    point first;		/* saved first point */
-    int saved;		/* "`first' valid" flag */
-    double sum;		/* accumulator */
+    point previous = {0.0, 0.0}; /* previous point */
+    point current = {0.0, 0.0}; /* current point */
+    point first = {0.0, 0.0}; /* saved first point */
+    int saved; /* "`first' valid" flag */
+    double sum; /* accumulator */
 
     if (!GetArgs(argc, argv)) {
 	/* process command arguments */

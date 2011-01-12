@@ -702,8 +702,8 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
     struct directory *mdp = (struct directory *)NULL;
     struct directory *copy = (struct directory *)NULL;
 
-    struct bu_vls *copyname;
-    struct bu_vls *nextname;
+    struct bu_vls *copyname = NULL;
+    struct bu_vls *nextname = NULL;
 
     /* get the name of what the object "should" get cloned to */
     copyname = get_name(_dbip, dp, state, 0);
