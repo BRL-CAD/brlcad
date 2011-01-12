@@ -17,30 +17,24 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file get_iges_vertex.c
- *
- */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 struct iges_vertex *
-Get_iges_vertex( v )
-    struct vertex *v;
+Get_iges_vertex(struct vertex *v)
 {
     struct iges_vertex_list *vert_list;
 
-    NMG_CK_VERTEX( v );
+    NMG_CK_VERTEX(v);
 
     vert_list = vertex_root;
 
-    while ( vert_list )
-    {
+    while (vert_list) {
 	int vert_no;
 
-	for ( vert_no=0; vert_no < vert_list->no_of_verts; vert_no++ )
-	{
-	    if ( vert_list->i_verts[vert_no].v == v )
+	for (vert_no=0; vert_no < vert_list->no_of_verts; vert_no++) {
+	    if (vert_list->i_verts[vert_no].v == v)
 		return &(vert_list->i_verts[vert_no]);
 	}
 	vert_list = vert_list->next;
@@ -48,6 +42,7 @@ Get_iges_vertex( v )
 
     return (struct iges_vertex *)NULL;
 }
+
 
 /*
  * Local Variables:

@@ -23,38 +23,33 @@
  * "parent" field of the root of the new tree is filed by the "parent"
  * argument.
  *
- * Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
  */
 
 #include "./iges_struct.h"
 
-struct node *Copytree( root, parent )
-    struct node *root, *parent;
+struct node *Copytree(struct node *root, struct node *parent)
 {
 
     struct node *ptr;
 
-    if ( root == NULL )
+    if (root == NULL)
 	return (struct node *)NULL;
 
 
-    ptr = (struct node *)bu_malloc( sizeof( struct node ), "Copytree: ptr" );
+    ptr = (struct node *)bu_malloc(sizeof(struct node), "Copytree: ptr");
 
     *ptr = (*root);
     ptr->parent = parent;
 
-    if ( root->left != NULL )
-	ptr->left = Copytree( root->left, ptr );
+    if (root->left != NULL)
+	ptr->left = Copytree(root->left, ptr);
 
-    if ( root->right != NULL )
-	ptr->right = Copytree( root->right, ptr );
+    if (root->right != NULL)
+	ptr->right = Copytree(root->right, ptr);
 
     return ptr;
 }
+
 
 /*
  * Local Variables:

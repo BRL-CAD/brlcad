@@ -17,34 +17,26 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cyl.c
- *
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
- */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 int
-cyl( entityno )
+cyl(entityno)
     int entityno;
 {
-    fastf_t		radius=0.0;
-    point_t		base;		/* center point of base */
-    vect_t		height;
-    vect_t		hdir;		/* direction in which to grow height */
-    fastf_t		scale_height=0.0;
-    fastf_t		x_1;
-    fastf_t		y_1;
-    fastf_t		z_1;
-    fastf_t		x_2;
-    fastf_t		y_2;
-    fastf_t		z_2;
-    int		sol_num;		/* IGES solid type number */
+    fastf_t radius=0.0;
+    point_t base;		/* center point of base */
+    vect_t height;
+    vect_t hdir;		/* direction in which to grow height */
+    fastf_t scale_height=0.0;
+    fastf_t x_1;
+    fastf_t y_1;
+    fastf_t z_1;
+    fastf_t x_2;
+    fastf_t y_2;
+    fastf_t z_2;
+    int sol_num;		/* IGES solid type number */
 
     /* Default values */
     x_1 = 0.0;
@@ -55,47 +47,41 @@ cyl( entityno )
     z_2 = 1.0;
 
     /* Acquiring Data */
-    if ( dir[entityno]->param <= pstart )
-    {
-	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-		dir[entityno]->direct, dir[entityno]->name );
+    if (dir[entityno]->param <= pstart) {
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
-    Readrec( dir[entityno]->param );
-    Readint( &sol_num, "" );
-    Readcnv( &scale_height, "" );
-    Readcnv( &radius, "" );
-    Readcnv( &x_1, "" );
-    Readcnv( &y_1, "" );
-    Readcnv( &z_1, "" );
-    Readcnv( &x_2, "" );
-    Readcnv( &y_2, "" );
-    Readcnv( &z_2, "" );
+    Readrec(dir[entityno]->param);
+    Readint(&sol_num, "");
+    Readcnv(&scale_height, "");
+    Readcnv(&radius, "");
+    Readcnv(&x_1, "");
+    Readcnv(&y_1, "");
+    Readcnv(&z_1, "");
+    Readcnv(&x_2, "");
+    Readcnv(&y_2, "");
+    Readcnv(&z_2, "");
 
-    if ( radius < SMALL_FASTF || scale_height < SMALL_FASTF )
-    {
-	bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
-		dir[entityno]->direct, dir[entityno]->name );
-	if ( NEAR_ZERO(radius, SMALL_FASTF) )
-	{
-	    bu_log( "\tradius of cylinder is zero!!!\n" );
+    if (radius < SMALL_FASTF || scale_height < SMALL_FASTF) {
+	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
+	       dir[entityno]->direct, dir[entityno]->name);
+	if (NEAR_ZERO(radius, SMALL_FASTF)) {
+	    bu_log("\tradius of cylinder is zero!!!\n");
 	    return 0;
 	}
-	if ( NEAR_ZERO(scale_height, SMALL_FASTF) )
-	{
-	    bu_log( "\theight of cylinder is zero!!!\n" );
+	if (NEAR_ZERO(scale_height, SMALL_FASTF)) {
+	    bu_log("\theight of cylinder is zero!!!\n");
 	    return 0;
 	}
 
-	if ( radius < 0.0 )
-	{
-	    bu_log( "\tUsing the absolute value of a negative radius\n" );
+	if (radius < 0.0) {
+	    bu_log("\tUsing the absolute value of a negative radius\n");
 	    radius = (-radius);
 	}
 
-	if ( scale_height < 0.0 )
-	{
-	    bu_log( "\tUsing absolute value of a negative height and reversing axis direction\n" );
+	if (scale_height < 0.0) {
+	    bu_log("\tUsing absolute value of a negative height and reversing axis direction\n");
 	    scale_height = (-scale_height);
 	    x_2 = (-x_2);
 	    y_2 = (-y_2);
@@ -120,14 +106,15 @@ cyl( entityno )
 
     VSCALE(height, hdir, scale_height);
 
-    if ( mk_rcc(fdout, dir[entityno]->name, base, height, radius) < 0 )  {
+    if (mk_rcc(fdout, dir[entityno]->name, base, height, radius) < 0) {
 	bu_log("Unable to write entity D%07d (%s)\n" ,
-	       dir[entityno]->direct, dir[entityno]->name );
+	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
     return 1;
 
 }
+
 
 /*
  * Local Variables:

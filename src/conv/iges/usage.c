@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file usage.c
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
- */
 
 #include "common.h"
 

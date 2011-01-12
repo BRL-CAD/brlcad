@@ -17,27 +17,19 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sphere.c
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
- */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 int
-sphere( entityno )
-    int entityno;
+sphere(int entityno)
 {
-    fastf_t		radius=0.0;
-    point_t		center;
-    fastf_t		x;
-    fastf_t		y;
-    fastf_t		z;
-    int		sol_num;		/* IGES solid type number */
+    fastf_t radius=0.0;
+    point_t center;
+    fastf_t x;
+    fastf_t y;
+    fastf_t z;
+    int sol_num;		/* IGES solid type number */
 
     /* Set Defaults */
 
@@ -47,23 +39,21 @@ sphere( entityno )
 
     /* Acquiring Data */
 
-    if ( dir[entityno]->param <= pstart )
-    {
-	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-		dir[entityno]->direct, dir[entityno]->name );
+    if (dir[entityno]->param <= pstart) {
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
-    Readrec( dir[entityno]->param );
-    Readint( &sol_num, "" );
-    Readcnv( &radius, "" );
-    Readcnv( &x, "" );
-    Readcnv( &y, "" );
-    Readcnv( &z, "" );
+    Readrec(dir[entityno]->param);
+    Readint(&sol_num, "");
+    Readcnv(&radius, "");
+    Readcnv(&x, "");
+    Readcnv(&y, "");
+    Readcnv(&z, "");
 
-    if ( radius <= 0.0 )
-    {
-	bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
-		dir[entityno]->direct, dir[entityno]->name );
+    if (radius <= 0.0) {
+	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
+	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
 
@@ -80,6 +70,7 @@ sphere( entityno )
 
     return 1;
 }
+
 
 /*
  * Local Variables:

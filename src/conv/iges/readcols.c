@@ -23,27 +23,20 @@
  * buffer.  The number is "cols".  The string of characters read is
  * pointed to by "id".
  *
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
  */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 void
-Readcols( id, cols )
-    char *id;
-    int cols;
+Readcols(char *id, int cols)
 {
     int i;
     char *tmp;
 
     tmp = id;
 
-    for ( i=0; i<cols; i++ )
+    for (i=0; i<cols; i++)
 	*tmp++ = card[counter++];
 }
 

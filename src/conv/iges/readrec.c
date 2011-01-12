@@ -30,19 +30,13 @@
  * desired record.  The "read" routines then call this routine if the
  * buffer empties.
  *
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
  */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 int
-Readrec( recno )
-    int recno;
+Readrec(int recno)
 {
 
     int i, ch;
@@ -50,17 +44,15 @@ Readrec( recno )
 
     currec = recno;
     offset = (recno - 1) * reclen;
-    if ( fseek( fd, offset, 0 ) )
-    {
-	bu_log( "Error in seek\n" );
-	perror( "Readrec" );
-	bu_exit( 1, NULL );
+    if (fseek(fd, offset, 0)) {
+	bu_log("Error in seek\n");
+	perror("Readrec");
+	bu_exit(1, NULL);
     }
     counter = 0;
 
-    for ( i=0; i<reclen; i++ )
-    {
-	if ( (ch=getc( fd )) == EOF )
+    for (i=0; i<reclen; i++) {
+	if ((ch=getc(fd)) == EOF)
 	    return 1;
 	card[i] = ch;
     }

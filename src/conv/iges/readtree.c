@@ -17,77 +17,60 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file readtree.c
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
- */
-
-/*		Read and construct a boolean tree		*/
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-union tree *Readtree( matp )
-    mat_t *matp;
+union tree *
+Readtree(mat_t *matp)
 {
     int length, i, k, op;
     union tree *ptr, *Pop();
     matp_t new_mat;
 
-    Readint( &i, "" );
-    if ( i != 180 )
-    {
-	bu_log( "Expecting a Boolean Tree, found type %d\n", i );
+    Readint(&i, "");
+    if (i != 180) {
+	bu_log("Expecting a Boolean Tree, found type %d\n", i);
 	return (union tree *)NULL;
     }
 
     Freestack();
-    Readint( &length, "" );
-    for ( i=0; i<length; i++ )
-    {
-	Readint( &op, "" );
-	if ( op < 0 )	/* This is an operand */
-	{
-	    ptr = (union tree *)bu_malloc( sizeof( union tree ),
-					   "Readtree: ptr" );
+    Readint(&length, "");
+    for (i=0; i<length; i++) {
+	Readint(&op, "");
+	if (op < 0) {
+	    /* This is an operand */
+	    ptr = (union tree *)bu_malloc(sizeof(union tree),
+					  "Readtree: ptr");
 	    ptr->magic = RT_TREE_MAGIC;
 	    ptr->tr_l.tl_op = OP_DB_LEAF;
 	    k = ((-op)-1)/2;
-	    if ( k < 0 || k >= totentities )
-	    {
-		bu_log( "Readtree(): pointer in tree is out of bounds (%d)\n", -op );
+	    if (k < 0 || k >= totentities) {
+		bu_log("Readtree(): pointer in tree is out of bounds (%d)\n", -op);
 		return (union tree *)NULL;
 	    }
-	    if ( dir[k]->type <= 0 )
-	    {
-		bu_log( "Unknown entity type (%d) at D%07d\n", -dir[k]->type, dir[k]->direct );
+	    if (dir[k]->type <= 0) {
+		bu_log("Unknown entity type (%d) at D%07d\n", -dir[k]->type, dir[k]->direct);
 		return (union tree *)NULL;
 	    }
-	    ptr->tr_l.tl_name = bu_strdup( dir[k]->name );
-	    if ( matp && dir[k]->rot )
-	    {
-		new_mat = (matp_t)bu_malloc( sizeof( mat_t ), "new_mat" );
-		bn_mat_mul( new_mat, *matp, *dir[k]->rot );
-	    }
-	    else if ( dir[k]->rot )
+	    ptr->tr_l.tl_name = bu_strdup(dir[k]->name);
+	    if (matp && dir[k]->rot) {
+		new_mat = (matp_t)bu_malloc(sizeof(mat_t), "new_mat");
+		bn_mat_mul(new_mat, *matp, *dir[k]->rot);
+	    } else if (dir[k]->rot)
 		new_mat = *dir[k]->rot;
-	    else if ( matp )
+	    else if (matp)
 		new_mat = *matp;
 	    else
 		new_mat = (matp_t)NULL;
 	    ptr->tr_l.tl_mat = new_mat;
-	    Push( ptr );
-	}
-	else	/* This is an operator */
-	{
-	    ptr = (union tree *)bu_malloc( sizeof( union tree ),
-					   "Readtree: ptr" );
+	    Push(ptr);
+	} else {
+	    /* This is an operator */
+	    ptr = (union tree *)bu_malloc(sizeof(union tree),
+					  "Readtree: ptr");
 	    ptr->magic = RT_TREE_MAGIC;
-	    switch ( op )
-	    {
+	    switch (op) {
 		case 1:
 		    ptr->tr_b.tb_op = OP_UNION;
 		    break;
@@ -98,11 +81,11 @@ union tree *Readtree( matp )
 		    ptr->tr_b.tb_op = OP_SUBTRACT;
 		    break;
 		default:
-		    bu_exit( 1, "Readtree(): illegal operator code (%d)\n", op );
+		    bu_exit(1, "Readtree(): illegal operator code (%d)\n", op);
 	    }
 	    ptr->tr_b.tb_right = Pop();
 	    ptr->tr_b.tb_left = Pop();
-	    Push( ptr );
+	    Push(ptr);
 	}
     }
 
