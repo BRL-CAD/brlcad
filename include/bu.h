@@ -2529,7 +2529,7 @@ BU_EXPORT BU_EXTERN(int bu_count_path, (char *path, char *substr));
 /**
  * Return array with filenames with suffix matching substr
  */
-BU_EXPORT BU_EXTERN(void bu_list_path, (char *path, char *substr, char **filearray)); 
+BU_EXPORT BU_EXTERN(void bu_list_path, (char *path, char *substr, char **filearray));
 
 
 /** @file brlcad_path.c
@@ -5065,6 +5065,18 @@ BU_EXPORT BU_EXTERN(size_t bu_strlcpym, (char *dst, const char *src, size_t size
  */
 BU_EXPORT BU_EXTERN(char *bu_strdupm, (const char *cp, const char *label));
 #define bu_strdup(s) bu_strdupm(s, BU_FLSTR)
+
+/**
+ * b u _ s t r c m p  / b u _ s t r c m p m
+ *
+ * Compares two strings more gracefully as standard library's strcmp().
+ * It accepts NULL as valid input values and considers "" and NULL as equal.
+ *
+ * bu_strcmp() is a macro that includes the current file name and line
+ * number that can be used when bu debugging is enabled.
+ */
+BU_EXPORT BU_EXTERN(int bu_strcmpm, (const char *string1, const char *string2, const char *label));
+#define bu_strcmp(s) bu_strcmpm(s, BU_FLSTR)
 
 /** @} */
 
