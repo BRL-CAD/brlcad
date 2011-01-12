@@ -34,7 +34,7 @@ MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext)
 			COMMAND XML_CATALOG_FILES=${XML_CATALOG_FILES} ${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${outfile} ${XSL_MAN_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
 			)
 		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
-		INSTALL(FILES ${outfile} DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man${mannum})
+		INSTALL(FILES ${outfile} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR}/man${mannum})
 	ENDFOREACH(filename ${${xml_files}})
 ENDMACRO(DOCBOOK_TO_MAN targetname_suffix srcfile outfile targetdir)
 

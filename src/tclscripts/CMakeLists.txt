@@ -9,7 +9,7 @@ MACRO(pkgIndex_BUILD name srcdir targetdir)
 		DEPENDS btclsh
 		)
 	ADD_CUSTOM_TARGET(${name}_pkgIndex.tcl ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl)
-	INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/${targetdir})
+	INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
 ENDMACRO(pkgIndex_BUILD name srcdir targetdir)
 
 MACRO(tclIndex_BUILD name srcdir targetdir)
@@ -21,7 +21,7 @@ MACRO(tclIndex_BUILD name srcdir targetdir)
 		DEPENDS btclsh
 		)
 	ADD_CUSTOM_TARGET(${name}_tclIndex ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tclIndex)
-	INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/tclIndex DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/${targetdir})
+	INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/tclIndex DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
 ENDMACRO(tclIndex_BUILD name srcdir targetdir)
 
 
@@ -55,7 +55,7 @@ SET(toplevel_TCLSCRIPTS
 	mouse.tcl 
 	vmath.tcl
 )
-INSTALL(FILES ${toplevel_TCLSCRIPTS} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts)
+INSTALL(FILES ${toplevel_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts)
 
 pkgIndex_BUILD(tclscripts ${CMAKE_CURRENT_SOURCE_DIR} tclscripts)
 tclIndex_BUILD(tclscripts ${CMAKE_CURRENT_SOURCE_DIR} tclscripts)

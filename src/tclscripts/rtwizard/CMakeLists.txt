@@ -5,7 +5,7 @@ ADD_CUSTOM_COMMAND(
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.tcl ${CMAKE_CURRENT_BINARY_DIR}/rtwizard 
 	)
 ADD_CUSTOM_TARGET(rtwizard ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/rtwizard)
-INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/rtwizard DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/rtwizard DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_BIN_DIR})
 
 
 SET(rtwizard_TCLSCRIPTS
@@ -14,7 +14,7 @@ SET(rtwizard_TCLSCRIPTS
 	rtwizard.tcl
 	)
 
-INSTALL(FILES ${rtwizard_TCLSCRIPTS} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/rtwizard)
+INSTALL(FILES ${rtwizard_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/rtwizard)
 
 pkgIndex_BUILD(rtwizard ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/rtwizard)
 tclIndex_BUILD(rtwizard ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/rtwizard)
@@ -35,7 +35,7 @@ SET(PictureTypeA_DATA
 	examples/PictureTypeA/title.txt 
 	examples/PictureTypeA/preview.small.gif
 	)
-INSTALL(FILES ${PictureTypeA_DATA} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeA)
+INSTALL(FILES ${PictureTypeA_DATA} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeA)
 
 
 SET(PictureTypeB_DATA
@@ -45,7 +45,7 @@ SET(PictureTypeB_DATA
 	examples/PictureTypeB/title.txt 
 	examples/PictureTypeB/preview.small.gif
 	)
-INSTALL(FILES ${PictureTypeB_DATA} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeB)
+INSTALL(FILES ${PictureTypeB_DATA} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeB)
 
 
 SET(PictureTypeC_DATA
@@ -55,7 +55,7 @@ SET(PictureTypeC_DATA
 	examples/PictureTypeC/title.txt 
 	examples/PictureTypeC/preview.small.gif
 	)
-INSTALL(FILES ${PictureTypeC_DATA} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeC)
+INSTALL(FILES ${PictureTypeC_DATA} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeC)
 
 
 SET(PictureTypeD_DATA
@@ -65,7 +65,7 @@ SET(PictureTypeD_DATA
 	examples/PictureTypeD/title.txt 
 	examples/PictureTypeD/preview.small.gif
 	)
-INSTALL(FILES ${PictureTypeD_DATA} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeD)
+INSTALL(FILES ${PictureTypeD_DATA} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeD)
 
 
 SET(PictureTypeE_DATA
@@ -75,7 +75,7 @@ SET(PictureTypeE_DATA
 	examples/PictureTypeE/title.txt 
 	examples/PictureTypeE/preview.small.gif
 	)
-INSTALL(FILES ${PictureTypeE_DATA} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeE)
+INSTALL(FILES ${PictureTypeE_DATA} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeE)
 
 
 SET(PictureTypeF_DATA
@@ -85,5 +85,5 @@ SET(PictureTypeF_DATA
 	examples/PictureTypeF/title.txt 
 	examples/PictureTypeF/preview.small.gif
 	)
-INSTALL(FILES ${PictureTypeF_DATA} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeF)
+INSTALL(FILES ${PictureTypeF_DATA} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeF)
 

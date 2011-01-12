@@ -36,7 +36,7 @@ SET(archer_TCLSCRIPTS
 	Utility.tcl 
 	Wizard.tcl
 )
-INSTALL(FILES ${archer_TCLSCRIPTS} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/archer)
+INSTALL(FILES ${archer_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/archer)
 
 pkgIndex_BUILD(archer ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/archer)
 tclIndex_BUILD(archer ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/archer)

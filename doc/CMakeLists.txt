@@ -206,7 +206,7 @@ SET(documentation_DATA
 	tube.txt 
 	tool_categories.txt
 )
-install(FILES ${documentation_DATA} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/doc)
+install(FILES ${documentation_DATA} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/doc)
 
 SET(doc_MANS
 	bw.5
@@ -215,7 +215,7 @@ SET(doc_MANS
 	plot3.5
 )
 
-install(FILES ${doc_MANS} DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man5)
+install(FILES ${doc_MANS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR}/man5)
 
 CONFIGURE_FILE(pad_file.xml.in ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/doc)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/doc)

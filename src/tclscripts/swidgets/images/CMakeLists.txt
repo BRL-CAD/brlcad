@@ -6,4 +6,4 @@ SET(swidgets_image_DATA
 	plus.xbm
 	tip.gif
 )
-INSTALL(FILES ${swidgets_image_DATA} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/swidgets/images)
+INSTALL(FILES ${swidgets_image_DATA} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/swidgets/images)

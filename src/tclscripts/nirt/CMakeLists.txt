@@ -2,7 +2,7 @@ SET(nirt_TCLSCRIPTS
 	prototype.sh
 	)
 
-INSTALL(FILES ${nirt_TCLSCRIPTS} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/nirt)
+INSTALL(FILES ${nirt_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/nirt)
 
 pkgIndex_BUILD(nirt ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/nirt)
 tclIndex_BUILD(nirt ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/nirt)

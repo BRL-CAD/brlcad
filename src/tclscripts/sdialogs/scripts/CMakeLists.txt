@@ -3,7 +3,7 @@ SET(sdialogs_scripts_TCLSCRIPTS
 	listdialog.itk
 	stddlgs.tcl
 )
-INSTALL(FILES ${sdialogs_scripts_TCLSCRIPTS} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/sdialogs/scripts)
+INSTALL(FILES ${sdialogs_scripts_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/sdialogs/scripts)
 
 tclIndex_BUILD(sdialogs_scripts ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/sdialogs/scripts)
 

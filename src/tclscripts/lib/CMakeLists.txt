@@ -23,7 +23,7 @@ SET(lib_TCLSCRIPTS
 	ViewAxesControl.tcl
 )
 
-INSTALL(FILES ${lib_TCLSCRIPTS} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/lib)
+INSTALL(FILES ${lib_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/lib)
 
 pkgIndex_BUILD(lib ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/lib)
 tclIndex_BUILD(lib ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/lib)

@@ -24,7 +24,7 @@ IF(BRLCAD-ENABLE_X11)
 	ENDIF(BRLCAD-ENABLE_TK)
 ENDIF(BRLCAD-ENABLE_X11)
 
-INSTALL(FILES pl-dm.c DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/sample_applications)
+INSTALL(FILES pl-dm.c DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
 
 # Don't have the libpc or boost stuff yet
 # BRLCAD_ADDEXEC(pc_test pc_test.c "libwdb libpc")

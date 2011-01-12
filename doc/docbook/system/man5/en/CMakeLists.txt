@@ -2,9 +2,9 @@ SET(docbook_man5_EN
 	gattributes.xml
 )
 
-DOCBOOK_TO_HTML(man5 docbook_man5_EN ${BRLCAD_INSTALL_DATA_DIR}/html/man5/en)
+DOCBOOK_TO_HTML(man5 docbook_man5_EN ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/man5/en)
 DOCBOOK_TO_MAN(man5 docbook_man5_EN 5 5)
 
 IF(BRLCAD-BUILD_EXTRADOCS_PDF_MAN)
-    DOCBOOK_TO_PDF(man5 docbook_man5_EN ${BRLCAD_INSTALL_DATA_DIR}/pdf/man5/en)
+    DOCBOOK_TO_PDF(man5 docbook_man5_EN ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/pdf/man5/en)
 ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF_MAN)

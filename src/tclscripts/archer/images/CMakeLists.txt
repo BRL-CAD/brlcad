@@ -260,5 +260,5 @@ SET(archer_images
 	wizard.png
 	)
 
-INSTALL(FILES ${archer_images} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/archer/images)
+INSTALL(FILES ${archer_images} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/archer/images)
 

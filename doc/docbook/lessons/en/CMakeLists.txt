@@ -131,10 +131,10 @@ SET(docbook_lessons_EN_IMAGES
 	images/mged16_radio_cutaways.png
 )
 
-DOCBOOK_TO_HTML(lesson docbook_lessons_EN ${BRLCAD_INSTALL_DATA_DIR}/html/lessons/en)
-INSTALL(FILES ${docbook_lessons_EN_IMAGES} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/lessons/en/images)
+DOCBOOK_TO_HTML(lesson docbook_lessons_EN ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/lessons/en)
+INSTALL(FILES ${docbook_lessons_EN_IMAGES} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/lessons/en/images)
 
 
 IF(BRLCAD-BUILD_EXTRADOCS_PDF)
-  DOCBOOK_TO_PDF(lesson docbook_lessons_EN ${BRLCAD_INSTALL_DATA_DIR}/pdf/lessons/en)
+  DOCBOOK_TO_PDF(lesson docbook_lessons_EN ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/pdf/lessons/en)
 ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF)

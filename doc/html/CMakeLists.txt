@@ -2,7 +2,7 @@ SET(toplevel_HTML
 	bookmarks.html
 	toc.html
 )
-install(FILES ${toplevel_HTML} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html)
+install(FILES ${toplevel_HTML} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html)
 
 SET(anim_tutorial_HTML
 	manuals/Anim_Tutorial/Lee_tux.gif 
@@ -47,7 +47,7 @@ SET(anim_tutorial_HTML
 	manuals/Anim_Tutorial/v_eqn1.gif 
 	manuals/Anim_Tutorial/v_eqn2.gif
 )
-install(FILES ${anim_tutorial_HTML} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/manuals/Anim_Tutorial)
+install(FILES ${anim_tutorial_HTML} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/manuals/Anim_Tutorial)
 
 
 SET(cadwidgets_HTML
@@ -65,7 +65,7 @@ SET(cadwidgets_HTML
 	manuals/cadwidgets/index.html 
 	manuals/cadwidgets/skeleton.html
 )
-install(FILES ${cadwidgets_HTML} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/manuals/cadwidgets)
+install(FILES ${cadwidgets_HTML} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/manuals/cadwidgets)
 
 
 SET(libbu_HTML
@@ -73,7 +73,7 @@ SET(libbu_HTML
 	manuals/libbu/contents.html
 	manuals/libbu/index.html
 )
-install(FILES ${libbu_HTML} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/manuals/libbu)
+install(FILES ${libbu_HTML} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/manuals/libbu)
 
 SET(libdm_HTML
 	manuals/libdm/api.html
@@ -83,7 +83,7 @@ SET(libdm_HTML
 	manuals/libdm/preface.html
 	manuals/libdm/tcl.html
 )
-install(FILES ${libdm_HTML} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/manuals/libdm)
+install(FILES ${libdm_HTML} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/manuals/libdm)
 
 
 SET(librt_HTML
@@ -93,7 +93,7 @@ SET(librt_HTML
 	manuals/librt/view_obj.html
 	manuals/librt/wdb_obj.html
 )
-install(FILES ${librt_HTML} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/manuals/librt)
+install(FILES ${librt_HTML} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/manuals/librt)
 
 SET(manuals_HTML
 	manuals/Install.html 
@@ -104,7 +104,7 @@ SET(manuals_HTML
 	manuals/index.html 
 	manuals/small-eagleCAD.gif
 )
-install(FILES ${manuals_HTML} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/manuals)
+install(FILES ${manuals_HTML} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/manuals)
 
 SET(manuals_mged_animmate_HTML
 	manuals/mged/animmate/anim_cascade.html 
@@ -172,7 +172,7 @@ SET(manuals_mged_animmate_HTML
 	manuals/mged/animmate/viewget.html 
 	manuals/mged/animmate/vscript_doc.html
 )
-install(FILES ${manuals_mged_animmate_HTML} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/manuals/mged/animmate)
+install(FILES ${manuals_mged_animmate_HTML} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/manuals/mged/animmate)
 
 SET(manuals_mged_HTML
 	manuals/mged/az_el.gif 
@@ -237,10 +237,10 @@ SET(manuals_mged_HTML
 	manuals/mged/skipped 
 	manuals/mged/tex-html.tcl
 )
-install(FILES ${manuals_mged_HTML} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/manuals/mged)
+install(FILES ${manuals_mged_HTML} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/manuals/mged)
 
 
-install(FILES manuals/shaders/camo.html DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/manuals/shaders)
+install(FILES manuals/shaders/camo.html DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/manuals/shaders)
 
 SET(relnotes_HTML
 	ReleaseNotes/email2.0.html 
@@ -251,7 +251,7 @@ SET(relnotes_HTML
 	ReleaseNotes/email5.0.html
 	ReleaseNotes/index.html
 )
-install(FILES ${relnotes_HTML} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/ReleaseNotes)
+install(FILES ${relnotes_HTML} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/ReleaseNotes)
 
 SET(relnotes_5_HTML
 	ReleaseNotes/Rel5.0/deprecated.html
@@ -259,7 +259,7 @@ SET(relnotes_5_HTML
 	ReleaseNotes/Rel5.0/new_cmds.html
 	ReleaseNotes/Rel5.0/new_libs.html
 )
-install(FILES ${relnotes_5_HTML} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/ReleaseNotes/Rel5.0)
+install(FILES ${relnotes_5_HTML} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/ReleaseNotes/Rel5.0)
 
 
 SET(relnotes_5_summary_HTML
@@ -336,9 +336,9 @@ SET(relnotes_5_summary_HTML
 	ReleaseNotes/Rel5.0/Summary/tsld018.htm 
 	ReleaseNotes/Rel5.0/Summary/tsld019.htm
 )
-install(FILES ${relnotes_5_summary_HTML} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/ReleaseNotes/Rel5.0/Summary)
+install(FILES ${relnotes_5_summary_HTML} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/ReleaseNotes/Rel5.0/Summary)
 
 SET(relnotes_6_HTML
 	ReleaseNotes/Rel6.0/index.html
 )
-install(FILES ${relnotes_6_HTML} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/ReleaseNotes/Rel6.0)
+install(FILES ${relnotes_6_HTML} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/ReleaseNotes/Rel6.0)

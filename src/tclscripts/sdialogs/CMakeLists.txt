@@ -4,7 +4,7 @@ SET(sdialogs_TCLSCRIPTS
 	sdialogs.tcl
 )
 
-INSTALL(FILES ${sdialogs_TCLSCRIPTS} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/sdialogs)
+INSTALL(FILES ${sdialogs_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/sdialogs)
 
 pkgIndex_BUILD(sdialogs ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/sdialogs)
 tclIndex_BUILD(sdialogs ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/sdialogs)

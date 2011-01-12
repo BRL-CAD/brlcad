@@ -5,7 +5,7 @@ SET(swidgets_TCLSCRIPTS
 	swidgets.tcl
 )
 
-INSTALL(FILES ${swidgets_TCLSCRIPTS} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/swidgets)
+INSTALL(FILES ${swidgets_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/swidgets)
 
 pkgIndex_BUILD(swidgets ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/swidgets)
 tclIndex_BUILD(swidgets ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/swidgets)

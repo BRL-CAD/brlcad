@@ -4,4 +4,4 @@ SET(boteditor_TCLSCRIPTS
 	botTools.tcl
 )
 
-INSTALL(FILES ${boteditor_TCLSCRIPTS} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/boteditor)
+INSTALL(FILES ${boteditor_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/boteditor)

@@ -45,9 +45,9 @@ SET(docbook_books_EN_IMAGES
 	images/tutorial_series_volIII_table_image_1.png
 )
 
-DOCBOOK_TO_HTML(book docbook_books_EN ${BRLCAD_INSTALL_DATA_DIR}/html/books/en)
-INSTALL(FILES ${docbook_books_EN_IMAGES} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/books/en/images)
+DOCBOOK_TO_HTML(book docbook_books_EN ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/books/en)
+INSTALL(FILES ${docbook_books_EN_IMAGES} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/books/en/images)
 
 IF(BRLCAD-BUILD_EXTRADOCS_PDF)
-  DOCBOOK_TO_PDF(book docbook_books_EN ${BRLCAD_INSTALL_DATA_DIR}/pdf/books/en)
+  DOCBOOK_TO_PDF(book docbook_books_EN ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/pdf/books/en)
 ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF)

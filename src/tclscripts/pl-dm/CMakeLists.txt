@@ -4,7 +4,7 @@ SET(pl-dm_TCLSCRIPTS
 	menu.tcl
 	)
 
-INSTALL(FILES ${pl-dm_TCLSCRIPTS} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/pl-dm)
+INSTALL(FILES ${pl-dm_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/pl-dm)
 
 pkgIndex_BUILD(pl-dm ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/pl-dm)
 tclIndex_BUILD(pl-dm ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/pl-dm)

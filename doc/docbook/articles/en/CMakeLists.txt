@@ -101,9 +101,9 @@ SET(docbook_articles_EN_IMAGES
 	images/tire_fig14.png
 )
 
-DOCBOOK_TO_HTML(article docbook_articles_EN ${BRLCAD_INSTALL_DATA_DIR}/html/articles/en)
-INSTALL(FILES ${docbook_articles_EN_IMAGES} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/articles/en/images)
+DOCBOOK_TO_HTML(article docbook_articles_EN ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/articles/en)
+INSTALL(FILES ${docbook_articles_EN_IMAGES} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/articles/en/images)
 
 IF(BRLCAD-BUILD_EXTRADOCS_PDF)
-  DOCBOOK_TO_PDF(article docbook_articles_EN ${BRLCAD_INSTALL_DATA_DIR}/pdf/articles/en)
+  DOCBOOK_TO_PDF(article docbook_articles_EN ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/pdf/articles/en)
 ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF)
