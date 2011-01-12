@@ -93,5 +93,10 @@ set(HTESTER_SOURCES
     htester.c
 )
 
+set(TIMETESTER_SOURCES
+    timetester.c
+)
+
 add_executable(htester ${HTESTER_SOURCES})
-target_link_libraries(htester libbu)
+add_executable(timetester ${TIMETESTER_SOURCES})
+target_link_libraries(htester timetester libbu)
