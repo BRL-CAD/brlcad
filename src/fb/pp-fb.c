@@ -452,10 +452,14 @@ paint(void)
     char c;
     int i, j, iw, ih, iwih, trnf, flop;
     int	inten = 0;
-    int	inten_high;
+    int	inten_high = 0;
     long li, lj, numb(void);
-    RGBpixel ocl, tcl, pmix, tp, bp;
-    unsigned char *fb_p;	/* Current position in buffer.	*/
+    RGBpixel ocl = {0, 0, 0};
+    RGBpixel tcl = {0, 0, 0};
+    RGBpixel pmix = {0, 0, 0};
+    RGBpixel tp = {0, 0, 0};
+    RGBpixel bp = {0, 0, 0};
+    unsigned char *fb_p = NULL;	/* Current position in buffer.	*/
 
     printf("Picture is being painted\n");
     bp[RED]=colortab[ibc].c_pixel[RED];
