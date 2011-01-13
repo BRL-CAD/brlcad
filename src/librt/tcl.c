@@ -605,7 +605,7 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
     }
 
     for (dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++) {
-	if (strcmp(dbcmd->cmdname, argv[1]) == 0) {
+	if (BU_STR_EQUAL(dbcmd->cmdname, argv[1])) {
 	    return (*dbcmd->cmdfunc)(clientData, interp,
 				     argc, argv);
 	}

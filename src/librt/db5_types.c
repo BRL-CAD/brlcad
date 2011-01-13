@@ -209,7 +209,7 @@ db5_type_codes_from_tag(int *major, int *minor, const char *tag)
     for (tp = (struct db5_type *) type_table;
 	 tp->major_code != DB5_MAJORTYPE_RESERVED;
 	 ++tp) {
-	if ((*(tp->tag) == *tag) && (strcmp(tp->tag, tag) == 0)) {
+	if ((*(tp->tag) == *tag) && (BU_STR_EQUAL(tp->tag, tag))) {
 	    *major = tp->major_code;
 	    *minor = tp->minor_code;
 	    return 0;
@@ -228,7 +228,7 @@ db5_type_codes_from_descrip(int *major, int *minor, const char *descrip)
 	 tp->major_code != DB5_MAJORTYPE_RESERVED;
 	 ++tp) {
 	if ((*(tp->description) == *descrip)
-	    && (strcmp(tp->description, descrip) == 0)) {
+	    && (BU_STR_EQUAL(tp->description, descrip))) {
 	    *major = tp->major_code;
 	    *minor = tp->minor_code;
 	    return 0;
@@ -303,7 +303,7 @@ db5_is_standard_attribute(const char *attrname)
     standard_attributes[7] = "inherit";
 
     for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
-	if (strcmp(attrname, standard_attributes[i]) == 0) return 1;
+	if (BU_STR_EQUAL(attrname, standard_attributes[i])) return 1;
     }
 
     return 0;
@@ -357,35 +357,35 @@ db5_standardize_attribute(const char *attrname)
     inherit_names[1] = "INHERIT";
 
     for (i = 0; i < sizeof(region_flag_names)/sizeof(char *); i++) {
-	if (strcmp(attrname, region_flag_names[i]) == 0) return ATTR_REGION;
+	if (BU_STR_EQUAL(attrname, region_flag_names[i])) return ATTR_REGION;
     }
 
     for (i = 0; i < sizeof(region_id_names)/sizeof(char *); i++) {
-	if (strcmp(attrname, region_id_names[i]) == 0) return ATTR_REGION_ID;
+	if (BU_STR_EQUAL(attrname, region_id_names[i])) return ATTR_REGION_ID;
     }
 
     for (i = 0; i < sizeof(material_id_names)/sizeof(char *); i++) {
-	if (strcmp(attrname, material_id_names[i]) == 0) return ATTR_MATERIAL_ID;
+	if (BU_STR_EQUAL(attrname, material_id_names[i])) return ATTR_MATERIAL_ID;
     }
 
     for (i = 0; i < sizeof(air_names)/sizeof(char *); i++) {
-	if (strcmp(attrname, air_names[i]) == 0) return ATTR_AIR;
+	if (BU_STR_EQUAL(attrname, air_names[i])) return ATTR_AIR;
     }
 
     for (i = 0; i < sizeof(los_names)/sizeof(char *); i++) {
-	if (strcmp(attrname, los_names[i]) == 0) return ATTR_LOS;
+	if (BU_STR_EQUAL(attrname, los_names[i])) return ATTR_LOS;
     }
 
     for (i = 0; i < sizeof(color_names)/sizeof(char *); i++) {
-	if (strcmp(attrname, color_names[i]) == 0) return ATTR_COLOR;
+	if (BU_STR_EQUAL(attrname, color_names[i])) return ATTR_COLOR;
     }
 
     for (i = 0; i < sizeof(shader_names)/sizeof(char *); i++) {
-	if (strcmp(attrname, shader_names[i]) == 0) return ATTR_SHADER;
+	if (BU_STR_EQUAL(attrname, shader_names[i])) return ATTR_SHADER;
     }
 
     for (i = 0; i < sizeof(inherit_names)/sizeof(char *); i++) {
-	if (strcmp(attrname, inherit_names[i]) == 0) return ATTR_INHERIT;
+	if (BU_STR_EQUAL(attrname, inherit_names[i])) return ATTR_INHERIT;
     }
 
     return -1;

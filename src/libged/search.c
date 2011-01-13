@@ -2097,7 +2097,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		find_execute(dbplan, &dfp, gedp, 0);
 	    }
 	} else {
-	    if (strcmp(argv[1], ".") == 0) {
+	    if (BU_STR_EQUAL(argv[1], ".")) {
 		isoutput = 0;
 		if (find_formplan(&argv[2], &dbplan, gedp) != GED_OK) {
 		    bu_vls_printf(&gedp->ged_result_str,  "Failed to build find plan.\n");

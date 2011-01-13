@@ -59,7 +59,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc > 1 && strcmp(argv[1], "-r") == 0) {
+    if (argc > 1 && BU_STR_EQUAL(argv[1], "-r")) {
 	recurse = 1;
 
 	/* skip past used args */

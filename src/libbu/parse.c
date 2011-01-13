@@ -1049,7 +1049,7 @@ bu_vls_struct_item_named(struct bu_vls *vp, const struct bu_structparse *parseta
     register const struct bu_structparse *sdp;
 
     for (sdp = parsetab; sdp->sp_name != NULL; sdp++)
-	if (strcmp(sdp->sp_name, name) == 0) {
+	if (BU_STR_EQUAL(sdp->sp_name, name)) {
 	    bu_vls_struct_item(vp, sdp, base, sep_char);
 	    return 0;
 	}
@@ -2172,10 +2172,10 @@ bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse
     while (sp->sp_name != NULL) {
 	bu_vls_printf(logstr, "%s ", sp->sp_name);
 	/* These types are specified by lengths, e.g. %80s */
-	if (strcmp(sp->sp_fmt, "%c") == 0 ||
-	    strcmp(sp->sp_fmt, "%s") == 0 ||
-	    strcmp(sp->sp_fmt, "%S") == 0 || /* XXX - DEPRECATED [7.14] */
-	    strcmp(sp->sp_fmt, "%V") == 0) {
+	if (BU_STR_EQUAL(sp->sp_fmt, "%c") ||
+	    BU_STR_EQUAL(sp->sp_fmt, "%s") ||
+	    BU_STR_EQUAL(sp->sp_fmt, "%S") || /* XXX - DEPRECATED [7.14] */
+	    BU_STR_EQUAL(sp->sp_fmt, "%V")) {
 	    if (sp->sp_count > 1) {
 		/* Make them all look like %###s */
 		bu_vls_printf(logstr, "%%%lds", sp->sp_count);

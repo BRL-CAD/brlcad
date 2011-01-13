@@ -60,7 +60,7 @@ ged_which_shader(struct ged *gedp, int argc, const char *argv[])
     myArgv = (char **)argv;
     sflag = 0;
 
-    if (myArgc > 1 && strcmp(myArgv[1], "-s") == 0) {
+    if (myArgc > 1 && BU_STR_EQUAL(myArgv[1], "-s")) {
 	--myArgc;
 	++myArgv;
 	sflag = 1;

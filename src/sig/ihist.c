@@ -46,7 +46,7 @@ int main(int argc, char **argv)
     long	num, levels=0;
 
     while ( argc > 1 ) {
-	if ( strcmp( argv[1], "-v" ) == 0 ) {
+	if ( BU_STR_EQUAL( argv[1], "-v" ) ) {
 	    verbose++;
 	} else
 	    break;

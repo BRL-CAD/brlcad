@@ -267,7 +267,7 @@ bu_lex(
     if (keywords) {
 	register struct bu_lex_key *kp;
 	for (kp=keywords;kp->tok_val; kp++) {
-	    if (strcmp(kp->string, unit) == 0) {
+	    if (BU_STR_EQUAL(kp->string, unit)) {
 		token->type = BU_LEX_KEYWORD;
 		token->t_key.value = kp->tok_val;
 		bu_free(unit, "unit token");

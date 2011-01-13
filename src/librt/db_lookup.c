@@ -170,7 +170,7 @@ db_dircheck(struct db_i *dbip,
 	char *this;
 	if (n0 == *(this=dp->d_namep)  &&	/* speed */
 	    n1 == this[1]  &&			/* speed */
-	    strcmp(cp, this) == 0) {
+	    BU_STR_EQUAL(cp, this)) {
 	    /* Name exists in directory already */
 	    int c;
 
@@ -237,7 +237,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
 	char *this;
 
 	/* first two checks are for speed */
-	if ((n0 == *(this=dp->d_namep)) && (n1 == this[1]) && (strcmp(name, this) == 0)) {
+	if ((n0 == *(this=dp->d_namep)) && (n1 == this[1]) && (BU_STR_EQUAL(name, this))) {
 	    if (RT_G_DEBUG&DEBUG_DB)
 		bu_log("db_lookup(%s) x%x\n", name, dp);
 	    return dp;

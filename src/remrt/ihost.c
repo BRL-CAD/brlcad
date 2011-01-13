@@ -200,7 +200,7 @@ host_lookup_by_addr(const struct sockaddr_in * from, int enter)
     /* See if this host has been previously entered by number */
     for ( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
 	CK_IHOST(ihp);
-	if ( strcmp( ihp->ht_name, name ) == 0 )
+	if ( BU_STR_EQUAL( ihp->ht_name, name ) )
 	    return ihp;
     }
 

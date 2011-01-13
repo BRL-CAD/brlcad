@@ -195,9 +195,9 @@ f_vrmgr(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     vr_host = bu_strdup(argv[1]);
     role = argv[2];
 
-    if (strcmp(role, "master") == 0) {
-    } else if (strcmp(role, "slave") == 0) {
-    } else if (strcmp(role, "overview") == 0) {
+    if (BU_STR_EQUAL(role, "master")) {
+    } else if (BU_STR_EQUAL(role, "slave")) {
+    } else if (BU_STR_EQUAL(role, "overview")) {
     } else {
 	Tcl_AppendResult(interp, "role '", role, "' unknown, must be master/slave/overview\n",
 			 (char *)NULL);
@@ -224,11 +224,11 @@ f_vrmgr(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     }
 
     /* Establish appropriate hooks */
-    if (strcmp(role, "master") == 0) {
+    if (BU_STR_EQUAL(role, "master")) {
 	viewpoint_hook = vr_viewpoint_hook;
-    } else if (strcmp(role, "slave") == 0) {
+    } else if (BU_STR_EQUAL(role, "slave")) {
 	cmdline_hook = vr_event_hook;
-    } else if (strcmp(role, "overview") == 0) {
+    } else if (BU_STR_EQUAL(role, "overview")) {
 	/* No hooks required, just listen */
     }
     Tcl_CreateFileHandler(vrmgr->pkc_fd, TCL_READABLE,

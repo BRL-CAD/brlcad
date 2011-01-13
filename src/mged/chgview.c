@@ -1407,7 +1407,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     for (--argc, ++argv; argc; --argc, ++argv) {
 	cmd = *argv;
 
-	if (strcmp(cmd, "zap") == 0 || strcmp(cmd, "zero") == 0) {
+	if (BU_STR_EQUAL(cmd, "zap") || BU_STR_EQUAL(cmd, "zero")) {
 	    const char *av[3];
 
 	    VSETALL(view_state->vs_rate_model_rotate, 0.0);
@@ -1430,7 +1430,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    (void)f_adc(clientData, interp, 2, av);
 
 	    (void)mged_svbase();
-	} else if (strcmp(cmd, "calibrate") == 0) {
+	} else if (BU_STR_EQUAL(cmd, "calibrate")) {
 	    VSETALL(view_state->vs_absolute_tran, 0.0);
 	} else {
 	    if (argc - 1) {
@@ -2356,7 +2356,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		    default:
 			goto usage;
 		}
-	    } else if (strcmp(cmd, "xadc") == 0) {
+	    } else if (BU_STR_EQUAL(cmd, "xadc")) {
 		const char *av[5];
 		char sval[32];
 		int nargs = 3;
@@ -2376,7 +2376,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 		sprintf(sval, "%d", i);
 		(void)f_adc(clientData, interp, nargs, av);
-	    } else if (strcmp(cmd, "yadc") == 0) {
+	    } else if (BU_STR_EQUAL(cmd, "yadc")) {
 		const char *av[5];
 		char sval[32];
 		int nargs = 3;
@@ -2396,7 +2396,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 		sprintf(sval, "%d", i);
 		(void)f_adc(clientData, interp, nargs, av);
-	    } else if (strcmp(cmd, "ang1") == 0) {
+	    } else if (BU_STR_EQUAL(cmd, "ang1")) {
 		const char *av[5];
 		char sval[32];
 		int nargs = 3;
@@ -2416,7 +2416,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 		sprintf(sval, "%f", f);
 		(void)f_adc(clientData, interp, nargs, av);
-	    } else if (strcmp(cmd, "ang2") == 0) {
+	    } else if (BU_STR_EQUAL(cmd, "ang2")) {
 		const char *av[5];
 		char sval[32];
 		int nargs = 3;
@@ -2436,7 +2436,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 		sprintf(sval, "%f", f);
 		(void)f_adc(clientData, interp, nargs, av);
-	    } else if (strcmp(cmd, "distadc") == 0) {
+	    } else if (BU_STR_EQUAL(cmd, "distadc")) {
 		const char *av[5];
 		char sval[32];
 		int nargs = 3;

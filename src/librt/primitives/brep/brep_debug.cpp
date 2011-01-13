@@ -1755,27 +1755,27 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 
     snprintf(commtag, 64, "_BC_"); //default name pre/postfix tag for fake bn_vlblock solid
 
-    if (strcmp(command, "info") == 0) {
-	if (strcmp(command, "?") == 0) {
+    if (BU_STR_EQUAL(command, "info")) {
+	if (BU_STR_EQUAL(command, "?")) {
 	    info_usage(vls);
 	} else if (argc == 3) {
 	    ret = brep_info(bs, vls);
 	} else if (argc == 5) {
 	    const char *part = argv[3];
 	    const char *strindex = argv[4];
-	    if (strcmp(strindex, "?") == 0) {
+	    if (BU_STR_EQUAL(strindex, "?")) {
 		info_usage(vls);
 	    } else {
 		int index = atoi(strindex);
-		if (strcmp(part, "S") == 0) {
+		if (BU_STR_EQUAL(part, "S")) {
 		    ret = brep_surface_info(bs, vls, index);
-		} else if (strcmp(part, "F") == 0) {
+		} else if (BU_STR_EQUAL(part, "F")) {
 		    ret = brep_face_info(bs, vls, index);
 		}
 	    }
 	}
-    } else if (strcmp(command, "plot") == 0) {
-	if (strcmp(command, "?") == 0) {
+    } else if (BU_STR_EQUAL(command, "plot")) {
+	if (BU_STR_EQUAL(command, "?")) {
 	    plot_usage(vls);
 	} else if (argc == 3) {
 	    plot_usage(vls);
@@ -1789,59 +1789,59 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 	    }
 	    if (argc >= 5) {
 		const char *strindex = argv[4];
-		if (strcmp(strindex, "all") == 0) {
+		if (BU_STR_EQUAL(strindex, "all")) {
 		    index = -1;
 		} else {
 		    index = atoi(strindex);
 		}
 	    }
-	    if (strcmp(part, "S") == 0) {
+	    if (BU_STR_EQUAL(part, "S")) {
 		snprintf(commtag, 64, "_BC_S_");
 		ret = brep_surface_plot(vls, bs, bi, vbp, index, plotres);
-	    } else if (strcmp(part, "E") == 0) {
+	    } else if (BU_STR_EQUAL(part, "E")) {
 		snprintf(commtag, 64, "_BC_EE_");
 		ret = brep_isosurface_plot(vls, bs, bi, vbp, index, plotres);
-	    } else if (strcmp(part, "EE") == 0) {
+	    } else if (BU_STR_EQUAL(part, "EE")) {
 		snprintf(commtag, 64, "_BC_EE_");
 		int index1 = index;
 		int index2 = plotres;
 		for (int i=index1; i <= index2; i++) {
 		    ret = brep_isosurface_plot(vls, bs, bi, vbp, i, 3);
 		}
-	    } else if (strcmp(part, "SN") == 0) {
+	    } else if (BU_STR_EQUAL(part, "SN")) {
 		snprintf(commtag, 64, "_BC_SN_");
 		ret = brep_surface_normal_plot(vls, bs, bi, vbp, index, plotres);
-	    } else if (strcmp(part, "KN") == 0) {
+	    } else if (BU_STR_EQUAL(part, "KN")) {
 		snprintf(commtag, 64, "_BC_KN_");
 		ret = brep_surface_knot_plot(vls, bs, bi, vbp, index);
-	    } else if (strcmp(part, "F") == 0) {
+	    } else if (BU_STR_EQUAL(part, "F")) {
 		snprintf(commtag, 64, "_BC_F_");
 		ret = brep_facetrim_plot(vls, bs, bi, vbp, index, plotres, true);
-	    } else if (strcmp(part, "F2d") == 0) {
+	    } else if (BU_STR_EQUAL(part, "F2d")) {
 		snprintf(commtag, 64, "_BC_F2d_");
 		ret = brep_facetrim_plot(vls, bs, bi, vbp, index, plotres, false);
-	    } else if (strcmp(part, "SBB") == 0) {
+	    } else if (BU_STR_EQUAL(part, "SBB")) {
 		snprintf(commtag, 64, "_BC_SBB_");
 		ret = brep_surfaceleafs_plot(vls, bs, bi, vbp, true, index, plotres);
-	    } else if (strcmp(part, "SBB2d") == 0) {
+	    } else if (BU_STR_EQUAL(part, "SBB2d")) {
 		snprintf(commtag, 64, "_BC_SBB2d_");
 		ret = brep_surfaceleafs_plot(vls, bs, bi, vbp, false, index, plotres);
-	    }  else if (strcmp(part, "TD") == 0) {
+	    }  else if (BU_STR_EQUAL(part, "TD")) {
 		snprintf(commtag, 64, "_BC_TD_");
 		ret = brep_trim_direction_plot(vls, bs, bi, vbp, index, plotres);
-	    } else if (strcmp(part, "T") == 0) {
+	    } else if (BU_STR_EQUAL(part, "T")) {
 		snprintf(commtag, 64, "_BC_T_");
 		ret = brep_trim_plot(vls, bs, bi, vbp, index, plotres, true);
-	    } else if (strcmp(part, "T2d") == 0) {
+	    } else if (BU_STR_EQUAL(part, "T2d")) {
 		snprintf(commtag, 64, "_BC_T2d_");
 		ret = brep_trim_plot(vls, bs, bi, vbp, index, plotres, false);
-	    } else if (strcmp(part, "TBB") == 0) {
+	    } else if (BU_STR_EQUAL(part, "TBB")) {
 		snprintf(commtag, 64, "_BC_TBB_");
 		ret = brep_trimleafs_plot(vls, bs, bi, vbp, true, index, plotres);
-	    } else if (strcmp(part, "TBB2d") == 0) {
+	    } else if (BU_STR_EQUAL(part, "TBB2d")) {
 		snprintf(commtag, 64, "_BC_TBB2d_");
 		ret = brep_trimleafs_plot(vls, bs, bi, vbp, false, index, plotres);
-	    } else if (strcmp(part, "E") == 0) {
+	    } else if (BU_STR_EQUAL(part, "E")) {
 		snprintf(commtag, 64, "_BC_E_");
 		ret = brep_edge3d_plot(vls, bs, bi, vbp, index, plotres);
 	    }

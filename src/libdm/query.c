@@ -42,7 +42,7 @@ char *dm_bestXType(char *dpy_string);
 int
 dm_validXType(char *dpy_string, char *name)
 {
-    if (strcmp(name, "wgl")==0) {
+    if (BU_STR_EQUAL(name, "wgl")) {
 #ifdef DM_WGL
 	return 1;
 #else
@@ -51,7 +51,7 @@ dm_validXType(char *dpy_string, char *name)
 #endif /* DM_WGL */
     }
 
-    if (strcmp(name, "rtgl")==0) {
+    if (BU_STR_EQUAL(name, "rtgl")) {
 #ifdef DM_RTGL
 	Display *dpy;
 	int return_val;
@@ -68,7 +68,7 @@ dm_validXType(char *dpy_string, char *name)
 	return 0;
     }
 
-    if (strcmp(name, "ogl")==0) {
+    if (BU_STR_EQUAL(name, "ogl")) {
 #ifdef DM_OGL
 	Display *dpy;
 	int return_val;
@@ -85,7 +85,7 @@ dm_validXType(char *dpy_string, char *name)
 	return 0;
     }
 
-    if (strcmp(name, "X")==0) {
+    if (BU_STR_EQUAL(name, "X")) {
 #ifdef DM_X
 	Display *dpy;
 	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
@@ -98,7 +98,7 @@ dm_validXType(char *dpy_string, char *name)
 	return 0;
     }
 
-    if (strcmp(name, "tk")==0) {
+    if (BU_STR_EQUAL(name, "tk")) {
 #ifdef DM_TK
 	return 1;
 #else

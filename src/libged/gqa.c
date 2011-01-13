@@ -713,7 +713,7 @@ parse_args(int ac, char *av[])
 			/* got something valid? */
 			found_unit = 0;
 			for (cv = &units_tab[i][0]; cv->name[0] != '\0'; cv++) {
-			    if (units_name[i] && strcmp(cv->name, units_name[i]) == 0) {
+			    if (units_name[i] && BU_STR_EQUAL(cv->name, units_name[i])) {
 				units[i] = cv;
 				found_unit = 1;
 				break;

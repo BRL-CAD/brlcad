@@ -639,7 +639,7 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    if (argc > 1 && strcmp(argv[1], "-t") == 0) {
+    if (argc > 1 && BU_STR_EQUAL(argv[1], "-t")) {
     }
 
     datafile_basename = argv[bu_optind];

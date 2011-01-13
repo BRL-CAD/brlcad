@@ -338,7 +338,7 @@ static char opts[] = "\
 	while (bu_optind < argc) {
 	    if (fp != NULL && fp != stdin)
 		fclose(fp);
-	    if (strcmp(argv[bu_optind], "-") == 0)
+	    if (BU_STR_EQUAL(argv[bu_optind], "-"))
 		fp = stdin;
 	    else if ((fp = fopen(argv[bu_optind], "r")) == NULL) {
 		fprintf(stderr, "plrot: can't open \"%s\"\n", argv[bu_optind]);

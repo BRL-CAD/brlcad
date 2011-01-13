@@ -1684,7 +1684,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 	currTree = rtgljob.oldTrees[i];
 	foundthistree = 0;
  	for (j = 0; j < numVisible; j++) {
-	    if (strcmp(currTree, visibleTrees[j]) == 0) 
+	    if (BU_STR_EQUAL(currTree, visibleTrees[j])) 
 		foundthistree = 1;
 	}
 	if (foundthistree == 0) foundalloldtrees = 0;
@@ -1787,7 +1787,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 	 * first and starting over.
 	 */
         for (j = 0; j < rtgljob.numTrees; j++) {
-            if (strcmp(currTree, rtgljob.oldTrees[j]) == 0)
+            if (BU_STR_EQUAL(currTree, rtgljob.oldTrees[j]))
                 new = 0;
         }
         
@@ -1833,7 +1833,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 		 * first and starting over.
 		 **/
 		for (j = 0; j < rtgljob.numTrees; j++) {
-		    if (strcmp(currTree, rtgljob.oldTrees[j]) == 0)
+		    if (BU_STR_EQUAL(currTree, rtgljob.oldTrees[j]))
 			new = 0;
 		}
 		

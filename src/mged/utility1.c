@@ -791,13 +791,13 @@ f_tables(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
     status = TCL_OK;
 
     /* find out which ascii table is desired */
-    if (strcmp(argv[0], "solids") == 0) {
+    if (BU_STR_EQUAL(argv[0], "solids")) {
 	/* complete summary - down to solids/paremeters */
 	flag = SOL_TABLE;
-    } else if (strcmp(argv[0], "regions") == 0) {
+    } else if (BU_STR_EQUAL(argv[0], "regions")) {
 	/* summary down to solids as members of regions */
 	flag = REG_TABLE;
-    } else if (strcmp(argv[0], "idents") == 0) {
+    } else if (BU_STR_EQUAL(argv[0], "idents")) {
 	/* summary down to regions */
 	flag = ID_TABLE;
     } else {

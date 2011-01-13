@@ -464,7 +464,7 @@ int get_args( int argc, register char **argv )
 		}
 		break;
 	    case 'u':
-	    	if (strcmp(bu_optarg,"model") == 0) {
+	    	if (BU_STR_EQUAL(bu_optarg,"model")) {
 	    		model_units = 1;
 	    		default_units = 0;
 	    	} else {

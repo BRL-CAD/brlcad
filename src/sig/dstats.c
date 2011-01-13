@@ -50,7 +50,7 @@ int main(int ac, char *av[])
     FILE *fp;
 
     /* check for verbose flag */
-    if (ac > 1 && strcmp(av[1], "-v") == 0) {
+    if (ac > 1 && BU_STR_EQUAL(av[1], "-v")) {
 	verbose++;
 	av++;
 	ac--;

@@ -213,11 +213,11 @@ do_lines(FILE *fp, char *buffer)
 		       stdout );
 		continue;
 	    }
-	    if ( strcmp( token, "line" ) == 0 )  {
+	    if ( BU_STR_EQUAL( token, "line" ) )  {
 		fprintf(stdout, "%d", line );
 		continue;
 	    }
-	    if ( strcmp( token, "time" ) == 0 )  {
+	    if ( BU_STR_EQUAL( token, "time" ) )  {
 		fputs( chanwords[0], stdout );
 		continue;
 	    }
@@ -273,7 +273,7 @@ int
 multi_words( char *words[], int	word_count )
 {
 
-    if ( strcmp( words[0], "rot" ) == 0 )  {
+    if ( BU_STR_EQUAL( words[0], "rot" ) )  {
 	mat_t	mat;
 
 	/* Expects rotations rx, ry, rz, in degrees */
@@ -286,7 +286,7 @@ multi_words( char *words[], int	word_count )
 	out_mat( mat, stdout );
 	return 0;
     }
-    if ( strcmp( words[0], "xlate" ) == 0 )  {
+    if ( BU_STR_EQUAL( words[0], "xlate" ) )  {
 	mat_t	mat;
 
 	if ( word_count < 4 )  return -1;
@@ -299,7 +299,7 @@ multi_words( char *words[], int	word_count )
 	out_mat( mat, stdout );
 	return 0;
     }
-    if ( strcmp( words[0], "rot_at" ) == 0 )  {
+    if ( BU_STR_EQUAL( words[0], "rot_at" ) )  {
 	mat_t	mat;
 	mat_t	mat1;
 	mat_t	mat2;
@@ -337,7 +337,7 @@ multi_words( char *words[], int	word_count )
 	out_mat( mat, stdout );
 	return 0;
     }
-    if ( strcmp( words[0], "orient" ) == 0 )  {
+    if ( BU_STR_EQUAL( words[0], "orient" ) )  {
 	int i;
 	mat_t	mat;
 	double	args[8];
@@ -365,7 +365,7 @@ multi_words( char *words[], int	word_count )
 	out_mat( mat, stdout );
 	return 0;
     }
-    if ( strcmp( words[0], "ae" ) == 0 )  {
+    if ( BU_STR_EQUAL( words[0], "ae" ) )  {
 	mat_t	mat;
 	fastf_t	az, el;
 
@@ -385,7 +385,7 @@ multi_words( char *words[], int	word_count )
 	out_mat( mat, stdout );
 	return 0;
     }
-    if ( strcmp( words[0], "arb_rot_pt" ) == 0 )  {
+    if ( BU_STR_EQUAL( words[0], "arb_rot_pt" ) )  {
 	mat_t	mat;
 	point_t	pt1, pt2;
 	vect_t	dir;
@@ -403,7 +403,7 @@ multi_words( char *words[], int	word_count )
 	out_mat( mat, stdout );
 	return 0;
     }
-    if ( strcmp( words[0], "arb_rot_dir" ) == 0 )  {
+    if ( BU_STR_EQUAL( words[0], "arb_rot_dir" ) )  {
 	mat_t	mat;
 	point_t	pt1;
 	vect_t	dir;
@@ -420,7 +420,7 @@ multi_words( char *words[], int	word_count )
 	out_mat( mat, stdout );
 	return 0;
     }
-    if ( strcmp( words[0], "quat" ) == 0 )  {
+    if ( BU_STR_EQUAL( words[0], "quat" ) )  {
 	mat_t	mat;
 	quat_t	quat;
 
@@ -433,7 +433,7 @@ multi_words( char *words[], int	word_count )
 	out_mat( mat, stdout);
 	return 0;
     }
-    if ( strcmp( words[0], "fromto" ) == 0 )  {
+    if ( BU_STR_EQUAL( words[0], "fromto" ) )  {
 	mat_t	mat;
 	point_t	cur;
 	point_t	next;
@@ -442,17 +442,17 @@ multi_words( char *words[], int	word_count )
 
 	/* Usage: fromto +Z cur_xyz next_xyz */
 	if ( word_count < 8 )  return -1;
-	if ( strcmp( words[1], "+X" ) == 0 )  {
+	if ( BU_STR_EQUAL( words[1], "+X" ) )  {
 	    VSET( from, 1, 0, 0 );
-	} else if ( strcmp( words[1], "-X" ) == 0 )  {
+	} else if ( BU_STR_EQUAL( words[1], "-X" ) )  {
 	    VSET( from, -1, 0, 0 );
-	} else if ( strcmp( words[1], "+Y" ) == 0 )  {
+	} else if ( BU_STR_EQUAL( words[1], "+Y" ) )  {
 	    VSET( from, 0, 1, 0 );
-	} else if ( strcmp( words[1], "-Y" ) == 0 )  {
+	} else if ( BU_STR_EQUAL( words[1], "-Y" ) )  {
 	    VSET( from, 0, -1, 0 );
-	} else if ( strcmp( words[1], "+Z" ) == 0 )  {
+	} else if ( BU_STR_EQUAL( words[1], "+Z" ) )  {
 	    VSET( from, 0, 0, 1 );
-	} else if ( strcmp( words[1], "-Z" ) == 0 )  {
+	} else if ( BU_STR_EQUAL( words[1], "-Z" ) )  {
 	    VSET( from, 0, 0, -1 );
 	} else {
 	    fprintf(stderr, "fromto '%s' is not +/-XYZ\n", words[1]);

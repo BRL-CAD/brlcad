@@ -56,17 +56,17 @@ int main(int argc, char **argv)
     int	n, L;
 
     while ( argc > 1 ) {
-	if ( strcmp(argv[1], "-v") == 0 ) {
+	if ( BU_STR_EQUAL(argv[1], "-v") ) {
 	    mode = VERT;
 	    pause_time = 0;
 	    Clear = 0;
-	} else if ( strcmp(argv[1], "-b") == 0 ) {
+	} else if ( BU_STR_EQUAL(argv[1], "-b") ) {
 	    mode = BARS;
-	} else if ( strcmp(argv[1], "-p") == 0 ) {
+	} else if ( BU_STR_EQUAL(argv[1], "-p") ) {
 	    pause_time = 3;
-	} else if ( strcmp(argv[1], "-c") == 0 ) {
+	} else if ( BU_STR_EQUAL(argv[1], "-c") ) {
 	    Clear++;
-	} else if ( strcmp(argv[1], "-h") == 0 ) {
+	} else if ( BU_STR_EQUAL(argv[1], "-h") ) {
 	    fbsize = 1024;
 	} else
 	    break;

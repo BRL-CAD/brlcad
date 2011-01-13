@@ -120,7 +120,7 @@ get_args(int argc, char **argv)
 	return 0;
 
     f1_name = argv[bu_optind++];
-    if (strcmp(f1_name, "-") == 0)
+    if (BU_STR_EQUAL(f1_name, "-"))
 	f1 = stdin;
     else if ((f1 = fopen(f1_name, "r")) == NULL) {
 	perror(f1_name);
@@ -131,7 +131,7 @@ get_args(int argc, char **argv)
     }
 
     f2_name = argv[bu_optind++];
-    if (strcmp(f2_name, "-") == 0)
+    if (BU_STR_EQUAL(f2_name, "-"))
 	f2 = stdin;
     else if ((f2 = fopen(f2_name, "r")) == NULL) {
 	perror(f2_name);

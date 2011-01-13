@@ -143,9 +143,9 @@ main(int argc, char **argv)
     struct uplot *up;
 
     while (argc > 1) {
-	if (strcmp(argv[1], "-v") == 0) {
+	if (BU_STR_EQUAL(argv[1], "-v")) {
 	    verbose++;
-	} else if (strcmp(argv[1], "-S") == 0) {
+	} else if (BU_STR_EQUAL(argv[1], "-S")) {
 	    scale = 1;
 	} else
 	    break;

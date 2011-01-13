@@ -3239,7 +3239,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
     /* open log file, if a name was provided */
     if ( strlen( log_file ) > 0 ) {
-	if ( strcmp( log_file, "stderr" ) == 0 ) {
+	if ( BU_STR_EQUAL( log_file, "stderr" ) ) {
 	    logger = stderr;
 	} else if ( (logger=fopen( log_file, "wb" ) ) == NULL ) {
 	    (void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Cannot open log file" );

@@ -143,7 +143,7 @@ main(int argc, char **argv)
 	bu_exit(10, NULL);
     }
     for (i=1;i<argc;i++) {
-	if (strcmp("-F", argv[i])==0) {
+	if (BU_STR_EQUAL("-F", argv[i])) {
 #if 0
 	    argv[++i];
 #else
@@ -153,10 +153,10 @@ main(int argc, char **argv)
 	     */
 	    ++i;
 #endif
-	} else if (strcmp("-W", argv[i])==0) {
+	} else if (BU_STR_EQUAL("-W", argv[i])) {
 	    sscanf(argv[++i], "%d", &scr_w);
 	    scr_set=1;
-	} else if (strcmp("-N", argv[i])==0) {
+	} else if (BU_STR_EQUAL("-N", argv[i])) {
 	    sscanf(argv[++i], "%d", &scr_h);
 	    scr_set=1;
 	} else if (strncmp("-", argv[i], 1)==0) {

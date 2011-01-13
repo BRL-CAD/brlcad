@@ -842,7 +842,7 @@ f_Exec_Function()
     if ( (ftbl = get_Func_Name( name, MAX_LN, ": " )) == FT_NULL )
 	return 0;
     else
-	if ( strcmp( ftbl->f_name, name ) == 0 )
+	if ( BU_STR_EQUAL( ftbl->f_name, name ) )
 	    return (*ftbl->f_func)(ftbl->f_buff);
 	else
 	{
@@ -1336,7 +1336,7 @@ f_Bind_Name_To_Key() /* Bind key to function or macro. */
 	 == FT_NULL
 	)
 	return 0;
-    if ( strcmp( ftbl->f_name, name ) == 0 )
+    if ( BU_STR_EQUAL( ftbl->f_name, name ) )
     {
 	/* Key is still bound to this function/macro. */
 	bindings[(int)key[0]] = ftbl;

@@ -329,7 +329,7 @@ bu_mm_value(const char *s)
 
     for (tp=bu_units_length_tab; tp->name[0]; tp++) {
 	if (*ptr != tp->name[0])  continue;
-	if (strcmp(ptr, tp->name) == 0) {
+	if (BU_STR_EQUAL(ptr, tp->name)) {
 	    v *= tp->val;
 	    return v;
 	}

@@ -338,7 +338,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
 
 	oip->code_nm = 0;
 	for (vtp = (outval *)(ValTab + 1); vtp->name; ++vtp) {
-	    if (strcmp(vtp->name, up) == 0) {
+	    if (BU_STR_EQUAL(vtp->name, up)) {
 		oip->code_nm = vtp->code_nm;
 		break;
 	    }
@@ -491,7 +491,7 @@ print_item (char *buffer, com_table *ctp)
 	    *bp++ = '\0';
 
 	for (vtp = (outval *)(ValTab + 1); vtp->name; ++vtp) {
-	    if (strcmp(vtp->name, bp0) == 0) {
+	    if (BU_STR_EQUAL(vtp->name, bp0)) {
 		switch (vtp->type) {
 		    case OIT_INT:
 			printf("%d\n", vtp->value.ival);
@@ -656,12 +656,12 @@ direct_output(const char *buffer, com_table *ctp)
 	return;
     }
 
-    if (strcmp(buffer + i, "?") == 0) {
+    if (BU_STR_EQUAL(buffer + i, "?")) {
 	com_usage(ctp);
 	return;
     }
 
-    if (strcmp(buffer + i, "default") == 0) {
+    if (BU_STR_EQUAL(buffer + i, "default")) {
 	newf = stdout;
 	new_dest = def_dest_string;
 	openfunc = 0;
@@ -730,12 +730,12 @@ state_file(const char *buffer, com_table *ctp)
 	return;
     }
 
-    if (strcmp(buffer + i, "?") == 0) {
+    if (BU_STR_EQUAL(buffer + i, "?")) {
 	com_usage(ctp);
 	return;
     }
 
-    if (strcmp(buffer + i, "default") == 0) {
+    if (BU_STR_EQUAL(buffer + i, "default")) {
 	new_name = def_sf_name;
     } else {
 	new_name = bu_malloc(strlen(buffer + i)+1, "new_state_filename");
@@ -775,7 +775,7 @@ dump_state(const char *buffer, com_table *ctp)
     fprintf(sfPtr, "dir %g %g %g\n", direct(X), direct(Y), direct(Z));
     fprintf(sfPtr, "useair %d\n", ap.a_rt_i->useair);
     fprintf(sfPtr, "units %s\n", local_u_name);
-    if (strcmp(dest_string, "stdout") == 0)
+    if (BU_STR_EQUAL(dest_string, "stdout"))
 	fputs("dest default\n", sfPtr);
     else
 	fprintf(sfPtr, "dest %s\n", dest_string);

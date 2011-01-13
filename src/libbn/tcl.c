@@ -49,7 +49,7 @@
 int
 bn_decode_mat(fastf_t *m, const char *str)
 {
-    if (strcmp(str, "I") == 0) {
+    if (BU_STR_EQUAL(str, "I")) {
 	MAT_IDN(m);
 	return 16;
     }

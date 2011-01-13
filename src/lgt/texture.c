@@ -197,10 +197,10 @@ init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 int
 tex_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
 {
-    if ( strcmp( ICON_SUFFIX, suffix( entry->name ) ) == 0 )
+    if ( BU_STR_EQUAL( ICON_SUFFIX, suffix( entry->name ) ) )
 	return	icon_Entry( uvp, entry );
     else
-	if ( strcmp( FB_SUFFIX, suffix( entry->name ) ) == 0 )
+	if ( BU_STR_EQUAL( FB_SUFFIX, suffix( entry->name ) ) )
 	    return	fb_Entry( uvp, entry );
 	else
 	    return	0;

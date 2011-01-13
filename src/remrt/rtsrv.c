@@ -166,12 +166,12 @@ main(int argc, char **argv)
 	return 1;
     }
     while ( argv[1][0] == '-' )  {
-	if ( strcmp( argv[1], "-d" ) == 0 )  {
+	if ( BU_STR_EQUAL( argv[1], "-d" ) )  {
 	    debug++;
-	} else if ( strcmp( argv[1], "-x" ) == 0 )  {
+	} else if ( BU_STR_EQUAL( argv[1], "-x" ) )  {
 	    sscanf( argv[2], "%x", (unsigned int *)&rt_g.debug );
 	    argc--; argv++;
-	} else if ( strcmp( argv[1], "-X" ) == 0 )  {
+	} else if ( BU_STR_EQUAL( argv[1], "-X" ) )  {
 	    sscanf( argv[2], "%x", (unsigned int *)&rdebug );
 	    argc--; argv++;
 	} else {

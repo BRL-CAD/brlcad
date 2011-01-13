@@ -131,13 +131,13 @@ main(int argc, char **argv)
 
     if ( argc >= 3 ) {
 	iname = argv[1];
-	if ( strcmp(iname, "-") == 0 )  {
+	if ( BU_STR_EQUAL(iname, "-") )  {
 	    ifp = stdin;
 	} else {
 	    ifp = fopen(iname, "rb");
 	}
 	if ( !ifp )  perror(iname);
-	if ( strcmp(argv[2], "-") == 0 )  {
+	if ( BU_STR_EQUAL(argv[2], "-") )  {
 	    ofp = stdout;
 	} else {
 	    ofp = fopen(argv[2], "wb");

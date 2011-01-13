@@ -73,15 +73,15 @@ main(int argc, char **argv)
     size_t ret;
 
     while (argc > 1 && argv[1][0] == '-') {
-	if (strcmp(argv[1], "-v") == 0)
+	if (BU_STR_EQUAL(argv[1], "-v"))
 	    verbose = 1;
-	else if (strcmp(argv[1], "-ntsc") == 0) {
+	else if (BU_STR_EQUAL(argv[1], "-ntsc")) {
 	    /* NTSC weights */
 	    rweight = 0.30;
 	    gweight = 0.59;
 	    bweight = 0.11;
 	    red = green = blue = 1;
-	} else if (strcmp(argv[1], "-crt") == 0) {
+	} else if (BU_STR_EQUAL(argv[1], "-crt")) {
 	    /* CRT weights */
 	    rweight = 0.26;
 	    gweight = 0.66;

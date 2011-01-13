@@ -2122,7 +2122,7 @@ view_eol(struct application *ap, RGBpixel (*scanbuf))
     if ( pix_buffered == B_LINE )
     {
 	bu_semaphore_acquire( RT_SEM_STATS );
-	if ( strcmp( fb_file, "/dev/remote" ) == 0 )
+	if ( BU_STR_EQUAL( fb_file, "/dev/remote" ) )
 	{
 	    char ystr[5];
 	    (void) sprintf( ystr, "%04d", ap->a_y );

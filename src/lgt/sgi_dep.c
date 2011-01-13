@@ -99,7 +99,7 @@ tryGetOrigin( xp, yp )
     long *xp, *yp;
 {
     char *fbtype = fb_gettype( fbiop );
-    if ( strcmp( fbtype, "Remote Device Interface" ) == 0 )	/* trouble */
+    if ( BU_STR_EQUAL( fbtype, "Remote Device Interface" ) )	/* trouble */
     {
 	prnt_Scroll( "Can't get window origin from remote device.\n" );
 	return false;

@@ -25,6 +25,8 @@
 #include <string.h>
 #include <errno.h>
 
+#include "bu.h"
+
 
 int
 bu_booleanize(const char *str)
@@ -46,7 +48,7 @@ bu_booleanize(const char *str)
 	return 0;
 
     /* exactly "0" */
-    if (strcmp(str, "0") == 0)
+    if (BU_STR_EQUAL(str, "0"))
 	return 0;
 
     /* variant of "0" (e.g., 000) */

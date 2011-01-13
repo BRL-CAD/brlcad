@@ -60,7 +60,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
 	{
 	    int	new_i;
 
-	    if ((strcmp(argv[1], "-s") == 0)
+	    if ((BU_STR_EQUAL(argv[1], "-s"))
 		&& (sscanf(argv[2], "%d", &new_i) == 1)) {
 		i = new_i;
 		return GED_OK;

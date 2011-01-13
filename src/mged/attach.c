@@ -349,14 +349,14 @@ f_attach(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[argc-1], "nu") == 0) {
+    if (BU_STR_EQUAL(argv[argc-1], "nu")) {
 	/* nothing to do */
 	return TCL_OK;
     }
 
     /* Look at last argument, skipping over any options which preceed it */
     for (wp = &which_dm[2]; wp->type != -1; wp++)
-	if (strcmp(argv[argc - 1], wp->name) == 0)
+	if (BU_STR_EQUAL(argv[argc - 1], wp->name))
 	    break;
 
     if (wp->type == -1) {

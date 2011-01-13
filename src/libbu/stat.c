@@ -190,7 +190,7 @@ _bu_file_access(const char *path, int access_level)
 	    int i;
 	    struct group *grdb = getgrgid(sb.st_gid);
 	    for (i = 0; grdb && grdb->gr_mem[i]; i++) {
-		if (strcmp(grdb->gr_mem[i], pwdb->pw_name) == 0) {
+		if (BU_STR_EQUAL(grdb->gr_mem[i], pwdb->pw_name)) {
 		    /* one of our other groups */
 		    return sb.st_mode & (mask & grp_mask);
 		}

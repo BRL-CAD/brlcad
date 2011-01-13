@@ -65,11 +65,11 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
     pos_in = 1;
 
     /* find out which command was entered */
-    if (strcmp(argv[0], "paths") == 0) {
+    if (BU_STR_EQUAL(argv[0], "paths")) {
 	/* want to list all matching paths */
 	gtd.gtd_flag = _GED_LISTPATH;
     }
-    if (strcmp(argv[0], "listeval") == 0) {
+    if (BU_STR_EQUAL(argv[0], "listeval")) {
 	/* want to list evaluated solid[s] */
 	gtd.gtd_flag = _GED_LISTEVAL;
     }

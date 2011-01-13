@@ -172,7 +172,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 	    /* if we already have an entry for this region pair,
 	     * we increase the counter and return
 	     */
-	    if ( (strcmp(reg1->reg_name, op->reg1) == 0) && (strcmp(reg2->reg_name, op->reg2) == 0) ) {
+	    if ( (BU_STR_EQUAL(reg1->reg_name, op->reg1)) && (BU_STR_EQUAL(reg2->reg_name, op->reg2)) ) {
 		op->count++;
 		if ( depth > op->maxdepth )
 		    op->maxdepth = depth;
@@ -184,7 +184,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 
 	for ( op=olist; op; prev_ol=op, op=op->next ) {
 	    /* if this pair was seen in reverse, decrease the unique counter */
-	    if ( (strcmp(reg1->reg_name, op->reg2) == 0) && (strcmp(reg2->reg_name, op->reg1) == 0) ) {
+	    if ( (BU_STR_EQUAL(reg1->reg_name, op->reg2)) && (BU_STR_EQUAL(reg2->reg_name, op->reg1)) ) {
 		unique_overlap_count--;
 		break;
 	    }
@@ -287,7 +287,7 @@ static void print_overlap_summary(void) {
 
 		/* iterate over the list and see if we already printed this one */
 		for ( backop=olist; (backop!=op) && (backop); backop=backop->next ) {
-		    if ((strcmp(op->reg1, backop->reg1) == 0) || (strcmp(op->reg1, backop->reg2) == 0)) break;
+		    if ((BU_STR_EQUAL(op->reg1, backop->reg1)) || (BU_STR_EQUAL(op->reg1, backop->reg2))) break;
 		}
 		/* if we got to the end of the list (backop points to the match) */
 		if (!backop || (backop==op)) {
@@ -298,7 +298,7 @@ static void print_overlap_summary(void) {
 		/* iterate over the list again up to where we are to see if the second
 		 * region was already printed */
 		for (backop=olist; backop; backop=backop->next) {
-		    if ((strcmp(op->reg2, backop->reg1) == 0) || (strcmp(op->reg2, backop->reg2) == 0)) break;
+		    if ((BU_STR_EQUAL(op->reg2, backop->reg1)) || (BU_STR_EQUAL(op->reg2, backop->reg2))) break;
 		}
 		if ( !backop || (backop==op)) {
 		    bu_log("%s  ", op->reg2);
@@ -345,7 +345,7 @@ view_end(void) {
 	     * see if we hit the reverse previously.
 	     */
 	    for ( backop=olist; (backop!=op) && (backop); backop=backop->next ) {
-		if ((strcmp(op->reg2, backop->reg1) == 0) && (strcmp(op->reg1, backop->reg2) == 0)) break;
+		if ((BU_STR_EQUAL(op->reg2, backop->reg1)) && (BU_STR_EQUAL(op->reg1, backop->reg2))) break;
 	    }
 	    if (backop && (backop!=op)) continue;
 
@@ -359,8 +359,8 @@ view_end(void) {
 		 * reverse matching pair (done inside loop
 		 * explicitly)*/
 		for ( nextop=op; nextop; nextop=nextop->next) {
-		    if ((strcmp(op->reg1, nextop->reg2) == 0) &&
-			(strcmp(op->reg2, nextop->reg1) == 0))
+		    if ((BU_STR_EQUAL(op->reg1, nextop->reg2)) &&
+			(BU_STR_EQUAL(op->reg2, nextop->reg1)))
 			break;
 		}
 		/* when we leave the loop, nextop is either

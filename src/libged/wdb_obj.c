@@ -576,7 +576,7 @@ Usage: wdb_open\n\
     /* Delete previous proc (if any) to release all that memory, first */
     (void)Tcl_DeleteCommand(interp, argv[1]);
 
-    if (argc == 3 || strcmp(argv[2], "db") == 0) {
+    if (argc == 3 || BU_STR_EQUAL(argv[2], "db")) {
 	struct db_i *dbip;
 	int i;
 
@@ -590,7 +590,7 @@ Usage: wdb_open\n\
 	RT_CK_DBI_TCL(interp, dbip);
 
 	wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-    } else if (strcmp(argv[2], "file") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "file")) {
 	wdbp = wdb_fopen(argv[3]);
     } else {
 	struct db_i *dbip;
@@ -598,13 +598,13 @@ Usage: wdb_open\n\
 	if (wdb_decode_dbip(interp, argv[3], &dbip) != TCL_OK)
 	    return TCL_ERROR;
 
-	if (strcmp(argv[2], "disk") == 0)
+	if (BU_STR_EQUAL(argv[2], "disk"))
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-	else if (strcmp(argv[2], "disk_append") == 0)
+	else if (BU_STR_EQUAL(argv[2], "disk_append"))
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
-	else if (strcmp(argv[2], "inmem") == 0)
+	else if (BU_STR_EQUAL(argv[2], "inmem"))
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
-	else if (strcmp(argv[2], "inmem_append") == 0)
+	else if (BU_STR_EQUAL(argv[2], "inmem_append"))
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
 	else {
 	    Tcl_AppendResult(interp, "wdb_open ", argv[2],
@@ -1511,13 +1511,13 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
     (void)Tcl_DeleteCommand(interp, newprocname);
 
     while (argv[2][0] == '-') {
-	if (strcmp(argv[2], "-i") == 0) {
+	if (BU_STR_EQUAL(argv[2], "-i")) {
 	    rtip->rti_dont_instance = 1;
 	    argc--;
 	    argv++;
 	    continue;
 	}
-	if (strcmp(argv[2], "-u") == 0) {
+	if (BU_STR_EQUAL(argv[2], "-u")) {
 	    rtip->useair = 1;
 	    argc--;
 	    argv++;
@@ -2224,7 +2224,7 @@ wdb_list_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (argc > 1 && strcmp(argv[1], "-r") == 0) {
+    if (argc > 1 && BU_STR_EQUAL(argv[1], "-r")) {
 	recurse = 1;
 
 	/* skip past used args */
@@ -2348,11 +2348,11 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
     pos_in = 1;
 
     /* find out which command was entered */
-    if (strcmp(argv[0], "paths") == 0) {
+    if (BU_STR_EQUAL(argv[0], "paths")) {
 	/* want to list all matching paths */
 	gtd.gtd_flag = _GED_LISTPATH;
     }
-    if (strcmp(argv[0], "listeval") == 0) {
+    if (BU_STR_EQUAL(argv[0], "listeval")) {
 	/* want to list evaluated solid[s] */
 	gtd.gtd_flag = _GED_LISTEVAL;
     }
@@ -2579,7 +2579,7 @@ wdb_kill_cmd(struct rt_wdb *wdbp,
     }
 
     /* skip past "-f" */
-    if (argc > 1 && strcmp(argv[1], "-f") == 0) {
+    if (argc > 1 && BU_STR_EQUAL(argv[1], "-f")) {
 	verbose = LOOKUP_QUIET;
 	argc--;
 	argv++;
@@ -3489,7 +3489,7 @@ wdb_concat_cmd(struct rt_wdb *wdbp,
 
 	    cc_data.copy_mode |= AUTO_PREFIX;
 
-	    if (strcmp(argv[3], "/") == 0) {
+	    if (BU_STR_EQUAL(argv[3], "/")) {
 		cc_data.copy_mode = NO_AFFIX | CUSTOM_PREFIX;
 	    } else {
 		(void)bu_vls_strcpy(&cc_data.affix, argv[3]);
@@ -3500,7 +3500,7 @@ wdb_concat_cmd(struct rt_wdb *wdbp,
 
 	    cc_data.copy_mode |= AUTO_SUFFIX;
 
-	    if (strcmp(argv[3], "/") == 0) {
+	    if (BU_STR_EQUAL(argv[3], "/")) {
 		cc_data.copy_mode = NO_AFFIX | CUSTOM_SUFFIX;
 	    } else {
 		(void)bu_vls_strcpy(&cc_data.affix, argv[3]);
@@ -3524,7 +3524,7 @@ wdb_concat_cmd(struct rt_wdb *wdbp,
 
 	cc_data.copy_mode |= AUTO_PREFIX;
 
-	if (strcmp(argv[2], "/") == 0) {
+	if (BU_STR_EQUAL(argv[2], "/")) {
 	    cc_data.copy_mode = NO_AFFIX | CUSTOM_PREFIX;
 	} else {
 	    (void)bu_vls_strcpy(&cc_data.affix, argv[2]);
@@ -4927,7 +4927,7 @@ wdb_which_cmd(struct rt_wdb *wdbp,
     else
 	isAir = 0;
 
-    if (strcmp(argv[1], "-s") == 0) {
+    if (BU_STR_EQUAL(argv[1], "-s")) {
 	--argc;
 	++argv;
 
@@ -7204,7 +7204,7 @@ wdb_units_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (argc == 2 && strcmp(argv[1], "-s") == 0) {
+    if (argc == 2 && BU_STR_EQUAL(argv[1], "-s")) {
 	--argc;
 	++argv;
 
@@ -7564,7 +7564,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "get") == 0) {
+    if (BU_STR_EQUAL(argv[1], "get")) {
 	if (argc == 3) {
 	    /* just list all the attributes */
 	    avpp = avs.avp;
@@ -7603,7 +7603,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	bu_avs_free(&avs);
 	return TCL_OK;
 
-    } else if (strcmp(argv[1], "set") == 0) {
+    } else if (BU_STR_EQUAL(argv[1], "set")) {
 	/* setting attribute/value pairs */
 	if ((argc - 3) % 2) {
 	    Tcl_AppendResult(interp,
@@ -7615,7 +7615,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 
 	i = 3;	
 	while (i < argc) {
-	    if (strcmp(argv[i], "region") == 0 && strcmp(argv[i+1], "R") == 0) {
+	    if (BU_STR_EQUAL(argv[i], "region") && BU_STR_EQUAL(argv[i+1], "R")) {
 		dp->d_flags |= DIR_REGION;
 	    }
 	    (void)bu_avs_add(&avs, argv[i], argv[i+1]);
@@ -7631,10 +7631,10 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 
 	/* avs is freed by db5_update_attributes() */
 	return TCL_OK;
-    } else if (strcmp(argv[1], "rm") == 0) {
+    } else if (BU_STR_EQUAL(argv[1], "rm")) {
 	i = 3;
 	while (i < argc) {
-	    if (strcmp(argv[i], "region") == 0) {
+	    if (BU_STR_EQUAL(argv[i], "region")) {
 		dp->d_flags = dp->d_flags & ~(DIR_REGION);
 	    }
 	    (void)bu_avs_remove(&avs, argv[i]);
@@ -7650,7 +7650,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 
 	/* avs is freed by db5_replace_attributes() */
 	return TCL_OK;
-    } else if (strcmp(argv[1], "append") == 0) {
+    } else if (BU_STR_EQUAL(argv[1], "append")) {
 	if ((argc-3)%2) {
 	    Tcl_AppendResult(interp,
 			     "Error: attribute names and values must be in pairs!!!\n",
@@ -7662,7 +7662,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	while (i < argc) {
 	    const char *old_val;
 
-	    if (strcmp(argv[i], "region") == 0 && strcmp(argv[i+1], "R") == 0) {
+	    if (BU_STR_EQUAL(argv[i], "region") && BU_STR_EQUAL(argv[i+1], "R")) {
 		dp->d_flags |= DIR_REGION;
 	    }
 	    old_val = bu_avs_get(&avs, argv[i]);
@@ -7690,7 +7690,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 
 	/* avs is freed by db5_replace_attributes() */
 	return TCL_OK;
-    } else if (strcmp(argv[1], "show") == 0) {
+    } else if (BU_STR_EQUAL(argv[1], "show")) {
 	struct bu_vls vls;
 	int max_attr_name_len=0;
 	int tabs1=0;

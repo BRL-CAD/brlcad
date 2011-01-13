@@ -277,7 +277,7 @@ f_press(ClientData clientData,
 	    bu_vls_free(&tmp_vls);
 	}
 
-	if (strcmp(str, "help") == 0) {
+	if (BU_STR_EQUAL(str, "help")) {
 	    struct bu_vls vls;
 
 	    bu_vls_init(&vls);

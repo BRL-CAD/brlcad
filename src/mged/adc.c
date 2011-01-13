@@ -481,7 +481,7 @@ f_adc (
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "-i") == 0) {
+    if (BU_STR_EQUAL(argv[1], "-i")) {
 	if (argc < 4) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "adc: -i option specified without an op-val pair");
@@ -505,7 +505,7 @@ f_adc (
     for (i = 0; i < argc; ++i)
 	user_pt[i] = atof(argp[i]);
 
-    if (strcmp(parameter, "draw") == 0) {
+    if (BU_STR_EQUAL(parameter, "draw")) {
 	if (argc == 0) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d", adc_state->adc_draw);
@@ -530,7 +530,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "a1") == 0) {
+    if (BU_STR_EQUAL(parameter, "a1")) {
 	if (argc == 0) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%.15e", adc_state->adc_a1);
@@ -556,7 +556,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "a2") == 0) {
+    if (BU_STR_EQUAL(parameter, "a2")) {
 	if (argc == 0) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%.15e", adc_state->adc_a2);
@@ -582,7 +582,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "dst") == 0) {
+    if (BU_STR_EQUAL(parameter, "dst")) {
 	if (argc == 0) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%.15e", adc_state->adc_dst * view_state->vs_gvp->gv_scale * base2local);
@@ -609,7 +609,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "odst") == 0) {
+    if (BU_STR_EQUAL(parameter, "odst")) {
 	if (argc == 0) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d", adc_state->adc_dv_dist);
@@ -635,7 +635,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "dh") == 0) {
+    if (BU_STR_EQUAL(parameter, "dh")) {
 	if (argc == 1) {
 	    if (!adc_state->adc_anchor_pos) {
 		adc_state->adc_pos_grid[X] += user_pt[0] / (view_state->vs_gvp->gv_scale * base2local);
@@ -652,7 +652,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "dv") == 0) {
+    if (BU_STR_EQUAL(parameter, "dv")) {
 	if (argc == 1) {
 	    if (!adc_state->adc_anchor_pos) {
 		adc_state->adc_pos_grid[Y] += user_pt[0] / (view_state->vs_gvp->gv_scale * base2local);
@@ -669,7 +669,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "hv") == 0) {
+    if (BU_STR_EQUAL(parameter, "hv")) {
 	if (argc == 0) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%.15e %.15e",
@@ -703,7 +703,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "dx") == 0) {
+    if (BU_STR_EQUAL(parameter, "dx")) {
 	if (argc == 1) {
 	    if (!adc_state->adc_anchor_pos) {
 		adc_state->adc_pos_model[X] += user_pt[0] * local2base;
@@ -720,7 +720,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "dy") == 0) {
+    if (BU_STR_EQUAL(parameter, "dy")) {
 	if (argc == 1) {
 	    if (!adc_state->adc_anchor_pos) {
 		adc_state->adc_pos_model[Y] += user_pt[0] * local2base;
@@ -737,7 +737,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "dz") == 0) {
+    if (BU_STR_EQUAL(parameter, "dz")) {
 	if (argc == 1) {
 	    if (!adc_state->adc_anchor_pos) {
 		adc_state->adc_pos_model[Z] += user_pt[0] * local2base;
@@ -754,7 +754,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "xyz") == 0) {
+    if (BU_STR_EQUAL(parameter, "xyz")) {
 	if (argc == 0) {
 	    VSCALE(scaled_pos, adc_state->adc_pos_model, base2local);
 
@@ -785,7 +785,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "x") == 0) {
+    if (BU_STR_EQUAL(parameter, "x")) {
 	if (argc == 0) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d", adc_state->adc_dv_x);
@@ -816,7 +816,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "y") == 0) {
+    if (BU_STR_EQUAL(parameter, "y")) {
 	if (argc == 0) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d", adc_state->adc_dv_y);
@@ -847,7 +847,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "anchor_pos") == 0) {
+    if (BU_STR_EQUAL(parameter, "anchor_pos")) {
 	if (argc == 0) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d", adc_state->adc_anchor_pos);
@@ -876,7 +876,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "anchor_a1") == 0) {
+    if (BU_STR_EQUAL(parameter, "anchor_a1")) {
 	if (argc == 0) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d", adc_state->adc_anchor_a1);
@@ -902,7 +902,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "anchorpoint_a1") == 0) {
+    if (BU_STR_EQUAL(parameter, "anchorpoint_a1")) {
 	if (argc == 0) {
 	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_a1, base2local);
 
@@ -931,7 +931,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "anchor_a2") == 0) {
+    if (BU_STR_EQUAL(parameter, "anchor_a2")) {
 	if (argc == 0) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d", adc_state->adc_anchor_a2);
@@ -957,7 +957,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "anchorpoint_a2") == 0) {
+    if (BU_STR_EQUAL(parameter, "anchorpoint_a2")) {
 	if (argc == 0) {
 	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_a2, base2local);
 
@@ -986,7 +986,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "anchor_dst") == 0) {
+    if (BU_STR_EQUAL(parameter, "anchor_dst")) {
 	if (argc == 0) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "%d", adc_state->adc_anchor_dst);
@@ -1012,7 +1012,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "anchorpoint_dst") == 0) {
+    if (BU_STR_EQUAL(parameter, "anchorpoint_dst")) {
 	if (argc == 0) {
 	    VSCALE(scaled_pos, adc_state->adc_anchor_pt_dst, base2local);
 
@@ -1041,7 +1041,7 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "reset") == 0) {
+    if (BU_STR_EQUAL(parameter, "reset")) {
 	if (argc == 0) {
 	    adc_reset();
 
@@ -1053,12 +1053,12 @@ f_adc (
 	return TCL_ERROR;
     }
 
-    if (strcmp(parameter, "vars") == 0) {
+    if (BU_STR_EQUAL(parameter, "vars")) {
 	adc_print_vars();
 	return TCL_OK;
     }
 
-    if (strcmp(parameter, "help") == 0) {
+    if (BU_STR_EQUAL(parameter, "help")) {
 	Tcl_AppendResult(interp, "Usage:\n", adc_syntax1, adc_syntax2, adc_syntax3, adc_syntax4, (char *)NULL);
 	return TCL_OK;
     }

@@ -663,7 +663,7 @@ cmd_output_hook(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc
 
     /* Also, don't allow silly infinite loops. */
 
-    if (strcmp(argv[1], argv[0]) == 0) {
+    if (BU_STR_EQUAL(argv[1], argv[0])) {
 	Tcl_AppendResult(interpreter, "Don't be silly.", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -702,7 +702,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "open") == 0) {
+    if (BU_STR_EQUAL(argv[1], "open")) {
 	struct cmd_list *clp;
 	int name_not_used = 1;
 
@@ -734,7 +734,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "close") == 0) {
+    if (BU_STR_EQUAL(argv[1], "close")) {
 	struct cmd_list *clp;
 
 	if (argc != 3) {
@@ -775,7 +775,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "get") == 0) {
+    if (BU_STR_EQUAL(argv[1], "get")) {
 	if (argc != 2) {
 	    bu_vls_printf(&vls, "helpdevel cmd_win");
 	    Tcl_Eval(interpreter, bu_vls_addr(&vls));
@@ -790,7 +790,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "set") == 0) {
+    if (BU_STR_EQUAL(argv[1], "set")) {
 	if (argc != 3) {
 	    bu_vls_printf(&vls, "helpdevel cmd_win");
 	    Tcl_Eval(interpreter, bu_vls_addr(&vls));

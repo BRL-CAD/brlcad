@@ -524,15 +524,15 @@ main(int argc, char **argv)
 		break;
 	    case 'f':
 		/* linmod */
-		if (strcmp(strarg, "solid") == 0) {
+		if (BU_STR_EQUAL(strarg, "solid")) {
 		    printf("NV ");
-		} else if (strcmp(strarg, "dotted") == 0) {
+		} else if (BU_STR_EQUAL(strarg, "dotted")) {
 		    printf("DV ");
-		} else if (strcmp(strarg, "longdashed") == 0) {
+		} else if (BU_STR_EQUAL(strarg, "longdashed")) {
 		    printf("LDV ");
-		} else if (strcmp(strarg, "shortdashed") == 0) {
+		} else if (BU_STR_EQUAL(strarg, "shortdashed")) {
 		    printf("SDV ");
-		} else if (strcmp(strarg, "dotdashed") == 0) {
+		} else if (BU_STR_EQUAL(strarg, "dotdashed")) {
 		    printf("DDV ");
 		} else {
 		    fprintf(stderr, "linmod %s unknown\n", strarg);

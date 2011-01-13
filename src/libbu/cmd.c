@@ -41,7 +41,7 @@ bu_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv, s
 
     for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
 	if (ctp->ct_name[0] == argv[cmd_index][0] &&
-	    strcmp(ctp->ct_name, argv[cmd_index]) == 0) {
+	    BU_STR_EQUAL(ctp->ct_name, argv[cmd_index])) {
 	    return (*ctp->ct_func)(clientData, interp, argc, argv);
 	}
     }

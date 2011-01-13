@@ -68,7 +68,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (strcmp(argv[1], "-s") == 0) {
+    if (BU_STR_EQUAL(argv[1], "-s")) {
 	--argc;
 	++argv;
 

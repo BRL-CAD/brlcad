@@ -59,7 +59,7 @@ main(int argc, char **argv)
     long r;
     size_t ret;
 
-    if (argc > 1 && strcmp(argv[1], "-v") == 0) {
+    if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
 	verbose++;
 	argc--;
 	argv++;

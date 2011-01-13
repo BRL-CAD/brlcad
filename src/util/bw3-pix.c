@@ -38,10 +38,10 @@ void
 open_file(FILE **fp, char *name)
 {
     /* check for special names */
-    if (strcmp(name, "-") == 0) {
+    if (BU_STR_EQUAL(name, "-")) {
 	*fp = stdin;
 	return;
-    } else if (strcmp(name, ".") == 0) {
+    } else if (BU_STR_EQUAL(name, ".")) {
 	*fp = fopen("/dev/null", "r");
 	return;
     }

@@ -691,7 +691,7 @@ txt_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, const
     if (bu_vls_strlen(&tp->tx_name)<=0) return -1;
     /*	!?! if (tp->tx_name[0] == '\0' )  return -1;	*/ /* FAIL, no file */
 
-    if (strcmp( mfp->mf_name, "bwtexture" ) == 0 ) pixelbytes = 1;
+    if (BU_STR_EQUAL( mfp->mf_name, "bwtexture" ) ) pixelbytes = 1;
 
     /* load the texture from its datasource */
     if (txt_load_datasource(tp, rtip->rti_dbip, tp->tx_w * tp->tx_n * pixelbytes)<0) {
