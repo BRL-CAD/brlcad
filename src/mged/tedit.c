@@ -978,15 +978,15 @@ get_editor_string(struct bu_vls *editstring)
 	    count += (BU_STR_EQUAL(editor, which) && (!editor_opt || editor_opt[0] == '\0'));
 	which = bu_which(VIM_EDITOR);
 	if (which)
-	    count += !(strcmp(editor, which));
+	    count += !strcmp(editor, which);
 	which = bu_which(VI_EDITOR);
 	if (which)
-	    count += !(strcmp(editor, which));
+	    count += !strcmp(editor, which);
 	which = bu_which(ED_EDITOR);
 	if (which)
-	    count += !(strcmp(editor, which));
-	count += !(strcmp(editor, JOVE_EDITOR));
-	count += !(!(!(strcmp(editor, MAC_EDITOR))));
+	    count += !strcmp(editor, which);
+	count += !strcmp(editor, JOVE_EDITOR);
+	count += !strcmp(editor, MAC_EDITOR);
 	if (count > 0) {
 	    /* start with emacs... */ 
 	    editor = bu_which(EMACS_EDITOR);
