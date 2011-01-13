@@ -155,7 +155,9 @@
 
     # Create new slave interp
     interp delete $slaveInterp
-    set slaveInterp [interp create]
+    if { [catch {set slaveInterp [interp create]} err] } {
+	error "Unable to reinitalize a slave interpreter"
+    }
 
     # Create slave interp's aliases
     foreach cmd $cmdlist {
@@ -193,7 +195,7 @@
     eval itk_initialize $args
 
     # thar be dragons here
-    if { [catch {set slaveInterp [interp create]} error] } {
+    if { [catch {set slaveInterp [interp create]} err] } {
 	error "Unable to initalize a slave interpreter"
     }
 
