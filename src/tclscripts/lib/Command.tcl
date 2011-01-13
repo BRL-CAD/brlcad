@@ -192,7 +192,10 @@
 ::itcl::body Command::constructor {args} {
     eval itk_initialize $args
 
-    set slaveInterp [interp create]
+    # thar be dragons here
+    if { [catch {set slaveInterp [interp create]} error] } {
+	error "Unable to initalize a slave interpreter"
+    }
 
     doBindings
 
