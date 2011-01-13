@@ -137,7 +137,7 @@ get_args(int argc, char **argv)
 	    perror("scanf");
 
 	printf("Scan line length of input file ");
-	scanf("%d", &linelen);
+	ret = scanf("%d", &linelen);
 	if (ret != 1)
 	    perror("scanf");
     }
