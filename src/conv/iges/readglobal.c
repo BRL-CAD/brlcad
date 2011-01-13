@@ -30,6 +30,8 @@ fastf_t cnv[]={
 
 /* IGES Version */
 #define NO_OF_VERSIONS 10
+#define COMMA ','
+
 char *iges_version[NO_OF_VERSIONS]={
     " ",
     "1.0",
@@ -43,8 +45,7 @@ char *iges_version[NO_OF_VERSIONS]={
     "5.1" };
 
 void
-Readglobal(file_count)
-    int file_count;
+Readglobal(int file_count)
 {
 
     int field=2, i;
@@ -53,7 +54,7 @@ Readglobal(file_count)
 
 
     /* Get End-of-field delimiter */
-    if (card[counter] != ', ') {
+    if (card[counter] != COMMA) {
 	counter--;
 	while (card[++counter] == ' ');
 	if (card[counter] != '1' || card[counter+1] != 'H') {
@@ -67,7 +68,7 @@ Readglobal(file_count)
 	eof = card[++counter];
 	while (card[++counter] != eof);
     } else
-	eof = ', ';
+	eof = COMMA;
 
 
     /* Get End-of-record delimiter */
