@@ -255,7 +255,7 @@ ged_erasePathFromDisplay(struct ged *gedp,
     while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	if (!strcmp(path, bu_vls_addr(&gdlp->gdl_path))) {
+	if (BU_STR_EQUAL(path, bu_vls_addr(&gdlp->gdl_path))) {
 	    /* Free up the solids list associated with this display list */
 	    while (BU_LIST_WHILE(sp, solid, &gdlp->gdl_headSolid)) {
 		dp = FIRST_SOLID(sp);

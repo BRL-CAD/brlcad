@@ -1318,7 +1318,7 @@ ged_addToDisplay(struct ged *gedp,
     /* Make sure name is not already in the list */
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
-	if (!strcmp(name, bu_vls_addr(&gdlp->gdl_path)))
+	if (BU_STR_EQUAL(name, bu_vls_addr(&gdlp->gdl_path)))
 	    goto end;
 
 	/*

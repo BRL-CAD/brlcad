@@ -715,7 +715,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 
 	/* Search to see if there exists a command window with this name */
 	for (BU_LIST_FOR (clp, cmd_list, &head_cmd_list.l))
-	    if (!strcmp(argv[2], bu_vls_addr(&clp->cl_name))) {
+	    if (BU_STR_EQUAL(argv[2], bu_vls_addr(&clp->cl_name))) {
 		name_not_used = 0;
 		break;
 	    }
@@ -748,7 +748,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	 * the name in argv[2].
 	 */
 	for (BU_LIST_FOR (clp, cmd_list, &head_cmd_list.l))
-	    if (!strcmp(argv[2], bu_vls_addr(&clp->cl_name)))
+	    if (BU_STR_EQUAL(argv[2], bu_vls_addr(&clp->cl_name)))
 		break;
 
 	if (clp == &head_cmd_list) {
@@ -1464,7 +1464,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     }
 
     for (BU_LIST_FOR (clp, cmd_list, &head_cmd_list.l))
-	if (!strcmp(bu_vls_addr(&clp->cl_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&clp->cl_name), argv[1]))
 	    break;
 
     if (clp == &head_cmd_list &&
@@ -1660,7 +1660,7 @@ f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 
     /* change primary focus to window argv[1] */
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	if (!strcmp(argv[1], bu_vls_addr(&p->dml_dmp->dm_pathName))) {
+	if (BU_STR_EQUAL(argv[1], bu_vls_addr(&p->dml_dmp->dm_pathName))) {
 	    curr_dm_list = p;
 
 	    if (curr_dm_list->dml_tie)

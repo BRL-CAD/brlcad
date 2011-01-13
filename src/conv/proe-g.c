@@ -142,8 +142,8 @@ Build_unique_name(char *name)
     bu_vls_strcpy(&ret_name, name);
     ptr = name_root;
     while (ptr) {
-	if (!strcmp(bu_vls_addr(&ret_name), ptr->brlcad_name) ||
-	    (ptr->solid_name && !strcmp(bu_vls_addr(&ret_name), ptr->solid_name))) {
+	if (BU_STR_EQUAL(bu_vls_addr(&ret_name), ptr->brlcad_name) ||
+	    (ptr->solid_name && BU_STR_EQUAL(bu_vls_addr(&ret_name), ptr->solid_name))) {
 	    /* this name already exists, build a new one */
 	    ++tries;
 	    bu_vls_trunc(&ret_name, name_len);

@@ -228,7 +228,7 @@ main(int argc, char **argv)
 
 		/* check the list to see if this name is already there */
 		for (i=0; i<BU_PTBL_END(&names); i++) {
-		    if (!strcmp((char *)BU_PTBL_GET(&names, i), name)) {
+		    if (BU_STR_EQUAL((char *)BU_PTBL_GET(&names, i), name)) {
 			/* found it, so go back and read the next line */
 			found = 1;
 			break;

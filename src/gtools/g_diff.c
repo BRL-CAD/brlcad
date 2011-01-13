@@ -357,7 +357,7 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 		fprintf(stderr, "%s\n", Tcl_GetStringResult(interp));
 		bu_exit (1, NULL);
 	    }
-	    if (!strcmp(Tcl_GetStringFromObj(key1, &junk), Tcl_GetStringFromObj(key2, &junk))) {
+	    if (BU_STR_EQUAL(Tcl_GetStringFromObj(key1, &junk), Tcl_GetStringFromObj(key2, &junk))) {
 
 		found = 1;
 		if (Tcl_ListObjIndex(interp, obj2, j+1, &val2) == TCL_ERROR) {
@@ -466,7 +466,7 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 		fprintf(stderr, "%s\n", Tcl_GetStringResult(interp));
 		bu_exit (1, NULL);
 	    }
-	    if (!strcmp(Tcl_GetStringFromObj(key1, &junk), Tcl_GetStringFromObj(key2, &junk))) {
+	    if (BU_STR_EQUAL(Tcl_GetStringFromObj(key1, &junk), Tcl_GetStringFromObj(key2, &junk))) {
 		found = 1;
 		break;
 	    }
@@ -576,7 +576,7 @@ compare_tcl_combs(Tcl_Obj *obj1, struct directory *dp1, Tcl_Obj *obj2)
     bu_vls_init(&adjust);
 
     /* first check if there is any difference */
-    if (!strcmp(Tcl_GetStringFromObj(obj1, &junk), Tcl_GetStringFromObj(obj2, &junk)))
+    if (BU_STR_EQUAL(Tcl_GetStringFromObj(obj1, &junk), Tcl_GetStringFromObj(obj2, &junk)))
 	return 0;
 
     if (mode != HUMAN) {

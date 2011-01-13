@@ -400,7 +400,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	    /* look for system name in existing list */
 	    new_sys = (struct muves_sys *)NULL;
 	    for (BU_LIST_FOR(sys, muves_sys, &muves_sys_head.l)) {
-		if (!strcmp(&line[i], sys->muves_name)) {
+		if (BU_STR_EQUAL(&line[i], sys->muves_name)) {
 		    /* found system already existing */
 		    new_sys = sys;
 		    break;

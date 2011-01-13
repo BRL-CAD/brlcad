@@ -236,7 +236,7 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB( comb );
 
-    if ( !strcmp( bu_vls_addr( &comb->shader ), "light" ) )
+    if ( BU_STR_EQUAL( bu_vls_addr( &comb->shader ), "light" ) )
     {
 	rt_db_free_internal(&intern);
 	return 0;

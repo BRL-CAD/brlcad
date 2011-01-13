@@ -527,8 +527,8 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 
 	/* region flag */
 	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "region"));
-	if (!strcmp(bu_vls_addr(&newval), "Yes") || !strcmp(bu_vls_addr(&newval), "R") || !strcmp(bu_vls_addr(&newval), "1") ||
-	    !strcmp(bu_vls_addr(&newval), "Y") || !strcmp(bu_vls_addr(&newval), "y")) {
+	if (BU_STR_EQUAL(bu_vls_addr(&newval), "Yes") || BU_STR_EQUAL(bu_vls_addr(&newval), "R") || BU_STR_EQUAL(bu_vls_addr(&newval), "1") ||
+	    BU_STR_EQUAL(bu_vls_addr(&newval), "Y") || BU_STR_EQUAL(bu_vls_addr(&newval), "y")) {
 	    comb->region_flag = 1;
 	    dp->d_flags |= DIR_REGION;
 	} else {
@@ -589,8 +589,8 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 
 	/* inherit */
 	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "inherit"));
-	if (!strcmp(bu_vls_addr(&newval), "Yes") || !strcmp(bu_vls_addr(&newval), "1") ||
-	    !strcmp(bu_vls_addr(&newval), "Y") || !strcmp(bu_vls_addr(&newval), "y")) {
+	if (BU_STR_EQUAL(bu_vls_addr(&newval), "Yes") || BU_STR_EQUAL(bu_vls_addr(&newval), "1") ||
+	    BU_STR_EQUAL(bu_vls_addr(&newval), "Y") || BU_STR_EQUAL(bu_vls_addr(&newval), "y")) {
 	    comb->inherit = 1;
 	} else {
 	    comb->inherit = 0;

@@ -614,7 +614,7 @@ cmd_openpl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **a
 	/* check for existing objects with same name as argv[i] */
 	for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
 	    /* found object with same name */
-	    if (!strcmp(bu_vls_addr(&plp->pl_name), bnp)) {
+	    if (BU_STR_EQUAL(bu_vls_addr(&plp->pl_name), bnp)) {
 		rt_vlblock_free(plp->pl_vbp);
 		goto up_to_vl;
 	    }
@@ -743,7 +743,7 @@ cmd_closepl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **
 
     for (i=1; i < argc; ++i) {
 	for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
-	    if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))) {
+	    if (BU_STR_EQUAL(argv[i], bu_vls_addr(&plp->pl_name))) {
 		BU_LIST_DEQUEUE(&plp->l);
 		bu_vls_free(&plp->pl_name);
 		rt_vlblock_free(plp->pl_vbp);
@@ -779,7 +779,7 @@ cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **arg
 
     for (i=1; i < argc; ++i) {
 	for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
-	    if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))) {
+	    if (BU_STR_EQUAL(argv[i], bu_vls_addr(&plp->pl_name))) {
 		plp->pl_draw = 1;
 		break;
 	    }
@@ -812,7 +812,7 @@ cmd_erase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **ar
 
     for (i=1; i < argc; ++i) {
 	for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
-	    if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))) {
+	    if (BU_STR_EQUAL(argv[i], bu_vls_addr(&plp->pl_name))) {
 		plp->pl_draw = 0;
 		break;
 	    }
