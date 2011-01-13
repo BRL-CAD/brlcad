@@ -3,10 +3,7 @@
 MACRO(pkgIndex_BUILD name srcdir targetdir)
 	ADD_CUSTOM_COMMAND(
 		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl
-		COMMAND ${CMAKE_COMMAND} -E remove ${srcdir}/pkgIndex.tcl
-		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ampi.tcl ${srcdir}
-	   COMMAND ${CMAKE_COMMAND} -E copy ${srcdir}/pkgIndex.tcl ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl
-		COMMAND ${CMAKE_COMMAND} -E remove ${srcdir}/pkgIndex.tcl
+		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ampi.tcl ${CMAKE_CURRENT_BINARY_DIR}
 		DEPENDS btclsh
 		)
 	ADD_CUSTOM_TARGET(${name}_pkgIndex.tcl ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl)
@@ -16,10 +13,7 @@ ENDMACRO(pkgIndex_BUILD name srcdir targetdir)
 MACRO(tclIndex_BUILD name srcdir targetdir)
 	ADD_CUSTOM_COMMAND(
 		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tclIndex
-		COMMAND ${CMAKE_COMMAND} -E remove ${srcdir}/tclIndex
-		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ami.tcl ${srcdir} 
-		COMMAND ${CMAKE_COMMAND} -E copy ${srcdir}/tclIndex ${CMAKE_CURRENT_BINARY_DIR}/tclIndex
-		COMMAND ${CMAKE_COMMAND} -E remove ${srcdir}/tclIndex
+		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ami.tcl ${CMAKE_CURRENT_BINARY_DIR} 
 		DEPENDS btclsh
 		)
 	ADD_CUSTOM_TARGET(${name}_tclIndex ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tclIndex)
@@ -57,13 +51,8 @@ SET(toplevel_TCLSCRIPTS
 	mouse.tcl 
 	vmath.tcl
 )
+FILE(COPY ${toplevel_TCLSCRIPTS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 INSTALL(FILES ${toplevel_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts)
 
 pkgIndex_BUILD(tclscripts ${CMAKE_CURRENT_SOURCE_DIR} tclscripts)
 tclIndex_BUILD(tclscripts ${CMAKE_CURRENT_SOURCE_DIR} tclscripts)
-
-SET(toplevel_TCLSCRIPT_FILES
-	${CMAKE_CURRENT_SOURCE_DIR}/pkgIndex.tcl
-	${CMAKE_CURRENT_SOURCE_DIR}/tclIndex
-)
-SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${toplevel_TCLSCRIPT_FILES}")
