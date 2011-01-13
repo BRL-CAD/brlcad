@@ -50,7 +50,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
 
     switch (argc) {
 	case 2:
-	    if (strcmp(argv[1], "-s") != 0)
+	    if (!BU_STR_EQUAL(argv[1], "-s"))
 		break;
 	    else {
 		i = 0;

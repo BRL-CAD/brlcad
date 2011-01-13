@@ -293,7 +293,7 @@ f_press(ClientData clientData,
 
 	/* Process the button function requested. */
 	for (bp = button_table; bp->bu_code >= 0; bp++) {
-	    if (strcmp(str, bp->bu_name) != 0)
+	    if (!BU_STR_EQUAL(str, bp->bu_name))
 		continue;
 
 	    (void)bp->bu_func(clientData, interp, 2, argv+1);
@@ -305,7 +305,7 @@ f_press(ClientData clientData,
 	    for (item=0, mptr = *m;
 		 mptr->menu_string[0] != '\0';
 		 mptr++, item++) {
-		if (strcmp(str, mptr->menu_string) != 0)
+		if (!BU_STR_EQUAL(str, mptr->menu_string))
 		    continue;
 
 		menu_state->ms_cur_item = item;

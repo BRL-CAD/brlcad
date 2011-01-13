@@ -3429,7 +3429,7 @@ findjoint(const struct db_full_path *pathp)
 	    if (jp->path.arc_last+i >= pathp->fp_len) break;
 	    for (j=0; j<=(size_t)jp->path.arc_last;j++) {
 		if ((*pathp->fp_names[i+j]->d_namep != *jp->path.arc[j]) ||
-		    (strcmp(pathp->fp_names[i+j]->d_namep, jp->path.arc[j]) !=0)) {
+		    (!BU_STR_EQUAL(pathp->fp_names[i+j]->d_namep, jp->path.arc[j]))) {
 		    good=0;
 		    break;
 		}

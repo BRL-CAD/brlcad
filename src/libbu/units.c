@@ -201,7 +201,7 @@ bu_units_conversion(const char *str)
     for (cvtab=unit_lists; cvtab->cvttab; cvtab++) {
 	for (tp=cvtab->cvttab; tp->name[0]; tp++) {
 	    if (ubuf[0] != tp->name[0])  continue;
-	    if (strcmp(ubuf, tp->name) != 0)  continue;
+	    if (!BU_STR_EQUAL(ubuf, tp->name))  continue;
 	    return tp->val;
 	}
     }

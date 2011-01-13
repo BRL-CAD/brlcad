@@ -575,7 +575,7 @@ idendump(void)	/* Print out Ident record information */
 	);
 
     /* Print a warning message on stderr if versions differ */
-    if ( strcmp( record.i.i_version, ID_VERSION ) != 0 )  {
+    if ( !BU_STR_EQUAL( record.i.i_version, ID_VERSION ) )  {
 	(void)fprintf(stderr,
 		      "g2asc: File is version (%s), Program is version (%s)\n",
 		      record.i.i_version, ID_VERSION );

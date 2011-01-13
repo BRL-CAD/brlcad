@@ -124,7 +124,7 @@ host_lookup_by_hostent(const struct hostent * addr, int enter)
     for ( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
 	CK_IHOST(ihp);
 
-	if ( strcmp( ihp->ht_name, addr->h_name ) != 0 )
+	if ( !BU_STR_EQUAL( ihp->ht_name, addr->h_name ) )
 	    continue;
 	return ihp;
     }

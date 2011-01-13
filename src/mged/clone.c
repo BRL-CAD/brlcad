@@ -952,7 +952,7 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     /* Read in knots from specified file *************/
     do
 	bu_fgets(line, 81, points);
-    while (strcmp(strtok(line, ","), "112") != 0);
+    while (!BU_STR_EQUAL(strtok(line, ","), "112"));
 
     bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
     bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));

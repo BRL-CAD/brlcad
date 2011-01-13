@@ -146,7 +146,7 @@ GetArgs(int argc, const char *argv[])	/* process command arguments */
 		}
 		iflag = 1;
 
-		if (strcmp(bu_optarg, "-") != 0 && freopen(bu_optarg, "r", stdin) == NULL) {
+		if (!BU_STR_EQUAL(bu_optarg, "-") && freopen(bu_optarg, "r", stdin) == NULL) {
 		    fprintf(stderr, "can't open \"%s\"", bu_optarg);
 		    return 1;
 		}
@@ -159,7 +159,7 @@ GetArgs(int argc, const char *argv[])	/* process command arguments */
 		}
 		oflag = 1;
 
-		if (strcmp(bu_optarg, "-") != 0 && freopen(bu_optarg, "w", stdout) == NULL) {
+		if (!BU_STR_EQUAL(bu_optarg, "-") && freopen(bu_optarg, "w", stdout) == NULL) {
 		    fprintf(stderr, "can't create \"%s\"", bu_optarg);
 		    return 1;
 		}

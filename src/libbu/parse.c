@@ -614,7 +614,7 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 
     for (; sdp->sp_name != (char *)0; sdp++) {
 
-	if (strcmp(sdp->sp_name, name) != 0	/* no name match */
+	if (!BU_STR_EQUAL(sdp->sp_name, name)	/* no name match */
 	    && sdp->sp_fmt[0] != 'i'
 	    && sdp->sp_fmt[1] != 'p')		/* no include desc */
 
@@ -2225,7 +2225,7 @@ bu_structparse_argv(struct bu_vls *logstr,
     while (argc > 0) {
 	/* Find the attribute which matches this argument. */
 	for (sdp = desc; sdp->sp_name != NULL; sdp++) {
-	    if (strcmp(sdp->sp_name, *argv) != 0)
+	    if (!BU_STR_EQUAL(sdp->sp_name, *argv))
 		continue;
 
 	    /* if we get this far, we've got a name match

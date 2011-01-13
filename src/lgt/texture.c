@@ -216,7 +216,7 @@ icon_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
     char				*file = entry->name + TEX_KEYLEN;
     bu_semaphore_acquire( RT_SEM_RESULTS );
     for (	iconp = icons;
-		iconp != NULL && strcmp( iconp->filenm, file ) != 0;
+		iconp != NULL && !BU_STR_EQUAL( iconp->filenm, file );
 		iconp = iconp->next )
 	;
     if ( iconp == NULL )
@@ -253,7 +253,7 @@ fb_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
     char				*file = entry->name + TEX_KEYLEN;
     bu_semaphore_acquire( RT_SEM_RESULTS );
     for (	fbp = fbs;
-		fbp != NULL && strcmp( fbp->filenm, file ) != 0;
+		fbp != NULL && !BU_STR_EQUAL( fbp->filenm, file );
 		fbp = fbp->next )
 	;
     if ( fbp == NULL )

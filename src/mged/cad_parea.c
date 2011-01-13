@@ -109,7 +109,7 @@ GetArgs(int argc, const char *argv[])			/* process command arguments */
 		}
 		iflag = 1;
 
-		if (strcmp(bu_optarg, "-") != 0
+		if (!BU_STR_EQUAL(bu_optarg, "-")
 		    && freopen(bu_optarg, "r", stdin) == NULL
 		    ) {
 		    (void)printf("cad_parea: can't open \"%s\"\n", bu_optarg);
@@ -124,7 +124,7 @@ GetArgs(int argc, const char *argv[])			/* process command arguments */
 		}
 		oflag = 1;
 
-		if (strcmp(bu_optarg, "-") != 0
+		if (!BU_STR_EQUAL(bu_optarg, "-")
 		    && freopen(bu_optarg, "w", stdout) == NULL
 		    ) {
 		    (void)printf("cad_parea: can't create \"%s\"\n", bu_optarg);

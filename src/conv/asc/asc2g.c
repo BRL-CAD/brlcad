@@ -990,7 +990,7 @@ identbld(void)
     }
     *np = '\0';
 
-    if (strcmp(version, ID_VERSION) != 0) {
+    if (!BU_STR_EQUAL(version, ID_VERSION)) {
 	bu_log("WARNING:  input file version (%s) is not %s\n",
 	       version, ID_VERSION);
     }

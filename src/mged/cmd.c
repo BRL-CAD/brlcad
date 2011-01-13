@@ -1207,7 +1207,7 @@ mged_cmd(
 	functions = in_functions;
 
     for (ftp = &functions[1]; ftp->ft_name; ftp++) {
-	if (strcmp(ftp->ft_name, argv[0]) != 0)
+	if (!BU_STR_EQUAL(ftp->ft_name, argv[0]))
 	    continue;
 	/* We have a match */
 	if ((ftp->ft_min <= argc) && (ftp->ft_max < 0 || argc <= ftp->ft_max)) {
@@ -1324,7 +1324,7 @@ helpcomm(int argc, const char *argv[], struct funtab *functions)
     /* Help command(s) */
     for (i=1; i<argc; i++) {
 	for (ftp = functions+1; ftp->ft_name; ftp++) {
-	    if (strcmp(ftp->ft_name, argv[i]) != 0)
+	    if (!BU_STR_EQUAL(ftp->ft_name, argv[i]))
 		continue;
 
 	    Tcl_AppendResult(INTERP, "Usage: ", functions->ft_name, ftp->ft_name,

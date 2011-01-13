@@ -2204,7 +2204,7 @@ ph_version(struct pkg_conn *pc, char *buf)
     struct servers	*sp;
 
     sp = &servers[pc->pkc_fd];
-    if ( strcmp( PROTOCOL_VERSION, buf ) != 0 )  {
+    if ( !BU_STR_EQUAL( PROTOCOL_VERSION, buf ) )  {
 	bu_log("ERROR %s: protocol version mis-match\n",
 	       sp->sr_host->ht_name);
 	bu_log("  local='%s'\n", PROTOCOL_VERSION );
@@ -3826,7 +3826,7 @@ cd_EOFrame(int argc, char **argv)
 	frame_script = (char *)0;
     }
 
-    if (strcmp(argv[1], "off") != 0 ) {
+    if (!BU_STR_EQUAL(argv[1], "off") ) {
 	frame_script = bu_strdup(argv[1]);
     }
     return 0;

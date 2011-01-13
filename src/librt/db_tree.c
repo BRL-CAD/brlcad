@@ -424,7 +424,7 @@ db_apply_state_from_one_member(
     switch (tp->tr_op) {
 
 	case OP_DB_LEAF:
-	    if (strcmp(cp, tp->tr_l.tl_name) != 0)
+	    if (!BU_STR_EQUAL(cp, tp->tr_l.tl_name))
 		return 0;		/* NO-OP */
 	    tsp->ts_sofar |= sofar;
 	    if (db_apply_state_from_memb(tsp, pathp, tp) < 0)

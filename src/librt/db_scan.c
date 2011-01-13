@@ -117,7 +117,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 	nrec++;
 	switch ( record.u_id )  {
 	    case ID_IDENT:
-		if ( strcmp( record.i.i_version, ID_VERSION) != 0 )  {
+		if ( !BU_STR_EQUAL( record.i.i_version, ID_VERSION) )  {
 		    bu_log("db_scan WARNING: File is Version %s, Program is version %s\n",
 			   record.i.i_version, ID_VERSION );
 		}

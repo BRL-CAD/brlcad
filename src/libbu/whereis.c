@@ -69,7 +69,7 @@ bu_whereis(const char *cmd)
 
     /* check for full/relative path match */
     bu_strlcpy(bu_whereis_result, cmd, MAXPATHLEN);
-    if (strcmp(bu_whereis_result, cmd) != 0) {
+    if (!BU_STR_EQUAL(bu_whereis_result, cmd)) {
 	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("command [%s] is too long\n", cmd);
 	}
