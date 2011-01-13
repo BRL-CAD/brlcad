@@ -972,7 +972,6 @@ main(int argc, char **argv)
     Tcl_FindExecutable(argv[0]);
     interp = Tcl_CreateInterp();
     tclcad_auto_path(interp);
-    tclcad_tcl_library(interp);
 
     if (Tcl_Init(interp) == TCL_ERROR) {
 	bu_log("Tcl_Init failure:\n%s\n", Tcl_GetStringResult(interp));
