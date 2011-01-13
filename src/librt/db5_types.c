@@ -209,7 +209,7 @@ db5_type_codes_from_tag(int *major, int *minor, const char *tag)
     for (tp = (struct db5_type *) type_table;
 	 tp->major_code != DB5_MAJORTYPE_RESERVED;
 	 ++tp) {
-	if ((*(tp->tag) == *tag) && (strcmp(tp->tag, tag) == 0)) {
+	if ((*(tp->tag) == *tag) && (BU_STR_EQUAL(tp->tag, tag))) {
 	    *major = tp->major_code;
 	    *minor = tp->minor_code;
 	    return 0;
@@ -228,7 +228,7 @@ db5_type_codes_from_descrip(int *major, int *minor, const char *descrip)
 	 tp->major_code != DB5_MAJORTYPE_RESERVED;
 	 ++tp) {
 	if ((*(tp->description) == *descrip)
-	    && (strcmp(tp->description, descrip) == 0)) {
+	    && (BU_STR_EQUAL(tp->description, descrip))) {
 	    *major = tp->major_code;
 	    *minor = tp->minor_code;
 	    return 0;
@@ -303,7 +303,7 @@ db5_is_standard_attribute(const char *attrname)
     standard_attributes[7] = "inherit";
 
     for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
-	if (strcmp(attrname, standard_attributes[i]) == 0) return 1;
+	if (BU_STR_EQUAL(attrname, standard_attributes[i])) return 1;
     }
 
     return 0;
@@ -357,35 +357,35 @@ db5_standardize_attribute(const char *attrname)
     inherit_names[1] = "INHERIT";
 
     for (i = 0; i < sizeof(region_flag_names)/sizeof(char *); i++) {
-	if (strcmp(attrname, region_flag_names[i]) == 0) return ATTR_REGION;
+	if (BU_STR_EQUAL(attrname, region_flag_names[i])) return ATTR_REGION;
     }
 
     for (i = 0; i < sizeof(region_id_names)/sizeof(char *); i++) {
-	if (strcmp(attrname, region_id_names[i]) == 0) return ATTR_REGION_ID;
+	if (BU_STR_EQUAL(attrname, region_id_names[i])) return ATTR_REGION_ID;
     }
 
     for (i = 0; i < sizeof(material_id_names)/sizeof(char *); i++) {
-	if (strcmp(attrname, material_id_names[i]) == 0) return ATTR_MATERIAL_ID;
+	if (BU_STR_EQUAL(attrname, material_id_names[i])) return ATTR_MATERIAL_ID;
     }
 
     for (i = 0; i < sizeof(air_names)/sizeof(char *); i++) {
-	if (strcmp(attrname, air_names[i]) == 0) return ATTR_AIR;
+	if (BU_STR_EQUAL(attrname, air_names[i])) return ATTR_AIR;
     }
 
     for (i = 0; i < sizeof(los_names)/sizeof(char *); i++) {
-	if (strcmp(attrname, los_names[i]) == 0) return ATTR_LOS;
+	if (BU_STR_EQUAL(attrname, los_names[i])) return ATTR_LOS;
     }
 
     for (i = 0; i < sizeof(color_names)/sizeof(char *); i++) {
-	if (strcmp(attrname, color_names[i]) == 0) return ATTR_COLOR;
+	if (BU_STR_EQUAL(attrname, color_names[i])) return ATTR_COLOR;
     }
 
     for (i = 0; i < sizeof(shader_names)/sizeof(char *); i++) {
-	if (strcmp(attrname, shader_names[i]) == 0) return ATTR_SHADER;
+	if (BU_STR_EQUAL(attrname, shader_names[i])) return ATTR_SHADER;
     }
 
     for (i = 0; i < sizeof(inherit_names)/sizeof(char *); i++) {
-	if (strcmp(attrname, inherit_names[i]) == 0) return ATTR_INHERIT;
+	if (BU_STR_EQUAL(attrname, inherit_names[i])) return ATTR_INHERIT;
     }
 
     return -1;
@@ -416,14 +416,14 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 	has_standard[i] = 0;
     }
     for (i=0; i < avs->count; i++, avpp++) {
-	if (!strcmp(avpp->name, "region")) has_standard[ATTR_REGION] = 1;
-	if (!strcmp(avpp->name, "region_id")) has_standard[ATTR_REGION_ID] = 1;
-	if (!strcmp(avpp->name, "material_id")) has_standard[ATTR_MATERIAL_ID] = 1;
-	if (!strcmp(avpp->name, "air")) has_standard[ATTR_AIR] = 1;
-	if (!strcmp(avpp->name, "los")) has_standard[ATTR_LOS] = 1;
-	if (!strcmp(avpp->name, "color")) has_standard[ATTR_COLOR] = 1;
-	if (!strcmp(avpp->name, "oshader")) has_standard[ATTR_SHADER] = 1;
-	if (!strcmp(avpp->name, "inherit")) has_standard[ATTR_INHERIT] = 1;
+	if (BU_STR_EQUAL(avpp->name, "region")) has_standard[ATTR_REGION] = 1;
+	if (BU_STR_EQUAL(avpp->name, "region_id")) has_standard[ATTR_REGION_ID] = 1;
+	if (BU_STR_EQUAL(avpp->name, "material_id")) has_standard[ATTR_MATERIAL_ID] = 1;
+	if (BU_STR_EQUAL(avpp->name, "air")) has_standard[ATTR_AIR] = 1;
+	if (BU_STR_EQUAL(avpp->name, "los")) has_standard[ATTR_LOS] = 1;
+	if (BU_STR_EQUAL(avpp->name, "color")) has_standard[ATTR_COLOR] = 1;
+	if (BU_STR_EQUAL(avpp->name, "oshader")) has_standard[ATTR_SHADER] = 1;
+	if (BU_STR_EQUAL(avpp->name, "inherit")) has_standard[ATTR_INHERIT] = 1;
     }
 
     avpp = avs->avp;
@@ -434,8 +434,8 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 		    /* In the case of regions, values like Yes and 1 are causing trouble
 		     * somewhere in the code.  Do "R" for all affirmative cases and
 		     * strip any non-affirmative cases out of the avs */
-		    if (!strcmp(avpp->value, "Yes") || !strcmp(avpp->value, "R") || !strcmp(avpp->value, "1") ||
-			!strcmp(avpp->value, "Y") || !strcmp(avpp->value, "y")) {
+		    if (BU_STR_EQUAL(avpp->value, "Yes") || BU_STR_EQUAL(avpp->value, "R") || BU_STR_EQUAL(avpp->value, "1") ||
+			BU_STR_EQUAL(avpp->value, "Y") || BU_STR_EQUAL(avpp->value, "y")) {
 			(void)bu_avs_add(&avstmp, "region", "R");
 			has_standard[ATTR_REGION] = 1;
 		    }
@@ -527,8 +527,8 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 
 	/* region flag */
 	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "region"));
-	if (!strcmp(bu_vls_addr(&newval), "Yes") || !strcmp(bu_vls_addr(&newval), "R") || !strcmp(bu_vls_addr(&newval), "1") ||
-	    !strcmp(bu_vls_addr(&newval), "Y") || !strcmp(bu_vls_addr(&newval), "y")) {
+	if (BU_STR_EQUAL(bu_vls_addr(&newval), "Yes") || BU_STR_EQUAL(bu_vls_addr(&newval), "R") || BU_STR_EQUAL(bu_vls_addr(&newval), "1") ||
+	    BU_STR_EQUAL(bu_vls_addr(&newval), "Y") || BU_STR_EQUAL(bu_vls_addr(&newval), "y")) {
 	    comb->region_flag = 1;
 	    dp->d_flags |= DIR_REGION;
 	} else {
@@ -589,8 +589,8 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 
 	/* inherit */
 	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "inherit"));
-	if (!strcmp(bu_vls_addr(&newval), "Yes") || !strcmp(bu_vls_addr(&newval), "1") ||
-	    !strcmp(bu_vls_addr(&newval), "Y") || !strcmp(bu_vls_addr(&newval), "y")) {
+	if (BU_STR_EQUAL(bu_vls_addr(&newval), "Yes") || BU_STR_EQUAL(bu_vls_addr(&newval), "1") ||
+	    BU_STR_EQUAL(bu_vls_addr(&newval), "Y") || BU_STR_EQUAL(bu_vls_addr(&newval), "y")) {
 	    comb->inherit = 1;
 	} else {
 	    comb->inherit = 0;
@@ -647,7 +647,7 @@ db5_update_std_attributes(struct db_i *dbip, struct directory *dp, const struct 
 	    bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
 	    (void)bu_avs_add_vls(&avs, "color", &newval);
 	}
-	if (strcmp(bu_vls_addr(&comb->shader), "")) {
+	if (!BU_STR_EQUAL(bu_vls_addr(&comb->shader), "")) {
 	    bu_vls_sprintf(&newval, "%s", bu_vls_addr(&comb->shader));
 	    (void)bu_avs_add_vls(&avs, "oshader", &newval);
 	} else {

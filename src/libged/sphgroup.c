@@ -76,7 +76,7 @@ ged_sphgroup(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; i < RT_DBNHASH; i++)
 	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
 	   if (dp->d_nref == 0 && !(dp->d_flags & DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) continue;
-	   if (!(strcmp(dp->d_namep, sphdp->d_namep))) continue;
+	   if (BU_STR_EQUAL(dp->d_namep, sphdp->d_namep)) continue;
 	   if (!(dp->d_flags & DIR_REGION)) continue;
 	   inside_flag = 0;
 	   if (_ged_get_obj_bounds(gedp, 1, (const char **)&(dp->d_namep), 0, obj_min, obj_max) != GED_ERROR) {

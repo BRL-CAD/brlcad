@@ -2084,6 +2084,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		point_t prev;
 
 		brep_hit &out = *i;
+		VMOVE(prev, out.point);
 
 		if (i != hits.begin()) {
 		    bu_log("<%g>", DIST_PT_PT(out.point, prev));
@@ -2095,7 +2096,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
 		if (out.direction == brep_hit::ENTERING) bu_log("+");
 		if (out.direction == brep_hit::LEAVING) bu_log("-");
-		VMOVE(prev, out.point);
+
 		bu_log(")");
 	    }
 	    bu_log("\n**** Orig Hits: %zu\n", orig.size());
@@ -2104,6 +2105,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		point_t prev;
 
 		brep_hit &out = *i;
+		VMOVE(prev, out.point);
 
 		if (i != orig.begin()) {
 		    bu_log("<%g>", DIST_PT_PT(out.point, prev));
@@ -2116,7 +2118,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		if (out.direction == brep_hit::ENTERING) bu_log("+");
 		if (out.direction == brep_hit::LEAVING) bu_log("-");
 		bu_log("<%d>", out.sbv->m_face->m_bRev);
-		VMOVE(prev, out.point);
+
 		bu_log(")");
 	    }
 

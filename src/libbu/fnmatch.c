@@ -195,7 +195,7 @@ static CHARCLASS charclasses[] = {
 static int
 classcompare(const void *a, const void *b)
 {
-    return strcmp(((CHARCLASS *)a)->idstring, ((CHARCLASS *)b)->idstring);
+    return !BU_STR_EQUAL(((CHARCLASS *)a)->idstring, ((CHARCLASS *)b)->idstring);
 }
 
 

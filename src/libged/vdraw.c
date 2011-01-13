@@ -175,7 +175,7 @@ ged_vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 
     for (ctp = vdraw_cmds; ctp->ct_name != (char *)0; ctp++) {
 	if (ctp->ct_name[0] == argv[1][0] &&
-	    !strcmp(ctp->ct_name, argv[1])) {
+	    BU_STR_EQUAL(ctp->ct_name, argv[1])) {
 	    return (*ctp->ct_func)(gedp, argc, argv);
 	}
     }

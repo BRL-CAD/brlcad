@@ -146,7 +146,7 @@ get_args(int argc, char **argv)
 	input = stdin;
     } else {
 	in_name = argv[bu_optind];
-	if (strcmp(in_name, "-") == 0) {
+	if (BU_STR_EQUAL(in_name, "-")) {
 	    if (isatty(fileno(stdin))) return 0;
 	    input = stdin;
 	} else {

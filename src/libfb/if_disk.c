@@ -60,7 +60,7 @@ dsk_open(FBIO *ifp, char *file, int width, int height)
     if (height == 0)
 	height = ifp->if_height;
 
-    if (strcmp(file, "-") == 0) {
+    if (BU_STR_EQUAL(file, "-")) {
 	/*
 	 * It is the applications job to write ascending scanlines.
 	 * If it does not, then this can be stacked with /dev/mem,

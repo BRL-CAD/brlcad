@@ -86,7 +86,7 @@ static int pixel_size (char *buf)
 	++ep;
 
     for (ap = a_tbl; ap->ext; ++ap)
-	if (strcmp(ep, ap->ext) == 0)
+	if (BU_STR_EQUAL(ep, ap->ext))
 	    return ap->size;
 
     return DFLT_PIXEL_SIZE;
@@ -101,7 +101,7 @@ main (int argc, char **argv)
     int ch;
     int how = BELIEVE_NAME;
     int nm_bytes = -1;
-    int nm_pixels;
+    int nm_pixels = 0;
     unsigned long int width;
     unsigned long int height;
     struct stat stat_buf;

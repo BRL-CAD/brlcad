@@ -136,7 +136,7 @@ get_args(int argc, char **argv)
 	return 0;
     } else {
 	orig_name = argv[bu_optind];
-	if (strcmp(orig_name, "-") == 0) {
+	if (BU_STR_EQUAL(orig_name, "-")) {
 	    if (isatty(fileno(stdin))) return 0;
 	    orig = stdin;
 	} else {
@@ -154,7 +154,7 @@ get_args(int argc, char **argv)
 	return 0;
     } else {
 	paste_name = argv[bu_optind];
-	if (strcmp(paste_name, "-") == 0) {
+	if (BU_STR_EQUAL(paste_name, "-")) {
 	    if (isatty(fileno(stdin))) return 0;
 	    paste = stdin;
 	    if (!orig_isfile) {

@@ -133,7 +133,7 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 	in_file_name = argv[bu_optind];
     }
 
-    if (strcmp(in_file_name, "-") == 0) {
+    if (BU_STR_EQUAL(in_file_name, "-")) {
 	*ifp = stdin;
     } else {
 	*ifp = fopen(in_file_name, "rb");

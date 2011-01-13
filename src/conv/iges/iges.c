@@ -53,6 +53,7 @@
 
 /* define defaulted entry for directory entry array */
 #define DEFAULT (-99999)
+#define COMMA ','
 
 extern int verbose;
 static int solids_to_nmg=0;/* Count of solids that were converted to nmg's in CSG mode */
@@ -474,7 +475,7 @@ write_freeform(FILE *fp,	/* output file */
 			}
 			field_start = curr_loc;
 
-			if (s[curr_loc] == ', ' || s[curr_loc] == ';') {
+			if (s[curr_loc] == COMMA || s[curr_loc] == ';') {
 			    /* empty field */
 			    curr_loc++;
 			} else {
@@ -506,11 +507,11 @@ write_freeform(FILE *fp,	/* output file */
 				/* this is not a string and cannot be continued to next line */
 
 				/* find end of this field */
-				while (curr_loc < str_len && s[curr_loc] != ', ' && s[curr_loc] != ';') {
+				while (curr_loc < str_len && s[curr_loc] != COMMA && s[curr_loc] != ';') {
 				    curr_loc++;
 				}
 
-				if (s[curr_loc] == ', ' || s[curr_loc] == ';')
+				if (s[curr_loc] == COMMA || s[curr_loc] == ';')
 				    curr_loc++;
 
 				if (curr_loc > line_end) {

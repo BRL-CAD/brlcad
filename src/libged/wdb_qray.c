@@ -148,7 +148,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "fmt") == 0) {
+    if (BU_STR_EQUAL(argv[1], "fmt")) {
 	int i;
 
 	if (argc == 2) {
@@ -186,7 +186,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "basename") == 0) {
+    if (BU_STR_EQUAL(argv[1], "basename")) {
 	if (argc == 2) {
 	    /* get value */
 	    Tcl_AppendResult(interp, bu_vls_addr(&dgop->dgo_qray_basename), (char *)NULL);
@@ -204,7 +204,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "script") == 0) {
+    if (BU_STR_EQUAL(argv[1], "script")) {
 	if (argc == 2) {
 	    /* get value */
 	    Tcl_AppendResult(interp, bu_vls_addr(&dgop->dgo_qray_script), (char *)NULL);
@@ -222,7 +222,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "effects") == 0) {
+    if (BU_STR_EQUAL(argv[1], "effects")) {
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_init(&vls);
@@ -253,7 +253,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "echo") == 0) {
+    if (BU_STR_EQUAL(argv[1], "echo")) {
 	if (argc == 2) {
 	    /* get value */
 	    if (dgop->dgo_qray_cmd_echo)
@@ -289,7 +289,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "oddcolor") == 0) {
+    if (BU_STR_EQUAL(argv[1], "oddcolor")) {
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_init(&vls);
@@ -333,7 +333,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "evencolor") == 0) {
+    if (BU_STR_EQUAL(argv[1], "evencolor")) {
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_init(&vls);
@@ -373,7 +373,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "voidcolor") == 0) {
+    if (BU_STR_EQUAL(argv[1], "voidcolor")) {
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_init(&vls);
@@ -413,7 +413,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "overlapcolor") == 0) {
+    if (BU_STR_EQUAL(argv[1], "overlapcolor")) {
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_init(&vls);
@@ -453,12 +453,12 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "vars") == 0) {
+    if (BU_STR_EQUAL(argv[1], "vars")) {
 	qray_print_vars(dgop, interp);
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "help") == 0) {
+    if (BU_STR_EQUAL(argv[1], "help")) {
 	Tcl_AppendResult(interp, "Usage:\n", qray_syntax, (char *)NULL);
 	return TCL_OK;
     }

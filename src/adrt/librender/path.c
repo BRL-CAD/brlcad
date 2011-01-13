@@ -58,7 +58,7 @@ render_path_free(render_t *render)
 
 
 void
-render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
+render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
 {
     struct tie_ray_s new_ray;
     struct tie_id_s new_id;
@@ -119,7 +119,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE
 		VUNITIZE(T);
 
 		/* Form Basis X */
-		bax[0] = T[0] || T[1] ? -T[1] : 1.0;
+		bax[0] = NEAR_ZERO(T[0],SMALL_FASTF) || NEAR_ZERO(T[1],SMALL_FASTF) ? -T[1] : 1.0;
 		bax[1] = T[0];
 		bax[2] = 0;
 		VUNITIZE(bax);
@@ -155,7 +155,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE
 	VADD2(accum,  accum,  new_pix);
     }
 
-    VSCALE((*pixel).v,  accum,  rd->inv_samples);
+    VSCALE(*pixel,  accum,  rd->inv_samples);
 }
 
 int

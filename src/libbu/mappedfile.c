@@ -70,8 +70,8 @@ bu_open_mapped_file(const char *name, const char *appl)
     }
     for (BU_LIST_FOR(mp, bu_mapped_file, &bu_mapped_file_list)) {
 	BU_CK_MAPPED_FILE(mp);
-	if (strcmp(name, mp->name))  continue;
-	if (appl && strcmp(appl, mp->appl))
+	if (!BU_STR_EQUAL(name, mp->name))  continue;
+	if (appl && !BU_STR_EQUAL(appl, mp->appl))
 	    continue;
 	/* File is already mapped -- verify size and modtime */
 #ifdef HAVE_SYS_STAT_H

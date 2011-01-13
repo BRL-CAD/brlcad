@@ -1346,21 +1346,21 @@ arb_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	for (i = 0; i < ELEMENTS_PER_POINT; i++)
 	    aip->pt[j][i] = atof(cmd_argvs[3+i+3*j]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
-    if (!strcmp("arb4", cmd_argvs[2])) {
+    if (BU_STR_EQUAL("arb4", cmd_argvs[2])) {
 	VMOVE(aip->pt[7], aip->pt[3]);
 	VMOVE(aip->pt[6], aip->pt[3]);
 	VMOVE(aip->pt[5], aip->pt[3]);
 	VMOVE(aip->pt[4], aip->pt[3]);
 	VMOVE(aip->pt[3], aip->pt[0]);
-    } else if (!strcmp("arb5", cmd_argvs[2])) {
+    } else if (BU_STR_EQUAL("arb5", cmd_argvs[2])) {
 	VMOVE(aip->pt[7], aip->pt[4]);
 	VMOVE(aip->pt[6], aip->pt[4]);
 	VMOVE(aip->pt[5], aip->pt[4]);
-    } else if (!strcmp("arb6", cmd_argvs[2])) {
+    } else if (BU_STR_EQUAL("arb6", cmd_argvs[2])) {
 	VMOVE(aip->pt[7], aip->pt[5]);
 	VMOVE(aip->pt[6], aip->pt[5]);
 	VMOVE(aip->pt[5], aip->pt[4]);
-    } else if (!strcmp("arb7", cmd_argvs[2])) {
+    } else if (BU_STR_EQUAL("arb7", cmd_argvs[2])) {
 	VMOVE(aip->pt[7], aip->pt[4]);
     }
 
@@ -1425,7 +1425,7 @@ ell_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	vals[i] = atof(cmd_argvs[3+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
     }
 
-    if (!strcmp("ell", cmd_argvs[2])) {
+    if (BU_STR_EQUAL("ell", cmd_argvs[2])) {
  	/* everything's ok */
 	/* V, A, B, C */
 	VMOVE(eip->v, &vals[0]);
@@ -1435,7 +1435,7 @@ ell_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	return GED_OK;
     }
 
-    if (!strcmp("ellg", cmd_argvs[2])) {
+    if (BU_STR_EQUAL("ellg", cmd_argvs[2])) {
 	/* V, f1, f2, len */
 	/* convert ELLG format into ELL1 format */
 	len = vals[6];
@@ -1452,7 +1452,7 @@ ell_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	VSCALE(eip->a, eip->b, .5*len/mag_b);
 	/* calculate radius of revolution (for ELL1 format) */
 	r_rev = sqrt(MAGSQ(eip->a) - (mag_b*.5)*(mag_b*.5));
-    } else if (!strcmp("ell1", cmd_argvs[2])) {
+    } else if (BU_STR_EQUAL("ell1", cmd_argvs[2])) {
 	/* V, A, r */
 	VMOVE(eip->v, &vals[0]);
 	VMOVE(eip->a, &vals[3]);
@@ -1768,7 +1768,7 @@ box_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	return GED_ERROR;
     }
 
-    if (!strcmp("box", cmd_argvs[2])) {
+    if (BU_STR_EQUAL("box", cmd_argvs[2])) {
 	VMOVE(aip->pt[0], Vrtx);
 	VADD2(aip->pt[1], Vrtx, Wdth);
 	VADD3(aip->pt[2], Vrtx, Wdth, Hgt);
@@ -2460,7 +2460,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     }
 
     /* if points are in a file */
-    if ((strcmp(argv[3], "yes") == 0) || (strcmp(argv[3], "y") == 0)) {
+    if ((BU_STR_EQUAL(argv[3], "yes")) || (BU_STR_EQUAL(argv[3], "y"))) {
 
         /* prompt for point file path and name */
         if (argc < 5) {
@@ -2839,11 +2839,11 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
      * make name <half|arb[4-8]|sph|ell|ellg|ell1|tor|tgc|tec|
      rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|hyp|eto|superell>
     */
-    if (strcmp(argv[2], "ebm") == 0) {
+    if (BU_STR_EQUAL(argv[2], "ebm")) {
 	nvals = 4;
 	menu = p_ebm;
 	fn_in = ebm_in;
-    } else if (strcmp(argv[2], "arbn") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "arbn")) {
 	switch (arbn_in(gedp, argc, argv, &internal, &p_arbn[0])) {
 	    case GED_ERROR:
 		bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, ARBN not made!\n", argv[0]);
@@ -2853,7 +2853,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 		return GED_MORE;
 	}
 	goto do_new_update;
-    } else if (strcmp(argv[2], "bot") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "bot")) {
 	switch (bot_in(gedp, argc, argv, &internal, &p_bot[0])) {
 	    case GED_ERROR:
 		bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, BOT not made!\n", argv[0]);
@@ -2863,15 +2863,15 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 		return GED_MORE;
 	}
 	goto do_new_update;
-    } else if (strcmp(argv[2], "submodel") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "submodel")) {
 	nvals = 3;
 	menu = p_submodel;
 	fn_in = submodel_in;
-    } else if (strcmp(argv[2], "vol") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "vol")) {
 	nvals = 9;
 	menu = p_vol;
 	fn_in = vol_in;
-    } else if (strcmp(argv[2], "hf") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "hf")) {
 	if (gedp->ged_wdbp->dbip->dbi_version <= 4) {
 	    nvals = 19;
 	    menu = p_hf;
@@ -2881,11 +2881,11 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str, "%s: the height field is deprecated. Use the dsp primitive.\n", argv[0]);
 	    return GED_ERROR;
 	}
-    } else if (strcmp(argv[2], "poly") == 0 ||
-	       strcmp(argv[2], "pg") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "poly") ||
+	       BU_STR_EQUAL(argv[2], "pg")) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: the polysolid is deprecated and not supported by this command.\nUse the bot primitive.\n", argv[0]);
 	return GED_ERROR;
-    } else if (strcmp(argv[2], "dsp") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "dsp")) {
 	if (gedp->ged_wdbp->dbip->dbi_version <= 4) {
 	    nvals = 6;
 	    menu = p_dsp_v4;
@@ -2896,7 +2896,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	    fn_in = dsp_in_v5;
 	}
 
-    } else if (strcmp(argv[2], "pipe") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "pipe")) {
 	switch (pipe_in(gedp, argc, argv, &internal, &p_pipe[0])) {
 	    case GED_ERROR:
 		bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, pipe not made!\n", argv[0]);
@@ -2906,7 +2906,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 		return GED_MORE;
 	}
 	goto do_new_update;
-    } else if (strcmp(argv[2], "metaball") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "metaball")) {
 	switch (metaball_in(gedp, argc, argv, &internal, &p_metaball[0])) {
 	    case GED_ERROR:
 		bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, metaball not made!\n", argv[0]);
@@ -2916,7 +2916,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 		return GED_MORE;
 	}
 	goto do_new_update;
-    } else if (strcmp(argv[2], "ars") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "ars")) {
 	switch (ars_in(gedp, argc, argv, &internal, &p_ars[0])) {
 	    case GED_ERROR:
 		bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, ars not made!\n", argv[0]);
@@ -2926,7 +2926,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 		return GED_MORE;
 	}
 	goto do_new_update;
-    } else if (strcmp(argv[2], "half") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "half")) {
 	nvals = 3*1 + 1;
 	menu = p_half;
 	fn_in = half_in;
@@ -2943,88 +2943,88 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	nvals = 3*n;
 	menu = p_arb;
 	fn_in = arb_in;
-    } else if (strcmp(argv[2], "sph") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "sph")) {
 	nvals = 3*1 + 1;
 	menu = p_sph;
 	fn_in = sph_in;
-    } else if (strcmp(argv[2], "ellg") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "ellg")) {
 	nvals = 3*2 + 1;
 	menu = p_ellg;
 	fn_in = ell_in;
-    } else if (strcmp(argv[2], "ell") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "ell")) {
 	nvals = 3*4;
 	menu = p_ell;
 	fn_in = ell_in;
-    } else if (strcmp(argv[2], "ell1") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "ell1")) {
 	nvals = 3*2 + 1;
 	menu = p_ell1;
 	fn_in = ell_in;
-    } else if (strcmp(argv[2], "tor") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "tor")) {
 	nvals = 3*2 + 2;
 	menu = p_tor;
 	fn_in = tor_in;
-    } else if (strcmp(argv[2], "tgc") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "tgc")) {
 	nvals = 3*4 + 2;
 	menu = p_tgc;
 	fn_in = tgc_in;
-    } else if (strcmp(argv[2], "tec") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "tec")) {
 	nvals = 3*4 + 1;
 	menu = p_tec;
 	fn_in = tec_in;
-    } else if (strcmp(argv[2], "rec") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "rec")) {
 	nvals = 3*4;
 	menu = p_rec;
 	fn_in = rec_in;
-    } else if (strcmp(argv[2], "trc") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "trc")) {
 	nvals = 3*2 + 2;
 	menu = p_trc;
 	fn_in = trc_in;
-    } else if (strcmp(argv[2], "rcc") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "rcc")) {
 	nvals = 3*2 + 1;
 	menu = p_rcc;
 	fn_in = rcc_in;
-    } else if (strcmp(argv[2], "box") == 0
-	       || strcmp(argv[2], "raw") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "box")
+	       || BU_STR_EQUAL(argv[2], "raw")) {
 	nvals = 3*4;
 	menu = p_box;
 	fn_in = box_in;
-    } else if (strcmp(argv[2], "rpp") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "rpp")) {
 	nvals = 3*2;
 	menu = p_rpp;
 	fn_in = rpp_in;
-    } else if (strcmp(argv[2], "orpp") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "orpp")) {
 	nvals = 3*1;
 	menu = p_orpp;
 	fn_in = orpp_in;
-    } else if (strcmp(argv[2], "rpc") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "rpc")) {
 	nvals = 3*3 + 1;
 	menu = p_rpc;
 	fn_in = rpc_in;
-    } else if (strcmp(argv[2], "rhc") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "rhc")) {
 	nvals = 3*3 + 2;
 	menu = p_rhc;
 	fn_in = rhc_in;
-    } else if (strcmp(argv[2], "epa") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "epa")) {
 	nvals = 3*3 + 1;
 	menu = p_epa;
 	fn_in = epa_in;
-    } else if (strcmp(argv[2], "ehy") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "ehy")) {
 	nvals = 3*3 + 2;
 	menu = p_ehy;
 	fn_in = ehy_in;
-    } else if (strcmp(argv[2], "hyp") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "hyp")) {
 	nvals = 3*3 + 2;
 	menu = p_hyp;
 	fn_in = hyp_in;
-    } else if (strcmp(argv[2], "eto") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "eto")) {
 	nvals = 3*3 + 2;
 	menu = p_eto;
 	fn_in = eto_in;
-    } else if (strcmp(argv[2], "part") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "part")) {
 	nvals = 2*3 + 2;
 	menu = p_part;
 	fn_in = part_in;
-    } else if (strcmp(argv[2], "binunif") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "binunif")) {
 	if (gedp->ged_wdbp->dbip->dbi_version <= 4) {
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "%s: the binunif primitive is not supported by this command when using an old style database",
@@ -3035,23 +3035,23 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	    menu = p_binunif;
 	    fn_in = binunif_in;
 	}
-    } else if (strcmp(argv[2], "extrude") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "extrude")) {
 	nvals = 4*3 + 1;
 	menu = p_extrude;
 	fn_in = extrude_in;
-    } else if (strcmp(argv[2], "revolve") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "revolve")) {
 	nvals = 3*3 + 2;
 	menu = p_revolve;
 	fn_in = revolve_in;
-    } else if (strcmp(argv[2], "grip") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "grip")) {
 	nvals = 2*3 + 1;
 	menu = p_grip;
 	fn_in = grip_in;
-    } else if (strcmp(argv[2], "superell") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "superell")) {
 	nvals = 3*4 + 2;
 	menu = p_superell;
 	fn_in = superell_in;
-    } else if (strcmp(argv[2], "pnts") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "pnts")) {
 	switch (pnts_in(gedp, argc, argv, &internal, p_pnts)) {
 	    case GED_ERROR:
 		bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, pnts not made!\n", argv[0]);
@@ -3062,12 +3062,12 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	goto do_new_update;
-    } else if (strcmp(argv[2], "cline") == 0 ||
-	       strcmp(argv[2], "grip") == 0 ||
-	       strcmp(argv[2], "nmg") == 0 ||
-	       strcmp(argv[2], "nurb") == 0 ||
-	       strcmp(argv[2], "sketch") == 0 ||
-	       strcmp(argv[2], "spline") == 0) {
+    } else if (BU_STR_EQUAL(argv[2], "cline") ||
+	       BU_STR_EQUAL(argv[2], "grip") ||
+	       BU_STR_EQUAL(argv[2], "nmg") ||
+	       BU_STR_EQUAL(argv[2], "nurb") ||
+	       BU_STR_EQUAL(argv[2], "sketch") ||
+	       BU_STR_EQUAL(argv[2], "spline")) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: the %s primitive is not supported by this command", argv[0], argv[2]);
 	return GED_ERROR;
     } else {

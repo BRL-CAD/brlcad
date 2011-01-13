@@ -30,6 +30,9 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include  "bu.h"
+
+
 int	nflag = 0;
 
 static const char usage[] = "\
@@ -40,7 +43,7 @@ int main(int argc, char **argv)
     double	d;
 
     while ( argc > 1 ) {
-	if ( strcmp( argv[1], "-n" ) == 0 )
+	if ( BU_STR_EQUAL( argv[1], "-n" ) )
 	    nflag++;
 	else
 	    break;

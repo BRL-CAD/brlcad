@@ -891,7 +891,7 @@ get_editor_string(struct bu_vls *editstring)
 
     /* still unset? try windows */
     if (!editor || editor[0] == '\0') {
-	if (!strcmp(os, "Windows 95") || !strcmp(os, "Windows NT")) {
+	if (BU_STR_EQUAL(os, "Windows 95") || BU_STR_EQUAL(os, "Windows NT")) {
     	    editor = WIN_EDITOR;
 	} else {
     	    editor = (char *)NULL;
@@ -943,7 +943,7 @@ get_editor_string(struct bu_vls *editstring)
 
 
     /* If we're in classic mode on Windows, go with jove */
-    if (classic_mged && (!strcmp(os, "Windows 95") || !strcmp(os, "Windows NT"))) {
+    if (classic_mged && (BU_STR_EQUAL(os, "Windows 95") || BU_STR_EQUAL(os, "Windows NT"))) {
 	const char *jovepath = bu_brlcad_root("bin/jove", 1);
 	editor = JOVE_EDITOR;
 	if (jovepath) {
@@ -975,18 +975,18 @@ get_editor_string(struct bu_vls *editstring)
 	 * of the non-working configs isn't set.*/
 	which = bu_which(EMACS_EDITOR);
 	if (which)
-	    count += (!strcmp(editor, which) && (!editor_opt || editor_opt[0] == '\0'));
+	    count += (BU_STR_EQUAL(editor, which) && (!editor_opt || editor_opt[0] == '\0'));
 	which = bu_which(VIM_EDITOR);
 	if (which)
-	    count += !(strcmp(editor, which));
+	    count += BU_STR_EQUAL(editor, which);
 	which = bu_which(VI_EDITOR);
 	if (which)
-	    count += !(strcmp(editor, which));
+	    count += BU_STR_EQUAL(editor, which);
 	which = bu_which(ED_EDITOR);
 	if (which)
-	    count += !(strcmp(editor, which));
-	count += !(strcmp(editor, JOVE_EDITOR));
-	count += !(!(!(strcmp(editor, MAC_EDITOR))));
+	    count += BU_STR_EQUAL(editor, which);
+	count += BU_STR_EQUAL(editor, JOVE_EDITOR);
+	count += BU_STR_EQUAL(editor, MAC_EDITOR);
 	if (count > 0) {
 	    /* start with emacs... */ 
 	    editor = bu_which(EMACS_EDITOR);
@@ -1015,7 +1015,7 @@ get_editor_string(struct bu_vls *editstring)
     } else { 
     	/* Spell out in which situations we need a terminal.
 	 */
-    	if (!strcmp(os, "Darwin")) {
+    	if (BU_STR_EQUAL(os, "Darwin")) {
     	    /* on the mac, if it's not mac editor assume a terminal is needed. Until
 	     * we figure out how to use Mac terminal, use X11 xterm */
     	    if (editor != MAC_EDITOR) {
@@ -1037,28 +1037,28 @@ get_editor_string(struct bu_vls *editstring)
     	/* For now, assume there aren't any situations where Windows will use a terminal */
 	
     	/* If it's not mac, and it's not Windows, we need a controlling terminal */
-    	if (strcmp(os, "Darwin") && strcmp(os, "Windows 95") && strcmp(os, "Windows NT")) {
-    	    if (!strcmp(editor, EMACS_EDITOR)) {
+    	if (!BU_STR_EQUAL(os, "Darwin") && !BU_STR_EQUAL(os, "Windows 95") && !BU_STR_EQUAL(os, "Windows NT")) {
+    	    if (BU_STR_EQUAL(editor, EMACS_EDITOR)) {
     		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
     	    }
-    	    if (!strcmp(editor, VIM_EDITOR)) {
+    	    if (BU_STR_EQUAL(editor, VIM_EDITOR)) {
     		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
     	    }
-    	    if (!strcmp(editor, VI_EDITOR)) {
+    	    if (BU_STR_EQUAL(editor, VI_EDITOR)) {
     		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
     	    }
-    	    if (!strcmp(editor, ED_EDITOR)) {
+    	    if (BU_STR_EQUAL(editor, ED_EDITOR)) {
     		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
     	    }
-    	    if (!strcmp(editor, JOVE_EDITOR)) {
+    	    if (BU_STR_EQUAL(editor, JOVE_EDITOR)) {
     		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";

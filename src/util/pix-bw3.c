@@ -43,6 +43,7 @@ main(int argc, char **argv)
     int i, num;
     FILE *rfp, *bfp, *gfp;
     unsigned char *ibufp;
+    size_t ret;
 
     if (argc != 4 || isatty(fileno(stdin))) {
 	bu_exit(1, "usage: pix-bw3 redout greenout blueout < file.pix\n");
@@ -63,9 +64,15 @@ main(int argc, char **argv)
 	    green[i] = *ibufp++;
 	    blue[i] = *ibufp++;
 	}
-	fwrite(red, sizeof(*red), num/3, rfp);
-	fwrite(green, sizeof(*green), num/3, gfp);
-	fwrite(blue, sizeof(*blue), num/3, bfp);
+	ret = fwrite(red, sizeof(*red), num/3, rfp);
+	if (ret < (size_t)num/3)
+	    perror("fwrite");
+	ret = fwrite(green, sizeof(*green), num/3, gfp);
+	if (ret < (size_t)num/3)
+	    perror("fwrite");
+	ret = fwrite(blue, sizeof(*blue), num/3, bfp);
+	if (ret < (size_t)num/3)
+	    perror("fwrite");
     }
 
     return 0;

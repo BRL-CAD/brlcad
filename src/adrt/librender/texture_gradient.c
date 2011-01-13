@@ -30,27 +30,27 @@
 
 #include "bu.h"
 
-void texture_gradient_init(struct texture_s *texture, int axis) {
+void
+texture_gradient_init(struct texture_s *texture, int axis) {
     struct texture_gradient_s *td;
 
     texture->data = bu_malloc(sizeof(struct texture_gradient_s), "gradient data");
     texture->free = texture_gradient_free;
-    texture->work = (struct texture_work_s *)texture_gradient_work;
+    texture->work = (texture_work_t *)texture_gradient_work;
 
     td = (struct texture_gradient_s *)texture->data;
     td->axis = axis;
 }
 
-
-void texture_gradient_free(struct texture_s *texture) {
+void
+texture_gradient_free(struct texture_s *texture) {
     bu_free(texture->data, "gradient data");
 }
 
-
-void texture_gradient_work(__TEXTURE_WORK_PROTOTYPE__) {
+void
+texture_gradient_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, vect_t *pixel) {
     struct texture_gradient_s *td;
     vect_t pt;
-
 
     td = (struct texture_gradient_s *)texture->data;
 

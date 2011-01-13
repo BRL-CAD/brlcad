@@ -2129,55 +2129,55 @@ verbIn(struct human_data_t *dude)
 		if (holder <= 0)
 		    bu_log("Bad inputs, zero and non-negative values for inputs!\n");
 		/*Big statement of matching names with variables*/
-		if (strcmp(s, "headSize")==0)
+		if (BU_STR_EQUAL(s, "headSize"))
 		    dude->head.headSize = holder;
-		else if (strcmp(s, "neckWidth")==0)
+		else if (BU_STR_EQUAL(s, "neckWidth"))
 		    dude->head.neckWidth = holder;
-		else if (strcmp(s, "neckLength")==0)
+		else if (BU_STR_EQUAL(s, "neckLength"))
 		    dude->head.neckLength = holder;
-		else if (strcmp(s, "topTorsoLength")==0)
+		else if (BU_STR_EQUAL(s, "topTorsoLength"))
 		    dude->torso.topTorsoLength = holder;
-		else if (strcmp(s, "lowTorsoLength")==0)
+		else if (BU_STR_EQUAL(s, "lowTorsoLength"))
 		    dude->torso.lowTorsoLength = holder;
-		else if (strcmp(s, "shoulderWidth")==0)
+		else if (BU_STR_EQUAL(s, "shoulderWidth"))
 		    dude->torso.shoulderWidth = holder;
-		else if (strcmp(s, "shoulderDepth")==0)
+		else if (BU_STR_EQUAL(s, "shoulderDepth"))
 		    dude->torso.shoulderDepth = holder;
-		else if (strcmp(s, "abWidth")==0)
+		else if (BU_STR_EQUAL(s, "abWidth"))
 		    dude->torso.abWidth = holder;
-		else if (strcmp(s, "abDepth")==0)
+		else if (BU_STR_EQUAL(s, "abDepth"))
 		    dude->torso.abDepth = holder;
-		else if (strcmp(s, "pelvisWidth")==0)
+		else if (BU_STR_EQUAL(s, "pelvisWidth"))
 		    dude->torso.pelvisWidth = holder;
-		else if (strcmp(s, "pelvisDepth")==0)
+		else if (BU_STR_EQUAL(s, "pelvisDepth"))
 		    dude->torso.pelvisDepth = holder;
-		else if (strcmp(s, "upperArmWidth")==0)
+		else if (BU_STR_EQUAL(s, "upperArmWidth"))
 		    dude->arms.upperArmWidth = holder;
-		else if (strcmp(s, "upperArmLength")==0)
+		else if (BU_STR_EQUAL(s, "upperArmLength"))
 		    dude->arms.upperArmLength = holder;
-		else if (strcmp(s, "lowerArmLength")==0)
+		else if (BU_STR_EQUAL(s, "lowerArmLength"))
 		    dude->arms.lowerArmLength = holder;
-		else if (strcmp(s, "elbowWidth")==0)
+		else if (BU_STR_EQUAL(s, "elbowWidth"))
 		    dude->arms.elbowWidth = holder;
-		else if (strcmp(s, "wristWidth")==0)
+		else if (BU_STR_EQUAL(s, "wristWidth"))
 		    dude->arms.wristWidth = holder;
-		else if (strcmp(s, "handLength")==0)
+		else if (BU_STR_EQUAL(s, "handLength"))
 		    dude->arms.handLength = holder;
-		else if (strcmp(s, "handWidth")==0)
+		else if (BU_STR_EQUAL(s, "handWidth"))
 		    dude->arms.handWidth = holder;
-		else if (strcmp(s, "thighLength")==0)
+		else if (BU_STR_EQUAL(s, "thighLength"))
 		    dude->legs.thighLength = holder;
-		else if (strcmp(s, "thighWidth")==0)
+		else if (BU_STR_EQUAL(s, "thighWidth"))
 		    dude->legs.thighWidth = holder;
-		else if (strcmp(s, "calfLength")==0)
+		else if (BU_STR_EQUAL(s, "calfLength"))
 		    dude->legs.calfLength = holder;
-		else if (strcmp(s, "kneeWidth")==0)
+		else if (BU_STR_EQUAL(s, "kneeWidth"))
 		    dude->legs.kneeWidth = holder;
-		else if (strcmp(s, "footLength")==0)
+		else if (BU_STR_EQUAL(s, "footLength"))
 		    dude->legs.footLength = holder;
-		else if (strcmp(s, "ankleWidth")==0)
+		else if (BU_STR_EQUAL(s, "ankleWidth"))
 		    dude->legs.ankleWidth = holder;
-		else if (strcmp(s, "toeWidth")==0)
+		else if (BU_STR_EQUAL(s, "toeWidth"))
 		    dude->legs.toeWidth = holder;
 		else
 		    bu_log("Bad spelling somewhere\n");

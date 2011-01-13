@@ -30,12 +30,13 @@
 
 #include "bu.h"
 
-void texture_clouds_init(struct texture_s *texture, tfloat size, int octaves, int absolute, vect_t scale, vect_t translate) {
+void
+texture_clouds_init(struct texture_s *texture, tfloat size, int octaves, int absolute, vect_t scale, vect_t translate) {
     struct texture_clouds_s *td;
 
     texture->data = bu_malloc(sizeof(struct texture_clouds_s), "cloud data");
     texture->free = texture_clouds_free;
-    texture->work = (struct texture_work_s *)texture_clouds_work;
+    texture->work = (texture_work_t *)texture_clouds_work;
 
     td = (struct texture_clouds_s*)texture->data;
     td->size = size;
@@ -47,8 +48,8 @@ void texture_clouds_init(struct texture_s *texture, tfloat size, int octaves, in
     texture_perlin_init(&td->perlin);
 }
 
-
-void texture_clouds_free(struct texture_s *texture) {
+void
+texture_clouds_free(struct texture_s *texture) {
     struct texture_clouds_s *td;
 
     td = (struct texture_clouds_s*)texture->data;
@@ -56,8 +57,8 @@ void texture_clouds_free(struct texture_s *texture) {
     bu_free(texture->data, "cloud data");
 }
 
-
-void texture_clouds_work(__TEXTURE_WORK_PROTOTYPE__) {
+void
+texture_clouds_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, vect_t *pixel) {
     struct texture_clouds_s *td;
     vect_t p, pt;
 

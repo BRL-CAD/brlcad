@@ -168,7 +168,7 @@ static unsigned short *hl_dstmap = NULL;
 	    && ((failure=PT_BEHIND, pp->pt_outhit->hit_dist < BEHIND_ME_TOL)\
 	     || (failure=PT_EYE, pp->pt_inseg->seg_stp == lgts[0].stp)\
 	     ||	(failure=PT_GRID, lgts[0].stp != NULL &&\
-		 !strcmp( pp->pt_inseg->seg_stp->st_name, "GRID" )));\
+		 BU_STR_EQUAL( pp->pt_inseg->seg_stp->st_name, "GRID" )));\
 		pp = pp->pt_forw\
 		)\
 		{ struct partition *pt_back = pp->pt_back;\
@@ -2122,7 +2122,7 @@ view_eol(struct application *ap, RGBpixel (*scanbuf))
     if ( pix_buffered == B_LINE )
     {
 	bu_semaphore_acquire( RT_SEM_STATS );
-	if ( strcmp( fb_file, "/dev/remote" ) == 0 )
+	if ( BU_STR_EQUAL( fb_file, "/dev/remote" ) )
 	{
 	    char ystr[5];
 	    (void) sprintf( ystr, "%04d", ap->a_y );

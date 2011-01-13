@@ -80,6 +80,7 @@ void
 fill_buffer(int y)
 {
     static int file_pos = 0;
+    size_t ret;
 
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
@@ -90,7 +91,10 @@ fill_buffer(int y)
 	}
 	file_pos = buf_start * scanlen;
     }
-    fread(buffer, scanlen, buflines, buffp);
+    ret = fread(buffer, scanlen, buflines, buffp);
+    if (ret < (size_t)buflines)
+	perror("fread");
+
     file_pos += buflines * scanlen;
 }
 
@@ -107,6 +111,7 @@ ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
     double x, y;
     double xstep, ystep;
     unsigned char *op, *lp;
+    size_t ret;
 
     xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
     ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
@@ -134,7 +139,9 @@ ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
 	    *op++ = lp[2];
 	}
 
-	(void) fwrite(outbuf, 3, ox, ofp);
+	ret = fwrite(outbuf, 3, ox, ofp);
+	if (ret < (size_t)ox)
+	    perror("fwrite");
     }
 }
 
@@ -151,6 +158,7 @@ binterp(FILE *ofp, int ix, int iy, int ox, int oy)
     double x, y, dx, dy, mid1, mid2;
     double xstep, ystep;
     unsigned char *op, *up, *lp;
+    size_t ret;
 
     xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
     ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
@@ -198,7 +206,9 @@ binterp(FILE *ofp, int ix, int iy, int ox, int oy)
 	    *op++ = mid1 + dy * (mid2 - mid1);
 	}
 
-	(void) fwrite(outbuf, 3, ox, ofp);
+	ret = fwrite(outbuf, 3, ox, ofp);
+	if (ret < (size_t)ox)
+	    perror("fwrite");
     }
 }
 
@@ -219,6 +229,7 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
     double xdist, ydist;			/* length of new pixel sides in old coord */
     double sumr, sumg, sumb;
     unsigned char *op;
+    size_t ret;
 
     if (ix == ox)
 	pxlen = 1.0;
@@ -289,7 +300,9 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 	    *op++ = (int)(sumg / (pxlen * pylen));
 	    *op++ = (int)(sumb / (pxlen * pylen));
 	}
-	fwrite(outbuf, 3, ox, ofp);
+	ret = fwrite(outbuf, 3, ox, ofp);
+	if (ret < (size_t)ox)
+	    perror("fwrite");
     }
     return 1;
 }

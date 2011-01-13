@@ -72,7 +72,7 @@ fb_log( const char *fmt, ... )
     /* We use the same lock as malloc.  Sys-call or mem lock, really */
     bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
     va_start( ap, fmt );
-    if ( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) ) {
+    if ( tty && (err_file[0] == '\0' || BU_STR_EQUAL( err_file, "/dev/tty" )) ) {
 	/* Only move cursor and scroll if newline is output.	*/
 	static int	newline = 1;
 	if ( CS != NULL ) {

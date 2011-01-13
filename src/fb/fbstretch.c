@@ -337,7 +337,7 @@ main(int argc, char **argv)
 		);
 
 	if (src_file == NULL
-	    || (dst_file != NULL && strcmp(src_file, dst_file) == 0)
+	    || (dst_file != NULL && BU_STR_EQUAL(src_file, dst_file))
 	    )
 	    dst_fbp = src_fbp;	/* No No No Not a Second Time */
 	else if ((dst_fbp = fb_open(dst_file, dst_width, dst_height))

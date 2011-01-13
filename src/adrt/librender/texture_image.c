@@ -33,12 +33,13 @@
 
 #include "bu.h"
 
-void texture_image_init(struct texture_s *texture, short w, short h, unsigned char *image) {
+void
+texture_image_init(struct texture_s *texture, short w, short h, unsigned char *image) {
     struct texture_image_s *td;
 
     texture->data = bu_malloc(sizeof(struct texture_image_s), "texture data");
     texture->free = texture_image_free;
-    texture->work = (struct texture_work_s *)texture_image_work;
+    texture->work = (texture_work_t *)texture_image_work;
 
     td = (struct texture_image_s *)texture->data;
     td->w = w;
@@ -47,8 +48,8 @@ void texture_image_init(struct texture_s *texture, short w, short h, unsigned ch
     memcpy(td->image, image, 3*w*h);
 }
 
-
-void texture_image_free(struct texture_s *texture) {
+void
+texture_image_free(struct texture_s *texture) {
     struct texture_image_s *td;
 
     td = (struct texture_image_s *)texture->data;
@@ -56,8 +57,8 @@ void texture_image_free(struct texture_s *texture) {
     bu_free(texture->data, "texture data");
 }
 
-
-void texture_image_work(__TEXTURE_WORK_PROTOTYPE__) {
+void
+texture_image_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, vect_t *pixel) {
     struct texture_image_s *td;
     vect_t pt;
     fastf_t u, v;

@@ -94,7 +94,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 
     for (i=1; i < argc; i++) {
 	if (argv[i][0] == '-' && argv[i][1] == 'u' &&
-	    strcmp(argv[1], "-u") == 0) {
+	    BU_STR_EQUAL(argv[1], "-u")) {
 	    units_supplied=1;
 	} else if (argv[i][0] == '-' && argv[i][1] == '-' &&
 		   argv[i][2] == '\0') {

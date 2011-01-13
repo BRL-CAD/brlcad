@@ -473,7 +473,7 @@ void adrt_slave_mesg(void *mesg, unsigned int mesg_len)
 
 		/* set hit flag */
 		for (n = 0; n < db.mesh_num; n++) {
-		    if (!strcmp(db.mesh_list[n]->name, name)) {
+		    if (BU_STR_EQUAL(db.mesh_list[n]->name, name)) {
 			db.mesh_list[n]->flags |= MESH_HIT;
 			continue;
 		    }

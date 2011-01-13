@@ -182,7 +182,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-    if (strcmp(parameter, "draw") == 0) {
+    if (BU_STR_EQUAL(parameter, "draw")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.ggs_draw);
 	    return GED_OK;
@@ -201,7 +201,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "vsnap") == 0) {
+    if (BU_STR_EQUAL(parameter, "vsnap")) {
 	if (argc == 0) {
 	    grid_vsnap(gedp);
 	    return GED_OK;
@@ -211,7 +211,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "snap") == 0) {
+    if (BU_STR_EQUAL(parameter, "snap")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.ggs_snap);
 	    return GED_OK;
@@ -230,7 +230,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "rh") == 0) {
+    if (BU_STR_EQUAL(parameter, "rh")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%g",
 			  gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
@@ -245,7 +245,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "rv") == 0) {
+    if (BU_STR_EQUAL(parameter, "rv")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%g",
 			  gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
@@ -260,7 +260,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "mrh") == 0) {
+    if (BU_STR_EQUAL(parameter, "mrh")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.ggs_res_major_h);
 	    return GED_OK;
@@ -274,7 +274,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "mrv") == 0) {
+    if (BU_STR_EQUAL(parameter, "mrv")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.ggs_res_major_v);
 	    return GED_OK;
@@ -288,7 +288,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "anchor") == 0) {
+    if (BU_STR_EQUAL(parameter, "anchor")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%g %g %g",
 			  gedp->ged_gvp->gv_grid.ggs_anchor[X] * gedp->ged_wdbp->dbip->dbi_base2local,
@@ -307,7 +307,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "color") == 0) {
+    if (BU_STR_EQUAL(parameter, "color")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
 			  gedp->ged_gvp->gv_grid.ggs_color[X],
@@ -326,12 +326,12 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "vars") == 0) {
+    if (BU_STR_EQUAL(parameter, "vars")) {
 	grid_vls_print(gedp);
 	return GED_OK;
     }
 
-    if (strcmp(parameter, "help") == 0) {
+    if (BU_STR_EQUAL(parameter, "help")) {
 	grid_usage(gedp, argv[0]);
 	return GED_HELP;
     }

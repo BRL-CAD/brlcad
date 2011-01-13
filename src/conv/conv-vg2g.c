@@ -83,7 +83,7 @@ main(int argc, char **argv)
 
     if (rec.u_id == ID_IDENT) {
 	/* have an mged type file - check its version */
-	if ( strcmp(rec.i.i_version, ID_VERSION) == 0 ) {
+	if ( BU_STR_EQUAL(rec.i.i_version, ID_VERSION) ) {
 	    (void)printf("%s: NO conversion necessary\n", argv[1]);
 	    (void)putchar(7);
 	    return 0;

@@ -117,7 +117,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 	nrec++;
 	switch ( record.u_id )  {
 	    case ID_IDENT:
-		if ( strcmp( record.i.i_version, ID_VERSION) != 0 )  {
+		if ( !BU_STR_EQUAL( record.i.i_version, ID_VERSION) )  {
 		    bu_log("db_scan WARNING: File is Version %s, Program is version %s\n",
 			   record.i.i_version, ID_VERSION );
 		}
@@ -536,23 +536,23 @@ db_v4_get_units_code( const char *str )
 {
     if ( !str )  return ID_NO_UNIT;	/* no units specified */
 
-    if ( strcmp(str, "mm") == 0 || strcmp(str, "millimeters") == 0 )
+    if ( BU_STR_EQUAL(str, "mm") || BU_STR_EQUAL(str, "millimeters") )
 	return ID_MM_UNIT;
-    if ( strcmp(str, "um") == 0 || strcmp(str, "micrometers") == 0)
+    if ( BU_STR_EQUAL(str, "um") || BU_STR_EQUAL(str, "micrometers"))
 	return ID_UM_UNIT;
-    if ( strcmp(str, "cm") == 0 || strcmp(str, "centimeters") == 0)
+    if ( BU_STR_EQUAL(str, "cm") || BU_STR_EQUAL(str, "centimeters"))
 	return ID_CM_UNIT;
-    if ( strcmp(str, "m")==0 || strcmp(str, "meters")==0 )
+    if ( BU_STR_EQUAL(str, "m") || BU_STR_EQUAL(str, "meters") )
 	return ID_M_UNIT;
-    if ( strcmp(str, "km") == 0 || strcmp(str, "kilometers") == 0)
+    if ( BU_STR_EQUAL(str, "km") || BU_STR_EQUAL(str, "kilometers"))
 	return ID_KM_UNIT;
-    if ( strcmp(str, "in")==0 || strcmp(str, "inches")==0 || strcmp(str, "inch")==0 )
+    if ( BU_STR_EQUAL(str, "in") || BU_STR_EQUAL(str, "inches") || BU_STR_EQUAL(str, "inch") )
 	return ID_IN_UNIT;
-    if ( strcmp(str, "ft")==0 || strcmp(str, "feet")==0 || strcmp(str, "foot")==0 )
+    if ( BU_STR_EQUAL(str, "ft") || BU_STR_EQUAL(str, "feet") || BU_STR_EQUAL(str, "foot") )
 	return ID_FT_UNIT;
-    if ( strcmp(str, "yd")==0 || strcmp(str, "yards")==0 || strcmp(str, "yard")==0 )
+    if ( BU_STR_EQUAL(str, "yd") || BU_STR_EQUAL(str, "yards") || BU_STR_EQUAL(str, "yard") )
 	return ID_YD_UNIT;
-    if ( strcmp(str, "mi")==0 || strcmp(str, "miles")==0 || strcmp(str, "mile")==0 )
+    if ( BU_STR_EQUAL(str, "mi") || BU_STR_EQUAL(str, "miles") || BU_STR_EQUAL(str, "mile") )
 	return ID_MI_UNIT;
 
     return -1;		/* error */

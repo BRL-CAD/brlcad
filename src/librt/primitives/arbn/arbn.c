@@ -1090,9 +1090,9 @@ rt_arbn_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	    bu_vls_printf(logstr, " P%d {%.25g %.25g %.25g %.25g}", i,
 			  V4ARGS(arbn->eqn[i]));
 	}
-    } else if (!strcmp(attr, "N")) {
+    } else if (BU_STR_EQUAL(attr, "N")) {
 	bu_vls_printf(logstr, "%d", arbn->neqn);
-    } else if (!strcmp(attr, "P")) {
+    } else if (BU_STR_EQUAL(attr, "P")) {
 	for (i=0; i<arbn->neqn; i++) {
 	    bu_vls_printf(logstr, " P%d {%.25g %.25g %.25g %.25g}", i,
 			  V4ARGS(arbn->eqn[i]));
@@ -1148,7 +1148,7 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
     RT_ARBN_CK_MAGIC(arbn);
 
     while (argc >= 2) {
-	if (!strcmp(argv[0], "N")) {
+	if (BU_STR_EQUAL(argv[0], "N")) {
 	    val = atol(argv[1]);
 	    if (val < 0) {
 		bu_vls_printf(logstr, "ERROR: number of planes [%ld] must be greater than 0\n", val);
@@ -1167,7 +1167,7 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    }
 	    arbn->neqn = i;
 
-	} else if (!strcmp(argv[0], "P")) {
+	} else if (BU_STR_EQUAL(argv[0], "P")) {
 	    /* eliminate all the '{' and '}' chars */
 	    c = (unsigned char *)argv[1];
 	    while (*c != '\0') {

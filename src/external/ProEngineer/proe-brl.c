@@ -574,7 +574,7 @@ create_unique_name( char *name )
 	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "\tCreating rb tree for brlcad names\n" );
 	}
-	brlcad_names = bu_rb_create1( "BRL-CAD names", strcmp );
+	brlcad_names = bu_rb_create1( "BRL-CAD names", bu_strcmp );
 	bu_rb_uniq_all_on( brlcad_names );
     }
 
@@ -801,7 +801,7 @@ add_to_empty_list( char *name )
     } else {
 	ptr = empty_parts_root;
 	while ( !found && ptr->next ) {
-	    if ( !strcmp( name, ptr->name ) ) {
+	    if ( BU_STR_EQUAL( name, ptr->name ) ) {
 		found = 1;
 		break;
 	    }
@@ -3239,7 +3239,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
     /* open log file, if a name was provided */
     if ( strlen( log_file ) > 0 ) {
-	if ( strcmp( log_file, "stderr" ) == 0 ) {
+	if ( BU_STR_EQUAL( log_file, "stderr" ) ) {
 	    logger = stderr;
 	} else if ( (logger=fopen( log_file, "wb" ) ) == NULL ) {
 	    (void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Cannot open log file" );
@@ -3251,11 +3251,11 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	}
 
 	/* Set logger type */
-	if (!strcmp("Failure", logger_type_str))
+	if (BU_STR_EQUAL("Failure", logger_type_str))
 	    logger_type = LOGGER_TYPE_FAILURE;
-	else if (!strcmp("Success", logger_type_str))
+	else if (BU_STR_EQUAL("Success", logger_type_str))
 	    logger_type = LOGGER_TYPE_SUCCESS;
-	else if (!strcmp("Failure/Success", logger_type_str))
+	else if (BU_STR_EQUAL("Failure/Success", logger_type_str))
 	    logger_type = LOGGER_TYPE_FAILURE_OR_SUCCESS;
 	else
 	    logger_type = LOGGER_TYPE_ALL;

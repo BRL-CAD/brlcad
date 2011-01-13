@@ -387,7 +387,7 @@ int main(int argc, char **argv)
 	rt_pr_tol( &rtip->rti_tol );
 
     /* before view_init */
-    if ( outputfile && strcmp( outputfile, "-") == 0 )
+    if ( outputfile && BU_STR_EQUAL( outputfile, "-") )
 	outputfile = (char *)0;
 
     /*

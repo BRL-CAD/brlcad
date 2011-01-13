@@ -185,7 +185,7 @@ index_in_list(struct nametbl l, char *name)
     int i;
 
     for (i = 0; i < l.names_used; i++)
-	if (!strcmp(bu_vls_addr(&l.names[i].src), name))
+	if (BU_STR_EQUAL(bu_vls_addr(&l.names[i].src), name))
 	    return i;
     return -1;
 }

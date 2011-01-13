@@ -133,7 +133,7 @@ rt_regionfix(struct rt_i *rtip)
 	     *          current instance (use) count.
 	     */
 	    oldid = rp->reg_regionid;
-	    if (strcmp(tabp, "+uses") == 0) {
+	    if (BU_STR_EQUAL(tabp, "+uses")) {
 		newid = oldid + rp->reg_instnum;
 	    } else if (*tabp == '+') {
 		newid = oldid + atoi(tabp+1);

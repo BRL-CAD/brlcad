@@ -221,7 +221,8 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    VPRINT(" OPoint", pt);
 	    bu_log("***********\n");
 	}
-	if (segp->seg_stp->st_bit >= rtip->nsolids) bu_bomb("rt_boolweave: st_bit");
+	if ((size_t)segp->seg_stp->st_bit >= rtip->nsolids)
+	    bu_bomb("rt_boolweave: st_bit");
 
 	BU_LIST_DEQUEUE(&(segp->l));
 	BU_LIST_INSERT(&(out_hd->l), &(segp->l));
@@ -999,7 +1000,8 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
     int n_regions;
     int n_fastgen = 0;
     int code;
-    int i;
+    size_t i;
+    int counter;
 
     RT_CK_AP(ap);
     RT_CK_PARTITION(pp);
@@ -1011,8 +1013,8 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 
     /* Count number of FASTGEN regions */
     n_regions = BU_PTBL_LEN(regiontable);
-    for (i = n_regions-1; i >= 0; i--) {
-	struct region *regp = (struct region *)BU_PTBL_GET(regiontable, i);
+    for (counter = n_regions-1; counter >= 0; counter--) {
+	struct region *regp = (struct region *)BU_PTBL_GET(regiontable, counter);
 	RT_CK_REGION(regp);
 	if (regp->reg_is_fastgen != REGION_NON_FASTGEN) n_fastgen++;
     }
@@ -1072,8 +1074,8 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 
 	/* Finally, think up a way to pass plate/plate overlaps on */
 	n_fastgen = 0;
-	for (i = n_regions-1; i >= 0; i--) {
-	    struct region *regp = (struct region *)BU_PTBL_GET(regiontable, i);
+	for (counter = n_regions-1; counter >= 0; counter--) {
+	    struct region *regp = (struct region *)BU_PTBL_GET(regiontable, counter);
 	    if (regp == REGION_NULL) continue;	/* empty slot in table */
 	    RT_CK_REGION(regp);
 	    if (regp->reg_is_fastgen != REGION_NON_FASTGEN) n_fastgen++;
@@ -1230,7 +1232,7 @@ rt_default_logoverlap(struct application *ap, const struct partition *pp, const 
     point_t pt;
     static long count = 0; /* Not PARALLEL, shouldn't hurt */
     register fastf_t depth;
-    int i;
+    size_t i;
     struct bu_vls str;
 
     RT_CK_AP(ap);

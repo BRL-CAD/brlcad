@@ -97,6 +97,9 @@ ENDIF(BRLCAD_BUILD_LOCAL_TCL)
 add_executable(htester htester.c)
 target_link_libraries(htester ${CMAKE_THREAD_LIBS_INIT} ${PNG_LIBRARY} libbu)
 
+add_executable(timetester timetester.c)
+target_link_libraries(timetester libbu)
+
 set(bu_MAN3
   htond.3
   libbu.3

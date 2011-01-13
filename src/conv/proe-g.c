@@ -142,8 +142,8 @@ Build_unique_name(char *name)
     bu_vls_strcpy(&ret_name, name);
     ptr = name_root;
     while (ptr) {
-	if (!strcmp(bu_vls_addr(&ret_name), ptr->brlcad_name) ||
-	    (ptr->solid_name && !strcmp(bu_vls_addr(&ret_name), ptr->solid_name))) {
+	if (BU_STR_EQUAL(bu_vls_addr(&ret_name), ptr->brlcad_name) ||
+	    (ptr->solid_name && BU_STR_EQUAL(bu_vls_addr(&ret_name), ptr->solid_name))) {
 	    /* this name already exists, build a new one */
 	    ++tries;
 	    bu_vls_trunc(&ret_name, name_len);
@@ -966,7 +966,7 @@ Rm_nulls(void)
 		char *save_name;
 
 		save_name = (char *)BU_PTBL_GET(&null_parts, k);
-		if (!strcmp(save_name, tree_list[j].tl_tree->tr_l.tl_name)) {
+		if (BU_STR_EQUAL(save_name, tree_list[j].tl_tree->tr_l.tl_name)) {
 		    found = 1;
 		    break;
 		}

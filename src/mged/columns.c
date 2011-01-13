@@ -98,7 +98,7 @@ cmpdirname(const genptr_t a, const genptr_t b)
 
     dp1 = (struct directory **)a;
     dp2 = (struct directory **)b;
-    return strcmp((*dp1)->d_namep, (*dp2)->d_namep);
+    return !BU_STR_EQUAL((*dp1)->d_namep, (*dp2)->d_namep);
 }
 
 

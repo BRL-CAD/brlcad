@@ -69,6 +69,7 @@ bu_ptbl_rm
 bu_realloc
 bu_setjmp_valid
 bu_setlinebuf
+bu_strcmpm
 bu_strdupm
 bu_strlcatm
 bu_strlcpym

@@ -248,7 +248,7 @@ make_tree(struct rt_comb_internal *comb, struct directory *dp, size_t node_count
     intern.idb_ptr = (genptr_t)comb;
     comb->tree = final_tree;
 
-    if (strcmp(new_name, old_name)) {
+    if (!BU_STR_EQUAL(new_name, old_name)) {
 	int flags;
 
 	if (comb->region_flag)

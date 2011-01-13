@@ -112,7 +112,7 @@ _ged_get_obj_bounds(struct ged	*gedp,
 	    if (*argv[i] != '/' && *reg_name == '/')
 		reg_name++;
 
-	    if (!strcmp( reg_name, argv[i]))
+	    if (BU_STR_EQUAL( reg_name, argv[i]))
 		goto found;
 	}
 	goto not_found;

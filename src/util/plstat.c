@@ -145,7 +145,7 @@ main(int argc, char **argv)
     int i;
 
     while (argc > 1) {
-	if (strcmp(argv[1], "-v") == 0) {
+	if (BU_STR_EQUAL(argv[1], "-v")) {
 	    verbose++;
 	} else
 	    break;
@@ -253,8 +253,12 @@ outfloat(int n)
     int i;
     unsigned char in[8*16];
     double out[16];
+    size_t ret;
 
-    fread(in, 8, n, fp);
+    ret = fread(in, 8, n, fp);
+    if (ret < (size_t)n)
+	perror("fread");
+
     ntohd((unsigned char *)out, in, n);
 
     for (i = 0; i < n; i++) {

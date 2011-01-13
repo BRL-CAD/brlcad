@@ -32,7 +32,7 @@ proc mike_dedication {id} {
     toplevel $top -screen $mged_gui($id,screen)
     set row 0
 
-    set mike_file [bu_brlcad_data "tclscripts/mged"]/mike-tux.ppm
+    set mike_file [file join [bu_brlcad_data "tclscripts"] mged mike-tux.ppm]
     if { [file exists $mike_file] } {
 	set mike [image create photo -file $mike_file]
 	label $top.mike_im -image $mike -relief sunken
@@ -45,7 +45,7 @@ proc mike_dedication {id} {
     #	grid rowconfigure $top $row -weight 1
     incr row
 
-    set dedi_file [bu_brlcad_data "tclscripts/mged"]/mike-dedication.txt
+    set dedi_file [file join [bu_brlcad_data "tclscripts"] mged mike-dedication.txt]
     if { [file exists $dedi_file] } {
 	if { [catch {open $dedi_file "r"} fp] == 0 } {
 	    set dedi_text [read -nonewline $fp]

@@ -155,7 +155,7 @@ readBatchInput(FILE *fp)
 		brst_log(" ");
 	    brst_log("^\n");
 	} else
-	    if (strcmp(cmdname, CMD_COMMENT) == 0) {
+	    if (BU_STR_EQUAL(cmdname, CMD_COMMENT)) {
 		/* special handling for comments */
 		cmdptr = cmdbuf;
 		cmdbuf[strlen(cmdbuf)-1] = '\0'; /* clobber newline */

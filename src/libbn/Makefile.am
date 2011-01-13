@@ -54,6 +54,7 @@ AM_CFLAGS = ${STRICT_FLAGS}
 
 EXTRA_DIST = \
 	$(man_MANS) \
+	bntester.dat \
 	ulp.c \
 	CMakeLists.txt
 

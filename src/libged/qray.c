@@ -135,7 +135,7 @@ ged_qray(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(argv[1], "fmt") == 0) {
+    if (BU_STR_EQUAL(argv[1], "fmt")) {
 	int i;
 
 	if (argc == 2) {
@@ -171,7 +171,7 @@ ged_qray(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(argv[1], "basename") == 0) {
+    if (BU_STR_EQUAL(argv[1], "basename")) {
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&gedp->ged_gdp->gd_qray_basename));
@@ -187,7 +187,7 @@ ged_qray(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(argv[1], "script") == 0) {
+    if (BU_STR_EQUAL(argv[1], "script")) {
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&gedp->ged_gdp->gd_qray_script));
@@ -203,7 +203,7 @@ ged_qray(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(argv[1], "effects") == 0) {
+    if (BU_STR_EQUAL(argv[1], "effects")) {
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_printf(&gedp->ged_result_str, "%c", gedp->ged_gdp->gd_qray_effects);
@@ -226,7 +226,7 @@ ged_qray(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(argv[1], "echo") == 0) {
+    if (BU_STR_EQUAL(argv[1], "echo")) {
 	if (argc == 2) {
 	    /* get value */
 	    if (gedp->ged_gdp->gd_qray_cmd_echo)
@@ -257,7 +257,7 @@ ged_qray(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(argv[1], "oddcolor") == 0) {
+    if (BU_STR_EQUAL(argv[1], "oddcolor")) {
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
@@ -292,7 +292,7 @@ ged_qray(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(argv[1], "evencolor") == 0) {
+    if (BU_STR_EQUAL(argv[1], "evencolor")) {
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
@@ -327,7 +327,7 @@ ged_qray(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(argv[1], "voidcolor") == 0) {
+    if (BU_STR_EQUAL(argv[1], "voidcolor")) {
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
@@ -362,7 +362,7 @@ ged_qray(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(argv[1], "overlapcolor") == 0) {
+    if (BU_STR_EQUAL(argv[1], "overlapcolor")) {
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
@@ -397,12 +397,12 @@ ged_qray(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(argv[1], "vars") == 0) {
+    if (BU_STR_EQUAL(argv[1], "vars")) {
 	qray_print_vars(gedp);
 	return GED_OK;
     }
 
-    if (strcmp(argv[1], "help") == 0) {
+    if (BU_STR_EQUAL(argv[1], "help")) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], qray_syntax);
 	return GED_HELP;
     }

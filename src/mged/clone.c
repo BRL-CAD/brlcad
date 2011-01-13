@@ -201,7 +201,7 @@ index_in_list(struct nametbl l, char *name)
     size_t i;
 
     for (i = 0; i < l.names_used; i++)
-	if (!strcmp(bu_vls_addr(&l.names[i].src), name))
+	if (BU_STR_EQUAL(bu_vls_addr(&l.names[i].src), name))
 	    return i;
     return -1;
 }
@@ -702,8 +702,8 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
     struct directory *mdp = (struct directory *)NULL;
     struct directory *copy = (struct directory *)NULL;
 
-    struct bu_vls *copyname;
-    struct bu_vls *nextname;
+    struct bu_vls *copyname = NULL;
+    struct bu_vls *nextname = NULL;
 
     /* get the name of what the object "should" get cloned to */
     copyname = get_name(_dbip, dp, state, 0);
@@ -952,7 +952,7 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     /* Read in knots from specified file *************/
     do
 	bu_fgets(line, 81, points);
-    while (strcmp(strtok(line, ","), "112") != 0);
+    while (!BU_STR_EQUAL(strtok(line, ","), "112"));
 
     bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
     bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));

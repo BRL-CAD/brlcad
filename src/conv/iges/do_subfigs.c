@@ -174,7 +174,7 @@ Do_subfigs()
 
 		/* Check if this external reference is already on the list */
 		for (BU_LIST_FOR(list_ptr, file_list, &iges_list.l)) {
-		    if (!strcmp(file_name, list_ptr->file_name)) {
+		    if (BU_STR_EQUAL(file_name, list_ptr->file_name)) {
 			found = 1;
 			name = list_ptr->obj_name;
 			break;

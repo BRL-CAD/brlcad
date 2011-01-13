@@ -46,7 +46,7 @@ brst_log(const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    if (tty && (errfile[0] == '\0' || ! strcmp(errfile, "/dev/tty"))) {
+    if (tty && (errfile[0] == '\0' || BU_STR_EQUAL(errfile, "/dev/tty"))) {
 	clr_Tabs(HmTtyFd);
 	if (ScDL != NULL) {
 	    (void) ScMvCursor(1, SCROLL_TOP);

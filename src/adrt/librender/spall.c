@@ -61,13 +61,11 @@ render_spall_free(render_t *render)
     bu_free(render->data, "render data");
 }
 
-
 static void *
 render_arrow_hit(struct tie_ray_s *UNUSED(ray), struct tie_id_s *UNUSED(id), struct tie_tri_s *tri, void *UNUSED(ptr))
 {
     return tri;
 }
-
 
 void *
 render_spall_hit(struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, struct tie_tri_s *tri, void *ptr)
@@ -79,9 +77,8 @@ render_spall_hit(struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, struct tie_
     return hit;
 }
 
-
 void
-render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
+render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
 {
     struct render_spall_s *rd;
     struct render_spall_hit_s hit;
@@ -94,9 +91,9 @@ render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TI
 
     /* Draw spall Cone */
     if (tie_work(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
-	pixel->v[0] = (tfloat)0.4;
-	pixel->v[1] = (tfloat)0.4;
-	pixel->v[2] = (tfloat)0.4;
+	*pixel[0] = (tfloat)0.4;
+	*pixel[1] = (tfloat)0.4;
+	*pixel[2] = (tfloat)0.4;
     }
 
     /*
@@ -162,7 +159,7 @@ render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TI
 #endif
 	/* Shade using inhit */
 	VSCALE(color,  color,  (dot*0.50));
-	VADD2((*pixel).v,  (*pixel).v,  color);
+	VADD2(*pixel,  *pixel,  color);
 #if 0
     } else {
 	/* shade solid */
@@ -173,9 +170,9 @@ render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, TI
     }
 #endif
 
-    pixel->v[0] += (tfloat)0.1;
-    pixel->v[1] += (tfloat)0.1;
-    pixel->v[2] += (tfloat)0.1;
+    *pixel[0] += (tfloat)0.1;
+    *pixel[1] += (tfloat)0.1;
+    *pixel[2] += (tfloat)0.1;
 }
 
 int
@@ -183,7 +180,7 @@ render_spall_init(render_t *render, const char *buf)
 {
     struct render_spall_s *d;
     vect_t *tri_list, *vec_list, normal, up, ray_pos, ray_dir;
-    tfloat plane[4], angle;
+    fastf_t plane[4], angle;
     int i;
 
     if(buf == NULL)
@@ -192,7 +189,7 @@ render_spall_init(render_t *render, const char *buf)
     render->work = render_spall_work;
     render->free = render_spall_free;
 
-    sscanf(buf, "(%g %g %g) (%g %g %g) %g",
+    sscanf(buf, "(%lg %lg %lg) (%lg %lg %lg) %lg",
 		    &ray_pos[0], &ray_pos[1], &ray_pos[2],
 		    &ray_dir[0], &ray_dir[1], &ray_dir[2],
 		    &angle);
@@ -227,8 +224,8 @@ render_spall_init(render_t *render, const char *buf)
     /******************/
     /* The spall Cone */
     /******************/
-    vec_list = (TIE_3 *)bu_malloc(sizeof(TIE_3) * TESSELATION, "vec_list");
-    tri_list = (TIE_3 *)bu_malloc(sizeof(TIE_3) * TESSELATION * 3, "tri_list");
+    vec_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELATION, "vec_list");
+    tri_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELATION * 3, "tri_list");
 
     render_util_spall_vec(ray_dir, angle, TESSELATION, vec_list);
 

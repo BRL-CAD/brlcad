@@ -249,7 +249,7 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	return TCL_ERROR;
     }
 
-    if (!strcmp("-n", argv[1])) {
+    if (BU_STR_EQUAL("-n", argv[1])) {
 	illum_only = 1;
 	--argc;
 	++argv;

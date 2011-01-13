@@ -680,7 +680,7 @@ rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
     struct xray ray;
     struct resource *resp;
     struct rt_i *rtip;
-    int i;
+    size_t i;
 
     resp = ss->ap->a_resource;
     rtip = ss->ap->a_rt_i;

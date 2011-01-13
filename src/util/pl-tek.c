@@ -170,8 +170,12 @@ getieee(void)
 {
     unsigned char in[8];
     double d;
+    size_t ret;
 
-    fread(in, 8, 1, stdin);
+    ret = fread(in, 8, 1, stdin);
+    if (ret < 1)
+	perror("fread");
+
     ntohd((unsigned char *)&d, in, 1);
     return d;
 }
@@ -368,9 +372,9 @@ main(int argc, char **argv)
     struct uplot *up;
 
     while (argc > 1) {
-	if (strcmp(argv[1], "-v") == 0) {
+	if (BU_STR_EQUAL(argv[1], "-v")) {
 	    verbose++;
-	} else if (strcmp(argv[1], "-e") == 0) {
+	} else if (BU_STR_EQUAL(argv[1], "-e")) {
 	    expand_it = 1;
 	} else {
 	    fprintf(stderr, "pl-tek: argument '%s' ignored\n", argv[1]);

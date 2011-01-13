@@ -154,7 +154,7 @@ txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value)
     register struct txt_specific *tp =
 	(struct txt_specific *)cp;
 
-    if (!strcmp(name, txt_parse[0].sp_name) && ptab == txt_parse) {
+    if (BU_STR_EQUAL(name, txt_parse[0].sp_name) && ptab == txt_parse) {
 	tp->tx_trans_valid = 1;
     } else {
 	bu_log("file:%s, line:%d txt_transp_hook name:(%s) instead of (%s)\n",
@@ -691,7 +691,7 @@ txt_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, const
     if (bu_vls_strlen(&tp->tx_name)<=0) return -1;
     /*	!?! if (tp->tx_name[0] == '\0' )  return -1;	*/ /* FAIL, no file */
 
-    if (strcmp( mfp->mf_name, "bwtexture" ) == 0 ) pixelbytes = 1;
+    if (BU_STR_EQUAL( mfp->mf_name, "bwtexture" ) ) pixelbytes = 1;
 
     /* load the texture from its datasource */
     if (txt_load_datasource(tp, rtip->rti_dbip, tp->tx_w * tp->tx_n * pixelbytes)<0) {

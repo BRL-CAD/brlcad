@@ -35,12 +35,12 @@ normal_hit(struct tie_ray_s *UNUSED(ray), struct tie_id_s *UNUSED(id), struct ti
 }
 
 void
-render_normal_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel) {
+render_normal_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel) {
     struct tie_id_s	id;
     float	one[3] = { 1, 1, 1 };
 
     if (tie_work(tie, ray, &id, normal_hit, NULL))
-	VADD2SCALE(pixel->v, id.norm, one, 0.5);
+	VADD2SCALE(*pixel, id.norm, one, 0.5);
     return;
 }
 

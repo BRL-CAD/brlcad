@@ -1882,10 +1882,10 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 
 		RT_CLINE_CK_MAGIC(cli);
 
-		if (!strcmp(cp, "V")) {
+		if (BU_STR_EQUAL(cp, "V")) {
 		    VMOVE(mpt, cli->v);
 		    *strp = "V";
-		} else if (!strcmp(cp, "H")) {
+		} else if (BU_STR_EQUAL(cp, "H")) {
 		    VADD2(mpt, cli->v, cli->h);
 		    *strp = "H";
 		} else {
@@ -1901,10 +1901,10 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 
 		RT_PART_CK_MAGIC(part);
 
-		if (!strcmp(cp, "V")) {
+		if (BU_STR_EQUAL(cp, "V")) {
 		    VMOVE(mpt, part->part_V);
 		    *strp = "V";
-		} else if (!strcmp(cp, "H")) {
+		} else if (BU_STR_EQUAL(cp, "H")) {
 		    VADD2(mpt, part->part_V, part->part_H);
 		    *strp = "H";
 		} else {
@@ -2094,22 +2094,22 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		    (struct rt_ell_internal *)ip->idb_ptr;
 		RT_ELL_CK_MAGIC(ell);
 
-		if (strcmp(cp, "V") == 0) {
+		if (BU_STR_EQUAL(cp, "V")) {
 		    VMOVE(mpt, ell->v);
 		    *strp = "V";
 		    break;
 		}
-		if (strcmp(cp, "A") == 0) {
+		if (BU_STR_EQUAL(cp, "A")) {
 		    VADD2(mpt, ell->v, ell->a);
 		    *strp = "A";
 		    break;
 		}
-		if (strcmp(cp, "B") == 0) {
+		if (BU_STR_EQUAL(cp, "B")) {
 		    VADD2(mpt, ell->v, ell->b);
 		    *strp = "B";
 		    break;
 		}
-		if (strcmp(cp, "C") == 0) {
+		if (BU_STR_EQUAL(cp, "C")) {
 		    VADD2(mpt, ell->v, ell->c);
 		    *strp = "C";
 		    break;
@@ -2125,22 +2125,22 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		    (struct rt_superell_internal *)ip->idb_ptr;
 		RT_SUPERELL_CK_MAGIC(superell);
 
-		if (strcmp(cp, "V") == 0) {
+		if (BU_STR_EQUAL(cp, "V")) {
 		    VMOVE(mpt, superell->v);
 		    *strp = "V";
 		    break;
 		}
-		if (strcmp(cp, "A") == 0) {
+		if (BU_STR_EQUAL(cp, "A")) {
 		    VADD2(mpt, superell->v, superell->a);
 		    *strp = "A";
 		    break;
 		}
-		if (strcmp(cp, "B") == 0) {
+		if (BU_STR_EQUAL(cp, "B")) {
 		    VADD2(mpt, superell->v, superell->b);
 		    *strp = "B";
 		    break;
 		}
-		if (strcmp(cp, "C") == 0) {
+		if (BU_STR_EQUAL(cp, "C")) {
 		    VADD2(mpt, superell->v, superell->c);
 		    *strp = "C";
 		    break;
@@ -2156,7 +2156,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		    (struct rt_tor_internal *)ip->idb_ptr;
 		RT_TOR_CK_MAGIC(tor);
 
-		if (strcmp(cp, "V") == 0) {
+		if (BU_STR_EQUAL(cp, "V")) {
 		    VMOVE(mpt, tor->v);
 		    *strp = "V";
 		    break;
@@ -2173,32 +2173,32 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		    (struct rt_tgc_internal *)ip->idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
-		if (strcmp(cp, "V") == 0) {
+		if (BU_STR_EQUAL(cp, "V")) {
 		    VMOVE(mpt, tgc->v);
 		    *strp = "V";
 		    break;
 		}
-		if (strcmp(cp, "H") == 0) {
+		if (BU_STR_EQUAL(cp, "H")) {
 		    VMOVE(mpt, tgc->h);
 		    *strp = "H";
 		    break;
 		}
-		if (strcmp(cp, "A") == 0) {
+		if (BU_STR_EQUAL(cp, "A")) {
 		    VMOVE(mpt, tgc->a);
 		    *strp = "A";
 		    break;
 		}
-		if (strcmp(cp, "B") == 0) {
+		if (BU_STR_EQUAL(cp, "B")) {
 		    VMOVE(mpt, tgc->b);
 		    *strp = "B";
 		    break;
 		}
-		if (strcmp(cp, "C") == 0) {
+		if (BU_STR_EQUAL(cp, "C")) {
 		    VMOVE(mpt, tgc->c);
 		    *strp = "C";
 		    break;
 		}
-		if (strcmp(cp, "D") == 0) {
+		if (BU_STR_EQUAL(cp, "D")) {
 		    VMOVE(mpt, tgc->d);
 		    *strp = "D";
 		    break;
@@ -8690,7 +8690,7 @@ f_keypoint(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 	    es_keyfixed = 1;
 	    break;
 	case 1:
-	    if (strcmp(argv[1], "reset") == 0) {
+	    if (BU_STR_EQUAL(argv[1], "reset")) {
 		es_keytag = "";
 		es_keyfixed = 0;
 		get_solid_keypoint(es_keypoint, &es_keytag,

@@ -91,7 +91,7 @@ ged_pathlist(struct ged *gedp, int argc, const char *argv[])
     pathListNoLeaf = 0;
 
     if (argc == 3) {
-	if (!strcmp(argv[1], "-noleaf"))
+	if (BU_STR_EQUAL(argv[1], "-noleaf"))
 	    pathListNoLeaf = 1;
 
 	++argv;

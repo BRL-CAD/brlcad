@@ -72,9 +72,10 @@ main (int argc, char *argv[])
     int dwidth;		/* doubles/pixel (in bytes) */
     int pwidth;		/* bytes/pixel, total */
     int num;
-    int infd;		/* File descriptor */
+    int infd = 0;	/* File descriptor */
     int cfd = -1;	/*   "       "     */
     int dfd = -1;	/*   "       "     */
+    ssize_t ret;
 
     c_per_p = 3; cf_name = "-";
     d_per_p = 1; df_name = "";
@@ -178,10 +179,16 @@ main (int argc, char *argv[])
 	    cbp += cwidth;
 	    dbp += dwidth;
 	}
-	if (cf_name)
-	    write(cfd, cbuf, i * cwidth);
-	if (df_name)
-	    write(dfd, dbuf, i * dwidth);
+	if (cf_name) {
+	    ret = write(cfd, cbuf, i * cwidth);
+	    if (ret < 0)
+		perror("write");
+	}
+	if (df_name) {
+	    ret = write(dfd, dbuf, i * dwidth);
+	    if (ret < 0)
+		perror("write");
+	}
 	if (num % pwidth != 0)
 	    bu_log("pixdsplit: WARNING: incomplete final pixel ignored\n");
     }

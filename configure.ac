@@ -4359,7 +4359,6 @@ AC_CONFIG_FILES([
 	src/tclscripts/hv3/Makefile
 	src/tclscripts/lib/Makefile
 	src/tclscripts/mged/Makefile
-	src/tclscripts/nirt/Makefile
 	src/tclscripts/pl-dm/Makefile
 	src/tclscripts/rtwizard/Makefile
 	src/tclscripts/rtwizard/examples/Makefile

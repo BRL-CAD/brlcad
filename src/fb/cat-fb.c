@@ -928,6 +928,7 @@ writelines(int nlines, char *buf)
     int	l;
 
     for (l = 0; l < nlines; l++)  {
+	size_t ret;
 	if (cur_fb_line < 0 )  {
 	    /* Ran off bottom of screen */
 	    if ( fbp )
@@ -959,10 +960,15 @@ writelines(int nlines, char *buf)
 	    }
 	    buf++;
 	}
-	if ( output_pix )
-	    fwrite( scanline, scr_width*3, 1, stdout );
-	else
-	    fb_write( fbp, 0, cur_fb_line, scanline, scr_width );
+	if ( output_pix ) {
+	    ret = fwrite( scanline, scr_width*3, 1, stdout );
+	    if (ret != 1)
+		perror("fwrite");
+	} else {
+	    ret = fb_write( fbp, 0, cur_fb_line, scanline, scr_width );
+	    if (ret != (size_t)scanline)
+		perror("fwrite");
+	}
 	cur_fb_line--;
     }
     return 0;

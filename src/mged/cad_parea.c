@@ -54,11 +54,11 @@ main(int argc, const char *argv[])			/* "cad_parea" entry point */
     /* argument count */
     /* argument strings */
 {
-    point previous;	/* previous point */
-    point current;	/* current point */
-    point first;		/* saved first point */
-    int saved;		/* "`first' valid" flag */
-    double sum;		/* accumulator */
+    point previous = {0.0, 0.0}; /* previous point */
+    point current = {0.0, 0.0}; /* current point */
+    point first = {0.0, 0.0}; /* saved first point */
+    int saved; /* "`first' valid" flag */
+    double sum; /* accumulator */
 
     if (!GetArgs(argc, argv)) {
 	/* process command arguments */
@@ -109,7 +109,7 @@ GetArgs(int argc, const char *argv[])			/* process command arguments */
 		}
 		iflag = 1;
 
-		if (strcmp(bu_optarg, "-") != 0
+		if (!BU_STR_EQUAL(bu_optarg, "-")
 		    && freopen(bu_optarg, "r", stdin) == NULL
 		    ) {
 		    (void)printf("cad_parea: can't open \"%s\"\n", bu_optarg);
@@ -124,7 +124,7 @@ GetArgs(int argc, const char *argv[])			/* process command arguments */
 		}
 		oflag = 1;
 
-		if (strcmp(bu_optarg, "-") != 0
+		if (!BU_STR_EQUAL(bu_optarg, "-")
 		    && freopen(bu_optarg, "w", stdout) == NULL
 		    ) {
 		    (void)printf("cad_parea: can't create \"%s\"\n", bu_optarg);

@@ -206,7 +206,7 @@ joint_lookup(const char *name)
     struct joint *jp;
 
     for (BU_LIST_FOR(jp, joint, &joint_head)) {
-	if (strcmp(jp->name, name) == 0) return jp;
+	if (BU_STR_EQUAL(jp->name, name)) return jp;
     }
     return (struct joint *) 0;
 }
@@ -2143,7 +2143,7 @@ f_jaccept(int argc, const char *argv[])
     for (BU_LIST_FOR(jp, joint, &joint_head)) {
 	if (argc) {
 	    for (i=0; i<argc; i++) {
-		if (strcmp(argv[i], jp->name) == 0) break;
+		if (BU_STR_EQUAL(argv[i], jp->name)) break;
 	    }
 	    if (i>=argc) continue;
 	}
@@ -2178,7 +2178,7 @@ f_jreject(int argc, const char *argv[])
     for (BU_LIST_FOR(jp, joint, &joint_head)) {
 	if (argc) {
 	    for (i=0; i<argc; i++) {
-		if (strcmp(argv[i], jp->name) == 0) break;
+		if (BU_STR_EQUAL(argv[i], jp->name)) break;
 	    }
 	    if (i>=argc) continue;
 	}
@@ -2338,7 +2338,7 @@ part_solve(struct hold *hp, double limits, double tol)
 	for (BU_LIST_FOR(jp, joint, &joint_head)) {
 	    if (hp->j_set.path.type == ARC_LIST) {
 		for (i=0; i <= (size_t)hp->j_set.path.arc_last; i++) {
-		    if (strcmp(jp->name, hp->j_set.path.arc[i]) == 0) {
+		    if (BU_STR_EQUAL(jp->name, hp->j_set.path.arc[i])) {
 			BU_GETSTRUCT(jh, jointH);
 			jh->l.magic = MAGIC_JOINT_HANDLE;
 			jh->p = jp;
@@ -2352,12 +2352,12 @@ part_solve(struct hold *hp, double limits, double tol)
 		continue;
 	    }
 	    for (i=0;i<hp->effector.path.fp_len; i++) {
-		if (strcmp(jp->path.arc[0],
+		if (!BU_STR_EQUAL(jp->path.arc[0],
 			   hp->effector.path.fp_names[i]->d_namep)==0) break;
 	    }
 	    if (i+jp->path.arc_last >= hp->effector.path.fp_len) continue;
 	    for (j=1; j <= (size_t)jp->path.arc_last;j++) {
-		if (strcmp(jp->path.arc[j],
+		if (!BU_STR_EQUAL(jp->path.arc[j],
 			   hp->effector.path.fp_names[i+j]->d_namep)
 		    != 0) break;
 	    }
@@ -2373,7 +2373,7 @@ part_solve(struct hold *hp, double limits, double tol)
 		jh->arc_loc = i+j-1;
 		jh->flag = 0;
 		BU_LIST_APPEND(&hp->j_head, &jh->l);
-		if (strcmp(hp->joint, jp->name) == 0) {
+		if (BU_STR_EQUAL(hp->joint, jp->name)) {
 		    startjoint = jh->arc_loc;
 		}
 	    }
@@ -2943,7 +2943,7 @@ f_jsolve(int argc, char *argv[])
     while (argc) {
 	found = 0;
 	for (BU_LIST_FOR(hp, hold, &hold_head)) {
-	    if (strcmp(*argv, hp->name)==0) {
+	    if (BU_STR_EQUAL(*argv, hp->name)) {
 		found = 1;
 		for (count=0; count<loops; count++) {
 		    if (!part_solve(hp, delta, epsilon)) break;
@@ -3134,7 +3134,7 @@ f_jhold(int argc, const char *argv[])
 	if (argc) {
 	    int i;
 	    for (i=0; i<argc; i++) {
-		if (strcmp(argv[i], hp->name) == 0) break;
+		if (BU_STR_EQUAL(argv[i], hp->name)) break;
 	    }
 	    if (i>=argc) continue;
 	}
@@ -3429,7 +3429,7 @@ findjoint(const struct db_full_path *pathp)
 	    if (jp->path.arc_last+i >= pathp->fp_len) break;
 	    for (j=0; j<=(size_t)jp->path.arc_last;j++) {
 		if ((*pathp->fp_names[i+j]->d_namep != *jp->path.arc[j]) ||
-		    (strcmp(pathp->fp_names[i+j]->d_namep, jp->path.arc[j]) !=0)) {
+		    (!BU_STR_EQUAL(pathp->fp_names[i+j]->d_namep, jp->path.arc[j]))) {
 		    good=0;
 		    break;
 		}

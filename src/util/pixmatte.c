@@ -117,7 +117,7 @@ open_file(int i, char *name)
     }
 
     file_name[i] = name;
-    if (strcmp(name, "-") == 0) {
+    if (BU_STR_EQUAL(name, "-")) {
 	fp[i] = stdin;
 	if (isatty(fileno(stdin)))
 	    return -1;	/* FAIL */

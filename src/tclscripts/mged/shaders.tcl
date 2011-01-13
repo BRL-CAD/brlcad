@@ -1615,8 +1615,7 @@ proc do_light { shade_var id } {
 		foreach s { 0 1 2 3 4 5 6 7 8 9 } {
 		    set shader_params(light_i${i}_v${v}_s${s}) \
 			[image create photo -file \
-			     [bu_brlcad_data \
-				  "tclscripts/mged/l_i${i}_v${v}_s${s}.gif"]]
+			     [file join [bu_brlcad_data "tclscripts"] mged l_i${i}_v${v}_s${s}.gif]]
 		}
 	    }
 	}

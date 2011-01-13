@@ -34,7 +34,7 @@ proc get_html_data {cmdname} {
     global man_data
 
     # get file data
-    set man_fd [open [bu_brlcad_data "html/mann/en/$cmdname.html"]]
+    set man_fd [open [file join [bu_brlcad_data "html"] mann en $cmdname.html]]
     set man_data [read $man_fd]
     close $man_fd
 }
@@ -70,7 +70,7 @@ proc man {cmdname} {
     set _mgedFramebufferId [ lindex $_mgedFramebufferId 0 ]
 
 
-    if {![file exists [bu_brlcad_data "html/mann/en/$cmdname.html"]]} {
+    if {![file exists [file join [bu_brlcad_data "html"] mann en $cmdname.html]]]} {
     	puts "No man page found for $cmdname"
 	return
     } else {
@@ -100,7 +100,7 @@ proc man {cmdname} {
 	grid .man.top.l .man.top.s -sticky nsew -in .man.top.listing
 	grid columnconfigure .man.top.listing 0 -weight 0
 	grid rowconfigure .man.top.listing 0 -weight 1
-	set cmdfiles [glob -directory [bu_brlcad_data "html/mann/en"] *.html ]
+	set cmdfiles [glob -directory [file join [bu_brlcad_data "html"] mann en] *.html ]
 	set cmds [list ]
 	foreach cmdfile $cmdfiles {
 	   regexp {(.+/)(.+)(.html)} $cmdfile -> url cmdrootname htmlsuffix 

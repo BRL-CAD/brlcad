@@ -661,7 +661,7 @@ cmd_output_hook(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc
 
     /* Also, don't allow silly infinite loops. */
 
-    if (strcmp(argv[1], argv[0]) == 0) {
+    if (BU_STR_EQUAL(argv[1], argv[0])) {
 	Tcl_AppendResult(interpreter, "Don't be silly.", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -700,7 +700,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "open") == 0) {
+    if (BU_STR_EQUAL(argv[1], "open")) {
 	struct cmd_list *clp;
 	int name_not_used = 1;
 
@@ -713,7 +713,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 
 	/* Search to see if there exists a command window with this name */
 	for (BU_LIST_FOR (clp, cmd_list, &head_cmd_list.l))
-	    if (!strcmp(argv[2], bu_vls_addr(&clp->cl_name))) {
+	    if (BU_STR_EQUAL(argv[2], bu_vls_addr(&clp->cl_name))) {
 		name_not_used = 0;
 		break;
 	    }
@@ -732,7 +732,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "close") == 0) {
+    if (BU_STR_EQUAL(argv[1], "close")) {
 	struct cmd_list *clp;
 
 	if (argc != 3) {
@@ -746,11 +746,11 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	 * the name in argv[2].
 	 */
 	for (BU_LIST_FOR (clp, cmd_list, &head_cmd_list.l))
-	    if (!strcmp(argv[2], bu_vls_addr(&clp->cl_name)))
+	    if (BU_STR_EQUAL(argv[2], bu_vls_addr(&clp->cl_name)))
 		break;
 
 	if (clp == &head_cmd_list) {
-	    if (!strcmp(argv[2], "mged"))
+	    if (BU_STR_EQUAL(argv[2], "mged"))
 		Tcl_AppendResult(interpreter, "cmd_close: not allowed to close \"mged\"",
 				 (char *)NULL);
 	    else
@@ -773,7 +773,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "get") == 0) {
+    if (BU_STR_EQUAL(argv[1], "get")) {
 	if (argc != 2) {
 	    bu_vls_printf(&vls, "helpdevel cmd_win");
 	    Tcl_Eval(interpreter, bu_vls_addr(&vls));
@@ -788,7 +788,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "set") == 0) {
+    if (BU_STR_EQUAL(argv[1], "set")) {
 	if (argc != 3) {
 	    bu_vls_printf(&vls, "helpdevel cmd_win");
 	    Tcl_Eval(interpreter, bu_vls_addr(&vls));
@@ -797,7 +797,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	}
 
 	for (BU_LIST_FOR (curr_cmd_list, cmd_list, &head_cmd_list.l)) {
-	    if (strcmp(bu_vls_addr(&curr_cmd_list->cl_name), argv[2]))
+	    if (!BU_STR_EQUAL(bu_vls_addr(&curr_cmd_list->cl_name), argv[2]))
 		continue;
 
 	    break;
@@ -1205,7 +1205,7 @@ mged_cmd(
 	functions = in_functions;
 
     for (ftp = &functions[1]; ftp->ft_name; ftp++) {
-	if (strcmp(ftp->ft_name, argv[0]) != 0)
+	if (!BU_STR_EQUAL(ftp->ft_name, argv[0]))
 	    continue;
 	/* We have a match */
 	if ((ftp->ft_min <= argc) && (ftp->ft_max < 0 || argc <= ftp->ft_max)) {
@@ -1322,7 +1322,7 @@ helpcomm(int argc, const char *argv[], struct funtab *functions)
     /* Help command(s) */
     for (i=1; i<argc; i++) {
 	for (ftp = functions+1; ftp->ft_name; ftp++) {
-	    if (strcmp(ftp->ft_name, argv[i]) != 0)
+	    if (!BU_STR_EQUAL(ftp->ft_name, argv[i]))
 		continue;
 
 	    Tcl_AppendResult(INTERP, "Usage: ", functions->ft_name, ftp->ft_name,
@@ -1462,11 +1462,11 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     }
 
     for (BU_LIST_FOR (clp, cmd_list, &head_cmd_list.l))
-	if (!strcmp(bu_vls_addr(&clp->cl_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&clp->cl_name), argv[1]))
 	    break;
 
     if (clp == &head_cmd_list &&
-	(strcmp(bu_vls_addr(&head_cmd_list.cl_name), argv[1]))) {
+	(!BU_STR_EQUAL(bu_vls_addr(&head_cmd_list.cl_name), argv[1]))) {
 	Tcl_AppendResult(interpreter, "f_tie: unrecognized command_window - ", argv[1],
 			 "\n", (char *)NULL);
 	bu_vls_free(&vls);
@@ -1658,7 +1658,7 @@ f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 
     /* change primary focus to window argv[1] */
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	if (!strcmp(argv[1], bu_vls_addr(&p->dml_dmp->dm_pathName))) {
+	if (BU_STR_EQUAL(argv[1], bu_vls_addr(&p->dml_dmp->dm_pathName))) {
 	    curr_dm_list = p;
 
 	    if (curr_dm_list->dml_tie)
@@ -1845,7 +1845,7 @@ cmd_lm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
 
     bu_vls_init(&vls);
     bu_vls_strcat(&vls, argv[0]);
-    for (i=1; i<argc; i++) {
+    for (i=1; i<(size_t)argc; i++) {
 	if (*argv[i] == '-') {
 	    bu_vls_putc(&vls, ' ');
 	    bu_vls_strcat(&vls, argv[i]);
@@ -1857,7 +1857,7 @@ cmd_lm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
     }
 
     bu_avs_init(&avs, argc - last_opt, "cmd_lm avs");
-    for (i=last_opt+1; i<argc; i++) {
+    for (i=last_opt+1; i<(size_t)argc; i++) {
 	bu_avs_add_nonunique(&avs, "MUVES_Component", argv[i]);
     }
 

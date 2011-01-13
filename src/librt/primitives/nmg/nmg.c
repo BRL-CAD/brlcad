@@ -2723,7 +2723,7 @@ rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
     struct vertexuse *vu;
     struct vertex *v;
     struct vertex_g *vg;
-    int i;
+    size_t i;
 
     NMG_CK_MODEL(m);
 
@@ -2792,7 +2792,7 @@ rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	    /* bu_vls_strcat(logstr, " }"); */
 	}
 	bu_ptbl_free(&verts);
-    } else if (!strcmp(attr, "V")) {
+    } else if (BU_STR_EQUAL(attr, "V")) {
 	/* list of vertices */
 
 	bu_ptbl_init(&verts, 256, "nmg verts");
@@ -2842,7 +2842,7 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
     verts = (struct tmp_v *)NULL;
     for (i=0; i<argc; i += 2) {
-	if (!strcmp(argv[i], "V")) {
+	if (BU_STR_EQUAL(argv[i], "V")) {
 	    obj = Tcl_NewStringObj(argv[i+1], -1);
 	    if (Tcl_ListObjGetElements(brlcad_interp, obj, &num_verts,
 				       &obj_array) != TCL_OK) {
@@ -2871,10 +2871,10 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
     while (argc >= 2) {
 	struct vertex ***face_verts;
 
-	if (!strcmp(argv[0], "V")) {
+	if (BU_STR_EQUAL(argv[0], "V")) {
 	    /* vertex list handled above */
 	    goto cont;
-	} else if (!strcmp(argv[0], "F")) {
+	} else if (BU_STR_EQUAL(argv[0], "F")) {
 	    if (!verts) {
 		bu_vls_printf(logstr,
 			      "ERROR: cannot set faces without vertices\n");

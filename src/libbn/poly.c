@@ -542,7 +542,7 @@ bn_pr_poly(const char *title, register const struct bn_poly *eqn)
     bu_vls_init(&str);
     bu_vls_extend(&str, 196);
     bu_vls_strcat(&str, title);
-    snprintf(buf, 48, " polynomial, degree = %lu\n", eqn->dgr);
+    snprintf(buf, 48, " polynomial, degree = %lu\n", (long unsigned int)eqn->dgr);
     bu_vls_strcat(&str, buf);
 
     exponent = eqn->dgr;

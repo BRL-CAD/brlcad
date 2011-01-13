@@ -70,17 +70,18 @@ main(int argc, char **argv)
     int num;
     int in, out;
     double value;
+    size_t ret;
 
     while (argc > 1 && argv[1][0] == '-') {
-	if (strcmp(argv[1], "-v") == 0)
+	if (BU_STR_EQUAL(argv[1], "-v"))
 	    verbose = 1;
-	else if (strcmp(argv[1], "-ntsc") == 0) {
+	else if (BU_STR_EQUAL(argv[1], "-ntsc")) {
 	    /* NTSC weights */
 	    rweight = 0.30;
 	    gweight = 0.59;
 	    bweight = 0.11;
 	    red = green = blue = 1;
-	} else if (strcmp(argv[1], "-crt") == 0) {
+	} else if (BU_STR_EQUAL(argv[1], "-crt")) {
 	    /* CRT weights */
 	    rweight = 0.26;
 	    gweight = 0.66;
@@ -229,7 +230,9 @@ main(int argc, char **argv)
     png_read_image(png_p, rows);
 
     if (!convert_to_bw) {
-	fwrite(image, file_width*file_height, 1, stdout);
+	ret = fwrite(image, file_width*file_height, 1, stdout);
+	if (ret < 1)
+	    perror("fwrite");
 	bu_exit (0, NULL);
     }
 
@@ -285,7 +288,9 @@ main(int argc, char **argv)
 			 (int)image[in+2]) / 3;
     }
 
-    fwrite(obuf, sizeof(char), num/3, stdout);
+    ret = fwrite(obuf, sizeof(char), num/3, stdout);
+	if (ret < (size_t)num/3)
+	    perror("fwrite");
 
     if (clip_high != 0 || clip_low != 0) {
 	fprintf(stderr, "png-bw: clipped %d high, %d, low\n",

@@ -58,7 +58,7 @@ edcodes_reg_compare(const void *p1, const void *p2)
     reg1 = strchr(*(char **)p1, '/');
     reg2 = strchr(*(char **)p2, '/');
 
-    return strcmp(reg1, reg2);
+    return !BU_STR_EQUAL(reg1, reg2);
 }
 
 

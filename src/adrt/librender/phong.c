@@ -34,22 +34,22 @@ render_phong_free(render_t *UNUSED(render))
 }
 
 void
-render_phong_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
+render_phong_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
 {
     struct tie_id_s		id;
     adrt_mesh_t		*mesh;
 
     if ((mesh = (adrt_mesh_t*)tie_work(tie, ray, &id, render_hit, NULL)) != NULL) {
-	TIE_3		vec;
+	vect_t		vec;
 
-	*pixel = mesh->attributes->color;
+	VMOVE(*pixel, mesh->attributes->color.v);
 
 	if (mesh->texture)
 	    mesh->texture->work(mesh->texture, mesh, ray, &id, pixel);
 
-	VSUB2(vec.v,  ray->pos,  id.pos);
-	VUNITIZE(vec.v);
-	VSCALE((*pixel).v, (*pixel).v, VDOT( vec.v,  id.norm));
+	VSUB2(vec,  ray->pos,  id.pos);
+	VUNITIZE(vec);
+	VSCALE(*pixel, *pixel, VDOT(vec,  id.norm));
     }
     return;
 }

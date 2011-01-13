@@ -42,7 +42,7 @@ void		fb_Zoom_Window(void);
 int
 fb_Setup(char *file, int size)
 {
-    if ( strcmp( file, "/dev/remote" ) == 0 )
+    if ( BU_STR_EQUAL( file, "/dev/remote" ) )
 	file = "/dev/debug";
     prnt_Event( "Opening device..." );
 

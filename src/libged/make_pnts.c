@@ -136,21 +136,21 @@ str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_re
 	temp_string = bu_vls_addr(&str);
 	qsort(temp_string, strlen(temp_string), sizeof(char), (int (*)(const void *a, const void *b))compare_char);
 
-	if (strcmp(temp_string, "xyz") == 0) {
+	if (BU_STR_EQUAL(temp_string, "xyz")) {
 	    *pnt_type = RT_PNT_TYPE_PNT;
-	} else if (strcmp(temp_string, "bgrxyz") == 0) {
+	} else if (BU_STR_EQUAL(temp_string, "bgrxyz")) {
 	    *pnt_type = RT_PNT_TYPE_COL;
-	} else if (strcmp(temp_string, "sxyz") == 0) {
+	} else if (BU_STR_EQUAL(temp_string, "sxyz")) {
 	    *pnt_type = RT_PNT_TYPE_SCA;
-	} else if (strcmp(temp_string, "ijkxyz") == 0) {
+	} else if (BU_STR_EQUAL(temp_string, "ijkxyz")) {
 	    *pnt_type = RT_PNT_TYPE_NRM;
-	} else if (strcmp(temp_string, "bgrsxyz") == 0) {
+	} else if (BU_STR_EQUAL(temp_string, "bgrsxyz")) {
 	    *pnt_type = RT_PNT_TYPE_COL_SCA;
-	} else if (strcmp(temp_string, "bgijkrxyz") == 0) {
+	} else if (BU_STR_EQUAL(temp_string, "bgijkrxyz")) {
 	    *pnt_type = RT_PNT_TYPE_COL_NRM;
-	} else if (strcmp(temp_string, "ijksxyz") == 0) {
+	} else if (BU_STR_EQUAL(temp_string, "ijksxyz")) {
 	    *pnt_type = RT_PNT_TYPE_SCA_NRM;
-	} else if (strcmp(temp_string, "bgijkrsxyz") == 0) {
+	} else if (BU_STR_EQUAL(temp_string, "bgijkrsxyz")) {
 	    *pnt_type = RT_PNT_TYPE_COL_SCA_NRM;
 	} else {
 	    bu_vls_printf(ged_result_str, "Invalid format string '%s'", format_string);

@@ -774,7 +774,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
     struct soltab *stp;
     struct region *regp;
     Tcl_HashTable *tbl;
-    int prev_sol_count;
+    size_t prev_sol_count;
     int i;
     int num_attrs=0;
     point_t region_min, region_max;
@@ -1202,11 +1202,11 @@ _rt_getregion(struct rt_i *rtip, const char *reg_name)
 	const char *cp;
 	/* First, check for a match of the full path */
 	if (*reg_base == regp->reg_name[0] &&
-	    strcmp(reg_base, regp->reg_name) == 0)
+	    BU_STR_EQUAL(reg_base, regp->reg_name))
 	    return regp;
 	/* Second, check for a match of the database node name */
 	cp = bu_basename(regp->reg_name);
-	if (*cp == *reg_name && strcmp(cp, reg_name) == 0)
+	if (*cp == *reg_name && BU_STR_EQUAL(cp, reg_name))
 	    return regp;
     }
     return REGION_NULL;

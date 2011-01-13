@@ -160,7 +160,7 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 	    char dtype[40], format[40];
 	    if (sscanf(buf2, "%40s %40s %64s", dtype, format, geom_fname) != 3)
 		bu_exit(1, "Incomplete geometry field in input file.");
-	    if (strcmp(dtype, "indexed_poly") != 0)
+	    if (!BU_STR_EQUAL(dtype, "indexed_poly"))
 		bu_exit(1, "Unknown geometry data type. Must be \"indexed_poly\".");
 	}
 	bu_fgets(buf, sizeof(buf), fpin);

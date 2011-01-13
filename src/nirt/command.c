@@ -497,10 +497,10 @@ nirt_units(char *buffer, com_table *ctp)
 	return;
     }
 
-    if (strcmp(buffer + i, "?") == 0) {
+    if (BU_STR_EQUAL(buffer + i, "?")) {
 	com_usage(ctp);
 	return;
-    } else if (strcmp(buffer + i, "default") == 0) {
+    } else if (BU_STR_EQUAL(buffer + i, "default")) {
 	base2local = rtip->rti_dbip->dbi_base2local;
 	local2base = rtip->rti_dbip->dbi_local2base;
 	bu_strlcpy(local_u_name, bu_units_string(base2local), sizeof(local_u_name));
@@ -531,7 +531,7 @@ do_overlap_claims(char *buffer, com_table *ctp)
 	return;
     }
 
-    if (strcmp(buffer + i, "?") == 0) {
+    if (BU_STR_EQUAL(buffer + i, "?")) {
 	com_usage(ctp);
 	return;
     }
@@ -540,8 +540,8 @@ do_overlap_claims(char *buffer, com_table *ctp)
 	int k;
 
 	sprintf(numeral, "%d", j);
-	if ((strcmp(buffer + i, ocname[j]) == 0)
-	    || (strcmp(buffer + i, numeral) == 0)) {
+	if ((BU_STR_EQUAL(buffer + i, ocname[j]))
+	    || (BU_STR_EQUAL(buffer + i, numeral))) {
 	    overlap_claims = j;
 	    for (k = 0; k < 2; ++k)
 		if (rti_tab[k] != RTI_NULL)

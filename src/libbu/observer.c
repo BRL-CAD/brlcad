@@ -54,7 +54,7 @@ _bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, con
 
     /* see if it already exists, if so, modify it */
     for (BU_LIST_FOR(op, bu_observer, &headp->l))
-	if (strcmp(bu_vls_addr(&op->observer), argv[1]) == 0) {
+	if (BU_STR_EQUAL(bu_vls_addr(&op->observer), argv[1])) {
 	    if (argc == 2)
 		/* clobber cmd */
 		bu_vls_init(&op->cmd);
@@ -108,7 +108,7 @@ _bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, con
 
     /* search for observer and remove from list */
     for (BU_LIST_FOR(op, bu_observer, &headp->l))
-	if (strcmp(bu_vls_addr(&op->observer), argv[1]) == 0) {
+	if (BU_STR_EQUAL(bu_vls_addr(&op->observer), argv[1])) {
 	    BU_LIST_DEQUEUE(&op->l);
 	    bu_vls_free(&op->observer);
 	    bu_vls_free(&op->cmd);

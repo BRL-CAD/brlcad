@@ -53,7 +53,7 @@ Do_showmats(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree
     smdp = (struct showmats_data *)user_ptr1;
     aflag = *((int *)user_ptr2);
 
-    if (strcmp(comb_leaf->tr_l.tl_name, smdp->smd_child))
+    if (!BU_STR_EQUAL(comb_leaf->tr_l.tl_name, smdp->smd_child))
 	return;
 
     smdp->smd_count++;

@@ -101,6 +101,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
+    ssize_t ret;
     FBIO *fbp = FBIO_NULL;
 
     if (!get_args(argc, argv)) {
@@ -144,7 +145,9 @@ main(int argc, char **argv)
 
 	/* send expose command to camera */
 	cmd = 'I';	/* expose command */
-	write(fd, &cmd, 1);
+	ret = write(fd, &cmd, 1);
+	if (ret < 0)
+	    perror("write");
 	hangten();
 
 	/* Wait a long time here, because exposure can be lengthy */

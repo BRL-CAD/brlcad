@@ -146,7 +146,7 @@ GetArgs(int argc, const char *argv[])	/* process command arguments */
 		}
 		iflag = 1;
 
-		if (strcmp(bu_optarg, "-") != 0 && freopen(bu_optarg, "r", stdin) == NULL) {
+		if (!BU_STR_EQUAL(bu_optarg, "-") && freopen(bu_optarg, "r", stdin) == NULL) {
 		    fprintf(stderr, "can't open \"%s\"", bu_optarg);
 		    return 1;
 		}
@@ -159,7 +159,7 @@ GetArgs(int argc, const char *argv[])	/* process command arguments */
 		}
 		oflag = 1;
 
-		if (strcmp(bu_optarg, "-") != 0 && freopen(bu_optarg, "w", stdout) == NULL) {
+		if (!BU_STR_EQUAL(bu_optarg, "-") && freopen(bu_optarg, "w", stdout) == NULL) {
 		    fprintf(stderr, "can't create \"%s\"", bu_optarg);
 		    return 1;
 		}
@@ -388,10 +388,10 @@ Search(void)				/* output bounding polygon */
     /* Output point and look for next CCW point on periphery. */
 
     for (;;) {
-	coords first;	/* first output if -v */
-	double mindir; /* smallest from->to angle */
+	coords first = {0.0, 0.0}; /* first output if -v */
+	double mindir = 0.0; /* smallest from->to angle */
 	point *nextp = (point *)NULL; /* -> next perimeter point */
-	queue *endq;	/* -> endpoint queue entry */
+	queue *endq = NULL; /* -> endpoint queue entry */
 
 #ifdef DEBUG
 	fprintf(stderr, "from %g", from);

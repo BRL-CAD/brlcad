@@ -109,6 +109,7 @@ main(int argc, char **argv)
     char ibuf[1024*3] = {0};
     char name[80] = {0};
     FILE *f[8];
+    size_t ret;
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
@@ -155,7 +156,9 @@ main(int argc, char **argv)
 	}
 	/* split this scanline up into the output files */
 	for (i = 0; i < numx; i++) {
-	    fwrite(&ibuf[i*out_width*pixsize], pixsize, out_width, f[i]);
+	    ret = fwrite(&ibuf[i*out_width*pixsize], pixsize, out_width, f[i]);
+	    if (ret < out_width)
+		perror("fwrite");
 	}
 	y = (y + 1) % out_height;
     }

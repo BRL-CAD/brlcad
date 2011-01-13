@@ -257,11 +257,7 @@ proc dbupgrade {args} {
     file attributes $db_orig -permissions 0440
 
     # dbupgrade converts the original database to the current db format
-    if {$tcl_platform(platform) == "windows"} {
-	set dbupgrade [bu_brlcad_root "bin/dbupgrade.exe"]
-    } else {
-	set dbupgrade [bu_brlcad_root "bin/dbupgrade"]
-    }
+    set dbupgrade [file join [bu_brlcad_root "bin"] dbupgrade]
     catch {exec $dbupgrade $db_orig $dbname} ret
 
     if {[file exists $dbname]} {

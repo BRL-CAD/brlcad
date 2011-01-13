@@ -401,7 +401,7 @@ dgo_open_tcl(ClientData	UNUSED(clientData),
 
     /* search for database object */
     for (BU_LIST_FOR (wdbp, rt_wdb, &rt_g.rtg_headwdb.l)) {
-	if (strcmp(bu_vls_addr(&wdbp->wdb_name), argv[2]) == 0)
+	if (BU_STR_EQUAL(bu_vls_addr(&wdbp->wdb_name), argv[2]))
 	    break;
     }
 
@@ -487,7 +487,7 @@ dgo_illum_cmd(struct dg_obj	*dgop,
 
 	for (i = 0; i < sp->s_fullpath.fp_len; ++i) {
 	    if (*argv[1] == *DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep &&
-		strcmp(argv[1], DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep) == 0) {
+		BU_STR_EQUAL(argv[1], DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep)) {
 		found = 1;
 		if (illum)
 		    sp->s_iflag = UP;
@@ -1191,7 +1191,7 @@ dgo_autoview_tcl(ClientData	clientData,
 
     /* search for view object */
     for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
-	if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
+	if (BU_STR_EQUAL(bu_vls_addr(&vop->vo_name), argv[2]))
 	    break;
     }
 
@@ -1333,7 +1333,7 @@ dgo_get_eyemodel_cmd(struct dg_obj	*dgop,
      * Retrieve the view object
      */
     for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
-	if (strcmp(bu_vls_addr(&vop->vo_name), argv[1]) == 0)
+	if (BU_STR_EQUAL(bu_vls_addr(&vop->vo_name), argv[1]))
 	    break;
     }
 
@@ -1484,7 +1484,7 @@ dgo_rt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 
     /* search for view object */
     for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
-	if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
+	if (BU_STR_EQUAL(bu_vls_addr(&vop->vo_name), argv[2]))
 	    break;
     }
 
@@ -2144,7 +2144,7 @@ dgo_rtcheck_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[
 
     /* search for view object */
     for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
-	if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
+	if (BU_STR_EQUAL(bu_vls_addr(&vop->vo_name), argv[2]))
 	    break;
     }
 
@@ -2183,7 +2183,7 @@ dgo_assoc_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
     if (argc == 3) {
 	/* search for database object */
 	for (BU_LIST_FOR (wdbp, rt_wdb, &rt_g.rtg_headwdb.l)) {
-	    if (strcmp(bu_vls_addr(&wdbp->wdb_name), argv[2]) == 0)
+	    if (BU_STR_EQUAL(bu_vls_addr(&wdbp->wdb_name), argv[2]))
 		break;
 	}
 
@@ -2359,7 +2359,7 @@ dgo_nirt_tcl(ClientData	clientData,
 
     /* search for view object */
     for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
-	if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
+	if (BU_STR_EQUAL(bu_vls_addr(&vop->vo_name), argv[2]))
 	    break;
     }
 
@@ -2395,7 +2395,7 @@ dgo_vnirt_tcl(ClientData	clientData,
 
     /* search for view object */
     for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
-	if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
+	if (BU_STR_EQUAL(bu_vls_addr(&vop->vo_name), argv[2]))
 	    break;
     }
 
@@ -2498,10 +2498,10 @@ dgo_set_uplotOutputMode_cmd(struct dg_obj	*dgop,
     }
 
     if (argv[1][0] == 'b' &&
-	!strcmp("binary", argv[1]))
+	BU_STR_EQUAL("binary", argv[1]))
 	dgop->dgo_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     else if (argv[1][0] == 't' &&
-	     !strcmp("text", argv[1]))
+	     BU_STR_EQUAL("text", argv[1]))
 	dgop->dgo_uplotOutputMode = PL_OUTPUT_MODE_TEXT;
     else {
 	bu_vls_init(&vls);
@@ -2923,27 +2923,27 @@ dgo_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
     if (curtree->tr_op == OP_NOP)  return  curtree;
 
     if (!dgcdp->draw_nmg_only) {
-	if (BU_SETJUMP)
-	{
-	    char  *sofar = db_path_to_string(pathp);
-
+	if (!BU_SETJUMP) {
+	    /* try */
+	    failed = nmg_boolean(curtree, *tsp->ts_m, tsp->ts_tol, tsp->ts_resp);
+	    if (failed) {
+		db_free_tree(curtree, tsp->ts_resp);
+		return (union tree *)NULL;
+	    }
 	    BU_UNSETJUMP;
+	} else {
+	    /* catch */
+	    char  *sofar = db_path_to_string(pathp);
 
 	    Tcl_AppendResult(dgcdp->interp, "WARNING: Boolean evaluation of ", sofar,
 			     " failed!!!\n", (char *)NULL);
 	    bu_free((genptr_t)sofar, "path string");
 	    db_free_tree(curtree, tsp->ts_resp);
+
+	    BU_UNSETJUMP;
 	    return (union tree *)NULL;
 	}
-	failed = nmg_boolean(curtree, *tsp->ts_m, tsp->ts_tol, tsp->ts_resp);
-	BU_UNSETJUMP;
-	if (failed) {
-	    db_free_tree(curtree, tsp->ts_resp);
-	    return (union tree *)NULL;
-	}
-    }
-    else if (curtree->tr_op != OP_NMG_TESS)
-    {
+    } else if (curtree->tr_op != OP_NMG_TESS) {
 	Tcl_AppendResult(dgcdp->interp, "Cannot use '-d' option when Boolean evaluation is required\n", (char *)NULL);
 	db_free_tree(curtree, tsp->ts_resp);
 	return (union tree *)NULL;

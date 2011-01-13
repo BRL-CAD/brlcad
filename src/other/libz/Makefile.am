@@ -46,7 +46,7 @@ minigzip_LDADD = libz.la
 
 EXTRA_DIST = \
 	$(man_MANS) \
-        CMakeLists.txt \
+	CMakeLists.txt \
 	FAQ \
 	INDEX \
 	amiga \
@@ -62,7 +62,7 @@ EXTRA_DIST = \
 	qnx \
 	treebuild.xml \
 	watcom \
-	win32
+	win32 \
 	zconf.h.cmakein \
 	zconf.h.in \
 	zlib.3.pdf \

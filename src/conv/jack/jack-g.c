@@ -125,7 +125,7 @@ main(int argc, char **argv)
 	bu_strlcpy(reg_name, base, sizeof(base)+1);
 	/* Ignore .pss extension if it's there. */
 	doti = strlen(reg_name) - 4;
-	if (doti > 0 && !strcmp(".pss", reg_name+doti))
+	if (doti > 0 && BU_STR_EQUAL(".pss", reg_name+doti))
 	    reg_name[doti] = '\0';
     }
 

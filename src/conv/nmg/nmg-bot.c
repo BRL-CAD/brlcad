@@ -91,7 +91,7 @@ main(int argc, char **argv)
     }
 
     if (argc == 4) {
-	if (!strcmp(argv[1], "-v"))
+	if (BU_STR_EQUAL(argv[1], "-v"))
 	    verbose = 1;
 	else {
 	    bu_log("Illegal option: %s\n", argv[1]);

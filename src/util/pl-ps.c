@@ -169,8 +169,12 @@ getieee(void)
 {
     unsigned char in[8];
     double d;
+    size_t ret;
 
-    fread(in, 8, 1, infp);
+    ret = fread(in, 8, 1, infp);
+    if (ret < 1)
+	perror("fread");
+
     ntohd((unsigned char *)&d, in, 1);
     return d;
 }
@@ -520,15 +524,15 @@ main(int argc, char **argv)
 		break;
 	    case 'f':
 		/* linmod */
-		if (strcmp(strarg, "solid") == 0) {
+		if (BU_STR_EQUAL(strarg, "solid")) {
 		    printf("NV ");
-		} else if (strcmp(strarg, "dotted") == 0) {
+		} else if (BU_STR_EQUAL(strarg, "dotted")) {
 		    printf("DV ");
-		} else if (strcmp(strarg, "longdashed") == 0) {
+		} else if (BU_STR_EQUAL(strarg, "longdashed")) {
 		    printf("LDV ");
-		} else if (strcmp(strarg, "shortdashed") == 0) {
+		} else if (BU_STR_EQUAL(strarg, "shortdashed")) {
 		    printf("SDV ");
-		} else if (strcmp(strarg, "dotdashed") == 0) {
+		} else if (BU_STR_EQUAL(strarg, "dotdashed")) {
 		    printf("DDV ");
 		} else {
 		    fprintf(stderr, "linmod %s unknown\n", strarg);

@@ -100,7 +100,7 @@ ged_rect(struct ged	*gedp,
 	    return GED_ERROR;
 	}
 
-    if (strcmp(parameter, "draw") == 0) {
+    if (BU_STR_EQUAL(parameter, "draw")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_rect.grs_draw);
 	    return GED_OK;
@@ -119,7 +119,7 @@ ged_rect(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "cdim") == 0) {
+    if (BU_STR_EQUAL(parameter, "cdim")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d",
 			  gedp->ged_gvp->gv_rect.grs_cdim[X],
@@ -144,7 +144,7 @@ ged_rect(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "dim") == 0) {
+    if (BU_STR_EQUAL(parameter, "dim")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d",
 			  gedp->ged_gvp->gv_rect.grs_dim[X],
@@ -168,7 +168,7 @@ ged_rect(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "pos") == 0) {
+    if (BU_STR_EQUAL(parameter, "pos")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d",
 			  gedp->ged_gvp->gv_rect.grs_pos[X],
@@ -192,7 +192,7 @@ ged_rect(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "bg") == 0) {
+    if (BU_STR_EQUAL(parameter, "bg")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
 			  gedp->ged_gvp->gv_rect.grs_bg[X],
@@ -216,7 +216,7 @@ ged_rect(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "color") == 0) {
+    if (BU_STR_EQUAL(parameter, "color")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
 			  gedp->ged_gvp->gv_rect.grs_color[X],
@@ -240,7 +240,7 @@ ged_rect(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "lstyle") == 0) {
+    if (BU_STR_EQUAL(parameter, "lstyle")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_rect.grs_line_style);
 	    return GED_OK;
@@ -264,7 +264,7 @@ ged_rect(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "lwidth") == 0) {
+    if (BU_STR_EQUAL(parameter, "lwidth")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_rect.grs_line_width);
 	    return GED_OK;
@@ -288,7 +288,7 @@ ged_rect(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "rt") == 0) {
+    if (BU_STR_EQUAL(parameter, "rt")) {
 	if (argc == 1)
 	    return ged_rect_rt(gedp, (int)user_pt[X]);
 
@@ -296,7 +296,7 @@ ged_rect(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "zoom") == 0) {
+    if (BU_STR_EQUAL(parameter, "zoom")) {
 	if (argc == 0)
 	    return ged_rect_zoom(gedp);
 
@@ -304,12 +304,12 @@ ged_rect(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "vars") == 0) {
+    if (BU_STR_EQUAL(parameter, "vars")) {
 	ged_rect_vls_print(gedp);
 	return GED_OK;
     }
 
-    if (strcmp(parameter, "help") == 0) {
+    if (BU_STR_EQUAL(parameter, "help")) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", command, usage);
 	return GED_HELP;
     }

@@ -83,7 +83,7 @@ main(int argc, char **argv)
 	/* undocumented option to revert to an old db version
 	 * currently, can only revert to db version 4
 	 */
-	if ( strcmp( argv[1], "-r" ) ) {
+	if ( !BU_STR_EQUAL( argv[1], "-r" ) ) {
 	    fprintf(stderr, "Usage: %s input.g output.g\n", argv[0]);
 	    return 1;
 	} else {
@@ -142,7 +142,7 @@ main(int argc, char **argv)
     if ( db_dirbuild( dbip ) )
 	bu_exit(1, "db_dirbuild failed\n" );
 
-    if ( (strcmp( dbip->dbi_title, "Untitled v4 BRL-CAD Database" )==0) && (dbip->dbi_version == 4) ) {
+    if ( (BU_STR_EQUAL( dbip->dbi_title, "Untitled v4 BRL-CAD Database" )) && (dbip->dbi_version == 4) ) {
 	dbip->dbi_title=bu_strdup( "Untitled BRL-CAD Database" );
     }
     db_update_ident( fp->dbip, dbip->dbi_title, dbip->dbi_local2base );

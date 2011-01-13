@@ -614,7 +614,7 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 
     for (; sdp->sp_name != (char *)0; sdp++) {
 
-	if (strcmp(sdp->sp_name, name) != 0	/* no name match */
+	if (!BU_STR_EQUAL(sdp->sp_name, name)	/* no name match */
 	    && sdp->sp_fmt[0] != 'i'
 	    && sdp->sp_fmt[1] != 'p')		/* no include desc */
 
@@ -1049,7 +1049,7 @@ bu_vls_struct_item_named(struct bu_vls *vp, const struct bu_structparse *parseta
     register const struct bu_structparse *sdp;
 
     for (sdp = parsetab; sdp->sp_name != NULL; sdp++)
-	if (strcmp(sdp->sp_name, name) == 0) {
+	if (BU_STR_EQUAL(sdp->sp_name, name)) {
 	    bu_vls_struct_item(vp, sdp, base, sep_char);
 	    return 0;
 	}
@@ -2014,7 +2014,7 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
     shader = _bu_list_elem(in, 0);
     params = _bu_list_elem(in, 1);
 
-    if (!strcmp(shader, "envmap")) {
+    if (BU_STR_EQUAL(shader, "envmap")) {
 	/* environment map */
 
 	if (bu_vls_strlen(vls))
@@ -2022,7 +2022,7 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 	bu_vls_strcat(vls, "envmap");
 
 	bu_shader_to_key_eq(params, vls);
-    } else if (!strcmp(shader, "stack")) {
+    } else if (BU_STR_EQUAL(shader, "stack")) {
 	/* stacked shaders */
 
 	int i;
@@ -2172,10 +2172,10 @@ bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse
     while (sp->sp_name != NULL) {
 	bu_vls_printf(logstr, "%s ", sp->sp_name);
 	/* These types are specified by lengths, e.g. %80s */
-	if (strcmp(sp->sp_fmt, "%c") == 0 ||
-	    strcmp(sp->sp_fmt, "%s") == 0 ||
-	    strcmp(sp->sp_fmt, "%S") == 0 || /* XXX - DEPRECATED [7.14] */
-	    strcmp(sp->sp_fmt, "%V") == 0) {
+	if (BU_STR_EQUAL(sp->sp_fmt, "%c") ||
+	    BU_STR_EQUAL(sp->sp_fmt, "%s") ||
+	    BU_STR_EQUAL(sp->sp_fmt, "%S") || /* XXX - DEPRECATED [7.14] */
+	    BU_STR_EQUAL(sp->sp_fmt, "%V")) {
 	    if (sp->sp_count > 1) {
 		/* Make them all look like %###s */
 		bu_vls_printf(logstr, "%%%lds", sp->sp_count);
@@ -2225,7 +2225,7 @@ bu_structparse_argv(struct bu_vls *logstr,
     while (argc > 0) {
 	/* Find the attribute which matches this argument. */
 	for (sdp = desc; sdp->sp_name != NULL; sdp++) {
-	    if (strcmp(sdp->sp_name, *argv) != 0)
+	    if (!BU_STR_EQUAL(sdp->sp_name, *argv))
 		continue;
 
 	    /* if we get this far, we've got a name match

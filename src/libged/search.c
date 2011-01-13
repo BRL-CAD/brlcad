@@ -834,7 +834,7 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    }			
 		}
 		if ((checkval == 2) && (strcomparison == 1)) {
-    		    if (strcmp(bu_vls_addr(&value), avpp->value) < 0) {
+    		    if (bu_strcmp(bu_vls_addr(&value), avpp->value) < 0) {
 		    	bu_avs_free(&avs);
     			bu_vls_free(&attribname);
     			bu_vls_free(&value);
@@ -847,7 +847,7 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    }			
 		}
 		if ((checkval == 3) && (strcomparison == 1)) {
-    		    if (strcmp(bu_vls_addr(&value), avpp->value) > 0) {
+    		    if (bu_strcmp(bu_vls_addr(&value), avpp->value) > 0) {
 		    	bu_avs_free(&avs);
     			bu_vls_free(&attribname);
     			bu_vls_free(&value);
@@ -860,7 +860,7 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    }			
 		}
 		if ((checkval == 4) && (strcomparison == 1)) {
-    		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (strcmp(bu_vls_addr(&value), avpp->value) < 0)) {
+    		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (bu_strcmp(bu_vls_addr(&value), avpp->value) < 0)) {
 		    	bu_avs_free(&avs);
     			bu_vls_free(&attribname);
     			bu_vls_free(&value);
@@ -873,7 +873,7 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    }			
 		}
 		if ((checkval == 5) && (strcomparison == 1)) {
-    		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (strcmp(bu_vls_addr(&value), avpp->value) > 0)) {
+    		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (bu_strcmp(bu_vls_addr(&value), avpp->value) > 0)) {
 		    	bu_avs_free(&avs);
     			bu_vls_free(&attribname);
     			bu_vls_free(&value);
@@ -1012,15 +1012,15 @@ f_stdattr(PLAN *UNUSED(plan), struct db_full_path *entry, struct ged *gedp)
     avpp = avs.avp;
     for (i = 0; i < (size_t)avs.count; i++, avpp++) {
 	found_attr = 1;
-	if (strcmp(avpp->name, "GIFTmater") != 0 &&
-	    strcmp(avpp->name, "aircode") != 0 &&
-	    strcmp(avpp->name, "inherit") != 0 &&
-	    strcmp(avpp->name, "los") != 0 &&
-	    strcmp(avpp->name, "material_id") != 0 &&
-	    strcmp(avpp->name, "oshader") != 0 &&
-	    strcmp(avpp->name, "region") != 0 &&
-	    strcmp(avpp->name, "region_id") != 0 &&
-	    strcmp(avpp->name, "rgb") != 0) {
+	if (!BU_STR_EQUAL(avpp->name, "GIFTmater") &&
+	    !BU_STR_EQUAL(avpp->name, "aircode") &&
+	    !BU_STR_EQUAL(avpp->name, "inherit") &&
+	    !BU_STR_EQUAL(avpp->name, "los") &&
+	    !BU_STR_EQUAL(avpp->name, "material_id") &&
+	    !BU_STR_EQUAL(avpp->name, "oshader") &&
+	    !BU_STR_EQUAL(avpp->name, "region") &&
+	    !BU_STR_EQUAL(avpp->name, "region_id") &&
+	    !BU_STR_EQUAL(avpp->name, "rgb")) {
 
 	    found_nonstd_attr = 1;
 	}
@@ -1544,7 +1544,7 @@ option(char *name)
 int
 typecompare(const void *a, const void *b)
 {
-    return strcmp(((OPTION *)a)->name, ((OPTION *)b)->name);
+    return !BU_STR_EQUAL(((OPTION *)a)->name, ((OPTION *)b)->name);
 }
 
 
@@ -2079,7 +2079,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	/* initialize result */
 	bu_vls_trunc(&gedp->ged_result_str, 0);
 
-	if (!((argv[1][0] == '-') || (argv[1][0] == '!')  || (argv[1][0] == '(')) && (strcmp(argv[1], "/") != 0) && (strcmp(argv[1], ".") != 0)) {
+	if (!((argv[1][0] == '-') || (argv[1][0] == '!')  || (argv[1][0] == '(')) && (!BU_STR_EQUAL(argv[1], "/")) && (!BU_STR_EQUAL(argv[1], "."))) {
 	    /* We seem to have a path - make sure it's valid */
 	    if (db_string_to_path(&dfp, gedp->ged_wdbp->dbip, argv[1]) == -1) {
 		bu_vls_printf(&gedp->ged_result_str,  " Search path not found in database.\n");
@@ -2097,7 +2097,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		find_execute(dbplan, &dfp, gedp, 0);
 	    }
 	} else {
-	    if (strcmp(argv[1], ".") == 0) {
+	    if (BU_STR_EQUAL(argv[1], ".")) {
 		isoutput = 0;
 		if (find_formplan(&argv[2], &dbplan, gedp) != GED_OK) {
 		    bu_vls_printf(&gedp->ged_result_str,  "Failed to build find plan.\n");

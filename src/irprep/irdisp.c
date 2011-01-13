@@ -36,6 +36,8 @@
 #include<X11/Xlib.h>
 #include<X11/Xutil.h>
 
+#include "bu.h"
+
 int
 main(void)
 {
@@ -134,15 +136,15 @@ main(void)
 	/*  Call the program ir-X or ir-sgi so that a file that has been raytraced  */
 	/*  may be displayed.  */
 	choice[0] = '\0';
-	while ( strcmp( choice, "sgi" ) && strcmp( choice, "X" ) && strcmp( choice, "x" ) )
+	while ( !BU_STR_EQUAL( choice, "sgi" ) && !BU_STR_EQUAL( choice, "X" ) && !BU_STR_EQUAL( choice, "x" ) )
 	{
 	    (void)printf("\nSelect display ('X' or 'sgi') -> " );
 	    (void)fflush(stdout);
 	    (void)scanf( "%80s", choice );
 	}
-	if ( !strcmp( choice, "X" ) || !strcmp( choice, "x" ) )
+	if ( BU_STR_EQUAL( choice, "X" ) || BU_STR_EQUAL( choice, "x" ) )
 	    X_or_SGI = irX;
-	else if ( !strcmp( choice, "sgi" ) )
+	else if ( BU_STR_EQUAL( choice, "sgi" ) )
 	    X_or_SGI = irsgi;
 	else
 	{

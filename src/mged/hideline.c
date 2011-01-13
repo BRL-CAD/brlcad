@@ -71,8 +71,8 @@ hit_headon(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 {
     char diff_solid;
     vect_t diff;
-    fastf_t len;
-    struct solid *sp;
+    fastf_t len = 0.0;
+    struct solid *sp = NULL;
 
     if (PartHeadp->pt_forw->pt_forw != PartHeadp)
 	Tcl_AppendResult(INTERP, "hit_headon: multiple partitions\n", (char *)NULL);
@@ -124,22 +124,27 @@ hit_overlap(struct application *UNUSED(ap), struct partition *UNUSED(ph), struct
 int
 f_hideline(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
-    FILE *plotfp;
-    char visible;
-    int i, numobjs;
-    char *objname[MAXOBJECTS], title[1];
-    fastf_t len, u, step;
-    float ratio;
-    vect_t last_move;
-    struct rt_i *rtip;
-    struct resource resource;
+    FILE *plotfp = NULL;
+    char *objname[MAXOBJECTS] = {0};
+    char title[512] = {0};
+    char visible = 0;
+    fastf_t len = 0.0;
+    fastf_t ratio = 0.0;
+    fastf_t step = 0.0;
+    fastf_t u = 0.0;
+    int i = 0;
+    int numobjs = 0;
     struct application a;
-    vect_t temp;
-    vect_t last, dir;
-    struct bn_vlist *vp;
-    struct solid *sp;
+    struct bn_vlist *vp = NULL;
+    struct ged_display_list *gdlp = NULL;
+    struct ged_display_list *next_gdlp = NULL;
+    struct resource resource;
+    struct rt_i *rtip = NULL;
+    struct solid *sp = NULL;
+    vect_t dir = {0.0, 0.0, 0.0};
+    vect_t last = {0.0, 0.0, 0.0};
+    vect_t last_move = {0.0, 0.0, 0.0};
+    vect_t temp = {0.0, 0.0, 0.0};
 
     CHECK_DBI_NULL;
 
@@ -185,7 +190,7 @@ f_hideline(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 	Tcl_AppendResult(interp, "\t", objname[i], "\n", (char *)NULL);
 
     /* Initialization for librt */
-    if ((rtip = rt_dirbuild(dbip->dbi_filename, title, 0)) == RTI_NULL) {
+    if ((rtip = rt_dirbuild(dbip->dbi_filename, title, sizeof(title))) == RTI_NULL) {
 	Tcl_AppendResult(interp, "f_hideline: unable to open model file \"",
 			 dbip->dbi_filename, "\"\n", (char *)NULL);
 	return TCL_ERROR;

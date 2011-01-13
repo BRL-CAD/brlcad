@@ -189,7 +189,7 @@ strsolbld(void)
     args = strtok(NULL, "\n");
 #endif
 
-    if (strcmp(type, "dsp") == 0) {
+    if (BU_STR_EQUAL(type, "dsp")) {
 	struct rt_dsp_internal *dsp;
 
 	BU_GETSTRUCT(dsp, rt_dsp_internal);
@@ -210,7 +210,7 @@ strsolbld(void)
 	    goto out;
 	}
 	/* 'dsp' has already been freed by wdb_export() */
-    } else if (strcmp(type, "ebm") == 0) {
+    } else if (BU_STR_EQUAL(type, "ebm")) {
 	struct rt_ebm_internal *ebm;
 
 	BU_GETSTRUCT(ebm, rt_ebm_internal);
@@ -233,7 +233,7 @@ strsolbld(void)
 	    goto out;
 	}
 	/* 'ebm' has already been freed by wdb_export() */
-    } else if (strcmp(type, "vol") == 0) {
+    } else if (BU_STR_EQUAL(type, "vol")) {
 	struct rt_vol_internal *vol;
 
 	BU_GETSTRUCT(vol, rt_vol_internal);
@@ -990,7 +990,7 @@ identbld(void)
     }
     *np = '\0';
 
-    if (strcmp(version, ID_VERSION) != 0) {
+    if (!BU_STR_EQUAL(version, ID_VERSION)) {
 	bu_log("WARNING:  input file version (%s) is not %s\n",
 	       version, ID_VERSION);
     }

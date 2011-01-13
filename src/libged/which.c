@@ -54,7 +54,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
-    if (!strcmp(argv[0], "whichair"))
+    if (BU_STR_EQUAL(argv[0], "whichair"))
 	isAir = 1;
     else
 	isAir = 0;
@@ -68,7 +68,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (strcmp(argv[1], "-s") == 0) {
+    if (BU_STR_EQUAL(argv[1], "-s")) {
 	--argc;
 	++argv;
 

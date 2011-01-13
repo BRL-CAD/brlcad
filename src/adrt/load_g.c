@@ -168,7 +168,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 	printf("Failed to load\n");
 	return 0;
     }
-    
+
     if(dir->d_minor_type == ID_NMG)
 	return 0;
 

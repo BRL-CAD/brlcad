@@ -119,6 +119,7 @@ write_ppm(FILE *fp, char *data, long width, long height, int bytes_per_pixel)
 {
     int i;
     char *row;
+    size_t ret;
 
     if (bytes_per_pixel == 1) {
 	/* PGM magic number */
@@ -142,7 +143,9 @@ write_ppm(FILE *fp, char *data, long width, long height, int bytes_per_pixel)
 
     for (i = 0; i < height; i++) {
 	row = data + (height-1 - i) * width * bytes_per_pixel;
-	fwrite(row, 1, width * bytes_per_pixel, fp);
+	ret = fwrite(row, 1, width * bytes_per_pixel, fp);
+	if (ret < (size_t)width * bytes_per_pixel)
+	    perror("fwrite");
     }
 
 }

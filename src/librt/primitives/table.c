@@ -1809,19 +1809,19 @@ rt_id_solid(struct bu_external *ep)
 	    break;
 	case DBID_STRSOL:
 	    /* XXX This really needs to be some kind of table */
-	    if (strcmp(rec->ss.ss_keyword, "ebm") == 0) {
+	    if (BU_STR_EQUAL(rec->ss.ss_keyword, "ebm")) {
 		id = ID_EBM;
 		break;
-	    } else if (strcmp(rec->ss.ss_keyword, "vol") == 0) {
+	    } else if (BU_STR_EQUAL(rec->ss.ss_keyword, "vol")) {
 		id = ID_VOL;
 		break;
-	    } else if (strcmp(rec->ss.ss_keyword, "hf") == 0) {
+	    } else if (BU_STR_EQUAL(rec->ss.ss_keyword, "hf")) {
 		id = ID_HF;
 		break;
-	    } else if (strcmp(rec->ss.ss_keyword, "dsp") == 0) {
+	    } else if (BU_STR_EQUAL(rec->ss.ss_keyword, "dsp")) {
 		id = ID_DSP;
 		break;
-	    } else if (strcmp(rec->ss.ss_keyword, "submodel") == 0) {
+	    } else if (BU_STR_EQUAL(rec->ss.ss_keyword, "submodel")) {
 		id = ID_SUBMODEL;
 		break;
 	    }

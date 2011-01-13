@@ -1473,7 +1473,7 @@ f_Wrt_Fb(char **args)
 	bu_log( "No default, must specify file name!\n" );
 	return	-1;
     }
-    if ( strcmp( save_fb_file, fb_file ) == 0 )
+    if ( BU_STR_EQUAL( save_fb_file, fb_file ) )
     {
 	bu_log( "Frame buffer is same as saved image!\n" );
 	return	-1;
@@ -1544,7 +1544,7 @@ f_Rd_Fb(char **args)
 	bu_log( "No default, must specify file name!\n" );
 	return	-1;
     }
-    if ( strcmp( save_fb_file, fb_file ) == 0 )
+    if ( BU_STR_EQUAL( save_fb_file, fb_file ) )
     {
 	bu_log( "Frame buffer is same as saved image!\n" );
 	return	-1;
@@ -3583,7 +3583,7 @@ make_Script(char *file)
 		    type_grid,
 		    force_viewsz ? view_size : 0.0 );
 
-    if ( err_file[0] != '\0' && strcmp( err_file, "/dev/tty" ) )
+    if ( err_file[0] != '\0' && !BU_STR_EQUAL( err_file, "/dev/tty" ) )
 	(void) fprintf( run_fp,	" -O%s", err_file );
     if ( aperture_sz > 1 )
 	(void) fprintf( run_fp,	" -A%d", aperture_sz );

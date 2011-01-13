@@ -42,11 +42,11 @@ component_hit(struct tie_ray_s *ray, struct tie_id_s *UNUSED(id), struct tie_tri
 }
 
 void
-render_component_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel)
+render_component_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
 {
     struct tie_id_s id;
     adrt_mesh_t *mesh;
-    TIE_3 vec;
+    vect_t vec;
 
     if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, component_hit, NULL))) {
 	/* Flip normal to face ray origin (via dot product check) */
@@ -54,16 +54,16 @@ render_component_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ra
 	    VSCALE(id.norm,  id.norm,  -1.0);
 
 	/* shade solid */
-	pixel->v[0] = mesh->flags & ADRT_MESH_HIT ? 0.8 : 0.2;
-	pixel->v[1] = (tfloat)0.2;
-	pixel->v[2] = mesh->flags & ADRT_MESH_SELECT ? 0.8 : 0.2;
-	VSUB2(vec.v,  ray->pos,  id.pos);
-	VUNITIZE(vec.v);
-	VSCALE((*pixel).v, (*pixel).v, VDOT(vec.v, id.norm) * 0.8);
+	*pixel[0] = mesh->flags & ADRT_MESH_HIT ? 0.8 : 0.2;
+	*pixel[1] = (tfloat)0.2;
+	*pixel[2] = mesh->flags & ADRT_MESH_SELECT ? 0.8 : 0.2;
+	VSUB2(vec,  ray->pos,  id.pos);
+	VUNITIZE(vec);
+	VSCALE((*pixel), (*pixel), VDOT(vec, id.norm) * 0.8);
     } else if (ray->depth) {
-	pixel->v[0] += (tfloat)0.2;
-	pixel->v[1] += (tfloat)0.2;
-	pixel->v[2] += (tfloat)0.2;
+	*pixel[0] += (tfloat)0.2;
+	*pixel[1] += (tfloat)0.2;
+	*pixel[2] += (tfloat)0.2;
     }
 }
 

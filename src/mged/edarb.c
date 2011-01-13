@@ -561,11 +561,11 @@ f_mirface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
     /* check which axis */
     k = -1;
-    if (strcmp(argv[2], "x") == 0)
+    if (BU_STR_EQUAL(argv[2], "x"))
 	k = 0;
-    if (strcmp(argv[2], "y") == 0)
+    if (BU_STR_EQUAL(argv[2], "y"))
 	k = 1;
-    if (strcmp(argv[2], "z") == 0)
+    if (BU_STR_EQUAL(argv[2], "z"))
 	k = 2;
     if (k < 0) {
 	Tcl_AppendResult(interp, "axis must be x, y or z\n", (char *)NULL);

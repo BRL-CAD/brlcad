@@ -131,13 +131,13 @@ main(int argc, char **argv)
 
     if ( argc >= 3 ) {
 	iname = argv[1];
-	if ( strcmp(iname, "-") == 0 )  {
+	if ( BU_STR_EQUAL(iname, "-") )  {
 	    ifp = stdin;
 	} else {
 	    ifp = fopen(iname, "rb");
 	}
 	if ( !ifp )  perror(iname);
-	if ( strcmp(argv[2], "-") == 0 )  {
+	if ( BU_STR_EQUAL(argv[2], "-") )  {
 	    ofp = stdout;
 	} else {
 	    ofp = fopen(argv[2], "wb");
@@ -575,7 +575,7 @@ idendump(void)	/* Print out Ident record information */
 	);
 
     /* Print a warning message on stderr if versions differ */
-    if ( strcmp( record.i.i_version, ID_VERSION ) != 0 )  {
+    if ( !BU_STR_EQUAL( record.i.i_version, ID_VERSION ) )  {
 	(void)fprintf(stderr,
 		      "g2asc: File is version (%s), Program is version (%s)\n",
 		      record.i.i_version, ID_VERSION );

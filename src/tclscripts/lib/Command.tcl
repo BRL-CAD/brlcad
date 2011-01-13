@@ -155,7 +155,9 @@
 
     # Create new slave interp
     interp delete $slaveInterp
-    set slaveInterp [interp create]
+    if { [catch {set slaveInterp [interp create]} err] } {
+	error "Unable to reinitalize a slave interpreter"
+    }
 
     # Create slave interp's aliases
     foreach cmd $cmdlist {
@@ -192,7 +194,10 @@
 ::itcl::body Command::constructor {args} {
     eval itk_initialize $args
 
-    set slaveInterp [interp create]
+    # thar be dragons here
+    if { [catch {set slaveInterp [interp create]} err] } {
+	error "Unable to initalize a slave interpreter"
+    }
 
     doBindings
 

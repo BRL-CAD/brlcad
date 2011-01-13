@@ -159,7 +159,7 @@ ged_do_prefix(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tr
     prefix = (char *)prefix_ptr;
     obj = (char *)obj_ptr;
 
-    if ( strcmp( comb_leaf->tr_l.tl_name, obj ) )
+    if ( !BU_STR_EQUAL( comb_leaf->tr_l.tl_name, obj ) )
 	return;
 
     bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );

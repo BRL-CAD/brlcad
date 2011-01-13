@@ -83,7 +83,7 @@ cmpdirname(const genptr_t a,
 
     dp1 = (struct directory **)a;
     dp2 = (struct directory **)b;
-    return strcmp((*dp1)->d_namep, (*dp2)->d_namep);
+    return !BU_STR_EQUAL((*dp1)->d_namep, (*dp2)->d_namep);
 }
 
 
@@ -400,7 +400,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 {
     struct bu_vls vls;
     struct directory *dp;
-    int i;
+    size_t i;
     int c;
     int aflag = 0;		/* print all objects without formatting */
     int cflag = 0;		/* print combinations */

@@ -170,7 +170,7 @@ db_dircheck(struct db_i *dbip,
 	char *this;
 	if (n0 == *(this=dp->d_namep)  &&	/* speed */
 	    n1 == this[1]  &&			/* speed */
-	    strcmp(cp, this) == 0) {
+	    BU_STR_EQUAL(cp, this)) {
 	    /* Name exists in directory already */
 	    int c;
 
@@ -237,7 +237,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
 	char *this;
 
 	/* first two checks are for speed */
-	if ((n0 == *(this=dp->d_namep)) && (n1 == this[1]) && (strcmp(name, this) == 0)) {
+	if ((n0 == *(this=dp->d_namep)) && (n1 == this[1]) && (BU_STR_EQUAL(name, this))) {
 	    if (RT_G_DEBUG&DEBUG_DB)
 		bu_log("db_lookup(%s) x%x\n", name, dp);
 	    return dp;
@@ -586,8 +586,8 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 	    match_count = 0;
 	    for (i=0; (size_t)i<(size_t)avs->count; i++) {
 		for (j=0; (size_t)j<(size_t)obj_avs.count; j++) {
-		    if (!strcmp(avs->avp[i].name, obj_avs.avp[j].name)) {
-			if (!strcmp(avs->avp[i].value, obj_avs.avp[j].value)) {
+		    if (BU_STR_EQUAL(avs->avp[i].name, obj_avs.avp[j].name)) {
+			if (BU_STR_EQUAL(avs->avp[i].value, obj_avs.avp[j].value)) {
 			    if (op == 2) {
 				draw = 1;
 				break;

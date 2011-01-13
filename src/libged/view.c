@@ -56,27 +56,27 @@ ged_view(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (!strcmp(argv[1], "quat")) {
+    if (BU_STR_EQUAL(argv[1], "quat")) {
 	return ged_quat(gedp, argc-1, argv+1);
     }
 
-    if (!strcmp(argv[1], "ypr")) {
+    if (BU_STR_EQUAL(argv[1], "ypr")) {
 	return ged_ypr(gedp, argc-1, argv+1);
     }
 
-    if (!strcmp(argv[1], "aet")) {
+    if (BU_STR_EQUAL(argv[1], "aet")) {
 	return ged_aet(gedp, argc-1, argv+1);
     }
 
-    if (!strcmp(argv[1], "center")) {
+    if (BU_STR_EQUAL(argv[1], "center")) {
 	return ged_center(gedp, argc-1, argv+1);
     }
 
-    if (!strcmp(argv[1], "eye")) {
+    if (BU_STR_EQUAL(argv[1], "eye")) {
 	return ged_eye(gedp, argc-1, argv+1);
     }
 
-    if (!strcmp(argv[1], "size")) {
+    if (BU_STR_EQUAL(argv[1], "size")) {
 	return ged_size(gedp, argc-1, argv+1);
     }
 

@@ -68,7 +68,7 @@ ged_make_bb(struct ged *gedp, int argc, const char *argv[])
     i = 1;
 
     /* look for a USEAIR option */
-    if (! strcmp(argv[i], "-u")) {
+    if (BU_STR_EQUAL(argv[i], "-u")) {
 	use_air = 1;
 	i++;
     }

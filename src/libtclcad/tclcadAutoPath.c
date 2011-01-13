@@ -150,7 +150,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     snprintf(buffer, MAX_BUF, "set tcl_library");
     Tcl_Eval(interp, buffer);
     bu_vls_strncat(&auto_path, Tcl_GetStringResult(interp), MAX_BUF);
-
+    
     /* get string of invocation binary */
     which_argv = bu_which(bu_argv0_full_path());
     if (!which_argv) {
@@ -384,6 +384,18 @@ tclcad_auto_path(Tcl_Interp *interp)
 		    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 		} else {
 		    found_init_tcl=1;
+		}
+
+		/* extra measures necessary for "create interp":
+		 * determine if TCL_LIBRARY is set, and set it if not.
+		 */
+		library_path = getenv("TCL_LIBRARY");
+		if (!library_path) {
+		    /* this REALLY sets it */
+		    snprintf(buffer, MAX_BUF, "set env(TCL_LIBRARY) {%s}", srcpath);
+		    if (Tcl_Eval(interp, buffer)) {
+			bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+		    }
 		}
 	    }
 	}

@@ -100,7 +100,7 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
 	    if (first) {
 		first = 0;
 
-		if (!strcmp(tok, argv[1])) {
+		if (BU_STR_EQUAL(tok, argv[1])) {
 		    found = 1;
 		    bu_vls_printf(&new_path, "%s", argv[2]);
 		} else

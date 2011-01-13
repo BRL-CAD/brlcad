@@ -182,7 +182,7 @@ done:
      * Eventually this may invoke UNIX Domain PKG (if we can figure
      * out what to do about socket pathnames).
      */
-    if (strcmp(host, "unix") == 0)
+    if (BU_STR_EQUAL(host, "unix"))
 	bu_strlcpy(host, "localhost", length);
 
     /* copy out port and device */

@@ -2126,16 +2126,16 @@ rt_sketch_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const 
 	if (curve_to_tcl_list(logstr, crv)) {
 	    return BRLCAD_ERROR;
 	}
-    } else if (!strcmp(attr, "V")) {
+    } else if (BU_STR_EQUAL(attr, "V")) {
 	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(skt->V));
-    } else if (!strcmp(attr, "A")) {
+    } else if (BU_STR_EQUAL(attr, "A")) {
 	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(skt->u_vec));
-    } else if (!strcmp(attr, "B")) {
+    } else if (BU_STR_EQUAL(attr, "B")) {
 	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(skt->v_vec));
-    } else if (!strcmp(attr, "VL")) {
+    } else if (BU_STR_EQUAL(attr, "VL")) {
 	for (i=0; i<skt->vert_count; i++)
 	    bu_vls_printf(logstr, " {%.25g %.25g}", V2ARGS(skt->verts[i]));
-    } else if (!strcmp(attr, "SL")) {
+    } else if (BU_STR_EQUAL(attr, "SL")) {
 	crv = &skt->skt_curve;
 	if (curve_to_tcl_list(logstr, crv)) {
 	    return BRLCAD_ERROR;
@@ -2198,7 +2198,7 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 	    return ret;
 	type = Tcl_GetString(seg_type);
 
-	if (!strcmp(type, "line")) {
+	if (BU_STR_EQUAL(type, "line")) {
 	    struct line_seg *lsg;
 
 	    lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "lsg");
@@ -2223,7 +2223,7 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 	    }
 	    lsg->magic = CURVE_LSEG_MAGIC;
 	    crv->segments[j] = (genptr_t)lsg;
-	} else if (!strcmp(type, "bezier")) {
+	} else if (BU_STR_EQUAL(type, "bezier")) {
 	    struct bezier_seg *bsg;
 	    int num_points;
 
@@ -2258,7 +2258,7 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 	    }
 	    bsg->magic = CURVE_BEZIER_MAGIC;
 	    crv->segments[j] = (genptr_t)bsg;
-	} else if (!strcmp(type, "carc")) {
+	} else if (BU_STR_EQUAL(type, "carc")) {
 	    struct carc_seg *csg;
 	    double tmp;
 
@@ -2294,7 +2294,7 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 	    }
 	    csg->magic = CURVE_CARC_MAGIC;
 	    crv->segments[j] = (genptr_t)csg;
-	} else if (!strcmp(type, "nurb")) {
+	} else if (BU_STR_EQUAL(type, "nurb")) {
 	    struct nurb_seg *nsg;
 
 	    nsg = (struct nurb_seg *)bu_calloc(1, sizeof(struct nurb_seg), "nsg");
@@ -2352,7 +2352,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
     RT_SKETCH_CK_MAGIC(skt);
 
     while (argc >= 2) {
-	if (!strcmp(argv[0], "V")) {
+	if (BU_STR_EQUAL(argv[0], "V")) {
 	    new = skt->V;
 	    array_len = 3;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
@@ -2360,7 +2360,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
-	} else if (!strcmp(argv[0], "A")) {
+	} else if (BU_STR_EQUAL(argv[0], "A")) {
 	    new = skt->u_vec;
 	    array_len = 3;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
@@ -2368,7 +2368,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
-	} else if (!strcmp(argv[0], "B")) {
+	} else if (BU_STR_EQUAL(argv[0], "B")) {
 	    new = skt->v_vec;
 	    array_len = 3;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
@@ -2376,7 +2376,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
-	} else if (!strcmp(argv[0], "VL")) {
+	} else if (BU_STR_EQUAL(argv[0], "VL")) {
 	    fastf_t *new_verts=(fastf_t *)NULL;
 	    int len;
 	    char *ptr;
@@ -2407,7 +2407,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 		bu_free((char *)skt->verts, "verts");
 	    skt->verts = (point2d_t *)new_verts;
 	    skt->vert_count = len / 2;
-	} else if (!strcmp(argv[0], "SL")) {
+	} else if (BU_STR_EQUAL(argv[0], "SL")) {
 /* the entire segment list */
 	    Tcl_Obj *tmp;
 	    struct curve *crv;

@@ -141,7 +141,7 @@ rt_tcl_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 {
     static const char xyz[4] = "XYZ";
     struct bu_vls str;
-    int i;
+    size_t i;
 
     bu_vls_init(&str);
 
@@ -166,7 +166,7 @@ rt_tcl_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 	    bu_vls_printf(&str, "} pieces {");
 	    for (i = 0; i < cutp->bn.bn_piecelen; i++) {
 		struct rt_piecelist *plp = &cutp->bn.bn_piecelist[i];
-		int j;
+		size_t j;
 		RT_CK_PIECELIST(plp);
 		/* These can be taken by user positionally */
 		bu_vls_printf(&str, "{%s {", plp->stp->st_name);
@@ -370,7 +370,7 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
     struct rt_i *rtip;
     int idx;
 
-    if ((argc != 5 && argc != 6) || (argc == 6 && strcmp(argv[2], "-R"))) {
+    if ((argc != 5 && argc != 6) || (argc == 6 && !BU_STR_EQUAL(argv[2], "-R"))) {
 	Tcl_AppendResult(interp,
 			 "wrong # args: should be \"",
 			 argv[0], " ", argv[1], " [-R] {P} dir|at {V}\"",
@@ -605,7 +605,7 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
     }
 
     for (dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++) {
-	if (strcmp(dbcmd->cmdname, argv[1]) == 0) {
+	if (BU_STR_EQUAL(dbcmd->cmdname, argv[1])) {
 	    return (*dbcmd->cmdfunc)(clientData, interp,
 				     argc, argv);
 	}

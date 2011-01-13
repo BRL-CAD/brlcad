@@ -1689,14 +1689,14 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 		    status = BRLCAD_OK;
 		}
 	    }
-	} else if (!strcmp(attr, "nn")) {
+	} else if (BU_STR_EQUAL(attr, "nn")) {
 	    if (!(bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) || bot->num_normals < 1) {
 		bu_vls_strcat(logstr, "0");
 	    } else {
 		bu_vls_printf(logstr, "%lu", bot->num_normals);
 	    }
 	    status = BRLCAD_OK;
-	} else if (!strcmp(attr, "nfn")) {
+	} else if (BU_STR_EQUAL(attr, "nfn")) {
 	    if (!(bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) || bot->num_face_normals < 1) {
 		bu_vls_strcat(logstr, "0");
 	    } else {
@@ -1758,7 +1758,7 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 		    status = BRLCAD_OK;
 		}
 	    }
-	} else if (!strcmp(attr, "flags")) {
+	} else if (BU_STR_EQUAL(attr, "flags")) {
 	    bu_vls_printf(logstr, "{");
 	    if (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 		bu_vls_printf(logstr, " has_normals");
@@ -1837,16 +1837,16 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 		    }
 		}
 	    }
-	} else if (!strcmp(attr, "nv")) {
+	} else if (BU_STR_EQUAL(attr, "nv")) {
 	    bu_vls_printf(logstr, "%lu", bot->num_vertices);
 	    status = BRLCAD_OK;
-	} else if (!strcmp(attr, "nt")) {
+	} else if (BU_STR_EQUAL(attr, "nt")) {
 	    bu_vls_printf(logstr, "%lu", bot->num_faces);
 	    status = BRLCAD_OK;
-	} else if (!strcmp(attr, "mode")) {
+	} else if (BU_STR_EQUAL(attr, "mode")) {
 	    bu_vls_printf(logstr, "%s", modes[bot->mode]);
 	    status = BRLCAD_OK;
-	} else if (!strcmp(attr, "orient")) {
+	} else if (BU_STR_EQUAL(attr, "orient")) {
 	    bu_vls_printf(logstr, "%s", orientation[bot->orientation]);
 	    status = BRLCAD_OK;
 	} else {
@@ -1933,12 +1933,12 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 			BU_BITCLR(bot->face_mode, li);
 		    else
 			BU_BITSET(bot->face_mode, li);
-		} else if (!strcmp(argv[1], "append"))
+		} else if (BU_STR_EQUAL(argv[1], "append"))
 		    BU_BITSET(bot->face_mode, li);
 		else
 		    BU_BITCLR(bot->face_mode, li);
 	    }
-	} else if (!strcmp(argv[0], "nn")) {
+	} else if (BU_STR_EQUAL(argv[0], "nn")) {
 	    long new_num=0;
 	    size_t old_num = bot->num_normals;
 
@@ -2383,7 +2383,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		t_str = Tcl_GetStringFromObj(obj, NULL);
 		bot->thickness[li] = atof(t_str);
 	    }
-	} else if (!strcmp(argv[0], "mode")) {
+	} else if (BU_STR_EQUAL(argv[0], "mode")) {
 	    char *m_str;
 
 	    m_str = Tcl_GetStringFromObj(obj, NULL);
@@ -2400,11 +2400,11 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    } else {
 		if (!strncmp(m_str, modes[RT_BOT_SURFACE], 4))
 		    bot->mode = RT_BOT_SURFACE;
-		else if (!strcmp(m_str, modes[RT_BOT_SOLID]))
+		else if (BU_STR_EQUAL(m_str, modes[RT_BOT_SOLID]))
 		    bot->mode = RT_BOT_SOLID;
-		else if (!strcmp(m_str, modes[RT_BOT_PLATE]))
+		else if (BU_STR_EQUAL(m_str, modes[RT_BOT_PLATE]))
 		    bot->mode = RT_BOT_PLATE;
-		else if (!strcmp(m_str, modes[RT_BOT_PLATE_NOCOS]))
+		else if (BU_STR_EQUAL(m_str, modes[RT_BOT_PLATE_NOCOS]))
 		    bot->mode = RT_BOT_PLATE_NOCOS;
 		else {
 		    bu_vls_printf(logstr, "unrecognized mode!!!");
@@ -2427,11 +2427,11 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		}
 		bot->orientation = orient;
 	    } else {
-		if (!strcmp(o_str, orientation[RT_BOT_UNORIENTED]))
+		if (BU_STR_EQUAL(o_str, orientation[RT_BOT_UNORIENTED]))
 		    bot->orientation = RT_BOT_UNORIENTED;
-		else if (!strcmp(o_str, orientation[RT_BOT_CCW]))
+		else if (BU_STR_EQUAL(o_str, orientation[RT_BOT_CCW]))
 		    bot->orientation = RT_BOT_CCW;
-		else if (!strcmp(o_str, orientation[RT_BOT_CW]))
+		else if (BU_STR_EQUAL(o_str, orientation[RT_BOT_CW]))
 		    bot->orientation = RT_BOT_CW;
 		else {
 		    bu_vls_printf(logstr, "unrecognized orientation!!!");
@@ -2439,18 +2439,18 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    return BRLCAD_ERROR;
 		}
 	    }
-	} else if (!strcmp(argv[0], "flags")) {
+	} else if (BU_STR_EQUAL(argv[0], "flags")) {
 	    (void)Tcl_ListObjGetElements(brlcad_interp, obj, &len, &obj_array);
 	    bot->bot_flags = 0;
 	    for (i=0; i<(size_t)len; i++) {
 		char *str;
 
 		str = Tcl_GetStringFromObj(obj_array[i], NULL);
-		if (!strcmp(str, "has_normals")) {
+		if (BU_STR_EQUAL(str, "has_normals")) {
 		    bot->bot_flags |= RT_BOT_HAS_SURFACE_NORMALS;
-		} else if (!strcmp(str, "use_normals")) {
+		} else if (BU_STR_EQUAL(str, "use_normals")) {
 		    bot->bot_flags |= RT_BOT_USE_NORMALS;
-		} else if (!strcmp(str, "use_floats")) {
+		} else if (BU_STR_EQUAL(str, "use_floats")) {
 		    bot->bot_flags |= RT_BOT_USE_FLOATS;
 		} else {
 		    bu_vls_printf(logstr, "unrecognized flag (must be \"has_normals\", \"use_normals\", or \"use_floats\"!!!");

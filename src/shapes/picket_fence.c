@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 	bu_exit(1, "Invalid argument, spacing must be non-negative\n");
     }
 
-    if (strcmp(argv[5], "-r") == 0) {
+    if (BU_STR_EQUAL(argv[5], "-r")) {
 	round = 1;
 	argc--; argv++;
     }

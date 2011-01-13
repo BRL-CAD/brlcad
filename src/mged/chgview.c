@@ -292,7 +292,7 @@ edit_com(int argc,
     /* check args for "-A" (attributes) and "-o" and "-R" */
     bu_vls_init(&vls);
     bu_vls_strcpy(&vls, argv[0]);
-    for (i=1; i<argc; i++) {
+    for (i=1; i<(size_t)argc; i++) {
 	char *ptr_A=NULL;
 	char *ptr_o=NULL;
 	char *ptr_R=NULL;
@@ -344,7 +344,7 @@ edit_com(int argc,
 
 	bu_avs_init(&avs, (argc - last_opt)/2, "edit_com avs");
 	i = 1;
-	while (i < argc) {
+	while (i < (size_t)argc) {
 	    if (*argv[i] == '-') {
 		i++;
 		continue;
@@ -488,7 +488,7 @@ emuves_com(int argc, const char *argv[])
     struct bu_attribute_value_set avs;
     const char **objs;
     int ret;
-    int num_opts=0;
+    size_t num_opts=0;
 
     CHECK_DBI_NULL;
 
@@ -502,7 +502,7 @@ emuves_com(int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    for (i=1; i<argc; i++) {
+    for (i=1; i<(size_t)argc; i++) {
 	if (*argv[i] == '-') {
 	    num_opts++;
 	} else {
@@ -511,7 +511,7 @@ emuves_com(int argc, const char *argv[])
     }
 
     bu_avs_init(&avs, argc/2, "muves_avs");
-    for (i=1; i<argc; i++) {
+    for (i=1; i<(size_t)argc; i++) {
 	bu_avs_add_nonunique(&avs, "MUVES_Component", argv[i]);
     }
 
@@ -762,12 +762,12 @@ f_status(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "state")) {
+    if (BU_STR_EQUAL(argv[1], "state")) {
 	Tcl_AppendResult(interp, state_str[STATE], (char *)NULL);
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "Viewscale")) {
+    if (BU_STR_EQUAL(argv[1], "Viewscale")) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%f", view_state->vs_gvp->gv_scale*base2local);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -775,7 +775,7 @@ f_status(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "base2local")) {
+    if (BU_STR_EQUAL(argv[1], "base2local")) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%f", base2local);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -783,7 +783,7 @@ f_status(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "local2base")) {
+    if (BU_STR_EQUAL(argv[1], "local2base")) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%f", local2base);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -791,32 +791,32 @@ f_status(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "toViewcenter")) {
+    if (BU_STR_EQUAL(argv[1], "toViewcenter")) {
 	bn_tcl_mat_print(interp, "toViewcenter", view_state->vs_gvp->gv_center);
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "Viewrot")) {
+    if (BU_STR_EQUAL(argv[1], "Viewrot")) {
 	bn_tcl_mat_print(interp, "Viewrot", view_state->vs_gvp->gv_rotation);
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "model2view")) {
+    if (BU_STR_EQUAL(argv[1], "model2view")) {
 	bn_tcl_mat_print(interp, "model2view", view_state->vs_gvp->gv_model2view);
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "view2model")) {
+    if (BU_STR_EQUAL(argv[1], "view2model")) {
 	bn_tcl_mat_print(interp, "view2model", view_state->vs_gvp->gv_view2model);
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "model2objview")) {
+    if (BU_STR_EQUAL(argv[1], "model2objview")) {
 	bn_tcl_mat_print(interp, "model2objview", view_state->vs_model2objview);
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "objview2model")) {
+    if (BU_STR_EQUAL(argv[1], "objview2model")) {
 	bn_tcl_mat_print(interp, "objview2model", view_state->vs_objview2model);
 	return TCL_OK;
     }
@@ -826,7 +826,7 @@ f_status(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
-    if (!strcmp(argv[1], "help"))
+    if (BU_STR_EQUAL(argv[1], "help"))
 	return TCL_OK;
 
     return TCL_ERROR;
@@ -1002,7 +1002,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 		    for (; a_new_match && (i >= 0) && (j >= 0); --i, --j) {
 			sname = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep;
 			if ((*sname != *(path_piece[j]))
-			    || strcmp(sname, path_piece[j]))
+			    || !BU_STR_EQUAL(sname, path_piece[j]))
 			    a_new_match = 0;
 		    }
 
@@ -1407,7 +1407,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     for (--argc, ++argv; argc; --argc, ++argv) {
 	cmd = *argv;
 
-	if (strcmp(cmd, "zap") == 0 || strcmp(cmd, "zero") == 0) {
+	if (BU_STR_EQUAL(cmd, "zap") || BU_STR_EQUAL(cmd, "zero")) {
 	    const char *av[3];
 
 	    VSETALL(view_state->vs_rate_model_rotate, 0.0);
@@ -1430,7 +1430,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    (void)f_adc(clientData, interp, 2, av);
 
 	    (void)mged_svbase();
-	} else if (strcmp(cmd, "calibrate") == 0) {
+	} else if (BU_STR_EQUAL(cmd, "calibrate")) {
 	    VSETALL(view_state->vs_absolute_tran, 0.0);
 	} else {
 	    if (argc - 1) {
@@ -2356,7 +2356,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		    default:
 			goto usage;
 		}
-	    } else if (strcmp(cmd, "xadc") == 0) {
+	    } else if (BU_STR_EQUAL(cmd, "xadc")) {
 		const char *av[5];
 		char sval[32];
 		int nargs = 3;
@@ -2376,7 +2376,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 		sprintf(sval, "%d", i);
 		(void)f_adc(clientData, interp, nargs, av);
-	    } else if (strcmp(cmd, "yadc") == 0) {
+	    } else if (BU_STR_EQUAL(cmd, "yadc")) {
 		const char *av[5];
 		char sval[32];
 		int nargs = 3;
@@ -2396,7 +2396,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 		sprintf(sval, "%d", i);
 		(void)f_adc(clientData, interp, nargs, av);
-	    } else if (strcmp(cmd, "ang1") == 0) {
+	    } else if (BU_STR_EQUAL(cmd, "ang1")) {
 		const char *av[5];
 		char sval[32];
 		int nargs = 3;
@@ -2416,7 +2416,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 		sprintf(sval, "%f", f);
 		(void)f_adc(clientData, interp, nargs, av);
-	    } else if (strcmp(cmd, "ang2") == 0) {
+	    } else if (BU_STR_EQUAL(cmd, "ang2")) {
 		const char *av[5];
 		char sval[32];
 		int nargs = 3;
@@ -2436,7 +2436,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 		sprintf(sval, "%f", f);
 		(void)f_adc(clientData, interp, nargs, av);
-	    } else if (strcmp(cmd, "distadc") == 0) {
+	    } else if (BU_STR_EQUAL(cmd, "distadc")) {
 		const char *av[5];
 		char sval[32];
 		int nargs = 3;
@@ -3184,7 +3184,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_ERROR;
     }
 
-    if (!strcmp(argv[1], "add")) {
+    if (BU_STR_EQUAL(argv[1], "add")) {
 	if (argc != 2) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "help view_ring");
@@ -3217,7 +3217,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "next")) {
+    if (BU_STR_EQUAL(argv[1], "next")) {
 	if (argc != 2) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "help view_ring");
@@ -3256,7 +3256,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "prev")) {
+    if (BU_STR_EQUAL(argv[1], "prev")) {
 	if (argc != 2) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "help view_ring");
@@ -3295,7 +3295,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "toggle")) {
+    if (BU_STR_EQUAL(argv[1], "toggle")) {
 	struct view_ring *save_last_view;
 
 	if (argc != 2) {
@@ -3328,7 +3328,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "delete")) {
+    if (BU_STR_EQUAL(argv[1], "delete")) {
 	if (argc != 3) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "help view_ring");
@@ -3378,7 +3378,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "goto")) {
+    if (BU_STR_EQUAL(argv[1], "goto")) {
 	if (argc != 3) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "help view_ring");
@@ -3425,7 +3425,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "get")) {
+    if (BU_STR_EQUAL(argv[1], "get")) {
 	/* return current view */
 	if (argc == 2) {
 	    bu_vls_init(&vls);
@@ -3435,7 +3435,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	    return TCL_OK;
 	}
 
-	if (strcmp("-a", argv[2])) {
+	if (!BU_STR_EQUAL("-a", argv[2])) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "help view_ring");
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -3860,7 +3860,7 @@ mged_etran(char coords,
 int
 mged_otran(const vect_t tvec)
 {
-    vect_t work;
+    vect_t work = {0.0, 0.0, 0.0};
 
     if (STATE == ST_S_EDIT || STATE == ST_O_EDIT) {
 	/* apply acc_rot_sol to tvec */
