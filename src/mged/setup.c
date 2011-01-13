@@ -498,46 +498,19 @@ mged_setup(Tcl_Interp **interpreter)
     /* Create the interpreter */
     *interpreter = Tcl_CreateInterp();
 
-    /* a two-pass init loop.  the first pass just tries default init
-     * routines while the second calls tclcad_auto_path() to help it
-     * find other, potentially uninstalled, resources.
-     */
-    while (1) {
-
-	/* not called first time through, give Tcl_Init() a chance */
-	if (try_auto_path) {
-	    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
-	    tclcad_auto_path(*interpreter);
-	}
-
-	/* Initialize Tcl */
-	Tcl_ResetResult(*interpreter);
-	if (init_tcl && Tcl_Init(*interpreter) == TCL_ERROR) {
-	    if (!try_auto_path) {
-		try_auto_path=1;
-		continue;
-	    }
+    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
+    tclcad_auto_path(*interpreter);
+    
+    /* We've got the paths set, now initialize the interperter */ 
+    if (Tcl_Init(*interpreter) != TCL_OK) {
 	    bu_log("Tcl_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
-	    break;
-	}
-	init_tcl=0;
+	    Tcl_ResetResult(*interpreter);
+    }
 
-	/* Initialize [incr Tcl] */
-	if (Tcl_Eval(*interpreter, "package require Itcl") != TCL_OK) {
+    /* Initialize [incr Tcl] */
+    if (Tcl_Eval(*interpreter, "package require Itcl") != TCL_OK) {
 	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
-	    break;
-	}
-
-	/* don't actually want to loop forever */
-	break;
-
-    } /* end iteration over Init() routines that need auto_path */
-    Tcl_ResetResult(*interpreter);
-
-    /* if we haven't loaded by now, load auto_path so we find our tclscripts */
-    if (!try_auto_path) {
-	/* Locate the BRL-CAD-specific Tcl scripts */
-	tclcad_auto_path(*interpreter);
+	    Tcl_ResetResult(*interpreter);
     }
 
     /*XXX FIXME: Should not be importing Itcl into the global namespace */
