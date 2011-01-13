@@ -6,7 +6,6 @@ SUBDIRS = \
 	hv3 \
 	lib \
 	mged \
-	nirt \
 	pl-dm \
 	rtwizard \
 	sdialogs \
