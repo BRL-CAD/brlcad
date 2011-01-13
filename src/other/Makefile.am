@@ -173,7 +173,6 @@ endif
 
 EXTRA_DIST = \
 	boost \
-	fonts \
 	togl
 
 # FIXME: need to only traverse tcl/tk if configured
