@@ -30,6 +30,9 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include  "bu.h"
+
+
 int	nflag = 0;
 
 static const char usage[] = "\

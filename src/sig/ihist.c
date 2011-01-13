@@ -28,6 +28,9 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu.h"
+
+
 long	bits[16] = {0};
 long	values[65536] = {0};
 long	*zerop;
