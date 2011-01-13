@@ -250,7 +250,7 @@ compare_values(int type, Tcl_Obj *val1, Tcl_Obj *val2)
     float a, b;
     Tcl_Obj *obj1, *obj2;
 
-    str_ret = BU_STR_EQUAL(Tcl_GetStringFromObj(val1, NULL), Tcl_GetStringFromObj(val2, NULL));
+    str_eq = BU_STR_EQUAL(Tcl_GetStringFromObj(val1, NULL), Tcl_GetStringFromObj(val2, NULL));
 
     if (str_eq || type == ATTRS) {
 	return 0;
