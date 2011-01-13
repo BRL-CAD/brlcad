@@ -3125,7 +3125,7 @@ wdb_move_all_cmd(struct rt_wdb *wdbp,
 			comb_leaf = comb_leaf->tr_b.tb_left;
 		    }
 
-		    if (!strcmp(comb_leaf->tr_l.tl_name, argv[1])) {
+		    if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, argv[1])) {
 			bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");
 			comb_leaf->tr_l.tl_name = bu_strdup(argv[2]);
 			changed = 1;
@@ -4922,7 +4922,7 @@ wdb_which_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (!strcmp(argv[0], "whichair"))
+    if (BU_STR_EQUAL(argv[0], "whichair"))
 	isAir = 1;
     else
 	isAir = 0;
@@ -8331,7 +8331,7 @@ wdb_pathlist_cmd(struct rt_wdb *wdbp,
     pathListNoLeaf = 0;
 
     if (argc == 3) {
-	if (!strcmp(argv[1], "-noleaf"))
+	if (BU_STR_EQUAL(argv[1], "-noleaf"))
 	    pathListNoLeaf = 1;
 
 	++argv;
@@ -8404,7 +8404,7 @@ wdb_bot_smooth_cmd(struct rt_wdb *wdbp,
 
     while (*argv[arg_index] == '-') {
 	/* this is an option */
-	if (!strcmp(argv[arg_index], "-t")) {
+	if (BU_STR_EQUAL(argv[arg_index], "-t")) {
 	    arg_index++;
 	    tolerance_angle = atof(argv[arg_index]);
 	} else {
@@ -9275,7 +9275,7 @@ wdb_do_list(struct db_i *dbip,
 	    return;
 	}
 	for (BU_AVS_FOR (avp, &avs)) {
-	    if (!strcmp(avp->name, "units")) {
+	    if (BU_STR_EQUAL(avp->name, "units")) {
 		double conv;
 		const char *str;
 
@@ -10376,7 +10376,7 @@ wdb_newcmds_tcl(ClientData clientData,
 
     for (ctp = wdb_newcmds; ctp->ct_name != (char *)0; ctp++) {
 	if (ctp->ct_name[0] == argv[1][0] &&
-	    !strcmp(ctp->ct_name, argv[1])) {
+	    BU_STR_EQUAL(ctp->ct_name, argv[1])) {
 	    ret = (*ctp->ct_func)(&ged, argc-1, argv+1);
 	    break;
 	}

@@ -87,7 +87,7 @@ common_dm(int argc, const char *argv[])
     if (dbip == DBI_NULL)
 	return TCL_OK;
 
-    if (!strcmp(argv[0], "idle")) {
+    if (BU_STR_EQUAL(argv[0], "idle")) {
 	am_mode = AMM_IDLE;
 	scroll_active = 0;
 	if (rubber_band->rb_active) {
@@ -104,7 +104,7 @@ common_dm(int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[0], "m")) {
+    if (BU_STR_EQUAL(argv[0], "m")) {
 	int x;
 	int y;
 	int old_orig_gui;
@@ -275,7 +275,7 @@ common_dm(int argc, const char *argv[])
 	return status;
     }
 
-    if (!strcmp(argv[0], "am")) {
+    if (BU_STR_EQUAL(argv[0], "am")) {
 	if (argc < 4) {
 	    Tcl_AppendResult(INTERP, "dm am: need more parameters\n",
 			     "dm am <r|t|s> xpos ypos\n", (char *)NULL);
@@ -338,7 +338,7 @@ common_dm(int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[0], "adc")) {
+    if (BU_STR_EQUAL(argv[0], "adc")) {
 	fastf_t fx, fy;
 	fastf_t td; /* tick distance */
 
@@ -420,7 +420,7 @@ common_dm(int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[0], "con")) {
+    if (BU_STR_EQUAL(argv[0], "con")) {
 	if (argc < 5) {
 	    Tcl_AppendResult(INTERP, "dm con: need more parameters\n",
 			     "dm con r|t|s x|y|z xpos ypos\n",
@@ -541,7 +541,7 @@ common_dm(int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[0], "size")) {
+    if (BU_STR_EQUAL(argv[0], "size")) {
 	int width, height;
 
 	/* get the window size */
@@ -575,7 +575,7 @@ common_dm(int argc, const char *argv[])
     }
 
 #if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
-    if (!strcmp(argv[0], "getx")) {
+    if (BU_STR_EQUAL(argv[0], "getx")) {
 	if (argc == 1) {
 	    struct bu_vls tmp_vls;
 
@@ -596,7 +596,7 @@ common_dm(int argc, const char *argv[])
     }
 #endif
 
-    if (!strcmp(argv[0], "bg")) {
+    if (BU_STR_EQUAL(argv[0], "bg")) {
 	int r, g, b;
 
 	if (argc != 1 && argc != 4) {

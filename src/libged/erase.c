@@ -376,7 +376,7 @@ _ged_eraseAllNamesFromDisplay(struct ged *gedp,
 		}
 	    }
 
-	    if (!strcmp(tok, name)) {
+	    if (BU_STR_EQUAL(tok, name)) {
 		_ged_freeDisplayListItem(gedp, gdlp);
 		found = 1;
 

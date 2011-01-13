@@ -1233,7 +1233,7 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    return BRLCAD_ERROR;
 	}
 
-	if (!strcmp(argv[0], "N")) {
+	if (BU_STR_EQUAL(argv[0], "N")) {
 	    if (nurb->srfs) {
 		for (i=0; i<nurb->nsrf; i++)
 		    rt_nurb_free_snurb(nurb->srfs[i], NULL);
@@ -1242,7 +1242,7 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    nurb->nsrf = atoi(argv[1]);
 	    nurb->srfs = (struct face_g_snurb **) bu_calloc(
 		nurb->nsrf, sizeof(struct face_g_snurb *), "nurb srfs[]");
-	} else if (!strcmp(argv[0], "S")) {
+	} else if (BU_STR_EQUAL(argv[0], "S")) {
 	    (void)Tcl_ListObjGetElements(brlcad_interp, list, &len, &srf_array);
 	    for (srf_no=0; srf_no < nurb->nsrf; srf_no++) {
 		int n_params=0;
@@ -1256,7 +1256,7 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		    int tmp_len;
 
 		    key = Tcl_GetStringFromObj(srf_param_array[i], NULL);
-		    if (!strcmp(key, "O")) {
+		    if (BU_STR_EQUAL(key, "O")) {
 			tmp_len = 0;
 			if (tcl_obj_to_int_array(brlcad_interp, srf_param_array[i+1],
 						 &order, &tmp_len) != 2) {
@@ -1264,7 +1264,7 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 					  "ERROR: unable to parse surface\n");
 			    return BRLCAD_ERROR;
 			}
-		    } else if (!strcmp(key, "s")) {
+		    } else if (BU_STR_EQUAL(key, "s")) {
 			tmp_len = 0;
 			if (tcl_obj_to_int_array(brlcad_interp, srf_param_array[i+1],
 						 &s_size, &tmp_len) != 2) {
@@ -1272,16 +1272,16 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 					  "ERROR: unable to parse surface\n");
 			    return BRLCAD_ERROR;
 			}
-		    } else if (!strcmp(key, "T")) {
+		    } else if (BU_STR_EQUAL(key, "T")) {
 			pt_type = atoi(Tcl_GetStringFromObj(
 					   srf_param_array[i+1], NULL));
-		    } else if (!strcmp(key, "u")) {
+		    } else if (BU_STR_EQUAL(key, "u")) {
 			tcl_obj_to_fastf_array(brlcad_interp, srf_param_array[i+1], &u_pts,
 					       &u_size);
-		    } else if (!strcmp(key, "v")) {
+		    } else if (BU_STR_EQUAL(key, "v")) {
 			tcl_obj_to_fastf_array(brlcad_interp, srf_param_array[i+1], &v_pts,
 					       &v_size);
-		    } else if (!strcmp(key, "P")) {
+		    } else if (BU_STR_EQUAL(key, "P")) {
 			int tmp2;
 
 			if (!order || !s_size || !u_pts || !v_pts ||

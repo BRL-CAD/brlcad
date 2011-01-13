@@ -752,7 +752,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 		break;
 
 	if (clp == &head_cmd_list) {
-	    if (!strcmp(argv[2], "mged"))
+	    if (BU_STR_EQUAL(argv[2], "mged"))
 		Tcl_AppendResult(interpreter, "cmd_close: not allowed to close \"mged\"",
 				 (char *)NULL);
 	    else

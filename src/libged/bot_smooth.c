@@ -74,7 +74,7 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
 
     while (*argv[arg_index] == '-') {
 	/* this is an option */
-	if ( !strcmp( argv[arg_index], "-t" ) ) {
+	if ( BU_STR_EQUAL( argv[arg_index], "-t" ) ) {
 	    arg_index++;
 	    tolerance_angle = atof( argv[arg_index] );
 	} else {

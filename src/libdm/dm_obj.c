@@ -282,17 +282,17 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 #endif /* DM_X */
 
 #ifdef DM_TK
-    if (!strcmp(argv[2], "tk"))
+    if (BU_STR_EQUAL(argv[2], "tk"))
 	type = DM_TYPE_TK;
 #endif /* DM_TK */
 
 #ifdef DM_OGL
-    if (!strcmp(argv[2], "ogl"))
+    if (BU_STR_EQUAL(argv[2], "ogl"))
 	type = DM_TYPE_OGL;
 #endif /* DM_OGL */
 
 #ifdef DM_WGL
-    if (!strcmp(argv[2], "wgl"))
+    if (BU_STR_EQUAL(argv[2], "wgl"))
 	type = DM_TYPE_WGL;
 #endif /* DM_WGL */
 

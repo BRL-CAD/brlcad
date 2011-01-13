@@ -154,7 +154,7 @@ txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value)
     register struct txt_specific *tp =
 	(struct txt_specific *)cp;
 
-    if (!strcmp(name, txt_parse[0].sp_name) && ptab == txt_parse) {
+    if (BU_STR_EQUAL(name, txt_parse[0].sp_name) && ptab == txt_parse) {
 	tp->tx_trans_valid = 1;
     } else {
 	bu_log("file:%s, line:%d txt_transp_hook name:(%s) instead of (%s)\n",

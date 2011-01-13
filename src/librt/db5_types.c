@@ -416,14 +416,14 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 	has_standard[i] = 0;
     }
     for (i=0; i < avs->count; i++, avpp++) {
-	if (!strcmp(avpp->name, "region")) has_standard[ATTR_REGION] = 1;
-	if (!strcmp(avpp->name, "region_id")) has_standard[ATTR_REGION_ID] = 1;
-	if (!strcmp(avpp->name, "material_id")) has_standard[ATTR_MATERIAL_ID] = 1;
-	if (!strcmp(avpp->name, "air")) has_standard[ATTR_AIR] = 1;
-	if (!strcmp(avpp->name, "los")) has_standard[ATTR_LOS] = 1;
-	if (!strcmp(avpp->name, "color")) has_standard[ATTR_COLOR] = 1;
-	if (!strcmp(avpp->name, "oshader")) has_standard[ATTR_SHADER] = 1;
-	if (!strcmp(avpp->name, "inherit")) has_standard[ATTR_INHERIT] = 1;
+	if (BU_STR_EQUAL(avpp->name, "region")) has_standard[ATTR_REGION] = 1;
+	if (BU_STR_EQUAL(avpp->name, "region_id")) has_standard[ATTR_REGION_ID] = 1;
+	if (BU_STR_EQUAL(avpp->name, "material_id")) has_standard[ATTR_MATERIAL_ID] = 1;
+	if (BU_STR_EQUAL(avpp->name, "air")) has_standard[ATTR_AIR] = 1;
+	if (BU_STR_EQUAL(avpp->name, "los")) has_standard[ATTR_LOS] = 1;
+	if (BU_STR_EQUAL(avpp->name, "color")) has_standard[ATTR_COLOR] = 1;
+	if (BU_STR_EQUAL(avpp->name, "oshader")) has_standard[ATTR_SHADER] = 1;
+	if (BU_STR_EQUAL(avpp->name, "inherit")) has_standard[ATTR_INHERIT] = 1;
     }
 
     avpp = avs->avp;
@@ -434,8 +434,8 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 		    /* In the case of regions, values like Yes and 1 are causing trouble
 		     * somewhere in the code.  Do "R" for all affirmative cases and
 		     * strip any non-affirmative cases out of the avs */
-		    if (!strcmp(avpp->value, "Yes") || !strcmp(avpp->value, "R") || !strcmp(avpp->value, "1") ||
-			!strcmp(avpp->value, "Y") || !strcmp(avpp->value, "y")) {
+		    if (BU_STR_EQUAL(avpp->value, "Yes") || BU_STR_EQUAL(avpp->value, "R") || BU_STR_EQUAL(avpp->value, "1") ||
+			BU_STR_EQUAL(avpp->value, "Y") || BU_STR_EQUAL(avpp->value, "y")) {
 			(void)bu_avs_add(&avstmp, "region", "R");
 			has_standard[ATTR_REGION] = 1;
 		    }

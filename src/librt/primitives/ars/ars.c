@@ -1203,9 +1203,9 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	    }
 	    bu_vls_printf(logstr, " }");
 	}
-    } else if (!strcmp(attr, "NC")) {
+    } else if (BU_STR_EQUAL(attr, "NC")) {
 	bu_vls_printf(logstr, "%d", ars->ncurves);
-    } else if (!strcmp(attr, "PPC")) {
+    } else if (BU_STR_EQUAL(attr, "PPC")) {
 	bu_vls_printf(logstr, "%d", ars->pts_per_curve);
     } else if (attr[0] == 'C') {
 	char *ptr;
@@ -1267,7 +1267,7 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
     RT_ARS_CK_MAGIC(ars);
 
     while (argc >= 2) {
-	if (!strcmp(argv[0], "NC")) {
+	if (BU_STR_EQUAL(argv[0], "NC")) {
 	    /* change number of curves */
 	    i = atoi(argv[1]);
 	    if (i < ars->ncurves) {
@@ -1301,7 +1301,7 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		}
 		ars->ncurves = i;
 	    }
-	} else if (!strcmp(argv[0], "PPC")) {
+	} else if (BU_STR_EQUAL(argv[0], "PPC")) {
 	    /* change the number of points per curve */
 	    i = atoi(argv[1]);
 	    if (i < 3) {

@@ -586,8 +586,8 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 	    match_count = 0;
 	    for (i=0; (size_t)i<(size_t)avs->count; i++) {
 		for (j=0; (size_t)j<(size_t)obj_avs.count; j++) {
-		    if (!strcmp(avs->avp[i].name, obj_avs.avp[j].name)) {
-			if (!strcmp(avs->avp[i].value, obj_avs.avp[j].value)) {
+		    if (BU_STR_EQUAL(avs->avp[i].name, obj_avs.avp[j].name)) {
+			if (BU_STR_EQUAL(avs->avp[i].value, obj_avs.avp[j].value)) {
 			    if (op == 2) {
 				draw = 1;
 				break;

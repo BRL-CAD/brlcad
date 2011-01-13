@@ -79,7 +79,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 		    extrude = (struct rt_extrude_internal *)intern.idb_ptr;
 		    RT_EXTRUDE_CK_MAGIC(extrude);
 
-		    if (!strcmp(extrude->sketch_name, old)) {
+		    if (BU_STR_EQUAL(extrude->sketch_name, old)) {
 			if (nflag) {
 			    bu_vls_printf(&gedp->ged_result_str, "%s ", dirp->d_namep);
 			    rt_db_free_internal(&intern);
@@ -145,7 +145,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 			comb_leaf = comb_leaf->tr_b.tb_left;
 		    }
 
-		    if (!strcmp(comb_leaf->tr_l.tl_name, old)) {
+		    if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, old)) {
 			if (nflag)
 			    bu_vls_printf(&gedp->ged_result_str, "%s ", dp->d_namep);
 			else {
@@ -193,7 +193,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 	    bu_vls_init(&new_path);
 
 	    while (tok) {
-		if (!strcmp(tok, old)) {
+		if (BU_STR_EQUAL(tok, old)) {
 		    found = 1;
 
 		    if (first) {

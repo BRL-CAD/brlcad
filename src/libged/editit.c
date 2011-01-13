@@ -150,7 +150,7 @@ _ged_editit(char *editstring, const char *filename)
 	    return 1;
 #else
 
-	    if (!strcmp(bu_basename(editor), "TextEdit")) {
+	    if (BU_STR_EQUAL(bu_basename(editor), "TextEdit")) {
 		/* close stdout/stderr so we don't get blather from TextEdit about service registration failure */
 		close(fileno(stdout));
 		close(fileno(stderr));

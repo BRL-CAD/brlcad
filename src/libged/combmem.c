@@ -602,7 +602,7 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (etype == ETYPES_REL && tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
-	    !strcmp(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
+	    BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
 
 	    COMBMEM_CHECK_MAT(tp, tree_index, old_rt_tree_array, mat, aetvec, tvec, svec, key_pt, az, el, tw, tx, ty, tz, sa, sx, sy, sz);
 	} else {
@@ -684,7 +684,7 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
-	    !strcmp(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
+	    BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
 	    fastf_t tx, ty, tz;
 	    fastf_t sa, sx, sy, sz;
 	    vect_t aetvec, tvec, svec;
@@ -759,7 +759,7 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
-	    !strcmp(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
+	    BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
 	    fastf_t az, el, tw;
 	    fastf_t tx, ty, tz;
 	    fastf_t sa, sx, sy, sz;
@@ -826,7 +826,7 @@ combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
-	    !strcmp(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
+	    BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
 
 	    bn_mat_mul(tp->tr_l.tl_mat, mat, old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat);
 	} else {
@@ -899,7 +899,7 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
-	    !strcmp(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
+	    BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
 	    fastf_t az, el, tw;
 	    fastf_t tx, ty, tz;
 

@@ -736,11 +736,11 @@ bn_cmd_noise(ClientData clientData,
     octaves = atof(argv[6]);
 
 
-    if (!strcmp("bn_noise_turb", argv[0])) {
+    if (BU_STR_EQUAL("bn_noise_turb", argv[0])) {
 	val = bn_noise_turb(pt, h_val, lacunarity, octaves);
 
 	Tcl_SetObjResult(interp, Tcl_NewDoubleObj(val));
-    } else if (!strcmp("bn_noise_fbm", argv[0])) {
+    } else if (BU_STR_EQUAL("bn_noise_fbm", argv[0])) {
 	val = bn_noise_fbm(pt, h_val, lacunarity, octaves);
 	Tcl_SetObjResult(interp, Tcl_NewDoubleObj(val));
     } else {
@@ -838,10 +838,10 @@ bn_cmd_noise_slice(ClientData clientData,
     octaves = atof(argv[6]);
 
 
-    if (!strcmp("bn_noise_turb", argv[0])) {
+    if (BU_STR_EQUAL("bn_noise_turb", argv[0])) {
 	val = bn_noise_turb(pt, h_val, lacunarity, octaves);
 	Tcl_SetObjResult(interp, Tcl_NewDoubleObj(val));
-    } else if (!strcmp("bn_noise_fbm", argv[0])) {
+    } else if (BU_STR_EQUAL("bn_noise_fbm", argv[0])) {
 	val = bn_noise_fbm(pt, h_val, lacunarity, octaves);
 	Tcl_SetObjResult(interp, Tcl_NewDoubleObj(val));
     } else {

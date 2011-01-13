@@ -424,7 +424,7 @@ X_dm(int argc, char *argv[])
 {
     int status;
 
-    if (!strcmp(argv[0], "set")) {
+    if (BU_STR_EQUAL(argv[0], "set")) {
 	struct bu_vls tmp_vls;
 
 	bu_vls_init(&tmp_vls);
@@ -436,7 +436,7 @@ X_dm(int argc, char *argv[])
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[0], "m")) {
+    if (BU_STR_EQUAL(argv[0], "m")) {
 	vect_t view_pos;
 
 	if (argc < 4) {
@@ -455,7 +455,7 @@ X_dm(int argc, char *argv[])
 	return status;
     }
 
-    if (!strcmp(argv[0], "am")) {
+    if (BU_STR_EQUAL(argv[0], "am")) {
 	int buttonpress;
 
 	if (argc < 5) {

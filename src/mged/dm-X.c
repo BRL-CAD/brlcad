@@ -97,7 +97,7 @@ X_doevent(ClientData UNUSED(clientData), XEvent *eventPtr)
 static int
 X_dm(int argc, const char *argv[])
 {
-    if (!strcmp(argv[0], "set")) {
+    if (BU_STR_EQUAL(argv[0], "set")) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);

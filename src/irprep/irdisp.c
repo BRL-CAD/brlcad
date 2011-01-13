@@ -140,9 +140,9 @@ main(void)
 	    (void)fflush(stdout);
 	    (void)scanf( "%80s", choice );
 	}
-	if ( !strcmp( choice, "X" ) || !strcmp( choice, "x" ) )
+	if ( BU_STR_EQUAL( choice, "X" ) || BU_STR_EQUAL( choice, "x" ) )
 	    X_or_SGI = irX;
-	else if ( !strcmp( choice, "sgi" ) )
+	else if ( BU_STR_EQUAL( choice, "sgi" ) )
 	    X_or_SGI = irsgi;
 	else
 	{

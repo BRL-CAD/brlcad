@@ -1471,7 +1471,7 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
     }
 
     for (i=0; i < num_objects; i++) {
-	if (!strcmp(obj_rpt[i].o_name, str)) {
+	if (BU_STR_EQUAL(obj_rpt[i].o_name, str)) {
 	    bu_free(str, "");
 	    return i;
 	}

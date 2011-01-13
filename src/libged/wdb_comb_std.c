@@ -401,7 +401,7 @@ wdb_check_syntax(Tcl_Interp *interp, struct db_i *dbip, struct bu_list *hp, char
 		break;
 	    case WDB_TOK_TREE:
 		arg_count++;
-		if (!dp && !strcmp(comb_name, tok->tp->tr_l.tl_name))
+		if (!dp && BU_STR_EQUAL(comb_name, tok->tp->tr_l.tl_name))
 		    circular_ref++;
 		else if (db_lookup(dbip, tok->tp->tr_l.tl_name, LOOKUP_QUIET) == DIR_NULL)
 		    Tcl_AppendResult(interp, "WARNING: '",
@@ -658,7 +658,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 		case WDB_TOK_SUBTR:
 		    break;
 		case WDB_TOK_TREE:
-		    if (tok->tp && !strcmp(tok->tp->tr_l.tl_name, comb_name)) {
+		    if (tok->tp && BU_STR_EQUAL(tok->tp->tr_l.tl_name, comb_name)) {
 			db_free_tree(tok->tp, &rt_uniresource);
 			if (rt_db_get_internal(&intern1, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 			    Tcl_AppendResult(interp, "Cannot get records for ", comb_name, "\n", (char *)NULL);

@@ -1480,8 +1480,8 @@ nmg_break_all_es_on_v(unsigned long *magic_p, struct vertex *v, const struct bn_
     BN_CK_TOL(tol);
 
     magic_type = bu_identify_magic(*magic_p);
-    if (!strcmp(magic_type, "NULL") ||
-	!strcmp(magic_type, "Unknown_Magic")) {
+    if (BU_STR_EQUAL(magic_type, "NULL") ||
+	BU_STR_EQUAL(magic_type, "Unknown_Magic")) {
 	bu_log("Bad magic pointer passed to nmg_break_all_es_on_v (%s)\n", magic_type);
 	bu_bomb("Bad magic pointer passed to nmg_break_all_es_on_v()\n");
     }

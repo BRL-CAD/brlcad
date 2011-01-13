@@ -1034,7 +1034,7 @@ go_cmd(ClientData clientData,
 
     for (ctp = go_cmds; ctp->go_name != (char *)0; ctp++) {
 	if (ctp->go_name[0] == argv[1][0] &&
-	    !strcmp(ctp->go_name, argv[1])) {
+	    BU_STR_EQUAL(ctp->go_name, argv[1])) {
 	    ret = (*ctp->go_wrapper_func)(gop->go_gedp, argc-1, (const char **)argv+1, ctp->go_func, ctp->go_usage, ctp->go_maxargs);
 	    break;
 	}
@@ -3079,7 +3079,7 @@ go_data_move(struct ged *gedp,
     vx = (mx - cx) * sf;
     vy = (cy - my) * sf;
 
-    if (!strcmp(argv[2], "data_arrows")) {
+    if (BU_STR_EQUAL(argv[2], "data_arrows")) {
 	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_data_arrows; 
 
 	/* Silently ignore */
@@ -3096,7 +3096,7 @@ go_data_move(struct ged *gedp,
 	return BRLCAD_OK;
     }
 
-    if (!strcmp(argv[2], "sdata_arrows")) {
+    if (BU_STR_EQUAL(argv[2], "sdata_arrows")) {
 	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_sdata_arrows; 
 
 	/* Silently ignore */
@@ -3113,7 +3113,7 @@ go_data_move(struct ged *gedp,
 	return BRLCAD_OK;
     }
 
-    if (!strcmp(argv[2], "data_axes")) {
+    if (BU_STR_EQUAL(argv[2], "data_axes")) {
 	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes; 
 
 	/* Silently ignore */
@@ -3130,7 +3130,7 @@ go_data_move(struct ged *gedp,
 	return BRLCAD_OK;
     }
 
-    if (!strcmp(argv[2], "sdata_axes")) {
+    if (BU_STR_EQUAL(argv[2], "sdata_axes")) {
 	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes; 
 
 	/* Silently ignore */
@@ -3148,7 +3148,7 @@ go_data_move(struct ged *gedp,
     }
 
 
-    if (!strcmp(argv[2], "data_labels")) {
+    if (BU_STR_EQUAL(argv[2], "data_labels")) {
 	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_data_labels; 
 
 	/* Silently ignore */
@@ -3165,7 +3165,7 @@ go_data_move(struct ged *gedp,
 	return BRLCAD_OK;
     }
 
-    if (!strcmp(argv[2], "sdata_labels")) {
+    if (BU_STR_EQUAL(argv[2], "sdata_labels")) {
 	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_sdata_labels; 
 
 	/* Silently ignore */
@@ -3182,7 +3182,7 @@ go_data_move(struct ged *gedp,
 	return BRLCAD_OK;
     }
 
-    if (!strcmp(argv[2], "data_lines")) {
+    if (BU_STR_EQUAL(argv[2], "data_lines")) {
 	struct ged_data_line_state *gdlsp = &gdvp->gdv_view->gv_data_lines; 
 
 	/* Silently ignore */
@@ -3199,7 +3199,7 @@ go_data_move(struct ged *gedp,
 	return BRLCAD_OK;
     }
 
-    if (!strcmp(argv[2], "sdata_lines")) {
+    if (BU_STR_EQUAL(argv[2], "sdata_lines")) {
 	struct ged_data_line_state *gdlsp = &gdvp->gdv_view->gv_sdata_lines; 
 
 	/* Silently ignore */
@@ -6034,17 +6034,17 @@ go_new_view(struct ged *gedp,
 #endif /* DM_X */
 
 #ifdef DM_TK
-    if (!strcmp(argv[2], "tk"))
+    if (BU_STR_EQUAL(argv[2], "tk"))
 	type = DM_TYPE_TK;
 #endif /* DM_TK */
 
 #ifdef DM_OGL
-    if (!strcmp(argv[2], "ogl"))
+    if (BU_STR_EQUAL(argv[2], "ogl"))
 	type = DM_TYPE_OGL;
 #endif /* DM_OGL */
 
 #ifdef DM_WGL
-    if (!strcmp(argv[2], "wgl"))
+    if (BU_STR_EQUAL(argv[2], "wgl"))
 	type = DM_TYPE_WGL;
 #endif /* DM_WGL */
 

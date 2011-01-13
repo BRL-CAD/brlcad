@@ -762,12 +762,12 @@ f_status(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "state")) {
+    if (BU_STR_EQUAL(argv[1], "state")) {
 	Tcl_AppendResult(interp, state_str[STATE], (char *)NULL);
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "Viewscale")) {
+    if (BU_STR_EQUAL(argv[1], "Viewscale")) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%f", view_state->vs_gvp->gv_scale*base2local);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -775,7 +775,7 @@ f_status(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "base2local")) {
+    if (BU_STR_EQUAL(argv[1], "base2local")) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%f", base2local);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -783,7 +783,7 @@ f_status(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "local2base")) {
+    if (BU_STR_EQUAL(argv[1], "local2base")) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%f", local2base);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -791,32 +791,32 @@ f_status(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "toViewcenter")) {
+    if (BU_STR_EQUAL(argv[1], "toViewcenter")) {
 	bn_tcl_mat_print(interp, "toViewcenter", view_state->vs_gvp->gv_center);
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "Viewrot")) {
+    if (BU_STR_EQUAL(argv[1], "Viewrot")) {
 	bn_tcl_mat_print(interp, "Viewrot", view_state->vs_gvp->gv_rotation);
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "model2view")) {
+    if (BU_STR_EQUAL(argv[1], "model2view")) {
 	bn_tcl_mat_print(interp, "model2view", view_state->vs_gvp->gv_model2view);
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "view2model")) {
+    if (BU_STR_EQUAL(argv[1], "view2model")) {
 	bn_tcl_mat_print(interp, "view2model", view_state->vs_gvp->gv_view2model);
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "model2objview")) {
+    if (BU_STR_EQUAL(argv[1], "model2objview")) {
 	bn_tcl_mat_print(interp, "model2objview", view_state->vs_model2objview);
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "objview2model")) {
+    if (BU_STR_EQUAL(argv[1], "objview2model")) {
 	bn_tcl_mat_print(interp, "objview2model", view_state->vs_objview2model);
 	return TCL_OK;
     }
@@ -826,7 +826,7 @@ f_status(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
-    if (!strcmp(argv[1], "help"))
+    if (BU_STR_EQUAL(argv[1], "help"))
 	return TCL_OK;
 
     return TCL_ERROR;
@@ -3184,7 +3184,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_ERROR;
     }
 
-    if (!strcmp(argv[1], "add")) {
+    if (BU_STR_EQUAL(argv[1], "add")) {
 	if (argc != 2) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "help view_ring");
@@ -3217,7 +3217,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "next")) {
+    if (BU_STR_EQUAL(argv[1], "next")) {
 	if (argc != 2) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "help view_ring");
@@ -3256,7 +3256,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "prev")) {
+    if (BU_STR_EQUAL(argv[1], "prev")) {
 	if (argc != 2) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "help view_ring");
@@ -3295,7 +3295,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "toggle")) {
+    if (BU_STR_EQUAL(argv[1], "toggle")) {
 	struct view_ring *save_last_view;
 
 	if (argc != 2) {
@@ -3328,7 +3328,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "delete")) {
+    if (BU_STR_EQUAL(argv[1], "delete")) {
 	if (argc != 3) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "help view_ring");
@@ -3378,7 +3378,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "goto")) {
+    if (BU_STR_EQUAL(argv[1], "goto")) {
 	if (argc != 3) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "help view_ring");
@@ -3425,7 +3425,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[1], "get")) {
+    if (BU_STR_EQUAL(argv[1], "get")) {
 	/* return current view */
 	if (argc == 2) {
 	    bu_vls_init(&vls);

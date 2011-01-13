@@ -305,7 +305,7 @@ main(int argc, char **argv)
     printf("ran Tcl_CreateThread\n");
 
     Tcl_Eval(binterp, "vwait CloseWindow");
-    if (!strcmp(Tcl_GetVar(binterp, "CloseWindow", 0), "close")) {
+    if (BU_STR_EQUAL(Tcl_GetVar(binterp, "CloseWindow", 0), "close")) {
 	Tcl_Eval(binterp, "destroy .");
     }
 

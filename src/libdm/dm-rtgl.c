@@ -478,7 +478,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 
     for (j = 0; j < ndevices; ++j, list++) {
 	if (list->use == IsXExtensionDevice) {
-	    if (!strcmp(list->name, "dial+buttons")) {
+	    if (BU_STR_EQUAL(list->name, "dial+buttons")) {
 		if ((dev = XOpenDevice(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				       list->id)) == (XDevice *)NULL) {
 		    bu_log("rtgl_open: Couldn't open the dials+buttons\n");

@@ -194,9 +194,9 @@ do_silly_nastran_shortcuts(void)
     int field_no;
 
     for (field_no=0; field_no < NO_OF_FIELDS; field_no++) {
-	if (!strcmp(curr_rec[field_no], "=")) {
+	if (BU_STR_EQUAL(curr_rec[field_no], "=")) {
 	    bu_strlcpy(curr_rec[field_no], prev_rec[field_no], FIELD_LENGTH);
-	} else if (!strcmp(curr_rec[field_no], "==")) {
+	} else if (BU_STR_EQUAL(curr_rec[field_no], "==")) {
 	    while (field_no < NO_OF_FIELDS) {
 		bu_strlcpy(curr_rec[field_no], prev_rec[field_no], FIELD_LENGTH);
 		field_no++;

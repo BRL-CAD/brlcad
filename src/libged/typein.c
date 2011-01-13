@@ -1346,21 +1346,21 @@ arb_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	for (i = 0; i < ELEMENTS_PER_POINT; i++)
 	    aip->pt[j][i] = atof(cmd_argvs[3+i+3*j]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
-    if (!strcmp("arb4", cmd_argvs[2])) {
+    if (BU_STR_EQUAL("arb4", cmd_argvs[2])) {
 	VMOVE(aip->pt[7], aip->pt[3]);
 	VMOVE(aip->pt[6], aip->pt[3]);
 	VMOVE(aip->pt[5], aip->pt[3]);
 	VMOVE(aip->pt[4], aip->pt[3]);
 	VMOVE(aip->pt[3], aip->pt[0]);
-    } else if (!strcmp("arb5", cmd_argvs[2])) {
+    } else if (BU_STR_EQUAL("arb5", cmd_argvs[2])) {
 	VMOVE(aip->pt[7], aip->pt[4]);
 	VMOVE(aip->pt[6], aip->pt[4]);
 	VMOVE(aip->pt[5], aip->pt[4]);
-    } else if (!strcmp("arb6", cmd_argvs[2])) {
+    } else if (BU_STR_EQUAL("arb6", cmd_argvs[2])) {
 	VMOVE(aip->pt[7], aip->pt[5]);
 	VMOVE(aip->pt[6], aip->pt[5]);
 	VMOVE(aip->pt[5], aip->pt[4]);
-    } else if (!strcmp("arb7", cmd_argvs[2])) {
+    } else if (BU_STR_EQUAL("arb7", cmd_argvs[2])) {
 	VMOVE(aip->pt[7], aip->pt[4]);
     }
 
@@ -1425,7 +1425,7 @@ ell_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	vals[i] = atof(cmd_argvs[3+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
     }
 
-    if (!strcmp("ell", cmd_argvs[2])) {
+    if (BU_STR_EQUAL("ell", cmd_argvs[2])) {
  	/* everything's ok */
 	/* V, A, B, C */
 	VMOVE(eip->v, &vals[0]);
@@ -1435,7 +1435,7 @@ ell_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	return GED_OK;
     }
 
-    if (!strcmp("ellg", cmd_argvs[2])) {
+    if (BU_STR_EQUAL("ellg", cmd_argvs[2])) {
 	/* V, f1, f2, len */
 	/* convert ELLG format into ELL1 format */
 	len = vals[6];
@@ -1452,7 +1452,7 @@ ell_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	VSCALE(eip->a, eip->b, .5*len/mag_b);
 	/* calculate radius of revolution (for ELL1 format) */
 	r_rev = sqrt(MAGSQ(eip->a) - (mag_b*.5)*(mag_b*.5));
-    } else if (!strcmp("ell1", cmd_argvs[2])) {
+    } else if (BU_STR_EQUAL("ell1", cmd_argvs[2])) {
 	/* V, A, r */
 	VMOVE(eip->v, &vals[0]);
 	VMOVE(eip->a, &vals[3]);
@@ -1768,7 +1768,7 @@ box_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	return GED_ERROR;
     }
 
-    if (!strcmp("box", cmd_argvs[2])) {
+    if (BU_STR_EQUAL("box", cmd_argvs[2])) {
 	VMOVE(aip->pt[0], Vrtx);
 	VADD2(aip->pt[1], Vrtx, Wdth);
 	VADD3(aip->pt[2], Vrtx, Wdth, Hgt);

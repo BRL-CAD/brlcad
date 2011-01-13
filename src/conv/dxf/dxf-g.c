@@ -289,12 +289,12 @@ get_layer()
     curr_layer = -1;
     for ( i = 1; i < next_layer; i++ ) {
 	if ( !color_by_layer && !ignore_colors && curr_color != 256 ) {
-	    if ( layers[i]->color_number == curr_color && !strcmp( curr_layer_name, layers[i]->name ) ) {
+	    if ( layers[i]->color_number == curr_color && BU_STR_EQUAL( curr_layer_name, layers[i]->name ) ) {
 		curr_layer = i;
 		break;
 	    }
 	} else {
-	    if ( !strcmp( curr_layer_name, layers[i]->name ) ) {
+	    if ( BU_STR_EQUAL( curr_layer_name, layers[i]->name ) ) {
 		curr_layer = i;
 		break;
 	    }
@@ -469,9 +469,9 @@ process_header_code( int code )
 	case 9:		/* variable name */
 	    if ( !strncmp( line, "$INSUNITS", 9 ) ) {
 		int_ptr = &units;
-	    } else if ( !strcmp( line, "$CECOLOR" ) ) {
+	    } else if ( BU_STR_EQUAL( line, "$CECOLOR" ) ) {
 		int_ptr = &color_by_layer;
-	    } else if ( !strcmp( line, "$SPLINESEGS" ) ) {
+	    } else if ( BU_STR_EQUAL( line, "$SPLINESEGS" ) ) {
 		int_ptr = &splineSegs;
 	    }
 	    break;
@@ -517,7 +517,7 @@ process_tables_unknown_code( int code )
 	    printf( "%s\n", line );
 	    break;
 	case 0:		/* text string */
-	    if ( !strcmp( line, "LAYER" ) ) {
+	    if ( BU_STR_EQUAL( line, "LAYER" ) ) {
 		if ( curr_layer_name ) {
 		    bu_free( curr_layer_name, "cur_layer_name" );
 		    curr_layer_name = NULL;
@@ -525,7 +525,7 @@ process_tables_unknown_code( int code )
 		curr_color = 0;
 		curr_state->sub_state = LAYER_TABLE_STATE;
 		break;
-	    } else if ( !strcmp( line, "ENDTAB" ) ) {
+	    } else if ( BU_STR_EQUAL( line, "ENDTAB" ) ) {
 		if ( curr_layer_name ) {
 		    bu_free( curr_layer_name, "cur_layer_name" );
 		    curr_layer_name = NULL;
@@ -608,7 +608,7 @@ process_blocks_code( int code )
 	    } else if ( !strncmp( line, "ENDSEC", 6 ) ) {
 		curr_state->state = UNKNOWN_SECTION;
 		break;
-	    } else if ( !strcmp( line, "ENDBLK" ) ) {
+	    } else if ( BU_STR_EQUAL( line, "ENDBLK" ) ) {
 		curr_block = NULL;
 		break;
 	    } else if ( !strncmp( line, "BLOCK", 5 ) ) {
@@ -995,31 +995,31 @@ process_entities_unknown_code( int code )
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strcmp( line, "CIRCLE" ) ) {
+	    } else if ( BU_STR_EQUAL( line, "CIRCLE" ) ) {
 		curr_state->sub_state = CIRCLE_ENTITY_STATE;
 		if ( verbose ) {
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strcmp( line, "ELLIPSE" ) ) {
+	    } else if ( BU_STR_EQUAL( line, "ELLIPSE" ) ) {
 		curr_state->sub_state = ELLIPSE_ENTITY_STATE;
 		if ( verbose ) {
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strcmp( line, "SPLINE" ) ) {
+	    } else if ( BU_STR_EQUAL( line, "SPLINE" ) ) {
 		curr_state->sub_state = SPLINE_ENTITY_STATE;
 		if ( verbose ) {
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strcmp( line, "ARC" ) ) {
+	    } else if ( BU_STR_EQUAL( line, "ARC" ) ) {
 		curr_state->sub_state = ARC_ENTITY_STATE;
 		if ( verbose ) {
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strcmp( line, "DIMENSION" ) ) {
+	    } else if ( BU_STR_EQUAL( line, "DIMENSION" ) ) {
 		curr_state->sub_state = DIMENSION_ENTITY_STATE;
 		if ( verbose ) {
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
@@ -1031,43 +1031,43 @@ process_entities_unknown_code( int code )
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strcmp( line, "POINT" ) ) {
+	    } else if ( BU_STR_EQUAL( line, "POINT" ) ) {
 		curr_state->sub_state = POINT_ENTITY_STATE;
 		if ( verbose ) {
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strcmp( line, "LEADER" ) ) {
+	    } else if ( BU_STR_EQUAL( line, "LEADER" ) ) {
 		curr_state->sub_state = LEADER_ENTITY_STATE;
 		if ( verbose ) {
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strcmp( line, "MTEXT" ) ) {
+	    } else if ( BU_STR_EQUAL( line, "MTEXT" ) ) {
 		curr_state->sub_state = MTEXT_ENTITY_STATE;
 		if ( verbose ) {
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strcmp( line, "TEXT" ) ) {
+	    } else if ( BU_STR_EQUAL( line, "TEXT" ) ) {
 		curr_state->sub_state = TEXT_ENTITY_STATE;
 		if ( verbose ) {
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strcmp( line, "ATTRIB" ) ) {
+	    } else if ( BU_STR_EQUAL( line, "ATTRIB" ) ) {
 		curr_state->sub_state = ATTRIB_ENTITY_STATE;
 		if ( verbose ) {
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strcmp( line, "ATTDEF" ) ) {
+	    } else if ( BU_STR_EQUAL( line, "ATTDEF" ) ) {
 		curr_state->sub_state = ATTDEF_ENTITY_STATE;
 		if ( verbose ) {
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strcmp( line, "SOLID" ) ) {
+	    } else if ( BU_STR_EQUAL( line, "SOLID" ) ) {
 		curr_state->sub_state = SOLID_ENTITY_STATE;
 		if ( verbose ) {
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
@@ -1082,7 +1082,7 @@ process_entities_unknown_code( int code )
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strcmp( line, "ENDBLK" ) ) {
+	    } else if ( BU_STR_EQUAL( line, "ENDBLK" ) ) {
 		/* found end of an inserted block, pop the state stack */
 		tmp_state = curr_state;
 		BU_LIST_POP( state_data, &state_stack, curr_state );
@@ -1143,7 +1143,7 @@ process_insert_entities_code( int code )
 	    break;
 	case 2:		/* block name */
 	    for ( BU_LIST_FOR( blk, block_list, &block_head ) ) {
-		if ( !strcmp( blk->block_name, line ) ) {
+		if ( BU_STR_EQUAL( blk->block_name, line ) ) {
 		    break;
 		}
 	    }
@@ -2465,7 +2465,7 @@ process_dimension_entities_code( int code )
 		}
 		for ( BU_LIST_FOR( blk, block_list, &block_head ) ) {
 		    if (block_name) {
-			if ( !strcmp( blk->block_name, block_name ) ) {
+			if ( BU_STR_EQUAL( blk->block_name, block_name ) ) {
 			    break;
 			}
 		    }

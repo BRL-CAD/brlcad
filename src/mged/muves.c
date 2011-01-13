@@ -278,7 +278,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 
 		    /* check if this component name already exists */
 		    for (BU_LIST_FOR(new_comp, muves_comp, &muves_comp_head.l)) {
-			if (!strcmp(ptr, new_comp->muves_name))
+			if (BU_STR_EQUAL(ptr, new_comp->muves_name))
 			    break;
 		    }
 
@@ -479,11 +479,11 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	    for (BU_LIST_FOR(member, member_list, &new_sys->member_head.l)) {
 		switch (member->object_type) {
 		    case MUVES_COMPONENT:   /* component */
-			if (!strcmp(ptr, member->mem.comp->muves_name))
+			if (BU_STR_EQUAL(ptr, member->mem.comp->muves_name))
 			    already_member = 1;
 			break;
 		    case MUVES_SYSTEM:      /* system */
-			if (!strcmp(ptr, member->mem.sys->muves_name))
+			if (BU_STR_EQUAL(ptr, member->mem.sys->muves_name))
 			    already_member = 1;
 			break;
 		    default:
@@ -502,7 +502,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	    member = (struct member_list *)bu_malloc(sizeof(struct member_list), "member");
 	    member->object_type = MUVES_TYPE_UNKNOWN;
 	    for (BU_LIST_FOR(sys, muves_sys, &muves_sys_head.l)) {
-		if (!strcmp(ptr, sys->muves_name)) {
+		if (BU_STR_EQUAL(ptr, sys->muves_name)) {
 		    /* found a matching system name */
 		    member->object_type = MUVES_SYSTEM;
 		    member->mem.sys = sys;
@@ -513,7 +513,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	    if (member->object_type == MUVES_TYPE_UNKNOWN) {
 		/* look for a matching component */
 		for (BU_LIST_FOR(comp, muves_comp, &muves_comp_head.l)) {
-		    if (!strcmp(ptr, comp->muves_name)) {
+		    if (BU_STR_EQUAL(ptr, comp->muves_name)) {
 			/* found a matching component */
 			member->object_type = MUVES_COMPONENT;
 			member->mem.comp = comp;
@@ -605,14 +605,14 @@ f_e_muves(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int argc, c
     for (i=1; i<argc; i++) {
 	/* look in list of MUVES components */
 	for (BU_LIST_FOR(comp, muves_comp, &muves_comp_head.l)) {
-	    if (!strcmp(argv[i], comp->muves_name))
+	    if (BU_STR_EQUAL(argv[i], comp->muves_name))
 		Display_muves_comp(comp,
 				   &e_argc, &e_argv, &e_argv_len);
 	}
 
 	/* look in list of MUVES systems */
 	for (BU_LIST_FOR(sys, muves_sys, &muves_sys_head.l)) {
-	    if (!strcmp(argv[i], sys->muves_name))
+	    if (BU_STR_EQUAL(argv[i], sys->muves_name))
 		Display_muves_sys(sys,
 				  &e_argc, &e_argv, &e_argv_len);
 	}
@@ -646,7 +646,7 @@ f_l_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	struct muves_sys *sys;
 
 	for (BU_LIST_FOR(comp, muves_comp, &muves_comp_head.l)) {
-	    if (!strcmp(argv[i], comp->muves_name)) {
+	    if (BU_STR_EQUAL(argv[i], comp->muves_name)) {
 		struct cad_comp_list *cad;
 		int member_count;
 		char count_str[32];
@@ -664,7 +664,7 @@ f_l_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	}
 
 	for (BU_LIST_FOR(sys, muves_sys, &muves_sys_head.l)) {
-	    if (!strcmp(argv[i], sys->muves_name)) {
+	    if (BU_STR_EQUAL(argv[i], sys->muves_name)) {
 		struct member_list *member;
 		int member_count;
 		char count_str[32];

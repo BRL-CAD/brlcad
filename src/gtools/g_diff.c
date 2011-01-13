@@ -545,7 +545,7 @@ compare_tcl_solids(char *str1, Tcl_Obj *obj1, struct directory *dp1, char *str2,
 	    printf("kill %s\ndb put %s %s\n", dp1->d_namep, dp1->d_namep, str2);
 
 	return 1;
-    } else if (!strcmp(str1, str2)) {
+    } else if (BU_STR_EQUAL(str1, str2)) {
 	return 0;		/* no difference */
     }
 
@@ -621,7 +621,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 
 	key = Tcl_GetStringFromObj(objs[i-1], NULL);
 	value = Tcl_GetStringFromObj(objs[i], NULL);
-	if (!strcmp(key, "region_id")) {
+	if (BU_STR_EQUAL(key, "region_id")) {
 	    long id;
 
 	    id = strtol(value, NULL, 0);
@@ -629,7 +629,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 		fprintf(stderr, "WARNING: %s in %s: \"region_id\" attribute says %ld, while region says %ld\n",
 			dp->d_namep, dbip->dbi_filename, id, comb->region_id);
 	    }
-	} else if (!strcmp(key, "giftmater")) {
+	} else if (BU_STR_EQUAL(key, "giftmater")) {
 	    long GIFTmater;
 
 	    GIFTmater = strtol(value, NULL, 0);
@@ -637,7 +637,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 		fprintf(stderr, "WARNING: %s in %s: \"giftmater\" attribute says %ld, while region says %ld\n",
 			dp->d_namep, dbip->dbi_filename, GIFTmater, comb->GIFTmater);
 	    }
-	} else if (!strcmp(key, "los")) {
+	} else if (BU_STR_EQUAL(key, "los")) {
 	    long los;
 
 	    los = strtol(value, NULL, 0);
@@ -645,7 +645,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 		fprintf(stderr, "WARNING: %s in %s: \"los\" attribute says %ld, while region says %ld\n",
 			dp->d_namep, dbip->dbi_filename, los, comb->los);
 	    }
-	} else if (!strcmp(key, "material")) {
+	} else if (BU_STR_EQUAL(key, "material")) {
 	    if (!strncmp(value, "gift", 4)) {
 		long GIFTmater;
 
@@ -655,7 +655,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 			    dp->d_namep, dbip->dbi_filename, value, comb->GIFTmater);
 		}
 	    }
-	} else if (!strcmp(key, "aircode")) {
+	} else if (BU_STR_EQUAL(key, "aircode")) {
 	    long aircode;
 
 	    aircode = strtol(value, NULL, 0);
@@ -697,13 +697,13 @@ remove_region_attrs(Tcl_Obj *obj)
 	key = Tcl_GetStringFromObj(objs[i-1], NULL);
 	j = 0;
 	while (region_attrs[j]) {
-	    if (!strcmp(key, region_attrs[j])) {
+	    if (BU_STR_EQUAL(key, region_attrs[j])) {
 		Tcl_ListObjReplace(interp, obj, i-1, 2, 0, NULL);
 		break;
 	    }
 	    j++;
 	}
-	if (!found_material && !strcmp(key, "material")) {
+	if (!found_material && BU_STR_EQUAL(key, "material")) {
 	    found_material = 1;
 	    if (!strncmp(Tcl_GetStringFromObj(objs[i], NULL), "gift", 4)) {
 		Tcl_ListObjReplace(interp, obj, i-1, 2, 0, NULL);

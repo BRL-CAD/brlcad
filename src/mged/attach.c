@@ -197,7 +197,7 @@ release(char *name, int need_close)
     if (name != NULL) {
 	struct dm_list *p;
 
-	if (!strcmp("nu", name))
+	if (BU_STR_EQUAL("nu", name))
 	    return TCL_OK;  /* Ignore */
 
 	FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
@@ -632,7 +632,7 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
 	return TCL_ERROR;
     }
 
-    if (!strcmp(argv[1], "valid")) {
+    if (BU_STR_EQUAL(argv[1], "valid")) {
 	if (argc < 3) {
     	    struct bu_vls vls;
 	    
@@ -643,32 +643,32 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
     	    return TCL_ERROR;
     	}
 #ifdef DM_X
-    	if (!strcmp(argv[argc-1], "X")) {
+    	if (BU_STR_EQUAL(argv[argc-1], "X")) {
     	    Tcl_AppendResult(interpreter, "X", (char *)NULL);
     	}
 #endif /* DM_X */
 #ifdef DM_TK
-    	if (!strcmp(argv[argc-1], "tk")) {
+    	if (BU_STR_EQUAL(argv[argc-1], "tk")) {
     	    Tcl_AppendResult(interpreter, "tk", (char *)NULL);
     	}
 #endif /* DM_TK */
 #ifdef DM_WGL
-    	if (!strcmp(argv[argc-1], "wgl")) {
+    	if (BU_STR_EQUAL(argv[argc-1], "wgl")) {
 	    Tcl_AppendResult(interpreter, "wgl", (char *)NULL);
 	}
 #endif /* DM_WGL */
 #ifdef DM_OGL
-    	if (!strcmp(argv[argc-1], "ogl")) {
+    	if (BU_STR_EQUAL(argv[argc-1], "ogl")) {
 	    Tcl_AppendResult(interpreter, "ogl", (char *)NULL);
 	}
 #endif /* DM_OGL */
 #ifdef DM_RTGL
-    	if (!strcmp(argv[argc-1], "rtgl")) {
+    	if (BU_STR_EQUAL(argv[argc-1], "rtgl")) {
 	    Tcl_AppendResult(interpreter, "rtgl", (char *)NULL);
 	}
 #endif /* DM_RTGL */
 #ifdef DM_GLX
-    	if (!strcmp(argv[argc-1], "glx")) {
+    	if (BU_STR_EQUAL(argv[argc-1], "glx")) {
 	    Tcl_AppendResult(interpreter, "glx", (char *)NULL);
 	}
 #endif /* DM_GLX */

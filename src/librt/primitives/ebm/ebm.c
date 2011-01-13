@@ -1586,15 +1586,15 @@ rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	for (i=0; i<16; i++)
 	    bu_vls_printf(logstr, " %.25g", ebm->mat[i]);
 	bu_vls_printf(logstr, " }");
-    } else if (!strcmp(attr, "F")) {
+    } else if (BU_STR_EQUAL(attr, "F")) {
 	bu_vls_printf(logstr, "%s", ebm->file);
-    } else if (!strcmp(attr, "W")) {
+    } else if (BU_STR_EQUAL(attr, "W")) {
 	bu_vls_printf(logstr, "%d", ebm->xdim);
-    } else if (!strcmp(attr, "N")) {
+    } else if (BU_STR_EQUAL(attr, "N")) {
 	bu_vls_printf(logstr, "%d", ebm->ydim);
-    } else if (!strcmp(attr, "H")) {
+    } else if (BU_STR_EQUAL(attr, "H")) {
 	bu_vls_printf(logstr, "%.25g", ebm->tallness);
-    } else if (!strcmp(attr, "M")) {
+    } else if (BU_STR_EQUAL(attr, "M")) {
 	for (i=0; i<16; i++)
 	    bu_vls_printf(logstr, "%.25g ", ebm->mat[i]);
     } else {
@@ -1629,19 +1629,19 @@ rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
     RT_EBM_CK_MAGIC(ebm);
 
     while (argc >= 2) {
-	if (!strcmp(argv[0], "F")) {
+	if (BU_STR_EQUAL(argv[0], "F")) {
 	    if (strlen(argv[1]) >= RT_EBM_NAME_LEN) {
 		bu_vls_printf(logstr, "ERROR: File name too long");
 		return BRLCAD_ERROR;
 	    }
 	    bu_strlcpy(ebm->file, argv[1], RT_EBM_NAME_LEN);
-	} else if (!strcmp(argv[0], "W")) {
+	} else if (BU_STR_EQUAL(argv[0], "W")) {
 	    ebm->xdim = atoi(argv[1]);
-	} else if (!strcmp(argv[0], "N")) {
+	} else if (BU_STR_EQUAL(argv[0], "N")) {
 	    ebm->ydim = atoi(argv[1]);
-	} else if (!strcmp(argv[0], "H")) {
+	} else if (BU_STR_EQUAL(argv[0], "H")) {
 	    ebm->tallness = atof(argv[1]);
-	} else if (!strcmp(argv[0], "M")) {
+	} else if (BU_STR_EQUAL(argv[0], "M")) {
 	    int len=16;
 	    fastf_t array[16];
 	    fastf_t *ar_ptr;

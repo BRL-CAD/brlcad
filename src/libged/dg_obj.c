@@ -2498,10 +2498,10 @@ dgo_set_uplotOutputMode_cmd(struct dg_obj	*dgop,
     }
 
     if (argv[1][0] == 'b' &&
-	!strcmp("binary", argv[1]))
+	BU_STR_EQUAL("binary", argv[1]))
 	dgop->dgo_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     else if (argv[1][0] == 't' &&
-	     !strcmp("text", argv[1]))
+	     BU_STR_EQUAL("text", argv[1]))
 	dgop->dgo_uplotOutputMode = PL_OUTPUT_MODE_TEXT;
     else {
 	bu_vls_init(&vls);

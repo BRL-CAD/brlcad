@@ -801,7 +801,7 @@ add_to_empty_list( char *name )
     } else {
 	ptr = empty_parts_root;
 	while ( !found && ptr->next ) {
-	    if ( !strcmp( name, ptr->name ) ) {
+	    if ( BU_STR_EQUAL( name, ptr->name ) ) {
 		found = 1;
 		break;
 	    }
@@ -3251,11 +3251,11 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	}
 
 	/* Set logger type */
-	if (!strcmp("Failure", logger_type_str))
+	if (BU_STR_EQUAL("Failure", logger_type_str))
 	    logger_type = LOGGER_TYPE_FAILURE;
-	else if (!strcmp("Success", logger_type_str))
+	else if (BU_STR_EQUAL("Success", logger_type_str))
 	    logger_type = LOGGER_TYPE_SUCCESS;
-	else if (!strcmp("Failure/Success", logger_type_str))
+	else if (BU_STR_EQUAL("Failure/Success", logger_type_str))
 	    logger_type = LOGGER_TYPE_FAILURE_OR_SUCCESS;
 	else
 	    logger_type = LOGGER_TYPE_ALL;

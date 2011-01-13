@@ -78,7 +78,7 @@ cmd_rt(ClientData UNUSED(clientData),
 	strncmp(argv[0], "_mged_", 6) == 0)
 	argv[0] += 6;
 
-    if (!strcmp(argv[0], "rtcheck"))
+    if (BU_STR_EQUAL(argv[0], "rtcheck"))
 	doRtcheck = 1;
     else
 	doRtcheck = 0;

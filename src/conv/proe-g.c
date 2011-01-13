@@ -966,7 +966,7 @@ Rm_nulls(void)
 		char *save_name;
 
 		save_name = (char *)BU_PTBL_GET(&null_parts, k);
-		if (!strcmp(save_name, tree_list[j].tl_tree->tr_l.tl_name)) {
+		if (BU_STR_EQUAL(save_name, tree_list[j].tl_tree->tr_l.tl_name)) {
 		    found = 1;
 		    break;
 		}

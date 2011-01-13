@@ -168,7 +168,7 @@ static unsigned short *hl_dstmap = NULL;
 	    && ((failure=PT_BEHIND, pp->pt_outhit->hit_dist < BEHIND_ME_TOL)\
 	     || (failure=PT_EYE, pp->pt_inseg->seg_stp == lgts[0].stp)\
 	     ||	(failure=PT_GRID, lgts[0].stp != NULL &&\
-		 !strcmp( pp->pt_inseg->seg_stp->st_name, "GRID" )));\
+		 BU_STR_EQUAL( pp->pt_inseg->seg_stp->st_name, "GRID" )));\
 		pp = pp->pt_forw\
 		)\
 		{ struct partition *pt_back = pp->pt_back;\

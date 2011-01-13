@@ -144,7 +144,7 @@ _ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
 	    return;
 	}
 	for (BU_AVS_FOR( avp, &avs)) {
-	    if (!strcmp(avp->name, "units")) {
+	    if (BU_STR_EQUAL(avp->name, "units")) {
 		double conv;
 		const char *str;
 

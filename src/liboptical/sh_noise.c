@@ -262,7 +262,7 @@ noise_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
     /* figure out which shader is really being called */
     for (i = 0; noise_mfuncs[i].mf_name; i++ ) {
-	if (!strcmp(noise_mfuncs[i].mf_name, mfp->mf_name))
+	if (BU_STR_EQUAL(noise_mfuncs[i].mf_name, mfp->mf_name))
 	    goto found;
     }
     bu_log("shader name \"%s\" not recognized, assuming \"%s\"\n",

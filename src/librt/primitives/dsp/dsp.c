@@ -4594,7 +4594,7 @@ hook_verify(const struct bu_structparse *sp,
 
     if (!sp || !sp_name || !base) return;
 
-    if (!strcmp(sp_name, "src")) {
+    if (BU_STR_EQUAL(sp_name, "src")) {
 	switch (dsp_ip->dsp_datasrc) {
 	    case RT_DSP_SRC_V4_FILE:
 	    case RT_DSP_SRC_FILE:
@@ -4608,13 +4608,13 @@ hook_verify(const struct bu_structparse *sp,
 		break;
 	}
 
-    } else if (!strcmp(sp_name, "w")) {
+    } else if (BU_STR_EQUAL(sp_name, "w")) {
 	if (dsp_ip->dsp_xcnt == 0)
 	    bu_log("Error in DSP width dimension (0)\n");
-    } else if (!strcmp(sp_name, "n")) {
+    } else if (BU_STR_EQUAL(sp_name, "n")) {
 	if (dsp_ip->dsp_ycnt == 0)
 	    bu_log("Error in DSP width dimension (0)\n");
-    } else if (!strcmp(sp_name, "cut")) {
+    } else if (BU_STR_EQUAL(sp_name, "cut")) {
 	switch (dsp_ip->dsp_cuttype) {
 	    case DSP_CUT_DIR_ADAPT:
 	    case DSP_CUT_DIR_llUR:

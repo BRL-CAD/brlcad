@@ -2014,7 +2014,7 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
     shader = _bu_list_elem(in, 0);
     params = _bu_list_elem(in, 1);
 
-    if (!strcmp(shader, "envmap")) {
+    if (BU_STR_EQUAL(shader, "envmap")) {
 	/* environment map */
 
 	if (bu_vls_strlen(vls))
@@ -2022,7 +2022,7 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 	bu_vls_strcat(vls, "envmap");
 
 	bu_shader_to_key_eq(params, vls);
-    } else if (!strcmp(shader, "stack")) {
+    } else if (BU_STR_EQUAL(shader, "stack")) {
 	/* stacked shaders */
 
 	int i;

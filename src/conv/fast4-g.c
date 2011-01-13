@@ -1813,7 +1813,7 @@ f4_do_ccone3(void)
 		   group_id, comp_id, element_id);
 	    return;
 	}
-	if (!strcmp(field, "        "))
+	if (BU_STR_EQUAL(field, "        "))
 	    ro[i] = -1.0;
     }
 
@@ -1826,7 +1826,7 @@ f4_do_ccone3(void)
 		   group_id, comp_id, element_id);
 	    return;
 	}
-	if (!strcmp(field, "        "))
+	if (BU_STR_EQUAL(field, "        "))
 	    ri[i] = -1.0;
     }
 

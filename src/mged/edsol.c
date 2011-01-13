@@ -1882,10 +1882,10 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 
 		RT_CLINE_CK_MAGIC(cli);
 
-		if (!strcmp(cp, "V")) {
+		if (BU_STR_EQUAL(cp, "V")) {
 		    VMOVE(mpt, cli->v);
 		    *strp = "V";
-		} else if (!strcmp(cp, "H")) {
+		} else if (BU_STR_EQUAL(cp, "H")) {
 		    VADD2(mpt, cli->v, cli->h);
 		    *strp = "H";
 		} else {
@@ -1901,10 +1901,10 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 
 		RT_PART_CK_MAGIC(part);
 
-		if (!strcmp(cp, "V")) {
+		if (BU_STR_EQUAL(cp, "V")) {
 		    VMOVE(mpt, part->part_V);
 		    *strp = "V";
-		} else if (!strcmp(cp, "H")) {
+		} else if (BU_STR_EQUAL(cp, "H")) {
 		    VADD2(mpt, part->part_V, part->part_H);
 		    *strp = "H";
 		} else {
