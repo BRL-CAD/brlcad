@@ -12,10 +12,6 @@ Remaining items:
 
 8.  Review and test binaries - get regression testing working, check mged and archer, etc.
 
-10. Convert -D options that need spaces in args (mostly pathnames) to config.h header files - mostly
-    this is an issue for Tcl/Tk and packages, but CMake->Visual C++ solutions doesn't tolerate the
-	 spaces.
-
 12. Try enabling the Aqua compile logic - it still won't work, but get the build logic to the point
     where the autotools logic is.
 
@@ -23,7 +19,11 @@ Remaining items:
 
 14. Apply lessons learned to the SCL build logic
 
-15. Try and get archer working in the build directory
+15. Try and get archer working in the build directory - this is going to involve carefully studying
+    what bu_brlcad_data and friends are up to, and what we need to have in place. Right now mged
+	 will crash if either a share dir is created in the build toplevel (empty data dir) or there
+	 is an installed BRL-CAD in the target install directory (not sure what the issue is there) but
+	 will run in isolation.
 
 Done (to first order, all this needs testing)
 
@@ -42,3 +42,9 @@ Done (to first order, all this needs testing)
     doesn't work out-of-box (lex/yacc and sh based logic are obvious, other probables)
 
 11. Find out why make package from CPack isn't including much of anything, fix it.
+
+10. Convert -D options that need spaces in args (mostly pathnames) to config.h header files - mostly
+    this is an issue for Tcl/Tk and packages, but CMake->Visual C++ solutions doesn't tolerate the
+	 spaces.
+
+
