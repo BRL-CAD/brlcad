@@ -39,6 +39,8 @@ namespace eval Archer {
 
     set pluginsdir [file join [bu_brlcad_data "plugins"] archer]
     if {![file exists $pluginsdir]} {
+	# searching 'src' is only necessary for items installed to a
+	# different hierarchy.
 	set pluginsdir [file join [bu_brlcad_data "src"] archer plugins]
     }
 
@@ -723,6 +725,9 @@ package provide Archer 1.0
     set pluginPath [file join [bu_brlcad_data "plugins"] archer]
     if { ![file exists $pluginPath] } {
 	# try a source dir invocation
+
+	# searching 'src' is only necessary for items installed to a
+	# different hierarchy.
 	set pluginPath [file join [bu_brlcad_data "src"] archer plugins]
     }
     if { ![file exists $pluginPath] } {
@@ -2957,10 +2962,7 @@ package provide Archer 1.0
     } {}
 
     # About Info
-    set imgfile [file join $brlcadDataPath tclscripts archer images aboutArcher.png]
-    if { ![file exists $imgfile] } {
-	set imgfile [file join [bu_brlcad_data "src"] tclscripts archer images aboutArcher.png]
-    }
+    set imgfile [file join [bu_brlcad_data "tclscripts"] archer images aboutArcher.png]
     set aboutImg [image create photo -file $imgfile]
     itk_component add aboutInfo {
 	::ttk::label $itk_component(aboutDialogTabs).aboutInfo \
@@ -2978,7 +2980,7 @@ package provide Archer 1.0
 	    -textbackground $SystemButtonFace
     } {}
 
-    set brlcadLicenseFile [file join $brlcadDataPath COPYING]
+    set brlcadLicenseFile [file join [bu_brlcad_data "."] COPYING]
     if {![catch {open $brlcadLicenseFile "r"} fd]} {
 	set brlcadLicenseInfo [read $fd]
 	close $fd
@@ -2997,7 +2999,7 @@ package provide Archer 1.0
 	    -textbackground $SystemButtonFace
     } {}
 
-    set ackFile [file join $brlcadDataPath doc archer_ack.txt]
+    set ackFile [file join [bu_brlcad_data "doc"] archer_ack.txt]
     if {![catch {open $ackFile "r"} fd]} {
 	set ackInfo [read $fd]
 	close $fd
@@ -3010,15 +3012,7 @@ package provide Archer 1.0
     } {}
 
     # try installed, uninstalled
-    set imgfile [file join $brlcadDataPath tclscripts mged mike-tux.png]
-    if { ![file exists $imgfile] } {
-	# try src tree
-	set imgfile [file join [bu_brlcad_data "src"] tclscripts mged mike-tux.png]
-	if { ![file exists $imgfile] } {
-	    # try local relative
-	    set imgfile [file join tclscripts mged mike-tux.png]
-	}
-    }
+    set imgfile [file join [bu_brlcad_data "tclscripts"] mged mike-tux.png]
     set mikeImg [image create photo -file $imgfile]
     itk_component add mikePic {
 	::label $itk_component(mikeF).pic \
@@ -3046,7 +3040,7 @@ package provide Archer 1.0
 	    -textbackground $SystemButtonFace
     } {}
 
-    set mikeInfoFile [file join $brlcadDataPath tclscripts mged mike-dedication.txt]
+    set mikeInfoFile [file join [bu_brlcad_data "tclscripts"] mged mike-dedication.txt]
     if {![catch {open $mikeInfoFile "r"} fd]} {
 	set mikeInfo [read -nonewline $fd]
 	close $fd
@@ -3115,7 +3109,7 @@ proc Archer::html_help_display {me} {
 
 
 proc Archer::mkHelpTkImage {file} {
-    set fullpath [file join $brlcadDataPath html manuals mged $file]
+    set fullpath [file join [bu_brlcad_data "html"] manuals mged $file]
     set name [image create photo -file $fullpath]
     return [list $name [list image delete $name]]
 }

@@ -73,7 +73,6 @@ namespace eval ArcherCore {
 	common OBJ_EDIT_VIEW_MODE 0
 	common OBJ_ATTR_VIEW_MODE 1
 
-	common brlcadDataPath
 	common SystemWindowFont
 	common SystemWindowText
 	common SystemWindow
@@ -240,7 +239,6 @@ namespace eval ArcherCore {
 	method Z                   {args}
 	method zap                 {args}
 
-	set brlcadDataPath [bu_brlcad_data "."]
 	if {$tcl_platform(platform) != "windows"} {
 	    set SystemWindowFont Helvetica
 	    set SystemWindowText black
@@ -822,11 +820,7 @@ Popup Menu    Right or Ctrl-Left
 	set env(DISPLAY) ":0"
     }
 
-    set mImgDir [file join $brlcadDataPath tclscripts archer images]
-    if { ![file exists $mImgDir] } {
-	set path [bu_brlcad_data "src"]
-	set mImgDir [file join $path tclscripts archer images]
-    }
+    set mImgDir [file join [bu_brlcad_data "tclscripts"] archer images]
 
     if {[llength $args] == 1} {
 	set args [lindex $args 0]
