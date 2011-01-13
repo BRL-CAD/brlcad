@@ -1001,14 +1001,14 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    }
 	} else if (BU_STR_EQUAL(buf, "shader")) {
 	    bu_vls_trunc(&comb->shader, 0);
-	    if (strcmp(argv[1], "none")) {
+	    if (!BU_STR_EQUAL(argv[1], "none")) {
 		bu_vls_strcat(&comb->shader, argv[1]);
 		/* Leading spaces boggle the combination exporter */
 		bu_vls_trimspace(&comb->shader);
 	    }
 	} else if (BU_STR_EQUAL(buf, "material")) {
 	    bu_vls_trunc(&comb->material, 0);
-	    if (strcmp(argv[1], "none")) {
+	    if (!BU_STR_EQUAL(argv[1], "none")) {
 		bu_vls_strcat(&comb->material, argv[1]);
 		bu_vls_trimspace(&comb->material);
 	    }

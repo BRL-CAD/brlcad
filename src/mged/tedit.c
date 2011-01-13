@@ -1037,7 +1037,7 @@ get_editor_string(struct bu_vls *editstring)
     	/* For now, assume there aren't any situations where Windows will use a terminal */
 	
     	/* If it's not mac, and it's not Windows, we need a controlling terminal */
-    	if (strcmp(os, "Darwin") && strcmp(os, "Windows 95") && strcmp(os, "Windows NT")) {
+    	if (!BU_STR_EQUAL(os, "Darwin") && !BU_STR_EQUAL(os, "Windows 95") && !BU_STR_EQUAL(os, "Windows NT")) {
     	    if (BU_STR_EQUAL(editor, EMACS_EDITOR)) {
     		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)

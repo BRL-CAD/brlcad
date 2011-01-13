@@ -83,7 +83,7 @@ main(int argc, char **argv)
 	/* undocumented option to revert to an old db version
 	 * currently, can only revert to db version 4
 	 */
-	if ( strcmp( argv[1], "-r" ) ) {
+	if ( !BU_STR_EQUAL( argv[1], "-r" ) ) {
 	    fprintf(stderr, "Usage: %s input.g output.g\n", argv[0]);
 	    return 1;
 	} else {

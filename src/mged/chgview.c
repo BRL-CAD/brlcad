@@ -1002,7 +1002,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 		    for (; a_new_match && (i >= 0) && (j >= 0); --i, --j) {
 			sname = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep;
 			if ((*sname != *(path_piece[j]))
-			    || strcmp(sname, path_piece[j]))
+			    || !BU_STR_EQUAL(sname, path_piece[j]))
 			    a_new_match = 0;
 		    }
 
@@ -3435,7 +3435,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	    return TCL_OK;
 	}
 
-	if (strcmp("-a", argv[2])) {
+	if (!BU_STR_EQUAL("-a", argv[2])) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "help view_ring");
 	    Tcl_Eval(interp, bu_vls_addr(&vls));

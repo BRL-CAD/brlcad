@@ -647,7 +647,7 @@ db5_update_std_attributes(struct db_i *dbip, struct directory *dp, const struct 
 	    bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
 	    (void)bu_avs_add_vls(&avs, "color", &newval);
 	}
-	if (strcmp(bu_vls_addr(&comb->shader), "")) {
+	if (!BU_STR_EQUAL(bu_vls_addr(&comb->shader), "")) {
 	    bu_vls_sprintf(&newval, "%s", bu_vls_addr(&comb->shader));
 	    (void)bu_avs_add_vls(&avs, "oshader", &newval);
 	} else {

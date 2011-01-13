@@ -94,7 +94,7 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
 
     GED_DB_LOOKUP(gedp, dp_old, old_bot_name, LOOKUP_QUIET, GED_ERROR);
 
-    if ( strcmp( old_bot_name, new_bot_name ) ) {
+    if ( !BU_STR_EQUAL( old_bot_name, new_bot_name ) ) {
 	GED_CHECK_EXISTS(gedp, new_bot_name, LOOKUP_QUIET, GED_ERROR);
     } else {
 	dp_new = dp_old;

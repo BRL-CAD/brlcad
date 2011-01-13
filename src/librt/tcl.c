@@ -370,7 +370,7 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
     struct rt_i *rtip;
     int idx;
 
-    if ((argc != 5 && argc != 6) || (argc == 6 && strcmp(argv[2], "-R"))) {
+    if ((argc != 5 && argc != 6) || (argc == 6 && !BU_STR_EQUAL(argv[2], "-R"))) {
 	Tcl_AppendResult(interp,
 			 "wrong # args: should be \"",
 			 argv[0], " ", argv[1], " [-R] {P} dir|at {V}\"",

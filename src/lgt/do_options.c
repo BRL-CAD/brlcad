@@ -3583,7 +3583,7 @@ make_Script(char *file)
 		    type_grid,
 		    force_viewsz ? view_size : 0.0 );
 
-    if ( err_file[0] != '\0' && strcmp( err_file, "/dev/tty" ) )
+    if ( err_file[0] != '\0' && !BU_STR_EQUAL( err_file, "/dev/tty" ) )
 	(void) fprintf( run_fp,	" -O%s", err_file );
     if ( aperture_sz > 1 )
 	(void) fprintf( run_fp,	" -A%d", aperture_sz );

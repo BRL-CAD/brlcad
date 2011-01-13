@@ -668,7 +668,7 @@ build_region( struct wmember *head, char *part_name, char *refset_name, char *in
 
     get_part_name( &region_name_vls );
 
-    if ( refset_name && strcmp( refset_name, "None" ) ) {
+    if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 	bu_vls_strcat( &region_name_vls, "_" );
 	bu_vls_strcat( &region_name_vls, refset_name );
     }
@@ -1286,7 +1286,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
     }
 
     bu_log( "offsets = :%s: :%s:\n", offsets[0], offsets[1] );
-    if ( strcmp( offsets[0], "0.0" ) || strcmp( offsets[1], "0.0" ) ) {
+    if ( !BU_STR_EQUAL( offsets[0], "0.0" ) || !BU_STR_EQUAL( offsets[1], "0.0" ) ) {
 	bu_log( "Cannot handle offset extrusions yet\n" );
 	UF_free( ta );
 	UF_free( limits[0] );
@@ -1741,7 +1741,7 @@ conv_cable( char *part_name, char *refset_name, char *inst_name, unsigned char *
 	bu_vls_strcat( &inner_name_vls, "_inner" );
     }
 
-    if ( refset_name && strcmp( refset_name, "None" ) ) {
+    if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 	bu_vls_strcat( &region_name_vls, "_" );
 	bu_vls_strcat( &region_name_vls, refset_name );
     }
@@ -4351,7 +4351,7 @@ convert_a_feature( tag_t feat_tag,
 
 	    UF_func( UF_OBJ_ask_type_and_subtype( parents[i], &type, &subtype));
 	    UF_func( UF_MODL_ask_feat_type( parents[i], &ftype1 ) );
-	    if ( strcmp( ftype1, "DATUM_PLANE" ) ) {
+	    if ( !BU_STR_EQUAL( ftype1, "DATUM_PLANE" ) ) {
 		uf_list_p_t feat_list;
 		int feat_count=0;
 		tag_t body_tag;
@@ -4833,7 +4833,7 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 
 	    get_part_name( &name_vls );
 
-	    if ( refset_name && strcmp( refset_name, "None" ) ) {
+	    if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 		bu_vls_strcat( &name_vls, "_" );
 		bu_vls_strcat( &name_vls, refset_name );
 	    }
@@ -5115,7 +5115,7 @@ convert_entire_part( tag_t node, char *p_name, char *refset_name, char *inst_nam
 
 	get_part_name( &name_vls );
 
-	if ( refset_name && strcmp( refset_name, "None" ) ) {
+	if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 	    bu_vls_strcat( &name_vls, "_" );
 	    bu_vls_strcat( &name_vls, refset_name );
 	}
@@ -5320,7 +5320,7 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
 
 	get_part_name( &name_vls );
 
-	if ( refset_name && strcmp( refset_name, "None" ) ) {
+	if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 	    bu_vls_strcat( &name_vls, "_" );
 	    bu_vls_strcat( &name_vls, refset_name );
 	}
@@ -5361,7 +5361,7 @@ convert_geom( tag_t node, char *p_name, char *refset_name, char *inst_name, cons
 					   curr_xform, units_conv ) );
 	}
     }
-    if ( refset_name && strcmp( refset_name, "None" ) ) {
+    if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 	/* convert reference set */
 	return( convert_reference_set( node, p_name, refset_name, inst_name,
 				       curr_xform, units_conv ) );

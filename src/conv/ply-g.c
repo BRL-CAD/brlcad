@@ -529,7 +529,7 @@ get_property( struct element *ptr )
 
     c = strtok( tmp_buf, " \t" );
     if ( c ) {
-	if ( strcmp( c, "property" ) ) {
+	if ( !BU_STR_EQUAL( c, "property" ) ) {
 	    bu_exit(1, "get_property called for non-property, line = %s\n", line );
 	}
     } else {

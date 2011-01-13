@@ -69,13 +69,13 @@ _ged_editit(char *editstring, const char *filename)
     avtmp = (char **)bu_malloc(sizeof(char *)*5, "ged_editit: editstring args");
     bu_argv_from_string(avtmp, 4, editstring);
 
-    if (avtmp[0] && strcmp(avtmp[0], "(null)"))
+    if (avtmp[0] && !BU_STR_EQUAL(avtmp[0], "(null)"))
 	terminal = avtmp[0];
-    if (avtmp[1] && strcmp(avtmp[1], "(null)"))
+    if (avtmp[1] && !BU_STR_EQUAL(avtmp[1], "(null)"))
 	terminal_opt = avtmp[1];
-    if (avtmp[2] && strcmp(avtmp[2], "(null)"))
+    if (avtmp[2] && !BU_STR_EQUAL(avtmp[2], "(null)"))
 	editor = avtmp[2];
-    if (avtmp[3] && strcmp(avtmp[3], "(null)"))
+    if (avtmp[3] && !BU_STR_EQUAL(avtmp[3], "(null)"))
 	editor_opt = avtmp[3];
 
     if (!editor) {

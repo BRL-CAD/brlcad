@@ -2352,12 +2352,12 @@ part_solve(struct hold *hp, double limits, double tol)
 		continue;
 	    }
 	    for (i=0;i<hp->effector.path.fp_len; i++) {
-		if (strcmp(jp->path.arc[0],
+		if (!BU_STR_EQUAL(jp->path.arc[0],
 			   hp->effector.path.fp_names[i]->d_namep)==0) break;
 	    }
 	    if (i+jp->path.arc_last >= hp->effector.path.fp_len) continue;
 	    for (j=1; j <= (size_t)jp->path.arc_last;j++) {
-		if (strcmp(jp->path.arc[j],
+		if (!BU_STR_EQUAL(jp->path.arc[j],
 			   hp->effector.path.fp_names[i+j]->d_namep)
 		    != 0) break;
 	    }

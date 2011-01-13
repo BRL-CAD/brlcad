@@ -290,7 +290,7 @@ main(int argc, char **argv)
 
 	    /* skip elements with the wrong name */
 	    name = NULL;
-	    while (name == NULL || strcmp(name, curr_name)) {
+	    while (name == NULL || !BU_STR_EQUAL(name, curr_name)) {
 		/* check for enf of file */
 		if (bu_fgets(line, MAX_LINE_SIZE, elems) == NULL) {
 		    eof = 1;

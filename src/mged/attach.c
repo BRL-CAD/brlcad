@@ -201,7 +201,7 @@ release(char *name, int need_close)
 	    return TCL_OK;  /* Ignore */
 
 	FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	    if (strcmp(name, bu_vls_addr(&p->dml_dmp->dm_pathName)))
+	    if (!BU_STR_EQUAL(name, bu_vls_addr(&p->dml_dmp->dm_pathName)))
 		continue;
 
 	    /* found it */

@@ -79,7 +79,7 @@ Do_prefix(struct db_i *dbi, struct rt_comb_internal *UNUSED(comb), union tree *c
     prefix = (char *)prefix_ptr;
     obj = (char *)obj_ptr;
 
-    if (strcmp(comb_leaf->tr_l.tl_name, obj))
+    if (!BU_STR_EQUAL(comb_leaf->tr_l.tl_name, obj))
 	return;
 
     bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");

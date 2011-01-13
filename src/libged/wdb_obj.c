@@ -1624,7 +1624,7 @@ Do_showmats(struct db_i *dbip,
 
     smdp = (struct showmats_data *)user_ptr1;
 
-    if (strcmp(comb_leaf->tr_l.tl_name, smdp->smd_child))
+    if (!BU_STR_EQUAL(comb_leaf->tr_l.tl_name, smdp->smd_child))
 	return;
 
     smdp->smd_count++;
@@ -4360,7 +4360,7 @@ wdb_find_ref(struct db_i *UNUSED(dbip),
     RT_CK_TREE(comb_leaf);
 
     obj_name = (char *)object;
-    if (strcmp(comb_leaf->tr_l.tl_name, obj_name))
+    if (!BU_STR_EQUAL(comb_leaf->tr_l.tl_name, obj_name))
 	return;
 
     comb_name = (char *)comb_name_ptr;
@@ -8437,7 +8437,7 @@ wdb_bot_smooth_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (strcmp(old_bot_name, new_bot_name)) {
+    if (!BU_STR_EQUAL(old_bot_name, new_bot_name)) {
 
 	if ((dp_new=db_lookup(wdbp->dbip, new_bot_name, LOOKUP_QUIET)) != DIR_NULL) {
 	    Tcl_AppendResult(interp, new_bot_name, " already exists!!\n", (char *)NULL);
@@ -8906,7 +8906,7 @@ wdb_cmpdirname(const genptr_t a,
 
     dp1 = (struct directory **)a;
     dp2 = (struct directory **)b;
-    return strcmp((*dp1)->d_namep, (*dp2)->d_namep);
+    return !BU_STR_EQUAL((*dp1)->d_namep, (*dp2)->d_namep);
 }
 
 

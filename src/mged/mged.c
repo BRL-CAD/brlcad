@@ -2619,10 +2619,10 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     bu_vls_init(&msg);
 
     if (argc == 3
-	&& strcmp("y", argv[2])
-	&& strcmp("Y", argv[2])
-	&& strcmp("n", argv[2])
-	&& strcmp("N", argv[2]))
+	&& !BU_STR_EQUAL("y", argv[2])
+	&& !BU_STR_EQUAL("Y", argv[2])
+	&& !BU_STR_EQUAL("n", argv[2])
+	&& !BU_STR_EQUAL("N", argv[2]))
     {
 	bu_vls_printf(&vls, "help opendb");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));

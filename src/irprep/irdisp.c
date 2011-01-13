@@ -134,7 +134,7 @@ main(void)
 	/*  Call the program ir-X or ir-sgi so that a file that has been raytraced  */
 	/*  may be displayed.  */
 	choice[0] = '\0';
-	while ( strcmp( choice, "sgi" ) && strcmp( choice, "X" ) && strcmp( choice, "x" ) )
+	while ( !BU_STR_EQUAL( choice, "sgi" ) && !BU_STR_EQUAL( choice, "X" ) && !BU_STR_EQUAL( choice, "x" ) )
 	{
 	    (void)printf("\nSelect display ('X' or 'sgi') -> " );
 	    (void)fflush(stdout);

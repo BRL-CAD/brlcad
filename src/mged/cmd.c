@@ -799,7 +799,7 @@ cmd_cmd_win(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, co
 	}
 
 	for (BU_LIST_FOR (curr_cmd_list, cmd_list, &head_cmd_list.l)) {
-	    if (strcmp(bu_vls_addr(&curr_cmd_list->cl_name), argv[2]))
+	    if (!BU_STR_EQUAL(bu_vls_addr(&curr_cmd_list->cl_name), argv[2]))
 		continue;
 
 	    break;
@@ -1468,7 +1468,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	    break;
 
     if (clp == &head_cmd_list &&
-	(strcmp(bu_vls_addr(&head_cmd_list.cl_name), argv[1]))) {
+	(!BU_STR_EQUAL(bu_vls_addr(&head_cmd_list.cl_name), argv[1]))) {
 	Tcl_AppendResult(interpreter, "f_tie: unrecognized command_window - ", argv[1],
 			 "\n", (char *)NULL);
 	bu_vls_free(&vls);

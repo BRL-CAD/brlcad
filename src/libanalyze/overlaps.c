@@ -123,7 +123,7 @@ int add_segment(struct xray *rp, struct hit *ihitp, struct hit *outp, struct reg
     struct bu_hash_entry *prev, *entry;
     struct overlap_instance *overlap;
     int status;
-    int order = strcmp(reg1->reg_name, reg2->reg_name);
+    int order = bu_strcmp(reg1->reg_name, reg2->reg_name);
 
     /* If we somehow got the same region name in both regions, ignore the segment */
     if (!order) return 0; 

@@ -472,7 +472,7 @@ db_find_named_leaf(union tree *tp, const char *cp)
     switch (tp->tr_op) {
 
 	case OP_DB_LEAF:
-	    if (strcmp(cp, tp->tr_l.tl_name))
+	    if (!BU_STR_EQUAL(cp, tp->tr_l.tl_name))
 		return TREE_NULL;
 	    return tp;
 

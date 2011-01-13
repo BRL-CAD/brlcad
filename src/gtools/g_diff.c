@@ -297,7 +297,7 @@ compare_values(int type, Tcl_Obj *val1, Tcl_Obj *val2)
 		return 1;
 	    }
 	} else {
-	    if (strcmp(str1, str2)) {
+	    if (!BU_STR_EQUAL(str1, str2)) {
 		return strstr(str2, str1)?2:1;
 	    }
 	}
@@ -866,7 +866,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	}
 
 	/* the two objects are different types */
-	if (strcmp(str1, str2)) {
+	if (!BU_STR_EQUAL(str1, str2)) {
 	    has_diff += 1;
 	    if (mode == HUMAN)
 		printf("%s:\n\twas: %s\n\tis now: %s\n\n",
@@ -1060,7 +1060,7 @@ main(int argc, char **argv)
     }
 
     /* compare titles */
-    if (strcmp(dbip1->dbi_title, dbip2->dbi_title)) {
+    if (!BU_STR_EQUAL(dbip1->dbi_title, dbip2->dbi_title)) {
 	different = 1;
 	if (mode == HUMAN) {
 	    printf("Title has changed from: \"%s\" to: \"%s\"\n\n", dbip1->dbi_title, dbip2->dbi_title);
