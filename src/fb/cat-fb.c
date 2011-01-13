@@ -54,6 +54,7 @@
 /* The vfonts are scaled for 200 dpi */
 #define CONVERT(n)		((n)*(200./432.))
 #define RECONVERT(n)		((n)*(432./200.))
+#define COMMA ','
 
 
 unsigned char	*scanline;
@@ -156,7 +157,7 @@ char	asctab[128] = {
     '.',	/*.*/
     'g',	/*g*/
     '\023',	/*3/4*/
-    ',',	/*,*/
+    COMMA,	/*,*/
     '&',	/*&*/
     'y',	/*y*/
     '\0',	/*blank*/

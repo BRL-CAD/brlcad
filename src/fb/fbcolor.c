@@ -35,6 +35,9 @@
 #include "fb.h"
 #include "libtermio.h"
 
+#define COMMA ','
+
+
 int curchan = 0;	/* 0=r, 1=g, 2=b */
 
 int col[6] = {128, 128, 128};		/* r, g, b h, s, v */
@@ -228,7 +231,7 @@ doKeyPad(void)
 	    new_rgb();
 	    break;
 	case '-':
-	case ',':
+	case COMMA:
 	    col[curchan]--;
 	    new_rgb();
 	    break;
