@@ -58,16 +58,16 @@ Cad_AppInit(Tcl_Interp *interp)
 /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
     tclcad_auto_path(interp);
 
-    /* Initialize Itcl */
+/* Initialize [incr Tcl] */
     if (Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
-	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 
 #ifdef BWISH
-   /* Initialize Itk */
+/* Initialize [incr Tk] */
     if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
-	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	bu_log("Itk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 #endif
@@ -82,11 +82,7 @@ Cad_AppInit(Tcl_Interp *interp)
 #endif /* IMPORT_ITCL */
 
 #ifdef BWISH
-    /* Initialize Itk */
-    if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
-	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }
+
 #  ifdef IMPORT_ITK
 /* Import [incr Tk] commands into the global namespace */
     if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
