@@ -71,6 +71,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
+#include "fb.h"
 
 
 long int width=512;		/* width of pixture */
