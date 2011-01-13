@@ -96,7 +96,7 @@ namespace eval Archer {
 
 LoadArcherLibs
 package require ArcherCore 1.0
-package require Tktable 2.10
+catch {package require Tktable 2.10} tktable
 package provide Archer 1.0
 
 ::itcl::class Archer {
@@ -2860,7 +2860,11 @@ package provide Archer 1.0
     } {}
 
     # About Info
-    set aboutImg [image create photo -file [file join $brlcadDataPath tclscripts archer images aboutArcher.png]]
+    set imgfile [file join $brlcadDataPath tclscripts archer images aboutArcher.png]
+    if { ![file exists $imgfile] } {
+	set imgfile [file join [bu_brlcad_data "src"] tclscripts archer images aboutArcher.png]
+    }
+    set aboutImg [image create photo -file $imgfile]
     itk_component add aboutInfo {
 	::ttk::label $itk_component(aboutDialogTabs).aboutInfo \
 	    -image $aboutImg
@@ -2908,7 +2912,17 @@ package provide Archer 1.0
 	::frame $itk_component(aboutDialogTabs).mikeInfo
     } {}
 
-    set mikeImg [image create photo -file [file join $brlcadDataPath tclscripts mged mike-tux.png]]
+    # try installed, uninstalled
+    set imgfile [file join $brlcadDataPath tclscripts mged mike-tux.png]
+    if { ![file exists $imgfile] } {
+	# try src tree
+	set imgfile [file join [bu_brlcad_data "src"] tclscripts mged mike-tux.png]
+	if { ![file exists $imgfile] } {
+	    # try local relative
+	    set imgfile [file join tclscripts mged mike-tux.png]
+	}
+    }
+    set mikeImg [image create photo -file $imgfile]
     itk_component add mikePic {
 	::label $itk_component(mikeF).pic \
 	    -image $mikeImg
