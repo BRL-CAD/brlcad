@@ -23,7 +23,8 @@ Remaining items:
     what bu_brlcad_data and friends are up to, and what we need to have in place. Right now mged
 	 will crash if either a share dir is created in the build toplevel (empty data dir) or there
 	 is an installed BRL-CAD in the target install directory (not sure what the issue is there) but
-	 will run in isolation.
+	 will run in isolation. Even a full copy of the installed share dir in the toplevel build causes
+	 a crash, and Archer can't find its files even with the full share dir present (?)
 
 Done (to first order, all this needs testing)
 
