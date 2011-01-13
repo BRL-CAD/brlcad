@@ -56,6 +56,7 @@ main(int argc, char **argv)
 {
     int x, y;
     int readval;
+    ssize_t ret;
 
     if (argc < 2) {
 	fprintf(stderr, "%s", usage);
@@ -109,7 +110,9 @@ main(int argc, char **argv)
 
     /* First and last are black */
     memset(out1, 0, pix_line*3);
-    write(1, out1, pix_line*3);
+    ret = write(1, out1, pix_line*3);
+    if (ret < 0)
+	perror("write");
 
     for (y=1; y < nlines-2; y++) {
 	static unsigned char *op;
@@ -140,12 +143,16 @@ main(int argc, char **argv)
 		     c[ i-3]    + c[ i  ]*3  + c[ i+3]
 		) / 84;
 	}
-	write(1, out1, pix_line*3);
+	ret = write(1, out1, pix_line*3);
+	if (ret < 0)
+	    perror("write");
     }
 
     /* First and last are black */
     memset(out1, 0, pix_line*3);
-    write(1, out1, pix_line*3);
+    ret = write(1, out1, pix_line*3);
+    if (ret < 0)
+	perror("write");
 
     return 0;
 }

@@ -96,6 +96,7 @@ int main(int ac, char **av)
 {
     int i, pixels;
     unsigned char r, g, b, R, G, B;
+    size_t ret;
 
     if ((i=parse_args(ac, av))+6 > ac)
 	usage("missing pixel value(s)\n");
@@ -134,7 +135,9 @@ int main(int ac, char **av)
 	    }
 	}
 
-	fwrite(obuf, 3, pixels, stdout);
+	ret = fwrite(obuf, 3, pixels, stdout);
+	if (ret != (size_t)pixels)
+	    perror("fwrite");
     }
     return 0;
 }

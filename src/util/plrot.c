@@ -37,8 +37,8 @@
 #include "bn.h"
 
 #define UPPER_CASE(c)	((c)-32)
-#define COPY(n) {fread(cbuf, 1, n, fp); fwrite(cbuf, 1, n, stdout);}
-#define SKIP(n) {fread(cbuf, 1, n, fp);}
+#define COPY(n) {size_t ret; ret = fread(cbuf, 1, n, fp); if (ret < n) perror("fread"); ret = fwrite(cbuf, 1, n, stdout); if (ret < n) perror("fwrite");}
+#define SKIP(n) {size_t ret; ret = fread(cbuf, 1, n, fp); if (ret < n) perror("fread");}
 #define LEN 265
 
 #define putsi(s) {putchar(s); putchar((s)>>8);}
@@ -594,15 +594,21 @@ two_dcoord_out(FILE *fp, fastf_t *m)
     unsigned char buf[2*8];
     double p1[3];
     double p2[3];
+    size_t ret;
 
-    fread(buf, 1, 2*8, fp);
+    ret = fread(buf, 1, 2*8, fp);
+    if (ret < 2*8)
+	perror("fread");
+
     ntohd((unsigned char *)p1, buf, 2);
     p1[2] = 0;		/* no Z */
 
     MAT4X3PNT(p2, m, p1);
 
     htond(buf, (unsigned char *)p2, 3);
-    fwrite(buf, 1, 3*8, stdout);
+    ret = fwrite(buf, 1, 3*8, stdout);
+    if (ret < 3*8)
+	perror("fwrite");
 }
 
 
@@ -612,14 +618,20 @@ three_dcoord_out(FILE *fp, fastf_t *m)
     unsigned char buf[3*8];
     double p1[3];
     double p2[3];
+    size_t ret;
 
-    fread(buf, 1, 3*8, fp);
+    ret = fread(buf, 1, 3*8, fp);
+    if (ret < 3*8)
+	perror("fread");
+
     ntohd((unsigned char *)p1, buf, 3);
 
     MAT4X3PNT(p2, m, p1);
 
     htond(buf, (unsigned char *)p2, 3);
-    fwrite(buf, 1, 3*8, stdout);
+    ret = fwrite(buf, 1, 3*8, stdout);
+    if (ret < 3*8)
+	perror("fwrite");
 }
 
 
@@ -628,7 +640,12 @@ getdouble(FILE *fp)
 {
     double d;
     unsigned char buf[8];
-    fread(buf, 8, 1, fp);
+    size_t ret;
+
+    ret = fread(buf, 8, 1, fp);
+    if (ret < 1)
+	perror("fread");
+
     ntohd((unsigned char *)&d, buf, 1);
     return d;
 }

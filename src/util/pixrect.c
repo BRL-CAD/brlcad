@@ -57,6 +57,7 @@ get_args(int argc, char **argv)
 {
     int c;
     int inputmode = INTERACTIVE;
+    int ret;
 
     /* Get info from command line arguments */
     while ((c = bu_getopt(argc, argv, "s:w:n:x:y:X:Y:S:W:N:#:")) != EOF) {
@@ -126,11 +127,19 @@ get_args(int argc, char **argv)
 
 	/* Get info */
 	printf("Area to extract (x, y) in pixels ");
-	scanf("%d%d", &xnum, &ynum);
+	ret = scanf("%d%d", &xnum, &ynum);
+	if (ret != 2)
+	    perror("scanf");
+
 	printf("Origin to extract from (0, 0 is lower left) ");
-	scanf("%d%d", &xorig, &yorig);
+	ret = scanf("%d%d", &xorig, &yorig);
+	if (ret != 2)
+	    perror("scanf");
+
 	printf("Scan line length of input file ");
 	scanf("%d", &linelen);
+	if (ret != 1)
+	    perror("scanf");
     }
 
     /* Make sure nessecary variables set */
@@ -184,6 +193,7 @@ main(int argc, char **argv)
 {
     int row;
     long offset;
+    size_t ret;
 
     if (!get_args(argc, argv)) {
 	bu_exit(1, "%s", usage);
@@ -200,8 +210,12 @@ main(int argc, char **argv)
     for (row = 0 + yorig; row < ynum + yorig; row++) {
 	offset = (row * linelen + xorig) * bytes_per_pixel;
 	fseek(ifp, offset, 0);
-	fread(buf, sizeof(*buf), outbytes, ifp);
-	fwrite(buf, sizeof(*buf), outbytes, ofp);
+	ret = fread(buf, sizeof(*buf), outbytes, ifp);
+	if (ret < (size_t)outbytes)
+	    perror("fread");
+	ret = fwrite(buf, sizeof(*buf), outbytes, ofp);
+	if (ret < (size_t)outbytes)
+	    perror("fwrite");
     }
 
     return 0;

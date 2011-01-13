@@ -259,8 +259,11 @@ main(int argc, char **argv)
 
     if (!pure) {
 	long nbits;
+	size_t ret;
 
-	fread(inbuf, sizeof(struct rasterfile), 1, fp);
+	ret = fread(inbuf, sizeof(struct rasterfile), 1, fp);
+	if (ret < 1)
+	    perror("fread");
 
 	header.ras_magic = getlong(&inbuf[NET_LONG_LEN*0]);
 	header.ras_width = getlong(&inbuf[NET_LONG_LEN*1]);

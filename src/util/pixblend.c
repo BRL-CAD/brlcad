@@ -159,6 +159,7 @@ main(int argc, char **argv)
     int gthreshold = 0;
 #endif
     int c = 0;
+    size_t ret;
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);
@@ -266,7 +267,9 @@ main(int argc, char **argv)
 		}
 	    }
 	}
-	fwrite(b3, 1, len, stdout);
+	ret = fwrite(b3, 1, len, stdout);
+	if (ret < len)
+	    perror("fwrite");
     }
 
     return 0;

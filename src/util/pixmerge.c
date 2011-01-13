@@ -152,6 +152,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
+    size_t ret;
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);
@@ -254,7 +255,9 @@ main(int argc, char **argv)
 	    }
 	    bg_cnt++;
 	}
-	fwrite(b3, width, len, stdout);
+	ret = fwrite(b3, width, len, stdout);
+	if (ret < (size_t)len)
+	    perror("fwrite");
     }
     fprintf(stderr, "pixmerge: %ld foreground, %ld background\n",
 	    fg_cnt, bg_cnt);

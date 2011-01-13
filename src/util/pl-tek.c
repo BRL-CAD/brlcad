@@ -170,8 +170,12 @@ getieee(void)
 {
     unsigned char in[8];
     double d;
+    size_t ret;
 
-    fread(in, 8, 1, stdin);
+    ret = fread(in, 8, 1, stdin);
+    if (ret < 1)
+	perror("fread");
+
     ntohd((unsigned char *)&d, in, 1);
     return d;
 }

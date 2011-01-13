@@ -253,8 +253,12 @@ outfloat(int n)
     int i;
     unsigned char in[8*16];
     double out[16];
+    size_t ret;
 
-    fread(in, 8, n, fp);
+    ret = fread(in, 8, n, fp);
+    if (ret < (size_t)n)
+	perror("fread");
+
     ntohd((unsigned char *)out, in, n);
 
     for (i = 0; i < n; i++) {

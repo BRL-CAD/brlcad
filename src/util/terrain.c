@@ -657,6 +657,7 @@ main(int ac, char **av)
     unsigned short *buf;
     int in_cookie, out_cookie;
     int count;
+    size_t ret;
 
     arg_count = parse_args(ac, av);
 
@@ -691,7 +692,10 @@ main(int ac, char **av)
 	}
     }
 
-    fwrite(buf, sizeof(*buf), count, stdout);
+    ret = fwrite(buf, sizeof(*buf), count, stdout);
+    if (ret < (size_t)count)
+	perror("fwrite");
+
     return 0;
 }
 

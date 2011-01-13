@@ -61,6 +61,7 @@ main(int argc, char **argv)
     int clip_high, clip_low;
     double value;
     FILE *finp, *foutp;
+    size_t ret;
 
     while (argc > 1 && argv[1][0] == '-') {
 	if (strcmp(argv[1], "-ntsc") == 0) {
@@ -164,7 +165,9 @@ main(int argc, char **argv)
 		obuf[out] = ((int)ibuf[in] + (int)ibuf[in+1] +
 			     (int)ibuf[in+2]) / 3;
 	}
-	fwrite(obuf, sizeof(char), num/3, foutp);
+	ret = fwrite(obuf, sizeof(char), num/3, foutp);
+	if (ret != (size_t)num/3)
+	    perror("fwrite");
     }
 
     if (clip_high != 0 || clip_low != 0) {
