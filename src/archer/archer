@@ -132,11 +132,20 @@ proc showMainWindow {} {
 proc createSplashScreen {} {
     global env
 
-    # XXX disabled until tkimg is working better
     set useImage 1
 
     if {$useImage} {
-	set image [image create photo -file [file join [bu_brlcad_data "tclscripts"] archer images aboutArcher.png]]
+	# try installed, uninstalled
+	set imgfile [file join [bu_brlcad_data "tclscripts"] archer images aboutArcher.png]
+	if { ![file exists $imgfile] } {
+	    # try src tree
+	    set imgfile [file join [bu_brlcad_data "src"] archer images aboutArcher.png]
+	    if { [!file exists $imgfile] } {
+		# try local relative
+	        set imgfile [file join tclscripts archer images aboutArcher.png]
+	    }
+	}
+	set image [image create photo -file $imgfile]
 	set ::ArcherCore::splash [Splash .splash -image $image]
     } else {
 	set ::ArcherCore::splash [Splash .splash -message "Loading Archer ... please wait ..."]
