@@ -59,7 +59,16 @@ done
 exec $WISH $0 $@
 
 # Itk's default class doesn't keep the menu, but Archer needs it - redefine itk:Toplevel
-source [file join [bu_brlcad_data "tclscripts"] itk_redefines.tcl]
+set itk_file [file join [bu_brlcad_data "tclscripts"] itk_redefines.tcl]
+if { ![file exists $itk_file] } {
+	#try src tree
+	set itk_file [file join [bu_brlcad_data "src"] archer itk_redefines.tcl]
+	if { ![file exists $itk_file] } {
+		#try local relative
+		set itk_file [file join src archer itk_redefines.tcl]
+	}
+}
+source $itk_file
 
 # Set ttk theme
 if {[tk windowingsystem] eq "aqua"} {
