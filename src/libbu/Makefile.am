@@ -107,7 +107,7 @@ man_MANS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	timetester.c
+	timetester.c \
 	CMakeLists.txt
 
 AM_CPPFLAGS = \
