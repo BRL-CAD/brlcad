@@ -573,7 +573,7 @@ get_attached(void)
 	    return;
 	}
 
-	if (bu_vls_strlen(&type) == 0 || strcmp(bu_vls_addr(&type), "nu") == 0) {
+	if (bu_vls_strlen(&type) == 0 || BU_STR_EQUAL(bu_vls_addr(&type), "nu")) {
 	    /* Nothing more to do. */
 	    bu_vls_free(&type);
 	    return;
@@ -583,7 +583,7 @@ get_attached(void)
 	bu_vls_trimspace(&type);
 
 	for (wp = &which_dm[2]; wp->type != -1; wp++) {
-	    if (strcmp(bu_vls_addr(&type), wp->name) == 0) {
+	    if (BU_STR_EQUAL(bu_vls_addr(&type), wp->name)) {
 		break;
 	    }
 	}

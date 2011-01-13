@@ -134,7 +134,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	char *ttp;
 	RT_CK_RTI(*rtipp);
 	ttp = (*rtipp)->rti_treetop;
-	if (ttp && strcmp(ttp, bu_vls_addr(&sip->treetop)) == 0) {
+	if (ttp && BU_STR_EQUAL(ttp, bu_vls_addr(&sip->treetop))) {
 	    /* Re-cycle an already prepped rti */
 	    sub_rtip = *rtipp;
 	    sub_rtip->rti_uses++;

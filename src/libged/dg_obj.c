@@ -401,7 +401,7 @@ dgo_open_tcl(ClientData	UNUSED(clientData),
 
     /* search for database object */
     for (BU_LIST_FOR (wdbp, rt_wdb, &rt_g.rtg_headwdb.l)) {
-	if (strcmp(bu_vls_addr(&wdbp->wdb_name), argv[2]) == 0)
+	if (BU_STR_EQUAL(bu_vls_addr(&wdbp->wdb_name), argv[2]))
 	    break;
     }
 
@@ -487,7 +487,7 @@ dgo_illum_cmd(struct dg_obj	*dgop,
 
 	for (i = 0; i < sp->s_fullpath.fp_len; ++i) {
 	    if (*argv[1] == *DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep &&
-		strcmp(argv[1], DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep) == 0) {
+		BU_STR_EQUAL(argv[1], DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep)) {
 		found = 1;
 		if (illum)
 		    sp->s_iflag = UP;
@@ -1191,7 +1191,7 @@ dgo_autoview_tcl(ClientData	clientData,
 
     /* search for view object */
     for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
-	if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
+	if (BU_STR_EQUAL(bu_vls_addr(&vop->vo_name), argv[2]))
 	    break;
     }
 
@@ -1333,7 +1333,7 @@ dgo_get_eyemodel_cmd(struct dg_obj	*dgop,
      * Retrieve the view object
      */
     for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
-	if (strcmp(bu_vls_addr(&vop->vo_name), argv[1]) == 0)
+	if (BU_STR_EQUAL(bu_vls_addr(&vop->vo_name), argv[1]))
 	    break;
     }
 
@@ -1484,7 +1484,7 @@ dgo_rt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 
     /* search for view object */
     for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
-	if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
+	if (BU_STR_EQUAL(bu_vls_addr(&vop->vo_name), argv[2]))
 	    break;
     }
 
@@ -2144,7 +2144,7 @@ dgo_rtcheck_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[
 
     /* search for view object */
     for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
-	if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
+	if (BU_STR_EQUAL(bu_vls_addr(&vop->vo_name), argv[2]))
 	    break;
     }
 
@@ -2183,7 +2183,7 @@ dgo_assoc_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
     if (argc == 3) {
 	/* search for database object */
 	for (BU_LIST_FOR (wdbp, rt_wdb, &rt_g.rtg_headwdb.l)) {
-	    if (strcmp(bu_vls_addr(&wdbp->wdb_name), argv[2]) == 0)
+	    if (BU_STR_EQUAL(bu_vls_addr(&wdbp->wdb_name), argv[2]))
 		break;
 	}
 
@@ -2359,7 +2359,7 @@ dgo_nirt_tcl(ClientData	clientData,
 
     /* search for view object */
     for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
-	if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
+	if (BU_STR_EQUAL(bu_vls_addr(&vop->vo_name), argv[2]))
 	    break;
     }
 
@@ -2395,7 +2395,7 @@ dgo_vnirt_tcl(ClientData	clientData,
 
     /* search for view object */
     for (BU_LIST_FOR (vop, view_obj, &HeadViewObj.l)) {
-	if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
+	if (BU_STR_EQUAL(bu_vls_addr(&vop->vo_name), argv[2]))
 	    break;
     }
 

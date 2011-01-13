@@ -267,7 +267,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 
     /* check to see if display manager object exists */
     for (BU_LIST_FOR(dmop, dm_obj, &HeadDMObj.l)) {
-	if (strcmp(argv[name_index], bu_vls_addr(&dmop->dmo_name)) == 0) {
+	if (BU_STR_EQUAL(argv[name_index], bu_vls_addr(&dmop->dmo_name))) {
 	    Tcl_AppendStringsToObj(obj, "dmo_open: ", argv[name_index],
 				   " exists.", (char *)NULL);
 	    Tcl_SetObjResult(interp, obj);
@@ -1540,7 +1540,7 @@ dmo_drawGeom_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
     argv += 2;
     for (i = 0; i < argc; ++i) {
 	for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l)) {
-	    if (strcmp(bu_vls_addr(&dgop->dgo_name), argv[i]) == 0) {
+	    if (BU_STR_EQUAL(bu_vls_addr(&dgop->dgo_name), argv[i])) {
 		dmo_drawSList(dmop, &dgop->dgo_headSolid);
 		break;
 	    }
@@ -1602,7 +1602,7 @@ dmo_drawLabels_tcl(ClientData clientData,
     }
 
     for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l)) {
-	if (strcmp(bu_vls_addr(&dgop->dgo_name), argv[2]) == 0) {
+	if (BU_STR_EQUAL(bu_vls_addr(&dgop->dgo_name), argv[2])) {
 	    /* for each primitive */
 	    for (i = 4; i < argc; ++i) {
 		dm_draw_labels(dmop->dmo_dmp, dgop->dgo_wdbp, argv[i], dmop->viewMat,

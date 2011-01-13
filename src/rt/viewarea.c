@@ -318,7 +318,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
                  * structure, increment number of exposures & hits and
                  * increment seen, then exit for-loop.
                  */
-		if ( (strcmp(area_record_ptr->name, &buffer[l])==0) ) {
+		if ( (BU_STR_EQUAL(area_record_ptr->name, &buffer[l])) ) {
 		    if (type == EXPOSED_AREA) {
 			if (!area_record_ptr->seen) {
 			    area_record_ptr->exposures++;
