@@ -134,6 +134,8 @@ EXTRA_DIST= \
 	pix2fb/pix2fb.vcproj \
 	pix2g/pix2g.vcproj \
 	pixautosize/pixautosize.vcproj \
+	pixblend/pixblend.vcproj \
+	pixcmp/pixcmp.vcproj \
 	pixflip2fb/pixflip2fb.vcproj \
 	pixmatte/pixmatte.vcproj \
 	pl2fb/pl2fb.vcproj \
