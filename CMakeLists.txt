@@ -371,12 +371,12 @@ INSTALL_DIR(PACKAGE lib)
 # The location in which to install BRL-CAD data files 
 IF(NOT ${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR)
 	IF (${CMAKE_INSTALL_PREFIX} MATCHES "^/usr[/]*$")
-		INSTALL_DIR(DATA "share/brlcad")
+		INSTALL_DIR(DATA "share/brlcad/${BRLCAD_VERSION}")
 	ENDIF()
 	IF (${CMAKE_INSTALL_PREFIX} MATCHES "^/usr/local[/]*$")
-		INSTALL_DIR(DATA "share/brlcad")
+		INSTALL_DIR(DATA "share/brlcad/${BRLCAD_VERSION}")
 	ENDIF()
-	INSTALL_DIR(DATA "share")
+	INSTALL_DIR(DATA "share/${BRLCAD_VERSION}")
 ENDIF(NOT ${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR)
 
 # The location in which to install BRL-CAD Manual pages
