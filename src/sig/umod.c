@@ -182,9 +182,7 @@ int main(int argc, char **argv)
     }
 
     if ( clip_high != 0L || clip_low != 0L ) {
-	(void)fprintf( stderr, "%s: clipped %lu high, %lu low\n",
-		       progname,
-		       clip_high, clip_low );
+	(void)fprintf( stderr, "%s: clipped %lu high, %lu low\n", progname, (long unsigned)clip_high, (long unsigned)clip_low );
     }
 
     return 0;

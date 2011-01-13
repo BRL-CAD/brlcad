@@ -155,7 +155,7 @@ void writePipe
         mk_add_pipe_pt(&pipePointList, pipePoint, radius, 2 * radius / 3., radius / 2.);
     }
 
-    sprintf(name, "s%lu.pipe", ++pipe_counter);
+    sprintf(name, "s%lu.pipe", (long unsigned int)++pipe_counter);
     if (mk_pipe(wdbp, name, &pipePointList) == 0) {
         addToRegion(form.compnr, name);
 
@@ -188,7 +188,7 @@ void writeRectangularBox
     VSCALE(min, min, IntavalUnitInMm)
     VSCALE(max, max, IntavalUnitInMm)
 
-    sprintf(name, "s%lu.rpp", ++rpp_counter);
+    sprintf(name, "s%lu.rpp", (long unsigned int)++rpp_counter);
     mk_rpp(wdbp, name, min, max);
     addToRegion(form.compnr, name);
 
@@ -221,7 +221,7 @@ void writeSolidBot
         }
     }
 
-    sprintf(name, "s%lu.sbot", ++bot_counter);
+    sprintf(name, "s%lu.sbot", (long unsigned)++bot_counter);
 
     mk_bot(wdbp,
            name,
@@ -398,7 +398,7 @@ void writeRingModeBox
 
     bu_bitv* faceMode = bu_bitv_new(num_faces);
 
-    sprintf(name, "s%lu.pbot", ++bot_counter);
+    sprintf(name, "s%lu.pbot", (long unsigned)++bot_counter);
 
     mk_bot(wdbp,
            name,
@@ -453,7 +453,7 @@ void writePlateBot
 
     bu_bitv* faceMode = bu_bitv_new(form.bot.num_faces);
 
-    sprintf(name, "s%lu.pbot", ++bot_counter);
+    sprintf(name, "s%lu.pbot", (long unsigned)++bot_counter);
 
     mk_bot(wdbp,
            name,
@@ -498,7 +498,7 @@ void writeCone
     fastf_t radius1 = form.radius1 * IntavalUnitInMm;
     fastf_t radius2 = form.radius2 * IntavalUnitInMm;
 
-    sprintf(name, "s%lu.trc", ++trc_counter);
+    sprintf(name, "s%lu.trc", (long unsigned)++trc_counter);
     mk_trc_h(wdbp, name, base, height, radius1, radius2);
     addToRegion(form.compnr, name);
 
@@ -528,7 +528,7 @@ void writeCylinder
 
     fastf_t radius = form.radius1 * IntavalUnitInMm;
 
-    sprintf(name, "s%lu.rcc", ++rcc_counter);
+    sprintf(name, "s%lu.rcc", (long unsigned)++rcc_counter);
     mk_rcc(wdbp, name, base, height, radius);
     addToRegion(form.compnr, name);
 
@@ -570,7 +570,7 @@ void writeArb8
     for (size_t i = 0; i < 8; ++i)
         VSCALE(shuffle[i], shuffle[i], IntavalUnitInMm)
 
-    sprintf(name, "s%lu.arb8", ++arb8_counter);
+    sprintf(name, "s%lu.arb8", (long unsigned)++arb8_counter);
     mk_arb8(wdbp, name, reinterpret_cast<fastf_t*>(shuffle));
     addToRegion(form.compnr, name);
 

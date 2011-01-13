@@ -165,7 +165,7 @@ main (int argc, char **argv)
 	bu_exit (0, NULL);
 
  done:
-    bu_log("%lu %lu\n", width, height);
+    bu_log("%zu %zu\n", width, height);
     return 0;
 }
 

@@ -130,7 +130,7 @@ write_ppm(FILE *fp, char *data, long width, long height, int bytes_per_pixel)
     }
 
     /* width height */
-    fprintf(fp, "%lu %lu\n", width, height);
+    fprintf(fp, "%lu %lu\n", (long unsigned)width, (long unsigned)height);
 
     /* maximum color component value */
     fprintf(fp, "255\n");

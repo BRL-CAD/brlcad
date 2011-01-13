@@ -1105,11 +1105,11 @@ view_end(struct application *ap)
     /* output of center of exposed area */
     if (rtarea_compute_centers) {
         bu_log("Center of Exposed Area     (%lu hits) = (%.4lf, %.4lf, %.4lf) %s\n",
-		exposed_hit_sum,
-		exposed_hit_x_sum / (fastf_t)exposed_hit_sum / units,
-		exposed_hit_y_sum / (fastf_t)exposed_hit_sum / units,
-		exposed_hit_z_sum / (fastf_t)exposed_hit_sum / units,
-		bu_units_string(units)
+	       (long unsigned)exposed_hit_sum,
+	       exposed_hit_x_sum / (fastf_t)exposed_hit_sum / units,
+	       exposed_hit_y_sum / (fastf_t)exposed_hit_sum / units,
+	       exposed_hit_z_sum / (fastf_t)exposed_hit_sum / units,
+	       bu_units_string(units)
 	);
     }
     bu_log("Number of Presented Regions:    %8d\n", presented_region_count);

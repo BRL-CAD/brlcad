@@ -1671,7 +1671,7 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 	    V3INTCLAMPARGS(V),
 	    V3INTCLAMPARGS(u),
 	    V3INTCLAMPARGS(v),
-	    sketch_ip->vert_count);
+	    (long unsigned)sketch_ip->vert_count);
     bu_vls_strcat(str, buf);
 
     if (!verbose)
@@ -1680,7 +1680,7 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
     if (sketch_ip->vert_count) {
 	bu_vls_strcat(str, "\tVertices:\n\t");
 	for (i=0; i<sketch_ip->vert_count; i++) {
-	    sprintf(buf, " %lu-(%g %g)", i, V2INTCLAMPARGS(sketch_ip->verts[i]));
+	    sprintf(buf, " %lu-(%g %g)", (long unsigned)i, V2INTCLAMPARGS(sketch_ip->verts[i]));
 	    bu_vls_strcat(str, buf);
 	    if (i && (i+1)%3 == 0)
 		bu_vls_strcat(str, "\n\t");

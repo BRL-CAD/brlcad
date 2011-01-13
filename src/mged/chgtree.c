@@ -283,7 +283,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     (void)chg_state(ST_O_PICK, ST_O_PATH, "internal change of state");
 
     /* Select the matrix */
-    sprintf(number, "%lu", lhs.fp_len);
+    sprintf(number, "%lu", (long unsigned)lhs.fp_len);
     new_argv[0] = "matpick";
     new_argv[1] = number;
     new_argv[2] = NULL;
