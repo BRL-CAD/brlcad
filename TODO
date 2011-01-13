@@ -44,6 +44,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* add distribution test for making sure the source code conventions
+  for function replacements are being respected (e.g., bu_strcmp()
+  instead of strcmp()).
+
 * let the cp command take multiple arguments for simultaneously
   creating multiple named copies
 
