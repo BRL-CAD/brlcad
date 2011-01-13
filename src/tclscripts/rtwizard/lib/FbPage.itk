@@ -438,7 +438,7 @@ namespace eval RtWizard {
 		 [string match $screenOnly "false"] } {
 	    return $fbFile
 	}
-	set binpath [bu_brlcad_root bin]
+	set binpath [bu_brlcad_root "bin"]
 	#
 	# Create an on-screen buffer
 	#

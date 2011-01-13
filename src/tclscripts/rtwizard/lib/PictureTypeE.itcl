@@ -185,7 +185,7 @@ namespace eval RtWizard {
 	set bg [hexToRGB $bgHex]
 	set bgl "=[lindex $bg 0]/[lindex $bg 1]/[lindex $bg 2]"
 
-	set binpath [bu_brlcad_root bin]
+	set binpath [bu_brlcad_root "bin"]
 
 	#
 	# Get the gamma
