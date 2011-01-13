@@ -99,7 +99,7 @@ history_record_priv(struct bu_vls *cmdp, struct timeval *start, struct timeval *
 {
     struct bu_cmdhist *new_hist;
 
-    if (strcmp(bu_vls_addr(cmdp), "\n") == 0)
+    if (BU_STR_EQUAL(bu_vls_addr(cmdp), "\n"))
 	return;
 
     new_hist = (struct bu_cmdhist *)bu_malloc(sizeof(struct bu_cmdhist),
