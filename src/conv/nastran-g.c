@@ -40,6 +40,8 @@
 #include "wdb.h"
 #include "bu.h"
 
+#define COMMA ','
+
 
 struct coord_sys
 {
@@ -375,10 +377,10 @@ get_free_form_input(FILE *fp, int write_flag)
 	    while (line[i] != '\0' && isspace(line[i]))
 		i++;
 	    j = (-1);
-	    while (line[i] != '\0' && line[i] != ',' && !isspace(line[i]))
+	    while (line[i] != '\0' && line[i] != COMMA && !isspace(line[i]))
 		curr_rec[field_no][++j] = line[i++];
 	    curr_rec[field_no][++j] = '\0';
-	    if (line[i] == ',')
+	    if (line[i] == COMMA)
 		i++;
 	}
 
@@ -393,10 +395,10 @@ get_free_form_input(FILE *fp, int write_flag)
 		while (line[i] != '\0' && isspace(line[i]))
 		    i++;
 		j = (-1);
-		while (line[i] != '\0' && line[i] != ',' && !isspace(line[i]))
+		while (line[i] != '\0' && line[i] != COMMA && !isspace(line[i]))
 		    curr_rec[field_no][++j] = line[i++];
 		curr_rec[field_no][++j] = '\0';
-		if (line[i] == ',')
+		if (line[i] == COMMA)
 		    i++;
 	    }
 	}
@@ -461,7 +463,7 @@ get_next_record(FILE *fp, int call_input, int write_flag)
 	return 1;
 
     /* check which format is being used */
-    tmp = strchr(line, ',');
+    tmp = strchr(line, COMMA);
     if (tmp && tmp - line < 10)
 	form = FREE_FIELD;
     else {
