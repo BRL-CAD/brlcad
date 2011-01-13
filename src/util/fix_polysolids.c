@@ -97,6 +97,7 @@ main(int argc, char *argv[])
 	struct vertex *verts[5];
 	union record rec2;
 	int i;
+	size_t ret;
 
 	if (done == 2) {
 	    rec = rec2;
@@ -155,7 +156,9 @@ main(int argc, char *argv[])
 
 		break;
 	    default:
-		fwrite(&rec, sizeof(union record), 1, stdout);
+		ret = fwrite(&rec, sizeof(union record), 1, stdout);
+		if (ret < 1)
+		    perror("fwrite");
 		break;
 	}
     }

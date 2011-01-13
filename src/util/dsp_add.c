@@ -179,6 +179,7 @@ main(int ac, char *av[])
     int in_cookie, out_cookie;
     int conv;
     struct stat sb;
+    size_t ret;
 
     next_arg = parse_args(ac, av);
 
@@ -214,10 +215,14 @@ main(int ac, char *av[])
     count = count >> 1; /* convert count of char to count of short */
 
     /* Read the terrain data */
-    fread(buf1, sizeof(short), count, in1);
+    ret = fread(buf1, sizeof(short), count, in1);
+    if (ret < count)
+	perror("fread");
     fclose(in1);
 
-    fread(buf2, sizeof(short), count, in2);
+    ret = fread(buf2, sizeof(short), count, in2);
+    if (ret < count)
+	perror("fread");
     fclose(in2);
 
 

@@ -294,6 +294,7 @@ main(int argc, char **argv)
     unsigned char *obuf;
     unsigned char *buffer;
     double angle = 0.0;
+    size_t io;
 
     ifp = stdin;
     ofp = stdout;
@@ -357,7 +358,9 @@ main(int argc, char **argv)
 		    }
 		    outplace = outbyte;
 		}
-		fwrite(obuf, pixbytes, buflines, ofp);
+		io = fwrite(obuf, pixbytes, buflines, ofp);
+		if (io < buflines)
+		    perror("fwrite");
 		outplace += buflines*pixbytes;
 	    }
 	} else if (minus90) {
@@ -381,7 +384,9 @@ main(int argc, char **argv)
 		    }
 		    outplace = outbyte;
 		}
-		fwrite(obuf, pixbytes, buflines, ofp);
+		io = fwrite(obuf, pixbytes, buflines, ofp);
+		if (io < buflines)
+		    perror("fwrite");
 		outplace += buflines*pixbytes;
 	    }
 	} else if (invert) {
@@ -397,13 +402,17 @@ main(int argc, char **argv)
 		    }
 		    outplace = outbyte;
 		}
-		fwrite(&buffer[(y-firsty-1)*scanbytes], 1, scanbytes, ofp);
+		io = fwrite(&buffer[(y-firsty-1)*scanbytes], 1, scanbytes, ofp);
+		if (io < scanbytes)
+		    perror("fwrite");
 		outplace += scanbytes;
 	    }
 	} else {
 	    /* Reverse only */
 	    for (y = 0; y < buflines; y++) {
-		fwrite(&buffer[y*scanbytes], 1, scanbytes, ofp);
+		io = fwrite(&buffer[y*scanbytes], 1, scanbytes, ofp);
+		if (io < scanbytes)
+		    perror("fwrite");
 	    }
 	}
 
