@@ -6049,7 +6049,7 @@ go_new_view(struct ged *gedp,
 #endif /* DM_WGL */
 
     if (type == DM_TYPE_BAD) {
-	bu_vls_printf(&gedp->ged_result_str, "Unsupported display manager type - %s\n", argv[2]);
+	bu_vls_printf(&gedp->ged_result_str, "ERROR:  Requisite display manager is not available.\nBRL-CAD may need to be recompiled with support for:  %s\nRun 'fbhelp' for a list of available display managers.\n", argv[2]);
 	return BRLCAD_ERROR;
     }
 
