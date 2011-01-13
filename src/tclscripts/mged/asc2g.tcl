@@ -70,11 +70,7 @@ current database." } {} } OK Cancel]
 	    }
 
 	    # convert ascii database to binary
-	    if {$tcl_platform(platform) == "windows"} {
-		set asc2g [bu_brlcad_root "bin/asc2g.exe"]
-	    } else {
-		set asc2g [bu_brlcad_root "bin/asc2g"]
-	    }
+	    set asc2g [file join [bu_brlcad_root "bin"] asc2g]
 	    catch {exec $asc2g $filename $db_name} msg
 
 	    # concat the binary

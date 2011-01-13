@@ -579,11 +579,7 @@ proc do_fbclear { id } {
 	set blue 0
     }
 
-    if {$tcl_platform(platform) == "windows"} {
-	set fbclear [bu_brlcad_root "bin/fbclear.exe"]
-    } else {
-	set fbclear [bu_brlcad_root "bin/fbclear"]
-    }
+    set fbclear [file join [bu_brlcad_root "bin"] fbclear]
     set result [catch { exec $fbclear -F $rt_control($id,cooked_dest)\
 			    $red $green $blue & } rt_error]
 

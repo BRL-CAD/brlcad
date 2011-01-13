@@ -61,11 +61,7 @@ to put the acsii converted database."}} OK Cancel]
 		}
 	    }
 
-	    if {$tcl_platform(platform) == "windows"} {
-		set g2asc [bu_brlcad_root "bin/g2asc.exe"]
-	    } else {
-		set g2asc [bu_brlcad_root "bin/g2asc"]
-	    }
+	    set g2asc [file join [bu_brlcad_root "bin"] g2asc]
 	    catch {exec $g2asc $db_name $ascii_filename} msg
 	}
     } else {

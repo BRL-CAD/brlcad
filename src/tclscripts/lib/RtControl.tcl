@@ -471,12 +471,7 @@
 
     set cooked_dest [get_cooked_dest]
 
-    if {$tcl_platform(platform) == "windows"} {
-	set fbclear [bu_brlcad_root "bin/fbclear.exe"]
-	regsub -all {\\} $fbclear {/} fbclear
-    } else {
-	set fbclear [bu_brlcad_root "bin/fbclear"]
-    }
+    set fbclear [file join [bu_brlcad_root "bin"] fbclear]
     set result [catch {eval exec $fbclear -F $cooked_dest $rtColor &} rt_error]
 
     if {$result} {
