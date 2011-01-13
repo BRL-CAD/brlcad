@@ -795,7 +795,9 @@ bool Get3Coords(coords *coop)
     bool ret;
 
     ret = GetCoords(coop);
-    fread(trash, sizeof(trash), 1, pfin);
+    if (fread(trash, sizeof(trash), 1, pfin) != 1)
+	return false;
+
     return ret;
 }
 

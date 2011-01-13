@@ -128,6 +128,7 @@ main(int argc, char **argv)
     int i, j, k, lclr, iquit=0, ichg=0, gclr(void), cclr(char *pc);
     int il, iu, iclr, iskp, jclr, bsp(void);
     int scr_w=512, scr_h=512, scr_set=0;
+    int ret;
 
     printf("GIFT-PRETTY File painted on Generic Framebuffer\n");
 /* check invocation */
@@ -255,14 +256,18 @@ main(int argc, char **argv)
 		break;
 	    case 'a':
 		printf("Old color? ");
-		scanf("%3s", cs);
+		ret = scanf("%3s", cs);
+		if (ret != 1)
+		    perror("scanf");
 		iclr=cclr(cs);
 		if (iclr<0) {
 		    prtclr(0);
 		    break;
 		}
 		printf("New color? ");
-		scanf("%3s", cs);
+		ret = scanf("%3s", cs);
+		if (ret != 1)
+		    perror("scanf");
 		jclr=cclr(cs);
 		if (jclr<0) {
 		    prtclr(0);
@@ -284,7 +289,9 @@ main(int argc, char **argv)
 		break;
 	    case 'b':
 		printf("%s background changed to ", colortab[ibc].name);
-		scanf("%3s", cs);
+		ret = scanf("%3s", cs);
+		if (ret != 1)
+		    perror("scanf");
 		ibc=cclr(cs);
 		if (ibc<0) {
 		    ibc=0;
@@ -294,7 +301,9 @@ main(int argc, char **argv)
 	    case 't':
 		printf("%s transparent color changed to ",
 		       colortab[itc].name);
-		scanf("%3s", cs);
+		ret = scanf("%3s", cs);
+		if (ret != 1)
+		    perror("scanf");
 		itc=cclr(cs);
 		if (itc<0) {
 		    prtclr(0);
@@ -319,7 +328,9 @@ main(int argc, char **argv)
 		    if ((i%20)==19) {
 			char cbuf[16];
 			printf("(c)ontine, (s)top? ");
-			scanf("%1s", cbuf);
+			ret = scanf("%1s", cbuf);
+			if (ret != 1)
+			    perror("scanf");
 			c = cbuf[0];
 			if (c=='s') break;
 		    }
@@ -341,6 +352,7 @@ main(int argc, char **argv)
 		iquit=1;
 	    case 'v':
 		if (ichg!=0) {
+		    ssize_t writeret;
 		    for (i=0;i<ni;i++) {
 			loci+=6;
 			lseek(ifd, (off_t)loci, 0);
@@ -348,7 +360,9 @@ main(int argc, char **argv)
 			for (j=0, cp=colortab[itmc[i]].name;j<3;
 			     cp++, j++) {
 			    loci++;
-			    write(ifd, cp, 1);
+			    writeret = write(ifd, cp, 1);
+			    if (writeret < 0)
+				perror("write");
 			}
 			lseek(ifd, (off_t)++loci, 0);
 			while ((c=gc())!='\n') loci++;
@@ -364,11 +378,17 @@ main(int argc, char **argv)
 		goto view;
 	    case 'r':
 		printf("Lower limit? ");
-		scanf("%d", &il);
+		ret = scanf("%d", &il);
+		if (ret != 1)
+		    perror("scanf");
 		printf("Upper limit? ");
-		scanf("%d", &iu);
+		ret = scanf("%d", &iu);
+		if (ret != 1)
+		    perror("scanf");
 		printf("Color? ");
-		scanf("%3s", cs);
+		ret = scanf("%3s", cs);
+		if (ret != 1)
+		    perror("scanf");
 		iclr=cclr(cs);
 		if (iclr<0) {
 		    prtclr(0);
