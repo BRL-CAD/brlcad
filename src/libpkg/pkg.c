@@ -415,7 +415,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     memset((char *)&sinme, 0, sizeof(sinme));
 
 #ifdef HAVE_SYS_UN_H
-    if (host == NULL || strlen(host) == 0 || BU_STR_EQUAL(host, "unix")) {
+    if (host == NULL || strlen(host) == 0 || strcmp(host, "unix")==0) {
 	/* UNIX Domain socket, port = pathname */
 	sunhim.sun_family = AF_UNIX;
 	strncpy(sunhim.sun_path, service, sizeof(sunhim.sun_path));
