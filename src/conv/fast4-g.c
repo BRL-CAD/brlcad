@@ -383,7 +383,7 @@ Search_names(struct name_tree *root, char *name, int *found)
     while (1) {
 	int diff;
 
-	diff = strcmp(name, ptr->name);
+	diff = bu_strcmp(name, ptr->name);
 	if (diff == 0) {
 	    *found = 1;
 	    return ptr;
@@ -518,7 +518,7 @@ Insert_region_name(char *name, int reg_id)
     if (!name_root) {
 	name_root = new_ptr;
     } else {
-	diff = strcmp(name, nptr_model->name);
+	diff = bu_strcmp(name, nptr_model->name);
 
 	if (diff > 0) {
 	    if (nptr_model->nright) {
@@ -676,7 +676,7 @@ Insert_name(struct name_tree **root, char *name, int inner)
 	return;
     }
 
-    diff = strcmp(name, ptr->name);
+    diff = bu_strcmp(name, ptr->name);
     if (diff > 0) {
 	if (ptr->nright) {
 	    bu_log("Insert_name: ptr->nright not null\n");
@@ -875,7 +875,7 @@ Delete_name(struct name_tree **root, char *name)
     found = 0;
 
     while (1) {
-	diff = strcmp(name, ptr->name);
+	diff = bu_strcmp(name, ptr->name);
 	if (diff == 0) {
 	    found = 1;
 	    break;
@@ -2080,11 +2080,11 @@ f4_do_hole_wall(int type)
     }
 
     /* eliminate trailing blanks */
-    s_len = strlen(line);
+    s_len = bu_strlen(line);
     while (isspace(line[--s_len]))
 	line[s_len] = '\0';
 
-    s_len = strlen(line);
+    s_len = bu_strlen(line);
     if (s_len > 80)
 	s_len = 80;
 

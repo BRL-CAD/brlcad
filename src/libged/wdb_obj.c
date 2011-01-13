@@ -3067,7 +3067,7 @@ wdb_move_all_cmd(struct rt_wdb *wdbp,
 		    extrude = (struct rt_extrude_internal *)intern.idb_ptr;
 		    RT_EXTRUDE_CK_MAGIC(extrude);
 
-		    if (! strcmp(extrude->sketch_name, argv[1])) {
+		    if (BU_STR_EQUAL(extrude->sketch_name, argv[1])) {
 			bu_free(extrude->sketch_name, "sketch name");
 			extrude->sketch_name = bu_strdup(argv[2]);
 
@@ -7106,7 +7106,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
     i = 1;
 
     /* look for a USEAIR option */
-    if (! strcmp(argv[i], "-u")) {
+    if (BU_STR_EQUAL(argv[i], "-u")) {
 	use_air = 1;
 	i++;
     }

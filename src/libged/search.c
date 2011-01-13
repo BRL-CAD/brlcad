@@ -834,7 +834,7 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    }			
 		}
 		if ((checkval == 2) && (strcomparison == 1)) {
-    		    if (strcmp(bu_vls_addr(&value), avpp->value) < 0) {
+    		    if (bu_strcmp(bu_vls_addr(&value), avpp->value) < 0) {
 		    	bu_avs_free(&avs);
     			bu_vls_free(&attribname);
     			bu_vls_free(&value);
@@ -847,7 +847,7 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    }			
 		}
 		if ((checkval == 3) && (strcomparison == 1)) {
-    		    if (strcmp(bu_vls_addr(&value), avpp->value) > 0) {
+    		    if (bu_strcmp(bu_vls_addr(&value), avpp->value) > 0) {
 		    	bu_avs_free(&avs);
     			bu_vls_free(&attribname);
     			bu_vls_free(&value);
@@ -860,7 +860,7 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    }			
 		}
 		if ((checkval == 4) && (strcomparison == 1)) {
-    		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (strcmp(bu_vls_addr(&value), avpp->value) < 0)) {
+    		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (bu_strcmp(bu_vls_addr(&value), avpp->value) < 0)) {
 		    	bu_avs_free(&avs);
     			bu_vls_free(&attribname);
     			bu_vls_free(&value);
@@ -873,7 +873,7 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    }			
 		}
 		if ((checkval == 5) && (strcomparison == 1)) {
-    		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (strcmp(bu_vls_addr(&value), avpp->value) > 0)) {
+    		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (bu_strcmp(bu_vls_addr(&value), avpp->value) > 0)) {
 		    	bu_avs_free(&avs);
     			bu_vls_free(&attribname);
     			bu_vls_free(&value);
@@ -1544,7 +1544,7 @@ option(char *name)
 int
 typecompare(const void *a, const void *b)
 {
-    return strcmp(((OPTION *)a)->name, ((OPTION *)b)->name);
+    return !BU_STR_EQUAL(((OPTION *)a)->name, ((OPTION *)b)->name);
 }
 
 

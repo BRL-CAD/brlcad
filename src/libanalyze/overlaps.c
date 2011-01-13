@@ -68,7 +68,7 @@ add_unique_pair(struct region_pair *list, /* list to add into */
 
     /* insert in the list at the "nice" place */
     for (BU_LIST_FOR (rp, region_pair, &list->l)) {
-	if (strcmp(rp->r.r1->reg_name, r1->reg_name) <= 0)
+	if (bu_strcmp(rp->r.r1->reg_name, r1->reg_name) <= 0)
 	    break;
     }
     BU_LIST_INSERT(&rp->l, &rpair->l);

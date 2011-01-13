@@ -741,7 +741,7 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
 		struct area_list *newNode;
 
 		while (listp->next) {
-		    if (!listp->cell || (strcmp(cell->name, listp->cell->name) < 0)) {
+		    if (!listp->cell || (bu_strcmp(cell->name, listp->cell->name) < 0)) {
 			break;
 		    }
 		    prev = listp;
@@ -893,7 +893,7 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 		if ((!listp->cell) || (cellp->depth > listp->cell->depth)) {
 		    break;
 		}
-		if ((cellp->depth == listp->cell->depth) && (strcmp(cellp->name, listp->cell->name) < 0)) {
+		if ((cellp->depth == listp->cell->depth) && (bu_strcmp(cellp->name, listp->cell->name) < 0)) {
 		    break;
 		}
 

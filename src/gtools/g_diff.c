@@ -246,13 +246,13 @@ compare_values(int type, Tcl_Obj *val1, Tcl_Obj *val2)
 {
     int len1, len2;
     int i;
-    int str_ret;
+    int str_eq;
     float a, b;
     Tcl_Obj *obj1, *obj2;
 
-    str_ret = strcmp(Tcl_GetStringFromObj(val1, NULL), Tcl_GetStringFromObj(val2, NULL));
+    str_ret = BU_STR_EQUAL(Tcl_GetStringFromObj(val1, NULL), Tcl_GetStringFromObj(val2, NULL));
 
-    if (str_ret == 0 || type == ATTRS) {
+    if (str_eq || type == ATTRS) {
 	return 0;
     }
 
