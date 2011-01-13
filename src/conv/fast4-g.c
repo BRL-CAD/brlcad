@@ -2080,11 +2080,11 @@ f4_do_hole_wall(int type)
     }
 
     /* eliminate trailing blanks */
-    s_len = bu_strlen(line);
+    s_len = strlen(line);
     while (isspace(line[--s_len]))
 	line[s_len] = '\0';
 
-    s_len = bu_strlen(line);
+    s_len = strlen(line);
     if (s_len > 80)
 	s_len = 80;
 
