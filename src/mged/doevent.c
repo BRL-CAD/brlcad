@@ -146,7 +146,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
     if (eventPtr->type == ConfigureNotify) {
 	XConfigureEvent *conf = (XConfigureEvent *)eventPtr;
 
-	DM_CONFIGURE_WIN(dmp);
+	DM_CONFIGURE_WIN(dmp, 0);
 	rect_image2view();
 	dirty = 1;
 

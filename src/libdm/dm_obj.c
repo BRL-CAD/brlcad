@@ -1909,7 +1909,7 @@ dmo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     }
 
     /* configure the display manager window */
-    status = DM_CONFIGURE_WIN(dmop->dmo_dmp);
+    status = DM_CONFIGURE_WIN(dmop->dmo_dmp, 0);
 
 #ifdef USE_FBSERV
     /* configure the framebuffer window */

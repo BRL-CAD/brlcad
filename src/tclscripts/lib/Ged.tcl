@@ -183,6 +183,7 @@ package provide cadwidgets::Ged 1.0
 	method eye_pos {args}
 	method faceplate {args}
 	method facetize {args}
+	method fontsize {args}
 	method form {args}
 	method fracture {args}
 	method g {args}
@@ -1252,6 +1253,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::facetize {args} {
     eval $mGed facetize $args
+}
+
+::itcl::body cadwidgets::Ged::fontsize {args} {
+    eval $mGed fontsize $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::form {args} {

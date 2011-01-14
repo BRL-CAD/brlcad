@@ -156,7 +156,7 @@ X_dm_init(struct dm_list *o_dm_list,
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
 #endif
 
-    (void)DM_CONFIGURE_WIN(dmp);
+    (void)DM_CONFIGURE_WIN(dmp, 0);
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));

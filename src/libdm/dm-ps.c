@@ -117,7 +117,8 @@ struct dm dm_ps = {
     0,				/* depth buffer is not writable */
     0,				/* no zbuffer */
     0,				/* no zclipping */
-    1,                            /* clear back buffer after drawing and swap */
+    1,                          /* clear back buffer after drawing and swap */
+    0,                          /* not overriding the auto font size */
     0				/* Tcl interpreter */
 };
 
