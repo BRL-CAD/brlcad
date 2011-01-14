@@ -131,7 +131,8 @@ SET(docbook_lessons_EN_IMAGES
 	images/mged16_radio_cutaways.png
 )
 
-DOCBOOK_TO_HTML(lesson docbook_lessons_EN ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/lessons/en)
+DOCBOOK_TO_HTML(lesson docbook_lessons_EN html/lessons/en)
+FILE(COPY ${docbook_lessons_EN_IMAGES} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/html/lessons/en/images)
 INSTALL(FILES ${docbook_lessons_EN_IMAGES} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/lessons/en/images)
 
 

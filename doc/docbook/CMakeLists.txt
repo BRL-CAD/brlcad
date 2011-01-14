@@ -13,21 +13,21 @@ SET(XML_CATALOG_FILES "${CMAKE_SOURCE_DIR}/doc/docbook/catalog.xml")
 MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 	FOREACH(filename ${${xml_files}})
 		STRING(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
-		SET(outfile ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.html)
+		SET(outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.html)
 		SET(targetname ${filename_root}_${targetname_suffix}_html)
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
 			COMMAND XML_CATALOG_FILES=${XML_CATALOG_FILES} ${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${outfile} ${XSL_XHTML_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
 			)
 		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
-		INSTALL(FILES ${outfile} DESTINATION ${targetdir})
+		INSTALL(FILES ${outfile} DESTINATION ${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
 	ENDFOREACH(filename ${${xml_files}})
 ENDMACRO(DOCBOOK_TO_HTML targetname_suffix srcfile outfile targetdir)
 
-MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext)
+MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
 	FOREACH(filename ${${xml_files}})
 		STRING(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
-		SET(outfile ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.${manext})
+		SET(outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.${manext})
 		SET(targetname ${filename_root}_${targetname_suffix}_man${mannum})
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
@@ -42,8 +42,9 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 	FOREACH(filename ${${xml_files}})
 		STRING(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
 		SET(tmp_fo_file ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.fo)
-		SET(outfile ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.pdf)
+		SET(outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
 		SET(targetname ${filename_root}_${targetname_suffix}_pdf)
+		FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
 		ADD_CUSTOM_COMMAND(
 		        OUTPUT ${tmp_fo_file}
 			COMMAND XML_CATALOG_FILES=${XML_CATALOG_FILES} ${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${tmp_fo_file} ${XSL_FO_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
@@ -54,7 +55,7 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 			DEPENDS ${tmp_fo_file}
 			)
 		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
-		INSTALL(FILES ${outfile} DESTINATION ${targetdir})
+		INSTALL(FILES ${outfile} DESTINATION ${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
 	ENDFOREACH(filename ${${xml_files}})
 ENDMACRO(DOCBOOK_TO_PDF targetname_suffix srcfile outfile targetdir)
 

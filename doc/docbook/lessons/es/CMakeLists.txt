@@ -128,6 +128,7 @@ SET(docbook_lessons_ES_IMAGES
 )
 
 DOCBOOK_TO_HTML(lesson_ES docbook_lessons_ES ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/lessons/es)
+FILE(COPY ${docbook_lessons_ES_IMAGES} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/html/lessons/es/images)
 INSTALL(FILES ${docbook_lessons_ES_IMAGES} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/lessons/es/images)
 
 IF(BRLCAD-BUILD_EXTRADOCS_PDF)

@@ -256,11 +256,11 @@ IF(NOT ALL_MANN_EN_XML_COUNT EQUAL KNOWN_MANN_EN_XML_COUNT)
 	${UNKNOWN_LIST}")
 ENDIF(NOT ALL_MANN_EN_XML_COUNT EQUAL KNOWN_MANN_EN_XML_COUNT)
 
-DOCBOOK_TO_HTML(mann docbook_mann_EN ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/mann/en)
-DOCBOOK_TO_HTML(mann docbook_mann_INTRO ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/mann/en)
-DOCBOOK_TO_MAN(mann docbook_mann_EN n nged)
+DOCBOOK_TO_HTML(mann docbook_mann_EN html/mann/en)
+DOCBOOK_TO_HTML(mann docbook_mann_INTRO html/mann/en)
+DOCBOOK_TO_MAN(mann docbook_mann_EN n nged man/mann)
 
 IF(BRLCAD-BUILD_EXTRADOCS_PDF_MAN)
-	DOCBOOK_TO_PDF(mann docbook_mann_EN ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/pdf/mann/en)
+	DOCBOOK_TO_PDF(mann docbook_mann_EN pdf/mann/en)
 ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF_MAN)
 
