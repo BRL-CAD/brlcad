@@ -167,6 +167,113 @@ rt_rpp_region(struct rt_i *rtip, const char *reg_name, fastf_t *min_rpp, fastf_t
 }
 
 
+/**
+ * R T _ I N _ R P P
+ *
+ * Compute the intersections of a ray with a rectangular parallelpiped
+ * (RPP) that has faces parallel to the coordinate planes
+ *
+ * The algorithm here was developed by Gary Kuehl for GIFT.  A good
+ * description of the approach used can be found in "??" by XYZZY and
+ * Barsky, ACM Transactions on Graphics, Vol 3 No 1, January 1984.
+ *
+ * Note: The computation of entry and exit distance is mandatory, as
+ * the final test catches the majority of misses.
+ *
+ * Note: A hit is returned if the intersect is behind the start point.
+ *
+ * Returns -
+ * 0 if ray does not hit RPP,
+ * !0 if ray hits RPP.
+ *
+ * Implicit return -
+ * rp->r_min = dist from start of ray to point at which ray ENTERS solid
+ * rp->r_max = dist from start of ray to point at which ray LEAVES solid
+ */
+int
+rt_in_rpp(struct xray *rp,
+	  register const fastf_t *invdir,	/* inverses of rp->r_dir[] */
+	  register const fastf_t *min,
+	  register const fastf_t *max)
+{
+    register const fastf_t *pt = &rp->r_pt[0];
+    register fastf_t sv;
+#define st sv			/* reuse the register */
+    register fastf_t rmin = -INFINITY;
+    register fastf_t rmax =  INFINITY;
+
+    /* Start with infinite ray, and trim it down */
+
+    /* X axis */
+    if (*invdir < 0.0) {
+	/* Heading towards smaller numbers */
+	/* if (*min > *pt) miss */
+	if (rmax > (sv = (*min - *pt) * *invdir))
+	    rmax = sv;
+	if (rmin < (st = (*max - *pt) * *invdir))
+	    rmin = st;
+    }  else if (*invdir > 0.0) {
+	/* Heading towards larger numbers */
+	/* if (*max < *pt) miss */
+	if (rmax > (st = (*max - *pt) * *invdir))
+	    rmax = st;
+	if (rmin < ((sv = (*min - *pt) * *invdir)))
+	    rmin = sv;
+    } else {
+	/*
+	 * Direction cosines along this axis is NEAR 0,
+	 * which implies that the ray is perpendicular to the axis,
+	 * so merely check position against the boundaries.
+	 */
+	if ((*min > *pt) || (*max < *pt))
+	    return 0;	/* MISS */
+    }
+
+    /* Y axis */
+    pt++; invdir++; max++; min++;
+    if (*invdir < 0.0) {
+	if (rmax > (sv = (*min - *pt) * *invdir))
+	    rmax = sv;
+	if (rmin < (st = (*max - *pt) * *invdir))
+	    rmin = st;
+    }  else if (*invdir > 0.0) {
+	if (rmax > (st = (*max - *pt) * *invdir))
+	    rmax = st;
+	if (rmin < ((sv = (*min - *pt) * *invdir)))
+	    rmin = sv;
+    } else {
+	if ((*min > *pt) || (*max < *pt))
+	    return 0;	/* MISS */
+    }
+
+    /* Z axis */
+    pt++; invdir++; max++; min++;
+    if (*invdir < 0.0) {
+	if (rmax > (sv = (*min - *pt) * *invdir))
+	    rmax = sv;
+	if (rmin < (st = (*max - *pt) * *invdir))
+	    rmin = st;
+    }  else if (*invdir > 0.0) {
+	if (rmax > (st = (*max - *pt) * *invdir))
+	    rmax = st;
+	if (rmin < ((sv = (*min - *pt) * *invdir)))
+	    rmin = sv;
+    } else {
+	if ((*min > *pt) || (*max < *pt))
+	    return 0;	/* MISS */
+    }
+
+    /* If equal, RPP is actually a plane */
+    if (rmin > rmax)
+	return 0;	/* MISS */
+
+    /* HIT.  Only now do rp->r_min and rp->r_max have to be written */
+    rp->r_min = rmin;
+    rp->r_max = rmax;
+    return 1;		/* HIT */
+}
+
+
 /*
  * Local Variables:
  * mode: C
