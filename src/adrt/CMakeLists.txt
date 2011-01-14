@@ -99,4 +99,5 @@ SET(tie_HDRS
 	librender/texture_internal.h 
 	libtie/tie.h
 )
+FILE(COPY ${tie_HDRS} DESTINATION ${CMAKE_BINARY_DIR}/include/tie)
 INSTALL(FILES ${tie_HDRS} DESTINATION include/tie)

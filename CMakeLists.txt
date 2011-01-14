@@ -398,7 +398,7 @@ INSTALL_DIR(DOXYGEN ${DOC_DIR}/doxygen)
 # run this macro, the config.h.in file must first be present, which
 # we take care of here:
 
-SET(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/brlcad_config.h.in")
+SET(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/brlcad/brlcad_config.h.in")
 FILE(WRITE ${CONFIG_H_FILE} "/**** Define statements for CMake ****/\n")
 FILE(APPEND ${CONFIG_H_FILE} "#ifndef __CONFIG_H__\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define __CONFIG_H__\n")
@@ -964,7 +964,7 @@ set_property(CACHE BRLCAD-BUILD_SRC_OTHER PROPERTY STRINGS
 # idea being that if any other system-wide defines or include are needed
 # they can just be added here.
 SET(BRLCAD_STD_DEFS "-DHAVE_CONFIG_H;-DBRLCADBUILD=1")
-SET(BRLCAD_STD_INCLUDES "${BRLCAD_BINARY_DIR}/include;${BRLCAD_SOURCE_DIR}/include")
+SET(BRLCAD_STD_INCLUDES	"${BRLCAD_BINARY_DIR}/include/brlcad;${BRLCAD_BINARY_DIR}/include")
 
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(db)
@@ -983,7 +983,7 @@ FILE(APPEND  ${CONFIG_H_FILE} "#define BUILD_SOURCE_DIR \"${CMAKE_SOURCE_DIR}\"\
 
 # Now that all the tests are done, configure the brlcad_config.h file:
 FILE(APPEND ${CONFIG_H_FILE} "#endif /* __CONFIG_H__ */\n")
-configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
+configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad/brlcad_config.h)
 
 # Before we finalize, set some specific global compiler flags
 IF(MSVC)

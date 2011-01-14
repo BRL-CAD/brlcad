@@ -312,6 +312,7 @@ SET(TK_HDRS
 	generic/tkDecls.h
 	generic/tkPlatDecls.h
 )
+FILE(COPY ${TK_HDRS} DESTINATION ${CMAKE_BINARY_DIR}/include)
 
 SET(TTK_SRCS
 	generic/ttk/ttkBlink.c
