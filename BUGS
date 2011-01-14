@@ -15,8 +15,6 @@ on-going issues.
 Recent Bugs
 -----------
 
-* ted command ends up not applying changes.
-
 * asc2g of a .asc file containing the first line as a "#" comment
   results in a bu_malloc(0) bomb.  comment lines should be valid in
   .asc files.
