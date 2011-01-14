@@ -217,7 +217,9 @@ set(IGNORED_SOURCES
     primitives/xxx/xxx.c
 )
 
+FILE(COPY nurb_example.c DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/sample_applications)
 INSTALL(FILES nurb_example.c DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
+FILE(COPY raydebug.tcl DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/sample_applications)
 INSTALL(FILES raydebug.tcl DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
 
 if(MSVC)

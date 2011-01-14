@@ -8,6 +8,7 @@ set(LIBPKG_SOURCES
     vers.c
 )
 
+FILE(COPY tpkg.c DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/sample_applications)
 INSTALL(FILES tpkg.c DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
 
 BRLCAD_ADDLIB(libpkg "${LIBPKG_SOURCES}" libbu)

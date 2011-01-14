@@ -20,6 +20,7 @@ BRLCAD_ADDEXEC(remapid remapid.c "librt libbu")
 add_executable(g_transfer g_transfer.c)
 target_link_libraries(g_transfer librt libpkg)
 
+FILE(COPY g_transfer.c DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/sample_applications)
 INSTALL(FILES g_transfer.c DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
 
 SET(gtools_MANS
@@ -27,5 +28,5 @@ SET(gtools_MANS
   g_lint.1
   remapid.1
 )
-
+FILE(COPY ${gtools_MANS} DESTINATION ${CMAKE_BINARY_DIR}/${MAN_DIR}/man1)
 install(FILES ${gtools_MANS} DESTINATION ${MAN_DIR}/man1)

@@ -141,7 +141,9 @@ BRLCAD_ADDEXEC(g-shell.rect g-shell.rect.c "libwdb librt libbu")
 
 install(PROGRAMS intaval-g.py DESTINATION bin)
 
+FILE(COPY g-xxx.c DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/sample_applications)
 INSTALL(FILES g-xxx.c DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
+FILE(COPY g-xxx_facets.c DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/sample_applications)
 INSTALL(FILES g-xxx_facets.c DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
 
 SET(conv_MANS
