@@ -2709,10 +2709,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	}
 
 	/* did the caller specify not creating a new database? */
-	if (argc >= 3
-	    && *argv[2] != 'y'
-	    && *argv[2] != 'Y')
-	{
+	if (argc >= 3 && !bu_booleanize(argv[2])) {
 	    gedp = save_gedp;
 	    dbip = save_dbip; /* restore previous database */
 	    rt_new_material_head(save_materp);
@@ -2892,7 +2889,7 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    if (dbip == DBI_NULL ) {
+    if (dbip == DBI_NULL) {
 	Tcl_AppendResult(interpreter, "No database is open\n", NULL);
 	return TCL_OK;
     }
