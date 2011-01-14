@@ -22,6 +22,8 @@ changes made.  See document footer for additional details.
 * upgraded libpng to version 1.4.5 - Cliff Yapp
 * upgraded zlib to version 1.2.5 - Cliff Yapp
 * removed shell execution ! command from vdeck - Cliff Yapp
+* fixed mged 'attr show' command so that attributes are sorted by name
+        - Tom Browder
 
 ----------------------------------------------------------------------
 --- 2010-12-07  Release 7.18.0                                     ---
