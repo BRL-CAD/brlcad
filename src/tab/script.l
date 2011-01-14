@@ -1,7 +1,7 @@
 /*                        S C R I P T . L
  * BRL-CAD
  *
- * Copyright (c) 2005-2010 United States Government as represented by
+ * Copyright (c) 2005-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
 /*                        S C R I P T . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2010 United States Government as represented by
+ * Copyright (c) 2005-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

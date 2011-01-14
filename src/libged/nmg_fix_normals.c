@@ -1,7 +1,7 @@
 /*                  N M G _ F I X _ N O R M A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

@@ -1,7 +1,7 @@
 dnl                    C O N F I G U R E . A C
 dnl BRL-CAD
 dnl
-dnl Copyright (c) 2004-2010 United States Government as represented by
+dnl Copyright (c) 2004-2011 United States Government as represented by
 dnl the U.S. Army Research Laboratory.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
