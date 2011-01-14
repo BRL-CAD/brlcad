@@ -185,8 +185,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     /* get name of installation binary */
     snprintf(buffer, MAX_BUF, "%s%cbin%c%s", root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, bu_getprogname());
 
-    /* are we running from an installed binary? if so add to path */
-    if (from_installed) {
+    /* add paths based on bu_brlcad_root and bu_brlcad_data */
 	bu_vls_printf(&auto_path, "%c%s%clib",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%clib%ctcl%s",
@@ -203,135 +202,22 @@ tclcad_auto_path(Tcl_Interp *interp)
 #endif
 	bu_vls_printf(&auto_path, "%c%s%clib%ciwidgets%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, IWIDGETS_VERSION);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%clib",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cutil",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cmged",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cgeometree",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%crtwizard",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%carcher",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-    }
+	bu_vls_printf(&auto_path, "%c%s%c%s%ctclscripts",
+		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, data, BU_DIR_SEPARATOR);
+	bu_vls_printf(&auto_path, "%c%s%c%s%ctclscripts%clib",
+		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	bu_vls_printf(&auto_path, "%c%s%c%s%ctclscripts%cutil",
+		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	bu_vls_printf(&auto_path, "%c%s%c%s%ctclscripts%cmged",
+		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	bu_vls_printf(&auto_path, "%c%s%c%s%ctclscripts%cgeometree",
+		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	bu_vls_printf(&auto_path, "%c%s%c%s%ctclscripts%crtwizard",
+		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	bu_vls_printf(&auto_path, "%c%s%c%s%ctclscripts%carcher",
+		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 
-    /* are we running uninstalled? */
-    if(from_built)
-	    srcpath = BUILD_SOURCE_DIR;
-
-    /* if uninstalled, add search paths for source invocation */
-    if (from_built) {
-        bu_vls_printf(&auto_path, "%c%s%clib%ctcl8.5",BU_PATH_SEPARATOR, BUILD_BINARY_DIR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-        bu_vls_printf(&auto_path, "%c%s%clib",BU_PATH_SEPARATOR, BUILD_BINARY_DIR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ctcl%cunix",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ctcl%clibrary",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ctk%cunix",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ctk%clibrary",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%cincrTcl",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%cincrTcl%citcl%clibrary",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%cincrTcl%citk%clibrary",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ciwidgets",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%clib",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%cutil",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%cmged",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%cgeometree",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%crtwizard",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%carcher",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-    }
-
-    /* add search paths for dist invocation */
-    if (srcpath) {
-	snprintf(buffer, MAX_BUF, "%s%c..%csrc%cother%ctcl%cunix",
-		 srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	if (bu_file_exists(buffer)) {
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%ctcl%cunix",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%ctcl%clibrary",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%ctk%cunix",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%ctk%clibrary",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%cincrTcl",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%cincrTcl%citcl%clibrary",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%cincrTcl%citk%clibrary",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%ciwidgets",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%clib",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%cutil",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%cmged",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%cgeometree",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%crtwizard",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%carcher",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	}
-    }
-
-    /* be sure to check installation paths even if we aren't running from there */
-    if (!from_installed) {
-	bu_vls_printf(&auto_path, "%c%s%clib",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%clib%ctcl%s",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TCL_VERSION);
-#ifdef HAVE_TK
-	bu_vls_printf(&auto_path, "%c%s%clib%ctk%s",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TK_VERSION);
-#endif
-	bu_vls_printf(&auto_path, "%c%s%clib%citcl%s",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITCL_VERSION);
-#ifdef HAVE_TK
-	bu_vls_printf(&auto_path, "%c%s%clib%citk%s",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITK_VERSION);
-#endif
-	bu_vls_printf(&auto_path, "%c%s%clib%ciwidgets%s",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, IWIDGETS_VERSION);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%clib",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cutil",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cmged",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cgeometree",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%crtwizard",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%ctclscripts%carcher",
-		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-    }
-
-    /*    printf("AUTO_PATH IS %s\n", bu_vls_addr(&auto_path)); */
+    /*printf("AUTO_PATH IS %s\n", bu_vls_addr(&auto_path)); */
 
     /* see if user already set ITCL_LIBRARY override */
     library_path = getenv("ITCL_LIBRARY");
