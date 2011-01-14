@@ -20,7 +20,7 @@ MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 			COMMAND XML_CATALOG_FILES=${XML_CATALOG_FILES} ${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${outfile} ${XSL_XHTML_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
 			)
 		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
-		INSTALL(FILES ${outfile} DESTINATION ${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
+		INSTALL(FILES ${outfile} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
 	ENDFOREACH(filename ${${xml_files}})
 ENDMACRO(DOCBOOK_TO_HTML targetname_suffix srcfile outfile targetdir)
 
@@ -55,7 +55,7 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 			DEPENDS ${tmp_fo_file}
 			)
 		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
-		INSTALL(FILES ${outfile} DESTINATION ${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
+		INSTALL(FILES ${outfile} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
 	ENDFOREACH(filename ${${xml_files}})
 ENDMACRO(DOCBOOK_TO_PDF targetname_suffix srcfile outfile targetdir)
 
