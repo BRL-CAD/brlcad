@@ -17,6 +17,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* open binary-incompatible v4 database
+
 * fix ted
 
 
