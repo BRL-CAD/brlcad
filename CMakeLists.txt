@@ -957,15 +957,7 @@ set(BRLCAD-BUILD_SRC_OTHER "Auto" CACHE STRING
 set_property(CACHE BRLCAD-BUILD_SRC_OTHER PROPERTY STRINGS
 	"Yes" "No" "Auto")
 
-
-
-# Virtually all of the BRL-CAD code needs the BRL-CAD include directories
-# and a couple of standard defines - set those up in variables now - the
-# idea being that if any other system-wide defines or include are needed
-# they can just be added here.
-SET(BRLCAD_STD_DEFS "-DHAVE_CONFIG_H;-DBRLCADBUILD=1")
-SET(BRLCAD_STD_INCLUDES	"${BRLCAD_BINARY_DIR}/include/brlcad;${BRLCAD_BINARY_DIR}/include")
-
+# We've done the toplevel configure steps, now add the subdirectories
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(db)
 ADD_SUBDIRECTORY(include)

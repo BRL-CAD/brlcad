@@ -36,6 +36,7 @@ SET(G_SAMPLE_MODELS
   xmp.asc
 )
 
+FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/db)
 FOREACH(g_model ${G_SAMPLE_MODELS})
   STRING(REGEX REPLACE "([0-9a-z]*).asc" "\\1" g_model_root "${g_model}")
   ADD_CUSTOM_COMMAND(

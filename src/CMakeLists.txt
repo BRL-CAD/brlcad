@@ -41,6 +41,7 @@ ADD_SUBDIRECTORY(other)
 # in all BRL-CAD builds
 
 include_directories(
+	${BRLCAD_BINARY_DIR}/include/brlcad
 	${BRLCAD_BINARY_DIR}/include
 	${BRLCAD_SOURCE_DIR}/include
 	)
