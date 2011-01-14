@@ -1,5 +1,6 @@
 set(LIBRT_SOURCES
     attributes.c
+    bbox.c
     bezier_2d_isect.c
     binunif/binunif.c
     binunif/db5_bin.c
