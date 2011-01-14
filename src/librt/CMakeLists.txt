@@ -18,6 +18,7 @@ set(LIBRT_SOURCES
     db_alloc.c
     db_anim.c
     db_flags.c
+    db_float.c
     db_inmem.c
     db_io.c
     db_lookup.c
