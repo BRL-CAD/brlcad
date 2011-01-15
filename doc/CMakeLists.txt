@@ -206,6 +206,7 @@ SET(documentation_DATA
 	tube.txt 
 	tool_categories.txt
 )
+FILE(COPY ${documentation_DATA} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/doc)
 install(FILES ${documentation_DATA} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/doc)
 
 SET(doc_MANS
