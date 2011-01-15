@@ -66,7 +66,7 @@
 	must be a path to a primitive shape, and <emphasis>path_lhs</emphasis> must be a path to a combination 	that includes the first component of <emphasis>path_rhs</emphasis> as one of its members. The edited 	matrix will be the matrix in the final component of <emphasis>path_lhs</emphasis> that corresponds to 	the first component of <emphasis>path_rhs</emphasis>.  The last component in <emphasis>path_rhs 	</emphasis> is used as the reference shape during object editing.
    </para>
    <para>Note that for scripting the object to be edited must be in view so a <command>B</command>
-        or <command>e</command> must be used on the object before using the <command>oed</command> command.
+        or <command>draw</command> must be used on the object before using the <command>oed</command> command.
    </para>
 </refsect1>
 
