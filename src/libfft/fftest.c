@@ -1,7 +1,7 @@
 /*                        F F T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,12 +29,6 @@
 #include <math.h>
 
 #include "fft.h"
-
-
-typedef struct {
-    double re;	/* Real Part */
-    double im;	/* Imaginary Part */
-} COMPLEX;
 
 /***** TEST ROUTINES *****/
 COMPLEX data[64];

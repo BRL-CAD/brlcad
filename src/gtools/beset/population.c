@@ -1,7 +1,7 @@
 /*                    P O P U L A T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@
 
 
 /* FIXME: get rid of globals*/
-float *idx;
+float *randomer;
 int shape_number;
 
 
@@ -62,8 +62,8 @@ pop_init (struct population *p, int size)
     p->name = bu_malloc(sizeof(char **) * size, "names");
 
 #define SEED 33
-    /* init in main() bn_rand_init(idx, SEED);*/
-    bn_rand_init(idx, SEED);
+    /* init in main() bn_rand_init(randomer, SEED);*/
+    bn_rand_init(randomer, SEED);
 }
 
 /**
@@ -177,12 +177,12 @@ int
 pop_wrand_ind(struct individual *i, int size, fastf_t total_fitness, int offset)
 {
     int n = offset;
-    fastf_t rindex, psum = 0;
-    rindex =pop_rand() * total_fitness;
+    fastf_t idx, psum = 0;
+    idx =pop_rand() * total_fitness;
     psum = i[n].fitness;
     for (n = offset+1; n < size; n++) {
 	psum += i[n].fitness;
-	if ( rindex <= psum )
+	if ( idx <= psum )
 	    return n-1;
     }
     return size-1;
@@ -194,7 +194,7 @@ pop_wrand_ind(struct individual *i, int size, fastf_t total_fitness, int offset)
 fastf_t
 pop_rand (void)
 {
-    return bn_rand0to1(idx);
+    return bn_rand0to1(randomer);
 }
 
 /**
@@ -204,7 +204,7 @@ pop_rand (void)
 int
 pop_wrand_gop(void)
 {
-    float i = bn_rand0to1(idx);
+    float i = bn_rand0to1(randomer);
     if (i < 0.1)
 	return REPRODUCE;
     if (i < 0.3)

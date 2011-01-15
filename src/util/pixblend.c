@@ -1,7 +1,7 @@
 /*                      P I X B L E N D . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2010 United States Government as represented by
+ * Copyright (c) 1995-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,6 +39,7 @@
 #  include <sys/time.h>
 #endif
 #include <string.h>
+#include <time.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -65,9 +66,7 @@ Usage: pixblend [-{r|i} value] [-s [seed]] file1.pix file2.pix > out.pix\n";
 int
 timeseed(void)
 {
-    struct timeval tv;
-    gettimeofday(&tv, (struct timezone *)NULL);
-    return (int)tv.tv_usec;
+	return time(0);
 }
 
 
@@ -121,7 +120,7 @@ get_args(int argc, char **argv)
 	return 0;
 
     f1_name = argv[bu_optind++];
-    if (strcmp(f1_name, "-") == 0)
+    if (BU_STR_EQUAL(f1_name, "-"))
 	f1 = stdin;
     else if ((f1 = fopen(f1_name, "r")) == NULL) {
 	perror(f1_name);
@@ -132,7 +131,7 @@ get_args(int argc, char **argv)
     }
 
     f2_name = argv[bu_optind++];
-    if (strcmp(f2_name, "-") == 0)
+    if (BU_STR_EQUAL(f2_name, "-"))
 	f2 = stdin;
     else if ((f2 = fopen(f2_name, "r")) == NULL) {
 	perror(f2_name);
@@ -160,6 +159,7 @@ main(int argc, char **argv)
     int gthreshold = 0;
 #endif
     int c = 0;
+    size_t ret;
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);
@@ -180,7 +180,7 @@ main(int argc, char **argv)
     }
 
     if (rflg) {
-#ifdef HAVE_SRAND48
+#ifdef HAVE_DRAND48
 	srand48((long)seed);
 #else
 	threshold = (int) (value * 65536.0);
@@ -199,7 +199,7 @@ main(int argc, char **argv)
     while (1) {
 	unsigned char *cb1, *cb2;	/* current input buf ptrs */
 	unsigned char *cb3; 	/* current output buf ptr */
-	int r1, r2, len, todo;
+	size_t r1, r2, len, todo;
 
 	++c;
 	r1 = fread(b1, 1, CHUNK, f1);
@@ -234,7 +234,6 @@ main(int argc, char **argv)
 		} else {
 #ifdef HAVE_DRAND48
 		    double d;
-		    extern double drand48(void);
 		    d = drand48();
 		    if (d >= value)
 #else
@@ -268,7 +267,9 @@ main(int argc, char **argv)
 		}
 	    }
 	}
-	fwrite(b3, 1, len, stdout);
+	ret = fwrite(b3, 1, len, stdout);
+	if (ret < len)
+	    perror("fwrite");
     }
 
     return 0;

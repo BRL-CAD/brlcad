@@ -1,7 +1,7 @@
 /*                          A X E S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,13 +45,13 @@ static void ax_set_dirty_flag();
 
 struct _axes_state default_axes_state = {
     /* ax_rc */			1,
-    /* ax_model_draw */    	        0,
+    /* ax_model_draw */    	0,
     /* ax_model_size */		500,
     /* ax_model_linewidth */	1,
     /* ax_model_pos */		{ 0.0, 0.0, 0.0 },
-    /* ax_view_draw */    	        0,
+    /* ax_view_draw */    	0,
     /* ax_view_size */		500,
-    /* ax_view_linewidth */		1,
+    /* ax_view_linewidth */	1,
     /* ax_view_pos */		{ 0, 0 },
     /* ax_edit_draw */		0,
     /* ax_edit_size1 */		500,
@@ -64,20 +64,20 @@ struct _axes_state default_axes_state = {
 #define AX_O(_m) bu_offsetof(struct _axes_state, _m)
 #define AX_OA(_m) bu_offsetofarray(struct _axes_state, _m)
 struct bu_structparse axes_vparse[] = {
-    {"%d",  1, "model_draw",	AX_O(ax_model_draw),		ax_set_dirty_flag },
-    {"%d",  1, "model_size",	AX_O(ax_model_size),		ax_set_dirty_flag },
-    {"%d",  1, "model_linewidth",	AX_O(ax_model_linewidth),	ax_set_dirty_flag },
-    {"%f",	3, "model_pos",		AX_OA(ax_model_pos),		ax_set_dirty_flag },
-    {"%d",  1, "view_draw",		AX_O(ax_view_draw),		ax_set_dirty_flag },
-    {"%d",  1, "view_size",		AX_O(ax_view_size),		ax_set_dirty_flag },
-    {"%d",  1, "view_linewidth",	AX_O(ax_view_linewidth),	ax_set_dirty_flag },
-    {"%d",  2, "view_pos",		AX_OA(ax_view_pos),		ax_set_dirty_flag },
-    {"%d",  1, "edit_draw",		AX_O(ax_edit_draw),		ax_set_dirty_flag },
-    {"%d",  1, "edit_size1",	AX_O(ax_edit_size1),		ax_set_dirty_flag },
-    {"%d",  1, "edit_size2",	AX_O(ax_edit_size2),		ax_set_dirty_flag },
-    {"%d",  1, "edit_linewidth1",	AX_O(ax_edit_linewidth1),	ax_set_dirty_flag },
-    {"%d",  1, "edit_linewidth2",	AX_O(ax_edit_linewidth2),	ax_set_dirty_flag },
-    {"",	0, (char *)0,		0,				BU_STRUCTPARSE_FUNC_NULL }
+    {"%d", 1, "model_draw",	AX_O(ax_model_draw),		ax_set_dirty_flag, NULL, NULL },
+    {"%d", 1, "model_size",	AX_O(ax_model_size),		ax_set_dirty_flag, NULL, NULL },
+    {"%d", 1, "model_linewidth",AX_O(ax_model_linewidth),	ax_set_dirty_flag, NULL, NULL },
+    {"%f", 3, "model_pos",	AX_OA(ax_model_pos),		ax_set_dirty_flag, NULL, NULL },
+    {"%d", 1, "view_draw",	AX_O(ax_view_draw),		ax_set_dirty_flag, NULL, NULL },
+    {"%d", 1, "view_size",	AX_O(ax_view_size),		ax_set_dirty_flag, NULL, NULL },
+    {"%d", 1, "view_linewidth",	AX_O(ax_view_linewidth),	ax_set_dirty_flag, NULL, NULL },
+    {"%d", 2, "view_pos",	AX_OA(ax_view_pos),		ax_set_dirty_flag, NULL, NULL },
+    {"%d", 1, "edit_draw",	AX_O(ax_edit_draw),		ax_set_dirty_flag, NULL, NULL },
+    {"%d", 1, "edit_size1",	AX_O(ax_edit_size1),		ax_set_dirty_flag, NULL, NULL },
+    {"%d", 1, "edit_size2",	AX_O(ax_edit_size2),		ax_set_dirty_flag, NULL, NULL },
+    {"%d", 1, "edit_linewidth1",AX_O(ax_edit_linewidth1),	ax_set_dirty_flag, NULL, NULL },
+    {"%d", 1, "edit_linewidth2",AX_O(ax_edit_linewidth2),	ax_set_dirty_flag, NULL, NULL },
+    {"",   0, (char *)0,	0,			 BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -100,10 +100,10 @@ draw_e_axes()
     mat_t rot_mat;
     struct ged_axes_state gas;
 
-    if (state == ST_S_EDIT) {
+    if (STATE == ST_S_EDIT) {
 	MAT4X3PNT(v_ap1, view_state->vs_gvp->gv_model2view, e_axes_pos);
 	MAT4X3PNT(v_ap2, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
-    } else if (state == ST_O_EDIT) {
+    } else if (STATE == ST_O_EDIT) {
 	point_t m_ap2;
 
 	MAT4X3PNT(v_ap1, view_state->vs_gvp->gv_model2view, es_keypoint);

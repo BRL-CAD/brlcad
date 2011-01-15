@@ -1,7 +1,7 @@
 /*                        J A C K - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -125,7 +125,7 @@ main(int argc, char **argv)
 	bu_strlcpy(reg_name, base, sizeof(base)+1);
 	/* Ignore .pss extension if it's there. */
 	doti = strlen(reg_name) - 4;
-	if (doti > 0 && !strcmp(".pss", reg_name+doti))
+	if (doti > 0 && BU_STR_EQUAL(".pss", reg_name+doti))
 	    reg_name[doti] = '\0';
     }
 

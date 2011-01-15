@@ -1,7 +1,7 @@
 /*                         P A T H L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,10 +40,7 @@ static int pathListNoLeaf = 0;
  *			P A T H L I S T _ L E A F _ F U N C
  */
 static union tree *
-ged_pathlist_leaf_func(struct db_tree_state	*tsp,
-		       const struct db_full_path *pathp,
-		       struct rt_db_internal	*ip,
-		       genptr_t			client_data)
+ged_pathlist_leaf_func(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
     struct ged *gedp = (struct ged *)client_data;
     char *str;
@@ -94,7 +91,7 @@ ged_pathlist(struct ged *gedp, int argc, const char *argv[])
     pathListNoLeaf = 0;
 
     if (argc == 3) {
-	if (!strcmp(argv[1], "-noleaf"))
+	if (BU_STR_EQUAL(argv[1], "-noleaf"))
 	    pathListNoLeaf = 1;
 
 	++argv;

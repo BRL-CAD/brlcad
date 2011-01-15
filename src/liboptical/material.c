@@ -1,7 +1,7 @@
 /*                      M A T E R I A L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -113,7 +113,7 @@ try_load(const char *path, const char *material, const char *shader_name)
     for (mfp = shader_mfuncs; mfp->mf_name != (char *)NULL; mfp++) {
 	RT_CK_MF(mfp);
 
-	if (! strcmp(mfp->mf_name, shader_name))
+	if (BU_STR_EQUAL(mfp->mf_name, shader_name))
 	    return shader_mfuncs; /* found ! */
     }
 

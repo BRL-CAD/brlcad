@@ -1,7 +1,7 @@
 /*                      R E A D C O L S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,27 +23,20 @@
  * buffer.  The number is "cols".  The string of characters read is
  * pointed to by "id".
  *
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
  */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 void
-Readcols( id, cols )
-    char *id;
-    int cols;
+Readcols(char *id, int cols)
 {
     int i;
     char *tmp;
 
     tmp = id;
 
-    for ( i=0; i<cols; i++ )
+    for (i=0; i<cols; i++)
 	*tmp++ = card[counter++];
 }
 

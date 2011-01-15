@@ -1,7 +1,7 @@
 /*                         S C R E E N G R A B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,6 @@ int
 ged_screen_grab(struct ged *gedp,int argc, const char *argv[])
 {
 
-    FILE *fp;
     int i;
     int width = 0;
     int height = 0;
@@ -93,7 +92,7 @@ ged_screen_grab(struct ged *gedp,int argc, const char *argv[])
 
     for (i = 0; i < height; ++i) {
 	rows[i] = (unsigned char *)(idata + ((height-i-1)*bytes_per_line));
-	bu_image_save_writeline(bif, i, (const unsigned char *)rows[i]);
+	bu_image_save_writeline(bif, i, (unsigned char *)rows[i]);
     }
 
     if (bif != NULL)

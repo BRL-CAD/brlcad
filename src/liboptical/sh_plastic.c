@@ -1,7 +1,7 @@
 /*                    S H _ P L A S T I C . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,6 @@
 
 #ifdef RT_MULTISPECTRAL
 #  include "spectrum.h"
-extern const struct bn_table	*spectrum;
 #endif
 
 

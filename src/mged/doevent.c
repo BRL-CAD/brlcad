@@ -1,7 +1,7 @@
 /*                       D O E V E N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#if HAVE_GL_DEVICE_H
+#ifdef HAVE_GL_DEVICE_H
 #  include <gl/device.h>
 #endif
 
@@ -57,7 +57,7 @@
 #include "./sedit.h"
 
 
-extern int doMotion;			/* defined in dm-generic.c */
+extern int doMotion;			/* defined in buttons.c */
 extern void rect_view2image();		/* defined in rect.c */
 extern void rect_image2view();
 extern void rb_set_dirty_flag();
@@ -146,7 +146,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
     if (eventPtr->type == ConfigureNotify) {
 	XConfigureEvent *conf = (XConfigureEvent *)eventPtr;
 
-	DM_CONFIGURE_WIN(dmp);
+	DM_CONFIGURE_WIN(dmp, 0);
 	rect_image2view();
 	dirty = 1;
 
@@ -288,10 +288,10 @@ motion_event_handler(XMotionEvent *xmotion)
 		save_coords = mged_variables->mv_coords;
 		mged_variables->mv_coords = 'v';
 
-		if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
+		if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
 		    mged_variables->mv_transform == 'e') {
 
-		    if (state == ST_S_EDIT) {
+		    if (STATE == ST_S_EDIT) {
 			save_edflag = es_edflag;
 			if (!SEDIT_ROTATE)
 			    es_edflag = SROT;
@@ -317,7 +317,7 @@ motion_event_handler(XMotionEvent *xmotion)
 				      dy * 0.25, dx * 0.25);
 		}
 
-		(void)Tcl_Eval(interp, bu_vls_addr(&cmd));
+		(void)Tcl_Eval(INTERP, bu_vls_addr(&cmd));
 		mged_variables->mv_coords = save_coords;
 
 		goto reset_edflag;
@@ -332,10 +332,10 @@ motion_event_handler(XMotionEvent *xmotion)
 		fx = dx / (fastf_t)dmp->dm_width * 2.0;
 		fy = -dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0;
 
-		if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
+		if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
 		    mged_variables->mv_transform == 'e') {
 
-		    if (state == ST_S_EDIT) {
+		    if (STATE == ST_S_EDIT) {
 			save_edflag = es_edflag;
 			if (!SEDIT_TRAN)
 			    es_edflag = STRANS;
@@ -365,7 +365,7 @@ motion_event_handler(XMotionEvent *xmotion)
 			VSUB2(diff, model_pt, vcenter);
 			VSCALE(diff, diff, base2local);
 			VADD2(model_pt, dml_work_pt, diff);
-			if (state == ST_S_EDIT)
+			if (STATE == ST_S_EDIT)
 			    bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 			else
 			    bu_vls_printf(&cmd, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
@@ -392,18 +392,18 @@ motion_event_handler(XMotionEvent *xmotion)
 		    }
 		}
 
-		(void)Tcl_Eval(interp, bu_vls_addr(&cmd));
+		(void)Tcl_Eval(INTERP, bu_vls_addr(&cmd));
 		mged_variables->mv_coords = save_coords;
 
 		goto reset_edflag;
 	    }
 	case AMM_SCALE:
-	    if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
+	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (state == ST_S_EDIT && !SEDIT_SCALE) {
+		if (STATE == ST_S_EDIT && !SEDIT_SCALE) {
 		    save_edflag = es_edflag;
 		    es_edflag = SSCALE;
-		} else if (state == ST_O_EDIT && !OEDIT_SCALE) {
+		} else if (STATE == ST_O_EDIT && !OEDIT_SCALE) {
 		    save_edflag = edobj;
 		    edobj = BE_O_SCALE;
 		}
@@ -456,9 +456,9 @@ motion_event_handler(XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_ROT_X:
-	    if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
+	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (state == ST_S_EDIT) {
+		if (STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_ROTATE)
 			es_edflag = SROT;
@@ -481,9 +481,9 @@ motion_event_handler(XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_ROT_Y:
-	    if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
+	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (state == ST_S_EDIT) {
+		if (STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_ROTATE)
 			es_edflag = SROT;
@@ -506,9 +506,9 @@ motion_event_handler(XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_ROT_Z:
-	    if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
+	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (state == ST_S_EDIT) {
+		if (STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_ROTATE)
 			es_edflag = SROT;
@@ -531,13 +531,13 @@ motion_event_handler(XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_TRAN_X:
-	    if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
+	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (state == ST_S_EDIT) {
+		if (STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_TRAN)
 			es_edflag = STRANS;
-		} else if (state == ST_O_EDIT && !OEDIT_TRAN) {
+		} else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
 		    save_edflag = edobj;
 		    edobj = BE_O_X;
 		}
@@ -555,13 +555,13 @@ motion_event_handler(XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_TRAN_Y:
-	    if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
+	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (state == ST_S_EDIT) {
+		if (STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_TRAN)
 			es_edflag = STRANS;
-		} else if (state == ST_O_EDIT && !OEDIT_TRAN) {
+		} else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
 		    save_edflag = edobj;
 		    edobj = BE_O_Y;
 		}
@@ -579,13 +579,13 @@ motion_event_handler(XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_TRAN_Z:
-	    if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
+	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (state == ST_S_EDIT) {
+		if (STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_TRAN)
 			es_edflag = STRANS;
-		} else if (state == ST_O_EDIT && !OEDIT_TRAN) {
+		} else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
 		    save_edflag = edobj;
 		    edobj = BE_O_XY;
 		}
@@ -603,13 +603,13 @@ motion_event_handler(XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_SCALE_X:
-	    if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
+	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (state == ST_S_EDIT) {
+		if (STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_SCALE)
 			es_edflag = SSCALE;
-		} else if (state == ST_O_EDIT && !OEDIT_SCALE) {
+		} else if (STATE == ST_O_EDIT && !OEDIT_SCALE) {
 		    save_edflag = edobj;
 		    edobj = BE_O_XSCALE;
 		}
@@ -627,13 +627,13 @@ motion_event_handler(XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_SCALE_Y:
-	    if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
+	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (state == ST_S_EDIT) {
+		if (STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_SCALE)
 			es_edflag = SSCALE;
-		} else if (state == ST_O_EDIT && !OEDIT_SCALE) {
+		} else if (STATE == ST_O_EDIT && !OEDIT_SCALE) {
 		    save_edflag = edobj;
 		    edobj = BE_O_YSCALE;
 		}
@@ -651,13 +651,13 @@ motion_event_handler(XMotionEvent *xmotion)
 
 	    break;
 	case AMM_CON_SCALE_Z:
-	    if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
+	    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
 		mged_variables->mv_transform == 'e') {
-		if (state == ST_S_EDIT) {
+		if (STATE == ST_S_EDIT) {
 		    save_edflag = es_edflag;
 		    if (!SEDIT_SCALE)
 			es_edflag = SSCALE;
-		} else if (state == ST_O_EDIT && !OEDIT_SCALE) {
+		} else if (STATE == ST_O_EDIT && !OEDIT_SCALE) {
 		    save_edflag = edobj;
 		    edobj = BE_O_ZSCALE;
 		}
@@ -721,13 +721,13 @@ motion_event_handler(XMotionEvent *xmotion)
 	    break;
     }
 
-    (void)Tcl_Eval(interp, bu_vls_addr(&cmd));
+    (void)Tcl_Eval(INTERP, bu_vls_addr(&cmd));
 
  reset_edflag:
     if (save_edflag != -1) {
-	if (state == ST_S_EDIT)
+	if (STATE == ST_S_EDIT)
 	    es_edflag = save_edflag;
-	else if (state == ST_O_EDIT)
+	else if (STATE == ST_O_EDIT)
 	    edobj = save_edflag;
     }
 
@@ -858,7 +858,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 			      45.0 - 45.0*((double)setting) * INV_GED);
 	    } else {
 		if (mged_variables->mv_rateknobs) {
-		    if ((state == ST_S_EDIT || state == ST_O_EDIT)
+		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
 			&& mged_variables->mv_transform == 'e') {
 			switch (mged_variables->mv_coords) {
 			    case 'm':
@@ -873,11 +873,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 				break;
 			}
 
-			if (state == ST_S_EDIT) {
+			if (STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_ROTATE)
 				es_edflag = SROT;
-			} else if (state == ST_O_EDIT && !OEDIT_ROTATE) {
+			} else if (STATE == ST_O_EDIT && !OEDIT_ROTATE) {
 			    save_edflag = edobj;
 			    edobj = BE_O_ROTATE;
 			}
@@ -898,7 +898,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		    setting = dm_limit(dml_knobs[dmep->first_axis]);
 		    bu_vls_printf(&cmd, "knob z %f\n", setting / 512.0);
 		} else {
-		    if ((state == ST_S_EDIT || state == ST_O_EDIT)
+		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
 			&& mged_variables->mv_transform == 'e') {
 			switch (mged_variables->mv_coords) {
 			    case 'm':
@@ -913,11 +913,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 				break;
 			}
 
-			if (state == ST_S_EDIT) {
+			if (STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_ROTATE)
 				es_edflag = SROT;
-			} else if (state == ST_O_EDIT && !OEDIT_ROTATE) {
+			} else if (STATE == ST_O_EDIT && !OEDIT_ROTATE) {
 			    save_edflag = edobj;
 			    edobj = BE_O_ROTATE;
 			}
@@ -955,7 +955,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		bu_vls_printf(&cmd, "knob distadc %d\n", setting);
 	    } else {
 		if (mged_variables->mv_rateknobs) {
-		    if ((state == ST_S_EDIT || state == ST_O_EDIT)
+		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
 			&& mged_variables->mv_transform == 'e') {
 			switch (mged_variables->mv_coords) {
 			    case 'm':
@@ -968,11 +968,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 				break;
 			}
 
-			if (state == ST_S_EDIT) {
+			if (STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_TRAN)
 				es_edflag = STRANS;
-			} else if (state == ST_O_EDIT && !OEDIT_TRAN) {
+			} else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
 			    save_edflag = edobj;
 			    edobj = BE_O_XY;
 			}
@@ -993,7 +993,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		    setting = dm_limit(dml_knobs[dmep->first_axis]);
 		    bu_vls_printf(&cmd, "knob Z %f\n", setting / 512.0);
 		} else {
-		    if ((state == ST_S_EDIT || state == ST_O_EDIT)
+		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
 			&& mged_variables->mv_transform == 'e') {
 			switch (mged_variables->mv_coords) {
 			    case 'm':
@@ -1006,11 +1006,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 				break;
 			}
 
-			if (state == ST_S_EDIT) {
+			if (STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_TRAN)
 				es_edflag = STRANS;
-			} else if (state == ST_O_EDIT && !OEDIT_TRAN) {
+			} else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
 			    save_edflag = edobj;
 			    edobj = BE_O_XY;
 			}
@@ -1049,7 +1049,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		bu_vls_printf(&cmd, "knob yadc %d\n", setting);
 	    } else {
 		if (mged_variables->mv_rateknobs) {
-		    if ((state == ST_S_EDIT || state == ST_O_EDIT)
+		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
 			&& mged_variables->mv_transform == 'e') {
 			switch (mged_variables->mv_coords) {
 			    case 'm':
@@ -1064,11 +1064,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 				break;
 			}
 
-			if (state == ST_S_EDIT) {
+			if (STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_ROTATE)
 				es_edflag = SROT;
-			} else if (state == ST_O_EDIT && !OEDIT_ROTATE) {
+			} else if (STATE == ST_O_EDIT && !OEDIT_ROTATE) {
 			    save_edflag = edobj;
 			    edobj = BE_O_ROTATE;
 			}
@@ -1089,7 +1089,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		    setting = dm_limit(dml_knobs[dmep->first_axis]);
 		    bu_vls_printf(&cmd, "knob y %f\n", setting / 512.0);
 		} else {
-		    if ((state == ST_S_EDIT || state == ST_O_EDIT)
+		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
 			&& mged_variables->mv_transform == 'e') {
 			switch (mged_variables->mv_coords) {
 			    case 'm':
@@ -1104,11 +1104,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 				break;
 			}
 
-			if (state == ST_S_EDIT) {
+			if (STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_ROTATE)
 				es_edflag = SROT;
-			} else if (state == ST_O_EDIT && !OEDIT_ROTATE) {
+			} else if (STATE == ST_O_EDIT && !OEDIT_ROTATE) {
 			    save_edflag = edobj;
 			    edobj = BE_O_ROTATE;
 			}
@@ -1134,7 +1134,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 	    break;
 	case DIAL5:
 	    if (mged_variables->mv_rateknobs) {
-		if ((state == ST_S_EDIT || state == ST_O_EDIT)
+		if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
 		    && mged_variables->mv_transform == 'e') {
 		    switch (mged_variables->mv_coords) {
 			case 'm':
@@ -1147,11 +1147,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 			    break;
 		    }
 
-		    if (state == ST_S_EDIT) {
+		    if (STATE == ST_S_EDIT) {
 			save_edflag = es_edflag;
 			if (!SEDIT_TRAN)
 			    es_edflag = STRANS;
-		    } else if (state == ST_O_EDIT && !OEDIT_TRAN) {
+		    } else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
 			save_edflag = edobj;
 			edobj = BE_O_XY;
 		    }
@@ -1172,7 +1172,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		setting = dm_limit(dml_knobs[dmep->first_axis]);
 		bu_vls_printf(&cmd, "knob Y %f\n", setting / 512.0);
 	    } else {
-		if ((state == ST_S_EDIT || state == ST_O_EDIT)
+		if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
 		    && mged_variables->mv_transform == 'e') {
 		    switch (mged_variables->mv_coords) {
 			case 'm':
@@ -1185,11 +1185,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 			    break;
 		    }
 
-		    if (state == ST_S_EDIT) {
+		    if (STATE == ST_S_EDIT) {
 			save_edflag = es_edflag;
 			if (!SEDIT_TRAN)
 			    es_edflag = STRANS;
-		    } else if (state == ST_O_EDIT && !OEDIT_TRAN) {
+		    } else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
 			save_edflag = edobj;
 			edobj = BE_O_XY;
 		    }
@@ -1227,7 +1227,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		bu_vls_printf(&cmd, "knob xadc %d\n", setting);
 	    } else {
 		if (mged_variables->mv_rateknobs) {
-		    if ((state == ST_S_EDIT || state == ST_O_EDIT)
+		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
 			&& mged_variables->mv_transform == 'e') {
 			switch (mged_variables->mv_coords) {
 			    case 'm':
@@ -1242,11 +1242,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 				break;
 			}
 
-			if (state == ST_S_EDIT) {
+			if (STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_ROTATE)
 				es_edflag = SROT;
-			} else if (state == ST_O_EDIT && !OEDIT_ROTATE) {
+			} else if (STATE == ST_O_EDIT && !OEDIT_ROTATE) {
 			    save_edflag = edobj;
 			    edobj = BE_O_ROTATE;
 			}
@@ -1267,7 +1267,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		    setting = dm_limit(dml_knobs[dmep->first_axis]);
 		    bu_vls_printf(&cmd, "knob x %f\n", setting / 512.0);
 		} else {
-		    if ((state == ST_S_EDIT || state == ST_O_EDIT)
+		    if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
 			&& mged_variables->mv_transform == 'e') {
 			switch (mged_variables->mv_coords) {
 			    case 'm':
@@ -1282,11 +1282,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 				break;
 			}
 
-			if (state == ST_S_EDIT) {
+			if (STATE == ST_S_EDIT) {
 			    save_edflag = es_edflag;
 			    if (!SEDIT_ROTATE)
 				es_edflag = SROT;
-			} else if (state == ST_O_EDIT && !OEDIT_ROTATE) {
+			} else if (STATE == ST_O_EDIT && !OEDIT_ROTATE) {
 			    save_edflag = edobj;
 			    edobj = BE_O_ROTATE;
 			}
@@ -1311,7 +1311,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 	    break;
 	case DIAL7:
 	    if (mged_variables->mv_rateknobs) {
-		if ((state == ST_S_EDIT || state == ST_O_EDIT)
+		if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
 		    && mged_variables->mv_transform == 'e') {
 		    switch (mged_variables->mv_coords) {
 			case 'm':
@@ -1324,11 +1324,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 			    break;
 		    }
 
-		    if (state == ST_S_EDIT) {
+		    if (STATE == ST_S_EDIT) {
 			save_edflag = es_edflag;
 			if (!SEDIT_TRAN)
 			    es_edflag = STRANS;
-		    } else if (state == ST_O_EDIT && !OEDIT_TRAN) {
+		    } else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
 			save_edflag = edobj;
 			edobj = BE_O_XY;
 		    }
@@ -1349,7 +1349,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 		setting = dm_limit(dml_knobs[dmep->first_axis]);
 		bu_vls_printf(&cmd, "knob X %f\n", setting / 512.0);
 	    } else {
-		if ((state == ST_S_EDIT || state == ST_O_EDIT)
+		if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT)
 		    && mged_variables->mv_transform == 'e') {
 		    switch (mged_variables->mv_coords) {
 			case 'm':
@@ -1362,11 +1362,11 @@ dials_event_handler(XDeviceMotionEvent *dmep)
 			    break;
 		    }
 
-		    if (state == ST_S_EDIT) {
+		    if (STATE == ST_S_EDIT) {
 			save_edflag = es_edflag;
 			if (!SEDIT_TRAN)
 			    es_edflag = STRANS;
-		    } else if (state == ST_O_EDIT && !OEDIT_TRAN) {
+		    } else if (STATE == ST_O_EDIT && !OEDIT_TRAN) {
 			save_edflag = edobj;
 			edobj = BE_O_XY;
 		    }
@@ -1395,12 +1395,12 @@ dials_event_handler(XDeviceMotionEvent *dmep)
     /* Keep track of the knob values */
     knob_values[dmep->first_axis] = dmep->axis_data[0];
 
-    Tcl_Eval(interp, bu_vls_addr(&cmd));
+    Tcl_Eval(INTERP, bu_vls_addr(&cmd));
 
     if (save_edflag != -1) {
-	if (state == ST_S_EDIT)
+	if (STATE == ST_S_EDIT)
 	    es_edflag = save_edflag;
-	else if (state == ST_O_EDIT)
+	else if (STATE == ST_O_EDIT)
 	    edobj = save_edflag;
     }
 
@@ -1434,7 +1434,7 @@ buttons_event_handler(XDeviceButtonEvent *dbep, int press)
 			  label_button(bmap[dbep->button - 1]));
 	}
 
-	(void)Tcl_Eval(interp, bu_vls_addr(&cmd));
+	(void)Tcl_Eval(INTERP, bu_vls_addr(&cmd));
 	bu_vls_free(&cmd);
     } else {
 	if (dbep->button == 1)

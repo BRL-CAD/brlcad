@@ -1,7 +1,7 @@
 /*                    P I X B A C K G N D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -237,6 +237,7 @@ main(int argc, char **argv)
     unsigned char *horiz_buf;
     unsigned char *vert_buf;
     unsigned char *vp;
+    ssize_t ret;
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);
@@ -310,7 +311,9 @@ main(int argc, char **argv)
 		*op-- = vp[1];
 		*op-- = *vp;
 	    }
-	    write(1, horiz_buf, file_width*3);
+	    ret = write(1, horiz_buf, file_width*3);
+	    if (ret < 0)
+		perror("write");
 	}
     } else {
 	/* Inverted:  top-to-bottom.  Good with cat-fb */
@@ -324,7 +327,9 @@ main(int argc, char **argv)
 		*op-- = vp[1];
 		*op-- = *vp;
 	    }
-	    write(1, horiz_buf, file_width*3);
+	    ret = write(1, horiz_buf, file_width*3);
+	    if (ret < 0)
+		perror("write");
 	}
     }
 

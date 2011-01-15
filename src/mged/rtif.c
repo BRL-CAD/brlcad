@@ -1,7 +1,7 @@
 /*                          R T I F . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,10 +62,10 @@
  * rt, rtarea, rtweight, rtcheck, and rtedge all use this.
  */
 int
-cmd_rt(ClientData clientData,
+cmd_rt(ClientData UNUSED(clientData),
        Tcl_Interp *interp,
        int argc,
-       char **argv)
+       const char *argv[])
 {
     int doRtcheck;
     int ret;
@@ -78,7 +78,7 @@ cmd_rt(ClientData clientData,
 	strncmp(argv[0], "_mged_", 6) == 0)
 	argv[0] += 6;
 
-    if (!strcmp(argv[0], "rtcheck"))
+    if (BU_STR_EQUAL(argv[0], "rtcheck"))
 	doRtcheck = 1;
     else
 	doRtcheck = 0;
@@ -108,7 +108,7 @@ cmd_rt(ClientData clientData,
  * Typically used to invoke a remote RT (hence the name).
  */
 int
-cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_rrt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
     Tcl_DString ds;
@@ -180,21 +180,23 @@ rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
  * 1 leave view alone, animate solid named "EYE"
  */
 int
-f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
-    FILE *fp;
-    struct directory *dp;
-    struct solid *sp;
-    vect_t eye_model;
-    vect_t xlate;
-    vect_t sav_center;
-    vect_t sav_start;
-    int mode;
-    fastf_t scale;
+    FILE *fp = NULL;
+    fastf_t scale = 0.0;
     mat_t rot;
-    struct bn_vlist *vp;
+    struct bn_vlist *vp = NULL;
+    struct directory *dp = NULL;
+    struct ged_display_list *gdlp = NULL;
+    struct ged_display_list *next_gdlp = NULL;
+    vect_t eye_model = {0.0, 0.0, 0.0};
+    vect_t sav_center = {0.0, 0.0, 0.0};
+    vect_t sav_start = {0.0, 0.0, 0.0};
+    vect_t xlate = {0.0, 0.0, 0.0};
+
+    /* static due to setjmp */
+    static int mode = 0;
+    static struct solid *sp;
 
     CHECK_DBI_NULL;
 
@@ -254,16 +256,13 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    Tcl_AppendResult(interp, "rotation supressed, center is eyepoint\n", (char *)NULL);
 	    break;
     }
- work:
-#if 0
-    /* If user hits ^C, this will stop, but will leave hanging filedes */
-    (void)signal(SIGINT, cur_sigint);
-#else
+work:
+    /* FIXME: this isn't portable or seem well thought-out */
     if (setjmp(jmp_env) == 0)
 	(void)signal(SIGINT, sig3);  /* allow interrupts */
     else
 	return TCL_OK;
-#endif
+
     while (!feof(fp) &&
 	   rt_read(fp, &scale, eye_model, rot) >= 0) {
 	switch (mode) {
@@ -318,6 +317,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	view_state->vs_flag = 1;
 	refresh();	/* Draw new display */
     }
+
     if (mode == 1) {
 	VMOVE(sp->s_center, sav_center);
 	if (BU_LIST_NON_EMPTY(&(sp->s_vlist))) {
@@ -360,7 +360,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Invoke nirt with the current view & stuff
  */
 int
-f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_nirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
     Tcl_DString ds;
@@ -402,7 +402,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 
 int
-f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_vnirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
     Tcl_DString ds;

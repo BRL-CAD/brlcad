@@ -1,7 +1,7 @@
 /*                         B O T _ S M O O T H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -74,7 +74,7 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
 
     while (*argv[arg_index] == '-') {
 	/* this is an option */
-	if ( !strcmp( argv[arg_index], "-t" ) ) {
+	if ( BU_STR_EQUAL( argv[arg_index], "-t" ) ) {
 	    arg_index++;
 	    tolerance_angle = atof( argv[arg_index] );
 	} else {
@@ -94,7 +94,7 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
 
     GED_DB_LOOKUP(gedp, dp_old, old_bot_name, LOOKUP_QUIET, GED_ERROR);
 
-    if ( strcmp( old_bot_name, new_bot_name ) ) {
+    if ( !BU_STR_EQUAL( old_bot_name, new_bot_name ) ) {
 	GED_CHECK_EXISTS(gedp, new_bot_name, LOOKUP_QUIET, GED_ERROR);
     } else {
 	dp_new = dp_old;

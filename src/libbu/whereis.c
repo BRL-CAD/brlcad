@@ -1,7 +1,7 @@
 /*                       W H E R I S . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2010 United States Government as represented by
+ * Copyright (c) 2005-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,13 +69,15 @@ bu_whereis(const char *cmd)
 
     /* check for full/relative path match */
     bu_strlcpy(bu_whereis_result, cmd, MAXPATHLEN);
-    if (strcmp(bu_whereis_result, cmd) != 0) {
+    if (!BU_STR_EQUAL(bu_whereis_result, cmd)) {
 	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("command [%s] is too long\n", cmd);
 	}
 	return NULL;
     }
     if (bu_file_exists(bu_whereis_result) && strchr(bu_whereis_result, BU_DIR_SEPARATOR)) {
+	if (bu_whereis_result[0] == '\0')
+	    return NULL; /* never return empty */
 	return bu_whereis_result;
     }
 
@@ -114,6 +116,8 @@ bu_whereis(const char *cmd)
 
 	snprintf(bu_whereis_result, MAXPATHLEN, "%s/%s", directory, cmd);
 	if (bu_file_exists(bu_whereis_result)) {
+	    if (bu_whereis_result[0] == '\0')
+		return NULL; /* never return empty */
 	    return bu_whereis_result;
 	}
 

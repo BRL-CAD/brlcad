@@ -1,7 +1,7 @@
 /*                    P O P U L A T I O N . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,10 +30,10 @@
 
 #define GEO_SPHERE 1
 
-#define VSCALE_SELF(a, c) { (a)[X] *= (c); (a)[Y] *= (c); (a)[Z]*=(c);}
+#define VSCALE_SELF(a, c) { (a)[X] *= (c); (a)[Y] *= (c); (a)[Z]*=(c); }
 #define VMUTATE(a) {VMUT(a, -MUT_STEP/2+MUT_STEP*pop_rand())}
-#define VMUT(a, c) {(a)[X] += ((a)[X] == 0)?0:(c); (a)[Y] += ((a)[Y] == 0)?0:(c); (a)[Z]+=((a)[Z]==0)?0:(c);}
-#define MUT_STEP .8
+#define VMUT(a, c) {(a)[X] += (NEAR_ZERO((a)[X], SMALL_FASTF))?0.0:(c); (a)[Y] += (NEAR_ZERO((a)[Y], SMALL_FASTF))?0.0:(c); (a)[Z]+=(NEAR_ZERO((a)[Z], SMALL_FASTF))?0:(c);}
+#define MUT_STEP 0.8
 
 
 

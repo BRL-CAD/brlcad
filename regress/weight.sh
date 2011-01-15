@@ -2,7 +2,7 @@
 #                       W E I G H T . S H
 # BRL-CAD
 #
-# Copyright (c) 2010 United States Government as represented by
+# Copyright (c) 2010-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,12 +42,12 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . $1/regress/library.sh
 
-MGED="`ensearch mged/mged`"
+MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
     echo "Unable to find mged, aborting"
     exit 1
 fi
-RTWEIGHT="`ensearch rt/rtweight`"
+RTWEIGHT="`ensearch rtweight`"
 if test ! -f "$RTWEIGHT" ; then
     echo "Unable to find rtweight, aborting"
     exit 1

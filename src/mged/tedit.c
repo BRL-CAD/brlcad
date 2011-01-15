@@ -1,7 +1,7 @@
 /*                         T E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -82,7 +82,7 @@ static int j;
 int writesolid(void), readsolid(void);
 
 int
-f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_tedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     FILE *fp;
 
@@ -114,7 +114,7 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     (void)fclose(fp);
 
-    if (editit(argv[0], tmpfil)) {
+    if (editit(argv[0], tmpfil) == TCL_OK) {
 	if (readsolid()) {
 	    (void)unlink(tmpfil);
 	    return TCL_ERROR;
@@ -138,17 +138,17 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * return 0 if this vertex is a duplicate of one of the above
  */
 static int
-useThisVertex(int index)
+useThisVertex(int idx)
 {
     int i;
 
     for (i=0; i<8 && uvec[i] != -1; i++) {
-	if (uvec[i] == index) return 1;
+	if (uvec[i] == idx) return 1;
     }
 
-    if (svec[0] != 0 && index == svec[2]) return 1;
+    if (svec[0] != 0 && idx == svec[2]) return 1;
 
-    if (svec[1] != 0 && index == svec[2+svec[0]]) return 1;
+    if (svec[1] != 0 && idx == svec[2+svec[0]]) return 1;
 
     return 0;
 }
@@ -184,7 +184,7 @@ writesolid(void)
 	struct rt_superell_internal *superell;
 
 	default:
-	    Tcl_AppendResult(interp, "Cannot text edit this solid type\n", (char *)NULL);
+	    Tcl_AppendResult(INTERP, "Cannot text edit this solid type\n", (char *)NULL);
 	    (void)fclose(fp);
 	    return 1;
 	case ID_TOR:
@@ -362,7 +362,7 @@ readsolid(void)
 	double a, b, c, d;
 
 	default:
-	    Tcl_AppendResult(interp, "Cannot text edit this solid type\n", (char *)NULL);
+	    Tcl_AppendResult(INTERP, "Cannot text edit this solid type\n", (char *)NULL);
 	    ret_val = 1;
 	    break;
 	case ID_TOR:
@@ -873,10 +873,7 @@ readsolid(void)
 int
 get_editor_string(struct bu_vls *editstring)
 {
-    int pid = 0;
-    int xpid = 0;
     char buffer[RT_MAXLINE] = {0};
-    int stat = 0;
     int count = 0;
     const char *os = (char *)NULL;
     const char *terminal = (char *)NULL;
@@ -884,17 +881,17 @@ get_editor_string(struct bu_vls *editstring)
     const char *editor = (char *)NULL;
     const char *editor_opt = (char *)NULL;
 
-    os = Tcl_GetVar(interp, "::tcl_platform(os)", TCL_GLOBAL_ONLY);
-    editor = Tcl_GetVar(interp, "editor", TCL_GLOBAL_ONLY);
+    os = Tcl_GetVar(INTERP, "::tcl_platform(os)", TCL_GLOBAL_ONLY);
+    editor = Tcl_GetVar(INTERP, "editor", TCL_GLOBAL_ONLY);
     if (!editor || editor[0] == '\0')
-	editor = Tcl_GetVar(interp, "EDITOR", TCL_GLOBAL_ONLY);
+	editor = Tcl_GetVar(INTERP, "EDITOR", TCL_GLOBAL_ONLY);
 
     if (!editor || editor[0] == '\0')
 	editor = getenv("EDITOR");
 
     /* still unset? try windows */
     if (!editor || editor[0] == '\0') {
-	if (!strcmp(os, "Windows 95") || !strcmp(os, "Windows NT")) {
+	if (BU_STR_EQUAL(os, "Windows 95") || BU_STR_EQUAL(os, "Windows NT")) {
     	    editor = WIN_EDITOR;
 	} else {
     	    editor = (char *)NULL;
@@ -914,22 +911,22 @@ get_editor_string(struct bu_vls *editstring)
     }
 
     /* still unset? try vim */
-    if (!editor || editor[0] == '\0') {
+    if (!editor) {
 	editor = bu_which(VIM_EDITOR);
     }
 
     /* still unset? try vi */
-    if (!editor || editor[0] == '\0') {
+    if (!editor) {
 	editor = bu_which(VI_EDITOR);
     }
 
     /* still unset? try ed */
-    if (!editor || editor[0] == '\0') {
+    if (!editor) {
        	editor = bu_which(ED_EDITOR);
     }
 
     /* still unset? default to jove */
-    if (!editor || editor[0] == '\0') {
+    if (!editor) {
 	const char *jovepath = bu_brlcad_root("bin/jove", 1);
 	editor = JOVE_EDITOR;
 	if (jovepath) {
@@ -946,7 +943,7 @@ get_editor_string(struct bu_vls *editstring)
 
 
     /* If we're in classic mode on Windows, go with jove */
-    if (classic_mged && (!strcmp(os, "Windows 95") || !strcmp(os, "Windows NT"))) {
+    if (classic_mged && (BU_STR_EQUAL(os, "Windows 95") || BU_STR_EQUAL(os, "Windows NT"))) {
 	const char *jovepath = bu_brlcad_root("bin/jove", 1);
 	editor = JOVE_EDITOR;
 	if (jovepath) {
@@ -956,6 +953,8 @@ get_editor_string(struct bu_vls *editstring)
     }
 
     if (classic_mged) {
+	const char *which = NULL;
+
 	/* In this situation, make sure we're using an editor that will
 	 * work within the mged terminal (i.e. no launching a separate
 	 * gui, regardless of EDITOR settings. In this situation, emacs
@@ -974,29 +973,37 @@ get_editor_string(struct bu_vls *editstring)
 	 * Hence, check for known working AND known not-working up front - need
 	 * to satisfy both that there IS a working config already and that one
 	 * of the non-working configs isn't set.*/
-	count += (!strcmp(editor, bu_which(EMACS_EDITOR)) && (!editor_opt || editor_opt[0] == '\0'));
-	count += !(strcmp(editor, bu_which(VIM_EDITOR)));
-	count += !(strcmp(editor, bu_which(VI_EDITOR)));
-	count += !(strcmp(editor, bu_which(ED_EDITOR)));
-	count += !(strcmp(editor, JOVE_EDITOR));
-	count += !(!(!(strcmp(editor, MAC_EDITOR))));
+	which = bu_which(EMACS_EDITOR);
+	if (which)
+	    count += (BU_STR_EQUAL(editor, which) && (!editor_opt || editor_opt[0] == '\0'));
+	which = bu_which(VIM_EDITOR);
+	if (which)
+	    count += BU_STR_EQUAL(editor, which);
+	which = bu_which(VI_EDITOR);
+	if (which)
+	    count += BU_STR_EQUAL(editor, which);
+	which = bu_which(ED_EDITOR);
+	if (which)
+	    count += BU_STR_EQUAL(editor, which);
+	count += BU_STR_EQUAL(editor, JOVE_EDITOR);
+	count += BU_STR_EQUAL(editor, MAC_EDITOR);
 	if (count > 0) {
 	    /* start with emacs... */ 
 	    editor = bu_which(EMACS_EDITOR);
 	    /* if emacs is found, set editor_opt */
-	    if (!strcmp(editor, bu_which(EMACS_EDITOR))) {
+	    if (editor) {
 		editor_opt = "-nw";
 	    }
-	    if (!editor || editor[0] == '\0') {
+	    if (!editor) {
 		editor = bu_which(VIM_EDITOR);
 	    }
-	    if (!editor || editor[0] == '\0') {
+	    if (!editor) {
 		editor = bu_which(VI_EDITOR);
 	    }
-	    if (!editor || editor[0] == '\0') {
+	    if (!editor) {
 		editor = bu_which(ED_EDITOR);
 	    }
-	    if (!editor || editor[0] == '\0') {
+	    if (!editor) {
 		const char *binpath = bu_brlcad_root("bin", 1);
 		editor = JOVE_EDITOR;
 		if (binpath) {
@@ -1008,7 +1015,7 @@ get_editor_string(struct bu_vls *editstring)
     } else { 
     	/* Spell out in which situations we need a terminal.
 	 */
-    	if (!strcmp(os, "Darwin")) {
+    	if (BU_STR_EQUAL(os, "Darwin")) {
     	    /* on the mac, if it's not mac editor assume a terminal is needed. Until
 	     * we figure out how to use Mac terminal, use X11 xterm */
     	    if (editor != MAC_EDITOR) {
@@ -1030,28 +1037,28 @@ get_editor_string(struct bu_vls *editstring)
     	/* For now, assume there aren't any situations where Windows will use a terminal */
 	
     	/* If it's not mac, and it's not Windows, we need a controlling terminal */
-    	if (strcmp(os, "Darwin") && strcmp(os, "Windows 95") && strcmp(os, "Windows NT")) {
-    	    if (!strcmp(editor, EMACS_EDITOR)) {
+    	if (!BU_STR_EQUAL(os, "Darwin") && !BU_STR_EQUAL(os, "Windows 95") && !BU_STR_EQUAL(os, "Windows NT")) {
+    	    if (BU_STR_EQUAL(editor, EMACS_EDITOR)) {
     		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
     	    }
-    	    if (!strcmp(editor, VIM_EDITOR)) {
+    	    if (BU_STR_EQUAL(editor, VIM_EDITOR)) {
     		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
     	    }
-    	    if (!strcmp(editor, VI_EDITOR)) {
+    	    if (BU_STR_EQUAL(editor, VI_EDITOR)) {
     		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
     	    }
-    	    if (!strcmp(editor, ED_EDITOR)) {
+    	    if (BU_STR_EQUAL(editor, ED_EDITOR)) {
     		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
     	    }
-    	    if (!strcmp(editor, JOVE_EDITOR)) {
+    	    if (BU_STR_EQUAL(editor, JOVE_EDITOR)) {
     		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";

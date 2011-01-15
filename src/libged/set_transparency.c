@@ -1,7 +1,7 @@
 /*                         S E T _ T R A N S P A R E N C Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
     struct solid *sp;
-    int i;
+    size_t i;
     struct directory **dpp;
     struct directory **tmp_dpp;
     fastf_t transparency;

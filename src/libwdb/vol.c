@@ -1,7 +1,7 @@
 /*                           V O L . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@
  * M K _ V O L
  */
 int
-mk_vol(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim, int zdim, int lo, int hi, const fastf_t *cellsize, const matp_t mat)
+mk_vol(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_t ydim, size_t zdim, size_t lo, size_t hi, const fastf_t *cellsize, const matp_t mat)
     /* name of file containing bitmap */
     /* X dimansion of file (w cells) */
     /* Y dimension of file (n cells) */

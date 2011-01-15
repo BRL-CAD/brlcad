@@ -1,7 +1,7 @@
 /*                       R E F R A C T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ int max_bounces = 5;	/* Maximum recursion level */
 
 
 #ifdef RT_MULTISPECTRAL
-extern const struct bn_table *spectrum;
+#include "spectrum.h"
 extern struct bn_tabdata *background;
 #else
 extern vect_t background;

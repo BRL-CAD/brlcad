@@ -1,7 +1,7 @@
 /*                      P O L A R - F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -368,13 +368,13 @@ main (int argc, char **argv)
     int merge = 0;	/* Overlay data on current contents FB? */
     int NoWarnings = 0;	/* Abort if any irregular input? */
     int perimeter = 0;	/* Plot perimeter of function? */
-    char *FB_Name;	/* Name of frame-buffer file */
-    char *FileName;	/* Name of input file */
-    char *Opt;		/* Used in parsing command-line options */
-    double angle_cvt;	/* Factor to convert input units to radians */
-    double arc_max = 360.0;/* Greatest value of theta to plot */
+    char *Opt = NULL;	/* Used in parsing command-line options */
+    char *FB_Name = NULL;	/* Name of frame-buffer file */
+    char *FileName = NULL;	/* Name of input file */
+    double angle_cvt = 0.0;	/* Factor to convert input units to radians */
+    double arc_max = 360.0;	/* Greatest value of theta to plot */
     double arc_min = 0.0;	/* Least      "    "   "    "   "  */
-    double npf_rho;	/* Current entry in npf_tbl */
+    double npf_rho = 0.0;	/* Current entry in npf_tbl */
     double npf_tbl[360];	/* The function (in (theta, rho) pairs) */
     double rho, theta;	/* Polar coordinates of current pixel */
     double twist = 0.0;	/* Clockwise rotation of image (in degrees) */
@@ -397,7 +397,7 @@ main (int argc, char **argv)
     unsigned char *fbb;		/* Buffer for current line of frame buffer */
     unsigned char *fbbPtr;	/* Pointer to within fbb */
 
-    void (*Fill_Func)();
+    void (*Fill_Func)() = Fill_Empty;
 
 /* Initialize things */
     ProgName = *argv;

@@ -1,7 +1,7 @@
 /*                       F A S T 4 - G . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -228,15 +228,20 @@ static int	face_count=0;	/* number of faces in above arrays */
 
 static point_t *grid_points = NULL;
 
-static const char *usage="Usage:\n\tfast4-g [-dwq] [-c component_list] [-m muves_file] [-o plot_file] [-b BU_DEBUG_FLAG] [-x RT_DEBUG_FLAG] fastgen4_bulk_data_file output.g\n\
-	d - print debugging info\n\
-	q - quiet mode (don't say anyhing except error messages\n\
-	w - print warnings about creating default names\n\
-	c - process only the listed region ids, may be a list (3001, 4082, 5347) or a range (2314-3527)\n\
-	m - create a MUVES input file containing CHGCOMP and CBACKING elements\n\
-	o - create a 'plot_file' containing a libplot3 plot file of all CTRI and CQUAD elements processed\n\
-	b - set LIBBU debug flag\n\
-	x - set RT debug flag\n";
+static void
+usage() {
+    bu_log("Usage:\n\tfast4-g [-dwq] [-c component_list] [-m muves_file] [-o plot_file] [-b BU_DEBUG_FLAG] [-x RT_DEBUG_FLAG] fastgen4_bulk_data_file output.g\n");
+    bu_log("	d - print debugging info\n");
+    bu_log("	q - quiet mode (don't say anyhing except error messages\n");
+    bu_log("	w - print warnings about creating default names\n");
+    bu_log("	c - process only the listed region ids, may be a list (3001, 4082, 5347) or a range (2314-3527)\n");
+    bu_log("	m - create a MUVES input file containing CHGCOMP and CBACKING elements\n");
+    bu_log("	o - create a 'plot_file' containing a libplot3 plot file of all CTRI and CQUAD elements processed\n");
+    bu_log("	b - set LIBBU debug flag\n");
+    bu_log("	x - set RT debug flag\n");
+
+    bu_exit(1, NULL);
+}
 
 
 static int
@@ -378,7 +383,7 @@ Search_names(struct name_tree *root, char *name, int *found)
     while (1) {
 	int diff;
 
-	diff = strcmp(name, ptr->name);
+	diff = bu_strcmp(name, ptr->name);
 	if (diff == 0) {
 	    *found = 1;
 	    return ptr;
@@ -513,7 +518,7 @@ Insert_region_name(char *name, int reg_id)
     if (!name_root) {
 	name_root = new_ptr;
     } else {
-	diff = strcmp(name, nptr_model->name);
+	diff = bu_strcmp(name, nptr_model->name);
 
 	if (diff > 0) {
 	    if (nptr_model->nright) {
@@ -671,7 +676,7 @@ Insert_name(struct name_tree **root, char *name, int inner)
 	return;
     }
 
-    diff = strcmp(name, ptr->name);
+    diff = bu_strcmp(name, ptr->name);
     if (diff > 0) {
 	if (ptr->nright) {
 	    bu_log("Insert_name: ptr->nright not null\n");
@@ -870,7 +875,7 @@ Delete_name(struct name_tree **root, char *name)
     found = 0;
 
     while (1) {
-	diff = strcmp(name, ptr->name);
+	diff = bu_strcmp(name, ptr->name);
 	if (diff == 0) {
 	    found = 1;
 	    break;
@@ -1808,7 +1813,7 @@ f4_do_ccone3(void)
 		   group_id, comp_id, element_id);
 	    return;
 	}
-	if (!strcmp(field, "        "))
+	if (BU_STR_EQUAL(field, "        "))
 	    ro[i] = -1.0;
     }
 
@@ -1821,7 +1826,7 @@ f4_do_ccone3(void)
 		   group_id, comp_id, element_id);
 	    return;
 	}
-	if (!strcmp(field, "        "))
+	if (BU_STR_EQUAL(field, "        "))
 	    ri[i] = -1.0;
     }
 
@@ -1835,8 +1840,8 @@ f4_do_ccone3(void)
     len23 = len03 - len01 - len12;
 
     for (i=0; i<4; i+=3) {
-	if (ro[i] ==-1.0) {
-	    if (ri[i] == -1.0) {
+	if (EQUAL(ro[i], -1.0)) {
+	    if (EQUAL(ri[i], -1.0)) {
 		bu_log("ERROR: both inner and outer radii at g%d of a CCONE3 are undefined\n", i+1);
 		bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 		       group_id, comp_id, element_id);
@@ -1845,31 +1850,31 @@ f4_do_ccone3(void)
 		ro[i] = ri[i];
 	    }
 
-	} else if (ri[i] == -1.0) {
+	} else if (EQUAL(ri[i], -1.0)) {
 	    ri[i] = ro[i];
 	}
     }
 
-    if (ro[1] == -1.0) {
-	if (ro[2] != -1.0)
+    if (EQUAL(ro[1], -1.0)) {
+	if (!EQUAL(ro[2], -1.0))
 	    ro[1] = ro[0] + (ro[2] - ro[0]) * len01 / (len01 + len12);
 	else
 	    ro[1] = ro[0] + (ro[3] - ro[0]) * len01 / len03;
     }
-    if (ro[2] == -1.0) {
-	if (ro[1] != -1.0)
+    if (EQUAL(ro[2], -1.0)) {
+	if (!EQUAL(ro[1], -1.0))
 	    ro[2] = ro[1] + (ro[3] - ro[1]) * len12 / (len12 + len23);
 	else
 	    ro[2] = ro[0] + (ro[3] - ro[0]) * (len01 + len12) / len03;
     }
-    if (ri[1] == -1.0) {
-	if (ri[2] != -1.0)
+    if (EQUAL(ri[1], -1.0)) {
+	if (!EQUAL(ri[2], -1.0))
 	    ri[1] = ri[0] + (ri[2] - ri[0]) * len01 / (len01 + len12);
 	else
 	    ri[1] = ri[0] + (ri[3] - ri[0]) * len01 / len03;
     }
-    if (ri[2] == -1.0) {
-	if (ri[1] != -1.0)
+    if (EQUAL(ri[2], -1.0)) {
+	if (!EQUAL(ri[1], -1.0))
 	    ri[2] = ri[1] + (ri[3] - ri[1]) * len12 / (len12 + len23);
 	else
 	    ri[2] = ri[0] + (ri[3] - ri[0]) * (len01 + len12) / len03;
@@ -1888,7 +1893,7 @@ f4_do_ccone3(void)
 	VSUB2(diff, grid_points[pt2], grid_points[pt1]);
 
 	/* make first cone */
-	if (ro[0] != min_radius || ro[1] != min_radius) {
+	if (!EQUAL(ro[0], min_radius) || !EQUAL(ro[1], min_radius)) {
 	    name = make_solid_name(CCONE3, element_id, comp_id, group_id, 1);
 	    mk_trc_h(fpout, name, grid_points[pt1], diff, ro[0], ro[1]);
 	    if (mk_addmember(name, &r_head.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
@@ -1896,7 +1901,7 @@ f4_do_ccone3(void)
 	    bu_free(name, "solid_name");
 
 	    /* and the inner cone */
-	    if (ri[0] != min_radius || ri[1] != min_radius) {
+	    if (!EQUAL(ri[0], min_radius) || !EQUAL(ri[1], min_radius)) {
 		name = make_solid_name(CCONE3, element_id, comp_id, group_id, 11);
 		mk_trc_h(fpout, name, grid_points[pt1], diff, ri[0], ri[1]);
 		if (mk_addmember(name, &r_head.l, NULL, WMOP_SUBTRACT) == (struct wmember *)NULL)
@@ -1910,7 +1915,7 @@ f4_do_ccone3(void)
 	VSUB2(diff, grid_points[pt3], grid_points[pt2]);
 
 	/* make second cone */
-	if (ro[1] != min_radius || ro[2] != min_radius) {
+	if (!EQUAL(ro[1], min_radius) || !EQUAL(ro[2], min_radius)) {
 	    name = make_solid_name(CCONE3, element_id, comp_id, group_id, 2);
 	    mk_trc_h(fpout, name, grid_points[pt2], diff, ro[1], ro[2]);
 	    if (mk_addmember(name, &r_head.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
@@ -1918,7 +1923,7 @@ f4_do_ccone3(void)
 	    bu_free(name, "solid_name");
 
 	    /* and the inner cone */
-	    if (ri[1] != min_radius || ri[2] != min_radius) {
+	    if (!EQUAL(ri[1], min_radius) || !EQUAL(ri[2], min_radius)) {
 		name = make_solid_name(CCONE3, element_id, comp_id, group_id, 22);
 		mk_trc_h(fpout, name, grid_points[pt2], diff, ri[1], ri[2]);
 		if (mk_addmember(name, &r_head.l, NULL, WMOP_SUBTRACT) == (struct wmember *)NULL)
@@ -1932,7 +1937,7 @@ f4_do_ccone3(void)
 	VSUB2(diff, grid_points[pt4], grid_points[pt3]);
 
 	/* make third cone */
-	if (ro[2] != min_radius || ro[3] != min_radius) {
+	if (!EQUAL(ro[2], min_radius) || !EQUAL(ro[3], min_radius)) {
 	    name = make_solid_name(CCONE3, element_id, comp_id, group_id, 3);
 	    mk_trc_h(fpout, name, grid_points[pt3], diff, ro[2], ro[3]);
 	    if (mk_addmember(name, &r_head.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
@@ -1940,7 +1945,7 @@ f4_do_ccone3(void)
 	    bu_free(name, "solid_name");
 
 	    /* and the inner cone */
-	    if (ri[2] != min_radius || ri[3] != min_radius) {
+	    if (!EQUAL(ri[2], min_radius) || !EQUAL(ri[3], min_radius)) {
 		name = make_solid_name(CCONE3, element_id, comp_id, group_id, 33);
 		mk_trc_h(fpout, name, grid_points[pt3], diff, ri[2], ri[3]);
 		if (mk_addmember(name, &r_head.l, NULL, WMOP_SUBTRACT) == (struct wmember *)NULL)
@@ -2699,7 +2704,7 @@ static void
 f4_do_cbacking(void)
 {
     int gr1, co1, gr2, co2, material;
-    fastf_t thickness, probability;
+    fastf_t inthickness, probability;
 
     if (!pass)
 	return;
@@ -2720,7 +2725,7 @@ f4_do_cbacking(void)
     co2 = atoi(field);
 
     bu_strlcpy(field, &line[40], sizeof(field));
-    thickness = atof(field) * 25.4;
+    inthickness = atof(field) * 25.4;
 
     bu_strlcpy(field, &line[48], sizeof(field));
     probability = atof(field);
@@ -2728,7 +2733,7 @@ f4_do_cbacking(void)
     bu_strlcpy(field, &line[56], sizeof(field));
     material = atoi(field);
 
-    fprintf(fp_muves, "CBACKING %d %d %g %g %d\n", gr1*1000+co1, gr2*1000+co2, thickness, probability, material);
+    fprintf(fp_muves, "CBACKING %d %d %g %g %d\n", gr1*1000+co1, gr2*1000+co2, inthickness, probability, material);
 }
 
 
@@ -3061,7 +3066,6 @@ make_regions(void)
 
 	if (splt) {
 	    vect_t norm;
-	    struct name_tree *ptr2;
 	    int found;
 
 	    /* make a halfspace */
@@ -3137,7 +3141,7 @@ static void
 read_fast4_colors(char *color_file)
 {
     FILE *fp;
-    char line[COLOR_LINE_LEN] = {0};
+    char colorline[COLOR_LINE_LEN] = {0};
     int low, high;
     int r, g, b;
     struct fast4_color *color;
@@ -3147,8 +3151,8 @@ read_fast4_colors(char *color_file)
 	return;
     }
 
-    while (bu_fgets(line, COLOR_LINE_LEN, fp) != NULL) {
-	if (sscanf(line, "%d %d %d %d %d", &low, &high, &r, &g, &b) != 5)
+    while (bu_fgets(colorline, COLOR_LINE_LEN, fp) != NULL) {
+	if (sscanf(colorline, "%d %d %d %d %d", &low, &high, &r, &g, &b) != 5)
 	    continue;
 
 	/* skip invalid colors */
@@ -3216,7 +3220,7 @@ main(int argc, char **argv)
 		break;
 	    default:
 		bu_log("Unrecognzed option (%c)\n", c);
-		bu_exit(1, usage);
+		usage();
 		break;
 	}
     }
@@ -3225,7 +3229,7 @@ main(int argc, char **argv)
 	bu_log("doing memory checking\n");
 
     if (argc-bu_optind != 2) {
-	bu_exit(1, usage);
+	usage();
     }
 
     rt_init_resource(&rt_uniresource, 0, NULL);
@@ -3243,7 +3247,7 @@ main(int argc, char **argv)
     if (plot_file) {
 	if ((fp_plot=fopen(plot_file, "wb")) == NULL) {
 	    bu_log("Cannot open plot file (%s)\n", plot_file);
-	    bu_exit(1, usage);
+	    usage();
 	}
     }
 

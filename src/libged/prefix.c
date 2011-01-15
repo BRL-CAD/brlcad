@@ -1,7 +1,7 @@
 /*                         P R E F I X . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -147,7 +147,7 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
 }
 
 static void
-ged_do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t prefix_ptr, genptr_t obj_ptr, genptr_t user_ptr3)
+ged_do_prefix(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t prefix_ptr, genptr_t obj_ptr, genptr_t UNUSED(user_ptr3))
 {
     char *prefix, *obj;
     char tempstring_v4[NAMESIZE+1];
@@ -159,7 +159,7 @@ ged_do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb
     prefix = (char *)prefix_ptr;
     obj = (char *)obj_ptr;
 
-    if ( strcmp( comb_leaf->tr_l.tl_name, obj ) )
+    if ( !BU_STR_EQUAL( comb_leaf->tr_l.tl_name, obj ) )
 	return;
 
     bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );

@@ -1,7 +1,7 @@
 /*                            F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ void		fb_Zoom_Window(void);
 int
 fb_Setup(char *file, int size)
 {
-    if ( strcmp( file, "/dev/remote" ) == 0 )
+    if ( BU_STR_EQUAL( file, "/dev/remote" ) )
 	file = "/dev/debug";
     prnt_Event( "Opening device..." );
 

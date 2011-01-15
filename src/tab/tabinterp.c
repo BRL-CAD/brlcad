@@ -1,7 +1,7 @@
 /* T A B I N T E R P . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -413,25 +413,25 @@ cm_interp(int argc, char **argv)
     int ch;
     struct chan *chp;
 
-    if (strcmp(argv[1], "step") == 0) {
+    if (BU_STR_EQUAL(argv[1], "step")) {
 	interp = INTERP_STEP;
 	periodic = 0;
-    } else if (strcmp(argv[1], "cstep") == 0) {
+    } else if (BU_STR_EQUAL(argv[1], "cstep")) {
 	interp = INTERP_STEP;
 	periodic = 1;
-    } else if (strcmp(argv[1], "linear") == 0) {
+    } else if (BU_STR_EQUAL(argv[1], "linear")) {
 	interp = INTERP_LINEAR;
 	periodic = 0;
-    } else if (strcmp(argv[1], "clinear") == 0) {
+    } else if (BU_STR_EQUAL(argv[1], "clinear")) {
 	interp = INTERP_LINEAR;
 	periodic = 1;
-    } else if (strcmp(argv[1], "spline") == 0) {
+    } else if (BU_STR_EQUAL(argv[1], "spline")) {
 	interp = INTERP_SPLINE;
 	periodic = 0;
-    } else if (strcmp(argv[1], "cspline") == 0) {
+    } else if (BU_STR_EQUAL(argv[1], "cspline")) {
 	interp = INTERP_SPLINE;
 	periodic = 1;
-    } else if (strcmp(argv[1], "quat") == 0) {
+    } else if (BU_STR_EQUAL(argv[1], "quat")) {
 	interp = INTERP_QUAT;
 	periodic = 0;
     } else {

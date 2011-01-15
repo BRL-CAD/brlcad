@@ -1,7 +1,7 @@
 /*                          P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@
 
 
 int
-f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     static vect_t last;
     static vect_t fin;
@@ -67,7 +67,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     int fd2[2]; /* cad_boundp | cad_parea */
     int fd3[2]; /* cad_parea | mged */
     int retcode;
-    char *tol_ptr;
+    const char *tol_ptr;
 
     /* XXX needs fixing */
 

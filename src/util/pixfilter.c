@@ -1,7 +1,7 @@
 /*                     P I X F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -141,6 +141,7 @@ main(int argc, char **argv)
     int x, y, color;
     int value, r1, r2, r3;
     int max, min;
+    size_t ret;
 
     /* Select Default Filter (low pass) */
     select_filter("low");
@@ -162,9 +163,18 @@ main(int argc, char **argv)
     bottom = &line1[0];
     middle = &line2[0];
     top    = &line3[0];
-    fread(bottom, sizeof(char), 3*width, infp);
-    fread(middle, sizeof(char), 3*width, infp);
-    fwrite(bottom, sizeof(char), 3*width, stdout);
+
+    ret = fread(bottom, sizeof(char), 3*width, infp);
+    if (ret < (size_t)3*width)
+	perror("fread");
+
+    ret = fread(middle, sizeof(char), 3*width, infp);
+    if (ret < (size_t)3*width)
+	perror("fread");
+
+    ret = fwrite(bottom, sizeof(char), 3*width, stdout);
+    if (ret < (size_t)3*width)
+	perror("fwrite");
 
     if (verbose) {
 	for (x = 0; x < 11; x++)
@@ -176,7 +186,10 @@ main(int argc, char **argv)
 
     for (y = 1; y < height-1; y++) {
 	/* read in top line */
-	fread(top, sizeof(char), 3*width, infp);
+	ret = fread(top, sizeof(char), 3*width, infp);
+	if (ret < (size_t)3*width)
+	    perror("fread");
+
 	for (color = 0; color < 3; color++) {
 	    obuf[0+color] = middle[0+color];
 	    /* Filter a line */
@@ -200,7 +213,9 @@ main(int argc, char **argv)
 	    }
 	    obuf[3*(width-1)+color] = middle[3*(width-1)+color];
 	}
-	fwrite(obuf, sizeof(char), 3*width, stdout);
+	ret = fwrite(obuf, sizeof(char), 3*width, stdout);
+	if (ret < (size_t)3*width)
+	    perror("fwrite");
 	/* Adjust row pointers */
 	temp = bottom;
 	bottom = middle;
@@ -208,7 +223,9 @@ main(int argc, char **argv)
 	top = temp;
     }
     /* write out last line untouched */
-    fwrite(top, sizeof(char), 3*width, stdout);
+    ret = fwrite(top, sizeof(char), 3*width, stdout);
+    if (ret < (size_t)3*width)
+	perror("fwrite");
 
     /* Give advise on scaling factors */
     if (verbose)

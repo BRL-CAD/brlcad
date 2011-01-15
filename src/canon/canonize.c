@@ -1,7 +1,7 @@
 /*                      C A N O N I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -68,12 +68,12 @@ queue(fp)
     /* write the command line options out to the data stream */
     for (args=1; args < arg_c; args++) {
 
-	if (!strcmp(arg_v[args], "-a")) {
+	if (BU_STR_EQUAL(arg_v[args], "-a")) {
 	    fprintf(pfp, " -w %ld -n %ld", width, height);
-	} if (!strcmp(arg_v[args], "-d")) {
+	} if (BU_STR_EQUAL(arg_v[args], "-d")) {
 	    args += 2;	/* skip device specification */
-	} if (!strcmp(arg_v[args], "-v") ||
-	      !strcmp(arg_v[args], "-V")) {
+	} if (BU_STR_EQUAL(arg_v[args], "-v") ||
+	      BU_STR_EQUAL(arg_v[args], "-V")) {
 	    continue;	/* skip verbose specification */
 	} else {
 	    fprintf(pfp, " %s", arg_v[args]);

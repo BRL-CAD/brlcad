@@ -1,7 +1,7 @@
 /*                         W E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,37 +17,29 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file wedge.c
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
- */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 int
-wedge( entityno )
-    int entityno;
+wedge(int entityno)
 {
-    fastf_t		xscale=0.0;
-    fastf_t		yscale=0.0;
-    fastf_t		zscale=0.0;
-    fastf_t		txscale=0.0;		/* top xscale */
-    fastf_t		x_1, y_1, z_1;		/* first vertex components */
-    fastf_t		x_2, y_2, z_2;		/* xdir vector components */
-    fastf_t		x_3, y_3, z_3;		/* zdir vector components */
-    vect_t		xdir;			/* a unit vector */
-    vect_t		xvec;			/* vector along x-axis */
-    vect_t		txvec;			/* vector along top x-axis */
-    vect_t		ydir;			/* a unit vector */
-    vect_t		yvec;			/* vector along y-axis */
-    vect_t		zdir;			/* a unit vector */
-    vect_t		zvec;			/* vector along z-axis */
-    point_t		pts[9];			/* array of points */
-    int		sol_num;		/* IGES solid type number */
+    fastf_t xscale=0.0;
+    fastf_t yscale=0.0;
+    fastf_t zscale=0.0;
+    fastf_t txscale=0.0;		/* top xscale */
+    fastf_t x_1, y_1, z_1;		/* first vertex components */
+    fastf_t x_2, y_2, z_2;		/* xdir vector components */
+    fastf_t x_3, y_3, z_3;		/* zdir vector components */
+    vect_t xdir;			/* a unit vector */
+    vect_t xvec;			/* vector along x-axis */
+    vect_t txvec;			/* vector along top x-axis */
+    vect_t ydir;			/* a unit vector */
+    vect_t yvec;			/* vector along y-axis */
+    vect_t zdir;			/* a unit vector */
+    vect_t zvec;			/* vector along z-axis */
+    point_t pts[9];			/* array of points */
+    int sol_num;		/* IGES solid type number */
 
     /* Default values */
     x_1 = 0.0;
@@ -62,32 +54,30 @@ wedge( entityno )
 
 
     /* Acquiring Data */
-    if ( dir[entityno]->param <= pstart )
-    {
-	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-		dir[entityno]->direct, dir[entityno]->name );
+    if (dir[entityno]->param <= pstart) {
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
-    Readrec( dir[entityno]->param );
-    Readint( &sol_num, "" );
-    Readcnv( &xscale, "" );
-    Readcnv( &yscale, "" );
-    Readcnv( &zscale, "" );
-    Readcnv( &txscale, "" );
-    Readcnv( &x_1, "" );
-    Readcnv( &y_1, "" );
-    Readcnv( &z_1, "" );
-    Readcnv( &x_2, "" );
-    Readcnv( &y_2, "" );
-    Readcnv( &z_2, "" );
-    Readcnv( &x_3, "" );
-    Readcnv( &y_3, "" );
-    Readcnv( &z_3, "" );
+    Readrec(dir[entityno]->param);
+    Readint(&sol_num, "");
+    Readcnv(&xscale, "");
+    Readcnv(&yscale, "");
+    Readcnv(&zscale, "");
+    Readcnv(&txscale, "");
+    Readcnv(&x_1, "");
+    Readcnv(&y_1, "");
+    Readcnv(&z_1, "");
+    Readcnv(&x_2, "");
+    Readcnv(&y_2, "");
+    Readcnv(&z_2, "");
+    Readcnv(&x_3, "");
+    Readcnv(&y_3, "");
+    Readcnv(&z_3, "");
 
-    if ( xscale <= 0.0 || yscale <= 0.0 || zscale <= 0.0 )
-    {
-	bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
-		dir[entityno]->direct, dir[entityno]->name );
+    if (xscale <= 0.0 || yscale <= 0.0 || zscale <= 0.0) {
+	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
+	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
 
@@ -118,7 +108,7 @@ wedge( entityno )
 
     VSET(pts[0], x_1, y_1, z_1);		/* Yields first vertex */
     VADD2(pts[1], pts[0], xvec);		/* Finds second vertex */
-    VADD2(pts[2], pts[1], yvec);		/* Finds third vertex  */
+    VADD2(pts[2], pts[1], yvec);		/* Finds third vertex */
     VADD2(pts[3], pts[0], yvec);		/* Finds fourth vertex */
 
     /* Make the top face by extruding the bottom face vertices.
@@ -137,6 +127,7 @@ wedge( entityno )
     return 1;
 
 }
+
 
 /*
  * Local Variables:

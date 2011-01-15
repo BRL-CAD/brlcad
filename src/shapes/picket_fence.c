@@ -1,7 +1,7 @@
 /*                  P I C K E T _ F E N C E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 	bu_exit(1, "Invalid argument, spacing must be non-negative\n");
     }
 
-    if (strcmp(argv[5], "-r") == 0) {
+    if (BU_STR_EQUAL(argv[5], "-r")) {
 	round = 1;
 	argc--; argv++;
     }

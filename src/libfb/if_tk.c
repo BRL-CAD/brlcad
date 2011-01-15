@@ -1,7 +1,7 @@
 /*                         I F _ T K . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -295,7 +295,7 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	    int count;
 	    
 	    /* If the Tk window gets a close event, bail */
-	    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0), "close")) {
+	    if (BU_STR_EQUAL(Tcl_GetVar(fbinterp, "CloseWindow", 0), "close")) {
 		free(buffer);
 		free(linebuffer);
 		free(tkwrite_buffer);
@@ -337,7 +337,7 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	free(tkwrite_buffer);
 	fclose(stdin);
 	Tcl_Eval(fbinterp, "vwait CloseWindow");
-	if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0), "close")) {
+	if (BU_STR_EQUAL(Tcl_GetVar(fbinterp, "CloseWindow", 0), "close")) {
 	    printf("Close Window event\n");
 	    Tcl_Eval(fbinterp, "destroy .");
 	}

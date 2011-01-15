@@ -1,7 +1,7 @@
 /*                            B U . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1400,7 +1400,7 @@ struct bu_ptbl {
 #define BU_PTBL_BASEADDR(ptbl)	((ptbl)->buffer)
 #define BU_PTBL_LASTADDR(ptbl)	((ptbl)->buffer + (ptbl)->end - 1)
 #define BU_PTBL_END(ptbl)	((ptbl)->end)
-#define BU_PTBL_LEN(p)	((p)->end)
+#define BU_PTBL_LEN(ptbl)	((size_t)(ptbl)->end)
 #define BU_PTBL_GET(ptbl, i)	((ptbl)->buffer[(i)])
 #define BU_PTBL_SET(ptbl, i, val)	((ptbl)->buffer[(i)] = (long*)(val))
 #define BU_PTBL_TEST(ptbl)	((ptbl)->l.magic == BU_PTBL_MAGIC)
@@ -2529,7 +2529,7 @@ BU_EXPORT BU_EXTERN(int bu_count_path, (char *path, char *substr));
 /**
  * Return array with filenames with suffix matching substr
  */
-BU_EXPORT BU_EXTERN(void bu_list_path, (char *path, char *substr, char **filearray)); 
+BU_EXPORT BU_EXTERN(void bu_list_path, (char *path, char *substr, char **filearray));
 
 
 /** @file brlcad_path.c
@@ -3618,8 +3618,12 @@ BU_EXPORT BU_EXTERN(int bu_struct_import,
  *
  * Put a structure in external form to a stdio file.  All formatting
  * must have been accomplished previously.
+ *
+ * Returns number of bytes written.  On error, a short byte count (or
+ * zero) is returned.  Use feof(3) or ferror(3) to determine which
+ * errors occur.
  */
-BU_EXPORT BU_EXTERN(int bu_struct_put,
+BU_EXPORT BU_EXTERN(size_t bu_struct_put,
 		    (FILE *fp,
 		     const struct bu_external *ext));
 
@@ -3627,8 +3631,11 @@ BU_EXPORT BU_EXTERN(int bu_struct_put,
  * B U _ S T R U C T _ G E T
  *
  * Obtain the next structure in external form from a stdio file.
+ *
+ * Returns number of bytes read into the bu_external.  On error, zero
+ * is returned.
  */
-BU_EXPORT BU_EXTERN(int bu_struct_get,
+BU_EXPORT BU_EXTERN(size_t bu_struct_get,
 		    (struct bu_external *ext,
 		     FILE *fp));
 
@@ -3842,7 +3849,7 @@ BU_EXPORT BU_EXTERN(void bu_structparse_get_terse_form,
 BU_EXPORT BU_EXTERN(int bu_structparse_argv,
 		    (struct bu_vls *logstr,
 		     int argc,
-		     char **argv,
+		     const char **argv,
 		     const struct bu_structparse *desc,
 		     char *base));
 
@@ -5059,6 +5066,33 @@ BU_EXPORT BU_EXTERN(size_t bu_strlcpym, (char *dst, const char *src, size_t size
 BU_EXPORT BU_EXTERN(char *bu_strdupm, (const char *cp, const char *label));
 #define bu_strdup(s) bu_strdupm(s, BU_FLSTR)
 
+/**
+ * b u _ s t r c m p  / b u _ s t r c m p m
+ *
+ * Compares two strings more gracefully as standard library's strcmp().
+ * It accepts NULL as valid input values and considers "" and NULL as equal.
+ *
+ * bu_strcmp() is a macro that includes the current file name and line
+ * number that can be used when bu debugging is enabled.
+ *
+ */
+BU_EXPORT BU_EXTERN(int bu_strcmpm, (const char *string1, const char *string2, const char *label));
+#define bu_strcmp(s1, s2)    bu_strcmpm((s1), (s2), BU_FLSTR)
+
+/**
+ * BU_STR_EMPTY() is a convenience macro that tests a string for
+ * emptiness, i.e. "" or NULL.
+*/
+#define BU_STR_EMPTY(s) (bu_strcmpm((s), "", BU_FLSTR) == 0)
+
+/**
+ * BU_STR_EQUAL() is a convenience macro for testing two
+ * null-terminaed strings for equality, i.e. A == B, and is equivalent
+ * to (bu_strcmp(s1, s2) == 0) returning true if the strings match and
+ * false if they do not.
+ */
+#define BU_STR_EQUAL(s1, s2) (bu_strcmpm((s1), (s2), BU_FLSTR) == 0)
+
 /** @} */
 
 /** @addtogroup bu_log */
@@ -5302,7 +5336,7 @@ BU_EXPORT BU_EXTERN(void bu_tcl_structparse_get_terse_form,
 BU_EXPORT BU_EXTERN(int bu_tcl_structparse_argv,
 		    (Tcl_Interp *interp,
 		     int argc,
-		     char **argv,
+		     const char **argv,
 		     const struct bu_structparse *desc,
 		     char *base));
 
@@ -5995,7 +6029,7 @@ struct bu_image_file {
 };
 
 BU_EXPORT BU_EXTERN(struct bu_image_file *bu_image_save_open,
-		    (char *filename,
+		    (const char *filename,
 		     int format,
 		     int width,
 		     int height,
@@ -6146,6 +6180,15 @@ BU_EXPORT BU_EXTERN(int bu_restore_interrupts, ());
 #define BU_SIMD_MMX 1
 #define BU_SIMD_NONE 0
 BU_EXPORT BU_EXTERN(int bu_simd_level, ());
+
+/** @} */
+
+/** @addtogroup file */
+/** @{ */
+/** @file timer.c
+ * Return microsecond accuracy time information.
+ */
+BU_EXPORT BU_EXTERN(int64_t bu_gettime, ());
 
 /** @} */
 

@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -99,7 +99,7 @@ history_record_priv(struct bu_vls *cmdp, struct timeval *start, struct timeval *
 {
     struct bu_cmdhist *new_hist;
 
-    if (strcmp(bu_vls_addr(cmdp), "\n") == 0)
+    if (BU_STR_EQUAL(bu_vls_addr(cmdp), "\n"))
 	return;
 
     new_hist = (struct bu_cmdhist *)bu_malloc(sizeof(struct bu_cmdhist),
@@ -167,15 +167,15 @@ cmd_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **
 
     fp = NULL;
     while (argc > 1) {
-	if (strcmp(argv[1], "-delays") == 0)
+	if (BU_STR_EQUAL(argv[1], "-delays"))
 	    with_delays = 1;
-	else if (strcmp(argv[1], "-outfile") == 0) {
+	else if (BU_STR_EQUAL(argv[1], "-outfile")) {
 	    if (fp != NULL) {
 		fclose(fp);
 		Tcl_AppendResult(interp, "history: -outfile option given more than once\n",
 				 (char *)NULL);
 		return TCL_ERROR;
-	    } else if (argc < 3 || strcmp(argv[2], "-delays") == 0) {
+	    } else if (argc < 3 || BU_STR_EQUAL(argv[2], "-delays")) {
 		Tcl_AppendResult(interp, "history: I need a file name\n", (char *)NULL);
 		return TCL_ERROR;
 	    } else {
@@ -289,7 +289,7 @@ cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **arg
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "add") == 0) {
+    if (BU_STR_EQUAL(argv[1], "add")) {
 	struct timeval zero;
 
 	if (argc != 3) {
@@ -311,7 +311,7 @@ cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **arg
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "next") == 0) {
+    if (BU_STR_EQUAL(argv[1], "next")) {
 	if (argc != 2) {
 	    Tcl_AppendResult(interp, "hist next\n\treturn next command in history", (char *)0);
 	    return TCL_ERROR;
@@ -326,7 +326,7 @@ cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **arg
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "prev") == 0) {
+    if (BU_STR_EQUAL(argv[1], "prev")) {
 	if (argc != 2) {
 	    Tcl_AppendResult(interp, "hist prev\n\treturn previous command in history", (char *)0);
 	    return TCL_ERROR;

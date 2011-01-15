@@ -1,7 +1,7 @@
 dnl                    C O N F I G U R E . A C
 dnl BRL-CAD
 dnl
-dnl Copyright (c) 2004-2010 United States Government as represented by
+dnl Copyright (c) 2004-2011 United States Government as represented by
 dnl the U.S. Army Research Laboratory.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -357,7 +357,7 @@ BC_ARG_ENABLE([use_dtrace], [dtrace], [Enable dtrace support], [no])
 BC_ARG_ENABLE([build_verbose], [verbose], [Enable verbose compilation], [auto])
 
 # warnings
-BC_ARG_ENABLE([build_warnings], [warnings], [Enable verbose compilation warnings], [no])
+BC_ARG_ENABLE([build_warnings], [warnings], [Enable verbose compilation warnings], [yes])
 
 # build progress status
 BC_ARG_ENABLE([build_progress], [progress], [Enable verbose compilation progress], [no])
@@ -2118,7 +2118,7 @@ else
 fi
 AC_SUBST(NOWARN)
 if test "x$bc_build_warnings" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Winline], [warning])
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long], [warning])
 	# XXX also of interest
 	# -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
 	# -Wstrict-prototypes -Wold-style-definition -Wshorten-64-to-32 -Wmissing-field-initializers
@@ -2136,7 +2136,7 @@ fi
 
 dnl we are more strict on clean dirs by default (no-long-long needed due to tcl.h)
 if test "x$bc_build_strict" = "xyes" ; then
-   BC_COMPILER_AND_LINKER_RECOGNIZES([-w -pedantic -W -Wall -Werror -Wno-long-long], [strict], [no])
+   BC_COMPILER_AND_LINKER_RECOGNIZES([-w -pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long -Werror], [strict], [no])
    if test "x$bc_strict_works" = "xyes" ; then
        # do not include -w as that was just to suppress any test warnings
        STRICT_FLAGS="-pedantic -W -Wall -Werror -Wno-long-long"
@@ -3320,7 +3320,7 @@ AC_TRY_RUN([
 #ifdef HAVE_TERMLIB_H
 #  include <termlib.h>
 #else
-#  if HAVE_NCURSES_H
+#  ifdef HAVE_NCURSES_H
 #    include <ncurses.h>
 #  else
 #    ifdef HAVE_CURSES_H
@@ -3339,7 +3339,7 @@ AC_TRY_RUN([
 #      endif
 #    endif
 #  endif
-#  if HAVE_TERM_H
+#  ifdef HAVE_TERM_H
 #    include <term.h>
 #  endif
 #endif
@@ -4315,7 +4315,6 @@ AC_CONFIG_FILES([
 	src/other/URToolkit/man/Makefile
 	src/other/URToolkit/tools/Makefile
 	src/other/URToolkit/tools/clock/Makefile
-	src/other/awf/Makefile
 	src/other/incrTcl/Makefile
 	src/other/incrTcl/doc/Makefile
 	src/other/incrTcl/itcl/Makefile
@@ -4356,16 +4355,11 @@ AC_CONFIG_FILES([
 	src/tclscripts/Makefile
 	src/tclscripts/archer/Makefile
 	src/tclscripts/archer/images/Makefile
-	src/tclscripts/archer/images/Themes/Makefile
-	src/tclscripts/archer/images/Themes/Crystal/Makefile
-	src/tclscripts/archer/images/Themes/Crystal_Large/Makefile
-	src/tclscripts/archer/images/Themes/Windows/Makefile
 	src/tclscripts/boteditor/Makefile
 	src/tclscripts/geometree/Makefile
 	src/tclscripts/hv3/Makefile
 	src/tclscripts/lib/Makefile
 	src/tclscripts/mged/Makefile
-	src/tclscripts/nirt/Makefile
 	src/tclscripts/pl-dm/Makefile
 	src/tclscripts/rtwizard/Makefile
 	src/tclscripts/rtwizard/examples/Makefile

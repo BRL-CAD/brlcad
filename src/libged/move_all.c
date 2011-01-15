@@ -1,7 +1,7 @@
 /*                         M O V E _ A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -79,7 +79,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 		    extrude = (struct rt_extrude_internal *)intern.idb_ptr;
 		    RT_EXTRUDE_CK_MAGIC(extrude);
 
-		    if (!strcmp(extrude->sketch_name, old)) {
+		    if (BU_STR_EQUAL(extrude->sketch_name, old)) {
 			if (nflag) {
 			    bu_vls_printf(&gedp->ged_result_str, "%s ", dirp->d_namep);
 			    rt_db_free_internal(&intern);
@@ -145,7 +145,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 			comb_leaf = comb_leaf->tr_b.tb_left;
 		    }
 
-		    if (!strcmp(comb_leaf->tr_l.tl_name, old)) {
+		    if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, old)) {
 			if (nflag)
 			    bu_vls_printf(&gedp->ged_result_str, "%s ", dp->d_namep);
 			else {
@@ -187,13 +187,13 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 	    int first = 1;
 	    int found = 0;
 	    struct bu_vls new_path;
-	    char *dup = strdup(bu_vls_addr(&gdlp->gdl_path));
-	    char *tok = strtok(dup, "/");
+	    char *dupstr = strdup(bu_vls_addr(&gdlp->gdl_path));
+	    char *tok = strtok(dupstr, "/");
 
 	    bu_vls_init(&new_path);
 
 	    while (tok) {
-		if (!strcmp(tok, old)) {
+		if (BU_STR_EQUAL(tok, old)) {
 		    found = 1;
 
 		    if (first) {
@@ -217,7 +217,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 		bu_vls_printf(&gdlp->gdl_path, "%s", bu_vls_addr(&new_path));
 	    }
 
-	    free((void *)dup);
+	    free((void *)dupstr);
 	    bu_vls_free(&new_path);
 	}
     }

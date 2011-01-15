@@ -1,7 +1,7 @@
 /*                         C O M B M E M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -385,11 +385,16 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
     size_t i;
     size_t node_count;
 
+    if (argc < 2) {
+	bu_vls_printf(&gedp->ged_result_str, "ERROR argument missing after [%s]\n", argv[0]);
+	return GED_ERROR;
+    }
+
     COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], dp, intern, ntp, rt_tree_array, node_count);
 
     for (i=0; i<node_count; i++) {
 	union tree *itp = rt_tree_array[i].tl_tree;
-	char op;
+	char op = '\0';
 
 	RT_CK_TREE(itp);
 	BU_ASSERT_LONG(itp->tr_op, ==, OP_DB_LEAF);
@@ -597,7 +602,7 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (etype == ETYPES_REL && tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
-	    !strcmp(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
+	    BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
 
 	    COMBMEM_CHECK_MAT(tp, tree_index, old_rt_tree_array, mat, aetvec, tvec, svec, key_pt, az, el, tw, tx, ty, tz, sa, sx, sy, sz);
 	} else {
@@ -679,7 +684,7 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
-	    !strcmp(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
+	    BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
 	    fastf_t tx, ty, tz;
 	    fastf_t sa, sx, sy, sz;
 	    vect_t aetvec, tvec, svec;
@@ -754,7 +759,7 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
-	    !strcmp(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
+	    BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
 	    fastf_t az, el, tw;
 	    fastf_t tx, ty, tz;
 	    fastf_t sa, sx, sy, sz;
@@ -821,7 +826,7 @@ combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
-	    !strcmp(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
+	    BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
 
 	    bn_mat_mul(tp->tr_l.tl_mat, mat, old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat);
 	} else {
@@ -894,7 +899,7 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
-	    !strcmp(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
+	    BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
 	    fastf_t az, el, tw;
 	    fastf_t tx, ty, tz;
 
@@ -917,9 +922,11 @@ combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_comb_internal *comb;
     struct rt_db_internal intern;
-    union tree *ntp;
-    struct rt_tree_array *rt_tree_array;
-    size_t node_count;
+
+    if (argc < 2) {
+	bu_vls_printf(&gedp->ged_result_str, "ERROR argument missing after [%s]\n", argv[0]);
+	return GED_ERROR;
+    }
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], argv[1]);

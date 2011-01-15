@@ -1,7 +1,7 @@
 /*                 S O L I D S _ O N _ R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2010 United States Government as represented by
+ * Copyright (c) 1995-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ struct sol_name_dist
 };
 #define SOL_NAME_DIST_MAGIC 0x736c6e64
 
-#if OLD_RPT
+#ifdef OLD_RPT
 /*
  * S O L _ C O M P _ N A M E
  *
@@ -75,7 +75,7 @@ sol_comp_name(void *v1, void *v2)
     BU_CKMAG(s1, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
     BU_CKMAG(s2, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
-    return strcmp(s1->name, s2->name);
+    return !BU_STR_EQUAL(s1->name, s2->name);
 }
 
 
@@ -167,26 +167,13 @@ print_solid(void *vp)
  * Does nothing.  Returns 1.
  */
 static int
-no_op(struct application *ap, struct partition *ph, struct region *r1, struct region *r2, struct partition *hp)
+no_op(struct application *UNUSED(ap), struct partition *UNUSED(ph), struct region *UNUSED(r1), struct region *UNUSED(r2), struct partition *UNUSED(hp))
 {
     return 1;
 }
 
 
-/*
- * B U I L D _ P A T H _ N A M E _ O F _ S O L I D ()
- *
- * Builds the slash-separated path name for a struct solid.
- */
-void
-build_path_name_of_solid(struct bu_vls *vp, struct solid *sp)
-{
-    bu_vls_trunc(vp, 0);
-    db_path_to_vls(vp, &sp->s_fullpath);
-}
-
-
-#if OLD_RPT
+#ifdef OLD_RPT
 /*
  * R P T _ S O L I D S
  *
@@ -358,7 +345,7 @@ rpt_solids(struct application *ap, struct partition *ph, struct seg *finished_se
  * e.g. from piercing the torus twice.
  */
 static int
-rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct seg *segp)
+rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     struct partition *pp;
     int len;
@@ -415,14 +402,14 @@ rpt_miss(struct application *ap)
  * N.B. - It is the caller's responsibility to free the array
  * of solid names.
  */
-char **skewer_solids (int argc, const char **argv, fastf_t *ray_orig, fastf_t *ray_dir, int full_path)
+char **skewer_solids (int argc, const char *argv[], fastf_t *ray_orig, fastf_t *ray_dir, int UNUSED(full_path))
 {
     struct application ap;
     struct rt_i *rtip;
     struct bu_list sol_list;
 
     if (argc <= 0) {
-	Tcl_AppendResult(interp, "skewer_solids argc<=0\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "skewer_solids argc<=0\n", (char *)NULL);
 	return (char **) 0;
     }
 
@@ -431,7 +418,7 @@ char **skewer_solids (int argc, const char **argv, fastf_t *ray_orig, fastf_t *r
     rtip->useair = 1;
     rtip->rti_dont_instance = 1;	/* full paths to solids, too. */
     if (rt_gettrees(rtip, argc, argv, 1) == -1) {
-	Tcl_AppendResult(interp, "rt_gettrees() failed\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "rt_gettrees() failed\n", (char *)NULL);
 	rt_clean(rtip);
 	bu_free((genptr_t)rtip, "struct rt_i");
 	return (char **) 0;

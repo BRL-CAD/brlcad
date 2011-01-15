@@ -1,7 +1,7 @@
 /*                         I H O S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -124,7 +124,7 @@ host_lookup_by_hostent(const struct hostent * addr, int enter)
     for ( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
 	CK_IHOST(ihp);
 
-	if ( strcmp( ihp->ht_name, addr->h_name ) != 0 )
+	if ( !BU_STR_EQUAL( ihp->ht_name, addr->h_name ) )
 	    continue;
 	return ihp;
     }
@@ -200,7 +200,7 @@ host_lookup_by_addr(const struct sockaddr_in * from, int enter)
     /* See if this host has been previously entered by number */
     for ( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
 	CK_IHOST(ihp);
-	if ( strcmp( ihp->ht_name, name ) == 0 )
+	if ( BU_STR_EQUAL( ihp->ht_name, name ) )
 	    return ihp;
     }
 

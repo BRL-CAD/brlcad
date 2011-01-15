@@ -1,7 +1,7 @@
 /*                           I M A G E . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -84,7 +84,7 @@ image_flip(unsigned char *buf, int width, int height)
  * I suck. I'll fix this later. Honest.
  */
 HIDDEN int
-guess_file_format(char *filename, char *trimmedname)
+guess_file_format(const char *filename, char *trimmedname)
 {
     /* look for the FMT: header */
 #define CMP(name) if (!strncmp(filename, #name":", strlen(#name))) {bu_strlcpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return BU_IMAGE_##name; }
@@ -260,7 +260,7 @@ bu_image_save(unsigned char *data, int width, int height, int depth, char *filen
 }
 
 struct bu_image_file *
-bu_image_save_open(char *filename, int format, int width, int height, int depth)
+bu_image_save_open(const char *filename, int format, int width, int height, int depth)
 {
     struct bu_image_file *bif = (struct bu_image_file *)bu_malloc(sizeof(struct bu_image_file), "bu_image_save_open");
     bif->magic = BU_IMAGE_FILE_MAGIC;

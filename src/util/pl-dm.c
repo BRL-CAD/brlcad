@@ -1,7 +1,7 @@
 /*                         P L - D M . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2010 United States Government as represented by
+ * Copyright (c) 1999-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -170,7 +170,7 @@ get_args(int argc, char **argv)
 
 static void
 refresh() {
-    int i;
+    size_t i;
     struct plot_list *plp;
 
     DM_DRAW_BEGIN(dmp);
@@ -424,7 +424,7 @@ X_dm(int argc, char *argv[])
 {
     int status;
 
-    if (!strcmp(argv[0], "set")) {
+    if (BU_STR_EQUAL(argv[0], "set")) {
 	struct bu_vls tmp_vls;
 
 	bu_vls_init(&tmp_vls);
@@ -436,7 +436,7 @@ X_dm(int argc, char *argv[])
 	return TCL_OK;
     }
 
-    if (!strcmp(argv[0], "m")) {
+    if (BU_STR_EQUAL(argv[0], "m")) {
 	vect_t view_pos;
 
 	if (argc < 4) {
@@ -455,7 +455,7 @@ X_dm(int argc, char *argv[])
 	return status;
     }
 
-    if (!strcmp(argv[0], "am")) {
+    if (BU_STR_EQUAL(argv[0], "am")) {
 	int buttonpress;
 
 	if (argc < 5) {
@@ -501,7 +501,7 @@ X_dm(int argc, char *argv[])
 static void
 size_reset()
 {
-    int i;
+    size_t i;
     struct bn_vlist *tvp;
     vect_t min, max;
     vect_t center;
@@ -614,7 +614,7 @@ cmd_openpl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **a
 	/* check for existing objects with same name as argv[i] */
 	for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
 	    /* found object with same name */
-	    if (!strcmp(bu_vls_addr(&plp->pl_name), bnp)) {
+	    if (BU_STR_EQUAL(bu_vls_addr(&plp->pl_name), bnp)) {
 		rt_vlblock_free(plp->pl_vbp);
 		goto up_to_vl;
 	    }
@@ -743,7 +743,7 @@ cmd_closepl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **
 
     for (i=1; i < argc; ++i) {
 	for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
-	    if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))) {
+	    if (BU_STR_EQUAL(argv[i], bu_vls_addr(&plp->pl_name))) {
 		BU_LIST_DEQUEUE(&plp->l);
 		bu_vls_free(&plp->pl_name);
 		rt_vlblock_free(plp->pl_vbp);
@@ -779,7 +779,7 @@ cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **arg
 
     for (i=1; i < argc; ++i) {
 	for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
-	    if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))) {
+	    if (BU_STR_EQUAL(argv[i], bu_vls_addr(&plp->pl_name))) {
 		plp->pl_draw = 1;
 		break;
 	    }
@@ -812,7 +812,7 @@ cmd_erase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **ar
 
     for (i=1; i < argc; ++i) {
 	for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
-	    if (!strcmp(argv[i], bu_vls_addr(&plp->pl_name))) {
+	    if (BU_STR_EQUAL(argv[i], bu_vls_addr(&plp->pl_name))) {
 		plp->pl_draw = 0;
 		break;
 	    }
@@ -1064,7 +1064,7 @@ static int
 X_dmInit()
 {
     int windowbounds[6] = { 2047, -2048, 2047, -2048, 2047, -2048 };
-    char *av[4];
+    const char *av[4];
 
     av[0] = "X_open";
     av[1] = "-i";
@@ -1097,7 +1097,7 @@ Ogl_dmInit()
     av[2] = "sampler_bind_dm";
     av[3] = (char *)NULL;
 
-    if ((dmp = DM_OPEN(INTERP, DM_TYPE_OGL, 3, av)) == DM_NULL) {
+    if ((dmp = DM_OPEN(INTERP, DM_TYPE_OGL, 3, (const char **)av)) == DM_NULL) {
 	Tcl_AppendResult(INTERP, "Failed to open a display manager\n", (char *)NULL);
 	return TCL_ERROR;
     }

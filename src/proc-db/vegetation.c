@@ -1,7 +1,7 @@
 /*                    V E G E T A T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -164,7 +164,7 @@ static float segmentToSegmentDistance(const point_t S1P0, const point_t S1P1, co
 
 
 static segmentList_t *findIntersectors(const growthSegment_t * const segment, const structure_t * const structure, const segmentList_t * const exemptList) {
-    int i, j;
+    size_t i, j;
     segmentList_t *bigList = NULL;
     segmentList_t *segList = NULL;
     double maxFromRadius = 0.0;
@@ -434,8 +434,8 @@ static void branchGrowthPoints(plant_t *plant) {
 
 
 static void growPlant(plant_t *plant) {
-    int i;
-    int growthSteps;
+    size_t i;
+    size_t growthSteps;
     int retryCount;
     growthSegment_t *segment;
     growthPoint_t *point;
@@ -778,7 +778,7 @@ static int writePlantToDisk(struct rt_wdb *fp, plant_t *plant) {
 
 
 static void destroyPlant(plant_t *plant) {
-    int i;
+    size_t i;
 
     /* get rid of the plant structure properly */
     if (plant != NULL) {

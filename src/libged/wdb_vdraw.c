@@ -1,7 +1,7 @@
 /*                         V D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -167,7 +167,7 @@ static int
 vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     struct dg_obj *dgop = (struct dg_obj *)clientData;
-    int index, uind;
+    size_t idx, uind;
     struct bn_vlist *vp, *cp;
 
     if (!dgop->dgo_currVHead) {
@@ -201,8 +201,8 @@ vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[
 	    }
 	}
 	cp = vp;
-	index = vp->nused;
-    } else if (sscanf(argv[1], "%d", &uind) < 1) {
+	idx = vp->nused;
+    } else if (sscanf(argv[1], "%lu", &uind) < 1) {
 	Tcl_AppendResult(interp, "vdraw: write index not an integer\n", (char *)NULL);
 	return TCL_ERROR;
     } else {
@@ -233,27 +233,27 @@ vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[
 	    return TCL_ERROR;
 	}
 	cp = vp;
-	index = uind;
+	idx = uind;
     }
 
-    if (sscanf(argv[2], "%d", &(cp->cmd[index])) < 1) {
+    if (sscanf(argv[2], "%d", &(cp->cmd[idx])) < 1) {
 	Tcl_AppendResult(interp, "vdraw: cmd not an integer\n", (char *)NULL);
 	return TCL_ERROR;
     }
     if (argc == 6) {
-	cp->pt[index][0] = atof(argv[3]);
-	cp->pt[index][1] = atof(argv[4]);
-	cp->pt[index][2] = atof(argv[5]);
+	cp->pt[idx][0] = atof(argv[3]);
+	cp->pt[idx][1] = atof(argv[4]);
+	cp->pt[idx][2] = atof(argv[5]);
     } else {
 	if (argc != 4 ||
-	    bn_decode_vect(cp->pt[index], argv[3]) != 3) {
+	    bn_decode_vect(cp->pt[idx], argv[3]) != 3) {
 	    Tcl_AppendResult(interp,
 			     "vdraw write: wrong # args, need either x y z or {x y z}\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
     }
     /* increment counter only if writing onto end */
-    if (index == cp->nused)
+    if (idx == cp->nused)
 	cp->nused++;
 
     return TCL_OK;
@@ -269,8 +269,8 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
     struct dg_obj *dgop = (struct dg_obj *)clientData;
     struct bn_vlist *vp, *cp, *wp;
     int i;
-    int index;
-    int uind;
+    int idx;
+    size_t uind;
 
     if (!dgop->dgo_currVHead) {
 	Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
@@ -280,7 +280,7 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
 	Tcl_AppendResult(interp, "vdraw: not enough args", (char *)NULL);
 	return TCL_ERROR;
     }
-    if (sscanf(argv[1], "%d", &uind) < 1) {
+    if (sscanf(argv[1], "%lu", &uind) < 1) {
 	Tcl_AppendResult(interp, "vdraw: insert index not an integer\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -312,7 +312,7 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
 
 
     cp = vp;
-    index = uind;
+    idx = uind;
 
     vp = BU_LIST_LAST(bn_vlist, &(dgop->dgo_currVHead->vdc_vhd));
     vp->nused++;
@@ -328,17 +328,17 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
 	vp = wp;
     }
 
-    for (i=vp->nused-1; i>index; i--) {
+    for (i=vp->nused-1; i>idx; i--) {
 	vp->cmd[i] = vp->cmd[i-1];
 	VMOVE(vp->pt[i], vp->pt[i-1]);
     }
-    if (sscanf(argv[2], "%d", &(vp->cmd[index])) < 1) {
+    if (sscanf(argv[2], "%d", &(vp->cmd[idx])) < 1) {
 	Tcl_AppendResult(interp, "vdraw: cmd not an integer\n", (char *)NULL);
 	return TCL_ERROR;
     }
-    vp->pt[index][0] = atof(argv[3]);
-    vp->pt[index][1] = atof(argv[4]);
-    vp->pt[index][2] = atof(argv[5]);
+    vp->pt[idx][0] = atof(argv[3]);
+    vp->pt[idx][1] = atof(argv[4]);
+    vp->pt[idx][2] = atof(argv[5]);
 
     return TCL_OK;
 }
@@ -352,8 +352,8 @@ vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
 {
     struct dg_obj *dgop = (struct dg_obj *)clientData;
     struct bn_vlist *vp, *wp;
-    int i;
-    int uind;
+    size_t i;
+    size_t uind;
 
     if (!dgop->dgo_currVHead) {
 	Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
@@ -380,7 +380,7 @@ vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
 	}
 	return TCL_OK;
     }
-    if (sscanf(argv[1], "%d", &uind) < 1) {
+    if (sscanf(argv[1], "%lu", &uind) < 1) {
 	Tcl_AppendResult(interp, "vdraw: delete index not an integer\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -444,7 +444,7 @@ vdraw_read_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]
     struct dg_obj *dgop = (struct dg_obj *)clientData;
     struct bn_vlist *vp;
     struct bu_vls vls;
-    int uind;
+    size_t uind;
     int length;
 
     if (!dgop->dgo_currVHead) {
@@ -485,7 +485,7 @@ vdraw_read_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]
 	bu_vls_free(&vls);
 	return TCL_OK;
     }
-    if (sscanf(argv[1], "%d", &uind) < 1) {
+    if (sscanf(argv[1], "%lu", &uind) < 1) {
 	Tcl_AppendResult(interp, "vdraw: read index not an integer\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -522,13 +522,13 @@ vdraw_read_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]
  *        send
  */
 static int
-vdraw_send_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+vdraw_send_tcl(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), char *UNUSED(argv[]))
 {
     struct dg_obj *dgop = (struct dg_obj *)clientData;
     struct directory *dp;
     struct bu_vls vls;
     char solid_name [RT_VDRW_MAXNAME+RT_VDRW_PREFIX_LEN+1];
-    int index;
+    int idx;
     int real_flag;
 
     if (!dgop->dgo_currVHead) {
@@ -550,16 +550,16 @@ vdraw_send_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]
     }
 
     /* 0 means OK, -1 means conflict with real solid name */
-    index = dgo_invent_solid(dgop,
-			     interp,
-			     solid_name,
-			     &(dgop->dgo_currVHead->vdc_vhd),
-			     dgop->dgo_currVHead->vdc_rgb,
-			     1, 0.0, 0);
+    idx = dgo_invent_solid(dgop,
+			   interp,
+			   solid_name,
+			   &(dgop->dgo_currVHead->vdc_vhd),
+			   dgop->dgo_currVHead->vdc_rgb,
+			   1, 0.0, 0);
     dgo_notify(dgop, interp);
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "%d", index);
+    bu_vls_printf(&vls, "%d", idx);
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 

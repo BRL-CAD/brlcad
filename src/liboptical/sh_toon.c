@@ -1,7 +1,7 @@
 /*                        S H _ T O O N . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2010 United States Government as represented by
+ * Copyright (c) 2010-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 #include "rtprivate.h"
 #include "light.h"
 
-#define TOON_MAGIC 0x746F6F6E0A    /* make this a unique number for each shader */
+#define TOON_MAGIC 0x746F6F6E    /* make this a unique number for each shader */
 #define CK_TOON_SP(_p) BU_CKMAG(_p, TOON_MAGIC, "toon_specific")
 
 /*

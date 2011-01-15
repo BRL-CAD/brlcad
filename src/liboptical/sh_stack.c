@@ -1,7 +1,7 @@
 /*                      S H _ S T A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -151,7 +151,7 @@ static int sh_stk_dosetup(char *cp, struct region *rp, char **dpp, char **mpp, s
 #endif
     for ( mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw )  {
 	if (matname[0] != mfp->mf_name[0]  ||
-	    strcmp( matname, mfp->mf_name ) != 0 )
+	    !BU_STR_EQUAL( matname, mfp->mf_name ) )
 	    continue;
 	goto found;
     }

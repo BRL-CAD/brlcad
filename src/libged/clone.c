@@ -1,7 +1,7 @@
 /*                         C L O N E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -185,7 +185,7 @@ index_in_list(struct nametbl l, char *name)
     int i;
 
     for (i = 0; i < l.names_used; i++)
-	if (!strcmp(bu_vls_addr(&l.names[i].src), name))
+	if (BU_STR_EQUAL(bu_vls_addr(&l.names[i].src), name))
 	    return i;
     return -1;
 }

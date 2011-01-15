@@ -35,6 +35,7 @@ librt_xxx_la_SOURCES = primitives/xxx/xxx.c
 
 librt_nil_la_SOURCES = \
 	attributes.c \
+	bbox.c \
 	bezier_2d_isect.c \
 	binunif/binunif.c \
 	binunif/db5_bin.c \
@@ -53,6 +54,7 @@ librt_nil_la_SOURCES = \
 	db_alloc.c \
 	db_anim.c \
 	db_flags.c \
+	db_float.c \
 	db_inmem.c \
 	db_io.c \
 	db_lookup.c \

@@ -1,7 +1,7 @@
 /*                      H I D E L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -52,10 +52,10 @@
 
 #define MOVE(v) VMOVE(last_move, (v))
 
-#define DRAW(v) { vect_t a, b;\
-		  MAT4X3PNT(a, view_state->vs_gvp->gv_model2view, last_move);\
-		  MAT4X3PNT(b, view_state->vs_gvp->gv_model2view, (v));\
-		  pdv_3line(plotfp, a, b); }
+#define DRAW(v) { vect_t _a, _b;\
+		  MAT4X3PNT(_a, view_state->vs_gvp->gv_model2view, last_move);\
+		  MAT4X3PNT(_b, view_state->vs_gvp->gv_model2view, (v));\
+		  pdv_3line(plotfp, _a, _b); }
 
 extern struct db_i *dbip;	/* current database instance */
 
@@ -67,15 +67,15 @@ vect_t aim_point;
  * hit_headon - routine called by rt_shootray if ray hits model
  */
 static int
-hit_headon(struct application *ap, struct partition *PartHeadp, struct seg *segp)
+hit_headon(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     char diff_solid;
     vect_t diff;
-    fastf_t len;
-    struct solid *sp;
+    fastf_t len = 0.0;
+    struct solid *sp = NULL;
 
     if (PartHeadp->pt_forw->pt_forw != PartHeadp)
-	Tcl_AppendResult(interp, "hit_headon: multiple partitions\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "hit_headon: multiple partitions\n", (char *)NULL);
 
     VJOIN1(PartHeadp->pt_forw->pt_inhit->hit_point, ap->a_ray.r_pt,
 	   PartHeadp->pt_forw->pt_inhit->hit_dist, ap->a_ray.r_dir);
@@ -102,7 +102,7 @@ hit_headon(struct application *ap, struct partition *PartHeadp, struct seg *segp
  * a "hit" routine.
  */
 static int
-hit_tangent(struct application *ap)
+hit_tangent(struct application *UNUSED(ap))
 {
     return 1;		/* always a hit */
 }
@@ -112,7 +112,7 @@ hit_tangent(struct application *ap)
  * hit_overlap - called by rt_shootray if ray hits an overlap
  */
 static int
-hit_overlap(struct application *ap, struct partition *ph, struct region *r1, struct region *r2, struct partition *hp)
+hit_overlap(struct application *UNUSED(ap), struct partition *UNUSED(ph), struct region *UNUSED(r1), struct region *UNUSED(r2), struct partition *UNUSED(hp))
 {
     return 0;		/* never a hit */
 }
@@ -122,24 +122,29 @@ hit_overlap(struct application *ap, struct partition *ph, struct region *r1, str
  * F _ H I D E L I N E
  */
 int
-f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_hideline(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
-    FILE *plotfp;
-    char visible;
-    int i, numobjs;
-    char *objname[MAXOBJECTS], title[1];
-    fastf_t len, u, step;
-    float ratio;
-    vect_t last_move;
-    struct rt_i *rtip;
-    struct resource resource;
+    FILE *plotfp = NULL;
+    char *objname[MAXOBJECTS] = {0};
+    char title[512] = {0};
+    char visible = 0;
+    fastf_t len = 0.0;
+    fastf_t ratio = 0.0;
+    fastf_t step = 0.0;
+    fastf_t u = 0.0;
+    int i = 0;
+    int numobjs = 0;
     struct application a;
-    vect_t temp;
-    vect_t last, dir;
-    struct bn_vlist *vp;
-    struct solid *sp;
+    struct bn_vlist *vp = NULL;
+    struct ged_display_list *gdlp = NULL;
+    struct ged_display_list *next_gdlp = NULL;
+    struct resource resource;
+    struct rt_i *rtip = NULL;
+    struct solid *sp = NULL;
+    vect_t dir = {0.0, 0.0, 0.0};
+    vect_t last = {0.0, 0.0, 0.0};
+    vect_t last_move = {0.0, 0.0, 0.0};
+    vect_t temp = {0.0, 0.0, 0.0};
 
     CHECK_DBI_NULL;
 
@@ -185,7 +190,7 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendResult(interp, "\t", objname[i], "\n", (char *)NULL);
 
     /* Initialization for librt */
-    if ((rtip = rt_dirbuild(dbip->dbi_filename, title, 0)) == RTI_NULL) {
+    if ((rtip = rt_dirbuild(dbip->dbi_filename, title, sizeof(title))) == RTI_NULL) {
 	Tcl_AppendResult(interp, "f_hideline: unable to open model file \"",
 			 dbip->dbi_filename, "\"\n", (char *)NULL);
 	return TCL_ERROR;
@@ -210,10 +215,11 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	epsilon = 0.1*view_state->vs_gvp->gv_scale;
     }
 
-    for (i = 0; i < numobjs; i++)
-	if (rt_gettree(rtip, objname[i]) == -1)
-	    Tcl_AppendResult(interp, "f_hideline: rt_gettree failed on \"",
-			     objname[i], "\"\n", (char *)NULL);
+    for (i = 0; i < numobjs; i++) {
+	if (rt_gettree(rtip, objname[i]) == -1) {
+	    Tcl_AppendResult(interp, "f_hideline: rt_gettree failed on \"", objname[i], "\"\n", (char *)NULL);
+	}
+    }
 
     /* Crawl along the vectors raytracing as we go */
     VSET(temp, 0.0, 0.0, -1.0);				/* looking at model */
@@ -232,7 +238,6 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    Tcl_AppendResult(interp, "Primitive\n", (char *)NULL);
 	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-		int i;
 		int nused = vp->nused;
 		int *cmd = vp->cmd;
 		point_t *pt = vp->pt;

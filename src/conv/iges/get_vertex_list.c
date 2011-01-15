@@ -1,7 +1,7 @@
 /*               G E T _ V E R T E X _ L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,47 +17,39 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file get_vertex_list.c
- *
- */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 struct iges_vertex_list *
-Get_vertex_list( vert_de )
-    int vert_de;
+Get_vertex_list(int vert_de)
 {
     struct iges_vertex_list *v_list;
 
-    if ( vertex_root == NULL )
-    {
-	vertex_root = Read_vertex_list( vert_de );
-	if ( vertex_root != NULL )
-	{
+    if (vertex_root == NULL) {
+	vertex_root = Read_vertex_list(vert_de);
+	if (vertex_root != NULL) {
 	    vertex_root->next = NULL;
 	    return vertex_root;
-	}
-	else
+	} else
 	    return (struct iges_vertex_list *)NULL;
-    }
-    else
-    {
+    } else {
 	v_list = vertex_root;
-	while ( v_list->next != NULL && v_list->vert_de != vert_de )
+	while (v_list->next != NULL && v_list->vert_de != vert_de)
 	    v_list = v_list->next;
     }
 
-    if ( v_list->vert_de == vert_de )
+    if (v_list->vert_de == vert_de)
 	return v_list;
 
-    v_list->next = Read_vertex_list( vert_de );
-    if ( v_list->next == NULL )
+    v_list->next = Read_vertex_list(vert_de);
+    if (v_list->next == NULL)
 	return (struct iges_vertex_list *)NULL;
     else
 	return v_list->next;
 
 }
+
 
 /*
  * Local Variables:

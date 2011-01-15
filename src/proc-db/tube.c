@@ -1,7 +1,7 @@
 /*                          T U B E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -95,7 +95,7 @@ double dxtab[] = {
 
 double projectile_pos;
 point_t sample[1024];
-int nsamples;
+size_t nsamples;
 
 double iradius, oradius;
 double length;

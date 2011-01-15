@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -492,13 +492,13 @@ main(int argc, char *argv[])
 	    }
 	    break;
 	case 'r':
-	    if (strcmp(ocastring, "resolve") == 0)
+	    if (BU_STR_EQUAL(ocastring, "resolve"))
 		overlap_claims = OVLP_RESOLVE;
-	    else if (strcmp(ocastring, "rebuild_fastgen") == 0)
+	    else if (BU_STR_EQUAL(ocastring, "rebuild_fastgen"))
 		overlap_claims = OVLP_REBUILD_FASTGEN;
-	    else if (strcmp(ocastring, "rebuild_all") == 0)
+	    else if (BU_STR_EQUAL(ocastring, "rebuild_all"))
 		overlap_claims = OVLP_REBUILD_ALL;
-	    else if (strcmp(ocastring, "retain") == 0)
+	    else if (BU_STR_EQUAL(ocastring, "retain"))
 		overlap_claims = OVLP_RETAIN;
 	    else {
 		fprintf(stderr,

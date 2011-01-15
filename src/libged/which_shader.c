@@ -1,7 +1,7 @@
 /*                         W H I C H _ S H A D E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ ged_which_shader(struct ged *gedp, int argc, const char *argv[])
     myArgv = (char **)argv;
     sflag = 0;
 
-    if (myArgc > 1 && strcmp(myArgv[1], "-s") == 0) {
+    if (myArgc > 1 && BU_STR_EQUAL(myArgv[1], "-s")) {
 	--myArgc;
 	++myArgv;
 	sflag = 1;

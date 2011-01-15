@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -304,7 +304,7 @@ wdb_track_cmd(struct rt_wdb *wdbp,
     ++arg;
     tr[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
-    if (tr[0] == tr[1]) {
+    if (EQUAL(tr[0], tr[1])) {
 	Tcl_AppendResult(interp, "MIN == MAX ... STOP\n", (char *)NULL);
 	edit_result = TCL_ERROR;
 	goto end;

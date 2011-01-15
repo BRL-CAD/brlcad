@@ -1,7 +1,7 @@
 /*                        S C R O L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -133,7 +133,7 @@ sl_halt_scroll(void)
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "knob zero");
-    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+    (void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
 
@@ -175,7 +175,7 @@ sl_tol(struct scroll_item *mptr, double val)
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
 
@@ -198,7 +198,7 @@ sl_atol(struct scroll_item *mptr, double val)
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*view_state->vs_gvp->gv_scale*base2local);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
 
@@ -218,7 +218,7 @@ sl_rrtol(struct scroll_item *mptr, double val)
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val * RATE_ROT_FACTOR);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
 
@@ -238,7 +238,7 @@ sl_artol(struct scroll_item *mptr, double val)
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*ABS_ROT_FACTOR);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
 
@@ -258,7 +258,7 @@ sl_adctol(struct scroll_item *mptr, double val)
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, 45.0 - val*45.0);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
 
@@ -278,7 +278,7 @@ sl_itol(struct scroll_item *mptr, double val)
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*GED_MAX);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 }
 
@@ -562,7 +562,7 @@ scroll_display(int y_top)
 		    break;
 		case 5:
 		    if (second_menu)
-			Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
+			Tcl_AppendResult(INTERP, "scroll_display: 2nd scroll menu is hosed\n",
 					 (char *)NULL);
 		    else {
 			if (EDIT_ROTATE && mged_variables->mv_transform == 'e') {
@@ -614,7 +614,7 @@ scroll_display(int y_top)
 		    break;
 		case 6:
 		    if (second_menu)
-			Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
+			Tcl_AppendResult(INTERP, "scroll_display: 2nd scroll menu is hosed\n",
 					 (char *)NULL);
 		    else {
 			if (EDIT_ROTATE && mged_variables->mv_transform == 'e') {
@@ -666,10 +666,10 @@ scroll_display(int y_top)
 		    break;
 		default:
 		    if (second_menu)
-			Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
+			Tcl_AppendResult(INTERP, "scroll_display: 2nd scroll menu is hosed\n",
 					 (char *)NULL);
 		    else
-			Tcl_AppendResult(interp, "scroll_display: first scroll menu is hosed\n",
+			Tcl_AppendResult(INTERP, "scroll_display: first scroll menu is hosed\n",
 					 (char *)NULL);
 	    }
 

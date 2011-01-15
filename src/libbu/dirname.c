@@ -1,7 +1,7 @@
 /*                      D I R N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,10 +37,10 @@ bu_dirname(const char *cp)
 
     /* Special cases */
     if (cp == NULL)  return bu_strdup(".");
-    if (strcmp(cp, SLASH) == 0)
+    if (BU_STR_EQUAL(cp, SLASH))
 	return bu_strdup(SLASH);
-    if (strcmp(cp, DOT) == 0 ||
-	strcmp(cp, DOTDOT) == 0 ||
+    if (BU_STR_EQUAL(cp, DOT) ||
+	BU_STR_EQUAL(cp, DOTDOT) ||
 	strrchr(cp, '/') == NULL)
 	return bu_strdup(DOT);
 

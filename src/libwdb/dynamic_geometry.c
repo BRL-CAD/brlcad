@@ -1,7 +1,7 @@
 /*              D Y N A M I C _ G E O M E T R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2010 United States Government as represented by
+ * Copyright (c) 2003-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -226,7 +226,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 							 */
 {
     struct bu_vls tmp_name;
-    int i, base_len, count=0;
+    size_t i, base_len, count=0;
     struct directory *dp;
     struct rt_db_internal intern;
     struct soltab *stp;

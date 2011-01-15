@@ -1,7 +1,7 @@
 /*                        C A T - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,6 +54,7 @@
 /* The vfonts are scaled for 200 dpi */
 #define CONVERT(n)		((n)*(200./432.))
 #define RECONVERT(n)		((n)*(432./200.))
+#define COMMA ','
 
 
 unsigned char	*scanline;
@@ -156,7 +157,7 @@ char	asctab[128] = {
     '.',	/*.*/
     'g',	/*g*/
     '\023',	/*3/4*/
-    ',',	/*,*/
+    COMMA,	/*,*/
     '&',	/*&*/
     'y',	/*y*/
     '\0',	/*blank*/
@@ -763,7 +764,7 @@ readinfont(void)
     cfont = relfont();
 
     fontdes[cfont].fnum = fnum;
-    fontdes[cfont].psize = fontdes[cfont].psize = size;
+    fontdes[cfont].psize = size;
     fontdes[cfont].vfp = vfp;
     if (debug) fprintf(stderr, "slot %d = %s\n", cfont, cbuf );
 
@@ -928,6 +929,7 @@ writelines(int nlines, char *buf)
     int	l;
 
     for (l = 0; l < nlines; l++)  {
+	size_t ret;
 	if (cur_fb_line < 0 )  {
 	    /* Ran off bottom of screen */
 	    if ( fbp )
@@ -959,10 +961,15 @@ writelines(int nlines, char *buf)
 	    }
 	    buf++;
 	}
-	if ( output_pix )
-	    fwrite( scanline, scr_width*3, 1, stdout );
-	else
-	    fb_write( fbp, 0, cur_fb_line, scanline, scr_width );
+	if ( output_pix ) {
+	    ret = fwrite( scanline, scr_width*3, 1, stdout );
+	    if (ret != 1)
+		perror("fwrite");
+	} else {
+	    ret = fb_write( fbp, 0, cur_fb_line, scanline, scr_width );
+	    if (ret != (size_t)scanline)
+		perror("fwrite");
+	}
 	cur_fb_line--;
     }
     return 0;

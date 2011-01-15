@@ -1,7 +1,7 @@
 /*                          P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -785,7 +785,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	return 1;
     }
 
-    snprintf(buf, BUF_SZ, "Total number of points: %lu\nDefault scale: %f\n", pnts->count, pnts->scale);
+    snprintf(buf, BUF_SZ, "Total number of points: %lu\nDefault scale: %f\n", (long unsigned)pnts->count, pnts->scale);
     bu_vls_strcat(str, buf);
 
     loop_counter = 1;
@@ -795,7 +795,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	    bu_vls_strcat(str, "point#, (point)\n");
 	    for (BU_LIST_FOR(point, pnt, &(((struct pnt *)pnts->point)->l))) {
 		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f)\n",
-			 loop_counter,
+			 (long unsigned)loop_counter,
 			 point->v[X] * mm2local,
 			 point->v[Y] * mm2local,
 			 point->v[Z] * mm2local);
@@ -809,7 +809,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	    bu_vls_strcat(str, "point#, (point), (color)\n");
 	    for (BU_LIST_FOR(point, pnt_color, &(((struct pnt_color *)pnts->point)->l))) {
 		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f %f %f)\n",
-			 loop_counter,
+			 (long unsigned)loop_counter,
 			 point->v[X] * mm2local,
 			 point->v[Y] * mm2local,
 			 point->v[Z] * mm2local,
@@ -826,7 +826,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	    bu_vls_strcat(str, "point#, (point), (scale)\n");
 	    for (BU_LIST_FOR(point, pnt_scale, &(((struct pnt_scale *)pnts->point)->l))) {
 		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f)\n",
-			 loop_counter,
+			 (long unsigned)loop_counter,
 			 point->v[X] * mm2local,
 			 point->v[Y] * mm2local,
 			 point->v[Z] * mm2local,
@@ -841,7 +841,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	    bu_vls_strcat(str, "point#, (point), (normal)\n");
 	    for (BU_LIST_FOR(point, pnt_normal, &(((struct pnt_normal *)pnts->point)->l))) {
 		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f %f %f)\n",
-			 loop_counter,
+			 (long unsigned)loop_counter,
 			 point->v[X] * mm2local,
 			 point->v[Y] * mm2local,
 			 point->v[Z] * mm2local,
@@ -858,7 +858,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	    bu_vls_strcat(str, "point#, (point), (color), (scale)\n");
 	    for (BU_LIST_FOR(point, pnt_color_scale, &(((struct pnt_color_scale *)pnts->point)->l))) {
 		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f %f %f), (%f)\n",
-			 loop_counter,
+			 (long unsigned)loop_counter,
 			 point->v[X] * mm2local,
 			 point->v[Y] * mm2local,
 			 point->v[Z] * mm2local,
@@ -876,7 +876,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	    bu_vls_strcat(str, "point#, (point), (color), (normal)\n");
 	    for (BU_LIST_FOR(point, pnt_color_normal, &(((struct pnt_color_normal *)pnts->point)->l))) {
 		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f %f %f), (%f %f %f)\n",
-			 loop_counter,
+			 (long unsigned)loop_counter,
 			 point->v[X] * mm2local,
 			 point->v[Y] * mm2local,
 			 point->v[Z] * mm2local,
@@ -896,7 +896,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	    bu_vls_strcat(str, "point#, (point), (scale), (normal)\n");
 	    for (BU_LIST_FOR(point, pnt_scale_normal, &(((struct pnt_scale_normal *)pnts->point)->l))) {
 		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f), (%f %f %f)\n",
-			 loop_counter,
+			 (long unsigned)loop_counter,
 			 point->v[X] * mm2local,
 			 point->v[Y] * mm2local,
 			 point->v[Z] * mm2local,
@@ -914,7 +914,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	    bu_vls_strcat(str, "point#, (point), (color), (scale), (normal)\n");
 	    for (BU_LIST_FOR(point, pnt_color_scale_normal, &(((struct pnt_color_scale_normal *)pnts->point)->l))) {
 		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f %f %f), (%f), (%f %f %f)\n",
-			 loop_counter,
+			 (long unsigned)loop_counter,
 			 point->v[X] * mm2local,
 			 point->v[Y] * mm2local,
 			 point->v[Z] * mm2local,

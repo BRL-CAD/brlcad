@@ -1,7 +1,7 @@
 /*                         F I N D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ find_ref(struct db_i *dbip,
     RT_CK_TREE(comb_leaf);
 
     obj_name = (char *)object;
-    if (strcmp(comb_leaf->tr_l.tl_name, obj_name))
+    if (!BU_STR_EQUAL(comb_leaf->tr_l.tl_name, obj_name))
 	return;
 
     comb_name = (char *)comb_name_ptr;

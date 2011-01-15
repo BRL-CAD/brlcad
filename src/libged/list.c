@@ -1,7 +1,7 @@
 /*                         L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc > 1 && strcmp(argv[1], "-r") == 0) {
+    if (argc > 1 && BU_STR_EQUAL(argv[1], "-r")) {
 	recurse = 1;
 
 	/* skip past used args */
@@ -144,7 +144,7 @@ _ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
 	    return;
 	}
 	for (BU_AVS_FOR( avp, &avs)) {
-	    if (!strcmp(avp->name, "units")) {
+	    if (BU_STR_EQUAL(avp->name, "units")) {
 		double conv;
 		const char *str;
 

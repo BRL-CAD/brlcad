@@ -1,7 +1,7 @@
 /*                         I H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,9 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu.h"
+
+
 long	bits[16] = {0};
 long	values[65536] = {0};
 long	*zerop;
@@ -46,7 +49,7 @@ int main(int argc, char **argv)
     long	num, levels=0;
 
     while ( argc > 1 ) {
-	if ( strcmp( argv[1], "-v" ) == 0 ) {
+	if ( BU_STR_EQUAL( argv[1], "-v" ) ) {
 	    verbose++;
 	} else
 	    break;

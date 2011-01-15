@@ -1,7 +1,7 @@
 /*                         R O T A T E _ A R B _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -199,7 +199,6 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
     (void)rt_arb_calc_points(arb, arb_type, planes, &gedp->ged_wdbp->wdb_tol);
 
     {
-	int i;
 	mat_t invmat;
 
 	bn_mat_inv(invmat, mat);

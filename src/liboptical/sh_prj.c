@@ -1,7 +1,7 @@
 /*                        S H _ P R J . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -230,7 +230,7 @@ dimen_hook(register const struct bu_structparse *sdp, register const char *name,
     /* begining of structure */
     /* string containing value */
 {
-    if (! strcmp("%f", sdp->sp_fmt)) {
+    if (BU_STR_EQUAL("%f", sdp->sp_fmt)) {
 	fastf_t *f;
 	f = (fastf_t *)(base + sdp->sp_offset);
 	if (*f < 0.0) {
@@ -238,7 +238,7 @@ dimen_hook(register const struct bu_structparse *sdp, register const char *name,
 		   sdp->sp_name, *f, value);
 	    bu_bomb("");
 	}
-    } else if (! strcmp("%d", sdp->sp_fmt)) {
+    } else if (BU_STR_EQUAL("%d", sdp->sp_fmt)) {
 	int *i;
 	i = (int *)(base + sdp->sp_offset);
 	if (*i < 0) {

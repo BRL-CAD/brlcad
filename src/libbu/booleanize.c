@@ -1,7 +1,7 @@
 /*                    B O O L E A N I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2010 United States Government as represented by
+ * Copyright (c) 2010-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,8 @@
 #include <string.h>
 #include <errno.h>
 
+#include "bu.h"
+
 
 int
 bu_booleanize(const char *str)
@@ -46,7 +48,7 @@ bu_booleanize(const char *str)
 	return 0;
 
     /* exactly "0" */
-    if (strcmp(str, "0") == 0)
+    if (BU_STR_EQUAL(str, "0"))
 	return 0;
 
     /* variant of "0" (e.g., 000) */

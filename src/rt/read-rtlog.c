@@ -1,7 +1,7 @@
 /*                    R E A D - R T L O G . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2010 United States Government as represented by
+ * Copyright (c) 1991-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -183,14 +183,14 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	 * the address of the location must be provided: &eye_pos[0].
 	 */
 
-	if (strcmp(string, "View") == 0) {
+	if (BU_STR_EQUAL(string, "View")) {
 	    num = sscanf(arg_ptr, "%lf %9s %lf", &azimuth, forget_it, &elevation);
 	    if (num != 3) {
 		fprintf(stderr, "View= %.6f %s %.6f elevation\n", azimuth, forget_it, elevation);
 		return -1;
 	    }
 	    seen_view = 1;
-	} else if (strcmp(string, "Orientation") == 0) {
+	} else if (BU_STR_EQUAL(string, "Orientation")) {
 	    num = sscanf(arg_ptr, "%lf, %lf, %lf, %lf",
 			 &orientation[0], &orientation[1], &orientation[2],
 			 &orientation[3]);
@@ -201,7 +201,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 		return -1;
 	    }
 	    seen_orientation = 1;
-	} else if (strcmp(string, "Eye_pos") == 0) {
+	} else if (BU_STR_EQUAL(string, "Eye_pos")) {
 	    num = sscanf(arg_ptr, "%lf, %lf, %lf", &eye_pos[0],
 			 &eye_pos[1], &eye_pos[2]);
 	    if (num != 3) {
@@ -210,7 +210,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 		return -1;
 	    }
 	    seen_eye_pos = 1;
-	} else if (strcmp(string, "Size") == 0) {
+	} else if (BU_STR_EQUAL(string, "Size")) {
 	    num = sscanf(arg_ptr, "%lf", &m_size);
 	    if (num != 1) {
 		fprintf(stderr, "Size=%.6f\n", m_size);

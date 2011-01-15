@@ -1,7 +1,7 @@
 /*                     S S A M P V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -639,7 +639,7 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    if (argc > 1 && strcmp(argv[1], "-t") == 0) {
+    if (argc > 1 && BU_STR_EQUAL(argv[1], "-t")) {
     }
 
     datafile_basename = argv[bu_optind];

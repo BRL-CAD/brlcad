@@ -1,7 +1,7 @@
 /*                         T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 
 static void
 ged_do_trace(struct db_i		*dbip,
-	     struct rt_comb_internal	*comb,
+	     struct rt_comb_internal	*UNUSED(comb),
 	     union tree			*comb_leaf,
 	     genptr_t			user_ptr1,
 	     genptr_t			user_ptr2,

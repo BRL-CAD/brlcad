@@ -1,7 +1,7 @@
 /*                           V L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -453,7 +453,7 @@ bu_vls_strcmp(struct bu_vls *s1, struct bu_vls *s2)
     }
 
     /* neither empty, straight up comparison */
-    return strcmp(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset);
+    return !BU_STR_EQUAL(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset);
 }
 
 

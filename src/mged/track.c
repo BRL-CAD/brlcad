@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,6 @@
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-extern void aexists(char *name);
 
 static int Trackpos = 0;
 static fastf_t plano[4], plant[4];
@@ -69,7 +68,7 @@ void itoa(int n, char *s, int w);
  *
  */
 int
-f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
 
     fastf_t fw[3], lw[3], iw[3], dw[3], tr[3];
@@ -250,12 +249,12 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
     tr[1] = atof(argv[arg]) * local2base;
     ++arg;
-    if (tr[0] == tr[1]) {
+    if (EQUAL(tr[0], tr[1])) {
 	Tcl_AppendResult(interp, "MIN == MAX ... STOP\n", (char *)NULL);
 	edit_result = TCL_ERROR;
 	goto end;
     }
-    if (tr[0] > tr[1]) {
+    if (tr[0] > tr[1] - SMALL_FASTF) {
 	Tcl_AppendResult(interp, "MIN > MAX .... will switch\n", (char *)NULL);
 	tr[1] = tr[0];
 	tr[0] = tr[2];
@@ -578,13 +577,13 @@ wrobj(char name[], int flags)
 	return 0;
 
     if (db_lookup(dbip, name, LOOKUP_QUIET) != DIR_NULL) {
-	Tcl_AppendResult(interp, "track naming error: ", name,
+	Tcl_AppendResult(INTERP, "track naming error: ", name,
 			 " already exists\n", (char *)NULL);
 	return -1;
     }
 
     if (flags != DIR_SOLID) {
-	Tcl_AppendResult(interp, "wrobj can only write solids, aborting\n");
+	Tcl_AppendResult(INTERP, "wrobj can only write solids, aborting\n");
 	return -1;
     }
 
@@ -630,19 +629,19 @@ wrobj(char name[], int flags)
 	    }
 	    break;
 	default:
-	    Tcl_AppendResult(interp, "Unrecognized solid type in 'wrobj', aborting\n", (char *)NULL);
+	    Tcl_AppendResult(INTERP, "Unrecognized solid type in 'wrobj', aborting\n", (char *)NULL);
 	    return -1;
     }
 
     if ((tdp = db_diradd(dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	rt_db_free_internal(&intern);
-	Tcl_AppendResult(interp, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL);
 	return -1;
     }
 
     if (rt_db_put_internal(tdp, dbip, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern);
-	Tcl_AppendResult(interp, "wrobj(", name, "):  write error\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "wrobj(", name, "):  write error\n", (char *)NULL);
 	TCL_ERROR_RECOVERY_SUGGESTION;
 	return -1;
     }
@@ -665,7 +664,7 @@ tancir(fastf_t *cir1, fastf_t *cir2)
     if (mag > 1.0e-20 || mag < -1.0e-20) {
 	f = 1.0/mag;
     } else {
-	Tcl_AppendResult(interp, "tancir():  0-length vector!\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "tancir():  0-length vector!\n", (char *)NULL);
 	return;
     }
     VSCALE(work, work, f);
@@ -886,7 +885,7 @@ crregion(char *region, char *op, int *members, int number, char *solidname, int 
 	solidname[8] = '\0';
 	crname(solidname, members[i], maxlen);
 	if (db_lookup(dbip, solidname, LOOKUP_QUIET) == DIR_NULL) {
-	    Tcl_AppendResult(interp, "region: ", region, " will skip member: ",
+	    Tcl_AppendResult(INTERP, "region: ", region, " will skip member: ",
 			     solidname, "\n", (char *)NULL);
 	    continue;
 	}
@@ -916,7 +915,7 @@ itoa(int n, char *s, int w)
      */
     for (j = i; j < w; j++) s[j] = ' ';
     if (i > w)
-	Tcl_AppendResult(interp, "itoa: field length too small\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "itoa: field length too small\n", (char *)NULL);
     s[w] = '\0';
     /* reverse the array
      */

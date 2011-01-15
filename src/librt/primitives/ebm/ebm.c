@@ -1,7 +1,7 @@
 /*                           E B M . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -218,7 +218,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     double tmax;	/* out point of entire grid */
     vect_t t;		/* next t value for XYZ cell plane intersect */
     vect_t delta;	/* spacing of XYZ cell planes along ray */
-    int igrid[3];	/* Grid cell coordinates of cell (integerized) */
+    size_t igrid[3];	/* Grid cell coordinates of cell (integerized) */
     vect_t P;		/* hit point */
     int inside;		/* inside/outside a solid flag */
     int in_index;
@@ -264,14 +264,10 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     /* find grid cell where ray first hits ideal space bounding RPP */
     igrid[X] = (P[X] - ebmp->ebm_origin[X]) / ebmp->ebm_cellsize[X];
     igrid[Y] = (P[Y] - ebmp->ebm_origin[Y]) / ebmp->ebm_cellsize[Y];
-    if (igrid[X] < 0) {
-	igrid[X] = 0;
-    } else if (igrid[X] >= ebmp->ebm_i.xdim) {
+    if (igrid[X] >= ebmp->ebm_i.xdim) {
 	igrid[X] = ebmp->ebm_i.xdim-1;
     }
-    if (igrid[Y] < 0) {
-	igrid[Y] = 0;
-    } else if (igrid[Y] >= ebmp->ebm_i.ydim) {
+    if (igrid[Y] >= ebmp->ebm_i.ydim) {
 	igrid[Y] = ebmp->ebm_i.ydim-1;
     }
     if (RT_G_DEBUG&DEBUG_EBM)bu_log("g[X] = %d, g[Y] = %d\n", igrid[X], igrid[Y]);
@@ -589,7 +585,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* If first use of this file, prepare in-memory buffer */
     if (!mp->apbuf) {
-	register int y;
+	size_t y;
 	unsigned char *cp;
 
 	/* Prevent a multi-processor race */
@@ -736,7 +732,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* If first use of this file, prepare in-memory buffer */
     if (!mp->apbuf) {
-	register int y;
+	size_t y;
 	unsigned char *cp;
 
 	/* Prevent a multi-processor race */
@@ -1134,7 +1130,7 @@ int
 rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     register struct rt_ebm_internal *eip;
-    register int x, y;
+    size_t x, y;
     register int following;
     register int base;
 
@@ -1370,14 +1366,14 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct rt_ebm_internal *eip;
     struct shell *s;
     struct faceuse *fu=(struct faceuse*)NULL;
-    register int i;
     struct vertex ***vertp;	/* dynam array of ptrs to pointers */
     struct vertex **loop_verts;
     struct ebm_edge edges;		/* list of edges */
     struct ebm_edge *e, *start_loop;
-    int start, x, y, left;
-    int max_loop_length;
-    int loop_length;
+    size_t i;
+    size_t start, x, y, left;
+    size_t max_loop_length;
+    size_t loop_length;
     vect_t height, h;
 
     BN_CK_TOL(tol);
@@ -1590,15 +1586,15 @@ rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	for (i=0; i<16; i++)
 	    bu_vls_printf(logstr, " %.25g", ebm->mat[i]);
 	bu_vls_printf(logstr, " }");
-    } else if (!strcmp(attr, "F")) {
+    } else if (BU_STR_EQUAL(attr, "F")) {
 	bu_vls_printf(logstr, "%s", ebm->file);
-    } else if (!strcmp(attr, "W")) {
+    } else if (BU_STR_EQUAL(attr, "W")) {
 	bu_vls_printf(logstr, "%d", ebm->xdim);
-    } else if (!strcmp(attr, "N")) {
+    } else if (BU_STR_EQUAL(attr, "N")) {
 	bu_vls_printf(logstr, "%d", ebm->ydim);
-    } else if (!strcmp(attr, "H")) {
+    } else if (BU_STR_EQUAL(attr, "H")) {
 	bu_vls_printf(logstr, "%.25g", ebm->tallness);
-    } else if (!strcmp(attr, "M")) {
+    } else if (BU_STR_EQUAL(attr, "M")) {
 	for (i=0; i<16; i++)
 	    bu_vls_printf(logstr, "%.25g ", ebm->mat[i]);
     } else {
@@ -1623,7 +1619,7 @@ rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
  * "M" - matrix to transform EBM solid into model coordinates
  */
 int
-rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_ebm_internal *ebm;
 
@@ -1633,19 +1629,19 @@ rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
     RT_EBM_CK_MAGIC(ebm);
 
     while (argc >= 2) {
-	if (!strcmp(argv[0], "F")) {
+	if (BU_STR_EQUAL(argv[0], "F")) {
 	    if (strlen(argv[1]) >= RT_EBM_NAME_LEN) {
 		bu_vls_printf(logstr, "ERROR: File name too long");
 		return BRLCAD_ERROR;
 	    }
 	    bu_strlcpy(ebm->file, argv[1], RT_EBM_NAME_LEN);
-	} else if (!strcmp(argv[0], "W")) {
+	} else if (BU_STR_EQUAL(argv[0], "W")) {
 	    ebm->xdim = atoi(argv[1]);
-	} else if (!strcmp(argv[0], "N")) {
+	} else if (BU_STR_EQUAL(argv[0], "N")) {
 	    ebm->ydim = atoi(argv[1]);
-	} else if (!strcmp(argv[0], "H")) {
+	} else if (BU_STR_EQUAL(argv[0], "H")) {
 	    ebm->tallness = atof(argv[1]);
-	} else if (!strcmp(argv[0], "M")) {
+	} else if (BU_STR_EQUAL(argv[0], "M")) {
 	    int len=16;
 	    fastf_t array[16];
 	    fastf_t *ar_ptr;

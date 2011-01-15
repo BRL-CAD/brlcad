@@ -2,7 +2,7 @@
 #                   C O N V E R S I O N . S H
 # BRL-CAD
 #
-# Copyright (c) 2010 United States Government as represented by
+# Copyright (c) 2010-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,9 @@ fi
 LC_ALL=C
 
 # force posix behavior
-set -o posix >/dev/null 2>&1
+POSIX_PEDANTIC=1
+POSIXLY_CORRECT=1
+export POSIX_PEDANTIC POSIXLY_CORRECT
 
 
 #######################
@@ -497,7 +499,7 @@ EOF
 	fi
 
 	count=`expr $count + 1`
-	$ECHO "%-4s\tnmg: %s %s\tbot: %s %s %6lds %*s%ld %s:%s" $status $nmg $real_nmg $bot $real_bot $SECONDS \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
+	$ECHO "%-4s\tnmg: %s %s\tbot: %s %s %6.0fs %*s%.0f %s:%s" \"$status\" \"$nmg\" \"$real_nmg\" \"$bot\" \"$real_bot\" \"$SECONDS\" \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
     done
 
     # restore stdin
@@ -532,14 +534,14 @@ $ECHO "... Done."
 $ECHO
 $ECHO "Summary:"
 $ECHO
-$ECHO "   Files:  %ld" $files
-$ECHO " Objects:  %ld" $count
-$ECHO "Failures:  %ld NMG, %ld BoT" $nmg_fail $bot_fail
-$ECHO "NMG conversion:  %.1f%%  (%ld of %ld objects)" $nmg_percent $nmg_count $count
-$ECHO "BoT conversion:  %.1f%%  (%ld of %ld objects)" $bot_percent $bot_count $count
+$ECHO "   Files:  %.0f" $files
+$ECHO " Objects:  %.0f" $count
+$ECHO "Failures:  %.0f NMG, %.0f BoT" $nmg_fail $bot_fail
+$ECHO "NMG conversion:  %.1f%%  (%.0f of %.0f objects)" $nmg_percent $nmg_count $count
+$ECHO "BoT conversion:  %.1f%%  (%.0f of %.0f objects)" $bot_percent $bot_count $count
 $ECHO "  Success rate:  %.1f%%" $rate
 $ECHO
-$ECHO "Elapsed:  %d seconds" $elp
+$ECHO "Elapsed:  %.0f seconds" $elp
 $ECHO "Average:  %.1f seconds per object" $avg
 $ECHO
 $ECHO "Finished running $THIS on `date`"

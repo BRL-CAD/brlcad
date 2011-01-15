@@ -90,7 +90,7 @@ Generic Binary Distributions:
 For the unspecialized binary distributions that are basically
 compressed tarballs of the installation root, they should contain the
 entire hierarchy of the distribution.  That is to say that they
-contain /usr/brlcad in it's entirety so that if you decompress, you
+contain /usr/brlcad in its entirety so that if you decompress, you
 will have a `usr' directory that contains a single `brlcad' directory:
 
 gunzip brlcad-7.2.4_linux_ia64.tar.gz
@@ -123,13 +123,13 @@ path) as described in this document's Installation Options section.
 INSTALLING FROM SOURCE
 ----------------------
 
-There are a couple means to obtain the BRL-CAD sources, usually via
+There are a couple of ways to obtain the BRL-CAD sources, usually via
 one of the following starting points:
 
   1) from a SVN checkout/export, or
   2) from a source distribution tarball
 
-Using the latest SVN sources is recommended where possible, since it
+Using the latest SVN sources is recommended where possible since it
 will have the latest changes.  See the corresponding section below for
 details on how to install from either starting point.
 

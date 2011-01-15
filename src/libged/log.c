@@ -1,7 +1,7 @@
 /*                           L O G . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,17 +68,17 @@ ged_log(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (argv[1][0] == 'g' && !strcmp(argv[1], "get")) {
+    if (argv[1][0] == 'g' && BU_STR_EQUAL(argv[1], "get")) {
 	bu_vls_vlscatzap(&gedp->ged_result_str, &gedp->ged_log);
 	return GED_OK;
     }
 
-    if (argv[1][0] == 's' && !strcmp(argv[1], "start")) {
+    if (argv[1][0] == 's' && BU_STR_EQUAL(argv[1], "start")) {
 	bu_log_add_hook(ged_logHook, (genptr_t)&gedp->ged_log);
 	return GED_OK;
     }
 
-    if (argv[1][0] == 's' && !strcmp(argv[1], "stop")) {
+    if (argv[1][0] == 's' && BU_STR_EQUAL(argv[1], "stop")) {
 	bu_log_delete_hook(ged_logHook, (genptr_t)&gedp->ged_log);
 	return GED_OK;
     }

@@ -1,7 +1,7 @@
 /*                       G E D . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2010 United States Government as represented by
+ * Copyright (c) 2000-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -242,7 +242,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     save_materp = rt_material_head();
     rt_new_material_head(MATER_NULL);
 
-    if (strcmp(dbtype, "db") == 0) {
+    if (BU_STR_EQUAL(dbtype, "db")) {
 	struct db_i	*dbip;
 
 	if ((dbip = _ged_open_dbip(filename, existing_only)) == DBI_NULL) {
@@ -255,7 +255,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	RT_CK_DBI(dbip);
 
 	wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-    } else if (strcmp(dbtype, "file") == 0) {
+    } else if (BU_STR_EQUAL(dbtype, "file")) {
 	wdbp = wdb_fopen(filename);
     } else {
 	struct db_i	*dbip;
@@ -299,13 +299,13 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	/* Could core dump */
 	RT_CK_DBI(dbip);
 
-	if (strcmp(dbtype, "disk" ) == 0)
+	if (BU_STR_EQUAL(dbtype, "disk" ))
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-	else if (strcmp(dbtype, "disk_append") == 0)
+	else if (BU_STR_EQUAL(dbtype, "disk_append"))
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
-	else if (strcmp(dbtype, "inmem" ) == 0)
+	else if (BU_STR_EQUAL(dbtype, "inmem" ))
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
-	else if (strcmp(dbtype, "inmem_append" ) == 0)
+	else if (BU_STR_EQUAL(dbtype, "inmem_append" ))
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
 	else {
 	    /* Restore RT's material head */

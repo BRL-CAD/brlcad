@@ -1,7 +1,7 @@
 /*                         E R A S E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ void ged_splitGDL(struct ged *gedp, struct ged_display_list *gdlp, struct db_ful
 int
 ged_erase(struct ged *gedp, int argc, const char *argv[])
 {
-    int i;
+    size_t i;
     int flag_A_attr=0;
     int flag_o_nonunique=1;
     int last_opt=0;
@@ -255,7 +255,7 @@ ged_erasePathFromDisplay(struct ged *gedp,
     while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	if (!strcmp(path, bu_vls_addr(&gdlp->gdl_path))) {
+	if (BU_STR_EQUAL(path, bu_vls_addr(&gdlp->gdl_path))) {
 	    /* Free up the solids list associated with this display list */
 	    while (BU_LIST_WHILE(sp, solid, &gdlp->gdl_headSolid)) {
 		dp = FIRST_SOLID(sp);
@@ -376,7 +376,7 @@ _ged_eraseAllNamesFromDisplay(struct ged *gedp,
 		}
 	    }
 
-	    if (!strcmp(tok, name)) {
+	    if (BU_STR_EQUAL(tok, name)) {
 		_ged_freeDisplayListItem(gedp, gdlp);
 		found = 1;
 

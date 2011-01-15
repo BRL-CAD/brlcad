@@ -1,7 +1,7 @@
 /*                           D S P . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2010 United States Government as represented by
+ * Copyright (c) 1999-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -4594,7 +4594,7 @@ hook_verify(const struct bu_structparse *sp,
 
     if (!sp || !sp_name || !base) return;
 
-    if (!strcmp(sp_name, "src")) {
+    if (BU_STR_EQUAL(sp_name, "src")) {
 	switch (dsp_ip->dsp_datasrc) {
 	    case RT_DSP_SRC_V4_FILE:
 	    case RT_DSP_SRC_FILE:
@@ -4608,13 +4608,13 @@ hook_verify(const struct bu_structparse *sp,
 		break;
 	}
 
-    } else if (!strcmp(sp_name, "w")) {
+    } else if (BU_STR_EQUAL(sp_name, "w")) {
 	if (dsp_ip->dsp_xcnt == 0)
 	    bu_log("Error in DSP width dimension (0)\n");
-    } else if (!strcmp(sp_name, "n")) {
+    } else if (BU_STR_EQUAL(sp_name, "n")) {
 	if (dsp_ip->dsp_ycnt == 0)
 	    bu_log("Error in DSP width dimension (0)\n");
-    } else if (!strcmp(sp_name, "cut")) {
+    } else if (BU_STR_EQUAL(sp_name, "cut")) {
 	switch (dsp_ip->dsp_cuttype) {
 	    case DSP_CUT_DIR_ADAPT:
 	    case DSP_CUT_DIR_llUR:
@@ -4721,7 +4721,7 @@ rt_dsp_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
  * rt_functab[].ft_adjust()
  */
 int
-rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     register const struct bu_structparse *sp = NULL;
     const struct rt_dsp_internal *dsp_ip;
@@ -4742,8 +4742,7 @@ rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
 
     if (! sp) return BRLCAD_ERROR;
 
-    return bu_structparse_argv(logstr, argc, argv, sp,
-			       (char *)intern->idb_ptr);
+    return bu_structparse_argv(logstr, argc, argv, sp, (char *)intern->idb_ptr);
 }
 
 

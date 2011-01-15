@@ -1,7 +1,7 @@
 /*                    M A P P E D F I L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,8 +70,8 @@ bu_open_mapped_file(const char *name, const char *appl)
     }
     for (BU_LIST_FOR(mp, bu_mapped_file, &bu_mapped_file_list)) {
 	BU_CK_MAPPED_FILE(mp);
-	if (strcmp(name, mp->name))  continue;
-	if (appl && strcmp(appl, mp->appl))
+	if (!BU_STR_EQUAL(name, mp->name))  continue;
+	if (appl && !BU_STR_EQUAL(appl, mp->appl))
 	    continue;
 	/* File is already mapped -- verify size and modtime */
 #ifdef HAVE_SYS_STAT_H

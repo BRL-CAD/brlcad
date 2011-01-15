@@ -1,7 +1,7 @@
 /*                          F E N C E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1864,7 +1864,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for fence name\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    bu_strlcpy(fenceName, verboseinput, DEFAULT_MAXNAMELENGTH);
 		}
 	    }
@@ -1880,7 +1880,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for start position\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    sscanf(verboseinput, "%lf%lf%lf", &fenceStartPosition[0], &fenceStartPosition[1], &fenceStartPosition[2]);
 		}
 	    }
@@ -1896,7 +1896,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for end position\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    sscanf(verboseinput, "%lf%lf%lf", &fenceEndPosition[0], &fenceEndPosition[1], &fenceEndPosition[2]);
 		}
 	    }
@@ -1912,7 +1912,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for fence height\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    sscanf(verboseinput, "%lf%lf%lf", &fenceHeight[0], &fenceHeight[1], &fenceHeight[2]);
 		}
 	    }
@@ -1939,7 +1939,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for fence material\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    bu_strlcpy(fenceMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 		}
 	    }
@@ -1955,7 +1955,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for fence material params\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    bu_strlcpy(fenceMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 		}
 	    }
@@ -1971,7 +1971,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for fence material color\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    sscanf(verboseinput, "%d%d%d", &colorinput[0], &colorinput[1], &colorinput[2]);
 
 		    if ((colorinput[0]<0)|(colorinput[1]<0)|(colorinput[2]<0)) {
@@ -2006,7 +2006,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole name\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    bu_strlcpy(poleName, verboseinput, DEFAULT_MAXNAMELENGTH);
 		}
 	    }
@@ -2022,7 +2022,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole height\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    sscanf(verboseinput, "%lf", &poleHeight);
 		}
 	    }
@@ -2038,7 +2038,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole radius\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    sscanf(verboseinput, "%lf", &poleRadius);
 		}
 	    }
@@ -2054,7 +2054,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole spacing\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    sscanf(verboseinput, "%lf", &fencePoleSpacing);
 		}
 	    }
@@ -2070,7 +2070,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole material\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    bu_strlcpy(poleMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 		}
 	    }
@@ -2086,7 +2086,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole material params\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    bu_strlcpy(poleMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 		}
 	    }
@@ -2102,7 +2102,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole material color\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    sscanf(verboseinput, "%d%d%d", &colorinput[0], &colorinput[1], &colorinput[2]);
 
 		    if ((colorinput[0]<0)|(colorinput[1]<0)|(colorinput[2]<0)) {
@@ -2137,7 +2137,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh name\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    bu_strlcpy(meshName, verboseinput, DEFAULT_MAXNAMELENGTH);
 		}
 	    }
@@ -2153,7 +2153,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh height\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    sscanf(verboseinput, "%lf", &meshHeight);
 		}
 	    }
@@ -2169,7 +2169,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh width\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    sscanf(verboseinput, "%lf", &meshWidth);
 		}
 	    }
@@ -2185,7 +2185,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh material\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    bu_strlcpy(meshMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 		}
 	    }
@@ -2201,7 +2201,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh material params\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    bu_strlcpy(meshMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 		}
 	    }
@@ -2217,7 +2217,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh material color\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    sscanf(verboseinput, "%d%d%d", &colorinput[0], &colorinput[1], &colorinput[2]);
 
 		    if ((colorinput[0]<0)|(colorinput[1]<0)|(colorinput[2]<0)) {
@@ -2252,7 +2252,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire name\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    bu_strlcpy(wireName, verboseinput, DEFAULT_MAXNAMELENGTH);
 		}
 	    }
@@ -2268,7 +2268,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] wire radius\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    sscanf(verboseinput, "%lf", &wireRadius);
 		}
 	    }
@@ -2284,7 +2284,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire angle\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    sscanf(verboseinput, "%lf", &wireAngle);
 		}
 	    }
@@ -2300,7 +2300,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire material\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    bu_strlcpy(wireMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 		}
 	    }
@@ -2316,7 +2316,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire material params\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    bu_strlcpy(wireMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
 		}
 	    }
@@ -2332,7 +2332,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire material color\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    sscanf(verboseinput, "%d%d%d", &colorinput[0], &colorinput[1], &colorinput[2]);
 
 		    if ((colorinput[0]<0)|(colorinput[1]<0)|(colorinput[2]<0)) {
@@ -2364,7 +2364,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire segment length\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    sscanf(verboseinput, "%lf", &wireSegmentLength);
 		}
 	    }
@@ -2380,7 +2380,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire segment separation\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    sscanf(verboseinput, "%lf", &wireSegmentSeparation);
 		}
 	    }
@@ -2396,7 +2396,7 @@ int main(int argc, char **argv)
 		if (debug) {
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for segment name\n", verboseinput);
 		}
-		if (strcmp(verboseinput, "") != 0) {
+		if (!BU_STR_EQUAL(verboseinput, "")) {
 		    bu_strlcpy(segmentName, verboseinput, DEFAULT_MAXNAMELENGTH);
 		}
 	    }

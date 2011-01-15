@@ -1,7 +1,7 @@
 /*                       A S C - N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -261,7 +261,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 
 		    switch (token[0]) {
 			case 'h':	/* Is it cw or ccw? */
-			    if (!strcmp(token, "hole"))
+			    if (BU_STR_EQUAL(token, "hole"))
 				dir = OT_OPPOSITE;
 			    else
 				bu_exit(EXIT_FAILURE, "descr_to_nmg: expected \"hole\"\n");

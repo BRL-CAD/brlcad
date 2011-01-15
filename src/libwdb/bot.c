@@ -1,7 +1,7 @@
 /*                           B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2010 United States Government as represented by
+ * Copyright (c) 1999-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,8 +45,8 @@ mk_bot_w_normals(
     unsigned char mode,
     unsigned char orientation,
     unsigned char flags,
-    int num_vertices,
-    int num_faces,
+    size_t num_vertices,
+    size_t num_faces,
     fastf_t *vertices,	/* array of floats for vertices [num_vertices*3] */
     int *faces,		/* array of ints for faces [num_faces*3] */
     fastf_t *thickness,	/* array of plate mode thicknesses
@@ -58,14 +58,14 @@ mk_bot_w_normals(
 				 * otherwise thickness is centered
 				 * about hit point
 				 */
-    int num_normals,	/* number of unit normals in normals array */
+    size_t num_normals,	/* number of unit normals in normals array */
     fastf_t *normals,	/* array of floats for normals [num_normals*3] */
     int *face_normals)	/* array of ints (indices into normals array),
 			 * must have 3*num_faces entries.
 			 */
 {
     struct rt_bot_internal *bot;
-    int i;
+    size_t i;
 
     if ((num_normals > 0) && (fp->dbip->dbi_version < 5)) {
 	bu_log("You are using an old database format which does not support surface normals for BOT primitives\n");
@@ -123,8 +123,8 @@ mk_bot(
     unsigned char mode,
     unsigned char orientation,
     unsigned char flags,
-    int num_vertices,
-    int num_faces,
+    size_t num_vertices,
+    size_t num_faces,
     fastf_t *vertices,	/* array of floats for vertices [num_vertices*3] */
     int *faces,		/* array of ints for faces [num_faces*3] */
     fastf_t *thickness,	/* array of plate mode thicknesses

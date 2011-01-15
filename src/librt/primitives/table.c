@@ -1,7 +1,7 @@
 /*                         T A B L E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,13 +56,14 @@
 	BU_EXTERN(void rt_##name##_vshot, (struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)); \
 	BU_EXTERN(int rt_##name##_tess, (struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)); \
 	BU_EXTERN(int rt_##name##_tnurb, (struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)); \
+	BU_EXTERN(void rt_##name##_brep, (ON_Brep **b, struct rt_db_internal *ip, const struct bn_tol *tol)); \
 	BU_EXTERN(int rt_##name##_import5, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_export5, (struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_import4, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_export4, (struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(void rt_##name##_ifree, (struct rt_db_internal *ip)); \
 	BU_EXTERN(int rt_##name##_get, (struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)); \
-	BU_EXTERN(int rt_##name##_adjust, (struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)); \
+	BU_EXTERN(int rt_##name##_adjust, (struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)); \
 	BU_EXTERN(int rt_##name##_describe, (struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i)); \
 	BU_EXTERN(void rt_##name##_make, (const struct rt_functab *ftp, struct rt_db_internal *intern)); \
 	BU_EXTERN(int rt_##name##_xform, (struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip, struct resource *resp)); \
@@ -115,7 +116,7 @@ RT_DECLARE_INTERFACE(brep);
 
 /* generics for object manipulation, in generic.c */
 extern int rt_generic_get(struct bu_vls *, const struct rt_db_internal *, const char *);
-extern int rt_generic_adjust(struct bu_vls *, struct rt_db_internal *, int, char **);
+extern int rt_generic_adjust(struct bu_vls *, struct rt_db_internal *, int, const char **);
 extern int rt_generic_form(struct bu_vls *, const struct rt_functab *);
 extern void rt_generic_make(const struct rt_functab *, struct rt_db_internal *);
 extern int rt_generic_xform(struct rt_db_internal *, const mat_t, struct rt_db_internal *, int, struct db_i *, struct resource *);
@@ -127,13 +128,13 @@ BU_EXTERN(void rt_binunif_ifree, (struct rt_db_internal *ip));
 BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i));
 BU_EXTERN(void rt_binunif_make, (const struct rt_functab *ftp, struct rt_db_internal *intern));
 BU_EXTERN(int rt_binunif_get, (struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr));
-BU_EXTERN(int rt_binunif_adjust, (struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv));
+BU_EXTERN(int rt_binunif_adjust, (struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv));
 
 /* from tcl.c and db5_comb.c */
 BU_EXTERN(int rt_comb_export5, (struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp));
 BU_EXTERN(int rt_comb_import5, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp));
 BU_EXTERN(int rt_comb_get, (struct bu_vls *logstr, const struct rt_db_internal *intern, const char *item));
-BU_EXTERN(int rt_comb_adjust, (struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv));
+BU_EXTERN(int rt_comb_adjust, (struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv));
 BU_EXTERN(int rt_comb_form, (struct bu_vls *logstr, const struct rt_functab *ftp));
 BU_EXTERN(void rt_comb_make, (const struct rt_functab *ftp, struct rt_db_internal *intern));
 BU_EXTERN(void rt_comb_ifree, (struct rt_db_internal *ip));
@@ -150,6 +151,7 @@ const struct rt_functab rt_functab[] = {
 	/* 0: unused, for sanity checking. */
 	RT_FUNCTAB_MAGIC, "ID_NULL", "NULL",
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -199,6 +201,7 @@ const struct rt_functab rt_functab[] = {
 	rt_tor_vshot,
 	rt_tor_tess,
 	NULL,
+	rt_tor_brep,
 	rt_tor_import5,
 	rt_tor_export5,
 	rt_tor_import4,
@@ -234,6 +237,7 @@ const struct rt_functab rt_functab[] = {
 	rt_tgc_vshot,
 	rt_tgc_tess,
 	rt_tgc_tnurb,
+	rt_tgc_brep,
 	rt_tgc_import5,
 	rt_tgc_export5,
 	rt_tgc_import4,
@@ -269,6 +273,7 @@ const struct rt_functab rt_functab[] = {
 	rt_ell_vshot,
 	rt_ell_tess,
 	rt_ell_tnurb,
+	rt_ell_brep,
 	rt_ell_import5,
 	rt_ell_export5,
 	rt_ell_import4,
@@ -304,6 +309,7 @@ const struct rt_functab rt_functab[] = {
 	rt_arb_vshot,
 	rt_arb_tess,
 	rt_arb_tnurb,
+	rt_arb_brep,
 	rt_arb_import5,
 	rt_arb_export5,
 	rt_arb_import4,
@@ -338,6 +344,7 @@ const struct rt_functab rt_functab[] = {
 	rt_ars_plot,
 	NULL,
 	rt_ars_tess,
+	NULL,
 	NULL,
 	rt_ars_import5,
 	rt_ars_export5,
@@ -374,6 +381,7 @@ const struct rt_functab rt_functab[] = {
 	rt_hlf_vshot,
 	rt_hlf_tess,
 	NULL,
+	NULL,
 	rt_hlf_import5,
 	rt_hlf_export5,
 	rt_hlf_import4,
@@ -409,6 +417,7 @@ const struct rt_functab rt_functab[] = {
 	rt_rec_vshot,
 	rt_tgc_tess,
 	NULL,
+	rt_tgc_brep,
 	rt_tgc_import5,
 	rt_tgc_export5,
 	rt_tgc_import4,
@@ -446,6 +455,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	rt_pg_import4,
 	rt_pg_export4,
 	rt_pg_ifree,
@@ -478,6 +488,7 @@ const struct rt_functab rt_functab[] = {
 	rt_nurb_plot,
 	NULL,
 	rt_nurb_tess,
+	NULL,
 	NULL,
 	rt_nurb_import5,
 	rt_nurb_export5,
@@ -514,6 +525,7 @@ const struct rt_functab rt_functab[] = {
 	rt_sph_vshot,
 	rt_ell_tess,
 	rt_ell_tnurb,
+	rt_ell_brep,
 	rt_ell_import5,
 	rt_ell_export5,
 	rt_ell_import4,
@@ -549,6 +561,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_nmg_tess,
 	NULL,
+	rt_nmg_brep,
 	rt_nmg_import5,
 	rt_nmg_export5,
 	rt_nmg_import4,
@@ -584,6 +597,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_ebm_tess,
 	NULL,
+	rt_ebm_brep,
 	rt_ebm_import5,
 	rt_ebm_export5,
 	rt_ebm_import4,
@@ -619,6 +633,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_vol_tess,
 	NULL,
+	rt_vol_brep,
 	rt_vol_import5,
 	rt_vol_export5,
 	rt_vol_import4,
@@ -654,6 +669,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_arbn_tess,
 	NULL,
+	rt_arbn_brep,
 	rt_arbn_import5,
 	rt_arbn_export5,
 	rt_arbn_import4,
@@ -689,6 +705,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_pipe_tess,
 	NULL,
+	rt_pipe_brep,
 	rt_pipe_import5,
 	rt_pipe_export5,
 	rt_pipe_import4,
@@ -723,6 +740,7 @@ const struct rt_functab rt_functab[] = {
 	rt_part_plot,
 	NULL,
 	rt_part_tess,
+	NULL,
 	NULL,
 	rt_part_import5,
 	rt_part_export5,
@@ -759,6 +777,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_rpc_tess,
 	NULL,
+	rt_rpc_brep,
 	rt_rpc_import5,
 	rt_rpc_export5,
 	rt_rpc_import4,
@@ -794,6 +813,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_rhc_tess,
 	NULL,
+	rt_rhc_brep,
 	rt_rhc_import5,
 	rt_rhc_export5,
 	rt_rhc_import4,
@@ -829,6 +849,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_epa_tess,
 	NULL,
+	rt_epa_brep,
 	rt_epa_import5,
 	rt_epa_export5,
 	rt_epa_import4,
@@ -864,6 +885,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_ehy_tess,
 	NULL,
+	rt_ehy_brep,
 	rt_ehy_import5,
 	rt_ehy_export5,
 	rt_ehy_import4,
@@ -899,6 +921,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_eto_tess,
 	NULL,
+	rt_eto_brep,
 	rt_eto_import5,
 	rt_eto_export5,
 	rt_eto_import4,
@@ -934,6 +957,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_grp_tess,
 	NULL,
+	NULL,
 	rt_grp_import5,
 	rt_grp_export5,
 	rt_grp_import4,
@@ -955,6 +979,7 @@ const struct rt_functab rt_functab[] = {
 	/* 23 -- XXX unimplemented */
 	RT_FUNCTAB_MAGIC, "ID_JOINT", "joint",
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1004,6 +1029,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_hf_tess,
 	NULL,
+	NULL,
 	rt_hf_import5,
 	rt_hf_export5,
 	rt_hf_import4,
@@ -1039,6 +1065,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_dsp_tess,
 	NULL,
+	rt_dsp_brep,
 	rt_dsp_import5,
 	rt_dsp_export5,
 	rt_dsp_import4,
@@ -1074,6 +1101,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
+	rt_sketch_brep,
 	rt_sketch_import5,
 	rt_sketch_export5,
 	rt_sketch_import4,
@@ -1109,6 +1137,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_extrude_tess,
 	NULL,
+	rt_extrude_brep,
 	rt_extrude_import5,
 	rt_extrude_export5,
 	rt_extrude_import4,
@@ -1143,6 +1172,7 @@ const struct rt_functab rt_functab[] = {
 	rt_submodel_plot,
 	NULL,
 	rt_submodel_tess,
+	NULL,
 	NULL,
 	rt_submodel_import5,
 	rt_submodel_export5,
@@ -1179,6 +1209,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_cline_tess,
 	NULL,
+	NULL,
 	rt_cline_import5,
 	rt_cline_export5,
 	rt_cline_import4,
@@ -1214,6 +1245,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_bot_tess,
 	NULL,
+	rt_bot_brep,
 	rt_bot_import5,
 	rt_bot_export5,
 	rt_bot_import4,
@@ -1235,6 +1267,7 @@ const struct rt_functab rt_functab[] = {
 	/* 31 combination objects (should not be in this table) */
 	RT_FUNCTAB_MAGIC, "ID_COMBINATION", "comb",
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1294,6 +1327,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	0,
 	0,
 	NULL,
@@ -1307,6 +1341,7 @@ const struct rt_functab rt_functab[] = {
 	/* 33 */
 	RT_FUNCTAB_MAGIC, "ID_BINUNIF", "binunif",
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1366,6 +1401,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	0,
 	0,
 	NULL,
@@ -1392,6 +1428,7 @@ const struct rt_functab rt_functab[] = {
 	rt_superell_plot,
 	NULL,
 	rt_superell_tess,
+	NULL,
 	NULL,
 	rt_superell_import5,
 	rt_superell_export5,
@@ -1427,6 +1464,7 @@ const struct rt_functab rt_functab[] = {
 	rt_metaball_plot,
 	NULL,
 	rt_metaball_tess,
+	NULL,
 	NULL,
 	rt_metaball_import5,
 	rt_metaball_export5,
@@ -1464,6 +1502,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_brep_tess,
 	NULL,
+	NULL,
 	rt_brep_import5,
 	rt_brep_export5,
 	NULL,
@@ -1485,6 +1524,7 @@ const struct rt_functab rt_functab[] = {
 	/* 37 this entry for placeholder (so table offsets are correct) */
 	RT_FUNCTAB_MAGIC, "ID_BREP_PLCHLDR", "brep",
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1535,6 +1575,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_hyp_tess,
 	NULL,
+	rt_hyp_brep,
 	rt_hyp_import5,
 	rt_hyp_export5,
 	NULL,
@@ -1556,6 +1597,7 @@ const struct rt_functab rt_functab[] = {
 	/* 39 */
 	RT_FUNCTAB_MAGIC, "ID_CONSTRAINT", "constrnt",
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1605,6 +1647,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_revolve_tess,
 	NULL,
+	rt_revolve_brep,
 	rt_revolve_import5,
 	rt_revolve_export5,
 	NULL,
@@ -1640,6 +1683,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	rt_pnts_import5,
 	rt_pnts_export5,
 	NULL,
@@ -1661,6 +1705,7 @@ const struct rt_functab rt_functab[] = {
 	/* this entry for sanity only */
 	0L, ">ID_MAXIMUM", ">id_max",
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1764,19 +1809,19 @@ rt_id_solid(struct bu_external *ep)
 	    break;
 	case DBID_STRSOL:
 	    /* XXX This really needs to be some kind of table */
-	    if (strcmp(rec->ss.ss_keyword, "ebm") == 0) {
+	    if (BU_STR_EQUAL(rec->ss.ss_keyword, "ebm")) {
 		id = ID_EBM;
 		break;
-	    } else if (strcmp(rec->ss.ss_keyword, "vol") == 0) {
+	    } else if (BU_STR_EQUAL(rec->ss.ss_keyword, "vol")) {
 		id = ID_VOL;
 		break;
-	    } else if (strcmp(rec->ss.ss_keyword, "hf") == 0) {
+	    } else if (BU_STR_EQUAL(rec->ss.ss_keyword, "hf")) {
 		id = ID_HF;
 		break;
-	    } else if (strcmp(rec->ss.ss_keyword, "dsp") == 0) {
+	    } else if (BU_STR_EQUAL(rec->ss.ss_keyword, "dsp")) {
 		id = ID_DSP;
 		break;
-	    } else if (strcmp(rec->ss.ss_keyword, "submodel") == 0) {
+	    } else if (BU_STR_EQUAL(rec->ss.ss_keyword, "submodel")) {
 		id = ID_SUBMODEL;
 		break;
 	    }

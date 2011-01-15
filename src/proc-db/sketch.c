@@ -1,7 +1,7 @@
 /*                        S K E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2010 United States Government as represented by
+ * Copyright (c) 2000-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,6 +45,7 @@ main(int argc, char **argv)
     struct bezier_seg *bsg;
     struct line_seg *lsg;
     struct carc_seg *csg;
+    size_t i;
     point_t V;
     vect_t u_vec, v_vec;
     point2d_t verts[] = {
@@ -59,7 +60,6 @@ main(int argc, char **argv)
 	{ 125, 0 },	/* 8 */
 	{ 200, 200 }	/* 9 */
     };
-    int i;
 
     VSET(V, 10, 20, 30);
     VSET(u_vec, 1, 0, 0);

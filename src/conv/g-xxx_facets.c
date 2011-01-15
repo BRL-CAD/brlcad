@@ -1,7 +1,7 @@
 /*                  G - X X X _ F A C E T S . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2010 United States Government as represented by
+ * Copyright (c) 2003-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,12 +27,10 @@
 
 #include "common.h"
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
 
 #include "vmath.h"
 #include "nmg.h"
@@ -52,8 +50,9 @@ BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 
 static char	usage[] = "\
-Usage: %s [-v][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n\
-[-D dist_calc_tol] -o output_file_name brlcad_db.g object(s)\n";
+Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default: 0.01)]\n\
+  [-n norm_tess_tol (default: 0.0)][-D dist_calc_tol (default: 0.005)]\n\
+   -o output_file_name brlcad_db.g object(s)\n";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -70,14 +69,11 @@ static int		regions_converted = 0;
 static int		regions_written = 0;
 static unsigned int	tot_polygons = 0;
 
-
 /*
  *			M A I N
  */
 int
-main(argc, argv)
-    int	argc;
-    char	*argv[];
+main(int argc, char **argv)
 {
     int	c;
     double		percent;
@@ -183,12 +179,12 @@ main(argc, argv)
 
     /* Walk indicated tree(s).  Each region will be output separately */
     (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-			1,			/* ncpu */
-			&tree_state,
-			0,			/* take all regions */
-			do_region_end,
-			nmg_booltree_leaf_tess,
-			(genptr_t)NULL);	/* in librt/nmg_bool.c */
+                        1,			/* ncpu */
+                        &tree_state,
+                        0,			/* take all regions */
+                        do_region_end,
+                        nmg_booltree_leaf_tess,
+                        (genptr_t)NULL);	/* in librt/nmg_bool.c */
 
     percent = 0;
     if (regions_tried>0) {
@@ -205,6 +201,12 @@ main(argc, argv)
     }
 
     bu_log( "%ld triangles written\n", tot_polygons );
+
+    bu_log( "Tesselation parameters used:\n");
+    bu_log( "  abs  [-a]    %g\n", ttol.abs );
+    bu_log( "  rel  [-r]    %g\n", ttol.rel );
+    bu_log( "  norm [-n]    %g\n", ttol.norm );
+    bu_log( "  dist [-D]    %g\n", tol.dist );
 
     /* Release dynamic storage */
     nmg_km(the_model);

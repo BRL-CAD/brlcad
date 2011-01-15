@@ -1,7 +1,7 @@
 /*                       D B _ A N I M . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2010 United States Government as represented by
+ * Copyright (c) 1987-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -309,22 +309,22 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
     if ( db_follow_path_for_state( &ts, &(anp->an_path), argv[1], LOOKUP_NOISY ) < 0 )
 	goto bad;
 
-    if ( strcmp( argv[2], "matrix" ) == 0 )  {
+    if ( BU_STR_EQUAL( argv[2], "matrix" ) )  {
 	if (argc < 5) {
 	    bu_log("db_parse_1anim:  matrix does not have enough arguments\n");
 	    goto bad;
 	}
 
 	anp->an_type = RT_AN_MATRIX;
-	if ( strcmp( argv[3], "rstack" ) == 0 )
+	if ( BU_STR_EQUAL( argv[3], "rstack" ) )
 	    anp->an_u.anu_m.anm_op = ANM_RSTACK;
-	else if ( strcmp( argv[3], "rarc" ) == 0 )
+	else if ( BU_STR_EQUAL( argv[3], "rarc" ) )
 	    anp->an_u.anu_m.anm_op = ANM_RARC;
-	else if ( strcmp( argv[3], "lmul" ) == 0 )
+	else if ( BU_STR_EQUAL( argv[3], "lmul" ) )
 	    anp->an_u.anu_m.anm_op = ANM_LMUL;
-	else if ( strcmp( argv[3], "rmul" ) == 0 )
+	else if ( BU_STR_EQUAL( argv[3], "rmul" ) )
 	    anp->an_u.anu_m.anm_op = ANM_RMUL;
-	else if ( strcmp( argv[3], "rboth" ) == 0 )
+	else if ( BU_STR_EQUAL( argv[3], "rboth" ) )
 	    anp->an_u.anu_m.anm_op = ANM_RBOTH;
 	else  {
 	    bu_log("db_parse_1anim:  Matrix op '%s' unknown\n",
@@ -333,8 +333,8 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 	}
 
 	/* Allow some shorthands for the matrix spec */
-	if ( strcmp( argv[4], "translate" ) == 0 ||
-	     strcmp( argv[4], "xlate" ) == 0 )  {
+	if ( BU_STR_EQUAL( argv[4], "translate" ) ||
+	     BU_STR_EQUAL( argv[4], "xlate" ) )  {
 	    if (argc < 5+3) {
 		bu_log("db_parse_1anim:  matrix %s translate does not have enough arguments, only %d\n",
 		       argv[3], argc);
@@ -345,7 +345,7 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 			atof( argv[5+0] ),
 			atof( argv[5+1] ),
 			atof( argv[5+2] ) );
-	} else if ( strcmp( argv[4], "rot" ) == 0 )  {
+	} else if ( BU_STR_EQUAL( argv[4], "rot" ) )  {
 	    if (argc < 5+3) {
 		bu_log("db_parse_1anim:  matrix %s rot does not have enough arguments, only %d\n",
 		       argv[3], argc );
@@ -356,7 +356,7 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 			   atof( argv[5+0] ),
 			   atof( argv[5+1] ),
 			   atof( argv[5+2] ) );
-	} else if ( strcmp( argv[4], "scale" ) == 0 )  {
+	} else if ( BU_STR_EQUAL( argv[4], "scale" ) )  {
 	    fastf_t	scale;
 	    if (argc < 6) {
 		bu_log("db_parse_1anim:  matrix %s scale does not have enough arguments, only %d\n",
@@ -371,7 +371,7 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 	    }
 	    MAT_IDN(anp->an_u.anu_m.anm_mat);
 	    anp->an_u.anu_m.anm_mat[15] = 1/scale;
-	} else if ( strcmp( argv[4], "scale_about" ) == 0 )  {
+	} else if ( BU_STR_EQUAL( argv[4], "scale_about" ) )  {
 	    point_t	pt;
 	    fastf_t	scale;
 	    if (argc < 5+4) {
@@ -401,7 +401,7 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 	    for ( i=0; i<16; i++ )
 		anp->an_u.anu_m.anm_mat[i] = atof( argv[i+4] );
 	}
-    } else if ( strcmp( argv[2], "material" ) == 0 )  {
+    } else if ( BU_STR_EQUAL( argv[2], "material" ) )  {
 	if (argc < 5) {
 	    bu_log("db_parse_1anim:  material does not have enough arguments, only %d\n", argc);
 	    goto bad;
@@ -409,12 +409,12 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 
 	anp->an_type = RT_AN_MATERIAL;
 	bu_vls_init( &anp->an_u.anu_p.anp_shader );
-	if ( (strcmp( argv[3], "replace" ) == 0) ||
-	     (strcmp( argv[3], "rboth" ) == 0) )  {
+	if ( (BU_STR_EQUAL( argv[3], "replace" )) ||
+	     (BU_STR_EQUAL( argv[3], "rboth" )) )  {
 	    bu_vls_from_argv( &anp->an_u.anu_p.anp_shader,
 			      argc-4, (const char **)&argv[4] );
 	    anp->an_u.anu_p.anp_op = RT_ANP_REPLACE;
-	} else if ( strcmp( argv[3], "append" ) == 0 )  {
+	} else if ( BU_STR_EQUAL( argv[3], "append" ) )  {
 	    bu_vls_from_argv( &anp->an_u.anu_p.anp_shader,
 			      argc-4, (const char **)&argv[4] );
 	    anp->an_u.anu_p.anp_op = RT_ANP_APPEND;
@@ -423,7 +423,7 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 		   argv[3]);
 	    goto bad;
 	}
-    } else if ( strcmp( argv[2], "color" ) == 0 )  {
+    } else if ( BU_STR_EQUAL( argv[2], "color" ) )  {
 	if (argc < 6) {
 	    bu_log("db_parse_1anim:  color does not have enough arguments, only %d\n", argc);
 	    goto bad;
@@ -433,8 +433,8 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 	anp->an_u.anu_c.anc_rgb[0] = atoi( argv[3+0] );
 	anp->an_u.anu_c.anc_rgb[1] = atoi( argv[3+1] );
 	anp->an_u.anu_c.anc_rgb[2] = atoi( argv[3+2] );
-    } else if ( strcmp( argv[2], "temperature" ) == 0 ||
-		strcmp( argv[2], "temp" ) == 0 )  {
+    } else if ( BU_STR_EQUAL( argv[2], "temperature" ) ||
+		BU_STR_EQUAL( argv[2], "temp" ) )  {
 	anp->an_type = RT_AN_TEMPERATURE;
 	anp->an_u.anu_t = atof( argv[3] );
     } else {

@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United  States Government as represented by
+ * Copyright (c) 1985-2011 United  States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -379,7 +379,7 @@ int main(int argc, char **argv)
 	rt_pr_tol( &rtip->rti_tol );
 
     /* before view_init */
-    if ( outputfile && strcmp( outputfile, "-") == 0 )
+    if ( outputfile && BU_STR_EQUAL( outputfile, "-") )
 	outputfile = (char *)0;
 
     /*

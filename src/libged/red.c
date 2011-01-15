@@ -1,7 +1,7 @@
 /*                        R E D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -331,7 +331,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 	    bu_vls_trunc(&current_substring, 0);
 	    bu_vls_strncpy(&current_substring, currptr + attrstart, attrend - attrstart);
 	    if (get_attr_val_pair(bu_vls_addr(&current_substring), &attr_vls, &val_vls)) {
-		if (strcmp(bu_vls_addr(&val_vls), "") && strcmp(bu_vls_addr(&attr_vls), "name"))
+		if (!BU_STR_EQUAL(bu_vls_addr(&val_vls), "") && !BU_STR_EQUAL(bu_vls_addr(&attr_vls), "name"))
 		    (void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls)); 
 	    }
 	    currptr = currptr + attrend;
@@ -913,7 +913,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	    } else {
 		/* it worked - kill the original and put the updated copy in its place if a pre-existing
 		 * comb was being edited - otherwise everything is already fine.*/
-		if (strcmp(bu_vls_addr(&comb_name), bu_vls_addr(&temp_name))) {
+		if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(&temp_name))) {
 		    av[0] = "kill";
 		    av[1] = bu_vls_addr(&comb_name);
 		    av[2] = NULL;

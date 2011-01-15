@@ -1,7 +1,7 @@
 /*                      D U N N C O M M . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -188,6 +188,7 @@ dunnopen(void)
 int
 goodstatus(void)
 {
+    ssize_t ret;
     struct timeval waittime, *timeout;
     int readval;
 
@@ -196,7 +197,9 @@ goodstatus(void)
     timeout->tv_usec = 0;
 
     cmd = ';';	/* status request cmd */
-    write(fd, &cmd, 1);
+    ret = write(fd, &cmd, 1);
+    if (ret < 0)
+	perror("write");
     FD_ZERO(&readfds);
     FD_SET(fd, &readfds);
     select(fd+1, &readfds, (fd_set *)0, (fd_set *)0, timeout);
@@ -259,6 +262,7 @@ int
 ready(int nsecs)
 {
     int i;
+    ssize_t ret;
 
     struct timeval waittime, *timeout;
     timeout = &waittime;
@@ -266,7 +270,9 @@ ready(int nsecs)
     timeout->tv_usec = 0;
 
     cmd = ':';	/* ready test command */
-    write(fd, &cmd, 1);
+    ret = write(fd, &cmd, 1);
+    if (ret < 0)
+	perror("write");
 
     FD_ZERO(&readfds);
     FD_SET(fd, &readfds);
@@ -319,6 +325,7 @@ getexposure(char *title)
 {
     struct timeval waittime;
     int readval;
+    ssize_t ret;
 
     waittime.tv_sec = 20;
     waittime.tv_usec = 0;
@@ -331,7 +338,10 @@ getexposure(char *title)
 	cmd = '<';	/* req 8x10 exposure values */
     else
 	cmd = '=';	/* request AUX exposure values */
-    write(fd, &cmd, 1);
+    ret = write(fd, &cmd, 1);
+    if (ret < 0)
+	perror("write");
+
     FD_ZERO(&readfds);
     FD_SET(fd, &readfds);
     select(fd+1, &readfds, (fd_set *)0, (fd_set *)0, &waittime);
@@ -357,6 +367,7 @@ int
 dunnsend(char color, int val)
 {
     char digit;
+    ssize_t ret;
 
     if (val < 0 || val > 255) {
 	printf("dunncolor: bad value %d\n", val);
@@ -372,19 +383,34 @@ dunnsend(char color, int val)
 	cmd = 'K';	/* set 8x10 exposure values */
     else
 	cmd = 'L';	/* set AUX exposure values */
-    write(fd, &cmd, 1);
+    ret = write(fd, &cmd, 1);
+    if (ret < 0)
+	perror("write");
+
     hangten();
-    write(fd, &color, 1);
+    ret = write(fd, &color, 1);
+    if (ret < 0)
+	perror("write");
+
     hangten();
     digit = (val/100 + 0x30)&0x7f;
-    write(fd, &digit, 1);
+    ret = write(fd, &digit, 1);
+    if (ret < 0)
+	perror("write");
+
     hangten();
     val = val%100;
     digit = (val/10 + 0x30)&0x7f;
-    write(fd, &digit, 1);
+    ret = write(fd, &digit, 1);
+    if (ret < 0)
+	perror("write");
+
     hangten();
     digit = (val%10 + 0x30)&0x7f;
-    write(fd, &digit, 1);
+    ret = write(fd, &digit, 1);
+    if (ret < 0)
+	perror("write");
+
     hangten();
     return 0;		/* OK */
 }

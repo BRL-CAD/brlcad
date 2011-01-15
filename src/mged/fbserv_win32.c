@@ -1,7 +1,7 @@
 /*                  F B S E R V _ W I N 3 2 . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2010 United States Government as represented by
+ * Copyright (c) 1995-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -127,18 +127,6 @@ setup_socket(fd)
 LOCAL_STATIC void
 comm_error(str)
     char *str;
-{
-    return;
-}
-
-
-/*
- * This is where we go for message types we don't understand.
- */
-void
-pkgfoo(pcp, buf)
-    struct pkg_conn *pcp;
-    char *buf;
 {
     return;
 }

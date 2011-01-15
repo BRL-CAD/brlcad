@@ -1,7 +1,7 @@
 /*                    O V E R L A P S . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ add_unique_pair(struct region_pair *list, /* list to add into */
 
     /* insert in the list at the "nice" place */
     for (BU_LIST_FOR (rp, region_pair, &list->l)) {
-	if (strcmp(rp->r.r1->reg_name, r1->reg_name) <= 0)
+	if (bu_strcmp(rp->r.r1->reg_name, r1->reg_name) <= 0)
 	    break;
     }
     BU_LIST_INSERT(&rp->l, &rpair->l);
@@ -123,7 +123,7 @@ int add_segment(struct xray *rp, struct hit *ihitp, struct hit *outp, struct reg
     struct bu_hash_entry *prev, *entry;
     struct overlap_instance *overlap;
     int status;
-    int order = strcmp(reg1->reg_name, reg2->reg_name);
+    int order = bu_strcmp(reg1->reg_name, reg2->reg_name);
 
     /* If we somehow got the same region name in both regions, ignore the segment */
     if (!order) return 0; 

@@ -1,7 +1,7 @@
 /*                         R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -94,7 +94,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 
     for (i=1; i < argc; i++) {
 	if (argv[i][0] == '-' && argv[i][1] == 'u' &&
-	    strcmp(argv[1], "-u") == 0) {
+	    BU_STR_EQUAL(argv[1], "-u")) {
 	    units_supplied=1;
 	} else if (argv[i][0] == '-' && argv[i][1] == '-' &&
 		   argv[i][2] == '\0') {
@@ -313,7 +313,7 @@ _ged_rt_write(struct ged *gedp,
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
-    int i;
+    size_t i;
     quat_t quat;
     struct solid *sp;
 

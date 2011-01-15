@@ -1,7 +1,7 @@
 /*                        C A M E R A . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,18 +41,18 @@
 
 typedef struct render_camera_view_s
 {
-    TIE_3 step_x;
-    TIE_3 step_y;
-    TIE_3 pos;
-    TIE_3 top_l;
+    vect_t step_x;
+    vect_t step_y;
+    vect_t pos;
+    vect_t top_l;
 } render_camera_view_t;
 
 
 typedef struct render_camera_s
 {
     uint8_t type;
-    TIE_3 pos;
-    TIE_3 focus;
+    point_t pos;
+    vect_t focus;
     fastf_t tilt;
     fastf_t fov;
     fastf_t gridsize;
@@ -82,7 +82,7 @@ typedef struct camera_tile_s
 typedef struct render_camera_thread_data_s
 {
     render_camera_t *camera;
-    tie_t *tie;
+    struct tie_s *tie;
     camera_tile_t *tile;
     void *res_buf;
     unsigned int *scanline;
@@ -92,7 +92,7 @@ typedef struct render_camera_thread_data_s
 BU_EXPORT BU_EXTERN(void render_camera_init, (render_camera_t *camera, int threads));
 BU_EXPORT BU_EXTERN(void render_camera_free, (render_camera_t *camera));
 BU_EXPORT BU_EXTERN(void render_camera_prep, (render_camera_t *camera));
-BU_EXPORT BU_EXTERN(void render_camera_render, (render_camera_t *camera, tie_t *tie, camera_tile_t *tile, tienet_buffer_t *result));
+BU_EXPORT BU_EXTERN(void render_camera_render, (render_camera_t *camera, struct tie_s *tie, camera_tile_t *tile, tienet_buffer_t *result));
 
 BU_EXPORT BU_EXTERN(int render_shader_init, (render_t *, const char *name, const char *buf));
 BU_EXPORT BU_EXTERN(const char *render_shader_load_plugin, (const char *filename));

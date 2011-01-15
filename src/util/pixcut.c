@@ -1,7 +1,7 @@
 /*                        P I X C U T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -146,7 +146,7 @@ get_args(int argc, char **argv)
 	input = stdin;
     } else {
 	in_name = argv[bu_optind];
-	if (strcmp(in_name, "-") == 0) {
+	if (BU_STR_EQUAL(in_name, "-")) {
 	    if (isatty(fileno(stdin))) return 0;
 	    input = stdin;
 	} else {

@@ -1,7 +1,7 @@
 /*                       D O C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,11 +22,6 @@
  * This routine loops through all the directory entries and calls and
  * sets colors according to the directory entry field #13
  * 
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
  */
 
 #include "./iges_struct.h"
@@ -50,38 +45,34 @@ Docolor()
     int i, j;
     fastf_t a;
 
-    for ( i=0; i<totentities; i++ )
-    {
+    for (i=0; i<totentities; i++) {
 	/* only set colors for regions, groups, or solid instances */
-	if ( dir[i]->type == 180 || dir[i]->type == 184 || dir[i]->type == 430 )
-	{
-	    if ( dir[i]->colorp > 0 ) /* just use color table */
-	    {
+	if (dir[i]->type == 180 || dir[i]->type == 184 || dir[i]->type == 430) {
+	    if (dir[i]->colorp > 0) {
+		/* just use color table */
 		dir[i]->rgb[0] = colortab[dir[i]->colorp][1];
 		dir[i]->rgb[1] = colortab[dir[i]->colorp][2];
 		dir[i]->rgb[2] = colortab[dir[i]->colorp][3];
-	    }
-	    else if ( dir[i]->colorp < 0 )
-	    {
+	    } else if (dir[i]->colorp < 0) {
 		/* Use color definition entity */
-		Readrec( dir[-dir[i]->colorp]->param );
-		Readint( &j, "" );
-		if ( j != 314 )
-		{
-		    bu_log( "Incorrect color parameters for entity %d\n", i );
-		    bu_log( "\tcolor entity is #%d\n", -dir[i]->colorp );
+		Readrec(dir[-dir[i]->colorp]->param);
+		Readint(&j, "");
+		if (j != 314) {
+		    bu_log("Incorrect color parameters for entity %d\n", i);
+		    bu_log("\tcolor entity is #%d\n", -dir[i]->colorp);
 		    continue;
 		}
-		Readflt( &a, "" );
+		Readflt(&a, "");
 		dir[i]->rgb[0] = 2.55 * a + 0.5;
-		Readflt( &a, "" );
+		Readflt(&a, "");
 		dir[i]->rgb[1] = 2.55 * a + 0.5;
-		Readflt( &a, "" );
+		Readflt(&a, "");
 		dir[i]->rgb[2] = 2.55 * a + 0.5;
 	    }
 	}
     }
 }
+
 
 /*
  * Local Variables:

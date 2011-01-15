@@ -1,7 +1,7 @@
 /*                        R E N D E R . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ RENDER_SHADER(phong);
 RENDER_SHADER(spall);
 RENDER_SHADER(surfel);
 
-void* render_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
+void* render_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr);
 
 #endif
 

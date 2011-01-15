@@ -1,7 +1,7 @@
 /*                        D M _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2010 United States Government as represented by
+ * Copyright (c) 1997-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -267,7 +267,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 
     /* check to see if display manager object exists */
     for (BU_LIST_FOR(dmop, dm_obj, &HeadDMObj.l)) {
-	if (strcmp(argv[name_index], bu_vls_addr(&dmop->dmo_name)) == 0) {
+	if (BU_STR_EQUAL(argv[name_index], bu_vls_addr(&dmop->dmo_name))) {
 	    Tcl_AppendStringsToObj(obj, "dmo_open: ", argv[name_index],
 				   " exists.", (char *)NULL);
 	    Tcl_SetObjResult(interp, obj);
@@ -282,17 +282,17 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 #endif /* DM_X */
 
 #ifdef DM_TK
-    if (!strcmp(argv[2], "tk"))
+    if (BU_STR_EQUAL(argv[2], "tk"))
 	type = DM_TYPE_TK;
 #endif /* DM_TK */
 
 #ifdef DM_OGL
-    if (!strcmp(argv[2], "ogl"))
+    if (BU_STR_EQUAL(argv[2], "ogl"))
 	type = DM_TYPE_OGL;
 #endif /* DM_OGL */
 
 #ifdef DM_WGL
-    if (!strcmp(argv[2], "wgl"))
+    if (BU_STR_EQUAL(argv[2], "wgl"))
 	type = DM_TYPE_WGL;
 #endif /* DM_WGL */
 
@@ -311,10 +311,10 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 	int arg_start = 3;
 	int newargs = 2;
 	int ac;
-	char **av;
+	const char **av;
 
 	ac = argc + newargs;
-	av = (char **)bu_malloc(sizeof(char *) * (ac+1), "dmo_open_tcl: av");
+	av = (const char **)bu_malloc(sizeof(char *) * (ac+1), "dmo_open_tcl: av");
 	av[0] = argv[0];
 
 	/* Insert new args (i.e. arrange to call init_dm_obj from dm_open()) */
@@ -330,7 +330,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 	/* copy the rest */
 	for (i = arg_start; i < argc; ++i)
 	    av[i+newargs] = argv[i];
-	av[i+newargs] = (char *)NULL;
+	av[i+newargs] = (const char *)NULL;
 
 	if ((dmp = dm_open(interp, type, ac, av)) == DM_NULL) {
 	    if (Tcl_IsShared(obj))
@@ -1540,7 +1540,7 @@ dmo_drawGeom_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
     argv += 2;
     for (i = 0; i < argc; ++i) {
 	for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l)) {
-	    if (strcmp(bu_vls_addr(&dgop->dgo_name), argv[i]) == 0) {
+	    if (BU_STR_EQUAL(bu_vls_addr(&dgop->dgo_name), argv[i])) {
 		dmo_drawSList(dmop, &dgop->dgo_headSolid);
 		break;
 	    }
@@ -1602,7 +1602,7 @@ dmo_drawLabels_tcl(ClientData clientData,
     }
 
     for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l)) {
-	if (strcmp(bu_vls_addr(&dgop->dgo_name), argv[2]) == 0) {
+	if (BU_STR_EQUAL(bu_vls_addr(&dgop->dgo_name), argv[2])) {
 	    /* for each primitive */
 	    for (i = 4; i < argc; ++i) {
 		dm_draw_labels(dmop->dmo_dmp, dgop->dgo_wdbp, argv[i], dmop->viewMat,
@@ -1909,7 +1909,7 @@ dmo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     }
 
     /* configure the display manager window */
-    status = DM_CONFIGURE_WIN(dmop->dmo_dmp);
+    status = DM_CONFIGURE_WIN(dmop->dmo_dmp, 0);
 
 #ifdef USE_FBSERV
     /* configure the framebuffer window */

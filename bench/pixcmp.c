@@ -1,7 +1,7 @@
 /*                        P I X C M P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -185,13 +185,13 @@ main(int argc, char *argv[])
 
     /* printf("Skip from FILE1: %ld and from FILE2: %ld\n", f1_skip, f2_skip); */
 
-    if (strcmp(argv[0], "-") == 0) {
+    if (BU_STR_EQUAL(argv[0], "-")) {
 	f1 = stdin;
     } else if ((f1 = fopen(argv[0], "rb")) == NULL) {
 	perror(argv[0]);
 	exit(FILE_ERROR);
     }
-    if ((argc < 2) || (strcmp(argv[1], "-") == 0)) {
+    if ((argc < 2) || BU_STR_EQUAL(argv[1], "-")) {
 	f2 = stdin;
     } else if ((f2 = fopen(argv[1], "rb")) == NULL) {
 	perror(argv[1]);

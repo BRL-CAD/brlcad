@@ -1,7 +1,7 @@
 #                       A S C 2 G . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -70,11 +70,7 @@ current database." } {} } OK Cancel]
 	    }
 
 	    # convert ascii database to binary
-	    if {$tcl_platform(platform) == "windows"} {
-		set asc2g [bu_brlcad_root "bin/asc2g.exe"]
-	    } else {
-		set asc2g [bu_brlcad_root "bin/asc2g"]
-	    }
+	    set asc2g [file join [bu_brlcad_root "bin"] asc2g]
 	    catch {exec $asc2g $filename $db_name} msg
 
 	    # concat the binary

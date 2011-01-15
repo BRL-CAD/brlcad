@@ -1,7 +1,7 @@
 #                      P O I N T S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2007-2010 United States Government as represented by
+# Copyright (c) 2007-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -391,11 +391,7 @@ proc pipe {pts} {
     eval "$cmd"
 
     close $fd
-    if {$tcl_platform(platform) == "windows"} {
-	set asc2pl [bu_brlcad_root "bin/asc-pl.exe"]
-    } else {
-	set asc2pl [bu_brlcad_root "bin/asc-pl"]
-    }
+    set asc2pl [file join [bu_brlcad_root "bin"] asc-pl]
     exec "$asc2pl < pipe$pipe_number.plasc > pipe$pipe_nubmer.pl"
 
     incr pipe_number
@@ -701,11 +697,7 @@ if { 1 == 0 } {
 	set c "Q"
     }
     close $fd
-    if {$tcl_platform(platform) == "windows"} {
-	set asc2pl [bu_brlcad_root "bin/asc-pl.exe"]
-    } else {
-	set asc2pl [bu_brlcad_root "bin/asc-pl"]
-    }
+    set asc2pl [file join [bu_brlcad_root "bin"] asc-pl]
     exec "$asc2pl < pipe.asc > pipe.pl"
     overlay pipe.pl
     file delete pipe.asc

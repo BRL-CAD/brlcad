@@ -1,7 +1,7 @@
 /*                         T A B L E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -121,7 +121,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
     struct rt_tree_array *tree_list;
     size_t node_count;
     size_t actual_count;
-    int i, k;
+    size_t i, k;
 
     RT_CK_DIR(dp);
     BU_CK_PTBL(cur_path);
@@ -166,7 +166,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
 	(void)fprintf(tabptr, " %-4ld %4ld %4ld %4ld %4ld  ",
 		      *numreg, comb->region_id, comb->aircode, comb->GIFTmater,
 		      comb->los);
-	for (k=0; k<BU_PTBL_END(cur_path); k++) {
+	for (k=0; k<BU_PTBL_LEN(cur_path); k++) {
 	    struct directory *path_dp;
 
 	    path_dp = (struct directory *)BU_PTBL_GET(cur_path, k);
@@ -333,13 +333,13 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     status = GED_OK;
 
     /* find out which ascii table is desired */
-    if (strcmp(argv[0], "solids") == 0) {
+    if (BU_STR_EQUAL(argv[0], "solids")) {
 	/* complete summary - down to solids/paremeters */
 	flag = SOL_TABLE;
-    } else if (strcmp(argv[0], "regions") == 0) {
+    } else if (BU_STR_EQUAL(argv[0], "regions")) {
 	/* summary down to solids as members of regions */
 	flag = REG_TABLE;
-    } else if (strcmp(argv[0], "idents") == 0) {
+    } else if (BU_STR_EQUAL(argv[0], "idents")) {
 	/* summary down to regions */
 	flag = ID_TABLE;
     } else {

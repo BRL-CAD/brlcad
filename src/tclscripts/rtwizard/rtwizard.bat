@@ -1,7 +1,7 @@
 REM                      R T W I Z A R D . B A T
 REM  BRL-CAD
 REM 
-REM  Copyright (c) 2006-2010 United States Government as represented by
+REM  Copyright (c) 2006-2011 United States Government as represented by
 REM  the U.S. Army Research Laboratory.
 REM 
 REM  This library is free software; you can redistribute it and/or

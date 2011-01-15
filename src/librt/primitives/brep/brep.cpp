@@ -1,7 +1,7 @@
 /*                     B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -73,7 +73,7 @@ extern "C" {
     void rt_brep_ifree(struct rt_db_internal *ip);
     int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
     int rt_brep_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr);
-    int rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv);
+    int rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, const char **argv);
     int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
 #ifdef __cplusplus
 }
@@ -456,11 +456,11 @@ public:
 	CLEAN_MISS,
 	NEAR_HIT,
 	NEAR_MISS,
-	CRACK_HIT, //applied to first point of two near_miss points with same normal direction, second point removed
+	CRACK_HIT //applied to first point of two near_miss points with same normal direction, second point removed
     };
     enum hit_direction {
 	ENTERING,
-	LEAVING,
+	LEAVING
     };
 
     const ON_BrepFace& face;
@@ -2084,6 +2084,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		point_t prev;
 
 		brep_hit &out = *i;
+		VMOVE(prev, out.point);
 
 		if (i != hits.begin()) {
 		    bu_log("<%g>", DIST_PT_PT(out.point, prev));
@@ -2095,7 +2096,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
 		if (out.direction == brep_hit::ENTERING) bu_log("+");
 		if (out.direction == brep_hit::LEAVING) bu_log("-");
-		VMOVE(prev, out.point);
+
 		bu_log(")");
 	    }
 	    bu_log("\n**** Orig Hits: %zu\n", orig.size());
@@ -2104,6 +2105,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		point_t prev;
 
 		brep_hit &out = *i;
+		VMOVE(prev, out.point);
 
 		if (i != orig.begin()) {
 		    bu_log("<%g>", DIST_PT_PT(out.point, prev));
@@ -2116,7 +2118,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		if (out.direction == brep_hit::ENTERING) bu_log("+");
 		if (out.direction == brep_hit::LEAVING) bu_log("-");
 		bu_log("<%d>", out.sbv->m_face->m_bRev);
-		VMOVE(prev, out.point);
+
 		bu_log(")");
 	    }
 
@@ -3125,7 +3127,7 @@ rt_brep_tclget(Tcl_Interp *, const struct rt_db_internal *, const char *)
  * R T _ B R E P _ T C L A D J U S T
  */
 int
-rt_brep_tcladjust(Tcl_Interp *, struct rt_db_internal *, int, char **)
+rt_brep_tcladjust(Tcl_Interp *, struct rt_db_internal *, int, const char **)
 {
     return 0;
 }

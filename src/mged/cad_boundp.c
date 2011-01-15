@@ -1,7 +1,7 @@
 /*                    C A D _ B O U N D P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -74,7 +74,7 @@ typedef struct queue
     point *endpoint;	/* -> endpt of ray from point */
 } queue;			/* entry in list of endpoints */
 
-static int Build(void), Chop(void), EndPoint(coords *p, segment *segp), GetArgs(int argc, char **argv), Input(segment *inp),
+static int Build(void), Chop(void), EndPoint(coords *p, segment *segp), GetArgs(int argc, const char *argv[]), Input(segment *inp),
     Near(coords *ap, coords *bp), Search(void), Split(coords *p, segment *oldp, segment *listh), Usage(void);
 static coords *Intersect(segment *a, segment *b);
 static point *LookUp(coords *coop), *NewPoint(coords *coop), *PutList(coords *coop);
@@ -88,7 +88,10 @@ static double tolerance = 0.0;	/* point matching slop */
 static double tolsq = 0.0;		/* `tolerance' ^ 2 */
 static point *headp = NULL;		/* head of list of points */
 static segment seghead = {
-    &seghead };	/* segment list head */
+    &seghead,
+    {0.0f, 0.0f},
+    {0.0f, 0.0f}
+};	/* segment list head */
 
 
 static int
@@ -100,7 +103,7 @@ Usage(void) 				/* print usage message */
 
 
 int
-main(int argc, char **argv)			/* "cad_boundp" entry point */
+main(int argc, const char *argv[])			/* "cad_boundp" entry point */
     /* argument count */
     /* argument strings */
 {
@@ -121,7 +124,7 @@ main(int argc, char **argv)			/* "cad_boundp" entry point */
 
 
 static int
-GetArgs(int argc, char **argv)	/* process command arguments */
+GetArgs(int argc, const char *argv[])	/* process command arguments */
     /* argument count */
     /* argument strings */
 {
@@ -134,7 +137,7 @@ GetArgs(int argc, char **argv)	/* process command arguments */
     fprintf(stderr, "\n\t\tGetArgs\n");
 #endif
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "i:o:t:v")) != EOF)
+    while ((c = bu_getopt(argc, (char * const *)argv, "i:o:t:v")) != EOF)
 	switch (c) {
 	    case 'i':
 		if (iflag) {
@@ -143,7 +146,7 @@ GetArgs(int argc, char **argv)	/* process command arguments */
 		}
 		iflag = 1;
 
-		if (strcmp(bu_optarg, "-") != 0 && freopen(bu_optarg, "r", stdin) == NULL) {
+		if (!BU_STR_EQUAL(bu_optarg, "-") && freopen(bu_optarg, "r", stdin) == NULL) {
 		    fprintf(stderr, "can't open \"%s\"", bu_optarg);
 		    return 1;
 		}
@@ -156,7 +159,7 @@ GetArgs(int argc, char **argv)	/* process command arguments */
 		}
 		oflag = 1;
 
-		if (strcmp(bu_optarg, "-") != 0 && freopen(bu_optarg, "w", stdout) == NULL) {
+		if (!BU_STR_EQUAL(bu_optarg, "-") && freopen(bu_optarg, "w", stdout) == NULL) {
 		    fprintf(stderr, "can't create \"%s\"", bu_optarg);
 		    return 1;
 		}
@@ -385,10 +388,10 @@ Search(void)				/* output bounding polygon */
     /* Output point and look for next CCW point on periphery. */
 
     for (;;) {
-	coords first;	/* first output if -v */
-	double mindir; /* smallest from->to angle */
+	coords first = {0.0, 0.0}; /* first output if -v */
+	double mindir = 0.0; /* smallest from->to angle */
 	point *nextp = (point *)NULL; /* -> next perimeter point */
-	queue *endq;	/* -> endpoint queue entry */
+	queue *endq = NULL; /* -> endpoint queue entry */
 
 #ifdef DEBUG
 	fprintf(stderr, "from %g", from);
@@ -423,16 +426,15 @@ Search(void)				/* output bounding polygon */
 
 	    /* Note: it would be possible to save some calls
 	       to atan2 by being clever about quadrants.  */
-	    if (endp->xy.y == currentp->xy.y
-		&& endp->xy.x == currentp->xy.x
-		)
+	    if (NEAR_EQUAL(endp->xy.y, currentp->xy.y, SMALL_FASTF)
+		&& NEAR_EQUAL(endp->xy.x, currentp->xy.x, SMALL_FASTF))
+	    {
 		to = 0.0;	/* not supposed to happen */
-	    else
-		to = atan2((double)
-			   (endp->xy.y - currentp->xy.y),
-			   (double)
-			   (endp->xy.x - currentp->xy.x)
+	    } else {
+		to = atan2((double)(endp->xy.y - currentp->xy.y),
+			   (double)(endp->xy.x - currentp->xy.x)
 		    ) * DEG2RAD;
+	    }
 #ifdef DEBUG
 	    fprintf(stderr, "to %g", to);
 #endif

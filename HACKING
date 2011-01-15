@@ -180,7 +180,7 @@ For each source file in BRL-CAD, the following checklist applies:
   scope and passing as parameters or embedding them in structures as
   data.
 
-In addtion, don't be afraid to rewrite code or throw away code that
+In addition, don't be afraid to rewrite code or throw away code that
 "smells bad".  No code is sacred.  Perfection is achieved not when
 there is nothing more to add but, rather, when there is nothing more
 to take away.
@@ -421,7 +421,7 @@ migrated to build system declarations, preprocessor defines, or being
 removed outright.  It's okay to make modifications that assume
 compiler conformance with the ANSI C standard (c89).
 
-There currently no C++ interface to the core BRL-CAD libraries.  There
+There is currently no C++ interface to the core BRL-CAD libraries.  There
 are a few tools and enhancements to libraries that are implemented in
 C++ (the new BREP object type in librt, for example), but there are
 presently no C++ bindings available beyond experimental developments.
@@ -552,6 +552,7 @@ variables should be utilized instead of the standard C facility:
   bu_optarg instead of optarg
   bu_strlcat instead of strcat(), strncat(), and strlcat()
   bu_strlcpy instead of strcpy(), strncpy(), and strlcpy()
+  bu_strcmp and BU_STR_EQUAL() instead of strcmp()
 
 Similarly, ANSI C functions are preferred over the BSD and POSIX
 interfaces.  The following functions should be used:

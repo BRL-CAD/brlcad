@@ -1,7 +1,7 @@
 /*                     P I X B O R D E R . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2010 United States Government as represented by
+ * Copyright (c) 1996-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -206,6 +206,8 @@ int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
     fastf_t hue_frac;
     fastf_t p, q, t;
     int hue_int;
+
+    VSETALL(float_rgb, 0.0);
 
     hue = hsv[HUE];
     sat = hsv[SAT];

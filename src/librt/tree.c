@@ -1,7 +1,7 @@
 /*                          T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2010 United States Government as represented by
+ * Copyright (c) 1995-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -557,7 +557,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
     } else {
 	/*
 	 * If there is more than just a direct reference to this leaf
-	 * from it's containing region, copy that below-region path
+	 * from its containing region, copy that below-region path
 	 * into st_path.  Otherwise, leave st_path's magic number 0.
 	 *
 	 * XXX nothing depends on this behavior yet, and this whole
@@ -774,7 +774,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
     struct soltab *stp;
     struct region *regp;
     Tcl_HashTable *tbl;
-    int prev_sol_count;
+    size_t prev_sol_count;
     int i;
     int num_attrs=0;
     point_t region_min, region_max;
@@ -1000,86 +1000,6 @@ rt_gettrees(struct rt_i *rtip, int argc, const char **argv, int ncpus)
 
 
 /**
- * R T _ B O U N D _ T R E E
- *
- * Calculate the bounding RPP of the region whose boolean tree is
- * 'tp'.  The bounding RPP is returned in tree_min and tree_max, which
- * need not have been initialized first.
- *
- * Returns -
- * 0 success
- * -1 failure (tree_min and tree_max may have been altered)
- */
-int
-rt_bound_tree(const union tree *tp, fastf_t *tree_min, fastf_t *tree_max)
-{
-    vect_t r_min, r_max;		/* rpp for right side of tree */
-
-    RT_CK_TREE(tp);
-
-    switch (tp->tr_op) {
-
-	case OP_SOLID:
-	    {
-		const struct soltab *stp;
-
-		stp = tp->tr_a.tu_stp;
-		RT_CK_SOLTAB(stp);
-		if (stp->st_aradius <= 0) {
-		    bu_log("rt_bound_tree: encountered dead solid '%s'\n",
-			   stp->st_dp->d_namep);
-		    return -1;	/* ERROR */
-		}
-
-		if (stp->st_aradius >= INFINITY) {
-		    VSETALL(tree_min, -INFINITY);
-		    VSETALL(tree_max,  INFINITY);
-		    return 0;
-		}
-		VMOVE(tree_min, stp->st_min);
-		VMOVE(tree_max, stp->st_max);
-		return 0;
-	    }
-
-	default:
-	    bu_log("rt_bound_tree(x%x): unknown op=x%x\n",
-		   tp, tp->tr_op);
-	    return -1;
-
-	case OP_XOR:
-	case OP_UNION:
-	    /* BINARY type -- expand to contain both */
-	    if (rt_bound_tree(tp->tr_b.tb_left, tree_min, tree_max) < 0 ||
-		rt_bound_tree(tp->tr_b.tb_right, r_min, r_max) < 0)
-		return -1;
-	    VMIN(tree_min, r_min);
-	    VMAX(tree_max, r_max);
-	    break;
-	case OP_INTERSECT:
-	    /* BINARY type -- find common area only */
-	    if (rt_bound_tree(tp->tr_b.tb_left, tree_min, tree_max) < 0 ||
-		rt_bound_tree(tp->tr_b.tb_right, r_min, r_max) < 0)
-		return -1;
-	    /* min = largest min, max = smallest max */
-	    VMAX(tree_min, r_min);
-	    VMIN(tree_max, r_max);
-	    break;
-	case OP_SUBTRACT:
-	    /* BINARY type -- just use left tree */
-	    if (rt_bound_tree(tp->tr_b.tb_left, tree_min, tree_max) < 0 ||
-		rt_bound_tree(tp->tr_b.tb_right, r_min, r_max) < 0)
-		return -1;
-	    /* Discard right rpp */
-	    break;
-	case OP_NOP:
-	    /* Implies that this tree has nothing in it */
-	    break;
-    }
-    return 0;
-}
-
-
-/**
  * R T _ T R E E _ E L I M _ N O P S
  *
  * Eliminate any references to NOP nodes from the tree.  It is safe to
@@ -1178,142 +1098,6 @@ top:
     }
     return 0;
 }
-
-
-/**
- * R T _ G E T R E G I O N
- *
- * Return a pointer to the corresponding region structure of the given
- * region's name (reg_name), or REGION_NULL if it does not exist.
- *
- * If the full path of a region is specified, then that one is
- * returned.  However, if only the database node name of the region is
- * specified and that region has been referenced multiple time in the
- * tree, then this routine will simply return the first one.
- */
-HIDDEN struct region *
-_rt_getregion(struct rt_i *rtip, const char *reg_name)
-{
-    struct region *regp;
-    const char *reg_base = bu_basename(reg_name);
-
-    RT_CK_RTI(rtip);
-    for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
-	const char *cp;
-	/* First, check for a match of the full path */
-	if (*reg_base == regp->reg_name[0] &&
-	    strcmp(reg_base, regp->reg_name) == 0)
-	    return regp;
-	/* Second, check for a match of the database node name */
-	cp = bu_basename(regp->reg_name);
-	if (*cp == *reg_name && strcmp(cp, reg_name) == 0)
-	    return regp;
-    }
-    return REGION_NULL;
-}
-
-
-/**
- * R T _ R P P _ R E G I O N
- *
- * Calculate the bounding RPP for a region given the name of the
- * region node in the database.  See remarks in _rt_getregion() above
- * for name conventions.  Returns 0 for failure (and prints a
- * diagnostic), or 1 for success.
- */
-int
-rt_rpp_region(struct rt_i *rtip, const char *reg_name, fastf_t *min_rpp, fastf_t *max_rpp)
-{
-    struct region *regp;
-
-    RT_CHECK_RTI(rtip);
-
-    regp = _rt_getregion(rtip, reg_name);
-    if (regp == REGION_NULL) return 0;
-    if (rt_bound_tree(regp->reg_treetop, min_rpp, max_rpp) < 0)
-	return 0;
-    return 1;
-}
-
-
-/**
- * R T _ F A S T F _ F L O A T
- *
- * Convert TO fastf_t FROM 3xfloats (for database)
- */
-void
-rt_fastf_float(fastf_t *ff, const dbfloat_t *fp, int n)
-{
-    while (n--) {
-	*ff++ = *fp++;
-	*ff++ = *fp++;
-	*ff++ = *fp++;
-	ff += ELEMENTS_PER_VECT-3;
-    }
-}
-
-
-/**
- * R T _ M A T _ D B M A T
- *
- * Convert TO fastf_t matrix FROM dbfloats (for database)
- */
-void
-rt_mat_dbmat(fastf_t *ff, const dbfloat_t *dbp)
-{
-
-    *ff++ = *dbp++;
-    *ff++ = *dbp++;
-    *ff++ = *dbp++;
-    *ff++ = *dbp++;
-
-    *ff++ = *dbp++;
-    *ff++ = *dbp++;
-    *ff++ = *dbp++;
-    *ff++ = *dbp++;
-
-    *ff++ = *dbp++;
-    *ff++ = *dbp++;
-    *ff++ = *dbp++;
-    *ff++ = *dbp++;
-
-    *ff++ = *dbp++;
-    *ff++ = *dbp++;
-    *ff++ = *dbp++;
-    *ff++ = *dbp++;
-}
-
-
-/**
- * R T _ D B M A T _ M A T
- *
- * Convert FROM fastf_t matrix TO dbfloats (for updating database)
- */
-void
-rt_dbmat_mat(dbfloat_t *dbp, const fastf_t *ff)
-{
-
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-}
-
 
 /**
  * R T _ F I N D _ S O L I D

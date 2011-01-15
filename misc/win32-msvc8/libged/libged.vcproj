@@ -1010,6 +1010,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\screengrab.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\search.c"
 				>
 			</File>

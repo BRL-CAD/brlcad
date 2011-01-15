@@ -1,7 +1,7 @@
 /*                   	P C _ T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,7 +44,6 @@
 int
 main(int argc, char **argv)
 {
-    int ret;
     struct rt_wdb *fp;
     struct directory *dp;
     struct rt_db_internal ip;
@@ -111,7 +110,7 @@ main(int argc, char **argv)
 
     wdb_close(fp);
 
-    return ret;
+    return 0;
 }
 
 

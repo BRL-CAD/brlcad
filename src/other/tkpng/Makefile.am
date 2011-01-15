@@ -9,8 +9,8 @@ tkpng_la_LDFLAGS = -module
 lib_LTLIBRARIES = tkpng.la
 
 tkpng_la_SOURCES = \
-	tkImgPNG.c \
-	tkImgPNGInit.c
+	generic/tkImgPNG.c \
+	generic/tkImgPNGInit.c
 
 tkpng_la_LIBADD = \
 	${LIBZ} \
@@ -20,6 +20,7 @@ tkpng_la_LIBADD = \
 
 EXTRA_DIST = \
 	README \
+	ChangeLog \
 	license.terms
 
 include $(top_srcdir)/misc/Makefile.defs

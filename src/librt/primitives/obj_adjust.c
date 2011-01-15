@@ -1,7 +1,7 @@
 /*                  O B J _ A D J U S T . C
  * BRL-CAD
  *
- * Copyright (c) 2010 United States Government as represented by
+ * Copyright (c) 2010-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
 
 
 int
-rt_obj_adjust(struct bu_vls *logstr, struct rt_db_internal *ip, int argc, char **argv)
+rt_obj_adjust(struct bu_vls *logstr, struct rt_db_internal *ip, int argc, const char **argv)
 {
     int id;
     const struct rt_functab *ft;

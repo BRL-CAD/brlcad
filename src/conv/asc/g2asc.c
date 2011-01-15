@@ -1,7 +1,7 @@
 /*                         G 2 A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,8 +28,8 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <ctype.h>
 #include <string.h>
+#include <ctype.h>
 #include "bio.h"
 
 #include "vmath.h"
@@ -45,8 +45,7 @@ const mat_t	id_mat = {
     0.0, 0.0, 1.0, 0.0,
     0.0, 0.0, 0.0, 1.0};	/* identity matrix for pipes */
 
-char *name(char *str);
-char *strchop(char *str, int len);
+char *strchop(char *str, size_t len);
 #define CH(x)	strchop(x, sizeof(x))
 
 int	combdump(void);
@@ -54,7 +53,7 @@ void	idendump(void), polyhead(void), polydata(void);
 void	soldump(void), extrdump(void), sketchdump(void);
 void	membdump(union record *rp), arsadump(void), arsbdump(void);
 void	materdump(void), bspldump(void), bsurfdump(void);
-void	pipe_dump(void), particle_dump(void), dump_pipe_segs(char *name, struct bu_list *headp);
+void	pipe_dump(void), particle_dump(void), dump_pipe_segs(char *, struct bu_list *);
 void	arbn_dump(void), cline_dump(void), bot_dump(void);
 void	nmg_dump(void);
 void	strsol_dump(void);
@@ -132,13 +131,13 @@ main(int argc, char **argv)
 
     if ( argc >= 3 ) {
 	iname = argv[1];
-	if ( strcmp(iname, "-") == 0 )  {
+	if ( BU_STR_EQUAL(iname, "-") )  {
 	    ifp = stdin;
 	} else {
 	    ifp = fopen(iname, "rb");
 	}
 	if ( !ifp )  perror(iname);
-	if ( strcmp(argv[2], "-") == 0 )  {
+	if ( BU_STR_EQUAL(argv[2], "-") )  {
 	    ofp = stdout;
 	} else {
 	    ofp = fopen(argv[2], "wb");
@@ -208,7 +207,7 @@ main(int argc, char **argv)
 	    if ( dp->d_major_type == 2 && dp->d_minor_type == 0 ) {
 		const char *value;
 		Tcl_Obj	*list, *obj;
-		int list_len;
+		size_t list_len;
 		struct bu_attribute_value_set g_avs;
 
 		/* get _GLOBAL attributes */
@@ -240,9 +239,13 @@ main(int argc, char **argv)
 		if ( !value )
 		    continue;
 		list = Tcl_NewStringObj( value, -1);
-		if ( Tcl_ListObjLength( interp, list, &list_len ) != TCL_OK ) {
-		    bu_log( "Failed to get length of region color table!!\n" );
-		    continue;
+		{
+		    int llen;
+		    if ( Tcl_ListObjLength( interp, list, &llen ) != TCL_OK ) {
+			bu_log( "Failed to get length of region color table!!\n" );
+			continue;
+		    }
+		    list_len = (size_t)llen;
 		}
 		for ( i=0; i<list_len; i++ ) {
 		    if ( Tcl_ListObjIndex( interp, list, i, &obj ) != TCL_OK ) {
@@ -267,18 +270,18 @@ main(int argc, char **argv)
 	    }
 
 	    if ( dp->d_flags & DIR_COMB ) {
-		struct bu_vls log;
+		struct bu_vls logstr;
 
-		bu_vls_init(&log);
-		if (intern.idb_meth->ft_get(&log, &intern, "tree") != TCL_OK) {
+		bu_vls_init(&logstr);
+		if (intern.idb_meth->ft_get(&logstr, &intern, "tree") != TCL_OK) {
 		    rt_db_free_internal(&intern);
 		    bu_log("Unable to export '%s', skipping\n", dp->d_namep);
-		    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
-		    bu_vls_free(&log);
+		    Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)0);
+		    bu_vls_free(&logstr);
 		    continue;
 		}
-		Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
-		bu_vls_free(&log);
+		Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)0);
+		bu_vls_free(&logstr);
 		if ( dp->d_flags & DIR_REGION ) {
 		    fprintf( ofp, "put {%s} comb region yes tree {%s}\n",
 			     tclify_name( dp->d_namep ),
@@ -289,18 +292,18 @@ main(int argc, char **argv)
 			     Tcl_GetStringResult(interp) );
 		}
 	    } else {
-		struct bu_vls log;
+		struct bu_vls logstr;
 
-		bu_vls_init(&log);
-		if ( (dp->d_minor_type != ID_CONSTRAINT) && (intern.idb_meth->ft_get( &log, &intern, NULL ) != TCL_OK) )  {
+		bu_vls_init(&logstr);
+		if ( (dp->d_minor_type != ID_CONSTRAINT) && (intern.idb_meth->ft_get( &logstr, &intern, NULL ) != TCL_OK) )  {
 		    rt_db_free_internal(&intern);
 		    bu_log("Unable to export '%s', skipping\n", dp->d_namep );
-		    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
-		    bu_vls_free(&log);
+		    Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)0);
+		    bu_vls_free(&logstr);
 		    continue;
 		}
-		Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
-		bu_vls_free(&log);
+		Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)0);
+		bu_vls_free(&logstr);
 		fprintf( ofp, "put {%s} %s\n",
 			 tclify_name( dp->d_namep ),
 			 Tcl_GetStringResult(interp) );
@@ -398,8 +401,50 @@ main(int argc, char **argv)
 	}
     }  while ( fread( (char *)&record, sizeof record, 1, ifp ) == 1  &&
 	       !feof(ifp) );
-    bu_exit(0, NULL);
+
+    return 0;
 }
+
+
+/*
+ *			N A M E
+ *
+ *  Take a database name and null-terminate it,
+ *  converting unprintable characters to something printable.
+ *  Here we deal with names not being null-terminated.
+ */
+char *encode_name(char *str)
+{
+    static char buf[NAMESIZE+1];
+    char *ip = str;
+    char *op = buf;
+    int warn = 0;
+
+    while ( op < &buf[NAMESIZE] )  {
+	if ( *ip == '\0' )  break;
+	if ( isascii(*ip) && isprint(*ip) && !isspace(*ip) )  {
+	    *op++ = *ip++;
+	}  else  {
+	    *op++ = '@';
+	    ip++;
+	    warn = 1;
+	}
+    }
+    *op = '\0';
+    if (warn)  {
+	(void)fprintf(stderr,
+		      "g2asc: Illegal char in object name, converted to '%s'\n",
+		      buf );
+    }
+    if ( op == buf )  {
+	/* Null input name */
+	(void)fprintf(stderr,
+		      "g2asc:  NULL object name converted to -=NULL=-\n");
+	return "-=NULL=-";
+    }
+    return buf;
+}
+
 
 /*
  *			G E T _ E X T
@@ -409,9 +454,9 @@ main(int argc, char **argv)
  *  the remainder are read from ifp.
  */
 void
-get_ext(struct bu_external *ep, int ngran)
+get_ext(struct bu_external *ep, size_t ngran)
 {
-    size_t	count;
+    size_t count;
 
     BU_INIT_EXTERNAL(ep);
 
@@ -426,7 +471,7 @@ get_ext(struct bu_external *ep, int ngran)
 		   sizeof(union record), ngran-1, ifp);
     if ( count != (size_t)ngran-1 )  {
 	fprintf(stderr,
-		"g2asc: get_ext:  wanted to read %d granules, got %d\n",
+		"g2asc: get_ext:  wanted to read %lu granules, got %lu\n",
 		ngran-1, count);
 	bu_exit(1, NULL);
     }
@@ -435,10 +480,10 @@ get_ext(struct bu_external *ep, int ngran)
 void
 nmg_dump(void)
 {
-    union record		rec;
-    long			i, granules;
-    long			struct_count[26];
-    int			j, k;
+    union record rec;
+    long struct_count[26];
+    size_t i, granules;
+    size_t j, k;
 
     /* just in case someone changes the record size */
     if ( sizeof( union record )%32 )
@@ -530,7 +575,7 @@ idendump(void)	/* Print out Ident record information */
 	);
 
     /* Print a warning message on stderr if versions differ */
-    if ( strcmp( record.i.i_version, ID_VERSION ) != 0 )  {
+    if ( !BU_STR_EQUAL( record.i.i_version, ID_VERSION ) )  {
 	(void)fprintf(stderr,
 		      "g2asc: File is version (%s), Program is version (%s)\n",
 		      record.i.i_version, ID_VERSION );
@@ -541,7 +586,7 @@ void
 polyhead(void)	/* Print out Polyhead record information */
 {
     (void)fprintf(ofp, "%c ", record.p.p_id );		/* P */
-    (void)fprintf(ofp, "%.16s", name(record.p.p_name) );	/* unique name */
+    (void)fprintf(ofp, "%.16s", encode_name(record.p.p_name) );	/* unique name */
     (void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 }
 
@@ -574,7 +619,7 @@ soldump(void)	/* Print out Solid record information */
 
     (void)fprintf(ofp, "%c ", record.s.s_id );	/* S */
     (void)fprintf(ofp, "%d ", record.s.s_type );	/* GED primitive type */
-    (void)fprintf(ofp, "%.16s ", name(record.s.s_name) );	/* unique name */
+    (void)fprintf(ofp, "%.16s ", encode_name(record.s.s_name) );	/* unique name */
     (void)fprintf(ofp, "%d", record.s.s_cgtype );/* COMGEOM solid type */
     for ( i = 0; i < 24; i++ )
 	(void)fprintf(ofp, " %.12e", record.s.s_values[i] ); /* parameters */
@@ -584,15 +629,15 @@ soldump(void)	/* Print out Solid record information */
 void
 cline_dump(void)
 {
-    int				ngranules;	/* number of granules, total */
-    char				*name;
-    struct rt_cline_internal	*cli;
-    struct bu_external		ext;
-    struct rt_db_internal		intern;
+    size_t ngranules;	/* number of granules, total */
+    char *name;
+    struct rt_cline_internal *cli;
+    struct bu_external ext;
+    struct rt_db_internal intern;
 
-    ngranules = 1;
     name = record.cli.cli_name;
 
+    ngranules = 1;
     get_ext( &ext, ngranules );
 
     /* Hand off to librt's import() routine */
@@ -619,12 +664,12 @@ cline_dump(void)
 void
 bot_dump(void)
 {
-    int				ngranules;
-    char				*name;
-    struct rt_bot_internal		*bot;
-    struct bu_external		ext;
-    struct rt_db_internal		intern;
-    int				i;
+    size_t ngranules;
+    char *name;
+    struct rt_bot_internal *bot;
+    struct bu_external ext;
+    struct rt_db_internal intern;
+    size_t i;
 
     name = record.bot.bot_name;
     ngranules = bu_glong( record.bot.bot_nrec) + 1;
@@ -645,19 +690,18 @@ bot_dump(void)
     (void)fprintf(ofp, "%d ", bot->mode );
     (void)fprintf(ofp, "%d ", bot->orientation );
     (void)fprintf(ofp, "%d ", 0 );	/* was error_mode */
-    (void)fprintf(ofp, "%d ", bot->num_vertices );
-    (void)fprintf(ofp, "%d", bot->num_faces );
+    (void)fprintf(ofp, "%lu ", bot->num_vertices );
+    (void)fprintf(ofp, "%lu", bot->num_faces );
     (void)fprintf(ofp, "\n");
 
     for ( i=0; i<bot->num_vertices; i++ )
-	fprintf(ofp,  "	%d: %26.20e %26.20e %26.20e\n", i, V3ARGS( &bot->vertices[i*3] ) );
+	fprintf(ofp,  "	%lu: %26.20e %26.20e %26.20e\n", i, V3ARGS( &bot->vertices[i*3] ) );
     if ( bot->mode == RT_BOT_PLATE )
     {
 	struct bu_vls vls;
 
 	for ( i=0; i<bot->num_faces; i++ )
-	    fprintf(ofp,  "	%d: %d %d %d %26.20e\n", i, V3ARGS( &bot->faces[i*3] ),
-		    bot->thickness[i] );
+	    fprintf(ofp,  "	%lu: %d %d %d %26.20e\n", i, V3ARGS( &bot->faces[i*3] ), bot->thickness[i] );
 	bu_vls_init( &vls );
 	bu_bitv_to_hex( &vls, bot->face_mode );
 	fprintf(ofp,  "	%s\n", bu_vls_addr( &vls ) );
@@ -666,7 +710,7 @@ bot_dump(void)
     else
     {
 	for ( i=0; i<bot->num_faces; i++ )
-	    fprintf(ofp,  "	%d: %d %d %d\n", i, V3ARGS( &bot->faces[i*3] ) );
+	    fprintf(ofp,  "	%lu: %d %d %d\n", i, V3ARGS( &bot->faces[i*3] ) );
     }
 
     rt_db_free_internal(&intern);
@@ -677,11 +721,11 @@ void
 pipe_dump(void)	/* Print out Pipe record information */
 {
 
-    int			ngranules;	/* number of granules, total */
-    char			*name;
-    struct rt_pipe_internal	*pipe;		/* want a struct for the head, not a ptr. */
-    struct bu_external	ext;
-    struct rt_db_internal	intern;
+    size_t ngranules;	/* number of granules, total */
+    char *name;
+    struct rt_pipe_internal *pipeip;		/* want a struct for the head, not a ptr. */
+    struct bu_external ext;
+    struct rt_db_internal intern;
 
     ngranules = bu_glong(record.pwr.pwr_count)+1;
     name = record.pwr.pwr_name;
@@ -695,14 +739,14 @@ pipe_dump(void)	/* Print out Pipe record information */
 	bu_exit(-1, NULL);
     }
 
-    pipe = (struct rt_pipe_internal *)intern.idb_ptr;
-    RT_PIPE_CK_MAGIC(pipe);
+    pipeip = (struct rt_pipe_internal *)intern.idb_ptr;
+    RT_PIPE_CK_MAGIC(pipeip);
 
     /* send the doubly linked list off to dump_pipe_segs(), which
      * will print all the information.
      */
 
-    dump_pipe_segs(name, &pipe->pipe_segs_head);
+    dump_pipe_segs(name, &pipeip->pipe_segs_head);
 
     rt_db_free_internal(&intern);
     bu_free_external( &ext );
@@ -712,7 +756,7 @@ void
 dump_pipe_segs(char *name, struct bu_list *headp)
 {
 
-    struct wdb_pipept	*sp;
+    struct wdb_pipept *sp;
 
     fprintf(ofp, "%c %.16s\n", DBID_PIPE, name);
 
@@ -784,12 +828,12 @@ particle_dump(void)
 void
 arbn_dump(void)
 {
-    int		ngranules;	/* number of granules to be read */
-    int		i;		/* a counter */
-    char		*name;
-    struct rt_arbn_internal	*arbn;
-    struct bu_external	ext;
-    struct rt_db_internal	intern;
+    size_t ngranules;	/* number of granules to be read */
+    size_t i;		/* a counter */
+    char *name;
+    struct rt_arbn_internal *arbn;
+    struct bu_external ext;
+    struct rt_db_internal intern;
 
     ngranules = bu_glong(record.n.n_grans)+1;
     name = record.n.n_name;
@@ -806,7 +850,7 @@ arbn_dump(void)
     arbn = (struct rt_arbn_internal *)intern.idb_ptr;
     RT_ARBN_CK_MAGIC(arbn);
 
-    fprintf(ofp, "%c %.16s %d\n", 'n', name, arbn->neqn);
+    fprintf(ofp, "%c %.16s %lu\n", 'n', name, arbn->neqn);
     for ( i = 0; i < arbn->neqn; i++ )  {
 	fprintf(ofp, "n %26.20e %20.26e %26.20e %26.20e\n",
 		arbn->eqn[i][X], arbn->eqn[i][Y],
@@ -880,7 +924,7 @@ combdump(void)	/* Print out Combination record information */
 	    (void)fprintf(ofp, "V ");
 	    break;
     }
-    (void)fprintf(ofp, "%.16s ", name(record.c.c_name) );	/* unique name */
+    (void)fprintf(ofp, "%.16s ", encode_name(record.c.c_name) );	/* unique name */
     (void)fprintf(ofp, "%d ", record.c.c_regionid );	/* region ID code */
     (void)fprintf(ofp, "%d ", record.c.c_aircode );	/* air space code */
     (void)fprintf(ofp, "%d ", mcount );       		/* DEPRECATED: # of members */
@@ -949,7 +993,7 @@ membdump(union record *rp)
 
     (void)fprintf(ofp, "%c ", rp->M.m_id );		/* M */
     (void)fprintf(ofp, "%c ", rp->M.m_relation );	/* Boolean oper. */
-    (void)fprintf(ofp, "%.16s ", name(rp->M.m_instname) );	/* referred-to obj. */
+    (void)fprintf(ofp, "%.16s ", encode_name(rp->M.m_instname) );	/* referred-to obj. */
     for ( i = 0; i < 16; i++ )			/* homogeneous transform matrix */
 	(void)fprintf(ofp, "%.12e ", rp->M.m_mat[i] );
     (void)fprintf(ofp, "%d", 0 );			/* was COMGEOM solid # */
@@ -964,7 +1008,7 @@ arsadump(void)	/* Print out ARS record information */
 
     (void)fprintf(ofp, "%c ", record.a.a_id );	/* A */
     (void)fprintf(ofp, "%d ", record.a.a_type );	/* primitive type */
-    (void)fprintf(ofp, "%.16s ", name(record.a.a_name) );	/* unique name */
+    (void)fprintf(ofp, "%.16s ", encode_name(record.a.a_name) );	/* unique name */
     (void)fprintf(ofp, "%d ", record.a.a_m );	/* # of curves */
     (void)fprintf(ofp, "%d ", record.a.a_n );	/* # of points per curve */
     (void)fprintf(ofp, "%d ", record.a.a_curlen );/* # of granules per curve */
@@ -1020,7 +1064,7 @@ bspldump(void)	/* Print out B-spline solid description record information */
 {
     (void)fprintf(ofp,  "%c %.16s %d %.12e\n",
 		  record.B.B_id,		/* b */
-		  name(record.B.B_name),	/* unique name */
+		  encode_name(record.B.B_name),	/* unique name */
 		  record.B.B_nsurf,	/* # of surfaces in this solid */
 		  record.B.B_resolution );	/* resolution of flatness */
 }
@@ -1097,51 +1141,12 @@ bsurfdump(void)	/* Print d-spline surface description record information */
 }
 
 /*
- *			N A M E
- *
- *  Take a database name and null-terminate it,
- *  converting unprintable characters to something printable.
- *  Here we deal with names not being null-terminated.
- */
-char *name(char *str)
-{
-    static char buf[NAMESIZE+1];
-    char *ip = str;
-    char *op = buf;
-    int warn = 0;
-
-    while ( op < &buf[NAMESIZE] )  {
-	if ( *ip == '\0' )  break;
-	if ( isascii(*ip) && isprint(*ip) && !isspace(*ip) )  {
-	    *op++ = *ip++;
-	}  else  {
-	    *op++ = '@';
-	    ip++;
-	    warn = 1;
-	}
-    }
-    *op = '\0';
-    if (warn)  {
-	(void)fprintf(stderr,
-		      "g2asc: Illegal char in object name, converted to '%s'\n",
-		      buf );
-    }
-    if ( op == buf )  {
-	/* Null input name */
-	(void)fprintf(stderr,
-		      "g2asc:  NULL object name converted to -=NULL=-\n");
-	return "-=NULL=-";
-    }
-    return buf;
-}
-
-/*
  *			S T R C H O P
  *
  *  Take a string and a length, and null terminate,
  *  converting unprintable characters to something printable.
  */
-char *strchop(char *str, int len)
+char *strchop(char *str, size_t len)
 {
     static char buf[10000] = {0};
     char *ip = str;
@@ -1149,7 +1154,9 @@ char *strchop(char *str, int len)
     int warn = 0;
     char *ep;
 
-    if ( len > sizeof(buf)-2 )  len=sizeof(buf)-2;
+    if ( len > sizeof(buf)-2 )
+	len=sizeof(buf)-2;
+
     ep = &buf[len-1];		/* Leave room for null */
     while ( op < ep )  {
 	if ( *ip == '\0' )  break;
@@ -1200,8 +1207,8 @@ extrdump(void)
     RT_EXTRUDE_CK_MAGIC(extr);
 
     (void)fprintf(ofp, "%c ", DBID_EXTR );	/* e */
-    (void)fprintf(ofp, "%.16s ", name( myname ) );	/* unique name */
-    (void)fprintf(ofp, "%.16s ", name( extr->sketch_name ) );
+    (void)fprintf(ofp, "%.16s ", encode_name( myname ) );	/* unique name */
+    (void)fprintf(ofp, "%.16s ", encode_name( extr->sketch_name ) );
     (void)fprintf(ofp, "%d ", extr->keypoint );
     (void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( extr->V ) );
     (void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( extr->h ) );
@@ -1212,13 +1219,13 @@ extrdump(void)
 void
 sketchdump(void)
 {
-    struct rt_sketch_internal	*skt;
-    int				ngranules;
-    char				*myname;
-    struct bu_external		ext;
-    struct rt_db_internal		intern;
-    int				i, j;
-    struct curve			*crv;
+    struct rt_sketch_internal *skt;
+    size_t ngranules;
+    char *myname;
+    struct bu_external ext;
+    struct rt_db_internal intern;
+    size_t i, j;
+    struct curve *crv;
 
     myname = record.skt.skt_name;
     ngranules = bu_glong( record.skt.skt_count) + 1;
@@ -1235,11 +1242,11 @@ sketchdump(void)
     RT_SKETCH_CK_MAGIC( skt );
     crv = &skt->skt_curve;
     (void)fprintf(ofp, "%c ", DBID_SKETCH ); /* d */
-    (void)fprintf(ofp, "%.16s ", name( myname ) );  /* unique name */
+    (void)fprintf(ofp, "%.16s ", encode_name( myname ) );  /* unique name */
     (void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( skt->V ) );
     (void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( skt->u_vec ) );
     (void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( skt->v_vec ) );
-    (void)fprintf(ofp, "%d %d\n", skt->vert_count, crv->seg_count );
+    (void)fprintf(ofp, "%lu %lu\n", skt->vert_count, crv->seg_count );
     for ( i=0; i<skt->vert_count; i++ )
 	(void)fprintf(ofp, " %.12e %.12e", V2ARGS( skt->verts[i] ) );
     (void)fprintf(ofp, "\n" );

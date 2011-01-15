@@ -1,7 +1,7 @@
 /*                      S H _ L I G H T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,6 @@
 
 #ifdef RT_MULTISPECTRAL
 #  include "spectrum.h"
-extern const struct bn_table *spectrum;
 #endif
 
 
@@ -222,10 +221,10 @@ light_pt_set(register const struct bu_structparse *sdp, register const char *nam
     struct light_specific *lsp = (struct light_specific *)base;
     fastf_t *p = (fastf_t *)(base+sdp->sp_offset);
 
-    if (! strcmp("pt", name)) {
+    if (BU_STR_EQUAL("pt", name)) {
 	/* user just specified point, set normal to zeros */
 	p[3] = p[4] = p[5] = 0.0;
-    } else if (strcmp("pn", name)) {
+    } else if (!BU_STR_EQUAL("pn", name)) {
 	bu_log("*********** unknown option in light_pt_set %s:%d\n", __FILE__, __LINE__);
 	return;
     }

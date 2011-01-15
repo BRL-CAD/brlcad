@@ -1,7 +1,7 @@
 /*                      D U N N S N A P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -101,6 +101,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
+    ssize_t ret;
     FBIO *fbp = FBIO_NULL;
 
     if (!get_args(argc, argv)) {
@@ -144,7 +145,9 @@ main(int argc, char **argv)
 
 	/* send expose command to camera */
 	cmd = 'I';	/* expose command */
-	write(fd, &cmd, 1);
+	ret = write(fd, &cmd, 1);
+	if (ret < 0)
+	    perror("write");
 	hangten();
 
 	/* Wait a long time here, because exposure can be lengthy */

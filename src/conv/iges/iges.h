@@ -1,7 +1,7 @@
 /*                          I G E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,31 +17,29 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file iges.h
- *
- */
 
-#define CSG_MODE		1
-#define FACET_MODE		2
-#define	TRIMMED_SURF_MODE	3
+#define CSG_MODE 1
+#define FACET_MODE 2
+#define TRIMMED_SURF_MODE 3
 
-#define NAMESIZE	16	/* from db.h */
+#define NAMESIZE 16 /* from db.h */
 
 struct iges_properties
 {
-    char			name[NAMESIZE+1];
-    char			material_name[32];
-    char			material_params[60];
-    char			region_flag;
-    short			ident;
-    short			air_code;
-    short			material_code;
-    short			los_density;
-    short			inherit;
-    short			color_defined;
-    unsigned char		color[3];
+    char name[NAMESIZE+1];
+    char material_name[32];
+    char material_params[60];
+    char region_flag;
+    short ident;
+    short air_code;
+    short material_code;
+    short los_density;
+    short inherit;
+    short color_defined;
+    unsigned char color[3];
 
 };
+
 
 /*
  * Local Variables:

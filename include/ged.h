@@ -1,7 +1,7 @@
 /*                           G E D . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -687,12 +687,12 @@ GED_EXPORT BU_EXTERN(int	wdb_put_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_adjust_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_form_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
@@ -707,7 +707,7 @@ GED_EXPORT BU_EXTERN(int	wdb_rt_gettrees_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_dump_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
@@ -802,7 +802,7 @@ GED_EXPORT BU_EXTERN(int	wdb_stub_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_region_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
@@ -959,11 +959,6 @@ GED_EXPORT BU_EXTERN(int wdb_bot_smooth_cmd,
 		     int argc,
 		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_importFg4Section_cmd,
-		    (struct rt_wdb *wdbp,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char *argv[]));
-GED_EXPORT BU_EXTERN(int	wdb_stub_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,

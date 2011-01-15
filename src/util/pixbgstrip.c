@@ -1,7 +1,7 @@
 /*                    P I X B G S T R I P . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2010 United States Government as represented by
+ * Copyright (c) 1991-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or

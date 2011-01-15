@@ -1,7 +1,7 @@
 /*                       S G I _ D E P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -99,7 +99,7 @@ tryGetOrigin( xp, yp )
     long *xp, *yp;
 {
     char *fbtype = fb_gettype( fbiop );
-    if ( strcmp( fbtype, "Remote Device Interface" ) == 0 )	/* trouble */
+    if ( BU_STR_EQUAL( fbtype, "Remote Device Interface" ) )	/* trouble */
     {
 	prnt_Scroll( "Can't get window origin from remote device.\n" );
 	return false;

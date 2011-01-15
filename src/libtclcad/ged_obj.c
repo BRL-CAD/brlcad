@@ -1,7 +1,7 @@
 /*                       G E D _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2010 United States Government as represented by
+ * Copyright (c) 2000-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -189,6 +189,12 @@ HIDDEN int go_data_pick(struct ged *gedp,
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
+HIDDEN int go_fontsize(struct ged *gedp,
+		       int argc,
+		       const char *argv[],
+		       ged_func_ptr func,
+		       const char *usage,
+		       int maxargs);
 HIDDEN int go_init_view_bindings(struct ged *gedp,
 				 int argc,
 				 const char *argv[],
@@ -743,6 +749,7 @@ static struct go_cmdtab go_cmds[] = {
     {"eye_pos",	"[x y z]", 5, go_view_func, ged_eye_pos},
     {"faceplate",	"center_dot|prim_labels|view_params|view_scale color|draw [val(s)]", GO_UNLIMITED, go_faceplate, GED_FUNC_PTR_NULL},
     {"facetize",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_facetize},
+    {"fontsize",	"[fontsize]", 3, go_fontsize, GED_FUNC_PTR_NULL},
     {"form",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_form},
     {"fracture",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_fracture},
     {"g",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_group},
@@ -1034,7 +1041,7 @@ go_cmd(ClientData clientData,
 
     for (ctp = go_cmds; ctp->go_name != (char *)0; ctp++) {
 	if (ctp->go_name[0] == argv[1][0] &&
-	    !strcmp(ctp->go_name, argv[1])) {
+	    BU_STR_EQUAL(ctp->go_name, argv[1])) {
 	    ret = (*ctp->go_wrapper_func)(gop->go_gedp, argc-1, (const char **)argv+1, ctp->go_func, ctp->go_usage, ctp->go_maxargs);
 	    break;
 	}
@@ -1190,7 +1197,7 @@ Usage: go_open\n\
     /* Delete previous proc (if any) to release all that memory, first */
     (void)Tcl_DeleteCommand(interp, argv[1]);
 
-    if (argc == 3 || strcmp(argv[2], "db") == 0) {
+    if (argc == 3 || BU_STR_EQUAL(argv[2], "db")) {
 	if (argc == 3) {
 	    dbname = argv[2];
 	    gedp = ged_open("filename", dbname, 0); 
@@ -1251,7 +1258,7 @@ go_autoview(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -1274,7 +1281,7 @@ go_axes(struct ged *gedp,
 	const char *usage)
 {
 
-    if (strcmp(argv[2], "draw") == 0) {
+    if (BU_STR_EQUAL(argv[2], "draw")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_draw);
 	    return BRLCAD_OK;
@@ -1298,7 +1305,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "axes_size") == 0) {
+    if (BU_STR_EQUAL(argv[2], "axes_size")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%lf", gasp->gas_axes_size);
 	    return BRLCAD_OK;
@@ -1319,7 +1326,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "axes_pos") == 0) {
+    if (BU_STR_EQUAL(argv[2], "axes_pos")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%lf %lf %lf",
 			  V3ARGS(gasp->gas_axes_pos));
@@ -1343,7 +1350,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "axes_color") == 0) {
+    if (BU_STR_EQUAL(argv[2], "axes_color")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gasp->gas_axes_color));
@@ -1374,7 +1381,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "label_color") == 0) {
+    if (BU_STR_EQUAL(argv[2], "label_color")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gasp->gas_label_color));
@@ -1405,7 +1412,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "line_width") == 0) {
+    if (BU_STR_EQUAL(argv[2], "line_width")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_line_width);
 	    return BRLCAD_OK;
@@ -1426,7 +1433,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "pos_only") == 0) {
+    if (BU_STR_EQUAL(argv[2], "pos_only")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_pos_only);
 	    return BRLCAD_OK;
@@ -1450,7 +1457,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "tick_color") == 0) {
+    if (BU_STR_EQUAL(argv[2], "tick_color")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gasp->gas_tick_color));
@@ -1481,7 +1488,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "tick_enable") == 0) {
+    if (BU_STR_EQUAL(argv[2], "tick_enable")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_enabled);
 	    return BRLCAD_OK;
@@ -1505,7 +1512,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "tick_interval") == 0) {
+    if (BU_STR_EQUAL(argv[2], "tick_interval")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_interval);
 	    return BRLCAD_OK;
@@ -1526,7 +1533,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "tick_length") == 0) {
+    if (BU_STR_EQUAL(argv[2], "tick_length")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_length);
 	    return BRLCAD_OK;
@@ -1547,7 +1554,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "tick_major_color") == 0) {
+    if (BU_STR_EQUAL(argv[2], "tick_major_color")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gasp->gas_tick_major_color));
@@ -1578,7 +1585,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "tick_major_length") == 0) {
+    if (BU_STR_EQUAL(argv[2], "tick_major_length")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_major_length);
 	    return BRLCAD_OK;
@@ -1599,7 +1606,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "ticks_per_major") == 0) {
+    if (BU_STR_EQUAL(argv[2], "ticks_per_major")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_ticks_per_major);
 	    return BRLCAD_OK;
@@ -1620,7 +1627,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "tick_threshold") == 0) {
+    if (BU_STR_EQUAL(argv[2], "tick_threshold")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_threshold);
 	    return BRLCAD_OK;
@@ -1644,7 +1651,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "triple_color") == 0) {
+    if (BU_STR_EQUAL(argv[2], "triple_color")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_triple_color);
 	    return BRLCAD_OK;
@@ -1715,7 +1722,7 @@ go_bg(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -1806,7 +1813,7 @@ go_bounds(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -1872,7 +1879,7 @@ go_configure(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -1882,7 +1889,7 @@ go_configure(struct ged *gedp,
     }
 
     /* configure the display manager window */
-    status = DM_CONFIGURE_WIN(gdvp->gdv_dmp);
+    status = DM_CONFIGURE_WIN(gdvp->gdv_dmp, 0);
 
     /* configure the framebuffer window */
     if (gdvp->gdv_fbs.fbs_fbp != FBIO_NULL)
@@ -1943,7 +1950,7 @@ go_constrain_rmode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -2008,7 +2015,7 @@ go_constrain_tmode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -2102,7 +2109,7 @@ go_copy(struct ged *gedp,
 	bu_vls_strcpy(&from_vls, cp+1);
 
 	for (BU_LIST_FOR(gop, ged_obj, &HeadGedObj.l)) {
-	    if (!strcmp(bu_vls_addr(&gop->go_name), bu_vls_addr(&db_vls))) {
+	    if (BU_STR_EQUAL(bu_vls_addr(&gop->go_name), bu_vls_addr(&db_vls))) {
 		from_gedp = gop->go_gedp;
 		break;
 	    }
@@ -2127,7 +2134,7 @@ go_copy(struct ged *gedp,
 	bu_vls_strcpy(&to_vls, cp+1);
 
 	for (BU_LIST_FOR(gop, ged_obj, &HeadGedObj.l)) {
-	    if (!strcmp(bu_vls_addr(&gop->go_name), bu_vls_addr(&db_vls))) {
+	    if (BU_STR_EQUAL(bu_vls_addr(&gop->go_name), bu_vls_addr(&db_vls))) {
 		to_gedp = gop->go_gedp;
 		break;
 	    }
@@ -2201,7 +2208,7 @@ go_data_arrows(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -2215,7 +2222,7 @@ go_data_arrows(struct ged *gedp,
     else
 	gdasp = &gdvp->gdv_view->gv_data_arrows;
 
-    if (strcmp(argv[2], "draw") == 0) {
+    if (BU_STR_EQUAL(argv[2], "draw")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_draw);
 	    return BRLCAD_OK;
@@ -2239,7 +2246,7 @@ go_data_arrows(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "color") == 0) {
+    if (BU_STR_EQUAL(argv[2], "color")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gdasp->gdas_color));
@@ -2270,7 +2277,7 @@ go_data_arrows(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "line_width") == 0) {
+    if (BU_STR_EQUAL(argv[2], "line_width")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_line_width);
 	    return BRLCAD_OK;
@@ -2291,7 +2298,7 @@ go_data_arrows(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "points") == 0) {
+    if (BU_STR_EQUAL(argv[2], "points")) {
 	register int i;
 
 	if (argc == 3) {
@@ -2355,7 +2362,7 @@ go_data_arrows(struct ged *gedp,
 	}
     }
 
-    if (strcmp(argv[2], "tip_length") == 0) {
+    if (BU_STR_EQUAL(argv[2], "tip_length")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_tip_length);
 	    return BRLCAD_OK;
@@ -2376,7 +2383,7 @@ go_data_arrows(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "tip_width") == 0) {
+    if (BU_STR_EQUAL(argv[2], "tip_width")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_tip_width);
 	    return BRLCAD_OK;
@@ -2428,7 +2435,7 @@ go_data_axes(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -2442,7 +2449,7 @@ go_data_axes(struct ged *gedp,
     else
 	gdasp = &gdvp->gdv_view->gv_data_axes;
 
-    if (strcmp(argv[2], "draw") == 0) {
+    if (BU_STR_EQUAL(argv[2], "draw")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_draw);
 	    return BRLCAD_OK;
@@ -2466,7 +2473,7 @@ go_data_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "color") == 0) {
+    if (BU_STR_EQUAL(argv[2], "color")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gdasp->gdas_color));
@@ -2497,7 +2504,7 @@ go_data_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "line_width") == 0) {
+    if (BU_STR_EQUAL(argv[2], "line_width")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_line_width);
 	    return BRLCAD_OK;
@@ -2518,7 +2525,7 @@ go_data_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "size") == 0) {
+    if (BU_STR_EQUAL(argv[2], "size")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%lf", gdasp->gdas_size);
 	    return BRLCAD_OK;
@@ -2539,7 +2546,7 @@ go_data_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "points") == 0) {
+    if (BU_STR_EQUAL(argv[2], "points")) {
 	register int i;
 
 	if (argc == 3) {
@@ -2629,7 +2636,7 @@ go_data_labels(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -2643,7 +2650,7 @@ go_data_labels(struct ged *gedp,
     else
 	gdlsp = &gdvp->gdv_view->gv_data_labels;
 
-    if (strcmp(argv[2], "draw") == 0) {
+    if (BU_STR_EQUAL(argv[2], "draw")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gdlsp->gdls_draw);
 	    return BRLCAD_OK;
@@ -2667,7 +2674,7 @@ go_data_labels(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "color") == 0) {
+    if (BU_STR_EQUAL(argv[2], "color")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gdlsp->gdls_color));
@@ -2698,7 +2705,7 @@ go_data_labels(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "labels") == 0) {
+    if (BU_STR_EQUAL(argv[2], "labels")) {
 	register int i;
 
 	/* { {{label this} {0 0 0}} {{label that} {100 100 100}} }*/
@@ -2804,7 +2811,7 @@ go_data_labels(struct ged *gedp,
 	}
     }
 
-    if (strcmp(argv[2], "size") == 0) {
+    if (BU_STR_EQUAL(argv[2], "size")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%lf", gdlsp->gdls_size);
 	    return BRLCAD_OK;
@@ -2857,7 +2864,7 @@ go_data_lines(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -2871,7 +2878,7 @@ go_data_lines(struct ged *gedp,
     else
 	gdlsp = &gdvp->gdv_view->gv_data_lines;
 
-    if (strcmp(argv[2], "draw") == 0) {
+    if (BU_STR_EQUAL(argv[2], "draw")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gdlsp->gdls_draw);
 	    return BRLCAD_OK;
@@ -2895,7 +2902,7 @@ go_data_lines(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "color") == 0) {
+    if (BU_STR_EQUAL(argv[2], "color")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gdlsp->gdls_color));
@@ -2926,7 +2933,7 @@ go_data_lines(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "line_width") == 0) {
+    if (BU_STR_EQUAL(argv[2], "line_width")) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gdlsp->gdls_line_width);
 	    return BRLCAD_OK;
@@ -2947,7 +2954,7 @@ go_data_lines(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "points") == 0) {
+    if (BU_STR_EQUAL(argv[2], "points")) {
 	register int i;
 
 	if (argc == 3) {
@@ -3050,7 +3057,7 @@ go_data_move(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -3079,7 +3086,7 @@ go_data_move(struct ged *gedp,
     vx = (mx - cx) * sf;
     vy = (cy - my) * sf;
 
-    if (!strcmp(argv[2], "data_arrows")) {
+    if (BU_STR_EQUAL(argv[2], "data_arrows")) {
 	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_data_arrows; 
 
 	/* Silently ignore */
@@ -3096,7 +3103,7 @@ go_data_move(struct ged *gedp,
 	return BRLCAD_OK;
     }
 
-    if (!strcmp(argv[2], "sdata_arrows")) {
+    if (BU_STR_EQUAL(argv[2], "sdata_arrows")) {
 	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_sdata_arrows; 
 
 	/* Silently ignore */
@@ -3113,7 +3120,7 @@ go_data_move(struct ged *gedp,
 	return BRLCAD_OK;
     }
 
-    if (!strcmp(argv[2], "data_axes")) {
+    if (BU_STR_EQUAL(argv[2], "data_axes")) {
 	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes; 
 
 	/* Silently ignore */
@@ -3130,7 +3137,7 @@ go_data_move(struct ged *gedp,
 	return BRLCAD_OK;
     }
 
-    if (!strcmp(argv[2], "sdata_axes")) {
+    if (BU_STR_EQUAL(argv[2], "sdata_axes")) {
 	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes; 
 
 	/* Silently ignore */
@@ -3148,7 +3155,7 @@ go_data_move(struct ged *gedp,
     }
 
 
-    if (!strcmp(argv[2], "data_labels")) {
+    if (BU_STR_EQUAL(argv[2], "data_labels")) {
 	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_data_labels; 
 
 	/* Silently ignore */
@@ -3165,7 +3172,7 @@ go_data_move(struct ged *gedp,
 	return BRLCAD_OK;
     }
 
-    if (!strcmp(argv[2], "sdata_labels")) {
+    if (BU_STR_EQUAL(argv[2], "sdata_labels")) {
 	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_sdata_labels; 
 
 	/* Silently ignore */
@@ -3182,7 +3189,7 @@ go_data_move(struct ged *gedp,
 	return BRLCAD_OK;
     }
 
-    if (!strcmp(argv[2], "data_lines")) {
+    if (BU_STR_EQUAL(argv[2], "data_lines")) {
 	struct ged_data_line_state *gdlsp = &gdvp->gdv_view->gv_data_lines; 
 
 	/* Silently ignore */
@@ -3199,7 +3206,7 @@ go_data_move(struct ged *gedp,
 	return BRLCAD_OK;
     }
 
-    if (!strcmp(argv[2], "sdata_lines")) {
+    if (BU_STR_EQUAL(argv[2], "sdata_lines")) {
 	struct ged_data_line_state *gdlsp = &gdvp->gdv_view->gv_sdata_lines; 
 
 	/* Silently ignore */
@@ -3252,7 +3259,7 @@ go_data_pick(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -3712,6 +3719,63 @@ go_init_default_bindings(struct ged_dm_view *gdvp)
 }
 
 HIDDEN int
+go_fontsize(struct ged *gedp,
+	    int argc,
+	    const char *argv[],
+	    ged_func_ptr func,
+	    const char *usage,
+	    int UNUSED(maxargs))
+{
+    int fontsize;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 2 || 3 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    /* get the font size */
+    if (argc == 2) {
+	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_dmp->dm_fontsize);
+	return BRLCAD_OK;
+    }
+
+    /* set background color */
+    if (sscanf(argv[2], "%d", &fontsize) != 1)
+	goto bad_fontsize;
+
+    if (DM_VALID_FONT_SIZE(fontsize) || fontsize == 0) {
+	gdvp->gdv_dmp->dm_fontsize = fontsize;
+	DM_CONFIGURE_WIN(gdvp->gdv_dmp, 1);
+	go_refresh_view(gdvp);
+	return BRLCAD_OK;
+    }
+
+ bad_fontsize:
+    bu_vls_printf(&gedp->ged_result_str, "%s: %s", argv[0], argv[2]);
+    return BRLCAD_ERROR;
+}
+
+HIDDEN int
 go_init_view_bindings(struct ged *gedp,
 		      int argc,
 		      const char *argv[],
@@ -3736,7 +3800,7 @@ go_init_view_bindings(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -3775,7 +3839,7 @@ go_delete_view(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -3813,7 +3877,7 @@ go_faceplate(struct ged *gedp,
 	goto bad;
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -3822,8 +3886,8 @@ go_faceplate(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    if (strcmp(argv[2], "center_dot") == 0) {
-	if (strcmp(argv[3], "draw") == 0) {
+    if (BU_STR_EQUAL(argv[2], "center_dot")) {
+	if (BU_STR_EQUAL(argv[3], "draw")) {
 	    if (argc == 4) {
 		bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_view->gv_center_dot.gos_draw);
 		return BRLCAD_OK;
@@ -3841,7 +3905,7 @@ go_faceplate(struct ged *gedp,
 	    }
 	}
 
-	if (strcmp(argv[3], "color") == 0) {
+	if (BU_STR_EQUAL(argv[3], "color")) {
 	    if (argc == 4) {
 		bu_vls_printf(&gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_center_dot.gos_line_color));
 		return BRLCAD_OK;
@@ -3862,8 +3926,8 @@ go_faceplate(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "prim_labels") == 0) {
-	if (strcmp(argv[3], "draw") == 0) {
+    if (BU_STR_EQUAL(argv[2], "prim_labels")) {
+	if (BU_STR_EQUAL(argv[3], "draw")) {
 	    if (argc == 4) {
 		bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_view->gv_prim_labels.gos_draw);
 		return BRLCAD_OK;
@@ -3881,7 +3945,7 @@ go_faceplate(struct ged *gedp,
 	    }
 	}
 
-	if (strcmp(argv[3], "color") == 0) {
+	if (BU_STR_EQUAL(argv[3], "color")) {
 	    if (argc == 4) {
 		bu_vls_printf(&gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_prim_labels.gos_text_color));
 		return BRLCAD_OK;
@@ -3902,8 +3966,8 @@ go_faceplate(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "view_params") == 0) {
-	if (strcmp(argv[3], "draw") == 0) {
+    if (BU_STR_EQUAL(argv[2], "view_params")) {
+	if (BU_STR_EQUAL(argv[3], "draw")) {
 	    if (argc == 4) {
 		bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_view->gv_view_params.gos_draw);
 		return BRLCAD_OK;
@@ -3921,7 +3985,7 @@ go_faceplate(struct ged *gedp,
 	    }
 	}
 
-	if (strcmp(argv[3], "color") == 0) {
+	if (BU_STR_EQUAL(argv[3], "color")) {
 	    if (argc == 4) {
 		bu_vls_printf(&gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_view_params.gos_text_color));
 		return BRLCAD_OK;
@@ -3942,8 +4006,8 @@ go_faceplate(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "view_scale") == 0) {
-	if (strcmp(argv[3], "draw") == 0) {
+    if (BU_STR_EQUAL(argv[2], "view_scale")) {
+	if (BU_STR_EQUAL(argv[3], "draw")) {
 	    if (argc == 4) {
 		bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_view->gv_view_scale.gos_draw);
 		return BRLCAD_OK;
@@ -3961,7 +4025,7 @@ go_faceplate(struct ged *gedp,
 	    }
 	}
 
-	if (strcmp(argv[3], "color") == 0) {
+	if (BU_STR_EQUAL(argv[3], "color")) {
 	    if (argc == 4) {
 		bu_vls_printf(&gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_view_scale.gos_line_color));
 		return BRLCAD_OK;
@@ -4026,7 +4090,7 @@ go_handle_refresh(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), name))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), name))
 	    break;
     }
 
@@ -4066,7 +4130,7 @@ go_idle_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -4125,7 +4189,7 @@ go_light(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -4206,7 +4270,7 @@ go_listen(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -4334,7 +4398,7 @@ go_model_axes(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -4406,7 +4470,7 @@ go_mouse_constrain_rot(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -4509,7 +4573,7 @@ go_mouse_constrain_trans(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -4614,7 +4678,7 @@ go_mouse_move_arb_edge(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -4711,7 +4775,7 @@ go_mouse_move_arb_face(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -4809,7 +4873,7 @@ go_mouse_orotate(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -4909,7 +4973,7 @@ go_mouse_oscale(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -5007,7 +5071,7 @@ go_mouse_otranslate(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -5112,7 +5176,7 @@ go_mouse_ray(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -5189,7 +5253,7 @@ go_mouse_rect(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -5261,7 +5325,7 @@ go_mouse_rot(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -5347,7 +5411,7 @@ go_mouse_rotate_arb_face(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -5441,7 +5505,7 @@ go_mouse_scale(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -5531,7 +5595,7 @@ go_mouse_protate(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -5624,7 +5688,7 @@ go_mouse_pscale(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -5722,7 +5786,7 @@ go_mouse_ptranslate(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -5817,7 +5881,7 @@ go_mouse_trans(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -5907,7 +5971,7 @@ go_move_arb_edge_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -5966,7 +6030,7 @@ go_move_arb_face_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -6034,22 +6098,22 @@ go_new_view(struct ged *gedp,
 #endif /* DM_X */
 
 #ifdef DM_TK
-    if (!strcmp(argv[2], "tk"))
+    if (BU_STR_EQUAL(argv[2], "tk"))
 	type = DM_TYPE_TK;
 #endif /* DM_TK */
 
 #ifdef DM_OGL
-    if (!strcmp(argv[2], "ogl"))
+    if (BU_STR_EQUAL(argv[2], "ogl"))
 	type = DM_TYPE_OGL;
 #endif /* DM_OGL */
 
 #ifdef DM_WGL
-    if (!strcmp(argv[2], "wgl"))
+    if (BU_STR_EQUAL(argv[2], "wgl"))
 	type = DM_TYPE_WGL;
 #endif /* DM_WGL */
 
     if (type == DM_TYPE_BAD) {
-	bu_vls_printf(&gedp->ged_result_str, "Unsupported display manager type - %s\n", argv[2]);
+	bu_vls_printf(&gedp->ged_result_str, "ERROR:  Requisite display manager is not available.\nBRL-CAD may need to be recompiled with support for:  %s\nRun 'fbhelp' for a list of available display managers.\n", argv[2]);
 	return BRLCAD_ERROR;
     }
 
@@ -6061,22 +6125,22 @@ go_new_view(struct ged *gedp,
 	int arg_start = 3;
 	int newargs = 0;
 	int ac;
-	char **av;
+	const char **av;
 
 	ac = argc + newargs;
-	av = (char **)bu_malloc(sizeof(char *) * (ac+1), "go_new_view: av");
-	av[0] = (char *)argv[0];
+	av = (const char **)bu_malloc(sizeof(char *) * (ac+1), "go_new_view: av");
+	av[0] = argv[0];
 
 	/*
 	 * Stuff name into argument list.
 	 */
 	av[1] = "-n";
-	av[2] = (char *)argv[name_index];
+	av[2] = argv[name_index];
 
 	/* copy the rest */
 	for (i = arg_start; i < argc; ++i)
-	    av[i+newargs] = (char *)argv[i];
-	av[i+newargs] = (char *)NULL;
+	    av[i+newargs] = argv[i];
+	av[i+newargs] = (const char *)NULL;
 
 	new_gdvp->gdv_dmp = dm_open(go_current_gop->go_interp, type, ac, av);
 	if (new_gdvp->gdv_dmp == DM_NULL) {
@@ -6157,7 +6221,7 @@ go_orotate_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -6215,7 +6279,7 @@ go_oscale_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -6273,7 +6337,7 @@ go_otranslate_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -6328,7 +6392,7 @@ go_paint_rect_area(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -6383,7 +6447,7 @@ go_png(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -6614,7 +6678,7 @@ go_rect_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -6777,7 +6841,7 @@ go_rotate_arb_face_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -6837,7 +6901,7 @@ go_rotate_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -6962,13 +7026,13 @@ go_rt_gettrees(struct ged *gedp,
     (void)Tcl_DeleteCommand(go_current_gop->go_interp, newprocname);
 
     while (2 < argc && argv[2][0] == '-') {
-	if (strcmp(argv[2], "-i") == 0) {
+	if (BU_STR_EQUAL(argv[2], "-i")) {
 	    rtip->rti_dont_instance = 1;
 	    argc--;
 	    argv++;
 	    continue;
 	}
-	if (strcmp(argv[2], "-u") == 0) {
+	if (BU_STR_EQUAL(argv[2], "-u")) {
 	    rtip->useair = 1;
 	    argc--;
 	    argv++;
@@ -7046,7 +7110,7 @@ go_protate_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -7105,7 +7169,7 @@ go_pscale_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -7164,7 +7228,7 @@ go_ptranslate_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -7223,7 +7287,7 @@ go_scale_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -7284,7 +7348,7 @@ go_screen2model(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -7342,7 +7406,7 @@ go_screen2view(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -7394,7 +7458,7 @@ go_set_coord(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -7446,7 +7510,7 @@ go_set_fb_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -7504,7 +7568,7 @@ go_snap_view(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -7558,7 +7622,7 @@ go_translate_mode(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -7614,7 +7678,7 @@ go_transparency(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -7668,7 +7732,7 @@ go_view_axes(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -7706,7 +7770,7 @@ go_view_win_size(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -7772,7 +7836,7 @@ go_vmake(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -7847,7 +7911,7 @@ go_vslew(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -7919,7 +7983,7 @@ go_zbuffer(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -7977,7 +8041,7 @@ go_zclip(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -8276,7 +8340,7 @@ go_view_func(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 
@@ -8336,7 +8400,7 @@ go_dm_func(struct ged *gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
 	    break;
     }
 

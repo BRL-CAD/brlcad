@@ -1,7 +1,7 @@
 /*                   C M D H I S T _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -97,7 +97,7 @@ cho_open(ClientData clientData, Tcl_Interp *interp, char *name)
 
     /* check to see if command history object exists */
     for (BU_LIST_FOR(chop, bu_cmdhist_obj, &HeadCmdHistObj.l)) {
-	if (strcmp(name, bu_vls_addr(&chop->cho_name)) == 0) {
+	if (BU_STR_EQUAL(name, bu_vls_addr(&chop->cho_name))) {
 	    Tcl_AppendResult(interp, "ch_open: ", name,
 			     " exists.\n", (char *)NULL);
 	    return CMDHIST_OBJ_NULL;

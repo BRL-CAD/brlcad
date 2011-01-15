@@ -1,7 +1,7 @@
 /*                         T I T L E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,6 @@ int
 ged_title(struct ged *gedp, int argc, const char *argv[])
 {
     struct bu_vls title;
-    static const char *usage = "description";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);

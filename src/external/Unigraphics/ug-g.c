@@ -1,7 +1,7 @@
 /*                          U G - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -668,7 +668,7 @@ build_region( struct wmember *head, char *part_name, char *refset_name, char *in
 
     get_part_name( &region_name_vls );
 
-    if ( refset_name && strcmp( refset_name, "None" ) ) {
+    if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 	bu_vls_strcat( &region_name_vls, "_" );
 	bu_vls_strcat( &region_name_vls, refset_name );
     }
@@ -977,7 +977,7 @@ get_exp_value( char *want, int n_exps, tag_t *exps, char **descs, double *value 
     int i;
 
     for ( i=0; i<n_exps; i++ ) {
-	if ( !strcmp( want, descs[i] ) ) {
+	if ( BU_STR_EQUAL( want, descs[i] ) ) {
 	    /* found the wanted expression */
 	    UF_func( UF_MODL_ask_exp_tag_value( exps[i], value ) );
 	    return 0;
@@ -1286,7 +1286,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
     }
 
     bu_log( "offsets = :%s: :%s:\n", offsets[0], offsets[1] );
-    if ( strcmp( offsets[0], "0.0" ) || strcmp( offsets[1], "0.0" ) ) {
+    if ( !BU_STR_EQUAL( offsets[0], "0.0" ) || !BU_STR_EQUAL( offsets[1], "0.0" ) ) {
 	bu_log( "Cannot handle offset extrusions yet\n" );
 	UF_free( ta );
 	UF_free( limits[0] );
@@ -1741,7 +1741,7 @@ conv_cable( char *part_name, char *refset_name, char *inst_name, unsigned char *
 	bu_vls_strcat( &inner_name_vls, "_inner" );
     }
 
-    if ( refset_name && strcmp( refset_name, "None" ) ) {
+    if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 	bu_vls_strcat( &region_name_vls, "_" );
 	bu_vls_strcat( &region_name_vls, refset_name );
     }
@@ -4117,7 +4117,7 @@ convert_a_feature( tag_t feat_tag,
 	    bu_log( "\t\t#%d - %s\n", i+1, descs[i] );
 	}
     }
-    if ( !strcmp( feat_type, "CYLINDER" ) ) {
+    if ( BU_STR_EQUAL( feat_type, "CYLINDER" ) ) {
 	fastf_t radius;
 	point_t base;
 	vect_t height;
@@ -4140,7 +4140,7 @@ convert_a_feature( tag_t feat_tag,
 	}
 	add_to_obj_list( solid_name );
 	(void)mk_addmember( solid_name, &head->l, NULL, brlcad_op );
-    } else if ( !strcmp( feat_type, "BLOCK" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "BLOCK" ) ) {
 	fastf_t pts[24];
 	char *solid_name;
 
@@ -4159,7 +4159,7 @@ convert_a_feature( tag_t feat_tag,
 	}
 	add_to_obj_list( solid_name );
 	(void)mk_addmember( solid_name, &head->l, NULL, brlcad_op );
-    } else if ( !strcmp( feat_type, "SPHERE" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "SPHERE" ) ) {
 	point_t center;
 	fastf_t radius;
 	char *solid_name;
@@ -4180,7 +4180,7 @@ convert_a_feature( tag_t feat_tag,
 	}
 	add_to_obj_list( solid_name );
 	(void)mk_addmember( solid_name, &head->l, NULL, brlcad_op );
-    } else if ( !strcmp( feat_type, "CONE" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "CONE" ) ) {
 	point_t base;
 	vect_t dirv;
 	fastf_t height, radbase, radtop;
@@ -4202,7 +4202,7 @@ convert_a_feature( tag_t feat_tag,
 	}
 	add_to_obj_list( solid_name );
 	(void)mk_addmember( solid_name, &head->l, NULL, brlcad_op );
-    } else if ( !strcmp( feat_type, "SWP104" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "SWP104" ) ) {
 	char *solid_name;
 
 	solid_name = convert_sweep( feat_tag, part_name, refset_name, inst_name, rgb, curr_xform,
@@ -4213,77 +4213,77 @@ convert_a_feature( tag_t feat_tag,
 	}
 	add_to_obj_list( solid_name );
 	(void)mk_addmember( solid_name, &head->l, NULL, brlcad_op );
-    } else if ( !strcmp( feat_type, "SIMPLE HOLE" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "SIMPLE HOLE" ) ) {
 	if ( do_hole( SIMPLE_HOLE_TYPE, feat_tag, n_exps, exps, descs, units_conv,
 		      curr_xform, head ) ) {
 	    failed = 1;
 	}
-    } else if ( !strcmp( feat_type, "CBORE_HOLE" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "CBORE_HOLE" ) ) {
 	if ( do_hole( COUNTER_BORE_HOLE_TYPE, feat_tag, n_exps, exps, descs, units_conv,
 		      curr_xform, head ) ) {
 	    failed = 1;
 	}
-    } else if ( !strcmp( feat_type, "CSUNK_HOLE" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "CSUNK_HOLE" ) ) {
 	if ( do_hole( COUNTER_SINK_HOLE_TYPE, feat_tag, n_exps, exps, descs, units_conv,
 		      curr_xform, head ) ) {
 	    failed = 1;
 	}
-    } else if ( !strcmp( feat_type, "RECT_POCKET" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "RECT_POCKET" ) ) {
 	if ( do_rect_pocket( feat_tag, n_exps, exps, descs, units_conv,
 			     curr_xform, head ) ) {
 	    failed = 1;
 	}
-    } else if ( !strcmp( feat_type, "CYL_POCKET" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "CYL_POCKET" ) ) {
 	if ( do_cyl_pocket( feat_tag, n_exps, exps, descs, units_conv,
 			    curr_xform, head ) ) {
 	    failed = 1;
 	}
-    } else if ( !strcmp( feat_type, "RECT_PAD" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "RECT_PAD" ) ) {
 	if ( do_rect_pad( feat_tag, n_exps, exps, descs, units_conv,
 			  curr_xform, head ) ) {
 	    failed = 1;
 	}
-    } else if ( !strcmp( feat_type, "RECT_SLOT" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "RECT_SLOT" ) ) {
 	if ( do_rect_slot( feat_tag, n_exps, exps, descs, units_conv,
 			   curr_xform, head ) ) {
 	    failed = 1;
 	}
-    } else if ( !strcmp( feat_type, "BALL_END_SLOT" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "BALL_END_SLOT" ) ) {
 	if ( do_ball_end_slot( feat_tag, n_exps, exps, descs, units_conv,
 			       curr_xform, head ) ) {
 	    failed = 1;
 	}
-    } else if ( !strcmp( feat_type, "U_SLOT" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "U_SLOT" ) ) {
 	if ( do_u_slot( feat_tag, n_exps, exps, descs, units_conv,
 			curr_xform, head ) ) {
 	    failed = 1;
 	}
-    } else if ( !strcmp( feat_type, "T_SLOT" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "T_SLOT" ) ) {
 	if ( do_t_slot( feat_tag, n_exps, exps, descs, units_conv,
 			curr_xform, head ) ) {
 	    failed = 1;
 	}
-    } else if ( !strcmp( feat_type, "DOVE_TAIL_SLOT" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "DOVE_TAIL_SLOT" ) ) {
 	if ( do_dove_tail_slot( feat_tag, n_exps, exps, descs, units_conv,
 				curr_xform, head ) ) {
 	    failed = 1;
 	}
-    } else if ( !strcmp( feat_type, "RECT_GROOVE" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "RECT_GROOVE" ) ) {
 	if ( do_groove( RECT_GROOVE, feat_tag, n_exps, exps, descs, units_conv,
 			curr_xform, head ) ) {
 	    failed = 1;
 	}
-    } else if ( !strcmp( feat_type, "BALL_END_GROOVE" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "BALL_END_GROOVE" ) ) {
 	if ( do_groove( BALL_END_GROOVE, feat_tag, n_exps, exps, descs, units_conv,
 			curr_xform, head ) ) {
 	    failed = 1;
 	}
-    } else if ( !strcmp( feat_type, "U_GROOVE" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "U_GROOVE" ) ) {
 	if ( do_groove( U_GROOVE, feat_tag, n_exps, exps, descs, units_conv,
 			curr_xform, head ) ) {
 	    failed = 1;
 	}
-    } else if ( !strcmp( feat_type, "MIRROR" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "MIRROR" ) ) {
 #if 1
 
 	int i;
@@ -4321,7 +4321,7 @@ convert_a_feature( tag_t feat_tag,
 	    UF_func( UF_MODL_ask_feat_type( parents[i], &ftype1 ) );
 	    DO_INDENT;
 	    bu_log( "parent[%d] is feature %s, type %s\n", i, feat_name, ftype1 );
-	    if ( !strcmp( ftype1, "DATUM_PLANE" ) ) {
+	    if ( BU_STR_EQUAL( ftype1, "DATUM_PLANE" ) ) {
 		char *offset, *angle;
 		UF_func( UF_MODL_ask_datum_plane_parms( parents[i], plane_pt, plane_norm, &offset, &angle ) );
 		DO_INDENT;
@@ -4351,7 +4351,7 @@ convert_a_feature( tag_t feat_tag,
 
 	    UF_func( UF_OBJ_ask_type_and_subtype( parents[i], &type, &subtype));
 	    UF_func( UF_MODL_ask_feat_type( parents[i], &ftype1 ) );
-	    if ( strcmp( ftype1, "DATUM_PLANE" ) ) {
+	    if ( !BU_STR_EQUAL( ftype1, "DATUM_PLANE" ) ) {
 		uf_list_p_t feat_list;
 		int feat_count=0;
 		tag_t body_tag;
@@ -4414,7 +4414,7 @@ convert_a_feature( tag_t feat_tag,
 	    }
 	}
 #endif
-    } else if ( !strcmp( feat_type, "MIRROR_SET" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "MIRROR_SET" ) ) {
 	tag_t plane_tag;
 	tag_t *mirror_features;
 	int num_mirror_features;
@@ -4429,7 +4429,7 @@ convert_a_feature( tag_t feat_tag,
 	UF_free( mirror_features );
 	bu_log( "Failed to convert mirror set (%s) in part %s\n", feat_name, part_name );
 	failed = 1;
-    } else if ( !strcmp( feat_type, "BOSS" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "BOSS" ) ) {
 	char *solid_name;
 	double location[3], dir1[3], dir2[3], ht, ang;
 	point_t base;
@@ -4480,12 +4480,12 @@ convert_a_feature( tag_t feat_tag,
 	add_to_obj_list( solid_name );
 	(void)mk_addmember( solid_name, &head->l, NULL, brlcad_op );
 # if DO_SUPPRESSIONS
-    } else if ( !strcmp( feat_type, "CHAMFER" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "CHAMFER" ) ) {
 	failed = 1;
-    } else if ( !strcmp( feat_type, "BLEND" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "BLEND" ) ) {
 	failed = 1;
 #else
-    } else if ( !strcmp( feat_type, "CHAMFER" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "CHAMFER" ) ) {
 	if ( min_chamfer <= 0.0 ) {
 	    failed = 1;
 	} else {
@@ -4498,7 +4498,7 @@ convert_a_feature( tag_t feat_tag,
 		failed = 1;
 	    }
 	}
-    } else if ( !strcmp( feat_type, "BLEND" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "BLEND" ) ) {
 	if ( min_round <= 0.0 ) {
 	    failed = 1;
 	} else {
@@ -4512,7 +4512,7 @@ convert_a_feature( tag_t feat_tag,
 	    }
 	}
 #endif
-    } else if ( !strcmp( feat_type, "BREP" ) ) {
+    } else if ( BU_STR_EQUAL( feat_type, "BREP" ) ) {
 	parts_brep++;
 	failed = 1;
     } else {
@@ -4833,7 +4833,7 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 
 	    get_part_name( &name_vls );
 
-	    if ( refset_name && strcmp( refset_name, "None" ) ) {
+	    if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 		bu_vls_strcat( &name_vls, "_" );
 		bu_vls_strcat( &name_vls, refset_name );
 	    }
@@ -4972,7 +4972,7 @@ process_instance( tag_t comp_obj_tag, const mat_t curr_xform, double units_conv,
 
 	i = -1;
 	while ( subparts[++i] ) {
-	    if ( !strcmp( ptr, subparts[i] ) ) {
+	    if ( BU_STR_EQUAL( ptr, subparts[i] ) ) {
 		do_this_one = 1;
 		break;
 	    }
@@ -5115,7 +5115,7 @@ convert_entire_part( tag_t node, char *p_name, char *refset_name, char *inst_nam
 
 	get_part_name( &name_vls );
 
-	if ( refset_name && strcmp( refset_name, "None" ) ) {
+	if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 	    bu_vls_strcat( &name_vls, "_" );
 	    bu_vls_strcat( &name_vls, refset_name );
 	}
@@ -5183,7 +5183,7 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
 	ref_ptr->name = bu_strdup( ref_set_name );
 	ref_ptr->tag = tmp_tag;
 
-	if (refset_name &&  !strcmp(refset_name, ref_set_name) ) {
+	if (refset_name &&  BU_STR_EQUAL(refset_name, ref_set_name) ) {
 	    DO_INDENT;
 	    bu_log("----found desired refset \"%s\"\n",
 		   ref_set_name);
@@ -5206,7 +5206,7 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
 
 	for ( i=0; i<num_refsets; i++ ) {
 
-	    if ( !strcmp( def_ref_sets[i], "Entire Part" ) ) {
+	    if ( BU_STR_EQUAL( def_ref_sets[i], "Entire Part" ) ) {
 		/* convert entire part */
 		DO_INDENT;
 		bu_log( "Using reference set %s, since we cannot find %s\n",
@@ -5216,7 +5216,7 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
 	    }
 	    ref_ptr = ref_root;
 	    while ( ref_ptr ) {
-		if ( !strcmp( ref_ptr->name, def_ref_sets[i] ) ) {
+		if ( BU_STR_EQUAL( ref_ptr->name, def_ref_sets[i] ) ) {
 		    found_refset = 1;
 		    ref_tag = ref_ptr->tag;
 		    break;
@@ -5320,7 +5320,7 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
 
 	get_part_name( &name_vls );
 
-	if ( refset_name && strcmp( refset_name, "None" ) ) {
+	if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 	    bu_vls_strcat( &name_vls, "_" );
 	    bu_vls_strcat( &name_vls, refset_name );
 	}
@@ -5353,7 +5353,7 @@ convert_geom( tag_t node, char *p_name, char *refset_name, char *inst_name, cons
 	DO_INDENT;
 	bu_log( "Using user specified reference set name (%s) in place of (%s)\n",
 		use_refset_name, refset_name );
-	if ( !strcmp( use_refset_name, "Entire Part" ) || !strcmp( use_refset_name, "None" ) ) {
+	if ( BU_STR_EQUAL( use_refset_name, "Entire Part" ) || BU_STR_EQUAL( use_refset_name, "None" ) ) {
 	    return( convert_entire_part( node, p_name, refset_name, inst_name,
 					 curr_xform, units_conv ) );
 	} else {
@@ -5361,7 +5361,7 @@ convert_geom( tag_t node, char *p_name, char *refset_name, char *inst_name, cons
 					   curr_xform, units_conv ) );
 	}
     }
-    if ( refset_name && strcmp( refset_name, "None" ) ) {
+    if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 	/* convert reference set */
 	return( convert_reference_set( node, p_name, refset_name, inst_name,
 				       curr_xform, units_conv ) );
@@ -5504,7 +5504,7 @@ check_features_for_suppression( tag_t solid_tag, char *part_name, double units_c
 
 	UF_func( UF_MODL_ask_feat_type( feat_tag, &feat_type ) );
 
-	if ( !strcmp( feat_type, "BLEND" ) ) {
+	if ( BU_STR_EQUAL( feat_type, "BLEND" ) ) {
 	    double blend_radius;
 
 	    DO_INDENT;
@@ -5515,7 +5515,7 @@ check_features_for_suppression( tag_t solid_tag, char *part_name, double units_c
 	    }
 
 	    add_to_suppress_list( feat_tag );
-	} else if ( !strcmp( feat_type, "CHAMFER" ) ) {
+	} else if ( BU_STR_EQUAL( feat_type, "CHAMFER" ) ) {
 	    double offset1, offset2;
 
 	    DO_INDENT;

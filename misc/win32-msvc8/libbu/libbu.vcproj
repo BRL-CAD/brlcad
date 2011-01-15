@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="libbu"
 	ProjectGUID="{D2A218BF-FAB3-4BEA-B288-E357FE003E29}"
+	RootNamespace="libbu"
 	>
 	<Platforms>
 		<Platform
@@ -331,6 +332,10 @@
 						AdditionalIncludeDirectories=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libbu\booleanize.c"
+				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libbu\brlcad_path.c"
@@ -1335,6 +1340,10 @@
 						AdditionalIncludeDirectories=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libbu\timer.c"
+				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libbu\units.c"

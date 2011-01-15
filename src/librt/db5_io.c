@@ -1,7 +1,7 @@
 /*                        D B 5 _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -777,7 +777,7 @@ db_wrap_v5_external(struct bu_external *ep, const char *name)
     BU_ASSERT_LONG(raw.h_dli, ==, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT);
 
     /* See if name needs to be changed */
-    if (raw.name.ext_buf == NULL || strcmp(name, raw.name.ext_buf) != 0) {
+    if (raw.name.ext_buf == NULL || !BU_STR_EQUAL(name, raw.name.ext_buf)) {
 	/* Name needs to be changed.  Create new external form.
 	 * Make temporary copy so input isn't smashed
 	 * as new external object is constructed.

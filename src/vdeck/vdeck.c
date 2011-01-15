@@ -1,7 +1,7 @@
 /*                         V D E C K . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -211,7 +211,7 @@ sortFunc(const void *a, const void *b)
     const char **lhs = (const char **)a;
     const char **rhs = (const char **)b;
 
-    return strcmp( *lhs, *rhs );
+    return !BU_STR_EQUAL( *lhs, *rhs );
 }
 
 
@@ -414,7 +414,7 @@ flatten_tree( struct bu_vls *vls, union tree *tp, char *op, int neg )
  * in this region have been visited.
  */
 union tree *
-region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data )
+region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data) )
 {
     struct directory	*dp;
     char			*fullname;
@@ -426,8 +426,8 @@ region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union t
     int			left;
     int			length;
     struct directory	*regdp = DIR_NULL;
-    int			i;
-    int			first;
+    size_t i;
+    int first;
 
     bu_vls_init( &ident );
     bu_vls_init( &reg );
@@ -546,7 +546,7 @@ region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union t
  * Re-use the librt "soltab" structures here, for our own purposes.
  */
 union tree *
-gettree_leaf( struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data )
+gettree_leaf( struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data) )
 {
     fastf_t	f;
     struct soltab	*stp;
@@ -783,7 +783,7 @@ addhalf(struct bu_vls *v, struct rt_half_internal *gp, char *name, int num )
 void
 addarbn(struct bu_vls *v, struct rt_arbn_internal *gp, char *name, int num )
 {
-    int	i;
+    size_t i;
 
     BU_CK_VLS(v);
     RT_ARBN_CK_MAGIC(gp);
@@ -1018,7 +1018,7 @@ addtgc(struct bu_vls *v, struct rt_tgc_internal *gp, char *name, int num )
 
     /* TEC if ratio top and bot vectors equal and base parallel to top.
      */
-    if ( mc != 0.0 && md != 0.0 &&
+    if ( !NEAR_ZERO(mc, SMALL_FASTF) && !NEAR_ZERO(md, SMALL_FASTF) &&
 	 fabs( (mb/md)-(ma/mc) ) < CONV_EPSILON &&
 	 fabs( fabs(VDOT(axb, cxd)) - (maxb*mcxd) ) < CONV_EPSILON )  {
 	cgtype = TEC;
@@ -1187,7 +1187,7 @@ ars_curve_out(struct bu_vls *v, fastf_t *fp, int todo, int curveno, int num )
 void
 addars(struct bu_vls *v, struct rt_ars_internal *gp, char *name, int num )
 {
-    int	i;
+    size_t i;
 
     RT_ARS_CK_MAGIC(gp);
 
@@ -1798,7 +1798,7 @@ abort_sig( int sig )
  * Terminate run.
  */
 void
-quit( int sig )
+quit( int UNUSED(sig) )
 {
     (void) fprintf( stdout, "quitting...\n" );
     bu_exit( 0, NULL );

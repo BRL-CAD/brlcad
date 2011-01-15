@@ -1,7 +1,7 @@
 /*                       D B _ T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -424,7 +424,7 @@ db_apply_state_from_one_member(
     switch (tp->tr_op) {
 
 	case OP_DB_LEAF:
-	    if (strcmp(cp, tp->tr_l.tl_name) != 0)
+	    if (!BU_STR_EQUAL(cp, tp->tr_l.tl_name))
 		return 0;		/* NO-OP */
 	    tsp->ts_sofar |= sofar;
 	    if (db_apply_state_from_memb(tsp, pathp, tp) < 0)
@@ -472,7 +472,7 @@ db_find_named_leaf(union tree *tp, const char *cp)
     switch (tp->tr_op) {
 
 	case OP_DB_LEAF:
-	    if (strcmp(cp, tp->tr_l.tl_name))
+	    if (!BU_STR_EQUAL(cp, tp->tr_l.tl_name))
 		return TREE_NULL;
 	    return tp;
 
@@ -522,13 +522,13 @@ db_find_named_leafs_parent(int *side, union tree *tp, const char *cp)
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    if (tp->tr_b.tb_left->tr_op == OP_DB_LEAF) {
-		if (strcmp(cp, tp->tr_b.tb_left->tr_l.tl_name) == 0) {
+		if (BU_STR_EQUAL(cp, tp->tr_b.tb_left->tr_l.tl_name)) {
 		    *side = 1;
 		    return tp;
 		}
 	    }
 	    if (tp->tr_b.tb_right->tr_op == OP_DB_LEAF) {
-		if (strcmp(cp, tp->tr_b.tb_right->tr_l.tl_name) == 0) {
+		if (BU_STR_EQUAL(cp, tp->tr_b.tb_right->tr_l.tl_name)) {
 		    *side = 2;
 		    return tp;
 		}
@@ -685,7 +685,7 @@ db_tree_del_dbleaf(union tree **tp, const char *cp, struct resource *resp, int n
     if ((parent = db_find_named_leafs_parent(&side, *tp, cp)) == TREE_NULL) {
 	/* Perhaps the root of the tree is the named leaf? */
 	if ((*tp)->tr_op == OP_DB_LEAF &&
-	    strcmp(cp, (*tp)->tr_l.tl_name) == 0) {
+	    BU_STR_EQUAL(cp, (*tp)->tr_l.tl_name)) {
 	    if (nflag)
 		return 0;
 
@@ -827,13 +827,13 @@ db_follow_path(
     struct db_full_path *total_path,
     const struct db_full_path *new_path,
     int noisy,
-    int depth)		/* # arcs in new_path to use */
+    long depth)		/* # arcs in new_path to use */
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct directory *comb_dp;	/* combination's dp */
     struct directory *dp;	/* element's dp */
-    int j;
+    size_t j;
 
     RT_CK_DBTS(tsp);
     RT_CHECK_DBI(tsp->ts_dbip);
@@ -853,7 +853,7 @@ db_follow_path(
     if (depth < 0) {
 	depth = new_path->fp_len-1 + depth;
 	if (depth < 0) bu_bomb("db_follow_path() depth exceeded provided path\n");
-    } else if (depth >= new_path->fp_len) {
+    } else if ((size_t)depth >= new_path->fp_len) {
 	depth = new_path->fp_len-1;
     } else if (depth == 0) {
 	/* depth of zero means "do it all". */
@@ -904,7 +904,7 @@ db_follow_path(
      */
     do {
 	/* j == depth is the last one, presumably a leaf */
-	if (j > depth) break;
+	if (j > (size_t)depth) break;
 	dp = new_path->fp_names[j];
 	RT_CK_DIR(dp);
 
@@ -959,7 +959,7 @@ db_follow_path(
 	/* Advance to next path element */
 	j++;
 	comb_dp = dp;
-    } while (j <= depth);
+    } while (j <= (size_t)depth);
 
 out:
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
@@ -1021,7 +1021,7 @@ _db_detect_cycle(struct db_full_path *pathp, union tree *tp)
 
     /* check the path to see if it is groundhog day */
     while (--depth >= 0) {
-	if (strcmp(tp->tr_l.tl_name, pathp->fp_names[depth]->d_namep) == 0) {
+	if (BU_STR_EQUAL(tp->tr_l.tl_name, pathp->fp_names[depth]->d_namep)) {
 	    return 1;
 	}
     }

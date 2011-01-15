@@ -1,7 +1,7 @@
 /*                         G E T _ O B J _ B O U N D S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -112,7 +112,7 @@ _ged_get_obj_bounds(struct ged	*gedp,
 	    if (*argv[i] != '/' && *reg_name == '/')
 		reg_name++;
 
-	    if (!strcmp( reg_name, argv[i]))
+	    if (BU_STR_EQUAL( reg_name, argv[i]))
 		goto found;
 	}
 	goto not_found;

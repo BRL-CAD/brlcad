@@ -64,6 +64,7 @@ set(LIBBU_SOURCES
     str.c
     tcl.c
     temp.c
+    timer.c
     units.c
     vers.c
     vfont.c
@@ -88,9 +89,21 @@ add_definitions(
 
 add_library(libbu ${LIBBU_SOURCES})
 
+#
+# some library-testing tools
+#
 set(HTESTER_SOURCES
     htester.c
 )
-
 add_executable(htester ${HTESTER_SOURCES})
-target_link_libraries(htester libbu)
+target_link_libraries(htester
+    libbu
+)
+
+set(TIMETESTER_SOURCES
+    timetester.c
+)
+add_executable(timetester ${TIMETESTER_SOURCES})
+target_link_libraries(timetester
+    libbu
+)

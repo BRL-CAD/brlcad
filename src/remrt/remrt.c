@@ -1,7 +1,7 @@
 /*                         R E M R T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -2204,7 +2204,7 @@ ph_version(struct pkg_conn *pc, char *buf)
     struct servers	*sp;
 
     sp = &servers[pc->pkc_fd];
-    if ( strcmp( PROTOCOL_VERSION, buf ) != 0 )  {
+    if ( !BU_STR_EQUAL( PROTOCOL_VERSION, buf ) )  {
 	bu_log("ERROR %s: protocol version mis-match\n",
 	       sp->sr_host->ht_name);
 	bu_log("  local='%s'\n", PROTOCOL_VERSION );
@@ -3357,11 +3357,11 @@ cd_resume(int argc, char **argv)
 int
 cd_allocate(int argc, char **argv)
 {
-    if (strcmp(argv[1], "frame") == 0) {
+    if (BU_STR_EQUAL(argv[1], "frame")) {
 	work_allocate_method = OPT_FRAME;
-    } else if ( strcmp(argv[1], "movie") == 0 ) {
+    } else if ( BU_STR_EQUAL(argv[1], "movie") ) {
 	work_allocate_method = OPT_MOVIE;
-    } else if ( strcmp(argv[1], "load") == 0 ) {
+    } else if ( BU_STR_EQUAL(argv[1], "load") ) {
 	work_allocate_method = OPT_LOAD;
     } else {
 	bu_log("%s Bad allocateby type '%s'\n", stamp(), argv[1]);
@@ -3481,9 +3481,9 @@ cd_frames( int argc, char **argv )
 int
 cd_memprint(int argc, char **argv)
 {
-    if (strcmp(argv[1], "on")==0) {
+    if (BU_STR_EQUAL(argv[1], "on")) {
 	rt_g.debug |= (DEBUG_MEM|DEBUG_MEM_FULL);
-    } else if (strcmp(argv[1], "off") == 0) {
+    } else if (BU_STR_EQUAL(argv[1], "off")) {
 	rt_g.debug &= ~(DEBUG_MEM|DEBUG_MEM_FULL);
     } else {
 	bu_prmem("memprint command");
@@ -3756,17 +3756,17 @@ cd_host(int argc, char **argv)
 	return -1;
 
     /* When */
-    if ( strcmp( argv[argpoint], "always" ) == 0 ) {
+    if ( BU_STR_EQUAL( argv[argpoint], "always" ) ) {
 	ihp->ht_when = HT_ALWAYS;
-    } else if ( strcmp( argv[argpoint], "night" ) == 0 )  {
+    } else if ( BU_STR_EQUAL( argv[argpoint], "night" ) )  {
 	ihp->ht_when = HT_NIGHT;
-    } else if ( strcmp( argv[argpoint], "hacknight" ) == 0 )  {
+    } else if ( BU_STR_EQUAL( argv[argpoint], "hacknight" ) )  {
 	ihp->ht_when = HT_HACKNIGHT;
-    } else if ( strcmp( argv[argpoint], "passive" ) == 0 )  {
+    } else if ( BU_STR_EQUAL( argv[argpoint], "passive" ) )  {
 	ihp->ht_when = HT_PASSIVE;
-    } else if ( strcmp( argv[argpoint], "rs" ) == 0 ) {
+    } else if ( BU_STR_EQUAL( argv[argpoint], "rs" ) ) {
 	ihp->ht_when = HT_RS;
-    } else if ( strcmp( argv[argpoint], "passrs" ) == 0 ) {
+    } else if ( BU_STR_EQUAL( argv[argpoint], "passrs" ) ) {
 	ihp->ht_when = HT_PASSRS;
     } else {
 	bu_log("unknown 'when' string '%s'\n", argv[argpoint]);
@@ -3783,13 +3783,13 @@ cd_host(int argc, char **argv)
     }
 
     /* Where */
-    if ( strcmp( argv[argpoint], "cd" ) == 0 )  {
+    if ( BU_STR_EQUAL( argv[argpoint], "cd" ) )  {
 	ihp->ht_where = HT_CD;
 	ihp->ht_path = bu_strdup( argv[argpoint+1] );
-    } else if ( strcmp( argv[argpoint], "convert" ) == 0 )  {
+    } else if ( BU_STR_EQUAL( argv[argpoint], "convert" ) )  {
 	ihp->ht_where = HT_CONVERT;
 	ihp->ht_path = bu_strdup( argv[argpoint+1] );
-    } else if (strcmp( argv[argpoint], "use" ) == 0 ) {
+    } else if (BU_STR_EQUAL( argv[argpoint], "use" ) ) {
 	ihp->ht_where = HT_USE;
 	ihp->ht_path = bu_strdup( argv[argpoint+1]);
     } else {
@@ -3826,7 +3826,7 @@ cd_EOFrame(int argc, char **argv)
 	frame_script = (char *)0;
     }
 
-    if (strcmp(argv[1], "off") != 0 ) {
+    if (!BU_STR_EQUAL(argv[1], "off") ) {
 	frame_script = bu_strdup(argv[1]);
     }
     return 0;

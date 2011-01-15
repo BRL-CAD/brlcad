@@ -1,7 +1,7 @@
 /*                         P L A N E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2720,13 +2720,13 @@ bn_distsq_line3_line3(fastf_t *dist, fastf_t *P, fastf_t *d_in, fastf_t *Q, fast
  * @return 1 - planes form a singular matrix (no solution)
  */
 int
-bn_isect_planes(fastf_t *pt, const fastf_t (*planes)[4], const int pl_count)
+bn_isect_planes(fastf_t *pt, const fastf_t (*planes)[4], const size_t pl_count)
 {
     mat_t matrix;
     mat_t inverse;
     vect_t hpq;
     fastf_t det;
-    int i;
+    size_t i;
 
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("bn_isect_planes:\n");

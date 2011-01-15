@@ -1,7 +1,7 @@
 /*                       S H _ S T X T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -94,7 +94,7 @@ stxt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value)
     register struct stxt_specific *stp =
 	(struct stxt_specific *)cp;
 
-    if (!strcmp(name, stxt_parse[0].sp_name) && ptab == stxt_parse) {
+    if (BU_STR_EQUAL(name, stxt_parse[0].sp_name) && ptab == stxt_parse) {
 	stp->trans_valid = 1;
     } else {
 	bu_log("file:%s, line:%d stxt_transp_hook name:(%s) instead of (%s)\n",

@@ -1,7 +1,7 @@
 /*                          D M - X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -68,11 +68,11 @@ zclip_hook(void)
 
 
 struct bu_structparse X_vparse[] = {
-    {"%f",  1, "bound",		DM_O(dm_bound),		dirty_hook},
-    {"%d",  1, "useBound",	DM_O(dm_boundFlag),	dirty_hook},
-    {"%d",  1, "zclip",		DM_O(dm_zclip),		zclip_hook},
-    {"%d",  1, "debug",		DM_O(dm_debugLevel),	BU_STRUCTPARSE_FUNC_NULL},
-    {"",    0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL}
+    {"%f",  1, "bound",		DM_O(dm_bound),		dirty_hook, NULL, NULL},
+    {"%d",  1, "useBound",	DM_O(dm_boundFlag),	dirty_hook, NULL, NULL},
+    {"%d",  1, "zclip",		DM_O(dm_zclip),		zclip_hook, NULL, NULL},
+    {"%d",  1, "debug",		DM_O(dm_debugLevel),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"",    0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 
@@ -80,8 +80,7 @@ struct bu_structparse X_vparse[] = {
   This routine is being called from doEvent() to handle Expose events.
 */
 static int
-X_doevent(ClientData clientData,
-	  XEvent *eventPtr)
+X_doevent(ClientData UNUSED(clientData), XEvent *eventPtr)
 {
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
 	dirty = 1;
@@ -96,10 +95,9 @@ X_doevent(ClientData clientData,
 
 
 static int
-X_dm(int argc,
-     char *argv[])
+X_dm(int argc, const char *argv[])
 {
-    if (!strcmp(argv[0], "set")) {
+    if (BU_STR_EQUAL(argv[0], "set")) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -120,7 +118,7 @@ X_dm(int argc,
 	    bu_vls_free(&tmp_vls);
 	}
 
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -133,7 +131,7 @@ X_dm(int argc,
 int
 X_dm_init(struct dm_list *o_dm_list,
 	  int argc,
-	  char *argv[])
+	  const char *argv[])
 {
     struct bu_vls vls;
 
@@ -146,7 +144,7 @@ X_dm_init(struct dm_list *o_dm_list,
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
 #endif
 
-    if ((dmp = dm_open(interp, DM_TYPE_X, argc-1, argv)) == DM_NULL)
+    if ((dmp = dm_open(INTERP, DM_TYPE_X, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
     /* keep display manager in sync */
@@ -158,11 +156,11 @@ X_dm_init(struct dm_list *o_dm_list,
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
 #endif
 
-    (void)DM_CONFIGURE_WIN(dmp);
+    (void)DM_CONFIGURE_WIN(dmp, 0);
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_OK;
@@ -175,7 +173,7 @@ X_fb_open(void)
     char *X_name = "/dev/X";
 
     if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
-	Tcl_AppendResult(interp, "X_dm_init: failed to allocate framebuffer memory\n",
+	Tcl_AppendResult(INTERP, "X_dm_init: failed to allocate framebuffer memory\n",
 			 (char *)NULL);
 	return;
     }

@@ -1,7 +1,7 @@
 /*                          Q R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 #include "./qray.h"
 
 int
-f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_qray(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
     Tcl_DString ds;

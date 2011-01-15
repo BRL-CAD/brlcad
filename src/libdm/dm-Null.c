@@ -1,7 +1,7 @@
 /*                       D M - N U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -94,6 +94,12 @@ Nu_bg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 }
 
 
+HIDDEN int
+Nu_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image))
+{
+    return 0;
+}
+
 struct dm dm_Null = {
     Nu_int0,
     Nu_int0,
@@ -122,7 +128,7 @@ struct dm dm_Null = {
     Nu_int0,
     Nu_int0,
     Nu_int0,
-    Nu_int0, /* display to image function */
+    Nu_getDisplayImage, /* display to image function */
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
@@ -155,7 +161,8 @@ struct dm dm_Null = {
     0,				/* depth buffer is not writable */
     0,				/* no zbuffer */
     0,				/* no zclipping */
-    1,                            /* clear back buffer after drawing and swap */
+    1,                          /* clear back buffer after drawing and swap */
+    0,                          /* not overriding the auto font size */
     0				/* Tcl interpreter */
 };
 

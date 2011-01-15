@@ -1,7 +1,7 @@
 /*                     C A D _ P A R E A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ typedef struct
     double y;			/* Y coordinate */
 } point;			/* polygon vertex */
 
-static int GetArgs(int argc, char **argv), Input(point *coop);
+static int GetArgs(int argc, const char *argv[]), Input(point *coop);
 static void Output(double result), Usage(void);
 
 
@@ -50,15 +50,15 @@ Usage(void) 				/* print usage message */
 
 
 int
-main(int argc, char **argv)			/* "cad_parea" entry point */
+main(int argc, const char *argv[])			/* "cad_parea" entry point */
     /* argument count */
     /* argument strings */
 {
-    point previous;	/* previous point */
-    point current;	/* current point */
-    point first;		/* saved first point */
-    int saved;		/* "`first' valid" flag */
-    double sum;		/* accumulator */
+    point previous = {0.0, 0.0}; /* previous point */
+    point current = {0.0, 0.0}; /* current point */
+    point first = {0.0, 0.0}; /* saved first point */
+    int saved; /* "`first' valid" flag */
+    double sum; /* accumulator */
 
     if (!GetArgs(argc, argv)) {
 	/* process command arguments */
@@ -91,7 +91,7 @@ main(int argc, char **argv)			/* "cad_parea" entry point */
 
 
 static int
-GetArgs(int argc, char **argv)			/* process command arguments */
+GetArgs(int argc, const char *argv[])			/* process command arguments */
     /* argument count */
     /* argument strings */
 {
@@ -100,7 +100,7 @@ GetArgs(int argc, char **argv)			/* process command arguments */
     int c;		/* option letter */
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "i:o:")) != EOF)
+    while ((c = bu_getopt(argc, (char * const *)argv, "i:o:")) != EOF)
 	switch (c) {
 	    case 'i':
 		if (iflag) {
@@ -109,7 +109,7 @@ GetArgs(int argc, char **argv)			/* process command arguments */
 		}
 		iflag = 1;
 
-		if (strcmp(bu_optarg, "-") != 0
+		if (!BU_STR_EQUAL(bu_optarg, "-")
 		    && freopen(bu_optarg, "r", stdin) == NULL
 		    ) {
 		    (void)printf("cad_parea: can't open \"%s\"\n", bu_optarg);
@@ -124,7 +124,7 @@ GetArgs(int argc, char **argv)			/* process command arguments */
 		}
 		oflag = 1;
 
-		if (strcmp(bu_optarg, "-") != 0
+		if (!BU_STR_EQUAL(bu_optarg, "-")
 		    && freopen(bu_optarg, "w", stdout) == NULL
 		    ) {
 		    (void)printf("cad_parea: can't create \"%s\"\n", bu_optarg);

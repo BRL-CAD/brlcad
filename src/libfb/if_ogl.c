@@ -1,7 +1,7 @@
 /*                        I F _ O G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1875,7 +1875,7 @@ ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	if (y >= ifp->if_height)
 	    break;
 
-	if (count >= ifp->if_width-x)
+	if (count >= (size_t)(ifp->if_width-x))
 	    scan_count = ifp->if_width-x;
 	else
 	    scan_count = count;
@@ -1939,8 +1939,8 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	if (y >= ifp->if_height)
 	    break;
 
-	if (pix_count >= ifp->if_width-x)
-	    scan_count = ifp->if_width-x;
+	if (pix_count >= (size_t)(ifp->if_width-x))
+	    scan_count = (size_t)(ifp->if_width-x);
 	else
 	    scan_count = pix_count;
 
@@ -1995,7 +1995,7 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	    fb_log("Warning, ogl_write: glXMakeCurrent unsuccessful.\n");
 	}
 
-	if (xstart + count < ifp->if_width) {
+	if (xstart + count < (size_t)ifp->if_width) {
 	    ogl_xmit_scanlines(ifp, ybase, 1, xstart, count);
 	    if (OGL(ifp)->copy_flag) {
 		/* repaint one scanline from backbuffer */

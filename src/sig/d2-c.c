@@ -1,7 +1,7 @@
 /*                          D 2 - C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,10 +35,10 @@ void
 open_file(FILE **fp, char *name)
 {
     /* check for special names */
-    if (strcmp(name, "-") == 0) {
+    if (BU_STR_EQUAL(name, "-")) {
 	*fp = stdin;
 	return;
-    } else if (strcmp(name, ".") == 0) {
+    } else if (BU_STR_EQUAL(name, ".")) {
 	*fp = fopen("/dev/null", "r");
 	return;
     }

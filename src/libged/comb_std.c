@@ -1,7 +1,7 @@
 /*                  C O M B _ S T D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -381,7 +381,7 @@ ged_check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct d
 		break;
 	    case GED_TOK_TREE:
 		arg_count++;
-		if ( !dp && !strcmp( comb_name, tok->tp->tr_l.tl_name ) )
+		if ( !dp && BU_STR_EQUAL( comb_name, tok->tp->tr_l.tl_name ) )
 		    circular_ref++;
 		else if ( db_lookup( gedp->ged_wdbp->dbip, tok->tp->tr_l.tl_name, LOOKUP_QUIET ) == DIR_NULL )
 		    bu_vls_printf(&gedp->ged_result_str, "WARNING: '%s' does not actually exist\n", tok->tp->tr_l.tl_name);
@@ -626,7 +626,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		case GED_TOK_SUBTR:
 		    break;
 		case GED_TOK_TREE:
-		    if (tok->tp && !strcmp(tok->tp->tr_l.tl_name, comb_name)) {
+		    if (tok->tp && BU_STR_EQUAL(tok->tp->tr_l.tl_name, comb_name)) {
 			db_free_tree( tok->tp, &rt_uniresource );
 			GED_DB_GET_INTERNAL(gedp, &intern1, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 			comb1 = (struct rt_comb_internal *)intern1.idb_ptr;

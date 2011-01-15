@@ -1,7 +1,7 @@
 /*                         D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -517,7 +517,7 @@ ged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
 void
 _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name, int copy)
 {
-    int i;
+    size_t i;
     char shortname[32];
     char namebuf[64];
 
@@ -1115,7 +1115,7 @@ ged_color_soltab(struct bu_list *hdlp)
 int
 ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 {
-    int i;
+    size_t i;
     int flag_A_attr=0;
     int flag_o_nonunique=1;
     int last_opt=0;
@@ -1318,7 +1318,7 @@ ged_addToDisplay(struct ged *gedp,
     /* Make sure name is not already in the list */
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
-	if (!strcmp(name, bu_vls_addr(&gdlp->gdl_path)))
+	if (BU_STR_EQUAL(name, bu_vls_addr(&gdlp->gdl_path)))
 	    goto end;
 
 	/*

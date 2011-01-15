@@ -1,7 +1,7 @@
 /*                         B W M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -267,8 +267,7 @@ int main(int argc, char **argv)
     }
 
     if (clip_high != 0 || clip_low != 0) {
-	(void)fprintf(stderr, "bwmod: clipped %lu high, %lu low\n",
-		      clip_high, clip_low);
+	(void)fprintf(stderr, "bwmod: clipped %lu high, %lu low\n", (long unsigned)clip_high, (long unsigned)clip_low);
     }
     return 0;
 }

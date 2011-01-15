@@ -1,7 +1,7 @@
 /*                       W A V E L E T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -67,13 +67,13 @@ char *options = "W:S:s:w:n:t:#:D:12drR:";
 char *progname = "(noname)";
 int img_space=1;
 int debug;
-unsigned long width = 512;
-unsigned long height = 512;
-unsigned long channels = 3;
+size_t width = 512;
+size_t height = 512;
+size_t channels = 3;
 int value_type = CHAR;
 int value_size = sizeof(char);
 int avg_size = 0;
-unsigned long limit = 0;
+size_t limit = 0;
 int decomp_recon;
 
 
@@ -168,9 +168,9 @@ wlt_decompose_1d(void)
 {
     size_t ret;
     genptr_t buf, tbuf;
-    unsigned long int i, n;
-    unsigned long int sample_size;	/* size of data type x #values/sample */
-    unsigned long int scanline_size;	/* # bytes in a scanline */
+    size_t i, n;
+    size_t sample_size;	/* size of data type x #values/sample */
+    size_t scanline_size;	/* # bytes in a scanline */
 
     sample_size = value_size * channels;
     scanline_size = sample_size * width;
@@ -179,15 +179,14 @@ wlt_decompose_1d(void)
     tbuf = bu_malloc(scanline_size >> 1, "wavelet buf");
 
     if (debug)
-	fprintf(stderr, "1D decompose:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n",
-		value_size, channels, width, height, limit);
+	fprintf(stderr, "1D decompose:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n", value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)limit);
 
 
     for (i=0; i < height; i++) {
 
 	n = fread(buf, sample_size, width, stdin);
 	if (n != width) {
-	    bu_exit(1, "read failed line %lu got %lu not %lu\n", i, n, width);
+	    bu_exit(1, "read failed line %zu got %zu not %zu\n", i, n, width);
 	}
 
 	switch (value_type) {
@@ -231,8 +230,8 @@ wlt_decompose_2d(void)
 {
     size_t ret;
     genptr_t buf, tbuf;
-    unsigned long int sample_size;
-    unsigned long int scanline_size;
+    size_t sample_size;
+    size_t scanline_size;
 
     sample_size = value_size * channels;
     scanline_size = sample_size * width;
@@ -241,17 +240,16 @@ wlt_decompose_2d(void)
     tbuf = bu_malloc(scanline_size, "wavelet buf");
 
     if (debug)
-	fprintf(stderr, "2D decompose:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n",
-		value_size, channels, width, height, limit);
+	fprintf(stderr, "2D decompose:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n", value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)limit);
 
 
     if (width != height) {
 	fprintf(stderr, "Two dimensional decomposition requires square image\n");
-	bu_exit(1, "%lu x %lu image specified\n", width, height);
+	bu_exit(1, "%zu x %zu image specified\n", width, height);
     }
 
     if (fread(buf, scanline_size, height, stdin) != height) {
-	bu_exit(1, "read error getting %lux%lu bytes\n", scanline_size, height);
+	bu_exit(1, "read error getting %zu x %zu bytes\n", scanline_size, height);
     }
 
     switch (value_type) {
@@ -292,9 +290,9 @@ wlt_reconstruct_1d(void)
 {
     size_t ret;
     genptr_t buf, tbuf;
-    unsigned long int i, n;
-    unsigned long int sample_size;	/* size of data type x #values/sample */
-    unsigned long int scanline_size;	/* # bytes in a scanline */
+    size_t i, n;
+    size_t sample_size;	/* size of data type x #values/sample */
+    size_t scanline_size;	/* # bytes in a scanline */
 
     sample_size = value_size * channels;
     scanline_size = sample_size * width;
@@ -303,8 +301,7 @@ wlt_reconstruct_1d(void)
     tbuf = bu_malloc(scanline_size >> 1, "wavelet buf");
 
     if (debug)
-	fprintf(stderr, "1D reconstruct:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n",
-		value_size, channels, width, height, limit);
+	fprintf(stderr, "1D reconstruct:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n", value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)limit);
 
 
     for (i=0; i < height; i++) {
@@ -312,7 +309,7 @@ wlt_reconstruct_1d(void)
 
 	n = fread(buf, sample_size, width, stdin);
 	if (n != width) {
-	    bu_exit(-1, "read failed line %lu got %lu not %lu\n", i, n, width);
+	    bu_exit(-1, "read failed line %zu got %zu not %zu\n", i, n, width);
 	}
 
 	switch (value_type) {
@@ -356,8 +353,8 @@ wlt_reconstruct_2d(void)
 {
     size_t ret;
     genptr_t buf, tbuf;
-    unsigned long int sample_size;
-    unsigned long int scanline_size;
+    size_t sample_size;
+    size_t scanline_size;
 
     sample_size = value_size * channels;
     scanline_size = sample_size * width;
@@ -366,16 +363,15 @@ wlt_reconstruct_2d(void)
     tbuf = bu_malloc(scanline_size, "wavelet buf");
 
     if (debug)
-	fprintf(stderr, "2D reconstruct:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n",
-		value_size, channels, width, height, limit);
+	fprintf(stderr, "2D reconstruct:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n", value_size, (long unsigned)channels, (long unsigned)width, (long unsigned)height, (long unsigned)limit);
 
     if (width != height) {
 	fprintf(stderr, "Two dimensional decomposition requires square image\n");
-	bu_exit(1, "%lu x %lu image specified\n", width, height);
+	bu_exit(1, "%zu x %zu image specified\n", width, height);
     }
 
     if (fread(buf, scanline_size, height, stdin) != height) {
-	bu_exit(1, "read error getting %lux%lu bytes\n", scanline_size, height);
+	bu_exit(1, "read error getting %zu x %zu bytes\n", scanline_size, height);
     }
 
     switch (value_type) {

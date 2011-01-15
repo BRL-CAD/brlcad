@@ -1,7 +1,7 @@
 /*                         V D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -175,7 +175,7 @@ ged_vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 
     for (ctp = vdraw_cmds; ctp->ct_name != (char *)0; ctp++) {
 	if (ctp->ct_name[0] == argv[1][0] &&
-	    !strcmp(ctp->ct_name, argv[1])) {
+	    BU_STR_EQUAL(ctp->ct_name, argv[1])) {
 	    return (*ctp->ct_func)(gedp, argc, argv);
 	}
     }
@@ -192,7 +192,8 @@ ged_vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 static int
 ged_vdraw_write(struct ged *gedp, int argc, const char *argv[])
 {
-    int index, uind;
+    size_t idx;
+    size_t uind;
     struct bn_vlist *vp, *cp;
     static const char *usage = "i|next c x y z";
 
@@ -233,8 +234,8 @@ ged_vdraw_write(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 	cp = vp;
-	index = vp->nused;
-    } else if (sscanf(argv[2], "%d", &uind) < 1) {
+	idx = vp->nused;
+    } else if (sscanf(argv[2], "%lu", &uind) < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "vdraw: write index not an integer\n");
 	return GED_ERROR;
     } else {
@@ -265,26 +266,26 @@ ged_vdraw_write(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 	cp = vp;
-	index = uind;
+	idx = uind;
     }
 
-    if (sscanf(argv[3], "%d", &(cp->cmd[index])) < 1) {
+    if (sscanf(argv[3], "%d", &(cp->cmd[idx])) < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "vdraw: cmd not an integer\n");
 	return GED_ERROR;
     }
     if (argc == 7) {
-	cp->pt[index][0] = atof(argv[4]);
-	cp->pt[index][1] = atof(argv[5]);
-	cp->pt[index][2] = atof(argv[6]);
+	cp->pt[idx][0] = atof(argv[4]);
+	cp->pt[idx][1] = atof(argv[5]);
+	cp->pt[idx][2] = atof(argv[6]);
     } else {
 	if (argc != 5 ||
-	    bn_decode_vect(cp->pt[index], argv[4]) != 3) {
+	    bn_decode_vect(cp->pt[idx], argv[4]) != 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "vdraw write: wrong # args, need either x y z or {x y z}\n");
 	    return GED_ERROR;
 	}
     }
     /* increment counter only if writing onto end */
-    if (index == cp->nused)
+    if (idx == cp->nused)
 	cp->nused++;
 
     return GED_OK;
@@ -298,9 +299,9 @@ int
 ged_vdraw_insert(struct ged *gedp, int argc, const char *argv[])
 {
     struct bn_vlist *vp, *cp, *wp;
-    int i;
-    int index;
-    int uind;
+    size_t i;
+    size_t idx;
+    size_t uind;
     static const char *usage = "i c x y z";
 
     /* must be wanting help */
@@ -317,7 +318,7 @@ ged_vdraw_insert(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "vdraw: not enough args");
 	return GED_ERROR;
     }
-    if (sscanf(argv[2], "%d", &uind) < 1) {
+    if (sscanf(argv[2], "%lu", &uind) < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "vdraw: insert index not an integer\n");
 	return GED_ERROR;
     }
@@ -349,7 +350,7 @@ ged_vdraw_insert(struct ged *gedp, int argc, const char *argv[])
 
 
     cp = vp;
-    index = uind;
+    idx = uind;
 
     vp = BU_LIST_LAST(bn_vlist, &(gedp->ged_gdp->gd_currVHead->vdc_vhd));
     vp->nused++;
@@ -365,17 +366,17 @@ ged_vdraw_insert(struct ged *gedp, int argc, const char *argv[])
 	vp = wp;
     }
 
-    for (i=vp->nused-1; i>index; i--) {
+    for (i=vp->nused-1; i>idx; i--) {
 	vp->cmd[i] = vp->cmd[i-1];
 	VMOVE(vp->pt[i], vp->pt[i-1]);
     }
-    if (sscanf(argv[3], "%d", &(vp->cmd[index])) < 1) {
+    if (sscanf(argv[3], "%d", &(vp->cmd[idx])) < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "vdraw: cmd not an integer\n");
 	return GED_ERROR;
     }
-    vp->pt[index][0] = atof(argv[4]);
-    vp->pt[index][1] = atof(argv[5]);
-    vp->pt[index][2] = atof(argv[6]);
+    vp->pt[idx][0] = atof(argv[4]);
+    vp->pt[idx][1] = atof(argv[5]);
+    vp->pt[idx][2] = atof(argv[6]);
 
     return GED_OK;
 }
@@ -388,8 +389,8 @@ int
 ged_vdraw_delete(struct ged *gedp, int argc, const char *argv[])
 {
     struct bn_vlist *vp, *wp;
-    int i;
-    int uind;
+    size_t i;
+    size_t uind;
     static const char *usage = "i|last|all";
 
     /* must be wanting help */
@@ -423,7 +424,7 @@ ged_vdraw_delete(struct ged *gedp, int argc, const char *argv[])
 	}
 	return GED_OK;
     }
-    if (sscanf(argv[2], "%d", &uind) < 1) {
+    if (sscanf(argv[2], "%lu", &uind) < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s %s: delete index not an integer\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
@@ -485,7 +486,7 @@ static int
 ged_vdraw_read(struct ged *gedp, int argc, const char *argv[])
 {
     struct bn_vlist *vp;
-    int uind;
+    size_t uind;
     int length;
     static const char *usage = "read i|color|length|name";
 
@@ -524,7 +525,7 @@ ged_vdraw_read(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "%d", length);
 	return GED_OK;
     }
-    if (sscanf(argv[2], "%d", &uind) < 1) {
+    if (sscanf(argv[2], "%lu", &uind) < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s %s: read index not an integer\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
@@ -562,9 +563,14 @@ ged_vdraw_send(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     char solid_name [RT_VDRW_MAXNAME+RT_VDRW_PREFIX_LEN+1];
-    int index;
+    int idx;
     int real_flag;
 
+    if (argc < 2) {
+	bu_vls_printf(&gedp->ged_result_str, "ERROR: missing parameter after [%s]", argv[0]);
+	return GED_ERROR;
+    }
+	
     if (!gedp->ged_gdp->gd_currVHead) {
 	bu_vls_printf(&gedp->ged_result_str, "%s %s: no vlist is currently open.", argv[0], argv[1]);
 	return GED_ERROR;
@@ -584,13 +590,13 @@ ged_vdraw_send(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* 0 means OK, -1 means conflict with real solid name */
-    index = _ged_invent_solid(gedp,
+    idx = _ged_invent_solid(gedp,
 			     solid_name,
 			     &(gedp->ged_gdp->gd_currVHead->vdc_vhd),
 			     gedp->ged_gdp->gd_currVHead->vdc_rgb,
 			     1, 0.0, 0);
 
-    bu_vls_printf(&gedp->ged_result_str, "%d", index);
+    bu_vls_printf(&gedp->ged_result_str, "%d", idx);
 
     return GED_OK;
 }

@@ -1,7 +1,7 @@
 /*                    S K E T C H _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,11 +66,11 @@ void FindLoops(ON_Brep **b) {
 	    for (int i = 0; i < allsegments.Count(); i++) {
 		pstart = (*b)->m_C3[i]->PointAtStart();
 		pend = (*b)->m_C3[i]->PointAtEnd();
-		if (ON_NearZero(ptmatch.DistanceTo(pstart), ON_ZERO_TOLERANCE) && (curvearray[i] == -1)) {
+		if (NEAR_ZERO(ptmatch.DistanceTo(pstart), ON_ZERO_TOLERANCE) && (curvearray[i] == -1)) {
 		    curvecount = i;
 		    ptmatch = pend;
 		    i = allsegments.Count();
-		    if (ON_NearZero(pend.DistanceTo(ptterminate), ON_ZERO_TOLERANCE)) {
+		    if (NEAR_ZERO(pend.DistanceTo(ptterminate), ON_ZERO_TOLERANCE)) {
 			loop_complete = 1;
 			loopcount++;
 		    }
@@ -159,7 +159,7 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     //  For the brep, need the list of 3D vertex points.  In sketch, they
     //  are stored as 2D coordinates, so use the sketch_plane to define 3 space
     //  points for the vertices.
-    for (int i = 0; i < eip->vert_count; i++) {
+    for (size_t i = 0; i < eip->vert_count; i++) {
 	(*b)->NewVertex(sketch_plane->PointAt(eip->verts[i][0], eip->verts[i][1]), 0.0);
     }
 
@@ -172,7 +172,7 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     struct carc_seg *csg;
     struct bezier_seg *bsg;
     long *lng;
-    for (int i = 0; i < (&eip->skt_curve)->seg_count; i++) {
+    for (size_t i = 0; i < (&eip->skt_curve)->seg_count; i++) {
 	lng = (long *)(&eip->skt_curve)->segments[i];
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:

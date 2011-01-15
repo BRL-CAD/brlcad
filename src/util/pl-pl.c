@@ -1,7 +1,7 @@
 /*                         P L - P L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -143,9 +143,9 @@ main(int argc, char **argv)
     struct uplot *up;
 
     while (argc > 1) {
-	if (strcmp(argv[1], "-v") == 0) {
+	if (BU_STR_EQUAL(argv[1], "-v")) {
 	    verbose++;
-	} else if (strcmp(argv[1], "-S") == 0) {
+	} else if (BU_STR_EQUAL(argv[1], "-S")) {
 	    scale = 1;
 	} else
 	    break;
@@ -377,8 +377,12 @@ getieee(void)
 {
     char in[8];
     double d;
+    size_t ret;
 
-    fread(in, 8, 1, stdin);
+    ret = fread(in, 8, 1, stdin);
+    if (ret < 1)
+	perror("fread");
+
     ntohd((unsigned char *)&d, (unsigned char *)in, 1);
     return d;
 }
@@ -481,9 +485,12 @@ void
 putieee(double d)
 {
     unsigned char out[8];
+    size_t ret;
 
     htond(out, (unsigned char *)&d, 1);
-    fwrite(out, 1, 8, stdout);
+    ret = fwrite(out, 1, 8, stdout);
+    if (ret < 8)
+	perror("fwrite");
 }
 
 

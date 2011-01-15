@@ -1,7 +1,7 @@
 /*                         P U T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -93,7 +93,7 @@ ged_put(struct ged *gedp, int argc, const char *argv[])
 	rt_generic_make(ftp, &intern);
     }
 
-    if (!ftp->ft_adjust || ftp->ft_adjust(&gedp->ged_result_str, &intern, argc-3, (char **)argv+3) == GED_ERROR) {
+    if (!ftp->ft_adjust || ftp->ft_adjust(&gedp->ged_result_str, &intern, argc-3, argv+3) == GED_ERROR) {
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }

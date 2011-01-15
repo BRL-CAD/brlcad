@@ -1,7 +1,7 @@
 /*                    T O R _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 
 
 extern "C" void
-rt_tor_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
+rt_tor_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     struct rt_tor_internal *tip;
 

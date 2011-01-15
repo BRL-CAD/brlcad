@@ -1,7 +1,7 @@
 /*                       O V E R L A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,15 +38,12 @@
 
 /* Usage:  overlay file.pl [name] */
 int
-cmd_overlay(ClientData clientData,
-	    Tcl_Interp *interp,
-	    int argc,
-	    char **argv)
+cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
     Tcl_DString ds;
     int ac;
-    char *av[5];
+    const char *av[5];
     struct bu_vls char_size;
 
     if (gedp == GED_NULL)
@@ -88,7 +85,7 @@ cmd_overlay(ClientData clientData,
 
 /* Usage:  labelvert solid(s) */
 int
-f_labelvert(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;

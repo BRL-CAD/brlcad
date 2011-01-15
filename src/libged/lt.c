@@ -1,7 +1,7 @@
 /*                         L T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,12 +69,11 @@ ged_lt(struct ged *gedp, int argc, const char *argv[])
 }
 
 static int
-ged_list_children(struct ged			*gedp,
-		  struct directory	*dp)
+ged_list_children(struct ged *gedp, struct directory *dp)
 {
-    int			i;
-    struct rt_db_internal		intern;
-    struct rt_comb_internal		*comb;
+    size_t i;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
 
     if (!(dp->d_flags & DIR_COMB))
 	return GED_OK;

@@ -1,7 +1,7 @@
 /*                        D M - R T G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -113,7 +113,7 @@ Rtgl_dm_init(struct dm_list *o_dm_list,
 
     eventHandler = Rtgl_doevent;
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
-    (void)DM_CONFIGURE_WIN(dmp);
+    (void)DM_CONFIGURE_WIN(dmp, 0);
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
@@ -187,9 +187,9 @@ Rtgl_doevent(ClientData clientData,
  */
 static int
 Rtgl_dm(int argc,
-	char **argv)
+	const char *argv[])
 {
-    if (!strcmp(argv[0], "set")) {
+    if (BU_STR_EQUAL(argv[0], "set")) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);

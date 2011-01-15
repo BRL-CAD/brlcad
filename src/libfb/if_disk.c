@@ -1,7 +1,7 @@
 /*                       I F _ D I S K . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ dsk_open(FBIO *ifp, char *file, int width, int height)
     if (height == 0)
 	height = ifp->if_height;
 
-    if (strcmp(file, "-") == 0) {
+    if (BU_STR_EQUAL(file, "-")) {
 	/*
 	 * It is the applications job to write ascending scanlines.
 	 * If it does not, then this can be stacked with /dev/mem,

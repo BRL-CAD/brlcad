@@ -1,7 +1,7 @@
 /*                          I N I T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 #include "bu.h"
 #include "raytrace.h"
 #include "rtprivate.h"
+#include "optical.h"
 
 int		rt_verbosity = -1;	/* blather incesantly by default */
 int		rdebug;			/* RT program debugging */

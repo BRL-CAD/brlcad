@@ -1,7 +1,7 @@
 /*               E U C L I D _ U N F O R M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -52,6 +52,13 @@ main(int argc, char *argv[])
     int old_id=(-1), e;
 
     printf( "$03" );
+
+    if (argc != 1) {
+	if (argc > 1)
+	    bu_log("Unexpected paramter [%s]\n", argv[1]);
+
+	bu_log("Usage: %s < inputfile]\n  Primary input lines are as follows:\n    face# #npts face_type e ident a\n", argv[0]);
+    }
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);

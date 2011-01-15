@@ -1,7 +1,7 @@
 /*                    V E G E T A T I O N . H
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -63,8 +63,8 @@ typedef struct growthSegment {
 
 /* not really a list (it is a container), but close enough */
 typedef struct segmentList {
-    unsigned int capacity;
-    unsigned int count;
+    size_t capacity;
+    size_t count;
     growthSegment_t **segment;
 } segmentList_t;
 #define INIT_GROWTHSEGMENTLIST_T(_i) { (_i)->capacity = 0; (_i)->count = 0; (_i)->segment=NULL; }
@@ -104,8 +104,8 @@ typedef struct growthPoint {
 
 /* XXX not really a list -- it is a container object for a list */
 typedef struct growthPointList {
-    unsigned int capacity;
-    unsigned int count;
+    size_t capacity;
+    size_t count;
     growthPoint_t **point;
 } growthPointList_t;
 #define INIT_GROWTHPOINTLIST_T(_i) { (_i)->capacity = 0; (_i)->count = 0; (_i)->point=NULL; }

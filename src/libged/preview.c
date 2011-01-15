@@ -1,7 +1,7 @@
 /*                         P R E V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -236,8 +236,6 @@ int
 ged_loadframe(struct ged *gedp, FILE *fp)
 {
     char *cmd;
-    int	c;
-    vect_t temp;
 
     int end = 0;
     while (!end && ((cmd = rt_read_cmd(fp)) != NULL)) {
@@ -282,12 +280,10 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[-v] [-e] [-o image_name.ext]  [-d sec_delay] [-D start frame] [-K last frame] rt_script_file";
 
     FILE *fp;
-    char *cmd;
     int c;
     vect_t temp;
     char **vp;
     size_t args = 0;
-    genptr_t dmp = NULL;
     struct bu_vls extension;
     struct bu_vls name;
     char *dot;
@@ -405,9 +401,8 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     while (ged_loadframe(gedp, fp) == GED_OK) {
 	if (image_name) {
 	    struct bu_vls fullname;
-	    char *screengrab_args[3];
+	    const char *screengrab_args[3];
 	    int screengrab_argc = 0;
-	    struct view_obj *vop;
 
 	    bu_vls_init(&fullname);
 

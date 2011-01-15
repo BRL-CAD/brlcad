@@ -1,7 +1,7 @@
 /*                       G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -224,7 +224,7 @@ rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
  * rt_functab[].ft_adjust()
  */
 int
-rt_generic_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_generic_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     const struct rt_functab *ftp;
 

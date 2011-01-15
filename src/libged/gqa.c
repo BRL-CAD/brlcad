@@ -1,7 +1,7 @@
 /*                         G Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -713,7 +713,7 @@ parse_args(int ac, char *av[])
 			/* got something valid? */
 			found_unit = 0;
 			for (cv = &units_tab[i][0]; cv->name[0] != '\0'; cv++) {
-			    if (units_name[i] && strcmp(cv->name, units_name[i]) == 0) {
+			    if (units_name[i] && BU_STR_EQUAL(cv->name, units_name[i])) {
 				units[i] = cv;
 				found_unit = 1;
 				break;
@@ -1471,7 +1471,7 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
     }
 
     for (i=0; i < num_objects; i++) {
-	if (!strcmp(obj_rpt[i].o_name, str)) {
+	if (BU_STR_EQUAL(obj_rpt[i].o_name, str)) {
 	    bu_free(str, "");
 	    return i;
 	}

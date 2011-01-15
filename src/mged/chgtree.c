@@ -1,7 +1,7 @@
 /*                       C H G T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@
  * Format: cpi old new
  */
 int
-f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct directory *proto;
     struct directory *dp;
@@ -121,7 +121,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	(void)cmd_draw(clientData, interp, 2, av);
     }
 
-    if (state == ST_VIEW) {
+    if (STATE == ST_VIEW) {
 	const char *av[3];
 
 	av[0] = "sed";
@@ -171,7 +171,7 @@ find_solid_with_path(struct db_full_path *pathp)
 
 	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "find_solid_with_path() found %d matches\n", count);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
     }
 
@@ -192,14 +192,14 @@ find_solid_with_path(struct db_full_path *pathp)
  * edited.
  */
 int
-cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
     struct db_full_path lhs;
     struct db_full_path rhs;
     struct db_full_path both;
-    char *new_argv[4];
+    const char *new_argv[4];
     char number[32];
     int is_empty = 1;
 
@@ -283,7 +283,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     (void)chg_state(ST_O_PICK, ST_O_PATH, "internal change of state");
 
     /* Select the matrix */
-    sprintf(number, "%d", lhs.fp_len);
+    sprintf(number, "%lu", (long unsigned)lhs.fp_len);
     new_argv[0] = "matpick";
     new_argv[1] = number;
     new_argv[2] = NULL;

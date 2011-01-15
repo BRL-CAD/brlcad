@@ -1,7 +1,7 @@
 /*                      S U B M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2010 United States Government as represented by
+ * Copyright (c) 2000-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -134,7 +134,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	char *ttp;
 	RT_CK_RTI(*rtipp);
 	ttp = (*rtipp)->rti_treetop;
-	if (ttp && strcmp(ttp, bu_vls_addr(&sip->treetop)) == 0) {
+	if (ttp && BU_STR_EQUAL(ttp, bu_vls_addr(&sip->treetop))) {
 	    /* Re-cycle an already prepped rti */
 	    sub_rtip = *rtipp;
 	    sub_rtip->rti_uses++;
@@ -212,8 +212,8 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     rt_prep_parallel(sub_rtip, 1);
 
     /* Ensure bu_ptbl rti_resources is full size.  Ptrs will be null */
-    if ((size_t)BU_PTBL_LEN(&sub_rtip->rti_resources) < sub_rtip->rti_resources.blen) {
-	BU_PTBL_LEN(&sub_rtip->rti_resources) = (off_t)sub_rtip->rti_resources.blen;
+    if (BU_PTBL_LEN(&sub_rtip->rti_resources) < sub_rtip->rti_resources.blen) {
+	BU_PTBL_END(&sub_rtip->rti_resources) = sub_rtip->rti_resources.blen;
     }
 
     if (RT_G_DEBUG) rt_pr_cut_info(sub_rtip, stp->st_name);

@@ -1,7 +1,7 @@
 /*                        U S E P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,231 +39,10 @@
 
 #include "./sedit.h"
 
-/* Degree <-> Radian conversion factors */
-double degtorad =  0.01745329251994329573;
-double radtodeg = 57.29577951308232098299;
 
 struct ged_display_list *illum_gdlp = GED_DISPLAY_LIST_NULL;
 struct solid *illump = SOLID_NULL;	/* == 0 if none, else points to ill. solid */
 int ipathpos = 0;	/* path index of illuminated element */
-/* set by e9.c, cleared here */
-void wrt_view(fastf_t *out, const fastf_t *change, const fastf_t *in), wrt_point(fastf_t *out, const fastf_t *change, const fastf_t *in, const fastf_t *point);
-static void illuminate(int y);
-
-/*
- * F _ M O U S E
- *
- * X and Y are expected to be in -2048 <= x, y <= +2047 range.  The
- * "up" flag is 1 on the not-pressed to pressed transition, and 0 on
- * the pressed to not-pressed transition.
- *
- * Note -
- * The mouse is the focus of much of the editing activity in GED.  The
- * editor operates in one of seven basic editing states, recorded in
- * the variable called "state".  When no editing is taking place, the
- * editor is in state ST_VIEW.  There are two paths out of ST_VIEW:
- *
- * BE_S_ILLUMINATE, when pressed, takes the editor into ST_S_PICK,
- * where the mouse is used to pick a solid to edit, using our unusual
- * "illuminate" technique.  Moving the mouse varies the solid being
- * illuminated.  When the mouse is pressed, the editor moves into
- * state ST_S_EDIT, and solid editing may begin.  Solid editing is
- * terminated via BE_ACCEPT and BE_REJECT.
- *
- * BE_O_ILLUMINATE, when pressed, takes the editor into ST_O_PICK,
- * again performing the illuminate procedure.  When the mouse is
- * pressed, the editor moves into state ST_O_PATH.  Now, moving the
- * mouse allows the user to choose the portion of the path relation to
- * be edited.  When the mouse is pressed, the editor moves into state
- * ST_O_EDIT, and object editing may begin.  Object editing is
- * terminated via BE_ACCEPT and BE_REJECT.
- *
- * The only way to exit the intermediate states (non-VIEW, non-EDIT)
- * is by completing the sequence, or pressing BE_REJECT.
- */
-int
-f_mouse(
-    ClientData clientData,
-    Tcl_Interp *interp,
-    int argc,
-    char **argv)
-{
-    vect_t mousevec;		/* float pt -1..+1 mouse pos vect */
-    int isave;
-    int up;
-    int xpos;
-    int ypos;
-
-    if (argc < 4 || 4 < argc) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help M");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    up = atoi(argv[1]);
-    xpos = atoi(argv[2]);
-    ypos = atoi(argv[3]);
-
-    /* Build floating point mouse vector, -1 to +1 */
-    mousevec[X] =  xpos * INV_GED;
-    mousevec[Y] =  ypos * INV_GED;
-    mousevec[Z] = 0;
-
-    if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui && up) {
-	/*
-	 * If mouse press is in scroll area, see if scrolling, and if so,
-	 * divert this mouse press.
-	 */
-	if ((xpos >= MENUXLIM) || scroll_active) {
-	    int i;
-
-	    if (scroll_active)
-		ypos = scroll_y;
-
-	    if ((i = scroll_select(xpos, ypos, 1)) < 0) {
-		Tcl_AppendResult(interp,
-				 "mouse press outside valid scroll area\n",
-				 (char *)NULL);
-		return TCL_ERROR;
-	    }
-
-	    if (i > 0) {
-		scroll_active = 1;
-		scroll_y = ypos;
-
-		/* Scroller bars claimed button press */
-		return TCL_OK;
-	    }
-	    /* Otherwise, fall through */
-	}
-
-	/*
-	 * If menu is active, and mouse press is in menu area, divert
-	 * this mouse press for menu purposes.
-	 */
-	if (xpos < MENUXLIM) {
-	    int i;
-
-	    if ((i = mmenu_select(ypos, 1)) < 0) {
-		Tcl_AppendResult(interp,
-				 "mouse press outside valid menu\n",
-				 (char *)NULL);
-		return TCL_ERROR;
-	    }
-
-	    if (i > 0) {
-		/* Menu claimed button press */
-		return TCL_OK;
-	    }
-	    /* Otherwise, fall through */
-	}
-    }
-
-    /*
-     * In the best of all possible worlds, nothing should happen when
-     * the mouse is not pressed; this would relax the requirement for
-     * the host being informed when the mouse changes position.
-     * However, for now, illuminate mode makes this impossible.
-     */
-    if (up == 0) switch (state) {
-
-	case ST_VIEW:
-	case ST_S_EDIT:
-	case ST_O_EDIT:
-	default:
-	    return TCL_OK;		/* Take no action in these states */
-
-	case ST_O_PICK:
-	case ST_S_PICK:
-	    /*
-	     * Use the mouse for illuminating a solid
-	     */
-	    illuminate(ypos);
-	    return TCL_OK;
-
-	case ST_O_PATH:
-	    /*
-	     * Convert DT position to path element select
-	     */
-	    isave = ipathpos;
-	    ipathpos = illump->s_fullpath.fp_len-1 - (
-		(ypos+(int)GED_MAX) * (illump->s_fullpath.fp_len) / (int)GED_RANGE);
-	    if (ipathpos != isave)
-		view_state->vs_flag = 1;
-	    return TCL_OK;
-
-    } else switch (state) {
-
-	case ST_VIEW:
-	    /*
-	     * Use the DT for moving view center.  Make indicated
-	     * point be new view center (NEW).
-	     */
-	    slewview(mousevec);
-	    return TCL_OK;
-
-	case ST_O_PICK:
-	    ipathpos = 0;
-	    (void)chg_state(ST_O_PICK, ST_O_PATH, "mouse press");
-	    view_state->vs_flag = 1;
-	    return TCL_OK;
-
-	case ST_S_PICK:
-	    /* Check details, Init menu, set state */
-	    init_sedit();		/* does chg_state */
-	    view_state->vs_flag = 1;
-	    return TCL_OK;
-
-	case ST_S_EDIT:
-	    if ((SEDIT_TRAN || SEDIT_SCALE || SEDIT_PICK) && mged_variables->mv_transform == 'e')
-		sedit_mouse(mousevec);
-	    else
-		slewview(mousevec);
-	    return TCL_OK;
-
-	case ST_O_PATH:
-	    /*
-	     * Set combination "illuminate" mode.  This code assumes
-	     * that the user has already illuminated a single solid,
-	     * and wishes to move a collection of objects of which the
-	     * illuminated solid is a part.  The whole combination
-	     * will not illuminate (to save vector drawing time), but
-	     * all the objects should move/scale in unison.
-	     */
-	    {
-		char *av[3];
-		char num[8];
-		(void)sprintf(num, "%d", ipathpos);
-		av[0] = "matpick";
-		av[1] = num;
-		av[2] = (char *)NULL;
-		(void)f_matpick(clientData, interp, 2, av);
-		/* How to record this in the journal file? */
-		return TCL_OK;
-	    }
-
-	case ST_S_VPICK:
-	    sedit_vpick(mousevec);
-	    return TCL_OK;
-
-	case ST_O_EDIT:
-	    if ((OEDIT_TRAN || OEDIT_SCALE) && mged_variables->mv_transform == 'e')
-		objedit_mouse(mousevec);
-	    else
-		slewview(mousevec);
-
-	    return TCL_OK;
-
-	default:
-	    state_err("mouse press");
-	    return TCL_ERROR;
-    }
-    /* NOTREACHED */
-}
 
 
 /*
@@ -318,11 +97,7 @@ illuminate(int y) {
  * advance illump or ipathpos
  */
 int
-f_aip(
-    ClientData clientData,
-    Tcl_Interp *interp,
-    int argc,
-    char **argv)
+f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct ged_display_list *gdlp;
     struct solid *sp;
@@ -339,14 +114,14 @@ f_aip(
 
     if (!(curr_dm_list->dml_ndrawn)) {
 	return TCL_OK;
-    } else if (state != ST_S_PICK && state != ST_O_PICK  && state != ST_O_PATH) {
+    } else if (STATE != ST_S_PICK && STATE != ST_O_PICK  && STATE != ST_O_PATH) {
 	return TCL_OK;
     }
 
-    if (state == ST_O_PATH) {
+    if (STATE == ST_O_PATH) {
 	if (argc == 1 || *argv[1] == 'f') {
 	    ++ipathpos;
-	    if (ipathpos >= illump->s_fullpath.fp_len)
+	    if ((size_t)ipathpos >= illump->s_fullpath.fp_len)
 		ipathpos = 0;
 	} else if (*argv[1] == 'b') {
 	    --ipathpos;
@@ -440,48 +215,6 @@ wrt_point(mat_t out, const mat_t change, const mat_t in, const point_t point)
 
 
 /*
- * W R T _ P O I N T _ D I R E C
- *
- * Given a model-space transformation matrix "change", return a matrix
- * which applies the change with-respect-to given "point" and "direc".
- */
-void
-wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t point, const vect_t direc)
-{
-    static mat_t t1;
-    static mat_t pt_to_origin, origin_to_pt;
-    static mat_t d_to_zaxis, zaxis_to_d;
-    static vect_t zaxis;
-
-    /* build "point to origin" matrix */
-    MAT_IDN(pt_to_origin);
-    MAT_DELTAS_VEC_NEG(pt_to_origin, point);
-
-    /* build "origin to point" matrix */
-    MAT_IDN(origin_to_pt);
-    MAT_DELTAS_VEC_NEG(origin_to_pt, point);
-
-    /* build "direc to zaxis" matrix */
-    VSET(zaxis, 0.0, 0.0, 1.0);
-    bn_mat_fromto(d_to_zaxis, direc, zaxis);
-
-    /* build "zaxis to direc" matrix */
-    bn_mat_inv(zaxis_to_d, d_to_zaxis);
-
-    /* apply change matrix...
-     * t1 = change * d_to_zaxis * pt_to_origin * in
-     */
-    bn_mat_mul4(t1, change, d_to_zaxis, pt_to_origin, in);
-
-    /* apply origin_to_pt matrix:
-     * out = origin_to_pt * zaxis_to_d *
-     * change * d_to_zaxis * pt_to_origin * in
-     */
-    bn_mat_mul3(out, origin_to_pt, zaxis_to_d, t1);
-}
-
-
-/*
  * F _ M A T P I C K
  *
  * When in O_PATH state, select the arc which contains the matrix
@@ -495,17 +228,13 @@ wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t poi
  * n = edit arc from path [n-1] to [n]
  */
 int
-f_matpick(
-    ClientData clientData,
-    Tcl_Interp *interp,
-    int argc,
-    char **argv)
+f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
     struct solid *sp;
     char *cp;
-    int j;
+    size_t j;
     int illum_only = 0;
 
     CHECK_DBI_NULL;
@@ -520,7 +249,7 @@ f_matpick(
 	return TCL_ERROR;
     }
 
-    if (!strcmp("-n", argv[1])) {
+    if (BU_STR_EQUAL("-n", argv[1])) {
 	illum_only = 1;
 	--argc;
 	++argv;
@@ -560,7 +289,7 @@ f_matpick(
     } else {
 	ipathpos = atoi(argv[1]);
 	if (ipathpos < 0) ipathpos = 0;
-	else if (ipathpos >= illump->s_fullpath.fp_len)
+	else if ((size_t)ipathpos >= illump->s_fullpath.fp_len)
 	    ipathpos = illump->s_fullpath.fp_len-1;
     }
  got:
@@ -570,13 +299,13 @@ f_matpick(
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    for (j = 0; j <= ipathpos; j++) {
+	    for (j = 0; j <= (size_t)ipathpos; j++) {
 		if (DB_FULL_PATH_GET(&sp->s_fullpath, j) !=
 		    DB_FULL_PATH_GET(&illump->s_fullpath, j))
 		    break;
 	    }
 	    /* Only accept if top of tree is identical */
-	    if (j == ipathpos+1)
+	    if (j == (size_t)ipathpos+1)
 		sp->s_iflag = UP;
 	    else
 		sp->s_iflag = DOWN;
@@ -594,6 +323,223 @@ f_matpick(
     }
 
     update_views = 1;
+    return TCL_OK;
+}
+
+
+/*
+ * F _ M O U S E
+ *
+ * X and Y are expected to be in -2048 <= x, y <= +2047 range.  The
+ * "up" flag is 1 on the not-pressed to pressed transition, and 0 on
+ * the pressed to not-pressed transition.
+ *
+ * Note -
+ * The mouse is the focus of much of the editing activity in GED.  The
+ * editor operates in one of seven basic editing states, recorded in
+ * the variable called "state".  When no editing is taking place, the
+ * editor is in state ST_VIEW.  There are two paths out of ST_VIEW:
+ *
+ * BE_S_ILLUMINATE, when pressed, takes the editor into ST_S_PICK,
+ * where the mouse is used to pick a solid to edit, using our unusual
+ * "illuminate" technique.  Moving the mouse varies the solid being
+ * illuminated.  When the mouse is pressed, the editor moves into
+ * state ST_S_EDIT, and solid editing may begin.  Solid editing is
+ * terminated via BE_ACCEPT and BE_REJECT.
+ *
+ * BE_O_ILLUMINATE, when pressed, takes the editor into ST_O_PICK,
+ * again performing the illuminate procedure.  When the mouse is
+ * pressed, the editor moves into state ST_O_PATH.  Now, moving the
+ * mouse allows the user to choose the portion of the path relation to
+ * be edited.  When the mouse is pressed, the editor moves into state
+ * ST_O_EDIT, and object editing may begin.  Object editing is
+ * terminated via BE_ACCEPT and BE_REJECT.
+ *
+ * The only way to exit the intermediate states (non-VIEW, non-EDIT)
+ * is by completing the sequence, or pressing BE_REJECT.
+ */
+int
+f_mouse(
+    ClientData clientData,
+    Tcl_Interp *interp,
+    int argc,
+    const char *argv[])
+{
+    vect_t mousevec;		/* float pt -1..+1 mouse pos vect */
+    int isave;
+    int up;
+    int xpos;
+    int ypos;
+
+    if (argc < 4 || 4 < argc) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help M");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    up = atoi(argv[1]);
+    xpos = atoi(argv[2]);
+    ypos = atoi(argv[3]);
+
+    /* Build floating point mouse vector, -1 to +1 */
+    mousevec[X] =  xpos * INV_GED;
+    mousevec[Y] =  ypos * INV_GED;
+    mousevec[Z] = 0;
+
+    if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui && up) {
+	/*
+	 * If mouse press is in scroll area, see if scrolling, and if so,
+	 * divert this mouse press.
+	 */
+	if ((xpos >= MENUXLIM) || scroll_active) {
+	    int i;
+
+	    if (scroll_active)
+		ypos = scroll_y;
+
+	    if ((i = scroll_select(xpos, ypos, 1)) < 0) {
+		Tcl_AppendResult(interp,
+				 "mouse press outside valid scroll area\n",
+				 (char *)NULL);
+		return TCL_ERROR;
+	    }
+
+	    if (i > 0) {
+		scroll_active = 1;
+		scroll_y = ypos;
+
+		/* Scroller bars claimed button press */
+		return TCL_OK;
+	    }
+	    /* Otherwise, fall through */
+	}
+
+	/*
+	 * If menu is active, and mouse press is in menu area, divert
+	 * this mouse press for menu purposes.
+	 */
+	if (xpos < MENUXLIM) {
+	    int i;
+
+	    if ((i = mmenu_select(ypos, 1)) < 0) {
+		Tcl_AppendResult(interp,
+				 "mouse press outside valid menu\n",
+				 (char *)NULL);
+		return TCL_ERROR;
+	    }
+
+	    if (i > 0) {
+		/* Menu claimed button press */
+		return TCL_OK;
+	    }
+	    /* Otherwise, fall through */
+	}
+    }
+
+    /*
+     * In the best of all possible worlds, nothing should happen when
+     * the mouse is not pressed; this would relax the requirement for
+     * the host being informed when the mouse changes position.
+     * However, for now, illuminate mode makes this impossible.
+     */
+    if (up == 0) switch (STATE) {
+
+	case ST_VIEW:
+	case ST_S_EDIT:
+	case ST_O_EDIT:
+	default:
+	    return TCL_OK;		/* Take no action in these states */
+
+	case ST_O_PICK:
+	case ST_S_PICK:
+	    /*
+	     * Use the mouse for illuminating a solid
+	     */
+	    illuminate(ypos);
+	    return TCL_OK;
+
+	case ST_O_PATH:
+	    /*
+	     * Convert DT position to path element select
+	     */
+	    isave = ipathpos;
+	    ipathpos = illump->s_fullpath.fp_len-1 - (
+		(ypos+(int)GED_MAX) * (illump->s_fullpath.fp_len) / (int)GED_RANGE);
+	    if (ipathpos != isave)
+		view_state->vs_flag = 1;
+	    return TCL_OK;
+
+    } else switch (STATE) {
+
+	case ST_VIEW:
+	    /*
+	     * Use the DT for moving view center.  Make indicated
+	     * point be new view center (NEW).
+	     */
+	    slewview(mousevec);
+	    return TCL_OK;
+
+	case ST_O_PICK:
+	    ipathpos = 0;
+	    (void)chg_state(ST_O_PICK, ST_O_PATH, "mouse press");
+	    view_state->vs_flag = 1;
+	    return TCL_OK;
+
+	case ST_S_PICK:
+	    /* Check details, Init menu, set state */
+	    init_sedit();		/* does chg_state */
+	    view_state->vs_flag = 1;
+	    return TCL_OK;
+
+	case ST_S_EDIT:
+	    if ((SEDIT_TRAN || SEDIT_SCALE || SEDIT_PICK) && mged_variables->mv_transform == 'e')
+		sedit_mouse(mousevec);
+	    else
+		slewview(mousevec);
+	    return TCL_OK;
+
+	case ST_O_PATH:
+	    /*
+	     * Set combination "illuminate" mode.  This code assumes
+	     * that the user has already illuminated a single solid,
+	     * and wishes to move a collection of objects of which the
+	     * illuminated solid is a part.  The whole combination
+	     * will not illuminate (to save vector drawing time), but
+	     * all the objects should move/scale in unison.
+	     */
+	    {
+		const char *av[3];
+		char num[8];
+		(void)sprintf(num, "%d", ipathpos);
+		av[0] = "matpick";
+		av[1] = num;
+		av[2] = (char *)NULL;
+		(void)f_matpick(clientData, interp, 2, av);
+		/* How to record this in the journal file? */
+		return TCL_OK;
+	    }
+
+	case ST_S_VPICK:
+	    sedit_vpick(mousevec);
+	    return TCL_OK;
+
+	case ST_O_EDIT:
+	    if ((OEDIT_TRAN || OEDIT_SCALE) && mged_variables->mv_transform == 'e')
+		objedit_mouse(mousevec);
+	    else
+		slewview(mousevec);
+
+	    return TCL_OK;
+
+	default:
+	    state_err("mouse press");
+	    return TCL_ERROR;
+    }
+    /* NOTREACHED */
     return TCL_OK;
 }
 

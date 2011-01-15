@@ -1,7 +1,7 @@
 /*                     G _ T R A N S F E R . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2010 United States Government as represented by
+ * Copyright (c) 2006-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -97,14 +97,14 @@ validate_port(int port) {
 
 
 int
-hit(struct application *ap, struct partition *p, struct seg *s)
+hit(struct application *UNUSED(ap), struct partition *UNUSED(p), struct seg *UNUSED(s))
 {
     bu_log("HIT!\n");
     return 0;
 }
 
 int
-miss(struct application *ap)
+miss(struct application *UNUSED(ap))
 {
     bu_log("MISSED!\n");
     return 0;
@@ -150,7 +150,7 @@ do_something() {
 
 
 void
-server_helo(struct pkg_conn *connection, char *buf)
+server_helo(struct pkg_conn *UNUSED(connection), char *buf)
 {
     /* should not encounter since we listened for it specifically
      * before beginning processing of packets.
@@ -161,7 +161,7 @@ server_helo(struct pkg_conn *connection, char *buf)
 
 
 void
-server_args(struct pkg_conn *connection, char *buf)
+server_args(struct pkg_conn *UNUSED(connection), char *buf)
 {
     /* updates the srv_argc and srv_argv application globals used to
      * show that we can shoot at geometry in-memory.
@@ -182,7 +182,7 @@ server_args(struct pkg_conn *connection, char *buf)
 
 
 void
-server_geom(struct pkg_conn *connection, char *buf)
+server_geom(struct pkg_conn *UNUSED(connection), char *buf)
 {
     struct bu_external ext;
     struct db5_raw_internal raw;
@@ -213,7 +213,7 @@ server_geom(struct pkg_conn *connection, char *buf)
 
 
 void
-server_ciao(struct pkg_conn *connection, char *buf)
+server_ciao(struct pkg_conn *UNUSED(connection), char *buf)
 {
     bu_log("CIAO encountered\n");
 
@@ -244,11 +244,11 @@ run_server(int port) {
     char *title;
 
     struct pkg_switch callbacks[] = {
-	{MSG_HELO, server_helo, "HELO"},
-	{MSG_ARGS, server_args, "ARGS"},
-	{MSG_GEOM, server_geom, "GEOM"},
-	{MSG_CIAO, server_ciao, "CIAO"},
-	{0, 0, (char *)0}
+	{MSG_HELO, server_helo, "HELO", NULL},
+	{MSG_ARGS, server_args, "ARGS", NULL},
+	{MSG_GEOM, server_geom, "GEOM", NULL},
+	{MSG_CIAO, server_ciao, "CIAO", NULL},
+	{0, 0, NULL, NULL}
     };
 
     validate_port(port);
@@ -281,7 +281,7 @@ run_server(int port) {
 	    client = PKC_NULL;
 	} else {
 	    /* validate magic header */
-	    if (strcmp(title, MAGIC_ID) != 0) {
+	    if (!BU_STR_EQUAL(title, MAGIC_ID)) {
 		bu_log("Bizarre corruption, received a HELO without at matching MAGIC ID!\n");
 		pkg_close(client);
 		client = PKC_NULL;

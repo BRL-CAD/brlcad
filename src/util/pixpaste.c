@@ -1,7 +1,7 @@
 /*                      P I X P A S T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -136,7 +136,7 @@ get_args(int argc, char **argv)
 	return 0;
     } else {
 	orig_name = argv[bu_optind];
-	if (strcmp(orig_name, "-") == 0) {
+	if (BU_STR_EQUAL(orig_name, "-")) {
 	    if (isatty(fileno(stdin))) return 0;
 	    orig = stdin;
 	} else {
@@ -154,7 +154,7 @@ get_args(int argc, char **argv)
 	return 0;
     } else {
 	paste_name = argv[bu_optind];
-	if (strcmp(paste_name, "-") == 0) {
+	if (BU_STR_EQUAL(paste_name, "-")) {
 	    if (isatty(fileno(stdin))) return 0;
 	    paste = stdin;
 	    if (!orig_isfile) {

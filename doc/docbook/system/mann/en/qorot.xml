@@ -2,7 +2,7 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
                    "../../../resources/standard/dtd/docbookx.dtd">
 
-<!-- Copyright (c) 2005-2008 United States Government as represented by -->
+<!-- Copyright (c) 2005-2011 United States Government as represented by -->
 <!-- the U.S. Army Research Laboratory.                                 -->
 <!--                                                                    -->
 <!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
@@ -72,7 +72,7 @@
 
 <refsect1 id='examples'>
   <title>EXAMPLES</title>
-  <para>The example shows the use of the <command>quorot</command> command to rotate a currently edited object through a specified angle and starting point and in a particular direction.
+  <para>The example shows the use of the <command>qorot</command> command to rotate a currently edited object through a specified angle and starting point and in a particular direction.
     
   </para>
          

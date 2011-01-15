@@ -1,7 +1,7 @@
 /*			M G E D _ D M . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -589,7 +589,7 @@ extern int doEvent(ClientData, void *);
 #endif
 
 /* defined in dm-generic.c */
-extern int common_dm(int argc, char *argv[]);
+extern int common_dm(int argc, const char *argv[]);
 
 /* defined in setup.c */
 extern void mged_rtCmdNotify();

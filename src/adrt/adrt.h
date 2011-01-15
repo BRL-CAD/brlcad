@@ -1,7 +1,7 @@
 /*                          A D R T . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,6 +56,9 @@ enum
     ADRT_WORK_MINMAX,			/* 17 */
     ADRT_WORK_END
 };
+
+#if 0
+/* FIXME: unused, remove? */
 static char *adrt_work_table[20] = {
     "ADRT_WORK_INIT",
     "ADRT_WORK_STATUS",
@@ -66,7 +69,7 @@ static char *adrt_work_table[20] = {
     "ADRT_WORK_SELECT",
     "ADRT_WORK_MINMAX",
     NULL};
-
+#endif
 
 
 #define ADRT_NETOP_BASE 0x20
@@ -83,6 +86,9 @@ enum
     ADRT_NETOP_SHUTDOWN,		/* 27 */
     ADRT_NETOP_END
 };
+
+#if 0
+/* FIXME: unused, remove? */
 static char *adrt_netop_table[20] = {
     "ADRT_NETOP_NOP",
     "ADRT_NETOP_INIT",
@@ -93,6 +99,7 @@ static char *adrt_netop_table[20] = {
     "ADRT_NETOP_QUIT",
     "ADRT_NETOP_SHUTDOWN",
     NULL};
+#endif
 
 /* fill in a human readable version of the adrt op (for debugging) */
 #define ADRT_MESSAGE_NAME(op) \
@@ -155,7 +162,7 @@ typedef struct tienet_buffer_s {
     uint32_t ind;
 } tienet_buffer_t;
 
-BU_EXPORT BU_EXTERN(int load_g, (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **));
+BU_EXPORT BU_EXTERN(int load_g, (struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **));
 
 #endif
 

@@ -1,7 +1,7 @@
 /*                  W R I T E _ B R L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,14 +34,14 @@
 
 double IntavalUnitInMm = 0.1;
 
-int arb6_counter = 0;
-int arb8_counter = 0;
-int pipe_counter = 0;
-int rcc_counter  = 0;
-int sph_counter  = 0;
-int rpp_counter  = 0;
-int trc_counter  = 0;
-int bot_counter  = 0;
+size_t arb6_counter = 0;
+size_t arb8_counter = 0;
+size_t pipe_counter = 0;
+size_t rcc_counter  = 0;
+size_t sph_counter  = 0;
+size_t rpp_counter  = 0;
+size_t trc_counter  = 0;
+size_t bot_counter  = 0;
 
 
 void addTriangle
@@ -155,7 +155,7 @@ void writePipe
         mk_add_pipe_pt(&pipePointList, pipePoint, radius, 2 * radius / 3., radius / 2.);
     }
 
-    sprintf(name, "s%d.pipe", ++pipe_counter);
+    sprintf(name, "s%lu.pipe", (long unsigned int)++pipe_counter);
     if (mk_pipe(wdbp, name, &pipePointList) == 0) {
         addToRegion(form.compnr, name);
 
@@ -188,7 +188,7 @@ void writeRectangularBox
     VSCALE(min, min, IntavalUnitInMm)
     VSCALE(max, max, IntavalUnitInMm)
 
-    sprintf(name, "s%d.rpp", ++rpp_counter);
+    sprintf(name, "s%lu.rpp", (long unsigned int)++rpp_counter);
     mk_rpp(wdbp, name, min, max);
     addToRegion(form.compnr, name);
 
@@ -221,7 +221,7 @@ void writeSolidBot
         }
     }
 
-    sprintf(name, "s%d.sbot", ++bot_counter);
+    sprintf(name, "s%lu.sbot", (long unsigned)++bot_counter);
 
     mk_bot(wdbp,
            name,
@@ -269,7 +269,7 @@ void writeRingModeBox
     // compute inner points
     vect_t inner[MAX_NPTS];
 
-    for(int i2 = 0; i2 < static_cast<int>(form.npts); ++i2) {
+    for(size_t i2 = 0; i2 < form.npts; ++i2) {
         vect_t a, b, c;
         VMOVE(c, outer[(i2 - 1) % form.npts])
         VMOVE(a, outer[i2])
@@ -329,9 +329,9 @@ void writeRingModeBox
 
     // bot parameters
     // vertices
-    size_t  num_vertices = 0;
-    int     outer_i[MAX_NPTS];
-    int     inner_i[MAX_NPTS];
+    size_t num_vertices = 0;
+    int outer_i[MAX_NPTS];
+    int inner_i[MAX_NPTS];
     fastf_t vertices[MAX_NPTS * 3];
 
     for(size_t i3 = 0; i3 < form.npts; ++i3) {
@@ -382,10 +382,10 @@ void writeRingModeBox
 
     // faces
     size_t num_faces = 0;
-    int    faces[MAX_TRIANGLES * 3];
+    int faces[MAX_TRIANGLES * 3];
 
     for(size_t i4 = 0; i4 < form.npts; ++i4) {
-        int nextIndex = (i4 + 1) % form.npts;
+        size_t nextIndex = (i4 + 1) % form.npts;
 
         addTriangle(faces, num_faces, outer_i[i4], outer_i[nextIndex], inner_i[i4]);
         addTriangle(faces, num_faces, inner_i[i4], outer_i[nextIndex], inner_i[nextIndex]);
@@ -398,7 +398,7 @@ void writeRingModeBox
 
     bu_bitv* faceMode = bu_bitv_new(num_faces);
 
-    sprintf(name, "s%d.pbot", ++bot_counter);
+    sprintf(name, "s%lu.pbot", (long unsigned)++bot_counter);
 
     mk_bot(wdbp,
            name,
@@ -453,7 +453,7 @@ void writePlateBot
 
     bu_bitv* faceMode = bu_bitv_new(form.bot.num_faces);
 
-    sprintf(name, "s%d.pbot", ++bot_counter);
+    sprintf(name, "s%lu.pbot", (long unsigned)++bot_counter);
 
     mk_bot(wdbp,
            name,
@@ -498,7 +498,7 @@ void writeCone
     fastf_t radius1 = form.radius1 * IntavalUnitInMm;
     fastf_t radius2 = form.radius2 * IntavalUnitInMm;
 
-    sprintf(name, "s%d.trc", ++trc_counter);
+    sprintf(name, "s%lu.trc", (long unsigned)++trc_counter);
     mk_trc_h(wdbp, name, base, height, radius1, radius2);
     addToRegion(form.compnr, name);
 
@@ -528,7 +528,7 @@ void writeCylinder
 
     fastf_t radius = form.radius1 * IntavalUnitInMm;
 
-    sprintf(name, "s%d.rcc", ++rcc_counter);
+    sprintf(name, "s%lu.rcc", (long unsigned)++rcc_counter);
     mk_rcc(wdbp, name, base, height, radius);
     addToRegion(form.compnr, name);
 
@@ -570,7 +570,7 @@ void writeArb8
     for (size_t i = 0; i < 8; ++i)
         VSCALE(shuffle[i], shuffle[i], IntavalUnitInMm)
 
-    sprintf(name, "s%d.arb8", ++arb8_counter);
+    sprintf(name, "s%lu.arb8", (long unsigned)++arb8_counter);
     mk_arb8(wdbp, name, reinterpret_cast<fastf_t*>(shuffle));
     addToRegion(form.compnr, name);
 

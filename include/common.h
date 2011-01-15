@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,6 +54,7 @@
 #  ifndef HAVE_DRAND48
 #    define drand48() ((double)rand() / (double)(RAND_MAX + 1))
 #    define HAVE_DRAND48 1
+#	 define srand48(seed) (srand(seed))
 #  endif
 
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */

@@ -1,7 +1,7 @@
 /*               O P E N N U R B S _ E X T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,8 @@
 #include "brep.h"
 #include "dvec.h"
 
-#include "opennurbs_ext.h"
+/* our interface header */
+#include "./opennurbs_ext.h"
 
 
 #define RANGE_HI 0.55
@@ -773,7 +774,7 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf, bool isLeaf, ON_3dPoint *m
 
     BBNode* node;
     if (isLeaf) {
-	vect_t delta;
+/*	vect_t delta; */
 
 	VSUB2(min, min, buffer);
 	VADD2(max, max, buffer);
@@ -1441,15 +1442,11 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	const ON_Surface* surf = m_face->SurfaceOf();
 	ON_Interval usurf = surf->Domain(0);
 	ON_Interval vsurf = surf->Domain(1);
-	fastf_t ufactor = (u[1] - u[0]) / (usurf[1] - usurf[0]);
-	fastf_t vfactor = (v[1] - v[0]) / (vsurf[1] - vsurf[0]);
 	point_t a, b;
 	VSET(a, usurf[0], vsurf[0], 0.0);
 	VSET(b, usurf[1], vsurf[1], 0.0);
-	double dsurf = DIST_PT_PT(a, b);
 	VSET(a, u[0], v[0], 0.0);
 	VSET(b, u[1], v[1], 0.0);
-	double dsubsurf = DIST_PT_PT(a, b);
 	double uq = u.Length()*0.25;
 	double vq = v.Length()*0.25;
 	localsurf->FrameAt(u.Mid() - uq, v.Mid() - vq, frames[5]);
@@ -2078,7 +2075,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #define SE 4
 
 bool
-SurfaceTree::isFlat(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *m_normals, ON_3dPoint *corners, const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
+SurfaceTree::isFlat(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *UNUSED(m_normals), ON_3dPoint *UNUSED(corners), const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
 {
 	/*
     ON_3dVector normals[8];
@@ -2173,7 +2170,7 @@ SurfaceTree::isFlat(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVecto
 }
 
 bool
-SurfaceTree::isStraight(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *m_normals, ON_3dPoint *corners, const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
+SurfaceTree::isStraight(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *UNUSED(m_normals), ON_3dPoint *UNUSED(corners), const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
 {
     double Xdot = frames[0].xaxis * frames[1].xaxis;
     Xdot = Xdot * (frames[0].xaxis * frames[2].xaxis);
@@ -2216,7 +2213,7 @@ SurfaceTree::isStraight(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dV
 }
 
 fastf_t
-SurfaceTree::isFlatU(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *m_normals, ON_3dPoint *corners, const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
+SurfaceTree::isFlatU(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *m_normals, ON_3dPoint *UNUSED(corners), const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
 {
     fastf_t product = 1.0;
     product *= m_normals[0]*m_normals[1];
@@ -2238,7 +2235,7 @@ SurfaceTree::isFlatU(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVect
 }
 
 fastf_t
-SurfaceTree::isFlatV(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *m_normals, ON_3dPoint *corners, const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
+SurfaceTree::isFlatV(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *m_normals, ON_3dPoint *UNUSED(corners), const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
 {
 	fastf_t product = 1.0;
     product *= m_normals[0]*m_normals[3];

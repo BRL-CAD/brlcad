@@ -1,7 +1,7 @@
 /*                      R A Y T R A C E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -221,8 +221,8 @@ struct rt_db_internal  {
  */
 struct db_full_path {
     unsigned long	magic;
-    int			fp_len;
-    int			fp_maxlen;
+    size_t		fp_len;
+    size_t		fp_maxlen;
     struct directory **	fp_names;	/**< @brief array of dir pointers */
 };
 #define DB_FULL_PATH_POP(_pp) { \
@@ -735,11 +735,11 @@ union cutter  {
 	fastf_t		bn_min[3];
 	fastf_t		bn_max[3];
 	struct soltab **bn_list;	/**< @brief bn_list[bn_len] */
-	int		bn_len;		/**< @brief # of solids in list */
-	int		bn_maxlen;	/**< @brief # of ptrs allocated to list */
+	size_t		bn_len;		/**< @brief # of solids in list */
+	size_t		bn_maxlen;	/**< @brief # of ptrs allocated to list */
 	struct rt_piecelist *bn_piecelist; /**< @brief [] solids with pieces */
-	int		bn_piecelen;	/**< @brief # of piecelists used */
-	int		bn_maxpiecelen; /**< @brief # of piecelists allocated */
+	size_t		bn_piecelen;	/**< @brief # of piecelists used */
+	size_t		bn_maxpiecelen; /**< @brief # of piecelists allocated */
     } bn;
     struct nugridnode {
 	int nu_type;
@@ -1339,7 +1339,7 @@ struct rt_piecestate  {
  */
 struct rt_piecelist  {
     unsigned long	magic;
-    long		npieces;	/**< @brief  number of pieces in pieces[] array */
+    size_t		npieces;	/**< @brief  number of pieces in pieces[] array */
     long		*pieces;	/**< @brief  pieces[npieces], piece indices */
     struct soltab	*stp;		/**< @brief  ref back to solid */
 };
@@ -1447,19 +1447,19 @@ RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined 
  * Structure used by the "reprep" routines
  */
 struct rt_reprep_obj_list {
-    int ntopobjs;		/**< @brief  number of objects in the original call to gettrees */
+    size_t ntopobjs;		/**< @brief  number of objects in the original call to gettrees */
     char **topobjs;		/**< @brief  list of the above object names */
-    int nunprepped;		/**< @brief  number of objects to be unprepped and re-prepped */
+    size_t nunprepped;		/**< @brief  number of objects to be unprepped and re-prepped */
     char **unprepped;		/**< @brief  list of the above objects */
     /* Above here must be filled in by application */
     /* Below here is used by dynamic geometry routines, should be zeroed by application before use */
     struct bu_ptbl paths;	/**< @brief  list of all paths from topobjs to unprepped objects */
     struct db_tree_state **tsp;	/**< @brief  tree state used by tree walker in "reprep" routines */
     struct bu_ptbl unprep_regions;	/**< @brief  list of region structures that will be "unprepped" */
-    long old_nsolids;		/**< @brief  rtip->nsolids before unprep */
-    long old_nregions;		/**< @brief  rtip->nregions before unprep */
-    long nsolids_unprepped;	/**< @brief  number of soltab structures eliminated by unprep */
-    long nregions_unprepped;	/**< @brief  number of region structures eliminated by unprep */
+    size_t old_nsolids;		/**< @brief  rtip->nsolids before unprep */
+    size_t old_nregions;	/**< @brief  rtip->nregions before unprep */
+    size_t nsolids_unprepped;	/**< @brief  number of soltab structures eliminated by unprep */
+    size_t nregions_unprepped;	/**< @brief  number of region structures eliminated by unprep */
 };
 
 
@@ -1738,17 +1738,17 @@ struct rt_i {
     genptr_t		Orca_hash_tbl;	/**< @brief  Hash table in matrices for ORCA */
     struct bu_ptbl	delete_regs;	/**< @brief  list of region pointers to delete after light_init() */
     /* Ray-tracing statistics */
-    long		nregions;	/**< @brief  total # of regions participating */
-    long		nsolids;	/**< @brief  total # of solids participating */
-    long		rti_nrays;	/**< @brief  # calls to rt_shootray() */
-    long		nmiss_model;	/**< @brief  rays missed model RPP */
-    long		nshots;		/**< @brief  # of calls to ft_shot() */
-    long		nmiss;		/**< @brief  solid ft_shot() returned a miss */
-    long		nhits;		/**< @brief  solid ft_shot() returned a hit */
-    long		nmiss_tree;	/**< @brief  shots missed sub-tree RPP */
-    long		nmiss_solid;	/**< @brief  shots missed solid RPP */
-    long		ndup;		/**< @brief  duplicate shots at a given solid */
-    long		nempty_cells;	/**< @brief  number of empty NUgrid cells */
+    size_t		nregions;	/**< @brief  total # of regions participating */
+    size_t		nsolids;	/**< @brief  total # of solids participating */
+    size_t		rti_nrays;	/**< @brief  # calls to rt_shootray() */
+    size_t		nmiss_model;	/**< @brief  rays missed model RPP */
+    size_t		nshots;		/**< @brief  # of calls to ft_shot() */
+    size_t		nmiss;		/**< @brief  solid ft_shot() returned a miss */
+    size_t		nhits;		/**< @brief  solid ft_shot() returned a hit */
+    size_t		nmiss_tree;	/**< @brief  shots missed sub-tree RPP */
+    size_t		nmiss_solid;	/**< @brief  shots missed solid RPP */
+    size_t		ndup;		/**< @brief  duplicate shots at a given solid */
+    size_t		nempty_cells;	/**< @brief  number of empty NUgrid cells */
     union cutter	rti_CutHead;	/**< @brief  Head of cut tree */
     union cutter	rti_inf_box;	/**< @brief  List of infinite solids */
     union cutter *	rti_CutFree;	/**< @brief  cut Freelist */
@@ -1769,13 +1769,13 @@ struct rt_i {
     struct bu_list	rti_solidheads[RT_DBNHASH]; /**< @brief  active solid lists */
     struct bu_ptbl	rti_resources;	/**< @brief  list of 'struct resource'es encountered */
     double		rti_nu_gfactor;	/**< @brief  constant in numcells computation */
-    int			rti_cutlen;	/**< @brief  goal for # solids per boxnode */
-    int			rti_cutdepth;	/**< @brief  goal for depth of NUBSPT cut tree */
+    size_t		rti_cutlen;	/**< @brief  goal for # solids per boxnode */
+    size_t		rti_cutdepth;	/**< @brief  goal for depth of NUBSPT cut tree */
     /* Parameters required for rt_submodel */
     char *		rti_treetop;	/**< @brief  bu_strduped, for rt_submodel rti's only */
-    int			rti_uses;	/**< @brief  for rt_submodel */
+    size_t		rti_uses;	/**< @brief  for rt_submodel */
     /* Parameters for accelerating "pieces" of solids */
-    int			rti_nsolids_with_pieces; /**< @brief  # solids using pieces */
+    size_t		rti_nsolids_with_pieces; /**< @brief  # solids using pieces */
     /* Parameters for dynamic geometry */
     int			rti_add_to_new_solids_list;
     struct bu_ptbl	rti_new_solids;
@@ -1982,6 +1982,9 @@ struct rt_functab {
 			     struct model * /*m*/,
 			     struct rt_db_internal * /*ip*/,
 			     const struct bn_tol * /*tol*/));
+    void (*ft_brep) BU_ARGS((ON_Brep ** /*b*/,
+			    struct rt_db_internal * /*ip*/,
+			    const struct bn_tol * /*tol*/));
     int (*ft_import5) BU_ARGS((struct rt_db_internal * /*ip*/,
 			       const struct bu_external * /*ep*/,
 			       const mat_t /*mat*/,
@@ -2017,7 +2020,7 @@ struct rt_functab {
     size_t ft_internal_size;	/**< @brief  sizeof(struct rt_xxx_internal) */
     unsigned long ft_internal_magic;	/**< @brief  RT_XXX_INTERNAL_MAGIC */
     int	(*ft_get) BU_ARGS((struct bu_vls *, const struct rt_db_internal *, const char *item));
-    int	(*ft_adjust) BU_ARGS((struct bu_vls *, struct rt_db_internal *, int /*argc*/, char ** /*argv*/));
+    int	(*ft_adjust) BU_ARGS((struct bu_vls *, struct rt_db_internal *, int /*argc*/, const char ** /*argv*/));
     int	(*ft_form) BU_ARGS((struct bu_vls *, const struct rt_functab *));
 
     void (*ft_make) BU_ARGS((const struct rt_functab *, struct rt_db_internal */*ip*/));
@@ -2687,14 +2690,14 @@ RT_EXPORT BU_EXTERN(void db_dup_full_path,
 		     const struct db_full_path *oldp));
 RT_EXPORT BU_EXTERN(void db_extend_full_path,
 		    (struct db_full_path *pathp,
-		     int incr));
+		     size_t incr));
 RT_EXPORT BU_EXTERN(void db_append_full_path,
 		    (struct db_full_path *dest,
 		     const struct db_full_path *src));
 RT_EXPORT BU_EXTERN(void db_dup_path_tail,
-		    (struct db_full_path	*newp,
-		     const struct db_full_path	*oldp,
-		     int			start));
+		    (struct db_full_path *newp,
+		     const struct db_full_path *oldp,
+		     off_t start));
 RT_EXPORT BU_EXTERN(char *db_path_to_string,
 		    (const struct db_full_path *pp));
 RT_EXPORT BU_EXTERN(void db_path_to_vls,
@@ -3227,11 +3230,11 @@ RT_EXPORT BU_EXTERN(void db_tree_funcleaf,
 		     genptr_t		user_ptr2,
 		     genptr_t		user_ptr3));
 RT_EXPORT BU_EXTERN(int db_follow_path,
-		    (struct db_tree_state	*tsp,
-		     struct db_full_path	*total_path,
-		     const struct db_full_path	*new_path,
-		     int			noisy,
-		     int			depth));
+		    (struct db_tree_state *tsp,
+		     struct db_full_path *total_path,
+		     const struct db_full_path *new_path,
+		     int noisy,
+		     long pdepth));
 RT_EXPORT BU_EXTERN(int db_follow_path_for_state,
 		    (struct db_tree_state *tsp,
 		     struct db_full_path *pathp,
@@ -4692,7 +4695,7 @@ RT_EXPORT BU_EXTERN(int rt_bot_edge_in_list,
 		    (const int v1,
 		     const int v2,
 		     const int edge_list[],
-		     const int edge_count0));
+		     const size_t edge_count0));
 RT_EXPORT BU_EXTERN(int rt_bot_plot,
 		    (struct bu_list		*vhead,
 		     struct rt_db_internal	*ip,
@@ -4707,15 +4710,10 @@ RT_EXPORT BU_EXTERN(int rt_bot_find_v_nearest_pt2,
 		    (const struct rt_bot_internal *bot,
 		     const point_t	pt2,
 		     const mat_t	mat));
-RT_EXPORT BU_EXTERN(int rt_bot_find_e_nearest_pt2,
-		    (int *vert1,
-		     int *vert2,
-		     const struct rt_bot_internal *bot,
-		     const point_t	pt2,
-		     const mat_t	mat));
+RT_EXPORT BU_EXTERN(int rt_bot_find_e_nearest_pt2, (int *vert1, int *vert2, const struct rt_bot_internal *bot, const point_t pt2, const mat_t mat));
 RT_EXPORT BU_EXTERN(fastf_t rt_bot_propget,
 		    (struct rt_bot_internal *bot,
-		    char *property));
+		    const char *property));
 RT_EXPORT BU_EXTERN(int rt_bot_vertex_fuse,
 		    (struct rt_bot_internal *bot));
 RT_EXPORT BU_EXTERN(int rt_bot_face_fuse,
@@ -4848,7 +4846,7 @@ RT_EXPORT BU_EXTERN(int tcl_list_to_int_array,
 
 RT_EXPORT BU_EXTERN(int tcl_list_to_fastf_array,
 		    (Tcl_Interp *interp,
-		     char *char_list,
+		     const char *char_list,
 		     fastf_t **array,
 		     int *array_len));
 
@@ -5903,11 +5901,11 @@ RT_EXPORT BU_EXTERN(void rt_binunif_dump,
 RT_EXPORT extern fastf_t rt_cline_radius;
 
 /* defined in bot.c */
-RT_EXPORT extern int rt_bot_minpieces;
-RT_EXPORT extern int rt_bot_tri_per_piece;
+RT_EXPORT extern size_t rt_bot_minpieces;
+RT_EXPORT extern size_t rt_bot_tri_per_piece;
 RT_EXPORT BU_EXTERN(int rt_bot_sort_faces,
 		    (struct rt_bot_internal *bot,
-		     int tris_per_piece));
+		     size_t tris_per_piece));
 RT_EXPORT BU_EXTERN(int rt_bot_decimate,
 		    (struct rt_bot_internal *bot,
 		     fastf_t max_chord_error,

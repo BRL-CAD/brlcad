@@ -1,7 +1,7 @@
 /*                         M A K E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
 int
 ged_make(struct ged *gedp, int argc, const char *argv[])
 {
-    int i;
+    size_t i;
     int k;
     int save_bu_optind;
     struct directory *dp;
@@ -136,8 +136,8 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, GED_ERROR);
     RT_INIT_DB_INTERNAL(&internal);
 
-    if (strcmp(argv[bu_optind+1], "arb8") == 0 ||
-	strcmp(argv[bu_optind+1],  "rpp") == 0) {
+    if (BU_STR_EQUAL(argv[bu_optind+1], "arb8") ||
+	BU_STR_EQUAL(argv[bu_optind+1],  "rpp")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARB8;
 	internal.idb_meth = &rt_functab[ID_ARB8];
@@ -160,7 +160,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	arb_ip->pt[6][Y] += scale;
 	arb_ip->pt[6][Z] += scale;
 	arb_ip->pt[7][Z] += scale;
-    } else if (strcmp(argv[bu_optind+1], "arb7") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "arb7")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARB8;
 	internal.idb_meth = &rt_functab[ID_ARB8];
@@ -182,7 +182,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	arb_ip->pt[5][Y] += scale;
 	arb_ip->pt[6][Y] += scale;
 	arb_ip->pt[6][Z] += 0.5*scale;
-    } else if (strcmp(argv[bu_optind+1], "arb6") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "arb6")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARB8;
 	internal.idb_meth = &rt_functab[ID_ARB8];
@@ -207,7 +207,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	arb_ip->pt[6][Z] += scale;
 	arb_ip->pt[7][Y] += 0.5*scale;
 	arb_ip->pt[7][Z] += scale;
-    } else if (strcmp(argv[bu_optind+1], "arb5") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "arb5")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARB8;
 	internal.idb_meth = &rt_functab[ID_ARB8];
@@ -230,7 +230,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	    arb_ip->pt[i][Y] += 0.5*scale;
 	    arb_ip->pt[i][Z] += 0.5*scale;
 	}
-    } else if (strcmp(argv[bu_optind+1], "arb4") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "arb4")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARB8;
 	internal.idb_meth = &rt_functab[ID_ARB8];
@@ -253,7 +253,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	    arb_ip->pt[i][X] -= scale;
 	    arb_ip->pt[i][Y] += scale;
 	}
-    } else if (strcmp(argv[bu_optind+1], "arbn") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "arbn")) {
 	point_t view_center;
 
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -289,8 +289,8 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	    arbn_ip->eqn[i][W] +=
 		VDOT(view_center, arbn_ip->eqn[i]);
 	}
-    } else if (strcmp(argv[bu_optind+1], "ars") == 0) {
-	int curve;
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "ars")) {
+	size_t curve;
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARS;
 	internal.idb_meth = &rt_functab[ID_ARS];
@@ -340,7 +340,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 
-    } else if (strcmp(argv[bu_optind+1], "sph") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "sph")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ELL;
 	internal.idb_meth = &rt_functab[ID_ELL];
@@ -351,8 +351,8 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	VSET(ell_ip->a, 0.5*scale, 0.0, 0.0);	/* A */
 	VSET(ell_ip->b, 0.0, 0.5*scale, 0.0);	/* B */
 	VSET(ell_ip->c, 0.0, 0.0, 0.5*scale);	/* C */
-    } else if ((strcmp(argv[bu_optind+1], "grp") == 0) ||
-	       (strcmp(argv[bu_optind+1], "grip") == 0)) {
+    } else if ((BU_STR_EQUAL(argv[bu_optind+1], "grp")) ||
+	       (BU_STR_EQUAL(argv[bu_optind+1], "grip"))) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_GRIP;
 	internal.idb_meth = &rt_functab[ID_GRIP];
@@ -363,7 +363,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	     origin[Z]);
 	VSET(grp_ip->normal, 1.0, 0.0, 0.0);
 	grp_ip->mag = 0.375*scale;
-    } else if (strcmp(argv[bu_optind+1], "ell1") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "ell1")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ELL;
 	internal.idb_meth = &rt_functab[ID_ELL];
@@ -374,7 +374,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	VSET(ell_ip->a, 0.5*scale, 0.0, 0.0);	/* A */
 	VSET(ell_ip->b, 0.0, 0.25*scale, 0.0);	/* B */
 	VSET(ell_ip->c, 0.0, 0.0, 0.25*scale);	/* C */
-    } else if (strcmp(argv[bu_optind+1], "ell") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "ell")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ELL;
 	internal.idb_meth = &rt_functab[ID_ELL];
@@ -385,7 +385,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	VSET(ell_ip->a, 0.5*scale, 0.0, 0.0);		/* A */
 	VSET(ell_ip->b, 0.0, 0.25*scale, 0.0);	/* B */
 	VSET(ell_ip->c, 0.0, 0.0, 0.125*scale);	/* C */
-    } else if (strcmp(argv[bu_optind+1], "tor") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "tor")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_TOR;
 	internal.idb_meth = &rt_functab[ID_TOR];
@@ -399,7 +399,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	tor_ip->r_b = tor_ip->r_a;
 	VSET(tor_ip->a, 0.0, 1, 0.0);
 	VSET(tor_ip->b, 0.0, 0.0, 1);
-    } else if (strcmp(argv[bu_optind+1], "tgc") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "tgc")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_TGC;
 	internal.idb_meth = &rt_functab[ID_TGC];
@@ -412,7 +412,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	VSET(tgc_ip->b,  0.0, 0.125*scale, 0.0);
 	VSET(tgc_ip->c,  0.125*scale, 0.0, 0.0);
 	VSET(tgc_ip->d,  0.0, 0.25*scale, 0.0);
-    } else if (strcmp(argv[bu_optind+1], "tec") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "tec")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_TGC;
 	internal.idb_meth = &rt_functab[ID_TGC];
@@ -425,7 +425,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	VSET(tgc_ip->b,  0.0, 0.125*scale, 0.0);
 	VSET(tgc_ip->c,  0.125*scale, 0.0, 0.0);
 	VSET(tgc_ip->d,  0.0, (0.0625*scale), 0.0);
-    } else if (strcmp(argv[bu_optind+1], "rec") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "rec")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_TGC;
 	internal.idb_meth = &rt_functab[ID_TGC];
@@ -438,7 +438,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	VSET(tgc_ip->b,  0.0, 0.125*scale, 0.0);
 	VSET(tgc_ip->c,  0.25*scale, 0.0, 0.0);
 	VSET(tgc_ip->d,  0.0, 0.125*scale, 0.0);
-    } else if (strcmp(argv[bu_optind+1], "trc") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "trc")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_TGC;
 	internal.idb_meth = &rt_functab[ID_TGC];
@@ -451,7 +451,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	VSET(tgc_ip->b,  0.0, 0.25*scale, 0.0);
 	VSET(tgc_ip->c,  0.125*scale, 0.0, 0.0);
 	VSET(tgc_ip->d,  0.0, 0.125*scale, 0.0);
-    } else if (strcmp(argv[bu_optind+1], "rcc") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "rcc")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_TGC;
 	internal.idb_meth = &rt_functab[ID_TGC];
@@ -464,7 +464,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	VSET(tgc_ip->b,  0.0, 0.25*scale, 0.0);
 	VSET(tgc_ip->c,  0.25*scale, 0.0, 0.0);
 	VSET(tgc_ip->d,  0.0, 0.25*scale, 0.0);
-    } else if (strcmp(argv[bu_optind+1], "half") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "half")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_HALF;
 	internal.idb_meth = &rt_functab[ID_HALF];
@@ -473,7 +473,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	half_ip->magic = RT_HALF_INTERNAL_MAGIC;
 	VSET(half_ip->eqn, 0.0, 0.0, 1.0);
 	half_ip->eqn[W] = (origin[Z]);
-    } else if (strcmp(argv[bu_optind+1], "rpc") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "rpc")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_RPC;
 	internal.idb_meth = &rt_functab[ID_RPC];
@@ -484,7 +484,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	VSET(rpc_ip->rpc_H, 0.0, 0.0, scale);
 	VSET(rpc_ip->rpc_B, 0.0, (scale*0.5), 0.0);
 	rpc_ip->rpc_r = scale*0.25;
-    } else if (strcmp(argv[bu_optind+1], "rhc") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "rhc")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_RHC;
 	internal.idb_meth = &rt_functab[ID_RHC];
@@ -496,7 +496,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	VSET(rhc_ip->rhc_B, 0.0, 0.5*scale, 0.0);
 	rhc_ip->rhc_r = scale*0.25;
 	rhc_ip->rhc_c = scale*0.10;
-    } else if (strcmp(argv[bu_optind+1], "epa") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "epa")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_EPA;
 	internal.idb_meth = &rt_functab[ID_EPA];
@@ -508,7 +508,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	VSET(epa_ip->epa_Au, 0.0, 1.0, 0.0);
 	epa_ip->epa_r1 = scale*0.5;
 	epa_ip->epa_r2 = scale*0.25;
-    } else if (strcmp(argv[bu_optind+1], "ehy") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "ehy")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_EHY;
 	internal.idb_meth = &rt_functab[ID_EHY];
@@ -521,7 +521,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	ehy_ip->ehy_r1 = scale*0.5;
 	ehy_ip->ehy_r2 = scale*0.25;
 	ehy_ip->ehy_c = ehy_ip->ehy_r2;
-    } else if (strcmp(argv[bu_optind+1], "eto") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "eto")) {
 	fastf_t mag;
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ETO;
@@ -536,13 +536,13 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	/* Close enough for now.*/
 	eto_ip->eto_r = scale*0.5 - mag*cos(M_PI_4);
 	eto_ip->eto_rd = scale*0.05;
-    } else if (strcmp(argv[bu_optind+1], "hyp") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "hyp")) {
 	vect_t vertex, height, vectA;
 	VSET(vertex, origin[X], origin[Y], origin[Z] - scale*0.5);
 	VSET(height, 0.0, 0.0, scale);
 	VSET(vectA, 0.0, scale*0.5, 0.0);
 	return mk_hyp(gedp->ged_wdbp, argv[save_bu_optind], vertex, height, vectA, scale*0.25, 0.4);
-    } else if (strcmp(argv[bu_optind+1], "part") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "part")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_PARTICLE;
 	internal.idb_meth = &rt_functab[ID_PARTICLE];
@@ -554,7 +554,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	part_ip->part_vrad = scale*0.25;
 	part_ip->part_hrad = scale*0.125;
 	part_ip->part_type = RT_PARTICLE_TYPE_CONE;
-    } else if (strcmp(argv[bu_optind+1], "nmg") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "nmg")) {
 	struct model *m;
 	struct nmgregion *r;
 	struct shell *s;
@@ -569,7 +569,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_type = ID_NMG;
 	internal.idb_meth = &rt_functab[ID_NMG];
 	internal.idb_ptr = (genptr_t)m;
-    } else if (strcmp(argv[bu_optind+1], "pipe") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "pipe")) {
 	struct wdb_pipept *ps;
 
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -593,7 +593,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	ps->pp_id = 0.25*ps->pp_od;
 	ps->pp_bendradius = ps->pp_od;
 	BU_LIST_INSERT(&pipe_ip->pipe_segs_head, &ps->l);
-    } else if (strcmp(argv[bu_optind + 1], "pnts") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind + 1], "pnts")) {
 	struct pnt *point;
 	struct pnt *headPoint;
 
@@ -615,7 +615,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	VSET(point->v, origin[X], origin[Y], origin[Z]);
 	BU_LIST_PUSH(&headPoint->l, &point->l);
 
-    } else if (strcmp(argv[bu_optind+1], "bot") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "bot")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_BOT;
 	internal.idb_meth = &rt_functab[ID_BOT];
@@ -639,7 +639,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	VSET(&bot_ip->faces[3], 0, 1, 2);
 	VSET(&bot_ip->faces[6], 0, 2, 3);
 	VSET(&bot_ip->faces[9], 1, 2, 3);
-    } else if (strcmp(argv[bu_optind+1], "extrude") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "extrude")) {
 	char *av[8];
 	char center_str[512];
 	char scale_str[128];
@@ -661,8 +661,8 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	extrude_ip->sketch_name = bu_strdup(bu_vls_addr(&gedp->ged_result_str));
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
 
-	sprintf(center_str, "%lf %lf %lf", V3ARGS(origin));
-	sprintf(scale_str, "%lf", scale);
+	sprintf(center_str, "%f %f %f", V3ARGS(origin));
+	sprintf(scale_str, "%f", scale);
 	av[0] = "make";
 	av[1] = "-o";
 	av[2] = center_str;
@@ -672,7 +672,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	av[6] = "sketch";
 	av[7] = (char *)0;
 	ged_make(gedp, 7, (const char **)av);
-    } else if (strcmp(argv[bu_optind+1], "sketch") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "sketch")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_SKETCH;
 	internal.idb_meth = &rt_functab[ID_SKETCH];
@@ -754,7 +754,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	sketch_ip->skt_curve.reverse = (int *)NULL;
 	sketch_ip->skt_curve.segments = (genptr_t *)NULL;
 #endif
-    } else if (strcmp(argv[bu_optind+1], "superell") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "superell")) {
 
 
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -771,23 +771,23 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	superell_ip->e = 1.0;
 	fprintf(stdout, "superell being made with %f and %f\n", superell_ip->n, superell_ip->e);
 
-    } else if (strcmp(argv[bu_optind+1], "hf") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "hf")) {
 	bu_vls_printf(&gedp->ged_result_str, "make: the height field is deprecated and not supported by this command.\nUse the dsp primitive.\n");
 	return GED_ERROR;
-    } else if (strcmp(argv[bu_optind+1], "pg") == 0 ||
-	       strcmp(argv[bu_optind+1], "poly") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "pg") ||
+	       BU_STR_EQUAL(argv[bu_optind+1], "poly")) {
 	bu_vls_printf(&gedp->ged_result_str, "make: the polysolid is deprecated and not supported by this command.\nUse the bot primitive.");
 	return GED_ERROR;
-    } else if (strcmp(argv[bu_optind+1], "cline") == 0 ||
-	       strcmp(argv[bu_optind+1], "dsp") == 0 ||
-	       strcmp(argv[bu_optind+1], "ebm") == 0 ||
-	       strcmp(argv[bu_optind+1], "nurb") == 0 ||
-	       strcmp(argv[bu_optind+1], "spline") == 0 ||
-	       strcmp(argv[bu_optind+1], "submodel") == 0 ||
-	       strcmp(argv[bu_optind+1], "vol") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "cline") ||
+	       BU_STR_EQUAL(argv[bu_optind+1], "dsp") ||
+	       BU_STR_EQUAL(argv[bu_optind+1], "ebm") ||
+	       BU_STR_EQUAL(argv[bu_optind+1], "nurb") ||
+	       BU_STR_EQUAL(argv[bu_optind+1], "spline") ||
+	       BU_STR_EQUAL(argv[bu_optind+1], "submodel") ||
+	       BU_STR_EQUAL(argv[bu_optind+1], "vol")) {
 	bu_vls_printf(&gedp->ged_result_str, "make: the %s primitive is not supported by this command", argv[bu_optind+1]);
 	return GED_ERROR;
-    } else if (strcmp(argv[bu_optind+1], "metaball") == 0) {
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "metaball")) {
 	struct wdb_metaballpt *mbpt;
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_METABALL;

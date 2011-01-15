@@ -1,7 +1,7 @@
 /*                         G - O F F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -211,17 +211,14 @@ main(int argc, char **argv)
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
     union tree		*ret_tree;
     struct nmgregion	*r;
-    struct bu_list		vhead;
 
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
-
-    BU_LIST_INIT(&vhead);
 
     if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
 	char	*sofar = db_path_to_string(pathp);
@@ -252,7 +249,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	    db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 	    /* Get rid of (m)any other intermediate structures */
-	    if ( (*tsp->ts_m)->magic != -1L )
+	    if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
 		nmg_km(*tsp->ts_m);
 
 	    /* Now, make a new, clean model structure for next pass. */

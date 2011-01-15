@@ -1,7 +1,7 @@
 /*                 P U L L B A C K C U R V E . H
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,6 +51,11 @@
 #include "opennurbs.h"
 
 
+namespace brlcad {
+    class SurfaceTree;
+}
+
+
 /**
  * p u l l b a c k _ c u r v e
  */
@@ -64,7 +69,6 @@ enum seam_direction {
 };
 
 
-#define NEAR_EQUAL(_a, _b, _tol) (fabs((_a) - (_b)) <= _tol)
 #define PBC_TOL 0.000001
 #define PBC_FROM_OFFSET 0.001
 #define PBC_SEAM_TOL 0.01

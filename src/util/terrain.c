@@ -1,7 +1,7 @@
 /*                       T E R R A I N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -657,6 +657,7 @@ main(int ac, char **av)
     unsigned short *buf;
     int in_cookie, out_cookie;
     int count;
+    size_t ret;
 
     arg_count = parse_args(ac, av);
 
@@ -691,7 +692,10 @@ main(int ac, char **av)
 	}
     }
 
-    fwrite(buf, sizeof(*buf), count, stdout);
+    ret = fwrite(buf, sizeof(*buf), count, stdout);
+    if (ret < (size_t)count)
+	perror("fwrite");
+
     return 0;
 }
 

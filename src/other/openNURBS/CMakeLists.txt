@@ -109,7 +109,7 @@ set(OPENNURBS_SOURCES
 file(GLOB OPENNURBS_HEADERS *.h)
 
 set(OPENNURBS_LINKLIBRARIES
-    libz
+    zlib
 )
 
 include_directories(

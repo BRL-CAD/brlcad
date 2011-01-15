@@ -1,7 +1,7 @@
 /*                        B L O C K 2 . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,38 +17,29 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file block2.c
- *
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
- */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 int
-block( entityno )
-    int entityno;
+block(int entityno)
 {
 
-    fastf_t		xscale=0.0;
-    fastf_t		yscale=0.0;
-    fastf_t		zscale=0.0;
-    fastf_t		x_1, y_1, z_1;		/* First vertex components */
-    fastf_t		x_2, y_2, z_2;		/* xdir vector components */
-    fastf_t		x_3, y_3, z_3;		/* zdir vector components */
-    point_t		v;			/* the first vertex */
-    vect_t		xdir;			/* a unit vector */
-    vect_t		xvec;			/* vector along x-axis */
-    vect_t		ydir;			/* a unit vector */
-    vect_t		yvec;			/* vector along y-axis */
-    vect_t		zdir;			/* a unit vector */
-    vect_t		zvec;			/* vector along z-axis */
-    point_t		pts[9];			/* array of points */
-    int		sol_num;		/* IGES solid type number */
+    fastf_t xscale=0.0;
+    fastf_t yscale=0.0;
+    fastf_t zscale=0.0;
+    fastf_t x_1, y_1, z_1;		/* First vertex components */
+    fastf_t x_2, y_2, z_2;		/* xdir vector components */
+    fastf_t x_3, y_3, z_3;		/* zdir vector components */
+    point_t v;			/* the first vertex */
+    vect_t xdir;			/* a unit vector */
+    vect_t xvec;			/* vector along x-axis */
+    vect_t ydir;			/* a unit vector */
+    vect_t yvec;			/* vector along y-axis */
+    vect_t zdir;			/* a unit vector */
+    vect_t zvec;			/* vector along z-axis */
+    point_t pts[9];			/* array of points */
+    int sol_num;		/* IGES solid type number */
 
     /* Default values */
     x_1 = 0.0;
@@ -64,32 +55,30 @@ block( entityno )
 
     /* Acquiring Data */
 
-    if ( dir[entityno]->param <= pstart )
-    {
-	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-		dir[entityno]->direct, dir[entityno]->name );
+    if (dir[entityno]->param <= pstart) {
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
 
-    Readrec( dir[entityno]->param );
-    Readint( &sol_num, "" );
-    Readcnv( &xscale, "" );
-    Readcnv( &yscale, "" );
-    Readcnv( &zscale, "" );
-    Readcnv( &x_1, "" );
-    Readcnv( &y_1, "" );
-    Readcnv( &z_1, "" );
-    Readflt( &x_2, "" );
-    Readflt( &y_2, "" );
-    Readflt( &z_2, "" );
-    Readflt( &x_3, "" );
-    Readflt( &y_3, "" );
-    Readflt( &z_3, "" );
+    Readrec(dir[entityno]->param);
+    Readint(&sol_num, "");
+    Readcnv(&xscale, "");
+    Readcnv(&yscale, "");
+    Readcnv(&zscale, "");
+    Readcnv(&x_1, "");
+    Readcnv(&y_1, "");
+    Readcnv(&z_1, "");
+    Readflt(&x_2, "");
+    Readflt(&y_2, "");
+    Readflt(&z_2, "");
+    Readflt(&x_3, "");
+    Readflt(&y_3, "");
+    Readflt(&z_3, "");
 
-    if ( xscale <= 0.0 || yscale <= 0.0 || zscale <= 0.0 )
-    {
-	bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
-		dir[entityno]->direct, dir[entityno]->name );
+    if (xscale <= 0.0 || yscale <= 0.0 || zscale <= 0.0) {
+	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
+	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
 
@@ -120,7 +109,7 @@ block( entityno )
     VSET(v, x_1, y_1, z_1);			/* Yields first vertex */
     VMOVE(pts[0], v);			/* put first vertex into array */
     VADD2(pts[1], v, xvec);			/* Finds second vertex */
-    VADD3(pts[2], v, xvec, yvec);		/* Finds third vertex  */
+    VADD3(pts[2], v, xvec, yvec);		/* Finds third vertex */
     VADD2(pts[3], v, yvec);			/* Finds fourth vertex */
 
     /* Now extrude the bottom face to make the top.
@@ -140,6 +129,7 @@ block( entityno )
 
 
 }
+
 
 /*
  * Local Variables:

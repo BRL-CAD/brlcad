@@ -1,7 +1,7 @@
 /*                        B W C R O P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -172,7 +172,7 @@ main(int argc, char **argv)
     init_buffer(scanlen);
 
     /* Check for silly buffer syndrome */
-    if (abs((int)(ury - uly)) > buflines/2 || abs((int)(lry - lly)) > buflines/2) {
+    if ((unsigned)abs((int)(ury - uly)) > buflines/2 || (unsigned)abs((int)(lry - lly)) > buflines/2) {
 	fprintf(stderr, "bwcrop: Warning: You are skewing enough in the y direction\n");
 	fprintf(stderr, "bwcrop: relative to my buffer size that I will exhibit silly\n");
 	fprintf(stderr, "bwcrop: buffer syndrome (two replacements per scanline).\n");

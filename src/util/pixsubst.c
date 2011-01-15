@@ -1,7 +1,7 @@
 /*                      P I X S U B S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,6 +36,7 @@ main(int argc, char **argv)
 
     unsigned char pix[3], pixin[3], pixout[3];
     int npixels;
+    size_t ret;
 
     if (argc != 4 && argc != 7) {
 	bu_log("Usage:\n");
@@ -65,14 +66,21 @@ main(int argc, char **argv)
 	if ((npixels=fread(pixin, sizeof(unsigned char), 3, stdin)) != 3) {
 	    bu_exit(1, "Unexpected end of input\n");
 	}
-	fwrite(pixout, sizeof(unsigned char), npixels, stdout);
+	ret = fwrite(pixout, sizeof(unsigned char), npixels, stdout);
+	if (ret < (size_t)npixels)
+	    perror("fwrite");
     }
 
     while ((npixels=fread(pix, sizeof(unsigned char), 3, stdin)) == 3) {
-	if (pix[0] == pixin[0] && pix[1] == pixin[1] && pix[2] == pixin[2])
-	    fwrite(pixout, sizeof(unsigned char), npixels, stdout);
-	else
-	    fwrite(pix, sizeof(unsigned char), npixels, stdout);
+	if (pix[0] == pixin[0] && pix[1] == pixin[1] && pix[2] == pixin[2]) {
+	    ret = fwrite(pixout, sizeof(unsigned char), npixels, stdout);
+	    if (ret < (size_t)npixels)
+		perror("fwrite");
+	} else {
+	    ret = fwrite(pix, sizeof(unsigned char), npixels, stdout);
+	    if (ret < (size_t)npixels)
+		perror("fwrite");
+	}
     }
     return 0;
 }

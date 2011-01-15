@@ -1,7 +1,7 @@
 /*                         S O L I D . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -275,13 +275,13 @@ getsolid(void)
     namecvt( sol_work, &name, 's' );
     if (verbose) col_pr( name );
 
-    if ( strcmp( solid_type, "end" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "end" ) )  {
 	/* DoE/MORSE version 1 format */
 	bu_free( name, "name" );
 	return 1;		/* END */
     }
 
-    if ( strcmp( solid_type, "ars" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "ars" ) )  {
 	int		ncurves;
 	int		pts_per_curve;
 	double		**curve;
@@ -316,7 +316,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "rpp" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "rpp" ) )  {
 	double	min[3], max[3];
 
 	if ( getsoldata( dd, 2*3, sol_work ) < 0 )
@@ -328,7 +328,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "box" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "box" ) )  {
 	if ( getsoldata( dd, 4*3, sol_work ) < 0 )
 	    return -1;
 	VMOVE( T(0), D(0) );
@@ -345,8 +345,8 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "raw" ) == 0 ||
-	 strcmp( solid_type, "wed" ) == 0		/* DoE name */
+    if ( BU_STR_EQUAL( solid_type, "raw" ) ||
+	 BU_STR_EQUAL( solid_type, "wed" )		/* DoE name */
 	)  {
 	if ( getsoldata( dd, 4*3, sol_work ) < 0 )
 	    return -1;
@@ -364,7 +364,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "rvw" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "rvw" ) )  {
 	/* Right Vertical Wedge (Origin: DoE/MORSE) */
 	double	a2, theta, phi, h2;
 	double	a2theta;
@@ -400,7 +400,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "arw" ) == 0) {
+    if ( BU_STR_EQUAL( solid_type, "arw" )) {
 	/* ARbitrary Wedge --- ERIM */
 	if ( getsoldata( dd, 4*3, sol_work ) < 0)
 	    return -1;
@@ -419,7 +419,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "arb8" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "arb8" ) )  {
 	if ( getsoldata( dd, 8*3, sol_work ) < 0 )
 	    return -1;
 	ret = mk_arb8( outfp, name, dd );
@@ -427,7 +427,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "arb7" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "arb7" ) )  {
 	if ( getsoldata( dd, 7*3, sol_work ) < 0 )
 	    return -1;
 	VMOVE( D(7), D(4) );
@@ -436,7 +436,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "arb6" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "arb6" ) )  {
 	if ( getsoldata( dd, 6*3, sol_work ) < 0 )
 	    return -1;
 	/* Note that the ordering is important, as data is in D(4), D(5) */
@@ -448,7 +448,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "arb5" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "arb5" ) )  {
 	if ( getsoldata( dd, 5*3, sol_work ) < 0 )
 	    return -1;
 	VMOVE( D(5), D(4) );
@@ -459,7 +459,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "arb4" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "arb4" ) )  {
 	if ( getsoldata( dd, 4*3, sol_work ) < 0 )
 	    return -1;
 	ret = mk_arb4( outfp, name, dd );
@@ -467,7 +467,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "rcc" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "rcc" ) )  {
 	/* V, H, r */
 	if ( getsoldata( dd, 2*3+1, sol_work ) < 0 )
 	    return -1;
@@ -476,7 +476,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "rec" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "rec" ) )  {
 	/* V, H, A, B */
 	if ( getsoldata( dd, 4*3, sol_work ) < 0 )
 	    return -1;
@@ -486,7 +486,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "trc" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "trc" ) )  {
 	/* V, H, r1, r2 */
 	if ( getsoldata( dd, 2*3+2, sol_work ) < 0 )
 	    return -1;
@@ -495,7 +495,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "tec" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "tec" ) )  {
 	/* V, H, A, B, p */
 	if ( getsoldata( dd, 4*3+1, sol_work ) < 0 )
 	    return -1;
@@ -508,7 +508,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "tgc" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "tgc" ) )  {
 	/* V, H, A, B, r1, r2 */
 	if ( getsoldata( dd, 4*3+2, sol_work ) < 0 )
 	    return -1;
@@ -522,7 +522,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "sph" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "sph" ) )  {
 	/* V, radius */
 	if ( getsoldata( dd, 1*3+1, sol_work ) < 0 )
 	    return -1;
@@ -574,7 +574,7 @@ getsolid(void)
 	return 0;		/* OK */
     }
 
-    if ( strcmp( solid_type, "rpc" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "rpc" ) )  {
 	/* V, H, B, r */
 	if ( getsoldata( dd, 3*3+1, sol_work ) < 0 )
 	    return -1;
@@ -584,7 +584,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "rhc" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "rhc" ) )  {
 	/* V, H, B, r, c */
 	if ( getsoldata( dd, 3*3+2, sol_work ) < 0 )
 	    return -1;
@@ -594,7 +594,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "epa" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "epa" ) )  {
 	/* V, H, Au, r1, r2 */
 	if ( getsoldata( dd, 3*3+2, sol_work ) < 0 )
 	    return -1;
@@ -604,7 +604,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "ehy" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "ehy" ) )  {
 	/* V, H, Au, r1, r2, c */
 	if ( getsoldata( dd, 3*3+3, sol_work ) < 0 )
 	    return -1;
@@ -614,7 +614,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "eto" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "eto" ) )  {
 	/* V, N, C, r, rd */
 	if ( getsoldata( dd, 3*3+2, sol_work ) < 0 )
 	    return -1;
@@ -625,7 +625,7 @@ getsolid(void)
     }
 
 
-    if ( version <= 4 && strcmp( solid_type, "ell" ) == 0 )  {
+    if ( version <= 4 && BU_STR_EQUAL( solid_type, "ell" ) )  {
 	/* Foci F1, F2, major axis length L */
 	vect_t	v;
 
@@ -650,8 +650,8 @@ getsolid(void)
 	goto ell1;
     }
 
-    if ( (version == 5 && strcmp( solid_type, "ell" ) == 0)  ||
-	 strcmp( solid_type, "ell1" ) == 0 )  {
+    if ( (version == 5 && BU_STR_EQUAL( solid_type, "ell" ))  ||
+	 BU_STR_EQUAL( solid_type, "ell1" ) )  {
 	/* V, A, r */
 	/* GIFT4 name is "ell1", GIFT5 name is "ell" */
 	if ( getsoldata( dd, 2*3+1, sol_work ) < 0 )
@@ -677,7 +677,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "ellg" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "ellg" ) )  {
 	/* V, A, B, C */
 	if ( getsoldata( dd, 4*3, sol_work ) < 0 )
 	    return -1;
@@ -686,7 +686,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "tor" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "tor" ) )  {
 	/* V, N, r1, r2 */
 	if ( getsoldata( dd, 2*3+2, sol_work ) < 0 )
 	    return -1;
@@ -695,7 +695,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "haf" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "haf" ) )  {
 	/* N, d */
 	if ( getsoldata( dd, 1*3+1, sol_work ) < 0 )
 	    return -1;
@@ -704,7 +704,7 @@ getsolid(void)
 	return ret;
     }
 
-    if ( strcmp( solid_type, "arbn" ) == 0 )  {
+    if ( BU_STR_EQUAL( solid_type, "arbn" ) )  {
 	ret = read_arbn( name );
 	bu_free( name, "name" );
     }

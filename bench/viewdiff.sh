@@ -2,7 +2,7 @@
 #                    V I E W D I F F . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without

@@ -1,7 +1,7 @@
 #                     S H A D E R S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -1615,8 +1615,7 @@ proc do_light { shade_var id } {
 		foreach s { 0 1 2 3 4 5 6 7 8 9 } {
 		    set shader_params(light_i${i}_v${v}_s${s}) \
 			[image create photo -file \
-			     [bu_brlcad_data \
-				  "tclscripts/mged/l_i${i}_v${v}_s${s}.gif"]]
+			     [file join [bu_brlcad_data "tclscripts"] mged l_i${i}_v${v}_s${s}.gif]]
 		}
 	    }
 	}

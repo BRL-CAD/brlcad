@@ -1,7 +1,7 @@
 /*                           E X T . H
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,10 +27,7 @@
  *
  */
 
-/***** Variables declared in liboptical or multispectral *****/
-#ifdef RT_MULTISPECTRAL
-extern const struct bn_table		*spectrum;
-#endif  /* RT_MULTISPECTRAL */
+#include "optical.h"
 
 /***** Variables declared in opt.c *****/
 extern char		*framebuffer;		/* desired framebuffer */

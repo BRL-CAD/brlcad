@@ -1,7 +1,7 @@
 /*                        S P H M A P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -170,7 +170,7 @@ spm_load(spm_map_t *mapp, char *filename)
 
     RT_CK_SPM(mapp);
 
-    if (strcmp(filename, "-") == 0)
+    if (BU_STR_EQUAL(filename, "-"))
 	fp = stdin;
     else {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
@@ -205,7 +205,7 @@ spm_save(spm_map_t *mapp, char *filename)
 
     RT_CK_SPM(mapp);
 
-    if (strcmp(filename, "-") == 0)
+    if (BU_STR_EQUAL(filename, "-"))
 	fp = stdout;
     else {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
@@ -252,7 +252,7 @@ spm_pix_load(spm_map_t *mapp, char *filename, int nx, int ny)
 
     RT_CK_SPM(mapp);
 
-    if (strcmp(filename, "-") == 0)
+    if (BU_STR_EQUAL(filename, "-"))
 	fp = stdin;
     else {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
@@ -315,7 +315,7 @@ spm_pix_save(spm_map_t *mapp, char *filename, int nx, int ny)
 
     RT_CK_SPM(mapp);
 
-    if (strcmp(filename, "-") == 0)
+    if (BU_STR_EQUAL(filename, "-"))
 	fp = stdout;
     else {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */

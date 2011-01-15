@@ -1,7 +1,7 @@
 /*                          B I G E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2010 United States Government as represented by
+ * Copyright (c) 1997-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -200,7 +200,6 @@ wdb_add_solid(const struct directory *dp,
 
 	if (dgcdp->do_polysolids) {
 	    struct shell *s=(struct shell *)NULL;
-	    struct nmgregion *r=(struct nmgregion *)NULL;
 
 	    /* create and prep a BoT version of this solid */
 	    if (eptr->l.m) {
@@ -534,8 +533,8 @@ wdb_promote_ints(struct bu_list *head,
 		    continue;
 		}
 
-		if (a->seg_in.hit_dist == b->seg_in.hit_dist
-		    && a->seg_out.hit_dist == b->seg_out.hit_dist)
+		if (EQUAL(a->seg_in.hit_dist, b->seg_in.hit_dist)
+		    && EQUAL(a->seg_out.hit_dist, b->seg_out.hit_dist))
 		{
 		    a->seg_stp = ON_SURF;
 		    tmp = b;
@@ -545,7 +544,7 @@ wdb_promote_ints(struct bu_list *head,
 			continue;;
 		}
 
-		if (a->seg_out.hit_dist == b->seg_out.hit_dist)
+		if (EQUAL(a->seg_out.hit_dist, b->seg_out.hit_dist))
 		    a->seg_out.hit_dist = b->seg_in.hit_dist;
 		else if (a->seg_out.hit_dist < b->seg_out.hit_dist) {
 		    if (b->seg_in.hit_dist > a->seg_in.hit_dist)
@@ -557,7 +556,7 @@ wdb_promote_ints(struct bu_list *head,
 			RT_FREE_SEG(tmp, dgcdp->ap->a_resource);
 			break;
 		    }
-		} else if (a->seg_in.hit_dist == b->seg_in.hit_dist) {
+		} else if (EQUAL(a->seg_in.hit_dist, b->seg_in.hit_dist)) {
 		    fastf_t tmp_dist;
 
 		    tmp_dist = a->seg_out.hit_dist;
@@ -579,8 +578,8 @@ wdb_promote_ints(struct bu_list *head,
 		    continue;
 		}
 
-		if (b->seg_in.hit_dist == a->seg_in.hit_dist
-		    && b->seg_out.hit_dist == a->seg_out.hit_dist)
+		if (EQUAL(b->seg_in.hit_dist, a->seg_in.hit_dist)
+		    && EQUAL(b->seg_out.hit_dist, a->seg_out.hit_dist))
 		{
 		    b->seg_stp = ON_SURF;
 		    tmp = a;
@@ -590,7 +589,7 @@ wdb_promote_ints(struct bu_list *head,
 		    break;
 		}
 
-		if (b->seg_out.hit_dist == a->seg_out.hit_dist) {
+		if (EQUAL(b->seg_out.hit_dist, a->seg_out.hit_dist)) {
 		    tmp = b;
 		    b = BU_LIST_PNEXT(seg, &b->l);
 		    BU_LIST_DEQUEUE(&tmp->l);
@@ -605,7 +604,7 @@ wdb_promote_ints(struct bu_list *head,
 			RT_FREE_SEG(tmp, dgcdp->ap->a_resource);
 			continue;
 		    }
-		} else if (b->seg_in.hit_dist == a->seg_in.hit_dist)
+		} else if (EQUAL(b->seg_in.hit_dist, a->seg_in.hit_dist))
 		    b->seg_in.hit_dist = a->seg_out.hit_dist;
 		else {
 		    RT_GET_SEG(tmp, dgcdp->ap->a_resource);
@@ -630,8 +629,8 @@ wdb_promote_ints(struct bu_list *head,
 	    bu_log("\tfound overlapping ON_INT segs:\n");
 #endif
 
-	    if (a->seg_in.hit_dist == b->seg_in.hit_dist &&
-		a->seg_out.hit_dist == b->seg_out.hit_dist)
+	    if (EQUAL(a->seg_in.hit_dist, b->seg_in.hit_dist)
+		&& EQUAL(a->seg_out.hit_dist, b->seg_out.hit_dist))
 	    {
 #ifdef debug
 		bu_log("Promoting A, eliminating B\n");
@@ -643,7 +642,7 @@ wdb_promote_ints(struct bu_list *head,
 		break;
 	    }
 
-	    if (a->seg_out.hit_dist == b->seg_out.hit_dist) {
+	    if (EQUAL(a->seg_out.hit_dist, b->seg_out.hit_dist)) {
 		b->seg_stp = ON_SURF;
 		a->seg_out.hit_dist = b->seg_in.hit_dist;
 
@@ -672,7 +671,7 @@ wdb_promote_ints(struct bu_list *head,
 #endif
 		}
 	    } else {
-		if (a->seg_in.hit_dist == b->seg_in.hit_dist) {
+		if (EQUAL(a->seg_in.hit_dist, b->seg_in.hit_dist)) {
 		    fastf_t tmp_dist;
 
 		    tmp_dist = a->seg_out.hit_dist;
@@ -872,7 +871,6 @@ wdb_eval_op(struct bu_list *A,
 	     * hit distance to larger
 	     */
 	    while (BU_LIST_WHILE(segb, seg, B)) {
-		int inserted;
 		BU_LIST_DEQUEUE(&segb->l);
 
 		if (segb->seg_stp == IN_SOL) {
@@ -1129,23 +1127,23 @@ wdb_classify_seg(struct seg *seg, struct soltab *shoot, struct xray *rp, struct 
     rd.stp = shoot;
 
     if (rt_functab[shoot->st_id].ft_shot && rt_functab[shoot->st_id].ft_shot(shoot, &new_rp, dgcdp->ap, rd.seghead)) {
-	struct seg *seg;
+	struct seg *segp;
 
-	while (BU_LIST_WHILE(seg, seg, &rd.seghead->l)) {
-	    BU_LIST_DEQUEUE(&seg->l);
+	while (BU_LIST_WHILE(segp, seg, &rd.seghead->l)) {
+	    BU_LIST_DEQUEUE(&segp->l);
 #ifdef debug
-	    bu_log("dist = %g and %g\n", seg->seg_in.hit_dist,
-		   seg->seg_out.hit_dist);
+	    bu_log("dist = %g and %g\n", segp->seg_in.hit_dist,
+		   segp->seg_out.hit_dist);
 #endif
 	    if (ret != ON_SURF) {
-		if (NEAR_ZERO(seg->seg_in.hit_dist, rd.tol->dist)) {
+		if (NEAR_ZERO(segp->seg_in.hit_dist, rd.tol->dist)) {
 		    ret = ON_SURF;
 		}
-		if (NEAR_ZERO(seg->seg_out.hit_dist, rd.tol->dist)) {
+		if (NEAR_ZERO(segp->seg_out.hit_dist, rd.tol->dist)) {
 		    ret = ON_SURF;
 		}
 	    }
-	    RT_FREE_SEG(seg, dgcdp->ap->a_resource);
+	    RT_FREE_SEG(segp, dgcdp->ap->a_resource);
 	}
     }
 
@@ -1156,23 +1154,23 @@ wdb_classify_seg(struct seg *seg, struct soltab *shoot, struct xray *rp, struct 
 	VMOVE(new_rp.r_dir, new_dir);
 	wdb_inverse_dir(new_rp.r_dir, rd.rd_invdir);
 	if (rt_functab[shoot->st_id].ft_shot && rt_functab[shoot->st_id].ft_shot(shoot, &new_rp, dgcdp->ap, rd.seghead)) {
-	    struct seg *seg;
+	    struct seg *segp;
 
-	    while (BU_LIST_WHILE(seg, seg, &rd.seghead->l)) {
-		BU_LIST_DEQUEUE(&seg->l);
+	    while (BU_LIST_WHILE(segp, seg, &rd.seghead->l)) {
+		BU_LIST_DEQUEUE(&segp->l);
 #ifdef debug
-		bu_log("dist = %g and %g\n", seg->seg_in.hit_dist,
-		       seg->seg_out.hit_dist);
+		bu_log("dist = %g and %g\n", segp->seg_in.hit_dist,
+		       segp->seg_out.hit_dist);
 #endif
 		if (ret != ON_SURF) {
-		    if (NEAR_ZERO(seg->seg_in.hit_dist, rd.tol->dist)) {
+		    if (NEAR_ZERO(segp->seg_in.hit_dist, rd.tol->dist)) {
 			ret = ON_SURF;
 		    }
-		    if (NEAR_ZERO(seg->seg_out.hit_dist, rd.tol->dist)) {
+		    if (NEAR_ZERO(segp->seg_out.hit_dist, rd.tol->dist)) {
 			ret = ON_SURF;
 		    }
 		}
-		RT_FREE_SEG(seg, dgcdp->ap->a_resource);
+		RT_FREE_SEG(segp, dgcdp->ap->a_resource);
 	    }
 	}
     }
@@ -1717,10 +1715,9 @@ wdb_Eplot(union E_tree *eptr,
 		    BU_LIST_INIT(B);
 
 		    for (i=1; i<hit_count1; i += 2) {
-			fastf_t diff;
-
-			diff = dists1[i] - dists1[i-1];
-			if (NEAR_ZERO(diff, tol->dist)) {
+			fastf_t distdiff;
+			distdiff = dists1[i] - dists1[i-1];
+			if (NEAR_ZERO(distdiff, tol->dist)) {
 			    continue;
 			}
 			RT_GET_SEG(aseg, dgcdp->ap->a_resource);
@@ -1735,10 +1732,9 @@ wdb_Eplot(union E_tree *eptr,
 		    }
 
 		    for (i=1; i<hit_count2; i += 2) {
-			fastf_t diff;
-
-			diff = dists2[i] - dists2[i-1];
-			if (NEAR_ZERO(diff, tol->dist)) {
+			fastf_t distdiff;
+			distdiff = dists2[i] - dists2[i-1];
+			if (NEAR_ZERO(distdiff, tol->dist)) {
 			    continue;
 			}
 			RT_GET_SEG(aseg, dgcdp->ap->a_resource);
@@ -1934,7 +1930,6 @@ wdb_fix_halfs(struct dg_client_data *dgcdp)
 	    struct edgeuse *eu, *new_eu;
 	    struct loopuse *lu, *new_lu;
 	    plane_t pl;
-	    int count;
 	    struct vertexuse *vcut[2];
 	    point_t pt[2];
 	    struct edgeuse *eu_split[2];

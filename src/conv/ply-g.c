@@ -1,7 +1,7 @@
 /*                         P L Y - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -529,7 +529,7 @@ get_property( struct element *ptr )
 
     c = strtok( tmp_buf, " \t" );
     if ( c ) {
-	if ( strcmp( c, "property" ) ) {
+	if ( !BU_STR_EQUAL( c, "property" ) ) {
 	    bu_exit(1, "get_property called for non-property, line = %s\n", line );
 	}
     } else {
@@ -541,7 +541,7 @@ get_property( struct element *ptr )
 	bu_exit(1, "Unexpected EOL while parsing property, line = %s\n", line );
     }
 
-    if ( !strcmp( c, "list" ) ) {
+    if ( BU_STR_EQUAL( c, "list" ) ) {
 	if ( verbose ) {
 	    bu_log( "\tfound a list\n" );
 	}
@@ -554,7 +554,7 @@ get_property( struct element *ptr )
 	}
 	i = 0;
 	while ( types[i] ) {
-	    if ( !strcmp( c, types[i] ) || !strcmp( c, types2[i] ) ) {
+	    if ( BU_STR_EQUAL( c, types[i] ) || BU_STR_EQUAL( c, types2[i] ) ) {
 		p->index_type = i;
 		break;
 	    }
@@ -572,7 +572,7 @@ get_property( struct element *ptr )
 	}
 	i = 0;
 	while ( types[i] ) {
-	    if ( !strcmp( c, types[i] ) || !strcmp( c, types2[i] ) ) {
+	    if ( BU_STR_EQUAL( c, types[i] ) || BU_STR_EQUAL( c, types2[i] ) ) {
 		p->list_type = i;
 		break;
 	    }
@@ -588,7 +588,7 @@ get_property( struct element *ptr )
     } else {
 	i = 0;
 	while ( types[i] ) {
-	    if ( !strcmp( c, types[i] ) || !strcmp( c, types2[i] ) ) {
+	    if ( BU_STR_EQUAL( c, types[i] ) || BU_STR_EQUAL( c, types2[i] ) ) {
 		p->type = i;
 		break;
 	    }
@@ -716,11 +716,11 @@ read_ply_data( struct rt_bot_internal *bot )
 		    cur_vertex++;
 		    p = elem_ptr->props;
 		    while ( p ) {
-			if ( !strcmp( p->name, "x" ) ) {
+			if ( BU_STR_EQUAL( p->name, "x" ) ) {
 			    bot->vertices[cur_vertex*3] = get_double(p->type );
-			} else if ( !strcmp( p->name, "y" ) ) {
+			} else if ( BU_STR_EQUAL( p->name, "y" ) ) {
 			    bot->vertices[cur_vertex*3+1] = get_double(p->type );
-			} else if ( !strcmp( p->name, "z" ) ) {
+			} else if ( BU_STR_EQUAL( p->name, "z" ) ) {
 			    bot->vertices[cur_vertex*3+2] = get_double(p->type );
 			} else {
 			    skip( p->type );

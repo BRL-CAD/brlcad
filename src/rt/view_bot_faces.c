@@ -1,7 +1,7 @@
 /*                V I E W _ B O T _ F A C E S . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2010 United States Government as represented by
+ * Copyright (c) 2003-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -292,7 +292,7 @@ view_end()
 	fprintf(outfp, "BOT: %s\n", Tcl_GetHashKey(&bots, entry));
 	faces = (struct bu_ptbl *)Tcl_GetHashValue(entry);
 	for (i=0; i<BU_PTBL_LEN(faces); i++) {
-	    fprintf(outfp, "\t%llu\n", (unsigned long long)BU_PTBL_GET(faces, i));
+	    fprintf(outfp, "\t%llu\n", (long)BU_PTBL_GET(faces, i));
 	}
 	entry = Tcl_NextHashEntry(&search);
     }

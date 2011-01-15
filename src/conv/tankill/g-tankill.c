@@ -1,7 +1,7 @@
 /*                     G - T A N K I L L . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -104,7 +104,7 @@ insert_id(int id)
 
 /* routine used in tree walker to select regions with the current ident number */
 static int
-select_region(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_region(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
 {
     if ( tsp->ts_regionid == curr_id )
 	return 0;
@@ -114,7 +114,7 @@ select_region(struct db_tree_state *tsp, const struct db_full_path *pathp, const
 
 /* routine used in tree walker to collect region ident numbers */
 static int
-get_reg_id(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+get_reg_id(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
 {
     insert_id( tsp->ts_regionid );
     return -1;
@@ -122,7 +122,7 @@ get_reg_id(struct db_tree_state *tsp, const struct db_full_path *pathp, const st
 
 /* stubs to warn of the unexpected */
 static union tree *
-region_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, union tree *UNUSED(curtree), genptr_t UNUSED(client_data))
 {
     struct directory *fp_name;	/* name from pathp */
 
@@ -132,7 +132,7 @@ region_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, union t
 }
 
 static union tree *
-leaf_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *UNUSED(ip), genptr_t UNUSED(client_data))
 {
     struct directory *fp_name;	/* name from pathp */
 
@@ -585,11 +585,11 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 
 	/* Now write the data out */
 	if ( fp_id )	/* Use id count instead of actual id */
-	    fprintf( fp_out, "%ul %d %d           " ,
-		     BU_PTBL_END( &vertices ), id_counter, surr_code );
+	    fprintf( fp_out, "%lu %d %d           " ,
+		     (unsigned long)BU_PTBL_END( &vertices ), id_counter, surr_code );
 	else
-	    fprintf( fp_out, "%ul %d %d           " ,
-		     BU_PTBL_END( &vertices ), tsp->ts_regionid, surr_code );
+	    fprintf( fp_out, "%lu %d %d           " ,
+		     (unsigned long)BU_PTBL_END( &vertices ), tsp->ts_regionid, surr_code );
 	for ( i=0; i<BU_PTBL_END( &vertices ); i++ )
 	{
 	    struct vertex *v;

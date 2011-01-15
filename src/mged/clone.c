@@ -1,7 +1,7 @@
 /*	                  C L O N E . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2010 United States Government as represented by
+ * Copyright (c) 2005-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -83,8 +83,8 @@
 struct clone_state {
     Tcl_Interp *interp;         /* Stash a pointer to the tcl interpreter for output */
     struct directory *src;	/* Source object */
-    int incr;			/* Amount to increment between copies */
-    int n_copies;		/* Number of copies to make */
+    size_t incr;		/* Amount to increment between copies */
+    size_t n_copies;		/* Number of copies to make */
     int draw_obj;		/* 1 if draw copied object */
     hvect_t trans;		/* Translation between copies */
     hvect_t rot;		/* Rotation between copies */
@@ -94,7 +94,6 @@ struct clone_state {
     int autoview;		/* Execute autoview after drawing all objects */
     int updpos;			/* Position of number to update (for -c) */
 };
-#define INTERP state->interp
 
 struct name {
     struct bu_vls src;		/* source object name */
@@ -109,9 +108,9 @@ struct name {
  */
 struct nametbl {
     struct name *names;
-    int name_size;
-    int names_len;
-    int names_used;
+    size_t name_size;
+    size_t names_len;
+    size_t names_used;
 };
 
 
@@ -131,7 +130,7 @@ struct knot {
  * values.
  */
 struct spline {
-    int n_segs;
+    size_t n_segs;
     fastf_t *t; /* break points */
     struct knot *k; /* polynomials */
 };
@@ -148,9 +147,9 @@ struct link {
  * initialize the name list used for stashing destination names
  */
 static void
-init_list(struct nametbl *l, int s)
+init_list(struct nametbl *l, size_t s)
 {
-    int i, j;
+    size_t i, j;
 
     l->names = (struct name *)bu_calloc(10, sizeof(struct name), "alloc l->names");
     for (i = 0; i < 10; i++) {
@@ -171,7 +170,7 @@ init_list(struct nametbl *l, int s)
 static int
 add_to_list(struct nametbl *l, char *name)
 {
-    int i, j;
+    size_t i, j;
 
     /*
      * add more slots if adding 1 more new name will fill up all the
@@ -199,10 +198,10 @@ add_to_list(struct nametbl *l, char *name)
 static int
 index_in_list(struct nametbl l, char *name)
 {
-    int i;
+    size_t i;
 
     for (i = 0; i < l.names_used; i++)
-	if (!strcmp(bu_vls_addr(&l.names[i].src), name))
+	if (BU_STR_EQUAL(bu_vls_addr(&l.names[i].src), name))
 	    return i;
     return -1;
 }
@@ -278,7 +277,7 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 {
     struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
-    int i, j;
+    size_t i, j;
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
@@ -322,15 +321,15 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 		    rp->s.s_values[j] = -rp->s.s_values[j];
 	    }
 	    /* translate */
-	    if (state->trans[W])
+	    if (state->trans[W] > SMALL_FASTF)
 		/* assumes primitive's first parameter is it's position */
 		VADD2(rp->s.s_values, rp->s.s_values, state->trans);
 	    /* rotate */
-	    if (state->rot[W]) {
+	    if (state->rot[W] > SMALL_FASTF) {
 		mat_t r;
 		vect_t vec, ovec;
 
-		if (state->rpnt[W])
+		if (state->rpnt[W] > SMALL_FASTF)
 		    VSUB2(rp->s.s_values, rp->s.s_values, state->rpnt);
 		MAT_IDN(r);
 		bn_mat_angles(r, state->rot[X], state->rot[Y], state->rot[Z]);
@@ -339,7 +338,7 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 		    MAT4X3VEC(ovec, r, vec);
 		    VMOVE(rp->s.s_values+j, ovec);
 		}
-		if (state->rpnt[W])
+		if (state->rpnt[W] > SMALL_FASTF)
 		    VADD2(rp->s.s_values, rp->s.s_values, state->rpnt);
 	    }
 	} else
@@ -365,7 +364,7 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 static void
 copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *state, int idx)
 {
-    int i;
+    size_t i;
     mat_t matrix;
 
     MAT_IDN(matrix);
@@ -377,15 +376,15 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
     }
 
     /* translate */
-    if (state->trans[W])
+    if (state->trans[W] > SMALL_FASTF)
 	MAT_DELTAS_ADD_VEC(matrix, state->trans);
 
     /* rotation */
-    if (state->rot[W]) {
+    if (state->rot[W] > SMALL_FASTF) {
     	mat_t m2, t;
 
 	bn_mat_angles(m2, state->rot[X], state->rot[Y], state->rot[Z]);
-	if (state->rpnt[W]) {
+	if (state->rpnt[W] > SMALL_FASTF) {
 	    mat_t m3;
 
 	    bn_mat_xform_about_pt(m3, m2, state->rpnt);
@@ -419,7 +418,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	/* actually copy the primitive to the new name */
 	argv[1] = proto->d_namep;
 	argv[2] = bu_vls_addr(name);
-	ret = wdb_copy_cmd(_dbip->dbi_wdbp, INTERP, 3, argv);
+	ret = wdb_copy_cmd(_dbip->dbi_wdbp, state->interp, 3, argv);
 	if (ret != TCL_OK)
 	    bu_log("WARNING: failure cloning \"%s\" to \"%s\"\n", proto->d_namep, name);
 
@@ -487,7 +486,8 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 {
     struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
-    int i, j;
+    size_t i;
+    size_t j;
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
@@ -534,7 +534,7 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		bu_log("ERROR: clone internal error looking up %s\n", rp[j].M.m_instname);
 		return NULL;
 	    }
-	    snprintf(rp[j].M.m_instname, NAMESIZE, "%s", obj_list.names[index_in_list(obj_list, rp[j].M.m_instname)].dest[i]);
+	    snprintf(rp[j].M.m_instname, NAMESIZE, "%s", bu_vls_addr(&obj_list.names[index_in_list(obj_list, rp[j].M.m_instname)].dest[i]));
 	}
 
 	/* write the object to disk */
@@ -593,7 +593,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 {
     struct directory *dp = (struct directory *)NULL;
     struct bu_vls *name;
-    int i;
+    size_t i;
 
     /* sanity */
     if (!proto) {
@@ -697,13 +697,13 @@ copy_comb(struct db_i *_dbip, struct directory *proto, genptr_t state)
 static struct directory *
 copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struct clone_state *state)
 {
-    int i;
+    size_t i;
     union record *rp = (union record *)NULL;
     struct directory *mdp = (struct directory *)NULL;
     struct directory *copy = (struct directory *)NULL;
 
-    struct bu_vls *copyname;
-    struct bu_vls *nextname;
+    struct bu_vls *copyname = NULL;
+    struct bu_vls *nextname = NULL;
 
     /* get the name of what the object "should" get cloned to */
     copyname = get_name(_dbip, dp, state, 0);
@@ -751,7 +751,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 	/* leaf node -- make a copy the object */
 	copy_solid(_dbip, dp, (genptr_t)state);
     else {
-	Tcl_AppendResult(INTERP, "clone:  ", dp->d_namep, " is neither a combination or a primitive?\n", (char *)NULL);
+	Tcl_AppendResult(state->interp, "clone:  ", dp->d_namep, " is neither a combination or a primitive?\n", (char *)NULL);
 	goto done_copy_tree;
     }
 
@@ -781,8 +781,7 @@ static struct directory *
 copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state)
 {
     struct directory *copy = (struct directory *)NULL;
-    struct nametbl *curr = (struct nametbl *)NULL;
-    int i, j, idx;
+    size_t i, j, idx;
 
     init_list(&obj_list, state->n_copies);
 
@@ -801,11 +800,11 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
 	for (i = 0; i < (state->n_copies > obj_list.name_size ? obj_list.name_size : state->n_copies); i++) {
 	    av[1] = bu_vls_addr(&obj_list.names[idx].dest[i]);
 	    /* draw does not use clientdata */
-	    cmd_draw((ClientData)NULL, INTERP, 2, av);
+	    cmd_draw((ClientData)NULL, state->interp, 2, av);
 	}
 	if (state->autoview) {
 	    av[0] = "autoview";
-	    cmd_autoview((ClientData)NULL, INTERP, 1, av);
+	    cmd_autoview((ClientData)NULL, state->interp, 1, av);
 	}
     }
 
@@ -837,7 +836,7 @@ interp_spl(fastf_t t, struct spline spl, vect_t pt)
     int i = 0;
     fastf_t s, s2, s3;
 
-    if (t == spl.t[spl.n_segs])
+    if (EQUAL(t, spl.t[spl.n_segs]))
 	t -= VUNITIZE_TOL;
 
     /* traverse to the spline segment interval */
@@ -860,13 +859,15 @@ interp_spl(fastf_t t, struct spline spl, vect_t pt)
  * copies of objects along a spline path.
  */
 int
-f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct spline s;
     vect_t *verts  = (vect_t *)NULL;
     struct link *links = (struct link *)NULL;
-    int i, j, k, inc;
-    int n_verts, n_links, arg = 1;
+    int opt;
+    size_t i, j, k, inc;
+    size_t n_verts, n_links;
+    int arg = 1;
     FILE *points = (FILE *)NULL;
     char tok[81] = {0}, line[81] = {0};
     char ch;
@@ -874,7 +875,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     fastf_t len, olen;
     fastf_t dist_to_next;
     fastf_t min, max, mid;
-    fastf_t pt[3] = {0}, rot[3] = {0};
+    fastf_t pt[3] = {0};
     int no_draw = 0;
 
     /* allow interrupts */
@@ -884,8 +885,9 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
 
     bu_optind = 1;
-    while ((i = bu_getopt(argc, argv, "fh")) != EOF)
-	switch (i) {
+    opt = bu_getopt(argc, (char * const *)argv, "fh");
+    while (opt != EOF) {
+	switch (opt) {
 	    case 'f':
 		no_draw = 1;
 		arg++;
@@ -901,6 +903,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		Tcl_AppendResult(interp, "\t<link1> <%% of total link> <link2> <%% of total link> ....\n", (char *)NULL);
 		return TCL_OK;
 	}
+    }
 
     if (argc < arg+1) {
 	Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter number of links: ", (char *)NULL);
@@ -935,7 +938,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /* Read in links names and link lengths **********/
     links = (struct link *)malloc(sizeof(struct link)*n_links);
-    for (i = arg; i < argc; i+=2) {
+    for (i = arg; i < (size_t)argc; i+=2) {
 	bu_vls_strcpy(&links[(i-arg)/2].name, argv[i]);
 	if (argc > arg+1)
 	    sscanf(argv[i+1], "%lf", &links[(i-arg)/2].pct);
@@ -943,13 +946,13 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    links[(i-arg)/2].pct = 1.0;
 	totlen += links[(i-arg)/2].pct;
     }
-    if (totlen != 1.0)
+    if (!NEAR_ZERO(totlen - 1.0, SMALL_FASTF))
 	fprintf(stdout, "ERROR\n");
 
     /* Read in knots from specified file *************/
     do
 	bu_fgets(line, 81, points);
-    while (strcmp(strtok(line, ","), "112") != 0);
+    while (!BU_STR_EQUAL(strtok(line, ","), "112"));
 
     bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
     bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
@@ -1032,9 +1035,9 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     fprintf(stdout, "\n");
 
     /* Write out interpolation info ******************/
-    fprintf(stdout, "%d Iterations; Final link lengths:\n", i);
+    fprintf(stdout, "%ld Iterations; Final link lengths:\n", i);
     for (i = 0; i < n_links; i++)
-	fprintf(stdout, "  %s\t%.15lf\n", links[i].name, links[i].len);
+	fprintf(stdout, "  %s\t%.15f\n", bu_vls_addr(&links[i].name), links[i].len);
     fflush(stdin);
     /* Place links on vertices ***********************/
     fprintf(stdout, "Continue? [y/n]  ");
@@ -1042,7 +1045,6 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     if (ch == 'y') {
 	struct clone_state state;
 	struct directory **dps = (struct directory **)NULL;
-	fastf_t units[6] = {1, 1, 10, 1000, 25.4, 304.8};
 	char *vargs[3];
 
 	for (i = 0; i < 2; i++)
@@ -1074,7 +1076,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		VSUB2(pt, verts[n_links*i+j], verts[n_links*i+j+1]);
 		VSET(state.rot, 0, (M_PI - atan2(pt[Z], pt[X])),
 		     -atan2(pt[Y], sqrt(pt[X]*pt[X]+pt[Z]*pt[Z])));
-		VSCALE(state.rot, state.rot, radtodeg);
+		VSCALE(state.rot, state.rot, RAD2DEG);
 		/*
 		  VSUB2(state.rot, state.rot, rots[j]);
 		  VADD2(rots[j], state.rot, rots[j]);
@@ -1086,7 +1088,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		bu_strlcpy(vargs[1], dps[j]->d_namep, CLONE_BUFSIZE);
 
 		if (!no_draw || !is_dm_null()) {
-		    drawtrees(2, vargs, 1);
+		    drawtrees(2, (const char **)vargs, 1);
 		    size_reset();
 		    new_mats();
 		    color_soltab();

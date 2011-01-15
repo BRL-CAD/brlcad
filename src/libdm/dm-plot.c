@@ -1,7 +1,7 @@
 /*                       D M - P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,7 +53,6 @@
 /* Display Manager package interface */
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
-struct dm *plot_open(Tcl_Interp *interp, int argc, char **argv);
 
 HIDDEN_DM_FUNCTION_PROTOTYPES(plot)
 
@@ -118,7 +117,8 @@ struct dm dm_plot = {
     0,				/* depth buffer is not writable */
     0,				/* no zbuffer */
     0,				/* no zclipping */
-    1,                            /* clear back buffer after drawing and swap */
+    1,                          /* clear back buffer after drawing and swap */
+    0,                          /* not overriding the auto font size */
     0				/* Tcl interpreter */
 };
 
@@ -133,7 +133,7 @@ static mat_t plotmat;
  *
  */
 struct dm *
-plot_open(Tcl_Interp *interp, int argc, char **argv)
+plot_open(Tcl_Interp *interp, int argc, const char *argv[])
 {
     static int count = 0;
     struct dm *dmp;

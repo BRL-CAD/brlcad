@@ -2,7 +2,7 @@
 #                       L I G H T S . S H
 # BRL-CAD
 #
-# Copyright (c) 2010 United States Government as represented by
+# Copyright (c) 2010-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,22 +42,22 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . $1/regress/library.sh
 
-RT="`ensearch rt/rt`"
+RT="`ensearch rt`"
 if test ! -f "$RT" ; then
     echo "Unable to find rt, aborting"
     exit 1
 fi
-A2G="`ensearch conv/asc2g`"
+A2G="`ensearch asc2g`"
 if test ! -f "$A2G" ; then
     echo "Unable to find asc2g, aborting"
     exit 1
 fi
-A2P="`ensearch conv/asc2pix`"
+A2P="`ensearch asc2pix`"
 if test ! -f "$A2P" ; then
     echo "Unable to find asc2pix, aborting"
     exit 1
 fi
-PIXDIFF="`ensearch util/pixdiff`"
+PIXDIFF="`ensearch pixdiff`"
 if test ! -f "$PIXDIFF" ; then
     echo "Unable to find pixdiff, aborting"
     exit 1

@@ -1,7 +1,7 @@
 /*                       C M A P - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -99,9 +99,9 @@ main(int argc, char **argv)
     char line[512], buf[512], *str;
 
     while (argc > 1) {
-	if (strcmp(argv[1], "-h") == 0) {
+	if (BU_STR_EQUAL(argv[1], "-h")) {
 	    fbsize = 1024;
-	} else if (strcmp(argv[1], "-o") == 0) {
+	} else if (BU_STR_EQUAL(argv[1], "-o")) {
 	    overlay++;
 	} else if (argv[1][0] == '-') {
 	    /* unknown flag */

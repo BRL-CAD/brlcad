@@ -1,7 +1,7 @@
 /*                       F I T N E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -74,7 +74,7 @@ fit_store (char *obj, char *dbname, struct fitness_state *fstate)
  *	C A P T U R E _ H I T --- called by rt_shootray(), stores a ray that hit the shape
  */
 int
-capture_hit(register struct application *ap, struct partition *partHeadp, struct seg *segs)
+capture_hit(register struct application *ap, struct partition *partHeadp, struct seg *UNUSED(segs))
 {
     register struct partition *pp;
     struct part *add;
@@ -107,7 +107,7 @@ capture_miss(register struct application *ap)
  *	C O M P A R E _ H I T -- compare a ray that hit to source
  */
 int
-compare_hit(register struct application *ap, struct partition *partHeadp, struct seg *segs)
+compare_hit(register struct application *ap, struct partition *partHeadp, struct seg *UNUSED(segs))
 {
     register struct partition *pp=NULL;
     register struct part *mp=NULL;
@@ -295,7 +295,7 @@ get_next_row(struct fitness_state *fstate)
  *
  */
 void
-rt_worker(int cpu, genptr_t g)
+rt_worker(int UNUSED(cpu), genptr_t g)
 {
     struct application ap;
     struct fitness_state *fstate = (struct fitness_state *)g;

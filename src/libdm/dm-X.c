@@ -1,7 +1,7 @@
 /*                          D M - X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -688,7 +688,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     for (j = 0; j < ndevices; ++j, list++) {
 	if (list->use == IsXExtensionDevice) {
-	    if (!strcmp(list->name, "dial+buttons")) {
+	    if (BU_STR_EQUAL(list->name, "dial+buttons")) {
 		if ((dev = XOpenDevice(pubvars->dpy,
 				       list->id)) == (XDevice *)NULL) {
 		    bu_log("X_open_dm: Couldn't open the dials+buttons\n");
@@ -1367,10 +1367,10 @@ X_setWinBounds(struct dm *dmp, int *w)
 
 
 HIDDEN int
-X_configureWin(struct dm *dmp)
+X_configureWin(struct dm *dmp, int force)
 {
     /* don't force */
-    return X_configureWin_guts(dmp, 0);
+    return X_configureWin_guts(dmp, force);
 }
 
 
@@ -1407,9 +1407,8 @@ X_getDisplayImage(struct dm *dmp, unsigned char **image)
     int bytes_per_pixel;
     int bytes_per_pixel_output = 3; /* limit for current bu_image raw pix usage */
     int bytes_per_line_output;
-    int bits_per_channel = 8;  /* bits per color channel */
     int i, j, k;
-    unsigned char *dbyte0, *dbyte1, *dbyte2, *dbyte3;
+    unsigned char *dbyte0, *dbyte1, *dbyte2;
     int red_shift;
     int green_shift;
     int blue_shift;
@@ -1674,7 +1673,8 @@ struct dm dm_X = {
     0,				/* depth buffer is not writable */
     0,				/* no zbuffer */
     0,				/* no zclipping */
-    1,                            /* clear back buffer after drawing and swap */
+    1,                          /* clear back buffer after drawing and swap */
+    0,                          /* not overriding the auto font size */
     0				/* Tcl interpreter */
 };
 

@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -288,7 +288,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     ++arg;
     tr[1] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
-    if (tr[0] == tr[1]) {
+    if (EQUAL(tr[0], tr[1])) {
 	bu_vls_printf(&gedp->ged_result_str, "MIN == MAX ... STOP\n");
 	edit_result = GED_ERROR;
 	goto end;

@@ -1,7 +1,7 @@
 /*                           O P T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -464,7 +464,7 @@ int get_args( int argc, register char **argv )
 		}
 		break;
 	    case 'u':
-	    	if (strcmp(bu_optarg,"model") == 0) {
+	    	if (BU_STR_EQUAL(bu_optarg,"model")) {
 	    		model_units = 1;
 	    		default_units = 0;
 	    	} else {

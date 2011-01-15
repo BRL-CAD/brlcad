@@ -1,7 +1,7 @@
 /*                         C O P Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -118,7 +118,7 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
     bu_free_external(&external);
 
     /* Need to do something extra for _GLOBAL */
-    if (to_gedp->ged_wdbp->dbip->dbi_version > 4 && !strcmp(to, DB5_GLOBAL_OBJECT_NAME)) {
+    if (to_gedp->ged_wdbp->dbip->dbi_version > 4 && BU_STR_EQUAL(to, DB5_GLOBAL_OBJECT_NAME)) {
 	struct directory *to_dp;
 	struct bu_attribute_value_set avs;
 	const char *val;

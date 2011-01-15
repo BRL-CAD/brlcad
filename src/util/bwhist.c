@@ -1,7 +1,7 @@
 /*                        B W H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ main(int argc, char **argv)
     FILE *fp;
 
     /* check for verbose flag */
-    if (argc > 1 && strcmp(argv[1], "-v") == 0) {
+    if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
 	verbose++;
 	argv++;
 	argc--;

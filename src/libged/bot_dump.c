@@ -1,7 +1,7 @@
 /*                         B O T _ D U M P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -784,13 +784,13 @@ ged_bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 		output_file = bu_optarg;
 		break;
 	    case 't':
-		if (!strcmp("dxf", bu_optarg))
+		if (BU_STR_EQUAL("dxf", bu_optarg))
 		    output_type = OTYPE_DXF;
-		else if (!strcmp("obj", bu_optarg))
+		else if (BU_STR_EQUAL("obj", bu_optarg))
 		    output_type = OTYPE_OBJ;
-		else if (!strcmp("sat", bu_optarg))
+		else if (BU_STR_EQUAL("sat", bu_optarg))
 		    output_type = OTYPE_SAT;
-		else if (!strcmp("stl", bu_optarg))
+		else if (BU_STR_EQUAL("stl", bu_optarg))
 		    output_type = OTYPE_STL;
 		else {
 		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);

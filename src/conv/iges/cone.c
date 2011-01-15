@@ -1,7 +1,7 @@
 /*                          C O N E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,34 +17,25 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cone.c
- *
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
- */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 int
-cone( entityno )
-    int entityno;
+cone(int entityno)
 {
-    fastf_t		rad1=0.0;
-    fastf_t		rad2;
-    point_t		base;		/* center point of base */
-    vect_t		hdir;		/* direction in which to grow height */
-    fastf_t		scale_height=0.0;
-    fastf_t		x_1;
-    fastf_t		y_1;
-    fastf_t		z_1;
-    fastf_t		x_2;
-    fastf_t		y_2;
-    fastf_t		z_2;
-    int		sol_num;		/* IGES solid type number */
+    fastf_t rad1=0.0;
+    fastf_t rad2;
+    point_t base;		/* center point of base */
+    vect_t hdir;		/* direction in which to grow height */
+    fastf_t scale_height=0.0;
+    fastf_t x_1;
+    fastf_t y_1;
+    fastf_t z_1;
+    fastf_t x_2;
+    fastf_t y_2;
+    fastf_t z_2;
+    int sol_num;		/* IGES solid type number */
 
     /* Default values */
     x_1 = 0.0;
@@ -56,58 +47,49 @@ cone( entityno )
     rad2 = 0.0;
 
     /* Acquiring Data */
-    if ( dir[entityno]->param <= pstart )
-    {
-	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-		dir[entityno]->direct, dir[entityno]->name );
+    if (dir[entityno]->param <= pstart) {
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
-    Readrec( dir[entityno]->param );
-    Readint( &sol_num, "" );
-    Readcnv( &scale_height, "" );
-    Readcnv( &rad1, "" );
-    Readcnv( &rad2, "" );
-    Readcnv( &x_1, "" );
-    Readcnv( &y_1, "" );
-    Readcnv( &z_1, "" );
-    Readcnv( &x_2, "" );
-    Readcnv( &y_2, "" );
-    Readcnv( &z_2, "" );
+    Readrec(dir[entityno]->param);
+    Readint(&sol_num, "");
+    Readcnv(&scale_height, "");
+    Readcnv(&rad1, "");
+    Readcnv(&rad2, "");
+    Readcnv(&x_1, "");
+    Readcnv(&y_1, "");
+    Readcnv(&z_1, "");
+    Readcnv(&x_2, "");
+    Readcnv(&y_2, "");
+    Readcnv(&z_2, "");
 
-    if ( scale_height <= 0.0 || rad1 < rad2 || rad2 < 0.0 )
-    {
-	bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
-		dir[entityno]->direct, dir[entityno]->name );
-	if ( NEAR_ZERO(scale_height, SMALL_FASTF) )
-	{
-	    bu_log( "\tCone height is zero!!\n" );
+    if (scale_height <= 0.0 || rad1 < rad2 || rad2 < 0.0) {
+	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
+	       dir[entityno]->direct, dir[entityno]->name);
+	if (NEAR_ZERO(scale_height, SMALL_FASTF)) {
+	    bu_log("\tCone height is zero!!\n");
 	    return 0;
 	}
-	if ( NEAR_ZERO(rad1, SMALL_FASTF) && NEAR_ZERO(rad2, SMALL_FASTF) )
-	{
-	    bu_log( "\tBoth radii for cone are zero!!!\n" );
+	if (NEAR_ZERO(rad1, SMALL_FASTF) && NEAR_ZERO(rad2, SMALL_FASTF)) {
+	    bu_log("\tBoth radii for cone are zero!!!\n");
 	    return 0;
 	}
-	if ( rad1 < 0.0 )
-	{
-	    bu_log( "\tUsing absloute value of a negative face radius (%f)\n", rad1 );
+	if (rad1 < 0.0) {
+	    bu_log("\tUsing absloute value of a negative face radius (%f)\n", rad1);
 	    rad1 = (-rad1);
-	}
-	else if ( NEAR_ZERO(rad1, SMALL_FASTF) )
+	} else if (NEAR_ZERO(rad1, SMALL_FASTF))
 	    rad1 = SMALL_FASTF;
 
-	if ( rad2 < 0.0 )
-	{
-	    bu_log( "\tUsing absloute value of a negative face radius (%f)\n", rad2 );
+	if (rad2 < 0.0) {
+	    bu_log("\tUsing absloute value of a negative face radius (%f)\n", rad2);
 	    rad2 = (-rad2);
-	}
-	else if ( NEAR_ZERO(rad2, SMALL_FASTF) )
+	} else if (NEAR_ZERO(rad2, SMALL_FASTF))
 	    rad2 = SMALL_FASTF;
 
-	if (scale_height < 0.0 )
-	{
-	    bu_log( "\tUsing absloute value of a negative height (%f)\n", scale_height );
-	    bu_log( "\t\tand reversing height direction\n" );
+	if (scale_height < 0.0) {
+	    bu_log("\tUsing absloute value of a negative height (%f)\n", scale_height);
+	    bu_log("\t\tand reversing height direction\n");
 	    x_2 = (-x_2);
 	    y_2 = (-y_2);
 	    z_2 = (-z_2);
@@ -128,21 +110,22 @@ cone( entityno )
 
     VSET(base, x_1, y_1, z_1);		/* the center pt of base plate */
     VSET(hdir, x_2, y_2, z_2);
-    if ( MAGNITUDE(hdir) <= SQRT_SMALL_FASTF )  {
-	bu_log("Illegal height vector %g,%g,%g for entity D%07d (%s)\n",
+    if (MAGNITUDE(hdir) <= SQRT_SMALL_FASTF) {
+	bu_log("Illegal height vector %g, %g, %g for entity D%07d (%s)\n",
 	       V3ARGS(hdir),
-	       dir[entityno]->direct, dir[entityno]->name );
+	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
     VUNITIZE(hdir);
 
-    if ( mk_cone( fdout, dir[entityno]->name, base, hdir, scale_height, rad1, rad2 ) < 0 )  {
+    if (mk_cone(fdout, dir[entityno]->name, base, hdir, scale_height, rad1, rad2) < 0) {
 	bu_log("Unable to write entity D%07d (%s)\n",
-	       dir[entityno]->direct, dir[entityno]->name );
+	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;
     }
     return 1;
 }
+
 
 /*
  * Local Variables:

@@ -9,7 +9,10 @@ libz_la_SOURCES = \
 	compress.c \
 	crc32.c \
 	deflate.c \
-	gzio.c \
+	gzclose.c \
+	gzlib.c \
+	gzread.c \
+	gzwrite.c \
 	infback.c \
 	inffast.c \
 	inflate.c \
@@ -21,6 +24,7 @@ libz_la_SOURCES = \
 include_HEADERS = \
 	crc32.h \
 	deflate.h \
+	gzguts.h \
 	inffast.h \
 	inffixed.h \
 	inflate.h \
@@ -42,25 +46,29 @@ minigzip_LDADD = libz.la
 
 EXTRA_DIST = \
 	$(man_MANS) \
-        CMakeLists.txt \
+	CMakeLists.txt \
 	FAQ \
 	INDEX \
-	Makefile.in.orig \
-	Makefile.orig \
-	algorithm.txt \
 	amiga \
-	as400 \
 	configure \
 	contrib \
+	doc \
 	examples \
 	make_vms.com \
 	minigzip.c \
 	msdos \
+	nintendods \
 	old \
-	projects \
 	qnx \
+	treebuild.xml \
+	watcom \
 	win32 \
-	zconf.in.h
+	zconf.h.cmakein \
+	zconf.h.in \
+	zlib.3.pdf \
+	zlib.map \
+	zlib.pc.in \
+	zlib2ansi
 
 include $(top_srcdir)/misc/Makefile.defs
 

@@ -17,9 +17,7 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* conversion.sh using signals for child->parent communication
-
-* conversion.sh --not and --only options
+* open binary-incompatible v4 database
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -45,6 +43,22 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* add distribution test for making sure the source code conventions
+  for function replacements are being respected (e.g., bu_strcmp()
+  instead of strcmp()).
+
+* let the cp command take multiple arguments for simultaneously
+  creating multiple named copies
+
+* add support to the attr command for listing keys in a user-specified
+  alphabetical (possibly case-insensitive) order in addition to or
+  instead of generated order.
+
+* deprecate dbcp and merge functionality (and improved
+  double-buffering) with the buffer tool.
+
+* make the converters export all top-level objects by default
 
 * investigate why solids.sh fails on three pixels on some 64-bit
   platforms. it grazingly hits/misses a tgc causing a regression

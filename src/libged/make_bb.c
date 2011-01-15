@@ -1,7 +1,7 @@
 /*                         M A K E _ B B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ ged_make_bb(struct ged *gedp, int argc, const char *argv[])
     i = 1;
 
     /* look for a USEAIR option */
-    if (! strcmp(argv[i], "-u")) {
+    if (BU_STR_EQUAL(argv[i], "-u")) {
 	use_air = 1;
 	i++;
     }

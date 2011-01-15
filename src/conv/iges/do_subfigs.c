@@ -1,7 +1,7 @@
 /*                    D O _ S U B F I G S . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2010 United States Government as represented by
+ * Copyright (c) 1995-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file do_subfigs.c
- *
- */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
@@ -33,13 +30,12 @@ Do_subfigs()
     struct wmember head1;
     struct wmember *wmem;
 
-    if ( RT_G_DEBUG & DEBUG_MEM_FULL )
+    if (RT_G_DEBUG & DEBUG_MEM_FULL)
 	bu_mem_barriercheck();
 
-    BU_LIST_INIT( &head1.l );
+    BU_LIST_INIT(&head1.l);
 
-    for ( i=0; i<totentities; i++ )
-    {
+    for (i=0; i<totentities; i++) {
 	int subfigdef_de;
 	int subfigdef_index;
 	int no_of_members;
@@ -49,212 +45,190 @@ Do_subfigs()
 	double mat_scale[3];
 	int non_unit;
 
-	if ( dir[i]->type != 408 )
+	if (dir[i]->type != 408)
 	    continue;
 
-	if ( RT_G_DEBUG & DEBUG_MEM_FULL )
+	if (RT_G_DEBUG & DEBUG_MEM_FULL)
 	    bu_mem_barriercheck();
 
-	if ( dir[i]->param <= pstart )
-	{
-	    bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-		    dir[i]->direct, dir[i]->name );
+	if (dir[i]->param <= pstart) {
+	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+		   dir[i]->direct, dir[i]->name);
 	    continue;
 	}
 
-	Readrec( dir[i]->param );
-	Readint( &entity_type, "" );
-	if ( entity_type != 408 )
-	{
-	    bu_log( "Expected Singular Subfigure Instance Entity, found %s\n",
-		    iges_type(entity_type) );
+	Readrec(dir[i]->param);
+	Readint(&entity_type, "");
+	if (entity_type != 408) {
+	    bu_log("Expected Singular Subfigure Instance Entity, found %s\n",
+		   iges_type(entity_type));
 	    continue;
 	}
 
-	Readint( &subfigdef_de, "" );
+	Readint(&subfigdef_de, "");
 	subfigdef_index = (subfigdef_de - 1)/2;
-	if ( subfigdef_index >= totentities )
-	{
-	    bu_log( "Singular Subfigure Instance Entity gives Subfigure Definition" );
-	    bu_log( "\tEntity DE of %d, largest DE in file is %d\n",
-		    subfigdef_de, (totentities * 2) - 1 );
+	if (subfigdef_index >= totentities) {
+	    bu_log("Singular Subfigure Instance Entity gives Subfigure Definition");
+	    bu_log("\tEntity DE of %d, largest DE in file is %d\n",
+		   subfigdef_de, (totentities * 2) - 1);
 	    continue;
 	}
-	if ( dir[subfigdef_index]->type != 308 )
-	{
-	    bu_log( "Expected Subfigure Definition Entity, found %s\n",
-		    iges_type(dir[subfigdef_index]->type) );
-	    continue;
-	}
-
-	if ( dir[subfigdef_index]->param <= pstart )
-	{
-	    bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-		    dir[subfigdef_index]->direct, dir[subfigdef_index]->name );
-	    continue;
-	}
-	Readrec( dir[subfigdef_index]->param );
-	Readint( &entity_type, "" );
-	if ( entity_type != 308 )
-	{
-	    bu_log( "Expected Subfigure Definition Entity, found %s\n",
-		    iges_type(entity_type) );
+	if (dir[subfigdef_index]->type != 308) {
+	    bu_log("Expected Subfigure Definition Entity, found %s\n",
+		   iges_type(dir[subfigdef_index]->type));
 	    continue;
 	}
 
-	Readint( &j, "" );	/* ignore depth */
-	Readstrg( "");		/* ignore subfigure name */
+	if (dir[subfigdef_index]->param <= pstart) {
+	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+		   dir[subfigdef_index]->direct, dir[subfigdef_index]->name);
+	    continue;
+	}
+	Readrec(dir[subfigdef_index]->param);
+	Readint(&entity_type, "");
+	if (entity_type != 308) {
+	    bu_log("Expected Subfigure Definition Entity, found %s\n",
+		   iges_type(entity_type));
+	    continue;
+	}
 
-	wmem = mk_addmember( dir[subfigdef_index]->name, &head1.l, NULL, WMOP_UNION );
+	Readint(&j, "");	/* ignore depth */
+	Readstrg("");		/* ignore subfigure name */
+
+	wmem = mk_addmember(dir[subfigdef_index]->name, &head1.l, NULL, WMOP_UNION);
 	non_unit = 0;
-	for ( j=0; j<3; j++ )
-	{
+	for (j=0; j<3; j++) {
 	    double mag_sq;
 
 	    mat_scale[j] = 1.0;
-	    mag_sq = MAGSQ( &(*dir[i]->rot)[j*4] );
-	    if ( !NEAR_ZERO( mag_sq - 1.0, 100.0*SQRT_SMALL_FASTF ) )
-	    {
-		mat_scale[j] = 1.0/sqrt( mag_sq );
+	    mag_sq = MAGSQ(&(*dir[i]->rot)[j*4]);
+	    if (!NEAR_ZERO(mag_sq - 1.0, 100.0*SQRT_SMALL_FASTF)) {
+		mat_scale[j] = 1.0/sqrt(mag_sq);
 		non_unit = 1;
 	    }
 	}
 
-	if ( non_unit )
-	{
-	    bu_log( "Illegal transformation matrix in %s for member %s\n",
-		    curr_file->obj_name, wmem->wm_name );
-	    bu_log( " row vector magnitudes are %g, %g, and %g\n",
-		    1.0/mat_scale[0], 1.0/mat_scale[1], 1.0/mat_scale[2] );
-	    bn_mat_print( "", *dir[i]->rot );
-	    for ( j=0; j<11; j++ )
-	    {
-		if ( (j+1)%4 == 0 )
+	if (non_unit) {
+	    bu_log("Illegal transformation matrix in %s for member %s\n",
+		   curr_file->obj_name, wmem->wm_name);
+	    bu_log(" row vector magnitudes are %g, %g, and %g\n",
+		   1.0/mat_scale[0], 1.0/mat_scale[1], 1.0/mat_scale[2]);
+	    bn_mat_print("", *dir[i]->rot);
+	    for (j=0; j<11; j++) {
+		if ((j+1)%4 == 0)
 		    continue;
 		(*dir[i]->rot)[j] *= mat_scale[0];
 	    }
-	    bn_mat_print( "After scaling:", *dir[i]->rot );
+	    bn_mat_print("After scaling:", *dir[i]->rot);
 
 	}
-	memcpy(wmem->wm_mat, *dir[i]->rot, sizeof( mat_t ));
+	memcpy(wmem->wm_mat, *dir[i]->rot, sizeof(mat_t));
 
-	Readint( &no_of_members, "" );	/* get number of members */
-	members = (int *)bu_calloc( no_of_members, sizeof( int ), "Do_subfigs: members" );
-	for ( j=0; j<no_of_members; j++ )
-	    Readint( &members[j], "" );
+	Readint(&no_of_members, "");	/* get number of members */
+	members = (int *)bu_calloc(no_of_members, sizeof(int), "Do_subfigs: members");
+	for (j=0; j<no_of_members; j++)
+	    Readint(&members[j], "");
 
-	BU_LIST_INIT( &head2.l );
-	for ( j=0; j<no_of_members; j++ )
-	{
+	BU_LIST_INIT(&head2.l);
+	for (j=0; j<no_of_members; j++) {
 	    int idx;
 
 	    idx = (members[j] - 1)/2;
 
-	    if ( idx >= totentities )
-	    {
-		bu_log( "Subfigure Definition Entity gives Member Entity" );
-		bu_log( "\tDE of %d, largest DE in file is %d\n",
-			members[j], (totentities * 2) - 1 );
+	    if (idx >= totentities) {
+		bu_log("Subfigure Definition Entity gives Member Entity");
+		bu_log("\tDE of %d, largest DE in file is %d\n",
+		       members[j], (totentities * 2) - 1);
 		continue;
 	    }
-	    if ( dir[idx]->param <= pstart )
-	    {
-		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-			dir[idx]->direct, dir[idx]->name );
+	    if (dir[idx]->param <= pstart) {
+		bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+		       dir[idx]->direct, dir[idx]->name);
 		continue;
 	    }
 
-	    if ( dir[idx]->type == 416 )
-	    {
+	    if (dir[idx]->type == 416) {
 		struct file_list *list_ptr;
 		char *file_name;
 		int found=0;
 
 		/* external reference */
 
-		Readrec( dir[idx]->param );
-		Readint( &entity_type, "" );
+		Readrec(dir[idx]->param);
+		Readint(&entity_type, "");
 
-		if ( entity_type != 416 )
-		{
-		    bu_log( "Expected External reference Entity, found %s\n",
-			    iges_type(entity_type) );
+		if (entity_type != 416) {
+		    bu_log("Expected External reference Entity, found %s\n",
+			   iges_type(entity_type));
 		    continue;
 		}
 
-		if ( dir[idx]->form != 1 )
-		{
-		    bu_log( "External Reference Entity of form #%d found\n",
-			    dir[idx]->form );
-		    bu_log( "\tOnly form #1 is currnetly handled\n" );
+		if (dir[idx]->form != 1) {
+		    bu_log("External Reference Entity of form #%d found\n",
+			   dir[idx]->form);
+		    bu_log("\tOnly form #1 is currnetly handled\n");
 		    continue;
 		}
 
-		Readname( &file_name, "" );
+		Readname(&file_name, "");
 
 		/* Check if this external reference is already on the list */
-		for ( BU_LIST_FOR( list_ptr, file_list, &iges_list.l ) )
-		{
-		    if ( !strcmp( file_name, list_ptr->file_name ) )
-		    {
+		for (BU_LIST_FOR(list_ptr, file_list, &iges_list.l)) {
+		    if (BU_STR_EQUAL(file_name, list_ptr->file_name)) {
 			found = 1;
 			name = list_ptr->obj_name;
 			break;
 		    }
 		}
 
-		if ( !found )
-		{
+		if (!found) {
 		    /* Need to add this one to the list */
-		    list_ptr = (struct file_list *)bu_malloc( sizeof( struct file_list ),
-							      "Do_subfigs: list_ptr" );
+		    list_ptr = (struct file_list *)bu_malloc(sizeof(struct file_list),
+							     "Do_subfigs: list_ptr");
 
 		    list_ptr->file_name = file_name;
-		    if ( no_of_members == 1 )
-			bu_strlcpy( list_ptr->obj_name, dir[subfigdef_index]->name, NAMESIZE+1 );
-		    else
-		    {
-			bu_strlcpy( list_ptr->obj_name, "subfig", NAMESIZE+1 );
-			(void) Make_unique_brl_name( list_ptr->obj_name );
+		    if (no_of_members == 1)
+			bu_strlcpy(list_ptr->obj_name, dir[subfigdef_index]->name, NAMESIZE+1);
+		    else {
+			bu_strlcpy(list_ptr->obj_name, "subfig", NAMESIZE+1);
+			(void) Make_unique_brl_name(list_ptr->obj_name);
 		    }
 
 
-		    BU_LIST_APPEND( &curr_file->l, &list_ptr->l );
+		    BU_LIST_APPEND(&curr_file->l, &list_ptr->l);
 
 		    name = list_ptr->obj_name;
-		}
-		else
-		    bu_free( (char *)file_name, "Do_subfigs: file_name" );
+		} else
+		    bu_free((char *)file_name, "Do_subfigs: file_name");
 
-	    }
-	    else
+	    } else
 		name = dir[idx]->name;
 
-	    if ( no_of_members > 1 )
-	    {
-		wmem = mk_addmember( name, &head2.l, NULL, WMOP_UNION );
-		memcpy(wmem->wm_mat, dir[idx]->rot, sizeof( mat_t ));
+	    if (no_of_members > 1) {
+		wmem = mk_addmember(name, &head2.l, NULL, WMOP_UNION);
+		memcpy(wmem->wm_mat, dir[idx]->rot, sizeof(mat_t));
 	    }
 	}
 
-	if ( no_of_members > 1 )
-	    (void)mk_lcomb( fdout, dir[subfigdef_index]->name, &head2, 0,
-			    (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
+	if (no_of_members > 1)
+	    (void)mk_lcomb(fdout, dir[subfigdef_index]->name, &head2, 0,
+			   (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
     }
 
-    if ( RT_G_DEBUG & DEBUG_MEM_FULL )
+    if (RT_G_DEBUG & DEBUG_MEM_FULL)
 	bu_mem_barriercheck();
 
-    if ( BU_LIST_IS_EMPTY( &head1.l ) )
+    if (BU_LIST_IS_EMPTY(&head1.l))
 	return;
 
-    (void) mk_lcomb( fdout, curr_file->obj_name, &head1, 0,
-		     (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
+    (void) mk_lcomb(fdout, curr_file->obj_name, &head1, 0,
+		    (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 
-    if ( RT_G_DEBUG & DEBUG_MEM_FULL )
+    if (RT_G_DEBUG & DEBUG_MEM_FULL)
 	bu_mem_barriercheck();
 
 }
+
 
 /*
  * Local Variables:

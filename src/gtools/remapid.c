@@ -1,7 +1,7 @@
 /*                       R E M A P I D . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2010 United States Government as represented by
+ * Copyright (c) 1997-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -64,6 +64,7 @@ typedef struct remapid_file REMAPID_FILE;
 #define bu_stdin (&bu_iob[0])
 extern REMAPID_FILE bu_iob[1];
 #define REMAPID_FILE_NO_COMMENT -1
+#define COMMA ','
 
 
 /*
@@ -396,7 +397,7 @@ mk_curr_id(int region_id)
  *
  */
 void
-print_curr_id(void *v, int depth)
+print_curr_id(void *v, int UNUSED(depth))
 {
     struct curr_id *cip = (struct curr_id *) v;
     struct remap_reg *rp;
@@ -418,7 +419,7 @@ print_curr_id(void *v, int depth)
  *
  */
 void
-print_nonempty_curr_id(void *v, int depth)
+print_nonempty_curr_id(void *v, int UNUSED(depth))
 {
     struct curr_id *cip = (struct curr_id *) v;
     struct remap_reg *rp;
@@ -604,7 +605,7 @@ read_block(REMAPID_FILE *sfp, int *ch, int *n1, int *n2)
     while (isspace(*ch))
 	*ch = remapid_fgetc(sfp);
     switch (*ch) {
-	case ', ':
+	case COMMA:
 	case ':':
 	    return 1;
 	case '-':
@@ -672,7 +673,7 @@ read_spec(REMAPID_FILE *sfp, char *sf_name)
 		ch = remapid_fgetc(sfp);
 
 	    switch (ch) {
-		case ', ':
+		case COMMA:
 		    continue;
 		case ':':
 		    ch = remapid_fgetc(sfp);
@@ -751,7 +752,7 @@ db_init(char *db_name)
  *
  */
 void
-write_assignment(void *v, int depth)
+write_assignment(void *v, int UNUSED(depth))
 {
     int region_id;
     struct curr_id *cip = (struct curr_id *) v;

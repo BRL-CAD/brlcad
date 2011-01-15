@@ -1,7 +1,7 @@
 /*                        M A K E _ N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
 
     switch (argc) {
 	case 2:
-	    if (strcmp(argv[1], "-s") != 0)
+	    if (!BU_STR_EQUAL(argv[1], "-s"))
 		break;
 	    else {
 		i = 0;
@@ -60,7 +60,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
 	{
 	    int	new_i;
 
-	    if ((strcmp(argv[1], "-s") == 0)
+	    if ((BU_STR_EQUAL(argv[1], "-s"))
 		&& (sscanf(argv[2], "%d", &new_i) == 1)) {
 		i = new_i;
 		return GED_OK;

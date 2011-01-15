@@ -1,7 +1,7 @@
 /*                        S K E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ extern void get_indices(genptr_t seg, int *start, int *end);	/* from g_extrude.c
 int
 rt_check_curve(const struct curve *crv, const struct rt_sketch_internal *skt, int noisy)
 {
-    int i, j;
+    size_t i, j;
     int ret=0;
 
     /* empty sketches are invalid */
@@ -73,20 +73,20 @@ rt_check_curve(const struct curve *crv, const struct rt_sketch_internal *skt, in
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
 		lsg = (struct line_seg *)lng;
-		if (lsg->start >= skt->vert_count ||
-		    lsg->end >= skt->vert_count)
+		if ((size_t)lsg->start >= skt->vert_count ||
+		    (size_t)lsg->end >= skt->vert_count)
 		    ret++;
 		break;
 	    case CURVE_CARC_MAGIC:
 		csg = (struct carc_seg *)lng;
-		if (csg->start >= skt->vert_count ||
-		    csg->end >= skt->vert_count)
+		if ((size_t)csg->start >= skt->vert_count ||
+		    (size_t)csg->end >= skt->vert_count)
 		    ret++;
 		break;
 	    case CURVE_NURB_MAGIC:
 		nsg = (struct nurb_seg *)lng;
-		for (j=0; j<nsg->c_size; j++) {
-		    if (nsg->ctl_points[j] >= skt->vert_count) {
+		for (j=0; j<(size_t)nsg->c_size; j++) {
+		    if ((size_t)nsg->ctl_points[j] >= skt->vert_count) {
 			ret++;
 			break;
 		    }
@@ -94,8 +94,8 @@ rt_check_curve(const struct curve *crv, const struct rt_sketch_internal *skt, in
 		break;
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
-		for (j=0; j<=bsg->degree; j++) {
-		    if (bsg->ctl_points[j] >= skt->vert_count) {
+		for (j=0; j<=(size_t)bsg->degree; j++) {
+		    if ((size_t)bsg->ctl_points[j] >= skt->vert_count) {
 			ret++;
 			break;
 		    }
@@ -514,7 +514,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
     switch (*lng) {
 	case CURVE_LSEG_MAGIC:
 	    lsg = (struct line_seg *)lng;
-	    if (lsg->start >= sketch_ip->vert_count || lsg->end >= sketch_ip->vert_count) {
+	    if ((size_t)lsg->start >= sketch_ip->vert_count || (size_t)lsg->end >= sketch_ip->vert_count) {
 		ret++;
 		break;
 	    }
@@ -532,7 +532,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		int nsegs;
 
 		csg = (struct carc_seg *)lng;
-		if (csg->start >= sketch_ip->vert_count || csg->end >= sketch_ip->vert_count) {
+		if ((size_t)csg->start >= sketch_ip->vert_count || (size_t)csg->end >= sketch_ip->vert_count) {
 		    ret++;
 		    break;
 		}
@@ -674,7 +674,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 
 		nsg = (struct nurb_seg *)lng;
 		for (i=0; i<nsg->c_size; i++) {
-		    if (nsg->ctl_points[i] >= sketch_ip->vert_count) {
+		    if ((size_t)nsg->ctl_points[i] >= sketch_ip->vert_count) {
 			ret++;
 			break;
 		    }
@@ -779,7 +779,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 	    bsg = (struct bezier_seg *)lng;
 
 	    for (i=0; i<=bsg->degree; i++) {
-		if (bsg->ctl_points[i] >= sketch_ip->vert_count) {
+		if ((size_t)bsg->ctl_points[i] >= sketch_ip->vert_count) {
 		    ret++;
 		    break;
 		}
@@ -885,7 +885,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 int
 curve_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, struct curve *crv)
 {
-    int seg_no;
+    size_t seg_no;
     int ret=0;
 
     BU_CK_LIST_HEAD(vhead);
@@ -964,10 +964,10 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
     struct rt_sketch_internal *sketch_ip;
     union record *rp;
     vect_t v;
-    int seg_no;
+    size_t seg_no;
     unsigned char *ptr;
     struct curve *crv;
-    int i;
+    size_t i;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1062,7 +1062,7 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 		nsg->c_size = bu_glong(ptr);
 		ptr += 4;
 		nsg->ctl_points = (int *)bu_malloc(nsg->c_size * sizeof(int), "nsg->ctl_points");
-		for (i=0; i<nsg->c_size; i++) {
+		for (i=0; i<(size_t)nsg->c_size; i++) {
 		    nsg->ctl_points[i] = bu_glong(ptr);
 		    ptr += 4;
 		}
@@ -1080,7 +1080,7 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 		bsg->degree = bu_glong(ptr);
 		ptr += 4;
 		bsg->ctl_points = (int *)bu_calloc(bsg->degree + 1, sizeof(int), "bsg->ctl_points");
-		for (i=0; i<=bsg->degree; i++) {
+		for (i=0; i<=(size_t)bsg->degree; i++) {
 		    bsg->ctl_points[i] = bu_glong(ptr);
 		    ptr += 4;
 		}
@@ -1120,7 +1120,7 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 {
     struct rt_sketch_internal *sketch_ip;
     union record *rec;
-    int i, seg_no, nbytes=0, ngran;
+    size_t i, seg_no, nbytes=0, ngran;
     vect_t tmp_vec;
     unsigned char *ptr;
 
@@ -1253,7 +1253,7 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		ptr += nseg->k.k_size * 8;
 		(void)bu_plong(ptr, nseg->c_size);
 		ptr += 4;
-		for (i=0; i<nseg->c_size; i++) {
+		for (i=0; i<(size_t)nseg->c_size; i++) {
 		    (void)bu_plong(ptr, nseg->ctl_points[i]);
 		    ptr +=  4;
 		}
@@ -1268,7 +1268,7 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		ptr += 4;
 		(void)bu_plong(ptr, bseg->degree);
 		ptr += 4;
-		for (i=0; i<=bseg->degree; i++) {
+		for (i=0; i<=(size_t)bseg->degree; i++) {
 		    (void)bu_plong(ptr, bseg->ctl_points[i]);
 		    ptr += 4;
 		}
@@ -1304,10 +1304,10 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 {
     struct rt_sketch_internal *sketch_ip;
     vect_t v;
-    int seg_no;
+    size_t seg_no;
     unsigned char *ptr;
     struct curve *crv;
-    int i;
+    size_t i;
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
 	bu_log("Barrier check at start of sketch_import5():\n");
@@ -1399,7 +1399,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 		nsg->c_size = bu_glong(ptr);
 		ptr += SIZEOF_NETWORK_LONG;
 		nsg->ctl_points = (int *)bu_malloc(nsg->c_size * sizeof(int), "nsg->ctl_points");
-		for (i=0; i<nsg->c_size; i++) {
+		for (i=0; i<(size_t)nsg->c_size; i++) {
 		    nsg->ctl_points[i] = bu_glong(ptr);
 		    ptr += SIZEOF_NETWORK_LONG;
 		}
@@ -1417,7 +1417,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 		bsg->degree = bu_glong(ptr);
 		ptr += SIZEOF_NETWORK_LONG;
 		bsg->ctl_points = (int *)bu_calloc(bsg->degree+1, sizeof(int), "bsg->ctl_points");
-		for (i=0; i<=bsg->degree; i++) {
+		for (i=0; i<=(size_t)bsg->degree; i++) {
 		    bsg->ctl_points[i] = bu_glong(ptr);
 		    ptr += SIZEOF_NETWORK_LONG;
 		}
@@ -1459,8 +1459,8 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 {
     struct rt_sketch_internal *sketch_ip;
     unsigned char *cp;
-    int seg_no;
-    int i;
+    size_t seg_no;
+    size_t i;
     vect_t tmp_vec;
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
@@ -1601,7 +1601,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		cp += nseg->k.k_size * SIZEOF_NETWORK_DOUBLE;
 		(void)bu_plong(cp, nseg->c_size);
 		cp += SIZEOF_NETWORK_LONG;
-		for (i=0; i<nseg->c_size; i++) {
+		for (i=0; i<(size_t)nseg->c_size; i++) {
 		    (void)bu_plong(cp, nseg->ctl_points[i]);
 		    cp += SIZEOF_NETWORK_LONG;
 		}
@@ -1616,7 +1616,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		cp += SIZEOF_NETWORK_LONG;
 		(void)bu_plong(cp, bseg->degree);
 		cp += SIZEOF_NETWORK_LONG;
-		for (i=0; i<=bseg->degree; i++) {
+		for (i=0; i<=(size_t)bseg->degree; i++) {
 		    (void)bu_plong(cp, bseg->ctl_points[i]);
 		    cp += SIZEOF_NETWORK_LONG;
 		}
@@ -1654,8 +1654,8 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 {
     struct rt_sketch_internal *sketch_ip =
 	(struct rt_sketch_internal *)ip->idb_ptr;
-    int i;
-    int seg_no;
+    size_t i;
+    size_t seg_no;
     char buf[256];
     point_t V;
     vect_t u, v;
@@ -1667,11 +1667,11 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
     VSCALE(u, sketch_ip->u_vec, mm2local);
     VSCALE(v, sketch_ip->v_vec, mm2local);
 
-    sprintf(buf, "\tV = (%g %g %g),  A = (%g %g %g), B = (%g %g %g)\n\t%d vertices\n",
+    sprintf(buf, "\tV = (%g %g %g),  A = (%g %g %g), B = (%g %g %g)\n\t%lu vertices\n",
 	    V3INTCLAMPARGS(V),
 	    V3INTCLAMPARGS(u),
 	    V3INTCLAMPARGS(v),
-	    sketch_ip->vert_count);
+	    (long unsigned)sketch_ip->vert_count);
     bu_vls_strcat(str, buf);
 
     if (!verbose)
@@ -1680,7 +1680,7 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
     if (sketch_ip->vert_count) {
 	bu_vls_strcat(str, "\tVertices:\n\t");
 	for (i=0; i<sketch_ip->vert_count; i++) {
-	    sprintf(buf, " %d-(%g %g)", i, V2INTCLAMPARGS(sketch_ip->verts[i]));
+	    sprintf(buf, " %lu-(%g %g)", (long unsigned)i, V2INTCLAMPARGS(sketch_ip->verts[i]));
 	    bu_vls_strcat(str, buf);
 	    if (i && (i+1)%3 == 0)
 		bu_vls_strcat(str, "\n\t");
@@ -1700,7 +1700,7 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 	switch (lsg->magic) {
 	    case CURVE_LSEG_MAGIC:
 		lsg = (struct line_seg *)sketch_ip->skt_curve.segments[seg_no];
-		if (lsg->start >= sketch_ip->vert_count || lsg->end >= sketch_ip->vert_count) {
+		if ((size_t)lsg->start >= sketch_ip->vert_count || (size_t)lsg->end >= sketch_ip->vert_count) {
 		    if (sketch_ip->skt_curve.reverse[seg_no])
 			sprintf(buf, "\t\tLine segment from vertex #%d to #%d\n",
 				lsg->end, lsg->start);
@@ -1724,7 +1724,7 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 		if (csg->radius < 0.0) {
 		    bu_vls_strcat(str, "\t\tFull Circle:\n");
 
-		    if (csg->end >= sketch_ip->vert_count || csg->start >= sketch_ip->vert_count) {
+		    if ((size_t)csg->end >= sketch_ip->vert_count || (size_t)csg->start >= sketch_ip->vert_count) {
 			sprintf(buf, "\t\tcenter at vertex #%d\n",
 				csg->end);
 			bu_vls_strcat(str, buf);
@@ -1741,7 +1741,7 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 		} else {
 		    bu_vls_strcat(str, "\t\tCircular Arc:\n");
 
-		    if (csg->end >= sketch_ip->vert_count || csg->start >= sketch_ip->vert_count) {
+		    if ((size_t)csg->end >= sketch_ip->vert_count || (size_t)csg->start >= sketch_ip->vert_count) {
 			sprintf(buf, "\t\t\tstart at vertex #%d\n",
 				csg->start);
 			bu_vls_strcat(str, buf);
@@ -1780,8 +1780,8 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 		sprintf(buf, "\t\t\torder = %d, number of control points = %d\n",
 			nsg->order, nsg->c_size);
 		bu_vls_strcat(str, buf);
-		if (nsg->ctl_points[0] >= sketch_ip->vert_count ||
-		    nsg->ctl_points[nsg->c_size-1] >= sketch_ip->vert_count) {
+		if ((size_t)nsg->ctl_points[0] >= sketch_ip->vert_count ||
+		    (size_t)nsg->ctl_points[nsg->c_size-1] >= sketch_ip->vert_count) {
 		    if (sketch_ip->skt_curve.reverse[seg_no])
 			sprintf(buf, "\t\t\tstarts at vertex #%d\n\t\t\tends at vertex #%d\n",
 				nsg->ctl_points[nsg->c_size-1],
@@ -1810,8 +1810,8 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 		bu_vls_strcat(str, "\t\tBezier segment:\n");
 		sprintf(buf, "\t\t\tdegree = %d\n", bsg->degree);
 		bu_vls_strcat(str, buf);
-		if (bsg->ctl_points[0] >= sketch_ip->vert_count ||
-		    bsg->ctl_points[bsg->degree] >= sketch_ip->vert_count) {
+		if ((size_t)bsg->ctl_points[0] >= sketch_ip->vert_count ||
+		    (size_t)bsg->ctl_points[bsg->degree] >= sketch_ip->vert_count) {
 		    if (sketch_ip->skt_curve.reverse[seg_no]) {
 			sprintf(buf, "\t\t\tstarts at vertex #%d\n\t\t\tends at vertex #%d\n",
 				bsg->ctl_points[bsg->degree],
@@ -1845,7 +1845,7 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 void
 rt_curve_free(struct curve *crv)
 {
-    int i;
+    size_t i;
 
     if (crv->seg_count)
 	bu_free((char *)crv->reverse, "crv->reverse");
@@ -1931,7 +1931,7 @@ rt_sketch_ifree(struct rt_db_internal *ip)
 void
 rt_copy_curve(struct curve *crv_out, const struct curve *crv_in)
 {
-    int i, j;
+    size_t i, j;
 
     crv_out->seg_count = crv_in->seg_count;
     if (crv_out->seg_count) {
@@ -1967,16 +1967,16 @@ rt_copy_curve(struct curve *crv_out, const struct curve *crv_in)
 		crv_out->segments[j] = (genptr_t)nsg_out;
 		*nsg_out = *nsg_in;
 		nsg_out->ctl_points = (int *)bu_calloc(nsg_in->c_size, sizeof(int), "nsg_out->ctl_points");
-		for (i=0; i<nsg_out->c_size; i++)
+		for (i=0; i<(size_t)nsg_out->c_size; i++)
 		    nsg_out->ctl_points[i] = nsg_in->ctl_points[i];
 		if (RT_NURB_IS_PT_RATIONAL(nsg_in->pt_type)) {
 		    nsg_out->weights = (fastf_t *)bu_malloc(nsg_out->c_size * sizeof(fastf_t), "nsg_out->weights");
-		    for (i=0; i<nsg_out->c_size; i++)
+		    for (i=0; i<(size_t)nsg_out->c_size; i++)
 			nsg_out->weights[i] = nsg_in->weights[i];
 		} else
 		    nsg_out->weights = (fastf_t *)NULL;
 		nsg_out->k.knots = bu_malloc(nsg_in->k.k_size * sizeof(fastf_t), "nsg_out->k.knots");
-		for (i=0; i<nsg_in->k.k_size; i++)
+		for (i=0; i<(size_t)nsg_in->k.k_size; i++)
 		    nsg_out->k.knots[i] = nsg_in->k.knots[i];
 		break;
 	    case CURVE_BEZIER_MAGIC:
@@ -1986,7 +1986,7 @@ rt_copy_curve(struct curve *crv_out, const struct curve *crv_in)
 		*bsg_out = *bsg_in;
 		bsg_out->ctl_points = (int *)bu_calloc(bsg_out->degree + 1,
 						       sizeof(int), "bsg_out->ctl_points");
-		for (i=0; i<=bsg_out->degree; i++) {
+		for (i=0; i<=(size_t)bsg_out->degree; i++) {
 		    bsg_out->ctl_points[i] = bsg_in->ctl_points[i];
 		}
 		break;
@@ -2002,7 +2002,7 @@ struct rt_sketch_internal *
 rt_copy_sketch(const struct rt_sketch_internal *sketch_ip)
 {
     struct rt_sketch_internal *out;
-    int i;
+    size_t i;
     struct curve *crv_out;
 
     RT_SKETCH_CK_MAGIC(sketch_ip);
@@ -2036,7 +2036,7 @@ rt_copy_sketch(const struct rt_sketch_internal *sketch_ip)
 int
 curve_to_tcl_list(struct bu_vls *vls, struct curve *crv)
 {
-    int i, j;
+    size_t i, j;
 
     bu_vls_printf(vls, " SL {");
     for (j=0; j<crv->seg_count; j++) {
@@ -2059,25 +2059,25 @@ curve_to_tcl_list(struct bu_vls *vls, struct curve *crv)
 		{
 		    struct bezier_seg *bsg = (struct bezier_seg *)crv->segments[j];
 		    bu_vls_printf(vls, " { bezier D %d P {", bsg->degree);
-		    for (i=0; i<=bsg->degree; i++)
+		    for (i=0; i<=(size_t)bsg->degree; i++)
 			bu_vls_printf(vls, " %d", bsg->ctl_points[i]);
 		    bu_vls_printf(vls, " } }");
 		}
 		break;
 	    case CURVE_NURB_MAGIC:
 		{
-		    int k;
+		    size_t k;
 		    struct nurb_seg *nsg = (struct nurb_seg *)crv->segments[j];
 		    bu_vls_printf(vls, " { nurb O %d T %d K {",
 				  nsg->order, nsg->pt_type);
-		    for (k=0; k<nsg->k.k_size; k++)
+		    for (k=0; k<(size_t)nsg->k.k_size; k++)
 			bu_vls_printf(vls, " %.25g", nsg->k.knots[k]);
 		    bu_vls_strcat(vls, "} P {");
-		    for (k=0; k<nsg->c_size; k++)
+		    for (k=0; k<(size_t)nsg->c_size; k++)
 			bu_vls_printf(vls, " %d", nsg->ctl_points[k]);
 		    if (nsg->weights) {
 			bu_vls_strcat(vls, "} W {");
-			for (k=0; k<nsg->c_size; k++)
+			for (k=0; k<(size_t)nsg->c_size; k++)
 			    bu_vls_printf(vls, " %.25g", nsg->weights[k]);
 		    }
 		    bu_vls_strcat(vls, "} }");
@@ -2106,7 +2106,7 @@ int
 rt_sketch_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     struct rt_sketch_internal *skt=(struct rt_sketch_internal *)intern->idb_ptr;
-    int i;
+    size_t i;
     struct curve *crv;
 
     BU_CK_VLS(logstr);
@@ -2126,28 +2126,27 @@ rt_sketch_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const 
 	if (curve_to_tcl_list(logstr, crv)) {
 	    return BRLCAD_ERROR;
 	}
-    } else if (!strcmp(attr, "V")) {
+    } else if (BU_STR_EQUAL(attr, "V")) {
 	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(skt->V));
-    } else if (!strcmp(attr, "A")) {
+    } else if (BU_STR_EQUAL(attr, "A")) {
 	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(skt->u_vec));
-    } else if (!strcmp(attr, "B")) {
+    } else if (BU_STR_EQUAL(attr, "B")) {
 	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(skt->v_vec));
-    } else if (!strcmp(attr, "VL")) {
+    } else if (BU_STR_EQUAL(attr, "VL")) {
 	for (i=0; i<skt->vert_count; i++)
 	    bu_vls_printf(logstr, " {%.25g %.25g}", V2ARGS(skt->verts[i]));
-    } else if (!strcmp(attr, "SL")) {
+    } else if (BU_STR_EQUAL(attr, "SL")) {
 	crv = &skt->skt_curve;
 	if (curve_to_tcl_list(logstr, crv)) {
 	    return BRLCAD_ERROR;
 	}
     } else if (*attr == 'V') {
-	i = atoi((attr+1));
-	if (i < 0 || i >= skt->vert_count) {
+	long lval = atol((attr+1));
+	if (lval < 0 || (size_t)lval >= skt->vert_count) {
 	    bu_vls_printf(logstr, "ERROR: Illegal vertex number\n");
 	    return BRLCAD_ERROR;
 	}
-
-	bu_vls_printf(logstr, "%.25g %.25g", V2ARGS(skt->verts[i]));
+	bu_vls_printf(logstr, "%.25g %.25g", V2ARGS(skt->verts[lval]));
     } else {
 	/* unrecognized attribute */
 	bu_vls_printf(logstr, "ERROR: Unknown attribute, choices are V, A, B, VL, SL, or V#\n");
@@ -2199,7 +2198,7 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 	    return ret;
 	type = Tcl_GetString(seg_type);
 
-	if (!strcmp(type, "line")) {
+	if (BU_STR_EQUAL(type, "line")) {
 	    struct line_seg *lsg;
 
 	    lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "lsg");
@@ -2224,7 +2223,7 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 	    }
 	    lsg->magic = CURVE_LSEG_MAGIC;
 	    crv->segments[j] = (genptr_t)lsg;
-	} else if (!strcmp(type, "bezier")) {
+	} else if (BU_STR_EQUAL(type, "bezier")) {
 	    struct bezier_seg *bsg;
 	    int num_points;
 
@@ -2259,7 +2258,7 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 	    }
 	    bsg->magic = CURVE_BEZIER_MAGIC;
 	    crv->segments[j] = (genptr_t)bsg;
-	} else if (!strcmp(type, "carc")) {
+	} else if (BU_STR_EQUAL(type, "carc")) {
 	    struct carc_seg *csg;
 	    double tmp;
 
@@ -2295,7 +2294,7 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 	    }
 	    csg->magic = CURVE_CARC_MAGIC;
 	    crv->segments[j] = (genptr_t)csg;
-	} else if (!strcmp(type, "nurb")) {
+	} else if (BU_STR_EQUAL(type, "nurb")) {
 	    struct nurb_seg *nsg;
 
 	    nsg = (struct nurb_seg *)bu_calloc(1, sizeof(struct nurb_seg), "nsg");
@@ -2342,7 +2341,7 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
 
 int
-rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_sketch_internal *skt;
     int ret, array_len;
@@ -2353,7 +2352,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
     RT_SKETCH_CK_MAGIC(skt);
 
     while (argc >= 2) {
-	if (!strcmp(argv[0], "V")) {
+	if (BU_STR_EQUAL(argv[0], "V")) {
 	    new = skt->V;
 	    array_len = 3;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
@@ -2361,7 +2360,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
-	} else if (!strcmp(argv[0], "A")) {
+	} else if (BU_STR_EQUAL(argv[0], "A")) {
 	    new = skt->u_vec;
 	    array_len = 3;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
@@ -2369,7 +2368,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
-	} else if (!strcmp(argv[0], "B")) {
+	} else if (BU_STR_EQUAL(argv[0], "B")) {
 	    new = skt->v_vec;
 	    array_len = 3;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
@@ -2377,15 +2376,18 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
-	} else if (!strcmp(argv[0], "VL")) {
+	} else if (BU_STR_EQUAL(argv[0], "VL")) {
 	    fastf_t *new_verts=(fastf_t *)NULL;
 	    int len;
 	    char *ptr;
+	    char *dupstr;
 
 	    /* the vertex list is a list of lists (each element is a list of two coordinates)
 	     * so eliminate all the '{' and '}' chars in the list
 	     */
-	    ptr = argv[1];
+	    dupstr = bu_strdup(argv[1]);
+
+	    ptr = dupstr;
 	    while (*ptr != '\0') {
 		if (*ptr == '{' || *ptr == '}')
 		    *ptr = ' ';
@@ -2393,7 +2395,9 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	    }
 
 	    len = 0;
-	    (void)tcl_list_to_fastf_array(brlcad_interp, argv[1], &new_verts, &len);
+	    (void)tcl_list_to_fastf_array(brlcad_interp, dupstr, &new_verts, &len);
+	    bu_free(dupstr, "sketch adjust strdup");
+
 	    if (len%2) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertices\n");
 		return BRLCAD_ERROR;
@@ -2403,7 +2407,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 		bu_free((char *)skt->verts, "verts");
 	    skt->verts = (point2d_t *)new_verts;
 	    skt->vert_count = len / 2;
-	} else if (!strcmp(argv[0], "SL")) {
+	} else if (BU_STR_EQUAL(argv[0], "SL")) {
 /* the entire segment list */
 	    Tcl_Obj *tmp;
 	    struct curve *crv;
@@ -2420,12 +2424,12 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 		return ret;
 	} else if (*argv[0] == 'V' && isdigit(*(argv[0]+1))) {
 	    /* changing a specific vertex */
-	    int vert_no;
+	    long vert_no;
 	    fastf_t *new_vert;
 
-	    vert_no = atoi(argv[0] + 1);
+	    vert_no = atol(argv[0] + 1);
 	    new_vert = skt->verts[vert_no];
-	    if (vert_no < 0 || vert_no > skt->vert_count) {
+	    if (vert_no < 0 || (size_t)vert_no > skt->vert_count) {
 		bu_vls_printf(logstr, "ERROR: Illegal vertex number\n");
 		return BRLCAD_ERROR;
 	    }

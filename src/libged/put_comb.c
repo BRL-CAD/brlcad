@@ -1,7 +1,7 @@
 /*                         P U T _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ _ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory
     intern.idb_ptr = (genptr_t)comb;
     comb->tree = final_tree;
 
-    if (strcmp(new_name, old_name)) {
+    if (!BU_STR_EQUAL(new_name, old_name)) {
 	int flags;
 
 	if (comb->region_flag)

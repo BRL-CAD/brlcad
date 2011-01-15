@@ -1,7 +1,7 @@
 /*                       M A K E D I R . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -157,7 +157,7 @@ Makedir()
 	Readrec(saverec); /* restore previous record */
     }
 
- out:
+out:
     bu_log("\t%d\n\n", entcount+1);
     if (paramguess)
 	bu_log("Some entities did not have proper parameter pointers, so a resonable guess was made\n");

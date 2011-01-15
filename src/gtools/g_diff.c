@@ -1,7 +1,7 @@
 /*                        G _ D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -246,13 +246,13 @@ compare_values(int type, Tcl_Obj *val1, Tcl_Obj *val2)
 {
     int len1, len2;
     int i;
-    int str_ret;
+    int str_eq;
     float a, b;
     Tcl_Obj *obj1, *obj2;
 
-    str_ret = strcmp(Tcl_GetStringFromObj(val1, NULL), Tcl_GetStringFromObj(val2, NULL));
+    str_eq = BU_STR_EQUAL(Tcl_GetStringFromObj(val1, NULL), Tcl_GetStringFromObj(val2, NULL));
 
-    if (str_ret == 0 || type == ATTRS) {
+    if (str_eq || type == ATTRS) {
 	return 0;
     }
 
@@ -297,7 +297,7 @@ compare_values(int type, Tcl_Obj *val1, Tcl_Obj *val2)
 		return 1;
 	    }
 	} else {
-	    if (strcmp(str1, str2)) {
+	    if (!BU_STR_EQUAL(str1, str2)) {
 		return strstr(str2, str1)?2:1;
 	    }
 	}
@@ -357,7 +357,7 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 		fprintf(stderr, "%s\n", Tcl_GetStringResult(interp));
 		bu_exit (1, NULL);
 	    }
-	    if (!strcmp(Tcl_GetStringFromObj(key1, &junk), Tcl_GetStringFromObj(key2, &junk))) {
+	    if (BU_STR_EQUAL(Tcl_GetStringFromObj(key1, &junk), Tcl_GetStringFromObj(key2, &junk))) {
 
 		found = 1;
 		if (Tcl_ListObjIndex(interp, obj2, j+1, &val2) == TCL_ERROR) {
@@ -466,7 +466,7 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 		fprintf(stderr, "%s\n", Tcl_GetStringResult(interp));
 		bu_exit (1, NULL);
 	    }
-	    if (!strcmp(Tcl_GetStringFromObj(key1, &junk), Tcl_GetStringFromObj(key2, &junk))) {
+	    if (BU_STR_EQUAL(Tcl_GetStringFromObj(key1, &junk), Tcl_GetStringFromObj(key2, &junk))) {
 		found = 1;
 		break;
 	    }
@@ -545,7 +545,7 @@ compare_tcl_solids(char *str1, Tcl_Obj *obj1, struct directory *dp1, char *str2,
 	    printf("kill %s\ndb put %s %s\n", dp1->d_namep, dp1->d_namep, str2);
 
 	return 1;
-    } else if (!strcmp(str1, str2)) {
+    } else if (BU_STR_EQUAL(str1, str2)) {
 	return 0;		/* no difference */
     }
 
@@ -576,7 +576,7 @@ compare_tcl_combs(Tcl_Obj *obj1, struct directory *dp1, Tcl_Obj *obj2)
     bu_vls_init(&adjust);
 
     /* first check if there is any difference */
-    if (!strcmp(Tcl_GetStringFromObj(obj1, &junk), Tcl_GetStringFromObj(obj2, &junk)))
+    if (BU_STR_EQUAL(Tcl_GetStringFromObj(obj1, &junk), Tcl_GetStringFromObj(obj2, &junk)))
 	return 0;
 
     if (mode != HUMAN) {
@@ -621,7 +621,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 
 	key = Tcl_GetStringFromObj(objs[i-1], NULL);
 	value = Tcl_GetStringFromObj(objs[i], NULL);
-	if (!strcmp(key, "region_id")) {
+	if (BU_STR_EQUAL(key, "region_id")) {
 	    long id;
 
 	    id = strtol(value, NULL, 0);
@@ -629,7 +629,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 		fprintf(stderr, "WARNING: %s in %s: \"region_id\" attribute says %ld, while region says %ld\n",
 			dp->d_namep, dbip->dbi_filename, id, comb->region_id);
 	    }
-	} else if (!strcmp(key, "giftmater")) {
+	} else if (BU_STR_EQUAL(key, "giftmater")) {
 	    long GIFTmater;
 
 	    GIFTmater = strtol(value, NULL, 0);
@@ -637,7 +637,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 		fprintf(stderr, "WARNING: %s in %s: \"giftmater\" attribute says %ld, while region says %ld\n",
 			dp->d_namep, dbip->dbi_filename, GIFTmater, comb->GIFTmater);
 	    }
-	} else if (!strcmp(key, "los")) {
+	} else if (BU_STR_EQUAL(key, "los")) {
 	    long los;
 
 	    los = strtol(value, NULL, 0);
@@ -645,7 +645,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 		fprintf(stderr, "WARNING: %s in %s: \"los\" attribute says %ld, while region says %ld\n",
 			dp->d_namep, dbip->dbi_filename, los, comb->los);
 	    }
-	} else if (!strcmp(key, "material")) {
+	} else if (BU_STR_EQUAL(key, "material")) {
 	    if (!strncmp(value, "gift", 4)) {
 		long GIFTmater;
 
@@ -655,7 +655,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 			    dp->d_namep, dbip->dbi_filename, value, comb->GIFTmater);
 		}
 	    }
-	} else if (!strcmp(key, "aircode")) {
+	} else if (BU_STR_EQUAL(key, "aircode")) {
 	    long aircode;
 
 	    aircode = strtol(value, NULL, 0);
@@ -697,13 +697,13 @@ remove_region_attrs(Tcl_Obj *obj)
 	key = Tcl_GetStringFromObj(objs[i-1], NULL);
 	j = 0;
 	while (region_attrs[j]) {
-	    if (!strcmp(key, region_attrs[j])) {
+	    if (BU_STR_EQUAL(key, region_attrs[j])) {
 		Tcl_ListObjReplace(interp, obj, i-1, 2, 0, NULL);
 		break;
 	    }
 	    j++;
 	}
-	if (!found_material && !strcmp(key, "material")) {
+	if (!found_material && BU_STR_EQUAL(key, "material")) {
 	    found_material = 1;
 	    if (!strncmp(Tcl_GetStringFromObj(objs[i], NULL), "gift", 4)) {
 		Tcl_ListObjReplace(interp, obj, i-1, 2, 0, NULL);
@@ -866,7 +866,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	}
 
 	/* the two objects are different types */
-	if (strcmp(str1, str2)) {
+	if (!BU_STR_EQUAL(str1, str2)) {
 	    has_diff += 1;
 	    if (mode == HUMAN)
 		printf("%s:\n\twas: %s\n\tis now: %s\n\n",
@@ -1060,7 +1060,7 @@ main(int argc, char **argv)
     }
 
     /* compare titles */
-    if (strcmp(dbip1->dbi_title, dbip2->dbi_title)) {
+    if (!BU_STR_EQUAL(dbip1->dbi_title, dbip2->dbi_title)) {
 	different = 1;
 	if (mode == HUMAN) {
 	    printf("Title has changed from: \"%s\" to: \"%s\"\n\n", dbip1->dbi_title, dbip2->dbi_title);

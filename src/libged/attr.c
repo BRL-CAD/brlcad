@@ -1,7 +1,7 @@
 /*                         A T T R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,6 +26,14 @@
 #include <string.h>
 
 #include "ged.h"
+
+/* comparison function for the avs->name qsort below -- based on example in libc: man qsort */
+static int
+cmpstringp(const void *p1, const void *p2)
+{
+    return strcmp((char * const)((struct bu_attribute_value_pair *)p1)->name,
+                  (char * const)((struct bu_attribute_value_pair *)p2)->name);
+}
 
 int
 ged_attr(struct ged *gedp, int argc, const char *argv[])
@@ -72,7 +80,10 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (strcmp(argv[1], "get") == 0) {
+    /* sort attribute-value set array by attribute name */
+    qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), cmpstringp);
+
+    if (BU_STR_EQUAL(argv[1], "get")) {
 	if (argc == 3) {
 	    /* just list all the attributes */
 	    avpp = avs.avp;
@@ -103,7 +114,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	bu_avs_free(&avs);
 
-    } else if ( strcmp( argv[1], "set" ) == 0 ) {
+    } else if ( BU_STR_EQUAL( argv[1], "set" ) ) {
 	/* setting attribute/value pairs */
 	if ((argc - 3) % 2) {
 	    bu_vls_printf(&gedp->ged_result_str,
@@ -114,7 +125,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	i = 3;
 	while (i < (size_t)argc) {
-	    if(strcmp( argv[i], "region") == 0 && strcmp(argv[i+1], "R") == 0) {
+	    if(BU_STR_EQUAL( argv[i], "region") && BU_STR_EQUAL(argv[i+1], "R")) {
  		dp->d_flags |= DIR_REGION;
  	    }
 	    (void)bu_avs_add(&avs, argv[i], argv[i+1]);
@@ -129,10 +140,10 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	/* avs is freed by db5_update_attributes() */
 
-    } else if (strcmp(argv[1], "rm") == 0) {
+    } else if (BU_STR_EQUAL(argv[1], "rm")) {
 	i = 3;
 	while (i < (size_t)argc) {
-    	    if(strcmp( argv[i], "region") == 0) {
+    	    if(BU_STR_EQUAL( argv[i], "region")) {
  		dp->d_flags = dp->d_flags & ~(DIR_REGION);
  	    }
 	    (void)bu_avs_remove(&avs, argv[i]);
@@ -147,7 +158,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	/* avs is freed by db5_replace_attributes() */
 
-    } else if ( strcmp( argv[1], "append" ) == 0 ) {
+    } else if ( BU_STR_EQUAL( argv[1], "append" ) ) {
 	if ((argc-3)%2) {
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "Error: attribute names and values must be in pairs!!!\n");
@@ -157,7 +168,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	i = 3;
 	while (i < (size_t)argc) {
 	    const char *old_val;
-	    if(strcmp( argv[i], "region") == 0 && strcmp(argv[i+1], "R") == 0) {
+	    if(BU_STR_EQUAL( argv[i], "region") && BU_STR_EQUAL(argv[i+1], "R")) {
  		dp->d_flags |= DIR_REGION;
  	    }
 	    old_val = bu_avs_get(&avs, argv[i]);
@@ -184,7 +195,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	/* avs is freed by db5_replace_attributes() */
 
-    } else if ( strcmp( argv[1], "show" ) == 0 ) {
+    } else if ( BU_STR_EQUAL( argv[1], "show" ) ) {
 	int max_attr_name_len=0;
 	int tabs1=0;
 

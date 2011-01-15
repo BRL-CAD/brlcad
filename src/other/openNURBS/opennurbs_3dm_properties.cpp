@@ -315,7 +315,7 @@ void ON_3dmProperties::Default()
 ON_3dmProperties::ON_3dmProperties()
 {
   Default();
-};
+}
 
 ON_3dmProperties::~ON_3dmProperties()
 {

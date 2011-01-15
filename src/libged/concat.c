@@ -1,7 +1,7 @@
 /*                         C O N C A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -108,7 +108,7 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 
 	    cc_data.copy_mode |= AUTO_PREFIX;
 
-	    if (argc == 3 || strcmp(argv[3], "/") == 0) {
+	    if (argc == 3 || BU_STR_EQUAL(argv[3], "/")) {
 		cc_data.copy_mode = NO_AFFIX | CUSTOM_PREFIX;
 	    } else {
 		(void)bu_vls_strcpy(&cc_data.affix, argv[3]);
@@ -119,7 +119,7 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 
 	    cc_data.copy_mode |= AUTO_SUFFIX;
 
-	    if (argc == 3 || strcmp(argv[3], "/") == 0) {
+	    if (argc == 3 || BU_STR_EQUAL(argv[3], "/")) {
 		cc_data.copy_mode = NO_AFFIX | CUSTOM_SUFFIX;
 	    } else {
 		(void)bu_vls_strcpy(&cc_data.affix, argv[3]);
@@ -139,7 +139,7 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 
 	cc_data.copy_mode |= AUTO_PREFIX;
 
-	if (argc == 2 || strcmp(argv[2], "/") == 0) {
+	if (argc == 2 || BU_STR_EQUAL(argv[2], "/")) {
 	    cc_data.copy_mode = NO_AFFIX | CUSTOM_PREFIX;
 	} else {
 	    (void)bu_vls_strcpy(&cc_data.affix, argv[2]);

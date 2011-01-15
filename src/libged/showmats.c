@@ -1,7 +1,7 @@
 /*                         S H O W M A T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,12 +41,7 @@ struct showmats_data {
 };
 
 static void
-Do_showmats(struct db_i			*dbip,
-	    struct rt_comb_internal	*comb,
-	    union tree			*comb_leaf,
-	    genptr_t			user_ptr1,
-	    genptr_t			user_ptr2,
-	    genptr_t			user_ptr3)
+Do_showmats(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t UNUSED(user_ptr3))
 {
     struct showmats_data *smdp;
     int aflag;
@@ -58,7 +53,7 @@ Do_showmats(struct db_i			*dbip,
     smdp = (struct showmats_data *)user_ptr1;
     aflag = *((int *)user_ptr2);
 
-    if (strcmp(comb_leaf->tr_l.tl_name, smdp->smd_child))
+    if (!BU_STR_EQUAL(comb_leaf->tr_l.tl_name, smdp->smd_child))
 	return;
 
     smdp->smd_count++;
@@ -81,7 +76,7 @@ Do_showmats(struct db_i			*dbip,
 }
 
 static int
-Run_showmats(struct ged *gedp, char *path, int aflag)
+Run_showmats(struct ged *gedp, const char *path, int aflag)
 {
     struct showmats_data sm_data;
     char *parent;

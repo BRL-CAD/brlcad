@@ -1,7 +1,7 @@
 /*                      D B 5 _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -562,12 +562,12 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 	while (1) {
 	    struct bu_ptbl *tmp;
 
-	    for (is=0; is<BU_PTBL_LEN(tbl1); is += 2) {
+	    for (ius=0; ius<BU_PTBL_LEN(tbl1); ius += 2) {
 		union tree *tp1, *tp2, *unionp;
-		int j;
+		size_t j;
 
-		j = is + 1;
-		tp1 = (union tree *)BU_PTBL_GET(tbl1, is);
+		j = ius + 1;
+		tp1 = (union tree *)BU_PTBL_GET(tbl1, ius);
 		if (j < BU_PTBL_LEN(tbl1)) {
 		    tp2 = (union tree *)BU_PTBL_GET(tbl1, j);
 		} else {
@@ -849,34 +849,34 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	}
 	itemlwr[i] = 0;
 
-	if (strcmp(itemlwr, "region")==0) {
+	if (BU_STR_EQUAL(itemlwr, "region")) {
 	    snprintf(buf, 128, "%s", comb->region_flag ? "yes" : "no");
-	} else if (strcmp(itemlwr, "id")==0) {
+	} else if (BU_STR_EQUAL(itemlwr, "id")) {
 	    if (!comb->region_flag) goto not_region;
 	    snprintf(buf, 128, "%ld", comb->region_id);
-	} else if (strcmp(itemlwr, "air")==0) {
+	} else if (BU_STR_EQUAL(itemlwr, "air")) {
 	    if (!comb->region_flag) goto not_region;
 	    snprintf(buf, 128, "%ld", comb->aircode);
-	} else if (strcmp(itemlwr, "los")==0) {
+	} else if (BU_STR_EQUAL(itemlwr, "los")) {
 	    if (!comb->region_flag) goto not_region;
 	    snprintf(buf, 128, "%ld", comb->los);
-	} else if (strcmp(itemlwr, "giftmater")==0) {
+	} else if (BU_STR_EQUAL(itemlwr, "giftmater")) {
 	    if (!comb->region_flag) goto not_region;
 	    snprintf(buf, 128, "%ld", comb->GIFTmater);
-	} else if (strcmp(itemlwr, "rgb")==0) {
+	} else if (BU_STR_EQUAL(itemlwr, "rgb")) {
 	    if (comb->rgb_valid)
 		snprintf(buf, 128, "%d %d %d", V3ARGS(comb->rgb));
 	    else
 		snprintf(buf, 128, "invalid");
-	} else if (strcmp(itemlwr, "shader")==0) {
+	} else if (BU_STR_EQUAL(itemlwr, "shader")) {
 	    bu_vls_printf(logstr, "%s", bu_vls_addr(&comb->shader));
 	    return BRLCAD_OK;
-	} else if (strcmp(itemlwr, "material")==0) {
+	} else if (BU_STR_EQUAL(itemlwr, "material")) {
 	    bu_vls_printf(logstr, "%s", bu_vls_addr(&comb->material));
 	    return BRLCAD_OK;
-	} else if (strcmp(itemlwr, "inherit")==0) {
+	} else if (BU_STR_EQUAL(itemlwr, "inherit")) {
 	    snprintf(buf, 128, "%s", comb->inherit ? "yes" : "no");
-	} else if (strcmp(itemlwr, "tree")==0) {
+	} else if (BU_STR_EQUAL(itemlwr, "tree")) {
 	    db_tree_list(logstr, comb->tree);
 	    return BRLCAD_OK;
 	} else {
@@ -920,12 +920,12 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    buf[i] = isupper(argv[0][i])?tolower(argv[0][i]):argv[0][i];
 	buf[i] = 0;
 
-	if (strcmp(buf, "region")==0) {
-	    if (strcmp(argv[1], "none") == 0) {
+	if (BU_STR_EQUAL(buf, "region")) {
+	    if (BU_STR_EQUAL(argv[1], "none")) {
 		comb->region_flag = 0;
-	    } else if (strcmp(argv[1], "no") == 0) {
+	    } else if (BU_STR_EQUAL(argv[1], "no")) {
 		comb->region_flag = 0;
-	    } else if (strcmp(argv[1], "yes") == 0) {
+	    } else if (BU_STR_EQUAL(argv[1], "yes")) {
 		comb->region_flag = 1;
 	    } else {
 		if (sscanf(argv[1], "%d", &i) != 1)
@@ -936,53 +936,53 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 
 		comb->region_flag = (char)i;
 	    }
-	} else if (strcmp(buf, "temp")==0) {
+	} else if (BU_STR_EQUAL(buf, "temp")) {
 	    if (!comb->region_flag) goto not_region;
-	    if (strcmp(argv[1], "none") == 0) {
+	    if (BU_STR_EQUAL(argv[1], "none")) {
 		comb->temperature = 0.0;
 	    } else {
 		if (sscanf(argv[1], "%lf", &d) != 1)
 		    return BRLCAD_ERROR;
 		comb->temperature = (float)d;
 	    }
-	} else if (strcmp(buf, "id")==0) {
+	} else if (BU_STR_EQUAL(buf, "id")) {
 	    if (!comb->region_flag) goto not_region;
-	    if (strcmp(argv[1], "none") == 0) {
+	    if (BU_STR_EQUAL(argv[1], "none")) {
 		comb->region_id = 0;
 	    } else {
 		if (sscanf(argv[1], "%d", &i) != 1)
 		    return BRLCAD_ERROR;
 		comb->region_id = i;
 	    }
-	} else if (strcmp(buf, "air")==0) {
+	} else if (BU_STR_EQUAL(buf, "air")) {
 	    if (!comb->region_flag) goto not_region;
-	    if (strcmp(argv[1], "none") == 0) {
+	    if (BU_STR_EQUAL(argv[1], "none")) {
 		comb->aircode = 0;
 	    } else {
 		if (sscanf(argv[1], "%d", &i) != 1)
 		    return BRLCAD_ERROR;
 		comb->aircode = i;
 	    }
-	} else if (strcmp(buf, "los")==0) {
+	} else if (BU_STR_EQUAL(buf, "los")) {
 	    if (!comb->region_flag) goto not_region;
-	    if (strcmp(argv[1], "none") == 0) {
+	    if (BU_STR_EQUAL(argv[1], "none")) {
 		comb->los = 0;
 	    } else {
 		if (sscanf(argv[1], "%d", &i) != 1)
 		    return BRLCAD_ERROR;
 		comb->los = i;
 	    }
-	} else if (strcmp(buf, "giftmater")==0) {
+	} else if (BU_STR_EQUAL(buf, "giftmater")) {
 	    if (!comb->region_flag) goto not_region;
-	    if (strcmp(argv[1], "none") == 0) {
+	    if (BU_STR_EQUAL(argv[1], "none")) {
 		comb->GIFTmater = 0;
 	    } else {
 		if (sscanf(argv[1], "%d", &i) != 1)
 		    return BRLCAD_ERROR;
 		comb->GIFTmater = i;
 	    }
-	} else if (strcmp(buf, "rgb")==0) {
-	    if (strcmp(argv[1], "invalid")==0 || strcmp(argv[1], "none") == 0) {
+	} else if (BU_STR_EQUAL(buf, "rgb")) {
+	    if (BU_STR_EQUAL(argv[1], "invalid") || BU_STR_EQUAL(argv[1], "none")) {
 		comb->rgb[0] = comb->rgb[1] =
 		    comb->rgb[2] = 0;
 		comb->rgb_valid = 0;
@@ -999,25 +999,25 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		comb->rgb[2] = (unsigned char)b;
 		comb->rgb_valid = 1;
 	    }
-	} else if (strcmp(buf, "shader")==0) {
+	} else if (BU_STR_EQUAL(buf, "shader")) {
 	    bu_vls_trunc(&comb->shader, 0);
-	    if (strcmp(argv[1], "none")) {
+	    if (!BU_STR_EQUAL(argv[1], "none")) {
 		bu_vls_strcat(&comb->shader, argv[1]);
 		/* Leading spaces boggle the combination exporter */
 		bu_vls_trimspace(&comb->shader);
 	    }
-	} else if (strcmp(buf, "material")==0) {
+	} else if (BU_STR_EQUAL(buf, "material")) {
 	    bu_vls_trunc(&comb->material, 0);
-	    if (strcmp(argv[1], "none")) {
+	    if (!BU_STR_EQUAL(argv[1], "none")) {
 		bu_vls_strcat(&comb->material, argv[1]);
 		bu_vls_trimspace(&comb->material);
 	    }
-	} else if (strcmp(buf, "inherit")==0) {
-	    if (strcmp(argv[1], "none") == 0) {
+	} else if (BU_STR_EQUAL(buf, "inherit")) {
+	    if (BU_STR_EQUAL(argv[1], "none")) {
 		comb->inherit = 0;
-	    } else if (strcmp(argv[1], "no") == 0) {
+	    } else if (BU_STR_EQUAL(argv[1], "no")) {
 		comb->inherit = 0;
-	    } else if (strcmp(argv[1], "yes") == 0) {
+	    } else if (BU_STR_EQUAL(argv[1], "yes")) {
 		comb->inherit = 1;
 	    } else {
 		if (sscanf(argv[1], "%d", &i) != 1)
@@ -1028,10 +1028,10 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 
 		comb->inherit = (char)i;
 	    }
-	} else if (strcmp(buf, "tree")==0) {
+	} else if (BU_STR_EQUAL(buf, "tree")) {
 	    union tree *new;
 
-	    if (*argv[1] == '\0' || strcmp(argv[1], "none") == 0) {
+	    if (*argv[1] == '\0' || BU_STR_EQUAL(argv[1], "none")) {
 		db_free_tree(comb->tree, &rt_uniresource);
 		comb->tree = TREE_NULL;
 	    } else {

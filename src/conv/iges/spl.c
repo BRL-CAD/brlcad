@@ -1,7 +1,7 @@
 /*                           S P L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file spl.c
- *
- */
 
 #include "common.h"
 
@@ -33,8 +30,7 @@
 #include "./b_spline.h"
 
 struct b_spline *
-spl_new(u_order, v_order, n_u, n_v, n_rows, n_cols, evp)
-    int u_order, v_order, n_u, n_v, n_rows, n_cols, evp;
+spl_new(int u_order, int v_order, int n_u, int n_v, int n_rows, int n_cols, int evp)
 {
     struct b_spline *srf;
 
@@ -65,9 +61,9 @@ spl_new(u_order, v_order, n_u, n_v, n_rows, n_cols, evp)
     return srf;
 }
 
+
 void
-spl_sfree(srf)
-    struct b_spline * srf;
+spl_sfree(struct b_spline * srf)
 {
     bu_free((char *)srf->u_kv->knots, "spl_sfree: srf->u_kv->knots");
     bu_free((char *)srf->v_kv->knots, "spl_sfree: srf->v_kv->knots");
@@ -80,10 +76,9 @@ spl_sfree(srf)
     bu_free((char *)srf, "spl_sfree: srf");
 }
 
+
 struct knot_vec *
-spl_kvknot(order, lower, upper, num)
-    int order, num;
-    fastf_t lower, upper;
+spl_kvknot(int order, fastf_t lower, fastf_t upper, int num)
 {
     int i;
     int total;
@@ -92,7 +87,7 @@ spl_kvknot(order, lower, upper, num)
 
     total = order * 2 + num;
 
-    knot_step = (upper - lower) / ( num + 1 );
+    knot_step = (upper - lower) / (num + 1);
 
     new_knots = (struct knot_vec *) bu_malloc(sizeof(struct knot_vec), "spl_kvknot: new_knots");
     new_knots->k_size = total;
@@ -110,6 +105,7 @@ spl_kvknot(order, lower, upper, num)
 
     return new_knots;
 }
+
 
 /*
  * Local Variables:

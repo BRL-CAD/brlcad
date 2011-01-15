@@ -1,7 +1,7 @@
 /*                         F B - B W . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -149,6 +149,7 @@ Usage: fb-bw [-h -i] [-F framebuffer]\n\
     if (yin > height) yin = height;
 
     for (y = scr_yoff; y < scr_yoff + yin; y++) {
+	size_t ret;
 	if (inverse) {
 	    (void)fb_read(fbp, scr_xoff, fb_getheight(fbp)-1-y, inbuf, xin);
 	} else {
@@ -158,7 +159,9 @@ Usage: fb-bw [-h -i] [-F framebuffer]\n\
 	    obuf[x] = (((int)inbuf[3*x+RED]) + ((int)inbuf[3*x+GRN])
 		       + ((int)inbuf[3*x+BLU])) / 3;
 	}
-	fwrite(&obuf[0], sizeof(char), xin, outfp);
+	ret = fwrite(&obuf[0], sizeof(char), xin, outfp);
+	if (ret != (size_t)xin)
+	    perror("fwrite");
     }
 
     fb_close(fbp);

@@ -1,7 +1,7 @@
 /*                        B R L A B S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,14 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file brlabs.c
- *
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
- */
 
 #include "common.h"
 
@@ -32,18 +24,18 @@
 
 #include "bu.h"
 
-fastf_t brlabs( a )
-    const fastf_t a;
+fastf_t brlabs(const fastf_t a)
 {
     fastf_t b;
 
-    if ( a > 0 )
+    if (a > 0)
 	b = a;
     else
 	b = (-a);
 
     return b;
 }
+
 
 /*
  * Local Variables:

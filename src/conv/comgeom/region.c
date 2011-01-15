@@ -1,7 +1,7 @@
 /*                        R E G I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -118,8 +118,8 @@ getregion(void)
 		printf("getregion: premature EOF\n");
 		return -1;
 	    }
-	    if ( strcmp( rcard, "  end" ) == 0 ||
-		 strcmp( rcard, "  END" ) == 0 )  {
+	    if ( BU_STR_EQUAL( rcard, "  end" ) ||
+		 BU_STR_EQUAL( rcard, "  END" ) )  {
 		/* Version 1, DoE/MORSE */
 		reg_total = reg_num;
 		return 0;	/* done */
