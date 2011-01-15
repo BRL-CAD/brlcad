@@ -34,45 +34,6 @@ IF(BRLCAD_BUILD_LOCAL_ZLIB)
 ENDIF(BRLCAD_BUILD_LOCAL_ZLIB)
 
 # libtermlib Library
-# We need to do a functionality test here, if we're not on Windows
-IF(NOT WIN32)
-	SET(LIBTERM_SRC "
-#ifdef HAVE_TERMLIB_H
-#  include <termlib.h>
-#else
-#  ifdef HAVE_NCURSES_H
-#    include <ncurses.h>
-#  else
-#    ifdef HAVE_CURSES_H
-#      include <curses.h>
-#    else
-#      ifdef HAVE_TERMCAP_H
-#        include <termcap.h>
-#      else
-#        ifdef HAVE_TERMINFO_H
-#          include <terminfo.h>
-#        else
-#          ifdef HAVE_TINFO_H
-#            include <tinfo.h>
-#          endif
-#        endif
-#      endif
-#    endif
-#  endif
-#  ifdef HAVE_TERM_H
-#    include <term.h>
-#  endif
-#endif
-int main () {
-    char buffer[2048] = {0};
-	 int result = tgetent(buffer, "vt100");
-	 return 0;
-}")
-	CHECK_C_SOURCE_RUNS("${LIBTERM_SRC}" LIBTERM_WORKS)
-	IF(NOT LIBTERM_WORKS)
-		SET(BRLCAD_BUILD_LOCAL_TERMLIB ON)
-	ENDIF(NOT LIBTERM_WORKS)
-ENDIF(NOT WIN32)
 THIRD_PARTY_OPTION(TERMLIB termlib)
 THIRD_PARTY_SUBDIR(TERMLIB libtermlib)
 
