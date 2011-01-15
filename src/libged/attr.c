@@ -1,7 +1,7 @@
 /*                         A T T R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,6 +26,14 @@
 #include <string.h>
 
 #include "ged.h"
+
+/* comparison function for the avs->name qsort below -- based on example in libc: man qsort */
+static int
+cmpstringp(const void *p1, const void *p2)
+{
+    return strcmp((char * const)((struct bu_attribute_value_pair *)p1)->name,
+                  (char * const)((struct bu_attribute_value_pair *)p2)->name);
+}
 
 int
 ged_attr(struct ged *gedp, int argc, const char *argv[])
@@ -71,6 +79,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 	return GED_ERROR;
     }
+
+    /* sort attribute-value set array by attribute name */
+    qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), cmpstringp);
 
     if (BU_STR_EQUAL(argv[1], "get")) {
 	if (argc == 3) {

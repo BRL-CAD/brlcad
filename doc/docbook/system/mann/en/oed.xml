@@ -2,7 +2,7 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
                    "../../../resources/standard/dtd/docbookx.dtd">
 
-<!-- Copyright (c) 2005-2008 United States Government as represented by -->
+<!-- Copyright (c) 2005-2011 United States Government as represented by -->
 <!-- the U.S. Army Research Laboratory.                                 -->
 <!--                                                                    -->
 <!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
@@ -64,6 +64,9 @@
   <title>DESCRIPTION</title>
   <para>Places MGED directly into the matrix edit mode. The <emphasis>path_rhs</emphasis>
 	must be a path to a primitive shape, and <emphasis>path_lhs</emphasis> must be a path to a combination 	that includes the first component of <emphasis>path_rhs</emphasis> as one of its members. The edited 	matrix will be the matrix in the final component of <emphasis>path_lhs</emphasis> that corresponds to 	the first component of <emphasis>path_rhs</emphasis>.  The last component in <emphasis>path_rhs 	</emphasis> is used as the reference shape during object editing.
+   </para>
+   <para>Note that for scripting the object to be edited must be in view so a <command>B</command>
+        or <command>draw</command> must be used on the object before using the <command>oed</command> command.
    </para>
 </refsect1>
 

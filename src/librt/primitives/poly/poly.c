@@ -1,7 +1,7 @@
 /*                            P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -818,8 +818,7 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 	    (long int)pgp->npoly);
     bu_vls_strcat(str, buf);
 
-    sprintf(buf, "\tMost complex face has %lu vertices\n",
-	    pgp->max_npts);
+    sprintf(buf, "\tMost complex face has %lu vertices\n", (long unsigned)pgp->max_npts);
     bu_vls_strcat(str, buf);
 
     if (pgp->npoly) {
@@ -837,8 +836,7 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 	fastf_t *v = pgp->poly[i].verts;
 	fastf_t *n = pgp->poly[i].norms;
 
-	sprintf(buf, "\tPolygon %lu: (%lu pts)\n",
-		(long unsigned int)i, pgp->poly[i].npts);
+	sprintf(buf, "\tPolygon %lu: (%lu pts)\n", (long unsigned)i, (long unsigned)pgp->poly[i].npts);
 	bu_vls_strcat(str, buf);
 	for (j=0; j < pgp->poly[i].npts; j++) {
 	    sprintf(buf, "\t\tV (%g, %g, %g)\n\t\t N (%g, %g, %g)\n",

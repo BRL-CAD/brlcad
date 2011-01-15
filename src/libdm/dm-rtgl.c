@@ -1,7 +1,7 @@
 /*                        D M - R T G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -149,6 +149,7 @@ HIDDEN_DM_FUNCTION_PROTOTYPES(rtgl)
     1,				/* zbuffer */
     0,				/* no zclipping */
     0,                          /* clear back buffer after drawing and swap */
+    0,                          /* not overriding the auto font size */
     0				/* Tcl interpreter */
 };
 
@@ -2561,9 +2562,9 @@ rtgl_configureWin_guts(struct dm *dmp, int force)
 
 
 HIDDEN int
-rtgl_configureWin(struct dm *dmp)
+rtgl_configureWin(struct dm *dmp, int force)
 {
-    return rtgl_configureWin_guts(dmp, 0);
+    return rtgl_configureWin_guts(dmp, force);
 }
 
 

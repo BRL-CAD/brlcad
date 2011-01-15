@@ -1,7 +1,7 @@
 /*                        C U R S O R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #ifdef HAVE_TERMLIB_H
 #  include <termlib.h>
 #else
-#  if HAVE_NCURSES_H
+#  ifdef HAVE_NCURSES_H
 #    include <ncurses.h>
 #  else
 #    ifdef HAVE_CURSES_H
@@ -46,7 +46,7 @@
 #      endif
 #    endif
 #  endif
-#  if HAVE_TERM_H
+#  ifdef HAVE_TERM_H
 #    include <term.h>
 #  endif
 #endif

@@ -1,7 +1,7 @@
 /*                           B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2010 United States Government as represented by
+ * Copyright (c) 1999-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -587,7 +587,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
                     }
                 }
             }
-            fprintf(stderr, "Vertex #%lu appears in %lu faces\n", i, faceCount);
+            fprintf(stderr, "Vertex #%lu appears in %lu faces\n", (long unsigned)i, (long unsigned)faceCount);
             if (faceCount == 0) {
                 continue;
             }
@@ -601,7 +601,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
                         planes[i][3] = VDOT(planes[i], &bot_ip->vertices[bot_ip->faces[faces[i]*3]*3]);
 		    }
 		    plane = planes[i];
-		    fprintf(stderr, "\tplane #%lu = (%g %g %g %g)\n", i, V4ARGS(plane));
+		    fprintf(stderr, "\tplane #%lu = (%g %g %g %g)\n", (long unsigned)i, V4ARGS(plane));
 		}
         }
         return -1;
@@ -1179,8 +1179,8 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	    break;
     }
     snprintf(buf, 256, "\t%lu vertices, %lu faces (%s)\n",
-	     bot_ip->num_vertices,
-	     bot_ip->num_faces,
+	     (long unsigned)bot_ip->num_vertices,
+	     (long unsigned)bot_ip->num_faces,
 	     orientation);
     bu_vls_strcat(str, buf);
     bu_vls_strcat(str, mode);
@@ -1200,7 +1200,7 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	size_t j, k;
 	point_t pt[3];
 
-	snprintf(buf, 256, "\tface %lu:", i);
+	snprintf(buf, 256, "\tface %lu:", (long unsigned)i);
 	bu_vls_strcat(str, buf);
 
 	for (j=0; j<3; j++) {
@@ -1245,7 +1245,7 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	}
     }
     if (badVertexCount > 0) {
-	snprintf(buf, 256, "\tThis BOT has %lu invalid references to vertices\n", badVertexCount);
+	snprintf(buf, 256, "\tThis BOT has %lu invalid references to vertices\n", (long unsigned)badVertexCount);
 	bu_vls_strcat(str, buf);
     }
 
@@ -1693,14 +1693,14 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	    if (!(bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) || bot->num_normals < 1) {
 		bu_vls_strcat(logstr, "0");
 	    } else {
-		bu_vls_printf(logstr, "%lu", bot->num_normals);
+		bu_vls_printf(logstr, "%lu", (long unsigned)bot->num_normals);
 	    }
 	    status = BRLCAD_OK;
 	} else if (BU_STR_EQUAL(attr, "nfn")) {
 	    if (!(bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) || bot->num_face_normals < 1) {
 		bu_vls_strcat(logstr, "0");
 	    } else {
-		bu_vls_printf(logstr, "%lu", bot->num_face_normals);
+		bu_vls_printf(logstr, "%lu", (long unsigned)bot->num_face_normals);
 	    }
 	    status = BRLCAD_OK;
 	} else if (!strncmp(attr, "fm", 2)) {
@@ -1714,7 +1714,7 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 		} else {
 		    li = atol(&attr[2]);
 		    if (li < 0 || (size_t)li >= bot->num_faces) {
-			bu_vls_printf(logstr, "face number [%ld] out of range (0..%lu)", li, bot->num_faces-1);
+			bu_vls_printf(logstr, "face number [%ld] out of range (0..%zu)", li, bot->num_faces-1);
 			status = BRLCAD_ERROR;
 		    } else {
 			bu_vls_printf(logstr, "%s",
@@ -1727,7 +1727,7 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	    if (attr[1] != '\0') {
 		li = atol(&attr[1]);
 		if (li < 0 || (size_t)li >= bot->num_vertices) {
-		    bu_vls_printf(logstr, "vertex number [%ld] out of range (0..%lu)", li, bot->num_vertices-1);
+		    bu_vls_printf(logstr, "vertex number [%ld] out of range (0..%zu)", li, bot->num_vertices-1);
 		    status = BRLCAD_ERROR;
 		} else {
 		    bu_vls_printf(logstr, "%.25G %.25G %.25G",
@@ -1750,7 +1750,7 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	    } else {
 		li = atol(&attr[1]);
 		if (li < 0 || (size_t)li >= bot->num_faces) {
-		    bu_vls_printf(logstr, "face number [%ld] out of range (0..%lu)", li, bot->num_faces-1);
+		    bu_vls_printf(logstr, "face number [%ld] out of range (0..%zu)", li, bot->num_faces-1);
 		    status = BRLCAD_ERROR;
 		} else {
 		    bu_vls_printf(logstr, "%lu %lu %lu",
@@ -1796,7 +1796,7 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	    } else {
 		li = atol(&attr[1]);
 		if (li < 0 || (size_t)li >= bot->num_faces) {
-		    bu_vls_printf(logstr, "face number [%ld] out of range (0..%lu)", li, bot->num_faces-1);
+		    bu_vls_printf(logstr, "face number [%ld] out of range (0..%zu)", li, bot->num_faces-1);
 		    status = BRLCAD_ERROR;
 		} else {
 		    indx = bot->faces[li*3+0];
@@ -1829,7 +1829,7 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 		} else {
 		    li = atol(&attr[1]);
 		    if (li < 0 || (size_t)li >= bot->num_faces) {
-			bu_vls_printf(logstr, "face number [%ld] out of range (0..%lu)", li, bot->num_faces-1);
+			bu_vls_printf(logstr, "face number [%ld] out of range (0..%zu)", li, bot->num_faces-1);
 			status = BRLCAD_ERROR;
 		    } else {
 			bu_vls_printf(logstr, " %.25G", bot->thickness[li]);
@@ -1838,10 +1838,10 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 		}
 	    }
 	} else if (BU_STR_EQUAL(attr, "nv")) {
-	    bu_vls_printf(logstr, "%lu", bot->num_vertices);
+	    bu_vls_printf(logstr, "%zu", bot->num_vertices);
 	    status = BRLCAD_OK;
 	} else if (BU_STR_EQUAL(attr, "nt")) {
-	    bu_vls_printf(logstr, "%lu", bot->num_faces);
+	    bu_vls_printf(logstr, "%zu", bot->num_faces);
 	    status = BRLCAD_OK;
 	} else if (BU_STR_EQUAL(attr, "mode")) {
 	    bu_vls_printf(logstr, "%s", modes[bot->mode]);
@@ -1869,7 +1869,7 @@ bot_check_vertex_indices(struct bu_vls *logstr, struct rt_bot_internal *bot)
 	for (k=0 ; k<3 ; k++) {
 	    int vertex_no = bot->faces[i*3+k];
 	    if (vertex_no < 0 || (size_t)vertex_no >= bot->num_vertices) {
-		bu_vls_printf(logstr, "WARNING: BOT has illegal vertex index (%d) in face #(%lu)\n", vertex_no, i);
+		bu_vls_printf(logstr, "WARNING: BOT has illegal vertex index (%d) in face #(%zu)\n", vertex_no, i);
 		badVertexCount++;
 	    }
 	}
@@ -1923,7 +1923,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    } else {
 		li = atol(&(argv[0][2]));
 		if (li < 0 || (size_t)li >= bot->num_faces) {
-		    bu_vls_printf(logstr, "face number [%ld] out of range (0..%lu)", li, bot->num_faces-1);
+		    bu_vls_printf(logstr, "face number [%ld] out of range (0..%zu)", li, bot->num_faces-1);
 		    Tcl_DecrRefCount(obj);
 		    return BRLCAD_ERROR;
 		}
@@ -3156,7 +3156,7 @@ rt_bot_condense(struct rt_bot_internal *bot)
     for (i=0; i<bot->num_faces*3; i++) {
 	j = bot->faces[i];
 	if (j >= num_verts) {
-	    bu_log("Illegal vertex number %lu, should be 0 through %lu\n", j, num_verts-1);
+	    bu_log("Illegal vertex number %zu, should be 0 through %zu\n", j, num_verts-1);
 	    bu_bomb("Illegal vertex number\n");
 	}
 	verts[j] = 1;
@@ -3554,7 +3554,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 
     /* do some checking on the "new_faces" */
     if (new_face_count != bot->num_faces) {
-	bu_log("new_face_count = %lu, should be %lu\n", new_face_count, bot->num_faces);
+	bu_log("new_face_count = %zu, should be %zu\n", new_face_count, bot->num_faces);
 	bu_free(new_faces, "new_faces");
 	return 1;
     }
@@ -4142,10 +4142,9 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
 	return -1;
     }
 
-    bu_log("original face count = %lu, edge count = %lu\n",
-	   bot->num_faces, edge_count);
-    bu_log("\tedges deleted = %lu\n", edges_deleted);
-    bu_log("\tnew face_count = %lu\n", face_count);
+    bu_log("original face count = %zu, edge count = %zu\n", bot->num_faces, edge_count);
+    bu_log("\tedges deleted = %zu\n", edges_deleted);
+    bu_log("\tnew face_count = %zu\n", face_count);
 
     actual_count /= 3;
 

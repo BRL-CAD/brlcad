@@ -1,7 +1,7 @@
 /*                       P I X - P P M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -130,7 +130,7 @@ write_ppm(FILE *fp, char *data, long width, long height, int bytes_per_pixel)
     }
 
     /* width height */
-    fprintf(fp, "%lu %lu\n", width, height);
+    fprintf(fp, "%lu %lu\n", (long unsigned)width, (long unsigned)height);
 
     /* maximum color component value */
     fprintf(fp, "255\n");

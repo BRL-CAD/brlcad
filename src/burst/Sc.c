@@ -1,7 +1,7 @@
 /*                            S C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,15 +38,31 @@
 #endif
 
 /* Externals from termlib(3). */
-#ifdef HAVE_NCURSES_H
-#  include <ncurses.h>
+#ifdef HAVE_TERMLIB_H
+#  include <termlib.h>
 #else
-#  ifdef HAVE_CURSES_H
-#    include <curses.h>
+#  ifdef HAVE_NCURSES_H
+#    include <ncurses.h>
+#  else
+#    ifdef HAVE_CURSES_H
+#      include <curses.h>
+#    else
+#      ifdef HAVE_TERMCAP_H
+#        include <termcap.h>
+#      else
+#        ifdef HAVE_TERMINFO_H
+#          include <terminfo.h>
+#        else
+#          ifdef HAVE_TINFO_H
+#            include <tinfo.h>
+#          endif
+#        endif
+#      endif
+#    endif
 #  endif
-#endif
-#ifdef HAVE_TERM_H
-#  include <term.h>
+#  ifdef HAVE_TERM_H
+#    include <term.h>
+#  endif
 #endif
 
 #include "bu.h"

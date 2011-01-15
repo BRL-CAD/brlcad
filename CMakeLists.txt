@@ -704,12 +704,14 @@ IF(BRLCAD-ENABLE_X11)
    BRLCAD_INCLUDE_FILE(X11/Xlib.h HAVE_X11_XLIB_H)
 ENDIF(BRLCAD-ENABLE_X11)
 
-# Locate a curses package, and set the CONFIG_H header var if
-# the Find package reports the header present
-find_package(Curses)
-if (CURSES_HAVE_CURSES_H)
-	FILE(APPEND ${CONFIG_H_FILE} "#define HAVE_CURSES_H 1\n")
-endif()
+# Locate a terminal library
+BRLCAD_CHECK_LIBRARY(TERMLIB termlib tputs)
+BRLCAD_CHECK_LIBRARY(TERMLIB ncurses tputs)
+BRLCAD_CHECK_LIBRARY(TERMLIB curses tputs)
+BRLCAD_CHECK_LIBRARY(TERMLIB termcap tputs)
+BRLCAD_CHECK_LIBRARY(TERMLIB terminfo tputs)
+BRLCAD_CHECK_LIBRARY(TERMLIB tinfo tputs)
+BRLCAD_CHECK_LIBRARY(TERMLIB ccurses tputs)
 
 # m library is not needed on Windows
 IF(NOT WIN32)
@@ -813,6 +815,7 @@ BRLCAD_INCLUDE_FILE(libgen.h HAVE_LIBGEN_H)
 BRLCAD_INCLUDE_FILE(memory.h HAVE_MEMORY_H)
 BRLCAD_INCLUDE_FILE(netdb.h HAVE_NETDB_H)
 BRLCAD_INCLUDE_FILE(ncurses.h HAVE_NCURSES_H)
+BRLCAD_INCLUDE_FILE(curses.h HAVE_CURSES_H)
 BRLCAD_INCLUDE_FILE(netinet/in.h HAVE_NETINET_IN_H)
 BRLCAD_INCLUDE_FILE(poll.h HAVE_POLL_H)
 BRLCAD_INCLUDE_FILE(pwd.h HAVE_PWD_H)

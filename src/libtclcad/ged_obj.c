@@ -1,7 +1,7 @@
 /*                       G E D _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2010 United States Government as represented by
+ * Copyright (c) 2000-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -189,6 +189,12 @@ HIDDEN int go_data_pick(struct ged *gedp,
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
+HIDDEN int go_fontsize(struct ged *gedp,
+		       int argc,
+		       const char *argv[],
+		       ged_func_ptr func,
+		       const char *usage,
+		       int maxargs);
 HIDDEN int go_init_view_bindings(struct ged *gedp,
 				 int argc,
 				 const char *argv[],
@@ -743,6 +749,7 @@ static struct go_cmdtab go_cmds[] = {
     {"eye_pos",	"[x y z]", 5, go_view_func, ged_eye_pos},
     {"faceplate",	"center_dot|prim_labels|view_params|view_scale color|draw [val(s)]", GO_UNLIMITED, go_faceplate, GED_FUNC_PTR_NULL},
     {"facetize",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_facetize},
+    {"fontsize",	"[fontsize]", 3, go_fontsize, GED_FUNC_PTR_NULL},
     {"form",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_form},
     {"fracture",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_fracture},
     {"g",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_group},
@@ -1882,7 +1889,7 @@ go_configure(struct ged *gedp,
     }
 
     /* configure the display manager window */
-    status = DM_CONFIGURE_WIN(gdvp->gdv_dmp);
+    status = DM_CONFIGURE_WIN(gdvp->gdv_dmp, 0);
 
     /* configure the framebuffer window */
     if (gdvp->gdv_fbs.fbs_fbp != FBIO_NULL)
@@ -3709,6 +3716,63 @@ go_init_default_bindings(struct ged_dm_view *gdvp)
 
     Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&bindings));
     bu_vls_free(&bindings);
+}
+
+HIDDEN int
+go_fontsize(struct ged *gedp,
+	    int argc,
+	    const char *argv[],
+	    ged_func_ptr func,
+	    const char *usage,
+	    int UNUSED(maxargs))
+{
+    int fontsize;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 2 || 3 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    /* get the font size */
+    if (argc == 2) {
+	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_dmp->dm_fontsize);
+	return BRLCAD_OK;
+    }
+
+    /* set background color */
+    if (sscanf(argv[2], "%d", &fontsize) != 1)
+	goto bad_fontsize;
+
+    if (DM_VALID_FONT_SIZE(fontsize) || fontsize == 0) {
+	gdvp->gdv_dmp->dm_fontsize = fontsize;
+	DM_CONFIGURE_WIN(gdvp->gdv_dmp, 1);
+	go_refresh_view(gdvp);
+	return BRLCAD_OK;
+    }
+
+ bad_fontsize:
+    bu_vls_printf(&gedp->ged_result_str, "%s: %s", argv[0], argv[2]);
+    return BRLCAD_ERROR;
 }
 
 HIDDEN int

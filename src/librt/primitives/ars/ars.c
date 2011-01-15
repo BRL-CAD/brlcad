@@ -1,7 +1,7 @@
 /*                           A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -412,8 +412,7 @@ rt_ars_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     RT_ARS_CK_MAGIC(arip);
     bu_vls_strcat(str, "arbitrary rectangular solid (ARS)\n");
 
-    sprintf(buf, "\t%lu curves, %lu points per curve\n",
-	    arip->ncurves, arip->pts_per_curve);
+    sprintf(buf, "\t%lu curves, %lu points per curve\n", (long unsigned)arip->ncurves, (long unsigned)arip->pts_per_curve);
     bu_vls_strcat(str, buf);
 
     if (arip->ncurves > 0) {
@@ -430,7 +429,7 @@ rt_ars_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     for (i=0; i < arip->ncurves; i++) {
 	register fastf_t *v = arip->curves[i];
 
-	sprintf(buf, "\tCurve %lu:\n", i);
+	sprintf(buf, "\tCurve %lu:\n", (long unsigned)i);
 	bu_vls_strcat(str, buf);
 	for (j=0; j < arip->pts_per_curve; j++) {
 	    sprintf(buf, "\t\t(%g, %g, %g)\n",

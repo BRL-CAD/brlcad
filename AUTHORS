@@ -4,36 +4,45 @@ BRL-CAD Contributors
 
 The BRL-CAD development team would like to take this opportunity to
 thank the many people and organizations who have contributed to make
-BRL-CAD the package that it is today.
+BRL-CAD the package it is today.
 
-BRL-CAD was originally conceived and written for the most part by the
-late Michael John Muuss.  He is the original primary architect and
-author.  The package has since been improved upon over the years by
-Mike and the Advanced Computer Systems Team at the U.S. Army Research
-Laboratory (* see note), as well as by many others around the world.
-His work lives on in testament to his intellect and indomitable spirit
-through the contributions and improvements by others.  We strive to
-recognize those groups and individuals that have helped make BRL-CAD
-the package that it is today here.
+BRL-CAD was originally conceived and written, for the most part, by
+the late Michael John Muuss.  He is our original primary architect and
+author.  His work lives on in testament to his intellect and
+indomitable spirit through the contributions and improvements by
+others.
 
-Contributions of this collective work are separated into major
-sections depending on the level and type of involvement that the
-individual maintained.  Contributors are roughly ordered
-chronologically for each section, depending upon when involvement with
-BRL-CAD began.  The earliest contributors are named first; likewise,
-the most recent contributors are listed at the bottom.
+Over the years, Mike and the Advanced Computer Systems Team at the
+U.S. Army Research Laboratory (* see note) as well as many others
+around the world worked on developing BRL-CAD.  In December 2004,
+BRL-CAD development was opened and expanded with the conversion to
+Open Source.
 
-Names are optionally followed by the organizations that may have
-supported their involvement to some degree, also listed in
-chronological order.  Developers are only categorized as such and are
-only listed once as they tend to fit most categories, whereas the
-contributions of others are categorized and repeated as appropriate.
-Many individuals including many with affiliated organizations have
-also supported the package of their own accord and on their own time.
-Participation and contributions are graciously appreciated.
+We strive to accurately and completely recognize the groups and
+individuals that have helped make BRL-CAD the package it is today.
+Contributors are grouped together and ordered chronologically with the
+earliest named first; likewise, the more recent contributors are
+listed at the bottom.
 
-Active developers are denoted with an "**", meaning that they have
-been actively involved within the past 12 months.
+Names are optionally followed by the date of their first contribution
+and a list of affiliations.  Individuals supporting and contributing
+to the project on their own time and of their own accord have an
+affiliation listed as "Open Source".
+
+BRL-CAD is the collective effort of many contributors (** see note).
+Developers are characterized as individuals that have made substantial
+contributions (hundreds or even thousands of features) to the project
+over an extended period of time (years or even decades).  Other
+contributor credits are organized into the following general
+categories depending on the level and type of involvement:
+
+  * Mathematical, Algorithmic, and Geometric Support
+  * Documentation Writers
+  * Code Contributors
+  * Special Thanks
+
+Participation and contributions are graciously appreciated and
+credited in following.
 
 
 ORIGINAL ARCHITECT AND AUTHOR
@@ -801,8 +810,8 @@ contributed entirely before the name change reflect the original name,
 whereas persons who continued or began contributions after the name
 change reflect the new name.
 
-** The contributor is an active developer, meaning that they have been
-actively involved with the BRL-CAD development within the past 12 months.
+** The individual is an active contributor, participating in BRL-CAD
+development within the past 12 months with numerous contributions.
 
 If any corrections or additions need to be made, please contact one of
 the active core developers.  Additionally, you may send inquiries,

@@ -1,7 +1,7 @@
 dnl                    C O N F I G U R E . A C
 dnl BRL-CAD
 dnl
-dnl Copyright (c) 2004-2010 United States Government as represented by
+dnl Copyright (c) 2004-2011 United States Government as represented by
 dnl the U.S. Army Research Laboratory.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -3320,7 +3320,7 @@ AC_TRY_RUN([
 #ifdef HAVE_TERMLIB_H
 #  include <termlib.h>
 #else
-#  if HAVE_NCURSES_H
+#  ifdef HAVE_NCURSES_H
 #    include <ncurses.h>
 #  else
 #    ifdef HAVE_CURSES_H
@@ -3339,7 +3339,7 @@ AC_TRY_RUN([
 #      endif
 #    endif
 #  endif
-#  if HAVE_TERM_H
+#  ifdef HAVE_TERM_H
 #    include <term.h>
 #  endif
 #endif

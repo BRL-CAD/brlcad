@@ -1,7 +1,7 @@
 /*                         D X F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -698,7 +698,7 @@ process_point_entities_code( int code )
 	    get_layer();
 	    layers[curr_layer]->point_count++;
 	    MAT4X3PNT( tmp_pt, curr_state->xform, pt );
-	    sprintf( tmp_name, "point.%lu", layers[curr_layer]->point_count );
+	    sprintf( tmp_name, "point.%lu", (long unsigned int)layers[curr_layer]->point_count );
 	    (void)mk_sph( out_fp, tmp_name, tmp_pt, 0.1 );
 	    (void)bu_ptbl_ins( &(layers[curr_layer]->solids), (long *)bu_strdup( tmp_name ) );
 	    curr_state->sub_state = UNKNOWN_ENTITY_STATE;

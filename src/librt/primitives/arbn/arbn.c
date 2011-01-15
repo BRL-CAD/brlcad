@@ -1,7 +1,7 @@
 /*                          A R B N . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1023,14 +1023,14 @@ rt_arbn_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
     size_t i;
 
     RT_ARBN_CK_MAGIC(aip);
-    sprintf(buf, "arbn bounded by %lu planes\n", aip->neqn);
+    sprintf(buf, "arbn bounded by %lu planes\n", (long unsigned)aip->neqn);
     bu_vls_strcat(str, buf);
 
     if (!verbose) return 0;
 
     for (i=0; i < aip->neqn; i++) {
 	sprintf(buf, "\t%lu: (%g, %g, %g) %g\n",
-		i,
+		(long unsigned)i,
 		INTCLAMP(aip->eqn[i][X]),		/* should have unit length */
 		INTCLAMP(aip->eqn[i][Y]),
 		INTCLAMP(aip->eqn[i][Z]),

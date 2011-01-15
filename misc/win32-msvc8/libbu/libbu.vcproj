@@ -334,6 +334,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libbu\booleanize.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libbu\brlcad_path.c"
 				>
 				<FileConfiguration

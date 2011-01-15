@@ -1,7 +1,7 @@
 /*                         P L - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -81,6 +81,8 @@
 #include "bu.h"
 #include "fb.h"
 #include "plot3.h"
+
+#define COMMA ','
 
 /*
   Raster device model and image terminology as used herein:
@@ -267,7 +269,7 @@ static struct vectorchar {
 
     /* Some needed chars, hastily drawn -MJM */
     {'.', {{4, 7},   {3, 7},   {3, 6},   {4, 6},   {4, 7},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
-    {',', {{4, 6},   {3, 6},   {3, 5},   {4, 5},   {4, 8},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
+    {COMMA, {{4, 6},   {3, 6},   {3, 5},   {4, 5},   {4, 8},   {END},   {NIL},   {NIL},   {NIL},   {NIL}}},
 
     {'\0', {{NIL}, {NIL}, {NIL}, {NIL}, {NIL}, {NIL}, {NIL}, {NIL}, {NIL}, {NIL}}}
 };

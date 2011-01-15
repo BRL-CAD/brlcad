@@ -1,7 +1,7 @@
 /*                        C A T - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,6 +54,7 @@
 /* The vfonts are scaled for 200 dpi */
 #define CONVERT(n)		((n)*(200./432.))
 #define RECONVERT(n)		((n)*(432./200.))
+#define COMMA ','
 
 
 unsigned char	*scanline;
@@ -156,7 +157,7 @@ char	asctab[128] = {
     '.',	/*.*/
     'g',	/*g*/
     '\023',	/*3/4*/
-    ',',	/*,*/
+    COMMA,	/*,*/
     '&',	/*&*/
     'y',	/*y*/
     '\0',	/*blank*/

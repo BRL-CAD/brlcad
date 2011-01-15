@@ -1,7 +1,7 @@
 /*                        D M _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2010 United States Government as represented by
+ * Copyright (c) 1997-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1909,7 +1909,7 @@ dmo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     }
 
     /* configure the display manager window */
-    status = DM_CONFIGURE_WIN(dmop->dmo_dmp);
+    status = DM_CONFIGURE_WIN(dmop->dmo_dmp, 0);
 
 #ifdef USE_FBSERV
     /* configure the framebuffer window */

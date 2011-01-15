@@ -1,7 +1,7 @@
 #                     A R C H E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2010 United States Government as represented by
+# Copyright (c) 2002-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -151,10 +151,10 @@ package provide Archer 1.0
 	method pluginUpdateStatusBar {msg}
 
 	method importFg4Sections   {_slist _wlist _delta}
-	method setDefaultBindingMode {_mode}
 
 	# General
 	method askToRevert {}
+	method raytracePlus {}
 
 	# ArcherCore Override Section
 	method 3ptarb              {args}
@@ -227,6 +227,7 @@ package provide Archer 1.0
 	method vmake               {args}
 	method initImages          {}
 	method initFbImages        {}
+	method setDefaultBindingMode {_mode}
 
 	# Object Edit Management
 	method checkpoint {_obj _type}
@@ -314,7 +315,6 @@ package provide Archer 1.0
 	method fbModeToggle {}
 	method fbToggle {}
 	method rtEndCallback {_aborted}
-	method raytracePlus {}
 
 	#XXX Need to split up menuStatusCB into one method per menu
 	method menuStatusCB {_w}
@@ -935,6 +935,30 @@ package provide Archer 1.0
 	$itk_component(ged) configure -autoViewEnable 1
 	SetNormalCursor $this
     }
+}
+
+
+::itcl::body Archer::raytracePlus {} {
+    $itk_component(primaryToolbar) itemconfigure raytrace \
+	-image $mImage_rtAbort \
+	-command "$itk_component(rtcntrl) abort"
+    $itk_component(rtcntrl) raytracePlus
+}
+
+
+::itcl::body Archer::askToRevert {} {
+    if {!$mNeedSave} {
+	return 0
+    }
+
+    $itk_component(revertDialog) center [namespace tail $this]
+    ::update
+    if {[$itk_component(revertDialog) activate]} {
+	revert
+	return 1
+    }
+
+    return 0
 }
 
 
@@ -1965,22 +1989,6 @@ package provide Archer 1.0
 
 
 ################################### Protected Section ###################################
-
-::itcl::body Archer::askToRevert {} {
-    if {!$mNeedSave} {
-	return 0
-    }
-
-    $itk_component(revertDialog) center [namespace tail $this]
-    ::update
-    if {[$itk_component(revertDialog) activate]} {
-	revert
-	return 1
-    }
-
-    return 0
-}
-
 
 ################################### ArcherCore Override Section ###################################
 
@@ -4670,14 +4678,6 @@ proc title_node_handler {node} {
     $itk_component(primaryToolbar) itemconfigure raytrace \
 	-image $mImage_rt \
 	-command [::itcl::code $this raytracePlus]
-}
-
-
-::itcl::body Archer::raytracePlus {} {
-    $itk_component(primaryToolbar) itemconfigure raytrace \
-	-image $mImage_rtAbort \
-	-command "$itk_component(rtcntrl) abort"
-    $itk_component(rtcntrl) raytracePlus
 }
 
 

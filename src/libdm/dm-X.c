@@ -1,7 +1,7 @@
 /*                          D M - X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1367,10 +1367,10 @@ X_setWinBounds(struct dm *dmp, int *w)
 
 
 HIDDEN int
-X_configureWin(struct dm *dmp)
+X_configureWin(struct dm *dmp, int force)
 {
     /* don't force */
-    return X_configureWin_guts(dmp, 0);
+    return X_configureWin_guts(dmp, force);
 }
 
 
@@ -1673,7 +1673,8 @@ struct dm dm_X = {
     0,				/* depth buffer is not writable */
     0,				/* no zbuffer */
     0,				/* no zclipping */
-    1,                            /* clear back buffer after drawing and swap */
+    1,                          /* clear back buffer after drawing and swap */
+    0,                          /* not overriding the auto font size */
     0				/* Tcl interpreter */
 };
 

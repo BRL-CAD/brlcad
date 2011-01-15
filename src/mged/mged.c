@@ -1,7 +1,7 @@
 /*                           M G E D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -589,6 +589,9 @@ mged_process_char(char ch)
 #define CTRL_W      '\027'
 #define ESC         27
 #define BACKSPACE   '\b'
+#ifdef WIN32
+# undef DELETE
+#endif
 #define DELETE      127
 
 
@@ -2578,9 +2581,8 @@ mged_finish(int exitcode)
  *
  * argv[1] is the filename.
  *
- * There are two invocations:
- * main()
- * cmdline()	(Only one arg is permitted.)
+ * argv[2] is optional 'y' or 'n' indicating whether to create the
+ * database if it does not exist.
  *
  * Returns TCL_OK if database was opened, TCL_ERROR if database was
  * NOT opened (and the user didn't abort).
@@ -2591,13 +2593,12 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     struct ged *save_gedp;
     struct db_i *save_dbip = DBI_NULL;
     struct mater *save_materp = MATER_NULL;
-    struct bu_vls vls;
     struct bu_vls msg;	/* use this to hold returned message */
-    int create_new_db = 0;
+    int created_new_db = 0;
 
     if (argc <= 1) {
-
 	/* Invoked without args, return name of current database */
+
 	if (dbip != DBI_NULL) {
 	    Tcl_AppendResult(interpreter, dbip->dbi_filename, (char *)NULL);
 	    return TCL_OK;
@@ -2607,27 +2608,19 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	return TCL_OK;
     }
 
-    bu_vls_init(&vls);
-
-    if (3 < argc || (strlen(argv[1]) == 0)) {
-	bu_vls_printf(&vls, "help opendb");
-	Tcl_Eval(interpreter, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
     bu_vls_init(&msg);
 
-    if (argc == 3
-	&& !BU_STR_EQUAL("y", argv[2])
-	&& !BU_STR_EQUAL("Y", argv[2])
-	&& !BU_STR_EQUAL("n", argv[2])
-	&& !BU_STR_EQUAL("N", argv[2]))
+    /* validate arguments */
+    if (argc > 3
+	|| (argc == 2
+	    && strlen(argv[1]) == 0)
+	|| (argc == 3
+	    && !BU_STR_EQUAL("y", argv[2])
+	    && !BU_STR_EQUAL("Y", argv[2])
+	    && !BU_STR_EQUAL("n", argv[2])
+	    && !BU_STR_EQUAL("N", argv[2])))
     {
-	bu_vls_printf(&vls, "help opendb");
-	Tcl_Eval(interpreter, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	bu_vls_free(&msg);
+	Tcl_Eval(interpreter, "help opendb");
 	return TCL_ERROR;
     }
 
@@ -2653,10 +2646,12 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 	    if (!bu_file_readable(argv[1])) {
 		bu_log("ERROR: Unable to read from %s\n", argv[1]);
+		bu_vls_free(&msg);
 		return TCL_ERROR;
 	    }
 
-	    bu_log("ERROR: Unable to open %s as geometry database file \n", argv[1]);
+	    bu_log("ERROR: Unable to open %s as geometry database file\n", argv[1]);
+	    bu_vls_free(&msg);
 	    return TCL_ERROR;
 	}
 
@@ -2666,14 +2661,16 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 		if (classic_mged) {
 		    bu_log("Create new database (y|n)[n]? ");
 		    (void)bu_fgets(line, sizeof(line), stdin);
-		    if (line[0] != 'y' && line[0] != 'Y') {
-			bu_log("Warning: no database is currently opened!\n");
-			bu_vls_free(&vls);
+		    if (bu_booleanize(line)) {
+			bu_log("Warning: no database is currently open!\n");
 			bu_vls_free(&msg);
 			return TCL_OK;
 		    }
 		} else {
+		    struct bu_vls vls;
 		    int status;
+
+		    bu_vls_init(&vls);
 
 		    if (dpy_string != (char *)NULL)
 			bu_vls_printf(&vls, "cad_dialog .createdb %s \"Create New Database?\" \"Create new database named %s?\" \"\" 0 Yes No Quit",
@@ -2684,15 +2681,15 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 		    status = Tcl_Eval(interpreter, bu_vls_addr(&vls));
 
+		    bu_vls_free(&vls);
+
 		    if (status != TCL_OK || Tcl_GetStringResult(interpreter)[0] == '2') {
-			bu_vls_free(&vls);
 			bu_vls_free(&msg);
 			return TCL_ERROR;
 		    }
 
 		    if (Tcl_GetStringResult(interpreter)[0] == '1') {
 			bu_log("opendb: no database is currently opened!\n");
-			bu_vls_free(&vls);
 			bu_vls_free(&msg);
 			return TCL_OK;
 		    }
@@ -2707,7 +2704,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 		    Tcl_AppendResult(interpreter, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
 				     (char *)NULL);
 		    bu_vls_printf(&curr_cmd_list->cl_more_default, "n");
-		    bu_vls_free(&vls);
 		    bu_vls_free(&msg);
 		    return TCL_ERROR;
 		}
@@ -2716,14 +2712,10 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	}
 
 	/* did the caller specify not creating a new database? */
-	if (argc >= 3
-	    && *argv[2] != 'y'
-	    && *argv[2] != 'Y')
-	{
+	if (argc >= 3 && !bu_booleanize(argv[2])) {
 	    gedp = save_gedp;
 	    dbip = save_dbip; /* restore previous database */
 	    rt_new_material_head(save_materp);
-	    bu_vls_free(&vls);
 	    bu_vls_free(&msg);
 	    return TCL_OK;
 	}
@@ -2733,7 +2725,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	    gedp = save_gedp;
 	    dbip = save_dbip; /* restore previous database */
 	    rt_new_material_head(save_materp);
-	    bu_vls_free(&vls);
 	    bu_vls_free(&msg);
 
 	    if (mged_init_flag) {
@@ -2751,7 +2742,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	}
 	/* New database has already had db_dirbuild() by here */
 
-	create_new_db = 1;
+	created_new_db = 1;
 	bu_vls_printf(&msg, "The new database %s was successfully created.\n", argv[1]);
     } else {
 	/* Opened existing database file */
@@ -2781,8 +2772,9 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	rt_new_material_head(new_materp);
     }
 
-    if (dbip->dbi_read_only)
+    if (dbip->dbi_read_only) {
 	bu_vls_printf(&msg, "%s: READ ONLY\n", dbip->dbi_filename);
+    }
 
     /* Quick -- before he gets away -- write a logfile entry! */
     log_event("START", argv[1]);
@@ -2793,18 +2785,13 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	return TCL_ERROR;
     }
 
-    /*XXX shouldn't need any of this */
-#if 1
     /* increment use count for this db instance */
     (void)db_clone_dbi(dbip, NULL);
 
     /* Establish LIBWDB TCL access to both disk and in-memory databases */
     if (wdb_init_obj(interpreter, wdbp, MGED_DB_NAME) != TCL_OK) {
-	bu_vls_printf(&msg, "%s\n%s\n",
-		      Tcl_GetStringResult(interpreter),
-		      Tcl_GetVar(interpreter, "errorInfo", TCL_GLOBAL_ONLY));
+	bu_vls_printf(&msg, "%s\n%s\n", Tcl_GetStringResult(interpreter), Tcl_GetVar(interpreter, "errorInfo", TCL_GLOBAL_ONLY));
 	Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
-	bu_vls_free(&vls);
 	bu_vls_free(&msg);
 	return TCL_ERROR;
     }
@@ -2814,62 +2801,63 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
     /* This creates a "db" command object */
     if (wdb_create_cmd(interpreter, wdbp, MGED_DB_NAME) != TCL_OK) {
-	bu_vls_printf(&msg, "%s\n%s\n",
-		      Tcl_GetStringResult(interpreter),
-		      Tcl_GetVar(interpreter, "errorInfo", TCL_GLOBAL_ONLY));
+	bu_vls_printf(&msg, "%s\n%s\n", Tcl_GetStringResult(interpreter), Tcl_GetVar(interpreter, "errorInfo", TCL_GLOBAL_ONLY));
 	Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
-	bu_vls_free(&vls);
 	bu_vls_free(&msg);
 	return TCL_ERROR;
     }
 
-    /* This creates the ".inmem" in-memory geometry container */
-    bu_vls_trunc(&vls, 0);
-    bu_vls_printf(&vls, "wdb_open %s inmem [get_dbip]", MGED_INMEM_NAME);
-    if (Tcl_Eval(interpreter, bu_vls_addr(&vls)) != TCL_OK) {
-	bu_vls_printf(&msg, "%s\n%s\n",
-		      Tcl_GetStringResult(interpreter),
-		      Tcl_GetVar(interpreter, "errorInfo", TCL_GLOBAL_ONLY));
-	Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
-	bu_vls_free(&vls);
-	bu_vls_free(&msg);
-	return TCL_ERROR;
+    /* This creates the ".inmem" in-memory geometry container and sets
+     * up the GUI.
+     */
+    {
+	struct bu_vls cmd;
+
+	bu_vls_init(&cmd);
+
+	bu_vls_printf(&cmd, "wdb_open %s inmem [get_dbip]", MGED_INMEM_NAME);
+	if (Tcl_Eval(interpreter, bu_vls_addr(&cmd)) != TCL_OK) {
+	    bu_vls_printf(&msg, "%s\n%s\n", Tcl_GetStringResult(interpreter), Tcl_GetVar(interpreter, "errorInfo", TCL_GLOBAL_ONLY));
+	    Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
+	    bu_vls_free(&msg);
+	    bu_vls_free(&cmd);
+	    return TCL_ERROR;
+	}
+
+	/* Perhaps do something special with the GUI */
+	bu_vls_trunc(&cmd, 0);
+	bu_vls_printf(&cmd, "opendb_callback %s", dbip->dbi_filename);
+	(void)Tcl_Eval(interpreter, bu_vls_addr(&cmd));
+
+	bu_vls_strcpy(&cmd, "local2base");
+	Tcl_UnlinkVar(interpreter, bu_vls_addr(&cmd));
+	Tcl_LinkVar(interpreter, bu_vls_addr(&cmd), (char *)&local2base, TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
+
+	bu_vls_strcpy(&cmd, "base2local");
+	Tcl_UnlinkVar(interpreter, bu_vls_addr(&cmd));
+	Tcl_LinkVar(interpreter, bu_vls_addr(&cmd), (char *)&base2local, TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
+
+	bu_vls_free(&cmd);
     }
-#endif
-
-    /* Perhaps do something special with the GUI */
-    bu_vls_trunc(&vls, 0);
-    bu_vls_printf(&vls, "opendb_callback %s", dbip->dbi_filename);
-    (void)Tcl_Eval(interpreter, bu_vls_addr(&vls));
-
-    bu_vls_strcpy(&vls, "local2base");
-    Tcl_UnlinkVar(interpreter, bu_vls_addr(&vls));
-    Tcl_LinkVar(interpreter, bu_vls_addr(&vls), (char *)&local2base,
-		TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
-
-    bu_vls_strcpy(&vls, "base2local");
-    Tcl_UnlinkVar(interpreter, bu_vls_addr(&vls));
-    Tcl_LinkVar(interpreter, bu_vls_addr(&vls), (char *)&base2local,
-		TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
 
     set_localunit_TclVar();
 
     /* Print title/units information */
-    if (interactive)
+    if (interactive) {
 	bu_vls_printf(&msg, "%s (units=%s)\n", dbip->dbi_title,
 		      bu_units_string(dbip->dbi_local2base));
+    }
 
     /*
      * We have an old database version AND we're not in the process of
      * creating a new database.
      */
-    if (dbip->dbi_version != 5 && !create_new_db) {
+    if (dbip->dbi_version != 5 && !created_new_db) {
 	if (db_upgrade) {
 	    if (db_warn)
 		bu_vls_printf(&msg, "Warning:\n\tDatabase version is old.\n\tConverting to the new format.\n");
 
-	    bu_vls_strcpy(&vls, "after idle dbupgrade -f y");
-	    (void)Tcl_Eval(interpreter, bu_vls_addr(&vls));
+	    (void)Tcl_Eval(interpreter, "after idle dbupgrade -f y");
 	} else {
 	    if (db_warn) {
 		if (classic_mged)
@@ -2882,8 +2870,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
     Tcl_ResetResult(interpreter);
     Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
-
-    bu_vls_free(&vls);
     bu_vls_free(&msg);
 
     return TCL_OK;
@@ -2906,7 +2892,7 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    if (dbip == DBI_NULL ) {
+    if (dbip == DBI_NULL) {
 	Tcl_AppendResult(interpreter, "No database is open\n", NULL);
 	return TCL_OK;
     }

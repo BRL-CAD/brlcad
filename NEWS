@@ -13,6 +13,10 @@ changes made.  See document footer for additional details.
 --- 2010-12-XX  Release 7.18.2                                     ---
 ----------------------------------------------------------------------
 
+* 'attr show' command displays attributes sorted by name - Tom Browder
+* fixed ted command to work using new editor support - Cliff Yapp
+* fixed mged text editor invocation bug when editor wasn't installed
+	- Sean Morrison, Daniel Roßberg, Cliff Yapp
 * support for comment lines at beginning of .asc files - John Anderson
 * disabled adrt_master and adrt_slave tools - Erik Greenwald
 * ported pixblend image processing tool to Windows - Erik Greenwald
