@@ -203,6 +203,7 @@ HmPrntWindows(void)
 
   Print all HmItem's in listp.
 */
+/*
 static void
 HmPrntLList(HmLList *listp)
 {
@@ -212,7 +213,7 @@ HmPrntLList(HmLList *listp)
     HmPrntLList(listp->next);
     return;
 }
-
+*/
 
 /*
   void HmFreeItems(Hmitem *itemp)
