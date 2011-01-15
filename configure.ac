@@ -3320,7 +3320,7 @@ AC_TRY_RUN([
 #ifdef HAVE_TERMLIB_H
 #  include <termlib.h>
 #else
-#  if HAVE_NCURSES_H
+#  ifdef HAVE_NCURSES_H
 #    include <ncurses.h>
 #  else
 #    ifdef HAVE_CURSES_H
@@ -3339,7 +3339,7 @@ AC_TRY_RUN([
 #      endif
 #    endif
 #  endif
-#  if HAVE_TERM_H
+#  ifdef HAVE_TERM_H
 #    include <term.h>
 #  endif
 #endif
