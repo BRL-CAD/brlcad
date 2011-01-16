@@ -87,11 +87,11 @@ SET(mged_TCLSCRIPTS
 	xclone.tcl
 )
 
-FILE(COPY ${mged_TCLSCRIPTS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+FILE(COPY ${mged_TCLSCRIPTS} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/tclscripts/mged)
 INSTALL(FILES ${mged_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/mged)
 
-pkgIndex_BUILD(mged ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/mged)
-tclIndex_BUILD(mged ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/mged)
+pkgIndex_BUILD(mged tclscripts/mged)
+tclIndex_BUILD(mged tclscripts/mged)
 
 SET(mged_tcl_DATA
 	l_i0_v0_s0.gif 
@@ -138,5 +138,5 @@ SET(mged_tcl_DATA
 	mike-tux.ppm 
 	mike-tux.png
 )
-FILE(COPY ${mged_tcl_DATA} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+FILE(COPY ${mged_tcl_DATA} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/tclscripts/mged)
 INSTALL(FILES ${mged_tcl_DATA} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/mged)

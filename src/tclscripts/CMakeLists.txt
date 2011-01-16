@@ -1,24 +1,24 @@
 # Convenience macros for building pkgIndex.tcl and tclIndex files
 
-MACRO(pkgIndex_BUILD name srcdir targetdir)
+MACRO(pkgIndex_BUILD name targetdir)
 	ADD_CUSTOM_COMMAND(
-		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl
-		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ampi.tcl ${CMAKE_CURRENT_BINARY_DIR}
+		OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl
+		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ampi.tcl ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}
 		DEPENDS btclsh
 		)
-	ADD_CUSTOM_TARGET(${name}_pkgIndex.tcl ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl)
-	INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
-ENDMACRO(pkgIndex_BUILD name srcdir targetdir)
+	ADD_CUSTOM_TARGET(${name}_pkgIndex.tcl ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl)
+	INSTALL(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
+ENDMACRO(pkgIndex_BUILD name targetdir)
 
-MACRO(tclIndex_BUILD name srcdir targetdir)
+MACRO(tclIndex_BUILD name targetdir)
 	ADD_CUSTOM_COMMAND(
-		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tclIndex
-		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ami.tcl ${CMAKE_CURRENT_BINARY_DIR} 
+		OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex
+		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ami.tcl ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir} 
 		DEPENDS btclsh
 		)
-	ADD_CUSTOM_TARGET(${name}_tclIndex ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tclIndex)
-	INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/tclIndex DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
-ENDMACRO(tclIndex_BUILD name srcdir targetdir)
+	ADD_CUSTOM_TARGET(${name}_tclIndex ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex)
+	INSTALL(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
+ENDMACRO(tclIndex_BUILD name targetdir)
 
 
 # Now that the macros are defined, we can add tclscript subdirs
@@ -50,8 +50,8 @@ SET(toplevel_TCLSCRIPTS
 	mouse.tcl 
 	vmath.tcl
 )
-FILE(COPY ${toplevel_TCLSCRIPTS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+FILE(COPY ${toplevel_TCLSCRIPTS} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/tclscripts)
 INSTALL(FILES ${toplevel_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts)
 
-pkgIndex_BUILD(tclscripts ${CMAKE_CURRENT_SOURCE_DIR} tclscripts)
-tclIndex_BUILD(tclscripts ${CMAKE_CURRENT_SOURCE_DIR} tclscripts)
+pkgIndex_BUILD(tclscripts tclscripts)
+tclIndex_BUILD(tclscripts tclscripts)

@@ -36,9 +36,9 @@ SET(archer_TCLSCRIPTS
 	Utility.tcl 
 	Wizard.tcl
 )
-FILE(COPY ${archer_TCLSCRIPTS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+FILE(COPY ${archer_TCLSCRIPTS} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/tclscripts/archer)
 INSTALL(FILES ${archer_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/archer)
 
-pkgIndex_BUILD(archer ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/archer)
-tclIndex_BUILD(archer ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/archer)
+pkgIndex_BUILD(archer tclscripts/archer)
+tclIndex_BUILD(archer tclscripts/archer)
 
