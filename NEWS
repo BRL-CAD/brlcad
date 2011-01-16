@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2010-12-XX  Release 7.18.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed asc2g color table bug parsing 'color' lines - Sean Morrison
 * 'attr show' command displays attributes sorted by name - Tom Browder
 * fixed ted command to work using new editor support - Cliff Yapp
 * fixed mged text editor invocation bug when editor wasn't installed
