@@ -3337,6 +3337,11 @@ BU_EXPORT BU_EXTERN(int bu_mem_barriercheck,
  * @n	a/		.
  * @n	../a/b		../a
  *
+ * This routine will return "." if other valid results are not available
+ * but should never return NULL.
+ *
+ * Caller is responsible for freeing memory used by the return.
+ *
  * Warning: don't rely on non-constness of bu_dirname().. will change
  * to const.
  */
