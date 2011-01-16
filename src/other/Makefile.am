@@ -43,12 +43,6 @@ else !BUILD_TK
 TKDIR=
 endif
 
-if BUILD_ITCL
-ITCLDIR=incrTcl
-else !BUILD_ITCL
-ITCLDIR=
-endif
-
 if BUILD_TERMLIB
 TERMLIBDIR=libtermlib
 else !BUILD_TERMLIB
@@ -148,7 +142,7 @@ SUBDIRS = \
 	$(URTDIR) \
 	${TCLDIR} \
 	${TKDIR} \
-	${ITCLDIR} \
+	incrTcl \
 	${IWIDGETSDIR} \
 	${TERMLIBDIR} \
 	${JOVEDIR} \

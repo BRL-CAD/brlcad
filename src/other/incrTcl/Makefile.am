@@ -3,6 +3,12 @@ ITCLLIB = \
 	libitcl.la \
 	libitcl@ITCL_VERSION@.la
 
+if BUILD_ITCL
+ITCLDIR=incrTcl
+else !BUILD_ITCL
+	ITCLDIR=
+endif
+
 if BUILD_ITK
 ITKDIR = itk
 ITKLIB = \
@@ -21,7 +27,7 @@ endif
 
 SUBDIRS = \
 	doc \
-	itcl \
+	$(ITCLDIR) \
 	$(ITKDIR) \
 	tools \
 	$(IWIDGETSDIR)
