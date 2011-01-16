@@ -392,6 +392,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 {
     static char result[MAXPATHLEN] = {0};
     const char *lhs;
+    char real_path[MAXPATHLEN] = {0};
     struct bu_vls searched;
     char where[MAX_WHERE_SIZE] = {0};
 
@@ -436,25 +437,10 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 #endif
 
     /* run-time path identification */
-    lhs = bu_getprogname();
+    realpath(bu_argv0_full_path(), real_path);
+    lhs = (const char *)bu_dirname((const char *)bu_dirname(real_path));
     if (lhs) {
-	char argv0[MAX_WHERE_SIZE] = {0};
-	size_t len = strlen(lhs);
-	snprintf(argv0, MAX_WHERE_SIZE, "%s", lhs);
-
-	/* need to trim off the trailing binary */
-	while (len-1 > 0) {
-	    if (argv0[len-1] == BU_DIR_SEPARATOR) {
-		argv0[len] = '.';
-		argv0[len+1] = '.';
-		argv0[len+2] = '\0';
-		break;
-	    }
-	    len--;
-	}
-
-	snprintf(where, MAX_WHERE_SIZE, "\trun-time path identification [%s]\n", argv0);
-	if (_bu_find_path(result, argv0, rhs, &searched, where)) {
+	if (_bu_find_path(result, lhs, rhs, &searched, where)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: Run-time path identification [%s]\n", result);
 	    }
