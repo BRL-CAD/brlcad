@@ -140,8 +140,6 @@ get_args(int argc, char **argv)
 	ret = scanf("%d", &linelen);
 	if (ret != 1)
 	    perror("scanf");
-	if (ret != 1)
-	    perror("scanf");
     }
 
     /* Make sure nessecary variables set */
