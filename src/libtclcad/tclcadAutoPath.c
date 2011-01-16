@@ -36,8 +36,6 @@
 #  include "tk.h"
 #endif
 
-#include "brlcad_config.h"
-
 #ifndef ITCL_VERSION
 #  include "itcl.h"
 #endif
