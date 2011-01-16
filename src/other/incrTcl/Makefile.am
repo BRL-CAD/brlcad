@@ -24,7 +24,7 @@ SUBDIRS = \
 	itcl \
 	$(ITKDIR) \
 	tools \
-	iwidgets
+	$(IWIDGETSDIR)
 
 DIST_SUBDIRS = \
 	doc \
