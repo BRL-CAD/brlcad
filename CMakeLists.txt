@@ -713,6 +713,10 @@ BRLCAD_CHECK_LIBRARY(TERMLIB terminfo tputs)
 BRLCAD_CHECK_LIBRARY(TERMLIB tinfo tputs)
 BRLCAD_CHECK_LIBRARY(TERMLIB ccurses tputs)
 
+# Should not need this, once we use the above results and
+# a compile test properly - Curses is overkill
+find_package(Curses)
+
 # m library is not needed on Windows
 IF(NOT WIN32)
 	BRLCAD_CHECK_LIBRARY(M m cos)
