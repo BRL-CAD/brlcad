@@ -2047,7 +2047,25 @@ fi
 
 dnl debug flags
 if test "x$bc_use_debug" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-ggdb3], [debug_flag])
+
+	dnl FIXME: fugly workaround as there is no known
+	dnl feature-specific way to detect -ggdb3 or -gstabs+ is
+	dnl preferred and libtool+Mac 10.4 will work with -ggdb3.
+
+	AC_CHECK_PROGS(SW_VERS, sw_vers)
+	if test "x$SW_VERS" != "x"; then
+		AC_MSG_CHECKING(Mac OS X version for debugging)
+		MACOSX_VERSION=`$SW_VERS | sed -n "s/^ProductVersion:[[[:space:]]]//p" | cut -f 1-3 -d.`
+		AC_MSG_RESULT([$MACOSX_VERSION])
+	fi
+	case "x$MACOSX_VERSION" in
+	    x10.[1234])
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-gstabs+], [debug_flag])
+		;;
+	    *)
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-ggdb3], [debug_flag])
+		;;
+	esac
 	if test "x$bc_debug_flag_works" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
 	fi
