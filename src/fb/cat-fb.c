@@ -764,7 +764,7 @@ readinfont(void)
     cfont = relfont();
 
     fontdes[cfont].fnum = fnum;
-    fontdes[cfont].psize = fontdes[cfont].psize = size;
+    fontdes[cfont].psize = size;
     fontdes[cfont].vfp = vfp;
     if (debug) fprintf(stderr, "slot %d = %s\n", cfont, cbuf );
 

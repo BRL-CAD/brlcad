@@ -3324,6 +3324,9 @@ BU_EXPORT BU_EXTERN(int bu_mem_barriercheck,
  * Given a filesystem pathname, return a pointer to a dynamic string
  * which is the parent directory of that file/directory.
  *
+ * It is the caller's responsibility to bu_free() the pointer returned
+ * from this routine.  Examples of strings returned:
+ *
  *	/usr/dir/file	/usr/dir
  * @n	/usr/dir/	/usr
  * @n	/usr/file	/usr
@@ -3339,11 +3342,6 @@ BU_EXPORT BU_EXTERN(int bu_mem_barriercheck,
  *
  * This routine will return "." if other valid results are not available
  * but should never return NULL.
- *
- * Caller is responsible for freeing memory used by the return.
- *
- * Warning: don't rely on non-constness of bu_dirname().. will change
- * to const.
  */
 BU_EXPORT BU_EXTERN(char *bu_dirname,
 		    (const char *cp));

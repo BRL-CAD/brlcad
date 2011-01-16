@@ -429,6 +429,27 @@ Wdb_Init(Tcl_Interp *interp)
 static int
 wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
+    struct bu_cmdtab *ctp = NULL;
+    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+    struct ged ged;
+    int ret;
+
+    /* look for the new libged commands too, but don't call bu_cmd()
+     * or wdb_newcmds_tcl() as there's no way to distinguish between
+     * TCL_ERROR from a found command and an unfound command.
+     */
+    GED_INIT(&ged, wdbp);
+    for (ctp = wdb_newcmds; ctp->ct_name != (char *)0; ctp++) {
+	if (BU_STR_EQUAL(ctp->ct_name, argv[1])) {
+	    ret = (*ctp->ct_func)(&ged, argc-1, argv+1);
+	    Tcl_SetResult(interp, bu_vls_addr(&ged.ged_result_str), TCL_VOLATILE);
+	    if (ret == GED_OK)
+		return TCL_OK;
+	    return TCL_ERROR;
+	}
+    }
+
+    /* not a new command -- look for the command in the old command table */
     return bu_cmd(clientData, interp, argc, (const char **)argv, wdb_cmds, 1);
 }
 

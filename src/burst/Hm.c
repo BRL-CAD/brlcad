@@ -199,22 +199,6 @@ HmPrntWindows(void)
 
 
 /*
-  void HmPrntLList(HmLList *listp)	(DEBUG)
-
-  Print all HmItem's in listp.
-*/
-static void
-HmPrntLList(HmLList *listp)
-{
-    if (listp == (HmLList *) NULL)
-	return;
-    HmPrntItem(listp->itemp);
-    HmPrntLList(listp->next);
-    return;
-}
-
-
-/*
   void HmFreeItems(Hmitem *itemp)
 
   Free storage (allocated with malloc) for an array of HmItem's.

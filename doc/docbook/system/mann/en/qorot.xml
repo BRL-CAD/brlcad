@@ -72,7 +72,7 @@
 
 <refsect1 id='examples'>
   <title>EXAMPLES</title>
-  <para>The example shows the use of the <command>quorot</command> command to rotate a currently edited object through a specified angle and starting point and in a particular direction.
+  <para>The example shows the use of the <command>qorot</command> command to rotate a currently edited object through a specified angle and starting point and in a particular direction.
     
   </para>
          

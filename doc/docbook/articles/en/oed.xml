@@ -206,7 +206,7 @@ lollipop/
     
     <literallayout class="monospaced">comb object1.c u sphere.s u cube.s</literallayout>
     
-    After this command both the primitives and the combination are \
+    After this command both the primitives and the combination are
     present in the display, which will result in overlaps.  Use the 
     <command>B</command> command to reduce the display to just the 
     combination.
@@ -865,6 +865,13 @@ object1.c:  --
 	  remember to use <emphasis>path_lhs</emphasis> to precisely 
 	  identify the shape to be worked on - subtle and messy errors
 	  are possible if the wrong path is used.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  When using <command>oed</command> in a script, the object must be in view so a
+          <command>B</command> or <command>draw</command> command to select the object must
+          be entered before using the <command>oed</command> command on it.
 	</para>
       </listitem>
       </itemizedlist>

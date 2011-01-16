@@ -557,7 +557,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
     } else {
 	/*
 	 * If there is more than just a direct reference to this leaf
-	 * from it's containing region, copy that below-region path
+	 * from its containing region, copy that below-region path
 	 * into st_path.  Otherwise, leave st_path's magic number 0.
 	 *
 	 * XXX nothing depends on this behavior yet, and this whole
