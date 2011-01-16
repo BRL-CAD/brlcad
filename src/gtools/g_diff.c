@@ -86,100 +86,78 @@ compare_colors(void)
     int found1 = 0, found2 = 0;
     int is_diff = 0;
 
-    for (mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw) {
+    /* find a match for all color table entries of file1 in file2 */
+    for (mp1 = mater_hd1; is_diff == 0 && mp1 != MATER_NULL; mp1 = mp1->mt_forw) {
 	found1 = 0;
 	mp2 = mater_hd2;
 	while (mp2 != MATER_NULL) {
-	    if (mp1->mt_low == mp2->mt_low &&
-		mp1->mt_high == mp2->mt_high &&
-		mp1->mt_r == mp2->mt_r &&
-		mp1->mt_g == mp2->mt_g &&
-		mp1->mt_b == mp2->mt_b) {
+	    if (mp1->mt_low == mp2->mt_low
+		&& mp1->mt_high == mp2->mt_high
+		&& mp1->mt_r == mp2->mt_r
+		&& mp1->mt_g == mp2->mt_g
+		&& mp1->mt_b == mp2->mt_b)
+	    {
 		found1 = 1;
 		break;
-	    } else {
-		mp2 = mp2->mt_forw;
 	    }
-	}
-	if (!found1)
-	    break;
-    }
-    for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
-	found1 = 0;
-	mp1 = mater_hd1;
-	while (mp1 != MATER_NULL) {
-	    if (mp1->mt_low == mp2->mt_low &&
-		mp1->mt_high == mp2->mt_high &&
-		mp1->mt_r == mp2->mt_r &&
-		mp1->mt_g == mp2->mt_g &&
-		mp1->mt_b == mp2->mt_b) {
-		found2 = 1;
-		break;
-	    } else {
-		mp1 = mp1->mt_forw;
-	    }
-	}
-	if (!found2)
-	    break;
-    }
-    if (!found1 && !found2) {
-	return 0;
-    } else if (!found1 || !found2) {
-	is_diff = 1;
-    } else {
-	/* actually compare two color tables */
-	mp1 = mater_hd1;
-	mp2 = mater_hd2;
-	while (mp1 != MATER_NULL && mp2 != MATER_NULL) {
-	    if (mp1->mt_low != mp2->mt_low) {
-		is_diff = 1;
-		break;
-	    }
-	    if (mp1->mt_high != mp2->mt_high) {
-		is_diff = 1;
-		break;
-	    }
-	    if (mp1->mt_r != mp2->mt_r) {
-		is_diff = 1;
-		break;
-	    }
-	    if (mp1->mt_g != mp2->mt_g) {
-		is_diff = 1;
-		break;
-	    }
-	    if (mp1->mt_b != mp2->mt_b) {
-		is_diff = 1;
-		break;
-	    }
-	    mp1 = mp1->mt_forw;
 	    mp2 = mp2->mt_forw;
+	}
+	if (!found1) {
+	    /* bu_log("could not find %d..%d: %d %d %d\n", mp1->mt_low, mp1->mt_high, mp1->mt_r, mp1->mt_g, mp1->mt_b); */
+	    is_diff = 1;
 	}
     }
 
-    if (is_diff) {
-	if (mode == HUMAN) {
-	    printf("Color table has changed from:\n");
-	    for (mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw) {
-		printf("\t%d..%d %d %d %d\n", mp1->mt_low, mp1->mt_high,
-		       mp1->mt_r, mp1->mt_g, mp1->mt_b);
+    /* find a match for all color tabl eentries of file2 in file1 */
+    for (mp2 = mater_hd2; is_diff == 0 && mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
+	found2 = 0;
+	mp1 = mater_hd1;
+	while (mp1 != MATER_NULL) {
+	    if (mp1->mt_low == mp2->mt_low
+		&& mp1->mt_high == mp2->mt_high
+		&& mp1->mt_r == mp2->mt_r
+		&& mp1->mt_g == mp2->mt_g
+		&& mp1->mt_b == mp2->mt_b)
+	    {
+		found2 = 1;
+		break;
 	    }
-	    printf("\t\tto:\n");
-	    for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
-		printf("\t%d..%d %d %d %d\n", mp2->mt_low, mp2->mt_high,
-		       mp2->mt_r, mp2->mt_g, mp2->mt_b);
-	    }
-	} else {
-	    if (version2 > 4)
-		printf("attr rm _GLOBAL regionid_colortable\n");
+	    mp1 = mp1->mt_forw;
+	}
+	if (!found2) {
+	    /* bu_log("could not find %d..%d: %d %d %d\n", mp1->mt_low, mp1->mt_high, mp1->mt_r, mp1->mt_g, mp1->mt_b); */
+	    is_diff = 1;
+	}
+    }
+
+    if (is_diff == 0) {
+	return 0;
+    }
+
+    if (mode == HUMAN) {
+	printf("Color table has changed from:\n");
+	for (mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw) {
+	    printf("\t%d..%d %d %d %d\n", mp1->mt_low, mp1->mt_high,
+		   mp1->mt_r, mp1->mt_g, mp1->mt_b);
+	}
+	printf("\t\tto:\n");
+	for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
+	    printf("\t%d..%d %d %d %d\n", mp2->mt_low, mp2->mt_high,
+		   mp2->mt_r, mp2->mt_g, mp2->mt_b);
+	}
+    } else {
+	if (version2 > 4) {
+	    /* punt, just delete the existing colortable and print a new one */
+	    printf("attr rm _GLOBAL regionid_colortable\n");
 	    for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
 		printf("color %d %d %d %d %d\n", mp2->mt_low, mp2->mt_high,
 		       mp2->mt_r, mp2->mt_g, mp2->mt_b);
 	    }
 	}
-	return 1;
     }
-    return 0;
+    return 1;
 }
+
 
 void
 kill_obj(char *name)
