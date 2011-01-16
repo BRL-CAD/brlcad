@@ -49,14 +49,14 @@ if {[file exists $installDir]} {
 
 # Look for required source files
 set missingFile 0
-if {![file exists [file join $rootDir src other iwidgets iwidgets.tcl.in]]} {
-  puts "ERROR: Missing [file join $rootDir src other iwidgets iwidgets.tcl.in]"
+if {![file exists [file join $rootDir src other incrTcl iwidgets iwidgets.tcl.in]]} {
+  puts "ERROR: Missing [file join $rootDir src other incrTcl iwidgets iwidgets.tcl.in]"
   set missingFile 1
 }
 
 
-if {![file exists [file join $rootDir src other iwidgets pkgIndex.tcl.in]]} {
-  puts "ERROR: Missing [file join $rootDir src other iwidgets pkgIndex.tcl.in]"
+if {![file exists [file join $rootDir src other incrTcl iwidgets pkgIndex.tcl.in]]} {
+  puts "ERROR: Missing [file join $rootDir src other incrTcl iwidgets pkgIndex.tcl.in]"
   set missingFile 1
 }
 
@@ -205,7 +205,7 @@ puts "\[06 of 15] COPYING LIBRARIES TO LIB DIRECTORY"
 catch {
   copy_stuff [file join $rootDir src other incrTcl itcl library] [file join $installDir lib itcl$itclVersion]
   copy_stuff [file join $rootDir src other incrTcl itk library] [file join $installDir lib itk$itclVersion]
-  copy_stuff [file join $rootDir src other iwidgets generic] [file join $installDir lib iwidgets$iwidgetsVersion scripts]
+  copy_stuff [file join $rootDir src other incrTcl iwidgets generic] [file join $installDir lib iwidgets$iwidgetsVersion scripts]
   copy_stuff [file join $rootDir src other tcl library] [file join $installDir lib tcl$tclVersion]
   copy_stuff [file join $rootDir src other tk library] [file join $installDir lib tk$tclVersion]
 }
@@ -249,7 +249,7 @@ catch {
 
 puts "\[08 of 15] CREATING iwidgets.tcl"
 catch {
-  set fd1 [open [file join $rootDir src other iwidgets iwidgets.tcl.in] r]
+  set fd1 [open [file join $rootDir src other incrTcl iwidgets iwidgets.tcl.in] r]
   set lines [read $fd1]
   close $fd1
   if {$verbose} { puts "Creating [file join $installDir lib iwidgets$iwidgetsVersion iwidgets.tcl]" }
@@ -263,7 +263,7 @@ catch {
 
 puts "\[09 of 15] CREATING pkgIndex.tcl FOR iwidgets"
 catch {
-  set fd1 [open [file join $rootDir src other iwidgets pkgIndex.tcl.in] r]
+  set fd1 [open [file join $rootDir src other incrTcl iwidgets pkgIndex.tcl.in] r]
   set lines [read $fd1]
   close $fd1
   if {$verbose} { puts "Creating [file join $installDir lib iwidgets$iwidgetsVersion pkgIndex.tcl]" }

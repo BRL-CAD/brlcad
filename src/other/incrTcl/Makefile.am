@@ -13,17 +13,25 @@ ITKDIR =
 ITKLIB =
 endif
 
+if BUILD_IWIDGETS
+IWIDGETSDIR=iwidgets
+else !BUILD_IWIDGETS
+IWIDGETSDIR=
+endif
+
 SUBDIRS = \
 	doc \
 	itcl \
 	$(ITKDIR) \
-	tools
+	tools \
+	iwidgets
 
 DIST_SUBDIRS = \
 	doc \
 	itcl \
 	itk \
-	tools
+	tools \
+	iwidgets
 
 EXTRA_DIST = \
 	CHANGES \

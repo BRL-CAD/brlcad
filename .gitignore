@@ -1,4 +1,4 @@
-/.deps
-/.libs
 /Makefile
 /Makefile.in
+/iwidgets.tcl
+/pkgIndex.tcl

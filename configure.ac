@@ -4346,11 +4346,11 @@ AC_CONFIG_FILES([
 	src/other/incrTcl/itk/library/Makefile
 	src/other/incrTcl/itk/pkgIndex.tcl
 	src/other/incrTcl/tools/Makefile
-	src/other/iwidgets/Makefile
-	src/other/iwidgets/doc/Makefile
-	src/other/iwidgets/generic/Makefile
-	src/other/iwidgets/iwidgets.tcl
-	src/other/iwidgets/pkgIndex.tcl
+	src/other/incrTcl/iwidgets/Makefile
+	src/other/incrTcl/iwidgets/doc/Makefile
+	src/other/incrTcl/iwidgets/generic/Makefile
+	src/other/incrTcl/iwidgets/iwidgets.tcl
+	src/other/incrTcl/iwidgets/pkgIndex.tcl
 	src/other/jove/Makefile
 	src/other/jove/teach-jove
 	src/other/libregex/Makefile
