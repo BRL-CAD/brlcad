@@ -42,6 +42,7 @@
 #endif
 
 #include "bu.h"
+#include "brlcad_version.h"
 #include "tclcad.h"
 
 #define MAX_BUF 2048
@@ -87,7 +88,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     struct bu_vls tclcmd;
     struct bu_vls invocation_full_path;
     struct bu_vls root_full_path;
-    struct bu_vls build_full_path;
+    struct bu_vls data_path;
     const char *library_path = NULL;
 
     const char *root = NULL;
@@ -119,9 +120,6 @@ tclcad_auto_path(Tcl_Interp *interp)
 	return;
     }
 
-    root = bu_brlcad_root("", 1);
-    data = bu_brlcad_data("", 1);
-
     bu_vls_init(&auto_path);
     bu_vls_init(&tcl_library);
     bu_vls_init(&system_tcl_library);
@@ -129,7 +127,10 @@ tclcad_auto_path(Tcl_Interp *interp)
     bu_vls_init(&tclcmd);
     bu_vls_init(&invocation_full_path);
     bu_vls_init(&root_full_path);
-    bu_vls_init(&build_full_path);
+    bu_vls_init(&data_path);
+
+    bu_vls_sprintf(&data_path, "share/brlcad/%s", brlcad_version());
+    root = bu_brlcad_root(bu_vls_addr(&data_path), 1);
 
     /* If we have a system init.tcl path passed in, put it in tcl_library */
     bu_vls_sprintf(&system_tcl_library, "%s", TCL_SYSTEM_INITTCL_PATH);
@@ -165,27 +166,14 @@ tclcad_auto_path(Tcl_Interp *interp)
     Tcl_Eval(interp, bu_vls_addr(&tclcmd));
     bu_vls_sprintf(&root_full_path, "%s", Tcl_GetStringFromObj(Tcl_GetObjResult(interp), NULL));
 
-    bu_vls_sprintf(&tclcmd, "file normalize %s", BUILD_BINARY_DIR); 
-    Tcl_Eval(interp, bu_vls_addr(&tclcmd));
-    bu_vls_sprintf(&build_full_path, "%s", Tcl_GetStringFromObj(Tcl_GetObjResult(interp), NULL));
-
-    if(strstr(bu_vls_addr(&invocation_full_path), bu_vls_addr(&root_full_path))) {
-	    from_installed = 1;
-    } else {
-	    if(strstr(bu_vls_addr(&invocation_full_path), bu_vls_addr(&build_full_path))) {
-		    from_built = 1;
-	    }
-    }
-
     bu_vls_free(&tclcmd);
     bu_vls_free(&invocation_full_path);
     bu_vls_free(&root_full_path);
-    bu_vls_free(&build_full_path);
  
     /* get name of installation binary */
     snprintf(buffer, MAX_BUF, "%s%cbin%c%s", root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, bu_getprogname());
 
-    /* add paths based on bu_brlcad_root and bu_brlcad_data */
+    /* add paths based on bu_brlcad_root and the brlcad data dir */
 	bu_vls_printf(&auto_path, "%c%s%clib",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%clib%ctcl%s",
@@ -202,20 +190,20 @@ tclcad_auto_path(Tcl_Interp *interp)
 #endif
 	bu_vls_printf(&auto_path, "%c%s%clib%ciwidgets%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, IWIDGETS_VERSION);
-	bu_vls_printf(&auto_path, "%c%s%c%s%ctclscripts",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, data, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%c%s%ctclscripts%clib",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%c%s%ctclscripts%cutil",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%c%s%ctclscripts%cmged",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%c%s%ctclscripts%cgeometree",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%c%s%ctclscripts%crtwizard",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%c%s%ctclscripts%carcher",
-		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	bu_vls_printf(&auto_path, "%c%s%ctclscripts",
+		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	bu_vls_printf(&auto_path, "%c%s%ctclscripts%clib",
+		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cutil",
+		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cmged",
+		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cgeometree",
+		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	bu_vls_printf(&auto_path, "%c%s%ctclscripts%crtwizard",
+		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	bu_vls_printf(&auto_path, "%c%s%ctclscripts%carcher",
+		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 
     /*printf("AUTO_PATH IS %s\n", bu_vls_addr(&auto_path)); */
 
@@ -244,11 +232,11 @@ tclcad_auto_path(Tcl_Interp *interp)
 
 	/* make sure it exists before appending */
 	if (bu_file_exists(srcpath)) {
-	    /*		printf("APPENDING: %s\n", srcpath); */
+	    		printf("APPENDING: %s\n", srcpath); 
 	    bu_vls_sprintf(&lappend, "lappend auto_path {%s}", srcpath);
 	    (void)Tcl_Eval(interp, bu_vls_addr(&lappend));
 	} else {
-	    /*		printf("NOT APPENDING: %s\n", srcpath); */
+	    		printf("NOT APPENDING: %s\n", srcpath); 
 	    continue;
 	}
 
@@ -334,6 +322,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     bu_vls_free(&system_tcl_library);
     bu_vls_free(&tcl_library);
     bu_vls_free(&lappend);
+    bu_vls_free(&data_path);
 
     return;
 }
