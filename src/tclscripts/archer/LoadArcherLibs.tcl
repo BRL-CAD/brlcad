@@ -29,15 +29,21 @@
 proc LoadArcherCoreLibs {} {
     global tcl_platform
 
+    # load tkpng
+    if { [catch {package require tkpng} _initialized] } {
+	puts "$_initialized"
+	puts ""
+	puts "ERROR: Unable to load tkpng"
+	exit 1
+    }
+
+
     if { [catch {package require Swidgets} _initialized] } {
 	puts "$_initialized"
 	puts ""
 	puts "ERROR: Unable to load ArcherCore Scripting"
 	exit 1
     }
-
-    # load tkpng
-    catch {package require tkpng} tkpng
 
     # load Tkhtml
     catch {package require hv3 0.1} hv3
