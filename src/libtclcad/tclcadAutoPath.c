@@ -175,7 +175,7 @@ tclcad_tcl_library(Tcl_Interp *interp)
  * src/other/tk/library/tk.tcl
  * src/other/incrTcl/itcl/library/itcl.tcl
  * src/other/incrTcl/itk/library/itk.tcl
- * src/other/iwidgets/library/iwidgets.tcl
+ * src/other/incrTcl/iwidgets/library/iwidgets.tcl
  * src/tclscripts/pkgIndex.tcl and subdirs
  *
  * if TCLCAD_LIBRARY_PATH is set
@@ -295,8 +295,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%cother%cincrTcl%citk%clibrary",
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ciwidgets",
-		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	bu_vls_printf(&auto_path, "%c%s%csrc%cother%cincrTcl%ciwidgets",
+		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts",
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%clib",
@@ -332,8 +332,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%cincrTcl%citk%clibrary",
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%ciwidgets",
-			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%cincrTcl%ciwidgets",
+			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts",
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%clib",
