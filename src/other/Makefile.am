@@ -43,6 +43,18 @@ else !BUILD_TK
 TKDIR=
 endif
 
+if BUILD_ITCL
+ITCLDIR=incrTcl
+else !BUILD_ITCL
+ITCLDIR=
+endif
+
+if BUILD_IWIDGETS
+IWIDGETSDIR=iwidgets
+else !BUILD_IWIDGETS
+IWIDGETSDIR=
+endif
+
 if BUILD_TERMLIB
 TERMLIBDIR=libtermlib
 else !BUILD_TERMLIB
@@ -142,7 +154,7 @@ SUBDIRS = \
 	$(URTDIR) \
 	${TCLDIR} \
 	${TKDIR} \
-	incrTcl \
+	${ITCLDIR} \
 	${IWIDGETSDIR} \
 	${TERMLIBDIR} \
 	${JOVEDIR} \
@@ -167,6 +179,7 @@ EXTRA_DIST = \
 DIST_SUBDIRS = \
 	URToolkit \
 	incrTcl \
+	iwidgets \
 	jove \
 	libpng \
 	libregex \
