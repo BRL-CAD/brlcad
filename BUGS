@@ -15,9 +15,6 @@ on-going issues.
 Recent Bugs
 -----------
 
-* asc2g+g2asc of ktank.g (_GLOBAL has a colortable, writes out "color"
-  command lines) fails saying "color" command not recognized.
-
 * asc2g of a .asc file containing the first line as a "#" comment
   results in a bu_malloc(0) bomb.  comment lines should be valid in
   .asc files.
