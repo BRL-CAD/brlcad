@@ -4,9 +4,9 @@ ITCLLIB = \
 	libitcl@ITCL_VERSION@.la
 
 if BUILD_ITCL
-ITCLDIR=incrTcl
+ITCLDIR= itcl
 else !BUILD_ITCL
-	ITCLDIR=
+ITCLDIR=
 endif
 
 if BUILD_ITK
