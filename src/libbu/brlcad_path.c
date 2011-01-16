@@ -392,7 +392,6 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 {
     static char result[MAXPATHLEN] = {0};
     const char *lhs;
-    char real_path[MAXPATHLEN] = {0};
     struct bu_vls searched;
     char where[MAX_WHERE_SIZE] = {0};
 
@@ -437,10 +436,18 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 #endif
 
     /* run-time path identification */
-    realpath(bu_argv0_full_path(), real_path);
-    lhs = (const char *)bu_dirname((const char *)bu_dirname(real_path));
+    lhs = bu_argv0_full_path();
     if (lhs) {
-	if (_bu_find_path(result, lhs, rhs, &searched, where)) {
+	char real_path[MAXPATHLEN] = {0};
+	char *dirpath;
+	realpath(lhs, real_path);
+	dirpath = bu_dirname(real_path);
+	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
+	bu_free(dirpath, "free bu_dirname");
+	dirpath = bu_dirname(real_path);
+	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
+	bu_free(dirpath, "free bu_dirname");
+	if (_bu_find_path(result, real_path, rhs, &searched, where)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: Run-time path identification [%s]\n", result);
 	    }
