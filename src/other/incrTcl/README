@@ -1,5 +1,0 @@
-This directory contains the sources for Itcl 3.4b1, Itk 3.3 and Iwidgets 4.0.1, plus any
-changes found necessary for BRL-CAD - check the subversion history.
-
-The config directory contains two files necessary for the iwidgets build system - apparently
-itcl/itk got an update at some point that iwidgets never received.

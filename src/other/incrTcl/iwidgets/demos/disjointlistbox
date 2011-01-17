@@ -1,9 +1,0 @@
-# ----------------------------------------------------------------------
-#  DEMO: disjointlistbox in [incr Widgets]
-# ----------------------------------------------------------------------
-package require Iwidgets 4.0
-
-iwidgets::disjointlistbox .dlb
-pack .dlb -padx 10 -pady 10 -fill both -expand yes 
-
-.dlb insertlhs {black white red blue yellow green magenta}
