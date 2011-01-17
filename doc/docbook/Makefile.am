@@ -110,6 +110,7 @@ EXTRA_DIST = \
 	fop.xconf.in \
 	lessons/en/Makefile.am \
 	lessons/es/Makefile.am \
+	log4j.properties \
 	resources \
 	specifications/en/Makefile.am \
 	system/README \
