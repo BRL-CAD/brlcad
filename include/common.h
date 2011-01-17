@@ -42,7 +42,12 @@
  * should not use config defines)
  */
 #if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
-#  include "brlcad_config.h"
+
+#  if defined(_WIN32) && !defined(__CYGWIN__) && !defined(CMAKE_HEADERS)
+#    include "config_win.h"
+#  else
+#    include "brlcad_config.h"
+#  endif  /* _WIN32 */
 
 /* Simulates drand48() functionality using rand() which is assumed to
  * exist everywhere. The range is [0, 1).
