@@ -32,7 +32,7 @@ EXTRA_DIST = \
 	makefile.bc \
 	makefile.vc \
 	rules.vc \
-	tcl.m4
+	tclconfig
 
 lib_LTLIBRARIES = \
 	$(ITCLLIB) \

@@ -1,3 +1,215 @@
+2010-09-23  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* itcl/Makefile.in: add valgrind targets
+
+	* itcl/generic/itcl_ensemble.c (HandleEnsemble): fix mem leak in
+	itcl ensemble handling. [AS Bug 86108, SF Bug 1503328]
+
+2010-08-17  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* itcl/Makefile.in, itk/Makefile.in (TCL_TOP_DIR_NATIVE): no longer
+	necessary for private header builds
+
+2010-08-16  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* itcl/Makefile.in, itcl/configure, itcl/configure.in:
+	* itk/Makefile.in, itk/configure, itk/configure.in:
+	* configure, configure.in: update to TEA 3.9, regen with ac-2.59
+
+2009-10-14  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* itcl/library/itcl.tcl (unknown): proper scoping for errorCode.
+	[AS Bug #84942]
+
+2009-07-09  Karl Lehenbauer  <karll@users.sf.net>
+	* IncrTcl 3.4b1 tagged for release.
+
+2008-12-15  Andreas Kupries  <andreask@activestate.com>
+
+	* itcl/generic/itcl_cmds.c: Handle TIP#336 addition of API to access
+	* itcl/generic/itcl_ensemble.c: interp->errorLine.
+	* itcl/generic/itclInt.h:
+	* itcl/generic/itcl_methods.c:
+	* itcl/generic/itcl_parse.c:
+
+2008-11-03  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* itcl/library/itcl.tcl (::unknown): correct unknown redefinition
+	to support pre-8.5 interps. [Bug #2040295]
+
+2008-10-04  Miguel Sofer  <msofer@users.sf.net>
+
+	* itcl/generic/itcl_bicmds.c: replace interp->result with
+	Tcl_GetStringResult (thanks apw)
+
+2008-08-06  Miguel Sofer  <msofer@users.sf.net>
+
+	* itcl/library/itcl.tcl: patch Tcl's ::unknown at load time, as
+	Tcl removed the special handling that we need for [namespace code] 
+	[Patch 2040295]
+	
+2008-06-13  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* itcl/generic/itcl_methods.c (Itcl_CreateMemberCode): ensure that
+	we init all Command structure to 0 for version struct variance.
+
+2008-02-07  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* itcl/library/itcl.tcl (::itcl::itcl_class): correct compat
+	definition to use right declaration for public/protected variable.
+
+2008-02-06  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* itcl/library/itcl.tcl (itcl_class, itcl_info): create auto_index
+	fallbacks of classic itcl v2 itcl_class and itcl_info calls.  This
+	handles the public/protected change in itcl::class definitions.
+
+2007-11-03  David Gravereaux <davygrvy@pobox.com>
+
+	* itcl/generic/itclInt.h: small macro fix with USE_TCL_STUBS.
+	Made check for if it was defined.
+
+	* makefile.vc:
+	* itcl/win/makefile.vc:
+	* itk/win/makefile.vc:  'depend' target added.
+
+2007-10-22  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* itcl/generic/itcl_methods.c: cast to silence compiler warning.
+
+2007-09-06  David Gravereaux <davygrvy@pobox.com>
+
+	* itcl/win/makefile.vc: Small change to how compiler flags are
+	built-up.  Stubs library doesn't have stuff it doesn't need and
+	now takes $(OPTDEFINES) from the top rules.vc
+
+	* itcl/doc/Preserve.3:  New API dox that never was, and probably
+	* itcl/doc/Object.3:    won't be for long.
+	* itcl/doc/List.3:
+	* itcl/doc/Class.3:
+
+2007-08-07  Miguel Sofer  <msofer@users.sf.net>
+
+	* itcl/generic/itclInt.h:
+	* itcl/generic/itcl_class.c:
+	* itcl/generic/itcl_cmds.c:
+	* itcl/generic/itcl_methods.c:
+	* itcl/generic/itcl_migrate.c:
+	* itcl/generic/itcl_objects.c:
+	* itcl/generic/itcl_parse.c:
+	* itcl/generic/itcl_util.c:  Adaptation to Tcl's VarReform. When
+	compiled against 8.4 headers, itcl/itk will also run under 8.5.
+	Patch from [Bug 1766617] 
+
+2007-08-03  Miguel Sofer  <msofer@users.sf.net>
+
+	* itcl/generic/itcl_parse.c (Itcl_ClassCommonCmd): plug leak
+	of pre-existing variables being declared as common
+
+2007-07-04  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* itcl/library/itcl.tcl: add 'ensemble' to auto_mkindex tclIndex
+	file generation. (allaert)
+
+2007-07-03  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* itcl/Makefile.in: do not include tests/old in dist.
+
+	* itcl/generic/itcl_cmds.c (Initialize):              Resolve
+	* itcl/generic/itcl_util.c (Itcl_DiscardInterpState): [Bug 1047544]
+	(Itcl_RestoreInterpState, Itcl_SaveInterpState):      with fix that
+	* itcl/generic/itclInt.h: has late-8.4 support for stubs x-version
+	support of the state APIs.
+
+	* {itcl,itk}/Makefile.in: add TAR var, with 'tar' default (was 'gtar')
+
+	* itcl/generic/itcl_class.c (Itcl_HandleClass): Make #auto handling
+	* itcl/tests/basic.test:                        code unicode-aware.
+
+2007-06-10  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* makefile.bc, {itcl,itk}/win/makefile.bc: removed outdated
+
+	* itcl/library/itcl.tcl: fix for itcl's tclIndex file generation
+	to include "imported" itcl commands, like configbody. (allaert)
+
+2007-05-24  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* itk/tests/toplevel.test, itk/library/Toplevel.itk: keep
+	-menu for toplevel. [Bug 1208541] (derevenets)
+
+	* itk/library/Toplevel.itk, itk/library/Widget.itk: handle widgets
+	with spaces. [Bug 1539966] (ogilvie)
+
+	* itcl/generic/itcl_class.c, itcl/generic/itcl_cmds.c: code cleanup
+	* itcl/generic/itcl_methods.c, itcl/tests/basic.test: [Bug 1156326]
+
+	* itcl/tests/basic.test: more test cases [Bug 1156333]
+	* itcl/generic/itcl_parse.c (Itcl_ClassCmd): handle "" class name
+	properly. [Bug 1156343] (dejong)
+
+	* itcl/generic/itcl_class.c (Itcl_FindClassNamespace): harden the
+	lookup to use short-circuit. [Bug 1156352]
+
+	* README, configure, configure.in:
+	* itcl/configure, itcl/configure.in, itcl/generic/itcl.h:
+	* itk/configure, itk/configure.in, itk/generic/itk.h: updated to
+	3.4 as itcl handles M.m more cleanly
+
+	* itcl/generic/itcl_bicmds.c, itcl/generic/itcl_class.c:
+	* itcl/generic/itcl_cmds.c, itcl/generic/itcl_ensemble.c:
+	* itcl/generic/itcl_methods.c, itcl/generic/itcl_objects.c:
+	* itcl/generic/itcl_parse.c, itcl/generic/itcl_util.c:
+	* itk/generic/itk_archetype.c, itk/generic/itk_cmds.c:
+	* itk/generic/itk_option.c: Reduce use of potentially dangerous
+	Tcl_AppendStringsToObj for possibly shared interp result obj.
+	[Bug 227814, 1468370]
+
+	* README, itcl/configure, itcl/configure.in: updated to 3.3.1
+	* itcl/generic/itcl.h, itcl/generic/itclInt.decls:
+	* itcl/generic/itclInt.h, itcl/generic/itclIntDecls.h:
+	* itcl/generic/itcl_bicmds.c, itcl/generic/itcl_class.c:
+	* itcl/generic/itcl_cmds.c, itcl/generic/itcl_methods.c:
+	* itcl/generic/itcl_migrate.c, itcl/generic/itcl_objects.c:
+	* itcl/generic/itcl_parse.c, itcl/generic/itcl_util.c:
+	* itk/configure, itk/configure.in, itk/generic/itk.h:
+	* itk/generic/itk_archetype.c, itk/generic/itk_option.c: Fix itcl
+	use of Tcl_CallFrame to allow itcl compiled with pre-8.5 core to
+	work in Tcl 8.5.  [Bug 1725219]
+
+2007-02-15  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* configure, configure.in, itcl/configure, itcl/configure.in:
+	* itk/configure, itk/configure.in, tclconfig/tcl.m4: TEA 3.6 update
+
+	* itcl/generic/itcl_cmds.c (Initialize): remove the exactness
+	requirement on the TCL_VERSION in Tcl_PkgRequire/Tcl_InitStubs.
+	[AS Bug 67068]
+
+2006-06-06  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* itcl/generic/itcl_methods.c (Itcl_DeleteMemberCode): check
+	procPtr for NULL.
+
+2006-06-02  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* itcl/tests/methods.test (method-2.1): 
+	* itcl/generic/itcl_methods.c (Itcl_DeleteMemberCode): free any
+	compiled local in the no arguments list case.
+
+2006-01-25  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* itcl/configure.in, itcl/configure: 
+	* itk/configure.in, itk/configure: 
+	* configure, configure.in: update to TEA 3.5
+	* tclconfig/tcl.m4:        TEA rcs 1.89 2006/01/25 21:25:02
+
+2005-12-02  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tclconfig/tcl.m4: update to TEA 3.4
+	* configure.in, itcl/configure.in, itk/configure.in:
+	* configure, itcl/configure, itk/configure:
+
 2005-03-25  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* Makefile.in:                           OS X patches from Steffen
