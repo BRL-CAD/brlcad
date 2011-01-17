@@ -493,6 +493,7 @@ include_directories(
 	${ITCL_INCLUDE_DIRS}
 	${ITK_INCLUDE_PATH}
 	${X11_INCLUDE_DIR}
+	${CMAKE_BINARY_DIR}/include/brlcad
 )
 
 add_library(itk ${ITK_GENERIC_SRCS})
