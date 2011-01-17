@@ -3,7 +3,7 @@ SET(brlcadinclude_required
 	bn.h 
 	bu.h 
 	common.h 
-	config_win.h 
+	config_win_cmake.h 
 	ged.h 
 	magic.h 
 	pstdint.h 

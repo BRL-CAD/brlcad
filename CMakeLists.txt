@@ -397,7 +397,7 @@ FILE(APPEND ${CONFIG_H_FILE} "#define __CONFIG_H__\n")
 
 # If we're building on Windows, start off with the config_win.h file
 IF(WIN32)
-	FILE(APPEND ${CONFIG_H_FILE} "#include \"config_win.h\"\n")
+	FILE(APPEND ${CONFIG_H_FILE} "#include \"config_win_cmake.h\"\n")
 ENDIF(WIN32)
 
 # Set up some of the define statements for path information and other basics
