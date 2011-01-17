@@ -3230,7 +3230,7 @@ AC_SUBST(TKTABLE)
 
 dnl *** tkpng ***
 dnl figure out whether we need to build tkpng 
-TKPNG_VERSION="0.9"
+TKPNG_VERSION="0.8"
 TKPNG_LIB_FILE="tkpng${SHLIB_SUFFIX}"
 case $host_os in
      *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
