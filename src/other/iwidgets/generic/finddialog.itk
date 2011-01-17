@@ -1,0 +1,488 @@
+#
+# Finddialog
+# ----------------------------------------------------------------------
+# This class implements a dialog for searching text.  It prompts the
+# user for a search string and the method of searching which includes
+# case sensitive, regular expressions, backwards, and all.
+#
+# ----------------------------------------------------------------------
+#  AUTHOR: Mark L. Ulferts              EMAIL: mulferts@austin.dsccc.com
+#
+#  @(#) RCS: $Id$
+# ----------------------------------------------------------------------
+#            Copyright (c) 1996 DSC Technologies Corporation
+# ======================================================================
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
+# software without specific, written prior permission.
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
+# ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
+# INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
+# WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
+# SOFTWARE.
+# ======================================================================
+
+#
+# Usual options.
+#
+itk::usual Finddialog {
+    keep -background -cursor -foreground -selectcolor
+}
+
+# ------------------------------------------------------------------
+#                          IPRFINDDIALOG
+# ------------------------------------------------------------------
+itcl::class ::iwidgets::Finddialog {
+    inherit iwidgets::Dialogshell
+
+    constructor {args} {}
+
+    itk_option define -selectcolor selectColor Background {} 
+    itk_option define -clearcommand clearCommand Command {}
+    itk_option define -matchcommand matchCommand Command {}
+    itk_option define -patternbackground patternBackground Background \#707070
+    itk_option define -patternforeground patternForeground Foreground White
+    itk_option define -searchbackground searchBackground Background \#c4c4c4
+    itk_option define -searchforeground searchForeground Foreground Black
+    itk_option define -textwidget textWidget TextWidget {}
+
+    public {
+	method clear {}
+	method find {}
+    }
+
+    protected {
+	method _get {setting}
+	method _textExists {}
+
+	common _optionValues       ;# Current settings of check buttons.
+	common _searchPoint        ;# Starting location for searches
+	common _matchLen           ;# Matching pattern string length
+    }
+}
+
+#
+# Provide a lowercased access method for the ::finddialog class.
+# 
+proc ::iwidgets::finddialog {pathName args} {
+    uplevel ::iwidgets::Finddialog $pathName $args
+}
+
+#
+# Use option database to override default resources of base classes.
+#
+option add *Finddialog.title "Find" widgetDefault
+
+# ------------------------------------------------------------------
+#                            CONSTRUCTOR
+# ------------------------------------------------------------------
+itcl::body ::iwidgets::Finddialog::constructor {args} {
+    #
+    # Add the find pattern entryfield.
+    #
+    itk_component add pattern {
+	iwidgets::Entryfield $itk_interior.pattern -labeltext "Find:"
+    } 
+    bind [$itk_component(pattern) component entry] \
+	    <Return> "[itcl::code $this invoke]; break"
+    
+    #
+    # Add the find all checkbutton.
+    #
+    itk_component add all {
+	checkbutton $itk_interior.all \
+	    -variable [itcl::scope _optionValues($this-all)] \
+	    -text "All"
+    }
+
+    #
+    # Add the case consideration checkbutton.
+    #
+    itk_component add case {
+	checkbutton $itk_interior.case \
+	    -variable [itcl::scope _optionValues($this-case)] \
+	    -text "Consider Case"
+    }
+
+    #
+    # Add the regular expression checkbutton.
+    #
+    itk_component add regexp {
+	checkbutton $itk_interior.regexp \
+	    -variable [itcl::scope _optionValues($this-regexp)] \
+	    -text "Use Regular Expression"
+    }
+
+    #
+    # Add the find backwards checkbutton.
+    #
+    itk_component add backwards {
+	checkbutton $itk_interior.backwards \
+	    -variable [itcl::scope _optionValues($this-backwards)] \
+	    -text "Find Backwards"
+    }
+
+    #
+    # Add the find, clear, and close buttons, making find be the default.
+    #
+    add Find -text Find -command [itcl::code $this find]
+    add Clear -text Clear -command [itcl::code $this clear]
+    add Close -text Close -command [itcl::code $this deactivate 0]
+
+    default Find
+
+    #
+    # Use the grid to layout the components.
+    #
+    grid $itk_component(pattern) -row 0 -column 0 \
+	-padx 10 -pady 10 -columnspan 4 -sticky ew
+    grid $itk_component(all) -row 1 -column 0
+    grid $itk_component(case) -row 1 -column 1
+    grid $itk_component(regexp) -row 1 -column 2
+    grid $itk_component(backwards) -row 1 -column 3
+
+    grid columnconfigure $itk_interior 0 -weight 1
+    grid columnconfigure $itk_interior 1 -weight 1
+    grid columnconfigure $itk_interior 2 -weight 1
+    grid columnconfigure $itk_interior 3 -weight 1
+
+    #
+    # Initialize all the configuration options.
+    #
+    eval itk_initialize $args
+}
+
+# ------------------------------------------------------------------
+#                             OPTIONS
+# ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
+# OPTION: -clearcommand
+#
+# Specifies a command to be invoked following a clear operation. 
+# The command is meant to be a means of notification that the
+# clear has taken place and allow other actions to take place such
+# as disabling a find again menu.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Finddialog::clearcommand {}
+
+# ------------------------------------------------------------------
+# OPTION: -matchcommand
+#
+# Specifies a command to be invoked following a find operation. 
+# The command is called with a match point as an argument.  Should
+# a match not be found the match point is {}.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Finddialog::matchcommand {}
+
+# ------------------------------------------------------------------
+# OPTION: -patternbackground
+#
+# Specifies the background color of the text matching the search
+# pattern.  It may have any of the forms accepted by Tk_GetColor.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Finddialog::patternbackground {}
+
+# ------------------------------------------------------------------
+# OPTION: -patternforeground
+#
+# Specifies the foreground color of the pattern matching a search
+# operation.  It may have any of the forms accepted by Tk_GetColor.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Finddialog::patternforeground {}
+
+# ------------------------------------------------------------------
+# OPTION: -searchforeground
+#
+# Specifies the foreground color of the line containing the matching
+# pattern from a search operation.  It may have any of the forms 
+# accepted by Tk_GetColor.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Finddialog::searchforeground {}
+
+# ------------------------------------------------------------------
+# OPTION: -searchbackground
+#
+# Specifies the background color of the line containing the matching
+# pattern from a search operation.  It may have any of the forms 
+# accepted by Tk_GetColor.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Finddialog::searchbackground {}
+
+# ------------------------------------------------------------------
+# OPTION: -textwidget
+#
+# Specifies the scrolledtext or text widget to be searched.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Finddialog::textwidget {
+    if {$itk_option(-textwidget) != {}} {
+	set _searchPoint($itk_option(-textwidget)) 1.0
+    }
+}
+
+# ------------------------------------------------------------------
+#                            METHODS
+# ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
+# PUBLIC METHOD: clear 
+#
+# Clear the pattern entryfield and the indicators.  
+# ------------------------------------------------------------------
+itcl::body ::iwidgets::Finddialog::clear {} {
+    $itk_component(pattern) clear
+
+    if {[_textExists]} {
+	set _searchPoint($itk_option(-textwidget)) 1.0
+
+	$itk_option(-textwidget) tag remove search-line 1.0 end
+	$itk_option(-textwidget) tag remove search-pattern 1.0 end
+    }
+
+    if {$itk_option(-clearcommand) != {}} {
+	eval $itk_option(-clearcommand)
+    }
+}
+
+# ------------------------------------------------------------------
+# PUBLIC METHOD: find
+#
+# Search for a specific text string in the text widget given by
+# the -textwidget option.  Should this option not be set to an
+# existing widget, then a quick exit is made. 
+# ------------------------------------------------------------------
+itcl::body ::iwidgets::Finddialog::find {} {
+    if {! [_textExists]} {
+	return
+    }
+
+    #
+    # Clear any existing indicators in the text widget.
+    #
+    $itk_option(-textwidget) tag remove search-line 1.0 end
+    $itk_option(-textwidget) tag remove search-pattern 1.0 end
+
+    #
+    # Make sure the search pattern isn't just blank.  If so, skip this.
+    #
+    set pattern [_get pattern]
+
+    if {[string trim $pattern] == ""} {
+	return
+    }
+
+    #
+    # After clearing out any old highlight indicators from a previous
+    # search, we'll be building our search command piece-meal based on 
+    # the current settings of the checkbuttons in the find dialog.  The
+    # first we'll add is a variable to catch the count of the length
+    # of the string matching the pattern.
+    #
+    set precmd "$itk_option(-textwidget) search \
+	    -count [list [itcl::scope _matchLen($this)]]"
+
+    if {! [_get case]} {
+	append precmd " -nocase"
+    }
+
+    if {[_get regexp]} {
+	append precmd " -regexp"
+    } else {
+	append precmd " -exact"
+    }
+
+    #
+    # If we are going to find all matches, then the start point for
+    # the search will be the beginning of the text; otherwise, we'll
+    # use the last known starting point +/- a character depending on
+    # the direction.
+    #
+    if {[_get all]} {
+	set _searchPoint($itk_option(-textwidget)) 1.0
+    } else {
+	if {[_get backwards]} {
+	    append precmd " -backwards"
+	} else {
+	    append precmd " -forwards"
+	}
+    }
+
+    #
+    # Get the pattern to be matched and add it to the search command.
+    # Since it may contain embedded spaces, we'll wrap it in a list.
+    #
+    append precmd " [list $pattern]"    
+
+    #
+    # If the search is for all matches, then we'll be performing the 
+    # search until no more matches are found; otherwise, we'll break
+    # out of the loop after one search.
+    #
+    while {1} {
+	if {[_get all]} {
+	    set postcmd " $_searchPoint($itk_option(-textwidget)) end"
+
+	} else {
+	    set postcmd " $_searchPoint($itk_option(-textwidget))"
+	}
+
+	#
+	# Create the final search command out of the pre and post parts
+	# and evaluate it which returns the location of the matching string.
+	#
+	set cmd {}
+	append cmd $precmd $postcmd
+
+	if {[catch {eval $cmd} matchPoint] != 0} {
+	    set _searchPoint($itk_option(-textwidget)) 1.0
+	    return {}
+	}
+
+	#
+	# If a match exists, then we'll make this spot be the new starting
+	# position.  Then we'll tag the line and the pattern in the line.
+	# The foreground and background settings will lite these positions
+	# in the text widget up.
+	#
+	if {$matchPoint != {}} {
+	    set _searchPoint($itk_option(-textwidget)) $matchPoint 
+
+	    $itk_option(-textwidget) tag add search-line \
+	      "$_searchPoint($itk_option(-textwidget)) linestart" \
+		"$_searchPoint($itk_option(-textwidget))" 
+	    $itk_option(-textwidget) tag add search-line \
+	      "$_searchPoint($itk_option(-textwidget)) + \
+               $_matchLen($this) chars" \
+	      "$_searchPoint($itk_option(-textwidget)) lineend"
+	    $itk_option(-textwidget) tag add search-pattern \
+	       $_searchPoint($itk_option(-textwidget)) \
+		"$_searchPoint($itk_option(-textwidget)) + \
+                 $_matchLen($this) chars"
+	}
+
+	#
+	# Set the search point for the next time through to be one
+	# character more or less from the current search point based
+	# on the direction.
+	#
+	if {[_get all] || ! [_get backwards]} {
+	    set _searchPoint($itk_option(-textwidget)) \
+		[$itk_option(-textwidget) index \
+		     "$_searchPoint($itk_option(-textwidget)) + 1c"]
+	} else {
+	    set _searchPoint($itk_option(-textwidget)) \
+		[$itk_option(-textwidget) index \
+		     "$_searchPoint($itk_option(-textwidget)) - 1c"]
+	}
+
+	#
+	# If this isn't a find all operation or we didn't get a match, exit.
+	#
+	if {(! [_get all]) || ($matchPoint == {})} {
+	    break
+	}
+    }
+
+    #
+    # Configure the colors for the search-line and search-pattern.
+    #
+    $itk_option(-textwidget) tag configure search-line \
+	    -foreground $itk_option(-searchforeground)
+    $itk_option(-textwidget) tag configure search-line \
+	    -background $itk_option(-searchbackground)
+    $itk_option(-textwidget) tag configure search-pattern \
+	    -background $itk_option(-patternbackground)
+    $itk_option(-textwidget) tag configure search-pattern \
+	    -foreground $itk_option(-patternforeground)
+
+    #
+    # Adjust the view to be the last matched position.
+    #
+    if {$matchPoint != {}} {
+	$itk_option(-textwidget) see $matchPoint
+    }
+
+    #
+    # There may be multiple matches of the pattern on a single line,
+    # so we'll set the tag priorities such that the pattern tag is higher.
+    #
+    $itk_option(-textwidget) tag raise search-pattern search-line
+
+    #
+    # If a match command is defined, then call it with the match point.
+    #
+    if {$itk_option(-matchcommand) != {}} {
+	[subst $itk_option(-matchcommand)] $matchPoint
+    }
+
+    #
+    # Return the match point to the caller so they know if we found 
+    # anything and if so where
+    #
+    return $matchPoint
+}
+
+# ------------------------------------------------------------------
+# PROTECTED METHOD: _get setting
+#
+# Get the current value for the pattern, case, regexp, or backwards.
+# ------------------------------------------------------------------
+itcl::body ::iwidgets::Finddialog::_get {setting} {
+    switch $setting {
+	pattern {
+	    return [$itk_component(pattern) get]
+	}
+	case {
+	    return $_optionValues($this-case)
+	}
+	regexp {
+	    return $_optionValues($this-regexp)
+	}
+	backwards {
+	    return $_optionValues($this-backwards)
+	}
+	all {
+	    return $_optionValues($this-all)
+	}
+	default {
+	    error "bad get setting: \"$setting\", should be pattern,\
+		    case, regexp, backwards, or all"
+	}
+    }
+}
+
+# ------------------------------------------------------------------
+# PROTECTED METHOD: _textExists
+#
+# Check the validity of the text widget option.  Does it exist and
+# is it of the class Text or Scrolledtext.
+# ------------------------------------------------------------------
+itcl::body ::iwidgets::Finddialog::_textExists {} {
+    if {$itk_option(-textwidget) == {}} {
+	return 0
+    }
+
+    if {! [winfo exists $itk_option(-textwidget)]} {
+	error "bad finddialog text widget value: \"$itk_option(-textwidget)\",\
+               the widget doesn't exist"
+    }
+
+    if {([winfo class $itk_option(-textwidget)] != "Text") &&
+	([itcl::find objects -isa iwidgets::Scrolledtext *::$itk_option(-textwidget)] == "")} {
+	error "bad finddialog text widget value: \"$itk_option(-textwidget)\",\
+               must be of the class Text or based on Scrolledtext"
+    }
+
+    return 1
+}

@@ -1,0 +1,168 @@
+# This file is a Tcl script to test out [incr Widgets] Finddialog class.
+# It is organized in the standard fashion for Tcl tests with the following
+# notation for test case labels:
+#
+#   1.x - Construction/Destruction tests
+#   2.x - Configuration option tests
+#   3.x - Method tests
+#   4.x - Other tests
+#
+# Copyright (c) 1995 DSC Technologies Corporation
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# @(#) $Id$
+
+package require tcltest
+namespace import -force ::tcltest::*
+
+if [catch {package require Iwidgets 4.0}] {
+  # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
+  # env var is initialized in the Makefile when doing a 'make test'.
+  # If sourcing this file independently, this variable must be set manually.
+  if ![info exists env(IWIDGETS_LIBRARY)] {
+    error "Unable to locate Iwidgets package.  Set your IWIDGETS_LIBRARY\
+      environment\nvariable to the directory that contains iwidgets.tcl"
+  }
+  lappend auto_path $env(IWIDGETS_LIBRARY)
+  package require Iwidgets 4.0
+}
+
+if {[string compare test [info procs test]] == 1} {
+    source defs
+}
+
+wm geometry . {}
+raise .
+
+set c 1
+set o 1
+set m 1
+
+#
+# Initial construction test
+#
+test Finddialog-1.$c {Finddialog construction} {
+    iwidgets::Scrolledlistbox .slb
+    iwidgets::Scrolledtext .st
+    pack .st
+    .st insert end "Now is the time for all good men\\n" 
+    .st insert end "to come to the aid of their country"
+
+    iwidgets::Finddialog .fd
+    .fd center .st
+    .fd activate
+} {}
+
+incr c
+
+#
+# Option tests which are successful.
+#
+test Finddialog-2.$o {configuration option} {
+    llength [.fd configure]
+} {43}
+
+incr o
+
+foreach test {
+    {-background #d9d9d9 #d9d9d9} 
+    {-buttonboxpadx 10 10} 
+    {-buttonboxpady 10 10} 
+    {-cursor gumby gumby} 
+    {-textwidget .st .st}
+    {-patternbackground blue blue}
+    {-patternforeground white white}
+    {-searchbackground skyblue skyblue}
+    {-searchforeground white white}
+    {-title "Find Dialog" "Find Dialog"}} {
+	set option [lindex $test 0]
+	test Finddialog-2.$o "configuration options, $option" {
+	    .fd configure $option [lindex $test 1]
+	    lindex [.fd configure $option] 4
+	} [lindex $test 2]
+	update 
+	incr o
+}
+
+#
+# Option tests which fail and produce errors.
+#
+foreach test {
+  {-buttonboxpos bogus {bad buttonboxpos option "bogus": should be n, s, e, or w}}
+  {-modality bogus {bad modality option "bogus": should be none, application, or global}}} {
+	set option [lindex $test 0]
+        test Finddialog-2.$o "configuration options, $option" {
+	    list [catch {.fd configure $option [lindex $test 1]} msg] $msg
+	} [list 1 [lindex $test 2]]
+	incr o
+}
+
+#
+# Method tests which are successful.
+#
+foreach test {
+    {{.fd component pattern insert end "the"} {}}
+    {{.fd find} 1.7}
+    {{.fd find} 1.45}
+    {{.fd clear} {}}
+    {{.fd invoke Find} {}}
+    {{.fd buttonconfigure Find -text Search} {}}} {
+	set method [lindex [lindex $test 0] 1]
+	test Finddialog-3.$m "object methods, $method" {
+	    list [catch {eval [lindex $test 0]} msg] $msg
+	} [list 0 [lindex $test 1]]
+	update 
+	incr m
+}
+
+.fd configure -textwidget .bogus
+
+#
+# Method tests which fail and produce errors
+#
+test Finddialog-3.$m "Non existant textwidget" {
+    list [catch {.fd find} msg] $msg
+} [list 1 {bad finddialog text widget value: ".bogus", the widget doesn't exist}]
+update
+incr m
+
+.fd configure -textwidget .slb
+
+test Finddialog-3.$m "Wrong class of textwidget" {
+    list [catch {.fd find} msg] $msg
+} [list 1 {bad finddialog text widget value: ".slb", must be of the class Text or based on Scrolledtext}]
+update
+incr m
+
+#
+# Destruction test
+#
+test Finddialog-1.$c {Finddialog destruction} {
+    destroy .slb
+    destroy .st
+    destroy .fd
+    update 
+} {}
+incr c
+
+#
+# Initial construction test
+#
+test Finddialog-1.$c {Finddialog construction} {
+    iwidgets::Finddialog .fd
+} {.fd}
+
+incr c
+
+#
+# Destruction test
+#
+test Finddialog-1.$c {Finddialog destruction} {
+    destroy .fd
+    update 
+} {}
+
+::tcltest::cleanupTests
+exit

@@ -1,0 +1,197 @@
+# This file is a Tcl script to test out [incr Widgets] Regexpfield class.
+# It is organized in the standard fashion for Tcl tests with the following
+# notation for test case labels:
+#
+#   1.x - Construction/Destruction tests
+#   2.x - Configuration option tests
+#   3.x - Method tests
+#
+# Copyright (c) 1995 DSC Technologies Corporation
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# @(#) $Id$
+
+package require tcltest
+namespace import -force ::tcltest::*
+
+if [catch {package require Iwidgets 4.0}] {
+  # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
+  # env var is initialized in the Makefile when doing a 'make test'.
+  # If sourcing this file independently, this variable must be set manually.
+  if ![info exists env(IWIDGETS_LIBRARY)] {
+    error "Unable to locate Iwidgets package.  Set your IWIDGETS_LIBRARY\
+      environment\nvariable to the directory that contains iwidgets.tcl"
+  }
+  lappend auto_path $env(IWIDGETS_LIBRARY)
+  package require Iwidgets 4.0
+}
+
+if {[string compare test [info procs test]] == 1} {
+    source defs
+}
+
+wm geometry . {}
+raise .
+
+set c 1
+set o 1
+set m 1
+
+#
+# Initial construction test
+#
+test Regexpfield-1.$c {Regexpfield construction} {
+    iwidgets::Regexpfield .ef -labeltext "Entry Field"
+    .ef insert end test
+    pack .ef -padx 10 -pady 10 -fill both -expand yes
+    update 
+} {}
+
+incr c
+
+#
+# Option tests which are successful.
+#
+test Regexpfield-2.$o {configuration option} {
+    llength [.ef configure]
+} {40}
+
+incr o
+
+foreach test {
+    {-background #d9d9d9 #d9d9d9}
+    {-borderwidth 4 4} 
+    {-borderwidth 2 2} 
+    {-childsitepos e e} 
+    {-childsitepos s s} 
+    {-childsitepos w w} 
+    {-childsitepos n n} 
+    {-command {.ef configure -background red} {.ef configure -background red}}
+    {-cursor gumby gumby} 
+    {-exportselection 0 0} 
+    {-fixed 10 10} 
+    {-fixed 0 0} 
+    {-foreground Green Green} 
+    {-foreground Black Black} 
+    {-highlightcolor Red Red}
+    {-highlightthickness 2 2}
+    {-insertbackground Yellow Yellow} 
+    {-insertbackground Black Black} 
+    {-insertborderwidth 1 1} 
+    {-insertborderwidth 0 0} 
+    {-insertofftime 400 400} 
+    {-insertontime 700 700} 
+    {-insertwidth 3 3} 
+    {-invalid {.ef configure -background Green} {.ef configure -background Green}}
+    {-justify right right}
+    {-justify center center}
+    {-justify left left}
+    {-labelmargin 5 5} 
+    {-labelpos w w} 
+    {-labelpos nw nw} 
+    {-labelpos n n} 
+    {-labelpos ne ne} 
+    {-labelpos e e} 
+    {-labelpos se se} 
+    {-labelpos s s} 
+    {-labelpos sw sw} 
+    {-labeltext Label Label} 
+    {-relief raised raised} 
+    {-relief sunken sunken} 
+    {-state disabled disabled} 
+    {-state normal normal} 
+    {-sticky w w}
+    {-sticky nw nw}
+    {-sticky n n}
+    {-sticky ne ne}
+    {-sticky e e}
+    {-sticky se se}
+    {-sticky s s}
+    {-sticky sw sw}
+    {-sticky news news}
+    {-textbackground GhostWhite GhostWhite} 
+    {-regexp {.*} {.*}} 
+    {-nocase 0 0} 
+    {-width 30 30}} {
+	set option [lindex $test 0]
+	test Regexpfield-2.$o "configuration options, $option" {
+	    .ef configure $option [lindex $test 1]
+	    lindex [.ef configure $option] 4
+	} [lindex $test 2]
+	update 
+	incr o
+}
+
+#
+# Option tests which fail and produce errors.
+#
+foreach test {
+  {-fixed bogus {bad fixed option "bogus", should be positive integer}}
+  {-childsitepos bogus {bad childsite option "bogus": should be n, e, s, or w}}} {
+	set option [lindex $test 0]
+        test Regexpfield-2.$o "configuration options, $option" {
+	    list [catch {.ef configure $option [lindex $test 1]} msg] $msg
+	} [list 1 [lindex $test 2]]
+	incr o
+}
+
+#
+# Method tests which are successful.
+#
+foreach test {
+    {{.ef childsite} {.ef.lwchildsite.efchildsite}}
+    {{.ef clear} {}}
+    {{.ef insert end "Test String"} {}}
+    {{.ef get} {Test String}}
+    {{.ef delete 0 end} {}}
+    {{.ef insert end "Another Test"} {}}
+    {{.ef icursor end} {}}
+    {{.ef index end} 12}
+    {{.ef selection from 0} {}}
+    {{.ef selection to end} {}}
+    {{.ef xview 3} {}}
+    {{.ef clear} {}}} {
+	set method [lindex [lindex $test 0] 1]
+	test Regexpfield-3.$m "object methods, $method" {
+	    list [catch {eval [lindex $test 0]} msg] $msg
+	} [list 0 [lindex $test 1]]
+	update 
+	incr m
+}
+
+#
+# Conclusion of constrcution/destruction tests
+#
+test Regexpfield-1.$c {Regexpfield destruction} {
+    destroy .ef
+    update 
+} {}
+
+incr c
+
+test Regexpfield-1.$c {Regexpfield construction} {
+    iwidgets::regexpfield .ef -width 12
+    pack .ef -padx 10 -pady 10
+    update 
+} {}
+
+incr c
+
+test Regexpfield-1.$c {Regexpfield destruction} {
+    destroy .ef
+    update 
+} {}
+
+incr c
+
+test Regexpfield-1.$c {Regexpfield destruction} {
+    iwidgets::regexpfield .ef
+    pack .ef
+    destroy .ef
+    update 
+} {}
+
+::tcltest::cleanupTests
+exit

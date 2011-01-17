@@ -1,0 +1,14 @@
+# ----------------------------------------------------------------------
+#  DEMO: hyperhelp in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+option add *textBackground seashell
+
+button .push -text "Help..." -command {
+    set win [iwidgets::hyperhelp .#auto -title "Hyperhelp demo" -modality none \
+        -topics {demo} -helpdir [file join ${iwidgets::library} demos]]
+    $win showtopic demo
+    $win activate
+}
+pack .push

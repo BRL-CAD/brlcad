@@ -1,0 +1,1567 @@
+2008-08-20  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/disjointlistbox.itk (::iwidgets::disjointlistbox): fix
+	8.5 grid anchoring. [Bug 2062394]
+
+2007-06-10  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/shell.itk (::iwidgets::shell): fix problem with "tkwait
+	visibility" in iwidget's dialog box (allaert)
+
+	* generic/pushbutton.itk (::iwidgets::pushbutton): handle Tk 8.4
+	frame padx/y changes.
+
+	* iwidgets.tcl.in: don't add non-existent path to auto_path
+
+	* generic/datefield.itk (::iwidgets::datefield): use string match
+	instead of regexp
+
+2007-05-24  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/combobox.itk: use -state readonly for combobox.
+	[Bug 998874] (griffin)
+
+	* generic/calendar.itk: 8.5-compatible last day of month
+	calculation. [Bug 1311531] (broeken)
+
+	* demos/catalog: make location independent. [Bug 1631754] (kupries)
+
+2006-04-11  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/extfileselectionbox.itk
+	(iwidgets::Extfileselectionbox::_setDirList): set currentIndex to
+	default value
+
+2005-04-11  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* configure, tclconfig/tcl.m4: TEA 3.2 update
+	* configure.in (AC_PROG_INSTALL): add back @INSTALL*@ check
+
+2005-01-24  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tclconfig/install-sh, tclconfig/tcl.m4 (new):
+	* tcl.m4 (removed):
+	* Makefile.in, aclocal.m4: Updated to TEA 3.1 build system
+	* configure, configure.in:
+	* iwidgets.tcl.in, pkgIndex.tcl.in:
+
+2002-10-25  Andreas Kupries  <andreask@activestate.com>
+
+	* configure.in: Added determination of EXEEXT or else
+	  SC_PROG_TCLSH may pick up the wrong file as executable (In my
+	  case it mistook tclsh83g.pdb for the tclsh).
+	  Regen'd configure.
+
+2002-09-25  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* Makefile.in: improved libdir support (steffen)
+
+2002-09-22  Marty Backe <marty@lucidway.org>
+    * generic/shell.itk: SF ticket 611739
+        Changed _return from a private to protected.
+    * generic/entryfield.itk
+        <Return> bindings are now passed to the parent unless the -command
+        option is defined.
+
+2002-09-09  Chad Smith  <csmith@adc.com>
+
+	********************************
+	**** IWIDGETS 4.0.1 RELEASE ****
+	********************************
+
+	* Makefile.in: SF ticket 227921
+	Updated man page installation such that "iwidgets_" is now
+	prepended to the man page filename.  This is done to avoid
+	naming conflicts with man pages in other extensions.
+
+2002-09-09  Chad Smith  <csmith@adc.com>
+    * generic/scrolledtext.itk
+    * doc/scrolledtext.n
+    * doc/scrolledhtml.n
+    * demos/html/scrolledtext.n.html
+    * demos/html/scrolledhtml.n.html
+    * tests/scrolledtext.test
+    * tests/scrolledhtml.test
+        SF ticket 532602: added -tabs to scrolledtext (and
+	scrolledhtml due to inheritance)
+
+2002-09-08  Marty Backe <marty@lucidway.org>
+    * generic/combobox.itk
+        Fixed SF bug 501300 - keyboard navigation was not working
+        properly if any items were null
+
+2002-09-06  Chad Smith  <csmith@adc.com>
+    * generic/hierarchy.itk: SF ticket 596111
+	After reconfiguring -querycommand, the text component
+	lost its tag configuration.  Added code to reset
+	the hilite, lowlite, and info tags.
+
+2002-09-05  Chad Smith  <csmith@adc.com>
+    * generic/hierarchy.itk: SF ticket 600941
+	Marked node lost its highlighting when parent folder
+	closed and reopened
+
+2002-09-05  Chad Smith  <csmith@adc.com>
+    * generic/canvasprintbox.itk: SF ticket 560153
+	Wouldn't print to a filename other than "canvas.ps".
+
+2002-09-05  Chad Smith  <csmith@adc.com>
+    * generic/tabnotebook.itk: SF ticket 514222
+	Patch added for infinite loop problem introduced by
+	new -padx and -pady Tk frame widget options in 8.4
+
+2002-09-05  Chad Smith  <csmith@adc.com>
+    * generic/tabnotebook.itk: SF ticket 603823
+	Patch for bugs related to the -int option
+    * generic/calendar.itk: SF ticket 603823
+	Found bug while testing the dateentry patch.  Several
+	methods expected -int to be set to "yes" or "no"
+
+2002-03-24  Marty Backe <mgbacke@usa.net>
+    * generic/disjointlistbox.itk
+        Applied patch sumitted by Brett Schwarz to add two new sort
+        options which determine how items are added to each
+        scrolledlistbox. Did some various code formatting cleanup.
+    * doc/disjointlistbox.n
+        Updated the man page to reflect the addition of the two
+        sort options.
+    * demos/html/disjointlistbox.n.html
+        Updated the html version of the man page
+    * tests/disjointlistbox.test
+        Added tests for the the two new options. 
+
+2002-03-19  Marty Backe <mgbacke@usa.net>
+    * generic/messagebox.itk
+        Modified the save method to center the tk_getSaveFile dialog
+        on the messagebox window.
+
+2002-03-16  Marty Backe <mgbacke@usa.net>
+    * generic/scrolledlistbox.itk: SF Patch 494696
+        Applied patch submitted by Brett Schwarz to change the sort
+        method to accept any sort arguments allowed by Tcl's lsort.
+        Modified patch to generate an appropriate error message if an
+        invalid sort argument is provided.
+    * doc/scrolledlistbox.n
+        Updated the man page to reflect the new sort arguments.
+    * demos/html/scrolledlistbox.n.html
+        Updated per change to doc/scrolledlistbox.n
+    * tests/scrolledlistbox.test
+        Updated the 'fail test' to reflect the new error message generated
+        by an invalid sort argument.
+    * tests/combobox.test
+        Updated the sort 'failed test' to reflect the new error message
+        generated by an invalid sort argument. Fallout from patch to
+        scrolledlistbox.itk. See above.
+
+2002-03-15  Marty Backe <mgbacke@usa.net>
+    * generic/messagebox.itk
+        Fixed a couple of bugs relating to the popup menu 'Save' function:
+            1) The filename that was saved to was also echoed to the
+               messagebox. Unfortunately the variable referenced was not
+               valid, so a stack trace followed any Save operation.
+            2) The message 'issued' to the messagebox from item 1) above
+               used the tag INFO, which doesn't exist by default.
+
+            I choose to remove the 'issue' after a file Save. The widget
+            really shouldn't contribute anything to the messagebox output.
+            The user of the messagebox iwidget should have control over
+            what gets displayed.
+
+        Changed the 'export' method to directly use the scrolledtext
+        'export' method instead of re-implementing it within this widget.
+
+        Rearranged the layout of the popup menu. Moved the 'Clear' menu
+        to the end of the list. It was too easy to generate the popup and
+        accidentally choose the 'Clear' function.
+    
+    * generic/hyperhelp.itk
+        Removed the 'error' statement that would cause any application that
+        used Hyperhelp to stacktrace if a file to be rendered couldn't be
+        opened. It's now just a silent error. Perhaps a -errorcommand option
+        could be added later.
+
+2002-03-10  Marty Backe <mgbacke@usa.net>
+    * generic/extfileselectionbox.itk: SF ticket 482080
+        Fixed SF ticket 482080 - wrapped _pwd in quotes
+        Fixed newly discovered bug:
+            When the current directory contains a directory named after
+            a punctuation mark (e.g., ! '). Method _setDirList was always
+            setting the Dir listbox selection to index 0, which is normally
+            ".", unless the directory contains a directory named
+            after a punctuation mark. Now it gets set to "." regardless.
+
+2002-02-26  Marty Backe <mgbacke@usa.net>
+    * generic/radiobox.itk: SF ticket 521332
+        Fixed various bugs:
+            1) Traces weren't being released when the object was destroyed.
+            2) Small memory leak - _modes($this) array element not deleted
+               when the object was destroyed.
+            3) If the -command option was defined, the command would be
+               triggered when the first radiobutton was added via the add
+               method.
+        Added a destructor to fix bugs 1 & 2. Modified the constructor to
+        fix bug 3.
+    * generic/extfileselectiondialog.itk: SF ticket 521335
+        Added the -sashcursor option (was already defined in the man page,
+        but wasn't implemented).
+    * tests/radiobox.test:
+        Added test to check for bug number 3 above.
+    * tests/extfileselectiondialog.test:
+        Added 2 option tests for -sashcursor & -labelfont. Updated the
+        option count test.
+
+2002-02-24  Marty Backe <mgbacke@usa.net>
+    * generic/datefield.itk
+        Fixed bugs introduced in previous patch - unbraced 'if' conditionals
+    * generic/tabset.itk
+        Fixed bug introduced in previous patch - 'code' used instead
+        of 'itcl::code'.
+    * generic/shell.itk: SF ticket 521338
+        The 'center' method now properly centers windows that have been
+        resized between calls to center.
+    * generic/scrolledlistbox.ikt: SF ticket 521326
+        The <B1-Motion> binding was removed to eliminate multiple triggers
+        of the command specified by the -selectioncommand option if the
+        mouse is moved while the item is being selected. 
+        
+2002-02-16  Marty Backe <mgbacke@usa.net>
+    * generic/scrolledhtml.itk: SF ticket 481956
+        Fixed potential for lengthy page renderings to throw a bgerror.
+        
+2001-12-11  Chad Smith  <csmith@adc.com>
+	* generic/combobox.itk: SF ticket 474817
+		Fixed an auto-completion problem.
+
+2001-12-07  Chad Smith  <csmith@adc.com>
+	* generic/tabset.itk:
+		Added patch submitted by Reinhard Max to optimize tab addition.
+
+2001-11-29  Chad Smith  <csmith@adc.com>
+	* configure.in:
+	* Makefile.in: SF tickets 462528 and 486735
+		Removed a lot of unnecessary variables.  Updated configure.in
+		so that autoconf-generated version matches the configure script
+		that is included (thanks Andreas).  Removed --with-itk and
+		changed --with-itcl to be required if Iwidgets is not
+		installed direcly underneath toplevel Itcl directory.
+
+2001-09-20  Chad Smith  <csmith@adc.com>
+	* generic/shell.itk: SF ticket 227885
+		Added an 'update idletasks' to flush the event loop after
+		activating a shell iwidgets.
+
+2001-09-18  Chad Smith  <csmith@adc.com>
+	* generic/radiobox.itk: SF ticket 227923
+		Added code to keep users from modifying -variable and -value
+		radiobutton component options.
+
+2001-09-17  Chad Smith  <csmith@adc.com>
+	* generic/entryfield.itk: SF ticket 227912
+		Corrected some pasting problems.
+
+2001-09-14  Chad Smith  <csmith@adc.com>
+	* generic/tabset.itk: SF ticket 460879
+		Commented out a line of code to keep the tab from forcing
+		focus on the hull frame on <Enter>.
+
+2001-09-14  Chad Smith  <csmith@adc.com>
+	* generic/tabnotebook.itk: SF tickets 452803 and 461471
+		Had to do an "undo" of some previous code that was causing an
+		infinite resizing on <Configure> events.
+
+2001-08-07  Chad Smith  <csmith@adc.com>
+
+	********************************
+	**** IWIDGETS 4.0.0 RELEASE ****
+	********************************
+
+	* Merged iwidgets_overhaul branch to CVS head.  This branch
+	included all modifications necessary to extract the iwidgets
+	from the itcl distribution.
+
+2001-07-17  Jeff Hobbs  <jeffh@ActiveState.com>
+	* Makefile.in: removed attempt to install $(GENERIC_DIR)/*.tcl
+	from install-libraries target as there aren't any .tcl files there
+	since the removal of generic/scopedobject.tcl.  This was resulting
+	in an error on install.
+
+2001-05-24  davygrvy
+	* ChangeLog (added):
+		Auto gen'd this from output of `cvs log`.  This will help us
+		make a nice quality digest of the changes done for a release.
+
+2001-05-23  davygrvy
+	* .cvsignore:
+	* configure:
+	* configure.in:
+		Updated patch level to 3.0.2 in prep for a release.
+
+2001-05-22  davygrvy
+	* win/iwidgets.tcl:
+	* win/makefile.vc:
+	* win/pkg.vc:
+		makefile.vc actually works again.
+
+	* win/pkgIndex.tcl:
+		we'll auto gen these from the makefile
+
+	* win/makefile.vc:
+		got catalog.tcl installing
+
+2001-05-21  davygrvy
+	* demos/demo.html:
+		Moved change on the old iwidget3.0.0 to the new repository tree
+		for Iwidgets
+
+2001-05-19  davygrvy
+	* generic/menubar.itk:
+	* generic/tabnotebook.itk:
+		Moved Chad's changes to the new repository files from the old
+		iwidgets3.0.0
+
+2001-05-18  davygrvy
+	* generic/scopedobject.tcl:
+		removed due to copy
+
+2001-04-25  davygrvy
+	* generic/colors.itk:
+	* win/catalog.bat:
+	* win/makefile.bc:
+	* win/tclIndex:
+		cleaning of prior 2.2.0 import to match the correct HEAD
+
+	* CHANGES:
+	* Makefile.in:
+	* README:
+	* aclocal.m4:
+	* configure:
+	* configure.in:
+	* demos/buttonbox:
+	* demos/canvasprintdialog:
+	* demos/catalog:
+	* demos/combobox:
+	* demos/demo.html:
+	* demos/dialog:
+	* demos/dialogshell:
+	* demos/entryfield:
+	* demos/feedback:
+	* demos/fileselectionbox:
+	* demos/fileselectiondialog:
+	* demos/html/buttonbox.n.html:
+	* demos/html/canvasprintbox.n.html:
+	* demos/html/canvasprintdialog.n.html:
+	* demos/html/combobox.n.html:
+	* demos/html/dialog.n.html:
+	* demos/html/dialogshell.n.html:
+	* demos/html/entryfield.n.html:
+	* demos/html/feedback.n.html:
+	* demos/html/fileselectionbox.n.html:
+	* demos/html/fileselectiondialog.n.html:
+	* demos/html/hyperhelp.n.html:
+	* demos/html/iwidgets2.2.0UserCmds.html:
+	* demos/html/labeledwidget.n.html:
+	* demos/html/menubar.n.html:
+	* demos/html/messagedialog.n.html:
+	* demos/html/notebook.n.html:
+	* demos/html/optionmenu.n.html:
+	* demos/html/panedwindow.n.html:
+	* demos/html/promptdialog.n.html:
+	* demos/html/pushbutton.n.html:
+	* demos/html/radiobox.n.html:
+	* demos/html/scrolledcanvas.n.html:
+	* demos/html/scrolledframe.n.html:
+	* demos/html/scrolledhtml.n.html:
+	* demos/html/scrolledlistbox.n.html:
+	* demos/html/scrolledtext.n.html:
+	* demos/html/selectionbox.n.html:
+	* demos/html/selectiondialog.n.html:
+	* demos/html/shell.n.html:
+	* demos/html/spindate.n.html:
+	* demos/html/spinint.n.html:
+	* demos/html/spinner.n.html:
+	* demos/html/spintime.n.html:
+	* demos/html/tabnotebook.n.html:
+	* demos/html/tabset.n.html:
+	* demos/html/toolbar.n.html:
+	* demos/hyperhelp:
+	* demos/images/mag.gif:
+	* demos/images/poly.gif:
+	* demos/images/ruler.gif:
+	* demos/images/select.gif:
+	* demos/iwidgets.gif:
+	* demos/labeledwidget:
+	* demos/menubar:
+	* demos/messagedialog:
+	* demos/notebook:
+	* demos/optionmenu:
+	* demos/panedwindow:
+	* demos/promptdialog:
+	* demos/pushbutton:
+	* demos/radiobox:
+	* demos/scrolledcanvas:
+	* demos/scrolledframe:
+	* demos/scrolledhtml:
+	* demos/scrolledlistbox:
+	* demos/scrolledtext:
+	* demos/selectionbox:
+	* demos/selectiondialog:
+	* demos/spindate:
+	* demos/spinint:
+	* demos/spinner:
+	* demos/spintime:
+	* demos/tabnotebook:
+	* demos/tabset:
+	* demos/toolbar:
+	* doc/buttonbox.n:
+	* doc/canvasprintbox.n:
+	* doc/canvasprintdialog.n:
+	* doc/combobox.n:
+	* doc/dialog.n:
+	* doc/dialogshell.n:
+	* doc/entryfield.n:
+	* doc/feedback.n:
+	* doc/fileselectionbox.n:
+	* doc/fileselectiondialog.n:
+	* doc/hyperhelp.n:
+	* doc/iwidgets.ps:
+	* doc/labeledwidget.n:
+	* doc/man.macros:
+	* doc/menubar.n:
+	* doc/messagedialog.n:
+	* doc/mkitclman:
+	* doc/notebook.n:
+	* doc/optionmenu.n:
+	* doc/panedwindow.n:
+	* doc/promptdialog.n:
+	* doc/pushbutton.n:
+	* doc/radiobox.n:
+	* doc/scrolledcanvas.n:
+	* doc/scrolledframe.n:
+	* doc/scrolledhtml.n:
+	* doc/scrolledlistbox.n:
+	* doc/scrolledtext.n:
+	* doc/selectionbox.n:
+	* doc/selectiondialog.n:
+	* doc/shell.n:
+	* doc/spindate.n:
+	* doc/spinint.n:
+	* doc/spinner.n:
+	* doc/spintime.n:
+	* doc/tabnotebook.n:
+	* doc/tabset.n:
+	* doc/tk2html:
+	* doc/tk2html.awk:
+	* doc/tk2html.perl:
+	* doc/tk2html2.awk:
+	* doc/toolbar.n:
+	* generic/buttonbox.itk:
+	* generic/canvasprintbox.itk:
+	* generic/canvasprintdialog.itk:
+	* generic/colors.itk:
+	* generic/combobox.itk:
+	* generic/dialog.itk:
+	* generic/dialogshell.itk:
+	* generic/entryfield.itk:
+	* generic/feedback.itk:
+	* generic/fileselectionbox.itk:
+	* generic/fileselectiondialog.itk:
+	* generic/hyperhelp.itk:
+	* generic/labeledwidget.itk:
+	* generic/menubar.itk:
+	* generic/messagedialog.itk:
+	* generic/notebook.itk:
+	* generic/optionmenu.itk:
+	* generic/pane.itk:
+	* generic/panedwindow.itk:
+	* generic/promptdialog.itk:
+	* generic/pushbutton.itk:
+	* generic/radiobox.itk:
+	* generic/scrolledcanvas.itk:
+	* generic/scrolledframe.itk:
+	* generic/scrolledhtml.itk:
+	* generic/scrolledlistbox.itk:
+	* generic/scrolledtext.itk:
+	* generic/selectionbox.itk:
+	* generic/selectiondialog.itk:
+	* generic/shell.itk:
+	* generic/spindate.itk:
+	* generic/spinint.itk:
+	* generic/spinner.itk:
+	* generic/spintime.itk:
+	* generic/tabnotebook.itk:
+	* generic/tabset.itk:
+	* generic/tclIndex:
+	* generic/toolbar.itk:
+	* generic/unknownimage.gif:
+	* incoming/README:
+	* incoming/doc/man.macros:
+	* incoming/tests/all:
+	* incoming/tests/defs:
+	* iwidgets.tcl.in:
+	* license.terms:
+	* outgoing/README:
+	* pkgIndex.tcl.in:
+	* tests/all:
+	* tests/all.tcl:
+	* tests/buttonbox.test:
+	* tests/canvasprintbox.test:
+	* tests/canvasprintdialog.test:
+	* tests/combobox.test:
+	* tests/defs:
+	* tests/dialog.test:
+	* tests/dialogshell.test:
+	* tests/entryfield.test:
+	* tests/feedback.test:
+	* tests/fileselectionbox.test:
+	* tests/fileselectiondialog.test:
+	* tests/hyperhelp.html:
+	* tests/hyperhelp.test:
+	* tests/labeledwidget.test:
+	* tests/menubar.test:
+	* tests/messagedialog.test:
+	* tests/notebook.test:
+	* tests/optionmenu.test:
+	* tests/panedwindow.test:
+	* tests/promptdialog.test:
+	* tests/pushbutton.test:
+	* tests/radiobox.test:
+	* tests/scrolledcanvas.test:
+	* tests/scrolledframe.test:
+	* tests/scrolledhtml.test:
+	* tests/scrolledlistbox.test:
+	* tests/scrolledtext.test:
+	* tests/selectionbox.test:
+	* tests/selectiondialog.test:
+	* tests/shell.test:
+	* tests/spindate.test:
+	* tests/spinint.test:
+	* tests/spinner.test:
+	* tests/spintime.test:
+	* tests/tabnotebook.test:
+	* tests/tabset.test:
+	* tests/toolbar.test:
+	* tests/usual.test:
+	* win/catalog.bat:
+	* win/iwidgets.tcl:
+	* win/makefile.bc:
+	* win/makefile.vc:
+	* win/pkgIndex.tcl:
+	* win/tclIndex:
+		import of current 2.2.0
+
+	* win/pkg.vc:
+		moved the info about the iwidget version for makefile.vc
+
+2001-04-04  smithc
+	* generic/menubar.itk:
+		Fixed stack trace that would occur if the programmer attempted to create two menu items with the
+		same command name.
+
+2000-12-19  smithc
+	* generic/combobox.itk:
+		Fixed 3 bugs:
+		
+		1) bug with -state config option
+		2) added some performance enhancements
+		3) added code to restore grabs following dropdown listbox unmap
+
+2000-12-06  smithc
+	* generic/hierarchy.itk:
+		Added patches submitted by Martin Backe on 12/5/00.  One was for a memory leak in
+		the clear() method, and the other was to correct %n substitution in the _select()
+		method.
+
+	* doc/hierarchy.n:
+		Added -selectcommand to the man page.
+
+2000-08-25  csmith
+	* generic/scrolledlistbox.itk:
+		Patch submitted by Shaun Lowry - I don't know the ticket number, but here's
+		part of the ticket description:
+		
+		Name:  Shaun Lowry
+		email:  slowry@iss.net
+		Support:  Gold
+		Severity:  2
+		OperatingSystem:  Windows NT
+		OperatingSystemVersion:  NT4 SP6
+		Machine:  Beige :-) (home built PC)
+		Synopsis:  scrolledlistbox "pattern" based selection doesn't work properly
+		
+		ReproducibleScript:
+		package require Iwidgets
+		iwidgets::scrolledlistbox .f
+		.f insert end "friendly"
+		.f insert end "hostile"
+		.f get host*
+		.f get friend*
+
+2000-08-22  welch
+	* configure:
+	* configure.in:
+		Bumped version number to 3.0.1 (PARTS LIST NOTICE)
+
+	* generic/scrolledlistbox.itk:
+		Added catch around -listvariable option so this can be used
+		with older versions of Tk that do not have this option on listboxes.
+
+2000-08-17  csmith
+	* generic/timeentry.itk:
+		Same problem as dateentry.  See documentation for dateentry version 1.2 in
+		CVS.  I don't have a ticket number.
+		
+		-chad smith
+
+	* generic/dateentry.itk:
+		While documenting the iwidgets last year in my book, I came across a bug where
+		destroying a component didn't remove it from the composite options list.  I
+		told Michael about it, and he's fixed it in 3.2.  This broke the dateentry
+		because it was explicitly unsetting the component from the itk_component
+		array.  I simply deleted that line of code.
+		
+		I need to make a pass at the rest of the iwidgets to see which other ones were
+		also unsetting the component.
+		
+		-chad smith
+
+2000-08-08  csmith
+	* generic/hierarchy.itk:
+		Several enhancements and bug fixes added by Doug Howard.  Doug added the
+		following configuration options:
+			-dblclickcommand
+			-icondblcommand
+			-imagecommand
+			-imagedblcommand
+			-imagemenuloadcommand
+			-textmenuloadcommand
+		
+		He also added two public methods: expanded and expState.  Multiple non-public
+		methods were added to support the new configuration options.  I have updated
+		the man page for each new option and public method.
+
+	* doc/hierarchy.n:
+		Man page updated per the additional configuration options and public methods
+		added by Doug Howard.
+
+	* tests/hierarchy.test:
+		Needed to change the number of configuration options per additions by
+		Doug Howard so hierarchy would pass the 'make test'.
+
+2000-08-07  welch
+	* configure:
+		Ran autoconf
+
+2000-08-02  welch
+	* Makefile.in:
+	* configure:
+		Changed this to use installFiles.tcl instead of install-sh
+
+2000-07-29  welch
+	* configure:
+	* configure:
+		Ran autoconf
+
+2000-07-14  welch
+	* configure:
+		Updated configure
+
+2000-07-06  mmc
+	* generic/timefield.itk:
+	* tests/all:
+	* tests/all.tcl:
+	* tests/defs:
+	* tests/menubar.test:
+	* tests/notebook.test:
+	* tests/tabnotebook.test:
+	* tests/tabset.test:
+	* tests/toolbar.test:
+	* unix/Makefile.in:
+	* unix/configure.in:
+	* unix/install-sh:
+	* unix/iwidgets.tcl.in:
+	* unix/pkgIndex.tcl.in:
+		
+		6/26/00 (bug fix)
+		  Fixed Itcl_ClassVarResolver so that the formal parameters in a
+		  method/proc take precedence over class data members.
+		
+		6/30/00 (bug fix)
+		  Fixed all itcl/itk/iwidgets3.0.0 tests to run cleanly with the new
+		  tcltest package.
+		
+		7/1/00 (bug fix)
+		  Fixed "itk_component delete" so that the composite option list is
+		  cleaned up whenever a component is deleted.  For example, suppose
+		  a component is the sole contributor of -font.  When that component
+		  is removed via "itk_component delete", the -font option goes away
+		  as well.  Also fixed the handling of the itk-delete-* binding for
+		  the component.  When the component is removed, the binding tag
+		  is also removed by itk::remove_destroy_hook.
+		
+		7/5/00 (bug fix)
+		  Fixed the check done during object creation to avoid clobbering
+		  existing commands.  Previously, itcl would look for any command--
+		  in the local *and* global namespace--that might be clobbered.
+		  Now, it looks for commands only in the local namespace, since
+		  those are the only ones that could truly be clobbered.
+		
+		7/5/00 (cleanup)
+		  Removed obsolete Makefile/configure files in the various "unix"
+		  directories.  Makefiles and configure files now reside one level
+		  above, in the standard TEA place.
+
+2000-06-06  wart
+	* Makefile.in:
+	* configure:
+	* configure.in:
+	* tests/all.tcl:
+	* tests/buttonbox.test:
+	* tests/calendar.test:
+	* tests/canvasprintbox.test:
+	* tests/canvasprintdialog.test:
+	* tests/checkbox.test:
+	* tests/combobox.test:
+	* tests/dateentry.test:
+	* tests/datefield.test:
+	* tests/dialog.test:
+	* tests/dialogshell.test:
+	* tests/disjointlistbox.test:
+	* tests/entryfield.test:
+	* tests/extfileselectionbox.test:
+	* tests/extfileselectiondialog.test:
+	* tests/feedback.test:
+	* tests/fileselectionbox.test:
+	* tests/fileselectiondialog.test:
+	* tests/finddialog.test:
+	* tests/hierarchy.test:
+	* tests/hyperhelp.test:
+	* tests/labeledframe.test:
+	* tests/labeledwidget.test:
+	* tests/menubar.test:
+	* tests/messagebox.test:
+	* tests/messagedialog.test:
+	* tests/notebook.test:
+	* tests/optionmenu.test:
+	* tests/panedwindow.test:
+	* tests/promptdialog.test:
+	* tests/pushbutton.test:
+	* tests/radiobox.test:
+	* tests/regexpfield.test:
+	* tests/scrolledcanvas.test:
+	* tests/scrolledframe.test:
+	* tests/scrolledhtml.test:
+	* tests/scrolledlistbox.test:
+	* tests/scrolledtext.test:
+	* tests/selectionbox.test:
+	* tests/selectiondialog.test:
+	* tests/shell.test:
+	* tests/spindate.test:
+	* tests/spinint.test:
+	* tests/spinner.test:
+	* tests/spintime.test:
+	* tests/tabnotebook.test:
+	* tests/tabset.test:
+	* tests/timeentry.test:
+	* tests/timefield.test:
+	* tests/toolbar.test:
+	* tests/usual.test:
+	* tests/watch.test:
+		Modified tests to run with TEA Makefile
+
+2000-06-02  csmith
+	* generic/timefield.itk:
+		Here are the comments from an itcl mailing list poster as well as
+		my comments interspersed.
+		
+		
+		iwidgets::timefield
+
+2000-04-26  csmith
+	* generic/checkbox.itk:
+		Bug fix - patch by Mark Wilson added to select method to handle boolean
+		(other than 0,1) -onvalue options.
+
+2000-04-19  mmc
+	* configure:
+	* configure.in:
+		
+		- fixed itcl::find to find classes/objects in *all* namespaces
+		- fixed tests to run cleanly
+
+2000-03-28  csmith
+	* generic/scrolledhtml.itk:
+		Applied patches submitted by Brian Griffin.  The patches are as follows:
+		
+		*** scrolledhtml.itk	1999/02/21 02:50:38	1.3
+		--- scrolledhtml.itk	2000/03/14 18:07:27
+		*************** class iwidgets::Scrolledhtml {
+		*** 141,146 ****
+		--- 141,147 ----
+		    itk_option define -unknownimage unknownimage File {}
+		    itk_option define -textbackground textBackground Background {}
+		    itk_option define -update update Update 1
+		+   itk_option define -debug deBug Debug 0
+		 =20
+		    public method import {args}
+		    public method clear {}
+		*************** body iwidgets::Scrolledhtml::import {arg
+		*** 544,550 ****
+		                    append _cwd [file dirname $filename]
+		                  } else {
+		                    set f [open $filename r]
+		! g                  set _cwd [file dirname $filename]
+		                  }
+		                }
+		            }
+		--- 545,551 ----
+		                    append _cwd [file dirname $filename]
+		                  } else {
+		                    set f [open $filename r]
+		!                   set _cwd [file dirname $filename]
+		                  }
+		                }
+		            }
+		*************** body iwidgets::Scrolledhtml::render {htm
+		*** 611,618 ****
+		  			    [lindex $entity 1]] "" entity
+		  		set cmd [string tolower [lindex $entity 0]]
+		  		if {[info command _entity_$cmd]!=3D""} {
+		! 		    catch {eval _entity_$cmd [lrange $entity 1 end]}
+		  		}
+		  		set html \
+		  		    [string range $html [expr [lindex $match 1]+1] end]
+		  	    }
+		--- 612,624 ----
+		  			    [lindex $entity 1]] "" entity
+		  		set cmd [string tolower [lindex $entity 0]]
+		  		if {[info command _entity_$cmd]!=3D""} {
+		! 		    if {[catch {eval _entity_$cmd [lrange $entity 1 end]}
+		bad]} {
+		! 			if {$itk_option(-debug)} {
+		! 			    global errorInfo
+		! 			    puts stderr "render: _entity_$cmd [lrange $entity
+		1 end] =
+		Error:$bad\n$errorInfo"
+		! 			}
+		  		    }
+		+ 		}
+		  		set html \
+		  		    [string range $html [expr [lindex $match 1]+1] end]
+		  	    }
+		*************** body iwidgets::Scrolledhtml::_append_tex
+		*** 728,743 ****
+		  	if ![string length $text] return
+		      }
+		      if {!$_pre && !$_intitle} {
+		! 	set p [$_hottext get "end - 2c"]
+		  	set n [string index $text 0]
+		          if {$n =3D=3D " " && $p =3D=3D " "} {
+		            set text [string range $text 1 end]
+		          }
+		! 	$_hottext insert end $text $_tag
+		  	return
+		      }
+		      if {$_pre && !$_intitle} {
+		! 	$_hottext insert end $text $_tag
+		  	return
+		      }
+		      append _title $text
+		--- 734,757 ----
+		  	if ![string length $text] return
+		      }
+		      if {!$_pre && !$_intitle} {
+		! 	if {[catch {$_hottext get "end - 2c"} p]} {
+		! 	    set p ""
+		! 	}
+		  	set n [string index $text 0]
+		          if {$n =3D=3D " " && $p =3D=3D " "} {
+		            set text [string range $text 1 end]
+		          }
+		! 	if {[catch {$_hottext insert end $text $_tag}]} {
+		! 	    set pht [winfo parent $_hottext]
+		! 	    catch {$pht insert end $text $_tag}
+		! 	}	   =20
+		  	return
+		      }
+		      if {$_pre && !$_intitle} {
+		! 	if {[catch {$_hottext insert end $text $_tag}]} {
+		! 	    set pht [winfo parent $_hottext]
+		! 	    catch {$pht insert end $text $_tag}
+		! 	}   =20
+		  	return
+		      }
+		      append _title $text
+		*************** body iwidgets::Scrolledhtml::_set_tag {}
+		*** 807,813 ****
+		      if {![info exists _tagl($_tag)]} {
+		  	set _tagfont($_tag) 1
+		  	eval $_hottext tag configure $_tag \
+		! 	    -foreground $_color \
+		  	    -lmargin1 ${_left}m \
+		  	    -lmargin2 ${_left2}m $args
+		  	if [catch {eval $_hottext tag configure $_tag \
+		--- 821,827 ----
+		      if {![info exists _tagl($_tag)]} {
+		  	set _tagfont($_tag) 1
+		  	eval $_hottext tag configure $_tag \
+		! 	    -foreground \$_color \
+		  	    -lmargin1 ${_left}m \
+		  	    -lmargin2 ${_left2}m $args
+		  	if [catch {eval $_hottext tag configure $_tag \
+		*************** body iwidgets::Scrolledhtml::_entity_tab
+		*** 2127,2133 ****
+		  # end table
+		  # ------------------------------------------------------------------
+		  body iwidgets::Scrolledhtml::_entity_/table {} {
+		!   if $_intable {
+		      _pop tableborder
+		      set table [[_pop table] childsite]
+		      _pop row
+		--- 2141,2147 ----
+		  # end table
+		  # ------------------------------------------------------------------
+		  body iwidgets::Scrolledhtml::_entity_/table {} {
+		!     if {$_intable} {
+		  	_pop tableborder
+		  	set table [[_pop table] childsite]
+		  	_pop row
+		*************** body iwidgets::Scrolledhtml::_entity_/ta
+		*** 2150,2155 ****
+		--- 2164,2181 ----
+		  	set _link [_pop link]
+		  	set _alink [_pop alink]
+		  	foreach x [grid slaves $table] {
+		+ 	    set text [$x get 1.0 end]
+		+ 	    set tl [split $text \n]
+		+ 	    set max 0
+		+ 	    foreach l $tl {
+		+ 		set len [string length $l]
+		+ 		if {$len > $max} {
+		+ 		    set max $len
+		+ 		}
+		+ 	    }
+		+ 	    if {$max > [$x cget -width]} {
+		+ 		$x configure -width $max
+		+ 	    }
+		  	    if {[$x cget -height] =3D=3D 1} {
+		  		$x configure -height [lindex [split [$x index "end - 1 chars"]
+		"."] =
+		0]
+		  	    }
+		*************** body iwidgets::Scrolledhtml::_entity_td=20
+		*** 2219,2227 ****
+		        set cellspacing [_peek cellspacing]
+		      set _hottext $table.cell[incr _counter]
+		      text $_hottext -relief flat -width $ar(width) -height $ar(height) =
+		\
+		!              -foreground $_color -background $_bgcolor =
+		-highlightthickness 0 \
+		!              -wrap word -cursor $itk_option(-cursor) \
+		               -padx $cellpadding -pady $cellpadding
+		      if [info exists ar(nowrap)] {
+		  	$_hottext configure -wrap none
+		      }
+		--- 2245,2258 ----
+		  	set cellspacing [_peek cellspacing]
+		  	set _hottext $table.cell[incr _counter]
+		  	text $_hottext -relief flat -width $ar(width) -height $ar(height) \
+		! 	    -highlightthickness 0 -wrap word -cursor $itk_option(-cursor) \
+		  		   -padx $cellpadding -pady $cellpadding
+		+ 	if {$_color !=3D ""} {
+		+ 	    $_hottext config -foreground $_color
+		+ 	}
+		+ 	if {$_bgcolor !=3D ""} {
+		+ 	    $_hottext config -background $_bgcolor=20
+		+ 	}
+		  	if [info exists ar(nowrap)] {
+		  	    $_hottext configure -wrap none
+		  	}
+		*************** body iwidgets::Scrolledhtml::_entity_td=20
+		*** 2229,2235 ****
+		--- 2260,2272 ----
+		  	    $_hottext configure -relief sunken
+		  	}
+		  	set row [_peek row]
+		+ 	if {$row < 0} {
+		+ 	    set row 0
+		+ 	}
+		  	set column [_pop column]
+		+ 	if {$column < 0} {
+		+ 	    set column 0
+		+ 	}
+		  	while {[grid slaves $table -row $row -column $column] !=3D ""} {
+		  	    incr column
+		  	}
+
+	* generic/shell.itk:
+		Reversed these two lines of code in the activate() method.
+			wm deiconify $itk_component(hull)
+			raise $itk_component(hull)
+		This fixes a problem mentioned by Brett Schwarz with a particular window
+		manager he was using with Linux.  After testing this code change on a number
+		of other platforms/WMs (Solaris, Windows, HP-UX -- OLVWM, CDE, GNOME, FVWM) it
+		does not appear to affect behavior on any of these other systems.
+
+2000-03-21  csmith
+	* generic/fileselectionbox.itk:
+		From a patch I received from Brett Schwarz:
+		
+		BUG
+		---
+		When the -fileson option is set to false, then only the directory
+		listing is shown. It is implied that this becomes a directory selector.
+		However, when single clicking on a directory, the selection entry widget
+		only gets updated with the tail of the directory name (what is actually
+		in the directory listbox), not the whole path.
+		
+		DESIRED BEHAVIOR
+
+	* generic/extfileselectionbox.itk:
+		From a patch I received from Brett Schwarz:
+		
+		BUG
+		---
+		When the -fileson option is set to false, then only the directory
+		listing is shown. I is implied that this becomes a directory selector.
+		However, when single clicking on a directory, the selection entry widget
+		only gets updated with the tail of the directory name (what is actually
+		in the directory listbox), not the whole path.
+		
+		DESIRED BEHAVIOR
+
+2000-03-10  csmith
+	* doc/checkbox.n:
+		Updated man page to reflect addition of new config option: 
+		orient.
+
+	* generic/radiobox.itk:
+		Added a new configuration option to the radiobox: -orient, which specifies the
+		orientation of the radiobuttons within the radiobox.
+
+	* generic/checkbox.itk:
+		Added a new config option to the checkbox: -oritent, which allows the user to
+		specify the orientation of the checkbuttons, either horizontally or
+		vertically (default).
+
+	* doc/radiobox.n:
+		Updated man page to reflect the new config option I added: 
+		orient.
+
+2000-03-09  csmith
+	* doc/scrolledlistbox.n:
+		Updated man page to include -listvariable associated option and itemconfigure
+		associated method.
+
+	* generic/spinint.itk:
+		Added patch submitted by Brett Schwarz.  When a value outside the specified
+		range is typed into the entryfield component, the spinint will beep if the up
+		or down arrow is pressed.  We decided it was better to change the value back
+		to within the valid range. For example, if the range is from 10 to 20:
+			user types 50 in entryfield:
+				up arrow results in 10
+				down arrow results in 20
+			user types 5 in entryfield:
+				up arrow results in 10
+				down arrow results in 20
+
+	* generic/feedback.itk:
+		This is to close ticket #2881.  While implementing the fix, I found another
+		bug where resizing of the window did not update the trough.  So I did not add
+		the patch from this ticket.  Rather, I added a new binding in the class
+		constructor on the hull such that <Configure> events invoke the _display
+		method to update the trough.  This binding fixes both cases and does not
+		introduce any performance problems.
+
+	* doc/scrolledtext.n:
+		Updated man page to include image associated method.
+
+2000-03-08  csmith
+	* generic/hierarchy.itk:
+		Implemented and tested bug fix for ticket #3444.
+		csmith: 3/8/00 4:02pm
+
+2000-03-02  csmith
+	* generic/scrolledlistbox.itk:
+		Added a wrapper method for the new tk8.3 itemconfigure command for the
+		listbox.
+
+	* generic/scrolledtext.itk:
+		This is to close bug report #3446.  I added a wrapper method for the text
+		widget's new image function per request.
+
+	* unix/Makefile.in:
+		This is to close ticket #3958.  Removed the "iwidgets.tcl and pkgIndex.tcl"
+		targets from 'make clean'.
+
+	* generic/scrolledlistbox.itk:
+		Added -listvariable to the list of options kept with the listbox component is
+		added so that this option is available at the mega-widget level.
+
+2000-01-31  csmith
+	* generic/combobox.itk:
+		Small bug fix in the delete method when deleting text from the entry
+		component.
+
+2000-01-26  csmith
+	* generic/disjointlistbox.itk:
+		This mega-widget is setting tk_strictMotif to 1.  Several emails circulated
+		around the itcl mailing list about problems that this caused.  disjointlistbox
+		is the only mega-widget that set this global variable, so I've removed the
+		line of code that did this.  After a brief sanity check, things look fine
+		without this line of code.
+
+2000-01-24  wart
+	* configure:
+		Regenerated configure scripts to pick up changes to tcl.m4
+
+	* configure:
+		Regenerated configure scripts to pick up recent changes to tcl.m4
+
+2000-01-07  csmith
+	* generic/messagedialog.itk:
+		Added -wraplength and -justify to configuration options.  I don't know why
+		these were removed from version 2.2, but they're useful and should be there.
+
+2000-01-03  csmith
+	* generic/combobox.itk:
+		One typo dealing with -state with -dropdown is false ("info exists" should
+		have been "winfo exists").  Also added a conditional in the delete method
+		to avoid a possible stack dump.
+
+	* generic/watch.itk:
+		-tickcolor was not working - simple fix to modify the canvas option
+		from -fill to -outline
+
+	* generic/timefield.itk:
+		Patch by Massimo Morin to add -gmt and -textvariable options to
+		the timefield.
+
+	* generic/optionmenu.itk:
+		The 'select' method was not working properly when passed the "end" argument.
+		Modified the 'select' method to check for a bad index value - did not use
+		the patch attached to the bug report.
+
+	* generic/canvasprintbox.itk:
+		minor bug fix, -pagesize was not updating the optionmenu
+
+	* generic/calendar.itk:
+		Fixed a bug with -buttonforeground when photos used instead of
+		bitmaps.
+
+	* generic/spindate.itk:
+		datemargin was not working properly.  Bug fixed by Brett
+		Schwarz.
+
+	* generic/finddialog.itk:
+		Patch by Brett Schwarz to fix -clearcommand and -matchcommand options,
+		which were not working.
+
+	* generic/extfileselectionbox.itk:
+		A few public methods should be private:
+			_selectDir
+			_dblSelectDir
+			_selectFile
+
+	* Makefile.in:
+		Patch submitted by Andreas Gustafsson: 'make clean' removes files generated
+		by the configure script and should only remove files generated by make.
+
+1999-12-20  csmith
+	* generic/labeledframe.itk:
+		Fixed some access level inconsistencies with some class methods.  One public
+		method (smt) should not be public.  Actually, I can't find anywhere in any
+		code where this method is called.  Maybe it should be deleted?  I made it
+		protected along with 3 private methods that were labeled as protected in the
+		method comment block.
+
+	* generic/checkbox.itk:
+		1) I removed the following configuration option definitions from the
+		   class definition: -command, -disabledforeground, and -selectcolor.
+		   These options are now only applicable after checkbuttons have been
+		   added to the checkbox.
+		
+			a) The -command option never worked anyway.  It was defined
+			   via 'itk_option define' but was not implemented.  The easiest
+			   solution was to keep this option when adding a new checkbutton.
+			   This at least adds -command functionality but doesn't provide
+			   for % variable substitutions, which would be a nice addition
+			   for future revisions.
+		
+			b) The -disabledforeground and -selectcolor options were valid
+			   options for initial checkbox creation but had no error checking.
+			   You could therefore create a new checkbox with -selectcolor set
+			   to "foo bar" and it would work OK.  When you tried to add a new
+			   checkbutton via the add() method, however, it would fail until
+			   the class level -selectcolor was modified.  This could lead to
+			   confusion, so these two options are now only valid after (or
+			   during) the addition of checkbuttons.  Tk then handles the error
+			   checking.
+		
+		2) Added -state to the keep fragment during checkbutton addition.
+		
+		So in a nutshell, these 4 options are now valid checkbox options after
+		at least one checkbutton has been added:
+			-command
+			-disabledforeground
+			-selectcolor
+			-state
+
+1999-12-16  wart
+	* Makefile.in:
+		Install a few extra useful files (license.terms, catalog.bat)
+
+1999-12-16  csmith
+	* generic/menubar.itk:
+		public method _helpHandler should be private.  Not sure how this originally
+		happened unless just an oversight on the author's part.
+
+1999-12-15  csmith
+	* generic/feedback.itk:
+		Modified the _display method per a bug report submitted by Kory Hopkins on
+		9/24/99 (at least that's when I got it).  There was a simple code change to
+		fix a problem with the trough calculation when stepping.
+
+1999-11-24  wart
+	* configure:
+		regenerated configure scripts to pick up tcl.m4 changes
+
+	* configure:
+		tcl.m4:  Updated to reflect recent TEA changes
+		
+		*/configure:  Regnereated with new tcl.m4
+		
+		iwidgets2.2.0/Makefile.in:  Don't copy nonexistent files
+
+1999-11-18  csmith
+	* generic/optionmenu.itk:
+		Modified a ternary expression to a simple if:then conditional because of some
+		problems with exponentials.
+
+	* generic/optionmenu.itk:
+		Just for clarity, changed the menubutton component's designated "-indicator"
+		option to "-indicatoron".  Someone noticed it and actually submitted a bug
+		report on it.  Geez.
+
+	* doc/toolbar.n:
+		Removed the -relief option from the list of standard options.
+
+	* generic/scrolledtext.itk:
+		Fixed a bug with the search method.  The arguments needed to be evaluated one
+		level down the call stack.
+
+	* demos/html/toolbar.n.html:
+		Removed the -relief option from the standard options and also alphabetized
+		each of the standard options for lookup convenience.
+
+1999-09-14  wart
+	* iwidgets.tcl.in:
+	* pkgIndex.tcl.in:
+		Fixed installation of pkgIndex.tcl file.  We have to install a pre-made
+		pkgIndex.tcl file since pkg_mkIndex can't seem to make a usable one.
+
+1999-09-10  wart
+	* Makefile.in:
+		Fixed bug when calling mkIndex.tcl for itk
+		
+		reduced amount of output from "make install" in iwidgets
+
+1999-09-09  wart
+	* iwidgets.tcl.in:
+	* pkgIndex.tcl.in:
+		Added pkgIndex files for Iwidgets
+		
+		Top level Makefile should no longer loop endlessly if the configure went bad.
+
+1999-09-04  wart
+	* Makefile.in:
+	* aclocal.m4:
+	* configure:
+	* configure.in:
+		TEA changes.  Itcl now uses the same Makefiles and configure scripts for
+		both Windows and Unix.
+		
+		Note that static shells are not yet done in this TEA implementation.
+
+1999-08-21  matt
+	* win/makefile.vc:
+		Moved HTML install to seperate non-default target, since the files that
+		it tries to install don't exist and cause a failure during the install.
+
+1999-07-26  csmith
+	* generic/pane.itk:
+		A typo in the configbody for -minimum.  The first '$' should be removed from
+		  set $itk_option(-minimum) $pixels
+
+1999-07-22  csmith
+	* generic/notebook.itk:
+		This is to incorporate a bug fix reported by Larry Virden for the
+		tabbed notebook.  Looks like a typo in the code, where
+		    set $_currPage -1
+		should be
+		    set _currPage -1
+
+	* generic/calendar.itk:
+		This is to fix a problem reported by Larry Virden in the calendar
+		iwidget.  There's a typo in the line,
+		    set $_time $time
+		which should be
+		    set _time $time
+
+1999-07-08  rjohnson
+	* demos/html/iwidgets2.2.0UserCmds.html:
+	* demos/html/iwidgets3.0.0UserCmds.htm:
+		
+		Updated html index file to 3.0.
+
+	* demos/html/iwidgets3.0.0UserCmds.htm:
+	* demos/html/iwidgets3.0.0UserCmds.html:
+		
+		Messed up extension.
+
+1999-06-16  csmith
+	* generic/toolbar.itk:
+		This fix is contributed by Raviv Gil.  Below is his description of the bug.
+		
+		"Working with iwidgets3.0.0 we've encountered the following problem :
+		We created a toolbar containing several buttons, each button with a short
+		help string. Passing above the toolbar and then closing the window sometimes
+		opened a Tcl Error message indicating that the method 'showBalloon' was
+		invoked for an invalid tk path."
+
+	* generic/panedwindow.itk:
+		There were several places in the code that looped from 1 to the number of
+		actual panes in the panedwindow when the code should be looping over the
+		number of active panes.  Each of these areas in the code could cause a stack
+		dump, complaining about an invalid pathanme regarding a sash or a separator.
+		I've changed each of these areas to use _activePanes instead of _panes.
+
+1999-05-25  redman
+	* unix/configure.in:
+		Fix the makefile and configure files, etc., for Unix
+		in order to compile with Tcl/Tk 8.1 with stubs.
+		
+		Builds itclsh and itkwish properly.
+
+1999-03-30  csmith
+	* generic/checkbox.itk:
+		::Checkbox::select invokes the specified checkbutton regardless of whether
+		it's selected or not.  It should only tell the checkbutton to invoke if
+		the checkbutton is not already selected.
+
+	* generic/menubar.itk:
+		There was a typo in the redefinition of the tkMenuFind proc at the bottom
+		of menubar.itk.  "winfo" was being used instead of "info" with the
+		"command" argument.
+
+1999-03-15  csmith
+	* tests/entryfield.test:
+		Added one line of code in the 'foreach test' loop for the new -
+		pasting option.
+
+	* doc/entryfield.n:
+		Updated man page to document a new option, -pasting, which allows the
+		developer to disable pasting into the entry component of the entryfield.
+		This is useful when using -validate because validation does not catch
+		pasting text.
+
+	* generic/entryfield.itk:
+	1) Added a new configuration option, -pasting, which allows the user to
+	   disable pasting text into the entry component of the entryfield.
+	   Previously, when using -validate, the user was allowed to paste text
+	   which could cause stack dumps into the entryfield because pasting was
+	   not caught.  The user, for instance, could paste a 40 digit number and
+	   kill any expr's since the integer is too large for tcl to handle.
+	2) The _keyPress method hardcoded state comparisons for <Ctrl>, <Alt>,
+	   <NumLock><Ctrl>, and <NumLock><Alt>.  The problem was that these
+	   hardcoded values were UNIX-specific.  I added platform-independant code.
+
+	* CHANGES:
+		Added to entries under the Entryfield section: 1) documented new configuration
+		option, -pasting; and 2) documented change to _keyPress method to remove
+		hardcoded state comparisons.
+
+1999-03-08  csmith
+	* generic/panedwindow.itk:
+		Instantiating an extfileselectionbox iwidgets with a single configuration
+		option, '-fileson 0', caused a stack dump as a result of accessing an
+		invalid tk window pathname in iwidgets::Panedwindow::sashcursor.  The
+		solution was to wrap a conditional around the path to see if it exists
+		before trying to use it.
+
+1999-03-04  csmith
+	* generic/combobox.itk:
+		The -command configuration option was being overwritten in the
+		_createComponents method if it was specified during widget creation.
+
+1999-02-21  rjohnson
+	* generic/scrolledhtml.itk:
+		
+		Removed stack trace error in widget.  However, the widget still
+		doesn't display correctly...
+
+1999-01-25  stanton
+	* unix/iwidgets.tcl.in:
+	* win/iwidgets.tcl:
+	Changed so iwidgets.tcl does a "namespace import -force itcl::*"
+	This is a hack to get around the fact that iwidgets uses "class"
+	instead of "itcl::class".  The correct long term solution is to change
+	all of the iwidgets code to use qualified names.
+
+1998-12-22  rjohnson
+	* demos/watch: Fixed bug in watch demo.
+
+1998-12-18  rjohnson
+	* demos/catalog:
+	Removed the mainwindow demo from the catalog demo.  It was not a well
+	behaved demo and running would break the catalog demo.  [Bug ID: 508]
+
+1998-09-14  stanton
+	* demos/images/clear.gif:
+	* demos/images/close.gif:
+	* demos/images/copy.gif:
+	* demos/images/cut.gif:
+	* demos/images/exit.gif:
+	* demos/images/find.gif:
+	* demos/images/help.gif:
+	* demos/images/mag.gif:
+	* demos/images/new.gif:
+	* demos/images/open.gif:
+	* demos/images/paste.gif:
+	* demos/images/poly.gif:
+	* demos/images/print.gif:
+	* demos/images/ruler.gif:
+	* demos/images/save.gif:
+	* demos/images/select.gif:
+	* demos/iwidgets.gif:
+	* generic/unknownimage.gif:
+		Fixed binary files
+
+1998-09-10  stanton
+	* doc/iwidgets.ps:
+		added iwidgets.ps as a binary file
+
+1998-08-25  stanton
+	* demos/mainwindow:
+		fixed bug where image names conflicted with global commands
+
+1998-08-24  stanton
+	* generic/hyperhelp.itk:
+		fixed portability bug in file name handling
+
+	* demos/html/buttonbox.n.html:
+	* demos/html/canvasprintbox.n.html:
+	* demos/html/canvasprintdialog.n.html:
+	* demos/html/combobox.n.html:
+	* demos/html/dialog.n.html:
+	* demos/html/dialogshell.n.html:
+	* demos/html/entryfield.n.html:
+	* demos/html/feedback.n.html:
+	* demos/html/fileselectionbox.n.html:
+	* demos/html/fileselectiondialog.n.html:
+	* demos/html/hyperhelp.n.html:
+	* demos/html/iwidgets2.2.0UserCmds.html:
+	* demos/html/labeledwidget.n.html:
+	* demos/html/menubar.n.html:
+	* demos/html/messagedialog.n.html:
+	* demos/html/notebook.n.html:
+	* demos/html/optionmenu.n.html:
+	* demos/html/panedwindow.n.html:
+	* demos/html/promptdialog.n.html:
+	* demos/html/pushbutton.n.html:
+	* demos/html/radiobox.n.html:
+	* demos/html/scrolledcanvas.n.html:
+	* demos/html/scrolledframe.n.html:
+	* demos/html/scrolledhtml.n.html:
+	* demos/html/scrolledlistbox.n.html:
+	* demos/html/scrolledtext.n.html:
+	* demos/html/selectionbox.n.html:
+	* demos/html/selectiondialog.n.html:
+	* demos/html/shell.n.html:
+	* demos/html/spindate.n.html:
+	* demos/html/spinint.n.html:
+	* demos/html/spinner.n.html:
+	* demos/html/spintime.n.html:
+	* demos/html/tabnotebook.n.html:
+	* demos/html/tabset.n.html:
+	* demos/html/toolbar.n.html:
+		updated
+
+1998-08-21  stanton
+	* demos/catalog:
+		removed extraneous import
+
+1998-08-18  welch
+	* demos/catalog:
+		Fixed demo
+
+1998-08-11  welch
+	* CHANGES:
+	* demos/catalog:
+	* demos/html/buttonbox.n.html:
+	* demos/html/canvasprintbox.n.html:
+	* demos/html/combobox.n.html:
+	* demos/html/dialogshell.n.html:
+	* demos/html/entryfield.n.html:
+	* demos/html/fileselectionbox.n.html:
+	* demos/html/fileselectiondialog.n.html:
+	* demos/html/hyperhelp.n.html:
+	* demos/html/labeledwidget.n.html:
+	* demos/html/menubar.n.html:
+	* demos/html/notebook.n.html:
+		Updates from Michael
+
+	* demos/feedback:
+	* demos/html/canvasprintdialog.n.html:
+	* demos/html/dialog.n.html:
+	* demos/html/feedback.n.html:
+	* demos/html/messagedialog.n.html:
+	* demos/html/optionmenu.n.html:
+	* demos/html/panedwindow.n.html:
+	* demos/html/promptdialog.n.html:
+	* demos/html/pushbutton.n.html:
+	* demos/html/radiobox.n.html:
+	* demos/html/scrolledcanvas.n.html:
+	* demos/html/scrolledframe.n.html:
+	* demos/html/scrolledhtml.n.html:
+	* demos/html/scrolledlistbox.n.html:
+	* demos/html/scrolledtext.n.html:
+	* demos/html/selectionbox.n.html:
+	* demos/html/selectiondialog.n.html:
+	* demos/html/shell.n.html:
+	* demos/html/spindate.n.html:
+	* demos/html/spinint.n.html:
+	* demos/html/spinner.n.html:
+	* demos/html/spintime.n.html:
+	* demos/html/tabnotebook.n.html:
+	* demos/html/tabset.n.html:
+	* demos/html/toolbar.n.html:
+	* demos/mainwindow:
+	* demos/watch:
+	* doc/calendar.n:
+	* doc/labeledframe.n:
+	* doc/optionmenu.n:
+	* doc/selectionbox.n:
+	* generic/combobox.itk:
+	* generic/entryfield.itk:
+	* generic/hierarchy.itk:
+	* generic/menubar.itk:
+	* generic/messagebox.itk:
+	* generic/optionmenu.itk:
+	* generic/radiobox.itk:
+	* generic/scrolledframe.itk:
+	* generic/scrolledhtml.itk:
+	* generic/shell.itk:
+	* generic/toolbar.itk:
+	* tests/entryfield.test:
+	* tests/hyperhelp.test:
+	* tests/optionmenu.test:
+	* tests/shell.test:
+	* tests/spinner.test:
+	* unix/Makefile.in:
+	* unix/iwidgets.tcl.in:
+	* unix/pkgIndex.tcl.in:
+		3.0 final from Michael
+
+	* unix/Makefile.in:
+		Fixed symlink
+

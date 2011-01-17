@@ -1,0 +1,347 @@
+# This file is a Tcl script to test out [incr Widgets] Tabset class.
+# It is organized in the standard fashion for Tcl tests with the following
+# notation for test case labels:
+#
+#   1.x - Construction/Destruction tests
+#   2.x - Configuration option tests
+#   3.x - Method tests
+#
+# Copyright (c) 1995 DSC Technologies Corporation
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# @(#) $Id$
+
+package require tcltest
+namespace import -force ::tcltest::*
+
+if [catch {package require Iwidgets 4.0}] {
+  # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
+  # env var is initialized in the Makefile when doing a 'make test'.
+  # If sourcing this file independently, this variable must be set manually.
+  if ![info exists env(IWIDGETS_LIBRARY)] {
+    error "Unable to locate Iwidgets package.  Set your IWIDGETS_LIBRARY\
+      environment\nvariable to the directory that contains iwidgets.tcl"
+  }
+  lappend auto_path $env(IWIDGETS_LIBRARY)
+  package require Iwidgets 4.0
+}
+
+if {[string compare test [info procs test]] == 1} {
+    source defs
+}
+
+wm geometry . {}
+raise .
+
+set c 1
+set o 1
+set m 1
+
+#
+# Initial construction test
+#
+test Tabset-1.$c {Tabset construction} {
+    iwidgets::Tabset .ts
+    pack .ts 
+    update 
+    .ts add -label one
+    update 
+    .ts add -label two
+    update 
+    .ts add -label three
+    update 
+} {}
+
+incr c
+
+#
+# Option tests which are successful.
+#
+test Tabset-2.$o {configuration option} {
+    llength [.ts configure]
+} {24}
+
+incr o
+
+foreach test {
+	{-disabledforeground #a3a3a3 #a3a3a3 }
+	{-backdrop white white }
+	{-start 4 4 }
+	{-command   }
+	{-font fixed fixed }
+	{-selectbackground #ececec #ececec }
+	{-gap overlap overlap }
+	{-background #CDCDB7B7B5B5 #CDCDB7B7B5B5 }
+	{-state normal normal }
+	{-equaltabs true true }
+	{-bevelamount 0 0 }
+	{-selectforeground black black }
+	{-foreground #000000000000 #000000000000 }
+	{-raiseselect false false }
+	{-padx 4 4 }
+	{-pady 4 4 }
+	{-cursor   }
+	{-margin 5 5 }
+	{-angle 20 20 }
+	{-width 0 0 }
+	{-tabborders true true }
+	{-height 0 0 }
+	{-tabpos s s }
+	} {
+	set option [lindex $test 0]
+	test Tabset-2.$o "configuration options, $option" {
+	    .ts configure $option [lindex $test 1] 
+		lindex [.ts configure $option] 4
+	} [lindex $test 2]
+	update 
+	incr o
+}
+
+#
+# Tabconfigure Option tests which are successful.
+#
+test Tabset-2.$o {tab configuration option} {
+    llength [.ts tabconfigure 0]
+} {22}
+
+# do tabconfigure tests also...
+foreach test {
+	{0 -bevelamount 0 0}
+	{0 -state normal normal}
+	{0 -anchor c c}
+	{0 -image {} {}}
+	{0 -bitmap {} {}}
+	{0 -label Hello Hello}
+	{0 -label "Hello World" "Hello World"}
+	{0 -padx 4 4}
+	{0 -pady 4 4}
+	{0 -selectbackground gray70 gray70}
+	{0 -selectforeground black black}
+	{0 -disabledforeground gray gray}
+	{0 -background white white}
+	{0 -foreground black black}
+	{0 -orient vertical vertical}
+	{0 -invert false false}
+	{0 -angle 20 20}
+	{0 -font "-adobe-helvetica-bold-r-normal--34-240-100-100-p-182-iso8859-1" "-adobe-helvetica-bold-r-normal--34-240-100-100-p-182-iso8859-1"}
+	{0 -tabborders true true}
+	} {
+		set index  [lindex $test 0]
+		set option [lindex $test 1]
+		test Tabset-2.$o "tab configuration options, $option" {
+			.ts tabconfigure $index $option [lindex $test 2] 
+			.ts tabcget $index $option
+		} [lindex $test 3]
+	update 
+	incr o
+}
+
+#
+# Option tests which fail and produce errors.
+#
+#foreach test {
+#	{ -OPTION BADVALUE {ERROR_MESSAGE} }
+#	} {
+#	set option [lindex $test 0]
+#        test Tabset-2.$o "configuration options, $option" {
+#	    list [catch {.bb configure $option [lindex $test 1]} msg] $msg
+#	} [list 1 [lindex $test 2]]
+#	incr o
+#}
+
+#
+# Method tests which are successful.
+#
+foreach test {
+    {{.ts add} 
+		{::.ts-tab[0-9]+}}
+    {{.ts add} 
+		{::.ts-tab[0-9]+}}
+    {{.ts add} 
+		{::.ts-tab[0-9]+}}
+    {{.ts add -label Never} 
+		{::.ts-tab[0-9]+}}
+    {{.ts add} 
+		{::.ts-tab[0-9]+}}
+	{{.ts add -label "Hello World" -disabledforeground gray} 
+		{::.ts-tab[0-9]+}}
+    {{.ts index end} 
+		{[0-9]+}}
+    {{.ts index Never} 
+		{[0-9]+}}
+    {{.ts index 0} 
+		{0}}
+    {{.ts select 0} 
+		{0}}
+    {{.ts select select} 
+		{0}}
+    {{.ts select end} 
+		{[0-9]+}}
+    {{.ts select "Hello World"} 
+		{[0-9]+}}
+    {{.ts insert 0} 
+		{::.ts-tab[0-9]+}}
+    {{.ts insert select -label "An Insert"} 
+		{::.ts-tab[0-9]+}}
+    {{.ts insert end -label "Next To Last"} 
+		{::.ts-tab[0-9]+}}
+    {{.ts select 0} 
+		{0}}
+    {{.ts next} 
+		{1}}
+    {{.ts next} 
+		{2}}
+    {{.ts prev} 
+		{1}}
+    {{.ts prev} 
+		{0}}
+    {{.ts delete Never} 
+		{}}
+    {{.ts delete 1 2} 
+		{}}
+    {{.ts delete 0 "Hello World"} 
+		{}}
+    {{.ts add} 
+		{::.ts-tab[0-9]+}}
+    {{.ts add} 
+		{::.ts-tab[0-9]+}}
+    {{.ts add} 
+		{::.ts-tab[0-9]+}}
+    {{.ts add} 
+		{::.ts-tab[0-9]+}}
+    {{.ts delete 0 end} 
+		{}}
+    {{.ts add} 
+		{::.ts-tab[0-9]+}}
+    {{.ts add} 
+		{::.ts-tab[0-9]+}}
+    {{.ts add} 
+		{::.ts-tab[0-9]+}}
+    {{.ts add} 
+		{::.ts-tab[0-9]+}}
+    {{.ts select 2} 
+		{[-]*[0-9]+}}
+    {{.ts delete select end} 
+		{}}
+    {{.ts delete 0 end} 
+		{}}
+    {{.ts add -label "First Page"} 
+		{::.ts-tab[0-9]+}}
+    {{.ts add -label "Second Page"} 
+		{::.ts-tab[0-9]+}}
+    {{.ts add -label "Third Page"} 
+		{::.ts-tab[0-9]+}}
+    {{.ts add -label "Fourth Page"} 
+		{::.ts-tab[0-9]+}}
+    {{.ts add -label "Fifth Page"} 
+		{::.ts-tab[0-9]+}}
+    {{.ts add -label "Sixth Page"} 
+		{::.ts-tab[0-9]+}}
+    {{.ts select "First Page"} 
+		{[-]*[0-9]+}}
+    {{.ts delete select "Second Page"} 
+		{}}
+    {{.ts delete "Third Page" 1} 
+		{}}
+    {{.ts delete "Fifth Page" "Sixth Page"} 
+		{}}
+	} {
+	set method [lindex [lindex $test 0] 1]
+	set method_invoke [lindex $test 0]
+
+	set testContents "set msg {}\n"
+	append testContents \
+	    "set result \[catch \{[lindex $test 0]\} msg\]\n"
+	append testContents \
+	    "lappend result \[regexp -- \{[lindex $test 1]\} \$msg\] \n"
+	append testContents "set result\n"
+	test Tabset-3.$m "\[$method_invoke\]" $testContents \
+		[list 0 1]
+	update 
+	incr m
+}
+
+#
+# Method tests which fail and produce errors
+#
+set m 1
+foreach test {
+		{1 {.ts delete 0 end} {can't delete tab}}
+		{0 {.ts add} {}}
+		{0 {.ts delete 0} {}}
+		{1 {.ts delete 0} {can't delete tabs, no tabs}}
+		{0 {.ts add} {}}
+		{1 {.ts delete 1} {bad value for index1}}
+		{1 {.ts delete select} {bad value for index1}}
+		{0 {.ts delete 0} {}}
+		{0 {.ts add} {}}
+		{1 {.ts delete 0 1} {bad value for index2}}
+		{1 {.ts delete 1 4} {bad value for index1}}
+		{0 {.ts add} {}}
+		{0 {.ts delete 0 1} {}}
+		{0 {.ts add} {}}
+		{1 {.ts delete 0 1 4 5 6} {wrong # args}}
+		{1 {.ts delete} {wrong # args}}
+		{0 {.ts delete 0} {}}
+		{1 {.ts delete 0} {can't delete tabs}}
+		{1 {.ts delete select} {can't delete tabs}}
+		{1 {.ts insert 0} {no tab to insert before, tabset}}
+		{0 {.ts add} {}}
+		{0 {.ts add} {}}
+		{1 {.ts insert 2} {bad value}}
+		{1 {.ts insert -1} {bad option}}
+		{0 {.ts delete 0 end} {}}
+		{1 {.ts next} {can't goto next tab, no tabs in the tabset}}
+		{1 {.ts prev} {can't goto previous tab, no tabs in the tabset}}
+		{1 {.ts select 0} {can't activate a tab, no tabs in the tabset}}
+		{0 {.ts add} {}}
+		{1 {.ts select 1} {bad value}}
+		{0 {.ts delete 0} {}}
+	} {
+		set method_status [lindex $test 0]
+		set method_invoke [lindex $test 1]
+		set method [lindex $method_invoke 1]
+
+		set testContents "set msg {}\n"
+		append testContents \
+		    "set result \[catch \{$method_invoke\} msg\]\n"
+		append testContents \
+		    "lappend result \[regexp -- \{[lindex $test 2]\} \$msg\] \n"
+		append testContents "set result\n"
+		test Tabset-4.$m "\[$method_invoke\]" $testContents \
+			[list $method_status 1]
+	incr m
+	}
+
+# Conclusion of constrcution/destruction tests
+#
+test Tabset-1.$c {Tabset destruction} {
+    destroy .ts
+    update 
+} {}
+
+incr c
+
+test Tabset-1.$c {Tabset construction} {
+    iwidgets::Tabset .ts -width 100 -height 100
+    pack .ts 
+    update 
+    .ts add -label one
+    update 
+    .ts add -label two
+    update 
+    .ts add -label three
+    update 
+} {}
+
+incr c
+
+test Tabset-1.$c {Tabset destruction} {
+	destroy .ts
+    update 
+} {}
+
+::tcltest::cleanupTests
+exit

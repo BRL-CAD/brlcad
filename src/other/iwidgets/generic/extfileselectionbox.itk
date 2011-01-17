@@ -1,0 +1,1187 @@
+#
+# Extfileselectionbox
+# ----------------------------------------------------------------------
+# Implements a file selection box that is a slightly extended version
+# of the OSF/Motif standard XmExtfileselectionbox composite widget.  
+# The Extfileselectionbox differs from the Motif standard in that the
+# filter and selection fields are comboboxes and the files and directory
+# lists are in a paned window.
+#
+# ----------------------------------------------------------------------
+#  AUTHOR: Mark L. Ulferts               EMAIL: mulferts@spd.dsccc.com
+#          Anthony L. Parent                    tony.parent@symbios.com
+#
+#  @(#) $Id$
+# ----------------------------------------------------------------------
+#            Copyright (c) 1997 DSC Technologies Corporation
+# ======================================================================
+# Permission to use, copy, modify, distribute and license this software
+# and its documentation for any purpose, and without fee or written
+# agreement with DSC, is hereby granted, provided that the above copyright
+# notice appears in all copies and that both the copyright notice and
+# warranty disclaimer below appear in supporting documentation, and that
+# the names of DSC Technologies Corporation or DSC Communications
+# Corporation not be used in advertising or publicity pertaining to the
+# software without specific, written prior permission.
+#
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
+# INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE,
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+# WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+# SOFTWARE.
+# ======================================================================
+
+#
+# Usual options.
+#
+itk::usual Extfileselectionbox {
+    keep -activebackground -activerelief -background -borderwidth -cursor \
+         -elementborderwidth -foreground -highlightcolor -highlightthickness \
+         -insertbackground -insertborderwidth -insertofftime -insertontime \
+         -insertwidth -jump -labelfont -selectbackground -selectborderwidth \
+         -textbackground -textfont -troughcolor
+}
+
+# ------------------------------------------------------------------
+#                          EXTFILESELECTIONBOX
+# ------------------------------------------------------------------
+itcl::class iwidgets::Extfileselectionbox {
+    inherit itk::Widget
+
+    constructor {args} {}
+    destructor {}
+
+    itk_option define -childsitepos childSitePos Position s
+    itk_option define -fileson filesOn FilesOn true
+    itk_option define -dirson dirsOn DirsOn true
+    itk_option define -selectionon selectionOn SelectionOn true
+    itk_option define -filteron filterOn FilterOn true
+    itk_option define -mask mask Mask {*}
+    itk_option define -directory directory Directory {}
+    itk_option define -automount automount Automount {}
+    itk_option define -nomatchstring noMatchString NoMatchString {}
+    itk_option define -dirsearchcommand dirSearchCommand Command {}
+    itk_option define -filesearchcommand fileSearchCommand Command {}
+    itk_option define -selectioncommand selectionCommand Command {}
+    itk_option define -filtercommand filterCommand Command {}
+    itk_option define -selectdircommand selectDirCommand Command {}
+    itk_option define -selectfilecommand selectFileCommand Command {}
+    itk_option define -invalid invalid Command {bell}
+    itk_option define -filetype fileType FileType {regular}
+    itk_option define -width width Width 350
+    itk_option define -height height Height 300
+
+    public {
+    method childsite {}
+    method get {}
+    method filter {}
+    }
+
+    protected {
+    method _packComponents {{when later}}
+    method _updateLists {{when later}}
+    }
+
+    private {
+    method _selectDir {}
+    method _dblSelectDir {}
+    method _selectFile {}
+    method _selectSelection {}
+    method _selectFilter {}
+    method _setFilter {}
+    method _setSelection {}
+    method _setDirList {}
+    method _setFileList {}
+
+    method _nPos {}
+    method _sPos {}
+    method _ePos {}
+    method _wPos {}
+    method _topPos {}
+    method _bottomPos {}
+
+    variable _packToken ""      ;# non-null => _packComponents pending
+    variable _updateToken ""    ;# non-null => _updateLists pending
+    variable _pwd "."           ;# present working dir
+    variable _interior          ;# original interior setting
+    }
+}
+
+#
+# Provide a lowercased access method for the Extfileselectionbox class.
+#
+proc ::iwidgets::extfileselectionbox {pathName args} {
+    uplevel ::iwidgets::Extfileselectionbox $pathName $args
+}
+
+#
+# Use option database to override default resources of base classes.
+#
+option add *Extfileselectionbox.borderWidth 2 widgetDefault
+
+option add *Extfileselectionbox.filterLabel Filter widgetDefault
+option add *Extfileselectionbox.dirsLabel Directories widgetDefault
+option add *Extfileselectionbox.filesLabel Files widgetDefault
+option add *Extfileselectionbox.selectionLabel Selection widgetDefault
+
+option add *Extfileselectionbox.width 350 widgetDefault
+option add *Extfileselectionbox.height 300 widgetDefault
+
+# ------------------------------------------------------------------
+#                        CONSTRUCTOR
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::constructor {args} {
+    #
+    # Add back to the hull width and height options and make the
+    # borderwidth zero since we don't need it.
+    #
+    itk_option add hull.width hull.height
+    component hull configure -borderwidth 0
+
+    set _interior $itk_interior
+
+    #
+    # Create the filter entry.
+    #
+    itk_component add filter {
+        iwidgets::Combobox $itk_interior.filter -unique true \
+        -command [itcl::code $this _selectFilter] -exportselection 0 \
+        -labelpos nw -completion 0
+    
+    } {
+    usual
+
+        rename -labeltext -filterlabel filterLabel Text
+    }
+
+    set cmd [$itk_component(filter) cget -command]
+    set cmd "$cmd;[itcl::code $this _selectFilter]"
+    $itk_component(filter) configure -command "$cmd" -selectioncommand "$cmd";
+
+    #
+    # Create a paned window for the directory and file lists.
+    #
+    itk_component add listpane {
+        iwidgets::Panedwindow $itk_interior.listpane -orient vertical
+    } 
+
+    $itk_component(listpane) add dirs -margin 5
+    $itk_component(listpane) add files -margin 5
+
+    #
+    # Create the directory list.
+    #
+    itk_component add dirs {
+        iwidgets::Scrolledlistbox [$itk_component(listpane) childsite dirs].dirs \
+        -selectioncommand [itcl::code $this _selectDir] \
+        -selectmode single -exportselection 0 \
+        -visibleitems 1x1 -labelpos nw \
+        -hscrollmode static -vscrollmode static \
+        -dblclickcommand [itcl::code $this _dblSelectDir]
+    } {
+    usual
+
+        rename -labeltext -dirslabel dirsLabel Text
+    }
+    grid $itk_component(dirs) -sticky nsew
+    grid rowconfigure [$itk_component(listpane) childsite dirs] 0 -weight 1
+    grid columnconfigure [$itk_component(listpane) childsite dirs] 0 -weight 1
+
+    #
+    # Create the files list.
+    #
+    itk_component add files {
+        iwidgets::Scrolledlistbox [$itk_component(listpane) childsite files].files \
+        -selectioncommand [itcl::code $this _selectFile] \
+        -selectmode single -exportselection 0 \
+        -visibleitems 1x1 -labelpos nw \
+        -hscrollmode static -vscrollmode static
+    } {
+    usual
+
+        rename -labeltext -fileslabel filesLabel Text
+    }
+    grid $itk_component(files) -sticky nsew
+    grid rowconfigure [$itk_component(listpane) childsite files] 0 -weight 1
+    grid columnconfigure [$itk_component(listpane) childsite files] 0 -weight 1
+
+    #
+    # Create the selection entry.
+    #
+    itk_component add selection {
+      iwidgets::Combobox $itk_interior.selection -unique true \
+      -command [itcl::code $this _selectSelection] -exportselection 0 \
+      -labelpos nw -completion 0
+    } {
+    usual
+
+        rename -labeltext -selectionlabel selectionLabel Text
+    }
+
+    #
+    # Create the child site widget.
+    #
+    itk_component add -protected childsite {
+        frame $itk_interior.fsbchildsite
+    } 
+
+    #
+    # Set the interior variable to the childsite for derived classes.
+    #
+    set itk_interior $itk_component(childsite)
+
+    #
+    # Explicitly handle configs that may have been ignored earlier.
+    #
+    eval itk_initialize $args
+
+    #
+    # When idle, pack the childsite and update the lists.
+    #
+    _packComponents
+    _updateLists
+}
+
+# ------------------------------------------------------------------
+#                           DESTRUCTOR
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::destructor {} {
+    if {$_packToken != ""} {after cancel $_packToken}
+    if {$_updateToken != ""} {after cancel $_updateToken}
+}
+
+# ------------------------------------------------------------------
+#                             OPTIONS
+# ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
+# OPTION: -childsitepos
+#
+# Specifies the position of the child site in the selection box.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::childsitepos {
+    _packComponents
+}
+
+# ------------------------------------------------------------------
+# OPTION: -fileson
+#
+# Specifies whether or not to display the files list.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::fileson {
+    if {$itk_option(-fileson)} {
+        $itk_component(listpane) show files
+
+        _updateLists
+
+    } else {
+        $itk_component(listpane) hide files
+    }
+}
+
+# ------------------------------------------------------------------
+# OPTION: -dirson
+#
+# Specifies whether or not to display the dirs list.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::dirson {
+    if {$itk_option(-dirson)} {
+        $itk_component(listpane) show dirs
+
+        _updateLists
+
+    } else {
+        $itk_component(listpane) hide dirs
+    }
+}
+
+# ------------------------------------------------------------------
+# OPTION: -selectionon
+#
+# Specifies whether or not to display the selection entry widget.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::selectionon {
+    _packComponents
+}
+
+# ------------------------------------------------------------------
+# OPTION: -filteron
+#
+# Specifies whether or not to display the filter entry widget.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::filteron {
+    _packComponents
+}
+
+# ------------------------------------------------------------------
+# OPTION: -mask
+#
+# Specifies the initial file mask string.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::mask {
+    global tcl_platform
+    set prefix $_pwd
+
+    #
+    # Remove automounter paths.
+    #
+    if {$tcl_platform(platform) == "unix"} {
+        if {$itk_option(-automount) != {}} {
+            foreach autoDir $itk_option(-automount) {
+                # Use catch because we can't be sure exactly what strings
+                # were passed into the -automount option
+                catch {
+                    if {[regsub ^/$autoDir $prefix {} prefix] != 0} {
+                        break
+                    }
+                }
+            }
+        }
+    }
+
+    set curFilter $itk_option(-mask);
+    $itk_component(filter) delete entry 0 end
+    $itk_component(filter) insert entry 0 [file join "$_pwd" $itk_option(-mask)]
+
+    #
+    # Make sure the right most text is visable.
+    #
+    [$itk_component(filter) component entry] xview moveto 1
+}
+
+# ------------------------------------------------------------------
+# OPTION: -directory
+#
+# Specifies the initial default directory.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::directory {
+    if {$itk_option(-directory) != {}} {
+        if {! [file exists $itk_option(-directory)]} {
+            error "bad directory option \"$itk_option(-directory)\":\
+                    directory does not exist"
+        }
+
+        set olddir [pwd]
+        cd $itk_option(-directory)
+        set _pwd [pwd]
+        cd $olddir
+
+        configure -mask $itk_option(-mask)
+        _selectFilter
+    }
+}
+
+# ------------------------------------------------------------------
+# OPTION: -automount
+#
+# Specifies list of directory prefixes to ignore. Typically, this
+# option would be used with values such as:
+#   -automount {export tmp_mnt}
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::automount {
+}
+
+# ------------------------------------------------------------------
+# OPTION: -nomatchstring
+#
+# Specifies the string to be displayed in the files list should
+# not regular files exist in the directory.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::nomatchstring {
+}
+
+# ------------------------------------------------------------------
+# OPTION: -dirsearchcommand
+#
+# Specifies a command to be executed to perform a directory search.
+# The command will receive the current working directory and filter
+# mask as arguments.  The command should return a list of files which
+# will be placed into the directory list.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::dirsearchcommand {
+}
+
+# ------------------------------------------------------------------
+# OPTION: -filesearchcommand
+#
+# Specifies a command to be executed to perform a file search.
+# The command will receive the current working directory and filter
+# mask as arguments.  The command should return a list of files which
+# will be placed into the file list.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::filesearchcommand {
+}
+
+# ------------------------------------------------------------------
+# OPTION: -selectioncommand
+#
+# Specifies a command to be executed upon pressing return in the
+# selection entry widget.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::selectioncommand {
+}
+
+# ------------------------------------------------------------------
+# OPTION: -filtercommand
+#
+# Specifies a command to be executed upon pressing return in the
+# filter entry widget.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::filtercommand {
+}
+
+# ------------------------------------------------------------------
+# OPTION: -selectdircommand
+#
+# Specifies a command to be executed following selection of a
+# directory in the directory list.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::selectdircommand {
+}
+
+# ------------------------------------------------------------------
+# OPTION: -selectfilecommand
+#
+# Specifies a command to be executed following selection of a
+# file in the files list.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::selectfilecommand {
+}
+
+# ------------------------------------------------------------------
+# OPTION: -invalid
+#
+# Specify a command to executed should the filter contents be
+# proven invalid.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::invalid {
+}
+
+# ------------------------------------------------------------------
+# OPTION: -filetype
+#
+# Specify the type of files which may appear in the file list.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::filetype {
+    switch $itk_option(-filetype) {
+        regular -
+        directory -
+        any {
+        }
+        default {
+            error "bad filetype option \"$itk_option(-filetype)\":\
+                    should be regular, directory, or any"
+        }
+    }
+
+    _updateLists
+}
+
+# ------------------------------------------------------------------
+# OPTION: -width
+#
+# Specifies the width of the file selection box.  The value may be
+# specified in any of the forms acceptable to Tk_GetPixels.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::width {
+    #
+    # The width option was added to the hull in the constructor.
+    # So, any width value given is passed automatically to the
+    # hull.  All we have to do is play with the propagation.
+    #
+    if {$itk_option(-width) != 0} {
+        set propagate 0
+    } else {
+        set propagate 1
+    }
+
+    #
+    # Due to a bug in the tk4.2 grid, we have to check the 
+    # propagation before setting it.  Setting it to the same
+    # value it already is will cause it to toggle.
+    #
+    if {[grid propagate $itk_component(hull)] != $propagate} {
+        grid propagate $itk_component(hull) $propagate
+    }
+}
+
+# ------------------------------------------------------------------
+# OPTION: -height
+#
+# Specifies the height of the file selection box.  The value may be
+# specified in any of the forms acceptable to Tk_GetPixels.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Extfileselectionbox::height {
+    #
+    # The height option was added to the hull in the constructor.
+    # So, any height value given is passed automatically to the
+    # hull.  All we have to do is play with the propagation.
+    #
+    if {$itk_option(-height) != 0} {
+        set propagate 0
+    } else {
+        set propagate 1
+    }
+
+    #
+    # Due to a bug in the tk4.2 grid, we have to check the 
+    # propagation before setting it.  Setting it to the same
+    # value it already is will cause it to toggle.
+    #
+    if {[grid propagate $itk_component(hull)] != $propagate} {
+        grid propagate $itk_component(hull) $propagate
+    }
+}
+
+# ------------------------------------------------------------------
+#                            METHODS
+# ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
+# METHOD: childsite
+#
+# Returns the path name of the child site widget.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::childsite {} {
+    return $itk_component(childsite)
+}
+
+# ------------------------------------------------------------------
+# METHOD: get
+#
+# Returns the current selection.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::get {} {
+    return [$itk_component(selection) get]
+}
+
+# ------------------------------------------------------------------
+# METHOD: filter
+#
+# The user has pressed Return in the filter.  Make sure the contents
+# contain a valid directory before setting default to directory.
+# Use the invalid option to warn the user of any problems.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::filter {} {
+    set newdir [file dirname [$itk_component(filter) get]]
+
+    if {! [file exists $newdir]} {
+        uplevel #0 "$itk_option(-invalid)"
+        return
+    }
+
+    set _pwd $newdir;
+    if {$_pwd == "."} {set _pwd [pwd]};
+
+    _updateLists
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _updateLists ?now?
+#
+# Updates the contents of both the file and directory lists, as well
+# resets the positions of the filter, and lists.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::_updateLists {{when "later"}} {
+    switch -- $when {
+        later {
+            if {$_updateToken == ""} {
+                set _updateToken [after idle [itcl::code $this _updateLists now]]
+            }
+        }
+        now {
+            if {$itk_option(-dirson)} {_setDirList}
+            if {$itk_option(-fileson)} {_setFileList}
+
+            if {$itk_option(-filteron)} {
+                _setFilter
+            }
+            if {$itk_option(-selectionon)} {
+                $itk_component(selection) icursor end
+            }
+            if {$itk_option(-dirson)} {
+                $itk_component(dirs) justify left
+            }
+            if {$itk_option(-fileson)} {
+                $itk_component(files) justify left
+            }
+            set _updateToken ""
+        }
+        default {
+            error "bad option \"$when\": should be later or now"
+        }
+    }
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _setFilter
+#
+# Set the filter to the current selection in the directory list plus
+# any existing mask in the filter.  Translate the two special cases
+# of '.', and '..' directory names to full path names..
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::_setFilter {} {
+    global tcl_platform
+    set prefix [$itk_component(dirs) getcurselection]
+    set curFilter [file tail [$itk_component(filter) get]]
+
+    while {[regexp {\.$} $prefix]} {
+        if {[file tail $prefix] == "."} {
+            if {$prefix == "."} {
+                if {$_pwd == "."} {
+                    set _pwd [pwd]
+                } elseif {$_pwd == ".."} {
+                    set _pwd [file dirname [pwd]]
+                }
+                set prefix $_pwd
+            } else {
+                set prefix [file dirname $prefix]
+            }
+        } elseif {[file tail $prefix] == ".."} {
+            if {$prefix != ".."} {
+                set prefix [file dirname [file dirname $prefix]]
+            } else {
+                if {$_pwd == "."} {
+                    set _pwd [pwd]
+                } elseif {$_pwd == ".."} {
+                    set _pwd [file dirname [pwd]]
+                }
+                set prefix [file dirname "$_pwd"]
+            }
+        } else {
+            break
+        }
+    }
+
+    if { [file pathtype $prefix] != "absolute" } {
+        set prefix [file join "$_pwd" $prefix]
+    }
+
+    #
+    # Remove automounter paths.
+    #
+    if {$tcl_platform(platform) == "unix"} {
+        if {$itk_option(-automount) != {}} {
+            foreach autoDir $itk_option(-automount) {
+                # Use catch because we can't be sure exactly what strings
+                # were passed into the -automount option
+                catch {
+                    if {[regsub ^/$autoDir $prefix {} prefix] != 0} {
+                        break
+                    }
+                }
+            }
+        }
+    }
+
+    $itk_component(filter) delete entry 0 end
+    $itk_component(filter) insert entry 0 [file join $prefix $curFilter]
+
+    if {[info level -1] != "_selectDir"} {
+        $itk_component(filter) insert list 0 [file join $prefix $curFilter]
+    }
+
+    #
+    # Make sure insertion cursor is at the end.
+    #
+    $itk_component(filter) icursor end
+
+    #
+    # Make sure the right most text is visable.
+    #
+    [$itk_component(filter) component entry] xview moveto 1
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _setSelection
+#
+# Set the contents of the selection entry to either the current
+# selection of the file or directory list dependent on which lists
+# are currently mapped.  For the file list, avoid seleciton of the
+# no match string.  As for the directory list, translate file names.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::_setSelection {} {
+    global tcl_platform
+    $itk_component(selection) delete entry 0 end
+
+    if {$itk_option(-fileson)} {
+        set selection [$itk_component(files) getcurselection]
+
+        if {$selection != $itk_option(-nomatchstring)} {
+            if {[file pathtype $selection] != "absolute"} {
+                set selection [file join "$_pwd" $selection]
+            }
+
+        #
+        # Remove automounter paths.
+        #
+        if {$tcl_platform(platform) == "unix"} {
+            if {$itk_option(-automount) != {}} {
+                foreach autoDir $itk_option(-automount) {
+                    # Use catch because we can't be sure exactly what strings
+                    # were passed into the -automount option
+                    catch {
+                        if {[regsub ^/$autoDir $selection {} selection] != 0} {
+                            break
+                        }
+                    }
+                }
+            }
+        }
+
+        $itk_component(selection) insert entry 0 $selection
+        } else {
+            $itk_component(files) selection clear 0 end
+    }
+
+    } else {
+        set selection [$itk_component(dirs) getcurselection]
+
+    if {[file tail $selection] == "."} {
+        if {$selection != "."} {
+            set selection [file dirname $selection]
+        } else {
+            set selection "$_pwd"
+        }
+    } elseif {[file tail $selection] == ".."} {
+        if {$selection != ".."} {
+            set selection [file dirname [file dirname $selection]]
+        } else {
+            set selection [file join "$_pwd" ..]
+        }
+    } else {
+        set selection [file join "$_pwd" $selection]
+    }
+
+    #
+        # Remove automounter paths.
+    #
+    if {$tcl_platform(platform) == "unix"} {
+        if {$itk_option(-automount) != {}} {
+            foreach autoDir $itk_option(-automount) {
+                # Use catch because we can't be sure exactly what strings
+                # were passed into the -automount option
+                catch {
+                    if {[regsub ^/$autoDir $selection {} selection] != 0} {
+                        break
+                    }
+                }
+            }
+        }
+    }
+
+        $itk_component(selection) insert entry 0 $selection
+    }
+
+    $itk_component(selection) insert list 0 $selection
+    $itk_component(selection) icursor end
+
+    #
+    # Make sure the right most text is visable.
+    #
+    [$itk_component(selection) component entry] xview moveto 1
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _setDirList
+#
+# Clear the directory list and dependent on whether the user has
+# defined their own search procedure or not fill the list with their
+# results or those of a glob.  Select the first element if it exists.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::_setDirList {} {
+    $itk_component(dirs) clear
+
+    set currentIndex ""
+    if {$itk_option(-dirsearchcommand) == {}} {
+        set cwd "$_pwd"
+        
+        set counter 0
+        foreach i [lsort [glob -nocomplain \
+                  [file join $cwd .*] [file join $cwd *]]] {
+            if {[file isdirectory $i]} {
+                set insert "[file tail $i]"
+                if {$insert == "."} {
+                    set currentIndex $counter
+                }
+                $itk_component(dirs) insert end "$insert"
+                incr counter
+            }
+        }
+
+    } else {
+        set mask [file tail [$itk_component(filter) get]]
+
+        foreach file [uplevel #0 $itk_option(-dirsearchcommand) "$_pwd" $mask] {
+            $itk_component(dirs) insert end $file
+        }
+    }
+
+    if {[$itk_component(dirs) size]} {
+        $itk_component(dirs) selection clear 0 end
+        if {$currentIndex != ""} {
+            $itk_component(dirs) selection set $currentIndex
+        } else {
+            $itk_component(dirs) selection set 0
+        }
+    }
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _setFileList
+#
+# Clear the file list and dependent on whether the user has defined
+# their own search procedure or not fill the list with their results
+# or those of a 'glob'.  If the files list has no contents, then set
+# the files list to the 'nomatchstring'.  Clear all selections.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::_setFileList {} {
+    $itk_component(files) clear
+    set mask [file tail [$itk_component(filter) get]]
+
+    if {$itk_option(-filesearchcommand) == {}} {
+        if {$mask == "*"} {
+            set files [lsort [glob -nocomplain \
+                  [file join "$_pwd" .*] [file join "$_pwd" *]]]
+        } else {
+            set files [lsort [glob -nocomplain [file join "$_pwd" $mask]]]
+        }
+
+        foreach i $files {
+            if {($itk_option(-filetype) == "regular" && \
+            ! [file isdirectory $i]) || \
+            ($itk_option(-filetype) == "directory" && \
+            [file isdirectory $i]) || \
+            ($itk_option(-filetype) == "any")} {
+        set insert "[file tail $i]"
+        $itk_component(files) insert end "$insert"
+            }
+        }
+
+    } else {
+        foreach file [uplevel #0 $itk_option(-filesearchcommand) "$_pwd" $mask] {
+            $itk_component(files) insert end $file
+        }
+    }
+
+    if {[$itk_component(files) size] == 0} {
+        if {$itk_option(-nomatchstring) != {}} {
+            $itk_component(files) insert end $itk_option(-nomatchstring)
+        }
+    }
+
+    $itk_component(files) selection clear 0 end
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _selectDir
+#
+# For a selection in the directory list, set the filter and possibly
+# the selection entry based on the fileson option.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::_selectDir {} {
+    _setFilter
+
+    if {$itk_option(-fileson)} {} {
+        _setSelection
+    }
+
+    if {$itk_option(-selectdircommand) != {}} {
+        uplevel #0 $itk_option(-selectdircommand)
+    }
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _dblSelectDir
+#
+# For a double click event in the directory list, select the
+# directory, set the default to the selection, and update both the
+# file and directory lists.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::_dblSelectDir {} {
+    filter
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _selectFile
+#
+# The user has selected a file.  Put the current selection in the
+# file list in the selection entry widget.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::_selectFile {} {
+    _setSelection
+
+    if {$itk_option(-selectfilecommand) != {}} {
+        uplevel #0 $itk_option(-selectfilecommand)
+    }
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _selectSelection
+#
+# The user has pressed Return in the selection entry widget.  Call
+# the defined selection command if it exists.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::_selectSelection {} {
+    if {$itk_option(-selectioncommand) != {}} {
+        uplevel #0 $itk_option(-selectioncommand)
+    }
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _selectFilter
+#
+# The user has pressed Return in the filter entry widget.  Call the
+# defined selection command if it exists, otherwise just filter.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::_selectFilter {} {
+    if {$itk_option(-filtercommand) != {}} {
+        uplevel #0 $itk_option(-filtercommand)
+    } else {
+        filter
+    }
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _packComponents
+#
+# Pack the selection, items, and child site widgets based on options.
+# Using the -in option of pack, put the childsite around the frame
+# in the hull for n, s, e, and w positions.  Make sure and raise 
+# the child site since using the 'in' option may obscure the site.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::_packComponents {{when "later"}} {
+    if {$when == "later"} {
+        if {$_packToken == ""} {
+            set _packToken [after idle [itcl::code $this _packComponents now]]
+        }
+        return
+    } elseif {$when != "now"} {
+        error "bad option \"$when\": should be now or later"
+    }
+
+    set _packToken ""
+
+    #
+    # Forget about any previous placements via the grid and
+    # reset all the possible minsizes and weights for all
+    # the rows and columns.
+    #
+    foreach component {childsite listpane filter selection} {
+        grid forget $itk_component($component)
+    }
+
+    for {set row 0} {$row < 6} {incr row} {
+        grid rowconfigure $_interior $row -minsize 0 -weight 0
+    }
+
+    for {set col 0} {$col < 3} {incr col} {
+        grid columnconfigure $_interior $col -minsize 0 -weight 0
+    }
+
+    #
+    # Place all the components based on the childsite poisition
+    # option.
+    #
+    switch $itk_option(-childsitepos) {
+        n { _nPos }
+
+        w { _wPos }
+
+        s { _sPos }
+
+        e { _ePos }
+
+    top { _topPos }
+
+    bottom { _bottomPos }
+
+        default {
+            error "bad childsitepos option \"$itk_option(-childsitepos)\":\
+                    should be n, e, s, w, top, or bottom"
+        }
+    }
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _nPos
+#
+# Position the childsite to the north and all the other components
+# appropriately based on the individual "on" options.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::_nPos {} {
+    grid $itk_component(childsite) -row 0 -column 0 \
+    -columnspan 1 -rowspan 1 -sticky nsew -padx 5
+
+    if {$itk_option(-filteron)} {
+        grid $itk_component(filter) -row 1 -column 0 \
+            -columnspan 1 -sticky ew -padx 5
+        grid rowconfigure $_interior 2 -minsize 7
+    }
+
+    grid $itk_component(listpane) -row 3 -column 0 \
+        -columnspan 1 -sticky nsew
+
+    grid rowconfigure $_interior 3 -weight 1
+
+    if {$itk_option(-selectionon)} {
+        grid rowconfigure $_interior 4 -minsize 7
+        grid $itk_component(selection) -row 5 -column 0 \
+            -columnspan 1 -sticky ew -padx 5
+    }
+
+    grid columnconfigure $_interior 0 -weight 1
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _sPos
+#
+# Position the childsite to the south and all the other components
+# appropriately based on the individual "on" options.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::_sPos {} {
+    if {$itk_option(-filteron)} {
+        grid $itk_component(filter) -row 0 -column 0 \
+            -columnspan 1 -sticky ew -padx 5
+        grid rowconfigure $_interior 1 -minsize 7
+    }
+
+    grid $itk_component(listpane) -row 2 -column 0 \
+        -columnspan 1 -sticky nsew
+    
+    grid rowconfigure $_interior 2 -weight 1
+
+    if {$itk_option(-selectionon)} {
+        grid rowconfigure $_interior 3 -minsize 7
+        grid $itk_component(selection) -row 4 -column 0 \
+            -columnspan 1 -sticky ew -padx 5
+    }
+    
+    grid $itk_component(childsite) -row 5 -column 0 \
+    -columnspan 1 -rowspan 1 -sticky nsew -padx 5
+
+    grid columnconfigure $_interior 0 -weight 1
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _ePos
+#
+# Position the childsite to the east and all the other components
+# appropriately based on the individual "on" options.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::_ePos {} {
+    if {$itk_option(-filteron)} {
+        grid $itk_component(filter) -row 0 -column 0 \
+            -columnspan 1 -sticky ew -padx 5
+        grid rowconfigure $_interior 1 -minsize 7
+    }
+
+    grid $itk_component(listpane) -row 2 -column 0 \
+        -columnspan 1 -sticky nsew
+
+    grid rowconfigure $_interior 2 -weight 1
+
+    if {$itk_option(-selectionon)} {
+        grid rowconfigure $_interior 3 -minsize 7
+        grid $itk_component(selection) -row 4 -column 0 \
+            -columnspan 1 -sticky ew -padx 5
+    }
+
+    grid $itk_component(childsite) -row 0 -column 1 \
+    -rowspan 5 -columnspan 1 -sticky nsew
+
+    grid columnconfigure $_interior 0 -weight 1
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _wPos
+#
+# Position the childsite to the west and all the other components
+# appropriately based on the individual "on" options.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::_wPos {} {
+    grid $itk_component(childsite) -row 0 -column 0 \
+    -rowspan 5 -columnspan 1 -sticky nsew
+
+    if {$itk_option(-filteron)} {
+        grid $itk_component(filter) -row 0 -column 1 \
+            -columnspan 1 -sticky ew -padx 5
+        grid rowconfigure $_interior 1 -minsize 7
+    } 
+
+    grid $itk_component(listpane) -row 2 -column 1 \
+        -columnspan 1 -sticky nsew
+
+    grid rowconfigure $_interior 2 -weight 1
+
+    if {$itk_option(-selectionon)} {
+        grid rowconfigure $_interior 3 -minsize 7
+        grid $itk_component(selection) -row 4 -column 1 \
+            -columnspan 1 -sticky ew -padx 5
+    }
+
+    grid columnconfigure $_interior 1 -weight 1
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _topPos
+#
+# Position the childsite below the filter but above the lists and 
+# all the other components appropriately based on the individual 
+# "on" options.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::_topPos {} {
+    if {$itk_option(-filteron)} {
+        grid $itk_component(filter) -row 0 -column 0 \
+            -columnspan 1 -sticky ew -padx 5
+    }
+
+    grid $itk_component(childsite) -row 1 -column 0 \
+    -columnspan 1 -rowspan 1 -sticky nsew -padx 5
+
+    grid $itk_component(listpane) -row 2 -column 0 -sticky nsew
+
+    grid rowconfigure $_interior 2 -weight 1
+
+    if {$itk_option(-selectionon)} {
+        grid rowconfigure $_interior 3 -minsize 7
+        grid $itk_component(selection) -row 4 -column 0 \
+            -columnspan 1 -sticky ew -padx 5
+    }
+
+    grid columnconfigure $_interior 0 -weight 1
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _bottomPos
+#
+# Position the childsite below the lists and above the selection
+# and all the other components appropriately based on the individual 
+# "on" options.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Extfileselectionbox::_bottomPos {} {
+    if {$itk_option(-filteron)} {
+        grid $itk_component(filter) -row 0 -column 0 \
+            -columnspan 1 -sticky ew -padx 5
+        grid rowconfigure $_interior 1 -minsize 7
+    }
+
+    grid $itk_component(listpane) -row 2 -column 0 -sticky nsew
+
+    grid rowconfigure $_interior 2 -weight 1
+
+    grid $itk_component(childsite) -row 3 -column 0 \
+    -columnspan 1 -rowspan 1 -sticky nsew -padx 5
+
+    if {$itk_option(-selectionon)} {
+        grid $itk_component(selection) -row 4 -column 0 \
+            -columnspan 1 -sticky ew -padx 5
+    }
+
+    grid columnconfigure $_interior 0 -weight 1
+}

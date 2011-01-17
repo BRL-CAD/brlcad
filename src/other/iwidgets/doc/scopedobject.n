@@ -1,0 +1,100 @@
+'\"
+'\" Copyright (c) 1997 DSC Technologies Corporation
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\"
+'\" @(#) scopedobject.n 1.21 97/1/30 16:04:44
+'\" 
+.so man.macros
+.HS scopedobject iwid
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+scopedobject \- Create and manipulate a scoped \[incr Tcl\] class object.
+.SH SYNOPSIS
+\fBscopedobject\fI \fIobjName \fR?\fIoptions\fR?
+.SH "INHERITANCE"
+None
+.SH "STANDARD OPTIONS"
+.LP
+.nf
+Name:	\fBenterscopecommand:\fR
+Command-Line Switch:	\fB-enterscopecommand\fR
+.fi
+.IP
+Specifies a Tcl command to invoke when an object enters scope
+(i.e. when it is created..). The default is {}.
+.LP
+.nf
+Name:	\fBenterscopecommand:\fR
+Command-Line Switch:	\fB-enterscopecommand\fR
+.fi
+.IP
+Specifies a Tcl command to invoke when an object exits scope
+(i.e. when it is deleted..). The default is {}.
+.LP
+.BE
+
+.SH DESCRIPTION
+.PP
+The \fBscopedobject\fR command creates a base class for defining
+Itcl classes which posses scoped behavior like Tcl variables.
+The objects are only accessible within the procedure in which
+they are instantiated and are deleted when the procedure returns.
+This class was designed to be a general purpose base class for
+supporting scoped incr Tcl classes.  The options include the
+execute a Tcl script command when an object enters and exits its
+scope.
+.SH "METHODS"
+.PP
+The \fBscopedobject\fR command creates a new Tcl command whose
+name is \fIpathName\fR.  This
+command may be used to invoke various operations on the object.
+It has the following general form:
+.DS C
+\fIpathName option \fR?\fIarg arg ...\fR?
+.DE
+\fIOption\fR and the \fIarg\fRs
+determine the exact behavior of the command.  The following
+commands are possible for scopedobject objects:
+.SH "OBJECT-SPECIFIC METHODS"
+.TP
+\fIpathName \fBcget\fR \fIoption\fR
+Returns the current value of the configuration option given
+by \fIoption\fR.
+\fIOption\fR may have any of the values accepted by the \fBscopedobject\fR
+command.
+.TP
+\fIpathName\fR \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
+Query or modify the configuration options of the object.
+If no \fIoption\fR is specified, returns a list describing all of
+the available options for \fIpathName\fR.  If \fIoption\fR is specified
+with no \fIvalue\fR, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no \fIoption\fR is specified).  If
+one or more \fIoption\-value\fR pairs are specified, then the command
+modifies the given objects option(s) to have the given value(s);  in
+this case the command returns an empty string.
+\fIOption\fR may have any of the values accepted by the \fBscopedobject\fR
+command.
+
+.SH EXAMPLE
+.IP
+The scopedobject was primarily meant to be a base class.  The
+following is an example of usage without inheritance:
+.LP
+.DS
+  proc scopedobject_demo {} {
+    iwidgets::scopedobject #auto \
+        -exitscopecommand {puts "enter scopedobject_demo"} \
+        -exitscopecommand {puts "exit scopedobject_demo"}
+  }
+
+  scopedobject_demo
+
+.DE
+.SH AUTHOR
+John A. Tucker
+.SH KEYWORDS
+scopedobject, object

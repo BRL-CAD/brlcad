@@ -1,0 +1,177 @@
+'\"
+'\" Copyright (c) 1997 DSC Technologies Corporation
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\"
+'\" @(#) dateentry.n 1.0 97/04/30 16:04:44
+'\" 
+.so man.macros
+.HS iwidgets::dateentry iwid
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+iwidgets::dateentry \- Create and manipulate a dateentry widget
+.SH SYNOPSIS
+\fBiwidgets::dateentry\fI \fIpathName \fR?\fIoptions\fR?
+.SH "INHERITANCE"
+itk::Widget <- iwidgets::LabeledWidget <- iwidgets::Datefield <- iwidgets::Dateentry
+.SH "STANDARD OPTIONS"
+.LP
+.nf
+.ta 4c 8c 12c
+\fB
+background   borderWidth      cursor              exportSelection
+foreground   highlightColor   highlightThickness  insertBackground
+justify      relief\fR
+.fi
+.LP
+See the "options" manual entry for details on the standard options.
+.SH "INHERITED OPTIONS"
+.LP
+.nf
+.ta 4c 8c 12c
+\fBdisabledForeground\fR  \fBint\fR          \fBlabelBitmap\fR   \fBlabelFont\fR
+\fBlabelImage\fR          \fBlabelMargin\fR  \fBlabelPos\fR      \fBlabelText\fR
+\fBlabelVariable\fR       \fBstate\fR        \fBsticky\fR
+.fi
+.LP
+See the "labeledwidget" class manual entry for details on these
+inherited options.
+.LP
+.nf
+.ta 4c 8c 12c
+\fBcommand\fR	\fBiq\fR	\fBstate\fR	\fBtextBackground\fR
+\fBtextFont\fR	
+.fi
+.LP
+See the "datefield" class manual entry for details on these
+inherited options.
+.SH "ASSOCIATED OPTIONS"
+.LP
+.nf
+.ta 4c 8c 12c
+\fBbackwardImage\fR	\fBbuttonForeground\fR	\fBcommand\fR	\fBcurrentDateFont\fR
+\fBdateFont\fR	\fBdayFont\fR	\fBdays\fR	\fBforwardImage\fR
+\fBoutline\fR	\fBselectColor\fR	\fBselectThickness\fR	\fBstartDay\fR
+\fBtitleFont\fR	\fBweekdayBackground\fR	\fBweekendBackground\fR
+.fi
+.LP
+See the "calendar" manual entry for details on the associated options.
+.SH "WIDGET-SPECIFIC OPTIONS"
+.LP
+.nf
+Name:	\fBgrab\fR
+Class:	\fBGrab\fR
+Command-Line Switch:	\fB-grab\fR
+.fi
+.IP
+Specifies the grab level, \fBlocal\fR or \fBglobal\fR, to be obtained before 
+bringing up the popup calendar.  The default is global.  For more information
+concerning grab levels, consult the documentation for Tk's \fBgrab\fR command.
+.LP
+.nf
+Name:	\fBicon\fR
+Class:	\fBIcon\fR
+Command-Line Switch:	\fB-icon\fR
+.fi
+.IP
+Specifies the calendar icon image to be used in the dateentry.  
+This image must have been created previously with 
+the \fBimage create\fR command.  Should one not be provided, 
+then one will be generated, pixmap if possible, bitmap otherwise.
+.LP
+.BE
+
+.SH DESCRIPTION
+.PP
+The \fBiwidgets::dateentry\fR command creates a quicken style date entry field 
+with a popup calendar by combining the datefield and calendar 
+widgets together.  This allows a user to enter the date via the 
+keyboard or by using the mouse and selecting the calendar icon 
+which brings up a popup calendar.
+.DE
+
+.SH "METHODS"
+.PP
+The \fBiwidgets::dateentry\fR command creates a new Tcl command whose
+name is \fIpathName\fR.  This
+command may be used to invoke various
+operations on the widget.  It has the following general form:
+.DS C
+\fIpathName option \fR?\fIarg arg ...\fR?
+.DE
+\fIOption\fR and the \fIarg\fRs
+determine the exact behavior of the command.  The following
+commands are possible for dateentry widgets:
+.SH "INHERITED METHODS"
+.LP
+.nf
+.ta 4c 8c 12c
+\fBget\fR	\fBisvalid\fR	\fBshow\fR
+.fi
+.LP
+See the "datefield" manual entry for details on the associated methods.
+.SH "WIDGET-SPECIFIC METHODS"
+.TP
+\fIpathName \fBcget\fR \fIoption\fR
+Returns the current value of the configuration option given
+by \fIoption\fR.
+\fIOption\fR may have any of the values accepted by the \fBiwidgets::dateentry\fR
+command.
+.TP
+\fIpathName\fR \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
+Query or modify the configuration options of the widget.
+If no \fIoption\fR is specified, returns a list describing all of
+the available options for \fIpathName\fR (see \fBTk_ConfigureInfo\fR for
+information on the format of this list).  If \fIoption\fR is specified
+with no \fIvalue\fR, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no \fIoption\fR is specified).  If
+one or more \fIoption\-value\fR pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+\fIOption\fR may have any of the values accepted by the \fBiwidgets::dateentry\fR
+command.
+
+.SH "COMPONENTS"
+.LP
+.nf
+Name:	\fBlabel\fR
+Class:	\fBLabel\fR
+.fi
+.IP
+The label component provides a label component to used to identify the date.
+See the "label" widget manual entry for details on the label component item.
+.LP
+.nf
+Name:	\fBiconbutton\fR
+Class:	\fBLabel\fR
+.fi
+.IP
+The iconbutton component provides a labelbutton component to act as a 
+lightweight button
+displaying the calendar icon.  Upon pressing the labelbutton, the calendar
+appears.  See the "label" widget manual entry for details on the 
+labelbutton component item.
+.LP
+.nf
+Name:	\fBdate\fR
+Class:	\fBEntry\fR
+.fi
+.IP
+The date component provides the entry field for date input and display.
+See the "entry" widget manual entry for details on the date component item.
+.fi
+
+.SH EXAMPLE
+.DS
+ package require Iwidgets 4.0
+ iwidgets::dateentry .de
+ pack .de
+.DE
+.SH AUTHOR
+Mark L. Ulferts
+.LP
+.SH KEYWORDS
+dateentry, widget

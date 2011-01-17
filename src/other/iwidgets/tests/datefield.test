@@ -1,0 +1,203 @@
+# This file is a Tcl script to test out [incr Widgets] Datefield class.
+# It is organized in the standard fashion for Tcl tests with the following
+# notation for test case labels:
+#
+#   1.x - Construction/Destruction tests
+#   2.x - Configuration option tests
+#   3.x - Method tests
+#
+# Copyright (c) 1995 DSC Technologies Corporation
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# @(#) $Id$
+
+package require tcltest
+namespace import -force ::tcltest::*
+
+if [catch {package require Iwidgets 4.0}] {
+  # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
+  # env var is initialized in the Makefile when doing a 'make test'.
+  # If sourcing this file independently, this variable must be set manually.
+  if ![info exists env(IWIDGETS_LIBRARY)] {
+    error "Unable to locate Iwidgets package.  Set your IWIDGETS_LIBRARY\
+      environment\nvariable to the directory that contains iwidgets.tcl"
+  }
+  lappend auto_path $env(IWIDGETS_LIBRARY)
+  package require Iwidgets 4.0
+}
+
+if {[string compare test [info procs test]] == 1} {
+    source defs
+}
+
+wm geometry . {}
+raise .
+
+set c 1
+set o 1
+set m 1
+
+#
+# Initial construction test
+#
+test Datefield-1.$c {Datefield construction} {
+    iwidgets::Datefield .df -labeltext "Date Field"
+    pack .df -padx 10 -pady 10 -fill both -expand yes
+    update 
+} {}
+
+incr c
+
+#
+# Option tests which are successful. First confirm proper number of options.
+#
+test Datefield-2.$o {configuration option} {
+    llength [.df configure]
+} {28}
+
+incr o
+
+foreach test {
+    {-background #d9d9d9 #d9d9d9}
+    {-borderwidth 4 4} 
+    {-borderwidth 2 2} 
+    {-command {.df configure -background red} {.df configure -background red}}
+    {-cursor gumby gumby} 
+    {-exportselection 0 0} 
+    {-foreground Green Green} 
+    {-foreground Black Black} 
+    {-highlightcolor Red Red}
+    {-highlightthickness 2 2}
+    {-insertbackground Yellow Yellow} 
+    {-insertbackground Black Black} 
+    {-int yes yes}
+    {-int no no}
+    {-iq average average}
+    {-iq high high}
+    {-justify right right}
+    {-justify center center}
+    {-justify left left}
+    {-labelmargin 5 5} 
+    {-labelpos w w} 
+    {-labelpos nw nw} 
+    {-labelpos n n} 
+    {-labelpos ne ne} 
+    {-labelpos e e} 
+    {-labelpos se se} 
+    {-labelpos s s} 
+    {-labelpos sw sw} 
+    {-labeltext Label Label} 
+    {-relief raised raised} 
+    {-relief sunken sunken} 
+    {-gmt true true}
+    {-gmt false false}
+    {-gmt on on}
+    {-gmt off off}
+    {-gmt 1 1}
+    {-gmt 0 0}
+    {-gmt yes yes}
+    {-gmt no no}
+    {-sticky w w}
+    {-sticky nw nw}
+    {-sticky n n}
+    {-sticky ne ne}
+    {-sticky e e}
+    {-sticky se se}
+    {-sticky s s}
+    {-sticky sw sw}
+    {-sticky news news}
+    {-textbackground GhostWhite GhostWhite} 
+    {-textbackground #d9d9d9 #d9d9d9}} {
+	set option [lindex $test 0]
+	test Datefield-2.$o "configuration options, $option" {
+	    .df configure $option [lindex $test 1]
+	    lindex [.df configure $option] 4
+	} [lindex $test 2]
+	update 
+	incr o
+}
+
+#
+# Option tests which fail and produce errors.
+#
+foreach test {
+  {-iq bogus {bad iq option "bogus": should be high, average or low}}
+  {-gmt bogus {bad gmt option "bogus": should be boolean}}
+  {-childsitepos bogus {bad childsite option "bogus": should be n, e, s, or w}}} {
+	set option [lindex $test 0]
+        test Datefield-2.$o "configuration options, $option" {
+	    list [catch {.df configure $option [lindex $test 1]} msg] $msg
+	} [list 1 [lindex $test 2]]
+	incr o
+}
+
+#
+# Method tests which are successful.
+#
+foreach test {
+    {{.df childsite} {.df.lwchildsite}}
+    {{.df show 03/03/1960} {}}
+    {{.df get} {03/03/1960}}
+    {{.df get -string} {03/03/1960}}
+    {{.df isvalid} {1}}
+    {{.df component date delete 0 end} {}}
+    {{.df component date insert end 03/32/1960} {}}
+    {{.df isvalid} {0}}
+    {{.df show 03/03/1960} {}}
+    {{.df show now} {}}} {
+	set method [lindex [lindex $test 0] 1]
+	test Datefield-3.$m "object methods, $method" {
+	    list [catch {eval [lindex $test 0]} msg] $msg
+	} [list 0 [lindex $test 1]]
+	update 
+	incr m
+}
+
+test Datefield-3.$m "object methods, clock clicks" {
+    set clicks [clock scan "06/08/1964"]
+    .df show $clicks
+    update 
+    .df get 
+} {06/08/1964}
+incr m
+
+#
+# Method tests which fail and produce errors
+#
+foreach test {
+    {{.df get bogus} {bad format option "bogus": should be -string or -clicks}}
+    {{.df show bogus} {bad date: "bogus", must be a valid date string, clock clicks value or the keyword now}}} {
+	set method [lindex [lindex $test 0] 1]
+	test Datefield-3.$m "object methods, $method" {
+	    list [catch {eval [lindex $test 0]} msg] $msg
+	} [list 1 [lindex $test 1]]
+	incr m
+}
+
+#
+# Conclusion of constrcution/destruction tests
+#
+test Datefield-1.$c {Datefield destruction} {
+    destroy .df
+    update 
+} {}
+
+incr c
+
+test Datefield-1.$c {Datefield construction} {
+    iwidgets::datefield .df 
+    pack .df -padx 10 -pady 10
+    update 
+} {}
+
+incr c
+
+test Datefield-1.$c {Datefield destruction} {
+    destroy .df
+    update 
+} {}
+
+::tcltest::cleanupTests
+exit

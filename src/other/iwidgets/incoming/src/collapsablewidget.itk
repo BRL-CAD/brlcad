@@ -1,0 +1,324 @@
+#
+# Collapsablewidget
+# ----------------------------------------------------------------------
+# Implements a collapsable widget which contains a label and child site.
+# The child site is a frame which can filled with any widget via a 
+# derived itcl::class or though the use of the childSite method.  
+#
+# Clicking on the button/arrow indicator will collapse/reveal the 
+# child-site
+#
+# ----------------------------------------------------------------------
+#  AUTHOR: Vince Darley               EMAIL: vince@biosgroup.com
+#  
+#  Based upon the labelledwidget distributed under the copyright
+#  below, under which all my modifications are also distributed.
+#
+# ----------------------------------------------------------------------
+#            Copyright (c) 1995-1999 DSC Technologies Corporation
+# ======================================================================
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
+# software without specific, written prior permission.
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
+# ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
+# INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
+# WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
+# SOFTWARE.
+# ======================================================================
+
+#
+# Default resources.
+#
+option add *Collapsablewidget.labelMargin 1 widgetDefault
+package require Itk
+
+#
+# Usual options.
+#
+itk::usual Collapsablewidget {
+    keep -background -cursor -foreground -labelfont
+}
+
+# Define the right pointing and down-pointing triangles
+# for collapsed and expanded entries.
+if {[lsearch [image names] closedNode] == -1} {
+    image create bitmap closedNode -data {
+	#define closednode_width 13
+	#define closednode_height 13
+	static char closednode_bits[] = {
+	    0x00, 0x00, 0x00, 0x00, 0x10, 0x10, 0x30, 0x10,
+	    0x70, 0x10, 0xf0, 0x10, 0xf0, 0x11, 0xf0, 0x13,
+	    0xf0, 0x11, 0xf0, 0x10, 0x70, 0x10, 0x30, 0x10,
+	    0x10, 0x10};
+    }
+}
+if {[lsearch [image names] openNode] == -1} {
+    image create bitmap openNode -data {
+	#define opennode_width 13
+	#define opennode_height 13
+	static char opennode_bits[] = {
+	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfc, 0x1f,
+	    0xf8, 0x0f, 0xf0, 0x07, 0xe0, 0x03, 0xc0, 0x01,
+	    0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfc, 0x1f,
+	    0x00, 0x00};
+    }
+}
+
+# ------------------------------------------------------------------
+#                            COLLAPSABLEWIDGET
+# ------------------------------------------------------------------
+
+itcl::class iwidgets::Collapsablewidget {
+    inherit itk::Widget
+
+    constructor {args} {}
+    destructor {}
+
+    itk_option define -labelmargin labelMargin Margin 1
+    itk_option define -labeltext labelText Text {}
+    itk_option define -labelvariable labelVariable Variable {}
+    itk_option define -labelbitmap labelBitmap Bitmap {}
+    itk_option define -labelimage labelImage Image {}
+    itk_option define -collapsed collapsed Collapsed 1
+    
+    public method childsite
+
+    public method collapse
+    
+    public method reveal
+    
+    public method toggle
+    
+    protected method _positionLabel {when}
+
+    proc alignlabels {args} {}
+
+    protected variable _reposition ""  ;# non-null => _positionLabel pending
+}
+    
+#
+# Provide a lowercased access method for the Collapsablewidget class.
+# 
+proc ::iwidgets::collapsablewidget {pathName args} {
+    uplevel ::iwidgets::Collapsablewidget $pathName $args
+}
+
+# ------------------------------------------------------------------
+#                        CONSTRUCTOR
+# ------------------------------------------------------------------
+
+itcl::body iwidgets::Collapsablewidget::constructor {args} {
+    # 
+    # Create the outermost frame to maintain geometry.
+    #
+    itk_component add shell {
+	frame $itk_interior.shell -relief ridge -bd 2
+    } {
+	keep -background -cursor 
+    }
+    pack $itk_component(shell) -fill both -expand yes
+    
+    itk_component add frame {
+	frame $itk_component(shell).frame
+    } {
+    }    
+    pack $itk_component(frame) -fill x -expand no -side top
+    
+    itk_component add trigger {
+	button $itk_component(shell).frame.trigger -command "$this toggle" \
+	  -relief flat \
+	  -image closedNode
+    } {
+    }
+    pack $itk_component(trigger) -side left
+    #
+    # Create label.
+    #
+    itk_component add label {
+	label $itk_component(shell).frame.label
+    } {
+	keep -background -foreground -cursor 
+	
+	rename -font -labelfont labelFont Font
+    }
+    pack $itk_component(label) -side right -fill x -expand yes
+    
+    #
+    # Create margin between label and the child site.
+    #
+    itk_component add labmargin {
+	frame $itk_component(shell).labmargin
+    } {
+	keep -background -cursor
+    }
+    pack $itk_component(labmargin) -side bottom
+
+    #
+    # Create a frame for the childsite widget.
+    #
+    itk_component add lwchildsite {
+	frame $itk_component(shell).lwchildsite
+    } {
+	keep -background -cursor
+    }
+    #pack $itk_component(lwchildsite) -fill both -expand yes
+    set itk_interior $itk_component(lwchildsite)
+     
+    
+    ##
+    # Explicitly handle configs that may have been ignored earlier.
+    #
+    eval itk_initialize $args
+
+    # 
+    # When idle, position the label.
+    #
+}
+
+# ------------------------------------------------------------------
+#                           DESTURCTOR
+# ------------------------------------------------------------------
+itcl::body iwidgets::Collapsablewidget::destructor {} {
+    if {$_reposition != ""} {after cancel $_reposition}
+}
+
+itcl::body iwidgets::Collapsablewidget::toggle {} {
+    set itk_option(-collapsed) [expr 1 - $itk_option(-collapsed)]
+    if {$itk_option(-collapsed)} {
+	collapse
+    } else {
+	reveal
+    }
+}
+
+itcl::body iwidgets::Collapsablewidget::collapse {} {
+    pack forget $itk_component(lwchildsite)
+    $itk_component(trigger) configure -image closedNode
+}
+
+itcl::body iwidgets::Collapsablewidget::reveal {} {
+    pack $itk_component(lwchildsite) -side bottom -fill both -expand yes
+    $itk_component(trigger) configure -image openNode
+}
+
+# ------------------------------------------------------------------
+#                             OPTIONS
+# ------------------------------------------------------------------
+
+itcl::configbody iwidgets::Collapsablewidget::collapsed {
+    if {$itk_option(-collapsed)} {
+	collapse
+    } else {
+	reveal
+    }
+}
+
+# ------------------------------------------------------------------
+# OPTION: -labeltext
+#
+# Specifies the label text.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Collapsablewidget::labeltext {
+    $itk_component(label) configure -text $itk_option(-labeltext)
+    
+}
+
+# ------------------------------------------------------------------
+# OPTION: -labelvariable
+#
+# Specifies the label text variable.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Collapsablewidget::labelvariable {
+    $itk_component(label) configure -textvariable $itk_option(-labelvariable)
+    
+}
+
+# ------------------------------------------------------------------
+# OPTION: -labelbitmap
+#
+# Specifies the label bitmap.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Collapsablewidget::labelbitmap {
+    $itk_component(label) configure -bitmap $itk_option(-labelbitmap)
+}
+
+# ------------------------------------------------------------------
+# OPTION: -labelimage
+#
+# Specifies the label image.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Collapsablewidget::labelimage {
+    $itk_component(label) configure -image $itk_option(-labelimage)
+}
+
+# ------------------------------------------------------------------
+#                            METHODS
+# ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
+# METHOD: childsite
+#
+# Returns the path name of the child site widget.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Collapsablewidget::childsite {} {
+    return $itk_component(lwchildsite)
+}
+
+# ------------------------------------------------------------------
+# PROCEDURE: alignlabels widget ?widget ...?
+#
+# The alignlabels procedure takes a list of widgets derived from
+# the Collapsablewidget itcl::class and adjusts the label margin to align 
+# the labels.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Collapsablewidget::alignlabels {args} {
+    update
+    set maxLabelWidth 0
+    
+    #
+    # Verify that all the widgets are of type Collapsablewidget and 
+    # determine the size of the maximum length label string.
+    #
+    foreach iwid $args {
+	if {[catch {$iwid isa iwidgets::Collapsablewidget} ret] || $ret == 0} {
+	    error "$iwid is not a \"Collapsablewidget\": $ret"
+	}
+	
+	set csWidth [winfo reqwidth $iwid.shell.lwchildsite]
+	set shellWidth [winfo reqwidth $iwid.shell]
+	
+	if {[expr $shellWidth - $csWidth] > $maxLabelWidth} {
+	    set maxLabelWidth [expr $shellWidth - $csWidth]
+	}
+    }
+    
+    #
+    # Adjust the margins for the labels such that the child sites and
+    # labels line up.
+    #
+    foreach iwid $args {
+	set csWidth [winfo reqwidth $iwid.shell.lwchildsite]
+	set shellWidth [winfo reqwidth $iwid.shell]
+	
+	set labelSize [expr $shellWidth - $csWidth]
+	
+	if {$maxLabelWidth > $labelSize} {
+	    set dist [expr $maxLabelWidth - \
+	      ($labelSize - [winfo reqwidth $iwid.shell.labmargin])]
+	    
+	    $iwid configure -labelmargin $dist 
+	}
+    }	
+}

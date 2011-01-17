@@ -1,0 +1,16 @@
+#!/bin/sh
+# \
+	exec wish8.4 -f $0 $*
+
+package require Iwidgets 4.0
+
+#
+# Demo script for the Scopedobject class
+#
+proc scopedobject_demo {} {
+  iwidgets::scopedobject #auto \
+        -exitscopecommand {puts "enter scopedobject_demo"} \
+        -exitscopecommand {puts "exit scopedobject_demo"}
+}
+
+scopedobject_demo

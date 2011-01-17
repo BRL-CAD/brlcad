@@ -1,0 +1,11 @@
+# ----------------------------------------------------------------------
+#  DEMO: selectiondialog in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+iwidgets::shell .sh -modality none -padx 20 -pady 20 -title Shell
+
+pack [label [.sh childsite].l -text SHELL]
+
+.sh center
+.sh activate

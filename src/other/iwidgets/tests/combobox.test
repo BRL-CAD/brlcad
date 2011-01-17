@@ -1,0 +1,328 @@
+# This file is a Tcl script to test out [incr Widgets] Combobox class.
+# It is organized in the standard fashion for Tcl tests with the following
+# notation for test case labels:
+#
+#   1.x - Construction/Destruction tests
+#   2.x - Configuration option tests
+#   3.x - Method tests
+#
+# Copyright (c) 1995 John S. Sigler
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+
+package require tcltest
+namespace import -force ::tcltest::*
+
+if [catch {package require Iwidgets 4.0}] {
+  # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
+  # env var is initialized in the Makefile when doing a 'make test'.
+  # If sourcing this file independently, this variable must be set manually.
+  if ![info exists env(IWIDGETS_LIBRARY)] {
+    error "Unable to locate Iwidgets package.  Set your IWIDGETS_LIBRARY\
+      environment\nvariable to the directory that contains iwidgets.tcl"
+  }
+  lappend auto_path $env(IWIDGETS_LIBRARY)
+  package require Iwidgets 4.0
+}
+
+if {[string compare test [info procs test]] == 1} {
+    source defs
+}
+
+wm geometry . {}
+raise .
+
+set c 1
+set o 1
+set m 1
+
+#
+# Initial construction test
+#
+test Combobox-1.$c {Combobox construction} {
+    iwidgets::Combobox .cb
+    pack .cb -padx 10 -pady 10 -fill x -expand yes
+    image create bitmap flagup -file $tk_library/demos/images/flagup.bmp
+    update 
+} {}
+
+incr c
+
+#
+# Option tests which are successful.
+#
+test Combobox-2.$o {configuration option} {
+    llength [.cb configure]
+} {52}
+
+incr o
+
+foreach test {
+    {-listheight 150 150}
+    {-width 20 20}
+    {-textvariable option option}
+    {-labeltext Combobox: Combobox:} 
+    {-labelpos nw nw}
+    {-labelpos n n}
+    {-labelpos ne ne}
+    {-labelpos w w}
+    {-labelimage flagup flagup}
+    {-labelpos nw nw}
+    {-labelpos n n}
+    {-labelpos ne ne}
+    {-labelpos w w}
+    {-labelimage {} {}} 
+    {-borderwidth 10 10}
+    {-borderwidth 2 2}
+    {-background steelblue steelblue}
+    {-foreground white white}
+    {-background grey85 grey85}
+    {-foreground Black Black}
+    {-textvariable {} {}}
+    {-state disabled disabled}
+    {-state normal normal}
+    {-textvariable option option}
+    {-arrowrelief groove groove}
+    {-arrowrelief flat flat}
+    {-arrowrelief raised raised}
+    {-selectioncommand {doit} {@scope :: doit}}
+    {-selectioncommand {} {}}
+    {-cursor {} {}}
+	{-grab global global}
+	{-grab local local}
+    {-textvariable {} {} }
+    {-dropdown false false}
+    {-dropdown true true}
+    {-textvariable option option}
+    {-editable true true}
+    {-editable false false}
+    {-relief raised raised}
+    {-relief groove groove}
+    {-relief flat flat}
+    {-relief sunken sunken}
+    {-exportselection 1 1}
+    {-exportselection 0 0}
+    {-invalid {catch {blt_bell}} {catch {blt_bell}} }
+    {-labelmargin 2 2}
+    {-labelfont -Adobe-Helvetica-Bold-R-Normal--*-120-*  \
+	-Adobe-Helvetica-Bold-R-Normal--*-120-*}
+    {-margin 5 5}
+    {-popupcursor hand1 hand1}
+    {-popupcursor hand2 hand2}
+    {-selectbackground \#b2dfee \#b2dfee}
+    {-selectbackground steelblue steelblue}
+    {-selectborderwidth 1 1}
+    {-selectforeground Black Black}
+    {-sticky w w}
+    {-sticky nw nw}
+    {-sticky n n}
+    {-sticky ne ne}
+    {-sticky e e}
+    {-sticky se se}
+    {-sticky s s}
+    {-sticky sw sw}
+    {-sticky news news}
+    {-textbackground white white}
+    {-textfont 10x20 10x20}
+    {-textfont -Adobe-Helvetica-Medium-R-Normal--*-120-* \
+	-Adobe-Helvetica-Medium-R-Normal--*-120-*} 
+    {-textvariable {} {} }
+    {-unique true true}
+    {-validate alpha alpha}
+    {-validate {} {}}
+    {-dropdown false false}
+    {-hscrollmode dynamic static}
+    {-hscrollmode dynamic dynamic}
+    {-vscrollmode dynamic static}
+	{-grab global global}
+    {-vscrollmode dynamic dynamic}
+    {-dropdown true true}} {
+	set option [lindex $test 0]
+	test Combobox-2.$o "configuration options, $option" {
+	    .cb configure $option [lindex $test 2]
+	    lindex [.cb configure $option] 4
+	} [lindex $test 2]
+	update 
+	incr o
+    }
+
+#
+# Option tests which fail and produce errors.
+#
+foreach test {
+    {-borderwidth bogus {bad screen distance "bogus"}}
+	{-completion bogus {bad completion option "bogus": should be boolean}}
+    {-cursor bogus {bad cursor spec "bogus"}}
+    {-dropdown bogus {bad dropdown option "bogus": should be boolean}}
+	{-editable bogus {bad editable option "bogus": should be boolean}}
+    {-exportselection bogus {expected boolean value but got "bogus"}}
+    {-grab bogus {bad grab value "bogus": must be global or local}}
+    {-listheight bogus {bad screen distance "bogus"}}
+    {-hscrollmode bogus {bad hscrollmode option "bogus": should be static, dynamic, or none}}
+    {-margin bogus {bad screen distance "bogus"}}
+    {-popupcursor bogus {bad cursor spec "bogus"}}
+    {-selectborderwidth bogus {bad screen distance "bogus"}}
+    {-state bogus {bad state "bogus": must be disabled or normal}}
+    {-unique bogus {bad unique value "bogus": should be boolean}}
+    {-vscrollmode bogus {bad vscrollmode option "bogus": should be static, dynamic, or none}}
+    {-width bogus {expected integer but got "bogus"}} } {
+        if {[lindex $test 0] == "-state"} {
+          if {$::tk_version >= 8.4} {
+            # A new state was added to the Tk entry widget in 8.4.
+            set test {-state bogus {bad state "bogus": must be disabled, normal, or readonly}}
+          }
+        }
+	set option [lindex $test 0]
+        test Combobox-2.$o "configuration options, $option" {
+	    list [catch {.cb configure $option [lindex $test 1]} msg] $msg
+	} [list 1 [lindex $test 2]]
+	incr o
+}
+#
+# Method tests which are successful.
+#
+foreach test {
+    {{.cb configure -editable 1} {}}
+    {{.cb clear all} {}}
+    {{.cb insert list 0 Test1 Test2 Test3 Test4} {}}
+    {{.cb insert list end {More Test}} {}}
+    {{.cb size} {5}}
+    {{.cb delete list 1} {}}
+    {{.cb delete list 0 2} {}}
+    {{.cb size} {1}}
+    {{.cb get 0} {More Test}}
+    {{.cb selection set end end} {}}
+    {{.cb getcurselection} {More Test}}
+    {{.cb get} {More Test}}
+    {{.cb clear entry} {}}
+    {{.cb get} {}}
+    {{.cb insert entry end "this is a test"} {} }
+    {{.cb get} {this is a test}}
+    {{.cb curselection} {}}
+    {{.cb clear} {}}
+    {{.cb size} {0}}
+    {{.cb getcurselection} {}}
+    {{.cb insert list end {Test1} {Test2} {Really Long String Test}} {}}
+    {{.cb size} {3}}
+    {{.cb get 0} {Test1}}
+	{{.cb insert entry end R} {}}
+	{{.cb getcurselection} {Really Long String Test}}
+	{{.cb get} {Really Long String Test}}
+	{{.cb config -completion off} {}}
+	{{.cb selection clear 0 end} {}}
+	{{.cb insert entry end R} {}}
+	{{.cb get} {R}}
+	{{.cb getcurselection} {}}
+	{{.cb config -completion on} {}}
+    {{.cb get [expr [.cb size]-1]} {Really Long String Test}}
+    {{.cb insert list 0 {Test3} {Test4} {Really Long String Test}} {}}
+    {{.cb size} {6}}
+    {{.cb insert list 1 {Test5} {Test6} {Really Long String Test}} {}}
+    {{.cb size} {9}}
+    {{.cb insert list 5 {Test7} {Test8} {Really Long String Test}} {}}
+    {{.cb size} {12}}
+	{{.cb config -state disabled} {}}
+	{{.cb insert list end {not gonna make it in}} {}}
+	{{.cb size} {12}}
+	{{.cb insert entry end {eally!}} {}}
+	{{.cb get} {R}}
+	{{.cb config -state normal} {}}
+	{{.cb config -dropdown 0} {}}
+	{{.cb size} {12}}
+	{{.cb config -dropdown 1} {}}
+	{{.cb size} {12}}
+    {{.cb see 0} {}}
+    {{.cb see 11} {}}
+    {{.cb get end} {Really Long String Test}}
+    {{.cb selection clear 0 end} {}}
+    {{.cb selection set 5 5} {}}
+    {{.cb curselection} {5}}
+    {{.cb justify left} {}}
+    {{.cb justify right} {}}
+    {{.cb justify top} {}}
+    {{.cb justify bottom} {}}
+    {{.cb sort ascending} {}}
+    {{.cb sort descending} {}}
+    {{.cb sort increasing} {}}
+    {{.cb sort decreasing} {}}} {
+	set method [lindex [lindex $test 0] 1]
+	test Combobox-3.$m "object methods, $method" {
+	    list [catch {eval [lindex $test 0]} msg] $msg
+	} [list 0 [lindex $test 1]]
+	update 
+	incr m
+}
+
+#
+# Method tests which fail and produce errors
+#
+foreach test {
+    {{.cb clear bogus} {bad Combobox component "bogus": must be entry, list, or all.}}
+    {{.cb delete} {wrong # args: should be ".cb delete component first ?last?"}}
+    {{.cb delete bogus 0} {bad Combobox component "bogus": must be entry or list.}}
+    {{.cb delete list} {wrong # args: should be ".cb delete component first ?last?"}}
+    {{.cb delete entry} {wrong # args: should be ".cb delete component first ?last?"}}
+    {{.cb get bogus1 bogus2} {wrong # args: should be ".cb get ?index?"}}
+    {{.cb insert} {wrong # args: should be ".cb insert component index ?arg arg ...?"}}
+    {{.cb insert bogus 0 bogus0} {bad Combobox component "bogus": must be entry or list.}}
+    {{.cb insert list} {wrong # args: should be ".cb insert component index ?arg arg ...?"}}
+    {{.cb insert list 1} {no value given for parameter "string" in function "Combobox::insert"}}
+    {{.cb insert entry a b c} {called function "Combobox::insert entry" with too many arguments}}
+    {{.cb selection} {wrong # args: should be ".cb selection option first ?last?"}}
+    {{.cb selection bogus1 bogus2 bogus3 bogus4} {wrong # args: should be ".cb selection option first ?last?"}}
+    {{.cb selection bogus bogus} {bad Scrolledlistbox index "bogus": must be active, anchor, end, @x,y, number, or a pattern}}
+    {{.cb sort bogus} {bad sort argument "bogus": must be a valid argument to the Tcl lsort command}}} {
+    set method [lindex [lindex $test 0] 1]
+    test Combobox-3.$m "object methods, $method" {
+	list [catch {eval [lindex $test 0]} msg] $msg
+    } [list 1 [lindex $test 1]]
+    incr m
+}
+
+#
+# Conclusion of constrcution/destruction tests
+#
+test Combobox-4.1 {Combobox destruction} {
+    destroy .cb
+    update 
+} {}
+
+incr c
+
+test Combobox-4.2 {Combobox construction} {
+    iwidgets::Combobox .cb3 -selectioncommand {puts "choice: [.cb get]" } \
+	-dropdown false -listheight 50 \
+	-labeltext "Numeric Simple:" -labelpos w \
+	-validate numeric -unique false
+	.cb3 insert list end 123 456 789 101112
+    pack .cb3 -padx 10 -pady 10 -fill both -expand yes
+    update 
+} {}
+
+incr c
+
+test Combobox-4.3 {Combobox destruction} {
+    destroy .cb3
+    update 
+} {}
+
+test Combobox-4.4 {Combobox construction} {
+    iwidgets::Combobox .cb4 -arrowrelief flat -selectioncommand {puts "choice: [.cb get]" } \
+	-editable false \
+	-listheight 200 -labeltext "DropDown:" -labelpos w \
+	-popupcursor hand1 -unique true
+	.cb4 insert list end Hello {Out There} World
+    pack .cb4 -padx 10 -pady 10 -fill both -expand yes
+    update 
+} {}
+
+incr c
+
+test Combobox-4.5 {Combobox destruction} {
+    destroy .cb4
+    update 
+} {}
+
+::tcltest::cleanupTests
+exit

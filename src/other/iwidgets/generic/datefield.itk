@@ -1,0 +1,1020 @@
+#
+# Datefield
+# ----------------------------------------------------------------------
+# Implements a date entry field with adjustable built-in intelligence
+# levels.
+# ----------------------------------------------------------------------
+#   AUTHOR:  Mark L. Ulferts          E-mail: mulferts@austin.dsccc.com
+#
+#   @(#) $Id$
+# ----------------------------------------------------------------------
+#            Copyright (c) 1997 DSC Technologies Corporation
+# ======================================================================
+#
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
+# software without specific, written prior permission.
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
+# ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
+# INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
+# WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
+# SOFTWARE.
+# ======================================================================
+
+#
+# Usual options.
+#
+itk::usual Datefield {
+    keep -background -borderwidth -cursor -foreground -highlightcolor \
+     -highlightthickness -labelfont -textbackground -textfont 
+}
+
+# ------------------------------------------------------------------
+#                               DATEFIELD
+# ------------------------------------------------------------------
+itcl::class iwidgets::Datefield {
+    inherit iwidgets::Labeledwidget 
+    
+    constructor {args} {}
+
+    itk_option define -childsitepos childSitePos Position e
+    itk_option define -command command Command {}
+    itk_option define -iq iq Iq high
+    itk_option define -gmt gmt GMT no
+    itk_option define -int int DateFormat no
+    
+    public method get {{format "-string"}}
+    public method isvalid {}
+    public method show {{date now}}
+
+    protected method _backward {}
+    protected method _focusIn {}
+    protected method _forward {}
+    protected method _keyPress {char sym state}
+    protected method _lastDay {month year}
+    protected method _moveField {direction}
+    protected method _setField {field}
+    protected method _whichField {}
+
+    protected variable _cfield "month"
+    protected variable _fields {month day year}
+}
+
+
+#
+# Provide a lowercased access method for the datefield class.
+# 
+proc ::iwidgets::datefield {pathName args} {
+    uplevel ::iwidgets::Datefield $pathName $args
+}
+
+#
+# Use option database to override default resources of base classes.
+#
+option add *Datefield.justify center widgetDefault
+
+# ------------------------------------------------------------------
+#                        CONSTRUCTOR
+# ------------------------------------------------------------------
+itcl::body iwidgets::Datefield::constructor {args} {
+    component hull configure -borderwidth 0
+    
+    #   
+    # Create an entry field for entering the date.
+    #   
+    itk_component add date {
+    entry $itk_interior.date -width 10
+    } {
+    keep -borderwidth -cursor -exportselection \
+        -foreground -highlightcolor -highlightthickness \
+        -insertbackground -justify -relief -state
+    
+    rename -font -textfont textFont Font
+    rename -highlightbackground -background background Background
+    rename -background -textbackground textBackground Background
+    }
+
+    #
+    # Create the child site widget.
+    #
+    itk_component add -protected dfchildsite {
+    frame $itk_interior.dfchildsite
+    } 
+    set itk_interior $itk_component(dfchildsite)
+    
+    #
+    # Add datefield event bindings for focus in and keypress events.
+    #
+    bind $itk_component(date) <FocusIn> [itcl::code $this _focusIn]
+    bind $itk_component(date) <KeyPress> [itcl::code $this _keyPress %A %K %s]
+    
+    #
+    # Disable some mouse button event bindings:
+    #   Button Motion
+    #   Double-Clicks
+    #   Triple-Clicks
+    #   Button2
+    #
+    bind $itk_component(date) <Button1-Motion>  break
+    bind $itk_component(date) <Button2-Motion>  break
+    bind $itk_component(date) <Double-Button>   break
+    bind $itk_component(date) <Triple-Button>   break
+    bind $itk_component(date) <2>       break
+
+    #
+    # Initialize the widget based on the command line options.
+    #
+    eval itk_initialize $args
+
+    #
+    # Initialize the date to the current date.
+    #
+    $itk_component(date) delete 0 end
+
+    show now
+}
+
+# ------------------------------------------------------------------
+#                             OPTIONS
+# ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
+# OPTION: -childsitepos
+#
+# Specifies the position of the child site in the widget.  Valid
+# locations are n, s, e, and w.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Datefield::childsitepos {
+    set parent [winfo parent $itk_component(date)]
+
+    switch $itk_option(-childsitepos) {
+    n {
+        grid $itk_component(dfchildsite) -row 0 -column 0 -sticky ew
+        grid $itk_component(date) -row 1 -column 0 -sticky nsew
+
+        grid rowconfigure $parent 0 -weight 0
+        grid rowconfigure $parent 1 -weight 1
+        grid columnconfigure $parent 0 -weight 1
+        grid columnconfigure $parent 1 -weight 0
+    }
+    
+    e {
+        grid $itk_component(dfchildsite) -row 0 -column 1 -sticky ns
+        grid $itk_component(date) -row 0 -column 0 -sticky nsew
+
+        grid rowconfigure $parent 0 -weight 1
+        grid rowconfigure $parent 1 -weight 0
+        grid columnconfigure $parent 0 -weight 1
+        grid columnconfigure $parent 1 -weight 0
+    }
+    
+    s {
+        grid $itk_component(dfchildsite) -row 1 -column 0 -sticky ew
+        grid $itk_component(date) -row 0 -column 0 -sticky nsew
+
+        grid rowconfigure $parent 0 -weight 1
+        grid rowconfigure $parent 1 -weight 0
+        grid columnconfigure $parent 0 -weight 1
+        grid columnconfigure $parent 1 -weight 0
+    }
+    
+    w {
+        grid $itk_component(dfchildsite) -row 0 -column 0 -sticky ns
+        grid $itk_component(date) -row 0 -column 1 -sticky nsew
+
+        grid rowconfigure $parent 0 -weight 1
+        grid rowconfigure $parent 1 -weight 0
+        grid columnconfigure $parent 0 -weight 0
+        grid columnconfigure $parent 1 -weight 1
+    }
+    
+    default {
+        error "bad childsite option\
+            \"$itk_option(-childsitepos)\":\
+            should be n, e, s, or w"
+    }
+    }
+}
+
+# ------------------------------------------------------------------
+# OPTION: -command
+#
+# Command invoked upon detection of return key press event.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Datefield::command {}
+
+# ------------------------------------------------------------------
+# OPTION: -iq
+#
+# Specifies the level of intelligence to be shown in the actions
+# taken by the date field during the processing of keypress events.
+# Valid settings include high, average, and low.  With a high iq,
+# the date prevents the user from typing in an invalid date.  For 
+# example, if the current date is 05/31/1997 and the user changes
+# the month to 04, then the day will be instantly modified for them 
+# to be 30.  In addition, leap years are fully taken into account.
+# With average iq, the month is limited to the values of 01-12, but
+# it is possible to type in an invalid day.  A setting of low iq
+# instructs the widget to do no validity checking at all during
+# date entry.  With both average and low iq levels, it is assumed
+# that the validity will be determined at a later time using the
+# date's isvalid command.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Datefield::iq {
+    switch $itk_option(-iq) {
+    high - average - low {
+    }
+    default {
+        error "bad iq option \"$itk_option(-iq)\":\
+                   should be high, average or low"
+    }
+    }
+}
+
+# ------------------------------------------------------------------
+# OPTION: -int 
+#
+# Added by Mark Alston 2001/10/21
+#
+# Allows for the use of dates in "international" format: YYYY-MM-DD.
+# It must be a boolean value.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Datefield::int { 
+    switch $itk_option(-int) {
+    1 - yes - true - on {
+        set _cfield "year"
+        set _fields {year month day}
+    }
+    0 - no - false - off { }
+    default {
+        error "bad int option \"$itk_option(-int)\": should be boolean"
+    }
+    }
+    show [get]
+}
+
+# ------------------------------------------------------------------
+# OPTION: -gmt
+#
+# This option is used for GMT time.  Must be a boolean value.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Datefield::gmt {
+  switch $itk_option(-gmt) {
+    0 - no - false - off { }
+    1 - yes - true - on { }
+    default {
+      error "bad gmt option \"$itk_option(-gmt)\": should be boolean"
+    }
+  }
+}
+
+# ------------------------------------------------------------------
+#                            METHODS
+# ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
+# PUBLIC METHOD: get ?format?
+#
+# Return the current contents of the datefield in one of two formats
+# string or as an integer clock value using the -string and -clicks
+# options respectively.  The default is by string.  Reference the 
+# clock command for more information on obtaining dates and their 
+# formats.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Datefield::get {{format "-string"}} {
+    set datestr [$itk_component(date) get]
+
+    switch -- $format {
+    "-string" {
+        return $datestr
+    }
+    "-clicks" {
+        return [clock scan $datestr]
+    }
+    default {
+        error "bad format option \"$format\":\
+                   should be -string or -clicks"
+    }
+    }
+}
+
+# ------------------------------------------------------------------
+# PUBLIC METHOD: show date
+#
+# Changes the currently displayed date to be that of the date 
+# argument.  The date may be specified either as a string or an
+# integer clock value.  Reference the clock command for more 
+# information on obtaining dates and their formats.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Datefield::show {{date "now"}} {
+    $itk_component(date) delete 0 end
+    if {$itk_option(-int)} {
+        set format {%Y-%m-%d}
+    } else {
+        set format {%m/%d/%Y}
+    }
+
+    if {$date == "now"} {
+        set seconds [::clock seconds]
+        $itk_component(date) insert end \
+            [clock format $seconds -format "$format" -gmt $itk_option(-gmt)]
+
+    } elseif { $itk_option(-iq) != "low" } {
+        if {[catch {::clock format $date}] == 0} {
+            set seconds $date
+        } elseif {[catch {set seconds [::clock scan $date -gmt \
+                $itk_option(-gmt)]}] != 0} {
+            error "bad date: \"$date\", must be a valid date\
+            string, clock clicks value or the keyword now"
+        }
+        $itk_component(date) insert end \
+            [clock format $seconds -format "$format" -gmt $itk_option(-gmt)]
+    } else {
+        # Note that it doesn't matter what -int is set to.
+        $itk_component(date) insert end $date
+    }
+
+    if {$itk_option(-int)} {
+        _setField year
+    } else {
+        _setField month
+    }
+
+    return
+}
+
+# ------------------------------------------------------------------
+# PUBLIC METHOD: isvalid
+#
+# Returns a boolean indication of the validity of the currently
+# displayed date value.  For example, 3/3/1960 is valid whereas
+# 02/29/1997 is invalid.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Datefield::isvalid {} {
+    if {[catch {clock scan [$itk_component(date) get]}] != 0} {
+        return 0
+    } else {
+        return 1
+    }
+}
+
+# ------------------------------------------------------------------
+# PROTECTED METHOD: _focusIn
+#
+# This method is bound to the <FocusIn> event.  It resets the 
+# insert cursor and field settings to be back to their last known
+# positions.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Datefield::_focusIn {} {
+    _setField $_cfield
+}
+
+# ------------------------------------------------------------------
+# PROTECTED METHOD: _keyPress 
+#
+# This method is the workhorse of the class.  It is bound to the
+# <KeyPress> event and controls the processing of all key strokes.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Datefield::_keyPress {char sym state} {
+    #
+    #  Determine which field we are in currently.  This is needed
+    # since the user may have moved to this position via a mouse
+    # selection and so it would not be in the position we last 
+    # knew it to be.
+    #
+    _whichField 
+
+    #
+    # If we are using an international date the split char is "-" 
+    # otherwise it is "/".
+    #
+    if {$itk_option(-int)} {
+        set split_char "-"
+    } else {
+        set split_char "/"
+    }
+
+
+    #
+    # Set up a few basic variables we'll be needing throughout the
+    # rest of the method such as the position of the insert cursor
+    # and the currently displayed day, month, and year.
+    #
+    set icursor [$itk_component(date) index insert]
+    set splist [split [$itk_component(date) get] "$split_char"]
+
+
+    # A bunch of added variables to allow for the use of int dates
+    if {$itk_option(-int)} {
+        set order {year month day}
+        set year [lindex $splist 0]
+        set month [lindex $splist 1]
+        set day [lindex $splist 2]
+        set year_start_pos 0
+        set year_second_pos 1
+        set year_third_pos 2
+        set year_fourth_pos 3
+        set year_end_pos 4
+        set month_start_pos 5
+        set month_second_pos 6
+        set month_end_pos 7
+        set day_start_pos 8
+        set day_second_pos 9
+        set day_end_pos 10
+    } else {
+        set order {month day year}
+        set month [lindex $splist 0]
+        set day [lindex $splist 1]
+        set year [lindex $splist 2]
+        set month_start_pos 0
+        set month_second_pos 1
+        set month_end_pos 2
+        set day_start_pos 3
+        set day_second_pos 4
+        set day_end_pos 5
+        set year_start_pos 6
+        set year_second_pos 7
+        set year_third_pos 8
+        set year_fourth_pos 9
+        set year_end_pos 10
+    }
+
+
+    #
+    # Process numeric keystrokes.  This involes a fair amount of 
+    # processing with step one being to check and make sure we
+    # aren't attempting to insert more that 10 characters.  If
+    # so ring the bell and break.
+    #
+    if {[string match {[0-9]} $char]} {
+        if {[$itk_component(date) index insert] == 10} {
+            bell
+            return -code break
+        }
+
+        #
+        # If we are currently in the month field then we process the
+        # number entered based on the cursor position.  If we are at
+        # at the first position and our iq is low, then accept any 
+        # input.
+        #
+        if {$_cfield == "month"} {
+
+            if {[$itk_component(date) index insert] == $month_start_pos} {
+                if {$itk_option(-iq) == "low"} {
+                $itk_component(date) delete $month_start_pos
+                $itk_component(date) insert $month_start_pos $char
+            } else {
+                #
+                # Otherwise, we're slightly smarter.  If the number
+                # is less than two insert it at position zero.  If 
+                # this makes the month greater than twelve, set the 
+                # number at position one to zero which makes in 
+                # effect puts the month back in range.  
+                #
+                regsub {([0-9])([0-9])} $month "$char\\2" month2b
+
+                if {$char < 2} {
+                    $itk_component(date) delete $month_start_pos
+                    $itk_component(date) insert $month_start_pos $char
+
+                    if {$month2b > 12} {
+                        $itk_component(date) delete $month_second_pos
+                        $itk_component(date) insert $month_second_pos 0
+                        $itk_component(date) icursor $month_second_pos
+                    } elseif {$month2b == "00"} {
+                        $itk_component(date) delete $month_second_pos
+                        $itk_component(date) insert $month_second_pos 1
+                        $itk_component(date) icursor $month_second_pos
+                    }
+
+                    #
+                    # Finally, if the number is greater than one we'll 
+                    # assume that they really mean to be entering a zero
+                    # followed by their number, do so for them, and 
+                    # proceed to skip to the next field which is the 
+                    # day field.
+                    #
+                } else {
+                    $itk_component(date) delete $month_start_pos $month_end_pos
+                    $itk_component(date) insert $month_start_pos 0$char
+                    _setField day
+                }
+            }
+            
+            #
+            # Else, we're at the second month position.  Again, if we aren't
+            # too smart, let them enter anything.  Otherwise, if the 
+            # number makes the month exceed twelve, set the month to
+            # zero followed by their number to get it back into range.
+            #
+        } else {
+            regsub {([0-9])([0-9])} $month "\\1$char" month2b
+        
+            if {$itk_option(-iq) == "low"} {
+                $itk_component(date) delete $month_second_pos
+                $itk_component(date) insert $month_second_pos $char
+            } else {
+                if {$month2b > 12} {
+                    $itk_component(date) delete $month_start_pos $month_end_pos
+                    $itk_component(date) insert $month_start_pos 0$char
+                } elseif {$month2b == "00"} {
+                    bell
+                    return -code break
+                } else {
+                    $itk_component(date) delete $month_second_pos
+                    $itk_component(date) insert $month_second_pos $char
+                }           
+            }
+            _setField day
+        }
+
+        # 
+        # Now, the month processing is complete and if we're of a
+        # high level of intelligence, then we'll make sure that the
+        # current value for the day is valid for this month.  If
+        # it is beyond the last day for this month, change it to
+        # be the last day of the new month.
+        #
+        if {$itk_option(-iq) == "high"} {
+            set splist [split [$itk_component(date) get] "$split_char"]
+            set month [lindex $splist [lsearch $order month]]
+            if {$day > [set endday [_lastDay $month $year]]} {
+                set icursor [$itk_component(date) index insert]
+                $itk_component(date) delete $day_start_pos $day_end_pos
+                $itk_component(date) insert $day_start_pos $endday
+                $itk_component(date) icursor $icursor
+            }
+        }
+        
+        #
+        # Finally, return with a code of break to stop any normal
+        # processing in that we've done all that is necessary.
+        #
+        return -code break
+    }
+
+    #
+    # This next block of code is for processing of the day field
+    # which is quite similar is strategy to that of the month.
+    #
+    if {$_cfield == "day"} {
+        if {$itk_option(-iq) == "high"} {
+            set endofMonth [_lastDay $month $year]
+        } else {
+            set endofMonth 31
+        }
+
+        #
+        # If we are at the first cursor position for the day 
+        # we are processing 
+        # the first character of the day field.  If we have an iq 
+        # of low accept any input.
+        #
+        if {[$itk_component(date) index insert] == $day_start_pos} {
+            if {$itk_option(-iq) == "low"} {
+                $itk_component(date) delete $day_start_pos
+                $itk_component(date) insert $day_start_pos $char
+            
+            } else {
+
+                #
+                # If the day to be is double zero, then make the
+                # day be the first.
+                #
+                regsub {([0-9])([0-9])} $day "$char\\2" day2b
+
+                if {$day2b == "00"} {
+                    $itk_component(date) delete $day_start_pos $day_end_pos
+                    $itk_component(date) insert $day_start_pos 01
+                    $itk_component(date) icursor $day_second_pos
+                    #
+                    # Otherwise, if the character is less than four 
+                    # and the month is not Feburary, insert the number 
+                    # and if this makes the day be beyond the valid 
+                    # range for this month, than set to be back in 
+                    # range.  
+                    #
+                } elseif {($char < 4) && ($month != "02")} {
+                    $itk_component(date) delete $day_start_pos
+                    $itk_component(date) insert $day_start_pos $char
+            
+                    if {$day2b > $endofMonth} {
+                        $itk_component(date) delete $day_second_pos
+                        $itk_component(date) insert $day_second_pos 0
+                        $itk_component(date) icursor $day_second_pos
+                    } 
+            
+                    #
+                    # For Feburary with a number to be entered of 
+                    # less than three, make sure the number doesn't 
+                    # make the day be greater than the correct range
+                    # and if so adjust the input. 
+                    #
+                } elseif {$char < 3} {
+                    $itk_component(date) delete $day_start_pos
+                    $itk_component(date) insert $day_start_pos $char
+                    if {$day2b > $endofMonth} {
+                        $itk_component(date) delete $day_start_pos $day_end_pos
+                        $itk_component(date) insert $day_start_pos $endofMonth
+                        $itk_component(date) icursor $day_second_pos
+                    } 
+
+                    #
+                    # Finally, if the number is greater than three,
+                    # set the day to be zero followed by the number 
+                    # entered and proceed to the year field or end.
+                    #
+                } else {
+                    $itk_component(date) delete $day_start_pos $day_end_pos
+                    $itk_component(date) insert $day_start_pos 0$char
+                    $itk_component(date) icursor $day_end_pos
+                    if {!$itk_option(-int)} {
+                        _setField year
+                    }
+                }
+            }
+            #
+            # Else, we're dealing with the second number in the day
+            # field.  If we're not too bright accept anything, otherwise
+            # if the day is beyond the range for this month or equal to
+            # zero then ring the bell.
+            #
+        } else {
+            regsub {([0-9])([0-9])} $day "\\1$char" day2b
+        
+            if {($itk_option(-iq) != "low") && \
+                (($day2b > $endofMonth) || ($day2b == "00"))} {
+                bell
+            } else {
+                $itk_component(date) delete $day_second_pos
+                $itk_component(date) insert $day_second_pos $char
+                $itk_component(date) icursor $day_end_pos
+                if {!$itk_option(-int)} {
+                    _setField year
+                }
+            }
+        }
+
+        #
+        # Return with a code of break to prevent normal processing. 
+        #
+        return -code break
+    }
+
+    #
+    # This month and day we're tough, the code for the year is 
+    # comparitively simple.  Accept any input and if we are really
+    # sharp, then make sure the day is correct for the month
+    # given the year.  In short, handle leap years.
+    #
+    if {$_cfield == "year"} {
+        if {$itk_option(-iq) == "low"} {
+            $itk_component(date) delete $icursor
+            $itk_component(date) insert $icursor $char
+        } else {
+            set prevdate [get]
+            if {[$itk_component(date) index insert] == $year_start_pos} {
+                set yrdgt [lindex [split [lindex \
+                [split $prevdate "$split_char"] [lsearch $order year]] ""] 0]
+                if {$char != $yrdgt} {
+                    if {$char == 1} {
+                        $itk_component(date) delete $icursor $year_end_pos
+                        $itk_component(date) insert $icursor 1999
+                    } elseif {$char == 2} {
+                        $itk_component(date) delete $icursor $year_end_pos
+                        $itk_component(date) insert $icursor 2000
+                    } else {
+                        bell
+                        return -code break
+                    }
+                }
+
+                $itk_component(date) icursor $year_second_pos
+                return -code break
+            }
+        
+            $itk_component(date) delete $icursor
+            $itk_component(date) insert $icursor $char
+
+
+            if {[catch {clock scan [get]}] != 0} {
+                $itk_component(date) delete $year_start_pos $year_end_pos
+                $itk_component(date) insert $year_start_pos \
+                [lindex [split $prevdate "$split_char"] [lsearch $order year]]
+                $itk_component(date) icursor $icursor
+
+                bell
+                return -code break
+            }
+
+            if {$itk_option(-iq) == "high"} {
+                set splist [split [$itk_component(date) get] "$split_char"]
+                set year [lindex $splist [lsearch $order year]]
+
+                if {$day > [set endday [_lastDay $month $year]]} {
+                    set icursor [$itk_component(date) index insert]
+                    $itk_component(date) delete $day_start_pos $day_end_pos
+                    $itk_component(date) insert $day_start_pos $endday
+                    $itk_component(date) icursor $icursor
+                }
+            }
+        }
+        if {$itk_option(-int)} {
+            if {$icursor == $year_fourth_pos } {
+                _setField month
+            }
+        }
+        return -code break
+    }
+    
+    #
+    # Process the plus and the up arrow keys.  They both yeild the same
+    # effect, they increment the day by one.
+    #
+    } elseif {($sym == "plus") || ($sym == "Up")} {
+        if {[catch {show [clock scan "1 day" -base [get -clicks]]}] != 0} {
+            bell
+        }
+        return -code break
+    
+        #
+        # Process the minus and the down arrow keys which decrement the day.
+        #
+    } elseif {($sym == "minus") || ($sym == "Down")} {
+        if {[catch {show [clock scan "-1 day" -base [get -clicks]]}] != 0} {
+            bell
+        }
+        return -code break
+
+        #
+        # A tab key moves the day/month/year (or year/month/day) field
+        # forward by one unless
+        # the current field is the last field.  In that case we'll let tab
+        # do what is supposed to and pass the focus onto the next widget.
+        #
+    } elseif {($sym == "Tab") && ($state == 0)} {
+        if {$_cfield != "[lindex $order 2]"} {
+            _moveField forward
+            return -code break
+        } else {
+            _setField "[lindex $order 0]"
+            return -code continue
+        }
+
+        #
+        # A ctrl-tab key moves the day/month/year field backwards by one 
+        # unless the current field is the the first field.  In that case we'll
+        # let tab take the focus to a previous widget.
+        #
+    } elseif {($sym == "Tab") && ($state == 4)} {
+        if {$_cfield != "[lindex $order 0]"} {
+            _moveField backward
+            return -code break
+        } else {
+            set _cfield "[lindex $order 0]"
+            return -code continue
+        }
+
+        #
+        # A right arrow key moves the insert cursor to the right one.
+        #
+    } elseif {$sym == "Right"} {
+        _forward
+        return -code break
+
+        #
+        # A left arrow, backspace, or delete key moves the insert cursor 
+        # to the left one.  This is what you expect for the left arrow
+        # and since the whole widget always operates in overstrike mode,
+        # it makes the most sense for backspace and delete to do the same.
+        #
+    } elseif {$sym == "Left" || $sym == "BackSpace" || $sym == "Delete"} {
+        _backward
+        return -code break
+
+    } elseif {($sym == "Control_L") || ($sym == "Shift_L") || \
+            ($sym == "Control_R") || ($sym == "Shift_R")} {
+        return -code break
+
+        #
+        # A Return key invokes the optionally specified command option.
+        #
+    } elseif {$sym == "Return"} {
+        uplevel #0 $itk_option(-command)
+        return -code break 
+    } else {
+        bell
+        return -code break
+    }
+}
+
+# ------------------------------------------------------------------
+# PROTECTED METHOD: _setField field
+#
+# Internal method which adjusts the field to be that of the 
+# argument, setting the insert cursor appropriately.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Datefield::_setField {field} {
+    set _cfield $field
+    
+    if {$itk_option(-int)} {
+        set year_pos 2
+        set month_pos 5
+        set day_pos 8
+    } else {
+        set month_pos 0
+        set day_pos 3
+        set year_pos 8
+    }
+
+    switch $field {
+        "month" {
+            $itk_component(date) icursor $month_pos
+        }
+        "day" {
+            $itk_component(date) icursor $day_pos
+        }
+        "year" {
+            $itk_component(date) icursor $year_pos
+        }
+        default {
+            error "bad field: \"$field\", must be month, day or year"
+        }
+    }
+}
+
+# ------------------------------------------------------------------
+# PROTECTED METHOD: _moveField
+#
+# Internal method for moving the field forward or backward by one.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Datefield::_moveField {direction} {
+
+    set index [lsearch $_fields $_cfield]
+
+    if {$direction == "forward"} {
+        set newIndex [expr {$index + 1}]
+    } else {
+        set newIndex [expr {$index - 1}]
+    }
+
+    if {$newIndex == [llength $_fields]} {
+        set newIndex 0
+    }
+    if {$newIndex < 0} {
+        set newIndex [expr {[llength $_fields] - 1}]
+    }
+
+    _setField [lindex $_fields $newIndex]
+
+    return
+}
+
+# ------------------------------------------------------------------
+# PROTECTED METHOD: _whichField
+#
+# Internal method which returns the current field that the cursor
+# is currently within.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Datefield::_whichField {} {
+    set icursor [$itk_component(date) index insert]
+
+    if {$itk_option(-int)} {
+        switch $icursor {
+            0 - 1 - 2 - 3 {
+                set _cfield "year"
+            }
+            5 - 6 {
+                set _cfield "month"
+            }
+            8 - 9 {
+                set _cfield "day"
+            }
+        }
+    } else {
+        switch $icursor {
+            0 - 1 {
+            set _cfield "month"
+            }
+            3 - 4 {
+            set _cfield "day"
+            }
+            6 - 7 - 8 - 9 {
+            set _cfield "year"
+            }
+        }
+    }
+}
+
+# ------------------------------------------------------------------
+# PROTECTED METHOD: _forward
+#
+# Internal method which moves the cursor forward by one character
+# jumping over the slashes and wrapping.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Datefield::_forward {} {
+    set icursor [$itk_component(date) index insert]
+
+    if {$itk_option(-int)} {
+        switch $icursor {
+            3 {
+                _setField month
+            }
+            6 {
+            _setField day
+            }
+            9 - 10 {
+            _setField year
+            }
+            default {
+            $itk_component(date) icursor [expr {$icursor + 1}]
+            }
+        }
+    } else {
+        switch $icursor {
+            1 {
+            _setField day
+            }
+            4 {
+            _setField year
+            }
+            9 - 10 {
+            _setField month
+            }
+            default {
+            $itk_component(date) icursor [expr {$icursor + 1}]
+            }
+        }
+    }
+}
+
+# ------------------------------------------------------------------
+# PROTECTED METHOD: _backward
+#
+# Internal method which moves the cursor backward by one character
+# jumping over the slashes and wrapping.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Datefield::_backward {} {
+    set icursor [$itk_component(date) index insert]
+    if {$itk_option(-int)} {
+        switch $icursor {
+            8 {
+            _setField month
+            }
+            5 {
+            _setField year
+            }
+            0 {
+            _setField day
+            }
+            default {
+            $itk_component(date) icursor [expr {$icursor -1}]
+            }
+        }
+    } else {
+        switch $icursor {
+            6 {
+                _setField day
+            }
+            3 {
+                _setField month
+            }
+            0 {
+                _setField year
+            }
+            default {
+                $itk_component(date) icursor [expr {$icursor -1}]
+            }
+        }
+    }
+}
+
+# ------------------------------------------------------------------
+# PROTECTED METHOD: _lastDay month year
+#
+# Internal method which determines the last day of the month for
+# the given month and year.  We start at 28 and go forward till
+# we fail.  Crude but effective.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Datefield::_lastDay {month year} {
+    set lastone 28
+
+    for {set lastone 28} {$lastone < 32} {incr lastone} {
+        set nextone [expr $lastone + 1]
+        if {[catch {clock scan $month/$nextone/$year}] != 0} {
+            return $lastone
+        }
+    }
+}

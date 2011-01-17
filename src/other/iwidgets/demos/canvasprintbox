@@ -1,0 +1,22 @@
+# ----------------------------------------------------------------------
+#  DEMO: canvasprintbox in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+option add *textBackground seashell
+
+#
+# Make a canvas for the main application:
+#
+canvas .c -width 200 -height 200 -background white
+pack .c
+
+.c create rectangle 30 30 150 150 -fill blue
+.c create oval 70 70 190 190 -fill red
+.c create polygon 60 50 110 180 10 180 -fill green
+.c create text 100 5 -anchor n -text "Example Drawing"
+
+iwidgets::canvasprintbox .pcb -printcmd "lpr" -pagesize "A4"
+
+.pcb setcanvas .c
+

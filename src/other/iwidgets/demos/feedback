@@ -1,0 +1,18 @@
+# ----------------------------------------------------------------------
+#  DEMO: feedback in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+. configure -background white
+
+iwidgets::feedback .fb -labeltext "Status                    " -steps 22
+pack .fb -padx 4 -pady 4
+
+button .go -text "Go" -command {
+    .fb reset
+    for {set i 0} {$i < 22} {incr i} {
+        .fb step
+        after 100
+    }
+}
+pack .go -padx 4 -pady 4

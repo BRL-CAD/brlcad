@@ -1,0 +1,284 @@
+'\"
+'\" Copyright (c) 1995 DSC Technologies Corporation
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\"
+'\" @(#) scrolledtext.n 1.21 94/12/17 16:04:44
+'\" 
+.so man.macros
+.HS iwidgets::scrolledtext iwid
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+iwidgets::scrolledtext \- Create and manipulate a scrolled text widget
+.SH SYNOPSIS
+\fBiwidgets::scrolledtext\fI \fIpathName \fR?\fIoptions\fR?
+.SH "INHERITANCE"
+itk::Widget <- iwidgets::Labeledwidget <- iwidgets::Scrolledwidget <- iwidgets::Scrolledtext
+.SH "STANDARD OPTIONS"
+.LP
+.nf
+.ta 4c 8c 12c
+\fBactiveBackground\fR	\fBbackground\fR	\fBborderWidth\fR	\fBcursor\fR
+\fBexportSelection\fR		\fBforeground\fR	\fBhighlightColor\fR
+\fBhighlightThickness\fR	\fBinsertBackground\fR
+\fBinsertBorderWidth\fR	\fBinsertOffTime\fR	\fBinsertOnTime\fR
+\fBinsertWidth\fR		\fBpadX\fR	\fBpadY\fR
+\fBrelief\fR		\fBselectBackground\fR
+\fBselectBorderWidth\fR	\fBselectForeground\fR
+\fBsetGrid\fR 
+.fi
+.LP
+See the "options" manual entry for details on the standard options.
+.SH "ASSOCIATED OPTIONS"
+.LP
+.nf
+.ta 4c 8c 12c
+\fBactiveRelief\fR	\fBelementBorderWidth\fR	\fBjump\fR	\fBtroughColor\fR
+.fi
+.LP
+See the "scrollbar" widget manual entry for details on the above
+associated options.
+.LP
+.nf
+.ta 4c 8c 12c
+\fBspacing1\fR	\fBspacing2\fR	\fBspacing3\fR	\fBstate\fR
+\fBtabs\fR	\fBwrap\fR
+.fi
+.LP
+See the "text" widget manual entry for details on the above
+associated options.
+.SH "INHERITED OPTIONS"
+.LP
+.nf
+.ta 4c 8c 12c
+\fBdisabledForeground\fR	\fBlabelBitmap\fR	\fBlabelFont\fR	\fBlabelImage\fR
+\fBlabelMargin\fR	\fBlabelPos\fR	\fBlabelText\fR	\fBlabelVariable\fR
+\fBstate\fR	\fBsticky\fR
+.fi
+.LP
+See the "labeledwidget" class manual entry for details on the inherited options.
+.SH "WIDGET-SPECIFIC OPTIONS"
+.LP
+.nf
+Name:	\fBheight\fR
+Class:	\fBHeight\fR
+Command-Line Switch:	\fB-height\fR
+.fi
+.IP
+Specifies the height of the scrolled text as an entire unit.
+The value may be specified in any of the forms acceptable to 
+\fBTk_GetPixels\fR.  Any additional space needed to display the other
+components such as labels, margins, and scrollbars force the text
+to be compressed.  A value of zero along with the same value for 
+the width causes the value given for the visibleitems option 
+to be applied which administers geometry constraints in a different
+manner.  The default height is zero.
+.LP
+.nf
+Name:	\fBhscrollMode\fR
+Class:	\fBScrollMode\fR
+Command-Line Switch:	\fB-hscrollmode\fR
+.fi
+.IP
+Specifies the the display mode to be used for the horizontal
+scrollbar: \fBstatic, dynamic,\fR or \fBnone\fR.  In static mode, the 
+scroll bar is displayed at all times.  Dynamic mode displays the
+scroll bar as required, and none disables the scroll bar display.  The 
+default is static.
+.LP
+.nf
+Name:	\fBsbWidth\fR
+Class:	\fBWidth\fR
+Command-Line Switch:	\fB-sbwidth\fR
+.fi
+.IP
+Specifies the width of the scrollbar in any of the forms
+acceptable to \fBTk_GetPixels\fR.  
+.LP
+.nf
+Name:	\fBscrollMargin\fR
+Class:	\fBMargin\fR
+Command-Line Switch:	\fB-scrollmargin\fR
+.fi
+.IP
+Specifies the distance between the text area and scrollbar in any of the forms
+acceptable to \fBTk_GetPixels\fR.  The default is 3 pixels.
+.LP
+.nf
+Name:	\fBtextBackground\fR
+Class:	\fBBackground\fR
+Command-Line Switch:	\fB-textbackground\fR
+.fi
+.IP
+Specifies the background color for the text area in any of the forms
+acceptable to \fBTk_GetColor\fR.
+.LP
+.nf
+Name:	\fBtextFont\fR
+Class:	\fBFont\fR
+Command-Line Switch:	\fB-textfont\fR
+.fi
+.IP
+Specifies the font to be used in the scrolled text area.
+.LP
+.nf
+Name:	\fBvisibleitems\fR
+Class:	\fBVisibleItems\fR
+Command-Line Switch:	\fB-visibleitems\fR
+.fi
+.IP
+Specifies the widthxheight in characters and lines for the text.
+This option is only administered if the width and height options
+are both set to zero, otherwise they take precedence.  The default value
+is 80x24.  With the visibleitems option engaged, geometry constraints 
+are maintained only on the text.  The size of the other components such as 
+labels, margins, and scroll bars, are additive and independent, 
+effecting the overall size of the scrolled text.  In contrast,
+should the width and height options have non zero values, they
+are applied to the scrolled text as a whole.  The text 
+is compressed or expanded to maintain the geometry constraints.
+.LP
+.nf
+Name:	\fBvscrollMode\fR
+Class:	\fBScrollMode\fR
+Command-Line Switch:	\fB-vscrollmode\fR
+.fi
+.IP
+Specifies the the display mode to be used for the vertical
+scrollbar: \fBstatic, dynamic,\fR or \fBnone\fR.  In static mode, the 
+scroll bar is displayed at all times.  Dynamic mode displays the 
+scroll bar as required, and none disables the scroll bar display.  The 
+default is static.
+.LP
+.nf
+Name:	\fBwidth\fR
+Class:	\fBWidth\fR
+Command-Line Switch:	\fB-width\fR
+.fi
+.IP
+Specifies the width of the scrolled text as an entire unit.
+The value may be specified in any of the forms acceptable to 
+\fBTk_GetPixels\fR.  Any additional space needed to display the other
+components such as labels, margins, and scrollbars force the text
+to be compressed.  A value of zero along with the same value for 
+the height causes the value given for the visibleitems option 
+to be applied which administers geometry constraints in a different
+manner.  The default width is zero.
+.LP
+.BE
+
+.SH DESCRIPTION
+.PP
+The \fBiwidgets::scrolledtext\fR command creates 
+a scrolled text widget with additional options to manage
+the scrollbars.  This includes options to control the method
+in which the scrollbars are displayed, i.e. statically or  dynamically.
+Options also exist for adding a label to the scrolled text area and
+controlling its position.  Import/export of methods are provided for 
+file I/O.
+
+.SH "METHODS"
+.PP
+The \fBiwidgets::scrolledtext\fR command creates a new Tcl command whose
+name is \fIpathName\fR.  This
+command may be used to invoke various
+operations on the widget.  It has the following general form:
+.DS C
+\fIpathName option \fR?\fIarg arg ...\fR?
+.DE
+\fIOption\fR and the \fIarg\fRs
+determine the exact behavior of the command.  The following
+commands are possible for scrolledtext widgets:
+.SH "ASSOCIATED METHODS"
+.LP
+.nf
+.ta 4c 8c 12c
+\fBbbox\fR	\fBcompare\fR	\fBdebug\fR	\fBdelete\fR	
+\fBdlineinfo\fR	\fBget\fR	\fBimage\fR	\fBindex\fR
+\fBinsert\fR	\fBmark\fR	\fBscan\fR	\fBsearch\fR
+\fBsee\fR	\fBtag\fR	\fBwindow\fR	\fBxview\fR
+\fByview\fR
+.fi
+.LP
+See the "text" manual entry for details on the standard methods.
+
+.SH "WIDGET-SPECIFIC METHODS"
+.TP
+\fIpathName \fBcget\fR \fIoption\fR
+Returns the current value of the configuration option given
+by \fIoption\fR.
+\fIOption\fR may have any of the values accepted by the \fBiwidgets::scrolledtext\fR
+command.
+.TP
+\fIpathName \fBchildsite\fR
+Returns the child site widget path name.
+.TP
+\fIpathName \fBclear\fR
+Clear the text area of all characters.
+.TP
+\fIpathName\fR \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
+Query or modify the configuration options of the widget.
+If no \fIoption\fR is specified, returns a list describing all of
+the available options for \fIpathName\fR (see \fBTk_ConfigureInfo\fR for
+information on the format of this list).  If \fIoption\fR is specified
+with no \fIvalue\fR, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no \fIoption\fR is specified).  If
+one or more \fIoption\-value\fR pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+\fIOption\fR may have any of the values accepted by the \fBiwidgets::scrolledtext\fR
+command.
+.TP
+\fIpathName \fBimport\fR \fIfilename\fR ?\fIindex\fR?
+Load the text from a file into the text area at the \fIindex\fR.  The 
+\fIfilename\fR must exist.  
+.TP
+\fIpathName \fBexport\fR \fIfilename\fR
+Write text to a file.  If \fIfilename\fR exists then contents are 
+replaced with text widget contents.
+
+.SH "COMPONENTS"
+.LP
+.nf
+Name:	\fBtext\fR
+Class:	\fBText\fR
+.fi
+.IP
+The text component is the text widget.  See the "text" widget 
+manual entry for details on the text component item.
+.LP
+.nf
+Name:	\fBhorizsb\fR
+Class:	\fBScrollbar\fR
+.fi
+.IP
+The horizsb component is the horizontal scroll bar.  See the "scrollbar" 
+widget manual entry for details on the horizsb component item.
+.LP
+.nf
+Name:	\fBvertsb\fR
+Class:	\fBScrollbar\fR
+.fi
+.IP
+The vertsb component is the vertical scroll bar.  See the "scrollbar" widget 
+manual entry for details on the vertsb component item.
+.fi
+
+.SH EXAMPLE
+.DS
+ package require Iwidgets 4.0
+ option add *textBackground white
+
+ iwidgets::scrolledtext .st -hscrollmode dynamic -labeltext "Password File"
+
+ pack .st -padx 10 -pady 10 -fill both -expand yes
+
+ .st import /etc/passwd
+.DE
+.SH AUTHOR
+Mark L. Ulferts
+.SH KEYWORDS
+scrolledtext, text, widget

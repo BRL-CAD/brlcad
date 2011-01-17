@@ -1,0 +1,199 @@
+#
+# Promptdialog
+# ----------------------------------------------------------------------
+# Implements a prompt dialog similar to the OSF/Motif standard prompt
+# dialog composite widget.  The Promptdialog is derived from the 
+# Dialog class and is composed of a EntryField with methods to
+# manipulate the dialog buttons.
+# 
+# ----------------------------------------------------------------------
+#  AUTHOR: Mark L. Ulferts              EMAIL: mulferts@austin.dsccc.com
+#
+#  @(#) $Id$
+# ----------------------------------------------------------------------
+#            Copyright (c) 1995 DSC Technologies Corporation
+# ======================================================================
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
+# software without specific, written prior permission.
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
+# ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
+# INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
+# WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
+# SOFTWARE.
+# ======================================================================
+
+#
+# Usual options.
+#
+itk::usual Promptdialog {
+    keep -background -borderwidth -cursor -foreground -highlightcolor \
+	 -highlightthickness -insertbackground -insertborderwidth \
+	 -insertofftime -insertontime -insertwidth -labelfont -modality \
+	 -selectbackground -selectborderwidth -selectforeground \
+	 -textbackground -textfont
+}
+
+# ------------------------------------------------------------------
+#                            PROMPTDIALOG
+# ------------------------------------------------------------------
+itcl::class iwidgets::Promptdialog {
+    inherit iwidgets::Dialog
+
+    constructor {args} {}
+
+    public method get {} 
+    public method clear {} 
+    public method insert {args} 
+    public method delete {args} 
+    public method icursor {args} 
+    public method index {args} 
+    public method scan {args} 
+    public method selection {args} 
+    method xview {args} 
+}
+
+#
+# Provide a lowercased access method for the Dialogshell class.
+# 
+proc ::iwidgets::promptdialog {pathName args} {
+    uplevel ::iwidgets::Promptdialog $pathName $args
+}
+
+#
+# Use option database to override default resources of base classes.
+#
+option add *Promptdialog.labelText Selection widgetDefault
+option add *Promptdialog.labelPos nw widgetDefault
+option add *Promptdialog.title "Prompt Dialog" widgetDefault
+option add *Promptdialog.master "." widgetDefault
+
+# ------------------------------------------------------------------
+#                        CONSTRUCTOR
+# ------------------------------------------------------------------
+itcl::body iwidgets::Promptdialog::constructor {args} {
+    #
+    # Set the borderwidth to zero.
+    #
+    component hull configure -borderwidth 0
+    
+    # 
+    # Create an entry field widget.
+    #
+    itk_component add prompt {
+	iwidgets::Entryfield $itk_interior.prompt -command [itcl::code $this invoke]
+    } {
+	usual
+
+	keep -exportselection -invalid -labelpos -labeltext -relief \
+	    -show -textbackground -textfont -validate 
+    }
+    
+    pack $itk_component(prompt) -fill x -expand yes
+    set itk_interior [childsite]
+    
+    hide Help
+
+    #
+    # Initialize the widget based on the command line options.
+    #
+    eval itk_initialize $args
+}   
+
+# ------------------------------------------------------------------
+#                            METHODS
+# ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
+# METHOD: get
+#
+# Thinwrapped method of entry field class.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Promptdialog::get {} {
+    return [$itk_component(prompt) get]
+}
+
+# ------------------------------------------------------------------
+# METHOD: clear 
+#
+# Thinwrapped method of entry field class.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Promptdialog::clear {} {
+    eval $itk_component(prompt) clear
+}
+
+# ------------------------------------------------------------------
+# METHOD: insert args
+#
+# Thinwrapped method of entry field class.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Promptdialog::insert {args} {
+    eval $itk_component(prompt) insert $args
+}
+
+# ------------------------------------------------------------------
+# METHOD: delete first ?last?
+#
+# Thinwrapped method of entry field class.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Promptdialog::delete {args} {
+    eval $itk_component(prompt) delete $args
+}
+
+# ------------------------------------------------------------------
+# METHOD: icursor
+#
+# Thinwrapped method of entry field class.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Promptdialog::icursor {args} {
+    eval $itk_component(prompt) icursor $args
+}
+
+# ------------------------------------------------------------------
+# METHOD: index
+#
+# Thinwrapped method of entry field class.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Promptdialog::index {args} {
+    return [eval $itk_component(prompt) index $args]
+}
+
+# ------------------------------------------------------------------
+# METHOD: scan option args
+#
+# Thinwrapped method of entry field class.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Promptdialog::scan {args} {
+    eval $itk_component(prompt) scan $args
+}
+
+# ------------------------------------------------------------------
+# METHOD: selection args
+#
+# Thinwrapped method of entry field class.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Promptdialog::selection {args} {
+    eval $itk_component(prompt) selection $args
+}
+
+# ------------------------------------------------------------------
+# METHOD: xview args
+#
+# Thinwrapped method of entry field class.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Promptdialog::xview {args} {
+    eval $itk_component(prompt) xview $args
+}
+
+

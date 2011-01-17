@@ -1,0 +1,173 @@
+# This file is a Tcl script to test out [incr Widgets] Spinner class.
+# It is organized in the standard fashion for Tcl tests with the following
+# notation for test case labels:
+#
+#   1.x - Construction/Destruction tests
+#   2.x - Configuration option tests
+#   3.x - Method tests
+#
+# Copyright (c) 1995 DSC Technologies Corporation
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# @(#) $Id$
+
+package require tcltest
+namespace import -force ::tcltest::*
+
+if [catch {package require Iwidgets 4.0}] {
+  # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
+  # env var is initialized in the Makefile when doing a 'make test'.
+  # If sourcing this file independently, this variable must be set manually.
+  if ![info exists env(IWIDGETS_LIBRARY)] {
+    error "Unable to locate Iwidgets package.  Set your IWIDGETS_LIBRARY\
+      environment\nvariable to the directory that contains iwidgets.tcl"
+  }
+  lappend auto_path $env(IWIDGETS_LIBRARY)
+  package require Iwidgets 4.0
+}
+
+if {[string compare test [info procs test]] == 1} {
+    source defs
+}
+wm geometry . {}
+raise .
+
+set c 1
+set o 1
+set m 1
+
+#
+# Initial construction test
+#
+test Spinner-1.$c {Spinner construction} {
+    iwidgets::Spinner .sp
+    pack .sp -padx 10 -pady 10 -fill both -expand yes
+    update 
+} {}
+
+incr c
+
+#
+# Option tests which are successful.
+#
+test Spinner-2.$o {configuration option} {
+    llength [.sp configure]
+} {45}
+
+incr o
+
+foreach test {
+    {-background #d9d9d9 #d9d9d9} 
+    {-foreground blue blue}
+    {-borderwidth 4 4} 
+    {-childsitepos e e} 
+    {-childsitepos s s} 
+    {-childsitepos w w} 
+    {-childsitepos n n} 
+    {-childsitepos e e} 
+    {-borderwidth 2 2} 
+    {-cursor gumby gumby} 
+    {-decrement {.sp insert end Down} {.sp insert end Down}}
+    {-exportselection 0 0} 
+    {-fixed 15 15} 
+    {-foreground Black Black} 
+    {-increment {.sp insert end Up} {.sp insert end Up}}
+    {-insertbackground Blue Blue} 
+    {-insertbackground Black Black} 
+    {-insertborderwidth 2 2} 
+    {-insertofftime 200 200} 
+    {-insertontime 500 500} 
+    {-insertwidth 3 3} 
+    {-labelfont 6x13 6x13} 
+    {-labelmargin 5 5} 
+    {-labeltext Label Label} 
+    {-labelpos w w} 
+    {-labelpos nw nw} 
+    {-labelpos n n} 
+    {-labelpos ne ne} 
+    {-labelpos e e} 
+    {-labelpos se se} 
+    {-labelpos s s} 
+    {-labelpos sw sw} 
+    {-arroworient horizontal horizontal} 
+    {-relief raised raised} 
+    {-selectbackground #c3c3c3 #c3c3c3} 
+    {-selectborderwidth 2 2} 
+    {-selectforeground Black Black} 
+    {-state disabled disabled} 
+    {-state normal normal} 
+    {-sticky w w}
+    {-sticky nw nw}
+    {-sticky n n}
+    {-sticky ne ne}
+    {-sticky e e}
+    {-sticky se se}
+    {-sticky s s}
+    {-sticky sw sw}
+    {-sticky news news}
+    {-textfont 6x13 6x13} 
+    {-validate numeric {::iwidgets::Entryfield::numeric %c}}
+    {-repeatdelay 400 400}
+    {-repeatdelay -100 0}
+    {-repeatinterval 200 200}
+    {-repeatinterval -100 0}
+    {-width 30 30}} {
+	set option [lindex $test 0]
+	test Spinner-2.$o "configuration options, $option" {
+	    .sp configure $option [lindex $test 1]
+	    lindex [.sp configure $option] 4
+	} [lindex $test 2]
+	update 
+	incr o
+}
+
+#
+# Method tests which are successful.
+#
+foreach test {
+    {{.sp up} {}}
+    {{.sp down} {}}} {
+	set method [lindex [lindex $test 0] 1]
+	test Spinner-3.$m "object methods, $method" {
+	    list [catch {eval [lindex $test 0]} msg] $msg
+	} [list 0 [lindex $test 1]]
+	update 
+	incr m
+}
+
+#
+# Conclusion of constrcution/destruction tests
+#
+test Spinner-1.$c {Spinner destruction} {
+    destroy .sp
+    update 
+} {}
+
+incr c
+
+test Spinner-1.$c {Spinner construction} {
+    iwidgets::spinner .sp 
+    pack .sp -padx 10 -pady 10 -fill both -expand yes
+    update 
+} {}
+
+incr c
+
+test Spinner-1.$c {Spinner destruction} {
+    destroy .sp
+    update 
+} {}
+
+incr c
+
+test Spinner-1.$c {Spinner destruction} {
+    iwidgets::spinner .sp
+    pack .sp
+    destroy .sp
+    update 
+} {}
+
+::tcltest::cleanupTests
+exit

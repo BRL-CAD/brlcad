@@ -1,0 +1,17 @@
+# ----------------------------------------------------------------------
+#  DEMO: pushbutton in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+. configure -background white
+
+iwidgets::pushbutton .pb -text "Push Me" -defaultring yes -command {
+    puts "Hello, World!"
+}
+pack .pb -padx 4 -pady 4
+
+checkbutton .default -text "Default ring" -variable defring \
+    -command {.pb configure -defaultring $defring}
+pack .default -padx 4 -pady 4
+
+.default invoke

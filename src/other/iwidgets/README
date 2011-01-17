@@ -1,0 +1,212 @@
+------------------------------------------------------------------------------
+                    [incr Widgets] - version 4.0.2
+------------------------------------------------------------------------------
+Please send general comments, suggestions, and questions to chad_smith@adc.com
+or itclguy@yahoo.com.  Much of this file was written by Mark Ulferts, the
+original [incr Widgets] guy, several years ago when the Iwidgets were first
+released.  Chad has assumed responsibilities for updates and maintenance.
+
+==============================================================================
+           Copyright (c) 1995   DSC Technologies Corporation
+==============================================================================
+ This software is copyrighted by DSC Technologies and private individual 
+ contributors.  The copyright holder is specifically listed in the header 
+ of each file.  The following terms apply to all files associated with the
+ software unless explicitly disclaimed in individual files by private
+ contributors.
+  
+ Permission to use, copy, modify, distribute and license this software and 
+ its documentation for any purpose, and without fee or written agreement 
+ with DSC, is hereby granted, provided that the above copyright notice 
+ appears in all copies and that both the copyright notice and warranty 
+ disclaimer below appear in supporting documentation, and that the names of
+ DSC Technologies Corporation or DSC Communications Corporation not be used 
+ in advertising or publicity pertaining to the software without specific, 
+ written prior permission.
+  
+ DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-INFRINGEMENT.
+ THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE AUTHORS AND 
+ DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL DSC BE LIABLE FOR ANY
+ SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
+ RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
+ CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION, ARISING OUT OF OR IN
+ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+  
+ RESTRICTED RIGHTS: Use, duplication or disclosure by the government
+ is subject to the restrictions as set forth in subparagraph (c) (1) (ii)
+ of the Rights in Technical Data and Computer Software Clause as DFARS
+ 252.227-7013 and FAR 52.227-19.
+==============================================================================
+
+ OVERVIEW
+------------------------------------------------------------------------------
+ - Introduction
+ - Distribution
+ - Web site
+ - Getting started
+ - Contributions
+ - Acknowledgements
+------------------------------------------------------------------------------
+
+
+ Introduction
+------------------------------------------------------------------------------
+ [incr Widgets] is an object-oriented mega-widget set which extends 
+ Tcl/Tk and is based on [incr Tcl] and [incr Tk].  This set of mega-widgets
+ delivers many new, general purpose widgets like option menus, comboboxes, 
+ selection boxes, and various dialogs whose couterparts are found in Motif 
+ and Windows. Since [incr Widgets] is based on the [incr Tk] extension, the 
+ Tk framework of configuration options, widget commands, and default bindings
+ is maintained.  In other words, each [incr Widgets] mega-widget seamlessly 
+ blends with the standard Tk widgets. They look, act and feel like Tk 
+ widgets. In addition, all [incr Widgets] mega-widgets are object oriented and 
+ may themselves be extended, using either inheritance or composition.
+
+ [incr Widgets] offers a strong object-oriented foundation which addresses 
+ the need for a flexible and extensible mega-widget set. Its usage replaces 
+ common widget combinations with higher level abstractions, simplifying code,
+ reducing errors, increasing readability, adding productivity, and promoting 
+ a singular look-and-feel.  The ability to extend [incr Widgets] enables 
+ developers to create new mega-widgets based on previous work.
+
+ In short, [incr Widgets] is a library of reusable mega-widgets that can 
+ be easily extended using composition or inheritance, allowing quicker 
+ development of large scale applications. Usage drastically reduces 
+ development time. New dialogs can be created in hours. Whole applications 
+ in a few days. Reuse becomes a reality. Many projects are benefitting frm
+ the intergration of this mega-widget set into their development strategy. 
+ [incr Widgets] is an [incr Tcl] and [incr Tk] success story. Good products 
+ come from good foundations.
+
+
+ Distribution
+------------------------------------------------------------------------------
+ The [incr Widgets] distribution may be downloaded at SourceForge:
+ www.sourceforge.net/projects/incrtcl.  The current distribution is
+ version 4.0.2.
+
+
+ Web site
+------------------------------------------------------------------------------
+ For the most current news regarding [incr Widgets] please consult the web
+ site - http://incrtcl.sourceforge.net/iwidgets.  Many thanks to Brett Schwarz
+ who has done an incredible job overhauling this site.  Take a look!
+  
+
+ Getting started
+------------------------------------------------------------------------------
+ The "doc" directory contains man pages and a technical paper. The man
+ pages are installed under the man directory off your --prefix, and as of
+ version 4.0.1 are prepended with the text "iwidgets_" to easily differentiate
+ [incr Widgets] man pages from those of other extensions.
+
+   doc/iwidgets.ps ... Updated paper presented at Tcl Workshop 95.
+
+   doc/*.n ........... Man pages
+
+ The "demos" directory contains demo scripts for each mega-widget as
+ well as html versions of all the [incr Widgets] man pages.  The
+ demos are also installed under the lib directory off your --prefix.
+
+   demos/catalog ..... Comprehensive demo package which illustrates
+                       [incr Widgets] usage additionally displaying the 
+                       source.
+
+   demos/html    ..... HTML version of the [incr Widgets] man pages.
+
+ The "tests" directory contains a set of test scripts for [incr Widgets].
+ They also make for a great demo of the flexiblity of the mega-widgets.
+
+
+ Installation
+------------------------------------------------------------------------------
+  NOTE: Having the itcl distribution is a prerequsite to using iwidgets.
+  Thus, if you don't have itcl you need to visit Source Forge to download
+  and install it first.  Once you have downloaded and installed [incr Tcl]
+  and [incr Tk], you can proceed with [incr Widgets] installation as follows:
+
+  1)  Copy the iwidgets4.0.2.tar.gz file to your toplevel [incr Tcl]
+      directory.  For example, if you have the itcl3.2.1 distribution in
+      a directory named /usr/local/tcl/itcl3.2.1, then you should copy
+      the iwidgets file to this directory.
+
+      Note, if you don't copy the iwidgets archive to this directory,
+      then you will need to specify the --with-itcl flag when you run
+      the configure script.
+
+  2)  Untar/unzip the archive:
+
+	gunzip -c iwidgets4.0.2.tar.gz |tar xvf -
+
+  3)  Run the configuration script:
+
+        cd iwidgets4.0.0
+        ./configure
+
+      By default, the configuration script will set things up to be
+      installed in "/usr/local".  You can change this by specifying a
+      different "prefix" in the "configure" command.  You'll want to
+      use the same value you used for the prefix in the configuration
+      of your [incr Tcl/Tk] distribution.
+
+        ./configure --prefix=/your/install/path
+
+      The "configure" script generates a Makefile from the Makefile.in
+      template.
+
+      Also, as mentioned eariler, you may need to tell the [incr Widgets]
+      where the [incr Tcl] source is located.  For example, if your toplevel
+      [incr Tcl] directory is located in /opt/tools/tcl/itcl3.2.1 and you
+      are building the [incr Widgets] in a directory other than this, then
+      you will need to use the following:
+
+	./configure --prefix=/your/install/path \
+	  --with-itcl=/opt/tools/tcl/itcl3.2.1
+
+  4)  Run the test suite:
+
+        make test
+
+  7)  Install the [incr Widgets] man pages, demos, and script files.
+
+        make install
+
+
+ Acknowledgements
+------------------------------------------------------------------------------
+ Thanks to Brett Schwarz for a ton of work done on the new [incr Widgets]
+ web site, http://incrtcl.sourceforge.net/iwidgets.
+
+ Thanks to the original develment team, comprised of Mark Ulferts, Sue 
+ Yockey, Bret Schuhmacher, Alfredo Jahn, John Sigler, and Bill Scott.  Also 
+ thanks to Mark Harrison for his influence, confidence, and ideas.
+
+ Thanks also to the new set of contributors which include John Tucker,
+ Mitch Gorman, John Reekie, Alfredo Jahn, Ken Copeland, Tako Schotanus,
+ Tony Parent and Michael McLennan
+
+ Thanks to Michael McLennan, creator of [incr Tcl] and [incr Tk], for the 
+ beta copies, training, assistance, and his infectious enthusiasm.
+
+ Thanks to DSC Communications for picking up the copyright and supporting
+ the public release of this software.
+
+ Thanks to John P. Davis for creating the [incr Widgets] "Flaming Toaster"
+ logo which can be seen at http://www.tcltk.com/iwidgets
+
+ Thanks to WebNet Technologies for their assistance is designing the [incr
+ Widgets] web site, as well as hosting it.
+
+ Special thanks to my wife Karen for supporting this effort and to our two 
+ girls, Katelyn and Bailey, who occasionally shared the PC with me.  Also
+ thanks to my Discman and its relentless power supply as well as my rock
+ and roll CD collection.  No music, no software.
+
+--
+ ____________________________________________________________________________
+    _/_/   _/_/    _/        _/    _/   Mark L. Ulferts
+   _/ _/ _/ _/    _/        _/    _/    ulferts@swbell.net
+  _/  _/_/ _/    _/        _/    _/     mulferts@austin.dsccc.com 
+ _/   _/  _/ _/ _/_/_/ _/ _/_/_/_/ _/   DSC Communications Corp, Austin Texas

@@ -1,0 +1,217 @@
+'\"
+'\" Copyright (c) 1995 DSC Technologies Corporation
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\"
+'\" @(#) dialogshell.n 1.21 94/12/17 16:04:44
+'\" 
+.so man.macros
+.HS iwidgets::dialogshell iwid
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+iwidgets::dialogshell \- Create and manipulate a dialog shell widget
+.SH SYNOPSIS
+\fBiwidgets::dialogshell\fI \fIpathName \fR?\fIoptions\fR?
+.SH "INHERITANCE"
+itk::Toplevel <- iwidgets::Shell <- iwidgets::Dialogshell
+.SH "STANDARD OPTIONS"
+.LP
+.nf
+.ta 4c 8c 12c
+\fBbackground\fR	\fBcursor\fR	\fBforeground\fR
+.fi
+.LP
+See the "options" manual entry for details on the standard options.
+.SH "INHERITED OPTIONS"
+.LP
+.nf
+.ta 4c 8c 12c
+\fBheight\fR	\fBmaster\fR	\fBmodality\fR	\fBwidth\fR
+.fi
+.LP
+See the "shell" manual entry for details on the above inherited options.
+.LP
+.nf
+.ta 4c 8c 12c
+\fBtitle\fR 
+.fi
+.LP
+See the "Toplevel" manual entry for details on the above inherited options.
+
+.SH "WIDGET-SPECIFIC OPTIONS"
+.LP
+.nf
+Name:	\fBbuttonBoxPadX\fR
+Class:	\fBPad\fR
+Command-Line Switch:	\fB-buttonboxpadx\fR
+.fi
+.IP
+Specifies a non-negative padding distance to leave between the button group and
+the outer edge of the button box in the x direction.  The value may be 
+given in any of the forms accpetable to \fBTk_GetPixels\fR.  The default 
+is 5 pixels.
+.LP
+.nf
+Name:	\fBbuttonBoxPadY\fR
+Class:	\fBPad\fR
+Command-Line Switch:	\fB-buttonboxpady\fR
+.fi
+.IP
+Specifies a non-negative padding distance to leave between the button group and
+the outer edge of the button box in the y direction.  The value may be 
+given in any of the forms accpetable to \fBTk_GetPixels\fR.  The default 
+is 5 pixels.
+.LP
+.nf
+Name:	\fBbuttonBoxPos\fR
+Class:	\fBPosition\fR
+Command-Line Switch:	\fB-buttonboxpos\fR
+.fi
+.IP
+Attaches buttons to the given side of the dialog: \fBn\fR, \fBs\fR, 
+\fBe\fR or \fBw\fR.  The default is s.
+.LP
+.nf
+Name:	\fBpadX\fR
+Class:	\fBPad\fR
+Command-Line Switch:	\fB-padx\fR
+.fi
+.IP
+Specifies a padding distance for the childsite in the X-direction in
+any of the forms acceptable to \fBTk_GetPixels\fR.  The default is 10.
+.LP
+.nf
+Name:	\fBpadY\fR
+Class:	\fBPad\fR
+Command-Line Switch:	\fB-pady\fR
+.fi
+.IP
+Specifies a padding distance for the childsite in the Y-direction in
+any of the forms acceptable to \fBTk_GetPixels\fR.  The default is 10.
+.LP
+.nf
+Name:	\fBseparator\fR
+Class:	\fBSeparator\fR
+Command-Line Switch:	\fB-separator\fR
+.fi
+.IP
+Specifies whether a line is drawn to separate the 
+buttons from the dialog box contents in any of the forms
+acceptable to \fBTcl_GetBoolean\fR.  The default is true.
+.LP
+.nf
+Name:	\fBthickness\fR
+Class:	\fBThickness\fR
+Command-Line Switch:	\fB-thickness\fR
+.fi
+.IP
+Specifies the thickness of the separator in any of the forms acceptable
+to \fBTk_GetPixels\fR.  The default is 3 pixels.
+.BE
+
+.SH DESCRIPTION
+.PP
+The \fBiwidgets::dialogshell\fR command creates a dialog shell which is a top 
+level widget composed of a button box, separator, and child site area.
+The class also has methods to control button construction.
+
+.SH "METHODS"
+.PP
+The \fBiwidgets::dialogshell\fR command create a new Tcl command whose
+name is \fIpathName\fR.  This command may be used to invoke various
+operations on the widget.  It has the following general form:
+.DS C
+\fIpathName option \fR?\fIarg arg ...\fR?
+.DE
+\fIOption\fR and the \fIarg\fRs
+determine the exact behavior of the command.  The following
+commands are possible for dialogshell widgets:
+.SH "INHERITED METHODS"
+.LP
+.nf
+.ta 4c 8c 12c
+\fBactivate\fR	\fBcenter\fR	\fBdeactivate\fR
+.fi
+.LP
+See the "shell" manual entry for details on the above inherited methods.
+.SH "ASSOCIATED METHODS"
+.LP
+.nf
+.ta 4c 8c 12c
+\fBadd\fR	\fBbuttonconfigure\fR	\fBdefault\fR	\fBdelete\fR
+\fBhide\fR	\fBindex\fR	\fBinsert\fR	\fBinvoke\fR
+\fBshow\fR
+.fi
+.LP
+See the "buttonbox" manual entry for details on the associated methods.
+.SH "WIDGET-SPECIFIC METHODS"
+.TP
+\fIpathName \fBcget\fR \fIoption\fR
+Returns the current value of the configuration option given
+by \fIoption\fR.
+\fIOption\fR may have any of the values accepted by the \fBiwidgets::dialogshell\fR
+command.
+.TP
+\fIpathName \fBchildsite\fR
+Returns the pathname of the child site widget.
+.TP
+\fIpathName\fR \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
+Query or modify the configuration options of the widget.
+If no \fIoption\fR is specified, returns a list describing all of
+the available options for \fIpathName\fR (see \fBTk_ConfigureInfo\fR for
+information on the format of this list).  If \fIoption\fR is specified
+with no \fIvalue\fR, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no \fIoption\fR is specified).  If
+one or more \fIoption\-value\fR pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+\fIOption\fR may have any of the values accepted by the \fBiwidgets::dialogshell\fR
+command.
+
+.SH "COMPONENTS"
+.LP
+.nf
+Name:	\fBdschildsite\fR
+Class:	\fBframe\fR
+.fi
+.IP
+The dschildsite component is the user child site for the dialog shell.  See 
+the "frame" widget manual entry for details on the dschildsite component item.
+.LP
+.nf
+Name:	\fBseparator\fR
+Class:	\fBframe\fR
+.fi
+.IP
+The separator component devides the area between the user child site and
+the button box.  See the "frame" widget manual entry for details on the 
+separator component item.
+.LP
+.nf
+Name:	\fBbbox\fR
+Class:	\fBButtonBox\fR
+.fi
+.IP
+The bbox component is the button box containing the buttons for the dialog 
+shell.  See the "ButtonBox" widget manual entry for details on the 
+bbox component item.
+.fi
+
+.SH EXAMPLE
+.DS
+ package require Iwidgets 4.0
+ iwidgets::dialogshell .ds -modality none
+ 
+ .ds add OK -text "OK" 
+ .ds add Cancel -text "Cancel"
+ .ds default OK
+ 
+ .ds activate
+.DE
+.SH AUTHOR
+Mark L. Ulferts
+.SH KEYWORDS
+dialogshell, dialog, shell, widget

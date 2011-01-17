@@ -1,0 +1,217 @@
+<TITLE>buttonbox - Create and manipulate a manager widget for buttons</TITLE>
+<H1>buttonbox - Create and manipulate a manager widget for buttons</H1>
+
+</pre><H2>SYNOPSIS</H2>
+<B>buttonbox<I> <I>pathName </I>?<I>options</I>?
+</pre><H2>INHERITANCE</H2>
+itk::Widget &lt;- buttonbox
+</pre><H2>STANDARD OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>background</B><br>
+</td>
+<td valign=top>
+<B>cursor</B><br>
+</td>
+<td valign=top>
+</td>
+<td valign=top>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/options.n.html"> "options" </A> manual entry for details on the standard options.
+</pre><H2>WIDGET-SPECIFIC OPTIONS</H2>
+<P>
+<pre>
+Name:                   <B>orient</B>
+Class:                  <B>Orient</B>
+Command-Line Switch:	<B>-orient</B>
+</pre>
+<UL>
+Orientation of the button box: <B>horizontal</B> or <B>vertical</B>.  The default
+is horizontal.
+</UL>
+<P>
+<pre>
+Name:                   <B>padX</B>
+Class:                  <B>PadX</B>
+Command-Line Switch:	<B>-padx</B>
+</pre>
+<UL>
+Specifies a non-negative padding distance to leave between the button group and
+the outer edge of the button box in the x direction.  The value may be 
+given in any of the forms acceptable to <B>Tk_GetPixels</B>.  The default 
+is 5 pixels.
+</UL>
+<P>
+<pre>
+Name:                   <B>padY</B>
+Class:                  <B>PadY</B>
+Command-Line Switch:	<B>-pady</B>
+</pre>
+<UL>
+Specifies a non-negative padding distance to leave between the button group and
+the outer edge of the button box in the y direction.  The value may be given 
+in any of the forms acceptable to <B>Tk_GetPixels</B>.  The default is 5 pixels.
+</UL>
+<P>
+</pre><HR>
+
+</pre><H2>DESCRIPTION</H2>
+<P>
+The <B>buttonbox</B> command creates a manager widget for controlling
+buttons.  The button box also supports the display and invocation
+of a default button.  The button box can be configured either horizontally
+or vertically.  
+
+</pre><H2>METHODS</H2>
+<P>
+The <B>buttonbox</B> command creates a new Tcl command whose
+name is <I>pathName</I>.  This
+command may be used to invoke various
+operations on the widget.  It has the following general form:
+<pre>
+<I>pathName option </I>?<I>arg arg ...</I>?
+</pre>
+<I>Option</I> and the <I>arg</I>s
+determine the exact behavior of the command. 
+<P>
+Many of the widget commands for the buttonbox take as one argument an
+indicator of which button of the button box to operate on.  These 
+indicators are called <I>indexes</I> and allow reference and manipulation 
+of buttons regardless of their current map state.  buttonbox indexes 
+may be specified in any of the following forms:
+<DL>
+<DT> <I>number</I>
+</I></B>
+<DD> Specifies the button numerically, where 0 corresponds to the 
+left/top-most button of the button box. 
+</DL>
+<DL>
+<DT> <B>end</B>
+</I></B>
+<DD> Indicates the right/bottom-most button of the button box.
+</DL>
+<DL>
+<DT> <B>default</B>
+</I></B>
+<DD> Indicates the current default button of the button box.  This is the
+button with the default ring displayed.
+</DL>
+<DL>
+<DT> <I>pattern</I>
+</I></B>
+<DD> If the index doesn't satisfy one of the above forms then this
+form is used.  <I>Pattern</I> is pattern-matched against the tag of
+each button in the button box, in order from left/top to right/left,
+until a matching entry is found.  The rules of <B>Tcl_StringMatch</B>
+are used.
+
+</DL>
+</pre><H2>WIDGET-SPECIFIC METHODS</H2>
+<DL>
+<DT> <I>pathName <B>add</B> <I>tag</I> <I>args</I>
+</I></B>
+<DD> Add a button distinguished by <I>tag</I> to the end of the button box.
+If additional arguments are present they specify options to be applied
+to the button.  See <B>PushButton</B> for information on the options
+available.
+</DL>
+<DL>
+<DT> <I>pathName <B>buttonconfigure</B> <I>index</I> ?<I>options</I>?
+</I></B>
+<DD> This command is similar to the <B>configure</B> command, except that
+it applies to the options for an individual button, 
+whereas <B>configure</B> applies to the options for the button box as a whole.
+<I>Options</I> may have any of the values accepted by the <B>PushButton</B>
+command.  If <I>options</I> are specified, options are modified
+as indicated in the command and the command returns an empty string.
+If no <I>options</I> are specified, returns a list describing
+the current options for entry <I>index</I> (see <B>Tk_ConfigureInfo</B> for
+information on the format of this list).
+</DL>
+<DL>
+<DT> <I>pathName <B>cget</B> <I>option</I>
+</I></B>
+<DD> Returns the current value of the configuration option given
+by <I>option</I>.
+<I>Option</I> may have any of the values accepted by the <B>buttonbox</B>
+command.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?
+</I></B>
+<DD> Query or modify the configuration options of the widget.
+If no <I>option</I> is specified, returns a list describing all of
+the available options for <I>pathName</I> (see <B>Tk_ConfigureInfo</B> for
+information on the format of this list).  If <I>option</I> is specified
+with no <I>value</I>, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no <I>option</I> is specified).  If
+one or more <I>option-value</I> pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+<I>Option</I> may have any of the values accepted by the <B>buttonbox</B>
+command.
+</DL>
+<DL>
+<DT> <I>pathName <B>default</B> <I>index</I>
+</I></B>
+<DD> Sets the default button to the button given by <I>index</I>.  This causes
+the default ring to appear arround the specified button.
+</DL>
+<DL>
+<DT> <I>pathName <B>delete</B> <I>index</I>
+</I></B>
+<DD> Deletes the button given by <I>index</I> from the button box.
+</DL>
+<DL>
+<DT> <I>pathName <B>hide</B> <I>index</I>
+</I></B>
+<DD> Hides the button denoted by <I>index</I>.  This doesn't remove the button 
+permanently, just inhibits its display.  
+</DL>
+<DL>
+<DT> <I>pathName <B>index <I>index</I>
+</I></B>
+<DD> Returns the numerical index corresponding to <I>index</I>.
+</DL>
+<DL>
+<DT> <I>pathName <B>insert <I>index</I> <I>tag</I> ?<I>option value option value ...</I>?
+</I></B>
+<DD> Same as the <B>add</B> command except that it inserts the new
+button just before the one given by <I>index</I>, instead of appending
+to the end of the button box.  The <I>option</I>, and <I>value</I>
+arguments have the same interpretation as for the <B>add</B> widget
+command.  
+</DL>
+<DL>
+<DT> <I>pathName <B>invoke</B> <I>?index?</I>
+</I></B>
+<DD> Invoke the command associated with a button.  If no arguments
+are given then the current default button is invoked, otherwise the argument
+is expected to be a button <I>index</I>.
+</DL>
+<DL>
+<DT> <I>pathName <B>show</B> <I>index</I>
+</I></B>
+<DD> Display a previously hidden button denoted by <I>index</I>.
+</DL>
+</pre><H2>EXAMPLE</H2>
+<pre>
+ buttonbox .bb
+
+ .bb add Yes -text Yes -command "puts Yes" 
+ .bb add No -text No -command "puts No"
+ .bb add Maybe -text Maybe -command "puts Maybe"
+ .bb default Yes
+
+ pack .bb -expand yes -fill both
+</pre>
+</pre><H2>AUTHORS</H2>
+Bret A. Schuhmacher
+<P>
+Mark L. Ulferts
+</pre><H2>KEYWORDS</H2>
+buttonbox, pushbutton, button, widget

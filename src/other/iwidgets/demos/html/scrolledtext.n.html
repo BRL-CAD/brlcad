@@ -1,0 +1,367 @@
+<TITLE>scrolledtext - Create and manipulate a scrolled text widget</TITLE>
+<H1>scrolledtext - Create and manipulate a scrolled text widget</H1>
+
+</pre><H2>SYNOPSIS</H2>
+<B>scrolledtext<I> <I>pathName </I>?<I>options</I>?
+</pre><H2>INHERITANCE</H2>
+itk::Widget &lt;- Labeledwidget &lt;- Scrolledwidget &lt;- Scrolledtext
+</pre><H2>STANDARD OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>activeBackground</B><br>
+<B>exportSelection</B><br>
+<B>insertBackground</B><br>
+<B>insertWidth</B><br>
+<B>selectBackground</B><br>
+</td>
+<td valign=top>
+<B>background</B><br>
+<B>foreground</B><br>
+<B>insertBorderWidth</B><br>
+<B>padX</B><br>
+<B>selectBorderWidth</B><br>
+</td>
+<td valign=top>
+<B>borderWidth</B><br>
+<B>highlightColor</B><br>
+<B>insertOffTime</B><br>
+<B>padY</B><br>
+<B>selectForeground</B><br>
+</td>
+<td valign=top>
+<B>cursor</B><br>
+<B>highlightThickness</B><br>
+<B>insertOnTime</B><br>
+<B>relief</B><br>
+<B>setGrid</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/options.n.html"> "options" </A> manual entry for details on the standard options.
+</pre><H2>ASSOCIATED OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>activeRelief</B><br>
+</td>
+<td valign=top>
+<B>elementBorderWidth</B><br>
+</td>
+<td valign=top>
+<B>jump</B><br>
+</td>
+<td valign=top>
+<B>troughColor</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/scrollbar.n.html"> "scrollbar" </A> widget manual entry for details on the above
+associated options.
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>spacing1</B><br>
+<B>tabs</B><br>
+</td>
+<td valign=top>
+<B>spacing2</B><br>
+<B>wrap</B><br>
+</td>
+<td valign=top>
+<B>spacing3</B><br>
+</td>
+<td valign=top>
+<B>state</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/text.n.html"> "text" </A> widget manual entry for details on the above
+associated options.
+</pre><H2>INHERITED OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>disabledForeground</B><br>
+<B>labelMargin</B><br>
+<B>state</B><br>
+</td>
+<td valign=top>
+<B>labelBitmap</B><br>
+<B>labelPos</B><br>
+</td>
+<td valign=top>
+<B>labelFont</B><br>
+<B>labelText</B><br>
+</td>
+<td valign=top>
+<B>labelImage</B><br>
+<B>labelVariable</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="labeledwidget.n.html"> "labeledwidget" </A> class manual entry for details on the inherited options.
+</pre><H2>WIDGET-SPECIFIC OPTIONS</H2>
+<P>
+<pre>
+Name:                   <B>height</B>
+Class:                  <B>Height</B>
+Command-Line Switch:	<B>-height</B>
+</pre>
+<UL>
+Specifies the height of the scrolled text as an entire unit.
+The value may be specified in any of the forms acceptable to 
+<B>Tk_GetPixels</B>.  Any additional space needed to display the other
+components such as labels, margins, and scrollbars force the text
+to be compressed.  A value of zero along with the same value for 
+the width causes the value given for the visibleitems option 
+to be applied which administers geometry constraints in a different
+manner.  The default height is zero.
+</UL>
+<P>
+<pre>
+Name:                   <B>hscrollMode</B>
+Class:                  <B>ScrollMode</B>
+Command-Line Switch:	<B>-hscrollmode</B>
+</pre>
+<UL>
+Specifies the the display mode to be used for the horizontal
+scrollbar: <B>static, dynamic,</B> or <B>none</B>.  In static mode, the 
+scroll bar is displayed at all times.  Dynamic mode displays the
+scroll bar as required, and none disables the scroll bar display.  The 
+default is static.
+</UL>
+<P>
+<pre>
+Name:                   <B>sbWidth</B>
+Class:                  <B>Width</B>
+Command-Line Switch:	<B>-sbwidth</B>
+</pre>
+<UL>
+Specifies the width of the scrollbar in any of the forms
+acceptable to <B>Tk_GetPixels</B>.  
+</UL>
+<P>
+<pre>
+Name:                   <B>scrollMargin</B>
+Class:                  <B>Margin</B>
+Command-Line Switch:	<B>-scrollmargin</B>
+</pre>
+<UL>
+Specifies the distance between the text area and scrollbar in any of the forms
+acceptable to <B>Tk_GetPixels</B>.  The default is 3 pixels.
+</UL>
+<P>
+<pre>
+Name:                   <B>textBackground</B>
+Class:                  <B>Background</B>
+Command-Line Switch:	<B>-textbackground</B>
+</pre>
+<UL>
+Specifies the background color for the text area in any of the forms
+acceptable to <B>Tk_GetColor</B>.
+</UL>
+<P>
+<pre>
+Name:                   <B>textFont</B>
+Class:                  <B>Font</B>
+Command-Line Switch:	<B>-textfont</B>
+</pre>
+<UL>
+Specifies the font to be used in the scrolled text area.
+</UL>
+<P>
+<pre>
+Name:                   <B>visibleitems</B>
+Class:                  <B>VisibleItems</B>
+Command-Line Switch:	<B>-visibleitems</B>
+</pre>
+<UL>
+Specifies the widthxheight in characters and lines for the text.
+This option is only administered if the width and height options
+are both set to zero, otherwise they take precedence.  The default value
+is 80x24.  With the visibleitems option engaged, geometry constraints 
+are maintained only on the text.  The size of the other components such as 
+labels, margins, and scroll bars, are additive and independent, 
+effecting the overall size of the scrolled text.  In contrast,
+should the width and height options have non zero values, they
+are applied to the scrolled text as a whole.  The text 
+is compressed or expanded to maintain the geometry constraints.
+</UL>
+<P>
+<pre>
+Name:                   <B>vscrollMode</B>
+Class:                  <B>ScrollMode</B>
+Command-Line Switch:	<B>-vscrollmode</B>
+</pre>
+<UL>
+Specifies the the display mode to be used for the vertical
+scrollbar: <B>static, dynamic,</B> or <B>none</B>.  In static mode, the 
+scroll bar is displayed at all times.  Dynamic mode displays the 
+scroll bar as required, and none disables the scroll bar display.  The 
+default is static.
+</UL>
+<P>
+<pre>
+Name:                   <B>width</B>
+Class:                  <B>Width</B>
+Command-Line Switch:	<B>-width</B>
+</pre>
+<UL>
+Specifies the width of the scrolled text as an entire unit.
+The value may be specified in any of the forms acceptable to 
+<B>Tk_GetPixels</B>.  Any additional space needed to display the other
+components such as labels, margins, and scrollbars force the text
+to be compressed.  A value of zero along with the same value for 
+the height causes the value given for the visibleitems option 
+to be applied which administers geometry constraints in a different
+manner.  The default width is zero.
+</UL>
+<P>
+</pre><HR>
+
+</pre><H2>DESCRIPTION</H2>
+<P>
+The <B>scrolledtext</B> command creates 
+a scrolled text widget with additional options to manage
+the scrollbars.  This includes options to control the method
+in which the scrollbars are displayed, i.e. statically or  dynamically.
+Options also exist for adding a label to the scrolled text area and
+controlling its position.  Import/export of methods are provided for 
+file I/O.
+
+</pre><H2>METHODS</H2>
+<P>
+The <B>scrolledtext</B> command creates a new Tcl command whose
+name is <I>pathName</I>.  This
+command may be used to invoke various
+operations on the widget.  It has the following general form:
+<pre>
+<I>pathName option </I>?<I>arg arg ...</I>?
+</pre>
+<I>Option</I> and the <I>arg</I>s
+determine the exact behavior of the command.  The following
+commands are possible for scrolledtext widgets:
+</pre><H2>ASSOCIATED METHODS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>bbox</B><br>
+<B>dlineinfo</B><br>
+<B>mark</B><br>
+<B>tag</B><br>
+</td>
+<td valign=top>
+<B>compare</B><br>
+<B>get</B><br>
+<B>scan</B><br>
+<B>window</B><br>
+</td>
+<td valign=top>
+<B>debug</B><br>
+<B>index</B><br>
+<B>search</B><br>
+<B>xview</B><br>
+</td>
+<td valign=top>
+<B>delete</B><br>
+<B>insert</B><br>
+<B>see</B><br>
+<B>yview</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/text.n.html"> "text" </A> manual entry for details on the standard methods.
+
+</pre><H2>WIDGET-SPECIFIC METHODS</H2>
+<DL>
+<DT> <I>pathName <B>cget</B> <I>option</I>
+</I></B>
+<DD> Returns the current value of the configuration option given
+by <I>option</I>.
+<I>Option</I> may have any of the values accepted by the <B>scrolledtext</B>
+command.
+</DL>
+<DL>
+<DT> <I>pathName <B>childsite</B>
+</I></B>
+<DD> Returns the child site widget path name.
+</DL>
+<DL>
+<DT> <I>pathName <B>clear</B>
+</I></B>
+<DD> Clear the text area of all characters.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?
+</I></B>
+<DD> Query or modify the configuration options of the widget.
+If no <I>option</I> is specified, returns a list describing all of
+the available options for <I>pathName</I> (see <B>Tk_ConfigureInfo</B> for
+information on the format of this list).  If <I>option</I> is specified
+with no <I>value</I>, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no <I>option</I> is specified).  If
+one or more <I>option-value</I> pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+<I>Option</I> may have any of the values accepted by the <B>scrolledtext</B>
+command.
+</DL>
+<DL>
+<DT> <I>pathName <B>import</B> <I>filename</I> ?<I>index</I>?
+</I></B>
+<DD> Load the text from a file into the text area at the <I>index</I>.  The 
+<I>filename</I> must exist.  
+</DL>
+<DL>
+<DT> <I>pathName <B>export</B> <I>filename</I>
+</I></B>
+<DD> Write text to a file.  If <I>filename</I> exists then contents are 
+replaced with text widget contents.
+
+</DL>
+</pre><H2>COMPONENTS</H2>
+<P>
+<pre>
+Name:                   <B>text</B>
+Class:                  <B>Text</B>
+</pre>
+<UL>
+The text component is the text widget.  See the "text" widget 
+manual entry for details on the text component item.
+</UL>
+<P>
+<pre>
+Name:                   <B>horizsb</B>
+Class:                  <B>Scrollbar</B>
+</pre>
+<UL>
+The horizsb component is the horizontal scroll bar.  See the "scrollbar" 
+widget manual entry for details on the horizsb component item.
+</UL>
+<P>
+<pre>
+Name:                   <B>vertsb</B>
+Class:                  <B>Scrollbar</B>
+</pre>
+<UL>
+The vertsb component is the vertical scroll bar.  See the "scrollbar" widget 
+manual entry for details on the vertsb component item.
+</UL>
+</table>
+
+</pre><H2>EXAMPLE</H2>
+<pre>
+ option add *textBackground white
+
+ scrolledtext .st -scrollmode dynamic -labeltext "Password File"
+
+ pack .st -padx 10 -pady 10 -fill both -expand yes
+
+ .st import /etc/passwd
+</pre>
+</pre><H2>AUTHOR</H2>
+Mark L. Ulferts
+</pre><H2>KEYWORDS</H2>
+scrolledtext, text, widget

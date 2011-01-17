@@ -1,0 +1,22 @@
+# ----------------------------------------------------------------------
+#  DEMO: selectiondialog in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+option add *textBackground seashell
+
+iwidgets::selectiondialog .sd -modality application
+.sd configure -selectionlabel "Font:"
+
+.sd insert items end Ariel Courier Helvetica Knarly Lucida \
+    Rumpus Symbol Times "Zapf Dingbats"
+
+button .select -text "Font..." -command {
+    if {[.sd activate]} {
+        puts "selected: [.sd get]"
+    } else {
+        puts "cancelled"
+    }
+}
+pack .select -side left
+

@@ -1,0 +1,23 @@
+# ----------------------------------------------------------------------
+#  DEMO: labeledwidget in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+. configure -background white
+
+iwidgets::labeledwidget .lw -labeltext "Label Text:"
+pack .lw -padx 4 -pady 4
+
+set win [.lw childsite]
+label $win.ex -text "(put your widgets here)" \
+    -background black -foreground white \
+    -width 30 -height 3
+pack $win.ex -expand yes -fill both -padx 4 -pady 4
+
+iwidgets::optionmenu .pos -labeltext "Position:" -command {
+    .lw configure -labelpos [.pos get]
+}
+pack .pos -padx 4 -pady 4
+
+.pos insert end e n ne nw s se sw w
+.pos select w

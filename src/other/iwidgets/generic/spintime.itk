@@ -1,0 +1,527 @@
+# Spintime 
+# ----------------------------------------------------------------------
+# Implements a Time spinner widget.  A time spinner contains three
+# integer spinners:  one for hours, one for minutes and one for
+# seconds.  Options exist to manage to behavior, appearance, and
+# format of each component spinner.
+#
+# ----------------------------------------------------------------------
+#  AUTHOR: Sue Yockey                  EMAIL: yockey@actc.com
+#          Mark L. Ulferts                    mulferts@austin.dsccc.com
+#
+#   @(#) $Id$
+# ----------------------------------------------------------------------
+#            Copyright (c) 1997 DSC Technologies Corporation
+# ======================================================================
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
+# software without specific, written prior permission.
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
+# ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
+# INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
+# WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
+# SOFTWARE.
+# ======================================================================
+
+#
+# Default resources.
+#
+option add *Spintime.hourLabel "Hour" widgetDefault
+option add *Spintime.minuteLabel "Minute" widgetDefault
+option add *Spintime.secondLabel "Second" widgetDefault
+option add *Spintime.hourWidth 3 widgetDefault
+option add *Spintime.minuteWidth 3 widgetDefault
+option add *Spintime.secondWidth 3 widgetDefault
+
+#
+# Usual options.
+#
+itk::usual Spintime {
+    keep -background -cursor -foreground -labelfont -textbackground -textfont
+}
+
+# ------------------------------------------------------------------
+#                            SPINTIME
+# ------------------------------------------------------------------
+itcl::class iwidgets::Spintime {
+    inherit itk::Widget 
+    
+    constructor {args} {}
+    destructor {}
+
+    itk_option define -orient orient Orient vertical 
+    itk_option define -labelpos labelPos Position w 
+    itk_option define -houron hourOn HourOn true 
+    itk_option define -minuteon minuteOn MinuteOn true 
+    itk_option define -secondon secondOn SecondOn true 
+    itk_option define -timemargin timeMargin Margin 1 
+    itk_option define -militaryon militaryOn MilitaryOn true 
+
+    public {
+	method get {{format "-string"}} 
+	method show {{date now}}
+    }
+    
+    protected {
+	method _packTime {{when later}}
+	method _down60 {comp}
+
+	variable _repack {}             ;# Reconfiguration flag.
+	variable _interior
+    }
+}
+
+#
+# Provide a lowercased access method for the Spintime class.
+# 
+proc ::iwidgets::spintime {pathName args} {
+    uplevel ::iwidgets::Spintime $pathName $args
+}
+
+# ------------------------------------------------------------------
+#                        CONSTRUCTOR
+# ------------------------------------------------------------------
+itcl::body iwidgets::Spintime::constructor {args} {
+    set _interior $itk_interior
+    set clicks [clock seconds]
+
+    #
+    # Create Hour Spinner
+    #
+    itk_component add hour {
+	iwidgets::Spinint $itk_interior.hour -fixed 2 -range {0 23} -justify right
+    } {
+	keep -background -cursor -arroworient -foreground \
+		-labelfont -labelmargin -relief -textbackground \
+		-textfont -repeatdelay -repeatinterval
+
+	rename -labeltext -hourlabel hourLabel Text
+	rename -width -hourwidth hourWidth Width
+    }
+    
+    #
+    # Take off the default bindings for selction and motion.
+    #
+    bind [$itk_component(hour) component entry] <1> {break}
+    bind [$itk_component(hour) component entry] <Button1-Motion> {break}
+
+    #
+    # Create Minute Spinner
+    #
+    itk_component add minute {
+	iwidgets::Spinint $itk_interior.minute \
+		-decrement [itcl::code $this _down60 minute] \
+		-fixed 2 -range {0 59} -justify right
+    } {
+	keep -background -cursor -arroworient -foreground \
+		-labelfont -labelmargin -relief -textbackground \
+		-textfont -repeatdelay -repeatinterval
+
+	rename -labeltext -minutelabel minuteLabel Text
+	rename -width -minutewidth minuteWidth Width
+    }
+    
+    #
+    # Take off the default bindings for selction and motion.
+    #
+    bind [$itk_component(minute) component entry] <1> {break}
+    bind [$itk_component(minute) component entry] <Button1-Motion> {break}
+
+    #
+    # Create Second Spinner
+    #
+    itk_component add second {
+	iwidgets::Spinint $itk_interior.second  \
+		-decrement [itcl::code $this _down60 second] \
+		-fixed 2 -range {0 59} -justify right
+    } {
+	keep -background -cursor -arroworient -foreground \
+		-labelfont -labelmargin -relief -textbackground \
+		-textfont -repeatdelay -repeatinterval
+
+	rename -labeltext -secondlabel secondLabel Text
+	rename -width -secondwidth secondWidth Width
+    }
+
+    #
+    # Take off the default bindings for selction and motion.
+    #
+    bind [$itk_component(second) component entry] <1> {break}
+    bind [$itk_component(second) component entry] <Button1-Motion> {break}
+
+    #
+    # Initialize the widget based on the command line options.
+    #
+    eval itk_initialize $args
+
+    # 
+    # Show the current time.
+    #
+    show now
+}
+	
+# ------------------------------------------------------------------
+#                           DESTRUCTOR
+# ------------------------------------------------------------------
+itcl::body iwidgets::Spintime::destructor {} {
+    if {$_repack != ""} {after cancel $_repack}
+}
+
+# ------------------------------------------------------------------
+#                             OPTIONS
+# ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
+# OPTION: -orient
+# 
+# Specifies the orientation of the 3 spinners for Hour, Minute 
+# and second.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Spintime::orient {
+    _packTime
+}
+
+# ------------------------------------------------------------------
+# OPTION: -labelpos
+# 
+# Specifies the location of all 3 spinners' labels. 
+# Overloaded 
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Spintime::labelpos {
+    switch $itk_option(-labelpos) {
+	n {
+	    $itk_component(hour) configure -labelpos n
+	    $itk_component(minute) configure -labelpos n
+	    $itk_component(second) configure -labelpos n
+	    
+	    #
+	    # Un-align labels
+	    #
+	    $itk_component(hour) configure -labelmargin 1
+	    $itk_component(minute) configure -labelmargin 1
+	    $itk_component(second) configure -labelmargin 1
+	}
+	
+	s {
+	    $itk_component(hour) configure -labelpos s
+	    $itk_component(minute) configure -labelpos s
+	    $itk_component(second) configure -labelpos s
+	    
+	    #
+	    # Un-align labels
+	    #
+	    $itk_component(hour) configure -labelmargin 1
+	    $itk_component(minute) configure -labelmargin 1
+	    $itk_component(second) configure -labelmargin 1
+	}
+	
+	w {
+	    $itk_component(hour) configure -labelpos w
+	    $itk_component(minute) configure -labelpos w
+	    $itk_component(second) configure -labelpos w
+	}
+	
+	e {
+	    $itk_component(hour) configure -labelpos e
+	    $itk_component(minute) configure -labelpos e
+	    $itk_component(second) configure -labelpos e
+	    
+	    #
+	    # Un-align labels
+	    #
+	    $itk_component(hour) configure -labelmargin 1
+	    $itk_component(minute) configure -labelmargin 1
+	    $itk_component(second) configure -labelmargin 1
+	}
+	
+	default {
+	    error "bad labelpos option \"$itk_option(-labelpos)\",\
+		    should be n, s, w or e"
+	}
+    }
+
+    _packTime
+}
+
+# ------------------------------------------------------------------
+# OPTION: -houron
+# 
+# Specifies whether or not to display the hour spinner.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Spintime::houron {
+    _packTime
+}
+
+# ------------------------------------------------------------------
+# OPTION: -minuteon
+# 
+# Specifies whether or not to display the minute spinner.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Spintime::minuteon {
+    _packTime
+}
+
+# ------------------------------------------------------------------
+# OPTION: -secondon
+# 
+# Specifies whether or not to display the second spinner.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Spintime::secondon {
+    _packTime
+}
+
+
+# ------------------------------------------------------------------
+# OPTION: -timemargin
+# 
+# Specifies the margin space between the hour and minute spinners 
+# and the minute and second spinners. 
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Spintime::timemargin {
+    _packTime
+}
+
+# ------------------------------------------------------------------
+# OPTION: -militaryon
+#
+# Specifies 24-hour clock or 12-hour.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Spintime::militaryon {
+    set clicks [clock seconds]
+
+    if {$itk_option(-militaryon)} {
+	$itk_component(hour) configure -range {0 23}
+	$itk_component(hour) delete 0 end
+	$itk_component(hour) insert end [clock format $clicks -format "%H"]
+    } else {
+	$itk_component(hour) configure -range {1 12}
+	$itk_component(hour) delete 0 end
+	$itk_component(hour) insert end [clock format $clicks -format "%I"]
+    }
+}
+
+# ------------------------------------------------------------------
+#                            METHODS
+# ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
+# METHOD: get ?format?
+#
+# Get the value of the time spinner in one of two formats string or 
+# as an integer clock value using the -string and -clicks options 
+# respectively.  The default is by string.  Reference the clock 
+# command for more information on obtaining time and its formats.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Spintime::get {{format "-string"}} {
+    set hour [$itk_component(hour) get]
+    set minute [$itk_component(minute) get]
+    set second [$itk_component(second) get]
+
+    switch -- $format {
+	"-string" {
+	    return "$hour:$minute:$second"
+	}
+	"-clicks" {
+	    return [clock scan "$hour:$minute:$second"]
+	}
+	default {
+	    error "bad format option \"$format\":\
+                   should be -string or -clicks"
+	}
+    }
+}
+
+# ------------------------------------------------------------------
+# PUBLIC METHOD: show time
+#
+# Changes the currently displayed time to be that of the time
+# argument.  The time may be specified either as a string or an
+# integer clock value.  Reference the clock command for more 
+# information on obtaining time and its format.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Spintime::show {{time "now"}} {
+    if {$time == "now"} {
+	set seconds [clock seconds]
+    } else {
+	if {[catch {clock format $time}] == 0} {
+	    set seconds $time
+	} elseif {[catch {set seconds [clock scan $time]}] != 0} {
+	    error "bad time: \"$time\", must be a valid time\
+               string, clock clicks value or the keyword now"
+	}
+    }
+
+    $itk_component(hour) delete 0 end
+
+    if {$itk_option(-militaryon)} {
+	scan [clock format $seconds -format "%H"] "%d" hour
+    } else {
+	scan hour [clock format $seconds -format "%I"] "%d" hour
+    }
+
+    $itk_component(hour) insert end $hour
+
+    $itk_component(minute) delete 0 end
+    scan [clock format $seconds -format "%M"] "%d" minute 
+    $itk_component(minute) insert end $minute
+
+    $itk_component(second) delete 0 end
+    scan [clock format $seconds -format "%S"] "%d" seconds
+    $itk_component(second) insert end $seconds
+
+    return
+}
+
+# ------------------------------------------------------------------
+# PROTECTED METHOD: _packTime ?when?
+#
+# Pack components of time spinner.  If "when" is "now", the change 
+# is applied immediately.  If it is "later" or it is not specified,
+# then the change is applied later, when the application is idle.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Spintime::_packTime {{when later}} {
+    if {$when == "later"} {
+	if {$_repack == ""} {
+	    set _repack [after idle [itcl::code $this _packTime now]]
+	}
+	return
+    } elseif {$when != "now"} {
+	error "bad option \"$when\": should be now or later"
+    }
+
+    for {set i 0} {$i < 5} {incr i} {
+	grid rowconfigure $_interior $i -minsize 0
+	grid columnconfigure $_interior $i -minsize 0
+    }
+
+    if {$itk_option(-minuteon)} {
+	set minuteon 1
+    } else {
+	set minuteon 0
+    }
+    if {$itk_option(-secondon)} {
+	set secondon 1
+    } else {
+	set secondon 0
+    }
+
+    set _repack ""
+
+    switch $itk_option(-orient) {
+	vertical {
+	    set row -1
+
+	    if {$itk_option(-houron)} {
+		grid $itk_component(hour) -row [incr row] -column 0 \
+		    -sticky nsew 
+	    } else {
+		grid forget $itk_component(hour)
+	    }
+
+	    if {$itk_option(-minuteon)} {
+		if {$itk_option(-houron)} {
+		    grid rowconfigure $_interior [incr row] \
+			-minsize $itk_option(-timemargin)
+		}
+
+		grid $itk_component(minute) -row [incr row] -column 0 \
+		    -sticky nsew 
+	    } else {
+		grid forget $itk_component(minute)
+	    }
+	    
+	    if {$itk_option(-secondon)} {
+		if {$minuteon || $secondon} {
+		    grid rowconfigure $_interior [incr row] \
+			-minsize $itk_option(-timemargin)
+		}
+
+		grid $itk_component(second) -row [incr row] -column 0 \
+		    -sticky nsew 
+	    } else {
+		grid forget $itk_component(second)
+	    }
+	    
+	    if {$itk_option(-labelpos) == "w"} {
+		iwidgets::Labeledwidget::alignlabels $itk_component(hour) \
+			$itk_component(minute) $itk_component(second)
+	    }
+	}
+	
+	horizontal {
+	    set column -1
+
+	    if {$itk_option(-houron)} {
+		grid $itk_component(hour) -row 0 -column [incr column] \
+		    -sticky nsew 
+	    } else {
+		grid forget $itk_component(hour)
+	    }
+	    
+	    if {$itk_option(-minuteon)} {
+		if {$itk_option(-houron)} {
+		    grid columnconfigure $_interior [incr column] \
+			-minsize $itk_option(-timemargin)
+		}
+
+		grid $itk_component(minute) -row 0 -column [incr column] \
+		    -sticky nsew 
+	    } else {
+		grid forget $itk_component(minute)
+	    }
+	    
+	    if {$itk_option(-secondon)} {
+		if {$minuteon || $secondon} {
+		    grid columnconfigure $_interior [incr column] \
+			-minsize $itk_option(-timemargin)
+		}
+
+		grid $itk_component(second) -row 0 -column [incr column] \
+		    -sticky nsew 
+	    } else {
+		grid forget $itk_component(second)
+	    }
+	    
+	    #
+	    # Un-align labels
+	    #
+	    $itk_component(hour) configure -labelmargin 1
+	    $itk_component(minute) configure -labelmargin 1
+	    $itk_component(second) configure -labelmargin 1
+	}
+	
+	default {
+	    error "bad orient option \"$itk_option(-orient)\", should\
+		    be \"vertical\" or \"horizontal\""
+	}
+    } 
+}
+
+# ------------------------------------------------------------------
+# METHOD: down60
+#
+# Down arrow button press event.  Decrement value in the minute
+# or second entry.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Spintime::_down60 {comp} {
+	set step [$itk_component($comp) cget -step]
+	set val [$itk_component($comp) get]
+
+	incr val -$step
+	if {$val < 0} {
+	   set val [expr {60-$step}]
+        }
+	$itk_component($comp) delete 0 end
+	$itk_component($comp) insert 0 $val
+}

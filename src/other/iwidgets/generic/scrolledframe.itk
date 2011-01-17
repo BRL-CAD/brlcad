@@ -1,0 +1,250 @@
+#
+# Scrolledframe
+# ----------------------------------------------------------------------
+# Implements horizontal and vertical scrollbars around a childsite
+# frame.  Includes options to control display of scrollbars.
+#
+# ----------------------------------------------------------------------
+#  AUTHOR: Mark Ulferts                        mulferts@austin.dsccc.com 
+#
+#  @(#) $Id$
+# ----------------------------------------------------------------------
+#            Copyright (c) 1995 DSC Technologies Corporation
+# ======================================================================
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
+# software without specific, written prior permission.
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
+# ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
+# INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
+# WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
+# SOFTWARE.
+# ======================================================================
+
+#
+# Usual options.
+#
+itk::usual Scrolledframe {
+    keep -activebackground -activerelief -background -borderwidth -cursor \
+	 -elementborderwidth -foreground -highlightcolor -highlightthickness \
+	 -jump -labelfont -troughcolor
+}
+
+# ------------------------------------------------------------------
+#                            SCROLLEDFRAME
+# ------------------------------------------------------------------
+itcl::class iwidgets::Scrolledframe {
+    inherit iwidgets::Scrolledwidget
+
+    constructor {args} {}
+    destructor {}
+
+    public method childsite {} 
+    public method justify {direction} 
+    public method xview {args} 
+    public method yview {args} 
+
+    protected method _configureCanvas {} 
+    protected method _configureFrame {} 
+}
+
+#
+# Provide a lowercased access method for the Scrolledframe class.
+# 
+proc ::iwidgets::scrolledframe {pathName args} {
+    uplevel ::iwidgets::Scrolledframe $pathName $args
+}
+
+#
+# Use option database to override default resources of base classes.
+#
+option add *Scrolledframe.width 100 widgetDefault
+option add *Scrolledframe.height 100 widgetDefault
+option add *Scrolledframe.labelPos n widgetDefault
+
+# ------------------------------------------------------------------
+#                        CONSTRUCTOR
+# ------------------------------------------------------------------
+itcl::body iwidgets::Scrolledframe::constructor {args} {
+    itk_option remove iwidgets::Labeledwidget::state
+
+    #
+    # Create a clipping frame which will provide the border for
+    # relief display.
+    #
+    itk_component add clipper {
+	frame $itk_interior.clipper 
+    } {
+	usual
+
+	keep -borderwidth -relief 
+    }	
+    grid $itk_component(clipper) -row 0 -column 0 -sticky nsew
+    grid rowconfigure $_interior 0 -weight 1
+    grid columnconfigure $_interior 0 -weight 1
+
+    # 
+    # Create a canvas to scroll
+    #
+    itk_component add canvas {
+	canvas $itk_component(clipper).canvas \
+		-height 1.0 -width 1.0 \
+                -scrollregion "0 0 1 1" \
+                -xscrollcommand \
+		[itcl::code $this _scrollWidget $itk_interior.horizsb] \
+		-yscrollcommand \
+		[itcl::code $this _scrollWidget $itk_interior.vertsb] \
+	        -highlightthickness 0 -takefocus 0
+    } {
+	ignore -highlightcolor -highlightthickness
+	keep -background -cursor
+    }
+    grid $itk_component(canvas) -row 0 -column 0 -sticky nsew
+    grid rowconfigure $itk_component(clipper) 0 -weight 1
+    grid columnconfigure $itk_component(clipper) 0 -weight 1
+    
+    # 
+    # Configure the command on the vertical scroll bar in the base class.
+    #
+    $itk_component(vertsb) configure \
+	-command [itcl::code $itk_component(canvas) yview]
+
+    #
+    # Configure the command on the horizontal scroll bar in the base class.
+    #
+    $itk_component(horizsb) configure \
+		-command [itcl::code $itk_component(canvas) xview]
+    
+    #
+    # Handle configure events on the canvas to adjust the frame size
+    # according to the scrollregion.
+    #
+    bind $itk_component(canvas) <Configure> [itcl::code $this _configureCanvas]
+    
+    #
+    # Create a Frame inside canvas to hold widgets to be scrolled 
+    #
+    itk_component add -protected sfchildsite {
+	frame $itk_component(canvas).sfchildsite 
+    } {
+	keep -background -cursor
+    }
+    pack $itk_component(sfchildsite) -fill both -expand yes
+    $itk_component(canvas) create window 0 0 -tags frameTag \
+            -window $itk_component(sfchildsite) -anchor nw
+    set itk_interior $itk_component(sfchildsite)
+    bind $itk_component(sfchildsite) <Configure> [itcl::code $this _configureFrame]
+    
+    #
+    # Initialize the widget based on the command line options.
+    #
+    eval itk_initialize $args
+}
+
+# ------------------------------------------------------------------
+#                           DESTURCTOR
+# ------------------------------------------------------------------
+itcl::body iwidgets::Scrolledframe::destructor {} {
+}
+
+
+# ------------------------------------------------------------------
+#                            METHODS
+# ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
+# METHOD: childsite
+#
+# Returns the path name of the child site widget.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Scrolledframe::childsite {} {
+    return $itk_component(sfchildsite)
+}
+
+# ------------------------------------------------------------------
+# METHOD: justify
+#
+# Justifies the scrolled region in one of four directions: top,
+# bottom, left, or right.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Scrolledframe::justify {direction} {
+    if {[winfo ismapped $itk_component(canvas)]} {
+	update idletasks
+	
+	switch $direction {
+	    left {
+		$itk_component(canvas) xview moveto 0
+	    }
+	    right {
+		$itk_component(canvas) xview moveto 1
+	    }
+	    top {
+		$itk_component(canvas) yview moveto 0
+	    }
+	    bottom {
+		$itk_component(canvas) yview moveto 1
+	    }
+	    default {
+		error "bad justify argument \"$direction\": should be\
+			left, right, top, or bottom"
+	    }
+	}
+    }
+}
+
+# ------------------------------------------------------------------
+# METHOD: xview index
+#
+# Adjust the view in the frame so that character position index
+# is displayed at the left edge of the widget.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Scrolledframe::xview {args} {
+    return [eval $itk_component(canvas) xview $args]
+}
+
+# ------------------------------------------------------------------
+# METHOD: yview index
+#
+# Adjust the view in the frame so that character position index
+# is displayed at the top edge of the widget.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Scrolledframe::yview {args} {
+    return [eval $itk_component(canvas) yview $args]
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _configureCanvas 
+#
+# Responds to configure events on the canvas widget.  When canvas 
+# changes size, adjust frame size.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Scrolledframe::_configureCanvas {} {
+    set sr [$itk_component(canvas) cget -scrollregion]
+    set srw [lindex $sr 2]
+    set srh [lindex $sr 3]
+    
+    $itk_component(sfchildsite) configure -height $srh -width $srw
+}
+
+# ------------------------------------------------------------------
+# PRIVATE METHOD: _configureFrame 
+#
+# Responds to configure events on the frame widget.  When the frame 
+# changes size, adjust scrolling region size.
+# ------------------------------------------------------------------
+itcl::body iwidgets::Scrolledframe::_configureFrame {} {
+    $itk_component(canvas) configure \
+	    -scrollregion [$itk_component(canvas) bbox frameTag] 
+}
+
