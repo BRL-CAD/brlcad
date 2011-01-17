@@ -29,7 +29,6 @@ EXTRA_DIST = \
 	CHANGES \
 	INCOMPATIBLE \
 	license.terms \
-	makefile.bc \
 	makefile.vc \
 	rules.vc \
 	tclconfig
