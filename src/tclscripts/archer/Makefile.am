@@ -39,6 +39,7 @@ scripts = \
 	Wizard.tcl \
 	bgerror.tcl \
 	cursor.tcl \
+	itk_redefines \
 	tabwindow.itk
 
 BUILT_SOURCES = \
