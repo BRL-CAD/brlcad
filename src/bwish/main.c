@@ -49,8 +49,8 @@
  */
 #define IMPORT_ITCL	1
 #ifdef BWISH
-#   define IMPORT_ITK	1
-#   define IMPORT_IWIDGETS	1
+#  define IMPORT_ITK	1
+#  define IMPORT_IWIDGETS	1
 #endif
 
 extern int cmdInit(Tcl_Interp *interp);
@@ -99,6 +99,11 @@ Cad_AppInit(Tcl_Interp *interp)
 	}
 	init_tcl=0;
 
+	/* warn if tcl_library isn't set by now */
+	if (try_auto_path) {
+	    tclcad_tcl_library(interp);
+	}
+
 #ifdef BWISH
 	/* Initialize Tk */
 	Tcl_ResetResult(interp);
@@ -116,7 +121,7 @@ Cad_AppInit(Tcl_Interp *interp)
 
 	/* Initialize [incr Tcl] */
 	Tcl_ResetResult(interp);
-	if (init_itcl && Tcl_Eval(interp, "package require Itcl") == TCL_ERROR) {
+	if (init_itcl && Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
 	    if (!try_auto_path) {
 		try_auto_path=1;
 		/* Itcl_Init() leaves initialization in a bad state
@@ -134,7 +139,7 @@ Cad_AppInit(Tcl_Interp *interp)
 #ifdef BWISH
 	/* Initialize [incr Tk] */
 	Tcl_ResetResult(interp);
-	if (init_itk && Tcl_Eval(interp, "package require Itk") == TCL_ERROR) {
+	if (init_itk && Tcl_Eval(interp, "package require Itk") != TCL_OK) {
 	    if (!try_auto_path) {
 		try_auto_path=1;
 		continue;
