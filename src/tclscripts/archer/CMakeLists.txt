@@ -22,6 +22,7 @@ SET(archer_TCLSCRIPTS
 	GripEditFrame.tcl 
 	HalfEditFrame.tcl 
 	HypEditFrame.tcl 
+	itk_redefines.tcl
 	LoadArcherLibs.tcl 
 	PartEditFrame.tcl 
 	Plugin.tcl 
