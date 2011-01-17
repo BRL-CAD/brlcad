@@ -184,7 +184,7 @@ main(int argc, char **argv)
     im_hpatches = ((height * im_mag)+31) / 32;
     if (im_wpatches*32 > 2560) {
 	fprintf(stderr, "bw-imp:  output %d too wide, limit is 2560\n",
-		im_wpatches*32);
+		(int)im_wpatches*32);
 	return 1;
     }
 
