@@ -49,6 +49,14 @@
 #ifndef ITCLINT_H
 #define ITCLINT_H
 
+ /* included so we avoid tcl's compat headers */ 	 
+
+#if defined(_WIN32) && !defined(__CYGWIN__) 	 
+#  include <fcntl.h> 	 
+#  include <io.h> 	 
+#endif 	 
+#include "common.h"
+
 #include "tclInt.h"
 #include "itcl.h"
 
