@@ -89,9 +89,9 @@ FB_EXPORT extern int fb_null(FBIO *ifp);
 FB_EXPORT extern int fb_null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig);
 
 /* utility functions */
-FB_EXPORT extern int fb_common_file_size(unsigned long int *widthp, unsigned long int *heightp, const char *filename, int pixel_size);
-FB_EXPORT extern int fb_common_image_size(unsigned long int *widthp, unsigned long int *heightp, unsigned long int npixels);
-FB_EXPORT extern int fb_common_name_size(unsigned long int *widthp, unsigned long int *heightp, const char *name);
+FB_EXPORT extern int fb_common_file_size(size_t *widthp, size_t *heightp, const char *filename, int pixel_size);
+FB_EXPORT extern int fb_common_image_size(size_t *widthp, size_t *heightp, size_t npixels);
+FB_EXPORT extern int fb_common_name_size(size_t *widthp, size_t *heightp, const char *name);
 
 /* color mapping */
 FB_EXPORT extern int fb_is_linear_cmap(const ColorMap *cmap);

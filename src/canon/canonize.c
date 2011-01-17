@@ -69,7 +69,7 @@ queue(fp)
     for (args=1; args < arg_c; args++) {
 
 	if (BU_STR_EQUAL(arg_v[args], "-a")) {
-	    fprintf(pfp, " -w %ld -n %ld", width, height);
+	    fprintf(pfp, " -w %lu -n %lu", (unsigned long)width, (unsigned long)height);
 	} if (BU_STR_EQUAL(arg_v[args], "-d")) {
 	    args += 2;	/* skip device specification */
 	} if (BU_STR_EQUAL(arg_v[args], "-v") ||
