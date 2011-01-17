@@ -17,7 +17,7 @@
 #include <tk.h>
 
 #ifndef	PACKAGE_VERSION
-#define	PACKAGE_VERSION "0.8"
+#define	PACKAGE_VERSION "0.9"
 #endif
 
 extern Tk_PhotoImageFormat tkImgFmtPNG;
