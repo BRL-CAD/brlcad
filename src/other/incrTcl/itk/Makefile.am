@@ -16,7 +16,6 @@ EXTRA_DIST = \
 	examples \
 	itkConfig.sh.in \
 	license.terms \
-	mac \
 	tests \
 	win
 
