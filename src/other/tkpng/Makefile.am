@@ -8,6 +8,9 @@ tkpng_la_CFLAGS = \
 tkpng_la_LDFLAGS = -module
 lib_LTLIBRARIES = tkpng.la
 
+brlcadscriptdir =  ${libdir}/tkpng${TKPNG_VERSION}
+brlcadscript_SCRIPTS = pkgIndex.tcl
+
 tkpng_la_SOURCES = \
 	generic/tkImgPNG.c \
 	generic/tkImgPNGInit.c
@@ -17,6 +20,9 @@ tkpng_la_LIBADD = \
 	${TCL} \
 	${TK} \
 	${TCLSTUB}
+
+DISTCLEANFILES = \
+	pkgIndex.tcl
 
 EXTRA_DIST = \
 	README \
