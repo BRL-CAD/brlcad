@@ -142,6 +142,7 @@ FILE(APPEND ${TCL_CFG_H_FILE} "#define CFG_RUNTIME_DOCDIR \"${CMAKE_INSTALL_PREF
 # First, get some standard options out of the way - things that are constant
 # between various platforms or pertain to specific OS definitions
 SET(TCL_CFLAGS "${TCL_CFLAGS} -DSTDC_HEADERS=1")
+SET(TCL_CFLAGS "${TCL_CFLAGS} -DCMAKE_HEADERS=1")
 SET(TCL_CFLAGS "${TCL_CFLAGS} -DTCL_SHLIB_EXT=\\\"${CMAKE_SHARED_LIBRARY_SUFFIX}\\\"")
 
 # Windows specific flags

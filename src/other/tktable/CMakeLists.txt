@@ -55,6 +55,7 @@ FILE(APPEND ${TKTABLE_CFG_H_FILE} "#define TBL_RUNTIME_DIR \"${CMAKE_INSTALL_PRE
 
 add_definitions(
 	-DSTDC_HEADERS=1
+	-DCMAKE_HEADERS=1
 	)
 
 add_library(Tktable SHARED ${TKTABLE_SRCS})
