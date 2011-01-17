@@ -31,10 +31,10 @@
 #endif
 #include "bio.h"
 
-#include "itcl.h"
+#include "tcl.h"
 
 #ifdef BWISH
-#  include "itk.h"
+#  include "tk.h"
 #  include "dm.h"
 #  include "fb.h"
 #endif
@@ -59,14 +59,14 @@ Cad_AppInit(Tcl_Interp *interp)
     tclcad_auto_path(interp);
 
 /* Initialize [incr Tcl] */
-    if (Itcl_Init(interp) == TCL_ERROR) {
+    if (Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
 	bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 
 #ifdef BWISH
 /* Initialize [incr Tk] */
-    if (Itk_Init(interp) == TCL_ERROR) {
+    if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
 	bu_log("Itk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }

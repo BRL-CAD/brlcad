@@ -31,9 +31,7 @@
 #include "tcl.h"
 
 #ifdef BWISH
-#  include "itk.h"
-#else
-#  include "itcl.h"
+#  include "tk.h"
 #endif
 
 #include "bu.h"
@@ -50,8 +48,10 @@
  * the global namespace..  allow for easy means to disable the import.
  */
 #define IMPORT_ITCL	1
-#define IMPORT_ITK	1
-#define IMPORT_IWIDGETS	1
+#ifdef BWISH
+#  define IMPORT_ITK	1
+#  define IMPORT_IWIDGETS	1
+#endif
 
 extern int cmdInit(Tcl_Interp *interp);
 extern void Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *interp);
@@ -121,7 +121,7 @@ Cad_AppInit(Tcl_Interp *interp)
 
 	/* Initialize [incr Tcl] */
 	Tcl_ResetResult(interp);
-	if (init_itcl && Itcl_Init(interp) == TCL_ERROR) {
+	if (init_itcl && Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
 	    if (!try_auto_path) {
 		try_auto_path=1;
 		/* Itcl_Init() leaves initialization in a bad state
@@ -134,13 +134,12 @@ Cad_AppInit(Tcl_Interp *interp)
 	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	    return TCL_ERROR;
 	}
-	Tcl_StaticPackage(interp, "Itcl", Itcl_Init, Itcl_SafeInit);
 	init_itcl=0;
 
 #ifdef BWISH
 	/* Initialize [incr Tk] */
 	Tcl_ResetResult(interp);
-	if (init_itk && Itk_Init(interp) == TCL_ERROR) {
+	if (init_itk && Tcl_Eval(interp, "package require Itk") != TCL_OK) {
 	    if (!try_auto_path) {
 		try_auto_path=1;
 		continue;
@@ -148,7 +147,6 @@ Cad_AppInit(Tcl_Interp *interp)
 	    bu_log("Itk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	    return TCL_ERROR;
 	}
-	Tcl_StaticPackage(interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
 	init_itk=0;
 #endif
 
@@ -280,6 +278,7 @@ main(int argc, char **argv)
 {
     /* Create the interpreter */
     INTERP = Tcl_CreateInterp();
+    Tcl_FindExecutable(argv[0]);
     Cad_Main(argc, argv, Cad_AppInit, INTERP);
 
     return 0;
