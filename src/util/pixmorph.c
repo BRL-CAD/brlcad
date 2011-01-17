@@ -345,7 +345,7 @@ lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, long int *np)
 int
 get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **linesfilenamep,
 	 double *warpfracp, int *dissolvefracp, long int *autosizep,
-	 long int *widthp, long int *heightp)
+	 size_t *widthp, size_t *heightp)
 {
     long int c;
 
@@ -380,7 +380,7 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
 }
 
 
-int
+size_t
 pix_readpixels(FILE *fp, long int numpix, unsigned char *pixarray)
 {
     return fread(pixarray, 3, (size_t)numpix, fp);
@@ -399,7 +399,7 @@ main(int argc, char **argv)
 {
     char *picAname, *picBname, *linesfilename;
     FILE *picA, *picB, *linesfile;
-    long int pa_width = 0, pa_height = 0;
+    size_t pa_width = 0, pa_height = 0;
     int dissolvefrac;
     double warpfrac;
     unsigned char *pa, *pb, *wa, *wb, *morph;
@@ -446,7 +446,7 @@ main(int argc, char **argv)
     }
 
     if (autosize) {
-	if (fb_common_file_size((unsigned long int *)&pa_width, (unsigned long int *)&pa_height, argv[1], 3) == 0) {
+	if (fb_common_file_size(&pa_width, &pa_height, argv[1], 3) == 0) {
 	    fprintf(stderr, "pixmorph: unable to autosize\n");
 	    return 1;
 	}
@@ -460,13 +460,13 @@ main(int argc, char **argv)
 
 	if (pa_width > 0) {
 	    pa_height = sb.st_size/(3*pa_width);
-	    fprintf(stderr, "width = %ld, size = %ld, so height = %ld\n",
-		    pa_width, (long)sb.st_size, pa_height);
+	    fprintf(stderr, "width = %lu, size = %ld, so height = %lu\n",
+		    (unsigned long)pa_width, (long)sb.st_size, (unsigned long)pa_height);
 	} else if (pa_height > 0) pa_width = sb.st_size/(3*pa_height);
 
 	if (pa_width <= 0 || pa_height <= 0) {
-	    fprintf(stderr, "pixmorph: Bogus image dimensions: %ld %ld\n",
-		    pa_width, pa_height);
+	    fprintf(stderr, "pixmorph: Bogus image dimensions: %lu %lu\n",
+		    (unsigned long)pa_width, (unsigned long)pa_height);
 	    return 1;
 	}
     }
@@ -493,13 +493,13 @@ main(int argc, char **argv)
     fprintf(stderr, "pixmorph: Reading images and lines file.\n");
 
     if (pix_readpixels(picA, pa_width*pa_height, pa) < pa_width*pa_height) {
-	fprintf(stderr, "Error reading %ld pixels from %s\n",
-		pa_width*pa_height, picAname);
+	fprintf(stderr, "Error reading %lu pixels from %s\n",
+		(unsigned long)pa_width*pa_height, picAname);
 	return 1;
     }
     if (pix_readpixels(picB, pa_width*pa_height, pb) < pa_width*pa_height) {
-	fprintf(stderr, "Error reading %ld pixels from %s\n",
-		pa_width*pa_height,  picBname);
+	fprintf(stderr, "Error reading %lu pixels from %s\n",
+		(unsigned long)pa_width*pa_height,  picBname);
 	return 1;
     }
     fclose(picA);

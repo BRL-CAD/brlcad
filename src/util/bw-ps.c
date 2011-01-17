@@ -161,10 +161,10 @@ main(int argc, char **argv)
     for (y = 0; y < height; y += scans_per_patch) {
 	/* start a patch */
 	fprintf(ofp, "save\n");
-	fprintf(ofp, "%ld %ld 8 [%ld 0 0 %ld 0 %ld] {<\n ",
-		width, scans_per_patch,		/* patch size */
-		width, height,			/* total size = 1.0 */
-		-y);				/* patch y origin */
+	fprintf(ofp, "%lu %lu 8 [%lu 0 0 %lu 0 %lu] {<\n ",
+		(unsigned long)width, (unsigned long)scans_per_patch,		/* patch size */
+		(unsigned long)width, (unsigned long)height,			/* total size = 1.0 */
+		(unsigned long)-y);				/* patch y origin */
 
 	/* data */
 	num = 0;
@@ -216,7 +216,7 @@ prolog(FILE *fp, char *name, int w, int h)
 	pagewidth = pageheight;
 	pageheight = tmp;
 	fprintf(fp, "90 rotate\n");
-	fprintf(fp, "0 -%ld translate\n", pageheight);
+	fprintf(fp, "0 -%lu translate\n", (unsigned long)pageheight);
     }
     if (!encapsulated && center) {
 	int xtrans, ytrans;
