@@ -49,20 +49,21 @@
 #ifndef ITCLINT_H
 #define ITCLINT_H
 
-/* included so we avoid tcl's compat headers */
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  include <fcntl.h>
-#  include <io.h>
-#endif
-#include "common.h"
-
 #include "tclInt.h"
 #include "itcl.h"
 
 #ifdef BUILD_itcl
 # undef TCL_STORAGE_CLASS
 # define TCL_STORAGE_CLASS DLLEXPORT
+#endif
+
+/*
+ * Handle hiding of errorLine in 8.6
+ */
+#if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION < 6)
+#define ERRORLINE(interp) ((interp)->errorLine)
+#else
+#define ERRORLINE(interp) (Tcl_GetErrorLine(interp))
 #endif
 
 #define ITCL_TCL_PRE_8_5 (TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 5)
