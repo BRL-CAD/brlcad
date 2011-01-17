@@ -466,6 +466,7 @@ SET(ITCL_INCLUDE_DIRS ${ITCL_SOURCE_DIR}/generic ${ITCL_BINARY_DIR}/include)
 include_directories(
 	${TCL_INCLUDE_DIRS}
 	${ITCL_INCLUDE_DIRS}
+	${CMAKE_BINARY_DIR}/include/brlcad
 )
 
 add_library(itcl ${ITCL_GENERIC_SRCS})
