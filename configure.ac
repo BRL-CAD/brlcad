@@ -314,7 +314,7 @@ BC_ARG_ENABLE([build_tkhtml], [tkhtml-build], [Build the included tkhtml], [yes]
 # togl
 #BC_ARG_ENABLE([build_togl], [togl-build], [Build the included togl], [no])
 
-# tkpng 
+# tkpng
 BC_ARG_ENABLE([build_tkpng], [tkpng-build], [Build the included tkpng], [auto])
 
 # tktable
@@ -2267,6 +2267,7 @@ AC_CHECK_FUNCS(\
 	mkstemp \
 	pipe \
 	popen \
+	realpath \
 	sbrk \
 	setenv \
 	setpgid \
@@ -2377,7 +2378,7 @@ fi
 	#AC_MSG_NOTICE([Installation of a modern GNU Flex before continuing is recommended.])
      #fi
 #fi
-	
+
 AC_MSG_CHECKING([whether we have the essentials to make parsers])
 if test "x$build_parsers" = "xyes" ; then
     AC_MSG_RESULT(yes)
@@ -3229,7 +3230,7 @@ AC_SUBST(TKTABLE)
 
 
 dnl *** tkpng ***
-dnl figure out whether we need to build tkpng 
+dnl figure out whether we need to build tkpng
 TKPNG_VERSION="0.8"
 TKPNG_LIB_FILE="tkpng${SHLIB_SUFFIX}"
 case $host_os in
@@ -4174,7 +4175,7 @@ fi
 dnl configure tkhtml
 if test "x$build_brlcad_tkhtml" = "xyes" ; then
     ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
-    # this is a hack to all tkhtml to see when the tk headers are in odd 
+    # this is a hack to all tkhtml to see when the tk headers are in odd
     # places. it seems to ignore the CPPFLAGS in it's configure phase.
     if test ! "x$TKINCDIR" = "x" ; then
 	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"

@@ -440,7 +440,11 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
     if (lhs) {
 	char real_path[MAXPATHLEN] = {0};
 	char *dirpath;
+#ifdef HAVE_REALPATH
 	realpath(lhs, real_path);
+#else
+	bu_strlcpy(real_path, lhs, (size_t)MAXPATHLEN);
+#endif
 	dirpath = bu_dirname(real_path);
 	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
 	bu_free(dirpath, "free bu_dirname");
