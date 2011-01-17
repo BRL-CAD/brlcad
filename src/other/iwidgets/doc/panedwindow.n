@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) panedwindow.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::panedwindow iwid
 .BS
@@ -32,7 +32,7 @@ Class:	\fBHeight\fR
 Command-Line Switch:	\fB-height\fR
 .fi
 .IP
-Specifies the overall height of the paned window in any of the forms
+Specifies the overall height of the paned window in any of the forms 
 acceptable to \fBTk_GetPixels\fR.  The default is 10 pixels.
 .LP
 .nf
@@ -41,7 +41,7 @@ Class:	\fBOrient\fR
 Command-Line Switch:	\fB-orient\fR
 .fi
 .IP
-Specifies the orientation of the separators: \fBvertical\fR or
+Specifies the orientation of the separators: \fBvertical\fR or 
 \fBhorizontal\fR.  The default is horizontal.
 .LP
 .nf
@@ -50,8 +50,8 @@ Class:	\fBBorderWidth\fR
 Command-Line Switch:	\fB-sashborderwidth\fR
 .fi
 .IP
-Specifies a value indicating the width of the 3-D border to draw
-around the outside of the sash in any of the forms acceptable to
+Specifies a value indicating the width of the 3-D border to draw 
+around the outside of the sash in any of the forms acceptable to 
 \fBTk_GetPixels\fR.  The default is 2 pixels.
 .LP
 .nf
@@ -69,7 +69,7 @@ Class:	\fBHeight\fR
 Command-Line Switch:	\fB-sashheight\fR
 .fi
 .IP
-Specifies the height of the sash in any of the forms acceptable to
+Specifies the height of the sash in any of the forms acceptable to 
 \fBTk_GetPixels\fR.  The default is 10 pixels.
 .LP
 .nf
@@ -78,11 +78,11 @@ Class:	\fBSashIndent\fR
 Command-Line Switch 	\fBsashindent\fR
 .fi
 .IP
-Specifies the placement of the sash along the panes in any of the forms
+Specifies the placement of the sash along the panes in any of the forms 
 acceptable to \fBTk_GetPixels\fR.  A positive
 value causes the sash to be offset from the near (left/top) side
 of the pane, and a negative value causes the sash to be offset from
-the far (right/bottom) side.  If the offset is greater than the
+the far (right/bottom) side.  If the offset is greater than the 
 width, then the sash is placed flush against the side.  The
 default is -10 pixels.
 .LP
@@ -92,7 +92,7 @@ Class:	\fBWidth\fR
 Command-Line Switch:	\fB-sashwidth\fR
 .fi
 .IP
-Specifies the width of the sash in any of the forms acceptable to
+Specifies the width of the sash in any of the forms acceptable to 
 \fBTk_GetPixels\fR.  The default is 10 pixels.
 .LP
 .nf
@@ -110,7 +110,7 @@ Class:	\fBThickness\fR
 Command-Line Switch:	\fB-thickness\fR
 .fi
 .IP
-Specifies the thickness of the separators in any of the forms acceptable to
+Specifies the thickness of the separators in any of the forms acceptable to 
 \fBTk_GetPixels\fR.  The default is 3 pixels.
 .LP
 .LP
@@ -120,19 +120,19 @@ Class:	\fBWidth\fR
 Command-Line Switch:	\fB-width\fR
 .fi
 .IP
-Specifies the overall width of the paned window in any of the forms
+Specifies the overall width of the paned window in any of the forms 
 acceptable to \fBTk_GetPixels\fR.  The default is 10 pixels.
 .LP
 .BE
 
 .SH DESCRIPTION
 .PP
-The \fBiwidgets::panedwindow\fR command creates a multiple paned window widget
+The \fBiwidgets::panedwindow\fR command creates a multiple paned window widget 
 capable of orienting the panes
 either vertically or horizontally.  Each pane is itself a frame acting
-as a child site for other widgets.  The border separating each pane
+as a child site for other widgets.  The border separating each pane 
 contains a sash which allows user positioning of the panes relative to
-one another.
+one another.  
 
 .SH "METHODS"
 .PP
@@ -144,17 +144,17 @@ operations on the widget.  It has the following general form:
 \fIpathName option \fR?\fIarg arg ...\fR?
 .DE
 \fIOption\fR and the \fIarg\fRs
-determine the exact behavior of the command.
+determine the exact behavior of the command.  
 .PP
 Many of the widget commands for the \fBpanedwindow\fR take as one argument an
 indicator of which pane of the paned window to operate on.  These indicators
-are called \fIindexes\fR and allow reference and manipulation of panes
-regardless of their current map state.  Paned window indexes may be
+are called \fIindexes\fR and allow reference and manipulation of panes 
+regardless of their current map state.  Paned window indexes may be 
 specified in any of the following forms:
 .TP 12
 \fInumber\fR
-Specifies the pane numerically, where 0 corresponds to the nearest
-(top/left-most) pane of the paned window.
+Specifies the pane numerically, where 0 corresponds to the nearest 
+(top/left-most) pane of the paned window. 
 .TP 12
 \fBend\fR
 Indicates the farthest (bottom/right-most) pane of the paned window.
@@ -169,7 +169,7 @@ are used.
 .SH "WIDGET-SPECIFIC METHODS"
 .TP
 \fIpathName \fBadd\fR \fItag\fR ?\fIoption value option value\fR?
-Adds a new pane to the paned window on the far side (right/bottom).  The
+Adds a new pane to the paned window on the far side (right/bottom).  The 
 following options may be specified:
 .RS
 .TP
@@ -179,7 +179,7 @@ the forms acceptable to \fBTk_GetPixels\fR.  The default is 8 pixels.
 .TP
 \fB-minimum\fR \fIvalue\fR
 Specifies the minimum size that a pane's contents may reach not
-inclusive of twice the margin in any of the forms acceptable to
+inclusive of twice the margin in any of the forms acceptable to 
 \fBTk_GetPixels\fR.  The default is 10 pixels.
 
 The \fBadd\fR method returns the path name of the pane.
@@ -192,8 +192,8 @@ by \fIoption\fR.
 command.
 .TP
 \fIpathName \fBchildsite\fR ?\fIindex\fR?
-Returns a list of the child site path names or a specific child site given
-an index.  The list is constructed from the near side (left/top) to the far
+Returns a list of the child site path names or a specific child site given 
+an index.  The list is constructed from the near side (left/top) to the far 
 side (right/bottom).
 .TP
 \fIpathName\fR \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
@@ -231,7 +231,7 @@ Same as the \fBadd\fR command except that it inserts the new
 pane just before the one given by \fIindex\fR, instead of appending
 to the end of the panedwindow.  The \fIoption\fR, and \fIvalue\fR
 arguments have the same interpretation as for the \fBadd\fR widget
-command.
+command.  
 .TP
 \fIpathName \fBpaneconfigure\fR \fIindex\fR ?\fIoptions\fR?
 This command is similar to the \fBconfigure\fR command, except that
@@ -259,7 +259,7 @@ movement until the fractions are modified via the fraction method.
 For example a panedwindow is created with three panes and the minimum
 and margin options are at their default settings.  Next the user moves
 the sashes to compact the panes to one side.  Now, if the minimum is
-increased on the most compressed pane via the paneconfigure method to
+increased on the most compressed pane via the paneconfigure method to 
 a large enough value, then sash movement is blocked
 until the fractions are adjusted.  This situation is unusual and under
 normal operation of the panedwindow, this problem will never occur.
@@ -268,7 +268,7 @@ normal operation of the panedwindow, this problem will never occur.
 .SH EXAMPLE
 .DS
  package require Iwidgets 4.0
- iwidgets::panedwindow .pw -width 300 -height 300
+ iwidgets::panedwindow .pw -width 300 -height 300 
  .pw add top
  .pw add middle -margin 10
  .pw add bottom -margin 10 -minimum 10

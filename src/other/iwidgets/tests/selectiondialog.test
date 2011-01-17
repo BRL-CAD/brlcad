@@ -65,50 +65,50 @@ foreach test {
     {-width 360 360}
     {-activerelief raised raised}
     {-borderwidth 2 2}
-    {-background #d9d9d9 #d9d9d9}
-    {-buttonboxpos n n}
-    {-buttonboxpadx 10 10}
-    {-buttonboxpos e e}
-    {-buttonboxpos w w}
-    {-buttonboxpady 10 10}
-    {-buttonboxpos s s}
-    {-cursor gumby gumby}
+    {-background #d9d9d9 #d9d9d9} 
+    {-buttonboxpos n n} 
+    {-buttonboxpadx 10 10} 
+    {-buttonboxpos e e} 
+    {-buttonboxpos w w} 
+    {-buttonboxpady 10 10} 
+    {-buttonboxpos s s} 
+    {-cursor gumby gumby} 
     {-foreground Black Black}
     {-highlightcolor Black Black}
     {-highlightthickness 2 2}
-    {-modality global global}
-    {-modality application application}
-    {-modality none none}
-    {-padx 15 15}
-    {-pady 15 15}
-    {-textbackground GhostWhite GhostWhite}
-    {-separator off off}
-    {-thickness 4 4}
-    {-separator on on}
+    {-modality global global} 
+    {-modality application application} 
+    {-modality none none} 
+    {-padx 15 15} 
+    {-pady 15 15} 
+    {-textbackground GhostWhite GhostWhite} 
+    {-separator off off} 
+    {-thickness 4 4} 
+    {-separator on on} 
     {-title Selectiondialog Selectiondialog}
-    {-childsitepos n n}
-    {-childsitepos s s}
-    {-childsitepos e e}
-    {-childsitepos w w}
-    {-childsitepos center center}
-    {-cursor gumby gumby}
-    {-exportselection 0 0}
-    {-insertbackground Blue Blue}
-    {-insertbackground Black Black}
-    {-insertborderwidth 1 1}
-    {-insertofftime 200 200}
-    {-insertontime  500 500}
-    {-insertwidth 3 3}
-    {-itemslabel "Items Label" "Items Label"}
-    {-itemson no no}
-    {-labelfont 6x13 6x13}
-    {-itemson yes yes}
-    {-selectbackground #c3c3c3 #c3c3c3}
-    {-selectborderwidth 2 2}
-    {-selectforeground Black Black}
-    {-selectionlabel "Selection Label" "Selection Label"}
-    {-selectionon no no}
-    {-selectionon yes yes}
+    {-childsitepos n n} 
+    {-childsitepos s s} 
+    {-childsitepos e e} 
+    {-childsitepos w w} 
+    {-childsitepos center center} 
+    {-cursor gumby gumby} 
+    {-exportselection 0 0} 
+    {-insertbackground Blue Blue} 
+    {-insertbackground Black Black} 
+    {-insertborderwidth 1 1} 
+    {-insertofftime 200 200} 
+    {-insertontime  500 500} 
+    {-insertwidth 3 3} 
+    {-itemslabel "Items Label" "Items Label"} 
+    {-itemson no no} 
+    {-labelfont 6x13 6x13} 
+    {-itemson yes yes} 
+    {-selectbackground #c3c3c3 #c3c3c3} 
+    {-selectborderwidth 2 2} 
+    {-selectforeground Black Black} 
+    {-selectionlabel "Selection Label" "Selection Label"} 
+    {-selectionon no no} 
+    {-selectionon yes yes} 
     {-width 0 0}
     {-height 0 0}
     {-textfont 6x13 6x13}} {
@@ -117,7 +117,7 @@ foreach test {
 	    .sd configure $option [lindex $test 1]
 	    lindex [.sd configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -151,7 +151,7 @@ foreach test {
 	test Selectiondialog-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -173,21 +173,21 @@ foreach test {
 #
 test Selectiondialog-1.$c {Selectiondialog destruction} {
     destroy .sd
-    update
+    update 
 } {}
 
 incr c
 
 test Selectiondialog-1.$c {Selectiondialog construction} {
     iwidgets::selectiondialog .sd
-    update
+    update 
 } {}
 
 incr c
 
 test Selectiondialog-1.$c {Selectiondialog destruction} {
     destroy .sd
-    update
+    update 
 } {}
 
 incr c
@@ -195,7 +195,7 @@ incr c
 test Selectiondialog-1.$c {Selectiondialog destruction} {
     iwidgets::selectiondialog .sd
     destroy .sd
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

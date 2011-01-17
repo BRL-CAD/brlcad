@@ -45,7 +45,7 @@ set m 1
 test Optionmenu-1.$c {Optionmenu construction} {
     iwidgets::Optionmenu .om
     pack .om -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -66,26 +66,26 @@ foreach test {
     {-labeltext Optionmenu Optionmenu}
     {-background #d9d9d9 #d9d9d9}
     {-borderwidth 2 2}
-    {-labelpos w w}
-    {-clicktime 100 100}
+    {-labelpos w w} 
+    {-clicktime 100 100} 
     {-command {.om configure -background Red} {.om configure -background Red}}
-    {-cursor gumby gumby}
-    {-labelpos nw nw}
-    {-cyclicon false false}
-    {-cyclicon true true}
+    {-cursor gumby gumby} 
+    {-labelpos nw nw} 
+    {-cyclicon false false} 
+    {-cyclicon true true} 
     {-font -Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-* -Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*}
-    {-labelpos n n}
-    {-foreground Black Black}
-    {-labelpos ne ne}
-    {-labelpos se se}
+    {-labelpos n n} 
+    {-foreground Black Black} 
+    {-labelpos ne ne} 
+    {-labelpos se se} 
     {-labelfont -Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-* -Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*}
-    {-labelmargin 5 5}
-    {-labelpos e e}
-    {-state disabled disabled}
-    {-labelpos s s}
-    {-state normal normal}
-    {-labelpos sw sw}
-    {-labelpos w w}
+    {-labelmargin 5 5} 
+    {-labelpos e e} 
+    {-state disabled disabled} 
+    {-labelpos s s} 
+    {-state normal normal} 
+    {-labelpos sw sw} 
+    {-labelpos w w} 
     {-sticky w w}
     {-sticky nw nw}
     {-sticky n n}
@@ -101,7 +101,7 @@ foreach test {
 	    .om configure $option [lindex $test 1]
 	    lindex [.om configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -147,7 +147,7 @@ foreach test {
 	test Optionmenu-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -169,7 +169,7 @@ foreach test {
 #
 test Optionmenu-1.$c {Optionmenu destruction} {
     destroy .om
-    update
+    update 
 } {}
 
 incr c
@@ -178,14 +178,14 @@ test Optionmenu-1.$c {Optionmenu construction} {
     iwidgets::optionmenu .om -labeltext "Label" \
 	-labelpos n
     pack .om -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Optionmenu-1.$c {Optionmenu destruction} {
     destroy .om
-    update
+    update 
 } {}
 
 incr c
@@ -194,7 +194,7 @@ test Optionmenu-1.$c {Optionmenu destruction} {
     iwidgets::optionmenu .om
     pack .om
     destroy .om
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

@@ -80,7 +80,7 @@ See the "Toplevel" manual entry for details on the above inherited options.
 <P>
 The <B>dialog</B> command creates a dialog box providing standard
 buttons and a child site for use in derived classes.  The buttons
-include ok, apply, cancel, and help.  Methods and Options exist to
+include ok, apply, cancel, and help.  Methods and Options exist to 
 configure the buttons and their containing box.
 
 </pre><H2>METHODS</H2>
@@ -181,7 +181,7 @@ command.
  .d buttonconfigure Apply -command {puts Apply}
  .d buttonconfigure Cancel -command {puts Cancel; .d deactivate 0}
  .d buttonconfigure Help -command {puts Help}
-
+ 
  listbox [.d childsite].lb -relief sunken
  pack [.d childsite].lb -expand yes -fill both
 

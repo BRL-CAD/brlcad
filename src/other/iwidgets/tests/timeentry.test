@@ -45,7 +45,7 @@ set m 1
 test Timeentry-1.$c {Timeentry construction} {
     iwidgets::Timeentry .te -labeltext "Time Entry"
     pack .te -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -61,32 +61,32 @@ incr o
 
 foreach test {
     {-background #d9d9d9 #d9d9d9}
-    {-borderwidth 4 4}
-    {-borderwidth 2 2}
+    {-borderwidth 4 4} 
+    {-borderwidth 2 2} 
     {-command {.te configure -background red} {.te configure -background red}}
-    {-cursor gumby gumby}
-    {-exportselection 0 0}
-    {-foreground Green Green}
-    {-foreground Black Black}
+    {-cursor gumby gumby} 
+    {-exportselection 0 0} 
+    {-foreground Green Green} 
+    {-foreground Black Black} 
     {-highlightcolor Red Red}
     {-highlightthickness 2 2}
-    {-insertbackground Yellow Yellow}
-    {-insertbackground Black Black}
+    {-insertbackground Yellow Yellow} 
+    {-insertbackground Black Black} 
     {-justify right right}
     {-justify center center}
     {-justify left left}
-    {-labelmargin 5 5}
-    {-labelpos w w}
-    {-labelpos nw nw}
-    {-labelpos n n}
-    {-labelpos ne ne}
-    {-labelpos e e}
-    {-labelpos se se}
-    {-labelpos s s}
-    {-labelpos sw sw}
-    {-labeltext Label Label}
-    {-relief raised raised}
-    {-relief sunken sunken}
+    {-labelmargin 5 5} 
+    {-labelpos w w} 
+    {-labelpos nw nw} 
+    {-labelpos n n} 
+    {-labelpos ne ne} 
+    {-labelpos e e} 
+    {-labelpos se se} 
+    {-labelpos s s} 
+    {-labelpos sw sw} 
+    {-labeltext Label Label} 
+    {-relief raised raised} 
+    {-relief sunken sunken} 
     {-foreground black black}
     {-state disabled disabled}
     {-state normal normal}
@@ -111,14 +111,14 @@ foreach test {
     {-sticky sw sw}
     {-sticky news news}
     {-tickcolor purple purple}
-    {-textbackground GhostWhite GhostWhite}
+    {-textbackground GhostWhite GhostWhite} 
     {-textbackground #d9d9d9 #d9d9d9}} {
 	set option [lindex $test 0]
 	test Timeentry-2.$o "configuration options, $option" {
 	    .te configure $option [lindex $test 1]
 	    lindex [.te configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -151,15 +151,15 @@ foreach test {
 	test Timeentry-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
 test Timeentry-3.$m "object methods, clock clicks" {
     set clicks [clock scan "3:15:00 PM"]
     .te show $clicks
-    update
-    .te get
+    update 
+    .te get 
 } {03:15:00 PM}
 incr m
 
@@ -181,22 +181,22 @@ foreach test {
 #
 test Timeentry-1.$c {Timeentry destruction} {
     destroy .te
-    update
+    update 
 } {}
 
 incr c
 
 test Timeentry-1.$c {Timeentry construction} {
-    iwidgets::timeentry .te
+    iwidgets::timeentry .te 
     pack .te -padx 10 -pady 10
-    update
+    update 
 } {}
 
 incr c
 
 test Timeentry-1.$c {Timeentry destruction} {
     destroy .te
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

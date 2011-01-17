@@ -1,9 +1,9 @@
 #
 # Fileselectionbox
 # ----------------------------------------------------------------------
-# Implements a file selection box in a style similar to the OSF/Motif
-# standard XmFileselectionbox composite widget.  The Fileselectionbox
-# is composed of directory and file scrolled lists as well as filter
+# Implements a file selection box in a style similar to the OSF/Motif 
+# standard XmFileselectionbox composite widget.  The Fileselectionbox 
+# is composed of directory and file scrolled lists as well as filter 
 # and selection entry fields.
 #
 # ----------------------------------------------------------------------
@@ -207,7 +207,7 @@ itcl::body iwidgets::Fileselectionbox::constructor {args} {
     #
     itk_component add -protected childsite {
         frame $itk_interior.fsbchildsite
-    }
+    } 
 
     #
     # Set the interior variable to the childsite for derived classes.
@@ -466,7 +466,7 @@ itcl::configbody iwidgets::Fileselectionbox::width {
     }
 
     #
-    # Due to a bug in the tk4.2 grid, we have to check the
+    # Due to a bug in the tk4.2 grid, we have to check the 
     # propagation before setting it.  Setting it to the same
     # value it already is will cause it to toggle.
     #
@@ -494,7 +494,7 @@ itcl::configbody iwidgets::Fileselectionbox::height {
     }
 
     #
-    # Due to a bug in the tk4.2 grid, we have to check the
+    # Due to a bug in the tk4.2 grid, we have to check the 
     # propagation before setting it.  Setting it to the same
     # value it already is will cause it to toggle.
     #
@@ -899,7 +899,7 @@ itcl::body iwidgets::Fileselectionbox::_selectFilter {} {
 #
 # Pack the selection, items, and child site widgets based on options.
 # Using the -in option of pack, put the childsite around the frame
-# in the hull for n, s, e, and w positions.  Make sure and raise
+# in the hull for n, s, e, and w positions.  Make sure and raise 
 # the child site since using the 'in' option may obscure the site.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Fileselectionbox::_packComponents {{when "later"}} {
@@ -976,11 +976,11 @@ itcl::body iwidgets::Fileselectionbox::_nPos {} {
     if {$itk_option(-dirson)} {
 	grid $itk_component(dirs) -row 3 -column 0 \
 	    -columnspan 1 -sticky nsew
-    }
+    } 
     if {$itk_option(-fileson)} {
 	grid $itk_component(files) -row 3 -column 2 \
 	    -columnspan 1 -sticky nsew
-    }
+    } 
     if {$itk_option(-dirson)} {
 	if {$itk_option(-fileson)} {
 	    grid columnconfigure $_interior 1 -minsize 7
@@ -1037,7 +1037,7 @@ itcl::body iwidgets::Fileselectionbox::_sPos {} {
 	    grid configure $itk_component(files) -columnspan 3 -column 0
 	}
     }
-
+    
     grid rowconfigure $_interior 2 -weight 1
 
     if {$itk_option(-selectionon)} {
@@ -1045,7 +1045,7 @@ itcl::body iwidgets::Fileselectionbox::_sPos {} {
 	grid $itk_component(selection) -row 4 -column 0 \
 	    -columnspan 3 -sticky ew
     }
-
+    
     grid $itk_component(childsite) -row 5 -column 0 \
 	-columnspan 3 -rowspan 1 -sticky nsew
     grid columnconfigure $_interior 0 -weight 1
@@ -1113,7 +1113,7 @@ itcl::body iwidgets::Fileselectionbox::_wPos {} {
 	grid $itk_component(filter) -row 0 -column 1 \
 	    -columnspan 3 -sticky ew
 	grid rowconfigure $_interior 1 -minsize 7
-    }
+    } 
 
     if {$itk_option(-dirson)} {
 	grid $itk_component(dirs) -row 2 -column 1 \
@@ -1150,8 +1150,8 @@ itcl::body iwidgets::Fileselectionbox::_wPos {} {
 # ------------------------------------------------------------------
 # PRIVATE METHOD: _topPos
 #
-# Position the childsite below the filter but above the lists and
-# all the other components appropriately based on the individual
+# Position the childsite below the filter but above the lists and 
+# all the other components appropriately based on the individual 
 # "on" options.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Fileselectionbox::_topPos {} {
@@ -1196,7 +1196,7 @@ itcl::body iwidgets::Fileselectionbox::_topPos {} {
 # ------------------------------------------------------------------
 # PRIVATE METHOD: _centerPos
 #
-# Position the childsite between the lists and all the other
+# Position the childsite between the lists and all the other 
 # components appropriately based on the individual "on" options.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Fileselectionbox::_centerPos {} {
@@ -1254,7 +1254,7 @@ itcl::body iwidgets::Fileselectionbox::_centerPos {} {
 # PRIVATE METHOD: _bottomPos
 #
 # Position the childsite below the lists and above the selection
-# and all the other components appropriately based on the individual
+# and all the other components appropriately based on the individual 
 # "on" options.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Fileselectionbox::_bottomPos {} {

@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) extfileselectionbox.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::extfileselectionbox iwid
 .BS
@@ -87,8 +87,8 @@ Class:	\fBPosition\fR
 Command-Line Switch:	\fB-childsitepos\fR
 .fi
 .IP
-Specifies the position of the child site in the extended fileselection
-box: \fBn\fR, \fBs\fR, \fBe\fR, \fBw\fR, \fBtop\fR, or \fBbottom\fR.
+Specifies the position of the child site in the extended fileselection 
+box: \fBn\fR, \fBs\fR, \fBe\fR, \fBw\fR, \fBtop\fR, or \fBbottom\fR.  
 The default is s.
 .LP
 .nf
@@ -97,7 +97,7 @@ Class:	\fBDirectory\fR
 Command-Line Switch:	\fB-directory\fR
 .fi
 .IP
-Specifies the initial default directory.  The default is the present
+Specifies the initial default directory.  The default is the present 
 working directory.
 .LP
 .nf
@@ -175,7 +175,7 @@ Command-Line Switch:	\fB-filtercommand\fR
 .fi
 .IP
 Specifies a Tcl command to be executed upon hitting the Return key
-in the filter combobox widget.
+in the filter combobox widget.  
 .LP
 .nf
 Name:	\fBfilterLabel\fR
@@ -202,7 +202,7 @@ Class:	\fBHeight\fR
 Command-Line Switch:	\fB-height\fR
 .fi
 .IP
-Specifies the height of the selection box.  The value may be specified in
+Specifies the height of the selection box.  The value may be specified in 
 any of the forms acceptable to Tk_GetPixels.  The default is 300 pixels.
 .LP
 .nf
@@ -211,7 +211,7 @@ Class:	\fBCommand\fR
 Command-Line Switch:	\fB-invalid\fR
 .fi
 .IP
-Command to be executed should the filter contents be proven
+Command to be executed should the filter contents be proven 
 invalid.  The default is {bell}.
 .LP
 .nf
@@ -237,7 +237,7 @@ Class:	\fBCommand\fR
 Command-Line Switch:	\fB-selectdirommand\fR
 .fi
 .IP
-Specifies a Tcl command to be executed following selection of a
+Specifies a Tcl command to be executed following selection of a 
 directory in the directory list.
 .LP
 .nf
@@ -246,7 +246,7 @@ Class:	\fBCommand\fR
 Command-Line Switch:	\fB-selectfileommand\fR
 .fi
 .IP
-Specifies a Tcl command to be executed following selection of a
+Specifies a Tcl command to be executed following selection of a 
 file in the files list.
 .LP
 .nf
@@ -256,7 +256,7 @@ Command-Line Switch:	\fB-selectioncommand\fR
 .fi
 .IP
 Specifies a Tcl command to be executed upon hitting the Return key
-in the selection combobox widget.
+in the selection combobox widget.  
 .LP
 .nf
 Name:	\fBselectionLabel\fR
@@ -283,16 +283,16 @@ Class:	\fBWidth\fR
 Command-Line Switch:	\fB-width\fR
 .fi
 .IP
-Specifies the width of the selection box.  The value may be specified in
+Specifies the width of the selection box.  The value may be specified in 
 any of the forms acceptable to Tk_GetPixels.  The default is 350 pixels.
 .LP
 .BE
 
 .SH DESCRIPTION
 .PP
-The \fBiwidgets::extfileselectionbox\fR command creates an extended file
+The \fBiwidgets::extfileselectionbox\fR command creates an extended file 
 selection box which is slightly different than the fileselectionbox widget.
-The differences are mostly cosmetic in that the listboxes are
+The differences are mostly cosmetic in that the listboxes are 
 within a panedwindow and the entryfields for the filter and selection
 have been replaced by comboboxes.  Other than that the interface is
 practically the same.
@@ -336,7 +336,7 @@ this case the command returns an empty string.
 command.
 .TP
 \fIpathName \fBfilter\fR
-Update the current contents of the extended file selection box based
+Update the current contents of the extended file selection box based 
 on the current filter combobox value.
 .TP
 \fIpathName \fBget\fR
@@ -349,8 +349,8 @@ Name:	\fBdirs\fR
 Class:	\fBScrolledlistbox\fR
 .fi
 .IP
-The dirs component is the directory list box for the extended fileselection
-box. See the "scrolledlistbox" widget manual entry for details on the dirs
+The dirs component is the directory list box for the extended fileselection 
+box. See the "scrolledlistbox" widget manual entry for details on the dirs 
 component item.
 .LP
 .nf
@@ -368,7 +368,7 @@ Class:	\fBCombobox\fR
 .fi
 .IP
 The filter component is the field for user input of the filter value.
-See the "combobox" widget manual entry for details on the filter
+See the "combobox" widget manual entry for details on the filter 
 component item.
 .LP
 .nf
@@ -377,7 +377,7 @@ Class:	\fBCombobox\fR
 .fi
 .IP
 The selection component is the field for user input of the currently
-selected file value.  See the "combobox" widget manual entry for details
+selected file value.  See the "combobox" widget manual entry for details 
 on the selection component item.
 .fi
 
@@ -385,7 +385,7 @@ on the selection component item.
 .DS
 package require Iwidgets 4.0
 iwidgets::extfileselectionbox .fsb
-pack .fsb -padx 10 -pady 10 -fill both -expand yes
+pack .fsb -padx 10 -pady 10 -fill both -expand yes 
 .DE
 .SH AUTHOR(S)
 Mark L. Ulferts

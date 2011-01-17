@@ -28,7 +28,7 @@ set imagedir [file join ${iwidgets::library} demos images]
 	       -helpstr "Close the file"
 	   separator sep2
 	   command exit -label "Exit" -underline 1 \
-	       -helpstr "Exit this application"
+	       -helpstr "Exit this application" 
     }
 
 #

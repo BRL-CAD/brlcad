@@ -47,17 +47,17 @@ set cdir [pwd]
 test Hierarchy-1.$c {Hierarchy construction} {
     iwidgets::Hierarchy .h
     pack .h -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 
     image create bitmap testicon -data {
 	#define node.xbm_width 16
 	#define node.xbm_height 16
 	static unsigned char node.xbm_bits[] = {
-	   0x00, 0x00, 0x00, 0x00, 0xfe, 0x7f, 0x02, 0x40,
-           0xfa, 0x5f, 0xfa, 0x5f, 0x82, 0x41, 0x82, 0x41,
-           0x82, 0x41, 0x82, 0x41, 0x82, 0x41, 0x02, 0x40,
+	   0x00, 0x00, 0x00, 0x00, 0xfe, 0x7f, 0x02, 0x40, 
+           0xfa, 0x5f, 0xfa, 0x5f, 0x82, 0x41, 0x82, 0x41, 
+           0x82, 0x41, 0x82, 0x41, 0x82, 0x41, 0x02, 0x40, 
            0xfe, 0x7f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    }
+    }	
 
     set homelist [lsort [glob -nocomplain $env(HOME)/*]]
 
@@ -79,7 +79,7 @@ test Hierarchy-1.$c {Hierarchy construction} {
 	foreach file [lsort [glob -nocomplain *]] {
 	    lappend rlist [list [file join $dir $file] $file]
 	}
-
+	
 	return $rlist
     }
 } {}
@@ -107,22 +107,22 @@ foreach test {
     {-alwaysquery no no}
     {-alwaysquery on on}
     {-alwaysquery off off}
-    {-background #d9d9d9 #d9d9d9}
-    {-borderwidth 2 2}
-    {-cursor gumby gumby}
+    {-background #d9d9d9 #d9d9d9} 
+    {-borderwidth 2 2} 
+    {-cursor gumby gumby} 
     {-disabledforeground #a3a3a3 #a3a3a3}
     {-elementborderwidth -1 -1}
-    {-foreground Black Black}
-    {-height 300 300}
+    {-foreground Black Black} 
+    {-height 300 300} 
     {-width 400 400}
     {-highlightcolor Black Black}
     {-highlightthickness 2 2}
-    {-hscrollmode none none}
-    {-hscrollmode static static}
-    {-hscrollmode dynamic dynamic}
+    {-hscrollmode none none} 
+    {-hscrollmode static static} 
+    {-hscrollmode dynamic dynamic} 
     {-jump 0 0}
-    {-textbackground GhostWhite GhostWhite}
-    {-labelmargin 5 5}
+    {-textbackground GhostWhite GhostWhite} 
+    {-labelmargin 5 5} 
     {-labeltext Label Label}
     {-labelpos nw nw}
     {-labelpos ne ne}
@@ -139,14 +139,14 @@ foreach test {
     {-markbackground #a0a0a0 #a0a0a0}
     {-markforeground Black Black}
     {-menucursor gumby gumby}
-    {-relief raised raised}
-    {-relief sunken sunken}
-    {-vscrollmode none none}
-    {-vscrollmode static static}
-    {-vscrollmode dynamic dynamic}
-    {-sbwidth 20 20}
-    {-scrollmargin 5 5}
-    {-textbackground #d9d9d9 #d9d9d9}
+    {-relief raised raised} 
+    {-relief sunken sunken} 
+    {-vscrollmode none none} 
+    {-vscrollmode static static} 
+    {-vscrollmode dynamic dynamic} 
+    {-sbwidth 20 20} 
+    {-scrollmargin 5 5} 
+    {-textbackground #d9d9d9 #d9d9d9} 
     {-visibleitems 40x20 40x20}
     {-height 0 0}
     {-width 0 0}
@@ -189,7 +189,7 @@ foreach test {
 	    .h configure $option [lindex $test 1]
 	    lindex [.h configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -220,18 +220,18 @@ test Hierarchy-1.$m {Hierarchy selection/mark get} {
     .h draw -now
     .h selection clear
     eval .h selection add $homelist
-    update
+    update 
     if {[lsort [.h selection get]] != [lsort $homelist]} {
-	error "selection isn't right"
+	error "selection isn't right" 
     }
     .h selection clear
     update
 
     .h mark clear
     eval .h mark add $homelist
-    update
+    update 
     if {[lsort [.h mark get]] != [lsort $homelist]} {
-	error "mark isn't right"
+	error "mark isn't right" 
     }
     update
     .h mark clear
@@ -261,7 +261,7 @@ foreach test {
 	test Hierarchy-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -287,7 +287,7 @@ foreach test {
 #
 test Hierarchy-1.$c {Hierarchy destruction} {
     destroy .h
-    update
+    update 
 } {}
 
 incr c
@@ -296,14 +296,14 @@ test Hierarchy-1.$c {Hierarchy construction} {
     iwidgets::hierarchy .h -hscrollmode dynamic -labeltext "Label" \
 	    -labelpos n -labelmargin 5
     pack .h -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Hierarchy-1.$c {Hierarchy destruction} {
     destroy .h
-    update
+    update 
 } {}
 
 incr c
@@ -312,7 +312,7 @@ test Hierarchy-1.$c {Hierarchy destruction} {
     iwidgets::hierarchy .h
     pack .h
     destroy .h
-    update
+    update 
 } {}
 
 cd $cdir

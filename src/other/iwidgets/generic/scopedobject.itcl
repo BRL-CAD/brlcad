@@ -66,7 +66,7 @@
 #
 # -----------------------------------------------------------------------------
 #   AUTHOR:  John Tucker
-#            DSC Communications Corp
+#            DSC Communications Corp  
 # -----------------------------------------------------------------------------
 
 itcl::class iwidgets::Scopedobject {
@@ -105,7 +105,7 @@ itcl::class iwidgets::Scopedobject {
 
 #
 # Provide a lowercased access method for the Scopedobject class.
-#
+# 
 proc ::iwidgets::scopedobject {pathName args} {
     uplevel ::iwidgets::Scopedobject $pathName $args
 }
@@ -151,7 +151,7 @@ itcl::body iwidgets::Scopedobject::destructor {} {
 #
 # METHOD: _traceCommand
 #
-# PURPOSE:
+# PURPOSE: 
 # Callback used to destroy instances when their locally created variable
 # goes out of scope.
 #

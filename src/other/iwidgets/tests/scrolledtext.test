@@ -45,7 +45,7 @@ set m 1
 test Scrolledtext-1.$c {Scrolledtext construction} {
     iwidgets::Scrolledtext .st
     pack .st -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -60,20 +60,20 @@ test Scrolledtext-2.$o {configuration option} {
 incr o
 
 foreach test {
-    {-background #d9d9d9 #d9d9d9}
-    {-borderwidth 3 3}
-    {-cursor gumby gumby}
-    {-exportselection 0 0}
-    {-exportselection 1 1}
-    {-foreground Black Black}
-    {-height 120 120}
+    {-background #d9d9d9 #d9d9d9} 
+    {-borderwidth 3 3} 
+    {-cursor gumby gumby} 
+    {-exportselection 0 0} 
+    {-exportselection 1 1} 
+    {-foreground Black Black} 
+    {-height 120 120} 
     {-width 500 500}
-    {-insertbackground Black Black}
-    {-insertborderwidth 1 1}
-    {-insertofftime 200 200}
-    {-insertontime 500 500}
-    {-insertwidth 3 3}
-    {-labelmargin 5 5}
+    {-insertbackground Black Black} 
+    {-insertborderwidth 1 1} 
+    {-insertofftime 200 200} 
+    {-insertontime 500 500} 
+    {-insertwidth 3 3} 
+    {-labelmargin 5 5} 
     {-labeltext Label Label}
     {-labelpos nw nw}
     {-labelpos ne ne}
@@ -87,19 +87,19 @@ foreach test {
     {-labelpos w w}
     {-labelpos ws ws}
     {-labelpos n n}
-    {-relief raised raised}
-    {-relief sunken sunken}
-    {-vscrollmode none none}
-    {-vscrollmode static static}
-    {-vscrollmode dynamic dynamic}
-    {-hscrollmode none none}
-    {-hscrollmode static static}
-    {-hscrollmode dynamic dynamic}
-    {-sbwidth 20 20}
-    {-scrollmargin 5 5}
-    {-selectborderwidth 2 2}
-    {-state disabled disabled}
-    {-state normal normal}
+    {-relief raised raised} 
+    {-relief sunken sunken} 
+    {-vscrollmode none none} 
+    {-vscrollmode static static} 
+    {-vscrollmode dynamic dynamic} 
+    {-hscrollmode none none} 
+    {-hscrollmode static static} 
+    {-hscrollmode dynamic dynamic} 
+    {-sbwidth 20 20} 
+    {-scrollmargin 5 5} 
+    {-selectborderwidth 2 2} 
+    {-state disabled disabled} 
+    {-state normal normal} 
     {-sticky w w}
     {-sticky nw nw}
     {-sticky n n}
@@ -109,7 +109,7 @@ foreach test {
     {-sticky s s}
     {-sticky sw sw}
     {-sticky news news}
-    {-textbackground GhostWhite GhostWhite}
+    {-textbackground GhostWhite GhostWhite} 
     {-visibleitems 72x40 72x40}
     {-height 0 0}
     {-width 0 0}
@@ -120,7 +120,7 @@ foreach test {
 	    .st configure $option [lindex $test 1]
 	    lindex [.st configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -149,7 +149,7 @@ foreach test {
 	test Scrolledtext-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -158,7 +158,7 @@ foreach test {
 #
 test Scrolledtext-1.$c {Scrolledtext destruction} {
     destroy .st
-    update
+    update 
 } {}
 
 incr c
@@ -167,14 +167,14 @@ test Scrolledtext-1.$c {Scrolledtext construction} {
     iwidgets::scrolledtext .st -hscrollmode dynamic -labeltext "Label" \
 	    -labelpos n -labelmargin 5
     pack .st -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Scrolledtext-1.$c {Scrolledtext destruction} {
     destroy .st
-    update
+    update 
 } {}
 
 incr c
@@ -183,7 +183,7 @@ test Scrolledtext-1.$c {Scrolledtext destruction} {
     iwidgets::scrolledtext .st
     pack .st
     destroy .st
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

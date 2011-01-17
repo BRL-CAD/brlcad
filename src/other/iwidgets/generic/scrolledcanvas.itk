@@ -6,30 +6,30 @@
 # canvas options and methods are supported.
 #
 # ----------------------------------------------------------------------
-#  AUTHOR: Mark Ulferts                        mulferts@austin.dsccc.com
+#  AUTHOR: Mark Ulferts                        mulferts@austin.dsccc.com 
 #
 #  @(#) $Id$
 # ----------------------------------------------------------------------
 #            Copyright (c) 1995 DSC Technologies Corporation
 # ======================================================================
-# Permission to use, copy, modify, distribute and license this software
-# and its documentation for any purpose, and without fee or written
-# agreement with DSC, is hereby granted, provided that the above copyright
-# notice appears in all copies and that both the copyright notice and
-# warranty disclaimer below appear in supporting documentation, and that
-# the names of DSC Technologies Corporation or DSC Communications
-# Corporation not be used in advertising or publicity pertaining to the
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
 # software without specific, written prior permission.
-#
-# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
 # ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
 # INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
-# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE,
-# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL
-# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
 # WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
-# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
 # SOFTWARE.
 # ======================================================================
 
@@ -53,45 +53,45 @@ itcl::class iwidgets::Scrolledcanvas {
     constructor {args} {}
     destructor {}
 
-    itk_option define -autoresize autoResize AutoResize 1
+    itk_option define -autoresize autoResize AutoResize 1 
     itk_option define -automargin autoMargin AutoMargin 0
 
-    public method childsite {}
-    public method justify {direction}
+    public method childsite {} 
+    public method justify {direction} 
 
-    public method addtag {args}
-    public method bbox {args}
-    public method bind {args}
-    public method canvasx {args}
-    public method canvasy {args}
-    public method coords {args}
-    public method create {args}
-    public method dchars {args}
-    public method delete {args}
-    public method dtag {args}
-    public method find {args}
-    public method focus {args}
-    public method gettags {args}
-    public method icursor {args}
-    public method index {args}
-    public method insert {args}
-    public method itemconfigure {args}
-    public method itemcget {args}
-    public method lower {args}
-    public method move {args}
-    public method postscript {args}
-    public method raise {args}
-    public method scale {args}
-    public method scan {args}
-    public method select {args}
-    public method type {args}
-    public method xview {args}
-    public method yview {args}
+    public method addtag {args} 
+    public method bbox {args} 
+    public method bind {args} 
+    public method canvasx {args} 
+    public method canvasy {args} 
+    public method coords {args} 
+    public method create {args} 
+    public method dchars {args} 
+    public method delete {args} 
+    public method dtag {args} 
+    public method find {args} 
+    public method focus {args} 
+    public method gettags {args} 
+    public method icursor {args} 
+    public method index {args} 
+    public method insert {args} 
+    public method itemconfigure {args} 
+    public method itemcget {args} 
+    public method lower {args} 
+    public method move {args} 
+    public method postscript {args} 
+    public method raise {args} 
+    public method scale {args} 
+    public method scan {args} 
+    public method select {args} 
+    public method type {args} 
+    public method xview {args} 
+    public method yview {args} 
 }
 
 #
 # Provide a lowercased access method for the Scrolledcanvas class.
-#
+# 
 proc ::iwidgets::scrolledcanvas {pathName args} {
     uplevel ::iwidgets::Scrolledcanvas $pathName $args
 }
@@ -118,12 +118,12 @@ itcl::body iwidgets::Scrolledcanvas::constructor {args} {
 
 	keep -borderwidth -relief -highlightthickness -highlightcolor
 	rename -highlightbackground -background background Background
-    }
+    }	
     grid $itk_component(clipper) -row 0 -column 0 -sticky nsew
     grid rowconfigure $_interior 0 -weight 1
     grid columnconfigure $_interior 0 -weight 1
 
-    #
+    # 
     # Create a canvas to scroll
     #
     itk_component add canvas {
@@ -139,7 +139,7 @@ itcl::body iwidgets::Scrolledcanvas::constructor {args} {
 
 	ignore -highlightthickness -highlightcolor
 
-	keep -closeenough -confine -scrollregion
+	keep -closeenough -confine -scrollregion 
 	keep -xscrollincrement -yscrollincrement
 
 	rename -background -textbackground textBackground Background
@@ -147,8 +147,8 @@ itcl::body iwidgets::Scrolledcanvas::constructor {args} {
     grid $itk_component(canvas) -row 0 -column 0 -sticky nsew
     grid rowconfigure $itk_component(clipper) 0 -weight 1
     grid columnconfigure $itk_component(clipper) 0 -weight 1
-
-    #
+    
+    # 
     # Configure the command on the vertical scroll bar in the base class.
     #
     $itk_component(vertsb) configure \
@@ -159,7 +159,7 @@ itcl::body iwidgets::Scrolledcanvas::constructor {args} {
     #
     $itk_component(horizsb) configure \
 		-command [itcl::code $itk_component(canvas) xview]
-
+    
     #
     # Initialize the widget based on the command line options.
     #
@@ -179,9 +179,9 @@ itcl::body iwidgets::Scrolledcanvas::destructor {} {
 # ------------------------------------------------------------------
 # OPTION: -autoresize
 #
-# Automatically adjusts the scrolled region to be the bounding
-# box covering all the items in the canvas following the execution
-# of any method which creates or destroys items.  Thus, as new
+# Automatically adjusts the scrolled region to be the bounding 
+# box covering all the items in the canvas following the execution 
+# of any method which creates or destroys items.  Thus, as new 
 # items are added, the scrollbars adjust accordingly.
 # ------------------------------------------------------------------
 itcl::configbody iwidgets::Scrolledcanvas::autoresize {
@@ -222,9 +222,9 @@ itcl::body iwidgets::Scrolledcanvas::childsite {} {
 itcl::body iwidgets::Scrolledcanvas::justify {direction} {
     if {[winfo ismapped $itk_component(canvas)]} {
 	update idletasks
-
+	
 	switch $direction {
-	    left {
+	    left { 
 		$itk_component(canvas) xview moveto 0
 	    }
 	    right {
@@ -299,9 +299,9 @@ itcl::body iwidgets::Scrolledcanvas::coords {args} {
 # ------------------------------------------------------------------
 itcl::body iwidgets::Scrolledcanvas::create {args} {
     set retval [eval $itk_component(canvas) create $args]
-
+    
     configure -autoresize $itk_option(-autoresize)
-
+    
     return $retval
 }
 
@@ -317,9 +317,9 @@ itcl::body iwidgets::Scrolledcanvas::dchars {args} {
 # ------------------------------------------------------------------
 itcl::body iwidgets::Scrolledcanvas::delete {args} {
     set retval [eval $itk_component(canvas) delete $args]
-
+    
     configure -autoresize $itk_option(-autoresize)
-
+    
     return $retval
 }
 
@@ -328,7 +328,7 @@ itcl::body iwidgets::Scrolledcanvas::delete {args} {
 # ------------------------------------------------------------------
 itcl::body iwidgets::Scrolledcanvas::dtag {args} {
     eval $itk_component(canvas) dtag $args
-
+    
     configure -autoresize $itk_option(-autoresize)
 }
 
@@ -379,18 +379,18 @@ itcl::body iwidgets::Scrolledcanvas::insert {args} {
 # ------------------------------------------------------------------
 itcl::body iwidgets::Scrolledcanvas::itemconfigure {args} {
     set retval [eval $itk_component(canvas) itemconfigure $args]
-
+    
     configure -autoresize $itk_option(-autoresize)
-
+    
     return $retval
 }
 
 # ------------------------------------------------------------------
-# METHOD: itemcget tagOrId ?option?
+# METHOD: itemcget tagOrId ?option? 
 # ------------------------------------------------------------------
 itcl::body iwidgets::Scrolledcanvas::itemcget {args} {
     set retval [eval $itk_component(canvas) itemcget $args]
-
+    
     return $retval
 }
 
@@ -406,7 +406,7 @@ itcl::body iwidgets::Scrolledcanvas::lower {args} {
 # ------------------------------------------------------------------
 itcl::body iwidgets::Scrolledcanvas::move {args} {
     eval $itk_component(canvas) move $args
-
+    
     configure -autoresize $itk_option(-autoresize)
 }
 
@@ -470,7 +470,7 @@ itcl::body iwidgets::Scrolledcanvas::xview {args} {
 }
 
 # ------------------------------------------------------------------
-# METHOD: yview index
+# METHOD: yview index 
 # ------------------------------------------------------------------
 itcl::body iwidgets::Scrolledcanvas::yview {args} {
     eval $itk_component(canvas) yview $args

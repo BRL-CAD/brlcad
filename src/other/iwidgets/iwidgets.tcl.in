@@ -22,10 +22,16 @@ namespace eval ::iwidgets {
     namespace export *
 
     variable library [file dirname [info script]]
-    variable version @IWIDGETS_VERSION@
+    variable version @PACKAGE_VERSION@
+
+    lappend auto_path $iwidgets::library
+    variable subdir
+    foreach subdir {generic scripts} {
+	if {[file isdirectory [file join $iwidgets::library $subdir]]} {
+	    lappend auto_path [file join $iwidgets::library $subdir]
+	}
+    }
+    unset subdir
 }
 
-lappend auto_path $iwidgets::library \
-		  [file join $iwidgets::library generic] \
-		  [file join $iwidgets::library scripts]
 package provide Iwidgets $iwidgets::version

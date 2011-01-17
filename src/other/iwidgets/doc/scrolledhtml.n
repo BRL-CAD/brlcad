@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) scrolledhtml.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::scrolledhtml iwid
 .BS
@@ -27,7 +27,7 @@ exportSelection   foreground         highlightColor    highlightThickness
 insertBackground  insertBorderWidth  insertOffTime     insertOnTime
 insertWidth       padX               padY              relief
 repeatDelay       repeatInterval     selectBackground  selectBorderWidth
-selectForeground  setGrid\fR
+selectForeground  setGrid\fR 
 .fi
 .LP
 See the "options" manual entry for details on the standard options.
@@ -76,7 +76,7 @@ Command-Line Switch:	\fB-feedback\fR
 .fi
 .IP
 Specifies the callback command to use to give feedback on current
-status. The command is executed in the form \fIcommand\fR \fI<number of
+status. The command is executed in the form \fIcommand\fR \fI<number of 
 characters remaining>\fR
 .LP
 .nf
@@ -86,8 +86,8 @@ Command-Line Switch:	\fB-fixedfont\fR
 .fi
 .IP
 Specifies the name of the font to be used for fixed-width character
-text (such as <pre>...</pre> or <tt>...</tt>.) The size, style, and
-other font attributes are determined by the format tags in the
+text (such as <pre>...</pre> or <tt>...</tt>.) The size, style, and 
+other font attributes are determined by the format tags in the 
 document. The default is courier.
 .LP
 .nf
@@ -96,8 +96,8 @@ Class:	\fBFontName\fR
 Command-Line Switch:	\fB-fontname\fR
 .fi
 .IP
-Specifies the name of the font to be used for normal-width character
-spaced text. The size, style, and other font attributes are
+Specifies the name of the font to be used for normal-width character 
+spaced text. The size, style, and other font attributes are 
 determined by the format tags in the document. The default is times.
 .LP
 .nf
@@ -115,9 +115,9 @@ Class:	\fBForeground\fR
 Command-Line Switch:	\fB-foreground\fR
 .fi
 .IP
-Specifies the color of text other than hypertext links, in any
+Specifies the color of text other than hypertext links, in any 
 of the forms acceptable to \fBTk_GetColor\fR. This value may
-be overridden in a particular document by the \fItext\fR attribute
+be overridden in a particular document by the \fItext\fR attribute 
 of the \fBBody\fR HTML tag.
 .LP
 .nf
@@ -128,7 +128,7 @@ Command-Line Switch:	\fB-link\fR
 .IP
 Specifies the default color of hypertext links in any of the forms
 acceptable to \fBTk_GetColor\fR. This value may be overridden in a
-particular document by the \fIlink\fR attribute of the \fBBody\fR
+particular document by the \fIlink\fR attribute of the \fBBody\fR 
 HTML tag. The default is blue.
 .LP
 .nf
@@ -156,9 +156,9 @@ Class:	\fBBackground\fR
 Command-Line Switch:	\fB-textbackground\fR
 .fi
 .IP
-Specifies the background color for the text area in any of
-the forms acceptable to \fBTk_GetColor\fR. This value may be
-overridden in a particular document by the \fIbgcolor\fR attribute
+Specifies the background color for the text area in any of 
+the forms acceptable to \fBTk_GetColor\fR. This value may be 
+overridden in a particular document by the \fIbgcolor\fR attribute 
 of the \fBBody\fR HTML tag.
 .LP
 .nf
@@ -182,7 +182,7 @@ A boolean value indicating whether to call update during html rendering.
 
 .SH DESCRIPTION
 .PP
-The \fBiwidgets::scrolledhtml\fR command creates
+The \fBiwidgets::scrolledhtml\fR command creates 
 a scrolled text widget with the additional capability to display
 html formatted documents.
 An import method is provided to read an html document file, and
@@ -204,7 +204,7 @@ commands are possible for scrolledhtml widgets:
 .LP
 .nf
 .ta 4c 8c 12c
-\fBbbox\fR	\fBcompare\fR	\fBdebug\fR	\fBdelete\fR
+\fBbbox\fR	\fBcompare\fR	\fBdebug\fR	\fBdelete\fR	
 \fBdlineinfo\fR	\fBget\fR	\fBindex\fR	\fBinsert\fR
 \fBmark\fR	\fBscan\fR	\fBsearch\fR	\fBsee\fR
 \fBtag\fR	\fBwindow\fR	\fBxview\fR	\fByview\fR
@@ -245,12 +245,12 @@ command.
 \fIpathName\fR \fBimport\fR ?\fIoption\fR? \fIhref\fR
 Load html formatted text from a file.  \fIHref\fR must exist.
 If \fIoption\fR is -link, \fIhref\fR is assumed to be relative
-to the application's current working directory. Otherwise,
+to the application's current working directory. Otherwise, 
 \fIhref\fR is assumed to be relative to the path of the last
 page loaded. \fIHref\fR is either a filename, or a reference
 of the form \fIfilename\fR#\fIanchorname\fR. In the latter form,
-fIFilename\fR and/or \fIanchorname\fR may be empty.
-If \fIfilename\fR is empty, the current document is assumed.
+fIFilename\fR and/or \fIanchorname\fR may be empty. 
+If \fIfilename\fR is empty, the current document is assumed. 
 If \fIanchorname\fR is empty, the top of the document is assumed.
 .TP
 \fIpathName\fR \fBpwd\fR

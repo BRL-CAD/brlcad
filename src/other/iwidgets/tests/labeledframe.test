@@ -56,7 +56,7 @@ test Labeledframe-1.$c {Labeledframe construction} {
     pack [radiobutton $cs.w8 -anchor w -text "Button8"] -anchor w -fill x
 
     pack .lf -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -119,7 +119,7 @@ foreach test {
 	    .lf configure $option [lindex $test 1]
 	    lindex [.lf configure $option] 4
 	} [lindex $test 2]
-        update
+        update 
 	incr o
     }
 
@@ -151,7 +151,7 @@ incr m
 test Labeledframe-1.$c {Labeledframe destruction} {
     destroy .b
     destroy .lf
-    update
+    update 
 } {}
 
 incr c
@@ -169,23 +169,23 @@ test Labeledframe-1.$c {Labeledframe construction} {
     pack [radiobutton $cs.w7 -anchor w -text "Button7"] -anchor w -fill x
     pack [radiobutton $cs.w8 -anchor w -text "Button8"] -anchor w -fill x
     pack .lf -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Labeledframe-1.$c {Labeledframe destruction} {
     destroy .lf
-    update
+    update 
 } {}
 
 incr c
 
 test Labeledframe-1.$c {Labeledframe construction} {
-    iwidgets::labeledframe .lf
-    pack .lf
+    iwidgets::labeledframe .lf 
+    pack .lf 
     destroy .lf
-    update
+    update 
 } {}
 
 

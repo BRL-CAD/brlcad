@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) labeledframe.n 1.21 97/1/30 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::labeledframe iwid
 .BS
@@ -53,7 +53,7 @@ Class:	\fBBitmap\fR
 Command-Line Switch:	\fB-labelbitmap\fR
 .fi
 .IP
-Specifies a bitmap to display in the label, in any of the forms
+Specifies a bitmap to display in the label, in any of the forms 
 acceptable to \fBTk_GetBitmap\fR.  This option overrides the \fIlabeltext\fR
 option.
 .LP
@@ -74,7 +74,7 @@ Command-Line Switch:	\fB-labelmargin\fR
 .fi
 .IP
 Specifies the distance between the inner ede of the hull frames relief,
-and the label in any of the forms acceptable to \fBTk_GetPixels\fR.
+and the label in any of the forms acceptable to \fBTk_GetPixels\fR. 
 The default is 10 pixels.
 .LP
 .nf
@@ -118,7 +118,7 @@ The \fBiwidgets::labeledframe\fR command creates a hull frame with a
 grooved relief, a label positioned within the grooved relief of
 the hull frame, and a frame childsite.  The frame childsite can filled with any
 widget via a derived class or though the use of the childsite method.
-This class was designed to be a general purpose base class for supporting the
+This class was designed to be a general purpose base class for supporting the 
 combination of labeled frame and a childsite.  The options include the
 ability to position the label at configurable locations within the
 grooved relief of the hull frame, and control the display of the label.
@@ -166,7 +166,7 @@ Name:	\fBlabel\fR
 Class:	\fBlabel\fR
 .fi
 .IP
-The label component provides the label for the labeled widget.  See the
+The label component provides the label for the labeled widget.  See the 
 "label" widget manual entry for details on the label component item.
 .fi
 .LP

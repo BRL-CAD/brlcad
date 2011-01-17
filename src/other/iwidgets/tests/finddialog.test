@@ -47,7 +47,7 @@ test Finddialog-1.$c {Finddialog construction} {
     iwidgets::Scrolledlistbox .slb
     iwidgets::Scrolledtext .st
     pack .st
-    .st insert end "Now is the time for all good men\\n"
+    .st insert end "Now is the time for all good men\\n" 
     .st insert end "to come to the aid of their country"
 
     iwidgets::Finddialog .fd
@@ -67,10 +67,10 @@ test Finddialog-2.$o {configuration option} {
 incr o
 
 foreach test {
-    {-background #d9d9d9 #d9d9d9}
-    {-buttonboxpadx 10 10}
-    {-buttonboxpady 10 10}
-    {-cursor gumby gumby}
+    {-background #d9d9d9 #d9d9d9} 
+    {-buttonboxpadx 10 10} 
+    {-buttonboxpady 10 10} 
+    {-cursor gumby gumby} 
     {-textwidget .st .st}
     {-patternbackground blue blue}
     {-patternforeground white white}
@@ -82,7 +82,7 @@ foreach test {
 	    .fd configure $option [lindex $test 1]
 	    lindex [.fd configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -113,7 +113,7 @@ foreach test {
 	test Finddialog-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -143,7 +143,7 @@ test Finddialog-1.$c {Finddialog destruction} {
     destroy .slb
     destroy .st
     destroy .fd
-    update
+    update 
 } {}
 incr c
 
@@ -161,7 +161,7 @@ incr c
 #
 test Finddialog-1.$c {Finddialog destruction} {
     destroy .fd
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

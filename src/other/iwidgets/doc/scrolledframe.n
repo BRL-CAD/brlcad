@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) scrolledframe.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::scrolledframe iwid
 .BS
@@ -23,7 +23,7 @@ itk::Widget <- iwidgets::Labeledwidget <- iwidgets::Scrolledwidget <- iwidgets::
 \fB
 activeBackground  background        borderWidth        cursor
 font              foreground        highlightColor     highlightThickness
-relief            selectBackground  selectBorderWidth  selectForeground\fR
+relief            selectBackground  selectBorderWidth  selectForeground\fR	
 .fi
 .LP
 See the "options" manual entry for details on the standard options.
@@ -61,9 +61,9 @@ Command-Line Switch:	\fB-hscrollmode\fR
 .fi
 .IP
 Specifies the the display mode to be used for the horizontal
-scrollbar: \fBstatic\fR, \fBdynamic\fR, or \fBnone\fR.  In static mode, the
+scrollbar: \fBstatic\fR, \fBdynamic\fR, or \fBnone\fR.  In static mode, the 
 scroll bar is displayed at all times.  Dynamic mode displays the
-scroll bar as required, and none disables the scroll bar display.  The
+scroll bar as required, and none disables the scroll bar display.  The 
 default is static.
 .LP
 .nf
@@ -72,7 +72,7 @@ Class:	\fBWidth\fR
 Command-Line Switch:	\fB-sbwidth\fR
 .fi
 .IP
-Specifies the width of the scrollbar in any of the forms acceptable
+Specifies the width of the scrollbar in any of the forms acceptable 
 to \fBTk_GetPixels\fR.  The default width is 15 pixels.
 .LP
 .nf
@@ -91,9 +91,9 @@ Command-Line Switch:	\fB-vscrollmode\fR
 .fi
 .IP
 Specifies the the display mode to be used for the vertical
-scrollbar: \fBstatic\fR, \fBdynamic\fR, or \fBnone\fR.  In static mode, the
-scroll bar is displayed at all times.  Dynamic mode displays the
-scroll bar as required, and none disables the scroll bar display.  The
+scrollbar: \fBstatic\fR, \fBdynamic\fR, or \fBnone\fR.  In static mode, the 
+scroll bar is displayed at all times.  Dynamic mode displays the 
+scroll bar as required, and none disables the scroll bar display.  The 
 default is static.
 .LP
 .nf
@@ -108,10 +108,10 @@ acceptable to \fBTk_GetPixels\fR.  The default height is 100 pixels.
 
 .SH DESCRIPTION
 .PP
-The \fBscrolledframe\fR combines the functionallity of scrolling with that
-of a typical frame widget to implement a clipable viewing area whose visible
-region may be modified with the scroll bars. This enables the contruction
-of visually larger areas than which could normally be displayed, containing
+The \fBscrolledframe\fR combines the functionallity of scrolling with that 
+of a typical frame widget to implement a clipable viewing area whose visible 
+region may be modified with the scroll bars. This enables the contruction 
+of visually larger areas than which could normally be displayed, containing 
 a heterogenous mix of other widgets. Options exist which allow full control
 over which scrollbars are displayed and the method, i.e. statically or
 dynamically. The frame itself may be accessed by the \fBchildsite\fR
@@ -174,7 +174,7 @@ Name:	\fBhorizsb\fR
 Class:	\fBScrollbar\fR
 .fi
 .IP
-The horizsb component is the horizontal scroll bar.  See the "ScrollBar"
+The horizsb component is the horizontal scroll bar.  See the "ScrollBar" 
 widget manual entry for details on the horizsb component item.
 .LP
 .nf
@@ -182,7 +182,7 @@ Name:	\fBvertsb\fR
 Class:	\fBScrollbar\fR
 .fi
 .IP
-The vertsb component is the vertical scroll bar.  See the "ScrollBar" widget
+The vertsb component is the vertical scroll bar.  See the "ScrollBar" widget 
 manual entry for details on the vertsb component item.
 .fi
 

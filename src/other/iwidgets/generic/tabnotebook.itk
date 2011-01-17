@@ -1,31 +1,31 @@
 #
 # Tabnotebook Widget
 # ----------------------------------------------------------------------
-# The Tabnotebook command creates a new window (given by the pathName
-# argument) and makes it into a Tabnotebook widget. Additional options,
-# described above may be specified on the command line or in the option
-# database to configure aspects of the Tabnotebook such as its colors,
-# font, and text. The Tabnotebook command returns its pathName argument.
-# At the time this command is invoked, there must not exist a window
+# The Tabnotebook command creates a new window (given by the pathName 
+# argument) and makes it into a Tabnotebook widget. Additional options, 
+# described above may be specified on the command line or in the option 
+# database to configure aspects of the Tabnotebook such as its colors, 
+# font, and text. The Tabnotebook command returns its pathName argument. 
+# At the time this command is invoked, there must not exist a window 
 # named pathName, but pathName's parent must exist.
-#
-# A Tabnotebook is a widget that contains a set of tabbed pages. It
-# displays one page from the set as the selected page. A Tab displays
-# the label for the page to which it is attached and serves as a page
-# selector.   When a page's tab is selected, the page's contents are
-# displayed in the page area. The selected tab has a three-dimensional
-# effect to make it appear to float above the other tabs. The tabs are
-# displayed as a group along either the left, top, right, or bottom
-# edge. When first created a Tabnotebook has no pages. Pages may be
+# 
+# A Tabnotebook is a widget that contains a set of tabbed pages. It 
+# displays one page from the set as the selected page. A Tab displays 
+# the label for the page to which it is attached and serves as a page 
+# selector.   When a page's tab is selected, the page's contents are 
+# displayed in the page area. The selected tab has a three-dimensional 
+# effect to make it appear to float above the other tabs. The tabs are 
+# displayed as a group along either the left, top, right, or bottom 
+# edge. When first created a Tabnotebook has no pages. Pages may be 
 # added or deleted using widget commands described below.
-#
-# A special option may be provided to the Tabnotebook. The -auto
-# option specifies whether the Tabnotebook will automatically handle
-# the unpacking and packing of pages when pages are selected. A value
-# of true sig nifies that the notebook will automatically manage it. This
-# is the default value. A value of false signifies the notebook will not
+# 
+# A special option may be provided to the Tabnotebook. The -auto 
+# option specifies whether the Tabnotebook will automatically handle 
+# the unpacking and packing of pages when pages are selected. A value 
+# of true sig nifies that the notebook will automatically manage it. This 
+# is the default value. A value of false signifies the notebook will not 
 # perform automatic switching of pages.
-#
+# 
 # ----------------------------------------------------------------------
 #  AUTHOR: Bill W. Scott
 #
@@ -35,24 +35,24 @@
 # ----------------------------------------------------------------------
 #            Copyright (c) 1995 DSC Technologies Corporation
 # ======================================================================
-# Permission to use, copy, modify, distribute and license this software
-# and its documentation for any purpose, and without fee or written
-# agreement with DSC, is hereby granted, provided that the above copyright
-# notice appears in all copies and that both the copyright notice and
-# warranty disclaimer below appear in supporting documentation, and that
-# the names of DSC Technologies Corporation or DSC Communications
-# Corporation not be used in advertising or publicity pertaining to the
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
 # software without specific, written prior permission.
-#
-# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
 # ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
 # INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
-# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE,
-# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL
-# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
 # WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
-# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
 # SOFTWARE.
 # ======================================================================
 
@@ -98,11 +98,11 @@ itk::usual Tabnotebook {
 # ------------------------------------------------------------------
 itcl::class iwidgets::Tabnotebook {
     inherit itk::Widget
-
+    
     constructor {args} {}
     destructor {}
-
-    itk_option define -borderwidth borderWidth BorderWidth 2
+    
+    itk_option define -borderwidth borderWidth BorderWidth 2 
     itk_option define -state state State normal
     itk_option define \
 	    -disabledforeground disabledForeground DisabledForeground #a3a3a3
@@ -117,50 +117,50 @@ itcl::class iwidgets::Tabnotebook {
     itk_option define -tabforeground tabForeground TabForeground Black
     itk_option define -tabbackground tabBackground TabBackground #d9d9d9
     itk_option define -backdrop backdrop Backdrop #d9d9d9
-    itk_option define -margin margin Margin 4
-    itk_option define -tabborders tabBorders TabBorders true
-    itk_option define -bevelamount bevelAmount BevelAmount 0
-    itk_option define -raiseselect raiseSelect RaiseSelect false
+    itk_option define -margin margin Margin 4 
+    itk_option define -tabborders tabBorders TabBorders true 
+    itk_option define -bevelamount bevelAmount BevelAmount 0 
+    itk_option define -raiseselect raiseSelect RaiseSelect false 
     itk_option define -auto auto Auto true
-    itk_option define -start start Start 4
-    itk_option define -padx padX PadX 4
-    itk_option define -pady padY PadY 4
-    itk_option define -gap gap Gap overlap
-    itk_option define -angle angle Angle 15
-    itk_option define -tabpos tabPos TabPos s
-
+    itk_option define -start start Start 4 
+    itk_option define -padx padX PadX 4 
+    itk_option define -pady padY PadY 4 
+    itk_option define -gap gap Gap overlap 
+    itk_option define -angle angle Angle 15 
+    itk_option define -tabpos tabPos TabPos s 
+    
     public method add { args }
-    public method configure { args }
+    public method configure { args } 
     public method childsite { args }
-    public method delete { args }
-    public method index { args }
+    public method delete { args } 
+    public method index { args } 
     public method insert { index args }
-    public method prev { }
+    public method prev { } 
     public method next { }
-    public method pageconfigure { index args }
-    public method select { index }
-    public method view { args }
-
-    protected method _reconfigureTabset { }
+    public method pageconfigure { index args } 
+    public method select { index } 
+    public method view { args } 
+    
+    protected method _reconfigureTabset { } 
     protected method _canvasReconfigure { wid hgt }
     protected method _pageReconfigure { pageName page wid hgt }
-
+    
     private method _getArgs { optList args }
-    private method _redrawBorder { wid hgt }
+    private method _redrawBorder { wid hgt } 
     private method _recomputeBorder { }
-    private method _pack { tabPos }
+    private method _pack { tabPos } 
     private method _resize {newWidth_ newHeight_}
-
+    
     private variable _canvasWidth 0       ;# currently tabnote canvas width
     private variable _canvasHeight 0      ;# currently tabnote canvas height
     private variable _nbOptList {}        ;# list of notebook options available
     private variable _tsOptList {}        ;# list of tabset options available
-
+    
     private variable _tabPos s            ;# holds -tabPos, because of ordering
-
+    
     private variable _borderRecompute false   ;# did we dirty border after cfg?
     private variable _tabsetReconfigure false ;# did we dirty tabsets after cfg?
-
+    
 }
 
 
@@ -185,17 +185,17 @@ itcl::body iwidgets::Tabnotebook::constructor {args} {
     }
     bind $itk_component(canvas) <Configure> [itcl::code $this _resize %w %h]
 
-
-
+    
+    
     # .......................
     # Create the NOTEBOOK
     #
     itk_component add notebook {
-	iwidgets::Notebook $itk_interior.canvas.notebook
+	iwidgets::Notebook $itk_interior.canvas.notebook 
     } {
-	keep -cursor -background
+	keep -cursor -background 
     }
-
+    
     #
     # Ouch, create a dummy page, go pageconfigure to get its options
     # and munge them into a list for later doling by pageconfigure
@@ -206,19 +206,19 @@ itcl::body iwidgets::Tabnotebook::constructor {args} {
 	lappend _nbOptList [lindex $config 0]
     }
     $itk_component(notebook) delete 0
-
-    #
+    
+    # 
     # Create the tabset.
     #
     itk_component add tabset {
 	iwidgets::Tabset $itk_interior.canvas.tabset \
 		-command [itcl::code $this component notebook select]
     } {
-	keep -cursor
+	keep -cursor 
     }
-
+    
     eval itk_initialize $args
-
+    
     #
     # Ouch, create a dummy tab, go tabconfigure to get its options
     # and munge them into a list for later doling by pageconfigure
@@ -229,10 +229,10 @@ itcl::body iwidgets::Tabnotebook::constructor {args} {
 	lappend _tsOptList [lindex $config 0]
     }
     $itk_component(tabset) delete 0
-
+    
     bind $itk_component(tabset) <Configure> \
 	    [itcl::code $this _reconfigureTabset]
-
+    
     _pack $_tabPos
     $itk_component(hull) configure -width [cget -width] -height [cget -height]
 }
@@ -270,18 +270,18 @@ itcl::configbody iwidgets::Tabnotebook::state {
 	$itk_component(tabset) configure -state $itk_option(-state)
 	#_reconfigureTabset
 	set _tabsetReconfigure true
-
+	
     }
 }
 
 # ----------------------------------------------------------------------
 # OPTION -disabledforeground
 #
-# Specifies a foreground color to use for displaying a
+# Specifies a foreground color to use for displaying a 
 # tab's label when its state is disabled.
 # ----------------------------------------------------------------------
 itcl::configbody iwidgets::Tabnotebook::disabledforeground {
-
+    
     if {$itk_option(-disabledforeground) != {}} {
 	$itk_component(tabset) configure \
 		-disabledforeground $itk_option(-disabledforeground)
@@ -296,7 +296,7 @@ itcl::configbody iwidgets::Tabnotebook::disabledforeground {
 # Standard option. See options man pages.
 # ----------------------------------------------------------------------
 itcl::configbody iwidgets::Tabnotebook::scrollcommand {
-
+    
     if {$itk_option(-scrollcommand) != {}} {
 	$itk_component(notebook) \
 		configure -scrollcommand $itk_option(-scrollcommand)
@@ -306,14 +306,14 @@ itcl::configbody iwidgets::Tabnotebook::scrollcommand {
 # ----------------------------------------------------------------------
 # OPTION -equaltabs
 #
-# Specifies whether to force tabs to be equal sized or not.
-# A value of true means constrain tabs to be equal sized.
-# A value of false allows each tab to size based on the text
-# label size. The value may have any of the forms accepted by
+# Specifies whether to force tabs to be equal sized or not. 
+# A value of true means constrain tabs to be equal sized. 
+# A value of false allows each tab to size based on the text 
+# label size. The value may have any of the forms accepted by 
 # the Tcl_GetBoolean, such as true, false, 0, 1, yes, or no.
 # ----------------------------------------------------------------------
 itcl::configbody iwidgets::Tabnotebook::equaltabs {
-
+    
     if {$itk_option(-equaltabs) != {}} {
 	$itk_component(tabset) \
 		configure -equaltabs $itk_option(-equaltabs)
@@ -328,7 +328,7 @@ itcl::configbody iwidgets::Tabnotebook::equaltabs {
 # Font for tab labels when they are set to text (-label set)
 # ----------------------------------------------------------------------
 itcl::configbody iwidgets::Tabnotebook::font {
-
+    
     if {$itk_option(-font) != {}} {
 	$itk_component(tabset) configure -font $itk_option(-font)
 	#_reconfigureTabset
@@ -365,11 +365,11 @@ itcl::configbody iwidgets::Tabnotebook::height {
 # ----------------------------------------------------------------------
 # OPTION -foreground
 #
-# Specifies a foreground color to use for displaying a page
+# Specifies a foreground color to use for displaying a page 
 # and its associated tab label (this is the selected state).
 # ----------------------------------------------------------------------
 itcl::configbody iwidgets::Tabnotebook::foreground {
-
+    
     if {$itk_option(-foreground) != {}} {
 	$itk_component(tabset) configure \
 		-selectforeground $itk_option(-foreground)
@@ -379,11 +379,11 @@ itcl::configbody iwidgets::Tabnotebook::foreground {
 # ----------------------------------------------------------------------
 # OPTION -background
 #
-# Specifies a background color to use for displaying a page
+# Specifies a background color to use for displaying a page 
 # and its associated tab bg (this is the selected state).
 # ----------------------------------------------------------------------
 itcl::configbody iwidgets::Tabnotebook::background {
-
+    
     if {$itk_option(-background) != {}} {
 	$itk_component(tabset) configure \
 		-selectbackground $itk_option(-background)
@@ -395,11 +395,11 @@ itcl::configbody iwidgets::Tabnotebook::background {
 # ----------------------------------------------------------------------
 # OPTION -tabforeground
 #
-# Specifies a foreground color to use for displaying tab labels
+# Specifies a foreground color to use for displaying tab labels 
 # when they are in their unselected state.
 # ----------------------------------------------------------------------
 itcl::configbody iwidgets::Tabnotebook::tabforeground {
-
+    
     if {$itk_option(-tabforeground) != {}} {
 	$itk_component(tabset) configure \
 		-foreground $itk_option(-tabforeground)
@@ -409,11 +409,11 @@ itcl::configbody iwidgets::Tabnotebook::tabforeground {
 # ----------------------------------------------------------------------
 # OPTION -tabbackground
 #
-# Specifies a background color to use for displaying tab backgrounds
+# Specifies a background color to use for displaying tab backgrounds 
 # when they are in their unselected state.
 # ----------------------------------------------------------------------
 itcl::configbody iwidgets::Tabnotebook::tabbackground {
-
+    
     if {$itk_option(-tabbackground) != {}} {
 	$itk_component(tabset) configure \
 		-background $itk_option(-tabbackground)
@@ -423,11 +423,11 @@ itcl::configbody iwidgets::Tabnotebook::tabbackground {
 # ----------------------------------------------------------------------
 # OPTION -backdrop
 #
-# Specifies a background color to use when filling in the
+# Specifies a background color to use when filling in the 
 # area behind the tabs.
 # ----------------------------------------------------------------------
 itcl::configbody iwidgets::Tabnotebook::backdrop {
-
+    
     if {$itk_option(-backdrop) != {}} {
 	$itk_component(tabset) configure \
 		-backdrop $itk_option(-backdrop)
@@ -504,7 +504,7 @@ itcl::configbody iwidgets::Tabnotebook::auto {
 # OPTION -start
 # ----------------------------------------------------------------------
 itcl::configbody iwidgets::Tabnotebook::start {
-
+    
     if {$itk_option(-start) != {}} {
 	$itk_component(tabset) configure \
 		-start $itk_option(-start)
@@ -516,16 +516,16 @@ itcl::configbody iwidgets::Tabnotebook::start {
 # ----------------------------------------------------------------------
 # OPTION -padx
 #
-# Specifies a non-negative value indicating how much extra space
-# to request for a tab around its label in the X-direction.
-# When computing how large a window it needs, the tab will add
-# this amount to the width it would normally need The tab will
-# end up with extra internal space to the left and right of its
-# text label. This value may have any of the forms acceptable
+# Specifies a non-negative value indicating how much extra space 
+# to request for a tab around its label in the X-direction. 
+# When computing how large a window it needs, the tab will add 
+# this amount to the width it would normally need The tab will 
+# end up with extra internal space to the left and right of its 
+# text label. This value may have any of the forms acceptable 
 # to Tk_GetPixels.
 # ----------------------------------------------------------------------
 itcl::configbody iwidgets::Tabnotebook::padx {
-
+    
     if {$itk_option(-padx) != {}} {
 	$itk_component(tabset) configure -padx $itk_option(-padx)
 	#_reconfigureTabset
@@ -536,15 +536,15 @@ itcl::configbody iwidgets::Tabnotebook::padx {
 # ----------------------------------------------------------------------
 # OPTION -pady
 #
-# Specifies a non-negative value indicating how much extra space to
-# request for a tab around its label in the Y-direction. When computing
-# how large a window it needs, the tab will add this amount to the
-# height it would normally need The tab will end up with extra internal
-# space to the top and bot tom of its text label. This value may have
+# Specifies a non-negative value indicating how much extra space to 
+# request for a tab around its label in the Y-direction. When computing 
+# how large a window it needs, the tab will add this amount to the 
+# height it would normally need The tab will end up with extra internal 
+# space to the top and bot tom of its text label. This value may have 
 # any of the forms acceptable to Tk_GetPixels.
 # ----------------------------------------------------------------------
 itcl::configbody iwidgets::Tabnotebook::pady {
-
+    
     if {$itk_option(-pady) != {}} {
 	$itk_component(tabset) configure -pady $itk_option(-pady)
 	#_reconfigureTabset
@@ -555,13 +555,13 @@ itcl::configbody iwidgets::Tabnotebook::pady {
 # ----------------------------------------------------------------------
 # OPTION -gap
 #
-# Specifies the amount of pixel space to place between each tab.
-# Value may be any pixel offset value. In addition, a special keyword
-# 'overlap' can be used as the value to achieve a standard overlap of
+# Specifies the amount of pixel space to place between each tab. 
+# Value may be any pixel offset value. In addition, a special keyword 
+# 'overlap' can be used as the value to achieve a standard overlap of 
 # tabs. This value may have any of the forms acceptable to Tk_GetPixels.
 # ----------------------------------------------------------------------
 itcl::configbody iwidgets::Tabnotebook::gap {
-
+    
     if {$itk_option(-gap) != {}} {
 	$itk_component(tabset) configure -gap $itk_option(-gap)
 	#_reconfigureTabset
@@ -572,13 +572,13 @@ itcl::configbody iwidgets::Tabnotebook::gap {
 # ----------------------------------------------------------------------
 # OPTION -angle
 #
-# Specifes the angle of slope from the inner edge to the outer edge
-# of the tab. An angle of 0 specifies square tabs. Valid ranges are
-# 0 to 45 degrees inclusive. Default is 15 degrees. If tabPos is
+# Specifes the angle of slope from the inner edge to the outer edge 
+# of the tab. An angle of 0 specifies square tabs. Valid ranges are 
+# 0 to 45 degrees inclusive. Default is 15 degrees. If tabPos is 
 # e or w, this option is ignored.
 # ----------------------------------------------------------------------
 itcl::configbody iwidgets::Tabnotebook::angle {
-
+    
     if {$itk_option(-angle) != {}} {
 	$itk_component(tabset) configure -angle $itk_option(-angle)
 	#_reconfigureTabset
@@ -589,11 +589,11 @@ itcl::configbody iwidgets::Tabnotebook::angle {
 # ----------------------------------------------------------------------
 # OPTION -tabpos
 #
-# Specifies the location of the set of tabs in relation to the
+# Specifies the location of the set of tabs in relation to the 
 # Notebook area. Must be n, s, e, or w.   Defaults to s.
 # ----------------------------------------------------------------------
 itcl::configbody iwidgets::Tabnotebook::tabpos {
-
+    
     if {$itk_option(-tabpos) != {}} {
 	set _tabPos $itk_option(-tabpos)
 	$itk_component(tabset) configure \
@@ -615,20 +615,20 @@ itcl::configbody iwidgets::Tabnotebook::tabpos {
 # -------------------------------------------------------------
 itcl::body iwidgets::Tabnotebook::configure { args } {
     set result [eval itk::Archetype::configure $args]
-
+    
     # check for flags then do update...
-    if { $_borderRecompute == "true" } {
+    if { $_borderRecompute == "true" } { 
 	_recomputeBorder
 	set _borderRecompute false
     }
-
-    if { $_tabsetReconfigure == "true" } {
+    
+    if { $_tabsetReconfigure == "true" } { 
 	_reconfigureTabset
 	set _tabsetReconfigure false
     }
-
+    
     return $result
-
+    
 }
 
 # -------------------------------------------------------------
@@ -640,22 +640,22 @@ itcl::body iwidgets::Tabnotebook::configure { args } {
 # Returns the page's childsite frame
 # -------------------------------------------------------------
 itcl::body iwidgets::Tabnotebook::add { args } {
-
+    
     # The args list should be an even # of params, if not then
     # prob missing value for last item in args list. Signal error.
     set len [llength $args]
     if { [expr {$len % 2}] } {
 	error "value for \"[lindex $args [expr {$len - 1}]]\" missing"
     }
-
+    
     # pick out the notebook args
     set nbArgs [eval _getArgs [list $_nbOptList] $args]
     set pageName [eval $itk_component(notebook) add $nbArgs]
-
+    
     # pick out the tabset args
     set tsArgs [eval _getArgs [list $_tsOptList] $args]
     eval $itk_component(tabset)   add $tsArgs
-
+    
     set page [index end]
     bind $pageName <Configure> \
 	    [itcl::code $this _pageReconfigure $pageName $page %w %h]
@@ -665,7 +665,7 @@ itcl::body iwidgets::Tabnotebook::add { args } {
 # -------------------------------------------------------------
 # METHOD: childsite ?<index>?
 #
-# If index is supplied, returns the child site widget
+# If index is supplied, returns the child site widget 
 # corresponding to the page index.  If called with no arguments,
 # returns a list of all child sites
 # -------------------------------------------------------------
@@ -705,17 +705,17 @@ itcl::body iwidgets::Tabnotebook::index { args } {
 # Returns the name of the page's child site
 # -------------------------------------------------------------
 itcl::body iwidgets::Tabnotebook::insert { index args } {
-
+    
     # pick out the notebook args
     set nbArgs [eval _getArgs [list $_nbOptList] $args]
     set pageName [eval $itk_component(notebook) insert [list $index] $nbArgs]
-
+    
     # pick out the tabset args
     set tsArgs [eval _getArgs [list $_tsOptList] $args]
     eval $itk_component(tabset)   insert [list $index] $tsArgs
-
+    
     return $pageName
-
+    
 }
 
 # -------------------------------------------------------------
@@ -746,10 +746,10 @@ itcl::body iwidgets::Tabnotebook::next { } {
 # associated with a page.
 # -------------------------------------------------------------
 itcl::body iwidgets::Tabnotebook::pageconfigure { index args } {
-
+    
     set nbArgs [eval _getArgs [list $_nbOptList] $args]
     set tsArgs [eval _getArgs [list $_tsOptList] $args]
-
+    
     set len [llength $args]
     switch $len {
 	0 {
@@ -774,7 +774,7 @@ itcl::body iwidgets::Tabnotebook::pageconfigure { index args } {
 	    # one options value... need to figure out which one
 	    # (page or tab) can service this. Then only return
 	    # that one's result.
-
+	    
 	    if { [llength $nbArgs] != 0 } {
 		return [eval $itk_component(notebook) \
 			pageconfigure $index $nbArgs]
@@ -784,23 +784,23 @@ itcl::body iwidgets::Tabnotebook::pageconfigure { index args } {
 	    } else {
 		error "unknown option \"$args\""
 	    }
-
+	    
 	}
 	default {
-
+	    
 	    # pick out the notebook args
 	    set nbConfig \
 		    [eval $itk_component(notebook) \
 		    pageconfigure [list $index] $nbArgs]
-
+	    
 	    # pick out the tabset args
 	    set tsConfig \
 		    [eval $itk_component(tabset)   \
 		    tabconfigure [list $index] $tsArgs]
-
+	    
 	    return ""
 	    #return [concat $nbConfig $tsConfig]
-
+	    
 	}
     }
 }
@@ -854,18 +854,18 @@ itcl::body iwidgets::Tabnotebook::view { args } {
 #
 # -------------------------------------------------------------
 itcl::body iwidgets::Tabnotebook::_getArgs { optList args } {
-
+    
     set len [llength $args]
-
+    
     set retArgs {}
-
+    
     for {set i 0} {$i < $len} {incr i} {
 	# get the option for this pair
 	set opt [lindex $args $i]
-
+	
 	# move ahead to the value
 	incr i
-
+	
 	# option exists!
 	if { [lsearch -exact $optList $opt] != -1} {
 	    lappend retArgs $opt
@@ -875,20 +875,20 @@ itcl::body iwidgets::Tabnotebook::_getArgs { optList args } {
 	    # option does not exist
 	}
     }
-
+    
     return $retArgs
 }
 
 # -------------------------------------------------------------
 # PROTECTED METHOD: _reconfigureTabset
 #
-# bound to the tabset reconfigure... We call our canvas
+# bound to the tabset reconfigure... We call our canvas 
 # reconfigure as if the canvas resized, it then configures
 # the tabset correctly.
 # -------------------------------------------------------------
 itcl::body iwidgets::Tabnotebook::_reconfigureTabset { } {
     _canvasReconfigure $_canvasWidth $_canvasHeight
-
+    
 }
 
 # -------------------------------------------------------------
@@ -898,18 +898,18 @@ itcl::body iwidgets::Tabnotebook::_reconfigureTabset { } {
 # keeps the tabset area stretched in its major dimension.
 # -------------------------------------------------------------
 itcl::body iwidgets::Tabnotebook::_canvasReconfigure { wid hgt } {
-
+    
     if { $_tabPos == "n" || $_tabPos == "s" } {
 	$itk_component(tabset) configure -width $wid
     } else {
 	$itk_component(tabset) configure -height $hgt
     }
-
+    
     set _canvasWidth $wid
     set _canvasHeight $hgt
-
-    _redrawBorder $wid $hgt
-
+    
+    _redrawBorder $wid $hgt 
+    
 }
 
 # -------------------------------------------------------------
@@ -919,15 +919,15 @@ itcl::body iwidgets::Tabnotebook::_canvasReconfigure { wid hgt } {
 # and height
 # -------------------------------------------------------------
 itcl::body iwidgets::Tabnotebook::_redrawBorder { wid hgt } {
-
+    
     # Get the top of the Notebook area...
-
+    
     set nbTop [winfo y $itk_component(notebook)]
     set canTop [expr {$nbTop - $itk_option(-borderwidth)}]
-
+    
     $itk_component(canvas) delete BORDER
     if { $itk_option(-borderwidth) > 0 } {
-
+	
 	# For south, east, and west -- draw the top/north edge
 	if { $_tabPos != "n" } {
 	    $itk_component(canvas) create line \
@@ -939,7 +939,7 @@ itcl::body iwidgets::Tabnotebook::_redrawBorder { wid hgt } {
 		    -fill [iwidgets::colors::topShadow $itk_option(-background)] \
 		    -tags BORDER
 	}
-
+	
 	# For north, east, and west -- draw the bottom/south edge
 	if { $_tabPos != "s" } {
 	    $itk_component(canvas) create line \
@@ -950,8 +950,8 @@ itcl::body iwidgets::Tabnotebook::_redrawBorder { wid hgt } {
 		    -width $itk_option(-borderwidth) \
 		    -fill [iwidgets::colors::bottomShadow $itk_option(-background)] \
 		    -tags BORDER
-	}
-
+	} 
+	
 	# For north, south, and east -- draw the left/west edge
 	if { $_tabPos != "w" } {
 	    $itk_component(canvas) create line \
@@ -963,7 +963,7 @@ itcl::body iwidgets::Tabnotebook::_redrawBorder { wid hgt } {
 		    -fill [iwidgets::colors::topShadow $itk_option(-background)] \
 		    -tags BORDER
 	}
-
+	
 	# For north, south, and west -- draw the right/east edge
 	if { $_tabPos != "e" } {
 	    $itk_component(canvas) create line \
@@ -976,7 +976,7 @@ itcl::body iwidgets::Tabnotebook::_redrawBorder { wid hgt } {
 		    -tags BORDER
 	}
     }
-
+    
 }
 
 # -------------------------------------------------------------
@@ -984,13 +984,13 @@ itcl::body iwidgets::Tabnotebook::_redrawBorder { wid hgt } {
 #
 # Based on current width and height of our canvas, repacks
 # the notebook with padding for borderwidth, and calls
-# redraw border method
+# redraw border method 
 # -------------------------------------------------------------
 itcl::body iwidgets::Tabnotebook::_recomputeBorder { } {
-
+    
     set wid [winfo width $itk_component(canvas)]
     set hgt [winfo height $itk_component(canvas)]
-
+    
     _pack $_tabPos
     _redrawBorder $wid $hgt
 }
@@ -998,7 +998,7 @@ itcl::body iwidgets::Tabnotebook::_recomputeBorder { } {
 # -------------------------------------------------------------
 # PROTECTED METHOD: _pageReconfigure
 #
-# This method will eventually reconfigure the tab notebook's
+# This method will eventually reconfigure the tab notebook's 
 # notebook area to contain the resized child site
 # -------------------------------------------------------------
 itcl::body iwidgets::Tabnotebook::_pageReconfigure { pageName page wid hgt } {
@@ -1011,10 +1011,10 @@ itcl::body iwidgets::Tabnotebook::_pageReconfigure { pageName page wid hgt } {
 # to the current $tabPos
 # -------------------------------------------------------------
 itcl::body iwidgets::Tabnotebook::_pack { tabPos } {
-
-    pack $itk_component(canvas) -fill both -expand yes
+    
+    pack $itk_component(canvas) -fill both -expand yes 
     pack propagate $itk_component(canvas) no
-
+    
     switch $tabPos {
 	n {
 	    # north
@@ -1027,7 +1027,7 @@ itcl::body iwidgets::Tabnotebook::_pack { tabPos } {
 		    -expand yes \
 		    -padx $itk_option(-borderwidth) \
 		    -pady $itk_option(-borderwidth) \
-		    -side bottom
+		    -side bottom 
 	}
 	s {
 	    # south
@@ -1037,7 +1037,7 @@ itcl::body iwidgets::Tabnotebook::_pack { tabPos } {
 		    -expand yes \
 		    -padx $itk_option(-borderwidth) \
 		    -pady $itk_option(-borderwidth)
-
+	    
 	    pack $itk_component(tabset) \
 		    -side left \
 		    -fill x \
@@ -1057,7 +1057,7 @@ itcl::body iwidgets::Tabnotebook::_pack { tabPos } {
 		    -expand yes \
 		    -padx $itk_option(-borderwidth) \
 		    -pady $itk_option(-borderwidth)
-
+	    
 	}
 	e {
 	    # east
@@ -1068,16 +1068,16 @@ itcl::body iwidgets::Tabnotebook::_pack { tabPos } {
 		    -expand yes \
 		    -padx $itk_option(-borderwidth) \
 		    -pady $itk_option(-borderwidth)
-
+	    
 	    pack $itk_component(tabset) \
 		    -fill y \
 		    -expand yes
 	}
     }
-
+    
     set wid [winfo width $itk_component(canvas)]
     set hgt [winfo height $itk_component(canvas)]
-
+    
     _redrawBorder $wid $hgt
 }
 

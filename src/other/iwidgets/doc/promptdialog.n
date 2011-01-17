@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) promptdialog.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::promptdialog iwid
 .BS
@@ -35,7 +35,7 @@ See the "options" manual entry for details on the standard options.
 \fBshow\fR
 .fi
 .LP
-See the "entry" widget manual entry for details on the above
+See the "entry" widget manual entry for details on the above 
 associated options.
 .LP
 .nf
@@ -48,7 +48,7 @@ associated options.
 .LP
 .nf
 .ta 4c 8c 12c
-\fBlabelFont\fR	\fBlabelPos\fR	\fBlabelText\fR
+\fBlabelFont\fR	\fBlabelPos\fR	\fBlabelText\fR	
 .fi
 .LP
 See the "labeledwidget" widget manual entry for details on the above
@@ -58,7 +58,7 @@ associated options.
 .nf
 .ta 4c 8c 12c
 \fBbuttonBoxPadX\fR	\fBbuttonBoxPadY\fR	\fBbuttonBoxPos\fR	\fBpadX\fR
-\fBpadY\fR	\fBseparator\fR	\fBthickness\fR
+\fBpadY\fR	\fBseparator\fR	\fBthickness\fR	
 .fi
 .LP
 See the "dialogshell" widget manual entry for details on the above
@@ -84,9 +84,9 @@ inherited options.
 
 .SH DESCRIPTION
 .PP
-The \fBiwidgets::promptdialog\fR command creates a prompt dialog similar to the
-OSF/Motif standard prompt dialog composite widget.  The promptdialog
-is derived from the dialog class and is composed of a EntryField
+The \fBiwidgets::promptdialog\fR command creates a prompt dialog similar to the 
+OSF/Motif standard prompt dialog composite widget.  The promptdialog 
+is derived from the dialog class and is composed of a EntryField 
 with commands to manipulate the dialog buttons.
 
 .SH "METHODS"
@@ -124,7 +124,7 @@ associated methods.
 .nf
 .ta 4c 8c 12c
 \fBadd\fR	\fBbuttonconfigure\fR	\fBdefault\fR	\fBhide\fR
-\fBinvoke\fR	\fBshow\fR
+\fBinvoke\fR	\fBshow\fR	
 .fi
 .LP
 See the "buttonbox" widget manual entry for details on the above
@@ -132,7 +132,7 @@ inherited methods.
 .LP
 .nf
 .ta 4c 8c 12c
-\fBchildsite\fR
+\fBchildsite\fR	
 .fi
 .LP
 See the "dialogshell" widget manual entry for details on the above
@@ -175,8 +175,8 @@ Name:	\fBprompt\fR
 Class:	\fBEntryfield\fR
 .fi
 .IP
-The prompt component is the entry field for user input in the prompt
-dialog.  See the "entryfield" widget manual entry for details on
+The prompt component is the entry field for user input in the prompt 
+dialog.  See the "entryfield" widget manual entry for details on 
 the prompt component item.
 .fi
 

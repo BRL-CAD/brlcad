@@ -44,14 +44,14 @@ set m 1
 #
 test Toolbar-1.$c {Toolbar construction} {
     iwidgets::Toolbar .tb
-    pack .tb
-    update
-    .tb add button item1 -text item1
-    update
+    pack .tb 
+    update 
+    .tb add button item1 -text item1 
+    update 
     .tb add button item2 -text item2
-    update
+    update 
     .tb add button item3 -text item3
-    update
+    update 
 } {}
 
 incr c
@@ -95,10 +95,10 @@ foreach test {
 	} {
 	set option [lindex $test 0]
 	test Toolbar-2.$o "configuration options, $option" {
-	    .tb configure $option [lindex $test 1]
+	    .tb configure $option [lindex $test 1] 
 		.tb cget $option
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -168,10 +168,10 @@ foreach test {
 	  }
 	  set index  [lindex $test 0]
 	  test Toolbar-2.$o "tab configuration options, $option" {
-		.tb itemconfigure $index $option [lindex $test 2]
+		.tb itemconfigure $index $option [lindex $test 2] 
 		.tb itemcget $index $option
 	  } [lindex $test 3]
-	update
+	update 
 	incr o
 }
 
@@ -182,27 +182,27 @@ foreach test {
 foreach test {
     {{.tb delete 0 end}
 		{}}
-    {{.tb add radiobutton one}
+    {{.tb add radiobutton one} 
 		{.tb.one}}
-    {{.tb index end}
+    {{.tb index end} 
 		{0}}
-    {{.tb add checkbutton two}
+    {{.tb add checkbutton two} 
 		{.tb.two}}
-    {{.tb index end}
+    {{.tb index end} 
 		{1}}
-    {{.tb index one}
+    {{.tb index one} 
 		{0}}
-    {{.tb insert end button oneandhalf -text "One & half"}
+    {{.tb insert end button oneandhalf -text "One & half"} 
 		{.tb.oneandhalf}}
-    {{.tb index oneandhalf}
+    {{.tb index oneandhalf} 
 		{1}}
-    {{.tb delete oneandhalf}
+    {{.tb delete oneandhalf} 
 		{}}
-    {{.tb index two}
+    {{.tb index two} 
 		{1}}
-    {{.tb delete 0 end}
+    {{.tb delete 0 end} 
 		{}}
-    {{.tb index 0}
+    {{.tb index 0} 
 		{-1}}
 	} {
 	set method [lindex [lindex $test 0] 1]
@@ -216,7 +216,7 @@ foreach test {
 	append testContents "set result\n"
 	test Toolbar-4.$m "\[$method_invoke\]" $testContents \
 		[list 0 1]
-	update
+	update 
 	incr m
 }
 
@@ -269,28 +269,28 @@ foreach test {
 #
 test Toolbar-1.$c {Toolbar destruction} {
     destroy .tb
-    update
+    update 
 } {}
 
 incr c
 
 test Toolbar-1.$c {Toolbar construction} {
-    iwidgets::Toolbar .tb
-    pack .tb
-    update
+    iwidgets::Toolbar .tb 
+    pack .tb 
+    update 
     .tb add iwidgets::optionmenu opt
-    update
+    update 
     .tb add button b
-    update
+    update 
     .tb add frame filler
-    update
+    update 
 } {}
 
 incr c
 
 test Toolbar-1.$c {Toolbar destruction} {
 	destroy .tb
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests
