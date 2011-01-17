@@ -56,7 +56,7 @@ test toplevel-1.1 {define a toplevel mega-widget class} {
 
 test toplevel-1.2 {check the list of configuration options} {
     .testToplevel0 configure
-} {{-background background Background linen linen} {-clientdata clientData ClientData {} {}} {-cursor cursor Cursor {} {}} {-foreground foreground Foreground navy navy} {-takefocus takeFocus TakeFocus 0 0} {-text text Text {} {}} {-title title Title {} {}}}
+} {{-background background Background linen linen} {-clientdata clientData ClientData {} {}} {-cursor cursor Cursor {} {}} {-foreground foreground Foreground navy navy} {-menu menu Menu {} {}} {-takefocus takeFocus TakeFocus 0 0} {-text text Text {} {}} {-title title Title {} {}}}
 
 test toplevel-1.3 {check the list components} {
     lsort [.testToplevel0 component]
