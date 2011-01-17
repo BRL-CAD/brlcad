@@ -40,7 +40,7 @@
 #  include "itcl.h"
 #endif
 
-#ifdef HAVE_DK
+#ifdef HAVE_TK
 # ifndef ITK_VERSION
 #  include "itk.h"
 # endif
