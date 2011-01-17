@@ -28,7 +28,6 @@
 /* system headers */
 #include <stdlib.h>
 #include <tcl.h>
-#include <itcl.h>
 #include <string.h>
 
 /* common headers */
@@ -484,7 +483,7 @@ mged_setup(Tcl_Interp **interpreter)
     int init_tcl = 1;
     int init_itcl = 1;
     struct bu_vls str;
-    const char *name = bu_getprogname();
+    const char *name = bu_argv0_full_path();
 
     /* locate our run-time binary (must be called before Tcl_CreateInterp()) */
     if (name) {
@@ -530,7 +529,7 @@ mged_setup(Tcl_Interp **interpreter)
 
 	/* Initialize [incr Tcl] */
 	Tcl_ResetResult(*interpreter);
-	if (init_itcl && Itcl_Init(*interpreter) == TCL_ERROR) {
+	if (init_itcl && Tcl_Eval(*interpreter, "package require Itcl") != TCL_OK) {
 	    if (!try_auto_path) {
 		try_auto_path=1;
 		/* Itcl_Init() leaves initialization in a bad state
@@ -543,7 +542,6 @@ mged_setup(Tcl_Interp **interpreter)
 	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
 	    break;
 	}
-	Tcl_StaticPackage(*interpreter, "Itcl", Itcl_Init, Itcl_SafeInit);
 	init_itcl=0;
 
 	/* don't actually want to loop forever */
