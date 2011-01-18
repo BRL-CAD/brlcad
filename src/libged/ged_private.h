@@ -52,6 +52,9 @@ __BEGIN_DECLS
 #define _GED_SHADED_MODE_ALL  2
 #define _GED_BOOL_EVAL        3
 
+#define _GED_TREE_AFLAG 0x01
+#define _GED_TREE_CFLAG 0x02
+
 struct _ged_id_names {
     struct bu_list l;
     struct bu_vls name;		/**< name associated with region id */
@@ -107,6 +110,11 @@ struct _ged_trace_data {
 /* defined in globals.c */
 extern struct solid _FreeSolid;
 
+/* defined in attr.c */
+BU_EXTERN (int _attr_cmpstringp,
+	   (const void *p1,
+            const void *p2));
+
 /* defined in ged.c */
 BU_EXTERN (void _ged_print_node,
 	   (struct ged		*gedp,
@@ -114,7 +122,7 @@ BU_EXTERN (void _ged_print_node,
 	    size_t		pathpos,
 	    int			indentSize,
 	    char		prefix,
-	    int			cflag,
+	    unsigned		flags,
 	    int                 displayDepth,
 	    int                 currdisplayDepth));
 BU_EXTERN (struct db_i *_ged_open_dbip,
