@@ -479,6 +479,7 @@ _ged_print_node(struct ged		*gedp,
     rt_db_free_internal(&intern);
 }
 
+
 /*
  * Local Variables:
  * mode: C

@@ -111,7 +111,7 @@ struct _ged_trace_data {
 extern struct solid _FreeSolid;
 
 /* defined in attr.c */
-BU_EXTERN (int _attr_cmpstringp,
+BU_EXTERN (int _ged_cmpattr,
 	   (const void *p1,
             const void *p2));
 
