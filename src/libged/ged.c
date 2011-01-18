@@ -367,7 +367,7 @@ _ged_print_node(struct ged		*gedp,
 	       size_t			pathpos,
 	       int			indentSize,
 	       char			prefix,
-	       int			cflag,
+	       unsigned			cflag,
 	       int                      displayDepth,
 	       int                      currdisplayDepth)
 {
