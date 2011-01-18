@@ -28,8 +28,8 @@
 #include "ged.h"
 
 /* comparison function for the avs->name qsort below -- based on example in libc: man qsort */
-static int
-cmpstringp(const void *p1, const void *p2)
+int
+_attr_cmpstringp(const void *p1, const void *p2)
 {
     return strcmp((char * const)((struct bu_attribute_value_pair *)p1)->name,
                   (char * const)((struct bu_attribute_value_pair *)p2)->name);
@@ -81,7 +81,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* sort attribute-value set array by attribute name */
-    qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), cmpstringp);
+    qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _attr_cmpstringp);
 
     if (BU_STR_EQUAL(argv[1], "get")) {
 	if (argc == 3) {
