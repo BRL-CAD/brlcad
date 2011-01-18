@@ -52,6 +52,7 @@ SET(SKIP_INSTALL_EXPORT ON CACHE BOOL "We dont't want export for this applicatio
 MARK_AS_ADVANCED(SKIP_INSTALL_EXPORT)
 SET(PNG_MAN_DIR ${MAN_DIR} CACHE STRING "Set PNG_MAN_DIR to the global MAN_DIR" FORCE)
 MARK_AS_ADVANCED(PNG_MAN_DIR)
+SET(CMAKE_INSTALL_LIBDIR ${LIB_DIR})
 THIRD_PARTY_SUBDIR(PNG libpng)
 IF(BRLCAD_BUILD_LOCAL_PNG)
 	# PNG_LIB_NAME doesn't automatically propogate to toplevel due to scoping of CMake variables - 

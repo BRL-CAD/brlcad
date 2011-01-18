@@ -59,13 +59,13 @@ ENDIF(MSVC)
 
 add_library(utahrle SHARED ${LIBUTAHRLE_SOURCES})
 target_link_libraries(utahrle ${M_LIBRARY})
-INSTALL(TARGETS utahrle DESTINATION lib)
+INSTALL(TARGETS utahrle DESTINATION ${LIB_DIR})
 add_library(utahrle-static STATIC ${LIBUTAHRLE_SOURCES})
 target_link_libraries(utahrle-static ${M_LIBRARY})
 IF(NOT WIN32)
 	SET_TARGET_PROPERTIES(utahrle-static PROPERTIES OUTPUT_NAME "utahrle")
 ENDIF(NOT WIN32)
-INSTALL(TARGETS utahrle-static ARCHIVE DESTINATION lib)
+INSTALL(TARGETS utahrle-static ARCHIVE DESTINATION ${LIB_DIR})
 
 SET(LIBUTAHRLE_MAN3
 	buildmap.3 

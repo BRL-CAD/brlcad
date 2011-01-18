@@ -17,7 +17,7 @@ SET(TKPNG_SRCS
 
 add_library(tkpng SHARED ${TKPNG_SRCS})
 target_link_libraries(tkpng ${TCL_LIBRARY} ${TCL_TK_LIBRARY} ${ZLIB_LIBRARY} ${X11_LIBRARIES})
-install(TARGETS tkpng DESTINATION lib)
+install(TARGETS tkpng DESTINATION ${LIB_DIR})
 
 # Create the pkgIndex.tcl file.
 GET_TARGET_PROPERTY(TKPNG_LIBLOCATION tkpng LOCATION_${CMAKE_BUILD_TYPE})

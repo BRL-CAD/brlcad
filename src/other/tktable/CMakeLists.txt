@@ -61,7 +61,7 @@ add_definitions(
 add_library(Tktable SHARED ${TKTABLE_SRCS})
 add_dependencies(Tktable tktable_header_gen)
 target_link_libraries(Tktable ${TCL_LIBRARY} ${TCL_TK_LIBRARY} ${X11_LIBRARIES})
-install(TARGETS Tktable DESTINATION lib)
+install(TARGETS Tktable DESTINATION ${LIB_DIR})
 
 # Create the pkgIndex.tcl file.
 GET_TARGET_PROPERTY(TKTABLE_LIBLOCATION Tktable LOCATION_${CMAKE_BUILD_TYPE})
