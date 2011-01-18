@@ -546,7 +546,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 #ifdef HAVE_REALPATH
 	realpath(full_path, result);
 #else
-	snprintf(result, "%s", full_path);
+	snprintf(result, MAXPATHLEN, "%s", full_path);
 #endif
 	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("Found: BRLCAD_DATA compile-time path [%s]\n", result);
