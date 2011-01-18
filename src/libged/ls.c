@@ -485,7 +485,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	if (!dir_flags) dir_flags = -1 ^ DIR_HIDDEN;
 
 	bu_avs_init(&avs, argc, "wdb_ls_cmd avs");
-	for (i = 0; i < argc; i += 2) {
+	for (i = 0; (int)i < argc; i += 2) {
 	    if (or_flag) {
 		bu_avs_add_nonunique(&avs, (char *)argv[i], (char *)argv[i+1]);
 	    } else {
@@ -511,7 +511,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	/*
 	 * Verify the names, and add pointers to them to the array.
 	 */
-	for (i = 0; i < argc; i++) {
+	for (i = 0; (int)i < argc; i++) {
 	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
 		continue;
 	    *dirp++ = dp;
