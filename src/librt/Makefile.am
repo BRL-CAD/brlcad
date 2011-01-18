@@ -161,7 +161,6 @@ librt_nil_la_SOURCES = \
 	primitives/nmg/nmg_index.c \
 	primitives/nmg/nmg_info.c \
 	primitives/nmg/nmg_inter.c \
-	primitives/nmg/nmg_junk.c \
 	primitives/nmg/nmg_manif.c \
 	primitives/nmg/nmg_mesh.c \
 	primitives/nmg/nmg_mirror.c \
@@ -301,6 +300,7 @@ EXTRA_DIST = \
 	parse.c \
 	pmalloc.c \
 	primitives/bot/g_bot_include.c \
+	primitives/nmg/nmg_junk.c \
 	timer-nt.c \
 	timer52brl.c \
 	timerhep.c \
