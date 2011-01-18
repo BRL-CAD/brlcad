@@ -540,6 +540,14 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     lhs = _brlcad_data();
     snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_DATA compile-time path [%s]\n", lhs);
     if (_bu_find_path(result, lhs, rhs, &searched, where)) {
+        const char *ipwd = _bu_ipwd();
+	char full_path[MAXPATHLEN] = {0};
+	snprintf(full_path, MAXPATHLEN, "%s%c%s", ipwd, BU_DIR_SEPARATOR, result);
+#ifdef HAVE_REALPATH
+	realpath(full_path, result);
+#else
+	snprintf(result, "%s", full_path);
+#endif
 	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("Found: BRLCAD_DATA compile-time path [%s]\n", result);
 	}
