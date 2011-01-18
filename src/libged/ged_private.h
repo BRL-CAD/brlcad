@@ -278,7 +278,7 @@ BU_EXTERN (int _ged_cm_null,
 BU_EXTERN(void _ged_vls_col_pr4v,
 	  (struct bu_vls *vls,
 	   struct directory **list_of_names,
-	   int num_in_list,
+	   size_t num_in_list,
 	   int no_decorate));
 BU_EXTERN(struct directory ** _ged_getspace,
 	  (struct db_i *dbip,

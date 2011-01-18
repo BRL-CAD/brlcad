@@ -97,7 +97,7 @@ cmpdirname(const genptr_t a,
 void
 _ged_vls_col_pr4v(struct bu_vls *vls,
 		  struct directory **list_of_names,
-		  int num_in_list,
+		  size_t num_in_list,
 		  int no_decorate)
 {
 #if 0
@@ -154,10 +154,11 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
 	}
     }
 #else
-    int lines, i, j, k, namelen, this_one;
-    int maxnamelen;	/* longest name in list */
-    int cwidth;		/* column width */
-    int numcol;		/* number of columns */
+    size_t lines, i, j, k, this_one;
+    size_t namelen;
+    size_t maxnamelen;	/* longest name in list */
+    size_t cwidth;	/* column width */
+    size_t numcol;	/* number of columns */
 
     qsort((genptr_t)list_of_names,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
@@ -171,7 +172,7 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
      */
     maxnamelen = 0;
     for (k=0; k < num_in_list; k++) {
-	namelen = (int)strlen(list_of_names[k]->d_namep);
+	namelen = strlen(list_of_names[k]->d_namep);
 	if (namelen > maxnamelen)
 	    maxnamelen = namelen;
     }
@@ -193,7 +194,7 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
 	for (j=0; j < numcol; j++) {
 	    this_one = j * lines + i;
 	    bu_vls_printf(vls, "%s", list_of_names[this_one]->d_namep);
-	    namelen = (int)strlen(list_of_names[this_one]->d_namep);
+	    namelen = strlen(list_of_names[this_one]->d_namep);
 
 	    /*
 	     * Region and ident checks here....  Since the code has
@@ -485,7 +486,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	if (!dir_flags) dir_flags = -1 ^ DIR_HIDDEN;
 
 	bu_avs_init(&avs, argc, "wdb_ls_cmd avs");
-	for (i = 0; (int)i < argc; i += 2) {
+	for (i = 0; i < (size_t)argc; i += 2) {
 	    if (or_flag) {
 		bu_avs_add_nonunique(&avs, (char *)argv[i], (char *)argv[i+1]);
 	    } else {
@@ -511,7 +512,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	/*
 	 * Verify the names, and add pointers to them to the array.
 	 */
-	for (i = 0; (int)i < argc; i++) {
+	for (i = 0; i < (size_t)argc; i++) {
 	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
 		continue;
 	    *dirp++ = dp;
