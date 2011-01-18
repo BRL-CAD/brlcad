@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "ged.h"
+#include "./ged_private.h"
 
 
 /*
@@ -45,9 +45,9 @@ int
 ged_attr(struct ged *gedp, int argc, const char *argv[])
 {
     size_t i;
-    struct directory	*dp;
+    struct directory *dp;
     struct bu_attribute_value_set avs;
-    struct bu_attribute_value_pair	*avpp;
+    struct bu_attribute_value_pair *avpp;
     static const char *usage = "{set|get|show|rm|append} object [key [value] ... ]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -102,7 +102,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    for (i=3; i<(size_t)argc; i++) {
 		val = bu_avs_get(&avs, argv[i]);
-		if ( !val ) {
+		if (!val) {
 		    bu_vls_printf(&gedp->ged_result_str,
 				  "Object %s does not have a %s attribute\n",
 				  dp->d_namep,
@@ -120,7 +120,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	bu_avs_free(&avs);
 
-    } else if ( BU_STR_EQUAL( argv[1], "set" ) ) {
+    } else if (BU_STR_EQUAL(argv[1], "set")) {
 	/* setting attribute/value pairs */
 	if ((argc - 3) % 2) {
 	    bu_vls_printf(&gedp->ged_result_str,
@@ -131,7 +131,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	i = 3;
 	while (i < (size_t)argc) {
-	    if(BU_STR_EQUAL( argv[i], "region") && BU_STR_EQUAL(argv[i+1], "R")) {
+	    if (BU_STR_EQUAL(argv[i], "region") && BU_STR_EQUAL(argv[i+1], "R")) {
  		dp->d_flags |= DIR_REGION;
  	    }
 	    (void)bu_avs_add(&avs, argv[i], argv[i+1]);
@@ -149,7 +149,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     } else if (BU_STR_EQUAL(argv[1], "rm")) {
 	i = 3;
 	while (i < (size_t)argc) {
-    	    if(BU_STR_EQUAL( argv[i], "region")) {
+    	    if (BU_STR_EQUAL(argv[i], "region")) {
  		dp->d_flags = dp->d_flags & ~(DIR_REGION);
  	    }
 	    (void)bu_avs_remove(&avs, argv[i]);
@@ -164,7 +164,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	/* avs is freed by db5_replace_attributes() */
 
-    } else if ( BU_STR_EQUAL( argv[1], "append" ) ) {
+    } else if (BU_STR_EQUAL(argv[1], "append")) {
 	if ((argc-3)%2) {
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "Error: attribute names and values must be in pairs!!!\n");
@@ -174,11 +174,11 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	i = 3;
 	while (i < (size_t)argc) {
 	    const char *old_val;
-	    if(BU_STR_EQUAL( argv[i], "region") && BU_STR_EQUAL(argv[i+1], "R")) {
+	    if (BU_STR_EQUAL(argv[i], "region") && BU_STR_EQUAL(argv[i+1], "R")) {
  		dp->d_flags |= DIR_REGION;
  	    }
 	    old_val = bu_avs_get(&avs, argv[i]);
-	    if ( !old_val ) {
+	    if (!old_val) {
 		(void)bu_avs_add(&avs, argv[i], argv[i+1]);
 	    } else {
 		struct bu_vls vls;
@@ -192,7 +192,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    i += 2;
 	}
-	if (db5_replace_attributes( dp, &avs, gedp->ged_wdbp->dbip)) {
+	if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "Error: failed to update attributes\n");
 	    bu_avs_free(&avs);
@@ -201,79 +201,79 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	/* avs is freed by db5_replace_attributes() */
 
-    } else if ( BU_STR_EQUAL( argv[1], "show" ) ) {
+    } else if (BU_STR_EQUAL(argv[1], "show")) {
 	int max_attr_name_len=0;
 	int tabs1=0;
 
 	/* pretty print */
-	if ( dp->d_flags & DIR_COMB ) {
-	    if ( dp->d_flags & DIR_REGION ) {
-		bu_vls_printf( &gedp->ged_result_str, "%s region:\n", argv[2] );
+	if (dp->d_flags & DIR_COMB) {
+	    if (dp->d_flags & DIR_REGION) {
+		bu_vls_printf(&gedp->ged_result_str, "%s region:\n", argv[2]);
 	    } else {
-		bu_vls_printf( &gedp->ged_result_str, "%s combination:\n", argv[2] );
+		bu_vls_printf(&gedp->ged_result_str, "%s combination:\n", argv[2]);
 	    }
-	} else if ( dp->d_flags & DIR_SOLID ) {
-	    bu_vls_printf( &gedp->ged_result_str, "%s %s:\n", argv[2],
-			   rt_functab[dp->d_minor_type].ft_label );
+	} else if (dp->d_flags & DIR_SOLID) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s %s:\n", argv[2],
+			  rt_functab[dp->d_minor_type].ft_label);
 	} else {
-	    switch ( dp->d_major_type ) {
+	    switch (dp->d_major_type) {
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
-		    bu_vls_printf( &gedp->ged_result_str, "%s global:\n", argv[2] );
+		    bu_vls_printf(&gedp->ged_result_str, "%s global:\n", argv[2]);
 		    break;
 		case DB5_MAJORTYPE_BINARY_MIME:
-		    bu_vls_printf( &gedp->ged_result_str, "%s binary(mime):\n", argv[2] );
+		    bu_vls_printf(&gedp->ged_result_str, "%s binary(mime):\n", argv[2]);
 		    break;
 		case DB5_MAJORTYPE_BINARY_UNIF:
-		    bu_vls_printf( &gedp->ged_result_str, "%s %s:\n", argv[2],
-				   binu_types[dp->d_minor_type] );
+		    bu_vls_printf(&gedp->ged_result_str, "%s %s:\n", argv[2],
+				  binu_types[dp->d_minor_type]);
 		    break;
 	    }
 	}
-	if ( argc == 3 ) {
+	if (argc == 3) {
 	    /* just display all attributes */
 	    avpp = avs.avp;
-	    for ( i=0; i < avs.count; i++, avpp++ ) {
+	    for (i=0; i < avs.count; i++, avpp++) {
 		int len;
 
-		len = (int)strlen( avpp->name );
-		if ( len > max_attr_name_len ) {
+		len = (int)strlen(avpp->name);
+		if (len > max_attr_name_len) {
 		    max_attr_name_len = len;
 		}
 	    }
 	    tabs1 = 2 + max_attr_name_len/8;
 	    avpp = avs.avp;
-	    for ( i=0; i < avs.count; i++, avpp++ ) {
+	    for (i=0; i < avs.count; i++, avpp++) {
 		const char *c;
 		int tabs2;
 		int k;
 		int len;
 
-		bu_vls_printf( &gedp->ged_result_str, "\t%s", avpp->name );
-		len = (int)strlen( avpp->name );
+		bu_vls_printf(&gedp->ged_result_str, "\t%s", avpp->name);
+		len = (int)strlen(avpp->name);
 		tabs2 = tabs1 - 1 - len/8;
-		for ( k=0; k<tabs2; k++ ) {
-		    bu_vls_putc( &gedp->ged_result_str, '\t' );
+		for (k=0; k<tabs2; k++) {
+		    bu_vls_putc(&gedp->ged_result_str, '\t');
 		}
 		c = avpp->value;
-		while ( *c ) {
-		    bu_vls_putc( &gedp->ged_result_str, *c );
-		    if ( *c == '\n' ) {
-			for ( k=0; k<tabs1; k++ ) {
-			    bu_vls_putc( &gedp->ged_result_str, '\t' );
+		while (*c) {
+		    bu_vls_putc(&gedp->ged_result_str, *c);
+		    if (*c == '\n') {
+			for (k=0; k<tabs1; k++) {
+			    bu_vls_putc(&gedp->ged_result_str, '\t');
 			}
 		    }
 		    c++;
 		}
-		bu_vls_putc( &gedp->ged_result_str, '\n' );
+		bu_vls_putc(&gedp->ged_result_str, '\n');
 	    }
 	} else {
 	    const char *val;
 	    int len;
 
 	    /* show just the specified attributes */
-	    for ( i=0; i<(size_t)argc; i++ ) {
-		len = (int)strlen( argv[i] );
-		if ( len > max_attr_name_len ) {
+	    for (i=0; i<(size_t)argc; i++) {
+		len = (int)strlen(argv[i]);
+		if (len > max_attr_name_len) {
 		    max_attr_name_len = len;
 		}
 	    }

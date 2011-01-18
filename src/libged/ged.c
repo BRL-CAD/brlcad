@@ -50,25 +50,6 @@
 #include "./ged_private.h"
 
 
-int ged_decode_dbip(const char *dbip_string, struct db_i **dbipp);
-void ged_drawable_init(struct ged_drawable *gdp);
-void ged_drawable_close(struct ged_drawable *gdp);
-
-void
-ged_close(struct ged *gedp)
-{
-    if (gedp == GED_NULL)
-	return;
-
-    wdb_close(gedp->ged_wdbp);
-    gedp->ged_wdbp = RT_WDB_NULL;
-
-    ged_drawable_close(gedp->ged_gdp);
-    gedp->ged_gdp = GED_DRAWABLE_NULL;
-
-    ged_free(gedp);
-}
-
 /* FIXME: this function should not exist.  passing pointers as strings
  * indicates a failure in design and lazy coding.
  */
@@ -85,6 +66,7 @@ ged_decode_dbip(const char *dbip_string, struct db_i **dbipp)
     return GED_OK;
 }
 
+
 void
 ged_drawable_close(struct ged_drawable *gdp)
 {
@@ -94,6 +76,23 @@ ged_drawable_close(struct ged_drawable *gdp)
     ged_free_qray(gdp);
     bu_free((genptr_t)gdp, "struct ged_drawable");
 }
+
+
+void
+ged_close(struct ged *gedp)
+{
+    if (gedp == GED_NULL)
+	return;
+
+    wdb_close(gedp->ged_wdbp);
+    gedp->ged_wdbp = RT_WDB_NULL;
+
+    ged_drawable_close(gedp->ged_gdp);
+    gedp->ged_gdp = GED_DRAWABLE_NULL;
+
+    ged_free(gedp);
+}
+
 
 void
 ged_drawable_init(struct ged_drawable *gdp)
@@ -113,6 +112,7 @@ ged_drawable_init(struct ged_drawable *gdp)
     ged_init_qray(gdp);
 }
 
+
 void
 ged_free(struct ged *gedp)
 {
@@ -127,6 +127,7 @@ ged_free(struct ged *gedp)
 
     bu_free((genptr_t)gedp, "struct ged");
 }
+
 
 void
 ged_init(struct ged *gedp)
@@ -143,6 +144,7 @@ ged_init(struct ged *gedp)
     BU_GETSTRUCT(gedp->ged_gdp, ged_drawable);
     ged_drawable_init(gedp->ged_gdp);
 }
+
 
 void
 ged_view_init(struct ged_view *gvp)
@@ -232,6 +234,7 @@ ged_view_init(struct ged_view *gvp)
     ged_view_update(gvp);
 }
 
+
 struct ged *
 ged_open(const char *dbtype, const char *filename, int existing_only)
 {
@@ -243,7 +246,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     rt_new_material_head(MATER_NULL);
 
     if (BU_STR_EQUAL(dbtype, "db")) {
-	struct db_i	*dbip;
+	struct db_i *dbip;
 
 	if ((dbip = _ged_open_dbip(filename, existing_only)) == DBI_NULL) {
 	    /* Restore RT's material head */
@@ -258,7 +261,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     } else if (BU_STR_EQUAL(dbtype, "file")) {
 	wdbp = wdb_fopen(filename);
     } else {
-	struct db_i	*dbip;
+	struct db_i *dbip;
 
 	/* FIXME: this call should not exist.  passing pointers as
 	 * strings indicates a failure in design and lazy coding.
@@ -299,13 +302,13 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	/* Could core dump */
 	RT_CK_DBI(dbip);
 
-	if (BU_STR_EQUAL(dbtype, "disk" ))
+	if (BU_STR_EQUAL(dbtype, "disk"))
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
 	else if (BU_STR_EQUAL(dbtype, "disk_append"))
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY);
-	else if (BU_STR_EQUAL(dbtype, "inmem" ))
+	else if (BU_STR_EQUAL(dbtype, "inmem"))
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
-	else if (BU_STR_EQUAL(dbtype, "inmem_append" ))
+	else if (BU_STR_EQUAL(dbtype, "inmem_append"))
 	    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
 	else {
 	    /* Restore RT's material head */
@@ -322,6 +325,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     return gedp;
 }
 
+
 /**
  * @brief
  * Open/Create the database and build the in memory directory.
@@ -333,7 +337,7 @@ _ged_open_dbip(const char *filename, int existing_only)
 
     /* open database */
     if (((dbip = db_open(filename, "r+w")) == DBI_NULL) &&
-	((dbip = db_open(filename, "r"  )) == DBI_NULL)) {
+	((dbip = db_open(filename, "r")) == DBI_NULL)) {
 
 	/*
 	 * Check to see if we can access the database
@@ -361,30 +365,31 @@ _ged_open_dbip(const char *filename, int existing_only)
     return dbip;
 }
 
+
 void
-_ged_print_node(struct ged		*gedp,
-	       struct directory *dp,
-	       size_t			pathpos,
-	       int			indentSize,
-	       char			prefix,
-	       unsigned			cflag,
-	       int                      displayDepth,
-	       int                      currdisplayDepth)
+_ged_print_node(struct ged *gedp,
+		struct directory *dp,
+		size_t pathpos,
+		int indentSize,
+		char prefix,
+		unsigned cflag,
+		int displayDepth,
+		int currdisplayDepth)
 {
     size_t i;
-    struct directory	*nextdp;
-    struct rt_db_internal		intern;
-    struct rt_comb_internal		*comb;
+    struct directory *nextdp;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
 
     if (cflag && !(dp->d_flags & DIR_COMB))
 	return;
 
     for (i=0; i<pathpos; i++)
-	if ( indentSize < 0 ) {
+	if (indentSize < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "\t");
 	} else {
 	    int j;
-	    for ( j=0; j<indentSize; j++ ) {
+	    for (j=0; j<indentSize; j++) {
 		bu_vls_printf(&gedp->ged_result_str, " ");
 	    }
 	}
@@ -405,8 +410,8 @@ _ged_print_node(struct ged		*gedp,
 	return;
 
     /*
-     *  This node is a combination (eg, a directory).
-     *  Process all the arcs (eg, directory members).
+     * This node is a combination (eg, a directory).
+     * Process all the arcs (eg, directory members).
      */
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
@@ -429,12 +434,12 @@ _ged_print_node(struct ged		*gedp,
 	}
 	node_count = db_tree_nleaves(comb->tree);
 	if (node_count > 0) {
-	    rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count,
-							       sizeof( struct rt_tree_array ), "tree list" );
+	    rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count,
+							      sizeof(struct rt_tree_array), "tree list");
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
 		rt_tree_array, comb->tree, OP_UNION,
-		1, &rt_uniresource ) - rt_tree_array;
-	    BU_ASSERT_SIZE_T( actual_count, ==, node_count );
+		1, &rt_uniresource) - rt_tree_array;
+	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    actual_count = 0;
