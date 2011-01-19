@@ -126,7 +126,6 @@ set(LIBRT_SOURCES
     primitives/nmg/nmg_index.c
     primitives/nmg/nmg_info.c
     primitives/nmg/nmg_inter.c
-    primitives/nmg/nmg_junk.c
     primitives/nmg/nmg_manif.c
     primitives/nmg/nmg_mesh.c
     primitives/nmg/nmg_mirror.c
