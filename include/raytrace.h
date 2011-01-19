@@ -3033,8 +3033,6 @@ RT_EXPORT BU_EXTERN(struct directory *db5_diradd,
 		     const struct db5_raw_internal *rip,
 		     off_t laddr,
 		     genptr_t client_data));
-RT_EXPORT BU_EXTERN(int db_get_version,
-		    (struct db_i *dbip));
 RT_EXPORT BU_EXTERN(int db5_scan,
 		    (struct db_i *dbip,
 		     void (*handler)(struct db_i *,
@@ -3042,6 +3040,11 @@ RT_EXPORT BU_EXTERN(int db5_scan,
 				     off_t addr,
 				     genptr_t client_data),
 		     genptr_t client_data));
+
+/**
+ * obtain the database version for a given database instance
+ */
+RT_EXPORT BU_EXTERN(int db_version, (struct db_i *dbip));
 
 /* db5_comb.c */
 RT_EXPORT BU_EXTERN(int rt_comb_import5, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp));

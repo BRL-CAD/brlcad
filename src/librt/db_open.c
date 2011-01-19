@@ -207,7 +207,7 @@ db_open(const char *name, const char *mode)
     dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
 
     /* determine version */
-    dbip->dbi_version = db_get_version(dbip);
+    dbip->dbi_version = db_version(dbip);
 
     if (RT_G_DEBUG & DEBUG_DB) {
 	bu_log("db_open(%s) dbip=x%x version=%d\n", dbip->dbi_filename, dbip, dbip->dbi_version);

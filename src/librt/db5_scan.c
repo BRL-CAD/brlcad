@@ -441,7 +441,7 @@ db_dirbuild(struct db_i *dbip)
 
 
 int
-db_get_version(struct db_i *dbip)
+db_version(struct db_i *dbip)
 {
     unsigned char header[8];
 
@@ -457,7 +457,7 @@ db_get_version(struct db_i *dbip)
 
     rewind(dbip->dbi_fp);
     if (fread(header, sizeof(header), 1, dbip->dbi_fp) != 1) {
-	bu_log("db_get_version ERROR, file (%s) too short to be BRL-CAD database\n", dbip->dbi_filename);
+	bu_log("ERROR: file (%s) too short to be a BRL-CAD database\n", dbip->dbi_filename ? dbip->dbi_filename : "unknown");
 	return -1;
     }
 
