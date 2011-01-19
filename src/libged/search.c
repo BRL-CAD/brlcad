@@ -1544,7 +1544,7 @@ option(char *name)
 int
 typecompare(const void *a, const void *b)
 {
-    return !BU_STR_EQUAL(((OPTION *)a)->name, ((OPTION *)b)->name);
+    return bu_strcmp(((OPTION *)a)->name, ((OPTION *)b)->name);
 }
 
 
