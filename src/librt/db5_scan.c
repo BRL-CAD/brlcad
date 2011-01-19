@@ -27,7 +27,7 @@
 
 #include "common.h"
 
-#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "bio.h"
 
@@ -450,6 +450,10 @@ db_version(struct db_i *dbip)
     }
 
     RT_CK_DBI(dbip);
+
+    /* already calculated during an rt_dirbuild? */
+    if (dbip->dbi_version > 0)
+	return abs(dbi->dbi_version);
 
     if (!dbip->dbi_fp) {
 	return -1;
