@@ -343,6 +343,8 @@ namespace eval ArcherCore {
 	variable mBackground "0 0 0"
 	variable mBackgroundColor Black
 	variable mBackgroundColorPref ""
+	variable mFBBackgroundColor Black
+	variable mFBBackgroundColorPref ""
 	variable mPrimitiveLabelColor Yellow
 	variable mPrimitiveLabelColorPref
 	variable mViewingParamsColor Yellow
@@ -5691,6 +5693,9 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::watchVar {_name1 _name2 _op} {
     switch -- $_name1 {
+	mFBBackgroundColor {
+	    $itk_component(rtcntrl) configure -color [cadwidgets::Ged::get_rgb_color $mFBBackgroundColor]
+	}
 	mMeasuringStickColor {
 	    $itk_component(ged) configure -measuringStickColor $mMeasuringStickColor
 	}
