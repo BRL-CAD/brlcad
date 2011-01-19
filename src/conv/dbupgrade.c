@@ -59,6 +59,7 @@ main(int argc, char **argv)
     int in_arg=1;
     int out_arg=2;
     long	errors = 0, skipped = 0;
+    int version;
     name[16] = '\0';
 
     /* this tolerance structure is only used for converting polysolids to BOT's
@@ -120,18 +121,19 @@ main(int argc, char **argv)
 
     }
 
+    version = db_version(dbip);
     if ( !reverse ) {
-	if ( db_version(dbip) == 5 ) {
+	if ( version == 5 ) {
 	    bu_log( "This database (%s) is already at the current version\n",
 		    argv[in_arg] );
 	    return 5;
 	}
-	if ( db_version(dbip) != 4 ) {
+	if ( version != 4 ) {
 	    bu_log( "Input database version not recognized!!!!\n" );
 	    return 4;
 	}
     } else if ( reverse ) {
-	if ( db_version(dbip) != 5 ) {
+	if ( version != 5 ) {
 	    bu_log( "Can only revert from db version 5\n" );
 	    return 6;
 	}
@@ -142,7 +144,7 @@ main(int argc, char **argv)
     if ( db_dirbuild( dbip ) )
 	bu_exit(1, "db_dirbuild failed\n" );
 
-    if ( (BU_STR_EQUAL( dbip->dbi_title, "Untitled v4 BRL-CAD Database" )) && (db_version(dbip) == 4) ) {
+    if ( (BU_STR_EQUAL( dbip->dbi_title, "Untitled v4 BRL-CAD Database" )) && (version == 4) ) {
 	dbip->dbi_title=bu_strdup( "Untitled BRL-CAD Database" );
     }
     db_update_ident( fp->dbip, dbip->dbi_title, dbip->dbi_local2base );
