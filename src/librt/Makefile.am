@@ -238,7 +238,6 @@ librt_nil_la_SOURCES = \
 	roots.c \
 	shoot.c \
 	spectrum.c \
-	storage.c \
 	tcl.c \
 	timer42.c \
 	transform.c \

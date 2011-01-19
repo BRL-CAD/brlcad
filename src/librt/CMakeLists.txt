@@ -201,7 +201,6 @@ set(LIBRT_SOURCES
     roots.c
     shoot.c
     spectrum.c
-    storage.c
     tcl.c
     transform.c
     tree.c
