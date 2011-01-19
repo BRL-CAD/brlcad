@@ -2415,14 +2415,14 @@ RT_EXPORT BU_EXTERN(void rt_pr_partitions,
 RT_EXPORT BU_EXTERN(struct soltab *rt_find_solid,
 		    (const struct rt_i *rtip,
 		     const char *name));
-/* Start the timer */
+/* Start the global timer */
 RT_EXPORT BU_EXTERN(void rt_prep_timer,
 		    (void));
-/* Read timer, return time + str */
+/* Read global timer, return time + str */
 RT_EXPORT BU_EXTERN(double rt_get_timer,
 		    (struct bu_vls *vp,
 		     double *elapsed));
-/* Return CPU time, text, & wall clock time */
+/* Return CPU time, text, & wall clock time off the global timer */
 RT_EXPORT BU_EXTERN(double rt_read_timer,
 		    (char *str, int len));
 /* Plot a solid */
