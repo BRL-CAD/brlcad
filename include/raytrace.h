@@ -3128,26 +3128,6 @@ RT_EXPORT BU_EXTERN(int db_rename,
 		     struct directory *,
 		     const char *newname));
 
-/**
- * D B _ A L L O C _ D I R E C T O R Y
- *
- * This routine is called by the RT_GET_DIRECTORY macro when the
- * freelist is exhausted.  Rather than simply getting one additional
- * structure, we get a whole batch, saving overhead.
- */
-RT_EXPORT BU_EXTERN(void db_alloc_directory_block, (struct resource *resp));
-
-/**
- * R T _ A L L O C _ S E G _ B L O C K
- *
- * This routine is called by the GET_SEG macro when the freelist is
- * exhausted.  Rather than simply getting one additional structure, we
- * get a whole batch, saving overhead.  When this routine is called,
- * the seg resource must already be locked.  malloc() locking is done
- * in bu_malloc.
- */
-RT_EXPORT BU_EXTERN(void rt_alloc_seg_block, (struct resource *res));
-
 /* db_match.c */
 RT_EXPORT BU_EXTERN(void db_update_nref,
 		    (struct db_i *dbip,
@@ -3189,6 +3169,26 @@ RT_EXPORT BU_EXTERN(int db_zapper,
 		    (struct db_i *,
 		     struct directory *dp,
 		     size_t start));
+
+/**
+ * D B _ A L L O C _ D I R E C T O R Y
+ *
+ * This routine is called by the RT_GET_DIRECTORY macro when the
+ * freelist is exhausted.  Rather than simply getting one additional
+ * structure, we get a whole batch, saving overhead.
+ */
+RT_EXPORT BU_EXTERN(void db_alloc_directory_block, (struct resource *resp));
+
+/**
+ * R T _ A L L O C _ S E G _ B L O C K
+ *
+ * This routine is called by the GET_SEG macro when the freelist is
+ * exhausted.  Rather than simply getting one additional structure, we
+ * get a whole batch, saving overhead.  When this routine is called,
+ * the seg resource must already be locked.  malloc() locking is done
+ * in bu_malloc.
+ */
+RT_EXPORT BU_EXTERN(void rt_alloc_seg_block, (struct resource *res));
 
 /* db_tree.c */
 RT_EXPORT BU_EXTERN(void db_dup_db_tree_state,
