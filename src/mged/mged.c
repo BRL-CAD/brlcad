@@ -1478,17 +1478,7 @@ main(int argc, char *argv[])
 	} else {
 	    struct bu_vls vls;
 	    int status;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	    const char *tkhtml_path = bu_brlcad_root("bin/Tkhtml3.0", 1);
-
 	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "lappend auto_path {%s}", tkhtml_path);
-	    (void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
-	    bu_vls_trunc(&vls, 0);
-#else
-	    bu_vls_init(&vls);
-#endif
-
 
 #ifdef HAVE_SETPGID
 	    /* make this a process group leader */

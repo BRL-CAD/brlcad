@@ -22,6 +22,10 @@
 
 #include "common.h"
 
+#ifdef _WIN32
+#include "windows.h"
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -386,7 +390,6 @@ _bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct 
     return 0;
 }
 
-
 const char *
 bu_brlcad_root(const char *rhs, int fail_quietly)
 {
@@ -443,7 +446,11 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 #ifdef HAVE_REALPATH
 	realpath(lhs, real_path);
 #else
+#  ifdef _WIN32
+	GetFullPathName(lhs, MAXPATHLEN, real_path, NULL);
+#  else
 	bu_strlcpy(real_path, lhs, (size_t)MAXPATHLEN);
+#  endif
 #endif
 	dirpath = bu_dirname(real_path);
 	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
@@ -546,7 +553,11 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 #ifdef HAVE_REALPATH
 	realpath(full_path, result);
 #else
+#  ifdef _WIN32
+	GetFullPathName(full_path, MAXPATHLEN, result, NULL);
+#  else
 	snprintf(result, MAXPATHLEN, "%s", full_path);
+#  endif
 #endif
 	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("Found: BRLCAD_DATA compile-time path [%s]\n", result);
