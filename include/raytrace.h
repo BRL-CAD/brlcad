@@ -928,7 +928,7 @@ struct directory  {
  */
 #define RT_GET_DIRECTORY(_p, _res) { \
 	while (((_p) = (_res)->re_directory_hd) == NULL) \
-		db_alloc_directory(_res); \
+		db_alloc_directory_block(_res); \
 	(_res)->re_directory_hd = (_p)->d_forw; \
 	(_p)->d_forw = NULL; }
 
