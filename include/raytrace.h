@@ -2508,9 +2508,6 @@ RT_EXPORT BU_EXTERN(void rt_pr_hit,
 /* rt_fastf_float, rt_mat_dbmat, rt_dbmat_mat
  * declarations moved to db.h */
 
-/* storage obtainers */
-RT_EXPORT BU_EXTERN(void rt_alloc_seg_block, (struct resource *res));
-
 RT_EXPORT BU_EXTERN(void rt_cut_it,
 		    (struct rt_i *rtip,
 		     int ncpu));
@@ -3140,6 +3137,16 @@ RT_EXPORT BU_EXTERN(int db_rename,
  */
 RT_EXPORT BU_EXTERN(void db_alloc_directory_block, (struct resource *resp));
 
+/**
+ * R T _ A L L O C _ S E G _ B L O C K
+ *
+ * This routine is called by the GET_SEG macro when the freelist is
+ * exhausted.  Rather than simply getting one additional structure, we
+ * get a whole batch, saving overhead.  When this routine is called,
+ * the seg resource must already be locked.  malloc() locking is done
+ * in bu_malloc.
+ */
+RT_EXPORT BU_EXTERN(void rt_alloc_seg_block, (struct resource *res));
 
 /* db_match.c */
 RT_EXPORT BU_EXTERN(void db_update_nref,
