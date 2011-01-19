@@ -357,6 +357,12 @@
 
 ############################### Configuration Options ###############################
 
+::itcl::configbody RtControl::color {\
+    set rtColor $itk_option(-color)
+    set bg [eval ::cadwidgets::Ged::rgb_to_tk $rtColor]
+    $itk_component(bgcolorpatchL) configure -background $bg
+}
+
 ::itcl::configbody RtControl::nproc {
     if {![regexp "^\[0-9\]+$" $itk_option(-nproc)]} {
 	error "Bad value - $itk_option(-nproc)"
