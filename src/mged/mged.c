@@ -173,16 +173,16 @@ char *dpy_string = (char *)NULL;
  * 0 - no warn
  * 1 - warn
  */
-int db_warn = 0;
+int mged_db_warn = 0;
 
 /*
  * 0 - no upgrade
  * 1 - upgrade
  */
-int db_upgrade = 0;
+int mged_db_upgrade = 0;
 
 /* force creation of specific database versions */
-int db_version = 5;
+int mged_db_version = 5;
 
 struct bn_tol mged_tol;	/* calculation tolerance */
 struct rt_tess_tol mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
@@ -2721,7 +2721,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	}
 
 	/* File does not exist, and should be created */
-	if ((dbip = db_create(argv[1], db_version)) == DBI_NULL) {
+	if ((dbip = db_create(argv[1], mged_db_version)) == DBI_NULL) {
 	    gedp = save_gedp;
 	    dbip = save_dbip; /* restore previous database */
 	    rt_new_material_head(save_materp);
@@ -2853,13 +2853,13 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
      * creating a new database.
      */
     if (db_version(dbip) < 5 && !created_new_db) {
-	if (db_upgrade) {
-	    if (db_warn)
+	if (mged_db_upgrade) {
+	    if (mged_db_warn)
 		bu_vls_printf(&msg, "Warning:\n\tDatabase version is old.\n\tConverting to the new format.\n");
 
 	    (void)Tcl_Eval(interpreter, "after idle dbupgrade -f y");
 	} else {
-	    if (db_warn) {
+	    if (mged_db_warn) {
 		if (classic_mged)
 		    bu_vls_printf(&msg, "Warning:\n\tDatabase version is old.\n\tSee the dbupgrade command.");
 		else
