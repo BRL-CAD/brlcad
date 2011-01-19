@@ -453,7 +453,7 @@ db_version(struct db_i *dbip)
 
     /* already calculated during an rt_dirbuild? */
     if (dbip->dbi_version > 0)
-	return abs(dbi->dbi_version);
+	return abs(dbip->dbi_version);
 
     if (!dbip->dbi_fp) {
 	return -1;
