@@ -97,7 +97,7 @@ mk_bot_w_normals(
 	bot->face_mode = (struct bu_bitv *)NULL;
     }
 
-    if ((num_normals > 0) && (db_version(fp->dbip) >= 5)) {
+    if ((num_normals > 0) && (db_version(fp->dbip) > 4)) {
 	bot->num_normals = num_normals;
 	bot->num_face_normals = bot->num_faces;
 	bot->normals = (fastf_t *)bu_calloc(bot->num_normals * 3, sizeof(fastf_t), "BOT normals");

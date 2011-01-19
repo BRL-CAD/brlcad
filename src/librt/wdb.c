@@ -157,14 +157,16 @@ wdb_export_external(
     unsigned char type)
 {
     struct directory *dp;
+    int version;
 
     RT_CK_WDB(wdbp);
     BU_CK_EXTERNAL(ep);
 
     /* Stash name into external representation */
-    if (db_version(wdbp->dbip) <= 4) {
+    version = db_version(wdbp->dbip);
+    if (version < 5) {
 	db_wrap_v4_external(ep, name);
-    } else if (db_version(wdbp->dbip) == 5) {
+    } else if (version == 5) {
 	if (db_wrap_v5_external(ep, name) < 0) {
 	    bu_log("wdb_export_external(%s): db_wrap_v5_external error\n",
 		   name);
@@ -172,7 +174,7 @@ wdb_export_external(
 	}
     } else {
 	bu_log("wdb_export_external(%s): version %d unsupported\n",
-	       name, db_version(wdbp->dbip));
+	       name, version);
 	return -4;
     }
 
@@ -286,7 +288,7 @@ wdb_put_internal(
     RT_CK_WDB(wdbp);
     RT_CK_DB_INTERNAL(ip);
 
-    if (db_version(wdbp->dbip) <= 4) {
+    if (db_version(wdbp->dbip) < 5) {
 	BU_INIT_EXTERNAL(&ext);
 
 	ret = -1;

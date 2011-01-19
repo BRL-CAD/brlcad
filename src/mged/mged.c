@@ -2852,7 +2852,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
      * We have an old database version AND we're not in the process of
      * creating a new database.
      */
-    if (db_version(dbip) != 5 && !created_new_db) {
+    if (db_version(dbip) < 5 && !created_new_db) {
 	if (db_upgrade) {
 	    if (db_warn)
 		bu_vls_printf(&msg, "Warning:\n\tDatabase version is old.\n\tConverting to the new format.\n");

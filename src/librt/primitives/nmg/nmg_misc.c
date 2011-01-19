@@ -4623,7 +4623,7 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
     intern.idb_meth = &rt_functab[ID_NMG];
     intern.idb_ptr = (genptr_t)m;
 
-    if (db_version(fp->dbip) <= 4) {
+    if (db_version(fp->dbip) < 5) {
 	BU_INIT_EXTERNAL(&ext);
 	ret = intern.idb_meth->ft_export4(&ext, &intern, 1.0, fp->dbip, &rt_uniresource);
 	if (ret < 0) {
