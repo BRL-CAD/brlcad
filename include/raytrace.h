@@ -2509,8 +2509,8 @@ RT_EXPORT BU_EXTERN(void rt_pr_hit,
  * declarations moved to db.h */
 
 /* storage obtainers */
-RT_EXPORT BU_EXTERN(void rt_alloc_seg_block,
-		    (struct resource *res));
+RT_EXPORT BU_EXTERN(void rt_alloc_seg_block, (struct resource *res));
+
 RT_EXPORT BU_EXTERN(void rt_cut_it,
 		    (struct rt_i *rtip,
 		     int ncpu));
@@ -3138,7 +3138,7 @@ RT_EXPORT BU_EXTERN(int db_rename,
  * freelist is exhausted.  Rather than simply getting one additional
  * structure, we get a whole batch, saving overhead.
  */
-RT_EXPORT BU_EXTERN(void db_alloc_directory, (struct resource *resp));
+RT_EXPORT BU_EXTERN(void db_alloc_directory_block, (struct resource *resp));
 
 
 /* db_match.c */
