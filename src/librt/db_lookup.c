@@ -484,34 +484,6 @@ db_pr_dir(const struct db_i *dbip)
 }
 
 
-void
-db_alloc_directory(struct resource *resp)
-{
-    struct directory *dp;
-    size_t bytes;
-
-    RT_CK_RESOURCE(resp);
-    BU_CK_PTBL(&resp->re_directory_blocks);
-
-    BU_ASSERT_PTR(resp->re_directory_hd, ==, NULL);
-
-    /* Get a BIG block */
-    bytes = (size_t)bu_malloc_len_roundup(1024*sizeof(struct directory));
-    dp = (struct directory *)bu_malloc(bytes, "re_directory_blocks from db_alloc_directory() " BU_FLSTR);
-
-    /* Record storage for later */
-    bu_ptbl_ins(&resp->re_directory_blocks, (long *)dp);
-
-    while (bytes >= sizeof(struct directory)) {
-	dp->d_magic = RT_DIR_MAGIC;
-	dp->d_forw = resp->re_directory_hd;
-	resp->re_directory_hd = dp;
-	dp++;
-	bytes -= sizeof(struct directory);
-    }
-}
-
-
 /**
  * D B _ L O O K U P _ B Y _ A T T R
  *
