@@ -2327,12 +2327,9 @@ struct nmg_inter_struct {
  *          Applications interface to the RT library             *
  *                                                               *
  *****************************************************************/
-/* Read named MGED db, build toc */
-RT_EXPORT BU_EXTERN(struct rt_i *rt_dirbuild,
-		    (const char *filename,
-		     char *buf,
-		     int len));
+
 /* Prepare for raytracing */
+
 RT_EXPORT BU_EXTERN(struct rt_i *rt_new_rti,
 		    (struct db_i *dbip));
 RT_EXPORT BU_EXTERN(void rt_free_rti,
@@ -2368,6 +2365,7 @@ RT_EXPORT BU_EXTERN(int rt_gen_elliptical_grid,
 		     const fastf_t *avec,
 		     const fastf_t *bvec,
 		     fastf_t gridsize));
+
 RT_EXPORT BU_EXTERN(int rt_gen_circular_grid,
 		    (struct xrays *ray_bundle,
 		     const struct xray *center_ray,
@@ -3319,9 +3317,12 @@ RT_EXPORT BU_EXTERN(union tree *db_tree_parse, (struct bu_vls *vls, const char *
 
 
 /* dir.c */
-RT_EXPORT BU_EXTERN(struct rt_i *rt_dirbuild,
-		    (const char *filename,
-		     char *buf, int len));
+
+/**
+ * Read named MGED db, build toc.
+ */
+RT_EXPORT BU_EXTERN(struct rt_i *rt_dirbuild, (const char *filename, char *buf, int len));
+
 RT_EXPORT BU_EXTERN(int rt_db_get_internal,
 		    (struct rt_db_internal	*ip,
 		     const struct directory	*dp,
