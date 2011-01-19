@@ -3234,7 +3234,7 @@ AC_SUBST(TKTABLE)
 dnl *** tkpng ***
 dnl figure out whether we need to build tkpng
 TKPNG_VERSION="0.8"
-TKPNG_LIB_FILE="tkpng${SHLIB_SUFFIX}"
+TKPNG_LIB_FILE="libtkpng${SHLIB_SUFFIX}"
 case $host_os in
      *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
 	 # some OS's don't like dots in the lib name
@@ -3246,7 +3246,7 @@ AC_SUBST(TKPNG_LIB_FILE)
 AC_MSG_CHECKING(whether to build tkpng)
 if test ! "x$bc_build_tkpng" = "xno" ; then
     build_brlcad_tkpng=yes
-    TKPNG='${top_builddir}/src/other/tkpng/tkpng${TKPNG_VERSION}.la'
+    TKPNG='${top_builddir}/src/other/tkpng/libtkpng${TKPNG_VERSION}.la'
     AC_MSG_RESULT(yes)
 else
     build_brlcad_tkpng=no
