@@ -409,7 +409,7 @@ struct seg {
 
 #define RT_GET_SEG(p, res) { \
 	while (!BU_LIST_WHILE((p), seg, &((res)->re_seg)) || !(p)) \
-		rt_get_seg(res); \
+		rt_alloc_seg_block(res); \
 	BU_LIST_DEQUEUE(&((p)->l)); \
 	(p)->l.forw = (p)->l.back = BU_LIST_NULL; \
 	(p)->seg_in.hit_magic = (p)->seg_out.hit_magic = RT_HIT_MAGIC; \
@@ -2509,7 +2509,7 @@ RT_EXPORT BU_EXTERN(void rt_pr_hit,
  * declarations moved to db.h */
 
 /* storage obtainers */
-RT_EXPORT BU_EXTERN(void rt_get_seg,
+RT_EXPORT BU_EXTERN(void rt_alloc_seg_block,
 		    (struct resource *res));
 RT_EXPORT BU_EXTERN(void rt_cut_it,
 		    (struct rt_i *rtip,

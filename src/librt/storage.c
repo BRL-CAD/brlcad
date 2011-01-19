@@ -38,7 +38,7 @@
 
 
 /**
- * R T _ G E T _ S E G
+ * R T _ A L L O C _ S E G _ B L O C K
  *
  * This routine is called by the GET_SEG macro when the freelist is
  * exhausted.  Rather than simply getting one additional structure, we
@@ -47,7 +47,7 @@
  * in bu_malloc.
  */
 void
-rt_get_seg(register struct resource *res)
+rt_alloc_seg_block(register struct resource *res)
 {
     register struct seg *sp;
     size_t bytes;
@@ -59,7 +59,7 @@ rt_get_seg(register struct resource *res)
 	bu_ptbl_init(&res->re_seg_blocks, 64, "re_seg_blocks ptbl");
     }
     bytes = bu_malloc_len_roundup(64*sizeof(struct seg));
-    sp = (struct seg *)bu_malloc(bytes, "rt_get_seg()");
+    sp = (struct seg *)bu_malloc(bytes, "rt_alloc_seg_block()");
     bu_ptbl_ins(&res->re_seg_blocks, (long *)sp);
     while (bytes >= sizeof(struct seg)) {
 	sp->l.magic = RT_SEG_MAGIC;
