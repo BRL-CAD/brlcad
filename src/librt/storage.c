@@ -37,38 +37,6 @@
 #include "bu.h"
 
 
-/**
- * R T _ A L L O C _ S E G _ B L O C K
- *
- * This routine is called by the GET_SEG macro when the freelist is
- * exhausted.  Rather than simply getting one additional structure, we
- * get a whole batch, saving overhead.  When this routine is called,
- * the seg resource must already be locked.  malloc() locking is done
- * in bu_malloc.
- */
-void
-rt_alloc_seg_block(register struct resource *res)
-{
-    register struct seg *sp;
-    size_t bytes;
-
-    RT_CK_RESOURCE(res);
-
-    if (BU_LIST_UNINITIALIZED(&res->re_seg)) {
-	BU_LIST_INIT(&(res->re_seg));
-	bu_ptbl_init(&res->re_seg_blocks, 64, "re_seg_blocks ptbl");
-    }
-    bytes = bu_malloc_len_roundup(64*sizeof(struct seg));
-    sp = (struct seg *)bu_malloc(bytes, "rt_alloc_seg_block()");
-    bu_ptbl_ins(&res->re_seg_blocks, (long *)sp);
-    while (bytes >= sizeof(struct seg)) {
-	sp->l.magic = RT_SEG_MAGIC;
-	BU_LIST_INSERT(&(res->re_seg), &(sp->l));
-	res->re_seglen++;
-	sp++;
-	bytes -= sizeof(struct seg);
-    }
-}
 
 
 /*
