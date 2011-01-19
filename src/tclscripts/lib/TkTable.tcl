@@ -529,6 +529,11 @@
 	    if {$row == $arow && $col == $acol} {
 		setInsertMode 1
 	    } else {
+		# This line causes the cell data to be
+		# retained even after the state is disable
+		# by the call to "setInsertMode 0" below.
+		$itk_component(table) activate active
+
 		setInsertMode 0
 	    }
 	}
