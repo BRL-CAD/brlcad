@@ -2159,7 +2159,7 @@ if test "x$bc_build_strict" = "xyes" ; then
    BC_COMPILER_AND_LINKER_RECOGNIZES([-w -pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long -Werror], [strict], [no])
    if test "x$bc_strict_works" = "xyes" ; then
        # do not include -w as that was just to suppress any test warnings
-       STRICT_FLAGS="-pedantic -W -Wall -Werror -Wno-long-long"
+       STRICT_FLAGS="-pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long  -Werror"
        AC_SUBST(STRICT_FLAGS)
        AC_DEFINE([STRICT_FLAGS], [1], [Define to 1 if strict standards compliance compilation is enabled.])
    fi
