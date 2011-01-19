@@ -55,7 +55,10 @@ libfb_la_SOURCES = \
 	vers.c
 
 libfb_la_LDFLAGS = -version-info 19:1 -no-undefined
+
+# STD_C99_FLAG is needed due to gl.h on Mac OS X 10.6 having // comments
 libfb_la_CFLAGS = \
+	${STD_C99_FLAGS} \
 	${STRICT_FLAGS} \
 	-DIF_REMOTE \
 	-DIF_AB \
