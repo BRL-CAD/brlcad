@@ -75,7 +75,7 @@ sol_comp_name(void *v1, void *v2)
     BU_CKMAG(s1, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
     BU_CKMAG(s2, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
-    return !BU_STR_EQUAL(s1->name, s2->name);
+    return bu_strcmp(s1->name, s2->name);
 }
 
 

@@ -8920,14 +8920,13 @@ wdb_importFg4Section_tcl(ClientData clientData,
  * on the respective names and return that value.
  */
 int
-wdb_cmpdirname(const genptr_t a,
-	       const genptr_t b)
+wdb_cmpdirname(const genptr_t a, const genptr_t b)
 {
     struct directory **dp1, **dp2;
 
     dp1 = (struct directory **)a;
     dp2 = (struct directory **)b;
-    return !BU_STR_EQUAL((*dp1)->d_namep, (*dp2)->d_namep);
+    return bu_strcmp((*dp1)->d_namep, (*dp2)->d_namep);
 }
 
 

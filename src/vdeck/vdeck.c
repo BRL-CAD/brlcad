@@ -211,7 +211,7 @@ sortFunc(const void *a, const void *b)
     const char **lhs = (const char **)a;
     const char **rhs = (const char **)b;
 
-    return !BU_STR_EQUAL( *lhs, *rhs );
+    return bu_strcmp( *lhs, *rhs );
 }
 
 

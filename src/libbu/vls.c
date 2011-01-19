@@ -453,7 +453,7 @@ bu_vls_strcmp(struct bu_vls *s1, struct bu_vls *s2)
     }
 
     /* neither empty, straight up comparison */
-    return !BU_STR_EQUAL(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset);
+    return bu_strcmp(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset);
 }
 
 
