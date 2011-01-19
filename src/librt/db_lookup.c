@@ -59,17 +59,12 @@ db_is_directory_non_empty(const struct db_i *dbip)
 }
 
 
-/**
- * D B _ G E T _ D I R E C T O R Y _ S I Z E
- *
- * Return the number of "struct directory" nodes in the given database.
- */
-int
-db_get_directory_size(const struct db_i *dbip)
+size_t
+db_directory_size(const struct db_i *dbip)
 {
     struct directory *dp;
-    int count = 0;
-    int i;
+    size_t count = 0;
+    size_t i;
 
     RT_CK_DBI(dbip);
 

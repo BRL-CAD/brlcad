@@ -42,29 +42,21 @@
  * G E D _ G E T S P A C E
  *
  * This routine walks through the directory entry list and mallocs
- * enough space for pointers to hold:
- *
- * a) all of the entries if called with an argument of 0, or
- * b) the number of entries specified by the argument if > 0.
+ * enough space for pointers to hold the number of entries specified
+ * by the argument if > 0.
  *
  */
 struct directory **
 _ged_getspace(struct db_i *dbip,
-	      int num_entries)
+	      size_t num_entries)
 {
     struct directory **dir_basep;
 
-    if (num_entries < 0) {
-	bu_log("_ged_getspace: was passed %d, used 0\n",
-	       num_entries);
-	num_entries = 0;
-    }
-
-    if (num_entries == 0) num_entries = db_get_directory_size(dbip);
+    if (num_entries == 0)
+	num_entries = db_directory_size(dbip);
 
     /* Allocate and cast num_entries worth of pointers */
-    dir_basep = (struct directory **) bu_malloc((num_entries+1) * sizeof(struct directory *),
-						"_ged_getspace *dir[]");
+    dir_basep = (struct directory **) bu_calloc((num_entries+1), sizeof(struct directory *), "_ged_getspace *dir[]");
     return dir_basep;
 }
 

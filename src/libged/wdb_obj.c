@@ -273,7 +273,7 @@ void wdb_vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int 
 void wdb_vls_long_dpp(struct bu_vls *vls, struct directory **list_of_names, int num_in_list, int aflag, int cflag, int rflag, int sflag);
 void wdb_vls_line_dpp(struct bu_vls *vls, struct directory **list_of_names, int num_in_list, int aflag, int cflag, int rflag, int sflag);
 void wdb_do_list(struct db_i *dbip, Tcl_Interp *interp, struct bu_vls *outstrp, struct directory *dp, int verbose);
-struct directory ** wdb_getspace(struct db_i *dbip, int num_entries);
+struct directory ** wdb_getspace(struct db_i *dbip, size_t num_entries);
 struct directory *wdb_combadd(Tcl_Interp *interp, struct db_i *dbip, struct directory *objp, char *combname, int region_flag, int relation, int ident, int air, struct rt_wdb *wdbp);
 void wdb_identitize(struct directory *dp, struct db_i *dbip, Tcl_Interp *interp);
 static void wdb_dir_summary(struct db_i *dbip, Tcl_Interp *interp, int flag);
@@ -648,7 +648,7 @@ Usage: wdb_open\n\
 int
 wdb_decode_dbip(Tcl_Interp *interp, const char *dbip_string, struct db_i **dbipp)
 {
-    if (sscanf(dbip_string, "%p", dbipp) != 1) {
+    if (sscanf(dbip_string, "%p", (void **)dbipp) != 1) {
 	return GED_ERROR;
     }
 
@@ -2134,7 +2134,7 @@ wdb_ls_cmd(struct rt_wdb *wdbp,
 	if (!dir_flags) dir_flags = -1 ^ DIR_HIDDEN;
 
 	bu_avs_init(&avs, argc, "wdb_ls_cmd avs");
-	for (i = 0; i < argc; i += 2) {
+	for (i = 0; i < (size_t)argc; i += 2) {
 	    if (or_flag) {
 		bu_avs_add_nonunique(&avs, argv[i], argv[i+1]);
 	    } else {
@@ -2160,7 +2160,7 @@ wdb_ls_cmd(struct rt_wdb *wdbp,
 	/*
 	 * Verify the names, and add pointers to them to the array.
 	 */
-	for (i = 0; i < argc; i++) {
+	for (i = 0; i < (size_t)argc; i++) {
 	    if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
 		continue;
 	    *dirp++ = dp;
@@ -9248,20 +9248,15 @@ wdb_vls_line_dpp(struct bu_vls *vls,
  */
 struct directory **
 wdb_getspace(struct db_i *dbip,
-	     int num_entries)
+	     size_t num_entries)
 {
     struct directory **dir_basep;
 
-    if (num_entries < 0) {
-	bu_log("wdb_getspace: was passed %d, used 0\n",
-	       num_entries);
-	num_entries = 0;
-    }
-
-    if (num_entries == 0) num_entries = db_get_directory_size(dbip);
+    if (num_entries == 0)
+	num_entries = db_directory_size(dbip);
 
     /* Allocate and cast num_entries worth of pointers */
-    dir_basep = (struct directory **) bu_malloc((num_entries+1) * sizeof(struct directory *),
+    dir_basep = (struct directory **) bu_calloc((num_entries+1), sizeof(struct directory *),
 						"wdb_getspace *dir[]");
     return dir_basep;
 }

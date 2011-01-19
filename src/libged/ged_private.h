@@ -282,7 +282,7 @@ BU_EXTERN(void _ged_vls_col_pr4v,
 	   int no_decorate));
 BU_EXTERN(struct directory ** _ged_getspace,
 	  (struct db_i *dbip,
-	   int num_entries));
+	   size_t num_entries));
 
 /* defined in preview.c */
 BU_EXTERN (void _ged_setup_rt,

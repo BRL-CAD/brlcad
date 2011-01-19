@@ -3065,8 +3065,15 @@ RT_EXPORT BU_EXTERN(void db_inmem,
 		     struct db_i	*dbip));
 
 /* db_lookup.c */
-RT_EXPORT BU_EXTERN(int db_get_directory_size,
-		    (const struct db_i	*dbip));
+
+/**
+ * D B _ D I R E C T O R Y _ S I Z E
+ *
+ * Return the number of "struct directory" nodes in the given
+ * database.
+ */
+RT_EXPORT BU_EXTERN(size_t db_directory_size, (const struct db_i *dbip));
+
 RT_EXPORT BU_EXTERN(void db_ck_directory,
 		    (const struct db_i *dbip));
 
