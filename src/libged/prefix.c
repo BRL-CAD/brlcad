@@ -76,7 +76,7 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	if (gedp->ged_wdbp->dbip->dbi_version < 5 && (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
+	if (db_version(gedp->ged_wdbp->dbip) < 5 && (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
 	    bu_vls_printf(&gedp->ged_result_str, "'%s%s' too long, must be %d characters or less.\n",
 			  argv[1], argv[i], NAMESIZE);
 
@@ -84,7 +84,7 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	if (gedp->ged_wdbp->dbip->dbi_version < 5) {
+	if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	    bu_strlcpy(tempstring_v4, argv[1], len);
 	    bu_strlcat(tempstring_v4, argv[i], len);
 	    tempstring = tempstring_v4;
@@ -163,7 +163,7 @@ ged_do_prefix(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tr
 	return;
 
     bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
-    if ( dbip->dbi_version < 5 ) {
+    if ( db_version(dbip) < 5 ) {
 	bu_strlcpy( tempstring_v4, prefix, len);
 	bu_strlcat( tempstring_v4, obj, len);
 	comb_leaf->tr_l.tl_name = bu_strdup( tempstring_v4 );

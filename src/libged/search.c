@@ -186,7 +186,7 @@ db_fullpath_traverse(struct ged *gedp,
 	/* entering region */
 	if (comb_func)
 	    comb_func(gedp, dfp, client_data);
-	if (gedp->ged_wdbp->dbip->dbi_version < 5) {
+	if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	    union record *rp;
 	    struct directory *mdp;
 	    /*
@@ -489,7 +489,7 @@ db_fullpath_stateful_traverse(struct ged *gedp,
 	/* entering region */
 	if (comb_func)
 	    if (comb_func(gedp, dfp, client_data)) return 1;
-	if (gedp->ged_wdbp->dbip->dbi_version < 5) {
+	if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	    union record *rp;
 	    struct directory *mdp;
 	    /*

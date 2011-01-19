@@ -955,7 +955,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s already exists.\n", argv[0], argv[arg]);
 	return GED_ERROR;
     }
-    if (gedp->ged_wdbp->dbip->dbi_version < 5 && (int)strlen(argv[arg]) > NAMESIZE) {
+    if (db_version(gedp->ged_wdbp->dbip) < 5 && (int)strlen(argv[arg]) > NAMESIZE) {
 	bu_vls_printf(&gedp->ged_result_str, "Database version 4 names are limited to %d characters\n", NAMESIZE);
 	return GED_ERROR;
     }

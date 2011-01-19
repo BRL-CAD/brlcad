@@ -536,7 +536,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_init(&comb->material);
     }
 
-    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
+    if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	new_name = new_name_v4;
 	if (dp == DIR_NULL)
 	    NAMEMOVE(argv[1], new_name_v4);

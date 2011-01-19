@@ -2819,7 +2819,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s already exists", argv[0], argv[1]);
 	return GED_ERROR;
     }
-    if (gedp->ged_wdbp->dbip->dbi_version <= 4 && (int)strlen(argv[1]) > NAMESIZE) {
+    if (db_version(gedp->ged_wdbp->dbip) <= 4 && (int)strlen(argv[1]) > NAMESIZE) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, v4 names are limited to %d characters\n", argv[0], NAMESIZE);
 	return GED_ERROR;
     }
@@ -2872,7 +2872,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	menu = p_vol;
 	fn_in = vol_in;
     } else if (BU_STR_EQUAL(argv[2], "hf")) {
-	if (gedp->ged_wdbp->dbip->dbi_version <= 4) {
+	if (db_version(gedp->ged_wdbp->dbip) <= 4) {
 	    nvals = 19;
 	    menu = p_hf;
 	    fn_in = hf_in;
@@ -2886,7 +2886,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "%s: the polysolid is deprecated and not supported by this command.\nUse the bot primitive.\n", argv[0]);
 	return GED_ERROR;
     } else if (BU_STR_EQUAL(argv[2], "dsp")) {
-	if (gedp->ged_wdbp->dbip->dbi_version <= 4) {
+	if (db_version(gedp->ged_wdbp->dbip) <= 4) {
 	    nvals = 6;
 	    menu = p_dsp_v4;
 	    fn_in = dsp_in_v4;
@@ -3025,7 +3025,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	menu = p_part;
 	fn_in = part_in;
     } else if (BU_STR_EQUAL(argv[2], "binunif")) {
-	if (gedp->ged_wdbp->dbip->dbi_version <= 4) {
+	if (db_version(gedp->ged_wdbp->dbip) <= 4) {
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "%s: the binunif primitive is not supported by this command when using an old style database",
 			  argv[0]);

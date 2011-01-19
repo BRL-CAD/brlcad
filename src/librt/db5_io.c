@@ -1166,7 +1166,7 @@ db5_get_attributes(const struct db_i *dbip, struct bu_attribute_value_set *avs, 
 
     RT_CK_DBI(dbip);
 
-    if (dbip->dbi_version < 5)
+    if (db_version(dbip) < 5)
 	return 0;	/* not an error, just no attributes */
 
     RT_CK_DIR(dp);

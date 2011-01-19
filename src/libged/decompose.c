@@ -72,7 +72,7 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 
     if ( argc > 2 ) {
 	prefix = (char *)argv[2];
-	if ( gedp->ged_wdbp->dbip->dbi_version < 5 && strlen(prefix) > NAMESIZE ) {
+	if ( db_version(gedp->ged_wdbp->dbip) < 5 && strlen(prefix) > NAMESIZE ) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Prefix %s is too long", argv[0], prefix);
 	    return GED_ERROR;
 	}
@@ -152,7 +152,7 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 		count++;
 		bu_vls_strcpy( &solid_name, prefix );
 		sprintf( shell_no, "_%d", count );
-		if ( gedp->ged_wdbp->dbip->dbi_version < 5 ) {
+		if ( db_version(gedp->ged_wdbp->dbip) < 5 ) {
 		    end_prefix = strlen( prefix );
 		    if ( end_prefix + strlen( shell_no ) > NAMESIZE )
 			end_prefix = NAMESIZE - strlen( shell_no );

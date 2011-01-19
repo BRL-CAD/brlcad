@@ -62,7 +62,7 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* check that we are using a version 5 database */
-    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
+    if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	bu_vls_printf(&gedp->ged_result_str, "This is an older database version.\nIt does not support binary objects.Use \"dbupgrade\" to upgrade this database to the current version.\n");
 	return GED_ERROR;
     }

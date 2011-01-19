@@ -700,7 +700,7 @@ compare_attrs(struct directory *dp1, struct directory *dp2)
 
     bu_vls_init(&vls);
 
-    if (dbip1->dbi_version > 4) {
+    if (db_version(dbip1) > 4) {
 	bu_vls_printf(&vls, "_db1 attr get %s", dp1->d_namep);
 	if (Tcl_Eval(interp, bu_vls_addr(&vls)) != TCL_OK) {
 	    fprintf(stderr, "Cannot get attributes for %s\n", dp1->d_namep);
@@ -717,7 +717,7 @@ compare_attrs(struct directory *dp1, struct directory *dp2)
 	obj1 = Tcl_NewObj();
     }
 
-    if (dbip2->dbi_version > 4) {
+    if (db_version(dbip2) > 4) {
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "_db2 attr get %s", dp1->d_namep);
 	if (Tcl_Eval(interp, bu_vls_addr(&vls)) != TCL_OK) {
@@ -988,7 +988,7 @@ main(int argc, char **argv)
     mater_hd1 = rt_dup_material_head();
     rt_color_free();
 
-    if (dbip1->dbi_version < 5) {
+    if (db_version(dbip1) < 5) {
 	pre_5_vers++;
     }
 
@@ -1026,7 +1026,7 @@ main(int argc, char **argv)
     mater_hd2 = rt_dup_material_head();
     rt_color_free();
 
-    if (dbip2->dbi_version < 5) {
+    if (db_version(dbip2) < 5) {
 	pre_5_vers++;
 	version2 = 4;
     } else {

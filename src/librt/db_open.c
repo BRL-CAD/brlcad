@@ -424,8 +424,8 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
     RT_CK_WDB(wdbp);
 
     /* just in case since we don't actually handle it below */
-    if (dbip->dbi_version != wdbp->dbip->dbi_version) {
-	bu_log("Internal Error: dumping a v%d database into a v%d database is untested\n", dbip->dbi_version, wdbp->dbip->dbi_version);
+    if (db_version(dbip) != db_version(wdbp->dbip)) {
+	bu_log("Internal Error: dumping a v%d database into a v%d database is untested\n", db_version(dbip), db_version(wdbp->dbip));
 	return -1;
     }
 

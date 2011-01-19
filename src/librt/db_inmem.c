@@ -158,7 +158,7 @@ db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *
     if (dp->d_flags & RT_DIR_INMEM)
 	bu_free(dp->d_un.ptr, "db_inmem() ext ptr");
     dp->d_un.ptr = ext->ext_buf;
-    if (dbip->dbi_version < 5) {
+    if (db_version(dbip) < 5) {
 	/* DB_MINREC granule size */
 	dp->d_len = ext->ext_nbytes / 128;
     } else {

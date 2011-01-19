@@ -121,17 +121,17 @@ main(int argc, char **argv)
     }
 
     if ( !reverse ) {
-	if ( dbip->dbi_version == 5 ) {
+	if ( db_version(dbip) == 5 ) {
 	    bu_log( "This database (%s) is already at the current version\n",
 		    argv[in_arg] );
 	    return 5;
 	}
-	if ( dbip->dbi_version != 4 ) {
+	if ( db_version(dbip) != 4 ) {
 	    bu_log( "Input database version not recognized!!!!\n" );
 	    return 4;
 	}
     } else if ( reverse ) {
-	if ( dbip->dbi_version != 5 ) {
+	if ( db_version(dbip) != 5 ) {
 	    bu_log( "Can only revert from db version 5\n" );
 	    return 6;
 	}
@@ -142,7 +142,7 @@ main(int argc, char **argv)
     if ( db_dirbuild( dbip ) )
 	bu_exit(1, "db_dirbuild failed\n" );
 
-    if ( (BU_STR_EQUAL( dbip->dbi_title, "Untitled v4 BRL-CAD Database" )) && (dbip->dbi_version == 4) ) {
+    if ( (BU_STR_EQUAL( dbip->dbi_title, "Untitled v4 BRL-CAD Database" )) && (db_version(dbip) == 4) ) {
 	dbip->dbi_title=bu_strdup( "Untitled BRL-CAD Database" );
     }
     db_update_ident( fp->dbip, dbip->dbi_title, dbip->dbi_local2base );

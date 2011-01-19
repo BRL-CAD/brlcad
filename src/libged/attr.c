@@ -69,7 +69,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* this is only valid for v5 databases */
-    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
+    if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	bu_vls_printf(&gedp->ged_result_str, "Attributes are not available for this database format.\nPlease upgrade your database format using \"dbupgrade\" to enable attributes.");
 	return GED_ERROR;
     }

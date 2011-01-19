@@ -804,7 +804,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 	tree_state.ts_resp = NULL;	/* sanity.  Needs to be updated */
 
 	if (attrs) {
-	    if (rtip->rti_dbip->dbi_version < 5) {
+	    if (db_version(rtip->rti_dbip) < 5) {
 		bu_log("WARNING: requesting attributes from an old database version (ignored)\n");
 		bu_avs_init_empty(&tree_state.ts_attrs);
 	    } else {

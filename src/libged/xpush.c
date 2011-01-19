@@ -153,7 +153,7 @@ Make_new_name(struct db_i *dbip,
 	/* set xform for this object_use to all zeros */
 	MAT_ZERO(use->xform);
 	use->used = 0;
-	if (dbip->dbi_version < 5) {
+	if (db_version(dbip) < 5) {
 	    NAMEMOVE(dp->d_namep, name_v4);
 	    name_v4[NAMESIZE] = '\0';                /* ensure null termination */
 	}
@@ -165,7 +165,7 @@ Make_new_name(struct db_i *dbip,
 	if (use_no == dp->d_uses-1 && dp->d_uses == dp->d_nref)
 	    use->dp = dp;
 	else {
-	    if (dbip->dbi_version < 5) {
+	    if (db_version(dbip) < 5) {
 		snprintf(&name_v4[suffix_start], NAMESIZE-suffix_start, format_v4, j);
 		name = name_v4;
 	    } else {
@@ -177,7 +177,7 @@ Make_new_name(struct db_i *dbip,
 	    /* Insure that new name is unique */
 	    while (db_lookup(dbip, name, 0) != DIR_NULL) {
 		j++;
-		if (dbip->dbi_version < 5) {
+		if (db_version(dbip) < 5) {
 		    snprintf(&name_v4[suffix_start], NAMESIZE-suffix_start, format_v4, j);
 		    name = name_v4;
 		} else {

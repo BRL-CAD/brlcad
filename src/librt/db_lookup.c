@@ -287,14 +287,14 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
 	/* if this is a version 4 database and the offending char is beyond NAMESIZE
 	 * then it is not really a problem
 	 */
-	if (dbip->dbi_version < 5 && (tmp_ptr - name) < NAMESIZE) {
+	if (db_version(dbip) < 5 && (tmp_ptr - name) < NAMESIZE) {
 	    bu_log("db_diradd() object named '%s' is illegal, ignored\n", name);
 	    return DIR_NULL;
 	}
     }
 
     bu_vls_init(&local);
-    if (dbip->dbi_version < 5) {
+    if (db_version(dbip) < 5) {
 	bu_vls_strncpy(&local, name, NAMESIZE);
     } else {
 	/* must provide a valid minor type */
@@ -323,7 +323,7 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
     dp->d_animate = NULL;
     dp->d_nref = 0;
     dp->d_uses = 0;
-    if (dbip->dbi_version > 4) {
+    if (db_version(dbip) > 4) {
 	dp->d_major_type = DB5_MAJORTYPE_BRLCAD;
 	dp->d_minor_type = *(unsigned char *)ptr;
     }

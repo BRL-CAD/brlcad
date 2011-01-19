@@ -83,7 +83,7 @@ Do_prefix(struct db_i *dbi, struct rt_comb_internal *UNUSED(comb), union tree *c
 	return;
 
     bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");
-    if (dbi->dbi_version < 5) {
+    if (db_version(dbi) < 5) {
 	bu_strlcpy(tempstring_v4, prefix, len);
 	bu_strlcat(tempstring_v4, obj, len);
 	comb_leaf->tr_l.tl_name = bu_strdup(tempstring_v4);
@@ -137,7 +137,7 @@ f_prefix(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	    continue;
 	}
 
-	if (dbip->dbi_version < 5 && (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
+	if (db_version(dbip) < 5 && (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
 	    struct bu_vls tmp_vls;
 
 	    bu_vls_init(&tmp_vls);
@@ -150,7 +150,7 @@ f_prefix(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	    continue;
 	}
 
-	if (dbip->dbi_version < 5) {
+	if (db_version(dbip) < 5) {
 	    bu_strlcpy(tempstring_v4, argv[1], len);
 	    bu_strlcat(tempstring_v4, argv[i], len);
 	    tempstring = tempstring_v4;

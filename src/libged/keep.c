@@ -154,7 +154,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     new_dbip = db_open(argv[0], "w");
 
     if (new_dbip != DBI_NULL) {
-	if (new_dbip->dbi_version != gedp->ged_wdbp->dbip->dbi_version) {
+	if (db_version(new_dbip) != db_version(gedp->ged_wdbp->dbip)) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: File format mismatch between '%s' and '%s'\n",
 			  cmd, argv[0], gedp->ged_wdbp->dbip->dbi_filename);
 	    return GED_ERROR;
@@ -171,7 +171,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 	}
     } else {
 	/* Create a new database */
-	keepfp = wdb_fopen_v(argv[0], gedp->ged_wdbp->dbip->dbi_version);
+	keepfp = wdb_fopen_v(argv[0], db_version(gedp->ged_wdbp->dbip));
 
 	if (keepfp == NULL) {
 	    perror(argv[0]);

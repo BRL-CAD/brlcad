@@ -104,7 +104,7 @@ db_preorder_traverse( struct directory *dp,
 	/* entering region */
 	if ( dtp->comb_enter_func )
 	    dtp->comb_enter_func( dtp->dbip, dp, dtp->client_data );
-	if ( dtp->dbip->dbi_version < 5 ) {
+	if ( db_version(dtp->dbip) < 5 ) {
 	    register union record   *rp;
 	    register struct directory *mdp;
 	    /*
@@ -223,7 +223,7 @@ db_functree(struct db_i *dbip,
     }
 
     if ( dp->d_flags & DIR_COMB )  {
-	if ( dbip->dbi_version < 5 ) {
+	if ( db_version(dbip) < 5 ) {
 	    register union record	*rp;
 	    register struct directory *mdp;
 	    /*

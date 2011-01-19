@@ -1229,7 +1229,7 @@ int rt_load_attrs(struct rt_i *rtip, char **attrs)
     RT_CHECK_RTI(rtip);
     RT_CK_DBI(rtip->rti_dbip);
 
-    if (rtip->rti_dbip->dbi_version < 5)
+    if (db_version(rtip->rti_dbip) < 5)
 	return 0;
 
     while (attrs[attr_count])

@@ -55,7 +55,7 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
+    if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	bu_vls_printf(&gedp->ged_result_str, "%s is not available prior to version 5 of the .g file format\n", argv[0]);
 	return GED_ERROR;
     }

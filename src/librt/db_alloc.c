@@ -152,10 +152,10 @@ db_delete(struct db_i *dbip, struct directory *dp)
 	return 0;
     }
 
-    if (dbip->dbi_version == 4) {
+    if (db_version(dbip) == 4) {
 	i = db_zapper(dbip, dp, 0);
 	rt_memfree(&(dbip->dbi_freep), (unsigned)dp->d_len, dp->d_addr/(sizeof(union record)));
-    } else if (dbip->dbi_version == 5) {
+    } else if (db_version(dbip) == 5) {
 	i = db5_write_free(dbip, dp, dp->d_len);
 	rt_memfree(&(dbip->dbi_freep), dp->d_len, dp->d_addr);
     } else {

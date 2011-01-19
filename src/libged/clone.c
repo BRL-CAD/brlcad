@@ -459,7 +459,7 @@ copy_solid(struct db_i *dbip, struct directory *proto, genptr_t clientData)
 	return;
     }
 
-    if (dbip->dbi_version < 5)
+    if (db_version(dbip) < 5)
 	(void)copy_v4_solid(dbip, proto, (struct ged_clone_state *)state, idx);
     else
 	(void)copy_v5_solid(dbip, proto, (struct ged_clone_state *)state, idx);
@@ -670,7 +670,7 @@ copy_comb(struct db_i *dbip, struct directory *proto, genptr_t clientData)
 	return;
     }
 
-    if (dbip->dbi_version < 5)
+    if (db_version(dbip) < 5)
 	(void)copy_v4_comb(dbip, proto, (struct ged_clone_state *)state, idx);
     else
 	(void)copy_v5_comb(dbip, proto, (struct ged_clone_state *)state, idx);
@@ -698,7 +698,7 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
     /* copy the object */
     if (dp->d_flags & DIR_COMB) {
 
-	if (state->gedp->ged_wdbp->dbip->dbi_version < 5) {
+	if (db_version(state->gedp->ged_wdbp->dbip) < 5) {
 	    /* A v4 method of peeking into a combination */
 
 	    int errors = 0;

@@ -162,9 +162,9 @@ wdb_export_external(
     BU_CK_EXTERNAL(ep);
 
     /* Stash name into external representation */
-    if (wdbp->dbip->dbi_version <= 4) {
+    if (db_version(wdbp->dbip) <= 4) {
 	db_wrap_v4_external(ep, name);
-    } else if (wdbp->dbip->dbi_version == 5) {
+    } else if (db_version(wdbp->dbip) == 5) {
 	if (db_wrap_v5_external(ep, name) < 0) {
 	    bu_log("wdb_export_external(%s): db_wrap_v5_external error\n",
 		   name);
@@ -172,7 +172,7 @@ wdb_export_external(
 	}
     } else {
 	bu_log("wdb_export_external(%s): version %d unsupported\n",
-	       name, wdbp->dbip->dbi_version);
+	       name, db_version(wdbp->dbip));
 	return -4;
     }
 
@@ -286,7 +286,7 @@ wdb_put_internal(
     RT_CK_WDB(wdbp);
     RT_CK_DB_INTERNAL(ip);
 
-    if (wdbp->dbip->dbi_version <= 4) {
+    if (db_version(wdbp->dbip) <= 4) {
 	BU_INIT_EXTERNAL(&ext);
 
 	ret = -1;

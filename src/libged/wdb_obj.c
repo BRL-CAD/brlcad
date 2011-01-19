@@ -1423,7 +1423,7 @@ wdb_tops_cmd(struct rt_wdb *wdbp,
     dirp = wdb_dir_getspace(wdbp->dbip, 0);
     dirp0 = dirp;
 
-    if (wdbp->dbip->dbi_version < 5) {
+    if (db_version(wdbp->dbip) < 5) {
 	for (i = 0; i < RT_DBNHASH; i++)
 	    for (dp = wdbp->dbip->dbi_Head[i];
 		 dp != DIR_NULL;
@@ -3042,7 +3042,7 @@ wdb_move_all_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (wdbp->dbip->dbi_version < 5 && (int)strlen(argv[2]) > NAMESIZE) {
+    if (db_version(wdbp->dbip) < 5 && (int)strlen(argv[2]) > NAMESIZE) {
 	struct bu_vls tmp_vls;
 
 	bu_vls_init(&tmp_vls);
@@ -3287,7 +3287,7 @@ get_new_name(const char *name,
 	}
 
 	/* make sure it fits for v4 */
-	if (cc_data->old_dbip->dbi_version < 5) {
+	if (db_version(cc_data->old_dbip) < 5) {
 	    if (bu_vls_strlen(&new_name) > V4_MAXNAME) {
 		bu_log("ERROR: generated new name [%s] is too long (%ld > %ld)\n", bu_vls_addr(&new_name), bu_vls_strlen(&new_name), V4_MAXNAME);
 	    }
@@ -3554,9 +3554,9 @@ wdb_concat_cmd(struct rt_wdb *wdbp,
 
     }
 
-    if (wdbp->dbip->dbi_version < 5) {
+    if (db_version(wdbp->dbip) < 5) {
 	if (bu_vls_strlen(&cc_data.affix) > V4_MAXNAME-1) {
-	    bu_log("ERROR: affix [%s] is too long for v%d\n", bu_vls_addr(&cc_data.affix), wdbp->dbip->dbi_version);
+	    bu_log("ERROR: affix [%s] is too long for v%d\n", bu_vls_addr(&cc_data.affix), db_version(wdbp->dbip));
 	    bu_vls_free(&cc_data.affix);
 	    return TCL_ERROR;
 	}
@@ -3570,7 +3570,7 @@ wdb_concat_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (newdbp->dbi_version > 4 && wdbp->dbip->dbi_version < 5) {
+    if (db_version(newdbp) > 4 && db_version(wdbp->dbip) < 5) {
 	bu_vls_free(&cc_data.affix);
 	Tcl_AppendResult(interp, argv[0], ": databases are incompatible, use dbupgrade on ",
 			 wdbp->dbip->dbi_filename, " first",
@@ -3825,7 +3825,7 @@ wdb_dir_check5(struct db_i *input_dbip,
 
     /* Add the prefix, if any */
     bu_vls_init(&local);
-    if (dcsp->main_dbip->dbi_version < 5) {
+    if (db_version(dcsp->main_dbip) < 5) {
 	if (dcsp->wdbp->wdb_ncharadd > 0) {
 	    bu_vls_strncpy(&local, bu_vls_addr(&dcsp->wdbp->wdb_prestr), dcsp->wdbp->wdb_ncharadd);
 	    bu_vls_strcat(&local, name);
@@ -3874,7 +3874,7 @@ wdb_dir_check(struct db_i *input_dbip, const char *name, off_t UNUSED(laddr), si
 
     /* Add the prefix, if any */
     bu_vls_init(&local);
-    if (dcsp->main_dbip->dbi_version < 5) {
+    if (db_version(dcsp->main_dbip) < 5) {
 	if (dcsp->wdbp->wdb_ncharadd > 0) {
 	    bu_vls_strncpy(&local, bu_vls_addr(&dcsp->wdbp->wdb_prestr), dcsp->wdbp->wdb_ncharadd);
 	    bu_vls_strcat(&local, name);
@@ -3930,7 +3930,7 @@ wdb_dup_cmd(struct rt_wdb *wdbp,
 	(void)bu_vls_strcpy(&wdbp->wdb_prestr, argv[2]);
 
     wdbp->wdb_num_dups = 0;
-    if (wdbp->dbip->dbi_version < 5) {
+    if (db_version(wdbp->dbip) < 5) {
 	if ((wdbp->wdb_ncharadd = bu_vls_strlen(&wdbp->wdb_prestr)) > 12) {
 	    wdbp->wdb_ncharadd = 12;
 	    bu_vls_trunc(&wdbp->wdb_prestr, 12);
@@ -3966,7 +3966,7 @@ wdb_dup_cmd(struct rt_wdb *wdbp,
     dcs.main_dbip = wdbp->dbip;
     dcs.wdbp = wdbp;
     dcs.dup_dirp = dirp0;
-    if (newdbp->dbi_version < 5) {
+    if (db_version(newdbp) < 5) {
 	if (db_scan(newdbp, wdb_dir_check, 0, (genptr_t)&dcs) < 0) {
 	    Tcl_AppendResult(interp, "dup: db_scan failure", (char *)NULL);
 	    bu_free((genptr_t)dirp0, "wdb_getspace array");
@@ -4801,7 +4801,7 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (wdbp->dbip->dbi_version < 5) {
+    if (db_version(wdbp->dbip) < 5) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%s is not available prior to version 5 of the .g file format\n", argv[0]);
 	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
@@ -5311,7 +5311,7 @@ wdb_version_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    bu_vls_printf(&vls, "%d", wdbp->dbip->dbi_version);
+    bu_vls_printf(&vls, "%d", db_version(wdbp->dbip));
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)0);
     bu_vls_free(&vls);
 
@@ -6212,7 +6212,7 @@ Make_new_name(struct db_i *dbip,
 	/* set xform for this object_use to all zeros */
 	MAT_ZERO(use->xform);
 	use->used = 0;
-	if (dbip->dbi_version < 5) {
+	if (db_version(dbip) < 5) {
 	    NAMEMOVE(dp->d_namep, name_v4);
 	    name_v4[NAMESIZE] = '\0';                /* ensure null termination */
 	}
@@ -6224,7 +6224,7 @@ Make_new_name(struct db_i *dbip,
 	if (use_no == dp->d_uses-1 && dp->d_uses == dp->d_nref)
 	    use->dp = dp;
 	else {
-	    if (dbip->dbi_version < 5) {
+	    if (db_version(dbip) < 5) {
 		snprintf(&name_v4[suffix_start], NAMESIZE-suffix_start, format_v4, j);
 		name = name_v4;
 	    } else {
@@ -6236,7 +6236,7 @@ Make_new_name(struct db_i *dbip,
 	    /* Insure that new name is unique */
 	    while (db_lookup(dbip, name, 0) != DIR_NULL) {
 		j++;
-		if (dbip->dbi_version < 5) {
+		if (db_version(dbip) < 5) {
 		    snprintf(&name_v4[suffix_start], NAMESIZE-suffix_start, format_v4, j);
 		    name = name_v4;
 		} else {
@@ -6847,7 +6847,7 @@ wdb_keep_cmd(struct rt_wdb *wdbp,
 
 
     if (new_dbip != DBI_NULL) {
-	if (new_dbip->dbi_version != wdbp->dbip->dbi_version) {
+	if (db_version(new_dbip) != db_version(wdbp->dbip)) {
 	    Tcl_AppendResult(interp,
 			     "keep: File format mismatch between '",
 			     argv[1], "' and '",
@@ -6869,7 +6869,7 @@ wdb_keep_cmd(struct rt_wdb *wdbp,
 	}
     } else {
 	/* Create a new database */
-	keepfp = wdb_fopen_v(argv[1], wdbp->dbip->dbi_version);
+	keepfp = wdb_fopen_v(argv[1], db_version(wdbp->dbip));
 
 	if (keepfp == NULL) {
 	    perror(argv[1]);
@@ -7328,7 +7328,7 @@ wdb_hide_cmd(struct rt_wdb *wdbp,
     dbip = wdbp->dbip;
 
     RT_CK_DBI(dbip);
-    if (dbip->dbi_version < 5) {
+    if (db_version(dbip) < 5) {
 	Tcl_AppendResult(interp,
 			 "Database was created with a previous release of BRL-CAD.\nSelect \"Tools->Upgrade Database...\" to enable support for this feature.",
 			 (char *)NULL);
@@ -7440,7 +7440,7 @@ wdb_unhide_cmd(struct rt_wdb *wdbp,
     dbip = wdbp->dbip;
 
     RT_CK_DBI(dbip);
-    if (dbip->dbi_version < 5) {
+    if (db_version(dbip) < 5) {
 	Tcl_AppendResult(interp,
 			 "Database was created with a previous release of BRL-CAD.\nSelect \"Tools->Upgrade Database...\" to enable support for this feature.",
 			 (char *)NULL);
@@ -7546,7 +7546,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
     struct bu_attribute_value_pair *avpp;
 
     /* this is only valid for v5 databases */
-    if (wdbp->dbip->dbi_version < 5) {
+    if (db_version(wdbp->dbip) < 5) {
 	Tcl_AppendResult(interp, "Attributes are not available for this database format.\nPlease upgrade your database format using \"dbupgrade\" to enable attributes.", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -8405,7 +8405,7 @@ wdb_bot_smooth_cmd(struct rt_wdb *wdbp,
     int id;
 
     /* check that we are using a version 5 database */
-    if (wdbp->dbip->dbi_version < 5) {
+    if (db_version(wdbp->dbip) < 5) {
 	Tcl_AppendResult(interp, "This is an older database version.\n",
 			 "It does not support BOT surface normals.\n",
 			 "Use \"dbupgrade\" to upgrade this database to the current version.\n",
@@ -8548,7 +8548,7 @@ wdb_bo_cmd(struct rt_wdb *wdbp,
     char *cname;
 
     /* check that we are using a version 5 database */
-    if (wdbp->dbip->dbi_version < 5) {
+    if (db_version(wdbp->dbip) < 5) {
 	Tcl_AppendResult(interp, "This is an older database version.\n",
 			 "It does not support binary objects.\n",
 			 "Use \"dbupgrade\" to upgrade this database to the current version.\n",

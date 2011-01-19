@@ -102,7 +102,7 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
     dirp = _ged_dir_getspace(gedp->ged_wdbp->dbip, 0);
     dirp0 = dirp;
 
-    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
+    if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	for (i = 0; i < RT_DBNHASH; i++)
 	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i];
 		 dp != DIR_NULL;
