@@ -324,6 +324,8 @@ Included in following are various minimally impacting API changes that
 have been identified in reverse chronological order.  As expressions
 are not extensively tested, use with caution.
 
+s/db_get_directory(/db_alloc_directory(/g
+        db_get_directory() renamed to db_alloc_directory() [7.18]
 s/db_get_directory_size(/db_directory_size(/g
         db_get_directory_size() renamed to db_directory_size() [7.18]
 s/db_get_version(/db_version(/g

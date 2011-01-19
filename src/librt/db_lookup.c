@@ -484,15 +484,8 @@ db_pr_dir(const struct db_i *dbip)
 }
 
 
-/**
- * D B _ G E T _ D I R E C T O R Y
- *
- * This routine is called by the RT_GET_DIRECTORY macro when the
- * freelist is exhausted.  Rather than simply getting one additional
- * structure, we get a whole batch, saving overhead.
- */
 void
-db_get_directory(struct resource *resp)
+db_alloc_directory(struct resource *resp)
 {
     struct directory *dp;
     size_t bytes;
@@ -504,7 +497,7 @@ db_get_directory(struct resource *resp)
 
     /* Get a BIG block */
     bytes = (size_t)bu_malloc_len_roundup(1024*sizeof(struct directory));
-    dp = (struct directory *)bu_malloc(bytes, "re_directory_blocks from db_get_directory() " BU_FLSTR);
+    dp = (struct directory *)bu_malloc(bytes, "re_directory_blocks from db_alloc_directory() " BU_FLSTR);
 
     /* Record storage for later */
     bu_ptbl_ins(&resp->re_directory_blocks, (long *)dp);

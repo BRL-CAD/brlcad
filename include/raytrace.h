@@ -928,7 +928,7 @@ struct directory  {
  */
 #define RT_GET_DIRECTORY(_p, _res) { \
 	while (((_p) = (_res)->re_directory_hd) == NULL) \
-		db_get_directory(_res); \
+		db_alloc_directory(_res); \
 	(_res)->re_directory_hd = (_p)->d_forw; \
 	(_p)->d_forw = NULL; }
 
@@ -3131,6 +3131,15 @@ RT_EXPORT BU_EXTERN(int db_rename,
 		     struct directory *,
 		     const char *newname));
 
+/**
+ * D B _ A L L O C _ D I R E C T O R Y
+ *
+ * This routine is called by the RT_GET_DIRECTORY macro when the
+ * freelist is exhausted.  Rather than simply getting one additional
+ * structure, we get a whole batch, saving overhead.
+ */
+RT_EXPORT BU_EXTERN(void db_alloc_directory, (struct resource *resp));
+
 
 /* db_match.c */
 RT_EXPORT BU_EXTERN(void db_update_nref,
@@ -3360,8 +3369,6 @@ RT_EXPORT BU_EXTERN(int rt_db_lookup_internal,
 RT_EXPORT BU_EXTERN(void rt_optim_tree,
 		    (union tree *tp,
 		     struct resource *resp));
-RT_EXPORT BU_EXTERN(void db_get_directory,
-		    (struct resource *resp));
 
 /* db_walk.c */
 RT_EXPORT BU_EXTERN(void db_functree,
