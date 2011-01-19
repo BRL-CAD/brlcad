@@ -5,7 +5,6 @@ tkpng_la_CFLAGS = \
 	-DDM_TK -DIF_TK \
 	${NOWARN}
 
-tkpng_la_LDFLAGS = -module
 lib_LTLIBRARIES = tkpng.la
 
 brlcadscriptdir =  ${libdir}/tkpng${TKPNG_VERSION}
