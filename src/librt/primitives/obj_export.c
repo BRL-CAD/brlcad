@@ -47,7 +47,7 @@ rt_obj_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     if (!ft)
 	return -3;
 
-    if (db_version(dbip) < 5) {
+    if (dbip->dbi_version < 5) {
 	export = ft->ft_export4;
     } else {
 	export = ft->ft_export5;

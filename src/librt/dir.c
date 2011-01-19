@@ -99,7 +99,7 @@ rt_db_get_internal(
     BU_INIT_EXTERNAL(&ext);
     RT_INIT_DB_INTERNAL(ip);
 
-    if ( db_version(dbip) > 4 )
+    if ( dbip->dbi_version > 4 )
 	return  rt_db_get_internal5( ip, dp, dbip, mat, resp );
 
     if ( db_get_external( &ext, dp, dbip ) < 0 )
