@@ -1141,7 +1141,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 
     /* check args for "-A" (attributes) and "-o" */
     bu_vls_init(&vls);
-    for (i=0; i<argc; i++) {
+    for (i=0; i<(size_t)argc; i++) {
 	char *ptr_A=NULL;
 	char *ptr_o=NULL;
 	char *c;
@@ -1199,7 +1199,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 
 	bu_avs_init(&avs, (argc - last_opt)/2, "ged_draw_guts avs");
 	i = 0;
-	while (i < argc) {
+	while (i < (size_t)argc) {
 	    if (*argv[i] == '-') {
 		i++;
 		continue;
@@ -1243,7 +1243,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	/* First, delete any mention of these objects.
 	 * Silently skip any leading options (which start with minus signs).
 	 */
-	for (i = 0; i < new_argc; ++i) {
+	for (i = 0; i < (size_t)new_argc; ++i) {
 	    /* Skip any options */
 	    if (new_argv[i][0] == '-')
 		continue;
@@ -1260,7 +1260,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	/* First, delete any mention of these objects.
 	 * Silently skip any leading options (which start with minus signs).
 	 */
-	for (i = 0; i < argc; ++i) {
+	for (i = 0; i < (size_t)argc; ++i) {
 	    /* Skip any options */
 	    if (argv[i][0] == '-')
 		continue;
