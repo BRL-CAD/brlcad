@@ -26,7 +26,11 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <time.h>
 
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #ifdef HAVE_ALARM
 #  include <signal.h>
 #endif
@@ -170,12 +174,12 @@ void BuildTree(struct Photon *EList, int ESize, struct PNode *Root) {
 
 
 /* Places photon into flat array that wwill form the final kd-tree. */
-void Store(point_t Pos, vect_t Dir, vect_t Normal, int Map) {
+void Store(point_t Pos, vect_t Dir, vect_t Normal, int map) {
     struct PhotonSearch Search;
     int i;
 
     /* If Importance Mapping is enabled, Check to see if the Photon is in an area that is considered important, if not then disregard it */
-    if (Map != PM_IMPORTANCE && PMap[PM_IMPORTANCE]->StoredPhotons) {
+    if (map != PM_IMPORTANCE && PMap[PM_IMPORTANCE]->StoredPhotons) {
 	/* Do a KD-Tree lookup and if the photon is within a distance of sqrt(ScaleFactor) from the nearest importon then keep it, otherwise discard it */
 
 	Search.RadSq = ScaleFactor;
@@ -199,30 +203,30 @@ void Store(point_t Pos, vect_t Dir, vect_t Normal, int Map) {
     }
 
 
-    if (PMap[Map]->StoredPhotons < PMap[Map]->MaxPhotons) {
+    if (PMap[map]->StoredPhotons < PMap[map]->MaxPhotons) {
 	HitG++;
 	for (i = 0; i < 3; i++) {
 	    /* Store Position, Direction, and Power of Photon */
-	    Emit[Map][PMap[Map]->StoredPhotons].Pos[i] = Pos[i];
-	    Emit[Map][PMap[Map]->StoredPhotons].Dir[i] = Dir[i];
-	    Emit[Map][PMap[Map]->StoredPhotons].Normal[i] = Normal[i];
-	    Emit[Map][PMap[Map]->StoredPhotons].Power[i] = CurPh.Power[i];
+	    Emit[map][PMap[map]->StoredPhotons].Pos[i] = Pos[i];
+	    Emit[map][PMap[map]->StoredPhotons].Dir[i] = Dir[i];
+	    Emit[map][PMap[map]->StoredPhotons].Normal[i] = Normal[i];
+	    Emit[map][PMap[map]->StoredPhotons].Power[i] = CurPh.Power[i];
 	}
-	PMap[Map]->StoredPhotons++;
+	PMap[map]->StoredPhotons++;
 	/*
-	  if (Map != PM_IMPORTANCE && PMap[PM_IMPORTANCE]->StoredPhotons < PMap[PM_IMPORTANCE]->MaxPhotons)
-	  bu_log("Map2: %d, Size: %d\n", Map, PMap[Map]->StoredPhotons);
+	  if (map != PM_IMPORTANCE && PMap[PM_IMPORTANCE]->StoredPhotons < PMap[PM_IMPORTANCE]->MaxPhotons)
+	  bu_log("Map2: %d, Size: %d\n", map, PMap[map]->StoredPhotons);
 	*/
 	/*
-	  if (Map == PM_IMPORTANCE)
-	  bu_log("Map: %d, Size: %d, [%.3f, %.3f, %.3f] [%.3f, %.3f, %.3f]\n", Map, PMap[Map]->StoredPhotons, Pos[0], Pos[1], Pos[2], CurPh.Power[0], CurPh.Power[1], CurPh.Power[2]);
+	  if (map == PM_IMPORTANCE)
+	  bu_log("Map: %d, Size: %d, [%.3f, %.3f, %.3f] [%.3f, %.3f, %.3f]\n", map, PMap[map]->StoredPhotons, Pos[0], Pos[1], Pos[2], CurPh.Power[0], CurPh.Power[1], CurPh.Power[2]);
 	*/
     }
 
     /*
-      bu_log("[%d][%d][%.3f, %.3f, %.3f]\n", Map, PMap[Map]->StoredPhotons, CurPh.Power[0], CurPh.Power[1], CurPh.Power[2]);
-      if (!(PMap[Map]->StoredPhotons % 64))
-      bu_log("[%d][%d][%.3f, %.3f, %.3f]\n", Map, PMap[Map]->StoredPhotons, Pos[0], Pos[1], Pos[2]);
+      bu_log("[%d][%d][%.3f, %.3f, %.3f]\n", map, PMap[map]->StoredPhotons, CurPh.Power[0], CurPh.Power[1], CurPh.Power[2]);
+      if (!(PMap[map]->StoredPhotons % 64))
+      bu_log("[%d][%d][%.3f, %.3f, %.3f]\n", map, PMap[map]->StoredPhotons, Pos[0], Pos[1], Pos[2]);
     */
 }
 
@@ -387,7 +391,9 @@ static fastf_t MaxFloat(fastf_t a, fastf_t b, fastf_t c) {
 }
 
 
-int HitRef(struct application *ap, struct partition *PartHeadp, struct seg *finished_segs) {
+int
+HitRef(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(finished_segs))
+{
     struct partition *part;
     vect_t pt, normal, spec;
     fastf_t refi, transmit;
@@ -431,7 +437,9 @@ int HitRef(struct application *ap, struct partition *PartHeadp, struct seg *fini
 
 
 /* Callback for Photon Hit, The 'current' photon is Emit[PMap->StoredPhotons] */
-int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finished_segs) {
+int
+PHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(finished_segs))
+{
     struct partition *part;
     vect_t pt, normal, color, spec, power;
     fastf_t refi, transmit, prob, prob_diff, prob_spec, prob_ref;
@@ -619,7 +627,9 @@ int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finish
 
 
 /* Callback for Photon Miss */
-int PMiss(struct application *ap) {
+int
+PMiss(struct application *UNUSED(ap))
+{
     return 0;
 }
 
@@ -629,13 +639,13 @@ int PMiss(struct application *ap) {
  * Call this function after each light source is processed.
  * This function also handles setting a default power for the photons based
  * on the size of the scene, i.e power of light source */
-void ScalePhotonPower(int Map) {
+void ScalePhotonPower(int map) {
     int i;
 
-    for (i = 0; i < PMap[Map]->StoredPhotons; i++) {
-	Emit[Map][i].Power[0] *= ScaleFactor/(double)EPS[Map];
-	Emit[Map][i].Power[1] *= ScaleFactor/(double)EPS[Map];
-	Emit[Map][i].Power[2] *= ScaleFactor/(double)EPS[Map];
+    for (i = 0; i < PMap[map]->StoredPhotons; i++) {
+	Emit[map][i].Power[0] *= ScaleFactor/(double)EPS[map];
+	Emit[map][i].Power[1] *= ScaleFactor/(double)EPS[map];
+	Emit[map][i].Power[2] *= ScaleFactor/(double)EPS[map];
     }
 }
 
@@ -749,7 +759,7 @@ void SanityCheck(struct PNode *Root, int LR) {
 }
 
 
-int ICHit(struct application *ap, struct partition *PartHeadp, struct seg *finished_segs) {
+int ICHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(finished_segs)) {
     struct partition *part;
     point_t pt, normal;
     vect_t C1, C2;
@@ -774,7 +784,7 @@ int ICHit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 }
 
 
-int ICMiss(struct application *ap) {
+int ICMiss(struct application *UNUSED(ap)) {
     /* Set to Background/Ambient Color later */
     return 0;
 }
@@ -890,7 +900,7 @@ void BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap) {
 static int starttime = 0;
 void alarmhandler(int sig) {
     int t;
-    float p, h, m, d, tl;
+    float p, tl;
     if (sig != SIGALRM)
 	bu_bomb("Funky signals\n");
     t = time(NULL) - starttime;
@@ -1045,7 +1055,7 @@ void WritePhotonFile(char *pmfile) {
 /*
  * Main Photon Mapping Function
  */
-void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int height, int Hypersample, int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int ImportanceMapping, int IrradianceHypersampling, int VisualizeIrradiance, double ScaleIndirect, char pmfile[255]) {
+void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int height, int UNUSED(Hypersample), int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int ImportanceMapping, int IrradianceHypersampling, int VisualizeIrradiance, double ScaleIndirect, char pmfile[255]) {
     int i, MapSize[PM_MAPS];
     double ratio;
 
@@ -1371,31 +1381,31 @@ fastf_t ConeFilter(fastf_t dist, fastf_t rad) {
 }
 
 
-void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np) {
+void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_t normal) {
     struct PhotonSearch Search;
-    int i, index;
+    int i, idx;
     fastf_t dist, TotDist;
     vect_t t, cirrad;
 
 
-    index = 0;
+    idx = 0;
     if (GPM_IH) {
-	index = ap->a_x + ap->a_y*GPM_WIDTH;
+	idx = ap->a_x + ap->a_y*GPM_WIDTH;
 	/* See if there is a cached irradiance calculation for this point */
-	for (i = 0; i < IC[index].Num; i++) {
-	    dist = (pos[0]-IC[index].List[i].Pos[0])*(pos[0]-IC[index].List[i].Pos[0])+(pos[1]-IC[index].List[i].Pos[1])*(pos[1]-IC[index].List[i].Pos[1])+(pos[2]-IC[index].List[i].Pos[2])*(pos[2]-IC[index].List[i].Pos[2]);
+	for (i = 0; i < IC[idx].Num; i++) {
+	    dist = (pos[0]-IC[idx].List[i].Pos[0])*(pos[0]-IC[idx].List[i].Pos[0])+(pos[1]-IC[idx].List[i].Pos[1])*(pos[1]-IC[idx].List[i].Pos[1])+(pos[2]-IC[idx].List[i].Pos[2])*(pos[2]-IC[idx].List[i].Pos[2]);
 	    if (dist < (ScaleFactor/100.0)*(ScaleFactor*100.0)) {
-		irrad[0] = IC[index].List[i].RGB[0];
-		irrad[1] = IC[index].List[i].RGB[1];
-		irrad[2] = IC[index].List[i].RGB[2];
+		irrad[0] = IC[idx].List[i].RGB[0];
+		irrad[1] = IC[idx].List[i].RGB[1];
+		irrad[2] = IC[idx].List[i].RGB[2];
 		return;
 	    }
 	}
 
 	/* There is no precomputed irradiance for this point, allocate space
 	   for a new one if neccessary. */
-	if (IC[index].Num) {
-	    IC[index].List = (struct IrradNode*)bu_realloc(IC[index].List, sizeof(struct IrradNode)*(IC[index].Num+1), "List");
+	if (IC[idx].Num) {
+	    IC[idx].List = (struct IrradNode*)bu_realloc(IC[idx].List, sizeof(struct IrradNode)*(IC[idx].Num+1), "List");
 	}
     }
 
@@ -1483,15 +1493,15 @@ void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_
 
     if (GPM_IH) {
 	/* Store Irradiance */
-	IC[index].List[IC[index].Num].RGB[0] = irrad[0];
-	IC[index].List[IC[index].Num].RGB[1] = irrad[1];
-	IC[index].List[IC[index].Num].RGB[2] = irrad[2];
+	IC[idx].List[IC[idx].Num].RGB[0] = irrad[0];
+	IC[idx].List[IC[idx].Num].RGB[1] = irrad[1];
+	IC[idx].List[IC[idx].Num].RGB[2] = irrad[2];
 
-	IC[index].List[IC[index].Num].Pos[0] = pos[0];
-	IC[index].List[IC[index].Num].Pos[1] = pos[1];
-	IC[index].List[IC[index].Num].Pos[2] = pos[2];
+	IC[idx].List[IC[idx].Num].Pos[0] = pos[0];
+	IC[idx].List[IC[idx].Num].Pos[1] = pos[1];
+	IC[idx].List[IC[idx].Num].Pos[2] = pos[2];
 
-	IC[index].Num++;
+	IC[idx].Num++;
     }
 }
 

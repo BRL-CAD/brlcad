@@ -525,7 +525,7 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 
 #ifndef RT_MULTISPECTRAL
 	if (PM_Activated) {
-	    IrradianceEstimate(ap, work, swp->sw_hit.hit_point, swp->sw_hit.hit_normal, 100, 100);
+	    IrradianceEstimate(ap, work, swp->sw_hit.hit_point, swp->sw_hit.hit_normal);
 	    VELMUL(work, work, color);
 	    VADD2(swp->sw_color, work, swp->sw_color);
 	    if (swp->sw_color[0] > 1.0) swp->sw_color[0]= 1.0;
@@ -536,9 +536,9 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
     } else {
 
 	if (PM_Activated) {
-	    /* IrradianceEstimate(work, swp->sw_hit.hit_point, swp->sw_hit.hit_normal, 100, 100);
+	    /* IrradianceEstimate(work, swp->sw_hit.hit_point, swp->sw_hit.hit_normal);
 	       VELMUL(swp->sw_color, work, color);*/
-	    IrradianceEstimate(ap, swp->sw_color, swp->sw_hit.hit_point, swp->sw_hit.hit_normal, 100, 100);
+	    IrradianceEstimate(ap, swp->sw_color, swp->sw_hit.hit_point, swp->sw_hit.hit_normal);
 	    if (swp->sw_color[0] > 1.0) swp->sw_color[0]= 1.0;
 	    if (swp->sw_color[1] > 1.0) swp->sw_color[1]= 1.0;
 	    if (swp->sw_color[2] > 1.0) swp->sw_color[2]= 1.0;
