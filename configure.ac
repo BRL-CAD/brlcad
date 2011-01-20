@@ -1963,8 +1963,11 @@ dnl     AC_SUBST(SSE)
     dnl library path search order, not biasing a preference for dylibs.
     BC_LINKER_RECOGNIZES([-Wl,-search_paths_first -Wnewline-eof])
 
-    dnl 64bit compilation flags
+    dnl 32-bit/64-bit compilation flags
     if test "x$bc_build_64bit" = "xyes" ; then
+
+	# 64-bit enabled, try to force 64-bit
+
 	found_64bit_flag=no
 
 	AC_MSG_CHECKING([if configure snuck on a 32bit flag to ld])
@@ -2009,6 +2012,56 @@ dnl     AC_SUBST(SSE)
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-q64], [64_flag])
 		if test "x$bc_64_flag_works" = "xyes" ; then
 			found_64bit_flag=yes
+		fi
+	fi
+
+    elif test "x$bc_build_64bit" = "xno" ; then
+
+	# 64-bit disabled, try to force 32-bit
+
+	found_32bit_flag=no
+
+	AC_MSG_CHECKING([if configure snuck on a 64bit flag to ld])
+	PRELD="$LD"
+	LD="`echo $LD | sed 's/64/32/'`"
+	if test "x$LD" = "x$PRELD" ; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+	fi
+
+	if test "x$found_32bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-32], [32_flag])
+		if test "x$bc_32_flag_works" = "xyes" ; then
+			found_32bit_flag=yes
+		fi
+	fi
+
+	if test "x$found_32bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-mabi=32], [32_flag])
+		if test "x$bc_32_flag_works" = "xyes" ; then
+			found_32bit_flag=yes
+		fi
+	fi
+
+	if test "x$found_32bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-m32], [32_flag])
+		if test "x$bc_32_flag_works" = "xyes" ; then
+			found_32bit_flag=yes
+		fi
+	fi
+
+	if test "x$found_32bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-q32], [32_flag])
+		if test "x$bc_32_flag_works" = "xyes" ; then
+			found_32bit_flag=yes
+		fi
+	fi
+
+	if test "x$found_32bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-arch generic], [32_flag])
+		if test "x$bc_32_flag_works" = "xyes" ; then
+			found_32bit_flag=yes
 		fi
 	fi
     fi
