@@ -17,7 +17,9 @@ DIST_SUBDIRS = \
 lib_LTLIBRARIES = libgcv.la
 noinst_LTLIBRARIES = libgcv_nil.la
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = \
+	${STRICT_FLAGS} \
+	${TCL_CPPFLAGS}
 
 libgcv_nil_la_SOURCES = \
 	region_end.c \
