@@ -1,5 +1,13 @@
+# FIXME - UGLY UGLY hack for Windows - has something to do with
+# Itk or something Itk requries not loading quite right.  Should
+# be doing this delete for ALL platforms, to set up the redefine
+# below.
+if {$tcl_platform(platform) != "windows"} {
 itcl::delete class itk::Toplevel
+}
 
+# Define our own Toplevel to ensure older Itcl/Itk versions can
+# still support Archer - we need to keep -menu
 itcl::class itk::Toplevel {
     inherit itk::Archetype
 
