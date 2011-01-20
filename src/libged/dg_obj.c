@@ -3059,7 +3059,7 @@ dgo_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
     }
 
     if (dgcdp->nmg_triangulate) {
-	process_triangulation(tsp, pathp, dgcdp->interp);
+	failed = process_triangulation(tsp, pathp, dgcdp->interp);
 	if (failed) {
 	    db_free_tree(curtree, tsp->ts_resp);
 	    return (union tree *)NULL;
