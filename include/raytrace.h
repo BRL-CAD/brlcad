@@ -3039,7 +3039,9 @@ RT_EXPORT BU_EXTERN(int db5_scan,
 		     genptr_t client_data));
 
 /**
- * obtain the database version for a given database instance
+ * obtain the database version for a given database instance.
+ *
+ * presently returns only a 4 or 5 accordingly.
  */
 RT_EXPORT BU_EXTERN(int db_version, (struct db_i *dbip));
 
