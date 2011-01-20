@@ -2031,6 +2031,13 @@ dnl     AC_SUBST(SSE)
 	fi
 
 	if test "x$found_32bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-arch i386], [32_flag])
+		if test "x$bc_32_flag_works" = "xyes" ; then
+			found_32bit_flag=yes
+		fi
+	fi
+
+	if test "x$found_32bit_flag" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-32], [32_flag])
 		if test "x$bc_32_flag_works" = "xyes" ; then
 			found_32bit_flag=yes
@@ -2053,13 +2060,6 @@ dnl     AC_SUBST(SSE)
 
 	if test "x$found_32bit_flag" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-q32], [32_flag])
-		if test "x$bc_32_flag_works" = "xyes" ; then
-			found_32bit_flag=yes
-		fi
-	fi
-
-	if test "x$found_32bit_flag" = "xno" ; then
-		BC_COMPILER_AND_LINKER_RECOGNIZES([-arch generic], [32_flag])
 		if test "x$bc_32_flag_works" = "xyes" ; then
 			found_32bit_flag=yes
 		fi
