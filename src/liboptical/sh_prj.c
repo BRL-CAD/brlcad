@@ -93,7 +93,7 @@ struct prj_specific {
  * so that the image may be loaded automatically as needed from either a file or
  * from a database-embedded binary object.
  */
-HIDDEN void img_source_hook(const struct bu_structparse *ip, const char *sp_name, genptr_t base, char *p) {
+HIDDEN void img_source_hook(const struct bu_structparse *UNUSED(ip), const char *sp_name, genptr_t base, char *UNUSED(p)) {
     struct img_specific *imageSpecific = (struct img_specific *)base;
     if (strncmp(sp_name, "file", 4) == 0) {
 	imageSpecific->i_datasrc=IMG_SRC_FILE;
@@ -196,7 +196,7 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
  * Bounds checking on perspective angle
  */
 HIDDEN void
-persp_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+persp_hook(register const struct bu_structparse *UNUSED(sdp), register const char *UNUSED(name), char *base, const char *value)
 /* structure description */
 /* struct member name */
 /* begining of structure */
@@ -214,7 +214,7 @@ persp_hook(register const struct bu_structparse *sdp, register const char *name,
 	bu_bomb("");
     }
 
-    if (img_sp->i_perspective != 0.0)
+    if (!NEAR_ZERO(img_sp->i_perspective, SMALL_FASTF))
 	bu_bomb("non-ortho perspective not yet implemented!\n");
 }
 
@@ -223,7 +223,7 @@ persp_hook(register const struct bu_structparse *sdp, register const char *name,
  * Check for value < 0.0
  */
 HIDDEN void
-dimen_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+dimen_hook(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *value)
 /* structure description */
 /* struct member name */
 /* begining of structure */
@@ -276,7 +276,7 @@ noop_hook(sdp, name, base, value)
  * XXX "orient" MUST ALWAYS BE THE LAST PARAMETER SPECIFIED FOR EACH IMAGE.
  */
 static void
-orient_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+orient_hook(register const struct bu_structparse *UNUSED(sdp), register const char *UNUSED(name), char *base, const char *UNUSED(value))
 /* structure description */
 /* struct member name */
 /* begining of structure */
@@ -391,25 +391,25 @@ orient_hook(register const struct bu_structparse *sdp, register const char *name
  * structure above
  */
 struct bu_structparse img_parse_tab[] = {
-    {"%V",	1, "image",		IMG_O(i_name),		BU_STRUCTPARSE_FUNC_NULL},
-    {"%V",	1, "file",		IMG_O(i_name),		img_source_hook},
-    {"%V",	1, "obj",		IMG_O(i_name),		img_source_hook},
-    {"%V",	1, "object",		IMG_O(i_name),		img_source_hook},
-    {"%d",	1, "w",			IMG_O(i_width),		dimen_hook},
-    {"%d",	1, "n",			IMG_O(i_height),	dimen_hook},
-    {"%f",	1, "viewsize",		IMG_O(i_viewsize),	dimen_hook},
-    {"%f",	3, "eye_pt",		IMG_AO(i_eye_pt),	BU_STRUCTPARSE_FUNC_NULL},
-    {"%f",	4, "orientation",	IMG_AO(i_orient),	orient_hook},
-    {"%c",	1, "through",		IMG_O(i_through),	BU_STRUCTPARSE_FUNC_NULL},
-    {"%c",	1, "antialias",		IMG_O(i_antialias),	BU_STRUCTPARSE_FUNC_NULL},
-    {"%c",	1, "behind",		IMG_O(i_behind),	BU_STRUCTPARSE_FUNC_NULL},
-    {"%c",	1, "perspective",	IMG_O(i_perspective),	persp_hook},
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL}
+    {"%V",	1, "image",		IMG_O(i_name),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%V",	1, "file",		IMG_O(i_name),		img_source_hook, NULL, NULL },
+    {"%V",	1, "obj",		IMG_O(i_name),		img_source_hook, NULL, NULL },
+    {"%V",	1, "object",		IMG_O(i_name),		img_source_hook, NULL, NULL },
+    {"%d",	1, "w",			IMG_O(i_width),		dimen_hook, NULL, NULL },
+    {"%d",	1, "n",			IMG_O(i_height),	dimen_hook, NULL, NULL },
+    {"%f",	1, "viewsize",		IMG_O(i_viewsize),	dimen_hook, NULL, NULL },
+    {"%f",	3, "eye_pt",		IMG_AO(i_eye_pt),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	4, "orientation",	IMG_AO(i_orient),	orient_hook, NULL, NULL },
+    {"%c",	1, "through",		IMG_O(i_through),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%c",	1, "antialias",		IMG_O(i_antialias),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%c",	1, "behind",		IMG_O(i_behind),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%c",	1, "perspective",	IMG_O(i_perspective),	persp_hook, NULL, NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 struct bu_structparse img_print_tab[] = {
-    {"%p",	bu_byteoffset(img_parse_tab[0]), "img_parse_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	4, "i_plane",		IMG_AO(i_plane),	BU_STRUCTPARSE_FUNC_NULL},
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL}
+    {"%p",	bu_byteoffset(img_parse_tab[0]), "img_parse_tab", 0, BU_STRUCTPARSE_FUNC_NULL , NULL, NULL },
+    {"%f",	4, "i_plane",		IMG_AO(i_plane),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -441,7 +441,7 @@ struct mfuncs prj_mfuncs[] = {
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */

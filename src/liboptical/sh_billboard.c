@@ -83,13 +83,19 @@ struct bbd_specific {
 };
 #define MAX_IMAGES 64
 /* The default values for the variables in the shader specific structure */
-const static
+static const
 struct bbd_specific bbd_defaults = {
     bbd_MAGIC,
     10,		/* img_threshold */
     512,	/* img_width */
     512,	/* img_height */
-    100.0	/* img_scale */
+    100.0,	/* img_scale */
+    {0, NULL, 0, 0, 0},
+    0,
+    {0, NULL, NULL},
+    NULL,
+    {0.0, 0.0, 0.0, 0.0},
+    {0.0, 0.0, 0.0, 0.0}
 };
 
 
@@ -108,16 +114,16 @@ void new_image(register const struct bu_structparse *sdp,
  * structure above
  */
 struct bu_structparse bbd_print_tab[] = {
-    {"%ld",  1, "w",	SHDR_O(img_width),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%ld",  1, "n",	SHDR_O(img_height),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "t",	SHDR_O(img_threshold),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "h",	SHDR_O(img_scale),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%V",  1, "f",	SHDR_O(img_filename),	new_image },
-    {"",    0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%ld",  1, "w",	SHDR_O(img_width),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%ld",  1, "n",	SHDR_O(img_height),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "t",	SHDR_O(img_threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  1, "h",	SHDR_O(img_scale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%V",  1, "f",	SHDR_O(img_filename),	new_image, NULL, NULL },
+    {"",    0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 struct bu_structparse bbd_parse_tab[] = {
-    {"%p", bu_byteoffset(bbd_print_tab[0]), "bbd_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
+    {"%p", bu_byteoffset(bbd_print_tab[0]), "bbd_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -141,10 +147,10 @@ struct mfuncs bbd_mfuncs[] = {
 };
 
 
-void new_image(register const struct bu_structparse *sdp,	/*struct desc*/
-	       register const char *name,	/*member name*/
+void new_image(register const struct bu_structparse *UNUSED(sdp),	/*struct desc*/
+	       register const char *UNUSED(name),	/*member name*/
 	       char *base,	/*struct base*/
-	       const char *value) /*string valu*/
+	       const char *UNUSED(value)) /*string value */
 {
     struct bbd_specific *bbd_sp = (struct bbd_specific *)base;
     struct bbd_img *bbdi;

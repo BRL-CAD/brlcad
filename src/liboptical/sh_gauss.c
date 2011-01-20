@@ -108,7 +108,8 @@ struct gauss_specific gauss_defaults = {
     { 0.0, 0.0, 0.0, 0.0,
       0.0, 0.0, 0.0, 0.0,
       0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0 }
+      0.0, 0.0, 0.0, 0.0 },
+    {0, NULL, NULL}
 };
 
 
@@ -122,14 +123,14 @@ struct gauss_specific gauss_defaults = {
  * structure above
  */
 struct bu_structparse gauss_print_tab[] = {
-    {"%f",  1, "sigma",		SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f", 1, "sigma",		SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",   0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 
 };
 struct bu_structparse gauss_parse_tab[] = {
-    {"%p",	bu_byteoffset(gauss_print_tab[0]), "gauss_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "s",			SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%p", bu_byteoffset(gauss_print_tab[0]), "gauss_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "s",			SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",   0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -294,7 +295,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */

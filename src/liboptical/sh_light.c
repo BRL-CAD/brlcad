@@ -70,50 +70,50 @@ struct mfuncs light_mfuncs[] = {
 
 /** for printing out light values */
 struct bu_structparse light_print_tab[] = {
-    {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "target",	LIGHT_OA(lt_target),	aim_set },
-    {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "visible",	LIGHT_O(lt_visible),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "target",	LIGHT_OA(lt_target),	aim_set, NULL, NULL },
+    {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "visible",	LIGHT_O(lt_visible),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 /** for actually parsing light values */
 struct bu_structparse light_parse[] = {
 
-    {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "b",		LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "inten",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "b",		LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "inten",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 
-    {"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "a",		LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "a",		LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 
-    {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "f",		LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "f",		LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 
-    {"%f",	3, "target",	LIGHT_OA(lt_target),	aim_set },
-    {"%f",	3, "t",		LIGHT_OA(lt_target),	aim_set },
-    {"%f",	3, "aim",	LIGHT_OA(lt_target),	aim_set },
+    {"%f",	3, "target",	LIGHT_OA(lt_target),	aim_set, NULL, NULL },
+    {"%f",	3, "t",		LIGHT_OA(lt_target),	aim_set, NULL, NULL },
+    {"%f",	3, "aim",	LIGHT_OA(lt_target),	aim_set, NULL, NULL },
 
-    {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "s",		LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "s",		LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 
-    {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "i",		LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "i",		LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 
-    {"%d",	1, "visible",	LIGHT_O(lt_visible),	light_cvt_visible },
-    {"%d",	1, "v",		LIGHT_O(lt_visible),	light_cvt_visible },
+    {"%d",	1, "visible",	LIGHT_O(lt_visible),	light_cvt_visible, NULL, NULL },
+    {"%d",	1, "v",		LIGHT_O(lt_visible),	light_cvt_visible, NULL, NULL },
 
-    {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	light_cvt_visible },
+    {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	light_cvt_visible, NULL, NULL },
 
-    {"%f",	3, "pt",	LIGHT_OA(lt_parse_pt), light_pt_set },
-    {"%f",	6, "pn",	LIGHT_OA(lt_parse_pt), light_pt_set },
+    {"%f",	3, "pt",	LIGHT_OA(lt_parse_pt), light_pt_set, NULL, NULL },
+    {"%f",	6, "pn",	LIGHT_OA(lt_parse_pt), light_pt_set, NULL, NULL },
 
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -146,7 +146,7 @@ struct light_obs_stuff {
  * is encountered, and causes lt_exaim to be set.
  */
 HIDDEN void
-aim_set (const struct bu_structparse *sdp, const char *name, const char *base, char *value)
+aim_set (const struct bu_structparse *UNUSED(sdp), const char *UNUSED(name), const char *base, char *UNUSED(value))
 {
     register struct light_specific *lsp = (struct light_specific *)base;
     if (rdebug & RDEBUG_LIGHT) {
@@ -162,7 +162,7 @@ aim_set (const struct bu_structparse *sdp, const char *name, const char *base, c
  * Convert "visible" flag to "invisible" variable
  */
 HIDDEN void
-light_cvt_visible(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+light_cvt_visible(register const struct bu_structparse *sdp, register const char *name, char *base, const char *UNUSED(value))
 /* structure description */
 /* struct member name */
 /* begining of structure */
@@ -216,7 +216,7 @@ light_pt_allocate(register struct light_specific *lsp)
  * (for points and points with normals respectively)
  */
 HIDDEN void
-light_pt_set(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+light_pt_set(register const struct bu_structparse *sdp, register const char *name, char *base, const char *UNUSED(value))
 /* structure description */
 /* struct member name */
 /* begining of structure */
@@ -254,7 +254,7 @@ light_pt_set(register const struct bu_structparse *sdp, register const char *nam
  * away.
  */
 HIDDEN int
-light_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+light_render(struct application *ap, struct partition *UNUSED(pp), struct shadework *swp, char *dp)
 {
     register struct light_specific *lsp = (struct light_specific *)dp;
     register fastf_t f;
@@ -306,7 +306,7 @@ ray_setup(struct application *ap,
 	  point_t span)
 {
     int face;
-    point_t pt;
+    point_t pt = {0.0, 0.0, 0.0};
     static int idx = 0;
 
     /* pick a face of the bounding RPP at which we will start the ray */
@@ -366,7 +366,7 @@ ray_setup(struct application *ap,
  * add the hit point(s) to the list of points on the light.
  */
 static int
-light_gen_sample_pts_hit(register struct application *ap, struct partition *PartHeadp, struct seg *sp)
+light_gen_sample_pts_hit(register struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(sp))
 {
     struct light_specific *lsp = (struct light_specific *)ap->a_uptr;
     struct soltab *stp;
@@ -470,7 +470,7 @@ light_gen_sample_pts_hit(register struct application *ap, struct partition *Part
  * light, then do nothing.
  */
 static int
-light_gen_sample_pts_miss(register struct application *ap)
+light_gen_sample_pts_miss(register struct application *UNUSED(ap))
 {
     return 0;
 }
@@ -596,8 +596,8 @@ HIDDEN int
 light_setup(register struct region *rp,
 	    struct bu_vls *matparm,
 	    genptr_t *dpp,
-	    struct mfuncs *mfp,
-	    struct rt_i *rtip)
+	    struct mfuncs *UNUSED(mfp),
+	    struct rt_i *UNUSED(rtip))
 {
     register struct light_specific *lsp;
     register struct soltab *stp;
@@ -1101,9 +1101,9 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     /* if the region we hit is a light source be generous */
 #if 1
     {
-	struct light_specific *lsp;
-	for (BU_LIST_FOR(lsp, light_specific, &(LightHead.l))) {
-	    if (lsp->lt_rp == regp) {
+	struct light_specific *lspi;
+	for (BU_LIST_FOR(lspi, light_specific, &(LightHead.l))) {
+	    if (lspi->lt_rp == regp) {
 #ifdef RT_MULTISPECTRAL
 		bn_tabdata_copy(ap->a_spectrum, ms_filter_color);
 #else

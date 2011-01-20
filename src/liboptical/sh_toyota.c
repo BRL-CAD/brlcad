@@ -72,16 +72,16 @@ struct toyota_specific {
 #define CL_O(m) bu_offsetof(struct toyota_specific, m)
 
 struct bu_structparse toyota_parse[] = {
-    {"%f", 1, "alpha",	CL_O(alpha),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f", 1, "beta",	CL_O(beta),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "weather",	CL_O(weather),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f", 1, "sun_sang",	CL_O(sun_sang),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f", 1, "index_refrac", CL_O(index_refrac),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f", 1, "atmos_trans", CL_O(atmos_trans),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f", 3, "Zenith",	bu_offsetofarray(struct toyota_specific, Zenith),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%s", 1, "material",	bu_offsetofarray(struct toyota_specific, material),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "glass",	CL_O(glass),		BU_STRUCTPARSE_FUNC_NULL },
-    {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f", 1, "alpha",	CL_O(alpha),			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "beta",	CL_O(beta),			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "weather",	CL_O(weather),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "sun_sang",	CL_O(sun_sang),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "index_refrac", CL_O(index_refrac),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "atmos_trans", CL_O(atmos_trans),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "Zenith",	bu_offsetofarray(struct toyota_specific, Zenith),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", 1, "material",	bu_offsetofarray(struct toyota_specific, material),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "glass",	CL_O(glass),			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -106,17 +106,10 @@ atmos_irradiance(fastf_t lambda),
     zenith_luminance(fastf_t sun_alt, fastf_t t_vl);
 
 struct mfuncs toyota_mfuncs[] = {
-    {MF_MAGIC,	"toyota",	0,		MFI_NORMAL|MFI_LIGHT,	0,
-     toyota_setup,	toyota_render,	toyota_print,	toyota_free },
-
-    {MF_MAGIC,	"tmirror",	0,		MFI_NORMAL|MFI_LIGHT,	0,
-     tmirror_setup,	toyota_render,	toyota_print,	toyota_free },
-
-    {MF_MAGIC,	"tglass",	0,		MFI_NORMAL|MFI_LIGHT,	0,
-     tglass_setup,	toyota_render,	toyota_print,	toyota_free },
-
-    {0,		(char *)0,	0,		0,	0,
-     0,		0,		0,		0 }
+    {MF_MAGIC,	"toyota",	0,		MFI_NORMAL|MFI_LIGHT,	0,     toyota_setup,	toyota_render,	toyota_print,	toyota_free },
+    {MF_MAGIC,	"tmirror",	0,		MFI_NORMAL|MFI_LIGHT,	0,     tmirror_setup,	toyota_render,	toyota_print,	toyota_free },
+    {MF_MAGIC,	"tglass",	0,		MFI_NORMAL|MFI_LIGHT,	0,     tglass_setup,	toyota_render,	toyota_print,	toyota_free },
+    {0,		(char *)0,	0,		0,	0,     0,		0,		0,		0 }
 };
 
 
@@ -139,7 +132,7 @@ struct mfuncs toyota_mfuncs[] = {
  * (MINOLTA CS-100)
  */
 HIDDEN int
-toyota_setup(register struct region *rp, struct bu_vls *matparm, char **dtp, struct mfuncs *mfp, struct rt_i *rtip)
+toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dtp, struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -229,7 +222,7 @@ toyota_setup(register struct region *rp, struct bu_vls *matparm, char **dtp, str
  * M I R R O R _ S E T U P
  */
 HIDDEN int
-tmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+tmirror_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -251,7 +244,7 @@ tmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, st
  * G L A S S _ S E T U P
  */
 HIDDEN int
-tglass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+tglass_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -301,17 +294,17 @@ toyota_free(char *cp)
  * Unitless (ratio).
  */
 fastf_t
-air_mass(fastf_t gamma)
+air_mass(fastf_t air_gamma)
 /* Solar altitude off horizon (degrees). */
 {
     fastf_t m;
 
-    if (gamma <= 0.) {
+    if (air_gamma <= 0.) {
 	bu_log("air_mass: sun altitude of %g degrees ignored.\n");
 	m = 0.;
     } else
-	m = 1./(sin(gamma*M_PI/180.)
-		+ 0.1500*pow((gamma + 3.885), -1.253));
+	m = 1./(sin(air_gamma*M_PI/180.)
+		+ 0.1500*pow((air_gamma + 3.885), -1.253));
     return m;
 }
 
@@ -327,7 +320,7 @@ air_mass(fastf_t gamma)
  * Luminance units: cd/m^2
  */
 fastf_t
-zenith_luminance(fastf_t sun_alt, fastf_t t_vl)
+zenith_luminance(fastf_t UNUSED(sun_alt), fastf_t UNUSED(t_vl))
 /* Solar altitude off horizon (degrees). */
 /* atmospheric turbidity (aerosol optical depth) */
 {
@@ -366,7 +359,7 @@ overcast_sky_lum(fastf_t lz, fastf_t *Zenith, fastf_t *Sky_elmt)
  * SENT LETTER TO CIE & TOYOTA JULY 7, 1992
  */
 fastf_t
-homogenous_sky_lum(fastf_t *Sky_elmt, fastf_t *Sun, fastf_t t_vl)
+homogenous_sky_lum(fastf_t *UNUSED(Sky_elmt), fastf_t *UNUSED(Sun), fastf_t UNUSED(t_vl))
 /* vectors to a sky element and to sun */
 /* Turbidity factor. */
 {
@@ -393,7 +386,7 @@ clear_sky_lum(fastf_t lz, fastf_t *Sky_elmt, fastf_t *Sun, fastf_t *Zenith)
     fastf_t cos_gamma;	/* cos(gamma) */
     fastf_t cos_z0;		/* cos(z0) */
     fastf_t cos_theta;	/* cos of angle between zenith & sky element */
-    fastf_t gamma;		/* angle from sun to a sky element */
+    fastf_t sky_gamma;		/* angle from sun to a sky element */
     fastf_t lum;		/* luminance */
     fastf_t z0;		/* angle from zenith to the sun */
 
@@ -401,11 +394,11 @@ clear_sky_lum(fastf_t lz, fastf_t *Sky_elmt, fastf_t *Sun, fastf_t *Zenith)
     cos_theta = VDOT(Sky_elmt, Zenith);
     cos_z0 = VDOT(Zenith, Sun);
     z0 = acos(cos_z0);
-    gamma = acos(cos_gamma);
+    sky_gamma = acos(cos_gamma);
 
     lum =
 	lz
-	* (0.91 + 10*exp(-3.*gamma) + 0.45*cos_gamma*cos_gamma)
+	* (0.91 + 10*exp(-3.*sky_gamma) + 0.45*cos_gamma*cos_gamma)
 	* (1. - exp(-0.32/cos_theta))
 	/ 0.27385*(0.91 + 10.*exp(-3.*z0) + 0.45*cos_z0*cos_z0);
 
@@ -1649,7 +1642,7 @@ skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf
 /* Weather condition. */
 /* Turbidity factor. */
 {
-    fastf_t e_mean, v1, v2,
+    fastf_t e_mean = 0.0, v1 = 0.0, v2 = 0.0,
 	lum,	/* Luminance at a given point in the sky (cd/m^2). */
 	lz,	/* Luminance at the zenith.  Units: cd/m^2 */
 	m1, m2,
@@ -1909,7 +1902,7 @@ reflectance(fastf_t lambda, fastf_t alpha, fastf_t *refl, int lines)
     j = --i;
     i--;
     lambda_l = refl[i*3];
-    while (i >= 0 && refl[i*3] == lambda_l && refl[i*3+1] > alpha)
+    while (i >= 0 && EQUAL(refl[i*3], lambda_l) && refl[i*3+1] > alpha)
 	i--;
 
     if (i < 0) {
@@ -1917,7 +1910,7 @@ reflectance(fastf_t lambda, fastf_t alpha, fastf_t *refl, int lines)
 	goto out;
     }
 
-    if (refl[(i+1)*3] == lambda_l) {
+    if (EQUAL(refl[(i+1)*3], lambda_l)) {
 	alpha_ll = refl[i*3+1];
 	beta_ll  = refl[i*3+2];
 	alpha_lh = refl[(i+1)*3+1];
@@ -1930,7 +1923,7 @@ reflectance(fastf_t lambda, fastf_t alpha, fastf_t *refl, int lines)
     }
 
     lambda_h = refl[j*3];	/* High lambda. */
-    while (j < lines && refl[j*3] == lambda_h && refl[j*3+1] < alpha) {
+    while (j < lines && EQUAL(refl[j*3], lambda_h) && refl[j*3+1] < alpha) {
 	j++;
     }
 
@@ -1939,7 +1932,7 @@ reflectance(fastf_t lambda, fastf_t alpha, fastf_t *refl, int lines)
 	goto out;
     }
 
-    if (refl[(j-1)*3] == lambda_h) {
+    if (EQUAL(refl[(j-1)*3], lambda_h)) {
 	alpha_hl = refl[(j-1)*3+1];
 	beta_hl  = refl[(j-1)*3+2];
 	alpha_hh = refl[j*3+1];
@@ -2181,7 +2174,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
     alpha0 = 0.0;	/* degrees. */
     refl = reflectance(lambda, alpha0, ts->refl, ts->refl_lines);
     while (refl < MIKE_TOL) {
-	if (refl == -1.)
+	if (EQUAL(refl, -1.0))
 	    bu_bomb("toyota render: no reflectance data.");
 	alpha0++;
 	refl = reflectance(lambda, alpha0, ts->refl, ts->refl_lines);
@@ -2191,7 +2184,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	alpha1++;
 	refl = reflectance(lambda, alpha1, ts->refl, ts->refl_lines);
     }
-    if (refl == -1.)
+    if (EQUAL(refl, -1.0))
 	alpha1--;
     alpha_c = (alpha0 + alpha1)/2;	/* degrees. */
     alpha_c *= M_PI/180;		/* radians. */
@@ -2281,7 +2274,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
  * any weather conditions."
  */
 HIDDEN int
-toyota_render(register struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+toyota_render(register struct application *ap, struct partition *UNUSED(pp), struct shadework *swp, char *dp)
 {
     fastf_t direct_sunlight,
 	dist,			/* Distance light travels (m). */

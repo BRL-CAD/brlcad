@@ -47,14 +47,9 @@ HIDDEN void sh_null_free(char *cp);
  * four shader functions *must* be defined, even if they do nothing.
  */
 struct mfuncs null_mfuncs[] = {
-    {MF_MAGIC,	"null",		0,		MFI_HIT,	0,
-     sh_null_setup,	sh_null_render,	sh_null_print,	sh_null_free },
-
-    {MF_MAGIC,	"invisible",		0,		MFI_HIT,	0,
-     sh_null_setup,	sh_null_render,	sh_null_print,	sh_null_free },
-
-    {0,		(char *)0,	0,		0,		0,
-     0,		0,		0,		0 }
+    {MF_MAGIC,	"null",		0,		MFI_HIT,	0, sh_null_setup,	sh_null_render,	sh_null_print,	sh_null_free },
+    {MF_MAGIC,	"invisible",	0,		MFI_HIT,	0, sh_null_setup,	sh_null_render,	sh_null_print,	sh_null_free },
+    {0,		(char *)0,	0,		0,		0, 0,		0,		0,		0 }
 };
 
 
@@ -72,8 +67,8 @@ struct mfuncs null_mfuncs[] = {
  * get called.
  */
 HIDDEN int
-sh_null_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip) {
-
+sh_null_setup(register struct region *UNUSED(rp), struct bu_vls *UNUSED(matparm), char **UNUSED(dpp), struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+{
     /* no point to check the arguments since we do nothing with them.  we leave the error
      * checking to elsewhere when used.
      */
@@ -97,11 +92,13 @@ sh_null_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, st
  * though, since it shouldn't normally be called.
  */
 HIDDEN int
-sh_null_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp) {
-
+sh_null_render(struct application *ap, struct partition *pp, struct shadework *swp, char *UNUSED(dp))
+{
     /* check the validity of the arguments we got */
+
     RT_AP_CHECK(ap);
     RT_CHECK_PT(pp);
+
     /* shadework structures do not have magic numbers or other means to test
      * their validity
      */
@@ -123,7 +120,8 @@ sh_null_render(struct application *ap, struct partition *pp, struct shadework *s
  * This routine is called if setup fails (which it never should).
  */
 HIDDEN void
-sh_null_print(register struct region *rp, char *dp) {
+sh_null_print(register struct region *rp, char *UNUSED(dp))
+{
     bu_log("%V uses the null shader\n", rp->reg_name);
 }
 
@@ -138,7 +136,8 @@ sh_null_print(register struct region *rp, char *dp) {
  * The null shader allocates nothing.  Therefore it releases nothing.
  */
 HIDDEN void
-sh_null_free(char *cp) {
+sh_null_free(char *UNUSED(cp))
+{
 }
 
 

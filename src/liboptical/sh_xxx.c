@@ -91,7 +91,7 @@ struct xxx_specific {
 
 
 /* The default values for the variables in the shader specific structure */
-const static
+static const
 struct xxx_specific xxx_defaults = {
     xxx_MAGIC,
     1.0,				/* xxx_val */
@@ -120,20 +120,20 @@ struct xxx_specific xxx_defaults = {
  * structure above
  */
 struct bu_structparse xxx_print_tab[] = {
-    {"%f",  1, "val",		SHDR_O(xxx_val),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "dist",		SHDR_O(xxx_dist),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  3, "delta",		SHDR_AO(xxx_delta),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  3, "max",		SHDR_AO(xxx_max),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  3, "min",		SHDR_AO(xxx_min),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",  1, "val",		SHDR_O(xxx_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  1, "dist",		SHDR_O(xxx_dist),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  3, "delta",		SHDR_AO(xxx_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  3, "max",		SHDR_AO(xxx_max),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  3, "min",		SHDR_AO(xxx_min),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 
 };
 struct bu_structparse xxx_parse_tab[] = {
-    {"%p",	bu_byteoffset(xxx_print_tab[0]), "xxx_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "v",		SHDR_O(xxx_val),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "dist",	SHDR_O(xxx_dist),	bu_mm_cvt },
-    {"%f",  3, "d",		SHDR_AO(xxx_delta),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%p",	bu_byteoffset(xxx_print_tab[0]), "xxx_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  1, "v",		SHDR_O(xxx_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  1, "dist",	SHDR_O(xxx_dist),		bu_mm_cvt, NULL, NULL },
+    {"%f",  3, "d",		SHDR_AO(xxx_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -149,11 +149,8 @@ HIDDEN void xxx_print(register struct region *rp, char *dp), xxx_free(char *cp);
  * values for the parameters.
  */
 struct mfuncs xxx_mfuncs[] = {
-    {MF_MAGIC,	"xxx",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
-     xxx_setup,	xxx_render,	xxx_print,	xxx_free },
-
-    {0,		(char *)0,	0,		0,		0,
-     0,		0,		0,		0 }
+    {MF_MAGIC,	"xxx",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,     xxx_setup,	xxx_render,	xxx_print,	xxx_free },
+    {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 
 
@@ -169,7 +166,7 @@ struct mfuncs xxx_mfuncs[] = {
  * -1 failure
  */
 HIDDEN int
-xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -177,8 +174,6 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 /* New since 4.4 release */
 {
     register struct xxx_specific *xxx_sp;
-    mat_t tmp;
-    vect_t bb_min, bb_max, v_tmp;
 
     /* check the arguments */
     RT_CHECK_RTI(rtip);

@@ -44,7 +44,7 @@ HIDDEN void stxt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, 
 struct stxt_specific {
     int stx_transp[3];	/* RGB for transparency */
     char stx_file[STX_NAME_LEN];	/* Filename */
-    int stx_magic;
+    unsigned long stx_magic;
     int stx_w;		/* Width of texture in pixels */
     int stx_fw;		/* File width of texture in pixels */
     int stx_n;		/* Number of scanlines */
@@ -59,29 +59,22 @@ struct stxt_specific {
 #define SOL_O(m) bu_offsetof(struct stxt_specific, m)
 
 struct bu_structparse stxt_parse[] = {
-    {"%d",	1, "transp",	bu_offsetofarray(struct stxt_specific, stx_transp),	stxt_transp_hook },
-    {"%s",	STX_NAME_LEN, "file",	bu_offsetofarray(struct stxt_specific, stx_file),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "w",			SOL_O(stx_w),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "n",			SOL_O(stx_n),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "d",			SOL_O(stx_d),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "fw",		SOL_O(stx_fw),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "trans_valid",	SOL_O(trans_valid),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%d",	1, "transp",	bu_offsetofarray(struct stxt_specific, stx_transp),	stxt_transp_hook, NULL, NULL },
+    {"%s",	STX_NAME_LEN, "file",	bu_offsetofarray(struct stxt_specific, stx_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "w",			SOL_O(stx_w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "n",			SOL_O(stx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "d",			SOL_O(stx_d),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "fw",		SOL_O(stx_fw),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "trans_valid",	SOL_O(trans_valid),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 struct mfuncs stxt_mfuncs[] = {
-    {MF_MAGIC,	"brick",	0,		MFI_HIT,	0,
-     stxt_setup,	brick_render,	stxt_print,	stxt_free },
-
-    {MF_MAGIC,	"mbound",	0,		MFI_HIT,	0,
-     stxt_setup,	mbound_render,	stxt_print,	stxt_free },
-
-    {MF_MAGIC,	"rbound",	0,		MFI_HIT,	0,
-     stxt_setup,	rbound_render,	stxt_print,	stxt_free },
-
-    {0,		(char *)0,	0,		0,		0,
-     0,		0,		0,		0 }
+    {MF_MAGIC,	"brick",	0,		MFI_HIT,	0,     stxt_setup,	brick_render,	stxt_print,	stxt_free },
+    {MF_MAGIC,	"mbound",	0,		MFI_HIT,	0,     stxt_setup,	mbound_render,	stxt_print,	stxt_free },
+    {MF_MAGIC,	"rbound",	0,		MFI_HIT,	0,     stxt_setup,	rbound_render,	stxt_print,	stxt_free },
+    {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 
 
@@ -91,7 +84,7 @@ struct mfuncs stxt_mfuncs[] = {
  * Hooked function, called by bu_structparse.
  */
 HIDDEN void
-stxt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value)
+stxt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *UNUSED(value))
 {
     register struct stxt_specific *stp =
 	(struct stxt_specific *)cp;
@@ -165,7 +158,7 @@ stxt_read(register struct stxt_specific *stp)
  * S T X T _ S E T U P
  */
 HIDDEN int
-stxt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+stxt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -233,7 +226,7 @@ stxt_print(register struct region *rp, char *dp)
 
 
 HIDDEN int
-brick_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+brick_render(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct shadework *swp, char *dp)
 {
     register struct stxt_specific *stp =
 	(struct stxt_specific *)dp;
@@ -328,7 +321,7 @@ brick_render(struct application *ap, struct partition *pp, struct shadework *swp
  * Use region RPP to bound solid texture (rbound).
  */
 HIDDEN int
-rbound_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+rbound_render(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct shadework *swp, char *dp)
 {
     register struct stxt_specific *stp =
 	(struct stxt_specific *)dp;
@@ -399,7 +392,7 @@ rbound_render(struct application *ap, struct partition *pp, struct shadework *sw
  * Use model RPP as solid texture bounds.  (mbound).
  */
 HIDDEN int
-mbound_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+mbound_render(struct application *ap, struct partition *UNUSED(pp), struct shadework *swp, char *dp)
 {
     register struct stxt_specific *stp =
 	(struct stxt_specific *)dp;

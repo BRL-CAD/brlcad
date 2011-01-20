@@ -67,21 +67,21 @@ struct brdf_specific {
 #define BRDF_O(m) bu_offsetof(struct brdf_specific, m)
 
 struct bu_structparse brdf_parse[] = {
-    {"%f",	1, "specular",		BRDF_O(specular_refl),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "sp",		BRDF_O(specular_refl),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "diffuse",		BRDF_O(diffuse_refl),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "di",		BRDF_O(diffuse_refl),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "rough",		BRDF_O(rms_slope),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "rms",		BRDF_O(rms_slope),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "transmit",		BRDF_O(transmit),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "tr",		BRDF_O(transmit),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "reflect",		BRDF_O(reflect),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "re",		BRDF_O(reflect),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "ri",		BRDF_O(refrac_index),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "extinction_per_meter", BRDF_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "extinction",	BRDF_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "ex",		BRDF_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",	1, "specular",		BRDF_O(specular_refl),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "sp",		BRDF_O(specular_refl),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "diffuse",		BRDF_O(diffuse_refl),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "di",		BRDF_O(diffuse_refl),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "rough",		BRDF_O(rms_slope),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "rms",		BRDF_O(rms_slope),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "transmit",		BRDF_O(transmit),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "tr",		BRDF_O(transmit),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "reflect",		BRDF_O(reflect),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "re",		BRDF_O(reflect),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "ri",		BRDF_O(refrac_index),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "extinction_per_meter", BRDF_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "extinction",	BRDF_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "ex",		BRDF_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -105,7 +105,7 @@ struct mfuncs brdf_mfuncs[] = {
  * B R D F _ S E T U P
  */
 HIDDEN int
-brdf_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+brdf_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     register struct brdf_specific *pp;
 

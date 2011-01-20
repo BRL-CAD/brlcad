@@ -71,7 +71,7 @@ noise_cvt_parse(register const struct bu_structparse *sdp, register const char *
 
 
 void
-noise_deg_to_rad(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+noise_deg_to_rad(register const struct bu_structparse *sdp, const char *UNUSED(name), char *base, const char *UNUSED(value))
 /* structure description */
 /* struct member name */
 /* begining of structure */
@@ -142,37 +142,37 @@ struct noise_specific noise_defaults = {
  * structure above
  */
 struct bu_structparse noise_print_tab[] = {
-    {"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "size",		SHDR_O(size),		bu_mm_cvt },
-    {"%f",  1, "angle",		SHDR_O(max_angle),	noise_deg_to_rad },
-    {"%f",  3, "vscale",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "min",		SHDR_O(minval),		BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  1, "size",		SHDR_O(size),		bu_mm_cvt, NULL, NULL },
+    {"%f",  1, "angle",		SHDR_O(max_angle),	noise_deg_to_rad, NULL, NULL },
+    {"%f",  3, "vscale",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  1, "min",		SHDR_O(minval),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 struct bu_structparse noise_parse_tab[] = {
-    {"%p",	bu_byteoffset(noise_print_tab[0]), "noise_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "l",			SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "o", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  3, "d",			SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "size",		SHDR_O(size),		bu_mm_cvt },
-    {"%f",  1, "s",			SHDR_O(size),		bu_mm_cvt },
-    {"%f",  1, "angle",		SHDR_O(max_angle),	noise_deg_to_rad },
-    {"%f",  1, "ang",		SHDR_O(max_angle),	noise_deg_to_rad },
-    {"%f",  1, "a",			SHDR_O(max_angle),	noise_deg_to_rad },
-    {"%f",  3, "vscale",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  3, "vs",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  3, "v",			SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "min",		SHDR_O(minval),		BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%p",	bu_byteoffset(noise_print_tab[0]), "noise_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "l",			SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "o", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  3, "d",			SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  1, "size",		SHDR_O(size),		bu_mm_cvt, NULL, NULL },
+    {"%f",  1, "s",			SHDR_O(size),		bu_mm_cvt, NULL, NULL },
+    {"%f",  1, "angle",		SHDR_O(max_angle),	noise_deg_to_rad, NULL, NULL },
+    {"%f",  1, "ang",		SHDR_O(max_angle),	noise_deg_to_rad, NULL, NULL },
+    {"%f",  1, "a",			SHDR_O(max_angle),	noise_deg_to_rad, NULL, NULL },
+    {"%f",  3, "vscale",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  3, "vs",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  3, "v",			SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  1, "min",		SHDR_O(minval),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -193,35 +193,16 @@ HIDDEN void noise_print(register struct region *rp, char *dp), noise_free(char *
  * WARNING:  The order of this table is critical for these shaders.
  */
 struct mfuncs noise_mfuncs[] = {
-    {MF_MAGIC,	"gravel",	0,	MFI_NORMAL|MFI_HIT|MFI_UV, 0,
-     noise_setup,	fractal_render,	noise_print,	noise_free },
-
-    {MF_MAGIC,	"fbmbump",	0,	MFI_NORMAL|MFI_HIT|MFI_UV, 0,
-     noise_setup,	fractal_render,	noise_print,	noise_free },
-
-    {MF_MAGIC,	"turbump",	0,	MFI_NORMAL|MFI_HIT|MFI_UV, 0,
-     noise_setup,	fractal_render, noise_print,	noise_free },
-
-    {MF_MAGIC,	"fbmcolor",	0,	MFI_NORMAL|MFI_HIT|MFI_UV, 0,
-     noise_setup,	fractal_render, noise_print,	noise_free },
-
-    {MF_MAGIC,	"turcolor",	0,	MFI_NORMAL|MFI_HIT|MFI_UV, 0,
-     noise_setup,	fractal_render, noise_print,	noise_free },
-
-    {MF_MAGIC,	"grunge",	0,	MFI_NORMAL|MFI_HIT|MFI_UV, 0,
-     noise_setup,	fractal_render, noise_print,	noise_free },
-
-    {MF_MAGIC,	"turcombo",	0,	MFI_NORMAL|MFI_HIT|MFI_UV, 0,
-     noise_setup,	fractal_render, noise_print,	noise_free },
-
-    {MF_MAGIC,	"fbmcombo",	0,	MFI_NORMAL|MFI_HIT|MFI_UV, 0,
-     noise_setup,	fractal_render,	noise_print,	noise_free },
-
-    {MF_MAGIC,	"flash",	0,	MFI_NORMAL|MFI_HIT|MFI_UV, 0,
-     noise_setup,	fractal_render, noise_print,	noise_free },
-
-    {0,		(char *)0,	0,	0,		0,
-     0,		0,		0,		0 }
+    {MF_MAGIC, "gravel",   0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {MF_MAGIC, "fbmbump",  0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {MF_MAGIC, "turbump",  0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {MF_MAGIC, "fbmcolor", 0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {MF_MAGIC, "turcolor", 0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {MF_MAGIC, "grunge",   0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {MF_MAGIC, "turcombo", 0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {MF_MAGIC, "fbmcombo", 0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {MF_MAGIC, "flash",	   0, MFI_NORMAL|MFI_HIT|MFI_UV, 0, noise_setup, fractal_render, noise_print, noise_free },
+    {       0, NULL,       0,			      0, 0,	      0,	      0,	   0,	       0 }
 };
 
 
@@ -280,7 +261,7 @@ found:
     db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
 
     MAT_IDN(tmp);
-    if (noise_sp->size != 1.0) {
+    if (!EQUAL(noise_sp->size, 1.0)) {
 	/* the user sets "size" to the size of the biggest
 	 * noise-space blob in model coordinates
 	 */

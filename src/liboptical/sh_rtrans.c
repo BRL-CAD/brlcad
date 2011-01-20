@@ -59,9 +59,9 @@ static struct rtrans_specific rtrans_defaults = {
 #define SHDR_AO(m) bu_offsetofarray(struct rtrans_specific, m)
 
 struct bu_structparse rtrans_parse[] = {
-    {"%f",  1, "threshold",		SHDR_O(threshold),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "t",			SHDR_O(threshold),		BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",  1, "threshold",		SHDR_O(threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  1, "t",			SHDR_O(threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -69,11 +69,8 @@ HIDDEN int rtrans_setup(register struct region *rp, struct bu_vls *matparm, char
 HIDDEN void rtrans_print(register struct region *rp, char *dp), rtrans_free(char *cp);
 
 struct mfuncs rtrans_mfuncs[] = {
-    {MF_MAGIC,	"rtrans",	0,		0,	0,
-     rtrans_setup,	rtrans_render,	rtrans_print,	rtrans_free },
-
-    {0,		(char *)0,	0,		0,	0,
-     0,		0,		0,		0 }
+    {MF_MAGIC,	"rtrans",	0,		0,	0,     rtrans_setup,	rtrans_render,	rtrans_print,	rtrans_free },
+    {0,		(char *)0,	0,		0,	0,     0,		0,		0,		0 }
 };
 
 
@@ -84,7 +81,7 @@ struct mfuncs rtrans_mfuncs[] = {
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-rtrans_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+rtrans_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */

@@ -45,10 +45,10 @@ struct spm_specific {
 #define SP_O(m) bu_offsetof(struct spm_specific, m)
 
 struct bu_structparse spm_parse[] = {
-    {"%s",	SPM_NAME_LEN, "file",		bu_offsetofarray(struct spm_specific, sp_file),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "w",		SP_O(sp_w),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "n",		SP_O(sp_w),	BU_STRUCTPARSE_FUNC_NULL },	/*compat*/
-    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
+    {"%s",	SPM_NAME_LEN, "file",		bu_offsetofarray(struct spm_specific, sp_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "w",		SP_O(sp_w),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "n",		SP_O(sp_w),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },	/*compat*/
+    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -56,11 +56,8 @@ HIDDEN int spm_setup(register struct region *rp, struct bu_vls *matparm, char **
 HIDDEN void spm_print(register struct region *rp, char *dp), spm_mfree(char *cp);
 
 struct mfuncs spm_mfuncs[] = {
-    {MF_MAGIC,	"spm",		0,		MFI_UV,		0,
-     spm_setup,	spm_render,	spm_print,	spm_mfree },
-
-    {0,		(char *)0,	0,		0,		0,
-     0,		0,		0,		0 }
+    {MF_MAGIC,	"spm",		0,		MFI_UV,		0,     spm_setup,	spm_render,	spm_print,	spm_mfree },
+    {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 
 
@@ -71,7 +68,7 @@ struct mfuncs spm_mfuncs[] = {
  * return a pointer to the relevant pixel.
  */
 HIDDEN int
-spm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+spm_render(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct shadework *swp, char *dp)
 {
     register struct spm_specific *spp =
 	(struct spm_specific *)dp;
@@ -99,7 +96,7 @@ spm_render(struct application *ap, struct partition *pp, struct shadework *swp, 
  * >0 success
  */
 HIDDEN int
-spm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+spm_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */

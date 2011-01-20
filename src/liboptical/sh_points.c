@@ -53,10 +53,10 @@ struct points_specific {
 #define POINTS_O(m) bu_offsetof(struct points_specific, m)
 
 struct bu_structparse points_parse[] = {
-    {"%s",	PT_NAME_LEN, "file", bu_offsetofarray(struct points_specific, pt_file),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "size",		POINTS_O(pt_size),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "w",			POINTS_O(pt_size),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%s",	PT_NAME_LEN, "file", bu_offsetofarray(struct points_specific, pt_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "size",		POINTS_O(pt_size),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "w",			POINTS_O(pt_size),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -64,11 +64,8 @@ HIDDEN int points_setup(register struct region *rp, struct bu_vls *matparm, char
 HIDDEN void points_print(register struct region *rp, char *dp), points_mfree(char *cp);
 
 struct mfuncs points_mfuncs[] = {
-    {MF_MAGIC,	"points",	0,		MFI_UV,		0,
-     points_setup,	points_render,	points_print,	points_mfree },
-
-    {0,		(char *)0,	0,		0,		0,
-     0,		0,		0,		0 }
+    {MF_MAGIC,	"points",	0,		MFI_UV,		0,     points_setup,	points_render,	points_print,	points_mfree },
+    {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 
 
@@ -89,7 +86,7 @@ struct points {
  * >0 success
  */
 HIDDEN int
-points_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+points_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -160,7 +157,7 @@ fail:
  * color of the "brightest" point (if any) within that region.
  */
 HIDDEN int
-points_render(struct application *ap, struct partition *partp, struct shadework *swp, char *dp)
+points_render(struct application *ap, struct partition *UNUSED(partp), struct shadework *swp, char *dp)
 {
     register struct points_specific *ptp =
 	(struct points_specific *)dp;
@@ -211,7 +208,7 @@ points_render(struct application *ap, struct partition *partp, struct shadework 
     /*bu_log("points_render ([%g %g][%g %g]) = %g\n",
       umin, umax, vmin, vmax, mag);*/
 
-    if (mag == 0) {
+    if (NEAR_ZERO(mag, SMALL_FASTF)) {
 	VSET(swp->sw_color, 0, 0, 0);
     } else {
 	VSET(swp->sw_color, mag/255.0, mag/255.0, mag/255.0);
@@ -225,7 +222,7 @@ points_render(struct application *ap, struct partition *partp, struct shadework 
  * P O I N T S _ P R I N T
  */
 HIDDEN void
-points_print(register struct region *rp, char *dp)
+points_print(register struct region *UNUSED(rp), char *dp)
 {
     bu_struct_print("points_setup", points_parse, (char *)dp);
     /* Should be more here */

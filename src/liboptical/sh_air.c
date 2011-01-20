@@ -49,8 +49,9 @@ struct air_specific {
 static struct air_specific air_defaults = {
     AIR_MAGIC,
     .1,		/* d_p_mm */
-    .01,		/* scale */
-    0.0,		/* delta */
+    .01,	/* scale */
+    0.0,	/* delta */
+    NULL	/* name */
 };
 
 
@@ -61,12 +62,12 @@ static struct air_specific air_defaults = {
 static void dpm_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
 
 struct bu_structparse air_parse[] = {
-    {"%f",  1, "dpm",		SHDR_O(d_p_mm),		dpm_hook },
-    {"%f",  1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "s",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "delta",		SHDR_O(delta),		bu_mm_cvt },
-    {"%f",  1, "d",		SHDR_O(delta),		bu_mm_cvt },
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",  1, "dpm",		SHDR_O(d_p_mm),		dpm_hook, NULL, NULL },
+    {"%f",  1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  1, "s",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  1, "delta",		SHDR_O(delta),		bu_mm_cvt, NULL, NULL },
+    {"%f",  1, "d",		SHDR_O(delta),		bu_mm_cvt, NULL, NULL },
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -93,7 +94,7 @@ struct mfuncs air_mfuncs[] = {
      0,		0,		0,		0 }
 };
 static void
-dpm_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+dpm_hook(register const struct bu_structparse *UNUSED(sdp), register const char *UNUSED(name), char *base, const char *UNUSED(value))
 /* structure description */
 /* struct member name */
 /* begining of structure */
@@ -177,7 +178,7 @@ air_free(char *cp)
  * once for each hit point to be shaded.
  */
 int
-airtest_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+airtest_render(struct application *ap, struct partition *pp, struct shadework *UNUSED(swp), char *dp)
 {
     register struct air_specific *air_sp =
 	(struct air_specific *)dp;
@@ -262,7 +263,7 @@ air_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 
 
 int
-tmist_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segHeadp)
+tmist_hit(register struct application *UNUSED(ap), struct partition *UNUSED(PartHeadp), struct seg *UNUSED(segHeadp))
 {
     /* go looking for the object named in
      * ((struct air_specific *)ap->a_uptr)->name
@@ -272,7 +273,7 @@ tmist_hit(register struct application *ap, struct partition *PartHeadp, struct s
     return 0;
 }
 int
-tmist_miss(register struct application *ap)
+tmist_miss(register struct application *UNUSED(ap))
 {
     /* we missed?! This is bogus!
      * but set ap->a_dist to something big
@@ -455,7 +456,7 @@ emist_render(struct application *ap, struct partition *pp, struct shadework *swp
  * once for each hit point to be shaded.
  */
 int
-emist_fbm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+emist_fbm_render(struct application *ap, struct partition *pp, struct shadework *UNUSED(swp), char *dp)
 {
 #ifndef NO_MAGIC_CHECKING
     register struct air_specific *air_sp =

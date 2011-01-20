@@ -72,7 +72,7 @@ struct flat_specific {
 #define CK_FLAT_SP(_p) BU_CKMAG(_p, FLAT_MAGIC, "flat_specific")
 
 /* The default values for the variables in the shader specific structure */
-const static
+static const
 struct flat_specific flat_defaults = {
     FLAT_MAGIC,
     { 1.0, 1.0, 1.0 }, /* full white */
@@ -101,12 +101,12 @@ struct flat_specific flat_defaults = {
  * is alpha==.4 which is equiv to transparency=={.4 .4 .4}).
  */
 struct bu_structparse flat_parse_tab[] = {
-    { "%f", 3, "color", SHDR_O(color), normalizedInput_hook}, /* for 0->1 color values */
-    { "%f", 3, "rgb", SHDR_O(color), normalizedInput_hook}, /* for 0->255 color values */
-    { "%f", 1, "bright", SHDR_O(color), singleNormalizedInput_hook}, /* for luminosity gray value */
-    { "%f", 3, "transparency", SHDR_O(transparency), normalizedInput_hook}, /* for rgb 0->1 transparency */
-    { "%f", 1, "alpha", SHDR_O(transparency), singleNormalizedInput_hook}, /* for single channel alpha transparency */
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    { "%f", 3, "color", SHDR_O(color), normalizedInput_hook, NULL, NULL }, /* for 0->1 color values */
+    { "%f", 3, "rgb", SHDR_O(color), normalizedInput_hook, NULL, NULL }, /* for 0->255 color values */
+    { "%f", 1, "bright", SHDR_O(color), singleNormalizedInput_hook, NULL, NULL }, /* for luminosity gray value */
+    { "%f", 3, "transparency", SHDR_O(transparency), normalizedInput_hook, NULL, NULL }, /* for rgb 0->1 transparency */
+    { "%f", 1, "alpha", SHDR_O(transparency), singleNormalizedInput_hook, NULL, NULL }, /* for single channel alpha transparency */
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -136,8 +136,8 @@ struct mfuncs flat_mfuncs[] = {
  * value == string containing value
  */
 void
-normalizedInput_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value) {
-
+normalizedInput_hook(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *UNUSED(value))
+{
     register double *p = (double *)(base+sdp->sp_offset);
     size_t i;
     int ok;
@@ -189,7 +189,7 @@ singleNormalizedInput_hook(register const struct bu_structparse *sdp, register c
  * default values are set.  Then any user-given values override.
  */
 HIDDEN int
-flat_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip) {
+flat_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip) {
 
     register struct flat_specific *flat_sp;
 

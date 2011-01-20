@@ -40,14 +40,9 @@ HIDDEN void sh_stk_free(char *cp);
 HIDDEN int ext_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp);
 
 struct mfuncs stk_mfuncs[] = {
-    {MF_MAGIC,	"stack",	0,		0,	0,
-     sh_stk_setup,	sh_stk_render,	sh_stk_print,	sh_stk_free},
-
-    {MF_MAGIC,	"extern",	0,		0,	0,
-     ext_setup,	sh_stk_render,	sh_stk_print,	sh_stk_free},
-
-    {0,		(char *)0,	0,		0,	0,
-     0,		0,		0,		0}
+    {MF_MAGIC,	"stack",	0,		0,	0,     sh_stk_setup,	sh_stk_render,	sh_stk_print,	sh_stk_free},
+    {MF_MAGIC,	"extern",	0,		0,	0,     ext_setup,	sh_stk_render,	sh_stk_print,	sh_stk_free},
+    {0,		(char *)0,	0,		0,	0,     0,		0,		0,		0}
 };
 
 
@@ -59,7 +54,7 @@ struct stk_specific {
 #define STK_O(m) bu_offsetof(struct stk_specific, m)
 
 struct bu_structparse stk_parse[] = {
-    {"",	0,	(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -209,7 +204,7 @@ out:
  * Returns 0 on failure, 1 on success.
  */
 HIDDEN int
-sh_stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp)
+sh_stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mf_p), struct rt_i *rtip, struct mfuncs **headp)
 
 /* parameter string */
 /* pointer to user data pointer */

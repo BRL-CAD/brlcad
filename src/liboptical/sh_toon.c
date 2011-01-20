@@ -51,7 +51,7 @@ struct toon_specific {
 
 
 /* The default values for the variables in the shader specific structure */
-const static
+static const
 struct toon_specific toon_defaults = {
     TOON_MAGIC
 };
@@ -67,12 +67,12 @@ struct toon_specific toon_defaults = {
  * structure above
  */
 struct bu_structparse toon_print_tab[] = {
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 
 };
 struct bu_structparse toon_parse_tab[] = {
-    {"%p",	bu_byteoffset(toon_print_tab[0]), "toon_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%p",	bu_byteoffset(toon_print_tab[0]), "toon_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -108,7 +108,7 @@ struct mfuncs toon_mfuncs[] = {
  * -1 failure
  */
 HIDDEN int
-toon_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+toon_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -116,8 +116,6 @@ toon_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
 /* New since 4.4 release */
 {
     register struct toon_specific *toon_sp;
-    mat_t tmp;
-    vect_t bb_min, bb_max, v_tmp;
 
     /* check the arguments */
     RT_CHECK_RTI(rtip);

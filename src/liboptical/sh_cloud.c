@@ -41,9 +41,9 @@ struct cloud_specific {
 #define CL_O(m) bu_offsetof(struct cloud_specific, m)
 
 struct bu_structparse cloud_parse[] = {
-    {"%f",	1, "thresh",	CL_O(cl_thresh),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "range",	CL_O(cl_range),		BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",	1, "thresh",	CL_O(cl_thresh),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "range",	CL_O(cl_range),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -115,7 +115,7 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
  * C L O U D _ S E T U P
  */
 HIDDEN int
-cloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     register struct cloud_specific *cp;
 
@@ -162,7 +162,7 @@ cloud_free(char *cp)
  * thresh=0.35, range=0.3 for decent clouds.
  */
 int
-cloud_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+cloud_render(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct shadework *swp, char *dp)
 {
     register struct cloud_specific *cp =
 	(struct cloud_specific *)dp;

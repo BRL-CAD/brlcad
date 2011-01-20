@@ -137,10 +137,10 @@ struct tthrm_specific {
  * structure above
  */
 struct bu_structparse tthrm_parse[] = {
-    {"%f",	1, "l",			SHDR_O(tt_min_temp),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "h", 		SHDR_O(tt_max_temp),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%s",	64, "file",		SHDR_O(tt_name),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",	1, "l",			SHDR_O(tt_min_temp),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "h", 		SHDR_O(tt_max_temp),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s",	64, "file",		SHDR_O(tt_name),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -156,11 +156,8 @@ HIDDEN void tthrm_print(register struct region *rp, char *dp), tthrm_free(char *
  * values for the parameters.
  */
 struct mfuncs tthrm_mfuncs[] = {
-    {MF_MAGIC,	"tthrm",		0,		MFI_NORMAL|MFI_HIT|MFI_UV,	0,
-     tthrm_setup,	tthrm_render,	tthrm_print,	tthrm_free },
-
-    {0,		(char *)0,	0,		0,		0,
-     0,		0,		0,		0 }
+    {MF_MAGIC,	"tthrm",		0,		MFI_NORMAL|MFI_HIT|MFI_UV,	0,     tthrm_setup,	tthrm_render,	tthrm_print,	tthrm_free },
+    {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 void
 print_thrm_seg(struct thrm_seg *ts)
@@ -184,7 +181,7 @@ print_thrm_seg(struct thrm_seg *ts)
 
 
 void
-tree_parse(struct bu_list *br, union tree *tr)
+tree_parse(struct bu_list *UNUSED(br), union tree *tr)
 {
     switch (tr->tr_b.tb_op) {
 	case OP_SOLID: break;
@@ -220,7 +217,7 @@ build_tree(struct bu_list *br, struct region *rp)
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -417,7 +414,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
     bu_close_mapped_file(tt_file);
 
-    if (tthrm_sp->tt_min_temp == 0.0 && tthrm_sp->tt_max_temp == 0.0) {
+    if (NEAR_ZERO(tthrm_sp->tt_min_temp, SMALL_FASTF) && EQUAL(tthrm_sp->tt_max_temp, SMALL_FASTF)) {
 	tthrm_sp->tt_min_temp = min_temp;
 	tthrm_sp->tt_max_temp = max_temp;
 	bu_log("computed temp min/max on %s: %g/%g\n", rp->reg_name, min_temp, max_temp);
@@ -427,7 +424,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	bu_log("taking user specified on %s: min/max %g/%g\n", rp->reg_name, min_temp, max_temp);
     }
 
-    if (max_temp != min_temp) {
+    if (!EQUAL(max_temp, min_temp)) {
 	tthrm_sp->tt_temp_scale = 1.0 / (max_temp - min_temp);
     } else {
 	/* min and max are equal, maybe zero */
@@ -463,7 +460,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
  * T R E E T H E R M _ P R I N T
  */
 HIDDEN void
-tthrm_print(register struct region *rp, char *dp)
+tthrm_print(register struct region *UNUSED(rp), char *dp)
 {
     struct tthrm_specific *tthrm_sp = (struct tthrm_specific *)dp;
 

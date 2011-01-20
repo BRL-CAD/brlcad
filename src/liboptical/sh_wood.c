@@ -178,36 +178,36 @@ static struct wood_specific *Wood_Chain;
  */
 
 struct bu_structparse wood_parse[] = {
-    {"%d",	1, "ident",		WOOD_O(ident),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "id",		WOOD_O(ident),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "overlay",		WOOD_O(overlay),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "o",			WOOD_O(overlay),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "ns",		WOOD_O(ns),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "jitter",		WOOD_O(jitter),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "j",			WOOD_O(jitter),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "lt_rgb",		WOOD_OA(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "lt",		WOOD_OA(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "dk_rgb",		WOOD_OA(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "dk",		WOOD_OA(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "spacing",		WOOD_O(spacing),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "s",			WOOD_O(spacing),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "scale",		WOOD_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "sc",		WOOD_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "phase",		WOOD_O(phase),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "p",			WOOD_O(phase),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "qd",		WOOD_O(qd),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "qp",		WOOD_O(qp),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "dither",		WOOD_OA(dither),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "di",		WOOD_OA(dither),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "depth",		WOOD_O(depth),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "de",		WOOD_O(depth),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "dd",		WOOD_O(dd),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "dz",		WOOD_O(dz),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "rotation",		WOOD_OA(rot),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "r",			WOOD_OA(rot),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "D",			WOOD_OA(D),		wood_D_set },
-    {"%f",	3, "V",			WOOD_OA(V),		wood_V_set },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%d",	1, "ident",		WOOD_O(ident),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "id",		WOOD_O(ident),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "overlay",		WOOD_O(overlay),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "o",			WOOD_O(overlay),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "ns",		WOOD_O(ns),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "jitter",		WOOD_O(jitter),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "j",			WOOD_O(jitter),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "lt_rgb",		WOOD_OA(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "lt",		WOOD_OA(lt_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "dk_rgb",		WOOD_OA(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "dk",		WOOD_OA(dk_rgb),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "spacing",		WOOD_O(spacing),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "s",			WOOD_O(spacing),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "scale",		WOOD_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "sc",		WOOD_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "phase",		WOOD_O(phase),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "p",			WOOD_O(phase),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "qd",		WOOD_O(qd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "qp",		WOOD_O(qp),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "dither",		WOOD_OA(dither),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "di",		WOOD_OA(dither),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "depth",		WOOD_O(depth),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "de",		WOOD_O(depth),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "dd",		WOOD_O(dd),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "dz",		WOOD_O(dz),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "rotation",		WOOD_OA(rot),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "r",			WOOD_OA(rot),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "D",			WOOD_OA(D),		wood_D_set, NULL, NULL },
+    {"%f",	3, "V",			WOOD_OA(V),		wood_V_set, NULL, NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -255,7 +255,7 @@ HIDDEN int wood_init (void)
  * to set flag bits, indicating the presence of actual parsed values.
  */
 
-HIDDEN void wood_V_set (const struct bu_structparse *sdp, const char *name, const char *base, char *value)
+HIDDEN void wood_V_set (const struct bu_structparse *UNUSED(sdp), const char *UNUSED(name), const char *base, char *UNUSED(value))
 {
     register struct wood_specific *wd =
 	(struct wood_specific *)base;
@@ -264,7 +264,7 @@ HIDDEN void wood_V_set (const struct bu_structparse *sdp, const char *name, cons
 }
 
 
-HIDDEN void wood_D_set (const struct bu_structparse *sdp, const char *name, const char *base, char *value)
+HIDDEN void wood_D_set (const struct bu_structparse *UNUSED(sdp), const char *UNUSED(name), const char *base, char *UNUSED(value))
 {
     register struct wood_specific *wd =
 	(struct wood_specific *)base;
@@ -276,7 +276,7 @@ HIDDEN void wood_D_set (const struct bu_structparse *sdp, const char *name, cons
 /*
  * W O O D _ S E T U P
  */
-HIDDEN int wood_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+HIDDEN int wood_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -628,7 +628,7 @@ HIDDEN double wood_turb (double x, double y, double z, struct wood_specific *wd)
  * which is then used to compute the distance from the ring center.  This
  * distance is then multiplied by a velocity coefficient that is sined.
  */
-HIDDEN int wood_render(struct application *ap, struct partition *partp, struct shadework *swp, char *dp)
+HIDDEN int wood_render(struct application *UNUSED(ap), struct partition *UNUSED(partp), struct shadework *swp, char *dp)
 {
     register struct wood_specific *wd =
 	(struct wood_specific *)dp;

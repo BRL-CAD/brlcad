@@ -59,13 +59,17 @@ struct tcl_specific {
 
 
 /* The default values for the variables in the shader specific structure */
-const static
+static const
 struct tcl_specific tcl_defaults = {
-    tcl_MAGIC,
+    tcl_MAGIC,			/* magic */
     { 0.0, 0.0, 0.0, 0.0,	/* tcl_m_to_r */
       0.0, 0.0, 0.0, 0.0,
       0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0 }
+      0.0, 0.0, 0.0, 0.0 },
+    {0},			/* tcl_interps */
+    NULL,			/* tcl_objPtr */
+    {0, NULL, 0, 0, 0},		/* tcl_file */
+    NULL			/* tcl_mp */
 };
 
 
@@ -79,14 +83,14 @@ struct tcl_specific tcl_defaults = {
  * structure above
  */
 struct bu_structparse tcl_print_tab[] = {
-    {"%V",  1, "file", SHDR_O(tcl_file),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
+    {"%V",  1, "file", SHDR_O(tcl_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 
 };
 struct bu_structparse tcl_parse_tab[] = {
-    {"%p",	bu_byteoffset(tcl_print_tab[0]), "tcl_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-    {"%V",  1, "f", SHDR_O(tcl_file),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
+    {"%p",	bu_byteoffset(tcl_print_tab[0]), "tcl_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%V",  1, "f", SHDR_O(tcl_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -117,7 +121,7 @@ struct mfuncs tcl_mfuncs[] = {
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */

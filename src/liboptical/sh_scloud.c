@@ -67,7 +67,15 @@ static struct scloud_specific scloud_defaults = {
     { 1.0, 1.0, 1.0 },	/* vscale */
     { 1000.0, 1200.0, 2100.0 },	/* delta */
     0.01,			/* max_d_p_mm */
-    0.0
+    0.0,			/* min_d_p_mm */
+    {1.0, 0.0, 0.0, 0.0,	/* mtos */
+     0.0, 1.0, 0.0, 0.0,
+     0.0, 0.0, 1.0, 0.0,
+     0.0, 0.0, 0.0, 1.0},
+    {1.0, 0.0, 0.0, 0.0,	/* stom */
+     0.0, 1.0, 0.0, 0.0,
+     0.0, 0.0, 1.0, 0.0,
+     0.0, 0.0, 0.0, 1.0}
 };
 
 
@@ -76,32 +84,32 @@ static struct scloud_specific scloud_defaults = {
 #define SHDR_AO(m) bu_offsetofarray(struct scloud_specific, m)
 
 struct bu_structparse scloud_pr[] = {
-    {"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  3, "vscale",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "Max", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "min", 		SHDR_O(min_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  3, "vscale",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "Max", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "min", 		SHDR_O(min_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 struct bu_structparse scloud_parse[] = {
-    {"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "l",			SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "M", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "Max", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "m", 		SHDR_O(min_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "min", 		SHDR_O(min_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "o", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "s",			SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  3, "vs",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  3, "d",			SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "l",			SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "M", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "Max", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "m", 		SHDR_O(min_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "min", 		SHDR_O(min_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "o", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  1, "s",			SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  3, "vs",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  3, "d",			SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -109,14 +117,9 @@ HIDDEN int scloud_setup(register struct region *rp, struct bu_vls *matparm, char
 HIDDEN void scloud_print(register struct region *rp, char *dp), scloud_free(char *cp);
 
 struct mfuncs scloud_mfuncs[] = {
-    {MF_MAGIC,	"scloud",	0,	MFI_HIT, MFF_PROC,
-     scloud_setup,	scloud_render,	scloud_print,	scloud_free },
-
-    {MF_MAGIC,	"tsplat",	0,	MFI_HIT, MFF_PROC,
-     scloud_setup,	tsplat_render,	scloud_print,	scloud_free },
-
-    {0,		(char *)0,	0,		0, 0,
-     0,		0,		0,		0 }
+    {MF_MAGIC,	"scloud",	0,	MFI_HIT, MFF_PROC,     scloud_setup,	scloud_render,	scloud_print,	scloud_free },
+    {MF_MAGIC,	"tsplat",	0,	MFI_HIT, MFF_PROC,     scloud_setup,	tsplat_render,	scloud_print,	scloud_free },
+    {0,		(char *)0,	0,		0, 0,     0,		0,		0,		0 }
 };
 
 
@@ -174,7 +177,7 @@ scloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 
     /* add the noise-space scaling */
     MAT_IDN(tmp);
-    if (scloud->scale != 1.0) {
+    if (!EQUAL(scloud->scale, 1.0)) {
 	tmp[0] = tmp[5] = tmp[10] = 1.0 / scloud->scale;
     } else {
 	tmp[0] = 1.0 / (scloud->vscale[0]);
@@ -388,13 +391,13 @@ scloud_render(struct application *ap, struct partition *pp, struct shadework *sw
     light_obs(ap, swp, swp->sw_inputs);
     VSETALL(incident_light, 0);
     for (i=ap->a_rt_i->rti_nlights-1; i>=0; i--) {
-	struct light_specific *lp;
-	if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL)
+	struct light_specific *lp2;
+	if ((lp2 = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL)
 	    continue;
 	/* XXX don't have a macro for this */
-	incident_light[0] += swp->sw_intensity[3*i+0] * lp->lt_color[0];
-	incident_light[1] += swp->sw_intensity[3*i+1] * lp->lt_color[1];
-	incident_light[2] += swp->sw_intensity[3*i+2] * lp->lt_color[2];
+	incident_light[0] += swp->sw_intensity[3*i+0] * lp2->lt_color[0];
+	incident_light[1] += swp->sw_intensity[3*i+1] * lp2->lt_color[1];
+	incident_light[2] += swp->sw_intensity[3*i+2] * lp2->lt_color[2];
     }
     VELMUL(swp->sw_color, swp->sw_color, incident_light);
 

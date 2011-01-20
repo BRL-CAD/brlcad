@@ -55,23 +55,23 @@ extern double AmbientIntensity;
 
 
 struct bu_structparse phong_parse[] = {
-    {"%d",	1, "shine",		PL_O(shine),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "sh",		PL_O(shine),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "specular",		PL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "sp",		PL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "diffuse",		PL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "di",		PL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "transmit",		PL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "tr",		PL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "reflect",		PL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "re",		PL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "ri",		PL_O(refrac_index),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "extinction_per_meter", PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "extinction",	PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "ex",		PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "emission",		PL_O(emission),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "em",		PL_O(emission),		BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%d",	1, "shine",		PL_O(shine),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "sh",		PL_O(shine),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "specular",		PL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "sp",		PL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "diffuse",		PL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "di",		PL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "transmit",		PL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "tr",		PL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "reflect",		PL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "re",		PL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "ri",		PL_O(refrac_index),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "extinction_per_meter", PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "extinction",	PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "ex",		PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "emission",		PL_O(emission),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "em",		PL_O(emission),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -82,23 +82,12 @@ HIDDEN void phong_free(char *cp);
 
 /* This can't be const, so the forward link can be written later */
 struct mfuncs phg_mfuncs[] = {
-    {MF_MAGIC,	"default",	0,		MFI_NORMAL,	0,
-     phong_setup,	phong_render,	phong_print,	phong_free },
-
-    {MF_MAGIC,	"phong",	0,		MFI_NORMAL,	0,
-     phong_setup,	phong_render,	phong_print,	phong_free },
-
-    {MF_MAGIC,	"plastic",	0,		MFI_NORMAL,	0,
-     phong_setup,	phong_render,	phong_print,	phong_free },
-
-    {MF_MAGIC,	"mirror",	0,		MFI_NORMAL,	0,
-     mirror_setup,	phong_render,	phong_print,	phong_free },
-
-    {MF_MAGIC,	"glass",	0,		MFI_NORMAL,	0,
-     glass_setup,	phong_render,	phong_print,	phong_free },
-
-    {0,		(char *)0,	0,		0,	0,
-     0,		0,		0,		0 }
+    {MF_MAGIC,	"default",	0,		MFI_NORMAL,	0,     phong_setup,	phong_render,	phong_print,	phong_free },
+    {MF_MAGIC,	"phong",	0,		MFI_NORMAL,	0,     phong_setup,	phong_render,	phong_print,	phong_free },
+    {MF_MAGIC,	"plastic",	0,		MFI_NORMAL,	0,     phong_setup,	phong_render,	phong_print,	phong_free },
+    {MF_MAGIC,	"mirror",	0,		MFI_NORMAL,	0,     mirror_setup,	phong_render,	phong_print,	phong_free },
+    {MF_MAGIC,	"glass",	0,		MFI_NORMAL,	0,     glass_setup,	phong_render,	phong_print,	phong_free },
+    {0,		(char *)0,	0,		0,	0,     0,		0,		0,		0 }
 };
 
 
@@ -112,7 +101,7 @@ extern double phg_ipow();
  * P H O N G _ S E T U P
  */
 HIDDEN int
-phong_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+phong_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 {
     register struct phong_specific *pp;
 
@@ -145,7 +134,7 @@ phong_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
  * M I R R O R _ S E T U P
  */
 HIDDEN int
-mirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+mirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 {
     register struct phong_specific *pp;
 
@@ -178,7 +167,7 @@ mirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
  * G L A S S _ S E T U P
  */
 HIDDEN int
-glass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+glass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 {
     register struct phong_specific *pp;
 
@@ -297,18 +286,19 @@ phong_free(char *cp)
 HIDDEN int
 phong_render(register struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
-    register struct light_specific *lp;
+    struct light_specific *lp;
 #ifndef RT_MULTISPECTRAL
-    register fastf_t *intensity;
-#endif
-    register fastf_t refl;
-    register fastf_t *to_light;
-    register int i;
-    register fastf_t cosine;
-    vect_t work, color;
-    vect_t reflected;
-    point_t pt;
+    fastf_t *intensity;
     fastf_t dist;
+    point_t pt;
+    vect_t color;
+#endif
+    fastf_t *to_light;
+    fastf_t cosine;
+    fastf_t refl;
+    int i;
+    vect_t reflected;
+    vect_t work;
 
 #ifdef RT_MULTISPECTRAL
     struct bn_tabdata *ms_matcolor = BN_TABDATA_NULL;

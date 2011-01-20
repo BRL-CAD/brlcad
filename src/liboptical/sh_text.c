@@ -108,19 +108,19 @@ struct mfuncs txt_mfuncs[] = {
 
 
 struct bu_structparse txt_parse[] = {
-    {"%d",	1, "transp",	bu_offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook },
-    {"%V",	1, "file", TX_O(tx_name),		txt_source_hook },
-    {"%V",	1, "obj", TX_O(tx_name),		txt_source_hook },
-    {"%V",	1, "object", TX_O(tx_name),		txt_source_hook },
-    {"%V",	1, "texture", TX_O(tx_name),	 BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "w",		TX_O(tx_w),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "n",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "l",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL }, {
-    /*compat*/"%d",	1, "trans_valid", TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "t",		TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  2, "uv",	TX_AO(tx_scale), 	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "m",		TX_O(tx_mirror),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%d",	1, "transp",	bu_offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook, NULL, NULL },
+    {"%V",	1, "file", TX_O(tx_name),		txt_source_hook, NULL, NULL },
+    {"%V",	1, "obj", TX_O(tx_name),		txt_source_hook, NULL, NULL },
+    {"%V",	1, "object", TX_O(tx_name),		txt_source_hook, NULL, NULL },
+    {"%V",	1, "texture", TX_O(tx_name),	 BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "w",		TX_O(tx_w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "n",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "l",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }, {
+    /*compat*/"%d",	1, "trans_valid", TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "t",		TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  2, "uv",	TX_AO(tx_scale), 	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "m",		TX_O(tx_mirror),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -130,7 +130,7 @@ struct bu_structparse txt_parse[] = {
  * looked up.  If neither is found, object name is left null so txt_setup() will
  * fail.
  */
-HIDDEN void txt_source_hook(const struct bu_structparse *ip, const char *sp_name, genptr_t base, char *p) {
+HIDDEN void txt_source_hook(const struct bu_structparse *UNUSED(ip), const char *sp_name, genptr_t base, char *UNUSED(p)) {
     struct txt_specific *textureSpecific = (struct txt_specific *)base;
     if (strncmp(sp_name, "file", 4)==0) {
 	textureSpecific->tx_datasrc=TXT_SRC_FILE;
@@ -148,7 +148,7 @@ HIDDEN void txt_source_hook(const struct bu_structparse *ip, const char *sp_name
  * Hooked function, called by bu_structparse
  */
 HIDDEN void
-txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value)
+txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *UNUSED(value))
 {
     register struct txt_specific *tp =
 	(struct txt_specific *)cp;
@@ -496,9 +496,9 @@ txt_render(struct application *ap, struct partition *pp, struct shadework *swp, 
     /* This circumlocution needed to keep expression simple for Cray,
      * and others
      */
-    if (r != ((long)tp->tx_transp[0])) goto opaque;
-    if (g != ((long)tp->tx_transp[1])) goto opaque;
-    if (b != ((long)tp->tx_transp[2])) goto opaque;
+    if (!EQUAL(r, ((long)tp->tx_transp[0]))) goto opaque;
+    if (!EQUAL(g, ((long)tp->tx_transp[1]))) goto opaque;
+    if (!EQUAL(b, ((long)tp->tx_transp[2]))) goto opaque;
 
     /*
      * Transparency mapping is enabled, and we hit a transparent spot.
@@ -734,10 +734,10 @@ struct ckr_specific {
 #define CKR_O(m) bu_offsetof(struct ckr_specific, m)
 
 struct bu_structparse ckr_parse[] = {
-    {"%d",	3, "a",	bu_offsetofarray(struct ckr_specific, ckr_a), BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	3, "b",	bu_offsetofarray(struct ckr_specific, ckr_b), BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "s", bu_offsetof(struct ckr_specific, ckr_scale), BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%d",	3, "a",	bu_offsetofarray(struct ckr_specific, ckr_a), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	3, "b",	bu_offsetofarray(struct ckr_specific, ckr_b), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "s", bu_offsetof(struct ckr_specific, ckr_scale), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -786,7 +786,7 @@ ckr_render(struct application *ap, struct partition *pp, register struct shadewo
  * C K R _ S E T U P
  */
 HIDDEN int
-ckr_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -840,7 +840,7 @@ ckr_free(char *cp)
  * Mostly useful for debugging ft_uv() routines.
  */
 HIDDEN int
-tstm_render(struct application *ap, struct partition *pp, register struct shadework *swp, char *dp)
+tstm_render(struct application *ap, struct partition *pp, register struct shadework *swp, char *UNUSED(dp))
 {
     VSET(swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v);
 
@@ -875,7 +875,7 @@ static vect_t star_colors[] = {
  * S T A R _ R E N D E R
  */
 HIDDEN int
-star_render(register struct application *ap, register struct partition *pp, struct shadework *swp, char *dp)
+star_render(register struct application *ap, register struct partition *pp, struct shadework *swp, char *UNUSED(dp))
 {
     /* Probably want to diddle parameters based on what part of sky */
     if (bn_rand0to1(ap->a_resource->re_randptr) >= 0.98) {
@@ -992,7 +992,7 @@ bmp_render(struct application *ap, struct partition *pp, struct shadework *swp, 
  * E N V M A P _ S E T U P
  */
 HIDDEN int
-envmap_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *rtip, struct mfuncs **headp)
+envmap_setup(register struct region *rp, struct bu_vls *matparm, char **UNUSED(dpp), const struct mfuncs *UNUSED(mfp), struct rt_i *rtip, struct mfuncs **headp)
 {
 
     BU_CK_VLS(matparm);

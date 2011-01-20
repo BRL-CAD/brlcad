@@ -2,6 +2,7 @@
 lib_LTLIBRARIES = liboptical.la
 
 AM_CPPFLAGS = \
+	${STRICT_FLAGS} \
 	${TCL_CPPFLAGS}
 
 liboptical_la_SOURCES = \
