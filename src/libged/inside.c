@@ -387,6 +387,11 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 
     RT_TGC_CK_MAGIC(tgc);
 
+    VSETALL(unit_a, 0);
+    VSETALL(unit_b, 0);
+    VSETALL(unit_c, 0);
+    VSETALL(unit_d, 0);
+
     VCROSS(norm, tgc->a, tgc->b);
     VUNITIZE(norm);
 
