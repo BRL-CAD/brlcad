@@ -424,6 +424,10 @@ SET(ITK_GENERIC_SRCS
 	generic/itk_util.c
 )
 
+SET(ITK_WIN_SRCS
+	win/dllEntryPoint.c
+)
+
 SET(ITK_STUB_SRCS
 	generic/itkStubLib.c
 )
@@ -496,13 +500,14 @@ include_directories(
 	${CMAKE_BINARY_DIR}/include/brlcad
 )
 
-add_library(itk ${ITK_GENERIC_SRCS})
-SET_TARGET_PROPERTIES(itk PROPERTIES PREFIX "lib")
 IF(WIN32)
+	add_library(itk ${ITK_GENERIC_SRCS} ${ITK_WIN_SRCS})
 	target_link_libraries(itk ${M_LIBRARY} ${ITCL_STUB_LIBRARY} ${TCL_STUB_LIBRARIES})
 ELSE(WIN32)
+	add_library(itk ${ITK_GENERIC_SRCS})
 	target_link_libraries(itk ${M_LIBRARY} ${TCL_LIBRARIES} ${ITCL_LIBRARY})
 ENDIF(WIN32)
+SET_TARGET_PROPERTIES(itk PROPERTIES PREFIX "lib")
 install(TARGETS itk DESTINATION ${LIB_DIR})
 
 add_library(itkstub ${ITK_STUB_SRCS})

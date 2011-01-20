@@ -428,6 +428,10 @@ SET(ITCL_GENERIC_SRCS
 	generic/itcl_util.c
 )
 
+SET(ITCL_WIN_SRCS
+	win/dllEntryPoint.c
+)
+
 SET(ITCL_STUB_SRCS
 	generic/itclStubLib.c
 )
@@ -469,13 +473,14 @@ include_directories(
 	${CMAKE_BINARY_DIR}/include/brlcad
 )
 
-add_library(itcl ${ITCL_GENERIC_SRCS})
-SET_TARGET_PROPERTIES(itcl PROPERTIES PREFIX "lib")
 IF(WIN32)
+   add_library(itcl ${ITCL_GENERIC_SRCS} ${ITCL_WIN_SRCS})
    target_link_libraries(itcl ${M_LIBRARY} ${TCL_STUB_LIBRARIES})
 ELSE(WIN32)
+   add_library(itcl ${ITCL_GENERIC_SRCS})
    target_link_libraries(itcl ${M_LIBRARY} ${TCL_LIBRARY} )
 ENDIF(WIN32)
+SET_TARGET_PROPERTIES(itcl PROPERTIES PREFIX "lib")
 install(TARGETS itcl DESTINATION ${LIB_DIR})
 
 add_library(itclstub STATIC ${ITCL_STUB_SRCS})
