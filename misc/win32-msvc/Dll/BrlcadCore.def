@@ -116,6 +116,7 @@ db_tree_funcleaf
 db_tree_nleaves
 db_update_ident
 db_update_nref
+db_version
 db_walk_tree
 
 gcv_region_end
