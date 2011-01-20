@@ -30,7 +30,10 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <strings.h>
+
+#ifdef HAVE_STRINGS_H
+# include <strings.h>
+#endif
 
 #include "bio.h"
 #include "tcl.h"
