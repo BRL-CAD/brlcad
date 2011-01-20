@@ -4435,17 +4435,19 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 {
     int i;
     int c;
-    int triangulate;
     char *newname;
     struct rt_db_internal intern;
     struct directory *dp;
     int failed;
     int nmg_use_tnurbs = 0;
-    int make_bot;
     struct db_tree_state init_state;
     struct db_i *dbip;
     union tree *facetize_tree;
     struct model *nmg_model;
+
+    /* static due to longjmp, keep gcc happy */
+    static int triangulate;
+    static int make_bot;
 
     if (argc < 3) {
 	Tcl_AppendResult(interp,
