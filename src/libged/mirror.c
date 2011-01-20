@@ -189,11 +189,12 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     /* draw the new object */
     {
 	const char *object = (const char *)argv[bu_optind+1];
-	const char *e_argv[3] = {
-	    "draw",
-	    object,
-	    NULL
-	};
+	const char *e_argv[3] = {0, 0, 0};
+
+	e_argv[0] = "draw";
+	e_argv[1] = object;
+	e_argv[2] = NULL;
+
 	(void)ged_draw(gedp, 2, e_argv);
 	ged_view_update(gedp->ged_gvp);
     }
