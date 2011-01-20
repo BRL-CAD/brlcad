@@ -163,7 +163,7 @@ static int sh_stk_dosetup(char *cp, struct region *rp, char **dpp, char **mpp, s
 
     bu_log("Shader \"%s\"... ", matname);
 
-    if ((mfp_new = load_dynamic_shader(matname, strlen(matname)))) {
+    if ((mfp_new = load_dynamic_shader(matname))) {
 	mlib_add_shader(headp, mfp_new);
 	goto retry;
     }

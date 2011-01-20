@@ -125,14 +125,8 @@ try_load(const char *path, const char *material, const char *shader_name)
 }
 
 
-/**
- * L O A D _ D Y N A M I C _ S H A D E R
- *
- * Given a shader/material name, try to find a DSO to supply the
- * shader.
- */
 struct mfuncs *
-load_dynamic_shader(const char *material, const int mlen)
+load_dynamic_shader(const char *material)
 {
     struct mfuncs *shader_mfuncs = (struct mfuncs *)NULL;
     char libname[MAXPATHLEN];
@@ -141,17 +135,16 @@ load_dynamic_shader(const char *material, const int mlen)
     int old_rdebug = R_DEBUG;
     char sh_name[128]; /* XXX constants are bogus */
 
-    if (mlen < sizeof(sh_name)) {
+    if (strlen(material) < sizeof(sh_name)) {
 	bu_strlcpy(sh_name, material, sizeof(sh_name));
     } else {
 	bu_log("shader name too long \"%s\" %d > %d\n",
-	       material, mlen, sizeof(sh_name));
+	       material, strlen(material), sizeof(sh_name));
 	return (struct mfuncs *)NULL;
     }
-    /* rdebug |= RDEBUG_MATERIAL; */
 
     if (R_DEBUG&RDEBUG_MATERIAL)
-	bu_log("load_dynamic_shader(\"%s\", %d)\n", sh_name, mlen);
+	bu_log("load_dynamic_shader(\"%s\")\n", sh_name);
 
     cwd = getcwd((char *)NULL, (size_t)MAXPATHLEN);
 
@@ -262,7 +255,7 @@ mlib_setup(struct mfuncs **headp,
 
     bu_log("Shader \"%s\"... ", material);
 
-    if ((mfp_new = load_dynamic_shader(material, mlen))) {
+    if ((mfp_new = load_dynamic_shader(material))) {
 	mlib_add_shader(headp, mfp_new);
 	bu_log("retrying\n");
 	goto retry;
