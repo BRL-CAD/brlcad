@@ -2953,7 +2953,7 @@ out:
 }
 
 
-int
+static int
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, Tcl_Interp *interp)
 {
     int result = 1;
@@ -2976,7 +2976,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 }
 
 
-int
+static int
 process_triangulation(struct db_tree_state *tsp, const struct db_full_path *pathp, Tcl_Interp *interp)
 {
     int result = 1;

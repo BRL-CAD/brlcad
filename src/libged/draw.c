@@ -394,7 +394,7 @@ ged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp
 }
 
 
-int
+static int
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct _ged_client_data *dgcdp)
 {
     int result = 1;
@@ -416,7 +416,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 }
 
 
-int
+static int
 process_triangulation(struct db_tree_state *tsp, const struct db_full_path *pathp, struct _ged_client_data *dgcdp)
 {
     int result = 1;
