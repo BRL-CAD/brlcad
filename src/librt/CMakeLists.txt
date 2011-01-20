@@ -215,6 +215,7 @@ set(IGNORED_SOURCES
     namegen.c
     nurb_example.c
     prcomb.c
+    primitives/nmg/nmg_junk.c
     primitives/xxx/xxx.c
 )
 
