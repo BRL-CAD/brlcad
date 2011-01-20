@@ -394,6 +394,53 @@ ged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp
 }
 
 
+int
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct _ged_client_data *dgcdp)
+{
+    int result = 1;
+
+    if (!BU_SETJUMP) {
+	/* try */
+
+	result = nmg_boolean(curtree, *tsp->ts_m, tsp->ts_tol, tsp->ts_resp);
+
+    } else {
+	/* catch */
+	char  *sofar = db_path_to_string(pathp);
+
+	bu_vls_printf(&dgcdp->gedp->ged_result_str, "WARNING: Boolean evaluation of %s failed!!!\n", sofar);
+	bu_free((genptr_t)sofar, "path string");
+    } BU_UNSETJUMP;
+
+    return result;
+}
+
+
+int
+process_triangulation(struct db_tree_state *tsp, const struct db_full_path *pathp, struct _ged_client_data *dgcdp)
+{
+    int result = 1;
+
+    if (!BU_SETJUMP) {
+	/* try */
+
+	nmg_triangulate_model(*tsp->ts_m, tsp->ts_tol);
+	result = 0;
+
+    } else {
+	/* catch */
+
+	char  *sofar = db_path_to_string(pathp);
+
+	bu_vls_printf(&dgcdp->gedp->ged_result_str, "WARNING: Triangulation of %s failed!!!\n", sofar);
+	bu_free((genptr_t)sofar, "path string");
+
+    } BU_UNSETJUMP;
+
+    return result;
+}
+
+
 /**
  * G E D _ N M G _ R E G I O N _ E N D
  *
@@ -428,23 +475,15 @@ ged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
 
     if (curtree->tr_op == OP_NOP) return curtree;
 
+    failed = 1;
     if (!dgcdp->draw_nmg_only) {
-	if (BU_SETJUMP) {
-	    char *sofar = db_path_to_string(pathp);
 
-	    BU_UNSETJUMP;
-
-	    bu_vls_printf(&dgcdp->gedp->ged_result_str, "WARNING: Boolean evaluation of %s failed!!!\n", sofar);
-	    bu_free((genptr_t)sofar, "path string");
-	    db_free_tree(curtree, tsp->ts_resp);
-	    return (union tree *)NULL;
-	}
-	failed = nmg_boolean(curtree, *tsp->ts_m, tsp->ts_tol, tsp->ts_resp);
-	BU_UNSETJUMP;
+	failed = process_boolean(curtree, tsp, pathp, dgcdp);
 	if (failed) {
 	    db_free_tree(curtree, tsp->ts_resp);
 	    return (union tree *)NULL;
 	}
+
     } else if (curtree->tr_op != OP_NMG_TESS) {
 	bu_vls_printf(&dgcdp->gedp->ged_result_str, "Cannot use '-d' option when Boolean evaluation is required\n");
 	db_free_tree(curtree, tsp->ts_resp);
@@ -459,18 +498,11 @@ ged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
     }
 
     if (dgcdp->nmg_triangulate) {
-	if (BU_SETJUMP) {
-	    char *sofar = db_path_to_string(pathp);
-
-	    BU_UNSETJUMP;
-
-	    bu_vls_printf(&dgcdp->gedp->ged_result_str, "WARNING: Triangulation of %s failed!!!\n", sofar);
-	    bu_free((genptr_t)sofar, "path string");
+	failed = process_triangulation(tsp, pathp, dgcdp);
+	if (failed) {
 	    db_free_tree(curtree, tsp->ts_resp);
 	    return (union tree *)NULL;
 	}
-	nmg_triangulate_model(*tsp->ts_m, tsp->ts_tol);
-	BU_UNSETJUMP;
     }
 
     if (r != 0) {
