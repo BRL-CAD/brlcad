@@ -75,19 +75,22 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int c;
-    int triangulate;
     char *newname;
     struct rt_db_internal intern;
     struct directory *dp;
     int failed;
     int nmg_use_tnurbs = 0;
-    int make_bot;
-    int marching_cube = 0;
     struct db_tree_state init_state;
     struct db_i *dbip;
     union tree *facetize_tree;
     struct model *nmg_model;
+
     static const char *usage = "[-n] [-t] [-T] new_obj old_obj [old_obj2 old_obj3 ...]";
+
+    /* static due to jumping */
+    static int triangulate;
+    static int make_bot;
+    static int marching_cube;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -117,6 +120,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     init_state.ts_tol = &gedp->ged_wdbp->wdb_tol;
 
     /* Initial vaues for options, must be reset each time */
+    marching_cube = 0;
     triangulate = 0;
     make_bot = 1;
 
