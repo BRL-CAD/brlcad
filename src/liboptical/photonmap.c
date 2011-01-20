@@ -885,6 +885,7 @@ void BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap) {
     BuildIrradianceCache(pid, Node->R, ap);
 }
 
+
 #ifdef HAVE_ALARM
 static int starttime = 0;
 void alarmhandler(int sig) {
@@ -897,8 +898,8 @@ void alarmhandler(int sig) {
     tl = (float)t*1.0/p - t;
     bu_log("    Irradiance Cache Progress: %d%%  Approximate time left: %d%d",
 	   (int)(100.0*p), (1.0/p-1.0)*(float)t, (float)t*1.0/p);
-#define BAH(s, w) if (tl > (s)) { float d = floor(tl / (float)(s)); \
-    tl -= d * (s); bu_log("%d "w, (int)d, d>1?"s":""); }
+#define BAH(s, w) if (tl > (s)) { float d = floor(tl / (float)(s));	\
+	tl -= d * (s); bu_log("%d "w, (int)d, d>1?"s":""); }
     BAH(60*60*24, "day%s, ");
     BAH(60*60, "hour%s, ");
     BAH(60, "minute%s, ");
@@ -1609,6 +1610,7 @@ void GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, 
     bu_free(Search.List, "Search.List");
     /* bu_log("Radius: %.3f, Max Phot: %d, Found: %d, Power: [%.4f, %.4f, %.4f], Pos: [%.3f, %.3f, %.3f]\n", sqrt(NP.RadSq), NP.Max, NP.Found, irrad[0], irrad[1], irrad[2], pos[0], pos[1], pos[2]);*/
 }
+
 
 /*
  * Local Variables:

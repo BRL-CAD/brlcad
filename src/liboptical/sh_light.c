@@ -42,8 +42,8 @@
 #endif
 
 
-#define LIGHT_O(m)	bu_offsetof(struct light_specific, m)
-#define LIGHT_OA(m)	bu_offsetofarray(struct light_specific, m)
+#define LIGHT_O(m) bu_offsetof(struct light_specific, m)
+#define LIGHT_OA(m) bu_offsetofarray(struct light_specific, m)
 
 
 /** Heads linked list of lights */
@@ -67,6 +67,7 @@ struct mfuncs light_mfuncs[] = {
     {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 
+
 /** for printing out light values */
 struct bu_structparse light_print_tab[] = {
     {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
@@ -79,6 +80,7 @@ struct bu_structparse light_print_tab[] = {
     {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	BU_STRUCTPARSE_FUNC_NULL },
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
+
 
 /** for actually parsing light values */
 struct bu_structparse light_parse[] = {
@@ -113,6 +115,7 @@ struct bu_structparse light_parse[] = {
 
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
+
 
 /**
  * This is a container for all the stuff that must be carried around
@@ -160,10 +163,10 @@ aim_set (const struct bu_structparse *sdp, const char *name, const char *base, c
  */
 HIDDEN void
 light_cvt_visible(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-    /* structure description */
-    /* struct member name */
-    /* begining of structure */
-    /* string containing value */
+/* structure description */
+/* struct member name */
+/* begining of structure */
+/* string containing value */
 {
     struct light_specific *lsp = (struct light_specific *)base;
 
@@ -182,6 +185,7 @@ light_cvt_visible(register const struct bu_structparse *sdp, register const char
 	    break;
     }
 }
+
 
 /**
  * ensure that there are sufficient light samples, allocate more if
@@ -213,10 +217,10 @@ light_pt_allocate(register struct light_specific *lsp)
  */
 HIDDEN void
 light_pt_set(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-    /* structure description */
-    /* struct member name */
-    /* begining of structure */
-    /* string containing value */
+/* structure description */
+/* struct member name */
+/* begining of structure */
+/* string containing value */
 {
     struct light_specific *lsp = (struct light_specific *)base;
     fastf_t *p = (fastf_t *)(base+sdp->sp_offset);
@@ -622,7 +626,7 @@ light_setup(register struct region *rp,
 	return -1;
     }
 
-    if (lsp->lt_angle > 180)  lsp->lt_angle = 180;
+    if (lsp->lt_angle > 180) lsp->lt_angle = 180;
     lsp->lt_cosangle = cos((double) lsp->lt_angle * 0.0174532925199433);
 
     /* Determine position and size */
@@ -671,8 +675,7 @@ light_setup(register struct region *rp,
 	if (lsp->lt_exaim) {
 	    VSUB2 (work, lsp->lt_target, lsp->lt_pos);
 	    VUNITIZE (work);
-	}
-	else VSET(work, 0, 0, -1);
+	} else VSET(work, 0, 0, -1);
 	MAT4X3VEC(lsp->lt_aim, matp, work);
 	VUNITIZE(lsp->lt_aim);
     }
@@ -762,7 +765,7 @@ light_init(struct application *ap)
 
     for (BU_LIST_FOR(lsp, light_specific, &(LightHead.l))) {
 	nlights++;
-	if (lsp->lt_fraction > 0)  continue;	/* overridden */
+	if (lsp->lt_fraction > 0) continue;	/* overridden */
 	if (lsp->lt_intensity <= 0)
 	    lsp->lt_intensity = 1;		/* keep non-neg */
 	if (lsp->lt_intensity > inten)
@@ -776,7 +779,7 @@ light_init(struct application *ap)
 
     for (BU_LIST_FOR(lsp, light_specific, &(LightHead.l))) {
 	RT_CK_LIGHT(lsp);
-	if (lsp->lt_fraction > 0)  continue;	/* overridden */
+	if (lsp->lt_fraction > 0) continue;	/* overridden */
 #ifdef RT_MULTISPECTRAL
 	lsp->lt_fraction = 1.0;	/* always use honest intensity values */
 #else
@@ -1229,13 +1232,13 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     VELMUL(ap->a_color, sub_ap.a_color, filter_color);
 #endif
     reason = "after filtering";
- out:
+out:
 
 #ifdef RT_MULTISPECTRAL
     if (ms_filter_color) bn_tabdata_free(ms_filter_color);
-    if (sw.msw_color)  bn_tabdata_free(sw.msw_color);
+    if (sw.msw_color) bn_tabdata_free(sw.msw_color);
     if (sw.msw_basecolor) bn_tabdata_free(sw.msw_basecolor);
-    if (sub_ap.a_spectrum)  bn_tabdata_free(sub_ap.a_spectrum);
+    if (sub_ap.a_spectrum) bn_tabdata_free(sub_ap.a_spectrum);
     if (rdebug & RDEBUG_LIGHT) {
 	bu_log("light vis=%d %s %s %s  ",
 	       light_visible,
@@ -1317,7 +1320,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
     if (rdebug & RDEBUG_LIGHT) bu_log("light_vis\n");
 
- retry:
+retry:
 
     /* compute the light direction */
     if (los->lsp->lt_infinite) {

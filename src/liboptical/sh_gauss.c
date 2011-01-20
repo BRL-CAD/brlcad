@@ -19,12 +19,12 @@
  */
 /** @file sh_gauss.c
  *
- *  To add a new shader to the "rt" program:
+ * To add a new shader to the "rt" program:
  *
  *	1) Copy this file to sh_shadername.c
  *	2) edit sh_shadername.c:
  *		change "G A U S S" to "S H A D E R N A M E"
- *		change "gauss"   to "shadername"
+ *		change "gauss" to "shadername"
  *		Set a new number for the gauss_MAGIC define
  *		define shader specific structure and defaults
  *		edit/build parse table for bu_structparse from gauss_parse
@@ -52,9 +52,9 @@
 #include "rtgeom.h"
 #include "rtprivate.h"
 
-extern int rr_render(struct application	*ap,
-		     struct partition	*pp,
-		     struct shadework   *swp);
+extern int rr_render(struct application *ap,
+		     struct partition *pp,
+		     struct shadework *swp);
 
 /* The internal representation of the solids must be stored so that we
  * can access their parameters at shading time.  This is done with
@@ -63,20 +63,20 @@ extern int rr_render(struct application	*ap,
  */
 #define DBINT_MAGIC 0xDECCA
 struct reg_db_internals {
-    struct bu_list	l;
+    struct bu_list l;
     struct rt_db_internal ip;	/* internal rep from rtgeom.h */
-    struct soltab	*st_p;
+    struct soltab *st_p;
     vect_t one_sigma;
-    mat_t	ell2model;	/* maps ellipse coord to model coord */
-    mat_t	model2ell;	/* maps model coord to ellipse coord */
+    mat_t ell2model;	/* maps ellipse coord to model coord */
+    mat_t model2ell;	/* maps model coord to ellipse coord */
 };
 #define DBINT_MAGIC 0xDECCA
-#define CK_DBINT(_p) BU_CKMAG( _p, DBINT_MAGIC, "struct reg_db_internals" )
+#define CK_DBINT(_p) BU_CKMAG(_p, DBINT_MAGIC, "struct reg_db_internals")
 
 struct tree_bark {
-    struct db_i	*dbip;
-    struct bu_list	*l;	/* lists solids in region (built in setup) */
-    const char	*name;
+    struct db_i *dbip;
+    struct bu_list *l;	/* lists solids in region (built in setup) */
+    const char *name;
     struct gauss_specific *gs;
 };
 
@@ -89,12 +89,12 @@ struct tree_bark {
  * to any particular use of the shader.
  */
 struct gauss_specific {
-    long	magic;	/* magic # for memory validity check, must come 1st */
-    double	gauss_sigma;	/* # std dev represented by ell bounds */
-    point_t	gauss_min;
+    long magic;	/* magic # for memory validity check, must come 1st */
+    double gauss_sigma;	/* # std dev represented by ell bounds */
+    point_t gauss_min;
     point_t gauss_max;
-    mat_t	gauss_m_to_sh;	/* model to shader space matrix */
-    struct	bu_list	dbil;
+    mat_t gauss_m_to_sh;	/* model to shader space matrix */
+    struct bu_list dbil;
 };
 
 
@@ -105,15 +105,16 @@ struct gauss_specific gauss_defaults = {
     4.0,
     {0.0, 0.0, 0.0}, /* min */
     {0.0, 0.0, 0.0}, /* max */
-    {	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0 }
+    { 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0 }
 };
 
-#define SHDR_NULL	((struct gauss_specific *)0)
-#define SHDR_O(m)	bu_offsetof(struct gauss_specific, m)
-#define SHDR_AO(m)	bu_offsetofarray(struct gauss_specific, m)
+
+#define SHDR_NULL ((struct gauss_specific *)0)
+#define SHDR_O(m) bu_offsetof(struct gauss_specific, m)
+#define SHDR_AO(m) bu_offsetofarray(struct gauss_specific, m)
 
 
 /* description of how to parse/print the arguments to the shader
@@ -131,8 +132,9 @@ struct bu_structparse gauss_parse_tab[] = {
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), gauss_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	gauss_print(register struct region *rp, char *dp), gauss_free(char *cp);
+
+HIDDEN int gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), gauss_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void gauss_print(register struct region *rp, char *dp), gauss_free(char *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -156,7 +158,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 {
     RT_CK_TREE(tp);
 
-    switch ( tp->tr_op )  {
+    switch (tp->tr_op) {
 	case OP_NOP:
 	    return;
 
@@ -167,8 +169,8 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    struct rt_ell_internal *ell_p;
 	    vect_t v;
 
-	    BU_GETSTRUCT( dbint, reg_db_internals );
-	    BU_LIST_MAGIC_SET( &(dbint->l), DBINT_MAGIC);
+	    BU_GETSTRUCT(dbint, reg_db_internals);
+	    BU_LIST_MAGIC_SET(&(dbint->l), DBINT_MAGIC);
 
 	    if (tp->tr_a.tu_stp->st_matp)
 		mp = tp->tr_a.tu_stp->st_matp;
@@ -184,7 +186,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 
 	    sol_id = dbint->ip.idb_type;
 
-	    if (sol_id < 0 ) {
+	    if (sol_id < 0) {
 		bu_log("Primitive ID %ld out of bounds\n", sol_id);
 		bu_bomb("");
 	    }
@@ -193,8 +195,8 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    if (sol_id != ID_ELL) {
 
 		if (op == OP_UNION)
-		    bu_log( "Non-ellipse \"union\" primitive of \"%s\" being ignored\n",
-			    tb->name);
+		    bu_log("Non-ellipse \"union\" primitive of \"%s\" being ignored\n",
+			   tb->name);
 
 		if (rdebug&RDEBUG_SHADE)
 		    bu_log(" got a primitive type %d \"%s\".  This primitive ain't no ellipse bucko!\n",
@@ -250,7 +252,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    if (rdebug&RDEBUG_SHADE) {
 		VPRINT("sigma", dbint->one_sigma);
 	    }
-	    BU_LIST_APPEND(tb->l, &(dbint->l) );
+	    BU_LIST_APPEND(tb->l, &(dbint->l));
 
 	    break;
 	}
@@ -284,26 +286,27 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
     }
 }
 
-/*	G A U S S _ S E T U P
+
+/* G A U S S _ S E T U P
  *
- *	This routine is called (at prep time)
- *	once for each region which uses this shader.
- *	Any shader-specific initialization should be done here.
+ * This routine is called (at prep time)
+ * once for each region which uses this shader.
+ * Any shader-specific initialization should be done here.
  */
 HIDDEN int
 gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-    /* pointer to reg_udata in *rp */
+/* pointer to reg_udata in *rp */
 
-    /* New since 4.4 release */
+/* New since 4.4 release */
 {
-    register struct gauss_specific	*gauss_sp;
+    register struct gauss_specific *gauss_sp;
     struct tree_bark tb;
 
     /* check the arguments */
     RT_CHECK_RTI(rtip);
-    BU_CK_VLS( matparm );
+    BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
 
 
@@ -315,14 +318,14 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT( gauss_sp, gauss_specific );
+    BU_GETSTRUCT(gauss_sp, gauss_specific);
     *dpp = (char *)gauss_sp;
 
     /* initialize the default values for the shader */
     memcpy(gauss_sp, &gauss_defaults, sizeof(struct gauss_specific));
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse( matparm, gauss_parse_tab, (char *)gauss_sp ) < 0 )
+    if (bu_struct_parse(matparm, gauss_parse_tab, (char *)gauss_sp) < 0)
 	return -1;
 
     /* We have to pick up the parameters for the gaussian puff now.
@@ -332,44 +335,46 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
      * that definition/parameters.
      */
 
-    BU_LIST_INIT( &gauss_sp->dbil );
+    BU_LIST_INIT(&gauss_sp->dbil);
     tb.l = &gauss_sp->dbil;
 
     tb.dbip = rtip->rti_dbip;
     tb.name = rp->reg_name;
     tb.gs = gauss_sp;
 
-    tree_solids ( rp->reg_treetop, &tb, OP_UNION, &rt_uniresource );
+    tree_solids (rp->reg_treetop, &tb, OP_UNION, &rt_uniresource);
 
 
     /* XXX If this puppy isn't axis-aligned, we should come up with a
      * matrix to rotate it into alignment.  We're going to have to do
      * computation in the space defined by this ellipsoid.
      */
-/*	db_shader_mat(gauss_sp->gauss_m_to_sh, rtip, rp, gauss_sp->gauss_min,
-	gauss_sp->gauss_max);
+/* db_shader_mat(gauss_sp->gauss_m_to_sh, rtip, rp, gauss_sp->gauss_min,
+   gauss_sp->gauss_max);
 */
 
 
     if (rdebug&RDEBUG_SHADE) {
-	bu_struct_print( " Parameters:", gauss_print_tab, (char *)gauss_sp );
-	bn_mat_print( "m_to_sh", gauss_sp->gauss_m_to_sh );
+	bu_struct_print(" Parameters:", gauss_print_tab, (char *)gauss_sp);
+	bn_mat_print("m_to_sh", gauss_sp->gauss_m_to_sh);
     }
 
     return 1;
 }
 
+
 /*
-   *	G A U S S _ P R I N T
+   * G A U S S _ P R I N T
    */
 HIDDEN void
 gauss_print(register struct region *rp, char *dp)
 {
-    bu_struct_print( rp->reg_name, gauss_print_tab, (char *)dp );
+    bu_struct_print(rp->reg_name, gauss_print_tab, (char *)dp);
 }
 
+
 /*
- *	G A U S S _ F R E E
+ * G A U S S _ F R E E
  */
 HIDDEN void
 gauss_free(char *cp)
@@ -378,22 +383,23 @@ gauss_free(char *cp)
 	(struct gauss_specific *)cp;
     struct reg_db_internals *p;
 
-    while (BU_LIST_WHILE(p, reg_db_internals, &gauss_sp->dbil) ) {
-	BU_LIST_DEQUEUE( &(p->l) );
-	bu_free( p->ip.idb_ptr, "internal ptr" );
-	bu_free( (char *)p, "gauss reg_db_internals" );
+    while (BU_LIST_WHILE(p, reg_db_internals, &gauss_sp->dbil)) {
+	BU_LIST_DEQUEUE(&(p->l));
+	bu_free(p->ip.idb_ptr, "internal ptr");
+	bu_free((char *)p, "gauss reg_db_internals");
     }
 
-    bu_free( cp, "gauss_specific" );
+    bu_free(cp, "gauss_specific");
 }
+
 
 
 /*
  *
  * Evaluate the 3-D gaussian "puff" function:
  *
- * 1.0 / ( (2*PI)^(3/2) * sigmaX*sigmaY*sigmaZ )) *
- *      exp( -0.5 * ( (x-ux)^2/sigmaX + (y-uy)^2/sigmaY + (z-uz)^2/sigmaZ ) )
+ * 1.0 / ((2*PI)^(3/2) * sigmaX*sigmaY*sigmaZ)) *
+ * exp(-0.5 * ((x-ux)^2/sigmaX + (y-uy)^2/sigmaY + (z-uz)^2/sigmaZ))
  *
  * for a given point "pt" where the center of the puff is at {ux, uy, uz} and
  * the size of 1 standard deviation is {sigmaX, sigmaY, sigmaZ}
@@ -413,7 +419,7 @@ gauss_eval(fastf_t *pt, fastf_t *ell_center, fastf_t *sigma)
     term2 = (p[X]/sigma[X]) + (p[Y]/sigma[Y]) + (p[Z]/sigma[Z]);
     term2 *= term2;
 
-    val = exp( -0.5 * term2 );
+    val = exp(-0.5 * term2);
 
     if (rdebug&RDEBUG_SHADE)
 	bu_log("pt(%g %g %g) term2:%g val:%g\n",
@@ -421,6 +427,7 @@ gauss_eval(fastf_t *pt, fastf_t *ell_center, fastf_t *sigma)
 
     return val;
 }
+
 
 /*
  * Given a seg which participates in the partition we are shading evaluate
@@ -446,7 +453,7 @@ eval_seg(struct application *ap, struct reg_db_internals *dbint, struct seg *seg
 
     span = seg_p->seg_out.hit_dist - seg_p->seg_in.hit_dist;
     steps = (int)(span / 100.0 + 0.5);
-    if ( steps < 2 ) steps = 2;
+    if (steps < 2) steps = 2;
 
     step_dist = span / (double)steps;
 
@@ -460,7 +467,7 @@ eval_seg(struct application *ap, struct reg_db_internals *dbint, struct seg *seg
 
     }
 #if 1
-    for (dist=seg_p->seg_in.hit_dist; dist < seg_p->seg_out.hit_dist; dist += step_dist ) {
+    for (dist=seg_p->seg_in.hit_dist; dist < seg_p->seg_out.hit_dist; dist += step_dist) {
 	VJOIN1(pt, ap->a_ray.r_pt, dist, ap->a_ray.r_dir);
 	optical_density += gauss_eval(pt, ell_p->v, dbint->one_sigma);
     }
@@ -472,19 +479,20 @@ eval_seg(struct application *ap, struct reg_db_internals *dbint, struct seg *seg
 #endif
 }
 
+
 /*
- *	G A U S S _ R E N D E R
+ * G A U S S _ R E N D E R
  *
- *	This is called (from viewshade() in shade.c) once for each hit point
- *	to be shaded.  The purpose here is to fill in values in the shadework
- *	structure.
+ * This is called (from viewshade() in shade.c) once for each hit point
+ * to be shaded.  The purpose here is to fill in values in the shadework
+ * structure.
  */
 int
 gauss_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 
 
-    /* defined in material.h */
-    /* ptr to the shader-specific struct */
+/* defined in material.h */
+/* ptr to the shader-specific struct */
 {
     register struct gauss_specific *gauss_sp =
 	(struct gauss_specific *)dp;
@@ -498,11 +506,11 @@ gauss_render(struct application *ap, struct partition *pp, struct shadework *swp
     CK_gauss_SP(gauss_sp);
 
     if (rdebug&RDEBUG_SHADE) {
-	bu_struct_print( "gauss_render Parameters:", gauss_print_tab, (char *)gauss_sp );
+	bu_struct_print("gauss_render Parameters:", gauss_print_tab, (char *)gauss_sp);
 
-	bu_log("r_pt(%g %g %g)  r_dir(%g %g %g)\n",
+	bu_log("r_pt(%g %g %g) r_dir(%g %g %g)\n",
 	       V3ARGS(ap->a_ray.r_pt),
-	       V3ARGS(ap->a_ray.r_dir) );
+	       V3ARGS(ap->a_ray.r_dir));
     }
 
     BU_CK_LIST_HEAD(&swp->sw_segs->l);
@@ -510,7 +518,7 @@ gauss_render(struct application *ap, struct partition *pp, struct shadework *swp
 
 
     /* look at each segment that participated in the ray partition(s) */
-    for (BU_LIST_FOR(seg_p, seg, &swp->sw_segs->l) ) {
+    for (BU_LIST_FOR(seg_p, seg, &swp->sw_segs->l)) {
 
 	if (rdebug&RDEBUG_SHADE) {
 	    bu_log("seg %g -> %g\n",
@@ -521,7 +529,7 @@ gauss_render(struct application *ap, struct partition *pp, struct shadework *swp
 	RT_CK_SOLTAB(seg_p->seg_stp);
 
 	/* check to see if the seg/solid is in this partition */
-	if (bu_ptbl_locate( &pp->pt_seglist, (long *)seg_p ) != -1 )  {
+	if (bu_ptbl_locate(&pp->pt_seglist, (long *)seg_p) != -1) {
 
 	    /* XXX You might use a bu_ptbl list of the solid pointers... */
 	    /* check to see if the solid is from this region */
@@ -551,28 +559,29 @@ gauss_render(struct application *ap, struct partition *pp, struct shadework *swp
 	bu_log("Optical Density %g\n", optical_density);
 
     /* get the path length right */
-/*	if (pp->pt_inhit->hit_dist < 0.0)
-	partition_dist = pp->pt_outhit->hit_dist;
-	else
-	partition_dist = (pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist);
+/* if (pp->pt_inhit->hit_dist < 0.0)
+   partition_dist = pp->pt_outhit->hit_dist;
+   else
+   partition_dist = (pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist);
 
-	tau = optical_density * partition_dist;
-	swp->sw_transmit = exp(-tau); */
+   tau = optical_density * partition_dist;
+   swp->sw_transmit = exp(-tau); */
 
     swp->sw_transmit = 1.0 - optical_density;
 
-/*	VMOVE(swp->sw_color, pt);*/
+/* VMOVE(swp->sw_color, pt);*/
 
     /* shader must perform transmission/reflection calculations
      *
      * 0 < swp->sw_transmit <= 1 causes transmission computations
      * 0 < swp->sw_reflect <= 1 causes reflection computations
      */
-    if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
-	(void)rr_render( ap, pp, swp );
+    if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
+	(void)rr_render(ap, pp, swp);
 
     return 1;
 }
+
 
 /*
  * Local Variables:

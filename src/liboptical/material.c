@@ -105,7 +105,7 @@ try_load(const char *path, const char *material, const char *shader_name)
 	return (struct mfuncs *)NULL;
     }
 
- found:
+found:
     if (R_DEBUG&RDEBUG_MATERIAL)
 	bu_log("%s_mfuncs table found\n", shader_name);
 
@@ -177,7 +177,7 @@ load_dynamic_shader(const char *material)
     if ((shader_mfuncs = try_load(libname, material, sh_name)))
 	goto done;
 
- done:
+done:
     /* clean up memory allocated */
     if (cwd) free(cwd);
 
@@ -198,9 +198,9 @@ load_dynamic_shader(const char *material)
  * M L I B _ S E T U P
  *
  * Returns -
- *	-1	failed
- *	 0	indicates that this region should be dropped
- *	 1	success
+ * -1 failed
+ * 0 indicates that this region should be dropped
+ * 1 success
  */
 int
 mlib_setup(struct mfuncs **headp,
@@ -212,10 +212,10 @@ mlib_setup(struct mfuncs **headp,
 #endif
 
     const struct mfuncs *mfp;
-    int		ret;
-    struct bu_vls	param;
-    const char	*material;
-    size_t		mlen;
+    int ret;
+    struct bu_vls param;
+    const char *material;
+    size_t mlen;
 
     RT_CK_REGION(rp);
     RT_CK_RTI(rtip);
@@ -230,7 +230,7 @@ mlib_setup(struct mfuncs **headp,
 	material = mdefault;
 	mlen = strlen(mdefault);
     } else {
-	char	*endp;
+	char *endp;
 	endp = strchr(material, ' ');
 	if (endp) {
 	    mlen = endp - material;
@@ -239,7 +239,7 @@ mlib_setup(struct mfuncs **headp,
 	    mlen = strlen(material);
 	}
     }
- retry:
+retry:
     for (mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw) {
 	if (material[0] != mfp->mf_name[0] ||
 	    strncmp(material, mfp->mf_name, strlen(mfp->mf_name)))
@@ -282,7 +282,7 @@ mlib_setup(struct mfuncs **headp,
     }
     bu_vls_free(&param);
     return -1;
- found:
+found:
     rp->reg_mfuncs = (char *)mfp;
     rp->reg_udata = (char *)0;
 

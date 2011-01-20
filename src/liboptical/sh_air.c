@@ -32,17 +32,17 @@
 #include "raytrace.h"
 #include "rtprivate.h"
 
-extern int rr_render(struct application	*ap,
-		     struct partition	*pp,
-		     struct shadework   *swp);
+extern int rr_render(struct application *ap,
+		     struct partition *pp,
+		     struct shadework *swp);
 
 #define AIR_MAGIC 0x41697200	/* "Air" */
 struct air_specific {
-    long	magic;
-    double	d_p_mm;	/* density per unit millimeter (specified in m)*/
-    double	scale;	/* only used in emist */
-    double	delta;	/* only used in emist */
-    char	*name;	/* name of "ground" object for emist_terrain_render */
+    long magic;
+    double d_p_mm;	/* density per unit millimeter (specified in m)*/
+    double scale;	/* only used in emist */
+    double delta;	/* only used in emist */
+    char *name;	/* name of "ground" object for emist_terrain_render */
 };
 #define CK_AIR_SP(_p) BU_CKMAG(_p, AIR_MAGIC, "air_specific")
 
@@ -53,9 +53,10 @@ static struct air_specific air_defaults = {
     0.0,		/* delta */
 };
 
-#define SHDR_NULL	((struct air_specific *)0)
-#define SHDR_O(m)	bu_offsetof(struct air_specific, m)
-#define SHDR_AO(m)	bu_offsetofarray(struct air_specific, m)
+
+#define SHDR_NULL ((struct air_specific *)0)
+#define SHDR_O(m) bu_offsetof(struct air_specific, m)
+#define SHDR_AO(m) bu_offsetofarray(struct air_specific, m)
 
 static void dpm_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
 
@@ -68,8 +69,9 @@ struct bu_structparse air_parse[] = {
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	air_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), airtest_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), air_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), emist_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), tmist_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	air_print(register struct region *rp, char *dp), air_free(char *cp);
+
+HIDDEN int air_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), airtest_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), air_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), emist_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), tmist_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void air_print(register struct region *rp, char *dp), air_free(char *cp);
 
 struct mfuncs air_mfuncs[] = {
     {MF_MAGIC,	"airtest",	0,		MFI_HIT, MFF_PROC,
@@ -92,38 +94,38 @@ struct mfuncs air_mfuncs[] = {
 };
 static void
 dpm_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-    /* structure description */
-    /* struct member name */
-    /* begining of structure */
-    /* string containing value */
+/* structure description */
+/* struct member name */
+/* begining of structure */
+/* string containing value */
 {
 #define meters_to_millimeters 0.001
     struct air_specific *air_sp = (struct air_specific *)base;
 
     air_sp->d_p_mm *= meters_to_millimeters;
 }
-/*	A I R _ S E T U P
+/* A I R _ S E T U P
  *
- *	This routine is called (at prep time)
- *	once for each region which uses this shader.
- *	Any shader-specific initialization should be done here.
+ * This routine is called (at prep time)
+ * once for each region which uses this shader.
+ * Any shader-specific initialization should be done here.
  */
 HIDDEN int
 air_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-    /* pointer to reg_udata in *rp */
+/* pointer to reg_udata in *rp */
 
-    /* New since 4.4 release */
+/* New since 4.4 release */
 {
-    register struct air_specific	*air_sp;
+    register struct air_specific *air_sp;
 
     if (rdebug&RDEBUG_SHADE) bu_log("air_setup\n");
 
     RT_CHECK_RTI(rtip);
-    BU_CK_VLS( matparm );
+    BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
-    BU_GETSTRUCT( air_sp, air_specific );
+    BU_GETSTRUCT(air_sp, air_specific);
     *dpp = (char *)air_sp;
 
     memcpy(air_sp, &air_defaults, sizeof(struct air_specific));
@@ -136,8 +138,8 @@ air_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	bu_bomb("");
     }
 
-    if (rdebug&RDEBUG_SHADE) bu_log("\"%s\"\n", bu_vls_addr(matparm) );
-    if (bu_struct_parse( matparm, air_parse, (char *)air_sp ) < 0 )
+    if (rdebug&RDEBUG_SHADE) bu_log("\"%s\"\n", bu_vls_addr(matparm));
+    if (bu_struct_parse(matparm, air_parse, (char *)air_sp) < 0)
 	return -1;
 
     if (rdebug&RDEBUG_SHADE) air_print(rp, (char *)air_sp);
@@ -145,31 +147,34 @@ air_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
     return 1;
 }
 
+
 /*
- *	A I R _ P R I N T
+ * A I R _ P R I N T
  */
 HIDDEN void
 air_print(register struct region *rp, char *dp)
 {
-    bu_struct_print( rp->reg_name, air_parse, (char *)dp );
+    bu_struct_print(rp->reg_name, air_parse, (char *)dp);
 }
 
+
 /*
- *	A I R _ F R E E
+ * A I R _ F R E E
  */
 HIDDEN void
 air_free(char *cp)
 {
     if (rdebug&RDEBUG_SHADE)
 	bu_log("air_free(%s:%d)\n", __FILE__, __LINE__);
-    bu_free( cp, "air_specific" );
+    bu_free(cp, "air_specific");
 }
 
+
 /*
- *	A I R T E S T _ R E N D E R
+ * A I R T E S T _ R E N D E R
  *
- *	This is called (from viewshade() in shade.c)
- *	once for each hit point to be shaded.
+ * This is called (from viewshade() in shade.c)
+ * once for each hit point to be shaded.
  */
 int
 airtest_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
@@ -182,7 +187,7 @@ airtest_render(struct application *ap, struct partition *pp, struct shadework *s
     CK_AIR_SP(air_sp);
 
     if (rdebug&RDEBUG_SHADE) {
-	bu_struct_print( "air_specific", air_parse, (char *)air_sp );
+	bu_struct_print("air_specific", air_parse, (char *)air_sp);
 
 	bu_log("air in(%g) out%g)\n",
 	       pp->pt_inhit->hit_dist,
@@ -192,17 +197,17 @@ airtest_render(struct application *ap, struct partition *pp, struct shadework *s
     return 1;
 }
 /*
- *	A I R _ R E N D E R
+ * A I R _ R E N D E R
  *
- *	This is called (from viewshade() in shade.c)
- *	once for each hit point to be shaded.
+ * This is called (from viewshade() in shade.c)
+ * once for each hit point to be shaded.
  *
  *
- *	This implements Beer's law homogeneous Fog/haze
+ * This implements Beer's law homogeneous Fog/haze
  *
- *	Tau = optical path depth = density_per_unit_distance * distance
+ * Tau = optical path depth = density_per_unit_distance * distance
  *
- *	transmission = e^(-Tau)
+ * transmission = e^(-Tau)
  */
 int
 air_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
@@ -217,7 +222,7 @@ air_render(struct application *ap, struct partition *pp, struct shadework *swp, 
     CK_AIR_SP(air_sp);
 
     if (rdebug&RDEBUG_SHADE) {
-	bu_struct_print( "air_specific", air_parse, (char *)air_sp );
+	bu_struct_print("air_specific", air_parse, (char *)air_sp);
 	bu_log("air in(%g) out(%g) r_pt(%g %g %g)\n",
 	       pp->pt_inhit->hit_dist,
 	       pp->pt_outhit->hit_dist,
@@ -238,15 +243,15 @@ air_render(struct application *ap, struct partition *pp, struct shadework *swp, 
     /* transmission = e^(-tau) */
     swp->sw_transmit = exp(-tau);
 
-    if ( swp->sw_transmit > 1.0) swp->sw_transmit = 1.0;
-    else if ( swp->sw_transmit < 0.0 ) swp->sw_transmit = 0.0;
+    if (swp->sw_transmit > 1.0) swp->sw_transmit = 1.0;
+    else if (swp->sw_transmit < 0.0) swp->sw_transmit = 0.0;
 
     /* extinction = 1. - transmission.  Extinguished part replaced by
      * the "color of the air".
      */
 
-    if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
-	(void)rr_render( ap, pp, swp );
+    if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
+	(void)rr_render(ap, pp, swp);
 
     if (rdebug&RDEBUG_SHADE)
 	bu_log("air o dist:%gmm tau:%g transmit:%g\n",
@@ -254,6 +259,7 @@ air_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 
     return 1;
 }
+
 
 int
 tmist_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segHeadp)
@@ -268,20 +274,21 @@ tmist_hit(register struct application *ap, struct partition *PartHeadp, struct s
 int
 tmist_miss(register struct application *ap)
 {
-    /* we missed?!  This is bogus!
+    /* we missed?! This is bogus!
      * but set ap->a_dist to something big
      */
     return 0;
 }
 
+
 /*
- *	T M I S T _ R E N D E R
+ * T M I S T _ R E N D E R
  *
  * Use height above named terrain object
  *
  *
- *	This is called (from viewshade() in shade.c)
- *	once for each hit point to be shaded.
+ * This is called (from viewshade() in shade.c)
+ * once for each hit point to be shaded.
  */
 int
 tmist_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
@@ -333,7 +340,7 @@ tmist_render(struct application *ap, struct partition *pp, struct shadework *swp
 	my_ap.a_logoverlap = ap->a_logoverlap;
 	my_ap.a_onehit = 0;
 	my_ap.a_uptr = (genptr_t)air_sp;
-	rt_shootray( &my_ap );
+	rt_shootray(&my_ap);
 
 	/* XXX check my_ap.a_dist for distance to ground */
 
@@ -356,7 +363,7 @@ tmist_render(struct application *ap, struct partition *pp, struct shadework *swp
     return 1;
 }
 /*
- *	E M I S T _ R E N D E R
+ * E M I S T _ R E N D E R
  *
  *
  *
@@ -369,12 +376,12 @@ tmist_render(struct application *ap, struct partition *pp, struct shadework *swp
  * B = density falloff with altitude
  *
  *
- *	delta = height at which fog starts
- *	scale = stretches exponential decay zone
- *	d_p_mm = maximum density @ ground
+ * delta = height at which fog starts
+ * scale = stretches exponential decay zone
+ * d_p_mm = maximum density @ ground
  *
- *	This is called (from viewshade() in shade.c)
- *	once for each hit point to be shaded.
+ * This is called (from viewshade() in shade.c)
+ * once for each hit point to be shaded.
  */
 int
 emist_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
@@ -407,13 +414,13 @@ emist_render(struct application *ap, struct partition *pp, struct shadework *swp
     Ze = (air_sp->delta + out_pt[Z]) * air_sp->scale;
     Zd = ap->a_ray.r_dir[Z];
 
-    if ( NEAR_ZERO( Zd, SQRT_SMALL_FASTF ) )
-	tau = air_sp->d_p_mm * te * exp( -Zo);
+    if (NEAR_ZERO(Zd, SQRT_SMALL_FASTF))
+	tau = air_sp->d_p_mm * te * exp(-Zo);
     else
-	tau = (( air_sp->d_p_mm * te) /  Zd) * ( exp(-Zo) - exp(-Ze) );
+	tau = ((air_sp->d_p_mm * te) /  Zd) * (exp(-Zo) - exp(-Ze));
 
-/*	XXX future
-	tau *= bn_noise_fbm(pt);
+/* XXX future
+   tau *= bn_noise_fbm(pt);
 */
 
     swp->sw_transmit = exp(-tau);
@@ -427,7 +434,7 @@ emist_render(struct application *ap, struct partition *pp, struct shadework *swp
     return 1;
 }
 /*
- *	F B M _ E M I S T _ R E N D E R
+ * F B M _ E M I S T _ R E N D E R
  *
  *
  *
@@ -440,12 +447,12 @@ emist_render(struct application *ap, struct partition *pp, struct shadework *swp
  * B = density falloff with altitude
  *
  *
- *	delta = height at which fog starts
- *	scale = stretches exponential decay zone
- *	d_p_mm = maximum density @ ground
+ * delta = height at which fog starts
+ * scale = stretches exponential decay zone
+ * d_p_mm = maximum density @ ground
  *
- *	This is called (from viewshade() in shade.c)
- *	once for each hit point to be shaded.
+ * This is called (from viewshade() in shade.c)
+ * once for each hit point to be shaded.
  */
 int
 emist_fbm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
@@ -484,7 +491,7 @@ emist_fbm_render(struct application *ap, struct partition *pp, struct shadework 
     VSUB2(dist_v, out_pt, in_pt);
     dist = MAGNITUDE(dist_v);
 
-    for (delta=0; delta < dist; delta += 1.0 ) {
+    for (delta=0; delta < dist; delta += 1.0) {
 	/* compute the current point in space */
 
 	/* Shoot a ray down the -Z axis to find our current height
@@ -496,6 +503,7 @@ emist_fbm_render(struct application *ap, struct partition *pp, struct shadework 
 
     return 1;
 }
+
 
 /*
  * Local Variables:

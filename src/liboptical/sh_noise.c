@@ -19,12 +19,12 @@
  */
 /** @file sh_noise.c
  *
- *	Shaders:
- *	gravel		turbulence noise applied to color and surface normal
- *	turbump		turbulence noise applied to surface normal
- *	turcolor	turbulence noise applied to color
- *	fbmbump		fbm noise applied to surface normal
- *	fbmcolor	fbm noise applied to color
+ * Shaders:
+ * gravel turbulence noise applied to color and surface normal
+ * turbump turbulence noise applied to surface normal
+ * turcolor turbulence noise applied to color
+ * fbmbump fbm noise applied to surface normal
+ * fbmcolor fbm noise applied to color
  *
  */
 
@@ -41,9 +41,9 @@
 #include "raytrace.h"
 #include "rtprivate.h"
 
-extern int rr_render(struct application	*ap,
-		     struct partition	*pp,
-		     struct shadework   *swp);
+extern int rr_render(struct application *ap,
+		     struct partition *pp,
+		     struct shadework *swp);
 #define noise_MAGIC 0x1847
 #define CK_noise_SP(_p) BU_CKMAG(_p, noise_MAGIC, "noise_specific")
 
@@ -52,10 +52,10 @@ extern int rr_render(struct application	*ap,
  */
 void
 noise_cvt_parse(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-    /* structure description */
-    /* struct member name */
-    /* begining of structure */
-    /* string containing value */
+/* structure description */
+/* struct member name */
+/* begining of structure */
+/* string containing value */
 {
     double *p = (double *)(base+sdp->sp_offset);
 
@@ -69,12 +69,13 @@ noise_cvt_parse(register const struct bu_structparse *sdp, register const char *
 
 }
 
+
 void
 noise_deg_to_rad(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-    /* structure description */
-    /* struct member name */
-    /* begining of structure */
-    /* string containing value */
+/* structure description */
+/* struct member name */
+/* begining of structure */
+/* string containing value */
 {
     double *p = (double *)(base+sdp->sp_offset);
 
@@ -82,26 +83,28 @@ noise_deg_to_rad(register const struct bu_structparse *sdp, register const char 
     *p = *p * (bn_pi / 180.0);
 }
 
+
 /*
  * the shader specific structure contains all variables which are unique
  * to any particular use of the shader.
  */
 struct noise_specific {
-    long	magic;	/* magic # for memory validity check, must come 1st */
-    double	lacunarity;
-    double	h_val;
-    double	octaves;
-    double	size;
-    double	max_angle;
-    point_t	vscale;	/* size of noise coordinate space */
-    vect_t	delta;
-    mat_t	m_to_sh;	/* model to shader space matrix */
-    mat_t	sh_to_m;	/* shader to model space matrix */
-    double	max_delta;
-    double	nsd;
-    double	minval;		/* don't use noise value less than this */
-    int	shader_number;
+    long magic;	/* magic # for memory validity check, must come 1st */
+    double lacunarity;
+    double h_val;
+    double octaves;
+    double size;
+    double max_angle;
+    point_t vscale;	/* size of noise coordinate space */
+    vect_t delta;
+    mat_t m_to_sh;	/* model to shader space matrix */
+    mat_t sh_to_m;	/* shader to model space matrix */
+    double max_delta;
+    double nsd;
+    double minval;		/* don't use noise value less than this */
+    int shader_number;
 };
+
 
 /* The default values for the variables in the shader specific structure */
 static const
@@ -114,23 +117,24 @@ struct noise_specific noise_defaults = {
     1.57079632679489661923,		/* max_angle M_PI_2 */
     { 1.0, 1.0, 1.0 },		/* vscale */
     { 1000.0, 1000.0, 1000.0 },	/* delta into noise space */
-    {	0.0, 0.0, 0.0, 0.0,	/* m_to_sh */
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0 },
-    {	0.0, 0.0, 0.0, 0.0,	/* sh_to_m */
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0 },
+    { 0.0, 0.0, 0.0, 0.0,	/* m_to_sh */
+      0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0 },
+    { 0.0, 0.0, 0.0, 0.0,	/* sh_to_m */
+      0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0 },
     0.0,				/* max_delta */
     0.0,				/* nsd */
     0.0,				/* minval */
     0				/* shader_number */
 };
 
-#define SHDR_NULL	((struct noise_specific *)0)
-#define SHDR_O(m)	bu_offsetof(struct noise_specific, m)
-#define SHDR_AO(m)	bu_offsetofarray(struct noise_specific, m)
+
+#define SHDR_NULL ((struct noise_specific *)0)
+#define SHDR_O(m) bu_offsetof(struct noise_specific, m)
+#define SHDR_AO(m) bu_offsetofarray(struct noise_specific, m)
 
 
 /* description of how to parse/print the arguments to the shader
@@ -148,6 +152,7 @@ struct bu_structparse noise_print_tab[] = {
     {"%f",  1, "min",		SHDR_O(minval),		BU_STRUCTPARSE_FUNC_NULL },
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
+
 
 struct bu_structparse noise_parse_tab[] = {
     {"%p",	bu_byteoffset(noise_print_tab[0]), "noise_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
@@ -170,11 +175,12 @@ struct bu_structparse noise_parse_tab[] = {
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	noise_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), noise_render(),
+
+HIDDEN int noise_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), noise_render(),
     fbmbump_render(), turbump_render(),
     fbmcolor_render(), turcolor_render(),
     fractal_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	noise_print(register struct region *rp, char *dp), noise_free(char *cp);
+HIDDEN void noise_print(register struct region *rp, char *dp), noise_free(char *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -219,28 +225,28 @@ struct mfuncs noise_mfuncs[] = {
 };
 
 
-/*	G R A V E L _ S E T U P
+/* G R A V E L _ S E T U P
  *
- *	This routine is called (at prep time)
- *	once for each region which uses this shader.
- *	Any shader-specific initialization should be done here.
+ * This routine is called (at prep time)
+ * once for each region which uses this shader.
+ * Any shader-specific initialization should be done here.
  */
 HIDDEN int
 noise_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-    /* pointer to reg_udata in *rp */
+/* pointer to reg_udata in *rp */
 
-    /* New since 4.4 release */
+/* New since 4.4 release */
 {
-    register struct noise_specific	*noise_sp;
-    mat_t	tmp;
+    register struct noise_specific *noise_sp;
+    mat_t tmp;
     mat_t model_to_region;
     int i;
 
     /* check the arguments */
     RT_CHECK_RTI(rtip);
-    BU_CK_VLS( matparm );
+    BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
 
 
@@ -250,25 +256,25 @@ noise_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	       rp->reg_mater.ma_shader);
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT( noise_sp, noise_specific );
+    BU_GETSTRUCT(noise_sp, noise_specific);
     *dpp = (char *)noise_sp;
 
     /* initialize the default values for the shader */
     memcpy(noise_sp, &noise_defaults, sizeof(struct noise_specific));
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse( matparm, noise_parse_tab, (char *)noise_sp ) < 0 )
+    if (bu_struct_parse(matparm, noise_parse_tab, (char *)noise_sp) < 0)
 	return -1;
 
     /* figure out which shader is really being called */
-    for (i = 0; noise_mfuncs[i].mf_name; i++ ) {
+    for (i = 0; noise_mfuncs[i].mf_name; i++) {
 	if (BU_STR_EQUAL(noise_mfuncs[i].mf_name, mfp->mf_name))
 	    goto found;
     }
     bu_log("shader name \"%s\" not recognized, assuming \"%s\"\n",
 	   mfp->mf_name, noise_mfuncs[0].mf_name);
     i = 0;
- found:
+found:
     noise_sp->shader_number = i;
 
     db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
@@ -300,42 +306,44 @@ noise_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	pow(noise_sp->lacunarity, noise_sp->octaves);
 
     if (rdebug&RDEBUG_SHADE) {
-	bu_struct_print( " Parameters:", noise_print_tab, (char *)noise_sp );
-	bn_mat_print( "m_to_sh", noise_sp->m_to_sh );
+	bu_struct_print(" Parameters:", noise_print_tab, (char *)noise_sp);
+	bn_mat_print("m_to_sh", noise_sp->m_to_sh);
     }
 
     return 1;
 }
 
+
 /*
- *	G R A V E L _ P R I N T
+ * G R A V E L _ P R I N T
  */
 HIDDEN void
 noise_print(register struct region *rp, char *dp)
 {
-    bu_struct_print( rp->reg_name, noise_print_tab, (char *)dp );
+    bu_struct_print(rp->reg_name, noise_print_tab, (char *)dp);
 }
 
+
 /*
- *	G R A V E L _ F R E E
+ * G R A V E L _ F R E E
  */
 HIDDEN void
 noise_free(char *cp)
 {
-    bu_free( cp, "noise_specific" );
+    bu_free(cp, "noise_specific");
 }
 #define RESCALE_NOISE(n) n += 1.0
 
 /*
- *	N O R M _ N O I S E
+ * N O R M _ N O I S E
  *
- *	Apply a noise function to the surface normal
+ * Apply a noise function to the surface normal
  */
 static void
 norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*func) (/* ??? */), struct shadework *swp, int rescale)
 
 
-    /* defined in material.h */
+/* defined in material.h */
 
 {
     vect_t N, tmp;
@@ -398,19 +406,20 @@ norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*fu
     }
 }
 
+
 /*
- *	F R A C T A L _ R E N D E R
+ * F R A C T A L _ R E N D E R
  *
- *	This is called (from viewshade() in shade.c) once for each hit point
- *	to be shaded.  The purpose here is to fill in values in the shadework
- *	structure.
+ * This is called (from viewshade() in shade.c) once for each hit point
+ * to be shaded.  The purpose here is to fill in values in the shadework
+ * structure.
  */
 int
 fractal_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 
 
-    /* defined in material.h */
-    /* ptr to the shader-specific struct */
+/* defined in material.h */
+/* ptr to the shader-specific struct */
 {
     register struct noise_specific *noise_sp =
 	(struct noise_specific *)dp;
@@ -423,7 +432,7 @@ fractal_render(struct application *ap, struct partition *pp, struct shadework *s
     CK_noise_SP(noise_sp);
 
     if (rdebug&RDEBUG_SHADE)
-	bu_struct_print( "noise_render Parameters:", noise_print_tab, (char *)noise_sp );
+	bu_struct_print("noise_render Parameters:", noise_print_tab, (char *)noise_sp);
 
     /* If we are performing the shading in "region" space, we must
      * transform the hit point from "model" space to "region" space.
@@ -432,11 +441,11 @@ fractal_render(struct application *ap, struct partition *pp, struct shadework *s
     MAT4X3PNT(pt, noise_sp->m_to_sh, swp->sw_hit.hit_point);
 
     if (rdebug&RDEBUG_SHADE) {
-	bu_log("%s:%d noise_render(%s)  model:(%g %g %g) shader:(%g %g %g)\n",
+	bu_log("%s:%d noise_render(%s) model:(%g %g %g) shader:(%g %g %g)\n",
 	       __FILE__, __LINE__,
 	       noise_mfuncs[noise_sp->shader_number].mf_name,
 	       V3ARGS(swp->sw_hit.hit_point),
-	       V3ARGS(pt) );
+	       V3ARGS(pt));
     }
 
     switch (noise_sp->shader_number) {
@@ -444,7 +453,7 @@ fractal_render(struct application *ap, struct partition *pp, struct shadework *s
 	case 6: /* turcombo */
 	    val = bn_noise_turb(pt, noise_sp->h_val,
 				noise_sp->lacunarity, noise_sp->octaves);
-	    if (val < noise_sp->minval )  val = noise_sp->minval;
+	    if (val < noise_sp->minval) val = noise_sp->minval;
 #ifdef RT_MULTISPECTRAL
 	    swp->sw_temperature *= val;
 #else
@@ -468,7 +477,7 @@ fractal_render(struct application *ap, struct partition *pp, struct shadework *s
 	    val = bn_noise_fbm(pt, noise_sp->h_val,
 			       noise_sp->lacunarity, noise_sp->octaves);
 	    RESCALE_NOISE(val);
-	    if (val < noise_sp->minval )  val = noise_sp->minval;
+	    if (val < noise_sp->minval) val = noise_sp->minval;
 #ifdef RT_MULTISPECTRAL
 	    swp->sw_temperature *= val;
 #else
@@ -478,7 +487,7 @@ fractal_render(struct application *ap, struct partition *pp, struct shadework *s
 	case 4:	/* turcolor */
 	    val = bn_noise_turb(pt, noise_sp->h_val,
 				noise_sp->lacunarity, noise_sp->octaves);
-	    if (val < noise_sp->minval )  val = noise_sp->minval;
+	    if (val < noise_sp->minval) val = noise_sp->minval;
 #ifdef RT_MULTISPECTRAL
 	    swp->sw_temperature *= val;
 #else
@@ -490,7 +499,7 @@ fractal_render(struct application *ap, struct partition *pp, struct shadework *s
 	    val = bn_noise_fbm(pt, noise_sp->h_val,
 			       noise_sp->lacunarity, noise_sp->octaves);
 	    RESCALE_NOISE(val);
-	    if (val < noise_sp->minval )  val = noise_sp->minval;
+	    if (val < noise_sp->minval) val = noise_sp->minval;
 #ifdef RT_MULTISPECTRAL
 	    swp->sw_temperature *= val;
 #else
@@ -504,7 +513,7 @@ fractal_render(struct application *ap, struct partition *pp, struct shadework *s
 			       noise_sp->lacunarity, noise_sp->octaves);
 
 	    val = 1.0 - val;
-	    if (val < noise_sp->minval )  val = noise_sp->minval;
+	    if (val < noise_sp->minval) val = noise_sp->minval;
 
 #ifdef RT_MULTISPECTRAL
 	    swp->sw_temperature *= val;
@@ -521,11 +530,12 @@ fractal_render(struct application *ap, struct partition *pp, struct shadework *s
      * 0 < swp->sw_transmit <= 1 causes transmission computations
      * 0 < swp->sw_reflect <= 1 causes reflection computations
      */
-    if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
-	(void)rr_render( ap, pp, swp );
+    if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
+	(void)rr_render(ap, pp, swp);
 
     return 1;
 }
+
 
 /*
  * Local Variables:
