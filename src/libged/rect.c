@@ -45,20 +45,23 @@ static int ged_rect_rt(struct ged *gedp, int port);
 static int ged_rect_zoom(struct ged *gedp);
 
 
-static char ged_rect_syntax[] = "\
- rect vname bg [r g b]		set or get the background color\n\
- rect vname color [r g b]	set or get the color\n\
- rect vname cdim w h		set or get the canvas dimension\n\
- rect vname dim	w h		set or get the rectangle dimension\n\
- rect vname draw [0|1]		set or get the draw parameter\n\
- rect vname help		prints this help message\n\
- rect vname lstyle [0|1]	set or get the line style, 0 - solid, 1 - dashed\n\
- rect vname lwidth w		set or get the line width\n\
- rect vname pos	x y		set or get the rectangle position\n\
- rect vname rt port		render the geometry within the rectangular area\n\
- rect vname vars		print a list of all variables (i.e. var = val)\n\
- rect vname zoom		zoom view to tangle position\n\
-";
+static void
+usage(struct ged *gedp, const char *argv0)
+{
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s\n", argv0);
+    bu_vls_printf(&gedp->ged_result_str, " rect vname bg [r g b]		set or get the background color\n");
+    bu_vls_printf(&gedp->ged_result_str, " rect vname color [r g b]	set or get the color\n");
+    bu_vls_printf(&gedp->ged_result_str, " rect vname cdim w h		set or get the canvas dimension\n");
+    bu_vls_printf(&gedp->ged_result_str, " rect vname dim	w h		set or get the rectangle dimension\n");
+    bu_vls_printf(&gedp->ged_result_str, " rect vname draw [0|1]		set or get the draw parameter\n");
+    bu_vls_printf(&gedp->ged_result_str, " rect vname help		prints this help message\n");
+    bu_vls_printf(&gedp->ged_result_str, " rect vname lstyle [0|1]	set or get the line style, 0 - solid, 1 - dashed\n");
+    bu_vls_printf(&gedp->ged_result_str, " rect vname lwidth w		set or get the line width\n");
+    bu_vls_printf(&gedp->ged_result_str, " rect vname pos	x y		set or get the rectangle position\n");
+    bu_vls_printf(&gedp->ged_result_str, " rect vname rt port		render the geometry within the rectangular area\n");
+    bu_vls_printf(&gedp->ged_result_str, " rect vname vars		print a list of all variables (i.e. var = val)\n");
+    bu_vls_printf(&gedp->ged_result_str, " rect vname zoom		zoom view to tangle position\n");
+}
 
 
 /*
@@ -75,7 +78,6 @@ ged_rect(struct ged	*gedp,
     char **argp = (char **)argv;
     point_t user_pt;		/* Value(s) provided by user */
     int i;
-    static const char *usage = ged_rect_syntax;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -85,7 +87,7 @@ ged_rect(struct ged	*gedp,
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (argc < 2 || 5 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	usage(gedp, argv[0]);
 	return GED_ERROR;
     }
 
@@ -96,7 +98,7 @@ ged_rect(struct ged	*gedp,
 
     for (i = 0; i < argc; ++i)
 	if (sscanf(argp[i], "%lf", &user_pt[i]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    usage(gedp, argv[0]);
 	    return GED_ERROR;
 	}
 
@@ -310,12 +312,13 @@ ged_rect(struct ged	*gedp,
     }
 
     if (BU_STR_EQUAL(parameter, "help")) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", command, usage);
+	usage(gedp, command);
 	return GED_HELP;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "%s: unrecognized command '%s'\nUsage: %s %s\n",
-		  command, parameter, command, usage);
+    bu_vls_printf(&gedp->ged_result_str, "%s: unrecognized command '%s'\n", command, parameter);
+    usage(gedp, command);
+
     return GED_ERROR;
 }
 
