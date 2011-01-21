@@ -92,15 +92,14 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     if (BU_STR_EQUAL(argv[1], "get")) {
 	if (argc == 3) {
 	    /* just list all the attributes */
-	    avpp = avs.avp;
-	    for (i=0; i < avs.count; i++, avpp++) {
+	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
 		bu_vls_printf(&gedp->ged_result_str, "%s {%s} ", avpp->name, avpp->value);
 	    }
 	} else {
 	    const char *val;
 	    int do_separators=argc-4; /* if more than one attribute */
 
-	    for (i=3; i<(size_t)argc; i++) {
+	    for (i = 3; i < (size_t)argc; i++) {
 		val = bu_avs_get(&avs, argv[i]);
 		if (!val) {
 		    bu_vls_printf(&gedp->ged_result_str,
@@ -202,8 +201,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	/* avs is freed by db5_replace_attributes() */
 
     } else if (BU_STR_EQUAL(argv[1], "show")) {
-	int max_attr_name_len=0;
-	int tabs1=0;
+	int max_attr_name_len = 0;
+	int tabs1 = 0;
 
 	/* pretty print */
 	if (dp->d_flags & DIR_COMB) {
@@ -231,8 +230,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	}
 	if (argc == 3) {
 	    /* just display all attributes */
-	    avpp = avs.avp;
-	    for (i=0; i < avs.count; i++, avpp++) {
+	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
 		int len;
 
 		len = (int)strlen(avpp->name);
@@ -241,8 +239,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		}
 	    }
 	    tabs1 = 2 + max_attr_name_len/8;
-	    avpp = avs.avp;
-	    for (i=0; i < avs.count; i++, avpp++) {
+	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
 		const char *c;
 		int tabs2;
 		int k;
@@ -251,14 +248,14 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(&gedp->ged_result_str, "\t%s", avpp->name);
 		len = (int)strlen(avpp->name);
 		tabs2 = tabs1 - 1 - len/8;
-		for (k=0; k<tabs2; k++) {
+		for (k = 0; k < tabs2; k++) {
 		    bu_vls_putc(&gedp->ged_result_str, '\t');
 		}
 		c = avpp->value;
 		while (*c) {
 		    bu_vls_putc(&gedp->ged_result_str, *c);
 		    if (*c == '\n') {
-			for (k=0; k<tabs1; k++) {
+			for (k = 0; k < tabs1; k++) {
 			    bu_vls_putc(&gedp->ged_result_str, '\t');
 			}
 		    }
@@ -271,14 +268,14 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    int len;
 
 	    /* show just the specified attributes */
-	    for (i=0; i<(size_t)argc; i++) {
+	    for (i = 0; i < (size_t)argc; i++) {
 		len = (int)strlen(argv[i]);
 		if (len > max_attr_name_len) {
 		    max_attr_name_len = len;
 		}
 	    }
 	    tabs1 = 2 + max_attr_name_len/8;
-	    for (i=3; i<(size_t)argc; i++) {
+	    for (i = 3; i < (size_t)argc; i++) {
 		int tabs2;
 		int k;
 		const char *c;
