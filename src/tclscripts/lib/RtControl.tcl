@@ -493,7 +493,36 @@
     if {$isaMged} {
 	set rt_cmd "$itk_option(-mged) component $rtActivePane rt -F [get_cooked_dest]"
     } else {
+	# isaGed must be true
 	set rt_cmd "$itk_option(-mged) pane_rt $rtActivePane -F [get_cooked_dest]"
+
+	if {[$itk_option(-mged) rect draw]} {
+	    set pos [$itk_option(-mged) rect pos]
+	    set dim [$itk_option(-mged) rect dim]
+
+	    set xmin [lindex $pos 0]
+	    set ymin [lindex $pos 1]
+	    set width [lindex $dim 0]
+	    set height [lindex $dim 1]
+
+	    if {$width != 0 && $height != 0} {
+		if {$width > 0} {
+		    set xmax [expr $xmin + $width]
+		} else {
+		    set xmax $xmin
+		    set xmin [expr $xmax + $width]
+		}
+
+		if {$height > 0} {
+		    set ymax [expr $ymin + $height]
+		} else {
+		    set ymax $ymin
+		    set ymin [expr $ymax + $height]
+		}
+
+		append rt_cmd " -j $xmin,$ymin,$xmax,$ymax"
+	    }
+	}
     }
 
     if {$rtSize != ""} {
