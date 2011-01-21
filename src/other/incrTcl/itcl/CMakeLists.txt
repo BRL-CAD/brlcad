@@ -475,10 +475,11 @@ include_directories(
 
 IF(WIN32)
    add_library(itcl ${ITCL_GENERIC_SRCS} ${ITCL_WIN_SRCS})
+   target_link_libraries(itcl ${M_LIBRARY} ${TCL_LIBRARY} ${TCL_STUB_LIBRARIES} )
 ELSE(WIN32)
    add_library(itcl ${ITCL_GENERIC_SRCS})
-ENDIF(WIN32)
    target_link_libraries(itcl ${M_LIBRARY} ${TCL_LIBRARY} )
+ENDIF(WIN32)
 SET_TARGET_PROPERTIES(itcl PROPERTIES PREFIX "lib")
 install(TARGETS itcl DESTINATION ${LIB_DIR})
 
