@@ -189,6 +189,7 @@ include/raytrace.h
 7.18.2
 ------
 	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
+	g-shell.rect renamed to g-shell-rect [minor tool rename]
 
 7.18.0
 ------
