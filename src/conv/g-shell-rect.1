@@ -39,12 +39,12 @@
 .\"
 .\".\".\"
 .SH NAME
-g-shell.rect \- Produce triangulated shell from BRL-CAD model
+g-shell-rect \- Produce triangulated shell from BRL-CAD model
 .SH SYNOPSIS
-.B g-shell.rect
+.B g-shell-rect
 [-d debug_level] [-n] [-g cell_size] [-i initial_ray_dir] [-d debug_level] -o brlcad_output_file database.g object(s)
 .SH DESCRIPTION
-.I g-shell.rect\^
+.I g-shell-rect\^
 converts the specified
 .I objects(s)
 from a BRL-CAD model
@@ -95,7 +95,7 @@ Supresses the refinement stage (firing rays from the secondary and tertiary axis
 Specifies the name of the BRL-CAD geometry file to create.
 .SH EXAMPLE
 .RS
-$ \|\fIg-shell.rect \|-o shell.g \|sample.g \|sample_object\fP
+$ \|\fIg-shell-rect \|-o shell.g \|sample.g \|sample_object\fP
 .RE
 .SH DIAGNOSTICS
 Error messages are intended to be self-explanatory.
