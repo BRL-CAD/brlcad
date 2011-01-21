@@ -73,7 +73,7 @@ bin_PROGRAMS = \
 	g-nmg \
 	g-obj \
 	g-off \
-	g-shell.rect \
+	g-shell-rect \
 	g-stl \
 	g-tankill \
 	g-var \
@@ -229,7 +229,7 @@ g_off_LDADD = \
 	${RT} \
 	${RT_LIBS}
 
-g_shell_rect_SOURCES = g-shell.rect.c
+g_shell_rect_SOURCES = g-shell-rect.c
 g_shell_rect_LDADD = ${WDB}
 
 g_stl_SOURCES = stl/g-stl.c
@@ -339,7 +339,7 @@ dist_man_MANS = \
 	g-egg.1 \
 	g-nff.1 \
 	g-obj.1 \
-	g-shell.rect.1 \
+	g-shell-rect.1 \
 	g-var.1 \
 	g-vrml.1 \
 	g-x3d.1 \

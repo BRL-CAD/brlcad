@@ -137,7 +137,7 @@ BRLCAD_ADDEXEC(viewpoint-g viewpoint-g.c "libwdb librt libbu")
 add_executable(g-xxx_facets g-xxx_facets.c)
 target_link_libraries(g-xxx_facets librt libbu)
 
-BRLCAD_ADDEXEC(g-shell.rect g-shell.rect.c "libwdb librt libbu")
+BRLCAD_ADDEXEC(g-shell-rect g-shell-rect.c "libwdb librt libbu")
 
 install(PROGRAMS intaval-g.py DESTINATION bin)
 
@@ -166,7 +166,7 @@ SET(conv_MANS
   g-egg.1 
   g-nff.1 
   g-obj.1 
-  g-shell.rect.1 
+  g-shell-rect.1 
   g-var.1 
   g-vrml.1 
   g-x3d.1 
