@@ -116,7 +116,7 @@ SET(ITCL_CFLAGS "${ITCL_CFLAGS} -DSTDC_HEADERS=1")
 # Windows specific flags
 IF(WIN32)
 	SET(ITCL_CFLAGS "${ITCL_CFLAGS} -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD")
-	SET(ITCL_CFLAGS "${ITCL_CFLAGS} -Dinline=__inline -DBUILD_itcl -DUSE_TCL_STUBS")
+	SET(ITCL_CFLAGS "${ITCL_CFLAGS} -Dinline=__inline -DBUILD_itcl")
 ENDIF(WIN32)
 
 
@@ -475,11 +475,10 @@ include_directories(
 
 IF(WIN32)
    add_library(itcl ${ITCL_GENERIC_SRCS} ${ITCL_WIN_SRCS})
-   target_link_libraries(itcl ${M_LIBRARY} ${TCL_STUB_LIBRARIES})
 ELSE(WIN32)
    add_library(itcl ${ITCL_GENERIC_SRCS})
-   target_link_libraries(itcl ${M_LIBRARY} ${TCL_LIBRARY} )
 ENDIF(WIN32)
+   target_link_libraries(itcl ${M_LIBRARY} ${TCL_LIBRARY} )
 SET_TARGET_PROPERTIES(itcl PROPERTIES PREFIX "lib")
 install(TARGETS itcl DESTINATION ${LIB_DIR})
 
