@@ -372,7 +372,7 @@ _ged_print_node(struct ged *gedp,
 		size_t pathpos,
 		int indentSize,
 		char prefix,
-		unsigned cflag,
+		unsigned flags,
 		int displayDepth,
 		int currdisplayDepth)
 {
@@ -380,6 +380,9 @@ _ged_print_node(struct ged *gedp,
     struct directory *nextdp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
+    unsigned aflag = (flags & _GED_TREE_AFLAG);
+    unsigned cflag = (flags & _GED_TREE_CFLAG);
+    struct bu_vls tmp_str;
 
     if (cflag && !(dp->d_flags & RT_DIR_COMB))
         return;
@@ -476,7 +479,7 @@ _ged_print_node(struct ged *gedp,
 		bu_vls_printf(&gedp->ged_result_str, "%s\n", rt_tree_array[i].tl_tree->tr_l.tl_name);
 	    } else {
 		if (currdisplayDepth < displayDepth) {
-		    _ged_print_node(gedp, nextdp, pathpos+1, indentSize, op, cflag, displayDepth, currdisplayDepth+1);
+		    _ged_print_node(gedp, nextdp, pathpos+1, indentSize, op, flags, displayDepth, currdisplayDepth+1);
 		}
 	    }
 	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
