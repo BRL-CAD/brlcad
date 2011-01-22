@@ -1298,7 +1298,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 		    // insert trim
 		    // insert singular trim along
 		    // 0 = south, 1 = east, 2 = north, 3 = west
-		    ON_Surface::ISO iso;
+		    ON_Surface::ISO iso = ON_Surface::N_iso;
 		    switch (is) {
 			case 0:
 			    //south
@@ -2436,7 +2436,7 @@ VertexLoop::LoadONBrep(ON_Brep *brep)
     corner[3] = surface->PointAt(U.m_t[1], V.m_t[1]);
 
     ON_2dPoint start, end;
-    ON_Surface::ISO iso;
+    ON_Surface::ISO iso = ON_Surface::N_iso;
     if (VNEAR_EQUAL(vertex, corner[0], POINT_CLOSENESS_TOLERANCE)) {
 	start = ON_2dPoint(U.m_t[0], V.m_t[0]);
 	if (VNEAR_EQUAL(vertex, corner[1], POINT_CLOSENESS_TOLERANCE)) {
