@@ -381,15 +381,15 @@ _ged_print_node(struct ged *gedp,
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
-    if (cflag && !(dp->d_flags & DIR_COMB))
-	return;
+    if (cflag && !(dp->d_flags & RT_DIR_COMB))
+        return;
 
-    for (i=0; i<pathpos; i++)
+    for (i = 0; i < pathpos; i++) {
 	if (indentSize < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "\t");
 	} else {
 	    int j;
-	    for (j=0; j<indentSize; j++) {
+	    for (j = 0; j < indentSize; j++) {
 		bu_vls_printf(&gedp->ged_result_str, " ");
 	    }
 	}
@@ -399,14 +399,14 @@ _ged_print_node(struct ged *gedp,
 
     bu_vls_printf(&gedp->ged_result_str, "%s", dp->d_namep);
     /* Output Comb and Region flags (-F?) */
-    if (dp->d_flags & DIR_COMB)
+    if (dp->d_flags & RT_DIR_COMB)
 	bu_vls_printf(&gedp->ged_result_str, "/");
-    if (dp->d_flags & DIR_REGION)
+    if (dp->d_flags & RT_DIR_REGION)
 	bu_vls_printf(&gedp->ged_result_str, "R");
 
     bu_vls_printf(&gedp->ged_result_str, "\n");
 
-    if (!(dp->d_flags & DIR_COMB))
+    if (!(dp->d_flags & RT_DIR_COMB))
 	return;
 
     /*
@@ -446,7 +446,7 @@ _ged_print_node(struct ged *gedp,
 	    rt_tree_array = NULL;
 	}
 
-	for (i=0; i<actual_count; i++) {
+	for (i = 0; i < actual_count; i++) {
 	    char op;
 
 	    switch (rt_tree_array[i].tl_op) {
@@ -464,7 +464,7 @@ _ged_print_node(struct ged *gedp,
 		    break;
 	    }
 
-	    if ((nextdp = db_lookup(gedp->ged_wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL) {
+	    if ((nextdp = db_lookup(gedp->ged_wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 		size_t j;
 
 		for (j=0; j<pathpos+1; j++)
