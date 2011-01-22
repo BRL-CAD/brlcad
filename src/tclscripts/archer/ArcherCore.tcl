@@ -359,6 +359,10 @@ namespace eval ArcherCore {
 	variable mEnableBigE 0
 	variable mEnableBigEPref ""
 
+	variable mDisplayFontSize 0
+	variable mDisplayFontSizePref ""
+	variable mDisplayFontSizes {}
+
 	variable mGridAnchor "0 0 0"
 	variable mGridAnchorXPref ""
 	variable mGridAnchorYPref ""
@@ -805,6 +809,12 @@ Popup Menu    Right or Ctrl-Left
     global env
     global tcl_platform
 
+    if {$tcl_platform(platform) == "windows"} {
+	set mDisplayFontSizes {0 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29}
+    } else {
+	set mDisplayFontSizes {0 5 6 7 8 9 10 12}
+    }
+
     set mLastSelectedDir [pwd]
 
     set mFontText [list $SystemWindowFont 8]
@@ -1023,6 +1033,9 @@ Popup Menu    Right or Ctrl-Left
     trace add variable [::itcl::scope mViewingParamsColor] write watchVar
     trace add variable [::itcl::scope mViewAxesColor] write watchVar
     trace add variable [::itcl::scope mViewAxesLabelColor] write watchVar
+
+    trace add variable [::itcl::scope mFBBackgroundColor] write watchVar
+    trace add variable [::itcl::scope mDisplayFontSize] write watchVar
 
     eval itk_initialize $args
 
@@ -5695,6 +5708,9 @@ Popup Menu    Right or Ctrl-Left
     switch -- $_name1 {
 	mFBBackgroundColor {
 	    $itk_component(rtcntrl) configure -color [cadwidgets::Ged::get_rgb_color $mFBBackgroundColor]
+	}
+	mDisplayFontSize {
+	    $itk_component(ged) fontsize $mDisplayFontSize
 	}
 	mMeasuringStickColor {
 	    $itk_component(ged) configure -measuringStickColor $mMeasuringStickColor
