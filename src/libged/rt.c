@@ -170,9 +170,14 @@ _ged_run_rt(struct ged *gedp)
     struct _ged_rt_client_data *drcdp;
 #ifndef _WIN32
     int pid;
+    int ret;
 
-    (void)pipe(pipe_in);
-    (void)pipe(pipe_err);
+    ret = pipe(pipe_in);
+    if (ret < 0)
+	perror("pipe");
+    ret = pipe(pipe_err);
+    if (ret < 0)
+	perror("pipe");
 
     if ((pid = fork()) == 0) {
 	/* make this a process group leader */
@@ -180,9 +185,13 @@ _ged_run_rt(struct ged *gedp)
 
 	/* Redirect stdin and stderr */
 	(void)close(0);
-	(void)dup(pipe_in[0]);
+	ret = dup(pipe_in[0]);
+	if (ret < 0)
+	    perror("dup");
 	(void)close(2);
-	(void)dup(pipe_err[1]);
+	ret = dup(pipe_err[1]);
+	if (ret < 0)
+	    perror("dup");
 
 	/* close pipes */
 	(void)close(pipe_in[0]);

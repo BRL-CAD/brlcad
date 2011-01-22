@@ -106,7 +106,9 @@ tables_sol_number(matp_t matrix, char *name, int *old, long *numsol)
     idbuf1.i_index = *numsol;
 
     (void)lseek(idfd, (off_t)0L, 2);
-    (void)write(idfd, &idbuf1, sizeof identt);
+    i = write(idfd, &idbuf1, sizeof identt);
+    if (i < 0)
+	perror("write");
 
     *old = 0;
     return idbuf1.i_index;
@@ -420,6 +422,8 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 
 	(void)fclose(tabptr);
     } else {
+	int ret;
+
 	(void)fprintf(tabptr, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
 	(void)fclose(tabptr);
 
@@ -433,7 +437,9 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_trunc(&cmd, 0);
 	    bu_vls_strcpy(&cmd, sortcmd_long);
 	    bu_vls_strcat(&cmd, argv[1]);
-	    (void)system(bu_vls_addr(&cmd));
+	    ret = system(bu_vls_addr(&cmd));
+	    if (ret != 0)
+		bu_log("WARNING: sort failure detected\n");
 	}
 	bu_vls_printf(&gedp->ged_result_str, "%V\n", &cmd);
 
@@ -441,7 +447,9 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_strcpy(&cmd, catcmd);
 	bu_vls_strcat(&cmd, argv[1]);
 	bu_vls_printf(&gedp->ged_result_str, "%V\n", &cmd);
-	(void)system(bu_vls_addr(&cmd));
+	ret = system(bu_vls_addr(&cmd));
+	if (ret != 0)
+	    bu_log("WARNING: cat failure detected\n");
 
 	(void)unlink("/tmp/ord_id\0");
     }
