@@ -1119,7 +1119,7 @@ wdb_put_cmd(struct rt_wdb *wdbp,
      * stdout/file wdb objects don't, but can still be written to.
      * If not, just skip the lookup test and write the object
      */
-    if (wdbp->dbip && db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET) != DIR_NULL) {
+    if (wdbp->dbip && db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(interp, argv[1], " already exists",
 			 (char *)NULL);
 	return TCL_ERROR;
@@ -1227,7 +1227,7 @@ wdb_adjust_cmd(struct rt_wdb *wdbp,
     RT_CK_DBI_TCL(interp, wdbp->dbip);
 
     dp = db_lookup(wdbp->dbip, name, LOOKUP_QUIET);
-    if (dp == DIR_NULL) {
+    if (dp == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, name, ": not found",
 			 (char *)NULL);
 	return TCL_ERROR;
@@ -1426,7 +1426,7 @@ wdb_tops_cmd(struct rt_wdb *wdbp,
     if (db_version(wdbp->dbip) < 5) {
 	for (i = 0; i < RT_DBNHASH; i++)
 	    for (dp = wdbp->dbip->dbi_Head[i];
-		 dp != DIR_NULL;
+		 dp != RT_DIR_NULL;
 		 dp = dp->d_forw) {
 		if (dp->d_nref == 0)
 		    *dirp++ = dp;
@@ -1434,15 +1434,15 @@ wdb_tops_cmd(struct rt_wdb *wdbp,
     } else {
 	for (i = 0; i < RT_DBNHASH; i++)
 	    for (dp = wdbp->dbip->dbi_Head[i];
-		 dp != DIR_NULL;
+		 dp != RT_DIR_NULL;
 		 dp = dp->d_forw) {
 
 		if (dp->d_nref == 0 &&
 		    (aflag ||
-		     (hflag && (dp->d_flags & DIR_HIDDEN)) ||
+		     (hflag && (dp->d_flags & RT_DIR_HIDDEN)) ||
 		     (pflag && dp->d_addr == RT_DIR_PHONY_ADDR) ||
 		     (!aflag && !hflag && !pflag &&
-		      !(dp->d_flags & DIR_HIDDEN) &&
+		      !(dp->d_flags & RT_DIR_HIDDEN) &&
 		      (dp->d_addr != RT_DIR_PHONY_ADDR))))
 		    *dirp++ = dp;
 	    }
@@ -1702,12 +1702,12 @@ wdb_showmats_cmd(struct rt_wdb *wdbp,
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 
-	if ((dp = db_lookup(wdbp->dbip, parent, LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp = db_lookup(wdbp->dbip, parent, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    return TCL_ERROR;
 
 	Tcl_AppendResult(interp, parent, "\n", (char *)NULL);
 
-	if (!(dp->d_flags & DIR_COMB)) {
+	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    Tcl_AppendResult(interp, "\tThis is not a combination\n", (char *)NULL);
 	    break;
 	}
@@ -1793,7 +1793,7 @@ wdb_shells_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if ((old_dp = db_lookup(wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((old_dp = db_lookup(wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return TCL_ERROR;
 
     if (rt_db_get_internal(&old_intern, old_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
@@ -1825,7 +1825,7 @@ wdb_shells_cmd(struct rt_wdb *wdbp,
 	    nmg_m_reindex(m, 0);
 
 	    bu_vls_printf(&shell_name, "shell.%d", shell_count);
-	    while (db_lookup(wdbp->dbip, bu_vls_addr(&shell_name), 0) != DIR_NULL) {
+	    while (db_lookup(wdbp->dbip, bu_vls_addr(&shell_name), 0) != RT_DIR_NULL) {
 		bu_vls_trunc(&shell_name, 0);
 		shell_count++;
 		bu_vls_printf(&shell_name, "shell.%d", shell_count);
@@ -1838,8 +1838,8 @@ wdb_shells_cmd(struct rt_wdb *wdbp,
 	    new_intern.idb_meth = &rt_functab[ID_NMG];
 	    new_intern.idb_ptr = (genptr_t)m_tmp;
 
-	    new_dp=db_diradd(wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type);
-	    if (new_dp == DIR_NULL) {
+	    new_dp=db_diradd(wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+	    if (new_dp == RT_DIR_NULL) {
 		WDB_TCL_ALLOC_ERR_return;
 	    }
 
@@ -2128,10 +2128,10 @@ wdb_ls_cmd(struct rt_wdb *wdbp,
 
 	dir_flags = 0;
 	if (aflag) dir_flags = -1;
-	if (cflag) dir_flags = DIR_COMB;
-	if (sflag) dir_flags = DIR_SOLID;
-	if (rflag) dir_flags = DIR_REGION;
-	if (!dir_flags) dir_flags = -1 ^ DIR_HIDDEN;
+	if (cflag) dir_flags = RT_DIR_COMB;
+	if (sflag) dir_flags = RT_DIR_SOLID;
+	if (rflag) dir_flags = RT_DIR_REGION;
+	if (!dir_flags) dir_flags = -1 ^ RT_DIR_HIDDEN;
 
 	bu_avs_init(&avs, argc, "wdb_ls_cmd avs");
 	for (i = 0; i < (size_t)argc; i += 2) {
@@ -2161,7 +2161,7 @@ wdb_ls_cmd(struct rt_wdb *wdbp,
 	 * Verify the names, and add pointers to them to the array.
 	 */
 	for (i = 0; i < (size_t)argc; i++) {
-	    if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+	    if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 		continue;
 	    *dirp++ = dp;
 	}
@@ -2174,8 +2174,8 @@ wdb_ls_cmd(struct rt_wdb *wdbp,
 	 * entries) to the array.
 	 */
 	for (i = 0; i < RT_DBNHASH; i++)
-	    for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-		if (!aflag && (dp->d_flags & DIR_HIDDEN))
+	    for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		if (!aflag && (dp->d_flags & RT_DIR_HIDDEN))
 		    continue;
 		*dirp++ = dp;
 	    }
@@ -2298,7 +2298,7 @@ wdb_list_cmd(struct rt_wdb *wdbp,
 
 	    rt_db_free_internal(&intern);
 	} else {
-	    if ((dp = db_lookup(wdbp->dbip, argv[arg], LOOKUP_NOISY)) == DIR_NULL)
+	    if ((dp = db_lookup(wdbp->dbip, argv[arg], LOOKUP_NOISY)) == RT_DIR_NULL)
 		continue;
 
 	    wdb_do_list(wdbp->dbip, interp, &str, dp, 99);	/* very verbose */
@@ -2384,7 +2384,7 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
 
 	tok = strtok(argv[1], "/");
 	while (tok) {
-	    if ((gtd.gtd_obj[gtd.gtd_objpos++] = db_lookup(wdbp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL)
+	    if ((gtd.gtd_obj[gtd.gtd_objpos++] = db_lookup(wdbp->dbip, tok, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return TCL_ERROR;
 	    tok = strtok((char *)NULL, "/");
 	}
@@ -2393,7 +2393,7 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
 
 	/* build directory pointer array for desired path */
 	for (i=0; i<gtd.gtd_objpos; i++) {
-	    if ((gtd.gtd_obj[i] = db_lookup(wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == DIR_NULL)
+	    if ((gtd.gtd_obj[i] = db_lookup(wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == RT_DIR_NULL)
 		return TCL_ERROR;
 	}
     }
@@ -2530,7 +2530,7 @@ wdb_expand_cmd(struct rt_wdb *wdbp,
 	pattern = argv[whicharg];
 	thismatch = 0;
 	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+	    for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		if (!db_regexp_match(pattern, dp->d_namep))
 		    continue;
 		/* Successful match */
@@ -2607,7 +2607,7 @@ wdb_kill_cmd(struct rt_wdb *wdbp,
     }
 
     for (i = 1; i < argc; i++) {
-	if ((dp = db_lookup(wdbp->dbip,  argv[i], verbose)) != DIR_NULL) {
+	if ((dp = db_lookup(wdbp->dbip,  argv[i], verbose)) != RT_DIR_NULL) {
 	    is_phony = (dp->d_addr == RT_DIR_PHONY_ADDR);
 
 	    /* don't worry about phony objects */
@@ -2680,8 +2680,8 @@ wdb_killall_cmd(struct rt_wdb *wdbp,
 
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & DIR_COMB))
+	for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (!(dp->d_flags & RT_DIR_COMB))
 		continue;
 
 	    if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
@@ -2786,7 +2786,7 @@ wdb_killtree_cmd(struct rt_wdb *wdbp,
     ktd.notify = 0;
 
     for (i=1; i<argc; i++) {
-	if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
 	/* ignore phony objects */
@@ -2836,7 +2836,7 @@ wdb_killtree_callback(struct db_i *dbip,
     if (dbip == DBI_NULL)
 	return;
 
-    Tcl_AppendResult(interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
+    Tcl_AppendResult(interp, "KILL ", (dp->d_flags & RT_DIR_COMB) ? "COMB" : "Solid",
 		     ":  ", dp->d_namep, "\n", (char *)NULL);
 
     /* notify drawable geometry objects associated with this database object */
@@ -2878,10 +2878,10 @@ wdb_copy_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if ((proto = db_lookup(wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((proto = db_lookup(wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return TCL_ERROR;
 
-    if (db_lookup(wdbp->dbip, argv[2], LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(wdbp->dbip, argv[2], LOOKUP_QUIET) != RT_DIR_NULL) {
 	if (interp) {
 	    Tcl_AppendResult(interp, argv[2], ":  already exists", (char *)NULL);
 	} else {
@@ -2900,7 +2900,7 @@ wdb_copy_cmd(struct rt_wdb *wdbp,
     }
 
     dp=db_diradd(wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, proto->d_flags, (genptr_t)&proto->d_minor_type);
-    if (dp == DIR_NULL) {
+    if (dp == RT_DIR_NULL) {
 	if (interp) {
 	    Tcl_AppendResult(interp, "An error has occured while adding a new object to the database.", (char *)NULL);
 	} else {
@@ -2965,10 +2965,10 @@ wdb_move_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if ((dp = db_lookup(wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp = db_lookup(wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return TCL_ERROR;
 
-    if (db_lookup(wdbp->dbip, argv[2], LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(wdbp->dbip, argv[2], LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(interp, argv[2], ":  already exists", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -3054,10 +3054,10 @@ wdb_move_all_cmd(struct rt_wdb *wdbp,
 
 
     /* rename the record itself */
-    if ((dp = db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp = db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return TCL_ERROR;
 
-    if (db_lookup(wdbp->dbip, argv[2], LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(wdbp->dbip, argv[2], LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(interp, argv[2], ":  already exists", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -3075,7 +3075,7 @@ wdb_move_all_cmd(struct rt_wdb *wdbp,
 	struct directory *dirp;
 
 	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dirp = wdbp->dbip->dbi_Head[i]; dirp != DIR_NULL; dirp = dirp->d_forw) {
+	    for (dirp = wdbp->dbip->dbi_Head[i]; dirp != RT_DIR_NULL; dirp = dirp->d_forw) {
 
 		if (dirp->d_major_type == DB5_MAJORTYPE_BRLCAD && \
 		    dirp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
@@ -3124,12 +3124,12 @@ wdb_move_all_cmd(struct rt_wdb *wdbp,
 
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+	for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    union tree *comb_leaf;
 	    int done=0;
 	    int changed=0;
 
-	    if (!(dp->d_flags & DIR_COMB))
+	    if (!(dp->d_flags & RT_DIR_COMB))
 		continue;
 
 	    if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
@@ -3309,7 +3309,7 @@ get_new_name(const char *name,
 	    bu_vls_vlscat(&prev_name, &new_name);
 	}
 
-    } while (db_lookup(dbip, aname, LOOKUP_QUIET) != DIR_NULL ||
+    } while (db_lookup(dbip, aname, LOOKUP_QUIET) != RT_DIR_NULL ||
 	     Tcl_FindHashEntry(used_names_tbl, aname) != NULL);
 
     /* if they didn't get what they asked for, warn them */
@@ -3447,7 +3447,7 @@ copy_object(
 	new_name = input_dp->d_namep;
     }
     new_dp = db_diradd(curr_dbip, new_name, RT_DIR_PHONY_ADDR, 0, input_dp->d_flags, (genptr_t)&input_dp->d_minor_type);
-    if (new_dp == DIR_NULL) {
+    if (new_dp == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "Failed to add new object name (", new_name,
 			 ") to directory - aborting!!\n", (char *)NULL);
 	return TCL_ERROR;
@@ -3675,7 +3675,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
     gtd.gtd_prflag = 0;
 
     /* check if new solid name already exists in description */
-    if (db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(interp, argv[1], ": already exists\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -3690,13 +3690,13 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
 
 	tok = strtok(argv[2], "/");
 	while (tok) {
-	    if ((gtd.gtd_obj[endpos++] = db_lookup(wdbp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL)
+	    if ((gtd.gtd_obj[endpos++] = db_lookup(wdbp->dbip, tok, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return TCL_ERROR;
 	    tok = strtok((char *)NULL, "/");
 	}
     } else {
 	for (i=2; i<argc; i++) {
-	    if ((gtd.gtd_obj[i-2] = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+	    if ((gtd.gtd_obj[i-2] = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 		return TCL_ERROR;
 	}
 	endpos = argc - 2;
@@ -3743,7 +3743,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
     }
 
     dp=db_diradd(wdbp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (genptr_t)&new_int.idb_type);
-    if (dp == DIR_NULL) {
+    if (dp == RT_DIR_NULL) {
 	rt_db_free_internal(&internal);
 	rt_db_free_internal(&new_int);
 	WDB_TCL_ALLOC_ERR_return;
@@ -3843,7 +3843,7 @@ wdb_dir_check5(struct db_i *input_dbip,
     }
 
     /* Look up this new name in the existing (main) database */
-    if ((dupdp = db_lookup(dcsp->main_dbip, bu_vls_addr(&local), LOOKUP_QUIET)) != DIR_NULL) {
+    if ((dupdp = db_lookup(dcsp->main_dbip, bu_vls_addr(&local), LOOKUP_QUIET)) != RT_DIR_NULL) {
 	/* Duplicate found, add it to the list */
 	dcsp->wdbp->wdb_num_dups++;
 	*dcsp->dup_dirp++ = dupdp;
@@ -3892,7 +3892,7 @@ wdb_dir_check(struct db_i *input_dbip, const char *name, off_t UNUSED(laddr), si
     }
 
     /* Look up this new name in the existing (main) database */
-    if ((dupdp = db_lookup(dcsp->main_dbip, bu_vls_addr(&local), LOOKUP_QUIET)) != DIR_NULL) {
+    if ((dupdp = db_lookup(dcsp->main_dbip, bu_vls_addr(&local), LOOKUP_QUIET)) != RT_DIR_NULL) {
 	/* Duplicate found, add it to the list */
 	dcsp->wdbp->wdb_num_dups++;
 	*dcsp->dup_dirp++ = dupdp;
@@ -4035,9 +4035,9 @@ wdb_group_cmd(struct rt_wdb *wdbp,
 
     /* get objects to add to group */
     for (i = 2; i < argc; i++) {
-	if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL) {
+	if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
 	    if (wdb_combadd(interp, wdbp->dbip, dp, argv[1], 0,
-			    WMOP_UNION, 0, 0, wdbp) == DIR_NULL)
+			    WMOP_UNION, 0, 0, wdbp) == RT_DIR_NULL)
 		return TCL_ERROR;
 	}  else
 	    Tcl_AppendResult(interp, "skip member ", argv[i], "\n", (char *)NULL);
@@ -4091,10 +4091,10 @@ wdb_remove_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if ((dp = db_lookup(wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp = db_lookup(wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return TCL_ERROR;
 
-    if ((dp->d_flags & DIR_COMB) == 0) {
+    if ((dp->d_flags & RT_DIR_COMB) == 0) {
 	Tcl_AppendResult(interp, "rm: ", dp->d_namep,
 			 " is not a combination", (char *)NULL);
 	return TCL_ERROR;
@@ -4186,7 +4186,7 @@ wdb_region_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET) == DIR_NULL) {
+    if (db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
 	/* will attempt to create the region */
 	if (wdbp->wdb_item_default) {
 	    struct bu_vls tmp_vls;
@@ -4208,7 +4208,7 @@ wdb_region_cmd(struct rt_wdb *wdbp,
 	    continue;
 	}
 	oper = argv[i][0];
-	if ((dp = db_lookup(wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == DIR_NULL) {
+	if ((dp = db_lookup(wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "skipping ", argv[i+1], "\n", (char *)NULL);
 	    continue;
 	}
@@ -4225,19 +4225,19 @@ wdb_region_cmd(struct rt_wdb *wdbp,
 	}
 
 	/* Adding region to region */
-	if (dp->d_flags & DIR_REGION) {
+	if (dp->d_flags & RT_DIR_REGION) {
 	    Tcl_AppendResult(interp, "Note: ", dp->d_namep,
 			     " is a region\n", (char *)NULL);
 	}
 
 	if (wdb_combadd(interp, wdbp->dbip, dp,
-			argv[1], 1, oper, ident, air, wdbp) == DIR_NULL) {
+			argv[1], 1, oper, ident, air, wdbp) == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "error in combadd", (char *)NULL);
 	    return TCL_ERROR;
 	}
     }
 
-    if (db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET) == DIR_NULL) {
+    if (db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
 	/* failed to create region */
 	if (wdbp->wdb_item_default > 1)
 	    wdbp->wdb_item_default--;
@@ -4296,8 +4296,8 @@ wdb_comb_cmd(struct rt_wdb *wdbp,
 
     /* Save combination name, for use inside loop */
     comb_name = argv[1];
-    if ((dp=db_lookup(wdbp->dbip, comb_name, LOOKUP_QUIET)) != DIR_NULL) {
-	if (!(dp->d_flags & DIR_COMB)) {
+    if ((dp=db_lookup(wdbp->dbip, comb_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
+	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    Tcl_AppendResult(interp,
 			     "ERROR: ", comb_name,
 			     " is not a combination", (char *)0);
@@ -4313,7 +4313,7 @@ wdb_comb_cmd(struct rt_wdb *wdbp,
 	    continue;
 	}
 	oper = argv[i][0];
-	if ((dp = db_lookup(wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == DIR_NULL) {
+	if ((dp = db_lookup(wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "skipping ", argv[i+1], "\n", (char *)NULL);
 	    continue;
 	}
@@ -4329,13 +4329,13 @@ wdb_comb_cmd(struct rt_wdb *wdbp,
 	    continue;
 	}
 
-	if (wdb_combadd(interp, wdbp->dbip, dp, comb_name, 0, oper, 0, 0, wdbp) == DIR_NULL) {
+	if (wdb_combadd(interp, wdbp->dbip, dp, comb_name, 0, oper, 0, 0, wdbp) == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "error in combadd", (char *)NULL);
 	    return TCL_ERROR;
 	}
     }
 
-    if (db_lookup(wdbp->dbip, comb_name, LOOKUP_QUIET) == DIR_NULL) {
+    if (db_lookup(wdbp->dbip, comb_name, LOOKUP_QUIET) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "Error:  ", comb_name,
 			 " not created", (char *)NULL);
 	return TCL_ERROR;
@@ -4515,7 +4515,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (db_lookup(dbip, newname, LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(dbip, newname, LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "error: solid '", newname,
 			 "' already exists, aborting\n", (char *)NULL);
 	return TCL_ERROR;
@@ -4634,8 +4634,8 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	nmg_model = (struct model *)NULL;
     }
 
-    dp=db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type);
-    if (dp == DIR_NULL) {
+    dp=db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
+    if (dp == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot add ", newname, " to directory\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -4701,9 +4701,9 @@ wdb_find_cmd(struct rt_wdb *wdbp,
 
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & DIR_COMB) ||
-		(!aflag && (dp->d_flags & DIR_HIDDEN)))
+	for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (!(dp->d_flags & RT_DIR_COMB) ||
+		(!aflag && (dp->d_flags & RT_DIR_HIDDEN)))
 		continue;
 
 	    if (rt_db_get_internal(&intern,
@@ -4815,11 +4815,11 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 
     /* For all regions not hidden */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+	for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    int found = 0;
 
-	    if (!(dp->d_flags & DIR_REGION) ||
-		(dp->d_flags & DIR_HIDDEN))
+	    if (!(dp->d_flags & RT_DIR_REGION) ||
+		(dp->d_flags & RT_DIR_HIDDEN))
 		continue;
 
 	    if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
@@ -5025,8 +5025,8 @@ wdb_which_cmd(struct rt_wdb *wdbp,
 
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & DIR_REGION))
+	for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (!(dp->d_flags & RT_DIR_REGION))
 		continue;
 
 	    if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
@@ -5176,7 +5176,7 @@ wdb_list_children(struct rt_wdb *wdbp,
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
-    if (!(dp->d_flags & DIR_COMB))
+    if (!(dp->d_flags & RT_DIR_COMB))
 	return TCL_OK;
 
     if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
@@ -5262,7 +5262,7 @@ wdb_lt_cmd(struct rt_wdb *wdbp,
     if (argc != 2)
 	goto bad;
 
-    if ((dp = db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp = db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	goto bad;
 
     return wdb_list_children(wdbp, interp, dp);
@@ -5359,7 +5359,7 @@ wdb_print_node(struct rt_wdb *wdbp,
     struct rt_comb_internal *comb;
 
 
-    if (cflag && !(dp->d_flags & DIR_COMB))
+    if (cflag && !(dp->d_flags & RT_DIR_COMB))
 	return;
 
     for (i=0; i<(size_t)pathpos; i++)
@@ -5383,14 +5383,14 @@ wdb_print_node(struct rt_wdb *wdbp,
 
     Tcl_AppendResult(interp, dp->d_namep, (char *)NULL);
     /* Output Comb and Region flags (-F?) */
-    if (dp->d_flags & DIR_COMB)
+    if (dp->d_flags & RT_DIR_COMB)
 	Tcl_AppendResult(interp, "/", (char *)NULL);
-    if (dp->d_flags & DIR_REGION)
+    if (dp->d_flags & RT_DIR_REGION)
 	Tcl_AppendResult(interp, "R", (char *)NULL);
 
     Tcl_AppendResult(interp, "\n", (char *)NULL);
 
-    if (!(dp->d_flags & DIR_COMB))
+    if (!(dp->d_flags & RT_DIR_COMB))
 	return;
 
     /*
@@ -5448,7 +5448,7 @@ wdb_print_node(struct rt_wdb *wdbp,
 		    break;
 	    }
 
-	    if ((nextdp = db_lookup(wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL) {
+	    if ((nextdp = db_lookup(wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 		int j;
 		struct bu_vls tmp_vls;
 
@@ -6143,8 +6143,8 @@ Free_uses(struct db_i *dbip)
 	struct directory *dp;
 	struct object_use *use;
 
-	for (dp=dbip->dbi_Head[i]; dp!=DIR_NULL; dp=dp->d_forw) {
-	    if (!(dp->d_flags & (DIR_SOLID | DIR_COMB)))
+	for (dp=dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
 	    while (BU_LIST_NON_EMPTY(&dp->d_use_hd)) {
@@ -6236,7 +6236,7 @@ Make_new_name(struct db_i *dbip,
 	    }
 
 	    /* Insure that new name is unique */
-	    while (db_lookup(dbip, name, 0) != DIR_NULL) {
+	    while (db_lookup(dbip, name, 0) != RT_DIR_NULL) {
 		j++;
 		if (db_version(dbip) < 5) {
 		    snprintf(&name_v4[suffix_start], NAMESIZE-suffix_start, format_v4, j);
@@ -6250,7 +6250,7 @@ Make_new_name(struct db_i *dbip,
 
 	    /* Add new name to directory */
 	    use->dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&dp->d_minor_type);
-	    if (use->dp == DIR_NULL) {
+	    if (use->dp == RT_DIR_NULL) {
 		WDB_ALLOC_ERR_return;
 	    }
 	}
@@ -6280,10 +6280,10 @@ Copy_solid(struct db_i *dbip,
 
     RT_CK_DIR(dp);
 
-    if (!(dp->d_flags & DIR_SOLID)) {
+    if (!(dp->d_flags & RT_DIR_SOLID)) {
 	Tcl_AppendResult(interp, "Copy_solid: ", dp->d_namep,
 			 " is not a solid!!!!\n", (char *)NULL);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     /* If no transformation is to be applied, just use the original */
@@ -6307,7 +6307,7 @@ Copy_solid(struct db_i *dbip,
     }
 
     /* get a fresh use */
-    found = DIR_NULL;
+    found = RT_DIR_NULL;
     for (BU_LIST_FOR (use, object_use, &dp->d_use_hd)) {
 	if (use->used)
 	    continue;
@@ -6318,28 +6318,28 @@ Copy_solid(struct db_i *dbip,
 	break;
     }
 
-    if (found == DIR_NULL && dp->d_nref == 1 && dp->d_uses == 1) {
+    if (found == RT_DIR_NULL && dp->d_nref == 1 && dp->d_uses == 1) {
 	/* only one use, take it */
 	found = dp;
     }
 
-    if (found == DIR_NULL) {
+    if (found == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "Ran out of uses for solid ",
 			 dp->d_namep, "\n", (char *)NULL);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     if (rt_db_get_internal(&sol_int, dp, dbip, xform, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "Cannot import solid ",
 			 dp->d_namep, "\n", (char *)NULL);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     RT_CK_DB_INTERNAL(&sol_int);
     if (rt_db_put_internal(found, dbip, &sol_int, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "Cannot write copy solid (", found->d_namep,
 			 ") to database\n", (char *)NULL);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     return found;
@@ -6370,7 +6370,7 @@ Do_copy_membs(struct db_i *dbip,
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
 
-    if ((dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == DIR_NULL)
+    if ((dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL)
 	return;
 
     xform = (matp_t)user_ptr1;
@@ -6385,7 +6385,7 @@ Do_copy_membs(struct db_i *dbip,
     }
 
     /* Copy member with current tranform matrix */
-    if ((dp_new=Copy_object(dbip, dp, new_xform, interp, wdbp)) == DIR_NULL) {
+    if ((dp_new=Copy_object(dbip, dp, new_xform, interp, wdbp)) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "Failed to copy object ",
 			 dp->d_namep, "\n", (char *)NULL);
 	return;
@@ -6441,7 +6441,7 @@ Copy_comb(struct db_i *dbip,
 			 (genptr_t)xform, (genptr_t)interp, (genptr_t)wdbp);
 
     /* Get a use of this object */
-    found = DIR_NULL;
+    found = RT_DIR_NULL;
     for (BU_LIST_FOR (use, object_use, &dp->d_use_hd)) {
 	/* Get a fresh use of this object */
 	if (use->used)
@@ -6452,15 +6452,15 @@ Copy_comb(struct db_i *dbip,
 	break;
     }
 
-    if (found == DIR_NULL && dp->d_nref == 1 && dp->d_uses == 1) {
+    if (found == RT_DIR_NULL && dp->d_nref == 1 && dp->d_uses == 1) {
 	/* only one use, so take original */
 	found = dp;
     }
 
-    if (found == DIR_NULL) {
+    if (found == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "Ran out of uses for combination ",
 			 dp->d_namep, "\n", (char *)NULL);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     if (rt_db_put_internal(found, dbip, &intern, &rt_uniresource) < 0) {
@@ -6468,7 +6468,7 @@ Copy_comb(struct db_i *dbip,
 			 "\n", (char *)NULL);
 	rt_db_free_internal(&intern);
 
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     return found;
@@ -6488,7 +6488,7 @@ Copy_object(struct db_i *dbip,
 {
     RT_CK_DIR(dp);
 
-    if (dp->d_flags & DIR_SOLID)
+    if (dp->d_flags & RT_DIR_SOLID)
 	return Copy_solid(dbip, dp, xform, interp, wdbp);
     else
 	return Copy_comb(dbip, dp, xform, interp, wdbp);
@@ -6512,7 +6512,7 @@ Do_ref_incr(struct db_i *dbip,
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
 
-    if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == DIR_NULL)
+    if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL)
 	return;
 
     dp->d_nref++;
@@ -6549,10 +6549,10 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
     }
 
     /* get directory pointer for arg */
-    if ((old_dp = db_lookup(wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((old_dp = db_lookup(wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return TCL_ERROR;
 
-    if (old_dp->d_flags & DIR_SOLID) {
+    if (old_dp->d_flags & RT_DIR_SOLID) {
 	bu_log("Attempt to xpush a primitive, aborting.\n");
 	return TCL_ERROR;
     }
@@ -6561,8 +6561,8 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
     for (i=0; i<RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=wdbp->dbip->dbi_Head[i]; dp!=DIR_NULL; dp=dp->d_forw) {
-	    if (!(dp->d_flags & (DIR_SOLID | DIR_COMB)))
+	for (dp=wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
 	    dp->d_uses = 0;
@@ -6577,11 +6577,11 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
     for (i=0; i<RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=wdbp->dbip->dbi_Head[i]; dp!=DIR_NULL; dp=dp->d_forw) {
-	    if (dp->d_flags & DIR_SOLID)
+	for (dp=wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	    if (dp->d_flags & RT_DIR_SOLID)
 		continue;
 
-	    if (!(dp->d_flags & (DIR_SOLID | DIR_COMB)))
+	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
 	    if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
@@ -6599,11 +6599,11 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
     for (i=0; i<RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=wdbp->dbip->dbi_Head[i]; dp!=DIR_NULL; dp=dp->d_forw) {
-	    if (dp->d_flags & DIR_SOLID)
+	for (dp=wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	    if (dp->d_flags & RT_DIR_SOLID)
 		continue;
 
-	    if (!(dp->d_flags & (DIR_SOLID | DIR_COMB)))
+	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
 	    if (dp->d_nref == 0)
@@ -6615,8 +6615,8 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
     for (i=0; i<RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=wdbp->dbip->dbi_Head[i]; dp!=DIR_NULL; dp=dp->d_forw) {
-	    if (!(dp->d_flags & (DIR_SOLID | DIR_COMB)))
+	for (dp=wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
 	    dp->d_nref = 0;
@@ -6709,10 +6709,10 @@ wdb_whatid_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if ((dp=db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp=db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return TCL_ERROR;
 
-    if (!(dp->d_flags & DIR_REGION)) {
+    if (!(dp->d_flags & RT_DIR_REGION)) {
 	Tcl_AppendResult(interp, argv[1], " is not a region", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -6787,7 +6787,7 @@ wdb_node_write(struct db_i *dbip,
 	extr = (struct rt_extrude_internal *)intern.idb_ptr;
 	RT_EXTRUDE_CK_MAGIC(extr);
 
-	if ((dp2 = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET)) != DIR_NULL) {
+	if ((dp2 = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	    wdb_node_write(dbip, dp2, ptr);
 	}
     } else if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD && dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP) {
@@ -6800,7 +6800,7 @@ wdb_node_write(struct db_i *dbip,
 
 	if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ) {
 	    /* need to keep this object */
-	    if ((dp2 = db_lookup(dbip, bu_vls_addr(&dsp->dsp_name),  LOOKUP_QUIET)) != DIR_NULL) {
+	    if ((dp2 = db_lookup(dbip, bu_vls_addr(&dsp->dsp_name),  LOOKUP_QUIET)) != RT_DIR_NULL) {
 		wdb_node_write(dbip, dp2, ptr);
 	    }
 	}
@@ -6839,7 +6839,7 @@ wdb_keep_cmd(struct rt_wdb *wdbp,
 
     /* First, clear any existing counts */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+	for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    dp->d_nref = 0;
     }
 
@@ -6896,7 +6896,7 @@ wdb_keep_cmd(struct rt_wdb *wdbp,
     bu_vls_free(&title);
 
     for (i = 2; i < argc; i++) {
-	if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 	db_functree(wdbp->dbip, dp, wdb_node_write, wdb_node_write, &rt_uniresource, (genptr_t)keepfp);
     }
@@ -6948,7 +6948,7 @@ wdb_cat_cmd(struct rt_wdb *wdbp,
 
     bu_vls_init(&str);
     for (arg = 1; arg < argc; arg++) {
-	if ((dp = db_lookup(wdbp->dbip, argv[arg], LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp = db_lookup(wdbp->dbip, argv[arg], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
 	bu_vls_trunc(&str, 0);
@@ -7002,7 +7002,7 @@ wdb_instance_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if ((dp = db_lookup(wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp = db_lookup(wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return TCL_ERROR;
 
     oper = WMOP_UNION;
@@ -7021,7 +7021,7 @@ wdb_instance_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (wdb_combadd(interp, wdbp->dbip, dp, argv[2], 0, oper, 0, 0, wdbp) == DIR_NULL)
+    if (wdb_combadd(interp, wdbp->dbip, dp, argv[2], 0, oper, 0, 0, wdbp) == RT_DIR_NULL)
 	return TCL_ERROR;
 
     return TCL_OK;
@@ -7141,7 +7141,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
     }
 
     new_name = argv[i++];
-    if (db_lookup(wdbp->dbip, new_name, LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(wdbp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(interp, new_name, " already exists\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -7168,8 +7168,8 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
     new_intern.idb_meth = &rt_functab[ID_ARB8];
     new_intern.idb_ptr = (genptr_t)arb;
 
-    dp=db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type);
-    if (dp == DIR_NULL) {
+    dp=db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+    if (dp == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -7338,7 +7338,7 @@ wdb_hide_cmd(struct rt_wdb *wdbp,
     }
 
     for (i=1; i<argc; i++) {
-	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL) {
+	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    continue;
 	}
 
@@ -7385,7 +7385,7 @@ wdb_hide_cmd(struct rt_wdb *wdbp,
 	    continue;
 	}
 	bu_free_external(&tmp);
-	dp->d_flags |= DIR_HIDDEN;
+	dp->d_flags |= RT_DIR_HIDDEN;
     }
 
     return TCL_OK;
@@ -7450,7 +7450,7 @@ wdb_unhide_cmd(struct rt_wdb *wdbp,
     }
 
     for (i=1; i<argc; i++) {
-	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL) {
+	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    continue;
 	}
 
@@ -7490,7 +7490,7 @@ wdb_unhide_cmd(struct rt_wdb *wdbp,
 	    continue;
 	}
 	bu_free_external(&tmp);
-	dp->d_flags &= (~DIR_HIDDEN);
+	dp->d_flags &= (~RT_DIR_HIDDEN);
     }
 
     return TCL_OK;
@@ -7572,7 +7572,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if ((dp=db_lookup(wdbp->dbip, argv[2], LOOKUP_QUIET)) == DIR_NULL) {
+    if ((dp=db_lookup(wdbp->dbip, argv[2], LOOKUP_QUIET)) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp,
 			 argv[2],
 			 " does not exist\n",
@@ -7639,7 +7639,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	i = 3;	
 	while (i < argc) {
 	    if (BU_STR_EQUAL(argv[i], "region") && BU_STR_EQUAL(argv[i+1], "R")) {
-		dp->d_flags |= DIR_REGION;
+		dp->d_flags |= RT_DIR_REGION;
 	    }
 	    (void)bu_avs_add(&avs, argv[i], argv[i+1]);
 	    i += 2;
@@ -7658,7 +7658,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	i = 3;
 	while (i < argc) {
 	    if (BU_STR_EQUAL(argv[i], "region")) {
-		dp->d_flags = dp->d_flags & ~(DIR_REGION);
+		dp->d_flags = dp->d_flags & ~(RT_DIR_REGION);
 	    }
 	    (void)bu_avs_remove(&avs, argv[i]);
 	    i++;
@@ -7686,7 +7686,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	    const char *old_val;
 
 	    if (BU_STR_EQUAL(argv[i], "region") && BU_STR_EQUAL(argv[i+1], "R")) {
-		dp->d_flags |= DIR_REGION;
+		dp->d_flags |= RT_DIR_REGION;
 	    }
 	    old_val = bu_avs_get(&avs, argv[i]);
 	    if (!old_val) {
@@ -7720,13 +7720,13 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	
 	/* pretty print */
 	bu_vls_init(&vls);
-	if (dp->d_flags & DIR_COMB) {
-	    if (dp->d_flags & DIR_REGION) {
+	if (dp->d_flags & RT_DIR_COMB) {
+	    if (dp->d_flags & RT_DIR_REGION) {
 		bu_vls_printf(&vls, "%s region:\n", argv[2]);
 	    } else {
 		bu_vls_printf(&vls, "%s combination:\n", argv[2]);
 	    }
-	} else if (dp->d_flags & DIR_SOLID) {
+	} else if (dp->d_flags & RT_DIR_SOLID) {
 	    bu_vls_printf(&vls, "%s %s:\n", argv[2],
 			  rt_functab[dp->d_minor_type].ft_label);
 	} else {
@@ -7928,12 +7928,12 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	nmg_name = argv[2];
     }
 
-    if (db_lookup(wdbp->dbip, new_name, LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(wdbp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(interp, new_name, " already exists\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if ((dp=db_lookup(wdbp->dbip, nmg_name, LOOKUP_QUIET)) == DIR_NULL) {
+    if ((dp=db_lookup(wdbp->dbip, nmg_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, nmg_name, " does not exist\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -8092,8 +8092,8 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 
 	rt_db_free_internal(&nmg_intern);
 
-	dp=db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type);
-	if (dp == DIR_NULL) {
+	dp=db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+	if (dp == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -8167,15 +8167,15 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
 
     new_name = argv[2];
 
-    if (db_lookup(wdbp->dbip, new_name, LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(wdbp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(interp, new_name, " already exists\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if ((dp=db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp=db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return TCL_ERROR;
 
-    if (dp->d_flags & DIR_COMB) {
+    if (dp->d_flags & RT_DIR_COMB) {
 	Tcl_AppendResult(interp, argv[1], " is a combination, only NMG primitives are allowed here\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -8226,8 +8226,8 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
 
     count = nmg_edge_collapse(m, &wdbp->wdb_tol, tol_coll, min_angle);
 
-    dp=db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type);
-    if (dp == DIR_NULL) {
+    dp=db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
+    if (dp == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL);
 	rt_db_free_internal(&intern);
 	return TCL_ERROR;
@@ -8295,13 +8295,13 @@ wdb_summary_cmd(struct rt_wdb *wdbp,
     cp = argv[1];
     while (*cp) switch (*cp++) {
 	case 'p':
-	    flags |= DIR_SOLID;
+	    flags |= RT_DIR_SOLID;
 	    break;
 	case 'r':
-	    flags |= DIR_REGION;
+	    flags |= RT_DIR_REGION;
 	    break;
 	case 'g':
-	    flags |= DIR_COMB;
+	    flags |= RT_DIR_COMB;
 	    break;
 	default:
 	    Tcl_AppendResult(interp, "summary:  P R or G are only valid parmaters\n",
@@ -8455,14 +8455,14 @@ wdb_bot_smooth_cmd(struct rt_wdb *wdbp,
     new_bot_name = argv[arg_index++];
     old_bot_name = argv[arg_index];
 
-    if ((dp_old=db_lookup(wdbp->dbip, old_bot_name, LOOKUP_QUIET)) == DIR_NULL) {
+    if ((dp_old=db_lookup(wdbp->dbip, old_bot_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, old_bot_name, " does not exist!!\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
     if (!BU_STR_EQUAL(old_bot_name, new_bot_name)) {
 
-	if ((dp_new=db_lookup(wdbp->dbip, new_bot_name, LOOKUP_QUIET)) != DIR_NULL) {
+	if ((dp_new=db_lookup(wdbp->dbip, new_bot_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, new_bot_name, " already exists!!\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -8490,9 +8490,9 @@ wdb_bot_smooth_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (dp_new == DIR_NULL) {
-	dp_new=db_diradd(wdbp->dbip, new_bot_name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type);
-	if (dp_new == DIR_NULL) {
+    if (dp_new == RT_DIR_NULL) {
+	dp_new=db_diradd(wdbp->dbip, new_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
+	if (dp_new == RT_DIR_NULL) {
 	    rt_db_free_internal(&intern);
 	    Tcl_AppendResult(interp, "Cannot add ", new_bot_name, " to directory\n", (char *)NULL);
 	    return TCL_ERROR;
@@ -8670,7 +8670,7 @@ wdb_bo_cmd(struct rt_wdb *wdbp,
 	}
 
 	obj_name = *argv;
-	if (db_lookup(wdbp->dbip, obj_name, LOOKUP_QUIET) != DIR_NULL) {
+	if (db_lookup(wdbp->dbip, obj_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "Object %s already exists", obj_name);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -8702,7 +8702,7 @@ wdb_bo_cmd(struct rt_wdb *wdbp,
 
 	obj_name = *argv;
 
-	if ((dp=db_lookup(wdbp->dbip, obj_name, LOOKUP_NOISY)) == DIR_NULL) {
+	if ((dp=db_lookup(wdbp->dbip, obj_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    return TCL_ERROR;
 	}
 	if (!(dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK)) {
@@ -8824,7 +8824,7 @@ int wdb_bot_face_sort_cmd(struct rt_wdb *wdbp,
 	struct rt_bot_internal *bot;
 	int id;
 
-	if ((dp=db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL) {
+	if ((dp=db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    continue;
 	}
 
@@ -9043,12 +9043,12 @@ wdb_vls_col_pr4v(struct bu_vls *vls,
 	     * be delayed until now.  There is no way to make the
 	     * decision on where to place them before now.
 	     */
-	    if (!no_decorate && list_of_names[this_one]->d_flags & DIR_COMB) {
+	    if (!no_decorate && list_of_names[this_one]->d_flags & RT_DIR_COMB) {
 		bu_vls_putc(vls, '/');
 		namelen++;
 	    }
 
-	    if (!no_decorate && list_of_names[this_one]->d_flags & DIR_REGION) {
+	    if (!no_decorate && list_of_names[this_one]->d_flags & RT_DIR_REGION) {
 		bu_vls_putc(vls, 'R');
 		namelen++;
 	    }
@@ -9107,11 +9107,11 @@ wdb_vls_long_dpp(struct bu_vls *vls,
 	if (len > max_nam_len)
 	    max_nam_len = len;
 
-	if (dp->d_flags & DIR_REGION)
+	if (dp->d_flags & RT_DIR_REGION)
 	    len = 6;
-	else if (dp->d_flags & DIR_COMB)
+	else if (dp->d_flags & RT_DIR_COMB)
 	    len = 4;
-	else if (dp->d_flags & DIR_SOLID)
+	else if (dp->d_flags & RT_DIR_SOLID)
 	    len = (int)strlen(rt_functab[dp->d_minor_type].ft_label);
 	else {
 	    switch (list_of_names[i]->d_major_type) {
@@ -9135,17 +9135,17 @@ wdb_vls_long_dpp(struct bu_vls *vls,
      * i - tracks the list item
      */
     for (i=0; i < num_in_list; ++i) {
-	if (list_of_names[i]->d_flags & DIR_COMB) {
+	if (list_of_names[i]->d_flags & RT_DIR_COMB) {
 	    isComb = 1;
 	    isSolid = 0;
 	    type = "comb";
 
-	    if (list_of_names[i]->d_flags & DIR_REGION) {
+	    if (list_of_names[i]->d_flags & RT_DIR_REGION) {
 		isRegion = 1;
 		type = "region";
 	    } else
 		isRegion = 0;
-	} else if (list_of_names[i]->d_flags & DIR_SOLID) {
+	} else if (list_of_names[i]->d_flags & RT_DIR_SOLID) {
 	    isComb = isRegion = 0;
 	    isSolid = 1;
 	    type = rt_functab[list_of_names[i]->d_minor_type].ft_label;
@@ -9213,11 +9213,11 @@ wdb_vls_line_dpp(struct bu_vls *vls,
      * i - tracks the list item
      */
     for (i=0; i < num_in_list; ++i) {
-	if (list_of_names[i]->d_flags & DIR_COMB) {
+	if (list_of_names[i]->d_flags & RT_DIR_COMB) {
 	    isComb = 1;
 	    isSolid = 0;
 
-	    if (list_of_names[i]->d_flags & DIR_REGION)
+	    if (list_of_names[i]->d_flags & RT_DIR_REGION)
 		isRegion = 1;
 	    else
 		isRegion = 0;
@@ -9367,13 +9367,13 @@ wdb_combadd(Tcl_Interp *interp,
     /*
      * Check to see if we have to create a new combination
      */
-    if ((dp = db_lookup(dbip,  combname, LOOKUP_QUIET)) == DIR_NULL) {
+    if ((dp = db_lookup(dbip,  combname, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	int flags;
 
 	if (region_flag)
-	    flags = DIR_REGION | DIR_COMB;
+	    flags = RT_DIR_REGION | RT_DIR_COMB;
 	else
-	    flags = DIR_COMB;
+	    flags = RT_DIR_COMB;
 
 	RT_INIT_DB_INTERNAL(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -9382,10 +9382,10 @@ wdb_combadd(Tcl_Interp *interp,
 
 	/* Update the in-core directory */
 	dp = db_diradd(dbip, combname, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type);
-	if (dp == DIR_NULL) {
+	if (dp == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "An error has occured while adding '",
 			     combname, "' to the database.\n", (char *)NULL);
-	    return DIR_NULL;
+	    return RT_DIR_NULL;
 	}
 
 	BU_GETSTRUCT(comb, rt_comb_internal);
@@ -9424,18 +9424,18 @@ wdb_combadd(Tcl_Interp *interp,
 
 	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
 	    Tcl_AppendResult(interp, "Failed to write ", dp->d_namep, (char *)NULL);
-	    return DIR_NULL;
+	    return RT_DIR_NULL;
 	}
 	return dp;
-    } else if (!(dp->d_flags & DIR_COMB)) {
+    } else if (!(dp->d_flags & RT_DIR_COMB)) {
 	Tcl_AppendResult(interp, combname, " exists, but is not a combination\n", (char *)NULL);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     /* combination exists, add a new member */
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "read error, aborting\n", (char *)NULL);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -9443,7 +9443,7 @@ wdb_combadd(Tcl_Interp *interp,
 
     if (region_flag && !comb->region_flag) {
 	Tcl_AppendResult(interp, combname, ": not a region\n", (char *)NULL);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
@@ -9451,7 +9451,7 @@ wdb_combadd(Tcl_Interp *interp,
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    Tcl_AppendResult(interp, "Cannot flatten tree for editing\n", (char *)NULL);
 	    rt_db_free_internal(&intern);
-	    return DIR_NULL;
+	    return RT_DIR_NULL;
 	}
     }
 
@@ -9496,7 +9496,7 @@ wdb_combadd(Tcl_Interp *interp,
     /* and finally, write it out */
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "Failed to write ", dp->d_namep, (char *)NULL);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     bu_free((char *)tree_list, "combadd: tree_list");
@@ -9523,7 +9523,7 @@ wdb_do_identitize(struct db_i *dbip,
 	comb_leaf->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t), "tl_mat");
     }
     MAT_IDN(comb_leaf->tr_l.tl_mat);
-    if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return;
 
     wdb_identitize(dp, dbip, interp);
@@ -9544,7 +9544,7 @@ wdb_identitize(struct directory *dp,
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
-    if (dp->d_flags & DIR_SOLID)
+    if (dp->d_flags & RT_DIR_SOLID)
 	return;
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
@@ -9568,7 +9568,7 @@ wdb_identitize(struct directory *dp,
  *
  * Summarize the contents of the directory by categories
  * (solid, comb, region).  If flag is != 0, it is interpreted
- * as a request to print all the names in that category (eg, DIR_SOLID).
+ * as a request to print all the names in that category (eg, RT_DIR_SOLID).
  */
 static void
 wdb_dir_summary(struct db_i *dbip,
@@ -9586,11 +9586,11 @@ wdb_dir_summary(struct db_i *dbip,
 
     sol = comb = reg = 0;
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_flags & DIR_SOLID)
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (dp->d_flags & RT_DIR_SOLID)
 		sol++;
-	    if (dp->d_flags & DIR_COMB) {
-		if (dp->d_flags & DIR_REGION)
+	    if (dp->d_flags & RT_DIR_COMB) {
+		if (dp->d_flags & RT_DIR_REGION)
 		    reg++;
 		else
 		    comb++;
@@ -9619,7 +9619,7 @@ wdb_dir_summary(struct db_i *dbip,
      * of interest) to the array
      */
     for (i = 0; i < RT_DBNHASH; i++)
-	for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    if (dp->d_flags & flag)
 		*dirp++ = dp;
 
@@ -9654,7 +9654,7 @@ wdb_dir_getspace(struct db_i *dbip,
     if (num_entries == 0) {
 	/* Set num_entries to the number of entries */
 	for (i = 0; i < RT_DBNHASH; i++)
-	    for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
 		num_entries++;
     }
 
@@ -9776,13 +9776,13 @@ wdb_bot_decimate_cmd(struct rt_wdb *wdbp,
     argv += bu_optind;
 
     /* make sure new solid does not already exist */
-    if ((dp=db_lookup(wdbp->dbip, argv[0], LOOKUP_QUIET)) != DIR_NULL) {
+    if ((dp=db_lookup(wdbp->dbip, argv[0], LOOKUP_QUIET)) != RT_DIR_NULL) {
 	Tcl_AppendResult(interp, argv[0], " already exists!!\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
     /* make sure current solid does exist */
-    if ((dp=db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET)) == DIR_NULL) {
+    if ((dp=db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET)) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, argv[1], " Does not exist\n", (char *)NULL);
 	return TCL_ERROR;
     }

@@ -64,7 +64,7 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((old_dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((old_dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return GED_ERROR;
 
     if (rt_db_get_internal(&old_intern, old_dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
@@ -96,7 +96,7 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
 	    nmg_m_reindex(m, 0);
 
 	    bu_vls_printf(&shell_name, "shell.%d", shell_count);
-	    while (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr( &shell_name), 0) != DIR_NULL) {
+	    while (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr( &shell_name), 0) != RT_DIR_NULL) {
 		bu_vls_trunc(&shell_name, 0);
 		shell_count++;
 		bu_vls_printf(&shell_name, "shell.%d", shell_count);
@@ -109,8 +109,8 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
 	    new_intern.idb_meth = &rt_functab[ID_NMG];
 	    new_intern.idb_ptr = (genptr_t)m_tmp;
 
-	    new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type);
-	    if (new_dp == DIR_NULL) {
+	    new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+	    if (new_dp == RT_DIR_NULL) {
 		bu_vls_printf(&gedp->ged_result_str, "An error has occured while adding a new object to the database.\n");
 		return GED_ERROR;
 	    }

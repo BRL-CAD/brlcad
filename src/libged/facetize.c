@@ -162,7 +162,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (db_lookup(dbip, newname, LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(dbip, newname, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "error: solid '%s' already exists, aborting\n", newname);
 	return GED_ERROR;
     }
@@ -301,8 +301,8 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	nmg_model = (struct model *)NULL;
     }
 
-    dp=db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type);
-    if (dp == DIR_NULL) {
+    dp=db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
+    if (dp == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot add %s to directory\n", newname);
 	return GED_ERROR;
     }

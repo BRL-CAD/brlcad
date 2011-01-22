@@ -45,7 +45,7 @@ ged_do_trace(struct db_i		*dbip,
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
 
-    if ((nextdp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+    if ((nextdp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return;
 
     pathpos = (int *)user_ptr1;
@@ -102,7 +102,7 @@ _ged_trace(struct directory	*dp,
 	return;
     }
 
-    if (dp->d_flags & DIR_COMB) {
+    if (dp->d_flags & RT_DIR_COMB) {
 	if (rt_db_get_internal(&intern, dp, gtdp->gtd_gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "Database read error, aborting");
 	    return;

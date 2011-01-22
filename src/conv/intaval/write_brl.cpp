@@ -106,7 +106,7 @@ void smoothBot
 ) {
     directory* dp = db_lookup(wdbp->dbip, name, LOOKUP_QUIET);
 
-    if (dp != DIR_NULL) {
+    if (dp != RT_DIR_NULL) {
         rt_db_internal intern;
 
         if (rt_db_get_internal(&intern, dp, wdbp->dbip, 0, &rt_uniresource) == ID_BOT) {

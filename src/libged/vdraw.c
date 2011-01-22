@@ -577,7 +577,7 @@ ged_vdraw_send(struct ged *gedp, int argc, const char *argv[])
     }
 
     snprintf(solid_name, RT_VDRW_MAXNAME+RT_VDRW_PREFIX_LEN+1, "%s%s", RT_VDRW_PREFIX, gedp->ged_gdp->gd_currVHead->vdc_name);
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, solid_name, LOOKUP_QUIET)) == DIR_NULL) {
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, solid_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	real_flag = 0;
     } else {
 	real_flag = (dp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;

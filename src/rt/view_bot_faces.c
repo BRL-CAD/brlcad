@@ -213,7 +213,7 @@ view_2init(struct application *ap, char *framename)
 		j = i;
 		while (line[j] != '\0' && !isspace(line[j])) j++;
 		line[j] = '\0';
-		if ((dp=db_lookup(ap->a_rt_i->rti_dbip, &line[i], LOOKUP_QUIET)) == DIR_NULL) {
+		if ((dp=db_lookup(ap->a_rt_i->rti_dbip, &line[i], LOOKUP_QUIET)) == RT_DIR_NULL) {
 		    bot_name = bu_strdup(&line[i]);
 		} else {
 		    bot_name = dp->d_namep;

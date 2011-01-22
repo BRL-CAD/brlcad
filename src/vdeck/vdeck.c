@@ -425,7 +425,7 @@ region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union t
     char			*cp;
     int			left;
     int			length;
-    struct directory	*regdp = DIR_NULL;
+    struct directory	*regdp = RT_DIR_NULL;
     size_t i;
     int first;
 
@@ -440,7 +440,7 @@ region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union t
     /* For name, find pointer to region combination */
     for ( i=0; i < pathp->fp_len; i++ )  {
 	regdp = pathp->fp_names[i];
-	if ( regdp->d_flags & DIR_REGION )  break;
+	if ( regdp->d_flags & RT_DIR_REGION )  break;
     }
 
     nnr++;			/* Start new region */

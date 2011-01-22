@@ -109,7 +109,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 
 	    rt_db_free_internal(&intern);
 	} else {
-	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[arg], LOOKUP_NOISY)) == DIR_NULL)
+	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[arg], LOOKUP_NOISY)) == RT_DIR_NULL)
 		continue;
 
 	    _ged_do_list(gedp, dp, 99);	/* very verbose */

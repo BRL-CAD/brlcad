@@ -184,7 +184,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
     if ((texture->tx_datasrc==TXT_SRC_AUTO) || (texture->tx_datasrc==TXT_SRC_OBJECT)) {
 
 	/* see if the object exists */
-	if ((dirEntry=db_lookup(dbInstance, bu_vls_addr(&texture->tx_name), LOOKUP_QUIET)) == DIR_NULL) {
+	if ((dirEntry=db_lookup(dbInstance, bu_vls_addr(&texture->tx_name), LOOKUP_QUIET)) == RT_DIR_NULL) {
 
 	    /* unable to find the texture object */
 	    if (texture->tx_datasrc!=TXT_SRC_AUTO) {

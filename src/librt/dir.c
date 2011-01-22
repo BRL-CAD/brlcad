@@ -105,7 +105,7 @@ rt_db_get_internal(
     if ( db_get_external( &ext, dp, dbip ) < 0 )
 	return -2;		/* FAIL */
 
-    if ( dp->d_flags & DIR_COMB )  {
+    if ( dp->d_flags & RT_DIR_COMB )  {
 	id = ID_COMBINATION;
     } else {
 	/* As a convenience to older ft_import4 routines */
@@ -289,7 +289,7 @@ rt_db_lookup_internal (
 	    bu_log("rt_db_lookup_internal() No object specified\n");
 	return ID_NULL;
     }
-    if ((dp = db_lookup(dbip, obj_name, noisy)) == DIR_NULL)
+    if ((dp = db_lookup(dbip, obj_name, noisy)) == RT_DIR_NULL)
 	return ID_NULL;
     if (rt_db_get_internal(ip, dp, dbip, (matp_t) NULL, resp ) < 0 )
     {

@@ -359,7 +359,7 @@ edit_com(int argc,
 	    i += 2;
 	}
 
-	tbl = db_lookup_by_attr(dbip, DIR_REGION | DIR_SOLID | DIR_COMB, &avs, flag_o_nonunique);
+	tbl = db_lookup_by_attr(dbip, RT_DIR_REGION | RT_DIR_SOLID | RT_DIR_COMB, &avs, flag_o_nonunique);
 	bu_avs_free(&avs);
 	if (!tbl) {
 	    bu_log("Error: db_lookup_by_attr() failed!!\n");
@@ -515,7 +515,7 @@ emuves_com(int argc, const char *argv[])
 	bu_avs_add_nonunique(&avs, "MUVES_Component", argv[i]);
     }
 
-    tbl = db_lookup_by_attr(dbip, DIR_REGION, &avs, 2);
+    tbl = db_lookup_by_attr(dbip, RT_DIR_REGION, &avs, 2);
 
     bu_avs_free(&avs);
 
@@ -975,13 +975,13 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
     basename = path_piece[nm_pieces - 1];
 
-    if ((dp = db_lookup(dbip,  basename, LOOKUP_NOISY)) == DIR_NULL) {
+    if ((dp = db_lookup(dbip,  basename, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "db_lookup failed for '", basename, "'\n", (char *)NULL);
 	goto bail_out;
     }
 
     nmatch = 0;
-    if (!(dp->d_flags & DIR_SOLID)) {
+    if (!(dp->d_flags & RT_DIR_SOLID)) {
 	Tcl_AppendResult(interp, basename, " is not a solid\n", (char *)NULL);
 	goto bail_out;
     }

@@ -726,7 +726,7 @@ ged_bot_dump_leaf(struct db_tree_state	*tsp,
     dp = pathp->fp_names[pathp->fp_len-1];
 
     /* we only dump BOT primitives, so skip some obvious exceptions */
-    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD || dp->d_flags & DIR_COMB)
+    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD || dp->d_flags & RT_DIR_COMB)
 	return curtree;
 
     MAT_IDN(mat);
@@ -948,7 +948,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 
 	    /* we only dump BOT primitives, so skip some obvious exceptions */
 	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
-	    if (dp->d_flags & DIR_COMB) continue;
+	    if (dp->d_flags & RT_DIR_COMB) continue;
 
 	    /* get the internal form */
 	    i=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, mat, &rt_uniresource);

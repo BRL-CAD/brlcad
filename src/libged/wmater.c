@@ -62,12 +62,12 @@ ged_wmater(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (i = 2; i < argc; ++i) {
-	if ( (dp = db_lookup( gedp->ged_wdbp->dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL ) {
+	if ( (dp = db_lookup( gedp->ged_wdbp->dbip,  argv[i], LOOKUP_NOISY )) == RT_DIR_NULL ) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Failed to find %s", argv[0], argv[i]);
 	    status = GED_ERROR;
 	    continue;
 	}
-	if ( (dp->d_flags & DIR_COMB) == 0 )  {
+	if ( (dp->d_flags & RT_DIR_COMB) == 0 )  {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a combination", argv[0], dp->d_namep);
 	    status = GED_ERROR;
 	    continue;

@@ -59,7 +59,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
     for (i=1; i < argc; ++i) {
 	struct rt_bot_list *headRblp;
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET)) == DIR_NULL) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET)) == RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: db_lookup(%s) error\n", argv[0], argv[i]);
 	    continue;
 	}
@@ -96,8 +96,8 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 		bot_intern.idb_meth = &rt_functab[ID_BOT];
 		bot_intern.idb_ptr = (genptr_t)rblp->bot;
 
-		dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&bot_intern.idb_type);
-		if (dp == DIR_NULL) {
+		dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&bot_intern.idb_type);
+		if (dp == RT_DIR_NULL) {
 		    bu_vls_printf(&gedp->ged_result_str, " failed to be added to the database.");
 		    rt_bot_list_free(headRblp, 0);
 		    rt_db_free_internal(&intern);

@@ -144,7 +144,7 @@ db_diradd5(
     bu_vls_strcpy(&local, name);
     if (db_dircheck(dbip, &local, 0, &headp) < 0) {
 	bu_vls_free(&local);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     if (rt_uniresource.re_magic == 0)
@@ -164,27 +164,27 @@ db_diradd5(
 	case DB5_MAJORTYPE_BRLCAD:
 	    if (minor_type == ID_COMBINATION) {
 
-		dp->d_flags = DIR_COMB;
+		dp->d_flags = RT_DIR_COMB;
 		if (!avs || avs->count == 0) break;
 		/*
 		 *  check for the "region=" attribute.
 		 */
 		if (bu_avs_get(avs, "region") != NULL)
-		    dp->d_flags = DIR_COMB|DIR_REGION;
+		    dp->d_flags = RT_DIR_COMB|RT_DIR_REGION;
 	    } else {
-		dp->d_flags = DIR_SOLID;
+		dp->d_flags = RT_DIR_SOLID;
 	    }
 	    break;
 	case DB5_MAJORTYPE_BINARY_UNIF:
 	case DB5_MAJORTYPE_BINARY_MIME:
 	    /* XXX Do we want to define extra flags for this? */
-	    dp->d_flags = DIR_NON_GEOM;
+	    dp->d_flags = RT_DIR_NON_GEOM;
 	    break;
 	case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 	    dp->d_flags = 0;
     }
     if (name_hidden)
-	dp->d_flags |= DIR_HIDDEN;
+	dp->d_flags |= RT_DIR_HIDDEN;
     dp->d_len = object_length;		/* in bytes */
     BU_LIST_INIT(&dp->d_use_hd);
     dp->d_animate = NULL;
@@ -217,7 +217,7 @@ db5_diradd(struct db_i *dbip,
     bu_vls_strcpy(&local, rip->name.ext_buf);
     if (db_dircheck(dbip, &local, 0, &headp) < 0) {
 	bu_vls_free(&local);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     if (rt_uniresource.re_magic == 0)
@@ -239,7 +239,7 @@ db5_diradd(struct db_i *dbip,
 
 		bu_avs_init_empty(&avs);
 
-		dp->d_flags = DIR_COMB;
+		dp->d_flags = RT_DIR_COMB;
 		if (rip->attributes.ext_nbytes == 0) break;
 		/*
 		 *  Crack open the attributes to
@@ -251,22 +251,22 @@ db5_diradd(struct db_i *dbip,
 		    break;
 		}
 		if (bu_avs_get(&avs, "region") != NULL)
-		    dp->d_flags = DIR_COMB|DIR_REGION;
+		    dp->d_flags = RT_DIR_COMB|RT_DIR_REGION;
 		bu_avs_free(&avs);
 	    } else {
-		dp->d_flags = DIR_SOLID;
+		dp->d_flags = RT_DIR_SOLID;
 	    }
 	    break;
 	case DB5_MAJORTYPE_BINARY_UNIF:
 	case DB5_MAJORTYPE_BINARY_MIME:
 	    /* XXX Do we want to define extra flags for this? */
-	    dp->d_flags = DIR_NON_GEOM;
+	    dp->d_flags = RT_DIR_NON_GEOM;
 	    break;
 	case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 	    dp->d_flags = 0;
     }
     if (rip->h_name_hidden)
-	dp->d_flags |= DIR_HIDDEN;
+	dp->d_flags |= RT_DIR_HIDDEN;
     dp->d_len = rip->object_length;		/* in bytes */
     BU_LIST_INIT(&dp->d_use_hd);
     dp->d_animate = NULL;
@@ -369,7 +369,7 @@ db_dirbuild(struct db_i *dbip)
 	}
 
 	/* Need to retrieve _GLOBAL object and obtain title and units */
-	if ((dp = db_lookup(dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY)) == DIR_NULL) {
+	if ((dp = db_lookup(dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_log("db_dirbuild(%s): improper database, no %s object\n",
 		   dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME);
 	    dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);

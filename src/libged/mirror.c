@@ -141,13 +141,13 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* make sure object mirroring to does not already exist */
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[bu_optind+1], LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(gedp->ged_wdbp->dbip, argv[bu_optind+1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s already exists\n", argv[bu_optind+1]);
 	return GED_ERROR;
     }
 
     /* look up the object being mirrored */
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[bu_optind], LOOKUP_NOISY)) == DIR_NULL) {
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[bu_optind], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Unable to find solid [%s]\n", argv[bu_optind]);
 	return GED_ERROR;
     }
@@ -176,7 +176,7 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 
     /* add the mirrored object to the directory */
     dp = db_diradd(gedp->ged_wdbp->dbip, argv[bu_optind+1], RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&ip->idb_type);
-    if (dp == DIR_NULL) {
+    if (dp == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Unable to add [%s] to the database directory", argv[bu_optind+1]);
 	return GED_ERROR;
     }

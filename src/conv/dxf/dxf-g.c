@@ -3397,7 +3397,7 @@ main( int argc, char *argv[] )
 
 	bu_vls_init(&top_name);
 	bu_vls_strcpy( &top_name, "all" );
-	while ( db_lookup( out_fp->dbip, bu_vls_addr( &top_name ), LOOKUP_QUIET ) != DIR_NULL ) {
+	while ( db_lookup( out_fp->dbip, bu_vls_addr( &top_name ), LOOKUP_QUIET ) != RT_DIR_NULL ) {
 	    count++;
 	    bu_vls_trunc( &top_name, 0 );
 	    bu_vls_printf( &top_name, "all.%d", count );

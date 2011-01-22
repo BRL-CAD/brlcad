@@ -64,11 +64,11 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 
     /* For all regions not hidden */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    int found = 0;
 
-	    if (!(dp->d_flags & DIR_REGION) ||
-		(dp->d_flags & DIR_HIDDEN))
+	    if (!(dp->d_flags & RT_DIR_REGION) ||
+		(dp->d_flags & RT_DIR_HIDDEN))
 		continue;
 
 	    if (rt_db_get_internal(&intern,

@@ -80,7 +80,7 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 	prefix = def_prefix;
     }
 
-    if ( (dp=db_lookup( gedp->ged_wdbp->dbip, nmg_solid_name, LOOKUP_NOISY ) ) == DIR_NULL )
+    if ( (dp=db_lookup( gedp->ged_wdbp->dbip, nmg_solid_name, LOOKUP_NOISY ) ) == RT_DIR_NULL )
 	return GED_ERROR;
 
     if ( rt_db_get_internal( &nmg_intern, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
@@ -162,7 +162,7 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_strcat( &solid_name, shell_no );
 		}
 
-		if ( db_lookup( gedp->ged_wdbp->dbip, bu_vls_addr( &solid_name ), LOOKUP_QUIET ) != DIR_NULL ) {
+		if ( db_lookup( gedp->ged_wdbp->dbip, bu_vls_addr( &solid_name ), LOOKUP_QUIET ) != RT_DIR_NULL ) {
 		    bu_vls_printf(&gedp->ged_result_str, "%s: cannot create unique solid name (%s)",
 				  argv[0], bu_vls_addr(&solid_name));
 		    return GED_ERROR;
@@ -175,8 +175,8 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 		new_intern.idb_meth = &rt_functab[ID_NMG];
 		new_intern.idb_ptr = (genptr_t)new_m;
 
-		new_dp=db_diradd( gedp->ged_wdbp->dbip, bu_vls_addr( &solid_name ), RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type);
-		if (new_dp == DIR_NULL) {
+		new_dp=db_diradd( gedp->ged_wdbp->dbip, bu_vls_addr( &solid_name ), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+		if (new_dp == RT_DIR_NULL) {
 		    bu_vls_free( &solid_name );
 		    bu_vls_printf(&gedp->ged_result_str, "%s: Database alloc error, aborting", argv[0]);
 		    return GED_ERROR;;

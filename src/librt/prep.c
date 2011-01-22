@@ -138,7 +138,7 @@ rt_new_rti(struct db_i *dbip)
 	register struct directory *dp;
 
 	dp = rtip->rti_dbip->dbi_Head[i];
-	for (; dp != DIR_NULL; dp = dp->d_forw)
+	for (; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    dp->d_uses = 0;
     }
 
@@ -1066,7 +1066,7 @@ rt_clean(register struct rt_i *rtip)
 	register struct directory *dp;
 
 	dp = rtip->rti_dbip->dbi_Head[i];
-	for (; dp != DIR_NULL; dp = dp->d_forw)
+	for (; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    dp->d_uses = 0;
     }
 
@@ -1272,7 +1272,7 @@ int rt_load_attrs(struct rt_i *rtip, char **attrs)
 	else
 	    reg_name++;
 
-	if ((dp=db_lookup(rtip->rti_dbip, reg_name, LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp=db_lookup(rtip->rti_dbip, reg_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
 	bu_avs_init_empty(&avs);
@@ -1323,7 +1323,7 @@ rt_find_path(struct db_i *dbip,
     switch (tp->tr_op) {
 	case OP_DB_LEAF:
 	    dp = db_lookup(dbip, tp->tr_l.tl_name, 1);
-	    if (dp == DIR_NULL) {
+	    if (dp == RT_DIR_NULL) {
 		bu_log("Unable to lookup geometry [%s]\nAborting.\n", tp->tr_l.tl_name);
 		return;
 	    }
@@ -1335,7 +1335,7 @@ rt_find_path(struct db_i *dbip,
 		db_full_path_init(newpath);
 		db_dup_full_path(newpath, (*curr_path));
 		(*curr_path) = newpath;
-	    } else if ((dp->d_flags & DIR_COMB) && !(dp->d_flags & DIR_REGION)) {
+	    } else if ((dp->d_flags & RT_DIR_COMB) && !(dp->d_flags & RT_DIR_REGION)) {
 		if (rt_db_get_internal(&intern, dp, dbip, NULL, resp) < 0) {
 		    bu_log("Unable to load [%s]\nAborting.\n", tp->tr_l.tl_name);
 		    return;
@@ -1391,7 +1391,7 @@ rt_find_paths(struct db_i *dbip,
 	return 0;
     }
 
-    if (!(start->d_flags & DIR_COMB) || (start->d_flags & DIR_REGION)) {
+    if (!(start->d_flags & RT_DIR_COMB) || (start->d_flags & RT_DIR_REGION)) {
 	bu_log("Cannot find path from %s to %s\n",
 	       start->d_namep, end->d_namep);
 	db_free_full_path(path);
@@ -1599,7 +1599,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	struct directory *start, *end;
 
 	start = db_lookup(rtip->rti_dbip, objs->topobjs[i], 1);
-	if (start == DIR_NULL) {
+	if (start == RT_DIR_NULL) {
 	    for (k=0; k<BU_PTBL_LEN(&objs->paths); k++) {
 		path = (struct db_full_path *)BU_PTBL_GET(&objs->paths, k);
 		db_free_full_path(path);
@@ -1609,7 +1609,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	}
 	for (j=0; j<objs->nunprepped; j++) {
 	    end = db_lookup(rtip->rti_dbip, objs->unprepped[j], 1);
-	    if (end == DIR_NULL) {
+	    if (end == RT_DIR_NULL) {
 		for (k=0; k<BU_PTBL_LEN(&objs->paths); k++) {
 		    path = (struct db_full_path *)BU_PTBL_GET(&objs->paths, k);
 		    db_free_full_path(path);

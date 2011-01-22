@@ -126,7 +126,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
     RT_CK_DIR(dp);
     BU_CK_PTBL(cur_path);
 
-    if (!(dp->d_flags & DIR_COMB))
+    if (!(dp->d_flags & RT_DIR_COMB))
 	return;
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
@@ -161,7 +161,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
 							   comb->tree, OP_UNION, 0, &rt_uniresource) - tree_list;
     BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 
-    if (dp->d_flags & DIR_REGION) {
+    if (dp->d_flags & RT_DIR_REGION) {
 	(*numreg)++;
 	(void)fprintf(tabptr, " %-4ld %4ld %4ld %4ld %4ld  ",
 		      *numreg, comb->region_id, comb->aircode, comb->GIFTmater,
@@ -202,12 +202,12 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
 		    break;
 	    }
 
-	    if ((sol_dp=db_lookup(gedp->ged_wdbp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) != DIR_NULL) {
-		if (sol_dp->d_flags & DIR_COMB) {
+	    if ((sol_dp=db_lookup(gedp->ged_wdbp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
+		if (sol_dp->d_flags & RT_DIR_COMB) {
 		    (void)fprintf(tabptr, "   RG %c %s\n",
 				  op, sol_dp->d_namep);
 		    continue;
-		} else if (!(sol_dp->d_flags & DIR_SOLID)) {
+		} else if (!(sol_dp->d_flags & RT_DIR_SOLID)) {
 		    (void)fprintf(tabptr, "   ?? %c %s\n",
 				  op, sol_dp->d_namep);
 		    continue;
@@ -237,7 +237,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
 	    } else
 		(void) fprintf(tabptr, "%s:  ", tree_list[i].tl_tree->tr_l.tl_name);
 
-	    if (!old && (sol_dp->d_flags & DIR_SOLID)) {
+	    if (!old && (sol_dp->d_flags & RT_DIR_SOLID)) {
 		/* if we get here, we must be looking for a solid table */
 		struct bu_vls tmp_vls;
 		bu_vls_init(&tmp_vls);
@@ -249,10 +249,10 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
 		fprintf(tabptr, "%s", bu_vls_addr(&tmp_vls));
 		bu_vls_free(&tmp_vls);
 	    }
-	    if (nsoltemp && (sol_dp->d_flags & DIR_SOLID))
+	    if (nsoltemp && (sol_dp->d_flags & RT_DIR_SOLID))
 		rt_db_free_internal(&sol_intern);
 	}
-    } else if (dp->d_flags & DIR_COMB) {
+    } else if (dp->d_flags & RT_DIR_COMB) {
 	int cur_length;
 
 	bu_ptbl_ins(cur_path, (long *)dp);
@@ -263,7 +263,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
 	    mat_t new_mat;
 
 	    nextdp = db_lookup(gedp->ged_wdbp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY);
-	    if (nextdp == DIR_NULL) {
+	    if (nextdp == RT_DIR_NULL) {
 		bu_vls_printf(&gedp->ged_result_str, "\tskipping this object\n");
 		continue;
 	    }
@@ -402,7 +402,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp;
 
 	bu_ptbl_reset(&cur_path);
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL)
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL)
 	    tables_new(gedp, dp, &cur_path, (fastf_t *)bn_mat_identity, flag, &numreg, &numsol);
 	else
 	    bu_vls_printf(&gedp->ged_result_str, "%s:  skip this object\n", argv[i]);

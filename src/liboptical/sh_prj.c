@@ -126,7 +126,7 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
     if ((image->i_datasrc==IMG_SRC_AUTO) || (image->i_datasrc==IMG_SRC_OBJECT)) {
 
 	/* see if the object exists */
-	if ((dirEntry=db_lookup(dbInstance, bu_vls_addr(&image->i_name), LOOKUP_QUIET)) == DIR_NULL) {
+	if ((dirEntry=db_lookup(dbInstance, bu_vls_addr(&image->i_name), LOOKUP_QUIET)) == RT_DIR_NULL) {
 
 	    /* unable to find the image object */
 	    if (image->i_datasrc!=IMG_SRC_AUTO) {

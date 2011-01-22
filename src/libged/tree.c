@@ -120,7 +120,7 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
 
 	if (j > 1)
 	    bu_vls_printf(&gedp->ged_result_str, "\n");
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, next, LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, next, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 	_ged_print_node(gedp, dp, 0, indentSize, 0, flags, displayDepth, 0);
     }

@@ -270,10 +270,10 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
     if ((cp = strchr(argv[1], '/')) != NULL) {
 	struct directory *d0, *d1;
-	if ((d1 = db_lookup(dbip, cp+1, LOOKUP_NOISY)) == DIR_NULL)
+	if ((d1 = db_lookup(dbip, cp+1, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    return TCL_ERROR;
 	*cp = '\0';		/* modifies argv[1] */
-	if ((d0 = db_lookup(dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL)
+	if ((d0 = db_lookup(dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    return TCL_ERROR;
 	/* Find arc on illump path which runs from d0 to d1 */
 	for (j=1; j < illump->s_fullpath.fp_len; j++) {

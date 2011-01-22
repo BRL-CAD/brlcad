@@ -208,7 +208,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 
     /* count the number of regions in the model */
     FOR_ALL_DIRECTORY_START(dp, dbip) {
-	if (!(dp->d_flags & DIR_REGION))
+	if (!(dp->d_flags & RT_DIR_REGION))
 	    continue;
 	reg_count++;
     } FOR_ALL_DIRECTORY_END;
@@ -220,7 +220,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
     reg_count =  0;
 
     FOR_ALL_DIRECTORY_START(dp, dbip) {
-	if (!(dp->d_flags & DIR_REGION))
+	if (!(dp->d_flags & RT_DIR_REGION))
 	    continue;
 
 	if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {

@@ -4581,7 +4581,7 @@ sedit(void)
 		    rt_db_free_internal(&tmp_ip);
 		}
 
-		if ((dp = db_lookup(dbip, sketch_name, 0)) == DIR_NULL) {
+		if ((dp = db_lookup(dbip, sketch_name, 0)) == RT_DIR_NULL) {
 		    bu_log("Warning: %s does not exist!\n",
 			   sketch_name);
 		    extr->skt = (struct rt_sketch_internal *)NULL;

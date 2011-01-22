@@ -403,7 +403,7 @@ wdb_check_syntax(Tcl_Interp *interp, struct db_i *dbip, struct bu_list *hp, char
 		arg_count++;
 		if (!dp && BU_STR_EQUAL(comb_name, tok->tp->tr_l.tl_name))
 		    circular_ref++;
-		else if (db_lookup(dbip, tok->tp->tr_l.tl_name, LOOKUP_QUIET) == DIR_NULL)
+		else if (db_lookup(dbip, tok->tp->tr_l.tl_name, LOOKUP_QUIET) == RT_DIR_NULL)
 		    Tcl_AppendResult(interp, "WARNING: '",
 				     tok->tp->tr_l.tl_name,
 				     "' does not actually exist\n", (char *)NULL);
@@ -512,10 +512,10 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 	/*
 	 * Set/Reset the REGION flag of an existing combination
 	 */
-	if ((dp = db_lookup(wdbp->dbip, comb_name, LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp = db_lookup(wdbp->dbip, comb_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    return TCL_ERROR;
 
-	if (!(dp->d_flags & DIR_COMB)) {
+	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    Tcl_AppendResult(interp, comb_name, " is not a combination\n", (char *)0);
 	    return TCL_ERROR;
 	}
@@ -557,7 +557,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
      */
 
     dp = db_lookup(wdbp->dbip, comb_name, LOOKUP_QUIET);
-    if (dp != DIR_NULL) {
+    if (dp != RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "ERROR: ", comb_name, " already exists\n", (char *)0);
 	return TCL_ERROR;
     }
@@ -593,7 +593,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 		/* next token MUST be an operator */
 		if (wdb_add_operator(interp, &tok_hd.l, *ptr, &last_tok) == TCL_ERROR) {
 		    wdb_free_tokens(&tok_hd.l);
-		    if (dp != DIR_NULL)
+		    if (dp != RT_DIR_NULL)
 			rt_db_free_internal(&intern);
 		    return TCL_ERROR;
 		}
@@ -605,7 +605,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 		name_len = wdb_add_operand(interp, &tok_hd.l, ptr);
 		if (name_len < 1) {
 		    wdb_free_tokens(&tok_hd.l);
-		    if (dp != DIR_NULL)
+		    if (dp != RT_DIR_NULL)
 			rt_db_free_internal(&intern);
 		    return TCL_ERROR;
 		}
@@ -615,7 +615,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 		/* must be an operator */
 		if (wdb_add_operator(interp, &tok_hd.l, *ptr, &last_tok) == TCL_ERROR) {
 		    wdb_free_tokens(&tok_hd.l);
-		    if (dp != DIR_NULL)
+		    if (dp != RT_DIR_NULL)
 			rt_db_free_internal(&intern);
 		    return TCL_ERROR;
 		}
@@ -629,7 +629,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 		name_len = wdb_add_operand(interp, &tok_hd.l, ptr);
 		if (name_len < 1) {
 		    wdb_free_tokens(&tok_hd.l);
-		    if (dp != DIR_NULL)
+		    if (dp != RT_DIR_NULL)
 			rt_db_free_internal(&intern);
 		    return TCL_ERROR;
 		}
@@ -645,7 +645,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
     }
 
     /* replace any occurences of comb_name with existing tree */
-    if (dp != DIR_NULL) {
+    if (dp != RT_DIR_NULL) {
 	for (BU_LIST_FOR(tok, tokens, &tok_hd.l)) {
 	    struct rt_db_internal intern1;
 	    struct rt_comb_internal *comb1;
@@ -683,10 +683,10 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 
     final_tree = wdb_eval_bool(&tok_hd.l);
 
-    if (dp == DIR_NULL) {
+    if (dp == RT_DIR_NULL) {
 	int flags;
 
-	flags = DIR_COMB;
+	flags = RT_DIR_COMB;
 	BU_GETSTRUCT(comb, rt_comb_internal);
 	comb->magic = RT_COMB_MAGIC;
 	comb->tree = final_tree;
@@ -713,7 +713,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 
-	    flags |= DIR_REGION;
+	    flags |= RT_DIR_REGION;
 	}
 
 	RT_INIT_DB_INTERNAL(&intern);
@@ -723,7 +723,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 	intern.idb_ptr = (genptr_t)comb;
 
 	dp=db_diradd(wdbp->dbip, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type);
-	if (dp == DIR_NULL) {
+	if (dp == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "Failed to add ", comb_name,
 			     " to directory, aborting\n", (char *)NULL);
 	    return TCL_ERROR;

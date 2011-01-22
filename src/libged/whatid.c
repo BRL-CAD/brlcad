@@ -59,10 +59,10 @@ ged_whatid(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    if ((dp=db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp=db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return GED_ERROR;
 
-    if (!(dp->d_flags & DIR_REGION)) {
+    if (!(dp->d_flags & RT_DIR_REGION)) {
 	bu_vls_printf(&gedp->ged_result_str, "%s is not a region", argv[1]);
 	return GED_ERROR;
     }

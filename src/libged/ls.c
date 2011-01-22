@@ -118,11 +118,11 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
 	     * until now.  There is no way to make the decision on
 	     * where to place them before now.
 	     */
-	    if (list_of_names[this_one]->d_flags & DIR_COMB) {
+	    if (list_of_names[this_one]->d_flags & RT_DIR_COMB) {
 		bu_vls_putc(vls, '/');
 		namelen++;
 	    }
-	    if (list_of_names[this_one]->d_flags & DIR_REGION) {
+	    if (list_of_names[this_one]->d_flags & RT_DIR_REGION) {
 		bu_vls_putc(vls, 'R');
 		namelen++;
 	    }
@@ -194,12 +194,12 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
 	     * until now.  There is no way to make the decision on
 	     * where to place them before now.
 	     */
-	    if (!no_decorate && list_of_names[this_one]->d_flags & DIR_COMB) {
+	    if (!no_decorate && list_of_names[this_one]->d_flags & RT_DIR_COMB) {
 		bu_vls_putc(vls, '/');
 		namelen++;
 	    }
 
-	    if (!no_decorate && list_of_names[this_one]->d_flags & DIR_REGION) {
+	    if (!no_decorate && list_of_names[this_one]->d_flags & RT_DIR_REGION) {
 		bu_vls_putc(vls, 'R');
 		namelen++;
 	    }
@@ -254,11 +254,11 @@ vls_long_dpp(struct bu_vls *vls,
 	if (len > max_nam_len)
 	    max_nam_len = len;
 
-	if (dp->d_flags & DIR_REGION)
+	if (dp->d_flags & RT_DIR_REGION)
 	    len = 6;
-	else if (dp->d_flags & DIR_COMB)
+	else if (dp->d_flags & RT_DIR_COMB)
 	    len = 4;
-	else if (dp->d_flags & DIR_SOLID)
+	else if (dp->d_flags & RT_DIR_SOLID)
 	    len = strlen(rt_functab[dp->d_minor_type].ft_label);
 	else {
 	    switch (list_of_names[i]->d_major_type) {
@@ -282,17 +282,17 @@ vls_long_dpp(struct bu_vls *vls,
      * i - tracks the list item
      */
     for (i=0; i < num_in_list; ++i) {
-	if (list_of_names[i]->d_flags & DIR_COMB) {
+	if (list_of_names[i]->d_flags & RT_DIR_COMB) {
 	    isComb = 1;
 	    isSolid = 0;
 	    type = "comb";
 
-	    if (list_of_names[i]->d_flags & DIR_REGION) {
+	    if (list_of_names[i]->d_flags & RT_DIR_REGION) {
 		isRegion = 1;
 		type = "region";
 	    } else
 		isRegion = 0;
-	} else if (list_of_names[i]->d_flags & DIR_SOLID) {
+	} else if (list_of_names[i]->d_flags & RT_DIR_SOLID) {
 	    isComb = isRegion = 0;
 	    isSolid = 1;
 	    type = rt_functab[list_of_names[i]->d_minor_type].ft_label;
@@ -359,11 +359,11 @@ vls_line_dpp(struct bu_vls *vls,
      * i - tracks the list item
      */
     for (i=0; i < num_in_list; ++i) {
-	if (list_of_names[i]->d_flags & DIR_COMB) {
+	if (list_of_names[i]->d_flags & RT_DIR_COMB) {
 	    isComb = 1;
 	    isSolid = 0;
 
-	    if (list_of_names[i]->d_flags & DIR_REGION)
+	    if (list_of_names[i]->d_flags & RT_DIR_REGION)
 		isRegion = 1;
 	    else
 		isRegion = 0;
@@ -471,10 +471,10 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 
 	dir_flags = 0;
 	if (aflag) dir_flags = -1;
-	if (cflag) dir_flags = DIR_COMB;
-	if (sflag) dir_flags = DIR_SOLID;
-	if (rflag) dir_flags = DIR_REGION;
-	if (!dir_flags) dir_flags = -1 ^ DIR_HIDDEN;
+	if (cflag) dir_flags = RT_DIR_COMB;
+	if (sflag) dir_flags = RT_DIR_SOLID;
+	if (rflag) dir_flags = RT_DIR_REGION;
+	if (!dir_flags) dir_flags = -1 ^ RT_DIR_HIDDEN;
 
 	bu_avs_init(&avs, argc, "wdb_ls_cmd avs");
 	for (i = 0; i < (size_t)argc; i += 2) {
@@ -504,7 +504,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	 * Verify the names, and add pointers to them to the array.
 	 */
 	for (i = 0; i < (size_t)argc; i++) {
-	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 		continue;
 	    *dirp++ = dp;
 	}
@@ -517,8 +517,8 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	 * entries) to the array.
 	 */
 	for (i = 0; i < RT_DBNHASH; i++)
-	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-		if (!aflag && (dp->d_flags & DIR_HIDDEN))
+	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		if (!aflag && (dp->d_flags & RT_DIR_HIDDEN))
 		    continue;
 		*dirp++ = dp;
 	    }

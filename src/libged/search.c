@@ -133,7 +133,7 @@ db_fullpath_traverse_subtree(union tree *tp,
     switch (tp->tr_op) {
 
 	case OP_DB_LEAF:
-	    if ((dp=db_lookup(gedp->ged_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL) {
+	    if ((dp=db_lookup(gedp->ged_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 		return;
 	    } else {
 		db_add_node_to_full_path(dfp, dp);
@@ -182,7 +182,7 @@ db_fullpath_traverse(struct ged *gedp,
 
     dp = DB_FULL_PATH_CUR_DIR(dfp);
 
-    if (dp->d_flags & DIR_COMB) {
+    if (dp->d_flags & RT_DIR_COMB) {
 	/* entering region */
 	if (comb_func)
 	    comb_func(gedp, dfp, client_data);
@@ -198,7 +198,7 @@ db_fullpath_traverse(struct ged *gedp,
 	    /* recurse */
 	    for (i=1; i < dp->d_len; i++) {
 		if ((mdp = db_lookup(gedp->ged_wdbp->dbip, rp[i].M.m_instname,
-				     LOOKUP_NOISY)) == DIR_NULL) {
+				     LOOKUP_NOISY)) == RT_DIR_NULL) {
 		    continue;
 		} else {
 		    db_add_node_to_full_path(dfp, mdp);
@@ -221,7 +221,7 @@ db_fullpath_traverse(struct ged *gedp,
 	    rt_db_free_internal(&in);
 	}
     }
-    if (dp->d_flags & DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK) {
+    if (dp->d_flags & RT_DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK) {
 	/* at leaf */
 	if (leaf_func)
 	    leaf_func(gedp, dfp, client_data);
@@ -418,7 +418,7 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
     switch (tp->tr_op) {
 
 	case OP_DB_LEAF:
-	    if ((dp=db_lookup(gedp->ged_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL) {
+	    if ((dp=db_lookup(gedp->ged_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 		return 0;
 	    } else {
 		db_add_node_to_full_path(dfp, dp);
@@ -485,7 +485,7 @@ db_fullpath_stateful_traverse(struct ged *gedp,
 
     dp = DB_FULL_PATH_CUR_DIR(dfp);
 
-    if (dp->d_flags & DIR_COMB) {
+    if (dp->d_flags & RT_DIR_COMB) {
 	/* entering region */
 	if (comb_func)
 	    if (comb_func(gedp, dfp, client_data)) return 1;
@@ -501,7 +501,7 @@ db_fullpath_stateful_traverse(struct ged *gedp,
 	    /* recurse */
 	    for (i=1; i < dp->d_len; i++) {
 		if ((mdp = db_lookup(gedp->ged_wdbp->dbip, rp[i].M.m_instname,
-				     LOOKUP_NOISY)) == DIR_NULL) {
+				     LOOKUP_NOISY)) == RT_DIR_NULL) {
 		    continue;
 		} else {
 		    db_add_node_to_full_path(dfp, mdp);
@@ -534,7 +534,7 @@ db_fullpath_stateful_traverse(struct ged *gedp,
 	    }
 	}
     }
-    if (dp->d_flags & DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK) {
+    if (dp->d_flags & RT_DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK) {
 	/* at leaf */
 	if (leaf_func) {
 	    if (leaf_func(gedp, dfp, client_data)) {
@@ -566,7 +566,7 @@ f_below(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
     db_full_path_init(&belowpath);
     db_dup_full_path(&belowpath, entry);
 
-    if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & DIR_COMB) {
+    if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & RT_DIR_COMB) {
 	if (rt_db_get_internal5(&in, DB_FULL_PATH_CUR_DIR(entry), gedp->ged_wdbp->dbip, NULL, gedp->ged_wdbp->wdb_resp) < 0)
 	    return 0;
 
@@ -1181,7 +1181,7 @@ f_type(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 	    type_match = (!bu_fnmatch(plan->type_data, "bot", 0));
 	    break;
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
-	    if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & DIR_REGION) {
+	    if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & RT_DIR_REGION) {
 		if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!bu_fnmatch(plan->type_data, "reg", 0))  || (!bu_fnmatch(plan->type_data, "region", 0))) {
 		    type_match = 1;
 		}
@@ -1342,7 +1342,7 @@ f_nnodes(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
      * in the argument string.
      */
 
-    if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & DIR_COMB) {
+    if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & RT_DIR_COMB) {
 	rt_db_get_internal5(&in, DB_FULL_PATH_CUR_DIR(entry), gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource);
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 	if (comb->tree == NULL) {
@@ -2041,8 +2041,8 @@ find_execute(PLAN *plan,        /* search plan */
 	    break;
 	case 1:
 	    for (i = 0; i < RT_DBNHASH; i++) {
-		for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-		    if (!(dp->d_flags & DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
+		for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		    if (!(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
 			db_string_to_path(&fullname, gedp->ged_wdbp->dbip, dp->d_namep);
 			find_execute_plans(gedp, &fullname, plan);
 		    }
@@ -2108,8 +2108,8 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		}
 	    } else {
 		for (i = 0; i < RT_DBNHASH; i++) {
-		    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-			if (dp->d_nref == 0 && !(dp->d_flags & DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
+		    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+			if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
 			    db_string_to_path(&dfp, gedp->ged_wdbp->dbip, dp->d_namep);
 			    isoutput = 0;
 			    if ((argv[1][0] == '-') || (argv[1][0] == '!')  || (argv[1][0] == '(')) {

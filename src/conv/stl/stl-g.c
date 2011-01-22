@@ -120,7 +120,7 @@ mk_unique_brlcad_name(struct bu_vls *name)
     }
 
     len = bu_vls_strlen(name);
-    while (db_lookup(fd_out->dbip, bu_vls_addr(name), LOOKUP_QUIET) != DIR_NULL) {
+    while (db_lookup(fd_out->dbip, bu_vls_addr(name), LOOKUP_QUIET) != RT_DIR_NULL) {
 	char suff[10];
 
 	bu_vls_trunc(name, len);

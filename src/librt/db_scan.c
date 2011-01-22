@@ -146,13 +146,13 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		    nrec++;
 		}
 		next = (off_t)ftell(dbip->dbi_fp);
-		handler( dbip, record.a.a_name, addr, nrec, DIR_SOLID, client_data );
+		handler( dbip, record.a.a_name, addr, nrec, RT_DIR_SOLID, client_data );
 		break;
 	    case ID_ARS_B:
 		bu_log("db_scan ERROR: Unattached ARS 'B' record\n");
 		break;
 	    case ID_SOLID:
-		handler( dbip, record.s.s_name, addr, nrec, DIR_SOLID, client_data );
+		handler( dbip, record.s.s_name, addr, nrec, RT_DIR_SOLID, client_data );
 		break;
 	    case DBID_STRSOL:
 		for (; nrec < DB_SS_NGRAN; nrec++ )  {
@@ -160,7 +160,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 			break;
 		}
 		next = (off_t)ftell(dbip->dbi_fp);
-		handler( dbip, record.ss.ss_name, addr, nrec, DIR_SOLID, client_data );
+		handler( dbip, record.ss.ss_name, addr, nrec, RT_DIR_SOLID, client_data );
 		break;
 	    case ID_MATERIAL:
 		if ( do_old_matter ) {
@@ -187,7 +187,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		    nrec++;
 		}
 		next = (off_t)ftell(dbip->dbi_fp);
-		handler( dbip, record.p.p_name, addr, nrec, DIR_SOLID, client_data );
+		handler( dbip, record.p.p_name, addr, nrec, RT_DIR_SOLID, client_data );
 		break;
 	    case ID_P_DATA:
 		bu_log("db_scan ERROR: Unattached P_DATA record\n");
@@ -213,7 +213,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		    }
 		    next = (off_t)ftell(dbip->dbi_fp);
 		}
-		handler( dbip, record.B.B_name, addr, nrec, DIR_SOLID, client_data );
+		handler( dbip, record.B.B_name, addr, nrec, RT_DIR_SOLID, client_data );
 		break;
 	    case ID_BSURF:
 		bu_log("db_scan ERROR: Unattached B-spline surface record\n");
@@ -234,10 +234,10 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 			break;
 		}
 		next = (off_t)ftell(dbip->dbi_fp);
-		handler( dbip, record.n.n_name, addr, nrec, DIR_SOLID, client_data );
+		handler( dbip, record.n.n_name, addr, nrec, RT_DIR_SOLID, client_data );
 		break;
 	    case DBID_PARTICLE:
-		handler( dbip, record.part.p_name, addr, nrec, DIR_SOLID, client_data );
+		handler( dbip, record.part.p_name, addr, nrec, RT_DIR_SOLID, client_data );
 		break;
 	    case DBID_PIPE:
 		j = bu_glong(record.pwr.pwr_count);
@@ -247,7 +247,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 			break;
 		}
 		next = (off_t)ftell(dbip->dbi_fp);
-		handler( dbip, record.pwr.pwr_name, addr, nrec, DIR_SOLID, client_data );
+		handler( dbip, record.pwr.pwr_name, addr, nrec, RT_DIR_SOLID, client_data );
 		break;
 	    case DBID_NMG:
 		j = bu_glong(record.nmg.N_count);
@@ -257,7 +257,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 			break;
 		}
 		next = (off_t)ftell(dbip->dbi_fp);
-		handler( dbip, record.nmg.N_name, addr, nrec, DIR_SOLID, client_data );
+		handler( dbip, record.nmg.N_name, addr, nrec, RT_DIR_SOLID, client_data );
 		break;
 	    case DBID_SKETCH:
 		j = bu_glong(record.skt.skt_count);
@@ -267,7 +267,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 			break;
 		}
 		next = (off_t)ftell(dbip->dbi_fp);
-		handler( dbip, record.skt.skt_name, addr, nrec, DIR_SOLID, client_data );
+		handler( dbip, record.skt.skt_name, addr, nrec, RT_DIR_SOLID, client_data );
 		break;
 	    case DBID_EXTR:
 		j = bu_glong(record.extr.ex_count);
@@ -277,10 +277,10 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 			break;
 		}
 		next = (off_t)ftell(dbip->dbi_fp);
-		handler( dbip, record.extr.ex_name, addr, nrec, DIR_SOLID, client_data );
+		handler( dbip, record.extr.ex_name, addr, nrec, RT_DIR_SOLID, client_data );
 		break;
 	    case DBID_CLINE:
-		handler( dbip, record.s.s_name, addr, nrec, DIR_SOLID, client_data );
+		handler( dbip, record.s.s_name, addr, nrec, RT_DIR_SOLID, client_data );
 		break;
 	    case DBID_BOT:
 		j = bu_glong( record.bot.bot_nrec );
@@ -290,7 +290,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 			break;
 		}
 		next = (off_t)ftell(dbip->dbi_fp);
-		handler( dbip, record.s.s_name, addr, nrec, DIR_SOLID, client_data );
+		handler( dbip, record.s.s_name, addr, nrec, RT_DIR_SOLID, client_data );
 		break;
 	    case ID_MEMB:
 		bu_log("db_scan ERROR: Unattached combination MEMBER record\n");
@@ -311,12 +311,12 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		switch (record.c.c_flags)  {
 		    default:
 		    case DBV4_NON_REGION:
-			j = DIR_COMB;
+			j = RT_DIR_COMB;
 			break;
 		    case DBV4_REGION:
 		    case DBV4_REGION_FASTGEN_PLATE:
 		    case DBV4_REGION_FASTGEN_VOLUME:
-			j = DIR_COMB|DIR_REGION;
+			j = RT_DIR_COMB|RT_DIR_REGION;
 			break;
 		}
 		handler( dbip, record.c.c_name, addr, nrec, j, client_data );

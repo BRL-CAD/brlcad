@@ -52,7 +52,7 @@ db_is_directory_non_empty(const struct db_i *dbip)
     RT_CK_DBI(dbip);
 
     for (i = 0; i < RT_DBNHASH; i++) {
-	if (dbip->dbi_Head[i] != DIR_NULL)
+	if (dbip->dbi_Head[i] != RT_DIR_NULL)
 	    return 1;
     }
     return 0;
@@ -69,7 +69,7 @@ db_directory_size(const struct db_i *dbip)
     RT_CK_DBI(dbip);
 
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    count++;
     }
     return count;
@@ -91,7 +91,7 @@ db_ck_directory(const struct db_i *dbip)
     RT_CK_DBI(dbip);
 
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    RT_CK_DIR(dp);
     }
 }
@@ -161,7 +161,7 @@ db_dircheck(struct db_i *dbip,
     /* Compute hash only once (almost always the case) */
     *headp = &(dbip->dbi_Head[db_dirhash(cp)]);
 
-    for (dp = **headp; dp != DIR_NULL; dp=dp->d_forw) {
+    for (dp = **headp; dp != RT_DIR_NULL; dp=dp->d_forw) {
 	char *this;
 	if (n0 == *(this=dp->d_namep)  &&	/* speed */
 	    n1 == this[1]  &&			/* speed */
@@ -174,7 +174,7 @@ db_dircheck(struct db_i *dbip,
 
 	    for (c = 'A'; c <= 'Z'; c++) {
 		*cp = c;
-		if (db_lookup(dbip, cp, noisy) == DIR_NULL)
+		if (db_lookup(dbip, cp, noisy) == RT_DIR_NULL)
 		    break;
 	    }
 	    if (c > 'Z') {
@@ -207,7 +207,7 @@ db_dircheck(struct db_i *dbip,
  *
  * Returns -
  * struct directory if name is found
- * DIR_NULL on failure
+ * RT_DIR_NULL on failure
  */
 struct directory *
 db_lookup(const struct db_i *dbip, const char *name, int noisy)
@@ -219,7 +219,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
     if (!name || name[0] == '\0') {
 	if (noisy || RT_G_DEBUG&DEBUG_DB)
 	    bu_log("db_lookup received NULL or empty name\n");
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     n0 = name[0];
@@ -228,7 +228,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
     RT_CK_DBI(dbip);
 
     dp = dbip->dbi_Head[db_dirhash(name)];
-    for (; dp != DIR_NULL; dp=dp->d_forw) {
+    for (; dp != RT_DIR_NULL; dp=dp->d_forw) {
 	char *this;
 
 	/* first two checks are for speed */
@@ -242,7 +242,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
     if (noisy || RT_G_DEBUG&DEBUG_DB)
 	bu_log("db_lookup(%s) failed: %s does not exist\n", name, name);
 
-    return DIR_NULL;
+    return RT_DIR_NULL;
 }
 
 
@@ -261,7 +261,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
  *
  * len is the length of the object, number of db granules used
  *
- * flags are defined in raytrace.h (DIR_SOLID, DIR_COMB, DIR_REGION,
+ * flags are defined in raytrace.h (RT_DIR_SOLID, RT_DIR_COMB, RT_DIR_REGION,
  * RT_DIR_INMEM, etc) for db version 5, ptr is the minor_type
  * (non-null pointer to valid unsigned char code)
  *
@@ -289,7 +289,7 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
 	 */
 	if (db_version(dbip) < 5 && (tmp_ptr - name) < NAMESIZE) {
 	    bu_log("db_diradd() object named '%s' is illegal, ignored\n", name);
-	    return DIR_NULL;
+	    return RT_DIR_NULL;
 	}
     }
 
@@ -301,13 +301,13 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
 	if (!ptr) {
 	    bu_log("WARNING: db_diradd() called with a null minor type pointer for object %s\nIgnoring %s\n", name, name);
 	    bu_vls_free(&local);
-	    return DIR_NULL;
+	    return RT_DIR_NULL;
 	}
 	bu_vls_strcpy(&local, name);
     }
     if (db_dircheck(dbip, &local, 0, &headp) < 0) {
 	bu_vls_free(&local);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     /* 'name' not found in directory, add it */
@@ -370,7 +370,7 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
 	rt_uniresource.re_directory_hd = dp;
 	return 0;
     }
-    for (findp = *headp; findp != DIR_NULL; findp = findp->d_forw) {
+    for (findp = *headp; findp != RT_DIR_NULL; findp = findp->d_forw) {
 	if (findp->d_forw != dp)
 	    continue;
 	RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
@@ -410,7 +410,7 @@ db_rename(struct db_i *dbip, struct directory *dp, const char *newname)
 	/* Was first on list, dequeue */
 	*headp = dp->d_forw;
     } else {
-	for (findp = *headp; findp != DIR_NULL; findp = findp->d_forw) {
+	for (findp = *headp; findp != RT_DIR_NULL; findp = findp->d_forw) {
 	    if (findp->d_forw != dp)
 		continue;
 	    /* Dequeue */
@@ -455,14 +455,14 @@ db_pr_dir(const struct db_i *dbip)
     /* units ? */
 
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp=dp->d_forw) {
-	    if (dp->d_flags & DIR_SOLID)
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp=dp->d_forw) {
+	    if (dp->d_flags & RT_DIR_SOLID)
 		flags = "SOL";
-	    else if ((dp->d_flags & (DIR_COMB|DIR_REGION)) ==
-		     (DIR_COMB|DIR_REGION))
+	    else if ((dp->d_flags & (RT_DIR_COMB|RT_DIR_REGION)) ==
+		     (RT_DIR_COMB|RT_DIR_REGION))
 		flags = "REG";
-	    else if ((dp->d_flags & (DIR_COMB|DIR_REGION)) ==
-		     DIR_COMB)
+	    else if ((dp->d_flags & (RT_DIR_COMB|RT_DIR_REGION)) ==
+		     RT_DIR_COMB)
 		flags = "COM";
 	    else
 		flags = "Bad";

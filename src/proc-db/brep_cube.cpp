@@ -456,7 +456,7 @@ main(int argc, char** argv)
     }
     db_dirbuild(dbip);
     struct directory* dirp;
-    if ((dirp = db_lookup(dbip, "cube.s", 0)) != DIR_NULL) {
+    if ((dirp = db_lookup(dbip, "cube.s", 0)) != RT_DIR_NULL) {
 	bu_log("\tfound cube.s\n");
 	struct rt_db_internal ip;
 	mat_t mat;

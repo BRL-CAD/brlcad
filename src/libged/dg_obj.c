@@ -840,7 +840,7 @@ dgo_build_dpp(struct dg_obj	*dgop,
      */
     dpp = bu_calloc(ac+1, sizeof(struct directory *), "dgo_build_dpp: directory pointers");
     for (i = 0; i < ac; ++i) {
-	if ((dp = db_lookup(dgop->dgo_wdbp->dbip, av[i], 0)) != DIR_NULL)
+	if ((dp = db_lookup(dgop->dgo_wdbp->dbip, av[i], 0)) != RT_DIR_NULL)
 	    dpp[i] = dp;
 	else {
 	    /* object is not currently being displayed */
@@ -853,7 +853,7 @@ dgo_build_dpp(struct dg_obj	*dgop,
 	}
     }
 
-    dpp[i] = DIR_NULL;
+    dpp[i] = RT_DIR_NULL;
 
     Tcl_Free((char *)av_orig);
     bu_vls_free(&vls);
@@ -897,13 +897,13 @@ dgo_how_cmd(struct dg_obj	*dgop,
 
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 	for (i = 0, tmp_dpp = dpp;
-	     i < sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
+	     i < sp->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
 	     ++i, ++tmp_dpp) {
 	    if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
 		break;
 	}
 
-	if (*tmp_dpp != DIR_NULL)
+	if (*tmp_dpp != RT_DIR_NULL)
 	    continue;
 
 	/* found a match */
@@ -2626,13 +2626,13 @@ dgo_set_transparency_cmd(struct dg_obj	*dgop,
 
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 	for (i = 0, tmp_dpp = dpp;
-	     i < sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
+	     i < sp->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
 	     ++i, ++tmp_dpp) {
 	    if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
 		break;
 	}
 
-	if (*tmp_dpp != DIR_NULL)
+	if (*tmp_dpp != RT_DIR_NULL)
 	    continue;
 
 	/* found a match */
@@ -3315,7 +3315,7 @@ dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], i
 
 		for (i = 0; i < argc; ++i) {
 #if 0
-		    if ((dp = db_lookup(dgop->dgo_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+		    if ((dp = db_lookup(dgop->dgo_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 			continue;
 #endif
 
@@ -3431,14 +3431,14 @@ dgo_invent_solid(struct dg_obj	*dgop,
 		 int		dmode)
 {
     struct directory	*dp;
-    struct directory		*dpp[2] = {DIR_NULL, DIR_NULL};
+    struct directory		*dpp[2] = {RT_DIR_NULL, RT_DIR_NULL};
     struct solid		*sp;
     unsigned char			type='0';
 
     if (dgop->dgo_wdbp->dbip == DBI_NULL)
 	return 0;
 
-    if ((dp = db_lookup(dgop->dgo_wdbp->dbip, name, LOOKUP_QUIET)) != DIR_NULL) {
+    if ((dp = db_lookup(dgop->dgo_wdbp->dbip, name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	if (dp->d_addr != RT_DIR_PHONY_ADDR) {
 	    Tcl_AppendResult(interp, "dgo_invent_solid(", name,
 			     ") would clobber existing database entry, ignored\n", (char *)NULL);
@@ -3453,7 +3453,7 @@ dgo_invent_solid(struct dg_obj	*dgop,
 	dgo_eraseobjall(dgop, interp, dpp);
     }
     /* Need to enter phony name in directory structure */
-    dp = db_diradd(dgop->dgo_wdbp->dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&type);
+    dp = db_diradd(dgop->dgo_wdbp->dbip,  name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&type);
 
     /* Obtain a fresh solid structure, and fill it in */
     GET_SOLID(sp, &_FreeSolid.l);
@@ -3672,7 +3672,7 @@ dgo_eraseobjall_callback(struct db_i		*dbip,
 			 int			notify)
 {
     struct dg_obj		*dgop;
-    struct directory	*dpp[2] = {DIR_NULL, DIR_NULL};
+    struct directory	*dpp[2] = {RT_DIR_NULL, RT_DIR_NULL};
 
     dpp[0] = dp;
     for (BU_LIST_FOR (dgop, dg_obj, &HeadDGObj.l))
@@ -3765,12 +3765,12 @@ dgo_eraseobjpath(struct dg_obj	*dgop,
 
 	dpp = bu_calloc(ac+1, sizeof(struct directory *), "eraseobjpath: directory pointers");
 	for (j = 0; j < ac; ++j)
-	    if ((dp = db_lookup(dgop->dgo_wdbp->dbip, av[j], noisy)) != DIR_NULL)
+	    if ((dp = db_lookup(dgop->dgo_wdbp->dbip, av[j], noisy)) != RT_DIR_NULL)
 		dpp[j] = dp;
 	    else
 		goto end;
 
-	dpp[j] = DIR_NULL;
+	dpp[j] = RT_DIR_NULL;
 
 	if (all)
 	    dgo_eraseobjall(dgop, interp, dpp);
@@ -3809,11 +3809,11 @@ dgo_eraseobjall(struct dg_obj			*dgop,
     if (dgop->dgo_wdbp->dbip == DBI_NULL)
 	return;
 
-    if (*dpp == DIR_NULL)
+    if (*dpp == RT_DIR_NULL)
 	return;
 
     db_full_path_init(&subpath);
-    for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp) {
+    for (tmp_dpp = dpp; *tmp_dpp != RT_DIR_NULL; ++tmp_dpp) {
 	RT_CK_DIR(*tmp_dpp);
 	db_add_node_to_full_path(&subpath, *tmp_dpp);
     }
@@ -3862,22 +3862,22 @@ dgo_eraseobj(struct dg_obj		*dgop,
     if (dgop->dgo_wdbp->dbip == DBI_NULL)
 	return;
 
-    if (*dpp == DIR_NULL)
+    if (*dpp == RT_DIR_NULL)
 	return;
 
-    for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)
+    for (tmp_dpp = dpp; *tmp_dpp != RT_DIR_NULL; ++tmp_dpp)
 	RT_CK_DIR(*tmp_dpp);
 
     sp = BU_LIST_FIRST(solid, &dgop->dgo_headSolid);
     while (BU_LIST_NOT_HEAD(sp, &dgop->dgo_headSolid)) {
 	nsp = BU_LIST_PNEXT(solid, sp);
 	for (i = 0, tmp_dpp = dpp;
-	     i < sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
+	     i < sp->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
 	     ++i, ++tmp_dpp)
 	    if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
 		goto end;
 
-	if (*tmp_dpp != DIR_NULL)
+	if (*tmp_dpp != RT_DIR_NULL)
 	    goto end;
 
 	BU_LIST_DEQUEUE(&sp->l);
@@ -3900,11 +3900,11 @@ dgo_eraseobj(struct dg_obj		*dgop,
     if (dgop->dgo_wdbp->dbip == DBI_NULL)
 	return;
 
-    if (*dpp == DIR_NULL)
+    if (*dpp == RT_DIR_NULL)
 	return;
 
     db_full_path_init(&subpath);
-    for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp) {
+    for (tmp_dpp = dpp; *tmp_dpp != RT_DIR_NULL; ++tmp_dpp) {
 	RT_CK_DIR(*tmp_dpp);
 	db_add_node_to_full_path(&subpath, *tmp_dpp);
     }
@@ -4008,25 +4008,25 @@ dgo_rt_write(struct dg_obj	*dgop,
     (void)fprintf(fp, "start 0; clean;\n");
     FOR_ALL_SOLIDS (sp, &dgop->dgo_headSolid) {
 	for (i=0;i<sp->s_fullpath.fp_len;i++) {
-	    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~DIR_USED;
+	    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
 	}
     }
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 	for (i=0; i<sp->s_fullpath.fp_len; i++) {
-	    if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & DIR_USED)) {
+	    if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & RT_DIR_USED)) {
 		struct animate *anp;
 		for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
 		     anp=anp->an_forw) {
 		    db_write_anim(fp, anp);
 		}
-		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags |= DIR_USED;
+		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags |= RT_DIR_USED;
 	    }
 	}
     }
 
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 	for (i=0;i< sp->s_fullpath.fp_len;i++) {
-	    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~DIR_USED;
+	    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
 	}
     }
     (void)fprintf(fp, "end;\n");
@@ -4879,7 +4879,7 @@ dgo_tree_cmd(struct dg_obj	*dgop,
 
 	if (j > 1)
 	    Tcl_AppendResult(interp, "\n", (char *)NULL);
-	if ((dp = db_lookup(dgop->dgo_wdbp->dbip, next, LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp = db_lookup(dgop->dgo_wdbp->dbip, next, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 	wdb_print_node(dgop->dgo_wdbp, interp, dp, 0, indentSize, 0, cflag, displayDepth, 0);
     }

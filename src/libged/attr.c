@@ -131,7 +131,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	i = 3;
 	while (i < (size_t)argc) {
 	    if (BU_STR_EQUAL(argv[i], "region") && BU_STR_EQUAL(argv[i+1], "R")) {
- 		dp->d_flags |= DIR_REGION;
+ 		dp->d_flags |= RT_DIR_REGION;
  	    }
 	    (void)bu_avs_add(&avs, argv[i], argv[i+1]);
 	    i += 2;
@@ -149,7 +149,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	i = 3;
 	while (i < (size_t)argc) {
     	    if (BU_STR_EQUAL(argv[i], "region")) {
- 		dp->d_flags = dp->d_flags & ~(DIR_REGION);
+ 		dp->d_flags = dp->d_flags & ~(RT_DIR_REGION);
  	    }
 	    (void)bu_avs_remove(&avs, argv[i]);
 	    i++;
@@ -174,7 +174,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	while (i < (size_t)argc) {
 	    const char *old_val;
 	    if (BU_STR_EQUAL(argv[i], "region") && BU_STR_EQUAL(argv[i+1], "R")) {
- 		dp->d_flags |= DIR_REGION;
+ 		dp->d_flags |= RT_DIR_REGION;
  	    }
 	    old_val = bu_avs_get(&avs, argv[i]);
 	    if (!old_val) {
@@ -205,13 +205,13 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	int tabs1 = 0;
 
 	/* pretty print */
-	if (dp->d_flags & DIR_COMB) {
-	    if (dp->d_flags & DIR_REGION) {
+	if (dp->d_flags & RT_DIR_COMB) {
+	    if (dp->d_flags & RT_DIR_REGION) {
 		bu_vls_printf(&gedp->ged_result_str, "%s region:\n", argv[2]);
 	    } else {
 		bu_vls_printf(&gedp->ged_result_str, "%s combination:\n", argv[2]);
 	    }
-	} else if (dp->d_flags & DIR_SOLID) {
+	} else if (dp->d_flags & RT_DIR_SOLID) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s %s:\n", argv[2],
 			  rt_functab[dp->d_minor_type].ft_label);
 	} else {

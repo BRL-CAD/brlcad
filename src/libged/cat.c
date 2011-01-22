@@ -58,7 +58,7 @@ ged_cat(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (arg = 1; arg < argc; arg++) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[arg], LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[arg], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
 	_ged_do_list(gedp, dp, 0);	/* non-verbose */

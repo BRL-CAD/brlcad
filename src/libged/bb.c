@@ -181,7 +181,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
    	new_intern.idb_meth = &rt_functab[ID_ARB8];
    	new_intern.idb_ptr = (genptr_t)arb;
        	
-   	if ((dp=db_diradd(gedp->ged_wdbp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL) {
+   	if ((dp=db_diradd(gedp->ged_wdbp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type)) == RT_DIR_NULL) {
    	    bu_vls_printf(&gedp->ged_result_str, "Cannot add %s to directory\n", bbname);
    	    return GED_ERROR;
    	}

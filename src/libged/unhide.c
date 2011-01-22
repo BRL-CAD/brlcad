@@ -65,7 +65,7 @@ ged_unhide(struct ged *gedp, int argc, const char *argv[])
     }
 
     for ( i=1; i<argc; i++ ) {
-	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL ) {
+	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == RT_DIR_NULL ) {
 	    continue;
 	}
 
@@ -102,7 +102,7 @@ ged_unhide(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 	bu_free_external( &tmp );
-	dp->d_flags &= (~DIR_HIDDEN);
+	dp->d_flags &= (~RT_DIR_HIDDEN);
     }
 
     return GED_OK;

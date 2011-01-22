@@ -268,7 +268,7 @@ db_free_anim(register struct db_i *dbip)
     /* Node animations */
     for ( i=0; i < RT_DBNHASH; i++ )  {
 	dp = dbip->dbi_Head[i];
-	for (; dp != DIR_NULL; dp = dp->d_forw )  {
+	for (; dp != RT_DIR_NULL; dp = dp->d_forw )  {
 	    for ( anp = dp->d_animate; anp != ANIM_NULL; )  {
 		register struct animate *nextanp;
 		RT_CK_ANIMATE(anp);

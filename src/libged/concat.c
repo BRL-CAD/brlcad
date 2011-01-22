@@ -385,7 +385,7 @@ ged_get_new_name(const char		*name,
 
 	num++;
 
-    } while (db_lookup( dbip, aname, LOOKUP_QUIET ) != DIR_NULL ||
+    } while (db_lookup( dbip, aname, LOOKUP_QUIET ) != RT_DIR_NULL ||
 	     Tcl_FindHashEntry( used_names_tbl, aname ) != NULL);
 
     /* if they didn't get what they asked for, warn them */
@@ -515,7 +515,7 @@ ged_copy_object(struct ged		*gedp,
 	new_name = input_dp->d_namep;
     }
     if ( (new_dp = db_diradd( curr_dbip, new_name, RT_DIR_PHONY_ADDR, 0, input_dp->d_flags,
-			      (genptr_t)&input_dp->d_minor_type ) ) == DIR_NULL ) {
+			      (genptr_t)&input_dp->d_minor_type ) ) == RT_DIR_NULL ) {
 	bu_vls_printf(&gedp->ged_result_str,
 		      "Failed to add new object name (%s) to directory - aborting!!\n",
 		      new_name);

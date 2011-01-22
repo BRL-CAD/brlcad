@@ -284,7 +284,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 
 	    /* Initialize fields */
 	    for (i=0; i<RT_DBNHASH; i++) {
-		dbip->dbi_Head[i] = DIR_NULL;
+		dbip->dbi_Head[i] = RT_DIR_NULL;
 	    }
 
 	    dbip->dbi_local2base = 1.0;		/* mm */

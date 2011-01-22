@@ -927,11 +927,11 @@ Rm_nulls(void)
 	int changed=0;
 
 	/* skip solids */
-	if (dp->d_flags & DIR_SOLID)
+	if (dp->d_flags & RT_DIR_SOLID)
 	    continue;
 
 	/* skip non-geometry */
-	if (!(dp->d_flags & (DIR_SOLID | DIR_COMB)))
+	if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 	    continue;
 
 	if (rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource) < 1) {

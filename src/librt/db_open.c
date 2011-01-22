@@ -148,7 +148,7 @@ db_open(const char *name, const char *mode)
 
     /* Initialize fields */
     for (i=0; i<RT_DBNHASH; i++)
-	dbip->dbi_Head[i] = DIR_NULL;
+	dbip->dbi_Head[i] = RT_DIR_NULL;
 
     dbip->dbi_local2base = 1.0;		/* mm */
     dbip->dbi_base2local = 1.0;
@@ -361,7 +361,7 @@ db_close(register struct db_i *dbip)
 
     /* Free all directory entries */
     for (i=0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != DIR_NULL;) {
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL;) {
 	    RT_CK_DIR(dp);
 	    nextdp = dp->d_forw;
 	    RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
@@ -384,7 +384,7 @@ db_close(register struct db_i *dbip)
 
 	    dp = nextdp;
 	}
-	dbip->dbi_Head[i] = DIR_NULL;	/* sanity*/
+	dbip->dbi_Head[i] = RT_DIR_NULL;	/* sanity*/
     }
 
     if (dbip->dbi_filepath != NULL) {
@@ -431,7 +431,7 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
 
     /* Output all directory entries */
     for (i=0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    RT_CK_DIR(dp);
 	    /* XXX Need to go to internal form, if database versions don't match */
 	    if (db_get_external(&ext, dp, dbip) < 0) {

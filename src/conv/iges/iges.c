@@ -350,10 +350,10 @@ lookup_props(props, name)
 	return 1;
 
     dp  = db_lookup(dbip, name, 1);
-    if (dp == DIR_NULL)
+    if (dp == RT_DIR_NULL)
 	return 1;
 
-    if (!(dp->d_flags & DIR_COMB))
+    if (!(dp->d_flags & RT_DIR_COMB))
 	return 1;
 
     id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);

@@ -67,7 +67,7 @@ node_write(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	extr = (struct rt_extrude_internal *)intern.idb_ptr;
 	RT_EXTRUDE_CK_MAGIC(extr);
 
-	if ((dp2 = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET)) != DIR_NULL) {
+	if ((dp2 = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	    node_write(dbip, dp2, ptr);
 	}
     } else if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD && dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP) {
@@ -80,7 +80,7 @@ node_write(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 
 	if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ) {
 	    /* need to keep this object */
-	    if ((dp2 = db_lookup(dbip, bu_vls_addr(&dsp->dsp_name),  LOOKUP_QUIET)) != DIR_NULL) {
+	    if ((dp2 = db_lookup(dbip, bu_vls_addr(&dsp->dsp_name),  LOOKUP_QUIET)) != RT_DIR_NULL) {
 		node_write(dbip, dp2, ptr);
 	    }
 	}
@@ -145,7 +145,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 
     /* First, clear any existing counts */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    dp->d_nref = 0;
     }
 
@@ -199,7 +199,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&title);
 
     for (i = 1; i < argc; i++) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
 	if (!flag_R) {

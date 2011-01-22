@@ -80,8 +80,8 @@ Free_uses(struct db_i *dbip)
 	struct directory *dp;
 	struct object_use *use;
 
-	for (dp=dbip->dbi_Head[i]; dp!=DIR_NULL; dp=dp->d_forw) {
-	    if (!(dp->d_flags & (DIR_SOLID | DIR_COMB)))
+	for (dp=dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
 	    while (BU_LIST_NON_EMPTY(&dp->d_use_hd)) {
@@ -175,7 +175,7 @@ Make_new_name(struct db_i *dbip,
 	    }
 
 	    /* Insure that new name is unique */
-	    while (db_lookup(dbip, name, 0) != DIR_NULL) {
+	    while (db_lookup(dbip, name, 0) != RT_DIR_NULL) {
 		j++;
 		if (db_version(dbip) < 5) {
 		    snprintf(&name_v4[suffix_start], NAMESIZE-suffix_start, format_v4, j);
@@ -189,7 +189,7 @@ Make_new_name(struct db_i *dbip,
 
 	    /* Add new name to directory */
 	    use->dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&dp->d_minor_type);
-	    if (use->dp == DIR_NULL) {
+	    if (use->dp == RT_DIR_NULL) {
 		bu_vls_printf(&gedp->ged_result_str, "\nAn error has occured while adding a new object to the database.\n"); \
 																 return;
 	    }
@@ -222,7 +222,7 @@ Do_copy_membs(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tr
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
 
-    if ((dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == DIR_NULL)
+    if ((dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL)
 	return;
 
     xform = (matp_t)user_ptr1;
@@ -236,7 +236,7 @@ Do_copy_membs(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tr
     }
 
     /* Copy member with current tranform matrix */
-    if ((dp_new=Copy_object(gedp, dp, new_xform)) == DIR_NULL) {
+    if ((dp_new=Copy_object(gedp, dp, new_xform)) == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Failed to copy object %s", dp->d_namep);
 	return;
     }
@@ -268,9 +268,9 @@ Copy_solid(struct ged *gedp,
 
     RT_CK_DIR(dp);
 
-    if (!(dp->d_flags & DIR_SOLID)) {
+    if (!(dp->d_flags & RT_DIR_SOLID)) {
 	bu_vls_printf(&gedp->ged_result_str, "Copy_solid: %s is not a solid!!!!\n", dp->d_namep);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     /* If no transformation is to be applied, just use the original */
@@ -294,7 +294,7 @@ Copy_solid(struct ged *gedp,
     }
 
     /* get a fresh use */
-    found = DIR_NULL;
+    found = RT_DIR_NULL;
     for (BU_LIST_FOR (use, object_use, &dp->d_use_hd)) {
 	if (use->used)
 	    continue;
@@ -305,25 +305,25 @@ Copy_solid(struct ged *gedp,
 	break;
     }
 
-    if (found == DIR_NULL && dp->d_nref == 1 && dp->d_uses == 1) {
+    if (found == RT_DIR_NULL && dp->d_nref == 1 && dp->d_uses == 1) {
 	/* only one use, take it */
 	found = dp;
     }
 
-    if (found == DIR_NULL) {
+    if (found == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Ran out of uses for solid %s\n", dp->d_namep);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     if (rt_db_get_internal(&sol_int, dp, gedp->ged_wdbp->dbip, xform, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot import solid %s\n", dp->d_namep);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     RT_CK_DB_INTERNAL(&sol_int);
     if (rt_db_put_internal(found, gedp->ged_wdbp->dbip, &sol_int, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot write copy solid (%s) to database\n", found->d_namep);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     return found;
@@ -365,7 +365,7 @@ Copy_comb(struct ged *gedp,
 			 (genptr_t)xform, (genptr_t)gedp, (genptr_t)0);
 
     /* Get a use of this object */
-    found = DIR_NULL;
+    found = RT_DIR_NULL;
     for (BU_LIST_FOR (use, object_use, &dp->d_use_hd)) {
 	/* Get a fresh use of this object */
 	if (use->used)
@@ -376,20 +376,20 @@ Copy_comb(struct ged *gedp,
 	break;
     }
 
-    if (found == DIR_NULL && dp->d_nref == 1 && dp->d_uses == 1) {
+    if (found == RT_DIR_NULL && dp->d_nref == 1 && dp->d_uses == 1) {
 	/* only one use, so take original */
 	found = dp;
     }
 
-    if (found == DIR_NULL) {
+    if (found == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Ran out of uses for combination %s\n", dp->d_namep);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     if (rt_db_put_internal(found, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "rt_db_put_internal failed for %s\n", dp->d_namep);
 	rt_db_free_internal(&intern);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     return found;
@@ -407,7 +407,7 @@ Copy_object(struct ged *gedp,
 {
     RT_CK_DIR(dp);
 
-    if (dp->d_flags & DIR_SOLID)
+    if (dp->d_flags & RT_DIR_SOLID)
 	return Copy_solid(gedp, dp, xform);
     else
 	return Copy_comb(gedp, dp, xform);
@@ -426,7 +426,7 @@ Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
 
-    if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == DIR_NULL)
+    if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL)
 	return;
 
     dp->d_nref++;
@@ -468,10 +468,10 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* get directory pointer for arg */
-    if ((old_dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((old_dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return GED_ERROR;
 
-    if (old_dp->d_flags & DIR_SOLID) {
+    if (old_dp->d_flags & RT_DIR_SOLID) {
 	bu_log("Attempt to xpush a primitive, aborting.\n");
 	return GED_ERROR;
     }
@@ -480,8 +480,8 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     for (i=0; i<RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=gedp->ged_wdbp->dbip->dbi_Head[i]; dp!=DIR_NULL; dp=dp->d_forw) {
-	    if (!(dp->d_flags & (DIR_SOLID | DIR_COMB)))
+	for (dp=gedp->ged_wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
 	    dp->d_uses = 0;
@@ -496,11 +496,11 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     for (i=0; i<RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=gedp->ged_wdbp->dbip->dbi_Head[i]; dp!=DIR_NULL; dp=dp->d_forw) {
-	    if (dp->d_flags & DIR_SOLID)
+	for (dp=gedp->ged_wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	    if (dp->d_flags & RT_DIR_SOLID)
 		continue;
 
-	    if (!(dp->d_flags & (DIR_SOLID | DIR_COMB)))
+	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
 	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
@@ -520,11 +520,11 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     for (i=0; i<RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=gedp->ged_wdbp->dbip->dbi_Head[i]; dp!=DIR_NULL; dp=dp->d_forw) {
-	    if (dp->d_flags & DIR_SOLID)
+	for (dp=gedp->ged_wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	    if (dp->d_flags & RT_DIR_SOLID)
 		continue;
 
-	    if (!(dp->d_flags & (DIR_SOLID | DIR_COMB)))
+	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
 	    if (dp->d_nref == 0)
@@ -536,8 +536,8 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     for (i=0; i<RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=gedp->ged_wdbp->dbip->dbi_Head[i]; dp!=DIR_NULL; dp=dp->d_forw) {
-	    if (!(dp->d_flags & (DIR_SOLID | DIR_COMB)))
+	for (dp=gedp->ged_wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
 	    dp->d_nref = 0;

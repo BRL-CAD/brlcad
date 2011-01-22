@@ -200,7 +200,7 @@ ged_dir_check5(struct db_i		*input_dbip,
     }
 
     /* Look up this new name in the existing (main) database */
-    if ((dupdp = db_lookup(dcsp->main_dbip, bu_vls_addr( &local ), LOOKUP_QUIET)) != DIR_NULL) {
+    if ((dupdp = db_lookup(dcsp->main_dbip, bu_vls_addr( &local ), LOOKUP_QUIET)) != RT_DIR_NULL) {
 	/* Duplicate found, add it to the list */
 	dcsp->wdbp->wdb_num_dups++;
 	*dcsp->dup_dirp++ = dupdp;
@@ -248,7 +248,7 @@ ged_dir_check(struct db_i *input_dbip, const char *name, off_t UNUSED(laddr), si
     }
 
     /* Look up this new name in the existing (main) database */
-    if ((dupdp = db_lookup(dcsp->main_dbip, bu_vls_addr( &local ), LOOKUP_QUIET)) != DIR_NULL) {
+    if ((dupdp = db_lookup(dcsp->main_dbip, bu_vls_addr( &local ), LOOKUP_QUIET)) != RT_DIR_NULL) {
 	/* Duplicate found, add it to the list */
 	dcsp->wdbp->wdb_num_dups++;
 	*dcsp->dup_dirp++ = dupdp;
