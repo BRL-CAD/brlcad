@@ -40,7 +40,7 @@
  * Return the object hierarchy for all object(s) specified or for all currently displayed
  *
  * Usage:
- *        tree [-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]
+ *        tree [-a] [-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]
  *
  */
 int
@@ -48,7 +48,7 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory	*dp;
     int		j;
-    int				cflag = 0;
+    unsigned                    flags = 0;
     int				indentSize = -1;
     int                         displayDepth = INT_MAX;
     int				c;
@@ -56,7 +56,7 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
     char			*buffer = NULL;
 #define WHOARGVMAX 256
     char				*whoargv[WHOARGVMAX+1] = {0};
-    static const char *usage = "[-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]";
+    static const char *usage = "[-a] [-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -67,13 +67,16 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
 
     /* Parse options */
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, (char * const *)argv, "d:i:o:c")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "d:i:o:ca")) != EOF) {
 	switch (c) {
 	    case 'i':
 		indentSize = atoi(bu_optarg);
 		break;
+	    case 'a':
+		flags |= _GED_TREE_AFLAG;
+		break;
 	    case 'c':
-		cflag = 1;
+		flags |= _GED_TREE_CFLAG;
 		break;
 	    case 'o':
 		if ((fdout = fopen(bu_optarg, "w+b")) == NULL) {
@@ -117,9 +120,9 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
 
 	if (j > 1)
 	    bu_vls_printf(&gedp->ged_result_str, "\n");
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, next, LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, next, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
-	_ged_print_node(gedp, dp, 0, indentSize, 0, cflag, displayDepth, 0);
+	_ged_print_node(gedp, dp, 0, indentSize, 0, flags, displayDepth, 0);
     }
 
     if (buffer) {

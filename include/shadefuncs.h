@@ -86,9 +86,13 @@ OPTICAL_EXPORT BU_EXTERN(int mlib_setup,
 OPTICAL_EXPORT BU_EXTERN(void mlib_free,
 			 (struct region *rp));
 
-OPTICAL_EXPORT BU_EXTERN(struct mfuncs *load_dynamic_shader,
-			 (const char *material,
-			  const int mlen));
+/**
+ * L O A D _ D Y N A M I C _ S H A D E R
+ *
+ * Given a shader/material name, try to find a DSO to supply the
+ * shader.
+ */
+OPTICAL_EXPORT BU_EXTERN(struct mfuncs *load_dynamic_shader, (const char *material));
 
 #endif
 /** @} */

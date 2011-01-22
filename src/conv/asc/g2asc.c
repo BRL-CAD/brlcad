@@ -277,7 +277,7 @@ main(int argc, char **argv)
 		continue;
 	    }
 
-	    if ( dp->d_flags & DIR_COMB ) {
+	    if ( dp->d_flags & RT_DIR_COMB ) {
 		struct bu_vls logstr;
 
 		bu_vls_init(&logstr);
@@ -290,7 +290,7 @@ main(int argc, char **argv)
 		}
 		Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)0);
 		bu_vls_free(&logstr);
-		if ( dp->d_flags & DIR_REGION ) {
+		if ( dp->d_flags & RT_DIR_REGION ) {
 		    fprintf( ofp, "put {%s} comb region yes tree {%s}\n",
 			     tclify_name( dp->d_namep ),
 			     Tcl_GetStringResult(interp) );

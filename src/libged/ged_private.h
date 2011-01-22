@@ -37,25 +37,29 @@
 
 __BEGIN_DECLS
 
-#define _GED_V4_MAXNAME	NAMESIZE
+#define _GED_V4_MAXNAME NAMESIZE
 #define _GED_TERMINAL_WIDTH 80
 #define _GED_COLUMNS ((_GED_TERMINAL_WIDTH + _GED_V4_MAXNAME - 1) / _GED_V4_MAXNAME)
 
 #define _GED_MAX_LEVELS 12
-#define _GED_CPEVAL	0
-#define _GED_LISTPATH	1
-#define _GED_LISTEVAL	2
-#define _GED_EVAL_ONLY	3
+#define _GED_CPEVAL      0
+#define _GED_LISTPATH    1
+#define _GED_LISTEVAL    2
+#define _GED_EVAL_ONLY   3
         
 #define _GED_WIREFRAME        0
 #define _GED_SHADED_MODE_BOTS 1
 #define _GED_SHADED_MODE_ALL  2
 #define _GED_BOOL_EVAL        3
 
+#define _GED_TREE_AFLAG 0x01
+#define _GED_TREE_CFLAG 0x02
+
 struct _ged_id_names {
     struct bu_list l;
     struct bu_vls name;		/**< name associated with region id */
 };
+
 
 struct _ged_id_to_names {
     struct bu_list l;
@@ -63,82 +67,90 @@ struct _ged_id_to_names {
     struct _ged_id_names headName;	/**< head of list of names */
 };
 
+
 struct _ged_client_data {
-    struct ged			*gedp;
-    struct ged_display_list	*gdlp;
-    int				wireframe_color_override;
-    int				wireframe_color[3];
-    int				draw_nmg_only;
-    int				nmg_triangulate;
-    int				draw_wireframes;
-    int				draw_normals;
-    int				draw_solid_lines_only;
-    int				draw_no_surfaces;
-    int				shade_per_vertex_normals;
-    int				draw_edge_uses;
-    int				fastpath_count;			/* statistics */
-    int				do_not_draw_nmg_solids_during_debugging;
-    struct bn_vlblock		*draw_edge_uses_vbp;
-    int				shaded_mode_override;
-    fastf_t			transparency;
-    int				dmode;
-    int				hiddenLine;
+    struct ged *gedp;
+    struct ged_display_list *gdlp;
+    int wireframe_color_override;
+    int wireframe_color[3];
+    int draw_nmg_only;
+    int nmg_triangulate;
+    int draw_wireframes;
+    int draw_normals;
+    int draw_solid_lines_only;
+    int draw_no_surfaces;
+    int shade_per_vertex_normals;
+    int draw_edge_uses;
+    int fastpath_count;			/* statistics */
+    int do_not_draw_nmg_solids_during_debugging;
+    struct bn_vlblock *draw_edge_uses_vbp;
+    int shaded_mode_override;
+    fastf_t transparency;
+    int dmode;
+    int hiddenLine;
     /* bigE related members */
-    struct application		*ap;
-    struct bu_ptbl		leaf_list;
-    struct rt_i			*rtip;
-    time_t			start_time;
-    time_t			etime;
-    long			nvectors;
-    int				do_polysolids;
-    int				num_halfs;
+    struct application *ap;
+    struct bu_ptbl leaf_list;
+    struct rt_i *rtip;
+    time_t start_time;
+    time_t etime;
+    long nvectors;
+    int do_polysolids;
+    int num_halfs;
 };
 
+
 struct _ged_trace_data {
-    struct ged	      *gtd_gedp;
-    struct directory  *gtd_path[_GED_MAX_LEVELS];
-    struct directory  *gtd_obj[_GED_MAX_LEVELS];
-    mat_t	      gtd_xform;
-    int		      gtd_objpos;
-    int		      gtd_prflag;
-    int		      gtd_flag;
+    struct ged *gtd_gedp;
+    struct directory *gtd_path[_GED_MAX_LEVELS];
+    struct directory *gtd_obj[_GED_MAX_LEVELS];
+    mat_t gtd_xform;
+    int gtd_objpos;
+    int gtd_prflag;
+    int gtd_flag;
 };
+
 
 /* defined in globals.c */
 extern struct solid _FreeSolid;
 
+/* defined in attr.c */
+BU_EXTERN (int _ged_cmpattr,
+	   (const void *p1,
+            const void *p2));
+
 /* defined in ged.c */
 BU_EXTERN (void _ged_print_node,
-	   (struct ged		*gedp,
+	   (struct ged *gedp,
 	    struct directory *dp,
-	    size_t		pathpos,
-	    int			indentSize,
-	    char		prefix,
-	    int			cflag,
-	    int                 displayDepth,
-	    int                 currdisplayDepth));
+	    size_t pathpos,
+	    int indentSize,
+	    char prefix,
+	    unsigned flags,
+	    int displayDepth,
+	    int currdisplayDepth));
 BU_EXTERN (struct db_i *_ged_open_dbip,
 	   (const char *filename,
 	    int existing_only));
 
 /* defined in color.c */
 BU_EXTERN (void _ged_color_putrec,
-	   (struct ged			*gedp,
-	    struct mater	*mp));
+	   (struct ged *gedp,
+	    struct mater *mp));
 	    
 BU_EXTERN (void _ged_color_zaprec,
-	   (struct ged			*gedp,
-	    struct mater	*mp));
+	   (struct ged *gedp,
+	    struct mater *mp));
 
 /* defined in comb.c */
 BU_EXTERN (struct directory *_ged_combadd,
-	   (struct ged			*gedp,
-	    struct directory	*objp,
-	    char			*combname,
-	    int				region_flag,
-	    int				relation,
-	    int				ident,
-	    int				air));
+	   (struct ged *gedp,
+	    struct directory *objp,
+	    char *combname,
+	    int region_flag,
+	    int relation,
+	    int ident,
+	    int air));
 
 /* defined in draw.c */
 BU_EXTERN (void _ged_cvt_vlblock_to_solids,
@@ -147,13 +159,13 @@ BU_EXTERN (void _ged_cvt_vlblock_to_solids,
 	    char *name,
 	    int copy));
 BU_EXTERN (int _ged_invent_solid,
-	   (struct ged		*gedp,
-	    char		*name,
-	    struct bu_list	*vhead,
-	    long int		rgb,
-	    int			copy,
-	    fastf_t		transparency,
-	    int			dmode));
+	   (struct ged *gedp,
+	    char *name,
+	    struct bu_list *vhead,
+	    long int rgb,
+	    int copy,
+	    fastf_t transparency,
+	    int dmode));
 BU_EXTERN (int _ged_drawtrees,
 	   (struct ged *gedp,
 	    int argc,
@@ -175,30 +187,30 @@ BU_EXTERN (int _ged_editit,
 
 /* defined in erase.c */
 BU_EXTERN (void _ged_eraseobjpath,
-	   (struct ged	*gedp,
-	    int		argc,
-	    const char	*argv[],
-	    const int	noisy,
-	    const int	all,
-	    const int	skip_first));
+	   (struct ged *gedp,
+	    int argc,
+	    const char *argv[],
+	    const int noisy,
+	    const int all,
+	    const int skip_first));
 BU_EXTERN (void _ged_eraseobjall,
-	   (struct ged			*gedp,
-	    struct directory	**dpp,
-	    int				skip_first));
+	   (struct ged *gedp,
+	    struct directory **dpp,
+	    int skip_first));
 BU_EXTERN (void _ged_eraseobj,
-	   (struct ged			*gedp,
-	    struct directory	**dpp,
-	    int				skip_first));
+	   (struct ged *gedp,
+	    struct directory **dpp,
+	    int skip_first));
 BU_EXTERN (void _ged_eraseAllNamesFromDisplay,
-	   (struct ged			*gedp,
-	    const char			*name,
-	    const int			skip_first));
+	   (struct ged *gedp,
+	    const char *name,
+	    const int skip_first));
 BU_EXTERN (void _ged_eraseAllPathsFromDisplay,
-	   (struct ged			*gedp,
-	    const char			*path,
-	    const int			skip_first));
+	   (struct ged *gedp,
+	    const char *path,
+	    const int skip_first));
 BU_EXTERN (void _ged_freeDisplayListItem,
-	   (struct ged			*gedp,
+	   (struct ged *gedp,
 	    struct ged_display_list *gdlp));
 
 
@@ -209,20 +221,20 @@ BU_EXTERN(void _ged_vls_print_matrix,
 
 /* defined in get_obj_bounds.c */
 BU_EXTERN (int _ged_get_obj_bounds,
-	   (struct ged		*gedp,
-	    int			argc,
-	    const char		*argv[],
-	    int			use_air,
-	    point_t		rpp_min,
-	    point_t		rpp_max));
+	   (struct ged *gedp,
+	    int argc,
+	    const char *argv[],
+	    int use_air,
+	    point_t rpp_min,
+	    point_t rpp_max));
 
 BU_EXTERN (int _ged_get_obj_bounds2,
-	   (struct ged			*gedp,
-	    int				argc,
-	    const char			*argv[],
-	    struct _ged_trace_data	*gtdp,
-	    point_t			rpp_min,
-	    point_t			rpp_max));
+	   (struct ged *gedp,
+	    int argc,
+	    const char *argv[],
+	    struct _ged_trace_data *gtdp,
+	    point_t rpp_min,
+	    point_t rpp_max));
 
 /* defined in how.c */
 BU_EXTERN (struct directory **_ged_build_dpp,
@@ -231,9 +243,9 @@ BU_EXTERN (struct directory **_ged_build_dpp,
 
 /* defined in list.c */
 BU_EXTERN(void _ged_do_list,
-	  (struct ged			*gedp,
-	   struct directory	*dp,
-	   int				verbose));
+	  (struct ged *gedp,
+	   struct directory *dp,
+	   int verbose));
 
 /* defined in loadview.c */
 extern vect_t _ged_eye_model;
@@ -264,13 +276,13 @@ BU_EXTERN (int _ged_cm_null,
 
 /* defined in ls.c */
 BU_EXTERN(void _ged_vls_col_pr4v,
-	  (struct bu_vls	*vls,
-	   struct directory	**list_of_names,
-	   int			num_in_list,
-	   int			no_decorate));
+	  (struct bu_vls *vls,
+	   struct directory **list_of_names,
+	   size_t num_in_list,
+	   int no_decorate));
 BU_EXTERN(struct directory ** _ged_getspace,
-	  (struct db_i	*dbip,
-	   int	num_entries));
+	  (struct db_i *dbip,
+	   size_t num_entries));
 
 /* defined in preview.c */
 BU_EXTERN (void _ged_setup_rt,
@@ -315,7 +327,7 @@ BU_EXTERN (void _ged_rt_write,
 	    vect_t eye_model));
 BU_EXTERN (void _ged_rt_output_handler,
 	   (ClientData clientData,
-	    int	 mask));
+	    int mask));
 
 /* defined in rtcheck.c */
 BU_EXTERN (void _ged_wait_status,
@@ -448,15 +460,15 @@ BU_EXTERN (int _ged_scale_tor,
 
 /* defined in tops.c */
 struct directory **
-_ged_dir_getspace(struct db_i	*dbip,
-		 int	num_entries);
+_ged_dir_getspace(struct db_i *dbip,
+		  int num_entries);
 
 /* defined in trace.c */
 BU_EXTERN (void _ged_trace,
-	   (struct directory	*dp,
-	    int				pathpos,
-	    const mat_t			old_xlate,
-	    struct _ged_trace_data	*gtdp));
+	   (struct directory *dp,
+	    int pathpos,
+	    const mat_t old_xlate,
+	    struct _ged_trace_data *gtdp));
 
 /* defined in translate_extrude.c */
 BU_EXTERN (int _ged_translate_extrude,
@@ -478,21 +490,21 @@ BU_EXTERN (int _ged_translate_tgc,
 BU_EXTERN (void _ged_mat_aet,
 	   (struct ged_view *gvp));
 BU_EXTERN (int _ged_do_rot,
-	   (struct ged	*gedp,
-	    char	coord,
-	    mat_t	rmat,
-	    int		(*func)()));
+	   (struct ged *gedp,
+	    char coord,
+	    mat_t rmat,
+	    int (*func)()));
 BU_EXTERN (int _ged_do_slew,
-	   (struct ged	*gedp,
-	    vect_t	svec));
+	   (struct ged *gedp,
+	    vect_t svec));
 BU_EXTERN (int _ged_do_tra,
-	   (struct ged	*gedp,
-	    char	coord,
-	    vect_t	tvec,
-	    int		(*func)()));
+	   (struct ged *gedp,
+	    char coord,
+	    vect_t tvec,
+	    int (*func)()));
 BU_EXTERN (int _ged_do_zoom,
-	   (struct ged	*gedp,
-	    fastf_t	sf));
+	   (struct ged *gedp,
+	    fastf_t sf));
 
 /* defined in ged_util.c */
 BU_EXTERN (int _ged_results_append_str,

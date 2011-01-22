@@ -399,7 +399,7 @@ db5_update_attribute(const char *obj_name, const char *name, const char *value, 
     struct bu_attribute_value_set avs;
 
     RT_CK_DBI(dbip);
-    if ((dp = db_lookup(dbip, obj_name, LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp = db_lookup(dbip, obj_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return -1;
 
     bu_avs_init(&avs, 2, "db5_update_attribute");
@@ -431,7 +431,7 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
 
     RT_CK_DBI(dbip);
 
-    if ((dp = db_lookup(dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET)) == DIR_NULL) {
+    if ((dp = db_lookup(dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	struct bu_external global;
 	unsigned char minor_type=0;
 

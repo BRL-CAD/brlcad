@@ -65,6 +65,7 @@ rr_miss(struct application *ap)
     return 1;	/* treat as escaping ray */
 }
 
+
 /*
  * R R _ H I T
  *
@@ -99,7 +100,7 @@ rr_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     RT_APPLICATION_INIT(&appl);
 
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw)
-	if (pp->pt_outhit->hit_dist > 0.0)  break;
+	if (pp->pt_outhit->hit_dist > 0.0) break;
     if (pp == PartHeadp) {
 	if (R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) {
 	    bu_log("rr_hit:  %d, %d no hit out front?\n",
@@ -122,7 +123,7 @@ rr_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     psave = pp;
     if (R_DEBUG&RDEBUG_REFRACT) bu_log("rr_hit(%s)\n", psave->pt_regionp->reg_name);
     for (; pp != PartHeadp; pp = pp->pt_forw)
-	if (pp->pt_regionp == (struct region *)(ap->a_uptr))  break;
+	if (pp->pt_regionp == (struct region *)(ap->a_uptr)) break;
     if (pp == PartHeadp) {
 	if (R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) {
 	    bu_log("rr_hit:  %d, %d Ray internal to %s landed unexpectedly in %s\n",
@@ -273,12 +274,13 @@ rr_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
 	}
     }
     ret = 2;				/* OK -- no more glass */
- out:
+out:
     if (R_DEBUG&RDEBUG_REFRACT) bu_log("rr_hit(%s) return=%d\n",
 				       psave ? psave->pt_regionp->reg_name : "",
 				       ret);
     return ret;
 }
+
 
 /*
  * R E F R A C T
@@ -721,7 +723,7 @@ vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 
 	if (code == 3) {
 	    sub_ap.a_purpose = "rr recurse on next glass";
 	    sub_ap.a_flag = 0;
-	}  else  {
+	} else {
 	    sub_ap.a_purpose = "rr recurse on escaping internal ray";
 	    sub_ap.a_flag = 1;
 	    sub_ap.a_onehit = sub_ap.a_onehit > -3 ? -3 : sub_ap.a_onehit;
@@ -769,7 +771,7 @@ vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 
      * Handle any reflection, including mirror reflections
      * detected by the transmission code, above.
      */
- do_reflection:
+do_reflection:
 #ifdef RT_MULTISPECTRAL
     if (sub_ap.a_spectrum) {
 	bu_free(sub_ap.a_spectrum, "rr_render: sub_ap.a_spectrum bn_tabdata*");
@@ -881,7 +883,7 @@ vdraw open rrnorm;vdraw params c 00ffff;vdraw write n 0 %g %g %g;vdraw write n 1
 	VPRINT("transmit", transmit_color);
 #endif
     }
- out:
+out:
     if (R_DEBUG&RDEBUG_REFRACT) {
 #ifdef RT_MULTISPECTRAL
 	{
@@ -907,6 +909,7 @@ vdraw open rrnorm;vdraw params c 00ffff;vdraw write n 0 %g %g %g;vdraw write n 1
 
     return 1;
 }
+
 
 /*
  * Local Variables:

@@ -1366,7 +1366,7 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     sketch_name = (char *)ptr + (ELEMENTS_PER_VECT*3 + 1)*SIZEOF_NETWORK_DOUBLE;
     if (!dbip)
 	rip->sk = (struct rt_sketch_internal *)NULL;
-    else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL) {
+    else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_log("rt_revolve_import4: ERROR: Cannot find sketch (%s) for extrusion\n",
 	       sketch_name);
 	rip->sk = (struct rt_sketch_internal *)NULL;

@@ -927,7 +927,7 @@ fillItemTree( jobject parent_node,
     jobject node;
     const char *muvesName;
 
-    if ( (dp=db_lookup( dbip, name, LOOKUP_QUIET )) == DIR_NULL ) {
+    if ( (dp=db_lookup( dbip, name, LOOKUP_QUIET )) == RT_DIR_NULL ) {
 	return;
     }
 
@@ -953,7 +953,7 @@ fillItemTree( jobject parent_node,
     }
 
 
-    if ( dp->d_flags & DIR_REGION ) {
+    if ( dp->d_flags & RT_DIR_REGION ) {
 	struct rt_comb_internal *comb;
 	jint ident, los, uses;
 
@@ -1020,7 +1020,7 @@ fillItemTree( jobject parent_node,
 	return;
     }
 
-    if ( dp->d_flags & DIR_COMB ) {
+    if ( dp->d_flags & RT_DIR_COMB ) {
 	/* recurse into this combination */
 	struct rt_comb_internal *comb;
 

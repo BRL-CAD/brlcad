@@ -92,7 +92,7 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (i = 1; i < argc; i++) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i], verbose)) != DIR_NULL) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i], verbose)) != RT_DIR_NULL) {
 	    if ( !force && dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0 ) {
 		bu_vls_printf(&gedp->ged_result_str, "You attempted to delete the _GLOBAL object.\n");
 		bu_vls_printf(&gedp->ged_result_str, "\tIf you delete the \"_GLOBAL\" object you will be losing some important information\n" );

@@ -60,7 +60,6 @@ for script in $ac_top_builddir $ac_abs_builddir $ac_builddir . ; do
 		# provokes libtool linker bug with noinst libraries.
 	        darwin*)
 		    sed 's/-all_load.*convenience//g' < $libtoolscript > ${libtoolscript}.sed
-		    sed "s/temp_rpath=\$/temp_rpath=$TCL_PATH:$TK_PATH/g" < $libtoolscript.sed > ${libtoolscript}.sed2
 		    if test ! "x`cat ${libtoolscript}`" = "x`cat ${libtoolscript}.sed2`" ; then
 			AC_MSG_RESULT([Found -all_load in libtool script, removing])
 			cp ${libtoolscript}.sed2 ${libtoolscript}

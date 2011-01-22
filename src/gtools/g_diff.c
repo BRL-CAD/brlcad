@@ -700,7 +700,7 @@ compare_attrs(struct directory *dp1, struct directory *dp2)
 
     bu_vls_init(&vls);
 
-    if (dbip1->dbi_version > 4) {
+    if (db_version(dbip1) > 4) {
 	bu_vls_printf(&vls, "_db1 attr get %s", dp1->d_namep);
 	if (Tcl_Eval(interp, bu_vls_addr(&vls)) != TCL_OK) {
 	    fprintf(stderr, "Cannot get attributes for %s\n", dp1->d_namep);
@@ -710,14 +710,14 @@ compare_attrs(struct directory *dp1, struct directory *dp2)
 
 	obj1 = Tcl_DuplicateObj(Tcl_GetObjResult(interp));
 	Tcl_ResetResult(interp);
-	if (dp1->d_flags & DIR_REGION && verify_region_attribs) {
+	if (dp1->d_flags & RT_DIR_REGION && verify_region_attribs) {
 	    verify_region_attrs(dp1, dbip1, obj1);
 	}
     } else {
 	obj1 = Tcl_NewObj();
     }
 
-    if (dbip2->dbi_version > 4) {
+    if (db_version(dbip2) > 4) {
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "_db2 attr get %s", dp1->d_namep);
 	if (Tcl_Eval(interp, bu_vls_addr(&vls)) != TCL_OK) {
@@ -728,14 +728,14 @@ compare_attrs(struct directory *dp1, struct directory *dp2)
 
 	obj2 = Tcl_DuplicateObj(Tcl_GetObjResult(interp));
 	Tcl_ResetResult(interp);
-	if (dp1->d_flags & DIR_REGION && verify_region_attribs) {
+	if (dp1->d_flags & RT_DIR_REGION && verify_region_attribs) {
 	    verify_region_attrs(dp2, dbip2, obj2);
 	}
     } else {
 	obj2 = Tcl_NewObj();
     }
 
-    if ((dp1->d_flags & DIR_REGION) && (dp2->d_flags & DIR_REGION)) {
+    if ((dp1->d_flags & RT_DIR_REGION) && (dp2->d_flags & RT_DIR_REGION)) {
 	/* don't complain about "region" attributes */
 	remove_region_attrs(obj1);
 	remove_region_attrs(obj2);
@@ -772,7 +772,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	Tcl_Obj *obj1, *obj2;
 
 	/* check if this object exists in the other database */
-	if ((dp2 = db_lookup(dbip2, dp1->d_namep, 0)) == DIR_NULL) {
+	if ((dp2 = db_lookup(dbip2, dp1->d_namep, 0)) == RT_DIR_NULL) {
 	    kill_obj(dp1->d_namep);
 	    continue;
 	}
@@ -825,7 +825,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	Tcl_ResetResult(interp);
 
 	/* got TCL versions of both */
-	if ((dp1->d_flags & DIR_SOLID) && (dp2->d_flags & DIR_SOLID)) {
+	if ((dp1->d_flags & RT_DIR_SOLID) && (dp2->d_flags & RT_DIR_SOLID)) {
 	    /* both are solids */
 	    has_diff += compare_tcl_solids(str1, obj1, dp1, str2, obj2);
 	    if (pre_5_vers != 2) {
@@ -834,7 +834,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	    continue;
 	}
 
-	if ((dp1->d_flags & DIR_COMB) && (dp2->d_flags & DIR_COMB)) {
+	if ((dp1->d_flags & RT_DIR_COMB) && (dp2->d_flags & RT_DIR_COMB)) {
 	    /* both are combinations */
 	    has_diff += compare_tcl_combs(obj1, dp1, obj2);
 	    if (pre_5_vers != 2) {
@@ -865,7 +865,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	    continue;
 
 	/* check if this object exists in the other database */
-	if ((dp1 = db_lookup(dbip1, dp2->d_namep, 0)) == DIR_NULL) {
+	if ((dp1 = db_lookup(dbip1, dp2->d_namep, 0)) == RT_DIR_NULL) {
 	    /* need to add this object */
 	    has_diff += 1;
 	    argv[2] = dp2->d_namep;
@@ -988,7 +988,7 @@ main(int argc, char **argv)
     mater_hd1 = rt_dup_material_head();
     rt_color_free();
 
-    if (dbip1->dbi_version < 5) {
+    if (db_version(dbip1) < 5) {
 	pre_5_vers++;
     }
 
@@ -1026,7 +1026,7 @@ main(int argc, char **argv)
     mater_hd2 = rt_dup_material_head();
     rt_color_free();
 
-    if (dbip2->dbi_version < 5) {
+    if (db_version(dbip2) < 5) {
 	pre_5_vers++;
 	version2 = 4;
     } else {

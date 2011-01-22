@@ -2209,7 +2209,7 @@ extrude_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
     eip->sketch_name = bu_strdup(cmd_argvs[15]);
     /* eip->keypoint = atoi(cmd_argvs[16]); */
 
-    if ((dp=db_lookup(gedp->ged_wdbp->dbip, eip->sketch_name, LOOKUP_NOISY)) == DIR_NULL) {
+    if ((dp=db_lookup(gedp->ged_wdbp->dbip, eip->sketch_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot find sketch (%s) for extrusion (%s)\n",
 		      eip->sketch_name, cmd_argvs[1]);
 	eip->skt = (struct rt_sketch_internal *)NULL;
@@ -2261,7 +2261,7 @@ revolve_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
     VUNITIZE(rip->r);
     VUNITIZE(rip->axis3d);
 
-    if ((dp=db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&rip->sketch_name), LOOKUP_NOISY)) == DIR_NULL) {
+    if ((dp=db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&rip->sketch_name), LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot find sketch (%s) for revolve (%s)\n",
 		      bu_vls_addr(&rip->sketch_name), cmd_argvs[1]);
 	rip->sk = (struct rt_sketch_internal *)NULL;
@@ -2815,11 +2815,11 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "Enter name of solid: ");
 	return GED_MORE;
     }
-    if (db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s already exists", argv[0], argv[1]);
 	return GED_ERROR;
     }
-    if (gedp->ged_wdbp->dbip->dbi_version <= 4 && (int)strlen(argv[1]) > NAMESIZE) {
+    if (db_version(gedp->ged_wdbp->dbip) < 5 && (int)strlen(argv[1]) > NAMESIZE) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, v4 names are limited to %d characters\n", argv[0], NAMESIZE);
 	return GED_ERROR;
     }
@@ -2872,7 +2872,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	menu = p_vol;
 	fn_in = vol_in;
     } else if (BU_STR_EQUAL(argv[2], "hf")) {
-	if (gedp->ged_wdbp->dbip->dbi_version <= 4) {
+	if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	    nvals = 19;
 	    menu = p_hf;
 	    fn_in = hf_in;
@@ -2886,7 +2886,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "%s: the polysolid is deprecated and not supported by this command.\nUse the bot primitive.\n", argv[0]);
 	return GED_ERROR;
     } else if (BU_STR_EQUAL(argv[2], "dsp")) {
-	if (gedp->ged_wdbp->dbip->dbi_version <= 4) {
+	if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	    nvals = 6;
 	    menu = p_dsp_v4;
 	    fn_in = dsp_in_v4;
@@ -3025,7 +3025,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	menu = p_part;
 	fn_in = part_in;
     } else if (BU_STR_EQUAL(argv[2], "binunif")) {
-	if (gedp->ged_wdbp->dbip->dbi_version <= 4) {
+	if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "%s: the binunif primitive is not supported by this command when using an old style database",
 			  argv[0]);
@@ -3095,8 +3095,8 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
  do_new_update:
     /* The function may have already written via LIBWDB */
     if (internal.idb_ptr != NULL) {
-	dp=db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&internal.idb_type);
-	if (dp == DIR_NULL) {
+	dp=db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type);
+	if (dp == RT_DIR_NULL) {
 	    rt_db_free_internal(&internal);
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add '%s' to directory\n", argv[0], name);
 	    return GED_ERROR;

@@ -196,7 +196,7 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
     RT_CK_FULL_PATH( pathp );
     dp = DB_FULL_PATH_CUR_DIR( pathp );
 
-    if ( !(dp->d_flags & DIR_COMB) )
+    if ( !(dp->d_flags & RT_DIR_COMB) )
 	return -1;
 
     id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource );
@@ -672,7 +672,7 @@ main(int argc, char **argv)
 	struct directory *dp;
 
 	dp = db_lookup( dbip, argv[i], LOOKUP_QUIET );
-	if ( dp == DIR_NULL )
+	if ( dp == RT_DIR_NULL )
 	{
 	    bu_log( "Cannot find %s\n", argv[i] );
 	    continue;
@@ -681,7 +681,7 @@ main(int argc, char **argv)
 	fprintf ( fp_out, "# Includes group %s\n", argv[i]);
 
 	/* light source must be a combibation */
-	if ( !(dp->d_flags & DIR_COMB) )
+	if ( !(dp->d_flags & RT_DIR_COMB) )
 	    continue;
 
 	/* walk trees selecting only light source regions */
@@ -756,7 +756,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     RT_CK_FULL_PATH( pathp );
     dp = DB_FULL_PATH_CUR_DIR( pathp );
 
-    if ( !(dp->d_flags & DIR_COMB) )
+    if ( !(dp->d_flags & RT_DIR_COMB) )
 	return;
 
     bu_vls_init(&shape_name);

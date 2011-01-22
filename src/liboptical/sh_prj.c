@@ -19,11 +19,11 @@
  */
 /** @file sh_prj.c
  *
- *	Projection shader
+ * Projection shader
  *
- *	The one parameter to this shader is a filename.  The named file
- *	contains the REAL parameters to the shader.  The v4 database format
- *	is far too anemic to support this sort of shader.
+ * The one parameter to this shader is a filename.  The named file
+ * contains the REAL parameters to the shader.  The v4 database format
+ * is far too anemic to support this sort of shader.
  *
  */
 
@@ -49,31 +49,31 @@
 #define CK_prj_SP(_p) BU_CKMAG(_p, prj_MAGIC, "prj_specific")
 
 struct img_specific {
-    struct bu_list	l;
-    unsigned long	junk;
+    struct bu_list l;
+    unsigned long junk;
     struct bu_vls i_name; /* name of object or file (depending on i_datasrc flag) */
 #define IMG_SRC_FILE 'f'
-#define IMG_SRC_OBJECT  'o'
+#define IMG_SRC_OBJECT 'o'
 #define IMG_SRC_AUTO 0
     char i_datasrc; /* is the datasource a file/object or automatic */
     struct bu_mapped_file *i_data; /* mapped file when IMG_SRC_FILE */
     struct rt_binunif_internal *i_binunifp;  /* db internal object when IMG_SRC_OBJECT */
     unsigned char *i_img;
-    int		i_width;
-    int		i_height;
-    fastf_t	i_viewsize;
-    point_t	i_eye_pt;
-    quat_t	i_orient;
-    mat_t		i_mat;		/* computed from i_orient */
-    mat_t		i_bn_mat_inv;	/* computed (for debug) */
-    plane_t	i_plane;	/* dir/plane of projection */
-    mat_t		i_sh_to_img;	/* transform used in prj_render() */
-    char		i_through;	/* ignore surface normal */
-    char		i_antialias;	/* anti-alias texture */
-    char		i_behind;	/* shade points behind img plane */
-    fastf_t	i_perspective;	/* perspective angle 0=ortho */
+    int i_width;
+    int i_height;
+    fastf_t i_viewsize;
+    point_t i_eye_pt;
+    quat_t i_orient;
+    mat_t i_mat;		/* computed from i_orient */
+    mat_t i_bn_mat_inv;	/* computed (for debug) */
+    plane_t i_plane;	/* dir/plane of projection */
+    mat_t i_sh_to_img;	/* transform used in prj_render() */
+    char i_through;	/* ignore surface normal */
+    char i_antialias;	/* anti-alias texture */
+    char i_behind;	/* shade points behind img plane */
+    fastf_t i_perspective;	/* perspective angle 0=ortho */
 };
-#define img_MAGIC	0x696d6700	/* "img" */
+#define img_MAGIC 0x696d6700	/* "img" */
 
 
 /**
@@ -81,19 +81,19 @@ struct img_specific {
  * to any particular use of the shader.
  */
 struct prj_specific {
-    unsigned long		magic;
-    struct img_specific	prj_images;
-    mat_t			prj_m_to_sh;
-    FILE			*prj_plfd;
+    unsigned long magic;
+    struct img_specific prj_images;
+    mat_t prj_m_to_sh;
+    FILE *prj_plfd;
 };
 
 
 /**
- *  img_source_hook() is used to record where the image datasource is coming from
- *  so that the image may be loaded automatically as needed from either a file or
- *  from a database-embedded binary object.
+ * img_source_hook() is used to record where the image datasource is coming from
+ * so that the image may be loaded automatically as needed from either a file or
+ * from a database-embedded binary object.
  */
-HIDDEN void img_source_hook(const struct bu_structparse *ip, const char *sp_name, genptr_t base, char *p) {
+HIDDEN void img_source_hook(const struct bu_structparse *UNUSED(ip), const char *sp_name, genptr_t base, char *UNUSED(p)) {
     struct img_specific *imageSpecific = (struct img_specific *)base;
     if (strncmp(sp_name, "file", 4) == 0) {
 	imageSpecific->i_datasrc=IMG_SRC_FILE;
@@ -106,7 +106,7 @@ HIDDEN void img_source_hook(const struct bu_structparse *ip, const char *sp_name
 
 
 /**
- *	i m g _ l o a d _ d a t a s o u r c e
+ * i m g _ l o a d _ d a t a s o u r c e
  *
  * This is a helper routine used in prj_setup() to load a projection image
  * either from a file or from a db object.
@@ -126,14 +126,13 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
     if ((image->i_datasrc==IMG_SRC_AUTO) || (image->i_datasrc==IMG_SRC_OBJECT)) {
 
 	/* see if the object exists */
-	if ( (dirEntry=db_lookup(dbInstance, bu_vls_addr(&image->i_name), LOOKUP_QUIET)) == DIR_NULL) {
+	if ((dirEntry=db_lookup(dbInstance, bu_vls_addr(&image->i_name), LOOKUP_QUIET)) == RT_DIR_NULL) {
 
 	    /* unable to find the image object */
 	    if (image->i_datasrc!=IMG_SRC_AUTO) {
 		return -1;
 	    }
-	}
-	else {
+	} else {
 	    struct rt_db_internal *dbip=(struct rt_db_internal *)bu_malloc(sizeof(struct rt_db_internal), "img_load_datasource");
 
 	    RT_INIT_DB_INTERNAL(dbip);
@@ -170,12 +169,12 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
     /* if we are auto and we couldn't find a database object match, or if source
      * is explicitly a file then we load the file.
      */
-    if ( ( (image->i_datasrc==IMG_SRC_AUTO) && (image->i_binunifp==NULL) ) || (image->i_datasrc==IMG_SRC_FILE) ) {
+    if (((image->i_datasrc==IMG_SRC_AUTO) && (image->i_binunifp==NULL)) || (image->i_datasrc==IMG_SRC_FILE)) {
 
 
 	image->i_data = bu_open_mapped_file_with_path(dbInstance->dbi_filepath,	bu_vls_addr(&image->i_name), NULL);
 
-	if ( image->i_data==NULL )
+	if (image->i_data==NULL)
 	    return -1;				/* FAIL */
 
 	if (image->i_data->buflen < size) {
@@ -194,14 +193,14 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
 
 
 /**
- *  Bounds checking on perspective angle
+ * Bounds checking on perspective angle
  */
 HIDDEN void
-persp_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-    /* structure description */
-    /* struct member name */
-    /* begining of structure */
-    /* string containing value */
+persp_hook(register const struct bu_structparse *UNUSED(sdp), register const char *UNUSED(name), char *base, const char *value)
+/* structure description */
+/* struct member name */
+/* begining of structure */
+/* string containing value */
 {
     struct img_specific *img_sp = (struct img_specific *)base;
 
@@ -215,7 +214,7 @@ persp_hook(register const struct bu_structparse *sdp, register const char *name,
 	bu_bomb("");
     }
 
-    if (img_sp->i_perspective != 0.0)
+    if (!NEAR_ZERO(img_sp->i_perspective, SMALL_FASTF))
 	bu_bomb("non-ortho perspective not yet implemented!\n");
 }
 
@@ -224,11 +223,11 @@ persp_hook(register const struct bu_structparse *sdp, register const char *name,
  * Check for value < 0.0
  */
 HIDDEN void
-dimen_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-    /* structure description */
-    /* struct member name */
-    /* begining of structure */
-    /* string containing value */
+dimen_hook(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *value)
+/* structure description */
+/* struct member name */
+/* begining of structure */
+/* string containing value */
 {
     if (BU_STR_EQUAL("%f", sdp->sp_fmt)) {
 	fastf_t *f;
@@ -252,11 +251,11 @@ dimen_hook(register const struct bu_structparse *sdp, register const char *name,
 
 #if 0
 HIDDEN void
-noop_hook( sdp, name, base, value )
-    register const struct bu_structparse	*sdp;	/* structure description */
-    register const char			*name;	/* struct member name */
-    char					*base;	/* begining of structure */
-    const char				*value;	/* string containing value */
+noop_hook(sdp, name, base, value)
+    register const struct bu_structparse *sdp;	/* structure description */
+    register const char *name;	/* struct member name */
+    char *base;	/* begining of structure */
+    const char *value;	/* string containing value */
 {
     struct img_specific *img_sp = (struct img_specific *)base;
 
@@ -277,18 +276,18 @@ noop_hook( sdp, name, base, value )
  * XXX "orient" MUST ALWAYS BE THE LAST PARAMETER SPECIFIED FOR EACH IMAGE.
  */
 static void
-orient_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-    /* structure description */
-    /* struct member name */
-    /* begining of structure */
-    /* string containing value */
+orient_hook(register const struct bu_structparse *UNUSED(sdp), register const char *UNUSED(name), char *base, const char *UNUSED(value))
+/* structure description */
+/* struct member name */
+/* begining of structure */
+/* string containing value */
 {
-    struct prj_specific	*prj_sp;
-    struct img_specific	*img_sp = (struct img_specific *)base;
-    struct img_specific	*img_new;
-    mat_t			trans, scale, tmp, xform;
-    vect_t			v_tmp;
-    point_t			p_tmp;
+    struct prj_specific *prj_sp;
+    struct img_specific *img_sp = (struct img_specific *)base;
+    struct img_specific *img_new;
+    mat_t trans, scale, tmp, xform;
+    vect_t v_tmp;
+    point_t p_tmp;
 
     BU_CK_LIST_HEAD(&img_sp->l);
 
@@ -311,7 +310,7 @@ orient_hook(register const struct bu_structparse *sdp, register const char *name
     /* compute matrix to transform region coordinates into
      * shader projection coordinates:
      *
-     *	prj_coord = scale * rot * translate * region_coord
+     * prj_coord = scale * rot * translate * region_coord
      */
     MAT_IDN(trans);
     MAT_DELTAS_VEC_NEG(trans, img_new->i_eye_pt);
@@ -382,8 +381,9 @@ orient_hook(register const struct bu_structparse *sdp, register const char *name
     BU_LIST_APPEND(&img_sp->l, &img_new->l);
 }
 
-#define IMG_O(m)	bu_offsetof(struct img_specific, m)
-#define IMG_AO(m)	bu_offsetofarray(struct img_specific, m)
+
+#define IMG_O(m) bu_offsetof(struct img_specific, m)
+#define IMG_AO(m) bu_offsetofarray(struct img_specific, m)
 
 
 /** description of how to parse/print the arguments to the shader.
@@ -391,30 +391,30 @@ orient_hook(register const struct bu_structparse *sdp, register const char *name
  * structure above
  */
 struct bu_structparse img_parse_tab[] = {
-    {"%V",	1, "image",		IMG_O(i_name),		BU_STRUCTPARSE_FUNC_NULL},
-    {"%V",	1, "file",		IMG_O(i_name),		img_source_hook},
-    {"%V",	1, "obj",		IMG_O(i_name),		img_source_hook},
-    {"%V",	1, "object",		IMG_O(i_name),		img_source_hook},
-    {"%d",	1, "w",			IMG_O(i_width),		dimen_hook},
-    {"%d",	1, "n",			IMG_O(i_height),	dimen_hook},
-    {"%f",	1, "viewsize",		IMG_O(i_viewsize),	dimen_hook},
-    {"%f",	3, "eye_pt",		IMG_AO(i_eye_pt),	BU_STRUCTPARSE_FUNC_NULL},
-    {"%f",	4, "orientation",	IMG_AO(i_orient),	orient_hook},
-    {"%c",	1, "through",		IMG_O(i_through),	BU_STRUCTPARSE_FUNC_NULL},
-    {"%c",	1, "antialias",		IMG_O(i_antialias),	BU_STRUCTPARSE_FUNC_NULL},
-    {"%c",	1, "behind",		IMG_O(i_behind),	BU_STRUCTPARSE_FUNC_NULL},
-    {"%c",	1, "perspective",	IMG_O(i_perspective),	persp_hook},
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL}
+    {"%V",	1, "image",		IMG_O(i_name),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%V",	1, "file",		IMG_O(i_name),		img_source_hook, NULL, NULL },
+    {"%V",	1, "obj",		IMG_O(i_name),		img_source_hook, NULL, NULL },
+    {"%V",	1, "object",		IMG_O(i_name),		img_source_hook, NULL, NULL },
+    {"%d",	1, "w",			IMG_O(i_width),		dimen_hook, NULL, NULL },
+    {"%d",	1, "n",			IMG_O(i_height),	dimen_hook, NULL, NULL },
+    {"%f",	1, "viewsize",		IMG_O(i_viewsize),	dimen_hook, NULL, NULL },
+    {"%f",	3, "eye_pt",		IMG_AO(i_eye_pt),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	4, "orientation",	IMG_AO(i_orient),	orient_hook, NULL, NULL },
+    {"%c",	1, "through",		IMG_O(i_through),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%c",	1, "antialias",		IMG_O(i_antialias),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%c",	1, "behind",		IMG_O(i_behind),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%c",	1, "perspective",	IMG_O(i_perspective),	persp_hook, NULL, NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 struct bu_structparse img_print_tab[] = {
-    {"%p",	bu_byteoffset(img_parse_tab[0]), "img_parse_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	4, "i_plane",		IMG_AO(i_plane),	BU_STRUCTPARSE_FUNC_NULL},
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL}
+    {"%p",	bu_byteoffset(img_parse_tab[0]), "img_parse_tab", 0, BU_STRUCTPARSE_FUNC_NULL , NULL, NULL },
+    {"%f",	4, "i_plane",		IMG_AO(i_plane),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
-HIDDEN int	prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), prj_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	prj_print(register struct region *rp, char *dp), prj_free(char *cp);
+HIDDEN int prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), prj_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void prj_print(register struct region *rp, char *dp), prj_free(char *cp);
 
 /**
  * The "mfuncs" structure defines the external interface to the shader.
@@ -434,32 +434,31 @@ struct mfuncs prj_mfuncs[] = {
 };
 
 
-/**	P R J _ S E T U P
+/** P R J _ S E T U P
  *
- *	This routine is called (at prep time)
- *	once for each region which uses this shader.
- *	Any shader-specific initialization should be done here.
+ * This routine is called (at prep time)
+ * once for each region which uses this shader.
+ * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
+/* pointer to reg_udata in *rp */
 
-    /* pointer to reg_udata in *rp */
-
-    /* New since 4.4 release */
+/* New since 4.4 release */
 {
-    struct prj_specific		*prj_sp;
-    struct img_specific		*img_sp;
+    struct prj_specific *prj_sp;
+    struct img_specific *img_sp;
 #if 0
     char * fname;
 #endif
-    struct bu_vls 			parameter_data;
-    struct bu_mapped_file		*parameter_file;
+    struct bu_vls parameter_data;
+    struct bu_mapped_file *parameter_file;
 
     /* check the arguments */
     RT_CHECK_RTI(rtip);
-    BU_CK_VLS( matparm );
+    BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
 
     if (rdebug&RDEBUG_SHADE)
@@ -467,7 +466,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	       rp->reg_name, bu_vls_addr(matparm));
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT( prj_sp, prj_specific );
+    BU_GETSTRUCT(prj_sp, prj_specific);
     *dpp = (char *)prj_sp;
 
     prj_sp->magic = prj_MAGIC;
@@ -484,7 +483,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 
 #if 0
     fname = bu_vls_addr(matparm);
-    if (! isspace(*fname) )
+    if (! isspace(*fname))
 	bu_log("------ Stack shader fixed?  Remove hack from prj shader ----\n");
     while (isspace(*fname)) fname++; /* XXX Hack till stack shader fixed */
 
@@ -500,25 +499,25 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
      */
 
     bu_vls_init(&parameter_data);
-    parameter_file = bu_open_mapped_file( bu_vls_addr(matparm), (char *)NULL );
+    parameter_file = bu_open_mapped_file(bu_vls_addr(matparm), (char *)NULL);
 
     if (parameter_file) {
 	/* the file loaded, so the contents become the parameter string */
 	bu_log("Filename: %s\n", bu_vls_addr(matparm));
 
-	bu_vls_strncpy( &parameter_data, (char *)parameter_file->buf,
-			parameter_file->buflen );
+	bu_vls_strncpy(&parameter_data, (char *)parameter_file->buf,
+		       parameter_file->buflen);
 
-	if (rdebug&RDEBUG_SHADE ) {
+	if (rdebug&RDEBUG_SHADE) {
 	    bu_log("parsing: %s\n", bu_vls_addr(&parameter_data));
 	}
 
-	bu_close_mapped_file( parameter_file );
+	bu_close_mapped_file(parameter_file);
     } else {
 	/* the file did not load, so the shader args become the param string */
 	bu_log("Parameters: %s\n", bu_vls_addr(matparm));
 
-	bu_vls_strncpy ( &parameter_data, bu_vls_addr(matparm), bu_vls_strlen(matparm) );
+	bu_vls_strncpy (&parameter_data, bu_vls_addr(matparm), bu_vls_strlen(matparm));
     }
 
     /* set defaults on img_specific struct */
@@ -533,13 +532,13 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
     prj_sp->prj_images.i_binunifp = GENPTR_NULL;
     prj_sp->prj_images.i_img = GENPTR_NULL;
 
-    if (bu_struct_parse( &parameter_data, img_parse_tab,
-			 (char *)&prj_sp->prj_images) < 0) {
+    if (bu_struct_parse(&parameter_data, img_parse_tab,
+			(char *)&prj_sp->prj_images) < 0) {
 	bu_log("ERROR: Unable to properly parse projection shader parameters\n");
 	return -1;
     }
 
-    bu_vls_free( &parameter_data );
+    bu_vls_free(&parameter_data);
 
     /* load the image data for any specified images */
     for (BU_LIST_FOR(img_sp, img_specific, &prj_sp->prj_images.l)) {
@@ -577,21 +576,22 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
      * as it exists where the region is defined (as opposed to the
      * (possibly transformed) one we are rendering.
      *
-     *  Non-PARALLEL, which is OK, because shaders are prepped serially.
+     * Non-PARALLEL, which is OK, because shaders are prepped serially.
      */
     db_region_mat(prj_sp->prj_m_to_sh, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
 
 
     if (rdebug&RDEBUG_SHADE) {
 
-	prj_print(rp, (char *)prj_sp );
+	prj_print(rp, (char *)prj_sp);
     }
 
     return 1;
 }
 
+
 /**
- *	P R J _ P R I N T
+ * P R J _ P R I N T
  */
 HIDDEN void
 prj_print(register struct region *rp, char *dp)
@@ -600,12 +600,13 @@ prj_print(register struct region *rp, char *dp)
     struct img_specific *img_sp;
 
     for (BU_LIST_FOR(img_sp, img_specific, &prj_sp->prj_images.l)) {
-	bu_struct_print( rp->reg_name, img_print_tab, (char *)img_sp );
+	bu_struct_print(rp->reg_name, img_print_tab, (char *)img_sp);
     }
 }
 
+
 /**
- *	P R J _ F R E E
+ * P R J _ F R E E
  */
 HIDDEN void
 prj_free(char *cp)
@@ -617,25 +618,25 @@ prj_free(char *cp)
     while (BU_LIST_WHILE(img_sp, img_specific, &prj_sp->prj_images.l)) {
 
 	img_sp->i_img = (unsigned char *)0;
-	if (img_sp->i_data) bu_close_mapped_file( img_sp->i_data );
+	if (img_sp->i_data) bu_close_mapped_file(img_sp->i_data);
 	img_sp->i_data = GENPTR_NULL; /* sanity */
-	if (img_sp->i_binunifp) rt_binunif_free( img_sp->i_binunifp );
+	if (img_sp->i_binunifp) rt_binunif_free(img_sp->i_binunifp);
 	img_sp->i_binunifp = GENPTR_NULL; /* sanity */
 	bu_vls_vlsfree(&img_sp->i_name);
 
-	BU_LIST_DEQUEUE( &img_sp->l );
-	bu_free( (char *)img_sp, "img_specific");
+	BU_LIST_DEQUEUE(&img_sp->l);
+	bu_free((char *)img_sp, "img_specific");
     }
 
-    if ( prj_sp->prj_plfd ) {
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	fclose( prj_sp->prj_plfd );
-	bu_semaphore_release( BU_SEM_SYSCALL );
+    if (prj_sp->prj_plfd) {
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	fclose(prj_sp->prj_plfd);
+	bu_semaphore_release(BU_SEM_SYSCALL);
     }
 
-    bu_free( cp, "prj_specific" );
+    bu_free(cp, "prj_specific");
 }
-HIDDEN const double	cs = (1.0/255.0);
+HIDDEN const double cs = (1.0/255.0);
 HIDDEN const point_t delta = {0.5, 0.5, 0.0};
 
 #if 0
@@ -650,7 +651,7 @@ project_antialiased(point_t sh_color,
 {
     int i, x, y;
     point_t sh_pts[CORNER_PTS];
-    struct pixel_ext	pe;
+    struct pixel_ext pe;
 
     /* project hit plane corner points into image space */
     for (i=0; i < CORNER_PTS; i++) {
@@ -693,7 +694,7 @@ project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific
 
     if (x >= img_sp->i_width || x < 0 ||
 	y >= img_sp->i_height || y < 0 ||
-	((img_sp->i_behind == '0' && sh_pt[Z] > 0.0)) ) {
+	((img_sp->i_behind == '0' && sh_pt[Z] > 0.0))) {
 	/* we're out of bounds,
 	 * leave the color alone
 	 */
@@ -716,29 +717,29 @@ project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific
 
 
 /**
- *	P R J _ R E N D E R
+ * P R J _ R E N D E R
  *
- *	This is called (from viewshade() in shade.c) once for each hit point
- *	to be shaded.  The purpose here is to fill in values in the shadework
- *	structure.
+ * This is called (from viewshade() in shade.c) once for each hit point
+ * to be shaded.  The purpose here is to fill in values in the shadework
+ * structure.
  */
 int
 prj_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 
 
-    /* defined in material.h */
-    /* ptr to the shader-specific struct */
+/* defined in material.h */
+/* ptr to the shader-specific struct */
 {
     register struct prj_specific *prj_sp =
 	(struct prj_specific *)dp;
     point_t r_pt;
-    plane_t	r_N;
+    plane_t r_N;
     int i, status;
     struct img_specific *img_sp;
-    point_t	sh_color;
-    point_t	final_color;
+    point_t sh_color;
+    point_t final_color;
     point_t tmp_pt;
-    fastf_t	divisor;
+    fastf_t divisor;
     struct pixel_ext r_pe;	/* region coord version of ap->a_pixelext */
     fastf_t dist;
     fastf_t weight;
@@ -762,9 +763,9 @@ prj_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 
 
     if (rdebug&RDEBUG_SHADE) {
-	bu_log("prj_render()  model:(%g %g %g) shader:(%g %g %g)\n",
+	bu_log("prj_render() model:(%g %g %g) shader:(%g %g %g)\n",
 	       V3ARGS(swp->sw_hit.hit_point),
-	       V3ARGS(r_pt) );
+	       V3ARGS(r_pt));
     }
 
 
@@ -783,7 +784,7 @@ prj_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 	 */
 
 	/* compute region coordinates for pixel extent */
-	for ( i=0; i < CORNER_PTS; i++) {
+	for (i=0; i < CORNER_PTS; i++) {
 	    MAT4X3PNT(r_pe.corner[i].r_pt,
 		      prj_sp->prj_m_to_sh,
 		      ap->a_pixelext->corner[i].r_pt);
@@ -826,7 +827,7 @@ prj_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 
 
     for (BU_LIST_FOR(img_sp, img_specific, &prj_sp->prj_images.l)) {
-	if ( img_sp->i_through == '0' && VDOT(r_N, img_sp->i_plane) < 0.0) {
+	if (img_sp->i_through == '0' && VDOT(r_N, img_sp->i_plane) < 0.0) {
 	    /* normal and projection dir don't match, skip on */
 
 	    if (rdebug&RDEBUG_SHADE && prj_sp->prj_plfd) {
@@ -863,11 +864,10 @@ prj_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 	    continue;
 #endif
 	VSCALE(sh_color, sh_color, cs);
-	weight = VDOT( r_N, img_sp->i_plane );
-	if (img_sp->i_through != '0' )
-	    weight = (weight < 0.0 ? -weight : weight );
-	if (weight > 0.0 )
-	{
+	weight = VDOT(r_N, img_sp->i_plane);
+	if (img_sp->i_through != '0')
+	    weight = (weight < 0.0 ? -weight : weight);
+	if (weight > 0.0) {
 	    VJOIN1(final_color, final_color, weight, sh_color);
 	    divisor += weight;
 	}
@@ -879,6 +879,7 @@ prj_render(struct application *ap, struct partition *pp, struct shadework *swp, 
     }
     return 1;
 }
+
 
 /*
  * Local Variables:

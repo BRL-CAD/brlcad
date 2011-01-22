@@ -76,7 +76,7 @@ void mesh_tracker(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     struct rt_db_internal internal;
 
     /* leaf node must be a solid */
-    if (!(dp->d_flags & DIR_SOLID)) {
+    if (!(dp->d_flags & RT_DIR_SOLID)) {
 	fprintf(stderr, "warning: '%s' is not a solid! (not processed)\n", dp->d_namep);
 	return;
     }
@@ -430,7 +430,7 @@ int main(int argc, char *argv[])
     db_update_nref(dbip, &rt_uniresource);
 
     dp = db_lookup(dbip, object, 0);
-    if (dp == DIR_NULL) {
+    if (dp == RT_DIR_NULL) {
 	bu_exit(1, "Object %s not found in database!\n", object);
     }
 

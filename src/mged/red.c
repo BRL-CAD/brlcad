@@ -252,11 +252,11 @@ make_tree(struct rt_comb_internal *comb, struct directory *dp, size_t node_count
 	int flags;
 
 	if (comb->region_flag)
-	    flags = DIR_COMB | DIR_REGION;
+	    flags = RT_DIR_COMB | RT_DIR_REGION;
 	else
-	    flags = DIR_COMB;
+	    flags = RT_DIR_COMB;
 
-	if (dp != DIR_NULL) {
+	if (dp != RT_DIR_NULL) {
 	    if (db_delete(dbip, dp) || db_dirdelete(dbip, dp)) {
 		Tcl_AppendResult(interp, "ERROR: Unable to delete directory entry for ",
 				 old_name, "\n", (char *)NULL);
@@ -265,21 +265,21 @@ make_tree(struct rt_comb_internal *comb, struct directory *dp, size_t node_count
 	    }
 	}
 
-	if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+	if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "Cannot add ", new_name,
 			     " to directory, no changes made\n", (char *)NULL);
 	    intern.idb_ptr->idb_meth->ft_ifree(&intern, &rt_uniresource);
 	    return 1;
 	}
-    } else if (dp == DIR_NULL) {
+    } else if (dp == RT_DIR_NULL) {
 	int flags;
 
 	if (comb->region_flag)
-	    flags = DIR_COMB | DIR_REGION;
+	    flags = RT_DIR_COMB | RT_DIR_REGION;
 	else
-	    flags = DIR_COMB;
+	    flags = RT_DIR_COMB;
 
-	if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+	if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "Cannot add ", new_name,
 			     " to directory, no changes made\n", (char *)NULL);
 	    intern.idb_ptr->idb_meth->ft_ifree(&intern, &rt_uniresource);
@@ -287,9 +287,9 @@ make_tree(struct rt_comb_internal *comb, struct directory *dp, size_t node_count
 	}
     } else {
 	if (comb->region_flag)
-	    dp->d_flags |= DIR_REGION;
+	    dp->d_flags |= RT_DIR_REGION;
 	else
-	    dp->d_flags &= ~DIR_REGION;
+	    dp->d_flags &= ~RT_DIR_REGION;
     }
 
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
@@ -395,7 +395,7 @@ put_tree_into_comb(struct rt_comb_internal *comb, struct directory *dp, char *ol
 		name[i] = '\0';
 
 	    /* Check for existence of member */
-	    if ((db_lookup(dbip, name, LOOKUP_QUIET)) == DIR_NULL)
+	    if ((db_lookup(dbip, name, LOOKUP_QUIET)) == RT_DIR_NULL)
 		bu_log("\tWARNING: ' %s ' does not exist\n", name);
 
 	    /* get matrix */
@@ -497,7 +497,7 @@ mktemp_comb(char *str)
     done = 0;
     while (!done && counter < 99999) {
 	sprintf(ptr, "%d", counter);
-	if (db_lookup(dbip, str, LOOKUP_QUIET) == DIR_NULL)
+	if (db_lookup(dbip, str, LOOKUP_QUIET) == RT_DIR_NULL)
 	    done = 1;
 	else
 	    counter++;
@@ -521,7 +521,7 @@ int save_comb(struct directory *dpold)
     if (rt_db_get_internal(&intern, dpold, dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
 	TCL_READ_ERR_return;
 
-    if ((dp=db_diradd(dbip, red_tmpcomb, -1L, 0, dpold->d_flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+    if ((dp=db_diradd(dbip, red_tmpcomb, -1L, 0, dpold->d_flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot save copy of ", dpold->d_namep,
 			 ", no changes made\n", (char *)NULL);
 	return 1;

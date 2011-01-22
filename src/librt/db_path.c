@@ -322,7 +322,7 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 	} else {
 	    *slashp = '\0';
 	}
-	if ( (dp = db_lookup( dbip, cp, LOOKUP_NOISY )) == DIR_NULL )  {
+	if ( (dp = db_lookup( dbip, cp, LOOKUP_NOISY )) == RT_DIR_NULL )  {
 	    bu_log("db_string_to_path() of '%s' failed on '%s'\n",
 		   str, cp );
 	    ret = -1; /* FAILED */
@@ -366,7 +366,7 @@ db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char
 	"db_argv_to_path path array" );
 
     for ( i=0; i<argc; i++ )  {
-	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL )  {
+	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == RT_DIR_NULL )  {
 	    bu_log("db_argv_to_path() failed on element %d='%s'\n",
 		   i, argv[i] );
 	    ret = -1; /* FAILED */

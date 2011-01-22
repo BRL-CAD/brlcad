@@ -60,6 +60,7 @@
     <command>tree</command>    
     
     <arg choice='req'><replaceable>objects(s)</replaceable></arg>
+    <arg>-a</arg>
     <arg>-c</arg>
     <arg>-i<replaceable>#</replaceable></arg>
     <arg>-o<replaceable>outfile</replaceable></arg>
@@ -71,8 +72,12 @@
   <title>DESCRIPTION</title>
   <para>Lists the contents of the specified <emphasis>objects</emphasis> in a tree-like format
 	that displays the hierarchical structure of the objects, and all objects referenced by
-	them, down to the primitive shape level. If <emphasis>-c</emphasis> is given, the shapes are not printed. The
-	<emphasis>-o outfile</emphasis> option prints the results to <emphasis>outfile.</emphasis> The <emphasis>-i #</emphasis> 	option allows the user to set the number of spaces to indent.
+	them, down to the primitive shape level. If <emphasis>-c</emphasis> is given, the shapes
+        are not printed.
+        The <emphasis>-a</emphasis> option adds a list of any attributes for each object.
+        Attributes are shown with a leading "@ " and are followed by their values.
+        The <emphasis>-o outfile</emphasis> option prints the results to <emphasis>outfile</emphasis>.
+        The <emphasis>-i #</emphasis> option allows the user to set the number of spaces to indent.
   </para>
 </refsect1>
 
@@ -105,7 +110,15 @@
       <prompt>mged></prompt><userinput>tree -c group1</userinput>
     </para>
     <para>No shapes are printed.
-       
+    </para>
+  </example>
+
+  <example>
+    <title>Specify that attributes are listed for each object printed.</title>
+    <para>
+      <prompt>mged></prompt><userinput>tree -a -c group1</userinput>
+    </para>
+    <para>No shapes are printed, but attributes are shown for the printed objects.
     </para>
   </example>
 

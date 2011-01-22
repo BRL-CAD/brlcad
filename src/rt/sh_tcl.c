@@ -78,14 +78,14 @@ sh_directchange_rgb(ClientData clientData, Tcl_Interp *interp, int argc, const c
 	return TCL_ERROR;
     }
 
-    if ( (dp = db_lookup( rtip->rti_dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL )  {
+    if ( (dp = db_lookup( rtip->rti_dbip, argv[2], LOOKUP_NOISY)) == RT_DIR_NULL )  {
 	Tcl_AppendResult(interp, argv[2], ": not found\n", NULL);
 	return TCL_ERROR;
     }
 
     /* Find all region names which match /comb/ pattern */
     for ( BU_LIST_FOR( regp, region, &rtip->HeadRegion ) )  {
-	if ( dp->d_flags & DIR_REGION )  {
+	if ( dp->d_flags & RT_DIR_REGION )  {
 	    /* name will occur at end of region string w/leading slash */
 	} else {
 	    /* name will occur anywhere, bracked by slashes */
@@ -137,7 +137,7 @@ sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, cons
 	return TCL_ERROR;
     }
 
-    if ( (dp = db_lookup( rtip->rti_dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL )  {
+    if ( (dp = db_lookup( rtip->rti_dbip, argv[2], LOOKUP_NOISY)) == RT_DIR_NULL )  {
 	Tcl_AppendResult(interp, argv[2], ": not found\n", NULL);
 	return TCL_ERROR;
     }
@@ -148,7 +148,7 @@ sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, cons
 
     /* Find all region names which match /comb/ pattern */
     for ( BU_LIST_FOR( regp, region, &rtip->HeadRegion ) )  {
-	if ( dp->d_flags & DIR_REGION )  {
+	if ( dp->d_flags & RT_DIR_REGION )  {
 	    /* name will occur at end of region string w/leading slash */
 	} else {
 	    /* name will occur anywhere, bracked by slashes */

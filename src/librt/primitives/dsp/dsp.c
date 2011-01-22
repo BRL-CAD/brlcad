@@ -654,9 +654,9 @@ rt_dsp_print(register const struct soltab *stp)
     BU_CK_VLS(&vls);
 
     bu_vls_printf(&vls, "\n---------db version: %d----------\n",
-		  stp->st_rtip->rti_dbip->dbi_version);
+		  db_version(stp->st_rtip->rti_dbip));
 
-    switch (stp->st_rtip->rti_dbip->dbi_version) {
+    switch (db_version(stp->st_rtip->rti_dbip)) {
 	case 4:
 	    BU_CK_VLS(&vls);
 	    dsp_print_v4(&vls, &(dsp->dsp_i));
@@ -4525,7 +4525,7 @@ rt_dsp_describe(struct bu_vls *str,
 
     RT_DSP_CK_MAGIC(dsp_ip);
 
-    switch (db_ip->dbi_version) {
+    switch (db_version(db_ip)) {
 	case 4:
 	    dsp_print_v4(&vls, dsp_ip);
 	    break;

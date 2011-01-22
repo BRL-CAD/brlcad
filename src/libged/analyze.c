@@ -87,7 +87,7 @@ ged_analyze(struct ged *gedp, int argc, const char *argv[])
 
     /* use the names that were input */
     for ( i = 1; i < argc; i++ )  {
-	if ( (ndp = db_lookup( gedp->ged_wdbp->dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL )
+	if ( (ndp = db_lookup( gedp->ged_wdbp->dbip,  argv[i], LOOKUP_NOISY )) == RT_DIR_NULL )
 	    continue;
 
 	GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);

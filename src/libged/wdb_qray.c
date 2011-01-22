@@ -59,19 +59,24 @@ static struct dg_qray_fmt_data def_qray_fmt_data[] = {
 };
 
 
-static char qray_syntax[] = "\
- qray vars			print a list of all variables (i.e. var = val)\n\
- qray basename [str]		set or get basename for query ray primitives\n\
- qray effects [t|g|b]		set or get effects (i.e. text, graphical or both)\n\
- qray echo [0|1]		set or get command echo\n\
- qray oddcolor [r g b]		set or get color of odd partitions\n\
- qray evencolor [r g b]		set or get color of even partitions\n\
- qray voidcolor [r g b]		set or get color of void areas\n\
- qray overlapcolor [r g b]	set or get color of overlap areas\n\
- qray fmt [r|h|p|f|m|o|g [str]]	set or get format string(s)\n\
- qray script [str]		set or get the nirt script string\n\
- qray [help]			print this help message\n\
-";
+static void
+usage(Tcl_Interp *interp)
+{
+    Tcl_AppendResult(interp, "Usage:\n",
+		     " qray vars			print a list of all variables (i.e. var = val)\n",
+		     " qray basename [str]		set or get basename for query ray primitives\n",
+		     " qray effects [t|g|b]		set or get effects (i.e. text, graphical or both)\n",
+		     " qray echo [0|1]			set or get command echo\n",
+		     " qray oddcolor [r g b]		set or get color of odd partitions\n",
+		     " qray evencolor [r g b]		set or get color of even partitions\n",
+		     " qray voidcolor [r g b]		set or get color of void areas\n",
+		     " qray overlapcolor [r g b]	set or get color of overlap areas\n",
+		     " qray fmt [r|h|p|f|m|o|g [str]]	set or get format string(s)\n",
+		     " qray script [str]		set or get the nirt script string\n",
+		     " qray [help]			print this help message\n",
+		     (char *)NULL);
+}
+
 
 static void
 qray_print_fmts(struct dg_obj *dgop,
@@ -144,7 +149,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 
     /* print help message */
     if (argc == 1) {
-	Tcl_AppendResult(interp, "Usage:\n", qray_syntax, (char *)NULL);
+	usage(interp);
 	return TCL_OK;
     }
 
@@ -160,7 +165,8 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	    if ((i = qray_get_fmt_index(dgop, *argv[2])) < 0) {
 		Tcl_AppendResult(interp,
 				 "qray: unrecognized format type: '",
-				 argv[2], "'\nUsage:\n", qray_syntax, (char *)NULL);
+				 argv[2], "'\n", NULL);
+		usage(interp);
 		return TCL_ERROR;
 	    }
 
@@ -171,7 +177,8 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	    if ((i = qray_get_fmt_index(dgop, *argv[2])) < 0) {
 		Tcl_AppendResult(interp,
 				 "qray: unrecognized format type: '",
-				 argv[2], "'\nUsage:\n", qray_syntax, (char *)NULL);
+				 argv[2], "'\n", NULL);
+		usage(interp);
 		return TCL_ERROR;
 	    }
 
@@ -459,12 +466,13 @@ dgo_qray_cmd(struct dg_obj *dgop,
     }
 
     if (BU_STR_EQUAL(argv[1], "help")) {
-	Tcl_AppendResult(interp, "Usage:\n", qray_syntax, (char *)NULL);
+	usage(interp);
 	return TCL_OK;
     }
 
     Tcl_AppendResult(interp, "qray: unrecognized command: '",
-		     argv[1], "'\nUsage:\n", qray_syntax, (char *)NULL);
+		     argv[1], "'\n", NULL);
+    usage(interp);
     return TCL_ERROR;
 }
 
@@ -528,6 +536,8 @@ dgo_qray_data_to_vlist(struct dg_obj *dgop,
     struct dg_qray_dataList *ndlp;
     vect_t in_pt, out_pt;
     vect_t last_out_pt;
+
+    VSETALL(last_out_pt, 0);
 
     for (BU_LIST_FOR(ndlp, dg_qray_dataList, &headp->l)) {
 	if (do_overlaps)

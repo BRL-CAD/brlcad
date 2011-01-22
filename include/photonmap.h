@@ -147,9 +147,7 @@ OPTICAL_EXPORT BU_EXTERN(void IrradianceEstimate,
 			 (struct application *ap,
 			  vect_t irrad,
 			  point_t pos,
-			  vect_t normal,
-			  fastf_t rad,
-			  int np));
+			  vect_t normal));
 /** @} */
 /*
  * Local Variables:

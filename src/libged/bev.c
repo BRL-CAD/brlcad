@@ -319,7 +319,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     intern.idb_ptr = (genptr_t)ged_nmg_model;
     ged_nmg_model = (struct model *)NULL;
 
-    GED_DB_DIRADD(gedp, dp, newname, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
 
     tmp_tree->tr_d.td_r = (struct nmgregion *)NULL;

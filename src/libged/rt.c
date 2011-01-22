@@ -331,7 +331,7 @@ _ged_rt_write(struct ged *gedp,
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for (i=0;i<sp->s_fullpath.fp_len;i++) {
-		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~DIR_USED;
+		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
 	    }
 	}
 
@@ -344,13 +344,13 @@ _ged_rt_write(struct ged *gedp,
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for (i=0; i<sp->s_fullpath.fp_len; i++) {
-		if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & DIR_USED)) {
+		if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & RT_DIR_USED)) {
 		    struct animate *anp;
 		    for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
 			 anp=anp->an_forw) {
 			db_write_anim(fp, anp);
 		    }
-		    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags |= DIR_USED;
+		    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags |= RT_DIR_USED;
 		}
 	    }
 	}
@@ -364,7 +364,7 @@ _ged_rt_write(struct ged *gedp,
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for (i=0;i< sp->s_fullpath.fp_len;i++) {
-		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~DIR_USED;
+		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
 	    }
 	}
 

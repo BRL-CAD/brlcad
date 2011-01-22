@@ -49,7 +49,7 @@ static struct ged_qray_color def_qray_overlap_color = { 255, 255, 255 };
 
 static struct ged_qray_fmt_data def_qray_fmt_data[] = {
     {'r', "\"Origin (x y z) = (%.2f %.2f %.2f)  (h v d) = (%.2f %.2f %.2f)\\nDirection (x y z) = (%.4f %.4f %.4f)  (az el) = (%.2f %.2f)\\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e"},
-    {'h', "\"    Region Name               Entry (x y z)              LOS  Obliq_in\\n\""},
+    {'h', "\"    Region Name               Entry (x y z) LOS  Obliq_in\\n\""},
     {'p', "\"%-20s (%9.3f %9.3f %9.3f) %8.2f %8.3f\\n\" reg_name x_in y_in z_in los obliq_in"},
     {'f', "\"\""},
     {'m', "\"You missed the target\\n\""},
@@ -58,19 +58,24 @@ static struct ged_qray_fmt_data def_qray_fmt_data[] = {
     {(char)0, (char *)NULL}
 };
 
-static char qray_syntax[] = "\
- qray vars			print a list of all variables (i.e. var = val)\n\
- qray basename [str]		set or get basename for query ray primitives\n\
- qray effects [t|g|b]		set or get effects (i.e. text, graphical or both)\n\
- qray echo [0|1]		set or get command echo\n\
- qray oddcolor [r g b]		set or get color of odd partitions\n\
- qray evencolor [r g b]		set or get color of even partitions\n\
- qray voidcolor [r g b]		set or get color of void areas\n\
- qray overlapcolor [r g b]	set or get color of overlap areas\n\
- qray fmt [r|h|p|f|m|o|g [str]]	set or get format string(s)\n\
- qray script [str]		set or get the nirt script string\n\
- qray [help]			print this help message\n\
-";
+
+static void
+usage(struct ged *gedp, const char *argv0)
+{
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s\n", argv0);
+    bu_vls_printf(&gedp->ged_result_str, " qray vars			print a list of all variables (i.e. var = val)\n");
+    bu_vls_printf(&gedp->ged_result_str, " qray basename [str]		set or get basename for query ray primitives\n");
+    bu_vls_printf(&gedp->ged_result_str, " qray effects [t|g|b]		set or get effects (i.e. text, graphical or both)\n");
+    bu_vls_printf(&gedp->ged_result_str, " qray echo [0|1]		set or get command echo\n");
+    bu_vls_printf(&gedp->ged_result_str, " qray oddcolor [r g b]		set or get color of odd partitions\n");
+    bu_vls_printf(&gedp->ged_result_str, " qray evencolor [r g b]		set or get color of even partitions\n");
+    bu_vls_printf(&gedp->ged_result_str, " qray voidcolor [r g b]		set or get color of void areas\n");
+    bu_vls_printf(&gedp->ged_result_str, " qray overlapcolor [r g b]	set or get color of overlap areas\n");
+    bu_vls_printf(&gedp->ged_result_str, " qray fmt [r|h|p|f|m|o|g [str]]	set or get format string(s)\n");
+    bu_vls_printf(&gedp->ged_result_str, " qray script [str]		set or get the nirt script string\n");
+    bu_vls_printf(&gedp->ged_result_str, " qray [help]			print this help message\n");
+}
+
 
 static void
 qray_print_fmts(struct ged *gedp)
@@ -80,6 +85,7 @@ qray_print_fmts(struct ged *gedp)
     for (i = 0; gedp->ged_gdp->gd_qray_fmts[i].type != (char)0; ++i)
 	bu_vls_printf(&gedp->ged_result_str, "%s\n", bu_vls_addr(&gedp->ged_gdp->gd_qray_fmts[i].fmt));
 }
+
 
 static void
 qray_print_vars(struct ged *gedp)
@@ -100,6 +106,7 @@ qray_print_vars(struct ged *gedp)
     qray_print_fmts(gedp);
 }
 
+
 static int
 qray_get_fmt_index(struct ged	*gedp,
 		   char	  	c)
@@ -112,6 +119,7 @@ qray_get_fmt_index(struct ged	*gedp,
 
     return -1;
 }
+
 
 int
 ged_qray(struct ged	*gedp,
@@ -126,12 +134,12 @@ ged_qray(struct ged	*gedp,
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage:\n%s", qray_syntax);
+	usage(gedp, argv[0]);
 	return GED_HELP;
     }
 
     if (argc > 6) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage:\n%s", qray_syntax);
+	usage(gedp, argv[0]);
 	return GED_ERROR;
     }
 
@@ -146,7 +154,7 @@ ged_qray(struct ged	*gedp,
 	    /* get particular format string */
 	    if ((i = qray_get_fmt_index(gedp, *argv[2])) < 0) {
 		bu_vls_printf(&gedp->ged_result_str, "qray: unrecognized format type: '%s'\n", argv[2]);
-		bu_vls_printf(&gedp->ged_result_str, "Usage:\n%s", qray_syntax);
+		usage(gedp, argv[0]);
 
 		return GED_ERROR;
 	    }
@@ -157,7 +165,7 @@ ged_qray(struct ged	*gedp,
 	    /* set value */
 	    if ((i = qray_get_fmt_index(gedp, *argv[2])) < 0) {
 		bu_vls_printf(&gedp->ged_result_str, "qray: unrecognized format type: '%s'\n", argv[2]);
-		bu_vls_printf(&gedp->ged_result_str, "Usage:\n%s", qray_syntax);
+		usage(gedp, argv[0]);
 
 		return GED_ERROR;
 	    }
@@ -403,15 +411,16 @@ ged_qray(struct ged	*gedp,
     }
 
     if (BU_STR_EQUAL(argv[1], "help")) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], qray_syntax);
+	usage(gedp, argv[0]);
 	return GED_HELP;
     }
 
     bu_vls_printf(&gedp->ged_result_str, "qray: unrecognized command: '%s'\n", argv[1]);
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s\n", argv[0], qray_syntax);
+    usage(gedp, argv[0]);
 
     return GED_ERROR;
 }
+
 
 void
 ged_init_qray(struct ged_drawable *gdp)
@@ -446,6 +455,7 @@ ged_init_qray(struct ged_drawable *gdp)
     gdp->gd_qray_fmts[i].type = (char)0;
 }
 
+
 void
 ged_free_qray(struct ged_drawable *gdp)
 {
@@ -457,6 +467,7 @@ ged_free_qray(struct ged_drawable *gdp)
 	bu_vls_free(&gdp->gd_qray_fmts[i].fmt);
     bu_free(gdp->gd_qray_fmts, "dgo_free_qray");
 }
+
 
 void
 ged_qray_data_to_vlist(struct ged		*gedp,
@@ -500,14 +511,15 @@ ged_qray_data_to_vlist(struct ged		*gedp,
 				    gedp->ged_gdp->gd_qray_void_color.r,
 				    gedp->ged_gdp->gd_qray_void_color.g,
 				    gedp->ged_gdp->gd_qray_void_color.b);
-	    RT_ADD_VLIST( vhead, last_out_pt, BN_VLIST_LINE_MOVE );
-	    RT_ADD_VLIST( vhead, in_pt, BN_VLIST_LINE_DRAW );
+	    RT_ADD_VLIST(vhead, last_out_pt, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, in_pt, BN_VLIST_LINE_DRAW);
 	}
 
 	VMOVE(last_out_pt, out_pt);
 	++i;
     }
 }
+
 
 /** @} */
 /*

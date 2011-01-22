@@ -110,7 +110,7 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
     /*
      * Check to see if we need to create a new object
      */
-    if ((dp = db_lookup(dbip, argv[1], LOOKUP_QUIET)) == DIR_NULL) {
+    if ((dp = db_lookup(dbip, argv[1], LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "object \"%s\" does not exist.\n", argv[1]);
 	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
@@ -243,7 +243,7 @@ cmd_export_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
     /*
      * Find the guy we're told to write
      */
-    if ((dp = db_lookup(dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL) {
+    if ((dp = db_lookup(dbip, argv[2], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls,
 		      "Cannot find object %s for writing\n", argv[2]);

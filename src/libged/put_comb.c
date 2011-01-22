@@ -57,11 +57,11 @@ _ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 	int flags;
 
 	if (comb->region_flag)
-	    flags = DIR_COMB | DIR_REGION;
+	    flags = RT_DIR_COMB | RT_DIR_REGION;
 	else
-	    flags = DIR_COMB;
+	    flags = RT_DIR_COMB;
 
-	if (dp != DIR_NULL) {
+	if (dp != RT_DIR_NULL) {
 	    if (db_delete(gedp->ged_wdbp->dbip, dp) || db_dirdelete(gedp->ged_wdbp->dbip, dp)) {
 		bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Unable to delete directory entry for %s\n", old_name);
 		intern.idb_meth->ft_ifree(&intern);
@@ -69,29 +69,29 @@ _ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 	    }
 	}
 
-	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Cannot add %s to directory, no changes made\n", new_name);
 	    intern.idb_meth->ft_ifree(&intern);
 	    return 1;
 	}
-    } else if (dp == DIR_NULL) {
+    } else if (dp == RT_DIR_NULL) {
 	int flags;
 
 	if (comb->region_flag)
-	    flags = DIR_COMB | DIR_REGION;
+	    flags = RT_DIR_COMB | RT_DIR_REGION;
 	else
-	    flags = DIR_COMB;
+	    flags = RT_DIR_COMB;
 
-	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Cannot add %s to directory, no changes made\n", new_name);
 	    intern.idb_meth->ft_ifree(&intern);
 	    return GED_ERROR;
 	}
     } else {
 	if (comb->region_flag)
-	    dp->d_flags |= DIR_REGION;
+	    dp->d_flags |= RT_DIR_REGION;
 	else
-	    dp->d_flags &= ~DIR_REGION;
+	    dp->d_flags &= ~RT_DIR_REGION;
     }
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
@@ -131,7 +131,7 @@ mktemp_comb(struct ged *gedp, const char *str)
     done = 0;
     while (!done && counter < 99999) {
 	sprintf(ptr, "%d", counter);
-	if (db_lookup(gedp->ged_wdbp->dbip, str, LOOKUP_QUIET) == DIR_NULL)
+	if (db_lookup(gedp->ged_wdbp->dbip, str, LOOKUP_QUIET) == RT_DIR_NULL)
 	    done = 1;
 	else
 	    counter++;
@@ -157,7 +157,7 @@ _ged_save_comb(struct ged *gedp, struct directory *dpold)
 	return NULL;
     }
 
-    if ((dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, dpold->d_flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+    if ((dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, dpold->d_flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
 	return NULL;
     }
@@ -364,7 +364,7 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
 		name[i] = '\0';
 
 	    /* Check for existence of member */
-	    if ((db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET)) == DIR_NULL)
+	    if ((db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET)) == RT_DIR_NULL)
 		bu_log("\tWARNING: ' %s ' does not exist\n", name);
 
 	    /* get matrix */
@@ -507,8 +507,8 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 
     comb = (struct rt_comb_internal *)NULL;
     dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
-    if (dp != DIR_NULL) {
-	if (!(dp->d_flags & DIR_COMB)) {
+    if (dp != RT_DIR_NULL) {
+	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a combination, so cannot be edited this way\n", argv[0], argv[1]);
 	    return GED_ERROR;
 	}
@@ -536,14 +536,14 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_init(&comb->material);
     }
 
-    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
+    if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	new_name = new_name_v4;
-	if (dp == DIR_NULL)
+	if (dp == RT_DIR_NULL)
 	    NAMEMOVE(argv[1], new_name_v4);
 	else
 	    NAMEMOVE(dp->d_namep, new_name_v4);
     } else {
-	if (dp == DIR_NULL)
+	if (dp == RT_DIR_NULL)
 	    new_name = (char *)argv[1];
 	else
 	    new_name = dp->d_namep;

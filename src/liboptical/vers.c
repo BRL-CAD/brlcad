@@ -34,6 +34,7 @@ optical_version(void)
     return brlcad_ident("The BRL-CAD Optical Shader Library");
 }
 
+
 /*
  * Local Variables:
  * tab-width: 8

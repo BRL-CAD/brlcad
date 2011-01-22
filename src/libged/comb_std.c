@@ -383,7 +383,7 @@ ged_check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct d
 		arg_count++;
 		if ( !dp && BU_STR_EQUAL( comb_name, tok->tp->tr_l.tl_name ) )
 		    circular_ref++;
-		else if ( db_lookup( gedp->ged_wdbp->dbip, tok->tp->tr_l.tl_name, LOOKUP_QUIET ) == DIR_NULL )
+		else if ( db_lookup( gedp->ged_wdbp->dbip, tok->tp->tr_l.tl_name, LOOKUP_QUIET ) == RT_DIR_NULL )
 		    bu_vls_printf(&gedp->ged_result_str, "WARNING: '%s' does not actually exist\n", tok->tp->tr_l.tl_name);
 		break;
 	}
@@ -431,7 +431,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
     char *comb_name;
     int ch;
     int region_flag = -1;
-    struct directory *dp = DIR_NULL;
+    struct directory *dp = RT_DIR_NULL;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb = NULL;
     struct tokens tok_hd;
@@ -492,7 +492,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	 */
 	GED_DB_LOOKUP(gedp, dp, comb_name, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
 
-	if (!(dp->d_flags & DIR_COMB)) {
+	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s is not a combination\n", comb_name);
 	    return GED_ERROR;
 	}
@@ -528,7 +528,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
      */
 
     GED_CHECK_EXISTS(gedp, comb_name, LOOKUP_QUIET, GED_ERROR);
-    dp = DIR_NULL;
+    dp = RT_DIR_NULL;
 
     /* parse Boolean expression */
     BU_LIST_INIT(&tok_hd.l);
@@ -561,7 +561,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		/* next token MUST be an operator */
 		if (ged_add_operator(gedp, &tok_hd.l, *ptr, &last_tok) == GED_ERROR) {
 		    ged_free_tokens(&tok_hd.l);
-		    if (dp != DIR_NULL)
+		    if (dp != RT_DIR_NULL)
 			rt_db_free_internal(&intern);
 		    return GED_ERROR;
 		}
@@ -573,7 +573,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		name_len = ged_add_operand(gedp, &tok_hd.l, ptr );
 		if (name_len < 1) {
 		    ged_free_tokens(&tok_hd.l);
-		    if (dp != DIR_NULL)
+		    if (dp != RT_DIR_NULL)
 			rt_db_free_internal(&intern);
 		    return GED_ERROR;
 		}
@@ -583,7 +583,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		/* must be an operator */
 		if (ged_add_operator(gedp, &tok_hd.l, *ptr, &last_tok) == GED_ERROR) {
 		    ged_free_tokens(&tok_hd.l);
-		    if (dp != DIR_NULL)
+		    if (dp != RT_DIR_NULL)
 			rt_db_free_internal(&intern);
 		    return GED_ERROR;
 		}
@@ -597,7 +597,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		name_len = ged_add_operand(gedp, &tok_hd.l, ptr );
 		if (name_len < 1) {
 		    ged_free_tokens(&tok_hd.l);
-		    if (dp != DIR_NULL)
+		    if (dp != RT_DIR_NULL)
 			rt_db_free_internal(&intern);
 		    return GED_ERROR;
 		}
@@ -613,7 +613,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* replace any occurences of comb_name with existing tree */
-    if (dp != DIR_NULL) {
+    if (dp != RT_DIR_NULL) {
 	for (BU_LIST_FOR(tok, tokens, &tok_hd.l)) {
 	    struct rt_db_internal intern1;
 	    struct rt_comb_internal *comb1;
@@ -647,10 +647,10 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 
     final_tree = ged_eval_bool(&tok_hd.l);
 
-    if (dp == DIR_NULL) {
+    if (dp == RT_DIR_NULL) {
 	int flags;
 
-	flags = DIR_COMB;
+	flags = RT_DIR_COMB;
 	BU_GETSTRUCT(comb, rt_comb_internal);
 	comb->magic = RT_COMB_MAGIC;
 	comb->tree = final_tree;
@@ -672,7 +672,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 			  "Creating region id=%ld, air=%ld, los=%ld, GIFTmaterial=%ld\n",
 			  comb->region_id, comb->aircode, comb->los, comb->GIFTmater);
 
-	    flags |= DIR_REGION;
+	    flags |= RT_DIR_REGION;
 	}
 
 	RT_INIT_DB_INTERNAL(&intern);

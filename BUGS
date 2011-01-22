@@ -15,6 +15,8 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rt -i -s4096 -H16 -F/dev/null boolean-ops.g all
+
 * asc2g of a .asc file containing the first line as a "#" comment
   results in a bu_malloc(0) bomb.  comment lines should be valid in
   .asc files.

@@ -63,7 +63,7 @@ color_putrec(struct mater *mp)
     if (dbip->dbi_read_only)
 	return;
 
-    if (dbip->dbi_version >= 5) {
+    if (db_version(dbip) > 4) {
 	bu_log("color_putrec does not work on db5 or later databases");
 	return;
     }

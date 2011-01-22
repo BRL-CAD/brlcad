@@ -297,7 +297,7 @@ printcodes(FILE *fp, struct directory *dp, int pathpos)
 	return TCL_ERROR;
     }
 
-    if (!(dp->d_flags & DIR_COMB))
+    if (!(dp->d_flags & RT_DIR_COMB))
 	return 0;
 
     if ((id=rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource)) < 0) {
@@ -346,14 +346,14 @@ Do_printnode(struct db_i *dbip2, struct rt_comb_internal *UNUSED(comb), union tr
     RT_CK_DBI(dbip2);
     RT_CK_TREE(comb_leaf);
 
-    if ((nextdp=db_lookup(dbip2, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+    if ((nextdp=db_lookup(dbip2, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return;
 
     fp = (FILE *)user_ptr1;
     pathpos = (int *)user_ptr2;
 
     /* recurse on combinations */
-    if (nextdp->d_flags & DIR_COMB)
+    if (nextdp->d_flags & RT_DIR_COMB)
 	(void)printcodes(fp, nextdp, (*pathpos)+1);
 }
 
@@ -386,7 +386,7 @@ f_wcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 
     regflag = lastmemb = 0;
     for (i = 2; i < argc; ++i) {
-	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL) {
+	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
 	    status = printcodes(fp, dp, 0);
 
 	    if (status == TCL_ERROR) {
@@ -447,13 +447,13 @@ f_rcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 	if (*cp == '\0')
 	    continue;
 
-	if ((dp = db_lookup(dbip, cp, LOOKUP_NOISY)) == DIR_NULL) {
+	if ((dp = db_lookup(dbip, cp, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    Tcl_AppendResult(interpreter, "f_rcodes: Warning - ", cp, " not found in database.\n",
 			     (char *)NULL);
 	    continue;
 	}
 
-	if (!(dp->d_flags & DIR_REGION)) {
+	if (!(dp->d_flags & RT_DIR_REGION)) {
 	    Tcl_AppendResult(interpreter, "f_rcodes: Warning ", cp, " not a region\n", (char *)NULL);
 	    continue;
 	}
@@ -582,7 +582,7 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
     RT_CK_DIR(dp);
     BU_CK_PTBL(cur_path);
 
-    if (!(dp->d_flags & DIR_COMB))
+    if (!(dp->d_flags & RT_DIR_COMB))
 	return;
 
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
@@ -615,7 +615,7 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 							   comb->tree, OP_UNION, 0, &rt_uniresource) - tree_list;
     BU_ASSERT_LONG(actual_count, ==, node_count);
 
-    if (dp->d_flags & DIR_REGION) {
+    if (dp->d_flags & RT_DIR_REGION) {
 	numreg++;
 	(void)fprintf(tabptr, " %-4ld %4ld %4ld %4ld %4ld  ",
 		      numreg, comb->region_id, comb->aircode, comb->GIFTmater,
@@ -657,12 +657,12 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 		    break;
 	    }
 
-	    if ((sol_dp=db_lookup(dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) != DIR_NULL) {
-		if (sol_dp->d_flags & DIR_COMB) {
+	    if ((sol_dp=db_lookup(dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
+		if (sol_dp->d_flags & RT_DIR_COMB) {
 		    (void)fprintf(tabptr, "   RG %c %s\n",
 				  op, sol_dp->d_namep);
 		    continue;
-		} else if (!(sol_dp->d_flags & DIR_SOLID)) {
+		} else if (!(sol_dp->d_flags & RT_DIR_SOLID)) {
 		    (void)fprintf(tabptr, "   ?? %c %s\n",
 				  op, sol_dp->d_namep);
 		    continue;
@@ -692,7 +692,7 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 	    } else
 		(void) fprintf(tabptr, "%s:  ", tree_list[i].tl_tree->tr_l.tl_name);
 
-	    if (!old && (sol_dp->d_flags & DIR_SOLID)) {
+	    if (!old && (sol_dp->d_flags & RT_DIR_SOLID)) {
 		/* if we get here, we must be looking for a solid table */
 		bu_vls_init_if_uninit(&tmp_vls);
 		if (rt_functab[sol_intern.idb_type].ft_describe(&tmp_vls, &sol_intern, 1, base2local, &rt_uniresource, dbip) < 0) {
@@ -702,10 +702,10 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 		fprintf(tabptr, "%s", bu_vls_addr(&tmp_vls));
 		bu_vls_free(&tmp_vls);
 	    }
-	    if (nsoltemp && (sol_dp->d_flags & DIR_SOLID))
+	    if (nsoltemp && (sol_dp->d_flags & RT_DIR_SOLID))
 		rt_db_free_internal(&sol_intern);
 	}
-    } else if (dp->d_flags & DIR_COMB) {
+    } else if (dp->d_flags & RT_DIR_COMB) {
 	int cur_length;
 
 	bu_ptbl_ins(cur_path, (long *)dp);
@@ -716,7 +716,7 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 	    mat_t new_mat;
 
 	    nextdp = db_lookup(dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY);
-	    if (nextdp == DIR_NULL) {
+	    if (nextdp == RT_DIR_NULL) {
 		Tcl_AppendResult(INTERP, "\tskipping this object\n", (char *)NULL);
 		continue;
 	    }
@@ -859,7 +859,7 @@ f_tables(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 	struct directory *dp;
 
 	bu_ptbl_reset(&cur_path);
-	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL)
+	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL)
 	    new_tables(dp, &cur_path, (const matp_t)bn_mat_identity, flag);
 	else
 	    Tcl_AppendResult(interpreter, " skip this object\n", (char *)NULL);

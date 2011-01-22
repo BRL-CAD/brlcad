@@ -90,13 +90,13 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for (i = 0, tmp_dpp = dpp;
-		 i < sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
+		 i < sp->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
 		 ++i, ++tmp_dpp) {
 		if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
 		    break;
 	    }
 
-	    if (*tmp_dpp != DIR_NULL)
+	    if (*tmp_dpp != RT_DIR_NULL)
 		continue;
 
 
@@ -179,7 +179,7 @@ _ged_build_dpp(struct ged *gedp,
      */
     dpp = bu_calloc(ac+1, sizeof(struct directory *), "_ged_build_dpp: directory pointers");
     for (i = 0; i < ac; ++i) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, av[i], 0)) != DIR_NULL)
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, av[i], 0)) != RT_DIR_NULL)
 	    dpp[i] = dp;
 	else {
 	    /* object is not currently being displayed */
@@ -192,7 +192,7 @@ _ged_build_dpp(struct ged *gedp,
 	}
     }
 
-    dpp[i] = DIR_NULL;
+    dpp[i] = RT_DIR_NULL;
 
     Tcl_Free((char *)av_orig);
     bu_vls_free(&vls);

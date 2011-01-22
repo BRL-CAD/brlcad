@@ -91,13 +91,13 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
 	struct rt_db_internal	intern;
 	struct rt_comb_internal *comb;
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, parent, LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, parent, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    return TCL_ERROR;
 
 	if (!aflag)
 	    bu_vls_printf(&gedp->ged_result_str, "%s\n", parent);
 
-	if (!(dp->d_flags & DIR_COMB)) {
+	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    if (!aflag)
 		bu_vls_printf(&gedp->ged_result_str, "\tThis is not a combination\n");
 	    break;

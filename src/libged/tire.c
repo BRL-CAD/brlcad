@@ -66,24 +66,24 @@ show_help(struct ged *gedp, const char *name)
     }
 
     bu_vls_printf(&gedp->ged_result_str, "usage: %s [-%s] [tire_name]\n", name, bu_vls_addr(&str));
-    bu_vls_printf(&gedp->ged_result_str, "options:\n"
-		  "\t-a\n\t\tAuto-generate top-level object name using\n"
-		  "\t\t(tire-<width>-<aspect>R<rim size>)\n"
-		  "\t-n <name>\n\t\tSpecify custom top-level object name\n"
-		  "\t-c <count>\n\t\tSpecify number of tread patterns around tire\n"
-		  "\t-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions\n"
-		  "\t\t(U.S. customary units, integer values only)\n"
-		  "\t-W <width>\n\t\tSpecify tire width in inches (overrides -d)\n"
-		  "\t-R <aspect>\n\t\tSpecify tire aspect ratio (#/100) (overrides -d)\n"
-		  "\t-D <rim size>\n\t\tSpecify rim size in inches (overrides -d)\n"
-		  "\t-g <depth>\n\t\tSpecify tread depth in terms of 32nds of an inch.\n"
-		  "\t-j <width>\n\t\tSpecify rim width in inches.\n"
-		  "\t-p <type>\n\t\tGenerate tread with tread pattern as specified\n"
-		  "\t-s <radius>\n\t\tSpecify the radius of the maximum sidewall width\n"
-		  "\t-t <type>\n\t\tGenerate tread with tread type as specified\n"
-		  "\t-u <thickness>\n\t\tSpecify tire thickness in mm\n"
-		  "\t-w <0|1>\n\t\tWhether to include the wheel or not\n"
-		  "\t-h\n\t\tShow help\n\n");
+    bu_vls_printf(&gedp->ged_result_str, "options:\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-a\n\t\tAuto-generate top-level object name using\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t\t(tire-<width>-<aspect>R<rim size>)\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-n <name>\n\t\tSpecify custom top-level object name\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-c <count>\n\t\tSpecify number of tread patterns around tire\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t\t(U.S. customary units, integer values only)\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-W <width>\n\t\tSpecify tire width in inches (overrides -d)\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-R <aspect>\n\t\tSpecify tire aspect ratio (#/100) (overrides -d)\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-D <rim size>\n\t\tSpecify rim size in inches (overrides -d)\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-g <depth>\n\t\tSpecify tread depth in terms of 32nds of an inch.\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-j <width>\n\t\tSpecify rim width in inches.\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-p <type>\n\t\tGenerate tread with tread pattern as specified\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-s <radius>\n\t\tSpecify the radius of the maximum sidewall width\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-t <type>\n\t\tGenerate tread with tread type as specified\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-u <thickness>\n\t\tSpecify tire thickness in mm\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-w <0|1>\n\t\tWhether to include the wheel or not\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-h\n\t\tShow help\n\n");
 
     bu_vls_free(&str);
     return;

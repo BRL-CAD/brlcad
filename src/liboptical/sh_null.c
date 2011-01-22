@@ -37,43 +37,38 @@
 
 extern int rr_render(struct application *ap, struct partition *pp, struct shadework *swp);
 
-HIDDEN int	sh_null_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int	sh_null_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	sh_null_print(register struct region *rp, char *dp);
-HIDDEN void	sh_null_free(char *cp);
+HIDDEN int sh_null_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int sh_null_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void sh_null_print(register struct region *rp, char *dp);
+HIDDEN void sh_null_free(char *cp);
 
 /* The "mfuncs" table describes what the user interface may call this shader.
  * The null shader may be referred to as null or invisible.  Note that the
  * four shader functions *must* be defined, even if they do nothing.
  */
 struct mfuncs null_mfuncs[] = {
-    {MF_MAGIC,	"null",		0,		MFI_HIT,	0,
-     sh_null_setup,	sh_null_render,	sh_null_print,	sh_null_free },
-
-    {MF_MAGIC,	"invisible",		0,		MFI_HIT,	0,
-     sh_null_setup,	sh_null_render,	sh_null_print,	sh_null_free },
-
-    {0,		(char *)0,	0,		0,		0,
-     0,		0,		0,		0 }
+    {MF_MAGIC,	"null",		0,		MFI_HIT,	0, sh_null_setup,	sh_null_render,	sh_null_print,	sh_null_free },
+    {MF_MAGIC,	"invisible",	0,		MFI_HIT,	0, sh_null_setup,	sh_null_render,	sh_null_print,	sh_null_free },
+    {0,		(char *)0,	0,		0,		0, 0,		0,		0,		0 }
 };
 
 
-/*	N U L L _ S E T U P
+/* N U L L _ S E T U P
  *
- *	This routine is called (at prep time) once for each region which uses this
- *  shader.  Any shader-specific initialization should be done here.  It should
- *  return 1 on success and -1 on failure.  Alternatively, this routine should
- *  return 0 to delete this region's shader information after setup (i.e. it's
- *  not needed for whatever reason to it won't be rendered).
+ * This routine is called (at prep time) once for each region which uses this
+ * shader.  Any shader-specific initialization should be done here.  It should
+ * return 1 on success and -1 on failure.  Alternatively, this routine should
+ * return 0 to delete this region's shader information after setup (i.e. it's
+ * not needed for whatever reason to it won't be rendered).
  *
- *  The null shader has nothing to do during setup since it doesn't actually
- *  have anything to do during render0.  It's setup returns 0 since there's no
- *  need to keep any region info.  This means that sh_null_render will not even
- *  get called.
+ * The null shader has nothing to do during setup since it doesn't actually
+ * have anything to do during render0.  It's setup returns 0 since there's no
+ * need to keep any region info.  This means that sh_null_render will not even
+ * get called.
  */
 HIDDEN int
-sh_null_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip ) {
-
+sh_null_setup(register struct region *UNUSED(rp), struct bu_vls *UNUSED(matparm), char **UNUSED(dpp), struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+{
     /* no point to check the arguments since we do nothing with them.  we leave the error
      * checking to elsewhere when used.
      */
@@ -84,24 +79,26 @@ sh_null_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, s
 
 
 /*
- *	N U L L _ R E N D E R
+ * N U L L _ R E N D E R
  *
- *	This is called (from viewshade() in shade.c) once for each hit point
- *	to be shaded.  The purpose here is to fill in values in the shadework
- *	structure.  This is, of course, not necessary when setup returns 0.
+ * This is called (from viewshade() in shade.c) once for each hit point
+ * to be shaded.  The purpose here is to fill in values in the shadework
+ * structure.  This is, of course, not necessary when setup returns 0.
  *
- *  The null shader actually does "something", though it is not called.
- *  It has to at least pass the ray through so that it can actually
- *  raytrace what is visible behind the invisible object.  Otherwise,
- *  an empty black void would be rendered.  this is not really important
- *  though, since it shouldn't normally be called.
+ * The null shader actually does "something", though it is not called.
+ * It has to at least pass the ray through so that it can actually
+ * raytrace what is visible behind the invisible object.  Otherwise,
+ * an empty black void would be rendered.  this is not really important
+ * though, since it shouldn't normally be called.
  */
 HIDDEN int
-sh_null_render( struct application *ap, struct partition *pp, struct shadework *swp, char *dp ) {
-
+sh_null_render(struct application *ap, struct partition *pp, struct shadework *swp, char *UNUSED(dp))
+{
     /* check the validity of the arguments we got */
+
     RT_AP_CHECK(ap);
     RT_CHECK_PT(pp);
+
     /* shadework structures do not have magic numbers or other means to test
      * their validity
      */
@@ -118,28 +115,31 @@ sh_null_render( struct application *ap, struct partition *pp, struct shadework *
 
 
 /*
- *	N U L L _ P R I N T
+ * N U L L _ P R I N T
  *
  * This routine is called if setup fails (which it never should).
  */
 HIDDEN void
-sh_null_print( register struct region *rp, char *dp ) {
+sh_null_print(register struct region *rp, char *UNUSED(dp))
+{
     bu_log("%V uses the null shader\n", rp->reg_name);
 }
 
 
 /*
- *	N U L L _ F R E E
+ * N U L L _ F R E E
  *
- *  This routine is called after all rendering has completed.  The intent is
- *  normally to release any specific structures that were allocated during
- *  setup or rendering.
+ * This routine is called after all rendering has completed.  The intent is
+ * normally to release any specific structures that were allocated during
+ * setup or rendering.
  *
- *  The null shader allocates nothing.  Therefore it releases nothing.
+ * The null shader allocates nothing.  Therefore it releases nothing.
  */
 HIDDEN void
-sh_null_free( char *cp ) {
+sh_null_free(char *UNUSED(cp))
+{
 }
+
 
 /*
  * Local Variables:

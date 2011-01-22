@@ -45,10 +45,10 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
     struct bu_ptbl stack;
 
     /* rename the record itself */
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, old, LOOKUP_NOISY )) == DIR_NULL)
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, old, LOOKUP_NOISY )) == RT_DIR_NULL)
 	return GED_ERROR;
 
-    if (db_lookup(gedp->ged_wdbp->dbip, new, LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(gedp->ged_wdbp->dbip, new, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: already exists", new);
 	return GED_ERROR;
     }
@@ -66,7 +66,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 	struct directory *dirp;
 
 	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dirp = gedp->ged_wdbp->dbip->dbi_Head[i]; dirp != DIR_NULL; dirp = dirp->d_forw) {
+	    for (dirp = gedp->ged_wdbp->dbip->dbi_Head[i]; dirp != RT_DIR_NULL; dirp = dirp->d_forw) {
 
 		if (dirp->d_major_type == DB5_MAJORTYPE_BRLCAD && \
 		    dirp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
@@ -122,13 +122,13 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    union tree	*comb_leaf;
 	    int		done=0;
 	    int		changed=0;
 
 
-	    if (!(dp->d_flags & DIR_COMB))
+	    if (!(dp->d_flags & RT_DIR_COMB))
 		continue;
 
 	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
@@ -281,7 +281,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (gedp->ged_wdbp->dbip->dbi_version < 5 && (int)strlen(argv[2]) > NAMESIZE) {
+    if (db_version(gedp->ged_wdbp->dbip) < 5 && (int)strlen(argv[2]) > NAMESIZE) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR: name length limited to %d characters in v4 databases\n", strlen(argv[2]));
 	return GED_ERROR;
     }

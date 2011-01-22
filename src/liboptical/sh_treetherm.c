@@ -82,17 +82,17 @@
 
 
 struct branch_seg {
-    struct bu_list		bs_siblings;
-    struct branch_seg	*bs_next;	/* toward leaves/ends/tips */
-    struct branch_seg	*bs_prev;	/* toward root/source */
+    struct bu_list bs_siblings;
+    struct branch_seg *bs_next;	/* toward leaves/ends/tips */
+    struct branch_seg *bs_prev;	/* toward root/source */
 
-    point_t			bs_start;	/* location of segment start */
-    vect_t			bs_dir;		/* direction of segment */
-    double			bs_length;	/* length of segment */
-    double			bs_sradius;	/* start radius */
-    double			bs_eradius;	/* end radius */
-    double			bs_dist;	/* total distance from root */
-    float			*bs_nodes[4];	/* point+temp for nodes */
+    point_t bs_start;	/* location of segment start */
+    vect_t bs_dir;		/* direction of segment */
+    double bs_length;	/* length of segment */
+    double bs_sradius;	/* start radius */
+    double bs_eradius;	/* end radius */
+    double bs_dist;	/* total distance from root */
+    float *bs_nodes[4];	/* point+temp for nodes */
 };
 
 
@@ -100,35 +100,36 @@ struct branch_seg {
 #define THRM_SEG_MAGIC 246127
 #define CK_THRM_SEG(_p) BU_CKMAG(_p, THRM_SEG_MAGIC, "thrm_seg")
 struct thrm_seg {
-    long	magic;
-    float	pt[3];			/* center point of nodes */
-    float	dir[3];
-    float	node[NUM_NODES][3];	/* vectors from center to each node */
-    float	vect[NUM_NODES][3];	/* vectors from center to each node */
-    float	temperature[NUM_NODES]; /* temperature from treetherm file */
+    long magic;
+    float pt[3];			/* center point of nodes */
+    float dir[3];
+    float node[NUM_NODES][3];	/* vectors from center to each node */
+    float vect[NUM_NODES][3];	/* vectors from center to each node */
+    float temperature[NUM_NODES]; /* temperature from treetherm file */
 };
+
 
 /*
  * the shader specific structure contains all variables which are unique
  * to any particular use of the shader.
  */
 struct tthrm_specific {
-    long			magic;
-    char			tt_name[64];
-    long			tt_max_seg;
-    fastf_t			tt_min_temp;
-    fastf_t			tt_max_temp;
-    float			tt_temp_scale;
-    struct bu_list		*tt_br;
-    struct thrm_seg		*tt_segs;
-    mat_t	tthrm_m_to_sh;	/* model to shader space matrix */
+    long magic;
+    char tt_name[64];
+    long tt_max_seg;
+    fastf_t tt_min_temp;
+    fastf_t tt_max_temp;
+    float tt_temp_scale;
+    struct bu_list *tt_br;
+    struct thrm_seg *tt_segs;
+    mat_t tthrm_m_to_sh;	/* model to shader space matrix */
 };
 
 
 /* The default values for the variables in the shader specific structure */
-#define SHDR_NULL	((struct tthrm_specific *)0)
-#define SHDR_O(m)	bu_offsetof(struct tthrm_specific, m)
-#define SHDR_AO(m)	bu_offsetofarray(struct tthrm_specific, m)
+#define SHDR_NULL ((struct tthrm_specific *)0)
+#define SHDR_O(m) bu_offsetof(struct tthrm_specific, m)
+#define SHDR_AO(m) bu_offsetofarray(struct tthrm_specific, m)
 
 
 /* description of how to parse/print the arguments to the shader
@@ -136,14 +137,15 @@ struct tthrm_specific {
  * structure above
  */
 struct bu_structparse tthrm_parse[] = {
-    {"%f",	1, "l",			SHDR_O(tt_min_temp),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "h", 		SHDR_O(tt_max_temp),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%s",	64, "file",		SHDR_O(tt_name),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",	1, "l",			SHDR_O(tt_min_temp),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "h", 		SHDR_O(tt_max_temp),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s",	64, "file",		SHDR_O(tt_name),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
-HIDDEN int	tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), tthrm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	tthrm_print(register struct region *rp, char *dp), tthrm_free(char *cp);
+
+HIDDEN int tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), tthrm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void tthrm_print(register struct region *rp, char *dp), tthrm_free(char *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -154,11 +156,8 @@ HIDDEN void	tthrm_print(register struct region *rp, char *dp), tthrm_free(char *
  * values for the parameters.
  */
 struct mfuncs tthrm_mfuncs[] = {
-    {MF_MAGIC,	"tthrm",		0,		MFI_NORMAL|MFI_HIT|MFI_UV,	0,
-     tthrm_setup,	tthrm_render,	tthrm_print,	tthrm_free },
-
-    {0,		(char *)0,	0,		0,		0,
-     0,		0,		0,		0 }
+    {MF_MAGIC,	"tthrm",		0,		MFI_NORMAL|MFI_HIT|MFI_UV,	0,     tthrm_setup,	tthrm_render,	tthrm_print,	tthrm_free },
+    {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 void
 print_thrm_seg(struct thrm_seg *ts)
@@ -182,7 +181,7 @@ print_thrm_seg(struct thrm_seg *ts)
 
 
 void
-tree_parse(struct bu_list *br, union tree *tr)
+tree_parse(struct bu_list *UNUSED(br), union tree *tr)
 {
     switch (tr->tr_b.tb_op) {
 	case OP_SOLID: break;
@@ -203,6 +202,7 @@ tree_parse(struct bu_list *br, union tree *tr)
 
 }
 
+
 void
 build_tree(struct bu_list *br, struct region *rp)
 {
@@ -210,42 +210,42 @@ build_tree(struct bu_list *br, struct region *rp)
 }
 
 
-/*	T R E E T H E R M _ S E T U P
+/* T R E E T H E R M _ S E T U P
  *
- *	This routine is called (at prep time)
- *	once for each region which uses this shader.
- *	Any shader-specific initialization should be done here.
+ * This routine is called (at prep time)
+ * once for each region which uses this shader.
+ * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
-    /* pointer to reg_udata in *rp */
+/* pointer to reg_udata in *rp */
 
-    /* New since 4.4 release */
+/* New since 4.4 release */
 {
-    register struct tthrm_specific	*tthrm_sp;
-    struct bu_mapped_file	*tt_file;
-    char			*tt_data;
-    long			cyl_tot = 0;
-    long			tseg;
-    float			*fp;
-    float			fv[4];
-    double			min_temp;
-    double			max_temp;
-    point_t			center;
-    point_t			pt;
-    vect_t			dir;
-    static const double	inv_nodes = 1.0/8.0;
-    int			node;
-    int			i;
-    int			long_size = 0;
-    size_t		file_size_long;
-    size_t		file_size_int;
+    register struct tthrm_specific *tthrm_sp;
+    struct bu_mapped_file *tt_file;
+    char *tt_data;
+    long cyl_tot = 0;
+    long tseg;
+    float *fp;
+    float fv[4];
+    double min_temp;
+    double max_temp;
+    point_t center;
+    point_t pt;
+    vect_t dir;
+    static const double inv_nodes = 1.0/8.0;
+    int node;
+    int i;
+    int long_size = 0;
+    size_t file_size_long;
+    size_t file_size_int;
 
     /* check the arguments */
     RT_CHECK_RTI(rtip);
-    BU_CK_VLS( matparm );
+    BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
 
     if (rdebug&RDEBUG_SHADE)
@@ -253,7 +253,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	       rp->reg_name, bu_vls_addr(matparm));
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT( tthrm_sp, tthrm_specific );
+    BU_GETSTRUCT(tthrm_sp, tthrm_specific);
     *dpp = (char *)tthrm_sp;
     tthrm_sp->magic = tthrm_MAGIC;
 
@@ -263,7 +263,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
     if (rdebug&RDEBUG_SHADE)
 	bu_log("Parsing: (%s)\n", bu_vls_addr(matparm));
 
-    if (bu_struct_parse( matparm, tthrm_parse, (char *)tthrm_sp ) < 0 ) {
+    if (bu_struct_parse(matparm, tthrm_parse, (char *)tthrm_sp) < 0) {
 	bu_bomb(__FILE__);
     }
     if (tthrm_sp->tt_name[0] == '\0') {
@@ -272,7 +272,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	bu_bomb(__FILE__);
     }
 
-    tt_file = bu_open_mapped_file( tthrm_sp->tt_name, (char *)NULL);
+    tt_file = bu_open_mapped_file(tthrm_sp->tt_name, (char *)NULL);
     if (!tt_file) {
 	bu_log("Error mapping \"%s\"\n",  tthrm_sp->tt_name);
 	bu_bomb("shader tthrm: can't get thermal data");
@@ -339,11 +339,11 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
     min_temp = MAX_FASTF;
     max_temp = -MAX_FASTF;
 
-#define CYL_DATA(_n) ((float *) (&tt_data[ \
-	 long_size + \
-	(_n) * (sizeof(short) + sizeof(float) * 4 * NUM_NODES) + \
-	sizeof(short) \
-	] ))
+#define CYL_DATA(_n) ((float *) (&tt_data[				\
+				     long_size +			\
+				     (_n) * (sizeof(short) + sizeof(float) * 4 * NUM_NODES) + \
+				     sizeof(short)			\
+				     ]))
 
     for (tseg = 0; tseg < cyl_tot; tseg++) {
 
@@ -414,7 +414,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
     bu_close_mapped_file(tt_file);
 
-    if (tthrm_sp->tt_min_temp == 0.0 && tthrm_sp->tt_max_temp == 0.0 ) {
+    if (NEAR_ZERO(tthrm_sp->tt_min_temp, SMALL_FASTF) && EQUAL(tthrm_sp->tt_max_temp, SMALL_FASTF)) {
 	tthrm_sp->tt_min_temp = min_temp;
 	tthrm_sp->tt_max_temp = max_temp;
 	bu_log("computed temp min/max on %s: %g/%g\n", rp->reg_name, min_temp, max_temp);
@@ -424,7 +424,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	bu_log("taking user specified on %s: min/max %g/%g\n", rp->reg_name, min_temp, max_temp);
     }
 
-    if (max_temp != min_temp) {
+    if (!EQUAL(max_temp, min_temp)) {
 	tthrm_sp->tt_temp_scale = 1.0 / (max_temp - min_temp);
     } else {
 	/* min and max are equal, maybe zero */
@@ -455,23 +455,25 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
     return 1;
 }
 
+
 /*
- *	T R E E T H E R M _ P R I N T
+ * T R E E T H E R M _ P R I N T
  */
 HIDDEN void
-tthrm_print(register struct region *rp, char *dp)
+tthrm_print(register struct region *UNUSED(rp), char *dp)
 {
     struct tthrm_specific *tthrm_sp = (struct tthrm_specific *)dp;
 
     bu_log("%s\n", tthrm_sp->tt_name);
-    bn_mat_print( "m_to_sh", tthrm_sp->tthrm_m_to_sh );
+    bn_mat_print("m_to_sh", tthrm_sp->tthrm_m_to_sh);
 #if 0
-    bu_struct_print( rp->reg_name, tthrm_print_tab, (char *)dp );
+    bu_struct_print(rp->reg_name, tthrm_print_tab, (char *)dp);
 #endif
 }
 
+
 /*
- *	T R E E T H E R M _ F R E E
+ * T R E E T H E R M _ F R E E
  */
 HIDDEN void
 tthrm_free(char *cp)
@@ -485,8 +487,9 @@ tthrm_free(char *cp)
     tthrm_sp->tt_name[0] = '\0';
     tthrm_sp->magic = 0;
 
-    bu_free( cp, "tthrm_specific" );
+    bu_free(cp, "tthrm_specific");
 }
+
 
 /*
  * God help us, we've got to extract the node number from the name
@@ -524,19 +527,20 @@ get_solid_number(struct partition *pp)
     return atoi(solid_digits);
 }
 
+
 /*
- *	T R E E T H E R M _ R E N D E R
+ * T R E E T H E R M _ R E N D E R
  *
- *	This is called (from viewshade() in shade.c) once for each hit point
- *	to be shaded.  The purpose here is to fill in values in the shadework
- *	structure.
+ * This is called (from viewshade() in shade.c) once for each hit point
+ * to be shaded.  The purpose here is to fill in values in the shadework
+ * structure.
  */
 int
 tthrm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 
 
-    /* defined in material.h */
-    /* ptr to the shader-specific struct */
+/* defined in material.h */
+/* ptr to the shader-specific struct */
 {
     register struct tthrm_specific *tthrm_sp =
 	(struct tthrm_specific *)dp;
@@ -545,11 +549,11 @@ tthrm_render(struct application *ap, struct partition *pp, struct shadework *swp
     point_t pt;
     vect_t pt_v;
     vect_t v;
-    int   solid_number;
+    int solid_number;
     struct thrm_seg *thrm_seg;
-    int	best_idx;
-    double	best_val;
-    double	Vdot;
+    int best_idx;
+    double best_val;
+    double Vdot;
     int node;
 
     /* check the validity of the arguments we got */
@@ -564,13 +568,13 @@ tthrm_render(struct application *ap, struct partition *pp, struct shadework *swp
     MAT4X3PNT(pt, tthrm_sp->tthrm_m_to_sh, swp->sw_hit.hit_point);
 
     if (rdebug&RDEBUG_SHADE)
-	bu_log( "tthrm_render(%s, %g %g %g)\n", tthrm_sp->tt_name,
-		V3ARGS(pt));
+	bu_log("tthrm_render(%s, %g %g %g)\n", tthrm_sp->tt_name,
+	       V3ARGS(pt));
 
 
     solid_number = get_solid_number(pp);
 
-    if (solid_number > tthrm_sp->tt_max_seg ) {
+    if (solid_number > tthrm_sp->tt_max_seg) {
 	bu_log("%s:%d solid name %s has solid number higher than %ld\n",
 	       __FILE__, __LINE__, tthrm_sp->tt_max_seg);
 	bu_bomb("Choke! ack! gasp! wheeeeeeze.\n");
@@ -693,10 +697,11 @@ too large.  Probable mis-match between geometry and thermal data\n"
     if (rdebug&RDEBUG_SHADE) {
 	bu_log("tthrm_render()\n\t  model:(%g %g %g)\n\t shader:(%g %g %g)\n",
 	       V3ARGS(swp->sw_hit.hit_point),
-	       V3ARGS(pt) );
+	       V3ARGS(pt));
     }
     return 1;
 }
+
 
 /*
  * Local Variables:

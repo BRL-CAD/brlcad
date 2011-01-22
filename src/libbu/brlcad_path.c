@@ -444,7 +444,10 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 	char real_path[MAXPATHLEN] = {0};
 	char *dirpath;
 #ifdef HAVE_REALPATH
-	realpath(lhs, real_path);
+	if (realpath(lhs, real_path) == NULL) {
+	    perror("realpath");
+	    bu_strlcpy(real_path, lhs, (size_t)MAXPATHLEN);
+	}
 #else
 #  ifdef _WIN32
 	GetFullPathName(lhs, MAXPATHLEN, real_path, NULL);

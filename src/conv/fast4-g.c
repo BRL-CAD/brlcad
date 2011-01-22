@@ -2833,7 +2833,7 @@ fix_regions(struct db_i *dbip, struct directory *dp, genptr_t ptr)
     if (ptr) ptr=ptr; /* quell warning */
 
     /* only process regions */
-    if (!(dp->d_flags & DIR_REGION))
+    if (!(dp->d_flags & RT_DIR_REGION))
 	return;
 
     if (rt_db_get_internal(&internal, dp, dbip, NULL, &rt_uniresource) < 0) {
@@ -2858,7 +2858,7 @@ fix_regions(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 
     /* only one element in tree */
 
-    if ((dp2=db_lookup(dbip, tree->tr_l.tl_name, 0)) == DIR_NULL) {
+    if ((dp2=db_lookup(dbip, tree->tr_l.tl_name, 0)) == RT_DIR_NULL) {
 	bu_log("Could not find %s\n", tree->tr_l.tl_name);
 	rt_db_free_internal(&internal);
 	return;
@@ -2918,7 +2918,7 @@ fix_regions(struct db_i *dbip, struct directory *dp, genptr_t ptr)
   if (debug)
   bu_log("looking up 'all'\n");
 
-  if ((dp=db_lookup(dbip, "all", 0)) == DIR_NULL) {
+  if ((dp=db_lookup(dbip, "all", 0)) == RT_DIR_NULL) {
   bu_log("Cannot find group 'all' in model, post processing not completed\n");
   db_close(dbip);
   return;

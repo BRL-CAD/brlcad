@@ -3864,7 +3864,7 @@ package provide cadwidgets::Ged 1.0
     foreach dm {ur ul ll lr} {
 	bind $itk_component($dm) <$_button> ""
 	bind $itk_component($dm) <ButtonRelease-$_button> ""
-	$mGed rect $itk_component($dm) draw 0
+#	$mGed rect $itk_component($dm) draw 0
     }
 }
 

@@ -30,8 +30,11 @@ noinst_PROGRAMS = \
 	parsetest \
 	prcomb
 
-# make sure the example compiles, but don't include it in librt
-librt_xxx_la_SOURCES = primitives/xxx/xxx.c
+# make sure example and temporary code compiles, but don't include it in librt
+librt_xxx_la_SOURCES = \
+	parse.c \
+	primitives/nmg/nmg_junk.c \
+	primitives/xxx/xxx.c
 
 librt_nil_la_SOURCES = \
 	attributes.c \
@@ -161,7 +164,6 @@ librt_nil_la_SOURCES = \
 	primitives/nmg/nmg_index.c \
 	primitives/nmg/nmg_info.c \
 	primitives/nmg/nmg_inter.c \
-	primitives/nmg/nmg_junk.c \
 	primitives/nmg/nmg_manif.c \
 	primitives/nmg/nmg_mesh.c \
 	primitives/nmg/nmg_mirror.c \
@@ -236,7 +238,6 @@ librt_nil_la_SOURCES = \
 	roots.c \
 	shoot.c \
 	spectrum.c \
-	storage.c \
 	tcl.c \
 	timer42.c \
 	transform.c \
@@ -298,7 +299,6 @@ EXTRA_DIST = \
 	brep_test.cpp \
 	columnparse.c \
 	namegen.c \
-	parse.c \
 	pmalloc.c \
 	primitives/bot/g_bot_include.c \
 	timer-nt.c \

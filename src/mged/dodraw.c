@@ -1097,7 +1097,7 @@ invent_solid(
     if (dbip == DBI_NULL)
 	return 0;
 
-    if ((dp = db_lookup(dbip,  name, LOOKUP_QUIET)) != DIR_NULL) {
+    if ((dp = db_lookup(dbip,  name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	if (dp->d_addr != RT_DIR_PHONY_ADDR) {
 	    Tcl_AppendResult(INTERP, "invent_solid(", name,
 			     ") would clobber existing database entry, ignored\n", (char *)NULL);
@@ -1109,7 +1109,7 @@ invent_solid(
 	ged_erasePathFromDisplay(gedp, name, 0);
     }
     /* Need to enter phony name in directory structure */
-    dp = db_diradd(dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, &type);
+    dp = db_diradd(dbip,  name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, &type);
 
     /* Obtain a fresh solid structure, and fill it in */
     GET_SOLID(sp, &MGED_FreeSolid.l);

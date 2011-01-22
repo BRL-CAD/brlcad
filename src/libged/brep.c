@@ -80,7 +80,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     }
     
     solid_name = (char *)argv[1];
-    if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  solid_name, LOOKUP_NOISY)) == DIR_NULL) {
+    if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  solid_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", solid_name);
 	return GED_ERROR;
     } else {

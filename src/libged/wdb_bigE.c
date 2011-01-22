@@ -280,7 +280,7 @@ wdb_build_etree(union tree *tp,
 	    BU_LIST_INIT(&eptr->l.seghead);
 	    break;
 	case OP_DB_LEAF:
-	    if ((dp=db_lookup(dgcdp->dgop->dgo_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL) {
+	    if ((dp=db_lookup(dgcdp->dgop->dgo_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 		eptr->l.m = (struct model *)NULL;
 		break;
 	    }

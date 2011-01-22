@@ -42,8 +42,8 @@
 #endif
 
 
-#define LIGHT_O(m)	bu_offsetof(struct light_specific, m)
-#define LIGHT_OA(m)	bu_offsetofarray(struct light_specific, m)
+#define LIGHT_O(m) bu_offsetof(struct light_specific, m)
+#define LIGHT_OA(m) bu_offsetofarray(struct light_specific, m)
 
 
 /** Heads linked list of lights */
@@ -67,52 +67,55 @@ struct mfuncs light_mfuncs[] = {
     {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 
+
 /** for printing out light values */
 struct bu_structparse light_print_tab[] = {
-    {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "target",	LIGHT_OA(lt_target),	aim_set },
-    {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "visible",	LIGHT_O(lt_visible),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "target",	LIGHT_OA(lt_target),	aim_set, NULL, NULL },
+    {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "visible",	LIGHT_O(lt_visible),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
+
 
 /** for actually parsing light values */
 struct bu_structparse light_parse[] = {
 
-    {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "b",		LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "inten",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "b",		LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "inten",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 
-    {"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "a",		LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "a",		LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 
-    {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "f",		LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "f",		LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 
-    {"%f",	3, "target",	LIGHT_OA(lt_target),	aim_set },
-    {"%f",	3, "t",		LIGHT_OA(lt_target),	aim_set },
-    {"%f",	3, "aim",	LIGHT_OA(lt_target),	aim_set },
+    {"%f",	3, "target",	LIGHT_OA(lt_target),	aim_set, NULL, NULL },
+    {"%f",	3, "t",		LIGHT_OA(lt_target),	aim_set, NULL, NULL },
+    {"%f",	3, "aim",	LIGHT_OA(lt_target),	aim_set, NULL, NULL },
 
-    {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "s",		LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "s",		LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 
-    {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "i",		LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "i",		LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 
-    {"%d",	1, "visible",	LIGHT_O(lt_visible),	light_cvt_visible },
-    {"%d",	1, "v",		LIGHT_O(lt_visible),	light_cvt_visible },
+    {"%d",	1, "visible",	LIGHT_O(lt_visible),	light_cvt_visible, NULL, NULL },
+    {"%d",	1, "v",		LIGHT_O(lt_visible),	light_cvt_visible, NULL, NULL },
 
-    {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	light_cvt_visible },
+    {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	light_cvt_visible, NULL, NULL },
 
-    {"%f",	3, "pt",	LIGHT_OA(lt_parse_pt), light_pt_set },
-    {"%f",	6, "pn",	LIGHT_OA(lt_parse_pt), light_pt_set },
+    {"%f",	3, "pt",	LIGHT_OA(lt_parse_pt), light_pt_set, NULL, NULL },
+    {"%f",	6, "pn",	LIGHT_OA(lt_parse_pt), light_pt_set, NULL, NULL },
 
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
+
 
 /**
  * This is a container for all the stuff that must be carried around
@@ -143,7 +146,7 @@ struct light_obs_stuff {
  * is encountered, and causes lt_exaim to be set.
  */
 HIDDEN void
-aim_set (const struct bu_structparse *sdp, const char *name, const char *base, char *value)
+aim_set (const struct bu_structparse *UNUSED(sdp), const char *UNUSED(name), const char *base, char *UNUSED(value))
 {
     register struct light_specific *lsp = (struct light_specific *)base;
     if (rdebug & RDEBUG_LIGHT) {
@@ -159,11 +162,11 @@ aim_set (const struct bu_structparse *sdp, const char *name, const char *base, c
  * Convert "visible" flag to "invisible" variable
  */
 HIDDEN void
-light_cvt_visible(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-    /* structure description */
-    /* struct member name */
-    /* begining of structure */
-    /* string containing value */
+light_cvt_visible(register const struct bu_structparse *sdp, register const char *name, char *base, const char *UNUSED(value))
+/* structure description */
+/* struct member name */
+/* begining of structure */
+/* string containing value */
 {
     struct light_specific *lsp = (struct light_specific *)base;
 
@@ -182,6 +185,7 @@ light_cvt_visible(register const struct bu_structparse *sdp, register const char
 	    break;
     }
 }
+
 
 /**
  * ensure that there are sufficient light samples, allocate more if
@@ -212,11 +216,11 @@ light_pt_allocate(register struct light_specific *lsp)
  * (for points and points with normals respectively)
  */
 HIDDEN void
-light_pt_set(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-    /* structure description */
-    /* struct member name */
-    /* begining of structure */
-    /* string containing value */
+light_pt_set(register const struct bu_structparse *sdp, register const char *name, char *base, const char *UNUSED(value))
+/* structure description */
+/* struct member name */
+/* begining of structure */
+/* string containing value */
 {
     struct light_specific *lsp = (struct light_specific *)base;
     fastf_t *p = (fastf_t *)(base+sdp->sp_offset);
@@ -250,7 +254,7 @@ light_pt_set(register const struct bu_structparse *sdp, register const char *nam
  * away.
  */
 HIDDEN int
-light_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+light_render(struct application *ap, struct partition *UNUSED(pp), struct shadework *swp, char *dp)
 {
     register struct light_specific *lsp = (struct light_specific *)dp;
     register fastf_t f;
@@ -302,7 +306,7 @@ ray_setup(struct application *ap,
 	  point_t span)
 {
     int face;
-    point_t pt;
+    point_t pt = {0.0, 0.0, 0.0};
     static int idx = 0;
 
     /* pick a face of the bounding RPP at which we will start the ray */
@@ -362,7 +366,7 @@ ray_setup(struct application *ap,
  * add the hit point(s) to the list of points on the light.
  */
 static int
-light_gen_sample_pts_hit(register struct application *ap, struct partition *PartHeadp, struct seg *sp)
+light_gen_sample_pts_hit(register struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(sp))
 {
     struct light_specific *lsp = (struct light_specific *)ap->a_uptr;
     struct soltab *stp;
@@ -466,7 +470,7 @@ light_gen_sample_pts_hit(register struct application *ap, struct partition *Part
  * light, then do nothing.
  */
 static int
-light_gen_sample_pts_miss(register struct application *ap)
+light_gen_sample_pts_miss(register struct application *UNUSED(ap))
 {
     return 0;
 }
@@ -592,8 +596,8 @@ HIDDEN int
 light_setup(register struct region *rp,
 	    struct bu_vls *matparm,
 	    genptr_t *dpp,
-	    struct mfuncs *mfp,
-	    struct rt_i *rtip)
+	    struct mfuncs *UNUSED(mfp),
+	    struct rt_i *UNUSED(rtip))
 {
     register struct light_specific *lsp;
     register struct soltab *stp;
@@ -622,7 +626,7 @@ light_setup(register struct region *rp,
 	return -1;
     }
 
-    if (lsp->lt_angle > 180)  lsp->lt_angle = 180;
+    if (lsp->lt_angle > 180) lsp->lt_angle = 180;
     lsp->lt_cosangle = cos((double) lsp->lt_angle * 0.0174532925199433);
 
     /* Determine position and size */
@@ -671,8 +675,7 @@ light_setup(register struct region *rp,
 	if (lsp->lt_exaim) {
 	    VSUB2 (work, lsp->lt_target, lsp->lt_pos);
 	    VUNITIZE (work);
-	}
-	else VSET(work, 0, 0, -1);
+	} else VSET(work, 0, 0, -1);
 	MAT4X3VEC(lsp->lt_aim, matp, work);
 	VUNITIZE(lsp->lt_aim);
     }
@@ -762,7 +765,7 @@ light_init(struct application *ap)
 
     for (BU_LIST_FOR(lsp, light_specific, &(LightHead.l))) {
 	nlights++;
-	if (lsp->lt_fraction > 0)  continue;	/* overridden */
+	if (lsp->lt_fraction > 0) continue;	/* overridden */
 	if (lsp->lt_intensity <= 0)
 	    lsp->lt_intensity = 1;		/* keep non-neg */
 	if (lsp->lt_intensity > inten)
@@ -776,7 +779,7 @@ light_init(struct application *ap)
 
     for (BU_LIST_FOR(lsp, light_specific, &(LightHead.l))) {
 	RT_CK_LIGHT(lsp);
-	if (lsp->lt_fraction > 0)  continue;	/* overridden */
+	if (lsp->lt_fraction > 0) continue;	/* overridden */
 #ifdef RT_MULTISPECTRAL
 	lsp->lt_fraction = 1.0;	/* always use honest intensity values */
 #else
@@ -1098,9 +1101,9 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     /* if the region we hit is a light source be generous */
 #if 1
     {
-	struct light_specific *lsp;
-	for (BU_LIST_FOR(lsp, light_specific, &(LightHead.l))) {
-	    if (lsp->lt_rp == regp) {
+	struct light_specific *lspi;
+	for (BU_LIST_FOR(lspi, light_specific, &(LightHead.l))) {
+	    if (lspi->lt_rp == regp) {
 #ifdef RT_MULTISPECTRAL
 		bn_tabdata_copy(ap->a_spectrum, ms_filter_color);
 #else
@@ -1229,13 +1232,13 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     VELMUL(ap->a_color, sub_ap.a_color, filter_color);
 #endif
     reason = "after filtering";
- out:
+out:
 
 #ifdef RT_MULTISPECTRAL
     if (ms_filter_color) bn_tabdata_free(ms_filter_color);
-    if (sw.msw_color)  bn_tabdata_free(sw.msw_color);
+    if (sw.msw_color) bn_tabdata_free(sw.msw_color);
     if (sw.msw_basecolor) bn_tabdata_free(sw.msw_basecolor);
-    if (sub_ap.a_spectrum)  bn_tabdata_free(sub_ap.a_spectrum);
+    if (sub_ap.a_spectrum) bn_tabdata_free(sub_ap.a_spectrum);
     if (rdebug & RDEBUG_LIGHT) {
 	bu_log("light vis=%d %s %s %s  ",
 	       light_visible,
@@ -1317,7 +1320,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
     if (rdebug & RDEBUG_LIGHT) bu_log("light_vis\n");
 
- retry:
+retry:
 
     /* compute the light direction */
     if (los->lsp->lt_infinite) {

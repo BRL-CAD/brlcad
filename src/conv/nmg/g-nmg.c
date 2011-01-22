@@ -286,7 +286,7 @@ csg_comb_func(struct db_i *db, struct directory *dp, genptr_t UNUSED(ptr))
 
     dp->d_uses = (-1);
 
-    if ( dp->d_flags & DIR_REGION ) {
+    if ( dp->d_flags & RT_DIR_REGION ) {
 	char **name;
 
 	/* convert a region to NMG's */
@@ -505,7 +505,7 @@ main(int argc, char **argv)
 	struct directory *dp;
 
 	dp = db_lookup( dbip, argv[i], 0 );
-	if ( dp == DIR_NULL ) {
+	if ( dp == RT_DIR_NULL ) {
 	    bu_log( "WARNING: Could not find %s, skipping\n", argv[i] );
 	    continue;
 	}

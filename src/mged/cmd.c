@@ -68,9 +68,9 @@ extern int classic_mged;
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
 
-extern int db_warn;
-extern int db_upgrade;
-extern int db_version;
+extern int mged_db_warn;
+extern int mged_db_upgrade;
+extern int mged_db_version;
 
 int glob_compat_mode = 1;
 int output_as_return = 1;
@@ -1683,9 +1683,9 @@ void
 mged_global_variable_setup(Tcl_Interp *interpreter)
 {
     Tcl_LinkVar(interpreter, "mged_default(dlist)", (char *)&mged_default_dlist, TCL_LINK_INT);
-    Tcl_LinkVar(interpreter, "mged_default(db_warn)", (char *)&db_warn, TCL_LINK_INT);
-    Tcl_LinkVar(interpreter, "mged_default(db_upgrade)", (char *)&db_upgrade, TCL_LINK_INT);
-    Tcl_LinkVar(interpreter, "mged_default(db_version)", (char *)&db_version, TCL_LINK_INT);
+    Tcl_LinkVar(interpreter, "mged_default(db_warn)", (char *)&mged_db_warn, TCL_LINK_INT);
+    Tcl_LinkVar(interpreter, "mged_default(db_upgrade)", (char *)&mged_db_upgrade, TCL_LINK_INT);
+    Tcl_LinkVar(interpreter, "mged_default(db_version)", (char *)&mged_db_version, TCL_LINK_INT);
 
     Tcl_LinkVar(interpreter, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
     Tcl_LinkVar(interpreter, "edit_solid_flag", (char *)&es_edflag, TCL_LINK_INT);
@@ -1697,9 +1697,9 @@ void
 mged_global_variable_teardown(Tcl_Interp *interpreter)
 {
     Tcl_UnlinkVar(interpreter, "mged_default(dlist)");
-    Tcl_UnlinkVar(interpreter, "mged_default(db_warn)");
-    Tcl_UnlinkVar(interpreter, "mged_default(db_upgrade)");
-    Tcl_UnlinkVar(interpreter, "mged_default(db_version)");
+    Tcl_UnlinkVar(interpreter, "mged_default(mged_db_warn)");
+    Tcl_UnlinkVar(interpreter, "mged_default(mged_db_upgrade)");
+    Tcl_UnlinkVar(interpreter, "mged_default(mged_db_version)");
 
     Tcl_UnlinkVar(interpreter, "edit_class");
     Tcl_UnlinkVar(interpreter, "edit_solid_flag");
@@ -1861,7 +1861,7 @@ cmd_lm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
 	bu_avs_add_nonunique(&avs, "MUVES_Component", argv[i]);
     }
 
-    tbl = db_lookup_by_attr(dbip, DIR_REGION, &avs, 2);
+    tbl = db_lookup_by_attr(dbip, RT_DIR_REGION, &avs, 2);
     if (!tbl) {
 	Tcl_AppendResult(interpreter, "ERROR: db_lookup_by_attr() failed!\n", (char *)NULL);
 	bu_vls_free(&vls);

@@ -83,7 +83,7 @@ Do_prefix(struct db_i *dbi, struct rt_comb_internal *UNUSED(comb), union tree *c
 	return;
 
     bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");
-    if (dbi->dbi_version < 5) {
+    if (db_version(dbi) < 5) {
 	bu_strlcpy(tempstring_v4, prefix, len);
 	bu_strlcat(tempstring_v4, obj, len);
 	comb_leaf->tr_l.tl_name = bu_strdup(tempstring_v4);
@@ -132,12 +132,12 @@ f_prefix(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
     /* First, check validity, and change node names */
     for (i = 2; i < argc; i++) {
-	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL) {
+	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    argv[i] = "";
 	    continue;
 	}
 
-	if (dbip->dbi_version < 5 && (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
+	if (db_version(dbip) < 5 && (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
 	    struct bu_vls tmp_vls;
 
 	    bu_vls_init(&tmp_vls);
@@ -150,7 +150,7 @@ f_prefix(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	    continue;
 	}
 
-	if (dbip->dbi_version < 5) {
+	if (db_version(dbip) < 5) {
 	    bu_strlcpy(tempstring_v4, argv[1], len);
 	    bu_strlcat(tempstring_v4, argv[i], len);
 	    tempstring = tempstring_v4;
@@ -161,7 +161,7 @@ f_prefix(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	    tempstring = bu_vls_addr(&tempstring_v5);
 	}
 
-	if (db_lookup(dbip, tempstring, LOOKUP_QUIET) != DIR_NULL) {
+	if (db_lookup(dbip, tempstring, LOOKUP_QUIET) != RT_DIR_NULL) {
 	    aexists(tempstring);
 	    argv[i] = "";
 	    continue;
@@ -180,7 +180,7 @@ f_prefix(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
     /* Examine all COMB nodes */
     FOR_ALL_DIRECTORY_START(dp, dbip) {
-	if (!(dp->d_flags & DIR_COMB))
+	if (!(dp->d_flags & RT_DIR_COMB))
 	    continue;
 
 	if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0)

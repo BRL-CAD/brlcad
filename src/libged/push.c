@@ -307,7 +307,7 @@ ged_do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), unio
 	comb_leaf->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t), "tl_mat");
     }
     MAT_IDN(comb_leaf->tr_l.tl_mat);
-    if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return;
 
     ged_identitize(dp, dbip, msg);
@@ -327,7 +327,7 @@ ged_identitize(struct directory	*dp,
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
-    if (dp->d_flags & DIR_SOLID)
+    if (dp->d_flags & RT_DIR_SOLID)
 	return;
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(msg, "Database read error, aborting\n");

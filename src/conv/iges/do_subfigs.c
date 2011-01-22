@@ -95,6 +95,7 @@ Do_subfigs()
 	Readint(&j, "");	/* ignore depth */
 	Readstrg("");		/* ignore subfigure name */
 
+	if (dir[subfigdef_index]->name)
 	wmem = mk_addmember(dir[subfigdef_index]->name, &head1.l, NULL, WMOP_UNION);
 	non_unit = 0;
 	for (j=0; j<3; j++) {

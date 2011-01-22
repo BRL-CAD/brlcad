@@ -50,7 +50,7 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
-    dp_old = dp_new = DIR_NULL;
+    dp_old = dp_new = RT_DIR_NULL;
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -62,7 +62,7 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* check that we are using a version 5 database */
-    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
+    if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	bu_vls_printf(&gedp->ged_result_str, "This is an older database version.\nIt does not support BOT surface normals.\nUse \"dbupgrade\" to upgrade this database to the current version.\n");
 	return GED_ERROR;
     }
@@ -117,8 +117,8 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ( dp_new == DIR_NULL ) {
-	GED_DB_DIRADD(gedp, dp_new, new_bot_name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
+    if ( dp_new == RT_DIR_NULL ) {
+	GED_DB_DIRADD(gedp, dp_new, new_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
     }
 
     GED_DB_PUT_INTERNAL(gedp, dp_new, &intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);

@@ -675,7 +675,7 @@ get_de_pointers(tp, dp, de_len, de_pointers)
 	    struct directory *dp_M;
 
 	    dp_M = db_lookup(DBIP, tp->tr_l.tl_name, LOOKUP_NOISY);
-	    if (dp_M == DIR_NULL)
+	    if (dp_M == RT_DIR_NULL)
 		return 1;
 
 	    if (dp_M->d_uses >= 0) {
@@ -723,7 +723,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     int id;
 
     /* when this is called in facet mode, we only want groups */
-    if (mode == FACET_MODE && (dp->d_flags & DIR_REGION))
+    if (mode == FACET_MODE && (dp->d_flags & RT_DIR_REGION))
 	return;
 
     /* check if already written */
@@ -836,7 +836,7 @@ incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, genp
     RT_CK_DBI(dbip);
     RT_CK_TREE(tp);
 
-    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return;
 
     dp->d_nref++;
@@ -850,7 +850,7 @@ count_refs(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     struct rt_comb_internal *comb;
     int id;
 
-    if (!(dp->d_flags & DIR_COMB))
+    if (!(dp->d_flags & RT_DIR_COMB))
 	return;
 
     id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);

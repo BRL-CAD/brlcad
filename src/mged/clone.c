@@ -247,7 +247,7 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 	bu_vls_trunc(newname, 0);
 	bu_vls_strcpy(newname, prefix);
 
-        if ((dp->d_flags & DIR_SOLID) || (dp->d_flags & DIR_REGION)) {
+        if ((dp->d_flags & RT_DIR_SOLID) || (dp->d_flags & RT_DIR_REGION)) {
 	    /* primitives and regions */
     	    if (suffix[0] != 0)
     		if ((i == 1) && is_in_list(obj_list, buf)) {
@@ -299,7 +299,7 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
 	/* add the object to the directory */
 	dp = db_diradd(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i]), RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
-	if ((dp == DIR_NULL) || (db_alloc(_dbip, dp, proto->d_len) < 0)) {
+	if ((dp == RT_DIR_NULL) || (db_alloc(_dbip, dp, proto->d_len) < 0)) {
 	    TCL_ALLOC_ERR;
 	    return;
 	}
@@ -470,7 +470,7 @@ copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t state)
 	return;
     }
 
-    if (_dbip->dbi_version < 5)
+    if (db_version(_dbip) < 5)
 	(void)copy_v4_solid(_dbip, proto, (struct clone_state *)state, idx);
     else
 	(void)copy_v5_solid(_dbip, proto, (struct clone_state *)state, idx);
@@ -498,7 +498,7 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	    return NULL;
 	}
 
-	if (proto->d_flags & DIR_REGION) {
+	if (proto->d_flags & RT_DIR_REGION) {
 	    if (!is_in_list(obj_list, rp[1].M.m_instname)) {
 		bu_log("ERROR: clone internal error looking up %s\n", rp[1].M.m_instname);
 		return NULL;
@@ -629,7 +629,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		return NULL;
 	    }
 
-	    if ((dp=db_diradd(wdbp->dbip, bu_vls_addr(name), -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL) {
+	    if ((dp=db_diradd(wdbp->dbip, bu_vls_addr(name), -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == RT_DIR_NULL) {
 		bu_log("An error has occured while adding a new object to the database.");
 		return NULL;
 	    }
@@ -682,7 +682,7 @@ copy_comb(struct db_i *_dbip, struct directory *proto, genptr_t state)
 	return;
     }
 
-    if (_dbip->dbi_version < 5)
+    if (db_version(_dbip) < 5)
 	(void)copy_v4_comb(_dbip, proto, (struct clone_state *)state, idx);
     else
 	(void)copy_v5_comb(_dbip, proto, (struct clone_state *)state, idx);
@@ -709,9 +709,9 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
     copyname = get_name(_dbip, dp, state, 0);
 
     /* copy the object */
-    if (dp->d_flags & DIR_COMB) {
+    if (dp->d_flags & RT_DIR_COMB) {
 
-	if (_dbip->dbi_version < 5) {
+	if (db_version(_dbip) < 5) {
 	    /* A v4 method of peeking into a combination */
 
 	    int errors = 0;
@@ -726,7 +726,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 	     * make up the object.
 	     */
 	    for (i = 1; i < dp->d_len; i++) {
-		if ((mdp = db_lookup(_dbip, rp[i].M.m_instname, LOOKUP_NOISY)) == DIR_NULL) {
+		if ((mdp = db_lookup(_dbip, rp[i].M.m_instname, LOOKUP_NOISY)) == RT_DIR_NULL) {
 		    errors++;
 		    bu_log("WARNING: failed to locate \"%s\"\n", rp[i].M.m_instname);
 		    continue;
@@ -747,7 +747,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 	} else
 	    /* A v5 method of peeking into a combination */
 	    db_functree(_dbip, dp, copy_comb, copy_solid, resp, (genptr_t)state);
-    } else if (dp->d_flags & DIR_SOLID)
+    } else if (dp->d_flags & RT_DIR_SOLID)
 	/* leaf node -- make a copy the object */
 	copy_solid(_dbip, dp, (genptr_t)state);
     else {

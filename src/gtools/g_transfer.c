@@ -427,7 +427,7 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
 	    }
 
 	    dp = db_lookup(dbip, geomv[i], LOOKUP_NOISY);
-	    if (dp == DIR_NULL) {
+	    if (dp == RT_DIR_NULL) {
 		pkg_close(stash.connection);
 		bu_log("Unable to lookup %s\n", geomv[i]);
 		bu_exit(EXIT_FAILURE, "ERROR: requested geometry could not be found\n");

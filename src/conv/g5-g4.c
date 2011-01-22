@@ -92,7 +92,7 @@ main(int argc, char **argv)
 	return 4;
     }
 
-    if ( dbip->dbi_version != 5 ) {
+    if ( db_version(dbip) != 5 ) {
 	bu_log( "Input database must be a version 5 database!!!!\n" );
 	return 5;
     }

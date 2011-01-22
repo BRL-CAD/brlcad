@@ -98,9 +98,9 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & DIR_COMB) ||
-		(!aflag && (dp->d_flags & DIR_HIDDEN)))
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (!(dp->d_flags & RT_DIR_COMB) ||
+		(!aflag && (dp->d_flags & RT_DIR_HIDDEN)))
 		continue;
 
 	    if (rt_db_get_internal(&intern,

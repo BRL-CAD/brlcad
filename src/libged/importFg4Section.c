@@ -129,7 +129,7 @@ rt_mk_bot_w_normals(
     struct rt_bot_internal *botip;
     int i;
 
-    if ( (num_normals > 0) && (fp->dbip->dbi_version < 5 ) ) {
+    if ( (num_normals > 0) && (db_version(fp->dbip) < 5 ) ) {
 	bu_log( "You are using an old database format which does not support surface normals for BOT primitives\n" );
 	bu_log( "You are attempting to create a BOT primitive named \"%s\" with surface normals\n", name );
 	bu_log( "The surface normals will not be saved\n" );
@@ -162,7 +162,7 @@ rt_mk_bot_w_normals(
 	botip->face_mode = (struct bu_bitv *)NULL;
     }
 
-    if ( (num_normals > 0) && (fp->dbip->dbi_version >= 5 ) ) {
+    if ( (num_normals > 0) && (db_version(fp->dbip) > 4 ) ) {
 	botip->num_normals = num_normals;
 	botip->num_face_normals = botip->num_faces;
 	botip->normals = (fastf_t *)bu_calloc( botip->num_normals * 3, sizeof( fastf_t ), "BOT normals" );

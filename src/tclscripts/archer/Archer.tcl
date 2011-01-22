@@ -3400,6 +3400,20 @@ proc title_node_handler {node} {
 	$mColorListNoTriple
 
     buildComboBox $itk_component(generalF) \
+	fbbackgroundColor \
+	fbbcolor \
+	mFBBackgroundColorPref \
+	"FB Background Color:" \
+	$mColorListNoTriple
+
+    buildComboBox $itk_component(generalF) \
+	fontsize \
+	fontsize \
+	mDisplayFontSizePref \
+	"Font Size:" \
+	$mDisplayFontSizes
+
+    buildComboBox $itk_component(generalF) \
 	binding \
 	binding \
 	mBindingModePref \
@@ -3503,6 +3517,12 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(backgroundColorL) -column 0 -row $i -sticky ne
     grid $itk_component(backgroundColorF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(fbbackgroundColorL) -column 0 -row $i -sticky ne
+    grid $itk_component(fbbackgroundColorF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(fontsizeL) -column 0 -row $i -sticky e
+    grid $itk_component(fontsizeF) -column 1 -row $i -sticky ew
     incr i
     grid $itk_component(measuringStickColorL) -column 0 -row $i -sticky e
     grid $itk_component(measuringStickColorF) -column 1 -row $i -sticky ew
@@ -7955,11 +7975,14 @@ proc title_node_handler {node} {
     }
 
     backgroundColor $mBackgroundColor
+    $itk_component(rtcntrl) configure -color [cadwidgets::Ged::get_rgb_color $mFBBackgroundColor]
     gedCmd configure -measuringStickColor $mMeasuringStickColor
     gedCmd configure -measuringStickMode $mMeasuringStickMode
     gedCmd configure -primitiveLabelColor $mPrimitiveLabelColor
     gedCmd configure -scaleColor $mScaleColor
     gedCmd configure -viewingParamsColor $mViewingParamsColor
+
+    $itk_component(ged) fontsize $mDisplayFontSize
 }
 
 
@@ -7983,6 +8006,15 @@ proc title_node_handler {node} {
     if {$mBackgroundColor != $mBackgroundColorPref} {
 	set mBackgroundColor $mBackgroundColorPref
 	backgroundColor $mBackgroundColor
+
+    }
+
+    if {$mFBBackgroundColor != $mFBBackgroundColorPref} {
+	set mFBBackgroundColor $mFBBackgroundColorPref
+    }
+
+    if {$mDisplayFontSize != $mDisplayFontSizePref} {
+	set mDisplayFontSize $mDisplayFontSizePref
     }
 
     if {$mPrimitiveLabelColor != $mPrimitiveLabelColorPref} {
@@ -8479,6 +8511,8 @@ proc title_node_handler {node} {
     set mBackgroundColorPref $mBackgroundColor
     set mBindingModePref $mBindingMode
     set mEnableBigEPref $mEnableBigE
+    set mFBBackgroundColorPref $mFBBackgroundColor
+    set mDisplayFontSizePref $mDisplayFontSize
     set mMeasuringStickColorPref $mMeasuringStickColor
     set mMeasuringStickModePref $mMeasuringStickMode
     set mPrimitiveLabelColorPref $mPrimitiveLabelColor
@@ -8623,6 +8657,8 @@ proc title_node_handler {node} {
     puts $_pfile "set mBackgroundColor \"$mBackgroundColor\""
     puts $_pfile "set mBindingMode $mBindingMode"
     puts $_pfile "set mEnableBigE $mEnableBigE"
+    puts $_pfile "set mFBBackgroundColor \"$mFBBackgroundColor\""
+    puts $_pfile "set mDisplayFontSize \"$mDisplayFontSize\""
     puts $_pfile "set mMeasuringStickColor \"$mMeasuringStickColor\""
     puts $_pfile "set mMeasuringStickMode $mMeasuringStickMode"
     puts $_pfile "set mPrimitiveLabelColor \"$mPrimitiveLabelColor\""

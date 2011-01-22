@@ -394,6 +394,53 @@ ged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp
 }
 
 
+static int
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct _ged_client_data *dgcdp)
+{
+    int result = 1;
+
+    if (!BU_SETJUMP) {
+	/* try */
+
+	result = nmg_boolean(curtree, *tsp->ts_m, tsp->ts_tol, tsp->ts_resp);
+
+    } else {
+	/* catch */
+	char  *sofar = db_path_to_string(pathp);
+
+	bu_vls_printf(&dgcdp->gedp->ged_result_str, "WARNING: Boolean evaluation of %s failed!!!\n", sofar);
+	bu_free((genptr_t)sofar, "path string");
+    } BU_UNSETJUMP;
+
+    return result;
+}
+
+
+static int
+process_triangulation(struct db_tree_state *tsp, const struct db_full_path *pathp, struct _ged_client_data *dgcdp)
+{
+    int result = 1;
+
+    if (!BU_SETJUMP) {
+	/* try */
+
+	nmg_triangulate_model(*tsp->ts_m, tsp->ts_tol);
+	result = 0;
+
+    } else {
+	/* catch */
+
+	char  *sofar = db_path_to_string(pathp);
+
+	bu_vls_printf(&dgcdp->gedp->ged_result_str, "WARNING: Triangulation of %s failed!!!\n", sofar);
+	bu_free((genptr_t)sofar, "path string");
+
+    } BU_UNSETJUMP;
+
+    return result;
+}
+
+
 /**
  * G E D _ N M G _ R E G I O N _ E N D
  *
@@ -428,23 +475,15 @@ ged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
 
     if (curtree->tr_op == OP_NOP) return curtree;
 
+    failed = 1;
     if (!dgcdp->draw_nmg_only) {
-	if (BU_SETJUMP) {
-	    char *sofar = db_path_to_string(pathp);
 
-	    BU_UNSETJUMP;
-
-	    bu_vls_printf(&dgcdp->gedp->ged_result_str, "WARNING: Boolean evaluation of %s failed!!!\n", sofar);
-	    bu_free((genptr_t)sofar, "path string");
-	    db_free_tree(curtree, tsp->ts_resp);
-	    return (union tree *)NULL;
-	}
-	failed = nmg_boolean(curtree, *tsp->ts_m, tsp->ts_tol, tsp->ts_resp);
-	BU_UNSETJUMP;
+	failed = process_boolean(curtree, tsp, pathp, dgcdp);
 	if (failed) {
 	    db_free_tree(curtree, tsp->ts_resp);
 	    return (union tree *)NULL;
 	}
+
     } else if (curtree->tr_op != OP_NMG_TESS) {
 	bu_vls_printf(&dgcdp->gedp->ged_result_str, "Cannot use '-d' option when Boolean evaluation is required\n");
 	db_free_tree(curtree, tsp->ts_resp);
@@ -459,18 +498,11 @@ ged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
     }
 
     if (dgcdp->nmg_triangulate) {
-	if (BU_SETJUMP) {
-	    char *sofar = db_path_to_string(pathp);
-
-	    BU_UNSETJUMP;
-
-	    bu_vls_printf(&dgcdp->gedp->ged_result_str, "WARNING: Triangulation of %s failed!!!\n", sofar);
-	    bu_free((genptr_t)sofar, "path string");
+	failed = process_triangulation(tsp, pathp, dgcdp);
+	if (failed) {
 	    db_free_tree(curtree, tsp->ts_resp);
 	    return (union tree *)NULL;
 	}
-	nmg_triangulate_model(*tsp->ts_m, tsp->ts_tol);
-	BU_UNSETJUMP;
     }
 
     if (r != 0) {
@@ -985,7 +1017,7 @@ _ged_invent_solid(struct ged *gedp,
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return 0;
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET)) != DIR_NULL) {
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	if (dp->d_addr != RT_DIR_PHONY_ADDR) {
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "_ged_invent_solid(%s) would clobber existing database entry, ignored\n", name);
@@ -999,7 +1031,7 @@ _ged_invent_solid(struct ged *gedp,
 	ged_erasePathFromDisplay(gedp, name, 0);
     }
     /* Need to enter phony name in directory structure */
-    dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&type);
+    dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&type);
 
     /* Obtain a fresh solid structure, and fill it in */
     GET_SOLID(sp, &_FreeSolid.l);
@@ -1141,7 +1173,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 
     /* check args for "-A" (attributes) and "-o" */
     bu_vls_init(&vls);
-    for (i=0; i<argc; i++) {
+    for (i=0; i<(size_t)argc; i++) {
 	char *ptr_A=NULL;
 	char *ptr_o=NULL;
 	char *c;
@@ -1199,7 +1231,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 
 	bu_avs_init(&avs, (argc - last_opt)/2, "ged_draw_guts avs");
 	i = 0;
-	while (i < argc) {
+	while (i < (size_t)argc) {
 	    if (*argv[i] == '-') {
 		i++;
 		continue;
@@ -1214,7 +1246,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    i += 2;
 	}
 
-	tbl = db_lookup_by_attr(gedp->ged_wdbp->dbip, DIR_REGION | DIR_SOLID | DIR_COMB, &avs, flag_o_nonunique);
+	tbl = db_lookup_by_attr(gedp->ged_wdbp->dbip, RT_DIR_REGION | RT_DIR_SOLID | RT_DIR_COMB, &avs, flag_o_nonunique);
 	bu_avs_free(&avs);
 	if (!tbl) {
 	    bu_log("Error: db_lookup_by_attr() failed!!\n");
@@ -1243,7 +1275,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	/* First, delete any mention of these objects.
 	 * Silently skip any leading options (which start with minus signs).
 	 */
-	for (i = 0; i < new_argc; ++i) {
+	for (i = 0; i < (size_t)new_argc; ++i) {
 	    /* Skip any options */
 	    if (new_argv[i][0] == '-')
 		continue;
@@ -1260,7 +1292,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	/* First, delete any mention of these objects.
 	 * Silently skip any leading options (which start with minus signs).
 	 */
-	for (i = 0; i < argc; ++i) {
+	for (i = 0; i < (size_t)argc; ++i) {
 	    /* Skip any options */
 	    if (argv[i][0] == '-')
 		continue;
@@ -1307,7 +1339,7 @@ ged_addToDisplay(struct ged *gedp,
     else
 	++cp;
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY)) == DIR_NULL) {
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	gdlp = GED_DISPLAY_LIST_NULL;
 	goto end;
     }
