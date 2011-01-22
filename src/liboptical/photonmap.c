@@ -38,13 +38,6 @@
 #include "photonmap.h"
 
 
-#define NRoot(x, y) exp(log(x)/y)	/* Not in Use */
-int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finished_segs);
-void GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, int map, double max_rad, int centog, int min_np);
-void Polar2Euclidian(vect_t Dir, vect_t Normal, double Theta, double Phi);
-void LocatePhotons(struct PhotonSearch *Search, struct PNode *Root);
-
-
 int PM_Activated;
 int PM_Visualize;
 
@@ -174,6 +167,77 @@ BuildTree(struct Photon *EList, int ESize, struct PNode *Root)
 
     bu_free(LList, "LList");
     bu_free(RList, "RList");
+}
+
+
+void
+LocatePhotons(struct PhotonSearch *Search, struct PNode *Root)
+{
+    fastf_t Dist, TDist, angle, MDist;
+    int i, MaxInd, Axis;
+
+    if (!Root)
+	return;
+
+    Axis = Root->P.Axis;
+    Dist = Search->Pos[Axis] - Root->P.Pos[Axis];
+
+    if (Dist < 0) {
+	/* Left of plane - search left subtree first */
+	LocatePhotons(Search, Root->L);
+	if (Dist*Dist < Search->RadSq)
+	    LocatePhotons(Search, Root->R);
+    } else {
+	/* Right of plane - search right subtree first */
+	LocatePhotons(Search, Root->R);
+	if (Dist*Dist < Search->RadSq)
+	    LocatePhotons(Search, Root->L);
+    }
+
+#if 0
+    /* HEAP, Find Distance between Root Photon and Search->Pos */
+    angle = VDOT(Search->Normal, Root->P.Normal);
+    Node.P = Root->P;
+    Node.Dist = (Root->P.Pos[0] - Search->Pos[0])*(Root->P.Pos[0] - Search->Pos[0]) + (Root->P.Pos[1] - Search->Pos[1])*(Root->P.Pos[1] - Search->Pos[1]) + (Root->P.Pos[2] - Search->Pos[2])*(Root->P.Pos[2] - Search->Pos[2]);
+    if (Node.Dist < Search->RadSq && angle > GPM_ATOL) {
+	/* Check that Result is within Radius and Angular Tolerance */
+	if (Search->Found < Search->Max) {
+	    Push(Search, Node);
+	} else {
+	    if (Node.Dist < Search->List[0].Dist) {
+		Pop(Search);
+		Push(Search, Node);
+	    }
+	}
+    }
+
+#else
+
+    /* REPLACE, Find Distance between Root Photon and NP->Pos */
+    Dist = (Root->P.Pos[0] - Search->Pos[0])*(Root->P.Pos[0] - Search->Pos[0]) + (Root->P.Pos[1] - Search->Pos[1])*(Root->P.Pos[1] - Search->Pos[1]) + (Root->P.Pos[2] - Search->Pos[2])*(Root->P.Pos[2] - Search->Pos[2]);
+
+    angle = VDOT(Search->Normal, Root->P.Normal);
+    if (Dist < Search->RadSq && angle > GPM_ATOL) {
+	/* Check that Result is within Radius and Angular Tolerance */
+	/* if (Dist < NP->RadSq) {*/
+	if (Search->Found < Search->Max) {
+	    Search->List[Search->Found++].P = Root->P;
+	} else {
+	    MDist = (Search->Pos[0] - Search->List[0].P.Pos[0])*(Search->Pos[0] - Search->List[0].P.Pos[0])+(Search->Pos[1] - Search->List[0].P.Pos[1])*(Search->Pos[1] - Search->List[0].P.Pos[1])+(Search->Pos[2] - Search->List[0].P.Pos[2])*(Search->Pos[2] - Search->List[0].P.Pos[2]);
+	    MaxInd = 0;
+	    for (i = 1; i < Search->Found; i++) {
+		TDist = (Search->Pos[0] - Search->List[i].P.Pos[0])*(Search->Pos[0] - Search->List[i].P.Pos[0])+(Search->Pos[1] - Search->List[i].P.Pos[1])*(Search->Pos[1] - Search->List[i].P.Pos[1])+(Search->Pos[2] - Search->List[i].P.Pos[2])*(Search->Pos[2] - Search->List[i].P.Pos[2]);
+		if (TDist > MDist) {
+		    MDist = TDist;
+		    MaxInd = i;
+		}
+	    }
+
+	    if (Dist < MDist)
+		Search->List[MaxInd].P = Root->P;
+	}
+    }
+#endif
 }
 
 
@@ -408,6 +472,9 @@ MaxFloat(fastf_t a, fastf_t b, fastf_t c)
     return a > b ? a > c ? a : c : b > c ? b : c;
 }
 
+
+/* break PHit <-> HitRef cycle */
+int PHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(finished_segs));
 
 int
 HitRef(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(finished_segs))
@@ -782,6 +849,138 @@ SanityCheck(struct PNode *Root, int LR)
     bu_log("Pos[%d]: [%.3f, %.3f, %.3f]\n", LR, Root->P.Pos[0], Root->P.Pos[1], Root->P.Pos[2]);
     SanityCheck(Root->L, 1);
     SanityCheck(Root->R, 2);
+}
+
+
+fastf_t
+GaussFilter(fastf_t dist, fastf_t rad)
+{
+    return 0.918 * (1.0 - (1.0 - exp(-1.953*dist*dist/(2.0*rad*rad)))/(1.0 - exp(-1.953)));
+}
+
+
+fastf_t
+ConeFilter(fastf_t dist, fastf_t rad)
+{
+    return 1.0 - dist/rad;
+}
+
+
+void
+GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, int map, double max_rad, int centog, int min_np)
+{
+    struct PhotonSearch Search;
+    int i;
+    fastf_t tmp, dist, Filter, ScaleFilter;
+    vect_t t, Centroid;
+
+
+    irrad[0] = irrad[1] = irrad[2] = 0;
+    if (!PMap[map]->StoredPhotons) return;
+
+    Search.Pos[0] = pos[0];
+    Search.Pos[1] = pos[1];
+    Search.Pos[2] = pos[2];
+
+    Search.RadSq = rad*rad/4.0;
+    Search.Max = np < min_np ? min_np : np;
+    Search.Normal[0] = normal[0];
+    Search.Normal[1] = normal[1];
+    Search.Normal[2] = normal[2];
+
+    Search.List = (struct PSN*)bu_calloc(Search.Max, sizeof(struct PSN), "PSN");
+    do {
+	Search.Found = 0;
+	Search.RadSq *= 4.0;
+	LocatePhotons(&Search, PMap[map]->Root);
+	if (!Search.Found && Search.RadSq > ScaleFactor*ScaleFactor/100.0)
+	    break;
+    } while (Search.Found < Search.Max && Search.RadSq < max_rad*max_rad);
+
+    /* bu_log("Found: %d\n", Search.Found);*/
+    if (Search.Found < min_np) {
+	bu_free(Search.List, "Search.List");
+	return;
+    }
+
+    /* Calculate Max Distance */
+    Search.RadSq = 1;
+    Centroid[0] = Centroid[1] = Centroid[2] = 0;
+
+    for (i = 0; i < Search.Found; i++) {
+	t[0] = Search.List[i].P.Pos[0] - pos[0];
+	t[1] = Search.List[i].P.Pos[1] - pos[1];
+	t[2] = Search.List[i].P.Pos[2] - pos[2];
+
+	Centroid[0] += Search.List[i].P.Pos[0];
+	Centroid[1] += Search.List[i].P.Pos[1];
+	Centroid[2] += Search.List[i].P.Pos[2];
+
+	dist = t[0]*t[0] + t[1]*t[1] + t[2]*t[2];
+	if (dist > Search.RadSq)
+	    Search.RadSq = dist;
+    }
+
+    if (Search.Found) {
+	Centroid[0] /= (double)Search.Found;
+	Centroid[1] /= (double)Search.Found;
+	Centroid[2] /= (double)Search.Found;
+    }
+
+
+    /* This needs a little debugging, splotches in moss cause tmp gets too small, will look at later, ||1 to turn it off */
+    if (!centog||1) {
+	Centroid[0] = pos[0];
+	Centroid[1] = pos[1];
+	Centroid[2] = pos[2];
+	ScaleFilter = 2.0;
+    } else {
+	ScaleFilter = 1.0;
+    }
+
+    for (i = 0; i < Search.Found; i++) {
+	t[0] = Search.List[i].P.Pos[0] - pos[0];
+	t[1] = Search.List[i].P.Pos[1] - pos[1];
+	t[2] = Search.List[i].P.Pos[2] - pos[2];
+
+	dist = t[0]*t[0] + t[1]*t[1] + t[2]*t[2];
+	/* Filter= 0.50;*/
+	/* Filter= ConeFilter(dist, NP.RadSq);*/
+	Filter = 0.5*GaussFilter(dist, Search.RadSq);
+
+	irrad[0] += Search.List[i].P.Power[0]*Filter*ScaleFilter;
+	irrad[1] += Search.List[i].P.Power[1]*Filter*ScaleFilter;
+	irrad[2] += Search.List[i].P.Power[2]*Filter*ScaleFilter;
+    }
+
+    tmp = M_PI*Search.RadSq;
+    t[0] = sqrt((Centroid[0] - pos[0])*(Centroid[0] - pos[0])+(Centroid[1] - pos[1])*(Centroid[1] - pos[1])+(Centroid[2] - pos[2])*(Centroid[2] - pos[2]));
+    tmp = M_PI*(sqrt(Search.RadSq)-t[0])*(sqrt(Search.RadSq)-t[0]);
+
+
+    irrad[0] /= tmp;
+    irrad[1] /= tmp;
+    irrad[2] /= tmp;
+
+    /*
+      if (irrad[0] > 10 || irrad[1] > 10 || irrad[2] > 10) {
+      bu_log("found: %d, tmp: %.1f\n", Search.Found, tmp);
+      }
+    */
+    if (map == PM_CAUSTIC) {
+	tmp = (double)Search.Found/(double)Search.Max;
+	irrad[0] *= tmp;
+	irrad[1] *= tmp;
+	irrad[2] *= tmp;
+    }
+
+    /*
+      irrad[0] *= (1.0/M_PI)/NP.RadSq;
+      irrad[1] *= (1.0/M_PI)/NP.RadSq;
+      irrad[2] *= (1.0/M_PI)/NP.RadSq;
+    */
+    bu_free(Search.List, "Search.List");
+    /* bu_log("Radius: %.3f, Max Phot: %d, Found: %d, Power: [%.4f, %.4f, %.4f], Pos: [%.3f, %.3f, %.3f]\n", sqrt(NP.RadSq), NP.Max, NP.Found, irrad[0], irrad[1], irrad[2], pos[0], pos[1], pos[2]);*/
 }
 
 
@@ -1356,95 +1555,10 @@ Pop(struct PhotonSearch *S)
 }
 
 
-void
-LocatePhotons(struct PhotonSearch *Search, struct PNode *Root)
-{
-    fastf_t Dist, TDist, angle, MDist;
-    int i, MaxInd, Axis;
-
-    if (!Root)
-	return;
-
-    Axis = Root->P.Axis;
-    Dist = Search->Pos[Axis] - Root->P.Pos[Axis];
-
-    if (Dist < 0) {
-	/* Left of plane - search left subtree first */
-	LocatePhotons(Search, Root->L);
-	if (Dist*Dist < Search->RadSq)
-	    LocatePhotons(Search, Root->R);
-    } else {
-	/* Right of plane - search right subtree first */
-	LocatePhotons(Search, Root->R);
-	if (Dist*Dist < Search->RadSq)
-	    LocatePhotons(Search, Root->L);
-    }
-
-#if 0
-    /* HEAP, Find Distance between Root Photon and Search->Pos */
-    angle = VDOT(Search->Normal, Root->P.Normal);
-    Node.P = Root->P;
-    Node.Dist = (Root->P.Pos[0] - Search->Pos[0])*(Root->P.Pos[0] - Search->Pos[0]) + (Root->P.Pos[1] - Search->Pos[1])*(Root->P.Pos[1] - Search->Pos[1]) + (Root->P.Pos[2] - Search->Pos[2])*(Root->P.Pos[2] - Search->Pos[2]);
-    if (Node.Dist < Search->RadSq && angle > GPM_ATOL) {
-	/* Check that Result is within Radius and Angular Tolerance */
-	if (Search->Found < Search->Max) {
-	    Push(Search, Node);
-	} else {
-	    if (Node.Dist < Search->List[0].Dist) {
-		Pop(Search);
-		Push(Search, Node);
-	    }
-	}
-    }
-
-#else
-
-    /* REPLACE, Find Distance between Root Photon and NP->Pos */
-    Dist = (Root->P.Pos[0] - Search->Pos[0])*(Root->P.Pos[0] - Search->Pos[0]) + (Root->P.Pos[1] - Search->Pos[1])*(Root->P.Pos[1] - Search->Pos[1]) + (Root->P.Pos[2] - Search->Pos[2])*(Root->P.Pos[2] - Search->Pos[2]);
-
-    angle = VDOT(Search->Normal, Root->P.Normal);
-    if (Dist < Search->RadSq && angle > GPM_ATOL) {
-	/* Check that Result is within Radius and Angular Tolerance */
-	/* if (Dist < NP->RadSq) {*/
-	if (Search->Found < Search->Max) {
-	    Search->List[Search->Found++].P = Root->P;
-	} else {
-	    MDist = (Search->Pos[0] - Search->List[0].P.Pos[0])*(Search->Pos[0] - Search->List[0].P.Pos[0])+(Search->Pos[1] - Search->List[0].P.Pos[1])*(Search->Pos[1] - Search->List[0].P.Pos[1])+(Search->Pos[2] - Search->List[0].P.Pos[2])*(Search->Pos[2] - Search->List[0].P.Pos[2]);
-	    MaxInd = 0;
-	    for (i = 1; i < Search->Found; i++) {
-		TDist = (Search->Pos[0] - Search->List[i].P.Pos[0])*(Search->Pos[0] - Search->List[i].P.Pos[0])+(Search->Pos[1] - Search->List[i].P.Pos[1])*(Search->Pos[1] - Search->List[i].P.Pos[1])+(Search->Pos[2] - Search->List[i].P.Pos[2])*(Search->Pos[2] - Search->List[i].P.Pos[2]);
-		if (TDist > MDist) {
-		    MDist = TDist;
-		    MaxInd = i;
-		}
-	    }
-
-	    if (Dist < MDist)
-		Search->List[MaxInd].P = Root->P;
-	}
-    }
-#endif
-}
-
-
 fastf_t
 Dist(point_t a, point_t b)
 {
     return (a[0]-b[0])*(a[0]-b[0]) + (a[1]-b[1])*(a[1]-b[1]) + (a[2]-b[2])*(a[2]-b[2]);
-}
-
-
-fastf_t
-GaussFilter(fastf_t dist, fastf_t rad)
-{
-    return 0.918 * (1.0 - (1.0 - exp(-1.953*dist*dist/(2.0*rad*rad)))/(1.0 - exp(-1.953)));
-}
-
-
-fastf_t
-ConeFilter(fastf_t dist, fastf_t rad)
-{
-    return 1.0 - dist/rad;
 }
 
 
@@ -1572,124 +1686,6 @@ IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_t nor
 
 	IC[idx].Num++;
     }
-}
-
-
-void
-GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, int map, double max_rad, int centog, int min_np)
-{
-    struct PhotonSearch Search;
-    int i;
-    fastf_t tmp, dist, Filter, ScaleFilter;
-    vect_t t, Centroid;
-
-
-    irrad[0] = irrad[1] = irrad[2] = 0;
-    if (!PMap[map]->StoredPhotons) return;
-
-    Search.Pos[0] = pos[0];
-    Search.Pos[1] = pos[1];
-    Search.Pos[2] = pos[2];
-
-    Search.RadSq = rad*rad/4.0;
-    Search.Max = np < min_np ? min_np : np;
-    Search.Normal[0] = normal[0];
-    Search.Normal[1] = normal[1];
-    Search.Normal[2] = normal[2];
-
-    Search.List = (struct PSN*)bu_calloc(Search.Max, sizeof(struct PSN), "PSN");
-    do {
-	Search.Found = 0;
-	Search.RadSq *= 4.0;
-	LocatePhotons(&Search, PMap[map]->Root);
-	if (!Search.Found && Search.RadSq > ScaleFactor*ScaleFactor/100.0)
-	    break;
-    } while (Search.Found < Search.Max && Search.RadSq < max_rad*max_rad);
-
-    /* bu_log("Found: %d\n", Search.Found);*/
-    if (Search.Found < min_np) {
-	bu_free(Search.List, "Search.List");
-	return;
-    }
-
-    /* Calculate Max Distance */
-    Search.RadSq = 1;
-    Centroid[0] = Centroid[1] = Centroid[2] = 0;
-
-    for (i = 0; i < Search.Found; i++) {
-	t[0] = Search.List[i].P.Pos[0] - pos[0];
-	t[1] = Search.List[i].P.Pos[1] - pos[1];
-	t[2] = Search.List[i].P.Pos[2] - pos[2];
-
-	Centroid[0] += Search.List[i].P.Pos[0];
-	Centroid[1] += Search.List[i].P.Pos[1];
-	Centroid[2] += Search.List[i].P.Pos[2];
-
-	dist = t[0]*t[0] + t[1]*t[1] + t[2]*t[2];
-	if (dist > Search.RadSq)
-	    Search.RadSq = dist;
-    }
-
-    if (Search.Found) {
-	Centroid[0] /= (double)Search.Found;
-	Centroid[1] /= (double)Search.Found;
-	Centroid[2] /= (double)Search.Found;
-    }
-
-
-    /* This needs a little debugging, splotches in moss cause tmp gets too small, will look at later, ||1 to turn it off */
-    if (!centog||1) {
-	Centroid[0] = pos[0];
-	Centroid[1] = pos[1];
-	Centroid[2] = pos[2];
-	ScaleFilter = 2.0;
-    } else {
-	ScaleFilter = 1.0;
-    }
-
-    for (i = 0; i < Search.Found; i++) {
-	t[0] = Search.List[i].P.Pos[0] - pos[0];
-	t[1] = Search.List[i].P.Pos[1] - pos[1];
-	t[2] = Search.List[i].P.Pos[2] - pos[2];
-
-	dist = t[0]*t[0] + t[1]*t[1] + t[2]*t[2];
-	/* Filter= 0.50;*/
-	/* Filter= ConeFilter(dist, NP.RadSq);*/
-	Filter = 0.5*GaussFilter(dist, Search.RadSq);
-
-	irrad[0] += Search.List[i].P.Power[0]*Filter*ScaleFilter;
-	irrad[1] += Search.List[i].P.Power[1]*Filter*ScaleFilter;
-	irrad[2] += Search.List[i].P.Power[2]*Filter*ScaleFilter;
-    }
-
-    tmp = M_PI*Search.RadSq;
-    t[0] = sqrt((Centroid[0] - pos[0])*(Centroid[0] - pos[0])+(Centroid[1] - pos[1])*(Centroid[1] - pos[1])+(Centroid[2] - pos[2])*(Centroid[2] - pos[2]));
-    tmp = M_PI*(sqrt(Search.RadSq)-t[0])*(sqrt(Search.RadSq)-t[0]);
-
-
-    irrad[0] /= tmp;
-    irrad[1] /= tmp;
-    irrad[2] /= tmp;
-
-    /*
-      if (irrad[0] > 10 || irrad[1] > 10 || irrad[2] > 10) {
-      bu_log("found: %d, tmp: %.1f\n", Search.Found, tmp);
-      }
-    */
-    if (map == PM_CAUSTIC) {
-	tmp = (double)Search.Found/(double)Search.Max;
-	irrad[0] *= tmp;
-	irrad[1] *= tmp;
-	irrad[2] *= tmp;
-    }
-
-    /*
-      irrad[0] *= (1.0/M_PI)/NP.RadSq;
-      irrad[1] *= (1.0/M_PI)/NP.RadSq;
-      irrad[2] *= (1.0/M_PI)/NP.RadSq;
-    */
-    bu_free(Search.List, "Search.List");
-    /* bu_log("Radius: %.3f, Max Phot: %d, Found: %d, Power: [%.4f, %.4f, %.4f], Pos: [%.3f, %.3f, %.3f]\n", sqrt(NP.RadSq), NP.Max, NP.Found, irrad[0], irrad[1], irrad[2], pos[0], pos[1], pos[2]);*/
 }
 
 
