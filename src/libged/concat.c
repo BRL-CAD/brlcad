@@ -65,16 +65,24 @@ int
 ged_concat(struct ged *gedp, int argc, const char *argv[])
 {
     struct db_i		*newdbp;
-    int			bad = 0;
     struct directory	*dp;
     Tcl_HashTable	name_tbl;
     Tcl_HashTable	used_names_tbl;
     Tcl_HashEntry	*ptr;
     Tcl_HashSearch	search;
+    struct bu_attribute_value_set g_avs;
+    const char          *cp;
+    char                *colorTab;
     struct ged_concat_data	cc_data;
     const char *oldfile;
-    static const char *usage = "[-s|-p] file.g [suffix|prefix]";
-
+    static const char *usage = "[-u] [-t] [-c] [-s|-p] file.g [suffix|prefix]";
+    int importUnits = 0;
+    int importTitle = 0;
+    int importColorTable = 0;
+    int saveGlobalAttrs = 0;
+    int c;
+    const char *commandName;
+        
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -82,67 +90,92 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if ((argc < 2) ||
-	(argc > 4) ||
-	(argv[1][0] != '-' && argc > 3) ||
-	(argv[1][0] == '-' && (argc < 3 || argc > 4))) {
+    if (argc < 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     bu_vls_init( &cc_data.affix );
     cc_data.copy_mode = 0;
+    commandName = argv[0];
+    
+    /* process args */
+    bu_optind = 1;
+    bu_opterr = 0;
+    while ( (c=bu_getopt(argc, (char * const *)argv, "utcsp")) != EOF )  {
+	switch (c) {
+	    case 'u':
+                importUnits = 1;
+                break;
+	    case 't':
+                importTitle = 1;
+                break;
+	    case 'c':
+                importColorTable = 1;
+                break;
+            case 'p':
+                cc_data.copy_mode |= AUTO_PREFIX;
+                break;
+            case 's':
+                cc_data.copy_mode |= AUTO_SUFFIX;
+                break;
+	    default:
+	    {
+		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", commandName, usage);
+                bu_vls_free( &cc_data.affix );
+		return GED_ERROR;
+	    }
+	}
+    }
+    argc -= bu_optind;
+    argv += bu_optind;
 
-    if ( argv[1][0] == '-' ) {
+    if (argc == 0) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", commandName, usage);
+	return GED_ERROR;
+    }
+    
+    oldfile = argv[0];
+    
+    argc--;
+    argv++;
+    
+    if ( cc_data.copy_mode) {
 	/* specified suffix or prefix explicitly */
 
-	oldfile = argv[2];
+	if ( cc_data.copy_mode & AUTO_PREFIX ) {
 
-	if ( argv[1][1] == 'p' ) {
-
-	    cc_data.copy_mode |= AUTO_PREFIX;
-
-	    if (argc == 3 || BU_STR_EQUAL(argv[3], "/")) {
+	    if (argc == 0 || BU_STR_EQUAL(argv[0], "/")) {
 		cc_data.copy_mode = NO_AFFIX | CUSTOM_PREFIX;
 	    } else {
-		(void)bu_vls_strcpy(&cc_data.affix, argv[3]);
+		(void)bu_vls_strcpy(&cc_data.affix, argv[0]);
 		cc_data.copy_mode |= CUSTOM_PREFIX;
 	    }
 
-	} else if ( argv[1][1] == 's' ) {
+	} else if ( cc_data.copy_mode & AUTO_SUFFIX ) {
 
-	    cc_data.copy_mode |= AUTO_SUFFIX;
-
-	    if (argc == 3 || BU_STR_EQUAL(argv[3], "/")) {
+	    if (argc == 0 || BU_STR_EQUAL(argv[0], "/")) {
 		cc_data.copy_mode = NO_AFFIX | CUSTOM_SUFFIX;
 	    } else {
-		(void)bu_vls_strcpy(&cc_data.affix, argv[3]);
+		(void)bu_vls_strcpy(&cc_data.affix, argv[0]);
 		cc_data.copy_mode |= CUSTOM_SUFFIX;
 	    }
 
 	} else {
 	    bu_vls_free( &cc_data.affix );
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", commandName, usage);
 	    return GED_ERROR;
 	}
 
     } else {
 	/* no prefix/suffix preference, use prefix */
 
-	oldfile = argv[1];
-
 	cc_data.copy_mode |= AUTO_PREFIX;
 
-	if (argc == 2 || BU_STR_EQUAL(argv[2], "/")) {
+	if (argc == 0 || BU_STR_EQUAL(argv[0], "/")) {
 	    cc_data.copy_mode = NO_AFFIX | CUSTOM_PREFIX;
 	} else {
-	    (void)bu_vls_strcpy(&cc_data.affix, argv[2]);
+	    (void)bu_vls_strcpy(&cc_data.affix, argv[0]);
 	    cc_data.copy_mode |= CUSTOM_PREFIX;
 	}
 
@@ -160,14 +193,14 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     if ((newdbp = db_open(oldfile, "r")) == DBI_NULL) {
 	bu_vls_free( &cc_data.affix );
 	perror(oldfile);
-	bu_vls_printf(&gedp->ged_result_str, "%s: Can't open %s", argv[0], oldfile);
+	bu_vls_printf(&gedp->ged_result_str, "%s: Can't open %s", commandName, oldfile);
 	return GED_ERROR;
     }
 
     if ( db_version(newdbp) > 4 && db_version(gedp->ged_wdbp->dbip) < 5 ) {
 	bu_vls_free( &cc_data.affix );
 	bu_vls_printf(&gedp->ged_result_str, "%s: databases are incompatible, use dbupgrade on %s first",
-		      argv[0], gedp->ged_wdbp->dbip->dbi_filename);
+		      commandName, gedp->ged_wdbp->dbip->dbi_filename);
 	return GED_ERROR;
     }
 
@@ -180,11 +213,19 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     Tcl_InitHashTable( &name_tbl, TCL_STRING_KEYS );
     Tcl_InitHashTable( &used_names_tbl, TCL_STRING_KEYS );
 
+    if (importUnits || importTitle || importColorTable) {
+        saveGlobalAttrs = 1;
+    }
     FOR_ALL_DIRECTORY_START( dp, newdbp ) {
-	if ( dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY ) {
-	    /* skip GLOBAL object */
-	    continue;
-	}
+	if ( dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
+            if (saveGlobalAttrs) {
+                if (db5_get_attributes(newdbp, &g_avs, dp)) {
+                    bu_vls_printf(&gedp->ged_result_str, "%s: Can't get global attributes from %s", commandName, oldfile);
+                    return GED_ERROR;
+                }
+            }
+            continue;
+        }
 	ged_copy_object(gedp, dp, newdbp, gedp->ged_wdbp->dbip, &name_tbl, &used_names_tbl, &cc_data);
     } FOR_ALL_DIRECTORY_END;
 
@@ -193,6 +234,47 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 
     /* Free all the directory entries, and close the input database */
     db_close(newdbp);
+    
+    if (importColorTable) {
+        colorTab = bu_strdup(bu_avs_get(&g_avs, "regionid_colortable"));
+        db5_import_color_table(colorTab);
+        bu_free(colorTab, "colorTab");
+    } else if (saveGlobalAttrs) {
+        bu_avs_remove(&g_avs, "regionid_colortable");
+    }
+    
+    if (importTitle) {
+        if ((cp = bu_avs_get(&g_avs, "title")) != NULL) {
+            char *oldTitle = gedp->ged_wdbp->dbip->dbi_title;
+            gedp->ged_wdbp->dbip->dbi_title = bu_strdup(cp);
+            if (oldTitle) {
+                bu_free(oldTitle, "old title");
+            }
+        }
+    } else if (saveGlobalAttrs) {
+        bu_avs_remove(&g_avs, "title");
+    }
+    
+    if (importUnits) {
+        if ((cp = bu_avs_get(&g_avs, "units")) != NULL) {
+            double dd;
+            if (sscanf(cp, "%lf", &dd) != 1 || NEAR_ZERO(dd, VUNITIZE_TOL)) {
+                bu_log("ged_copy_object(%s): improper database, %s object attribute 'units'=%s is invalid\n",
+                        oldfile, DB5_GLOBAL_OBJECT_NAME, cp);
+                bu_avs_remove(&g_avs, "units");
+            } else {
+                gedp->ged_wdbp->dbip->dbi_local2base = dd;
+                gedp->ged_wdbp->dbip->dbi_base2local = 1 / dd;
+            }
+        }
+    } else if (saveGlobalAttrs) {
+        bu_avs_remove(&g_avs, "units");
+    }
+    
+    if (saveGlobalAttrs) {
+        dp = db_lookup(gedp->ged_wdbp->dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY);
+        db5_update_attributes(dp, &g_avs, gedp->ged_wdbp->dbip);
+    }
 
     db_sync(gedp->ged_wdbp->dbip);	/* force changes to disk */
 
@@ -205,7 +287,7 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     Tcl_DeleteHashTable( &name_tbl );
     Tcl_DeleteHashTable( &used_names_tbl );
 
-    return bad ? GED_ERROR : GED_OK;
+    return GED_OK;
 }
 
 /**
