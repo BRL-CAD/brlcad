@@ -653,8 +653,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
      * A return of TREE_NULL from this routine signals an error,
      * so we need to cons up an OP_NOP node to return.
      */
-    if (curtree)
-	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
+    db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
     BU_GETUNION(curtree, tree);
     curtree->magic = RT_TREE_MAGIC;
