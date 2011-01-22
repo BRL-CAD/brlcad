@@ -384,6 +384,7 @@ _ged_print_node(struct ged *gedp,
     if (cflag && !(dp->d_flags & RT_DIR_COMB))
         return;
 
+    /* set up spacing from the left margin */
     for (i = 0; i < pathpos; i++) {
 	if (indentSize < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "\t");
@@ -393,6 +394,7 @@ _ged_print_node(struct ged *gedp,
 		bu_vls_printf(&gedp->ged_result_str, " ");
 	    }
 	}
+    }
 
     if (prefix)
 	bu_vls_printf(&gedp->ged_result_str, "%c ", prefix);
