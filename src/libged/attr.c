@@ -236,30 +236,10 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		    max_attr_name_len = len;
 		}
 	    }
-	    tabs1 = 2 + max_attr_name_len/8;
 	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
-		const char *c;
-		int tabs2;
-		int k;
-		int len;
-
-		bu_vls_printf(&gedp->ged_result_str, "\t%s", avpp->name);
-		len = (int)strlen(avpp->name);
-		tabs2 = tabs1 - 1 - len/8;
-		for (k = 0; k < tabs2; k++) {
-		    bu_vls_putc(&gedp->ged_result_str, '\t');
-		}
-		c = avpp->value;
-		while (*c) {
-		    bu_vls_putc(&gedp->ged_result_str, *c);
-		    if (*c == '\n') {
-			for (k = 0; k < tabs1; k++) {
-			    bu_vls_putc(&gedp->ged_result_str, '\t');
-			}
-		    }
-		    c++;
-		}
-		bu_vls_putc(&gedp->ged_result_str, '\n');
+		bu_vls_printf(&gedp->ged_result_str, "\t%-*.*s    %s\n",
+                              max_attr_name_len, max_attr_name_len,
+                              avpp->name, avpp->value);
 	    }
 	} else {
 	    const char *val;
