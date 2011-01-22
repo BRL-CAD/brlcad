@@ -72,7 +72,9 @@ int HitG, HitB;
 
 
 /* Split so that equal numbers are above and below the splitting plane */
-int FindMedian(struct Photon *List, int Num, int Axis) {
+int
+FindMedian(struct Photon *List, int Num, int Axis)
+{
     int i;
     fastf_t Min, Max, Mean;
 
@@ -93,7 +95,9 @@ int FindMedian(struct Photon *List, int Num, int Axis) {
 
 
 /* Generate a KD-Tree from a Flat Array of Photons */
-void BuildTree(struct Photon *EList, int ESize, struct PNode *Root) {
+void
+BuildTree(struct Photon *EList, int ESize, struct PNode *Root)
+{
     struct Photon *LList, *RList;
     vect_t Min, Max;
     int i, Axis, MedianIndex, LInd, RInd;
@@ -174,7 +178,9 @@ void BuildTree(struct Photon *EList, int ESize, struct PNode *Root) {
 
 
 /* Places photon into flat array that wwill form the final kd-tree. */
-void Store(point_t Pos, vect_t Dir, vect_t Normal, int map) {
+void
+Store(point_t Pos, vect_t Dir, vect_t Normal, int map)
+{
     struct PhotonSearch Search;
     int i;
 
@@ -232,7 +238,9 @@ void Store(point_t Pos, vect_t Dir, vect_t Normal, int map) {
 
 
 /* Compute a specular reflection */
-void SpecularReflect(vect_t normal, vect_t rdir) {
+void
+SpecularReflect(vect_t normal, vect_t rdir)
+{
     vect_t d;
     fastf_t dot;
 
@@ -249,7 +257,9 @@ void SpecularReflect(vect_t normal, vect_t rdir) {
 
 
 /* Compute a random reflected diffuse direction */
-void DiffuseReflect(vect_t normal, vect_t rdir) {
+void
+DiffuseReflect(vect_t normal, vect_t rdir)
+{
     /* Allow Photons to get a random direction at most 60 degrees to the normal */
     do {
 #ifndef HAVE_DRAND48
@@ -267,7 +277,9 @@ void DiffuseReflect(vect_t normal, vect_t rdir) {
 
 
 /* Compute refracted ray given Incident Ray, Normal, and 2 refraction indices */
-int Refract(vect_t I, vect_t N, fastf_t n1, fastf_t n2) {
+int
+Refract(vect_t I, vect_t N, fastf_t n1, fastf_t n2)
+{
     fastf_t n, c1, c2, radicand;
     vect_t t, r;
 
@@ -288,7 +300,9 @@ int Refract(vect_t I, vect_t N, fastf_t n1, fastf_t n2) {
 }
 
 
-int CheckMaterial(char *cmp, char *MS) {
+int
+CheckMaterial(char *cmp, char *MS)
+{
     size_t i;
 
     if (MS) {
@@ -303,7 +317,9 @@ int CheckMaterial(char *cmp, char *MS) {
 
 
 /* This function parses the material string to obtain specular and refractive values */
-void GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit) {
+void
+GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
+{
     struct phong_specific *phong_sp;
     struct bu_vls matparm;
 
@@ -386,7 +402,9 @@ void GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit) {
 }
 
 
-static fastf_t MaxFloat(fastf_t a, fastf_t b, fastf_t c) {
+static fastf_t
+MaxFloat(fastf_t a, fastf_t b, fastf_t c)
+{
     return a > b ? a > c ? a : c : b > c ? b : c;
 }
 
@@ -639,7 +657,9 @@ PMiss(struct application *UNUSED(ap))
  * Call this function after each light source is processed.
  * This function also handles setting a default power for the photons based
  * on the size of the scene, i.e power of light source */
-void ScalePhotonPower(int map) {
+void
+ScalePhotonPower(int map)
+{
     int i;
 
     for (i = 0; i < PMap[map]->StoredPhotons; i++) {
@@ -651,7 +671,9 @@ void ScalePhotonPower(int map) {
 
 
 /* Generate Importons and emit them into the scene from the eye position */
-void EmitImportonsRandom(struct application *ap, point_t eye_pos) {
+void
+EmitImportonsRandom(struct application *ap, point_t eye_pos)
+{
     while (PMap[PM_IMPORTANCE]->StoredPhotons < PMap[PM_IMPORTANCE]->MaxPhotons) {
 	do {
 	    /* Set Ray Direction to application ptr */
@@ -687,7 +709,9 @@ void EmitImportonsRandom(struct application *ap, point_t eye_pos) {
 
 
 /* Emit a photons in a random direction based on a point light */
-void EmitPhotonsRandom(struct application *ap, double ScaleIndirect) {
+void
+EmitPhotonsRandom(struct application *ap, double ScaleIndirect)
+{
     struct light_specific *lp;
     vect_t ldir;
     int i;
@@ -749,7 +773,9 @@ void EmitPhotonsRandom(struct application *ap, double ScaleIndirect) {
 }
 
 
-void SanityCheck(struct PNode *Root, int LR) {
+void
+SanityCheck(struct PNode *Root, int LR)
+{
     if (!Root)
 	return;
 
@@ -759,7 +785,9 @@ void SanityCheck(struct PNode *Root, int LR) {
 }
 
 
-int ICHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(finished_segs)) {
+int
+ICHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(finished_segs))
+{
     struct partition *part;
     point_t pt, normal;
     vect_t C1, C2;
@@ -784,7 +812,9 @@ int ICHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSE
 }
 
 
-int ICMiss(struct application *UNUSED(ap)) {
+int
+ICMiss(struct application *UNUSED(ap))
+{
     /* Set to Background/Ambient Color later */
     return 0;
 }
@@ -795,7 +825,9 @@ int ICMiss(struct application *UNUSED(ap)) {
  * - The Normal passed to this function must be unitized.
  * - This took me almost 3 hours to write, and it's tight.
  */
-void Polar2Euclidian(vect_t Dir, vect_t Normal, double Theta, double Phi) {
+void
+Polar2Euclidian(vect_t Dir, vect_t Normal, double Theta, double Phi)
+{
     int i;
     vect_t BasisX, BasisY;
 
@@ -814,7 +846,9 @@ void Polar2Euclidian(vect_t Dir, vect_t Normal, double Theta, double Phi) {
 /*
  * Irradiance Calculation for a given position
  */
-void Irradiance(int pid, struct Photon *P, struct application *ap) {
+void
+Irradiance(int pid, struct Photon *P, struct application *ap)
+{
     struct application *lap;		/* local application instance */
     int i, j, M, N;
     double theta, phi, Coef;
@@ -872,7 +906,9 @@ void Irradiance(int pid, struct Photon *P, struct application *ap) {
  * Go through each photon and use it for the position of the hemisphere
  * and then determine whether that should be included as a Cache Pt.
  */
-void BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap) {
+void
+BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap)
+{
     if (!Node)
 	return;
 
@@ -898,7 +934,9 @@ void BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap) {
 
 #ifdef HAVE_ALARM
 static int starttime = 0;
-void alarmhandler(int sig) {
+void
+alarmhandler(int sig)
+{
     int t;
     float p, tl;
     if (sig != SIGALRM)
@@ -921,7 +959,9 @@ void alarmhandler(int sig) {
 }
 #endif
 
-void IrradianceThread(int pid, genptr_t arg) {
+void
+IrradianceThread(int pid, genptr_t arg)
+{
 #ifdef HAVE_ALARM
     starttime = time(NULL);
     signal(SIGALRM, alarmhandler);
@@ -935,7 +975,9 @@ void IrradianceThread(int pid, genptr_t arg) {
 }
 
 
-void Initialize(int MAP, int MapSize) {
+void
+Initialize(int MAP, int MapSize)
+{
     PMap[MAP] = (struct PhotonMap*)bu_malloc(sizeof(struct PhotonMap), "PhotoMap");
     PMap[MAP]->MaxPhotons = MapSize;
     PMap[MAP]->Root = (struct PNode*)bu_malloc(sizeof(struct PNode), "PNode");
@@ -947,12 +989,13 @@ void Initialize(int MAP, int MapSize) {
 }
 
 
-int LoadFile(char *pmfile) {
+int
+LoadFile(char *pmfile)
+{
     FILE *FH;
     int I1, i;
     short S1;
     char C1;
-
 
     FH = fopen(pmfile, "rb");
     if (FH) {
@@ -998,7 +1041,9 @@ int LoadFile(char *pmfile) {
 }
 
 
-void WritePhotons(struct PNode *Root, FILE *FH) {
+void
+WritePhotons(struct PNode *Root, FILE *FH)
+{
     if (!Root)
 	return;
 
@@ -1008,7 +1053,9 @@ void WritePhotons(struct PNode *Root, FILE *FH) {
 }
 
 
-void WritePhotonFile(char *pmfile) {
+void
+WritePhotonFile(char *pmfile)
+{
     FILE *FH;
     int I1;
     short S1;
@@ -1055,7 +1102,9 @@ void WritePhotonFile(char *pmfile) {
 /*
  * Main Photon Mapping Function
  */
-void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int height, int UNUSED(Hypersample), int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int ImportanceMapping, int IrradianceHypersampling, int VisualizeIrradiance, double ScaleIndirect, char pmfile[255]) {
+void
+BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int height, int UNUSED(Hypersample), int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int ImportanceMapping, int IrradianceHypersampling, int VisualizeIrradiance, double ScaleIndirect, char pmfile[255])
+{
     int i, MapSize[PM_MAPS];
     double ratio;
 
@@ -1213,7 +1262,9 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
 }
 
 
-void Swap(struct PSN *a, struct PSN *b) {
+void
+Swap(struct PSN *a, struct PSN *b)
+{
     struct PSN c;
 
     /*
@@ -1236,7 +1287,9 @@ void Swap(struct PSN *a, struct PSN *b) {
   After inserting a new node it must be brought upwards until both children
   are less than it.
 */
-void HeapUp(struct PhotonSearch *S, int ind) {
+void
+HeapUp(struct PhotonSearch *S, int ind)
+{
     int i;
 
     if (!ind)
@@ -1258,7 +1311,9 @@ void HeapUp(struct PhotonSearch *S, int ind) {
   since choosing a child with the highest number may reduce the number of
   recursions the number will have to propogate
 */
-void HeapDown(struct PhotonSearch *S, int ind) {
+void
+HeapDown(struct PhotonSearch *S, int ind)
+{
     int c;
 
     if (2*ind+1 > S->Found)
@@ -1276,7 +1331,9 @@ void HeapDown(struct PhotonSearch *S, int ind) {
 }
 
 
-void Push(struct PhotonSearch *S, struct PSN P) {
+void
+Push(struct PhotonSearch *S, struct PSN P)
+{
     S->List[S->Found] = P;
     HeapUp(S, S->Found++);
     /*
@@ -1286,7 +1343,9 @@ void Push(struct PhotonSearch *S, struct PSN P) {
 }
 
 
-void Pop(struct PhotonSearch *S) {
+void
+Pop(struct PhotonSearch *S)
+{
     S->Found--;
     S->List[0] = S->List[S->Found];
     HeapDown(S, 0);
@@ -1297,7 +1356,9 @@ void Pop(struct PhotonSearch *S) {
 }
 
 
-void LocatePhotons(struct PhotonSearch *Search, struct PNode *Root) {
+void
+LocatePhotons(struct PhotonSearch *Search, struct PNode *Root)
+{
     fastf_t Dist, TDist, angle, MDist;
     int i, MaxInd, Axis;
 
@@ -1366,22 +1427,30 @@ void LocatePhotons(struct PhotonSearch *Search, struct PNode *Root) {
 }
 
 
-fastf_t Dist(point_t a, point_t b) {
+fastf_t
+Dist(point_t a, point_t b)
+{
     return (a[0]-b[0])*(a[0]-b[0]) + (a[1]-b[1])*(a[1]-b[1]) + (a[2]-b[2])*(a[2]-b[2]);
 }
 
 
-fastf_t GaussFilter(fastf_t dist, fastf_t rad) {
+fastf_t
+GaussFilter(fastf_t dist, fastf_t rad)
+{
     return 0.918 * (1.0 - (1.0 - exp(-1.953*dist*dist/(2.0*rad*rad)))/(1.0 - exp(-1.953)));
 }
 
 
-fastf_t ConeFilter(fastf_t dist, fastf_t rad) {
+fastf_t
+ConeFilter(fastf_t dist, fastf_t rad)
+{
     return 1.0 - dist/rad;
 }
 
 
-void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_t normal) {
+void
+IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_t normal)
+{
     struct PhotonSearch Search;
     int i, idx;
     fastf_t dist, TotDist;
@@ -1506,7 +1575,9 @@ void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_
 }
 
 
-void GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, int map, double max_rad, int centog, int min_np) {
+void
+GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, int map, double max_rad, int centog, int min_np)
+{
     struct PhotonSearch Search;
     int i;
     fastf_t tmp, dist, Filter, ScaleFilter;
