@@ -573,6 +573,16 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
+    /* !!! */bu_log("DEBUG: pubvars is %x\n", pubvars);
+    /* !!! */bu_log("DEBUG: pubvars->dpy is %x\n", pubvars->dpy);
+    /* !!! */bu_log("DEBUG: default screen is %d\n", DefaultScreen(pubvars->dpy));
+
+    /* FIXME: Applications on Mac OS X linking against the system
+     * Tcl/Tk frameworks may crash here due to dpy being a high (7+
+     * digit) value and the screens[] array it indexes into being 0x0.
+     * Might have better luck calling functions instead of macros.
+     */
+
     if (dmp->dm_width == 0) {
 	dmp->dm_width =
 	    DisplayWidth(pubvars->dpy,
