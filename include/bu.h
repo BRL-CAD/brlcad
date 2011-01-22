@@ -1791,11 +1791,7 @@ BU_EXPORT extern int bu_debug;
 #      define bu_byteoffset(_i)	((size_t)((char *)&(_i)))
 #    else
 #      if defined(__ia64__) || defined(__x86_64__) || defined(__sparc64__)
-#        if defined (__INTEL_COMPILER)
 #          define bu_byteoffset(_i)	((size_t)((char *)&(_i)))
-#        else
-#          define bu_byteoffset(_i)	((size_t)(((void *)&(_i))-((void *)0)))
-#        endif
 #      else
 /* "Conservative" way of finding # bytes as diff of 2 char ptrs */
 #        define bu_byteoffset(_i)	((size_t)(((char *)&(_i))-((char *)0)))
