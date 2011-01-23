@@ -71,7 +71,7 @@ struct tmp_v {
  *
  * returns 0 if nmg is ok and !0 on error in description
  *
- * implicit return - a struct nmg_specific is created, and it's
+ * implicit return - a struct nmg_specific is created, and its
  * address is stored in stp->st_specific for use by nmg_shot().
  */
 int

@@ -180,7 +180,7 @@ struct superell_specific {
  * 0 SUPERELL is OK
  * !0 Error in description
  *
- * Implicit return - A struct superell_specific is created, and it's
+ * Implicit return - A struct superell_specific is created, and its
  * address is stored in stp->st_specific for use by rt_superell_shot()
  */
 int

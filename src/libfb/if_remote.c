@@ -295,7 +295,7 @@ rem_close(FBIO *ifp)
 	return -2;
     /*
      * When some libfb interfaces with a "linger mode" window gets
-     * it's fb_close() call here, it closes down the network file
+     * its fb_close() call here, it closes down the network file
      * descriptor, and so the PKG connection is terminated at this
      * point.  If there was no transmission error noted in the
      * pkg_send() above, but the pkg_waitfor () here gets an error,

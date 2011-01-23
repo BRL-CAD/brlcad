@@ -68,7 +68,7 @@ extern void rt_sketch_bounds(struct rt_sketch_internal *, fastf_t *);
  * !0 Error in description
  *
  * Implicit return -
- * A struct revolve_specific is created, and it's address is stored
+ * A struct revolve_specific is created, and its address is stored
  * in stp->st_specific for use by revolve_shot().
  */
 int

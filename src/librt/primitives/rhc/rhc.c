@@ -210,7 +210,7 @@ const struct bu_structparse rt_rhc_parse[] = {
  * !0 Error in description
  *
  * Implicit return -
- * A struct rhc_specific is created, and it's address is stored in
+ * A struct rhc_specific is created, and its address is stored in
  * stp->st_specific for use by rhc_shot().
  */
 int

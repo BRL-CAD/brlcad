@@ -900,7 +900,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
  * !0 Error in description
  *
  * Implicit return -
- * A struct dsp_specific is created, and it's address is stored in
+ * A struct dsp_specific is created, and its address is stored in
  * stp->st_specific for use by dsp_shot().
  */
 int

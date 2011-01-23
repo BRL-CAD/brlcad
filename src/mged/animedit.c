@@ -359,7 +359,7 @@ read_hold_point(pp, name, fip)
 	    pp->name = arc[arc_last];
 	    /*
 	     * NOTE: we are not freeing the last entry which should be
-	     * a grip as we save it's name in pp->name.
+	     * a grip as we save its name in pp->name.
 	     */
 	    for (i=0; i< arc_last; i++) {
 		bu_free((genptr_t)arc[i], "arc entry");
@@ -417,7 +417,7 @@ read_hold_point(pp, name, fip)
 	    pp->name = arc[arc_last];
 	    /*
 	     * NOTE: we are not freeing the last entry which should be
-	     * a joint as we save it's name in pp->name.
+	     * a joint as we save its name in pp->name.
 	     */
 	    for (i=0; i< arc_last; i++) {
 		bu_free((genptr_t)arc[i], "arc entry");

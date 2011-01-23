@@ -133,7 +133,7 @@
  * 6 face structures.
  *		Each face structure fu_p references a random choice of 1 of
  *		the two parent faceuse structures sharing this face, and is
- *		in turn referenced by that faceuse and it's mate.
+ *		in turn referenced by that faceuse and its mate.
  * 12 loopuse structures
  *		Each loopuse structure down_hd references 4 edgeuse structures.
  *		Also, 1 loop structure, and 1 loopuse structure (its mate).
@@ -144,12 +144,12 @@
  *		(OT_OPPOSITE makes a hole, claiming surface area outside).
  *		Plus, "up" references the parent object (faceuse, here).
  * 6 loop structures
- *		Each loop structure references a random choice of 1 of it's
+ *		Each loop structure references a random choice of 1 of its
  *		parent loopuse structures and is in turn referenced by that
- *		loopuse and it's mate.
+ *		loopuse and its mate.
  * 48 edgeuse structures
  *		Each edgeuse structure references 1 vertexuse structure,
- *		1 edge structure, and 2 other edgeuse structures (it's mate
+ *		1 edge structure, and 2 other edgeuse structures (its mate
  *		and the next edgeuse radial to this edgeuse).
  *		(if this edge was NOT used in another face, then the
  *		radial pointer and mate pointer would point to the SAME
@@ -160,7 +160,7 @@
  *		Plus, "up" references the parent object (loopuse, here).
  * 12 edge structures
  *		Each edge structure references a random choice of one of
- *		it's parent edgeuse structures and is in turn referenced
+ *		its parent edgeuse structures and is in turn referenced
  *		by that edgeuse, the mate of that edgeuse, the radial of
  *		that edgeuse and the mate of the radial. (In this simple
  *		case of the cube, there are 4 edgeuses per edge).
@@ -172,14 +172,14 @@
  *		Also, "up" references the parent object (edgeuse, here).
  * 8 vertex structures
  *		Each vertex structure references 6 vertexuse structures
- *		via it's linked list. (In the case of the cube,
+ *		via its linked list. (In the case of the cube,
  *		there are three faces meeting at each vertex, and each of
  *		those faces has two faceuse structs of one loopuse each. Each
  *		loopuse will cite the vertex via one edgeuse, so 3*2 = 6).
  *
  * As well as each "use" pointing down to what it uses, the "use" points
  * up to the structure that uses it.  So working up from any abstract object
- * or it's use, the top of the tree (struct model) can be found.
+ * or its use, the top of the tree (struct model) can be found.
  * Working down from the struct model, all elements of the object can be
  * visited.
  *
@@ -1380,7 +1380,7 @@ nmg_klu(struct loopuse *lu1)
  * n m g _ k e g
  *
  * Internal routine to kill an edge geometry structure (of either
- * type), if all the edgeuses on it's list have vanished.  Regardless,
+ * type), if all the edgeuses on its list have vanished.  Regardless,
  * the edgeuse's geometry pointer is cleared.
  *
  * This routine does only a single edgeuse.  If the edgeuse mate has
@@ -1436,7 +1436,7 @@ nmg_keg(struct edgeuse *eu)
 /**
  * n m g _ k e u
  *
- * Delete an edgeuse & it's mate from a shell or loop.
+ * Delete an edgeuse & its mate from a shell or loop.
  *
  * Returns -
  * 0 If all is well
@@ -2834,7 +2834,7 @@ nmg_je(struct edgeuse *eudst, struct edgeuse *eusrc)
     NMG_CK_EDGEUSE(eusrc_mate);
 
     /* protect the morons from themselves.  Don't let them
-     * move an edgeuse to itself or it's mate
+     * move an edgeuse to itself or its mate
      */
     if (eusrc == eudst || eusrc_mate == eudst) {
 	bu_log("nmg_je() moving edgeuse to itself\n");

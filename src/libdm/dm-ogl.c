@@ -1121,7 +1121,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	glXMakeCurrent(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy, None, NULL);
 	glXDestroyContext(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy, old_glxContext);
     } else {
-	/* dmp1 will share it's display lists with dmp2 */
+	/* dmp1 will share its display lists with dmp2 */
 
 	old_glxContext = ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc;
 

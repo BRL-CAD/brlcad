@@ -62,7 +62,7 @@ struct mfuncs null_mfuncs[] = {
  * not needed for whatever reason to it won't be rendered).
  *
  * The null shader has nothing to do during setup since it doesn't actually
- * have anything to do during render0.  It's setup returns 0 since there's no
+ * have anything to do during render0.  Its setup returns 0 since there's no
  * need to keep any region info.  This means that sh_null_render will not even
  * get called.
  */

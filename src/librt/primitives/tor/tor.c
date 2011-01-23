@@ -165,7 +165,7 @@ struct tor_specific {
  * !0 Error in description
  *
  * Implicit return -
- * A struct tor_specific is created, and it's address is stored in
+ * A struct tor_specific is created, and its address is stored in
  * stp->st_specific for use by rt_tor_shot().
  */
 int

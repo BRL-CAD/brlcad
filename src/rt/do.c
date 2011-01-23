@@ -748,7 +748,7 @@ do_frame(int framenumber)
 	 * in).
 	 *
 	 * view_2init() can depend on the file being open for both
-	 * reading and writing, but must do it's own positioning.
+	 * reading and writing, but must do its own positioning.
 	 */
 	{
 	    struct stat sb;

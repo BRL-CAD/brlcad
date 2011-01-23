@@ -78,7 +78,7 @@ struct submodel_specific {
  * !0 Error in description
  *
  * Implicit return -
- * A struct submodel_specific is created, and it's address is stored in
+ * A struct submodel_specific is created, and its address is stored in
  * stp->st_specific for use by submodel_shot().
  */
 int

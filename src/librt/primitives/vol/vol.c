@@ -754,7 +754,7 @@ rt_vol_ifree(struct rt_db_internal *ip)
  * !0 Failure
  *
  * Implicit return -
- * A struct rt_vol_specific is created, and it's address is stored
+ * A struct rt_vol_specific is created, and its address is stored
  * in stp->st_specific for use by rt_vol_shot().
  */
 int

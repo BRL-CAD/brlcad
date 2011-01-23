@@ -187,7 +187,7 @@ view_2init(struct application *ap)
      * shading to take place.  Note that the option for ambient light
      * intensity had been reused since that will not be needed here.
      * The default of 5 degrees is used when AmbientIntensity is less
-     * than 0.5 because it's default is set to 0.4, and the permissible
+     * than 0.5 because its default is set to 0.4, and the permissible
      * range for light intensity is 0 -> 1.
      */
 

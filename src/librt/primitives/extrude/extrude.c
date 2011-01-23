@@ -102,7 +102,7 @@ static struct bn_tol extr_tol={
  * !0 Error in description
  *
  * Implicit return -
- * A struct extrude_specific is created, and it's address is stored in
+ * A struct extrude_specific is created, and its address is stored in
  * stp->st_specific for use by extrude_shot().
  */
 int

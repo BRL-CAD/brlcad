@@ -77,7 +77,7 @@ rt_dirbuild( const char *filename, char *buf, int len )
 /*
  *			R T _ D B _ G E T _ I N T E R N A L
  *
- *  Get an object from the database, and convert it into it's internal
+ *  Get an object from the database, and convert it into its internal
  *  representation.
  *
  *  Returns -

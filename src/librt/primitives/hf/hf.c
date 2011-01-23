@@ -204,7 +204,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
  * !0 Error in description
  *
  * Implicit return -
- * A struct hf_specific is created, and it's address is stored in
+ * A struct hf_specific is created, and its address is stored in
  * stp->st_specific for use by hf_shot().
  */
 int
@@ -2037,7 +2037,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
  * file.  Note that any parameters taken from a cfile are included in
  * the new string solid.  This isn't a problem, because if the cfile
  * is changed (perhaps to substitute a different resolution height
- * field of the same location in space), it's new parameters will
+ * field of the same location in space), its new parameters will
  * override those stored in the string solid (including the dfile
  * name).
  */

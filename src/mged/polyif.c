@@ -33,7 +33,7 @@
 #include "./mged_dm.h"
 
 
-/* When finalized, this stuff belongs in a header file of it's own */
+/* When finalized, this stuff belongs in a header file of its own */
 struct polygon_header {
     int magic;			/* magic number */
     int ident;			/* identification number */

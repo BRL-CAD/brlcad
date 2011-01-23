@@ -245,7 +245,7 @@ light_pt_set(register const struct bu_structparse *sdp, register const char *nam
 /**
  * L I G H T _ R E N D E R
  *
- * If we have a direct view of the light, return it's color.  A cosine
+ * If we have a direct view of the light, return its color.  A cosine
  * term is needed in the shading of the light source, to make it have
  * dimension and shape.  However, just a simple cosine of the angle
  * between the normal and the direction vector leads to a pretty dim
@@ -667,7 +667,7 @@ light_setup(register struct region *rp,
 	stp = tp->tr_a.tu_stp;
     }
 
-    /* Light is aimed down -Z in it's local coordinate system */
+    /* Light is aimed down -Z in its local coordinate system */
     {
 	register matp_t matp;
 	if ((matp = stp->st_matp) == (matp_t)0)
@@ -747,7 +747,7 @@ light_setup(register struct region *rp,
  * light source in the model, and assume that the energy from multiple
  * lights will not shine on a single location in such a way as to add
  * up to an overload condition.  We then account for the effect of
- * ambient light, because it always adds it's contribution.  Even here
+ * ambient light, because it always adds its contribution.  Even here
  * we only expect 50% of the ambient intensity, to keep the pictures
  * reasonably bright.
  */

@@ -311,7 +311,7 @@ rt_linear_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *pt1, fast
  * !0 if there is an error in the description
  *
  * Implicit return -
- * A struct bu_list is created, and it's address is stored in
+ * A struct bu_list is created, and its address is stored in
  * stp->st_specific for use by pipe_shot().
  */
 int

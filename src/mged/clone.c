@@ -322,7 +322,7 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	    }
 	    /* translate */
 	    if (state->trans[W] > SMALL_FASTF)
-		/* assumes primitive's first parameter is it's position */
+		/* assumes primitive's first parameter is its position */
 		VADD2(rp->s.s_values, rp->s.s_values, state->trans);
 	    /* rotate */
 	    if (state->rot[W] > SMALL_FASTF) {

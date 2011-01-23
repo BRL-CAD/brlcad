@@ -1648,7 +1648,7 @@ paren_squish(PLAN *plan, PLAN **resultplan)                /* plan with () nodes
 
     /*
      * the basic idea is to have yankexpr do all our work and just
-     * collect it's results together.
+     * collect its results together.
      */
     if (yankexpr(&plan, &expr) != GED_OK) return GED_ERROR;
     while (expr != NULL) {

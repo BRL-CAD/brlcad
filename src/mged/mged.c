@@ -2347,7 +2347,7 @@ refresh(void)
 		    mged_variables->mv_fb_all) {
 		    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
 		} else {
-		    /* Draw each solid in it's proper place on the
+		    /* Draw each solid in its proper place on the
 		     * screen by applying zoom, rotation, &
 		     * translation.  Calls DM_LOADMATRIX() and
 		     * DM_DRAW_VLIST().

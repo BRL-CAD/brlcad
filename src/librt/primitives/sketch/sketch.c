@@ -127,7 +127,7 @@ rt_check_curve(const struct curve *crv, const struct rt_sketch_internal *skt, in
  * !0 Error in description
  *
  * Implicit return -
- * A struct sketch_specific is created, and it's address is
+ * A struct sketch_specific is created, and its address is
  * stored in stp->st_specific for use by sketch_shot().
  */
 int

@@ -77,7 +77,7 @@ bn_vlist_3string(struct bu_list *vhead,
      *  The text is located in a local coordinate system with the
      *  lower left corner of the first character at (0, 0, 0), with
      *  the text proceeding onward towards +X.
-     *  We need to rotate the text around it's local (0, 0, 0),
+     *  We need to rotate the text around its local (0, 0, 0),
      *  and then translate to the user's designated "origin".
      *  If the user provided translation or
      *  scaling in his matrix, it will *also* be applied.

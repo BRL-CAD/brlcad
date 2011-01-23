@@ -804,7 +804,7 @@ uint32_t TIE_VAL(tie_kdtree_cache_free)(struct tie_s *tie, void **cache)
 /* Build the cache */
     tie_kdtree_cache_free_node(tie, tie->kdtree, cache, &size, &mem);
 
-/* Resize the array back to it's real value */
+/* Resize the array back to its real value */
 	/* TODO: examine if this is correct. A 0 re-alloc is probably a very bad
 	 * thing. */
     if( size == 0 ) {

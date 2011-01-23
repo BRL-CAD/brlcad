@@ -512,7 +512,7 @@ bn_isect_2planes(fastf_t *pt,
     VCROSS(dir, a, b);
     VUNITIZE(dir);		/* safety */
 
-    /* Select an axis-aligned plane which has it's normal pointing
+    /* Select an axis-aligned plane which has its normal pointing
      * along the same axis as the largest magnitude component of the
      * direction vector.  If the largest magnitude component is
      * negative, reverse the direction vector, so that model is "in
@@ -986,7 +986,7 @@ out:
  *
  * Special note: when return code is "0" for co-linearity, dist[1] has
  * an alternate interpretation: it's the parameter along p (not q)
- * which takes you from point p to the point (q + qdir), i.e., it's
+ * which takes you from point p to the point (q + qdir), i.e., its
  * the endpoint of the q linesegment, since in this case there may be
  * *two* intersections, if q is contained within span p to (p + pdir).
  * And either may be -10 if the point is outside the span.

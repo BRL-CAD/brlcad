@@ -127,7 +127,7 @@ const struct bu_structparse rt_hyp_parse[] = {
  * !0 Error in description
  *
  * Implicit return -
- * A struct hyp_specific is created, and it's address is stored in
+ * A struct hyp_specific is created, and its address is stored in
  * stp->st_specific for use by hyp_shot().
  */
 int

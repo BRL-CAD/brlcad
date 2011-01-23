@@ -3613,7 +3613,7 @@ dgo_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *
     dgo_bound_solid(dgcdp->interp, sp);
 
     /*
-     *  If this solid is new, fill in it's information.
+     *  If this solid is new, fill in its information.
      *  Otherwise, don't touch what is already there.
      */
     if (!existing_sp) {

@@ -1391,7 +1391,7 @@ plane_worker (int cpu, genptr_t ptr)
 		if (aborted)
 		    return;
 
-		/* FIXME: This shots increment and it's twin in the else clause below
+		/* FIXME: This shots increment and its twin in the else clause below
 		 * are presenting a significant drag on gqa performance via
 		 * heavy duty semaphore locking and unlocking.  Can a way
 		 * be found to do this job without needing to trigger the

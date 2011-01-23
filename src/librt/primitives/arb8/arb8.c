@@ -283,7 +283,7 @@ rt_arb_get_cgtype(
 /**
  * R T _ A R B _ S T D _ T Y P E
  *
- * Given an ARB in internal form, return it's specific ARB type.
+ * Given an ARB in internal form, return its specific ARB type.
  *
  * Set tol.dist = 0.0001 to obtain past behavior.
  *

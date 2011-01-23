@@ -507,7 +507,7 @@ pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(char *))
 
     /*
      * XXX - Somehow the system has to know what connection was
-     * accepted, it's protocol, etc.  For UNIX/inetd we use stdin.
+     * accepted, its protocol, etc.  For UNIX/inetd we use stdin.
      */
     conn = _pkg_makeconn(STDIN_FILENO, switchp, errlog);
     return conn;
