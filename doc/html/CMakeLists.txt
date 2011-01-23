@@ -51,9 +51,6 @@ SET(anim_tutorial_HTML
 FILE(COPY ${anim_tutorial_HTML} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/html/manuals/Anim_Tutorial)
 install(FILES ${anim_tutorial_HTML} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/manuals/Anim_Tutorial)
 
-FILE(COPY manuals/archer/archer.ico DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/html/manuals/archer)
-install(FILES manuals/archer/archer.ico DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/manuals/archer)
-
 SET(cadwidgets_HTML
 	manuals/cadwidgets/Command.html 
 	manuals/cadwidgets/Database.html 

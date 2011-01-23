@@ -237,7 +237,7 @@ proc main {} {
 	wm title $::ArcherCore::application "Archer"
 	if {$tcl_platform(os) == "Windows NT"} {
 	    wm iconbitmap $::ArcherCore::application -default \
-		[file join [bu_brlcad_data "html"] manuals archer archer.ico]
+		[file join [bu_brlcad_data "icons"] archer.ico]
 	}
 	set size [wm maxsize $::ArcherCore::application]
 	set w [lindex $size 0]

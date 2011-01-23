@@ -1327,6 +1327,15 @@ ENDIF(UNIX AND NOT APPLE)
 
 IF(WIN32)
    SET(CPACK_GENERATOR NSIS)
+   SET(CPACK_NSIS_PACKAGE_NAME "BRL-CAD")
+   SET(CPACK_SOURCE_DIR ${CMAKE_SOURCE_DIR})
+   SET(CPACK_DATA_DIR "share\\\\brlcad\\\\${BRLCAD_VERSION}")
+   # There is a bug in NSI that does not handle full unix paths properly. Make
+   # sure there is at least one set of four (4) backlasshes.
+   SET(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\brlcad.ico")
+   SET(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\uninstall.ico")
+   SET(CPACK_NSIS_DISPLAY_NAME "BRL-CAD")
+   SET(CPACK_NSIS_MODIFY_PATH ON)
 ENDIF(WIN32)
 
 SET(CPACK_SOURCE_GENERATOR TGZ TBZ2 ZIP)

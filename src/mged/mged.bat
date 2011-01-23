@@ -22,13 +22,10 @@ REM
 
 SETLOCAL
 
-SET MGED=%~dp0mged
-SET WEB_BROWSER=C:\Program Files\Internet Explorer\IEXPLORE.EXE
-
 IF "%1"=="-g" (
-    START /B %MGED% %2
+    "%~dp0\"mged.exe %2
 ) ELSE (
-    START /B %MGED% %1
+    "%~dp0\"mged.exe %1
 )
 
 CLS

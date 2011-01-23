@@ -130,6 +130,11 @@ BRLCAD_ADDEXEC(cad_boundp cad_boundp.c libbu)
 
 BRLCAD_ADDEXEC(cad_parea cad_parea.c libbu)
 
+IF(WIN32)
+	configure_file(mged.bat ${CMAKE_BINARY_DIR}/bin/mged.bat COPYONLY)
+	INSTALL(PROGRAMS mged.bat DESTINATION bin)
+ENDIF(WIN32)
+
 SET(mged_MANS
   cad_boundp.1
   cad_parea.1

@@ -12,6 +12,12 @@ SET(rtwizard_TCLSCRIPTS
 	rtwizard.bat
 	rtwizard.tcl
 	)
+
+IF(WIN32)
+	configure_file(rtwizard.bat ${CMAKE_BINARY_DIR}/bin/rtwizard.bat COPYONLY)
+	INSTALL(PROGRAMS rtwizard.bat DESTINATION bin)
+ENDIF(WIN32)
+
 FILE(COPY ${rtwizard_TCLSCRIPTS} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/tclscripts/rtwizard)
 INSTALL(FILES ${rtwizard_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/rtwizard)
 
