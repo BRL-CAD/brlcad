@@ -5,7 +5,9 @@ STEPDIR=
 endif
 
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = \
+	${STRICT_FLAGS} \
+	${TCL_CPPFLAGS}
 
 EXTRA_DIST = \
 	CMakeLists.txt \
