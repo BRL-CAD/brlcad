@@ -3534,12 +3534,8 @@ static struct db_tree_state mesh_initial_tree_state = {
 	0,		/* color inherit */
 	0,		/* mater inherit */
 	(char *)NULL	/* shader */
-    }
-    ,
-    {1.0, 0.0, 0.0, 0.0,
-     0.0, 1.0, 0.0, 0.0,
-     0.0, 0.0, 1.0, 0.0,
-     0.0, 0.0, 0.0, 1.0},
+    },
+    MAT_INIT_IDN,
     REGION_NON_FASTGEN,		/* ts_is_fastgen */
     {
 	/* attribute value set */

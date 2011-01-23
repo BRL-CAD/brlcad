@@ -2341,8 +2341,8 @@ process_text_attrib_entities_code( int code )
     static int horizAlignment=0;
     static int vertAlignment=0;
     static int textFlag=0;
-    static point_t firstAlignmentPoint = {0.0, 0.0, 0.0 };
-    static point_t secondAlignmentPoint = {0.0, 0.0, 0.0 };
+    static point_t firstAlignmentPoint = VINIT_ZERO;
+    static point_t secondAlignmentPoint = VINIT_ZERO;
     static double textScale=1.0;
     static double textHeight;
     static double textRotation=0.0;

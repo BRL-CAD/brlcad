@@ -585,7 +585,7 @@ Convert_part(char *line)
     int face_count=0;
     int degenerate_count=0;
     int small_count=0;
-    float colr[3]={ 0.5, 0.5, 0.5 };
+    float colr[3] = VINITALL(0.5);
     unsigned char color[3]={ 128, 128, 128 };
     char *brlcad_name;
     struct wmember head;

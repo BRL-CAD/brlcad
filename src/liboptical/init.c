@@ -45,7 +45,7 @@ struct bn_table *spectrum = NULL;
 #ifdef RT_MULTISPECTRAL
 struct bn_tabdata *background = NULL;	/* radiant emittance of bg */
 #else
-vect_t background = { 0.0, 0.0, 0.0 }; /* Black */
+vect_t background = VINIT_ZERO; /* Black */
 #endif
 
 #define MFUNCS(_name)							\

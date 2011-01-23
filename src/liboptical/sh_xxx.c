@@ -96,17 +96,11 @@ struct xxx_specific xxx_defaults = {
     xxx_MAGIC,
     1.0,				/* xxx_val */
     0.0,				/* xxx_dist */
-    { 1.0, 1.0, 1.0 },		/* xxx_delta */
-    { 0.0, 0.0, 0.0 },		/* xxx_min */
-    { 0.0, 0.0, 0.0 },		/* xxx_max */
-    { 0.0, 0.0, 0.0, 0.0,	/* xxx_m_to_sh */
-      0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0 },
-    { 0.0, 0.0, 0.0, 0.0,	/* xxx_m_to_r */
-      0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0 }
+    VINITALL(1.0),		/* xxx_delta */
+    VINIT_ZERO,			/* xxx_min */
+    VINIT_ZERO,			/* xxx_max */
+    MAT_INIT_ZERO,		/* xxx_m_to_sh */
+    MAT_INIT_ZERO		/* xxx_m_to_r */
 };
 
 

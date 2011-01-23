@@ -62,10 +62,7 @@ struct tcl_specific {
 static const
 struct tcl_specific tcl_defaults = {
     tcl_MAGIC,			/* magic */
-    { 0.0, 0.0, 0.0, 0.0,	/* tcl_m_to_r */
-      0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0 },
+    MAT_INIT_ZERO,		/* tcl_m_to_r */
     {0},			/* tcl_interps */
     NULL,			/* tcl_objPtr */
     {0, NULL, 0, 0, 0},		/* tcl_file */

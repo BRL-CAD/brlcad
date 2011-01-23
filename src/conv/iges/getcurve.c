@@ -29,11 +29,7 @@ extern fastf_t splinef(fastf_t c[4], fastf_t s);
 extern void Knot(int n, fastf_t values[]);
 extern void B_spline(fastf_t t, int m, int k, point_t P[], fastf_t weights[], point_t pt);
 
-mat_t idn={
-    1.0, 0.0, 0.0, 0.0 ,
-    0.0, 1.0, 0.0, 0.0 ,
-    0.0, 0.0, 1.0, 0.0 ,
-    0.0, 0.0, 0.0, 1.0 };
+mat_t idn = MAT_INIT_IDN;
 
 
 int

@@ -103,12 +103,9 @@ static const
 struct gauss_specific gauss_defaults = {
     gauss_MAGIC,
     4.0,
-    {0.0, 0.0, 0.0}, /* min */
-    {0.0, 0.0, 0.0}, /* max */
-    { 0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0 },
+    VINIT_ZERO, /* min */
+    VINIT_ZERO, /* max */
+    MAT_INIT_ZERO, /* gauss_m_to_sh */
     {0, NULL, NULL}
 };
 

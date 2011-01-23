@@ -51,7 +51,7 @@ struct _grid_state default_grid_state = {
     /* gr_rc */		1,
     /* gr_draw */		0,
     /* gr_snap */		0,
-    /* gr_anchor */		{ 0.0, 0.0, 0.0 },
+    /* gr_anchor */		VINIT_ZERO,
     /* gr_res_h */		1.0,
     /* gr_res_v */		1.0,
     /* gr_res_major_h */	5,

@@ -75,8 +75,8 @@ struct flat_specific {
 static const
 struct flat_specific flat_defaults = {
     FLAT_MAGIC,
-    { 1.0, 1.0, 1.0 }, /* full white */
-    { 0.0, 0.0, 0.0 }  /* completely opaque (no transparency)*/
+    VINITALL(1.0), /* full white */
+    VINIT_ZERO  /* completely opaque (no transparency)*/
 };
 
 

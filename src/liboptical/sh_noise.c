@@ -115,16 +115,10 @@ struct noise_specific noise_defaults = {
     4.0,		/* octaves */
     1.0,		/* size */
     1.57079632679489661923,		/* max_angle M_PI_2 */
-    { 1.0, 1.0, 1.0 },		/* vscale */
-    { 1000.0, 1000.0, 1000.0 },	/* delta into noise space */
-    { 0.0, 0.0, 0.0, 0.0,	/* m_to_sh */
-      0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0 },
-    { 0.0, 0.0, 0.0, 0.0,	/* sh_to_m */
-      0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0 },
+    VINITALL(1.0),	/* vscale */
+    VINITALL(1000.0),	/* delta into noise space */
+    MAT_INIT_ZERO,	/* m_to_sh */
+    MAT_INIT_ZERO,	/* sh_to_m */
     0.0,				/* max_delta */
     0.0,				/* nsd */
     0.0,				/* minval */

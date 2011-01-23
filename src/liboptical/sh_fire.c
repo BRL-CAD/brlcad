@@ -101,35 +101,19 @@ static const
 struct fire_specific fire_defaults = {
     fire_MAGIC,
     0,			/* fire_debug */
-    1.0,			/* fire flicker rate */
-    0.0,			/* fire_stretch */
+    1.0,		/* fire flicker rate */
+    0.0,		/* fire_stretch */
     2.1753974,		/* noise_lacunarity */
-    1.0,			/* noise_h_val */
-    2.0,			/* noise_octaves */
-    -1.0,			/* noise_size */
-    { 10.0, 10.0, 10.0 },	/* noise_vscale */
-    { 0.0, 0.0, 0.0 },	/* noise_delta */
-    { 0.0, 0.0, 0.0 },	/* fire_min */
-    { 0.0, 0.0, 0.0 },	/* fire_max */
-
-    {
-	/* fire_m_to_sh */
-	1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0 },
-    {
-	/* fire_sh_to_noise */
-	1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0 },
-    {
-	/* fire_colorspline_mat */
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0 }
+    1.0,		/* noise_h_val */
+    2.0,		/* noise_octaves */
+    -1.0,		/* noise_size */
+    VINITALL(10.0),	/* noise_vscale */
+    VINIT_ZERO,		/* noise_delta */
+    VINIT_ZERO,		/* fire_min */
+    VINIT_ZERO,		/* fire_max */
+    MAT_INIT_IDN,	/* fire_m_to_sh */
+    MAT_INIT_IDN,	/* fire_sh_to_noise */
+    MAT_INIT_ZERO	/* fire_colorspline_mat */
 };
 
 

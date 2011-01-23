@@ -275,7 +275,7 @@ bbd_setup(struct region *rp,
     VMOVE(vv, tgc->h);
     VUNITIZE(vv);
     for (BU_LIST_FOR(bi, bbd_img, &bbd_sp->imgs)) {
-	static const point_t o = { 0.0, 0.0, 0.0 };
+	static const point_t o = VINIT_ZERO;
 	bn_mat_arb_rot(mat, o, vv, angle*img_num);
 
 	/* compute plane equation */

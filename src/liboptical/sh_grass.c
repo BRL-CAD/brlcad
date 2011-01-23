@@ -154,12 +154,12 @@ static const struct grass_specific grass_defaults = {
     1.0,			/* h_val */
     4.0,			/* octaves */
     .31415926535,		/* size */
-    { 1.0, 1.0, 1.0 },		/* vscale */
+    VINITALL(1.0),		/* vscale */
     { 1001.6, 1020.5, 1300.4 },	/* delta into noise space */
     {.7, .6, .3},		/* brown */
     { /* struct plant proto */
 	0,			/* magic */
-	{0.0, 0.0, 0.0},	/* root */
+	VINIT_ZERO,	/* root */
 	0,			/* blades */
 	{{ /* struct blade */
 	    0,			/* magic */
@@ -169,26 +169,17 @@ static const struct grass_specific grass_defaults = {
 	    {{ /* struct leaf_segment */
 		    0,		/* magic */
 		    0.0,	/* len */
-		    {0.0, 0.0, 0.0}, /* blade */
-		    {0.0, 0.0, 0.0}  /* N */
+		    VINIT_ZERO, /* blade */
+		    VINIT_ZERO  /* N */
 	     }},
-	    {0.0, 0.0, 0.0},	/* pmin */
-	    {0.0, 0.0, 0.0}	/* pmax */
+	    VINIT_ZERO,		/* pmin */
+	    VINIT_ZERO		/* pmax */
 	}},
-	{0.0, 0.0, 0.0},	/* pmin */
-	{0.0, 0.0, 0.0}		/* pmax */
+	VINIT_ZERO,		/* pmin */
+	VINIT_ZERO		/* pmax */
     },
-     
-    {1.0, 0.0, 0.0, 0.0,	/* m_to_sh */
-     0.0, 1.0, 0.0, 0.0,
-     0.0, 0.0, 1.0, 0.0,
-     0.0, 0.0, 0.0, 1.0},
-
-    {1.0, 0.0, 0.0, 0.0,	/* sh_to_m */
-     0.0, 1.0, 0.0, 0.0,
-     0.0, 0.0, 1.0, 0.0,
-     0.0, 0.0, 0.0, 1.0},
-
+    MAT_INIT_IDN,		/* m_to_sh */
+    MAT_INIT_IDN		/* sh_to_m */
 };
 
 #define SHDR_NULL ((struct grass_specific *)0)

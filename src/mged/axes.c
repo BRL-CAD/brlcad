@@ -48,7 +48,7 @@ struct _axes_state default_axes_state = {
     /* ax_model_draw */    	0,
     /* ax_model_size */		500,
     /* ax_model_linewidth */	1,
-    /* ax_model_pos */		{ 0.0, 0.0, 0.0 },
+    /* ax_model_pos */		VINIT_ZERO,
     /* ax_view_draw */    	0,
     /* ax_view_size */		500,
     /* ax_view_linewidth */	1,

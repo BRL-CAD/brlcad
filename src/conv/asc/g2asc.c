@@ -39,11 +39,7 @@
 #include "rtgeom.h"
 #include "tcl.h"
 
-const mat_t	id_mat = {
-    1.0, 0.0, 0.0, 0.0,
-    0.0, 1.0, 0.0, 0.0,
-    0.0, 0.0, 1.0, 0.0,
-    0.0, 0.0, 0.0, 1.0};	/* identity matrix for pipes */
+const mat_t id_mat = MAT_INIT_IDN; /* identity matrix for pipes */
 
 char *strchop(char *str, size_t len);
 #define CH(x)	strchop(x, sizeof(x))
