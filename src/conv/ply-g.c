@@ -231,7 +231,7 @@ get_double( int type )
     unsigned int val_uint;
     float val_float;
     double val_double;
-    double val;
+    double val = 0.0;
 
     if ( ply_file_type == PLY_ASCII ) {
 	switch ( type ) {
@@ -355,8 +355,7 @@ get_int( int type )
     int val_int;
     unsigned int val_uint;
     double val_double;
-    int val;
-
+    int val = 0;
 
     if ( ply_file_type == PLY_ASCII ) {
 	switch ( type ) {
@@ -615,6 +614,7 @@ get_property( struct element *ptr )
 int
 read_ply_header()
 {
+    struct element *elem_ptr = NULL;
 
     if ( verbose ) {
 	bu_log( "Reading header...\n" );
@@ -628,7 +628,6 @@ read_ply_header()
 	return 1;
     }
     while ( bu_fgets( line, MAX_LINE_SIZE, ply_fp ) ) {
-	struct element *elem_ptr;
 	size_t len;
 
 	len = strlen( line );

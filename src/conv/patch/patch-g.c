@@ -1126,7 +1126,6 @@ proc_region(char *name1)
 void
 proc_triangle(int cnt)
 {
-    int k, l;
     int idx;
     int cpts;
     char shflg, mrflg, ctflg;
@@ -1137,6 +1136,11 @@ proc_triangle(int cnt)
     plane_t pl;
     point_t last;
     point_t centroid;
+
+    /* static due to bu exception handling */
+    static int k, l;
+
+    k = l = 0;
 
     if (in[cnt-1].cc != last_cc) {
 	count = 0;
@@ -1373,7 +1377,6 @@ void
 proc_plate(int cnt)
 {
     int thick_no;
-    int k, l;
     int idx;
     static int count=0;
     static int mir_count=0;
@@ -1384,6 +1387,11 @@ proc_plate(int cnt)
     plane_t pl;
     point_t last;
     point_t centroid;
+
+    /* static due to bu exception handling */
+    static int k, l;
+
+    k = l = 0;
 
     if (in[cnt-1].cc != last_cc) {
 	count = 0;
@@ -3599,11 +3607,14 @@ main(int argc, char **argv)
      */
     done = 1;
     if (labelfile != NULL) {
-
 	while (done != 0) {
 
 	    if ((stop=fscanf(gfp, "%4d", &num)) == 1) {
-		fscanf(gfp, "%16s %16s", nm[num].ug, nm[num].lg); /* NAMESIZE */
+		size_t ret;
+		ret = fscanf(gfp, "%16s %16s", nm[num].ug, nm[num].lg); /* NAMESIZE */
+		if (ret < 2)
+		    bu_log("Unexpected error reading label file\n");
+
 		while ((fgetc(gfp)) != '\n')
 		    ;
 	    } else {

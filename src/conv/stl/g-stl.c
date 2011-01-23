@@ -96,6 +96,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     struct vertex *v;
     char *region_name;
     int region_polys=0;
+    int ret;
 
     NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
@@ -147,11 +148,15 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		    snprintf(buf, 80, "BRL-CAD generated STL FILE (Units=%s) %s", inches?"inches":"mm", region_name);
 		}
 	    }
-	    write(bfd, &buf, 80);
+	    ret = write(bfd, &buf, 80);
+	    if (ret < 0)
+		perror("write");
 
 	    /* write a place keeper for the number of triangles */
 	    memset(buf, 0, 4);
-	    write(bfd, &buf, 4);
+	    ret = write(bfd, &buf, 4);
+	    if (ret < 0)
+		perror("write");
 	}
     }
 
@@ -190,7 +195,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		struct edgeuse *eu;
 		int vert_count=0;
 		float flts[12];
-		float *flt_ptr;
+		float *flt_ptr = NULL;
 		unsigned char vert_buffer[50];
 
 		NMG_CK_LOOPUSE(lu);
@@ -253,7 +258,9 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		    for (i=0; i<12; i++) {
 			lswap((unsigned int *)&vert_buffer[i*4]);
 		    }
-		    write(bfd, vert_buffer, 50);
+		    ret = write(bfd, vert_buffer, 50);
+		    if (ret < 0)
+			perror("write");
 		}
 		tot_polygons++;
 		region_polys++;
@@ -273,7 +280,9 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	    /* Write out number of triangles */
 	    bu_plong(tot_buffer, (unsigned long)region_polys);
 	    lswap((unsigned int *)tot_buffer);
-	    write(bfd, tot_buffer, 4);
+	    ret = write(bfd, tot_buffer, 4);
+	    if (ret < 0)
+		perror("write");
 	    close(bfd);
 	} else {
 	    fclose(fp);
@@ -299,6 +308,7 @@ main(int argc, char *argv[])
     int c;
     double percent;
     int i;
+    int ret;
     int use_mc = 0;
 
     bu_setlinebuf(stderr);
@@ -452,11 +462,15 @@ main(int argc, char *argv[])
 	} else {
 	    bu_strlcpy(buf, "BRL-CAD generated STL FILE (Units=mm)", sizeof(buf));
 	}
-	write(bfd, &buf, 80);
+	ret = write(bfd, &buf, 80);
+	if (ret < 0)
+	    perror("write");
 
 	/* write a place keeper for the number of triangles */
 	memset(buf, 0, 4);
-	write(bfd, &buf, 4);
+	ret = write(bfd, &buf, 4);
+	if (ret < 0)
+	    perror("write");
     }
 
     /* Walk indicated tree(s).  Each region will be output separately */
@@ -496,7 +510,9 @@ main(int argc, char *argv[])
 	    /* Write out number of triangles */
 	    bu_plong(tot_buffer, (unsigned long)tot_polygons);
 	    lswap((unsigned int *)tot_buffer);
-	    write(bfd, tot_buffer, 4);
+	    ret = write(bfd, tot_buffer, 4);
+	    if (ret < 0)
+		perror("write");
 	    close(bfd);
 	} else {
 	    fclose(fp);
