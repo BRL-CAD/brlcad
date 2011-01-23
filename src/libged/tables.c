@@ -54,10 +54,7 @@ struct identt {
 #define REG_TABLE	2
 #define ID_TABLE	3
 
-static struct identt identt = {0, {0}, {0.0, 0.0, 0.0, 0.0,
-					0.0, 0.0, 0.0, 0.0,
-					0.0, 0.0, 0.0, 0.0,
-					0.0, 0.0, 0.0, 0.0}};
+static struct identt identt = {0, {0}, MAT_INIT_ZERO};
 
 static int idfd = 0;
 static int rd_idfd = 0;
