@@ -1036,9 +1036,12 @@ void
 arsbdump(void)	/* Print out ARS B record information */
 {
     int i;
+    size_t ret;
 
     /* Read in a member record for processing */
-    (void)fread( (char *)&record, sizeof record, 1, ifp );
+    ret = fread( (char *)&record, sizeof record, 1, ifp );
+    if (ret != 1)
+	perror("fread");
     (void)fprintf(ofp, "%c ", record.b.b_id );		/* B */
     (void)fprintf(ofp, "%d ", record.b.b_type );		/* primitive type */
     (void)fprintf(ofp, "%d ", record.b.b_n );		/* current curve # */

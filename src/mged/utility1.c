@@ -535,6 +535,7 @@ sol_number(const matp_t matrix, char *name, int *old)
     int i;
     struct identt idbuf1, idbuf2;
     int readval;
+    int ret;
 
     memset(&idbuf1, 0, sizeof(struct identt));
     bu_strlcpy(idbuf1.i_name, name, sizeof(idbuf1.i_name));
@@ -559,7 +560,9 @@ sol_number(const matp_t matrix, char *name, int *old)
     idbuf1.i_index = numsol;
 
     (void)lseek(idfd, (off_t)0L, 2);
-    (void)write(idfd, &idbuf1, sizeof identt);
+    ret = write(idfd, &idbuf1, sizeof identt);
+    if (ret < 0)
+	perror("write");
 
     *old = 0;
     return idbuf1.i_index;
@@ -878,6 +881,8 @@ f_tables(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 
 	(void)fclose(tabptr);
     } else {
+	int ret;
+
 	(void)fprintf(tabptr, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
 	(void)fclose(tabptr);
 
@@ -888,13 +893,17 @@ f_tables(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 	bu_vls_strcpy(&cmd, sortcmd);
 	bu_vls_strcat(&cmd, argv[1]);
 	Tcl_AppendResult(interpreter, bu_vls_addr(&cmd), "\n", (char *)NULL);
-	(void)system(bu_vls_addr(&cmd));
+	ret = system(bu_vls_addr(&cmd));
+	if (ret != 0)
+	    bu_log("sort command failed\n");
 
 	bu_vls_trunc(&cmd, 0);
 	bu_vls_strcpy(&cmd, catcmd);
 	bu_vls_strcat(&cmd, argv[1]);
 	Tcl_AppendResult(interpreter, bu_vls_addr(&cmd), "\n", (char *)NULL);
-	(void)system(bu_vls_addr(&cmd));
+	ret = system(bu_vls_addr(&cmd));
+	if (ret != 0)
+	    bu_log("sort command failed\n");
 
 	(void)unlink("/tmp/ord_id\0");
     }

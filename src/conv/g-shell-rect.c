@@ -471,7 +471,8 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss, 
 static int
 shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
-    point_t hit1, hit2;
+    point_t hit1 = VINIT_ZERO;
+    point_t hit2 = VINIT_ZERO;
     point_t mhit1, mhit2;
     struct partition *pp;
     struct vertex *hit1_v=(struct vertex *)NULL;
