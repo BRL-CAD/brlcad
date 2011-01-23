@@ -47,13 +47,13 @@ extern void do_prep( struct rt_i *rtip );
 extern int old_way( FILE *fp );
 
 /* opt.c */
-extern int get_args( int argc, char **argv );
-extern int		query_x;
-extern int		query_y;
-extern int		Query_one_pixel;
-extern int		query_rdebug;
-extern int		query_debug;
-extern int		benchmark;
+extern int get_args(int argc, const char *argv[]);
+extern int query_x;
+extern int query_y;
+extern int Query_one_pixel;
+extern int query_rdebug;
+extern int query_debug;
+extern int benchmark;
 
 /* view.c */
 #if 0
