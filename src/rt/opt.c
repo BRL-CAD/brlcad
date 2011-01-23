@@ -165,7 +165,8 @@ extern struct command_tab	rt_cmdtab[];
 /*
  *			G E T _ A R G S
  */
-int get_args( int argc, register char **argv )
+int
+get_args(int argc, const char *argv[])
 {
     register int c;
     register int i;
@@ -176,7 +177,7 @@ int get_args( int argc, register char **argv )
 #define GETOPT_STR	\
 	".:,:@:a:b:c:d:e:f:g:h:ij:k:l:n:o:p:q:rs:tu:v:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:"
 
-    while ( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
+    while ( (c=bu_getopt( argc, (char * const *)argv, GETOPT_STR )) != EOF )  {
 	switch ( c )  {
 	    case 'q':
 		i = atoi(bu_optarg);
@@ -543,7 +544,8 @@ int get_args( int argc, register char **argv )
 		/* set expected playback rate in frames-per-second.
 		 * This actually gets stored as the delta-t per frame.
 		 */
-		if ( (frame_delta_t=atof( bu_optarg )) == 0.0) {
+		frame_delta_t = atof(bu_optarg);
+		if (NEAR_ZERO(frame_delta_t, SMALL_FASTF)) {
 		    fprintf(stderr, "Invalid frames/sec (%s) == 0.0\n",
 			    bu_optarg);
 		    frame_delta_t = 30.0;
@@ -562,7 +564,7 @@ int get_args( int argc, register char **argv )
 			|| *cp == '.' )  cp++;
 		while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
 		yy = atof(cp);
-		if ( yy == 0.0f )
+		if ( NEAR_ZERO(yy, SMALL_FASTF) )
 		    aspect = xx;
 		else
 		    aspect = xx/yy;

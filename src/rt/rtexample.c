@@ -85,7 +85,7 @@
  * The 'segs' segment list is unused in this example.
  */
 int
-hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
+hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     /* iterating over partitions, this will keep track of the current
      * partition we're working on.
@@ -199,7 +199,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
  * rt_shootray() if the ray encounters nothing.
  */
 int
-miss(struct application *ap)
+miss(struct application *UNUSED(ap))
 {
     bu_log("missed\n");
     return 0;

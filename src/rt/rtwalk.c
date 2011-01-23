@@ -92,11 +92,11 @@ void		write_matrix(int frame);
  *			G E T _ A R G S
  */
 int
-get_args(int argc, register char **argv)
+get_args(int argc, const char *argv[])
 {
     register int c;
 
-    while ( (c=bu_getopt( argc, argv, "x:X:n:v:" )) != EOF )  {
+    while ( (c=bu_getopt( argc, (char * const *)argv, "x:X:n:v:" )) != EOF )  {
 	switch ( c )  {
 	    case 'x':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
@@ -139,7 +139,7 @@ main(int argc, char **argv)
 
     bu_semaphore_init( RT_SEM_LAST );
 
-    if ( !get_args( argc, argv ) )  {
+    if ( !get_args( argc, (const char **)argv ) )  {
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);
     }
@@ -257,7 +257,6 @@ main(int argc, char **argv)
 
 	for ( failed_try=0; failed_try<100; failed_try++ )  {
 	    vect_t	out;
-	    int	i;
 
 	    /* Shoot Ray */
 	    if (R_DEBUG>=3)fprintf(stderr, "try=%d, maxtogo=%g  ",
@@ -367,10 +366,13 @@ main(int argc, char **argv)
 	VMOVE( norm_prev_step, norm_cur_try );
     }
     fprintf(stderr, "%d steps used without reaching goal by %gmm\n", curstep, max_dist_togo);
-    bu_exit(1, NULL);
+
+    return 1;
 }
 
-int hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
+
+int
+hit(register struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     register struct partition *pp;
     register struct soltab *stp;
@@ -394,7 +396,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 }
 
 int
-miss(register struct application *ap)
+miss(register struct application *UNUSED(ap))
 {
     return 0;
 }

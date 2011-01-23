@@ -495,7 +495,7 @@ int main(int argc, char **argv)
 /*
  *			G E T _ A R G S
  */
-int get_args( int argc, register char **argv )
+int get_args( int argc, const char *argv[] )
 {
     register int c;
     register int i;

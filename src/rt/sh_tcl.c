@@ -43,7 +43,8 @@
 #include "shadefuncs.h"
 
 
-extern struct mfuncs	*mfHead;	/* rt/view.c */
+extern struct mfuncs	*mfHead;	/* view.c */
+extern int get_args(int argc, const char *argv[]); /* opt.c */
 
 
 /*
@@ -54,7 +55,8 @@ extern struct mfuncs	*mfHead;	/* rt/view.c */
  *  so any changes will vanish on next re-prep unless other measures
  *  are taken.
  */
-sh_directchange_rgb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+int
+sh_directchange_rgb(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct rt_i	*rtip;
     struct region	*regp;
@@ -117,7 +119,8 @@ sh_directchange_rgb(ClientData clientData, Tcl_Interp *interp, int argc, const c
  *  so any changes will vanish on next re-prep unless other measures
  *  are taken.
  */
-sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+int
+sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct rt_i	*rtip;
     struct region	*regp;
@@ -179,7 +182,8 @@ sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, cons
  *
  *  Process RT-style command-line options.
  */
-sh_opt(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+int
+sh_opt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     if ( argc < 2 )  {
 	Tcl_AppendResult(interp, "Usage: sh_opt command_line_option(s)\n", NULL);
