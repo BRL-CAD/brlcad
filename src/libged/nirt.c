@@ -76,8 +76,8 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     FILE *fp_in = NULL;
     FILE *fp_out = NULL;
     FILE *fp_err = NULL;
-#ifndef _WIN32
     int ret;
+#ifndef _WIN32
     int pid = 0;
     int rpid = 0;
     int retcode = 0;
