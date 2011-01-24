@@ -51,38 +51,38 @@ extern int tp_ctable[];
 /**
  * pi
  */
-const fastf_t bn_pi	= M_PI;
+const fastf_t bn_pi = M_PI;
 /**
  * pi*2
  */
-const fastf_t bn_twopi	= 6.28318530717958647692;
+const fastf_t bn_twopi = 2.0 * M_PI;
 
 /**
  * pi/2
  */
-const fastf_t bn_halfpi		= M_PI_2;
+const fastf_t bn_halfpi = M_PI_2;
 /**
  * pi/4
  */
-const fastf_t bn_quarterpi	= M_PI_4;
+const fastf_t bn_quarterpi = M_PI_4;
 
 /**
  * 1/pi
  */
-const fastf_t bn_invpi	= M_1_PI;
+const fastf_t bn_invpi = M_1_PI;
 /**
  * 1/(pi*2)
  */
-const fastf_t bn_inv2pi	= 0.159154943091895335769;
+const fastf_t bn_inv2pi = 1.0 / (2.0 * M_PI);
 /**
  * 1/(pi*4)
  */
-const fastf_t bn_inv4pi	= 0.07957747154594766788;
+const fastf_t bn_inv4pi = 1.0 / (4.0 * M_PI);
 
 /**
  * 1.0/255.0
  */
-const fastf_t bn_inv255	= 0.003921568627450980392156862745;
+const fastf_t bn_inv255 = 1.0 / 255.0;
 
 /**
  * (pi*2)/360
