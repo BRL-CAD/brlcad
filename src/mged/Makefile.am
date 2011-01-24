@@ -106,7 +106,6 @@ mged_SOURCES = \
 	plot.c \
 	polyif.c \
 	predictor.c \
-	qray.c \
 	rect.c \
 	rtif.c \
 	scroll.c \
