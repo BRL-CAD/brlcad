@@ -38,8 +38,8 @@
 #include "plot3.h"
 
 /* private */
+#include "./rtprivate.h"
 #include "./ext.h"
-#include "rtprivate.h"
 
 
 #define CELLNULL ( (struct cell *) 0)

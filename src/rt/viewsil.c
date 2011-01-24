@@ -31,11 +31,12 @@
 #include "common.h"
 
 #include <stdio.h>
+
 #include "vmath.h"
 #include "raytrace.h"
 
 /* private */
-#include "rtprivate.h"
+#include "./rtprivate.h"
 
 
 extern	FILE	*outfp;

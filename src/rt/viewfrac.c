@@ -29,10 +29,12 @@
 #include "common.h"
 
 #include <stdio.h>
+
 #include "vmath.h"
 #include "raytrace.h"
+
+#include "./rtprivate.h"
 #include "./ext.h"
-#include "rtprivate.h"
 
 
 double	cell_depth;

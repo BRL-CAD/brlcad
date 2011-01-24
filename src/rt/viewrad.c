@@ -36,11 +36,12 @@
 
 #include <stdio.h>
 #include <string.h>
+
 #include "vmath.h"
 #include "raytrace.h"
 
 /* private */
-#include "rtprivate.h"
+#include "./rtprivate.h"
 #include "./rad.h"
 
 

@@ -40,10 +40,10 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "rtprivate.h"
 #include "plot3.h"
 #include "scanline.h"
 
+#include "./rtprivate.h"
 #include "./ext.h"
 
 

@@ -91,10 +91,10 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
 #include "fb.h"
 #include "bu.h"
 
+#include "./rtprivate.h"
 #include "./ext.h"
 
 

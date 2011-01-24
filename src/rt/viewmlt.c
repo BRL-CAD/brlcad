@@ -35,9 +35,9 @@
 #include "raytrace.h"
 #include "fb.h"
 
-#include "ext.h"
-#include "rtprivate.h"
-#include "scanline.h"
+#include "./scanline.h"
+#include "./rtprivate.h"
+#include "./ext.h"
 
 
 static int	buf_mode=0;

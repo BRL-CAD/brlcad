@@ -35,10 +35,12 @@
 #include "common.h"
 
 #include <stdio.h>
+
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "rtprivate.h"
+
+#include "./rtprivate.h"
 
 
 /* lighting models */

@@ -83,7 +83,8 @@
 #include "vmath.h"		/* vector math macros */
 #include "bu.h"
 #include "raytrace.h"		/* librt interface definitions */
-#include "rtprivate.h"
+
+#include "./rtprivate.h"
 
 
 char *progname = "(noname)";

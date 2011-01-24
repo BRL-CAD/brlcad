@@ -60,11 +60,12 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
+#include "optical.h"
 #include "fb.h"
 #include "pkg.h"
-#include "rtprivate.h"
 
 /* private */
+#include "../rt/rtprivate.h"
 #include "./protocol.h"
 #include "./ihost.h"
 #include "brlcad_version.h"
@@ -1313,7 +1314,7 @@ prep_frame(struct frame *fr)
 	    use_air, jitter,
 	    AmbientIntensity, lightmodel,
 	    eye_backoff,
-	    RT_G_DEBUG, rdebug,
+	    RT_G_DEBUG, R_DEBUG,
 	    rt_dist_tol, rt_perp_tol
 	);
     bu_vls_strcat( &fr->fr_cmd, buf );

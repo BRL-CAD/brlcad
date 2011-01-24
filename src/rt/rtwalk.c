@@ -35,8 +35,9 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
 #include "plot3.h"
+
+#include "./rtprivate.h"
 
 
 char	usage[] = "\

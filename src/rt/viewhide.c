@@ -46,8 +46,8 @@
 #include "plot3.h"
 
 /* private */
+#include "./rtprivate.h"
 #include "./ext.h"
-#include "rtprivate.h"
 
 
 #define SEEKING_START_PT 0

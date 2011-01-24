@@ -41,8 +41,9 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
-#include "rad.h"
+
+#include "./rtprivate.h"
+#include "./rad.h"
 
 
 #ifndef M_PI

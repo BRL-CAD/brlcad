@@ -58,9 +58,9 @@
 #include "pkg.h"
 #include "fb.h"
 
+#include "../rt/rtprivate.h"
 #include "../rt/ext.h"
 #include "./protocol.h"
-#include "rtprivate.h"
 
 
 

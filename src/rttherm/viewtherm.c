@@ -51,11 +51,11 @@
 #include "spectrum.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "rtprivate.h"
 #include "plot3.h"
 #include "light.h"
 
 /* private */
+#include "../rt/rtprivate.h"
 #include "../rt/ext.h"
 #include "brlcad_version.h"
 

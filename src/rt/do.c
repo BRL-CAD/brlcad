@@ -43,8 +43,10 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "rtprivate.h"
 #include "bu.h"
+
+#include "./rtprivate.h"
+
 
 /***** Variables shared with viewing model *** */
 extern FILE *outfp;			/* optional pixel output file */

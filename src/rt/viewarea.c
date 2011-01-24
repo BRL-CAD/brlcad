@@ -35,9 +35,11 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "./ext.h"
 #include "plot3.h"
-#include "rtprivate.h"
+
+#include "./rtprivate.h"
+#include "./ext.h"
+
 
 extern int	npsw;			/* number of worker PSWs to run */
 

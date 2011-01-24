@@ -34,9 +34,9 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "./ext.h"
 
-#include "rtprivate.h"
+#include "./rtprivate.h"
+#include "./ext.h"
 
 
 /* Note: struct parsing requires no space after the commas.  take care
