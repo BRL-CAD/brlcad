@@ -44,7 +44,7 @@ _ged_editit(char *editstring, const char *filename)
 {
 #ifdef HAVE_UNISTD_H
     int xpid = 0;
-    int stat = 0;
+    int status = 0;
 #endif
     int pid = 0;
     char **avtmp;
@@ -176,7 +176,7 @@ _ged_editit(char *editstring, const char *filename)
 
 #ifdef HAVE_UNISTD_H
     /* wait for the editor to terminate */
-    while ((xpid = wait(&stat)) >= 0) {
+    while ((xpid = wait(&status)) >= 0) {
 	if (xpid == pid) {
 	    break;
 	}
