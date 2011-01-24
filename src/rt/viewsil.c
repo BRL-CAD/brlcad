@@ -36,7 +36,7 @@
 #include "raytrace.h"
 
 /* private */
-#include "./rtprivate.h"
+#include "./rtuif.h"
 
 
 extern	FILE	*outfp;

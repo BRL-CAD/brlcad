@@ -65,7 +65,7 @@
 #include "pkg.h"
 
 /* private */
-#include "../rt/rtprivate.h"
+#include "../rt/rtuif.h"
 #include "./protocol.h"
 #include "./ihost.h"
 #include "brlcad_version.h"

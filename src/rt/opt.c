@@ -35,7 +35,7 @@
 #include "raytrace.h"
 #include "fb.h"
 
-#include "./rtprivate.h"
+#include "./rtuif.h"
 #include "./ext.h"
 
 

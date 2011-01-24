@@ -45,7 +45,7 @@
 #include "light.h"
 
 /* private */
-#include "./rtprivate.h"
+#include "./rtuif.h"
 #include "./ext.h"
 #include "brlcad_version.h"
 

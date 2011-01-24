@@ -38,7 +38,7 @@
 #include "plot3.h"
 
 /* private */
-#include "./rtprivate.h"
+#include "./rtuif.h"
 #include "./ext.h"
 
 

@@ -43,7 +43,7 @@
 #include "plot3.h"
 #include "scanline.h"
 
-#include "./rtprivate.h"
+#include "./rtuif.h"
 #include "./ext.h"
 
 

@@ -41,7 +41,7 @@
 #include "raytrace.h"
 
 /* private */
-#include "./rtprivate.h"
+#include "./rtuif.h"
 #include "./rad.h"
 
 

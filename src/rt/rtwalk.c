@@ -37,7 +37,7 @@
 #include "raytrace.h"
 #include "plot3.h"
 
-#include "./rtprivate.h"
+#include "./rtuif.h"
 
 
 char	usage[] = "\

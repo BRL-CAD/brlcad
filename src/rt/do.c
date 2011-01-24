@@ -45,7 +45,7 @@
 #include "fb.h"
 #include "bu.h"
 
-#include "./rtprivate.h"
+#include "./rtuif.h"
 
 
 /***** Variables shared with viewing model *** */

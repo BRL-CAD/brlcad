@@ -39,7 +39,7 @@
 #include "raytrace.h"
 #include "plot3.h"
 
-#include "./rtprivate.h"
+#include "./rtuif.h"
 
 
 extern int rt_shootray_bundle (struct application *ap, struct xray *rays, int nrays);

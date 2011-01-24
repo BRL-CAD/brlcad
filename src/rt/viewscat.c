@@ -42,7 +42,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 
-#include "./rtprivate.h"
+#include "./rtuif.h"
 #include "./rad.h"
 
 

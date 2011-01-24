@@ -84,7 +84,7 @@
 #include "bu.h"
 #include "raytrace.h"		/* librt interface definitions */
 
-#include "./rtprivate.h"
+#include "./rtuif.h"
 
 
 char *progname = "(noname)";

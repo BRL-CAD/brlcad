@@ -94,7 +94,7 @@
 #include "fb.h"
 #include "bu.h"
 
-#include "./rtprivate.h"
+#include "./rtuif.h"
 #include "./ext.h"
 
 

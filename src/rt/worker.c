@@ -37,7 +37,7 @@
 #include "raytrace.h"
 #include "fb.h"		/* Added because RGBpixel is now needed in do_pixel() */
 
-#include "./rtprivate.h"
+#include "./rtuif.h"
 #include "./ext.h"
 
 
