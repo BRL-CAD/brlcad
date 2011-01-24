@@ -537,7 +537,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		    break;
 		}
 
-		delta = M_PI/4.0;
+		delta = M_PI_4;
 		if (csg->radius <= 0.0) {
 		    VJOIN2(center, V, sketch_ip->verts[csg->end][0], u_vec, sketch_ip->verts[csg->end][1], v_vec);
 		    VJOIN2(pt, V, sketch_ip->verts[csg->start][0], u_vec, sketch_ip->verts[csg->start][1], v_vec);
@@ -574,7 +574,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		if (ttol->norm > 0.0) {
 		    fastf_t normal;
 
-		    normal = ttol->norm * M_PI / 180.0;
+		    normal = ttol->norm * DEG2RAD;
 		    if (normal < delta)
 			delta = normal;
 		}

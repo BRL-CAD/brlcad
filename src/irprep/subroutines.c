@@ -32,11 +32,6 @@
 #include <math.h>
 
 
-#if !defined(PI)
-#define PI 3.14159265358979323846264		/*  Pi.  */
-#endif
-
-
 /*  Subroutine to rotate a point, given a point (3 coordinates)  */
 /*  and three angles (in radians).  */
 
@@ -101,7 +96,7 @@ double radians(double a)
 
     double b;	/*  Angle in radians.  */
 
-    b = a * PI / 180.;
+    b = a * M_PI / 180.;
 
     return b;
 

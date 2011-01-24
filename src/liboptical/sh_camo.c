@@ -46,10 +46,6 @@
 #  include "spectrum.h"
 #endif
 
-#if !defined(M_PI)
-#  define M_PI 3.14159265358979323846
-#endif
-
 #define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
 
 

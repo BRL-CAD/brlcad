@@ -39,9 +39,6 @@
 extern int rr_render(struct application *ap,
 		     struct partition *pp,
 		     struct shadework *swp);
-#if !defined(M_PI)
-#define M_PI 3.14159265358979323846
-#endif
 
 #define FLOOR(x)	((int)(x) - ((x) < 0 && (x) != (int)(x)))
 #define CEIL(x)		((int)(x) + ((x) > 0 && (x) != (int)(x)))

@@ -975,9 +975,9 @@ GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, int m
     }
 
     /*
-      irrad[0] *= (1.0/M_PI)/NP.RadSq;
-      irrad[1] *= (1.0/M_PI)/NP.RadSq;
-      irrad[2] *= (1.0/M_PI)/NP.RadSq;
+      irrad[0] *= M_1_PI / NP.RadSq;
+      irrad[1] *= M_1_PI / NP.RadSq;
+      irrad[2] *= M_1_PI / NP.RadSq;
     */
     bu_free(Search.List, "Search.List");
     /* bu_log("Radius: %.3f, Max Phot: %d, Found: %d, Power: [%.4f, %.4f, %.4f], Pos: [%.3f, %.3f, %.3f]\n", sqrt(NP.RadSq), NP.Max, NP.Found, irrad[0], irrad[1], irrad[2], pos[0], pos[1], pos[2]);*/

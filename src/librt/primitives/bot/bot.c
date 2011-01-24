@@ -4040,7 +4040,7 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
 
     /* convert normal error to something useful (a minimum dot product) */
     if (max_normal_error > -1.0 - SMALL_FASTF) {
-	max_normal_error = cos(max_normal_error * M_PI / 180.0);
+	max_normal_error = cos(max_normal_error * DEG2RAD);
     }
 
     if (min_edge_length > SMALL_FASTF) {
