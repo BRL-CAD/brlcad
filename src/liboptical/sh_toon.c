@@ -35,8 +35,9 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 #include "light.h"
+
 
 #define TOON_MAGIC 0x746F6F6E    /* make this a unique number for each shader */
 #define CK_TOON_SP(_p) BU_CKMAG(_p, TOON_MAGIC, "toon_specific")

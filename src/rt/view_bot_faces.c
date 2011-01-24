@@ -147,7 +147,7 @@ raymiss(struct application *UNUSED(ap))
  */
 
 int
-view_init(struct application *ap, char *file, char *obj, int minus_o)
+view_init(struct application *ap, char *file, char *obj, int minus_o, int UNUSED(minus_F))
 {
     /* report air regions */
     use_air = 1;
@@ -251,7 +251,7 @@ view_2init(struct application *ap, char *framename)
  * This routine is called from do_run(), and in this case does nothing.
  */
 void
-view_pixel()
+view_pixel(struct application *UNUSED(ap))
 {
     return;
 }
@@ -263,7 +263,7 @@ view_pixel()
  * View_eol() is called by rt_shootray() in do_run().  In this case,
  * it does nothing.
  */
-void view_eol()
+void view_eol(struct application *UNUSED(ap))
 {
 }
 
@@ -275,7 +275,7 @@ void view_eol()
  *
  */
 void
-view_end()
+view_end(struct application *UNUSED(ap))
 {
     Tcl_HashEntry *entry;
     Tcl_HashSearch search;
@@ -301,9 +301,15 @@ view_end()
 }
 
 
-void view_setup() {}
-void view_cleanup() {}
-void application_init () {}
+void view_setup(struct rt_i *UNUSED(rtip))
+{
+}
+void view_cleanup(struct rt_i *UNUSED(rtip))
+{
+}
+void application_init()
+{
+}
 
 /*
  * Local Variables:

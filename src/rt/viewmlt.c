@@ -122,7 +122,7 @@ struct mlt_app {
  *  Called by main() at the start of a run.
  *  Returns 1 if framebuffer should be opened, else 0.
  */
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
 {
      return 1;		/* framebuffer needed */
 }
@@ -134,7 +134,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
  *  Called by do_frame() just before raytracing starts.
  */
 void
-view_2init(struct application *ap)
+view_2init(struct application *ap, char *UNUSED(framename))
 {
     int i;
     struct mlt_app* mlt_application;
@@ -1291,7 +1291,7 @@ reproject_worker(int cpu, genptr_t arg)
  *  Any end-of-line processing should be done in view_pixel().
  */
 void
-view_eol(register struct application *ap) {}
+view_eol(struct application *UNUSED(ap)) {}
 
 /*
  * Local Variables:

@@ -33,7 +33,8 @@
 #include "raytrace.h"
 #include "fb.h"
 #include "spm.h"
-#include "rtprivate.h"
+#include "optical.h"
+
 
 #define SPM_NAME_LEN 128
 struct spm_specific {

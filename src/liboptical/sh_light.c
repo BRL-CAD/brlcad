@@ -32,7 +32,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 #include "plot3.h"
 #include "light.h"
 #include "photonmap.h"

@@ -32,8 +32,8 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
-/*#include "../rt/mathtab.h"*/
+#include "optical.h"
+
 
 #define TXT_NAME_LEN 128
 struct txt_specific {

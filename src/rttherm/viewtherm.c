@@ -666,7 +666,7 @@ free_scanlines(void)
  * Called once, early on in RT setup, before view size is set.
  */
 int
-view_init(struct application *ap, char *file, char *obj, int minus_o)
+view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
 {
     bu_log("%s", brlcad_ident(title));
 

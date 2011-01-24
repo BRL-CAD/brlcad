@@ -34,7 +34,8 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
+
 
 HIDDEN int stxt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), brick_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), mbound_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), rbound_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
 HIDDEN void stxt_print(register struct region *rp, char *dp), stxt_free(char *cp);

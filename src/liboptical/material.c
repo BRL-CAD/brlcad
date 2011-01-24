@@ -37,7 +37,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 
 
 static const char *mdefault = "default"; /* Name of default material */

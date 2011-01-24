@@ -225,7 +225,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
  *  Called once for this run.
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(register struct application *ap, char *file, char *obj, int minus_o, int UNUSED(minus_F))
 {
     ap->a_hit = hit;
     ap->a_miss = miss;
@@ -249,7 +249,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
  *  Called at the beginning of each frame
  */
 void
-view_2init(register struct application *ap)
+view_2init(register struct application *ap, char *UNUSED(framename))
 {
     register struct rt_i *rtip = ap->a_rt_i;
 
@@ -319,7 +319,7 @@ static void print_overlap_summary(void) {
  *  Called at the end of each frame
  */
 void
-view_end(void) {
+view_end(struct application *UNUSED(ap)) {
     pl_flush(outfp);
     fflush(outfp);
     /*	bu_log("%d overlap%c detected\n\n", noverlaps, (noverlaps==1)?(char)NULL:'s');*/
@@ -401,12 +401,10 @@ view_end(void) {
 /*
  *	Stubs
  */
-void view_pixel(void) {}
-
-void view_eol(void) {}
-
-void view_setup(void) {}
-void view_cleanup(void) {}
+void view_pixel(struct application *UNUSED(ap)) {}
+void view_eol(struct application *UNUSED(ap)) {}
+void view_setup(struct rt_i *UNUSED(rtip)) {}
+void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 void application_init (void) {}
 
 /*

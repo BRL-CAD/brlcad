@@ -40,7 +40,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 
 #ifdef RT_MULTISPECTRAL
 #  include "spectrum.h"

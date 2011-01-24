@@ -34,7 +34,7 @@
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 #include "light.h"
 #include "plastic.h"
 #include "photonmap.h"

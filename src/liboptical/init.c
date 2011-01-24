@@ -34,7 +34,6 @@
 #include "vmath.h"
 #include "bu.h"
 #include "raytrace.h"
-#include "rtprivate.h"
 #include "optical.h"
 
 int rt_verbosity = -1;	/* blather incesantly by default */

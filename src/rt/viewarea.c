@@ -136,7 +136,7 @@ int area_center(struct point_list *ptlist, int number, point_t *center);
  *  			V I E W _ I N I T
  */
 int
-view_init( register struct application *ap, char *file, char *obj )
+view_init(struct application *ap, char *file, char *obj, int UNUSED(minus_o), int UNUSED(minus_F))
 {
     ap->a_hit = rayhit;
     ap->a_miss = raymiss;
@@ -161,7 +161,7 @@ view_init( register struct application *ap, char *file, char *obj )
  *  main().
  */
 void
-view_2init( struct application *ap )
+view_2init( struct application *ap, char *UNUSED(framename) )
 {
     register struct region *rp;
     register struct rt_i *rtip = ap->a_rt_i;
@@ -245,7 +245,7 @@ view_2init( struct application *ap )
  *  do_frame().
  */
 int
-raymiss(register struct application *ap)
+raymiss(struct application *UNUSED(ap))
 {
     return 0;
 }
@@ -256,7 +256,7 @@ raymiss(register struct application *ap)
  *  This routine is called from do_run(), and in this case does nothing.
  */
 void
-view_pixel()
+view_pixel(struct application *UNUSED(ap))
 {
     return;
 }
@@ -706,7 +706,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
  *  View_eol() is called by rt_shootray() in do_run().  In this case,
  *  it does nothing.
  */
-void	view_eol()
+void view_eol(struct application *UNUSED(ap))
 {
 }
 
@@ -1195,8 +1195,8 @@ view_end(struct application *ap)
     return;
 }
 
-void view_setup() {}
-void view_cleanup() {}
+void view_setup(struct rt_i *UNUSED(rtip)) {}
+void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 void application_init () {}
 
 /*

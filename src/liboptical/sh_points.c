@@ -41,7 +41,8 @@
 #include "raytrace.h"
 #include "fb.h"
 #include "spm.h"
-#include "rtprivate.h"
+#include "optical.h"
+
 
 #define PT_NAME_LEN 128
 struct points_specific {

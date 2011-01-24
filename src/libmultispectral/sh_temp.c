@@ -32,7 +32,8 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
+
 
 extern struct region	env_region;		/* import from view.c */
 

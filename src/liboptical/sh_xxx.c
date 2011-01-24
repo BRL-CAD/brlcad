@@ -69,7 +69,8 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
+
 
 #define xxx_MAGIC 0x1834    /* make this a unique number for each shader */
 #define CK_xxx_SP(_p) BU_CKMAG(_p, xxx_MAGIC, "xxx_specific")

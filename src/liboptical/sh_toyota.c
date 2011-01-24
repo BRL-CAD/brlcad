@@ -42,9 +42,10 @@
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 #include "plot3.h"
 #include "light.h"
+
 
 /* Sky onditions for luminance calculations. */
 #define CLEAR_SKY 0

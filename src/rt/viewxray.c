@@ -85,7 +85,7 @@ Options:\n\
  *  Returns 1 if framebuffer should be opened, else 0.
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o, int minus_F)
+view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj), int minus_o, int minus_F)
 {
     /*
      * We need to work to get the output pixels and scanlines
@@ -129,7 +129,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o, i
 
 /* beginning of a frame */
 void
-view_2init(struct application *ap, char *framename)
+view_2init(struct application *ap, char *UNUSED(framename))
 {
     /*
      *  This is a dangerous hack to allow us to use -A #
@@ -148,13 +148,13 @@ view_2init(struct application *ap, char *framename)
 
 /* end of each pixel */
 void
-view_pixel(register struct application *ap)
+view_pixel(struct application *UNUSED(ap))
 {
 }
 
 /* end of each line */
 void
-view_eol(register struct application *ap)
+view_eol(struct application *ap)
 {
     int i;
     unsigned char *buf = (unsigned char *)NULL;
@@ -204,13 +204,13 @@ view_eol(register struct application *ap)
     }
 }
 
-void	view_setup(void) {}
+void	view_setup(struct rt_i *UNUSED(rtip)) {}
 /* end of a frame, called after rt_clean() */
-void	view_cleanup(void) {}
+void	view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 /* end of each frame */
 void
-view_end(void)
+view_end(struct application *UNUSED(ap))
 {
 
 }

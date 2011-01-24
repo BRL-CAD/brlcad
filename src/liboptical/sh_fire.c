@@ -64,7 +64,8 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
+
 
 extern int rr_render(struct application *ap,
 		     struct partition *pp,

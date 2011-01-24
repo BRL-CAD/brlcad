@@ -22,7 +22,7 @@
 /** @file rtprivate.h
  *
  *@brief
- *	Things to support the "rt" program and the link to liboptical
+ * Things to support the "rt" program and the link to liboptical
  *
  */
 
@@ -36,15 +36,15 @@
 #include "raytrace.h"
 #include "optical.h"
 
-/* default parseable title length  (v4 was 132) */
+/* default parseable title length (v4 was 132) */
 #define RT_BUFSIZE 1024
 
 /* do.c */
 extern void do_ae(double azim, double elev);
-extern int do_frame( int framenumber );
-extern void def_tree( struct rt_i *rtip );
-extern void do_prep( struct rt_i *rtip );
-extern int old_way( FILE *fp );
+extern int do_frame(int framenumber);
+extern void def_tree(struct rt_i *rtip);
+extern void do_prep(struct rt_i *rtip);
+extern int old_way(FILE *fp);
 
 /* opt.c */
 extern int get_args(int argc, const char *argv[]);
@@ -56,29 +56,17 @@ extern int query_debug;
 extern int benchmark;
 
 /* view.c */
-#if 0
-extern void view_eol(register struct application *ap);
-extern void do_run( int a, int b );
-extern void view_2init( register struct application *ap, char	*framename);
-extern void view_setup(struct rt_i	*rtip);
-extern void view_pixel(register struct application *ap);
-extern void view_cleanup(struct rt_i	*rtip);
-extern int view_end(struct application *ap);
-extern int view_init(register struct application *ap,
-		     char *file,
-		     char *obj,
-		     int minus_o);
-#else
-extern void view_eol();
-extern void do_run();
-extern void view_2init();
-extern void view_setup();
-extern void view_pixel();
-extern void view_cleanup();
-extern void view_end();
-extern int view_init();
+extern int view_init(struct application *ap, char *file, char *obj, int minus_o, int minus_F);
+extern void view_2init(struct application *ap, char *framename);
 
-#endif
+extern void do_run(int a, int b);
+
+extern void view_end(struct application *ap);
+extern void view_eol(struct application *ap);
+extern void view_pixel(struct application *ap);
+
+extern void view_setup(struct rt_i *rtip);
+extern void view_cleanup(struct rt_i *rtip);
 
 #endif  /* __RTPRIVATE_H__ */
 /** @} */

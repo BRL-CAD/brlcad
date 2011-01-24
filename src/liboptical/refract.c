@@ -26,15 +26,18 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 #include "plot3.h"
+
 
 extern int viewshade(struct application *ap,
 		     register const struct partition *pp,
 		     register struct shadework *swp);
+
 
 
 int max_ireflect = 5;	/* Maximum internal reflection level */

@@ -33,7 +33,7 @@
 #include "vmath.h"
 #include "plot3.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 
 
 extern int rr_render(struct application *ap,

@@ -82,7 +82,7 @@ int     raymiss(register struct application *ap);
  *  and are later called from do_run().
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(register struct application *ap, char *file, char *obj, int minus_o, int UNUSED(minus_F))
 {
 
     if ( !minus_o )
@@ -114,7 +114,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
  *
  */
 void
-view_2init(struct application *ap)
+view_2init(struct application *ap, char *UNUSED(framename))
 {
 
     if ( outfp == NULL )
@@ -159,7 +159,7 @@ raymiss(register struct application *ap)
  *  This routine is called from do_run(), and in this case does nothing.
  */
 void
-view_pixel(void)
+view_pixel(struct application *UNUSED(ap))
 {
     return;
 }
@@ -218,7 +218,8 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
  *  View_eol() is called by rt_shootray() in do_run().  In this case,
  *  it does nothing.
  */
-void	view_eol(void)
+void
+view_eol(struct application *UNUSED(ap))
 {
 }
 
@@ -228,13 +229,13 @@ void	view_eol(void)
  *  View_end() is called by rt_shootray in do_run().
  */
 void
-view_end(void)
+view_end(struct application *UNUSED(ap))
 {
     fflush(outfp);
 }
 
-void view_setup(void) {}
-void view_cleanup(void) {}
+void view_setup(struct rt_i *UNUSED(rtip)) {}
+void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 void application_init (void) {}
 

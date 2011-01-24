@@ -36,7 +36,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "rtprivate.h"
+#include "optical.h"
 #include "plot3.h"
 
 
