@@ -90,23 +90,6 @@ extern void view_end(struct application *ap);
  */
 extern void view_cleanup(struct rt_i *rtip);
 
-/*** do.c ***/
-extern void def_tree(struct rt_i *rtip);
-extern void do_prep(struct rt_i *rtip);
-extern void do_run(int a, int b);
-extern void do_ae(double azim, double elev);
-extern int do_frame(int framenumber);
-extern int old_way(FILE *fp);
-
-/* opt.c */
-extern int get_args(int argc, const char *argv[]);
-extern int query_x;
-extern int query_y;
-extern int Query_one_pixel;
-extern int query_rdebug;
-extern int query_debug;
-extern int benchmark;
-
 #endif  /* __RTUIF_H__ */
 /*
  * Local Variables:

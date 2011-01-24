@@ -30,6 +30,12 @@
 #include "optical.h"
 
 /***** Variables declared in opt.c *****/
+extern int query_x;
+extern int query_y;
+extern int Query_one_pixel;
+extern int query_rdebug;
+extern int query_debug;
+extern int benchmark;
 extern char		*framebuffer;		/* desired framebuffer */
 extern double		azimuth, elevation;
 extern int		lightmodel;		/* Select lighting model */
@@ -82,7 +88,7 @@ extern mat_t		Viewrotscale;
 extern fastf_t		viewsize;
 extern char		*scanbuf;		/* pixels for REMRT */
 extern int		incr_mode;		/* !0 for incremental resolution */
-extern int		incr_level;		/* current incremental level */
+extern size_t		incr_level;		/* current incremental level */
 extern size_t		incr_nlevel;		/* number of levels */
 extern int		npsw;			/* number of worker PSWs to run */
 extern struct resource	resource[];		/* memory resources */
@@ -112,6 +118,16 @@ extern char		*outputfile;		/* name of base of output file */
 extern int		interactive;		/* human is watching results */
 extern int		benchmark;		/* No random numbers:  benchmark */
 /***** end variables shared with do.c *****/
+
+/*** do.c ***/
+extern void def_tree(struct rt_i *rtip);
+extern void do_run(int a, int b);
+extern void do_ae(double azim, double elev);
+extern int do_frame(int framenumber);
+extern int old_way(FILE *fp);
+
+/* opt.c */
+extern int get_args(int argc, const char *argv[]);
 
 /*
  * Local Variables:

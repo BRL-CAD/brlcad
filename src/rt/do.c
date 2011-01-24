@@ -46,6 +46,7 @@
 #include "bu.h"
 
 #include "./rtuif.h"
+#include "./ext.h"
 
 
 /***** Variables shared with viewing model *** */
@@ -72,8 +73,8 @@ extern size_t height;		/* # of lines in Y */
 extern mat_t Viewrotscale;	/* view orientation quaternion */
 extern fastf_t viewsize;
 extern int incr_mode;		/* !0 for incremental resolution */
-extern int incr_level;		/* current incremental level */
-extern int incr_nlevel;		/* number of levels */
+extern size_t incr_level;	/* current incremental level */
+extern size_t incr_nlevel;	/* number of levels */
 extern int npsw;
 extern struct resource resource[];
 /***** end variables shared with worker() */

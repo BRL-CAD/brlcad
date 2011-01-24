@@ -87,7 +87,7 @@ mat_t		Viewrotscale = { (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
 				 (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};
 fastf_t		viewsize = (fastf_t)0.0;
 int		incr_mode = 0;		/* !0 for incremental resolution */
-int		incr_level = 0;		/* current incremental level */
+size_t		incr_level = 0;		/* current incremental level */
 size_t		incr_nlevel = 0;	/* number of levels */
 int		npsw = 1;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
