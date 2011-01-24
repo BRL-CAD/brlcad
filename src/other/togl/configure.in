@@ -1,0 +1,281 @@
+#!/bin/bash -norc
+dnl	This file is an input file used by the GNU "autoconf" program to
+dnl	generate the file "configure", which is run during Tcl installation
+dnl	to configure the system for the local environment.
+#
+# RCS: @(#) $Id$
+
+#-----------------------------------------------------------------------
+# Sample configure.in for Tcl Extensions.  The only places you should
+# need to modify this file are marked by the string __CHANGE__
+#-----------------------------------------------------------------------
+
+#-----------------------------------------------------------------------
+# __CHANGE__
+# Set your package name and version numbers here.
+#
+# This initializes the environment with PACKAGE_NAME and PACKAGE_VERSION
+# set as provided.  These will also be added as -D defs in your Makefile
+# so you can encode the package version directly into the source files.
+#-----------------------------------------------------------------------
+
+AC_INIT([Togl], [2.1])
+
+#--------------------------------------------------------------------
+# Call TEA_INIT as the first TEA_ macro to set up initial vars.
+# This will define a ${TEA_PLATFORM} variable == "unix" or "windows"
+# as well as PKG_LIB_FILE and PKG_STUB_LIB_FILE.
+#--------------------------------------------------------------------
+
+TEA_INIT([3.7])
+
+AC_CONFIG_AUX_DIR(tclconfig)
+
+#--------------------------------------------------------------------
+# Load the tclConfig.sh file
+#--------------------------------------------------------------------
+
+TEA_PATH_TCLCONFIG
+TEA_LOAD_TCLCONFIG
+
+#--------------------------------------------------------------------
+# Load the tkConfig.sh file if necessary (Tk extension)
+#--------------------------------------------------------------------
+
+TEA_PATH_TKCONFIG
+TEA_LOAD_TKCONFIG
+
+#-----------------------------------------------------------------------
+# Handle the --prefix=... option by defaulting to what Tcl gave.
+# Must be called after TEA_LOAD_TCLCONFIG and before TEA_SETUP_COMPILER.
+#-----------------------------------------------------------------------
+
+TEA_PREFIX
+
+#-----------------------------------------------------------------------
+# Standard compiler checks.
+# This sets up CC by using the CC env var, or looks for gcc otherwise.
+# This also calls AC_PROG_CC, AC_PROG_INSTALL and a few others to create
+# the basic setup necessary to compile executables.
+#-----------------------------------------------------------------------
+
+TEA_SETUP_COMPILER
+
+#-----------------------------------------------------------------------
+# __CHANGE__
+# Specify the C source files to compile in TEA_ADD_SOURCES,
+# public headers that need to be installed in TEA_ADD_HEADERS,
+# stub library C source files to compile in TEA_ADD_STUB_SOURCES,
+# and runtime Tcl library files in TEA_ADD_TCL_SOURCES.
+# This defines PKG(_STUB)_SOURCES, PKG(_STUB)_OBJECTS, PKG_HEADERS
+# and PKG_TCL_SOURCES.
+#-----------------------------------------------------------------------
+
+TOGL_ENABLE_STUBS
+
+TEA_ADD_SOURCES([togl.c toglProcAddr.c toglStubInit.c])
+# togl_ws.h is added in Makefile.in because it is generated
+TEA_ADD_HEADERS([togl.h toglDecls.h])
+TEA_ADD_INCLUDES([])
+TEA_ADD_LIBS([])
+TEA_ADD_CFLAGS([])
+if test "${USE_STUBS}" = "1" ; then
+	TEA_ADD_STUB_SOURCES([toglStubLib.c])
+fi
+TEA_ADD_TCL_SOURCES([])
+
+#--------------------------------------------------------------------
+# __CHANGE__
+# A few miscellaneous platform-specific items:
+#
+# Define a special symbol for Windows (BUILD_sample in this case) so
+# that we create the export library with the dll.
+#
+# Windows creates a few extra files that need to be cleaned up.
+# You can add more files to clean if your extension creates any extra
+# files.
+#
+# TEA_ADD_* any platform specific compiler/build info here.
+#--------------------------------------------------------------------
+
+# Add pkgIndex.tcl if it is generated in the Makefile instead of ./configure
+# and change Makefile.in to move it from CONFIG_CLEAN_FILES to BINARIES var.
+#CLEANFILES="pkgIndex.tcl"
+if test "${TEA_PLATFORM}" = "windows" ; then
+    AC_DEFINE(BUILD_togl, 1, [Build windows export dll])
+    CLEANFILES="$CLEANFILES *.lib *.dll *.exp *.ilk *.pdb vc*.pch *.manifest"
+    #TEA_ADD_SOURCES([win/winFile.c])
+    #TEA_ADD_INCLUDES([-I\"$(${CYGPATH} ${srcdir}/win)\"])
+else
+    # Ensure no empty else clauses
+    :
+    CLEANFILES="so_locations"
+    #TEA_ADD_SOURCES([unix/unixFile.c])
+    #TEA_ADD_LIBS([-lsuperfly])
+fi
+AC_SUBST(CLEANFILES)
+
+#--------------------------------------------------------------------
+# __CHANGE__
+# Choose which headers you need.  Extension authors should try very
+# hard to only rely on the Tcl public header files.  Internal headers
+# contain private data structures and are subject to change without
+# notice.
+# This MUST be called after TEA_LOAD_TCLCONFIG / TEA_LOAD_TKCONFIG
+#--------------------------------------------------------------------
+
+# find Tcl, Tk, and X11 headers
+#TEA_PUBLIC_TCL_HEADERS
+TEA_PRIVATE_TCL_HEADERS
+
+#TEA_PUBLIC_TK_HEADERS
+TEA_PRIVATE_TK_HEADERS
+TEA_PATH_X
+
+# find autostereo header, lib, and daemon
+AC_ARG_WITH([autostereo],
+	[AS_HELP_STRING([--with-autostereo],
+		[directory with autostereo source (for SGI)])],
+	[with_autostereo=${withval}])
+AC_ARG_WITH([autostereod],
+	[AS_HELP_STRING([--with-autostereod],
+		[path to autostereod daemon (for SGI)])],
+	[with_autostereod=${withval}])
+AC_ARG_VAR([AUTOSTEREOD], [Path to autostereod for SGI IRIX computers])
+
+AC_MSG_CHECKING([for autostereo directory])
+if test x"${with_autostereo}" != x ; then
+	if test -f "${with_autostereo}/lib/autostereo.h" ; then
+		with_autostereo=`(cd ${with_autostereo}; pwd)`
+		TEA_ADD_INCLUDES([-I${with_autostereo}/lib])
+		TEA_ADD_LIBS([-L${with_autostereo}/lib -lautostereo])
+		AC_DEFINE_UNQUOTED(HAVE_AUTOSTEREO, 1,
+			[Define this if you have the autostereo header])
+	else
+		AC_MSG_ERROR([${with_autostereo} directory doesn't contain lib/autostereo.h])
+	fi
+fi
+
+AC_PATH_PROG([AUTOSTEREOD], [autostereod], [],
+			[`eval \"echo $sbindir\"`:$PATH:/sbin:/usr/sbin])
+
+
+# Choose OpenGL platform
+case "${TEA_WINDOWINGSYSTEM}" in
+	aqua)
+		AC_SUBST(TOGL_WINDOWINGSYSTEM,TOGL_AGL)
+		TEA_ADD_LIBS([-framework AGL -framework OpenGL -framework ApplicationServices])
+		# libGLU is implicit in OpenGL framework
+		LIBGLU=
+		;;
+	x11)
+		AC_SUBST(TOGL_WINDOWINGSYSTEM,TOGL_X11)
+		AC_ARG_WITH([Xmu],
+		    [AS_HELP_STRING([--with-Xmu],
+		        [use system's shared Xmu library])],
+		    [],
+		    [with_Xmu=no])
+		AS_IF([test "x$with_Xmu" != xno],
+		    [AC_CHECK_LIB([Xmu], [XmuLookupStandardColormap],
+			[TEA_ADD_LIBS([-lXmu])
+			 AC_DEFINE(USE_SYSTEM_LIBXMU, 1,
+				   [Define to use system Xmu library])
+			],
+			[with_Xmu=no],
+			[-lXt -lX11]
+		    )])
+		AS_IF([test "x$with_Xmu" = xno],
+			[TEA_ADD_SOURCES([Xmu/CmapAlloc.c Xmu/CrCmap.c Xmu/DelCmap.c Xmu/LookupCmap.c Xmu/StdCmap.c])])
+		TEA_ADD_LIBS([-lGL])
+		LIBGLU=-lGLU
+		TOGL_UNDEF_GET_PROC_ADDRESS
+		;;
+	win32)
+		AC_SUBST(TOGL_WINDOWINGSYSTEM,TOGL_WGL)
+		TEA_ADD_LIBS([opengl32.lib user32.lib gdi32.lib])
+		if test "$GCC" = "yes" ; then
+			LIBGLU=-lglu32
+		else
+			# assume Microsoft compiler
+			LIBGLU=glu32.lib
+		fi
+		;;
+	*)
+		AC_MSG_ERROR([Unsupported windowing system: ${TEA_WINDOWINGSYSTEM}])
+		;;
+esac
+AC_SUBST(LIBGLU)
+AC_SUBST(TEA_WINDOWINGSYSTEM)
+
+#--------------------------------------------------------------------
+# Check whether --enable-threads or --disable-threads was given.
+# This auto-enables if Tcl was compiled threaded.
+#--------------------------------------------------------------------
+
+TEA_ENABLE_THREADS
+
+#--------------------------------------------------------------------
+# The statement below defines a collection of symbols related to
+# building as a shared library instead of a static library.
+#--------------------------------------------------------------------
+
+TEA_ENABLE_SHARED
+
+#--------------------------------------------------------------------
+# This macro figures out what flags to use with the compiler/linker
+# when building shared/static debug/optimized objects.  This information
+# can be taken from the tclConfig.sh file, but this figures it all out.
+#--------------------------------------------------------------------
+
+TEA_CONFIG_CFLAGS
+# should be part of TEA_CONFIG_CFLAGS, but more visible modification here
+AC_SUBST(SHLIB_SUFFIX)
+
+#--------------------------------------------------------------------
+# Set the default compiler switches based on the --enable-symbols option.
+#--------------------------------------------------------------------
+
+TEA_ENABLE_SYMBOLS
+
+#--------------------------------------------------------------------
+# Everyone should be linking against the Tcl stub library.  If you
+# can't for some reason, remove this definition.  If you aren't using
+# stubs, you also need to modify the SHLIB_LD_LIBS setting below to
+# link against the non-stubbed Tcl library.  Add Tk too if necessary.
+#--------------------------------------------------------------------
+
+if test "${USE_STUBS}" = "1" ; then
+	AC_DEFINE(USE_TCL_STUBS, 1, [Use Tcl stubs])
+	AC_DEFINE(USE_TK_STUBS, 1, [Use Tk stubs])
+fi
+
+#--------------------------------------------------------------------
+# This macro generates a line to use when building a library.  It
+# depends on values set by the TEA_ENABLE_SHARED, TEA_ENABLE_SYMBOLS,
+# and TEA_LOAD_TCLCONFIG macros above.
+#--------------------------------------------------------------------
+
+TEA_MAKE_LIB
+
+if test "${USE_STUBS}" = "0" ; then
+	SHLIB_LD_LIBS=`echo "$SHLIB_LD_LIBS" | sed -e 's!stub!!g'`
+fi
+
+#--------------------------------------------------------------------
+# Determine the name of the tclsh and/or wish executables in the
+# Tcl and Tk build directories or the location they were installed
+# into. These paths are used to support running test cases only,
+# the Makefile should not be making use of these paths to generate
+# a pkgIndex.tcl file or anything else at extension build time.
+#--------------------------------------------------------------------
+
+TEA_PROG_TCLSH
+#TEA_PROG_WISH
+
+#--------------------------------------------------------------------
+# Finally, substitute all of the various values into the Makefile.
+# You may alternatively have a special pkgIndex.tcl.in or other files
+# which require substituting th AC variables in.  Include these here.
+#--------------------------------------------------------------------
+
+AC_OUTPUT([Makefile pkgIndex.tcl togl_ws.h])

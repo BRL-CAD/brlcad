@@ -1,0 +1,112 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <!-- vi:set sw=2: -->
+  <!--
+  Copyright (C) 1996-2002  Brian Paul and Ben Bederson
+  Copyright (C) 2005-2009  Greg Couch
+  See the LICENSE file for copyright details.
+  -->
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Togl Frequently Asked Questions</title>
+  </head>
+
+  <body>
+    <script type="text/javascript" src="header.js"></script>
+    <script type="text/javascript">
+      NavigationBar();
+    </script>
+
+    <h1 align="center">Togl Frequently Asked Questions</h1>
+
+    <h2>Contents</h2>
+    <ul>
+      <li><a href="#badmatch">Bad Match X errors on Sun systems</a>
+      <li><a href="#stereo">Is stereo rendering supported?</a>
+      <li><a href="#fullscreen stereo">Is fullscreen stereo rendering supported?</a>
+      <li><a href="#dc">How do I get the Microsoft Windows device context?</a>
+      <li><a href="#python">How do I use Togl from Python?</a>
+      <li><a href="#tile">Is Togl compatible with Tile and Tk 8.5?</a>
+    </ul>
+    <h2>Frequently Asked Questions (and Problems)</h2>
+
+    <hr>
+
+    <p>
+    If you have something to add to this section please let us know.
+
+    <dl>
+      <dt>
+      <a name="badmatch"><b>Bad Match X errors on Sun systems</b></a>
+      <dd>
+      There is(was?) a bug in Sun's XmuLookupStandardColormap
+      X library function.
+      If you compile togl.c with the SOLARIS_BUG symbol defined (-DSOLARIS_BUG)
+      this function call will be omitted.
+
+      <p>
+      <dt>
+      <a name="stereo"><b>Is stereo rendering supported?</b></a>
+      <dd>
+      Several different <a href="stereo.html">stereo modes</a> are supported.
+
+      <p>
+      <dt>
+      <a name="fullscreen stereo"><b>Is fullscreen stereo rendering supported?</b></a>
+      <dd>
+      Before Tk 8.5,
+      Tk does not support true fullscreen windows.
+      Consequenly the full-screen stereo,
+      that gaming graphics cards support (ATI Radeon, NVidia GeForce),
+      won't be added until sometime after Tk 8.5 is available.
+      Fullscreen stereo on workstation graphics cards
+      (ATI FireGL, NVidia Quadro, Matrix Parhelia, 3Dlabs Wildcat)
+      does work.
+      <p>
+      <dt>
+      <a name="dc"><b>How do I get the Microsoft Windows device context?</b></a>
+      <dd>
+      First call <code>Togl_MakeCurrent</code> to make sure you have the
+      right OpenGL context and device context set,
+      then call <code>wglGetCurrentDC</code>.
+
+      <p>
+      <dt>
+      <a name="python"><b>How do I use Togl from Python?</b></a>
+      <dd>
+      The Togl source distribution comes with a <code>Togl.py</code> file
+      that provides a Tkinter-style Togl widget.
+      And for Togl callbacks that are C functions,
+      there is a <code>toglpy.h</code> file that provides a function
+      that converts a Python object into its corresponding Togl widget:
+      <blockquote>
+	<code>Togl *getToglFromWidget(PyObject *widget)</code>
+      </blockquote>
+
+      <p>
+      <dt>
+      <a name="tile"><b>Is Togl compatible with Tile and Tk 8.5?</b></a>
+      <dd>
+      Yes, Togl works as is (except for the bitmap font support for X11 and Aqua).
+      From <a href="http://wiki.tcl.tk/1218">Joe English</a>:
+      <blockquote>
+	Complex &quot;owner-draw&quot; widgets like tkZinc,
+	or the text and canvas widgets,
+	really don't benefit much from themability,
+	so there's no reason to rewrite them.
+	(<a href="http://wiki.tcl.tk/13373">http://wiki.tcl.tk/13373</a>)
+      </blockquote>
+    </dl>
+
+    <hr>
+    <a href="http://sourceforge.net/projects/togl">
+      <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=519&amp;type=13" width="120" height="30" border="0" alt="Get Togl at SourceForge.net. Fast, secure and Free Open Source software downloads">
+    </a>
+    <a href="http://validator.w3.org/check?uri=referer">
+      <img src="http://www.w3.org/Icons/valid-html401-blue"
+      alt="Valid HTML 4.01 Transitional" height="31" width="88" border="0">
+    </a>
+  </body>
+</html>

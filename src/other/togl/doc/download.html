@@ -1,0 +1,340 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <!-- vi:set sw=2: -->
+  <!--
+  Copyright (C) 1996-2002  Brian Paul and Ben Bederson
+  Copyright (C) 2005-2009  Greg Couch
+  See the LICENSE file for copyright details.
+  -->
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Downloading and Installing Togl</title>
+  </head>
+
+  <body>
+    <script type="text/javascript" src="header.js"></script>
+    <script type="text/javascript">
+      NavigationBar();
+    </script>
+
+    <h1 align="center">Downloading and Installing Togl</h1>
+
+    <h2>Contents</h2>
+    <ul>
+      <li><a href="#prereq">Prerequisites</a>
+      <li><a href="#getting">Downloading</a>
+      <li><a href="#building">Installing</a>
+      <ul>
+	<li><a href="#x11">X11 usage</a>
+	<li><a href="#windows">Microsoft Windows usage</a>
+	<li><a href="#macosx">Mac OS X usage</a>
+      </ul>
+      <li><a href="#version">Version History</a>
+    </ul>
+
+    <hr>
+
+    <h2><a name="prereq">Prerequisites</a></h2>
+
+    <p>
+    You should have
+    <a href="http://www.tcl.tk/">Tcl and Tk</a>
+    installed on your computer.
+    Togl works with Tcl/Tk version 8.1 and up
+    (all recent testing has been with version 8.4).
+    The Mac OS X version requires version 8.4
+    (note: versions 8.4.12 and 8.4.13 have a bug when unmapping Togl widgets).
+
+    <p>
+    You must also have
+    <a href="http://www.opengl.org">OpenGL</a> or
+    <a href="http://www.mesa3d.org">Mesa</a>
+    (a free alternative to OpenGL with the same API)
+    installed on your computer.
+
+    <p>
+    And one should be familiar with Tcl, Tk, OpenGL,
+    and C programming to use Togl effectively.
+
+    <br>
+    <h2><a name="getting">Downloading Togl</a></h2>
+
+    <p>
+    Togl can be downloaded from the
+    <a href="http://sourceforge.net/project/showfiles.php?group_id=519">
+      SourceForge</a> Files page.
+
+    <p>
+    Several prebuilt binary distributions are available
+    as well as a source distribution.
+
+    <h2><a name="building">Installing Togl</a></h2>
+
+    <h3>Installing prebuild binaries</h3>
+
+    <p>
+    Prebuilt binaries provide a Togl2.1 directory,
+    the togl.h, togl_ws.h and toglDecls.h include files,
+    and the togl stub library
+    (libToglstub2.1.a or Toglstub20.lib, <i>etc</i>).
+    The Togl2.1 directory needs to copied
+    into one of the directories on Tcl's package path
+    (type <code>puts $auto_path</code> in the Tcl interpreter to see
+    the list of directories).
+    If you have C code that needs to access Togl's subroutines directly,
+    place the include file in the same place as Tcl's include file and
+    the stub library in the same place as Tcl's stub library.
+
+    <h3>Installing from source</h3>
+
+    <p>
+    Togl uses the Tcl Extension Architecture to be able to build on the
+    same platforms Tcl can be built on.
+    In addition to the Togl source,
+    you will need to have the Tcl and Tk source distributions
+    because not all installations have the needed Tcl and Tk internal header files.
+
+    <p>
+    How you link with Togl depends on how you're planning to use it.
+    There are basically three ways of using Togl with your application:
+    <ul>
+      <li>
+      Install the Togl shared library and pkgIndex.tcl file
+      (using <code>make install</code>)
+      and link to the Togl stubs library with your executable or shared library.
+      In this case you must call Togl_InitStubs() (and probably Tcl_InitStubs()
+      &mdash; Tk_InitStubs is only needed if you call Tk functions).
+      This is the way the included Togl examples are built.
+
+      <li>
+      Link to the Togl shared library
+      or &quot;compile in&quot; the Togl object files
+      with your executable or shared library.
+      In this case you must call Togl_Init() from your C code
+      to initialize Togl.
+
+      <li>
+      Install the Togl shared library and pkgIndex.tcl file
+      (using <code>make install</code>)
+      and then load it using Tcl commands or Tcl_PkgRequire().
+      Then use Tcl commands to create and manipulate the Togl widget.
+    </ul>
+
+    Since Togl is compiled into a shared library using the Tcl/Tk stubs-interface,
+    the same binary can be used with any version of Tck/Tk from 8.1 and up.
+    See <code>README.stubs</code> for more info.
+
+    <p>
+    Specific platform notes follow:
+
+    <h4><a name="x11">Unix/X11 usage</a></h4>
+
+    <p>
+    Unix/X systems only need the public Tcl/Tk include files.
+    Just <code>configure</code>, <code>make</code>,
+    and optionally <code>make install</code>.
+
+    <h4><a name="windows">Microsoft Windows usage</a></h4>
+
+    <p>
+    Microsoft Windows platforms need <code>tkWinInt.h</code>
+    and other internal Tk header files.  So you need a Tcl/Tk
+    source distribution in addition to the Togl distribution
+    (or copy over the various include files).
+    <p>
+    Here's the minimal way to build Togl with Tcl/Tk
+    using the <a href="http://gcc.gnu.org">gcc</a> that is distributed
+    as part of the <a href="http://cygwin.com/">cygwin</a> tools
+    (<a href="www.microsoft.com">Microsoft</a>'s compilers work too):
+    <blockquote><pre><code>
+VER=8.4.12
+SRCDIR=`pwd`
+
+cd $SRCDIR/tcl$VER/win
+env 'CC=gcc -mno-cygwin' ./configure --enable-threads
+make libtclstub84.a
+
+cd $SRCDIR/tk$VER/win
+env 'CC=gcc -mno-cygwin' ./configure --enable-threads
+make libtkstub84.a
+
+cd $SRCDIR/Togl2.1
+env 'CC=gcc -mno-cygwin' ./configure --with-tcl=../tcl$VER/win --with-tk=../tk$VER/win
+
+make
+</code></pre></blockquote>
+    The resulting <code>Togl21.dll</code> and <code>pkgIndex.tcl</code>
+    should be installed into your Tcl installation just like any other package.
+
+    <p>
+    If you change all of the above <code>make</code>'s
+    to <code>make install</code> instead,
+    then the Togl package is installed correctly.
+
+    <h4><a name="macosx">Mac OS X usage</a></h4>
+
+    <p>
+    These special instructions are for building the Aqua version of Togl.
+    Mac OS X needs <code>tkMacOSXInt.h</code>
+    and other internal Tk header files.
+    Unfortunately, the Tcl and Tk frameworks that Apple distributes
+    are missing the internal headers.
+    So you need a Tcl/Tk source distribution in addition to the Togl
+    distribution (or copy over the various include files).
+    You would probably want a newer version of Tcl and Tk anyway
+    because each minor revision of 8.4 has many Aqua bug fixes.
+    <p>
+    Here's one way to build Tcl, Tk, and Togl on Mac OS X
+    (assuming they are all in the same directory)
+    to install in your home directory:
+    <blockquote><pre><code>
+VER=8.4.12
+
+mkdir -p ~/bin
+make -C tcl$VER/macosx install PREFIX="${HOME}" INSTALL_PATH="${HOME}/Library/Frameworks"
+make -C tk$VER/macosx install PREFIX="${HOME}" INSTALL_PATH="${HOME}/Library/Frameworks" APPLICATION_INSTALL_PATH="${HOME}/Applications"
+
+cd Togl2.1
+./configure --prefix="${HOME}"
+make install
+</code></pre></blockquote>
+
+    <br>
+    <h2><a name="version">Version History</a></h2>
+
+    <h3>Version 1.0 &mdash; March, 1996</h3>
+    <ul>
+      <li>Initial version
+    </ul>
+
+    <h3>Version 1.1 (never officially released)</h3>
+    <ul>
+      <li>Added Togl_LoadBitmapFont function
+      <li>Fixed a few bugs
+    </ul>
+
+    <h3>Version 1.2 &mdash; November, 1996</h3>
+    <ul>
+      <li>added swapbuffers and makecurrent Tcl commands
+      <li>more bug fixes
+      <li>upgraded to suport Tcl 7.6 and Tk 4.2
+      <li>added stereo and overlay plane support
+      <li>added Togl_Get/SetClientData() functions
+      <li>added Togl_DestroyFunc()
+    </ul>
+
+    <h3>Version 1.3 &mdash; May 2, 1997</h3>
+    <ul>
+      <li>fixed a bug in Togl_Configure()
+      <li>fixed a compilation problem in using Tcl_PkgProvide() with Tcl < 7.4
+      <li>new overlay functions: Togl_ExistsOverlay, Togl_GetOverlayTransparentValue,
+      Togl_IsMappedOverlay, Togl_AllocColorOverlay, Togl_FreeColorOverlay
+      <li>added X11 functions: Togl_Display, Togl_Screen, Togl_ScreenNumber,
+      Togl_Colormap
+      <li>added Togl_DumpToEpsFile function
+      <li>fixed a C++ compilation problem
+      <li>more robust overlay code
+      <li>added timers (Togl_TimerFunc) from Peter Dern and Elmar Gerwalin
+    </ul>
+
+    <h3>Version 1.4 &mdash; September 17, 1997</h3>
+    <ul>
+      <li>ported to Microsoft Windows NT (Robert Casto)
+      <li>updated for Tcl/Tk 8.0
+      <li>added many config flags (-redsize, -depthsize, etc) (Matthias Ott)
+      <li>added Togl_Set*Func() functions to reassign callback functions (Matthias Ott)
+      <li>added Togl_ResetDefaultCallbacks() and Togl_ClientData() functions (Greg Couch)
+    </ul>
+
+    <h3>Version 1.5 &mdash; September 18, 1998</h3>
+    <ul>
+      <li>fixed a few Unix and Microsoft Windows compilation bugs
+      <li>added Ben Evan's SGI stereo functions
+      <li>multiple expose events now reduced to one redraw
+      <li>destroying Togl widgets caused problems, patched by Adrian J. Chung
+      <li>added Togl_TkWin() function
+      <li>updated for Tcl/Tk 8.0p2
+      <li>added gears demo from Philip Quaife
+      <li>added <code>-sharelist</code> and <code>-sharecontext</code> config flags
+      <li>fixed a few overlay update bugs
+      <li>added <code>-indirect</code> config flag
+    </ul>
+
+    <h3>Version 1.6 &mdash; May 7, 2003</h3>
+    <ul>
+      <li>added Togl_SetTimerFunc function
+      <li>updated for Tcl/Tk 8.0.5 and 8.1
+      <li>context sharing added for Microsoft Windows
+      <li>Macintosh support (by Paul Thiessen)
+      <li>Tcl/Tk stubs support &mdash; see README.tcl (by Jonas Beskow)
+    </ul>
+
+    <h3>Version 1.7 &mdash; January 6, 2006</h3>
+    <ul>
+      <li>added Mac OS X support
+      <li>enabled asking for quad-buffered stereo pixel formats on all platforms
+      (use -oldstereo on SGIs for splitscreen stereo &mdash; C API changed too)
+      <li>configuring the cursor is no longer slow
+      <li>added <code>-pixelformat</code> config flag
+      <li>added setgrid support (unfortunately many window managers can't cope with 1x1 pixel grid)
+      <li>only free context when last reference is gone
+      <li>switched to TEA-based configure (instead of editting make files)
+    </ul>
+
+    <h3>Version 2.0 &mdash; April 22, 2008</h3>
+    <ul>
+      <li>stubified C API
+      <li>replaced EPS support with TK photo image support
+      <li>simplified C API by requiring callback command options
+      <li>Added command arguments for create, destroy, etc. callbacks,
+      so there is a -createcommand option to the togl command (etc.).
+      (and removed Togl_*Func from the C API)
+      <li>added togl instance commands that call C API &mdash;
+      see <a href="tclapi.html">documentation</a>
+      <li>use Tcl objects internally
+      <li>use Tcl object interface for callbacks
+      <li>vertical sync control
+      <li>fix thread safety in anticipation that OpenGL drivers may someday be thread safe
+      <li>added simple stereo rendering interface
+      <li>revised font C API
+      <li>updated font support for Tk 8.4 on all platforms
+      <li>updated documentation
+      <li>prebuilt binaries
+    </ul>
+
+    <h3>Version 2.1 &mdash; December 2009 </h3>
+    <ul>
+      <li>incorporate the part of the X11R6 Xmu library that Togl uses
+      so it will work on (Linux) systems that don't have the Xmu shared library
+      <li>Mac OS X Aqua delete context bug fix
+      <li>multisampling support
+      <li>pbuffer support (Unix/X11, Microsoft Windows, Mac OS X)
+      <li>Ability to copy context state
+      <li>row interleaved stereo support
+    </ul>
+
+    <br>
+    <h3>Future plans</h3>
+    Patches for the following are especially welcome:
+    <ul>
+      <li>Tk 8.5 fonts
+      <li>Aqua Cocoa support (Tk 8.6b2)
+      <li>OpenGL 3 contexts
+      <li>EGL support
+      <li>RGB overlays
+      <li>Tcl access to colormap manipulation
+      <li>NVidia consumer stereo support
+    </ul>
+
+    <hr>
+    <a href="http://sourceforge.net/projects/togl">
+      <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=519&amp;type=13" width="120" height="30" border="0" alt="Get Togl at SourceForge.net. Fast, secure and Free Open Source software downloads">
+    </a>
+    <a href="http://validator.w3.org/check?uri=referer">
+      <img src="http://www.w3.org/Icons/valid-html401-blue"
+      alt="Valid HTML 4.01 Transitional" height="31" width="88" border="0">
+    </a>
+  </body>
+</html>

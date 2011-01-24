@@ -1,0 +1,109 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <!-- vi:set sw=2: -->
+  <!--
+  Copyright (C) 1996-2002  Brian Paul and Ben Bederson
+  Copyright (C) 2005-2009  Greg Couch
+  See the LICENSE file for copyright details.
+  -->
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Upgrading to Version 2</title>
+  </head>
+
+  <body>
+    <script type="text/javascript" src="header.js"></script>
+    <script type="text/javascript">
+      NavigationBar();
+    </script>
+
+    <h1 align="center">Upgrading to Version 2</h1>
+
+    <h2>Contents</h2>
+    <ul>
+      <li><a href="#callbacks">Widget callback changes</a>
+      <li><a href="#subcommands">Widget subcommand changes</a>
+      <li><a href="#stereo">Stereo changes</a>
+      <li><a href="#fonts">Font API changes</a>
+    </ul>
+
+    <hr>
+
+    <p>
+    Internally, Togl version 2 isn't very different from version 1,
+    and much of the C interface is the same.
+    The main difference is that the focus of the Togl API has changed
+    from being a C API to being a Tcl API.
+    Which means that the full power of Togl is accessible from Tcl
+    (the few exceptions are considered bugs).
+
+    <h2><a name="callbacks">Widget callback changes</a></h2>
+
+    The biggest change is how the various callback are initialized.
+    In version 1,
+    the C API Togl_Set*Func functions had to be used
+    to setup the callback functions before creating the Togl widget.
+    And once the callbacks were set for a particular Togl widget,
+    they could not be changed.
+    If more than once Togl widget was needed,
+    the callback functions would need to be reset before each widget creation.
+    In version 2,
+    the callbacks are configuration arguments to the widget
+    and can be updated like any other standard widget configuration option.
+    See the <a href="tclapi.html">Tcl API</a> for details.
+
+    <h2><a name="subcommands">Widget subcommand changes</a></h2>
+
+    Version 1 also allowed new subcommands to be added
+    to the togl widget command via the C API.
+    This was dropped for a variety of reasons:
+    there is no exact Tcl equivalent,
+    there is no standard object-oriented technique
+    currently in the Tcl core (8.4.13),
+    it is unclear how to make the API thread safe,
+    and the internal Tcl C API doesn't support
+    dynamicly changing sets of subcommands.
+    That said, this functionality might come back, especially when
+    <a href="http://www.tcl.tk/cgi-bin/tct/tip/">TIP #257</a> is implemented.
+    Instead, in version 2,
+    create a Tcl function that takes the Togl widget as an argument.
+    Functions written in C can get the underlying Togl structure handle
+    with either the <code>Togl_GetToglFromObj</code>
+    or the <code>Togl_GetToglFromName</code> function,
+    as appropriate.
+    This means that there are no special Togl commands, only Tcl commands.
+    See the <a href="tclapi.html">C API</a> for details.
+
+    <h2><a name="stereo">Stereo changes</a></h2>
+
+    The stereo support has been totally revamped.
+    Some <a href="stereo.html">form of stereo</a> is available all of the time.
+
+    <h2><a name="fonts">Font changes</a></h2>
+
+    Tcl support for writing strings has been added.
+    <p>
+
+    The <a href="capi.html#font">font C API</a> has been revised
+    so that Togl_LoadBitmapFont returns a font object instead an integer
+    (likewise for Togl_UnloadBitmapFont).
+    So instead of calling glListBase and glCallLists directly,
+    use Togl_WriteObj or Togl_WriteChars.
+    <p>
+    The TOGL_BITMAP_* constants remain for limited backwards
+    source compatibility and are deprecated.
+    The acceptable font names are now the same as Tk_GetFont
+    and the Tk font command on all platforms.
+
+    <hr>
+    <a href="http://sourceforge.net/projects/togl">
+      <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=519&amp;type=13" width="120" height="30" border="0" alt="Get Togl at SourceForge.net. Fast, secure and Free Open Source software downloads">
+    </a>
+    <a href="http://validator.w3.org/check?uri=referer">
+      <img src="http://www.w3.org/Icons/valid-html401-blue"
+      alt="Valid HTML 4.01 Transitional" height="31" width="88" border="0">
+    </a>
+  </body>
+</html>
