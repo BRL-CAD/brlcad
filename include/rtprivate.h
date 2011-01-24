@@ -17,11 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rt */
-/** @{ */
-/** @file rtprivate.h
- *
- *@brief
+/*
  * Things to support the "rt" program and the link to liboptical
  *
  */
@@ -69,7 +65,6 @@ extern void view_setup(struct rt_i *rtip);
 extern void view_cleanup(struct rt_i *rtip);
 
 #endif  /* __RTPRIVATE_H__ */
-/** @} */
 /*
  * Local Variables:
  * mode: C
