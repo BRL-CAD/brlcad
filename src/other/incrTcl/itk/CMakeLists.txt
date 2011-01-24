@@ -510,9 +510,7 @@ SET_TARGET_PROPERTIES(itk PROPERTIES PREFIX "lib")
 install(TARGETS itk DESTINATION ${LIB_DIR})
 
 add_library(itkstub ${ITK_STUB_SRCS})
-if(WIN32)
-	target_link_libraries(itkstub ${ITCL_STUB_LIBRARY} ${TCL_STUB_LIBRARIES})
-endif(WIN32)
+target_link_libraries(itkstub ${ITCL_STUB_LIBRARY} ${TCL_STUB_LIBRARIES})
 install(TARGETS itkstub DESTINATION ${LIB_DIR})
 
 GET_TARGET_PROPERTY(ITK_LIBLOCATION itk LOCATION_${CMAKE_BUILD_TYPE})
