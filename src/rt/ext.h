@@ -21,10 +21,6 @@
  *
  *  External variable declarations for the RT family of analysis programs.
  *
- *
- *  Author -
- *	Michael John Muuss
- *
  */
 
 #include "optical.h"

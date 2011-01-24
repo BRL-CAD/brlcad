@@ -21,9 +21,6 @@
  *
  *  An experimental volume fractions code.
  *
- *  Author -
- *	Michael John Muuss
- *
  */
 
 #include "common.h"

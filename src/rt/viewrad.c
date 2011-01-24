@@ -25,11 +25,6 @@
  * a GIFT/SRIM format Radar file.  It tracks specular direction
  * reflections.
  *
- * Author -
- * Phillip Dykstra
- * From viewpp.c and viewray.c by
- * Michael John Muuss
- *
  */
 
 #include "common.h"
