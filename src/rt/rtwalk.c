@@ -133,9 +133,9 @@ main(int argc, char **argv)
 
     static struct rt_i *rtip;
     char	*title_file;
-    char	idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
-    int	curstep;
+    char	idbuf[2048] = {0};	/* First ID record info */
     vect_t	first_dir;		/* First dir chosen on a step */
+    int	curstep;
     int	i;
 
     bu_semaphore_init( RT_SEM_LAST );

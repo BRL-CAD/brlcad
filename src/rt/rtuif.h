@@ -40,9 +40,6 @@
 #include "raytrace.h"
 #include "optical.h"
 
-/* default parseable title length (v4 was 132) */
-#define RT_BUFSIZE 1024
-
 
 /**
  * Called by main() at the start of a run.  Should set up rayhit() and

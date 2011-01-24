@@ -97,7 +97,7 @@ main(int argc, char **argv)
     struct application ap;
     static struct rt_i *rtip;
     char *title_file;
-    char idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
+    char idbuf[2048] = {0};		/* First ID record info */
     char *ptr;
     int attr_count=0, i;
     char **attrs = (char **)NULL;
