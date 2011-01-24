@@ -509,7 +509,7 @@ target_link_libraries(itk ${M_LIBRARY} ${TCL_LIBRARIES} ${ITCL_LIBRARY})
 SET_TARGET_PROPERTIES(itk PROPERTIES PREFIX "lib")
 install(TARGETS itk DESTINATION ${LIB_DIR})
 
-add_library(itkstub ${ITK_STUB_SRCS})
+add_library(itkstub STATIC ${ITK_STUB_SRCS})
 target_link_libraries(itkstub ${ITCL_STUB_LIBRARY} ${TCL_STUB_LIBRARIES})
 install(TARGETS itkstub DESTINATION ${LIB_DIR})
 
