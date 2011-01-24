@@ -3332,8 +3332,8 @@ RT_EXPORT BU_EXTERN(int db_region_mat,
 		     struct db_i	*dbip,
 		     const char	*name,
 		     struct resource *resp));
-/* FIXME: db_shader_mat (DEPRECATED), should be called rt_shader_mat */
-RT_EXPORT BU_EXTERN(int db_shader_mat,
+
+RT_EXPORT BU_EXTERN(int rt_shader_mat,
 		    (mat_t			model_to_shader,	/* result */
 		     const struct rt_i	*rtip,
 		     const struct region	*rp,

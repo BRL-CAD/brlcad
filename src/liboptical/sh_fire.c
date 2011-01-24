@@ -245,7 +245,7 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
      * We need to get a matrix to perform the appropriate transform(s).
      */
 
-    db_shader_mat(fire_sp->fire_m_to_sh, rtip, rp, fire_sp->fire_min,
+    rt_shader_mat(fire_sp->fire_m_to_sh, rtip, rp, fire_sp->fire_min,
 		  fire_sp->fire_max, &rt_uniresource);
 
     /* Build matrix to map shader space to noise space.

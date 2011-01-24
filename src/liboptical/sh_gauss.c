@@ -348,10 +348,6 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
      * matrix to rotate it into alignment.  We're going to have to do
      * computation in the space defined by this ellipsoid.
      */
-/* db_shader_mat(gauss_sp->gauss_m_to_sh, rtip, rp, gauss_sp->gauss_min,
-   gauss_sp->gauss_max);
-*/
-
 
     if (rdebug&RDEBUG_SHADE) {
 	bu_struct_print(" Parameters:", gauss_print_tab, (char *)gauss_sp);
