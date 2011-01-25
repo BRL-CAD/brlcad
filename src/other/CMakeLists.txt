@@ -34,8 +34,9 @@ IF(BRLCAD_BUILD_LOCAL_ZLIB)
 ENDIF(BRLCAD_BUILD_LOCAL_ZLIB)
 
 # libtermlib Library
-THIRD_PARTY_OPTION(TERMLIB termlib)
-THIRD_PARTY_SUBDIR(TERMLIB libtermlib)
+IF(BRLCAD_BUILD_LOCAL_LIBTERM)
+   THIRD_PARTY_SUBDIR(TERMLIB libtermlib)
+ENDIF(BRLCAD_BUILD_LOCAL_LIBTERM)
 
 # libpng Library - Checks for ZLIB, so need to handle libpng AFTER zlib to set the variables
 # if using a local copy of zlib.  If not using a local copy of zlib, FindZLIB results will 
@@ -372,4 +373,8 @@ ENDIF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 ADD_SUBDIRECTORY(tnt)
 SET(TNT_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/tnt" CACHE STRING "Directory containing tnt headers" FORCE)
 
-#ADD_SUBDIRECTORY(togl)
+# For now only turn on Togl for X11, but will need it everywhere eventually.  Will need
+# some logic to both look for package require and the C library, as both APIs will be needed.
+IF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
+   ADD_SUBDIRECTORY(togl)
+ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)

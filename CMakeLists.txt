@@ -709,6 +709,7 @@ IF(BRLCAD-ENABLE_X11)
 ENDIF(BRLCAD-ENABLE_X11)
 
 # Locate a terminal library
+OPTION(BRLCAD_BUILD_LOCAL_TERMLIB "Build the local TERMLIB library." ${BRLCAD-ENABLE_ALL_LOCAL_LIBS})
 BRLCAD_CHECK_LIBRARY(TERMLIB termlib tputs)
 BRLCAD_CHECK_LIBRARY(TERMLIB ncurses tputs)
 BRLCAD_CHECK_LIBRARY(TERMLIB curses tputs)
@@ -716,10 +717,22 @@ BRLCAD_CHECK_LIBRARY(TERMLIB termcap tputs)
 BRLCAD_CHECK_LIBRARY(TERMLIB terminfo tputs)
 BRLCAD_CHECK_LIBRARY(TERMLIB tinfo tputs)
 BRLCAD_CHECK_LIBRARY(TERMLIB ccurses tputs)
-
-# Should not need this, once we use the above results and
-# a compile test properly - Curses is overkill
-find_package(Curses)
+include(CheckCFileRuns)
+configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/termlib.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c)
+MESSAGE(TERMLIB: ${TERMLIB_LIBRARY})
+SET(CMAKE_REQUIRED_LIBRARIES ${TERMLIB_LIBRARY})
+CHECK_C_FILE_RUNS(${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c LIBTERM_RESULT)
+IF(NOT LIBTERM_RESULT)
+	SET(BRLCAD_BUILD_LOCAL_TERMLIB ON CACHE BOOL "Build the local TERMLIB library." FORCE)
+ENDIF(NOT LIBTERM_RESULT)
+#Only on WIN32 will the combination of the above tests and
+#libtermlib fail, so set variables accordingly
+IF(NOT WIN32)
+	SET(HAVE_TERMLIB 1)
+ELSE(NOT WIN32)
+	SET(BRLCAD_BUILD_LOCAL_TERMLIB OFF CACHE BOOL "Build the local TERMLIB library." FORCE)
+	SET(HAVE_TERMLIB 0)
+ENDIF(NOT WIN32)
 
 # m library is not needed on Windows
 IF(NOT WIN32)
