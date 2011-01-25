@@ -651,6 +651,15 @@ FunctionEnd
 ;--------------------------------
 ;Installer Sections
 
+!include LogicLib.nsh
+; Create desktop icons
+Function installdesktopicons
+SetOutPath $INSTDIR
+CreateShortCut "$DESKTOP\Archer.lnk" "$INSTDIR\bin\archer.bat" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\archer.ico" 0
+CreateShortCut "$DESKTOP\MGED.lnk" "$INSTDIR\bin\mged.bat" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\brlcad.ico" 0
+CreateShortCut "$DESKTOP\RtWizard.lnk" "$INSTDIR\bin\rtwizard.bat" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\brlcad.ico" 0
+FunctionEnd
+
 Section "-Core installation"
   ;Use the entire tree produced by the INSTALL target.  Keep the
   ;list of directories here in sync with the RMDir commands below.
@@ -719,6 +728,10 @@ Section "-Core installation"
 
   CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
 
+  ${If} $INSTALL_DESKTOP == 1
+     Call installdesktopicons
+  ${EndIf}
+
   ;Read a value from an InstallOptions INI file
   !insertmacro MUI_INSTALLOPTIONS_READ $DO_NOT_ADD_TO_PATH "NSIS.InstallOptions.ini" "Field 2" "State"
   !insertmacro MUI_INSTALLOPTIONS_READ $ADD_TO_PATH_ALL_USERS "NSIS.InstallOptions.ini" "Field 3" "State"
@@ -743,11 +756,6 @@ Section "-Core installation"
 
   !insertmacro MUI_STARTMENU_WRITE_END
 
-  ; Create desktop icons
-  SetOutPath $INSTDIR
-  CreateShortCut "$DESKTOP\Archer.lnk" "$INSTDIR\bin\archer.bat" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\archer.ico" 0
-  CreateShortCut "$DESKTOP\MGED.lnk" "$INSTDIR\bin\mged.bat" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\brlcad.ico" 0
-  CreateShortCut "$DESKTOP\RtWizard.lnk" "$INSTDIR\bin\rtwizard.bat" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\brlcad.ico" 0
 
 @CPACK_NSIS_EXTRA_INSTALL_COMMANDS@
 
