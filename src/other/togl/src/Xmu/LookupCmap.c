@@ -36,7 +36,7 @@ in this Software without prior written authorization from the X Consortium.
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
-#include <X11/Xmu/StdCmap.h>
+#include <StdCmap.h>
 
 static Status lookup();
 
