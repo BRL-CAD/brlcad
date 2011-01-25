@@ -19,8 +19,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * bu_ipwd returns the wrong path, check out realpath()
 
-* open binary-incompatible v4 database
-
 * rename all the g_* tools sans "_"
 
 
