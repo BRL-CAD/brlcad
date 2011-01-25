@@ -61,12 +61,18 @@ ADD_CUSTOM_TARGET(togl_stubs_gen
 	${TCL_TCLSH} ${CMAKE_CURRENT_SOURCE_DIR}/../tools/genStubs.tcl	${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/togl.decls
 )
 
+IF(TOGL_WINDOWINGSYSTEM MATCHES "TOGL_X11")
+	SET(TOGL_XMU_SRCS
+		Xmu/CmapAlloc.c
+		Xmu/CrCmap.c
+		Xmu/DelCmap.c
+		Xmu/LookupCmap.c
+		Xmu/StdCmap.c
+		)
+ENDIF(TOGL_WINDOWINGSYSTEM MATCHES "TOGL_X11")
+
 SET(TOGL_SRCS
-	Xmu/CmapAlloc.c
-	Xmu/CrCmap.c
-	Xmu/DelCmap.c
-	Xmu/LookupCmap.c
-	Xmu/StdCmap.c
+	${TOGL_XMU_SRCS}
 	togl.c
 	toglProcAddr.c
 	toglStubLib.c
@@ -75,7 +81,7 @@ SET(TOGL_SRCS
 
 add_library(togl SHARED ${TOGL_SRCS})
 ADD_DEPENDENCIES(togl togl_stubs_gen)
-target_link_libraries(togl ${TCL_LIBRARY} ${TK_LIBRARY} ${X11_LIBRARIES} ${OPENGL_LIBRARIES} ${GLUT_Xmu_LIBRARY})
+target_link_libraries(togl ${TCL_LIBRARY} ${TK_LIBRARY} ${X11_LIBRARIES} ${OPENGL_LIBRARIES})
 install(TARGETS togl DESTINATION lib)
 
 # Create the pkgIndex.tcl file.
