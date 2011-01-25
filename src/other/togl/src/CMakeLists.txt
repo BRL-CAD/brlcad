@@ -15,7 +15,6 @@ include_directories(
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/../include/tcltk/tk${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}
 	)
-MESSAGE("dir: ${CMAKE_CURRENT_SOURCE_DIR}/../include/tcltk/tk${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}")
 
 SET(TOGL_DECLS_H_TXT "
 #ifndef ToglDecls_H
