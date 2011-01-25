@@ -37,7 +37,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 
 
 static const char *mdefault = "default"; /* Name of default material */
@@ -105,7 +105,7 @@ try_load(const char *path, const char *material, const char *shader_name)
 	return (struct mfuncs *)NULL;
     }
 
- found:
+found:
     if (R_DEBUG&RDEBUG_MATERIAL)
 	bu_log("%s_mfuncs table found\n", shader_name);
 
@@ -125,14 +125,8 @@ try_load(const char *path, const char *material, const char *shader_name)
 }
 
 
-/**
- * L O A D _ D Y N A M I C _ S H A D E R
- *
- * Given a shader/material name, try to find a DSO to supply the
- * shader.
- */
 struct mfuncs *
-load_dynamic_shader(const char *material, const int mlen)
+load_dynamic_shader(const char *material)
 {
     struct mfuncs *shader_mfuncs = (struct mfuncs *)NULL;
     char libname[MAXPATHLEN];
@@ -141,17 +135,16 @@ load_dynamic_shader(const char *material, const int mlen)
     int old_rdebug = R_DEBUG;
     char sh_name[128]; /* XXX constants are bogus */
 
-    if (mlen < sizeof(sh_name)) {
+    if (strlen(material) < sizeof(sh_name)) {
 	bu_strlcpy(sh_name, material, sizeof(sh_name));
     } else {
 	bu_log("shader name too long \"%s\" %d > %d\n",
-	       material, mlen, sizeof(sh_name));
+	       material, strlen(material), sizeof(sh_name));
 	return (struct mfuncs *)NULL;
     }
-    /* rdebug |= RDEBUG_MATERIAL; */
 
     if (R_DEBUG&RDEBUG_MATERIAL)
-	bu_log("load_dynamic_shader(\"%s\", %d)\n", sh_name, mlen);
+	bu_log("load_dynamic_shader(\"%s\")\n", sh_name);
 
     cwd = getcwd((char *)NULL, (size_t)MAXPATHLEN);
 
@@ -184,7 +177,7 @@ load_dynamic_shader(const char *material, const int mlen)
     if ((shader_mfuncs = try_load(libname, material, sh_name)))
 	goto done;
 
- done:
+done:
     /* clean up memory allocated */
     if (cwd) free(cwd);
 
@@ -205,9 +198,9 @@ load_dynamic_shader(const char *material, const int mlen)
  * M L I B _ S E T U P
  *
  * Returns -
- *	-1	failed
- *	 0	indicates that this region should be dropped
- *	 1	success
+ * -1 failed
+ * 0 indicates that this region should be dropped
+ * 1 success
  */
 int
 mlib_setup(struct mfuncs **headp,
@@ -219,10 +212,10 @@ mlib_setup(struct mfuncs **headp,
 #endif
 
     const struct mfuncs *mfp;
-    int		ret;
-    struct bu_vls	param;
-    const char	*material;
-    size_t		mlen;
+    int ret;
+    struct bu_vls param;
+    const char *material;
+    size_t mlen;
 
     RT_CK_REGION(rp);
     RT_CK_RTI(rtip);
@@ -237,7 +230,7 @@ mlib_setup(struct mfuncs **headp,
 	material = mdefault;
 	mlen = strlen(mdefault);
     } else {
-	char	*endp;
+	char *endp;
 	endp = strchr(material, ' ');
 	if (endp) {
 	    mlen = endp - material;
@@ -246,7 +239,7 @@ mlib_setup(struct mfuncs **headp,
 	    mlen = strlen(material);
 	}
     }
- retry:
+retry:
     for (mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw) {
 	if (material[0] != mfp->mf_name[0] ||
 	    strncmp(material, mfp->mf_name, strlen(mfp->mf_name)))
@@ -262,7 +255,7 @@ mlib_setup(struct mfuncs **headp,
 
     bu_log("Shader \"%s\"... ", material);
 
-    if ((mfp_new = load_dynamic_shader(material, mlen))) {
+    if ((mfp_new = load_dynamic_shader(material))) {
 	mlib_add_shader(headp, mfp_new);
 	bu_log("retrying\n");
 	goto retry;
@@ -289,7 +282,7 @@ mlib_setup(struct mfuncs **headp,
     }
     bu_vls_free(&param);
     return -1;
- found:
+found:
     rp->reg_mfuncs = (char *)mfp;
     rp->reg_udata = (char *)0;
 

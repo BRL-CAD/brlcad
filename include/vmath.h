@@ -1504,6 +1504,38 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(_e) = atan2(-((_d)[Z]), sqrt((_d)[X]*(_d)[X] + (_d)[Y]*(_d)[Y])) * -RAD2DEG; \
 }
 
+/*** Macros suitable for declaration statement initialization. ***/
+
+/**
+ * vector macro suitable for declaration statement initialization.
+ * this sets all vector elements to the specified value similar to
+ * VSETALL() but as an initializer array declaration instead of as a
+ * statement.
+ */
+#define VINITALL(_v) {(_v), (_v), (_v)}
+
+/**
+ * vector macro suitable for declaration statement initialization.
+ * this sets all vector elements to zero similar to calling
+ * VSETALL(0.0) but as an initializer array declaration instead of as
+ * a statement.
+ */
+#define VINIT_ZERO {0.0, 0.0, 0.0}
+
+/**
+ * matrix macro suitable for declaration statement initialization.
+ * this sets up an identity matrix similar to calling MAT_IDN but as
+ * an initializer array declaration instead of as a statement.
+ */
+#define MAT_INIT_IDN {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0}
+
+/**
+ * matrix macro suitable for declaration statement initialization.
+ * this sets up a zero matrix similar to calling MAT_ZERO but as an
+ * initializer array declaration instead of as a statement.
+ */
+#define MAT_INIT_ZERO {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+
 __END_DECLS
 
 #endif /* __VMATH_H__ */

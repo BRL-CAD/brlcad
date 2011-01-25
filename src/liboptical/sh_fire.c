@@ -19,39 +19,39 @@
  */
 /** @file sh_fire.c
  *
- *  Fire shader
+ * Fire shader
  *
- *  Parameters:
+ * Parameters:
  *
- *	flicker=rate	Specifies rate of translation through noise space
- *			for animation.  swp->frametime * flicker gives a delta
- *			in Z of noise space for animation.  Useful values
- *			probably in range 0 > flicker > 10
+ * flicker=rate Specifies rate of translation through noise space for
+ * animation.  swp->frametime * flicker gives a delta in Z of noise
+ * space for animation.  Useful values probably in range 0 > flicker >
+ * 10
  *
- *	stretch=dist	Specifies a scaling of the exponential stretch of the
- *			flames.  flame stretch = e^(pos[Z] * -stretch)
+ * stretch=dist Specifies a scaling of the exponential stretch of the
+ * flames.  flame stretch = e^(pos[Z] * -stretch)
  *
  *
- *  Standard fbm parameters:
+ * Standard fbm parameters:
  *
- *	lacunarity	Scale between different levels of noise detail
+ * lacunarity Scale between different levels of noise detail
  *
- *	octaves		Number of different levels of noise to add to get
- *				structure of the flames.
+ * octaves Number of different levels of noise to add to get structure
+ * of the flames.
  *
- *	h_val		power for frequency (usually 1)
+ * h_val power for frequency (usually 1)
  *
- *	scale		3-tuple which scales noise WRT shader space:
- *			"how big is the largest noise frequency on object"
+ * scale 3-tuple which scales noise WRT shader space: "how big is the
+ * largest noise frequency on object"
  *
- *	delta		3-tuple specifying origin delta in noise space:
- *			"what piece of noise space maps to shader origin"
+ * delta 3-tuple specifying origin delta in noise space: "what piece
+ * of noise space maps to shader origin"
  *
- *  Usage:
- *	mged> shader flame.r {fire {st 1.25}}
+ * Usage:
+ * mged> shader flame.r {fire {st 1.25}}
  *
- *	Note:  The fire shader provides its own color.  It does not read any
- *		color information from the region definition.
+ * Note: The fire shader provides its own color.  It does not read any
+ * color information from the region definition.
  *
  */
 
@@ -64,11 +64,12 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 
-extern int rr_render(struct application	*ap,
-		     struct partition	*pp,
-		     struct shadework   *swp);
+
+extern int rr_render(struct application *ap,
+		     struct partition *pp,
+		     struct shadework *swp);
 #define fire_MAGIC 0x46697265   /* ``Fire'' */
 #define CK_fire_SP(_p) BU_CKMAG(_p, fire_MAGIC, "fire_specific")
 
@@ -77,63 +78,49 @@ extern int rr_render(struct application	*ap,
  * to any particular use of the shader.
  */
 struct fire_specific {
-    long	magic;	/* magic # for memory validity check, must come 1st */
-    int	fire_debug;
-    double	fire_flicker;		/* flicker rate */
-    double	fire_stretch;
-    double	noise_lacunarity;
-    double	noise_h_val;
-    double	noise_octaves;
-    double	noise_size;
-    vect_t	noise_vscale;
-    vect_t	noise_delta;
+    long magic;	/* magic # for memory validity check, must come 1st */
+    int fire_debug;
+    double fire_flicker;		/* flicker rate */
+    double fire_stretch;
+    double noise_lacunarity;
+    double noise_h_val;
+    double noise_octaves;
+    double noise_size;
+    vect_t noise_vscale;
+    vect_t noise_delta;
     /* the following values are computed */
     point_t fire_min;
     point_t fire_max;
-    mat_t	fire_m_to_sh;		/* model to shader space matrix */
-    mat_t	fire_sh_to_noise;	/* shader to noise space matrix */
-    mat_t	fire_colorspline_mat;
+    mat_t fire_m_to_sh;		/* model to shader space matrix */
+    mat_t fire_sh_to_noise;	/* shader to noise space matrix */
+    mat_t fire_colorspline_mat;
 };
+
 
 /* The default values for the variables in the shader specific structure */
 static const
 struct fire_specific fire_defaults = {
     fire_MAGIC,
     0,			/* fire_debug */
-    1.0,			/* fire flicker rate */
-    0.0,			/* fire_stretch */
+    1.0,		/* fire flicker rate */
+    0.0,		/* fire_stretch */
     2.1753974,		/* noise_lacunarity */
-    1.0,			/* noise_h_val */
-    2.0,			/* noise_octaves */
-    -1.0,			/* noise_size */
-    { 10.0, 10.0, 10.0 },	/* noise_vscale */
-    { 0.0, 0.0, 0.0 },	/* noise_delta */
-    { 0.0, 0.0, 0.0 },	/* fire_min */
-    { 0.0, 0.0, 0.0 },	/* fire_max */
-
-    {
-	/* fire_m_to_sh */
-	1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0 },
-    {
-	/* fire_sh_to_noise */
-	1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0 },
-    {
-	/* fire_colorspline_mat */
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0 }
+    1.0,		/* noise_h_val */
+    2.0,		/* noise_octaves */
+    -1.0,		/* noise_size */
+    VINITALL(10.0),	/* noise_vscale */
+    VINIT_ZERO,		/* noise_delta */
+    VINIT_ZERO,		/* fire_min */
+    VINIT_ZERO,		/* fire_max */
+    MAT_INIT_IDN,	/* fire_m_to_sh */
+    MAT_INIT_IDN,	/* fire_sh_to_noise */
+    MAT_INIT_ZERO	/* fire_colorspline_mat */
 };
 
-#define SHDR_NULL	((struct fire_specific *)0)
-#define SHDR_O(m)	bu_offsetof(struct fire_specific, m)
-#define SHDR_AO(m)	bu_offsetofarray(struct fire_specific, m)
+
+#define SHDR_NULL ((struct fire_specific *)0)
+#define SHDR_O(m) bu_offsetof(struct fire_specific, m)
+#define SHDR_AO(m) bu_offsetofarray(struct fire_specific, m)
 
 
 /* description of how to parse/print the arguments to the shader
@@ -141,36 +128,37 @@ struct fire_specific fire_defaults = {
  * structure above
  */
 struct bu_structparse fire_print_tab[] = {
-    {"%d",  1, "debug",	SHDR_O(fire_debug),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "flicker",	SHDR_O(fire_flicker),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "stretch",	SHDR_O(fire_stretch),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "lacunarity", SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "H", 	SHDR_O(noise_h_val),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "octaves", 	SHDR_O(noise_octaves),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  3, "scale",	SHDR_O(noise_size),		bu_mm_cvt },
-    {"%f",  3, "vscale",	SHDR_AO(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  3, "delta",	SHDR_AO(noise_delta),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3,  "max",	SHDR_AO(fire_max),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3,  "min",	SHDR_AO(fire_min),		BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%d", 1, "debug",		SHDR_O(fire_debug),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "flicker",	SHDR_O(fire_flicker),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "stretch",	SHDR_O(fire_stretch),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "lacunarity",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "H", 		SHDR_O(noise_h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "octaves", 	SHDR_O(noise_octaves),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "scale",		SHDR_O(noise_size),		bu_mm_cvt, NULL, NULL },
+    {"%f", 3, "vscale",		SHDR_AO(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "delta",		SHDR_AO(noise_delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3,  "max",		SHDR_AO(fire_max),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3,  "min",		SHDR_AO(fire_min),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",   0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 
 };
 struct bu_structparse fire_parse_tab[] = {
-    {"%p",	bu_byteoffset(fire_print_tab[0]), "fire_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "f",		SHDR_O(fire_flicker),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "st",	SHDR_O(fire_stretch),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "l",		SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "H", 	SHDR_O(noise_h_val),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "o", 	SHDR_O(noise_octaves),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "s",		SHDR_O(noise_size),		bu_mm_cvt },
-    {"%f",  3, "v",		SHDR_AO(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  3, "vs",	SHDR_AO(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  3, "d",		SHDR_AO(noise_delta),		BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%p", bu_byteoffset(fire_print_tab[0]), "fire_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "f",	SHDR_O(fire_flicker),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "st",	SHDR_O(fire_stretch),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "l",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "H", 	SHDR_O(noise_h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "o", 	SHDR_O(noise_octaves),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "s",	SHDR_O(noise_size),		bu_mm_cvt, NULL, NULL },
+    {"%f", 3, "v",	SHDR_AO(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "vs",	SHDR_AO(noise_vscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "d",	SHDR_AO(noise_delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
-HIDDEN int	fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), fire_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	fire_print(register struct region *rp, char *dp), fire_free(char *cp);
+
+HIDDEN int fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), fire_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void fire_print(register struct region *rp, char *dp), fire_free(char *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -187,6 +175,7 @@ struct mfuncs fire_mfuncs[] = {
     {0,		(char *)0,	0,		0,		0,
      0,		0,		0,		0 }
 };
+
 
 const double flame_colors[18][3] = {
     {0.0, 0.0, 0.0},
@@ -209,25 +198,26 @@ const double flame_colors[18][3] = {
     {1.0, 0.945, 0.902}
 };
 
-/*	F I R E _ S E T U P
+
+/* F I R E _ S E T U P
  *
- *	This routine is called (at prep time)
- *	once for each region which uses this shader.
- *	Any shader-specific initialization should be done here.
+ * This routine is called (at prep time)
+ * once for each region which uses this shader.
+ * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
-    /* pointer to reg_udata in *rp */
+/* pointer to reg_udata in *rp */
 
-    /* New since 4.4 release */
+/* New since 4.4 release */
 {
-    register struct fire_specific	*fire_sp;
+    register struct fire_specific *fire_sp;
 
     /* check the arguments */
     RT_CHECK_RTI(rtip);
-    BU_CK_VLS( matparm );
+    BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
 
 
@@ -235,17 +225,17 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
 	bu_log("fire_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT( fire_sp, fire_specific );
+    BU_GETSTRUCT(fire_sp, fire_specific);
     *dpp = (char *)fire_sp;
 
     /* initialize the default values for the shader */
     memcpy(fire_sp, &fire_defaults, sizeof(struct fire_specific));
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse( matparm, fire_parse_tab, (char *)fire_sp ) < 0 )
+    if (bu_struct_parse(matparm, fire_parse_tab, (char *)fire_sp) < 0)
 	return -1;
 
-    if (fire_sp->noise_size != -1.0) {
+    if (!EQUAL(fire_sp->noise_size, -1.0)) {
 	VSETALL(fire_sp->noise_vscale, fire_sp->noise_size);
     }
 
@@ -255,7 +245,7 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
      * We need to get a matrix to perform the appropriate transform(s).
      */
 
-    db_shader_mat(fire_sp->fire_m_to_sh, rtip, rp, fire_sp->fire_min,
+    rt_shader_mat(fire_sp->fire_m_to_sh, rtip, rp, fire_sp->fire_min,
 		  fire_sp->fire_max, &rt_uniresource);
 
     /* Build matrix to map shader space to noise space.
@@ -271,97 +261,101 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
     rt_dspline_matrix(fire_sp->fire_colorspline_mat, "Catmull", 0.5, 0.0);
 
 
-    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
-	bu_struct_print( " FIRE Parameters:", fire_print_tab, (char *)fire_sp );
-	bn_mat_print( "m_to_sh", fire_sp->fire_m_to_sh );
-	bn_mat_print( "sh_to_noise", fire_sp->fire_sh_to_noise );
-	bn_mat_print( "colorspline", fire_sp->fire_colorspline_mat );
+    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug) {
+	bu_struct_print(" FIRE Parameters:", fire_print_tab, (char *)fire_sp);
+	bn_mat_print("m_to_sh", fire_sp->fire_m_to_sh);
+	bn_mat_print("sh_to_noise", fire_sp->fire_sh_to_noise);
+	bn_mat_print("colorspline", fire_sp->fire_colorspline_mat);
     }
 
     return 1;
 }
 
+
 /*
- *	F I R E _ P R I N T
+ * F I R E _ P R I N T
  */
 HIDDEN void
 fire_print(register struct region *rp, char *dp)
 {
-    bu_struct_print( rp->reg_name, fire_print_tab, (char *)dp );
+    bu_struct_print(rp->reg_name, fire_print_tab, (char *)dp);
 }
 
+
 /*
- *	F I R E _ F R E E
+ * F I R E _ F R E E
  */
 HIDDEN void
 fire_free(char *cp)
 {
-    bu_free( cp, "fire_specific" );
+    bu_free(cp, "fire_specific");
 }
 
+
 /*
- *	F I R E _ R E N D E R
+ * F I R E _ R E N D E R
  *
- *	This is called (from viewshade() in shade.c) once for each hit point
- *	to be shaded.  The purpose here is to fill in values in the shadework
- *	structure.
+ * This is called (from viewshade() in shade.c) once for each hit point
+ * to be shaded.  The purpose here is to fill in values in the shadework
+ * structure.
  */
 int
 fire_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 
 
-    /* defined in material.h */
-    /* ptr to the shader-specific struct */
+/* defined in material.h */
+/* ptr to the shader-specific struct */
 {
-#define DEBUG_SPACE_PRINT(str, i_pt, o_pt) \
-	if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) { \
-		bu_log("fire_render() %s space \n", str); \
-		bu_log("fire_render() i_pt(%g %g %g)\n", V3ARGS(i_pt) ); \
-		bu_log("fire_render() o_pt(%g %g %g)\n", V3ARGS(o_pt) ); \
-	}
+#define DEBUG_SPACE_PRINT(str, i_pt, o_pt)			\
+    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug) {		\
+	bu_log("fire_render() %s space \n", str);		\
+	bu_log("fire_render() i_pt(%g %g %g)\n", V3ARGS(i_pt)); \
+	bu_log("fire_render() o_pt(%g %g %g)\n", V3ARGS(o_pt)); \
+    }
 
-#define	SHADER_TO_NOISE(n_pt, sh_pt, fire_sp, zdelta) { \
-	point_t tmp_pt; \
-	tmp_pt[X] = sh_pt[X]; \
-	tmp_pt[Y] = sh_pt[Y]; \
-	if ( ! NEAR_ZERO(fire_sp->fire_stretch, SQRT_SMALL_FASTF) ) \
-		tmp_pt[Z] = exp( (sh_pt[Z]+0.125) * -fire_sp->fire_stretch ); \
-	else \
-		tmp_pt[Z] = sh_pt[Z]; \
-	MAT4X3PNT(n_pt, fire_sp->fire_sh_to_noise, tmp_pt); \
-	n_pt[Z] += zdelta; \
-}
+#define SHADER_TO_NOISE(n_pt, sh_pt, fire_sp, zdelta) {			\
+	point_t tmp_pt;							\
+	tmp_pt[X] = sh_pt[X];						\
+	tmp_pt[Y] = sh_pt[Y];						\
+	if (! NEAR_ZERO(fire_sp->fire_stretch, SQRT_SMALL_FASTF))	\
+	    tmp_pt[Z] = exp((sh_pt[Z]+0.125) * -fire_sp->fire_stretch); \
+	else								\
+	    tmp_pt[Z] = sh_pt[Z];					\
+	MAT4X3PNT(n_pt, fire_sp->fire_sh_to_noise, tmp_pt);		\
+	n_pt[Z] += zdelta;						\
+    }
+
 
     register struct fire_specific *fire_sp =
 	(struct fire_specific *)dp;
-    point_t	m_i_pt, m_o_pt;	/* model space in/out points */
+    point_t m_i_pt, m_o_pt;	/* model space in/out points */
     point_t sh_i_pt, sh_o_pt;	/* shader space in/out points */
     point_t noise_i_pt, noise_o_pt;	/* shader space in/out points */
     point_t noise_pt;
-    point_t	color;
-    vect_t	noise_r_dir;
-    double	noise_r_thick;
-    int	i;
-    double	samples_per_unit_noise;
-    double	noise_dist_per_sample;
-    point_t	shader_pt;
-    vect_t	shader_r_dir;
-    double	shader_r_thick;
-    double	shader_dist_per_sample;
-    double	noise_zdelta;
+    point_t color;
+    vect_t noise_r_dir;
+    double noise_r_thick;
+    int i;
+    double samples_per_unit_noise;
+    double noise_dist_per_sample;
+    point_t shader_pt;
+    vect_t shader_r_dir;
+    double shader_r_thick;
+    double shader_dist_per_sample;
+    double noise_zdelta;
 
-    int	samples;
-    double	dist;
-    double	noise_val;
-    double	lumens;
+    int samples;
+    double dist;
+    double noise_val;
+    double lumens;
 
     /* check the validity of the arguments we got */
     RT_AP_CHECK(ap);
     RT_CHECK_PT(pp);
     CK_fire_SP(fire_sp);
 
-    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
-/*		bu_struct_print( "fire_render Parameters:", fire_print_tab, (char *)fire_sp ); */
+    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug) {
+/* bu_struct_print("fire_render Parameters:", fire_print_tab, (char *)fire_sp); */
 	bu_log("fire_render()\n");
     }
     /* If we are performing the shading in "region" space, we must
@@ -390,9 +384,9 @@ fire_render(struct application *ap, struct partition *pp, struct shadework *swp,
 
     noise_r_thick = MAGNITUDE(noise_r_dir);
 
-    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
+    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug) {
 	bu_log("fire_render() noise_r_dir (%g %g %g)\n",
-	       V3ARGS(noise_r_dir) );
+	       V3ARGS(noise_r_dir));
 	bu_log("fire_render() noise_r_thick %g\n", noise_r_thick);
     }
 
@@ -416,7 +410,7 @@ fire_render(struct application *ap, struct partition *pp, struct shadework *swp,
 
     if (samples < 1) samples = 1;
 
-    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
+    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug) {
 	bu_log("samples:%d\n", samples);
 	bu_log("samples_per_unit_noise %g\n", samples_per_unit_noise);
 	bu_log("noise_dist_per_sample %g\n", noise_dist_per_sample);
@@ -443,7 +437,7 @@ fire_render(struct application *ap, struct partition *pp, struct shadework *swp,
 	noise_val = bn_noise_turb(noise_pt, fire_sp->noise_h_val,
 				  fire_sp->noise_lacunarity, fire_sp->noise_octaves);
 
-	if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug )
+	if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug)
 	    bu_log("bn_noise_turb(%g %g %g) = %g\n",
 		   V3ARGS(noise_pt),
 		   noise_val);
@@ -453,28 +447,28 @@ fire_render(struct application *ap, struct partition *pp, struct shadework *swp,
 	 * value by the height in shader space
 	 */
 
-	if ( NEAR_ZERO(fire_sp->fire_stretch, SQRT_SMALL_FASTF) )
+	if (NEAR_ZERO(fire_sp->fire_stretch, SQRT_SMALL_FASTF))
 	    lumens += noise_val * 0.025;
 	else {
 	    register double t;
 	    t = lumens;
-	    lumens += noise_val * 0.025 *  (1.0 -shader_pt[Z]);
-	    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug )
+	    lumens += noise_val * 0.025 * (1.0 -shader_pt[Z]);
+	    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug)
 		bu_log("lumens:%g = %g + %g * %g\n",
 		       lumens, t, noise_val,
-		       0.025 * (1.0 - shader_pt[Z]) );
+		       0.025 * (1.0 - shader_pt[Z]));
 
 	}
 	if (lumens >= 1.0) {
 	    lumens = 1.0;
-	    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug )
+	    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug)
 		bu_log("early exit from lumens loop\n");
 	    break;
 	}
 
     }
 
-    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug )
+    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug)
 	bu_log("lumens = %g\n", lumens);
 
     if (lumens < 0.0) lumens = 0.0;
@@ -485,14 +479,15 @@ fire_render(struct application *ap, struct partition *pp, struct shadework *swp,
 		 18, 3, lumens);
 
     VMOVE(swp->sw_color, color);
-/*	VSETALL(swp->sw_basecolor, 1.0);*/
+/* VSETALL(swp->sw_basecolor, 1.0);*/
 
     swp->sw_transmit = 1.0 - (lumens * 4.);
-    if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
-	(void)rr_render( ap, pp, swp );
+    if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
+	(void)rr_render(ap, pp, swp);
 
     return 1;
 }
+
 
 /*
  * Local Variables:

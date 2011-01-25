@@ -530,10 +530,10 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	if (BU_STR_EQUAL(bu_vls_addr(&newval), "Yes") || BU_STR_EQUAL(bu_vls_addr(&newval), "R") || BU_STR_EQUAL(bu_vls_addr(&newval), "1") ||
 	    BU_STR_EQUAL(bu_vls_addr(&newval), "Y") || BU_STR_EQUAL(bu_vls_addr(&newval), "y")) {
 	    comb->region_flag = 1;
-	    dp->d_flags |= DIR_REGION;
+	    dp->d_flags |= RT_DIR_REGION;
 	} else {
 	    comb->region_flag = 0;
-	    dp->d_flags &= ~DIR_REGION;
+	    dp->d_flags &= ~RT_DIR_REGION;
 	}
 
 	/* region_id */

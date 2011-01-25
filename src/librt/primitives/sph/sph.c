@@ -80,7 +80,7 @@ struct sph_specific {
  * !0 Error in description
  *
  * Implicit return -
- * A struct sph_specific is created, and it's address is stored in
+ * A struct sph_specific is created, and its address is stored in
  * stp->st_specific for use by rt_sph_shot().
  * If the ELL is really a SPH, stp->st_id is modified to ID_SPH.
  */

@@ -79,7 +79,7 @@ main(argc, argv)
     int	argc;
     char	*argv[];
 {
-    FILE *fpf;	/* final output file */
+    FILE *fpf = NULL;	/* final output file */
     point_t		model_center;
     vect_t		view_dir;
     vect_t 		model_diag;
@@ -175,12 +175,12 @@ main(argc, argv)
 
     if ( !output_file ) {
 	bu_exit(1, "No output file specified!\n" );
-    } else {
-	/* Open output file */
-	if ( (fpf=fopen( output_file, "wb+" )) == NULL ) {
-	    perror( argv[0] );
-	    bu_exit(1, "Cannot open output file (%s) for writing\n", output_file );
-	}
+    }
+
+    /* Open output file */
+    if ( (fpf=fopen( output_file, "wb+" )) == NULL ) {
+	perror( argv[0] );
+	bu_exit(1, "Cannot open output file (%s) for writing\n", output_file );
     }
 
     /* Open temporary ouitput file */
@@ -298,7 +298,10 @@ main(argc, argv)
     /* copy the temporary file to the final file */
     rewind( fp );
     while ( (read_size=fread( buf, 1, COPY_BUF_SIZE, fp ) ) ) {
-	fwrite( buf, read_size, 1, fpf );
+	size_t ret;
+	ret = fwrite( buf, read_size, 1, fpf );
+	if (ret < 1)
+	    perror("fwrite");
     }
 
     fclose( fpf );
@@ -369,6 +372,92 @@ nmg_to_nff(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
 }
 
+
+static void
+process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp)
+{
+    if (!BU_SETJUMP) {
+	/* try */
+
+	/* Write the region to the NFF file */
+	nmg_to_nff( r, pathp, tsp->ts_regionid, tsp->ts_gmater );
+
+    } else {
+	/* catch */
+
+	char *sofar;
+
+	sofar = db_path_to_string(pathp);
+	bu_log( "FAILED in triangulator: %s\n", sofar );
+	bu_free( (char *)sofar, "sofar" );
+
+	/* Sometimes the NMG library adds debugging bits when
+	 * it detects an internal error, before bombing out.
+	 */
+	rt_g.NMG_debug = NMG_debug;	/* restore mode */
+
+	/* Release any intersector 2d tables */
+	nmg_isect2d_final_cleanup();
+
+	/* Get rid of (m)any other intermediate structures */
+	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
+	    nmg_km(*tsp->ts_m);
+	} else {
+	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	}
+
+	/* Now, make a new, clean model structure for next pass. */
+	*tsp->ts_m = nmg_mm();
+    }  BU_UNSETJUMP;
+}
+
+
+static union tree *
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
+{
+    union tree *ret_tree = TREE_NULL;
+
+    /* Begin bomb protection */
+    if ( !BU_SETJUMP ) {
+	/* try */
+
+	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+
+    } else  {
+	/* catch */
+	char *name = db_path_to_string( pathp );
+
+	/* Error, bail out */
+	bu_log( "conversion of %s FAILED!\n", name );
+
+	/* Sometimes the NMG library adds debugging bits when
+	 * it detects an internal error, before before bombing out.
+	 */
+	rt_g.NMG_debug = NMG_debug;/* restore mode */
+
+	/* Release any intersector 2d tables */
+	nmg_isect2d_final_cleanup();
+
+	/* Release the tree memory & input regions */
+	db_free_tree(curtree, &rt_uniresource);/* Does an nmg_kr() */
+
+	/* Get rid of (m)any other intermediate structures */
+	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
+	    nmg_km(*tsp->ts_m);
+	} else {
+	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	}
+
+	bu_free( name, "db_path_to_string" );
+	/* Now, make a new, clean model structure for next pass. */
+	*tsp->ts_m = nmg_mm();
+    } BU_UNSETJUMP;/* Relinquish the protection */
+
+    return ret_tree;
+}
+
+
 /*
  *			D O _ R E G I O N _ E N D
  *
@@ -406,47 +495,10 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
     regions_tried++;
 
-    /* Begin bomb protection */
-    if ( ncpu == 1 ) {
-	if ( BU_SETJUMP )  {
-	    /* Error, bail out */
-	    char *sofar;
-	    BU_UNSETJUMP;		/* Relinquish the protection */
-
-	    sofar = db_path_to_string(pathp);
-	    bu_log( "FAILED in Boolean evaluation: %s\n", sofar );
-	    fprintf(fpe, "Failed Bool. Eval.: %s\n", sofar);
-	    fflush(fpe);
-	    bu_free( (char *)sofar, "sofar" );
-
-	    /* Sometimes the NMG library adds debugging bits when
-	     * it detects an internal error, before bombing out.
-	     */
-	    rt_g.NMG_debug = NMG_debug;	/* restore mode */
-
-	    /* Release any intersector 2d tables */
-	    nmg_isect2d_final_cleanup();
-
-	    /* Release the tree memory & input regions */
-
-	    /* FIXME: memory leak? */
-	    /* db_free_tree(curtree);*/		/* Does an nmg_kr() */
-
-	    /* Get rid of (m)any other intermediate structures */
-	    if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )  {
-		nmg_km(*tsp->ts_m);
-	    } else {
-		bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-	    }
-
-	    /* Now, make a new, clean model structure for next pass. */
-	    *tsp->ts_m = nmg_mm();
-	    goto out;
-	}
-    }
     printf("Attempting to process region %s\n", db_path_to_string( pathp ));
     fflush(stdout);
-    ret_tree = nmg_booltree_evaluate( curtree, tsp->ts_tol, &rt_uniresource );	/* librt/nmg_bool.c */
+
+    ret_tree = process_boolean(curtree, tsp, pathp);
 
     if ( ret_tree )
 	r = ret_tree->tr_d.td_r;
@@ -497,41 +549,6 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
 	if ( !empty_region && !empty_model )
 	{
-	    if ( BU_SETJUMP )
-	    {
-		char *sofar;
-
-		BU_UNSETJUMP;
-
-		sofar = db_path_to_string(pathp);
-		bu_log( "FAILED in triangulator: %s\n", sofar );
-		fprintf(fpe, "Failed in triangulator: %s\n", sofar);
-		fflush(fpe);
-		bu_free( (char *)sofar, "sofar" );
-
-		/* Sometimes the NMG library adds debugging bits when
-		 * it detects an internal error, before bombing out.
-		 */
-		rt_g.NMG_debug = NMG_debug;	/* restore mode */
-
-		/* Release any intersector 2d tables */
-		nmg_isect2d_final_cleanup();
-
-		/* Get rid of (m)any other intermediate structures */
-		if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
-		{
-		    nmg_km(*tsp->ts_m);
-		}
-		else
-		{
-		    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-		}
-
-		/* Now, make a new, clean model structure for next pass. */
-		*tsp->ts_m = nmg_mm();
-		goto out;
-	    }
-
 	    region_name = db_path_to_string( pathp );
 	    fprintf( fp, "# %s\n", region_name);
 	    bu_free( region_name, "region name" );
@@ -540,19 +557,15 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	    fprintf( fp, "f %g %g %g 0.5 0.5 4.81884 0 0\n",
 		     V3ARGS( tsp->ts_mater.ma_color ) );
 
-	    /* Write the region to the NFF file */
-	    nmg_to_nff( r, pathp, tsp->ts_regionid, tsp->ts_gmater );
+	    process_triangulation(r, pathp, tsp);
 
 	    regions_written++;
-
-	    BU_UNSETJUMP;
 	}
 
 	if ( !empty_model )
 	    nmg_kr( r );
     }
 
- out:
     /*
      *  Dispose of original tree, so that all associated dynamic
      *  memory is released now, not at the end of all regions.

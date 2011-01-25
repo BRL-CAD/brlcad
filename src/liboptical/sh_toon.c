@@ -35,8 +35,9 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 #include "light.h"
+
 
 #define TOON_MAGIC 0x746F6F6E    /* make this a unique number for each shader */
 #define CK_TOON_SP(_p) BU_CKMAG(_p, TOON_MAGIC, "toon_specific")
@@ -46,18 +47,20 @@
  * to any particular use of the shader.
  */
 struct toon_specific {
-    long	magic;	/* magic # for memory validity check, must come 1st */
+    long magic;	/* magic # for memory validity check, must come 1st */
 };
 
+
 /* The default values for the variables in the shader specific structure */
-const static
+static const
 struct toon_specific toon_defaults = {
     TOON_MAGIC
 };
 
-#define SHDR_NULL	((struct toon_specific *)0)
-#define SHDR_O(m)	bu_offsetof(struct toon_specific, m)
-#define SHDR_AO(m)	bu_offsetofarray(struct toon_specific, m)
+
+#define SHDR_NULL ((struct toon_specific *)0)
+#define SHDR_O(m) bu_offsetof(struct toon_specific, m)
+#define SHDR_AO(m) bu_offsetofarray(struct toon_specific, m)
 
 
 /* description of how to parse/print the arguments to the shader
@@ -65,16 +68,17 @@ struct toon_specific toon_defaults = {
  * structure above
  */
 struct bu_structparse toon_print_tab[] = {
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 
 };
 struct bu_structparse toon_parse_tab[] = {
-    {"%p",	bu_byteoffset(toon_print_tab[0]), "toon_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%p",	bu_byteoffset(toon_print_tab[0]), "toon_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
-HIDDEN int	toon_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), toon_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	toon_print(register struct region *rp, char *dp), toon_free(char *cp);
+
+HIDDEN int toon_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), toon_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void toon_print(register struct region *rp, char *dp), toon_free(char *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -93,79 +97,80 @@ struct mfuncs toon_mfuncs[] = {
 };
 
 
-/*	T O O N _ S E T U P
+/* T O O N _ S E T U P
  *
- *	This routine is called (at prep time)
- *	once for each region which uses this shader.
- *	Any shader-specific initialization should be done here.
+ * This routine is called (at prep time)
+ * once for each region which uses this shader.
+ * Any shader-specific initialization should be done here.
  *
- * 	Returns:
- *	1	success
- *	0	success, but delete region
- *	-1	failure
+ * Returns:
+ * 1 success
+ * 0 success, but delete region
+ * -1 failure
  */
 HIDDEN int
-toon_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+toon_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
-    /* pointer to reg_udata in *rp */
+/* pointer to reg_udata in *rp */
 
-    /* New since 4.4 release */
+/* New since 4.4 release */
 {
-    register struct toon_specific	*toon_sp;
-    mat_t	tmp;
-    vect_t	bb_min, bb_max, v_tmp;
+    register struct toon_specific *toon_sp;
 
     /* check the arguments */
     RT_CHECK_RTI(rtip);
-    BU_CK_VLS( matparm );
+    BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
 
     if (rdebug&RDEBUG_SHADE)
 	bu_log("toon_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT( toon_sp, toon_specific );
+    BU_GETSTRUCT(toon_sp, toon_specific);
     *dpp = (char *)toon_sp;
 
     /* initialize the default values for the shader */
     memcpy(toon_sp, &toon_defaults, sizeof(struct toon_specific));
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse( matparm, toon_parse_tab, (char *)toon_sp ) < 0 )
+    if (bu_struct_parse(matparm, toon_parse_tab, (char *)toon_sp) < 0)
 	return -1;
 
     if (rdebug&RDEBUG_SHADE) {
-	bu_struct_print( " Parameters:", toon_print_tab, (char *)toon_sp );
+	bu_struct_print(" Parameters:", toon_print_tab, (char *)toon_sp);
     }
 
     return 1;
 }
 
+
 /*
- *	T O O N _ P R I N T
+ * T O O N _ P R I N T
  */
 HIDDEN void
 toon_print(register struct region *rp, char *dp)
 {
-    bu_struct_print( rp->reg_name, toon_print_tab, (char *)dp );
+    bu_struct_print(rp->reg_name, toon_print_tab, (char *)dp);
 }
 
+
 /*
- *	T O O N _ F R E E
+ * T O O N _ F R E E
  */
 HIDDEN void
 toon_free(char *cp)
 {
-    bu_free( cp, "toon_specific" );
+    bu_free(cp, "toon_specific");
 }
 
+
 /*
- *	T O O N _ R E N D E R
+ * T O O N _ R E N D E R
  *
- *	This is called (from viewshade() in shade.c) once for each hit point
- *	to be shaded.  The purpose here is to fill in values in the shadework
- *	structure.
+ * This is called (from viewshade() in shade.c) once for each hit point
+ * to be shaded.  The purpose here is to fill in values in the shadework
+ * structure.
  */
 int
 toon_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
@@ -181,7 +186,7 @@ toon_render(struct application *ap, struct partition *pp, struct shadework *swp,
     CK_TOON_SP(toon_sp);
 
     if (rdebug&RDEBUG_SHADE)
-	bu_struct_print( "toon_render Parameters:", toon_print_tab, (char *)toon_sp );
+	bu_struct_print("toon_render Parameters:", toon_print_tab, (char *)toon_sp);
 
     /* if surface normal is nearly orthogonal to the ray, make a black line */
     if (VDOT(swp->sw_hit.hit_normal, ap->a_inv_dir) >= 0.8) {
@@ -194,14 +199,14 @@ toon_render(struct application *ap, struct partition *pp, struct shadework *swp,
     light_obs(ap, swp, MFI_HIT);
 
     /* Consider effects of each light source */
-    for ( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
-	if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
+    for (i=ap->a_rt_i->rti_nlights-1; i>=0; i--) {
+	if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL)
 	    continue;
 
 	cosi = VDOT(swp->sw_hit.hit_normal, swp->sw_tolight);
-	if(cosi <= 0.0) scale = 0.0;
-	else if(cosi <= 0.5) scale = 0.5;
-	else if(cosi <= 0.8) scale = 0.8;
+	if (cosi <= 0.0) scale = 0.0;
+	else if (cosi <= 0.5) scale = 0.5;
+	else if (cosi <= 0.8) scale = 0.8;
 	else scale = 1.0;
 	VSCALE(swp->sw_color, swp->sw_color, scale);
 	return 1;
@@ -210,10 +215,11 @@ toon_render(struct application *ap, struct partition *pp, struct shadework *swp,
     /* no paths to light source, so just paint it black */
     VSETALL(swp->sw_color, 0);
 
-    if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
-	(void)rr_render( ap, pp, swp );
+    if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
+	(void)rr_render(ap, pp, swp);
     return 1;
 }
+
 
 /*
  * Local Variables:

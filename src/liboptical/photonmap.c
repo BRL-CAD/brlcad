@@ -26,19 +26,16 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <time.h>
 
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #ifdef HAVE_ALARM
 #  include <signal.h>
 #endif
 
 #include "photonmap.h"
-
-
-#define NRoot(x, y) exp(log(x)/y)	/* Not in Use */
-int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finished_segs);
-void GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, int map, double max_rad, int centog, int min_np);
-void Polar2Euclidian(vect_t Dir, vect_t Normal, double Theta, double Phi);
-void LocatePhotons(struct PhotonSearch *Search, struct PNode *Root);
 
 
 int PM_Activated;
@@ -68,7 +65,9 @@ int HitG, HitB;
 
 
 /* Split so that equal numbers are above and below the splitting plane */
-int FindMedian(struct Photon *List, int Num, int Axis) {
+int
+FindMedian(struct Photon *List, int Num, int Axis)
+{
     int i;
     fastf_t Min, Max, Mean;
 
@@ -89,7 +88,9 @@ int FindMedian(struct Photon *List, int Num, int Axis) {
 
 
 /* Generate a KD-Tree from a Flat Array of Photons */
-void BuildTree(struct Photon *EList, int ESize, struct PNode *Root) {
+void
+BuildTree(struct Photon *EList, int ESize, struct PNode *Root)
+{
     struct Photon *LList, *RList;
     vect_t Min, Max;
     int i, Axis, MedianIndex, LInd, RInd;
@@ -169,13 +170,86 @@ void BuildTree(struct Photon *EList, int ESize, struct PNode *Root) {
 }
 
 
+void
+LocatePhotons(struct PhotonSearch *Search, struct PNode *Root)
+{
+    fastf_t Dist, TDist, angle, MDist;
+    int i, MaxInd, Axis;
+
+    if (!Root)
+	return;
+
+    Axis = Root->P.Axis;
+    Dist = Search->Pos[Axis] - Root->P.Pos[Axis];
+
+    if (Dist < 0) {
+	/* Left of plane - search left subtree first */
+	LocatePhotons(Search, Root->L);
+	if (Dist*Dist < Search->RadSq)
+	    LocatePhotons(Search, Root->R);
+    } else {
+	/* Right of plane - search right subtree first */
+	LocatePhotons(Search, Root->R);
+	if (Dist*Dist < Search->RadSq)
+	    LocatePhotons(Search, Root->L);
+    }
+
+#if 0
+    /* HEAP, Find Distance between Root Photon and Search->Pos */
+    angle = VDOT(Search->Normal, Root->P.Normal);
+    Node.P = Root->P;
+    Node.Dist = (Root->P.Pos[0] - Search->Pos[0])*(Root->P.Pos[0] - Search->Pos[0]) + (Root->P.Pos[1] - Search->Pos[1])*(Root->P.Pos[1] - Search->Pos[1]) + (Root->P.Pos[2] - Search->Pos[2])*(Root->P.Pos[2] - Search->Pos[2]);
+    if (Node.Dist < Search->RadSq && angle > GPM_ATOL) {
+	/* Check that Result is within Radius and Angular Tolerance */
+	if (Search->Found < Search->Max) {
+	    Push(Search, Node);
+	} else {
+	    if (Node.Dist < Search->List[0].Dist) {
+		Pop(Search);
+		Push(Search, Node);
+	    }
+	}
+    }
+
+#else
+
+    /* REPLACE, Find Distance between Root Photon and NP->Pos */
+    Dist = (Root->P.Pos[0] - Search->Pos[0])*(Root->P.Pos[0] - Search->Pos[0]) + (Root->P.Pos[1] - Search->Pos[1])*(Root->P.Pos[1] - Search->Pos[1]) + (Root->P.Pos[2] - Search->Pos[2])*(Root->P.Pos[2] - Search->Pos[2]);
+
+    angle = VDOT(Search->Normal, Root->P.Normal);
+    if (Dist < Search->RadSq && angle > GPM_ATOL) {
+	/* Check that Result is within Radius and Angular Tolerance */
+	/* if (Dist < NP->RadSq) {*/
+	if (Search->Found < Search->Max) {
+	    Search->List[Search->Found++].P = Root->P;
+	} else {
+	    MDist = (Search->Pos[0] - Search->List[0].P.Pos[0])*(Search->Pos[0] - Search->List[0].P.Pos[0])+(Search->Pos[1] - Search->List[0].P.Pos[1])*(Search->Pos[1] - Search->List[0].P.Pos[1])+(Search->Pos[2] - Search->List[0].P.Pos[2])*(Search->Pos[2] - Search->List[0].P.Pos[2]);
+	    MaxInd = 0;
+	    for (i = 1; i < Search->Found; i++) {
+		TDist = (Search->Pos[0] - Search->List[i].P.Pos[0])*(Search->Pos[0] - Search->List[i].P.Pos[0])+(Search->Pos[1] - Search->List[i].P.Pos[1])*(Search->Pos[1] - Search->List[i].P.Pos[1])+(Search->Pos[2] - Search->List[i].P.Pos[2])*(Search->Pos[2] - Search->List[i].P.Pos[2]);
+		if (TDist > MDist) {
+		    MDist = TDist;
+		    MaxInd = i;
+		}
+	    }
+
+	    if (Dist < MDist)
+		Search->List[MaxInd].P = Root->P;
+	}
+    }
+#endif
+}
+
+
 /* Places photon into flat array that wwill form the final kd-tree. */
-void Store(point_t Pos, vect_t Dir, vect_t Normal, int Map) {
+void
+Store(point_t Pos, vect_t Dir, vect_t Normal, int map)
+{
     struct PhotonSearch Search;
     int i;
 
     /* If Importance Mapping is enabled, Check to see if the Photon is in an area that is considered important, if not then disregard it */
-    if (Map != PM_IMPORTANCE && PMap[PM_IMPORTANCE]->StoredPhotons) {
+    if (map != PM_IMPORTANCE && PMap[PM_IMPORTANCE]->StoredPhotons) {
 	/* Do a KD-Tree lookup and if the photon is within a distance of sqrt(ScaleFactor) from the nearest importon then keep it, otherwise discard it */
 
 	Search.RadSq = ScaleFactor;
@@ -199,36 +273,38 @@ void Store(point_t Pos, vect_t Dir, vect_t Normal, int Map) {
     }
 
 
-    if (PMap[Map]->StoredPhotons < PMap[Map]->MaxPhotons) {
+    if (PMap[map]->StoredPhotons < PMap[map]->MaxPhotons) {
 	HitG++;
 	for (i = 0; i < 3; i++) {
 	    /* Store Position, Direction, and Power of Photon */
-	    Emit[Map][PMap[Map]->StoredPhotons].Pos[i] = Pos[i];
-	    Emit[Map][PMap[Map]->StoredPhotons].Dir[i] = Dir[i];
-	    Emit[Map][PMap[Map]->StoredPhotons].Normal[i] = Normal[i];
-	    Emit[Map][PMap[Map]->StoredPhotons].Power[i] = CurPh.Power[i];
+	    Emit[map][PMap[map]->StoredPhotons].Pos[i] = Pos[i];
+	    Emit[map][PMap[map]->StoredPhotons].Dir[i] = Dir[i];
+	    Emit[map][PMap[map]->StoredPhotons].Normal[i] = Normal[i];
+	    Emit[map][PMap[map]->StoredPhotons].Power[i] = CurPh.Power[i];
 	}
-	PMap[Map]->StoredPhotons++;
+	PMap[map]->StoredPhotons++;
 	/*
-	  if (Map != PM_IMPORTANCE && PMap[PM_IMPORTANCE]->StoredPhotons < PMap[PM_IMPORTANCE]->MaxPhotons)
-	  bu_log("Map2: %d, Size: %d\n", Map, PMap[Map]->StoredPhotons);
+	  if (map != PM_IMPORTANCE && PMap[PM_IMPORTANCE]->StoredPhotons < PMap[PM_IMPORTANCE]->MaxPhotons)
+	  bu_log("Map2: %d, Size: %d\n", map, PMap[map]->StoredPhotons);
 	*/
 	/*
-	  if (Map == PM_IMPORTANCE)
-	  bu_log("Map: %d, Size: %d, [%.3f, %.3f, %.3f] [%.3f, %.3f, %.3f]\n", Map, PMap[Map]->StoredPhotons, Pos[0], Pos[1], Pos[2], CurPh.Power[0], CurPh.Power[1], CurPh.Power[2]);
+	  if (map == PM_IMPORTANCE)
+	  bu_log("Map: %d, Size: %d, [%.3f, %.3f, %.3f] [%.3f, %.3f, %.3f]\n", map, PMap[map]->StoredPhotons, Pos[0], Pos[1], Pos[2], CurPh.Power[0], CurPh.Power[1], CurPh.Power[2]);
 	*/
     }
 
     /*
-      bu_log("[%d][%d][%.3f, %.3f, %.3f]\n", Map, PMap[Map]->StoredPhotons, CurPh.Power[0], CurPh.Power[1], CurPh.Power[2]);
-      if (!(PMap[Map]->StoredPhotons % 64))
-      bu_log("[%d][%d][%.3f, %.3f, %.3f]\n", Map, PMap[Map]->StoredPhotons, Pos[0], Pos[1], Pos[2]);
+      bu_log("[%d][%d][%.3f, %.3f, %.3f]\n", map, PMap[map]->StoredPhotons, CurPh.Power[0], CurPh.Power[1], CurPh.Power[2]);
+      if (!(PMap[map]->StoredPhotons % 64))
+      bu_log("[%d][%d][%.3f, %.3f, %.3f]\n", map, PMap[map]->StoredPhotons, Pos[0], Pos[1], Pos[2]);
     */
 }
 
 
 /* Compute a specular reflection */
-void SpecularReflect(vect_t normal, vect_t rdir) {
+void
+SpecularReflect(vect_t normal, vect_t rdir)
+{
     vect_t d;
     fastf_t dot;
 
@@ -245,7 +321,9 @@ void SpecularReflect(vect_t normal, vect_t rdir) {
 
 
 /* Compute a random reflected diffuse direction */
-void DiffuseReflect(vect_t normal, vect_t rdir) {
+void
+DiffuseReflect(vect_t normal, vect_t rdir)
+{
     /* Allow Photons to get a random direction at most 60 degrees to the normal */
     do {
 #ifndef HAVE_DRAND48
@@ -263,7 +341,9 @@ void DiffuseReflect(vect_t normal, vect_t rdir) {
 
 
 /* Compute refracted ray given Incident Ray, Normal, and 2 refraction indices */
-int Refract(vect_t I, vect_t N, fastf_t n1, fastf_t n2) {
+int
+Refract(vect_t I, vect_t N, fastf_t n1, fastf_t n2)
+{
     fastf_t n, c1, c2, radicand;
     vect_t t, r;
 
@@ -284,7 +364,9 @@ int Refract(vect_t I, vect_t N, fastf_t n1, fastf_t n2) {
 }
 
 
-int CheckMaterial(char *cmp, char *MS) {
+int
+CheckMaterial(char *cmp, char *MS)
+{
     size_t i;
 
     if (MS) {
@@ -299,7 +381,9 @@ int CheckMaterial(char *cmp, char *MS) {
 
 
 /* This function parses the material string to obtain specular and refractive values */
-void GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit) {
+void
+GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
+{
     struct phong_specific *phong_sp;
     struct bu_vls matparm;
 
@@ -382,12 +466,19 @@ void GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit) {
 }
 
 
-static fastf_t MaxFloat(fastf_t a, fastf_t b, fastf_t c) {
+static fastf_t
+MaxFloat(fastf_t a, fastf_t b, fastf_t c)
+{
     return a > b ? a > c ? a : c : b > c ? b : c;
 }
 
 
-int HitRef(struct application *ap, struct partition *PartHeadp, struct seg *finished_segs) {
+/* break PHit <-> HitRef cycle */
+int PHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(finished_segs));
+
+int
+HitRef(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(finished_segs))
+{
     struct partition *part;
     vect_t pt, normal, spec;
     fastf_t refi, transmit;
@@ -431,7 +522,9 @@ int HitRef(struct application *ap, struct partition *PartHeadp, struct seg *fini
 
 
 /* Callback for Photon Hit, The 'current' photon is Emit[PMap->StoredPhotons] */
-int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finished_segs) {
+int
+PHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(finished_segs))
+{
     struct partition *part;
     vect_t pt, normal, color, spec, power;
     fastf_t refi, transmit, prob, prob_diff, prob_spec, prob_ref;
@@ -619,7 +712,9 @@ int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finish
 
 
 /* Callback for Photon Miss */
-int PMiss(struct application *ap) {
+int
+PMiss(struct application *UNUSED(ap))
+{
     return 0;
 }
 
@@ -629,19 +724,23 @@ int PMiss(struct application *ap) {
  * Call this function after each light source is processed.
  * This function also handles setting a default power for the photons based
  * on the size of the scene, i.e power of light source */
-void ScalePhotonPower(int Map) {
+void
+ScalePhotonPower(int map)
+{
     int i;
 
-    for (i = 0; i < PMap[Map]->StoredPhotons; i++) {
-	Emit[Map][i].Power[0] *= ScaleFactor/(double)EPS[Map];
-	Emit[Map][i].Power[1] *= ScaleFactor/(double)EPS[Map];
-	Emit[Map][i].Power[2] *= ScaleFactor/(double)EPS[Map];
+    for (i = 0; i < PMap[map]->StoredPhotons; i++) {
+	Emit[map][i].Power[0] *= ScaleFactor/(double)EPS[map];
+	Emit[map][i].Power[1] *= ScaleFactor/(double)EPS[map];
+	Emit[map][i].Power[2] *= ScaleFactor/(double)EPS[map];
     }
 }
 
 
 /* Generate Importons and emit them into the scene from the eye position */
-void EmitImportonsRandom(struct application *ap, point_t eye_pos) {
+void
+EmitImportonsRandom(struct application *ap, point_t eye_pos)
+{
     while (PMap[PM_IMPORTANCE]->StoredPhotons < PMap[PM_IMPORTANCE]->MaxPhotons) {
 	do {
 	    /* Set Ray Direction to application ptr */
@@ -677,7 +776,9 @@ void EmitImportonsRandom(struct application *ap, point_t eye_pos) {
 
 
 /* Emit a photons in a random direction based on a point light */
-void EmitPhotonsRandom(struct application *ap, double ScaleIndirect) {
+void
+EmitPhotonsRandom(struct application *ap, double ScaleIndirect)
+{
     struct light_specific *lp;
     vect_t ldir;
     int i;
@@ -739,7 +840,9 @@ void EmitPhotonsRandom(struct application *ap, double ScaleIndirect) {
 }
 
 
-void SanityCheck(struct PNode *Root, int LR) {
+void
+SanityCheck(struct PNode *Root, int LR)
+{
     if (!Root)
 	return;
 
@@ -749,7 +852,141 @@ void SanityCheck(struct PNode *Root, int LR) {
 }
 
 
-int ICHit(struct application *ap, struct partition *PartHeadp, struct seg *finished_segs) {
+fastf_t
+GaussFilter(fastf_t dist, fastf_t rad)
+{
+    return 0.918 * (1.0 - (1.0 - exp(-1.953*dist*dist/(2.0*rad*rad)))/(1.0 - exp(-1.953)));
+}
+
+
+fastf_t
+ConeFilter(fastf_t dist, fastf_t rad)
+{
+    return 1.0 - dist/rad;
+}
+
+
+void
+GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, int map, double max_rad, int centog, int min_np)
+{
+    struct PhotonSearch Search;
+    int i;
+    fastf_t tmp, dist, Filter, ScaleFilter;
+    vect_t t, Centroid;
+
+
+    irrad[0] = irrad[1] = irrad[2] = 0;
+    if (!PMap[map]->StoredPhotons) return;
+
+    Search.Pos[0] = pos[0];
+    Search.Pos[1] = pos[1];
+    Search.Pos[2] = pos[2];
+
+    Search.RadSq = rad*rad/4.0;
+    Search.Max = np < min_np ? min_np : np;
+    Search.Normal[0] = normal[0];
+    Search.Normal[1] = normal[1];
+    Search.Normal[2] = normal[2];
+
+    Search.List = (struct PSN*)bu_calloc(Search.Max, sizeof(struct PSN), "PSN");
+    do {
+	Search.Found = 0;
+	Search.RadSq *= 4.0;
+	LocatePhotons(&Search, PMap[map]->Root);
+	if (!Search.Found && Search.RadSq > ScaleFactor*ScaleFactor/100.0)
+	    break;
+    } while (Search.Found < Search.Max && Search.RadSq < max_rad*max_rad);
+
+    /* bu_log("Found: %d\n", Search.Found);*/
+    if (Search.Found < min_np) {
+	bu_free(Search.List, "Search.List");
+	return;
+    }
+
+    /* Calculate Max Distance */
+    Search.RadSq = 1;
+    Centroid[0] = Centroid[1] = Centroid[2] = 0;
+
+    for (i = 0; i < Search.Found; i++) {
+	t[0] = Search.List[i].P.Pos[0] - pos[0];
+	t[1] = Search.List[i].P.Pos[1] - pos[1];
+	t[2] = Search.List[i].P.Pos[2] - pos[2];
+
+	Centroid[0] += Search.List[i].P.Pos[0];
+	Centroid[1] += Search.List[i].P.Pos[1];
+	Centroid[2] += Search.List[i].P.Pos[2];
+
+	dist = t[0]*t[0] + t[1]*t[1] + t[2]*t[2];
+	if (dist > Search.RadSq)
+	    Search.RadSq = dist;
+    }
+
+    if (Search.Found) {
+	Centroid[0] /= (double)Search.Found;
+	Centroid[1] /= (double)Search.Found;
+	Centroid[2] /= (double)Search.Found;
+    }
+
+
+    /* This needs a little debugging, splotches in moss cause tmp gets too small, will look at later, ||1 to turn it off */
+    if (!centog||1) {
+	Centroid[0] = pos[0];
+	Centroid[1] = pos[1];
+	Centroid[2] = pos[2];
+	ScaleFilter = 2.0;
+    } else {
+	ScaleFilter = 1.0;
+    }
+
+    for (i = 0; i < Search.Found; i++) {
+	t[0] = Search.List[i].P.Pos[0] - pos[0];
+	t[1] = Search.List[i].P.Pos[1] - pos[1];
+	t[2] = Search.List[i].P.Pos[2] - pos[2];
+
+	dist = t[0]*t[0] + t[1]*t[1] + t[2]*t[2];
+	/* Filter= 0.50;*/
+	/* Filter= ConeFilter(dist, NP.RadSq);*/
+	Filter = 0.5*GaussFilter(dist, Search.RadSq);
+
+	irrad[0] += Search.List[i].P.Power[0]*Filter*ScaleFilter;
+	irrad[1] += Search.List[i].P.Power[1]*Filter*ScaleFilter;
+	irrad[2] += Search.List[i].P.Power[2]*Filter*ScaleFilter;
+    }
+
+    tmp = M_PI*Search.RadSq;
+    t[0] = sqrt((Centroid[0] - pos[0])*(Centroid[0] - pos[0])+(Centroid[1] - pos[1])*(Centroid[1] - pos[1])+(Centroid[2] - pos[2])*(Centroid[2] - pos[2]));
+    tmp = M_PI*(sqrt(Search.RadSq)-t[0])*(sqrt(Search.RadSq)-t[0]);
+
+
+    irrad[0] /= tmp;
+    irrad[1] /= tmp;
+    irrad[2] /= tmp;
+
+    /*
+      if (irrad[0] > 10 || irrad[1] > 10 || irrad[2] > 10) {
+      bu_log("found: %d, tmp: %.1f\n", Search.Found, tmp);
+      }
+    */
+    if (map == PM_CAUSTIC) {
+	tmp = (double)Search.Found/(double)Search.Max;
+	irrad[0] *= tmp;
+	irrad[1] *= tmp;
+	irrad[2] *= tmp;
+    }
+
+    /*
+      irrad[0] *= M_1_PI / NP.RadSq;
+      irrad[1] *= M_1_PI / NP.RadSq;
+      irrad[2] *= M_1_PI / NP.RadSq;
+    */
+    bu_free(Search.List, "Search.List");
+    /* bu_log("Radius: %.3f, Max Phot: %d, Found: %d, Power: [%.4f, %.4f, %.4f], Pos: [%.3f, %.3f, %.3f]\n", sqrt(NP.RadSq), NP.Max, NP.Found, irrad[0], irrad[1], irrad[2], pos[0], pos[1], pos[2]);*/
+}
+
+
+int
+ICHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(finished_segs))
+{
     struct partition *part;
     point_t pt, normal;
     vect_t C1, C2;
@@ -774,7 +1011,9 @@ int ICHit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 }
 
 
-int ICMiss(struct application *ap) {
+int
+ICMiss(struct application *UNUSED(ap))
+{
     /* Set to Background/Ambient Color later */
     return 0;
 }
@@ -785,7 +1024,9 @@ int ICMiss(struct application *ap) {
  * - The Normal passed to this function must be unitized.
  * - This took me almost 3 hours to write, and it's tight.
  */
-void Polar2Euclidian(vect_t Dir, vect_t Normal, double Theta, double Phi) {
+void
+Polar2Euclidian(vect_t Dir, vect_t Normal, double Theta, double Phi)
+{
     int i;
     vect_t BasisX, BasisY;
 
@@ -804,7 +1045,9 @@ void Polar2Euclidian(vect_t Dir, vect_t Normal, double Theta, double Phi) {
 /*
  * Irradiance Calculation for a given position
  */
-void Irradiance(int pid, struct Photon *P, struct application *ap) {
+void
+Irradiance(int pid, struct Photon *P, struct application *ap)
+{
     struct application *lap;		/* local application instance */
     int i, j, M, N;
     double theta, phi, Coef;
@@ -862,7 +1105,9 @@ void Irradiance(int pid, struct Photon *P, struct application *ap) {
  * Go through each photon and use it for the position of the hemisphere
  * and then determine whether that should be included as a Cache Pt.
  */
-void BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap) {
+void
+BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap)
+{
     if (!Node)
 	return;
 
@@ -885,11 +1130,14 @@ void BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap) {
     BuildIrradianceCache(pid, Node->R, ap);
 }
 
+
 #ifdef HAVE_ALARM
 static int starttime = 0;
-void alarmhandler(int sig) {
+void
+alarmhandler(int sig)
+{
     int t;
-    float p, h, m, d, tl;
+    float p, tl;
     if (sig != SIGALRM)
 	bu_bomb("Funky signals\n");
     t = time(NULL) - starttime;
@@ -897,8 +1145,8 @@ void alarmhandler(int sig) {
     tl = (float)t*1.0/p - t;
     bu_log("    Irradiance Cache Progress: %d%%  Approximate time left: %d%d",
 	   (int)(100.0*p), (1.0/p-1.0)*(float)t, (float)t*1.0/p);
-#define BAH(s, w) if (tl > (s)) { float d = floor(tl / (float)(s)); \
-    tl -= d * (s); bu_log("%d "w, (int)d, d>1?"s":""); }
+#define BAH(s, w) if (tl > (s)) { float d = floor(tl / (float)(s));	\
+	tl -= d * (s); bu_log("%d "w, (int)d, d>1?"s":""); }
     BAH(60*60*24, "day%s, ");
     BAH(60*60, "hour%s, ");
     BAH(60, "minute%s, ");
@@ -910,7 +1158,9 @@ void alarmhandler(int sig) {
 }
 #endif
 
-void IrradianceThread(int pid, genptr_t arg) {
+void
+IrradianceThread(int pid, genptr_t arg)
+{
 #ifdef HAVE_ALARM
     starttime = time(NULL);
     signal(SIGALRM, alarmhandler);
@@ -924,7 +1174,9 @@ void IrradianceThread(int pid, genptr_t arg) {
 }
 
 
-void Initialize(int MAP, int MapSize) {
+void
+Initialize(int MAP, int MapSize)
+{
     PMap[MAP] = (struct PhotonMap*)bu_malloc(sizeof(struct PhotonMap), "PhotoMap");
     PMap[MAP]->MaxPhotons = MapSize;
     PMap[MAP]->Root = (struct PNode*)bu_malloc(sizeof(struct PNode), "PNode");
@@ -936,42 +1188,66 @@ void Initialize(int MAP, int MapSize) {
 }
 
 
-int LoadFile(char *pmfile) {
+int
+LoadFile(char *pmfile)
+{
+    size_t ret;
     FILE *FH;
     int I1, i;
     short S1;
     char C1;
 
-
     FH = fopen(pmfile, "rb");
     if (FH) {
 	bu_log("  Reading Irradiance Cache File...\n");
-	fread(&S1, sizeof(short), 1, FH);
+	ret = fread(&S1, sizeof(short), 1, FH);
+	if (ret != 1)
+	    bu_log("Error reading irradiance cache file (endian)\n");
+
 	bu_log("endian: %d\n", S1);
 
-	fread(&S1, sizeof(short), 1, FH);
+	ret = fread(&S1, sizeof(short), 1, FH);
+	if (ret != 1)
+	    bu_log("Error reading irradiance cache file (revision)\n");
 	bu_log("revision: %d\n", S1);
 
-	fread(&ScaleFactor, sizeof(double), 1, FH);
+	ret = fread(&ScaleFactor, sizeof(double), 1, FH);
+	if (ret != 1)
+	    bu_log("Error reading irradiance cache file (scale factor)\n");
 	bu_log("Scale Factor: %.3f\n", ScaleFactor);
 
 	/* Read in Map Type */
-	fread(&C1, sizeof(char), 1, FH);
-	fread(&I1, sizeof(int), 1, FH);
+	ret = fread(&C1, sizeof(char), 1, FH);
+	if (ret != 1)
+	    bu_log("Error reading irradiance cache file (map type)\n");
+	ret = fread(&I1, sizeof(int), 1, FH);
+	if (ret != 1)
+	    bu_log("Error reading irradiance cache file (map type)\n");
+
 	Initialize(PM_GLOBAL, I1);
 	bu_log("Reading Global: %d\n", I1);
 	for (i = 0; i < I1; i++) {
-	    fread(&Emit[PM_GLOBAL][i], sizeof(struct Photon), 1, FH);
+	    ret = fread(&Emit[PM_GLOBAL][i], sizeof(struct Photon), 1, FH);
+	    if (ret != 1)
+		bu_log("Error reading irradiance cache file (global)\n");
 	    /* bu_log("Pos: [%.3f, %.3f, %.3f], Power: [%.3f, %.3f, %.3f]\n", Emit[PM_GLOBAL][i].Pos[0], Emit[PM_GLOBAL][i].Pos[1], Emit[PM_GLOBAL][i].Pos[2], Emit[PM_GLOBAL][i].Power[0], Emit[PM_GLOBAL][i].Power[1], Emit[PM_GLOBAL][i].Power[2]);*/
 	    /* bu_log("Pos: [%.3f, %.3f, %.3f], Irrad: [%.3f, %.3f, %.3f]\n", Emit[PM_GLOBAL][i].Pos[0], Emit[PM_GLOBAL][i].Pos[1], Emit[PM_GLOBAL][i].Pos[2], Emit[PM_GLOBAL][i].Irrad[0], Emit[PM_GLOBAL][i].Irrad[1], Emit[PM_GLOBAL][i].Irrad[2]);*/
 	}
 
-	fread(&C1, sizeof(char), 1, FH);
-	fread(&I1, sizeof(int), 1, FH);
+	ret = fread(&C1, sizeof(char), 1, FH);
+	if (ret != 1)
+	    bu_log("Error reading irradiance cache file (C1)\n");
+
+	ret = fread(&I1, sizeof(int), 1, FH);
+	if (ret != 1)
+	    bu_log("Error reading irradiance cache file (l1)\n");
+
 	Initialize(PM_CAUSTIC, I1);
 	bu_log("Reading Caustic: %d\n", I1);
 	for (i = 0; i < I1; i++) {
-	    fread(&Emit[PM_CAUSTIC][i], sizeof(struct Photon), 1, FH);
+	    ret = fread(&Emit[PM_CAUSTIC][i], sizeof(struct Photon), 1, FH);
+	    if (ret != 1)
+		bu_log("Error reading irradiance cache file (caustic)\n");
 	}
 
 	PMap[PM_GLOBAL]->StoredPhotons = PMap[PM_GLOBAL]->MaxPhotons;
@@ -987,51 +1263,77 @@ int LoadFile(char *pmfile) {
 }
 
 
-void WritePhotons(struct PNode *Root, FILE *FH) {
+void
+WritePhotons(struct PNode *Root, FILE *FH)
+{
+    size_t ret;
     if (!Root)
 	return;
 
-    fwrite(&Root->P, sizeof(struct Photon), 1, FH);
+    ret = fwrite(&Root->P, sizeof(struct Photon), 1, FH);
+    if (ret != 1)
+	bu_log("Unable to write photons\n");
     WritePhotons(Root->L, FH);
     WritePhotons(Root->R, FH);
 }
 
 
-void WritePhotonFile(char *pmfile) {
+void
+WritePhotonFile(char *pmfile)
+{
     FILE *FH;
     int I1;
     short S1;
     char C1;
-
+    size_t ret;
 
     FH = fopen(pmfile, "wb");
     if (FH) {
 	/* Write 2 Byte Endian Code and 2 Byte Revision Code */
 	S1 = 1;
-	fwrite(&S1, sizeof(short), 1, FH);
+	ret = fwrite(&S1, sizeof(short), 1, FH);
+	if (ret != 1)
+	    bu_log("Error writing irradiance cache file (endian)\n");
+
 	S1 = 0;
-	fwrite(&S1, sizeof(short), 1, FH);
+	ret = fwrite(&S1, sizeof(short), 1, FH);
+	if (ret != 1)
+	    bu_log("Error writing irradiance cache file (revision)\n");
 
 	/* Write Scale Factor */
 	bu_log("writing sf: %.3f\n", ScaleFactor);
-	fwrite(&ScaleFactor, sizeof(double), 1, FH);
+	ret = fwrite(&ScaleFactor, sizeof(double), 1, FH);
+	if (ret != 1)
+	    bu_log("Error writing irradiance cache file (scale factor)\n");
 
 	/* === Write PM_GLOBAL Data === */
 	C1 = PM_GLOBAL;
-	fwrite(&C1, sizeof(char), 1, FH);
+	ret = fwrite(&C1, sizeof(char), 1, FH);
+	if (ret != 1)
+	    bu_log("Error writing irradiance cache file (PM_GLOBAL)\n");
+
 	/* Write number of Photons */
 	I1 = PMap[PM_GLOBAL]->StoredPhotons;
-	fwrite(&I1, sizeof(int), 1, FH);
+	ret = fwrite(&I1, sizeof(int), 1, FH);
+	if (ret != 1)
+	    bu_log("Error writing irradiance cache file (photons)\n");
+
 	/* Write each photon to file */
 	if (PMap[PM_GLOBAL]->StoredPhotons)
 	    WritePhotons(PMap[PM_GLOBAL]->Root, FH);
 
 	/* === Write PM_CAUSTIC Data === */
 	C1 = PM_CAUSTIC;
-	fwrite(&C1, sizeof(char), 1, FH);
+	ret = fwrite(&C1, sizeof(char), 1, FH);
+	if (ret != 1)
+	    bu_log("Error writing irradiance cache file (PM_CAUSTIC)\n");
+
 	/* Write number of Photons */
 	I1 = PMap[PM_CAUSTIC]->StoredPhotons;
-	fwrite(&I1, sizeof(int), 1, FH);
+	ret = fwrite(&I1, sizeof(int), 1, FH);
+	if (ret != 1)
+	    bu_log("Error writing irradiance cache file (number of photons)\n");
+
 	/* Write each photon to file */
 	if (PMap[PM_CAUSTIC]->StoredPhotons)
 	    WritePhotons(PMap[PM_CAUSTIC]->Root, FH);
@@ -1044,7 +1346,9 @@ void WritePhotonFile(char *pmfile) {
 /*
  * Main Photon Mapping Function
  */
-void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int height, int Hypersample, int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int ImportanceMapping, int IrradianceHypersampling, int VisualizeIrradiance, double ScaleIndirect, char pmfile[255]) {
+void
+BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int height, int UNUSED(Hypersample), int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int ImportanceMapping, int IrradianceHypersampling, int VisualizeIrradiance, double ScaleIndirect, char pmfile[255])
+{
     int i, MapSize[PM_MAPS];
     double ratio;
 
@@ -1202,7 +1506,9 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
 }
 
 
-void Swap(struct PSN *a, struct PSN *b) {
+void
+Swap(struct PSN *a, struct PSN *b)
+{
     struct PSN c;
 
     /*
@@ -1225,7 +1531,9 @@ void Swap(struct PSN *a, struct PSN *b) {
   After inserting a new node it must be brought upwards until both children
   are less than it.
 */
-void HeapUp(struct PhotonSearch *S, int ind) {
+void
+HeapUp(struct PhotonSearch *S, int ind)
+{
     int i;
 
     if (!ind)
@@ -1247,7 +1555,9 @@ void HeapUp(struct PhotonSearch *S, int ind) {
   since choosing a child with the highest number may reduce the number of
   recursions the number will have to propogate
 */
-void HeapDown(struct PhotonSearch *S, int ind) {
+void
+HeapDown(struct PhotonSearch *S, int ind)
+{
     int c;
 
     if (2*ind+1 > S->Found)
@@ -1265,7 +1575,9 @@ void HeapDown(struct PhotonSearch *S, int ind) {
 }
 
 
-void Push(struct PhotonSearch *S, struct PSN P) {
+void
+Push(struct PhotonSearch *S, struct PSN P)
+{
     S->List[S->Found] = P;
     HeapUp(S, S->Found++);
     /*
@@ -1275,7 +1587,9 @@ void Push(struct PhotonSearch *S, struct PSN P) {
 }
 
 
-void Pop(struct PhotonSearch *S) {
+void
+Pop(struct PhotonSearch *S)
+{
     S->Found--;
     S->List[0] = S->List[S->Found];
     HeapDown(S, 0);
@@ -1286,115 +1600,40 @@ void Pop(struct PhotonSearch *S) {
 }
 
 
-void LocatePhotons(struct PhotonSearch *Search, struct PNode *Root) {
-    fastf_t Dist, TDist, angle, MDist;
-    int i, MaxInd, Axis;
-
-    if (!Root)
-	return;
-
-    Axis = Root->P.Axis;
-    Dist = Search->Pos[Axis] - Root->P.Pos[Axis];
-
-    if (Dist < 0) {
-	/* Left of plane - search left subtree first */
-	LocatePhotons(Search, Root->L);
-	if (Dist*Dist < Search->RadSq)
-	    LocatePhotons(Search, Root->R);
-    } else {
-	/* Right of plane - search right subtree first */
-	LocatePhotons(Search, Root->R);
-	if (Dist*Dist < Search->RadSq)
-	    LocatePhotons(Search, Root->L);
-    }
-
-#if 0
-    /* HEAP, Find Distance between Root Photon and Search->Pos */
-    angle = VDOT(Search->Normal, Root->P.Normal);
-    Node.P = Root->P;
-    Node.Dist = (Root->P.Pos[0] - Search->Pos[0])*(Root->P.Pos[0] - Search->Pos[0]) + (Root->P.Pos[1] - Search->Pos[1])*(Root->P.Pos[1] - Search->Pos[1]) + (Root->P.Pos[2] - Search->Pos[2])*(Root->P.Pos[2] - Search->Pos[2]);
-    if (Node.Dist < Search->RadSq && angle > GPM_ATOL) {
-	/* Check that Result is within Radius and Angular Tolerance */
-	if (Search->Found < Search->Max) {
-	    Push(Search, Node);
-	} else {
-	    if (Node.Dist < Search->List[0].Dist) {
-		Pop(Search);
-		Push(Search, Node);
-	    }
-	}
-    }
-
-#else
-
-    /* REPLACE, Find Distance between Root Photon and NP->Pos */
-    Dist = (Root->P.Pos[0] - Search->Pos[0])*(Root->P.Pos[0] - Search->Pos[0]) + (Root->P.Pos[1] - Search->Pos[1])*(Root->P.Pos[1] - Search->Pos[1]) + (Root->P.Pos[2] - Search->Pos[2])*(Root->P.Pos[2] - Search->Pos[2]);
-
-    angle = VDOT(Search->Normal, Root->P.Normal);
-    if (Dist < Search->RadSq && angle > GPM_ATOL) {
-	/* Check that Result is within Radius and Angular Tolerance */
-	/* if (Dist < NP->RadSq) {*/
-	if (Search->Found < Search->Max) {
-	    Search->List[Search->Found++].P = Root->P;
-	} else {
-	    MDist = (Search->Pos[0] - Search->List[0].P.Pos[0])*(Search->Pos[0] - Search->List[0].P.Pos[0])+(Search->Pos[1] - Search->List[0].P.Pos[1])*(Search->Pos[1] - Search->List[0].P.Pos[1])+(Search->Pos[2] - Search->List[0].P.Pos[2])*(Search->Pos[2] - Search->List[0].P.Pos[2]);
-	    MaxInd = 0;
-	    for (i = 1; i < Search->Found; i++) {
-		TDist = (Search->Pos[0] - Search->List[i].P.Pos[0])*(Search->Pos[0] - Search->List[i].P.Pos[0])+(Search->Pos[1] - Search->List[i].P.Pos[1])*(Search->Pos[1] - Search->List[i].P.Pos[1])+(Search->Pos[2] - Search->List[i].P.Pos[2])*(Search->Pos[2] - Search->List[i].P.Pos[2]);
-		if (TDist > MDist) {
-		    MDist = TDist;
-		    MaxInd = i;
-		}
-	    }
-
-	    if (Dist < MDist)
-		Search->List[MaxInd].P = Root->P;
-	}
-    }
-#endif
-}
-
-
-fastf_t Dist(point_t a, point_t b) {
+fastf_t
+Dist(point_t a, point_t b)
+{
     return (a[0]-b[0])*(a[0]-b[0]) + (a[1]-b[1])*(a[1]-b[1]) + (a[2]-b[2])*(a[2]-b[2]);
 }
 
 
-fastf_t GaussFilter(fastf_t dist, fastf_t rad) {
-    return 0.918 * (1.0 - (1.0 - exp(-1.953*dist*dist/(2.0*rad*rad)))/(1.0 - exp(-1.953)));
-}
-
-
-fastf_t ConeFilter(fastf_t dist, fastf_t rad) {
-    return 1.0 - dist/rad;
-}
-
-
-void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np) {
+void
+IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_t normal)
+{
     struct PhotonSearch Search;
-    int i, index;
+    int i, idx;
     fastf_t dist, TotDist;
     vect_t t, cirrad;
 
 
-    index = 0;
+    idx = 0;
     if (GPM_IH) {
-	index = ap->a_x + ap->a_y*GPM_WIDTH;
+	idx = ap->a_x + ap->a_y*GPM_WIDTH;
 	/* See if there is a cached irradiance calculation for this point */
-	for (i = 0; i < IC[index].Num; i++) {
-	    dist = (pos[0]-IC[index].List[i].Pos[0])*(pos[0]-IC[index].List[i].Pos[0])+(pos[1]-IC[index].List[i].Pos[1])*(pos[1]-IC[index].List[i].Pos[1])+(pos[2]-IC[index].List[i].Pos[2])*(pos[2]-IC[index].List[i].Pos[2]);
+	for (i = 0; i < IC[idx].Num; i++) {
+	    dist = (pos[0]-IC[idx].List[i].Pos[0])*(pos[0]-IC[idx].List[i].Pos[0])+(pos[1]-IC[idx].List[i].Pos[1])*(pos[1]-IC[idx].List[i].Pos[1])+(pos[2]-IC[idx].List[i].Pos[2])*(pos[2]-IC[idx].List[i].Pos[2]);
 	    if (dist < (ScaleFactor/100.0)*(ScaleFactor*100.0)) {
-		irrad[0] = IC[index].List[i].RGB[0];
-		irrad[1] = IC[index].List[i].RGB[1];
-		irrad[2] = IC[index].List[i].RGB[2];
+		irrad[0] = IC[idx].List[i].RGB[0];
+		irrad[1] = IC[idx].List[i].RGB[1];
+		irrad[2] = IC[idx].List[i].RGB[2];
 		return;
 	    }
 	}
 
 	/* There is no precomputed irradiance for this point, allocate space
 	   for a new one if neccessary. */
-	if (IC[index].Num) {
-	    IC[index].List = (struct IrradNode*)bu_realloc(IC[index].List, sizeof(struct IrradNode)*(IC[index].Num+1), "List");
+	if (IC[idx].Num) {
+	    IC[idx].List = (struct IrradNode*)bu_realloc(IC[idx].List, sizeof(struct IrradNode)*(IC[idx].Num+1), "List");
 	}
     }
 
@@ -1482,133 +1721,18 @@ void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_
 
     if (GPM_IH) {
 	/* Store Irradiance */
-	IC[index].List[IC[index].Num].RGB[0] = irrad[0];
-	IC[index].List[IC[index].Num].RGB[1] = irrad[1];
-	IC[index].List[IC[index].Num].RGB[2] = irrad[2];
+	IC[idx].List[IC[idx].Num].RGB[0] = irrad[0];
+	IC[idx].List[IC[idx].Num].RGB[1] = irrad[1];
+	IC[idx].List[IC[idx].Num].RGB[2] = irrad[2];
 
-	IC[index].List[IC[index].Num].Pos[0] = pos[0];
-	IC[index].List[IC[index].Num].Pos[1] = pos[1];
-	IC[index].List[IC[index].Num].Pos[2] = pos[2];
+	IC[idx].List[IC[idx].Num].Pos[0] = pos[0];
+	IC[idx].List[IC[idx].Num].Pos[1] = pos[1];
+	IC[idx].List[IC[idx].Num].Pos[2] = pos[2];
 
-	IC[index].Num++;
+	IC[idx].Num++;
     }
 }
 
-
-void GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, int map, double max_rad, int centog, int min_np) {
-    struct PhotonSearch Search;
-    int i;
-    fastf_t tmp, dist, Filter, ScaleFilter;
-    vect_t t, Centroid;
-
-
-    irrad[0] = irrad[1] = irrad[2] = 0;
-    if (!PMap[map]->StoredPhotons) return;
-
-    Search.Pos[0] = pos[0];
-    Search.Pos[1] = pos[1];
-    Search.Pos[2] = pos[2];
-
-    Search.RadSq = rad*rad/4.0;
-    Search.Max = np < min_np ? min_np : np;
-    Search.Normal[0] = normal[0];
-    Search.Normal[1] = normal[1];
-    Search.Normal[2] = normal[2];
-
-    Search.List = (struct PSN*)bu_calloc(Search.Max, sizeof(struct PSN), "PSN");
-    do {
-	Search.Found = 0;
-	Search.RadSq *= 4.0;
-	LocatePhotons(&Search, PMap[map]->Root);
-	if (!Search.Found && Search.RadSq > ScaleFactor*ScaleFactor/100.0)
-	    break;
-    } while (Search.Found < Search.Max && Search.RadSq < max_rad*max_rad);
-
-    /* bu_log("Found: %d\n", Search.Found);*/
-    if (Search.Found < min_np) {
-	bu_free(Search.List, "Search.List");
-	return;
-    }
-
-    /* Calculate Max Distance */
-    Search.RadSq = 1;
-    Centroid[0] = Centroid[1] = Centroid[2] = 0;
-
-    for (i = 0; i < Search.Found; i++) {
-	t[0] = Search.List[i].P.Pos[0] - pos[0];
-	t[1] = Search.List[i].P.Pos[1] - pos[1];
-	t[2] = Search.List[i].P.Pos[2] - pos[2];
-
-	Centroid[0] += Search.List[i].P.Pos[0];
-	Centroid[1] += Search.List[i].P.Pos[1];
-	Centroid[2] += Search.List[i].P.Pos[2];
-
-	dist = t[0]*t[0] + t[1]*t[1] + t[2]*t[2];
-	if (dist > Search.RadSq)
-	    Search.RadSq = dist;
-    }
-
-    if (Search.Found) {
-	Centroid[0] /= (double)Search.Found;
-	Centroid[1] /= (double)Search.Found;
-	Centroid[2] /= (double)Search.Found;
-    }
-
-
-    /* This needs a little debugging, splotches in moss cause tmp gets too small, will look at later, ||1 to turn it off */
-    if (!centog||1) {
-	Centroid[0] = pos[0];
-	Centroid[1] = pos[1];
-	Centroid[2] = pos[2];
-	ScaleFilter = 2.0;
-    } else {
-	ScaleFilter = 1.0;
-    }
-
-    for (i = 0; i < Search.Found; i++) {
-	t[0] = Search.List[i].P.Pos[0] - pos[0];
-	t[1] = Search.List[i].P.Pos[1] - pos[1];
-	t[2] = Search.List[i].P.Pos[2] - pos[2];
-
-	dist = t[0]*t[0] + t[1]*t[1] + t[2]*t[2];
-	/* Filter= 0.50;*/
-	/* Filter= ConeFilter(dist, NP.RadSq);*/
-	Filter = 0.5*GaussFilter(dist, Search.RadSq);
-
-	irrad[0] += Search.List[i].P.Power[0]*Filter*ScaleFilter;
-	irrad[1] += Search.List[i].P.Power[1]*Filter*ScaleFilter;
-	irrad[2] += Search.List[i].P.Power[2]*Filter*ScaleFilter;
-    }
-
-    tmp = M_PI*Search.RadSq;
-    t[0] = sqrt((Centroid[0] - pos[0])*(Centroid[0] - pos[0])+(Centroid[1] - pos[1])*(Centroid[1] - pos[1])+(Centroid[2] - pos[2])*(Centroid[2] - pos[2]));
-    tmp = M_PI*(sqrt(Search.RadSq)-t[0])*(sqrt(Search.RadSq)-t[0]);
-
-
-    irrad[0] /= tmp;
-    irrad[1] /= tmp;
-    irrad[2] /= tmp;
-
-    /*
-      if (irrad[0] > 10 || irrad[1] > 10 || irrad[2] > 10) {
-      bu_log("found: %d, tmp: %.1f\n", Search.Found, tmp);
-      }
-    */
-    if (map == PM_CAUSTIC) {
-	tmp = (double)Search.Found/(double)Search.Max;
-	irrad[0] *= tmp;
-	irrad[1] *= tmp;
-	irrad[2] *= tmp;
-    }
-
-    /*
-      irrad[0] *= (1.0/M_PI)/NP.RadSq;
-      irrad[1] *= (1.0/M_PI)/NP.RadSq;
-      irrad[2] *= (1.0/M_PI)/NP.RadSq;
-    */
-    bu_free(Search.List, "Search.List");
-    /* bu_log("Radius: %.3f, Max Phot: %d, Found: %d, Power: [%.4f, %.4f, %.4f], Pos: [%.3f, %.3f, %.3f]\n", sqrt(NP.RadSq), NP.Max, NP.Found, irrad[0], irrad[1], irrad[2], pos[0], pos[1], pos[2]);*/
-}
 
 /*
  * Local Variables:

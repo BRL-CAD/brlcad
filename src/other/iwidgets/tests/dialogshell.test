@@ -46,7 +46,7 @@ set m 1
 test Dialogshell-1.$c {Dialogshell construction} {
     iwidgets::Dialogshell .ds
     .ds add OK -text "OK"
-    .ds add Cancel -text "Cancel"
+    .ds add Cancel -text "Cancel" 
     .ds default OK
 
     listbox [.ds childsite].lb -relief sunken
@@ -67,33 +67,33 @@ test Dialogshell-2.$o {configuration option} {
 incr o
 
 foreach test {
-    {-background #d9d9d9 #d9d9d9}
+    {-background #d9d9d9 #d9d9d9} 
     {-width 300 300}
     {-height 300 300}
-    {-buttonboxpadx 10 10}
-    {-buttonboxpady 10 10}
-    {-buttonboxpos n n}
-    {-buttonboxpos e e}
-    {-buttonboxpos w w}
-    {-buttonboxpos s s}
-    {-cursor gumby gumby}
-    {-modality global global}
-    {-modality application application}
-    {-modality none none}
-    {-separator off off}
-    {-padx 15 15}
-    {-pady 15 15}
-    {-thickness 5 5}
+    {-buttonboxpadx 10 10} 
+    {-buttonboxpady 10 10} 
+    {-buttonboxpos n n} 
+    {-buttonboxpos e e} 
+    {-buttonboxpos w w} 
+    {-buttonboxpos s s} 
+    {-cursor gumby gumby} 
+    {-modality global global} 
+    {-modality application application} 
+    {-modality none none} 
+    {-separator off off} 
+    {-padx 15 15} 
+    {-pady 15 15} 
+    {-thickness 5 5} 
     {-width 0 0}
     {-height 0 0}
-    {-separator on on}
+    {-separator on on} 
     {-title "Dialog Shell" "Dialog Shell"}} {
 	set option [lindex $test 0]
 	test Dialogshell-2.$o "configuration options, $option" {
 	    .ds configure $option [lindex $test 1]
 	    lindex [.ds configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -129,7 +129,7 @@ foreach test {
 	test Dialogshell-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -153,7 +153,7 @@ incr m
 #
 test Dialogshell-1.$c {Dialogshell destruction} {
     destroy .ds
-    update
+    update 
 } {}
 incr c
 
@@ -163,7 +163,7 @@ incr c
 test Dialogshell-4.2 "global modality, activation, and deactivation" {
     iwidgets::dialogshell .ds -modality global
     .ds add OK -text "OK"
-    .ds add Cancel -text "Cancel"
+    .ds add Cancel -text "Cancel" 
     .ds default OK
     pack [label [.ds childsite].l -text "Global Modal Dialogshell"]
     after 2000 {.ds deactivate Test}
@@ -176,7 +176,7 @@ update
 #
 test Dialogshell-1.$c {Dialogshell destruction} {
     destroy .ds
-    update
+    update 
 } {}
 incr c
 
@@ -186,7 +186,7 @@ incr c
 test Dialogshell-4.3 "no modality, activation, and deactivation" {
     iwidgets::dialogshell .ds -modality none
     .ds add OK -text "OK"
-    .ds add Cancel -text "Cancel"
+    .ds add Cancel -text "Cancel" 
     .ds default OK
     pack [label [.ds childsite].l -text "Non-Modal Dialogshell"]
     .ds activate
@@ -201,7 +201,7 @@ update
 #
 test Dialogshell-1.$c {Dialogshell destruction} {
     destroy .ds
-    update
+    update 
 } {}
 
 incr c
@@ -212,7 +212,7 @@ incr c
 test Dialogshell-4.4 "application modality, activation, and deactivation" {
     iwidgets::dialogshell .ds -modality application
     .ds add OK -text "OK"
-    .ds add Cancel -text "Cancel"
+    .ds add Cancel -text "Cancel" 
     .ds default OK
     pack [label [.ds childsite].l -text "Application Modal Dialogshell"]
     after 2000 {.ds deactivate Test}
@@ -225,7 +225,7 @@ update
 #
 test Dialogshell-1.$c {Dialogshell destruction} {
     destroy .ds
-    update
+    update 
 } {}
 
 incr c
@@ -233,7 +233,7 @@ incr c
 test Dialogshell-1.$c {Dialogshell destruction} {
     iwidgets::dialogshell .ds
     destroy .ds
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

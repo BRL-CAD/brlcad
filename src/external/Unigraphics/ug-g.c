@@ -604,7 +604,7 @@ create_unique_brlcad_name( struct bu_vls *name_vls )
     bu_vls_init( &tmp_vls );
     bu_vls_vlscat( &tmp_vls, name_vls );
     len = bu_vls_strlen( &tmp_vls );
-    while ( db_lookup( wdb_fd->dbip, bu_vls_addr( &tmp_vls ), LOOKUP_QUIET ) != DIR_NULL ) {
+    while ( db_lookup( wdb_fd->dbip, bu_vls_addr( &tmp_vls ), LOOKUP_QUIET ) != RT_DIR_NULL ) {
 	count++;
 	bu_vls_trunc( &tmp_vls, len );
 	bu_vls_printf( &tmp_vls, ".%d", count );
@@ -4595,7 +4595,7 @@ conv_features( tag_t solid_tag, char *part_name, char *refset_name, char *inst_n
 	tmp = ptr->next;
 	if ( failed ) {
 	    dp = db_lookup( wdb_fd->dbip, ptr->name, LOOKUP_QUIET );
-	    if ( dp != DIR_NULL ) {
+	    if ( dp != RT_DIR_NULL ) {
 		db_delete( wdb_fd->dbip, dp );
 		db_dirdelete( wdb_fd->dbip, dp );
 	    }

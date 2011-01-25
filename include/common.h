@@ -42,7 +42,8 @@
  * should not use config defines)
  */
 #if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
-#  if defined(_WIN32) && !defined(__CYGWIN__)
+
+#  if defined(_WIN32) && !defined(__CYGWIN__) && !defined(CMAKE_HEADERS)
 #    include "config_win.h"
 #  else
 #    include "brlcad_config.h"
@@ -113,7 +114,12 @@ typedef ptrdiff_t ssize_t;
  * optional uintptr_t type.
  */
 #if !defined(INT8_MAX) || !defined(INT16_MAX) || !defined(INT32_MAX) || !defined(INT64_MAX)
-#  if defined(__STDC__) || defined(__STRICT_ANSI__) || defined(__SIZE_TYPE__) || defined(HAVE_STDINT_H)
+#  if (defined _MSC_VER && (_MSC_VER <= 1500))	
+     /* Older Versions of Visual C++ seem to need pstdint.h 
+      * but still pass the tests below, so force it based on
+      * version (ugh.) */
+#    include "pstdint.h"
+#  elif defined(__STDC__) || defined(__STRICT_ANSI__) || defined(__SIZE_TYPE__) || defined(HAVE_STDINT_H)
 #    define __STDC_LIMIT_MACROS 1
 #    define __STDC_CONSTANT_MACROS 1
 #    include <stdint.h>
@@ -282,6 +288,15 @@ typedef ptrdiff_t ssize_t;
 #  undef DEPRECATED
 #  define DEPRECATED /* deprecated */
 #  warning "DEPRECATED was previously defined.  Disabling the declaration."
+#endif
+
+/* ActiveState Tcl doesn't include this catch in tclPlatDecls.h, so we
+ * have to add it for them
+ */
+#if defined(_MSC_VER) && defined(__STDC__)
+   #include <tchar.h>
+   /* MSVC++ misses this. */
+   typedef _TCHAR TCHAR;
 #endif
 
 

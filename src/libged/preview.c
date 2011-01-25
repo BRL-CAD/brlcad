@@ -258,9 +258,9 @@ ged_loadframe(struct ged *gedp, FILE *fp)
     }
 
     if (end) {
-    	return GED_OK; //possible more frames
+    	return GED_OK; /* possible more frames */
     }
-    return GED_ERROR; //end of frames
+    return GED_ERROR; /* end of frames */
 }
 
 /**

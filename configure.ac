@@ -314,7 +314,7 @@ BC_ARG_ENABLE([build_tkhtml], [tkhtml-build], [Build the included tkhtml], [yes]
 # togl
 #BC_ARG_ENABLE([build_togl], [togl-build], [Build the included togl], [no])
 
-# tkpng 
+# tkpng
 BC_ARG_ENABLE([build_tkpng], [tkpng-build], [Build the included tkpng], [auto])
 
 # tktable
@@ -1535,10 +1535,12 @@ BC_CONFIGURE_STAGE([headers], [4 of 9])
 
 # make our minimum compliance goal explicit (needs to be tested here
 # so header files and types are tested properly)
-dnl BC_COMPILER_AND_LINKER_RECOGNIZES([-std=c99], [cstd], [no])
-dnl if test "x$bc_cstd_works" = "xyes" ; then
-dnl     CFLAGS="$CFLAGS -std=c99"
-dnl fi
+BC_COMPILER_AND_LINKER_RECOGNIZES([-std=c99], [cstd], [no])
+STD_C99_FLAGS=""
+if test "x$bc_cstd_works" = "xyes" ; then
+   STD_C99_FLAGS="-std=c99"
+fi
+AC_SUBST(STD_C99_FLAGS)
 
 # C89 headers: assert.h, ctype.h, errno.h, float.h, limits.h, locale.h,
 # math.h, setjmp.h, signal.h, stdarg.h, stddef.h, stdio.h, stdlib.h,
@@ -1961,8 +1963,11 @@ dnl     AC_SUBST(SSE)
     dnl library path search order, not biasing a preference for dylibs.
     BC_LINKER_RECOGNIZES([-Wl,-search_paths_first -Wnewline-eof])
 
-    dnl 64bit compilation flags
+    dnl 32-bit/64-bit compilation flags
     if test "x$bc_build_64bit" = "xyes" ; then
+
+	# 64-bit enabled, try to force 64-bit
+
 	found_64bit_flag=no
 
 	AC_MSG_CHECKING([if configure snuck on a 32bit flag to ld])
@@ -2009,6 +2014,56 @@ dnl     AC_SUBST(SSE)
 			found_64bit_flag=yes
 		fi
 	fi
+
+    elif test "x$bc_build_64bit" = "xno" ; then
+
+	# 64-bit disabled, try to force 32-bit
+
+	found_32bit_flag=no
+
+	AC_MSG_CHECKING([if configure snuck on a 64bit flag to ld])
+	PRELD="$LD"
+	LD="`echo $LD | sed 's/64/32/'`"
+	if test "x$LD" = "x$PRELD" ; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+	fi
+
+	if test "x$found_32bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-arch i386], [32_flag])
+		if test "x$bc_32_flag_works" = "xyes" ; then
+			found_32bit_flag=yes
+		fi
+	fi
+
+	if test "x$found_32bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-32], [32_flag])
+		if test "x$bc_32_flag_works" = "xyes" ; then
+			found_32bit_flag=yes
+		fi
+	fi
+
+	if test "x$found_32bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-mabi=32], [32_flag])
+		if test "x$bc_32_flag_works" = "xyes" ; then
+			found_32bit_flag=yes
+		fi
+	fi
+
+	if test "x$found_32bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-m32], [32_flag])
+		if test "x$bc_32_flag_works" = "xyes" ; then
+			found_32bit_flag=yes
+		fi
+	fi
+
+	if test "x$found_32bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-q32], [32_flag])
+		if test "x$bc_32_flag_works" = "xyes" ; then
+			found_32bit_flag=yes
+		fi
+	fi
     fi
 
 # end check for automatic flags
@@ -2047,7 +2102,25 @@ fi
 
 dnl debug flags
 if test "x$bc_use_debug" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-ggdb3], [debug_flag])
+
+	dnl FIXME: fugly workaround as there is no known
+	dnl feature-specific way to detect -ggdb3 or -gstabs+ is
+	dnl preferred and libtool+Mac 10.4 will work with -ggdb3.
+
+	AC_CHECK_PROGS(SW_VERS, sw_vers)
+	if test "x$SW_VERS" != "x"; then
+		AC_MSG_CHECKING(Mac OS X version for debugging)
+		MACOSX_VERSION=`$SW_VERS | sed -n "s/^ProductVersion:[[[:space:]]]//p" | cut -f 1-3 -d.`
+		AC_MSG_RESULT([$MACOSX_VERSION])
+	fi
+	case "x$MACOSX_VERSION" in
+	    x10.[1234])
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-gstabs+], [debug_flag])
+		;;
+	    *)
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-ggdb3], [debug_flag])
+		;;
+	esac
 	if test "x$bc_debug_flag_works" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
 	fi
@@ -2139,7 +2212,7 @@ if test "x$bc_build_strict" = "xyes" ; then
    BC_COMPILER_AND_LINKER_RECOGNIZES([-w -pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long -Werror], [strict], [no])
    if test "x$bc_strict_works" = "xyes" ; then
        # do not include -w as that was just to suppress any test warnings
-       STRICT_FLAGS="-pedantic -W -Wall -Werror -Wno-long-long"
+       STRICT_FLAGS="-pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long  -Werror"
        AC_SUBST(STRICT_FLAGS)
        AC_DEFINE([STRICT_FLAGS], [1], [Define to 1 if strict standards compliance compilation is enabled.])
    fi
@@ -2249,6 +2322,7 @@ AC_CHECK_FUNCS(\
 	mkstemp \
 	pipe \
 	popen \
+	realpath \
 	sbrk \
 	setenv \
 	setpgid \
@@ -2359,7 +2433,7 @@ fi
 	#AC_MSG_NOTICE([Installation of a modern GNU Flex before continuing is recommended.])
      #fi
 #fi
-	
+
 AC_MSG_CHECKING([whether we have the essentials to make parsers])
 if test "x$build_parsers" = "xyes" ; then
     AC_MSG_RESULT(yes)
@@ -3211,8 +3285,9 @@ AC_SUBST(TKTABLE)
 
 
 dnl *** tkpng ***
-dnl figure out whether we need to build tkpng 
-TKPNG_VERSION="0.9"
+dnl figure out whether we need to build tkpng
+TKPNG_VERSION="0.8"
+TKPNG_LIB_FILE="libtkpng${SHLIB_SUFFIX}"
 case $host_os in
      *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
 	 # some OS's don't like dots in the lib name
@@ -3220,10 +3295,11 @@ case $host_os in
 	 ;;
 esac
 AC_SUBST(TKPNG_VERSION)
+AC_SUBST(TKPNG_LIB_FILE)
 AC_MSG_CHECKING(whether to build tkpng)
 if test ! "x$bc_build_tkpng" = "xno" ; then
     build_brlcad_tkpng=yes
-    TKPNG='${top_builddir}/src/other/tkpng/tkpng${TKPNG_VERSION}.la'
+    TKPNG='${top_builddir}/src/other/tkpng/libtkpng${TKPNG_VERSION}.la'
     AC_MSG_RESULT(yes)
 else
     build_brlcad_tkpng=no
@@ -4154,7 +4230,7 @@ fi
 dnl configure tkhtml
 if test "x$build_brlcad_tkhtml" = "xyes" ; then
     ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
-    # this is a hack to all tkhtml to see when the tk headers are in odd 
+    # this is a hack to all tkhtml to see when the tk headers are in odd
     # places. it seems to ignore the CPPFLAGS in it's configure phase.
     if test ! "x$TKINCDIR" = "x" ; then
 	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
@@ -4344,6 +4420,7 @@ AC_CONFIG_FILES([
 	src/other/tcl/Makefile
 	src/other/tk/Makefile
 	src/other/tkpng/Makefile
+	src/other/tkpng/pkgIndex.tcl
 	src/other/tnt/Makefile
 	src/proc-db/Makefile
 	src/remrt/Makefile

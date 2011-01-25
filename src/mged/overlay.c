@@ -114,7 +114,7 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     for (i=1; i<argc; i++) {
 	struct solid *s;
-	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 	/* Find uses of this solid in the solid table */
 	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);

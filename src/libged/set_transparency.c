@@ -85,13 +85,13 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for (i = 0, tmp_dpp = dpp;
-		 i < sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
+		 i < sp->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
 		 ++i, ++tmp_dpp) {
 		if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
 		    break;
 	    }
 
-	    if (*tmp_dpp != DIR_NULL)
+	    if (*tmp_dpp != RT_DIR_NULL)
 		continue;
 
 	    /* found a match */

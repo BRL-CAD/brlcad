@@ -36,6 +36,9 @@
  */
 
 #include "tclInt.h"
+#ifdef CMAKE_HEADERS
+#  include "tcl_cfg.h"
+#endif
 
 /*
  * Use C preprocessor statements to define the various values for the embedded

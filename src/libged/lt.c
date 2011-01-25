@@ -60,7 +60,7 @@ ged_lt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL) {
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -75,7 +75,7 @@ ged_list_children(struct ged *gedp, struct directory *dp)
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
-    if (!(dp->d_flags & DIR_COMB))
+    if (!(dp->d_flags & RT_DIR_COMB))
 	return GED_OK;
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {

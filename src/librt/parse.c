@@ -91,7 +91,7 @@ bu_structprint(const char *title, const struct bu_structparse *parsetab, const c
 {
     register const struct bu_structparse	*sdp;
     register char			*loc;
-    register int			lastoff = -1;
+    register size_t lastoff = 0;
     struct bu_vls vls;
 
     bu_vls_init( &vls );
@@ -135,16 +135,16 @@ bu_structprint(const char *title, const struct bu_structparse *parsetab, const c
 	    case 'S':
 	    {
 		int delta = strlen(sdp->sp_name)+2;
-		register struct bu_vls *vls =
+		register struct bu_vls *locvls =
 		    (struct bu_vls *)loc;
 
 		bu_log_indent_delta(delta);
 		bu_log(" %s=(vls_magic)%d (vls_offset)%d (vls_len)%d (vls_max)%d\n",
-		       sdp->sp_name, vls->vls_magic,
-		       vls->vls_offset,
-		       vls->vls_len, vls->vls_max);
+		       sdp->sp_name, locvls->vls_magic,
+		       locvls->vls_offset,
+		       locvls->vls_len, locvls->vls_max);
 		bu_log_indent_delta(-delta);
-		bu_log("\"%s\"\n", vls->vls_str+vls->vls_offset);
+		bu_log("\"%s\"\n", locvls->vls_str+locvls->vls_offset);
 	    }
 	    break;
 	    case 'i':
@@ -230,14 +230,14 @@ bu_structprint(const char *title, const struct bu_structparse *parsetab, const c
  *               <0 upon failure
  */
 HIDDEN int
-bu_parse_double(const char *str, long int count, double *loc)
+bu_parse_double(const char *str, size_t count, double *loc)
 {
-    long	i;
+    size_t i;
     int	dot_seen;
     const char	*numstart;
     double	tmp_double;
     char	buf[128];
-    int	len;
+    size_t len;
 
     for (i=0; i < count && *str; ++i) {
 	numstart = str;
@@ -303,7 +303,8 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
     /* string containing value */
 {
     register char *loc;
-    int i, retval = 0;
+    size_t i;
+    int retval = 0;
 
     for (; sdp->sp_name != (char *)0; sdp++ )  {
 
@@ -338,7 +339,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 	    case 'c':
 	    case 's':
 	    {
-		register int i, j;
+		register size_t j;
 
 		/* copy the string, converting escaped
 		 * double quotes to just double quotes
@@ -734,7 +735,7 @@ bu_vls_structprint(struct bu_vls *vls, register const struct bu_structparse *sdp
     /* structure ponter */
 {
     register char			*loc;
-    register int			lastoff = -1;
+    register size_t lastoff = 0;
     register char			*cp;
     int len;
 
@@ -748,7 +749,7 @@ bu_vls_structprint(struct bu_vls *vls, register const struct bu_structparse *sdp
     for (; sdp->sp_name != (char*)NULL; sdp++) {
 	/* Skip alternate keywords for same value */
 
-	if ( lastoff == sdp->sp_offset )
+	if ( lastoff == (size_t)sdp->sp_offset )
 	    continue;
 	lastoff = sdp->sp_offset;
 

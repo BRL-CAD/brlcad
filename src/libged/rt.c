@@ -170,9 +170,14 @@ _ged_run_rt(struct ged *gedp)
     struct _ged_rt_client_data *drcdp;
 #ifndef _WIN32
     int pid;
+    int ret;
 
-    (void)pipe(pipe_in);
-    (void)pipe(pipe_err);
+    ret = pipe(pipe_in);
+    if (ret < 0)
+	perror("pipe");
+    ret = pipe(pipe_err);
+    if (ret < 0)
+	perror("pipe");
 
     if ((pid = fork()) == 0) {
 	/* make this a process group leader */
@@ -180,9 +185,13 @@ _ged_run_rt(struct ged *gedp)
 
 	/* Redirect stdin and stderr */
 	(void)close(0);
-	(void)dup(pipe_in[0]);
+	ret = dup(pipe_in[0]);
+	if (ret < 0)
+	    perror("dup");
 	(void)close(2);
-	(void)dup(pipe_err[1]);
+	ret = dup(pipe_err[1]);
+	if (ret < 0)
+	    perror("dup");
 
 	/* close pipes */
 	(void)close(pipe_in[0]);
@@ -331,7 +340,7 @@ _ged_rt_write(struct ged *gedp,
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for (i=0;i<sp->s_fullpath.fp_len;i++) {
-		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~DIR_USED;
+		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
 	    }
 	}
 
@@ -344,13 +353,13 @@ _ged_rt_write(struct ged *gedp,
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for (i=0; i<sp->s_fullpath.fp_len; i++) {
-		if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & DIR_USED)) {
+		if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & RT_DIR_USED)) {
 		    struct animate *anp;
 		    for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
 			 anp=anp->an_forw) {
 			db_write_anim(fp, anp);
 		    }
-		    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags |= DIR_USED;
+		    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags |= RT_DIR_USED;
 		}
 	    }
 	}
@@ -364,7 +373,7 @@ _ged_rt_write(struct ged *gedp,
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for (i=0;i< sp->s_fullpath.fp_len;i++) {
-		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~DIR_USED;
+		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
 	    }
 	}
 

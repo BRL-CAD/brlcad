@@ -449,6 +449,49 @@ main(int argc, char *argv[])
 }
 
 
+static union tree *
+process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_full_path *pathp)
+{
+    union tree *result = NULL;
+
+    /* Begin bomb protection */
+    if (!BU_SETJUMP) {
+	/* try */
+
+	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	result = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+
+    } else {
+	/* catch */
+
+	char *sofar;
+
+	/* Error, bail out */
+
+	sofar = db_path_to_string(pathp);
+	bu_log("FAILED: Cannot convert %s!\n", sofar);
+	bu_free(sofar, "path string");
+
+	/* Sometimes the NMG library adds debugging bits when
+	 * it detects an internal error, before bombing out.
+	 */
+	rt_g.NMG_debug = NMG_debug;	/* restore mode */
+
+	/* Release the tree memory & input regions */
+	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
+
+	/* Get rid of (m)any other intermediate structures */
+	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC)
+	    nmg_km(*tsp->ts_m);
+
+	/* Now, make a new, clean model structure for next pass. */
+	*tsp->ts_m = nmg_mm();
+    } BU_UNSETJUMP;		/* Relinquish the protection */
+
+    return result;
+}
+
+
 /*
  * D O _ N M G _ R E G I O N _ E N D
  *
@@ -486,54 +529,22 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
     regions_tried++;
 
-    /* Begin bomb protection */
-    if (!BU_SETJUMP) {
-	/* try */
+    if (verbose)
+	bu_log("\ndoing boolean tree evaluate...\n");
 
-	if (verbose)
-	    bu_log("\ndoing boolean tree evaluate...\n");
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	result = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
+    /* evaluate the boolean */
+    result = process_boolean(tsp, curtree, pathp);
 
-	if (result)
-	    r = result->tr_d.td_r;
-	else
-	    r = (struct nmgregion *)NULL;
+    if (result)
+	r = result->tr_d.td_r;
+    else
+	r = (struct nmgregion *)NULL;
 
-	if (verbose)
-	    bu_log("\nfinished boolean tree evaluate...\n");
-
-    } else {
-	/* catch */
-
-	char *sofar;
-
-	/* Error, bail out */
-	BU_UNSETJUMP;		/* Relinquish the protection */
-
-	sofar = db_path_to_string(pathp);
-	bu_log("FAILED: Cannot convert %s!\n", sofar);
-	bu_free(sofar, "path string");
-
-	/* Sometimes the NMG library adds debugging bits when
-	 * it detects an internal error, before bombing out.
-	 */
-	rt_g.NMG_debug = NMG_debug;	/* restore mode */
-
-	/* Release the tree memory & input regions */
-	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
-
-	/* Get rid of (m)any other intermediate structures */
-	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC)
-	    nmg_km(*tsp->ts_m);
-
-	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
-	goto out;
-    } BU_UNSETJUMP;		/* Relinquish the protection */
+    if (verbose)
+	bu_log("\nfinished boolean tree evaluate...\n");
 
     regions_done++;
-    if (r != 0) {
+    if (r != NULL) {
 
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
@@ -644,7 +655,6 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
-out:
     BU_GETUNION(curtree, tree);
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;
@@ -675,7 +685,7 @@ get_de_pointers(tp, dp, de_len, de_pointers)
 	    struct directory *dp_M;
 
 	    dp_M = db_lookup(DBIP, tp->tr_l.tl_name, LOOKUP_NOISY);
-	    if (dp_M == DIR_NULL)
+	    if (dp_M == RT_DIR_NULL)
 		return 1;
 
 	    if (dp_M->d_uses >= 0) {
@@ -723,7 +733,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     int id;
 
     /* when this is called in facet mode, we only want groups */
-    if (mode == FACET_MODE && (dp->d_flags & DIR_REGION))
+    if (mode == FACET_MODE && (dp->d_flags & RT_DIR_REGION))
 	return;
 
     /* check if already written */
@@ -836,7 +846,7 @@ incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, genp
     RT_CK_DBI(dbip);
     RT_CK_TREE(tp);
 
-    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return;
 
     dp->d_nref++;
@@ -850,7 +860,7 @@ count_refs(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     struct rt_comb_internal *comb;
     int id;
 
-    if (!(dp->d_flags & DIR_COMB))
+    if (!(dp->d_flags & RT_DIR_COMB))
 	return;
 
     id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);

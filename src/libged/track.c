@@ -137,7 +137,7 @@ crregion(struct ged *gedp,
     for (i=0; i<number; i++) {
 	solidname[grpname_len + extraTypeChars] = '\0';
 	crname(gedp, solidname, members[i], maxlen);
-	if (db_lookup(gedp->ged_wdbp->dbip, solidname, LOOKUP_QUIET) == DIR_NULL) {
+	if (db_lookup(gedp->ged_wdbp->dbip, solidname, LOOKUP_QUIET) == RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "region: %s will skip member: %s\n", region, solidname);
 	    continue;
 	}
@@ -345,8 +345,8 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     for (i=0; i<10; i++) {
 	crname(gedp, solname, i, len);
 	crname(gedp, regname, i, len);
-	if ((db_lookup(gedp->ged_wdbp->dbip, solname, LOOKUP_QUIET) != DIR_NULL) ||
-	    (db_lookup(gedp->ged_wdbp->dbip, regname, LOOKUP_QUIET) != DIR_NULL)) {
+	if ((db_lookup(gedp->ged_wdbp->dbip, solname, LOOKUP_QUIET) != RT_DIR_NULL) ||
+	    (db_lookup(gedp->ged_wdbp->dbip, regname, LOOKUP_QUIET) != RT_DIR_NULL)) {
 	    /* name already exists */
 	    bu_vls_printf(&gedp->ged_result_str, "Track: naming error -- STOP\n");
 	    edit_result = GED_ERROR;
@@ -369,7 +369,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     bu_strlcpy(sol.s_name, solname, len);
 
     sol.s_type = ID_ARB8;
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(gedp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
 
     solname[grpname_len + extraTypeChars] = '\0';
@@ -382,7 +382,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     trcurve(iw, tr);
     crname(gedp, solname, 1, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(gedp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
     /* idler dummy rcc */
@@ -393,7 +393,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     /* solid 2 */
     crname(gedp, solname, 2, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(gedp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -405,7 +405,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     bu_strlcpy(sol.s_name, solname, len);
     sol.s_type = ID_ARB8;
     crdummy(iw, tr, 1);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(gedp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -417,7 +417,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     VMOVE(temp1, &sol.s_values[0]);
     crname(gedp, solname, 4, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(gedp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -429,7 +429,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     trcurve(dw, tr);
     crname(gedp, solname, 5, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(gedp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -441,7 +441,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     VMOVE(&sol.s_values[15], &sol.s_values[9]);
     crname(gedp, solname, 6, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(gedp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -453,7 +453,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     bu_strlcpy(sol.s_name, solname, len);
     sol.s_type = ID_ARB8;
     crdummy(dw, tr, 2);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(gedp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -463,7 +463,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     bottom(temp1, temp2, tr);
     crname(gedp, solname, 8, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(gedp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -477,7 +477,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     top(temp1, temp2, tr);
     crname(gedp, solname, 9, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(gedp, solname, DIR_SOLID))
+    if (wrobj(gedp, solname, RT_DIR_SOLID))
 	return GED_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -548,7 +548,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	regname[grpname_len + extraTypeChars] = '\0';
 	crname(gedp, regname, i, len);
-	if (db_lookup(gedp->ged_wdbp->dbip, regname, LOOKUP_QUIET) == DIR_NULL) {
+	if (db_lookup(gedp->ged_wdbp->dbip, regname, LOOKUP_QUIET) == RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "group: %s will skip member: %s\n", grpname, regname);
 	    continue;
 	}
@@ -596,12 +596,12 @@ wrobj(struct ged *gedp,
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return 0;
 
-    if (db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "track naming error: %s already exists\n", name);
 	return GED_ERROR;
     }
 
-    if (flags != DIR_SOLID) {
+    if (flags != RT_DIR_SOLID) {
 	bu_vls_printf(&gedp->ged_result_str, "wrobj can only write solids, aborting\n");
 	return GED_ERROR;
     }
@@ -654,7 +654,7 @@ wrobj(struct ged *gedp,
     }
 
     tdp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type);
-    if (tdp == DIR_NULL) {
+    if (tdp == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(&gedp->ged_result_str, "Cannot add '%s' to directory, aborting\n", name);
 	return GED_ERROR;

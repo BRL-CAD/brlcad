@@ -1018,7 +1018,7 @@ get_editor_string(struct bu_vls *editstring)
     	if (BU_STR_EQUAL(os, "Darwin")) {
     	    /* on the mac, if it's not mac editor assume a terminal is needed. Until
 	     * we figure out how to use Mac terminal, use X11 xterm */
-    	    if (editor != MAC_EDITOR) {
+    	    if (!BU_STR_EQUAL(editor, MAC_EDITOR)) {
     		terminal = bu_which(XTERM_COMMAND);
 
 		/* look a little harder if we found nothing */

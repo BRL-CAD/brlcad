@@ -95,7 +95,7 @@ inherited options.
 .LP
 .nf
 .ta 4c 8c 12c
-\fBtitle\fR
+\fBtitle\fR 
 .fi
 .LP
 See the "Toplevel" widget  manual entry for details on the above
@@ -104,9 +104,9 @@ inherited options.
 
 .SH DESCRIPTION
 .PP
-The \fBiwidgets::fileselectiondialog\fR command creates a file selection dialog
+The \fBiwidgets::fileselectiondialog\fR command creates a file selection dialog 
 similar to the OSF/Motif standard composite widget.  The
-fileselectiondialog is derived from the Dialog class and is composed of
+fileselectiondialog is derived from the Dialog class and is composed of 
 a FileSelectionBox with attributes set to manipulate the dialog buttons.
 
 .SH "METHODS"
@@ -128,14 +128,14 @@ commands are possible for fileselectiondialog widgets:
 \fBget\fR	\fBchildsite\fR	\fBfilter\fR
 .fi
 .LP
-See the "fileselectionbox" class manual entry for details on the
+See the "fileselectionbox" class manual entry for details on the 
 associated methods.
 .SH "INHERITED METHODS"
 .LP
 .nf
 .ta 4c 8c 12c
 \fBadd\fR	\fBbuttonconfigure\fR	\fBdefault\fR	\fBhide\fR
-\fBinsert\fR	\fBinvoke\fR	\fBshow\fR
+\fBinsert\fR	\fBinvoke\fR	\fBshow\fR	
 .fi
 .LP
 See the "buttonbox" widget manual entry for details on the above
@@ -154,7 +154,7 @@ inherited methods.
 \fIpathName \fBcget\fR \fIoption\fR
 Returns the current value of the configuration option given
 by \fIoption\fR.
-\fIOption\fR may have any of the values accepted by
+\fIOption\fR may have any of the values accepted by 
 the \fBiwidgets::fileselectiondialog\fR command.
 .TP
 \fIpathName\fR \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
@@ -168,7 +168,7 @@ sublist of the value returned if no \fIoption\fR is specified).  If
 one or more \fIoption\-value\fR pairs are specified, then the command
 modifies the given widget option(s) to have the given value(s);  in
 this case the command returns an empty string.
-\fIOption\fR may have any of the values accepted by
+\fIOption\fR may have any of the values accepted by 
 the \fBiwidgets::fileselectiondialog\fR
 command.
 

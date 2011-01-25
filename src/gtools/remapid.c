@@ -461,8 +461,8 @@ struct curr_id *
 lookup_curr_id(int region_id)
 {
     int rc;	/* Return code from bu_rb_insert() */
-    struct curr_id *qcip;	/* The query */
-    struct curr_id *cip;	/* Value to return */
+    struct curr_id *qcip = NULL;/* The query */
+    struct curr_id *cip = NULL;	/* Value to return */
 
     /*
      * Prepare the query
@@ -507,7 +507,7 @@ mk_remap_reg(char *region_name)
     rp->rr_name = (char *) bu_malloc(strlen(region_name)+1, "region name");
     bu_strlcpy(rp->rr_name, region_name, strlen(region_name)+1);
 
-    rp->rr_dp = DIR_NULL;
+    rp->rr_dp = RT_DIR_NULL;
     rp->rr_ip = (struct rt_db_internal *) 0;
 
     return rp;
@@ -732,7 +732,7 @@ db_init(char *db_name)
     db_dirbuild(dbip);
 
     FOR_ALL_DIRECTORY_START(dp, dbip) {
-	if (!(dp->d_flags & DIR_REGION))
+	if (!(dp->d_flags & RT_DIR_REGION))
 	    continue;
 	ip = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "rt_db_internal");
 	if (rt_db_get_internal(ip, dp, dbip, (fastf_t *) NULL, &rt_uniresource) < 0) {

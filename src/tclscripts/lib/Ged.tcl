@@ -3864,7 +3864,7 @@ package provide cadwidgets::Ged 1.0
     foreach dm {ur ul ll lr} {
 	bind $itk_component($dm) <$_button> ""
 	bind $itk_component($dm) <ButtonRelease-$_button> ""
-	$mGed rect $itk_component($dm) draw 0
+#	$mGed rect $itk_component($dm) draw 0
     }
 }
 
@@ -4022,7 +4022,7 @@ package provide cadwidgets::Ged 1.0
     $help add copymat		{{a/b c/d}	{copy matrix from one combination's arc to another's}}
     $help add cp		{{from to} {copy [duplicate] object}}
     $help add cpi		{{from to}	{copy cylinder and position at end of original cylinder}}
-    $help add dbconcat		{{file [prefix]} {concatenate 'file' onto end of present database.  Run 'dup file' first.}}
+    $help add dbconcat		{{[-t] [-u] [-c] [-s|-p] file [prefix]} {concatenate 'file' onto end of present database.  Run 'dup file' first.}}
     $help add dbfind		{{[-s] <objects>} {find all references to objects}}
     $help add dbip		{{} {get dbip}}
     $help add dbot_dump	{{[-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] \n} {dump the displayed bots}}

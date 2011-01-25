@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* MGED on Mac OS X 10.6 mouse bindings fail to zoom in incrementally.
+  Pan, zoom out, and interactive zoom work.  Shift-grip bindings need
+  to be verified.
+
+* rt -i -s4096 -H16 -F/dev/null boolean-ops.g all
+
 * asc2g of a .asc file containing the first line as a "#" comment
   results in a bu_malloc(0) bomb.  comment lines should be valid in
   .asc files.

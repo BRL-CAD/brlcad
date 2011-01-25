@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) buttonbox.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::buttonbox iwid
 .BS
@@ -43,8 +43,8 @@ Command-Line Switch:	\fB-padx\fR
 .fi
 .IP
 Specifies a non-negative padding distance to leave between the button group and
-the outer edge of the button box in the x direction.  The value may be
-given in any of the forms acceptable to \fBTk_GetPixels\fR.  The default
+the outer edge of the button box in the x direction.  The value may be 
+given in any of the forms acceptable to \fBTk_GetPixels\fR.  The default 
 is 5 pixels.
 .LP
 .nf
@@ -54,7 +54,7 @@ Command-Line Switch:	\fB-pady\fR
 .fi
 .IP
 Specifies a non-negative padding distance to leave between the button group and
-the outer edge of the button box in the y direction.  The value may be given
+the outer edge of the button box in the y direction.  The value may be given 
 in any of the forms acceptable to \fBTk_GetPixels\fR.  The default is 5 pixels.
 .LP
 .BE
@@ -64,7 +64,7 @@ in any of the forms acceptable to \fBTk_GetPixels\fR.  The default is 5 pixels.
 The \fBiwidgets::buttonbox\fR command creates a manager widget for controlling
 buttons.  The button box also supports the display and invocation
 of a default button.  The button box can be configured either horizontally
-or vertically.
+or vertically.  
 
 .SH "METHODS"
 .PP
@@ -76,17 +76,17 @@ operations on the widget.  It has the following general form:
 \fIpathName option \fR?\fIarg arg ...\fR?
 .DE
 \fIOption\fR and the \fIarg\fRs
-determine the exact behavior of the command.
+determine the exact behavior of the command. 
 .PP
 Many of the widget commands for the buttonbox take as one argument an
-indicator of which button of the button box to operate on.  These
-indicators are called \fIindexes\fR and allow reference and manipulation
-of buttons regardless of their current map state.  buttonbox indexes
+indicator of which button of the button box to operate on.  These 
+indicators are called \fIindexes\fR and allow reference and manipulation 
+of buttons regardless of their current map state.  buttonbox indexes 
 may be specified in any of the following forms:
 .TP 12
 \fInumber\fR
-Specifies the button numerically, where 0 corresponds to the
-left/top-most button of the button box.
+Specifies the button numerically, where 0 corresponds to the 
+left/top-most button of the button box. 
 .TP 12
 \fBend\fR
 Indicates the right/bottom-most button of the button box.
@@ -112,7 +112,7 @@ available.
 .TP
 \fIpathName \fBbuttonconfigure\fR \fIindex\fR ?\fIoptions\fR?
 This command is similar to the \fBconfigure\fR command, except that
-it applies to the options for an individual button,
+it applies to the options for an individual button, 
 whereas \fBconfigure\fR applies to the options for the button box as a whole.
 \fIOptions\fR may have any of the values accepted by the \fBPushButton\fR
 command.  If \fIoptions\fR are specified, options are modified
@@ -149,8 +149,8 @@ the default ring to appear arround the specified button.
 Deletes the button given by \fIindex\fR from the button box.
 .TP
 \fIpathName \fBhide\fR \fIindex\fR
-Hides the button denoted by \fIindex\fR.  This doesn't remove the button
-permanently, just inhibits its display.
+Hides the button denoted by \fIindex\fR.  This doesn't remove the button 
+permanently, just inhibits its display.  
 .TP
 \fIpathName \fBindex \fIindex\fR
 Returns the numerical index corresponding to \fIindex\fR.
@@ -160,7 +160,7 @@ Same as the \fBadd\fR command except that it inserts the new
 button just before the one given by \fIindex\fR, instead of appending
 to the end of the button box.  The \fIoption\fR, and \fIvalue\fR
 arguments have the same interpretation as for the \fBadd\fR widget
-command.
+command.  
 .TP
 \fIpathName \fBinvoke\fR \fI?index?\fR
 Invoke the command associated with a button.  If no arguments
@@ -174,7 +174,7 @@ Display a previously hidden button denoted by \fIindex\fR.
  package require Iwidgets 4.0
  iwidgets::buttonbox .bb
 
- .bb add Yes -text Yes -command "puts Yes"
+ .bb add Yes -text Yes -command "puts Yes" 
  .bb add No -text No -command "puts No"
  .bb add Maybe -text Maybe -command "puts Maybe"
  .bb default Yes

@@ -431,7 +431,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
     /*
      *Find the guy we're told to write
      */
-    if ( (dp = db_lookup( dbip, name, LOOKUP_NOISY)) == DIR_NULL )
+    if ( (dp = db_lookup( dbip, name, LOOKUP_NOISY)) == RT_DIR_NULL )
 	return -1;
 
     RT_INIT_DB_INTERNAL(intern);

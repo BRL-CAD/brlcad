@@ -7,7 +7,7 @@ set tk_strictMotif 1
 
 iwidgets::Labeledframe .pr -labelpos ne -labeltext "Print range"
 set cs [.pr childsite]
-
+     
 radiobutton $cs.all \
         -highlightthickness 0 \
         -anchor w \

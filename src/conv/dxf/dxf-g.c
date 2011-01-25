@@ -2341,8 +2341,8 @@ process_text_attrib_entities_code( int code )
     static int horizAlignment=0;
     static int vertAlignment=0;
     static int textFlag=0;
-    static point_t firstAlignmentPoint = {0.0, 0.0, 0.0 };
-    static point_t secondAlignmentPoint = {0.0, 0.0, 0.0 };
+    static point_t firstAlignmentPoint = VINIT_ZERO;
+    static point_t secondAlignmentPoint = VINIT_ZERO;
     static double textScale=1.0;
     static double textHeight;
     static double textRotation=0.0;
@@ -3397,7 +3397,7 @@ main( int argc, char *argv[] )
 
 	bu_vls_init(&top_name);
 	bu_vls_strcpy( &top_name, "all" );
-	while ( db_lookup( out_fp->dbip, bu_vls_addr( &top_name ), LOOKUP_QUIET ) != DIR_NULL ) {
+	while ( db_lookup( out_fp->dbip, bu_vls_addr( &top_name ), LOOKUP_QUIET ) != RT_DIR_NULL ) {
 	    count++;
 	    bu_vls_trunc( &top_name, 0 );
 	    bu_vls_printf( &top_name, "all.%d", count );

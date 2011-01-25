@@ -45,7 +45,7 @@ set m 1
 test Timefield-1.$c {Timefield construction} {
     iwidgets::Timefield .tf -labeltext "Date Field"
     pack .tf -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -61,30 +61,30 @@ incr o
 
 foreach test {
     {-background #d9d9d9 #d9d9d9}
-    {-borderwidth 4 4}
-    {-borderwidth 2 2}
+    {-borderwidth 4 4} 
+    {-borderwidth 2 2} 
     {-command {.tf configure -background red} {.tf configure -background red}}
-    {-cursor gumby gumby}
-    {-exportselection 0 0}
-    {-foreground Green Green}
-    {-foreground Black Black}
+    {-cursor gumby gumby} 
+    {-exportselection 0 0} 
+    {-foreground Green Green} 
+    {-foreground Black Black} 
     {-highlightcolor Red Red}
     {-highlightthickness 2 2}
-    {-insertbackground Yellow Yellow}
-    {-insertbackground Black Black}
+    {-insertbackground Yellow Yellow} 
+    {-insertbackground Black Black} 
     {-justify right right}
     {-justify center center}
     {-justify left left}
-    {-labelmargin 5 5}
-    {-labelpos w w}
-    {-labelpos nw nw}
-    {-labelpos n n}
-    {-labelpos ne ne}
-    {-labelpos e e}
-    {-labelpos se se}
-    {-labelpos s s}
-    {-labelpos sw sw}
-    {-labeltext Label Label}
+    {-labelmargin 5 5} 
+    {-labelpos w w} 
+    {-labelpos nw nw} 
+    {-labelpos n n} 
+    {-labelpos ne ne} 
+    {-labelpos e e} 
+    {-labelpos se se} 
+    {-labelpos s s} 
+    {-labelpos sw sw} 
+    {-labeltext Label Label} 
     {-gmt true true}
     {-gmt false false}
     {-gmt on on}
@@ -93,8 +93,8 @@ foreach test {
     {-gmt 0 0}
     {-gmt yes yes}
     {-gmt no no}
-    {-relief raised raised}
-    {-relief sunken sunken}
+    {-relief raised raised} 
+    {-relief sunken sunken} 
     {-sticky w w}
     {-sticky nw nw}
     {-sticky n n}
@@ -104,14 +104,14 @@ foreach test {
     {-sticky s s}
     {-sticky sw sw}
     {-sticky news news}
-    {-textbackground GhostWhite GhostWhite}
+    {-textbackground GhostWhite GhostWhite} 
     {-textbackground #d9d9d9 #d9d9d9}} {
 	set option [lindex $test 0]
 	test Timefield-2.$o "configuration options, $option" {
 	    .tf configure $option [lindex $test 1]
 	    lindex [.tf configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -144,15 +144,15 @@ foreach test {
 	test Timefield-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
 test Timefield-3.$m "object methods, clock clicks" {
     set clicks [clock scan "3:15:00 PM"]
     .tf show $clicks
-    update
-    .tf get
+    update 
+    .tf get 
 } {03:15:00 PM}
 incr m
 
@@ -174,22 +174,22 @@ foreach test {
 #
 test Timefield-1.$c {Timefield destruction} {
     destroy .tf
-    update
+    update 
 } {}
 
 incr c
 
 test Timefield-1.$c {Timefield construction} {
-    iwidgets::timefield .tf
+    iwidgets::timefield .tf 
     pack .tf -padx 10 -pady 10
-    update
+    update 
 } {}
 
 incr c
 
 test Timefield-1.$c {Timefield destruction} {
     destroy .tf
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

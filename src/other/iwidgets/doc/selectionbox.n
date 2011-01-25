@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) selectionbox.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::selectionbox iwid
 .BS
@@ -72,7 +72,7 @@ Class:	\fBPosition\fR
 Command-Line Switch:	\fB-childsitepos\fR
 .fi
 .IP
-Specifies the position of the child site in the selection box: \fBn\fR,
+Specifies the position of the child site in the selection box: \fBn\fR, 
 \fBs\fR, \fBe\fR, \fBw\fR, or \fB\fR.  The default is center
 .LP
 .nf
@@ -81,7 +81,7 @@ Class:	\fBHeight\fR
 Command-Line Switch:	\fB-height\fR
 .fi
 .IP
-Specifies the height of the selection box.  The value may be specified in
+Specifies the height of the selection box.  The value may be specified in 
 any of the forms acceptable to Tk_GetPixels.  The default is 320 pixels.
 .LP
 .nf
@@ -107,7 +107,7 @@ Command-Line Switch:	\fB-itemslabelpos\fR
 .fi
 .IP
 Specifies the position of the label along the side of the items
-list: \fBn\fR, \fBne\fR, \fBe\fR, \fBse\fR, \fBs\fR, \fBsw\fR, \fBw\fR,
+list: \fBn\fR, \fBne\fR, \fBe\fR, \fBse\fR, \fBs\fR, \fBsw\fR, \fBw\fR, 
 or \fBnw\fR.  The default is nw.
 .LP
 .nf
@@ -152,8 +152,8 @@ Class:	\fBPosition\fR
 Command-Line Switch:	\fB-selectionlabelpos\fR
 .fi
 .IP
-Specifies the position of the label along the side of the selection:
-\fBn\fR, \fBne\fR, \fBe\fR, \fBse\fR, \fBs\fR, \fBsw\fR, \fBw\fR,
+Specifies the position of the label along the side of the selection: 
+\fBn\fR, \fBne\fR, \fBe\fR, \fBse\fR, \fBs\fR, \fBsw\fR, \fBw\fR, 
 or \fBnw\fR.  The default is nw.
 .LP
 .nf
@@ -171,7 +171,7 @@ Class:	\fBWidth\fR
 Command-Line Switch:	\fB-width\fR
 .fi
 .IP
-Specifies the width of the selection box.  The value may be specified in
+Specifies the width of the selection box.  The value may be specified in 
 any of the forms acceptable to Tk_GetPixels.  The default is 260 pixels.
 .LP
 .BE
@@ -196,7 +196,7 @@ operations on the widget.  It has the following general form:
 \fIpathName option \fR?\fIarg arg ...\fR?
 .DE
 \fIOption\fR and the \fIarg\fRs
-determine the exact behavior of the command.
+determine the exact behavior of the command.  
 
 .SH "ASSOCIATED METHODS"
 .LP
@@ -206,7 +206,7 @@ determine the exact behavior of the command.
 \fBscan\fR	\fBselection\fR	\fBsize\fR
 .fi
 .LP
-See the "listbox" widget class manual entry for details on the
+See the "listbox" widget class manual entry for details on the 
 associated methods.
 
 .SH "WIDGET-SPECIFIC METHODS"
@@ -221,7 +221,7 @@ command.
 Returns the child site widget path name.
 .TP
 \fIpathName \fBclear\fR \fIcomponent\fR
-Delete the contents of either the selection entry widget or
+Delete the contents of either the selection entry widget or 
 items list.  The \fIcomponent\fR argument may be either \fBitems\fR
 or \fBselection\fR.
 .TP
@@ -249,7 +249,7 @@ or \fBselection\fR.  The \fIargs\fR follow the rules of either an entry
 or list widget depending on the \fIcomponent\fR value.
 .TP
 \fIpathName \fBselectitem\fR
-Replace the selection entry field contents with the currently
+Replace the selection entry field contents with the currently 
 selected items value.
 
 .SH "COMPONENTS"
@@ -259,7 +259,7 @@ Name:	\fBchildsite\fR
 Class:	\fBFrame\fR
 .fi
 .IP
-The childsite component is the user child site for the selection box.  See
+The childsite component is the user child site for the selection box.  See 
 the "frame" widget manual entry for details on the childsite component item.
 .LP
 .nf
@@ -268,7 +268,7 @@ Class:	\fBScrolledlistbox\fR
 .fi
 .IP
 The items component provides the scrolled list box of items for the selection
-box.  See the "scrolledlistbox" widget manual entry for details on the
+box.  See the "scrolledlistbox" widget manual entry for details on the 
 items component item.
 .LP
 .nf
@@ -277,7 +277,7 @@ Class:	\fBEntryfield\fR
 .fi
 .IP
 The selection component provides the entry field in the selection box for
-display of the selected item in the items component.  See the "entryfield"
+display of the selected item in the items component.  See the "entryfield" 
 widget manual entry for details on the selection component item.
 .fi
 
@@ -287,7 +287,7 @@ widget manual entry for details on the selection component item.
  option add *textBackground white
 
  iwidgets::selectionbox .sb -items {Hello {Out There} World}
- pack .sb -padx 10 -pady 10 -fill both -expand yes
+ pack .sb -padx 10 -pady 10 -fill both -expand yes 
 
  set cs [label [.sb childsite].label -text "Child Site"]
  pack $cs -fill x -padx 10 -pady 10

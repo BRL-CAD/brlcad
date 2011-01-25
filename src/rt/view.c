@@ -52,11 +52,12 @@
 #include "mater.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "rtprivate.h"
-#include "./ext.h"
 #include "plot3.h"
 #include "photonmap.h"
 #include "scanline.h"
+
+#include "./rtuif.h"
+#include "./ext.h"
 
 
 const char title[] = "The BRL-CAD Raytracer RT";

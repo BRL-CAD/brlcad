@@ -26,7 +26,7 @@
  *  type and then performs a wavelet transform on that data.
  *
  * The transform
- *  operations available are to either decompose or reconstruct a signal into it's
+ *  operations available are to either decompose or reconstruct a signal into its
  *  corresponding wavelet form based on the haar wavelet.
  *
  *  Wavelet decompose/reconstruct operations

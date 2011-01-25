@@ -67,7 +67,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s already exists\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
@@ -220,8 +220,8 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 	VJOIN1(aip->pt[i+4], aip->pt[i], thick, norm);
     }
 
-    dp = db_diradd(gedp->ged_wdbp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&internal.idb_type);
-    if (dp == DIR_NULL) {
+    dp = db_diradd(gedp->ged_wdbp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type);
+    if (dp == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add %s to the directory\n", argv[0], argv[1]);
 	return GED_ERROR;
     }

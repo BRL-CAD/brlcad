@@ -19,12 +19,12 @@
  */
 /** @file init.c
  *
- *  This file represents the single function exported from the
- *  shader library whose "name" is known.
- *  All other functions are called through the function table.
+ * This file represents the single function exported from the
+ * shader library whose "name" is known.
+ * All other functions are called through the function table.
  *
- *  Shaders are, of course, permitted to "upcall" into LIBRT as
- *  necessary.
+ * Shaders are, of course, permitted to "upcall" into LIBRT as
+ * necessary.
  *
  */
 
@@ -34,61 +34,61 @@
 #include "vmath.h"
 #include "bu.h"
 #include "raytrace.h"
-#include "rtprivate.h"
 #include "optical.h"
 
-int		rt_verbosity = -1;	/* blather incesantly by default */
-int		rdebug;			/* RT program debugging */
-double		AmbientIntensity = 0.4;	/* Ambient light intensity */
-struct bn_table		*spectrum = NULL;
+int rt_verbosity = -1;	/* blather incesantly by default */
+int rdebug;			/* RT program debugging */
+double AmbientIntensity = 0.4;	/* Ambient light intensity */
+struct bn_table *spectrum = NULL;
 
 #ifdef RT_MULTISPECTRAL
-struct bn_tabdata	*background = NULL;	/* radiant emittance of bg */
+struct bn_tabdata *background = NULL;	/* radiant emittance of bg */
 #else
-vect_t			background = { 0.0, 0.0, 0.0 }; /* Black */
+vect_t background = VINIT_ZERO; /* Black */
 #endif
 
-#define MFUNCS(_name)	\
-	{ extern struct mfuncs _name[]; mlib_add_shader( headp, _name ); }
+#define MFUNCS(_name)							\
+    { extern struct mfuncs _name[]; mlib_add_shader(headp, _name); }
 
 
 /*
- *			O P T I C A L _ S H A D E R _ I N I T
+ * O P T I C A L _ S H A D E R _ I N I T
  */
 void
-optical_shader_init(struct mfuncs	**headp)
+optical_shader_init(struct mfuncs **headp)
 {
     /*
-     *  Connect up shader ("material") interfaces
-     *  Note that sh_plastic.c defines the required "default" entry.
+     * Connect up shader ("material") interfaces
+     * Note that sh_plastic.c defines the required "default" entry.
      */
-    MFUNCS( phg_mfuncs );
-    MFUNCS( null_mfuncs ); /* null test shader */
-    MFUNCS( light_mfuncs );
-    MFUNCS( cloud_mfuncs );
-    MFUNCS( spm_mfuncs );
-    MFUNCS( txt_mfuncs );
-    MFUNCS( stk_mfuncs );
-    MFUNCS( cook_mfuncs );
-    MFUNCS( stxt_mfuncs );
-    MFUNCS( points_mfuncs );
-    MFUNCS( toyota_mfuncs );
-    MFUNCS( wood_mfuncs );
-    MFUNCS( camo_mfuncs );
-    MFUNCS( scloud_mfuncs );
-    MFUNCS( air_mfuncs );
-    MFUNCS( rtrans_mfuncs );
-    MFUNCS( fire_mfuncs );
-    MFUNCS( brdf_mfuncs );
-    MFUNCS( gauss_mfuncs );
-    MFUNCS( noise_mfuncs );
-    MFUNCS( prj_mfuncs );
-    MFUNCS( grass_mfuncs );
-    MFUNCS( tthrm_mfuncs );
-    MFUNCS( flat_mfuncs );
-    MFUNCS( bbd_mfuncs );
-    MFUNCS( toon_mfuncs );
+    MFUNCS(phg_mfuncs);
+    MFUNCS(null_mfuncs); /* null test shader */
+    MFUNCS(light_mfuncs);
+    MFUNCS(cloud_mfuncs);
+    MFUNCS(spm_mfuncs);
+    MFUNCS(txt_mfuncs);
+    MFUNCS(stk_mfuncs);
+    MFUNCS(cook_mfuncs);
+    MFUNCS(stxt_mfuncs);
+    MFUNCS(points_mfuncs);
+    MFUNCS(toyota_mfuncs);
+    MFUNCS(wood_mfuncs);
+    MFUNCS(camo_mfuncs);
+    MFUNCS(scloud_mfuncs);
+    MFUNCS(air_mfuncs);
+    MFUNCS(rtrans_mfuncs);
+    MFUNCS(fire_mfuncs);
+    MFUNCS(brdf_mfuncs);
+    MFUNCS(gauss_mfuncs);
+    MFUNCS(noise_mfuncs);
+    MFUNCS(prj_mfuncs);
+    MFUNCS(grass_mfuncs);
+    MFUNCS(tthrm_mfuncs);
+    MFUNCS(flat_mfuncs);
+    MFUNCS(bbd_mfuncs);
+    MFUNCS(toon_mfuncs);
 }
+
 
 /*
  * Local Variables:

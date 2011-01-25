@@ -74,7 +74,7 @@ killtree_callback(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	_ged_eraseAllNamesFromDisplay(gktdp->gedp, dp->d_namep, 0);
 
 	bu_vls_printf(&gktdp->gedp->ged_result_str, "KILL %s:  %s\n",
-		      (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
+		      (dp->d_flags & RT_DIR_COMB) ? "COMB" : "Solid",
 		      dp->d_namep);
 
 	if (!gktdp->killrefs) {
@@ -162,7 +162,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "{");
 
     for (i=1; i<argc; i++) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
 	/* ignore phony objects */

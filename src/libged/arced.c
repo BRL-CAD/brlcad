@@ -80,7 +80,7 @@ ged_arced(struct ged *gedp, int argc, const char *argv[])
     /* Load the combination into memory */
     dp = anp->an_path.fp_names[anp->an_path.fp_len-2];
     RT_CK_DIR(dp);
-    if ((dp->d_flags & DIR_COMB) == 0) {
+    if ((dp->d_flags & RT_DIR_COMB) == 0) {
 	db_free_1anim(anp);
 	bu_vls_printf(&gedp->ged_result_str, "%s: not a combination", dp->d_namep);
 	return GED_ERROR;

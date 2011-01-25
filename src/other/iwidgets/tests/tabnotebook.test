@@ -44,14 +44,14 @@ set m 1
 #
 test Tabnotebook-1.$c {Tabnotebook construction} {
     iwidgets::Tabnotebook .tn
-    pack .tn
-    update
+    pack .tn 
+    update 
     .tn add -label one
-    update
+    update 
     .tn add -label two
-    update
+    update 
     .tn add -label three
-    update
+    update 
 } {}
 
 incr c
@@ -94,10 +94,10 @@ foreach test {
 	} {
 	set option [lindex $test 0]
 	test Tabnotebook-2.$o "configuration options, $option" {
-	    .tn configure $option [lindex $test 1]
+	    .tn configure $option [lindex $test 1] 
 		lindex [.tn configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -110,16 +110,16 @@ test Tabnotebook-2.$o {page configuration option} {
 
 # do pageconfigure tests also...
 foreach test {
-		{0 -label Hello Hello}
-		{end -label "Hello World" "Hello World"}
+		{0 -label Hello Hello} 
+		{end -label "Hello World" "Hello World"} 
 	} {
 		set index  [lindex $test 0]
 		set option [lindex $test 1]
 		test Tabnotebook-2.$o "configuration options, $option" {
-			.tn pageconfigure $index $option [lindex $test 2]
+			.tn pageconfigure $index $option [lindex $test 2] 
 			lindex [.tn pageconfigure $index $option] 4
 		} [lindex $test 3]
-	update
+	update 
 	incr o
 }
 
@@ -140,103 +140,103 @@ foreach test {
 # Method tests which are successful.
 #
 foreach test {
-    {{.tn add}
+    {{.tn add} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn add}
+    {{.tn add} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn add}
+    {{.tn add} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn add -label Never}
+    {{.tn add -label Never} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn add}
+    {{.tn add} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-	{{.tn add -label "Hello World" -disabledforeground gray}
+	{{.tn add -label "Hello World" -disabledforeground gray} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn childsite Never}
+    {{.tn childsite Never} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn childsite 0}
+    {{.tn childsite 0} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn childsite end}
+    {{.tn childsite end} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn index end}
+    {{.tn index end} 
 		{[0-9]+}}
-    {{.tn index Never}
+    {{.tn index Never} 
 		{[0-9]+}}
-    {{.tn index 0}
+    {{.tn index 0} 
 		{0}}
-    {{.tn select 0}
+    {{.tn select 0} 
 		{0}}
-    {{.tn select select}
+    {{.tn select select} 
 		{}}
-    {{.tn select end}
+    {{.tn select end} 
 		{[0-9]+}}
-    {{.tn select "Hello World"}
+    {{.tn select "Hello World"} 
 		{[0-9]+}}
-    {{.tn insert 0}
+    {{.tn insert 0} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn insert select -label "An Insert"}
+    {{.tn insert select -label "An Insert"} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn insert end -label "Next To Last"}
+    {{.tn insert end -label "Next To Last"} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn select 0}
+    {{.tn select 0} 
 		{0}}
-    {{.tn next}
+    {{.tn next} 
 		{1}}
-    {{.tn next}
+    {{.tn next} 
 		{2}}
-    {{.tn prev}
+    {{.tn prev} 
 		{1}}
-    {{.tn prev}
+    {{.tn prev} 
 		{0}}
-    {{.tn delete Never}
+    {{.tn delete Never} 
 		{}}
-    {{.tn delete 1 2}
+    {{.tn delete 1 2} 
 		{}}
-    {{.tn delete 0 "Hello World"}
+    {{.tn delete 0 "Hello World"} 
 		{}}
-    {{.tn add}
+    {{.tn add} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn add}
+    {{.tn add} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn add}
+    {{.tn add} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn add}
+    {{.tn add} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn delete 0 end}
+    {{.tn delete 0 end} 
 		{}}
-    {{.tn add}
+    {{.tn add} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn add}
+    {{.tn add} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn add}
+    {{.tn add} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn add}
+    {{.tn add} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn select 2}
+    {{.tn select 2} 
 		{[-]*[0-9]+}}
-    {{.tn delete select end}
+    {{.tn delete select end} 
 		{}}
-    {{.tn delete 0 end}
+    {{.tn delete 0 end} 
 		{}}
-    {{.tn add -label "First Page"}
+    {{.tn add -label "First Page"} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn add -label "Second Page"}
+    {{.tn add -label "Second Page"} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn add -label "Third Page"}
+    {{.tn add -label "Third Page"} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn add -label "Fourth Page"}
+    {{.tn add -label "Fourth Page"} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn add -label "Fifth Page"}
+    {{.tn add -label "Fifth Page"} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn add -label "Sixth Page"}
+    {{.tn add -label "Sixth Page"} 
 		{[.]tn[.]canvas[.]notebook[.]cs[.]page[0-9]+[.]cs}}
-    {{.tn select "First Page"}
+    {{.tn select "First Page"} 
 		{[-]*[0-9]+}}
-    {{.tn delete select "Second Page"}
+    {{.tn delete select "Second Page"} 
 		{}}
-    {{.tn delete "Third Page" 1}
+    {{.tn delete "Third Page" 1} 
 		{}}
-    {{.tn delete "Fifth Page" "Sixth Page"}
+    {{.tn delete "Fifth Page" "Sixth Page"} 
 		{}}
 	} {
 	set method [lindex [lindex $test 0] 1]
@@ -250,7 +250,7 @@ foreach test {
 	append testContents "set result\n"
 	test Tabnotebook-3.$m "\[$method_invoke\]" $testContents \
 		[list 0 1]
-	update
+	update 
 	incr m
 }
 
@@ -315,28 +315,28 @@ foreach test {
 #
 test Tabnotebook-1.$c {Tabnotebook destruction} {
     destroy .tn
-    update
+    update 
 } {}
 
 incr c
 
 test Tabnotebook-1.$c {Tabnotebook construction} {
     iwidgets::Tabnotebook .tn -width 100 -height 100
-    pack .tn
-    update
+    pack .tn 
+    update 
     .tn add -label one
-    update
+    update 
     .tn add -label two
-    update
+    update 
     .tn add -label three
-    update
+    update 
 } {}
 
 incr c
 
 test Tabnotebook-1.$c {Tabnotebook destruction} {
 	destroy .tn
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

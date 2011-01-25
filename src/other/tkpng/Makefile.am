@@ -1,22 +1,27 @@
-tkpng_la_CFLAGS = \
+libtkpng_la_CFLAGS = \
 	${LIBZ_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
 	${TK_CPPFLAGS} \
 	-DDM_TK -DIF_TK \
 	${NOWARN}
 
-tkpng_la_LDFLAGS = -module
-lib_LTLIBRARIES = tkpng.la
+lib_LTLIBRARIES = libtkpng.la
 
-tkpng_la_SOURCES = \
+brlcadscriptdir =  ${libdir}/tkpng${TKPNG_VERSION}
+brlcadscript_SCRIPTS = pkgIndex.tcl
+
+libtkpng_la_SOURCES = \
 	generic/tkImgPNG.c \
 	generic/tkImgPNGInit.c
 
-tkpng_la_LIBADD = \
+libtkpng_la_LIBADD = \
 	${LIBZ} \
 	${TCL} \
 	${TK} \
 	${TCLSTUB}
+
+DISTCLEANFILES = \
+	pkgIndex.tcl
 
 EXTRA_DIST = \
 	README \

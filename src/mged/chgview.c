@@ -359,7 +359,7 @@ edit_com(int argc,
 	    i += 2;
 	}
 
-	tbl = db_lookup_by_attr(dbip, DIR_REGION | DIR_SOLID | DIR_COMB, &avs, flag_o_nonunique);
+	tbl = db_lookup_by_attr(dbip, RT_DIR_REGION | RT_DIR_SOLID | RT_DIR_COMB, &avs, flag_o_nonunique);
 	bu_avs_free(&avs);
 	if (!tbl) {
 	    bu_log("Error: db_lookup_by_attr() failed!!\n");
@@ -515,7 +515,7 @@ emuves_com(int argc, const char *argv[])
 	bu_avs_add_nonunique(&avs, "MUVES_Component", argv[i]);
     }
 
-    tbl = db_lookup_by_attr(dbip, DIR_REGION, &avs, 2);
+    tbl = db_lookup_by_attr(dbip, RT_DIR_REGION, &avs, 2);
 
     bu_avs_free(&avs);
 
@@ -975,13 +975,13 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
     basename = path_piece[nm_pieces - 1];
 
-    if ((dp = db_lookup(dbip,  basename, LOOKUP_NOISY)) == DIR_NULL) {
+    if ((dp = db_lookup(dbip,  basename, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "db_lookup failed for '", basename, "'\n", (char *)NULL);
 	goto bail_out;
     }
 
     nmatch = 0;
-    if (!(dp->d_flags & DIR_SOLID)) {
+    if (!(dp->d_flags & RT_DIR_SOLID)) {
 	Tcl_AppendResult(interp, basename, " is not a solid\n", (char *)NULL);
 	goto bail_out;
     }
@@ -1154,7 +1154,7 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 }
 
 
-void
+static void
 check_nonzero_rates(void)
 {
     if (!NEAR_ZERO(view_state->vs_rate_model_rotate[X], SMALL_FASTF)
@@ -2948,153 +2948,6 @@ slewview(vect_t view_pos)
     set_absolute_tran();
 
     view_state->vs_flag = 1;
-}
-
-
-/*
- * F _ V I E W 2 M O D E L _ L U
- *
- * Given a point in view coordinates (local units),
- * convert it to model coordinates (local units).
- */
-int
-f_view2model_lu(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
-{
-    struct bu_vls vls;
-    fastf_t sf;
-    point_t view_pt;
-    point_t model_pt;
-
-    CHECK_DBI_NULL;
-
-    if (argc != 4)
-	goto bad;
-
-    if (sscanf(argv[1], "%lf", &view_pt[X]) != 1)
-	goto bad;
-    if (sscanf(argv[2], "%lf", &view_pt[Y]) != 1)
-	goto bad;
-    if (sscanf(argv[3], "%lf", &view_pt[Z]) != 1)
-	goto bad;
-
-    sf = 1.0 / (view_state->vs_gvp->gv_scale * base2local);
-    VSCALE(view_pt, view_pt, sf);
-    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
-    VSCALE(model_pt, model_pt, base2local);
-
-    bu_vls_init(&vls);
-    bn_encode_vect(&vls, model_pt);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-
-    bu_vls_free(&vls);
-    return TCL_OK;
-
- bad:
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helpdevel view2model_lu");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-}
-
-
-/*
- * F _ V I E W 2 G R I D _ L U
- *
- * Given a point in view coordinates (local units),
- * convert it to grid coordinates (local units).
- */
-int
-f_view2grid_lu(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
-{
-    struct bu_vls vls;
-    fastf_t f;
-    point_t view_pt;
-    point_t model_pt;
-    point_t mo_view_pt;           /* model origin in view space */
-    point_t diff;
-
-    CHECK_DBI_NULL;
-
-
-    if (argc != 4)
-	goto bad;
-
-    if (sscanf(argv[1], "%lf", &view_pt[X]) != 1)
-	goto bad;
-    if (sscanf(argv[2], "%lf", &view_pt[Y]) != 1)
-	goto bad;
-    if (sscanf(argv[3], "%lf", &view_pt[Z]) != 1)
-	goto bad;
-
-    VSETALL(model_pt, 0.0);
-    MAT4X3PNT(mo_view_pt, view_state->vs_gvp->gv_model2view, model_pt);
-    f = view_state->vs_gvp->gv_scale * base2local;
-    VSCALE(mo_view_pt, mo_view_pt, f);
-    VSUB2(diff, view_pt, mo_view_pt);
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "%.15e %.15e", diff[X], diff[Y]);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-
-    bu_vls_free(&vls);
-    return TCL_OK;
-
- bad:
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helpdevel view2grid_lu");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-}
-
-
-/*
- * F _ V I E W 2 M O D E L _ V E C
- *
- * Given a vector in view coordinates,
- * convert it to model coordinates.
- */
-int
-f_view2model_vec(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
-{
-    struct bu_vls vls;
-    point_t model_vec;
-    point_t view_vec;
-    mat_t inv_Viewrot;
-
-    if (argc != 4)
-	goto bad;
-
-    if (sscanf(argv[1], "%lf", &view_vec[X]) != 1)
-	goto bad;
-    if (sscanf(argv[2], "%lf", &view_vec[Y]) != 1)
-	goto bad;
-    if (sscanf(argv[3], "%lf", &view_vec[Z]) != 1)
-	goto bad;
-
-    bn_mat_inv(inv_Viewrot, view_state->vs_gvp->gv_rotation);
-    MAT4X3PNT(model_vec, inv_Viewrot, view_vec);
-
-    bu_vls_init(&vls);
-    bn_encode_vect(&vls, model_vec);
-#if 0
-    bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(model_vec));
-#endif
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-
-    bu_vls_free(&vls);
-    return TCL_OK;
-
- bad:
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helpdevel view2model_vec");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
 }
 
 

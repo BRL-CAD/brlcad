@@ -37,7 +37,6 @@
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"
-#  include "itk.h"
 #endif
 
 #include "bu.h"
@@ -402,8 +401,8 @@ gui_setup(const char *dstr)
     }
 
     /* Initialize [incr Tk] */
-    if (Itk_Init(INTERP) == TCL_ERROR) {
-	return TCL_ERROR;
+    if (Tcl_Eval(INTERP, "package require Itk") != TCL_OK) {
+      return TCL_ERROR;
     }
 
     /* Import [incr Tk] commands into the global namespace */

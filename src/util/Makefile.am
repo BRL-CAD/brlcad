@@ -223,7 +223,7 @@ bwfilter_SOURCES = bwfilter.c
 bwfilter_LDADD = ${BU}
 
 bwhist_SOURCES = bwhist.c
-bwhist_LDADD = ${FB}
+bwhist_LDADD = ${FB} ${BU}
 
 bwhisteq_SOURCES = bwhisteq.c
 bwhisteq_LDADD = ${BU}

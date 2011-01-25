@@ -71,12 +71,12 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
 
     /* First, check validity, and change node names */
     for (i = 2; i < argc; i++) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    argv[i] = "";
 	    continue;
 	}
 
-	if (gedp->ged_wdbp->dbip->dbi_version < 5 && (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
+	if (db_version(gedp->ged_wdbp->dbip) < 5 && (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
 	    bu_vls_printf(&gedp->ged_result_str, "'%s%s' too long, must be %d characters or less.\n",
 			  argv[1], argv[i], NAMESIZE);
 
@@ -84,7 +84,7 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	if (gedp->ged_wdbp->dbip->dbi_version < 5) {
+	if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	    bu_strlcpy(tempstring_v4, argv[1], len);
 	    bu_strlcat(tempstring_v4, argv[i], len);
 	    tempstring = tempstring_v4;
@@ -95,7 +95,7 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
 	    tempstring = bu_vls_addr(&tempstring_v5);
 	}
 
-	if (db_lookup( gedp->ged_wdbp->dbip, tempstring, LOOKUP_QUIET) != DIR_NULL) {
+	if (db_lookup( gedp->ged_wdbp->dbip, tempstring, LOOKUP_QUIET) != RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: already exists\n", tempstring);
 	    argv[i] = "";
 	    continue;
@@ -125,7 +125,7 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
 
     /* Examine all COMB nodes */
     FOR_ALL_DIRECTORY_START(dp, gedp->ged_wdbp->dbip) {
-	if (!(dp->d_flags & DIR_COMB))
+	if (!(dp->d_flags & RT_DIR_COMB))
 	    continue;
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
@@ -163,7 +163,7 @@ ged_do_prefix(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tr
 	return;
 
     bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
-    if ( dbip->dbi_version < 5 ) {
+    if ( db_version(dbip) < 5 ) {
 	bu_strlcpy( tempstring_v4, prefix, len);
 	bu_strlcat( tempstring_v4, obj, len);
 	comb_leaf->tr_l.tl_name = bu_strdup( tempstring_v4 );

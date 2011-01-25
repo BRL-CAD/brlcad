@@ -8,22 +8,22 @@
  */
 /** @file turb.c
  *
- *	Larger noise table for turbulence calculations.
+ * Larger noise table for turbulence calculations.
  *
- *  Author -
- *	Bill Laut
+ * Author -
+ * Bill Laut
  *
- *  Source -
- *	Gull Island Consultants, Inc.
- *	P.O. Box 627
- *	Muskegon, MI  49440
+ * Source -
+ * Gull Island Consultants, Inc.
+ * P.O. Box 627
+ * Muskegon, MI 49440
  */
 
 #include "common.h"
 
 #include "bu.h"
 
-const fastf_t	turb_table[20][20][20] = {
+const fastf_t turb_table[20][20][20] = {
     {{ 0.105489192064851520, -0.203732953406870370, -0.001023580785840750, -0.418433680199086670,
        0.019490496721118689, -0.494057352188974620,  0.379220851697027680, -0.381280504632741210,
        0.073469225782901049, -0.087082616984844208, -0.120197215583175420,  0.007280763704329729,
@@ -2423,6 +2423,7 @@ const fastf_t	turb_table[20][20][20] = {
        -0.182560822926461700, -0.044558695517480373, -0.088157558348029852,  0.218550244811922310,
        0.248654174152761700,  0.285344096366316080,  0.166540491860359910, -0.340634224470704790}}
 };
+
 
 /*
  * Local Variables:

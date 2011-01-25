@@ -2,7 +2,7 @@
 # Extfileselectionbox
 # ----------------------------------------------------------------------
 # Implements a file selection box that is a slightly extended version
-# of the OSF/Motif standard XmExtfileselectionbox composite widget.
+# of the OSF/Motif standard XmExtfileselectionbox composite widget.  
 # The Extfileselectionbox differs from the Motif standard in that the
 # filter and selection fields are comboboxes and the files and directory
 # lists are in a paned window.
@@ -152,7 +152,7 @@ itcl::body iwidgets::Extfileselectionbox::constructor {args} {
         iwidgets::Combobox $itk_interior.filter -unique true \
         -command [itcl::code $this _selectFilter] -exportselection 0 \
         -labelpos nw -completion 0
-
+    
     } {
     usual
 
@@ -168,7 +168,7 @@ itcl::body iwidgets::Extfileselectionbox::constructor {args} {
     #
     itk_component add listpane {
         iwidgets::Panedwindow $itk_interior.listpane -orient vertical
-    }
+    } 
 
     $itk_component(listpane) add dirs -margin 5
     $itk_component(listpane) add files -margin 5
@@ -228,7 +228,7 @@ itcl::body iwidgets::Extfileselectionbox::constructor {args} {
     #
     itk_component add -protected childsite {
         frame $itk_interior.fsbchildsite
-    }
+    } 
 
     #
     # Set the interior variable to the childsite for derived classes.
@@ -501,7 +501,7 @@ itcl::configbody iwidgets::Extfileselectionbox::width {
     }
 
     #
-    # Due to a bug in the tk4.2 grid, we have to check the
+    # Due to a bug in the tk4.2 grid, we have to check the 
     # propagation before setting it.  Setting it to the same
     # value it already is will cause it to toggle.
     #
@@ -529,7 +529,7 @@ itcl::configbody iwidgets::Extfileselectionbox::height {
     }
 
     #
-    # Due to a bug in the tk4.2 grid, we have to check the
+    # Due to a bug in the tk4.2 grid, we have to check the 
     # propagation before setting it.  Setting it to the same
     # value it already is will cause it to toggle.
     #
@@ -797,11 +797,11 @@ itcl::body iwidgets::Extfileselectionbox::_setSelection {} {
 itcl::body iwidgets::Extfileselectionbox::_setDirList {} {
     $itk_component(dirs) clear
 
+    set currentIndex ""
     if {$itk_option(-dirsearchcommand) == {}} {
         set cwd "$_pwd"
-
-        set counter      0
-        set currentIndex ""
+        
+        set counter 0
         foreach i [lsort [glob -nocomplain \
                   [file join $cwd .*] [file join $cwd *]]] {
             if {[file isdirectory $i]} {
@@ -952,7 +952,7 @@ itcl::body iwidgets::Extfileselectionbox::_selectFilter {} {
 #
 # Pack the selection, items, and child site widgets based on options.
 # Using the -in option of pack, put the childsite around the frame
-# in the hull for n, s, e, and w positions.  Make sure and raise
+# in the hull for n, s, e, and w positions.  Make sure and raise 
 # the child site since using the 'in' option may obscure the site.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Extfileselectionbox::_packComponents {{when "later"}} {
@@ -1053,7 +1053,7 @@ itcl::body iwidgets::Extfileselectionbox::_sPos {} {
 
     grid $itk_component(listpane) -row 2 -column 0 \
         -columnspan 1 -sticky nsew
-
+    
     grid rowconfigure $_interior 2 -weight 1
 
     if {$itk_option(-selectionon)} {
@@ -1061,7 +1061,7 @@ itcl::body iwidgets::Extfileselectionbox::_sPos {} {
         grid $itk_component(selection) -row 4 -column 0 \
             -columnspan 1 -sticky ew -padx 5
     }
-
+    
     grid $itk_component(childsite) -row 5 -column 0 \
     -columnspan 1 -rowspan 1 -sticky nsew -padx 5
 
@@ -1112,7 +1112,7 @@ itcl::body iwidgets::Extfileselectionbox::_wPos {} {
         grid $itk_component(filter) -row 0 -column 1 \
             -columnspan 1 -sticky ew -padx 5
         grid rowconfigure $_interior 1 -minsize 7
-    }
+    } 
 
     grid $itk_component(listpane) -row 2 -column 1 \
         -columnspan 1 -sticky nsew
@@ -1131,8 +1131,8 @@ itcl::body iwidgets::Extfileselectionbox::_wPos {} {
 # ------------------------------------------------------------------
 # PRIVATE METHOD: _topPos
 #
-# Position the childsite below the filter but above the lists and
-# all the other components appropriately based on the individual
+# Position the childsite below the filter but above the lists and 
+# all the other components appropriately based on the individual 
 # "on" options.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Extfileselectionbox::_topPos {} {
@@ -1161,7 +1161,7 @@ itcl::body iwidgets::Extfileselectionbox::_topPos {} {
 # PRIVATE METHOD: _bottomPos
 #
 # Position the childsite below the lists and above the selection
-# and all the other components appropriately based on the individual
+# and all the other components appropriately based on the individual 
 # "on" options.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Extfileselectionbox::_bottomPos {} {

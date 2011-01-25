@@ -30,14 +30,16 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
-#include <stdio.h>
+#define __USE_POSIX2 1
 #include <string.h>
-
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* for struct timeval */
 #endif
+#ifdef HAVE_UNISTED_H
+#  include <unistd.h>
+#endif
+#include "bio.h"
 
 #include "tcl.h"
 #include "bu.h"

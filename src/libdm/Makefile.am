@@ -66,6 +66,7 @@ libdm_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 libdm_la_CFLAGS = \
+	${STD_C99_FLAGS} \
 	${STRICT_FLAGS} \
 	${DM_X_CFLAGS} \
 	${DM_TK_CFLAGS} \

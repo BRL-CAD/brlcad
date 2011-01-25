@@ -334,12 +334,12 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 #define COMBMEM_GETCOMBTREE(_gedp, _cmd, _name, _dp, _intern, _ntp, _rt_tree_array, _node_count) { \
   struct rt_comb_internal *_comb; \
 \
-  if ((_dp = db_lookup((_gedp)->ged_wdbp->dbip, (_name), LOOKUP_NOISY)) == DIR_NULL) { \
+  if ((_dp = db_lookup((_gedp)->ged_wdbp->dbip, (_name), LOOKUP_NOISY)) == RT_DIR_NULL) { \
     bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not found in database.\n", (_cmd), (_name)); \
     return GED_ERROR; \
   } \
 \
-  if (!(_dp->d_flags & DIR_COMB)) { \
+  if (!(_dp->d_flags & RT_DIR_COMB)) { \
     bu_vls_printf(&(_gedp)->ged_result_str, "%s: Warning - %s not a combination\n", (_cmd), (_name)); \
     return GED_ERROR; \
   } \
@@ -928,12 +928,12 @@ combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL) {
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
-    if (!(dp->d_flags & DIR_COMB)) {
+    if (!(dp->d_flags & RT_DIR_COMB)) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not a combination\n", argv[0], argv[1]);
 	return GED_ERROR;
     }									\

@@ -37,8 +37,10 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
 #include "plot3.h"
+
+#include "./rtuif.h"
+
 
 extern int rt_shootray_bundle (struct application *ap, struct xray *rays, int nrays);
 extern int rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring);
@@ -95,7 +97,7 @@ main(int argc, char **argv)
     struct application ap;
     static struct rt_i *rtip;
     char *title_file;
-    char idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
+    char idbuf[2048] = {0};		/* First ID record info */
     char *ptr;
     int attr_count=0, i;
     char **attrs = (char **)NULL;

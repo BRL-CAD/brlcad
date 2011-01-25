@@ -46,7 +46,7 @@ int
 mk_write_color_table(struct rt_wdb *ofp)
 {
     RT_CK_WDB(ofp);
-    if (ofp->dbip->dbi_version <= 4) {
+    if (db_version(ofp->dbip) < 5) {
 	const struct mater *mp;
 
 	BU_ASSERT_LONG(mk_version, ==, 4);

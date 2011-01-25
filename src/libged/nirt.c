@@ -76,6 +76,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     FILE *fp_in = NULL;
     FILE *fp_out = NULL;
     FILE *fp_err = NULL;
+    int ret;
 #ifndef _WIN32
     int pid = 0;
     int rpid = 0;
@@ -285,18 +286,31 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "\nFiring from view center...\n");
 
 #ifndef _WIN32
-    (void)pipe(pipe_in);
-    (void)pipe(pipe_out);
-    (void)pipe(pipe_err);
+    ret = pipe(pipe_in);
+    if (ret < 0)
+	perror("pipe");
+    ret = pipe(pipe_out);
+    if (ret < 0)
+	perror("pipe");
+    ret = pipe(pipe_err);
+    if (ret < 0)
+	perror("pipe");
+
     (void)signal(SIGINT, SIG_IGN);
     if ((pid = fork()) == 0) {
 	/* Redirect stdin, stdout, stderr */
 	(void)close(0);
-	(void)dup(pipe_in[0]);
+	ret = dup(pipe_in[0]);
+	if (ret < 0)
+	    perror("dup");
 	(void)close(1);
-	(void)dup(pipe_out[1]);
+	ret = dup(pipe_out[1]);
+	if (ret < 0)
+	    perror("dup");
 	(void)close(2);
-	(void)dup (pipe_err[1]);
+	ret = dup (pipe_err[1]);
+	if (ret < 0)
+	    perror("dup");
 
 	/* close pipes */
 	(void)close(pipe_in[0]);
@@ -326,7 +340,9 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     fp_err = fdopen(pipe_err[0], "r");
 
     /* send quit command to nirt */
-    fwrite("q\n", 1, 2, fp_in);
+    ret = fwrite("q\n", 1, 2, fp_in);
+    if (ret != 2)
+	perror("fwrite");
     (void)fclose(fp_in);
 
 #else
@@ -440,7 +456,6 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
     if (DG_QRAY_GRAPHICS(gedp->ged_gdp)) {
-	int ret;
 
 	if (DG_QRAY_TEXT(gedp->ged_gdp))
 	    bu_vls_free(&o_vls); /* used to form "overlap" part of nirt command above */

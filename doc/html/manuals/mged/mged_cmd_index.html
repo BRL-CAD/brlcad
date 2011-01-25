@@ -771,7 +771,7 @@
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="arced"></A>arced</B> <I>comb/memb anim_command</DT>
-</I><DD>The objects in a <I>BRL-CAD</I> model are stored as Boolean combinations of primitive shapes and/or other combinations.  These combinations are stored as Boolean trees, with each leaf of the tree including a corresponding transformation matrix.  The &quot;arced&quot; command provides a means for directly editing these matrices.  The first argument to the &quot;arced&quot; command must identify the combination and which member’s matrix is to be edited.  The <I>comb/memb</I> argument indicates that member <I>memb</I> of combination <I>comb</I> has the matrix to be edited.  The remainder of the &quot;arced&quot; command line consists of an <I>animation</I> command to be applied to that matrix.  The available animation commands are:</DD>
+</I><DD>The objects in a <I>BRL-CAD</I> model are stored as Boolean combinations of primitive shapes and/or other combinations.  These combinations are stored as Boolean trees, with each leaf of the tree including a corresponding transformation matrix.  The &quot;arced&quot; command provides a means for directly editing these matrices.  The first argument to the &quot;arced&quot; command must identify the combination and which memberï¿½s matrix is to be edited.  The <I>comb/memb</I> argument indicates that member <I>memb</I> of combination <I>comb</I> has the matrix to be edited.  The remainder of the &quot;arced&quot; command line consists of an <I>animation</I> command to be applied to that matrix.  The available animation commands are:</DD>
 </DL>
 
 <UL>
@@ -811,7 +811,7 @@
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="arot"></A>arot</B> <I>x y z angle</DT>
-</I><DD>The &quot;arot&quot; command performs a rotation about the specified axis (<I>x y z</I>) using screen units (-2048 to +2048).  The amount of rotation is determined by <I>angle,</I> which is in degrees.  Exactly what is rotated and how it is rotated are dependent on MGED’s state as well as the state of the display manager. For example, in normal viewing mode, this command simply rotates the view.  However, in primitive edit mode, it rotates the shape being edited.</DD>
+</I><DD>The &quot;arot&quot; command performs a rotation about the specified axis (<I>x y z</I>) using screen units (-2048 to +2048).  The amount of rotation is determined by <I>angle,</I> which is in degrees.  Exactly what is rotated and how it is rotated are dependent on MGEDï¿½s state as well as the state of the display manager. For example, in normal viewing mode, this command simply rotates the view.  However, in primitive edit mode, it rotates the shape being edited.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>arot 0 0 1 10</DD>
 </DL>
@@ -923,7 +923,7 @@
 <TT><DD>mged&gt;</TT> <B>bot_condense bot1_condensed bot1_original</DD>
 </B><DD>-- Eliminate any unused vertices from the primitive named <I>bot1_original</I> and store the result in the new BOT primitive named <I>bot1_condensed.</DD>
 </I><DT><HR ALIGN="RIGHT"></DT>
-<B><DT><A NAME="bot_decimate"></A>bot_decimate </B><I>–c maximum_chord_error –n maximum_normal_error –e minimum_edge_length new_bot_primitive old_bot_primitive</DT>
+<B><DT><A NAME="bot_decimate"></A>bot_decimate </B><I>ï¿½c maximum_chord_error ï¿½n maximum_normal_error ï¿½e minimum_edge_length new_bot_primitive old_bot_primitive</DT>
 </I><DD>The &quot;bot_decimate&quot; command reduces the number of triangles in the <I>old_bot_primitive</I> and saves the results to the <I>new_bot_primitive</I>.  The reduction is accomplished through an edge decimation algorithm.  Only changes that do not violate the specified constraints are performed.  The <I>maximum_chord_error </I>parameter specifies the maximum distance allowed between the original surface and the surface of the new BOT primitive in the current editing units.  The <I>maximum_normal_error</I> specifies the maximum change in surface normal (degrees) between the old and new surfaces.  The <I>minimum_edge_length</I> specifies the length of the longest edge that will be decimated.  At least one constraint must be supplied.  If more than one constraint is specified, then only operations that satisfy all the constraints are performed. </DD>
 <DD></DD>
 <FONT SIZE=4><DD>Examples: </DD>
@@ -995,7 +995,7 @@
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="cat"></A>cat</B> <I>&lt;objects</I>&gt;</DT>
-<DD>The &quot;cat&quot; command displays a brief description of each item in the list of <I>objects</I>.  If the item is a primitive shape, the type of shape and its vertex are displayed.  If the item is a combination, the Boolean formula for that combination—including operands, operators, and parentheses—is displayed.  If the combination is flagged as a region, then that fact is also displayed along with the region’s ident code, air code, los, and GIFT material code.</DD>
+<DD>The &quot;cat&quot; command displays a brief description of each item in the list of <I>objects</I>.  If the item is a primitive shape, the type of shape and its vertex are displayed.  If the item is a combination, the Boolean formula for that combinationï¿½including operands, operators, and parenthesesï¿½is displayed.  If the combination is flagged as a region, then that fact is also displayed along with the regionï¿½s ident code, air code, los, and GIFT material code.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>cat region_1 region_2</DD>
 </DL>
@@ -1179,11 +1179,8 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </FONT>
 <B>
 <DL>
-<DT><A NAME="dbconcat"></A>dbconcat</B> <I>database_file</I> [<I>prefix</I>]</DT>
-<DT><A NAME="dbconcat"></A><B>dbconcat</B> <I>-s/p database_file</I></DT>
-<DD><p>The &quot;dbconcat&quot; command concatenates an existing <I>BRL-CAD</I> database to the database currently being edited.  If a <I>prefix</I> is supplied, then all objects from the <I>database_file</I> will have <I>prefix</I> added to the beginning of their names.  Note that each <I>BRL-CAD</I> object must have a unique name, so care must be taken not to &quot;dbconcat&quot; a database that has objects with names the same as objects in the current database.  The <A HREF="#dup">dup</A> command may be used to check for duplicate names.  If the <I>dup</I> command finds duplicate names, use the <I>prefix</I> option to both the <I>dup</I> and <I>dbconcat</I> commands to find a <I>prefix</I> that produces no duplicates.  If duplicate names are encountered during the &quot;dbconcat&quot; process, computer-generated prefixes will be added to the object names coming from the <I>database_file</I> (but member names appearing in combinations will not be modified, so this is a dangerous practice and should be avoided).</p></DD>
-
-  <DD><p>The second form also concatenates an existing <I>BRL-CAD</I> database to the database currently being edited; however, no prefix is required.  If the <I>-s</I> option is specified,then a computer-generated suffix is added wherever required to ensure unique object names.  Similarly, the <I>-p</I> option will create computer-generated prefixes where needed.  If a name in the existing database does not conflict with names in the database currently being edited, that name will not be changed.  Member names appearing in combinations in the existing database will be modified if needed.</p></DD>
+<DT><A NAME="dbconcat"></A>dbconcat</B> <I>[-s/-p] [-t] [-u] [-c] <I>database_file</I> [<I>affix</I>]</DT>
+<DD><p>The &quot;dbconcat&quot; command concatenates an existing <I>BRL-CAD</I> database to the database currently being edited.  If an <I>affix</I> is supplied, then all objects from the <I>database_file</I> will have that <I>affix</I> added to their names. The <I>-s</I> option indicates that the <I>affix</I> is a suffix, while the <I>-p</I> option (default) indicates that the <I>affix</I> is a prefix.  Note that each <I>BRL-CAD</I> object must have a unique name, so care must be taken not to &quot;dbconcat&quot; a database that has objects with names the same as objects in the current database.  The <A HREF="#dup">dup</A> command may be used to check for duplicate names.  If the <I>dup</I> command finds duplicate names, use the <I>prefix</I> option to both the <I>dup</I> and <I>dbconcat</I> commands to find a <I>prefix</I> that produces no duplicates.  If duplicate names are encountered during the &quot;dbconcat&quot; process, and no <I>affix</I> is supplied, computer-generated prefixes will be added to the object names coming from the <I>database_file</I> (but member names appearing in combinations will not be modified, so this is a dangerous practice and should be avoided). If the <I>-t</I> option is specified, then the title of the <I>database_file</I> will become the new title of the current <I>BRL-CAD</I> database. If the <I>-u</I> option is specified, the units of the current database will be set to that of the <I>database_file</I> being concatted. The <I>-c</I> option specifies that the region color table in the concatted <I>database_file</I> should replace any region color table in the current <I>BRL-CAD</I> datbase.</p></DD>
 
   <FONT SIZE=4><DT>Examples:</DT></font>
 
@@ -1193,6 +1190,9 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 
   <DD><tt>mged&gt;</TT> <B>dbconcat -s model_two.g</b></DD>
   <FONT SIZE=2><P>-- Copy all the objects in <I>model_two.g</I> to the current database, adding computer-generated suffixes as required. </P></FONT>
+
+  <DD><TT>mged&gt;</TT> <B>dbconcat -c -p model_two.g two_</B></DD>
+  <FONT SIZE=2><P>-- Copy all the objects in <I>model_two.g</I> to the current database, adding the prefix <I>two_</I> to every object copied from <I>model_two.g</I>. The region color table from <I>model_two.g</I> is copied to the current database, and any region color table that had existed in the current database is deleted. </P></FONT>
 </DL>
 
 <P><HR ALIGN="RIGHT"></P>
@@ -1289,11 +1289,11 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <B><DT>set</B> [<I>var</I> [<I>val</I>]]</DT>
 <DD>The &quot;set&quot; subcommand provides a means to set or query display manager-specific variables.  Invoked without any arguments, the <I>set</I> subcommand will return a list of all available internal display manager variables.  If only the <I>var</I> argument is specified, the value of that variable is returned.  If both <I>var</I> and <I>val</I> are given, then <I>var</I> will be set to <I>val</I>.</DD>
 <B><DT>size</B> [<I>width height</I>]</DT>
-<DD>The &quot;size&quot; subcommand provides a means to set or query the window size.  If no arguments are given, the display manager’s window size is returned.  If <I>width</I> and <I>height</I> are specified, the display manager makes a request to have its window resized.  Note that a size request is just that, a request, so it may be ignored, especially if the user has resized the window using the mouse.</DD>
+<DD>The &quot;size&quot; subcommand provides a means to set or query the window size.  If no arguments are given, the display managerï¿½s window size is returned.  If <I>width</I> and <I>height</I> are specified, the display manager makes a request to have its window resized.  Note that a size request is just that, a request, so it may be ignored, especially if the user has resized the window using the mouse.</DD>
 <B><DT>m</B> <I>button</I> <I>x y</DT>
 </I><DD>The &quot;m&quot; subcommand is used to simulate an <A HREF="#M">M</A> command.  The <I>button</I> argument determines which mouse button is being used to trigger a call to this command.  This value is used in the event handler to effect dragging the faceplate scrollbars.  The <I>x</I> and <I>y</I> arguments are in X screen coordinates, which are converted to MGED screen coordinates before being passed to the <A HREF="#M">M</A> command.</DD>
 <B><DT>am</B> &lt;<I>r</I> | <I>t</I> | <I>s</I>&gt; <I>x y</DT>
-</I><DD>The &quot;am&quot; subcommand effects <I>mged</I>’s alternate mouse mode. The alternate mouse mode gives the user a different way of manipulating the view or an object.  For example, the user can drag an object or perhaps rotate the view while using the mouse.  The first argument indicates the type of operation to perform (i.e., <I>r</I> for rotation, <I>t</I> for translation, and <I>s</I> for scale).  The <I>x</I> and <I>y</I> arguments are in X screen coordinates and are transformed appropriately before being passed to the <A HREF="#knob">knob</A> command.</DD>
+</I><DD>The &quot;am&quot; subcommand effects <I>mged</I>ï¿½s alternate mouse mode. The alternate mouse mode gives the user a different way of manipulating the view or an object.  For example, the user can drag an object or perhaps rotate the view while using the mouse.  The first argument indicates the type of operation to perform (i.e., <I>r</I> for rotation, <I>t</I> for translation, and <I>s</I> for scale).  The <I>x</I> and <I>y</I> arguments are in X screen coordinates and are transformed appropriately before being passed to the <A HREF="#knob">knob</A> command.</DD>
 <B><DT>adc</B> &lt;<I>1</I> | <I>2</I> | <I>t</I> | <I>d</I>&gt; <I>x y</DT>
 </I><DD>The &quot;adc&quot; subcommand provides a way of manipulating the angle distance cursor while using the mouse.  The first argument indicates the type of operation to perform (i.e., <I>1</I> for angle 1, <I>2</I> for angle 2, <I>t</I> for translate, and <I>d</I> for tick distance).  The <I>x</I> and <I>y</I> arguments are in X screen coordinates and are transformed appropriately before being passed to the <A HREF="#adc">adc</A> command (i.e., not &quot;dm adc&quot;).</DD>
 <B><DT>con</B> &lt;<I>r</I> | <I>t</I> | <I>s</I> &lt;<I>x</I> | <I>y</I> | <I>z</I>&gt; <I>xpos ypos</DT>
@@ -1463,14 +1463,14 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="erase"><A NAME="em"></A></A>em </B><I>[ -C#/#/#] value [value value . . .]</DT>
-</I><DD>The &quot;em&quot; command displays all regions that a MUVES_Component attribute that is set to any of the specified value arguments.  The <I>–C</I> option specifies a color to draw the regions.</DD>
+</I><DD>The &quot;em&quot; command displays all regions that a MUVES_Component attribute that is set to any of the specified value arguments.  The <I>ï¿½C</I> option specifies a color to draw the regions.</DD>
 <DD></DD>
 <FONT SIZE=4><DT>Examples:  </DT>
 </FONT><DD></DD>
 <DT>&#9;<TT>mged&gt;</TT> <B>em engine pilot</DT>
 </B><DD>-- Display all regions that have MUVES_Component attributes equal to engine or pilot.</DD>
 <DT></DT>
-<FONT FACE="Courier" SIZE=2><DD>mged&gt; </FONT><B>em –C0/255/0 hydraulics</DD><DIR>
+<FONT FACE="Courier" SIZE=2><DD>mged&gt; </FONT><B>em ï¿½C0/255/0 hydraulics</DD><DIR>
 
 </B><DT>-- Display all regions that have MUVES_Component attributes equal to hydraulics in green.</DT>
 <DD><HR ALIGN="RIGHT"></DD></DIR>
@@ -1706,7 +1706,7 @@ foo.r_xpand/R
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="gui"></A>gui</B> [<I>-config b|c|g</I>] [<I>-d display_string</I>] [<I>-gd graphics_display_string</I>] [<I>-dt graphics_type</I>] [<I>-id name</I>] [<I>-c -h -j -s</I>]</DT>
-<DD>This command is used to create an instance of MGED’s default Tcl/Tk graphical user interface (GUI).  The following options are allowed:</DD>
+<DD>This command is used to create an instance of MGEDï¿½s default Tcl/Tk graphical user interface (GUI).  The following options are allowed:</DD>
 </DL>
 <TABLE CELLSPACING=0 BORDER=0 WIDTH=576>
 <TR><TD WIDTH="24%" VALIGN="MIDDLE">
@@ -1835,10 +1835,10 @@ foo.r_xpand/R
 <LI>arb6 -- </FONT><A HREF="#ARB"><FONT SIZE=2>ARB</FONT></A><FONT SIZE=2> (six vertices). </LI>
 <LI>arb5 -- </FONT><A HREF="#ARB"><FONT SIZE=2>ARB</FONT></A><FONT SIZE=2> (five vertices). </LI>
 <LI>arb4 -- </FONT><A HREF="#ARB"><FONT SIZE=2>ARB</FONT></A><FONT SIZE=2> (four vertices). </LI>
-<LI>arbn – Arbitrary polyhedron with arbitrary number of vertices (plane equations).</LI>
-<LI>bot – Bag of Triangles.</LI>
-<LI>dsp – Displacement Map.</LI>
-<LI>pipe – Pipe (run of connected pipe or wire).</LI>
+<LI>arbn ï¿½ Arbitrary polyhedron with arbitrary number of vertices (plane equations).</LI>
+<LI>bot ï¿½ Bag of Triangles.</LI>
+<LI>dsp ï¿½ Displacement Map.</LI>
+<LI>pipe ï¿½ Pipe (run of connected pipe or wire).</LI>
 <LI>ebm --</FONT><A HREF="#EBM"><FONT SIZE=2>Extruded Bit Map</FONT></A><FONT SIZE=2>. </LI>
 <LI>vol --</FONT><A HREF="#VOL"><FONT SIZE=2>Voxels</FONT></A><FONT SIZE=2>. </LI>
 <LI>hf -- </FONT><A HREF="#HF"><FONT SIZE=2>Height Field</FONT></A><FONT SIZE=2> deprecated, see dsp.</LI>
@@ -2040,14 +2040,14 @@ foo.r_xpand/R
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="loadtk"></A>lm </B>[-l] [values]</DT>
-<DD>The &quot;lm&quot; command with no values argument lists the name of every region in the database (in alphabetical order), except for those marked as hidden with the hide command.  If the values argument is supplied, only those regions with a &quot;MUVES_Component&quot; attribute having one of the values are listed.  The –l option specifies to use a long format showing object name, object type, major type, minor type, and length.</DD>
+<DD>The &quot;lm&quot; command with no values argument lists the name of every region in the database (in alphabetical order), except for those marked as hidden with the hide command.  If the values argument is supplied, only those regions with a &quot;MUVES_Component&quot; attribute having one of the values are listed.  The ï¿½l option specifies to use a long format showing object name, object type, major type, minor type, and length.</DD>
 <DD></DD>
 <FONT SIZE=4><DT>Examples:  </DT>
 </FONT><DD></DD>
 <DT>&#9;<FONT FACE="Courier" SIZE=2>mged&gt;</FONT> <B>lm engine</DT>
 </B><DD>--List all regions with &quot;MUVES_Component&quot; attribute having a value of &quot;engine&quot;.</DD>
 <DT></DT>
-<FONT FACE="Courier" SIZE=2><DD>mged&gt;</FONT> <B>lm –1 engine pilot</DD><DIR>
+<FONT FACE="Courier" SIZE=2><DD>mged&gt;</FONT> <B>lm ï¿½1 engine pilot</DD><DIR>
 
 </B><DT>--List all regions with &quot;MUVES_Component&quot; attribute having a value of &quot;engine&quot; or &quot;pilot,&quot; and use the long format.</DT>
 <DD></DD>
@@ -2245,7 +2245,7 @@ foo.r_xpand/R
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="mirror"></A>mirror</B> <I>old_object new_object x</I>|<I>y</I>|<I>z</DT>
-</I><DD>The &quot;mirror&quot; command creates <I>new_object</I> by duplicating <I>old_object</I> and reflecting it along the indicated axis.  If <I>old_object</I> is a <A HREF="#SOLID">primitive shape</A>, then a new shape is created, with parameters adjusted to accomplish the <I>mirror</I> operation.  If <I>old_object</I> is a combination, then <I>new_object</I> will simply be a copy of <I>old_object</I> with all of its members’ matrices set to perform the appropriate reflection.</DD>
+</I><DD>The &quot;mirror&quot; command creates <I>new_object</I> by duplicating <I>old_object</I> and reflecting it along the indicated axis.  If <I>old_object</I> is a <A HREF="#SOLID">primitive shape</A>, then a new shape is created, with parameters adjusted to accomplish the <I>mirror</I> operation.  If <I>old_object</I> is a combination, then <I>new_object</I> will simply be a copy of <I>old_object</I> with all of its membersï¿½ matrices set to perform the appropriate reflection.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>mirror shape1 shape1_mirror x</DD>
 </DL><DIR>
@@ -2263,7 +2263,7 @@ foo.r_xpand/R
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="mv"></A>mv</B> <I>old_name new_name</DT>
-</I><DD>The &quot;mv&quot; command changes the name of <I>old_name</I> to <I>new_name</I>.  Note that this does not change any references to <I>old_name</I> that may appear in other <A HREF="#COMBINATION">combinations</A> in the database.  The <A HREF="#mvall">mvall</A> command will change an object’s name everywhere.</DD>
+</I><DD>The &quot;mv&quot; command changes the name of <I>old_name</I> to <I>new_name</I>.  Note that this does not change any references to <I>old_name</I> that may appear in other <A HREF="#COMBINATION">combinations</A> in the database.  The <A HREF="#mvall">mvall</A> command will change an objectï¿½s name everywhere.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>mv shapea shapeb</DD>
 </DL>
@@ -2271,7 +2271,7 @@ foo.r_xpand/R
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="mvall"></A>mvall</B> <I>old_name new_name</DT>
-</I><DD>The &quot;mvall&quot; command changes the name of <I>old_name</I> to <I>new_name</I>.  This will also change any references to <I>old_name</I> that may appear in other <A HREF="#COMBINATION">combinations</A> in the database.  The <A HREF="#mv">mv</A> command will change an object’s name without changing references to it.  The <A HREF="#prefix">prefix</A> command will also change the names and references of objects.</DD>
+</I><DD>The &quot;mvall&quot; command changes the name of <I>old_name</I> to <I>new_name</I>.  This will also change any references to <I>old_name</I> that may appear in other <A HREF="#COMBINATION">combinations</A> in the database.  The <A HREF="#mv">mv</A> command will change an objectï¿½s name without changing references to it.  The <A HREF="#prefix">prefix</A> command will also change the names and references of objects.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>mvall shapea shapeb</DD>
 </DL>
@@ -2447,7 +2447,7 @@ foo.r_xpand/R
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="press"></A>prj_add </B><I>[-t] [-b] [-n] shaderfile [image_file] [image_width] [image_height] </DT>
-</I><DD>The &quot;prj_add&quot; command appends information to the specified <I>shaderfile</I>.  The information appended is in the form required by the &quot;projection&quot; shader (<I>prj</I>) and includes the <I>image_file</I> (typically a &quot;pix&quot; file), the image_width and image_height, and current view parameters frmo the MGED display.  The resulting <I>shaderfile</I> may then be used as the parameter to the <I>prj </I>shader. Before executing this command, the region wireframe display in MGED should be aligned with the <I>image_file</I> (underlayed in MGED’s framebuffer) and the <I>image_file</I> should have the same height and width as the mged display.  The <I>-t</I> option indicates that the image should be projected through the object.  The <I>-n</I> option requests that antialiasing not be done. </DD>
+</I><DD>The &quot;prj_add&quot; command appends information to the specified <I>shaderfile</I>.  The information appended is in the form required by the &quot;projection&quot; shader (<I>prj</I>) and includes the <I>image_file</I> (typically a &quot;pix&quot; file), the image_width and image_height, and current view parameters frmo the MGED display.  The resulting <I>shaderfile</I> may then be used as the parameter to the <I>prj </I>shader. Before executing this command, the region wireframe display in MGED should be aligned with the <I>image_file</I> (underlayed in MGEDï¿½s framebuffer) and the <I>image_file</I> should have the same height and width as the mged display.  The <I>-t</I> option indicates that the image should be projected through the object.  The <I>-n</I> option requests that antialiasing not be done. </DD>
 <DT><HR ALIGN="RIGHT"></DT>
 <B><DT>press</B> <I>button_label</DT>
 </I><DD>The &quot;press&quot; command simulates the pressing of a button.  All of these button actions can be run directly as a command.  The <I>button_label</I> indicates which button to simulate.  The available buttons are:</DD>
@@ -2486,7 +2486,7 @@ foo.r_xpand/R
 <LI>zoomin -- Zoom in, synonym for zoom 2. </LI>
 <LI>zoomout -- Zoom out, synonym for zoom 0.5. </LI>
 <LI>rate -- Toggle between rate and absolute mode for knobs and sliders. </LI>
-<LI>edit – (deprecated) Toggle between edit and view modes for knobs and sliders (useful during editing to allow the knobs and sliders to be used for either editing operations (in edit mode) or to adjust the view without affecting the edited object (in view mode). </LI></UL>
+<LI>edit ï¿½ (deprecated) Toggle between edit and view modes for knobs and sliders (useful during editing to allow the knobs and sliders to be used for either editing operations (in edit mode) or to adjust the view without affecting the edited object (in view mode). </LI></UL>
 
 </FONT><FONT SIZE=4><DL>
 <DT>Examples:</DT>
@@ -2505,12 +2505,12 @@ foo.r_xpand/R
 </FONT><B><DL>
 <DT><A NAME="prj_add"></A></DT>
 <DT>prj_add</B> <I>shaderfile</I> [<I>image_file</I>] [<I>image_width</I>] [<I>image_height</I>]</DT>
-<DD>The &quot;prj_add&quot; command appends information to the specified <I>shaderfile</I>.  The information appended is in the form required by the &quot;projection&quot; shader (<I>prj</I>) and includes the <I>image_file</I> (typically a &quot;pix&quot; file), the <I>image_width</I> and <I>image_height</I>, and current view parameters from the MGED display.  The resulting <I>shaderfile</I> may then be used as the parameter to the <I>prj</I> shader.  Before executing this command, the region wireframe display in MGED should be aligned with the <I>image_file</I> (underlayed in MGED’s framebuffer), and the <I>image_file</I> should have the same height and width as the MGED display.</DD>
+<DD>The &quot;prj_add&quot; command appends information to the specified <I>shaderfile</I>.  The information appended is in the form required by the &quot;projection&quot; shader (<I>prj</I>) and includes the <I>image_file</I> (typically a &quot;pix&quot; file), the <I>image_width</I> and <I>image_height</I>, and current view parameters from the MGED display.  The resulting <I>shaderfile</I> may then be used as the parameter to the <I>prj</I> shader.  Before executing this command, the region wireframe display in MGED should be aligned with the <I>image_file</I> (underlayed in MGEDï¿½s framebuffer), and the <I>image_file</I> should have the same height and width as the MGED display.</DD>
 </DL>
 <FONT SIZE=2><P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="ps"></A>ps</B> [<I>-f font</I>] [<I>-t title</I>] [<I>-c creator</I>] [<I>-s size_in_inches</I>] [<I>-l line_width</I>] <I>output_file</DT>
-</I><DD>The &quot;ps&quot; command temporarily attaches the <I>Postscript</I> display manager and outputs the current MGED display to the specified <I>output_file</I> in <I>PostScript</I> format.  The <I>-f</I> option allows the <I>font</I> to be user-specified.  The <I>-t</I> option allows the user to provide a title (the default is &quot;No Title&quot;).  The <I>-c</I> option allows the user to specify the creator of the file (the default is &quot;LIBDM dm-ps&quot;).  The <I>–s</I> specifies the size of the drawing in inches.  The <I>–l</I> specifies the width of the lines drawn.</DD>
+</I><DD>The &quot;ps&quot; command temporarily attaches the <I>Postscript</I> display manager and outputs the current MGED display to the specified <I>output_file</I> in <I>PostScript</I> format.  The <I>-f</I> option allows the <I>font</I> to be user-specified.  The <I>-t</I> option allows the user to provide a title (the default is &quot;No Title&quot;).  The <I>-c</I> option allows the user to specify the creator of the file (the default is &quot;LIBDM dm-ps&quot;).  The <I>ï¿½s</I> specifies the size of the drawing in inches.  The <I>ï¿½l</I> specifies the width of the lines drawn.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>ps -t "Test Title" test.ps</DD>
 </DL><DIR>
@@ -2704,7 +2704,7 @@ foo.r_xpand/R
 </FONT><TT><DD>mged&gt;</TT> <B>red group2</DD>
 </DL><DIR>
 
-</B><FONT SIZE=2><P>-- Edit the combination <I>group2</I> with the user’s editor of choice. </P></DIR>
+</B><FONT SIZE=2><P>-- Edit the combination <I>group2</I> with the userï¿½s editor of choice. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
@@ -2803,7 +2803,7 @@ foo.r_xpand/R
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="rot"></A>rot</B> <I>x y z </DT>
-</I><DD>The &quot;rot&quot; command rotates the view or an object by <I>xyz</I> degrees.  Exactly what is rotated and how it is rotated are dependent on MGED’s state as well as the state of the display manager. See <A HREF="#arot">arot</A> for a similar capability.</DD>
+</I><DD>The &quot;rot&quot; command rotates the view or an object by <I>xyz</I> degrees.  Exactly what is rotated and how it is rotated are dependent on MGEDï¿½s state as well as the state of the display manager. See <A HREF="#arot">arot</A> for a similar capability.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>rot 0 0 45</DD>
 </DL>
@@ -2869,7 +2869,7 @@ foo.r_xpand/R
 </FONT><B><DL>
 <DT><A NAME="rt"></A>rt</B> [<I>options</I>] [-- <I>objects</I>]</DT>
 <DD>The &quot;rt&quot; command executes the <I>BRL-CAD</I> <I>rt</I> program with the default options of <BR>
-&quot;-s50 –M.&quot;  If perspective is turned on, then the <I>-p</I> option will be included with the value of the perspective angle.  The current database name is added to the end of the <I>rt</I> command line along with either the specified <I>objects</I> or, if none is specified, the list of currently displayed objects.  The <I>rt</I> program is written such that options may be repeated, and the last occurrence of an option will override any earlier occurences. This allows the user to specify other <I>size</I> (<I>-s</I>) options.  The <A HREF="#rrt">rrt</A> command performs a similar function, but may be used to execute other programs as well.  The <I>-M</I> option tells <I>rt</I> to read the viewing parameters from standard input.  See the <I>man</I> page on <I>rt</I> for details.  A related command is <A HREF="#saveview">saveview</A>, which can be used to create a shell script (batch job) to raytrace this view in the background.</DD>
+&quot;-s50 ï¿½M.&quot;  If perspective is turned on, then the <I>-p</I> option will be included with the value of the perspective angle.  The current database name is added to the end of the <I>rt</I> command line along with either the specified <I>objects</I> or, if none is specified, the list of currently displayed objects.  The <I>rt</I> program is written such that options may be repeated, and the last occurrence of an option will override any earlier occurences. This allows the user to specify other <I>size</I> (<I>-s</I>) options.  The <A HREF="#rrt">rrt</A> command performs a similar function, but may be used to execute other programs as well.  The <I>-M</I> option tells <I>rt</I> to read the viewing parameters from standard input.  See the <I>man</I> page on <I>rt</I> for details.  A related command is <A HREF="#saveview">saveview</A>, which can be used to create a shell script (batch job) to raytrace this view in the background.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>rt -s1024 -F/dev/Xl</DD>
 </DL><DIR>
@@ -2877,12 +2877,12 @@ foo.r_xpand/R
 </B><FONT SIZE=2><P>-- Run the <I>rt</I> program to produce a color-shaded image of the current view in the MGED display.  The image will be 1024 pixels square and will be displayed on a lingering <I>X</I> framebuffer. </P>
 <P><BR>
 </FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>rt -C 200/200/255 -- roof</B> <BR>
--- Run the <I>rt</I> program to produce a color-shaded image of the object <I>roof</I> using MGED’s current viewing parameters.  The image will have a sky-blue background and will be displayed on the framebuffer specified by the FB_FILE shell variable. </P></DIR>
+-- Run the <I>rt</I> program to produce a color-shaded image of the object <I>roof</I> using MGEDï¿½s current viewing parameters.  The image will have a sky-blue background and will be displayed on the framebuffer specified by the FB_FILE shell variable. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="rtcheck"></A>rtcheck</B> [<I>options</I>]</DT>
-<DD>The &quot;rtcheck&quot; command executes the <I>BRL-CAD</I> <I>rtcheck</I> program with the default options of &quot;-s50 –M.&quot;  The <I>-M</I> option tells <I>rtcheck</I> to read the viewing parameters from standard input so that rays are only fired from the current view.  The current database name and the list of currently displayed objects are added to the end of the <I>rtcheck</I> command line.  The <I>rtcheck</I> program is written such that options may be repeated, and the last occurrence of an option will override any earlier occurences. This allows the user to specify other <I>size</I> (<I>-s</I>) options.  The <A HREF="#rrt">rrt</A> command performs a similar function, but may be used to execute other programs as well.  The <I>rtcheck</I> program uses raytracing to check for overlapping regions in the list of objects passed on the command line.  When invoked from within MGED, any discovered overlaps along a ray are represented as yellow lines that extend only in the areas of overlap. Details and a count of overlaps are also reported.  Note that overlaps of less than 0.1&nbsp;mm are currently ignored by <I>rtcheck</I>.  The default option of <I>-s50</I> indicates that the checking rays should be fired from a uniform square grid with 50 rays on a side. This is very coarse and may miss significant overlaps.  It is recommended that the user select appropriate options for the <I>rtcheck</I> program and execute it for a variety viewing aspects to perform a thorough check.  The granularity of the grid may be controlled with the <I>-s</I>, <I>-w</I>, <I>-n</I>, <I>-g</I>, and <I>-G</I> options. See the <I>man</I> page on <I>rtcheck</I> for details.</DD>
+<DD>The &quot;rtcheck&quot; command executes the <I>BRL-CAD</I> <I>rtcheck</I> program with the default options of &quot;-s50 ï¿½M.&quot;  The <I>-M</I> option tells <I>rtcheck</I> to read the viewing parameters from standard input so that rays are only fired from the current view.  The current database name and the list of currently displayed objects are added to the end of the <I>rtcheck</I> command line.  The <I>rtcheck</I> program is written such that options may be repeated, and the last occurrence of an option will override any earlier occurences. This allows the user to specify other <I>size</I> (<I>-s</I>) options.  The <A HREF="#rrt">rrt</A> command performs a similar function, but may be used to execute other programs as well.  The <I>rtcheck</I> program uses raytracing to check for overlapping regions in the list of objects passed on the command line.  When invoked from within MGED, any discovered overlaps along a ray are represented as yellow lines that extend only in the areas of overlap. Details and a count of overlaps are also reported.  Note that overlaps of less than 0.1&nbsp;mm are currently ignored by <I>rtcheck</I>.  The default option of <I>-s50</I> indicates that the checking rays should be fired from a uniform square grid with 50 rays on a side. This is very coarse and may miss significant overlaps.  It is recommended that the user select appropriate options for the <I>rtcheck</I> program and execute it for a variety viewing aspects to perform a thorough check.  The granularity of the grid may be controlled with the <I>-s</I>, <I>-w</I>, <I>-n</I>, <I>-g</I>, and <I>-G</I> options. See the <I>man</I> page on <I>rtcheck</I> for details.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>rtcheck -g10 -G10</DD>
 </DL><DIR>
@@ -3186,7 +3186,7 @@ The calculational tolerances are used in evaluating the </FONT><A HREF="#BOOLEAN
 </B><DT>-- Create an RCC named <I>rcc.s</I> to fill in the hole in the middle of <I>tor</I>.<I>s. </DT>
 </I><DD><HR ALIGN="RIGHT"></DD>
 <B><DT>tra</B> <I>dx dy dz</DT>
-</I><DD>The &quot;tra&quot; command translates the view or an object.  Exactly what is done is determined by MGED’s state as well as the state of the current display manager.  The parameters <I>dx</I>, <I>dy</I>, and <I>dz</I> are in local units.</DD>
+</I><DD>The &quot;tra&quot; command translates the view or an object.  Exactly what is done is determined by MGEDï¿½s state as well as the state of the current display manager.  The parameters <I>dx</I>, <I>dy</I>, and <I>dz</I> are in local units.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>tra 10 0 0</DD>
 </DL>
@@ -3324,7 +3324,7 @@ The calculational tolerances are used in evaluating the </FONT><A HREF="#BOOLEAN
 <LI>context -- if nonzero (the default), then primitive editing parameters entered via the </FONT><A HREF="#p"><FONT SIZE=2>p</FONT></A><FONT SIZE=2> command will be applied to the edited shape in the context of the </FONT><A HREF="#COMBINATION"><FONT SIZE=2>combination</FONT></A><FONT SIZE=2> tree above it in the displayed hierarchy.  This means, for example, a translation applied to a shape will translate the shape to some point such that when the transformation matrices for that </FONT><A HREF="#PATH"><FONT SIZE=2>path</FONT></A><FONT SIZE=2> are applied, the edited shape will appear at the specified location.  If <I>context</I> is set to zero, then the primitive edit operations will be applied directly to the edited shape.  This means that a translation to a specific point may result in the edited shape being drawn at a point different from that specified (due to transformations in the <I>combination</I> tree above it).  Note that this only affects primitive edit operations that use the <I>p</I> command. </LI>
 <LI>dlist -- if nonzero, use display lists. </LI>
 <LI>use_air -- if nonzero, use air while raytracing. </LI>
-<LI>listen -- if nonzero, listen for connections to MGED’s built-in fbserv. </LI>
+<LI>listen -- if nonzero, listen for connections to MGEDï¿½s built-in fbserv. </LI>
 <LI>port -- port for the built-in fbserv to use. </LI>
 <LI>fb -- if nonzero, then framebuffer is active. </LI>
 <LI>fb_all -- if nonzero, use entire geometry window for the framebuffer; otherwise, use only the rectangular area. </LI>
@@ -3776,7 +3776,7 @@ mged </FONT><A HREF="#M"><B><FONT SIZE=2>M</B></FONT></A><B><FONT SIZE=2> 1 0 0<
 
 <B><FONT SIZE=2><P>open</B> <I>id -- </I>This subcommand is used to create the internal data structures for a new command window.  If <I>id</I> is already in use, nothing is changed.</P>
 </FONT><B><DL>
-<DT>close</B> <I>id -- </I>This subcommand releases <I>id</I>’s internal data structures.  If the referenced command window is <A HREF="#tie">tied</A> to a display manager, then that association is also removed.</DT>
+<DT>close</B> <I>id -- </I>This subcommand releases <I>id</I>ï¿½s internal data structures.  If the referenced command window is <A HREF="#tie">tied</A> to a display manager, then that association is also removed.</DT>
 <B><DT>set</B> <I>id -- </I>This subcommand sets the current command window to <I>id</I>.  If this command window is <A HREF="#tie">tied</A> to a display manager, that display manager becomes the current display manager.</DT>
 <B><DT>get </B>--<B> </B>This subcommand returns the id of the current command window.</DT></DIR>
 
@@ -3891,7 +3891,7 @@ some_non_region No {0 220 220} plastic No { u box2 - ball2 } </P></DIR>
 </FONT><B><DL>
 <DT><A NAME="make_name"></A>make_name</B> <I>template</DT>
 </I><B><DT>make_name</B> <I>-s [num]</DT>
-</I><DD>This command generates an object name that does not occur in the database.  The name, which is generated in the format specified by <I>template</I>, contains an integer count.  By default, this count appears at the end of the generated name, but if <I>template</I> contains the ‘@’ character, then the count appears at that position in the name.</DD>
+</I><DD>This command generates an object name that does not occur in the database.  The name, which is generated in the format specified by <I>template</I>, contains an integer count.  By default, this count appears at the end of the generated name, but if <I>template</I> contains the ï¿½@ï¿½ character, then the count appears at that position in the name.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><DD>mged&gt; <B>make_name wheel</DD>
 </DL>
@@ -3899,7 +3899,7 @@ some_non_region No {0 220 220} plastic No { u box2 - ball2 } </P></DIR>
 
 <P><BR>
 mged <B>make_name tree@trunk</B> <BR>
--- Returns &quot;tree@trunk.&quot;  The two-character string ‘@@’ is interpreted as the literal ‘@’, and thus is ignored for the purposes of positioning the name count.  The integer counter starts at 0, and, by default, it is incremented each time <I>make_name</I> is executed.  The <I>-s</I> option resets this counter.  If the argument <I>num</I> is specified, the counter is set to this value.  Otherwise, it is set to 0. </P></DIR>
+-- Returns &quot;tree@trunk.&quot;  The two-character string ï¿½@@ï¿½ is interpreted as the literal ï¿½@ï¿½, and thus is ignored for the purposes of positioning the name count.  The integer counter starts at 0, and, by default, it is incremented each time <I>make_name</I> is executed.  The <I>-s</I> option resets this counter.  If the argument <I>num</I> is specified, the counter is set to this value.  Otherwise, it is set to 0. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
@@ -3917,7 +3917,7 @@ mged <B>mged_update 1</B> <BR>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="mmenu_get"></A>mmenu_get</B> [<I>i</I>]</DT>
-<DD>This command is used to get MGED’s internal menus.  If <I>i</I> is not specified, return all three internal menus. Otherwise, return the <I>i<SUP>th</SUP> </I> menu.  Note - valid values for <I>i</I> are 0, 1, or 2.</DD>
+<DD>This command is used to get MGEDï¿½s internal menus.  If <I>i</I> is not specified, return all three internal menus. Otherwise, return the <I>i<SUP>th</SUP> </I> menu.  Note - valid values for <I>i</I> are 0, 1, or 2.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><DD>mged&gt; <B>mmenu_get</DD>
 </DL>
@@ -3931,10 +3931,10 @@ mged <B>mmenu_get 2</B> <BR>
 </FONT><B><DL>
 <DT><A NAME="mmenu_set"></A></DT>
 <DT>mmenu_set</B> <I>id i</DT>
-</I><DD>This Tcl proc is used to set/install MGED’s <I>i</I><SUP>th</SUP> internal menu in the Tcl/Tk button menu owned by <I>id</I>.</DD>
+</I><DD>This Tcl proc is used to set/install MGEDï¿½s <I>i</I><SUP>th</SUP> internal menu in the Tcl/Tk button menu owned by <I>id</I>.</DD>
 <DD>mged&gt; <B>mmenu_set bill 0</DD>
 </DL>
-</B><FONT SIZE=2><P>-- Install MGED’s 0<SUP>th</SUP> internal menu into <I>id</I>’s button menu. </P>
+</B><FONT SIZE=2><P>-- Install MGEDï¿½s 0<SUP>th</SUP> internal menu into <I>id</I>ï¿½s button menu. </P>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="model2grid_lu"></A>model2grid_lu</B> <I>mx my mz</DT>
@@ -4005,12 +4005,12 @@ mged <B>rset r</B> <BR>
 Rubber Band <BR>
 draw=0 <BR>
 linewidth=0 <BR>
-linestyle=‘s’ <BR>
+linestyle=ï¿½sï¿½ <BR>
 pos=0,0 <BR>
 dim=0,0 </P>
 <P><BR>
 mged <B>rset r draw</B> <BR>
--- Get value for &quot;Rubber Band’s&quot; draw variable 0. <BR>
+-- Get value for &quot;Rubber Bandï¿½s&quot; draw variable 0. <BR>
 </P>
 <P>mged <B>rset r draw 1</B> <BR>
 -- Draw rubber band.</P>
@@ -4043,7 +4043,7 @@ edit_linewidth2=1. </P>
 <FONT SIZE=2><P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="share"></A>share</B> <I>[-u] resource dm1 [dm2]</DT>
-</I><DD>The &quot;share&quot; command provides a mechanism to share (or unshare with the <B>–u</B> option) resources among display managers.  When a resource is shared between two or more display managers, any change to that resource is seen only in the sharing display managers.  The supported resource types are: ad (ADC), ax (Axes), c (Color Schemes), d (Display Lists), g (Grid), m (Menu), r (Rubber Band), vi (View), and var (MGED Variables).</DD>
+</I><DD>The &quot;share&quot; command provides a mechanism to share (or unshare with the <B>ï¿½u</B> option) resources among display managers.  When a resource is shared between two or more display managers, any change to that resource is seen only in the sharing display managers.  The supported resource types are: ad (ADC), ax (Axes), c (Color Schemes), d (Display Lists), g (Grid), m (Menu), r (Rubber Band), vi (View), and var (MGED Variables).</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><DD>mged&gt; <B>share g .dm_ogl0 .dm_ogl1</DD>
 </DL>
@@ -4061,7 +4061,7 @@ mged <B>share -u g .dm_ogl1</B> <BR>
 <FONT SIZE=2><P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="stuff_str"></A>stuff_str</B> <I>string</DT>
-</I><DD>Sends a string to MGED’s tty, while leaving the current command line alone. This is used to relay the activity of Tcl/Tk command windows to MGED’s tty.  If MGED is no longer attached to a tty, nothing happens.</DD>
+</I><DD>Sends a string to MGEDï¿½s tty, while leaving the current command line alone. This is used to relay the activity of Tcl/Tk command windows to MGEDï¿½s tty.  If MGED is no longer attached to a tty, nothing happens.</DD>
 </DL>
 <FONT SIZE=2><P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>

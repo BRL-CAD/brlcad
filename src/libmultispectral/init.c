@@ -36,7 +36,6 @@
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "rtprivate.h"
 #include "optical.h"
 
 

@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) extbutton.n 1.21 01/04/23 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::extbutton iwid
 .BS

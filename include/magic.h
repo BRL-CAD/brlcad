@@ -37,7 +37,7 @@
  * uninitialized data.
  *
  * The one ugly thing about this implementation is that every BRL-CAD
- * structure needs to have it's magic number registered here and in
+ * structure needs to have its magic number registered here and in
  * the header.
  *
  */

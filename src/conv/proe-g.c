@@ -585,7 +585,7 @@ Convert_part(char *line)
     int face_count=0;
     int degenerate_count=0;
     int small_count=0;
-    float colr[3]={ 0.5, 0.5, 0.5 };
+    float colr[3] = VINITALL(0.5);
     unsigned char color[3]={ 128, 128, 128 };
     char *brlcad_name;
     struct wmember head;
@@ -927,11 +927,11 @@ Rm_nulls(void)
 	int changed=0;
 
 	/* skip solids */
-	if (dp->d_flags & DIR_SOLID)
+	if (dp->d_flags & RT_DIR_SOLID)
 	    continue;
 
 	/* skip non-geometry */
-	if (!(dp->d_flags & (DIR_SOLID | DIR_COMB)))
+	if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 	    continue;
 
 	if (rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource) < 1) {

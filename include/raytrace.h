@@ -409,7 +409,7 @@ struct seg {
 
 #define RT_GET_SEG(p, res) { \
 	while (!BU_LIST_WHILE((p), seg, &((res)->re_seg)) || !(p)) \
-		rt_get_seg(res); \
+		rt_alloc_seg_block(res); \
 	BU_LIST_DEQUEUE(&((p)->l)); \
 	(p)->l.forw = (p)->l.back = BU_LIST_NULL; \
 	(p)->seg_in.hit_magic = (p)->seg_out.hit_magic = RT_HIT_MAGIC; \
@@ -928,7 +928,7 @@ struct directory  {
  */
 #define RT_GET_DIRECTORY(_p, _res) { \
 	while (((_p) = (_res)->re_directory_hd) == NULL) \
-		db_get_directory(_res); \
+		db_alloc_directory_block(_res); \
 	(_res)->re_directory_hd = (_p)->d_forw; \
 	(_p)->d_forw = NULL; }
 
@@ -2327,12 +2327,9 @@ struct nmg_inter_struct {
  *          Applications interface to the RT library             *
  *                                                               *
  *****************************************************************/
-/* Read named MGED db, build toc */
-RT_EXPORT BU_EXTERN(struct rt_i *rt_dirbuild,
-		    (const char *filename,
-		     char *buf,
-		     int len));
+
 /* Prepare for raytracing */
+
 RT_EXPORT BU_EXTERN(struct rt_i *rt_new_rti,
 		    (struct db_i *dbip));
 RT_EXPORT BU_EXTERN(void rt_free_rti,
@@ -2368,6 +2365,7 @@ RT_EXPORT BU_EXTERN(int rt_gen_elliptical_grid,
 		     const fastf_t *avec,
 		     const fastf_t *bvec,
 		     fastf_t gridsize));
+
 RT_EXPORT BU_EXTERN(int rt_gen_circular_grid,
 		    (struct xrays *ray_bundle,
 		     const struct xray *center_ray,
@@ -2417,14 +2415,14 @@ RT_EXPORT BU_EXTERN(void rt_pr_partitions,
 RT_EXPORT BU_EXTERN(struct soltab *rt_find_solid,
 		    (const struct rt_i *rtip,
 		     const char *name));
-/* Start the timer */
+/* Start the global timer */
 RT_EXPORT BU_EXTERN(void rt_prep_timer,
 		    (void));
-/* Read timer, return time + str */
+/* Read global timer, return time + str */
 RT_EXPORT BU_EXTERN(double rt_get_timer,
 		    (struct bu_vls *vp,
 		     double *elapsed));
-/* Return CPU time, text, & wall clock time */
+/* Return CPU time, text, & wall clock time off the global timer */
 RT_EXPORT BU_EXTERN(double rt_read_timer,
 		    (char *str, int len));
 /* Plot a solid */
@@ -2510,9 +2508,6 @@ RT_EXPORT BU_EXTERN(void rt_pr_hit,
 /* rt_fastf_float, rt_mat_dbmat, rt_dbmat_mat
  * declarations moved to db.h */
 
-/* storage obtainers */
-RT_EXPORT BU_EXTERN(void rt_get_seg,
-		    (struct resource *res));
 RT_EXPORT BU_EXTERN(void rt_cut_it,
 		    (struct rt_i *rtip,
 		     int ncpu));
@@ -3035,8 +3030,6 @@ RT_EXPORT BU_EXTERN(struct directory *db5_diradd,
 		     const struct db5_raw_internal *rip,
 		     off_t laddr,
 		     genptr_t client_data));
-RT_EXPORT BU_EXTERN(int db_get_version,
-		    (struct db_i *dbip));
 RT_EXPORT BU_EXTERN(int db5_scan,
 		    (struct db_i *dbip,
 		     void (*handler)(struct db_i *,
@@ -3044,6 +3037,13 @@ RT_EXPORT BU_EXTERN(int db5_scan,
 				     off_t addr,
 				     genptr_t client_data),
 		     genptr_t client_data));
+
+/**
+ * obtain the database version for a given database instance.
+ *
+ * presently returns only a 4 or 5 accordingly.
+ */
+RT_EXPORT BU_EXTERN(int db_version, (struct db_i *dbip));
 
 /* db5_comb.c */
 RT_EXPORT BU_EXTERN(int rt_comb_import5, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp));
@@ -3064,8 +3064,15 @@ RT_EXPORT BU_EXTERN(void db_inmem,
 		     struct db_i	*dbip));
 
 /* db_lookup.c */
-RT_EXPORT BU_EXTERN(int db_get_directory_size,
-		    (const struct db_i	*dbip));
+
+/**
+ * D B _ D I R E C T O R Y _ S I Z E
+ *
+ * Return the number of "struct directory" nodes in the given
+ * database.
+ */
+RT_EXPORT BU_EXTERN(size_t db_directory_size, (const struct db_i *dbip));
+
 RT_EXPORT BU_EXTERN(void db_ck_directory,
 		    (const struct db_i *dbip));
 
@@ -3123,7 +3130,6 @@ RT_EXPORT BU_EXTERN(int db_rename,
 		     struct directory *,
 		     const char *newname));
 
-
 /* db_match.c */
 RT_EXPORT BU_EXTERN(void db_update_nref,
 		    (struct db_i *dbip,
@@ -3165,6 +3171,26 @@ RT_EXPORT BU_EXTERN(int db_zapper,
 		    (struct db_i *,
 		     struct directory *dp,
 		     size_t start));
+
+/**
+ * D B _ A L L O C _ D I R E C T O R Y
+ *
+ * This routine is called by the RT_GET_DIRECTORY macro when the
+ * freelist is exhausted.  Rather than simply getting one additional
+ * structure, we get a whole batch, saving overhead.
+ */
+RT_EXPORT BU_EXTERN(void db_alloc_directory_block, (struct resource *resp));
+
+/**
+ * R T _ A L L O C _ S E G _ B L O C K
+ *
+ * This routine is called by the GET_SEG macro when the freelist is
+ * exhausted.  Rather than simply getting one additional structure, we
+ * get a whole batch, saving overhead.  When this routine is called,
+ * the seg resource must already be locked.  malloc() locking is done
+ * in bu_malloc.
+ */
+RT_EXPORT BU_EXTERN(void rt_alloc_seg_block, (struct resource *res));
 
 /* db_tree.c */
 RT_EXPORT BU_EXTERN(void db_dup_db_tree_state,
@@ -3306,8 +3332,8 @@ RT_EXPORT BU_EXTERN(int db_region_mat,
 		     struct db_i	*dbip,
 		     const char	*name,
 		     struct resource *resp));
-/* FIXME: db_shader_mat (DEPRECATED), should be called rt_shader_mat */
-RT_EXPORT BU_EXTERN(int db_shader_mat,
+
+RT_EXPORT BU_EXTERN(int rt_shader_mat,
 		    (mat_t			model_to_shader,	/* result */
 		     const struct rt_i	*rtip,
 		     const struct region	*rp,
@@ -3319,9 +3345,12 @@ RT_EXPORT BU_EXTERN(union tree *db_tree_parse, (struct bu_vls *vls, const char *
 
 
 /* dir.c */
-RT_EXPORT BU_EXTERN(struct rt_i *rt_dirbuild,
-		    (const char *filename,
-		     char *buf, int len));
+
+/**
+ * Read named MGED db, build toc.
+ */
+RT_EXPORT BU_EXTERN(struct rt_i *rt_dirbuild, (const char *filename, char *buf, int len));
+
 RT_EXPORT BU_EXTERN(int rt_db_get_internal,
 		    (struct rt_db_internal	*ip,
 		     const struct directory	*dp,
@@ -3349,8 +3378,6 @@ RT_EXPORT BU_EXTERN(int rt_db_lookup_internal,
 RT_EXPORT BU_EXTERN(void rt_optim_tree,
 		    (union tree *tp,
 		     struct resource *resp));
-RT_EXPORT BU_EXTERN(void db_get_directory,
-		    (struct resource *resp));
 
 /* db_walk.c */
 RT_EXPORT BU_EXTERN(void db_functree,

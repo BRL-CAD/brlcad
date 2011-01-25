@@ -39,11 +39,7 @@
 #include "rtgeom.h"
 #include "tcl.h"
 
-const mat_t	id_mat = {
-    1.0, 0.0, 0.0, 0.0,
-    0.0, 1.0, 0.0, 0.0,
-    0.0, 0.0, 1.0, 0.0,
-    0.0, 0.0, 0.0, 1.0};	/* identity matrix for pipes */
+const mat_t id_mat = MAT_INIT_IDN; /* identity matrix for pipes */
 
 char *strchop(char *str, size_t len);
 #define CH(x)	strchop(x, sizeof(x))
@@ -218,21 +214,29 @@ main(int argc, char **argv)
 
 		/* save the associated attributes of
 		 * _GLOBAL (except for title and units
-		 * which were already written out)
+		 * which were already written out) and
+                 * regionid_colortable (which is written out below)
 		 */
 		if (g_avs.count) {
-		    fprintf(ofp, "attr set {_GLOBAL}");
+                    int printedHeader = 0;
 		    for (i=0; i < g_avs.count; i++) {
 			if (strncmp(g_avs.avp[i].name, "title", 6) == 0) {
 			    continue;
 			} else if (strncmp(g_avs.avp[i].name, "units", 6) == 0) {
 			    continue;
+                        } else if (strncmp(g_avs.avp[i].name, "regionid_colortable", 19) == 0) {
+                            continue;
 			} else if (strlen(g_avs.avp[i].name) <= 0) {
 			    continue;
 			}
+                        if (printedHeader == 0) {
+                            fprintf(ofp, "attr set {_GLOBAL}");
+                            printedHeader = 1;
+                        }
 			fprintf(ofp, " {%s} {%s}", g_avs.avp[i].name, g_avs.avp[i].value);
 		    }
-		    fprintf(ofp, "\n");
+                    if (printedHeader == 1)
+                        fprintf(ofp, "\n");
 		}
 
 		value = bu_avs_get( &g_avs, "regionid_colortable" );
@@ -269,7 +273,7 @@ main(int argc, char **argv)
 		continue;
 	    }
 
-	    if ( dp->d_flags & DIR_COMB ) {
+	    if ( dp->d_flags & RT_DIR_COMB ) {
 		struct bu_vls logstr;
 
 		bu_vls_init(&logstr);
@@ -282,7 +286,7 @@ main(int argc, char **argv)
 		}
 		Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)0);
 		bu_vls_free(&logstr);
-		if ( dp->d_flags & DIR_REGION ) {
+		if ( dp->d_flags & RT_DIR_REGION ) {
 		    fprintf( ofp, "put {%s} comb region yes tree {%s}\n",
 			     tclify_name( dp->d_namep ),
 			     Tcl_GetStringResult(interp) );
@@ -472,7 +476,7 @@ get_ext(struct bu_external *ep, size_t ngran)
     if ( count != (size_t)ngran-1 )  {
 	fprintf(stderr,
 		"g2asc: get_ext:  wanted to read %lu granules, got %lu\n",
-		ngran-1, count);
+		(unsigned long)ngran-1, (unsigned long)count);
 	bu_exit(1, NULL);
     }
 }
@@ -500,11 +504,11 @@ nmg_dump(void)
 	struct_count[j] = bu_glong( &record.nmg.N_structs[j*4] );
 
     /* output some header info */
-    (void)fprintf(ofp,  "%c %d %.16s %ld\n",
+    (void)fprintf(ofp,  "%c %d %.16s %lu\n",
 		  record.nmg.N_id,	/* N */
 		  record.nmg.N_version,	/* NMG version */
 		  record.nmg.N_name,	/* solid name */
-		  granules );		/* number of additional granules */
+		  (unsigned long)granules );		/* number of additional granules */
 
     /* output the structure counts */
     for ( j=0; j<26; j++ )
@@ -690,18 +694,18 @@ bot_dump(void)
     (void)fprintf(ofp, "%d ", bot->mode );
     (void)fprintf(ofp, "%d ", bot->orientation );
     (void)fprintf(ofp, "%d ", 0 );	/* was error_mode */
-    (void)fprintf(ofp, "%lu ", bot->num_vertices );
-    (void)fprintf(ofp, "%lu", bot->num_faces );
+    (void)fprintf(ofp, "%lu ", (unsigned long)bot->num_vertices );
+    (void)fprintf(ofp, "%lu", (unsigned long)bot->num_faces );
     (void)fprintf(ofp, "\n");
 
     for ( i=0; i<bot->num_vertices; i++ )
-	fprintf(ofp,  "	%lu: %26.20e %26.20e %26.20e\n", i, V3ARGS( &bot->vertices[i*3] ) );
+	fprintf(ofp,  "	%lu: %26.20e %26.20e %26.20e\n", (unsigned long)i, V3ARGS( &bot->vertices[i*3] ) );
     if ( bot->mode == RT_BOT_PLATE )
     {
 	struct bu_vls vls;
 
 	for ( i=0; i<bot->num_faces; i++ )
-	    fprintf(ofp,  "	%lu: %d %d %d %26.20e\n", i, V3ARGS( &bot->faces[i*3] ), bot->thickness[i] );
+	    fprintf(ofp,  "	%lu: %d %d %d %26.20e\n", (unsigned long)i, V3ARGS( &bot->faces[i*3] ), bot->thickness[i] );
 	bu_vls_init( &vls );
 	bu_bitv_to_hex( &vls, bot->face_mode );
 	fprintf(ofp,  "	%s\n", bu_vls_addr( &vls ) );
@@ -710,7 +714,7 @@ bot_dump(void)
     else
     {
 	for ( i=0; i<bot->num_faces; i++ )
-	    fprintf(ofp,  "	%lu: %d %d %d\n", i, V3ARGS( &bot->faces[i*3] ) );
+	    fprintf(ofp,  "	%lu: %d %d %d\n", (unsigned long)i, V3ARGS( &bot->faces[i*3] ) );
     }
 
     rt_db_free_internal(&intern);
@@ -850,7 +854,7 @@ arbn_dump(void)
     arbn = (struct rt_arbn_internal *)intern.idb_ptr;
     RT_ARBN_CK_MAGIC(arbn);
 
-    fprintf(ofp, "%c %.16s %lu\n", 'n', name, arbn->neqn);
+    fprintf(ofp, "%c %.16s %lu\n", 'n', name, (unsigned long)arbn->neqn);
     for ( i = 0; i < arbn->neqn; i++ )  {
 	fprintf(ofp, "n %26.20e %20.26e %26.20e %26.20e\n",
 		arbn->eqn[i][X], arbn->eqn[i][Y],
@@ -1032,9 +1036,12 @@ void
 arsbdump(void)	/* Print out ARS B record information */
 {
     int i;
+    size_t ret;
 
     /* Read in a member record for processing */
-    (void)fread( (char *)&record, sizeof record, 1, ifp );
+    ret = fread( (char *)&record, sizeof record, 1, ifp );
+    if (ret != 1)
+	perror("fread");
     (void)fprintf(ofp, "%c ", record.b.b_id );		/* B */
     (void)fprintf(ofp, "%d ", record.b.b_type );		/* primitive type */
     (void)fprintf(ofp, "%d ", record.b.b_n );		/* current curve # */
@@ -1246,7 +1253,7 @@ sketchdump(void)
     (void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( skt->V ) );
     (void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( skt->u_vec ) );
     (void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( skt->v_vec ) );
-    (void)fprintf(ofp, "%lu %lu\n", skt->vert_count, crv->seg_count );
+    (void)fprintf(ofp, "%lu %lu\n", (unsigned long)skt->vert_count, (unsigned long)crv->seg_count );
     for ( i=0; i<skt->vert_count; i++ )
 	(void)fprintf(ofp, " %.12e %.12e", V2ARGS( skt->verts[i] ) );
     (void)fprintf(ofp, "\n" );

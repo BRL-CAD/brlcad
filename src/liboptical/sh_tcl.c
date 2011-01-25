@@ -19,10 +19,10 @@
  */
 /** @file sh_tcl.c
  *
- *  To add a new shader to the "rt" program's LIBOPTICAL library:
+ * To add a new shader to the "rt" program's LIBOPTICAL library:
  *
- *	6) Edit shaders.tcl and comb.tcl in the ../tclscripts/mged directory to
- *		add a new gui for this shader.
+ * 6) Edit shaders.tcl and comb.tcl in the ../tclscripts/mged directory to
+ * add a new gui for this shader.
  */
 
 #include "common.h"
@@ -36,11 +36,12 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 
-extern int rr_render(struct application	*ap,
-		     struct partition	*pp,
-		     struct shadework   *swp);
+
+extern int rr_render(struct application *ap,
+		     struct partition *pp,
+		     struct shadework *swp);
 #define tcl_MAGIC 0x54434C00    /* "TCL" */
 #define CK_tcl_SP(_p) BU_CKMAG(_p, tcl_MAGIC, "tcl_specific")
 
@@ -49,27 +50,30 @@ extern int rr_render(struct application	*ap,
  * to any particular use of the shader.
  */
 struct tcl_specific {
-    long	magic;	/* magic # for memory validity check, must come 1st */
-    mat_t			tcl_m_to_r; /* model to shader space matrix */
-    Tcl_Interp	       *tcl_interp[MAX_PSW];
-    Tcl_Obj		       *tcl_objPtr;
-    struct bu_vls		tcl_file;   /* name of script to run */
-    struct bu_mapped_file  *tcl_mp;	    /* actual script */
+    long magic;	/* magic # for memory validity check, must come 1st */
+    mat_t tcl_m_to_r; /* model to shader space matrix */
+    Tcl_Interp *tcl_interp[MAX_PSW];
+    Tcl_Obj *tcl_objPtr;
+    struct bu_vls tcl_file;   /* name of script to run */
+    struct bu_mapped_file *tcl_mp;	    /* actual script */
 };
+
 
 /* The default values for the variables in the shader specific structure */
-const static
+static const
 struct tcl_specific tcl_defaults = {
-    tcl_MAGIC,
-    {	0.0, 0.0, 0.0, 0.0,	/* tcl_m_to_r */
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0 }
+    tcl_MAGIC,			/* magic */
+    MAT_INIT_ZERO,		/* tcl_m_to_r */
+    {0},			/* tcl_interps */
+    NULL,			/* tcl_objPtr */
+    {0, NULL, 0, 0, 0},		/* tcl_file */
+    NULL			/* tcl_mp */
 };
 
-#define SHDR_NULL	((struct tcl_specific *)0)
-#define SHDR_O(m)	bu_offsetof(struct tcl_specific, m)
-#define SHDR_AO(m)	bu_offsetofarray(struct tcl_specific, m)
+
+#define SHDR_NULL ((struct tcl_specific *)0)
+#define SHDR_O(m) bu_offsetof(struct tcl_specific, m)
+#define SHDR_AO(m) bu_offsetofarray(struct tcl_specific, m)
 
 
 /* description of how to parse/print the arguments to the shader
@@ -77,18 +81,19 @@ struct tcl_specific tcl_defaults = {
  * structure above
  */
 struct bu_structparse tcl_print_tab[] = {
-    {"%V",  1, "file", SHDR_O(tcl_file),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
+    {"%V",  1, "file", SHDR_O(tcl_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 
 };
 struct bu_structparse tcl_parse_tab[] = {
-    {"%p",	bu_byteoffset(tcl_print_tab[0]), "tcl_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-    {"%V",  1, "f", SHDR_O(tcl_file),	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
+    {"%p",	bu_byteoffset(tcl_print_tab[0]), "tcl_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%V",  1, "f", SHDR_O(tcl_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
-HIDDEN int	tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), tcl_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	tcl_print(register struct region *rp, char *dp), tcl_free(char *cp);
+
+HIDDEN int tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), tcl_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void tcl_print(register struct region *rp, char *dp), tcl_free(char *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -107,26 +112,26 @@ struct mfuncs tcl_mfuncs[] = {
 };
 
 
-/*	T C L _ S E T U P
+/* T C L _ S E T U P
  *
- *	This routine is called (at prep time)
- *	once for each region which uses this shader.
- *	Any shader-specific initialization should be done here.
+ * This routine is called (at prep time)
+ * once for each region which uses this shader.
+ * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
-    /* pointer to reg_udata in *rp */
+/* pointer to reg_udata in *rp */
 
-    /* New since 4.4 release */
+/* New since 4.4 release */
 {
-    register struct tcl_specific	*tcl_sp;
+    register struct tcl_specific *tcl_sp;
     int cpu;
 
     /* check the arguments */
     RT_CHECK_RTI(rtip);
-    BU_CK_VLS( matparm );
+    BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
 
 
@@ -134,14 +139,14 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	bu_log("tcl_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT( tcl_sp, tcl_specific );
+    BU_GETSTRUCT(tcl_sp, tcl_specific);
     *dpp = (char *)tcl_sp;
 
     /* initialize the default values for the shader */
     memcpy(tcl_sp, &tcl_defaults, sizeof(struct tcl_specific));
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse( matparm, tcl_parse_tab, (char *)tcl_sp ) < 0 )
+    if (bu_struct_parse(matparm, tcl_parse_tab, (char *)tcl_sp) < 0)
 	return -1;
 
 #if 0
@@ -169,45 +174,48 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 
 
     if (rdebug&RDEBUG_SHADE) {
-	bu_struct_print( " Parameters:", tcl_print_tab,
-			 (char *)tcl_sp );
-	bn_mat_print( "m_to_sh", tcl_sp->tcl_m_to_r );
+	bu_struct_print(" Parameters:", tcl_print_tab,
+			(char *)tcl_sp);
+	bn_mat_print("m_to_sh", tcl_sp->tcl_m_to_r);
     }
 
     return 1;
 }
 
+
 /*
- *	T C L _ P R I N T
+ * T C L _ P R I N T
  */
 HIDDEN void
 tcl_print(register struct region *rp, char *dp)
 {
-    bu_struct_print( rp->reg_name, tcl_print_tab, (char *)dp );
+    bu_struct_print(rp->reg_name, tcl_print_tab, (char *)dp);
 }
 
+
 /*
- *	T C L _ F R E E
+ * T C L _ F R E E
  */
 HIDDEN void
 tcl_free(char *cp)
 {
-    bu_free( cp, "tcl_specific" );
+    bu_free(cp, "tcl_specific");
 }
 
+
 /*
- *	T C L _ R E N D E R
+ * T C L _ R E N D E R
  *
- *	This is called (from viewshade() in shade.c) once for each hit point
- *	to be shaded.  The purpose here is to fill in values in the shadework
- *	structure.
+ * This is called (from viewshade() in shade.c) once for each hit point
+ * to be shaded.  The purpose here is to fill in values in the shadework
+ * structure.
  */
 int
 tcl_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 
 
-    /* defined in material.h */
-    /* ptr to the shader-specific struct */
+/* defined in material.h */
+/* ptr to the shader-specific struct */
 {
     register struct tcl_specific *tcl_sp =
 	(struct tcl_specific *)dp;
@@ -221,8 +229,8 @@ tcl_render(struct application *ap, struct partition *pp, struct shadework *swp, 
     CK_tcl_SP(tcl_sp);
 
     if (rdebug&RDEBUG_SHADE)
-	bu_struct_print( "tcl_render Parameters:",
-			 tcl_print_tab, (char *)tcl_sp );
+	bu_struct_print("tcl_render Parameters:",
+			tcl_print_tab, (char *)tcl_sp);
 
     /* we are performing the shading in "region" space, so we must
      * transform the hit point from "model" space to "region" space.
@@ -230,15 +238,15 @@ tcl_render(struct application *ap, struct partition *pp, struct shadework *swp, 
     MAT4X3PNT(pt, tcl_sp->tcl_m_to_r, swp->sw_hit.hit_point);
 
     if (rdebug&RDEBUG_SHADE) {
-	bu_log("tcl_render()  model:(%g %g %g) shader:(%g %g %g)\n",
+	bu_log("tcl_render() model:(%g %g %g) shader:(%g %g %g)\n",
 	       V3ARGS(swp->sw_hit.hit_point),
-	       V3ARGS(pt) );
+	       V3ARGS(pt));
     }
 
     /* set some Tcl variables to the shadework structure values */
 
 #define rt_Tcl_LV(_s, _v) Tcl_LinkVar(tcl_sp->tcl_interp[cpu], _s, (char *)_v, \
-				TCL_LINK_DOUBLE)
+				      TCL_LINK_DOUBLE)
 
     rt_Tcl_LV("sw_transmit",	&swp->sw_transmit);
     rt_Tcl_LV("sw_reflect",		&swp->sw_reflect);
@@ -309,11 +317,12 @@ tcl_render(struct application *ap, struct partition *pp, struct shadework *swp, 
      * 0 < swp->sw_transmit <= 1 causes transmission computations
      * 0 < swp->sw_reflect <= 1 causes reflection computations
      */
-    if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
-	(void)rr_render( ap, pp, swp );
+    if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
+	(void)rr_render(ap, pp, swp);
 
     return 1;
 }
+
 
 /*
  * Local Variables:

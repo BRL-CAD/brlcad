@@ -80,15 +80,43 @@ _bu_ipwd()
     /* private stash */
     static const char *ipwd = NULL;
     static char buffer[MAXPATHLEN] = {0};
+#ifdef HAVE_REALPATH
+    char *real;
+#endif
 
+    /* already found the path before */
     if (ipwd) {
 	return ipwd;
     }
 
+    /* FIRST: try environment */
     ipwd = getenv("PWD"); /* not our memory to free */
-    if (!ipwd)
-	ipwd = bu_which("pwd");
+    if (ipwd) {
+#ifdef HAVE_REALPATH
+	real = realpath(ipwd, NULL);
+	if (real) {
+	    bu_strlcpy(buffer, real, (size_t)MAXPATHLEN);
+	    ipwd = buffer;
+	    free(real);
+	}
+#endif
+	return ipwd;
+    }
 
+    /* SECOND: try to query path */
+#ifdef HAVE_REALPATH
+    real = realpath(".", NULL);
+    if (real) {
+	bu_strlcpy(buffer, real, (size_t)MAXPATHLEN);
+	ipwd = buffer;
+	free(real);
+	real = NULL;
+	return ipwd;
+    }
+#endif
+
+    /* THIRD: try calling the 'pwd' command */
+    ipwd = bu_which("pwd");
     if (ipwd) {
 #if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	FILE *fp = NULL;
@@ -107,10 +135,10 @@ _bu_ipwd()
 	memset(buffer, 0, MAXPATHLEN); /* quellage */
 	ipwd = ".";
 #endif
-    } else {
-	ipwd = ".";
     }
 
+    /* LAST: punt (but do not return NULL) */
+    ipwd = ".";
     return ipwd;
 }
 
@@ -436,25 +464,25 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 #endif
 
     /* run-time path identification */
-    lhs = bu_getprogname();
+    lhs = bu_argv0_full_path();
     if (lhs) {
-	char argv0[MAX_WHERE_SIZE] = {0};
-	size_t len = strlen(lhs);
-	snprintf(argv0, MAX_WHERE_SIZE, "%s", lhs);
-
-	/* need to trim off the trailing binary */
-	while (len-1 > 0) {
-	    if (argv0[len-1] == BU_DIR_SEPARATOR) {
-		argv0[len] = '.';
-		argv0[len+1] = '.';
-		argv0[len+2] = '\0';
-		break;
-	    }
-	    len--;
+	char real_path[MAXPATHLEN] = {0};
+	char *dirpath;
+#ifdef HAVE_REALPATH
+	if (realpath(lhs, real_path) == NULL) {
+	    perror("realpath");
+	    bu_strlcpy(real_path, lhs, (size_t)MAXPATHLEN);
 	}
-
-	snprintf(where, MAX_WHERE_SIZE, "\trun-time path identification [%s]\n", argv0);
-	if (_bu_find_path(result, argv0, rhs, &searched, where)) {
+#else
+	bu_strlcpy(real_path, lhs, (size_t)MAXPATHLEN);
+#endif
+	dirpath = bu_dirname(real_path);
+	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
+	bu_free(dirpath, "free bu_dirname");
+	dirpath = bu_dirname(real_path);
+	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
+	bu_free(dirpath, "free bu_dirname");
+	if (_bu_find_path(result, real_path, rhs, &searched, where)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: Run-time path identification [%s]\n", result);
 	    }

@@ -87,7 +87,7 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET)) == DIR_NULL) {
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s not found", argv[1]);
 	return GED_ERROR;
     }

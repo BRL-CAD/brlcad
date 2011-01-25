@@ -63,10 +63,10 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return GED_ERROR;
 
-    if ((dp->d_flags & DIR_COMB) == 0) {
+    if ((dp->d_flags & RT_DIR_COMB) == 0) {
 	bu_vls_printf(&gedp->ged_result_str, "rm: %s is not a combination", dp->d_namep);
 	return GED_ERROR;
     }

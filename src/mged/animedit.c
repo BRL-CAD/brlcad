@@ -359,7 +359,7 @@ read_hold_point(pp, name, fip)
 	    pp->name = arc[arc_last];
 	    /*
 	     * NOTE: we are not freeing the last entry which should be
-	     * a grip as we save it's name in pp->name.
+	     * a grip as we save its name in pp->name.
 	     */
 	    for (i=0; i< arc_last; i++) {
 		bu_free((genptr_t)arc[i], "arc entry");
@@ -417,7 +417,7 @@ read_hold_point(pp, name, fip)
 	    pp->name = arc[arc_last];
 	    /*
 	     * NOTE: we are not freeing the last entry which should be
-	     * a joint as we save it's name in pp->name.
+	     * a joint as we save its name in pp->name.
 	     */
 	    for (i=0; i< arc_last; i++) {
 		bu_free((genptr_t)arc[i], "arc entry");
@@ -3534,12 +3534,8 @@ static struct db_tree_state mesh_initial_tree_state = {
 	0,		/* color inherit */
 	0,		/* mater inherit */
 	(char *)NULL	/* shader */
-    }
-    ,
-    {1.0, 0.0, 0.0, 0.0,
-     0.0, 1.0, 0.0, 0.0,
-     0.0, 0.0, 1.0, 0.0,
-     0.0, 0.0, 0.0, 1.0},
+    },
+    MAT_INIT_IDN,
     REGION_NON_FASTGEN,		/* ts_is_fastgen */
     {
 	/* attribute value set */

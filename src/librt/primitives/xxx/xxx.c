@@ -81,7 +81,7 @@
  * !0 Error in description
  *
  * Implicit return -
- * A struct xxx_specific is created, and it's address is stored in
+ * A struct xxx_specific is created, and its address is stored in
  * stp->st_specific for use by xxx_shot().
  */
 int

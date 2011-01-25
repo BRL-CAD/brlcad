@@ -19,9 +19,9 @@
  */
 /** @file sh_plastic.c
  *
- *  Notes -
- *	The normals on all surfaces point OUT of the solid.
- *	The incomming light rays point IN.  Thus the sign change.
+ * Notes -
+ * The normals on all surfaces point OUT of the solid.
+ * The incomming light rays point IN.  Thus the sign change.
  *
  */
 
@@ -34,7 +34,7 @@
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 #include "light.h"
 #include "plastic.h"
 #include "photonmap.h"
@@ -44,9 +44,9 @@
 #endif
 
 
-extern int rr_render(struct application	*ap,
-		     struct partition	*pp,
-		     struct shadework   *swp);
+extern int rr_render(struct application *ap,
+		     struct partition *pp,
+		     struct shadework *swp);
 /* Fast approximation to specular term */
 #define PHAST_PHONG 1	/* See Graphics Gems IV pg 387 */
 
@@ -55,67 +55,58 @@ extern double AmbientIntensity;
 
 
 struct bu_structparse phong_parse[] = {
-    {"%d",	1, "shine",		PL_O(shine),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "sh",		PL_O(shine),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "specular",		PL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "sp",		PL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "diffuse",		PL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "di",		PL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "transmit",		PL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "tr",		PL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "reflect",		PL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "re",		PL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "ri",		PL_O(refrac_index),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "extinction_per_meter", PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "extinction",	PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "ex",		PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "emission",		PL_O(emission),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "em",		PL_O(emission),		BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%d",	1, "shine",		PL_O(shine),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "sh",		PL_O(shine),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "specular",		PL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "sp",		PL_O(wgt_specular),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "diffuse",		PL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "di",		PL_O(wgt_diffuse),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "transmit",		PL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "tr",		PL_O(transmit),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "reflect",		PL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "re",		PL_O(reflect),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "ri",		PL_O(refrac_index),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "extinction_per_meter", PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "extinction",	PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "ex",		PL_O(extinction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "emission",		PL_O(emission),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "em",		PL_O(emission),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
+
 
 HIDDEN int phong_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), mirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), glass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip);
 HIDDEN int phong_render(register struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	phong_print(register struct region *rp, char *dp);
-HIDDEN void	phong_free(char *cp);
+HIDDEN void phong_print(register struct region *rp, char *dp);
+HIDDEN void phong_free(char *cp);
 
 /* This can't be const, so the forward link can be written later */
 struct mfuncs phg_mfuncs[] = {
-    {MF_MAGIC,	"default",	0,		MFI_NORMAL,	0,
-     phong_setup,	phong_render,	phong_print,	phong_free },
-
-    {MF_MAGIC,	"phong",	0,		MFI_NORMAL,	0,
-     phong_setup,	phong_render,	phong_print,	phong_free },
-
-    {MF_MAGIC,	"plastic",	0,		MFI_NORMAL,	0,
-     phong_setup,	phong_render,	phong_print,	phong_free },
-
-    {MF_MAGIC,	"mirror",	0,		MFI_NORMAL,	0,
-     mirror_setup,	phong_render,	phong_print,	phong_free },
-
-    {MF_MAGIC,	"glass",	0,		MFI_NORMAL,	0,
-     glass_setup,	phong_render,	phong_print,	phong_free },
-
-    {0,		(char *)0,	0,		0,	0,
-     0,		0,		0,		0 }
+    {MF_MAGIC,	"default",	0,		MFI_NORMAL,	0,     phong_setup,	phong_render,	phong_print,	phong_free },
+    {MF_MAGIC,	"phong",	0,		MFI_NORMAL,	0,     phong_setup,	phong_render,	phong_print,	phong_free },
+    {MF_MAGIC,	"plastic",	0,		MFI_NORMAL,	0,     phong_setup,	phong_render,	phong_print,	phong_free },
+    {MF_MAGIC,	"mirror",	0,		MFI_NORMAL,	0,     mirror_setup,	phong_render,	phong_print,	phong_free },
+    {MF_MAGIC,	"glass",	0,		MFI_NORMAL,	0,     glass_setup,	phong_render,	phong_print,	phong_free },
+    {0,		(char *)0,	0,		0,	0,     0,		0,		0,		0 }
 };
+
 
 #ifndef PHAST_PHONG
 extern double phg_ipow();
 #endif
 
-#define RI_AIR		1.0    /* Refractive index of air.		*/
+#define RI_AIR 1.0    /* Refractive index of air.		*/
 
 /*
- *			P H O N G _ S E T U P
+ * P H O N G _ S E T U P
  */
 HIDDEN int
-phong_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+phong_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 {
     register struct phong_specific *pp;
 
-    BU_CK_VLS( matparm );
-    BU_GETSTRUCT( pp, phong_specific );
+    BU_CK_VLS(matparm);
+    BU_GETSTRUCT(pp, phong_specific);
     *dpp = (char *)pp;
 
     pp->magic = PL_MAGIC;
@@ -128,26 +119,27 @@ phong_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
     pp->extinction = 0.0;
     pp->mfp = mfp;
 
-    if (bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
-	bu_free( (char *)pp, "phong_specific" );
+    if (bu_struct_parse(matparm, phong_parse, (char *)pp) < 0) {
+	bu_free((char *)pp, "phong_specific");
 	return -1;
     }
 
-    if (pp->transmit > 0 )
+    if (pp->transmit > 0)
 	rp->reg_transmit = 1;
     return 1;
 }
 
+
 /*
- *			M I R R O R _ S E T U P
+ * M I R R O R _ S E T U P
  */
 HIDDEN int
-mirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+mirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 {
     register struct phong_specific *pp;
 
-    BU_CK_VLS( matparm );
-    BU_GETSTRUCT( pp, phong_specific );
+    BU_CK_VLS(matparm);
+    BU_GETSTRUCT(pp, phong_specific);
     *dpp = (char *)pp;
 
     pp->magic = PL_MAGIC;
@@ -160,26 +152,27 @@ mirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
     pp->extinction = 0.0;
     pp->mfp = mfp;
 
-    if (bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
-	bu_free( (char *)pp, "phong_specific" );
+    if (bu_struct_parse(matparm, phong_parse, (char *)pp) < 0) {
+	bu_free((char *)pp, "phong_specific");
 	return -1;
     }
 
-    if (pp->transmit > 0 )
+    if (pp->transmit > 0)
 	rp->reg_transmit = 1;
     return 1;
 }
 
+
 /*
- *			G L A S S _ S E T U P
+ * G L A S S _ S E T U P
  */
 HIDDEN int
-glass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+glass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 {
     register struct phong_specific *pp;
 
-    BU_CK_VLS( matparm );
-    BU_GETSTRUCT( pp, phong_specific );
+    BU_CK_VLS(matparm);
+    BU_GETSTRUCT(pp, phong_specific);
     *dpp = (char *)pp;
 
     pp->magic = PL_MAGIC;
@@ -193,18 +186,19 @@ glass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
     pp->extinction = 0.0;
     pp->mfp = mfp;
 
-    if (bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
-	bu_free( (char *)pp, "phong_specific" );
+    if (bu_struct_parse(matparm, phong_parse, (char *)pp) < 0) {
+	bu_free((char *)pp, "phong_specific");
 	return -1;
     }
 
-    if (pp->transmit > 0 )
+    if (pp->transmit > 0)
 	rp->reg_transmit = 1;
     return 1;
 }
 
+
 /*
- *			P H O N G _ P R I N T
+ * P H O N G _ P R I N T
  */
 HIDDEN void
 phong_print(register struct region *rp, char *dp)
@@ -212,37 +206,38 @@ phong_print(register struct region *rp, char *dp)
     bu_struct_print(rp->reg_name, phong_parse, (char *)dp);
 }
 
+
 /*
- *			P H O N G _ F R E E
+ * P H O N G _ F R E E
  */
 HIDDEN void
 phong_free(char *cp)
 {
-    bu_free( cp, "phong_specific" );
+    bu_free(cp, "phong_specific");
 }
 
 
 /*
- *			P H O N G _ R E N D E R
+ * P H O N G _ R E N D E R
  *
  Color pixel based on the energy of a point light source (Eps)
  plus some diffuse illumination (Epd) reflected from the point
  <x, y> :
 
- E = Epd + Eps		(1)
+ E = Epd + Eps (1)
 
  The energy reflected from diffuse illumination is the product
  of the reflectance coefficient at point P (Rp) and the diffuse
  illumination (Id) :
 
- Epd = Rp * Id		(2)
+ Epd = Rp * Id (2)
 
  The energy reflected from the point light source is calculated
  by the sum of the diffuse reflectance (Rd) and the specular
  reflectance (Rs), multiplied by the intensity of the light
  source (Ips) :
 
- Eps = (Rd + Rs) * Ips	(3)
+ Eps = (Rd + Rs) * Ips (3)
 
  The diffuse reflectance is calculated by the product of the
  reflectance coefficient (Rp) and the cosine of the angle of
@@ -254,7 +249,7 @@ phong_free(char *cp)
  specular reflectance coeffient and (the cosine of the angle (S)
  raised to the nth power) :
 
- Rs = W(I) * cos(S)**n	(5)
+ Rs = W(I) * cos(S)**n (5)
 
  Where,
  I is the angle of incidence.
@@ -291,31 +286,32 @@ phong_free(char *cp)
 HIDDEN int
 phong_render(register struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
-    register struct light_specific *lp;
+    struct light_specific *lp;
 #ifndef RT_MULTISPECTRAL
-    register	fastf_t	*intensity;
+    fastf_t *intensity;
+    fastf_t dist;
+    point_t pt;
+    vect_t color;
 #endif
-    register	fastf_t	refl;
-    register	fastf_t	*to_light;
-    register	int	i;
-    register	fastf_t	cosine;
-    vect_t			work, color;
-    vect_t			reflected;
-    point_t			pt;
-    fastf_t			dist;
+    fastf_t *to_light;
+    fastf_t cosine;
+    fastf_t refl;
+    int i;
+    vect_t reflected;
+    vect_t work;
 
 #ifdef RT_MULTISPECTRAL
-    struct bn_tabdata	*ms_matcolor = BN_TABDATA_NULL;
+    struct bn_tabdata *ms_matcolor = BN_TABDATA_NULL;
 #else
-    point_t	matcolor;		/* Material color */
+    point_t matcolor;		/* Material color */
 #endif
     struct phong_specific *ps =
 	(struct phong_specific *)dp;
 
-    if (ps->magic != PL_MAGIC )  bu_log("phong_render: bad magic\n");
+    if (ps->magic != PL_MAGIC) bu_log("phong_render: bad magic\n");
 
     if (rdebug&RDEBUG_SHADE)
-	bu_struct_print( "phong_render", phong_parse, (char *)ps );
+	bu_struct_print("phong_render", phong_parse, (char *)ps);
 
     swp->sw_transmit = ps->transmit;
     swp->sw_reflect = ps->reflect;
@@ -327,22 +323,22 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
     if (swp->sw_phong_set_vector & SW_SET_REFRAC_INDEX) swp->sw_refrac_index = swp->sw_phong_ri;
     if (swp->sw_phong_set_vector & SW_SET_EXTINCTION) swp->sw_extinction = swp->sw_phong_extinction;
 #endif /* SW_SET_TRANSMIT */
-    if (swp->sw_xmitonly ) {
-	if (swp->sw_xmitonly > 1 )
+    if (swp->sw_xmitonly) {
+	if (swp->sw_xmitonly > 1)
 	    return 1;	/* done -- wanted parameters only */
-	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 ) {
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0) {
 	    if (rdebug&RDEBUG_SHADE)
 		bu_log("calling rr_render from phong, sw_xmitonly\n");
-	    (void)rr_render( ap, pp, swp );
+	    (void)rr_render(ap, pp, swp);
 	}
 	return 1;	/* done */
     }
 
 
 #ifdef RT_MULTISPECTRAL
-    ms_matcolor = bn_tabdata_dup( swp->msw_color );
+    ms_matcolor = bn_tabdata_dup(swp->msw_color);
 #else
-    VMOVE( matcolor, swp->sw_color );
+    VMOVE(matcolor, swp->sw_color);
 #endif
 
     /* Photon Mapping */
@@ -357,8 +353,8 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 #endif
     {
 	/* Diffuse reflectance from "Ambient" light source (at eye) */
-	if ((cosine = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )) > 0.0 )  {
-	    if (cosine > 1.00001 )  {
+	if ((cosine = -VDOT(swp->sw_hit.hit_normal, ap->a_ray.r_dir)) > 0.0) {
+	    if (cosine > 1.00001) {
 		bu_log("cosAmb=1+%g %s surfno=%d (x%d, y%d, lvl%d)\n",
 		       cosine-1,
 		       pp->pt_inseg->seg_stp->st_dp->d_namep,
@@ -378,15 +374,15 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 	    cosine *= AmbientIntensity;
 #endif
 #ifdef RT_MULTISPECTRAL
-	    bn_tabdata_scale( swp->msw_color, ms_matcolor, cosine );
+	    bn_tabdata_scale(swp->msw_color, ms_matcolor, cosine);
 #else
-	    VSCALE( swp->sw_color, matcolor, cosine );
+	    VSCALE(swp->sw_color, matcolor, cosine);
 #endif
 	} else {
 #ifdef RT_MULTISPECTRAL
-	    bn_tabdata_constval( swp->msw_color, 0.0 );
+	    bn_tabdata_constval(swp->msw_color, 0.0);
 #else
-	    VSETALL( swp->sw_color, 0 );
+	    VSETALL(swp->sw_color, 0);
 #endif
 	}
 
@@ -394,7 +390,7 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 #ifdef RT_MULTISPECTRAL
 	{
 	    float emission[3];
-	    struct bn_tabdata	*ms_emission = BN_TABDATA_NULL;
+	    struct bn_tabdata *ms_emission = BN_TABDATA_NULL;
 	    VMOVE(emission, ps->emission);
 #if SW_SET_TRANSMIT
 	    if (swp->sw_phong_set_vector & SW_SET_EMISSION) {
@@ -402,22 +398,22 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 	    }
 #endif
 	    /* XXX Really should get a curve at prep, not expand RGB samples */
-	    BN_GET_TABDATA( ms_emission, spectrum );
-	    rt_spect_reflectance_rgb( ms_emission, emission );
-	    bn_tabdata_add( swp->msw_color, swp->msw_color, ms_emission );
-	    bn_tabdata_free( ms_emission );
+	    BN_GET_TABDATA(ms_emission, spectrum);
+	    rt_spect_reflectance_rgb(ms_emission, emission);
+	    bn_tabdata_add(swp->msw_color, swp->msw_color, ms_emission);
+	    bn_tabdata_free(ms_emission);
 	}
 #else
 #if SW_SET_TRANSMIT
 	if (swp->sw_phong_set_vector & SW_SET_EMISSION) {
 	    vect_t tmp;
 	    VSETALL(tmp, swp->sw_phong_emission);
-	    VADD2( swp->sw_color, swp->sw_color, tmp);
+	    VADD2(swp->sw_color, swp->sw_color, tmp);
 	} else {
-	    VADD2( swp->sw_color, swp->sw_color, ps->emission );
+	    VADD2(swp->sw_color, swp->sw_color, ps->emission);
 	}
 #else
-	VADD2( swp->sw_color, swp->sw_color, ps->emission );
+	VADD2(swp->sw_color, swp->sw_color, ps->emission);
 #endif /* SW_SET_TRANSMIT */
 #endif
 
@@ -429,14 +425,14 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 	light_obs(ap, swp, ps->mfp->mf_inputs);
 
 	/* Consider effects of each light source */
-	for ( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
+	for (i=ap->a_rt_i->rti_nlights-1; i>=0; i--) {
 
-	    if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
+	    if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL)
 		continue;
 
-	    if ( rdebug & RDEBUG_LIGHT )  {
+	    if (rdebug & RDEBUG_LIGHT) {
 		bu_log("phong_render light=%s lightfract=%g\n",
-		       lp->lt_name, swp->sw_lightfract[i] );
+		       lp->lt_name, swp->sw_lightfract[i]);
 	    }
 
 	    /* Light is not shadowed -- add this contribution */
@@ -446,8 +442,8 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 	    to_light = swp->sw_tolight+3*i;
 
 	    /* Diffuse reflectance from this light source. */
-	    if ((cosine=VDOT(swp->sw_hit.hit_normal, to_light)) > 0.0 )  {
-		if (cosine > 1.00001 )  {
+	    if ((cosine=VDOT(swp->sw_hit.hit_normal, to_light)) > 0.0) {
+		if (cosine > 1.00001) {
 		    bu_log("cosI=1+%g (x%d, y%d, lvl%d)\n", cosine-1,
 			   ap->a_x, ap->a_y, ap->a_level);
 		    cosine = 1;
@@ -459,7 +455,7 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 			dist= sqrt((pt[0]-lp->lt_pos[0])*(pt[0]-lp->lt_pos[0]) + (pt[1]-lp->lt_pos[1])*(pt[1]-lp->lt_pos[1]) + (pt[2]-lp->lt_pos[2])*(pt[2]-lp->lt_pos[2]))/1000.0;
 		    dist= (1.0/(0.1 + 1.0*dist + 0.01*dist*dist));
 		    refl= dist * ps->wgt_diffuse * cosine * swp->sw_lightfract[i] * lp->lt_intensity;
-		    /*				bu_log("pt: [%.3f][%.3f,%.3f,%.3f]\n", dist, pt[0], pt[1], pt[2]);*/
+		    /* bu_log("pt: [%.3f][%.3f, %.3f, %.3f]\n", dist, pt[0], pt[1], pt[2]);*/
 		} else
 #endif
 		{
@@ -467,26 +463,26 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 		}
 
 #ifdef RT_MULTISPECTRAL
-		bn_tabdata_incr_mul3_scale( swp->msw_color,
-					    lp->lt_spectrum,
-					    swp->msw_intensity[i],
-					    ms_matcolor,
-					    refl );
+		bn_tabdata_incr_mul3_scale(swp->msw_color,
+					   lp->lt_spectrum,
+					   swp->msw_intensity[i],
+					   ms_matcolor,
+					   refl);
 #else
-		VELMUL3( work, matcolor, lp->lt_color, intensity );
-		VJOIN1( swp->sw_color, swp->sw_color, refl, work );
+		VELMUL3(work, matcolor, lp->lt_color, intensity);
+		VJOIN1(swp->sw_color, swp->sw_color, refl, work);
 #endif
 	    }
 
 	    /* Calculate specular reflectance.
-	     *	Reflected ray = (2 * cos(i) * Normal) - Incident ray.
-	     * 	Cos(s) = Reflected ray DOT Incident ray.
+	     * Reflected ray = (2 * cos(i) * Normal) - Incident ray.
+	     * Cos(s) = Reflected ray DOT Incident ray.
 	     */
 	    cosine *= 2;
-	    VSCALE( work, swp->sw_hit.hit_normal, cosine );
-	    VSUB2( reflected, work, to_light );
-	    if ((cosine = -VDOT( reflected, ap->a_ray.r_dir )) > 0 )  {
-		if (cosine > 1.00001 )  {
+	    VSCALE(work, swp->sw_hit.hit_normal, cosine);
+	    VSUB2(reflected, work, to_light);
+	    if ((cosine = -VDOT(reflected, ap->a_ray.r_dir)) > 0) {
+		if (cosine > 1.00001) {
 		    bu_log("cosS=1+%g (x%d, y%d, lvl%d)\n", cosine-1,
 			   ap->a_x, ap->a_y, ap->a_level);
 		    cosine = 1;
@@ -497,8 +493,8 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 		    /* It is unnecessary to compute the actual
 		     * exponential here since phong is just a
 		     * gross hack.  We approximate re:
-		     *  Graphics Gems IV "A Fast Alternative to
-		     *  Phong's Specular Model" Pg 385
+		     * Graphics Gems IV "A Fast Alternative to
+		     * Phong's Specular Model" Pg 385
 		     */
 		    cosine /
 		    (ps->shine - ps->shine*cosine + cosine);
@@ -506,20 +502,20 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 		phg_ipow(cosine, ps->shine);
 #endif /* PHAST_PHONG */
 #ifdef RT_MULTISPECTRAL
-		bn_tabdata_incr_mul2_scale( swp->msw_color,
-					    lp->lt_spectrum,
-					    swp->msw_intensity[i],
-					    refl );
+		bn_tabdata_incr_mul2_scale(swp->msw_color,
+					   lp->lt_spectrum,
+					   swp->msw_intensity[i],
+					   refl);
 #else
-		VELMUL( work, lp->lt_color, intensity );
-		VJOIN1( swp->sw_color, swp->sw_color, refl, work );
+		VELMUL(work, lp->lt_color, intensity);
+		VJOIN1(swp->sw_color, swp->sw_color, refl, work);
 #endif
 	    }
 	}
 
 #ifndef RT_MULTISPECTRAL
 	if (PM_Activated) {
-	    IrradianceEstimate(ap, work, swp->sw_hit.hit_point, swp->sw_hit.hit_normal, 100, 100);
+	    IrradianceEstimate(ap, work, swp->sw_hit.hit_point, swp->sw_hit.hit_normal);
 	    VELMUL(work, work, color);
 	    VADD2(swp->sw_color, work, swp->sw_color);
 	    if (swp->sw_color[0] > 1.0) swp->sw_color[0]= 1.0;
@@ -530,9 +526,9 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
     } else {
 
 	if (PM_Activated) {
-	    /*  IrradianceEstimate(work, swp->sw_hit.hit_point, swp->sw_hit.hit_normal, 100, 100);
-		VELMUL(swp->sw_color, work, color);*/
-	    IrradianceEstimate(ap, swp->sw_color, swp->sw_hit.hit_point, swp->sw_hit.hit_normal, 100, 100);
+	    /* IrradianceEstimate(work, swp->sw_hit.hit_point, swp->sw_hit.hit_normal);
+	       VELMUL(swp->sw_color, work, color);*/
+	    IrradianceEstimate(ap, swp->sw_color, swp->sw_hit.hit_point, swp->sw_hit.hit_normal);
 	    if (swp->sw_color[0] > 1.0) swp->sw_color[0]= 1.0;
 	    if (swp->sw_color[1] > 1.0) swp->sw_color[1]= 1.0;
 	    if (swp->sw_color[2] > 1.0) swp->sw_color[2]= 1.0;
@@ -541,8 +537,8 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
     }
 
 
-    if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
-	(void)rr_render( ap, pp, swp );
+    if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
+	(void)rr_render(ap, pp, swp);
 
 #ifdef RT_MULTISPECTRAL
     bn_tabdata_free(ms_matcolor);
@@ -553,24 +549,24 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 
 #ifndef PHAST_PHONG
 /*
- *  			I P O W
+ * I P O W
  *
- *  Raise a floating point number to an integer power
+ * Raise a floating point number to an integer power
  */
 double
-phg_ipow( d, cnt )
+phg_ipow(d, cnt)
     double d;
     register int cnt;
 {
     fastf_t input, result;
 
-    if ((input=d) < 1e-8 )  return 0.0;
-    if (cnt < 0 || cnt > 200 )  {
-	bu_log("phg_ipow(%g,%d) bad\n", d, cnt);
+    if ((input=d) < 1e-8) return 0.0;
+    if (cnt < 0 || cnt > 200) {
+	bu_log("phg_ipow(%g, %d) bad\n", d, cnt);
 	return d;
     }
     result = 1;
-    while ( cnt-- > 0 )
+    while (cnt-- > 0)
 	result *= input;
     return result;
 }

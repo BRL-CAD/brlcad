@@ -452,7 +452,9 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 	    if (mb_stat == 1) {
 		if (rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold) {
 		    point_t intersect, delta;
-		    rt_metaball_find_intersection(&intersect, mb, (const point_t *)&lastpoint, (const point_t *)&p, step, mb->finalstep);
+		    const point_t *pA = (const point_t *)&lastpoint;
+		    const point_t *pB = (const point_t *)&p;
+		    rt_metaball_find_intersection(&intersect, mb, pA, pB, step, mb->finalstep);
 		    VMOVE(segp->seg_out.hit_point, intersect);
 		    --segsleft;
 		    ++retval;
@@ -466,7 +468,9 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 	    } else {
 		if (rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold) {
 		    point_t intersect, delta;
-		    rt_metaball_find_intersection(&intersect, mb, (const point_t *)lastpoint, (const point_t *)&p, step, mb->finalstep);
+		    const point_t *pA = (const point_t *)&lastpoint;
+		    const point_t *pB = (const point_t *)&p;
+		    rt_metaball_find_intersection(&intersect, mb, pA, pB, step, mb->finalstep);
 		    RT_GET_SEG(segp, ap->a_resource);
 		    segp->seg_stp = stp;
 		    --segsleft;

@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) spinner.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::spinner iwid
 .BS
@@ -91,7 +91,7 @@ Class:	\fBRepeatDelay\fR
 Command-Line Switch:	\fB-repeatdelay\fR
 .fi
 .IP
-Specifies the initial delay in milliseconds before the spinner repeat action
+Specifies the initial delay in milliseconds before the spinner repeat action 
 on the arrow buttons engages.  The default is 300 milliseconds.
 .LP
 .nf
@@ -100,16 +100,16 @@ Class:	\fBRepeatInterval\fR
 Command-Line Switch:	\fB-repeatinterval\fR
 .fi
 .IP
-Specifies the repeat delay in milliseconds between selections of the arrow
-buttons.  A repeatinterval of 0 disables button repeat.  The default is
+Specifies the repeat delay in milliseconds between selections of the arrow 
+buttons.  A repeatinterval of 0 disables button repeat.  The default is 
 100 milliseconds.
 .LP
 .BE
 
 .SH DESCRIPTION
 .PP
-The \fBiwidgets::spinner\fR command creates a spinner widget.  The spinner is
-comprised of an entryfield plus up and down arrow buttons.
+The \fBiwidgets::spinner\fR command creates a spinner widget.  The spinner is 
+comprised of an entryfield plus up and down arrow buttons. 
 Arrows may be drawn horizontally or vertically.
 .DE
 
@@ -129,8 +129,8 @@ commands are possible for spinner widgets:
 .LP
 .nf
 .ta 4c 8c 12c
-\fBdelete\fR	\fBget\fR	\fBicursor\fR	\fBindex\fR
-\fBinsert\fR	\fBscan\fR	\fBselection\fR	\fBxview\fR
+\fBdelete\fR	\fBget\fR	\fBicursor\fR	\fBindex\fR	
+\fBinsert\fR	\fBscan\fR	\fBselection\fR	\fBxview\fR	
 .fi
 .LP
 See the "entry" manual entry for details on the associated methods.

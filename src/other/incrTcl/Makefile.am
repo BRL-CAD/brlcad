@@ -28,12 +28,10 @@ DIST_SUBDIRS = \
 EXTRA_DIST = \
 	CHANGES \
 	INCOMPATIBLE \
-	compat \
 	license.terms \
-	makefile.bc \
 	makefile.vc \
 	rules.vc \
-	tcl.m4
+	tclconfig
 
 lib_LTLIBRARIES = \
 	$(ITCLLIB) \

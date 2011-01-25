@@ -58,7 +58,7 @@ Axis2Placement2D::~Axis2Placement2D() {
 void
 Axis2Placement2D::BuildAxis() {
 	double d[3];
-	double ortho_comp[3];
+	double ortho_comp[3] = {0.0, 0.0, 0.0};
 
 	if (ref_direction == NULL) {
 		VSET(d,1.0,0.0,0.0);

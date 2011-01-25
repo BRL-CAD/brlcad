@@ -128,7 +128,7 @@ db_delrec(struct db_i *dbip, register struct directory *dp, int recnum)
  * D B _ D E L E T E
  *
  * Delete the indicated database record(s).
- * Arrange to write "free storage" database markers in it's place,
+ * Arrange to write "free storage" database markers in its place,
  * positively erasing what had been there before.
  *
  * Returns:
@@ -152,10 +152,10 @@ db_delete(struct db_i *dbip, struct directory *dp)
 	return 0;
     }
 
-    if (dbip->dbi_version == 4) {
+    if (db_version(dbip) == 4) {
 	i = db_zapper(dbip, dp, 0);
 	rt_memfree(&(dbip->dbi_freep), (unsigned)dp->d_len, dp->d_addr/(sizeof(union record)));
-    } else if (dbip->dbi_version == 5) {
+    } else if (db_version(dbip) == 5) {
 	i = db5_write_free(dbip, dp, dp->d_len);
 	rt_memfree(&(dbip->dbi_freep), dp->d_len, dp->d_addr);
     } else {
@@ -214,6 +214,61 @@ db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
     bu_free((char *)rp, "db_zapper buf");
     return ret;
 }
+
+
+void
+db_alloc_directory_block(struct resource *resp)
+{
+    struct directory *dp;
+    size_t bytes;
+
+    RT_CK_RESOURCE(resp);
+    BU_CK_PTBL(&resp->re_directory_blocks);
+
+    BU_ASSERT_PTR(resp->re_directory_hd, ==, NULL);
+
+    /* Get a BIG block */
+    bytes = (size_t)bu_malloc_len_roundup(1024*sizeof(struct directory));
+    dp = (struct directory *)bu_malloc(bytes, "re_directory_blocks from db_alloc_directory_block() " BU_FLSTR);
+
+    /* Record storage for later */
+    bu_ptbl_ins(&resp->re_directory_blocks, (long *)dp);
+
+    while (bytes >= sizeof(struct directory)) {
+	dp->d_magic = RT_DIR_MAGIC;
+	dp->d_forw = resp->re_directory_hd;
+	resp->re_directory_hd = dp;
+	dp++;
+	bytes -= sizeof(struct directory);
+    }
+}
+
+
+void
+rt_alloc_seg_block(register struct resource *res)
+{
+    register struct seg *sp;
+    size_t bytes;
+
+    RT_CK_RESOURCE(res);
+
+    if (BU_LIST_UNINITIALIZED(&res->re_seg)) {
+	BU_LIST_INIT(&(res->re_seg));
+	bu_ptbl_init(&res->re_seg_blocks, 64, "re_seg_blocks ptbl");
+    }
+    bytes = bu_malloc_len_roundup(64*sizeof(struct seg));
+    sp = (struct seg *)bu_malloc(bytes, "rt_alloc_seg_block()");
+    bu_ptbl_ins(&res->re_seg_blocks, (long *)sp);
+    while (bytes >= sizeof(struct seg)) {
+	sp->l.magic = RT_SEG_MAGIC;
+	BU_LIST_INSERT(&(res->re_seg), &(sp->l));
+	res->re_seglen++;
+	sp++;
+	bytes -= sizeof(struct seg);
+    }
+}
+
+
 /** @} */
 
 /*

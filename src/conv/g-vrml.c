@@ -196,7 +196,7 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
     RT_CK_FULL_PATH( pathp );
     dp = DB_FULL_PATH_CUR_DIR( pathp );
 
-    if ( !(dp->d_flags & DIR_COMB) )
+    if ( !(dp->d_flags & RT_DIR_COMB) )
 	return -1;
 
     id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource );
@@ -672,7 +672,7 @@ main(int argc, char **argv)
 	struct directory *dp;
 
 	dp = db_lookup( dbip, argv[i], LOOKUP_QUIET );
-	if ( dp == DIR_NULL )
+	if ( dp == RT_DIR_NULL )
 	{
 	    bu_log( "Cannot find %s\n", argv[i] );
 	    continue;
@@ -681,7 +681,7 @@ main(int argc, char **argv)
 	fprintf ( fp_out, "# Includes group %s\n", argv[i]);
 
 	/* light source must be a combibation */
-	if ( !(dp->d_flags & DIR_COMB) )
+	if ( !(dp->d_flags & RT_DIR_COMB) )
 	    continue;
 
 	/* walk trees selecting only light source regions */
@@ -733,8 +733,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     int i;
     int first=1;
     int is_light=0;
-    float r, g, b;
-    point_t ave_pt;
+    point_t ave_pt = VINIT_ZERO;
     struct bu_vls shape_name;
     char *full_path;
     /*There may be a better way to capture the region_id, than getting the rt_comb_internal structure,
@@ -747,6 +746,9 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     struct rt_comb_internal *comb;
     int id;
 
+    /* static due to libbu exception handling */
+    static float r, g, b;
+
     NMG_CK_MODEL( m );
 
     BARRIER_CHECK;
@@ -756,7 +758,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     RT_CK_FULL_PATH( pathp );
     dp = DB_FULL_PATH_CUR_DIR( pathp );
 
-    if ( !(dp->d_flags & DIR_COMB) )
+    if ( !(dp->d_flags & RT_DIR_COMB) )
 	return;
 
     bu_vls_init(&shape_name);
@@ -936,25 +938,25 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 
     if ( !is_light )
     {
+	/* static due to libbu exception handling */
+	static struct shell *s;
+	static struct shell *next_s;
+	static struct faceuse *fu;
+	static struct faceuse *next_fu;
+	static struct loopuse *lu;
+
 	/* triangulate any faceuses with holes */
 	for ( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
 	{
-	    struct shell *s;
-
 	    NMG_CK_REGION( reg );
 	    s = BU_LIST_FIRST( shell, &reg->s_hd );
 	    while ( BU_LIST_NOT_HEAD( s, &reg->s_hd ) )
 	    {
-		struct shell *next_s;
-		struct faceuse *fu;
-
 		NMG_CK_SHELL( s );
 		next_s = BU_LIST_PNEXT( shell, &s->l );
 		fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
 		while ( BU_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
 		{
-		    struct faceuse *next_fu;
-		    struct loopuse *lu;
 		    int shell_is_dead=0;
 		    int face_is_dead=0;
 
@@ -1244,7 +1246,54 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     return (union tree *)NULL;
 }
 
-union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+
+static union tree *
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
+{
+    union tree *ret_tree = TREE_NULL;
+
+    /* Begin bomb protection */
+    if ( !BU_SETJUMP ) {
+	/* try */
+
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+
+    } else {
+	/* catch */
+
+	char *name = db_path_to_string(pathp);
+
+	/* Error, bail out */
+	bu_log( "conversion of %s FAILED!\n", name );
+
+	/* Sometimes the NMG library adds debugging bits when
+	 * it detects an internal error, before before bombing out.
+	 */
+	rt_g.NMG_debug = NMG_debug;	/* restore mode */
+
+	/* Release any intersector 2d tables */
+	nmg_isect2d_final_cleanup();
+
+	/* Release the tree memory & input regions */
+	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
+
+	/* Get rid of (m)any other intermediate structures */
+	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
+	    nmg_km(*tsp->ts_m);
+	} else {
+	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	}
+
+	bu_free( name, "db_path_to_string" );
+	/* Now, make a new, clean model structure for next pass. */
+	*tsp->ts_m = nmg_mm();
+    } BU_UNSETJUMP;		/* Relinquish the protection */
+
+    return ret_tree;
+}
+
+union tree *
+nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
     struct nmgregion	*r;
     struct bu_list		vhead;
@@ -1272,47 +1321,13 @@ union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path 
 
     regions_tried++;
 
-    /* Begin bomb protection */
-    if ( BU_SETJUMP )
-    {
-	/* Error, bail out */
-	BU_UNSETJUMP;		/* Relinquish the protection */
-	bu_log( "conversion of %s FAILED!\n", name );
-
-	/* Sometimes the NMG library adds debugging bits when
-	 * it detects an internal error, before before bombing out.
-	 */
-	rt_g.NMG_debug = NMG_debug;	/* restore mode */
-
-	/* Release any intersector 2d tables */
-	nmg_isect2d_final_cleanup();
-
-	/* Release the tree memory & input regions */
-	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
-
-	/* Get rid of (m)any other intermediate structures */
-	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
-	{
-	    nmg_km(*tsp->ts_m);
-	}
-	else
-	{
-	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-	}
-
-	bu_free( name, "db_path_to_string" );
-	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
-	goto out;
-    }
-    ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+    ret_tree = process_boolean(curtree, tsp, pathp);
 
     if ( ret_tree )
 	r = ret_tree->tr_d.td_r;
     else
 	r = (struct nmgregion *)NULL;
 
-    BU_UNSETJUMP;		/* Relinquish the protection */
     bu_free( name, "db_path_to_string" );
     regions_converted++;
     if (r != (struct nmgregion *)NULL)
@@ -1368,7 +1383,6 @@ union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path 
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
- out:
     BU_GETUNION(curtree, tree);
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;

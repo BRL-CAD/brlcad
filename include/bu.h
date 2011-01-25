@@ -1791,11 +1791,7 @@ BU_EXPORT extern int bu_debug;
 #      define bu_byteoffset(_i)	((size_t)((char *)&(_i)))
 #    else
 #      if defined(__ia64__) || defined(__x86_64__) || defined(__sparc64__)
-#        if defined (__INTEL_COMPILER)
 #          define bu_byteoffset(_i)	((size_t)((char *)&(_i)))
-#        else
-#          define bu_byteoffset(_i)	((size_t)(((void *)&(_i))-((void *)0)))
-#        endif
 #      else
 /* "Conservative" way of finding # bytes as diff of 2 char ptrs */
 #        define bu_byteoffset(_i)	((size_t)(((char *)&(_i))-((char *)0)))
@@ -3085,7 +3081,7 @@ BU_EXPORT BU_EXTERN(void bu_call_hook,
  *
  * BRL-CAD support library, error logging routine.  Note that the user
  * may provide his own logging routine, by replacing these functions.
- * That is why this is in file of it's own.  For example, LGT and
+ * That is why this is in file of its own.  For example, LGT and
  * RTSRV take advantage of this.
  *
  * Here is an example of how to set up a custom logging callback.
@@ -3240,7 +3236,7 @@ BU_EXPORT BU_EXTERN(void bu_free,
  *
  * While the string 'str' is provided for the log messages, don't
  * disturb the str value, so that this storage allocation can be
- * tracked back to it's original creator.
+ * tracked back to its original creator.
  */
 BU_EXPORT BU_EXTERN(genptr_t bu_realloc,
 		    (genptr_t ptr,
@@ -3324,6 +3320,9 @@ BU_EXPORT BU_EXTERN(int bu_mem_barriercheck,
  * Given a filesystem pathname, return a pointer to a dynamic string
  * which is the parent directory of that file/directory.
  *
+ * It is the caller's responsibility to bu_free() the pointer returned
+ * from this routine.  Examples of strings returned:
+ *
  *	/usr/dir/file	/usr/dir
  * @n	/usr/dir/	/usr
  * @n	/usr/file	/usr
@@ -3337,8 +3336,8 @@ BU_EXPORT BU_EXTERN(int bu_mem_barriercheck,
  * @n	a/		.
  * @n	../a/b		../a
  *
- * Warning: don't rely on non-constness of bu_dirname().. will change
- * to const.
+ * This routine will return "." if other valid results are not available
+ * but should never return NULL.
  */
 BU_EXPORT BU_EXTERN(char *bu_dirname,
 		    (const char *cp));
@@ -3555,7 +3554,7 @@ BU_EXPORT BU_EXTERN(int bu_set_realtime, ());
  * with private stack areas.  Locking and work dispatching are handled
  * by 'func' using a "self-dispatching" paradigm.
  *
- * 'func' is called with one parameter, it's thread number.  Threads
+ * 'func' is called with one parameter, its thread number.  Threads
  * are given increasing numbers, starting with zero.
  *
  * This function will not return control until all invocations of the

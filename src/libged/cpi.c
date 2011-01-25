@@ -63,12 +63,12 @@ ged_cpi(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ( (proto = db_lookup( gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL ) {
+    if ( (proto = db_lookup( gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY )) == RT_DIR_NULL ) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s does not exist!!\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
-    if ( db_lookup( gedp->ged_wdbp->dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
+    if ( db_lookup( gedp->ged_wdbp->dbip,  argv[2], LOOKUP_QUIET ) != RT_DIR_NULL )  {
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s already exists!!\n", argv[0], argv[2]);
 	return GED_ERROR;
     }
@@ -90,7 +90,7 @@ ged_cpi(struct ged *gedp, int argc, const char *argv[])
     VADD2( tgc_ip->v, tgc_ip->v, tgc_ip->h );
 
     dp = db_diradd( gedp->ged_wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, proto->d_flags, &proto->d_minor_type);
-    if (dp == DIR_NULL) {
+    if (dp == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: An error has occured while adding a new object to the database.\n", argv[0]);
 	return GED_ERROR;
     }

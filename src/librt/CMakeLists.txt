@@ -126,7 +126,6 @@ set(LIBRT_SOURCES
     primitives/nmg/nmg_index.c
     primitives/nmg/nmg_info.c
     primitives/nmg/nmg_inter.c
-    primitives/nmg/nmg_junk.c
     primitives/nmg/nmg_manif.c
     primitives/nmg/nmg_mesh.c
     primitives/nmg/nmg_mirror.c
@@ -201,7 +200,6 @@ set(LIBRT_SOURCES
     roots.c
     shoot.c
     spectrum.c
-    storage.c
     tcl.c
     transform.c
     tree.c
@@ -217,6 +215,7 @@ set(IGNORED_SOURCES
     namegen.c
     nurb_example.c
     prcomb.c
+    primitives/nmg/nmg_junk.c
     primitives/xxx/xxx.c
 )
 

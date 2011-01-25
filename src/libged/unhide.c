@@ -59,13 +59,13 @@ ged_unhide(struct ged *gedp, int argc, const char *argv[])
 
     dbip = gedp->ged_wdbp->dbip;
 
-    if ( dbip->dbi_version < 5 ) {
+    if ( db_version(dbip) < 5 ) {
 	bu_vls_printf(&gedp->ged_result_str, "Database was created with a previous release of BRL-CAD.\nSelect \"Tools->Upgrade Database...\" to enable support for this feature.");
 	return GED_ERROR;
     }
 
     for ( i=1; i<argc; i++ ) {
-	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL ) {
+	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == RT_DIR_NULL ) {
 	    continue;
 	}
 
@@ -102,7 +102,7 @@ ged_unhide(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 	bu_free_external( &tmp );
-	dp->d_flags &= (~DIR_HIDDEN);
+	dp->d_flags &= (~RT_DIR_HIDDEN);
     }
 
     return GED_OK;

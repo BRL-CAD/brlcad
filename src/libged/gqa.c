@@ -761,6 +761,7 @@ get_densities_from_file(char *name)
     FILE *fp = (FILE *)NULL;
     char *buf = NULL;
     int ret = 0;
+    size_t sret = 0;
 
     fp = fopen(name, "rb");
     if (fp == (FILE *)NULL) {
@@ -777,7 +778,9 @@ get_densities_from_file(char *name)
     num_densities = 128;
     
     buf = bu_malloc(sb.st_size+1, "density buffer");
-    fread(buf, sb.st_size, 1, fp);
+    sret = fread(buf, sb.st_size, 1, fp);
+    if (sret != 1)
+	perror("fread");
     ret = parse_densities_buffer(buf, (unsigned long)sb.st_size, densities, &_ged_current_gedp->ged_result_str, &num_densities);
     bu_free(buf, "density buffer");
     fclose(fp);
@@ -1388,7 +1391,7 @@ plane_worker (int cpu, genptr_t ptr)
 		if (aborted)
 		    return;
 
-		/* FIXME: This shots increment and it's twin in the else clause below
+		/* FIXME: This shots increment and its twin in the else clause below
 		 * are presenting a significant drag on gqa performance via
 		 * heavy duty semaphore locking and unlocking.  Can a way
 		 * be found to do this job without needing to trigger the

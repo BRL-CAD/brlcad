@@ -69,7 +69,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 
     /* check args for "-A" (attributes) and "-o" */
     bu_vls_init(&vls);
-    for (i=0; i<argc; i++) {
+    for (i=0; i<(size_t)argc; i++) {
 	char *ptr_A=NULL;
 	char *ptr_o=NULL;
 
@@ -118,7 +118,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 
 	bu_avs_init(&avs, (argc - last_opt)/2, "ged_erase avs");
 	i = 0;
-	while (i < argc) {
+	while (i < (size_t)argc) {
 	    if (*argv[i] == '-') {
 		i++;
 		continue;
@@ -133,7 +133,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	    i += 2;
 	}
 
-	tbl = db_lookup_by_attr(gedp->ged_wdbp->dbip, DIR_REGION | DIR_SOLID | DIR_COMB, &avs, flag_o_nonunique);
+	tbl = db_lookup_by_attr(gedp->ged_wdbp->dbip, RT_DIR_REGION | RT_DIR_SOLID | RT_DIR_COMB, &avs, flag_o_nonunique);
 	bu_avs_free(&avs);
 	if (!tbl) {
 	    bu_log("Error: db_lookup_by_attr() failed!!\n");
@@ -159,7 +159,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	new_argv = (char **)bu_calloc(max_count+1, sizeof(char *), "ged_erase new_argv");
 	new_argc = bu_argv_from_string(new_argv, max_count, bu_vls_addr(&vls));
 
-	for (i = 0; i < new_argc; ++i) {
+	for (i = 0; i < (size_t)new_argc; ++i) {
 	    /* Skip any options */
 	    if (new_argv[i][0] == '-')
 		continue;
@@ -167,7 +167,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	    ged_erasePathFromDisplay(gedp, new_argv[i], 1);
 	}
     } else {
-	for (i = 0; i < argc; ++i)
+	for (i = 0; i < (size_t)argc; ++i)
 	    ged_erasePathFromDisplay(gedp, argv[i], 1);
     }
 

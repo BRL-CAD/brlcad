@@ -433,7 +433,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 		 * though the two distances are "equal" within
 		 * tolerance, they are not exactly the same.  If the
 		 * new segment is slightly closer to the ray origin,
-		 * then use it's IN point.
+		 * then use its IN point.
 		 *
 		 * This is an attempt to reduce the deflected normals
 		 * sometimes seen along the edges of e.g. a cylinder
@@ -1587,7 +1587,7 @@ pop:
 	case OP_XNOP:
 	    /*
 	     * Special NOP for XOR.  lhs was false.  If rhs is true,
-	     * take note of it's regionp.
+	     * take note of its regionp.
 	     */
 	    sp--;			/* pop temp val */
 	    if (ret) {
@@ -1663,14 +1663,14 @@ pop:
  * (or the a_ray_length value), and always get correct results.  Need
  * to take into account some additional factors:
  *
- * 1) A region shouldn't be evaluated until all it's solids have been
+ * 1) A region shouldn't be evaluated until all its solids have been
  * intersected, to prevent the "CERN" problem of out points being
  * wrong because subtracted solids aren't intersected yet.
  *
  * Maybe "all" solids don't have to be intersected, but some strong
  * statements are needed along these lines.
  *
- * A region is definitely ready to be evaluated IF all it's solids
+ * A region is definitely ready to be evaluated IF all its solids
  * have been intersected.
  *
  * 2) A partition shouldn't be evaluated until all the regions within
@@ -1816,7 +1816,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	 * If partition is behind ray start point, discard it.
 	 *
 	 * Partition may start before current box starts, because it's
-	 * still waiting for all it's solids to be shot.
+	 * still waiting for all its solids to be shot.
 	 */
 	if (pp->pt_outhit->hit_dist <= 0.001 /* milimeters */) {
 	    register struct partition *zap_pp;

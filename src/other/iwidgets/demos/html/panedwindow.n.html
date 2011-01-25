@@ -29,7 +29,7 @@ Class:                  <B>Height</B>
 Command-Line Switch:	<B>-height</B>
 </pre>
 <UL>
-Specifies the overall height of the paned window in any of the forms
+Specifies the overall height of the paned window in any of the forms 
 acceptable to <B>Tk_GetPixels</B>.  The default is 10 pixels.
 </UL>
 <P>
@@ -39,7 +39,7 @@ Class:                  <B>Orient</B>
 Command-Line Switch:	<B>-orient</B>
 </pre>
 <UL>
-Specifies the orientation of the separators: <B>vertical</B> or
+Specifies the orientation of the separators: <B>vertical</B> or 
 <B>horizontal</B>.  The default is horizontal.
 </UL>
 <P>
@@ -49,8 +49,8 @@ Class:                  <B>BorderWidth</B>
 Command-Line Switch:	<B>-sashborderwidth</B>
 </pre>
 <UL>
-Specifies a value indicating the width of the 3-D border to draw
-around the outside of the sash in any of the forms acceptable to
+Specifies a value indicating the width of the 3-D border to draw 
+around the outside of the sash in any of the forms acceptable to 
 <B>Tk_GetPixels</B>.  The default is 2 pixels.
 </UL>
 <P>
@@ -70,7 +70,7 @@ Class:                  <B>Height</B>
 Command-Line Switch:	<B>-sashheight</B>
 </pre>
 <UL>
-Specifies the height of the sash in any of the forms acceptable to
+Specifies the height of the sash in any of the forms acceptable to 
 <B>Tk_GetPixels</B>.  The default is 10 pixels.
 </UL>
 <P>
@@ -80,11 +80,11 @@ Class:                  <B>SashIndent</B>
 Command-Line Switch 	<B>sashindent</B>
 </pre>
 <UL>
-Specifies the placement of the sash along the panes in any of the forms
+Specifies the placement of the sash along the panes in any of the forms 
 acceptable to <B>Tk_GetPixels</B>.  A positive
 value causes the sash to be offset from the near (left/top) side
 of the pane, and a negative value causes the sash to be offset from
-the far (right/bottom) side.  If the offset is greater than the
+the far (right/bottom) side.  If the offset is greater than the 
 width, then the sash is placed flush against the side.  The
 default is -10 pixels.
 </UL>
@@ -95,7 +95,7 @@ Class:                  <B>Width</B>
 Command-Line Switch:	<B>-sashwidth</B>
 </pre>
 <UL>
-Specifies the width of the sash in any of the forms acceptable to
+Specifies the width of the sash in any of the forms acceptable to 
 <B>Tk_GetPixels</B>.  The default is 10 pixels.
 </UL>
 <P>
@@ -115,7 +115,7 @@ Class:                  <B>Thickness</B>
 Command-Line Switch:	<B>-thickness</B>
 </pre>
 <UL>
-Specifies the thickness of the separators in any of the forms acceptable to
+Specifies the thickness of the separators in any of the forms acceptable to 
 <B>Tk_GetPixels</B>.  The default is 3 pixels.
 </UL>
 <P>
@@ -126,7 +126,7 @@ Class:                  <B>Width</B>
 Command-Line Switch:	<B>-width</B>
 </pre>
 <UL>
-Specifies the overall width of the paned window in any of the forms
+Specifies the overall width of the paned window in any of the forms 
 acceptable to <B>Tk_GetPixels</B>.  The default is 10 pixels.
 </UL>
 <P>
@@ -134,12 +134,12 @@ acceptable to <B>Tk_GetPixels</B>.  The default is 10 pixels.
 
 </pre><H2>DESCRIPTION</H2>
 <P>
-The <B>panedwindow</B> command creates a multiple paned window widget
+The <B>panedwindow</B> command creates a multiple paned window widget 
 capable of orienting the panes
 either vertically or horizontally.  Each pane is itself a frame acting
-as a child site for other widgets.  The border separating each pane
+as a child site for other widgets.  The border separating each pane 
 contains a sash which allows user positioning of the panes relative to
-one another.
+one another.  
 
 </pre><H2>METHODS</H2>
 <P>
@@ -151,18 +151,18 @@ operations on the widget.  It has the following general form:
 <I>pathName option </I>?<I>arg arg ...</I>?
 </pre>
 <I>Option</I> and the <I>arg</I>s
-determine the exact behavior of the command.
+determine the exact behavior of the command.  
 <P>
 Many of the widget commands for the <B>panedwindow</B> take as one argument an
 indicator of which pane of the paned window to operate on.  These indicators
-are called <I>indexes</I> and allow reference and manipulation of panes
-regardless of their current map state.  Paned window indexes may be
+are called <I>indexes</I> and allow reference and manipulation of panes 
+regardless of their current map state.  Paned window indexes may be 
 specified in any of the following forms:
 <DL>
 <DT> <I>number</I>
 </I></B>
-<DD> Specifies the pane numerically, where 0 corresponds to the nearest
-(top/left-most) pane of the paned window.
+<DD> Specifies the pane numerically, where 0 corresponds to the nearest 
+(top/left-most) pane of the paned window. 
 </DL>
 <DL>
 <DT> <B>end</B>
@@ -183,7 +183,7 @@ are used.
 <DL>
 <DT> <I>pathName <B>add</B> <I>tag</I> ?<I>option value option value</I>?
 </I></B>
-<DD> Adds a new pane to the paned window on the far side (right/bottom).  The
+<DD> Adds a new pane to the paned window on the far side (right/bottom).  The 
 following options may be specified:
 </DL>
 <UL>
@@ -197,7 +197,7 @@ the forms acceptable to <B>Tk_GetPixels</B>.  The default is 8 pixels.
 <DT> <B>-minimum</B> <I>value</I>
 </I></B>
 <DD> Specifies the minimum size that a pane's contents may reach not
-inclusive of twice the margin in any of the forms acceptable to
+inclusive of twice the margin in any of the forms acceptable to 
 <B>Tk_GetPixels</B>.  The default is 10 pixels.
 
 The <B>add</B> method returns the path name of the pane.
@@ -214,8 +214,8 @@ command.
 <DL>
 <DT> <I>pathName <B>childsite</B> ?<I>index</I>?
 </I></B>
-<DD> Returns a list of the child site path names or a specific child site given
-an index.  The list is constructed from the near side (left/top) to the far
+<DD> Returns a list of the child site path names or a specific child site given 
+an index.  The list is constructed from the near side (left/top) to the far 
 side (right/bottom).
 </DL>
 <DL>
@@ -265,7 +265,7 @@ pane to be visually removed rather than deleted.
 pane just before the one given by <I>index</I>, instead of appending
 to the end of the panedwindow.  The <I>option</I>, and <I>value</I>
 arguments have the same interpretation as for the <B>add</B> widget
-command.
+command.  
 </DL>
 <DL>
 <DT> <I>pathName <B>paneconfigure</B> <I>index</I> ?<I>options</I>?
@@ -300,7 +300,7 @@ movement until the fractions are modified via the fraction method.
 For example a panedwindow is created with three panes and the minimum
 and margin options are at their default settings.  Next the user moves
 the sashes to compact the panes to one side.  Now, if the minimum is
-increased on the most compressed pane via the paneconfigure method to
+increased on the most compressed pane via the paneconfigure method to 
 a large enough value, then sash movement is blocked
 until the fractions are adjusted.  This situation is unusual and under
 normal operation of the panedwindow, this problem will never occur.
@@ -309,7 +309,7 @@ normal operation of the panedwindow, this problem will never occur.
 
 </pre><H2>EXAMPLE</H2>
 <pre>
- panedwindow .pw -width 300 -height 300
+ panedwindow .pw -width 300 -height 300 
  .pw add top
  .pw add middle -margin 10
  .pw add bottom -margin 10 -minimum 10

@@ -45,7 +45,7 @@ set m 1
 test Scrolledframe-1.$c {Scrolledframe construction} {
     iwidgets::Scrolledframe .sf
     pack .sf -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -60,8 +60,8 @@ test Scrolledframe-2.$o {configuration option} {
 incr o
 
 foreach test {
-    {-borderwidth 3 3}
-    {-height 180 180}
+    {-borderwidth 3 3} 
+    {-height 180 180} 
     {-labeltext "Scrolled Frame" "Scrolled Frame"}
     {-labelpos nw nw}
     {-labelpos ne ne}
@@ -75,13 +75,13 @@ foreach test {
     {-labelpos w w}
     {-labelpos ws ws}
     {-labelpos n n}
-    {-hscrollmode static static}
-    {-hscrollmode none none}
-    {-hscrollmode dynamic dynamic}
-    {-relief raised raised}
-    {-sbwidth 20 20}
-    {-relief sunken sunken}
-    {-scrollmargin 10 10}
+    {-hscrollmode static static} 
+    {-hscrollmode none none} 
+    {-hscrollmode dynamic dynamic} 
+    {-relief raised raised} 
+    {-sbwidth 20 20} 
+    {-relief sunken sunken} 
+    {-scrollmargin 10 10} 
     {-sticky w w}
     {-sticky nw nw}
     {-sticky n n}
@@ -91,16 +91,16 @@ foreach test {
     {-sticky s s}
     {-sticky sw sw}
     {-sticky news news}
-    {-vscrollmode static static}
-    {-vscrollmode none none}
-    {-vscrollmode dynamic dynamic}
+    {-vscrollmode static static} 
+    {-vscrollmode none none} 
+    {-vscrollmode dynamic dynamic} 
     {-width 150 150}} {
 	set option [lindex $test 0]
 	test Scrolledframe-2.$o "configuration options, $option" {
 	    .sf configure $option [lindex $test 1]
 	    lindex [.sf configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -132,7 +132,7 @@ foreach test {
 	test Scrolledframe-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -141,42 +141,42 @@ foreach test {
 #
 test Scrolledframe-1.$c {Scrolledframe children} {
     pack [button [.sf childsite].b1 -text Hello] -pady 10
-    update
+    update 
 } {}
 
 incr c
 
 test Scrolledframe-1.$c {Scrolledframe children} {
     pack [button [.sf childsite].b2 -text World] -pady 10
-    update
+    update 
 } {}
 
 incr c
 
 test Scrolledframe-1.$c {Scrolledframe children} {
     pack [button [.sf childsite].b3 -text "This is a test"] -pady 10
-    update
+    update 
 } {}
 
 incr c
 
 test Scrolledframe-1.$c {Scrolledframe children} {
     pack [button [.sf childsite].b4 -text "This is a really big button"] -pady 10
-    update
+    update 
 } {}
 
 incr c
 
 test Scrolledframe-1.$c {Scrolledframe children} {
     pack [button [.sf childsite].b5 -text "This is another really big button"] -pady 10
-    update
+    update 
 } {}
 
 incr c
 
 test Scrolledframe-1.$c {Scrolledframe children} {
     pack [button [.sf childsite].b6 -text "This is the last really big button"] -pady 10
-    update
+    update 
 } {}
 
 incr c
@@ -190,7 +190,7 @@ test Scrolledframe-1.$c {Scrolledframe destruction} {
     }
 
     destroy .sf
-    update
+    update 
 } {}
 
 incr c
@@ -198,16 +198,16 @@ incr c
 test Scrolledframe-1.$c {Scrolledframe construction} {
     iwidgets::scrolledframe .sf -width 150 -height 180 \
 	-labelpos nw -labeltext Scrolledframe \
-	-vscrollmode static -hscrollmode dynamic
+	-vscrollmode static -hscrollmode dynamic 
     pack .sf -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Scrolledframe-1.$c {Scrolledframe destruction} {
     destroy .sf
-    update
+    update 
 } {}
 
 incr c
@@ -216,7 +216,7 @@ test Scrolledframe-1.$c {Scrolledframe destruction} {
     iwidgets::scrolledframe .sf
     pack .sf
     destroy .sf
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

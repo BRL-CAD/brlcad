@@ -77,7 +77,7 @@ rt_dirbuild( const char *filename, char *buf, int len )
 /*
  *			R T _ D B _ G E T _ I N T E R N A L
  *
- *  Get an object from the database, and convert it into it's internal
+ *  Get an object from the database, and convert it into its internal
  *  representation.
  *
  *  Returns -
@@ -105,7 +105,7 @@ rt_db_get_internal(
     if ( db_get_external( &ext, dp, dbip ) < 0 )
 	return -2;		/* FAIL */
 
-    if ( dp->d_flags & DIR_COMB )  {
+    if ( dp->d_flags & RT_DIR_COMB )  {
 	id = ID_COMBINATION;
     } else {
 	/* As a convenience to older ft_import4 routines */
@@ -159,7 +159,7 @@ rt_db_put_internal(
     BU_INIT_EXTERNAL(&ext);
     RT_CK_DB_INTERNAL( ip );
 
-    if ( dbip->dbi_version > 4 )
+    if ( db_version(dbip) > 4 )
 	return  rt_db_put_internal5( dp, dbip, ip, resp,
 				     DB5_MAJORTYPE_BRLCAD );
 
@@ -289,7 +289,7 @@ rt_db_lookup_internal (
 	    bu_log("rt_db_lookup_internal() No object specified\n");
 	return ID_NULL;
     }
-    if ((dp = db_lookup(dbip, obj_name, noisy)) == DIR_NULL)
+    if ((dp = db_lookup(dbip, obj_name, noisy)) == RT_DIR_NULL)
 	return ID_NULL;
     if (rt_db_get_internal(ip, dp, dbip, (matp_t) NULL, resp ) < 0 )
     {

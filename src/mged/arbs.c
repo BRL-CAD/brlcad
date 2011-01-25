@@ -94,7 +94,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter name for this arb: ", (char *)NULL);
 	return TCL_ERROR;
     }
-    if (db_lookup(dbip, argv[1], LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(interp, argv[1], ":  already exists\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -279,7 +279,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     /* no interuprts */
     (void)signal(SIGINT, SIG_IGN);
 
-    if ((dp = db_diradd(dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL) {
+    if ((dp = db_diradd(dbip, argv[1], -1L, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type)) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot add ", argv[1], " to the directory\n", (char *)NULL);
 	return TCL_ERROR;
     }

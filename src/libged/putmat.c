@@ -93,12 +93,12 @@ ged_getmat(struct ged *gedp, int argc, const char *argv[])
 	strncpy(name2, last_fs+1, (size_t)(end-last_fs)); /* This includes the EOS */
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, name1, LOOKUP_NOISY)) == DIR_NULL) {
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, name1, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], name1);
 	return GED_ERROR;
     }
 
-    if (!(dp->d_flags & DIR_COMB)) {
+    if (!(dp->d_flags & RT_DIR_COMB)) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not a combination\n", argv[0], name1);
 	return GED_ERROR;
     }

@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) timeentry.n 1.0 97/04/30 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::timeentry iwid
 .BS
@@ -42,7 +42,7 @@ inherited options.
 .nf
 .ta 4c 8c 12c
 \fBcommand\fR	\fBformat\fR	\fBseconds\fR	\fBtextBackground\fR
-\fBtextFont\fR
+\fBtextFont\fR	
 .fi
 .LP
 See the "timefield" class manual entry for details on these
@@ -75,7 +75,7 @@ Class:	\fBGrab\fR
 Command-Line Switch:	\fB-grab\fR
 .fi
 .IP
-Specifies the grab level, \fBlocal\fR or \fBglobal\fR, to be obtained before
+Specifies the grab level, \fBlocal\fR or \fBglobal\fR, to be obtained before 
 bringing up the popup watch.  The default is global.  For more information
 concerning grab levels, consult the documentation for Tk's \fBgrab\fR command.
 .LP
@@ -85,9 +85,9 @@ Class:	\fBIcon\fR
 Command-Line Switch:	\fB-icon\fR
 .fi
 .IP
-Specifies the watch icon image to be used in the timeentry.
-This image must have been created previously with
-the \fBimage create\fR command.  Should one not be provided,
+Specifies the watch icon image to be used in the timeentry.  
+This image must have been created previously with 
+the \fBimage create\fR command.  Should one not be provided, 
 then one will be generated, pixmap if possible, bitmap otherwise.
 .LP
 .nf
@@ -104,10 +104,10 @@ or time icon button.
 
 .SH DESCRIPTION
 .PP
-The \fBiwidgets::timeentry\fR command creates a time entry field
-with a popup watch by combining the timefield and watch
-widgets together.  This allows a user to enter the time via the
-keyboard or by using the mouse and selecting the watch icon
+The \fBiwidgets::timeentry\fR command creates a time entry field 
+with a popup watch by combining the timefield and watch 
+widgets together.  This allows a user to enter the time via the 
+keyboard or by using the mouse and selecting the watch icon 
 which brings up a popup watch.
 .DE
 
@@ -168,10 +168,10 @@ Name:	\fBiconbutton\fR
 Class:	\fBLabel\fR
 .fi
 .IP
-The iconbutton component provides a labelbutton component to act as a
+The iconbutton component provides a labelbutton component to act as a 
 lightweight button
 displaying the watch icon.  Upon pressing the labelbutton, the watch
-appears.  See the "label" widget manual entry for details on the
+appears.  See the "label" widget manual entry for details on the 
 labelbutton component item.
 .LP
 .nf

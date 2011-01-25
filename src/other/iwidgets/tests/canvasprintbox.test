@@ -44,7 +44,7 @@ set m 1
 test Canvasprintbox-1.$c {Canvasprintbox construction} {
     iwidgets::Canvasprintbox .cpb
     pack .cpb -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -59,8 +59,8 @@ test Canvasprintbox-2.$o {configuration option} {
 incr o
 
 foreach test {
-    {-background #d9d9d9 #d9d9d9}
-    {-cursor gumby gumby}
+    {-background #d9d9d9 #d9d9d9} 
+    {-cursor gumby gumby} 
     {-hpagecnt 2 2}
     {-orient portrait portrait}
     {-orient landscape landscape}
@@ -88,7 +88,7 @@ foreach test {
 	    .cpb configure $option [lindex $test 1]
 	    lindex [.cpb configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -131,22 +131,22 @@ foreach test {
 test Canvasprintbox-1.$c {Canvasprintbox destruction} {
     destroy .c
     destroy .cpb
-    update
+    update 
 } {}
 
 incr c
 
 test Canvasprintbox-1.$c {Canvasprintbox construction} {
-    iwidgets::canvasprintbox .cpb
+    iwidgets::canvasprintbox .cpb 
     pack .cpb -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Canvasprintbox-1.$c {Canvasprintbox destruction} {
     destroy .cpb
-    update
+    update 
 } {}
 
 incr c
@@ -155,7 +155,7 @@ test Canvasprintbox-1.$c {Canvasprintbox destruction} {
     iwidgets::canvasprintbox .cpb
     pack .cpb
     destroy .cpb
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

@@ -115,9 +115,9 @@ Class:                  <B>AutoResize</B>
 Command-Line Switch:	<B>-autoresize</B>
 </pre>
 <UL>
-Automatically adjusts the scrolled region to be the bounding
-box covering all the items in the canvas following the execution
-of any method which creates or destroys items.  Thus, as new
+Automatically adjusts the scrolled region to be the bounding 
+box covering all the items in the canvas following the execution 
+of any method which creates or destroys items.  Thus, as new 
 items are added, the scrollbars adjust accordingly.
 </UL>
 <P>
@@ -127,7 +127,7 @@ Class:                  <B>Height</B>
 Command-Line Switch:	<B>-height</B>
 </pre>
 <UL>
-Specifies the height of the scrolled canvas widget in any of the forms
+Specifies the height of the scrolled canvas widget in any of the forms 
 acceptable to <B>Tk_GetPixels</B>.  The default height is 30 pixels.
 </UL>
 <P>
@@ -138,9 +138,9 @@ Command-Line Switch:	<B>-hscrollmode</B>
 </pre>
 <UL>
 Specifies the the display mode to be used for the horizontal
-scrollbar: <B>static, dynamic,</B> or <B>none</B>.  In static mode, the
+scrollbar: <B>static, dynamic,</B> or <B>none</B>.  In static mode, the 
 scroll bar is displayed at all times.  Dynamic mode displays the
-scroll bar as required, and none disables the scroll bar display.  The
+scroll bar as required, and none disables the scroll bar display.  The 
 default is static.
 </UL>
 <P>
@@ -150,7 +150,7 @@ Class:                  <B>Width</B>
 Command-Line Switch:	<B>-sbwidth</B>
 </pre>
 <UL>
-Specifies the width of the scrollbar in any of the forms acceptable
+Specifies the width of the scrollbar in any of the forms acceptable 
 to <B>Tk_GetPixels</B>.  The default width is 15 pixels..
 </UL>
 <P>
@@ -160,7 +160,7 @@ Class:                  <B>ScrollMargin</B>
 Command-Line Switch:	<B>-scrollmargin</B>
 </pre>
 <UL>
-Specifies the distance between the canvas and scrollbar in any of the
+Specifies the distance between the canvas and scrollbar in any of the 
 forms acceptable to <B>Tk_GetPixels</B>.  The default is 3 pixels.
 </UL>
 <P>
@@ -170,7 +170,7 @@ Class:                  <B>Background</B>
 Command-Line Switch <B>-textbackground</B>
 </pre>
 <UL>
-Specifies the background color for the canvas.  This allows the background
+Specifies the background color for the canvas.  This allows the background 
 within the canvas to be different from the normal background color.
 </UL>
 <P>
@@ -181,9 +181,9 @@ Command-Line Switch:	<B>-vscrollmode</B>
 </pre>
 <UL>
 Specifies the the display mode to be used for the vertical
-scrollbar: <B>static, dynamic,</B> or <B>none</B>.  In static mode, the
-scroll bar is displayed at all times.  Dynamic mode displays the
-scroll bar as required, and none disables the scroll bar display.  The
+scrollbar: <B>static, dynamic,</B> or <B>none</B>.  In static mode, the 
+scroll bar is displayed at all times.  Dynamic mode displays the 
+scroll bar as required, and none disables the scroll bar display.  The 
 default is static.
 </UL>
 <P>
@@ -193,14 +193,14 @@ Class:                  <B>Width</B>
 Command-Line Switch:	<B>-width</B>
 </pre>
 <UL>
-Specifies the width of the scrolled canvas widget in any of the forms
+Specifies the width of the scrolled canvas widget in any of the forms 
 acceptable to <B>Tk_GetPixels</B>.  The default height is 30 pixels.
 </UL>
 </pre><HR>
 
 </pre><H2>DESCRIPTION</H2>
 <P>
-The <B>scrolledcanvas</B> command creates
+The <B>scrolledcanvas</B> command creates 
 a scrolled canvas with additional options to manage
 horizontal and vertical scrollbars.  This includes options to control
 which scrollbars are displayed and the method, i.e. statically or
@@ -304,7 +304,7 @@ Name:                   <B>canvas</B>
 Class:                  <B>Canvas</B>
 </pre>
 <UL>
-The canvas component is the canvas widget.  See the "canvas" widget
+The canvas component is the canvas widget.  See the "canvas" widget 
 manual entry for details on the canvas component item.
 </UL>
 <P>
@@ -313,7 +313,7 @@ Name:                   <B>horizsb</B>
 Class:                  <B>Scrollbar</B>
 </pre>
 <UL>
-The horizsb component is the horizontal scroll bar.  See the "ScrollBar"
+The horizsb component is the horizontal scroll bar.  See the "ScrollBar" 
 widget manual entry for details on the horizsb component item.
 </UL>
 <P>
@@ -322,14 +322,14 @@ Name:                   <B>vertsb</B>
 Class:                  <B>Scrollbar</B>
 </pre>
 <UL>
-The vertsb component is the vertical scroll bar.  See the "ScrollBar" widget
+The vertsb component is the vertical scroll bar.  See the "ScrollBar" widget 
 manual entry for details on the vertsb component item.
 </UL>
 </table>
 
 </pre><H2>EXAMPLE</H2>
 <pre>
-  scrolledcanvas .sc
+  scrolledcanvas .sc 
 
   .sc create rectangle 100 100 400 400 -fill red
   .sc create rectangle 300 300 600 600 -fill green

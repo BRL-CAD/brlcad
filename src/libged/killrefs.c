@@ -76,7 +76,7 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
     ret = GED_OK;
 
     FOR_ALL_DIRECTORY_START(dp, gedp->ged_wdbp->dbip) {
-	if ( !(dp->d_flags & DIR_COMB) )
+	if ( !(dp->d_flags & RT_DIR_COMB) )
 	    continue;
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {

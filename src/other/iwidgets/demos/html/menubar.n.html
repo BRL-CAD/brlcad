@@ -98,9 +98,9 @@ curly braces ({}) to ensure proper parsing of the substituted values.
 <P>
 The <B>menubar</B> command creates a new window (given by the <I>pathName</I> argument) and makes it into a <B>menubar</B> menu widget. Additional options, described above may be specified on the command line or in the option database to configure aspects of the menubar such as its colors and font. The <B>menubar</B> command returns its <I>pathName</I> argument. At the time this command is invoked, there must not exist a window named pathName, but pathName's parent must exist.
 <P>
-A <B>menubar</B> is a widget that simplifies the task of creating menu hierarchies. It encapsulates a <B>frame</B> widget, as well as <B>menubuttons</B>, <B>menus</B>, and menu <B>entries</B>. The menubar allows menus to be specified and referenced in a more consistent manner than using Tk to build menus directly.
+A <B>menubar</B> is a widget that simplifies the task of creating menu hierarchies. It encapsulates a <B>frame</B> widget, as well as <B>menubuttons</B>, <B>menus</B>, and menu <B>entries</B>. The menubar allows menus to be specified and referenced in a more consistent manner than using Tk to build menus directly. 
 
-<B>Menubar</B> allows a menu tree to be expressed in a hierachical "language". The <B>menubar</B> accepts a <B>menuButtons</B> option that allows a list of menubuttons to be added to the menubar. In turn, each menubutton accepts a <B>menu</B> option that specifies a list of menu entries to be added to the menubutton's menu. Cascade entries also accept the <B>menu</B> option for specifying a list of menu entries to be added to the cascade's menu.
+<B>Menubar</B> allows a menu tree to be expressed in a hierachical "language". The <B>menubar</B> accepts a <B>menuButtons</B> option that allows a list of menubuttons to be added to the menubar. In turn, each menubutton accepts a <B>menu</B> option that specifies a list of menu entries to be added to the menubutton's menu. Cascade entries also accept the <B>menu</B> option for specifying a list of menu entries to be added to the cascade's menu. 
 
 Additionally, the menubar allows each component of the menubar system to be referenced by a simple <I>menuPathName</I> syntax. The menubar also extends the set of options for menu entries to include a <B>helpStr</B> option.
 </pre><H2>MENU PATH NAMES</H2>
@@ -130,7 +130,7 @@ The <I>menuPathName</I> is a series of segment names, each separated by the '.' 
 <DL>
 <DT> <I>number</I>
 </I></B>
-<DD> Specifies the index of the the component. For menubuttons, 0 corresponds to the left-most menubutton of the menu bar frame. As an example, <I>.1</I> would correspond to the second menubutton on the menu bar frame.
+<DD> Specifies the index of the the component. For menubuttons, 0 corresponds to the left-most menubutton of the menu bar frame. As an example, <I>.1</I> would correspond to the second menubutton on the menu bar frame. 
 <UL>
 For entries, 0 corresponds to the top-most entry of the menu. For example, .file.0 would correspond to the first entry on the menu attached to the menubutton named <I>file</I>.
 </UL>
@@ -138,7 +138,7 @@ For entries, 0 corresponds to the top-most entry of the menu. For example, .file
 <DL>
 <DT> <B>end</B>
 </I></B>
-<DD> Specifes the last component. For menubuttons, it specifies the right-most entry of the menu bar frame. For menu entries, it specifies the bottom-most entry of the menu.
+<DD> Specifes the last component. For menubuttons, it specifies the right-most entry of the menu bar frame. For menu entries, it specifies the bottom-most entry of the menu. 
 </DL>
 <DL>
 <DT> <B>last</B>
@@ -175,7 +175,7 @@ The following commands are possible for menubar widgets:
 </I></B>
 <DD> Adds either a menu to the menu bar or a menu entry to a menu pane.
 <UL>
-If additional arguments are present, they specify <I>option</I>s available to component type <B>entry</B>. See the man pages for <B>menu</B>(1) in the section on <B>ENTRIES</B>.
+If additional arguments are present, they specify <I>option</I>s available to component type <B>entry</B>. See the man pages for <B>menu</B>(1) in the section on <B>ENTRIES</B>. 
 
 If <I>type</I> is one of <B>cascade</B>, <B>checkbutton</B>, <B>command</B>, <B>radiobutton</B>, or <B>separator</B> it adds a new entry to the bottom of the menu denoted by the prefix of <I>menuPathName</I>. If additonal arguments are present, they specify options available to menu <B>entry</B> widgets. In addition, the <B>helpStr</B> option is added by the menubar widget to all components of type entry.
 </UL>
@@ -225,7 +225,7 @@ If <I>menuPathName</I> is of type menubar, then all menus and the menu bar frame
 <DL>
 <DT> <I>pathName</I> <B>index</B> <I>menuPathName</I>
 </I></B>
-<DD> If <I>menuPathName</I> is of type menubutton or menu, it returns the position of the menu/menubutton on the menubar frame.
+<DD> If <I>menuPathName</I> is of type menubutton or menu, it returns the position of the menu/menubutton on the menubar frame. 
 
 If <I>menuPathName</I> is of type <B>command</B>, <B>separator</B>, <B>radiobutton</B>, <B>checkbutton</B>, or <B>cascade</B>, it returns the menu widget's numerical index for the entry corresponding to <I>menuPathName</I>. If path is not found or the path is equal to ".", a value of -1 is returned.
 </DL>
@@ -288,12 +288,12 @@ The default mode is -glob.
 </DL>
 </pre><H2>EXAMPLE ONE: USING GRAMMAR</H2>
 <P>
-The following example creates a menubar with "File", "Edit", "Options" menubuttons. Each of these menubuttons has an associated menu.
+The following example creates a menubar with "File", "Edit", "Options" menubuttons. Each of these menubuttons has an associated menu. 
 In turn the File menu has menu entries, as well as the Edit
 menu and the Options menu. The Options menu is a tearoff menu
 with selectColor (for radiobuttons) set to blue.
 In addition, the Options menu has a cascade titled More,
-with several menu entries attached to it as well. An entry widget is
+with several menu entries attached to it as well. An entry widget is 
 provided to display help status.
 <P>
 menubar .mb -helpvariable helpVar -menubuttons {

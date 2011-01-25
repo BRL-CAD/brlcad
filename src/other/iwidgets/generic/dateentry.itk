@@ -12,31 +12,31 @@
 # ----------------------------------------------------------------------
 #            Copyright (c) 1997 DSC Technologies Corporation
 # ======================================================================
-# Permission to use, copy, modify, distribute and license this software
-# and its documentation for any purpose, and without fee or written
-# agreement with DSC, is hereby granted, provided that the above copyright
-# notice appears in all copies and that both the copyright notice and
-# warranty disclaimer below appear in supporting documentation, and that
-# the names of DSC Technologies Corporation or DSC Communications
-# Corporation not be used in advertising or publicity pertaining to the
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
 # software without specific, written prior permission.
-#
-# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
 # ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
 # INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
-# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE,
-# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL
-# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
 # WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
-# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
 # SOFTWARE.
 # ======================================================================
 #
 # ----------------------------------------------------------------------
 #
-# Modified 2001-10-23 by Mark Alston to pass options to the datefield
-# constructor.  Needed to allow use of new option -int which lets the
+# Modified 2001-10-23 by Mark Alston to pass options to the datefield 
+# constructor.  Needed to allow use of new option -int which lets the 
 # user use dates in YYYY-MM-DD format as well as MM/DD/YYYY format.
 #
 # option -int yes sets dates to YYYY-MM-DD format
@@ -65,7 +65,7 @@ itcl::class iwidgets::Dateentry {
 
     itk_option define -grab grab Grab "global"
     itk_option define -icon icon Icon {}
-
+    
     #
     # The calendar widget isn't created until needed, yet we need
     # its options to be available upon creation of a dateentry widget.
@@ -108,7 +108,7 @@ itcl::class iwidgets::Dateentry {
 
 #
 # Provide a lowercased access method for the dateentry class.
-#
+# 
 proc ::iwidgets::dateentry {pathName args} {
     uplevel ::iwidgets::Dateentry $pathName $args
 }
@@ -118,16 +118,16 @@ proc ::iwidgets::dateentry {pathName args} {
 # ------------------------------------------------------------------
 itcl::body iwidgets::Dateentry::constructor {args} {
     #
-    # Create an icon label to act as a button to bring up the
+    # Create an icon label to act as a button to bring up the 
     # calendar popup.
     #
     itk_component add iconbutton {
 	label $itk_interior.iconbutton -relief raised
     } {
-	keep -borderwidth -cursor -foreground
+	keep -borderwidth -cursor -foreground 
     }
     grid $itk_component(iconbutton) -row 0 -column 0 -sticky ns
-
+    
     #
     # Initialize the widget based on the command line options.
     #
@@ -161,7 +161,7 @@ itcl::configbody iwidgets::Dateentry::icon {
 # ------------------------------------------------------------------
 # OPTION: -grab
 #
-# Specifies the grab level, local or global, to be obtained when
+# Specifies the grab level, local or global, to be obtained when 
 # bringing up the popup calendar.  The default is global.
 # ------------------------------------------------------------------
 itcl::configbody iwidgets::Dateentry::grab {
@@ -270,14 +270,14 @@ itcl::body iwidgets::Dateentry::_getDefaultIcon {} {
 # ------------------------------------------------------------------
 # PROTECTED METHOD: _popup
 #
-# This method is invoked upon selection of the icon button.  It
-# creates a calendar widget within a toplevel popup, calculates
+# This method is invoked upon selection of the icon button.  It 
+# creates a calendar widget within a toplevel popup, calculates 
 # the position at which to display the calendar, performs a grab
 # and displays the calendar.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Dateentry::_popup {} {
     #
-    # First, let's nullify the icon binding so that any another
+    # First, let's nullify the icon binding so that any another 
     # selections are ignored until were done with this one.  Next,
     # change the relief of the icon.
     #
@@ -285,12 +285,12 @@ itcl::body iwidgets::Dateentry::_popup {} {
     $itk_component(iconbutton) configure -relief sunken
 
     #
-    # Create a withdrawn toplevel widget and remove the window
+    # Create a withdrawn toplevel widget and remove the window 
     # decoration via override redirect.
     #
     itk_component add -private popup {
-	toplevel $itk_interior.popup
-    }
+	toplevel $itk_interior.popup 
+    } 
     $itk_component(popup) configure -borderwidth 2 -background black
     wm withdraw $itk_component(popup)
     wm overrideredirect $itk_component(popup) 1
@@ -341,7 +341,7 @@ itcl::body iwidgets::Dateentry::_popup {} {
 	set popupx [expr {$rootx - 3 - $popupwidth}]
 	set popupy [expr {$rooty - 3 - $popupheight}]
     }
-
+    
     #
     # Get the current date from the datefield widget and both
     # show and select it on the calendar.
@@ -364,9 +364,9 @@ itcl::body iwidgets::Dateentry::_popup {} {
     # Perform either a local or global grab based on the -grab option.
     #
     if {$itk_option(-grab) == "local"} {
-	grab $itk_component(popup)
+	::grab $itk_component(popup)
     } else {
-	grab -global $itk_component(popup)
+	::grab -global $itk_component(popup)
     }
 
     #
@@ -379,12 +379,12 @@ itcl::body iwidgets::Dateentry::_popup {} {
 # ------------------------------------------------------------------
 # PROTECTED METHOD: _popupGetDate
 #
-# This method is the callback for selection of a date on the
+# This method is the callback for selection of a date on the 
 # calendar.  It releases the grab and sets the date in the
 # datefield widget.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Dateentry::_getPopupDate {date} {
-    _releaseGrab
+    _releaseGrab 
     show $date
 }
 
@@ -412,13 +412,13 @@ itcl::body iwidgets::Dateentry::_releaseGrabCheck {rootx rooty} {
 # ------------------------------------------------------------------
 # PROTECTED METHOD: _releaseGrab
 #
-# This method releases the grab, destroys the popup, changes the
+# This method releases the grab, destroys the popup, changes the 
 # relief of the button back to raised and reapplies the binding
 # to the icon button that engages the popup action.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Dateentry::_releaseGrab {} {
-    grab release $itk_component(popup)
+    ::grab release $itk_component(popup)
     $itk_component(iconbutton) configure -relief raised
-    destroy $itk_component(popup)
+    destroy $itk_component(popup) 
     bind $itk_component(iconbutton) <Button-1> [itcl::code $this _popup]
 }

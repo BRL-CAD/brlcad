@@ -16,7 +16,6 @@ brlcadinclude_required = \
 	raytrace.h \
 	rtfunc.h \
 	rtgeom.h \
-	rtprivate.h \
 	rtserver.h \
 	tclcad.h \
 	tie.h
@@ -85,7 +84,8 @@ noinst_HEADERS = \
 	sysv.h
 
 EXTRA_DIST = \
-	sed4
+	sed4 \
+	config_win_cmake.h
 
 if ONLY_BENCHMARK
 brlcadinclude_HEADERS = $(brlcadinclude_required)

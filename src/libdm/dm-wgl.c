@@ -579,7 +579,7 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 		       ((struct wgl_vars *)dmp1->dm_vars.priv_vars)->glxc);
 	wglDeleteContext(old_glxContext);
     } else {
-	/* dmp1 will share it's display lists with dmp2 */
+	/* dmp1 will share its display lists with dmp2 */
 
 	old_glxContext = ((struct wgl_vars *)dmp2->dm_vars.priv_vars)->glxc;
 

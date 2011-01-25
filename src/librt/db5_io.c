@@ -1056,7 +1056,7 @@ rt_db_external5_to_internal5(
 /**
  * R T _ D B _ G E T _ I N T E R N A L 5
  *
- * Get an object from the database, and convert it into it's internal
+ * Get an object from the database, and convert it into its internal
  * representation.
  *
  * Applications and middleware shouldn't call this directly, they

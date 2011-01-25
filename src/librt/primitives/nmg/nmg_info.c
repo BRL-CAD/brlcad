@@ -337,7 +337,7 @@ nmg_find_fu_with_fg_in_s(const struct shell *s1, const struct faceuse *fu2)
 
 	if (fu1 == fu2 || fu1->fumate_p == fu2) continue;
 
-	/* Face geometry matches, select fu1 or it's mate */
+	/* Face geometry matches, select fu1 or its mate */
 	flip1 = (fu1->orientation != OT_SAME) != (f1->flip != 0);
 	flip2 = (fu2->orientation != OT_SAME) != (f2->flip != 0);
 	if (flip1 == flip2) return fu1;
@@ -688,7 +688,7 @@ nmg_find_matching_eu_in_s(const struct edgeuse *eu1, const struct shell *s2)
  * will be considered, otherwise all edgeuses in the model are fair game.
  *
  * If a particular edgeuse "eup" is specified, then that edgeuse
- * and it's mate will not be returned as a match.
+ * and its mate will not be returned as a match.
  *
  * If "dangling_only" is true, then an edgeuse will be matched only if
  * there are no other edgeuses on the edge, i.e. the radial edgeuse is
@@ -1689,7 +1689,7 @@ nmg_find_pt_in_face(const struct faceuse *fu, const fastf_t *pt, const struct bn
  * pointer to vertex with matching geometry
  * NULL
  *
- * XXX Why does this return a vertex, while it's helpers return a vertexuse?
+ * XXX Why does this return a vertex, while its helpers return a vertexuse?
  */
 struct vertex *
 nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_tol *tol)

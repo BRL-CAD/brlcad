@@ -1030,6 +1030,7 @@ read_dem(
     double *out_y_cell_size,                           /* y scaling factor in milimeters */
     double *out_unit_elevation)                        /* z scaling factor in milimeters */
 {
+    size_t ret;
     int status = BRLCAD_ERROR;
     FILE *fp;
     FILE *fp2;
@@ -1083,7 +1084,10 @@ read_dem(
     /* Reads 1st 1024 character block from dem-g file; this block
      * contains the record 'a' data.
      */
-    fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+    ret = fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+    if (ret < sizeof(buf) / sizeof(buf[0])) {
+	bu_log("Failed to read the 'A' record\n");
+    }
 
     /* Validates all 'A' record sub_elements can be read and that all
      * required sub_elements contain values.
@@ -1190,7 +1194,10 @@ read_dem(
 
         /* Reads 1024 character block from dem-g file */
         /* this block contains the record 'b' header and data. */
-        fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+        ret = fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+	if (ret < sizeof(buf) / sizeof(buf[0])) {
+	    bu_log("Failed to read the 'B' record\n");
+	}
 
         /* Validates all 'B' record header sub_elements can be read
          * and all required sub_elements contain values.
@@ -1448,7 +1455,10 @@ read_dem(
                     /* no equal used in condition here because don't want to process last chunk in */
                     /* since the last chunk is a partial chunk */
 
-                    fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+                    ret = fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+		    if (ret < sizeof(buf) / sizeof(buf[0])) {
+			bu_log("Failed to read elevation chunk\n");
+		    }
 
                     for (indx5 = 1; indx5 <= 170; indx5++) {
                         /* loop thru 170 elevations in b type buffer with no b header */ 
@@ -1483,7 +1493,10 @@ read_dem(
                 number_of_previous_b_elevations = 146 + ((additional_1024char_chunks - 1)*170);
                 number_of_last_elevations = tot_elevations_in_curr_b_record - number_of_previous_b_elevations;
 
-                fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+                ret = fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+		if (ret < sizeof(buf) / sizeof(buf[0])) {
+		    bu_log("Failed to read input chunk\n");
+		}
 
                 for (indx6 = 1; indx6 <= number_of_last_elevations; indx6++) {
                     /* loop thru remaining elevations in b type buffer with no b header */ 
@@ -1565,6 +1578,7 @@ convert_load_order(
     long int column = 0;
     unsigned short int *buf3 = NULL;
     unsigned short int buf4 = 0;
+    size_t ret;
 
     buf3 = bu_calloc(1, *in_ydim, "buf3");
 
@@ -1581,9 +1595,15 @@ convert_load_order(
 	    return BRLCAD_ERROR;
         } 
         for (column = 1; column <= *in_xdim; column++) {
-            fread(buf3, sizeof(unsigned short int), sizeof(unsigned short int) * (*in_ydim)/sizeof(unsigned short int), fp3);
+            ret = fread(buf3, sizeof(unsigned short int), sizeof(unsigned short int) * (*in_ydim)/sizeof(unsigned short int), fp3);
+	    if (ret < sizeof(unsigned short int) * (*in_ydim)/sizeof(unsigned short int)) {
+		bu_log("Failed to read input chunk\n");
+	    }
             buf4 = *(buf3 + offset);
-            fwrite(&buf4, sizeof(buf4), 1, fp4);   
+            ret = fwrite(&buf4, sizeof(buf4), 1, fp4);   
+	    if (ret < 1) {
+		bu_log("Failed to write to output file\n");
+	    }
         }
         fclose(fp3);
     }

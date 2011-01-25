@@ -87,7 +87,7 @@ ged_orotate(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 
 	dp = gtd.gtd_obj[gtd.gtd_objpos-1];
-	if (!(dp->d_flags & DIR_SOLID)) {
+	if (!(dp->d_flags & RT_DIR_SOLID)) {
 	    if (_ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == GED_ERROR)
 		return GED_ERROR;
 	}
@@ -115,7 +115,7 @@ ged_orotate(struct ged *gedp, int argc, const char *argv[])
 
 	VSCALE(keypoint, keypoint, gedp->ged_wdbp->dbip->dbi_local2base);
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1],  LOOKUP_QUIET)) == DIR_NULL) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1],  LOOKUP_QUIET)) == RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: %s not found", argv[0], argv[1]);
 	    return GED_ERROR;
 	}

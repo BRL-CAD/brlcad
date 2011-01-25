@@ -158,7 +158,6 @@ BU_EXTERN(int f_put_sedit, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int f_qorot, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int f_qray, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int f_quit, (ClientData, Tcl_Interp *, int, const char *[]));
-BU_EXTERN(int f_rcodes, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int f_read_muves, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int f_red, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int f_refresh, (ClientData, Tcl_Interp *, int, const char *[]));
@@ -194,7 +193,6 @@ BU_EXTERN(int f_vnirt, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int f_vrmgr, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int f_vrot_center, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int f_wait, (ClientData, Tcl_Interp *, int, const char *[]));
-BU_EXTERN(int f_wcodes, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int f_winset, (ClientData, Tcl_Interp *, int, const char *[]));
 
 /* button callbacks, in buttons.c */

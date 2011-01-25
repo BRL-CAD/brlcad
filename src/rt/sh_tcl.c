@@ -43,7 +43,8 @@
 #include "shadefuncs.h"
 
 
-extern struct mfuncs	*mfHead;	/* rt/view.c */
+extern struct mfuncs	*mfHead;	/* view.c */
+extern int get_args(int argc, const char *argv[]); /* opt.c */
 
 
 /*
@@ -54,7 +55,8 @@ extern struct mfuncs	*mfHead;	/* rt/view.c */
  *  so any changes will vanish on next re-prep unless other measures
  *  are taken.
  */
-sh_directchange_rgb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+int
+sh_directchange_rgb(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct rt_i	*rtip;
     struct region	*regp;
@@ -78,14 +80,14 @@ sh_directchange_rgb(ClientData clientData, Tcl_Interp *interp, int argc, const c
 	return TCL_ERROR;
     }
 
-    if ( (dp = db_lookup( rtip->rti_dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL )  {
+    if ( (dp = db_lookup( rtip->rti_dbip, argv[2], LOOKUP_NOISY)) == RT_DIR_NULL )  {
 	Tcl_AppendResult(interp, argv[2], ": not found\n", NULL);
 	return TCL_ERROR;
     }
 
     /* Find all region names which match /comb/ pattern */
     for ( BU_LIST_FOR( regp, region, &rtip->HeadRegion ) )  {
-	if ( dp->d_flags & DIR_REGION )  {
+	if ( dp->d_flags & RT_DIR_REGION )  {
 	    /* name will occur at end of region string w/leading slash */
 	} else {
 	    /* name will occur anywhere, bracked by slashes */
@@ -117,7 +119,8 @@ sh_directchange_rgb(ClientData clientData, Tcl_Interp *interp, int argc, const c
  *  so any changes will vanish on next re-prep unless other measures
  *  are taken.
  */
-sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+int
+sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct rt_i	*rtip;
     struct region	*regp;
@@ -137,7 +140,7 @@ sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, cons
 	return TCL_ERROR;
     }
 
-    if ( (dp = db_lookup( rtip->rti_dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL )  {
+    if ( (dp = db_lookup( rtip->rti_dbip, argv[2], LOOKUP_NOISY)) == RT_DIR_NULL )  {
 	Tcl_AppendResult(interp, argv[2], ": not found\n", NULL);
 	return TCL_ERROR;
     }
@@ -148,7 +151,7 @@ sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, cons
 
     /* Find all region names which match /comb/ pattern */
     for ( BU_LIST_FOR( regp, region, &rtip->HeadRegion ) )  {
-	if ( dp->d_flags & DIR_REGION )  {
+	if ( dp->d_flags & RT_DIR_REGION )  {
 	    /* name will occur at end of region string w/leading slash */
 	} else {
 	    /* name will occur anywhere, bracked by slashes */
@@ -179,7 +182,8 @@ sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, cons
  *
  *  Process RT-style command-line options.
  */
-sh_opt(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+int
+sh_opt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     if ( argc < 2 )  {
 	Tcl_AppendResult(interp, "Usage: sh_opt command_line_option(s)\n", NULL);

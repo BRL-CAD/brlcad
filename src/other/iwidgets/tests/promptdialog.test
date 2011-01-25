@@ -60,32 +60,32 @@ test Promptdialog-2.$o {configuration option} {
 incr o
 
 foreach test {
-    {-background #d9d9d9 #d9d9d9}
-    {-buttonboxpos n n}
-    {-buttonboxpadx 10 10}
-    {-buttonboxpos e e}
-    {-buttonboxpos w w}
-    {-buttonboxpady 10 10}
-    {-buttonboxpos s s}
-    {-cursor gumby gumby}
+    {-background #d9d9d9 #d9d9d9} 
+    {-buttonboxpos n n} 
+    {-buttonboxpadx 10 10} 
+    {-buttonboxpos e e} 
+    {-buttonboxpos w w} 
+    {-buttonboxpady 10 10} 
+    {-buttonboxpos s s} 
+    {-cursor gumby gumby} 
     {-exportselection 1 1}
-    {-modality global global}
-    {-modality application application}
-    {-modality none none}
-    {-padx 15 15}
-    {-pady 15 15}
-    {-separator off off}
-    {-thickness 5 5}
-    {-separator on on}
+    {-modality global global} 
+    {-modality application application} 
+    {-modality none none} 
+    {-padx 15 15} 
+    {-pady 15 15} 
+    {-separator off off} 
+    {-thickness 5 5} 
+    {-separator on on} 
     {-title "Prompt Dialog" "Prompt Dialog"}
-    {-foreground Black Black}
-    {-textbackground GhostWhite GhostWhite}
-    {-insertbackground Black Black}
-    {-insertborderwidth 1 1}
-    {-insertborderwidth 0 0}
-    {-insertofftime 400 400}
-    {-insertontime 700 700}
-    {-insertwidth 3 3}
+    {-foreground Black Black} 
+    {-textbackground GhostWhite GhostWhite} 
+    {-insertbackground Black Black} 
+    {-insertborderwidth 1 1} 
+    {-insertborderwidth 0 0} 
+    {-insertofftime 400 400} 
+    {-insertontime 700 700} 
+    {-insertwidth 3 3} 
     {-labelpos nw nw}
     {-labelpos n n}
     {-labelpos ne ne}
@@ -98,18 +98,18 @@ foreach test {
     {-labelpos wn wn}
     {-labelpos w w}
     {-labelpos ws ws}
-    {-labeltext Label Label}
-    {-relief sunken sunken}
-    {-textbackground GhostWhite GhostWhite}
-    {-validate numeric numeric}
-    {-validate alphabetic alphabetic}
+    {-labeltext Label Label} 
+    {-relief sunken sunken} 
+    {-textbackground GhostWhite GhostWhite} 
+    {-validate numeric numeric} 
+    {-validate alphabetic alphabetic} 
     {-validate alphanumeric alphanumeric}} {
 	set option [lindex $test 0]
 	test Promptdialog-2.$o "configuration options, $option" {
 	    .pd configure $option [lindex $test 1]
 	    lindex [.pd configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -137,7 +137,7 @@ foreach test {
 	test Promptdialog-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -146,21 +146,21 @@ foreach test {
 #
 test Promptdialog-1.$c {Promptdialog destruction} {
     destroy .pd
-    update
+    update 
 } {}
 
 incr c
 
 test Promptdialog-1.$c {Promptdialog construction} {
     iwidgets::promptdialog .pd
-    update
+    update 
 } {}
 
 incr c
 
 test Promptdialog-1.$c {Promptdialog destruction} {
     destroy .pd
-    update
+    update 
 } {}
 
 incr c
@@ -168,7 +168,7 @@ incr c
 test Promptdialog-1.$c {Promptdialog destruction} {
     iwidgets::promptdialog .pd
     destroy .pd
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

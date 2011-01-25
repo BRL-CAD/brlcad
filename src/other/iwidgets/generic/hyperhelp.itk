@@ -56,7 +56,7 @@ itk::usual Hyperhelp {
          -selectbackground -selectborderwidth -selectforeground \
          -textbackground
 }
-
+ 
 # ------------------------------------------------------------------
 #                          HYPERHELP
 # ------------------------------------------------------------------
@@ -90,7 +90,7 @@ itcl::class iwidgets::Hyperhelp {
     protected variable _history {}      ;# History list of viewed pages
     protected variable _history_ndx -1  ;# current position in history list
     protected variable _history_len 0   ;# length of history list
-    protected variable _histdir -1      ;# direction in history we just came
+    protected variable _histdir -1      ;# direction in history we just came 
                                         ;# from
     protected variable _len 0           ;# length of text to be rendered
     protected variable _file {}         ;# current topic
@@ -212,7 +212,7 @@ itcl::body iwidgets::Hyperhelp::constructor {args} {
 # ------------------------------------------------------------------
 #                             OPTIONS
 # ------------------------------------------------------------------
-
+ 
 # ------------------------------------------------------------------
 # OPTION: -topics
 #
@@ -279,7 +279,7 @@ itcl::configbody iwidgets::Hyperhelp::helpdir {
 # Specify the command to execute when close is selected from the menu
 # ------------------------------------------------------------------
 itcl::configbody iwidgets::Hyperhelp::closecmd {
-  $itk_component(topicmenu) entryconfigure last -command $itk_option(-closecmd)
+  $itk_component(topicmenu) entryconfigure last -command $itk_option(-closecmd) 
 }
 
 # ------------------------------------------------------------------
@@ -383,7 +383,7 @@ itcl::body iwidgets::Hyperhelp::updatefeedback {n} {
 }
 
 # ------------------------------------------------------------------
-# PRIVATE METHOD: _readtopic
+# PRIVATE METHOD: _readtopic 
 #
 # Read in file, render it in text area, and jump to anchorpoint
 # ------------------------------------------------------------------
@@ -494,8 +494,8 @@ itcl::body iwidgets::Hyperhelp::_pageback {} {
 #
 # Callback for line forward shortcut key
 # ------------------------------------------------------------------
-itcl::body iwidgets::Hyperhelp::_lineforward {} {
-    $itk_component(scrtxt) yview scroll 1 units
+itcl::body iwidgets::Hyperhelp::_lineforward {} { 
+    $itk_component(scrtxt) yview scroll 1 units 
 }
 
 # ------------------------------------------------------------------
@@ -503,6 +503,6 @@ itcl::body iwidgets::Hyperhelp::_lineforward {} {
 #
 # Callback for line back shortcut key
 # ------------------------------------------------------------------
-itcl::body iwidgets::Hyperhelp::_lineback {} {
-    $itk_component(scrtxt) yview scroll -1 units
+itcl::body iwidgets::Hyperhelp::_lineback {} { 
+    $itk_component(scrtxt) yview scroll -1 units 
 }

@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) Hyperhelp.n
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::hyperhelp iwid
 .BS
@@ -21,7 +21,7 @@ itk::Toplevel <- iwidgets::Shell <- iwidgets::Hyperhelp
 .nf
 .ta 5c 10c
 \fBactiveBackground\fR	\fBbackground\fR	\fBborderWidth\fR
-\fBclosecmd\fR	\fBcursor\fR	\fBexportSelection\fR
+\fBclosecmd\fR	\fBcursor\fR	\fBexportSelection\fR	
 \fBforeground\fR	\fBhighlightColor\fR	\fBhighlightThickness\fR
 \fBinsertBackground\fR	\fBinsertBorderWidth	\fBinsertOffTime\fR
 \fBinsertOnTime\fR	\fBinsertWidth\fR	\fBpadX\fR
@@ -47,7 +47,7 @@ associated options.
 .LP
 .nf
 .ta 4c 8c 12c
-\fBmodality\fR	\fBtitle\fR
+\fBmodality\fR	\fBtitle\fR 
 .fi
 .LP
 See the "shell" manual entry for details on the above inherited options.
@@ -59,10 +59,10 @@ Class:  \fBTopics\fR
 Command-Line Switch:    \fB-topics\fR
 .fi
 .IP
-Specifies a list of help topics in the form {?\fItopic\fR? ... }. \fITopic\fR
-may either be a topic name, in which case the
-document associated with the topic should be in the file
-\fBhelpdir\fR/\fItopic\fR.html, or it may be of the form
+Specifies a list of help topics in the form {?\fItopic\fR? ... }. \fITopic\fR 
+may either be a topic name, in which case the 
+document associated with the topic should be in the file 
+\fBhelpdir\fR/\fItopic\fR.html, or it may be of the form 
 {\fIname\fR \fIfile\fR}. In the latter case, \fIname\fR is displayed in the
 topic menu, and selecting the name loads \fIfile\fR. If file has a relative
 path, it is assumed to be relative to helpdir.
@@ -108,7 +108,7 @@ Class:  \fBAfterLink\fR
 Command-Line Switch:    \fB-afterlink\fR
 .fi
 .IP
-Specifies a command to be eval'ed after a new link is completely displayed.
+Specifies a command to be eval'ed after a new link is completely displayed. 
 The path of the link that was displayed is appended before evaling the command.
 .LP
 .BE
@@ -117,7 +117,7 @@ The path of the link that was displayed is appended before evaling the command.
 .PP
 The \fBiwidgets::hyperhelp\fR command creates a shell window with a pulldown menu
 showing a list of topics. The topics are displayed by importing a HTML
-formatted file named \fBhelpdir\fR/\fItopic\fR.html. For a list of
+formatted file named \fBhelpdir\fR/\fItopic\fR.html. For a list of 
 supported HTML tags, see \fBscrolledhtml(n)\fR.
 
 .SH "METHODS"
@@ -188,7 +188,7 @@ Display html file one back in history list, if applicable.
  package require Iwidgets 4.0
  iwidgets::hyperhelp .h -topics { Intro Help } -helpdir ~/help
  .h showtopic Intro
-
+ 
 .DE
 .SH AUTHOR
 Kris Raney

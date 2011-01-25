@@ -76,7 +76,7 @@ ged_bot_vertex_fuse(struct ged *gedp, int argc, const char *argv[])
     count = rt_bot_vertex_fuse( bot );
     bu_log("Fused %d vertices\n", count);
 
-    GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, new_dp, &intern, &rt_uniresource, GED_ERROR);
 
     return GED_OK;

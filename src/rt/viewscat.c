@@ -25,12 +25,6 @@
  *  a GIFT/SRIM format Radar file.  It tracks specular direction
  *  reflections.
  *
- *  Author -
- *	Phillip Dykstra
- *	Paul R. Stay		(Added parallelization and physics code)
- *	From viewpp.c and viewray.c by
- *	Michael John Muuss
- *
  */
 
 #include "common.h"
@@ -41,13 +35,10 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
-#include "rad.h"
 
+#include "./rtuif.h"
+#include "./rad.h"
 
-#ifndef M_PI
-#  define M_PI            3.14159265358979323846
-#endif
 
 #define	MAXREFLECT	16
 #define	DEFAULTREFLECT	16
@@ -147,8 +138,8 @@ view_2init( struct application *ap )
 	numreflect = MAXREFLECT;
     }
 
-    elvang = elevation * M_PI / 180.0;
-    aziang = azimuth * M_PI / 180.0;
+    elvang = elevation * DEG2RAD;
+    aziang = azimuth * DEG2RAD;
 
     uhoriz[0] = (fastf_t) sin(aziang);
     uhoriz[1] = (fastf_t) -cos(aziang);

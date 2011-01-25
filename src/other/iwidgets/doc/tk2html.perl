@@ -64,7 +64,7 @@ if (!scalar @manpages) {
   if ($type =~ /roff/i) {
     $manpages[0] = "nroff -man $manpages[0]|col -b|";
   } elsif ($type =~ /text/i) {
-#    #$manpages[0] = $manpages[0];
+#    #$manpages[0] = $manpages[0]; 
 #    ; # NOP (No Operation)
     $manpages[0] = "nroff -man $manpages[0]| col -b|";
   } else {
@@ -75,7 +75,7 @@ if (!scalar @manpages) {
 man2html found the following match for your query:</hr>
 $manpages[0]
 <p>
-When  'file -L $manpages[0]' was run
+When  'file -L $manpages[0]' was run 
 (which should follow symbolic links)
 it returned the following value '$type'
 <p>
@@ -83,7 +83,7 @@ it returned the following value '$type'
 ";
   if ($type =~ /link/i) {
   print "
-This problem appears to be that there is a symbolic link
+This problem appears to be that there is a symbolic link 
 for a man page that is pointing to a file that doesn't exist.
 <p>
 ";
@@ -93,7 +93,7 @@ Please report this problem to someone who can do something about it.
 <i>(Assuming you aren't that person...)</i>
 If you don't know who that is, try emailing 'root' or 'postmaster'.
 <p>
-There was only one match for your query - and it can't currently
+There was only one match for your query - and it can't currently 
 be accessed.
 ";
   exit(0);
@@ -124,7 +124,7 @@ sub findman {
       # Reason for wildcards: ($_/*$section*/$lookfor.*)
       # (given $section = '2')
       # 1st: So it catches cat2 and man2
-      # 2nd: So it catches man2 and man2v
+      # 2nd: So it catches man2 and man2v 
       # (This should make it compatiable with HP/UX's man2.Z - not tested)
       # 3rd: So it catches stat.2 and stat.2v
       #
@@ -186,7 +186,7 @@ sub print_manpage {
     open(MAN, '-');
   } elsif (index($page,'|') == length($page)) {
     # A Pipe
-    local($eval) =
+    local($eval) = 
 'open(MAN, "'.$page.'") || die "Can'."'t open pipe to '$page' for reading: ".'$!";';
     eval($eval);
     die "Eval error line $. : '$eval' returned '$@' : $!\n";
@@ -194,9 +194,9 @@ sub print_manpage {
     open(MAN, $page) || die "Can't open '$page' for reading: $!";
   }
   while (<MAN>) {
-    s/\|\|*[   ]*$//;      # Delete trailing change bars
+    s/\|\|*[   ]*$//;      # Delete trailing change bars 
 
-    if (/^\s*$/) {
+    if (/^\s*$/) { 
       $blanks++;
       #if ($pre) { print "</pre>\n"; $pre = 0; }
       if (($. != 1) && ($blanks == 1)) {

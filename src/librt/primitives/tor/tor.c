@@ -165,7 +165,7 @@ struct tor_specific {
  * !0 Error in description
  *
  * Implicit return -
- * A struct tor_specific is created, and it's address is stored in
+ * A struct tor_specific is created, and its address is stored in
  * stp->st_specific for use by rt_tor_shot().
  */
 int
@@ -1318,7 +1318,7 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     tip->magic = RT_TOR_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    rt_fastf_float(vec, rp->s.s_values, 4);
+    rt_fastf_float(vec, rp->s.s_values, 4, dbip->dbi_version < 0 ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;

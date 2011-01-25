@@ -311,8 +311,8 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     for (i=0; i<11; i++) {
 	crname(solname, i, sizeof(solname));
 	crname(regname, i, sizeof(regname));
-	if ((db_lookup(dbip, solname, LOOKUP_QUIET) != DIR_NULL)	||
-	    (db_lookup(dbip, regname, LOOKUP_QUIET) != DIR_NULL)) {
+	if ((db_lookup(dbip, solname, LOOKUP_QUIET) != RT_DIR_NULL)	||
+	    (db_lookup(dbip, regname, LOOKUP_QUIET) != RT_DIR_NULL)) {
 	    /* name already exists */
 	    solname[8] = regname[8] = '\0';
 	    if ((Trackpos += 10) > 500) {
@@ -338,7 +338,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     crname(solname, 1, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
     sol.s_type = ID_ARB8;
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
 
     solname[8] = '\0';
@@ -350,7 +350,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     trcurve(iw, tr);
     crname(solname, 2, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
     /* idler dummy rcc */
@@ -360,7 +360,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     VMOVE(&sol.s_values[15], &sol.s_values[9]);
     crname(solname, 3, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
 
@@ -371,7 +371,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
     sol.s_type = ID_ARB8;
     crdummy(iw, tr, 1);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
 
@@ -382,7 +382,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     VMOVE(temp1, &sol.s_values[0]);
     crname(solname, 5, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
 
@@ -393,7 +393,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     trcurve(dw, tr);
     crname(solname, 6, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
 
@@ -404,7 +404,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     VMOVE(&sol.s_values[15], &sol.s_values[9]);
     crname(solname, 7, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
 
@@ -415,7 +415,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
     sol.s_type = ID_ARB8;
     crdummy(dw, tr, 2);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
 
@@ -424,7 +424,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     bottom(temp1, temp2, tr);
     crname(solname, 9, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
 
@@ -437,7 +437,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     top(temp1, temp2, tr);
     crname(solname, 10, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
-    if (wrobj(solname, DIR_SOLID))
+    if (wrobj(solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[8] = '\0';
 
@@ -506,7 +506,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	    continue;
 	regname[8] = '\0';
 	crname(regname, i, sizeof(regname));
-	if (db_lookup(dbip, regname, LOOKUP_QUIET) == DIR_NULL) {
+	if (db_lookup(dbip, regname, LOOKUP_QUIET) == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "group: ", grpname, " will skip member: ",
 			     regname, "\n", (char *)NULL);
 	    continue;
@@ -576,13 +576,13 @@ wrobj(char name[], int flags)
     if (dbip == DBI_NULL)
 	return 0;
 
-    if (db_lookup(dbip, name, LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(dbip, name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(INTERP, "track naming error: ", name,
 			 " already exists\n", (char *)NULL);
 	return -1;
     }
 
-    if (flags != DIR_SOLID) {
+    if (flags != RT_DIR_SOLID) {
 	Tcl_AppendResult(INTERP, "wrobj can only write solids, aborting\n");
 	return -1;
     }
@@ -633,7 +633,7 @@ wrobj(char name[], int flags)
 	    return -1;
     }
 
-    if ((tdp = db_diradd(dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+    if ((tdp = db_diradd(dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(INTERP, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL);
 	return -1;
@@ -884,7 +884,7 @@ crregion(char *region, char *op, int *members, int number, char *solidname, int 
     for (i=0; i<number; i++) {
 	solidname[8] = '\0';
 	crname(solidname, members[i], maxlen);
-	if (db_lookup(dbip, solidname, LOOKUP_QUIET) == DIR_NULL) {
+	if (db_lookup(dbip, solidname, LOOKUP_QUIET) == RT_DIR_NULL) {
 	    Tcl_AppendResult(INTERP, "region: ", region, " will skip member: ",
 			     solidname, "\n", (char *)NULL);
 	    continue;

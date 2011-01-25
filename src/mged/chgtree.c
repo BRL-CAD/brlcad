@@ -76,10 +76,10 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	return TCL_ERROR;
     }
 
-    if ((proto = db_lookup(dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((proto = db_lookup(dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return TCL_ERROR;
 
-    if (db_lookup(dbip,  argv[2], LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(dbip,  argv[2], LOOKUP_QUIET) != RT_DIR_NULL) {
 	aexists(argv[2]);
 	return TCL_ERROR;
     }
@@ -102,7 +102,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
     /* no interuprts */
     (void)signal(SIGINT, SIG_IGN);
 
-    if ((dp = db_diradd(dbip, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == DIR_NULL) {
+    if ((dp = db_diradd(dbip, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == RT_DIR_NULL) {
 	TCL_ALLOC_ERR_return;
     }
 

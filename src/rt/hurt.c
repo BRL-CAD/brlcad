@@ -45,8 +45,8 @@
 #include "light.h"
 
 /* private */
+#include "./rtuif.h"
 #include "./ext.h"
-#include "rtprivate.h"
 #include "brlcad_version.h"
 
 
@@ -235,7 +235,7 @@ int main(int argc, char **argv)
 {
     struct rt_i *rtip = NULL;
     char *title_file = NULL, *title_obj = NULL;	/* name of file and first object */
-    char idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
+    char idbuf[2048] = {0};		/* First ID record info */
     struct bu_vls	times;
     int i;
 
@@ -495,7 +495,7 @@ int main(int argc, char **argv)
 /*
  *			G E T _ A R G S
  */
-int get_args( int argc, register char **argv )
+int get_args( int argc, const char *argv[] )
 {
     register int c;
     register int i;

@@ -1,0 +1,104 @@
+.TH G-SHELL.RECT 1 BRL-CAD
+.\"                 G - S H E L L . R E C T . 1
+.\" BRL-CAD
+.\"
+.\" Copyright (c) 2005-2011 United States Government as represented by
+.\" the U.S. Army Research Laboratory.
+.\"
+.\" Redistribution and use in source (Docbook format) and 'compiled'
+.\" forms (PDF, PostScript, HTML, RTF, etc), with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code (Docbook format) must retain the
+.\" above copyright notice, this list of conditions and the following
+.\" disclaimer.
+.\"
+.\" 2. Redistributions in compiled form (transformed to other DTDs,
+.\" converted to PDF, PostScript, HTML, RTF, and other formats) must
+.\" reproduce the above copyright notice, this list of conditions and
+.\" the following disclaimer in the documentation and/or other
+.\" materials provided with the distribution.
+.\"
+.\" 3. The name of the author may not be used to endorse or promote
+.\" products derived from this documentation without specific prior
+.\" written permission.
+.\"
+.\" THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR AS IS'' AND ANY
+.\" EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+.\" OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+.\" BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+.\" USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\".\".\"
+.SH NAME
+g-shell-rect \- Produce triangulated shell from BRL-CAD model
+.SH SYNOPSIS
+.B g-shell-rect
+[-d debug_level] [-n] [-g cell_size] [-i initial_ray_dir] [-d debug_level] -o brlcad_output_file database.g object(s)
+.SH DESCRIPTION
+.I g-shell-rect\^
+converts the specified
+.I objects(s)
+from a BRL-CAD model
+.I database.g
+to a single NMG solid using raytracing. Rays are fired in a uniform grid.
+The direction for the first set of rays is chosen by calculating
+the presented area of the bounding box of the
+.I object(s)
+and selecting the direction with the largest area. The user may override this
+by specifying a desired initial ray direction using the
+.I -i
+option (see below).
+The initial shell is constructed using only the first and last
+intersections with the
+.I object(s).
+This will typically result in some rather large faces with normals at right angles
+to the ray direction. Unless the
+.I \-n
+option is spcified, these faces are then subdivided (according to the
+.I cell_size
+) and additional rays fired from the other two directions are used to refine their
+shape.
+The resulting NMG solid
+will be named
+.I shell
+and will be written to the specified
+.I brlcad_output_file.
+
+.PP
+The following command line options are recognized:
+.TP
+.B \-g \fIcell_size\fR
+Specify the dimensions (in millimeters) of the grid spacing.  The default is 50mm.
+.TP
+.B \-i \fIinitial_ray_dir\fR
+Specify the initial ray direction.  Valid values are X, Y, or Z.
+The best results are usually obtained by raytracing in the direction that produces the
+most hits first.
+
+.TP
+.B \-d \fIdebug_level\fR
+Set the debugging level.  Higher values produce more debugging information.
+.TP
+.B \-n
+Supresses the refinement stage (firing rays from the secondary and tertiary axis directions).
+.TP
+.B \-o \fIoutput.g\fR
+Specifies the name of the BRL-CAD geometry file to create.
+.SH EXAMPLE
+.RS
+$ \|\fIg-shell-rect \|-o shell.g \|sample.g \|sample_object\fP
+.RE
+.SH DIAGNOSTICS
+Error messages are intended to be self-explanatory.
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <devs@brlcad.org>.

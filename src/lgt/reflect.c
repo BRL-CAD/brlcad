@@ -42,7 +42,7 @@
 #include "./screen.h"
 
 
-#define TWO_PI		6.28318530717958647692528676655900576839433879875022
+#define TWO_PI		(2.0 * M_PI)
 #define RI_AIR		1.0  /* refractive index of air */
 
 /* These are used by the hidden-line drawing routines. */

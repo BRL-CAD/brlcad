@@ -6,7 +6,9 @@ libanalyze_nil_la_SOURCES = \
 	density.c \
 	overlaps.c
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = \
+	${STRICT_FLAGS} \
+	${TCL_CPPFLAGS}
 
 libanalyze_la_SOURCES =
 libanalyze_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}

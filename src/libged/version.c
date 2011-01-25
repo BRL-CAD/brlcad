@@ -47,7 +47,7 @@ ged_version(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_wdbp->dbip->dbi_version);
+    bu_vls_printf(&gedp->ged_result_str, "%d", db_version(gedp->ged_wdbp->dbip));
 
     return GED_OK;
 }

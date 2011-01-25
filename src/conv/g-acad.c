@@ -418,9 +418,6 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 		BU_UNSETJUMP;
 
 		sofar = db_path_to_string(pathp);
-		bu_log("FAILED in triangulator: %s\n", sofar);
-		fprintf(fpe, "Failed in triangulator: %s\n", sofar);
-		fflush(fpe);
 		bu_free((char *)sofar, "sofar");
 
 		/* Sometimes the NMG library adds debugging bits when

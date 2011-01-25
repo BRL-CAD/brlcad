@@ -225,7 +225,7 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	mode = atoi(argv[2]);
     switch (mode) {
 	case 1:
-	    if ((dp = db_lookup(dbip, "EYE", LOOKUP_NOISY)) == DIR_NULL) {
+	    if ((dp = db_lookup(dbip, "EYE", LOOKUP_NOISY)) == RT_DIR_NULL) {
 		mode = -1;
 		break;
 	    }

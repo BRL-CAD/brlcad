@@ -3,9 +3,9 @@
 # ----------------------------------------------------------------------
 package require Iwidgets 4.0
 
-iwidgets::buttonbox .bb
+iwidgets::buttonbox .bb 
 
-.bb add OK -text OK -command "puts OK"
+.bb add OK -text OK -command "puts OK" 
 .bb add Apply -text Apply -command "puts Apply"
 .bb add Cancel -text Cancel -command "puts Cancel"
 .bb default OK

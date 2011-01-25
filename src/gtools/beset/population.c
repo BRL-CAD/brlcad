@@ -361,7 +361,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 
 
 	    /* write child to new database */
-	    if ((dp=db_diradd(dbi_c, shape, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL)
+	    if ((dp=db_diradd(dbi_c, shape, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == RT_DIR_NULL)
 		bu_exit(EXIT_FAILURE, "Failed to add new object to the database");
 	    if (rt_db_put_internal(dp, dbi_c, &in, resp) < 0)
 		bu_exit(EXIT_FAILURE, "Failed to write new individual to databse");
@@ -379,7 +379,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 		    /*  tp->tr_op = (int)(2+pop_rand()*3);//FIXME: pop_rand() can be 1!*/
 		}
 
-	    /* if we're performing, save parent as it's right or left pointer will need
+	    /* if we're performing, save parent as its right or left pointer will need
 	     * to be modified to point to the new child node */
 	    if (crossover && node_idx == crossover_node)
 		crossover_parent = &tp->tr_b.tb_left;
@@ -489,7 +489,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    pop_functree(dbi_p, dbi_c, parent2->tree, resp, child2_id);
 
 
-	    if ((dp = db_diradd(dbi_c, child2_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL)
+	    if ((dp = db_diradd(dbi_c, child2_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == RT_DIR_NULL)
 		bu_exit(EXIT_FAILURE, "Failed to add new individual to child database");
 	    rt_db_put_internal(dp, dbi_c, &in2, resp);
 	    rt_db_free_internal(&in2);
@@ -521,7 +521,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
     }
 
 
-    if ((dp=db_diradd(dbi_c, child1_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL) {
+    if ((dp=db_diradd(dbi_c, child1_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == RT_DIR_NULL) {
 	bu_exit(EXIT_FAILURE, "Failed to add new individual to child database");
     }
     rt_db_put_internal(dp, dbi_c,  &in1, resp);

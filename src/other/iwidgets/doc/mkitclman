@@ -12,13 +12,13 @@
 #   Reads an [incr Tcl] or [incr Tk] class file as input, and outputs nroff.
 #   mkitclman generates a standard format used for [incr Widget] classes. It
 #   locates the class name, inheritance to one level, widget specific options,
-#   and widget specific methods. Areas that the script cannot handle it
+#   and widget specific methods. Areas that the script cannot handle it 
 #   places and uppercased name delimited by leading and trailing '_' characters.
 #
-#   [incr Tcl/Tk] 2.0 is the supported class format.
+#   [incr Tcl/Tk] 2.0 is the supported class format. 
 #
 # CAVEATS
-#   mkitlcman does not work with normal Tk or Tcl script files.
+#   mkitlcman does not work with normal Tk or Tcl script files. 
 #   It expects only one class per file. In addition, it does not work on
 #   namespace files.
 

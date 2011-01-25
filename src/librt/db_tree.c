@@ -367,7 +367,7 @@ db_apply_state_from_memb(struct db_tree_state *tsp, struct db_full_path *pathp, 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(tp);
 
-    if ((mdp = db_lookup(tsp->ts_dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == DIR_NULL) {
+    if ((mdp = db_lookup(tsp->ts_dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	char *sofar = db_path_to_string(pathp);
 	bu_log("db_lookup(%s) failed in %s\n", tp->tr_l.tl_name, sofar);
 	bu_free(sofar, "path string");
@@ -870,7 +870,7 @@ db_follow_path(
 	/* No prior path. Process any animations located at the
 	 * root.
 	 */
-	comb_dp = DIR_NULL;
+	comb_dp = RT_DIR_NULL;
 	dp = new_path->fp_names[0];
 	RT_CK_DIR(dp);
 
@@ -892,14 +892,14 @@ db_follow_path(
 	/* Put first element on output path, either way */
 	db_add_node_to_full_path(total_path, dp);
 
-	if ((dp->d_flags & DIR_COMB) == 0) goto is_leaf;
+	if ((dp->d_flags & RT_DIR_COMB) == 0) goto is_leaf;
 
 	/* Advance to next path element */
 	j = 1;
 	comb_dp = dp;
     }
     /*
-     * Process two things at once: the combination at [j], and it's
+     * Process two things at once: the combination at [j], and its
      * member at [j+1].
      */
     do {
@@ -908,7 +908,7 @@ db_follow_path(
 	dp = new_path->fp_names[j];
 	RT_CK_DIR(dp);
 
-	if ((comb_dp->d_flags & DIR_COMB) == 0) {
+	if ((comb_dp->d_flags & RT_DIR_COMB) == 0) {
 	    bu_log("db_follow_path() %s isn't combination\n", comb_dp->d_namep);
 	    goto fail;
 	}
@@ -937,7 +937,7 @@ db_follow_path(
 	rt_db_free_internal(&intern);
 
 	/* If member is a leaf, handle leaf processing too. */
-	if ((dp->d_flags & DIR_COMB) == 0) {
+	if ((dp->d_flags & RT_DIR_COMB) == 0) {
 	is_leaf:
 	    /* Object is a leaf */
 	    if (j == new_path->fp_len-1) {
@@ -1178,7 +1178,7 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
      */
     if (dp->d_addr == RT_DIR_PHONY_ADDR) return TREE_NULL;
 
-    if (dp->d_flags & DIR_COMB) {
+    if (dp->d_flags & RT_DIR_COMB) {
 	struct rt_comb_internal *comb;
 	struct db_tree_state nts;
 	int is_region;
@@ -1277,7 +1277,7 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	}
 	db_free_db_tree_state(&nts);
 	if (curtree) RT_CK_TREE(curtree);
-    } else if (dp->d_flags & DIR_SOLID) {
+    } else if (dp->d_flags & RT_DIR_SOLID) {
 
 	if (bn_mat_ck(dp->d_namep, tsp->ts_mat) < 0) {
 	    bu_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n",
@@ -2666,7 +2666,7 @@ db_region_mat(
  * <0 Failure
  */
 int
-db_shader_mat(
+rt_shader_mat(
     mat_t model_to_shader,	/* result */
     const struct rt_i *rtip,
     const struct region *rp,

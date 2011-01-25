@@ -450,10 +450,11 @@ Code that is potentially useful to another application, or that may be
 abstracted in such a way that it is useful to other applications,
 should be put in a library and not in application directories.
 
-C files use the .c extension.  Header files use the .h extension.  C++
-files use the .cpp extension.  PHP files use the .php extension.
-Tcl/Tk files use the .tcl/.tk extensions.  POSIX Bourne-style shell
-scripts use the .sh extension.
+C files use the .c extension.  Header files use the .h extension.  C++ files
+use the .cpp extension.  PHP files use the .php extension.  Tcl/Tk files use
+the .tcl/.tk extensions.  POSIX Bourne-style shell scripts use the .sh
+extension.  Perl files use the .pl (program) or .pm (module) extensions.
+
 
 Source files go into the src/ directory on the top level, into a
 corresponding directory for the category of binary or library that it

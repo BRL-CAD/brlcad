@@ -86,100 +86,78 @@ compare_colors(void)
     int found1 = 0, found2 = 0;
     int is_diff = 0;
 
-    for (mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw) {
+    /* find a match for all color table entries of file1 in file2 */
+    for (mp1 = mater_hd1; is_diff == 0 && mp1 != MATER_NULL; mp1 = mp1->mt_forw) {
 	found1 = 0;
 	mp2 = mater_hd2;
 	while (mp2 != MATER_NULL) {
-	    if (mp1->mt_low == mp2->mt_low &&
-		mp1->mt_high == mp2->mt_high &&
-		mp1->mt_r == mp2->mt_r &&
-		mp1->mt_g == mp2->mt_g &&
-		mp1->mt_b == mp2->mt_b) {
+	    if (mp1->mt_low == mp2->mt_low
+		&& mp1->mt_high == mp2->mt_high
+		&& mp1->mt_r == mp2->mt_r
+		&& mp1->mt_g == mp2->mt_g
+		&& mp1->mt_b == mp2->mt_b)
+	    {
 		found1 = 1;
 		break;
-	    } else {
-		mp2 = mp2->mt_forw;
 	    }
-	}
-	if (!found1)
-	    break;
-    }
-    for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
-	found1 = 0;
-	mp1 = mater_hd1;
-	while (mp1 != MATER_NULL) {
-	    if (mp1->mt_low == mp2->mt_low &&
-		mp1->mt_high == mp2->mt_high &&
-		mp1->mt_r == mp2->mt_r &&
-		mp1->mt_g == mp2->mt_g &&
-		mp1->mt_b == mp2->mt_b) {
-		found2 = 1;
-		break;
-	    } else {
-		mp1 = mp1->mt_forw;
-	    }
-	}
-	if (!found2)
-	    break;
-    }
-    if (!found1 && !found2) {
-	return 0;
-    } else if (!found1 || !found2) {
-	is_diff = 1;
-    } else {
-	/* actually compare two color tables */
-	mp1 = mater_hd1;
-	mp2 = mater_hd2;
-	while (mp1 != MATER_NULL && mp2 != MATER_NULL) {
-	    if (mp1->mt_low != mp2->mt_low) {
-		is_diff = 1;
-		break;
-	    }
-	    if (mp1->mt_high != mp2->mt_high) {
-		is_diff = 1;
-		break;
-	    }
-	    if (mp1->mt_r != mp2->mt_r) {
-		is_diff = 1;
-		break;
-	    }
-	    if (mp1->mt_g != mp2->mt_g) {
-		is_diff = 1;
-		break;
-	    }
-	    if (mp1->mt_b != mp2->mt_b) {
-		is_diff = 1;
-		break;
-	    }
-	    mp1 = mp1->mt_forw;
 	    mp2 = mp2->mt_forw;
+	}
+	if (!found1) {
+	    /* bu_log("could not find %d..%d: %d %d %d\n", mp1->mt_low, mp1->mt_high, mp1->mt_r, mp1->mt_g, mp1->mt_b); */
+	    is_diff = 1;
 	}
     }
 
-    if (is_diff) {
-	if (mode == HUMAN) {
-	    printf("Color table has changed from:\n");
-	    for (mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw) {
-		printf("\t%d..%d %d %d %d\n", mp1->mt_low, mp1->mt_high,
-		       mp1->mt_r, mp1->mt_g, mp1->mt_b);
+    /* find a match for all color tabl eentries of file2 in file1 */
+    for (mp2 = mater_hd2; is_diff == 0 && mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
+	found2 = 0;
+	mp1 = mater_hd1;
+	while (mp1 != MATER_NULL) {
+	    if (mp1->mt_low == mp2->mt_low
+		&& mp1->mt_high == mp2->mt_high
+		&& mp1->mt_r == mp2->mt_r
+		&& mp1->mt_g == mp2->mt_g
+		&& mp1->mt_b == mp2->mt_b)
+	    {
+		found2 = 1;
+		break;
 	    }
-	    printf("\t\tto:\n");
-	    for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
-		printf("\t%d..%d %d %d %d\n", mp2->mt_low, mp2->mt_high,
-		       mp2->mt_r, mp2->mt_g, mp2->mt_b);
-	    }
-	} else {
-	    if (version2 > 4)
-		printf("attr rm _GLOBAL regionid_colortable\n");
+	    mp1 = mp1->mt_forw;
+	}
+	if (!found2) {
+	    /* bu_log("could not find %d..%d: %d %d %d\n", mp1->mt_low, mp1->mt_high, mp1->mt_r, mp1->mt_g, mp1->mt_b); */
+	    is_diff = 1;
+	}
+    }
+
+    if (is_diff == 0) {
+	return 0;
+    }
+
+    if (mode == HUMAN) {
+	printf("Color table has changed from:\n");
+	for (mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw) {
+	    printf("\t%d..%d %d %d %d\n", mp1->mt_low, mp1->mt_high,
+		   mp1->mt_r, mp1->mt_g, mp1->mt_b);
+	}
+	printf("\t\tto:\n");
+	for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
+	    printf("\t%d..%d %d %d %d\n", mp2->mt_low, mp2->mt_high,
+		   mp2->mt_r, mp2->mt_g, mp2->mt_b);
+	}
+    } else {
+	if (version2 > 4) {
+	    /* punt, just delete the existing colortable and print a new one */
+	    printf("attr rm _GLOBAL regionid_colortable\n");
 	    for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
 		printf("color %d %d %d %d %d\n", mp2->mt_low, mp2->mt_high,
 		       mp2->mt_r, mp2->mt_g, mp2->mt_b);
 	    }
 	}
-	return 1;
     }
-    return 0;
+    return 1;
 }
+
 
 void
 kill_obj(char *name)
@@ -722,7 +700,7 @@ compare_attrs(struct directory *dp1, struct directory *dp2)
 
     bu_vls_init(&vls);
 
-    if (dbip1->dbi_version > 4) {
+    if (db_version(dbip1) > 4) {
 	bu_vls_printf(&vls, "_db1 attr get %s", dp1->d_namep);
 	if (Tcl_Eval(interp, bu_vls_addr(&vls)) != TCL_OK) {
 	    fprintf(stderr, "Cannot get attributes for %s\n", dp1->d_namep);
@@ -732,14 +710,14 @@ compare_attrs(struct directory *dp1, struct directory *dp2)
 
 	obj1 = Tcl_DuplicateObj(Tcl_GetObjResult(interp));
 	Tcl_ResetResult(interp);
-	if (dp1->d_flags & DIR_REGION && verify_region_attribs) {
+	if (dp1->d_flags & RT_DIR_REGION && verify_region_attribs) {
 	    verify_region_attrs(dp1, dbip1, obj1);
 	}
     } else {
 	obj1 = Tcl_NewObj();
     }
 
-    if (dbip2->dbi_version > 4) {
+    if (db_version(dbip2) > 4) {
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "_db2 attr get %s", dp1->d_namep);
 	if (Tcl_Eval(interp, bu_vls_addr(&vls)) != TCL_OK) {
@@ -750,14 +728,14 @@ compare_attrs(struct directory *dp1, struct directory *dp2)
 
 	obj2 = Tcl_DuplicateObj(Tcl_GetObjResult(interp));
 	Tcl_ResetResult(interp);
-	if (dp1->d_flags & DIR_REGION && verify_region_attribs) {
+	if (dp1->d_flags & RT_DIR_REGION && verify_region_attribs) {
 	    verify_region_attrs(dp2, dbip2, obj2);
 	}
     } else {
 	obj2 = Tcl_NewObj();
     }
 
-    if ((dp1->d_flags & DIR_REGION) && (dp2->d_flags & DIR_REGION)) {
+    if ((dp1->d_flags & RT_DIR_REGION) && (dp2->d_flags & RT_DIR_REGION)) {
 	/* don't complain about "region" attributes */
 	remove_region_attrs(obj1);
 	remove_region_attrs(obj2);
@@ -794,7 +772,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	Tcl_Obj *obj1, *obj2;
 
 	/* check if this object exists in the other database */
-	if ((dp2 = db_lookup(dbip2, dp1->d_namep, 0)) == DIR_NULL) {
+	if ((dp2 = db_lookup(dbip2, dp1->d_namep, 0)) == RT_DIR_NULL) {
 	    kill_obj(dp1->d_namep);
 	    continue;
 	}
@@ -847,7 +825,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	Tcl_ResetResult(interp);
 
 	/* got TCL versions of both */
-	if ((dp1->d_flags & DIR_SOLID) && (dp2->d_flags & DIR_SOLID)) {
+	if ((dp1->d_flags & RT_DIR_SOLID) && (dp2->d_flags & RT_DIR_SOLID)) {
 	    /* both are solids */
 	    has_diff += compare_tcl_solids(str1, obj1, dp1, str2, obj2);
 	    if (pre_5_vers != 2) {
@@ -856,7 +834,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	    continue;
 	}
 
-	if ((dp1->d_flags & DIR_COMB) && (dp2->d_flags & DIR_COMB)) {
+	if ((dp1->d_flags & RT_DIR_COMB) && (dp2->d_flags & RT_DIR_COMB)) {
 	    /* both are combinations */
 	    has_diff += compare_tcl_combs(obj1, dp1, obj2);
 	    if (pre_5_vers != 2) {
@@ -887,7 +865,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	    continue;
 
 	/* check if this object exists in the other database */
-	if ((dp1 = db_lookup(dbip1, dp2->d_namep, 0)) == DIR_NULL) {
+	if ((dp1 = db_lookup(dbip1, dp2->d_namep, 0)) == RT_DIR_NULL) {
 	    /* need to add this object */
 	    has_diff += 1;
 	    argv[2] = dp2->d_namep;
@@ -1010,7 +988,7 @@ main(int argc, char **argv)
     mater_hd1 = rt_dup_material_head();
     rt_color_free();
 
-    if (dbip1->dbi_version < 5) {
+    if (db_version(dbip1) < 5) {
 	pre_5_vers++;
     }
 
@@ -1048,7 +1026,7 @@ main(int argc, char **argv)
     mater_hd2 = rt_dup_material_head();
     rt_color_free();
 
-    if (dbip2->dbi_version < 5) {
+    if (db_version(dbip2) < 5) {
 	pre_5_vers++;
 	version2 = 4;
     } else {

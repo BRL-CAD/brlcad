@@ -219,7 +219,7 @@ reverse_buffer(unsigned char *buf)
 static void
 arbrot(double a, FILE *ifp, unsigned char *buf)
 {
-#define DtoR(x)	((x)*M_PI/180.0)
+#define DtoR(x)	((x) * DEG2RAD)
     size_t x, y;				/* working coord */
     double x2, y2;				/* its rotated position */
     double xc, yc;				/* rotation origin */

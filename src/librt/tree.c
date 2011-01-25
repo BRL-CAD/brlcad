@@ -564,10 +564,10 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
 	 * XXX 'else' clause might well be deleted. -Mike
 	 */
 	i = pathp->fp_len-1;
-	if (i > 0 && !(pathp->fp_names[i-1]->d_flags & DIR_REGION)) {
+	if (i > 0 && !(pathp->fp_names[i-1]->d_flags & RT_DIR_REGION)) {
 	    /* Search backwards for region.  If no region, use whole path */
 	    for (--i; i > 0; i--) {
-		if (pathp->fp_names[i-1]->d_flags & DIR_REGION) break;
+		if (pathp->fp_names[i-1]->d_flags & RT_DIR_REGION) break;
 	    }
 	    if (i < 0) i = 0;
 	    db_full_path_init(&stp->st_path);
@@ -665,7 +665,7 @@ rt_free_soltab(struct soltab *stp)
 
     bu_ptbl_free(&stp->st_regions);
 
-    stp->st_dp = DIR_NULL;	/* Sanity */
+    stp->st_dp = RT_DIR_NULL;	/* Sanity */
 
     if (stp->st_path.magic) {
 	RT_CK_FULL_PATH(&stp->st_path);
@@ -804,7 +804,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 	tree_state.ts_resp = NULL;	/* sanity.  Needs to be updated */
 
 	if (attrs) {
-	    if (rtip->rti_dbip->dbi_version < 5) {
+	    if (db_version(rtip->rti_dbip) < 5) {
 		bu_log("WARNING: requesting attributes from an old database version (ignored)\n");
 		bu_avs_init_empty(&tree_state.ts_attrs);
 	    } else {
@@ -1114,7 +1114,7 @@ rt_find_solid(const struct rt_i *rtip, const char *name)
 
     RT_CHECK_RTI(rtip);
     if ((dp = db_lookup((struct db_i *)rtip->rti_dbip, (char *)name,
-			LOOKUP_QUIET)) == DIR_NULL)
+			LOOKUP_QUIET)) == RT_DIR_NULL)
 	return RT_SOLTAB_NULL;
 
     RT_VISIT_ALL_SOLTABS_START(stp, (struct rt_i *)rtip) {

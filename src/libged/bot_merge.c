@@ -81,7 +81,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 
     /* read in all the bots */
     for (idx=1, i=2; i < argc; i++ ) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    continue;
 	}
 
@@ -183,7 +183,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     intern.idb_meth = &rt_functab[ID_BOT];
     intern.idb_ptr = (genptr_t)bots[0];
 
-    GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, new_dp, &intern, &rt_uniresource, GED_ERROR);
 
     bu_free(bots, "bots");

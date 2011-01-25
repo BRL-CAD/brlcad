@@ -70,7 +70,7 @@ rt_generic_xform(
     id = ip->idb_type;
     BU_INIT_EXTERNAL(&ext);
     /* Scale change on export is 1.0 -- no change */
-    switch (dbip->dbi_version) {
+    switch (db_version(dbip)) {
 	case 4:
 	    if (rt_functab[id].ft_export4(&ext, ip, 1.0, dbip, resp) < 0) {
 		bu_log("rt_generic_xform():  %s export failure\n",

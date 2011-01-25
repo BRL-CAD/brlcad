@@ -453,7 +453,7 @@ bu_vls_strcmp(struct bu_vls *s1, struct bu_vls *s2)
     }
 
     /* neither empty, straight up comparison */
-    return !BU_STR_EQUAL(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset);
+    return bu_strcmp(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset);
 }
 
 
@@ -761,7 +761,8 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 #define SIZETINT 0x080
 
     int flags;
-    int fieldlen=-1;
+    int fieldlen = -1;
+    int left_justify = 0;
 
     char fbuf[64] = {0}; /* % format buffer */
     char buf[BUFSIZ] = {0};
@@ -794,8 +795,10 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	ep = sp;
 	while (*ep) {
 	    ++ep;
-	    if (*ep == ' ' || *ep == '#' || *ep == '-' || *ep == '+' || *ep == '.' || isdigit(*ep)) {
+	    if (*ep == ' ' || *ep == '#' || *ep == '+' || *ep == '.' || isdigit(*ep)) {
 		continue;
+	    } else if (*ep == '-') {
+		left_justify = 1;
 	    } else if (*ep == 'l' || *ep == 'U' || *ep == 'O') {
 		if (flags & LONG_INT) {
 		    flags ^= LONG_INT;
@@ -824,6 +827,15 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		break;
 	}
 
+	/* libc left-justifies if there's a '-' char, even if the
+	 * value is already negative so no need to check current value
+	 * of left_justify.
+	 */
+	if (fieldlen < 0) {
+	    fieldlen = -fieldlen;
+	    left_justify = 1;
+	}
+
 	/* Copy off the format string */
 	len = ep-sp+1;
 	if ((size_t)len > sizeof(fbuf)-1)
@@ -841,11 +853,6 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    if (str) {
 			if (flags & FIELDLEN) {
 			    int stringlen = (int)strlen(str);
-			    int left_justify;
-
-			    left_justify = (fieldlen < 0);
-			    if (left_justify)
-				fieldlen *= -1; /* make positive */
 
 			    if (stringlen >= fieldlen)
 				bu_vls_strncat(vls, str, (size_t)fieldlen);
@@ -885,11 +892,6 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			BU_CK_VLS(vp);
 			if (flags & FIELDLEN) {
 			    int stringlen = bu_vls_strlen(vp);
-			    int left_justify;
-
-			    left_justify = (fieldlen < 0);
-			    if (left_justify)
-				fieldlen *= -1;
 
 			    if (stringlen >= fieldlen)
 				bu_vls_strncat(vls, bu_vls_addr(vp), (size_t)fieldlen);

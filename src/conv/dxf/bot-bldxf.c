@@ -592,7 +592,7 @@ int main(int ac, char *av[])
 
 	    /* we only dump BOT primitives, so skip some obvious exceptions */
 	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
-	    if (dp->d_flags & DIR_COMB) continue;
+	    if (dp->d_flags & RT_DIR_COMB) continue;
 
 	    if (debug&DEBUG_NAMES)
 		fprintf(stderr, "%s\n", dp->d_namep);

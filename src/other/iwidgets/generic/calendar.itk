@@ -2,46 +2,46 @@
 # Calendar
 # ----------------------------------------------------------------------
 # Implements a calendar widget for the selection of a date.  It displays
-# a single month at a time.  Buttons exist on the top to change the
-# month in effect turning th pages of a calendar.  As a page is turned,
-# the dates for the month are modified.  Selection of a date visually
-# marks that date.  The selected value can be monitored via the
+# a single month at a time.  Buttons exist on the top to change the 
+# month in effect turning th pages of a calendar.  As a page is turned, 
+# the dates for the month are modified.  Selection of a date visually 
+# marks that date.  The selected value can be monitored via the 
 # -command option or just retrieved using the get method.  Methods also
 # exist to select a date and show a particular month.  The option set
 # allows the calendars appearance to take on many forms.
 # ----------------------------------------------------------------------
 # AUTHOR:  Mark L. Ulferts             E-mail: mulferts@austin.dsccc.com
-#
+#            
 # ACKNOWLEDGEMENTS: Michael McLennan   E-mail: mmclennan@lucent.com
 #
-# This code is an [incr Tk] port of the calendar code shown in Michael
-# J. McLennan's book "Effective Tcl" from Addison Wesley.  Small
-# modificiations were made to the logic here and there to make it a
-# mega-widget and the command and option interface was expanded to make
+# This code is an [incr Tk] port of the calendar code shown in Michael 
+# J. McLennan's book "Effective Tcl" from Addison Wesley.  Small 
+# modificiations were made to the logic here and there to make it a 
+# mega-widget and the command and option interface was expanded to make 
 # it even more configurable, but the underlying logic is the same.
 #
 # @(#) $Id$
 # ----------------------------------------------------------------------
 #            Copyright (c) 1997 DSC Technologies Corporation
 # ======================================================================
-# Permission to use, copy, modify, distribute and license this software
-# and its documentation for any purpose, and without fee or written
-# agreement with DSC, is hereby granted, provided that the above copyright
-# notice appears in all copies and that both the copyright notice and
-# warranty disclaimer below appear in supporting documentation, and that
-# the names of DSC Technologies Corporation or DSC Communications
-# Corporation not be used in advertising or publicity pertaining to the
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
 # software without specific, written prior permission.
-#
-# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
 # ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
 # INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
-# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE,
-# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL
-# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
 # WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
-# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
 # SOFTWARE.
 # ======================================================================
 
@@ -49,7 +49,7 @@
 # Usual options.
 #
 itk::usual Calendar {
-    keep -background -cursor
+    keep -background -cursor 
 }
 
 # ------------------------------------------------------------------
@@ -57,7 +57,7 @@ itk::usual Calendar {
 # ------------------------------------------------------------------
 itcl::class iwidgets::Calendar {
     inherit itk::Widget
-
+    
     constructor {args} {}
 
     itk_option define -days days Days {Su Mo Tu We Th Fr Sa}
@@ -86,7 +86,7 @@ itcl::class iwidgets::Calendar {
     public method select {{date_ "now"}}   ;# Selects date, moving select ring
     public method show {{date_ "now"}}     ;# Displays a specific date
 
-    protected method _drawtext {canvas_ day_ date_ now_ x0_ y0_ x1_ y1_}
+    protected method _drawtext {canvas_ day_ date_ now_ x0_ y0_ x1_ y1_} 
 
     private method _change {delta_}
     private method _configureHandler {}
@@ -107,7 +107,7 @@ itcl::class iwidgets::Calendar {
 
 #
 # Provide a lowercased access method for the Calendar class.
-#
+# 
 proc ::iwidgets::calendar {pathName args} {
     uplevel ::iwidgets::Calendar $pathName $args
 }
@@ -131,7 +131,7 @@ itcl::body iwidgets::Calendar::constructor {args} {
 	keep -background -cursor -width -height
     }
     pack $itk_component(page) -expand yes -fill both
-
+    
     #
     # Create the forward and backward buttons.  Rather than pack
     # them directly in the hull, we'll waittill later and make
@@ -141,14 +141,14 @@ itcl::body iwidgets::Calendar::constructor {args} {
 	button $itk_component(page).backward \
 		-command [itcl::code $this _change -1]
     } {
-	keep -background -cursor
+	keep -background -cursor 
     }
 
     itk_component add forward {
 	button $itk_component(page).forward \
 		-command [itcl::code $this _change +1]
     } {
-	keep -background -cursor
+	keep -background -cursor 
     }
 
     #
@@ -156,12 +156,12 @@ itcl::body iwidgets::Calendar::constructor {args} {
     #
     set _time [clock seconds]
 
-    #
+    # 
     # Bind to the configure event which will be used to redraw
     # the calendar and display the month.
     #
     bind $itk_component(page) <Configure> [itcl::code $this _configureHandler]
-
+    
     #
     # Evaluate the option arguments.
     #
@@ -179,7 +179,7 @@ itcl::body iwidgets::Calendar::constructor {args} {
 # Allows for the use of dates in "international" format: YYYY-MM-DD.
 # It must be a boolean value.
 # ------------------------------------------------------------------
-itcl::configbody iwidgets::Calendar::int {
+itcl::configbody iwidgets::Calendar::int { 
     switch $itk_option(-int) {
 	1 - yes - true - on {
 	  set itk_option(-int) yes
@@ -196,7 +196,7 @@ itcl::configbody iwidgets::Calendar::int {
 # ------------------------------------------------------------------
 # OPTION: -command
 #
-# Sets the selection command for the calendar.  When the user
+# Sets the selection command for the calendar.  When the user 
 # selects a date on the calendar, the date is substituted in
 # place of "%d" in this command, and the command is executed.
 # ------------------------------------------------------------------
@@ -205,8 +205,8 @@ itcl::configbody iwidgets::Calendar::command {}
 # ------------------------------------------------------------------
 # OPTION: -days
 #
-# The days option takes a list of values to set the text used to display the
-# days of the week header above the dates.  The default value is
+# The days option takes a list of values to set the text used to display the 
+# days of the week header above the dates.  The default value is 
 # {Su Mo Tu We Th Fr Sa}.
 # ------------------------------------------------------------------
 itcl::configbody iwidgets::Calendar::days {
@@ -221,7 +221,7 @@ itcl::configbody iwidgets::Calendar::days {
 # ------------------------------------------------------------------
 # OPTION: -backwardimage
 #
-# Specifies a image to be displayed on the backwards calendar
+# Specifies a image to be displayed on the backwards calendar 
 # button.  If none is specified, a default is provided.
 # ------------------------------------------------------------------
 itcl::configbody iwidgets::Calendar::backwardimage {
@@ -241,8 +241,8 @@ itcl::configbody iwidgets::Calendar::backwardimage {
 		#define back_width 16
 		#define back_height 16
 		static unsigned char back_bits[] = {
-		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc0, 0x30,
-		    0xe0, 0x38, 0xf0, 0x3c, 0xf8, 0x3e, 0xfc, 0x3f,
+		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc0, 0x30, 
+		    0xe0, 0x38, 0xf0, 0x3c, 0xf8, 0x3e, 0xfc, 0x3f, 
 		    0xfc, 0x3f, 0xf8, 0x3e, 0xf0, 0x3c, 0xe0, 0x38,
 		    0xc0, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 		}
@@ -252,10 +252,10 @@ itcl::configbody iwidgets::Calendar::backwardimage {
 	# Configure the button to use the default image.
 	#
 	$itk_component(backward) configure -image $this-backward
-
+	
     #
     # Else, an image has been specified.  First, we'll need to make sure
-    # the image really exists before configuring the button to use it.
+    # the image really exists before configuring the button to use it.  
     # If it doesn't generate an error.
     #
     } else {
@@ -280,7 +280,7 @@ itcl::configbody iwidgets::Calendar::backwardimage {
 # ------------------------------------------------------------------
 # OPTION: -forwardimage
 #
-# Specifies a image to be displayed on the forwards calendar
+# Specifies a image to be displayed on the forwards calendar 
 # button.  If none is specified, a default is provided.
 # ------------------------------------------------------------------
 itcl::configbody iwidgets::Calendar::forwardimage {
@@ -300,8 +300,8 @@ itcl::configbody iwidgets::Calendar::forwardimage {
 		#define fwd_width 16
 		#define fwd_height 16
 		static unsigned char fwd_bits[] = {
-		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x03,
-		    0x1c, 0x07, 0x3c, 0x0f, 0x7c, 0x1f, 0xfc, 0x3f,
+		    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x03, 
+		    0x1c, 0x07, 0x3c, 0x0f, 0x7c, 0x1f, 0xfc, 0x3f, 
 		    0xfc, 0x3f, 0x7c, 0x1f, 0x3c, 0x0f, 0x1c, 0x07,
 		    0x0c, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 		}
@@ -311,10 +311,10 @@ itcl::configbody iwidgets::Calendar::forwardimage {
 	# Configure the button to use the default image.
 	#
 	$itk_component(forward) configure -image $this-forward
-
+	
     #
     # Else, an image has been specified.  First, we'll need to make sure
-    # the image really exists before configuring the button to use it.
+    # the image really exists before configuring the button to use it.  
     # If it doesn't generate an error.
     #
     } else {
@@ -404,7 +404,7 @@ itcl::configbody iwidgets::Calendar::buttonforeground {
 	    $itk_component(forward) configure \
 		    -foreground $itk_option(-buttonforeground)
 	}
-
+	
 	if {$itk_option(-backwardimage) == {}} {
 	    if {[lsearch [image names] $this-backward] != -1} {
 		$this-backward configure \
@@ -420,33 +420,33 @@ itcl::configbody iwidgets::Calendar::buttonforeground {
 # ------------------------------------------------------------------
 # OPTION: -selectcolor
 #
-# Specifies the color of the ring displayed that distinguishes the
-# currently selected date.
+# Specifies the color of the ring displayed that distinguishes the 
+# currently selected date.  
 # ------------------------------------------------------------------
 itcl::configbody iwidgets::Calendar::selectcolor {
     if {$_initialized} {
 	$itk_component(page) itemconfigure $_selected-sensor \
-		-outline $itk_option(-selectcolor)
+		-outline $itk_option(-selectcolor) 
     }
 }
 
 # ------------------------------------------------------------------
 # OPTION: -selectthickness
 #
-# Specifies the thickness of the ring displayed that distinguishes
-# the currently selected date.
+# Specifies the thickness of the ring displayed that distinguishes 
+# the currently selected date.  
 # ------------------------------------------------------------------
 itcl::configbody iwidgets::Calendar::selectthickness {
     if {$_initialized} {
 	$itk_component(page) itemconfigure $_selected-sensor \
-		-width $itk_option(-selectthickness)
+		-width $itk_option(-selectthickness) 
     }
 }
 
 # ------------------------------------------------------------------
 # OPTION: -titlefont
 #
-# Specifies the font used for the title text that consists of the
+# Specifies the font used for the title text that consists of the 
 # month and year.
 # ------------------------------------------------------------------
 itcl::configbody iwidgets::Calendar::titlefont {
@@ -459,7 +459,7 @@ itcl::configbody iwidgets::Calendar::titlefont {
 # ------------------------------------------------------------------
 # OPTION: -datefont
 #
-# Specifies the font used for the date text that consists of the
+# Specifies the font used for the date text that consists of the 
 # day of the month.
 # ------------------------------------------------------------------
 itcl::configbody iwidgets::Calendar::datefont {
@@ -531,10 +531,10 @@ itcl::configbody iwidgets::Calendar::startday {
 # ------------------------------------------------------------------
 # PUBLIC METHOD: get ?format?
 #
-# Returns the currently selected date in one of two formats, string
+# Returns the currently selected date in one of two formats, string 
 # or as an integer clock value using the -string and -clicks
-# options respectively.  The default is by string.  Reference the
-# clock command for more information on obtaining dates and their
+# options respectively.  The default is by string.  Reference the 
+# clock command for more information on obtaining dates and their 
 # formats.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Calendar::get {{format "-string"}} {
@@ -577,7 +577,7 @@ itcl::body iwidgets::Calendar::select {{date_ "now"}} {
 # ------------------------------------------------------------------
 # PUBLIC METHOD: show date_
 #
-# Changes the currently display month to be that of the specified
+# Changes the currently display month to be that of the specified 
 # date.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Calendar::show {{date_ "now"}} {
@@ -614,11 +614,11 @@ itcl::body iwidgets::Calendar::_drawtext {canvas_ day_ date_ now_ x0_ y0_ x1_ y1
     if {$date_ == $now_} {
 	$canvas_ itemconfigure $item \
 	    -font $itk_option(-currentdatefont) \
-	    -tags [list all-page date text now]
+	    -tags [list all-page date $date_-date text now]
     } else {
 	$canvas_ itemconfigure $item \
 	    -font $itk_option(-datefont) \
-	    -tags [list all-page date text]
+	    -tags [list all-page date $date_-date text]
     }
 }
 
@@ -661,14 +661,14 @@ itcl::body iwidgets::Calendar::_change {delta_} {
     if {[catch {set _time [clock scan "$month/1/$year"]}]} {
 	bell
     } else {
-	_redraw
+	_redraw 
     }
 }
 
 # ------------------------------------------------------------------
 # PRIVATE METHOD: _redraw
 #
-# Redraws the calendar.  This method is invoked whenever the
+# Redraws the calendar.  This method is invoked whenever the 
 # calendar changes size or we need to effect a change such as draw
 # it with a new month.
 # ------------------------------------------------------------------
@@ -774,13 +774,13 @@ itcl::body iwidgets::Calendar::_redraw {} {
 	}
 
 	#
-	# Create the date text and configure its font based on the
+	# Create the date text and configure its font based on the 
 	# wheather or not it is the current date.
 	#
 	_drawtext $itk_component(page) $day $date $now $x0 $y0 $x1 $y1
 
 	#
-	# Create a sensor area to detect selections.  Bind the
+	# Create a sensor area to detect selections.  Bind the 
 	# sensor and pass the date to the bind script.
 	#
         $itk_component(page) create rectangle $x0 $y0 $x1 $y1 \
@@ -788,6 +788,9 @@ itcl::body iwidgets::Calendar::_redraw {} {
             -tags [list $date-sensor all-sensor all-page]
 
         $itk_component(page) bind $date-sensor <ButtonPress-1> \
+            [itcl::code $this _selectEvent $date]
+
+        $itk_component(page) bind $date-date <ButtonPress-1> \
             [itcl::code $this _selectEvent $date]
     }
 
@@ -810,7 +813,7 @@ itcl::body iwidgets::Calendar::_redraw {} {
 # ------------------------------------------------------------------
 # PRIVATE METHOD: _days
 #
-# Used to rewite the days of the week label just below the month
+# Used to rewite the days of the week label just below the month 
 # title string.  The days are given in the -days option.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Calendar::_days {{wmax {}}} {
@@ -840,13 +843,13 @@ itcl::body iwidgets::Calendar::_days {{wmax {}}} {
 # PRIVATE METHOD: _layout time_
 #
 # Used whenever the calendar is redrawn.  Finds the month containing
-# a <time_> in seconds, and returns a list for all of the days in
+# a <time_> in seconds, and returns a list for all of the days in 
 # that month.  The list looks like this:
 #
 #    {day1 date1 kind1 c1 r1  day2 date2 kind2 c2 r2  ...}
 #
 # where dayN is a day number like 1,2,3,..., dateN is the date for
-# dayN, kindN is the day type of weekday or weekend, and cN,rN
+# dayN, kindN is the day type of weekday or weekend, and cN,rN 
 # are the column/row indices for the square containing that date.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Calendar::_layout {time_} {
@@ -859,10 +862,15 @@ itcl::body iwidgets::Calendar::_layout {time_} {
     set month [clock format $time_ -format "%m"]
     set year  [clock format $time_ -format "%Y"]
 
-    foreach lastday {31 30 29 28} {
-        if {[catch {clock scan "$month/$lastday/$year"}] == 0} {
-            break
-        }
+    if {[info tclversion] >= 8.5} {
+	set startOfMonth [clock scan "$year-$month-01" -format %Y-%m-%d]
+	set lastday [clock format [clock add $startOfMonth 1 month -1 day] -format %d]
+    } else {
+	foreach lastday {31 30 29 28} {
+	    if {[catch {clock scan "$month/$lastday/$year"}] == 0} {
+		break
+	    }
+	}
     }
     set seconds [clock scan "$month/1/$year"]
     set firstday [_adjustday [clock format $seconds -format %w]]
@@ -884,7 +892,7 @@ itcl::body iwidgets::Calendar::_layout {time_} {
         set daycol [_adjustday $dayoweek]
 
         set weekrow [expr {($firstday+$day-1)/7}]
-        lappend rlist $day $date $kind $daycol $weekrow
+        lappend rlist $day $date $kind $daycol $weekrow 
     }
     return $rlist
 }
@@ -907,8 +915,8 @@ itcl::body iwidgets::Calendar::_adjustday {day_} {
 # ------------------------------------------------------------------
 # PRIVATE METHOD: _select date_
 #
-# Selects the current <date_> on the calendar.  Highlights the date
-# on the calendar, and executes the command associated with the
+# Selects the current <date_> on the calendar.  Highlights the date 
+# on the calendar, and executes the command associated with the 
 # calendar, with the selected date substituted in place of "%d".
 # ------------------------------------------------------------------
 itcl::body iwidgets::Calendar::_select {date_} {
@@ -936,15 +944,15 @@ itcl::body iwidgets::Calendar::_select {date_} {
         $itk_component(page) raise $date-sensor
     } else {
         set _time $time
-        _redraw
+        _redraw 
     }
 }
 
 # ------------------------------------------------------------------
 # PRIVATE METHOD: _selectEvent date_
 #
-# Selects the current <date_> on the calendar.  Highlights the date
-# on the calendar, and executes the command associated with the
+# Selects the current <date_> on the calendar.  Highlights the date 
+# on the calendar, and executes the command associated with the 
 # calendar, with the selected date substituted in place of "%d".
 # ------------------------------------------------------------------
 itcl::body iwidgets::Calendar::_selectEvent {date_} {

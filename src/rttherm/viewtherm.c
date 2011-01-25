@@ -51,11 +51,11 @@
 #include "spectrum.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "rtprivate.h"
 #include "plot3.h"
 #include "light.h"
 
 /* private */
+#include "../rt/rtuif.h"
 #include "../rt/ext.h"
 #include "brlcad_version.h"
 
@@ -666,7 +666,7 @@ free_scanlines(void)
  * Called once, early on in RT setup, before view size is set.
  */
 int
-view_init(struct application *ap, char *file, char *obj, int minus_o)
+view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
 {
     bu_log("%s", brlcad_ident(title));
 

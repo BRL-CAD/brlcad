@@ -17,19 +17,36 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* open binary-incompatible v4 database
+* TBD
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
-* update g-xxx_facets to use libgcv
+* rt/rtedge command-line options for overriding object colors
 
-* rename all the g_* tools sans "_"
+* rtwizard enhancement to allow color overrides to be specified for
+  selected objects.
 
-* explore the g_qa/plot issue
+* deprecate dbcp and merge functionality (and improved
+  double-buffering) with the buffer tool.
 
-* release dm X get_color() memory
+* make the converters export all top-level objects by default
+
+* upgrade source repository back-end to the latest SVN 1.5 so we can
+  benefit from proper merge tracking.
+
+* the 'cp' command no longer draws the object that was copied --
+  undoubtedly a libged change -- so restore previous functionality.
+  as that behavior was not intentional and is undesirable for large
+  objects, have some means to determine that something is "large and
+  complex" or at a minimum, provide an option to not draw on copy.
+
+
+THESE ARE UNSCHEDULED BACKLOG TASKS
+-----------------------------------
+
+* rename all the g_* tools sans "_" [save until 7.20]
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
@@ -40,9 +57,16 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   or simply have an rt_*() for each function (e.g., rt_mirror(),
   rt_shot(), rt_describe(), etc).
 
+* explore the g_qa/plot issue
 
-THESE ARE UNSCHEDULED BACKLOG TASKS
------------------------------------
+* release dm X get_color() memory
+
+* update g-xxx_facets to use libgcv
+
+* bu_basename() says it'll return things that it probably won't
+  return.  like /path/to/file/ should return file and //// returning /
+  instead of empty.  probably should portably handle path separators
+  too, otherwise it's kind of meaningless in bu.
 
 * add distribution test for making sure the source code conventions
   for function replacements are being respected (e.g., bu_strcmp()
@@ -54,11 +78,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * add support to the attr command for listing keys in a user-specified
   alphabetical (possibly case-insensitive) order in addition to or
   instead of generated order.
-
-* deprecate dbcp and merge functionality (and improved
-  double-buffering) with the buffer tool.
-
-* make the converters export all top-level objects by default
 
 * investigate why solids.sh fails on three pixels on some 64-bit
   platforms. it grazingly hits/misses a tgc causing a regression
@@ -74,9 +93,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * make nreed's new bot cleanup interface update interactively without
   resorting to calls to Tcl_DoOneEvent() down in librt.
-
-* upgrade source repository back-end to the latest SVN 1.5 so we can
-  benefit from proper merge tracking.
 
 * make sure mged/archer behave properly with relative paths to dbopen.
   Windows in particular is doing something different in
@@ -113,17 +129,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   (which is a variant of 2 but potentially view independent).
 
 * investigate OpenEXR (BSD licensed HDE image format)
-
-* the 'cp' command no longer draws the object that was copied --
-  undoubtedly a libged change -- so restore previous functionality.
-  as that behavior was not intentional and is undesirable for large
-  objects, have some means to determine that something is "large and
-  complex" or at a minimum, provide an option to not draw on copy.
-
-* rt/rtedge command-line options for overriding object colors
-
-* rtwizard enhancement to allow color overrides to be specified for
-  selected objects.
 
 * plate mode NURBS/BREP objects.  Similar, if not identical, to plate
   mode BoTs, 'brep' objects need the ability to have a thickness

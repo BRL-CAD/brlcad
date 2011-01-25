@@ -76,7 +76,7 @@ ged_bot_condense(struct ged *gedp, int argc, const char *argv[])
     count2 = rt_bot_condense( bot );
     bu_vls_printf(&gedp->ged_result_str, "%s: %d dead vertices eliminated\n", argv[0], count2);
 
-    GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, new_dp, &intern, &rt_uniresource, GED_ERROR);
 
     return GED_OK;

@@ -102,7 +102,7 @@ static struct bn_tol extr_tol={
  * !0 Error in description
  *
  * Implicit return -
- * A struct extrude_specific is created, and it's address is stored in
+ * A struct extrude_specific is created, and its address is stored in
  * stp->st_specific for use by extrude_shot().
  */
 int
@@ -2073,7 +2073,7 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
     sketch_name = (char *)rp + sizeof(struct extr_rec);
     if (!dbip) {
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
-    } else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL) {
+    } else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_log("rt_extrude_import4: ERROR: Cannot find sketch (%.16s) for extrusion (%.16s)\n",
 	       sketch_name, rp->extr.ex_name);
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
@@ -2233,7 +2233,7 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     sketch_name = (char *)ptr + ELEMENTS_PER_VECT*4*SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG;
     if (!dbip) {
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
-    } else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL) {
+    } else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_log("rt_extrude_import4: ERROR: Cannot find sketch (%s) for extrusion\n",
 	       sketch_name);
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;

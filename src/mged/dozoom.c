@@ -357,7 +357,7 @@ dozoom(int which_eye)
     DM_LOADMATRIX(dmp, mat, which_eye);
 
 #ifdef DM_RTGL
-    /* dm rtgl has it's own way of drawing */
+    /* dm rtgl has its own way of drawing */
     if (IS_DM_TYPE_RTGL(dmp->dm_type)) {
     
         /* dm-rtgl needs database info for ray tracing */

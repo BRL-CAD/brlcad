@@ -44,14 +44,14 @@ set m 1
 #
 test Tabset-1.$c {Tabset construction} {
     iwidgets::Tabset .ts
-    pack .ts
-    update
+    pack .ts 
+    update 
     .ts add -label one
-    update
+    update 
     .ts add -label two
-    update
+    update 
     .ts add -label three
-    update
+    update 
 } {}
 
 incr c
@@ -92,10 +92,10 @@ foreach test {
 	} {
 	set option [lindex $test 0]
 	test Tabset-2.$o "configuration options, $option" {
-	    .ts configure $option [lindex $test 1]
+	    .ts configure $option [lindex $test 1] 
 		lindex [.ts configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -131,10 +131,10 @@ foreach test {
 		set index  [lindex $test 0]
 		set option [lindex $test 1]
 		test Tabset-2.$o "tab configuration options, $option" {
-			.ts tabconfigure $index $option [lindex $test 2]
+			.ts tabconfigure $index $option [lindex $test 2] 
 			.ts tabcget $index $option
 		} [lindex $test 3]
-	update
+	update 
 	incr o
 }
 
@@ -155,97 +155,97 @@ foreach test {
 # Method tests which are successful.
 #
 foreach test {
-    {{.ts add}
+    {{.ts add} 
 		{::.ts-tab[0-9]+}}
-    {{.ts add}
+    {{.ts add} 
 		{::.ts-tab[0-9]+}}
-    {{.ts add}
+    {{.ts add} 
 		{::.ts-tab[0-9]+}}
-    {{.ts add -label Never}
+    {{.ts add -label Never} 
 		{::.ts-tab[0-9]+}}
-    {{.ts add}
+    {{.ts add} 
 		{::.ts-tab[0-9]+}}
-	{{.ts add -label "Hello World" -disabledforeground gray}
+	{{.ts add -label "Hello World" -disabledforeground gray} 
 		{::.ts-tab[0-9]+}}
-    {{.ts index end}
+    {{.ts index end} 
 		{[0-9]+}}
-    {{.ts index Never}
+    {{.ts index Never} 
 		{[0-9]+}}
-    {{.ts index 0}
+    {{.ts index 0} 
 		{0}}
-    {{.ts select 0}
+    {{.ts select 0} 
 		{0}}
-    {{.ts select select}
+    {{.ts select select} 
 		{0}}
-    {{.ts select end}
+    {{.ts select end} 
 		{[0-9]+}}
-    {{.ts select "Hello World"}
+    {{.ts select "Hello World"} 
 		{[0-9]+}}
-    {{.ts insert 0}
+    {{.ts insert 0} 
 		{::.ts-tab[0-9]+}}
-    {{.ts insert select -label "An Insert"}
+    {{.ts insert select -label "An Insert"} 
 		{::.ts-tab[0-9]+}}
-    {{.ts insert end -label "Next To Last"}
+    {{.ts insert end -label "Next To Last"} 
 		{::.ts-tab[0-9]+}}
-    {{.ts select 0}
+    {{.ts select 0} 
 		{0}}
-    {{.ts next}
+    {{.ts next} 
 		{1}}
-    {{.ts next}
+    {{.ts next} 
 		{2}}
-    {{.ts prev}
+    {{.ts prev} 
 		{1}}
-    {{.ts prev}
+    {{.ts prev} 
 		{0}}
-    {{.ts delete Never}
+    {{.ts delete Never} 
 		{}}
-    {{.ts delete 1 2}
+    {{.ts delete 1 2} 
 		{}}
-    {{.ts delete 0 "Hello World"}
+    {{.ts delete 0 "Hello World"} 
 		{}}
-    {{.ts add}
+    {{.ts add} 
 		{::.ts-tab[0-9]+}}
-    {{.ts add}
+    {{.ts add} 
 		{::.ts-tab[0-9]+}}
-    {{.ts add}
+    {{.ts add} 
 		{::.ts-tab[0-9]+}}
-    {{.ts add}
+    {{.ts add} 
 		{::.ts-tab[0-9]+}}
-    {{.ts delete 0 end}
+    {{.ts delete 0 end} 
 		{}}
-    {{.ts add}
+    {{.ts add} 
 		{::.ts-tab[0-9]+}}
-    {{.ts add}
+    {{.ts add} 
 		{::.ts-tab[0-9]+}}
-    {{.ts add}
+    {{.ts add} 
 		{::.ts-tab[0-9]+}}
-    {{.ts add}
+    {{.ts add} 
 		{::.ts-tab[0-9]+}}
-    {{.ts select 2}
+    {{.ts select 2} 
 		{[-]*[0-9]+}}
-    {{.ts delete select end}
+    {{.ts delete select end} 
 		{}}
-    {{.ts delete 0 end}
+    {{.ts delete 0 end} 
 		{}}
-    {{.ts add -label "First Page"}
+    {{.ts add -label "First Page"} 
 		{::.ts-tab[0-9]+}}
-    {{.ts add -label "Second Page"}
+    {{.ts add -label "Second Page"} 
 		{::.ts-tab[0-9]+}}
-    {{.ts add -label "Third Page"}
+    {{.ts add -label "Third Page"} 
 		{::.ts-tab[0-9]+}}
-    {{.ts add -label "Fourth Page"}
+    {{.ts add -label "Fourth Page"} 
 		{::.ts-tab[0-9]+}}
-    {{.ts add -label "Fifth Page"}
+    {{.ts add -label "Fifth Page"} 
 		{::.ts-tab[0-9]+}}
-    {{.ts add -label "Sixth Page"}
+    {{.ts add -label "Sixth Page"} 
 		{::.ts-tab[0-9]+}}
-    {{.ts select "First Page"}
+    {{.ts select "First Page"} 
 		{[-]*[0-9]+}}
-    {{.ts delete select "Second Page"}
+    {{.ts delete select "Second Page"} 
 		{}}
-    {{.ts delete "Third Page" 1}
+    {{.ts delete "Third Page" 1} 
 		{}}
-    {{.ts delete "Fifth Page" "Sixth Page"}
+    {{.ts delete "Fifth Page" "Sixth Page"} 
 		{}}
 	} {
 	set method [lindex [lindex $test 0] 1]
@@ -259,7 +259,7 @@ foreach test {
 	append testContents "set result\n"
 	test Tabset-3.$m "\[$method_invoke\]" $testContents \
 		[list 0 1]
-	update
+	update 
 	incr m
 }
 
@@ -319,28 +319,28 @@ foreach test {
 #
 test Tabset-1.$c {Tabset destruction} {
     destroy .ts
-    update
+    update 
 } {}
 
 incr c
 
 test Tabset-1.$c {Tabset construction} {
     iwidgets::Tabset .ts -width 100 -height 100
-    pack .ts
-    update
+    pack .ts 
+    update 
     .ts add -label one
-    update
+    update 
     .ts add -label two
-    update
+    update 
     .ts add -label three
-    update
+    update 
 } {}
 
 incr c
 
 test Tabset-1.$c {Tabset destruction} {
 	destroy .ts
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

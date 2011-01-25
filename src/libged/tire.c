@@ -42,7 +42,6 @@
 
 #define ROWS 5
 #define COLS 5
-#define F_PI 3.1415926535897932384626433832795029L
 
 static char *options="an:c:d:W:R:D:g:j:p:s:t:u:w:h";
 
@@ -66,24 +65,24 @@ show_help(struct ged *gedp, const char *name)
     }
 
     bu_vls_printf(&gedp->ged_result_str, "usage: %s [-%s] [tire_name]\n", name, bu_vls_addr(&str));
-    bu_vls_printf(&gedp->ged_result_str, "options:\n"
-		  "\t-a\n\t\tAuto-generate top-level object name using\n"
-		  "\t\t(tire-<width>-<aspect>R<rim size>)\n"
-		  "\t-n <name>\n\t\tSpecify custom top-level object name\n"
-		  "\t-c <count>\n\t\tSpecify number of tread patterns around tire\n"
-		  "\t-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions\n"
-		  "\t\t(U.S. customary units, integer values only)\n"
-		  "\t-W <width>\n\t\tSpecify tire width in inches (overrides -d)\n"
-		  "\t-R <aspect>\n\t\tSpecify tire aspect ratio (#/100) (overrides -d)\n"
-		  "\t-D <rim size>\n\t\tSpecify rim size in inches (overrides -d)\n"
-		  "\t-g <depth>\n\t\tSpecify tread depth in terms of 32nds of an inch.\n"
-		  "\t-j <width>\n\t\tSpecify rim width in inches.\n"
-		  "\t-p <type>\n\t\tGenerate tread with tread pattern as specified\n"
-		  "\t-s <radius>\n\t\tSpecify the radius of the maximum sidewall width\n"
-		  "\t-t <type>\n\t\tGenerate tread with tread type as specified\n"
-		  "\t-u <thickness>\n\t\tSpecify tire thickness in mm\n"
-		  "\t-w <0|1>\n\t\tWhether to include the wheel or not\n"
-		  "\t-h\n\t\tShow help\n\n");
+    bu_vls_printf(&gedp->ged_result_str, "options:\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-a\n\t\tAuto-generate top-level object name using\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t\t(tire-<width>-<aspect>R<rim size>)\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-n <name>\n\t\tSpecify custom top-level object name\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-c <count>\n\t\tSpecify number of tread patterns around tire\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t\t(U.S. customary units, integer values only)\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-W <width>\n\t\tSpecify tire width in inches (overrides -d)\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-R <aspect>\n\t\tSpecify tire aspect ratio (#/100) (overrides -d)\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-D <rim size>\n\t\tSpecify rim size in inches (overrides -d)\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-g <depth>\n\t\tSpecify tread depth in terms of 32nds of an inch.\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-j <width>\n\t\tSpecify rim width in inches.\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-p <type>\n\t\tGenerate tread with tread pattern as specified\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-s <radius>\n\t\tSpecify the radius of the maximum sidewall width\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-t <type>\n\t\tGenerate tread with tread type as specified\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-u <thickness>\n\t\tSpecify tire thickness in mm\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-w <0|1>\n\t\tWhether to include the wheel or not\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-h\n\t\tShow help\n\n");
 
     bu_vls_free(&str);
     return;
@@ -937,8 +936,8 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     bu_vls_init(&str);
     bu_vls_init(&str2);
 
-    patternwidth1 = ztire * sin(F_PI / number_of_patterns);
-    patternwidth2 = z_base * sin(F_PI / number_of_patterns);
+    patternwidth1 = ztire * sin(M_PI / number_of_patterns);
+    patternwidth2 = z_base * sin(M_PI / number_of_patterns);
 
     verts[0] = verts1;
     vertcounts[0] = 12;
@@ -975,7 +974,7 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
     for ( i = 1; i <= number_of_patterns; i++) {
 	bu_vls_sprintf(&str, "tread_master%s.c", suffix);
-	getYRotMat(&y, i * 2 * F_PI / number_of_patterns);
+	getYRotMat(&y, i * 2 * M_PI / number_of_patterns);
 	(void)mk_addmember(bu_vls_addr(&str), &tread.l, y, WMOP_SUBTRACT);
     }
 
@@ -1072,8 +1071,8 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     bu_vls_init(&str);
     bu_vls_init(&str2);
 
-    patternwidth1 = ztire * sin(F_PI / number_of_patterns);
-    patternwidth2 = z_base * sin(F_PI / number_of_patterns);
+    patternwidth1 = ztire * sin(M_PI / number_of_patterns);
+    patternwidth2 = z_base * sin(M_PI / number_of_patterns);
 
     verts[0] = verts1;
     vertcounts[0] = 8;
@@ -1126,7 +1125,7 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
     for (i=1; i<=number_of_patterns; i++) {
 	bu_vls_sprintf(&str, "tread_master%s.c", suffix);
-	getYRotMat(&y, i * 2 * F_PI / number_of_patterns);
+	getYRotMat(&y, i * 2 * M_PI / number_of_patterns);
 	(void)mk_addmember(bu_vls_addr(&str), &tread.l, y, WMOP_SUBTRACT);
     }
 

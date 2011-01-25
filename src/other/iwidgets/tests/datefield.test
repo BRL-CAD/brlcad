@@ -45,7 +45,7 @@ set m 1
 test Datefield-1.$c {Datefield construction} {
     iwidgets::Datefield .df -labeltext "Date Field"
     pack .df -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -61,17 +61,17 @@ incr o
 
 foreach test {
     {-background #d9d9d9 #d9d9d9}
-    {-borderwidth 4 4}
-    {-borderwidth 2 2}
+    {-borderwidth 4 4} 
+    {-borderwidth 2 2} 
     {-command {.df configure -background red} {.df configure -background red}}
-    {-cursor gumby gumby}
-    {-exportselection 0 0}
-    {-foreground Green Green}
-    {-foreground Black Black}
+    {-cursor gumby gumby} 
+    {-exportselection 0 0} 
+    {-foreground Green Green} 
+    {-foreground Black Black} 
     {-highlightcolor Red Red}
     {-highlightthickness 2 2}
-    {-insertbackground Yellow Yellow}
-    {-insertbackground Black Black}
+    {-insertbackground Yellow Yellow} 
+    {-insertbackground Black Black} 
     {-int yes yes}
     {-int no no}
     {-iq average average}
@@ -79,18 +79,18 @@ foreach test {
     {-justify right right}
     {-justify center center}
     {-justify left left}
-    {-labelmargin 5 5}
-    {-labelpos w w}
-    {-labelpos nw nw}
-    {-labelpos n n}
-    {-labelpos ne ne}
-    {-labelpos e e}
-    {-labelpos se se}
-    {-labelpos s s}
-    {-labelpos sw sw}
-    {-labeltext Label Label}
-    {-relief raised raised}
-    {-relief sunken sunken}
+    {-labelmargin 5 5} 
+    {-labelpos w w} 
+    {-labelpos nw nw} 
+    {-labelpos n n} 
+    {-labelpos ne ne} 
+    {-labelpos e e} 
+    {-labelpos se se} 
+    {-labelpos s s} 
+    {-labelpos sw sw} 
+    {-labeltext Label Label} 
+    {-relief raised raised} 
+    {-relief sunken sunken} 
     {-gmt true true}
     {-gmt false false}
     {-gmt on on}
@@ -108,14 +108,14 @@ foreach test {
     {-sticky s s}
     {-sticky sw sw}
     {-sticky news news}
-    {-textbackground GhostWhite GhostWhite}
+    {-textbackground GhostWhite GhostWhite} 
     {-textbackground #d9d9d9 #d9d9d9}} {
 	set option [lindex $test 0]
 	test Datefield-2.$o "configuration options, $option" {
 	    .df configure $option [lindex $test 1]
 	    lindex [.df configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -151,15 +151,15 @@ foreach test {
 	test Datefield-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
 test Datefield-3.$m "object methods, clock clicks" {
     set clicks [clock scan "06/08/1964"]
     .df show $clicks
-    update
-    .df get
+    update 
+    .df get 
 } {06/08/1964}
 incr m
 
@@ -181,22 +181,22 @@ foreach test {
 #
 test Datefield-1.$c {Datefield destruction} {
     destroy .df
-    update
+    update 
 } {}
 
 incr c
 
 test Datefield-1.$c {Datefield construction} {
-    iwidgets::datefield .df
+    iwidgets::datefield .df 
     pack .df -padx 10 -pady 10
-    update
+    update 
 } {}
 
 incr c
 
 test Datefield-1.$c {Datefield destruction} {
     destroy .df
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

@@ -1054,9 +1054,14 @@ read_euclid_face(int *lst, int *ni, FILE *fp, struct vlist *vert, int *nv)
 {
     double	num_points, x, y, z, a, b, c, d;
     int	i, j, k, facet_type;
+    int ret;
 
     /* Description of record. */
-    fscanf(fp, "%d %*f %*f %lf", &facet_type, &num_points);
+    ret = fscanf(fp, "%d %*f %*f %lf", &facet_type, &num_points);
+    if (ret < 2) {
+	perror("fscanf");
+    }
+
     *ni = (int)num_points;
 
     if ( debug )
@@ -1065,7 +1070,10 @@ read_euclid_face(int *lst, int *ni, FILE *fp, struct vlist *vert, int *nv)
     /* Read in data points. */
     for (i = 0; i < *ni; i++)
     {
-	fscanf(fp, "%*d %lf %lf %lf", &x, &y, &z);
+	ret = fscanf(fp, "%*d %lf %lf %lf", &x, &y, &z);
+	if (ret < 3) {
+	    perror("fscanf");
+	}
 
 	if ( debug )
 	    bu_log( "\tpoint #%d ( %g %g %g )\n", i+1, x, y, z );
@@ -1081,7 +1089,10 @@ read_euclid_face(int *lst, int *ni, FILE *fp, struct vlist *vert, int *nv)
     }
 
     /* Read in plane equation. */
-    fscanf(fp, "%*d %lf %lf %lf %lf", &a, &b, &c, &d);
+    ret = fscanf(fp, "%*d %lf %lf %lf %lf", &a, &b, &c, &d);
+    if (ret < 4) {
+	perror("fscanf");
+    }
     if ( debug )
 	bu_log( "plane equation for face is ( %f %f %f %f )\n", a, b, c, d );
 

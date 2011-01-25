@@ -82,7 +82,7 @@ count_if_region(struct db_i *dbip, struct directory *dp, genptr_t rcount)
 {
     int *counter = (int*)rcount;
     RT_CK_DBI(dbip);
-    if (dp->d_flags & DIR_REGION) {
+    if (dp->d_flags & RT_DIR_REGION) {
 	(*counter)++;
     }
 }
@@ -98,10 +98,10 @@ determine_object_type(struct db_i *dbip, struct directory *dp)
     }
     db_functree(dbip, dp, count_if_region, NULL, resp, &rcount);
 
-    if (dp->d_flags & DIR_SOLID) {
+    if (dp->d_flags & RT_DIR_SOLID) {
 	object_type = 1;
     }
-    if (dp->d_flags & DIR_REGION) {
+    if (dp->d_flags & RT_DIR_REGION) {
 	if (rcount > 1) {
 	    bu_log("WARNING - detected region flag set in subtree of region."
 		   "Returning type as region - if assembly type is intended "
@@ -111,7 +111,7 @@ determine_object_type(struct db_i *dbip, struct directory *dp)
 	    object_type = 3;
 	}
     }
-    if ((dp->d_flags & DIR_COMB) && !(dp->d_flags & DIR_REGION)) {
+    if ((dp->d_flags & RT_DIR_COMB) && !(dp->d_flags & RT_DIR_REGION)) {
 	if (rcount > 0) {
 	    object_type = 4;
 	} else {

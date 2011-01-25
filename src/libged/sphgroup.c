@@ -60,7 +60,7 @@ ged_sphgroup(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((sphdp = db_lookup(gedp->ged_wdbp->dbip, argv[argc-1], LOOKUP_NOISY)) == DIR_NULL) {
+    if ((sphdp = db_lookup(gedp->ged_wdbp->dbip, argv[argc-1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	 bu_vls_printf(&gedp->ged_result_str, "Specified bounding sphere %s not found\n", argv[argc-1]);
 	 return GED_ERROR;
     } else {
@@ -74,10 +74,10 @@ ged_sphgroup(struct ged *gedp, int argc, const char *argv[])
 
     /* get objects to add to group - at the moment, only gets regions*/
     for (i = 0; i < RT_DBNHASH; i++)
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-	   if (dp->d_nref == 0 && !(dp->d_flags & DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) continue;
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	   if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) continue;
 	   if (BU_STR_EQUAL(dp->d_namep, sphdp->d_namep)) continue;
-	   if (!(dp->d_flags & DIR_REGION)) continue;
+	   if (!(dp->d_flags & RT_DIR_REGION)) continue;
 	   inside_flag = 0;
 	   if (_ged_get_obj_bounds(gedp, 1, (const char **)&(dp->d_namep), 0, obj_min, obj_max) != GED_ERROR) {
 	       VSETALL(rpp_min, MAX_FASTF);
@@ -99,7 +99,7 @@ ged_sphgroup(struct ged *gedp, int argc, const char *argv[])
 	       VSET(centerpt, (rpp_min[0] + rpp_max[0])*0.5, (rpp_min[1] + rpp_max[1])*0.5, (rpp_min[2] + rpp_max[2])*0.5);
 	       if (DIST_PT_PT(centerpt, bsph->v) <= MAGNITUDE(bsph->a)) inside_flag = 1;
 	       if (inside_flag == 1) {
-       		   if (_ged_combadd(gedp, dp, (char *)argv[1], 0, WMOP_UNION, 0, 0) == DIR_NULL) return GED_ERROR;
+       		   if (_ged_combadd(gedp, dp, (char *)argv[1], 0, WMOP_UNION, 0, 0) == RT_DIR_NULL) return GED_ERROR;
 		   inside_flag = 0;
 	       }
 	   }	       

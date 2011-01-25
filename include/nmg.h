@@ -233,7 +233,7 @@ struct nmgregion_a {
  * The wire edgeuses are disconnected line segments.  There is a
  * special interpetation to the eu_hd list of wire edgeuses.  Unlike
  * edgeuses seen in loops, the eu_hd list contains eu1, eu1mate, eu2,
- * eu2mate, ..., where each edgeuse and it's mate comprise a
+ * eu2mate, ..., where each edgeuse and its mate comprise a
  * *non-connected* "wire" edge which starts at eu1->vu_p->v_p and ends
  * at eu1mate->vu_p->v_p.  There is no relationship between the pairs
  * of edgeuses at all, other than that they all live on the same
@@ -421,7 +421,7 @@ struct loopuse {
  * An edge_g_lseg structure represents a line in 3-space.  All edges
  * on that line should share the same edge_g.
  *
- * An edge occupies the range eu->param to eu->eumate_p->param in it's
+ * An edge occupies the range eu->param to eu->eumate_p->param in its
  * geometry's parameter space.  (cnurbs only)
  */
 struct edge {

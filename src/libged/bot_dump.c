@@ -537,6 +537,7 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 	float flts[12];
 	float *flt_ptr;
 	unsigned char vert_buffer[50];
+	int ret;
 
 	vi = 3*faces[3*i];
 	VSET(A, vertices[vi], vertices[vi+1], vertices[vi+2]);
@@ -574,13 +575,18 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 	for (j=0; j<12; j++) {
 	    lswap((unsigned int *)&vert_buffer[j*4]);
 	}
-	write(fd, vert_buffer, 50);
+	ret = write(fd, vert_buffer, 50);
+	if (ret < 0) {
+	    perror("write");
+	}
     }
 }
 
 static void
 bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_name)
 {
+    int ret;
+
     if (output_directory) {
 	char *cp;
 	struct bu_vls file_name;
@@ -615,11 +621,17 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 	    /* Write out STL header */
 	    memset(buf, 0, sizeof(buf));
 	    bu_strlcpy(buf, "BRL-CAD generated STL FILE", sizeof(buf));
-	    write(fd, &buf, 80);
+	    ret = write(fd, &buf, 80);
+	    if (ret < 0) {
+		perror("write");
+	    }
 
 	    /* write a place keeper for the number of triangles */
 	    memset(buf, 0, 4);
-	    write(fd, &buf, 4);
+	    ret = write(fd, &buf, 4);
+	    if (ret < 0) {
+		perror("write");
+	    }
 
 	    write_bot_stl_binary(bot, fd, dp->d_namep);
 
@@ -629,7 +641,10 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 	    /* Write out number of triangles */
 	    bu_plong(tot_buffer, (unsigned long)total_faces);
 	    lswap((unsigned int *)tot_buffer);
-	    write(fd, tot_buffer, 4);
+	    ret = write(fd, tot_buffer, 4);
+	    if (ret < 0) {
+		perror("write");
+	    }
 
 	    close(fd);
 	} else {
@@ -726,7 +741,7 @@ ged_bot_dump_leaf(struct db_tree_state	*tsp,
     dp = pathp->fp_names[pathp->fp_len-1];
 
     /* we only dump BOT primitives, so skip some obvious exceptions */
-    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD || dp->d_flags & DIR_COMB)
+    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD || dp->d_flags & RT_DIR_COMB)
 	return curtree;
 
     MAT_IDN(mat);
@@ -817,6 +832,7 @@ ged_bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 int
 ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 {
+    int ret;
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
     struct directory *dp;
@@ -879,11 +895,17 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	    /* Write out STL header if output file is binary */
 	    memset(buf, 0, sizeof(buf));
 	    bu_strlcpy(buf, "BRL-CAD generated STL FILE", sizeof(buf));
-	    write(fd, &buf, 80);
+	    ret = write(fd, &buf, 80);
+	    if (ret < 0) {
+		perror("write");
+	    }
 
 	    /* write a place keeper for the number of triangles */
 	    memset(buf, 0, 4);
-	    write(fd, &buf, 4);
+	    ret = write(fd, &buf, 4);
+	    if (ret < 0) {
+		perror("write");
+	    }
 	} else {
 	    /* Open ASCII output file */
 	    if ((fp=fopen(output_file, "wb+")) == NULL) {
@@ -948,7 +970,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 
 	    /* we only dump BOT primitives, so skip some obvious exceptions */
 	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
-	    if (dp->d_flags & DIR_COMB) continue;
+	    if (dp->d_flags & RT_DIR_COMB) continue;
 
 	    /* get the internal form */
 	    i=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, mat, &rt_uniresource);
@@ -967,7 +989,6 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 
 	} FOR_ALL_DIRECTORY_END;
     } else {
-	int ret;
 	int ac = 1;
 	int ncpu = 1;
 	char *av[2];
@@ -1007,7 +1028,10 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	    /* Write out number of triangles */
 	    bu_plong(tot_buffer, (unsigned long)total_faces);
 	    lswap((unsigned int *)tot_buffer);
-	    write(fd, tot_buffer, 4);
+	    ret = write(fd, tot_buffer, 4);
+	    if (ret < 0) {
+		perror("write");
+	    }
 
 	    close(fd);
 	} else {
@@ -1281,6 +1305,7 @@ ged_data_dump(struct ged *gedp, FILE *fp)
 int
 ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 {
+    int ret;
     char *file_ext = '\0';
     FILE *fp = (FILE *)0;
     int fd = -1;
@@ -1342,11 +1367,17 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	    /* Write out STL header if output file is binary */
 	    memset(buf, 0, sizeof(buf));
 	    bu_strlcpy(buf, "BRL-CAD generated STL FILE", sizeof(buf));
-	    write(fd, &buf, 80);
+	    ret = write(fd, &buf, 80);
+	    if (ret < 0) {
+		perror("write");
+	    }
 
 	    /* write a place keeper for the number of triangles */
 	    memset(buf, 0, 4);
-	    write(fd, &buf, 4);
+	    ret = write(fd, &buf, 4);
+	    if (ret < 0) {
+		perror("write");
+	    }
 	} else {
 	    /* Open ASCII output file */
 	    if ((fp=fopen(output_file, "wb+")) == NULL) {
@@ -1467,7 +1498,6 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	struct solid *sp;
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    int ret;
 	    struct directory *dp;
 	    struct rt_db_internal intern;
 	    struct rt_bot_internal *bot;
@@ -1526,7 +1556,10 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	    /* Write out number of triangles */
 	    bu_plong(tot_buffer, (unsigned long)total_faces);
 	    lswap((unsigned int *)tot_buffer);
-	    write(fd, tot_buffer, 4);
+	    ret = write(fd, tot_buffer, 4);
+	    if (ret < 0) {
+		perror("write");
+	    }
 
 	    close(fd);
 	} else {
