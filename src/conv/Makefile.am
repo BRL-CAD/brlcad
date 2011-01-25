@@ -192,10 +192,11 @@ euclid_g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
 euclid_g_LDADD = ${WDB}
 
 euclid_unformat_SOURCES = euclid/euclid_unformat.c
+euclid_unformat_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
 euclid_unformat_LDADD = ${BU} ${BN} ${SYSV}
 
 fast4_g_SOURCES = fast4-g.c
-fastf4_g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
+fast4_g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
 fast4_g_LDADD = ${WDB}
 
 g2asc_SOURCES = asc/g2asc.c
