@@ -47,6 +47,7 @@ PROJECT(TK)
 
 # set local CFLAGS name
 SET(CFLAGS_NAME TK)
+SET(TK_CFLAGS "")
 
 # build shared libs by default
 OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
