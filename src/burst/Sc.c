@@ -65,6 +65,11 @@
 #  endif
 #endif
 
+/* termios.h might define this and conflict with vmath's */
+#ifdef VMIN
+#  undef VMIN
+#endif
+
 #include "bu.h"
 
 #include "./Sc.h"
