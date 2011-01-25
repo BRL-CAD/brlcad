@@ -17,8 +17,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* bu_ipwd returns the wrong path, check out realpath()
-
 * rename all the g_* tools sans "_"
 
 
