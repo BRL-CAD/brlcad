@@ -84,15 +84,43 @@ _bu_ipwd()
     /* private stash */
     static const char *ipwd = NULL;
     static char buffer[MAXPATHLEN] = {0};
+#ifdef HAVE_REALPATH
+    char *real;
+#endif
 
+    /* already found the path before */
     if (ipwd) {
 	return ipwd;
     }
 
+    /* FIRST: try environment */
     ipwd = getenv("PWD"); /* not our memory to free */
-    if (!ipwd)
-	ipwd = bu_which("pwd");
+    if (ipwd) {
+#ifdef HAVE_REALPATH
+	real = realpath(ipwd, NULL);
+	if (real) {
+	    bu_strlcpy(buffer, real, (size_t)MAXPATHLEN);
+	    ipwd = buffer;
+	    free(real);
+	}
+#endif
+	return ipwd;
+    }
 
+    /* SECOND: try to query path */
+#ifdef HAVE_REALPATH
+    real = realpath(".", NULL);
+    if (real) {
+	bu_strlcpy(buffer, real, (size_t)MAXPATHLEN);
+	ipwd = buffer;
+	free(real);
+	real = NULL;
+	return ipwd;
+    }
+#endif
+
+    /* THIRD: try calling the 'pwd' command */
+    ipwd = bu_which("pwd");
     if (ipwd) {
 #if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	FILE *fp = NULL;
@@ -111,10 +139,10 @@ _bu_ipwd()
 	memset(buffer, 0, MAXPATHLEN); /* quellage */
 	ipwd = ".";
 #endif
-    } else {
-	ipwd = ".";
     }
 
+    /* LAST: punt (but do not return NULL) */
+    ipwd = ".";
     return ipwd;
 }
 

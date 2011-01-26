@@ -31,7 +31,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 
 struct cloud_specific {
     fastf_t cl_thresh;

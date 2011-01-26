@@ -234,7 +234,7 @@ warp_image(unsigned char *dest, unsigned char *src,
 #define ICLAMP(d, a, b) (d < a ? (int)a : d > b ? (int)b : (int)d)
 
 	    /* Bilinear interpolation.
-	       It's the somewhat more expensive than it needs to be.
+	       It's somewhat more expensive than it needs to be.
 	       I'm going for clarity, here. */
 
 	    newcolor = ((1-frac_x)*(1-frac_y)*(double)src[findex+RED] +

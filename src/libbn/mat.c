@@ -51,12 +51,7 @@
 #include "bn.h"
 
 
-const mat_t bn_mat_identity = {
-    1.0, 0.0, 0.0, 0.0,
-    0.0, 1.0, 0.0, 0.0,
-    0.0, 0.0, 1.0, 0.0,
-    0.0, 0.0, 0.0, 1.0
-};
+const mat_t bn_mat_identity = MAT_INIT_IDN;
 
 
 /**

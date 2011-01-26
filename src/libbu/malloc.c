@@ -139,7 +139,7 @@ again:
 /**
  * _ B U _ M E M D E B U G _ C H E C K
  *
- * Check an entry against the memory debug table, based upon it's address.
+ * Check an entry against the memory debug table, based upon its address.
  */
 HIDDEN struct memdebug *
 _bu_memdebug_check(register genptr_t ptr, const char *str)

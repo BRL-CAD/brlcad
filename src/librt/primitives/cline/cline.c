@@ -74,7 +74,7 @@ const struct bu_structparse rt_cline_parse[] = {
  * !0 Error in description
  *
  * Implicit return -
- * A struct cline_specific is created, and it's address is stored
+ * A struct cline_specific is created, and its address is stored
  * in stp->st_specific for use by rt_cline_shot().
  */
 int

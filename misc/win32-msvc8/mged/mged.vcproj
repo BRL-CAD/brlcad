@@ -378,10 +378,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\mged\qray.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\mged\rect.c"
 				>
 			</File>

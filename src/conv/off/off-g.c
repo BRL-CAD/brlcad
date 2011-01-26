@@ -59,6 +59,7 @@ int read_faces(struct model *m, FILE *fgeom)
     struct faceuse 	 **outfaceuses;
     struct nmgregion  *r;
     struct shell 	  *s;
+    size_t ret;
 
     /* Get numbers of vertices and faces, and grab the appropriate amount of memory */
     if (fscanf(fgeom, "%d %d %d", &nverts, &nfaces, &nedges) != 3)
@@ -74,7 +75,9 @@ int read_faces(struct model *m, FILE *fgeom)
 	    bu_exit(1, "Not enough data points in geometry file.\n");
 
 	verts[i] = (struct vertex *) 0;
-	fscanf(fgeom, "%*[^\n]");
+	ret = fscanf(fgeom, "%*[^\n]");
+	if (ret > 0)
+	    bu_log("unknown parsing error\n");
     }
 
     r = nmg_mrsv(m);		/* Make region, empty shell, vertex. */
@@ -107,7 +110,9 @@ int read_faces(struct model *m, FILE *fgeom)
 	for (j = 0; j < nedges; j++)		/* Save (possibly) newly created vertex structs. */
 	    verts[pinds[j]-1] = vlist[j];
 
-	fscanf(fgeom, "%*[^\n]");
+	ret = fscanf(fgeom, "%*[^\n]");
+	if (ret > 0)
+	    bu_log("unknown parsing error\n");
 
 	bu_free((char *)vlist, "vertext list");
 	bu_free((char *)pinds, "point indicies");

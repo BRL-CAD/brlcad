@@ -69,7 +69,8 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
+
 
 #define xxx_MAGIC 0x1834    /* make this a unique number for each shader */
 #define CK_xxx_SP(_p) BU_CKMAG(_p, xxx_MAGIC, "xxx_specific")
@@ -96,17 +97,11 @@ struct xxx_specific xxx_defaults = {
     xxx_MAGIC,
     1.0,				/* xxx_val */
     0.0,				/* xxx_dist */
-    { 1.0, 1.0, 1.0 },		/* xxx_delta */
-    { 0.0, 0.0, 0.0 },		/* xxx_min */
-    { 0.0, 0.0, 0.0 },		/* xxx_max */
-    { 0.0, 0.0, 0.0, 0.0,	/* xxx_m_to_sh */
-      0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0 },
-    { 0.0, 0.0, 0.0, 0.0,	/* xxx_m_to_r */
-      0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0 }
+    VINITALL(1.0),		/* xxx_delta */
+    VINIT_ZERO,			/* xxx_min */
+    VINIT_ZERO,			/* xxx_max */
+    MAT_INIT_ZERO,		/* xxx_m_to_sh */
+    MAT_INIT_ZERO		/* xxx_m_to_r */
 };
 
 
@@ -201,13 +196,14 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
      * fixed on the region when the region is moved (as in animation)
      * we need to get a matrix to perform the appropriate transform(s).
      *
-     * db_shader_mat returns a matrix which maps points on/in the region
-     * into the unit cube.  This unit cube is formed by first mapping from
-     * world coordinates into "region coordinates" (the coordinate system
-     * in which the region is defined).  Then the bounding box of the
-     * region is used to establish a mapping to the unit cube
+     * rt_shader_mat() returns a matrix which maps points on/in the
+     * region into the unit cube.  This unit cube is formed by first
+     * mapping from world coordinates into "region coordinates" (the
+     * coordinate system in which the region is defined).  Then the
+     * bounding box of the region is used to establish a mapping to
+     * the unit cube
      *
-     * db_shader_mat(xxx_sp->xxx_m_to_sh, rtip, rp, xxx_sp->xxx_min,
+     * rt_shader_mat(xxx_sp->xxx_m_to_sh, rtip, rp, xxx_sp->xxx_min,
      * xxx_sp->xxx_max);
      *
      * Alternatively, shading may be done in "region coordinates"

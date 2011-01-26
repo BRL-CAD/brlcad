@@ -25,22 +25,18 @@
  * a GIFT/SRIM format Radar file.  It tracks specular direction
  * reflections.
  *
- * Author -
- * Phillip Dykstra
- * From viewpp.c and viewray.c by
- * Michael John Muuss
- *
  */
 
 #include "common.h"
 
 #include <stdio.h>
 #include <string.h>
+
 #include "vmath.h"
 #include "raytrace.h"
 
 /* private */
-#include "rtprivate.h"
+#include "./rtuif.h"
 #include "./rad.h"
 
 
@@ -110,10 +106,8 @@ static int radmiss(struct application *ap);
  * Called at the start of a run.
  * Returns 1 if framebuffer should be opened, else 0.
  */
-int view_init(register struct application *ap,
-	      char *file,
-	      char *obj,
-	      int minus_o)
+int
+view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
 {
     ap->a_hit = radhit;
     ap->a_miss = radmiss;
@@ -188,7 +182,7 @@ writerec(union radrec *rp, FILE *fp)
 
 /* beginning of a frame */
 void
-view_2init(struct application *ap)
+view_2init(struct application *ap, char *UNUSED(framename))
 {
     extern double azimuth, elevation;
     vect_t temp, aimpt;
@@ -235,17 +229,17 @@ view_2init(struct application *ap)
 }
 
 /* end of each pixel */
-void view_pixel(void) {}
+void view_pixel(struct application *UNUSED(ap)) {}
 
 /* end of each line */
-void view_eol(void) {}
+void view_eol(struct application *UNUSED(ap)) {}
 
-void view_setup(void) {}
-void view_cleanup(void) {}
+void view_setup(struct rt_i *rtip) {}
+void view_cleanup(struct rt_i *rtip) {}
 
 /* end of a frame */
 void
-view_end(void)
+view_end(struct application *UNUSED(ap))
 {
     /* flush any partial output record */
     if (precindex > 0) {

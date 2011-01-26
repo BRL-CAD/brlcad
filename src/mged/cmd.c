@@ -84,26 +84,6 @@ static struct bu_vls tcl_output_hook;
 
 
 /**
- * O U T P U T _ C A T C H
- *
- * Gets the output from bu_log and appends it to clientdata vls.
- */
-HIDDEN int
-output_catch(genptr_t clientdata, genptr_t str)
-{
-    struct bu_vls *vp = (struct bu_vls *)clientdata;
-    int len;
-
-    BU_CK_VLS(vp);
-    len = bu_vls_strlen(vp);
-    bu_vls_strcat(vp, str);
-    len = bu_vls_strlen(vp) - len;
-
-    return len;
-}
-
-
-/**
  * G U I _ O U T P U T
  *
  * Used as a hook for bu_log output.  Sends output to the Tcl

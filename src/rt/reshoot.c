@@ -83,7 +83,8 @@
 #include "vmath.h"		/* vector math macros */
 #include "bu.h"
 #include "raytrace.h"		/* librt interface definitions */
-#include "rtprivate.h"
+
+#include "./rtuif.h"
 
 
 char *progname = "(noname)";
@@ -311,7 +312,7 @@ main(int argc, char **argv)
     /* every application needs one of these */
     struct application	ap;
     static struct rt_i *rtip;	/* rt_dirbuild returns this */
-    char idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
+    char idbuf[2048] = {0};	/* First ID record info */
 
     int arg_count;
     int status = 0;

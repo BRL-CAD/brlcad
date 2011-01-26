@@ -58,9 +58,9 @@
 #include "pkg.h"
 #include "fb.h"
 
+#include "../rt/rtuif.h"
 #include "../rt/ext.h"
 #include "./protocol.h"
-#include "rtprivate.h"
 
 
 
@@ -654,7 +654,7 @@ prepare(void)
      * initialize application -- it will allocate 1 line and
      * set buf_mode=1, as well as do mlib_init().
      */
-    (void)view_init( &ap, title_file, title_obj, 0 );
+    (void)view_init( &ap, title_file, title_obj, 0, 0);
 
     do_prep( rtip );
 
@@ -664,7 +664,7 @@ prepare(void)
     grid_setup();
 
     /* initialize lighting */
-    view_2init( &ap );
+    view_2init( &ap, NULL );
 
     rtip->nshots = 0;
     rtip->nmiss_model = 0;

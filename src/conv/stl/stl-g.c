@@ -405,6 +405,7 @@ Convert_part_binary()
     int face_count=0;
     int degenerate_count=0;
     int small_count=0;
+    size_t ret;
 
     solid_count++;
     bu_vls_init(&solid_name);
@@ -420,7 +421,9 @@ Convert_part_binary()
     bu_log("\tUsing solid name: %s\n", bu_vls_addr(&solid_name));
 
 
-    fread(buf, 4, 1, fd_in);
+    ret = fread(buf, 4, 1, fd_in);
+    if (ret != 1)
+	perror("fread");
 
     /* swap bytes to convert from Little-endian to network order (big-endian) */
     lswap((unsigned int *)buf);
@@ -442,7 +445,9 @@ Convert_part_binary()
 	ntohf((unsigned char *)flts, buf, 12);
 
 	/* unused attribute byte count */
-	fread(buf, 2, 1, fd_in);
+	ret = fread(buf, 2, 1, fd_in);
+	if (ret != 1)
+	    perror("fread");
 
 	VMOVE(normal, flts);
 	VSCALE(pt, &flts[3], conv_factor);

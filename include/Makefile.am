@@ -16,7 +16,6 @@ brlcadinclude_required = \
 	raytrace.h \
 	rtfunc.h \
 	rtgeom.h \
-	rtprivate.h \
 	rtserver.h \
 	tclcad.h
 

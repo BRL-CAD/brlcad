@@ -2337,7 +2337,7 @@ refresh(void)
 		    mged_variables->mv_fb_all) {
 		    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
 		} else {
-		    /* Draw each solid in it's proper place on the
+		    /* Draw each solid in its proper place on the
 		     * screen by applying zoom, rotation, &
 		     * translation.  Calls DM_LOADMATRIX() and
 		     * DM_DRAW_VLIST().
@@ -2585,6 +2585,8 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     struct mater *save_materp = MATER_NULL;
     struct bu_vls msg;	/* use this to hold returned message */
     int created_new_db = 0;
+    int c;
+    int flip_v4 = 0;
 
     if (argc <= 1) {
 	/* Invoked without args, return name of current database */
@@ -2599,6 +2601,18 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     }
 
     bu_vls_init(&msg);
+
+    /* handle getopt arguments */
+    bu_optind = 1;
+    while ((c = bu_getopt(argc, (char * const *)argv, "f")) != EOF) {
+	switch (c) {
+	    case 'f':
+		flip_v4=1;
+		break;
+	}
+    }
+    argc -= (bu_optind - 1);
+    argv += (bu_optind - 1);
 
     /* validate arguments */
     if (argc > 3
@@ -2760,6 +2774,16 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	/* restore to the new db just opened */
 	dbip = new_dbip;
 	rt_new_material_head(new_materp);
+    }
+
+    if (flip_v4) {
+	if (dbip->dbi_version != 4) {
+	    bu_log("WARNING: [%s] is not a v4 database.  The -f option will be ignored.\n", dbip->dbi_filename);
+	} else {
+	    dbip->dbi_version *= -1; /* flip the version number to indicate a flipped database */
+	    dbip->dbi_read_only = 1; /* do NOT write to a flipped database */
+	    bu_log("Treating file as a binary-incompatible v4 geometry database.\n");
+	}
     }
 
     if (dbip->dbi_read_only) {

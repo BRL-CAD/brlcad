@@ -67,7 +67,7 @@ Showtree(struct node *root)
 	    return;
 	}
 
-	if (ptr->op < 0) /* this is an operand, push it's name */
+	if (ptr->op < 0) /* this is an operand, push its name */
 	    Apush(dir[-(1+ptr->op)/2]->name);
 	else {
 	    /* this is an operator */

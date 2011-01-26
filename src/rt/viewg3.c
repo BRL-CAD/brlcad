@@ -48,9 +48,10 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "./ext.h"
 #include "plot3.h"
-#include "rtprivate.h"
+
+#include "./rtuif.h"
+#include "./ext.h"
 
 
 #define	MM2IN	0.03937008		/* mm times MM2IN gives inches */
@@ -116,7 +117,7 @@ static char * save_file;
 static char * save_obj;
 
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(register struct application *ap, char *file, char *obj, int minus_o, int UNUSED(minus_F))
 {
     /* Handling of air in librt */
     use_air = 1;
@@ -176,7 +177,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
  *
  */
 void
-view_2init(struct application *ap)
+view_2init(struct application *ap, char *UNUSED(framename))
 {
     if ( outfp == NULL )
 	bu_exit(EXIT_FAILURE, "outfp is NULL\n");
@@ -242,7 +243,7 @@ raymiss(register struct application *ap)
  *  This routine is called from do_run(), and in this case does nothing.
  */
 void
-view_pixel(void)
+view_pixel(struct application *UNUSED(ap))
 {
     return;
 }
@@ -713,7 +714,8 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
  *  View_eol() is called by rt_shootray() in do_run().  In this case,
  *  it does nothing.
  */
-void	view_eol(void)
+void
+view_eol(struct application *UNUSED(ap))
 {
 }
 
@@ -727,7 +729,7 @@ void	view_eol(void)
  *  be zero on this shotline, or else the client codes get confused.
  */
 void
-view_end(void)
+view_end(struct application *UNUSED(ap))
 {
     fprintf(outfp, SHOT_FMT,
 	    999.9, 999.9,
@@ -744,8 +746,8 @@ view_end(void)
     fflush(outfp);
 }
 
-void view_setup(void) {}
-void view_cleanup(void) {}
+void view_setup(struct rt_i *UNUSED(rtip)) {}
+void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 
 /*

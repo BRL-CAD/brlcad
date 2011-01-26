@@ -449,6 +449,49 @@ main(int argc, char *argv[])
 }
 
 
+static union tree *
+process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_full_path *pathp)
+{
+    union tree *result = NULL;
+
+    /* Begin bomb protection */
+    if (!BU_SETJUMP) {
+	/* try */
+
+	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	result = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+
+    } else {
+	/* catch */
+
+	char *sofar;
+
+	/* Error, bail out */
+
+	sofar = db_path_to_string(pathp);
+	bu_log("FAILED: Cannot convert %s!\n", sofar);
+	bu_free(sofar, "path string");
+
+	/* Sometimes the NMG library adds debugging bits when
+	 * it detects an internal error, before bombing out.
+	 */
+	rt_g.NMG_debug = NMG_debug;	/* restore mode */
+
+	/* Release the tree memory & input regions */
+	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
+
+	/* Get rid of (m)any other intermediate structures */
+	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC)
+	    nmg_km(*tsp->ts_m);
+
+	/* Now, make a new, clean model structure for next pass. */
+	*tsp->ts_m = nmg_mm();
+    } BU_UNSETJUMP;		/* Relinquish the protection */
+
+    return result;
+}
+
+
 /*
  * D O _ N M G _ R E G I O N _ E N D
  *
@@ -486,54 +529,22 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
     regions_tried++;
 
-    /* Begin bomb protection */
-    if (!BU_SETJUMP) {
-	/* try */
+    if (verbose)
+	bu_log("\ndoing boolean tree evaluate...\n");
 
-	if (verbose)
-	    bu_log("\ndoing boolean tree evaluate...\n");
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	result = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
+    /* evaluate the boolean */
+    result = process_boolean(tsp, curtree, pathp);
 
-	if (result)
-	    r = result->tr_d.td_r;
-	else
-	    r = (struct nmgregion *)NULL;
+    if (result)
+	r = result->tr_d.td_r;
+    else
+	r = (struct nmgregion *)NULL;
 
-	if (verbose)
-	    bu_log("\nfinished boolean tree evaluate...\n");
-
-    } else {
-	/* catch */
-
-	char *sofar;
-
-	/* Error, bail out */
-	BU_UNSETJUMP;		/* Relinquish the protection */
-
-	sofar = db_path_to_string(pathp);
-	bu_log("FAILED: Cannot convert %s!\n", sofar);
-	bu_free(sofar, "path string");
-
-	/* Sometimes the NMG library adds debugging bits when
-	 * it detects an internal error, before bombing out.
-	 */
-	rt_g.NMG_debug = NMG_debug;	/* restore mode */
-
-	/* Release the tree memory & input regions */
-	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
-
-	/* Get rid of (m)any other intermediate structures */
-	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC)
-	    nmg_km(*tsp->ts_m);
-
-	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
-	goto out;
-    } BU_UNSETJUMP;		/* Relinquish the protection */
+    if (verbose)
+	bu_log("\nfinished boolean tree evaluate...\n");
 
     regions_done++;
-    if (r != 0) {
+    if (r != NULL) {
 
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
@@ -644,7 +655,6 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
-out:
     BU_GETUNION(curtree, tree);
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;

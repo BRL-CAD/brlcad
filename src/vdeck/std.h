@@ -50,20 +50,6 @@ typedef char *pointer;		/* generic pointer (void *) */
 #define	signed		/* nothing */	/* (undefine for ANSI C) */
 #define	volatile	/* nothing */	/* (undefine for ANSI C) */
 
-/* Universal constants */
-
-#define DEGRAD	57.2957795130823208767981548141051703324054724665642
-/* degrees per radian */
-#define	E	2.71828182845904523536028747135266249775724709369996
-/* base of natural logs */
-#define	GAMMA	0.57721566490153286061
-/* Euler's constant */
-#define LOG10E	0.43429448190325182765112891891660508229439700580367
-/* log of e to the base 10 */
-#define PHI	1.618033988749894848204586834365638117720309180
-/* golden ratio */
-#define PI	3.14159265358979323846264338327950288419716939937511
-/* ratio of circumf. to diam. */
 
 /* Useful macros */
 

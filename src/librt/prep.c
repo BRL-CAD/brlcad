@@ -132,7 +132,7 @@ rt_new_rti(struct db_i *dbip)
      *
      * There is a race (collision!) here on d_uses if rt_gettrees() is
      * called on another rtip of the same dbip before this rtip is
-     * done with all it's treewalking.
+     * done with all its treewalking.
      */
     for (i=0; i < RT_DBNHASH; i++) {
 	register struct directory *dp;
@@ -1057,7 +1057,7 @@ rt_clean(register struct rt_i *rtip)
      *
      * There is a race (collision!) here on d_uses if rt_gettrees() is
      * called on another rtip of the same dbip before this rtip is
-     * done with all it's treewalking.
+     * done with all its treewalking.
      *
      * This must be done for each 'clean' to keep
      * rt_find_identical_solid() working properly as d_uses goes up.

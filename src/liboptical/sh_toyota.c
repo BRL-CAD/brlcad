@@ -42,9 +42,10 @@
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 #include "plot3.h"
 #include "light.h"
+
 
 /* Sky onditions for luminance calculations. */
 #define CLEAR_SKY 0
@@ -303,7 +304,7 @@ air_mass(fastf_t air_gamma)
 	bu_log("air_mass: sun altitude of %g degrees ignored.\n");
 	m = 0.;
     } else
-	m = 1./(sin(air_gamma*M_PI/180.)
+	m = 1./(sin(air_gamma*DEG2RAD)
 		+ 0.1500*pow((air_gamma + 3.885), -1.253));
     return m;
 }
@@ -2187,7 +2188,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
     if (EQUAL(refl, -1.0))
 	alpha1--;
     alpha_c = (alpha0 + alpha1)/2;	/* degrees. */
-    alpha_c *= M_PI/180;		/* radians. */
+    alpha_c *= DEG2RAD;			/* radians. */
 
     /* Find horizontal component of reflected light. */
     if (!NEAR_ZERO(VDOT(swp->sw_hit.hit_normal, Refl)-1, MIKE_TOL)) {
@@ -2206,7 +2207,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 
     /* Angle between Ctr and edge of solid angle. */
     alpha_c = (alpha1 - alpha0)/2;	/* degrees. */
-    alpha_c *= M_PI/180;		/* radians. */
+    alpha_c *= DEG2RAD;			/* radians. */
 
     /* Set up coord axes with Ctr as Z axis. */
     VCROSS(Xaxis, Yaxis, Ctr);
@@ -2257,7 +2258,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	* bg_radiance
 	* VDOT(Sky_elmnt, swp->sw_hit.hit_normal)
 	* del_omega;
-    irradiance /= M_PI;
+    irradiance *= M_1_PI;
 
     return irradiance;
 }
@@ -2320,7 +2321,7 @@ toyota_render(register struct application *ap, struct partition *UNUSED(pp), str
 	VUNITIZE(Sun);
 /* VPRINT("Sun", Sun); */
 	/* Altitude of sun above horizon (degrees). */
-	sun_alt = 90 - acos(VDOT(Sun, ts->Zenith))*180/M_PI;
+	sun_alt = 90 - acos(VDOT(Sun, ts->Zenith)) * RAD2DEG;
 
 	/* Create reflected ray. */
 	i_dot_n = VDOT(swp->sw_hit.hit_normal, ap->a_ray.r_dir);

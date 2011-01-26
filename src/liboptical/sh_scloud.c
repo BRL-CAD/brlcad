@@ -32,15 +32,13 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 #include "light.h"
+
 
 extern int rr_render(struct application *ap,
 		     struct partition *pp,
 		     struct shadework *swp);
-#if !defined(M_PI)
-#define M_PI 3.14159265358979323846
-#endif
 
 #define FLOOR(x)	((int)(x) - ((x) < 0 && (x) != (int)(x)))
 #define CEIL(x)		((int)(x) + ((x) > 0 && (x) != (int)(x)))
@@ -60,22 +58,16 @@ struct scloud_specific {
 
 
 static struct scloud_specific scloud_defaults = {
-    2.1753974,	/* lacunarity */
+    2.1753974,		/* lacunarity */
     1.0,		/* h_val */
     4.0,		/* octaves */
     1.0,		/* scale */
-    { 1.0, 1.0, 1.0 },	/* vscale */
+    VINITALL(1.0),	/* vscale */
     { 1000.0, 1200.0, 2100.0 },	/* delta */
-    0.01,			/* max_d_p_mm */
-    0.0,			/* min_d_p_mm */
-    {1.0, 0.0, 0.0, 0.0,	/* mtos */
-     0.0, 1.0, 0.0, 0.0,
-     0.0, 0.0, 1.0, 0.0,
-     0.0, 0.0, 0.0, 1.0},
-    {1.0, 0.0, 0.0, 0.0,	/* stom */
-     0.0, 1.0, 0.0, 0.0,
-     0.0, 0.0, 1.0, 0.0,
-     0.0, 0.0, 0.0, 1.0}
+    0.01,		/* max_d_p_mm */
+    0.0,		/* min_d_p_mm */
+    MAT_INIT_IDN,	/* mtos */
+    MAT_INIT_IDN	/* stom */
 };
 
 

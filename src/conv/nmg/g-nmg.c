@@ -68,52 +68,23 @@ static int	regions_converted = 0;
 
 /* extern struct mater* rt_material_head; */
 
-/*
- *			D O _ R E G I O N _ E N D
- *
- *  Called from db_walk_tree().
- *
- *  This routine must be prepared to run in parallel.
- */
-union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+
+static union tree *
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
-    struct nmgregion	*r;
-    struct bu_list		vhead;
-    union tree		*ret_tree;
-    char			*sofar;
-    struct bu_vls		shader_params;
-    char nmg_name[16];
-    unsigned char rgb[3];
-    unsigned char *color = (unsigned char *)NULL;
-    char *shader;
-    char *matparm;
-    struct wmember headp;
-    struct rt_bot_internal *bot;
-
-    RT_CK_TESS_TOL(tsp->ts_ttol);
-    BN_CK_TOL(tsp->ts_tol);
-    NMG_CK_MODEL(*tsp->ts_m);
-
-    BU_LIST_INIT(&vhead);
-
-    if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
-	sofar = db_path_to_string(pathp);
-	bu_log("\ndo_region_end(%d %d%%) %s\n",
-	       regions_tried,
-	       regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
-	       sofar);
-	bu_free(sofar, "path string");
-    }
-
-    if (curtree->tr_op == OP_NOP)
-	return curtree;
-
-    regions_tried++;
+    union tree *ret_tree = NULL;
 
     /* Begin bomb protection */
-    if ( BU_SETJUMP ) {
+    if ( !BU_SETJUMP ) {
+	/* try */
+
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
+
+    } else {
+	/* catch */
+
 	/* Error, bail out */
-	BU_UNSETJUMP;		/* Relinquish the protection */
+	char *sofar;
 
 	sofar = db_path_to_string(pathp);
 	bu_log( "FAILED: %s\n", sofar );
@@ -139,9 +110,57 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
 	/* Now, make a new, clean model structure for next pass. */
 	*tsp->ts_m = nmg_mm();
-	goto out;
+    } BU_UNSETJUMP;		/* Relinquish the protection */
+
+    return ret_tree;
+}
+
+
+/*
+ *			D O _ R E G I O N _ E N D
+ *
+ *  Called from db_walk_tree().
+ *
+ *  This routine must be prepared to run in parallel.
+ */
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+{
+    struct nmgregion	*r;
+    struct bu_list		vhead;
+    union tree		*ret_tree;
+    char			*sofar;
+    struct bu_vls		shader_params;
+    char nmg_name[16];
+    unsigned char rgb[3];
+    unsigned char *color = (unsigned char *)NULL;
+    char *shader;
+    char *matparm;
+    struct wmember headp;
+    struct rt_bot_internal *bot = NULL;
+
+    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BN_CK_TOL(tsp->ts_tol);
+    NMG_CK_MODEL(*tsp->ts_m);
+
+    BU_LIST_INIT(&vhead);
+
+    if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
+	sofar = db_path_to_string(pathp);
+	bu_log("\ndo_region_end(%d %d%%) %s\n",
+	       regions_tried,
+	       regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
+	       sofar);
+	bu_free(sofar, "path string");
     }
-    ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
+
+    if (curtree->tr_op == OP_NOP)
+	return curtree;
+
+    regions_tried++;
+
+    ret_tree = process_boolean(curtree, tsp, pathp);
+
+    regions_converted++;
 
     if ( ret_tree ) {
 	r = ret_tree->tr_d.td_r;
@@ -154,9 +173,6 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	}
 	r = (struct nmgregion *)NULL;
     }
-
-    BU_UNSETJUMP;		/* Relinquish the protection */
-    regions_converted++;
 
     if (tsp->ts_mater.ma_shader) {
 	shader = strtok( tsp->ts_mater.ma_shader, tok_sep );
@@ -252,8 +268,6 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
      *  so we need to cons up an OP_NOP node to return.
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
-
- out:
 
     if ( RT_G_DEBUG&DEBUG_MEM_FULL )
 	bu_prmem( "At end of do_region_end()" );

@@ -128,7 +128,7 @@ db_delrec(struct db_i *dbip, register struct directory *dp, int recnum)
  * D B _ D E L E T E
  *
  * Delete the indicated database record(s).
- * Arrange to write "free storage" database markers in it's place,
+ * Arrange to write "free storage" database markers in its place,
  * positively erasing what had been there before.
  *
  * Returns:

@@ -554,7 +554,7 @@
     $help add color	{{low high r g b str} {make color entry}}
     $help add comb	{{comb_name <operation solid>} {create or extend combination w/booleans}}
     $help add comb_color {{comb R G B} {set combination's color}}
-    $help add concat	{{file [prefix]} {concatenate 'file' onto end of present database.  Run 'dup file' first.}}
+    $help add concat	{{[-t] [-u] [-c] [-s|-p] file [prefix]} {concatenate 'file' onto end of present database.  Run 'dup file' first.}}
     $help add copyeval	{{new_solid path_to_old_solid}	{copy an 'evaluated' path solid}}
     $help add cp	{{from to} {copy [duplicate] object}}
     $help add dbip	{{} {get dbip}}

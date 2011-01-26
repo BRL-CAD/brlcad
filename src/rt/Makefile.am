@@ -173,6 +173,7 @@ rtxray_SOURCES = \
 noinst_HEADERS = \
 	ext.h \
 	rad.h \
+	rtuif.h \
 	scanline.h
 
 man_MANS = \

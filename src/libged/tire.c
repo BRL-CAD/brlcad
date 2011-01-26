@@ -42,7 +42,6 @@
 
 #define ROWS 5
 #define COLS 5
-#define F_PI 3.1415926535897932384626433832795029L
 
 static char *options="an:c:d:W:R:D:g:j:p:s:t:u:w:h";
 
@@ -937,8 +936,8 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     bu_vls_init(&str);
     bu_vls_init(&str2);
 
-    patternwidth1 = ztire * sin(F_PI / number_of_patterns);
-    patternwidth2 = z_base * sin(F_PI / number_of_patterns);
+    patternwidth1 = ztire * sin(M_PI / number_of_patterns);
+    patternwidth2 = z_base * sin(M_PI / number_of_patterns);
 
     verts[0] = verts1;
     vertcounts[0] = 12;
@@ -975,7 +974,7 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
     for ( i = 1; i <= number_of_patterns; i++) {
 	bu_vls_sprintf(&str, "tread_master%s.c", suffix);
-	getYRotMat(&y, i * 2 * F_PI / number_of_patterns);
+	getYRotMat(&y, i * 2 * M_PI / number_of_patterns);
 	(void)mk_addmember(bu_vls_addr(&str), &tread.l, y, WMOP_SUBTRACT);
     }
 
@@ -1072,8 +1071,8 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     bu_vls_init(&str);
     bu_vls_init(&str2);
 
-    patternwidth1 = ztire * sin(F_PI / number_of_patterns);
-    patternwidth2 = z_base * sin(F_PI / number_of_patterns);
+    patternwidth1 = ztire * sin(M_PI / number_of_patterns);
+    patternwidth2 = z_base * sin(M_PI / number_of_patterns);
 
     verts[0] = verts1;
     vertcounts[0] = 8;
@@ -1126,7 +1125,7 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
     for (i=1; i<=number_of_patterns; i++) {
 	bu_vls_sprintf(&str, "tread_master%s.c", suffix);
-	getYRotMat(&y, i * 2 * F_PI / number_of_patterns);
+	getYRotMat(&y, i * 2 * M_PI / number_of_patterns);
 	(void)mk_addmember(bu_vls_addr(&str), &tread.l, y, WMOP_SUBTRACT);
     }
 

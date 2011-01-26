@@ -275,7 +275,7 @@ static int nmg_eval_count = 0;	/* debug -- plot file numbering */
  * N M G _ E V A L _ A C T I O N
  *
  * Given a pointer to some NMG data structure, search the 4
- * classification lists to determine it's classification.  (XXX In the
+ * classification lists to determine its classification.  (XXX In the
  * future, this should be done with one big array).  Then, return the
  * action code for an item of that classification.
  */

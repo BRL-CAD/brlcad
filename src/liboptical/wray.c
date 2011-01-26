@@ -161,6 +161,7 @@ wraypts(vect_t in, vect_t inorm, vect_t out, int id, struct application *ap, FIL
 {
     struct vldray vldray;
     vect_t norm;
+    size_t ret;
 
     VMOVE(&(vldray.ox), in);
     VSUB2(&(vldray.rx), out, in);
@@ -174,7 +175,9 @@ wraypts(vect_t in, vect_t inorm, vect_t out, int id, struct application *ap, FIL
 
     WRAY_TAG(vldray, ap);
 
-    fwrite(&vldray, sizeof(struct vldray), 1, fp);
+    ret = fwrite(&vldray, sizeof(struct vldray), 1, fp);
+    if (ret != 1)
+	bu_log("Unable to write ray\n");
 }
 
 
@@ -187,6 +190,7 @@ void
 wraypaint(vect_t start, vect_t norm, int paint, struct application *ap, FILE *fp)
 {
     struct vldray vldray;
+    size_t ret;
 
     VMOVE(&(vldray.ox), start);
     VSETALL(&(vldray.rx), 0);
@@ -199,7 +203,9 @@ wraypaint(vect_t start, vect_t norm, int paint, struct application *ap, FILE *fp
 
     WRAY_TAG(vldray, ap);
 
-    fwrite(&vldray, sizeof(struct vldray), 1, fp);
+    ret = fwrite(&vldray, sizeof(struct vldray), 1, fp);
+    if (ret != 1)
+	bu_log("Unable to write paint into ray file\n");
 }
 
 

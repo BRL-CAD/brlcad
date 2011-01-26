@@ -37,10 +37,11 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
 
-#include "db.h"  /* Yes, I know I shouldn't be peeking, put I am only
-		    looking to see what units we prefer... */
+#include "./rtuif.h"
+
+#include "db.h"  /* FIXME: Yes, I know I shouldn't be peeking, put I
+		    am only looking to see what units we prefer... */
 
 
 extern struct resource resource[];
@@ -180,7 +181,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
  *  Returns 1 if framebuffer should be opened, else 0.
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
 {
     register size_t i;
     char buf[BUFSIZ+1];
@@ -251,7 +252,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 
 /* beginning of a frame */
 void
-view_2init(struct application *ap)
+view_2init(struct application *ap, char *UNUSED(framename))
 {
     register struct region *rp;
     register struct rt_i *rtip = ap->a_rt_i;
@@ -262,17 +263,20 @@ view_2init(struct application *ap)
 }
 
 /* end of each pixel */
-void	view_pixel(struct application *ap)
+void
+view_pixel(struct application *UNUSED(ap))
 {
 }
 
 /* end of each line */
-void	view_eol(struct application *ap)
+void
+view_eol(struct application *UNUSED(ap))
 {
 }
 
 /* end of a frame */
-void	view_end(struct application *ap)
+void
+view_end(struct application *ap)
 {
     register struct datapoint *dp;
     register struct region *rp;
@@ -434,10 +438,10 @@ void	view_end(struct application *ap)
     fprintf( outfp, "\nTotal mass = %g %s\n\n", total_weight, units );
 }
 
-void	view_setup(void) {}
+void view_setup(struct rt_i *rtip) {}
 
 /* Associated with "clean" command, before new tree is loaded  */
-void	view_cleanup(void) {}
+void view_cleanup(struct rt_i *rtip) {}
 
 void application_init (void) {}
 

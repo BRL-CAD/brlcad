@@ -452,10 +452,10 @@ union record  {
 
 
 /* convert dbfloat->fastf_t */
-void rt_fastf_float DB_ARGS( (fastf_t *ff, const dbfloat_t *fp, int n) );
+void rt_fastf_float DB_ARGS( (fastf_t *ff, const dbfloat_t *fp, int n, int flip) );
 
 /* convert dbfloat mat->fastf_t */
-void rt_mat_dbmat DB_ARGS( (fastf_t *ff, const dbfloat_t *dbp) );
+void rt_mat_dbmat DB_ARGS( (fastf_t *ff, const dbfloat_t *dbp, int flip) );
 void rt_dbmat_mat DB_ARGS( (dbfloat_t *dbp, const fastf_t *ff) );
 
 #endif	/* __DB_H__ */

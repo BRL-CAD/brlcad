@@ -3081,7 +3081,7 @@ BU_EXPORT BU_EXTERN(void bu_call_hook,
  *
  * BRL-CAD support library, error logging routine.  Note that the user
  * may provide his own logging routine, by replacing these functions.
- * That is why this is in file of it's own.  For example, LGT and
+ * That is why this is in file of its own.  For example, LGT and
  * RTSRV take advantage of this.
  *
  * Here is an example of how to set up a custom logging callback.
@@ -3236,7 +3236,7 @@ BU_EXPORT BU_EXTERN(void bu_free,
  *
  * While the string 'str' is provided for the log messages, don't
  * disturb the str value, so that this storage allocation can be
- * tracked back to it's original creator.
+ * tracked back to its original creator.
  */
 BU_EXPORT BU_EXTERN(genptr_t bu_realloc,
 		    (genptr_t ptr,
@@ -3554,7 +3554,7 @@ BU_EXPORT BU_EXTERN(int bu_set_realtime, ());
  * with private stack areas.  Locking and work dispatching are handled
  * by 'func' using a "self-dispatching" paradigm.
  *
- * 'func' is called with one parameter, it's thread number.  Threads
+ * 'func' is called with one parameter, its thread number.  Threads
  * are given increasing numbers, starting with zero.
  *
  * This function will not return control until all invocations of the

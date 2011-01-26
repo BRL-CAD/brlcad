@@ -231,7 +231,7 @@ XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
  * !0 Error in description
  *
  * Implicit return -
- * A struct bot_specific is created, and it's address is stored in
+ * A struct bot_specific is created, and its address is stored in
  * stp->st_specific for use by bot_shot().
  */
 int

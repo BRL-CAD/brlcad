@@ -35,9 +35,11 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "./ext.h"
-#include "rtprivate.h"
 #include "fb.h"		/* Added because RGBpixel is now needed in do_pixel() */
+
+#include "./rtuif.h"
+#include "./ext.h"
+
 
 /* for fork/pipe linux timing hack */
 #ifdef USE_FORKED_THREADS

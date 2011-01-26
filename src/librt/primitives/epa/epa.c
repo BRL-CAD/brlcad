@@ -197,7 +197,7 @@ const struct bu_structparse rt_epa_parse[] = {
  * !0 Error in description
  *
  * Implicit return -
- * A struct epa_specific is created, and it's address is stored in
+ * A struct epa_specific is created, and its address is stored in
  * stp->st_specific for use by epa_shot().
  */
 int

@@ -72,7 +72,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib"
-				OutputFile="$(PlatformName)\$(ConfigurationName)/g-shell.rect.exe"
+				OutputFile="$(PlatformName)\$(ConfigurationName)/g-shell-rect.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
@@ -165,7 +165,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib"
-				OutputFile="$(PlatformName)\$(ConfigurationName)/g-shell.rect.exe"
+				OutputFile="$(PlatformName)\$(ConfigurationName)/g-shell-rect.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall$(PlatformName)/lib"
@@ -212,7 +212,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\..\src\conv\g-shell.rect.c"
+				RelativePath="..\..\..\src\conv\g-shell-rect.c"
 				>
 			</File>
 		</Filter>

@@ -31,7 +31,8 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
+
 
 HIDDEN int sh_stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp);
 HIDDEN int sh_stk_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);

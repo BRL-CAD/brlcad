@@ -461,8 +461,8 @@ struct curr_id *
 lookup_curr_id(int region_id)
 {
     int rc;	/* Return code from bu_rb_insert() */
-    struct curr_id *qcip;	/* The query */
-    struct curr_id *cip;	/* Value to return */
+    struct curr_id *qcip = NULL;/* The query */
+    struct curr_id *cip = NULL;	/* Value to return */
 
     /*
      * Prepare the query

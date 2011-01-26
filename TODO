@@ -17,11 +17,7 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* bu_ipwd returns the wrong path, check out realpath()
-
-* open binary-incompatible v4 database
-
-* rename all the g_* tools sans "_"
+* TBD
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -49,6 +45,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* rename all the g_* tools sans "_" [save until 7.20]
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.

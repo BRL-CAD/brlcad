@@ -822,7 +822,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	nmg_class_nothing_broken = 1;
 
 	/* Show each loop, one at a time, non-fancy */
-	/* XXX Should have it's own bit, or combination -- not always wanted */
+	/* XXX Should have its own bit, or combination -- not always wanted */
 	nmg_show_each_loop(sA, &classlist[0], 1, 0, "sA lu");
 	nmg_show_each_loop(sB, &classlist[4], 1, 0, "sB lu");
 
@@ -1117,7 +1117,7 @@ int nmg_bool_eval_silent=0;
  * For an example of several, see mged/dodraw.c.
  *
  * Returns an OP_NMG_TESS union tree node, which will contain the
- * resulting region and it's name, as a dynamic string.  The caller is
+ * resulting region and its name, as a dynamic string.  The caller is
  * responsible for releasing the string, and the node, by calling
  * db_free_tree() on the node.
  *
@@ -1170,7 +1170,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 	    bu_log("nmg_booltree_evaluate: bad op %d\n", tp->tr_op);
 	    return 0;
     }
-    /* Handle a boolean operation node.  First get it's leaves. */
+    /* Handle a boolean operation node.  First get its leaves. */
     tl = nmg_booltree_evaluate(tp->tr_b.tb_left, tol, resp);
     tr = nmg_booltree_evaluate(tp->tr_b.tb_right, tol, resp);
     if (tl == 0 || !tl->tr_d.td_r) {

@@ -622,7 +622,7 @@ _bu_parallel_interface(void)
 #  if defined(SGI_4D) || defined(IRIX)
     /*
      * On an SGI, a process/thread created with the "sproc" syscall
-     * has all of it's file descriptors closed when it "returns" to
+     * has all of its file descriptors closed when it "returns" to
      * sproc.  Since this trashes file descriptors which may still be
      * in use by other processes, we avoid ever returning to sproc.
      */

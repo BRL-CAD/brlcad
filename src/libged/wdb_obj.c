@@ -8484,7 +8484,7 @@ wdb_bot_smooth_cmd(struct rt_wdb *wdbp,
     old_bot = (struct rt_bot_internal *)intern.idb_ptr;
     RT_BOT_CK_MAGIC(old_bot);
 
-    if (rt_bot_smooth(old_bot, old_bot_name, wdbp->dbip, tolerance_angle*M_PI/180.0)) {
+    if (rt_bot_smooth(old_bot, old_bot_name, wdbp->dbip, tolerance_angle*DEG2RAD)) {
 	Tcl_AppendResult(interp, "Failed to smooth ", old_bot_name, "\n", (char *)NULL);
 	rt_db_free_internal(&intern);
 	return TCL_ERROR;

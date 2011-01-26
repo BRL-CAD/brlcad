@@ -168,7 +168,7 @@ int HmMaxVis
 
 If this routine is not called, default parameters will be used.
 
-HmInit() also opens "/dev/tty" for input and stores it's file
+HmInit() also opens "/dev/tty" for input and stores its file
 descriptor in HmTtyFd and associated stream handle in HmTtyFp.
 
 int HmTtyFd

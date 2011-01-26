@@ -199,7 +199,7 @@ const struct bu_structparse rt_ehy_parse[] = {
  * !0 Error in description
  *
  * Implicit return -
- * A struct ehy_specific is created, and it's address is stored in
+ * A struct ehy_specific is created, and its address is stored in
  * stp->st_specific for use by ehy_shot().
  */
 int

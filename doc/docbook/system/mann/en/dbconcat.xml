@@ -58,19 +58,25 @@
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>dbconcat</command>    
+      <arg choice='opt'><replaceable>-t</replaceable></arg>   
+      <arg choice='opt'><replaceable>-u</replaceable></arg>   
+      <arg choice='opt'><replaceable>-c</replaceable></arg>   
+      <arg choice='opt'><replaceable>-s|-p</replaceable></arg>
       <arg choice='req'><replaceable>database_file</replaceable></arg>
-      <arg choice='opt'><replaceable>prefix</replaceable></arg>
+      <arg choice='opt'><replaceable>affix</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      Concatenates an existing <emphasis> BRL-CAD </emphasis> database to the
-      database currently being edited. If a <emphasis> prefix</emphasis> is 
+      Concatenates an existing <emphasis>BRL-CAD</emphasis> database to the
+      database currently being edited. If an <emphasis>affix</emphasis> is 
       supplied, then all objects from the <emphasis>database_file</emphasis> 
-      will have <emphasis> prefix </emphasis> added to the beginning of their
-      names. Note that each <emphasis> BRL-CAD</emphasis> object must have a unique 
+      will have the <emphasis>affix</emphasis> added to their
+      names as a suffix (if the <emphasis>-s</emphasis> option is specified), or as a prefix
+      (if the <emphasis>-p</emphasis> option is specified). The <emphasis>-p</emphasis> is the default.
+      Note that each <emphasis>BRL-CAD</emphasis> object must have a unique 
       name, so care must be taken not to "dbconcat" a  database that has objects 
       with names the same as objects in the current database. 	The <command>dup</command> 
       command may be used to check for duplicate names. If the <command>dup</command> 
@@ -80,14 +86,19 @@
       are encountered during the "dbconcat" process, computer-generated prefixes
       will be added to the object names coming from the <emphasis>database_file</emphasis> 
       (but member names appearing in combinations will not be modified, so this is a 
-      dangerous practice and should be avoided).
+      dangerous practice and should be avoided). The <emphasis>-t</emphasis> option indicates that
+      the title of the <emphasis>database_file</emphasis> should become the title of the currently
+      edited database. The <emphasis>-u</emphasis> option indicates that the units of the
+      <emphasis>database_file</emphasis> should become the units of the currently edited database. Similarly,
+      the <emphasis>-c</emphasis> option indicates that the region color table of the currently edited database
+      should be replaced with that of the <emphasis>database_file</emphasis>.
     </para>
   </refsect1>
   
   <refsect1 id='examples'>
     <title>EXAMPLES</title>
     <para>
-      The example shows the use of the <command>dbconcat</command> command to copy all objects in a particular
+      This example shows the use of the <command>dbconcat</command> command to copy all objects in a particular
       database to the current database. It also shows how to add a particular prefix to every object copied.
     </para>
     <example>
@@ -96,6 +107,19 @@
       <para>
 	Copies all the objects in <emphasis>model_two.g</emphasis> to the current database,
 	but prefixes the name of every object copied with the string <emphasis>two_</emphasis>.
+      </para>
+    </example>
+    
+    <para>
+      Another example shows a usage to import the title, units, color table, and all the objects of a database file
+      into the current database. This is particularly useful if the current database is empty or just created by mged.
+    </para>
+    <example>
+      <title>Copy an entire database, including title, units, and color table, to the current database without any affix</title>    
+      <para><prompt>mged></prompt> <userinput>dbconcat -t -u -c model_two.g</userinput></para>
+      <para>
+        Copies all the objects in <emphasis>model_two.g</emphasis> to the current database, including the title, units,
+        and color table. No suffix or prefix is added to the object names.
       </para>
     </example>
   </refsect1>

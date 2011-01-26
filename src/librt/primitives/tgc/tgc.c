@@ -1557,7 +1557,7 @@ rt_tgc_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     tip->magic = RT_TGC_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    rt_fastf_float(vec, rp->s.s_values, 6);
+    rt_fastf_float(vec, rp->s.s_values, 6, dbip->dbi_version < 0 ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;

@@ -56,6 +56,7 @@ main(int argc, char **argv)
     static int count;
     static int i;
     double factor = 1.0;
+    int ret;
 
     if ( argc != 3 )  {
 	printf("Usage: conv-vg2g file.vg file.g\n");
@@ -130,7 +131,10 @@ main(int argc, char **argv)
 	printf("Title=%s\n", rec.i.i_title );
     }
 
-    write( ofd, &rec, sizeof rec );
+    ret = write( ofd, &rec, sizeof rec );
+    if (ret < 0)
+	perror("write");
+
     count = 1;
 
     /* find the units scale factor */
@@ -222,7 +226,10 @@ main(int argc, char **argv)
 		m[11] *= factor;
 		break;
 	}
-	write( ofd, &rec, sizeof(rec) );
+	ret = write( ofd, &rec, sizeof(rec) );
+	if (ret < 0)
+	    perror("write");
+
 	count++;
     }
     printf("%d database granules written\n", count);

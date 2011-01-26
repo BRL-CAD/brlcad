@@ -24,7 +24,7 @@
  * without taking any effects such as curvature, emission, reflection, etc
  * into consideration.  It simply shades an object constantly with either
  * (in order of reverse priority) 1) the default flat color (white),
- * 2) it's set region color, 2) the specified flat shader color (given via
+ * 2) its set region color, 2) the specified flat shader color (given via
  * the color attribute).
  *
  * Optionally a transparency value may be shown as well.  With transparency
@@ -48,7 +48,8 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
+
 
 extern int rr_render(struct application *ap, struct partition *pp, struct shadework *swp);
 
@@ -75,8 +76,8 @@ struct flat_specific {
 static const
 struct flat_specific flat_defaults = {
     FLAT_MAGIC,
-    { 1.0, 1.0, 1.0 }, /* full white */
-    { 0.0, 0.0, 0.0 }  /* completely opaque (no transparency)*/
+    VINITALL(1.0), /* full white */
+    VINIT_ZERO  /* completely opaque (no transparency)*/
 };
 
 

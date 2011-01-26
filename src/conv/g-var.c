@@ -121,6 +121,7 @@ void dealloc_mesh_list()
 
 void write_header(struct db_i *dbip)
 {
+    size_t ret;
     size_t len;
     char endian;
     /*
@@ -140,21 +141,35 @@ void write_header(struct db_i *dbip)
     } else {
 	endian = 0;
     }
-    fwrite(&endian, 1, 1, fp_out);
+    ret = fwrite(&endian, 1, 1, fp_out);
+    if (ret != 1)
+	perror("fwrite");
 
     /* format version */
-    fwrite(&format_version, 1, 1, fp_out);
+    ret = fwrite(&format_version, 1, 1, fp_out);
+    if (ret != 1)
+	perror("fwrite");
     len = strlen(dbip->dbi_title);
     /* model name string length */
-    fwrite(&len, sizeof(uint16_t), 1, fp_out);
+    ret = fwrite(&len, sizeof(uint16_t), 1, fp_out);
+    if (ret != 1)
+	perror("fwrite");
     /* model name string */
-    fwrite(dbip->dbi_title, 1, len, fp_out);
+    ret = fwrite(dbip->dbi_title, 1, len, fp_out);
+    if (ret != 1)
+	perror("fwrite");
     /* mesh count */
-    fwrite(&mesh_count, sizeof(uint32_t), 1, fp_out);
+    ret = fwrite(&mesh_count, sizeof(uint32_t), 1, fp_out);
+    if (ret != 1)
+	perror("fwrite");
     /* total number of vertices */
-    fwrite(&total_vertex_count, sizeof(uint32_t), 1, fp_out);
+    ret = fwrite(&total_vertex_count, sizeof(uint32_t), 1, fp_out);
+    if (ret != 1)
+	perror("fwrite");
     /* total number of faces */
-    fwrite(&total_face_count, sizeof(uint32_t), 1, fp_out);
+    ret = fwrite(&total_face_count, sizeof(uint32_t), 1, fp_out);
+    if (ret != 1)
+	perror("fwrite");
 }
 
 
@@ -231,6 +246,8 @@ void get_normals(struct rt_bot_internal *bot, float *dest)
 
 void write_mesh_data()
 {
+    size_t ret;
+
     /*
       Data format:
       Size of Mesh Name String (2 bytes - short)
@@ -263,27 +280,39 @@ void write_mesh_data()
 
 	len = strlen(curr->name);
 	/* mesh name string length */
-	fwrite(&len, sizeof(uint16_t), 1, fp_out);
+	ret = fwrite(&len, sizeof(uint16_t), 1, fp_out);
+	if (ret != 1)
+	    perror("fwrite");
 	/* mesh name string */
-	fwrite(curr->name, 1, len, fp_out);
+	ret = fwrite(curr->name, 1, len, fp_out);
+	if (ret != 1)
+	    perror("fwrite");
 	nvert = curr->bot->num_vertices;
 	nface = curr->bot->num_faces;
 	/* number of vertices */
-	fwrite(&nvert, sizeof(uint32_t), 1, fp_out);
+	ret = fwrite(&nvert, sizeof(uint32_t), 1, fp_out);
+	if (ret != 1)
+	    perror("fwrite");
 	/* number of faces */
-	fwrite(&nface, sizeof(uint32_t), 1, fp_out);
+	ret = fwrite(&nface, sizeof(uint32_t), 1, fp_out);
+	if (ret != 1)
+	    perror("fwrite");
 
 	/* vertex triples */
 	for (i=0; i < curr->bot->num_vertices; i++) {
 	    get_vertex(curr->bot, i, vec);
-	    fwrite(vec, sizeof(float), 3, fp_out);
+	    ret = fwrite(vec, sizeof(float), 3, fp_out);
+	    if (ret != 1)
+		perror("fwrite");
 	}
 	/* normal triples */
 	if (curr->bot->num_normals == curr->bot->num_vertices) {
 	    if (verbose)
 		fprintf(stderr, ">> .. normals found!\n");
 	    /* normals are provided */
-	    fwrite(curr->bot->normals, sizeof(float), curr->bot->num_normals * 3, fp_out);
+	    ret = fwrite(curr->bot->normals, sizeof(float), curr->bot->num_normals * 3, fp_out);
+	    if (ret != 1)
+		perror("fwrite");
 	} else {
 	    float *normals;
 	    if (verbose) {
@@ -292,7 +321,9 @@ void write_mesh_data()
 	    /* normals need to be computed */
 	    normals = bu_calloc(sizeof(float), curr->bot->num_vertices * 3, "normals");
 	    get_normals(curr->bot, normals);
-	    fwrite(normals, sizeof(float), curr->bot->num_vertices * 3, fp_out);
+	    ret = fwrite(normals, sizeof(float), curr->bot->num_vertices * 3, fp_out);
+	    if (ret != 1)
+		perror("fwrite");
 	    bu_free(normals, "normals");
 	}
 
@@ -304,7 +335,9 @@ void write_mesh_data()
 	    format = 2;
 	}
 	/* face index format */
-	fwrite(&format, 1, 1, fp_out);
+	ret = fwrite(&format, 1, 1, fp_out);
+	if (ret != 1)
+	    perror("fwrite");
 	switch (format) {
 	    case 0:
 		for (i=0; i< nface; i++) {
@@ -316,7 +349,9 @@ void write_mesh_data()
 			ind8[1] = curr->bot->faces[3*i+1];
 			ind8[2] = curr->bot->faces[3*i+2];
 		    }
-		    fwrite(&ind8, 1, 3, fp_out);
+		    ret = fwrite(&ind8, 1, 3, fp_out);
+		    if (ret != 1)
+			perror("fwrite");
 		}
 		break;
 	    case 1:
@@ -329,7 +364,9 @@ void write_mesh_data()
 			ind16[1] = curr->bot->faces[3*i+1];
 			ind16[2] = curr->bot->faces[3*i+2];
 		    }
-		    fwrite(&ind16, 2, 3, fp_out);
+		    ret = fwrite(&ind16, 2, 3, fp_out);
+		    if (ret != 1)
+			perror("fwrite");
 		}
 		break;
 	    case 2:
@@ -342,7 +379,9 @@ void write_mesh_data()
 			ind32[1] = curr->bot->faces[3*i+1];
 			ind32[2] = curr->bot->faces[3*i+2];
 		    }
-		    fwrite(&ind32, 4, 3, fp_out);
+		    ret = fwrite(&ind32, 4, 3, fp_out);
+		    if (ret != 1)
+			perror("fwrite");
 		}
 		break;
 	    default:

@@ -327,7 +327,7 @@ get_obliq(fastf_t *ray, fastf_t *normal)
     }
 
     /* convert obliquity to degrees */
-    obliquity = fabs(obliquity * 180/M_PI);
+    obliquity = fabs(obliquity * RAD2DEG);
     if (obliquity > 90 && obliquity <= 180)
 	obliquity = 180 - obliquity;
     else if (obliquity > 180 && obliquity <= 270)

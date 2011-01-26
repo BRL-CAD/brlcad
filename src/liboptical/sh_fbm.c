@@ -31,7 +31,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 
 
 struct fbm_specific {
@@ -46,13 +46,13 @@ struct fbm_specific {
 
 
 static struct fbm_specific fbm_defaults = {
-    2.1753974,	/* lacunarity */
+    2.1753974,		/* lacunarity */
     1.0,		/* h_val */
-    4,		/* octaves */
+    4,			/* octaves */
     0.0,		/* offset */
     0.0,		/* gain */
     1.0,		/* distortion */
-    { 1.0, 1.0, 1.0 }	/* scale */
+    VINITALL(1.0)	/* scale */
 };
 
 

@@ -40,14 +40,10 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 
 #ifdef RT_MULTISPECTRAL
 #  include "spectrum.h"
-#endif
-
-#if !defined(M_PI)
-#  define M_PI 3.14159265358979323846
 #endif
 
 #define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
@@ -92,40 +88,34 @@ camo_cvt_parse(register const struct bu_structparse *sdp, register const char *U
 static struct camo_specific camo_defaults = {
     camo_MAGIC,
     2.1753974,		/* noise_lacunarity */
-    1.0,			/* noise_h_val */
-    4.0,			/* noise_octaves */
-    1.0,			/* noise_size */
-    { 0.0125, 0.0125, 0.0125 },	/* noise_vscale */
-    { 1000.0, 1000.0, 1000.0 },	/* delta into noise space */
-    -0.25,			/* t1 */
-    0.25,			/* t2 */
+    1.0,		/* noise_h_val */
+    4.0,		/* noise_octaves */
+    1.0,		/* noise_size */
+    VINITALL(0.0125),	/* noise_vscale */
+    VINITALL(1000.0),	/* delta into noise space */
+    -0.25,		/* t1 */
+    0.25,		/* t2 */
     { .38, .29, .16 },	/* darker color c1 (97/74/41) */
     { .1, .30, .04 },	/* basic color c2 (26/77/10) */
-    { .15, .15, .15 },	/* dark black (38/38/38) */
-    {1.0, 0.0, 0.0, 0.0,
-     0.0, 1.0, 0.0, 0.0,
-     0.0, 0.0, 1.0, 0.0,
-     0.0, 0.0, 0.0, 1.0}
+    VINITALL(0.15),	/* dark black (38/38/38) */
+    MAT_INIT_IDN
 };
 
 
 static struct camo_specific marble_defaults = {
     camo_MAGIC,
     2.1753974,		/* noise_lacunarity */
-    1.0,			/* noise_h_val */
-    4.0,			/* noise_octaves */
-    1.0,			/* noise_size */
-    { 1.0, 1.0, 1.0 },	/* noise_vscale */
-    { 1000.0, 1000.0, 1000.0 },	/* delta into noise space */
-    0.25,			/* t1 */
-    0.5,			/* t2 */
+    1.0,		/* noise_h_val */
+    4.0,		/* noise_octaves */
+    1.0,		/* noise_size */
+    VINITALL(1.0),	/* noise_vscale */
+    VINITALL(1000.0),	/* delta into noise space */
+    0.25,		/* t1 */
+    0.5,		/* t2 */
     { .8, .2, .16 },	/* darker color c1 (97/74/41) */
     { .9, .9, .8 },	/* basic color c2 (26/77/10) */
-    { .15, .15, .15 },	/* dark black (38/38/38) */
-    {1.0, 0.0, 0.0, 0.0,
-     0.0, 1.0, 0.0, 0.0,
-     0.0, 0.0, 1.0, 0.0,
-     0.0, 0.0, 0.0, 1.0}
+    VINITALL(0.15),	/* dark black (38/38/38) */
+    MAT_INIT_IDN
 };
 
 

@@ -325,14 +325,21 @@ Included in following are various minimally impacting API changes that
 have been identified in reverse chronological order.  As expressions
 are not extensively tested, use with caution.
 
+s/db_shader_mat(/rt_shader_mat(/g
+        db_shader_mat() renamed to rt_shader_mat() [7.18]
+
 s/rt_get_seg(/rt_alloc_sed_block(/g
         rt_get_seg() renamed to rt_alloc_seg_block() [7.18]
+
 s/db_get_directory(/db_alloc_directory_block(/g
         db_get_directory() renamed to db_alloc_directory_block() [7.18]
+
 s/db_get_directory_size(/db_directory_size(/g
         db_get_directory_size() renamed to db_directory_size() [7.18]
+
 s/db_get_version(/db_version(/g
         db_get_version() renamed to db_version() [7.18]
+
 s/VAPPROXEQUAL(/VNEAR_EQUAL(/g
         VAPPROXEQUAL() renamed to VNEAR_EQUAL() [7.18]
 

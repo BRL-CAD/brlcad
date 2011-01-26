@@ -975,9 +975,9 @@ GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, int m
     }
 
     /*
-      irrad[0] *= (1.0/M_PI)/NP.RadSq;
-      irrad[1] *= (1.0/M_PI)/NP.RadSq;
-      irrad[2] *= (1.0/M_PI)/NP.RadSq;
+      irrad[0] *= M_1_PI / NP.RadSq;
+      irrad[1] *= M_1_PI / NP.RadSq;
+      irrad[2] *= M_1_PI / NP.RadSq;
     */
     bu_free(Search.List, "Search.List");
     /* bu_log("Radius: %.3f, Max Phot: %d, Found: %d, Power: [%.4f, %.4f, %.4f], Pos: [%.3f, %.3f, %.3f]\n", sqrt(NP.RadSq), NP.Max, NP.Found, irrad[0], irrad[1], irrad[2], pos[0], pos[1], pos[2]);*/
@@ -1191,6 +1191,7 @@ Initialize(int MAP, int MapSize)
 int
 LoadFile(char *pmfile)
 {
+    size_t ret;
     FILE *FH;
     int I1, i;
     short S1;
@@ -1199,32 +1200,54 @@ LoadFile(char *pmfile)
     FH = fopen(pmfile, "rb");
     if (FH) {
 	bu_log("  Reading Irradiance Cache File...\n");
-	fread(&S1, sizeof(short), 1, FH);
+	ret = fread(&S1, sizeof(short), 1, FH);
+	if (ret != 1)
+	    bu_log("Error reading irradiance cache file (endian)\n");
+
 	bu_log("endian: %d\n", S1);
 
-	fread(&S1, sizeof(short), 1, FH);
+	ret = fread(&S1, sizeof(short), 1, FH);
+	if (ret != 1)
+	    bu_log("Error reading irradiance cache file (revision)\n");
 	bu_log("revision: %d\n", S1);
 
-	fread(&ScaleFactor, sizeof(double), 1, FH);
+	ret = fread(&ScaleFactor, sizeof(double), 1, FH);
+	if (ret != 1)
+	    bu_log("Error reading irradiance cache file (scale factor)\n");
 	bu_log("Scale Factor: %.3f\n", ScaleFactor);
 
 	/* Read in Map Type */
-	fread(&C1, sizeof(char), 1, FH);
-	fread(&I1, sizeof(int), 1, FH);
+	ret = fread(&C1, sizeof(char), 1, FH);
+	if (ret != 1)
+	    bu_log("Error reading irradiance cache file (map type)\n");
+	ret = fread(&I1, sizeof(int), 1, FH);
+	if (ret != 1)
+	    bu_log("Error reading irradiance cache file (map type)\n");
+
 	Initialize(PM_GLOBAL, I1);
 	bu_log("Reading Global: %d\n", I1);
 	for (i = 0; i < I1; i++) {
-	    fread(&Emit[PM_GLOBAL][i], sizeof(struct Photon), 1, FH);
+	    ret = fread(&Emit[PM_GLOBAL][i], sizeof(struct Photon), 1, FH);
+	    if (ret != 1)
+		bu_log("Error reading irradiance cache file (global)\n");
 	    /* bu_log("Pos: [%.3f, %.3f, %.3f], Power: [%.3f, %.3f, %.3f]\n", Emit[PM_GLOBAL][i].Pos[0], Emit[PM_GLOBAL][i].Pos[1], Emit[PM_GLOBAL][i].Pos[2], Emit[PM_GLOBAL][i].Power[0], Emit[PM_GLOBAL][i].Power[1], Emit[PM_GLOBAL][i].Power[2]);*/
 	    /* bu_log("Pos: [%.3f, %.3f, %.3f], Irrad: [%.3f, %.3f, %.3f]\n", Emit[PM_GLOBAL][i].Pos[0], Emit[PM_GLOBAL][i].Pos[1], Emit[PM_GLOBAL][i].Pos[2], Emit[PM_GLOBAL][i].Irrad[0], Emit[PM_GLOBAL][i].Irrad[1], Emit[PM_GLOBAL][i].Irrad[2]);*/
 	}
 
-	fread(&C1, sizeof(char), 1, FH);
-	fread(&I1, sizeof(int), 1, FH);
+	ret = fread(&C1, sizeof(char), 1, FH);
+	if (ret != 1)
+	    bu_log("Error reading irradiance cache file (C1)\n");
+
+	ret = fread(&I1, sizeof(int), 1, FH);
+	if (ret != 1)
+	    bu_log("Error reading irradiance cache file (l1)\n");
+
 	Initialize(PM_CAUSTIC, I1);
 	bu_log("Reading Caustic: %d\n", I1);
 	for (i = 0; i < I1; i++) {
-	    fread(&Emit[PM_CAUSTIC][i], sizeof(struct Photon), 1, FH);
+	    ret = fread(&Emit[PM_CAUSTIC][i], sizeof(struct Photon), 1, FH);
+	    if (ret != 1)
+		bu_log("Error reading irradiance cache file (caustic)\n");
 	}
 
 	PMap[PM_GLOBAL]->StoredPhotons = PMap[PM_GLOBAL]->MaxPhotons;
@@ -1243,10 +1266,13 @@ LoadFile(char *pmfile)
 void
 WritePhotons(struct PNode *Root, FILE *FH)
 {
+    size_t ret;
     if (!Root)
 	return;
 
-    fwrite(&Root->P, sizeof(struct Photon), 1, FH);
+    ret = fwrite(&Root->P, sizeof(struct Photon), 1, FH);
+    if (ret != 1)
+	bu_log("Unable to write photons\n");
     WritePhotons(Root->L, FH);
     WritePhotons(Root->R, FH);
 }
@@ -1259,36 +1285,55 @@ WritePhotonFile(char *pmfile)
     int I1;
     short S1;
     char C1;
-
+    size_t ret;
 
     FH = fopen(pmfile, "wb");
     if (FH) {
 	/* Write 2 Byte Endian Code and 2 Byte Revision Code */
 	S1 = 1;
-	fwrite(&S1, sizeof(short), 1, FH);
+	ret = fwrite(&S1, sizeof(short), 1, FH);
+	if (ret != 1)
+	    bu_log("Error writing irradiance cache file (endian)\n");
+
 	S1 = 0;
-	fwrite(&S1, sizeof(short), 1, FH);
+	ret = fwrite(&S1, sizeof(short), 1, FH);
+	if (ret != 1)
+	    bu_log("Error writing irradiance cache file (revision)\n");
 
 	/* Write Scale Factor */
 	bu_log("writing sf: %.3f\n", ScaleFactor);
-	fwrite(&ScaleFactor, sizeof(double), 1, FH);
+	ret = fwrite(&ScaleFactor, sizeof(double), 1, FH);
+	if (ret != 1)
+	    bu_log("Error writing irradiance cache file (scale factor)\n");
 
 	/* === Write PM_GLOBAL Data === */
 	C1 = PM_GLOBAL;
-	fwrite(&C1, sizeof(char), 1, FH);
+	ret = fwrite(&C1, sizeof(char), 1, FH);
+	if (ret != 1)
+	    bu_log("Error writing irradiance cache file (PM_GLOBAL)\n");
+
 	/* Write number of Photons */
 	I1 = PMap[PM_GLOBAL]->StoredPhotons;
-	fwrite(&I1, sizeof(int), 1, FH);
+	ret = fwrite(&I1, sizeof(int), 1, FH);
+	if (ret != 1)
+	    bu_log("Error writing irradiance cache file (photons)\n");
+
 	/* Write each photon to file */
 	if (PMap[PM_GLOBAL]->StoredPhotons)
 	    WritePhotons(PMap[PM_GLOBAL]->Root, FH);
 
 	/* === Write PM_CAUSTIC Data === */
 	C1 = PM_CAUSTIC;
-	fwrite(&C1, sizeof(char), 1, FH);
+	ret = fwrite(&C1, sizeof(char), 1, FH);
+	if (ret != 1)
+	    bu_log("Error writing irradiance cache file (PM_CAUSTIC)\n");
+
 	/* Write number of Photons */
 	I1 = PMap[PM_CAUSTIC]->StoredPhotons;
-	fwrite(&I1, sizeof(int), 1, FH);
+	ret = fwrite(&I1, sizeof(int), 1, FH);
+	if (ret != 1)
+	    bu_log("Error writing irradiance cache file (number of photons)\n");
+
 	/* Write each photon to file */
 	if (PMap[PM_CAUSTIC]->StoredPhotons)
 	    WritePhotons(PMap[PM_CAUSTIC]->Root, FH);

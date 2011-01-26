@@ -70,12 +70,7 @@ struct db_tree_state mged_initial_tree_state = {
 	0,			/* mater inherit */
 	(char *)NULL		/* shader */
     },
-    {
-	1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0
-    },
+    MAT_INIT_IDN,
     REGION_NON_FASTGEN,		/* ts_is_fastgen */
     {
 	/* attribute value set */
@@ -277,7 +272,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
     nvectors += sp->s_vlen;
 
     /*
-     * If this solid is new, fill in it's information.
+     * If this solid is new, fill in its information.
      * Otherwise, don't touch what is already there.
      */
     if (!existing_sp) {
@@ -1147,50 +1142,6 @@ invent_solid(
     createDListALL(sp);
 
     return 0;		/* OK */
-}
-
-
-static union tree *mged_facetize_tree;
-
-/*
- * M G E D _ F A C E T I Z E _ R E G I O N _ E N D
- *
- * This routine must be prepared to run in parallel.
- */
-HIDDEN union tree *
-mged_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
-{
-    struct bu_list vhead;
-
-    BU_LIST_INIT(&vhead);
-
-    if (RT_G_DEBUG&DEBUG_TREEWALK) {
-	char *sofar = db_path_to_string(pathp);
-
-	Tcl_AppendResult(INTERP, "mged_facetize_region_end() path='", sofar,
-			 "'\n", (char *)NULL);
-	bu_free((genptr_t)sofar, "path string");
-    }
-
-    if (curtree->tr_op == OP_NOP) return curtree;
-
-    bu_semaphore_acquire(RT_SEM_MODEL);
-    if (mged_facetize_tree) {
-	union tree *tr;
-	tr = (union tree *)bu_calloc(1, sizeof(union tree), "union tree");
-	tr->magic = RT_TREE_MAGIC;
-	tr->tr_op = OP_UNION;
-	tr->tr_b.tb_regionp = REGION_NULL;
-	tr->tr_b.tb_left = mged_facetize_tree;
-	tr->tr_b.tb_right = curtree;
-	mged_facetize_tree = tr;
-    } else {
-	mged_facetize_tree = curtree;
-    }
-    bu_semaphore_release(RT_SEM_MODEL);
-
-    /* Tree has been saved, and will be freed later */
-    return TREE_NULL;
 }
 
 

@@ -55,8 +55,8 @@ MeasureWithUnit::~MeasureWithUnit() {
 
 double
 MeasureWithUnit::GetLengthConversionFactor() {
-	double sifactor;
-	double mfactor;
+	double sifactor = 0.0;
+	double mfactor = 0.0;
 	SiUnit *si = dynamic_cast<SiUnit *>(unit_component);
 	if (si != NULL) {
 		//found SI length unit
@@ -69,8 +69,8 @@ MeasureWithUnit::GetLengthConversionFactor() {
 
 double
 MeasureWithUnit::GetPlaneAngleConversionFactor() {
-	double sifactor;
-	double mfactor;
+	double sifactor = 0.0;
+	double mfactor = 0.0;
 	SiUnit *si = dynamic_cast<SiUnit *>(unit_component);
 	if (si != NULL) {
 		//found SI length unit
@@ -83,8 +83,8 @@ MeasureWithUnit::GetPlaneAngleConversionFactor() {
 
 double
 MeasureWithUnit::GetSolidAngleConversionFactor() {
-	double sifactor;
-	double mfactor;
+	double sifactor = 0.0;
+	double mfactor = 0.0;
 	SiUnit *si = dynamic_cast<SiUnit *>(unit_component);
 	if (si != NULL) {
 		//found SI length unit

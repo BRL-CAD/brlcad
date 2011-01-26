@@ -31,8 +31,9 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 #include "rtgeom.h"
+
 
 #define tthrm_MAGIC 0x7468726d	/* 'thrm' */
 #define CK_tthrm_SP(_p) BU_CKMAG(_p, tthrm_MAGIC, "tthrm_specific")

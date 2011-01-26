@@ -899,7 +899,7 @@ db_follow_path(
 	comb_dp = dp;
     }
     /*
-     * Process two things at once: the combination at [j], and it's
+     * Process two things at once: the combination at [j], and its
      * member at [j+1].
      */
     do {
@@ -2666,7 +2666,7 @@ db_region_mat(
  * <0 Failure
  */
 int
-db_shader_mat(
+rt_shader_mat(
     mat_t model_to_shader,	/* result */
     const struct rt_i *rtip,
     const struct region *rp,

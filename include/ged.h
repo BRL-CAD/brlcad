@@ -1559,7 +1559,7 @@ GED_EXPORT BU_EXTERN(int ged_combmem, (struct ged *gedp, int argc, const char *a
  * Import a database into the current database using an auto-incrementing or custom affix
  *
  * Usage:
- *     concat [-s|-p] file.g [suffix|prefix]
+ *     concat [-t] [-u] [-c] [-s|-p] file.g [suffix|prefix]
  */
 GED_EXPORT BU_EXTERN(int ged_concat, (struct ged *gedp, int argc, const char *argv[]));
 

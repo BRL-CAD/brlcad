@@ -4818,7 +4818,7 @@ sedit(void)
 	    return;
 
 	case SSCALE:
-	    /* scale the solid uniformly about it's vertex point */
+	    /* scale the solid uniformly about its vertex point */
 	    {
 		mat_t scalemat;
 

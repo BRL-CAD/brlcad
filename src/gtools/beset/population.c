@@ -379,7 +379,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 		    /*  tp->tr_op = (int)(2+pop_rand()*3);//FIXME: pop_rand() can be 1!*/
 		}
 
-	    /* if we're performing, save parent as it's right or left pointer will need
+	    /* if we're performing, save parent as its right or left pointer will need
 	     * to be modified to point to the new child node */
 	    if (crossover && node_idx == crossover_node)
 		crossover_parent = &tp->tr_b.tb_left;
