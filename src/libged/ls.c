@@ -91,60 +91,6 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
 		  size_t num_in_list,
 		  int no_decorate)
 {
-#if 0
-    int lines, i, j, namelen, this_one;
-
-    qsort((genptr_t)list_of_names,
-	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)(const void *, const void *))cmpdirname);
-
-    /*
-     * For the number of (full and partial) lines that will be needed,
-     * print in vertical format.
-     */
-    lines = (num_in_list + 3) / 4;
-    for (i=0; i < lines; i++) {
-	for (j=0; j < 4; j++) {
-	    this_one = j * lines + i;
-	    /* Restrict the print to 16 chars per spec. */
-	    bu_vls_printf(vls,  "%.16s", list_of_names[this_one]->d_namep);
-	    namelen = strlen(list_of_names[this_one]->d_namep);
-	    if (namelen > 16)
-		namelen = 16;
-	    /*
-	     * Region and ident checks here....  Since the code has
-	     * been modified to push and sort on pointers, the
-	     * printing of the region and ident flags must be delayed
-	     * until now.  There is no way to make the decision on
-	     * where to place them before now.
-	     */
-	    if (list_of_names[this_one]->d_flags & RT_DIR_COMB) {
-		bu_vls_putc(vls, '/');
-		namelen++;
-	    }
-	    if (list_of_names[this_one]->d_flags & RT_DIR_REGION) {
-		bu_vls_putc(vls, 'R');
-		namelen++;
-	    }
-	    /*
-	     * Size check (partial lines), and line termination.  Note
-	     * that this will catch the end of the lines that are full
-	     * too.
-	     */
-	    if (this_one + lines >= num_in_list) {
-		bu_vls_putc(vls, '\n');
-		break;
-	    } else {
-		/*
-		 * Pad to next boundary as there will be another entry
-		 * to the right of this one.
-		 */
-		while (namelen++ < 20)
-		    bu_vls_putc(vls, ' ');
-	    }
-	}
-    }
-#else
     size_t lines, i, j, k, this_one;
     size_t namelen;
     size_t maxnamelen;	/* longest name in list */
@@ -222,7 +168,6 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
 	    }
 	}
     }
-#endif
 }
 
 static void
