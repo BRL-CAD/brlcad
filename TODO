@@ -192,8 +192,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   ../src/gtools/g_qa -u m,m^3,kg -g 0.25m-0.5mm -p -Av -v gqa.g closed_box.r
   -rw-rw-r--  1 morrison users 41572569618 Apr 23 15:14 volume.pl
 
-* replace SCLstring with std::string
-
 * all of the rt* tracers share common code and common options, but do
   not share common documentation.  refactor documentation to use
   include directives so that there is one place where all of the
@@ -808,6 +806,18 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   try to get closer to the "only do the work we need to" ideal.  Once a new
   idea is proven in that command, it should be made into a libgcv routine
   and convertors/other commands retargted to use it.
+
+
+STEP
+----
+
+* add hierarchy preservation support to step-g
+
+* replace SCLstring with std::string
+
+* document step-g
+
+* implement g-step exporter
 
 
 BREP/NURBS
