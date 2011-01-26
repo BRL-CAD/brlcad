@@ -323,11 +323,19 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
     dp->d_animate = NULL;
     dp->d_nref = 0;
     dp->d_uses = 0;
+
+    /* v4 geometry databases do not use d_major/minor_type */
     if (db_version(dbip) > 4) {
 	dp->d_major_type = DB5_MAJORTYPE_BRLCAD;
+	if (ptr)
+	    dp->d_minor_type = *(unsigned char *)ptr;
+	else
+	    dp->d_minor_type = 0;
+    } else {
+	dp->d_major_type = 0;
+	dp->d_minor_type = 0;
     }
-    if (ptr)
-	dp->d_minor_type = *(unsigned char *)ptr;
+
     bu_vls_free(&local);
     return dp;
 }
