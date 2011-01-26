@@ -42,6 +42,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   objects, have some means to determine that something is "large and
   complex" or at a minimum, provide an option to not draw on copy.
 
+* plate mode NURBS/BREP objects.  Similar, if not identical, to plate
+  mode BoTs, 'brep' objects need the ability to have a thickness
+  described so you could automatically handle non-solid NURBS and
+  sheet-metal style geometry without requiring surface solidity.
+
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
@@ -130,11 +135,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * investigate OpenEXR (BSD licensed HDE image format)
 
-* plate mode NURBS/BREP objects.  Similar, if not identical, to plate
-  mode BoTs, 'brep' objects need the ability to have a thickness
-  described so you could automatically handle non-solid NURBS and
-  sheet-metal style geometry without requiring surface solidity.
-
 * fix archer/libdm labels/axes to not use pointer printing
 
 * annotation primitive.  specifically a means to create an object in
@@ -216,8 +216,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * add a force option to the tracers to support overwriting the current
   output file (so long as we're going to make it read-only by default).
-
-* improve min/max bounding box routines for BREP/NURBS
 
 * convert non-planar arb's to brep objects for ray-tracing.  see how
   well it works to see if we can remove an arb limitation.
@@ -833,10 +831,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   NURBS format, trims surfaces, evaluates boolean expressions, and
   then generates tool paths on resulting surfaces and interior paths.
 
-* identify useful concepts implemented in the old NURBS code that are not
-  present in openNURBS, and port that code to openNURBS data structures
-  and routines.  This will eventually allow us to remove the old NURBS code.
-
 * incorporate some variety of spatial partitioning into the facetize command
   (may involve just rewriting it) to try and realize MUCH faster tessellation
   of CSG geometry.  Current routines are doing a lot of unnecessary work that
@@ -844,6 +838,23 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   try to get closer to the "only do the work we need to" ideal.  Once a new
   idea is proven in that command, it should be made into a libgcv routine
   and convertors/other commands retargted to use it.
+
+BREP/NURBS
+----------
+
+* implement conversion of implicit CSG to NURBS CSG.  partially
+  complete, but primitives are still fixed at origin.
+
+* identify useful concepts implemented in the old NURBS code that are not
+  present in openNURBS, and port that code to openNURBS data structures
+  and routines.  This will eventually allow us to remove the old NURBS code.
+
+* improve min/max bounding box routines for BREP/NURBS
+
+* document the new NURBS/BREP primitive, capabilities and limitations
+
+* implement boolean evaluation of nurbs surfaces
+
 
 NMG Concepts to Explore
 -----------------------
