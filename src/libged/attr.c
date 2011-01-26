@@ -212,8 +212,11 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(&gedp->ged_result_str, "%s combination:\n", argv[2]);
 	    }
 	} else if (dp->d_flags & RT_DIR_SOLID) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s %s:\n", argv[2],
-			  rt_functab[dp->d_minor_type].ft_label);
+	    struct rt_db_internal intern;
+	    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+	    bu_vls_printf(&gedp->ged_result_str, "%s %s:\n", argv[2], intern.idb_meth->ft_label);
+	    rt_db_free_internal(&intern);
+
 	} else {
 	    switch (dp->d_major_type) {
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
