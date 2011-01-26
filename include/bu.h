@@ -95,10 +95,14 @@ __BEGIN_DECLS
  * file but if it isn't set, we create it.
  */
 #ifndef MAXPATHLEN
-#  ifdef _MAX_PATH
-#    define MAXPATHLEN _MAX_PATH
+#  ifdef PATH_MAX
+#    define MAXPATHLEN PATH_MAX
 #  else
-#    define MAXPATHLEN 1024
+#    ifdef _MAX_PATH
+#      define MAXPATHLEN _MAX_PATH
+#    else
+#      define MAXPATHLEN 1024
+#    endif
 #  endif
 #endif
 
