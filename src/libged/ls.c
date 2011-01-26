@@ -170,8 +170,8 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
     }
 }
 
-static void
-vls_long_dpp(struct bu_vls *vls,
+static int
+vls_long_dpp(struct ged *gedp,
 	     struct directory **list_of_names,
 	     int num_in_list,
 	     int aflag,		/* print all objects */
@@ -203,9 +203,12 @@ vls_long_dpp(struct bu_vls *vls,
 	    len = 6;
 	else if (dp->d_flags & RT_DIR_COMB)
 	    len = 4;
-	else if (dp->d_flags & RT_DIR_SOLID)
-	    len = strlen(rt_functab[dp->d_minor_type].ft_label);
-	else {
+	else if (dp->d_flags & RT_DIR_SOLID) {
+	    struct rt_db_internal intern;
+	    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+	    len = strlen(intern.idb_meth->ft_label);
+	    rt_db_free_internal(&intern);
+	} else {
 	    switch (list_of_names[i]->d_major_type) {
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		    len = 6;
@@ -227,22 +230,29 @@ vls_long_dpp(struct bu_vls *vls,
      * i - tracks the list item
      */
     for (i=0; i < num_in_list; ++i) {
-	if (list_of_names[i]->d_flags & RT_DIR_COMB) {
+	dp = list_of_names[i];
+
+	if (dp->d_flags & RT_DIR_COMB) {
 	    isComb = 1;
 	    isSolid = 0;
 	    type = "comb";
 
-	    if (list_of_names[i]->d_flags & RT_DIR_REGION) {
+	    if (dp->d_flags & RT_DIR_REGION) {
 		isRegion = 1;
 		type = "region";
 	    } else
 		isRegion = 0;
-	} else if (list_of_names[i]->d_flags & RT_DIR_SOLID) {
+	} else if (dp->d_flags & RT_DIR_SOLID) {
+	    struct rt_db_internal intern;
+	    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+
 	    isComb = isRegion = 0;
 	    isSolid = 1;
-	    type = rt_functab[list_of_names[i]->d_minor_type].ft_label;
+	    type = intern.idb_meth->ft_label;
+
+	    rt_db_free_internal(&intern);
 	} else {
-	    switch (list_of_names[i]->d_major_type) {
+	    switch (dp->d_major_type) {
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		    isSolid = 0;
 		    type = "global";
@@ -255,26 +265,27 @@ vls_long_dpp(struct bu_vls *vls,
 		case DB5_MAJORTYPE_BINARY_UNIF:
 		    isSolid = 0;
 		    isRegion = 0;
-		    type = binu_types[list_of_names[i]->d_minor_type];
+		    type = binu_types[dp->d_minor_type];
 		    break;
 	    }
 	}
 
 	/* print list item i */
-	dp = list_of_names[i];
 	if (aflag ||
 	    (!cflag && !rflag && !sflag) ||
 	    (cflag && isComb) ||
 	    (rflag && isRegion) ||
 	    (sflag && isSolid)) {
-	    bu_vls_printf(vls, "%s", dp->d_namep);
-	    bu_vls_spaces(vls, (int)(max_nam_len - strlen(dp->d_namep)));
-	    bu_vls_printf(vls, " %s", type);
-	    bu_vls_spaces(vls, (int)(max_type_len - strlen(type)));
-	    bu_vls_printf(vls,  " %2d %2d %ld\n",
+	    bu_vls_printf(&gedp->ged_result_str, "%s", dp->d_namep);
+	    bu_vls_spaces(&gedp->ged_result_str, (int)(max_nam_len - strlen(dp->d_namep)));
+	    bu_vls_printf(&gedp->ged_result_str, " %s", type);
+	    bu_vls_spaces(&gedp->ged_result_str, (int)(max_type_len - strlen(type)));
+	    bu_vls_printf(&gedp->ged_result_str,  " %2d %2d %ld\n",
 			  dp->d_major_type, dp->d_minor_type, (long)(dp->d_len));
 	}
     }
+
+    return GED_OK;
 }
 
 /**
@@ -283,8 +294,8 @@ vls_long_dpp(struct bu_vls *vls,
  * Given a pointer to a list of pointers to names and the number of names
  * in that list, sort and print that list on the same line.
  */
-static void
-vls_line_dpp(struct bu_vls *vls,
+static int
+vls_line_dpp(struct ged *gedp,
 	     struct directory **list_of_names,
 	     int num_in_list,
 	     int aflag,	/* print all objects */
@@ -323,9 +334,11 @@ vls_line_dpp(struct bu_vls *vls,
 	    (cflag && isComb) ||
 	    (rflag && isRegion) ||
 	    (sflag && isSolid)) {
-	    bu_vls_printf(vls,  "%s ", list_of_names[i]->d_namep);
+	    bu_vls_printf(&gedp->ged_result_str,  "%s ", list_of_names[i]->d_namep);
 	}
     }
+
+    return GED_OK;
 }
 
 
@@ -470,11 +483,9 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (lflag)
-	vls_long_dpp(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0),
-		     aflag, cflag, rflag, sflag);
+	(void)vls_long_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag);
     else if (aflag || cflag || rflag || sflag)
-	vls_line_dpp(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0),
-		     aflag, cflag, rflag, sflag);
+	(void)vls_line_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag);
     else
 	_ged_vls_col_pr4v(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0);
 
