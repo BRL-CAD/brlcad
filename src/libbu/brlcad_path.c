@@ -80,9 +80,7 @@ _bu_ipwd()
     /* private stash */
     static const char *ipwd = NULL;
     static char buffer[MAXPATHLEN] = {0};
-#ifdef HAVE_REALPATH
-    char *real;
-#endif
+    const char *pwd = NULL;
 
     /* already found the path before */
     if (ipwd) {
@@ -90,27 +88,22 @@ _bu_ipwd()
     }
 
     /* FIRST: try environment */
-    ipwd = getenv("PWD"); /* not our memory to free */
-    if (ipwd) {
+    pwd = getenv("PWD"); /* not our memory to free */
+    if (pwd && strlen(pwd) > 0) {
 #ifdef HAVE_REALPATH
-	real = realpath(ipwd, NULL);
-	if (real) {
-	    bu_strlcpy(buffer, real, (size_t)MAXPATHLEN);
-	    ipwd = buffer;
-	    free(real);
+	ipwd = realpath(pwd, buffer);
+	if (ipwd) {
+	    return ipwd;
 	}
 #endif
+	ipwd = pwd;
 	return ipwd;
     }
 
     /* SECOND: try to query path */
 #ifdef HAVE_REALPATH
-    real = realpath(".", NULL);
-    if (real) {
-	bu_strlcpy(buffer, real, (size_t)MAXPATHLEN);
-	ipwd = buffer;
-	free(real);
-	real = NULL;
+    ipwd = realpath(".", buffer);
+    if (ipwd && strlen(ipwd) > 0) {
 	return ipwd;
     }
 #endif
