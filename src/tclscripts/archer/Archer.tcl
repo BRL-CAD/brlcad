@@ -3274,7 +3274,7 @@ proc title_node_handler {node} {
     if {[file exists [file join [bu_brlcad_data "html"] mann en Introduction.html]]} {
 
 	# List of available help documents
-	set cmdfiles [glob -directory [bu_brlcad_data "html"] mann en *.html ]
+	set cmdfiles [glob -directory [bu_brlcad_data "html/mann/en"] *.html ]
 	set cmds [list ]
 	foreach cmdfile $cmdfiles {
 	    regexp {(.+/)(.+)(.html)} $cmdfile -> url cmdrootname htmlsuffix
