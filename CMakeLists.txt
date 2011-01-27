@@ -572,10 +572,6 @@ MARK_AS_ADVANCED(BRLCAD-ENABLE_OPTIMIZED_BUILD)
 OPTION(BRLCAD-ENABLE_COMPILER_WARNINGS "Use compiler warning flags" OFF)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_COMPILER_WARNINGS)
 
-# Build with debug symbols
-OPTION(BRLCAD-ENABLE_DEBUG "Use debugging compiler settings" ON)
-MARK_AS_ADVANCED(BRLCAD-ENABLE_DEBUG)
-
 # Build with profiling support
 OPTION(BRLCAD-ENABLE_PROFILING "Build with profiling support" OFF)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_PROFILING)
@@ -915,6 +911,8 @@ BRLCAD_TYPE_SIZE("sig_t" SIG "signal.h")
 # ***       Check for Compile Characteristics - Stage 6 of 9      ***
 # *******************************************************************
 
+SET(${CMAKE_C_FLAGS} "")
+SET(${CMAKE_CXX_FLAGS} "")
 INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
 
 # *******************************************************************
@@ -1003,6 +1001,8 @@ IF(MSVC)
 	SET(CMAKE_SHARED_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
 	SET(CMAKE_MODULE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
 ENDIF(MSVC)
+SET(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} ${${CMAKE_PROJECT_NAME}_C_FLAGS})
+SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${${CMAKE_PROJECT_NAME}_CXX_FLAGS})
 
 # *******************************************************************
 # ***              Summarize Results - Stage 9 of 9               ***
@@ -1051,18 +1051,15 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 		ENDIF(path_label MATCHES "^CMAKE_INSTALL_PREFIX$")
 	ENDFOREACH() 
 	MESSAGE("")
-	IF(CMAKE_BUILD_TYPE MATCHES "^Basic$")
+
+	STRING(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
+	IF(BUILD_TYPE)
 		SET(CMAKE_ALL_C_FLAGS "${CMAKE_C_FLAGS}")
 		SET(CMAKE_ALL_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-	endif()
-	IF(CMAKE_BUILD_TYPE MATCHES "^Debug$")
-		SET(CMAKE_ALL_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG}")
-		SET(CMAKE_ALL_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
-	endif()
-	IF(CMAKE_BUILD_TYPE MATCHES "^Release$")
-		SET(CMAKE_ALL_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE}")
-		SET(CMAKE_ALL_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
-	endif()
+	ELSE(BUILD_TYPE)
+		SET(CMAKE_ALL_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_${BUILD_TYPE}}")
+		SET(CMAKE_ALL_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${BUILD_TYPE}}")
+	ENDIF(BUILD_TYPE)
 
 	# Compiler settings - in this case there are additional "special case" flags that get
 	# added depending on build type - roll all flags into individual variables before printing
