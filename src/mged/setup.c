@@ -495,13 +495,13 @@ mged_setup(Tcl_Interp **interpreter)
 	Tcl_ResetResult(*interpreter);
 	if (init_tcl && Tcl_Init(*interpreter) == TCL_ERROR) {
 	    if (!try_auto_path) {
-		try_auto_path=1;
+		try_auto_path = 1;
 		continue;
 	    }
 	    bu_log("Tcl_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
 	    break;
 	}
-	init_tcl=0;
+	init_tcl = 0;
 
 	/* warn if tcl_library isn't set by now */
 	if (try_auto_path) {
@@ -512,7 +512,7 @@ mged_setup(Tcl_Interp **interpreter)
 	Tcl_ResetResult(*interpreter);
 	if (init_itcl && Tcl_Eval(*interpreter, "package require Itcl") != TCL_OK) {
 	    if (!try_auto_path) {
-		try_auto_path=1;
+		try_auto_path = 1;
 		/* Itcl_Init() leaves initialization in a bad state
 		 * and can cause retry failures.  cleanup manually.
 		 */
@@ -523,7 +523,7 @@ mged_setup(Tcl_Interp **interpreter)
 	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
 	    break;
 	}
-	init_itcl=0;
+	init_itcl = 0;
 
 	/* don't actually want to loop forever */
 	break;
