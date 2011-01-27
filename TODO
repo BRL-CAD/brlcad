@@ -55,6 +55,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* merge sed and oed commands
+
+* make the right-hand path to oed optional
+
 * deprecate dbcp and merge functionality (and improved
   double-buffering) with the buffer tool.
 
