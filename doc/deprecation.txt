@@ -47,6 +47,10 @@ new names should be listed for reference.
 
 7.18
 ----
+db.h
+        rt_fastf_float() -> ntohf() [deprecated 7.18]
+        rt_mat_dbmat() -> htonf() [deprecated 7.18]
+        rt_dbmat_mat() -> ntohf() [deprecated 7.18]
 dbcp
         dbcp -> dd [deprecated 7.18]
 mged
