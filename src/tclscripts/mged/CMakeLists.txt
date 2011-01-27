@@ -15,7 +15,8 @@ SET(mged_TCLSCRIPTS
 	attr_edit.tcl 
 	bindings.tcl 
 	bot_face_select.tcl 
-	bots.tcl 
+	bots.tcl
+	botedit.tcl
 	build_region.tcl 
 	calipers.tcl 
 	callbacks.tcl 
@@ -28,7 +29,7 @@ SET(mged_TCLSCRIPTS
 	cycle.tcl 
 	dbfindtree.tcl 
 	dbupgrade.tcl 
-        dmtype.tcl 
+   dmtype.tcl 
 	e_id.tcl 
 	edit_menu.tcl 
 	edit_solid.tcl 
