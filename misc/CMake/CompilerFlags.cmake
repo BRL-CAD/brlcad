@@ -96,7 +96,9 @@ CHECK_CXX_FLAG(ftemplate-depth-50)
 
 # 64bit compilation flags
 IF(BRLCAD-ENABLE_64BIT)
-	MESSAGE("Checking for 64-bit support:")
+	IF(NOT 64BIT_FLAG)
+		MESSAGE("Checking for 64-bit support:")
+	ENDIF(NOT 64BIT_FLAG)
 	CHECK_C_FLAG("arch x86_64" 64BIT_FLAG)
 	CHECK_C_FLAG(64 64BIT_FLAG)
 	CHECK_C_FLAG("mabi=64" 64BIT_FLAG)
