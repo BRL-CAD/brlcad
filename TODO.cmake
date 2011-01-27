@@ -19,13 +19,6 @@ Remaining items:
 
 14. Apply lessons learned to the SCL build logic
 
-15. Try and get archer working in the build directory - this is going to involve carefully studying
-    what bu_brlcad_data and friends are up to, and what we need to have in place. Right now mged
-	 will crash if either a share dir is created in the build toplevel (empty data dir) or there
-	 is an installed BRL-CAD in the target install directory (not sure what the issue is there) but
-	 will run in isolation. Even a full copy of the installed share dir in the toplevel build causes
-	 a crash, and Archer can't find its files even with the full share dir present (?)
-
 Done (to first order, all this needs testing)
 
 1.  Detect OpenGL properly on Apple - choose X11 vs Aqua, and get the ogl code working
@@ -47,5 +40,12 @@ Done (to first order, all this needs testing)
 10. Convert -D options that need spaces in args (mostly pathnames) to config.h header files - mostly
     this is an issue for Tcl/Tk and packages, but CMake->Visual C++ solutions doesn't tolerate the
 	 spaces.
+
+15. Try and get archer working in the build directory - this is going to involve carefully studying
+    what bu_brlcad_data and friends are up to, and what we need to have in place. Right now mged
+	 will crash if either a share dir is created in the build toplevel (empty data dir) or there
+	 is an installed BRL-CAD in the target install directory (not sure what the issue is there) but
+	 will run in isolation. Even a full copy of the installed share dir in the toplevel build causes
+	 a crash, and Archer can't find its files even with the full share dir present (?)
 
 
