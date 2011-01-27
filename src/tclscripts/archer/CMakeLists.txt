@@ -11,6 +11,7 @@ SET(archer_TCLSCRIPTS
 	AttrGroupsDisplayUtility.tcl 
 	BotUtility.tcl 
 	CombEditFrame.tcl 
+	DataUtils.tcl
 	EhyEditFrame.tcl 
 	EllEditFrame.tcl 
 	EpaEditFrame.tcl 
