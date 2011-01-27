@@ -170,7 +170,7 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
     }
 }
 
-static int
+static void
 vls_long_dpp(struct ged *gedp,
 	     struct directory **list_of_names,
 	     int num_in_list,
@@ -200,14 +200,16 @@ vls_long_dpp(struct ged *gedp,
 	    max_nam_len = len;
 
 	if (dp->d_flags & RT_DIR_REGION)
-	    len = 6;
+	    len = 6; /* "region" */
 	else if (dp->d_flags & RT_DIR_COMB)
-	    len = 4;
+	    len = 4; /* "comb" */
 	else if (dp->d_flags & RT_DIR_SOLID) {
 	    struct rt_db_internal intern;
-	    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
-	    len = strlen(intern.idb_meth->ft_label);
-	    rt_db_free_internal(&intern);
+	    len = 9; /* "primitive" */
+	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+		len = strlen(intern.idb_meth->ft_label);
+		rt_db_free_internal(&intern);
+	    }
 	} else {
 	    switch (list_of_names[i]->d_major_type) {
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
@@ -244,13 +246,13 @@ vls_long_dpp(struct ged *gedp,
 		isRegion = 0;
 	} else if (dp->d_flags & RT_DIR_SOLID) {
 	    struct rt_db_internal intern;
-	    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
-
+	    type = "primitive";
+	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+		type = intern.idb_meth->ft_label;
+		rt_db_free_internal(&intern);
+	    }
 	    isComb = isRegion = 0;
 	    isSolid = 1;
-	    type = intern.idb_meth->ft_label;
-
-	    rt_db_free_internal(&intern);
 	} else {
 	    switch (dp->d_major_type) {
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
@@ -284,8 +286,6 @@ vls_long_dpp(struct ged *gedp,
 			  dp->d_major_type, dp->d_minor_type, (long)(dp->d_len));
 	}
     }
-
-    return GED_OK;
 }
 
 /**
@@ -294,7 +294,7 @@ vls_long_dpp(struct ged *gedp,
  * Given a pointer to a list of pointers to names and the number of names
  * in that list, sort and print that list on the same line.
  */
-static int
+static void
 vls_line_dpp(struct ged *gedp,
 	     struct directory **list_of_names,
 	     int num_in_list,
@@ -337,8 +337,6 @@ vls_line_dpp(struct ged *gedp,
 	    bu_vls_printf(&gedp->ged_result_str,  "%s ", list_of_names[i]->d_namep);
 	}
     }
-
-    return GED_OK;
 }
 
 
@@ -483,9 +481,9 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (lflag)
-	(void)vls_long_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag);
+	vls_long_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag);
     else if (aflag || cflag || rflag || sflag)
-	(void)vls_line_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag);
+	vls_line_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag);
     else
 	_ged_vls_col_pr4v(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0);
 
