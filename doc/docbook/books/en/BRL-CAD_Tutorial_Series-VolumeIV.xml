@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS/DTD DocBook XML V4.4/EN" "/usr/pkg/share/xml/docbook/4.4/docbookx.dtd">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"../../resources/standard/dtd/docbookx.dtd">
+
 <book>
-  
   <title><![CDATA[BRL-CAD Tutorial Series: Volume IV - Converting Geometry Between BRL-CAD and Other Formats]]></title>
   <bookinfo>
     <author>
@@ -67,7 +67,7 @@ dedicated to his memory.</para>
       <para>Since 1979, the U.S. Army Research Laboratory<footnote>
 	  <para>On 30 September 1992, the U.S. Army Ballistic Research Laboratory (BRL) was deactivated and subsequently became part of the U.S. Army Research Laboratory (ARL) on 1 October 1992.</para>
 	</footnote> has been developing and distributing the Ballistic Research Laboratory - Computer-Aided Design (BRL-CAD) three-dimensional (3-D) solid modeling package to support combat vehicle vulnerability studies and various other military and industrial applications. The software, which is now in its third generation, includes a large collection of tools and utilities, including an interactive geometry editor, raytracing and generic framebuffer libraries, network-distributed image-processing/signal-processing capabilities, and an embedded scripting language.</para>
-      <para>In support of the package, a multivolume tutorial series is being written to assist users with the many features and functionality of BRL-CAD. Three volumes have been published thus far. Volume I provides an overview of the package contents and installation (Butler and Edwards, 2002).  Volume II addresses the basic functionality of the package's Multi-Device Geometry Editor (MGED) and offers a comprehensive list of the user commands available (Butler et al., 2001).  Volume III discusses the modeling process as well as principles and techniques to help maximize BRL-CAD's effectiveness (Butler et al., 2003).  All of these documents are available for download at <ulink url="http://ftp.arl.army.mil/brlcad/"><uri>http://ftp.arl.army.mil/brlcad/</uri></ulink> (U.S. Army Research Laboratory, 2003).</para>
+      <para>In support of the package, a multivolume tutorial series is being written to assist users with the many features and functionality of BRL-CAD. Three volumes have been published thus far. Volume I provides an overview of the package contents and installation (Butler and Edwards, 2002).  Volume II addresses the basic functionality of the package's Multi-Device Geometry Editor (MGED) and offers a comprehensive list of the user commands available (Butler et al., 2001).  Volume III discusses the modeling process as well as principles and techniques to help maximize BRL-CAD's effectiveness (Butler et al., 2003).  All of these documents are available for download at <ulink url="http://ftp.arl.army.mil/brlcad/">http://ftp.arl.army.mil/brlcad/</ulink> (U.S. Army Research Laboratory, 2003).</para>
       <para>The purpose of Volume IV is to discuss issues of compatibility and conversion between the BRL-CAD geometry file format and the formats of various other computer-aided design (CAD), computer-aided manufacturing (CAM), and computer-aided engineering (CAE) packages. Conversion is increasingly important for BRL-CAD users who must interact with a growing number of Government and commercial organizations involved in the research, development, testing, and evaluation of today's combat systems.</para>
       <para>Note that this document addresses BRL-CAD geometry converters, not BRL-CAD image converters (e.g., <command>pix-bw</command>, <command>pix-ps</command>, <command>pix-rle</command>, <command>bw-ps</command>, and <command>pl-ps</command>). For further information on image conversion, see the man page on the utility of interest.</para>
       <para>Also, because of the many file formats in existence today and the rapidly changing nature of computer software and software companies, it would be impractical to try to address all of the conversion paths and methods that are currently or potentially possible. Many times, conversion from one file format to another is not a one-to-one process. Depending on the amount of time and effort the BRL-CAD user is willing to invest, seemingly incompatible formats can be ``forced'' to convert via another CAD format or via a standardized CAD format (e.g., the Initial Graphics Exchange Specification [IGES] or the Standard for the Exchange of Product Model Data [STEP]). In fact, when it comes to converting from BRL-CAD, the widely accepted Stereo Lithography Tessellation Language (STL) format offers a crude path to convert BRL-CAD objects to virtually any commercial CAD system. The user is reminded, however, that such forced conversions can sometimes produce geometry of such poor quality (e.g., low-resolution or lossy output formats) or poor performance characteristics (e.g., large or computationally intensive output files) that completely rebuilding a model from scratch might be a preferable alternative.</para>
@@ -481,7 +481,7 @@ Engineering Company, 2002):</para>
 	  <para><option>v</option> - verbose; prints out progress information.</para>
 	</listitem>
       </itemizedlist>
-      <para>For more information on the DXF file format and import possibilities, see the on-line documentation on the Autodesk web site at <ulink url="http://adeskftp.autodesk.com/ prodsupp/downloads/dxf.pdf"><uri>http://adeskftp.autodesk.com/ prodsupp/downloads/dxf.pdf</uri></ulink> (Autodesk, 2003).</para>
+      <para>For more information on the DXF file format and import possibilities, see the on-line documentation on the Autodesk web site at <ulink url="http://adeskftp.autodesk.com/ prodsupp/downloads/dxf.pdf">http://adeskftp.autodesk.com/ prodsupp/downloads/dxf.pdf</ulink> (Autodesk, 2003).</para>
     </section>
     <section>
       <title>Converting From Elysium Neutral Facetted Format</title>
@@ -528,7 +528,7 @@ Engineering Company, 2002):</para>
 	  <para><option>t tolerance_distance</option> - sets distance calculation tolerance (in millimeters) (default is 0.005).</para>
 	</listitem>
       </itemizedlist>
-      <para>For more information on the Elysium file format and import possibilities, see the Elysium web site at <ulink url="http://www.elysiuminc.com"><uri>http://www.elysiuminc.com</uri></ulink> (Elysium, 2003).</para>
+      <para>For more information on the Elysium file format and import possibilities, see the Elysium web site at <ulink url="http://www.elysiuminc.com">http://www.elysiuminc.com</ulink> (Elysium, 2003).</para>
     </section>
     <section>
       <title>Converting From EUCLID Format</title>
@@ -562,7 +562,7 @@ Engineering Company, 2002):</para>
 	  <para><option>X lvl</option> - sets NMG library debug flag (see <filename>nmg.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
 	</listitem>
       </itemizedlist>
-      <para>For more information about the EUCLID file format and import possibilities, see the MDTVISION web site at <ulink url="http://support.mdtvision.com"><uri>http://support.mdtvision.com</uri></ulink> (MDTVISION, 2003).</para>
+      <para>For more information about the EUCLID file format and import possibilities, see the MDTVISION web site at <ulink url="http://support.mdtvision.com">http://support.mdtvision.com</ulink> (MDTVISION, 2003).</para>
       <table>
 	<title>Header file note</title>
 	<tgroup cols="2">

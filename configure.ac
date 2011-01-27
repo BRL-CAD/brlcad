@@ -4264,7 +4264,6 @@ AC_CONFIG_FILES([
 	db/Makefile
 	db/include/Makefile
 	doc/Makefile
-	doc/book/Makefile
 	doc/docbook/Makefile
 	doc/docbook/fop.xconf
 	doc/html/Makefile

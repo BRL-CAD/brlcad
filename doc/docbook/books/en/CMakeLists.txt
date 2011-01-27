@@ -2,6 +2,7 @@ SET(docbook_books_EN
 	BRL-CAD_Tutorial_Series-VolumeI.xml 
 	BRL-CAD_Tutorial_Series-VolumeII.xml 
 	BRL-CAD_Tutorial_Series-VolumeIII.xml
+	BRL-CAD_Tutorial_Series-VolumeIV.xml
 )
 
 SET(docbook_books_EN_IMAGES
