@@ -451,11 +451,13 @@ union record  {
 #endif
 
 
-/* convert dbfloat->fastf_t */
+/* DEPRECATED: do not use. */
 void rt_fastf_float DB_ARGS( (fastf_t *ff, const dbfloat_t *fp, int n, int flip) );
 
-/* convert dbfloat mat->fastf_t */
+/* DEPRECATED: do not use. */
 void rt_mat_dbmat DB_ARGS( (fastf_t *ff, const dbfloat_t *dbp, int flip) );
+
+/* DEPRECATED: do not use. */
 void rt_dbmat_mat DB_ARGS( (dbfloat_t *dbp, const fastf_t *ff) );
 
 #endif	/* __DB_H__ */
