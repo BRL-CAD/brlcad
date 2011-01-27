@@ -2,6 +2,7 @@ SET(sh_SCRIPTS
   elapsed.sh 
   any-png.sh 
   cadbug.sh 
+  conversion.sh
   cray.sh 
   facetall.sh 
   indent.sh 
