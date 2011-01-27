@@ -137,5 +137,5 @@ INSTALL(FILES ${docbook_lessons_EN_IMAGES} DESTINATION ${${CMAKE_PROJECT_NAME}_I
 
 
 IF(BRLCAD-BUILD_EXTRADOCS_PDF)
-  DOCBOOK_TO_PDF(lesson docbook_lessons_EN ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/pdf/lessons/en)
+  DOCBOOK_TO_PDF(lesson docbook_lessons_EN pdf/lessons/en)
 ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF)

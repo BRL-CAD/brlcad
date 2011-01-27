@@ -127,10 +127,10 @@ SET(docbook_lessons_ES_IMAGES
 	images/mged16_radio_with_mater_props.png
 )
 
-DOCBOOK_TO_HTML(lesson_ES docbook_lessons_ES ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/lessons/es)
+DOCBOOK_TO_HTML(lesson_ES docbook_lessons_ES html/lessons/es)
 FILE(COPY ${docbook_lessons_ES_IMAGES} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/html/lessons/es/images)
 INSTALL(FILES ${docbook_lessons_ES_IMAGES} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/lessons/es/images)
 
 IF(BRLCAD-BUILD_EXTRADOCS_PDF)
-  DOCBOOK_TO_PDF(lesson_ES docbook_lessons_ES ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/pdf/lessons/es)
+  DOCBOOK_TO_PDF(lesson_ES docbook_lessons_ES pdf/lessons/es)
 ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF)
