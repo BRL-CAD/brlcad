@@ -421,25 +421,6 @@ cmd_setup(void)
     pathname = bu_brlcad_data("tclscripts", 1);
     snprintf(buffer, sizeof(buffer), "%s", pathname);
 
-#ifdef _WIN32
-    if (pathname) {
-	/* XXXXXXXXXXXXXXX UGLY XXXXXXXXXXXXXXXXXX*/
-	int i;
-        struct bu_vls vls;
-
-	bu_strlcat(buffer, "/", MAXPATHLEN);
-
-	for (i=0;i<strlen(buffer);i++) {
-	    if (buffer[i]=='\\')
-		buffer[i]='/'; }
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "source %s/mged/tree.tcl", buffer);
-	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-    }
-#endif
-
     /* link some tcl variables to these corresponding globals */
     Tcl_LinkVar(INTERP, "glob_compat_mode", (char *)&glob_compat_mode, TCL_LINK_BOOLEAN);
     Tcl_LinkVar(INTERP, "output_as_return", (char *)&output_as_return, TCL_LINK_BOOLEAN);

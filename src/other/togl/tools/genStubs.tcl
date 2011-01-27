@@ -1086,6 +1086,9 @@ proc genStubs::init {} {
     }
 
     emitInits
+    set outfile [open [file join $outDir STUBSDONE] w]
+    puts $outfile "done"
+    close $outfile
 }
 
 # lassign --
