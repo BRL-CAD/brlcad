@@ -46,6 +46,7 @@ EXTRA_DIST = \
 	doxygen_structure \
 	flawfinder \
 	libtool.m4 \
+	nsis/archer.ico \
 	nsis/brlcad.ico \
 	nsis/brlcad.nsi \
 	nsis/header.bmp \

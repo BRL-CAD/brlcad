@@ -514,10 +514,8 @@ Get_subfig_name(entityno)
     Readint(&i, "");	/* ignore depth */
     Readname(&name, "");	/* get subfigure name */
 
-    if (name) {
-        dir[entityno]->name = Add_brl_name(name);
-        bu_free((char *)name, "Get_name: name");
-    }
+    dir[entityno]->name = Add_brl_name(name);
+    bu_free((char *)name, "Get_name: name");
 }
 
 
