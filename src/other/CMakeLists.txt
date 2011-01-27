@@ -34,9 +34,9 @@ IF(BRLCAD_BUILD_LOCAL_ZLIB)
 ENDIF(BRLCAD_BUILD_LOCAL_ZLIB)
 
 # libtermlib Library
-IF(BRLCAD_BUILD_LOCAL_LIBTERM)
+IF(BRLCAD_BUILD_LOCAL_TERMLIB)
    THIRD_PARTY_SUBDIR(TERMLIB libtermlib)
-ENDIF(BRLCAD_BUILD_LOCAL_LIBTERM)
+ENDIF(BRLCAD_BUILD_LOCAL_TERMLIB)
 
 # libpng Library - Checks for ZLIB, so need to handle libpng AFTER zlib to set the variables
 # if using a local copy of zlib.  If not using a local copy of zlib, FindZLIB results will 

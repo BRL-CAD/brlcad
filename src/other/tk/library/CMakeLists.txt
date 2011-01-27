@@ -180,6 +180,7 @@ SET(TK_DEMO_FILES
 	demos/ttknote.tcl
 	demos/ttkpane.tcl
 	demos/ttkprogress.tcl
+	demos/ttkscale.tcl
 	demos/twind.tcl
 	demos/unicodeout.tcl
 	demos/vscale.tcl

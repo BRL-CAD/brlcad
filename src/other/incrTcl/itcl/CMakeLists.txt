@@ -495,3 +495,11 @@ FILE(WRITE ${CMAKE_BINARY_DIR}/lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSIO
 
 install(FILES library/itcl.tcl DESTINATION lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/library/itcl.tcl ${CMAKE_BINARY_DIR}/lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION}/itcl.tcl COPYONLY)
+
+SET(ITCL_HDRS
+	generic/itcl.h
+	generic/itclDecls.h
+	generic/itclInt.h
+	generic/itclIntDecls.h
+	)
+install(FILES ${ITCL_HDRS} DESTINATION include)

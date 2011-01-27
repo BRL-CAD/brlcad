@@ -534,3 +534,9 @@ FOREACH(file ${ITK_LIBRARY_FILES})
    get_filename_component(filename ${file} NAME)
 	configure_file(${file} ${CMAKE_BINARY_DIR}/lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION}/${filename} COPYONLY)
 ENDFOREACH(file ${ITK_LIBRARY_FILES})
+
+SET(ITK_HDRS
+	generic/itk.h
+	generic/itkDecls.h
+	)
+install(FILES ${ITK_HDRS} DESTINATION include)

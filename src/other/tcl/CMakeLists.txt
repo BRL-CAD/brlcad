@@ -741,3 +741,12 @@ install(TARGETS tclsh DESTINATION bin)
 GET_FILENAME_COMPONENT(TCLSH_INSTALL_NAME ${CMAKE_INSTALL_PREFIX}/bin/tclsh ABSOLUTE)
 FILE(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/tclsh_make_symlink.cmake "exec_program(${CMAKE_COMMAND} ARGS -E create_symlink ${TCLSH_INSTALL_NAME} ${TCLSH_INSTALL_NAME}${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})")
 set_target_properties(tclsh PROPERTIES POST_INSTALL_SCRIPT ${CMAKE_BINARY_DIR}/CMakeTmp/tclsh_make_symlink.cmake) 
+
+SET(TCL_HDRS
+	generic/tcl.h
+	generic/tclDecls.h
+	generic/tclPlatDecls.h
+	generic/tclTomMath.h
+	generic/tclTomMathDecls.h
+	)
+install(FILES ${TCL_HDRS} DESTINATION include)
