@@ -1053,13 +1053,13 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 	MESSAGE("")
 
 	STRING(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
-	IF(BUILD_TYPE)
+	IF(NOT BUILD_TYPE)
 		SET(CMAKE_ALL_C_FLAGS "${CMAKE_C_FLAGS}")
 		SET(CMAKE_ALL_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-	ELSE(BUILD_TYPE)
+	ELSE(NOT BUILD_TYPE)
 		SET(CMAKE_ALL_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_${BUILD_TYPE}}")
 		SET(CMAKE_ALL_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${BUILD_TYPE}}")
-	ENDIF(BUILD_TYPE)
+	ENDIF(NOT BUILD_TYPE)
 
 	# Compiler settings - in this case there are additional "special case" flags that get
 	# added depending on build type - roll all flags into individual variables before printing
