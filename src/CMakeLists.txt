@@ -93,7 +93,8 @@ SET(remaining_dirs
 	libcursor 
 	libdm 
 	libfft 
-	libicv 
+	libicv
+	libpc
 	libmultispectral 
 	libtclcad 
 	libtermio 
