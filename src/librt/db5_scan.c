@@ -334,7 +334,6 @@ int
 db_dirbuild(struct db_i *dbip)
 {
     int version;
-    unsigned char header[8];
 
     if (!dbip) {
 	return -1;
