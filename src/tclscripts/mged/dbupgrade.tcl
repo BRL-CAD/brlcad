@@ -26,6 +26,11 @@
 #	The dbupgrade(message) string was written by Lee Butler.
 #
 
+namespace eval ::tk {}
+if {![info exists ::tk::Priv(cad_dialog)]} {
+    set ::tk::Priv(cad_dialog) .cad_dialog
+}
+
 set dbupgrade_priv(message) "
 Release 6.0 of BRL-CAD introduced a new geometry file format with
 several new features.
@@ -108,17 +113,18 @@ Support for the previous file format may be removed in a future release.
 # --help
 #
 proc dbupgrade {args} {
+
     global mged_gui
-    global ::tk::Priv
     global dbupgrade_priv
     global tcl_platform
 
-    set id [get_player_id_dm [winset]]
+    set ws [winset]
+    set id [get_player_id_dm $ws]
 
     # first time through only
     if {![info exists dbupgrade_priv(dbname)]} {
 	if {[opendb] == ""} {
-	    if {[info exists ::tk::Priv(cad_dialog)]} {
+	    if {[info exists .cad_dialog]} {
 		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		    "No database has been opened!" info 0 OK
 		return
@@ -149,7 +155,7 @@ proc dbupgrade {args} {
     if {[llength $args] == 0} {
 	# inform and prompt the user to upgrade
 
-	if {[info exists ::tk::Priv(cad_dialog)]} {
+	if {[info exists .cad_dialog]} {
 	    set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 			    "Would you like to upgrade $dbname?" \
 			    $dbupgrade_priv(message) \
@@ -161,7 +167,7 @@ proc dbupgrade {args} {
 	    }
 	} else {
 	    set_more_default upgrade
-	    error "more arguments needed::upgrade or cancel?  \[upgrade\]:"
+	    error "more arguments needed::upgrade or cancel? \[default: upgrade\] "
 	}
     } else {
 	# process user's response to prompting
@@ -224,7 +230,7 @@ proc dbupgrade {args} {
 	# when overwrite is 0, the user hasn't been prompted to overwrite yet
 	if {!$overwrite} {
 	    # not a directory, so prompt the user about overwriting
-	    if {[info exists ::tk::Priv(cad_dialog)]} {
+	    if {[info exists .cad_dialog]} {
 		set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 				"About to overwrite $dbname\R4"\
 				"Would you like to overwrite $dbname\R4"\
@@ -257,8 +263,8 @@ proc dbupgrade {args} {
     file attributes $db_orig -permissions 0440
 
     # dbupgrade converts the original database to the current db format
-    set dbupgrade [file join [bu_brlcad_root "bin"] dbupgrade]
-    catch {exec $dbupgrade $db_orig $dbname} ret
+    set dbupgrade_cmd [file join [bu_brlcad_root "bin"] dbupgrade]
+    catch {exec $dbupgrade_cmd $db_orig $dbname} ret
 
     if {[file exists $dbname]} {
 	#XXX There may eventually need to be more checks, but
@@ -294,6 +300,7 @@ proc dbupgrade {args} {
 	error "dbupgrade: $ret\nreopening $dbname"
     }
 }
+
 
 # Local Variables:
 # mode: Tcl
