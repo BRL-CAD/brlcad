@@ -7,9 +7,9 @@ Remaining items:
 12. Try enabling the Aqua compile logic - it still won't work, but get the build logic to the point
     where the autotools logic is.
 
-13. Enable any remaining things present in autotools but not CMake - RTGL and libpc come to mind.
-
 14. Apply lessons learned to the SCL build logic
+
+15. get tcl/tk build fixed on opensolaris, continue build
 
 Done (to first order, all this needs testing)
 
@@ -53,3 +53,4 @@ Done (to first order, all this needs testing)
 7.  Build flags - we supply a lot via several options in autotools - express that in CMake
 
 
+13. Enable any remaining things present in autotools but not CMake - RTGL and libpc come to mind. (got rtgl and libpc)
