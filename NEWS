@@ -15,6 +15,7 @@ changes made.  See document footer for additional details.
 
 * new mime-type geometry association for Debian platform - Jordi Sayol
 * improved Debian platform support with new menus, icons - Jordi Sayol
+* improved mged 'ls' command support for v4 databases - Sean Morrison
 * dbconcat supports title, units, & color table import - John Anderson
 * 'tree -a' command lists object attributes - Tom Browder
 * fixed Mac build failure running asc2g before install - Sean Morrison
