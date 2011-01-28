@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2010-12-XX  Release 7.18.2                                     ---
 ----------------------------------------------------------------------
 
+* new opendb -f endianness flip option for corrupt v4 - Sean Morrison
 * new mime-type geometry association for Debian platform - Jordi Sayol
 * improved Debian platform support with new menus, icons - Jordi Sayol
 * improved mged 'ls' command support for v4 databases - Sean Morrison
