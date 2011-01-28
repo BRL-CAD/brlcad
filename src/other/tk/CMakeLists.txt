@@ -442,7 +442,6 @@ SET(TK_WIN_SRCS
 	xlib/ximage.c
 	xlib/xutil.c
 	win/stubs.c
-	win/winMain.c
 	win/rc/tk.rc
 	generic/tkFileFilter.c
 	generic/tkMacWinMenu.c
