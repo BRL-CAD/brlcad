@@ -134,7 +134,9 @@
 #define fileno _fileno
 #define fstat _fstat
 #define getpid _getpid
-#define hypot _hypot
+#if (_MSC_VER < 1600)
+#  define hypot _hypot
+#endif
 #define isascii __isascii
 #define pclose _pclose
 #define popen _popen
