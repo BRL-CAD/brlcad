@@ -768,6 +768,12 @@ ELSE(NOT WIN32)
 	SET(HAVE_TERMLIB 0)
 ENDIF(NOT WIN32)
 
+# on SunOS with Sun Studio we need sunmath
+CHECK_LIBRARY_EXISTS(sunmath ieee_flags "" HAVE_SUNMATH_LIBRARY)
+IF(HAVE_SUNMATH_LIBRARY)
+	SET(SUN_MATH_LIB "-lsunmath")
+ENDIF(HAVE_SUNMATH_LIBRARY)
+
 # m library is not needed on Windows
 IF(NOT WIN32)
 	BRLCAD_CHECK_LIBRARY(M m cos)

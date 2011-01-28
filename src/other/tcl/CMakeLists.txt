@@ -716,7 +716,7 @@ SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TCL_CFLAGS}")
 
 add_library(tcl ${TCL_SRCS})
 install(TARGETS tcl DESTINATION ${LIB_DIR})
-target_link_libraries(tcl ${COREFOUNDATION_FRAMEWORK} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(tcl ${COREFOUNDATION_FRAMEWORK} ${SUN_MATH_LIB} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 GET_TARGET_PROPERTY(TCL_INSTALL_LIBNAME tcl LOCATION)
 SET_TARGET_PROPERTIES(tcl PROPERTIES VERSION ${TCL_VERSION} SOVERSION ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
 IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
@@ -732,7 +732,7 @@ target_link_libraries(tclstub ${CMAKE_THREAD_LIBS_INIT} ${COREFOUNDATION_FRAMEWO
 install(TARGETS tclstub DESTINATION ${LIB_DIR})
 
 add_executable(tclsh ${TCLSH_SRCS})
-target_link_libraries(tclsh tcl ${EXTRA_TCLSH_LIBS})
+target_link_libraries(tclsh tcl ${SUN_MATH_LIB} ${EXTRA_TCLSH_LIBS})
 install(TARGETS tclsh DESTINATION bin)
 # Regrettably, setting the VERSION variable on the tclsh target produces a symlink with a dash (which is a sensible default but
 # inconsistent with standard tcl practice) and I don't see how to alter that.
