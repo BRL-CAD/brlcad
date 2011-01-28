@@ -9,10 +9,6 @@ Remaining items:
 
 14. Apply lessons learned to the SCL build logic
 
-15. get tcl/tk build fixed on opensolaris, continue build
-
-16. make the src/other build logic use the version numbers where needed
-
 17. fix wish build on windows - current output exe doesn't run
 
 Done (to first order, all this needs testing)
@@ -58,3 +54,8 @@ Done (to first order, all this needs testing)
 
 
 13. Enable any remaining things present in autotools but not CMake - RTGL and libpc come to mind. (got rtgl and libpc)
+
+15. get tcl/tk build fixed on opensolaris, continue build (got tcl/tk building, but there are other issues with Sun Studio.  Other issues don't look to be specific to CMake, though there may be a few hiding behind other errors.)
+
+16. make the src/other build logic use the version numbers where needed
+

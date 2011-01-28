@@ -61,6 +61,7 @@ add_definitions(
 add_library(Tktable SHARED ${TKTABLE_SRCS})
 add_dependencies(Tktable tktable_header_gen)
 target_link_libraries(Tktable ${TCL_LIBRARY} ${TCL_TK_LIBRARY} ${X11_LIBRARIES})
+SET_TARGET_PROPERTIES(Tktable PROPERTIES VERSION ${TKTABLE_PKGVERSION})
 install(TARGETS Tktable DESTINATION ${LIB_DIR})
 
 # Create the pkgIndex.tcl file.

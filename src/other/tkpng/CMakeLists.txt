@@ -17,6 +17,7 @@ SET(TKPNG_SRCS
 
 add_library(tkpng SHARED ${TKPNG_SRCS})
 target_link_libraries(tkpng ${TCL_LIBRARY} ${TCL_TK_LIBRARY} ${ZLIB_LIBRARY} ${X11_LIBRARIES})
+SET_TARGET_PROPERTIES(tkpng PROPERTIES VERSION ${TKPNG_PKGVERSION})
 install(TARGETS tkpng DESTINATION ${LIB_DIR})
 
 # Create the pkgIndex.tcl file.

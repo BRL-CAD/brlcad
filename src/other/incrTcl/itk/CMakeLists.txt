@@ -1,5 +1,5 @@
 #                     C M A K E L I S T S . T X T
-# SCL
+# ITK 
 #
 # Copyright (c) 2010 United States Government as represented by
 # the U.S. Army Research Laboratory.
@@ -506,6 +506,8 @@ ELSE(WIN32)
 	add_library(itk ${ITK_GENERIC_SRCS})
 ENDIF(WIN32)
 target_link_libraries(itk ${M_LIBRARY} ${TCL_LIBRARIES} ${ITCL_LIBRARY})
+SET_TARGET_PROPERTIES(itk PROPERTIES VERSION ${ITK_VERSION} SOVERSION ${ITK_MAJOR_VERSION})
+SET_TARGET_PROPERTIES(itk PROPERTIES COMPILE_FLAGS "-w")
 SET_TARGET_PROPERTIES(itk PROPERTIES PREFIX "lib")
 install(TARGETS itk DESTINATION ${LIB_DIR})
 

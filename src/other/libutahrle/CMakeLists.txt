@@ -59,6 +59,7 @@ ENDIF(MSVC)
 
 add_library(utahrle SHARED ${LIBUTAHRLE_SOURCES})
 target_link_libraries(utahrle ${M_LIBRARY})
+SET_TARGET_PROPERTIES(utahrle PROPERTIES VERSION 19.0.1 SOVERSION 19)
 INSTALL(TARGETS utahrle DESTINATION ${LIB_DIR})
 add_library(utahrle-static STATIC ${LIBUTAHRLE_SOURCES})
 target_link_libraries(utahrle-static ${M_LIBRARY})
