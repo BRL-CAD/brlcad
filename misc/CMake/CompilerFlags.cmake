@@ -159,8 +159,8 @@ IF(BRLCAD-ENABLE_COMPILER_WARNINGS)
 	# -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
 	# -Wformat=2 (after bu_fopen_uniq() is obsolete)
 	CHECK_C_FLAG_GATHER(pedantic WARNING_FLAGS)
-	CHECK_C_FLAG_GATHER(w WARNING_FLAGS)
 	IF(NOT MSVC)
+	   CHECK_C_FLAG_GATHER(w WARNING_FLAGS)
 		CHECK_C_FLAG_GATHER(W WARNING_FLAGS)
 		CHECK_C_FLAG_GATHER(Wall WARNING_FLAGS)
 	ELSE(NOT MSVC)
@@ -178,11 +178,11 @@ ENDIF(BRLCAD-ENABLE_COMPILER_WARNINGS)
 # Unlike other flags, the STRICT flags are managed on a per-library
 # basis and do not need to be added to any CMAKE_*_FLAGS variable
 IF(BRLCAD-ENABLE_STRICT)
-	CHECK_C_FLAG_GATHER(w STRICT_FLAGS)
 	CHECK_C_FLAG_GATHER(pedantic STRICT_FLAGS)
-	CHECK_C_FLAG_GATHER(W STRICT_FLAGS)
 	# The Wall warnings are too verbose with Visual C++
 	IF(NOT MSVC)
+	   CHECK_C_FLAG_GATHER(w STRICT_FLAGS)
+	   CHECK_C_FLAG_GATHER(W STRICT_FLAGS)
 		CHECK_C_FLAG_GATHER(Wall STRICT_FLAGS)
 	ELSE(NOT MSVC)
 		CHECK_C_FLAG_GATHER(W4 STRICT_FLAGS)
