@@ -195,11 +195,21 @@ proc dbupgrade {args} {
 	if {[llength $args] == 2} {
 	    switch -- [lindex $args 1] {
 		"y" -
-		"Y" {
+		"Y" -
+		"yes" -
+		"yeS" -
+		"yEs" -
+		"yES" -
+		"Yes" -
+		"YeS" -
+		"YEs" -
+		"YES" {
 		    set overwrite 1
 		}
 		default {
 		    # restore original database
+		    puts "dbupgrade cancelled.  Reopening database \[$dbname\]"
+
 		    opendb $dbname y
 
 		    # remove tmp file
@@ -248,7 +258,7 @@ proc dbupgrade {args} {
 
 	    } else {
 		set_more_default n
-		error "more arguments needed::overwrite $dbname\R4?\[y|n\]  \[n\]:"
+		error "more arguments needed::overwrite $dbname\R4 \[y|n\]? \[default: n\] "
 	    }
 	}
 
