@@ -278,7 +278,7 @@ extern "C" {
 
 /* 16-bit wide character ("UNICODE") */
 
-#if !defined(ON_COMPILER_MSC) && !defined(ON_COMPILER_GNU)
+#if !defined(ON_COMPILER_MSC) && !defined(ON_COMPILER_GNU) && !defined(ON_COMPILER_SUN)
 typedef unsigned short wchar_t;
 #endif
 
@@ -357,6 +357,18 @@ typedef long long ON__INT64;
 
 // 64 bit unsigned integer
 typedef unsigned long long ON__UINT64;
+
+#elif defined(ON_COMPILER_SUN)
+
+// Don't know for sure what Sun Studio
+// uses, try long long
+
+// 64 bit integer
+typedef long long ON__INT64;
+
+// 64 bit unsigned integer
+typedef unsigned long long ON__UINT64;
+
 
 #else
 

@@ -20,6 +20,8 @@
 //
 ////////////////////////////////////////////////////////////////
 
+int _finite(double);
+
 #if !defined(OPENNURBS_INC_)
 #define OPENNURBS_INC_
 
