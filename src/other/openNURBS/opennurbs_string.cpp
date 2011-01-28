@@ -18,7 +18,9 @@
 /////////////////////////////////////////////////////////////////////////////
 // Empty strings point at empty_astring
 
-#include <sys/stat.h>
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
 
 struct ON_aStringHeader
 {
