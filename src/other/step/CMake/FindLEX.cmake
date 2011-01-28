@@ -42,20 +42,41 @@
 #      ${LEX_MyScanner_OUTPUTS}
 #   )
 #  ====================================================================
-
+#
 #=============================================================================
+# Copyright 2010 United States Government as represented by
+#                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#  
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# 
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+# 
+# * The names of the authors may not be used to endorse or promote
+#   products derived from this software without specific prior written
+#   permission.
 #
-# Distributed under the OSI-approved BSD License (the "License");
-# see accompanying file Copyright.txt for details.
-#
-# This software is distributed WITHOUT ANY WARRANTY; without even the
-# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the License for more information.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
-# (To distributed this file outside of CMake, substitute the full
-#  License text for the above reference.)
 
 FIND_PROGRAM(LEX_EXECUTABLE flex DOC "path to the lex executable")
 IF(NOT LEX_EXECUTABLE)
@@ -122,6 +143,16 @@ IF(LEX_EXECUTABLE)
       PROPERTIES OBJECT_DEPENDS ${YACC_${YaccTarget}_OUTPUT_HEADER})
   ENDMACRO(ADD_LEX_YACC_DEPENDENCY)
   #============================================================
+
+  #Need to run a test lex file to determine if YYTEXT_POINTER needs
+  #to be defined
+  EXEC_PROGRAM(${LEX_EXECUTABLE} ARGS ${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/lex_test.l -o ${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.c RETURN_VALUE _retval OUTPUT_VARIABLE _lexOut)
+  INCLUDE (CheckCFileRuns)
+  SET(FILE_RUN_DEFINITIONS "-DYYTEXT_POINTER=1")
+  CHECK_C_FILE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c YYTEXT_POINTER)
+  SET(FILE_RUN_DEFINITIONS)
+  FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine YYTEXT_POINTER 1\n")
+  
 
 ENDIF(LEX_EXECUTABLE)
 

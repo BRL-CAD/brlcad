@@ -42,7 +42,7 @@
 # Minimum required version of CMake
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 IF(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
+	CMAKE_POLICY(SET CMP0003 NEW)
 ENDIF(COMMAND CMAKE_POLICY)
 
 # set CMake project name
@@ -54,20 +54,15 @@ OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
 # build static libs by default
 OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
 
-
-# See HACKING for details on how to properly update the version
-FILE(READ ${SCL_SOURCE_DIR}/include/conf/MAJOR MAJOR_VERSION)
-STRING(STRIP ${MAJOR_VERSION} MAJOR_VERSION)
-FILE(READ ${SCL_SOURCE_DIR}/include/conf/MINOR MINOR_VERSION)
-STRING(STRIP ${MINOR_VERSION} MINOR_VERSION)
-FILE(READ ${SCL_SOURCE_DIR}/include/conf/PATCH PATCH_VERSION)
-STRING(STRIP ${PATCH_VERSION} PATCH_VERSION)
-
-SET(SCL_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}")
+# Set version
+SET(SCL_VERSION_MAJOR "3")
+SET(SCL_VERSION_MINOR "2")
+SET(SCL_VERSION_PATCH "0")
+SET(SCL_VERSION "${SCL_VERSION_MAJOR}.${SCL_VERSION_MINOR}.${SCL_VERSION_PATCH}")
 
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.
-SET(SCL_CMAKE_DIR "${SCL_SOURCE_DIR}/misc/CMake")
+SET(SCL_CMAKE_DIR "${SCL_SOURCE_DIR}/CMake")
 SET(CMAKE_MODULE_PATH "${SCL_CMAKE_DIR};${CMAKE_MODULE_PATH}")
 
 INCLUDE(${SCL_CMAKE_DIR}/SCL_Utils.cmake)
@@ -78,58 +73,102 @@ SET(_orig_lc_all      $ENV{LC_ALL})
 SET(_orig_lc_messages $ENV{LC_MESSAGES})
 SET(_orig_lang        $ENV{LANG})
 IF(_orig_lc_all)
-  SET(ENV{LC_ALL}      C)
+	SET(ENV{LC_ALL}      C)
 ENDIF(_orig_lc_all)
 IF(_orig_lc_messages)
-  SET(ENV{LC_MESSAGES} C)
+	SET(ENV{LC_MESSAGES} C)
 ENDIF(_orig_lc_messages)
 IF(_orig_lang)
-  SET(ENV{LANG}        C)
+	SET(ENV{LANG}        C)
 ENDIF(_orig_lang)
 
 # For NFS volumes, to ensure proper file creation.
 IF(NOT WIN32)
-  EXEC_PROGRAM(umask ARGS 022 OUTPUT_VARIABLE exec_out)
+	IF(NOT UMASK)
+		EXEC_PROGRAM(umask ARGS 022 OUTPUT_VARIABLE exec_out)
+	ELSE(NOT UMASK)
+		EXEC_PROGRAM(umask ARGS ${UMASK} OUTPUT_VARIABLE exec_out)
+	ENDIF(NOT UMASK)
 ENDIF(NOT WIN32)
 
-# Set build type here. In this case, watch for a command line assignment
-# and if there isn't one force set to basic in order to have a default
-# set for the remainder of the configure.  May not be necessary, and if
-# not should be removed - wait for finished build files to tell.
-set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
-        "Basic" "Debug" "Release")
-if (NOT CMAKE_BUILD_TYPE)
-   set(CMAKE_BUILD_TYPE "Basic" CACHE STRING "Set build type" FORCE)
-endif (NOT CMAKE_BUILD_TYPE)
+#---------------------------------------------------------------------
+# The following logic is what allows binaries to run successfully in 
+# the build directory AND install directory.  Thanks to plplot for 
+# identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
+
+# use, i.e. don't skip the full RPATH for the build tree
+SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+
+# when building, don't use the install RPATH already
+# (but later on when installing)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+
+# the RPATH/INSTALL_NAME_DIR to be used when installing
+if (NOT APPLE)
+	SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+endif(NOT APPLE)
+SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+
+# add the automatically determined parts of the RPATH which point to 
+# directories outside the build tree to the install RPATH
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 
 #-----------------------------------------------------------------------------
 # Output directories.
-IF(NOT LIBRARY_OUTPUT_PATH)
-  SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
-ENDIF(NOT LIBRARY_OUTPUT_PATH)
-IF(NOT EXECUTABLE_OUTPUT_PATH)
-  SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
-ENDIF(NOT EXECUTABLE_OUTPUT_PATH)
+IF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+	IF(WIN32)
+		SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${SCL_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all libraries.")
+	ELSE(WIN32)
+		SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${SCL_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
+	ENDIF(WIN32)
+ENDIF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+IF(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+	SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${SCL_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
+ENDIF(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+IF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+	SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${SCL_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
+ENDIF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+
+FOREACH(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	STRING(TOUPPER "${CFG_TYPE}" CFG_TYPE)
+	IF(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}")
+		IF(WIN32)
+			SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}" ${SCL_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all libraries.")
+		ELSE(WIN32)
+			SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}" ${SCL_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
+		ENDIF(WIN32)
+	ENDIF(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}")
+	IF(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}")
+		SET("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}" ${SCL_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
+	ENDIF(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}")
+	IF(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}")
+		SET("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}" ${SCL_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
+	ENDIF(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}")
+ENDFOREACH()
+
 
 #-----------------------------------------------------------------------------
 # Configure install locations. 
 
-IF(NOT CMAKE_INSTALL_PREFIX)
-  SET(CMAKE_INSTALL_PREFIX "/usr/local/scl")
-ENDIF(NOT CMAKE_INSTALL_PREFIX)
-
-# We will need an scl_config.h.in file to hold all the #cmakedefine statements,
-# which will in turn be used to generate an scl_conf.h file.  In autotools this
-# process is handled by autoheader - in the case of CMake we wrap the CHECK_*
-# functions and the creation of the entry in the brlcad_config.h.in file into
-# one step via a macro.  To run this macro, the file must first be present, which
-# we take care of here:
-
-SET(CONFIG_H_FILE "${SCL_BINARY_DIR}/include/scl_config.h.in")
-FILE(WRITE ${CONFIG_H_FILE} "/**** Define statements for CMake ****/\n")
-
-INCLUDE(${SCL_CMAKE_DIR}/SCL_ConfigFile.cmake)
+# The location in which to install BRLCAD. Need a good Debug location 
+# for Windows.  Only do this if CMAKE_INSTALL_PREFIX hasn't been set
+# already, to try and allow parent builds (if any) some control.
+IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+	MESSAGE("HAVE_DEFAULT_PREFIX")
+	IF(NOT WIN32)
+		IF ("${CMAKE_BUILD_TYPE}" MATCHES "Release")
+			SET(CMAKE_INSTALL_PREFIX "/usr")
+		ELSEIF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+			MESSAGE("setting debug output dir")
+			SET(CMAKE_INSTALL_PREFIX "${SCL_SOURCE_DIR}/../scl-install")
+		ELSE("${CMAKE_BUILD_TYPE}" MATCHES "Release")
+			SET(CMAKE_INSTALL_PREFIX "/usr/local")
+		ENDIF ("${CMAKE_BUILD_TYPE}" MATCHES "Release")
+	ENDIF(NOT WIN32)
+	SET(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "SCL install prefix" FORCE)
+ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+SET(BRLCAD_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "SCL install prefix")
 
 OPTION(SCL-BUILD_EXPRESS_ONLY "Only build express parser." OFF)
 MARK_AS_ADVANCED(SCL-BUILD_EXPRESS_ONLY)
@@ -139,24 +178,25 @@ INCLUDE (CheckLibraryExists)
 INCLUDE(${SCL_CMAKE_DIR}/FindLEX.cmake)
 INCLUDE(${SCL_CMAKE_DIR}/FindYACC.cmake)
 
-SCL_INCLUDE_FILE(ndir.h HAVE_NDIR_H)
-SCL_INCLUDE_FILE(stdarg.h HAVE_STDARG_H)
-SCL_INCLUDE_FILE(sys/stat.h HAVE_SYS_STAT_H)
-SCL_INCLUDE_FILE(sysent.h HAVE_SYSENT_H)
-SCL_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
+CHECK_INCLUDE_FILE(ndir.h HAVE_NDIR_H)
+CHECK_INCLUDE_FILE(stdarg.h HAVE_STDARG_H)
+CHECK_INCLUDE_FILE(sys/stat.h HAVE_SYS_STAT_H)
+CHECK_INCLUDE_FILE(sysent.h HAVE_SYSENT_H)
+CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 
-SCL_FUNCTION_EXISTS(abs HAVE_ABS)
-SCL_FUNCTION_EXISTS(memcpy HAVE_MEMCPY)
-SCL_FUNCTION_EXISTS(memmove HAVE_MEMMOVE)
+CHECK_FUNCTION_EXISTS(abs HAVE_ABS)
+CHECK_FUNCTION_EXISTS(memcpy HAVE_MEMCPY)
+CHECK_FUNCTION_EXISTS(memmove HAVE_MEMMOVE)
 
-SCL_TYPE_SIZE("ssize_t" SSIZE_T)
+CHECK_TYPE_SIZE("ssize_t" SSIZE_T)
 
 # Now that all the tests are done, configure the scl_config.h file:
-configure_file(${CONFIG_H_FILE} ${SCL_BINARY_DIR}/include/scl_config.h)
+configure_file(${SCL_SOURCE_DIR}/include/scl_config.h.in ${SCL_BINARY_DIR}/include/scl_config.h)
 
 include_directories(
-        ${SCL_SOURCE_DIR}/include
-)
+	${SCL_SOURCE_DIR}/include
+	${SCL_BINARY_DIR}/include
+	)
 
 ADD_SUBDIRECTORY(src/express)
 ADD_SUBDIRECTORY(src/exppp)
