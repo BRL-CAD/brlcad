@@ -30,22 +30,8 @@ EXTRA_DIST = \
 	brlcad-config.in \
 	brlcad.spec \
 	brlcad.spec.in \
-	debian/changelog \
-	debian/compat \
-	debian/control \
-	debian/copyright \
-	debian/rules \
-	debian/source/format \
 	debian/application-x-brlcad-extension.png \
 	debian/application-x-brlcad-extension.xml \
-	debian/brlcad.directory \
-	debian/brlcad.docs \
-	debian/brlcad.install \
-	debian/brlcad.menu \
-	debian/brlcad.png \
-	debian/brlcad.postinst \
-	debian/brlcad.postrm \
-	debian/brlcad.sh \
 	debian/brlcad-archer.desktop \
 	debian/brlcad-archer.png \
 	debian/brlcad-db.desktop \
@@ -55,6 +41,20 @@ EXTRA_DIST = \
 	debian/brlcad-doc.png \
 	debian/brlcad-mged.desktop \
 	debian/brlcad-rtwizard.desktop \
+	debian/brlcad.directory \
+	debian/brlcad.docs \
+	debian/brlcad.install \
+	debian/brlcad.menu \
+	debian/brlcad.png \
+	debian/brlcad.postinst \
+	debian/brlcad.postrm \
+	debian/brlcad.sh \
+	debian/changelog \
+	debian/compat \
+	debian/control \
+	debian/copyright \
+	debian/rules \
+	debian/source/format \
 	doxygen_structure \
 	flawfinder \
 	libtool.m4 \
