@@ -99,10 +99,10 @@ The primary benefits of the new file format to the user include:
 	command for more information.
 
 
-Release 6.0 of BRL-CAD retains the ability to edit and use geometry
-files created with previous releases (4.0 through 5.4) of the package.
-The features mentioned above will not be available when using geometry
-files retained in the old format.
+BRL-CAD retains the ability to edit and use geometry files created
+with previous releases (4.0+) of the package.  The features mentioned
+above, however, are not be available when using geometry files
+retained in the old format.
 
 Support for the previous file format may be removed in a future release.
 "
@@ -110,7 +110,7 @@ Support for the previous file format may be removed in a future release.
 ## - dbupgrade
 #
 # -f
-# --help
+# -help
 #
 proc dbupgrade {args} {
 
@@ -166,8 +166,8 @@ proc dbupgrade {args} {
 		return
 	    }
 	} else {
-	    set_more_default upgrade
-	    error "more arguments needed::upgrade or cancel? \[default: upgrade\] "
+	    set_more_default help
+	    error "more arguments needed::upgrade, cancel, or help? \[default: help\] "
 	}
     } else {
 	# process user's response to prompting
@@ -183,7 +183,9 @@ proc dbupgrade {args} {
 		return "dbupgrade cancelled"
 	    }
 	    default -
+	    "help" -
 	    "-help" {
+		puts "$dbupgrade_priv(message)"
 		unset dbupgrade_priv(dbname)
 		return [help dbupgrade]
 	    }
