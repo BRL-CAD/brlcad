@@ -22,8 +22,8 @@
 # Utility routines called by MGED's Tcl/Tk command window(s).
 #
 
-bind Text <Control-Key-slash> {}
-bind Text <<Cut>> {}
+catch {bind Text <Control-Key-slash> {}} err
+catch {bind Text <<Cut>> {}} err
 
 proc tk_textPaste {w} {
     global tcl_platform
