@@ -3045,6 +3045,21 @@ RT_EXPORT BU_EXTERN(int db5_scan,
  */
 RT_EXPORT BU_EXTERN(int db_version, (struct db_i *dbip));
 
+
+/* db_corrupt.c */
+
+/**
+ * Detect whether a given geometry database file seems to be corrupt
+ * or invalid due to flipped endianness.  Only relevant for v4
+ * geometry files that are binary-incompatible with the runtime
+ * platform.
+ *
+ * Returns true if flipping the endian type fixes all combination
+ * member matrices.
+ */
+RT_EXPORT BU_EXTERN(int rt_db_flip_endian, (struct db_i *dbip));
+
+
 /* db5_comb.c */
 RT_EXPORT BU_EXTERN(int rt_comb_import5, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp));
 
