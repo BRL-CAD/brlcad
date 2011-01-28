@@ -102,9 +102,9 @@
 #endif
 
 // Sun Studio wants a prototype for _finite, give it one
-//#if defined(ON_COMPILER_SUN)
-//int _finite(double);
-//#endif
+#if defined(ON_COMPILER_SUN)
+ int _finite(double);
+#endif
 
 /*
 // Define ON_NO_WINDOWS if you are compiling on a Windows system but want
