@@ -334,10 +334,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   without breaking the ability to set a GUI editor like TextEdit,
   Wordpad, etc.
 
-* Machine-independent dbupgrade.  Make it so that dbupgrade will work
-  on an old v4 without being on a machine of the same original
-  architecture type.
-
 * complete conversion of existing manual pages into docbook format
 
 * add an option to bot_dump for outputting surface normals.  Make sure
