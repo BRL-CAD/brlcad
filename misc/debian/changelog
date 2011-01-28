@@ -1,3 +1,42 @@
+brlcad (7.18.0-0) unstable; urgency=low
+
+  This release includes the initial release of a new Bag of Triangle
+  (BoT) editing interface for MGED and Archer.  Nicholas Reed developed
+  the new graphical user interface (GUI) in order to consolidate the
+  numerous BoT editing commands and processing steps into one unified
+  easy-to-use interface.  The new GUI grealy simplifies BoT processing
+  steps and can save modelers considerable time.
+
+  * ported benchmark suite to Windows (requires 'sh') - Erik Greenwald
+  * improved NURBS wireframes with interior surface lines - Keith Bowman
+  * additional NURBS raytracing robustness improvements - Keith Bowman
+  * removed pl-sgi plot tool - Sean Morrison
+  * expanded rtarea documentation with examples and detail - Cliff Yapp
+  * improved support for unlimited object counts in mged - Sean Morrison
+  * fixed 'erase_all' behavior so 'who' gives correct lists - Bob Parker
+  * fixed idents, solids, and regions output - Bob Parker
+  * increased performance of facetization and export - Sean Morrison
+  * fixed NURBS raytrace bug grazing nearly flat surfaces - Keith Bowman
+  * fixed infinite loop bug converting to NMG and BoT - Sean Morrison
+  * improved Windows installer desktop shortcut creation - Bob Parker
+  * fixed running mged external tools (e.g., rt) after 'cd' - Bob Parker
+  * fixed 'pnts' point cloud primitive memory access bug - Richard Weiss
+  * new BoT editing interface for mged and archer - Nicholas Reed
+  * fixed crash during BoT decimation - Nicholas Reed
+  * improved robustness of CSG boolean tree processing - Sean Morrison
+  * improved loading of Pro/E export plugin on Windows - Bob Parker
+  * added ray bundle shooting capability to rtshot - Keith Bowman
+  * improved robustness of facetization and export - Richard Weiss
+  * cleaner logging of facetize command BoT failures - Sean Morrison
+  * removed 'query' command line prompting tool - Sean Morrison
+  * increased optimized package run-time performance - Sean Morrison
+  * fixed crash when raytracing multiple frames - Keith Bowman
+  * fixed mged zap crash while using preview - Keith Bowman, Bob Parker
+  * added ability to toggle mged status bar via .mgedrc - Rob Shinn
+  * new mged 'bot' command for accessing BoT properties - Nicholas Reed
+
+ -- Jordi Sayol <g.sayol@yahoo.es>  Thu, 27 Jan 2011 15:18:03 +0100
+
 brlcad (7.16.10-1) unstable; urgency=low
 
   * Initial release (Closes: #289632).

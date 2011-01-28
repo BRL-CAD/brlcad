@@ -1,37 +1,17 @@
 #!/usr/bin/make -f
 
-# Author: Manuel A. Fernandez Montecelo <manuel.montezelo@gmail.com>
+# Author: Jordi Sayol <g.sayol@yahoo.es> 
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
-
-# DEB_BUILD_OPTIONS
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-        CXXFLAGS += -O0
-else
-        CXXFLAGS += -O2
-endif
-
-ifneq (,$(findstring parallel,$(DEB_BUILD_OPTIONS)))
-    PARALLEL_JOBS = $(shell echo $(DEB_BUILD_OPTIONS) | \
-        sed -e 's/.*parallel=\([0-9]\+\).*/\1/')
-    PARALLEL_OPTIONS = -j$(PARALLEL_JOBS)
-endif
-# DEB_BUILD_OPTIONS
-
 
 build: build-stamp
 
 build-stamp:
 	dh_testdir
 
-	./configure --enable-optimized --prefix=/usr \
-		--with-cppflags="-I/usr/include/tcl8.5" \
-		--with-tkinclude="/usr/include/tcl8.5" \
-		--with-tclconfig="/usr/share/tcltk/tcl8.5/" \
-		--with-tkconfig="/usr/share/tcltk/tk8.5/" \
-		--disable-build-all --enable-urt --enable-opennurbs --enable-tnt --enable-tkhtml3 && \
-	$(MAKE) $(PARALLEL_OPTIONS)
+	./configure --enable-optimized --enable-almost-everything --with-ogl --disable-debug && \
+	$(MAKE)
 
 	touch build-stamp
 
@@ -39,8 +19,7 @@ clean:
 	dh_testdir
 	dh_testroot
 
-#	not supported...
-#	make clean
+	#make clean
 
 	dh_clean
 
@@ -54,51 +33,13 @@ install-stamp: build-stamp
 
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
 
-#	Remove files, we're not going to ship them
-	rm -f debian/tmp/usr/lib/Tktable2.10/README.txt
-	rm -f debian/tmp/usr/lib/Tktable2.10/license.txt
-	rm -f debian/tmp/usr/lib/Tktable2.10/usr/lib/Tktable2.10/license.txt
-	rm -fr debian/tmp/usr/lib/Tktable2.10/html
-	rm -fr debian/tmp/usr/share/scl
-	rm -fr debian/tmp/usr/share/brlcad/*/pdf
-
-#	Move documentation
-	mkdir -p debian/tmp/usr/share/doc/brlcad
-	mv debian/tmp/usr/share/brlcad/*/doc debian/tmp/usr/share/doc/brlcad
-	mv debian/tmp/usr/share/brlcad/*/html debian/tmp/usr/share/doc/brlcad/html
-
-#	Move man pages
-	mkdir -p debian/tmp/usr/share/man/man3
-	mv debian/tmp/usr/man/mann/* debian/tmp/usr/share/man/man3/
-	mv debian/tmp/usr/man debian/tmp/usr/share/man
-
-# Build architecture-independent files here.
-binary-indep: build install
-	dh_testdir
-	dh_testroot
-	dh_install -i --list-missing
-	dh_installdocs -i
-	dh_installchangelogs -i
-	dh_installmime -i
-	dh_installman -i
-	dh_lintian -i
-	dh_icons -i
-	dh_compress -i
-	dh_fixperms -i
-	dh_installdeb -i
-	dh_gencontrol -i
-	dh_md5sums -i
-	dh_builddeb -i
-
 # Build architecture-dependent files here.
 binary-arch: build install
 	dh_testdir
 	dh_testroot
-	dh_install -a --list-missing
 	dh_installdocs -a
 	dh_installchangelogs -a
-	dh_installman -a
-	dh_lintian -a
+	dh_install -a --list-missing
 	dh_strip -a
 	dh_compress -a
 	dh_fixperms -a
@@ -109,5 +50,5 @@ binary-arch: build install
 	dh_md5sums -a
 	dh_builddeb -a
 
-binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install 
+binary: binary-arch clean
+.PHONY: build clean binary-arch binary install 

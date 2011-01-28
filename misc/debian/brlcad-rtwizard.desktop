@@ -1,0 +1,11 @@
+
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Type=Application
+Name=RtWizard
+Comment=Rt Wizard
+Exec=/usr/brlcad/bin/rtwizard %f
+Icon=text-x-script
+MimeType=application/x-brlcad-extension;
+Categories=BRL-CAD;

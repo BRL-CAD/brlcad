@@ -2,7 +2,7 @@
 #                     M A K E _ D E B . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2011 United States Government as represented by
+# Copyright (c) 2005-2010 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,28 +35,68 @@
 #
 ###
 
-set -e
+test -e
 
 if test ! -e /etc/debian_version ; then
     echo "Refusing to build on a non-debian system."
     exit 1
 fi
 
-if test ! -e /usr/bin/fakeroot ; then
-    echo "Need the fakeroot package."
+# needed packages
+E=0
+fcheck(){
+    if test `dpkg -s $1 2>/dev/null | grep "install ok installed" | wc -l` -eq 0 ; then
+	LLIST=$LLIST"\n"$1
+	E=1
+    fi
+}
+
+fcheck build-essential
+fcheck fakeroot
+fcheck debhelper
+fcheck bison
+fcheck flex
+fcheck libxi-dev
+fcheck xsltproc
+fcheck libgl1-mesa-dev
+
+if [ $E -eq 1 ]; then
+    echo "=========================================================="
+    echo "Mandatory to install these packages first:"
+    echo $LLIST
+    echo "=========================================================="
     exit 1
 fi
 
-if test ! -e /usr/bin/debuild ; then
-    echo "Need the devscripts package."
-    exit 1
+fcheck libpango1.0-dev
+
+if [ $E -eq 1 ]; then
+    echo "=========================================================="
+    echo "For a better font rendering, install this package first:"
+    echo $LLIST
+    echo "=========================================================="
+    echo "Pausing 15 seconds..."
+    sleep 15
 fi
+# needed packages
+
+# modify the doc menu entries
+B_VERSION=`cat include/conf/MAJOR`"."`cat include/conf/MINOR`"."`cat include/conf/PATCH`
+
+F="misc/debian/brlcad-doc.desktop"
+sed -i '/Exec=/d' $F
+echo "Exec=xdg-open /usr/brlcad/share/brlcad/$B_VERSION/html/toc.html" >> $F
+
+F="misc/debian/brlcad-db.desktop"
+sed -i '/Exec=/d' $F
+echo "Exec=xdg-open /usr/brlcad/share/brlcad/$B_VERSION/db" >> $F
+# modify the doc menu entries
 
 if test ! -e ./debian && test ! -e ./debian/control ; then
     ln -fs misc/debian debian
 fi
 
-fakeroot debian/rules binary && debuild -us -uc
+fakeroot debian/rules binary
 
 if test -L ./debian ; then rm debian ; fi
 
