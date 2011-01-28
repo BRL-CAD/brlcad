@@ -116,7 +116,7 @@ bu_open_mapped_file(const char *name, const char *appl)
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     if (UNLIKELY(fd < 0)) {
-	if (UNLIKELY(bu_debug&BU_DEBUG_DB))
+	if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
 	    perror(name);
 	goto fail;
     }
@@ -251,7 +251,7 @@ fail:
 	bu_free(mp, "mp from bu_open_mapped_file fail");
     }
 
-    if (UNLIKELY(bu_debug&BU_DEBUG_DB))
+    if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
 	bu_log("bu_open_mapped_file(%s, %s) can't open file\n",
 	       name, appl?appl:"(NIL)");
 
