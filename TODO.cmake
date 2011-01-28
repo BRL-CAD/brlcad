@@ -1,16 +1,10 @@
 Remaining items:
 
-2.  Do a diff of all the generated scripts using configure_file - make sure what autotools produces 
-	 is what is being produced by CMake, and make sure no variable definitions in support of scripts 
-	 are nuking variables used by CMake
-
 6.  Review the dist logic in the toplevel Makefile.am.  Gonna have to study up on CPack and CTest -
 	 figure out the process for checking permissions, install results, etc. in order to provide
 	 the same robustness for CMake generated tarballs that we have for autotools.
 
 7.  Build flags - we supply a lot via several options in autotools - express that in CMake
-
-8.  Review and test binaries - get regression testing working, check mged and archer, etc.
 
 12. Try enabling the Aqua compile logic - it still won't work, but get the build logic to the point
     where the autotools logic is.
@@ -48,4 +42,13 @@ Done (to first order, all this needs testing)
 	 will run in isolation. Even a full copy of the installed share dir in the toplevel build causes
 	 a crash, and Archer can't find its files even with the full share dir present (?)
 
+2.  Do a diff of all the generated scripts using configure_file - make sure what autotools produces 
+	 is what is being produced by CMake, and make sure no variable definitions in support of scripts 
+	 are nuking variables used by CMake - (checked this and defined a few variables, but CMake's
+	 habit of using full paths mixes oddly with pkgconfig's standard output of -lm, -lpng, etc. - 
+	 need to study this more later.  Not entirely convinced our autotools setup is fully correct
+	 either - does anyone use this?)
+
+8.  Review and test binaries - get regression testing working, check mged and archer, etc. - regression
+    works, mged and archer seem to work fairly well
 

@@ -185,7 +185,7 @@ static const char RCSid[] = "@(#)$Header$";
 #  include <unistd.h>
 #endif
 
-extern char	version[];
+char    version[] = "2.1";
 extern char	BinShell[];
 extern char	Joverc[];
 #if !defined(__STDC__) && !defined(_POSIX_SOURCE)	/* i.e. fairly old UNIX */
