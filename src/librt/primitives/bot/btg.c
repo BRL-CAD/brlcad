@@ -23,17 +23,21 @@
  *
  */
 
+#define TIE_PRECISION 1
+
 #include "common.h"
 
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "bot.h"
+#include "tie.h"
+
 #include "btg.h"
 
-#define TIE_PRECISION 1
-#include "tie.h"
 #include "tie.c"
 #include "tie_kdtree.c"
+
+int rt_bot_makesegs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp);
 
 void *
 bottie_allocn_double(unsigned long long ntri)
@@ -48,7 +52,7 @@ bottie_allocn_double(unsigned long long ntri)
 }
 
 void
-bottie_push_double(void *vtie, double **tri, unsigned int ntri, void *u, unsigned int pstride)
+bottie_push_double(void *vtie, TIE_3 **tri, unsigned int ntri, void *u, unsigned int pstride)
 {
     struct tie_s *tie = (struct tie_s *)vtie;
 
@@ -56,12 +60,11 @@ bottie_push_double(void *vtie, double **tri, unsigned int ntri, void *u, unsigne
 }
 
 int
-bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt_i *rtip)
+bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt_i *UNUSED(rtip))
 {
     struct tie_s *tie;
     struct bot_specific *bot;
-    point_t p;
-    int i;
+    unsigned int i;
 
     RT_BOT_CK_MAGIC(bot_ip);
 
@@ -74,12 +77,14 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
     tie = bot_ip->tie = bot->tie = bottie_allocn_double(bot_ip->num_faces);
 
     for(i=0;i< bot_ip->num_faces; i++) {
-	fastf_t *v[3];
+	TIE_3 v, *vp;
 
-	v[0] = &bot_ip->vertices[bot_ip->faces[i*3+0]*3];
-	v[1] = &bot_ip->vertices[bot_ip->faces[i*3+1]*3];
-	v[2] = &bot_ip->vertices[bot_ip->faces[i*3+2]*3];
-	bottie_push_double((struct tie_s *)tie, v, 1, i, 0);
+	vp = &v;
+
+	v.v[0] = bot_ip->vertices[bot_ip->faces[i*3+0]*3];
+	v.v[1] = bot_ip->vertices[bot_ip->faces[i*3+1]*3];
+	v.v[2] = bot_ip->vertices[bot_ip->faces[i*3+2]*3];
+	bottie_push_double((struct tie_s *)tie, &vp, 1, &i, 0);
     }
 
     tie_prep1((struct tie_s *)bot->tie);
@@ -103,7 +108,7 @@ struct hitdata_s {
 };
 
 static void *
-hitfunc(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
+hitfunc(tie_ray_t *UNUSED(ray), tie_id_t *id, tie_tri_t *UNUSED(tri), void *ptr)
 {
     struct hitdata_s *h = (struct hitdata_s *)ptr;
     struct tri_specific *tsp;
@@ -111,7 +116,7 @@ hitfunc(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
 
     if(h->nhits > (MAXHITS-1)) {
 	bu_log("Too many hits!\n");
-	return 1;
+	return (void *)1;
     }
 
     hp = &h->hits[h->nhits];

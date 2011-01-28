@@ -25,16 +25,18 @@
 
 #include "common.h"
 
+#define TIE_PRECISION 0
+
 #include "raytrace.h"
 #include "rtgeom.h"
+#include "tie.h"
 #include "btg.h"
 
-#define TIE_PRECISION 0
 #include "tie.c"
 #include "tie_kdtree.c"
 
-void
-*bottie_allocn_float(unsigned long long ntri)
+void *
+bottie_allocn_float(unsigned long long ntri)
 {
     struct tie_s *tie;
     tie = bu_malloc(sizeof(struct tie_s), "TIE");
@@ -42,19 +44,21 @@ void
 	return NULL;
 
     tie_init(tie, ntri, TIE_KDTREE_FAST);
+    return (void *)tie;
 }
 
 void
-bottie_push_float(void *vtie, float **tri, unsigned int ntri, void *usr, unsigned int pstride)
+bottie_push_float(void *UNUSED(vtie), float **UNUSED(tri), unsigned int UNUSED(ntri), void *UNUSED(usr), unsigned int UNUSED(pstride))
 {
     struct tie_s *tie = (struct tie_s *)vtie;
+    tie = NULL;
+    return;
 }
 
 int
-bottie_prep_float(struct soltab *stp,struct rt_bot_internal *bot, struct rt_i *rtip)
+bottie_prep_float(struct soltab *stp,struct rt_bot_internal *bot, struct rt_i *UNUSED(rtip))
 {
     struct tie_s *tie = (struct tie_s *)bot->tie;
-    point_t p;
 
     tie_prep(tie);
     VMOVE(stp->st_min, tie->min.v);
@@ -66,13 +70,16 @@ bottie_prep_float(struct soltab *stp,struct rt_bot_internal *bot, struct rt_i *r
     return 0;
 }
 
+#if 0
 static int
 hitfunc()
 {
+    return 0;
 }
+#endif
 
 int
-bottie_shot_float(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+bottie_shot_float(struct soltab *UNUSED(stp), register struct xray *UNUSED(rp), struct application *UNUSED(ap), struct seg *UNUSED(seghead))
 {
     /* use hitfunc to build the hit list */
     return -1;

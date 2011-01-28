@@ -220,7 +220,7 @@ void* TIE_VAL(tie_work)(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfun
  * this allows those divides to become fast multiplies.
  */
     for (i = 0; i < 3; i++) {
-	if (ray->dir.v[i] == 0.0)
+	if (NEAR_ZERO(ray->dir.v[i], TIE_PREC))
 	    ray->dir.v[i] = TIE_PREC;
 	dirinv[i] = 1.0 / ray->dir.v[i];
 	ab[i] = dirinv[i] < 0.0 ? 1.0 : 0.0;

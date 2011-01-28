@@ -23,7 +23,7 @@
  *
  */
 
-void bottie_push_double(void *vtie, double **tri, unsigned int ntri, void *usr, unsigned int pstride);
+void bottie_push_double(void *vtie, TIE_3 **tri, unsigned int ntri, void *usr, unsigned int pstride);
 int bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot, struct rt_i *rtip);
 int bottie_shot_double(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead);
 void bottie_free_double(void *vtie);

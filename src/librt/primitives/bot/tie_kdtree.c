@@ -125,7 +125,6 @@ tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, unsigned int tri_num)
 {
     tie_geom_t *g;
     TIE_3 min, max;
-    vect_t edge;
     unsigned int i;
 
     if (tri_num == 0 || tie->kdtree)
@@ -295,7 +294,7 @@ find_split_optimal(tie_t *tie, tie_kdtree_t *node, TIE_3 *cmin, TIE_3 *cmax, uns
     unsigned int side[3][MAX_SLICES+MIN_SLICES][2], i, j, d, s, n, k, smax[3], smin, slice_num;
     tfloat coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end, d_min = 0.0, d_max = 0.0;
     tie_tri_t *tri;
-    tie_geom_t *child[2], *node_gd = (tie_geom_t *)(node->data);
+    tie_geom_t *node_gd = (tie_geom_t *)(node->data);
     TIE_3 min, max;
     TIE_3 center[2], half_size[2];
 
@@ -764,7 +763,7 @@ TIE_VAL(tie_kdtree_prep)(tie_t *tie)
      */
     VSUB2(delta.v,  tie->max.v,  tie->min.v);
     MATH_MAX3(TIE_PREC, delta.v[0], delta.v[1], delta.v[2]);
-#if TIE_PRECISION == TIE_PRECISION_SINGLE
+#if TIE_PRECISION == TIE_SINGLE_PRECISION
     TIE_PREC *= (float)0.000000001;
 #else
     TIE_PREC *= 0.000000000001;
