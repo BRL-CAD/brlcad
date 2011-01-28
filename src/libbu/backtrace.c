@@ -296,7 +296,7 @@ bu_backtrace(FILE *fp)
     }
 
     /* make sure the debugger exists */
-    locate_gdb == bu_which("gdb");
+    locate_gdb = bu_which("gdb");
     if (locate_gdb) {
 	debugger_args[0] = bu_strdup(locate_gdb);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
