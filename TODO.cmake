@@ -11,6 +11,8 @@ Remaining items:
 
 15. get tcl/tk build fixed on opensolaris, continue build
 
+16. make the src/other build logic use the version numbers where needed
+
 Done (to first order, all this needs testing)
 
 1.  Detect OpenGL properly on Apple - choose X11 vs Aqua, and get the ogl code working
