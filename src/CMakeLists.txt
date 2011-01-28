@@ -1,33 +1,3 @@
-
-#lib_LTLIBRARIES = libbrlcad.la
-#noinst_LTLIBRARIES = libbrlcad_nil.la
-
-#libbrlcad_la_SOURCES =
-#libbrlcad_la_LDFLAGS = -version-info 19:1
-#libbrlcad_la_LIBADD = libbrlcad_nil.la
-
-#if BUILD_OPENNURBS
-#ON_NIL = $(top_builddir)/src/other/openNURBS/libopenNURBS_nil.la
-#else
-#ON_NIL =
-#endif
-
-#if BUILD_BOOST
-#PCDIR = libpc
-#else
-#PCDIR =
-#endif
-
-#libbrlcad_nil_la_SOURCES =
-#libbrlcad_nil_la_LIBADD = \
-#	$(top_builddir)/src/libbu/libbu_nil.la \
-#	$(top_builddir)/src/libbn/libbn_nil.la \
-#	$(top_builddir)/src/librt/librt_nil.la \
-#	$(top_builddir)/src/libwdb/libwdb_nil.la \
-#	$(top_builddir)/src/libged/libged_nil.la \
-#	${ON_NIL} \
-#	${TCL}
-
 # Minimal directories required for any BRL-CAD functionality
 
 # The other subdirectory does not share (at least, not universally)
@@ -87,15 +57,19 @@ SET(benchmark_dirs
 	fbserv 
 	rt
 )
-
+# The interaction of MSVC and Boost looks problematic - 
+# since we're not using libpc at the moment, conditionalize
+IF(NOT MSVC)
+	SET(LIBPC libpc)
+ENDIF(NOT MSVC)
 # anything not included from above
 SET(remaining_dirs 
 	libcursor 
 	libdm 
 	libfft 
 	libicv
-	libpc
 	libmultispectral 
+	${LIBPC}
 	libtclcad 
 	libtermio 
 	adrt 
