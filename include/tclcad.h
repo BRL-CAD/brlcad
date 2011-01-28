@@ -69,6 +69,7 @@ __BEGIN_DECLS
 
 struct ged_dm_view {
     struct bu_list		l;
+    struct bu_vls		gdv_callback;
     struct bu_vls		gdv_name;
     struct ged_view		*gdv_view;
     struct dm			*gdv_dmp;
