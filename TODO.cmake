@@ -4,8 +4,6 @@ Remaining items:
 	 figure out the process for checking permissions, install results, etc. in order to provide
 	 the same robustness for CMake generated tarballs that we have for autotools.
 
-7.  Build flags - we supply a lot via several options in autotools - express that in CMake
-
 12. Try enabling the Aqua compile logic - it still won't work, but get the build logic to the point
     where the autotools logic is.
 
@@ -51,4 +49,7 @@ Done (to first order, all this needs testing)
 
 8.  Review and test binaries - get regression testing working, check mged and archer, etc. - regression
     works, mged and archer seem to work fairly well
+
+7.  Build flags - we supply a lot via several options in autotools - express that in CMake
+
 

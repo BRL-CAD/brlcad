@@ -588,7 +588,7 @@ IF("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT BRLCAD-ENABLE_OPTIMIZED_BUILD
 ENDIF("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT BRLCAD-ENABLE_OPTIMIZED_BUILD)
 
 # Build with compiler warning flags 
-OPTION(BRLCAD-ENABLE_COMPILER_WARNINGS "Use compiler warning flags" OFF)
+OPTION(BRLCAD-ENABLE_COMPILER_WARNINGS "Use compiler warning flags" ON)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_COMPILER_WARNINGS)
 
 # Build with full compiler lines visible by default (won't need make
