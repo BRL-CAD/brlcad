@@ -381,7 +381,10 @@ ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
 
 # jove editor - technically this isn't a library,
 # but traditionally it's grouped into the "enable-all"
-# logic.
+# logic. Almost certainly won't build on Windows, and
+# it's not worth trying to make it do so.
 IF(BRLCAD-ENABLE_JOVE OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
-	ADD_SUBDIRECTORY(jove)
+	IF(NOT WIN32)
+		ADD_SUBDIRECTORY(jove)
+	ENDIF(NOT WIN32)
 ENDIF(BRLCAD-ENABLE_JOVE OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
