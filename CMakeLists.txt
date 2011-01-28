@@ -526,6 +526,10 @@ OPTION(BRLCAD-ENABLE_OPENGL "Use OpenGL." ON)
 #    OPTION(BRLCAD-ENABLE_RTGL "Enable experimental RTGL code." ON)
 # ENDIF(BRLCAD-ENABLE_OPENGL)
 
+# Enable JOVE.
+OPTION(BRLCAD-ENABLE_JOVE "Enable jove editor build." OFF)
+
+
 # There are extra documentation files available requiring Docbook
 # They are quite useful in graphical interfaces, but also add considerably
 # to the overall build time.  By default, PDF generation is off, and html/man
