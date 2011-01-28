@@ -1676,6 +1676,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 
     /* allocate our visible trees */
     visibleCount = ged_count_tops(gedp);
+    if(visibleCount) {
     visibleTrees = (char **)bu_calloc(visibleCount, sizeof(char *), "alloc visibleTrees");
 
     /* get number and names of visible tree tops */
@@ -1715,7 +1716,9 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 	maxSpan = 0.0;
 	numShot = rtgljob.numJobs = 0;
     }
-
+    } else {
+        numVisible = 0;
+    }
 
     /* no objects are visible */
     if (numVisible == 0) {
