@@ -13,6 +13,8 @@ changes made.  See document footer for additional details.
 --- 2010-12-XX  Release 7.18.2                                     ---
 ----------------------------------------------------------------------
 
+* new mime-type geometry association for Debian platform - Jordi Sayol
+* improved Debian platform support with new menus, icons - Jordi Sayol
 * dbconcat supports title, units, & color table import - John Anderson
 * 'tree -a' command lists object attributes - Tom Browder
 * fixed Mac build failure running asc2g before install - Sean Morrison
