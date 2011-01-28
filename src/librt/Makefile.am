@@ -298,6 +298,7 @@ EXTRA_DIST = \
 	CMakeLists.txt \
 	brep_test.cpp \
 	columnparse.c \
+	db_corrupt.c \
 	namegen.c \
 	pmalloc.c \
 	primitives/bot/g_bot_include.c \
