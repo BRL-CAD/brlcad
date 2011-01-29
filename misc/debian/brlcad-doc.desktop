@@ -1,10 +1,9 @@
-
 [Desktop Entry]
 Version=1.0
 Encoding=UTF-8
 Type=Application
 Name=BRL-CAD Documentation
 Comment=BRL-CAD Articles, Books and Lessons
+Exec=xdg-open /usr/brlcad/share/brlcad/7.18.1/html/toc.html
 Icon=brlcad-doc
 Categories=BRL-CAD-doc;
-Exec=xdg-open /usr/brlcad/share/brlcad/7.18.0/html/toc.html
