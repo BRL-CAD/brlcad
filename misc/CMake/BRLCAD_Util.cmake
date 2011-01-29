@@ -44,6 +44,8 @@ MACRO(BRLCAD_ADDEXEC execname srcs libs)
   ENDIF(LOCAL_COMPILE_FLAGS)
 ENDMACRO(BRLCAD_ADDEXEC execname srcs libs)
 
+# Library macro handles both shared and static libs, so one "BRLCAD_ADDLIB"
+# statement will cover both automatically
 MACRO(BRLCAD_ADDLIB libname srcs libs)
   STRING(REGEX REPLACE " " ";" srcslist "${srcs}")
   STRING(REGEX REPLACE " " ";" libslist1 "${libs}")
@@ -88,5 +90,5 @@ MACRO(BRLCAD_ADDLIB libname srcs libs)
 		  SET_TARGET_PROPERTIES(${libname}-static PROPERTIES COMPILE_FLAGS ${LOCAL_COMPILE_FLAGS})
 	  ENDIF(BUILD_STATIC_LIBS AND NOT MSVC)
   ENDIF(LOCAL_COMPILE_FLAGS)
-
 ENDMACRO(BRLCAD_ADDLIB libname srcs libs)
+

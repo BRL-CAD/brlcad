@@ -472,7 +472,8 @@ SET(ITCL_INCLUDE_DIRS ${ITCL_SOURCE_DIR}/generic ${ITCL_BINARY_DIR}/include)
 include_directories(
 	${TCL_INCLUDE_DIRS}
 	${ITCL_INCLUDE_DIRS}
-	${CMAKE_BINARY_DIR}/include/brlcad
+	${CMAKE_BINARY_DIR}/include
+	${CMAKE_SOURCE_DIR}/include
 )
 
 IF(WIN32)

@@ -1,7 +1,6 @@
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_BINARY_DIR}/include
-	${CMAKE_BINARY_DIR}/include/brlcad
 	${TERMLIB_INCLUDE_DIR}
 	)
 

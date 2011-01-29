@@ -499,7 +499,8 @@ include_directories(
 	${ITCL_INCLUDE_DIRS}
 	${ITK_INCLUDE_PATH}
 	${X11_INCLUDE_DIR}
-	${CMAKE_BINARY_DIR}/include/brlcad
+	${CMAKE_BINARY_DIR}/include
+	${CMAKE_SOURCE_DIR}/include
 )
 
 IF(WIN32)

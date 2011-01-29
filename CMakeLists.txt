@@ -395,7 +395,7 @@ INSTALL_DIR(DOXYGEN ${DOC_DIR}/doxygen)
 # run this macro, the config.h.in file must first be present, which
 # we take care of here:
 
-SET(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/brlcad/brlcad_config.h.in")
+SET(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/brlcad_config.h.in")
 FILE(WRITE ${CONFIG_H_FILE} "/**** Define statements for CMake ****/\n")
 FILE(APPEND ${CONFIG_H_FILE} "#ifndef __CONFIG_H__\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define __CONFIG_H__\n")
@@ -1039,7 +1039,7 @@ FILE(APPEND  ${CONFIG_H_FILE} "#define BUILD_SOURCE_DIR \"${CMAKE_SOURCE_DIR}\"\
 
 # Now that all the tests are done, configure the brlcad_config.h file:
 FILE(APPEND ${CONFIG_H_FILE} "#endif /* __CONFIG_H__ */\n")
-configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad/brlcad_config.h)
+configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
 
 # Before we finalize, set some specific global compiler flags
 IF(MSVC)
