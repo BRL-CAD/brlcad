@@ -1,6 +1,7 @@
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_BINARY_DIR}/include
+	${CMAKE_SOURCE_DIR}/include
 	${TERMLIB_INCLUDE_DIR}
 	)
 
