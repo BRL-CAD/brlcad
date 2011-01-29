@@ -2,7 +2,7 @@ include_directories(
 	${TERMLIB_INCLUDE_DIR}
 )
 IF(HAVE_TERMLIB)
-   BRLCAD_ADDLIB(libcursor cursor.c "${TERMLIB_LIBRARY}")
+	BRLCAD_ADDLIB(libcursor cursor.c "${TERMLIB_LIBRARY}" STRICT)
    SET_TARGET_PROPERTIES(libcursor PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
    install(FILES libcursor.3 DESTINATION ${MAN_DIR}/man3)

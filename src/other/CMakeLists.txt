@@ -2,6 +2,10 @@
 # Load some CMake macros to handle the special case of third party libraries.
 INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty.cmake)
 
+# Quiet all warnings in this directory
+IF(BRLCAD-DISABLE_SRC_OTHER_WARN)
+	add_definitions(-w)
+ENDIF(BRLCAD-DISABLE_SRC_OTHER_WARN)
 
 #---------------------------------------------------------------------------------
 # Optionally Building Local Copies of External Libraries 

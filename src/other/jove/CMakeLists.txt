@@ -34,7 +34,6 @@ SET(JOVE_SRCS
 add_executable(jove ${JOVE_SRCS})
 target_link_libraries(jove ${TERMLIB_LIBRARY})
 INSTALL(TARGETS jove DESTINATION bin)
-set_target_properties(jove PROPERTIES COMPILE_FLAGS "-w")
 
 SET(findcom_SOURCES
 	findcom.c
@@ -42,7 +41,6 @@ SET(findcom_SOURCES
 	)
 add_executable(findcom ${findcom_SOURCES})
 INSTALL(TARGETS findcom DESTINATION bin)
-set_target_properties(findcom PROPERTIES COMPILE_FLAGS "-w")
 
 FILE(COPY jove.1 DESTINATION ${CMAKE_BINARY_DIR}/${MAN_DIR}/man1)
 INSTALL(FILES jove.1 DESTINATION	${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR}/man1)

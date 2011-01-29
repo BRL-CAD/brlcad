@@ -24,7 +24,7 @@ SET(burst_SOURCES
 )
 
 if(HAVE_TERMLIB)
-   BRLCAD_ADDEXEC(burst "${burst_SOURCES}" "librt libfb libtermio ${TERMLIB_LIBRARY}")
+   BRLCAD_ADDEXEC(burst "${burst_SOURCES}" "librt libfb libtermio ${TERMLIB_LIBRARY}" STRICT)
 endif(HAVE_TERMLIB)
 
 

@@ -595,6 +595,10 @@ ENDIF("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT BRLCAD-ENABLE_OPTIMIZED_BU
 OPTION(BRLCAD-ENABLE_COMPILER_WARNINGS "Use compiler warning flags" ON)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_COMPILER_WARNINGS)
 
+# By default, we don't want any error reports at all from src/other
+OPTION(BRLCAD-DISABLE_SRC_OTHER_WARN "Disable warnings for src/other" ON)
+MARK_AS_ADVANCED(BRLCAD-DISABLE_SRC_OTHER_WARN)
+
 # Build with full compiler lines visible by default (won't need make
 # VERBOSE=1) on command line
 OPTION(BRLCAD-ENABLE_VERBOSE_PROGRESS "verbose output" OFF)

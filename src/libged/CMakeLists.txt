@@ -266,5 +266,5 @@ include_directories(
     ${TCL_INCLUDE_DIRS}
 )
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb librt libbu libanalyze ${REGEX_LIBRARY}")
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb librt libbu libanalyze ${REGEX_LIBRARY}" STRICT)
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 19.0.1 SOVERSION 19)
