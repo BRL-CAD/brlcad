@@ -7,12 +7,10 @@ SET(hv3_TCLSCRIPTS
 	hv3_util.tcl 
 	snit.tcl
 )
-FILE(COPY ${hv3_TCLSCRIPTS} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/tclscripts/hv3)
-INSTALL(FILES ${hv3_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/hv3)
-
+tclscripts_BUILD(hv3_TCLSCRIPTS tclscripts/hv3)
+pkgIndex_BUILD(hv3 tclscripts/hv3)
+tclIndex_BUILD(hv3 tclscripts/hv3)
 install(FILES hv3.man DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/doc)
 install(FILES tkhtml.n DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR}/mann)
 
-pkgIndex_BUILD(hv3 tclscripts/hv3)
-tclIndex_BUILD(hv3 tclscripts/hv3)
 

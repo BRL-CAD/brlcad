@@ -260,6 +260,4 @@ SET(archer_images
 	wizard.png
 	)
 
-FILE(COPY ${archer_images} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/tclscripts/archer/images)
-INSTALL(FILES ${archer_images} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/archer/images)
-
+tclscripts_BUILD(archer_images tclscripts/archer/images)

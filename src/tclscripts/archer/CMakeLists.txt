@@ -38,9 +38,7 @@ SET(archer_TCLSCRIPTS
 	itk_redefines.tcl
 	tabwindow.itk 
 )
-FILE(COPY ${archer_TCLSCRIPTS} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/tclscripts/archer)
-INSTALL(FILES ${archer_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/archer)
-
+tclscripts_BUILD(archer_TCLSCRIPTS tclscripts/archer)
 pkgIndex_BUILD(archer tclscripts/archer)
 tclIndex_BUILD(archer tclscripts/archer)
 

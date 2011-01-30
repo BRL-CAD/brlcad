@@ -1,11 +1,4 @@
-IF(BRLCAD-BUILD_EXTRADOCS)
-	SET(mgedman_TCLSCRIPTS
-		man.tcl
-	)
-ENDIF(BRLCAD-BUILD_EXTRADOCS)
-
 SET(mged_TCLSCRIPTS
-	${mgedman_TCLSCRIPTS} 
 	accel.tcl 
 	adc.tcl 
 	anim.tcl 
@@ -87,10 +80,7 @@ SET(mged_TCLSCRIPTS
 	tree.tcl 
 	xclone.tcl
 )
-
-FILE(COPY ${mged_TCLSCRIPTS} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/tclscripts/mged)
-INSTALL(FILES ${mged_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/mged)
-
+tclscripts_BUILD(mged_TCLSCRIPTS tclscripts/mged)
 pkgIndex_BUILD(mged tclscripts/mged)
 tclIndex_BUILD(mged tclscripts/mged)
 
@@ -139,5 +129,4 @@ SET(mged_tcl_DATA
 	mike-tux.ppm 
 	mike-tux.png
 )
-FILE(COPY ${mged_tcl_DATA} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/tclscripts/mged)
-INSTALL(FILES ${mged_tcl_DATA} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/mged)
+tclscripts_BUILD(mged_tcl_DATA tclscripts/mged)

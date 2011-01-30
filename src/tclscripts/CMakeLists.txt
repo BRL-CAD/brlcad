@@ -1,20 +1,38 @@
 # Convenience macros for building pkgIndex.tcl and tclIndex files
 
+MACRO(tclscripts_BUILD scriptlist targetdir)
+	STRING(REGEX REPLACE "/" "_" targetprefix ${targetdir})
+	SET(${targetprefix}_dependslist "")
+	FOREACH(filename ${${scriptlist}})
+	   STRING(REGEX REPLACE "/" "_" filestring ${filename})
+		ADD_CUSTOM_COMMAND(
+			OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename}
+			COMMAND ${CMAKE_COMMAND} -E copy	${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename}
+			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+			)
+		ADD_CUSTOM_TARGET(${targetprefix}_${filestring}_cp ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename})
+		SET(${targetprefix}_dependslist ${${targetprefix}_dependslist}	${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename})
+		INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${filename} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
+	ENDFOREACH(filename ${${scriptlist}})
+ENDMACRO(tclscripts_BUILD scriptlist targetdir)
+
 MACRO(pkgIndex_BUILD name targetdir)
+	STRING(REGEX REPLACE "/" "_" targetprefix ${targetdir})
 	ADD_CUSTOM_COMMAND(
 		OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl
 		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ampi.tcl ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}
-		DEPENDS btclsh
+		DEPENDS btclsh ${${targetprefix}_dependslist}
 		)
 	ADD_CUSTOM_TARGET(${name}_pkgIndex.tcl ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl)
 	INSTALL(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
 ENDMACRO(pkgIndex_BUILD name targetdir)
 
 MACRO(tclIndex_BUILD name targetdir)
+	STRING(REGEX REPLACE "/" "_" targetprefix ${targetdir})
 	ADD_CUSTOM_COMMAND(
 		OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex
 		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ami.tcl ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir} 
-		DEPENDS btclsh
+		DEPENDS btclsh ${${targetprefix}_dependslist}
 		)
 	ADD_CUSTOM_TARGET(${name}_tclIndex ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex)
 	INSTALL(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
@@ -34,7 +52,7 @@ ADD_SUBDIRECTORY(sdialogs)
 ADD_SUBDIRECTORY(swidgets)
 ADD_SUBDIRECTORY(util)
 
-SET(toplevel_TCLSCRIPTS
+SET(tclscripts_TCLSCRIPTS
 	ami.tcl 
 	ampi.tcl 
 	cad_clrpick.tcl 
@@ -50,8 +68,6 @@ SET(toplevel_TCLSCRIPTS
 	mouse.tcl 
 	vmath.tcl
 )
-FILE(COPY ${toplevel_TCLSCRIPTS} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/tclscripts)
-INSTALL(FILES ${toplevel_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts)
-
+tclscripts_BUILD(tclscripts_TCLSCRIPTS tclscripts)
 pkgIndex_BUILD(tclscripts tclscripts)
 tclIndex_BUILD(tclscripts tclscripts)

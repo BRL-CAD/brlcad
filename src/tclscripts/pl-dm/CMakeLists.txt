@@ -3,10 +3,7 @@ SET(pl-dm_TCLSCRIPTS
 	help.tcl
 	menu.tcl
 	)
-
-FILE(COPY ${pl-dm_TCLSCRIPTS} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/tclscripts/pl-dm)
-INSTALL(FILES ${pl-dm_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/pl-dm)
-
+tclscripts_BUILD(pl-dm_TCLSCRIPTS tclscripts/pl-dm)
 pkgIndex_BUILD(pl-dm tclscripts/pl-dm)
 tclIndex_BUILD(pl-dm tclscripts/pl-dm)
 

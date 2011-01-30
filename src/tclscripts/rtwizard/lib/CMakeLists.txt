@@ -20,10 +20,7 @@ SET(rtwizard_lib_TCLSCRIPTS
 	PictureTypeF.itcl 
 	Wizard.itk
 	)
-
-FILE(COPY ${rtwizard_lib_TCLSCRIPTS} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/tclscripts/rtwizard/lib)
-INSTALL(FILES ${rtwizard_lib_TCLSCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts/rtwizard/lib)
-
+tclscripts_BUILD(rtwizard_lib_TCLSCRIPTS tclscripts/rtwizard/lib)
 pkgIndex_BUILD(rtwizard_lib tclscripts/rtwizard/lib)
 tclIndex_BUILD(rtwizard_lib tclscripts/rtwizard/lib)
 
