@@ -172,10 +172,16 @@
     </para>
   </refsection>
   
-  <refsection xml:id="authors"><info><title>AUTHORS</title></info>
-    
-    <para>Michael John Muuss, Gary S. Moss</para>
-  </refsection>
+  <info>
+    <author>
+       <personname>Michael John Muuss</personname>
+       <contrib></contrib>
+    </author>
+    <author>
+       <personname>Gary S. Moss</personname>
+       <contrib></contrib>
+    </author>
+  </info>
   
   <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
     

@@ -51,9 +51,6 @@
   </variablelist>
 </refsection>
 
-<refsection xml:id="author"><info><title>AUTHOR</title></info>
-  
-  <para>BRL-CAD Team</para>
-</refsection>
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 </refentry>

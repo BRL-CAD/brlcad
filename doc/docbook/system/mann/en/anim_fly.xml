@@ -121,11 +121,13 @@
       </varlistentry>
     </variablelist>
   </refsection>
-  
-  <refsection xml:id="author"><info><title>AUTHOR</title></info>
-    
-    <para>Carl J. Nuzman</para>
-  </refsection>
+
+  <info>
+    <author>
+      <personname>Carl J. Nuzman</personname>
+      <contrib></contrib>
+    </author>
+  </info>
   
   <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
     

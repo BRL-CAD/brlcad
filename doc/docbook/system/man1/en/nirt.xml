@@ -1079,10 +1079,17 @@
   </para>
 </refsection>
 
-<refsection xml:id="authors"><info><title>AUTHORS</title></info>
-  
-  <para>
-    Natalie Eberius, Paul Tanenbaum
-  </para>
-</refsection>
+<info>
+  <author>
+      <personname>Natalie Eberius</personname>
+      <contrib></contrib>
+  </author>
+  <author>
+      <personname>Paul Tanenbaum</personname>
+      <contrib></contrib>
+  </author>
+</info>
+
+
+
 </refentry>

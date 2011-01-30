@@ -330,10 +330,12 @@
   </para>
 </refsection>
 
-<refsection xml:id="objg_author"><info><title>AUTHOR</title></info>
-  
-  <para>Richard Weiss</para>
-</refsection>
+<info>
+  <author>
+    <personname>Richard Weiss</personname>
+    <contrib></contrib>
+  </author>
+</info>
 
 <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
   

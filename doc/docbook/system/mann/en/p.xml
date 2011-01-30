@@ -53,10 +53,7 @@ would normally be done using the mouse or knobs.
  
 </refsection>
 
-<refsection xml:id="author"><info><title>AUTHOR</title></info>
-  
-  <para>BRL-CAD Team</para>
-</refsection>
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
   

@@ -138,10 +138,12 @@ number of windows:  3
 
 </refsection>
 
-<refsection xml:id="author"><info><title>AUTHOR</title></info>
-  
-  <para>Susan A. Coates</para>
-</refsection>
+<info>
+  <author>
+    <personname>Susan A. Coates</personname>
+    <contrib></contrib>
+  </author>
+</info>
 
 <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
   
