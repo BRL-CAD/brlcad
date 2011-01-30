@@ -92,3 +92,19 @@ MACRO(BRLCAD_ADDLIB libname srcs libs)
   ENDIF(LOCAL_COMPILE_FLAGS)
 ENDMACRO(BRLCAD_ADDLIB libname srcs libs)
 
+MACRO(BRLCAD_ADDDATA datalist targetdir)
+	STRING(REGEX REPLACE "/" "_" targetprefix ${targetdir})
+	SET(${targetprefix}_dependslist "")
+	FOREACH(filename ${${datalist}})
+		STRING(REGEX REPLACE "/" "_" filestring ${filename})
+		ADD_CUSTOM_COMMAND(
+			OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename}
+			COMMAND ${CMAKE_COMMAND} -E copy	${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename}
+			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+			)
+		ADD_CUSTOM_TARGET(${targetprefix}_${filestring}_cp ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename})
+		SET(${targetprefix}_dependslist ${${targetprefix}_dependslist}	${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename})
+		INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${filename} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
+	ENDFOREACH(filename ${${datalist}})
+ENDMACRO(BRLCAD_ADDDATA datalist targetdir)
+

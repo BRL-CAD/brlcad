@@ -31,5 +31,4 @@ SET(nirt_sfiles
   sfiles/gap1.nrt 
   sfiles/gap2.nrt
 )
-FILE(COPY ${nirt_sfiles} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/nirt)
-INSTALL(FILES ${nirt_sfiles} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/nirt)
+BRLCAD_ADDDATA(nirt_sfiles nirt)
