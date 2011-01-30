@@ -1,21 +1,20 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Ubicar figuras en espacios 3-D</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" 
-xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Ubicar figuras en espacios 3-D</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Aprobado para su publicación. Su distribución es ilimitada.</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="placing_shapes_in_3d_overviewlist">
+    <para xml:id="placing_shapes_in_3d_overviewlist">
       En este tutorial usted aprenderá a:
       
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Crear, editar y ubicar figuras en espacios 3-D.</para>
 	</listitem>
@@ -35,14 +34,14 @@ xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     </para>
 
-    <para id="placing_shapes_in_3d_intro1"> 
+    <para xml:id="placing_shapes_in_3d_intro1"> 
       En los tutoriales anteriores ha creado y editado formas. También ha 
       colocado objetos en el espacio tridimensional. En este tutorial se 
       ofrece una práctica más avanzada en la creación y edición de formas 
       y su colocación en el espacio 3-D.
     </para>
 
-    <para id="placing_shapes_in_3d_intro2">
+    <para xml:id="placing_shapes_in_3d_intro2">
       El diseño que usted hará en este tutorial es una simple vela en un 
       candelabro apoyado sobre una mesa (como se muestra en la figura 
       siguiente). En los próximos tutoriales, agregará decoración e 
@@ -50,10 +49,7 @@ xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged13_candle_design.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_design.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -64,13 +60,13 @@ format="PNG">
       </informalfigure>
     </para>
 
-    <para id="placing_shapes_in_3d_intro3">
+    <para xml:id="placing_shapes_in_3d_intro3">
       Comience creando una nueva base de datos llamada candle.g. Titule su 
       base de datos Candle Tutorial.
     </para>
 
-    <sect1 id="candle_create_tabletop">
-      <title>Crear una mesa</title>
+    <section xml:id="candle_create_tabletop"><info><title>Crear una mesa</title></info>
+      
       <para>
 	Cree un arb8 desde el GUI. Nombre a la figura arb8.s. En el menú View 
 	(Vista) seleccione la opción Front (Frente).
@@ -95,10 +91,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged13_candle_tabletop_wireframe_front.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_tabletop_wireframe_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -115,10 +108,10 @@ format="PNG">
 	
 	<command>r table1.r u arb8.s[Enter]</command>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="candle_create_base">
-      <title>Crear la base del candelabro</title>
+    <section xml:id="candle_create_base"><info><title>Crear la base del candelabro</title></info>
+      
       <para>
 	Cree un eto y nómbrelo eto1.s. Para crear la parte superior de la 
 	base del candelabro, necesitará rotar el eto 180'0. Tipee en la 
@@ -144,10 +137,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged13_candle_tabletop_eto1_wireframe_front.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_tabletop_eto1_wireframe_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -167,11 +157,11 @@ format="PNG">
 	En el menú Edit (Edición). Además de los comandos estándar, se le 
 	presentará un menú de trece formas específicas de edición de esta forma.
 	<informaltable>
-	  <tgroup cols='2'>
+	  <tgroup cols="2">
 	    <tbody>
 	      <row>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 Set H
 Set H (Move V)
 Set A
@@ -181,7 +171,7 @@ Set d
 		  </literallayout>
 		</entry>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 Set A,B
 Set C,D
 Set A,B,C,D
@@ -212,10 +202,7 @@ Move End H
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged13_candle_tabletop_eto1_rcc_wireframe_front.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_tabletop_eto1_rcc_wireframe_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -237,10 +224,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged13_candle_tabletop_base_front.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_tabletop_base_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -267,10 +251,10 @@ format="PNG">
 	En un momento querremos quitar parte de eto2.s. Si colocamos a eto2.s 
 	al final de la lista, podemos realizar esta eliminación sencillamente.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="candle_create_candle">
-      <title>Crear la vela</title>
+    <section xml:id="candle_create_candle"><info><title>Crear la vela</title></info>
+      
       <para>
 	
 	Cree un rcc y nómbrelo rcc2.s. Modifique la forma como lo hizo con el 
@@ -283,10 +267,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged13_candle_tabletop_base_candle_front.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_tabletop_base_candle_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -311,10 +292,10 @@ format="PNG">
 	Anteriormente habíamos dicho que íbamos a necesitar remover un poco de 
 	material del eto2.s. Ahora ya lo hemos hecho.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="candle_create_flame">
-      <title>Crear la llama de la vela</title>
+    <section xml:id="candle_create_flame"><info><title>Crear la llama de la vela</title></info>
+      
 
       <para>
 	Cree una partícula (part) y nómbrela part1.s. Edite y posicione la 
@@ -322,10 +303,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged13_candle_complete_front.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_complete_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -340,10 +318,10 @@ format="PNG">
 	
 	<command>r flame1.r u part1.s[Enter]</command>
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="candle_create_combination">
-      <title>Hacer una combinación del candelabro, la vela y la llama</title>
+    <section xml:id="candle_create_combination"><info><title>Hacer una combinación del candelabro, la vela y la llama</title></info>
+      
 
       <para>
 	Para hacer una combinación con las partes del candelabro, tipee en el 
@@ -351,10 +329,10 @@ format="PNG">
 	
 	<command>comb candle1.c u base1.r u candle1.r u flame1.r[Enter]</command>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="candle_check_data_tree">
-      <title>Controlar el árbol de datos</title>
+    <section xml:id="candle_check_data_tree"><info><title>Controlar el árbol de datos</title></info>
+      
       <para>
 	Ahora que usted ha hecho una serie de regiones y una combinación, sería 
 	un buen momento para revisar su árbol de datos y asegurarse de que está 
@@ -368,7 +346,7 @@ format="PNG">
 	
 	Su expresión booleana debería ser:
 	
-	<literallayout>
+	<literallayout class="normal">
    candle1.c/
 	
    u base1.r/R
@@ -390,12 +368,12 @@ format="PNG">
    u part1.s
 	</literallayout>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="candle_assign_mater_prop">
-      <title>
+    <section xml:id="candle_assign_mater_prop"><info><title>
 	Asignar propiedades de los materiales a los elementos del diseño
-      </title>
+      </title></info>
+      
       <para>
 	Para asignar las propiedades del material a su diseño, vaya al menú 
 	Edit (Edición) y seleccione Combination Editor (Editor de 
@@ -403,7 +381,7 @@ format="PNG">
 	cada uno de los elementos:
 	
 	<informaltable frame="all">
-	  <tgroup cols='4'>
+	  <tgroup cols="4">
 	    <thead>
 	      <row>
 		<entry>Element</entry>
@@ -423,19 +401,19 @@ format="PNG">
 		<entry>Candle Base</entry>
 		<entry>Plastic</entry>
 		<entry>Medium Gray (128 130 144)</entry>
-		<entry></entry>
+		<entry/>
 	      </row>
 	      <row>
 		<entry>Candle</entry>
 		<entry>Plastic</entry>
 		<entry>Light Blue (0 166 255)</entry>
-		<entry></entry>
+		<entry/>
 	      </row>
 	      <row>
 		<entry>Flame</entry>
 		<entry>Plastic</entry>
 		<entry>Light Yellow (255 255 190)</entry>
-		<entry></entry>
+		<entry/>
 	      </row>
 	    </tbody>
 	  </tgroup>
@@ -448,10 +426,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged13_candle_comb_ed_checker.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_comb_ed_checker.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -485,10 +460,10 @@ format="PNG">
 	rápidamente en expertos en la creación de colores RGB.
        </para>
       
-    </sect1>
+    </section>
 
-    <sect1 id="candle_raytrace">
-      <title>Hacer el trazado de rayos de su diseño (Raytrace)</title>
+    <section xml:id="candle_raytrace"><info><title>Hacer el trazado de rayos de su diseño (Raytrace)</title></info>
+      
       
       <para>
 	Antes de hacer el Raytrace, cambie la vista a az35, el25 para tener 
@@ -500,7 +475,7 @@ format="PNG">
 	
 	Este comando le dice al programa <application>MGED</application> que:
 	<informaltable>
-	  <tgroup cols='3'>
+	  <tgroup cols="3">
 	    <tbody>
 	      <row>
 		<entry>B</entry>
@@ -522,10 +497,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged13_candle_raytraced_overlay.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_raytraced_overlay.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -536,15 +508,15 @@ format="PNG">
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="placing_shapes_in_3d_review">
-      <title>Repasemos...</title>
+    <section xml:id="placing_shapes_in_3d_review"><info><title>Repasemos...</title></info>
+      
       <para>
 	
 	En este tutorial usted aprendió a:
       
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Crear, editar y ubicar figuras en espacios 3-D.</para>
 	</listitem>
@@ -562,6 +534,6 @@ format="PNG">
 	</listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

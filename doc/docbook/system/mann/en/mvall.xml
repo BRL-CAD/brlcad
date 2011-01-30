@@ -1,113 +1,75 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2011 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='mvall'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="mvall">
 
 <refmeta>
   <refentrytitle>MVALL</refentrytitle>
   <manvolnum>nged</manvolnum>
-  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-  <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
 </refmeta>
 
-<refnamediv id='name'>
+<refnamediv xml:id="name">
   <refname>mvall</refname>
   <refpurpose>Changes the name of <emphasis>old_name</emphasis> to <emphasis>new_name</emphasis> wherever it occurs in the database.
    </refpurpose>
 </refnamediv>
 
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-  <cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
     <command>mvall</command>    
-      <arg choice='opt'><replaceable>-n</replaceable></arg>
-      <arg choice='opt'><replaceable>(-f mapping_file) | (old_name new_name)</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>-n</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>(-f mapping_file) | (old_name new_name)</replaceable></arg>
    </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsect1 id='description'>
-  <title>DESCRIPTION</title>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  
   <para>Changes the name of <emphasis>old_name</emphasis> to <emphasis>new_name</emphasis>. This will also
 change any references to <emphasis>old_name</emphasis> that may occur in other combinations in the
 database. If the <emphasis>-f</emphasis> variation of the command is used, all <emphasis>old_name</emphasis>
  <emphasis>new_name</emphasis> pairings are read from the <emphasis>mapping_file</emphasis> and processed as
  previously stated.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='examples'>
-  <title>EXAMPLES</title>
-  <example>
-    <title>Change the name of an object everywhere it occurs in the database.</title>
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  
+  <example><info><title>Change the name of an object everywhere it occurs in the database.</title></info>
+    
      <para>
-      <prompt>mged></prompt><userinput>mvall shapea shapeb</userinput>
+      <prompt>mged&gt;</prompt><userinput>mvall shapea shapeb</userinput>
      </para>
      <para>Changes the name of <emphasis>shapea</emphasis> to <emphasis>shapeb</emphasis> everywhere it occurs in the database.
      </para>
   </example>
-    <example>
-      <title>This example shows a simple mapping file.</title>
-      <literallayout>
+    <example><info><title>This example shows a simple mapping file.</title></info>
+      
+      <literallayout class="normal">
 # this line is a comment
 old_name new_name
 foo bar # another comment, replacing foo with bar
 bad_name good_name
       </literallayout>
     </example>
-</refsect1>
+</refsection>
 
-<refsect1 id='see_also'>
-    <title>SEE ALSO</title>
+<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+    
     <para>mv prefix</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='author'>
-  <title>AUTHOR</title>
+<refsection xml:id="author"><info><title>AUTHOR</title></info>
+  
   <para>BRL-CAD Team</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='bug_reports'>
-  <title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
-</refsect1>
+</refsection>
 </refentry>
-

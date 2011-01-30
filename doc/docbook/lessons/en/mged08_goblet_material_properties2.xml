@@ -1,19 +1,19 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Assigning More Material Properties to a Goblet</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Assigning More Material Properties to a Goblet</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="goblet_material_properties2_overviewlist">
+    <para xml:id="goblet_material_properties2_overviewlist">
       In this lesson, you will:
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Use the specular and diffuse reflectivity options of the plastic shader.</para>
 	</listitem>
@@ -32,12 +32,12 @@
       </itemizedlist>
     </para>
     
-    <para id="goblet_material_properties2_intro1">
+    <para xml:id="goblet_material_properties2_intro1">
       Open the goblet.g database using whichever method you prefer. Go to the
       Edit menu and click on Combination Editor. Select basin1.r.
     </para>
     
-    <para id="goblet_material_properties2_intro2">
+    <para xml:id="goblet_material_properties2_intro2">
       In the last lesson, we assigned values for two shader
       attributes-transparency and mirror reflectance. In this lesson, we will
       assign values for still other shader properties. When the plastic shader
@@ -53,7 +53,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged08_goblet_combeditor.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged08_goblet_combeditor.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -65,20 +65,20 @@
 
     </para>
 
-    <note id="goblet_material_properties2_intro3">
+    <note xml:id="goblet_material_properties2_intro3">
       <para>
 	Note that in <application>BRL-CAD</application> versions prior to 5.2, the default values are    
 	used, but they are not displayed in the shader attribute boxes.       
       </para>
     </note>
    
-    <para id="goblet_material_properties2_intro4">
+    <para xml:id="goblet_material_properties2_intro4">
       In this example, the shader entry box indicates that the transparency (tr)
       is set at .5 and the mirror reflectance (re) is set at .45. The eight
       abbreviations currently used in the shader entry box are as follows:
 
     <informaltable>
-      <tgroup cols='4'>
+      <tgroup cols="4">
 	<tbody>
 	  <row>
 	    <entry>tr - transparency</entry>
@@ -97,8 +97,8 @@
     </informaltable>
     </para>
   
-    <sect1 id="goblet_specular_diffuse">
-      <title>Specular and Diffuse Reflectivity</title>
+    <section xml:id="goblet_specular_diffuse"><info><title>Specular and Diffuse Reflectivity</title></info>
+      
       <para>
 	When light reflects off of a shiny surface, it produces two types of
 	reflections. The most noticeable highlights are caused by specular
@@ -112,7 +112,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged08_spec_vs_diff_reflectivity.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged08_spec_vs_diff_reflectivity.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -145,10 +145,10 @@
 	assign a corresponding value to the complementary attribute so that the
 	combination of the values equals 1.0.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="goblet_refractive_index">
-      <title>Refractive Index</title>
+    <section xml:id="goblet_refractive_index"><info><title>Refractive Index</title></info>
+      
       
       <para>
 	When light passes through one medium (e.g., air) into another medium
@@ -170,7 +170,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged08_refractive_index.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged08_refractive_index.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -180,20 +180,20 @@
 	</mediaobject>
       </informalfigure>
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="goblet_shininess">
-      <title>Shininess</title>
+    <section xml:id="goblet_shininess"><info><title>Shininess</title></info>
+      
       <para>
 	The shininess of an object affects the size of the specular component of
 	the plastic shader. The shinier an object's surface is, the smaller the
 	reflection of the light source on the object's surface will be. The range
 	for shininess is typically an integer value from 1 to 10.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="goblet_extinction">
-      <title>Extinction</title>
+    <section xml:id="goblet_extinction"><info><title>Extinction</title></info>
+      
       <para>
 	The term extinction applies to the transmissive component of the plastic
 	shader, and it indicates the amount of light absorbed by the object's
@@ -201,18 +201,18 @@
 	number. Using this attribute can dramatically impact other attributes of
 	the shader, especially the refractive index.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="goblet_emission">
-      <title>Emission</title>
+    <section xml:id="goblet_emission"><info><title>Emission</title></info>
+      
       <para>
 	Emission is a relatively new feature that has been added to the <application>BRL-CAD</application>
 	package. It concerns the amount of artificial brightness of the object.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="goblet_shader_attributes">
-      <title> Applying Attributes of the Plastic Shader to the Goblet</title>
+    <section xml:id="goblet_shader_attributes"><info><title> Applying Attributes of the Plastic Shader to the Goblet</title></info>
+      
       <para>
 	Now that you understand the various attributes of the plastic shader, it
 	is time to experiment with how they affect the final product-the goblet
@@ -237,7 +237,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged08_goblet_reflectivity_1.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged08_goblet_reflectivity_1.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -250,7 +250,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged08_goblet_reflectivity_2.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged08_goblet_reflectivity_2.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -270,7 +270,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged08_comb_editor_window_mater_prop.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged08_comb_editor_window_mater_prop.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -286,13 +286,13 @@
 	the user in the attribute entry boxes (e.g., the Transparency of .5), it
 	does not reflect the default values (e.g., the Shininess of 10).
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="goblet_material_properties2_review">
-      <title>Review</title>
+    <section xml:id="goblet_material_properties2_review"><info><title>Review</title></info>
+      
       <para>
 	In this lesson, you:
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Used the specular reflectivity and diffuse reflectivity options of the plastic shader.</para>
 	  </listitem>
@@ -310,6 +310,6 @@
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

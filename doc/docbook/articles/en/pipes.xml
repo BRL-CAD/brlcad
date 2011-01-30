@@ -1,18 +1,18 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Using the Pipe Primitive</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Using the Pipe Primitive</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-  <sect1 id="pipe_general_use">
-    <title>General Use</title>
+  <section xml:id="pipe_general_use"><info><title>General Use</title></info>
+    
     <para>
 
     </para>
@@ -77,29 +77,29 @@
       tapered end on a garden hose.
     </para>
 
-    <figure>
-      <title>Basic pipe with parameters.</title>
+    <figure><info><title>Basic pipe with parameters.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/pipes_fig01.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig01.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
   
-    <figure>
-      <title>Various bend radii.</title>
+    <figure><info><title>Various bend radii.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/pipes_fig02.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig02.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
 
-    <figure>
-      <title>Example of special uses of the pipe.</title>
+    <figure><info><title>Example of special uses of the pipe.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/pipes_fig03.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig03.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -124,10 +124,10 @@
       larger inner diameter than outer diameter or an unacceptably tight bend
       radius).
     </para>
-  </sect1>
+  </section>
 
-  <sect1 id="pipe_make_coil">
-    <title>Making a Coil</title>
+  <section xml:id="pipe_make_coil"><info><title>Making a Coil</title></info>
+    
     <para>
       In addition to using the pipe primitive to make tubular objects such as
       electrical and hydraulic lines, it can be used to make other types of
@@ -178,11 +178,11 @@
       coil sections is 7/32 (0.21875) in.
     </para>
 
-    <figure>
-      <title>Determining the point positions for the copper coil.</title>
+    <figure><info><title>Determining the point positions for the copper coil.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/pipes_fig04.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig04.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -216,22 +216,22 @@
       <listitem>
 	<para>
 	  Set the units to millimeters using the <command>units</command> command on the command
-	  line (<literal>mged>units mm</literal>)
-	  or the Units option in the graphical user interface (GUI) (File -> Preferences -> Units).
+	  line (<literal>mged&gt;units mm</literal>)
+	  or the Units option in the graphical user interface (GUI) (File -&gt; Preferences -&gt; Units).
 	</para>
       </listitem>
       <listitem>
 	<para>
-	  Set the screen size to 2000 using the <command>size</command> command (mged>size 2000) and
-	  center the screen at 0 0 400 using the <command>center</command> command (mged>center 0 0
+	  Set the screen size to 2000 using the <command>size</command> command (mged&gt;size 2000) and
+	  center the screen at 0 0 400 using the <command>center</command> command (mged&gt;center 0 0
 	  400).
 	</para>
       </listitem>
       <listitem>
 	<para>
-	  Create a pipe named spring.s1 using the <command>make</command> command (mged>make
+	  Create a pipe named spring.s1 using the <command>make</command> command (mged&gt;make
 	  spring.s1 pipe) from the command line or the Create option from the GUI.
-	  Select the pipe for editing using either the <command>sed</command> command (mged>sed
+	  Select the pipe for editing using either the <command>sed</command> command (mged&gt;sed
 	  spring.s1) or the Enter Primitive Name dialog box.
 	</para>
       </listitem>
@@ -239,22 +239,22 @@
 	<para>
 	  With the default pipe in edit mode, set the diameter of the wire. To do
 	  this, first set the inner diameter of the wire to 0 by using the Edit
-	  menu's Set Pipe ID option and the <command>p</command> command on the command line (mged>p
+	  menu's Set Pipe ID option and the <command>p</command> command on the command line (mged&gt;p
 	  0). Next, set the outer diameter to 200 using the Set Pipe OD option and
-	  the p command (mged>p 200). (Be sure to set the Pipe inner diameter [ID]
+	  the p command (mged&gt;p 200). (Be sure to set the Pipe inner diameter [ID]
 	  and outer diameter [OD], not the Point ID and OD.)
 	</para>
       </listitem>
       <listitem>
 	<para>
 	  Set the pipe bend to 500 mm using the Edit menu's Set Pipe Bend option
-	  and the <command>p</command> command (mged>p 500).
+	  and the <command>p</command> command (mged&gt;p 500).
 	</para>
       </listitem>
       <listitem>
 	<para>
 	  Translate the pipe to coordinate 0 500 0 by selecting the Edit menu's
-	  Translate option and the <command>p</command> command (mged>p 0 500 0).
+	  Translate option and the <command>p</command> command (mged&gt;p 0 500 0).
 	</para>
       </listitem>
       <listitem>
@@ -266,7 +266,7 @@
       <listitem>
 	<para>
 	  Move the top end point to 500 500 50 using the Edit menu's Move Point
-	  option and the <command>p</command> command (mged>p 500 500 50).
+	  option and the <command>p</command> command (mged&gt;p 500 500 50).
 	</para>
       </listitem>
       <listitem>
@@ -278,40 +278,40 @@
       </listitem>
     </itemizedlist>
 
-    <informaltable frame='none' pgwide="1">
-      <tgroup cols='2' align='center'>
+    <informaltable frame="none" pgwide="1">
+      <tgroup cols="2" align="center">
 	<tbody>
 	  <row>
-	    <entry>- mged>p 500 -500 150</entry>
-	    <entry><inlinegraphic fileref="../../articles/en/images/pipes_fig05.png" /></entry>
+	    <entry>- mged&gt;p 500 -500 150</entry>
+	    <entry><inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/pipes_fig05.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
-	    <entry>- mged>p -500 -500 250</entry>
-	    <entry><inlinegraphic fileref="../../articles/en/images/pipes_fig06.png" /></entry>
+	    <entry>- mged&gt;p -500 -500 250</entry>
+	    <entry><inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/pipes_fig06.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
-	    <entry>- mged>p -500 500 350</entry>
-	    <entry><inlinegraphic fileref="../../articles/en/images/pipes_fig07.png" /></entry>
+	    <entry>- mged&gt;p -500 500 350</entry>
+	    <entry><inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/pipes_fig07.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
-	    <entry>- mged>p 500 500 450</entry>
-	    <entry><inlinegraphic fileref="../../articles/en/images/pipes_fig08.png" /></entry>
+	    <entry>- mged&gt;p 500 500 450</entry>
+	    <entry><inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/pipes_fig08.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
-	    <entry>- mged>p 500 -500 550</entry>
-	    <entry><inlinegraphic fileref="../../articles/en/images/pipes_fig09.png" /></entry>
+	    <entry>- mged&gt;p 500 -500 550</entry>
+	    <entry><inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/pipes_fig09.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
-	    <entry>- mged>p -500 -500 650</entry>
-	    <entry><inlinegraphic fileref="../../articles/en/images/pipes_fig10.png" /></entry>
+	    <entry>- mged&gt;p -500 -500 650</entry>
+	    <entry><inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/pipes_fig10.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
-	    <entry>- mged>p -500 500 750</entry>
-	    <entry><inlinegraphic fileref="../../articles/en/images/pipes_fig11.png" /></entry>
+	    <entry>- mged&gt;p -500 500 750</entry>
+	    <entry><inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/pipes_fig11.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
-	    <entry>- mged>p 0 500 800</entry>
-	    <entry><inlinegraphic fileref="../../articles/en/images/pipes_fig12.png" /></entry>
+	    <entry>- mged&gt;p 0 500 800</entry>
+	    <entry><inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/pipes_fig12.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	</tbody>
       </tgroup>
@@ -321,18 +321,18 @@
       The raytraced image of the coil segment is shown in Figure A-5.
     </para>
 
-    <figure>
-      <title>Raytraced coil segment.</title>
+    <figure><info><title>Raytraced coil segment.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/pipes_fig13.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig13.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
 
-    <note>
-      <title>Important Points to Remember About the Pipe</title>
-      <itemizedlist mark='bullet' id="pipes_summary_list">
+    <note><info><title>Important Points to Remember About the Pipe</title></info>
+      
+      <itemizedlist mark="bullet" xml:id="pipes_summary_list">
 	<listitem>
 	  <para>
 	    Even the end points of a pipe have a bend radius (although it is  
@@ -379,6 +379,6 @@
       </listitem>
       </itemizedlist>
     </note>
-  </sect1>
+  </section>
   
 </article>

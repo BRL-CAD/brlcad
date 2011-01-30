@@ -1,20 +1,18 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Crear un camión de juguete</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include 
-href="../../books/en/tutorial_series_authors.xml" 
-xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Crear un camión de juguete</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
     <legalnotice>
        <para>Aprobado para su publicación. Su distribución es ilimitada.</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="creating_toy_truck_overviewlist">
+    <para xml:id="creating_toy_truck_overviewlist">
 	En este tutorial usted aprenderá a:
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Crear un camión de juguete a partir de tres figuras.</para>
 	</listitem>
@@ -59,7 +57,7 @@ xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
       </itemizedlist>
     </para>
 
-    <para id="creating_toy_truck_intro1">
+    <para xml:id="creating_toy_truck_intro1">
 
       En los tutoriales anteriores, ha creado y editado figuras para producir 
       objetos simples. Este tutorial se centra en la creación de un objeto 
@@ -69,10 +67,7 @@ xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged15_truck_design.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_design.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -84,18 +79,18 @@ format="PNG">
 
     </para>
 
-    <para id="creating_toy_truck_intro2">
+    <para xml:id="creating_toy_truck_intro2">
       Comience creando una nueva base de datos llamada truck.g.
     </para>
 
-    <sect1 id="truck_cab_in_cmd">
-      <title>
+    <section xml:id="truck_cab_in_cmd"><info><title>
 	Crear una rpp para la cabina del camión utilizando el comando in
-      </title>
+      </title></info>
+      
       <para>
 	Para hacer la cabina del camión, cree un prisma recto paralelo 
-	(en inglés: right parallel piped > rpp) utilizando el comando in 
-	(de insert > insertar). En el prompt de la ventana de comandos tipee:
+	(en inglés: right parallel piped &gt; rpp) utilizando el comando in 
+	(de insert &gt; insertar). En el prompt de la ventana de comandos tipee:
 	
 	<command>in cab1.s rpp[Enter]</command>
 	
@@ -106,7 +101,7 @@ format="PNG">
 	
 	Esto le dirá a <application>MGED</application> que:
 	<informaltable>
-	  <tgroup cols='6'>
+	  <tgroup cols="6">
 	    <tbody>
 	      <row>
 		<entry>0</entry>
@@ -139,9 +134,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged15_truck_cab1s.png" 
-format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_cab1s.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -152,12 +145,12 @@ format="PNG"></imagedata>
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_hood_in_cmd">
-      <title>
+    <section xml:id="truck_hood_in_cmd"><info><title>
 	Utilizar el comando inside para crear un rpp como frente de la cabina
-      </title>
+      </title></info>
+      
       <para>
 	Para hacer el capó del coche, deberá crear otra forma rpp utilizando 
 	el comando inside. Este comando fue creado originalmente para ahuecar 
@@ -174,7 +167,7 @@ format="PNG"></imagedata>
 	
 	Este comando le dice a <application>MGED</application> que:
 	<informaltable>
-	  <tgroup cols='9'>
+	  <tgroup cols="9">
 	    <tbody>
 	      <row>
 		<entry>inside</entry>
@@ -244,10 +237,7 @@ format="PNG"></imagedata>
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged15_truck_cab_cutoff.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_cab_cutoff.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -258,12 +248,12 @@ format="PNG">
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_cab_wheel_well">
-      <title>
+    <section xml:id="truck_cab_wheel_well"><info><title>
 	Utilizar un rcc para crear la cavidad de la rueda en la cabina
-      </title>
+      </title></info>
+      
       <para>
 	Crear un cilindro (rcc) a utilizar para cortar un espacio para la 
 	primera rueda de la cabina. En la ventana de comandos del sistema, 
@@ -291,10 +281,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged15_truck_multipane_1stwheel.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_multipane_1stwheel.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -305,14 +292,14 @@ format="PNG">
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="ok_accept_apply_reset_cancel_dismiss">
-      <title>
+    <section xml:id="ok_accept_apply_reset_cancel_dismiss"><info><title>
 	    Comprender las diferencias entre OK, Accept, Apply, Reset, 
 	    Cancel, y Dismiss. (OK, Aceptar, Aplicar, Restablecer, 
 	    Cancelar y Salir)
-      </title>
+      </title></info>
+      
       <para>
 	El entorno gráfico de <application> MGED </application> ofrece a los 
 	usuarios varias opciones: aplicar, aceptar o rechazar los cambios 
@@ -346,13 +333,13 @@ format="PNG">
 	aceptados. Estos dos botones cierran el cuadro de diálogo al ser 
 	seleccionados.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_wheel_well_prim_edit_cpy">
-      <title>
+    <section xml:id="truck_wheel_well_prim_edit_cpy"><info><title>
 	Uso del Primitive Editor (Editor de primitivos) para hacer una copia 
 	de la cavidad de la rueda
-      </title>
+      </title></info>
+      
       <para>
 	Para realizar una copia de la cavidad de la rueda, vaya al menú Edit 
 	(Edición) y seleccione Primitive Editor (Editor de primitivos), que 
@@ -368,10 +355,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged15_prim_ed_wheel_well.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_prim_ed_wheel_well.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -394,10 +378,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged15_truck_2nd_wheel_wheel_place.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_2nd_wheel_wheel_place.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -408,10 +389,10 @@ format="PNG">
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_cab_shape_comb">
-      <title>Hacer una combinación con las figuras de la cabina</title>
+    <section xml:id="truck_cab_shape_comb"><info><title>Hacer una combinación con las figuras de la cabina</title></info>
+      
       <para>
 	Ahora es el momento de hacer una combinación de las ditintas figuras 
 	de la cabina.
@@ -423,7 +404,7 @@ format="PNG">
 	Este comando le dice a <application>MGED</application> que:
 	
 	<informaltable>
-	  <tgroup cols='10'>
+	  <tgroup cols="10">
 	    <tbody>
 	      <row>
 		<entry>comb</entry>
@@ -457,7 +438,7 @@ format="PNG">
 	Antes de continuar, debería chequear su árbol de datos tipeando: tree 
 	cab1.c. El árbol debería ser:
 
-	<literallayout>
+	<literallayout class="normal">
    cab1.c/
 
    u cab1.s
@@ -477,12 +458,12 @@ format="PNG">
 	complejos se acostumbrará a referirse a la lista de la base de datos 
 	para asegurarse de que esté compuesta por lo elementos que usted desea.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_body_in_cmd">
-      <title>
+    <section xml:id="truck_body_in_cmd"><info><title>
 	Crear un rpp para el cuerpo del camión utilizando el comando in
-      </title>
+      </title></info>
+      
       <para>
 	Para hacer el cuerpo del camión, tipee en el prompt de la línea de 
 	comandos:
@@ -504,10 +485,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged15_truck_cab_body.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_cab_body.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -518,13 +496,13 @@ format="PNG">
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="prim_ed_wheel_wells">
-      <title>
+    <section xml:id="prim_ed_wheel_wells"><info><title>
 	Utilizar el Primitive Editor para hacer las otras dos cavidades para 
 	las ruedas
-      </title>
+      </title></info>
+      
       <para>
 	Para hacer los dos huecos de las ruedas traseras en el cuerpo de la 
 	camioneta, repita los pasos utilizados en la creación de la segunda 	
@@ -536,10 +514,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged15_truck_wheel_wells_wireframe.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_wheel_wells_wireframe.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -551,18 +526,18 @@ format="PNG">
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_body_wheel_wells_comb">
-      <title>
+    <section xml:id="truck_body_wheel_wells_comb"><info><title>
 	Hacer una combinación con el cuerpo del camión y las cavidades
-      </title>
+      </title></info>
+      
       <para>
 
 	Cree una combinación con el cuerpo y ambas cavidades, nómbrela body1.c.
 	El árbol de body1.c debería decir:
 	
-	<literallayout>
+	<literallayout class="normal">
    body1.c/
 
    u body1.s
@@ -572,20 +547,20 @@ format="PNG">
    - well4.s
 	</literallayout>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_cab_body_region">
-      <title>Hacer una región con la cabina y el cuerpo del camión</title>
+    <section xml:id="truck_cab_body_region"><info><title>Hacer una región con la cabina y el cuerpo del camión</title></info>
+      
       <para>
 	Antes de agregarle las ruedas al camión, debe crear una región con la 
 	cabina y el cuerpo. En el prompt de la línea de comandos tipee:
 	
 	<command>r truck1.r u cab1.c u body1.c[Enter]</command>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_wheels">
-      <title>Crear ruedas para el camión</title>
+    <section xml:id="truck_wheels"><info><title>Crear ruedas para el camión</title></info>
+      
       <para>
 	Tal vez la mejor forma para la fabricación de ruedas es el toro. Puede 
 	crear esta forma a través de la ventana de comandos para darles un 
@@ -600,7 +575,7 @@ format="PNG">
 	
 	Este comando le dice a <application>MGED</application> que:
 	<informaltable>
-	  <tgroup cols='7'>
+	  <tgroup cols="7">
 	    <tbody>
 	      <row>
 		<entry>in</entry>
@@ -645,10 +620,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged15_truck_wheels.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_wheels.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -659,15 +631,15 @@ format="PNG">
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_wheels_region">
-      <title>Hacer una región con las ruedas</title>
+    <section xml:id="truck_wheels_region"><info><title>Hacer una región con las ruedas</title></info>
+      
       <para>
 	Cree una región con las ruedas. Cuando haya terminado, chequee su 
 	árbol de datos de wheel1.r. Deberá decir:
 
-	<literallayout>
+	<literallayout class="normal">
    wheel1.r/R
 
    u wheel1.s
@@ -679,12 +651,12 @@ format="PNG">
    u wheel4.s
 	</literallayout>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_regions_mater_props">
-      <title>
+    <section xml:id="truck_regions_mater_props"><info><title>
 	Asignar propiedades de los materiales a las regiones del camión
-      </title>
+      </title></info>
+      
       <para>
 	Su camión se compone de dos regiones: truck1.r y wheel1.r. Utilice el
 	Combinación Editor y seleccione truck1.r.
@@ -703,10 +675,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged15_cameo_shader.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_cameo_shader.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -722,9 +691,9 @@ format="PNG">
 	cliquee OK.
 	Luego genere el Raytrace de su diseño.
       </para>
-    </sect1>
-   <sect1 id="on_screen_help">
-      <title>Utilizar las opciones de ayuda disponibles en pantalla</title>
+    </section>
+   <section xml:id="on_screen_help"><info><title>Utilizar las opciones de ayuda disponibles en pantalla</title></info>
+      
       <para>
 	Probablemente habrá notado que muchos de los menús de aplicaciones de 
 	<application> MGED </application> ofrecen una amplia variedad de 
@@ -742,9 +711,9 @@ format="PNG">
 	mouse. En el único lugar en que esta función no se puede aplicar es en 
 	la parte de la ventana gráfica, donde se encuentra el diseño.
       </para>
-    </sect1>
-    <sect1 id="stacker_shading">
-      <title>La opción de apilado de sombreados (Stacker Option)</title>
+    </section>
+    <section xml:id="stacker_shading"><info><title>La opción de apilado de sombreados (Stacker Option)</title></info>
+      
       <para>
 	En los tutoriales anteriores, se aplicó color y sombreado a un objeto 
 	para hacerlo ver más realista. Sin embargo, a veces tendrá que aplicar 
@@ -790,10 +759,10 @@ format="PNG">
 	diseño muestre profundidad, necesitará apilar el sombreado de 
 	camuflaje y el de plástico.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="using_stacker_shading">
-      <title>El uso del Stacker Option (Apilado de sombreados)</title>
+    <section xml:id="using_stacker_shading"><info><title>El uso del Stacker Option (Apilado de sombreados)</title></info>
+      
       <para>
 	Para utilizar la opción Stacker, abra el editor de combinaciones y 	
 	seleccione truck1.r. Cliquee en el botón a la derecha del cuadro de 
@@ -821,10 +790,10 @@ format="PNG">
 	cuidado con los sombreados demasiado complejos.
 	</para>
       </caution>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_combine_regions">
-      <title>Hacer una combinación con las regiones del camión</title>
+    <section xml:id="truck_combine_regions"><info><title>Hacer una combinación con las regiones del camión</title></info>
+      
       <para>
 	Para hacer una combinación con las dos regiones del camión, tipee en 
 	el prompt de la línea de comandos:
@@ -834,7 +803,7 @@ format="PNG">
 	<command>B truck1.c[Enter]</command>
 	
 	Su árbol de datos de truck1.c debería decir:
-	<literallayout>
+	<literallayout class="normal">
    truck1.c/
 
    u truck1.r/R
@@ -868,10 +837,10 @@ format="PNG">
    u wheel4.s
 	</literallayout>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_raytracing">
-      <title>Generar el Raytrace del camión</title>
+    <section xml:id="truck_raytracing"><info><title>Generar el Raytrace del camión</title></info>
+      
       <para>
 	El último paso en la creación de su camión es generar el Raytrace de su 
 	diseño. Cuando el trazador de rayos haya terminado, observe que la parte 
@@ -896,15 +865,13 @@ format="PNG">
       </para>
       <para>
 
-	<informaltable frame='none' pgwide="1">
-	  <tgroup cols='2' align='center'>
+	<informaltable frame="none" pgwide="1">
+	  <tgroup cols="2" align="center">
 	    <tbody>
 	      <row>
-		<entry><inlinegraphic 
-fileref="../../lessons/es/images/mged15_truck_default_lighting.png" />
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged15_truck_default_lighting.png"/></imageobject></inlinemediaobject>
 		</entry>
-		<entry><inlinegraphic 
-fileref="../../lessons/es/images/mged15_truck_ambient_lighting.png" />
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged15_truck_ambient_lighting.png"/></imageobject></inlinemediaobject>
 		</entry>
 	      </row>
 	      <row>
@@ -916,13 +883,13 @@ fileref="../../lessons/es/images/mged15_truck_ambient_lighting.png" />
 	</informaltable>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="creating_toy_truck_review">
-      <title>Repasemos...</title>
+    <section xml:id="creating_toy_truck_review"><info><title>Repasemos...</title></info>
+      
       <para>
 		En este tutorial usted aprendió a:
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Crear un camión de juguete a partir de tres figuras.</para>
 	</listitem>
@@ -966,6 +933,6 @@ fileref="../../lessons/es/images/mged15_truck_ambient_lighting.png" />
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

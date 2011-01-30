@@ -1,58 +1,58 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Using the Extruded Bitmap Primitive</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Using the Extruded Bitmap Primitive</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-  <para id="ebm1">
+  <para xml:id="ebm1">
     The extruded bitmap (ebm) primitive allows the user to make a
     three-dimensional (3-D) shape from a two-dimensional black-and-white
     image. This feature can be helpful when dealing with complex outlines,
     text, or other complicated shapes captured as images.
   </para>
 
-  <para id="ebm2">
+  <para xml:id="ebm2">
     For example, the ebm could be used if one wanted to model 3-D letters,
     such as in a company name, onto the side of a simulated wall or building.
     Note also that the same image used for the projection can, with some extra
     processing, form the basis for the ebm (see Figures C-1-C-3).
   </para>
 
-  <figure id="ebm3">
-    <title>Example of the .bw image used for ebm.</title>
+  <figure xml:id="ebm3"><info><title>Example of the .bw image used for ebm.</title></info>
+    
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../articles/en/images/ebm_primitive_fig01.png" format="PNG"></imagedata>
+	<imagedata align="center" fileref="../../articles/en/images/ebm_primitive_fig01.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
   
-  <figure id="ebm4">
-    <title>Example of ebm.</title>
+  <figure xml:id="ebm4"><info><title>Example of ebm.</title></info>
+    
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../articles/en/images/ebm_primitive_fig02.png" format="PNG"></imagedata>
+	<imagedata align="center" fileref="../../articles/en/images/ebm_primitive_fig02.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
   
-  <figure id="ebm5">
-    <title>Example of the ebm with projection shader added.</title>
+  <figure xml:id="ebm5"><info><title>Example of the ebm with projection shader added.</title></info>
+    
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../articles/en/images/ebm_primitive_fig03.png" format="PNG"></imagedata>
+	<imagedata align="center" fileref="../../articles/en/images/ebm_primitive_fig03.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
 
-  <para id="ebm6">
+  <para xml:id="ebm6">
     To make an ebm, the image file must be a black and white (.bw) file. A .bw
     image is a grayscale raw image file with only one channel. Each pixel can
     be turned on or off, but it has no color data. As shown in Figures C-2 and
@@ -62,13 +62,13 @@
     primitive.
   </para>
 
-  <para id="ebm7">
+  <para xml:id="ebm7">
     To enter an ebm in a database, the in command must be used. The arguments
     are as shown in the following example:
   </para>
 
-  <informaltable frame="all" id="ebm8">
-    <tgroup cols='7'>
+  <informaltable frame="all" xml:id="ebm8">
+    <tgroup cols="7">
       <tbody>
 	<row><entry>in</entry><entry>sample.ebm</entry><entry>ebm</entry><entry>image.bw</entry><entry>600</entry><entry>800</entry><entry>1</entry></row>
 	<row>
@@ -84,8 +84,8 @@
     </tgroup>
   </informaltable>
 
-  <note id="ebm9">
-    <title>Points to Remember About the ebm</title>
+  <note xml:id="ebm9"><info><title>Points to Remember About the ebm</title></info>
+    
     <itemizedlist mark="bullet">
       <listitem>
 	<para>

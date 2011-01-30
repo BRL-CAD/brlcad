@@ -1,20 +1,20 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Creating Primitive Shapes in <application>MGED</application></title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Creating Primitive Shapes in <application>MGED</application></title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="creating_primitive_shapes_overviewlist">
+    <para xml:id="creating_primitive_shapes_overviewlist">
       In this lesson, you will:
       
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Launch the <application>MGED</application> program.</para>
 	</listitem>
@@ -71,8 +71,8 @@
 	</listitem>
       </itemizedlist>  
     </para>
-    <sect1 id="launching_mged">
-      <title>Launching the <application>MGED</application> Program</title> 
+    <section xml:id="launching_mged"><info><title>Launching the <application>MGED</application> Program</title></info>
+       
 
       <para>
 	To launch the <application>MGED</application> program, type mged at the Terminal (tty) prompt and
@@ -84,12 +84,12 @@
       </para>
 
 
-    </sect1>
-    <sect1 id="entering_commands">
-      <title>Entering Commands in the Command Window</title> 
+    </section>
+    <section xml:id="entering_commands"><info><title>Entering Commands in the Command Window</title></info>
+       
       
       <para>
-	You can type in commands at the <prompt>mged></prompt> prompt. Many experienced UNIX users
+	You can type in commands at the <prompt>mged&gt;</prompt> prompt. Many experienced UNIX users
 	prefer this method because it allows them to quickly create a model (which
 	we sometimes refer to as a "design") without having to point and click on
 	a lot of options. The complete listing of editing commands and what they
@@ -106,10 +106,10 @@
 	</para>
       </caution>
       
-    </sect1>
+    </section>
     
-    <sect1 id="using_gui">
-      <title>Using the GUI</title>
+    <section xml:id="using_gui"><info><title>Using the GUI</title></info>
+      
       
       <para>
 	Users who are more familiar with Microsoft Windows may prefer to use the
@@ -123,10 +123,10 @@
 	through the Terminal Window when starting <application>MGED</application> or through the GUI after
 	starting <application>MGED</application>.
       </para>
-    </sect1>
+    </section>
    
-    <sect1 id="open_new_database">
-      <title>Opening or Creating a New Database when Launching <application>MGED</application></title>
+    <section xml:id="open_new_database"><info><title>Opening or Creating a New Database when Launching <application>MGED</application></title></info>
+      
     
       <para>
 	When launching <application>MGED</application>, you can open or create a database at the same time.
@@ -139,7 +139,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged01_terminal.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged01_terminal.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -154,10 +154,10 @@
 	new database will be created. If sphere.g already exists, <application>MGED</application> will open
 	the sphere.g database as the program is launched.
       </para>
-    </sect1> 
+    </section> 
 
-    <sect1 id="create_new_database">
-      <title>Using the GUI to Open or Create a Database</title>
+    <section xml:id="create_new_database"><info><title>Using the GUI to Open or Create a Database</title></info>
+      
   
       <para>
 	Alternatively, once you have launched <application>MGED</application>, you can open an existing
@@ -177,7 +177,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged01_commandwindow.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged01_commandwindow.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -190,7 +190,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged01_graphicswindow.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged01_graphicswindow.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -206,10 +206,10 @@
 	know exactly where your database is going to be located. This can be
 	especially helpful if you have a lot of directories or files to manage.
       </para>  
-    </sect1>
+    </section>
 
-    <sect1 id="assign_title">
-      <title>Assigning a Title to Your Database</title>
+    <section xml:id="assign_title"><info><title>Assigning a Title to Your Database</title></info>
+      
 
       <para>
 	You can title your new database to provide an audit trail for you or
@@ -218,15 +218,15 @@
 	database you are going to make. When you are done, press the ENTER key.
 	For example:
 
-	<command><prompt>mged></prompt> title MySphere[ENTER]</command>
+	<command><prompt>mged&gt;</prompt> title MySphere[ENTER]</command>
 	
 	Note that in <application>BRL-CAD</application> versions prior to release 6.0, the title is limited
 	to 72 characters.
       </para>  
-    </sect1>
+    </section>
     
-    <sect1 id="set_units">
-      <title>Selecting a Unit of Length</title>
+    <section xml:id="set_units"><info><title>Selecting a Unit of Length</title></info>
+      
       
       <para>
 	<application>MGED</application> uses millimeters for all internal mathematical processes; however,
@@ -238,12 +238,12 @@
 	just type units in after the <application>MGED</application> prompt in the Command Window, followed
 	by the ENTER key. The Command Line looks like:
 	
-	<command><prompt>mged></prompt> units in[ENTER]</command>
+	<command><prompt>mged&gt;</prompt> units in[ENTER]</command>
       </para>  
-    </sect1>
+    </section>
 
-    <sect1 id="select_primitive">
-      <title>Selecting a Primitive Shape</title>
+    <section xml:id="select_primitive"><info><title>Selecting a Primitive Shape</title></info>
+      
       
       <para>
 	<application>MGED</application> provides a variety of primitive shapes (sometimes referred to as
@@ -262,10 +262,10 @@
 	  think primitive shape.  
 	</para>
       </note>  
-    </sect1>
+    </section>
 
-    <sect1 id="create_sphere_cmd_line">
-      <title>Creating a Sphere from the Command Line</title>
+    <section xml:id="create_sphere_cmd_line"><info><title>Creating a Sphere from the Command Line</title></info>
+      
 
       <para>
 	For this lesson, you are going to create a single sphere. There are two
@@ -285,7 +285,7 @@
 	This command tells the <application>MGED</application> program to:
 	
 	<informaltable frame="all">
-	  <tgroup cols='3'>
+	  <tgroup cols="3">
 	    <tbody>
 	      <row><entry>make</entry><entry>sph1.s</entry><entry>sph</entry></row>
 	      <row><entry>Make a primitive shape</entry><entry>Name it sph1.s</entry>
@@ -306,10 +306,10 @@
       <para>
 	This command will draw the primitive shape in the Graphics Window.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="clear_window">
-      <title>Clearing the Graphics Window</title>
+    <section xml:id="clear_window"><info><title>Clearing the Graphics Window</title></info>
+      
       
       <para>
 	To build another object or work on another primitive shape, you can easily
@@ -325,10 +325,10 @@
 	  Typing a zero (0) will stop the spin.
 	</para>
       </note>
-    </sect1> 
+    </section> 
     
-    <sect1 id="draw_object">
-      <title>Drawing a Previously Created Object</title>
+    <section xml:id="draw_object"><info><title>Drawing a Previously Created Object</title></info>
+      
       
       <para>
 	To recall the sphere, type the command on the Command Line as follows:
@@ -338,7 +338,7 @@
 	This command tells the <application>MGED</application> program to:
 	
 	<informaltable frame="all">
-	  <tgroup cols='2'>
+	  <tgroup cols="2">
 	    <tbody>
 	      <row><entry>draw</entry><entry>sph1.s</entry></row>
 	      <row><entry>Draw a previously created primitive shape</entry>
@@ -348,10 +348,10 @@
 	  </tgroup>
 	</informaltable>
       </para>
-    </sect1> 
+    </section> 
     
-    <sect1 id="erase_from_window">
-      <title>Erasing an Item from the Graphics Window</title>
+    <section xml:id="erase_from_window"><info><title>Erasing an Item from the Graphics Window</title></info>
+      
       
       <para>
 	You may occasionally want to erase a particular item from the display in
@@ -362,10 +362,10 @@
 	
 	<command>erase sph1.s[ENTER]</command>
       </para>
-    </sect1>     
+    </section>     
 
-    <sect1 id="create_sphere_gui">
-      <title>Creating a Sphere Using the GUI</title>
+    <section xml:id="create_sphere_gui"><info><title>Creating a Sphere Using the GUI</title></info>
+      
       
       <para>
 	Another way to create a sphere is to use the GUI menu system duplicated at
@@ -380,10 +380,10 @@
 	can change it as needed, and the shape's parameters-which define its
 	position, orientation, and size-will be in view.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="view_params">
-      <title>Viewing a Shape's Parameters</title>
+    <section xml:id="view_params"><info><title>Viewing a Shape's Parameters</title></info>
+      
 
       <para>
 	Sometimes when you are making a model, you might want to view a shape's
@@ -409,8 +409,8 @@
 	An example of the dialog that might occur in the Command Window for the
 	parameters or attributes of the first sphere you created is as follows:
 	
-	<literallayout>
-<prompt>mged></prompt> <command>l sph1.s</command>
+	<literallayout class="normal">
+<prompt>mged&gt;</prompt> <command>l sph1.s</command>
 <computeroutput>
 sph1.s: ellipsoid (ELL)
 
@@ -450,10 +450,10 @@ sph1.s: ellipsoid (ELL)
 	this lesson.
       </para>
       
-    </sect1>
+    </section>
 
-    <sect1 id="list_db_contents">
-      <title>Listing the Contents of a Database</title>
+    <section xml:id="list_db_contents"><info><title>Listing the Contents of a Database</title></info>
+      
 
       <para>
 	In addition to viewing a shape's contents, you might also want to list the
@@ -462,10 +462,10 @@ sph1.s: ellipsoid (ELL)
 	
 	<command>ls[ENTER]</command>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="kill_object">
-      <title>Killing a Shape or Object</title>
+    <section xml:id="kill_object"><info><title>Killing a Shape or Object</title></info>
+      
       
       <para>
 	Sometimes when creating a model, you may need to eliminate a shape or
@@ -498,10 +498,10 @@ sph1.s: ellipsoid (ELL)
 	  really want to permanently delete data before using the kill command. 
 	</para>
       </note>
-    </sect1>
+    </section>
 
-    <sect1 id="editing_commands">
-      <title>Editing Commands in the Command Window</title>
+    <section xml:id="editing_commands"><info><title>Editing Commands in the Command Window</title></info>
+      
       
       <para>
 	Occasionally, when you enter commands in the Command Window, you will make
@@ -524,25 +524,25 @@ sph1.s: ellipsoid (ELL)
 	arrow keys allow you to select a previously executed command for editing
 	and re-execution.
       </para>  
-    </sect1>
+    </section>
     
-    <sect1 id="quitting">
-      <title>Quitting <application>MGED</application></title>
+    <section xml:id="quitting"><info><title>Quitting <application>MGED</application></title></info>
+      
       
       <para>
 	Remember, to leave the program at any time, type from the Command Line
 	either the letter q or the word quit and then press the ENTER key. You may
 	also quit the program by selecting Exit from the File menu.
       </para>  
-    </sect1>
+    </section>
     
-    <sect1 id="creating_primitive_shapes_review">
-      <title>Review</title>
+    <section xml:id="creating_primitive_shapes_review"><info><title>Review</title></info>
+      
       
       <para>
 	In this lesson, you:
 	
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Started the <application>MGED</application> program.</para>
 	  </listitem>
@@ -599,5 +599,5 @@ sph1.s: ellipsoid (ELL)
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
   </article>

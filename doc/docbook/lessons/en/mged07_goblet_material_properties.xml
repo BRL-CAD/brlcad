@@ -1,20 +1,20 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Assigning Material Properties to a Goblet</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Assigning Material Properties to a Goblet</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="goblet_material_properties_overviewlist">
+    <para xml:id="goblet_material_properties_overviewlist">
       In this lesson, you will:
       
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Review how to open an existing database.</para>
 	</listitem>
@@ -30,7 +30,7 @@
       </itemizedlist>
     </para>
     
-    <para id="goblet_material_properties_intro1">
+    <para xml:id="goblet_material_properties_intro1">
       In this lesson, you will add material properties to the goblet you created
       in the previous lesson. The finished goblet should appear similar to the
       one in the following example.
@@ -38,7 +38,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged07_goblet_mater_complete.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged07_goblet_mater_complete.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -50,8 +50,8 @@
 
     </para>
 
-    <sect1 id="goblet_review_opening_db">
-      <title>Review of Opening an Existing Database</title>
+    <section xml:id="goblet_review_opening_db"><info><title>Review of Opening an Existing Database</title></info>
+      
       
       <para>
 	If you exited after the last lesson, open your goblet database (goblet.g)
@@ -70,8 +70,8 @@
 	of measure. Click on OK.
       </para>
       
-      <sect2>
-	<title>Drawing the Goblet in the Graphics Window</title>
+      <section><info><title>Drawing the Goblet in the Graphics Window</title></info>
+	
 	
 	<para>
 	  To draw the goblet you made in the previous lesson, move the mouse pointer
@@ -84,11 +84,11 @@
 	  A wireframe representation of the goblet should appear in the Graphics
 	  Window.
 	</para>
-      </sect2>
-    </sect1>
+      </section>
+    </section>
 
-    <sect1 id="goblet_assign_colors">
-      <title>Assigning Colors and the Plastic Shader to Regions of the Goblet</title>
+    <section xml:id="goblet_assign_colors"><info><title>Assigning Colors and the Plastic Shader to Regions of the Goblet</title></info>
+      
       <para>
 	Go to the Edit menu and click on Combination Editor. To select the various
 	regions of the goblet you made in the last lesson, go back to the Name box
@@ -128,8 +128,8 @@
 	selections applied.
       </para>
       
-      <sect2>
-	<title>Raytracing the Goblet</title>
+      <section><info><title>Raytracing the Goblet</title></info>
+	
 	<para>
 	  To raytrace the goblet, go to the File menu and click on Raytrace. The
 	  Raytrace Control Panel will appear. Move your mouse pointer to the button
@@ -157,7 +157,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged07_goblet_complete_window.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged07_goblet_complete_window.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -168,11 +168,11 @@
       </informalfigure>
 
 	</para>
-      </sect2>
-    </sect1>
+      </section>
+    </section>
     
-    <sect1 id="goblet_transparency_mirror">
-      <title>Using the Transparency and Mirror Reflectance Shader Options</title>
+    <section xml:id="goblet_transparency_mirror"><info><title>Using the Transparency and Mirror Reflectance Shader Options</title></info>
+      
       <para>
 	The raytraced goblet looks fairly realistic, but it could be enhanced by
 	using other options of the Combination Editor. When you selected the
@@ -200,7 +200,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged07_goblet_semitransparent.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged07_goblet_semitransparent.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -221,10 +221,10 @@
 	the left mouse button, and type in .45. This will cause about half of the
 	available light to be reflected off the surface of the goblet.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="goblet_newforms_raytrace">
-      <title>Raytracing the New Forms of the Goblet</title>
+    <section xml:id="goblet_newforms_raytrace"><info><title>Raytracing the New Forms of the Goblet</title></info>
+      
       
       <para>
 	Click on Apply and Raytrace the design. The new image should appear
@@ -233,7 +233,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged07_goblet_mirror.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged07_goblet_mirror.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -258,7 +258,7 @@
       </para>
       
       <informaltable frame="all">
-	<tgroup cols='2'>
+	<tgroup cols="2">
 	  <thead>
 	    <row>
 	      <entry>Transparency Value</entry>
@@ -289,14 +289,14 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-    </sect1>
+    </section>
     
-    <sect1 id="goblet_material_properties_review">
-      <title>Review</title>
+    <section xml:id="goblet_material_properties_review"><info><title>Review</title></info>
+      
       
       <para>
 	In this lesson, you:
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Reviewed how to open an existing database.</para>
 	  </listitem>
@@ -311,6 +311,6 @@
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

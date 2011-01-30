@@ -1,19 +1,19 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Refining a Mug Model</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Refining a Mug Model</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
  
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-   <para id="refining_mug_overviewlist">
+   <para xml:id="refining_mug_overviewlist">
       In this lesson, you will:
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Assign material properties to the mug using the mater command.</para>
 	</listitem>
@@ -26,14 +26,14 @@
       </itemizedlist>
     </para>
 
-    <para id="refining_mug_intro1">
+    <para xml:id="refining_mug_intro1">
       In this lesson, you will refine the mug you made in the previous lesson.
       If you stopped at the end of that lesson, open the database mug.g before
       continuing.
     </para>
 
-    <sect1 id="mug_mater_prop_mater_cmd">
-      <title>Assigning Material Properties to the Mug Using the <command>mater</command> Command</title>
+    <section xml:id="mug_mater_prop_mater_cmd"><info><title>Assigning Material Properties to the Mug Using the <command>mater</command> Command</title></info>
+      
       <para>
 	Assigning material properties to a region can be done with either the
 	mater or shader command. The program will respond with a series of
@@ -45,10 +45,10 @@
 	lighting model. Select the plastic shader and set the color to a medium
 	shade of green. The dialog in the Command Window should appear as follows:
 	
-	<command><prompt>mged></prompt> mater mug.r[Enter]</command>
+	<command><prompt>mged&gt;</prompt> mater mug.r[Enter]</command>
       </para>
       
-      <literallayout>
+      <literallayout class="normal">
    Shader =
 
    Shader? ('del' to delete, CR to skip) plastic[Enter]
@@ -73,7 +73,7 @@
       <para>
 	Diagrammed, this command says:
 	<informaltable>
-	  <tgroup cols='5'>
+	  <tgroup cols="5">
 	    <tbody>
 	      <row>
 		<entry>mater</entry>
@@ -100,10 +100,10 @@
 	  discussion.
 	</para>
       </note>
-    </sect1>
+    </section>
 
-    <sect1 id="mug_raytrace1">
-      <title>Raytracing the Mug</title>
+    <section xml:id="mug_raytrace1"><info><title>Raytracing the Mug</title></info>
+      
       <para>
 	Open the Raytrace Control Panel and select Raytrace. You should get an
 	image of a green mug on a dark background (we use a white background here
@@ -114,7 +114,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged11_mug_raytraced_norim.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged11_mug_raytraced_norim.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -124,10 +124,10 @@
 	</mediaobject>
       </informalfigure>
 
-    </sect1>
+    </section>
     
-    <sect1 id="mug_refining">
-      <title>Refining the Mug</title>
+    <section xml:id="mug_refining"><info><title>Refining the Mug</title></info>
+      
       <para>
 	Now let's improve the cup. Notice that the lip of the cup looks a little
 	too squared off. To fix this, you will need to add a rounded top to the
@@ -142,7 +142,7 @@
       </para>
       
       <informaltable>
-	<tgroup cols='7'>
+	<tgroup cols="7">
 	  <tbody>
 	    <row>
 	      <entry>in</entry>
@@ -165,10 +165,10 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-    </sect1>
+    </section>
 
-    <sect1 id="mug_torus_cup_combine">
-      <title>Combining the Shapes</title>
+    <section xml:id="mug_torus_cup_combine"><info><title>Combining the Shapes</title></info>
+      
       <para>
 	To combine the torus with the cup, you will need to type at the prompt:
 	
@@ -199,7 +199,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged11_mug_raytraced_rim.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged11_mug_raytraced_rim.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -210,13 +210,13 @@
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="refining_mug_review">
-      <title>Review</title>
+    <section xml:id="refining_mug_review"><info><title>Review</title></info>
+      
       <para>
 	In this chapter, you:
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Assigned material properties to the mug using the mater command.</para>
 	  </listitem>
@@ -228,6 +228,6 @@
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

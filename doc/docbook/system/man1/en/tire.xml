@@ -1,52 +1,15 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2008-2011 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR AS IS'' AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='tire1'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="tire1">
 
 <refmeta>
   <refentrytitle>TIRE</refentrytitle>
   <manvolnum>1</manvolnum>
-  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-  <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
 </refmeta>
 
-<refnamediv id='tire_name'>
+<refnamediv xml:id="tire_name">
   <refname>tire</refname>
   <refpurpose>
     Generate a tire model, given standard tire dimensional information
@@ -54,21 +17,21 @@
 </refnamediv>
 
 <!-- body begins here -->
-<refsynopsisdiv id='tire_synopsis'>
-  <cmdsynopsis>
+<refsynopsisdiv xml:id="tire_synopsis">
+  <cmdsynopsis sepchar=" ">
     <command>tire</command>    
-    <arg choice='opt' rep='repeat'><replaceable>options ...</replaceable></arg>
-    <arg><replaceable>name</replaceable></arg>
+    <arg choice="opt" rep="repeat"><replaceable>options ...</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>name</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsect1 id='tire_description'>
-  <title>DESCRIPTION</title>
+<refsection xml:id="tire_description"><info><title>DESCRIPTION</title></info>
+  
   <para>
     <command>tire</command> creates a curved sidewall tire in either the current
-    open database (when run from within MGED) or in <emphasis remap='I'>tire.g</emphasis>
+    open database (when run from within MGED) or in <emphasis remap="I">tire.g</emphasis>
     when run from the command line.  If no dimensions are supplied defaults are used.  The
-    default is to <emphasis remap='I'>not</emphasis> model tread (due to performance 
+    default is to <emphasis remap="I">not</emphasis> model tread (due to performance 
     issues) but tread modeling is implemented and available as a user option with the
     <option>-t</option> flag.
   </para>
@@ -79,16 +42,16 @@
     format uses '-' instead of '/' because the latter has significance in BRL-CAD 
     object trees.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='tire_options'>
-  <title>OPTIONS:</title>
-  <variablelist remap='TP'>
+<refsection xml:id="tire_options"><info><title>OPTIONS:</title></info>
+  
+  <variablelist remap="TP">
     <varlistentry>
       <term><option>-c count</option></term>
       <listitem>
 	<para>
-	  sets the number of tread <emphasis remap='I'>patterns</emphasis>
+	  sets the number of tread <emphasis remap="I">patterns</emphasis>
 	  used when adding tread to a tire.  A tread pattern is the repeated shape
 	  or combination of shapes used in tire tread definitions.
 	</para>
@@ -164,7 +127,7 @@
 	<para>
 	  allows the user to specify a name other than 'tire' for the root name
 	  of the toplevel database object.  Works with the
-	  <emphasis remap='B'>\a</emphasis>
+	  <emphasis remap="B">\a</emphasis>
 	  option or standalone.
 	</para>
       </listitem>
@@ -212,10 +175,10 @@
       </listitem>
     </varlistentry>
   </variablelist>
-</refsect1>
+</refsection>
 
-<refsect1 id='tire_examples'>
-  <title>EXAMPLE</title>
+<refsection xml:id="tire_examples"><info><title>EXAMPLE</title></info>
+  
   <para>
     The following will create a tire with width=185mm, ratio=65mm, and wheel
     diameter = 15in.  The <option>-t</option> flag will instruct the procedure to 
@@ -224,51 +187,50 @@
     flag will append '-185-65R15' to 'autowheel' to create the final
     toplevel name 'autowheel-185-65R15' in the database rather than 'tire'.
   </para>
-  <example>
-    <title>Creating a 185/65R15 tire with wheel</title>
+  <example><info><title>Creating a 185/65R15 tire with wheel</title></info>
+    
     <para>
       <userinput>tire -d 185/65R15 -t 1 -a -n autowheel</userinput>
     </para>
   </example>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='diagnostics'>
-  <title>DIAGNOSTICS</title>
+<refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
+  
   <para>
     Not much error checking yet - need to add.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='author'>
-  <title>AUTHOR</title>
+<refsection xml:id="author"><info><title>AUTHOR</title></info>
+  
   <para>Clifford Yapp</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='copyright'>
-  <title>COPYRIGHT</title>
+<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+  
   <para>
     This software is Copyright (c) 2008-2011 United States Government as
     represented by the U.S. Army Research Laboratory. All rights reserved.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='bugs'>
-  <title>BUGS</title>
+<refsection xml:id="bugs"><info><title>BUGS</title></info>
+  
   <para>
     There is a known problem where specifying very thin tires with a large
     inner wheel will cause incorrect geometry to be produced - this has to do
     with how the elliptical torus primitive is handled.  Other extreme cases
     such as extremely thin tire walls would also be expected to cause problems.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='bug_reports'>
-  <title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
-</refsect1>
+</refsection>
 </refentry>
-

@@ -1,5 +1,3 @@
-The resources directory holds all of the docbook dtd and xsl files
-required for processing - this is needed to ensure a stable location
-that BRL-CAD's docbook files can point to.  The standard subdirectory
-contains only the default formatting files - any custom work is done
-is other subdirectories.  
+The resources directory holds all of the docbook xsl files
+required for processing - this is needed to ensure a stable,
+correct set of XSL files.

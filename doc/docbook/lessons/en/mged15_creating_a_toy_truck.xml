@@ -1,19 +1,19 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Creating a Toy Truck</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Creating a Toy Truck</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="creating_toy_truck_overviewlist">
+    <para xml:id="creating_toy_truck_overviewlist">
       In this lesson, you will:
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Create a toy truck from three shapes.</para>
 	</listitem>
@@ -47,7 +47,7 @@
       </itemizedlist>
     </para>
 
-    <para id="creating_toy_truck_intro1">
+    <para xml:id="creating_toy_truck_intro1">
       In previous lessons, you created and edited shapes to produce simple
       objects. This lesson focuses on creating a slightly more complex object, a
       toy truck, from the Command Window. Your completed truck should look
@@ -56,7 +56,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_truck_design.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged15_truck_design.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -68,12 +68,12 @@
 
     </para>
 
-    <para id="creating_toy_truck_intro2">
+    <para xml:id="creating_toy_truck_intro2">
       Begin by creating a new database called truck.g.
     </para>
 
-    <sect1 id="truck_cab_in_cmd">
-      <title>Creating an rpp for the Cab of the Truck Using the In Command</title>
+    <section xml:id="truck_cab_in_cmd"><info><title>Creating an rpp for the Cab of the Truck Using the In Command</title></info>
+      
       <para>
 	To make the cab of the truck, you will create a right parallel piped using
 	the in (insert) command. At the Command Window prompt, type:
@@ -87,7 +87,7 @@
 	
 	This will tell <application>MGED</application> to:
 	<informaltable>
-	  <tgroup cols='6'>
+	  <tgroup cols="6">
 	    <tbody>
 	      <row>
 		<entry>0</entry>
@@ -119,7 +119,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_truck_cab1s.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged15_truck_cab1s.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -130,10 +130,10 @@
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_hood_in_cmd">
-      <title>Using the Inside Command to Create an rpp for the Hood of the Cab</title>
+    <section xml:id="truck_hood_in_cmd"><info><title>Using the Inside Command to Create an rpp for the Hood of the Cab</title></info>
+      
       <para>
 	To make the hood of the cab, you will need to make another rpp shape, this
 	time using the inside command. This special command was originally created
@@ -150,7 +150,7 @@
 	
 	The inside command tells <application>MGED</application> to:
 	<informaltable>
-	  <tgroup cols='9'>
+	  <tgroup cols="9">
 	    <tbody>
 	      <row>
 		<entry>inside</entry>
@@ -206,7 +206,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_truck_cab_cutoff.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged15_truck_cab_cutoff.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -217,10 +217,10 @@
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_cab_wheel_well">
-      <title>Using an rcc to Create a Wheel Well in the Cab</title>
+    <section xml:id="truck_cab_wheel_well"><info><title>Using an rcc to Create a Wheel Well in the Cab</title></info>
+      
       <para>
 	Make a cylinder (rcc) to use for cutting away a space for the first wheel
 	of the cab. At the Command Window prompt, type:
@@ -247,7 +247,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_truck_multipane_1stwheel.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged15_truck_multipane_1stwheel.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -258,10 +258,10 @@
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="ok_accept_apply_reset_cancel_dismiss">
-      <title>The Difference Between OK, Accept, Apply, Reset, Cancel, and Dismiss</title>
+    <section xml:id="ok_accept_apply_reset_cancel_dismiss"><info><title>The Difference Between OK, Accept, Apply, Reset, Cancel, and Dismiss</title></info>
+      
       <para>
 	The GUI environment of <application>MGED</application> offers users several options for applying,
 	accepting, or rejecting changes made through buttons at the bottom of
@@ -287,10 +287,10 @@
 	made in the dialog box and leave values unchanged from their last stored
 	settings. These two buttons close the dialog box.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_wheel_well_prim_edit_cpy">
-      <title>Using the Primitive Editor to Make a Copy of the Wheel Well</title>
+    <section xml:id="truck_wheel_well_prim_edit_cpy"><info><title>Using the Primitive Editor to Make a Copy of the Wheel Well</title></info>
+      
       <para>
 	To make a copy of your wheel well, go to the Edit menu and select
 	Primitive Editor, which will contain information about the last shape
@@ -304,7 +304,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_prim_ed_wheel_well.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged15_prim_ed_wheel_well.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -326,7 +326,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_truck_2nd_wheel_wheel_place.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged15_truck_2nd_wheel_wheel_place.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -337,10 +337,10 @@
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_cab_shape_comb">
-      <title>Making a Combination of the Cab Shapes</title>
+    <section xml:id="truck_cab_shape_comb"><info><title>Making a Combination of the Cab Shapes</title></info>
+      
       <para>
 	It is now time to make a combination of the various cab shapes.
 	
@@ -349,7 +349,7 @@
 	This command tells <application>MGED</application> to:
 	
 	<informaltable>
-	  <tgroup cols='10'>
+	  <tgroup cols="10">
 	    <tbody>
 	      <row>
 		<entry>comb</entry>
@@ -383,7 +383,7 @@
 	Before you go any further, you should check your data tree by typing tree
 	cab1.c. The data tree should say:
 
-	<literallayout>
+	<literallayout class="normal">
    cab1.c/
 
    u cab1.s
@@ -403,10 +403,10 @@
 	objects that you will periodically refer to the list of the database to
 	ensure it is composed of the elements you want.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_body_in_cmd">
-      <title>Creating an rpp for the Body of the Truck Using the In Command</title>
+    <section xml:id="truck_body_in_cmd"><info><title>Creating an rpp for the Body of the Truck Using the In Command</title></info>
+      
       <para>
 	To make the body of the truck, type at the Command Window prompt:
 	
@@ -424,7 +424,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_truck_cab_body.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged15_truck_cab_body.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -435,10 +435,10 @@
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="prim_ed_wheel_wells">
-      <title>Using the Primitive Editor to Make Two More Wheel Wells</title>
+    <section xml:id="prim_ed_wheel_wells"><info><title>Using the Primitive Editor to Make Two More Wheel Wells</title></info>
+      
       <para>
 	To make two wheel wells for the body of the truck, repeat the steps used
 	in making the second wheel well. Name your new shapes well3.s and well4.s.
@@ -448,7 +448,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_truck_wheel_wells_wireframe.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged15_truck_wheel_wells_wireframe.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -459,17 +459,17 @@
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_body_wheel_wells_comb">
-      <title>Making a Combination of the Truck Body and Wheel Wells</title>
+    <section xml:id="truck_body_wheel_wells_comb"><info><title>Making a Combination of the Truck Body and Wheel Wells</title></info>
+      
       <para>
 	Make a combination of the truck body and the two new wheel wells. Name it
 	body1.c.
 	
 	The tree for body1.c should say:
 	
-	<literallayout>
+	<literallayout class="normal">
    body1.c/
 
    u body1.s
@@ -479,20 +479,20 @@
    - well4.s
 	</literallayout>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_cab_body_region">
-      <title>Making a Region of the Cab and Body</title>
+    <section xml:id="truck_cab_body_region"><info><title>Making a Region of the Cab and Body</title></info>
+      
       <para>
 	Before adding wheels to the truck, you need to make a region of the cab
 	and body. At the Command Window prompt, type:
 	
 	<command>r truck1.r u cab1.c u body1.c[Enter]</command>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_wheels">
-      <title>Making Wheels for the Truck</title>
+    <section xml:id="truck_wheels"><info><title>Making Wheels for the Truck</title></info>
+      
       <para>
 	Perhaps the best shape for making wheels is the torus. You can create a
 	shape through the Command Window that has the correct size and placement
@@ -506,7 +506,7 @@
 	
 	This command tells <application>MGED</application> to:
 	<informaltable>
-	  <tgroup cols='7'>
+	  <tgroup cols="7">
 	    <tbody>
 	      <row>
 		<entry>in</entry>
@@ -545,7 +545,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_truck_wheels.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged15_truck_wheels.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -556,15 +556,15 @@
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_wheels_region">
-      <title>Making a Region of the Wheels</title>
+    <section xml:id="truck_wheels_region"><info><title>Making a Region of the Wheels</title></info>
+      
       <para>
 	Make a region of the four wheels. When you are finished, your data tree
 	for wheel1.r should say:
 
-	<literallayout>
+	<literallayout class="normal">
    wheel1.r/R
 
    u wheel1.s
@@ -576,10 +576,10 @@
    u wheel4.s
 	</literallayout>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_regions_mater_props">
-      <title>Assigning Material Properties to the Truck Regions</title>
+    <section xml:id="truck_regions_mater_props"><info><title>Assigning Material Properties to the Truck Regions</title></info>
+      
       <para>
 	Your truck is composed of two regions: truck1.r and wheel1.r. Use the
 	Combination Editor and select truck1.r.
@@ -597,7 +597,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged15_cameo_shader.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged15_cameo_shader.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -612,10 +612,10 @@
 	Apply a black color and plastic shader to the wheels (wheel1.r) and click
 	on OK. Then raytrace your design.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="on_screen_help">
-      <title>Using the On-Screen Help Option</title>
+    <section xml:id="on_screen_help"><info><title>Using the On-Screen Help Option</title></info>
+      
       <para>
 	You have probably noticed that many of the <application>MGED</application> menus offer a wide variety
 	of options from which to choose. With so many choices available, it is
@@ -630,10 +630,10 @@
 	work is in the geometry portion of the Graphics Window, where the design
 	is drawn.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="stacker_shading">
-      <title>The Stacker Option</title>
+    <section xml:id="stacker_shading"><info><title>The Stacker Option</title></info>
+      
       <para>
 	In previous lessons, you applied color and a shader to an object to make
 	it appear realistic. Sometimes, however, you will need to apply two or
@@ -673,10 +673,10 @@
 	three-dimensional nature of an object. If you want your design to show
 	depth, you will need to stack the camo shader and the plastic shader.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="using_stacker_shading">
-      <title>Using the Stacker Option</title>
+    <section xml:id="using_stacker_shading"><info><title>Using the Stacker Option</title></info>
+      
       <para>
 	To use the stacker option, open the Combination Editor and select
 	truck1.r. Click on the button to the right of the Shader entry box and
@@ -701,10 +701,10 @@
 	  careful stacking shaders with complex attributes.                     
 	</para>
       </caution>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_combine_regions">
-      <title>Making a Combination of the Truck Regions</title>
+    <section xml:id="truck_combine_regions"><info><title>Making a Combination of the Truck Regions</title></info>
+      
       <para>
 	To make a combination of the two truck regions, type at the Command Window
 	prompt:
@@ -714,7 +714,7 @@
 	<command>B truck1.c[Enter]</command>
 	
 	Your data tree for truck1.c should read:
-	<literallayout>
+	<literallayout class="normal">
    truck1.c/
 
    u truck1.r/R
@@ -748,10 +748,10 @@
    u wheel4.s
 	</literallayout>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="truck_raytracing">
-      <title>Raytracing the Truck</title>
+    <section xml:id="truck_raytracing"><info><title>Raytracing the Truck</title></info>
+      
       <para>
 	The last step in creating your truck is to raytrace your design. When the
 	raytracer has finished, notice that the top and one side of the truck are
@@ -773,12 +773,12 @@
       </para>
       <para>
 
-	<informaltable frame='none' pgwide="1">
-	  <tgroup cols='2' align='center'>
+	<informaltable frame="none" pgwide="1">
+	  <tgroup cols="2" align="center">
 	    <tbody>
 	      <row>
-		<entry><inlinegraphic fileref="../../lessons/en/images/mged15_truck_default_lighting.png" /></entry>
-		<entry><inlinegraphic fileref="../../lessons/en/images/mged15_truck_ambient_lighting.png" /></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged15_truck_default_lighting.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged15_truck_ambient_lighting.png"/></imageobject></inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>Truck with Default Lighting</entry>
@@ -789,13 +789,13 @@
 	</informaltable>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="creating_toy_truck_review">
-      <title>Review</title>
+    <section xml:id="creating_toy_truck_review"><info><title>Review</title></info>
+      
       <para>
 	In this lesson, you:
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Created a toy truck from three shapes.</para>
 	  </listitem>
@@ -828,6 +828,6 @@
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

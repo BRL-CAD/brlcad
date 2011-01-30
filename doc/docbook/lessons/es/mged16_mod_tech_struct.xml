@@ -1,19 +1,19 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Aprender técnicas de modelado y estructuras</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Aprender técnicas de modelado y estructuras</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Aprobada su publicación. Su distribución es ilimitada.</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="modeling_techniques_and_structures_overviewlist">
+    <para xml:id="modeling_techniques_and_structures_overviewlist">
       En este tutorial usted aprenderá a:
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Hacer regiones con las figuras del radio walkie-talkie.</para>
 	</listitem>
@@ -35,7 +35,7 @@
       </itemizedlist>
     </para>
 
-    <para id="modeling_techniques_and_structures_intro1">
+    <para xml:id="modeling_techniques_and_structures_intro1">
 
 	En el tutorial 2, usted creó las formas básicas de un radio 
 	walkie-talkie para adquirir experiencia en la visualización de los 
@@ -47,7 +47,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged16_radio_new_design.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged16_radio_new_design.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -59,14 +59,14 @@
 
     </para>
 
-    <sect1 id="radio_shapes_to_regions">
-      <title>Hacer regiones con las figuras</title>
+    <section xml:id="radio_shapes_to_regions"><info><title>Hacer regiones con las figuras</title></info>
+      
       <para>
 	Abra la base de datos radio.g que creó en el tutorial 2. En el línea 
 	de comandos utilice el comando ls para listar todos los contenidos de 
 	su radio. Deberá decir lo siguiente:
 	
-	<literallayout>
+	<literallayout class="normal">
    ant.s btn.s knob.s
 
    body.s btn2.s spkr.s
@@ -108,9 +108,9 @@
 	figuras, comenzando por el componente principal del radio: el cuerpo.
 
       </para>
-    </sect1>
-    <sect1 id="body_of_radio">
-      <title>El cuerpo del radio</title>
+    </section>
+    <section xml:id="body_of_radio"><info><title>El cuerpo del radio</title></info>
+      
 
       <para>
 
@@ -167,7 +167,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged16_radio_default_components_props.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged16_radio_default_components_props.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -239,10 +239,10 @@
                                                 
 	</para>
       </note>
-    </sect1>
+    </section>
 
-    <sect1 id="radio_other_regions">
-      <title>Las demás regiones</title>
+    <section xml:id="radio_other_regions"><info><title>Las demás regiones</title></info>
+      
       <para>
 
 	Hacer el botón para hablar es más sencillo que hacer la carcaza. El 
@@ -261,10 +261,10 @@
 	
 	<command>r ant.r u ant.s[Enter]</command>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="radio_assembly_comb">
-      <title>Recopilar las regiones en una combinación de montaje</title>
+    <section xml:id="radio_assembly_comb"><info><title>Recopilar las regiones en una combinación de montaje</title></info>
+      
       <para>
 
 	Ahora vamos a tomar todas las regiones que hemos hecho hasta ahora y 
@@ -280,7 +280,7 @@
       </para>
       <para>
 
-	Una forma más corta sería utilizar el comando g (group > grupo):
+	Una forma más corta sería utilizar el comando g (group &gt; grupo):
 	
 	<command>g radio.c case.r button.r knob.r ant.r[Enter]</command>
 
@@ -298,7 +298,7 @@
 	Si ahora viéramos el árbol de radio.c, debemos obtener el siguiente 
 	resultado en la ventana de comandos:
 
-	<literallayout>
+	<literallayout class="normal">
    radio.c/
 
    u case.r/R
@@ -330,10 +330,10 @@
    u ant.s
 	</literallayout>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="radio_assign_mater_props">
-      <title>Asignar propiedades de los materiales a las regiones</title>
+    <section xml:id="radio_assign_mater_props"><info><title>Asignar propiedades de los materiales a las regiones</title></info>
+      
       <para>
 
 	Hasta ahora, los objetos que hemos creado no tienen otras propiedades 
@@ -365,7 +365,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged16_radio_with_mater_props.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged16_radio_with_mater_props.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -387,10 +387,10 @@
 	
 	<command>r ant.r u ant2.s[Enter]</command>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="radio_internal_components">
-      <title>Agregando componentes internos</title>
+    <section xml:id="radio_internal_components"><info><title>Agregando componentes internos</title></info>
+      
       <para>
 
 	El radio luce cada vez más realista, sin embargo, todavía es sólo un
@@ -410,7 +410,7 @@
 	
 	Este comando le dice a <application> MGED </application> que:
 	<informaltable>
-	  <tgroup cols='5'>
+	  <tgroup cols="5">
 	    <tbody>
 	      <row>
 		<entry>mater</entry>
@@ -443,7 +443,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged16_radio_wireframe_circ_board.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged16_radio_wireframe_circ_board.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -455,7 +455,7 @@
       </informalfigure>
 
 	Además, el árbol de radio.c debería ser:
-	<literallayout>
+	<literallayout class="normal">
    radio.c/
 
    u case.r/R
@@ -493,10 +493,10 @@
    u board.s
 	</literallayout>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="radio_specialty_models">
-      <title>Hacer modelos especiales del radio</title>
+    <section xml:id="radio_specialty_models"><info><title>Hacer modelos especiales del radio</title></info>
+      
       <para>
 
 	Si tuviesemos que generar el trazado de rayos en esta instancia, la 
@@ -554,8 +554,8 @@
 	modificaciones que se hecho y la complejidad del objeto original.
 
       </para>
-      <sect2>
-	<title>Vista transparente</title>
+      <section><info><title>Vista transparente</title></info>
+	
 	<para>
 
 	  Hacer un radio especial con una carcaza transparente, probablemente 
@@ -604,7 +604,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged16_radio_transparent.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged16_radio_transparent.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -621,7 +621,7 @@
 	  radio_clear.c no es muy diferente a la de radio.c. La única 
 	  diferencia es que case.c ha sido sustituido por case_clear.c.
 
-	  <literallayout>
+	  <literallayout class="normal">
    radio_clear.c/
 
    u case_clear.r/R
@@ -674,9 +674,9 @@
 
 	  </para>
 	</note>
-      </sect2>
-      <sect2>
-	<title>Vista en corte</title>
+      </section>
+      <section><info><title>Vista en corte</title></info>
+	
 	<para>
 
 	  Otra manera de hacer visibles los componentes internos del radio es 
@@ -718,7 +718,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged16_radio_cut_wireframe.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged16_radio_cut_wireframe.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -738,7 +738,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged16_radio_cut_raytrace.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged16_radio_cut_raytrace.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -790,7 +790,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged16_radio_cutaways.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged16_radio_cutaways.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -800,11 +800,11 @@
 	</mediaobject>
       </informalfigure>
 
-      </sect2>
-    </sect1>
+      </section>
+    </section>
 
-    <sect1 id="radio_structure_redefinition">
-      <title>Redefiniendo la estructura del radio</title>
+    <section xml:id="radio_structure_redefinition"><info><title>Redefiniendo la estructura del radio</title></info>
+      
       <para>
 
 	Como las formas se agregan a un diseño, el diseñador a menudo 
@@ -820,7 +820,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged16_radio_structure_1.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged16_radio_structure_1.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -839,7 +839,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged16_radio_structure_2.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged16_radio_structure_2.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -864,7 +864,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged16_radio_structure_3.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged16_radio_structure_3.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -886,7 +886,7 @@
 	combinación de ensamble radio.c de modo que cuando electronics.c se 
 	agrega a radio.c, no tenga el mando y el botón incluido dos veces en 
 	el modelo.
-	Para ello, utilice el comando rm (remove > borrar):
+	Para ello, utilice el comando rm (remove &gt; borrar):
  
 	 <command>rm radio.c board.r knob.r button.r[Enter]</command>
 	 
@@ -898,7 +898,7 @@
       <para>
 
 	 Ahora el árbol de radio.c debería ser:
-	 <literallayout>
+	 <literallayout class="normal">
    radio.c/
 
    u case.r/R
@@ -964,7 +964,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged16_radio_casecut_raytrace.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged16_radio_casecut_raytrace.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -975,13 +975,13 @@
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="modeling_techniques_and_structures_review">
-      <title>Repasemos...</title>
+    <section xml:id="modeling_techniques_and_structures_review"><info><title>Repasemos...</title></info>
+      
       <para>
 	En este tutorial usted aprendió a:
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Hacer regiones con las figuras de la radio walkie-talkie.</para>
 	</listitem>
@@ -1002,6 +1002,6 @@
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

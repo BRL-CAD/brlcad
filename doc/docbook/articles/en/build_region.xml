@@ -1,17 +1,17 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Using the build_region Command</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Using the build_region Command</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-  <para id="build_region1">
+  <para xml:id="build_region1">
     Just as the Build Pattern tool can help automate the process of building
    multiple occurrences of objects, the build_region command can help
    automate the process of creating regions. The command (which currently has
@@ -19,13 +19,13 @@
    in the primitive name based on the intended use of the primitive.
   </para>
 
-  <para id="build_region2">
+  <para xml:id="build_region2">
     The user includes the Boolean operation and relational information in the
    name of the primitive using a simple naming convention. The naming
    convention is designed around the following two assumptions:
   </para>
 
-  <itemizedlist id="build_region3">
+  <itemizedlist xml:id="build_region3">
     <listitem>
       <para>
 	The same text "tag" is used for all primitives in a region.
@@ -38,7 +38,7 @@
     </listitem>
   </itemizedlist>
   
-  <para id="build_region4">
+  <para xml:id="build_region4">
     For example, let's say we want to build the four rounded corners of a
     "tub" region for a toy metal wagon assembly (see Figure F-1). We could
     choose something such as "wgn"--an abbreviated form of "wagon"--as the
@@ -46,16 +46,16 @@
     assembly name. Our primitives would therefore be of the form wgn.s#.
   </para>
 
-  <figure id="build_region5">
-    <title>The rounded corners of a toy wagon.</title>
+  <figure xml:id="build_region5"><info><title>The rounded corners of a toy wagon.</title></info>
+    
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../articles/en/images/build_region_fig01.png" format="PNG"></imagedata>
+	<imagedata align="center" fileref="../../articles/en/images/build_region_fig01.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
 
-  <para id="build_region6">
+  <para xml:id="build_region6">
     Next, we create an arb8 for one long side of the wagon tub. It is named
     wgn.s1. After that, we create an rcc for one corner of the tub. It is
     named wgn.s2. To get a hollow quarter cylinder, we need to subtract a
@@ -65,29 +65,29 @@
     wgn.s2-1, and the intersecting primitive will be named wgn.s2+1.
   </para>
   
-  <figure id="build_region7">
-    <title>Arb8, cylinder, and two Boolean primitives.</title>
+  <figure xml:id="build_region7"><info><title>Arb8, cylinder, and two Boolean primitives.</title></info>
+    
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../articles/en/images/build_region_fig02.png" format="PNG"></imagedata>
+	<imagedata align="center" fileref="../../articles/en/images/build_region_fig02.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
 
-  <para id="build_region8">
+  <para xml:id="build_region8">
     Now we have created the following four primitives:
-    <literallayout>
+    <literallayout class="normal">
 wgn.s1 wgn.s2 wgn.s2+1 wgn.s2-1
     </literallayout>
     If we separate the primitives sequentially as follows,
-    <literallayout>
+    <literallayout class="normal">
 wgn.s1
 
 wgn.s2 wgn.s2+1 wgn.s2-1,
     </literallayout>
     we can begin to see the Boolean structure falling out of the naming
     convention
-    <literallayout>
+    <literallayout class="normal">
 u wgn.s1
 
 u wgn.s2 + wgn.s2+1 - wgn.s2-1
@@ -99,38 +99,38 @@ u wgn.s2 + wgn.s2+1 - wgn.s2-1
       *****NEED IMAGE HERE*****
   </para>
  
-  <figure id="build_region9">
-    <title>The region and the subtraction primitives.</title>
+  <figure xml:id="build_region9"><info><title>The region and the subtraction primitives.</title></info>
+    
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../articles/en/images/build_region_fig03.png" format="PNG"></imagedata>
+	<imagedata align="center" fileref="../../articles/en/images/build_region_fig03.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
   
-  <para id="build_region10">
+  <para xml:id="build_region10">
     Note that the root name stays the same so we can maintain the
     relationship, and the second number (associated with the Boolean
     operation) is incremented sequentially.
   </para>
   
-  <figure id="build_region11">
-    <title>Raytraced image with hole.</title>
+  <figure xml:id="build_region11"><info><title>Raytraced image with hole.</title></info>
+    
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../articles/en/images/build_region_fig04.png" format="PNG"></imagedata>
+	<imagedata align="center" fileref="../../articles/en/images/build_region_fig04.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
   
-  <para id="build_region12">
+  <para xml:id="build_region12">
     Obviously, the overall success or failure of the build_region command
     depends on primitives being named properly. But if they are, the command
     can organize them in one automated step, creating complex regions in just
     a few keystrokes.
   </para>
   
-  <para id="build_region13">
+  <para xml:id="build_region13">
     Another modeling benefit of the build_region tool is that it allows the
     user to quickly organize primitives. Assume, for example, that we have
     used the aforementioned naming convention to construct a complicated

@@ -1,23 +1,21 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>
+<!-- Converted by db4-upgrade version 1.0 -->
+
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>
 	Ejercicios adicionales de ubicación de imágenes en espacios 3-D
     </title>
+    
 
-    <xi:include 
-href="../../books/en/tutorial_series_authors.xml" 
-xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
       <para>Aprobado para su publicación. Su distribución es ilimitada.</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="placing_shapes_in_3d_2_overviewlist">
+    <para xml:id="placing_shapes_in_3d_2_overviewlist">
       En este tutorial usted aprenderá a:
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>
 	    Crear copias de la figura utilizando el Primitive Editor 
@@ -44,19 +42,19 @@ xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
       </itemizedlist>
     </para>
 
-    <para id="placing_shapes_in_3d_2_intro1">
+    <para xml:id="placing_shapes_in_3d_2_intro1">
       En los tutoriales anteriores, hemos creado y editado y ubicado en 
       espacios 3-D distintas formas. 
       Este tutorial proporciona una práctica más avanzada en estas áreas
       utilizando el diseño del candelabro que creó en el tutorial anterior.
     </para>
     
-    <para id="placing_shapes_in_3d_2_intro2">
+    <para xml:id="placing_shapes_in_3d_2_intro2">
       Abra la base de datos candle.g y dibuje candle1.c.
     </para>
 
-    <sect1 id="candle_base_1st_sphere">
-      <title>Creando la primera esfera</title>
+    <section xml:id="candle_base_1st_sphere"><info><title>Creando la primera esfera</title></info>
+      
       
       <para>
 	Use la GUI para crear una esfera llamada sph1.s. Vaya al menú View 
@@ -66,10 +64,7 @@ xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged14_candle_base_sphere_topview.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged14_candle_base_sphere_topview.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -80,10 +75,10 @@ format="PNG">
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="draw_grid_feature">
-      <title>Utilizando la cuadrícula</title>
+    <section xml:id="draw_grid_feature"><info><title>Utilizando la cuadrícula</title></info>
+      
       
       <para>
 	Arrastre la esfera hacia el rcc como se muestra en la imagen anterior. 
@@ -92,10 +87,10 @@ format="PNG">
 	superposición de la cuadrícula en la ventana gráfica que le puede 
 	ayudará a posicionar la esfera en la base del candelabro.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="multipane_feature">
-      <title>Utilizando la opción Multipane (Multi-panel)</title>
+    <section xml:id="multipane_feature"><info><title>Utilizando la opción Multipane (Multi-panel)</title></info>
+      
       <para>
 	Como se señaló anteriormente, otra característica que está disponible 
 	para ayudarle a posicionar sus objetos es la opción Multipane del menú 
@@ -104,10 +99,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged14_candle_multipane.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged14_candle_multipane.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -130,10 +122,10 @@ format="PNG">
 	vista Multipane, regrese a Modes y cliquee la opción que desea 
 	desactivar.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="copies_of_shapes">
-      <title>Crear copias de una figura</title>
+    <section xml:id="copies_of_shapes"><info><title>Crear copias de una figura</title></info>
+      
       <para>
 	Para hacer más piedras para la base, puede utilizar el comando copy en 
 	la línea de comandos (cp sph1.s sph2.s), pero otra manera de hacer 
@@ -148,10 +140,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged14_primitive_editor.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged14_primitive_editor.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -171,10 +160,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged14_primitive_selection_dropdown.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged14_primitive_selection_dropdown.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -191,16 +177,14 @@ format="PNG">
 	posicionado las ocho esferas alrededor de la rcc, su diseño debería 
 	ser similar al siguiente, desde las vistas superior y frontal.
 	<informaltable>
-	  <tgroup cols='2'>
+	  <tgroup cols="2">
 	    <tbody>
 	      <row>
 		<entry>
-		  <inlinegraphic 
-fileref="../../lessons/es/images/mged14_candle_spheres_topview.png" />
+		  <inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged14_candle_spheres_topview.png"/></imageobject></inlinemediaobject>
 		</entry>
 		<entry>
-		  <inlinegraphic 
-fileref="../../lessons/es/images/mged14_candle_spheres_frontview.png" />
+		  <inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged14_candle_spheres_frontview.png"/></imageobject></inlinemediaobject>
 		</entry>
 	      </row>
 	      <row>
@@ -225,10 +209,7 @@ fileref="../../lessons/es/images/mged14_candle_spheres_frontview.png" />
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged14_candle_spheres_az35el25.png" 
-format="PNG">
-	  </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged14_candle_spheres_az35el25.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -239,10 +220,10 @@ format="PNG">
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="practice_make_regions_spheres">
-      <title>Haciendo regiones de las esferas</title>
+    <section xml:id="practice_make_regions_spheres"><info><title>Haciendo regiones de las esferas</title></info>
+      
       <para>
 	Ahora que todas las esferas están creadas y en su lugar, debe hacer 
 	una región de cada una de ellas. Para hacer esto tipee en la ventana 
@@ -297,7 +278,7 @@ format="PNG">
 	  entonces se vuelve más conveniente utilizar una tercera forma que 
 	  emplea diferentes tipos de bucles:
 
-	  <literallayout>                                              
+	  <literallayout class="normal">                                              
     for {set i 1} {i `&lt;= 1000} {incr i} {[Enter]                           
                                                                           
     r sph$i.r u sph$i.s [Enter]                                           
@@ -337,10 +318,10 @@ format="PNG">
 	  mejor hacerlas utilizando la línea de comandos.
 	</para>
       
-    </sect1>
+    </section>
 
-    <sect1 id="candle_base_spheres_combine">
-      <title>Combinando las esferas con la base del candelabro</title>
+    <section xml:id="candle_base_spheres_combine"><info><title>Combinando las esferas con la base del candelabro</title></info>
+      
       <para>
 	Estamos ante una decisión importante. Por el momento, las piedras se 
 	superponen en parte con la base del candelabro (la figura rcc1.s). 
@@ -383,7 +364,7 @@ format="PNG">
 	una combinación), y cliquee OK.
 	
 	El árbol de base1.r debería verse así:
-	<literallayout>
+	<literallayout class="normal">
    u base1.r/R
 
    u eto1.s
@@ -441,7 +422,7 @@ format="PNG">
 	</para>
 	<para>
 	  El resultado de esto sería un árbol como el siguiente:
-	  <literallayout>
+	  <literallayout class="normal">
     u base1.r/R                                                           
                                                                           
     u eto1.s                                                              
@@ -492,7 +473,7 @@ format="PNG">
 	  base de datos moviendo rcc1.s al final de la expresión booleana de 
 	  base1.r y luego restando cada una de las joyas de base1.r (por lo 
 	  tanto, extrayendo materiales de rcc1.s). Esto tendría como resultado:
-	  <literallayout>
+	  <literallayout class="normal">
     u base1.r/R                                                           
                                                                           
     u eto1.s                                                              
@@ -568,10 +549,7 @@ format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged14_candle_spheres_raytraced.png" 
-format="PNG">
-	  </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged14_candle_spheres_raytraced.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -582,13 +560,13 @@ format="PNG">
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="placing_shapes_in_3d_2_review">
-      <title>Repasemos...</title>
+    <section xml:id="placing_shapes_in_3d_2_review"><info><title>Repasemos...</title></info>
+      
       <para>
 	En este tutorial usted aprendió a:
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>
 	    Crear copias de la figura utilizando el Primitive Editor 
@@ -614,6 +592,6 @@ format="PNG">
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>
