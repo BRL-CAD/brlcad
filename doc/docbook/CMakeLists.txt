@@ -18,6 +18,7 @@ MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
 			COMMAND ${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${outfile} ${XSL_XHTML_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
 			)
 		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
 		INSTALL(FILES ${outfile} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
@@ -32,6 +33,7 @@ MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
 			COMMAND ${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${outfile} ${XSL_MAN_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
 			)
 		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
 		INSTALL(FILES ${outfile} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR}/man${mannum})
@@ -46,8 +48,9 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 		SET(targetname ${filename_root}_${targetname_suffix}_pdf)
 		FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
 		ADD_CUSTOM_COMMAND(
-		        OUTPUT ${tmp_fo_file}
+		   OUTPUT ${tmp_fo_file}
 			COMMAND ${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${tmp_fo_file} ${XSL_FO_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
 			)
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
