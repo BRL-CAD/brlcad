@@ -42,7 +42,7 @@ FOREACH(g_model ${G_SAMPLE_MODELS})
   ADD_CUSTOM_COMMAND(
     OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${g_model_root}.g
     COMMAND asc2g ${CMAKE_CURRENT_SOURCE_DIR}/${g_model} ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${g_model_root}.g
-    DEPENDS asc2g
+	 DEPENDS asc2g ${CMAKE_CURRENT_SOURCE_DIR}/${g_model}
   )
   ADD_CUSTOM_TARGET(${g_model_root}.g ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${g_model_root}.g)
   INSTALL(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${g_model_root}.g DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/db)
