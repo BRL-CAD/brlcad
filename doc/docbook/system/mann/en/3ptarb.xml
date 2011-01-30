@@ -1,6 +1,6 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="3ptarb1">
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="_3ptarb1">
 
 <refmeta>
   <refentrytitle>3PTARB</refentrytitle>
@@ -148,10 +148,7 @@
  
 </refsection>
 
-<refsection xml:id="author"><info><title>AUTHOR</title></info>
-  
-  <para>BRL-CAD TEAM</para>
-</refsection>
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
   

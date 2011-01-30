@@ -484,10 +484,7 @@ $  <filename>/bin/cc  program.c  -lfb -l\&lt;system-library...\&gt;</filen
 <para><citerefentry><refentrytitle>fbhelp</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 </refsection>
 
-<refsection xml:id="author"><info><title>AUTHOR</title></info>
-  
-  <para>BRL-CAD TEAM</para>
-</refsection>
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
   

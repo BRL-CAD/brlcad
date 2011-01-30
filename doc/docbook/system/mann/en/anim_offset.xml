@@ -120,11 +120,14 @@ anim_offset -o -600 900 1200 &lt; truck.table &gt; camera.table
       <emphasis remap="I">anim_orient</emphasis>, which converts between different orientation representations.
     </para>
   </refsection>
-  
-  <refsection xml:id="author"><info><title>AUTHOR</title></info>
-  <para>Carl J. Nuzman</para>
-  </refsection>
-  
+
+  <info>
+    <author>
+      <personname>Carl J. Nuzman</personname>
+      <contrib></contrib>
+    </author>
+  </info>
+ 
   <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
   <para> This software is Copyright (c) 1993-2011 by the United States
   Government as represented by U.S. Army Research Laboratory.</para>

@@ -448,10 +448,12 @@
   </para>
 </refsection>
 
-<refsection xml:id="author"><info><title>AUTHOR</title></info>
-  
-  <para>Clifford Yapp</para>
-</refsection>
+<info>
+  <author>
+    <personname>Clifford Yapp</personname>
+    <contrib></contrib>
+  </author>
+</info>
 
 <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
   

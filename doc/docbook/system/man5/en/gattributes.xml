@@ -253,10 +253,7 @@
 <para><citerefentry><refentrytitle>attr</refentrytitle><manvolnum>n</manvolnum></citerefentry>.</para>
 </refsection>
 
-<refsection xml:id="author"><info><title>AUTHOR</title></info>
-  
-  <para>BRLCAD-TEAM</para>
-</refsection>
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
   
