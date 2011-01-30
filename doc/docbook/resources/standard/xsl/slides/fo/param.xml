@@ -240,8 +240,8 @@ specification. The default unit is <literal>pt</literal>
       &lt;xsl:attribute name="font-family"&gt;
         &lt;xsl:value-of select="$slide.font.family"&gt;&lt;/xsl:value-of&gt;
       &lt;/xsl:attribute&gt;
-      &lt;xsl:attribute name="margin-left"&gt;1in&lt;/xsl:attribute&gt;
-      &lt;xsl:attribute name="margin-right"&gt;1in&lt;/xsl:attribute&gt;
+      &lt;xsl:attribute name="margin-{$direction.align.start}"&gt;1in&lt;/xsl:attribute&gt;
+      &lt;xsl:attribute name="margin-{$direction.align.end}"&gt;1in&lt;/xsl:attribute&gt;
       &lt;xsl:attribute name="font-size"&gt;
         &lt;xsl:value-of select="$body.font.size"&gt;&lt;/xsl:value-of&gt;
       &lt;/xsl:attribute&gt;

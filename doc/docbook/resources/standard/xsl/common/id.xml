@@ -28,118 +28,120 @@
 
 
 <l:gentext key="Abstract" text="Abstrak"/>
-<l:gentext key="abstract" text="Abstrak"/>
+<l:gentext key="abstract" text="abstrak"/>
+<l:gentext key="Acknowledgements" text="Penghargaan"/>
+<l:gentext key="acknowledgements" text="penghargaan"/>
 <l:gentext key="Answer" text="Jawab:"/>
-<l:gentext key="answer" text="Jawab:"/>
+<l:gentext key="answer" text="jawab:"/>
 <l:gentext key="Appendix" text="Lampiran"/>
-<l:gentext key="appendix" text="Lampiran"/>
+<l:gentext key="appendix" text="lampiran"/>
 <l:gentext key="Article" text="Artikel"/>
-<l:gentext key="article" text="Artikel"/>
-<l:gentext key="Author" text="Pembuat"/>
+<l:gentext key="article" text="artikel"/>
+<l:gentext key="Author" text="Penulis"/>
 <l:gentext key="Bibliography" text="Bibliografi"/>
-<l:gentext key="bibliography" text="Bibliografi"/>
+<l:gentext key="bibliography" text="bibliografi"/>
 <l:gentext key="Book" text="Buku"/>
-<l:gentext key="book" text="Buku"/>
+<l:gentext key="book" text="buku"/>
 <l:gentext key="CAUTION" text="PERHATIAN"/>
 <l:gentext key="Caution" text="Perhatian"/>
-<l:gentext key="caution" text="Perhatian"/>
+<l:gentext key="caution" text="perhatian"/>
 <l:gentext key="Chapter" text="Bab"/>
 <l:gentext key="chapter" text="bab"/>
 <l:gentext key="Colophon" text="Kolofon"/>
-<l:gentext key="colophon" text="Kolofon"/>
-<l:gentext key="Copyright" text="Hak Cipta (Copyright)"/>
-<l:gentext key="copyright" text="Hak Cipta (Copyright)"/>
+<l:gentext key="colophon" text="kolofon"/>
+<l:gentext key="Copyright" text="Hak Cipta"/>
+<l:gentext key="copyright" text="hak cipta"/>
 <l:gentext key="Dedication" text="Dedikasi"/>
-<l:gentext key="dedication" text="Dedikasi"/>
+<l:gentext key="dedication" text="dedikasi"/>
 <l:gentext key="Edition" text="Edisi"/>
-<l:gentext key="edition" text="Edisi"/>
-<l:gentext key="Editor" text="Editor" lang="en"/>
+<l:gentext key="edition" text="edisi"/>
+<l:gentext key="Editor" text="Penyunting"/>
 <l:gentext key="Equation" text="Persamaan"/>
-<l:gentext key="equation" text="Persamaan"/>
+<l:gentext key="equation" text="persamaan"/>
 <l:gentext key="Example" text="Contoh"/>
-<l:gentext key="example" text="Contoh"/>
+<l:gentext key="example" text="contoh"/>
 <l:gentext key="Figure" text="Gambar"/>
-<l:gentext key="figure" text="Gambar"/>
+<l:gentext key="figure" text="gambar"/>
 <l:gentext key="Glossary" text="Daftar Istilah"/>
-<l:gentext key="glossary" text="Daftar Istilah"/>
+<l:gentext key="glossary" text="daftar istilah"/>
 <l:gentext key="GlossSee" text="Lihat"/>
-<l:gentext key="glosssee" text="Lihat"/>
+<l:gentext key="glosssee" text="lihat"/>
 <l:gentext key="GlossSeeAlso" text="Lihat Juga"/>
-<l:gentext key="glossseealso" text="Lihat Juga"/>
+<l:gentext key="glossseealso" text="lihat juga"/>
 <l:gentext key="IMPORTANT" text="PENTING"/>
-<l:gentext key="important" text="Penting"/>
+<l:gentext key="important" text="penting"/>
 <l:gentext key="Important" text="Penting"/>
 <l:gentext key="Index" text="Indeks"/>
-<l:gentext key="index" text="Indeks"/>
+<l:gentext key="index" text="indeks"/>
 <l:gentext key="ISBN" text="ISBN"/>
-<l:gentext key="isbn" text="ISBN"/>
+<l:gentext key="isbn" text="isbn"/>
 <l:gentext key="LegalNotice" text="Aspek Hukum"/>
-<l:gentext key="legalnotice" text="Aspek Hukum"/>
+<l:gentext key="legalnotice" text="aspek hukum"/>
 <l:gentext key="MsgAud" text="Pemirsa"/>
-<l:gentext key="msgaud" text="Pemirsa"/>
+<l:gentext key="msgaud" text="pemirsa"/>
 <l:gentext key="MsgLevel" text="Tingkatan"/>
-<l:gentext key="msglevel" text="Tingkatan"/>
+<l:gentext key="msglevel" text="tingkatan"/>
 <l:gentext key="MsgOrig" text="Asal"/>
-<l:gentext key="msgorig" text="Asal"/>
+<l:gentext key="msgorig" text="asal"/>
 <l:gentext key="NOTE" text="CATATAN"/>
 <l:gentext key="Note" text="Catatan"/>
-<l:gentext key="note" text="Catatan"/>
+<l:gentext key="note" text="catatan"/>
 <l:gentext key="Part" text="Bagian"/>
-<l:gentext key="part" text="Bagian"/>
+<l:gentext key="part" text="bagian"/>
 <l:gentext key="Preface" text="Kata Pengantar"/>
-<l:gentext key="preface" text="Kata Pengantar"/>
+<l:gentext key="preface" text="kata pengantar"/>
 <l:gentext key="Procedure" text="Prosedur"/>
 <l:gentext key="procedure" text="Prosedur"/>
-<l:gentext key="ProductionSet" text="Produksi"/>
+<l:gentext key="ProductionSet" text="produksi"/>
 <l:gentext key="PubDate" text="Tanggal Publikasi"/>
-<l:gentext key="pubdate" text="Tanggal Publikasi"/>
+<l:gentext key="pubdate" text="tanggal publikasi"/>
 <l:gentext key="Published" text="Diterbitkan"/>
-<l:gentext key="published" text="Diterbitkan"/>
-<l:gentext key="Publisher" text="Publisher" lang="en"/>
+<l:gentext key="published" text="diterbitkan"/>
+<l:gentext key="Publisher" text="Penerbit"/>
 <l:gentext key="Qandadiv" text="Tanya dan Jawab"/>
 <l:gentext key="qandadiv" text="Tanya dan Jawab"/>
-<l:gentext key="QandASet" text="Frequently Asked Questions" lang="en"/>
+<l:gentext key="QandASet" text="Pertanyaan yang Sering Diajukan"/>
 <l:gentext key="Question" text="Tanya:"/>
 <l:gentext key="question" text="Tanya:"/>
-<l:gentext key="RefEntry" text=""/>
-<l:gentext key="refentry" text=""/>
+<l:gentext key="RefEntry" text="Halaman"/>
+<l:gentext key="refentry" text="halaman"/>
 <l:gentext key="Reference" text="Rujukan"/>
 <l:gentext key="reference" text="Rujukan"/>
 <l:gentext key="References" text="Rujukan-rujukan"/>
 <l:gentext key="RefName" text="Nama"/>
 <l:gentext key="refname" text="Nama"/>
-<l:gentext key="RefSection" text=""/>
-<l:gentext key="refsection" text=""/>
+<l:gentext key="RefSection" text="Bagian"/>
+<l:gentext key="refsection" text="bagian"/>
 <l:gentext key="RefSynopsisDiv" text="Sinopsis"/>
 <l:gentext key="refsynopsisdiv" text="Sinopsis"/>
-<l:gentext key="RevHistory" text="Catatan Revisi"/>
-<l:gentext key="revhistory" text="Catatan Revisi"/>
-<l:gentext key="revision" text="Revisi"/>
+<l:gentext key="RevHistory" text="Riwayat Revisi"/>
+<l:gentext key="revhistory" text="ciwayat revisi"/>
+<l:gentext key="revision" text="revisi"/>
 <l:gentext key="Revision" text="Revisi"/>
 <l:gentext key="sect1" text="Bagian"/>
 <l:gentext key="sect2" text="Bagian"/>
 <l:gentext key="sect3" text="Bagian"/>
 <l:gentext key="sect4" text="Bagian"/>
 <l:gentext key="sect5" text="Bagian"/>
-<l:gentext key="section" text="Bagian"/>
+<l:gentext key="section" text="bagian"/>
 <l:gentext key="Section" text="Bagian"/>
 <l:gentext key="see" text="lihat"/>
 <l:gentext key="See" text="Lihat"/>
 <l:gentext key="seealso" text="lihat juga"/>
 <l:gentext key="Seealso" text="Lihat juga"/>
 <l:gentext key="SeeAlso" text="Lihat Juga"/>
-<l:gentext key="set" text="Set"/>
+<l:gentext key="set" text="set"/>
 <l:gentext key="Set" text="Set"/>
-<l:gentext key="setindex" text="Indeks Set"/>
+<l:gentext key="setindex" text="indeks set"/>
 <l:gentext key="SetIndex" text="Indeks Set"/>
-<l:gentext key="Sidebar" text=""/>
-<l:gentext key="sidebar" text="sidebar"/>
+<l:gentext key="Sidebar" text="Panel Sisi"/>
+<l:gentext key="sidebar" text="panel sisi"/>
 <l:gentext key="step" text="tahap"/>
 <l:gentext key="Step" text="Tahap"/>
 <l:gentext key="table" text="Tabel"/>
 <l:gentext key="Table" text="Tabel"/>
-<l:gentext key="task" text="Task" lang="en"/>
-<l:gentext key="Task" text="Task" lang="en"/>
+<l:gentext key="task" text="tugas"/>
+<l:gentext key="Task" text="Tugas"/>
 <l:gentext key="tip" text="Tip"/>
 <l:gentext key="TIP" text="TIP"/>
 <l:gentext key="Tip" text="Tip"/>
@@ -148,57 +150,57 @@
 <l:gentext key="WARNING" text="AWAS"/>
 <l:gentext key="and" text="dan"/>
 <l:gentext key="by" text="oleh"/>
-<l:gentext key="Edited" text="disunting"/>
+<l:gentext key="Edited" text="Disunting"/>
 <l:gentext key="edited" text="disunting"/>
 <l:gentext key="Editedby" text="Disunting oleh"/>
-<l:gentext key="editedby" text="Disunting oleh"/>
+<l:gentext key="editedby" text="disunting oleh"/>
 <l:gentext key="in" text="di"/>
 <l:gentext key="lastlistcomma" text=","/>
 <l:gentext key="listcomma" text=","/>
-<l:gentext key="nonexistantelement" text="elemen tidak ada"/>
 <l:gentext key="notes" text="Catatan"/>
-<l:gentext key="Notes" text="Catatan"/>
+<l:gentext key="Notes" text="catatan"/>
 <l:gentext key="Pgs" text="Hal."/>
-<l:gentext key="pgs" text="Hal."/>
+<l:gentext key="pgs" text="hal."/>
 <l:gentext key="Revisedby" text="Direvisi oleh: "/>
-<l:gentext key="revisedby" text="Direvisi oleh: "/>
+<l:gentext key="revisedby" text="direvisi oleh: "/>
 <l:gentext key="TableNotes" text="Catatan"/>
-<l:gentext key="tablenotes" text="Catatan"/>
+<l:gentext key="tablenotes" text="catatan"/>
 <l:gentext key="TableofContents" text="Daftar Isi"/>
-<l:gentext key="tableofcontents" text="Daftar Isi"/>
-<l:gentext key="unexpectedelementname" text="Nama Elemen Tak Terduga"/>
+<l:gentext key="tableofcontents" text="daftar isi"/>
+<l:gentext key="unexpectedelementname" text="Nama elemen tak terduga"/>
 <l:gentext key="unsupported" text="tidak didukung"/>
 <l:gentext key="xrefto" text="xref ke"/>
-<l:gentext key="Authors" text="Authors" lang="en"/>
-<l:gentext key="copyeditor" text="Copy Editor" lang="en"/>
-<l:gentext key="graphicdesigner" text="Graphic Designer" lang="en"/>
-<l:gentext key="productioneditor" text="Production Editor" lang="en"/>
-<l:gentext key="technicaleditor" text="Technical Editor" lang="en"/>
-<l:gentext key="translator" text="Translator" lang="en"/>
-<l:gentext key="listofequations" text="Daftar Persamaan"/>
+<l:gentext key="Authors" text="Penulis"/>
+<l:gentext key="copyeditor" text="Pemeriksa Naskah"/>
+<l:gentext key="graphicdesigner" text="Perancang Grafis"/>
+<l:gentext key="productioneditor" text="Penyunting Produksi"/>
+<l:gentext key="technicaleditor" text="Penyunting Teknis"/>
+<l:gentext key="translator" text="Penerjemah"/>
+<l:gentext key="listofequations" text="daftar persamaan"/>
 <l:gentext key="ListofEquations" text="Daftar Persamaan"/>
 <l:gentext key="ListofExamples" text="Daftar Contoh"/>
-<l:gentext key="listofexamples" text="Daftar Contoh"/>
+<l:gentext key="listofexamples" text="daftar contoh"/>
 <l:gentext key="ListofFigures" text="Daftar Gambar"/>
-<l:gentext key="listoffigures" text="Daftar Gambar"/>
+<l:gentext key="listoffigures" text="daftar gambar"/>
 <l:gentext key="ListofProcedures" text="Daftar Prosedur"/>
-<l:gentext key="listofprocedures" text="Daftar Prosedur"/>
-<l:gentext key="listoftables" text="Daftar Tabel"/>
+<l:gentext key="listofprocedures" text="daftar prosedur"/>
+<l:gentext key="listoftables" text="daftar tabel"/>
 <l:gentext key="ListofTables" text="Daftar Tabel"/>
-<l:gentext key="ListofUnknown" text="Daftar Tidak Tahu"/>
-<l:gentext key="listofunknown" text="Daftar Tidak Tahu"/>
+<l:gentext key="ListofUnknown" text="Daftar Tidak Dikenal"/>
+<l:gentext key="listofunknown" text="daftar tidak dikenal"/>
 <l:gentext key="nav-home" text="Depan"/>
 <l:gentext key="nav-next" text="Lanjut"/>
-<l:gentext key="nav-next-sibling" text="Lewati"/>
-<l:gentext key="nav-prev" text="Balik"/>
-<l:gentext key="nav-prev-sibling" text="Sebelumnya"/>
+<l:gentext key="nav-next-sibling" text="Lompat ke Depan"/>
+<l:gentext key="nav-prev" text="Sebelumnya"/>
+<l:gentext key="nav-prev-sibling" text="Lompat ke Belakang"/>
 <l:gentext key="nav-up" text="Induk"/>
 <l:gentext key="nav-toc" text="Daftar Isi"/>
-<l:gentext key="Draft" text="Draft"/>
-<l:gentext key="above" text="Di Atas"/>
-<l:gentext key="below" text="Di Bawah"/>
+<l:gentext key="Draft" text="Draf"/>
+<l:gentext key="above" text="di atas"/>
+<l:gentext key="below" text="di bawah"/>
 <l:gentext key="sectioncalled" text="bagian bernama"/>
 <l:gentext key="index symbols" text="Simbol"/>
+<l:gentext key="writing-mode" text="lr-tb"/>
 <l:gentext key="lowercase.alpha" text="abcdefghijklmnopqrstuvwxyz"/>
 <l:gentext key="uppercase.alpha" text="ABCDEFGHIJKLMNOPQRSTUVWXYZ"/>
 <l:gentext key="normalize.sort.input" text="AaÀàÁáÂâÃãÄäÅåĀāĂăĄąǍǎǞǟǠǡǺǻȀȁȂȃȦȧḀḁẚẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặBbƀƁɓƂƃḂḃḄḅḆḇCcÇçĆćĈĉĊċČčƇƈɕḈḉDdĎďĐđƊɗƋƌǅǲȡɖḊḋḌḍḎḏḐḑḒḓEeÈèÉéÊêËëĒēĔĕĖėĘęĚěȄȅȆȇȨȩḔḕḖḗḘḙḚḛḜḝẸẹẺẻẼẽẾếỀềỂểỄễỆệFfƑƒḞḟGgĜĝĞğĠġĢģƓɠǤǥǦǧǴǵḠḡHhĤĥĦħȞȟɦḢḣḤḥḦḧḨḩḪḫẖIiÌìÍíÎîÏïĨĩĪīĬĭĮįİƗɨǏǐȈȉȊȋḬḭḮḯỈỉỊịJjĴĵǰʝKkĶķƘƙǨǩḰḱḲḳḴḵLlĹĺĻļĽľĿŀŁłƚǈȴɫɬɭḶḷḸḹḺḻḼḽMmɱḾḿṀṁṂṃNnÑñŃńŅņŇňƝɲƞȠǋǸǹȵɳṄṅṆṇṈṉṊṋOoÒòÓóÔôÕõÖöØøŌōŎŏŐőƟƠơǑǒǪǫǬǭǾǿȌȍȎȏȪȫȬȭȮȯȰȱṌṍṎṏṐṑṒṓỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợPpƤƥṔṕṖṗQqʠRrŔŕŖŗŘřȐȑȒȓɼɽɾṘṙṚṛṜṝṞṟSsŚśŜŝŞşŠšȘșʂṠṡṢṣṤṥṦṧṨṩTtŢţŤťŦŧƫƬƭƮʈȚțȶṪṫṬṭṮṯṰṱẗUuÙùÚúÛûÜüŨũŪūŬŭŮůŰűŲųƯưǓǔǕǖǗǘǙǚǛǜȔȕȖȗṲṳṴṵṶṷṸṹṺṻỤụỦủỨứỪừỬửỮữỰựVvƲʋṼṽṾṿWwŴŵẀẁẂẃẄẅẆẇẈẉẘXxẊẋẌẍYyÝýÿŸŶŷƳƴȲȳẎẏẙỲỳỴỵỶỷỸỹZzŹźŻżŽžƵƶȤȥʐʑẐẑẒẓẔẕẕ" lang="en"/>
@@ -216,6 +218,7 @@
 <l:context name="styles"><l:template name="person-name" text="first-last"/>
 </l:context>
 <l:context name="title"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="%t"/>
 <l:template name="appendix" text="Lampiran %n. %t"/>
 <l:template name="article" text="%t"/>
@@ -265,7 +268,7 @@
 <l:template name="procedure" text="%t"/>
 <l:template name="procedure.formal" text="Prosedur %n. %t"/>
 <l:template name="productionset" text="%t"/>
-<l:template name="productionset.formal" text="Produksi %n"/>
+<l:template name="productionset.formal" text="produksi %n"/>
 <l:template name="qandadiv" text="%t"/>
 <l:template name="qandaentry" text="%t"/>
 <l:template name="qandaset" text="%t"/>
@@ -321,6 +324,7 @@
 <l:template name="simplesect" text="%n. %t"/>
 </l:context>
 <l:context name="subtitle"><l:template name="appendix" text="%s"/>
+<l:template name="acknowledgements" text="%s" lang="en"/>
 <l:template name="article" text="%s"/>
 <l:template name="bibliodiv" text="%s"/>
 <l:template name="biblioentry" text="%s"/>
@@ -360,6 +364,7 @@
 <l:template name="toc" text="%s"/>
 </l:context>
 <l:context name="xref"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="Jawab: %n"/>
 <l:template name="appendix" text="%t"/>
 <l:template name="article" text="%t"/>
@@ -451,7 +456,7 @@
 <l:template name="figure" text="Gambar %n"/>
 <l:template name="part" text="Bagian %n"/>
 <l:template name="procedure" text="Prosedur %n"/>
-<l:template name="productionset" text="Produksi %n"/>
+<l:template name="productionset" text="produksi %n"/>
 <l:template name="qandadiv" text="Tanya dan Jawab %n"/>
 <l:template name="qandaentry" text="Tanya: %n"/>
 <l:template name="question" text="Tanya: %n"/>
@@ -471,7 +476,7 @@
 <l:template name="figure" text="Gambar %n, “%t”"/>
 <l:template name="part" text="Bagian %n, “%t”"/>
 <l:template name="procedure" text="Prosedur %n, “%t”"/>
-<l:template name="productionset" text="Produksi %n, “%t”"/>
+<l:template name="productionset" text="produksi %n, “%t”"/>
 <l:template name="qandadiv" text="Tanya dan Jawab %n, “%t”"/>
 <l:template name="refsect1" text="bagian bernama “%t”"/>
 <l:template name="refsect2" text="bagian bernama “%t”"/>
@@ -490,8 +495,9 @@
 <l:template name="sep2" text=" dan "/>
 <l:template name="seplast" text=", dan "/>
 </l:context>
-<l:context name="glossary"><l:template name="see" text="Lihat %t"/>
-<l:template name="seealso" text="Lihat Juga %t"/>
+<l:context name="glossary"><l:template name="see" text="Lihat %t."/>
+<l:template name="seealso" text="Lihat Juga %t."/>
+<l:template name="seealso-separator" text=", "/>
 </l:context>
 <l:context name="msgset"><l:template name="MsgAud" text="Pemirsa: "/>
 <l:template name="MsgLevel" text="Tingkatan: "/>
@@ -597,7 +603,7 @@
 <l:template name="patnum.sep" text=". " lang="en"/>
 <l:template name="patdate.sep" text=". " lang="en"/>
 </l:context><l:letters><l:l i="-1"/>
-<l:l i="0">Symbols</l:l>
+<l:l i="0">Simbol</l:l>
 <l:l i="10">A</l:l>
 <l:l i="10">a</l:l>
 <l:l i="10">À</l:l>

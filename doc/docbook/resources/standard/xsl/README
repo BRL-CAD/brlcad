@@ -60,8 +60,7 @@ schema/DTD, use one of the following stylesheets:
   javahelp/javahelp.xsl       - for JavaHelp
   eclipse/eclipse.xsl         - for Eclipse Help
 
-  manpages/docbook.xsl        - for groff/nroff man pages[1]
-  [1] more information at http://wiki.docbook.org/topic/ManPages
+  manpages/docbook.xsl        - for groff/nroff man pages
 
   */profile-*                 - single-pass-profiling versions of all above
 

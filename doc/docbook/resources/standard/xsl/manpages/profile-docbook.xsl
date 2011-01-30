@@ -41,6 +41,8 @@
   <xsl:param name="tbl.font.headings" select="$man.font.table.headings"/>
   <xsl:param name="tbl.font.title" select="$man.font.table.title"/>
 
+  <xsl:param name="stylesheet.result.type" select="'manpages'"/>
+
   <!-- ==================================================================== -->
 
   <xslo:include xmlns:xslo="http://www.w3.org/1999/XSL/Transform" href="../profiling/profile-mode.xsl"/><xslo:variable xmlns:xslo="http://www.w3.org/1999/XSL/Transform" name="profiled-content"><xslo:choose><xslo:when test="*/self::ng:* or */self::db:*"><xslo:message>Note: namesp. cut : stripped namespace before processing</xslo:message><xslo:variable name="stripped-content"><xslo:apply-templates select="/" mode="stripNS"/></xslo:variable><xslo:message>Note: namesp. cut : processing stripped document</xslo:message><xslo:apply-templates select="exslt:node-set($stripped-content)" mode="profile"/></xslo:when><xslo:otherwise><xslo:apply-templates select="/" mode="profile"/></xslo:otherwise></xslo:choose></xslo:variable><xslo:variable xmlns:xslo="http://www.w3.org/1999/XSL/Transform" name="profiled-nodes" select="exslt:node-set($profiled-content)"/><xsl:template match="/">
@@ -157,6 +159,11 @@
     <!-- * Assemble the various parts into a complete page, then store into -->
     <!-- * $manpage.contents so that we can manipluate them further. -->
     <xsl:variable name="manpage.contents">
+      <!-- * preprocessor invocation (need for legacy AT&T troff use) -->
+      <!-- * this tells troff to pre-process the page through tbl(1) -->
+      <!-- * (groff can figure it out automatically, but AT&T troff can't) -->
+      <xsl:text>'\" t
+</xsl:text>
       <!-- * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <!-- * top.comment = commented-out section at top of roff source -->
       <!-- * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
@@ -194,7 +201,10 @@
       <!-- * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <!-- * (re)define some macros -->
       <!-- * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-      <xsl:call-template name="define.macros"/>
+      <xsl:call-template name="define.portability.macros"/>
+      <xsl:if test="not($man.output.better.ps.enabled = 0)">
+        <xsl:call-template name="define.macros"/>
+      </xsl:if>
       <!-- * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <!-- * Set default hyphenation, justification, indentation, and -->
       <!-- * line-breaking -->

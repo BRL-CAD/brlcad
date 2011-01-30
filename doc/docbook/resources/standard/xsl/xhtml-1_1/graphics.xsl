@@ -37,7 +37,7 @@
 
 <xsl:template match="screenshot">
   <div>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates/>
   </div>
 </xsl:template>
@@ -1027,8 +1027,11 @@ valign: <xsl:value-of select="@valign"/></xsl:message>
           </xsl:choose>
         </xsl:when>
         <xsl:otherwise>
-          <a xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad" href="{$filename}"/>
-        </xsl:otherwise>
+	  <xsl:message terminate="yes">
+	    <xsl:text>Cannot insert </xsl:text><xsl:value-of select="$filename"/>
+	    <xsl:text>. Check use.extensions and textinsert.extension parameters.</xsl:text> 
+	  </xsl:message>
+	</xsl:otherwise>
       </xsl:choose>
     </xsl:when>
     <xsl:otherwise>
@@ -1057,7 +1060,7 @@ valign: <xsl:value-of select="@valign"/></xsl:message>
   </xsl:variable>
 
   <div>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:if test="$align != '' ">
       <xsl:attribute name="style"><xsl:text>text-align: </xsl:text>
         <xsl:value-of select="$align"/>
@@ -1072,7 +1075,7 @@ valign: <xsl:value-of select="@valign"/></xsl:message>
 
 <xsl:template match="inlinemediaobject">
   <span>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:call-template name="anchor"/>
     <xsl:call-template name="select.mediaobject"/>
   </span>
@@ -1272,7 +1275,7 @@ valign: <xsl:value-of select="@valign"/></xsl:message>
     </xsl:call-template>
   </xsl:variable>
 
-  <div class="longdesc-link" align="right">
+  <div class="longdesc-link" align="{$direction.align.end}">
     <br clear="all"/>
     <span class="longdesc-link">
       <xsl:text>[</xsl:text>
@@ -1358,7 +1361,10 @@ valign: <xsl:value-of select="@valign"/></xsl:message>
       </xsl:choose>
     </xsl:when>
     <xsl:otherwise>
-      <a xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad" href="{$filename}"/>
+      <xsl:message terminate="yes">
+	<xsl:text>Cannot insert </xsl:text><xsl:value-of select="$filename"/>
+	<xsl:text>. Check use.extensions and textinsert.extension parameters.</xsl:text> 
+      </xsl:message>
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
@@ -1367,7 +1373,7 @@ valign: <xsl:value-of select="@valign"/></xsl:message>
 
 <xsl:template match="caption">
   <div>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:if test="@align = 'right' or @align = 'left' or @align='center'">
       <xsl:attribute name="style"><xsl:text>text-align: </xsl:text><xsl:value-of select="@align"/></xsl:attribute>
     </xsl:if>

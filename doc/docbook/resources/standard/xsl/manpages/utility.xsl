@@ -69,31 +69,43 @@
   </xsl:template>
 
   <xsl:template name="code-inline-start">
-    <xsl:text>\FC</xsl:text>
+    <xsl:if test="not($man.output.better.ps.enabled = 0)">
+      <xsl:text>\FC</xsl:text>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template name="code-inline-end">
-    <xsl:text>\F[]</xsl:text>
+    <xsl:if test="not($man.output.better.ps.enabled = 0)">
+      <xsl:text>\F[]</xsl:text>
+    </xsl:if>
   </xsl:template>
 
   <!-- ================================================================== -->
 
   <xsl:template name="verbatim-block-start">
-    <xsl:text>.fam C&#10;</xsl:text>
-    <xsl:text>.ps -1&#10;</xsl:text>
+    <xsl:if test="not($man.output.better.ps.enabled = 0)">
+      <xsl:text>.fam C&#10;</xsl:text>
+      <xsl:text>.ps -1&#10;</xsl:text>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template name="verbatim-block-end">
-    <xsl:text>.fam&#10;</xsl:text>
-    <xsl:text>.ps +1&#10;</xsl:text>
+    <xsl:if test="not($man.output.better.ps.enabled = 0)">
+      <xsl:text>.fam&#10;</xsl:text>
+      <xsl:text>.ps +1&#10;</xsl:text>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template name="synopsis-block-start">
-    <xsl:text>.fam C&#10;</xsl:text>
+    <xsl:if test="not($man.output.better.ps.enabled = 0)">
+      <xsl:text>.fam C&#10;</xsl:text>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template name="synopsis-block-end">
-    <xsl:text>.fam&#10;</xsl:text>
+    <xsl:if test="not($man.output.better.ps.enabled = 0)">
+      <xsl:text>.fam&#10;</xsl:text>
+    </xsl:if>
   </xsl:template>
 
   <!-- ================================================================== -->
@@ -490,7 +502,16 @@
     <xsl:text>.SH</xsl:text>
     <xsl:text> </xsl:text>
     <xsl:text>"</xsl:text>
-    <xsl:value-of select="$title"/>
+    <xsl:choose>
+      <xsl:when test="not($man.output.better.ps.enabled = 0)">
+        <xsl:value-of select="$title"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="string.upper">
+          <xsl:with-param name="string" select="$title"/>
+        </xsl:call-template>
+      </xsl:otherwise>
+    </xsl:choose>
     <xsl:text>"</xsl:text>
     <xsl:text>&#10;</xsl:text>
     <xsl:call-template name="mark.subheading"/>

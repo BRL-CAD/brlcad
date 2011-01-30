@@ -26,7 +26,7 @@
 <xsl:variable name="chunk.hierarchy">
   <xsl:if test="$chunk.fast != 0">
     <xsl:choose>
-      <xsl:when test="function-available('exsl:node-set')">
+      <xsl:when test="$exsl.node.set.available != 0">
         <xsl:message>Computing chunks...</xsl:message>
         <xsl:apply-templates select="/*" mode="find.chunks"/>
       </xsl:when>
@@ -48,7 +48,7 @@
   </xsl:param>
 
   <xsl:choose>
-    <xsl:when test="$chunk.fast != 0 and function-available('exsl:node-set')">
+    <xsl:when test="$chunk.fast != 0 and $exsl.node.set.available != 0">
       <xsl:variable name="chunks" select="exsl:node-set($chunk.hierarchy)//cf:div"/>
       <xsl:variable name="genid" select="generate-id()"/>
 
@@ -284,7 +284,7 @@
             <xsl:with-param name="lot">
               <xsl:call-template name="list.of.titles">
                 <xsl:with-param name="titles" select="'equation'"/>
-                <xsl:with-param name="nodes" select=".//equation"/>
+                <xsl:with-param name="nodes" select=".//equation[title or info/title]"/>
               </xsl:call-template>
             </xsl:with-param>
           </xsl:call-template>
@@ -292,7 +292,7 @@
         <xsl:otherwise>
           <xsl:call-template name="list.of.titles">
             <xsl:with-param name="titles" select="'equation'"/>
-            <xsl:with-param name="nodes" select=".//equation"/>
+            <xsl:with-param name="nodes" select=".//equation[title or info/title]"/>
           </xsl:call-template>
         </xsl:otherwise>
       </xsl:choose>
@@ -774,9 +774,18 @@
     </xsl:call-template>
   </xsl:variable>
   <xsl:variable name="href.from.uri">
-    <xsl:call-template name="href.target.uri">
-      <xsl:with-param name="object" select="$context"/>
-    </xsl:call-template>
+    <xsl:choose>
+      <xsl:when test="not($toc-context = .)">
+        <xsl:call-template name="href.target.uri">
+          <xsl:with-param name="object" select="$toc-context"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="href.target.uri">
+          <xsl:with-param name="object" select="$context"/>
+        </xsl:call-template>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:variable>
   <!-- * <xsl:message>toc-context: <xsl:value-of select="local-name($toc-context)"/></xsl:message> -->
   <!-- * <xsl:message>node: <xsl:value-of select="local-name(.)"/></xsl:message> -->
@@ -875,7 +884,7 @@
   <xsl:if test="$olink.key != ''">
     <xsl:variable name="target.href">
       <xsl:for-each select="$target.database">
-        <xsl:value-of select="key('targetptr-key', $olink.key)/@href"/>
+        <xsl:value-of select="key('targetptr-key', $olink.key)[1]/@href"/>
       </xsl:for-each>
     </xsl:variable>
   
@@ -1170,7 +1179,7 @@
 
           <xsl:if test="$row2">
             <tr>
-              <td align="left">
+              <td align="{$direction.align.start}">
                 <xsl:if test="count($prev)&gt;0">
                   <a accesskey="p">
                     <xsl:attribute name="href">
@@ -1193,7 +1202,7 @@
                   <xsl:otherwise>&#160;</xsl:otherwise>
                 </xsl:choose>
               </th>
-              <td align="right">
+              <td align="{$direction.align.end}">
                 <xsl:text>&#160;</xsl:text>
                 <xsl:if test="count($next)&gt;0">
                   <a accesskey="n">
@@ -1243,7 +1252,7 @@
         <table width="100%" summary="Navigation footer">
           <xsl:if test="$row1">
             <tr>
-              <td align="left">
+              <td align="{$direction.align.start}">
                 <xsl:if test="count($prev)&gt;0">
                   <a accesskey="p">
                     <xsl:attribute name="href">
@@ -1275,7 +1284,7 @@
                   <xsl:otherwise>&#160;</xsl:otherwise>
                 </xsl:choose>
               </td>
-              <td align="right">
+              <td align="{$direction.align.end}">
                 <xsl:text>&#160;</xsl:text>
                 <xsl:if test="count($next)&gt;0">
                   <a accesskey="n">
@@ -1295,7 +1304,7 @@
 
           <xsl:if test="$row2">
             <tr>
-              <td align="left" valign="top">
+              <td align="{$direction.align.start}" valign="top">
                 <xsl:if test="$navig.showtitles != 0">
                   <xsl:apply-templates select="$prev" mode="object.title.markup"/>
                 </xsl:if>
@@ -1336,7 +1345,7 @@
                   </a>
                 </xsl:if>
               </td>
-              <td align="right" valign="top">
+              <td align="{$direction.align.end}" valign="top">
                 <xsl:text>&#160;</xsl:text>
                 <xsl:if test="$navig.showtitles != 0">
                   <xsl:apply-templates select="$next" mode="object.title.markup"/>

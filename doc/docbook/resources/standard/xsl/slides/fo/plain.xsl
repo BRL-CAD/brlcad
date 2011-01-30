@@ -4,6 +4,16 @@
                 xmlns:rx="http://www.renderx.com/XSL/Extensions"
                 version="1.0">
 
+<!-- ********************************************************************
+     $Id$
+     ********************************************************************
+
+     This file is part of the DocBook Slides Stylesheet distribution.
+     See ../README or http://docbook.sf.net/release/xsl/current/ for
+     copyright and other information.
+
+     ******************************************************************** -->
+
 <xsl:import href="../../fo/docbook.xsl"/>
 <xsl:import href="param.xsl"/>
 
@@ -354,10 +364,6 @@
 
     <fo:flow flow-name="xsl-region-body">
       <fo:block>
-        <xsl:call-template name="anchor">
-          <xsl:with-param name="conditional" select="0"/>
-        </xsl:call-template>
-
 	<xsl:if test="*[not(self::foil)]">
 	  <fo:block xsl:use-attribute-sets="foil.properties" space-after="1em">
 	    <xsl:apply-templates select="*[not(self::foil)]"/>
@@ -432,11 +438,7 @@
     </xsl:apply-templates>
     <fo:flow flow-name="xsl-region-body">
       <fo:block>
-        <xsl:call-template name="anchor">
-          <xsl:with-param name="conditional" select="0"/>
-        </xsl:call-template>
-
-        <fo:block xsl:use-attribute-sets="foil.properties">
+	<fo:block xsl:use-attribute-sets="foil.properties">
           <xsl:apply-templates/>
         </fo:block>
       </fo:block>
@@ -508,5 +510,19 @@
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
+
+<!-- Handling of xrefs -->
+
+<xsl:template match="foil|foilgroup" mode="xref-to">
+  <xsl:param name="referrer"/>
+  <xsl:param name="xrefstyle"/>
+  
+  <xsl:apply-templates select="." mode="object.xref.markup">
+    <xsl:with-param name="purpose" select="'xref'"/>
+    <xsl:with-param name="xrefstyle" select="$xrefstyle"/>
+    <xsl:with-param name="referrer" select="$referrer"/>
+  </xsl:apply-templates>
+</xsl:template>
+
 
 </xsl:stylesheet>

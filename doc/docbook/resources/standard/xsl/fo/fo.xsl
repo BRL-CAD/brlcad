@@ -13,6 +13,52 @@
 
      ******************************************************************** -->
 
+<!-- These variables set the margin-left or -right attribute value for FO output based on
+     the writing-mode specified in the gentext file for the document's lang. -->
+
+<xsl:param name="direction.align.start">
+  <xsl:choose>
+    <!-- FOP does not support writing-mode="rl-tb" -->
+    <xsl:when test="$fop.extensions != 0">left</xsl:when>
+    <xsl:when test="$fop1.extensions != 0">left</xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'lr')">left</xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'rl')">right</xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'tb')">top</xsl:when>
+    <xsl:otherwise>left</xsl:otherwise>
+  </xsl:choose>
+</xsl:param>
+
+<xsl:param name="direction.align.end">
+  <xsl:choose>
+    <xsl:when test="$fop.extensions != 0">right</xsl:when>
+    <xsl:when test="$fop1.extensions != 0">right</xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'lr')">right</xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'rl')">left</xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'tb')">bottom</xsl:when>
+    <xsl:otherwise>right</xsl:otherwise>
+  </xsl:choose>
+</xsl:param>
+
+<xsl:param name="direction.mode">
+  <xsl:choose>
+    <xsl:when test="$fop.extensions != 0 and
+                    starts-with($writing.mode, 'rl')">
+      <xsl:message>WARNING: FOP does not support right-to-left writing-mode</xsl:message>
+      <xsl:text>lr-tb</xsl:text>
+    </xsl:when>
+    <xsl:when test="$fop1.extensions != 0 and
+                    starts-with($writing.mode, 'rl')">
+      <xsl:message>WARNING: FOP does not support right-to-left writing-mode</xsl:message>
+      <xsl:text>lr-tb</xsl:text>
+    </xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'lr')">lr-tb</xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'rl')">rl-tb</xsl:when>
+    <xsl:when test="starts-with($writing.mode, 'tb')">tb-rl</xsl:when>
+    <xsl:otherwise>lr-tb</xsl:otherwise>
+  </xsl:choose>
+</xsl:param>
+
+
 <xsl:template name="anchor">
   <xsl:param name="node" select="."/>
   <xsl:param name="conditional" select="1"/>

@@ -33,7 +33,7 @@ CALS table column width specification.</refpurpose>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>CALS expresses table column widths in the following basic
 forms:</para>

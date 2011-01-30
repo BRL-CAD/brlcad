@@ -1,7 +1,8 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
-                exclude-result-prefixes="doc"
+                xmlns:exsl="http://exslt.org/common"
+                exclude-result-prefixes="doc exsl"
                 version='1.0'>
 
 <!-- ********************************************************************
@@ -260,6 +261,66 @@ document output.
 
 <xsl:template match="qandaset|qandaentry" mode="olink.mode">
   <xsl:call-template name="div"/>
+</xsl:template>
+
+<!-- handle an glossary collection -->
+<xsl:template match="glossary[@role='auto']" mode="olink.mode" priority="2">
+  <xsl:variable name="collection" select="document($glossary.collection, .)"/>
+  <xsl:if test="$glossary.collection = ''">
+    <xsl:message>
+      <xsl:text>Warning: processing automatic glossary </xsl:text>
+      <xsl:text>without a glossary.collection file.</xsl:text>
+    </xsl:message>
+  </xsl:if>
+
+  <xsl:if test="not($collection) and $glossary.collection != ''">
+    <xsl:message>
+      <xsl:text>Warning: processing automatic glossary but unable to </xsl:text>
+      <xsl:text>open glossary.collection file '</xsl:text>
+      <xsl:value-of select="$glossary.collection"/>
+      <xsl:text>'</xsl:text>
+    </xsl:message>
+  </xsl:if>
+
+
+  <xsl:if test="$exsl.node.set.available != 0">
+    <xsl:variable name="auto.glossary">
+      <xsl:apply-templates select="." mode="assemble.auto.glossary"/>
+    </xsl:variable>
+    <xsl:variable name="auto.glossary.nodeset" select="exsl:node-set($auto.glossary)"/>
+    <xsl:apply-templates select="$auto.glossary.nodeset/*" mode="olink.mode"/>
+  </xsl:if>
+
+</xsl:template>
+
+<!-- construct a glossary in memory -->
+<xsl:template match="glossary" mode="assemble.auto.glossary">
+  <xsl:copy>
+    <xsl:copy-of select="@*[not(local-name() = 'role')]"/>
+    <xsl:apply-templates select="node()" mode="assemble.auto.glossary"/>
+    <xsl:call-template name="select.glossentries"/>
+  </xsl:copy>
+</xsl:template>
+
+<xsl:template name="select.glossentries">
+  <xsl:param name="collection" select="document($glossary.collection, .)"/>
+  <xsl:param name="terms" select="//glossterm[not(parent::glossdef)]|//firstterm"/>
+
+  <xsl:for-each select="$collection//glossentry">
+    <xsl:variable name="cterm" select="glossterm"/>
+    <xsl:if test="$terms[@baseform = $cterm or . = $cterm]">
+      <xsl:copy-of select="."/>
+    </xsl:if>
+  </xsl:for-each>
+</xsl:template>
+
+<xsl:template match="glossentry" mode="assemble.auto.glossary">
+  <!-- skip the dummy entries -->
+</xsl:template>
+
+<xsl:template match="*" mode="assemble.auto.glossary">
+  <!-- pass through any titles and intro stuff -->
+  <xsl:copy-of select="."/>
 </xsl:template>
 
 <xsl:template match="*" mode="olink.mode">

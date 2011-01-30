@@ -1329,6 +1329,94 @@
 </div>
 </xsl:template>
 
+<xsl:template name="acknowledgements.titlepage.recto">
+  <div xsl:use-attribute-sets="acknowledgements.titlepage.recto.style">
+<xsl:call-template name="component.title">
+<xsl:with-param name="node" select="ancestor-or-self::acknowledgements[1]"/>
+</xsl:call-template></div>
+  <xsl:choose>
+    <xsl:when test="acknowledgementsinfo/subtitle">
+      <xsl:apply-templates mode="acknowledgements.titlepage.recto.auto.mode" select="acknowledgementsinfo/subtitle"/>
+    </xsl:when>
+    <xsl:when test="docinfo/subtitle">
+      <xsl:apply-templates mode="acknowledgements.titlepage.recto.auto.mode" select="docinfo/subtitle"/>
+    </xsl:when>
+    <xsl:when test="info/subtitle">
+      <xsl:apply-templates mode="acknowledgements.titlepage.recto.auto.mode" select="info/subtitle"/>
+    </xsl:when>
+    <xsl:when test="subtitle">
+      <xsl:apply-templates mode="acknowledgements.titlepage.recto.auto.mode" select="subtitle"/>
+    </xsl:when>
+  </xsl:choose>
+
+</xsl:template>
+
+<xsl:template name="acknowledgements.titlepage.verso">
+</xsl:template>
+
+<xsl:template name="acknowledgements.titlepage.separator">
+</xsl:template>
+
+<xsl:template name="acknowledgements.titlepage.before.recto">
+</xsl:template>
+
+<xsl:template name="acknowledgements.titlepage.before.verso">
+</xsl:template>
+
+<xsl:template name="acknowledgements.titlepage">
+  <div class="titlepage">
+    <xsl:variable name="recto.content">
+      <xsl:call-template name="acknowledgements.titlepage.before.recto"/>
+      <xsl:call-template name="acknowledgements.titlepage.recto"/>
+    </xsl:variable>
+    <xsl:variable name="recto.elements.count">
+      <xsl:choose>
+        <xsl:when test="function-available('exsl:node-set')"><xsl:value-of select="count(exsl:node-set($recto.content)/*)"/></xsl:when>
+        <xsl:when test="contains(system-property('xsl:vendor'), 'Apache Software Foundation')">
+          <!--Xalan quirk--><xsl:value-of select="count(exsl:node-set($recto.content)/*)"/></xsl:when>
+        <xsl:otherwise>1</xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:if test="(normalize-space($recto.content) != '') or ($recto.elements.count &gt; 0)">
+      <div><xsl:copy-of select="$recto.content"/></div>
+    </xsl:if>
+    <xsl:variable name="verso.content">
+      <xsl:call-template name="acknowledgements.titlepage.before.verso"/>
+      <xsl:call-template name="acknowledgements.titlepage.verso"/>
+    </xsl:variable>
+    <xsl:variable name="verso.elements.count">
+      <xsl:choose>
+        <xsl:when test="function-available('exsl:node-set')"><xsl:value-of select="count(exsl:node-set($verso.content)/*)"/></xsl:when>
+        <xsl:when test="contains(system-property('xsl:vendor'), 'Apache Software Foundation')">
+          <!--Xalan quirk--><xsl:value-of select="count(exsl:node-set($verso.content)/*)"/></xsl:when>
+        <xsl:otherwise>1</xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:if test="(normalize-space($verso.content) != '') or ($verso.elements.count &gt; 0)">
+      <div><xsl:copy-of select="$verso.content"/></div>
+    </xsl:if>
+    <xsl:call-template name="acknowledgements.titlepage.separator"/>
+  </div>
+</xsl:template>
+
+<xsl:template match="*" mode="acknowledgements.titlepage.recto.mode">
+  <!-- if an element isn't found in this mode, -->
+  <!-- try the generic titlepage.mode -->
+  <xsl:apply-templates select="." mode="titlepage.mode"/>
+</xsl:template>
+
+<xsl:template match="*" mode="acknowledgements.titlepage.verso.mode">
+  <!-- if an element isn't found in this mode, -->
+  <!-- try the generic titlepage.mode -->
+  <xsl:apply-templates select="." mode="titlepage.mode"/>
+</xsl:template>
+
+<xsl:template match="subtitle" mode="acknowledgements.titlepage.recto.auto.mode">
+<div xsl:use-attribute-sets="acknowledgements.titlepage.recto.style">
+<xsl:apply-templates select="." mode="acknowledgements.titlepage.recto.mode"/>
+</div>
+</xsl:template>
+
 <xsl:template name="preface.titlepage.recto">
   <xsl:choose>
     <xsl:when test="prefaceinfo/title">
@@ -3616,6 +3704,113 @@
 <xsl:template match="subtitle" mode="setindex.titlepage.recto.auto.mode">
 <div xsl:use-attribute-sets="setindex.titlepage.recto.style">
 <xsl:apply-templates select="." mode="setindex.titlepage.recto.mode"/>
+</div>
+</xsl:template>
+
+<xsl:template name="sidebar.titlepage.recto">
+  <xsl:choose>
+    <xsl:when test="sidebarinfo/title">
+      <xsl:apply-templates mode="sidebar.titlepage.recto.auto.mode" select="sidebarinfo/title"/>
+    </xsl:when>
+    <xsl:when test="docinfo/title">
+      <xsl:apply-templates mode="sidebar.titlepage.recto.auto.mode" select="docinfo/title"/>
+    </xsl:when>
+    <xsl:when test="info/title">
+      <xsl:apply-templates mode="sidebar.titlepage.recto.auto.mode" select="info/title"/>
+    </xsl:when>
+    <xsl:when test="title">
+      <xsl:apply-templates mode="sidebar.titlepage.recto.auto.mode" select="title"/>
+    </xsl:when>
+  </xsl:choose>
+
+  <xsl:choose>
+    <xsl:when test="sidebarinfo/subtitle">
+      <xsl:apply-templates mode="sidebar.titlepage.recto.auto.mode" select="sidebarinfo/subtitle"/>
+    </xsl:when>
+    <xsl:when test="docinfo/subtitle">
+      <xsl:apply-templates mode="sidebar.titlepage.recto.auto.mode" select="docinfo/subtitle"/>
+    </xsl:when>
+    <xsl:when test="info/subtitle">
+      <xsl:apply-templates mode="sidebar.titlepage.recto.auto.mode" select="info/subtitle"/>
+    </xsl:when>
+    <xsl:when test="subtitle">
+      <xsl:apply-templates mode="sidebar.titlepage.recto.auto.mode" select="subtitle"/>
+    </xsl:when>
+  </xsl:choose>
+
+</xsl:template>
+
+<xsl:template name="sidebar.titlepage.verso">
+</xsl:template>
+
+<xsl:template name="sidebar.titlepage.separator">
+</xsl:template>
+
+<xsl:template name="sidebar.titlepage.before.recto">
+</xsl:template>
+
+<xsl:template name="sidebar.titlepage.before.verso">
+</xsl:template>
+
+<xsl:template name="sidebar.titlepage">
+  <div class="titlepage">
+    <xsl:variable name="recto.content">
+      <xsl:call-template name="sidebar.titlepage.before.recto"/>
+      <xsl:call-template name="sidebar.titlepage.recto"/>
+    </xsl:variable>
+    <xsl:variable name="recto.elements.count">
+      <xsl:choose>
+        <xsl:when test="function-available('exsl:node-set')"><xsl:value-of select="count(exsl:node-set($recto.content)/*)"/></xsl:when>
+        <xsl:when test="contains(system-property('xsl:vendor'), 'Apache Software Foundation')">
+          <!--Xalan quirk--><xsl:value-of select="count(exsl:node-set($recto.content)/*)"/></xsl:when>
+        <xsl:otherwise>1</xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:if test="(normalize-space($recto.content) != '') or ($recto.elements.count &gt; 0)">
+      <div><xsl:copy-of select="$recto.content"/></div>
+    </xsl:if>
+    <xsl:variable name="verso.content">
+      <xsl:call-template name="sidebar.titlepage.before.verso"/>
+      <xsl:call-template name="sidebar.titlepage.verso"/>
+    </xsl:variable>
+    <xsl:variable name="verso.elements.count">
+      <xsl:choose>
+        <xsl:when test="function-available('exsl:node-set')"><xsl:value-of select="count(exsl:node-set($verso.content)/*)"/></xsl:when>
+        <xsl:when test="contains(system-property('xsl:vendor'), 'Apache Software Foundation')">
+          <!--Xalan quirk--><xsl:value-of select="count(exsl:node-set($verso.content)/*)"/></xsl:when>
+        <xsl:otherwise>1</xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:if test="(normalize-space($verso.content) != '') or ($verso.elements.count &gt; 0)">
+      <div><xsl:copy-of select="$verso.content"/></div>
+    </xsl:if>
+    <xsl:call-template name="sidebar.titlepage.separator"/>
+  </div>
+</xsl:template>
+
+<xsl:template match="*" mode="sidebar.titlepage.recto.mode">
+  <!-- if an element isn't found in this mode, -->
+  <!-- try the generic titlepage.mode -->
+  <xsl:apply-templates select="." mode="titlepage.mode"/>
+</xsl:template>
+
+<xsl:template match="*" mode="sidebar.titlepage.verso.mode">
+  <!-- if an element isn't found in this mode, -->
+  <!-- try the generic titlepage.mode -->
+  <xsl:apply-templates select="." mode="titlepage.mode"/>
+</xsl:template>
+
+<xsl:template match="title" mode="sidebar.titlepage.recto.auto.mode">
+<div xsl:use-attribute-sets="sidebar.titlepage.recto.style">
+<xsl:call-template name="formal.object.heading">
+<xsl:with-param name="object" select="ancestor-or-self::sidebar[1]"/>
+</xsl:call-template>
+</div>
+</xsl:template>
+
+<xsl:template match="subtitle" mode="sidebar.titlepage.recto.auto.mode">
+<div xsl:use-attribute-sets="sidebar.titlepage.recto.style">
+<xsl:apply-templates select="." mode="sidebar.titlepage.recto.mode"/>
 </div>
 </xsl:template>
 

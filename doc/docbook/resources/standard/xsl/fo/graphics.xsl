@@ -150,6 +150,7 @@
       <xsl:when test="@scale">0</xsl:when>
       <xsl:when test="@scalefit"><xsl:value-of select="@scalefit"/></xsl:when>
       <xsl:when test="@width or @depth">1</xsl:when>
+      <xsl:when test="$default.image.width != ''">1</xsl:when>
       <xsl:otherwise>0</xsl:otherwise>
     </xsl:choose>
   </xsl:variable>
@@ -479,7 +480,13 @@
     <xsl:when test="mml:*" xmlns:mml="http://www.w3.org/1998/Math/MathML">
       <xsl:apply-templates/>
     </xsl:when>
-  
+
+    <xsl:when test="svg:*" xmlns:svg="http://www.w3.org/2000/svg">
+      <fo:instream-foreign-object>
+        <xsl:apply-templates mode="copy-all" select="*"/>
+      </fo:instream-foreign-object>
+    </xsl:when>
+
     <xsl:when test="@format='linespecific'">
       <xsl:choose>
         <xsl:when test="$use.extensions != '0'

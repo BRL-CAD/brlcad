@@ -120,6 +120,9 @@
   <xsl:attribute name="link">#0000FF</xsl:attribute>
   <xsl:attribute name="vlink">#840084</xsl:attribute>
   <xsl:attribute name="alink">#0000FF</xsl:attribute>
+  <xsl:if test="starts-with($writing.mode, 'rl')">
+    <xsl:attribute name="dir">rtl</xsl:attribute>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template name="head.content">
@@ -132,6 +135,13 @@
     <xsl:copy-of select="$title"/>
   </title>
 
+  <xsl:if test="$html.base != ''">
+    <base href="{$html.base}"/>
+  </xsl:if>
+
+  <!-- Insert links to CSS files or insert literal style elements -->
+  <xsl:call-template name="generate.css"/>
+
   <xsl:if test="$html.stylesheet != ''">
     <xsl:call-template name="output.html.stylesheets">
       <xsl:with-param name="stylesheets" select="normalize-space($html.stylesheet)"/>
@@ -141,10 +151,6 @@
   <xsl:if test="$link.mailto.url != ''">
     <link rev="made"
           href="{$link.mailto.url}"/>
-  </xsl:if>
-
-  <xsl:if test="$html.base != ''">
-    <base href="{$html.base}"/>
   </xsl:if>
 
   <meta name="generator" content="DocBook {$DistroTitle} V{$VERSION}"/>
@@ -204,25 +210,20 @@ body { background-image: url('</xsl:text>
 
   <xsl:choose>
     <xsl:when test="contains($stylesheets, ' ')">
-      <link rel="stylesheet" href="{substring-before($stylesheets, ' ')}">
-        <xsl:if test="$html.stylesheet.type != ''">
-          <xsl:attribute name="type">
-            <xsl:value-of select="$html.stylesheet.type"/>
-          </xsl:attribute>
-        </xsl:if>
-      </link>
+      <xsl:variable name="css.filename" select="substring-before($stylesheets, ' ')"/>
+
+      <xsl:call-template name="make.css.link">
+        <xsl:with-param name="css.filename" select="$css.filename"/>
+      </xsl:call-template>
+
       <xsl:call-template name="output.html.stylesheets">
         <xsl:with-param name="stylesheets" select="substring-after($stylesheets, ' ')"/>
       </xsl:call-template>
     </xsl:when>
     <xsl:when test="$stylesheets != ''">
-      <link rel="stylesheet" href="{$stylesheets}">
-        <xsl:if test="$html.stylesheet.type != ''">
-          <xsl:attribute name="type">
-            <xsl:value-of select="$html.stylesheet.type"/>
-          </xsl:attribute>
-        </xsl:if>
-      </link>
+      <xsl:call-template name="make.css.link">
+        <xsl:with-param name="css.filename" select="$stylesheets"/>
+      </xsl:call-template>
     </xsl:when>
   </xsl:choose>
 </xsl:template>
@@ -338,9 +339,7 @@ body { background-image: url('</xsl:text>
          toss the namespace and continue.  Use the docbook5 namespaced
          stylesheets for DocBook5 if you don't want to use this feature.-->
     <!-- include extra test for Xalan quirk -->
-    <xsl:when test="(function-available('exsl:node-set') or
-                     contains(system-property('xsl:vendor'),
-                       'Apache Software Foundation'))
+    <xsl:when test="$exsl.node.set.available != 0
                     and (*/self::ng:* or */self::db:*)">
       <xsl:call-template name="log.message">
         <xsl:with-param name="level">Note</xsl:with-param>
@@ -459,6 +458,9 @@ body { background-image: url('</xsl:text>
     </body>
   </html>
   <xsl:value-of select="$html.append"/>
+  
+  <!-- Generate any css files only once, not once per chunk -->
+  <xsl:call-template name="generate.css.files"/>
 </xsl:template>
 
 <xsl:template name="root.messages">
@@ -474,7 +476,5 @@ body { background-image: url('</xsl:text>
   <!-- The default is that we are not chunking... -->
   <xsl:text>0</xsl:text>
 </xsl:template>
-
-<!-- ==================================================================== -->
 
 </xsl:stylesheet>

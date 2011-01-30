@@ -249,6 +249,12 @@
           </xsl:apply-templates>
         </xsl:when>
         <xsl:otherwise>
+          <xsl:if test="/set">
+            <!-- in a set, make sure we inherit the right book info... -->
+            <xsl:apply-templates mode="recursive-chunk-filename" select="parent::*">
+              <xsl:with-param name="recursive" select="true()"/>
+            </xsl:apply-templates>
+          </xsl:if>
         </xsl:otherwise>
       </xsl:choose>
 
@@ -404,7 +410,6 @@
     <!-- Hack! If someone hands us a DocBook V5.x or DocBook NG document,
          toss the namespace and continue.  Use the docbook5 namespaced
 	 stylesheets for DocBook5 if you don't want to use this feature.-->
-    <!-- include extra test for Xalan quirk -->
     <xsl:when test="false()"/>
     <!-- Can't process unless namespace removed -->
     <xsl:when test="false()"/>
@@ -460,6 +465,7 @@
 
 <xsl:template match="*" mode="process.root">
   <xsl:apply-templates select="."/>
+  <xsl:call-template name="generate.css"/>
 </xsl:template>
 
 <!-- ====================================================================== -->

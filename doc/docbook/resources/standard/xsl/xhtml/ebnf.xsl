@@ -72,7 +72,7 @@ to be incomplete. Don't forget to read the source, too :-)</para>
 
     <xsl:if test="title">
       <tr>
-        <th align="left" valign="top">
+        <th align="{$direction.align.start}" valign="top">
           <xsl:apply-templates select="." mode="class.attribute"/>
           <xsl:apply-templates select="title"/>
         </th>
@@ -104,12 +104,12 @@ to be incomplete. Don't forget to read the source, too :-)</para>
 <xsl:template match="production">
   <xsl:param name="recap" select="false()"/>
   <tr>
-    <td align="left" valign="top" width="3%">
+    <td align="{$direction.align.start}" valign="top" width="3%">
       <xsl:text>[</xsl:text>
       <xsl:number count="production" level="any"/>
       <xsl:text>]</xsl:text>
     </td>
-    <td align="right" valign="top" width="10%">
+    <td align="{$direction.align.end}" valign="top" width="10%">
       <xsl:choose>
         <xsl:when test="$recap">
           <a>
@@ -134,7 +134,7 @@ to be incomplete. Don't forget to read the source, too :-)</para>
       <xsl:apply-templates select="rhs"/>
       <xsl:copy-of select="$ebnf.statement.terminator"/>
     </td>
-    <td align="left" valign="top" width="30%">
+    <td align="{$direction.align.start}" valign="top" width="30%">
       <xsl:choose>
         <xsl:when test="rhs/lineannotation|constraint">
           <xsl:apply-templates select="rhs/lineannotation" mode="rhslo"/>
@@ -320,7 +320,7 @@ to be incomplete. Don't forget to read the source, too :-)</para>
 </xsl:template>
 
 <xsl:template match="constraintdef/title">
-  <p><b><xsl:apply-templates/></b></p>
+  <p><strong xmlns:xslo="http://www.w3.org/1999/XSL/Transform"><xsl:apply-templates/></strong></p>
 </xsl:template>
 
 <!-- ==================================================================== -->

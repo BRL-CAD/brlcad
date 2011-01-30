@@ -1,6 +1,7 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
+                xmlns:xlink="http://www.w3.org/1999/xlink"
                 exclude-result-prefixes="doc"
                 version='1.0'>
 
@@ -35,7 +36,7 @@ title of the element. This does not include the label.
     <!-- * FIXME: this should handle other *info elements as well -->
     <!-- * but this is good enough for now. -->
     <xsl:when test="title|info/title">
-      <xsl:apply-templates select="title[1]|info/title[1]" mode="title.markup">
+      <xsl:apply-templates select="(title|info/title)[1]" mode="title.markup">
         <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
       </xsl:apply-templates>
     </xsl:when>
@@ -144,7 +145,7 @@ title of the element. This does not include the label.
 <xsl:template match="dedication" mode="title.markup">
   <xsl:param name="allow-anchors" select="0"/>
   <xsl:choose>
-    <xsl:when test="title">
+    <xsl:when test="title|info/title">
       <xsl:apply-templates select="(title|info/title)[1]" mode="title.markup">
         <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
       </xsl:apply-templates>
@@ -157,10 +158,26 @@ title of the element. This does not include the label.
   </xsl:choose>
 </xsl:template>
 
+<xsl:template match="acknowledgements" mode="title.markup">
+  <xsl:param name="allow-anchors" select="0"/>
+  <xsl:choose>
+    <xsl:when test="title|info/title">
+      <xsl:apply-templates select="(title|info/title)[1]" mode="title.markup">
+        <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
+      </xsl:apply-templates>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:call-template name="gentext">
+        <xsl:with-param name="key" select="'Acknowledgements'"/>
+      </xsl:call-template>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
 <xsl:template match="colophon" mode="title.markup">
   <xsl:param name="allow-anchors" select="0"/>
   <xsl:choose>
-    <xsl:when test="title">
+    <xsl:when test="title|info/title">
       <xsl:apply-templates select="(title|info/title)[1]" mode="title.markup">
         <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
       </xsl:apply-templates>
@@ -262,8 +279,8 @@ title of the element. This does not include the label.
 <xsl:template match="refsynopsisdiv" mode="title.markup">
   <xsl:param name="allow-anchors" select="0"/>
   <xsl:choose>
-    <xsl:when test="title">
-      <xsl:apply-templates select="title" mode="title.markup">
+    <xsl:when test="title|info/title">
+      <xsl:apply-templates select="(title|info/title)[1]" mode="title.markup">
         <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
       </xsl:apply-templates>
     </xsl:when>
@@ -331,7 +348,7 @@ title of the element. This does not include the label.
   </xsl:apply-templates>
 </xsl:template>
 
-<xsl:template match="glossterm" mode="title.markup">
+<xsl:template match="glossterm|firstterm" mode="title.markup">
   <xsl:param name="allow-anchors" select="0"/>
 
   <xsl:choose>
@@ -380,28 +397,28 @@ title of the element. This does not include the label.
 
 <xsl:template match="figure|example|equation" mode="title.markup">
   <xsl:param name="allow-anchors" select="0"/>
-  <xsl:apply-templates select="title|info/title" mode="title.markup">
+  <xsl:apply-templates select="(title|info/title)[1]" mode="title.markup">
     <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
   </xsl:apply-templates>
 </xsl:template>
 
 <xsl:template match="table" mode="title.markup">
   <xsl:param name="allow-anchors" select="0"/>
-  <xsl:apply-templates select="(title|caption)[1]" mode="title.markup">
+  <xsl:apply-templates select="(title|info/title|caption)[1]" mode="title.markup">
     <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
   </xsl:apply-templates>
 </xsl:template>
 
 <xsl:template match="procedure" mode="title.markup">
   <xsl:param name="allow-anchors" select="0"/>
-  <xsl:apply-templates select="title" mode="title.markup">
+  <xsl:apply-templates select="(title|info/title)[1]" mode="title.markup">
     <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
   </xsl:apply-templates>
 </xsl:template>
 
 <xsl:template match="task" mode="title.markup">
   <xsl:param name="allow-anchors" select="0"/>
-  <xsl:apply-templates select="title" mode="title.markup">
+  <xsl:apply-templates select="(title|info/title)[1]" mode="title.markup">
     <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
   </xsl:apply-templates>
 </xsl:template>
@@ -492,8 +509,8 @@ title of the element. This does not include the label.
 <xsl:template match="legalnotice" mode="title.markup">
   <xsl:param name="allow-anchors" select="0"/>
   <xsl:choose>
-    <xsl:when test="title">
-      <xsl:apply-templates select="title" mode="title.markup">
+    <xsl:when test="title|info/title">
+      <xsl:apply-templates select="(title|info/title)[1]" mode="title.markup">
         <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
       </xsl:apply-templates>
     </xsl:when>
@@ -514,6 +531,11 @@ title of the element. This does not include the label.
   <xsl:choose>
     <xsl:when test="titleabbrev">
       <xsl:apply-templates select="titleabbrev[1]" mode="title.markup">
+        <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
+      </xsl:apply-templates>
+    </xsl:when>
+    <xsl:when test="info/titleabbrev">
+      <xsl:apply-templates select="info/titleabbrev[1]" mode="title.markup">
         <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
       </xsl:apply-templates>
     </xsl:when>
@@ -637,7 +659,7 @@ title of the element. This does not include the label.
                     descendant-or-self::olink or
                     descendant-or-self::xref or
                     descendant-or-self::indexterm or
-                    ancestor::title">
+		    (ancestor::title and (@id or @xml:id))">
 
       <xsl:apply-templates mode="no.anchor.mode"/>
     </xsl:when>
@@ -659,6 +681,36 @@ title of the element. This does not include the label.
   <xsl:apply-templates/>
 </xsl:template>
 
+<xsl:template match="link" mode="no.anchor.mode">
+  <xsl:choose>
+    <xsl:when test="count(child::node()) &gt; 0">
+      <!-- If it has content, use it -->
+      <xsl:apply-templates/>
+    </xsl:when>
+	<!-- look for an endterm -->
+    <xsl:when test="@endterm">
+      <xsl:variable name="etargets" select="key('id',@endterm)"/>
+      <xsl:variable name="etarget" select="$etargets[1]"/>
+      <xsl:choose>
+	<xsl:when test="count($etarget) = 0">
+          <xsl:message>
+	    <xsl:value-of select="count($etargets)"/>
+	    <xsl:text>Endterm points to nonexistent ID: </xsl:text>
+	    <xsl:value-of select="@endterm"/>
+          </xsl:message>
+	  <xsl:text>???</xsl:text>
+	</xsl:when>
+        <xsl:otherwise>
+	  <xsl:apply-templates select="$etarget" mode="endterm"/>
+	</xsl:otherwise>
+      </xsl:choose>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:apply-templates/>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
 <xsl:template match="olink" mode="no.anchor.mode">
   <xsl:apply-templates/>
 </xsl:template>
@@ -667,8 +719,8 @@ title of the element. This does not include the label.
   <!-- nop, suppressed -->
 </xsl:template>
 
-<xsl:template match="xref|link" mode="no.anchor.mode">
-  <xsl:variable name="targets" select="key('id',@linkend)"/>
+<xsl:template match="xref" mode="no.anchor.mode">
+  <xsl:variable name="targets" select="key('id',@linkend)|key('id',substring-after(@xlink:href,'#'))"/>
   <xsl:variable name="target" select="$targets[1]"/>
   <xsl:variable name="refelem" select="local-name($target)"/>
   
@@ -680,7 +732,8 @@ title of the element. This does not include the label.
     <xsl:when test="count($target) = 0">
       <xsl:message>
         <xsl:text>XRef to nonexistent id: </xsl:text>
-        <xsl:value-of select="@linkend"/>
+        <xsl:value-of select="@linkend"/> 
+        <xsl:value-of select="@xlink:href"/>
       </xsl:message>
       <xsl:text>???</xsl:text>
     </xsl:when>

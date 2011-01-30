@@ -268,6 +268,7 @@
 </xsl:template>
 
 <xsl:template match="refmeta">
+  <xsl:apply-templates select=".//indexterm"/>
 </xsl:template>
 
 <xsl:template match="manvolnum">

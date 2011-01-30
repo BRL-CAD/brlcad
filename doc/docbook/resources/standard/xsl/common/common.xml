@@ -32,7 +32,7 @@
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template returns '1' if the specified node is a component
 (Chapter, Appendix, etc.), and '0' otherwise.</para>
@@ -67,7 +67,7 @@
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template returns '1' if the specified node is a section
 (Section, Sect1, Sect2, etc.), and '0' otherwise.</para>
@@ -102,7 +102,7 @@
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template calculates the hierarchical level of a section.
 The element <tag>sect1</tag> is at level 1, <tag>sect2</tag> is
@@ -140,7 +140,7 @@ Defaults to the context node.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template name="qanda.section.level"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template calculates the hierarchical level of a QandASet.
 </para>
@@ -163,7 +163,7 @@ Defaults to the context node.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template takes a list of media objects (usually the
 children of a mediaobject or inlinemediaobject) and processes
@@ -209,7 +209,7 @@ in the list is appropriate.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template takes a list of media objects (usually the
 children of a mediaobject or inlinemediaobject) and determines
@@ -272,7 +272,7 @@ recursive process.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template examines a media object and returns '1' if the
 object is recognized as a graphic.</para>
@@ -306,7 +306,7 @@ object is recognized as a graphic.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>If passed an ID in <varname>linkend</varname>,
 <function>check.id.unique</function> prints
@@ -327,7 +327,7 @@ the ID is not unique.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>If passed an ID in <varname>linkend</varname>,
 <function>check.idref.targets</function> makes sure that the element
@@ -351,7 +351,7 @@ pointed to by the link is one of the elements listed in
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template prints a list of year elements with consecutive
 years printed as a range. In other words:</para>
@@ -432,7 +432,7 @@ year range is <quote>1991-1992</quote> but discretely it's
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template searches in a table for the value that most-closely
 (in the typical best-match sense of XSLT) matches the current (element)
@@ -451,7 +451,7 @@ node location.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>Given a string, this template does a language-aware conversion
 of that string to all uppercase letters, based on the values of the
@@ -487,7 +487,7 @@ unchanged.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>Given a string, this template does a language-aware conversion
 of that string to all lowercase letters, based on the values of the
@@ -520,7 +520,7 @@ unchanged.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template name="select.choice.separator"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>This template enables auto-generation of an appropriate
     localized "choice" separator (for example, "and" or "or") before
@@ -573,7 +573,7 @@ unchanged.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>This template evaluates an "info profile" matching the XPath
     expression given by the <parameter>profile</parameter>

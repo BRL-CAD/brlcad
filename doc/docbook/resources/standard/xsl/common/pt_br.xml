@@ -28,105 +28,107 @@
 
 
 <l:gentext key="Abstract" text="Resumo"/>
-<l:gentext key="abstract" text="Resumo"/>
+<l:gentext key="abstract" text="resumo"/>
+<l:gentext key="Acknowledgements" text="Agradecimentos"/>
+<l:gentext key="acknowledgements" text="agradecimentos"/>
 <l:gentext key="Answer" text="R:"/>
-<l:gentext key="answer" text="R:"/>
+<l:gentext key="answer" text="r:"/>
 <l:gentext key="Appendix" text="Apêndice"/>
 <l:gentext key="appendix" text="apêndice"/>
 <l:gentext key="Article" text="Artigo"/>
-<l:gentext key="article" text="Artigo"/>
+<l:gentext key="article" text="artigo"/>
 <l:gentext key="Author" text="Autor"/>
 <l:gentext key="Bibliography" text="Bibliografia"/>
-<l:gentext key="bibliography" text="Bibliografia"/>
+<l:gentext key="bibliography" text="bibliografia"/>
 <l:gentext key="Book" text="Livro"/>
-<l:gentext key="book" text="Livro"/>
+<l:gentext key="book" text="livro"/>
 <l:gentext key="CAUTION" text="CUIDADO"/>
 <l:gentext key="Caution" text="Cuidado"/>
-<l:gentext key="caution" text="Cuidado"/>
+<l:gentext key="caution" text="cuidado"/>
 <l:gentext key="Chapter" text="Capítulo"/>
 <l:gentext key="chapter" text="capítulo"/>
 <l:gentext key="Colophon" text="Considerações finais"/>
-<l:gentext key="colophon" text="Considerações finais"/>
+<l:gentext key="colophon" text="considerações finais"/>
 <l:gentext key="Copyright" text="Copyright"/>
-<l:gentext key="copyright" text="Copyright"/>
+<l:gentext key="copyright" text="copyright"/>
 <l:gentext key="Dedication" text="Dedicatória"/>
-<l:gentext key="dedication" text="Dedicatória"/>
+<l:gentext key="dedication" text="dedicatória"/>
 <l:gentext key="Edition" text="Edição"/>
-<l:gentext key="edition" text="Edição"/>
-<l:gentext key="Editor" text="Editor" lang="en"/>
+<l:gentext key="edition" text="edição"/>
+<l:gentext key="Editor" text="Editor"/>
 <l:gentext key="Equation" text="Equação"/>
-<l:gentext key="equation" text="Equação"/>
+<l:gentext key="equation" text="equação"/>
 <l:gentext key="Example" text="Exemplo"/>
-<l:gentext key="example" text="Exemplo"/>
+<l:gentext key="example" text="exemplo"/>
 <l:gentext key="Figure" text="Figura"/>
-<l:gentext key="figure" text="Figura"/>
+<l:gentext key="figure" text="figura"/>
 <l:gentext key="Glossary" text="Glossário"/>
-<l:gentext key="glossary" text="Glossário"/>
+<l:gentext key="glossary" text="glossário"/>
 <l:gentext key="GlossSee" text="Ver"/>
-<l:gentext key="glosssee" text="Ver"/>
+<l:gentext key="glosssee" text="ver"/>
 <l:gentext key="GlossSeeAlso" text="Ver Também"/>
-<l:gentext key="glossseealso" text="Ver Também"/>
+<l:gentext key="glossseealso" text="ver também"/>
 <l:gentext key="IMPORTANT" text="IMPORTANTE"/>
 <l:gentext key="important" text="Importante"/>
 <l:gentext key="Important" text="Importante"/>
 <l:gentext key="Index" text="Índice Remissivo"/>
-<l:gentext key="index" text="Índice Remissivo"/>
+<l:gentext key="index" text="índice remissivo"/>
 <l:gentext key="ISBN" text="ISBN"/>
 <l:gentext key="isbn" text="ISBN"/>
 <l:gentext key="LegalNotice" text="Nota Legal"/>
-<l:gentext key="legalnotice" text="Nota Legal"/>
+<l:gentext key="legalnotice" text="nota legal"/>
 <l:gentext key="MsgAud" text="Audiência"/>
-<l:gentext key="msgaud" text="Audiência"/>
+<l:gentext key="msgaud" text="audiência"/>
 <l:gentext key="MsgLevel" text="Nível"/>
-<l:gentext key="msglevel" text="Nível"/>
+<l:gentext key="msglevel" text="nível"/>
 <l:gentext key="MsgOrig" text="Origem"/>
-<l:gentext key="msgorig" text="Origem"/>
+<l:gentext key="msgorig" text="origem"/>
 <l:gentext key="NOTE" text="NOTA"/>
 <l:gentext key="Note" text="Nota"/>
-<l:gentext key="note" text="Nota"/>
+<l:gentext key="note" text="nota"/>
 <l:gentext key="Part" text="Parte"/>
-<l:gentext key="part" text="Parte"/>
+<l:gentext key="part" text="parte"/>
 <l:gentext key="Preface" text="Prefácio"/>
-<l:gentext key="preface" text="Prefácio"/>
+<l:gentext key="preface" text="prefácio"/>
 <l:gentext key="Procedure" text="Procedimento"/>
-<l:gentext key="procedure" text="Procedimento"/>
-<l:gentext key="ProductionSet" text="Production"/>
+<l:gentext key="procedure" text="procedimento"/>
+<l:gentext key="ProductionSet" text="Produção"/>
 <l:gentext key="PubDate" text="Data de Publicação"/>
-<l:gentext key="pubdate" text="Data de Publicação"/>
+<l:gentext key="pubdate" text="data de publicação"/>
 <l:gentext key="Published" text="Publicado"/>
-<l:gentext key="published" text="Publicado"/>
-<l:gentext key="Publisher" text="Publisher" lang="en"/>
+<l:gentext key="published" text="publicado"/>
+<l:gentext key="Publisher" text="Publicador"/>
 <l:gentext key="Qandadiv" text="P &amp; R"/>
 <l:gentext key="qandadiv" text="P &amp; R"/>
-<l:gentext key="QandASet" text="Frequently Asked Questions" lang="en"/>
+<l:gentext key="QandASet" text="Perguntas Frequentes"/>
 <l:gentext key="Question" text="P:"/>
 <l:gentext key="question" text="P:"/>
-<l:gentext key="RefEntry" text=""/>
-<l:gentext key="refentry" text=""/>
+<l:gentext key="RefEntry" text="Página"/>
+<l:gentext key="refentry" text="página"/>
 <l:gentext key="Reference" text="Referência"/>
-<l:gentext key="reference" text="Referência"/>
-<l:gentext key="References" text="References" lang="en"/>
+<l:gentext key="reference" text="referência"/>
+<l:gentext key="References" text="Referências"/>
 <l:gentext key="RefName" text="Nome"/>
-<l:gentext key="refname" text="Nome"/>
-<l:gentext key="RefSection" text=""/>
-<l:gentext key="refsection" text=""/>
+<l:gentext key="refname" text="nome"/>
+<l:gentext key="RefSection" text="Seção"/>
+<l:gentext key="refsection" text="seção"/>
 <l:gentext key="RefSynopsisDiv" text="Sinopse"/>
-<l:gentext key="refsynopsisdiv" text="Sinopse"/>
+<l:gentext key="refsynopsisdiv" text="sinopse"/>
 <l:gentext key="RevHistory" text="Histórico de Revisões"/>
-<l:gentext key="revhistory" text="Histórico de Revisões"/>
-<l:gentext key="revision" text="Revisão"/>
+<l:gentext key="revhistory" text="histórico de revisões"/>
+<l:gentext key="revision" text="revisão"/>
 <l:gentext key="Revision" text="Revisão"/>
-<l:gentext key="sect1" text="Section"/>
-<l:gentext key="sect2" text="Section"/>
-<l:gentext key="sect3" text="Section"/>
-<l:gentext key="sect4" text="Section"/>
-<l:gentext key="sect5" text="Section"/>
+<l:gentext key="sect1" text="Seção"/>
+<l:gentext key="sect2" text="Seção"/>
+<l:gentext key="sect3" text="Seção"/>
+<l:gentext key="sect4" text="Seção"/>
+<l:gentext key="sect5" text="Seção"/>
 <l:gentext key="section" text="seção"/>
 <l:gentext key="Section" text="Seção"/>
-<l:gentext key="see" text="Ver"/>
+<l:gentext key="see" text="ver"/>
 <l:gentext key="See" text="Ver"/>
-<l:gentext key="seealso" text="Ver Também"/>
-<l:gentext key="Seealso" text="ver também"/>
+<l:gentext key="seealso" text="ver também"/>
+<l:gentext key="Seealso" text="Ver também"/>
 <l:gentext key="SeeAlso" text="Ver Também"/>
 <l:gentext key="set" text="Conjunto"/>
 <l:gentext key="Set" text="Conjunto"/>
@@ -136,11 +138,11 @@
 <l:gentext key="sidebar" text="quadro lateral"/>
 <l:gentext key="step" text="passo"/>
 <l:gentext key="Step" text="Passo"/>
-<l:gentext key="table" text="Tabela"/>
+<l:gentext key="table" text="tabela"/>
 <l:gentext key="Table" text="Tabela"/>
-<l:gentext key="task" text="Task" lang="en"/>
-<l:gentext key="Task" text="Task" lang="en"/>
-<l:gentext key="tip" text="Dica"/>
+<l:gentext key="task" text="tarefa"/>
+<l:gentext key="Task" text="Tarefa"/>
+<l:gentext key="tip" text="dica"/>
 <l:gentext key="TIP" text="DICA"/>
 <l:gentext key="Tip" text="Dica"/>
 <l:gentext key="Warning" text="Atenção"/>
@@ -149,41 +151,40 @@
 <l:gentext key="and" text="e"/>
 <l:gentext key="by" text="por"/>
 <l:gentext key="Edited" text="Editado"/>
-<l:gentext key="edited" text="Editado"/>
+<l:gentext key="edited" text="editado"/>
 <l:gentext key="Editedby" text="Editado por"/>
-<l:gentext key="editedby" text="Editado por"/>
-<l:gentext key="in" text=""/>
+<l:gentext key="editedby" text="editado por"/>
+<l:gentext key="in" text="dentro"/>
 <l:gentext key="lastlistcomma" text=","/>
 <l:gentext key="listcomma" text=","/>
-<l:gentext key="nonexistantelement" text="elemento inexistente"/>
-<l:gentext key="notes" text="Notas"/>
+<l:gentext key="notes" text="notas"/>
 <l:gentext key="Notes" text="Notas"/>
 <l:gentext key="Pgs" text="Páginas"/>
-<l:gentext key="pgs" text="Páginas"/>
+<l:gentext key="pgs" text="páginas"/>
 <l:gentext key="Revisedby" text="Revisado por: "/>
-<l:gentext key="revisedby" text="Revisado por: "/>
+<l:gentext key="revisedby" text="revisado por: "/>
 <l:gentext key="TableNotes" text="Notas"/>
-<l:gentext key="tablenotes" text="Notas"/>
+<l:gentext key="tablenotes" text="notas"/>
 <l:gentext key="TableofContents" text="Índice"/>
-<l:gentext key="tableofcontents" text="Índice"/>
+<l:gentext key="tableofcontents" text="índice"/>
 <l:gentext key="unexpectedelementname" text="Nome de elemento inesperado"/>
 <l:gentext key="unsupported" text="não suportado"/>
-<l:gentext key="xrefto" text="referência para"/>
-<l:gentext key="Authors" text="Authors" lang="en"/>
-<l:gentext key="copyeditor" text="Copy Editor" lang="en"/>
-<l:gentext key="graphicdesigner" text="Graphic Designer" lang="en"/>
-<l:gentext key="productioneditor" text="Production Editor" lang="en"/>
-<l:gentext key="technicaleditor" text="Technical Editor" lang="en"/>
-<l:gentext key="translator" text="Translator" lang="en"/>
-<l:gentext key="listofequations" text="Lista de Equações"/>
+<l:gentext key="xrefto" text="xref para"/>
+<l:gentext key="Authors" text="Autores"/>
+<l:gentext key="copyeditor" text="Copidesque"/>
+<l:gentext key="graphicdesigner" text="Designer Gráfico"/>
+<l:gentext key="productioneditor" text="Editor de Produção"/>
+<l:gentext key="technicaleditor" text="Editor Técnico"/>
+<l:gentext key="translator" text="Tradutor"/>
+<l:gentext key="listofequations" text="lista de equações"/>
 <l:gentext key="ListofEquations" text="Lista de Equações"/>
 <l:gentext key="ListofExamples" text="Lista de Exemplos"/>
-<l:gentext key="listofexamples" text="Lista de Exemplos"/>
+<l:gentext key="listofexamples" text="lista de exemplos"/>
 <l:gentext key="ListofFigures" text="Lista de Figuras"/>
-<l:gentext key="listoffigures" text="Lista de Figuras"/>
-<l:gentext key="ListofProcedures" text="List of Procedures" lang="en"/>
-<l:gentext key="listofprocedures" text="List of Procedures" lang="en"/>
-<l:gentext key="listoftables" text="Lista de Tabelas"/>
+<l:gentext key="listoffigures" text="lista de figuras"/>
+<l:gentext key="ListofProcedures" text="Lista de Procedimentos"/>
+<l:gentext key="listofprocedures" text="lista de procedimentos"/>
+<l:gentext key="listoftables" text="lista de tabelas"/>
 <l:gentext key="ListofTables" text="Lista de Tabelas"/>
 <l:gentext key="ListofUnknown" text="Lista de ???"/>
 <l:gentext key="listofunknown" text="Lista de ???"/>
@@ -193,12 +194,13 @@
 <l:gentext key="nav-prev" text="Anterior"/>
 <l:gentext key="nav-prev-sibling" text="Início"/>
 <l:gentext key="nav-up" text="Acima"/>
-<l:gentext key="nav-toc" text="ToC" lang="en"/>
-<l:gentext key="Draft" text="Draft"/>
-<l:gentext key="above" text="above"/>
-<l:gentext key="below" text="below"/>
-<l:gentext key="sectioncalled" text="the section called"/>
-<l:gentext key="index symbols" text="Symbols"/>
+<l:gentext key="nav-toc" text="TdC"/>
+<l:gentext key="Draft" text="Rascunho"/>
+<l:gentext key="above" text="acima"/>
+<l:gentext key="below" text="abaixo"/>
+<l:gentext key="sectioncalled" text="A seção chamada"/>
+<l:gentext key="index symbols" text="Símbolos"/>
+<l:gentext key="writing-mode" text="lr-tb"/>
 <l:gentext key="lowercase.alpha" text="abcdefghijklmnopqrstuvwxyz"/>
 <l:gentext key="uppercase.alpha" text="ABCDEFGHIJKLMNOPQRSTUVWXYZ"/>
 <l:gentext key="normalize.sort.input" text="AaÀàÁáÂâÃãÄäÅåĀāĂăĄąǍǎǞǟǠǡǺǻȀȁȂȃȦȧḀḁẚẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặBbƀƁɓƂƃḂḃḄḅḆḇCcÇçĆćĈĉĊċČčƇƈɕḈḉDdĎďĐđƊɗƋƌǅǲȡɖḊḋḌḍḎḏḐḑḒḓEeÈèÉéÊêËëĒēĔĕĖėĘęĚěȄȅȆȇȨȩḔḕḖḗḘḙḚḛḜḝẸẹẺẻẼẽẾếỀềỂểỄễỆệFfƑƒḞḟGgĜĝĞğĠġĢģƓɠǤǥǦǧǴǵḠḡHhĤĥĦħȞȟɦḢḣḤḥḦḧḨḩḪḫẖIiÌìÍíÎîÏïĨĩĪīĬĭĮįİƗɨǏǐȈȉȊȋḬḭḮḯỈỉỊịJjĴĵǰʝKkĶķƘƙǨǩḰḱḲḳḴḵLlĹĺĻļĽľĿŀŁłƚǈȴɫɬɭḶḷḸḹḺḻḼḽMmɱḾḿṀṁṂṃNnÑñŃńŅņŇňƝɲƞȠǋǸǹȵɳṄṅṆṇṈṉṊṋOoÒòÓóÔôÕõÖöØøŌōŎŏŐőƟƠơǑǒǪǫǬǭǾǿȌȍȎȏȪȫȬȭȮȯȰȱṌṍṎṏṐṑṒṓỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợPpƤƥṔṕṖṗQqʠRrŔŕŖŗŘřȐȑȒȓɼɽɾṘṙṚṛṜṝṞṟSsŚśŜŝŞşŠšȘșʂṠṡṢṣṤṥṦṧṨṩTtŢţŤťŦŧƫƬƭƮʈȚțȶṪṫṬṭṮṯṰṱẗUuÙùÚúÛûÜüŨũŪūŬŭŮůŰűŲųƯưǓǔǕǖǗǘǙǚǛǜȔȕȖȗṲṳṴṵṶṷṸṹṺṻỤụỦủỨứỪừỬửỮữỰựVvƲʋṼṽṾṿWwŴŵẀẁẂẃẄẅẆẇẈẉẘXxẊẋẌẍYyÝýÿŸŶŷƳƴȲȳẎẏẙỲỳỴỵỶỷỸỹZzŹźŻżŽžƵƶȤȥʐʑẐẑẒẓẔẕẕ" lang="en"/>
@@ -216,6 +218,7 @@
 <l:context name="styles"><l:template name="person-name" text="first-last"/>
 </l:context>
 <l:context name="title"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="%t"/>
 <l:template name="appendix" text="Apêndice %n. %t"/>
 <l:template name="article" text="%t"/>
@@ -265,7 +268,7 @@
 <l:template name="procedure" text="%t"/>
 <l:template name="procedure.formal" text="Procedimento %n. %t"/>
 <l:template name="productionset" text="%t"/>
-<l:template name="productionset.formal" text="Production %n"/>
+<l:template name="productionset.formal" text="Produção %n"/>
 <l:template name="qandadiv" text="%t"/>
 <l:template name="qandaentry" text="%t"/>
 <l:template name="qandaset" text="%t"/>
@@ -321,6 +324,7 @@
 <l:template name="simplesect" text="%n. %t"/>
 </l:context>
 <l:context name="subtitle"><l:template name="appendix" text="%s"/>
+<l:template name="acknowledgements" text="%s" lang="en"/>
 <l:template name="article" text="%s"/>
 <l:template name="bibliodiv" text="%s"/>
 <l:template name="biblioentry" text="%s"/>
@@ -360,6 +364,7 @@
 <l:template name="toc" text="%s"/>
 </l:context>
 <l:context name="xref"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="R: %n"/>
 <l:template name="appendix" text="%t"/>
 <l:template name="article" text="%t"/>
@@ -451,7 +456,7 @@
 <l:template name="figure" text="Figura %n"/>
 <l:template name="part" text="Parte %n"/>
 <l:template name="procedure" text="Procedimento %n"/>
-<l:template name="productionset" text="Production %n"/>
+<l:template name="productionset" text="Produção %n"/>
 <l:template name="qandadiv" text="P &amp; R %n"/>
 <l:template name="qandaentry" text="P: %n"/>
 <l:template name="question" text="P: %n"/>
@@ -471,133 +476,134 @@
 <l:template name="figure" text="Figura %n, “%t”"/>
 <l:template name="part" text="Parte %n, “%t”"/>
 <l:template name="procedure" text="Procedimento %n, “%t”"/>
-<l:template name="productionset" text="Production %n, “%t”"/>
+<l:template name="productionset" text="Produção %n, “%t”"/>
 <l:template name="qandadiv" text="P &amp; R %n, “%t”"/>
-<l:template name="refsect1" text="the section called “%t”"/>
-<l:template name="refsect2" text="the section called “%t”"/>
-<l:template name="refsect3" text="the section called “%t”"/>
-<l:template name="refsection" text="the section called “%t”"/>
+<l:template name="refsect1" text="A seção chamada “%t”"/>
+<l:template name="refsect2" text="A seção chamada “%t”"/>
+<l:template name="refsect3" text="A seção chamada “%t”"/>
+<l:template name="refsection" text="A seção chamada “%t”"/>
 <l:template name="sect1" text="Seção %n, “%t”"/>
 <l:template name="sect2" text="Seção %n, “%t”"/>
 <l:template name="sect3" text="Seção %n, “%t”"/>
 <l:template name="sect4" text="Seção %n, “%t”"/>
 <l:template name="sect5" text="Seção %n, “%t”"/>
 <l:template name="section" text="Seção %n, “%t”"/>
-<l:template name="simplesect" text="the section called “%t”"/>
+<l:template name="simplesect" text="A seção chamada “%t”"/>
 <l:template name="table" text="Tabela %n, “%t”"/>
 </l:context>
 <l:context name="authorgroup"><l:template name="sep" text=", "/>
 <l:template name="sep2" text=" e "/>
 <l:template name="seplast" text=", e "/>
 </l:context>
-<l:context name="glossary"><l:template name="see" text="Ver %t"/>
-<l:template name="seealso" text="Ver Também %t"/>
+<l:context name="glossary"><l:template name="see" text="Ver %t."/>
+<l:template name="seealso" text="Ver Também %t."/>
+<l:template name="seealso-separator" text=", "/>
 </l:context>
 <l:context name="msgset"><l:template name="MsgAud" text="Audiência: "/>
 <l:template name="MsgLevel" text="Nível: "/>
 <l:template name="MsgOrig" text="Origem: "/>
 </l:context>
-<l:context name="datetime"><l:template name="format" text="m/d/Y" lang="en"/>
+<l:context name="datetime"><l:template name="format" text="d/m/Y"/>
 </l:context>
-<l:context name="termdef"><l:template name="prefix" text="[Definition: " lang="en"/>
-<l:template name="suffix" text="]" lang="en"/>
+<l:context name="termdef"><l:template name="prefix" text="[Definition: "/>
+<l:template name="suffix" text="]"/>
 </l:context>
-<l:context name="datetime-full"><l:template name="January" text="January" lang="en"/>
-<l:template name="February" text="February" lang="en"/>
-<l:template name="March" text="March" lang="en"/>
-<l:template name="April" text="April" lang="en"/>
-<l:template name="May" text="May" lang="en"/>
-<l:template name="June" text="June" lang="en"/>
-<l:template name="July" text="July" lang="en"/>
-<l:template name="August" text="August" lang="en"/>
-<l:template name="September" text="September" lang="en"/>
-<l:template name="October" text="October" lang="en"/>
-<l:template name="November" text="November" lang="en"/>
-<l:template name="December" text="December" lang="en"/>
-<l:template name="Monday" text="Monday" lang="en"/>
-<l:template name="Tuesday" text="Tuesday" lang="en"/>
-<l:template name="Wednesday" text="Wednesday" lang="en"/>
-<l:template name="Thursday" text="Thursday" lang="en"/>
-<l:template name="Friday" text="Friday" lang="en"/>
-<l:template name="Saturday" text="Saturday" lang="en"/>
-<l:template name="Sunday" text="Sunday" lang="en"/>
+<l:context name="datetime-full"><l:template name="January" text="Janeiro"/>
+<l:template name="February" text="Fevereiri"/>
+<l:template name="March" text="Março"/>
+<l:template name="April" text="Abril"/>
+<l:template name="May" text="Maio"/>
+<l:template name="June" text="Junho"/>
+<l:template name="July" text="Jullho"/>
+<l:template name="August" text="Agosto"/>
+<l:template name="September" text="Setembro"/>
+<l:template name="October" text="Outubro"/>
+<l:template name="November" text="Novembro"/>
+<l:template name="December" text="Dezembro"/>
+<l:template name="Monday" text="Segunda-feira"/>
+<l:template name="Tuesday" text="Terça-feira"/>
+<l:template name="Wednesday" text="Quarta-feira"/>
+<l:template name="Thursday" text="Quinta-feira"/>
+<l:template name="Friday" text="Sexta-feira"/>
+<l:template name="Saturday" text="Sabado"/>
+<l:template name="Sunday" text="Domingo"/>
 </l:context>
-<l:context name="datetime-abbrev"><l:template name="Jan" text="Jan" lang="en"/>
-<l:template name="Feb" text="Feb" lang="en"/>
-<l:template name="Mar" text="Mar" lang="en"/>
-<l:template name="Apr" text="Apr" lang="en"/>
-<l:template name="May" text="May" lang="en"/>
-<l:template name="Jun" text="Jun" lang="en"/>
-<l:template name="Jul" text="Jul" lang="en"/>
-<l:template name="Aug" text="Aug" lang="en"/>
-<l:template name="Sep" text="Sep" lang="en"/>
-<l:template name="Oct" text="Oct" lang="en"/>
-<l:template name="Nov" text="Nov" lang="en"/>
-<l:template name="Dec" text="Dec" lang="en"/>
-<l:template name="Mon" text="Mon" lang="en"/>
-<l:template name="Tue" text="Tue" lang="en"/>
-<l:template name="Wed" text="Wed" lang="en"/>
-<l:template name="Thu" text="Thu" lang="en"/>
-<l:template name="Fri" text="Fri" lang="en"/>
-<l:template name="Sat" text="Sat" lang="en"/>
-<l:template name="Sun" text="Sun" lang="en"/>
+<l:context name="datetime-abbrev"><l:template name="Jan" text="Jan"/>
+<l:template name="Feb" text="Fev"/>
+<l:template name="Mar" text="Mar"/>
+<l:template name="Apr" text="Abr"/>
+<l:template name="May" text="Maio"/>
+<l:template name="Jun" text="Jun"/>
+<l:template name="Jul" text="Jul"/>
+<l:template name="Aug" text="Ago"/>
+<l:template name="Sep" text="Set"/>
+<l:template name="Oct" text="Out"/>
+<l:template name="Nov" text="Nov"/>
+<l:template name="Dec" text="Dez"/>
+<l:template name="Mon" text="Seg"/>
+<l:template name="Tue" text="Ter"/>
+<l:template name="Wed" text="Qua"/>
+<l:template name="Thu" text="Qui"/>
+<l:template name="Fri" text="Sex"/>
+<l:template name="Sat" text="Sab"/>
+<l:template name="Sun" text="Dom"/>
 </l:context>
 <l:context name="htmlhelp"><l:template name="langcode" text="0x0416 Portuguese (BRAZIL)"/>
 </l:context>
-<l:context name="index"><l:template name="term-separator" text=", " lang="en"/>
-<l:template name="number-separator" text=", " lang="en"/>
-<l:template name="range-separator" text="-" lang="en"/>
+<l:context name="index"><l:template name="term-separator" text=", "/>
+<l:template name="number-separator" text=", "/>
+<l:template name="range-separator" text="-"/>
 </l:context>
-<l:context name="iso690"><l:template name="lastfirst.sep" text=", " lang="en"/>
-<l:template name="alt.person.two.sep" text=" – " lang="en"/>
-<l:template name="alt.person.last.sep" text=" – " lang="en"/>
-<l:template name="alt.person.more.sep" text=" – " lang="en"/>
-<l:template name="primary.editor" text=" (ed.)" lang="en"/>
-<l:template name="primary.many" text=", et al." lang="en"/>
-<l:template name="primary.sep" text=". " lang="en"/>
-<l:template name="submaintitle.sep" text=": " lang="en"/>
-<l:template name="title.sep" text=". " lang="en"/>
-<l:template name="othertitle.sep" text=", " lang="en"/>
-<l:template name="medium1" text=" [" lang="en"/>
-<l:template name="medium2" text="]" lang="en"/>
-<l:template name="secondary.person.sep" text="; " lang="en"/>
-<l:template name="secondary.sep" text=". " lang="en"/>
-<l:template name="respons.sep" text=". " lang="en"/>
-<l:template name="edition.sep" text=". " lang="en"/>
-<l:template name="edition.serial.sep" text=", " lang="en"/>
-<l:template name="issuing.range" text="-" lang="en"/>
-<l:template name="issuing.div" text=", " lang="en"/>
-<l:template name="issuing.sep" text=". " lang="en"/>
-<l:template name="partnr.sep" text=". " lang="en"/>
-<l:template name="placepubl.sep" text=": " lang="en"/>
-<l:template name="publyear.sep" text=", " lang="en"/>
-<l:template name="pubinfo.sep" text=". " lang="en"/>
-<l:template name="spec.pubinfo.sep" text=", " lang="en"/>
-<l:template name="upd.sep" text=", " lang="en"/>
-<l:template name="datecit1" text=" [cited " lang="en"/>
-<l:template name="datecit2" text="]" lang="en"/>
-<l:template name="extent.sep" text=". " lang="en"/>
-<l:template name="locs.sep" text=", " lang="en"/>
-<l:template name="location.sep" text=". " lang="en"/>
-<l:template name="serie.sep" text=". " lang="en"/>
-<l:template name="notice.sep" text=". " lang="en"/>
-<l:template name="access" text="Available " lang="en"/>
-<l:template name="acctoo" text="Also available " lang="en"/>
-<l:template name="onwww" text="from World Wide Web" lang="en"/>
-<l:template name="oninet" text="from Internet" lang="en"/>
-<l:template name="access.end" text=": " lang="en"/>
-<l:template name="link1" text="&lt;" lang="en"/>
-<l:template name="link2" text="&gt;" lang="en"/>
-<l:template name="access.sep" text=". " lang="en"/>
-<l:template name="isbn" text="ISBN " lang="en"/>
-<l:template name="issn" text="ISSN " lang="en"/>
-<l:template name="stdnum.sep" text=". " lang="en"/>
-<l:template name="patcountry.sep" text=". " lang="en"/>
-<l:template name="pattype.sep" text=", " lang="en"/>
-<l:template name="patnum.sep" text=". " lang="en"/>
-<l:template name="patdate.sep" text=". " lang="en"/>
-</l:context><l:letters lang="en"><l:l i="-1"/>
-<l:l i="0">Symbols</l:l>
+<l:context name="iso690"><l:template name="lastfirst.sep" text=", "/>
+<l:template name="alt.person.two.sep" text=" – "/>
+<l:template name="alt.person.last.sep" text=" – "/>
+<l:template name="alt.person.more.sep" text=" – "/>
+<l:template name="primary.editor" text=" (ed.)"/>
+<l:template name="primary.many" text=", et al."/>
+<l:template name="primary.sep" text=". "/>
+<l:template name="submaintitle.sep" text=": "/>
+<l:template name="title.sep" text=". "/>
+<l:template name="othertitle.sep" text=", "/>
+<l:template name="medium1" text=" ["/>
+<l:template name="medium2" text="]"/>
+<l:template name="secondary.person.sep" text="; "/>
+<l:template name="secondary.sep" text=". "/>
+<l:template name="respons.sep" text=". "/>
+<l:template name="edition.sep" text=". "/>
+<l:template name="edition.serial.sep" text=", "/>
+<l:template name="issuing.range" text="-"/>
+<l:template name="issuing.div" text=", "/>
+<l:template name="issuing.sep" text=". "/>
+<l:template name="partnr.sep" text=". "/>
+<l:template name="placepubl.sep" text=": "/>
+<l:template name="publyear.sep" text=", "/>
+<l:template name="pubinfo.sep" text=". "/>
+<l:template name="spec.pubinfo.sep" text=", "/>
+<l:template name="upd.sep" text=", "/>
+<l:template name="datecit1" text=" [cited "/>
+<l:template name="datecit2" text="]"/>
+<l:template name="extent.sep" text=". "/>
+<l:template name="locs.sep" text=", "/>
+<l:template name="location.sep" text=". "/>
+<l:template name="serie.sep" text=". "/>
+<l:template name="notice.sep" text=". "/>
+<l:template name="access" text="Available "/>
+<l:template name="acctoo" text="Also available "/>
+<l:template name="onwww" text="from World Wide Web"/>
+<l:template name="oninet" text="from Internet"/>
+<l:template name="access.end" text=": "/>
+<l:template name="link1" text="&lt;"/>
+<l:template name="link2" text="&gt;"/>
+<l:template name="access.sep" text=". "/>
+<l:template name="isbn" text="ISBN "/>
+<l:template name="issn" text="ISSN "/>
+<l:template name="stdnum.sep" text=". "/>
+<l:template name="patcountry.sep" text=". "/>
+<l:template name="pattype.sep" text=", "/>
+<l:template name="patnum.sep" text=". "/>
+<l:template name="patdate.sep" text=". "/>
+</l:context><l:letters><l:l i="-1"/>
+<l:l i="0">Símbolos</l:l>
 <l:l i="10">A</l:l>
 <l:l i="10">a</l:l>
 <l:l i="10">À</l:l>

@@ -570,9 +570,14 @@ element label.</para>
     <xsl:if test="$qanda.inherit.numeration != 0">
       <xsl:choose>
         <xsl:when test="ancestor::qandadiv">
-          <xsl:apply-templates select="ancestor::qandadiv[1]" mode="label.markup"/>
-          <xsl:apply-templates select="ancestor::qandadiv[1]"
-                               mode="intralabel.punctuation"/>
+          <xsl:variable name="div.label">
+            <xsl:apply-templates select="ancestor::qandadiv[1]" mode="label.markup"/>
+          </xsl:variable>
+          <xsl:if test="string-length($div.label) != 0">
+            <xsl:copy-of select="$div.label"/>
+            <xsl:apply-templates select="ancestor::qandadiv[1]"
+                                 mode="intralabel.punctuation"/>
+          </xsl:if>
         </xsl:when>
         <xsl:when test="$lparent.prefix != ''">
           <xsl:apply-templates select="$lparent" mode="label.markup"/>
@@ -603,19 +608,35 @@ element label.</para>
       <xsl:apply-templates select="$label"/>
     </xsl:when>
 
-    <xsl:when test="$deflabel = 'qanda' and local-name(.) = 'question'">
+    <xsl:when test="$deflabel = 'qanda' and self::question">
       <xsl:call-template name="gentext">
         <xsl:with-param name="key" select="'Question'"/>
       </xsl:call-template>
     </xsl:when>
 
-    <xsl:when test="$deflabel = 'qanda' and local-name(.) = 'answer'">
+    <xsl:when test="$deflabel = 'qanda' and self::answer">
       <xsl:call-template name="gentext">
         <xsl:with-param name="key" select="'Answer'"/>
       </xsl:call-template>
     </xsl:when>
 
-    <xsl:when test="$deflabel = 'number' and local-name(.) = 'question'">
+    <xsl:when test="($deflabel = 'qnumber' or
+                     $deflabel = 'qnumberanda') and self::question">
+      <xsl:call-template name="gentext">
+        <xsl:with-param name="key" select="'Question'"/>
+      </xsl:call-template>
+      <xsl:text>&#xA0;</xsl:text>
+      <xsl:value-of select="$prefix"/>
+      <xsl:number level="multiple" count="qandaentry" format="1"/>
+    </xsl:when>
+
+    <xsl:when test="$deflabel = 'qnumberanda' and self::answer">
+      <xsl:call-template name="gentext">
+        <xsl:with-param name="key" select="'Answer'"/>
+      </xsl:call-template>
+    </xsl:when>
+
+    <xsl:when test="$deflabel = 'number' and self::question">
       <xsl:value-of select="$prefix"/>
       <xsl:number level="multiple" count="qandaentry" format="1"/>
     </xsl:when>
@@ -631,9 +652,9 @@ element label.</para>
 
 <xsl:template match="figure|table|example" mode="label.markup">
   <xsl:variable name="pchap"
-                select="ancestor::chapter
+                select="(ancestor::chapter
                         |ancestor::appendix
-                        |ancestor::article[ancestor::book]"/>
+                        |ancestor::article[ancestor::book])[last()]"/>
 
   <xsl:variable name="prefix">
     <xsl:if test="count($pchap) &gt; 0">
@@ -721,12 +742,12 @@ element label.</para>
             <xsl:apply-templates select="$pchap" mode="label.markup"/>
             <xsl:apply-templates select="$pchap" mode="intralabel.punctuation"/>
           </xsl:if>
-          <xsl:number format="1" count="equation[title or info/title]" 
-	              from="chapter|appendix" level="any"/>
+          <xsl:number format="1" count="equation" 
+                      from="chapter|appendix" level="any"/>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:number format="1" count="equation[title or info/title]" 
-	              from="book|article" level="any"/>
+          <xsl:number format="1" count="equation" 
+                      from="book|article" level="any"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:otherwise>
@@ -838,9 +859,9 @@ Custom stylesheets may override it to get more selective behavior.</para>
         <xsl:when test="$format='upperroman' or $format='I'">
           <xsl:value-of select="'I'"/>
         </xsl:when>      
-	<xsl:when test="$format='arabicindic' or $format='&#x661;'">
-	  <xsl:value-of select="'&#x661;'"/>
-	</xsl:when>
+        <xsl:when test="$format='arabicindic' or $format='&#x661;'">
+          <xsl:value-of select="'&#x661;'"/>
+        </xsl:when>
         <xsl:otherwise>
           <xsl:message>
             <xsl:text>Unexpected </xsl:text><xsl:value-of select="local-name(.)"/><xsl:text>.autolabel value: </xsl:text>

@@ -20,7 +20,7 @@
 <refsection><info><title>Description</title></info>
 
 <para>If true, TOCs will be annotated. At present, this just means
-that the <tag>RefPurpose</tag> of <tag>RefEntry</tag>
+that the <tag>refpurpose</tag> of <tag>refentry</tag>
 TOC entries will be displayed.
 </para>
 

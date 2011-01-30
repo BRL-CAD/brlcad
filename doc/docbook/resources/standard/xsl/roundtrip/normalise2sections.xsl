@@ -15,7 +15,7 @@
 <!--====================================-->
   <axsl:output indent="yes"/>
   <axsl:strip-space elements="*"/>
-  <axsl:preserve-space elements="dbk:para"/>
+  <axsl:preserve-space elements="dbk:para dbk:emphasis"/>
   <axsl:template match="dbk:article">
     <axsl:copy>
       <axsl:for-each select="@*">

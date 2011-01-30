@@ -23,7 +23,9 @@
   <xsl:text>.sp&#10;</xsl:text>
   <xsl:call-template name="roff-if-end"/>
   <xsl:text>.RS 4&#10;</xsl:text>
-  <xsl:text>.BM yellow&#10;</xsl:text>
+  <xsl:if test="not($man.output.better.ps.enabled = 0)">
+    <xsl:text>.BM yellow&#10;</xsl:text>
+  </xsl:if>
   <xsl:call-template name="pinch.together"/>
   <xsl:text>.ps +1&#10;</xsl:text>
   <xsl:call-template name="make.bold.title"/>
@@ -31,7 +33,9 @@
   <xsl:text>.br&#10;</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>.sp .5v&#10;</xsl:text>
-  <xsl:text>.EM yellow&#10;</xsl:text>
+  <xsl:if test="not($man.output.better.ps.enabled = 0)">
+    <xsl:text>.EM yellow&#10;</xsl:text>
+  </xsl:if>
   <xsl:text>.RE&#10;</xsl:text>
 </xsl:template> 
 
@@ -97,12 +101,24 @@
 </xsl:template>
 
 <xsl:template match="simpara">
-  <xsl:if test="not(ancestor::authorblurb)
-    and not(ancestor::personblurb)
-    and not(ancestor::callout)"
-    >
-    <xsl:text>.sp&#10;</xsl:text>
-  </xsl:if>
+  <xsl:choose>
+    <xsl:when test="ancestor::footnote or
+                    ancestor::annotation or
+                    ancestor::authorblurb or
+                    ancestor::personblurb or
+                    ancestor::callout">
+      <xsl:if test="preceding-sibling::*[not(name() ='')]">
+        <xsl:text>.sp</xsl:text>
+        <xsl:text>&#10;</xsl:text>
+        <xsl:text>.RS 4n</xsl:text>
+        <xsl:text>&#10;</xsl:text>
+      </xsl:if>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>.sp</xsl:text>
+      <xsl:text>&#10;</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
   <xsl:variable name="content">
     <xsl:apply-templates/>
   </xsl:variable>
@@ -205,9 +221,11 @@
       <xsl:choose>
         <xsl:when test="self::literallayout|self::programlisting|self::screen
           and not(ancestor::*[local-name() = 'refsynopsisdiv'])
+          and not($man.output.better.ps.enabled = 0)
           ">
-          <!-- * if this is a literallayout|programlisting|screen, then -->
-          <!-- * we put a background behind it in non-TTY output; except -->
+          <!-- * if this is a literallayout|programlisting|screen, -->
+          <!-- * and user has set man.output.better.ps.enabled to non-zero, -->
+          <!-- * then we put a background behind it in non-TTY output; except -->
           <!-- * if it’s a descendant of a refsynopsisdiv (as can be -->
           <!-- * found in the git docs) -->
           <xsl:choose>

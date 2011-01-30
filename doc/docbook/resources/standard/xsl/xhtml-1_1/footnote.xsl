@@ -23,7 +23,7 @@
   </xsl:variable>
 
   <xsl:choose>
-    <xsl:when test="ancestor::tgroup">
+    <xsl:when test="ancestor::table or ancestor::informaltable">
       <sup>
         <xsl:text>[</xsl:text>
         <a id="{$name}" href="{$href}">
@@ -49,6 +49,15 @@
 <xsl:template match="footnoteref">
   <xsl:variable name="targets" select="key('id',@linkend)"/>
   <xsl:variable name="footnote" select="$targets[1]"/>
+
+  <xsl:if test="not(local-name($footnote) = 'footnote')">
+   <xsl:message terminate="yes">
+ERROR: A footnoteref element has a linkend that points to an element that is not a footnote. 
+Typically this happens when an id attribute is accidentally applied to the child of a footnote element. 
+target element: <xsl:value-of select="local-name($footnote)"/>
+linkend/id: <xsl:value-of select="@linkend"/>
+   </xsl:message>
+  </xsl:if>
 
   <xsl:variable name="target.href">
     <xsl:call-template name="href.target">
@@ -77,7 +86,7 @@
     <xsl:when test="string-length(@label) != 0">
       <xsl:value-of select="@label"/>
     </xsl:when>
-    <xsl:when test="ancestor::tgroup">
+    <xsl:when test="ancestor::table or ancestor::informaltable">
       <xsl:variable name="tfnum">
         <xsl:number level="any" from="table|informaltable" format="1"/>
       </xsl:variable>
@@ -87,13 +96,13 @@
           <xsl:value-of select="substring($table.footnote.number.symbols, $tfnum, 1)"/>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:number level="any" from="tgroup" format="{$table.footnote.number.format}"/>
+          <xsl:number level="any" from="table | informaltable" format="{$table.footnote.number.format}"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:when>
     <xsl:otherwise>
       <xsl:variable name="pfoot" select="preceding::footnote[not(@label)]"/>
-      <xsl:variable name="ptfoot" select="preceding::tgroup//footnote"/>
+      <xsl:variable name="ptfoot" select="preceding::table//footnote |                                           preceding::informaltable//footnote"/>
       <xsl:variable name="fnum" select="count($pfoot) - count($ptfoot) + 1"/>
 
       <xsl:choose>
@@ -125,22 +134,26 @@
       <xsl:with-param name="object" select="ancestor::footnote"/>
     </xsl:call-template>
   </xsl:variable>
-  <p>
-    <xsl:if test="@role and $para.propagates.style != 0">
-      <xsl:apply-templates select="." mode="class.attribute">
-        <xsl:with-param name="class" select="@role"/>
-      </xsl:apply-templates>
-    </xsl:if>
-    <sup>
-      <xsl:text>[</xsl:text>
-      <a id="{$name}" href="{$href}">
-        <xsl:apply-templates select="." mode="class.attribute"/>
-        <xsl:apply-templates select="ancestor::footnote" mode="footnote.number"/>
-      </a>
-      <xsl:text>] </xsl:text>
-    </sup>
-    <xsl:apply-templates/>
-  </p>
+
+  <xsl:call-template name="paragraph">
+    <xsl:with-param name="class">
+      <xsl:if test="@role and $para.propagates.style != 0">
+        <xsl:value-of select="@role"/>
+      </xsl:if>
+    </xsl:with-param>
+    <xsl:with-param name="content">
+      <sup>
+        <xsl:text>[</xsl:text>
+        <a id="{$name}" href="{$href}">
+          <xsl:apply-templates select="." mode="class.attribute"/>
+          <xsl:apply-templates select="ancestor::footnote" mode="footnote.number"/>
+        </a>
+        <xsl:text>] </xsl:text>
+      </sup>
+      <xsl:apply-templates/>
+    </xsl:with-param>
+  </xsl:call-template>
+
 </xsl:template>
 
 <!-- ==================================================================== -->
@@ -174,7 +187,7 @@
   </xsl:variable>
 
   <xsl:choose>
-    <xsl:when test="function-available('exsl:node-set')">
+    <xsl:when test="$exsl.node.set.available != 0">
       <xsl:variable name="html-nodes" select="exsl:node-set($html)"/>
       <xsl:choose>
         <xsl:when test="$html-nodes//p">
@@ -222,7 +235,7 @@
 
 <xsl:template name="process.footnotes">
   <xsl:variable name="footnotes" select=".//footnote"/>
-  <xsl:variable name="table.footnotes" select=".//tgroup//footnote"/>
+  <xsl:variable name="table.footnotes" select=".//table//footnote | .//informaltable//footnote"/>
 
   <!-- Only bother to do this if there's at least one non-table footnote -->
   <xsl:if test="count($footnotes)&gt;count($table.footnotes)">
@@ -254,14 +267,14 @@
   <xsl:choose>
     <xsl:when test="local-name(*[1]) = 'para' or local-name(*[1]) = 'simpara'">
       <div>
-        <xsl:apply-templates select="." mode="class.attribute"/>
+        <xsl:call-template name="common.html.attributes"/>
         <xsl:apply-templates/>
       </div>
     </xsl:when>
 
-    <xsl:when test="$html.cleanup != 0 and function-available('exsl:node-set')">
+    <xsl:when test="$html.cleanup != 0 and                      $exsl.node.set.available != 0">
       <div>
-        <xsl:apply-templates select="." mode="class.attribute"/>
+        <xsl:call-template name="common.html.attributes"/>
         <xsl:apply-templates select="*[1]" mode="footnote.body.number"/>
         <xsl:apply-templates select="*[position() &gt; 1]"/>
       </div>
@@ -275,14 +288,14 @@
         <xsl:text> unexpected as first child of footnote.</xsl:text>
       </xsl:message>
       <div>
-        <xsl:apply-templates select="." mode="class.attribute"/>
+        <xsl:call-template name="common.html.attributes"/>
         <xsl:apply-templates/>
       </div>
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="tgroup//footnote" mode="process.footnote.mode">
+<xsl:template match="table//footnote | informaltable//footnote" mode="process.footnote.mode">
 </xsl:template>
 
 <xsl:template match="footnote" mode="table.footnote.mode">

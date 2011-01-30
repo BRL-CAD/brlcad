@@ -17,6 +17,7 @@
 <refsynopsisdiv>
 <src:fragment xml:id="footnote.mark.properties.frag">
 <xsl:attribute-set name="footnote.mark.properties">
+  <xsl:attribute name="font-family"><xsl:value-of select="$body.fontset"/></xsl:attribute>
   <xsl:attribute name="font-size">75%</xsl:attribute>
   <xsl:attribute name="font-weight">normal</xsl:attribute>
   <xsl:attribute name="font-style">normal</xsl:attribute>

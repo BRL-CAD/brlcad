@@ -5,7 +5,7 @@
                 xmlns:exsl="http://exslt.org/common"
                 xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
 		version="1.0"
-                exclude-result-prefixes="doc"
+                exclude-result-prefixes="saxon lxslt redirect exsl doc"
                 extension-element-prefixes="saxon redirect lxslt exsl">
 
 <!-- ********************************************************************

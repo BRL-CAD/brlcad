@@ -257,6 +257,7 @@
   </xsl:if>
 
   <xsl:apply-templates select="dedication" mode="dedication"/>
+  <xsl:apply-templates select="acknowledgements" mode="acknowledgements"/>
 
   <xsl:call-template name="make.book.tocs"/>
 

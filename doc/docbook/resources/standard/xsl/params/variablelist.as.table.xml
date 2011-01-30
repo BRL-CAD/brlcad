@@ -22,7 +22,7 @@
 <refsection><info><title>Description</title></info>
 
 <para>If non-zero, <tag>variablelist</tag>s will be formatted as
-tables. A processing instruction exists to specify a particualar width for the 
+tables. A processing instruction exists to specify a particular width for the 
 column containing the <tag>term</tag>s:   
 <tag class="xmlpi">dbhtml term-width=".25in"</tag></para>
 
@@ -31,7 +31,7 @@ child of <tag>variablelist</tag>: <tag class="xmlpi">dbhtml
 list-presentation="table"</tag> or <tag class="xmlpi">dbhtml
 list-presentation="list"</tag>.</para>
 
-<para>This parameter only applys to the HTML transformations. In the
+<para>This parameter only applies to the HTML transformations. In the
 FO case, proper list markup is robust enough to handle the formatting.
 But see also <parameter>variablelist.as.blocks</parameter>.</para>
 

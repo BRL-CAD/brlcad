@@ -258,7 +258,7 @@ or 0 (the empty string)</para>
 
   <xsl:variable name="table" select="($tgroup/ancestor::table
                                      |$tgroup/ancestor::informaltable
-				     |$entry/ancestor::entrytbl)[last()]"/>
+                                     |$entry/ancestor::entrytbl)[last()]"/>
 
   <xsl:variable name="entry.value">
     <xsl:call-template name="get-attribute">
@@ -411,7 +411,7 @@ or 0 (the empty string)</para>
   <xsl:param name="attribute" select="'colname'"/>
   <xsl:param name="colspec.ancestor" 
              select="(ancestor::tgroup|ancestor::entrytbl)
-	             [position() = last()]"/>
+                     [position() = last()]"/>
   <xsl:param name="colspecs" select="$colspec.ancestor/colspec"/>
   <xsl:param name="count" select="1"/>
 
@@ -493,7 +493,7 @@ or 0 (the empty string)</para>
 
   <xsl:variable name="table" 
                 select="($node/ancestor-or-self::table | 
-                         $node/ancestor-or-self::informaltable)[1]"/>
+                         $node/ancestor-or-self::informaltable)[last()]"/>
 
   <xsl:variable name="tabstyle">
     <xsl:choose>

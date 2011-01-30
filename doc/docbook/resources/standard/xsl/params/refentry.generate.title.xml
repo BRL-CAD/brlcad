@@ -10,7 +10,7 @@
 </refmeta>
 <refnamediv>
 <refname>refentry.generate.title</refname>
-<refpurpose>Output title before 'RefName'(s)?</refpurpose>
+<refpurpose>Output title before <tag>refname</tag>s?</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
@@ -22,7 +22,7 @@
 <refsection><info><title>Description</title></info>
 
 <para>If non-zero, the reference page title or first name is
-output before the list of 'RefName's. This parameter and
+output before the list of <tag>refname</tag>s. This parameter and
 <parameter>refentry.generate.name</parameter> are mutually exclusive.
 This means that if you change this parameter to non-zero, you
 should set <parameter>refentry.generate.name</parameter> to zero unless

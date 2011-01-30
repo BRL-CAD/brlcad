@@ -23,7 +23,14 @@
 <!-- ==================================================================== -->
 
 <xsl:template name="block.object">
+  <xsl:variable name="keep.together">
+    <xsl:call-template name="pi.dbfo_keep-together"/>
+  </xsl:variable>
   <fo:block>
+    <xsl:if test="$keep.together != ''">
+      <xsl:attribute name="keep-together.within-column"><xsl:value-of
+                      select="$keep.together"/></xsl:attribute>
+    </xsl:if>
     <xsl:call-template name="anchor"/>
     <xsl:apply-templates/>
   </fo:block>
@@ -32,21 +39,42 @@
 <!-- ==================================================================== -->
 
 <xsl:template match="para">
+  <xsl:variable name="keep.together">
+    <xsl:call-template name="pi.dbfo_keep-together"/>
+  </xsl:variable>
   <fo:block xsl:use-attribute-sets="normal.para.spacing">
+    <xsl:if test="$keep.together != ''">
+      <xsl:attribute name="keep-together.within-column"><xsl:value-of
+                      select="$keep.together"/></xsl:attribute>
+    </xsl:if>
     <xsl:call-template name="anchor"/>
     <xsl:apply-templates/>
   </fo:block>
 </xsl:template>
 
 <xsl:template match="simpara">
+  <xsl:variable name="keep.together">
+    <xsl:call-template name="pi.dbfo_keep-together"/>
+  </xsl:variable>
   <fo:block xsl:use-attribute-sets="normal.para.spacing">
+    <xsl:if test="$keep.together != ''">
+      <xsl:attribute name="keep-together.within-column"><xsl:value-of
+                      select="$keep.together"/></xsl:attribute>
+    </xsl:if>
     <xsl:call-template name="anchor"/>
     <xsl:apply-templates/>
   </fo:block>
 </xsl:template>
 
 <xsl:template match="formalpara">
+  <xsl:variable name="keep.together">
+    <xsl:call-template name="pi.dbfo_keep-together"/>
+  </xsl:variable>
   <fo:block xsl:use-attribute-sets="normal.para.spacing">
+    <xsl:if test="$keep.together != ''">
+      <xsl:attribute name="keep-together.within-column"><xsl:value-of
+                      select="$keep.together"/></xsl:attribute>
+    </xsl:if>
     <xsl:call-template name="anchor"/>
     <xsl:apply-templates/>
   </fo:block>
@@ -86,7 +114,14 @@
 <!-- ==================================================================== -->
 
 <xsl:template match="blockquote">
+  <xsl:variable name="keep.together">
+    <xsl:call-template name="pi.dbfo_keep-together"/>
+  </xsl:variable>
   <fo:block xsl:use-attribute-sets="blockquote.properties">
+    <xsl:if test="$keep.together != ''">
+      <xsl:attribute name="keep-together.within-column"><xsl:value-of
+                      select="$keep.together"/></xsl:attribute>
+    </xsl:if>
     <xsl:call-template name="anchor"/>
     <fo:block>
       <xsl:if test="title|info/title">
@@ -107,13 +142,14 @@
   </fo:block>
 </xsl:template>
 
+<!-- Use an em dash per Chicago Manual of Style and https://sourceforge.net/tracker/index.php?func=detail&aid=2793878&group_id=21935&atid=373747 -->
 <xsl:template match="epigraph">
   <fo:block>
     <xsl:call-template name="anchor"/>
     <xsl:apply-templates select="para|simpara|formalpara|literallayout"/>
     <xsl:if test="attribution">
       <fo:inline>
-        <xsl:text>--</xsl:text>
+        <xsl:text>&#x2014;</xsl:text>
         <xsl:apply-templates select="attribution"/>
       </fo:inline>
     </xsl:if>
@@ -386,7 +422,14 @@
 <!-- ==================================================================== -->
 
 <xsl:template match="abstract">
+  <xsl:variable name="keep.together">
+    <xsl:call-template name="pi.dbfo_keep-together"/>
+  </xsl:variable>
   <fo:block xsl:use-attribute-sets="abstract.properties">
+    <xsl:if test="$keep.together != ''">
+      <xsl:attribute name="keep-together.within-column"><xsl:value-of
+                      select="$keep.together"/></xsl:attribute>
+    </xsl:if>
     <xsl:call-template name="anchor"/>
     <xsl:apply-templates/>
   </fo:block>
@@ -500,15 +543,26 @@
       <fo:table-row>
         <fo:table-cell number-columns-spanned="3" xsl:use-attribute-sets="revhistory.table.cell.properties">
           <fo:block xsl:use-attribute-sets="revhistory.title.properties">
-            <xsl:call-template name="gentext">
-              <xsl:with-param name="key" select="'RevHistory'"/>
-            </xsl:call-template>
+            <xsl:choose>
+              <xsl:when test="title|info/title">
+                <xsl:apply-templates select="title|info/title" mode="titlepage.mode"/>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:call-template name="gentext">
+                  <xsl:with-param name="key" select="'RevHistory'"/>
+                </xsl:call-template>
+              </xsl:otherwise>
+            </xsl:choose>
           </fo:block>
         </fo:table-cell>
       </fo:table-row>
       <xsl:apply-templates/>
     </fo:table-body>
   </fo:table>
+</xsl:template>
+
+<xsl:template match="revhistory/title">
+  <!-- Handled in titlepage.mode -->
 </xsl:template>
 
 <xsl:template match="revhistory/revision">
@@ -582,7 +636,7 @@
 
 <!-- ==================================================================== -->
 
-<xsl:template match="ackno">
+<xsl:template match="ackno|acknowledgements[parent::article]">
   <fo:block xsl:use-attribute-sets="normal.para.spacing">
     <xsl:call-template name="anchor"/>
     <xsl:apply-templates/>

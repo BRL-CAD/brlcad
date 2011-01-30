@@ -209,6 +209,82 @@
 
 <!-- ==================================================================== -->
 
+<xsl:template match="acknowledgements" mode="acknowledgements">
+  <xsl:variable name="id">
+    <xsl:call-template name="object.id"/>
+  </xsl:variable>
+
+  <xsl:variable name="master-reference">
+    <xsl:call-template name="select.pagemaster"/>
+  </xsl:variable>
+
+  <fo:page-sequence hyphenate="{$hyphenate}"
+                    master-reference="{$master-reference}">
+    <xsl:attribute name="language">
+      <xsl:call-template name="l10n.language"/>
+    </xsl:attribute>
+    <xsl:attribute name="format">
+      <xsl:call-template name="page.number.format">
+        <xsl:with-param name="master-reference" select="$master-reference"/>
+      </xsl:call-template>
+    </xsl:attribute>
+    <xsl:attribute name="initial-page-number">
+      <xsl:call-template name="initial.page.number">
+        <xsl:with-param name="master-reference" select="$master-reference"/>
+      </xsl:call-template>
+    </xsl:attribute>
+    <xsl:attribute name="force-page-count">
+      <xsl:call-template name="force.page.count">
+        <xsl:with-param name="master-reference" select="$master-reference"/>
+      </xsl:call-template>
+    </xsl:attribute>
+    <xsl:attribute name="hyphenation-character">
+      <xsl:call-template name="gentext">
+        <xsl:with-param name="key" select="'hyphenation-character'"/>
+      </xsl:call-template>
+    </xsl:attribute>
+    <xsl:attribute name="hyphenation-push-character-count">
+      <xsl:call-template name="gentext">
+        <xsl:with-param name="key" select="'hyphenation-push-character-count'"/>
+      </xsl:call-template>
+    </xsl:attribute>
+    <xsl:attribute name="hyphenation-remain-character-count">
+      <xsl:call-template name="gentext">
+        <xsl:with-param name="key" select="'hyphenation-remain-character-count'"/>
+      </xsl:call-template>
+    </xsl:attribute>
+
+    <xsl:apply-templates select="." mode="running.head.mode">
+      <xsl:with-param name="master-reference" select="$master-reference"/>
+    </xsl:apply-templates>
+
+    <xsl:apply-templates select="." mode="running.foot.mode">
+      <xsl:with-param name="master-reference" select="$master-reference"/>
+    </xsl:apply-templates>
+
+    <fo:flow flow-name="xsl-region-body">
+      <xsl:call-template name="set.flow.properties">
+        <xsl:with-param name="element" select="local-name(.)"/>
+        <xsl:with-param name="master-reference" select="$master-reference"/>
+      </xsl:call-template>
+
+      <fo:block id="{$id}"
+                xsl:use-attribute-sets="component.titlepage.properties">
+        <xsl:call-template name="acknowledgements.titlepage"/>
+      </fo:block>
+      <xsl:apply-templates/>
+    </fo:flow>
+  </fo:page-sequence>
+</xsl:template>
+
+<xsl:template match="acknowledgements"></xsl:template>
+<xsl:template match="acknowledgements/info"></xsl:template>
+<xsl:template match="acknowledgements/title"></xsl:template>
+<xsl:template match="acknowledgements/titleabbrev"></xsl:template>
+<xsl:template match="acknowledgements/subtitle"></xsl:template>
+
+<!-- ==================================================================== -->
+
 <xsl:template match="colophon">
   <xsl:variable name="id">
     <xsl:call-template name="object.id"/>

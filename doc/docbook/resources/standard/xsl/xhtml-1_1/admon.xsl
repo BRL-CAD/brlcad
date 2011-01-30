@@ -62,7 +62,7 @@
   </xsl:variable>
 
   <div>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:call-template name="common.html.attributes"/>
     <xsl:if test="$admon.style != ''">
       <xsl:attribute name="style">
         <xsl:value-of select="$admon.style"/>
@@ -86,7 +86,7 @@
             </xsl:attribute>
           </img>
         </td>
-        <th align="left">
+        <th align="{$direction.align.start}">
           <xsl:call-template name="anchor"/>
           <xsl:if test="$admon.textlabel != 0 or title or info/title">
             <xsl:apply-templates select="." mode="object.title.markup"/>
@@ -94,7 +94,7 @@
         </th>
       </tr>
       <tr>
-        <td align="left" valign="top">
+        <td align="{$direction.align.start}" valign="top">
           <xsl:apply-templates/>
         </td>
       </tr>
@@ -104,7 +104,9 @@
 
 <xsl:template name="nongraphical.admonition">
   <div>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:call-template name="common.html.attributes">
+      <xsl:with-param name="inherit" select="1"/>
+    </xsl:call-template>
     <xsl:if test="$admon.style">
       <xsl:attribute name="style">
         <xsl:value-of select="$admon.style"/>

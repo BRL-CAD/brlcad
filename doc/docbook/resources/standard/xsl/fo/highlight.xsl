@@ -15,28 +15,30 @@
 
      ******************************************************************** -->
 
-<xsl:template match='xslthl:keyword'>
-  <fo:inline font-weight="bold"><xsl:apply-templates/></fo:inline>
+<xsl:import href="../highlighting/common.xsl"/>
+
+<xsl:template match='xslthl:keyword' mode="xslthl">
+  <fo:inline font-weight="bold"><xsl:apply-templates mode="xslthl"/></fo:inline>
 </xsl:template>
 
-<xsl:template match='xslthl:string'>
-  <fo:inline font-weight="bold" font-style="italic"><xsl:apply-templates/></fo:inline>
+<xsl:template match='xslthl:string' mode="xslthl">
+  <fo:inline font-weight="bold" font-style="italic"><xsl:apply-templates mode="xslthl"/></fo:inline>
 </xsl:template>
 
-<xsl:template match='xslthl:comment'>
-  <fo:inline font-style="italic"><xsl:apply-templates/></fo:inline>
+<xsl:template match='xslthl:comment' mode="xslthl">
+  <fo:inline font-style="italic"><xsl:apply-templates mode="xslthl"/></fo:inline>
 </xsl:template>
 
-<xsl:template match='xslthl:tag'>
-  <fo:inline font-weight="bold"><xsl:apply-templates/></fo:inline>
+<xsl:template match='xslthl:tag' mode="xslthl">
+  <fo:inline font-weight="bold"><xsl:apply-templates mode="xslthl"/></fo:inline>
 </xsl:template>
 
-<xsl:template match='xslthl:attribute'>
-  <fo:inline font-weight="bold"><xsl:apply-templates/></fo:inline>
+<xsl:template match='xslthl:attribute' mode="xslthl">
+  <fo:inline font-weight="bold"><xsl:apply-templates mode="xslthl"/></fo:inline>
 </xsl:template>
 
-<xsl:template match='xslthl:value'>
-  <fo:inline font-weight="bold"><xsl:apply-templates/></fo:inline>
+<xsl:template match='xslthl:value' mode="xslthl">
+  <fo:inline font-weight="bold"><xsl:apply-templates mode="xslthl"/></fo:inline>
 </xsl:template>
 
 <!--
@@ -52,6 +54,24 @@
   <span style='background:yellow'><xsl:apply-templates/></span>
 </xsl:template>
 -->
+
+<xsl:template match='xslthl:number' mode="xslthl">
+  <xsl:apply-templates mode="xslthl"/>
+</xsl:template>
+
+<xsl:template match='xslthl:annotation' mode="xslthl">
+  <fo:inline color="gray"><xsl:apply-templates mode="xslthl"/></fo:inline>
+</xsl:template>
+
+<xsl:template match='xslthl:directive' mode="xslthl">
+  <xsl:apply-templates mode="xslthl"/>
+</xsl:template>
+
+<!-- Not sure which element will be in final XSLTHL 2.0 -->
+<xsl:template match='xslthl:doccomment|xslthl:doctype' mode="xslthl">
+  <fo:inline font-weight="bold"><xsl:apply-templates mode="xslthl"/></fo:inline>
+</xsl:template>
+
 
 </xsl:stylesheet>
 

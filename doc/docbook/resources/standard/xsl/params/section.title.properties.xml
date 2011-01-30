@@ -25,7 +25,7 @@
   <xsl:attribute name="space-before.minimum">0.8em</xsl:attribute>
   <xsl:attribute name="space-before.optimum">1.0em</xsl:attribute>
   <xsl:attribute name="space-before.maximum">1.2em</xsl:attribute>
-  <xsl:attribute name="text-align">left</xsl:attribute>
+  <xsl:attribute name="text-align">start</xsl:attribute>
   <xsl:attribute name="start-indent"><xsl:value-of select="$title.margin.left"/></xsl:attribute>
 </xsl:attribute-set>
 </src:fragment>

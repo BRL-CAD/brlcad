@@ -23,6 +23,7 @@
 	%xmlns;		CDATA	#FIXED %uri;
 	language	CDATA	#REQUIRED
 	english-language-name	CDATA	#IMPLIED
+	href            CDATA   #IMPLIED
 >
 
 <!ELEMENT %gentext; EMPTY>

@@ -3,7 +3,7 @@
                 xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 xmlns:xlink="http://www.w3.org/1999/xlink"
                 xmlns:exsl="http://exslt.org/common"
-                exclude-result-prefixes="exsl"
+                exclude-result-prefixes="exsl xlink"
                 version='1.0'>
 
 <!-- ********************************************************************
@@ -59,6 +59,16 @@
 
 <xsl:template match="footnoteref">
   <xsl:variable name="footnote" select="key('id',@linkend)"/>
+
+  <xsl:if test="not(local-name($footnote) = 'footnote')">
+   <xsl:message terminate="yes">
+ERROR: A footnoteref element has a linkend that points to an element that is not a footnote. 
+Typically this happens when an id attribute is accidentally applied to the child of a footnote element. 
+target element: <xsl:value-of select="local-name($footnote)"/>
+linkend/id: <xsl:value-of select="@linkend"/>
+   </xsl:message>
+  </xsl:if>
+
   <xsl:call-template name="format.footnote.mark">
     <xsl:with-param name="mark">
       <xsl:apply-templates select="$footnote" mode="footnote.number"/>
@@ -186,7 +196,7 @@
       </fo:block>
     </xsl:when>
 
-    <xsl:when test="function-available('exsl:node-set')">
+    <xsl:when test="$exsl.node.set.available != 0">
       <fo:block xsl:use-attribute-sets="table.footnote.properties">
         <xsl:apply-templates select="*[1]" mode="footnote.body.number"/>
         <xsl:apply-templates select="*[position() &gt; 1]"/>

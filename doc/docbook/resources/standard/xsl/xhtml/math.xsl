@@ -22,7 +22,7 @@
 
 <xsl:template match="mathphrase">
   <span>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates/>
   </span>
 </xsl:template>

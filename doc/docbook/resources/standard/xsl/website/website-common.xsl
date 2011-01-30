@@ -809,5 +809,13 @@ node.</para>
       <l:template name="webpage" text="%t"/>
     </l:context>
   </l:l10n>
+  <l:l10n language="es">
+    <l:context name="title">
+      <l:template name="webpage" text="%t"/>
+    </l:context>
+    <l:context name="xref">
+      <l:template name="webpage" text="%t"/>
+    </l:context>
+  </l:l10n>
 </l:i18n>
 </xsl:stylesheet>

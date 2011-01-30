@@ -25,7 +25,7 @@
 
 <xsl:template name="process-chunk-element">
   <xsl:choose>
-    <xsl:when test="$chunk.fast != 0 and function-available('exsl:node-set')">
+    <xsl:when test="$chunk.fast != 0 and $exsl.node.set.available != 0">
       <xsl:variable name="genid" select="generate-id()"/>
 
       <xsl:variable name="div" select="$chunks[@id=$genid or @xml:id=$genid]"/>

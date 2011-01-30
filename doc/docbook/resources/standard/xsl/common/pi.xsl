@@ -188,6 +188,11 @@
       child of a <tag>textobject</tag> containing embedded TeX
       markup, to cause that markup to be surrounded by
       <literal>$</literal> delimiter characters in output.</para>
+      <warning>
+       <para>This feature is useful for print/PDF output only if you
+       use the obsolete and now unsupported PassiveTeX XSL-FO
+       engine.</para>
+      </warning>
   </refdescription>
   <refsynopsisdiv>
     <synopsis><tag class="xmlpi">dbtex delims="no"|"yes"</tag></synopsis>
@@ -201,14 +206,11 @@
       </varlistentry>
     </variablelist>
   </refparameter>
+
   <refsee role="params">
     <para><parameter>tex.math.delims</parameter></para>
   </refsee>
-  <refsee role="tcg">
-    <para><link role="tcg"
-        xlink:href="TexMath.html"
-        >DBTeXMath</link></para>
-  </refsee>
+ 
 </doc:pi>
 <xsl:template name="pi.dbtex_delims">
   <xsl:param name="node" select="."/>
@@ -246,9 +248,7 @@
       </xsl:call-template>
     </xsl:variable>
     <xsl:choose>
-      <!-- include extra test for Xalan quirk -->
-      <xsl:when test="function-available('exsl:node-set') or 
-        contains(system-property('xsl:vendor'),'Apache Software Foundation')">
+      <xsl:when test="$exsl.node.set.available != 0">
         <!-- We must preserve context node in order to get valid language -->
         <xsl:variable name="context" select="."/>
         <xsl:for-each select="exsl:node-set($tokenized-format-string)/node()">

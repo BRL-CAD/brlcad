@@ -29,6 +29,8 @@
 
 <l:gentext key="Abstract" text="Resumen"/>
 <l:gentext key="abstract" text="resumen"/>
+<l:gentext key="Acknowledgements" text="Agradecimientos"/>
+<l:gentext key="acknowledgements" text="agradecimientos"/>
 <l:gentext key="Answer" text="R:"/>
 <l:gentext key="answer" text="r:"/>
 <l:gentext key="Appendix" text="Apéndice"/>
@@ -95,17 +97,17 @@
 <l:gentext key="pubdate" text="fecha de publicación"/>
 <l:gentext key="Published" text="Publicado"/>
 <l:gentext key="published" text="publicado"/>
-<l:gentext key="Publisher" text="Publisher" lang="en"/>
+<l:gentext key="Publisher" text="Editor"/>
 <l:gentext key="Qandadiv" text="P y R"/>
 <l:gentext key="qandadiv" text="P y R"/>
-<l:gentext key="QandASet" text="Frequently Asked Questions" lang="en"/>
+<l:gentext key="QandASet" text="Preguntas más frecuentes"/>
 <l:gentext key="Question" text="P:"/>
 <l:gentext key="question" text="p:"/>
-<l:gentext key="RefEntry" text="Entrada de referencia"/>
-<l:gentext key="refentry" text="entrada de referencia"/>
+<l:gentext key="RefEntry" text="Página"/>
+<l:gentext key="refentry" text="página"/>
 <l:gentext key="Reference" text="Referencia"/>
 <l:gentext key="reference" text="referencia"/>
-<l:gentext key="References" text="References" lang="en"/>
+<l:gentext key="References" text="Referencias"/>
 <l:gentext key="RefName" text="Nombre de referencia"/>
 <l:gentext key="refname" text="nombre de referencia"/>
 <l:gentext key="RefSection" text="Sección de referencia"/>
@@ -138,8 +140,8 @@
 <l:gentext key="Step" text="Paso"/>
 <l:gentext key="table" text="tabla"/>
 <l:gentext key="Table" text="Tabla"/>
-<l:gentext key="task" text="Task" lang="en"/>
-<l:gentext key="Task" text="Task" lang="en"/>
+<l:gentext key="task" text="tarea"/>
+<l:gentext key="Task" text="Tarea"/>
 <l:gentext key="tip" text="sugerencia"/>
 <l:gentext key="TIP" text="SUGERENCIA"/>
 <l:gentext key="Tip" text="Sugerencia"/>
@@ -155,7 +157,6 @@
 <l:gentext key="in" text="en"/>
 <l:gentext key="lastlistcomma" text=","/>
 <l:gentext key="listcomma" text=","/>
-<l:gentext key="nonexistantelement" text="elemento inexistente"/>
 <l:gentext key="notes" text="notas"/>
 <l:gentext key="Notes" text="Notas"/>
 <l:gentext key="Pgs" text="Págs."/>
@@ -169,20 +170,20 @@
 <l:gentext key="unexpectedelementname" text="nombre de elemento inesperado"/>
 <l:gentext key="unsupported" text="no soportado"/>
 <l:gentext key="xrefto" text="referencia a"/>
-<l:gentext key="Authors" text="Authors" lang="en"/>
-<l:gentext key="copyeditor" text="Copy Editor" lang="en"/>
-<l:gentext key="graphicdesigner" text="Graphic Designer" lang="en"/>
-<l:gentext key="productioneditor" text="Production Editor" lang="en"/>
-<l:gentext key="technicaleditor" text="Technical Editor" lang="en"/>
-<l:gentext key="translator" text="Translator" lang="en"/>
+<l:gentext key="Authors" text="Autores"/>
+<l:gentext key="copyeditor" text="Editor de copiado"/>
+<l:gentext key="graphicdesigner" text="Diseñador gráfico"/>
+<l:gentext key="productioneditor" text="Editor de producción"/>
+<l:gentext key="technicaleditor" text="Editor técnico"/>
+<l:gentext key="translator" text="Traductor"/>
 <l:gentext key="listofequations" text="lista de ecuaciones"/>
 <l:gentext key="ListofEquations" text="Lista de ecuaciones"/>
 <l:gentext key="ListofExamples" text="Lista de ejemplos"/>
 <l:gentext key="listofexamples" text="lista de ejemplos"/>
 <l:gentext key="ListofFigures" text="Lista de figuras"/>
 <l:gentext key="listoffigures" text="lista de figuras"/>
-<l:gentext key="ListofProcedures" text="List of Procedures" lang="en"/>
-<l:gentext key="listofprocedures" text="List of Procedures" lang="en"/>
+<l:gentext key="ListofProcedures" text="Lista de procedimientos"/>
+<l:gentext key="listofprocedures" text="lista de procedimientos"/>
 <l:gentext key="listoftables" text="lista de tablas"/>
 <l:gentext key="ListofTables" text="Lista de tablas"/>
 <l:gentext key="ListofUnknown" text="Lista de desconocido"/>
@@ -193,12 +194,13 @@
 <l:gentext key="nav-prev" text="Anterior"/>
 <l:gentext key="nav-prev-sibling" text="Retroceder"/>
 <l:gentext key="nav-up" text="Subir"/>
-<l:gentext key="nav-toc" text="ToC" lang="en"/>
+<l:gentext key="nav-toc" text="TdC"/>
 <l:gentext key="Draft" text="Borrador"/>
 <l:gentext key="above" text="arriba"/>
 <l:gentext key="below" text="abajo"/>
 <l:gentext key="sectioncalled" text="sección llamada"/>
 <l:gentext key="index symbols" text="Símbolos"/>
+<l:gentext key="writing-mode" text="lr-tb"/>
 <l:gentext key="lowercase.alpha" text="abcdefghijklmnopqrstuvwxyzáéíóúñ"/>
 <l:gentext key="uppercase.alpha" text="ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÚÑ"/>
 <l:gentext key="normalize.sort.input" text="AaÀàÁáÂâÃãÄäÅåĀāĂăĄąǍǎǞǟǠǡǺǻȀȁȂȃȦȧḀḁẚẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặBbƀƁɓƂƃḂḃḄḅḆḇCcÇçĆćĈĉĊċČčƇƈɕḈḉDdĎďĐđƊɗƋƌǅǲȡɖḊḋḌḍḎḏḐḑḒḓEeÈèÉéÊêËëĒēĔĕĖėĘęĚěȄȅȆȇȨȩḔḕḖḗḘḙḚḛḜḝẸẹẺẻẼẽẾếỀềỂểỄễỆệFfƑƒḞḟGgĜĝĞğĠġĢģƓɠǤǥǦǧǴǵḠḡHhĤĥĦħȞȟɦḢḣḤḥḦḧḨḩḪḫẖIiÌìÍíÎîÏïĨĩĪīĬĭĮįİƗɨǏǐȈȉȊȋḬḭḮḯỈỉỊịJjĴĵǰʝKkĶķƘƙǨǩḰḱḲḳḴḵLlĹĺĻļĽľĿŀŁłƚǈȴɫɬɭḶḷḸḹḺḻḼḽMmɱḾḿṀṁṂṃNnÑñŃńŅņŇňƝɲƞȠǋǸǹȵɳṄṅṆṇṈṉṊṋOoÒòÓóÔôÕõÖöØøŌōŎŏŐőƟƠơǑǒǪǫǬǭǾǿȌȍȎȏȪȫȬȭȮȯȰȱṌṍṎṏṐṑṒṓỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợPpƤƥṔṕṖṗQqʠRrŔŕŖŗŘřȐȑȒȓɼɽɾṘṙṚṛṜṝṞṟSsŚśŜŝŞşŠšȘșʂṠṡṢṣṤṥṦṧṨṩTtŢţŤťŦŧƫƬƭƮʈȚțȶṪṫṬṭṮṯṰṱẗUuÙùÚúÛûÜüŨũŪūŬŭŮůŰűŲųƯưǓǔǕǖǗǘǙǚǛǜȔȕȖȗṲṳṴṵṶṷṸṹṺṻỤụỦủỨứỪừỬửỮữỰựVvƲʋṼṽṾṿWwŴŵẀẁẂẃẄẅẆẇẈẉẘXxẊẋẌẍYyÝýÿŸŶŷƳƴȲȳẎẏẙỲỳỴỵỶỷỸỹZzŹźŻżŽžƵƶȤȥʐʑẐẑẒẓẔẕẕ" lang="en"/>
@@ -216,6 +218,7 @@
 <l:context name="styles"><l:template name="person-name" text="first-last"/>
 </l:context>
 <l:context name="title"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="%t"/>
 <l:template name="appendix" text="Apéndice %n. %t"/>
 <l:template name="article" text="%t"/>
@@ -321,6 +324,7 @@
 <l:template name="simplesect" text="%t"/>
 </l:context>
 <l:context name="subtitle"><l:template name="appendix" text="%s"/>
+<l:template name="acknowledgements" text="%s" lang="en"/>
 <l:template name="article" text="%s"/>
 <l:template name="bibliodiv" text="%s"/>
 <l:template name="biblioentry" text="%s"/>
@@ -360,6 +364,7 @@
 <l:template name="toc" text="%s"/>
 </l:context>
 <l:context name="xref"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="R: %n"/>
 <l:template name="appendix" text="%t"/>
 <l:template name="article" text="%t"/>
@@ -490,57 +495,58 @@
 <l:template name="sep2" text=" y "/>
 <l:template name="seplast" text=", y "/>
 </l:context>
-<l:context name="glossary"><l:template name="see" text="Ver %t"/>
-<l:template name="seealso" text="Ver también %t"/>
+<l:context name="glossary"><l:template name="see" text="Ver %t."/>
+<l:template name="seealso" text="Ver también %t."/>
+<l:template name="seealso-separator" text=", "/>
 </l:context>
 <l:context name="msgset"><l:template name="MsgAud" text="Audiencia: "/>
 <l:template name="MsgLevel" text="Nivel: "/>
 <l:template name="MsgOrig" text="Origen: "/>
 </l:context>
-<l:context name="datetime"><l:template name="format" text="m/d/Y" lang="en"/>
+<l:context name="datetime"><l:template name="format" text="d/m/Y"/>
 </l:context>
-<l:context name="termdef"><l:template name="prefix" text="[Definition: " lang="en"/>
-<l:template name="suffix" text="]" lang="en"/>
+<l:context name="termdef"><l:template name="prefix" text="[Definición: "/>
+<l:template name="suffix" text="]"/>
 </l:context>
-<l:context name="datetime-full"><l:template name="January" text="January" lang="en"/>
-<l:template name="February" text="February" lang="en"/>
-<l:template name="March" text="March" lang="en"/>
-<l:template name="April" text="April" lang="en"/>
-<l:template name="May" text="May" lang="en"/>
-<l:template name="June" text="June" lang="en"/>
-<l:template name="July" text="July" lang="en"/>
-<l:template name="August" text="August" lang="en"/>
-<l:template name="September" text="September" lang="en"/>
-<l:template name="October" text="October" lang="en"/>
-<l:template name="November" text="November" lang="en"/>
-<l:template name="December" text="December" lang="en"/>
-<l:template name="Monday" text="Monday" lang="en"/>
-<l:template name="Tuesday" text="Tuesday" lang="en"/>
-<l:template name="Wednesday" text="Wednesday" lang="en"/>
-<l:template name="Thursday" text="Thursday" lang="en"/>
-<l:template name="Friday" text="Friday" lang="en"/>
-<l:template name="Saturday" text="Saturday" lang="en"/>
-<l:template name="Sunday" text="Sunday" lang="en"/>
+<l:context name="datetime-full"><l:template name="January" text="Enero"/>
+<l:template name="February" text="Febrero"/>
+<l:template name="March" text="Marzo"/>
+<l:template name="April" text="Abril"/>
+<l:template name="May" text="Mayo"/>
+<l:template name="June" text="Junio"/>
+<l:template name="July" text="Julio"/>
+<l:template name="August" text="Agosto"/>
+<l:template name="September" text="Septiembre"/>
+<l:template name="October" text="Octubre"/>
+<l:template name="November" text="Noviembre"/>
+<l:template name="December" text="Diciembre"/>
+<l:template name="Monday" text="Lunes"/>
+<l:template name="Tuesday" text="Martes"/>
+<l:template name="Wednesday" text="Miércoles"/>
+<l:template name="Thursday" text="Jueves"/>
+<l:template name="Friday" text="Viernes"/>
+<l:template name="Saturday" text="Sábado"/>
+<l:template name="Sunday" text="Domingo"/>
 </l:context>
-<l:context name="datetime-abbrev"><l:template name="Jan" text="Jan" lang="en"/>
-<l:template name="Feb" text="Feb" lang="en"/>
-<l:template name="Mar" text="Mar" lang="en"/>
+<l:context name="datetime-abbrev"><l:template name="Jan" text="Ene"/>
+<l:template name="Feb" text="Feb"/>
+<l:template name="Mar" text="Mar"/>
 <l:template name="Apr" text="Apr" lang="en"/>
-<l:template name="May" text="May" lang="en"/>
-<l:template name="Jun" text="Jun" lang="en"/>
-<l:template name="Jul" text="Jul" lang="en"/>
-<l:template name="Aug" text="Aug" lang="en"/>
-<l:template name="Sep" text="Sep" lang="en"/>
-<l:template name="Oct" text="Oct" lang="en"/>
-<l:template name="Nov" text="Nov" lang="en"/>
-<l:template name="Dec" text="Dec" lang="en"/>
-<l:template name="Mon" text="Mon" lang="en"/>
-<l:template name="Tue" text="Tue" lang="en"/>
-<l:template name="Wed" text="Wed" lang="en"/>
-<l:template name="Thu" text="Thu" lang="en"/>
-<l:template name="Fri" text="Fri" lang="en"/>
-<l:template name="Sat" text="Sat" lang="en"/>
-<l:template name="Sun" text="Sun" lang="en"/>
+<l:template name="May" text="May"/>
+<l:template name="Jun" text="Jun"/>
+<l:template name="Jul" text="Jul"/>
+<l:template name="Aug" text="Ago"/>
+<l:template name="Sep" text="Sep"/>
+<l:template name="Oct" text="Oct"/>
+<l:template name="Nov" text="Nov"/>
+<l:template name="Dec" text="Dic"/>
+<l:template name="Mon" text="Lun"/>
+<l:template name="Tue" text="Mar"/>
+<l:template name="Wed" text="Mie"/>
+<l:template name="Thu" text="Jue"/>
+<l:template name="Fri" text="Vie"/>
+<l:template name="Sat" text="Sab"/>
+<l:template name="Sun" text="Dom"/>
 </l:context>
 <l:context name="htmlhelp"><l:template name="langcode" text="0x040a Spanish (Traditional Sort)"/>
 </l:context>

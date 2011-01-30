@@ -40,6 +40,13 @@
 <xsl:param name="profile.value" select="''"/>
 <xsl:param name="profile.separator" select="';'"/>
 
+<xsl:param name="exsl.node.set.available"> 
+  <xsl:choose>
+    <xsl:when xmlns:exsl="http://exslt.org/common" exsl:foo="" test="function-available('exsl:node-set') or contains(system-property('xsl:vendor'), 'Apache Software Foundation')">1</xsl:when>
+    <xsl:otherwise>0</xsl:otherwise>
+  </xsl:choose>
+</xsl:param>
+
 <!-- Call common profiling mode -->
 <xsl:template match="/">
   <xsl:apply-templates select="." mode="profile"/>

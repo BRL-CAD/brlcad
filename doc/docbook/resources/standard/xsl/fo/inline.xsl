@@ -19,6 +19,9 @@
 
      ******************************************************************** -->
 
+<xsl:key name="glossentries" match="glossentry" use="normalize-space(glossterm)"/>
+<xsl:key name="glossentries" match="glossentry" use="normalize-space(glossterm/@baseform)"/>
+
 <xsl:template name="simple.xlink">
   <xsl:param name="node" select="."/>
   <xsl:param name="content">
@@ -48,15 +51,21 @@
       <!-- Is it an olink ? -->
       <xsl:variable name="is.olink">
         <xsl:choose>
-	  <!-- If xlink:role="http://docbook.org/xlink/role/olink" -->
+          <!-- If xlink:role="http://docbook.org/xlink/role/olink" -->
           <!-- and if the href contains # -->
           <xsl:when test="contains($xhref,'#') and
-	       @xlink:role = $xolink.role">1</xsl:when>
+               @xlink:role = $xolink.role">1</xsl:when>
           <xsl:otherwise>0</xsl:otherwise>
         </xsl:choose>
       </xsl:variable>
 
       <xsl:choose>
+        <xsl:when test="$is.olink = 1">
+          <xsl:call-template name="olink">
+            <xsl:with-param name="content" select="$content"/>
+          </xsl:call-template>
+        </xsl:when>
+
         <xsl:when test="$is.idref = 1">
 
           <xsl:variable name="idref">
@@ -87,12 +96,6 @@
               </fo:basic-link>
             </xsl:otherwise>
           </xsl:choose>
-        </xsl:when>
-
-        <xsl:when test="$is.olink = 1">
-	  <xsl:call-template name="olink">
-	    <xsl:with-param name="content" select="$content"/>
-	  </xsl:call-template>
         </xsl:when>
 
         <!-- otherwise it's a URI -->
@@ -179,6 +182,7 @@
   </xsl:param>
 
   <fo:inline xsl:use-attribute-sets="monospace.properties">
+    <xsl:call-template name="anchor"/>
     <xsl:if test="@dir">
       <xsl:attribute name="direction">
         <xsl:choose>
@@ -684,7 +688,10 @@
 </xsl:template>
 
 <xsl:template match="phrase">
-  <xsl:call-template name="inline.charseq"/>
+  <fo:inline>
+    <xsl:call-template name="anchor"/>
+    <xsl:call-template name="inline.charseq"/>
+  </fo:inline>
 </xsl:template>
 
 <xsl:template match="quote">
@@ -693,18 +700,26 @@
       <xsl:with-param name="string"><xsl:number level="multiple"/></xsl:with-param>
     </xsl:call-template>
   </xsl:variable>
-  <xsl:choose>
-    <xsl:when test="$depth mod 2 = 0">
-      <xsl:call-template name="gentext.startquote"/>
-      <xsl:call-template name="inline.charseq"/>
-      <xsl:call-template name="gentext.endquote"/>
-    </xsl:when>
-    <xsl:otherwise>
-      <xsl:call-template name="gentext.nestedstartquote"/>
-      <xsl:call-template name="inline.charseq"/>
-      <xsl:call-template name="gentext.nestedendquote"/>
-    </xsl:otherwise>
-  </xsl:choose>
+  <xsl:variable name="content">
+    <xsl:choose>
+      <xsl:when test="$depth mod 2 = 0">
+        <xsl:call-template name="gentext.startquote"/>
+        <xsl:call-template name="inline.charseq"/>
+        <xsl:call-template name="gentext.endquote"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="gentext.nestedstartquote"/>
+        <xsl:call-template name="inline.charseq"/>
+        <xsl:call-template name="gentext.nestedendquote"/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:variable>
+
+  <fo:inline>
+    <xsl:call-template name="anchor"/>
+    <xsl:copy-of select="$content"/>
+  </fo:inline>
+
 </xsl:template>
 
 <xsl:template match="varname">
@@ -830,9 +845,7 @@
       </xsl:variable>
 
       <xsl:variable name="targets"
-                    select="//glossentry[normalize-space(glossterm)=$term
-			    or normalize-space(glossterm/@baseform)=$term]"/>
-
+                    select="key('glossentries', $term)"/>
       <xsl:variable name="target" select="$targets[1]"/>
 
       <xsl:choose>
@@ -992,7 +1005,20 @@
         <xsl:if test="not($email.delimiters.enabled = 0)">
           <xsl:text>&lt;</xsl:text>
         </xsl:if>
-        <xsl:apply-templates/>
+        <xsl:choose>
+          <xsl:when test="not($email.mailto.enabled = 0)">
+            <fo:basic-link xsl:use-attribute-sets="xref.properties"
+                           keep-together.within-line="always" hyphenate="false">
+              <xsl:attribute name="external-destination">
+                mailto:<xsl:value-of select="string(.)" />
+              </xsl:attribute>
+              <xsl:apply-templates/>
+            </fo:basic-link>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:apply-templates/>
+          </xsl:otherwise>
+        </xsl:choose>
         <xsl:if test="not($email.delimiters.enabled = 0)">
           <xsl:text>&gt;</xsl:text>
         </xsl:if>
@@ -1108,14 +1134,14 @@
           </xsl:call-template>
         </xsl:attribute>
 
-	<xsl:choose>
-	  <xsl:when test="$bibliography.numbered != 0">
-	    <xsl:apply-templates select="$target" mode="citation"/>
-	  </xsl:when>
-	  <xsl:otherwise>
-	    <xsl:call-template name="inline.charseq"/>
-	  </xsl:otherwise>
-	</xsl:choose>
+        <xsl:choose>
+          <xsl:when test="$bibliography.numbered != 0">
+            <xsl:apply-templates select="$target" mode="citation"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:call-template name="inline.charseq"/>
+          </xsl:otherwise>
+        </xsl:choose>
      
       </fo:basic-link>
       <xsl:text>]</xsl:text>
@@ -1145,8 +1171,8 @@
           </xsl:call-template>
         </xsl:attribute>
 
-	<xsl:call-template name="inline.charseq"/>
-	    
+        <xsl:call-template name="inline.charseq"/>
+            
       </fo:basic-link>
       <xsl:text>]</xsl:text>
     </xsl:when>
@@ -1161,7 +1187,7 @@
 
 <xsl:template match="biblioentry|bibliomixed" mode="citation">
   <xsl:number from="bibliography" count="biblioentry|bibliomixed"
-	      level="any" format="1"/>
+              level="any" format="1"/>
 </xsl:template>
 
 <!-- ==================================================================== -->

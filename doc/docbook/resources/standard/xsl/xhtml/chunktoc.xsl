@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ASCII"?>
 <!--This file was created automatically by html2xhtml-->
 <!--from the HTML stylesheets.-->
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns="http://www.w3.org/1999/xhtml" version="1.0" exclude-result-prefixes="doc">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" xmlns:exsl="http://exslt.org/common" xmlns:ng="http://docbook.org/docbook-ng" xmlns:db="http://docbook.org/ns/docbook" xmlns="http://www.w3.org/1999/xhtml" version="1.0" exclude-result-prefixes="doc exsl ng db">
 
 <!-- ********************************************************************
      $Id$
@@ -127,7 +127,7 @@
   <xsl:call-template name="process-chunk"/>
 </xsl:template>
 
-<xsl:template match="book/appendix">
+<xsl:template match="appendix">
   <xsl:call-template name="process-chunk"/>
 </xsl:template>
 
@@ -160,10 +160,6 @@
 </xsl:template>
 
 <xsl:template match="article">
-  <xsl:call-template name="process-chunk"/>
-</xsl:template>
-
-<xsl:template match="article/appendix">
   <xsl:call-template name="process-chunk"/>
 </xsl:template>
 
@@ -202,30 +198,100 @@
 <!-- ==================================================================== -->
 
 <xsl:template match="/">
+  <!-- * Get a title for current doc so that we let the user -->
+  <!-- * know what document we are processing at this point. -->
+  <xsl:variable name="doc.title">
+    <xsl:call-template name="get.doc.title"/>
+  </xsl:variable>
   <xsl:choose>
     <xsl:when test="$chunk.toc = ''">
       <xsl:message terminate="yes">
         <xsl:text>The chunk.toc file is not set.</xsl:text>
       </xsl:message>
     </xsl:when>
-
-    <xsl:when test="$rootid != ''">
+    <!-- Hack! If someone hands us a DocBook V5.x or DocBook NG document,
+         toss the namespace and continue.  Use the docbook5 namespaced
+	 stylesheets for DocBook5 if you don't want to use this feature.-->
+    <!-- include extra test for Xalan quirk -->
+    <xsl:when test="$exsl.node.set.available != 0                     and (*/self::ng:* or */self::db:*)">
+      <xsl:call-template name="log.message">
+        <xsl:with-param name="level">Note</xsl:with-param>
+        <xsl:with-param name="source" select="$doc.title"/>
+        <xsl:with-param name="context-desc">
+          <xsl:text>namesp. cut</xsl:text>
+        </xsl:with-param>
+        <xsl:with-param name="message">
+          <xsl:text>stripped namespace before processing</xsl:text>
+        </xsl:with-param>
+      </xsl:call-template>
+      <xsl:variable name="nons">
+        <xsl:apply-templates mode="stripNS"/>
+      </xsl:variable>
+      <xsl:call-template name="log.message">
+        <xsl:with-param name="level">Note</xsl:with-param>
+        <xsl:with-param name="source" select="$doc.title"/>
+        <xsl:with-param name="context-desc">
+          <xsl:text>namesp. cut</xsl:text>
+        </xsl:with-param>
+        <xsl:with-param name="message">
+          <xsl:text>processing stripped document</xsl:text>
+        </xsl:with-param>
+      </xsl:call-template>
+      <xsl:apply-templates select="exsl:node-set($nons)"/>
+    </xsl:when>
+    <!-- Can't process unless namespace removed -->
+    <xsl:when test="*/self::ng:* or */self::db:*">
+      <xsl:message terminate="yes">
+        <xsl:text>Unable to strip the namespace from DB5 document,</xsl:text>
+        <xsl:text> cannot proceed.</xsl:text>
+      </xsl:message>
+    </xsl:when>
+    <xsl:otherwise>
       <xsl:choose>
-        <xsl:when test="count(key('id',$rootid)) = 0">
-          <xsl:message terminate="yes">
-            <xsl:text>ID '</xsl:text>
-            <xsl:value-of select="$rootid"/>
-            <xsl:text>' not found in document.</xsl:text>
-          </xsl:message>
+        <xsl:when test="$rootid != ''">
+          <xsl:choose>
+            <xsl:when test="count(key('id',$rootid)) = 0">
+              <xsl:message terminate="yes">
+                <xsl:text>ID '</xsl:text>
+                <xsl:value-of select="$rootid"/>
+                <xsl:text>' not found in document.</xsl:text>
+              </xsl:message>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:if test="$collect.xref.targets = 'yes' or                             $collect.xref.targets = 'only'">
+                <xsl:apply-templates select="key('id', $rootid)" mode="collect.targets"/>
+              </xsl:if>
+              <xsl:if test="$collect.xref.targets != 'only'">
+                <xsl:apply-templates select="key('id',$rootid)" mode="process.root"/>
+                <xsl:if test="$tex.math.in.alt != ''">
+                  <xsl:apply-templates select="key('id',$rootid)" mode="collect.tex.math"/>
+                </xsl:if>
+                <xsl:if test="$generate.manifest != 0">
+                  <xsl:call-template name="generate.manifest">
+                    <xsl:with-param name="node" select="key('id',$rootid)"/>
+                  </xsl:call-template>
+                </xsl:if>
+              </xsl:if>
+            </xsl:otherwise>
+          </xsl:choose>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:apply-templates select="key('id',$rootid)"/>
+          <xsl:if test="$collect.xref.targets = 'yes' or                         $collect.xref.targets = 'only'">
+            <xsl:apply-templates select="/" mode="collect.targets"/>
+          </xsl:if>
+          <xsl:if test="$collect.xref.targets != 'only'">
+            <xsl:apply-templates select="/" mode="process.root"/>
+            <xsl:if test="$tex.math.in.alt != ''">
+              <xsl:apply-templates select="/" mode="collect.tex.math"/>
+            </xsl:if>
+            <xsl:if test="$generate.manifest != 0">
+              <xsl:call-template name="generate.manifest">
+                <xsl:with-param name="node" select="/"/>
+              </xsl:call-template>
+            </xsl:if>
+          </xsl:if>
         </xsl:otherwise>
       </xsl:choose>
-    </xsl:when>
-
-    <xsl:otherwise>
-      <xsl:apply-templates select="/" mode="process.root"/>
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>

@@ -259,7 +259,9 @@
           <!-- * do some further checking on it, so we can emit warnings -->
           <!-- * about potential problems -->
         <xsl:for-each select="node()">
-          <xsl:if test="local-name() != 'para' and local-name() !=''">
+          <xsl:if test="local-name() != 'para' and
+                        local-name() != 'simpara' and
+                        local-name() !=''">
             <!-- * for each node we find as a child of a footnote or -->
             <!-- * annotation, if it's not a para or a text node, emit a -->
             <!-- * warning... because in manpages output, we can't render -->
@@ -344,7 +346,7 @@
 
   <xsl:if test="self::ulink or self::*[@xlink:href]">
     <xsl:variable name="link.wrapper">
-      <xsl:value-of select="$notesource.contents"/>
+      <xsl:value-of select="normalize-space($notesource.contents)"/>
     </xsl:variable>
     <xsl:text>\m[blue]</xsl:text>
     <!-- * This is a hyperlink, so we need to determine if the user wants -->

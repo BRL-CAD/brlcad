@@ -199,6 +199,11 @@
   <xsl:value-of select="$section.autolabel"/>
 </xsl:template>
 
+<xsl:template match="procedure" mode="is.autonumber">
+  <xsl:value-of select="$formal.procedures"/>
+</xsl:template>
+
+
 <xsl:template match="*" mode="object.xref.template">
   <xsl:param name="purpose"/>
   <xsl:param name="xrefstyle"/>
@@ -229,6 +234,9 @@
 
   <xsl:variable name="context">
     <xsl:choose>
+      <xsl:when test="self::equation and not(title) and not(info/title)">
+         <xsl:value-of select="'xref-number'"/>
+      </xsl:when>
       <xsl:when test="string($autonumber) != 0 
                       and $number-and-title-template != 0
                       and $xref.with.number.and.title != 0">
@@ -392,7 +400,7 @@
       <xsl:message>
         <xsl:text>Xref is only supported to listitems in an</xsl:text>
         <xsl:text> orderedlist: </xsl:text>
-        <xsl:value-of select="@id|@xml:id"/>
+        <xsl:value-of select=".//@id|.//@xml:id"/>
       </xsl:message>
       <xsl:text>???</xsl:text>
     </xsl:when>
@@ -738,7 +746,7 @@
       <xsl:when test="$titletype != ''">
         <xsl:value-of select="$xref.label-title.separator"/>
       </xsl:when>
-      <xsl:when test="$pagetype != ''">
+      <xsl:when test="$pagetype != '' and $pagetype != 'nopage'">
         <xsl:value-of select="$xref.label-page.separator"/>
       </xsl:when>
     </xsl:choose>

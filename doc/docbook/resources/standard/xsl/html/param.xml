@@ -142,7 +142,7 @@ admonitions.</refpurpose>
 
 <refsynopsisdiv>
 <programlisting xml:id="admon.style.frag">&lt;xsl:param name="admon.style"&gt;
-  &lt;xsl:text&gt;margin-left: 0.5in; margin-right: 0.5in;&lt;/xsl:text&gt;
+  &lt;xsl:value-of select="concat('margin-', $direction.align.start,            ': 0.5in; margin-', $direction.align.end, ': 0.5in;')"&gt;&lt;/xsl:value-of&gt;
 &lt;/xsl:param&gt;</programlisting>
 </refsynopsisdiv>
 
@@ -313,10 +313,10 @@ Default graphics are provided in the distribution.
 
 <refsection><info><title>Description</title></info>
 
-<para>The default presentation of <tag>CalloutList</tag>s uses
-an HTML <tag>DL</tag>. Some browsers don't align DLs very well
-if <parameter>callout.graphics</parameter> are used. With this option
-turned on, <tag>CalloutList</tag>s are presented in an HTML
+<para>The default presentation of <tag>calloutlist</tag>s uses
+an HTML <tag>DL</tag> element. Some browsers don't align DLs very well
+if <parameter>callout.graphics</parameter> is used. With this option
+turned on, <tag>calloutlist</tag>s are presented in an HTML
 <tag>TABLE</tag>, which usually results in better alignment
 of the callout number with the callout description.</para>
 
@@ -424,7 +424,7 @@ only 10102 is supported in the stylesheets for this parameter.
 <refsection><info><title>Description</title></info>
 
 <para>The callouts extension processes <tag>areaset</tag>
-elements in <tag>ProgramListingCO</tag> and other text-based
+elements in <tag>programlistingco</tag> and other text-based
 callout elements.
 </para>
 
@@ -559,7 +559,7 @@ in <tag>productionset</tag>.</para>
 <refsection><info><title>Description</title></info>
 
 <para>If true, TOCs will be annotated. At present, this just means
-that the <tag>RefPurpose</tag> of <tag>RefEntry</tag>
+that the <tag>refpurpose</tag> of <tag>refentry</tag>
 TOC entries will be displayed.
 </para>
 
@@ -1212,6 +1212,78 @@ on <tag>indexterm</tag> and <tag>index</tag>,
 and set the <parameter>index.on.type</parameter> to a nonzero
 value.
 </para>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" xml:id="index.links.to.section">
+<refmeta>
+<refentrytitle>index.links.to.section</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">boolean</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>index.links.to.section</refname>
+<refpurpose>HTML index entries link to container section title</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting xml:id="index.links.to.section.frag">
+&lt;xsl:param name="index.links.to.section" select="1"&gt;&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>If zero, then an index entry in an index links
+directly to the location of the
+generated <tag>anchor</tag> that is output
+for the indexterm. If two identical indexterm elements
+exist in the same section, then both entries appear
+in the index with the same title but link to different
+locations.</para>
+
+<para>If non-zero, then an index entry in an index links to the
+section title containing the <tag>indexterm</tag>, rather than
+directly to the <tag>anchor</tag> output for the indexterm.
+Duplicate indexterm entries in the same section are dropped.
+</para>
+
+<para>The default value is 1, so index entries link to
+section titles by default.</para>
+
+<para>In both cases, the link text in an index entry is the
+title of the section containing the indexterm.
+That is because HTML does not have numbered pages.
+It also provides the reader with context information
+for each link.</para>
+
+<para>This parameter lets you choose which style of
+index linking you want. </para>
+
+<itemizedlist>
+<listitem>
+<para>When set to 0, an index entry takes you 
+to the precise location of its corresponding indexterm.
+However, if you have a lot of duplicate
+entries in sections, then you have a lot of duplicate
+titles in the index, which makes it more cluttered.
+The reader may not recognize why duplicate titles
+appear until they follow the links. Also, the links
+may land the reader in the middle of a section where the
+section title is not visible, which may also be
+confusing to the reader.</para>
+</listitem>
+<listitem>
+<para>When set to 1, an index entry link is
+less precise, but duplicate titles in the
+index entries are eliminated. 
+Landing on the section title location may confirm the reader's
+expectation that a link that
+shows a section title will take them to that section title,
+not a location within the section.
+</para>
+</listitem>
+</itemizedlist>
 
 </refsection>
 </refentry>
@@ -2570,7 +2642,7 @@ be set to is a newline character: <code>&amp;#x0a;</code> or
 
 <refsynopsisdiv>
 <programlisting xml:id="draft.mode.frag">
-&lt;xsl:param name="draft.mode"&gt;maybe&lt;/xsl:param&gt;
+&lt;xsl:param name="draft.mode"&gt;no&lt;/xsl:param&gt;
 </programlisting>
 </refsynopsisdiv>
 
@@ -2599,7 +2671,7 @@ on how their <literal>status</literal> attribute is set.
 
 <refsynopsisdiv>
 <programlisting xml:id="draft.watermark.image.frag">
-&lt;xsl:param name="draft.watermark.image"&gt;http://docbook.sourceforge.net/release/images/draft.png&lt;/xsl:param&gt;
+&lt;xsl:param name="draft.watermark.image"&gt;images/draft.png&lt;/xsl:param&gt;
 </programlisting>
 </refsynopsisdiv>
 
@@ -2686,6 +2758,321 @@ will not suppress the anchors.</para>
 <para>If non-zero, document abstracts will be reproduced in the HTML
 <literal>head</literal>, with <literal>&gt;meta name="description" content="..."</literal></para>
 
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" xml:id="make.clean.html">
+<refmeta>
+<refentrytitle>make.clean.html</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">boolean</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>make.clean.html</refname>
+<refpurpose>Make HTML conform to modern coding standards</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting xml:id="make.clean.html.frag">
+&lt;xsl:param name="make.clean.html" select="0"&gt;&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>If <parameter>make.clean.html</parameter> is true, the stylesheets take
+extra effort to ensure that the resulting HTML is conforms to
+modern HTML coding standards.  In addition to eliminating
+excessive and noncompliant coding, it moves presentation
+HTML coding to a CSS stylesheet.</para>
+
+<para>The resulting HTML is dependent on
+CSS for formatting, and so the stylesheet is capable of
+generating a supporting CSS file. The <parameter>docbook.css.source</parameter>
+and <parameter>custom.css.source</parameter> parameters control
+how a CSS file is generated.</para>
+
+<para>If you require your CSS to reside in the HTML 
+<tag>head</tag> element, then the <parameter>generate.css.header</parameter>
+can be used to do that.</para>
+
+<para>The <parameter>make.clean.html</parameter> parameter is
+different from <parameter>html.cleanup</parameter>
+because the former changes the resulting markup; it does not use extension functions
+like the latter to manipulate result-tree-fragments,
+and is therefore applicable to any XSLT processor.</para>
+
+<para>If <parameter>make.clean.html</parameter> is set to zero (the default),
+then the stylesheet retains its original 
+<quote>old style</quote>
+HTML formatting features.</para>
+</refsection>
+</refentry>
+
+<refentry version="5.0" xml:id="docbook.css.source">
+  <refmeta>
+    <refentrytitle>docbook.css.source</refentrytitle>
+    <refmiscinfo class="other" otherclass="datatype">string</refmiscinfo>
+  </refmeta>
+  <refnamediv>
+    <refname>docbook.css.source</refname>
+    <refpurpose>Name of the default CSS input file</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <programlisting xml:id="docbook.css.source.frag">&lt;xsl:param name="docbook.css.source"&gt;docbook.css.xml&lt;/xsl:param&gt;</programlisting>
+  </refsynopsisdiv>
+
+  <refsection><info><title>Description</title></info>
+
+<para>The <parameter>docbook.css.source</parameter> parameter
+specifies the name of the file containing the default DocBook
+CSS styles.  Those styles are necessary when the
+<parameter>make.clean.html</parameter> parameter is nonzero.</para>
+
+<para>The file is a well-formed XML file that
+must consist of a single <tag>style</tag> root
+element that contains CSS styles as its text content.
+The default value of the parameter (and filename)
+is <literal>docbook.css.xml</literal>.
+The stylesheets ship with the default file. You can substitute
+your own and specify its path in this parameter.</para>
+
+<para>If <parameter>docbook.css.source</parameter> is not blank,
+and <parameter>make.clean.html</parameter> is nonzero, then
+the stylesheet takes the following actions:</para>
+
+<orderedlist>
+  <listitem>
+    <para>The stylesheet uses the XSLT <literal>document()</literal>
+    function to open the file specified by the parameter and
+    load it into a variable.</para>
+  </listitem>
+  <listitem>
+    <para>The stylesheet forms an output pathname consisting of the
+    value of the <parameter>base.dir</parameter> parameter (if it is set)
+    and the value of <parameter>docbook.css.source</parameter>,
+    with the <literal>.xml</literal> suffix stripped off.
+    </para>
+  </listitem>
+  <listitem>
+    <para>The stylesheet removes the <tag>style</tag>
+    wrapper element and writes just the CSS text content to the output file.</para>
+  </listitem>
+  <listitem>
+    <para>The stylesheet adds a <tag>link</tag> element to the
+    HTML <tag>HEAD</tag> element to reference the external CSS stylesheet.
+    For example:</para>
+    <programlisting>&lt;link rel="stylesheet" href="docbook.css" type="text/css"&gt;
+    </programlisting>
+    <para>However, if the <parameter>docbook.css.link</parameter>
+    parameter is set to zero, then no <tag>link</tag> is written
+    for the default CSS file.  That is useful if a custom
+    CSS file will import the default CSS stylesheet to ensure
+    proper cascading of styles.</para>
+  </listitem>
+</orderedlist>
+
+<para>If the <parameter>docbook.css.source</parameter> parameter
+is changed from its default <literal>docbook.css.xml</literal> to blank,
+then no default CSS is generated. Likewise if the
+<parameter>make.clean.html</parameter> parameter is set to zero,
+then no default CSS is generated. The 
+<parameter>custom.css.source</parameter> parameter can be used
+instead to generate a complete custom CSS file.</para>
+
+<para>You can use the <parameter>generate.css.header</parameter>
+parameter to instead write the CSS to each HTML <tag>HEAD</tag>
+element in a <tag>style</tag> tag instead of an external CSS file.</para>
+
+  </refsection>
+</refentry>
+
+<refentry version="5.0" xml:id="docbook.css.link">
+<refmeta>
+<refentrytitle>docbook.css.link</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">boolean</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>docbook.css.link</refname>
+<refpurpose>Insert a link referencing the default CSS stylesheet</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting xml:id="docbook.css.link.frag">
+&lt;xsl:param name="docbook.css.link" select="1"&gt;&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>The stylesheets are capable of generating a default
+CSS stylesheet file.  The parameters 
+<parameter>make.clean.html</parameter> and
+<parameter>docbook.css.source</parameter> control that feature.</para>
+
+<para>Normally if a default CSS file is generated, then 
+the stylesheet inserts a <tag>link</tag> tag in the HTML
+<tag>HEAD</tag> element to reference it.
+However, you can omit that <tag>link</tag> reference if
+you set the <parameter>docbook.css.link</parameter> to zero
+(1 is the default).</para>
+
+<para>This parameter is useful when you want to import the 
+default CSS into a custom CSS file generated using the
+<parameter>custom.css.source</parameter> parameter.
+</para>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" xml:id="custom.css.source">
+  <refmeta>
+    <refentrytitle>custom.css.source</refentrytitle>
+    <refmiscinfo class="other" otherclass="datatype">string</refmiscinfo>
+  </refmeta>
+  <refnamediv>
+    <refname>custom.css.source</refname>
+    <refpurpose>Name of a custom CSS input file</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <programlisting xml:id="custom.css.source.frag">&lt;xsl:param name="custom.css.source"&gt;&lt;/xsl:param&gt;</programlisting>
+  </refsynopsisdiv>
+
+  <refsection><info><title>Description</title></info>
+
+<para>The <parameter>custom.css.source</parameter>
+parameter enables you to add CSS styles to DocBook's
+HTML output.</para>
+
+<para>The parameter
+specifies the name of a file containing custom
+CSS styles.  The file must be a well-formed XML file that
+consists of a single <tag>style</tag> root
+element that contains CSS styles as its text content.
+For example:</para>
+<programlisting>&lt;?xml version="1.0"?&gt;
+&lt;style&gt;
+h2 {
+  font-weight: bold;
+  color: blue;
+}
+...
+&lt;/style&gt;
+</programlisting>
+
+<para>The filename specified by the parameter
+should have a <literal>.xml</literal>
+filename suffix, although that is not required.
+The default value of this parameter is blank.</para>
+
+<para>If <parameter>custom.css.source</parameter> is not blank, then
+the stylesheet takes the following actions.
+These actions take place regardless of the value of
+the <parameter>make.clean.html</parameter> parameter.</para>
+
+<orderedlist>
+  <listitem>
+    <para>The stylesheet uses the XSLT <literal>document()</literal>
+    function to open the file specified by the parameter and
+    load it into a variable.</para>
+  </listitem>
+  <listitem>
+    <para>The stylesheet forms an output pathname consisting of the
+    value of the <parameter>base.dir</parameter> parameter (if it is set)
+    and the value of <parameter>custom.css.source</parameter>,
+    with the <literal>.xml</literal> suffix stripped off.
+    </para>
+  </listitem>
+  <listitem>
+    <para>The stylesheet removes the <tag>style</tag>
+    wrapper element and writes just the CSS text content to the output file.</para>
+  </listitem>
+  <listitem>
+    <para>The stylesheet adds a <tag>link</tag> element to the
+    HTML <tag>HEAD</tag> element to reference this external CSS stylesheet.
+    For example:
+    <programlisting>&lt;link rel="stylesheet" href="custom.css" type="text/css"&gt;
+    </programlisting>
+    </para>
+  </listitem>
+</orderedlist>
+
+
+
+<para>If the <parameter>make.clean.html</parameter> parameter is nonzero
+(the default is zero),
+and if the <parameter>docbook.css.source</parameter> parameter
+is not blank (the default is not blank),
+then the stylesheet will also generate a default CSS file
+and add a <tag>link</tag> tag to reference it.
+The <tag>link</tag> to the custom CSS comes after the 
+<tag>link</tag> to the default, so it should cascade properly
+in most browsers.
+If you do not want two <tag>link</tag> tags, and
+instead want your custom CSS to import the default generated
+CSS file, then do the following:
+</para>
+
+<orderedlist>
+  <listitem>
+    <para>Add a line like the following to your custom CSS source file:</para>
+    <programlisting>@import url("docbook.css")
+    </programlisting>
+  </listitem>
+  <listitem>
+    <para>Set the <parameter>docbook.css.link</parameter> parameter 
+    to zero. This will omit the <tag>link</tag> tag
+    that references the default CSS file.</para>
+  </listitem>
+</orderedlist>
+
+<para>If you set <parameter>make.clean.html</parameter> to nonzero but
+you do not want the default CSS generated, then also set
+the <parameter>docbook.css.source</parameter> parameter to blank.
+Then no default CSS will be generated, and so
+all CSS styles must come from your custom CSS file.</para>
+
+<para>You can use the <parameter>generate.css.header</parameter>
+parameter to instead write the CSS to each HTML <tag>HEAD</tag>
+element in a <tag>style</tag> tag instead of an external CSS file.</para>
+
+  </refsection>
+</refentry>
+
+<refentry version="5.0" xml:id="generate.css.header">
+<refmeta>
+<refentrytitle>generate.css.header</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">boolean</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>generate.css.header</refname>
+<refpurpose>Insert generated CSS styles in HEAD element</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting xml:id="generate.css.header.frag">
+&lt;xsl:param name="generate.css.header" select="0"&gt;&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>The stylesheets are capable of generating both default
+and custom CSS stylesheet files.  The parameters 
+<parameter>make.clean.html</parameter>,
+<parameter>docbook.css.source</parameter>, and
+<parameter>custom.css.source</parameter> control that feature.</para>
+
+<para>If you require that CSS styles reside in the HTML 
+<tag>HEAD</tag> element instead of external CSS files,
+then set the <parameter>generate.css.header</parameter>
+parameter to nonzero (it is zero by default).
+Then instead of generating the CSS in external files,
+they are wrapped in <tag>style</tag> elements in
+the <tag>HEAD</tag> element of each HTML output file.
+</para>
 
 </refsection>
 </refentry>
@@ -2930,9 +3317,10 @@ in range notation (1998-1999) instead of discrete notation
 collated into ranges.
 This works only if each year number is put into a separate
 year element.  The copyright element permits multiple
-year elements. The stylesheet will not successfully parse
-a complex year element such as <literal>&lt;year&gt;2001,2002,2003&lt;/year&gt;</literal> into
-a range.</para>
+year elements. If a year element contains a dash or
+a comma, then that year element will not be merged into
+any range.
+</para>
 
 </refsection>
 </refentry>
@@ -3049,8 +3437,8 @@ by</emphasis> heading is displayed above editor names in output of the
   <programlisting xml:id="abstract.notitle.enabled.frag">&lt;xsl:param name="abstract.notitle.enabled" select="0"&gt;&lt;/xsl:param&gt;</programlisting>
 </refsynopsisdiv>
 <refsection><info><title>Description</title></info>
-<para>If non-zero, in output of the <tag>abstract</tag> element on
-  titlepages, display of the abstract title is suppressed.</para>
+<para>If non-zero, in output of the <tag>abstract</tag> element on titlepages,
+display of the abstract title is suppressed.</para>
 </refsection>
 </refentry>
 
@@ -3393,7 +3781,7 @@ will include generated parentheses.
 </refmeta>
 <refnamediv>
 <refname>refentry.generate.name</refname>
-<refpurpose>Output NAME header before 'RefName'(s)?</refpurpose>
+<refpurpose>Output NAME header before <tag>refname</tag>s?</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
@@ -3405,7 +3793,7 @@ will include generated parentheses.
 <refsection><info><title>Description</title></info>
 
 <para>If non-zero, a "NAME" section title is output before the list
-of 'RefName's. This parameter and
+of <tag>refname</tag>s. This parameter and
 <parameter>refentry.generate.title</parameter> are mutually
 exclusive. This means that if you change this parameter to zero, you
 should set <parameter>refentry.generate.title</parameter> to non-zero unless
@@ -3422,7 +3810,7 @@ you want get quite strange output.
 </refmeta>
 <refnamediv>
 <refname>refentry.generate.title</refname>
-<refpurpose>Output title before 'RefName'(s)?</refpurpose>
+<refpurpose>Output title before <tag>refname</tag>s?</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
@@ -3434,7 +3822,7 @@ you want get quite strange output.
 <refsection><info><title>Description</title></info>
 
 <para>If non-zero, the reference page title or first name is
-output before the list of 'RefName's. This parameter and
+output before the list of <tag>refname</tag>s. This parameter and
 <parameter>refentry.generate.name</parameter> are mutually exclusive.
 This means that if you change this parameter to non-zero, you
 should set <parameter>refentry.generate.name</parameter> to zero unless
@@ -3899,20 +4287,62 @@ in HTML tables. nn for pixels or nn% for percentage length. E.g. 5 or
 <refsection><info><title>Description</title></info>
 
 <para>If no <literal>defaultlabel</literal> attribute is specified on
-a <tag>qandaset</tag>, this value is used. It must be one of the legal
-values for the defaultlabel attribute, one from none, number or
-qanda. The default value is 'number'.
+a <tag>qandaset</tag>, this value is used. It is generally one of the legal
+values for the defaultlabel attribute (<literal>none</literal>, 
+<literal>number</literal> or
+<literal>qanda</literal>), or one of the additional stylesheet-specific values
+(<literal>qnumber</literal> or <literal>qnumberanda</literal>).
+The default value is 'number'.
 </para>
-<para>Meaning</para>
-<para>qanda -   <tag>question</tag>s are labeled &#8220;Q:&#8221; and <tag>answer</tag>s are labeled &#8220;A:&#8221;. </para>
-<para>number -    The entries are enumerated. </para>
-<para>none -    No distinguishing label precedes Questions or Answers. 
+<para>The values are rendered as follows:</para>
+<variablelist>
+<varlistentry><term><literal>qanda</literal></term>
+<listitem>
+<para><tag>question</tag>s are labeled "Q:" and
+<tag>answer</tag>s are labeled "A:". </para>
+</listitem>
+</varlistentry>
 
+<varlistentry><term><literal>number</literal></term>
+<listitem>
+<para>The questions are enumerated and the answers
+are not labeled. </para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>qnumber</literal></term>
+<listitem>
+<para>The questions are labeled "Q:" followed by a number, and answers are not 
+labeled. 
+When sections are numbered, adding a label
+to the number distinguishes the question numbers
+from the section numbers.
+This value is not allowed in the
+<tag class="attribute">defaultlabel</tag> attribute
+of a <tag>qandaset</tag> element.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>qnumberanda</literal></term>
+<listitem>
+<para>The questions are labeled "Q:" followed by a number, and
+the answers are labeled "A:". 
+When sections are numbered, adding a label
+to the number distinguishes the question numbers
+from the section numbers.
+This value is not allowed in the
+<tag class="attribute">defaultlabel</tag> attribute
+of a <tag>qandaset</tag> element.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>none</literal></term>
+<listitem>
+<para>No distinguishing label precedes Questions or Answers. 
 </para>
-
-
-
-
+</listitem>
+</varlistentry>
+</variablelist>
 
 </refsection>
 </refentry>
@@ -4902,18 +5332,15 @@ attribute whose value specifies a page reference.
 
 <refsection><info><title>Description</title></info>
 
+<para>In DocBook documents that conform to a schema older than V4.3, this parameter allows 
+<tag class="attribute">role</tag> to serve the purpose of specifying the cross reference style.</para>
+
 <para>If non-zero, the <tag class="attribute">role</tag> attribute on
 <tag>xref</tag> will be used to select the cross reference style.
-The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.oasis-open.org/docbook/">DocBook
-Technical Committee</link> recently added an
-<tag class="attribute">xrefstyle</tag> attribute for this purpose.
-If the <tag class="attribute">xrefstyle</tag> attribute
-is present, <tag class="attribute">role</tag> will be ignored, regardless
-of this setting.</para>
-
-<para>Until an official DocBook release that includes the new
-attribute, this flag allows <tag class="attribute">role</tag>
-to serve that purpose.</para>
+In DocBook V4.3, the <tag class="attribute">xrefstyle</tag> attribute was added for this purpose.
+If the <tag class="attribute">xrefstyle</tag> attribute is present, 
+<tag class="attribute">role</tag> will be ignored, regardless of the setting
+of this parameter.</para>
 
 </refsection>
 
@@ -5144,7 +5571,7 @@ tables.</para>
 <refsection><info><title>Description</title></info>
 
 <para>If non-zero, <tag>variablelist</tag>s will be formatted as
-tables. A processing instruction exists to specify a particualar width for the 
+tables. A processing instruction exists to specify a particular width for the 
 column containing the <tag>term</tag>s:   
 <tag class="xmlpi">dbhtml term-width=".25in"</tag></para>
 
@@ -5153,7 +5580,7 @@ child of <tag>variablelist</tag>: <tag class="xmlpi">dbhtml
 list-presentation="table"</tag> or <tag class="xmlpi">dbhtml
 list-presentation="list"</tag>.</para>
 
-<para>This parameter only applys to the HTML transformations. In the
+<para>This parameter only applies to the HTML transformations. In the
 FO case, proper list markup is robust enough to handle the formatting.
 But see also <parameter>variablelist.as.blocks</parameter>.</para>
 
@@ -6117,11 +6544,7 @@ equations in your document.</para>
     <parameter>passivetex.extensions</parameter>,
     <parameter>tex.math.file</parameter></para>
 </refsection>
-<refsection><info><title>More information</title></info>
-  <para>For how-to documentation on embedding TeX equations and
-    generating output from them, see
-    <link xmlns:xlink="http://www.w3.org/1999/xlink" role="tcg" xlink:href="TexMath.html">DBTeXMath</link>.</para>
-</refsection>
+
 </refentry>
 
 <refentry version="5.0" xml:id="tex.math.file">
@@ -6181,6 +6604,12 @@ surrounded by math mode delimiters?</refpurpose>
 <para>For compatibility with DSSSL based DBTeXMath from Allin Cottrell
 you should set this parameter to 0.</para>
 
+<warning>
+  <para>This feature is useful for print/PDF output only if you
+  use the obsolete and now unsupported PassiveTeX XSL-FO
+  engine.</para>
+</warning>
+
 </refsection>
 <refsection><info><title>Related Parameters</title></info>
   <para><parameter>tex.math.in.alt</parameter>,
@@ -6191,11 +6620,8 @@ you should set this parameter to 0.</para>
   <para>You can also use the <tag class="xmlpi">dbtex delims</tag> processing
     instruction to control whether delimiters are output.</para>
 </refsection>
-<refsection><info><title>More information</title></info>
-  <para>For how-to documentation on embedding TeX equations and
-    generating output from them, see
-    <link xmlns:xlink="http://www.w3.org/1999/xlink" role="tcg" xlink:href="TexMath.html">DBTeXMath</link>.</para>
-</refsection>
+
+
 </refentry>
 
 <refentry version="5.0" xml:id="pixels.per.inch">
@@ -6519,26 +6945,90 @@ be syntactically highlighted?</refpurpose>
 
 <refsection><info><title>Description</title></info>
 
-<para>When this parameter is non-zero, the stylesheets will try to do
-syntax highlighting of the content of the <tag>programlisting</tag> element. The highlighting is done by the 
-XSLTHL extension module. This is an external Java library which is not part of the DocBook XSL distribution.</para>
+<para>When this parameter is non-zero, the stylesheets will try to do syntax highlighting of the 
+content of <tag>programlisting</tag> elements. You specify the language for each programlisting 
+by using the <tag class="attribute">language</tag> attribute. The <parameter>highlight.default.language</parameter> 
+parameter can be used to specify the language for programlistings without a <tag class="attribute">language</tag> 
+attribute. Syntax highlighting also works for <tag>screen</tag> and <tag>synopsis</tag> elements.</para>
 
-<para>In order to use this extension, you must add
-<filename>xslthl.jar</filename> to your Java classpath. You can
-download this software from <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://sourceforge.net/projects/xslthl">the XSLT syntax highlighting project</link> at SourceForge.</para>
+<para>The actual highlighting work is done by the XSLTHL extension module. This is an external Java library that has to be 
+downloaded separately (see below).</para>
 
-<para>The configuration of syntax highlighting is stored in 
-<filename>highlighting/xslthl-config.xml</filename>. The Java
-property <literal>xslthl.config</literal> must point to this
-file (using URL syntax).</para>
+<itemizedlist>
+<para>In order to use this extension, you must</para> 
 
-<para>This extension is known to work with Saxon 6.5.x. Here is an example of a modified Saxon command:</para>
+<listitem><para>add <filename>xslthl-2.x.x.jar</filename> to your Java classpath. The latest version is available
+from <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://sourceforge.net/projects/xslthl">the XSLT syntax highlighting project</link> 
+at SourceForge.</para>
+</listitem>
+<listitem>
+<para>use a customization layer in which you import one of the following stylesheet modules: 
+<itemizedlist>
+  <listitem>
+    <para><filename>html/highlight.xsl</filename>
+    </para>
+  </listitem>
+<listitem>
+    <para><filename>xhtml/highlight.xsl</filename>
+    </para>
+  </listitem>
+<listitem>
+    <para><filename>xhtml-1_1/highlight.xsl</filename>
+    </para>
+  </listitem>
+<listitem>
+    <para><filename>fo/highlight.xsl</filename>
+    </para>
+</listitem>
+</itemizedlist>
+</para>
+</listitem>
+<listitem><para>let either the <literal>xslthl.config</literal> Java system property or the
+<parameter>highlight.xslthl.config</parameter> parameter point to the configuration file for syntax 
+highlighting (using URL syntax). DocBook XSL comes with a ready-to-use configuration file, 
+<filename>highlighting/xslthl-config.xml</filename>.</para>
+</listitem>
+</itemizedlist>
 
-<programlisting>java -cp c:\batch\;&#8230;;c:\path\to\xslthl.jar -Dxslthl.config=file:///c:/docbook-xsl/highlighting/xslthl-config.xml &#8230; com.icl.saxon.StyleSheet &#8230;</programlisting>
+<para>The extension works with Saxon 6.5.x and Xalan-J. (Saxon 8.5 or later is also supported, but since it is 
+an XSLT 2.0 processor it is not guaranteed to work with DocBook XSL in all circumstances.)</para>
 
-<para>You can specify the language for each programlisting by using the <tag class="attribute">language</tag> attribute. The
-<parameter>highlighting.default.language</parameter> parameter can be used for specifying the
-language to be used for programlistings without a <tag class="attribute">language</tag> attribute.</para>
+<para>The following is an example of a Saxon 6 command adapted for syntax highlighting, to be used on Windows:</para>
+
+<informalexample>
+<para><command>java -cp c:/Java/saxon.jar;c:/Java/xslthl-2.0.1.jar 
+-Dxslthl.config=file:///c:/docbook-xsl/highlighting/xslthl-config.xml com.icl.saxon.StyleSheet 
+-o test.html test.xml myhtml.xsl</command></para>
+</informalexample>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" xml:id="highlight.xslthl.config">
+<refmeta>
+<refentrytitle>highlight.xslthl.config</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">uri</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>highlight.xslthl.config</refname>
+<refpurpose>Location of XSLTHL configuration file</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting xml:id="highlight.xslthl.config.frag">
+&lt;xsl:param name="highlight.xslthl.config"&gt;&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>This location has precedence over the corresponding Java property.</para>
+
+<para>Please note that usually you have to specify location as URL not
+just as a simple path on the local
+filesystem. E.g. <filename>file:///home/user/xslthl/my-xslthl-config.xml</filename>.</para>
+
+
 
 </refsection>
 </refentry>
@@ -6592,6 +7082,42 @@ brackets.</para></footnote>
 
 are generated around e-mail addresses
 (the output of the <tag>email</tag> element).</para>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" xml:id="exsl.node.set.available">
+<refmeta>
+<refentrytitle>exsl.node.set.available</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">boolean</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>exsl.node.set.available</refname>
+<refpurpose>Is the test function-available('exsl:node-set') true?</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting xml:id="exsl.node.set.available.frag">&lt;xsl:param name="exsl.node.set.available"&gt; 
+  &lt;xsl:choose&gt;
+    &lt;xsl:when exsl:foo="" test="function-available('exsl:node-set') or                        contains(system-property('xsl:vendor'),                          'Apache Software Foundation')"&gt;1&lt;/xsl:when&gt;
+    &lt;xsl:otherwise&gt;0&lt;/xsl:otherwise&gt;
+  &lt;/xsl:choose&gt;
+&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>If non-zero,
+then the exsl:node-set() function is available to be used in
+the stylesheet.
+If zero, then the function is not available.
+This param automatically detects the presence of
+the function and does not normally need to be set manually.</para>
+
+<para>This param was created to handle a long-standing
+bug in the Xalan processor that fails to detect the
+function even though it is available.</para>
 
 </refsection>
 </refentry>
@@ -6882,10 +7408,8 @@ and the <tag class="attribute">format</tag> attribute is
 <refsection><info><title>Description</title></info>
 
 <para>If specified, this value will be used for the
-<tag class="attribute">width</tag> attribute on
-images that do not specify any
-<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://docbook.org/tdg/en/html/imagedata.html#viewport.area">viewport
-dimensions</link>.</para>
+<tag class="attribute">width</tag> attribute on images that do not specify any 
+<emphasis xmlns:xlink="http://www.w3.org/1999/xlink" xlink:title="DocBook 5: The Definitive Guide" xlink:href="http://docbook.org/tdg5/en/html/imagedata.html#viewport.area">viewport dimensions</emphasis>.</para>
 
 </refsection>
 </refentry>
@@ -7684,7 +8208,7 @@ The title page includes generated links to each of the separate files.
 </para>
 <para>
 This feature depends on the
-<literal>chunk.tocs.and.lots</literal>
+<parameter>chunk.tocs.and.lots</parameter>
 parameter also being non-zero. 
 </para>
 
@@ -8964,11 +9488,9 @@ ToC as a default.</para>
 
 <refsection><info><title>Description</title></info>
 
-<para>Set non-zero for folder-like icons or zero for book-like icons in the TOC
-ToC. If you want to use folder-like icons you must swith off binary
-ToC using (xref) <parameter>htmlhelp.hhc.binary</parameter>.
-
-
+<para>Set to non-zero for folder-like icons or zero for book-like icons in the ToC. 
+If you want to use folder-like icons, you must switch off the binary ToC using 
+<parameter>htmlhelp.hhc.binary</parameter>.
 
 </para>
 
@@ -9966,6 +10488,85 @@ to be treated as case insensitive".</para>
 </refsection>
 </refentry>
 
+<refentry version="5.0" xml:id="writing.mode">
+<refmeta>
+<refentrytitle>writing.mode</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">string</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>writing.mode</refname>
+<refpurpose>Direction of text flow based on locale</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting xml:id="writing.mode.frag">
+&lt;xsl:param name="writing.mode"&gt;
+  &lt;xsl:call-template name="gentext"&gt;
+    &lt;xsl:with-param name="key"&gt;writing-mode&lt;/xsl:with-param&gt;
+    &lt;xsl:with-param name="lang"&gt;
+      &lt;xsl:call-template name="l10n.language"&gt;
+        &lt;xsl:with-param name="target" select="/*[1]"&gt;&lt;/xsl:with-param&gt;
+      &lt;/xsl:call-template&gt;
+    &lt;/xsl:with-param&gt;
+  &lt;/xsl:call-template&gt;
+&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>Sets direction of text flow and text alignment based on locale.
+The value is normally taken from the gentext file for the 
+lang attribute of the document's root element, using the 
+key name 'writing-mode' to look it up in the gentext file.
+But the param can also be
+set on the command line to override that gentext value.
+</para>
+<para>Accepted values are:
+<variablelist>
+  <varlistentry>
+    <term>lr-tb</term>
+    <listitem>
+      <para>Left-to-right text flow in each line, lines stack top to bottom.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>rl-tb</term>
+    <listitem>
+      <para>Right-to-left text flow in each line, lines stack top to bottom.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>tb-rl</term>
+    <listitem>
+      <para>Top-to-bottom text flow in each vertical line, lines stack right to left.
+      Supported by only a few XSL-FO processors. Not supported in HTML output.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>lr</term>
+    <listitem>
+      <para>Shorthand for lr-tb.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>rl</term>
+    <listitem>
+      <para>Shorthand for rl-tb.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>tb</term>
+    <listitem>
+      <para>Shorthand for tb-rl.</para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+</para>
+
+</refsection>
+</refentry>
+
 </reference>
 <appendix xml:id="stylesheet"><title>The Stylesheet</title>
 
@@ -9988,6 +10589,7 @@ around all these parameters.</para>
 
      ******************************************************************** --&gt;
 
+&lt;src:fragref linkend="abstract.notitle.enabled.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="admon.graphics.extension.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="admon.graphics.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="admon.graphics.path.frag"&gt;&lt;/src:fragref&gt;
@@ -9995,14 +10597,14 @@ around all these parameters.</para>
 &lt;src:fragref linkend="admon.textlabel.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="annotate.toc.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="annotation.css.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="annotation.js.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="annotation.graphic.open.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="annotation.graphic.close.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="annotation.graphic.open.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="annotation.js.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="annotation.support.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="appendix.autolabel.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="author.othername.in.middle.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="autotoc.label.separator.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="autotoc.label.in.hyperlink.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="autotoc.label.separator.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="base.dir.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="biblioentry.item.separator.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="bibliography.collection.frag"&gt;&lt;/src:fragref&gt;
@@ -10025,34 +10627,38 @@ around all these parameters.</para>
 &lt;src:fragref linkend="chunk.first.sections.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="chunk.quietly.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="chunk.section.depth.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="chunk.separate.lots.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="chunk.toc.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="chunk.tocs.and.lots.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="chunk.tocs.and.lots.has.title.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="chunk.separate.lots.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="citerefentry.link.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="collect.xref.targets.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="component.label.includes.part.label.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="contrib.inline.enabled.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="css.decoration.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="current.docid.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="custom.css.source.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="default.float.class.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="default.image.width.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="default.table.width.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="default.table.frame.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="default.table.width.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="docbook.css.link.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="docbook.css.source.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="draft.mode.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="draft.watermark.image.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="ebnf.table.bgcolor.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="ebnf.table.border.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="ebnf.assignment.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="ebnf.statement.terminator.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="ebnf.table.bgcolor.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="ebnf.table.border.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="eclipse.autolabel.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="eclipse.plugin.name.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="eclipse.plugin.id.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="eclipse.plugin.name.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="eclipse.plugin.provider.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="editedby.enabled.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="email.delimiters.enabled.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="emphasis.propagates.style.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="entry.propagates.style.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="exsl.node.set.available.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="firstterm.only.link.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="footer.rule.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="footnote.number.format.frag"&gt;&lt;/src:fragref&gt;
@@ -10062,12 +10668,13 @@ around all these parameters.</para>
 &lt;src:fragref linkend="funcsynopsis.decoration.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="funcsynopsis.style.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="function.parens.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="generate.css.header.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="generate.id.attributes.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="generate.index.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="generate.legalnotice.link.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="generate.revhistory.link.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="generate.manifest.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="generate.meta.abstract.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="generate.revhistory.link.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="generate.section.toc.level.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="generate.toc.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="glossary.collection.frag"&gt;&lt;/src:fragref&gt;
@@ -10080,6 +10687,7 @@ around all these parameters.</para>
 &lt;src:fragref linkend="header.rule.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="highlight.default.language.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="highlight.source.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="highlight.xslthl.config.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="html.append.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="html.base.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="html.cellpadding.frag"&gt;&lt;/src:fragref&gt;
@@ -10087,8 +10695,8 @@ around all these parameters.</para>
 &lt;src:fragref linkend="html.cleanup.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="html.ext.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="html.extra.head.links.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="html.head.legalnotice.link.types.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="html.head.legalnotice.link.multiple.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="html.head.legalnotice.link.types.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="html.longdesc.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="html.longdesc.link.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="html.stylesheet.frag"&gt;&lt;/src:fragref&gt;
@@ -10142,17 +10750,20 @@ around all these parameters.</para>
 &lt;src:fragref linkend="htmlhelp.title.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="htmlhelp.use.hhk.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="htmlhelp.window.geometry.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="img.src.path.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="id.warnings.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="ignore.image.scaling.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="img.src.path.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="index.links.to.section.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="index.method.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="index.number.separator.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="index.on.role.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="index.on.type.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="index.number.separator.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="index.term.separator.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="index.range.separator.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="index.prefer.titleabbrev.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="ignore.image.scaling.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="index.range.separator.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="index.term.separator.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="inherit.keywords.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="insert.olink.page.number.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="insert.olink.pdf.frag.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="insert.xref.page.number.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="javahelp.encoding.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="keep.relative.image.uris.frag"&gt;&lt;/src:fragref&gt;
@@ -10166,6 +10777,7 @@ around all these parameters.</para>
 &lt;src:fragref linkend="linenumbering.separator.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="linenumbering.width.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="link.mailto.url.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="make.clean.html.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="make.graphic.viewport.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="make.single.year.ranges.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="make.valid.html.frag"&gt;&lt;/src:fragref&gt;
@@ -10184,18 +10796,14 @@ around all these parameters.</para>
 &lt;src:fragref linkend="nominal.table.width.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="olink.base.uri.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="olink.debug.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="olink.properties.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="insert.olink.page.number.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="insert.olink.pdf.frag.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="prefer.internal.olink.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="olink.lang.fallback.sequence.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="olink.doctitle.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="olink.fragid.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="olink.lang.fallback.sequence.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="olink.outline.ext.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="olink.properties.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="olink.pubid.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="olink.resolver.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="olink.sysid.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="abstract.notitle.enabled.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="othercredit.like.author.enabled.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="para.propagates.style.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="part.autolabel.frag"&gt;&lt;/src:fragref&gt;
@@ -10203,12 +10811,13 @@ around all these parameters.</para>
 &lt;src:fragref linkend="pixels.per.inch.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="points.per.em.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="preface.autolabel.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="prefer.internal.olink.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="preferred.mediaobject.role.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="process.empty.source.toc.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="process.source.toc.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="profile.arch.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="profile.audience.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="profile.attribute.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="profile.audience.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="profile.condition.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="profile.conformance.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="profile.lang.frag"&gt;&lt;/src:fragref&gt;
@@ -10225,16 +10834,16 @@ around all these parameters.</para>
 &lt;src:fragref linkend="profile.wordsize.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="punct.honorific.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="qanda.defaultlabel.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="qanda.inherit.numeration.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="qanda.in.toc.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="qanda.inherit.numeration.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="qanda.nested.in.toc.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="qandadiv.autolabel.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="refclass.suppress.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="refentry.generate.name.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="refentry.generate.title.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="refentry.separator.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="refentry.xref.manvolnum.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="reference.autolabel.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="refclass.suppress.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="root.filename.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="rootid.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="runinhead.default.title.end.punct.frag"&gt;&lt;/src:fragref&gt;
@@ -10264,14 +10873,14 @@ around all these parameters.</para>
 &lt;src:fragref linkend="tablecolumns.extension.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="target.database.document.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="targets.filename.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="textdata.default.encoding.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="tex.math.delims.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="tex.math.file.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="tex.math.in.alt.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="textdata.default.encoding.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="textinsert.extension.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="toc.list.type.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="toc.section.depth.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="toc.max.depth.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="toc.section.depth.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="ulink.target.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="use.embed.for.svg.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="use.extensions.frag"&gt;&lt;/src:fragref&gt;
@@ -10281,12 +10890,13 @@ around all these parameters.</para>
 &lt;src:fragref linkend="use.role.for.mediaobject.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="use.svg.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="variablelist.as.table.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="variablelist.term.separator.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="variablelist.term.break.after.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="xref.with.number.and.title.frag"&gt;&lt;/src:fragref&gt;
-&lt;src:fragref linkend="xref.label-title.separator.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="variablelist.term.separator.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="writing.mode.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="xref.label-page.separator.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="xref.label-title.separator.frag"&gt;&lt;/src:fragref&gt;
 &lt;src:fragref linkend="xref.title-page.separator.frag"&gt;&lt;/src:fragref&gt;
+&lt;src:fragref linkend="xref.with.number.and.title.frag"&gt;&lt;/src:fragref&gt;
 
 &lt;/xsl:stylesheet&gt;
 </programlisting>

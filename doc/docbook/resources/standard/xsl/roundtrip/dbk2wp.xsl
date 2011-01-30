@@ -887,7 +887,8 @@
 
   <xsl:template match='blockquote|doc:blockquote'
     mode='doc:body'>
-    <xsl:apply-templates select='blockinfo|title|doc:info|doc:title'>
+    <xsl:apply-templates select='blockinfo|title|doc:info|doc:title'
+      mode='doc:body'>
       <xsl:with-param name='class'>
         <xsl:value-of select='local-name()'/>
       </xsl:with-param>
@@ -900,7 +901,11 @@
       <xsl:call-template name='doc:make-paragraph'>
 	<xsl:with-param name='style' select='"blockquote-attribution"'/>
 	<xsl:with-param name='content'>
-          <xsl:apply-templates select='attribution/node()|doc:attribution/node()'/>
+          <xsl:call-template name='doc:make-phrase'>
+            <xsl:with-param name='content'>
+              <xsl:apply-templates select='attribution/node()|doc:attribution/node()'/>
+            </xsl:with-param>
+          </xsl:call-template>
 	</xsl:with-param>
       </xsl:call-template>
     </xsl:if>
@@ -951,14 +956,20 @@
       mode='doc:list-continue'/>
 
     <xsl:apply-templates select='*[position() != 1]'
-      mode='doc:body'/>
+      mode='doc:list-continue'/>
   </xsl:template>  
 
-  <xsl:template match='*' mode='doc:list-continue'>
+  <xsl:template match='para|doc:para' mode='doc:list-continue'>
     <xsl:apply-templates select='.'
       mode='doc:body'>
       <xsl:with-param name='class' select='"para-continue"'/>
     </xsl:apply-templates>
+  </xsl:template>
+  <!-- non-paragraph elements in a listitem are rolled back into
+       the list item upon conversion.
+       -->
+  <xsl:template match='*' mode='doc:list-continue'>
+    <xsl:apply-templates select='.' mode='doc:body'/>
   </xsl:template>
 
   <xsl:template match='variablelist|doc:variablelist'

@@ -600,7 +600,7 @@
       <xsl:apply-templates select="."/>
     </xsl:variable>
     <xsl:choose>
-      <xsl:when test="function-available('exsl:node-set')">
+      <xsl:when test="$exsl.node.set.available != 0">
         <xsl:variable name="html-nodes" select="exsl:node-set($html)"/>
         <xsl:choose>
           <xsl:when test="$html-nodes//p">

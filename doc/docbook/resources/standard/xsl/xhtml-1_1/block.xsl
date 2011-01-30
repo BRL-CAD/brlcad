@@ -24,7 +24,7 @@
 
 <xsl:template name="block.object">
   <div>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:call-template name="common.html.attributes"/>
     <xsl:call-template name="anchor"/>
     <xsl:apply-templates/>
   </div>
@@ -58,12 +58,16 @@
 
   <xsl:variable name="p">
     <p>
-      <xsl:call-template name="dir"/>
-      <xsl:if test="$class != ''">
-        <xsl:apply-templates select="." mode="class.attribute">
-          <xsl:with-param name="class" select="$class"/>
-        </xsl:apply-templates>
-      </xsl:if>
+      <xsl:choose>
+        <xsl:when test="$class != ''">
+          <xsl:call-template name="common.html.attributes">
+            <xsl:with-param name="class" select="$class"/>
+          </xsl:call-template>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:call-template name="locale.html.attributes"/>
+        </xsl:otherwise>
+      </xsl:choose>
       <xsl:copy-of select="$content"/>
     </p>
   </xsl:variable>
@@ -83,6 +87,7 @@
 <xsl:template match="simpara">
   <!-- see also listitem/simpara in lists.xsl -->
   <p>
+    <xsl:call-template name="locale.html.attributes"/>
     <xsl:if test="@role and $para.propagates.style != 0">
       <xsl:apply-templates select="." mode="class.attribute">
         <xsl:with-param name="class" select="@role"/>
@@ -123,13 +128,26 @@
     </xsl:if>
   </xsl:variable>
 
-  <b>
-    <xsl:copy-of select="$titleStr"/>
-    <xsl:if test="$lastChar != ''                   and not(contains($runinhead.title.end.punct, $lastChar))">
-      <xsl:value-of select="$runinhead.default.title.end.punct"/>
-    </xsl:if>
-    <xsl:text>&#160;</xsl:text>
-  </b>
+  <xsl:choose>
+    <xsl:when test="$make.clean.html != 0">
+      <span class="formalpara-title">
+        <xsl:copy-of select="$titleStr"/>
+        <xsl:if test="$lastChar != ''                       and not(contains($runinhead.title.end.punct, $lastChar))">
+          <xsl:value-of select="$runinhead.default.title.end.punct"/>
+        </xsl:if>
+        <xsl:text>&#160;</xsl:text>
+      </span>
+    </xsl:when>
+    <xsl:otherwise>
+      <strong xmlns:xslo="http://www.w3.org/1999/XSL/Transform">
+        <xsl:copy-of select="$titleStr"/>
+        <xsl:if test="$lastChar != ''                       and not(contains($runinhead.title.end.punct, $lastChar))">
+          <xsl:value-of select="$runinhead.default.title.end.punct"/>
+        </xsl:if>
+        <xsl:text>&#160;</xsl:text>
+      </strong>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="formalpara/para">
@@ -140,10 +158,7 @@
 
 <xsl:template match="blockquote">
   <div>
-    <xsl:apply-templates select="." mode="class.attribute"/>
-    <xsl:if test="@lang or @xml:lang">
-      <xsl:call-template name="xml.language.attribute"/>
-    </xsl:if>
+    <xsl:call-template name="common.html.attributes"/>
     <xsl:call-template name="anchor"/>
 
     <xsl:choose>
@@ -158,7 +173,7 @@
           </tr>
           <tr>
             <td valign="top">&#160;</td>
-            <td colspan="2" align="right" valign="top">
+            <td colspan="2" align="{$direction.align.end}" valign="top">
               <xsl:text>--</xsl:text>
               <xsl:apply-templates select="attribution"/>
             </td>
@@ -167,7 +182,7 @@
       </xsl:when>
       <xsl:otherwise>
         <blockquote>
-          <xsl:apply-templates select="." mode="class.attribute"/>
+          <xsl:call-template name="common.html.attributes"/>
           <xsl:apply-templates/>
         </blockquote>
       </xsl:otherwise>
@@ -176,22 +191,32 @@
 </xsl:template>
 
 <xsl:template match="blockquote/title|blockquote/info/title">
-  <div class="blockquote-title">
-    <p>
-      <b>
+  <xsl:choose>
+    <xsl:when test="$make.clean.html != 0">
+      <div class="blockquote-title">
         <xsl:apply-templates/>
-      </b>
-    </p>
-  </div>
+      </div>
+    </xsl:when>
+    <xsl:otherwise>
+      <div class="blockquote-title">
+        <p>
+          <strong xmlns:xslo="http://www.w3.org/1999/XSL/Transform">
+            <xsl:apply-templates/>
+          </strong>
+        </p>
+      </div>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
+<!-- Use an em dash per Chicago Manual of Style and https://sourceforge.net/tracker/index.php?func=detail&aid=2793878&group_id=21935&atid=373747 -->
 <xsl:template match="epigraph">
   <div>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:call-template name="common.html.attributes"/>
       <xsl:apply-templates select="para|simpara|formalpara|literallayout"/>
       <xsl:if test="attribution">
         <div class="attribution">
-          <span>--<xsl:apply-templates select="attribution"/></span>
+          <span>&#8212;<xsl:apply-templates select="attribution"/></span>
         </div>
       </xsl:if>
   </div>
@@ -199,7 +224,7 @@
 
 <xsl:template match="attribution">
   <span>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:call-template name="common.html.attributes"/>
     <xsl:apply-templates/>
   </span>
 </xsl:template>
@@ -208,15 +233,9 @@
 
 <xsl:template match="abstract|sidebar">
   <div>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:call-template name="common.html.attributes"/>
     <xsl:call-template name="anchor"/>
-    <xsl:call-template name="formal.object.heading">
-      <xsl:with-param name="title">
-        <xsl:apply-templates select="." mode="title.markup">
-          <xsl:with-param name="allow-anchors" select="'1'"/>
-        </xsl:apply-templates>
-      </xsl:with-param>
-    </xsl:call-template>
+    <xsl:call-template name="sidebar.titlepage"/>
     <xsl:apply-templates/>
   </div>
 </xsl:template>
@@ -249,7 +268,16 @@
 </xsl:template>
 
 <xsl:template match="msgmain/title">
-  <b><xsl:apply-templates/></b>
+  <xsl:choose>
+    <xsl:when test="$make.clean.html != 0">
+      <span class="msgmain-title">
+        <xsl:apply-templates/>
+      </span>
+    </xsl:when>
+    <xsl:otherwise>
+      <strong xmlns:xslo="http://www.w3.org/1999/XSL/Transform"><xsl:apply-templates/></strong>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="msgsub">
@@ -257,7 +285,16 @@
 </xsl:template>
 
 <xsl:template match="msgsub/title">
-  <b><xsl:apply-templates/></b>
+  <xsl:choose>
+    <xsl:when test="$make.clean.html != 0">
+      <span class="msgsub-title">
+        <xsl:apply-templates/>
+      </span>
+    </xsl:when>
+    <xsl:otherwise>
+      <strong xmlns:xslo="http://www.w3.org/1999/XSL/Transform"><xsl:apply-templates/></strong>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="msgrel">
@@ -265,7 +302,16 @@
 </xsl:template>
 
 <xsl:template match="msgrel/title">
-  <b><xsl:apply-templates/></b>
+  <xsl:choose>
+    <xsl:when test="$make.clean.html != 0">
+      <span class="msgrel-title">
+        <xsl:apply-templates/>
+      </span>
+    </xsl:when>
+    <xsl:otherwise>
+      <strong xmlns:xslo="http://www.w3.org/1999/XSL/Transform"><xsl:apply-templates/></strong>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="msgtext">
@@ -277,39 +323,84 @@
 </xsl:template>
 
 <xsl:template match="msglevel">
-  <p>
-    <b>
-      <xsl:call-template name="gentext.template">
-        <xsl:with-param name="context" select="'msgset'"/>
-        <xsl:with-param name="name" select="'MsgLevel'"/>
-      </xsl:call-template>
-    </b>
-    <xsl:apply-templates/>
-  </p>
+  <xsl:choose>
+    <xsl:when test="$make.clean.html != 0">
+      <div class="msglevel">
+        <span class="msglevel-title">
+          <xsl:call-template name="gentext.template">
+            <xsl:with-param name="context" select="'msgset'"/>
+            <xsl:with-param name="name" select="'MsgLevel'"/>
+          </xsl:call-template>
+        </span>
+        <xsl:apply-templates/>
+      </div>
+    </xsl:when>
+    <xsl:otherwise>
+      <p>
+        <strong xmlns:xslo="http://www.w3.org/1999/XSL/Transform">
+          <xsl:call-template name="gentext.template">
+            <xsl:with-param name="context" select="'msgset'"/>
+            <xsl:with-param name="name" select="'MsgLevel'"/>
+          </xsl:call-template>
+        </strong>
+        <xsl:apply-templates/>
+      </p>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="msgorig">
-  <p>
-    <b>
-      <xsl:call-template name="gentext.template">
-        <xsl:with-param name="context" select="'msgset'"/>
-        <xsl:with-param name="name" select="'MsgOrig'"/>
-      </xsl:call-template>
-    </b>
-    <xsl:apply-templates/>
-  </p>
+  <xsl:choose>
+    <xsl:when test="$make.clean.html != 0">
+      <div class="msgorig">
+        <span class="msgorig-title">
+          <xsl:call-template name="gentext.template">
+            <xsl:with-param name="context" select="'msgset'"/>
+            <xsl:with-param name="name" select="'MsgOrig'"/>
+          </xsl:call-template>
+        </span>
+        <xsl:apply-templates/>
+      </div>
+    </xsl:when>
+    <xsl:otherwise>
+      <p>
+        <strong xmlns:xslo="http://www.w3.org/1999/XSL/Transform">
+          <xsl:call-template name="gentext.template">
+            <xsl:with-param name="context" select="'msgset'"/>
+            <xsl:with-param name="name" select="'MsgOrig'"/>
+          </xsl:call-template>
+        </strong>
+        <xsl:apply-templates/>
+      </p>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="msgaud">
-  <p>
-    <b>
-      <xsl:call-template name="gentext.template">
-        <xsl:with-param name="context" select="'msgset'"/>
-        <xsl:with-param name="name" select="'MsgAud'"/>
-      </xsl:call-template>
-    </b>
-    <xsl:apply-templates/>
-  </p>
+  <xsl:choose>
+    <xsl:when test="$make.clean.html != 0">
+      <div class="msgaud">
+        <span class="msgaud-title">
+          <xsl:call-template name="gentext.template">
+            <xsl:with-param name="context" select="'msgset'"/>
+            <xsl:with-param name="name" select="'MsgAud'"/>
+          </xsl:call-template>
+        </span>
+        <xsl:apply-templates/>
+      </div>
+    </xsl:when>
+    <xsl:otherwise>
+      <p>
+        <strong xmlns:xslo="http://www.w3.org/1999/XSL/Transform">
+          <xsl:call-template name="gentext.template">
+            <xsl:with-param name="context" select="'msgset'"/>
+            <xsl:with-param name="name" select="'MsgAud'"/>
+          </xsl:call-template>
+        </strong>
+        <xsl:apply-templates/>
+      </p>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="msgexplan">
@@ -317,22 +408,37 @@
 </xsl:template>
 
 <xsl:template match="msgexplan/title">
-  <p><b><xsl:apply-templates/></b></p>
+  <xsl:choose>
+    <xsl:when test="$make.clean.html != 0">
+      <div class="msgexplan">
+        <span class="msgexplan-title">
+          <xsl:apply-templates/>
+        </span>
+      </div>
+    </xsl:when>
+    <xsl:otherwise>
+      <p>
+        <strong xmlns:xslo="http://www.w3.org/1999/XSL/Transform">
+          <xsl:apply-templates/>
+        </strong>
+      </p>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <!-- ==================================================================== -->
 
 <xsl:template match="revhistory">
   <div>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:call-template name="common.html.attributes"/>
     <table border="0" width="100%" summary="Revision history">
       <tr>
-        <th align="left" valign="top" colspan="3">
-          <b>
+        <th align="{$direction.align.start}" valign="top" colspan="3">
+          <strong xmlns:xslo="http://www.w3.org/1999/XSL/Transform">
             <xsl:call-template name="gentext">
               <xsl:with-param name="key" select="'RevHistory'"/>
             </xsl:call-template>
-          </b>
+          </strong>
         </th>
       </tr>
       <xsl:apply-templates/>
@@ -346,7 +452,7 @@
   <xsl:variable name="revauthor" select="authorinitials|author"/>
   <xsl:variable name="revremark" select="revremark|revdescription"/>
   <tr>
-    <td align="left">
+    <td align="{$direction.align.start}">
       <xsl:if test="$revnumber">
         <xsl:call-template name="gentext">
           <xsl:with-param name="key" select="'Revision'"/>
@@ -355,19 +461,19 @@
         <xsl:apply-templates select="$revnumber"/>
       </xsl:if>
     </td>
-    <td align="left">
+    <td align="{$direction.align.start}">
       <xsl:apply-templates select="$revdate"/>
     </td>
     <xsl:choose>
       <xsl:when test="count($revauthor)=0">
-        <td align="left">
+        <td align="{$direction.align.start}">
           <xsl:call-template name="dingbat">
             <xsl:with-param name="dingbat">nbsp</xsl:with-param>
           </xsl:call-template>
         </td>
       </xsl:when>
       <xsl:otherwise>
-        <td align="left">
+        <td align="{$direction.align.start}">
           <xsl:for-each select="$revauthor">
             <xsl:apply-templates select="."/>
             <xsl:if test="position() != last()">
@@ -380,7 +486,7 @@
   </tr>
   <xsl:if test="$revremark">
     <tr>
-      <td align="left" colspan="3">
+      <td align="{$direction.align.start}" colspan="3">
         <xsl:apply-templates select="$revremark"/>
       </td>
     </tr>
@@ -414,11 +520,8 @@
 
 <!-- ==================================================================== -->
 
-<xsl:template match="ackno">
-  <p>
-    <xsl:apply-templates select="." mode="class.attribute"/>
-    <xsl:apply-templates/>
-  </p>
+<xsl:template match="ackno|acknowledgements[parent::article]">
+  <xsl:call-template name="block.object"/>
 </xsl:template>
 
 <!-- ==================================================================== -->

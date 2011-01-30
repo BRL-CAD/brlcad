@@ -130,13 +130,16 @@
     <xsl:call-template name="pi.dbfo_keep-together"/>
   </xsl:variable>
 
-  <!-- These don't have a pgwide attribute, so may use a PI -->
+  <!-- Some don't have a pgwide attribute, so may use a PI -->
   <xsl:variable name="pgwide.pi">
     <xsl:call-template name="pi.dbfo_pgwide"/>
   </xsl:variable>
 
   <xsl:variable name="pgwide">
     <xsl:choose>
+      <xsl:when test="@pgwide">
+        <xsl:value-of select="@pgwide"/>
+      </xsl:when>
       <xsl:when test="$pgwide.pi">
         <xsl:value-of select="$pgwide.pi"/>
       </xsl:when>
@@ -160,7 +163,7 @@
               <xsl:attribute name="keep-together.within-column"><xsl:value-of
                               select="$keep.together"/></xsl:attribute>
             </xsl:if>
-            <xsl:apply-templates/>
+            <xsl:call-template name="equation.without.title"/>
           </fo:block>
         </xsl:when>
         <xsl:otherwise>
@@ -170,7 +173,7 @@
               <xsl:attribute name="keep-together.within-column"><xsl:value-of
                               select="$keep.together"/></xsl:attribute>
             </xsl:if>
-            <xsl:apply-templates/>
+            <xsl:call-template name="equation.without.title"/>
           </fo:block>
         </xsl:otherwise>
       </xsl:choose>
@@ -273,10 +276,34 @@
   </xsl:choose>
 </xsl:template>
 
+<xsl:template name="equation.without.title">
+  <!-- Lay out equation and number next to equation using a table -->
+  <fo:table table-layout="fixed" width="100%">
+    <fo:table-column column-width="proportional-column-width(15)"/>
+    <fo:table-column column-width="proportional-column-width(1)"/>
+    <fo:table-body start-indent="0pt" end-indent="0pt">
+      <fo:table-row>
+        <fo:table-cell padding-end="6pt">
+          <fo:block>
+            <xsl:apply-templates/>
+          </fo:block>
+        </fo:table-cell>
+        <fo:table-cell xsl:use-attribute-sets="equation.number.properties">
+          <fo:block>
+            <xsl:text>(</xsl:text>
+            <xsl:apply-templates select="." mode="label.markup"/>
+            <xsl:text>)</xsl:text>
+          </fo:block>
+        </fo:table-cell>
+      </fo:table-row>
+    </fo:table-body>
+  </fo:table>
+</xsl:template>
+
 <xsl:template name="semiformal.object">
   <xsl:param name="placement" select="'before'"/>
   <xsl:choose>
-    <xsl:when test="./title">
+    <xsl:when test="title or info/title">
       <xsl:call-template name="formal.object">
         <xsl:with-param name="placement" select="$placement"/>
       </xsl:call-template>

@@ -169,8 +169,7 @@
   </xsl:if>
 
 
-  <xsl:if test="not(function-available('exslt:node-set') or
-                    function-available('exslt:nodeSet'))">
+  <xsl:if test="$exsl.node.set.available = 0">
     <xsl:message terminate="yes">
       <xsl:text>ERROR: the 'kosek' index method requires the </xsl:text>
       <xsl:text>exslt:node-set() function. Use a processor that </xsl:text>
@@ -294,6 +293,13 @@
     <xsl:if test="$axf.extensions != 0">
       <xsl:attribute name="axf:suppress-duplicate-page-number">true</xsl:attribute>
     </xsl:if>
+
+    <xsl:for-each select="$refs/primary">
+      <xsl:if test="@id or @xml:id">
+        <fo:inline id="{(@id|@xml:id)[1]}"/>
+      </xsl:if>
+    </xsl:for-each>
+
     <xsl:value-of select="primary"/>
 
     <xsl:choose>
@@ -403,6 +409,13 @@
     <xsl:if test="$axf.extensions != 0">
       <xsl:attribute name="axf:suppress-duplicate-page-number">true</xsl:attribute>
     </xsl:if>
+
+    <xsl:for-each select="$refs/secondary">
+      <xsl:if test="@id or @xml:id">
+        <fo:inline id="{(@id|@xml:id)[1]}"/>
+      </xsl:if>
+    </xsl:for-each>
+
     <xsl:value-of select="secondary"/>
 
     <xsl:choose>
@@ -522,6 +535,13 @@
     <xsl:if test="$axf.extensions != 0">
       <xsl:attribute name="axf:suppress-duplicate-page-number">true</xsl:attribute>
     </xsl:if>
+
+    <xsl:for-each select="$refs/tertiary">
+      <xsl:if test="@id or @xml:id">
+        <fo:inline id="{(@id|@xml:id)[1]}"/>
+      </xsl:if>
+    </xsl:for-each>
+
     <xsl:value-of select="tertiary"/>
 
     <xsl:choose>
@@ -753,11 +773,11 @@
                                        ancestor::refentry|ancestor::reference|ancestor::refsect1|ancestor::refsect2|
                                        ancestor::refsect3|ancestor::refsection|ancestor::refsynopsisdiv|
                                        ancestor::sect1|ancestor::sect2|ancestor::sect3|ancestor::sect4|ancestor::sect5|
-                                       ancestor::section|ancestor::setindex|ancestor::set|ancestor::sidebar)[&scope;]"/>
+                                       ancestor::section|ancestor::setindex|ancestor::set|ancestor::sidebar|ancestor::mediaobject)[&scope;]"/>
   
   <xsl:variable name="id">
     <xsl:call-template name="object.id">
-      <xsl:with-param name="object" select="$target[1]"/>
+      <xsl:with-param name="object" select="$target[position() = last()]"/>
     </xsl:call-template>
   </xsl:variable>
   

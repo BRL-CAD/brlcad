@@ -28,11 +28,13 @@
 <refsection><info><title>Description</title></info>
 
 <para>This parameter provides
-one means of indenting the body text relative to
-the left page margin.
+the means of indenting the body text relative to
+section titles.
+For left-to-right text direction, it indents the left side.
+For right-to-left text direction, it indents the right side.
 It is used in place of the 
 <parameter>title.margin.left</parameter> for
-all XSL-FO processors except FOP.
+all XSL-FO processors except FOP 0.25.
 It enables support for side floats to appear
 in the indented margin area.
 </para>

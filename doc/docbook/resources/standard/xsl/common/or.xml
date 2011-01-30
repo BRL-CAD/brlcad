@@ -29,6 +29,8 @@
 
 <l:gentext key="Abstract" text="ସାରାଂଶ"/>
 <l:gentext key="abstract" text="ସାରାଂଶ"/>
+<l:gentext key="Acknowledgements" text="ପ୍ରାପ୍ତି ସୂଚନା"/>
+<l:gentext key="acknowledgements" text="ପ୍ରାପ୍ତି ସୂଚନା"/>
 <l:gentext key="Answer" text="ଉ:"/>
 <l:gentext key="answer" text="ଉ:"/>
 <l:gentext key="Appendix" text="ପରିଶିଷ୍ଠ"/>
@@ -53,7 +55,7 @@
 <l:gentext key="dedication" text="ସମର୍ପଣ"/>
 <l:gentext key="Edition" text="ସଂସକରଣ"/>
 <l:gentext key="edition" text="ସଂସକରଣ"/>
-<l:gentext key="Editor" text="Editor" lang="en"/>
+<l:gentext key="Editor" text="ସମ୍ପାଦକ"/>
 <l:gentext key="Equation" text="ସମୀକରଣ"/>
 <l:gentext key="equation" text="ସମୀକରଣ"/>
 <l:gentext key="Example" text="ଉଦାହରଣ"/>
@@ -95,21 +97,21 @@
 <l:gentext key="pubdate" text="ପ୍ରକାଶନ ତାରୀଖ"/>
 <l:gentext key="Published" text="ପ୍ରକାଶିତ"/>
 <l:gentext key="published" text="ପ୍ରକାଶିତ"/>
-<l:gentext key="Publisher" text="Publisher" lang="en"/>
+<l:gentext key="Publisher" text="ପ୍ରକାଶକ"/>
 <l:gentext key="Qandadiv" text="ପ୍ର &amp; ଉ"/>
 <l:gentext key="qandadiv" text="ପ୍ର &amp; ଉ"/>
-<l:gentext key="QandASet" text="Frequently Asked Questions" lang="en"/>
+<l:gentext key="QandASet" text="ବାରମ୍ବାର ପଚରାଯାଉଥିବା ପ୍ରଶ୍ନଗୁଡ଼ିକ"/>
 <l:gentext key="Question" text="ପ୍ର:"/>
 <l:gentext key="question" text="ପ୍ର:"/>
-<l:gentext key="RefEntry" text=""/>
-<l:gentext key="refentry" text=""/>
+<l:gentext key="RefEntry" text="ପୃଷ୍ଠା"/>
+<l:gentext key="refentry" text="ପୃଷ୍ଠା"/>
 <l:gentext key="Reference" text="ସନ୍ଦର୍ଭ"/>
 <l:gentext key="reference" text="ସନ୍ଦର୍ଭ"/>
-<l:gentext key="References" text="References" lang="en"/>
+<l:gentext key="References" text="ସନ୍ଦର୍ଭ"/>
 <l:gentext key="RefName" text="ନାମ"/>
 <l:gentext key="refname" text="ନାମ"/>
-<l:gentext key="RefSection" text=""/>
-<l:gentext key="refsection" text=""/>
+<l:gentext key="RefSection" text="ଅଂଶ"/>
+<l:gentext key="refsection" text="ଅଂଶ"/>
 <l:gentext key="RefSynopsisDiv" text="ସାରାଂଶ"/>
 <l:gentext key="refsynopsisdiv" text="ସାରାଂଶ"/>
 <l:gentext key="RevHistory" text="ସଂଶୋଧନ ଇତିହାସ"/>
@@ -138,8 +140,8 @@
 <l:gentext key="Step" text="ପଦକ୍ଷେପ"/>
 <l:gentext key="table" text="ସାରଣୀ"/>
 <l:gentext key="Table" text="ସାରଣୀ"/>
-<l:gentext key="task" text="Task" lang="en"/>
-<l:gentext key="Task" text="Task" lang="en"/>
+<l:gentext key="task" text="କାର୍ଯ୍ୟସୂଚୀ"/>
+<l:gentext key="Task" text="କାର୍ଯ୍ୟସୂଚୀ"/>
 <l:gentext key="tip" text="ସଂକେତ"/>
 <l:gentext key="TIP" text="ସଂକେତ"/>
 <l:gentext key="Tip" text="ସଂକେତ"/>
@@ -155,7 +157,6 @@
 <l:gentext key="in" text="ଭିତରେ"/>
 <l:gentext key="lastlistcomma" text=","/>
 <l:gentext key="listcomma" text=","/>
-<l:gentext key="nonexistantelement" text="ଅସ୍ତିସ୍ବହୀନ ଉପାଦାନ"/>
 <l:gentext key="notes" text="ଟୀକା"/>
 <l:gentext key="Notes" text="ଟୀକା"/>
 <l:gentext key="Pgs" text="ପୃଷ୍ଠା"/>
@@ -169,12 +170,12 @@
 <l:gentext key="unexpectedelementname" text="ଅପ୍ରତ୍ଯାଶିତ ଉପାଦାନ ନାମ"/>
 <l:gentext key="unsupported" text="ଅସହାୟକ"/>
 <l:gentext key="xrefto" text="ସହିତ ପ୍ରାସଙ୍ଗିକ ସନ୍ଦର୍ଭ କରନ୍ତୁ"/>
-<l:gentext key="Authors" text="Authors" lang="en"/>
-<l:gentext key="copyeditor" text="Copy Editor" lang="en"/>
-<l:gentext key="graphicdesigner" text="Graphic Designer" lang="en"/>
-<l:gentext key="productioneditor" text="Production Editor" lang="en"/>
-<l:gentext key="technicaleditor" text="Technical Editor" lang="en"/>
-<l:gentext key="translator" text="Translator" lang="en"/>
+<l:gentext key="Authors" text="ଲେଖକ"/>
+<l:gentext key="copyeditor" text="ନକଲ ସମ୍ପାଦକ"/>
+<l:gentext key="graphicdesigner" text="ଆଲେଖୀ ରଚନାକାରୀ"/>
+<l:gentext key="productioneditor" text="ଉତ୍ପାଦନ ସମ୍ପାଦକ"/>
+<l:gentext key="technicaleditor" text="ଯାନ୍ତ୍ରିକ ସମ୍ପାଦକ"/>
+<l:gentext key="translator" text="ଅନୁବାଦକ"/>
 <l:gentext key="listofequations" text="ସମୀକରଣ ତାଲିକା"/>
 <l:gentext key="ListofEquations" text="ସମୀକରଣ ତାଲିକା"/>
 <l:gentext key="ListofExamples" text="ଉଦାହରଣ ତାଲିକା"/>
@@ -199,6 +200,7 @@
 <l:gentext key="below" text="ତଳେ"/>
 <l:gentext key="sectioncalled" text="ଏହି ଅଂଶର ନାମ"/>
 <l:gentext key="index symbols" text="ପ୍ରତୀକ"/>
+<l:gentext key="writing-mode" text="lr-tb"/>
 <l:gentext key="lowercase.alpha" text="ଅଆଇଈଉଊଋଏଐଓଔକଖଗଘଙଚଛଜଝଞଟଠଡଢଣତଥଦଧନପଫବଭମଯୟରଲଳୱଶଷସହ"/>
 <l:gentext key="uppercase.alpha" text="ଅଆଇଈଉଊଋଏଐଓଔକଖଗଘଙଚଛଜଝଞଟଠଡଢଣତଥଦଧନପଫବଭମଯୟରଲଳୱଶଷସହ"/>
 <l:gentext key="normalize.sort.input" text="AaÀàÁáÂâÃãÄäÅåĀāĂăĄąǍǎǞǟǠǡǺǻȀȁȂȃȦȧḀḁẚẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặBbƀƁɓƂƃḂḃḄḅḆḇCcÇçĆćĈĉĊċČčƇƈɕḈḉDdĎďĐđƊɗƋƌǅǲȡɖḊḋḌḍḎḏḐḑḒḓEeÈèÉéÊêËëĒēĔĕĖėĘęĚěȄȅȆȇȨȩḔḕḖḗḘḙḚḛḜḝẸẹẺẻẼẽẾếỀềỂểỄễỆệFfƑƒḞḟGgĜĝĞğĠġĢģƓɠǤǥǦǧǴǵḠḡHhĤĥĦħȞȟɦḢḣḤḥḦḧḨḩḪḫẖIiÌìÍíÎîÏïĨĩĪīĬĭĮįİƗɨǏǐȈȉȊȋḬḭḮḯỈỉỊịJjĴĵǰʝKkĶķƘƙǨǩḰḱḲḳḴḵLlĹĺĻļĽľĿŀŁłƚǈȴɫɬɭḶḷḸḹḺḻḼḽMmɱḾḿṀṁṂṃNnÑñŃńŅņŇňƝɲƞȠǋǸǹȵɳṄṅṆṇṈṉṊṋOoÒòÓóÔôÕõÖöØøŌōŎŏŐőƟƠơǑǒǪǫǬǭǾǿȌȍȎȏȪȫȬȭȮȯȰȱṌṍṎṏṐṑṒṓỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợPpƤƥṔṕṖṗQqʠRrŔŕŖŗŘřȐȑȒȓɼɽɾṘṙṚṛṜṝṞṟSsŚśŜŝŞşŠšȘșʂṠṡṢṣṤṥṦṧṨṩTtŢţŤťŦŧƫƬƭƮʈȚțȶṪṫṬṭṮṯṰṱẗUuÙùÚúÛûÜüŨũŪūŬŭŮůŰűŲųƯưǓǔǕǖǗǘǙǚǛǜȔȕȖȗṲṳṴṵṶṷṸṹṺṻỤụỦủỨứỪừỬửỮữỰựVvƲʋṼṽṾṿWwŴŵẀẁẂẃẄẅẆẇẈẉẘXxẊẋẌẍYyÝýÿŸŶŷƳƴȲȳẎẏẙỲỳỴỵỶỷỸỹZzŹźŻżŽžƵƶȤȥʐʑẐẑẒẓẔẕẕ" lang="en"/>
@@ -216,6 +218,7 @@
 <l:context name="styles"><l:template name="person-name" text="ପ୍ରଥମ-ଶେଷ"/>
 </l:context>
 <l:context name="title"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="%t"/>
 <l:template name="appendix" text="ପରିଶିଷ୍ଠ %n. %t"/>
 <l:template name="article" text="%t"/>
@@ -321,6 +324,7 @@
 <l:template name="simplesect" text="%t"/>
 </l:context>
 <l:context name="subtitle"><l:template name="appendix" text="%s"/>
+<l:template name="acknowledgements" text="%s" lang="en"/>
 <l:template name="article" text="%s"/>
 <l:template name="bibliodiv" text="%s"/>
 <l:template name="biblioentry" text="%s"/>
@@ -360,6 +364,7 @@
 <l:template name="toc" text="%s"/>
 </l:context>
 <l:context name="xref"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="ଉ: %n"/>
 <l:template name="appendix" text="%t"/>
 <l:template name="article" text="%t"/>
@@ -490,8 +495,9 @@
 <l:template name="sep2" text=" ଓ "/>
 <l:template name="seplast" text=", ଓ "/>
 </l:context>
-<l:context name="glossary"><l:template name="see" text="ଦେଖନ୍ତୁ %t"/>
-<l:template name="seealso" text="ଏହା ଭି ଦେଖନ୍ତୁ %t"/>
+<l:context name="glossary"><l:template name="see" text="ଦେଖନ୍ତୁ %t."/>
+<l:template name="seealso" text="ଏହା ଭି ଦେଖନ୍ତୁ %t."/>
+<l:template name="seealso-separator" text=", "/>
 </l:context>
 <l:context name="msgset"><l:template name="MsgAud" text="ଶ୍ରୋତୃବର୍ଗ: "/>
 <l:template name="MsgLevel" text="ସ୍ତର: "/>
@@ -542,7 +548,7 @@
 <l:template name="Sat" text="ଶନି"/>
 <l:template name="Sun" text="ରବି"/>
 </l:context>
-<l:context name="htmlhelp"><l:template name="langcode" text="0x0409 English (UNITED STATES)"/>
+<l:context name="htmlhelp"><l:template name="langcode" text="0x0448 Oriya"/>
 </l:context>
 <l:context name="index"><l:template name="term-separator" text=", " lang="en"/>
 <l:template name="number-separator" text=", " lang="en"/>
@@ -597,7 +603,7 @@
 <l:template name="patnum.sep" text=". " lang="en"/>
 <l:template name="patdate.sep" text=". " lang="en"/>
 </l:context><l:letters><l:l i="-1"/>
-<l:l i="0">Symbols</l:l>
+<l:l i="0">ପ୍ରତୀକ</l:l>
 <l:l i="10">A</l:l>
 <l:l i="10">a</l:l>
 <l:l i="10">À</l:l>

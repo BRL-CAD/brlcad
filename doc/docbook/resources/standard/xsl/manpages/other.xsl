@@ -79,46 +79,6 @@ ooexception
 oointerface
 simplemsgentry
 manvolnum
-
-db:abstract db:affiliation db:anchor db:answer db:appendix db:area db:areaset db:areaspec
-db:artheader db:article db:audiodata db:audioobject db:author db:authorblurb db:authorgroup
-db:beginpage db:bibliodiv db:biblioentry db:bibliography db:biblioset db:blockquote db:book
-db:bookbiblio db:bookinfo db:callout db:calloutlist db:caption db:caution db:chapter
-db:citerefentry db:cmdsynopsis db:co db:collab db:colophon db:colspec db:confgroup
-db:copyright db:dedication db:docinfo db:editor db:entrytbl db:epigraph db:equation
-db:example db:figure db:footnote db:footnoteref db:formalpara db:funcprototype
-db:funcsynopsis db:glossary db:glossdef db:glossdiv db:glossentry db:glosslist db:graphicco
-db:group db:highlights db:imagedata db:imageobject db:imageobjectco db:important db:index
-db:indexdiv db:indexentry db:indexterm db:informalequation db:informalexample
-db:informalfigure db:informaltable db:inlineequation db:inlinemediaobject
-db:itemizedlist db:itermset db:keycombo db:keywordset db:legalnotice db:listitem db:lot
-db:mediaobject db:mediaobjectco db:menuchoice db:msg db:msgentry db:msgexplan db:msginfo
-db:msgmain db:msgrel db:msgset db:msgsub db:msgtext db:note db:objectinfo
-db:orderedlist db:othercredit db:part db:partintro db:preface db:printhistory db:procedure
-db:programlistingco db:publisher db:qandadiv db:qandaentry db:qandaset db:question
-db:refentry db:reference db:refmeta db:refnamediv db:refsection db:refsect1 db:refsect1info
-db:refsect2
-db:refsect2info db:refsect3 db:refsect3info db:refsynopsisdiv db:refsynopsisdivinfo
-db:revhistory db:revision db:row db:sbr db:screenco db:screenshot db:sect1 db:sect1info db:sect2
-db:sect2info db:sect3 db:sect3info db:sect4 db:sect4info db:sect5 db:sect5info db:section
-db:sectioninfo db:seglistitem db:segmentedlist db:seriesinfo db:set db:setindex db:setinfo
-db:shortcut db:sidebar db:simplelist db:simplesect db:spanspec db:step db:subject
-db:subjectset db:substeps db:synopfragment db:table db:tbody db:textobject db:tfoot db:tgroup
-db:thead db:tip db:toc db:tocchap db:toclevel1 db:toclevel2 db:toclevel3 db:toclevel4
-db:toclevel5 db:tocpart db:varargs db:variablelist db:varlistentry db:videodata
-db:videoobject db:void db:warning db:subjectset
-
-db:classsynopsis
-db:constructorsynopsis
-db:destructorsynopsis
-db:fieldsynopsis
-db:methodparam
-db:methodsynopsis
-db:ooclass
-db:ooexception
-db:oointerface
-db:simplemsgentry
-db:manvolnum
 "/>
 
 <!-- ==================================================================== -->
@@ -263,7 +223,7 @@ db:manvolnum
   <xsl:call-template name="string.subst">
     <xsl:with-param name="string" select="$content"/>
     <xsl:with-param name="target">'</xsl:with-param>
-    <xsl:with-param name="replacement">\'</xsl:with-param>
+    <xsl:with-param name="replacement">\*(Aq</xsl:with-param>
   </xsl:call-template>
 </xsl:template>
 
@@ -346,7 +306,7 @@ db:manvolnum
     </xsl:call-template>
     <xsl:text>&#10;</xsl:text>
     <xsl:text>.\"  Language: </xsl:text>
-    <xsl:call-template name="l10.language.name"/>
+    <xsl:call-template name="l10n.language.name"/>
     <xsl:text>&#10;</xsl:text>
     <xsl:text>.\"</xsl:text>
     <xsl:text>&#10;</xsl:text>
@@ -635,10 +595,11 @@ db:manvolnum
           <xsl:with-param name="message-prolog">Note: </xsl:with-param>
           <xsl:with-param name="message-epilog"> (soelim stub)</xsl:with-param>
           <xsl:with-param name="content">
-            <xsl:value-of select="concat('.so man', $section, '/')"/>
+            <xsl:value-of select="'.so '"/>
             <xsl:call-template name="make.adjusted.man.filename">
               <xsl:with-param name="name" select="$first.refname"/>
               <xsl:with-param name="section" select="$section"/>
+              <xsl:with-param name="lang" select="$lang"/>
             </xsl:call-template>
             <xsl:text>&#10;</xsl:text>
           </xsl:with-param>
@@ -694,6 +655,24 @@ db:manvolnum
     <xsl:if test="$man.output.quietly = 0">
       <xsl:message><xsl:text>&#10;</xsl:text></xsl:message>
     </xsl:if>
+  </xsl:template>
+
+  <!-- ============================================================== -->
+
+  <!-- There is some stuff, that is not portable between groff/troff. -->
+  <xsl:template name="define.portability.macros">
+    <xsl:text>.\" -----------------------------------------------------------------&#10;</xsl:text>
+    <xsl:text>.\" * Define some portability stuff&#10;</xsl:text>
+    <xsl:text>.\" -----------------------------------------------------------------&#10;</xsl:text>
+    <xsl:text>.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~&#10;</xsl:text>
+    <xsl:text>.\" http://bugs.debian.org/507673&#10;</xsl:text>
+    <xsl:text>.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html&#10;</xsl:text>
+    <xsl:text>.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~&#10;</xsl:text>
+    <xsl:text>&#10;</xsl:text>
+    <xsl:text>.ie \n(.g .ds Aq \(aq</xsl:text>
+    <xsl:text>&#10;</xsl:text>
+    <xsl:text>.el       .ds Aq '</xsl:text>
+    <xsl:text>&#10;</xsl:text>
   </xsl:template>
 
   <!-- ============================================================== -->
@@ -787,7 +766,7 @@ db:manvolnum
 .if \\n[.$] \&amp;\\$*
 ..&#10;</xsl:text>
     <xsl:text>.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~&#10;</xsl:text>
-    <xsl:text>.\" BB/BE - put background/screen (filled box) around block of text&#10;</xsl:text>
+    <xsl:text>.\" BB/EB - put background/screen (filled box) around block of text&#10;</xsl:text>
     <xsl:text>.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~&#10;</xsl:text>
     <xsl:text>.de BB
 .if t \{\

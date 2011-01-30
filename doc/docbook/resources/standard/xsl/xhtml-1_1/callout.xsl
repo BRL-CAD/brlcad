@@ -45,7 +45,7 @@
       <xsl:choose>
         <xsl:when test="$verbatim/@linenumbering = 'numbered'                         and $linenumbering.extension != '0'">
           <div>
-            <xsl:apply-templates select="." mode="class.attribute"/>
+            <xsl:call-template name="common.html.attributes"/>
             <xsl:call-template name="number.rtf.lines">
               <xsl:with-param name="rtf" select="$rtf-with-callouts"/>
               <xsl:with-param name="pi.context" select="programlisting|screen"/>
@@ -55,7 +55,7 @@
         </xsl:when>
         <xsl:otherwise>
           <div>
-            <xsl:apply-templates select="." mode="class.attribute"/>
+            <xsl:call-template name="common.html.attributes"/>
             <xsl:copy-of select="$rtf-with-callouts"/>
             <xsl:apply-templates select="calloutlist"/>
           </div>
@@ -64,7 +64,7 @@
     </xsl:when>
     <xsl:otherwise>
       <div>
-        <xsl:apply-templates select="." mode="class.attribute"/>
+        <xsl:apply-templates select="." mode="common.html.attributes"/>
         <xsl:apply-templates/>
       </div>
     </xsl:otherwise>
@@ -89,7 +89,7 @@
   <xsl:choose>
     <xsl:when test="$target">
       <a>
-        <xsl:apply-templates select="." mode="class.attribute"/>
+        <xsl:apply-templates select="." mode="common.html.attributes"/>
         <xsl:if test="@id or @xml:id">
           <xsl:attribute name="id">
             <xsl:value-of select="(@id|@xml:id)[1]"/>

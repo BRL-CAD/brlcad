@@ -49,6 +49,9 @@
 <xsl:attribute-set name="dedication.titlepage.recto.style"/>
 <xsl:attribute-set name="dedication.titlepage.verso.style"/>
 
+<xsl:attribute-set name="acknowledgements.titlepage.recto.style"/>
+<xsl:attribute-set name="acknowledgements.titlepage.verso.style"/>
+
 <xsl:attribute-set name="preface.titlepage.recto.style"/>
 <xsl:attribute-set name="preface.titlepage.verso.style"/>
 
@@ -190,13 +193,20 @@
 </xsl:template>
 
 <xsl:template match="abstract" mode="titlepage.mode">
-  <fo:block>
-    <xsl:call-template name="formal.object.heading">
-      <xsl:with-param name="title">
-        <xsl:apply-templates select="." mode="title.markup"/>
-      </xsl:with-param>
-    </xsl:call-template>
-    <xsl:apply-templates mode="titlepage.mode"/>
+  <fo:block xsl:use-attribute-sets="abstract.properties">
+    <fo:block xsl:use-attribute-sets="abstract.title.properties">
+      <xsl:choose>
+	<xsl:when test="title|info/title">
+	  <xsl:apply-templates select="title|info/title"/>
+	</xsl:when>
+	<xsl:otherwise>
+	  <xsl:call-template name="gentext">
+	    <xsl:with-param name="key" select="'Abstract'"/>
+	  </xsl:call-template>
+	</xsl:otherwise>
+      </xsl:choose>
+    </fo:block>
+    <xsl:apply-templates select="*[not(self::title)]" mode="titlepage.mode"/>
   </fo:block>
 </xsl:template>
 
@@ -224,15 +234,22 @@
 <xsl:template match="author" mode="titlepage.mode">
   <fo:block>
     <xsl:call-template name="anchor"/>
-    <xsl:call-template name="person.name"/>
-    <xsl:if test="affiliation/orgname">
-      <xsl:text>, </xsl:text>
-      <xsl:apply-templates select="affiliation/orgname" mode="titlepage.mode"/>
-    </xsl:if>
-    <xsl:if test="email|affiliation/address/email">
-      <xsl:text> </xsl:text>
-      <xsl:apply-templates select="(email|affiliation/address/email)[1]"/>
-    </xsl:if>
+    <xsl:choose>
+      <xsl:when test="orgname">
+        <xsl:apply-templates/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="person.name"/>
+        <xsl:if test="affiliation/orgname">
+          <xsl:text>, </xsl:text>
+          <xsl:apply-templates select="affiliation/orgname" mode="titlepage.mode"/>
+        </xsl:if>
+        <xsl:if test="email|affiliation/address/email">
+          <xsl:text> </xsl:text>
+          <xsl:apply-templates select="(email|affiliation/address/email)[1]"/>
+        </xsl:if>
+      </xsl:otherwise>
+    </xsl:choose>
   </fo:block>
 </xsl:template>
 
@@ -671,7 +688,7 @@
 
 <!-- book recto -->
 
-<xsl:template match="bookinfo/authorgroup|info/authorgroup"
+<xsl:template match="bookinfo/authorgroup|book/info/authorgroup"
               mode="titlepage.mode" priority="2">
   <fo:block>
     <xsl:call-template name="anchor"/>
@@ -720,25 +737,25 @@
   <xsl:apply-templates select="othercredit" mode="titlepage.mode"/>
 </xsl:template>
 
-<xsl:template match="bookinfo/author|info/author"
+<xsl:template match="bookinfo/author|book/info/author"
               mode="titlepage.mode" priority="2">
   <fo:block>
     <xsl:call-template name="person.name"/>
   </fo:block>
 </xsl:template>
 
-<xsl:template match="bookinfo/corpauthor|info/corpauthor"
+<xsl:template match="bookinfo/corpauthor|book/info/corpauthor"
               mode="titlepage.mode" priority="2">
   <fo:block>
     <xsl:apply-templates/>
   </fo:block>
 </xsl:template>
 
-<xsl:template match="bookinfo/pubdate|info/pubdate"
+<xsl:template match="bookinfo/pubdate|book/info/pubdate"
               mode="titlepage.mode" priority="2">
   <fo:block>
     <xsl:call-template name="gentext">
-      <xsl:with-param name="key" select="'published'"/>
+      <xsl:with-param name="key" select="'pubdate'"/>
     </xsl:call-template>
     <xsl:text> </xsl:text>
     <xsl:apply-templates mode="titlepage.mode"/>

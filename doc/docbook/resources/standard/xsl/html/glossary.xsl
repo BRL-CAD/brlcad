@@ -4,6 +4,8 @@
 %common.entities;
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:xlink='http://www.w3.org/1999/xlink'
+                exclude-result-prefixes="xlink"
                 version='1.0'>
 
 <!-- ********************************************************************
@@ -23,7 +25,7 @@
   <xsl:call-template name="id.warning"/>
 
   <div>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:if test="$generate.id.attributes != 0">
       <xsl:attribute name="id">
         <xsl:call-template name="object.id"/>
@@ -84,7 +86,7 @@
 <xsl:template match="glosslist">
   &setup-language-variable;
   <div>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:call-template name="anchor"/>
     <xsl:if test="blockinfo/title|info/title|title">
       <xsl:call-template name="formal.object.heading"/>
@@ -111,7 +113,7 @@
   <xsl:call-template name="id.warning"/>
 
   <div>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates select="(glossentry[1]/preceding-sibling::*)"/>
 
     <dl>
@@ -133,7 +135,7 @@
 
 <xsl:template match="glossdiv/title">
   <h3>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates/>
   </h3>
 </xsl:template>
@@ -235,6 +237,7 @@ GlossEntry ::=
   <xsl:variable name="otherterm" select="@otherterm"/>
   <xsl:variable name="targets" select="key('id', $otherterm)"/>
   <xsl:variable name="target" select="$targets[1]"/>
+  <xsl:variable name="xlink" select="@xlink:href"/>
 
   <dd>
     <p>
@@ -249,7 +252,7 @@ GlossEntry ::=
         <xsl:choose>
           <xsl:when test="$target">
             <a>
-              <xsl:apply-templates select="." mode="class.attribute"/>
+              <xsl:apply-templates select="." mode="common.html.attributes"/>
               <xsl:attribute name="href">
                 <xsl:call-template name="href.target">
                   <xsl:with-param name="object" select="$target"/>
@@ -257,6 +260,13 @@ GlossEntry ::=
               </xsl:attribute>
               <xsl:apply-templates select="$target" mode="xref-to"/>
             </a>
+          </xsl:when>
+          <xsl:when test="$xlink">
+            <xsl:call-template name="simple.xlink">
+              <xsl:with-param name="content">
+                <xsl:apply-templates/>
+              </xsl:with-param>
+            </xsl:call-template>
           </xsl:when>
           <xsl:when test="$otherterm != '' and not($target)">
             <xsl:message>
@@ -275,7 +285,6 @@ GlossEntry ::=
         <xsl:with-param name="template" select="$template"/>
         <xsl:with-param name="title" select="$title"/>
       </xsl:call-template>
-      <xsl:text>.</xsl:text>
     </p>
   </dd>
 </xsl:template>
@@ -307,11 +316,12 @@ GlossEntry ::=
   <xsl:variable name="otherterm" select="@otherterm"/>
   <xsl:variable name="targets" select="key('id', $otherterm)"/>
   <xsl:variable name="target" select="$targets[1]"/>
+  <xsl:variable name="xlink" select="@xlink:href"/>
 
   <xsl:choose>
     <xsl:when test="$target">
       <a>
-        <xsl:apply-templates select="." mode="class.attribute"/>
+        <xsl:apply-templates select="." mode="common.html.attributes"/>
         <xsl:attribute name="href">
           <xsl:call-template name="href.target">
             <xsl:with-param name="object" select="$target"/>
@@ -319,6 +329,13 @@ GlossEntry ::=
         </xsl:attribute>
         <xsl:apply-templates select="$target" mode="xref-to"/>
       </a>
+    </xsl:when>
+    <xsl:when test="$xlink">
+      <xsl:call-template name="simple.xlink">
+        <xsl:with-param name="content">
+          <xsl:apply-templates/>
+        </xsl:with-param>
+      </xsl:call-template>
     </xsl:when>
     <xsl:when test="$otherterm != '' and not($target)">
       <xsl:message>
@@ -333,11 +350,12 @@ GlossEntry ::=
   </xsl:choose>
 
   <xsl:choose>
-    <xsl:when test="position() = last()">
-      <xsl:text>.</xsl:text>
-    </xsl:when>
+    <xsl:when test="position() = last()"/>
     <xsl:otherwise>
-      <xsl:text>, </xsl:text>
+		<xsl:call-template name="gentext.template">
+		  <xsl:with-param name="context" select="'glossary'"/>
+		  <xsl:with-param name="name" select="'seealso-separator'"/>
+		</xsl:call-template>
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
@@ -371,7 +389,7 @@ GlossEntry ::=
   </xsl:if>
 
   <div>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:if test="$generate.id.attributes != 0">
       <xsl:attribute name="id">
         <xsl:call-template name="object.id"/>
@@ -442,7 +460,7 @@ GlossEntry ::=
   &setup-language-variable;
 
   <div>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates select="(glossentry[1]/preceding-sibling::*)"/>
 
     <dl>

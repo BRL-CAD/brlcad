@@ -51,25 +51,39 @@
         <xsl:with-param name='style' select='w:pPr/w:pStyle/@w:val'/>
       </xsl:call-template>
     </xsl:variable>
-    <dbk:para>
-      <xsl:attribute name='rnd:style'>
-        <xsl:value-of select='$style'/>
-      </xsl:attribute>
-      <xsl:if test='w:pPr/w:pStyle/@w:val and
-                    $style != w:pPr/w:pStyle/@w:val'>
-        <xsl:attribute name='rnd:original-style'>
-          <xsl:value-of select='w:pPr/w:pStyle/@w:val'/>
-        </xsl:attribute>
-      </xsl:if>
+    <xsl:choose>
+      <xsl:when test='aml:annotation[@w:type = "Word.Deletion"] and
+                      not(aml:annotation[@w:type != "Word.Deletion"]) and
+                      count(*) = count(aml:annotation|w:pPr)'/>
 
-      <xsl:if test='w:r[1][w:rPr/w:rStyle/@w:val = "attributes"] and
-                    w:r[2][w:rPr/w:rStyle/@w:val = "CommentReference"]'>
-        <xsl:apply-templates select='w:r[2]//w:r[w:rPr/w:rStyle/@w:val = "attribute-name"]'
-          mode='rnd:attributes'/>
-      </xsl:if>
+      <!-- Eliminate paragraphs that have no content.
+           These are section or page breaks.
+        -->
+      <xsl:when test='not(w:r|w:hlink|w:tbl) and
+                      w:pPr/w:sectPr'/>
 
-      <xsl:apply-templates/>
-    </dbk:para>
+      <xsl:otherwise>
+        <dbk:para>
+          <xsl:attribute name='rnd:style'>
+            <xsl:value-of select='$style'/>
+          </xsl:attribute>
+          <xsl:if test='w:pPr/w:pStyle/@w:val and
+                        $style != w:pPr/w:pStyle/@w:val'>
+            <xsl:attribute name='rnd:original-style'>
+              <xsl:value-of select='w:pPr/w:pStyle/@w:val'/>
+            </xsl:attribute>
+          </xsl:if>
+
+          <xsl:if test='w:r[1][w:rPr/w:rStyle/@w:val = "attributes"] and
+                        w:r[2][w:rPr/w:rStyle/@w:val = "CommentReference"]'>
+            <xsl:apply-templates select='w:r[2]//w:r[w:rPr/w:rStyle/@w:val = "attribute-name"]'
+              mode='rnd:attributes'/>
+          </xsl:if>
+
+          <xsl:apply-templates/>
+        </dbk:para>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
   <xsl:template match='*' mode='rnd:attributes'>
@@ -110,17 +124,17 @@
       <xsl:when test='w:rPr/w:rStyle/@w:val = "attributes"'/>
       <xsl:when test='w:rPr/w:rStyle/@w:val = "CommentReference"'/>
       <xsl:when test='w:pict'>
+        <!-- "filename" is where the image data gets extracted to -->
         <xsl:variable name='filename'>
-          <xsl:choose>
-            <xsl:when test='contains(w:pict/w:binData/@w:name, "wordml://")'>
-              <xsl:value-of select='substring-after(w:pict/w:binData/@w:name, "wordml://")'/>
-            </xsl:when>
-            <xsl:otherwise>
-              <xsl:text>image</xsl:text>
-              <xsl:value-of select='count(preceding::w:pict) + 1'/>
-              <xsl:text>.jpg</xsl:text>
-            </xsl:otherwise>
-          </xsl:choose>
+          <xsl:call-template name='rnd:image-filename'/>
+        </xsl:variable>
+        <!-- "target" is the URL that will be the target of the imagedata hyperlink.
+             This may or may not be related to the physical filename.
+          -->
+        <xsl:variable name='target'>
+          <xsl:call-template name='rnd:image-target'>
+            <xsl:with-param name='filename' select='$filename'/>
+          </xsl:call-template>
         </xsl:variable>
 
         <xsl:call-template name='rnd:handle-image-data'>
@@ -130,7 +144,7 @@
 
         <dbk:inlinemediaobject>
           <dbk:imageobject>
-            <dbk:imagedata fileref='{$filename}'>
+            <dbk:imagedata fileref='{$target}'>
               <xsl:if test='w:pict/v:shape/@style'>
                 <xsl:attribute name='width'>
                   <xsl:value-of select='normalize-space(substring-before(substring-after(w:pict/v:shape/@style, "width:"), ";"))'/>
@@ -190,7 +204,43 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
-  <!-- An application may wish to override this template -->
+
+  <!-- An application may wish to override these templates -->
+
+  <!-- rnd:image-filename determines the filename of the physical file
+       to which the image data should be written.
+    -->
+  <xsl:template name='rnd:image-filename'>
+    <xsl:param name='pict' select='w:pict'/>
+
+    <xsl:choose>
+      <xsl:when test='contains($pict/w:binData/@w:name, "wordml://")'>
+        <xsl:value-of select='substring-after($pict/w:binData/@w:name, "wordml://")'/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:text>image</xsl:text>
+        <xsl:value-of select='count($pict/preceding::w:pict) + 1'/>
+        <xsl:text>.jpg</xsl:text>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <!-- rnd:image-target determines the URL for the image data.
+       This may or may not be related to the physical filename.
+    -->
+  <xsl:template name='rnd:image-target'>
+    <xsl:param name='filename'/>
+    <xsl:param name='pict' select='w:pict'/>
+
+    <xsl:value-of select='$filename'/>
+  </xsl:template>
+
+  <!-- rnd:handle-image-data receives the base64-encoded data and a filename
+       for the physical file to which the data should be written.
+       Since XSLT cannot natively handle binary data, this implementation
+       just writes the undecoded data to the nominated file.
+       A real application would decode the data into a binary representation.
+    -->
   <xsl:template name='rnd:handle-image-data'>
     <xsl:param name='filename'/>
     <xsl:param name='data'/>
@@ -276,9 +326,21 @@
 
       <dbk:tgroup>
         <xsl:apply-templates select='w:tblGrid'/>
-        <dbk:tbody>
-          <xsl:apply-templates select='w:tr'/>
-        </dbk:tbody>
+        <xsl:choose>
+          <xsl:when test='$tbl.style/w:tblStylePr[@w:type = "firstRow"]/w:trPr/w:tblHeader'>
+            <dbk:thead>
+              <xsl:apply-templates select='w:tr[1]'/>
+            </dbk:thead>
+            <dbk:tbody>
+              <xsl:apply-templates select='w:tr[position() != 1]'/>
+            </dbk:tbody>
+          </xsl:when>
+          <xsl:otherwise>
+            <dbk:tbody>
+              <xsl:apply-templates select='w:tr'/>
+            </dbk:tbody>
+          </xsl:otherwise>
+        </xsl:choose>
       </dbk:tgroup>
     </dbk:informaltable>
   </xsl:template>
@@ -370,5 +432,14 @@
   </xsl:template>
 
   <xsl:template match='w:hdr|w:ftr'/>
+
+  <xsl:template match='aml:annotation'>
+    <xsl:choose>
+      <xsl:when test='@w:type = "Word.Deletion"'/>
+      <xsl:otherwise>
+        <xsl:apply-templates/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
 
 </xsl:stylesheet>

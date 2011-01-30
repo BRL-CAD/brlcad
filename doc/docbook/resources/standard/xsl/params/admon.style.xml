@@ -16,7 +16,8 @@ admonitions.</refpurpose>
 
 <refsynopsisdiv>
 <src:fragment xml:id="admon.style.frag"><xsl:param name="admon.style">
-  <xsl:text>margin-left: 0.5in; margin-right: 0.5in;</xsl:text>
+  <xsl:value-of select="concat('margin-', $direction.align.start,
+           ': 0.5in; margin-', $direction.align.end, ': 0.5in;')"/>
 </xsl:param></src:fragment>
 </refsynopsisdiv>
 

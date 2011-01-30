@@ -297,14 +297,23 @@
 
   <xsl:template name="process.SH.xref">
     <xsl:param name="title"/>
-    <xsl:text>\c</xsl:text>
-    <xsl:text>&#x2592;</xsl:text>
-    <xsl:text>.SH-xref </xsl:text>
-    <xsl:text>"</xsl:text>
-    <xsl:value-of select="$title"/>
-    <xsl:text>\c"</xsl:text>
-    <xsl:text>&#x2592;</xsl:text>
-    <xsl:text>\&amp;</xsl:text>
+    <xsl:choose>
+      <xsl:when test="not($man.output.better.ps.enabled = 0)">
+        <xsl:text>\c</xsl:text>
+        <xsl:text>&#x2592;</xsl:text>
+        <xsl:text>.SH-xref </xsl:text>
+        <xsl:text>"</xsl:text>
+        <xsl:value-of select="$title"/>
+        <xsl:text>\c"</xsl:text>
+        <xsl:text>&#x2592;</xsl:text>
+        <xsl:text>\&amp;</xsl:text>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="string.upper">
+          <xsl:with-param name="string" select="$title"/>
+        </xsl:call-template>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
 </xsl:stylesheet>
