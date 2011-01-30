@@ -23,9 +23,10 @@
 collated into ranges.
 This works only if each year number is put into a separate
 year element.  The copyright element permits multiple
-year elements. The stylesheet will not successfully parse
-a complex year element such as <literal>&lt;year>2001,2002,2003&lt;/year></literal> into
-a range.</para>
+year elements. If a year element contains a dash or
+a comma, then that year element will not be merged into
+any range.
+</para>
 
 </refsection>
 </refentry>

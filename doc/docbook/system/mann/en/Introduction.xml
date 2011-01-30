@@ -1,9 +1,9 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>MGED Commands - Manual Pages</title>
-  </articleinfo>
+<!-- Converted by db4-upgrade version 1.0 -->
+
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>MGED Commands - Manual Pages</title>
+    
+  </info>
 
    <para>
       This is MGED's help system for commands available at the MGED

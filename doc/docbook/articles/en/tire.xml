@@ -1,26 +1,15 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article>
-  <articleinfo>
-    <title>Vehicle Tire and Wheel Creation in BRL-CAD</title>
-    <author>
-      <firstname>Clifford</firstname>
-      <surname>Yapp</surname>
-    </author>
-  </articleinfo>
-  
-  <abstract>
-    <para> 
-     Vehicle wheels are often approximated in BRL-CAD models with tori, cylinders, or other
-     basic geometric shapes that represent a very rough visual and geometric approximation of
-     a tire/wheel combination.  The <command>tire</command> procedure provides BRL-CAD users
-     with the ability to rapidly generate complex tire and wheel structures with
-     standard dimensional input information.
-    </para>
-  </abstract>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-  <sect1>
-    <title>Overview</title>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Vehicle Tire and Wheel Creation in BRL-CAD</title>
+    
+    <author><personname><firstname>Clifford</firstname><surname>Yapp</surname></personname></author>
+  </info>
+  
+  
+
+  <section><info><title>Overview</title></info>
+    
     <para>
       Traditionally, BRL-CAD tire models have been created using a single cylinder, a torus intersected
       with a cylinder, or in some cases additional combinations of these primitives.  While these approximations
@@ -54,10 +43,10 @@
       The tire generated is always centered at the global origin.
     </para>
 
-  </sect1>
+  </section>
 
- <sect1>
-    <title>Specifying a Tire with Standard Dimensional Conventions</title>
+ <section><info><title>Specifying a Tire with Standard Dimensional Conventions</title></info>
+    
 
     <para>
       The default behavior for the tire procedure with no arguments given is to produce a
@@ -66,7 +55,7 @@
     <informalfigure>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/tire_fig01.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/tire_fig01.png" format="PNG"/>
 	</imageobject>
 	<caption>
 	  <para>
@@ -91,7 +80,7 @@
       supports the following input format:
 
       <informaltable frame="all">
-	<tgroup cols='5' align='center'>
+	<tgroup cols="5" align="center">
 	  <tbody>
 	    <row>
 	      <entry>Width(mm)</entry>
@@ -118,9 +107,9 @@
     </para>
     <para>
       <informaltable frame="all">
-	<tgroup cols='2' align='center'>
-	  <colspec colwidth='1in'/>
-	  <colspec colwidth='3in'/>
+	<tgroup cols="2" align="center">
+	  <colspec colwidth="1in"/>
+	  <colspec colwidth="3in"/>
 	  <tbody>
 	    <row>
 	      <entry>255/40R18</entry>
@@ -145,9 +134,9 @@
       restrictions need to be observed.  Examples of INVALID inputs include:
  
       <informaltable frame="all">
-	<tgroup cols='2' align='center'>
-	  <colspec colwidth='1in' align='center'/>
-	  <colspec colwidth='3in' align='center'/>
+	<tgroup cols="2" align="center">
+	  <colspec colwidth="1in" align="center"/>
+	  <colspec colwidth="3in" align="center"/>
 	  <tbody>
 	    <row>
 	      <entry>255.0/40R18</entry>
@@ -185,7 +174,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig02.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig02.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -210,7 +199,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig03.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig03.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -222,10 +211,10 @@
       </informalfigure>
     </para>
     
- </sect1>  
+ </section>  
 
- <sect1>
-   <title>Options for Tire Tread Modeling</title>
+ <section><info><title>Options for Tire Tread Modeling</title></info>
+   
 
    <para>
      Tread is the most difficult part of a tire to define in terms of
@@ -250,7 +239,7 @@
      Currently, the following profiles and patterns are available:
      
      <informaltable frame="all">
-       <tgroup cols='4' align='center'>
+       <tgroup cols="4" align="center">
 	 <tbody>
 	   <row>
 	     <entry>Profile #</entry>
@@ -289,7 +278,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig04.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig04.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -309,7 +298,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig05.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig05.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -333,7 +322,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig06.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig06.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -360,7 +349,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig07.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig07.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -385,7 +374,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig08.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig08.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -418,11 +407,11 @@
       </para>
     </note>
 
- </sect1>
+ </section>
 
 
-  <sect1>
-    <title>Setting Tire Thickness</title>
+  <section><info><title>Setting Tire Thickness</title></info>
+    
     <para>
       Tire thickness is manipulated via the <emphasis>u</emphasis>
       flag.  By default, the tire procedure will adjust the thickness
@@ -441,7 +430,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig09.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig09.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -462,7 +451,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig10.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig10.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -488,7 +477,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig11.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig11.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -500,10 +489,10 @@
       </informalfigure>    
     </para>
  
-  </sect1>
+  </section>
 
-  <sect1>
-    <title>Changing the Rim Width</title>
+  <section><info><title>Changing the Rim Width</title></info>
+    
     <para>
       The default behavior of <command>tire</command> is to make the rim width (the
       width of the tire at the point where the outer wall connects
@@ -516,7 +505,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig12.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig12.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -527,10 +516,10 @@
       </informalfigure>    
     </para>
 
- </sect1>
+ </section>
 
-  <sect1>
-    <title>Changing the Radial Location of the Maximum Tire Width</title>
+  <section><info><title>Changing the Radial Location of the Maximum Tire Width</title></info>
+    
     <para>
       When <command>tire</command> accepts a maximum width specification, it internally
       decides on a default distance from the tire center where that maximum
@@ -541,7 +530,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig13.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig13.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -556,11 +545,11 @@
       </informalfigure>    
     </para>
 
- </sect1>
+ </section>
 
  
-  <sect1>
-    <title>Other Options</title>
+  <section><info><title>Other Options</title></info>
+    
     <para>
       The other flags available in <command>tire</command>
       relate to naming of the top-level tire object.  The <emphasis>a</emphasis>
@@ -584,10 +573,10 @@
       will create the "mytire.g" file and insert the default tire model.
     </para>
 
-  </sect1>
+  </section>
 
-  <sect1>
-    <title>Structure of a Tire Model</title>
+  <section><info><title>Structure of a Tire Model</title></info>
+    
     <para>
       Although it is not visible to the eye in normal raytracing, the 
       tire models do include knowledge in the model of the presence of 
@@ -598,7 +587,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../articles/en/images/tire_fig14.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../articles/en/images/tire_fig14.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -613,7 +602,7 @@
       The three material regions are defined immediately below the top-level object:
       
       <literallayout class="monospaced">
-mged> l tire
+mged&gt; l tire
 tire:  --
    u tire-215-55R17.r
    u air-215-55R17.r
@@ -628,7 +617,7 @@ tire:  --
       other regions.
 
       <literallayout class="monospaced">
-mged> tree -d 2 tire
+mged&gt; tree -d 2 tire
 tire/
 	u tire-215-55R17.r/R
 		u tire-solid-215-55R17.c/
@@ -656,12 +645,12 @@ tire/
 	more involved.
       </para>
     </note>
-  </sect1>
+  </section>
 
- <sect1>
-    <title>Summary</title>
+ <section><info><title>Summary</title></info>
+    
     <para>    
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>
 	    <command>tire</command> is a procedural geometry database tool to create
@@ -696,5 +685,5 @@ tire/
       </itemizedlist>
       
     </para>
- </sect1>
+ </section>
  </article>

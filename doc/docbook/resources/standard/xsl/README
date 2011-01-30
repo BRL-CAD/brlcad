@@ -1,158 +1,166 @@
-----------------------------------------------------------------------
-              README file for the DocBook XSL Stylesheets
-----------------------------------------------------------------------
-$Id$
+DocBook XSL NS (namespaced) Stylesheets
+===========================================
+Bob Stayton
+bobs@sagehill.net
 
-These are XSL stylesheets for transforming DocBook XML document
-instances into various output formats.
+This package contains a release of XSL stylesheets for
+processing namespaced DocBook documents (DocBook 5 or
+later). The stylesheets are the same as the concurrent
+stylesheet release except that the templates match on
+elements in the DocBook namespace.
 
-This README file provides only very minimal documentation on using
-the stylesheets. For more complete information, see Bob Stayton's
-book "DocBook XSL: The Complete Guide", available online at:
+Note, the stylesheets in the directories listed below
+have not yet been converted to use the DocBook
+namespace:
 
-  http://www.sagehill.net/docbookxsl/
+  slides
+  website
+  roundtrip
 
-----------------------------------------------------------------------
-Installation
-----------------------------------------------------------------------
-See the INSTALL file for information about installing this release.
 
-----------------------------------------------------------------------
-How to use the stylesheets
-----------------------------------------------------------------------
-The base canonical URI for these stylesheets is:
+Background
+-------------
+DocBook 5 differs from preceding versions of DocBook because
+its elements are in a namespace, "http://docbook.org/ns/docbook".
+Because the elements are in a namespace, the regular
+DocBook XSL templates do not match on the elements.
+In XSLT, a match attribute must explicitly specify
+the namespace prefix to match an element in that namespace
+(the default namespace does not apply to pattern matches).
 
-  http://docbook.sourceforge.net/release/xsl/current/
+The non-namspaced DocBook XSL stylesheets (created
+originally for processing DocBook 4 and earlier documents,
+before DocBook was put into a namespace for the DocBook 5
+release) are able to process a namespaced DocBook document
+by preprocessing the document to strip the namespace.
 
-You call any of the stylesheets in this distribution by doing one
-of the following:
+When the non-namspaced stylesheet detects that the root
+element of a document is in the DocBook namespace, it
+processes the document with mode="stripNS" to copy all the
+nodes to a variable, but without the DocBook namespace.
+Then it converts the variable to a nodeset, and processes
+the nodeset with the regular templates.
 
-  - Use the base canonical URI in combination with one of the
-    pathnames below. For example, for "chunked" HTML, output:
+The alternative approach is to create a set of templates
+that match on the native namespace of DocBook 5 and
+later documents.  These stylesheets do that.
 
-    http://docbook.sourceforge.net/release/xsl/current/html/chunk.xsl
+These stylesheets completely mimic the behavior of the
+existing stylesheets.  These are not XSLT 2.0 stylesheets,
+and they do not have any other significant changes than handling
+the namespaced elements.
 
-    If your system has a working XML Catalog or SGML Catalog setup
-    (most Linux systems do), then that URI will automatically be
-    resolved and replaced with a local pathname on your system.
+The two main advantages of these stylesheets are:
 
-  - Use a "real" local system base path in combination with one of
-    the pathnames below. For example, for "chunked" HTML, output:
+a. You can write customization layers using the DocBook namespace.
 
-    /usr/share/xml/docbook/stylesheet/nwalsh/html/chunk.xsl
+b. The xml:base of the root element is not lost during processing
+(so things like images and the olink database can be found
+more easily).
 
-To transform documents created with the standard DocBook
-schema/DTD, use one of the following stylesheets:
 
-  fo/docbook.xsl              - for XSL-FO
+How these stylesheets were produced
+----------------------------------------
+These stylesheets were created from a DocBook XSL 
+snapshot.  Each xsl file was processed with a
+Perl script and its output placed in a parallel
+directory tree.  Any non-xsl files were simply copied
+into place.
 
-  html/docbook.xsl            - for HTML (as a single file)
-  html/chunk.xsl              - for HTML (chunked into multiple files)
-  html/onechunk.xsl           - for HTML (chunked output in single file)
+Perl was used because of its excellent regular expression
+handling, and because Perl is able to preserve all whitespace.
+This retains the pretty-printed format that makes
+the stylesheets easier to read and understand.
 
-  xhtml/*.xsl                 - for XHTML versions of the above
+The stylesheet transforms each XSL match, select, test,
+count, from, use, and elements attribute to add a "d:"
+prefix to each element referenced in the attribute.
+For example:
 
-  xhtml-1_1/*.xsl             - for XHTML 1.1 versions of the above
+  <xsl:template match="para">
 
-  epub/docbook.xsl            - for .epub 
+becomes:
 
-  htmlhelp/htmlhelp.xsl       - for HTML Help
-  javahelp/javahelp.xsl       - for JavaHelp
-  eclipse/eclipse.xsl         - for Eclipse Help
+  <xsl:template match="d:para">
 
-  manpages/docbook.xsl        - for groff/nroff man pages[1]
-  [1] more information at http://wiki.docbook.org/topic/ManPages
+In addition, each stylesheet file has a namespace declaration
+added in its root element:
 
-  */profile-*                 - single-pass-profiling versions of all above
+  <xsl:stylesheet  xslns:d="http://docbook.org/ns/docbook"
 
-  roundtrip/*.xsl             - for DocBook to WordML, etc., to DocBook
+The combination of these two changes means that the templates
+now recognize DocBook 5 elements in their native namespace.
 
-To transform documents created with the DocBook Slides schema/DTD,
-use one of the following stylesheets:
 
-  slides/html/*.xsl           - for HTML slides of various kinds
-  slides/xhtml/*.xsl          - for XHTML slides of various kinds
-  slides/fo/plain.xsl         - for XSL-FO slides
-  slides/htmlhelp/...         - for HTML Help slides
+How to use these stylesheets
+--------------------------------
+DocBook 5 and later documents hav the DocBook namespace
+declaration in the root element, along with the version
+attribute:
 
-To transform documents created with the DocBook Website
-schema/DTD, use one of the following stylesheets:
+  <book xslns="http://docbook.org/ns/docbook" version="5.0">
 
-  website/website.xsl         - for non-tabular, non-chunked output
-  website/tabular.xsl         - for tabular, non-chunked output
-  website/chunk-*             - for chunked output
+You can process a namespaced DocBook document with these
+stylesheets using any XSLT processor, including xsltproc,
+Saxon 6 or 8, and Xalan.  Use these stylesheets as you would
+a stylesheet from the regular distribution (except for
+slides, website, and roundtrip).
 
-To generate a titlepage customization layer from a titlepage spec:
+If you happen to process a DocBook document whose root element
+is without the namespace declaration, the stylesheet
+does not fail.  Rather, it detects that the document
+does not have the namespace, and preprocesses it to add the
+namespace declaration to all elements in the document.
 
-  template/titlepage.xsl
+In a manner similar to stripNS, it copies the elements
+to a variable while adding the namespace, converts the
+variable to a nodeset, and then processes the nodeset with
+the namespace-aware templates.
 
-For details about creating titlepage spec files and generating and
-using titlepage customization layers, see "DocBook XSL: The
-Complete Guide" <http://www.sagehill.net/docbookxsl/>
+If the stylesheet encounters an element from your file
+for which the stylesheet has no matching template,
+it reports the unmatched element.  In these stylesheets,
+it also reports the namespace URI that the element has.
 
-----------------------------------------------------------------------
-Manifest
-----------------------------------------------------------------------
-AUTHORS       contact information
-BUGS          about known problems
-COPYING       copyright information
-INSTALL       installation instructions
-README        this file
-RELEASE.*     per-release cumulative summaries of user-visible changes
-TODO          about planned features not yet implemented
-VERSION       release metadata, including the current version
-              number (note that the VERSION file is an XSL stylesheet)
-NEWS          changes since the last public release (for a cumulative list of
-              changes, see the ChangeHistory.xml file)
 
-common/       code used among several output formats (HTML, FO, manpages,...)
-docsrc/       documentation sources
-eclipse/      for producing Eclipse Help
-epub/         for producing .epub
-extensions/   DocBook XSL Java extensions
-fo/           for producing XSL-FO
-highlighting  files used for adding source-code syntax highlighting in output
-html/         for producing HTML
-htmlhelp/     for producing HTML Help
-images/       images used in callouts and graphical admonitions
-javahelp/     for producing Java Help
-lib/          utility stylesheets with schema-independent functions
-manpages/     for producing groff/troff man pages
-profiling/    for profiling (omitting/including conditional text)
-roundtrip/    for "round trip" conversion among DocBook and
-              various word-processor formats (WordML, etc.)
-slides/       for producing slides output (from Slides source)
-template/     templates for building stylesheet customization layers
-tools/        assorted supplementary tools
-website/      for producing website output (from Website source)
-xhtml/        for producing XHTML
-xhtml-1_1/    for producing (stricter) XHTML 1.1
+Customizing these stylesheets
+--------------------------------
+These stylesheets are customized with a customization
+layer in the same manner as for the regular stylesheets,
+with two differences.
 
-----------------------------------------------------------------------
-Changes
-----------------------------------------------------------------------
-See the NEWS file for changes made since the previous release.
+When you create a customization layer, you must do two things:
 
-See the RELEASE-NOTES.html or RELEASE-NOTES.txt or RELEASE-NOTES.pdf
-files for per-release cumulative summaries of significant
-user-visible changes.
+a.  Add the namespace declaration (with a prefix of your choice):
 
-For online access to a hyperlinked view of all changes made over
-the entire history of the codebase, see the following:
+  <xsl:stylesheet  xslns:d="http://docbook.org/ns/docbook"
 
-  http://docbook.svn.sourceforge.net/viewvc/docbook/trunk/xsl/?view=log
+b.  Use the namespace prefix on all DocBook element names:
 
-WARNING: That above change history is a very long list and may
-take a long time to load/download.
+  <xsl:template match="d:formalpara">
 
-You can also create an XML-formatted "ChangeHistory.xml" copy of
-the complete change history for the codebase by running the
-following commands:
+Be sure to include the namespace prefix on all element
+references, including those in match, select, and test
+attributes, even when using an axis specifier.  Here are
+some examples:
 
-  svn checkout https://docbook.svn.sf.net/svnroot/docbook/trunk/xsl
-  svn log --xml --verbose xsl > ChangeHistory.xml
+  <xsl:if test="d:title">
 
-----------------------------------------------------------------------
-Copyright information
-----------------------------------------------------------------------
-See the accompanying file named COPYING.
+  <xsl:apply-templates select="d:title" mode="list.title.mode"/>
+
+  <xsl:apply-templates 
+       select="*[not(self::d:listitem or self::d:title 
+               or self::d:titleabbrev)] | 
+               comment()[not(preceding-sibling::d:listitem)] |
+               processing-instruction()[not(preceding-sibling::d:listitem)]"/>
+
+Failure to add the prefix to an element name will cause
+the stylesheet to silently not match the intended element,
+with consequences that are most likely undesirable.
+
+
+Report any problems
+------------------------
+These are new stylesheets and need thorough testing.
+Please report any problems to the docbook-apps
+mailing list or the SourceForge bug tracker.

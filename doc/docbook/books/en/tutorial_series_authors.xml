@@ -1,13 +1,8 @@
-<!DOCTYPE bookinfo PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<bookinfo>
-    <authorgroup id="Intro_MGED_Tutorial_Series_II_authors">
-      <author>
-	<firstname>Lee</firstname>
-	<surname>Butler</surname>
-	<othername role='mi'>A</othername>
-	<affiliation>
+<info xmlns="http://docbook.org/ns/docbook" version="5.0">
+    <authorgroup xml:id="Intro_MGED_Tutorial_Series_II_authors">
+      <author><personname><firstname>Lee</firstname><surname>Butler</surname><othername role="mi">A</othername></personname><affiliation>
 	  <shortaffil>Army Research Laboratory</shortaffil>
 	  <orgdiv>Survivability/Lethality Analysis Directorate</orgdiv>
 	  <address>
@@ -15,13 +10,8 @@
 	    <state>MD</state> 
 	    <postcode>21005-5068</postcode>
 	  </address>
-	</affiliation>
-      </author>
-      <author>
-	<firstname>Eric</firstname>
-	<surname>Edwards</surname>
-	<othername role='mi'>W</othername>
-	<affiliation>
+	</affiliation></author>
+      <author><personname><firstname>Eric</firstname><surname>Edwards</surname><othername role="mi">W</othername></personname><affiliation>
 	  <shortaffil>SURVICE Engineering Company</shortaffil>
 	  <address>
 	    <street>4695 Millennium Drive</street>
@@ -29,13 +19,8 @@
 	    <state>MD</state> 
 	    <postcode>21017-1505</postcode>
 	  </address>
-	</affiliation>
-      </author>
-      <author>
-	<firstname>Betty</firstname>
-	<surname>Schueler</surname>
-	<othername role='mi'>J</othername>
-	<affiliation>
+	</affiliation></author>
+      <author><personname><firstname>Betty</firstname><surname>Schueler</surname><othername role="mi">J</othername></personname><affiliation>
 	  <shortaffil>Quantum Research International, Inc.</shortaffil>
 	  <address>
 	    <street>2014 Tollgate Rd, Suite 203</street>
@@ -43,13 +28,8 @@
 	    <state>MD</state> 
 	    <postcode>21014</postcode>
 	  </address>
-	</affiliation>
-      </author>
-      <author>
-	<firstname>Robert</firstname>
-	<surname>Parker</surname>
-	<othername role='mi'>G</othername>
-	<affiliation>
+	</affiliation></author>
+      <author><personname><firstname>Robert</firstname><surname>Parker</surname><othername role="mi">G</othername></personname><affiliation>
 	  <shortaffil>Army Research Laboratory</shortaffil>
 	  <orgdiv>Survivability/Lethality Analysis Directorate</orgdiv>
 	  <address>
@@ -57,13 +37,8 @@
 	    <state>MD</state> 
 	    <postcode>21005-5068</postcode>
 	  </address>
-	</affiliation>
-      </author>
-      <author>
-	<firstname>John</firstname>
-	<surname>Anderson</surname>
-	<othername role='mi'>R</othername>
-	<affiliation>
+	</affiliation></author>
+      <author><personname><firstname>John</firstname><surname>Anderson</surname><othername role="mi">R</othername></personname><affiliation>
 	  <shortaffil>Army Research Laboratory</shortaffil>
 	  <orgdiv>Survivability/Lethality Analysis Directorate</orgdiv>
 	  <address>
@@ -71,16 +46,11 @@
 	    <state>MD</state> 
 	    <postcode>21005-5068</postcode>
 	  </address>
-	</affiliation>
-      </author>
+	</affiliation></author>
     </authorgroup>
 
-    <authorgroup id="Intro_MGED_Tutorial_Series_III_authors">
-      <author>
-	<firstname>Lee</firstname>
-	<surname>Butler</surname>
-	<othername role='mi'>A</othername>
-	<affiliation>
+    <authorgroup xml:id="Intro_MGED_Tutorial_Series_III_authors">
+      <author><personname><firstname>Lee</firstname><surname>Butler</surname><othername role="mi">A</othername></personname><affiliation>
 	  <shortaffil>Army Research Laboratory</shortaffil>
 	  <orgdiv>Survivability/Lethality Analysis Directorate</orgdiv>
 	  <address>
@@ -88,13 +58,8 @@
 	    <state>MD</state> 
 	    <postcode>21005-5068</postcode>
 	  </address>
-	</affiliation>
-      </author>
-      <author>
-	<firstname>Eric</firstname>
-	<surname>Edwards</surname>
-	<othername role='mi'>W</othername>
-	<affiliation>
+	</affiliation></author>
+      <author><personname><firstname>Eric</firstname><surname>Edwards</surname><othername role="mi">W</othername></personname><affiliation>
 	  <shortaffil>SURVICE Engineering Company</shortaffil>
 	  <address>
 	    <street>4695 Millennium Drive</street>
@@ -102,13 +67,8 @@
 	    <state>MD</state> 
 	    <postcode>21017-1505</postcode>
 	  </address>
-	</affiliation>
-      </author>
-      <author>
-        <firstname>Dwayne</firstname>
-        <surname>Kregel</surname>
-        <othername role='mi'>L</othername>
-        <affiliation>
+	</affiliation></author>
+      <author><personname><firstname>Dwayne</firstname><surname>Kregel</surname><othername role="mi">L</othername></personname><affiliation>
           <shortaffil>SURVICE Engineering Company</shortaffil>
           <address>
             <street>4695 Millennium Drive</street>
@@ -116,7 +76,6 @@
             <state>MD</state> 
             <postcode>21017-1505</postcode>
           </address>
-        </affiliation>
-      </author>
+        </affiliation></author>
     </authorgroup>
-</bookinfo>
+</info>

@@ -30,7 +30,7 @@
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="t:templates"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>The <literal>t:templates</literal> element is the root of a
 set of templates. This template creates an appropriate
@@ -52,7 +52,7 @@ set of templates. This template creates an appropriate
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="xsl:*"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template simply copies the xsl: elements
 straight through into the result tree.</para>
@@ -67,7 +67,7 @@ straight through into the result tree.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="t:titlepage"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>The <literal>t:titlepage</literal> element creates a set of
 templates for processing the titlepage for an element. The
@@ -140,7 +140,7 @@ and <quote>verso</quote> sides of the title page.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="@*" mode="copy.literal.atts"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template copies all of the <quote>other</quote> attributes
 from a <literal>t:titlepage</literal> element onto the specified
@@ -156,7 +156,7 @@ wrapper.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="t:titlepage-content"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>The title page content, that is, the elements from the source
 document that are rendered on the title page, can be controlled independently
@@ -274,7 +274,7 @@ you'll have to construct the templates by hand.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="t:titlepage-separator"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>The title page is separated from the content which follows it by
 the markup specified in the <literal>t:titlepage-separator</literal>
@@ -290,7 +290,7 @@ element.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="t:titlepage-before"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>Each side of the title page is preceded by the markup specified
 in the <literal>t:titlepage-before</literal> element for that
@@ -306,7 +306,7 @@ side.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="*" mode="copy"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template simply copies the elements that it applies to
 straight through into the result tree.</para>
@@ -321,7 +321,7 @@ straight through into the result tree.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="@*" mode="copy"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template simply copies the attributes that it applies to
 straight through into the result tree.</para>
@@ -336,7 +336,7 @@ straight through into the result tree.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="*" mode="document.order"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template is called to process all of the children of the
 <literal>t:titlepage-content</literal> element. It creates the hairy
@@ -367,7 +367,7 @@ names.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="*" mode="document.order"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template is called to process all of the children of the
 <literal>t:titlepage-content</literal> element. It creates the set
@@ -398,7 +398,7 @@ names.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="*" mode="titlepage.specialrules"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template is called to process all of the descendants of the
 <literal>t:titlepage-content</literal> element that require special
@@ -415,7 +415,7 @@ processing. At present, that's just <literal>t:or</literal> elements.
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="*" mode="titlepage.subrules"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template is called to process the children of special
 template elements.
@@ -431,7 +431,7 @@ template elements.
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="t:or"/&gt;&lt;xsl:template match="t:or" mode="titlepage.subrules"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template processes t:or.</para>
 
@@ -446,7 +446,7 @@ titlepage.subrules mode</refpurpose>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="t:or" mode="titlepage.subrules"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>The titlepage.subrules mode doesn't apply to t:or, so just
 reprocess this node in the normal mode.</para>
@@ -468,7 +468,7 @@ special rules.</refpurpose>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>Walk through each of the children of t:or, producing the
 text of the select attribute.</para>

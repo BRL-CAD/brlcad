@@ -34,7 +34,7 @@
     <synopsis><tag class="xmlpi">dbman funcsynopsis-style="kr"|"ansi"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbman
         funcsynopsis-style</tag> PI as a child of a

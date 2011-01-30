@@ -13,9 +13,9 @@
 <xsl:param name="DistroTitle" select="string(document('')//fm:Branch[1])"/>
 <xsl:param name="sf-relid" select="0"/>
 
-<xsl:param name="DistroName">docbook-xsl</xsl:param>
-<xsl:param name="PreviousRelease">1.73.2</xsl:param>
-<xsl:param name="PreviousReleaseRevision">7393</xsl:param>
+<xsl:param name="DistroName">docbook-xsl-ns</xsl:param>
+<xsl:param name="PreviousRelease">1.76.0</xsl:param>
+<xsl:param name="PreviousReleaseRevision">8900</xsl:param>
 <xsl:param name="Revision">$Revision$</xsl:param>
 <xsl:param name="VersionFileURL">$URL: https://docbook.svn.sourceforge.net/svnroot/docbook/trunk/xsl/VERSION $</xsl:param>
 
@@ -23,10 +23,10 @@
 
 <fm:project>
   <fm:Project>DocBook</fm:Project>
-  <fm:Branch>XSL Stylesheets</fm:Branch>
+  <fm:Branch>XSL-NS Stylesheets</fm:Branch>
   <!-- * set/keep fm:version as N.NN.N-pre except for official releases, -->
   <!-- * then after the release, revert it to N.NN.N-pre & check back in -->
-  <fm:Version>1.74.0</fm:Version>
+  <fm:Version>1.76.1</fm:Version>
 <!--
   <fm:License>MIT/X Consortium License</fm:License>
 -->
@@ -34,9 +34,9 @@
 <!-- * Initial freshmeat announcement -->
 <!-- * Documentation -->
 <!-- * Code cleanup -->
-<!-- * Minor feature enhancements -->
-Major feature enhancements
-<!-- * Minor bugfixes -->
+<!-- * Minor feature enhancements  -->
+<!-- * Major feature enhancements -->
+* Minor bugfixes 
 <!-- * Major bugfixes -->
 <!-- * Minor security fixes -->
 <!-- * Major security fixes -->
@@ -48,7 +48,7 @@ Major feature enhancements
   <fm:Changelog-URL>http://sourceforge.net/project/shownotes.php?release_id={SFRELID}</fm:Changelog-URL>
   <fm:CVS-URL>http://docbook.svn.sourceforge.net/viewvc/docbook/</fm:CVS-URL>
   <fm:Mailing-List-URL>http://lists.oasis-open.org/archives/docbook-apps/</fm:Mailing-List-URL>
-  <fm:Changes>This is feature release with that includes the first support of .epub output and a number of bug fixes.</fm:Changes>
+  <fm:Changes>This is a release with bugfixes and some enhancements.</fm:Changes>
 </fm:project>
 
 <xsl:template match="/" priority="-100">

@@ -1,52 +1,15 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2011 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='tree'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="tree">
 
 <refmeta>
   <refentrytitle>TREE</refentrytitle>
   <manvolnum>nged</manvolnum>
-  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-  <refmiscinfo class='manual'>BRL-CAD MGED Commands</refmiscinfo>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD MGED Commands</refmiscinfo>
 </refmeta>
 
-<refnamediv id='name'>
+<refnamediv xml:id="name">
   <refname>tree</refname>
   <refpurpose>Lists the contents of the specified <emphasis>objects</emphasis> in a tree-like format
 	that displays the hierarchical structure of the objects, and all objects referenced by
@@ -55,21 +18,21 @@
 </refnamediv>
 
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-  <cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
     <command>tree</command>    
     
-    <arg choice='req'><replaceable>objects(s)</replaceable></arg>
-    <arg>-a</arg>
-    <arg>-c</arg>
-    <arg>-i<replaceable>#</replaceable></arg>
-    <arg>-o<replaceable>outfile</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>objects(s)</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-a</arg>
+    <arg choice="opt" rep="norepeat">-c</arg>
+    <arg choice="opt" rep="norepeat">-i<replaceable>#</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-o<replaceable>outfile</replaceable></arg>
 
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsect1 id='description'>
-  <title>DESCRIPTION</title>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  
   <para>Lists the contents of the specified <emphasis>objects</emphasis> in a tree-like format
 	that displays the hierarchical structure of the objects, and all objects referenced by
 	them, down to the primitive shape level. If <emphasis>-c</emphasis> is given, the shapes
@@ -79,62 +42,61 @@
         The <emphasis>-o outfile</emphasis> option prints the results to <emphasis>outfile</emphasis>.
         The <emphasis>-i #</emphasis> option allows the user to set the number of spaces to indent.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='examples'>
-  <title>EXAMPLES</title>
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  
   <para>The first example shows the use of the <command>tree</command> command to list the contents of specified objects  	hierarchically.  The second and third examples show the use of the <command>tree</command> command with arguments.
   </para>
   
        
-  <example>
-    <title>Show the structure of an object down to the primitive shape level.</title>
+  <example><info><title>Show the structure of an object down to the primitive shape level.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>tree group1</userinput>
+      <prompt>mged&gt;</prompt><userinput>tree group1</userinput>
     </para>
     <para>Shows the structure of the tree rooted at <emphasis>group1</emphasis> down to the primitive shape level.
        
     </para>
   </example>
- <example>
-    <title>Specify the amount of indentation in the tree.</title>
+ <example><info><title>Specify the amount of indentation in the tree.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>tree -i2 group1</userinput>
+      <prompt>mged&gt;</prompt><userinput>tree -i2 group1</userinput>
     </para>
     <para> Uses two spaces for each level of indentation.       
     </para>
   </example>
-  <example>
-    <title>Specify that no shapes are to be printed.</title>
+  <example><info><title>Specify that no shapes are to be printed.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>tree -c group1</userinput>
+      <prompt>mged&gt;</prompt><userinput>tree -c group1</userinput>
     </para>
     <para>No shapes are printed.
     </para>
   </example>
 
-  <example>
-    <title>Specify that attributes are listed for each object printed.</title>
+  <example><info><title>Specify that attributes are listed for each object printed.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>tree -a -c group1</userinput>
+      <prompt>mged&gt;</prompt><userinput>tree -a -c group1</userinput>
     </para>
     <para>No shapes are printed, but attributes are shown for the printed objects.
     </para>
   </example>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='author'>
-  <title>AUTHOR</title>
+<refsection xml:id="author"><info><title>AUTHOR</title></info>
+  
   <para>BRL-CAD Team</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='bug_reports'>
-  <title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
-</refsect1>
+</refsection>
 </refentry>
-

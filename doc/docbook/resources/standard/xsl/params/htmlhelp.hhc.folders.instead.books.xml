@@ -21,11 +21,9 @@
 
 <refsection><info><title>Description</title></info>
 
-<para>Set non-zero for folder-like icons or zero for book-like icons in the TOC
-ToC. If you want to use folder-like icons you must swith off binary
-ToC using (xref) <parameter>htmlhelp.hhc.binary</parameter>.
-
-
+<para>Set to non-zero for folder-like icons or zero for book-like icons in the ToC. 
+If you want to use folder-like icons, you must switch off the binary ToC using 
+<parameter>htmlhelp.hhc.binary</parameter>.
 
 </para>
 

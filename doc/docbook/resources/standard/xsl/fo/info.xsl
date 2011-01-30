@@ -1,6 +1,8 @@
 <?xml version='1.0'?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:fo="http://www.w3.org/1999/XSL/Format"
+<xsl:stylesheet exclude-result-prefixes="d"
+                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 version='1.0'>
 
 <!-- ********************************************************************
@@ -23,7 +25,7 @@
 <!-- ==================================================================== -->
 <!-- called from named templates in a given mode -->
 
-<xsl:template match="corpauthor">
+<xsl:template match="d:corpauthor">
   <fo:inline>
     <xsl:apply-templates/>
   </fo:inline>

@@ -1,52 +1,15 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2011 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='vdraw'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="vdraw">
 
 <refmeta>
   <refentrytitle>VDRAW</refentrytitle>
   <manvolnum>nged</manvolnum>
-  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-  <refmiscinfo class='manual'>BRL-CAD MGED Commands</refmiscinfo>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD MGED Commands</refmiscinfo>
 </refmeta>
 
-<refnamediv id='name'>
+<refnamediv xml:id="name">
   <refname>vdraw</refname>
   <refpurpose>Allows drawing of lines and polygons (optionally with per
 vertex normals) in the MGED graphics display. It is used to build a named list of
@@ -55,17 +18,17 @@ delete all or part of the list.   </refpurpose>
 </refnamediv>
 
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-  <cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
     <command>vdraw</command>    
     
-    <arg choice='req'><replaceable>command</replaceable></arg>
-    <arg><replaceable>args</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>command</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>args</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsect1 id='description'>
-  <title>DESCRIPTION</title>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  
   <para>Allows drawing of lines and polygons (optionally with per
 vertex normals) in the MGED graphics display. It is used to build a named list of
 drawing commands for MGED, send the list to the MGED display, modify the list, or
@@ -73,11 +36,11 @@ delete all or part of the list. All vertices in the <emphasis>vdraw</emphasis> c
 The MGED drawing commands are represented by integers in the <emphasis>vdraw</emphasis> command.
 The MGED drawing commands and the integers that <emphasis>vdraw</emphasis> uses for them are:
    </para>
-<table frame='all'>
-<tgroup cols='3' align='center' colsep='1' rowsep='1'>
-<colspec colname='c1'/>
-<colspec colname='c2'/>
-<colspec colname='c3'/>
+<table frame="all">
+<tgroup cols="3" align="center" colsep="1" rowsep="1">
+<colspec colname="c1"/>
+<colspec colname="c2"/>
+<colspec colname="c3"/>
 <thead>
 <row>
 	<entry>MGED Drawing Command</entry>
@@ -129,9 +92,9 @@ The MGED drawing commands and the integers that <emphasis>vdraw</emphasis> uses 
 The <command>vdraw</command> commands are as follows:
 </para>
 
-<itemizedlist mark='bullet'>
+<itemizedlist mark="bullet">
 <listitem>
-	<para>open -- with no arguments, this returns “1” if there is a open list; “0” otherwise. If
+	<para>open -- with no arguments, this returns Â“1Â” if there is a open list; Â“0Â” otherwise. If
 	an argument is supplied, a command list is opened with the provided name.
 	</para>
 </listitem>
@@ -182,80 +145,80 @@ command lists.</para>
 </itemizedlist>
 <para>All textual arguments may be abbreviated by their first letter.</para>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='examples'>
-  <title>EXAMPLES</title>
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  
   <para>The eight examples show the use of the <command>vdraw</command> command with four different commands and various arguments to build a list of commands to draw a square.
    </para>
   
        
-  <example>
-    <title>Open a specified list.</title>
+  <example><info><title>Open a specified list.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>vdraw open square</userinput>
+      <prompt>mged&gt;</prompt><userinput>vdraw open square</userinput>
     </para>
     <para>Opens a list named <emphasis>square</emphasis>.
     </para>
   </example>
- <example>
-    <title>Set the color.</title>
+ <example><info><title>Set the color.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>vdraw params color ff00</userinput>
+      <prompt>mged&gt;</prompt><userinput>vdraw params color ff00</userinput>
     </para>
     <para>Sets the color to green.
     
     </para>
   </example>
-<example>
-    <title>Start a line at the origin.</title>
+<example><info><title>Start a line at the origin.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>vdraw write next 0 0 0 0</userinput>
+      <prompt>mged&gt;</prompt><userinput>vdraw write next 0 0 0 0</userinput>
     </para>
     <para>Starts a line at the origin.
        
     </para>
   </example>
-<example>
-    <title>Draw a line from the previous point to a specified point.</title>
+<example><info><title>Draw a line from the previous point to a specified point.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>vdraw write next 1 100 0 0</userinput>
+      <prompt>mged&gt;</prompt><userinput>vdraw write next 1 100 0 0</userinput>
     </para>
     <para>Draws a line from the origin to (100 0 0).
        
     </para>
   </example>
-<example>
-    <title>Draw a line from the previous point to a specified point.</title>
+<example><info><title>Draw a line from the previous point to a specified point.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>vdraw write next 1 100 100 0</userinput>
+      <prompt>mged&gt;</prompt><userinput>vdraw write next 1 100 100 0</userinput>
     </para>
     <para>Draws a line from the previous point to (100 100 0).
        
     </para>
   </example>
-<example>
-    <title>Draw a line from the previous point to a specified point.</title>
+<example><info><title>Draw a line from the previous point to a specified point.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>vdraw write next 1 0 100 0</userinput>
+      <prompt>mged&gt;</prompt><userinput>vdraw write next 1 0 100 0</userinput>
     </para>
     <para> Draws a line from the previous point to (0 100 0).
        
     </para>
   </example>
-<example>
-    <title>Draw a line from the previous point to the origin.</title>
+<example><info><title>Draw a line from the previous point to the origin.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>vdraw write next 1 0 0 0</userinput>
+      <prompt>mged&gt;</prompt><userinput>vdraw write next 1 0 0 0</userinput>
     </para>
     <para>
        Draws a line from the previous point to the origin.
     </para>
   </example>
-<example>
-    <title>Send the command list to the display manager.</title>
+<example><info><title>Send the command list to the display manager.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>vdraw send</userinput>
+      <prompt>mged&gt;</prompt><userinput>vdraw send</userinput>
     </para>
     <para>Draws the square in the MGED display.
        
@@ -263,19 +226,18 @@ command lists.</para>
   </example>
 
 
-</refsect1>
+</refsection>
 
-<refsect1 id='author'>
-  <title>AUTHOR</title>
+<refsection xml:id="author"><info><title>AUTHOR</title></info>
+  
   <para>BRL-CAD Team</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='bug_reports'>
-  <title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
-</refsect1>
+</refsection>
 </refentry>
-

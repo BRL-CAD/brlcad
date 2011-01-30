@@ -25,7 +25,7 @@ significant index terms</refpurpose>
 <refsection><info><title>Description</title></info>
 
 <para>Properties used to emphasize page number references for
-significant index terms (<tag class="attribute">significance</tag>=<tag class="attvalue">preffered</tag>). Currently works only with
+significant index terms (<tag class="attribute">significance</tag>=<tag class="attvalue">preferred</tag>). Currently works only with
 XEP.</para>
 
 </refsection>

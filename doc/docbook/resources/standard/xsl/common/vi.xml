@@ -29,6 +29,8 @@
 
 <l:gentext key="Abstract" text="Tổng quan"/>
 <l:gentext key="abstract" text="Tổng quan"/>
+<l:gentext key="Acknowledgements" text="Acknowledgements" lang="en"/>
+<l:gentext key="acknowledgements" text="Acknowledgements" lang="en"/>
 <l:gentext key="Answer" text="Đ:"/>
 <l:gentext key="answer" text="Đ:"/>
 <l:gentext key="Appendix" text="Phụ lục"/>
@@ -155,7 +157,6 @@
 <l:gentext key="in" text="trong"/>
 <l:gentext key="lastlistcomma" text=","/>
 <l:gentext key="listcomma" text=","/>
-<l:gentext key="nonexistantelement" text="phần tử không có"/>
 <l:gentext key="notes" text="Ghi chú"/>
 <l:gentext key="Notes" text="Ghi chú"/>
 <l:gentext key="Pgs" text="Pgs."/>
@@ -199,6 +200,7 @@
 <l:gentext key="below" text="dưới"/>
 <l:gentext key="sectioncalled" text="phần"/>
 <l:gentext key="index symbols" text="Ký hiệu"/>
+<l:gentext key="writing-mode" text="lr-tb"/>
 <l:gentext key="lowercase.alpha" text="abcdefghijklmnopqrstuvwxyz"/>
 <l:gentext key="uppercase.alpha" text="ABCDEFGHIJKLMNOPQRSTUVWXYZ"/>
 <l:gentext key="normalize.sort.input" text="AaÀàÁáÂâÃãÄäÅåĀāĂăĄąǍǎǞǟǠǡǺǻȀȁȂȃȦȧḀḁẚẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặBbƀƁɓƂƃḂḃḄḅḆḇCcÇçĆćĈĉĊċČčƇƈɕḈḉDdĎďĐđƊɗƋƌǅǲȡɖḊḋḌḍḎḏḐḑḒḓEeÈèÉéÊêËëĒēĔĕĖėĘęĚěȄȅȆȇȨȩḔḕḖḗḘḙḚḛḜḝẸẹẺẻẼẽẾếỀềỂểỄễỆệFfƑƒḞḟGgĜĝĞğĠġĢģƓɠǤǥǦǧǴǵḠḡHhĤĥĦħȞȟɦḢḣḤḥḦḧḨḩḪḫẖIiÌìÍíÎîÏïĨĩĪīĬĭĮįİƗɨǏǐȈȉȊȋḬḭḮḯỈỉỊịJjĴĵǰʝKkĶķƘƙǨǩḰḱḲḳḴḵLlĹĺĻļĽľĿŀŁłƚǈȴɫɬɭḶḷḸḹḺḻḼḽMmɱḾḿṀṁṂṃNnÑñŃńŅņŇňƝɲƞȠǋǸǹȵɳṄṅṆṇṈṉṊṋOoÒòÓóÔôÕõÖöØøŌōŎŏŐőƟƠơǑǒǪǫǬǭǾǿȌȍȎȏȪȫȬȭȮȯȰȱṌṍṎṏṐṑṒṓỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợPpƤƥṔṕṖṗQqʠRrŔŕŖŗŘřȐȑȒȓɼɽɾṘṙṚṛṜṝṞṟSsŚśŜŝŞşŠšȘșʂṠṡṢṣṤṥṦṧṨṩTtŢţŤťŦŧƫƬƭƮʈȚțȶṪṫṬṭṮṯṰṱẗUuÙùÚúÛûÜüŨũŪūŬŭŮůŰűŲųƯưǓǔǕǖǗǘǙǚǛǜȔȕȖȗṲṳṴṵṶṷṸṹṺṻỤụỦủỨứỪừỬửỮữỰựVvƲʋṼṽṾṿWwŴŵẀẁẂẃẄẅẆẇẈẉẘXxẊẋẌẍYyÝýÿŸŶŷƳƴȲȳẎẏẙỲỳỴỵỶỷỸỹZzŹźŻżŽžƵƶȤȥʐʑẐẑẒẓẔẕẕ" lang="en"/>
@@ -216,6 +218,7 @@
 <l:context name="styles"><l:template name="person-name" text="last-first"/>
 </l:context>
 <l:context name="title"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="%t"/>
 <l:template name="appendix" text="Phụ lục %n. %t"/>
 <l:template name="article" text="%t"/>
@@ -321,6 +324,7 @@
 <l:template name="simplesect" text="%t"/>
 </l:context>
 <l:context name="subtitle"><l:template name="appendix" text="%s"/>
+<l:template name="acknowledgements" text="%s" lang="en"/>
 <l:template name="article" text="%s"/>
 <l:template name="bibliodiv" text="%s"/>
 <l:template name="biblioentry" text="%s"/>
@@ -360,6 +364,7 @@
 <l:template name="toc" text="%s"/>
 </l:context>
 <l:context name="xref"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="Đ: %n"/>
 <l:template name="appendix" text="%t"/>
 <l:template name="article" text="%t"/>
@@ -490,8 +495,9 @@
 <l:template name="sep2" text=" và "/>
 <l:template name="seplast" text=", và "/>
 </l:context>
-<l:context name="glossary"><l:template name="see" text="Xem %t"/>
-<l:template name="seealso" text="Xem thêm %t"/>
+<l:context name="glossary"><l:template name="see" text="Xem %t."/>
+<l:template name="seealso" text="Xem thêm %t."/>
+<l:template name="seealso-separator" text=", "/>
 </l:context>
 <l:context name="msgset"><l:template name="MsgAud" text="Đọc giả: "/>
 <l:template name="MsgLevel" text="Cấp: "/>

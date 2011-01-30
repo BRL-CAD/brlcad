@@ -10,7 +10,7 @@
 </refmeta>
 <refnamediv>
 <refname>hyphenate.verbatim.characters</refname>
-<refpurpose>List of characters after which line break can occur in listings</refpurpose>
+<refpurpose>List of characters after which a line break can occur in listings</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>

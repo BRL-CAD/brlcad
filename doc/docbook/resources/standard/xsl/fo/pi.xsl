@@ -1,10 +1,11 @@
 <?xml version='1.0'?>
 <xsl:stylesheet
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-  xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
+  xmlns:d="http://docbook.org/ns/docbook"
+xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
   xmlns:fo="http://www.w3.org/1999/XSL/Format"
   xmlns:xlink="http://www.w3.org/1999/xlink"
-  exclude-result-prefixes="doc"
+  exclude-result-prefixes="doc xlink d"
   version='1.0'>
 
 <!-- ********************************************************************
@@ -82,6 +83,7 @@
   <refdescription>
     <para>Use the <tag class="xmlpi">dbfo bgcolor</tag> PI as child of a table row
       or cell to set a background color for that table row or cell.</para>
+    <para>This PI works for both CALS and HTML tables.</para>
   </refdescription>
   <refsynopsisdiv>
     <synopsis><tag class="xmlpi">dbfo bgcolor="<replaceable>color</replaceable>"</tag></synopsis>
@@ -146,6 +148,43 @@
   <xsl:call-template name="dbfo-attribute">
     <xsl:with-param name="pis" select="$node/processing-instruction('dbfo')"/>
     <xsl:with-param name="attribute" select="'float-type'"/>
+  </xsl:call-template>
+</xsl:template>
+
+<doc:pi name="dbfo_funcsynopsis-style" xmlns="">
+  <refpurpose>Specifies presentation style for a funcsynopsis</refpurpose>
+  <refdescription>
+    <para>Use the <tag class="xmlpi">dbfo funcsynopsis-style</tag> PI as a child of
+      a <tag>funcsynopsis</tag> or anywhere within a funcsynopsis
+      to control the presentation style for output of all
+      <tag>funcprototype</tag> instances within that funcsynopsis.</para>
+  </refdescription>
+  <refsynopsisdiv>
+    <synopsis><tag class="xmlpi">dbfo funcsynopsis-style="kr"|"ansi"</tag></synopsis>
+  </refsynopsisdiv>
+  <refparameter>
+    <variablelist>
+      <varlistentry><term>funcsynopsis-style="kr"</term>
+        <listitem>
+          <para>Displays <tag>funcprototype</tag> output in K&amp;R style</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry><term>funcsynopsis-style="ansi"</term>
+        <listitem>
+          <para>Displays <tag>funcprototype</tag> output in ANSI style</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refparameter>
+  <refsee role="params">
+    <para><parameter>funcsynopsis.style</parameter></para>
+  </refsee>
+</doc:pi>
+<xsl:template name="pi.dbfo_funcsynopsis-style">
+  <xsl:param name="node" select="."/>
+  <xsl:call-template name="dbfo-attribute">
+    <xsl:with-param name="pis" select="$node/processing-instruction('dbfo')"/>
+    <xsl:with-param name="attribute" select="'funcsynopsis-style'"/>
   </xsl:call-template>
 </xsl:template>
 
@@ -349,7 +388,7 @@
 </xsl:template> 
 
 <doc:pi name="dbfo_linenumbering.everyNth" xmlns="">
-  <refpurpose>Specifies interval for lines numbers in verbatims</refpurpose>
+  <refpurpose>Specifies interval for line numbers in verbatims</refpurpose>
   <refdescription>
     <para>Use the <tag class="xmlpi">dbfo linenumbering.everyNth</tag> PI as a child
       of a “verbatim” element – <tag>programlisting</tag>,
@@ -545,9 +584,9 @@
 </xsl:template>
 
 <doc:pi name="dbfo_orientation" xmlns="">
-  <refpurpose>Specifies the orientation for table row or cell</refpurpose>
+  <refpurpose>Specifies the orientation for a CALS table row or cell</refpurpose>
   <refdescription>
-    <para>Use the <tag class="xmlpi">dbfo orientation</tag> PI as a child of an
+    <para>Use the <tag class="xmlpi">dbfo orientation</tag> PI as a child of a CALS
       <tag>table</tag> row or cell to specify the orientation
       (rotation) for the row or cell.</para>
   </refdescription>
@@ -612,11 +651,11 @@
 </xsl:template>
 
 <doc:pi name="dbfo_rotated-width" xmlns="">
-  <refpurpose>Specifies the width for a table <tag>entry</tag> or
+  <refpurpose>Specifies the width for a CALS table <tag>entry</tag> or
     <tag>row</tag></refpurpose>
   <refdescription>
-    <para>Use the <tag class="xmlpi">dbfo rotated-width</tag> PI as a child of an
-      <tag>entry</tag> or <tag>row</tag> instance to specify the
+    <para>Use the <tag class="xmlpi">dbfo rotated-width</tag> PI as a child of 
+      <tag>entry</tag> or <tag>row</tag> instance in a CALS table to specify the
       width of that the <tag>entry</tag> or <tag>row</tag>; or
       use it higher up in table to cause the width to be inherited
       recursively down.</para>
@@ -719,12 +758,12 @@
 </xsl:template>
 
 <doc:pi name="dbfo_table-width" xmlns="">
-  <refpurpose>Specifies the width for a table or for revhistory
+  <refpurpose>Specifies the width for a CALS table or for revhistory
     output</refpurpose>
   <refdescription>
     <para>Use the <tag class="xmlpi">dbfo table-width</tag> PI as a child or
-      sibling of a <tag>table</tag>, or as a child of an
-      <tag>informaltable</tag>, <tag>entrybl</tag>, or
+      sibling of a CALS <tag>table</tag>, or as a child of an
+      <tag>informaltable</tag>, <tag>entrytbl</tag>, or
       <tag>revhistory</tag> instance (which is rendered as a table
       in output) to specify the width of the table in output.</para>
   </refdescription>
@@ -861,6 +900,40 @@
         >Soft page breaks</link></para>
   </refsee>
 </doc:pi>
+
+<doc:pi name="dbfo_row-height" xmlns="">
+  <refpurpose>Specifies the height for a CALS table row</refpurpose>
+  <refdescription>
+    <para>Use the <tag class="xmlpi">dbfo row-height</tag> PI as a child of a
+      <tag>row</tag> to specify the height of the row.</para>
+  </refdescription>
+  <refsynopsisdiv>
+    <synopsis><tag class="xmlpi">dbfo row-height="<replaceable>height</replaceable>"</tag></synopsis>
+  </refsynopsisdiv>
+  <refparameter>
+    <variablelist>
+      <varlistentry><term>row-height="<replaceable>height</replaceable>"</term>
+        <listitem>
+          <para>Specifies the row height (including units)</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refparameter>
+  <refsee role="tcg">
+    <para><link role="tcg"
+        xlink:href="RowHeight.html"
+        >Row height</link></para>
+  </refsee>
+</doc:pi>
+<xsl:template name="pi.dbfo_row-height">
+  <xsl:param name="node" select="."/>
+  <xsl:call-template name="dbfo-attribute">
+    <xsl:with-param name="pis" select="$node/processing-instruction('dbfo')"/>
+    <xsl:with-param name="attribute" select="'row-height'"/>
+  </xsl:call-template>
+</xsl:template> 
+
+
 <xsl:template name="pi.dbfo-need">
   <xsl:variable name="pi-height">
     <xsl:call-template name="dbfo-attribute">
@@ -892,51 +965,54 @@
   </xsl:variable>
 
   <xsl:choose>
+    <xsl:when test="$fop1.extensions != 0">
+      <!-- Doesn't work in fop -->
+    </xsl:when>
     <xsl:when test="$fop.extensions != 0">
       <!-- Doesn't work in fop -->
     </xsl:when>
     <xsl:when test="$pi-before != '' and
-      not(following-sibling::listitem) and
-      not(following-sibling::step)">
+      not(following-sibling::d:listitem) and
+      not(following-sibling::d:step)">
       <fo:block space-after="0pt" space-before="{$pi-before}">
         <xsl:copy-of select="$spacer"/>
       </fo:block>
     </xsl:when>
-    <xsl:when test="following-sibling::para">
+    <xsl:when test="following-sibling::d:para">
       <fo:block space-after="0pt" 
         xsl:use-attribute-sets="normal.para.spacing">
         <xsl:copy-of select="$spacer"/>
       </fo:block>
     </xsl:when>
-    <xsl:when test="following-sibling::table or
-      following-sibling::figure or
-      following-sibling::example or
-      following-sibling::equation">
+    <xsl:when test="following-sibling::d:table or
+      following-sibling::d:figure or
+      following-sibling::d:example or
+      following-sibling::d:equation">
       <fo:block space-after="0pt" 
         xsl:use-attribute-sets="formal.object.properties">
         <xsl:copy-of select="$spacer"/>
       </fo:block>
     </xsl:when>
-    <xsl:when test="following-sibling::informaltable or
-      following-sibling::informalfigure or
-      following-sibling::informalexample or
-      following-sibling::informalequation">
+    <xsl:when test="following-sibling::d:informaltable or
+      following-sibling::d:informalfigure or
+      following-sibling::d:informalexample or
+      following-sibling::d:informalequation">
       <fo:block space-after="0pt" 
         xsl:use-attribute-sets="informal.object.properties">
         <xsl:copy-of select="$spacer"/>
       </fo:block>
     </xsl:when>
-    <xsl:when test="following-sibling::itemizedlist or
-      following-sibling::orderedlist or
-      following-sibling::variablelist or
-      following-sibling::simplelist">
+    <xsl:when test="following-sibling::d:itemizedlist or
+      following-sibling::d:orderedlist or
+      following-sibling::d:variablelist or
+      following-sibling::d:simplelist">
       <fo:block space-after="0pt" 
         xsl:use-attribute-sets="informal.object.properties">
         <xsl:copy-of select="$spacer"/>
       </fo:block>
     </xsl:when>
-    <xsl:when test="following-sibling::listitem or
-      following-sibling::step">
+    <xsl:when test="following-sibling::d:listitem or
+      following-sibling::d:step">
       <fo:list-item space-after="0pt" 
         xsl:use-attribute-sets="informal.object.properties">
         <fo:list-item-label/>
@@ -945,12 +1021,12 @@
         </fo:list-item-body>
       </fo:list-item>
     </xsl:when>
-    <xsl:when test="following-sibling::sect1 or
-      following-sibling::sect2 or
-      following-sibling::sect3 or
-      following-sibling::sect4 or
-      following-sibling::sect5 or
-      following-sibling::section">
+    <xsl:when test="following-sibling::d:sect1 or
+      following-sibling::d:sect2 or
+      following-sibling::d:sect3 or
+      following-sibling::d:sect4 or
+      following-sibling::d:sect5 or
+      following-sibling::d:section">
       <fo:block space-after="0pt" 
         xsl:use-attribute-sets="section.title.properties">
         <xsl:copy-of select="$spacer"/>
@@ -964,11 +1040,14 @@
   </xsl:choose>
 
   <xsl:choose>
+    <xsl:when test="$fop1.extensions != 0">
+      <!-- Doesn't work in fop -->
+    </xsl:when>
     <xsl:when test="$fop.extensions != 0">
       <!-- Doesn't work in fop -->
     </xsl:when>
-    <xsl:when test="following-sibling::listitem or
-      following-sibling::step">
+    <xsl:when test="following-sibling::d:listitem or
+      following-sibling::d:step">
       <fo:list-item space-before.precedence="force"
         space-before="-{$height}"
         space-after="0pt"

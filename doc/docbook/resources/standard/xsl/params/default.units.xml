@@ -29,7 +29,7 @@
 <refsection><info><title>Description</title></info>
 
 <para>If an unqualified dimension is encountered (for example, in a
-graphic width), the <parameter>default-units</parameter> will be used for the
+graphic width), the <parameter>default.units</parameter> will be used for the
 units. Unqualified dimensions are not allowed in XSL Formatting Objects.
 </para>
 

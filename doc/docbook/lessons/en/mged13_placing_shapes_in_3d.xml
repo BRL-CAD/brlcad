@@ -1,20 +1,20 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Placing Shapes in 3-D Space</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Placing Shapes in 3-D Space</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="placing_shapes_in_3d_overviewlist">
+    <para xml:id="placing_shapes_in_3d_overviewlist">
       In this lesson, you will:
       
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Create, edit, and place shapes in 3-D space.</para>
 	</listitem>
@@ -31,13 +31,13 @@
 
     </para>
 
-    <para id="placing_shapes_in_3d_intro1"> 
+    <para xml:id="placing_shapes_in_3d_intro1"> 
       In previous lessons, you created and edited shapes. You also placed
       objects in three-dimensional space. This lesson will provide more advanced
       practice on creating and editing shapes and placing them in 3-D space.
     </para>
 
-    <para id="placing_shapes_in_3d_intro2">
+    <para xml:id="placing_shapes_in_3d_intro2">
       The design you will make in this lesson is a simple candle in a candle
       holder sitting on a table (as shown in the following figure). In the next
       lesson, you will add decorations and lighting to make the design more
@@ -46,7 +46,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_design.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_design.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -57,13 +57,13 @@
       </informalfigure>
     </para>
 
-    <para id="placing_shapes_in_3d_intro3">
+    <para xml:id="placing_shapes_in_3d_intro3">
       Begin by creating a new database called candle.g. Title your database
       Candle Tutorial.
     </para>
 
-    <sect1 id="candle_create_tabletop">
-      <title>Creating the Tabletop</title>
+    <section xml:id="candle_create_tabletop"><info><title>Creating the Tabletop</title></info>
+      
       <para>
 	Create an arb8 from the GUI. Name the shape arb8.s. Go to View and select
 	Front.
@@ -86,7 +86,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_tabletop_wireframe_front.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_tabletop_wireframe_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -102,10 +102,10 @@
 	
 	<command>r table1.r u arb8.s[Enter]</command>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="candle_create_base">
-      <title>Creating the Candle Base</title>
+    <section xml:id="candle_create_base"><info><title>Creating the Candle Base</title></info>
+      
       <para>
 	Create an eto and name it eto1.s. To create the bottom of the candle base,
 	you will need to flip the eto 180'0. Type at the Command Window prompt:
@@ -127,7 +127,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_tabletop_eto1_wireframe_front.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_tabletop_eto1_wireframe_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -146,11 +146,11 @@
 	Go to Edit. In addition to the standard commands, you will be presented
 	with a menu of thirteen shape-specific ways to edit this shape.
 	<informaltable>
-	  <tgroup cols='2'>
+	  <tgroup cols="2">
 	    <tbody>
 	      <row>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 Set H
 Set H (Move V)
 Set A
@@ -160,7 +160,7 @@ Set d
 		  </literallayout>
 		</entry>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 Set A,B
 Set C,D
 Set A,B,C,D
@@ -189,7 +189,7 @@ Move End H
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_tabletop_eto1_rcc_wireframe_front.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_tabletop_eto1_rcc_wireframe_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -210,7 +210,7 @@ Move End H
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_tabletop_base_front.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_tabletop_base_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -236,10 +236,10 @@ Move End H
 	eto2.s gives us. By placing eto2.s last in the list, we can perform this
 	removal easily.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="candle_create_candle">
-      <title>Creating the Candle</title>
+    <section xml:id="candle_create_candle"><info><title>Creating the Candle</title></info>
+      
       <para>
 	Create an rcc and name it rcc2.s. Edit the shape as you did the previous
 	rcc. When you are done, it should look similar to the one in the following
@@ -250,7 +250,7 @@ Move End H
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_tabletop_base_candle_front.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_tabletop_base_candle_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -274,10 +274,10 @@ Move End H
 	Earlier we had mentioned that we would want to remove some material that
 	we got from eto2.s. Now we have done it.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="candle_create_flame">
-      <title>Creating the Candle Flame</title>
+    <section xml:id="candle_create_flame"><info><title>Creating the Candle Flame</title></info>
+      
 
       <para>
 	Create a particle (part) and name it part1.s. Edit and position the shape
@@ -286,7 +286,7 @@ Move End H
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_complete_front.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_complete_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -300,10 +300,10 @@ Move End H
 	
 	<command>r flame1.r u part1.s[Enter]</command>
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="candle_create_combination">
-      <title>Making a Combination of the Base, Candle, and Flame</title>
+    <section xml:id="candle_create_combination"><info><title>Making a Combination of the Base, Candle, and Flame</title></info>
+      
 
       <para>
 	To make a combination of the parts of the candle, type at the Command
@@ -311,10 +311,10 @@ Move End H
 	
 	<command>comb candle1.c u base1.r u candle1.r u flame1.r[Enter]</command>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="candle_check_data_tree">
-      <title>Checking the Data Tree</title>
+    <section xml:id="candle_check_data_tree"><info><title>Checking the Data Tree</title></info>
+      
       <para>
 	Now that you have made a number of regions and a combination, it would be
 	a good time to check your data tree and make sure it agrees with the
@@ -327,7 +327,7 @@ Move End H
 	
 	Your Boolean expression should read:
 	
-	<literallayout>
+	<literallayout class="normal">
    candle1.c/
 	
    u base1.r/R
@@ -349,17 +349,17 @@ Move End H
    u part1.s
 	</literallayout>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="candle_assign_mater_prop">
-      <title>Assigning Material Properties to the Elements of the Design</title>
+    <section xml:id="candle_assign_mater_prop"><info><title>Assigning Material Properties to the Elements of the Design</title></info>
+      
       <para>
 	To assign material properties to your design, go to the Edit menu and
 	select the Combination Editor. Assign the following material properties to
 	each of the elements:
 	
 	<informaltable frame="all">
-	  <tgroup cols='4'>
+	  <tgroup cols="4">
 	    <thead>
 	      <row>
 		<entry>Element</entry>
@@ -379,19 +379,19 @@ Move End H
 		<entry>Candle Base</entry>
 		<entry>Plastic</entry>
 		<entry>Medium Gray (128 130 144)</entry>
-		<entry></entry>
+		<entry/>
 	      </row>
 	      <row>
 		<entry>Candle</entry>
 		<entry>Plastic</entry>
 		<entry>Light Blue (0 166 255)</entry>
-		<entry></entry>
+		<entry/>
 	      </row>
 	      <row>
 		<entry>Flame</entry>
 		<entry>Plastic</entry>
 		<entry>Light Yellow (255 255 190)</entry>
-		<entry></entry>
+		<entry/>
 	      </row>
 	    </tbody>
 	  </tgroup>
@@ -405,7 +405,7 @@ Move End H
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_comb_ed_checker.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_comb_ed_checker.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -434,10 +434,10 @@ Move End H
 	  quickly become adept at creating RGB colors.                          
 	</para>
       </note>
-    </sect1>
+    </section>
 
-    <sect1 id="candle_raytrace">
-      <title>Raytracing Your Design</title>
+    <section xml:id="candle_raytrace"><info><title>Raytracing Your Design</title></info>
+      
       
       <para>
 	Before raytracing, change the View to az35, el25 to give a better view of
@@ -448,7 +448,7 @@ Move End H
 	
 	This command tells the <application>MGED</application> program to:
 	<informaltable>
-	  <tgroup cols='3'>
+	  <tgroup cols="3">
 	    <tbody>
 	      <row>
 		<entry>B</entry>
@@ -471,7 +471,7 @@ Move End H
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_raytraced_overlay.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_raytraced_overlay.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -482,14 +482,14 @@ Move End H
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="placing_shapes_in_3d_review">
-      <title>Review</title>
+    <section xml:id="placing_shapes_in_3d_review"><info><title>Review</title></info>
+      
       <para>
 	
 	In this lesson, you:
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Created, edited, and placed shapes in 3-D space.</para>
 	  </listitem>
@@ -504,6 +504,6 @@ Move End H
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

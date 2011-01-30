@@ -1,23 +1,18 @@
 <?xml version="1.0"?>
 <!DOCTYPE xsl:stylesheet [
+<!ENTITY % common.entities SYSTEM "../common/entities.ent">
+%common.entities;
 
-<!ENTITY primary   'normalize-space(concat(primary/@sortas, primary[not(@sortas) or @sortas = ""]))'>
-<!ENTITY secondary 'normalize-space(concat(secondary/@sortas, secondary[not(@sortas) or @sortas = ""]))'>
-<!ENTITY tertiary  'normalize-space(concat(tertiary/@sortas, tertiary[not(@sortas) or @sortas = ""]))'>
-
-<!ENTITY sep '" "'>
 <!-- Documents using the kimber index method must have a lang attribute -->
 <!-- Only one of these should be present in the entity -->
 <!ENTITY lang 'concat(/*/@lang, /*/@xml:lang)'>
 
-<!ENTITY scope 'count(ancestor::node()|$scope) = count(ancestor::node())
-                and ($role = @role or $type = @type or
-                (string-length($role) = 0 and string-length($type) = 0))'>
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:fo="http://www.w3.org/1999/XSL/Format"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 xmlns:k="java:com.isogen.saxoni18n.Saxoni18nService"
-                exclude-result-prefixes="k"
+                exclude-result-prefixes="k d"
                 version="1.0">
 
 <!-- ********************************************************************
@@ -88,7 +83,7 @@
   </xsl:variable>
 
   <xsl:variable name="terms"
-                select="//indexterm[count(.|key('k-group',
+                select="//d:indexterm[count(.|key('k-group',
                    k:getIndexGroupKey(&lang;, &primary;))
                    [&scope;][1]) = 1
                    and not(@class = 'endofrange')]"/>
@@ -141,7 +136,7 @@
 
 </xsl:template>
 
-<xsl:template match="indexterm" mode="index-div-kimber">
+<xsl:template match="d:indexterm" mode="index-div-kimber">
   <xsl:param name="scope" select="."/>
   <xsl:param name="role" select="''"/>
   <xsl:param name="type" select="''"/>

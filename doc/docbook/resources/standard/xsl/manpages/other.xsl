@@ -1,10 +1,11 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:exsl="http://exslt.org/common"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:exsl="http://exslt.org/common"
                 xmlns:ng="http://docbook.org/docbook-ng"
                 xmlns:db="http://docbook.org/ns/docbook"
                 xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0"
-                exclude-result-prefixes="exsl"
+                exclude-result-prefixes="exsl d"
                 version='1.0'>
 
 <!-- ********************************************************************
@@ -41,84 +42,44 @@
 <xsl:preserve-space elements="*"/>
 
 <xsl:strip-space elements="
-abstract affiliation anchor answer appendix area areaset areaspec
-artheader article audiodata audioobject author authorblurb authorgroup
-beginpage bibliodiv biblioentry bibliography biblioset blockquote book
-bookbiblio bookinfo callout calloutlist caption caution chapter
-citerefentry cmdsynopsis co collab colophon colspec confgroup
-copyright dedication docinfo editor entrytbl epigraph equation
-example figure footnote footnoteref formalpara funcprototype
-funcsynopsis glossary glossdef glossdiv glossentry glosslist graphicco
-group highlights imagedata imageobject imageobjectco important index
-indexdiv indexentry indexterm informalequation informalexample
-informalfigure informaltable inlineequation inlinemediaobject
-itemizedlist itermset keycombo keywordset legalnotice listitem lot
-mediaobject mediaobjectco menuchoice msg msgentry msgexplan msginfo
-msgmain msgrel msgset msgsub msgtext note objectinfo
-orderedlist othercredit part partintro preface printhistory procedure
-programlistingco publisher qandadiv qandaentry qandaset question
-refentry reference refmeta refnamediv refsection refsect1 refsect1info refsect2
-refsect2info refsect3 refsect3info refsynopsisdiv refsynopsisdivinfo
-revhistory revision row sbr screenco screenshot sect1 sect1info sect2
-sect2info sect3 sect3info sect4 sect4info sect5 sect5info section
-sectioninfo seglistitem segmentedlist seriesinfo set setindex setinfo
-shortcut sidebar simplelist simplesect spanspec step subject
-subjectset substeps synopfragment table tbody textobject tfoot tgroup
-thead tip toc tocchap toclevel1 toclevel2 toclevel3 toclevel4
-toclevel5 tocpart varargs variablelist varlistentry videodata
-videoobject void warning subjectset
+d:abstract d:affiliation d:anchor d:answer d:appendix d:area d:areaset d:areaspec
+d:artheader d:article d:audiodata d:audioobject d:author d:authorblurb d:authorgroup
+d:beginpage d:bibliodiv d:biblioentry d:bibliography d:biblioset d:blockquote d:book
+d:bookbiblio d:bookinfo d:callout d:calloutlist d:caption d:caution d:chapter
+d:citerefentry d:cmdsynopsis d:co d:collab d:colophon d:colspec d:confgroup
+d:copyright d:dedication d:docinfo d:editor d:entrytbl d:epigraph d:equation
+d:example d:figure d:footnote d:footnoteref d:formalpara d:funcprototype
+d:funcsynopsis d:glossary d:glossdef d:glossdiv d:glossentry d:glosslist d:graphicco
+d:group d:highlights d:imagedata d:imageobject d:imageobjectco d:important d:index
+d:indexdiv d:indexentry d:indexterm d:informalequation d:informalexample
+d:informalfigure d:informaltable d:inlineequation d:inlinemediaobject
+d:itemizedlist d:itermset d:keycombo d:keywordset d:legalnotice d:listitem d:lot
+d:mediaobject d:mediaobjectco d:menuchoice d:msg d:msgentry d:msgexplan d:msginfo
+d:msgmain d:msgrel d:msgset d:msgsub d:msgtext d:note d:objectinfo
+d:orderedlist d:othercredit d:part d:partintro d:preface d:printhistory d:procedure
+d:programlistingco d:publisher d:qandadiv d:qandaentry d:qandaset d:question
+d:refentry d:reference d:refmeta d:refnamediv d:refsection d:refsect1 d:refsect1info d:refsect2
+d:refsect2info d:refsect3 d:refsect3info d:refsynopsisdiv d:refsynopsisdivinfo
+d:revhistory d:revision d:row d:sbr d:screenco d:screenshot d:sect1 d:sect1info d:sect2
+d:sect2info d:sect3 d:sect3info d:sect4 d:sect4info d:sect5 d:sect5info d:section
+d:sectioninfo d:seglistitem d:segmentedlist d:seriesinfo d:set d:setindex d:setinfo
+d:shortcut d:sidebar d:simplelist d:simplesect d:spanspec d:step d:subject
+d:subjectset d:substeps d:synopfragment d:table d:tbody d:textobject d:tfoot d:tgroup
+d:thead d:tip d:toc d:tocchap d:toclevel1 d:toclevel2 d:toclevel3 d:toclevel4
+d:toclevel5 d:tocpart d:varargs d:variablelist d:varlistentry d:videodata
+d:videoobject d:void d:warning d:subjectset
 
-classsynopsis
-constructorsynopsis
-destructorsynopsis
-fieldsynopsis
-methodparam
-methodsynopsis
-ooclass
-ooexception
-oointerface
-simplemsgentry
-manvolnum
-
-db:abstract db:affiliation db:anchor db:answer db:appendix db:area db:areaset db:areaspec
-db:artheader db:article db:audiodata db:audioobject db:author db:authorblurb db:authorgroup
-db:beginpage db:bibliodiv db:biblioentry db:bibliography db:biblioset db:blockquote db:book
-db:bookbiblio db:bookinfo db:callout db:calloutlist db:caption db:caution db:chapter
-db:citerefentry db:cmdsynopsis db:co db:collab db:colophon db:colspec db:confgroup
-db:copyright db:dedication db:docinfo db:editor db:entrytbl db:epigraph db:equation
-db:example db:figure db:footnote db:footnoteref db:formalpara db:funcprototype
-db:funcsynopsis db:glossary db:glossdef db:glossdiv db:glossentry db:glosslist db:graphicco
-db:group db:highlights db:imagedata db:imageobject db:imageobjectco db:important db:index
-db:indexdiv db:indexentry db:indexterm db:informalequation db:informalexample
-db:informalfigure db:informaltable db:inlineequation db:inlinemediaobject
-db:itemizedlist db:itermset db:keycombo db:keywordset db:legalnotice db:listitem db:lot
-db:mediaobject db:mediaobjectco db:menuchoice db:msg db:msgentry db:msgexplan db:msginfo
-db:msgmain db:msgrel db:msgset db:msgsub db:msgtext db:note db:objectinfo
-db:orderedlist db:othercredit db:part db:partintro db:preface db:printhistory db:procedure
-db:programlistingco db:publisher db:qandadiv db:qandaentry db:qandaset db:question
-db:refentry db:reference db:refmeta db:refnamediv db:refsection db:refsect1 db:refsect1info
-db:refsect2
-db:refsect2info db:refsect3 db:refsect3info db:refsynopsisdiv db:refsynopsisdivinfo
-db:revhistory db:revision db:row db:sbr db:screenco db:screenshot db:sect1 db:sect1info db:sect2
-db:sect2info db:sect3 db:sect3info db:sect4 db:sect4info db:sect5 db:sect5info db:section
-db:sectioninfo db:seglistitem db:segmentedlist db:seriesinfo db:set db:setindex db:setinfo
-db:shortcut db:sidebar db:simplelist db:simplesect db:spanspec db:step db:subject
-db:subjectset db:substeps db:synopfragment db:table db:tbody db:textobject db:tfoot db:tgroup
-db:thead db:tip db:toc db:tocchap db:toclevel1 db:toclevel2 db:toclevel3 db:toclevel4
-db:toclevel5 db:tocpart db:varargs db:variablelist db:varlistentry db:videodata
-db:videoobject db:void db:warning db:subjectset
-
-db:classsynopsis
-db:constructorsynopsis
-db:destructorsynopsis
-db:fieldsynopsis
-db:methodparam
-db:methodsynopsis
-db:ooclass
-db:ooexception
-db:oointerface
-db:simplemsgentry
-db:manvolnum
+d:classsynopsis
+d:constructorsynopsis
+d:destructorsynopsis
+d:fieldsynopsis
+d:methodparam
+d:methodsynopsis
+d:ooclass
+d:ooexception
+d:oointerface
+d:simplemsgentry
+d:manvolnum
 "/>
 
 <!-- ==================================================================== -->
@@ -129,7 +90,7 @@ db:manvolnum
     <xsl:if test="$man.charmap.enabled != 0">
       <xsl:variable name="lang">
         <xsl:call-template name="l10n.language">
-          <xsl:with-param name="target" select="//refentry[1]"/>
+          <xsl:with-param name="target" select="//d:refentry[1]"/>
         </xsl:call-template>
       </xsl:variable>
       <xsl:call-template name="read-character-map">
@@ -165,7 +126,7 @@ db:manvolnum
   <!-- redefine this any way you'd like to output messages -->
   <!-- DO NOT OUTPUT ANYTHING FROM THIS TEMPLATE -->
   <!-- Example:
-  <xsl:if test="//foo">
+  <xsl:if test="//d:foo">
     <xsl:call-template name="log.message">
       <xsl:with-param name="level">Warn</xsl:with-param>
       <xsl:with-param name="source" select="$refname"/>
@@ -196,7 +157,7 @@ db:manvolnum
 <!-- *  -->
 <!-- ******************************************************************** -->
 
-<xsl:template match="//refentry//text()">
+<xsl:template match="//d:refentry//text()">
   <xsl:call-template name="escape.roff.specials">
     <xsl:with-param name="content">
       <xsl:value-of select="."/>
@@ -263,7 +224,7 @@ db:manvolnum
   <xsl:call-template name="string.subst">
     <xsl:with-param name="string" select="$content"/>
     <xsl:with-param name="target">'</xsl:with-param>
-    <xsl:with-param name="replacement">\'</xsl:with-param>
+    <xsl:with-param name="replacement">\*(Aq</xsl:with-param>
   </xsl:call-template>
 </xsl:template>
 
@@ -346,7 +307,7 @@ db:manvolnum
     </xsl:call-template>
     <xsl:text>&#10;</xsl:text>
     <xsl:text>.\"  Language: </xsl:text>
-    <xsl:call-template name="l10.language.name"/>
+    <xsl:call-template name="l10n.language.name"/>
     <xsl:text>&#10;</xsl:text>
     <xsl:text>.\"</xsl:text>
     <xsl:text>&#10;</xsl:text>
@@ -620,7 +581,7 @@ db:manvolnum
     <xsl:param name="first.refname"/>
     <xsl:param name="section"/>
     <xsl:param name="lang"/>
-    <xsl:for-each select="refnamediv/refname">
+    <xsl:for-each select="d:refnamediv/d:refname">
       <xsl:if test=". != $first.refname">
         <xsl:call-template name="write.text.chunk">
           <xsl:with-param name="filename">
@@ -635,10 +596,11 @@ db:manvolnum
           <xsl:with-param name="message-prolog">Note: </xsl:with-param>
           <xsl:with-param name="message-epilog"> (soelim stub)</xsl:with-param>
           <xsl:with-param name="content">
-            <xsl:value-of select="concat('.so man', $section, '/')"/>
+            <xsl:value-of select="'.so '"/>
             <xsl:call-template name="make.adjusted.man.filename">
               <xsl:with-param name="name" select="$first.refname"/>
               <xsl:with-param name="section" select="$section"/>
+              <xsl:with-param name="lang" select="$lang"/>
             </xsl:call-template>
             <xsl:text>&#10;</xsl:text>
           </xsl:with-param>
@@ -655,7 +617,7 @@ db:manvolnum
   <!-- *  generated, including any "stub" pages. -->
   <xsl:template name="generate.manifest">
     <xsl:variable name="filelist">
-      <xsl:for-each select="//refentry">
+      <xsl:for-each select="//d:refentry">
         <!-- * all refname instances in a Refentry inherit their section -->
         <!-- * numbers from the parent Refentry; so we only need to get -->
         <!-- * the section once per Refentry, not once per Refname -->
@@ -667,7 +629,7 @@ db:manvolnum
         <xsl:variable name="lang">
           <xsl:call-template name="l10n.language"/>
         </xsl:variable>
-        <xsl:for-each select="refnamediv/refname">
+        <xsl:for-each select="d:refnamediv/d:refname">
           <xsl:call-template name="make.adjusted.man.filename">
             <xsl:with-param name="name" select="."/>
             <xsl:with-param name="section" select="$section"/>
@@ -694,6 +656,24 @@ db:manvolnum
     <xsl:if test="$man.output.quietly = 0">
       <xsl:message><xsl:text>&#10;</xsl:text></xsl:message>
     </xsl:if>
+  </xsl:template>
+
+  <!-- ============================================================== -->
+
+  <!-- There is some stuff, that is not portable between groff/troff. -->
+  <xsl:template name="define.portability.macros">
+    <xsl:text>.\" -----------------------------------------------------------------&#10;</xsl:text>
+    <xsl:text>.\" * Define some portability stuff&#10;</xsl:text>
+    <xsl:text>.\" -----------------------------------------------------------------&#10;</xsl:text>
+    <xsl:text>.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~&#10;</xsl:text>
+    <xsl:text>.\" http://bugs.debian.org/507673&#10;</xsl:text>
+    <xsl:text>.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html&#10;</xsl:text>
+    <xsl:text>.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~&#10;</xsl:text>
+    <xsl:text>&#10;</xsl:text>
+    <xsl:text>.ie \n(.g .ds Aq \(aq</xsl:text>
+    <xsl:text>&#10;</xsl:text>
+    <xsl:text>.el       .ds Aq '</xsl:text>
+    <xsl:text>&#10;</xsl:text>
   </xsl:template>
 
   <!-- ============================================================== -->
@@ -787,7 +767,7 @@ db:manvolnum
 .if \\n[.$] \&amp;\\$*
 ..&#10;</xsl:text>
     <xsl:text>.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~&#10;</xsl:text>
-    <xsl:text>.\" BB/BE - put background/screen (filled box) around block of text&#10;</xsl:text>
+    <xsl:text>.\" BB/EB - put background/screen (filled box) around block of text&#10;</xsl:text>
     <xsl:text>.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~&#10;</xsl:text>
     <xsl:text>.de BB
 .if t \{\

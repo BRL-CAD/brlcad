@@ -1,5 +1,7 @@
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-		xmlns:fo="http://www.w3.org/1999/XSL/Format"
+<xsl:stylesheet exclude-result-prefixes="d"
+                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+		xmlns:d="http://docbook.org/ns/docbook"
+xmlns:fo="http://www.w3.org/1999/XSL/Format"
 		version="1.0">
 
 <!-- ================================================================ -->
@@ -20,10 +22,10 @@
   <xsl:apply-templates select="*" mode="ati.xsl11.bookmarks"/>
 </xsl:template>
 
-<xsl:template match="set|book|part|reference|preface|chapter|appendix|article
-                     |glossary|bibliography|index|setindex
-                     |refentry
-                     |sect1|sect2|sect3|sect4|sect5|section"
+<xsl:template match="d:set|d:book|d:part|d:reference|d:preface|d:chapter|d:appendix|d:article
+                     |d:glossary|d:bibliography|d:index|d:setindex
+                     |d:refentry
+                     |d:sect1|d:sect2|d:sect3|d:sect4|d:sect5|d:section"
               mode="ati.xsl11.bookmarks">
   <xsl:variable name="id">
     <xsl:call-template name="object.id"/>
@@ -36,7 +38,7 @@
   <!-- If the object is a set or book, generate a bookmark for the toc -->
 
   <xsl:choose>
-    <xsl:when test="self::index and $generate.index = 0"/>	
+    <xsl:when test="self::d:index and $generate.index = 0"/>	
     <xsl:when test="parent::*">
       <fo:bookmark internal-destination="{$id}">
         <fo:bookmark-title>
@@ -58,9 +60,9 @@
         </xsl:call-template>
       </xsl:variable>
       <xsl:if test="contains($toc.params, 'toc')
-                    and section|sect1|refentry
-                        |article|bibliography|glossary
-                        |appendix">
+                    and d:section|d:sect1|d:refentry
+                        |d:article|d:bibliography|d:glossary
+                        |d:appendix">
         <fo:bookmark internal-destination="toc...{$id}">
           <fo:bookmark-title>
             <xsl:call-template name="gentext">

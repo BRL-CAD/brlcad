@@ -1,21 +1,21 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Asignación de propiedades de los materiales y trazado de rayos 
-	   (Raytracing) en <application>MGED</application></title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Asignación de propiedades de los materiales y trazado de rayos 
+	   (Raytracing) en <application>MGED</application></title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Aprobado para su publicación. Su distribución es ilimitada.</para>
    </legalnotice>
-  </articleinfo>
+  </info>
  
-    <para id="assigning_material_properties_and_raytracing_overviewlist">
+    <para xml:id="assigning_material_properties_and_raytracing_overviewlist">
       En este tutorial usted aprenderá a:
       
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Llamar figuras primitivas creadas anteriormente.</para>
 	</listitem>
@@ -43,8 +43,8 @@
       </itemizedlist>
     </para>
 
-    <sect1 id="assigning_material_properties_and_raytracing_opendb">
-      <title>Abrir una base de datos</title>
+    <section xml:id="assigning_material_properties_and_raytracing_opendb"><info><title>Abrir una base de datos</title></info>
+      
       
       <para>
 	Para llamar a una figura primitiva creada en el tutorial anterior, 
@@ -62,10 +62,10 @@
 	
 	<command>draw sph2.s rcc2.s[Enter]</command>
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="create_region">
-      <title>Crear una región</title>
+    <section xml:id="create_region"><info><title>Crear una región</title></info>
+      
       
       <para>
 	Antes de que pueda hacer el trazado de rayos de su diseño, usted tiene 
@@ -98,7 +98,7 @@
 	Este comando le dice a <application>MGED</application> que:
 	
 	<informaltable>
-	  <tgroup cols='6'>
+	  <tgroup cols="6">
 	    <tbody>
 	      <row>
 		<entry>r</entry>
@@ -120,10 +120,10 @@
 	  </tgroup>
 	</informaltable>
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="assign_material_prop">
-      <title>Asignar propiedad de la materia a una región</title>
+    <section xml:id="assign_material_prop"><info><title>Asignar propiedad de la materia a una región</title></info>
+      
 
       <para>
 	Ahora tipee:
@@ -133,7 +133,7 @@
 	<application>MGED</application> responderá con:
 	
       </para>
-      <literallayout>
+      <literallayout class="normal">
    shader=
    
    Shader? ('del' to delete, CR to skip)
@@ -151,7 +151,7 @@
 	<application>MGED</application> le preguntará:
 	
       </para>
-      <literallayout>
+      <literallayout class="normal">
    Color = (no color specified)
 
    Color R G B (0..255)? ('del' to delete, CR to skip)
@@ -167,7 +167,7 @@
 	<application>MGED</application> preguntará entonces:
       </para>
 
-      <literallayout>
+      <literallayout class="normal">
    Inherit = 0 lower nodes (towards leaves) override
 
    Inheritance (0/1)? (CR to skip)
@@ -185,8 +185,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged04_commandwindow.png" format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged04_commandwindow.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -205,7 +204,7 @@
       </para>
       
       <informaltable>
-	<tgroup cols='5'>
+	<tgroup cols="5">
 	  <tbody>
 	    <row>
 	      <entry>mater</entry>
@@ -224,10 +223,10 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-    </sect1>
+    </section>
     
-    <sect1 id="clear_window_new_region">
-      <title>Limpiar la ventana gráfica y dibujar una nueva región</title>
+    <section xml:id="clear_window_new_region"><info><title>Limpiar la ventana gráfica y dibujar una nueva región</title></info>
+      
 
       <para>
 	Una forma sencilla de limpiar su ventana gráfica y dibujar la nueva 
@@ -240,7 +239,7 @@
       </para>
       
       <informaltable>
-	<tgroup cols='2'>
+	<tgroup cols="2">
 	  <tbody>
 	    <row>
 	      <entry>B</entry>
@@ -260,10 +259,10 @@
       <para>
 	El comando Blast es la forma corta de combinar los comandos Z y draw.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="raytrace_model">
-      <title>Crear el  trazado de rayos (Raytrace) de su modelo</title>
+    <section xml:id="raytrace_model"><info><title>Crear el  trazado de rayos (Raytrace) de su modelo</title></info>
+      
       
       <para>
 	En el menú File (Archivo) seleccione la opción Raytrace.
@@ -310,8 +309,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged04_raytracedshapes.png" format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged04_raytracedshapes.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -333,10 +331,10 @@
 	panel de control de Raytrace.
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="layers_graphics_window">
-      <title>Cambiando capas de la ventana gráfica</title>
+    <section xml:id="layers_graphics_window"><info><title>Cambiando capas de la ventana gráfica</title></info>
+      
       
       <para>
 	La ventana gráfica de <application> MGED </application> se utiliza para 
@@ -364,12 +362,12 @@
       </para>
       
       <informaltable frame="none">
-	<tgroup cols='2'>
+	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><inlinegraphic fileref="../../lessons/es/images/mged04_raytracedshapes.png" />
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged04_raytracedshapes.png"/></imageobject></inlinemediaobject>
 	      </entry>
-	      <entry><inlinegraphic fileref="../../lessons/es/images/mged04_fb_overlay_mode.png" />
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged04_fb_overlay_mode.png"/></imageobject></inlinemediaobject>
 	      </entry>
 	    </row>
 	    <row>
@@ -407,10 +405,10 @@
 	framebuffer. Usted debe realizar nuevamente el trazado de rayos con el 	
 	fin de actualizar la imagen de framebuffer.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="clear_graphics_window">
-      <title>Despejar la ventana gráfica</title>
+    <section xml:id="clear_graphics_window"><info><title>Despejar la ventana gráfica</title></info>
+      
       
       <para>
 	Para borrar por completo la ventana de gráficos, usted puede hacerlo 
@@ -439,15 +437,15 @@
 	  del framebuffer se pierde al desactivarlo.
 	</para>
 
-    </sect1>
+    </section>
     
-    <sect1 id="assigning_material_properties_and_raytracing_review">
-      <title>Revisión</title>
+    <section xml:id="assigning_material_properties_and_raytracing_review"><info><title>Revisión</title></info>
+      
       
       <para>
 	En este tutorial usted aprendió a:
 	
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Llamar figuras primitivas creadas anteriormente.</para>
 	</listitem>
@@ -479,6 +477,6 @@
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

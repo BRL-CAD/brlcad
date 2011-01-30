@@ -19,8 +19,8 @@
       <xsl:attribute name="font-family">
         <xsl:value-of select="$slide.font.family"/>
       </xsl:attribute>
-      <xsl:attribute name="margin-left">1in</xsl:attribute>
-      <xsl:attribute name="margin-right">1in</xsl:attribute>
+      <xsl:attribute name="margin-{$direction.align.start}">1in</xsl:attribute>
+      <xsl:attribute name="margin-{$direction.align.end}">1in</xsl:attribute>
       <xsl:attribute name="font-size">
         <xsl:value-of select="$body.font.size"/>
       </xsl:attribute>

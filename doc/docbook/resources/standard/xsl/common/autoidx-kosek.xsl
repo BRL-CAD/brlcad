@@ -1,16 +1,17 @@
 <?xml version="1.0"?>
 <!DOCTYPE xsl:stylesheet [
-<!ENTITY primary   'normalize-space(concat(primary/@sortas, primary[not(@sortas)]))'>
-
+<!ENTITY % common.entities SYSTEM "entities.ent">
+%common.entities;
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                version="1.0"
+                xmlns:d="http://docbook.org/ns/docbook"
+version="1.0"
                 xmlns:func="http://exslt.org/functions"
                 xmlns:exslt="http://exslt.org/common"
                 xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0"
                 xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 extension-element-prefixes="func exslt"
-                exclude-result-prefixes="func exslt i l"
+                exclude-result-prefixes="func exslt i l d"
                 xmlns:i="urn:cz-kosek:functions:index">
 
 <!-- ********************************************************************
@@ -48,34 +49,36 @@
     <xsl:variable name="local.l10n.letters"
       select="($local.l10n.xml//l:i18n/l:l10n[@language=$lang]/l:letters)[1]"/>
     
-    <xsl:variable name="l10n.letters"
-      select="($l10n.xml/l:i18n/l:l10n[@language=$lang]/l:letters)[1]"/>
-    
-    <xsl:choose>
-      <xsl:when test="count($local.l10n.letters) &gt; 0">
-        <xsl:copy-of select="$local.l10n.letters"/>
-      </xsl:when>
-      <xsl:when test="count($l10n.letters) &gt; 0">
-        <xsl:copy-of select="$l10n.letters"/>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:message>
-          <xsl:text>No "</xsl:text>
-          <xsl:value-of select="$lang"/>
-          <xsl:text>" localization of index grouping letters exists</xsl:text>
-          <xsl:choose>
-            <xsl:when test="$lang = 'en'">
-              <xsl:text>.</xsl:text>
-            </xsl:when>
-            <xsl:otherwise>
-              <xsl:text>; using "en".</xsl:text>
-            </xsl:otherwise>
-          </xsl:choose>
-        </xsl:message>
-        
-        <xsl:copy-of select="($l10n.xml/l:i18n/l:l10n[@language='en']/l:letters)[1]"/>
-      </xsl:otherwise>
-    </xsl:choose>
+    <xsl:for-each select="$l10n.xml">
+      <xsl:variable name="l10n.letters"
+	select="document(key('l10n-lang', $lang)/@href)/l:l10n/l:letters[1]"/>
+
+      <xsl:choose>
+	<xsl:when test="count($local.l10n.letters) &gt; 0">
+	  <xsl:copy-of select="$local.l10n.letters"/>
+	</xsl:when>
+	<xsl:when test="count($l10n.letters) &gt; 0">
+	  <xsl:copy-of select="$l10n.letters"/>
+	</xsl:when>
+	<xsl:otherwise>
+	  <xsl:message>
+	    <xsl:text>No "</xsl:text>
+	    <xsl:value-of select="$lang"/>
+	    <xsl:text>" localization of index grouping letters exists</xsl:text>
+	    <xsl:choose>
+	      <xsl:when test="$lang = 'en'">
+		<xsl:text>.</xsl:text>
+	      </xsl:when>
+	      <xsl:otherwise>
+		<xsl:text>; using "en".</xsl:text>
+	      </xsl:otherwise>
+	    </xsl:choose>
+	  </xsl:message>
+
+	  <xsl:copy-of select="document(key('l10n-lang', 'en'))/l:l10n/l:letters[1]"/>
+	</xsl:otherwise>
+      </xsl:choose>
+    </xsl:for-each>
   </xsl:variable>
   
   <xsl:variable name="letters" select="exslt:node-set($letters-rtf)/*"/>
@@ -108,34 +111,36 @@
     <xsl:variable name="local.l10n.letters"
       select="($local.l10n.xml//l:i18n/l:l10n[@language=$lang]/l:letters)[1]"/>
     
-    <xsl:variable name="l10n.letters"
-      select="($l10n.xml/l:i18n/l:l10n[@language=$lang]/l:letters)[1]"/>
-    
-    <xsl:choose>
-      <xsl:when test="count($local.l10n.letters) &gt; 0">
-        <xsl:copy-of select="$local.l10n.letters"/>
-      </xsl:when>
-      <xsl:when test="count($l10n.letters) &gt; 0">
-        <xsl:copy-of select="$l10n.letters"/>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:message>
-          <xsl:text>No "</xsl:text>
-          <xsl:value-of select="$lang"/>
-          <xsl:text>" localization of index grouping letters exists</xsl:text>
-          <xsl:choose>
-            <xsl:when test="$lang = 'en'">
-              <xsl:text>.</xsl:text>
-            </xsl:when>
-            <xsl:otherwise>
-              <xsl:text>; using "en".</xsl:text>
-            </xsl:otherwise>
-          </xsl:choose>
-        </xsl:message>
-        
-        <xsl:copy-of select="($l10n.xml/l:i18n/l:l10n[@language='en']/l:letters)[1]"/>
-      </xsl:otherwise>
-    </xsl:choose>
+    <xsl:for-each select="$l10n.xml">
+      <xsl:variable name="l10n.letters"
+	select="document(key('l10n-lang', $lang)/@href)/l:l10n/l:letters[1]"/>
+
+      <xsl:choose>
+	<xsl:when test="count($local.l10n.letters) &gt; 0">
+	  <xsl:copy-of select="$local.l10n.letters"/>
+	</xsl:when>
+	<xsl:when test="count($l10n.letters) &gt; 0">
+	  <xsl:copy-of select="$l10n.letters"/>
+	</xsl:when>
+	<xsl:otherwise>
+	  <xsl:message>
+	    <xsl:text>No "</xsl:text>
+	    <xsl:value-of select="$lang"/>
+	    <xsl:text>" localization of index grouping letters exists</xsl:text>
+	    <xsl:choose>
+	      <xsl:when test="$lang = 'en'">
+		<xsl:text>.</xsl:text>
+	      </xsl:when>
+	      <xsl:otherwise>
+		<xsl:text>; using "en".</xsl:text>
+	      </xsl:otherwise>
+	    </xsl:choose>
+	  </xsl:message>
+
+	  <xsl:copy-of select="document(key('l10n-lang', 'en')/@href)/l:l10n/l:letters[1]"/>
+	</xsl:otherwise>
+      </xsl:choose>
+    </xsl:for-each>
   </xsl:variable>
   
   <xsl:variable name="letters" select="exslt:node-set($letters-rtf)/*"/>
@@ -144,7 +149,7 @@
 </func:function>
 
 <xsl:key name="group-code"
-         match="indexterm"
+         match="d:indexterm"
          use="i:group-index(&primary;)"/>
 
 </xsl:stylesheet>

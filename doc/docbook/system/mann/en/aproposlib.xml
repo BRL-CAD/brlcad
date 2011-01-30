@@ -1,53 +1,15 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2011 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-
-<refentry id='aproposlib'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="aproposlib">
   
   <refmeta>
     <refentrytitle>APROPOSLIB</refentrytitle>
     <manvolnum>nged</manvolnum>
-    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-    <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
   
-  <refnamediv id='name'>
+  <refnamediv xml:id="name">
     <refname>aproposlib</refname>
     <refpurpose>
       Searches through the one-line usage messages for a specified
@@ -57,40 +19,40 @@
   </refnamediv>
   
   <!-- body begins here -->
-  <refsynopsisdiv id='synopsis'>
-    <cmdsynopsis>
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
       <command>aproposlib</command>    
-      <arg choice='req'><replaceable>keyword</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable>keyword</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   
-  <refsect1 id='description'>
-    <title>DESCRIPTION</title>
+  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+    
     <para>
       The <command>aproposlib</command> command searches through the one-line 
       usage messages for a specified BRL-CAD library interface command and displays 
       the name of each command where a match is found.
     </para>
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='examples'>
-    <title>EXAMPLES</title>
+  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+    
     <para>
       The example demonstrates the use of the <command>aproposlib</command> command 
       to search the one-line usage messages for a particular BRL-CAD library 
       interface command. 
     </para>
-    <example>
-      <title>
+    <example><info><title>
 	Using the <command>aproposlib</command> command to search the 
 	one-line usage messages for a particular BRL-CAD library interface 
 	command containing "mat."
-      </title>
+      </title></info>
+      
       <para>
-	<prompt>mged> </prompt><userinput>aproposlib mat</userinput>
+	<prompt>mged&gt; </prompt><userinput>aproposlib mat</userinput>
       </para>
       <para>
-	<literallayout>
+	<literallayout class="normal">
 dgo_rtweight dm_drawDataAxes dm_drawModelAxes dm_drawViewAxes dm_loadmat mat_ae 
 mat_ae_vec mat_aet_vec mat_angles mat_arb_rot mat_eigen2x2 mat_fromto mat_inv 
 mat_lookat mat_mul mat_scale_about_pt mat_trn mat_vec_ortho mat_vec_perp 
@@ -101,19 +63,18 @@ wdb_xpush
 	</literallayout>
       </para>
     </example>
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='author'>
-    <title>AUTHOR</title>
+  <refsection xml:id="author"><info><title>AUTHOR</title></info>
+    
     <para>BRL-CAD Team</para>
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='bug_reports'>
-    <title>BUG REPORTS</title>
+  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+    
     <para>
       Reports of bugs or problems should be submitted via electronic
       mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
     </para>
-  </refsect1>
+  </refsection>
 </refentry>
-

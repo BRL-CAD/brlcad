@@ -1,6 +1,5 @@
-#!/usr/bin/python -u
-
-# THIS IS ALPHA CODE AND IS NOT COMPLETE!
+# docbook.py: extension module
+# $Id$
 
 import sys
 import string
@@ -32,7 +31,7 @@ def adjustColumnWidths(ctx, nodeset):
         pass
 
     # Get the nominal table width
-    varString = lookupVariable(tctxt, "nominal.table.width", None);
+    varString = lookupVariable(tctxt, "nominal.table.width", None)
     if varString == None:
         nominalWidth = 6 * pixelsPerInch;
     else:
@@ -41,7 +40,7 @@ def adjustColumnWidths(ctx, nodeset):
     # Get the requested table width
     tableWidth = lookupVariable(tctxt, "table.width", "100%")
 
-    foStylesheet = (tctxt.variableLookup("stylesheet.result.type", None) == "fo");
+    foStylesheet = (tctxt.variableLookup("stylesheet.result.type", None) == "fo")
 
     relTotal = 0
     relParts = []
@@ -67,21 +66,21 @@ def adjustColumnWidths(ctx, nodeset):
         if width == None:
             width = "1*"
 
-        relPart = 0.0;
-        absPart = 0.0;
-        starPos = string.find(width, "*");
+        relPart = 0.0
+        absPart = 0.0
+        starPos = string.find(width, "*")
         if starPos >= 0:
             relPart, absPart = string.split(width, "*", 2)
-            relPart = float(relPart);
+            relPart = float(relPart)
             relTotal = relTotal + float(relPart)
         else:
             absPart = width
 
-        pixels = convertLength(absPart);
-        absTotal = absTotal + pixels;
+        pixels = convertLength(absPart)
+        absTotal = absTotal + pixels
 
-        relParts.append(relPart);
-        absParts.append(pixels);
+        relParts.append(relPart)
+        absParts.append(pixels)
 
         col = col.next
 
@@ -97,7 +96,7 @@ def adjustColumnWidths(ctx, nodeset):
     #     widths in the nominalWidth and then turn them back into
     #     percentages.
 
-    widths = [];
+    widths = []
 
     if relTotal == 0:
         for absPart in absParts:
@@ -108,18 +107,18 @@ def adjustColumnWidths(ctx, nodeset):
                 widths.append("%d" % absPart)
     elif absTotal == 0:
         for relPart in relParts:
-            rel = relPart / relTotal * 100;
-            widths.append(rel);
+            rel = relPart / relTotal * 100
+            widths.append(rel)
         widths = correctRoundingError(widths)
     else:
-        pixelWidth = nominalWidth;
+        pixelWidth = nominalWidth
         if string.find(tableWidth, "%") < 0:
-            pixelWidth = convertLength(tableWidth);
+            pixelWidth = convertLength(tableWidth)
 
         if pixelWidth <= absTotal:
             print "Table is wider than table width"
         else:
-            pixelWidth = pixelWidth - absTotal;
+            pixelWidth = pixelWidth - absTotal
 
         absTotal = 0
         for count in range(len(relParts)):
@@ -163,9 +162,9 @@ def convertLength(length):
 
     m = re.search('([+-]?[\d\.]+)(\S+)', length)
     if m != None and m.lastindex > 1:
-        unit = pixelsPerInch;
+        unit = pixelsPerInch
         if unitHash.has_key(m.group(2)):
-            unit = unitHash[m.group(2)];
+            unit = unitHash[m.group(2)]
         else:
             print "Unrecognized length: " + m.group(2)
 
@@ -181,7 +180,7 @@ def correctRoundingError(floatWidths):
     # to exactly 100%.
 
     totalWidth = 0
-    widths = [];
+    widths = []
     for width in floatWidths:
         width = math.floor(width)
         widths.append(width)
@@ -194,8 +193,8 @@ def correctRoundingError(floatWidths):
         width = widths[count]
         error = error + columnError
         if error >= 1.0:
-            adj = math.floor(error);
-            error = error - adj;
+            adj = math.floor(error)
+            error = error - adj
             widths[count] = "%d%%" % (width + adj)
         else:
             widths[count] = "%d%%" % width
@@ -203,7 +202,7 @@ def correctRoundingError(floatWidths):
     return widths
 
 def lookupVariable(tctxt, varName, default):
-    varString = tctxt.variableLookup(varName, None);
+    varString = tctxt.variableLookup(varName, None)
     if varString == None:
         return default
 
@@ -228,12 +227,12 @@ def lookupVariable(tctxt, varName, default):
 
 #    # Now make a nodeset to return
 #    # Danger, Will Robinson! This creates a memory leak!
-#    newDoc = libxml2.newDoc("1.0");
-#    newColGroup = newDoc.newDocNode(None, "colgroup", None);
-#    newDoc.addChild(newColGroup);
+#    newDoc = libxml2.newDoc("1.0")
+#    newColGroup = newDoc.newDocNode(None, "colgroup", None)
+#    newDoc.addChild(newColGroup)
 #    col = colgroup.children
 #    while col != None:
-#        newCol = newDoc.newDocNode(None, "col", None);
+#        newCol = newDoc.newDocNode(None, "col", None)
 #        newCol.copyPropList(col);
 #        newCol.setProp("width", "4")
 #        newColGroup.addChild(newCol)

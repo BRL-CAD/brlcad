@@ -37,7 +37,7 @@
                 >plain text</link></para>
           </listitem>
         </itemizedlist>
-        This is primarily documentation on the parameters you can adjust
+        This is primarily documentation on the parameters and processing instructions you can use
         to control the behavior of the stylesheets.
         <note>
           <para>This is purely reference documentation&#xa0;– not how-to

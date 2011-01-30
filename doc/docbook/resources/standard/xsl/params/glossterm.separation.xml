@@ -21,8 +21,11 @@
 
 <refsection><info><title>Description</title></info>
 
-<para>Specifies the separation between glossary terms and descriptions when
-glossarys are presented using lists.</para>
+<para>Specifies the miminum horizontal
+separation between glossary terms and descriptions when
+they are presented side-by-side using lists
+when the <parameter>glossary.as.blocks</parameter>
+is zero.</para>
 
 </refsection>
 </refentry>

@@ -18,7 +18,7 @@
 
 <refsynopsisdiv>
 <src:fragment xml:id="draft.mode.frag">
-<xsl:param name="draft.mode">maybe</xsl:param>
+<xsl:param name="draft.mode">no</xsl:param>
 </src:fragment>
 </refsynopsisdiv>
 

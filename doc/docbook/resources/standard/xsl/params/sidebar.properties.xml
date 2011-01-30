@@ -20,12 +20,12 @@
   <xsl:attribute name="border-width">1pt</xsl:attribute>
   <xsl:attribute name="border-color">black</xsl:attribute>
   <xsl:attribute name="background-color">#DDDDDD</xsl:attribute>
-  <xsl:attribute name="padding-left">12pt</xsl:attribute>
-  <xsl:attribute name="padding-right">12pt</xsl:attribute>
+  <xsl:attribute name="padding-start">12pt</xsl:attribute>
+  <xsl:attribute name="padding-end">12pt</xsl:attribute>
   <xsl:attribute name="padding-top">6pt</xsl:attribute>
   <xsl:attribute name="padding-bottom">6pt</xsl:attribute>
-  <xsl:attribute name="margin-left">0pt</xsl:attribute>
-  <xsl:attribute name="margin-right">0pt</xsl:attribute>
+  <xsl:attribute name="margin-{$direction.align.start}">0pt</xsl:attribute>
+  <xsl:attribute name="margin-{$direction.align.end}">0pt</xsl:attribute>
 <!--
   <xsl:attribute name="margin-top">6pt</xsl:attribute>
   <xsl:attribute name="margin-bottom">6pt</xsl:attribute>

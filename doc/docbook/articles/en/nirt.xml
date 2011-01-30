@@ -1,28 +1,16 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article>
-  <articleinfo>
-    <title>Interactive Raytracing: The <command>nirt</command> Command</title>
-    <author>
-      <firstname>Clifford</firstname>
-      <surname>Yapp</surname>
-    </author>
-  </articleinfo>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-  <abstract>
-    <para> The <command>nirt</command> command casts individual rays according to user-specified
-    options, and reports back a wide variety of information about the model
-    along the specified ray.  It is extremely useful for tasks such as measuring
-    the thickness of objects and identifying gaps between objects.  When used
-    within the <application>MGED</application> environment, <application>NIRT</application> will produce a visible
-    ray path, coloring the ray according to the geometry encountered
-    along the ray.  It is also scriptable, allowing users to develop their
-    own custom analysis routines.</para>
-  </abstract>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Interactive Raytracing: The <command>nirt</command> Command</title>
+    
+    <author><personname><firstname>Clifford</firstname><surname>Yapp</surname></personname></author>
+  </info>
+
+  
 
 
-  <sect1>
-    <title>About <application>NIRT</application></title>
+  <section><info><title>About <application>NIRT</application></title></info>
+    
     <para>
       The <application>NIRT</application> (Natalie's Interactive Ray-Tracer) command line tool provides a user-level interface to the low-level routines
       defining the ray tracing logic, allowing a user to specify and cast an individual ray
@@ -32,10 +20,10 @@
       resulting in wireframe visualization of ray paths and the Query Ray Control Panel.
     </para>
 
-  </sect1>
+  </section>
 
-  <sect1>
-    <title><application>NIRT</application>:  Basic Syntax and Operations</title>
+  <section><info><title><application>NIRT</application>:  Basic Syntax and Operations</title></info>
+    
     
     <para>
       There are two environments within which <application>NIRT</application> can be used - inside the
@@ -45,7 +33,7 @@
       command prompt, and <application>MGED</application> command prompt.  The convention used here will be:
 
       	<informaltable>
-	  <tgroup cols='2' align='center'>
+	  <tgroup cols="2" align="center">
 	    <colspec colwidth="1*"/>
 	    <colspec colwidth="1*"/>
 	    <tbody>
@@ -71,8 +59,8 @@
     </para>
 
 
-    <sect2>
-      <title>Command Line Help</title>
+    <section><info><title>Command Line Help</title></info>
+      
       <para>
 	<application>NIRT</application> provides an <emphasis>h</emphasis> option
 	which prints out a list of available options and command syntax:
@@ -96,10 +84,10 @@ Options:
 
 	</literallayout>
       </para>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Loading a Model</title>
+    <section><info><title>Loading a Model</title></info>
+      
 
       <para>
 	There will be a number of models used to illustrate various <application>NIRT</application>
@@ -113,7 +101,7 @@ Options:
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig01.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig01.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -130,10 +118,10 @@ Options:
 	Although there are many <command>nirt</command>	options available,
 	only the database name and objects are essential to get started:
 	
-	<cmdsynopsis>
+	<cmdsynopsis sepchar=" ">
 	  <command>nirt</command>
-	  <arg choice='req'><replaceable>model.g</replaceable></arg>
-	  <arg choice='req'><replaceable>objects</replaceable></arg>
+	  <arg choice="req" rep="norepeat"><replaceable>model.g</replaceable></arg>
+	  <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg>
 	</cmdsynopsis>
 	
 	where <emphasis>objects</emphasis> is a list of objects in the database 
@@ -169,7 +157,7 @@ Object 'center_cube.r' processed
 Database title: 'Example BRL-CAD Database'
 Database units: 'mm'
 model_min = (-1, -1, -1)    model_max = (1, 1, 1)
-nirt>
+nirt&gt;
 	</literallayout>
 	
 	The first three lines identify the release number, tool
@@ -180,16 +168,16 @@ nirt>
 	<literal>model_max</literal>, are the outer bounds of the objects
 	specified. 
       </para>
-    </sect2>
+    </section>
     
-    <sect2>
-      <title>Shooting a Ray</title>
+    <section><info><title>Shooting a Ray</title></info>
+      
       <para>
 	With the example loaded into <application>NIRT</application>, the <command>s</command>
 	interactive command is used to shoot a ray:
 
 	<literallayout class="monospaced">
-nirt>  s
+nirt&gt;  s
 Origin (x y z) = (0.00000000 0.00000000 0.00000000)  (h v d) = (0.0000 0.0000 0.0000)
 Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
@@ -200,7 +188,7 @@ center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000
 	the structure of the report:
 
 	<informaltable>
-	  <tgroup cols='2' align='center'>
+	  <tgroup cols="2" align="center">
 	    <colspec colwidth="1*"/>
 	    <colspec colwidth="3*"/>
 	    <tbody>
@@ -253,9 +241,9 @@ center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000
       <application>NIRT</application> was only supplied with <emphasis>center_cube.r</emphasis> for a target object to begin with.)  
       Many examples of real world <application>NIRT</application> usage will have much more complex geometries and hence longer reports.
       </para>
-    </sect2>
-    <sect2>
-      <title>Moving the Origination Point</title>
+    </section>
+    <section><info><title>Moving the Origination Point</title></info>
+      
       <para>
 	If we move the origin to some point other than the
 	sphere center, a different ray is cast and the reported intersections change.  The 
@@ -263,12 +251,12 @@ center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000
 	accepts a list of points to change the origin:
 	
 	<literallayout class="monospaced">
-nirt>  xyz
+nirt&gt;  xyz
 (x, y, z) = (0.00, 0.00, 0.00)
-nirt>  xyz 0 0 .5 
-nirt>  xyz
+nirt&gt;  xyz 0 0 .5 
+nirt&gt;  xyz
 (x, y, z) = (0.00, 0.00, 0.50)
-nirt>  s
+nirt&gt;  s
 Origin (x y z) = (0.00000000 0.00000000 0.50000000)  (h v d) = (0.0000 0.5000 0.0000)
 Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
@@ -276,9 +264,9 @@ center_cube.r        (   1.0000    0.0000    0.5000)   2.0000   0.0000
 	</literallayout>
 
       </para>
-    </sect2>
-    <sect2>
-      <title>Backing Out of a Model</title>
+    </section>
+    <section><info><title>Backing Out of a Model</title></info>
+      
       <para>
 	Although in both previous cases the ray's origin was inside the cube, 
 	<application>NIRT</application>	backed up to the point of first intersection along the
@@ -300,7 +288,7 @@ center_cube.r        (   1.0000    0.0000    0.5000)   2.0000   0.0000
 	and after backout:
 
 	<literallayout class="monospaced">
-nirt>  q
+nirt&gt;  q
 Quitting...
 
 user@machine ~ $ nirt nirt_example.g left_and_right_cubes.r
@@ -315,13 +303,13 @@ Object 'left_and_right_cubes.r' processed
 Database title: 'Example BRL-CAD Database'
 Database units: 'mm'
 model_min = (-3, -1, -1)    model_max = (3, 1, 1)
-nirt>  s
+nirt&gt;  s
 Origin (x y z) = (0.00000000 0.00000000 0.00000000)  (h v d) = (0.0000 0.0000 0.0000)
 Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 left_and_right_cubes.r (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
-nirt>  backout 1
-nirt>  s
+nirt&gt;  backout 1
+nirt&gt;  s
 Origin (x y z) = (6.63324958 0.00000000 0.00000000)  (h v d) = (0.0000 0.0000 0.0000)
 Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
@@ -352,42 +340,42 @@ left_and_right_cubes.r (  -1.0000    0.0000    0.0000)   2.0000   0.0000
 	example:
 	
 	<literallayout class="monospaced">
-nirt>  backout 0
-nirt>  xyz
+nirt&gt;  backout 0
+nirt&gt;  xyz
 (x, y, z) = (0.00, 0.00, 0.00)
-nirt>  xyz 0 0 .5
-nirt>  s
+nirt&gt;  xyz 0 0 .5
+nirt&gt;  s
 Origin (x y z) = (0.00000000 0.00000000 0.50000000)  (h v d) = (0.0000 0.5000 0.0000)
 Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 left_and_right_cubes.r (  -1.0000    0.0000    0.5000)   2.0000   0.0000 
-nirt>  backout 1
-nirt>  xyz
+nirt&gt;  backout 1
+nirt&gt;  xyz
 (x, y, z) = (0.00, 0.00, 0.50)
-nirt>  backout 0
-nirt>  xyz
+nirt&gt;  backout 0
+nirt&gt;  xyz
 (x, y, z) = (0.00, 0.00, 0.50)
-nirt>  backout 1
-nirt>  xyz 0 0 .8
-nirt>  s
+nirt&gt;  backout 1
+nirt&gt;  xyz 0 0 .8
+nirt&gt;  s
 Origin (x y z) = (6.63324958 0.00000000 0.80000000)  (h v d) = (0.0000 0.8000 0.0000)
 Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 left_and_right_cubes.r (   3.0000    0.0000    0.8000)   2.0000   0.0000 
 left_and_right_cubes.r (  -1.0000    0.0000    0.8000)   2.0000   0.0000 
-nirt>  backout 0
-nirt>  s
+nirt&gt;  backout 0
+nirt&gt;  s
 Origin (x y z) = (0.00000000 0.00000000 0.80000000)  (h v d) = (0.0000 0.8000 0.0000)
 Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 left_and_right_cubes.r (  -1.0000    0.0000    0.8000)   2.0000   0.0000 
-nirt>
+nirt&gt;
 	</literallayout>
       </para>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Changing the Direction of the Ray</title>
+    <section><info><title>Changing the Direction of the Ray</title></info>
+      
       <para>
 	The other fundamental operation needed to make <application>NIRT</application> usable
 	is changing the direction of the ray.  This is achieved with the 
@@ -398,28 +386,28 @@ nirt>
 	to the origin:
 	
 	<literallayout class="monospaced">
-nirt>  xyz 0 0 0
-nirt>  dir
+nirt&gt;  xyz 0 0 0
+nirt&gt;  dir
 (x, y, z) = (-1.00, 0.00, 0.00)
-nirt>  s
+nirt&gt;  s
 Origin (x y z) = (0.00000000 0.00000000 0.00000000)  (h v d) = (0.0000 0.0000 0.0000)
 Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (-0.00000000 -0.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 left_and_right_cubes.r (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
-nirt>  dir -1 -.5 0
-nirt>  dir
+nirt&gt;  dir -1 -.5 0
+nirt&gt;  dir
 (x, y, z) = (-0.89, -0.45, 0.00)
-nirt>  s
+nirt&gt;  s
 Origin (x y z) = (0.00000000 0.00000000 0.00000000)  (h v d) = (0.0000 0.0000 0.0000)
 Direction (x y z) = (-0.89442719 -0.44721360 0.00000000)  (az el) = (26.56505118 -0.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 left_and_right_cubes.r (  -1.0000   -0.5000    0.0000)   1.1180  26.5651 
-nirt>  dir 0 0 1
-nirt>  s
+nirt&gt;  dir 0 0 1
+nirt&gt;  s
 Origin (x y z) = (0.00000000 0.00000000 0.00000000)  (h v d) = (0.0000 0.0000 0.0000)
 Direction (x y z) = (0.00000000 0.00000000 1.00000000)  (az el) = (0.00000000 -90.00000000)
 You missed the target
-nirt>
+nirt&gt;
 	</literallayout>
 
 	The first shot, in the default -x direction, intersects one of the sections.  
@@ -431,17 +419,17 @@ nirt>
 	The third shot is a more drastic change of direction, from the -x to positive z.  As there are no portions of the
 	region present along that path, a miss is reported.
       </para>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Reporting of Overlaps</title>
+    <section><info><title>Reporting of Overlaps</title></info>
+      
       <para>
 	In many cases, a geometry will have overlaps:  errors where a model is
 	assigning two physical regions to one volume.  To demonstrate
 	this behavior, <application>NIRT</application> is reloaded with <emphasis>overlap_example</emphasis>:
 
 	<literallayout class="monospaced">
-nirt>  q
+nirt&gt;  q
 Quitting...
 
 user@machine ~ $ nirt nirt_example.g overlap_example
@@ -456,14 +444,14 @@ Object 'overlap_example' processed
 Database title: 'Example BRL-CAD Database'
 Database units: 'mm'
 model_min = (-3, -1, -2)    model_max = (3, 1, 2)
-nirt>  backout 1
-nirt>  s
+nirt&gt;  backout 1
+nirt&gt;  s
 Origin (x y z) = (7.48331477 0.00000000 0.00000000)  (h v d) = (0.0000 0.0000 0.0000)
 Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 all_cubes.r          (   3.0000    0.0000    0.0000)   6.0000   0.0000 
 OVERLAP: 'center_overlap.r' and 'all_cubes.r' xyz_in=(1 0 0) los=2
-nirt>
+nirt&gt;
 	</literallayout>
 
 	The last line in the preceding report is reporting that the regions
@@ -473,8 +461,8 @@ nirt>
 	shoot along the z axis:
 
 	<literallayout class="monospaced">
-nirt>  dir 0 0 -1
-nirt>  s
+nirt&gt;  dir 0 0 -1
+nirt&gt;  s
 Origin (x y z) = (0.00000000 0.00000000 7.48331477)  (h v d) = (0.0000 0.0000 0.0000)
 Direction (x y z) = (0.00000000 0.00000000 -1.00000000)  (az el) = (0.00000000 90.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
@@ -482,7 +470,7 @@ center_overlap.r     (   0.0000    0.0000    2.0000)   1.0000   0.0000
 OVERLAP: 'center_overlap.r' and 'all_cubes.r' xyz_in=(0 0 1) los=2
 all_cubes.r          (   0.0000    0.0000    1.0000)   2.0000   0.0000 
 center_overlap.r     (   0.0000    0.0000   -1.0000)   1.0000   0.0000 
-nirt>  
+nirt&gt;  
 	</literallayout>
 
 	Along that vector, <emphasis>center_overlap.r</emphasis> is encountered first, then <emphasis>all_cubes.r</emphasis> intersecting
@@ -510,11 +498,11 @@ nirt>
 	 although tools such as <command>rtcheck</command> typically provide more 
 	 comprehensive summaries of overlap problems.
        </para>
-     </sect2>
-   </sect1>
+     </section>
+   </section>
    
-   <sect1>
-     <title>Graphical Visualization: <application>NIRT</application> in <application>MGED</application></title>
+   <section><info><title>Graphical Visualization: <application>NIRT</application> in <application>MGED</application></title></info>
+     
      <para> 
        The command line interaction provided by <application>NIRT</application> has few options
        for graphic visualization, but <application>MGED</application> allows the use and visualization of 
@@ -524,8 +512,8 @@ nirt>
        information allowing <application>MGED</application> to graphically plot the ray on its wireframe view.
      </para>
      
-     <sect2>
-       <title>Basic Usage</title>
+     <section><info><title>Basic Usage</title></info>
+       
        <para>
 	 The most important thing to remember when starting to use 
 	 <application>NIRT</application> in <application>MGED</application> is that the ray direction is always 
@@ -550,9 +538,9 @@ nirt>
 	 <command>nirt</command> <application>MGED</application> command:
 	
 	<literallayout class="monospaced">
-mged> draw center_cube.r
-mged> ae 0 0
-mged> nirt
+mged&gt; draw center_cube.r
+mged&gt; ae 0 0
+mged&gt; nirt
 
 Firing from view center...
 Origin (x y z) = (0.00 0.00 0.00)  (h v d) = (0.00 0.00 0.00)
@@ -560,13 +548,13 @@ Direction (x y z) = (-1.0000 -0.0000 0.0000)  (az el) = (0.00 -0.00)
     Region Name               Entry (x y z)              LOS  Obliq_in
 center_cube.r        (    1.000     0.000     0.000)     2.00    0.000
 
-mged>  
+mged&gt;  
 	</literallayout>
 
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig02.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig02.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -581,7 +569,7 @@ mged>
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig03.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig03.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -603,10 +591,10 @@ mged>
 	  </para>
 	</note>
        </para>
-     </sect2>
+     </section>
 
-     <sect2>
-       <title>Backing Out with <application>NIRT</application> in <application>MGED</application></title>
+     <section><info><title>Backing Out with <application>NIRT</application> in <application>MGED</application></title></info>
+       
        <para>
 	  Because <application>NIRT</application>'s interactive mode cannot be used while in <application>MGED</application>,
 	  the <emphasis>b</emphasis> flag must be provided to the invocation of the <command>nirt</command> <application>MGED</application>
@@ -618,9 +606,9 @@ mged>
 	  the ray path:
 
 	 <literallayout class="monospaced">
-mged> B left_and_right_cubes.r
-mged> ae 0 0
-mged> nirt
+mged&gt; B left_and_right_cubes.r
+mged&gt; ae 0 0
+mged&gt; nirt
 
 Firing from view center...
 Origin (x y z) = (0.00 0.00 0.00)  (h v d) = (0.00 0.00 0.00)
@@ -628,14 +616,14 @@ Direction (x y z) = (-1.0000 -0.0000 0.0000)  (az el) = (0.00 -0.00)
     Region Name               Entry (x y z)              LOS  Obliq_in
 region1.r            ( -300.000     0.000     0.000)   100.00    0.000
 
-mged> ae 90 0
-mged>  	 
+mged&gt; ae 90 0
+mged&gt;  	 
 	 </literallayout>
 
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig04.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig04.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -650,8 +638,8 @@ mged>
 	 out produces somewhat different results:
 
 	 <literallayout class="monospaced">
-mged> ae 0 0
-mged> nirt -b
+mged&gt; ae 0 0
+mged&gt; nirt -b
 
 Firing from view center...
 Origin (x y z) = (6.63 0.00 0.00)  (h v d) = (0.00 0.00 0.00)
@@ -660,13 +648,13 @@ Direction (x y z) = (-1.0000 -0.0000 0.0000)  (az el) = (0.00 -0.00)
 left_and_right_cubes.r (    3.000     0.000     0.000)     2.00    0.000
 left_and_right_cubes.r (   -1.000     0.000     0.000)     2.00    0.000
 
-mged> ae 90 0
+mged&gt; ae 90 0
 	</literallayout>
 
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig05.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig05.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -680,16 +668,16 @@ mged> ae 90 0
 	colors are used.  The colors have significance; the purple segment in the <application>NIRT</application> ray path 
 	corresponds to the empty area or "gap" between the two solid areas.
       </para>
-     </sect2>
+     </section>
      
-     <sect2>
-       <title>Ray Segment Coloring with <application>NIRT</application> and <application>MGED</application></title>
+     <section><info><title>Ray Segment Coloring with <application>NIRT</application> and <application>MGED</application></title></info>
+       
        <para>
 	 <application>NIRT</application> uses colors to visually represent the information seen
 	 in text form in its report.  The conventions are:
 	 
-	 <informaltable frame='all'>
-	   <tgroup cols='2' align='center'>
+	 <informaltable frame="all">
+	   <tgroup cols="2" align="center">
 	     <tbody>
 	       <row><entry><emphasis role="bold">Property</emphasis></entry><entry><emphasis role="bold">Color</emphasis></entry></row>
 	       <row><entry>Solid</entry><entry>Alternates between Blue and Yellow</entry></row>
@@ -705,9 +693,9 @@ mged> ae 90 0
 	 the results:
 
 	<literallayout class="monospaced">
-mged> B left_cube.r center_cube.r right_cube.r
-mged> ae 0 0
-mged> nirt -b
+mged&gt; B left_cube.r center_cube.r right_cube.r
+mged&gt; ae 0 0
+mged&gt; nirt -b
 
 Firing from view center...
 Origin (x y z) = (6.63 0.00 0.00)  (h v d) = (0.00 0.00 0.00)
@@ -717,13 +705,13 @@ right_cube.r         (    3.000     0.000     0.000)     2.00    0.000
 center_cube.r        (    1.000     0.000     0.000)     2.00    0.000
 left_cube.r          (   -1.000     0.000     0.000)     2.00    0.000
 
-mged> ae 90 0
+mged&gt; ae 90 0
 	</literallayout>
 
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig06.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig06.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -750,9 +738,9 @@ mged> ae 90 0
 	one region, and only one line color would be needed.  To illustrate:
 
 	<literallayout class="monospaced">
-mged> B all_cubes.r
-mged> ae 0 0
-mged> nirt -b
+mged&gt; B all_cubes.r
+mged&gt; ae 0 0
+mged&gt; nirt -b
 
 Firing from view center...
 Origin (x y z) = (6.63 0.00 0.00)  (h v d) = (0.00 0.00 0.00)
@@ -760,13 +748,13 @@ Direction (x y z) = (-1.0000 -0.0000 0.0000)  (az el) = (0.00 -0.00)
     Region Name               Entry (x y z)              LOS  Obliq_in
 all_cubes.r          (    3.000     0.000     0.000)     6.00    0.000
 
-mged> ae 90 0
+mged&gt; ae 90 0
 	</literallayout>
 
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig07.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig07.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -792,9 +780,9 @@ mged> ae 90 0
 	<emphasis>center_cube.r</emphasis> was in the first example in this section:
 	
 	<literallayout class="monospaced">
-mged> B left_cube.r right_cube.r
-mged> ae 0 0
-mged> nirt -b
+mged&gt; B left_cube.r right_cube.r
+mged&gt; ae 0 0
+mged&gt; nirt -b
 
 Firing from view center...
 Origin (x y z) = (6.63 0.00 0.00)  (h v d) = (0.00 0.00 0.00)
@@ -803,13 +791,13 @@ Direction (x y z) = (-1.0000 -0.0000 0.0000)  (az el) = (0.00 -0.00)
 right_cube.r         (    3.000     0.000     0.000)     2.00    0.000
 left_cube.r          (   -1.000     0.000     0.000)     2.00    0.000
 
-mged> ae 90 0
+mged&gt; ae 90 0
 	</literallayout>
 
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig08.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig08.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -824,9 +812,9 @@ mged> ae 90 0
 	time:
 
 	<literallayout class="monospaced">
-mged> B all_cubes.r center_cube.r
-mged> ae 0 0
-mged> nirt -b
+mged&gt; B all_cubes.r center_cube.r
+mged&gt; ae 0 0
+mged&gt; nirt -b
 
 Firing from view center...
 Origin (x y z) = (6.63 0.00 0.00)  (h v d) = (0.00 0.00 0.00)
@@ -835,13 +823,13 @@ Direction (x y z) = (-1.0000 -0.0000 0.0000)  (az el) = (0.00 -0.00)
 all_cubes.r          (    3.000     0.000     0.000)     6.00    0.000
 OVERLAP: 'center_cube.r' and 'all_cubes.r' xyz_in=(1 0 0) los=2
 
-mged> ae 90 0
+mged&gt; ae 90 0
 	</literallayout>
 
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig09.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig09.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -852,14 +840,14 @@ mged> ae 90 0
 	</informalfigure>
 	
       </para>
-    </sect2>
+    </section>
     
-    <sect2>
-      <title>Mouse-Based <application>NIRT</application> Usage</title>
+    <section><info><title>Mouse-Based <application>NIRT</application> Usage</title></info>
+      
       <para>
 	In addition to providing a <command>nirt</command> command on the <application>MGED</application>
 	command	line, there is a mouse-based trigger that can be used.  In the <application>MGED</application> 
-	menu, selecting	Settings->Mouse Behavior->Query Ray will change the behavior of 
+	menu, selecting	Settings-&gt;Mouse Behavior-&gt;Query Ray will change the behavior of 
 	the mouse. Selecting the view window, placing the mouse at some 
 	point over the model, and preforming a click will cast a 
 	ray in the view direction, centered at the point under the mouse pointer rather 
@@ -869,18 +857,18 @@ mged> ae 90 0
 	For this example, bring up <emphasis>left_cube.r</emphasis>, <emphasis>center_cube.r</emphasis>, and 
 	<emphasis>right_cube.r</emphasis>:
 	<literallayout class="monospaced">
-mged> B left_cube.r center_cube.r right_cube.r
-mged> 
+mged&gt; B left_cube.r center_cube.r right_cube.r
+mged&gt; 
 	</literallayout>
 
 	To aid with aiming, the grid overlay is enabled from the menu: 
-	Settings->Grid->Draw Grid. Grid spacing is adjusted with
-	Settings->Grid Spacing->Autosize:
+	Settings-&gt;Grid-&gt;Draw Grid. Grid spacing is adjusted with
+	Settings-&gt;Grid Spacing-&gt;Autosize:
 
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig10.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig10.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -917,7 +905,7 @@ right_cube.r         (    2.022    -1.000    -0.029)     2.00    0.000
 
 	Notice the entry points are off from the target values by small but significant amounts.
 	A more precise way to do this analysis is to use the "snap to grid" feature.  This feature
-	is enabled by selecting	Modes->Snap To Grid.  Repeating the above ray casts:
+	is enabled by selecting	Modes-&gt;Snap To Grid.  Repeating the above ray casts:
 
 	<literallayout class="monospaced">
 Firing from (-2.000000, -4.000000, -0.000000)...
@@ -942,20 +930,20 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 	These values are exact thanks to the corrections provided by the snap to grid mode.
 
       </para>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Configuring <application>NIRT</application> with the Query Ray Control Panel</title>
+    <section><info><title>Configuring <application>NIRT</application> with the Query Ray Control Panel</title></info>
+      
 
       <para>
 	When using <application>NIRT</application> within <application>MGED</application>, some of its settings can be 
 	changed	through a graphical dialog found in the menu: 
-	<application>MGED</application>'s Tools->Query Ray Control Panel. This section will describe the basic 
+	<application>MGED</application>'s Tools-&gt;Query Ray Control Panel. This section will describe the basic 
 	options.  More advanced settings will be covered later.
       </para>
 
-      <sect3>
-	<title>Enabling and Disabling Mouse-Based <application>nirt</application> Ray Casting</title>
+      <section><info><title>Enabling and Disabling Mouse-Based <application>nirt</application> Ray Casting</title></info>
+	
 	<para>
 	  Earlier, mouse-based <application>NIRT</application> ray casting was enabled via a menu option.  The
 	  Query Ray Control Panel offers a more convenient option for toggling the
@@ -968,7 +956,7 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig11.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig11.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -978,10 +966,10 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 	  </mediaobject>
 	</informalfigure>
 	</para>
-      </sect3>
+      </section>
 
-      <sect3>
-	<title>Customizing <application>NIRT</application> Coloring in <application>MGED</application></title>
+      <section><info><title>Customizing <application>NIRT</application> Coloring in <application>MGED</application></title></info>
+	
      
 	<para>
 	  Although the default colors normally work well, it is possible to adjust the
@@ -990,7 +978,7 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig12.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig12.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1010,7 +998,7 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig13.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig13.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1029,7 +1017,7 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig14.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig14.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1040,10 +1028,10 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 	</informalfigure>
 
 	</para>
-      </sect3>
+      </section>
 
-      <sect3>
-	<title>Customizing the Pseudo-Primitive Base Name</title>
+      <section><info><title>Customizing the Pseudo-Primitive Base Name</title></info>
+	
 	<para>
 	  <application>MGED</application> and <application>NIRT</application> use "pseudo" primitives to describe the
 	  actual graphical lines.  They will not behave like "normal" primitives, but 
@@ -1054,7 +1042,7 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig08.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig08.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1066,7 +1054,7 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 
 
 	  <literallayout class="monospaced">
-mged> who p
+mged&gt; who p
 query_rayffff00 query_rayffff query_rayff00ff 
 	  </literallayout>
 
@@ -1075,7 +1063,7 @@ query_rayffff00 query_rayffff query_rayff00ff
 	  command on <emphasis>query_rayffff</emphasis> does not work:
 
 	  <literallayout class="monospaced">
-mged> l query_rayffff
+mged&gt; l query_rayffff
 rt_db_get_internal(query_rayffff) failure
 	  </literallayout>
 
@@ -1084,7 +1072,7 @@ rt_db_get_internal(query_rayffff) failure
 	  the command:
 
 	  <literallayout class="monospaced">
-mged> erase query_rayff00ff
+mged&gt; erase query_rayff00ff
 	  </literallayout>
 
 	  will remove <emphasis>only</emphasis> the purple line segment and leave the others:
@@ -1093,7 +1081,7 @@ mged> erase query_rayff00ff
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig15.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig15.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1112,7 +1100,7 @@ mged> erase query_rayff00ff
 	  and rerunning <application>NIRT</application> results in pseudo-primitives named:
 
        <literallayout class="monospaced">
-mged> who p
+mged&gt; who p
      line_segmentffff00 line_segmentffff line_segmentff00ff 
 	 </literallayout>
 
@@ -1121,7 +1109,7 @@ mged> who p
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig16.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig16.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1131,10 +1119,10 @@ mged> who p
 	  </mediaobject>
 	</informalfigure>
 	</para>
-      </sect3>
+      </section>
 
-      <sect3>
-	<title>Echoing the Internal <command>nirt</command> Command</title>
+      <section><info><title>Echoing the Internal <command>nirt</command> Command</title></info>
+	
 	<para>
 	  The <emphasis role="bold">Echo Cmd</emphasis> check box in the <emphasis role="bold">Effects</emphasis>
 	  row allows the user to enable/disable
@@ -1144,7 +1132,7 @@ mged> who p
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig17.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig17.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1184,10 +1172,10 @@ left_cube.r          (   -1.000     0.022     0.011)     2.00    0.000
 	  This feature is primarily useful for debugging or scripting outside of <application>MGED</application>.
 
 	</para>
-      </sect3>
+      </section>
 
-      <sect3>
-	<title>Selecting Graphical and Textual Output</title>
+      <section><info><title>Selecting Graphical and Textual Output</title></info>
+	
 	<para>
 	  By default, <application>NIRT</application> in <application>MGED</application> outputs both graphical
 	  and text-based output.  This is reflected in the drop-down menu
@@ -1199,7 +1187,7 @@ left_cube.r          (   -1.000     0.022     0.011)     2.00    0.000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig18.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig18.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1210,12 +1198,12 @@ left_cube.r          (   -1.000     0.022     0.011)     2.00    0.000
 	</informalfigure>
 
 	</para>
-      </sect3>
-    </sect2>
-  </sect1>
+      </section>
+    </section>
+  </section>
   
-  <sect1>
-    <title>Reporting Options</title>
+  <section><info><title>Reporting Options</title></info>
+    
     <para> 
       Up until this point, only the default output configuration of 
       <application>NIRT</application> has been used.  Much of the power of 
@@ -1223,8 +1211,8 @@ left_cube.r          (   -1.000     0.022     0.011)     2.00    0.000
       information to supply precisely what is needed for any given purpose.
     </para>
 
-    <sect2>
-      <title>How to Change the Reporting Format</title>
+    <section><info><title>How to Change the Reporting Format</title></info>
+      
       <para>
 	The <emphasis>f</emphasis> option allows <application>NIRT</application> to load 
 	customized formatting files that change its reporting style.  In addition 
@@ -1263,7 +1251,7 @@ Objects 'left_cube.r' 'center_cube.r' 'right_cube.r' processed
 Database title: 'Example BRL-CAD Database'
 Database units: 'mm'
 model_min = (-3, -1, -1)    model_max = (3, 1, 1)
-nirt>  s
+nirt&gt;  s
 Ray:
 x_orig,y_orig,z_orig,d_orig,h,v,x_dir,y_dir,z_dir,az,el
 6.63324958,0.00000000,0.00000000,0.00000000,0.00000000,0.00000000,-1.00000000,0.000000... 
@@ -1280,7 +1268,7 @@ reg_name,path_name,reg_id,x_in,y_in,z_in,d_in,x_out,y_out,z_out,d_out,los,scaled
 	test.csv) and imported into a spreadsheet:
 
 	<screenshot>
-	  <graphic align="center" fileref="../../articles/en/images/nirt_fig19.png"></graphic>
+	  <mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/nirt_fig19.png"/></imageobject></mediaobject>
 	</screenshot>
 
       </para>
@@ -1291,8 +1279,8 @@ reg_name,path_name,reg_id,x_in,y_in,z_in,d_in,x_out,y_out,z_out,d_out,los,scaled
 	file.  In the previous case, the test.csv file is created easily:
 
 	<literallayout class="monospaced">
-nirt>  dest test.csv
-nirt>  s
+nirt&gt;  dest test.csv
+nirt&gt;  s
 	</literallayout>
 
 	The file contents match the previous output:
@@ -1313,7 +1301,7 @@ reg_name,path_name,reg_id,x_in,y_in,z_in,d_in,x_out,y_out,z_out,d_out,los,scaled
 	To restore output to the command line, use <command>dest default</command> to redirect to standard output:
 
 	<literallayout class="monospaced">
-nirt>  dest default
+nirt&gt;  dest default
 	</literallayout>
 
       </para>
@@ -1342,7 +1330,7 @@ Object 'left_and_right_cubes.r' processed
 Database title: 'Example BRL-CAD Database'
 Database units: 'mm'
 model_min = (-3, -1, -1)    model_max = (3, 1, 1)
-nirt>  s
+nirt&gt;  s
 Origin (x y z) = (6.63324958 0.00000000 0.00000000)  (h v d) = (0.0000 0.0000 0.0000)
 Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
@@ -1352,10 +1340,10 @@ left_and_right_cubes.r (  -1.0000    0.0000    0.0000)   2.0000   0.0000
 	  </literallayout>
 
 	</para>
-    </sect2>
+    </section>
     
-    <sect2>
-      <title>Handling Attribute Reporting</title>
+    <section><info><title>Handling Attribute Reporting</title></info>
+      
       <para>
 	The default command line reporting format lists an <emphasis role="bold">Attrib</emphasis> column 
 	where attributes may be printed, but does not print any as default output.  Including attributes in a
@@ -1365,10 +1353,10 @@ left_and_right_cubes.r (  -1.0000    0.0000    0.0000)   2.0000   0.0000
 
 	<literallayout class="monospaced">
 user@machine ~ $ nirt -b nirt_example.g left_cube_color.r center_cube_color.r right_cube_color.r
-nirt>  attr rgb
-nirt>  attr -p
+nirt&gt;  attr rgb
+nirt&gt;  attr -p
 "rgb"
-nirt>  s
+nirt&gt;  s
 
 Get trees...
 Prepping the geometry...
@@ -1387,18 +1375,18 @@ left_cube_color.r    (  -1.0000    0.0000    0.0000)   2.0000   0.0000 rgb=0/0/2
 	clear the table.
 
 	<literallayout class="monospaced">
-nirt>  attr -f
-nirt>  attr -p
+nirt&gt;  attr -f
+nirt&gt;  attr -p
 	</literallayout>
 
 	Multiple attributes can also be specified:
 
 	<literallayout class="monospaced">
-nirt>  attr rgb region
-nirt>  attr -p
+nirt&gt;  attr rgb region
+nirt&gt;  attr -p
 "rgb"
 "region"
-nirt>  s
+nirt&gt;  s
 
 Get trees...
 Prepping the geometry...
@@ -1431,7 +1419,7 @@ Objects 'left_cube_color.r' 'center_cube_color.r' 'right_cube_color.r' processed
 Database title: 'Example BRL-CAD Database'
 Database units: 'mm'
 model_min = (-3, -1, -1)    model_max = (3, 1, 1)
-nirt>  s
+nirt&gt;  s
 Origin (x y z) = (6.63324958 0.00000000 0.00000000)  (h v d) = (0.0000 0.0000 0.0000)
 Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0.00000...
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
@@ -1444,10 +1432,10 @@ left_cube_color.r    (  -1.0000    0.0000    0.0000)   2.0000   0.0000 rgb=0/0/2
       <note>
 	<para>Reporting attributes when running <application>NIRT</application> from within <application>MGED</application> is more involved.  This will be covered later.</para>
       </note>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Changing Units</title>
+    <section><info><title>Changing Units</title></info>
+      
       <para>
 	By default <application>NIRT</application>'s interactive command line mode reads and writes all 
 	dimensions in millimeters, regardless of the units set in the geometry file.  This is configurable 
@@ -1455,27 +1443,27 @@ left_cube_color.r    (  -1.0000    0.0000    0.0000)   2.0000   0.0000 rgb=0/0/2
 	print the current unit with no arguments.  Using <emphasis>center_cube.r</emphasis> as an example:
 
 	<literallayout class="monospaced">
-nirt>  units   
+nirt&gt;  units   
 units = 'mm'
-nirt>  s
+nirt&gt;  s
 Origin (x y z) = (3.46410162 0.00000000 0.00000000)  (h v d) = (0.0000 0.0000 0.0000)
 Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000 
-nirt>  units m
-nirt>  s
+nirt&gt;  units m
+nirt&gt;  s
 Origin (x y z) = (0.00346410 0.00000000 0.00000000)  (h v d) = (0.0000 0.0000 0.0000)
 Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 center_cube.r        (   0.0010    0.0000    0.0000)   0.0020   0.0000 
-nirt>  units in
-nirt>  s
+nirt&gt;  units in
+nirt&gt;  s
 Origin (x y z) = (0.13638195 0.00000000 0.00000000)  (h v d) = (0.0000 0.0000 0.0000)
 Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 center_cube.r        (   0.0394    0.0000    0.0000)   0.0787   0.0000 
-nirt>  units ft
-nirt>  s
+nirt&gt;  units ft
+nirt&gt;  s
 Origin (x y z) = (0.01136516 0.00000000 0.00000000)  (h v d) = (0.0000 0.0000 0.0000)
 Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0.00000000)
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
@@ -1486,22 +1474,22 @@ center_cube.r        (   0.0033    0.0000    0.0000)   0.0066   0.0000
 	current units set within the <application>MGED</application> environment.
 
       </para>
-    </sect2>
+    </section>
 
-  </sect1>
+  </section>
 
-  <sect1>
-    <title>Other Options</title>
+  <section><info><title>Other Options</title></info>
+    
     <para> 
     </para>
-    <sect2>
-      <title>Silent and Verbose Modes</title>
+    <section><info><title>Silent and Verbose Modes</title></info>
+      
       <para>
 	<application>NIRT</application> supports two behaviors associated with output verbosity.  
 	The interactive command line environment uses the verbose mode 
 	by default.  Verbose mode prints out the headers containing information about 
 	the BRL-CAD version number, database name, database title, etc. and also 
-	provides the "<emphasis role="bold">nirt></emphasis>" command prompt label.  Silent mode, used by 
+	provides the "<emphasis role="bold">nirt&gt;</emphasis>" command prompt label.  Silent mode, used by 
 	default inside the MGED command window, does not print any headers or prompt label.
       </para>
       <para>
@@ -1511,9 +1499,9 @@ center_cube.r        (   0.0033    0.0000    0.0000)   0.0066   0.0000
 	window, supplying the <emphasis>v</emphasis> option will produce the full text 
 	output of <application>NIRT</application>'s interactive mode in the <application>MGED</application> window.
       </para>
-    </sect2>
-    <sect2>
-      <title>Using Air Regions</title>
+    </section>
+    <section><info><title>Using Air Regions</title></info>
+      
       <para>
 	Air regions have a special status in BRL-CAD, and by default 
 	<application>NIRT</application> does not report them. If the user <emphasis>does</emphasis> wish to
@@ -1553,7 +1541,7 @@ left_and_right_cubes.r (  -1.0000    0.0000    0.0000)   2.0000   0.0000
 <informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig20.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig20.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1565,9 +1553,9 @@ left_and_right_cubes.r (  -1.0000    0.0000    0.0000)   2.0000   0.0000
 
 
 	</para>
-    </sect2>
-    <sect2>
-      <title>Reading an Orientation Matrix and Commands</title>
+    </section>
+    <section><info><title>Reading an Orientation Matrix and Commands</title></info>
+      
       <para>
 	This option is seldom used manually from the command line. Its primary purpose is to allow <application>MGED</application>'s <command>saveview</command> command to generate scripts 
 	that allow commands run on <application>MGED</application> views to be repeated on the command line.  By default
@@ -1602,11 +1590,11 @@ left_cube.r          (  -1.0000   -0.7002   -0.5693)   0.5767  42.0634
 	Notice the <literal>az</literal> and <literal>el</literal> reported are 35 and 25, which correspond to the 
 	settings for those values in <application>MGED</application> when <command>saveview</command> was run.
       </para>
-    </sect2>
-  </sect1>
+    </section>
+  </section>
   
-  <sect1>
-    <title>Scripting <application>NIRT</application></title>
+  <section><info><title>Scripting <application>NIRT</application></title></info>
+    
     <para> 
       As mentioned in the output formatting section, hand-copying <application>NIRT</application>
       output can be an inconvenient way to store results, particularly in cases where 
@@ -1614,8 +1602,8 @@ left_cube.r          (  -1.0000   -0.7002   -0.5693)   0.5767  42.0634
       <application>NIRT</application> usage with scripting.
     </para>
     
-    <sect2>
-      <title>Command Line Scripts:  The <emphasis>e</emphasis> Option</title>
+    <section><info><title>Command Line Scripts:  The <emphasis>e</emphasis> Option</title></info>
+      
       <para>
 	The most straightforward approach to supplying <application>NIRT</application> with a 
 	series of commands is to do so in a string from the command line using the 
@@ -1682,10 +1670,10 @@ left_and_right_cubes.r (  -1.0000    0.0000    0.0000)   2.0000   0.0000
 	Notice how the commands in the first <emphasis>e</emphasis> option are run without
 	the gap formatting, but the command in the second is run <emphasis>with</emphasis> gap formatting.  
       </para>
-    </sect2>
+    </section>
     
-    <sect2>
-      <title>Script Files: Other Uses of the <emphasis>f</emphasis> Option</title>
+    <section><info><title>Script Files: Other Uses of the <emphasis>f</emphasis> Option</title></info>
+      
       <para>
 	Earlier, the <emphasis>f</emphasis> option was used to change the output formatting
 	of <application>NIRT</application>.  This is only
@@ -1717,7 +1705,7 @@ q
 	be edited to use the <command>dest</command> command instead.</para></footnote>
 
 	<literallayout class="monospaced">
-nirt -s -f testscript nirt_example.g left_and_right_cubes.r > output.txt
+nirt -s -f testscript nirt_example.g left_and_right_cubes.r &gt; output.txt
 	</literallayout>
 
 	The contents of that file are the text reports of the two rays cast into the 
@@ -1741,7 +1729,7 @@ left_and_right_cubes.r (   1.0000    0.0000    0.0000)   2.0000   0.0000
 	single <command>nirt</command> run:
 
 	<literallayout class="monospaced">
-nirt -s -f csv -f testscript nirt_example.g left_and_right_cubes.r > output.csv
+nirt -s -f csv -f testscript nirt_example.g left_and_right_cubes.r &gt; output.csv
 	</literallayout>
 
 	As mentioned in the earlier section when combinations of  
@@ -1773,14 +1761,14 @@ reg_name,path_name,reg_id,x_in,y_in,z_in,d_in,x_out,y_out,z_out,d_out,los,scaled
 	As before, this format is trivially imported into a spreadsheet:
 
 	<screenshot>
-	  <graphic align="center" fileref="../../articles/en/images/nirt_fig21.png"></graphic>
+	  <mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/nirt_fig21.png"/></imageobject></mediaobject>
 	</screenshot>
 
       </para>
-    </sect2>
+    </section>
  
-    <sect2>
-      <title>Defining a Custom Reporting Format</title>
+    <section><info><title>Defining a Custom Reporting Format</title></info>
+      
       <para>
 	A final example of the use of the scripting mechanism is constructing a custom-tailored report
 	format and specifying it using the <emphasis>f</emphasis> option.  In the case of a
@@ -1853,10 +1841,10 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 	</para>
       </note>
 
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Customizing Report Output in <application>MGED</application></title>
+    <section><info><title>Customizing Report Output in <application>MGED</application></title></info>
+      
       <para>
 	The Query Ray Control Panel discussed earlier also provides access to
 	the reporting logic used by <application>MGED</application> when calling <application>NIRT</application>, but
@@ -1869,7 +1857,7 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig22.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig22.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1887,10 +1875,10 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 	in the next section.
 
       </para>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Reporting Attributes in <application>MGED</application>:  Advanced Formatting and Scripting</title>
+    <section><info><title>Reporting Attributes in <application>MGED</application>:  Advanced Formatting and Scripting</title></info>
+      
       <para>
 	As mentioned earlier,
 	reporting attributes with <application>NIRT</application> inside of <application>MGED</application> is more 
@@ -1911,7 +1899,7 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig23.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig23.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1932,7 +1920,7 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="../../articles/en/images/nirt_fig24.png" format="PNG"></imagedata>
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig24.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1952,10 +1940,10 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 	attributes.
       </para>
 
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Available Information for Inclusion in Reports</title>
+    <section><info><title>Available Information for Inclusion in Reports</title></info>
+      
       <para>
 	There are many cases where the user may want to change <emphasis>what</emphasis>
 	<application>NIRT</application>	is reporting, instead of or in addition to the 
@@ -1966,9 +1954,9 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 	the ray, which are used to trigger print events:
 	
 	<informaltable frame="all">
-	  <tgroup cols='2' align='center'>
-	    <colspec colwidth='1in'/>
-	    <colspec colwidth='4in'/>
+	  <tgroup cols="2" align="center">
+	    <colspec colwidth="1in"/>
+	    <colspec colwidth="4in"/>
 	    <tbody>
 	      <row>
 		<entry><emphasis role="bold">Event</emphasis></entry>
@@ -2019,14 +2007,14 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 	listed in Appendix A and can be used to change reported information.
 	The csv output format is one example of such use.
       </para>
-    </sect2>
-  </sect1>
+    </section>
+  </section>
 
-  <sect1>
-    <title>Summary</title>
+  <section><info><title>Summary</title></info>
+    
     <para> 
 
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
         <listitem>
           <para>
 	    <application>NIRT</application> is the standard, interactive ray trace query tool used
@@ -2054,21 +2042,21 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
         </listitem>
       </itemizedlist>
      </para>
-  </sect1>
+  </section>
 
-  <ackno>
+  <acknowledgements><para>
     The author would like to thank Bob Parker, John Anderson, Janine Gettier, and Christopher
     Sean Morrison for their time and help with explaining some of the more subtle concepts
     encountered by the author during the creation of this report.
-  </ackno>
+  </para></acknowledgements>
 
-  <appendix>
-    <title>Report Format Variable Listings</title>
+  <appendix><info><title>Report Format Variable Listings</title></info>
+    
     <para>
     	<informaltable frame="all">
-	  <tgroup cols='2' align='center'>
-	    <colspec colwidth='1in' colname='c1'/>
-	    <colspec colwidth='4in' colname='c2'/>
+	  <tgroup cols="2" align="center">
+	    <colspec colwidth="1in" colname="c1"/>
+	    <colspec colwidth="4in" colname="c2"/>
 	    <tbody>
 	      <row>
 		<entry namest="c1" nameend="c2" align="center"><emphasis role="bold">Ray Variables</emphasis></entry>
@@ -2122,9 +2110,9 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 	</informaltable>
 	
 	<informaltable frame="all">
-	  <tgroup cols='2' align='center'>
-	    <colspec colwidth='1in' colname='c1'/>
-	    <colspec colwidth='4in' colname='c2'/>
+	  <tgroup cols="2" align="center">
+	    <colspec colwidth="1in" colname="c1"/>
+	    <colspec colwidth="4in" colname="c2"/>
 	    <tbody>
 	      <row>
 		<entry namest="c1" nameend="c2" align="center"><emphasis role="bold">Partition Variables</emphasis></entry>
@@ -2276,9 +2264,9 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 	</informaltable>
 
 	<informaltable frame="all">
-	  <tgroup cols='2' align='center'>
-	    <colspec colwidth='1in' colname='c1'/>
-	    <colspec colwidth='4in' colname='c2'/>
+	  <tgroup cols="2" align="center">
+	    <colspec colwidth="1in" colname="c1"/>
+	    <colspec colwidth="4in" colname="c2"/>
 	    <tbody>
 	      <row>
 		<entry namest="c1" nameend="c2" align="center"><emphasis role="bold">Overlap Variables</emphasis></entry>
@@ -2348,9 +2336,9 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 	</informaltable>
 
 	<informaltable frame="all">
-	  <tgroup cols='2' align='center'>
-	    <colspec colwidth='1in' colname='c1'/>
-	    <colspec colwidth='4in' colname='c2'/>
+	  <tgroup cols="2" align="center">
+	    <colspec colwidth="1in" colname="c1"/>
+	    <colspec colwidth="4in" colname="c2"/>
 	    <tbody>
 	      <row>
 		<entry namest="c1" nameend="c2" align="center"><emphasis role="bold">Gap Variables</emphasis></entry>
@@ -2377,22 +2365,22 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
     </para>
   </appendix>
 
-  <appendix>
-    <title>Debugging Options</title>
+  <appendix><info><title>Debugging Options</title></info>
+    
     <para>
       In cases where problems are being encountered, it is possible to use
       debugging options to print additional information related to the raytracing
       process.  <application>NIRT</application> exposes two levels of debugging: 
       the core raytracing library and <application>NIRT</application> itself.
     </para>
-    <sect1>
-      <title>librt Debugging Information</title>
+    <section><info><title>librt Debugging Information</title></info>
+      
       <para>
 	In cases where detailed behavior of the core raytracing routines is of interest,
 	it is possible to use the <emphasis>x</emphasis> (lower case "x") option to print
 	additional diagnostic messages.<footnote><para>librt's diagnostic setting can also be set in 
 	the interactive environment with the <command>libdebug</command> command.</para></footnote>
-	See the <emphasis role='bold'>librt</emphasis> header files for more detail about
+	See the <emphasis role="bold">librt</emphasis> header files for more detail about
 	the very extensive debugging options provided.
 
 	<literallayout class="monospaced">
@@ -2420,9 +2408,9 @@ center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000
 
 
       </para>
-    </sect1>
-    <sect1>
-      <title><application>NIRT</application> Debugging Information</title>
+    </section>
+    <section><info><title><application>NIRT</application> Debugging Information</title></info>
+      
       <para>
 	<application>NIRT</application> itself also provides debugging information. It is accessed using
 	the <emphasis>X</emphasis> option.<footnote><para>The <command>nirt</command> level diagnostics can be set in 
@@ -2539,7 +2527,7 @@ center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000
 
 	</literallayout>
       </para>
-    </sect1>
+    </section>
 
   </appendix>
 </article>

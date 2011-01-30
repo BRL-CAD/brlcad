@@ -29,8 +29,8 @@
 <refsection><info><title>Description</title></info>
 
 <para>The page height is generally calculated from the
-<literal>paper.type</literal> and
-<literal>page.orientation</literal>.
+<parameter>paper.type</parameter> and
+<parameter>page.orientation</parameter> parameters.
 </para>
 
 </refsection>

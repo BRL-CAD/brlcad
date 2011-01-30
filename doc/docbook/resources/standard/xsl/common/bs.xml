@@ -28,118 +28,120 @@
 
 
 <l:gentext key="Abstract" text="Sažetak"/>
-<l:gentext key="abstract" text="Sažetak"/>
+<l:gentext key="abstract" text="sažetak"/>
+<l:gentext key="Acknowledgements" text="Priznanja"/>
+<l:gentext key="acknowledgements" text="priznanja"/>
 <l:gentext key="Answer" text="O:"/>
-<l:gentext key="answer" text="O:"/>
+<l:gentext key="answer" text="o:"/>
 <l:gentext key="Appendix" text="Dodatak"/>
-<l:gentext key="appendix" text="Dodatak"/>
+<l:gentext key="appendix" text="dodatak"/>
 <l:gentext key="Article" text="Članak"/>
-<l:gentext key="article" text="Članak"/>
-<l:gentext key="Author" text="Author" lang="en"/>
+<l:gentext key="article" text="članak"/>
+<l:gentext key="Author" text="Autor"/>
 <l:gentext key="Bibliography" text="Literatura"/>
-<l:gentext key="bibliography" text="Literatura"/>
+<l:gentext key="bibliography" text="literatura"/>
 <l:gentext key="Book" text="Knjiga"/>
-<l:gentext key="book" text="Knjiga"/>
+<l:gentext key="book" text="knjiga"/>
 <l:gentext key="CAUTION" text="PAŽNJA"/>
 <l:gentext key="Caution" text="Pažnja"/>
-<l:gentext key="caution" text="Pažnja"/>
+<l:gentext key="caution" text="pažnja"/>
 <l:gentext key="Chapter" text="Poglavlje"/>
-<l:gentext key="chapter" text="Poglavlje"/>
+<l:gentext key="chapter" text="poglavlje"/>
 <l:gentext key="Colophon" text="Kolofon"/>
-<l:gentext key="colophon" text="Kolofon"/>
+<l:gentext key="colophon" text="kolofon"/>
 <l:gentext key="Copyright" text="Autorska prava"/>
-<l:gentext key="copyright" text="Autorska prava"/>
+<l:gentext key="copyright" text="autorska prava"/>
 <l:gentext key="Dedication" text="Posveta"/>
-<l:gentext key="dedication" text="Posveta"/>
+<l:gentext key="dedication" text="posveta"/>
 <l:gentext key="Edition" text="Izdanje"/>
-<l:gentext key="edition" text="Izdanje"/>
-<l:gentext key="Editor" text="Editor" lang="en"/>
+<l:gentext key="edition" text="izdanje"/>
+<l:gentext key="Editor" text="Editor"/>
 <l:gentext key="Equation" text="Jednačina"/>
-<l:gentext key="equation" text="Jednačina"/>
+<l:gentext key="equation" text="jednačina"/>
 <l:gentext key="Example" text="Primjer"/>
-<l:gentext key="example" text="Primjer"/>
+<l:gentext key="example" text="primjer"/>
 <l:gentext key="Figure" text="Slika"/>
-<l:gentext key="figure" text="Slika"/>
+<l:gentext key="figure" text="slika"/>
 <l:gentext key="Glossary" text="Glosar"/>
-<l:gentext key="glossary" text="Glosar"/>
+<l:gentext key="glossary" text="glosar"/>
 <l:gentext key="GlossSee" text="Vidi"/>
-<l:gentext key="glosssee" text="Vidi"/>
+<l:gentext key="glosssee" text="vidi"/>
 <l:gentext key="GlossSeeAlso" text="Vidi takođe"/>
-<l:gentext key="glossseealso" text="Vidi takođe"/>
+<l:gentext key="glossseealso" text="vidi takođe"/>
 <l:gentext key="IMPORTANT" text="VAŽNO"/>
-<l:gentext key="important" text="Važno"/>
+<l:gentext key="important" text="važno"/>
 <l:gentext key="Important" text="Važno"/>
 <l:gentext key="Index" text="Indeks"/>
-<l:gentext key="index" text="Indeks"/>
+<l:gentext key="index" text="indeks"/>
 <l:gentext key="ISBN" text="ISBN"/>
 <l:gentext key="isbn" text="ISBN"/>
 <l:gentext key="LegalNotice" text="Pravne odredbe"/>
-<l:gentext key="legalnotice" text="Pravne odredbe"/>
+<l:gentext key="legalnotice" text="pravne odredbe"/>
 <l:gentext key="MsgAud" text="Primatelji"/>
-<l:gentext key="msgaud" text="Primatelji"/>
+<l:gentext key="msgaud" text="primatelji"/>
 <l:gentext key="MsgLevel" text="Nivo"/>
-<l:gentext key="msglevel" text="Nivo"/>
+<l:gentext key="msglevel" text="nivo"/>
 <l:gentext key="MsgOrig" text="Izvor"/>
-<l:gentext key="msgorig" text="Izvor"/>
+<l:gentext key="msgorig" text="izvor"/>
 <l:gentext key="NOTE" text="BILJEŠKA"/>
 <l:gentext key="Note" text="Bilješka"/>
 <l:gentext key="note" text="Bilješka"/>
 <l:gentext key="Part" text="Dio"/>
-<l:gentext key="part" text="Dio"/>
+<l:gentext key="part" text="dio"/>
 <l:gentext key="Preface" text="Predgovor"/>
-<l:gentext key="preface" text="Predgovor"/>
+<l:gentext key="preface" text="predgovor"/>
 <l:gentext key="Procedure" text="Postupak"/>
-<l:gentext key="procedure" text="Postupak"/>
+<l:gentext key="procedure" text="postupak"/>
 <l:gentext key="ProductionSet" text="Produkcija"/>
 <l:gentext key="PubDate" text="Objavljeno"/>
-<l:gentext key="pubdate" text="Objavljeno"/>
+<l:gentext key="pubdate" text="objavljeno"/>
 <l:gentext key="Published" text="Objavljeno"/>
-<l:gentext key="published" text="Objavljeno"/>
-<l:gentext key="Publisher" text="Publisher" lang="en"/>
+<l:gentext key="published" text="objavljeno"/>
+<l:gentext key="Publisher" text="Objavljeno"/>
 <l:gentext key="Qandadiv" text="P &amp; O"/>
 <l:gentext key="qandadiv" text="P &amp; O"/>
-<l:gentext key="QandASet" text="Frequently Asked Questions" lang="en"/>
+<l:gentext key="QandASet" text="Često Pitana Pitanja"/>
 <l:gentext key="Question" text="P:"/>
 <l:gentext key="question" text="P:"/>
-<l:gentext key="RefEntry" text=""/>
-<l:gentext key="refentry" text=""/>
+<l:gentext key="RefEntry" text="Stranica"/>
+<l:gentext key="refentry" text="stranica"/>
 <l:gentext key="Reference" text="Referenca"/>
-<l:gentext key="reference" text="Referenca"/>
-<l:gentext key="References" text="References" lang="en"/>
+<l:gentext key="reference" text="referenca"/>
+<l:gentext key="References" text="Referenca"/>
 <l:gentext key="RefName" text="Ime"/>
-<l:gentext key="refname" text="Ime"/>
-<l:gentext key="RefSection" text=""/>
-<l:gentext key="refsection" text=""/>
+<l:gentext key="refname" text="ime"/>
+<l:gentext key="RefSection" text="Odjeljak"/>
+<l:gentext key="refsection" text="odjeljak"/>
 <l:gentext key="RefSynopsisDiv" text="Pregled"/>
-<l:gentext key="refsynopsisdiv" text="Pregled"/>
+<l:gentext key="refsynopsisdiv" text="pregled"/>
 <l:gentext key="RevHistory" text="Historija verzija"/>
-<l:gentext key="revhistory" text="Historija verzija"/>
-<l:gentext key="revision" text="Verzija"/>
+<l:gentext key="revhistory" text="historija verzija"/>
+<l:gentext key="revision" text="verzija"/>
 <l:gentext key="Revision" text="Verzija"/>
 <l:gentext key="sect1" text="Odjeljak"/>
 <l:gentext key="sect2" text="Odjeljak"/>
 <l:gentext key="sect3" text="Odjeljak"/>
 <l:gentext key="sect4" text="Odjeljak"/>
 <l:gentext key="sect5" text="Odjeljak"/>
-<l:gentext key="section" text="Odjeljak"/>
+<l:gentext key="section" text="odjeljak"/>
 <l:gentext key="Section" text="Odjeljak"/>
 <l:gentext key="see" text="vidi"/>
 <l:gentext key="See" text="Vidi"/>
 <l:gentext key="seealso" text="vidi takođe"/>
 <l:gentext key="Seealso" text="Vidi takođe"/>
 <l:gentext key="SeeAlso" text="Vidi takođe"/>
-<l:gentext key="set" text="Set"/>
+<l:gentext key="set" text="set"/>
 <l:gentext key="Set" text="Set"/>
-<l:gentext key="setindex" text="Indeks"/>
+<l:gentext key="setindex" text="indeks"/>
 <l:gentext key="SetIndex" text="Indeks"/>
-<l:gentext key="Sidebar" text=""/>
-<l:gentext key="sidebar" text="sidebar"/>
+<l:gentext key="Sidebar" text="Postrana kolona"/>
+<l:gentext key="sidebar" text="postrana kolona"/>
 <l:gentext key="step" text="korak"/>
 <l:gentext key="Step" text="Korak"/>
-<l:gentext key="table" text="Tabela"/>
+<l:gentext key="table" text="tabela"/>
 <l:gentext key="Table" text="Tabela"/>
-<l:gentext key="task" text="Task" lang="en"/>
-<l:gentext key="Task" text="Task" lang="en"/>
+<l:gentext key="task" text="zadatak"/>
+<l:gentext key="Task" text="Zadatak"/>
 <l:gentext key="tip" text="Savjet"/>
 <l:gentext key="TIP" text="SAVJET"/>
 <l:gentext key="Tip" text="Savjet"/>
@@ -149,44 +151,43 @@
 <l:gentext key="and" text="i"/>
 <l:gentext key="by" text="od"/>
 <l:gentext key="Edited" text="Izdao"/>
-<l:gentext key="edited" text="Izdao"/>
+<l:gentext key="edited" text="izdao"/>
 <l:gentext key="Editedby" text="Izdao"/>
-<l:gentext key="editedby" text="Izdao"/>
+<l:gentext key="editedby" text="izdao"/>
 <l:gentext key="in" text="u"/>
 <l:gentext key="lastlistcomma" text=""/>
 <l:gentext key="listcomma" text=","/>
-<l:gentext key="nonexistantelement" text="nepostojeći element"/>
-<l:gentext key="notes" text="Bilješke"/>
+<l:gentext key="notes" text="bilješke"/>
 <l:gentext key="Notes" text="Bilješke"/>
 <l:gentext key="Pgs" text="Str."/>
-<l:gentext key="pgs" text="Str."/>
+<l:gentext key="pgs" text="ptr."/>
 <l:gentext key="Revisedby" text="Izmijenjeno od: "/>
-<l:gentext key="revisedby" text="Izmijenjeno od: "/>
+<l:gentext key="revisedby" text="izmijenjeno od: "/>
 <l:gentext key="TableNotes" text="Napomene"/>
-<l:gentext key="tablenotes" text="Napomene"/>
+<l:gentext key="tablenotes" text="napomene"/>
 <l:gentext key="TableofContents" text="Sadržaj"/>
-<l:gentext key="tableofcontents" text="Sadržaj"/>
+<l:gentext key="tableofcontents" text="sadržaj"/>
 <l:gentext key="unexpectedelementname" text="Neočkivano ime elementa"/>
 <l:gentext key="unsupported" text="nepodržano"/>
 <l:gentext key="xrefto" text="xref prema"/>
-<l:gentext key="Authors" text="Authors" lang="en"/>
-<l:gentext key="copyeditor" text="Copy Editor" lang="en"/>
-<l:gentext key="graphicdesigner" text="Graphic Designer" lang="en"/>
-<l:gentext key="productioneditor" text="Production Editor" lang="en"/>
-<l:gentext key="technicaleditor" text="Technical Editor" lang="en"/>
-<l:gentext key="translator" text="Translator" lang="en"/>
-<l:gentext key="listofequations" text="Spisak jednačina"/>
+<l:gentext key="Authors" text="Autori"/>
+<l:gentext key="copyeditor" text="Autorski Urednik"/>
+<l:gentext key="graphicdesigner" text="Graficki Dizajneri"/>
+<l:gentext key="productioneditor" text="Urednik Produkcije"/>
+<l:gentext key="technicaleditor" text="Tehnicki Editor"/>
+<l:gentext key="translator" text="Prevodilac"/>
+<l:gentext key="listofequations" text="spisak jednačina"/>
 <l:gentext key="ListofEquations" text="Spisak jednačina"/>
 <l:gentext key="ListofExamples" text="Spisak primjera"/>
-<l:gentext key="listofexamples" text="Spisak primjera"/>
+<l:gentext key="listofexamples" text="spisak primjera"/>
 <l:gentext key="ListofFigures" text="Spisak slika"/>
-<l:gentext key="listoffigures" text="Spisak slika"/>
+<l:gentext key="listoffigures" text="spisak slika"/>
 <l:gentext key="ListofProcedures" text="Spisak postupaka"/>
-<l:gentext key="listofprocedures" text="Spisak postupaka"/>
-<l:gentext key="listoftables" text="Spisak tabela"/>
+<l:gentext key="listofprocedures" text="spisak postupaka"/>
+<l:gentext key="listoftables" text="spisak tabela"/>
 <l:gentext key="ListofTables" text="Spisak tabela"/>
 <l:gentext key="ListofUnknown" text="Spisak ???"/>
-<l:gentext key="listofunknown" text="Spisak ???"/>
+<l:gentext key="listofunknown" text="spisak ???"/>
 <l:gentext key="nav-home" text="Početak"/>
 <l:gentext key="nav-next" text="Naprijed"/>
 <l:gentext key="nav-next-sibling" text="Brzo naprijed"/>
@@ -199,6 +200,7 @@
 <l:gentext key="below" text="ispod"/>
 <l:gentext key="sectioncalled" text="odjeljak sa nazivom"/>
 <l:gentext key="index symbols" text="Simboli"/>
+<l:gentext key="writing-mode" text="lr-tb"/>
 <l:gentext key="lowercase.alpha" text="abcčćdđefghijklmnoprsštuvzž"/>
 <l:gentext key="uppercase.alpha" text="ABCČĆDĐEFGHIJKLMNOPRSŠTUVZŽ"/>
 <l:gentext key="normalize.sort.input" text="AaÀàÁáÂâÃãÄäÅåĀāĂăĄąǍǎǞǟǠǡǺǻȀȁȂȃȦȧḀḁẚẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặBbƀƁɓƂƃḂḃḄḅḆḇCcÇçĆćĈĉĊċČčƇƈɕḈḉDdĎďĐđƊɗƋƌǅǲȡɖḊḋḌḍḎḏḐḑḒḓEeÈèÉéÊêËëĒēĔĕĖėĘęĚěȄȅȆȇȨȩḔḕḖḗḘḙḚḛḜḝẸẹẺẻẼẽẾếỀềỂểỄễỆệFfƑƒḞḟGgĜĝĞğĠġĢģƓɠǤǥǦǧǴǵḠḡHhĤĥĦħȞȟɦḢḣḤḥḦḧḨḩḪḫẖIiÌìÍíÎîÏïĨĩĪīĬĭĮįİƗɨǏǐȈȉȊȋḬḭḮḯỈỉỊịJjĴĵǰʝKkĶķƘƙǨǩḰḱḲḳḴḵLlĹĺĻļĽľĿŀŁłƚǈȴɫɬɭḶḷḸḹḺḻḼḽMmɱḾḿṀṁṂṃNnÑñŃńŅņŇňƝɲƞȠǋǸǹȵɳṄṅṆṇṈṉṊṋOoÒòÓóÔôÕõÖöØøŌōŎŏŐőƟƠơǑǒǪǫǬǭǾǿȌȍȎȏȪȫȬȭȮȯȰȱṌṍṎṏṐṑṒṓỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợPpƤƥṔṕṖṗQqʠRrŔŕŖŗŘřȐȑȒȓɼɽɾṘṙṚṛṜṝṞṟSsŚśŜŝŞşŠšȘșʂṠṡṢṣṤṥṦṧṨṩTtŢţŤťŦŧƫƬƭƮʈȚțȶṪṫṬṭṮṯṰṱẗUuÙùÚúÛûÜüŨũŪūŬŭŮůŰűŲųƯưǓǔǕǖǗǘǙǚǛǜȔȕȖȗṲṳṴṵṶṷṸṹṺṻỤụỦủỨứỪừỬửỮữỰựVvƲʋṼṽṾṿWwŴŵẀẁẂẃẄẅẆẇẈẉẘXxẊẋẌẍYyÝýÿŸŶŷƳƴȲȳẎẏẙỲỳỴỵỶỷỸỹZzŹźŻżŽžƵƶȤȥʐʑẐẑẒẓẔẕẕ" lang="en"/>
@@ -216,6 +218,7 @@
 <l:context name="styles"><l:template name="person-name" text="first-last"/>
 </l:context>
 <l:context name="title"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t"/>
 <l:template name="answer" text="%t"/>
 <l:template name="appendix" text="Dodatak %n. %t"/>
 <l:template name="article" text="%t"/>
@@ -237,8 +240,8 @@
 <l:template name="equation" text="Jednačina %n. %t"/>
 <l:template name="example" text="Primjer %n. %t"/>
 <l:template name="figure" text="Slika %n. %t"/>
-<l:template name="foil" text="%t" lang="en"/>
-<l:template name="foilgroup" text="%t" lang="en"/>
+<l:template name="foil" text="%t"/>
+<l:template name="foilgroup" text="%t"/>
 <l:template name="formalpara" text="%t"/>
 <l:template name="glossary" text="%t"/>
 <l:template name="glossdiv" text="%t"/>
@@ -285,9 +288,9 @@
 <l:template name="step" text="%t"/>
 <l:template name="table" text="Tabela %n. %t"/>
 <l:template name="task" text="%t"/>
-<l:template name="tasksummary" text="%t" lang="en"/>
-<l:template name="taskprerequisites" text="%t" lang="en"/>
-<l:template name="taskrelated" text="%t" lang="en"/>
+<l:template name="tasksummary" text="%t"/>
+<l:template name="taskprerequisites" text="%t"/>
+<l:template name="taskrelated" text="%t"/>
 <l:template name="tip" text="%t"/>
 <l:template name="toc" text="%t"/>
 <l:template name="variablelist" text="%t"/>
@@ -305,7 +308,7 @@
 <l:template name="sect5" text="%t"/>
 <l:template name="section" text="%t"/>
 <l:template name="simplesect" text="%t"/>
-<l:template name="part" text="%t" lang="en"/>
+<l:template name="part" text="%t"/>
 </l:context>
 <l:context name="title-numbered"><l:template name="appendix" text="Dodatak %n. %t"/>
 <l:template name="article/appendix" text="%n. %t"/>
@@ -321,6 +324,7 @@
 <l:template name="simplesect" text="%t"/>
 </l:context>
 <l:context name="subtitle"><l:template name="appendix" text="%s"/>
+<l:template name="acknowledgements" text="%s"/>
 <l:template name="article" text="%s"/>
 <l:template name="bibliodiv" text="%s"/>
 <l:template name="biblioentry" text="%s"/>
@@ -360,6 +364,7 @@
 <l:template name="toc" text="%s"/>
 </l:context>
 <l:context name="xref"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t"/>
 <l:template name="answer" text="O: %n"/>
 <l:template name="appendix" text="%t"/>
 <l:template name="article" text="%t"/>
@@ -379,8 +384,8 @@
 <l:template name="equation" text="%t"/>
 <l:template name="example" text="%t"/>
 <l:template name="figure" text="%t"/>
-<l:template name="foil" text="%t" lang="en"/>
-<l:template name="foilgroup" text="%t" lang="en"/>
+<l:template name="foil" text="%t"/>
+<l:template name="foilgroup" text="%t"/>
 <l:template name="formalpara" text="%t"/>
 <l:template name="glossary" text="%t"/>
 <l:template name="glossdiv" text="%t"/>
@@ -415,20 +420,20 @@
 <l:template name="setindex" text="%t"/>
 <l:template name="sidebar" text="%t"/>
 <l:template name="table" text="%t"/>
-<l:template name="task" text="%t" lang="en"/>
+<l:template name="task" text="%t"/>
 <l:template name="tip" text="%t"/>
 <l:template name="toc" text="%t"/>
 <l:template name="variablelist" text="%t"/>
 <l:template name="varlistentry" text="%n"/>
 <l:template name="warning" text="%t"/>
-<l:template name="olink.document.citation" text=" u %o"/>
-<l:template name="olink.page.citation" text=" (strana %p)"/>
+<l:template name="olink.document.citation" text=" in %o"/>
+<l:template name="olink.page.citation" text=" (page %p)"/>
 <l:template name="page.citation" text=" [%p]"/>
-<l:template name="page" text="(strana %p)"/>
-<l:template name="docname" text=" u %o"/>
-<l:template name="docnamelong" text=" u dokumentu sa naslovom %o"/>
-<l:template name="pageabbrev" text="(s. %p)"/>
-<l:template name="Page" text="Strana %p"/>
+<l:template name="page" text="(page %p)"/>
+<l:template name="docname" text=" in %o"/>
+<l:template name="docnamelong" text=" in the document titled %o"/>
+<l:template name="pageabbrev" text="(p. %p)"/>
+<l:template name="Page" text="Page %p"/>
 <l:template name="bridgehead" text="odjeljak sa nazivom “%t”"/>
 <l:template name="refsection" text="odjeljak sa nazivom “%t”"/>
 <l:template name="refsect1" text="odjeljak sa nazivom “%t”"/>
@@ -490,8 +495,9 @@
 <l:template name="sep2" text=" i "/>
 <l:template name="seplast" text=" i "/>
 </l:context>
-<l:context name="glossary"><l:template name="see" text="Vidi %t"/>
-<l:template name="seealso" text="Vidi takođe %t"/>
+<l:context name="glossary"><l:template name="see" text="Vidi %t."/>
+<l:template name="seealso" text="Vidi takođe %t."/>
+<l:template name="seealso-separator" text=", "/>
 </l:context>
 <l:context name="msgset"><l:template name="MsgAud" text="Primatelji: "/>
 <l:template name="MsgLevel" text="Nivo: "/>
@@ -499,8 +505,8 @@
 </l:context>
 <l:context name="datetime"><l:template name="format" text="d.m.Y"/>
 </l:context>
-<l:context name="termdef"><l:template name="prefix" text="[Definition: " lang="en"/>
-<l:template name="suffix" text="]" lang="en"/>
+<l:context name="termdef"><l:template name="prefix" text="[Definicija: "/>
+<l:template name="suffix" text="]"/>
 </l:context>
 <l:context name="datetime-full"><l:template name="January" text="Januar"/>
 <l:template name="February" text="Februar"/>
@@ -544,58 +550,58 @@
 </l:context>
 <l:context name="htmlhelp"><l:template name="langcode" text="0x141A Bosnian (Bosnia/Herzegovina)"/>
 </l:context>
-<l:context name="index"><l:template name="term-separator" text=", " lang="en"/>
-<l:template name="number-separator" text=", " lang="en"/>
-<l:template name="range-separator" text="-" lang="en"/>
+<l:context name="index"><l:template name="term-separator" text=", "/>
+<l:template name="number-separator" text=", "/>
+<l:template name="range-separator" text="-"/>
 </l:context>
-<l:context name="iso690"><l:template name="lastfirst.sep" text=", " lang="en"/>
-<l:template name="alt.person.two.sep" text=" – " lang="en"/>
-<l:template name="alt.person.last.sep" text=" – " lang="en"/>
-<l:template name="alt.person.more.sep" text=" – " lang="en"/>
-<l:template name="primary.editor" text=" (ed.)" lang="en"/>
-<l:template name="primary.many" text=", et al." lang="en"/>
-<l:template name="primary.sep" text=". " lang="en"/>
-<l:template name="submaintitle.sep" text=": " lang="en"/>
-<l:template name="title.sep" text=". " lang="en"/>
-<l:template name="othertitle.sep" text=", " lang="en"/>
-<l:template name="medium1" text=" [" lang="en"/>
-<l:template name="medium2" text="]" lang="en"/>
-<l:template name="secondary.person.sep" text="; " lang="en"/>
-<l:template name="secondary.sep" text=". " lang="en"/>
-<l:template name="respons.sep" text=". " lang="en"/>
-<l:template name="edition.sep" text=". " lang="en"/>
-<l:template name="edition.serial.sep" text=", " lang="en"/>
-<l:template name="issuing.range" text="-" lang="en"/>
-<l:template name="issuing.div" text=", " lang="en"/>
-<l:template name="issuing.sep" text=". " lang="en"/>
-<l:template name="partnr.sep" text=". " lang="en"/>
-<l:template name="placepubl.sep" text=": " lang="en"/>
-<l:template name="publyear.sep" text=", " lang="en"/>
-<l:template name="pubinfo.sep" text=". " lang="en"/>
-<l:template name="spec.pubinfo.sep" text=", " lang="en"/>
-<l:template name="upd.sep" text=", " lang="en"/>
-<l:template name="datecit1" text=" [cited " lang="en"/>
-<l:template name="datecit2" text="]" lang="en"/>
-<l:template name="extent.sep" text=". " lang="en"/>
-<l:template name="locs.sep" text=", " lang="en"/>
-<l:template name="location.sep" text=". " lang="en"/>
-<l:template name="serie.sep" text=". " lang="en"/>
-<l:template name="notice.sep" text=". " lang="en"/>
-<l:template name="access" text="Available " lang="en"/>
-<l:template name="acctoo" text="Also available " lang="en"/>
-<l:template name="onwww" text="from World Wide Web" lang="en"/>
-<l:template name="oninet" text="from Internet" lang="en"/>
-<l:template name="access.end" text=": " lang="en"/>
-<l:template name="link1" text="&lt;" lang="en"/>
-<l:template name="link2" text="&gt;" lang="en"/>
-<l:template name="access.sep" text=". " lang="en"/>
-<l:template name="isbn" text="ISBN " lang="en"/>
-<l:template name="issn" text="ISSN " lang="en"/>
-<l:template name="stdnum.sep" text=". " lang="en"/>
-<l:template name="patcountry.sep" text=". " lang="en"/>
-<l:template name="pattype.sep" text=", " lang="en"/>
-<l:template name="patnum.sep" text=". " lang="en"/>
-<l:template name="patdate.sep" text=". " lang="en"/>
+<l:context name="iso690"><l:template name="lastfirst.sep" text=", "/>
+<l:template name="alt.person.two.sep" text=" – "/>
+<l:template name="alt.person.last.sep" text=" – "/>
+<l:template name="alt.person.more.sep" text=" – "/>
+<l:template name="primary.editor" text=" (ed.)"/>
+<l:template name="primary.many" text=", et al."/>
+<l:template name="primary.sep" text=". "/>
+<l:template name="submaintitle.sep" text=": "/>
+<l:template name="title.sep" text=". "/>
+<l:template name="othertitle.sep" text=", "/>
+<l:template name="medium1" text=" ["/>
+<l:template name="medium2" text="]"/>
+<l:template name="secondary.person.sep" text="; "/>
+<l:template name="secondary.sep" text=". "/>
+<l:template name="respons.sep" text=". "/>
+<l:template name="edition.sep" text=". "/>
+<l:template name="edition.serial.sep" text=", "/>
+<l:template name="issuing.range" text="-"/>
+<l:template name="issuing.div" text=", "/>
+<l:template name="issuing.sep" text=". "/>
+<l:template name="partnr.sep" text=". "/>
+<l:template name="placepubl.sep" text=": "/>
+<l:template name="publyear.sep" text=", "/>
+<l:template name="pubinfo.sep" text=". "/>
+<l:template name="spec.pubinfo.sep" text=", "/>
+<l:template name="upd.sep" text=", "/>
+<l:template name="datecit1" text=" [cited "/>
+<l:template name="datecit2" text="]"/>
+<l:template name="extent.sep" text=". "/>
+<l:template name="locs.sep" text=", "/>
+<l:template name="location.sep" text=". "/>
+<l:template name="serie.sep" text=". "/>
+<l:template name="notice.sep" text=". "/>
+<l:template name="access" text="Available "/>
+<l:template name="acctoo" text="Also available "/>
+<l:template name="onwww" text="from World Wide Web"/>
+<l:template name="oninet" text="from Internet"/>
+<l:template name="access.end" text=": "/>
+<l:template name="link1" text="&lt;"/>
+<l:template name="link2" text="&gt;"/>
+<l:template name="access.sep" text=". "/>
+<l:template name="isbn" text="ISBN "/>
+<l:template name="issn" text="ISSN "/>
+<l:template name="stdnum.sep" text=". "/>
+<l:template name="patcountry.sep" text=". "/>
+<l:template name="pattype.sep" text=", "/>
+<l:template name="patnum.sep" text=". "/>
+<l:template name="patdate.sep" text=". "/>
 </l:context><l:letters><l:l i="-1"/>
 <l:l i="0">Simboli</l:l>
 <l:l i="10">A</l:l>
