@@ -64,12 +64,8 @@ ENDMACRO(DOCBOOK_TO_PDF targetname_suffix srcfile outfile targetdir)
 
 
 
-ADD_SUBDIRECTORY(articles/en)
-ADD_SUBDIRECTORY(books/en)
-ADD_SUBDIRECTORY(lessons/en)
-ADD_SUBDIRECTORY(lessons/es)
-ADD_SUBDIRECTORY(specifications/en)
-ADD_SUBDIRECTORY(system/man1/en)
-ADD_SUBDIRECTORY(system/man3/en)
-ADD_SUBDIRECTORY(system/man5/en)
-ADD_SUBDIRECTORY(system/mann/en)
+ADD_SUBDIRECTORY(articles)
+ADD_SUBDIRECTORY(books)
+ADD_SUBDIRECTORY(lessons)
+ADD_SUBDIRECTORY(specifications)
+ADD_SUBDIRECTORY(system)
