@@ -1,0 +1,16 @@
+usr/brlcad/
+debian/brlcad.sh etc/profile.d
+debian/brlcad.menu etc/xdg/menus/applications-merged
+debian/brlcad-archer.desktop usr/share/applications
+debian/brlcad-mged.desktop usr/share/applications
+debian/brlcad-rtwizard.desktop usr/share/applications
+debian/brlcad-db.desktop usr/share/applications
+debian/brlcad-doc.desktop usr/share/applications
+debian/brlcad.directory usr/share/desktop-directories
+debian/brlcad-doc.directory usr/share/desktop-directories
+debian/brlcad.png usr/share/icons/hicolor/48x48/apps
+debian/brlcad-archer.png usr/share/icons/hicolor/48x48/apps
+debian/brlcad-db.png usr/share/icons/hicolor/48x48/apps
+debian/brlcad-doc.png usr/share/icons/hicolor/48x48/apps
+debian/application-x-brlcad-extension.png usr/share/icons/hicolor/48x48/mimetypes
+debian/application-x-brlcad-extension.xml usr/share/mime/packages

@@ -267,6 +267,8 @@
 
     if {$mInherit != ""} {
 	lappend _attrs inherit $mInherit
+    } else {
+	lappend _attrs inherit "no"
     }
 
     lappend _attrs tree [ArcherCore::packTree [$itk_component(combTreeT) get 1.0 end]]

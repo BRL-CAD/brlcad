@@ -364,6 +364,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_v2m_point {_pane args}
 	method pane_view {_pane args}
 	method pane_view2model {_pane args}
+	method pane_view_callback {_pane args}
 	method pane_viewdir {_pane args}
 	method pane_vmake {_pane args}
 	method pane_vnirt {_pane args}
@@ -482,6 +483,8 @@ package provide cadwidgets::Ged 1.0
 	method view {args}
 	method view2model {args}
 	method view_axes {args}
+	method view_callback {args}
+	method view_callback_all {args}
 	method viewdir {args}
 	method vmake {args}
 	method vnirt {args}
@@ -1991,6 +1994,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed view2model $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_view_callback {_pane args} {
+    eval $mGed view_callback $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_viewdir {_pane args} {
     eval $mGed viewdir $itk_component($_pane) $args
 }
@@ -2531,6 +2538,16 @@ package provide cadwidgets::Ged 1.0
     }
 
     return $ret
+}
+
+::itcl::body cadwidgets::Ged::view_callback {args} {
+    eval $mGed view_callback $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::view_callback_all {args} {
+    foreach dm {ur ul ll lr} {
+	eval $mGed view_callback $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::viewdir {args} {

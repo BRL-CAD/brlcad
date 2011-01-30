@@ -200,9 +200,7 @@ main(int argc, char **argv)
 	    struct bu_attribute_value_set *avs=NULL;
 
 	    /* Process the _GLOBAL object */
-	    if ( dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY
-		 && dp->d_minor_type == DB5_MINORTYPE_RESERVED )
-	    {
+	    if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0) {
 		const char *value;
 		Tcl_Obj	*list, *obj;
 		size_t list_len;

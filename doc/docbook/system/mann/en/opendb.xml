@@ -55,38 +55,67 @@
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
   <cmdsynopsis>
-    <command>opendb</command>    
-       <arg><replaceable>database.g</replaceable></arg>
+    <command>opendb</command>
+      <arg choice='opt'>-f</arg>
+      <arg choice='opt'><replaceable>database.g</replaceable></arg>
     </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsect1 id='description'>
   <title>DESCRIPTION</title>
-  <para>Closes the current database file and opens <emphasis>database.g</emphasis>.
-	If <emphasis>database.g</emphasis> is not found, the current database is left open.  If <emphasis>	database.g</emphasis> is not specified on the command line, the name of the current database file is 	returned.
-   </para>
+  <para>Closes the current database file and
+    opens <emphasis>database.g</emphasis>.
+    If <emphasis>database.g</emphasis> is not found, the current
+    database is left open.  If <emphasis> database.g</emphasis> is not
+    specified on the command line, the name of the current database
+    file is returned.
+  </para>
+  <para>If the -f option is specified and the database.g is a v4
+     geometry database, the file will be read with a flipped binary
+     endianness encoding.  This is useful for binary-incompatible v4
+     geometry files that were created on a different platform type.
+  </para>
+  <para>Binary-incompatible v4 geometry database files that can be
+    auto-detected will be automatically converted if all resulting
+    matrices are valid.
+  </para>
 </refsect1>
 
 <refsect1 id='examples'>
   <title>EXAMPLES</title>
-  <para>The first example shows the use of the <command>opendb</command> command to close the current database file and open the one specified.  The second example shows the use of the command with no database name, which returns the name of the current database file. 
-    </para>
+  <para>The first example shows the use of
+    the <command>opendb</command> command to close the current
+    database file and open the one specified.  The second example
+    shows the use of the command with no database name, which returns
+    the name of the current database file.
+  </para>
   <example>
     <title>Close the current database and open another one.</title>
     <para>
       <prompt>mged></prompt><userinput>opendb model.g</userinput>
     </para>
     <para>Closes the current database file and opens <emphasis>model.g</emphasis>.
-     </para>
+    </para>
   </example>
-
- <example>
+  
+  <example>
     <title>Return the name of the current database file.</title>
     <para>
       <prompt>mged></prompt><userinput>opendb</userinput>
     </para>
     <para>Returns the name of the current database file.
-  
+    </para>
+  </example>
+
+  <example>
+    <title>Open and upgrade a binary-incompatible v4 file.</title>
+    <para>
+      <prompt>mged></prompt><userinput>opendb -f model.g</userinput>
+      <prompt>mged></prompt><userinput>dbupgrade</userinput>
+    </para>
+    <para>Closes any currently open database and
+      opens <emphasis>model.g</emphasis> as a binary-incompatible v4
+      geometry database.
     </para>
   </example>
 

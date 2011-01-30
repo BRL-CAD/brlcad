@@ -782,6 +782,7 @@ struct mem_map {
 #define	RT_DBHASH(sum)	((unsigned)(sum) & ((RT_DBNHASH)-1))
 #endif
 
+
 /**
  * D B _ I
  *
@@ -794,34 +795,38 @@ struct mem_map {
  * allocated.
  */
 struct db_i  {
-    unsigned long		dbi_magic;	/**< @brief magic number */
-    /* THESE ELEMENTS ARE AVAILABLE FOR APPLICATIONS TO READ */
-    char *			dbi_filename;	/**< @brief file name */
-    int				dbi_read_only;	/**< @brief !0 => read only file */
-    double			dbi_local2base;	/**< @brief local2mm */
-    double			dbi_base2local;	/**< @brief unit conversion factors */
-    char *			dbi_title;	/**< @brief title from IDENT rec */
-    char *const*		dbi_filepath;	/**< @brief search path for aux file opens (convenience var) */
-    /* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
-    struct directory *		dbi_Head[RT_DBNHASH];
-    FILE *			dbi_fp;		/**< @brief standard file pointer */
-    off_t			dbi_eof;	/**< @brief End+1 pos after db_scan() */
-    size_t			dbi_nrec;	/**< @brief # records after db_scan() */
-    int				dbi_uses;	/**< @brief # of uses of this struct */
-    struct mem_map *		dbi_freep;	/**< @brief map of free granules */
-    genptr_t			dbi_inmem;	/**< @brief ptr to in-memory copy */
-    struct animate *		dbi_anroot;	/**< @brief heads list of anim at root lvl */
-    struct bu_mapped_file *	dbi_mf;		/**< @brief Only in read-only mode */
-    struct bu_ptbl		dbi_clients;	/**< @brief List of rtip's using this db_i */
-    int				dbi_version;	/**< @brief 4 or 5 */
-    struct rt_wdb *		dbi_wdbp;	/**< @brief ptr back to containing rt_wdb */
-};
-#define DBI_NULL	((struct db_i *)0)
+    unsigned long dbi_magic;		/**< @brief magic number */
 
+    /* THESE ELEMENTS ARE AVAILABLE FOR APPLICATIONS TO READ */
+
+    char * dbi_filename;		/**< @brief file name */
+    int dbi_read_only;			/**< @brief !0 => read only file */
+    double dbi_local2base;		/**< @brief local2mm */
+    double dbi_base2local;		/**< @brief unit conversion factors */
+    char * dbi_title;			/**< @brief title from IDENT rec */
+    char * const * dbi_filepath;	/**< @brief search path for aux file opens (convenience var) */
+
+    /* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
+
+    struct directory * dbi_Head[RT_DBNHASH]; /** @brief PRIVATE: object hash table */
+    FILE * dbi_fp;			/**< @brief PRIVATE: standard file pointer */
+    off_t dbi_eof;			/**< @brief PRIVATE: End+1 pos after db_scan() */
+    size_t dbi_nrec;			/**< @brief PRIVATE: # records after db_scan() */
+    int dbi_uses;			/**< @brief PRIVATE: # of uses of this struct */
+    struct mem_map * dbi_freep;		/**< @brief PRIVATE: map of free granules */
+    genptr_t dbi_inmem;			/**< @brief PRIVATE: ptr to in-memory copy */
+    struct animate * dbi_anroot;	/**< @brief PRIVATE: heads list of anim at root lvl */
+    struct bu_mapped_file * dbi_mf;	/**< @brief PRIVATE: Only in read-only mode */
+    struct bu_ptbl dbi_clients;		/**< @brief PRIVATE: List of rtip's using this db_i */
+    int dbi_version;			/**< @brief PRIVATE: use db_verison() */
+    struct rt_wdb * dbi_wdbp;		/**< @brief PRIVATE: ptr back to containing rt_wdb */
+};
+#define DBI_NULL ((struct db_i *)0)
 #define RT_CHECK_DBI(_p)		BU_CKMAG(_p, DBI_MAGIC, "struct db_i")
 #define RT_CHECK_DBI_TCL(_interp, _p)	BU_CKMAG_TCL(_interp, _p, DBI_MAGIC, "struct db_i")
 #define RT_CK_DBI(_p)			RT_CHECK_DBI(_p)
 #define RT_CK_DBI_TCL(_interp, _p)	RT_CHECK_DBI_TCL(_interp, _p)
+
 
 /**
  * D I R E C T O R Y
@@ -851,28 +856,29 @@ struct db_i  {
  * on the object to modify the on-disk name.
  */
 struct directory  {
-    unsigned long	d_magic;		/**< @brief Magic number */
-    char *		d_namep;		/**< @brief pointer to name string */
+    unsigned long d_magic;	/**< @brief Magic number */
+    char * d_namep;		/**< @brief pointer to name string */
     union {
-	off_t		file_offset;		/**< @brief disk address in obj file */
-	genptr_t	ptr;			/**< @brief ptr to in-memory-only obj */
+	off_t file_offset;	/**< @brief disk address in obj file */
+	genptr_t ptr;		/**< @brief ptr to in-memory-only obj */
     } d_un;
-    struct directory *	d_forw;			/**< @brief link to next dir entry */
-    struct animate *	d_animate;		/**< @brief link to animation */
-    long		d_uses;			/**< @brief # uses, from instancing */
-    size_t		d_len;			/**< @brief # of db granules used */
-    long		d_nref;			/**< @brief # times ref'ed by COMBs */
-    int			d_flags;		/**< @brief flags */
-    unsigned char	d_major_type;		/**< @brief object major type */
-    unsigned char 	d_minor_type;		/**< @brief object minor type */
-    struct bu_list	d_use_hd;		/**< @brief heads list of uses (struct soltab l2) */
-    char		d_shortname[16];	/**< @brief Stash short names locally */
+    struct directory * d_forw;	/**< @brief link to next dir entry */
+    struct animate * d_animate;	/**< @brief link to animation */
+    long d_uses;		/**< @brief # uses, from instancing */
+    size_t d_len;		/**< @brief # of db granules used */
+    long d_nref;		/**< @brief # times ref'ed by COMBs */
+    int d_flags;		/**< @brief flags */
+    unsigned char d_major_type;	/**< @brief object major type */
+    unsigned char d_minor_type;	/**< @brief object minor type */
+    struct bu_list d_use_hd;	/**< @brief heads list of uses (struct soltab l2) */
+    char d_shortname[16];	/**< @brief Stash short names locally */
 };
 #define RT_DIR_NULL	((struct directory *)0)
 #define RT_CK_DIR(_dp)	BU_CKMAG(_dp, RT_DIR_MAGIC, "(librt)directory")
 
 #define d_addr	d_un.file_offset
 #define RT_DIR_PHONY_ADDR	((off_t)-1)	/**< @brief Special marker for d_addr field */
+
 
 /* flags for db_diradd() and friends */
 #define RT_DIR_SOLID    0x1   /**< @brief this name is a solid */
@@ -3044,6 +3050,21 @@ RT_EXPORT BU_EXTERN(int db5_scan,
  * presently returns only a 4 or 5 accordingly.
  */
 RT_EXPORT BU_EXTERN(int db_version, (struct db_i *dbip));
+
+
+/* db_corrupt.c */
+
+/**
+ * Detect whether a given geometry database file seems to be corrupt
+ * or invalid due to flipped endianness.  Only relevant for v4
+ * geometry files that are binary-incompatible with the runtime
+ * platform.
+ *
+ * Returns true if flipping the endian type fixes all combination
+ * member matrices.
+ */
+RT_EXPORT BU_EXTERN(int rt_db_flip_endian, (struct db_i *dbip));
+
 
 /* db5_comb.c */
 RT_EXPORT BU_EXTERN(int rt_comb_import5, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp));

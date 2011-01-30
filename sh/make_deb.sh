@@ -2,7 +2,7 @@
 #                     M A K E _ D E B . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2011 United States Government as represented by
+# Copyright (c) 2005-2010 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,29 +35,86 @@
 #
 ###
 
-set -e
+test -e
+
+BVERSION=`cat include/conf/MAJOR`"."`cat include/conf/MINOR`"."`cat include/conf/PATCH`
+BVERSION=`echo $BVERSION | sed 's/[^0-9.]//g'`
+CDATE=`date -R`
+CFILE="misc/debian/changelog"
 
 if test ! -e /etc/debian_version ; then
     echo "Refusing to build on a non-debian system."
     exit 1
 fi
 
-if test ! -e /usr/bin/fakeroot ; then
-    echo "Need the fakeroot package."
+# check needed packages
+E=0
+fcheck(){
+    T="install ok installed"
+    if test `dpkg -s $1 2>/dev/null | grep "$T" | wc -l` -eq 0 ; then
+	LLIST=$LLIST"\n"$1
+	E=1
+    fi
+}
+
+fcheck build-essential
+fcheck fakeroot
+fcheck debhelper
+fcheck bison
+fcheck flex
+fcheck libxi-dev
+fcheck xsltproc
+fcheck libgl1-mesa-dev
+
+if [ $E -eq 1 ]; then
+    echo "=========================================================="
+    echo "Mandatory to install these packages first:"
+    echo $LLIST
+    echo "=========================================================="
     exit 1
 fi
 
-if test ! -e /usr/bin/debuild ; then
-    echo "Need the devscripts package."
-    exit 1
+fcheck libpango1.0-dev
+
+if [ $E -eq 1 ]; then
+    echo "=========================================================="
+    echo "For a better font rendering, install this package first:"
+    echo $LLIST
+    echo "=========================================================="
+    echo "Pausing 15 seconds..."
+    sleep 15
 fi
 
+# modify doc menu desktop files
+fdoc(){
+    L=`sed -n '/Exec=/=' $2`
+    A=`sed -n $L'p' $2`
+    if test ! "Exec=$1" = "$A" ;then
+	sed -i "s:$A:Exec=$1:" $2
+    fi
+}
+
+fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/toc.html" "misc/debian/brlcad-doc.desktop"
+
+fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/db" "misc/debian/brlcad-db.desktop"
+
+# update debian/chagelog if needed
+if test -s $CFILE && test `sed -n '1p' $CFILE | grep "brlcad ($BVERSION-" | wc -l` = 0 ; then
+    L1="1s/^/brlcad ($BVERSION-0) unstable; urgency=low\n\n"
+    L2="  **** VERSION ENTRY AUTOMATICALLY ADDED BY \"sh\/make_deb.sh\" SCRIPT ****\n\n"
+    L3=" -- Jordi Sayol <g.sayol@yahoo.es>  $CDATE\n\n/"
+    sed -i "$L1$L2$L3" $CFILE
+fi
+
+# create link to misc/debian
 if test ! -e ./debian && test ! -e ./debian/control ; then
     ln -fs misc/debian debian
 fi
 
-fakeroot debian/rules binary && debuild -us -uc
+# create deb package
+fakeroot debian/rules binary
 
+# remove link to misc/debian
 if test -L ./debian ; then rm debian ; fi
 
 # Local Variables:

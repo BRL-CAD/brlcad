@@ -368,6 +368,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\db_corrupt.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\comb\db_comb.c"
 				>
 			</File>

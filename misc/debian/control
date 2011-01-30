@@ -1,18 +1,16 @@
 Source: brlcad
-Section: science
+Section: graphics
 Priority: extra
-Maintainer: Manuel A. Fernandez Montecelo <manuel.montezelo@gmail.com>
-DM-Upload-Allowed: yes
-Build-Depends: debhelper (>= 7.0.0), make (>= 3.8.0), bison, flex, libncurses5-dev, xserver-xorg-dev, libx11-dev, libxi-dev, libpng-dev, zlib1g-dev, tcl8.5-dev (>= 8.5), tk8.5-dev (>= 8.5), itcl3-dev, itk3-dev, iwidgets4, libtk-img-dev, blt-dev, libtnt-dev (>> 1.2.6), libjama-dev (>> 1.2.4), xsltproc
+Maintainer: Jordi Sayol <g.sayol@yahoo.es>
+Build-Depends: debhelper (>= 7.0.0), make (>= 3.8.0), bison, flex, libxi-dev, xsltproc, libgl1-mesa-dev, libfontconfig1-dev
 Standards-Version: 3.9.1
 Homepage: http://brlcad.org/
 Vcs-Svn: https://brlcad.svn.sourceforge.net/svnroot/brlcad/
 Vcs-Browser: http://brlcad.svn.sourceforge.net/viewvc/brlcad/
 
-Package: brlcad-bin
+Package: brlcad
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, brlcad-data (= ${source:Version})
-Suggests: brlcad-dev (= ${source:Version}), brlcad-doc (= ${source:Version})
+Depends: ${misc:Depends}, ${shlibs:Depends}
 Description: Constructive Solid Geometry (CSG) solid modeling system, binary files
  BRL-CAD is a powerful cross-platform open source combinatorial
  Constructive Solid Geometry (CSG) solid modeling system that includes
@@ -25,61 +23,3 @@ Description: Constructive Solid Geometry (CSG) solid modeling system, binary fil
  libraries, a system performance analysis benchmark suite, an embedded
  scripting interface, and a robust high-performance geometric
  representation and analysis library.
- .
- This package contains binaries and libraries.
-
-Package: brlcad-data
-Architecture: all
-Depends: ${misc:Depends}
-Description:  Constructive Solid Geometry (CSG) solid modeling system, data files
- BRL-CAD is a powerful cross-platform open source combinatorial
- Constructive Solid Geometry (CSG) solid modeling system that includes
- an interactive 3D solid geometry editor, a network-distributed
- symmetric multiprocessing high-performance ray-tracer,
- network-distributed framebuffer support, image and signal-processing
- tools, ray-tracing support for rendering and geometric analysis,
- path-tracing and photon mapping support for realistic image synthesis,
- animation capabilities, ray-tracing and numerical processing
- libraries, a system performance analysis benchmark suite, an embedded
- scripting interface, and a robust high-performance geometric
- representation and analysis library.
- .
- This package contains data needed by the binaries.
-
-Package: brlcad-dev
-Section: devel
-Architecture: all
-Depends: ${misc:Depends}
-Description:  Constructive Solid Geometry (CSG) solid modeling system, development files
- BRL-CAD is a powerful cross-platform open source combinatorial
- Constructive Solid Geometry (CSG) solid modeling system that includes
- an interactive 3D solid geometry editor, a network-distributed
- symmetric multiprocessing high-performance ray-tracer,
- network-distributed framebuffer support, image and signal-processing
- tools, ray-tracing support for rendering and geometric analysis,
- path-tracing and photon mapping support for realistic image synthesis,
- animation capabilities, ray-tracing and numerical processing
- libraries, a system performance analysis benchmark suite, an embedded
- scripting interface, and a robust high-performance geometric
- representation and analysis library.
- .
- This package contains the development files.
-
-Package: brlcad-doc
-Section: doc
-Architecture: all
-Depends: ${misc:Depends}
-Description:  Constructive Solid Geometry (CSG) solid modeling system, documentation
- BRL-CAD is a powerful cross-platform open source combinatorial
- Constructive Solid Geometry (CSG) solid modeling system that includes
- an interactive 3D solid geometry editor, a network-distributed
- symmetric multiprocessing high-performance ray-tracer,
- network-distributed framebuffer support, image and signal-processing
- tools, ray-tracing support for rendering and geometric analysis,
- path-tracing and photon mapping support for realistic image synthesis,
- animation capabilities, ray-tracing and numerical processing
- libraries, a system performance analysis benchmark suite, an embedded
- scripting interface, and a robust high-performance geometric
- representation and analysis library.
- .
- This package contains the documentation.
