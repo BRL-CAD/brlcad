@@ -1,6 +1,8 @@
 <?xml version='1.0'?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:exsl="http://exslt.org/common"
+<xsl:stylesheet exclude-result-prefixes="d"
+                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:exsl="http://exslt.org/common"
                 version='1.0'>
 
 <!-- ********************************************************************
@@ -15,7 +17,7 @@
 
 <!-- ==================================================================== -->
 
-<xsl:template match="replaceable|varname|structfield">
+<xsl:template match="d:replaceable|d:varname|d:structfield">
   <xsl:if test="$man.hyphenate.computer.inlines = 0">
     <xsl:call-template name="suppress.hyphenation"/>
   </xsl:if>
@@ -25,7 +27,7 @@
   </xsl:call-template>
 </xsl:template>
 
-<xsl:template match="option|userinput|envar|errorcode|constant|markup">
+<xsl:template match="d:option|d:userinput|d:envar|d:errorcode|d:constant|d:markup">
   <xsl:if test="$man.hyphenate.computer.inlines = 0">
     <xsl:call-template name="suppress.hyphenation"/>
   </xsl:if>
@@ -35,14 +37,14 @@
   </xsl:call-template>
 </xsl:template>
 
-<xsl:template match="classname">
+<xsl:template match="d:classname">
   <xsl:if test="$man.hyphenate.computer.inlines = 0">
     <xsl:call-template name="suppress.hyphenation"/>
   </xsl:if>
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="command">
+<xsl:template match="d:command">
   <xsl:if test="$man.hyphenate.computer.inlines = 0">
     <xsl:call-template name="suppress.hyphenation"/>
   </xsl:if>
@@ -52,8 +54,8 @@
   </xsl:call-template>
 </xsl:template>
 
-<xsl:template match="type[not(ancestor::cmdsynopsis) and
-                     not(ancestor::funcsynopsis)]">
+<xsl:template match="d:type[not(ancestor::d:cmdsynopsis) and
+                     not(ancestor::d:funcsynopsis)]">
   <xsl:if test="$man.hyphenate.computer.inlines = 0">
     <xsl:call-template name="suppress.hyphenation"/>
   </xsl:if>
@@ -63,8 +65,8 @@
   </xsl:call-template>
 </xsl:template>
 
-<xsl:template match="function[not(ancestor::cmdsynopsis) and
-                     not(ancestor::funcsynopsis)]">
+<xsl:template match="d:function[not(ancestor::d:cmdsynopsis) and
+                     not(ancestor::d:funcsynopsis)]">
   <xsl:if test="$man.hyphenate.computer.inlines = 0">
     <xsl:call-template name="suppress.hyphenation"/>
   </xsl:if>
@@ -74,8 +76,8 @@
   </xsl:call-template>
 </xsl:template>
 
-<xsl:template match="parameter[not(ancestor::cmdsynopsis) and
-                     not(ancestor::funcsynopsis)]">
+<xsl:template match="d:parameter[not(ancestor::d:cmdsynopsis) and
+                     not(ancestor::d:funcsynopsis)]">
   <xsl:if test="$man.hyphenate.computer.inlines = 0">
     <xsl:call-template name="suppress.hyphenation"/>
   </xsl:if>
@@ -85,7 +87,7 @@
   </xsl:call-template>
 </xsl:template>
 
-<xsl:template match="filename">
+<xsl:template match="d:filename">
   <!-- * add hyphenation suppression in Filename output only if -->
   <!-- * break.after.slash is also non-zero -->
   <xsl:if test="$man.hyphenate.filenames = 0 and
@@ -100,7 +102,7 @@
   <xsl:call-template name="inline.monoseq"/>
 </xsl:template>
 
-<xsl:template match="emphasis">
+<xsl:template match="d:emphasis">
   <xsl:choose>
     <xsl:when test="
       @role = 'bold' or
@@ -120,7 +122,7 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="optional">
+<xsl:template match="d:optional">
   <xsl:value-of select="$arg.choice.opt.open.str"/>
   <xsl:apply-templates/>
   <xsl:value-of select="$arg.choice.opt.close.str"/>
@@ -141,14 +143,14 @@
   <xsl:text>)</xsl:text>
 </xsl:template>
 
-<xsl:template match="citerefentry">
+<xsl:template match="d:citerefentry">
   <xsl:call-template name="do-citerefentry">
-    <xsl:with-param name="refentrytitle" select="refentrytitle"/>
-    <xsl:with-param name="manvolnum" select="manvolnum"/>
+    <xsl:with-param name="refentrytitle" select="d:refentrytitle"/>
+    <xsl:with-param name="manvolnum" select="d:manvolnum"/>
   </xsl:call-template>
 </xsl:template>
 
-<xsl:template match="trademark|productname">
+<xsl:template match="d:trademark|d:productname">
   <xsl:apply-templates/>
   <xsl:choose>
     <!-- * Just use true Unicode chars for copyright, trademark, etc., -->
@@ -169,7 +171,7 @@
     </xsl:when>
     <!-- * for Trademark element, render a trademark symbol by default -->
     <!-- * even if no "class" value is specified -->
-    <xsl:when test="self::trademark" >
+    <xsl:when test="self::d:trademark" >
       <xsl:text>&#x2122;</xsl:text>
     </xsl:when>
     <xsl:otherwise>
@@ -181,33 +183,33 @@
 
 <!-- * span seems to sneak through into output sometimes, possibly due -->
 <!-- * to failed Olink processing; so we need to catch it -->
-<xsl:template match="span">
+<xsl:template match="d:span">
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="inlinemediaobject">
+<xsl:template match="d:inlinemediaobject">
   <xsl:apply-templates/>
 </xsl:template>
 
 <!-- * indexterm instances produce groff comments like this: -->
 <!-- * .\" primary: secondary: tertiary -->
-<xsl:template match="indexterm">
+<xsl:template match="d:indexterm">
   <xsl:text>.\" </xsl:text>
   <xsl:apply-templates/>
   <xsl:text>&#10;</xsl:text>
 </xsl:template>
 
-<xsl:template match="primary">
+<xsl:template match="d:primary">
   <xsl:value-of select="normalize-space(.)"/>
 </xsl:template>
 
-<xsl:template match="secondary|tertiary">
+<xsl:template match="d:secondary|d:tertiary">
   <xsl:text>: </xsl:text>
   <xsl:value-of select="normalize-space(.)"/>
 </xsl:template>
 
 <!-- * non-empty remark instances produce groff comments -->
-<xsl:template match="remark">
+<xsl:template match="d:remark">
   <xsl:variable name="content" select="normalize-space(.)"/>
   <xsl:if test="not($content = '')">
     <xsl:text>.\" </xsl:text>

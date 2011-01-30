@@ -1,6 +1,8 @@
 <?xml version='1.0'?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                version='1.0'>
+<xsl:stylesheet exclude-result-prefixes="d"
+                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:d="http://docbook.org/ns/docbook"
+version='1.0'>
 
 <!-- ********************************************************************
      $Id$
@@ -14,8 +16,8 @@
 
 <!-- ==================================================================== -->
 
-<xsl:template match="section">
-  <xsl:variable name="depth" select="count(ancestor::section)+1"/>
+<xsl:template match="d:section">
+  <xsl:variable name="depth" select="count(ancestor::d:section)+1"/>
 
   <xsl:call-template name="id.warning"/>
 
@@ -45,13 +47,13 @@
 
 <xsl:template name="section.title">
   <!-- the context node should be the title of a section when called -->
-  <xsl:variable name="section" select="(ancestor::section
-                                        |ancestor::simplesect
-                                        |ancestor::sect1
-                                        |ancestor::sect2
-                                        |ancestor::sect3
-                                        |ancestor::sect4
-                                        |ancestor::sect5)[last()]"/>
+  <xsl:variable name="section" select="(ancestor::d:section
+                                        |ancestor::d:simplesect
+                                        |ancestor::d:sect1
+                                        |ancestor::d:sect2
+                                        |ancestor::d:sect3
+                                        |ancestor::d:sect4
+                                        |ancestor::d:sect5)[last()]"/>
 
   <xsl:variable name="renderas">
     <xsl:choose>
@@ -88,14 +90,14 @@
   </xsl:call-template>
 </xsl:template>
 
-<xsl:template match="section/title
-                    |section/info/title
-                    |sectioninfo/title" 
+<xsl:template match="d:section/d:title
+                    |d:section/d:info/d:title
+                    |d:sectioninfo/d:title" 
               mode="titlepage.mode" priority="2">
   <xsl:call-template name="section.title"/>
 </xsl:template>
 
-<xsl:template match="sect1">
+<xsl:template match="d:sect1">
   <xsl:call-template name="id.warning"/>
 
   <div>
@@ -139,14 +141,14 @@
   </div>
 </xsl:template>
 
-<xsl:template match="sect1/title
-                    |sect1/info/title
-                    |sect1info/title" 
+<xsl:template match="d:sect1/d:title
+                    |d:sect1/d:info/d:title
+                    |d:sect1info/d:title" 
               mode="titlepage.mode" priority="2">
   <xsl:call-template name="section.title"/>
 </xsl:template>
 
-<xsl:template match="sect2">
+<xsl:template match="d:sect2">
   <xsl:call-template name="id.warning"/>
 
   <div>
@@ -190,14 +192,14 @@
   </div>
 </xsl:template>
 
-<xsl:template match="sect2/title
-                    |sect2/info/title
-                    |sect2info/title" 
+<xsl:template match="d:sect2/d:title
+                    |d:sect2/d:info/d:title
+                    |d:sect2info/d:title" 
               mode="titlepage.mode" priority="2">
   <xsl:call-template name="section.title"/>
 </xsl:template>
 
-<xsl:template match="sect3">
+<xsl:template match="d:sect3">
   <xsl:call-template name="id.warning"/>
 
   <div>
@@ -241,14 +243,14 @@
   </div>
 </xsl:template>
 
-<xsl:template match="sect3/title
-                    |sect3/info/title
-                    |sect3info/title" 
+<xsl:template match="d:sect3/d:title
+                    |d:sect3/d:info/d:title
+                    |d:sect3info/d:title" 
               mode="titlepage.mode" priority="2">
   <xsl:call-template name="section.title"/>
 </xsl:template>
 
-<xsl:template match="sect4">
+<xsl:template match="d:sect4">
   <xsl:call-template name="id.warning"/>
 
   <div>
@@ -292,14 +294,14 @@
   </div>
 </xsl:template>
 
-<xsl:template match="sect4/title
-                    |sect4/info/title
-                    |sect4info/title" 
+<xsl:template match="d:sect4/d:title
+                    |d:sect4/d:info/d:title
+                    |d:sect4info/d:title" 
               mode="titlepage.mode" priority="2">
   <xsl:call-template name="section.title"/>
 </xsl:template>
 
-<xsl:template match="sect5">
+<xsl:template match="d:sect5">
   <xsl:call-template name="id.warning"/>
 
   <div>
@@ -343,14 +345,14 @@
   </div>
 </xsl:template>
 
-<xsl:template match="sect5/title
-                    |sect5/info/title
-                    |sect5info/title" 
+<xsl:template match="d:sect5/d:title
+                    |d:sect5/d:info/d:title
+                    |d:sect5info/d:title" 
               mode="titlepage.mode" priority="2">
   <xsl:call-template name="section.title"/>
 </xsl:template>
 
-<xsl:template match="simplesect">
+<xsl:template match="d:simplesect">
   <xsl:call-template name="id.warning"/>
 
   <div>
@@ -363,51 +365,51 @@
   </div>
 </xsl:template>
 
-<xsl:template match="simplesect/title|simplesect/info/title" 
+<xsl:template match="d:simplesect/d:title|d:simplesect/d:info/d:title" 
               mode="titlepage.mode" priority="2">
   <xsl:call-template name="section.title"/>
 </xsl:template>
 
-<xsl:template match="section/title"></xsl:template>
-<xsl:template match="section/titleabbrev"></xsl:template>
-<xsl:template match="section/subtitle"></xsl:template>
-<xsl:template match="sectioninfo"></xsl:template>
-<xsl:template match="section/info"></xsl:template>
+<xsl:template match="d:section/d:title"></xsl:template>
+<xsl:template match="d:section/d:titleabbrev"></xsl:template>
+<xsl:template match="d:section/d:subtitle"></xsl:template>
+<xsl:template match="d:sectioninfo"></xsl:template>
+<xsl:template match="d:section/d:info"></xsl:template>
 
-<xsl:template match="sect1/title"></xsl:template>
-<xsl:template match="sect1/titleabbrev"></xsl:template>
-<xsl:template match="sect1/subtitle"></xsl:template>
-<xsl:template match="sect1info"></xsl:template>
-<xsl:template match="sect1/info"></xsl:template>
+<xsl:template match="d:sect1/d:title"></xsl:template>
+<xsl:template match="d:sect1/d:titleabbrev"></xsl:template>
+<xsl:template match="d:sect1/d:subtitle"></xsl:template>
+<xsl:template match="d:sect1info"></xsl:template>
+<xsl:template match="d:sect1/d:info"></xsl:template>
 
-<xsl:template match="sect2/title"></xsl:template>
-<xsl:template match="sect2/subtitle"></xsl:template>
-<xsl:template match="sect2/titleabbrev"></xsl:template>
-<xsl:template match="sect2info"></xsl:template>
-<xsl:template match="sect2/info"></xsl:template>
+<xsl:template match="d:sect2/d:title"></xsl:template>
+<xsl:template match="d:sect2/d:subtitle"></xsl:template>
+<xsl:template match="d:sect2/d:titleabbrev"></xsl:template>
+<xsl:template match="d:sect2info"></xsl:template>
+<xsl:template match="d:sect2/d:info"></xsl:template>
 
-<xsl:template match="sect3/title"></xsl:template>
-<xsl:template match="sect3/subtitle"></xsl:template>
-<xsl:template match="sect3/titleabbrev"></xsl:template>
-<xsl:template match="sect3info"></xsl:template>
-<xsl:template match="sect3/info"></xsl:template>
+<xsl:template match="d:sect3/d:title"></xsl:template>
+<xsl:template match="d:sect3/d:subtitle"></xsl:template>
+<xsl:template match="d:sect3/d:titleabbrev"></xsl:template>
+<xsl:template match="d:sect3info"></xsl:template>
+<xsl:template match="d:sect3/d:info"></xsl:template>
 
-<xsl:template match="sect4/title"></xsl:template>
-<xsl:template match="sect4/subtitle"></xsl:template>
-<xsl:template match="sect4/titleabbrev"></xsl:template>
-<xsl:template match="sect4info"></xsl:template>
-<xsl:template match="sect4/info"></xsl:template>
+<xsl:template match="d:sect4/d:title"></xsl:template>
+<xsl:template match="d:sect4/d:subtitle"></xsl:template>
+<xsl:template match="d:sect4/d:titleabbrev"></xsl:template>
+<xsl:template match="d:sect4info"></xsl:template>
+<xsl:template match="d:sect4/d:info"></xsl:template>
 
-<xsl:template match="sect5/title"></xsl:template>
-<xsl:template match="sect5/subtitle"></xsl:template>
-<xsl:template match="sect5/titleabbrev"></xsl:template>
-<xsl:template match="sect5info"></xsl:template>
-<xsl:template match="sect5/info"></xsl:template>
+<xsl:template match="d:sect5/d:title"></xsl:template>
+<xsl:template match="d:sect5/d:subtitle"></xsl:template>
+<xsl:template match="d:sect5/d:titleabbrev"></xsl:template>
+<xsl:template match="d:sect5info"></xsl:template>
+<xsl:template match="d:sect5/d:info"></xsl:template>
 
-<xsl:template match="simplesect/title"></xsl:template>
-<xsl:template match="simplesect/subtitle"></xsl:template>
-<xsl:template match="simplesect/titleabbrev"></xsl:template>
-<xsl:template match="simplesect/info"></xsl:template>
+<xsl:template match="d:simplesect/d:title"></xsl:template>
+<xsl:template match="d:simplesect/d:subtitle"></xsl:template>
+<xsl:template match="d:simplesect/d:titleabbrev"></xsl:template>
+<xsl:template match="d:simplesect/d:info"></xsl:template>
 
 <!-- ==================================================================== -->
 
@@ -421,7 +423,7 @@
   <xsl:variable name="id">
     <xsl:choose>
       <!-- Make sure the subtitle doesn't get the same id as the title -->
-      <xsl:when test="self::subtitle">
+      <xsl:when test="self::d:subtitle">
         <xsl:call-template name="object.id">
           <xsl:with-param name="object" select="."/>
         </xsl:call-template>
@@ -473,28 +475,28 @@
 
 <!-- ==================================================================== -->
 
-<xsl:template match="bridgehead">
+<xsl:template match="d:bridgehead">
   <xsl:variable name="container"
-                select="(ancestor::appendix
-                        |ancestor::article
-                        |ancestor::bibliography
-                        |ancestor::chapter
-                        |ancestor::glossary
-                        |ancestor::glossdiv
-                        |ancestor::index
-                        |ancestor::partintro
-                        |ancestor::preface
-                        |ancestor::refsect1
-                        |ancestor::refsect2
-                        |ancestor::refsect3
-                        |ancestor::sect1
-                        |ancestor::sect2
-                        |ancestor::sect3
-                        |ancestor::sect4
-                        |ancestor::sect5
-                        |ancestor::section
-                        |ancestor::setindex
-                        |ancestor::simplesect)[last()]"/>
+                select="(ancestor::d:appendix
+                        |ancestor::d:article
+                        |ancestor::d:bibliography
+                        |ancestor::d:chapter
+                        |ancestor::d:glossary
+                        |ancestor::d:glossdiv
+                        |ancestor::d:index
+                        |ancestor::d:partintro
+                        |ancestor::d:preface
+                        |ancestor::d:refsect1
+                        |ancestor::d:refsect2
+                        |ancestor::d:refsect3
+                        |ancestor::d:sect1
+                        |ancestor::d:sect2
+                        |ancestor::d:sect3
+                        |ancestor::d:sect4
+                        |ancestor::d:sect5
+                        |ancestor::d:section
+                        |ancestor::d:setindex
+                        |ancestor::d:simplesect)[last()]"/>
 
   <xsl:variable name="clevel">
     <xsl:choose>
@@ -508,7 +510,7 @@
                       or local-name($container) = 'preface'
                       or local-name($container) = 'setindex'">1</xsl:when>
       <xsl:when test="local-name($container) = 'glossdiv'">
-        <xsl:value-of select="count(ancestor::glossdiv)+1"/>
+        <xsl:value-of select="count(ancestor::d:glossdiv)+1"/>
       </xsl:when>
       <xsl:when test="local-name($container) = 'sect1'
                       or local-name($container) = 'sect2'
@@ -553,43 +555,43 @@
   </xsl:element>
 </xsl:template>
 
-<xsl:template match="section/subtitle" mode="titlepage.mode" priority="2">
+<xsl:template match="d:section/d:subtitle" mode="titlepage.mode" priority="2">
   <xsl:call-template name="section.subtitle"/>
 </xsl:template>
 
-<xsl:template match="simplesect/subtitle" mode="titlepage.mode" priority="2">
+<xsl:template match="d:simplesect/d:subtitle" mode="titlepage.mode" priority="2">
   <xsl:call-template name="section.subtitle"/>
 </xsl:template>
 
-<xsl:template match="sect1/subtitle" mode="titlepage.mode" priority="2">
+<xsl:template match="d:sect1/d:subtitle" mode="titlepage.mode" priority="2">
   <xsl:call-template name="section.subtitle"/>
 </xsl:template>
 
-<xsl:template match="sect2/subtitle" mode="titlepage.mode" priority="2">
+<xsl:template match="d:sect2/d:subtitle" mode="titlepage.mode" priority="2">
   <xsl:call-template name="section.subtitle"/>
 </xsl:template>
 
-<xsl:template match="sect3/subtitle" mode="titlepage.mode" priority="2">
+<xsl:template match="d:sect3/d:subtitle" mode="titlepage.mode" priority="2">
   <xsl:call-template name="section.subtitle"/>
 </xsl:template>
 
-<xsl:template match="sect4/subtitle" mode="titlepage.mode" priority="2">
+<xsl:template match="d:sect4/d:subtitle" mode="titlepage.mode" priority="2">
   <xsl:call-template name="section.subtitle"/>
 </xsl:template>
 
-<xsl:template match="sect5/subtitle" mode="titlepage.mode" priority="2">
+<xsl:template match="d:sect5/d:subtitle" mode="titlepage.mode" priority="2">
   <xsl:call-template name="section.subtitle"/>
 </xsl:template>
 
 <xsl:template name="section.subtitle">
   <!-- the context node should be the subtitle of a section when called -->
-  <xsl:variable name="section" select="(ancestor::section
-                                        |ancestor::simplesect
-                                        |ancestor::sect1
-                                        |ancestor::sect2
-                                        |ancestor::sect3
-                                        |ancestor::sect4
-                                        |ancestor::sect5)[last()]"/>
+  <xsl:variable name="section" select="(ancestor::d:section
+                                        |ancestor::d:simplesect
+                                        |ancestor::d:sect1
+                                        |ancestor::d:sect2
+                                        |ancestor::d:sect3
+                                        |ancestor::d:sect4
+                                        |ancestor::d:sect5)[last()]"/>
 
   <xsl:variable name="level">
     <xsl:call-template name="section.level">

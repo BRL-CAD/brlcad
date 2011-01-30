@@ -1,6 +1,8 @@
 <?xml version='1.0'?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:fo="http://www.w3.org/1999/XSL/Format"
+<xsl:stylesheet exclude-result-prefixes="d"
+                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 version='1.0'>
 
 <!-- ********************************************************************
@@ -13,7 +15,7 @@
 
      ******************************************************************** -->
 
-<xsl:template match="note|important|warning|caution|tip">
+<xsl:template match="d:note|d:important|d:warning|d:caution|d:tip">
   <xsl:choose>
     <xsl:when test="$admon.graphics != 0">
       <xsl:call-template name="graphical.admonition"/>
@@ -83,7 +85,7 @@
             </fo:block>
           </fo:list-item-label>
           <fo:list-item-body start-indent="body-start()">
-            <xsl:if test="$admon.textlabel != 0 or title or info/title">
+            <xsl:if test="$admon.textlabel != 0 or d:title or d:info/d:title">
               <fo:block xsl:use-attribute-sets="admonition.title.properties">
                 <xsl:apply-templates select="." mode="object.title.markup">
 		  <xsl:with-param name="allow-anchors" select="1"/>
@@ -106,7 +108,7 @@
 
   <fo:block id="{$id}"
             xsl:use-attribute-sets="nongraphical.admonition.properties">
-    <xsl:if test="$admon.textlabel != 0 or title or info/title">
+    <xsl:if test="$admon.textlabel != 0 or d:title or d:info/d:title">
       <fo:block keep-with-next.within-column='always'
                 xsl:use-attribute-sets="admonition.title.properties">
          <xsl:apply-templates select="." mode="object.title.markup">
@@ -121,10 +123,10 @@
   </fo:block>
 </xsl:template>
 
-<xsl:template match="note/title"></xsl:template>
-<xsl:template match="important/title"></xsl:template>
-<xsl:template match="warning/title"></xsl:template>
-<xsl:template match="caution/title"></xsl:template>
-<xsl:template match="tip/title"></xsl:template>
+<xsl:template match="d:note/d:title"></xsl:template>
+<xsl:template match="d:important/d:title"></xsl:template>
+<xsl:template match="d:warning/d:title"></xsl:template>
+<xsl:template match="d:caution/d:title"></xsl:template>
+<xsl:template match="d:tip/d:title"></xsl:template>
 
 </xsl:stylesheet>

@@ -1,6 +1,8 @@
 <?xml version='1.0'?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:fo="http://www.w3.org/1999/XSL/Format"
+<xsl:stylesheet exclude-result-prefixes="d"
+                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 version='1.0'>
 
 <!-- ********************************************************************
@@ -17,7 +19,7 @@
 
 <!-- only set, book and part puts toc in its own page sequence -->
 
-<xsl:template match="set/toc | book/toc | part/toc">
+<xsl:template match="d:set/d:toc | d:book/d:toc | d:part/d:toc">
   <xsl:variable name="toc.params">
     <xsl:call-template name="find.path.params">
       <xsl:with-param name="node" select="parent::*"/>
@@ -40,19 +42,19 @@
           <!-- trick to switch context node to parent element -->
           <xsl:for-each select="parent::*">
             <xsl:choose>
-              <xsl:when test="self::set">
+              <xsl:when test="self::d:set">
                 <xsl:call-template name="set.toc">
                   <xsl:with-param name="toc.title.p" 
                                   select="contains($toc.params, 'title')"/>
                 </xsl:call-template>
               </xsl:when>
-              <xsl:when test="self::book">
+              <xsl:when test="self::d:book">
                 <xsl:call-template name="division.toc">
                   <xsl:with-param name="toc.title.p" 
                                   select="contains($toc.params, 'title')"/>
                 </xsl:call-template>
               </xsl:when>
-              <xsl:when test="self::part">
+              <xsl:when test="self::d:part">
                 <xsl:call-template name="division.toc">
                   <xsl:with-param name="toc.title.p" 
                                   select="contains($toc.params, 'title')"/>
@@ -82,7 +84,7 @@
   </xsl:if>
 </xsl:template>
   
-<xsl:template match="chapter/toc | appendix/toc | preface/toc | article/toc">
+<xsl:template match="d:chapter/d:toc | d:appendix/d:toc | d:preface/d:toc | d:article/d:toc">
   <xsl:variable name="toc.params">
     <xsl:call-template name="find.path.params">
       <xsl:with-param name="node" select="parent::*"/>
@@ -115,12 +117,12 @@
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="section/toc
-                    |sect1/toc
-                    |sect2/toc
-                    |sect3/toc
-                    |sect4/toc
-                    |sect5/toc">
+<xsl:template match="d:section/d:toc
+                    |d:sect1/d:toc
+                    |d:sect2/d:toc
+                    |d:sect3/d:toc
+                    |d:sect4/d:toc
+                    |d:sect5/d:toc">
 
   <xsl:variable name="toc.params">
     <xsl:call-template name="find.path.params">
@@ -156,17 +158,17 @@
 
 <!-- ==================================================================== -->
 
-<xsl:template match="tocpart|tocchap
-                     |toclevel1|toclevel2|toclevel3|toclevel4|toclevel5">
-  <xsl:apply-templates select="tocentry"/>
-  <xsl:if test="tocchap|toclevel1|toclevel2|toclevel3|toclevel4|toclevel5">
+<xsl:template match="d:tocpart|d:tocchap
+                     |d:toclevel1|d:toclevel2|d:toclevel3|d:toclevel4|d:toclevel5">
+  <xsl:apply-templates select="d:tocentry"/>
+  <xsl:if test="d:tocchap|d:toclevel1|d:toclevel2|d:toclevel3|d:toclevel4|d:toclevel5">
     <fo:block start-indent="{count(ancestor::*)*2}pc">
-      <xsl:apply-templates select="tocchap|toclevel1|toclevel2|toclevel3|toclevel4|toclevel5"/>
+      <xsl:apply-templates select="d:tocchap|d:toclevel1|d:toclevel2|d:toclevel3|d:toclevel4|d:toclevel5"/>
     </fo:block>
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="tocentry|lotentry|tocdiv|tocfront|tocback">
+<xsl:template match="d:tocentry|d:lotentry|d:tocdiv|d:tocfront|d:tocback">
   <fo:block text-align-last="justify"
             end-indent="2pc"
             last-line-end-indent="-2pc">
@@ -223,26 +225,26 @@
   </fo:block>
 </xsl:template>
 
-<xsl:template match="toc/title">
+<xsl:template match="d:toc/d:title">
   <fo:block font-weight="bold">
     <xsl:apply-templates/>
   </fo:block>
 </xsl:template>
 
-<xsl:template match="toc/subtitle">
+<xsl:template match="d:toc/d:subtitle">
   <fo:block font-weight="bold">
     <xsl:apply-templates/>
   </fo:block>
 </xsl:template>
 
-<xsl:template match="toc/titleabbrev">
+<xsl:template match="d:toc/d:titleabbrev">
 </xsl:template>
 
 <!-- ==================================================================== -->
 
 <!-- A lot element must have content, because there is no attribute
      to select what kind of list should be generated -->
-<xsl:template match="book/lot | part/lot">
+<xsl:template match="d:book/d:lot | d:part/d:lot">
   <!-- Don't generate a page sequence unless there is content -->
   <xsl:variable name="content">
     <xsl:choose>
@@ -271,7 +273,7 @@
   </xsl:if>
 </xsl:template>
   
-<xsl:template match="chapter/lot | appendix/lot | preface/lot | article/lot">
+<xsl:template match="d:chapter/d:lot | d:appendix/d:lot | d:preface/d:lot | d:article/d:lot">
   <xsl:choose>
     <xsl:when test="* and $process.source.toc != 0">
       <fo:block>
@@ -285,12 +287,12 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="section/lot
-                    |sect1/lot
-                    |sect2/lot
-                    |sect3/lot
-                    |sect4/lot
-                    |sect5/lot">
+<xsl:template match="d:section/d:lot
+                    |d:sect1/d:lot
+                    |d:sect2/d:lot
+                    |d:sect3/d:lot
+                    |d:sect4/d:lot
+                    |d:sect5/d:lot">
   <xsl:choose>
     <xsl:when test="* and $process.source.toc != 0">
       <fo:block>
@@ -314,19 +316,19 @@
   </xsl:message>
 </xsl:template>
 
-<xsl:template match="lot/title">
+<xsl:template match="d:lot/d:title">
   <fo:block font-weight="bold">
     <xsl:apply-templates/>
   </fo:block>
 </xsl:template>
 
-<xsl:template match="lot/subtitle">
+<xsl:template match="d:lot/d:subtitle">
   <fo:block font-weight="bold">
     <xsl:apply-templates/>
   </fo:block>
 </xsl:template>
 
-<xsl:template match="lot/titleabbrev">
+<xsl:template match="d:lot/d:titleabbrev">
 </xsl:template>
 
 </xsl:stylesheet>

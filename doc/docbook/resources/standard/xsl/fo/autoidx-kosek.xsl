@@ -4,7 +4,8 @@
 %common.entities;
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:fo="http://www.w3.org/1999/XSL/Format"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 xmlns:rx="http://www.renderx.com/XSL/Extensions"
                 xmlns:axf="http://www.antennahouse.com/names/XSL/Extensions"
                 xmlns:i="urn:cz-kosek:functions:index"
@@ -12,7 +13,7 @@
                 xmlns:func="http://exslt.org/functions"
                 xmlns:exslt="http://exslt.org/common"
                 extension-element-prefixes="func exslt"
-                exclude-result-prefixes="func exslt i l"
+                exclude-result-prefixes="func exslt i l d"
                 version="1.0">
 
 <!-- ********************************************************************
@@ -78,7 +79,7 @@
   </xsl:variable>
 
   <xsl:variable name="terms"
-                select="//indexterm[count(.|key('group-code',
+                select="//d:indexterm[count(.|key('group-code',
                                           i:group-index(&primary;))
                                           [&scope;][1]) = 1
                                 and not(@class = 'endofrange')]"/>
@@ -92,7 +93,7 @@
   </fo:block>
 </xsl:template>
 
-<xsl:template match="indexterm" mode="index-div-kosek">
+<xsl:template match="d:indexterm" mode="index-div-kosek">
   <xsl:param name="scope" select="."/>
   <xsl:param name="role" select="''"/>
   <xsl:param name="type" select="''"/>

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <!--This file was created automatically by xsl2profile-->
 <!--from the DocBook XSL stylesheets.-->
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:exsl="http://exslt.org/common" xmlns:ng="http://docbook.org/docbook-ng" xmlns:db="http://docbook.org/ns/docbook" xmlns:exslt="http://exslt.org/common" exslt:dummy="dummy" ng:dummy="dummy" db:dummy="dummy" extension-element-prefixes="exslt" exclude-result-prefixes="exsl exslt" version="1.0">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:d="http://docbook.org/ns/docbook"
+xmlns:exsl="http://exslt.org/common" xmlns:ng="http://docbook.org/docbook-ng" xmlns:db="http://docbook.org/ns/docbook" xmlns:exslt="http://exslt.org/common" exslt:dummy="dummy" ng:dummy="dummy" db:dummy="dummy" extension-element-prefixes="exslt" exclude-result-prefixes="exsl exslt d" version="1.0">
 
   <xsl:import href="../html/docbook.xsl"/>
   <xsl:import href="../html/manifest.xsl"/>
@@ -45,7 +46,7 @@
 
   <!-- ==================================================================== -->
 
-  <xslo:include xmlns:xslo="http://www.w3.org/1999/XSL/Transform" href="../profiling/profile-mode.xsl"/><xslo:variable xmlns:xslo="http://www.w3.org/1999/XSL/Transform" name="profiled-content"><xslo:choose><xslo:when test="*/self::ng:* or */self::db:*"><xslo:message>Note: namesp. cut : stripped namespace before processing</xslo:message><xslo:variable name="stripped-content"><xslo:apply-templates select="/" mode="stripNS"/></xslo:variable><xslo:message>Note: namesp. cut : processing stripped document</xslo:message><xslo:apply-templates select="exslt:node-set($stripped-content)" mode="profile"/></xslo:when><xslo:otherwise><xslo:apply-templates select="/" mode="profile"/></xslo:otherwise></xslo:choose></xslo:variable><xslo:variable xmlns:xslo="http://www.w3.org/1999/XSL/Transform" name="profiled-nodes" select="exslt:node-set($profiled-content)"/><xsl:template match="/">
+  <xslo:include xmlns:xslo="http://www.w3.org/1999/XSL/Transform" href="../profiling/profile-mode.xsl"/><xslo:variable xmlns:xslo="http://www.w3.org/1999/XSL/Transform" name="profiled-content"> <xslo:choose> <xslo:when test="namespace-uri(*[1]) != 'http://docbook.org/ns/docbook'"> <xsl:message>Adding DocBook namespace to version 4 DocBook document</xsl:message> <xsl:variable name="addns"> <xsl:apply-templates mode="addNS" select="/"/> </xsl:variable> <xsl:apply-templates select="exsl:node-set($addns)" mode="profile"/> </xslo:when> <xslo:otherwise> <xslo:apply-templates select="/" mode="profile"/> </xslo:otherwise> </xslo:choose> </xslo:variable><xslo:variable xmlns:xslo="http://www.w3.org/1999/XSL/Transform" name="profiled-nodes" select="exslt:node-set($profiled-content)"/><xsl:template match="/">
     <!-- * Get a title for current doc so that we let the user -->
     <!-- * know what document we are processing at this point. -->
     <xsl:variable name="doc.title">
@@ -64,7 +65,7 @@
         <!-- * manpages/profile-docbook.xsl, and the refentry child check -->
         <!-- * in the profile-docbook.xsl stylesheet won't work if we do -->
         <!-- * a simple //refentry check. -->
-        <xsl:apply-templates select="$profiled-nodes//refentry"/>
+        <xsl:apply-templates select="$profiled-nodes//d:refentry"/>
         <!-- * if $man.output.manifest.enabled is non-zero, -->
         <!-- * generate a manifest file -->
         <xsl:if test="not($man.output.manifest.enabled = 0)">
@@ -123,13 +124,13 @@
 
   <!-- ============================================================== -->
 
-  <xsl:template match="refentry">
+  <xsl:template match="d:refentry">
     <xsl:param name="lang">
       <xsl:call-template name="l10n.language"/>
     </xsl:param>
     <!-- * Just use the first refname found as the "name" of the man -->
     <!-- * page (which may different from the "title"...) -->
-    <xsl:variable name="first.refname" select="refnamediv[1]/refname[1]"/>
+    <xsl:variable name="first.refname" select="d:refnamediv[1]/d:refname[1]"/>
 
     <xsl:call-template name="root.messages">
       <xsl:with-param name="refname" select="$first.refname"/>

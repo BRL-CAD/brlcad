@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="ASCII"?>
 <!--This file was created automatically by html2xhtml-->
 <!--from the HTML stylesheets.-->
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" version="1.0">
+<xsl:stylesheet exclude-result-prefixes="d"
+                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:d="http://docbook.org/ns/docbook"
+xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
 <!-- ********************************************************************
      $Id$
@@ -15,20 +17,20 @@
 
 <!-- ==================================================================== -->
 
-<xsl:template match="colgroup" mode="htmlTable">
+<xsl:template match="d:colgroup" mode="htmlTable">
   <xsl:element name="{local-name()}" namespace="http://www.w3.org/1999/xhtml">
     <xsl:apply-templates select="@*" mode="htmlTableAtt"/>
     <xsl:apply-templates mode="htmlTable"/>
   </xsl:element>
 </xsl:template>
 
-<xsl:template match="col" mode="htmlTable">
+<xsl:template match="d:col" mode="htmlTable">
   <xsl:element name="{local-name()}" namespace="http://www.w3.org/1999/xhtml">
     <xsl:apply-templates select="@*" mode="htmlTableAtt"/>
   </xsl:element>
 </xsl:template>
 
-<xsl:template match="caption" mode="htmlTable">
+<xsl:template match="d:caption" mode="htmlTable">
   <!-- do not use xsl:copy because of XHTML's needs -->
   <caption>  
     <xsl:apply-templates select="@*" mode="htmlTableAtt"/>
@@ -40,14 +42,14 @@
   </caption>
 </xsl:template>
 
-<xsl:template match="tbody|thead|tfoot|tr" mode="htmlTable">
+<xsl:template match="d:tbody|d:thead|d:tfoot|d:tr" mode="htmlTable">
   <xsl:element name="{local-name(.)}" namespace="http://www.w3.org/1999/xhtml">
     <xsl:apply-templates select="@*" mode="htmlTableAtt"/>
     <xsl:apply-templates mode="htmlTable"/>
   </xsl:element>
 </xsl:template>
 
-<xsl:template match="th|td" mode="htmlTable">
+<xsl:template match="d:th|d:td" mode="htmlTable">
   <xsl:element name="{local-name(.)}" namespace="http://www.w3.org/1999/xhtml">
     <xsl:apply-templates select="@*" mode="htmlTableAtt"/>
     <xsl:apply-templates/> <!-- *not* mode=htmlTable -->

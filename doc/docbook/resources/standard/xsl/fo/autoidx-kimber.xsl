@@ -9,9 +9,10 @@
 
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:fo="http://www.w3.org/1999/XSL/Format"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 xmlns:k="java:com.isogen.saxoni18n.Saxoni18nService"
-                exclude-result-prefixes="k"
+                exclude-result-prefixes="k d"
                 version="1.0">
 
 <!-- ********************************************************************
@@ -82,7 +83,7 @@
   </xsl:variable>
 
   <xsl:variable name="terms"
-                select="//indexterm[count(.|key('k-group',
+                select="//d:indexterm[count(.|key('k-group',
                    k:getIndexGroupKey(&lang;, &primary;))
                    [&scope;][1]) = 1
                    and not(@class = 'endofrange')]"/>
@@ -135,7 +136,7 @@
 
 </xsl:template>
 
-<xsl:template match="indexterm" mode="index-div-kimber">
+<xsl:template match="d:indexterm" mode="index-div-kimber">
   <xsl:param name="scope" select="."/>
   <xsl:param name="role" select="''"/>
   <xsl:param name="type" select="''"/>

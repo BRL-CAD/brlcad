@@ -1,6 +1,8 @@
 <?xml version='1.0'?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:xi="http://www.w3.org/2001/XInclude"
+<xsl:stylesheet exclude-result-prefixes="d"
+                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:xi="http://www.w3.org/2001/XInclude"
                 version='1.0'>
 
 <!-- ********************************************************************
@@ -47,11 +49,11 @@
 
 <!-- ==================================================================== -->
 
-<xsl:template match="textobject[child::textdata[@entityref|@fileref]]">
-  <xsl:apply-templates select="textdata"/>
+<xsl:template match="d:textobject[child::d:textdata[@entityref|@fileref]]">
+  <xsl:apply-templates select="d:textdata"/>
 </xsl:template>
 
-<xsl:template match="textdata[@entityref|@fileref]">
+<xsl:template match="d:textdata[@entityref|@fileref]">
   <xsl:variable name="filename">
     <xsl:call-template name="get.external.filename"/>
   </xsl:variable>
@@ -71,15 +73,15 @@
 <!-- ==================================================================== -->
 
 <xsl:template
-    match="inlinemediaobject
-           [child::imageobject
-           [child::imagedata
+    match="d:inlinemediaobject
+           [child::d:imageobject
+           [child::d:imagedata
            [@format = 'linespecific' and
            (@entityref|@fileref)]]]">
-  <xsl:apply-templates select="imageobject/imagedata"/>
+  <xsl:apply-templates select="d:imageobject/d:imagedata"/>
 </xsl:template>
 
-<xsl:template match="imagedata
+<xsl:template match="d:imagedata
                      [@format = 'linespecific' and
                      (@entityref|@fileref)]">
   <xsl:variable name="filename">
@@ -90,7 +92,7 @@
 
 <!-- ==================================================================== -->
 
-<xsl:template match="inlinegraphic
+<xsl:template match="d:inlinegraphic
                      [@format = 'linespecific' and
                      (@entityref|@fileref)]">
   <xsl:variable name="filename">

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <!--This file was created automatically by xsl2profile-->
 <!--from the DocBook XSL stylesheets.-->
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:exsl="http://exslt.org/common" xmlns:fo="http://www.w3.org/1999/XSL/Format" xmlns:ng="http://docbook.org/docbook-ng" xmlns:db="http://docbook.org/ns/docbook" xmlns:exslt="http://exslt.org/common" exslt:dummy="dummy" ng:dummy="dummy" db:dummy="dummy" extension-element-prefixes="exslt" exclude-result-prefixes="db ng exsl exslt" version="1.0">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:d="http://docbook.org/ns/docbook"
+xmlns:exsl="http://exslt.org/common" xmlns:fo="http://www.w3.org/1999/XSL/Format" xmlns:ng="http://docbook.org/docbook-ng" xmlns:db="http://docbook.org/ns/docbook" xmlns:exslt="http://exslt.org/common" exslt:dummy="dummy" ng:dummy="dummy" db:dummy="dummy" extension-element-prefixes="exslt" exclude-result-prefixes="db ng exsl exslt d" version="1.0">
 
 <!-- It is important to use indent="no" here, otherwise verbatim -->
 <!-- environments get broken by indented tags...at least when the -->
@@ -72,7 +73,7 @@
 <xsl:include href="ebnf.xsl"/>
 <xsl:include href="../html/chunker.xsl"/>
 <xsl:include href="annotations.xsl"/>
-<xsl:include href="../common/stripns.xsl"/>
+<xsl:include href="../common/addns.xsl"/>
 
 <xsl:include href="fop.xsl"/>
 <xsl:include href="fop1.xsl"/>
@@ -117,16 +118,14 @@
 <!-- Update this list if new root elements supported -->
 <xsl:variable name="root.elements" select="' appendix article bibliography book chapter colophon dedication glossary index part preface qandaset refentry reference sect1 section set setindex '"/>
 
-<xslo:include xmlns:xslo="http://www.w3.org/1999/XSL/Transform" href="../profiling/profile-mode.xsl"/><xslo:variable xmlns:xslo="http://www.w3.org/1999/XSL/Transform" name="profiled-content"><xslo:choose><xslo:when test="*/self::ng:* or */self::db:*"><xslo:message>Note: namesp. cut : stripped namespace before processing</xslo:message><xslo:variable name="stripped-content"><xslo:apply-templates select="/" mode="stripNS"/></xslo:variable><xslo:message>Note: namesp. cut : processing stripped document</xslo:message><xslo:apply-templates select="exslt:node-set($stripped-content)" mode="profile"/></xslo:when><xslo:otherwise><xslo:apply-templates select="/" mode="profile"/></xslo:otherwise></xslo:choose></xslo:variable><xslo:variable xmlns:xslo="http://www.w3.org/1999/XSL/Transform" name="profiled-nodes" select="exslt:node-set($profiled-content)"/><xsl:template match="/">
+<xslo:include xmlns:xslo="http://www.w3.org/1999/XSL/Transform" href="../profiling/profile-mode.xsl"/><xslo:variable xmlns:xslo="http://www.w3.org/1999/XSL/Transform" name="profiled-content"> <xslo:choose> <xslo:when test="namespace-uri(*[1]) != 'http://docbook.org/ns/docbook'"> <xsl:message>Adding DocBook namespace to version 4 DocBook document</xsl:message> <xsl:variable name="addns"> <xsl:apply-templates mode="addNS" select="/"/> </xsl:variable> <xsl:apply-templates select="exsl:node-set($addns)" mode="profile"/> </xslo:when> <xslo:otherwise> <xslo:apply-templates select="/" mode="profile"/> </xslo:otherwise> </xslo:choose> </xslo:variable><xslo:variable xmlns:xslo="http://www.w3.org/1999/XSL/Transform" name="profiled-nodes" select="exslt:node-set($profiled-content)"/><xsl:template match="/">
   <!-- * Get a title for current doc so that we let the user -->
   <!-- * know what document we are processing at this point. -->
   <xsl:variable name="doc.title">
     <xsl:call-template name="get.doc.title"/>
   </xsl:variable>
   <xsl:choose>
-    <!-- Hack! If someone hands us a DocBook V5.x or DocBook NG document,
-         toss the namespace and continue.  Use the docbook5 namespaced
-         stylesheets for DocBook5 if you don't want to use this feature.-->
+    
     <xsl:when test="false()"/>
     <!-- Can't process unless namespace removed -->
     <xsl:when test="false()"/>
@@ -196,8 +195,8 @@
 
   <xsl:variable name="title">
     <xsl:choose>
-      <xsl:when test="$document.element/title[1]">
-        <xsl:value-of select="$document.element/title[1]"/>
+      <xsl:when test="$document.element/d:title[1]">
+        <xsl:value-of select="$document.element/d:title[1]"/>
       </xsl:when>
       <xsl:otherwise>[could not find document title]</xsl:otherwise>
     </xsl:choose>

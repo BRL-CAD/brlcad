@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:fo="http://www.w3.org/1999/XSL/Format"
+<xsl:stylesheet exclude-result-prefixes="d"
+                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 version="1.0">
 
 <!-- ********************************************************************
@@ -2083,7 +2085,7 @@
       <xsl:when test="($sequence='odd' or $sequence='even') and $position='center'">
         <xsl:if test="$pageclass != 'titlepage'">
           <xsl:choose>
-            <xsl:when test="ancestor::book and ($double.sided != 0)">
+            <xsl:when test="ancestor::d:book and ($double.sided != 0)">
               <fo:retrieve-marker retrieve-class-name="section.head.marker"
                                   retrieve-position="first-including-carryover"
                                   retrieve-boundary="page-sequence"/>
@@ -2442,7 +2444,7 @@
   <xsl:param name="master-reference" select="''"/>
 
   <xsl:choose>
-    <xsl:when test="$element = 'toc' and self::book">i</xsl:when>
+    <xsl:when test="$element = 'toc' and self::d:book">i</xsl:when>
     <xsl:when test="$element = 'preface'">i</xsl:when>
     <xsl:when test="$element = 'dedication'">i</xsl:when>
     <xsl:when test="$element = 'acknowledgements'">i</xsl:when>
@@ -2457,17 +2459,17 @@
   <!-- Select the first content that the stylesheet places
        after the TOC -->
   <xsl:variable name="first.book.content" 
-                select="ancestor::book/*[
-                          not(self::title or
-                              self::subtitle or
-                              self::titleabbrev or
-                              self::bookinfo or
-                              self::info or
-                              self::dedication or
-                              self::acknowledgements or
-                              self::preface or
-                              self::toc or
-                              self::lot)][1]"/>
+                select="ancestor::d:book/*[
+                          not(self::d:title or
+                              self::d:subtitle or
+                              self::d:titleabbrev or
+                              self::d:bookinfo or
+                              self::d:info or
+                              self::d:dedication or
+                              self::d:acknowledgements or
+                              self::d:preface or
+                              self::d:toc or
+                              self::d:lot)][1]"/>
   <xsl:choose>
     <!-- double-sided output -->
     <xsl:when test="$double.sided != 0">
@@ -2478,13 +2480,13 @@
         <!-- Change page.number.format if not -->
         <xsl:when test="$element = 'preface'">auto-odd</xsl:when>
         <xsl:when test="($element = 'dedication' or $element = 'article') 
-                    and not(preceding::chapter
-                            or preceding::preface
-                            or preceding::appendix
-                            or preceding::article
-                            or preceding::dedication
-                            or parent::part
-                            or parent::reference)">1</xsl:when>
+                    and not(preceding::d:chapter
+                            or preceding::d:preface
+                            or preceding::d:appendix
+                            or preceding::d:article
+                            or preceding::d:dedication
+                            or parent::d:part
+                            or parent::d:reference)">1</xsl:when>
         <xsl:when test="generate-id($first.book.content) =
                         generate-id(.)">1</xsl:when>
         <xsl:otherwise>auto-odd</xsl:otherwise>
@@ -2498,13 +2500,13 @@
         <xsl:when test="$element = 'book'">1</xsl:when>
         <xsl:when test="$element = 'preface'">auto</xsl:when>
        <xsl:when test="($element = 'dedication' or $element = 'article') and
-                        not(preceding::chapter
-                            or preceding::preface
-                            or preceding::appendix
-                            or preceding::article
-                            or preceding::dedication
-                            or parent::part
-                            or parent::reference)">1</xsl:when>
+                        not(preceding::d:chapter
+                            or preceding::d:preface
+                            or preceding::d:appendix
+                            or preceding::d:article
+                            or preceding::d:dedication
+                            or parent::d:part
+                            or parent::d:reference)">1</xsl:when>
         <xsl:when test="generate-id($first.book.content) =
                         generate-id(.)">1</xsl:when>
         <xsl:otherwise>auto</xsl:otherwise>

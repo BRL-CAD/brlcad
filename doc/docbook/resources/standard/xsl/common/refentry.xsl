@@ -1,8 +1,9 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
                 xmlns:date="http://exslt.org/dates-and-times"
-                exclude-result-prefixes="doc date"
+                exclude-result-prefixes="doc date d"
                 version='1.0'>
 
 <!-- ********************************************************************
@@ -204,9 +205,9 @@
 <xsl:template name="get.refentry.title">
   <xsl:param name="refname"/>
   <xsl:choose>
-    <xsl:when test="refmeta/refentrytitle">
+    <xsl:when test="d:refmeta/d:refentrytitle">
       <xsl:copy>
-        <xsl:apply-templates select="refmeta/refentrytitle/node()"/>
+        <xsl:apply-templates select="d:refmeta/d:refentrytitle/node()"/>
       </xsl:copy>
     </xsl:when>
     <xsl:otherwise>
@@ -251,8 +252,8 @@
   <xsl:param name="refname"/>
   <xsl:param name="quiet" select="0"/>
   <xsl:choose>
-    <xsl:when test="refmeta/manvolnum">
-      <xsl:value-of select="refmeta/manvolnum"/>
+    <xsl:when test="d:refmeta/d:manvolnum">
+      <xsl:value-of select="d:refmeta/d:manvolnum"/>
     </xsl:when>
     <xsl:otherwise>
       <xsl:if test="$quiet = 0">
@@ -276,7 +277,7 @@
         </xsl:if>
       </xsl:if>
       <xsl:choose>
-        <xsl:when test=".//funcsynopsis">
+        <xsl:when test=".//d:funcsynopsis">
           <xsl:if test="$quiet = 0">
             <xsl:if test="$refentry.meta.get.quietly = 0">
               <xsl:call-template name="log.message">
@@ -355,11 +356,11 @@
         <!-- * in *info -->
         <xsl:choose>
           <!-- * look for date or pubdate in *info -->
-          <xsl:when test="$info/date/node()
-                          |$info/pubdate/node()">
+          <xsl:when test="$info/d:date/node()
+                          |$info/d:pubdate/node()">
             <xsl:apply-templates
-                select="(($info[date])[last()]/date)[1]|
-                        (($info[pubdate])[last()]/pubdate)[1]"/>
+                select="(($info[d:date])[last()]/d:date)[1]|
+                        (($info[d:pubdate])[last()]/d:pubdate)[1]"/>
           </xsl:when>
           <xsl:otherwise>
             <!-- * found no Date or Pubdate -->
@@ -690,85 +691,85 @@
       <!-- * the source.name profile is empty; so we need to look -->
       <!-- * for a name to use -->
       <xsl:choose>
-        <xsl:when test="refmeta/refmiscinfo[@class = 'source' or @class = 'software']">
+        <xsl:when test="d:refmeta/d:refmiscinfo[@class = 'source' or @class = 'software']">
           <xsl:apply-templates 
-              select="refmeta/refmiscinfo[@class = 'source' or @class='software'][1]/node()"/>
+              select="d:refmeta/d:refmiscinfo[@class = 'source' or @class='software'][1]/node()"/>
         </xsl:when>
         <xsl:otherwise>
           <xsl:choose>
-            <xsl:when test="$info/productname">
+            <xsl:when test="$info/d:productname">
               <xsl:call-template name="set.refentry.metadata">
                 <xsl:with-param name="refname" select="$refname"/>
                 <xsl:with-param
                     name="info"
-                    select="($info[productname])[last()]"/>
+                    select="($info[d:productname])[last()]"/>
                 <xsl:with-param
                     name="contents"
-                    select="(($info[productname])[last()]/productname)[1]"/>
+                    select="(($info[d:productname])[last()]/d:productname)[1]"/>
                 <xsl:with-param name="context">source</xsl:with-param>
               </xsl:call-template>
             </xsl:when>
-            <xsl:when test="$info/corpname">
+            <xsl:when test="$info/d:corpname">
               <xsl:call-template name="set.refentry.metadata">
                 <xsl:with-param name="refname" select="$refname"/>
                 <xsl:with-param
                     name="info"
-                    select="($info[corpname])[last()]"/>
+                    select="($info[d:corpname])[last()]"/>
                 <xsl:with-param
                     name="contents"
-                    select="(($info[corpname])[last()]/corpname)[1]"/>
-                <xsl:with-param name="context">source</xsl:with-param>
-                <xsl:with-param name="preferred">productname</xsl:with-param>
-              </xsl:call-template>
-            </xsl:when>
-            <xsl:when test="$info/corpcredit">
-              <xsl:call-template name="set.refentry.metadata">
-                <xsl:with-param name="refname" select="$refname"/>
-                <xsl:with-param
-                    name="info"
-                    select="($info[corpcredit])[last()]"/>
-                <xsl:with-param
-                    name="contents"
-                    select="(($info[corpcredit])[last()]/corpcredit)[1]"/>
+                    select="(($info[d:corpname])[last()]/d:corpname)[1]"/>
                 <xsl:with-param name="context">source</xsl:with-param>
                 <xsl:with-param name="preferred">productname</xsl:with-param>
               </xsl:call-template>
             </xsl:when>
-            <xsl:when test="$info/corpauthor">
+            <xsl:when test="$info/d:corpcredit">
               <xsl:call-template name="set.refentry.metadata">
                 <xsl:with-param name="refname" select="$refname"/>
                 <xsl:with-param
                     name="info"
-                    select="($info[corpauthor])[last()]"/>
+                    select="($info[d:corpcredit])[last()]"/>
                 <xsl:with-param
                     name="contents"
-                    select="(($info[corpauthor])[last()]/corpauthor)[1]"/>
+                    select="(($info[d:corpcredit])[last()]/d:corpcredit)[1]"/>
                 <xsl:with-param name="context">source</xsl:with-param>
                 <xsl:with-param name="preferred">productname</xsl:with-param>
               </xsl:call-template>
             </xsl:when>
-            <xsl:when test="$info//orgname">
+            <xsl:when test="$info/d:corpauthor">
               <xsl:call-template name="set.refentry.metadata">
                 <xsl:with-param name="refname" select="$refname"/>
                 <xsl:with-param
                     name="info"
-                    select="($info[//orgname])[last()]"/>
+                    select="($info[d:corpauthor])[last()]"/>
                 <xsl:with-param
                     name="contents"
-                    select="(($info[//orgname])[last()]//orgname)[1]"/>
+                    select="(($info[d:corpauthor])[last()]/d:corpauthor)[1]"/>
                 <xsl:with-param name="context">source</xsl:with-param>
                 <xsl:with-param name="preferred">productname</xsl:with-param>
               </xsl:call-template>
             </xsl:when>
-            <xsl:when test="$info//publishername">
+            <xsl:when test="$info//d:orgname">
               <xsl:call-template name="set.refentry.metadata">
                 <xsl:with-param name="refname" select="$refname"/>
                 <xsl:with-param
                     name="info"
-                    select="($info[//publishername])[last()]"/>
+                    select="($info[//d:orgname])[last()]"/>
                 <xsl:with-param
                     name="contents"
-                    select="(($info[//publishername])[last()]//publishername)[1]"/>
+                    select="(($info[//d:orgname])[last()]//d:orgname)[1]"/>
+                <xsl:with-param name="context">source</xsl:with-param>
+                <xsl:with-param name="preferred">productname</xsl:with-param>
+              </xsl:call-template>
+            </xsl:when>
+            <xsl:when test="$info//d:publishername">
+              <xsl:call-template name="set.refentry.metadata">
+                <xsl:with-param name="refname" select="$refname"/>
+                <xsl:with-param
+                    name="info"
+                    select="($info[//d:publishername])[last()]"/>
+                <xsl:with-param
+                    name="contents"
+                    select="(($info[//d:publishername])[last()]//d:publishername)[1]"/>
                 <xsl:with-param name="context">source</xsl:with-param>
                 <xsl:with-param name="preferred">productname</xsl:with-param>
               </xsl:call-template>
@@ -874,46 +875,46 @@
       <!-- * the source.name profile is empty; so we need to look -->
       <!-- * for a name to use -->
       <xsl:choose>
-        <xsl:when test="refmeta/refmiscinfo[@class = 'version']">
+        <xsl:when test="d:refmeta/d:refmiscinfo[@class = 'version']">
           <xsl:apply-templates 
-              select="refmeta/refmiscinfo[@class = 'version'][1]/node()"/>
+              select="d:refmeta/d:refmiscinfo[@class = 'version'][1]/node()"/>
         </xsl:when>
         <xsl:otherwise>
           <xsl:choose>
-            <xsl:when test="$info/productnumber">
+            <xsl:when test="$info/d:productnumber">
               <xsl:call-template name="set.refentry.metadata">
                 <xsl:with-param name="refname" select="$refname"/>
                 <xsl:with-param
                     name="info"
-                    select="($info[productnumber])[last()]"/>
+                    select="($info[d:productnumber])[last()]"/>
                 <xsl:with-param
                     name="contents"
-                    select="(($info[productnumber])[last()]/productnumber)[1]"/>
+                    select="(($info[d:productnumber])[last()]/d:productnumber)[1]"/>
                 <xsl:with-param name="context">version</xsl:with-param>
               </xsl:call-template>
             </xsl:when>
-            <xsl:when test="$info/edition">
+            <xsl:when test="$info/d:edition">
               <xsl:call-template name="set.refentry.metadata">
                 <xsl:with-param name="refname" select="$refname"/>
                 <xsl:with-param
                     name="info"
-                    select="($info[edition])[last()]"/>
+                    select="($info[d:edition])[last()]"/>
                 <xsl:with-param
                     name="contents"
-                    select="(($info[edition])[last()]/edition)[1]"/>
+                    select="(($info[d:edition])[last()]/d:edition)[1]"/>
                 <xsl:with-param name="context">version</xsl:with-param>
                 <xsl:with-param name="preferred">productnumber</xsl:with-param>
               </xsl:call-template>
             </xsl:when>
-            <xsl:when test="$info/releaseinfo">
+            <xsl:when test="$info/d:releaseinfo">
               <xsl:call-template name="set.refentry.metadata">
                 <xsl:with-param name="refname" select="$refname"/>
                 <xsl:with-param
                     name="info"
-                    select="($info[releaseinfo])[last()]"/>
+                    select="($info[d:releaseinfo])[last()]"/>
                 <xsl:with-param
                     name="contents"
-                    select="(($info[releaseinfo])[last()]/releaseinfo)[1]"/>
+                    select="(($info[d:releaseinfo])[last()]/d:releaseinfo)[1]"/>
                 <xsl:with-param name="context">version</xsl:with-param>
                 <xsl:with-param name="preferred">productnumber</xsl:with-param>
               </xsl:call-template>
@@ -1056,9 +1057,9 @@
       </xsl:when>
       <xsl:otherwise>
         <xsl:choose>
-          <xsl:when test="refmeta/refmiscinfo[@class = 'manual' or @class = 'sectdesc']">
+          <xsl:when test="d:refmeta/d:refmiscinfo[@class = 'manual' or @class = 'sectdesc']">
             <xsl:apply-templates 
-                select="refmeta/refmiscinfo[@class = 'manual' or @class = 'sectdesc'][1]/node()"/>
+                select="d:refmeta/d:refmiscinfo[@class = 'manual' or @class = 'sectdesc'][1]/node()"/>
           </xsl:when>
           <xsl:otherwise>
             <!-- * only in the case of choosing appropriate -->
@@ -1066,27 +1067,27 @@
             <!-- * (first) matching element instead of the -->
             <!-- * closest (last) matching one -->
             <xsl:choose>
-              <xsl:when test="ancestor::*/title">
+              <xsl:when test="ancestor::*/d:title">
                 <xsl:call-template name="set.refentry.metadata">
                   <xsl:with-param name="refname" select="$refname"/>
                   <xsl:with-param
                       name="info"
-                      select="(ancestor::*[title])[1]"/>
+                      select="(ancestor::*[d:title])[1]"/>
                   <xsl:with-param
                       name="contents"
-                      select="(ancestor::*[title])[1]/title"/>
+                      select="(ancestor::*[d:title])[1]/d:title"/>
                   <xsl:with-param name="context">manual</xsl:with-param>
                 </xsl:call-template>
               </xsl:when>
-              <xsl:when test="$info/title">
+              <xsl:when test="$info/d:title">
                 <xsl:call-template name="set.refentry.metadata">
                   <xsl:with-param name="refname" select="$refname"/>
                   <xsl:with-param
                       name="info"
-                      select="($info[title])[1]"/>
+                      select="($info[d:title])[1]"/>
                   <xsl:with-param
                       name="contents"
-                      select="(($info[title])[1]/title)[1]"/>
+                      select="(($info[d:title])[1]/d:title)[1]"/>
                   <xsl:with-param name="context">manual</xsl:with-param>
                 </xsl:call-template>
               </xsl:when>

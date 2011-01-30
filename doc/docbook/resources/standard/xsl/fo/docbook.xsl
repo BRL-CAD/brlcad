@@ -1,10 +1,11 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:exsl="http://exslt.org/common"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:exsl="http://exslt.org/common"
                 xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 xmlns:ng="http://docbook.org/docbook-ng"
                 xmlns:db="http://docbook.org/ns/docbook"
-                exclude-result-prefixes="db ng exsl"
+                exclude-result-prefixes="db ng exsl d"
                 version='1.0'>
 
 <!-- It is important to use indent="no" here, otherwise verbatim -->
@@ -76,7 +77,7 @@
 <xsl:include href="ebnf.xsl"/>
 <xsl:include href="../html/chunker.xsl"/>
 <xsl:include href="annotations.xsl"/>
-<xsl:include href="../common/stripns.xsl"/>
+<xsl:include href="../common/addns.xsl"/>
 
 <xsl:include href="fop.xsl"/>
 <xsl:include href="fop1.xsl"/>
@@ -128,43 +129,40 @@
     <xsl:call-template name="get.doc.title"/>
   </xsl:variable>
   <xsl:choose>
-    <!-- Hack! If someone hands us a DocBook V5.x or DocBook NG document,
-         toss the namespace and continue.  Use the docbook5 namespaced
-         stylesheets for DocBook5 if you don't want to use this feature.-->
-    <xsl:when test="$exsl.node.set.available != 0
-                    and (*/self::ng:* or */self::db:*)">
-      <xsl:call-template name="log.message">
-        <xsl:with-param name="level">Note</xsl:with-param>
-        <xsl:with-param name="source" select="$doc.title"/>
-        <xsl:with-param name="context-desc">
-          <xsl:text>namesp. cut</xsl:text>
-        </xsl:with-param>
-        <xsl:with-param name="message">
-          <xsl:text>stripped namespace before processing</xsl:text>
-        </xsl:with-param>
-      </xsl:call-template>
-      <xsl:variable name="nons">
-        <xsl:apply-templates mode="stripNS"/>
-      </xsl:variable>
-      <xsl:call-template name="log.message">
-        <xsl:with-param name="level">Note</xsl:with-param>
-        <xsl:with-param name="source" select="$doc.title"/>
-        <xsl:with-param name="context-desc">
-          <xsl:text>namesp. cut</xsl:text>
-        </xsl:with-param>
-        <xsl:with-param name="message">
-          <xsl:text>processing stripped document</xsl:text>
-        </xsl:with-param>
-      </xsl:call-template>
-      <xsl:apply-templates select="exsl:node-set($nons)"/>
-    </xsl:when>
+    
+    <xsl:when test="namespace-uri(*[1]) != 'http://docbook.org/ns/docbook'">
+ <xsl:call-template name="log.message">
+ <xsl:with-param name="level">Note</xsl:with-param>
+ <xsl:with-param name="source" select="$doc.title"/>
+ <xsl:with-param name="context-desc">
+ <xsl:text>namesp. add</xsl:text>
+ </xsl:with-param>
+ <xsl:with-param name="message">
+ <xsl:text>added namespace before processing</xsl:text>
+ </xsl:with-param>
+ </xsl:call-template>
+ <xsl:variable name="addns">
+    <xsl:apply-templates mode="addNS"/>
+  </xsl:variable>
+  <xsl:apply-templates select="exsl:node-set($addns)"/>
+</xsl:when>
     <!-- Can't process unless namespace removed -->
-    <xsl:when test="*/self::ng:* or */self::db:*">
-      <xsl:message terminate="yes">
-        <xsl:text>Unable to strip the namespace from DB5 document,</xsl:text>
-        <xsl:text> cannot proceed.</xsl:text>
-      </xsl:message>
-    </xsl:when>
+    <xsl:when test="namespace-uri(*[1]) != 'http://docbook.org/ns/docbook'">
+ <xsl:call-template name="log.message">
+ <xsl:with-param name="level">Note</xsl:with-param>
+ <xsl:with-param name="source" select="$doc.title"/>
+ <xsl:with-param name="context-desc">
+ <xsl:text>namesp. add</xsl:text>
+ </xsl:with-param>
+ <xsl:with-param name="message">
+ <xsl:text>added namespace before processing</xsl:text>
+ </xsl:with-param>
+ </xsl:call-template>
+ <xsl:variable name="addns">
+    <xsl:apply-templates mode="addNS"/>
+  </xsl:variable>
+  <xsl:apply-templates select="exsl:node-set($addns)"/>
+</xsl:when>
     <xsl:otherwise>
       <xsl:choose>
         <xsl:when test="$rootid != ''">
@@ -238,8 +236,8 @@
 
   <xsl:variable name="title">
     <xsl:choose>
-      <xsl:when test="$document.element/title[1]">
-        <xsl:value-of select="$document.element/title[1]"/>
+      <xsl:when test="$document.element/d:title[1]">
+        <xsl:value-of select="$document.element/d:title[1]"/>
       </xsl:when>
       <xsl:otherwise>[could not find document title]</xsl:otherwise>
     </xsl:choose>

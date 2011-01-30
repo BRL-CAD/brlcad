@@ -1,11 +1,12 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:fo="http://www.w3.org/1999/XSL/Format"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 xmlns:sverb="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.Verbatim"
                 xmlns:xverb="com.nwalsh.xalan.Verbatim"
                 xmlns:lxslt="http://xml.apache.org/xslt"
                 xmlns:exsl="http://exslt.org/common"
-                exclude-result-prefixes="sverb xverb lxslt exsl"
+                exclude-result-prefixes="sverb xverb lxslt exsl d"
                 version='1.0'>
 
 <!-- ********************************************************************
@@ -27,7 +28,7 @@
 <lxslt:component prefix="xverb"
                  functions="numberLines"/>
 
-<xsl:template match="programlisting|screen|synopsis">
+<xsl:template match="d:programlisting|d:screen|d:synopsis">
   <xsl:param name="suppress-numbers" select="'0'"/>
   <xsl:variable name="id"><xsl:call-template name="object.id"/></xsl:variable>
 
@@ -101,7 +102,7 @@
   <xsl:choose>
     <!-- Need a block-container for these features -->
     <xsl:when test="@width != '' or
-                    (self::programlisting and
+                    (self::d:programlisting and
                     starts-with($writing.mode, 'rl'))">
       <fo:block-container start-indent="0pt" end-indent="0pt">
         <xsl:if test="@width != ''">
@@ -110,7 +111,7 @@
           </xsl:attribute>
         </xsl:if>
         <!-- All known program code is left-to-right -->
-        <xsl:if test="self::programlisting and
+        <xsl:if test="self::d:programlisting and
                       starts-with($writing.mode, 'rl')">
           <xsl:attribute name="writing-mode">lr-tb</xsl:attribute>
         </xsl:if>
@@ -124,7 +125,7 @@
 
 </xsl:template>
 
-<xsl:template match="literallayout">
+<xsl:template match="d:literallayout">
   <xsl:param name="suppress-numbers" select="'0'"/>
 
   <xsl:variable name="id"><xsl:call-template name="object.id"/></xsl:variable>
@@ -184,7 +185,7 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="address">
+<xsl:template match="d:address">
   <xsl:param name="suppress-numbers" select="'0'"/>
 
   <xsl:variable name="content">
@@ -285,34 +286,34 @@
       <xsl:when test="$pi.context/@continuation='continues'">
         <xsl:variable name="lastLine">
           <xsl:choose>
-            <xsl:when test="$pi.context/self::programlisting">
+            <xsl:when test="$pi.context/self::d:programlisting">
               <xsl:call-template name="lastLineNumber">
                 <xsl:with-param name="listings"
-                     select="preceding::programlisting[@linenumbering='numbered']"/>
+                     select="preceding::d:programlisting[@linenumbering='numbered']"/>
               </xsl:call-template>
             </xsl:when>
-            <xsl:when test="$pi.context/self::screen">
+            <xsl:when test="$pi.context/self::d:screen">
               <xsl:call-template name="lastLineNumber">
                 <xsl:with-param name="listings"
-                     select="preceding::screen[@linenumbering='numbered']"/>
+                     select="preceding::d:screen[@linenumbering='numbered']"/>
               </xsl:call-template>
             </xsl:when>
-            <xsl:when test="$pi.context/self::literallayout">
+            <xsl:when test="$pi.context/self::d:literallayout">
               <xsl:call-template name="lastLineNumber">
                 <xsl:with-param name="listings"
-                     select="preceding::literallayout[@linenumbering='numbered']"/>
+                     select="preceding::d:literallayout[@linenumbering='numbered']"/>
               </xsl:call-template>
             </xsl:when>
-            <xsl:when test="$pi.context/self::address">
+            <xsl:when test="$pi.context/self::d:address">
               <xsl:call-template name="lastLineNumber">
                 <xsl:with-param name="listings"
-                     select="preceding::address[@linenumbering='numbered']"/>
+                     select="preceding::d:address[@linenumbering='numbered']"/>
               </xsl:call-template>
             </xsl:when>
-            <xsl:when test="$pi.context/self::synopsis">
+            <xsl:when test="$pi.context/self::d:synopsis">
               <xsl:call-template name="lastLineNumber">
                 <xsl:with-param name="listings"
-                     select="preceding::synopsis[@linenumbering='numbered']"/>
+                     select="preceding::d:synopsis[@linenumbering='numbered']"/>
               </xsl:call-template>
             </xsl:when>
             <xsl:otherwise>
@@ -367,7 +368,7 @@
     </xsl:when>
     <xsl:when test="$listings[1]/@continuation='continues'">
       <xsl:call-template name="lastLineNumber">
-        <xsl:with-param name="listings" select="listings[position() &gt; 1]"/>
+        <xsl:with-param name="listings" select="d:listings[position() &gt; 1]"/>
         <xsl:with-param name="number" select="$number + $lines"/>
       </xsl:call-template>
     </xsl:when>

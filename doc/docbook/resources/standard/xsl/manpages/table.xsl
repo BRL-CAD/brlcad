@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:exsl="http://exslt.org/common"
-                exclude-result-prefixes="exsl"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:exsl="http://exslt.org/common"
+                exclude-result-prefixes="exsl d"
                 version='1.0'>
 
   <!-- ********************************************************************
@@ -33,7 +34,7 @@
   <!-- *   http://cm.bell-labs.com/cm/cs/doc/76/tbl.ps.gz -->
   <!-- *   http://www.snake.net/software/troffcvt/tbl.html -->
 
-  <xsl:template match="table|informaltable" mode="to.tbl">
+  <xsl:template match="d:table|d:informaltable" mode="to.tbl">
     <!--* the "source" param is an optional param; it can be any -->
     <!--* string you want to use that gives some indication of the -->
     <!--* source context for a table; it gets passed down to the named -->
@@ -62,7 +63,7 @@
     <!-- * If align="center", center the table. Otherwise, tbl(1) -->
     <!-- * left-aligns it by default; note that there is no support -->
     <!-- * in tbl(1) for specifying right alignment. -->
-    <xsl:if test="@align = 'center' or tgroup/@align = 'center'">
+    <xsl:if test="@align = 'center' or d:tgroup/@align = 'center'">
       <xsl:text>center </xsl:text>
     </xsl:if>
     </xsl:param>
@@ -85,12 +86,12 @@
     <!-- * used to process those. -->
     <xsl:param name="html-table-output">
       <xsl:choose>
-        <xsl:when test=".//tr">
+        <xsl:when test=".//d:tr">
           <!-- * If this table has a TR child, it means that it's an -->
           <!-- * HTML table in the DocBook source, instead of a CALS -->
           <!-- * table. So we just copy it as-is, while wrapping it -->
           <!-- * in an element with same name as its original parent. -->
-          <xsl:for-each select="descendant-or-self::table|descendant-or-self::informaltable">
+          <xsl:for-each select="descendant-or-self::d:table|descendant-or-self::d:informaltable">
             <xsl:element name="{local-name(..)}">
               <table>
                 <xsl:copy-of select="*"/>
@@ -125,16 +126,16 @@
       <!-- *   Output table title                                           -->
       <!-- * ============================================================== -->
       <xsl:if test="$title != '' or parent::td">
-        <xsl:text>.sp&#10;</xsl:text>
-        <xsl:call-template name="pinch.together"/>
+        <xsl:text>.PP&#10;</xsl:text>
         <xsl:text>.</xsl:text>
         <xsl:value-of select="$tbl.font.title"/>
         <xsl:text> </xsl:text>
         <xsl:if test="parent::td">
-          <xsl:text>*[nested&#x2580;table]</xsl:text>
+          <xsl:text>*[nested&#160;table]</xsl:text>
         </xsl:if>
         <xsl:value-of select="normalize-space($title)"/>
         <xsl:text>&#10;</xsl:text>
+        <xsl:text>.sp -1n&#10;</xsl:text>
       </xsl:if>
       
       <!-- * mark the start of the table -->
@@ -210,7 +211,7 @@
       <!-- * .TE = "Table End" -->
       <xsl:text>.TE&#10;</xsl:text>
       <!-- * put a blank line of space below the table -->
-      <xsl:text>.sp 1&#10;</xsl:text>
+      <xsl:text>.sp&#10;</xsl:text>
     </xsl:for-each>
   </xsl:template>
 
@@ -253,6 +254,7 @@
       <xsl:call-template name="output.cell"/>
     </xsl:for-each>
   </xsl:template>
+
 
   <!-- * ============================================================== -->
   <!-- *    Output the tbl(1)-formatted contents of each cell.            -->
@@ -321,12 +323,10 @@
     </xsl:param>
     <xsl:param  name="cell-data-sorted">
       <!-- * Sort the cells so that the dummy cells get put where we -->
-      <!-- * need them in the structure. Note that we need to specify -->
-      <!-- * data-type="number" here because the default sorting method -->
-      <!-- * for xsl:sort is "text" (alphabetical). -->
+      <!-- * need them in the structure. -->
       <xsl:for-each select="exsl:node-set($cell-data-unsorted)/cell">
-        <xsl:sort select="@row" data-type="number"/>
-        <xsl:sort select="@slot" data-type="number"/>
+        <xsl:sort select="@row"/>
+        <xsl:sort select="@slot"/>
         <xsl:copy-of select="."/>
       </xsl:for-each>
     </xsl:param>
@@ -376,12 +376,12 @@
           <xsl:call-template name="log.message">
             <xsl:with-param name="level">Warn</xsl:with-param>
             <xsl:with-param name="source" select="$source"/>
-            <xsl:with-param name="context-desc">tbl convert</xsl:with-param>
             <xsl:with-param name="message">
-              <xsl:text>Extracted a nested table</xsl:text>
+              <xsl:text
+              >tbl convert : Extracted a nested table</xsl:text>
             </xsl:with-param>
           </xsl:call-template>
-          <xsl:text>[\fInested&#x2580;table\fR]*&#10;</xsl:text>
+          <xsl:text>[\fInested&#160;table\fR]*&#10;</xsl:text>
         </xsl:when>
         <xsl:otherwise>
           <!-- * Apply templates to the child contents of this cell, to -->
@@ -437,7 +437,7 @@
       <xsl:when test="$rowspan > 1">
         <!-- * Tail recurse until we have no more rowspans, creating -->
         <!-- * an empty dummy cell each time. The type value, '^' -->
-        <!-- * is the marker that tbl(1) uses to indicate a -->
+        <!-- * is the marker that tbl(1) uses for indicates a -->
         <!-- * "vertically spanned heading". -->
         <cell row="{$row}" slot="{$slot}" type="^" colspan="{@colspan}"/>
         <xsl:call-template name="create.dummy.cells">
@@ -564,10 +564,10 @@
   <!-- * ============================================================== -->
   <!-- *    table footnotes                                      -->
   <!-- * ============================================================== -->
-  <xsl:template match="footnote" mode="table.footnote.mode">
-    <xsl:variable name="footnotes" select=".//footnote"/>
+  <xsl:template match="d:footnote" mode="table.footnote.mode">
+    <xsl:variable name="footnotes" select=".//d:footnote"/>
     <xsl:variable name="table.footnotes"
-                  select=".//tgroup//footnote"/>
+                  select=".//d:tgroup//d:footnote"/>
     <xsl:value-of select="$man.table.footnotes.divider"/>
     <xsl:text>&#10;</xsl:text>
     <xsl:text>.br&#10;</xsl:text>
@@ -581,18 +581,18 @@
     <xsl:variable name="name">
       <xsl:text>ftn.</xsl:text>
       <xsl:call-template name="object.id">
-        <xsl:with-param name="object" select="ancestor::footnote"/>
+        <xsl:with-param name="object" select="ancestor::d:footnote"/>
       </xsl:call-template>
     </xsl:variable>
     <xsl:variable name="href">
       <xsl:text>#</xsl:text>
       <xsl:call-template name="object.id">
-        <xsl:with-param name="object" select="ancestor::footnote"/>
+        <xsl:with-param name="object" select="ancestor::d:footnote"/>
       </xsl:call-template>
     </xsl:variable>
     <xsl:variable name="footnote.mark">
       <xsl:text>[</xsl:text>
-      <xsl:apply-templates select="ancestor::footnote"
+      <xsl:apply-templates select="ancestor::d:footnote"
                            mode="footnote.number"/>
       <xsl:text>]&#10;</xsl:text>
     </xsl:variable>
@@ -600,7 +600,7 @@
       <xsl:apply-templates select="."/>
     </xsl:variable>
     <xsl:choose>
-      <xsl:when test="$exsl.node.set.available != 0">
+      <xsl:when test="function-available('exsl:node-set')">
         <xsl:variable name="html-nodes" select="exsl:node-set($html)"/>
         <xsl:choose>
           <xsl:when test="$html-nodes//p">

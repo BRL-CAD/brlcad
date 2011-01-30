@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="ASCII"?>
 <!--This file was created automatically by html2xhtml-->
 <!--from the HTML stylesheets.-->
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:sverb="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.Verbatim" xmlns:xverb="xalan://com.nwalsh.xalan.Verbatim" xmlns:lxslt="http://xml.apache.org/xslt" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="sverb xverb lxslt" version="1.0">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:d="http://docbook.org/ns/docbook"
+xmlns:sverb="http://nwalsh.com/xslt/ext/com.nwalsh.saxon.Verbatim" xmlns:xverb="xalan://com.nwalsh.xalan.Verbatim" xmlns:lxslt="http://xml.apache.org/xslt" xmlns="http://www.w3.org/1999/xhtml" exclude-result-prefixes="sverb xverb lxslt d" version="1.0">
 
 <!-- ********************************************************************
      $Id$
@@ -15,8 +16,8 @@
 
 <lxslt:component prefix="xverb" functions="insertCallouts"/>
 
-<xsl:template match="programlistingco|screenco">
-  <xsl:variable name="verbatim" select="programlisting|screen"/>
+<xsl:template match="d:programlistingco|d:screenco">
+  <xsl:variable name="verbatim" select="d:programlisting|d:screen"/>
 
   <xsl:choose>
     <xsl:when test="$use.extensions != '0'                     and $callouts.extension != '0'">
@@ -29,10 +30,10 @@
       <xsl:variable name="rtf-with-callouts">
         <xsl:choose>
           <xsl:when test="function-available('sverb:insertCallouts')">
-            <xsl:copy-of select="sverb:insertCallouts(areaspec,$rtf)"/>
+            <xsl:copy-of select="sverb:insertCallouts(d:areaspec,$rtf)"/>
           </xsl:when>
           <xsl:when test="function-available('xverb:insertCallouts')">
-            <xsl:copy-of select="xverb:insertCallouts(areaspec,$rtf)"/>
+            <xsl:copy-of select="xverb:insertCallouts(d:areaspec,$rtf)"/>
           </xsl:when>
           <xsl:otherwise>
             <xsl:message terminate="yes">
@@ -48,16 +49,16 @@
             <xsl:call-template name="common.html.attributes"/>
             <xsl:call-template name="number.rtf.lines">
               <xsl:with-param name="rtf" select="$rtf-with-callouts"/>
-              <xsl:with-param name="pi.context" select="programlisting|screen"/>
+              <xsl:with-param name="pi.context" select="d:programlisting|d:screen"/>
             </xsl:call-template>
-            <xsl:apply-templates select="calloutlist"/>
+            <xsl:apply-templates select="d:calloutlist"/>
           </div>
         </xsl:when>
         <xsl:otherwise>
           <div>
             <xsl:call-template name="common.html.attributes"/>
             <xsl:copy-of select="$rtf-with-callouts"/>
-            <xsl:apply-templates select="calloutlist"/>
+            <xsl:apply-templates select="d:calloutlist"/>
           </div>
         </xsl:otherwise>
       </xsl:choose>
@@ -71,18 +72,18 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="areaspec|areaset|area">
+<xsl:template match="d:areaspec|d:areaset|d:area">
 </xsl:template>
 
-<xsl:template match="areaset" mode="conumber">
-  <xsl:number count="area|areaset" format="1"/>
+<xsl:template match="d:areaset" mode="conumber">
+  <xsl:number count="d:area|d:areaset" format="1"/>
 </xsl:template>
 
-<xsl:template match="area" mode="conumber">
-  <xsl:number count="area|areaset" format="1"/>
+<xsl:template match="d:area" mode="conumber">
+  <xsl:number count="d:area|d:areaset" format="1"/>
 </xsl:template>
 
-<xsl:template match="co" name="co">
+<xsl:template match="d:co" name="co">
   <!-- Support a single linkend in HTML -->
   <xsl:variable name="targets" select="key('id', @linkends)"/>
   <xsl:variable name="target" select="$targets[1]"/>
@@ -110,7 +111,7 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="coref">
+<xsl:template match="d:coref">
   <!-- tricky; this relies on the fact that we can process the "co" that's -->
   <!-- "over there" as if it were "right here" -->
 
@@ -134,10 +135,10 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="co" mode="callout-bug">
+<xsl:template match="d:co" mode="callout-bug">
   <xsl:call-template name="callout-bug">
     <xsl:with-param name="conum">
-      <xsl:number count="co" level="any" from="programlisting|screen|literallayout|synopsis" format="1"/>
+      <xsl:number count="d:co" level="any" from="d:programlisting|d:screen|d:literallayout|d:synopsis" format="1"/>
     </xsl:with-param>
   </xsl:call-template>
 </xsl:template>

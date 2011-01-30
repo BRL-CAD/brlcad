@@ -1,6 +1,8 @@
 <?xml version='1.0'?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:fo="http://www.w3.org/1999/XSL/Format"
+<xsl:stylesheet exclude-result-prefixes="d"
+                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 xmlns:axf="http://www.antennahouse.com/names/XSL/Extensions"
                 version='1.0'>
 
@@ -16,8 +18,8 @@
 
 <!-- ==================================================================== -->
 
-<xsl:template match="reference">
-   <xsl:if test="not(partintro)">
+<xsl:template match="d:reference">
+   <xsl:if test="not(d:partintro)">
     <xsl:variable name="id">
       <xsl:call-template name="object.id"/>
     </xsl:variable>
@@ -82,25 +84,25 @@
         </fo:block>
         <!-- Create one page sequence if no pagebreaks needed -->
         <xsl:if test="$refentry.pagebreak = 0">
-          <xsl:apply-templates select="refentry"/>
+          <xsl:apply-templates select="d:refentry"/>
         </xsl:if>
       </fo:flow>
     </fo:page-sequence>
   </xsl:if>
-  <xsl:apply-templates select="partintro"/>
+  <xsl:apply-templates select="d:partintro"/>
   <xsl:if test="$refentry.pagebreak != 0">
-    <xsl:apply-templates select="refentry"/>
+    <xsl:apply-templates select="d:refentry"/>
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="reference" mode="reference.titlepage.mode">
+<xsl:template match="d:reference" mode="reference.titlepage.mode">
   <xsl:call-template name="reference.titlepage"/>
 </xsl:template>
 
-<xsl:template match="reference/partintro">
+<xsl:template match="d:reference/d:partintro">
   <xsl:variable name="id">
     <xsl:call-template name="object.id">
-      <xsl:with-param name="object" select="ancestor::reference"/>
+      <xsl:with-param name="object" select="ancestor::d:reference"/>
     </xsl:call-template>
   </xsl:variable>
   <xsl:variable name="master-reference">
@@ -161,26 +163,26 @@
       <fo:block id="{$id}">
         <xsl:apply-templates select=".." mode="reference.titlepage.mode"/>
       </fo:block>
-      <xsl:if test="title">
+      <xsl:if test="d:title">
         <xsl:call-template name="partintro.titlepage"/>
       </xsl:if>
       <xsl:apply-templates/>
       <!-- Create one page sequence if no pagebreaks needed -->
       <xsl:if test="$refentry.pagebreak = 0">
-        <xsl:apply-templates select="../refentry"/>
+        <xsl:apply-templates select="../d:refentry"/>
       </xsl:if>
     </fo:flow>
   </fo:page-sequence>
 </xsl:template>
 
-<xsl:template match="reference/docinfo|refentry/refentryinfo"></xsl:template>
-<xsl:template match="reference/info"></xsl:template>
-<xsl:template match="reference/title"></xsl:template>
-<xsl:template match="reference/subtitle"></xsl:template>
+<xsl:template match="d:reference/d:docinfo|d:refentry/d:refentryinfo"></xsl:template>
+<xsl:template match="d:reference/d:info"></xsl:template>
+<xsl:template match="d:reference/d:title"></xsl:template>
+<xsl:template match="d:reference/d:subtitle"></xsl:template>
 
 <!-- ==================================================================== -->
 
-<xsl:template match="refentry">
+<xsl:template match="d:refentry">
   <xsl:variable name="id">
     <xsl:call-template name="object.id"/>
   </xsl:variable>
@@ -197,8 +199,8 @@
 
   <xsl:choose>
     <xsl:when test="not(parent::*) or 
-                    (parent::reference and $refentry.pagebreak != 0) or 
-                    parent::part">
+                    (parent::d:reference and $refentry.pagebreak != 0) or 
+                    parent::d:part">
       <!-- make a page sequence -->
       <fo:page-sequence hyphenate="{$hyphenate}"
                         master-reference="{$master-reference}">
@@ -267,11 +269,11 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="refmeta">
-  <xsl:apply-templates select=".//indexterm"/>
+<xsl:template match="d:refmeta">
+  <xsl:apply-templates select=".//d:indexterm"/>
 </xsl:template>
 
-<xsl:template match="manvolnum">
+<xsl:template match="d:manvolnum">
   <xsl:if test="$refentry.xref.manvolnum != 0">
     <xsl:text>(</xsl:text>
     <xsl:apply-templates/>
@@ -279,14 +281,14 @@
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="refmiscinfo">
+<xsl:template match="d:refmiscinfo">
 </xsl:template>
 
-<xsl:template match="refentrytitle">
+<xsl:template match="d:refentrytitle">
   <xsl:call-template name="inline.charseq"/>
 </xsl:template>
 
-<xsl:template match="refnamediv">
+<xsl:template match="d:refnamediv">
   <xsl:variable name="id">
     <xsl:call-template name="object.id"/>
   </xsl:variable>
@@ -299,7 +301,7 @@
     <!-- generated a "Name" subheading, so we don't need to do it again -->
     <xsl:if test="$refentry.generate.name != 0">
         <xsl:choose>
-          <xsl:when test="preceding-sibling::refnamediv">
+          <xsl:when test="preceding-sibling::d:refnamediv">
             <!-- no generated title on secondary refnamedivs! -->
           </xsl:when>
           <xsl:otherwise>
@@ -331,24 +333,24 @@
       <xsl:if test="$refentry.generate.title != 0">
   <xsl:variable name="section.level">
     <xsl:call-template name="refentry.level">
-      <xsl:with-param name="node" select="ancestor::refentry"/>
+      <xsl:with-param name="node" select="ancestor::d:refentry"/>
     </xsl:call-template>
   </xsl:variable>
 
   <xsl:variable name="reftitle">
         <xsl:choose>
-          <xsl:when test="../refmeta/refentrytitle">
-            <xsl:apply-templates select="../refmeta/refentrytitle"/>
+          <xsl:when test="../d:refmeta/d:refentrytitle">
+            <xsl:apply-templates select="../d:refmeta/d:refentrytitle"/>
           </xsl:when>
           <xsl:otherwise>
-            <xsl:apply-templates select="refname[1]"/>
+            <xsl:apply-templates select="d:refname[1]"/>
           </xsl:otherwise>
         </xsl:choose>
   </xsl:variable>
 
   <!-- xsl:use-attribute-sets takes only a Qname, not a variable -->
     <xsl:choose>
-      <xsl:when test="preceding-sibling::refnamediv">
+      <xsl:when test="preceding-sibling::d:refnamediv">
 	<!-- no title on secondary refnamedivs! -->
       </xsl:when>
       <xsl:when test="$section.level = 1">
@@ -397,7 +399,7 @@
     </xsl:if>
 
     <fo:block>
-      <xsl:if test="not(following-sibling::refnamediv)">
+      <xsl:if test="not(following-sibling::d:refnamediv)">
 	<xsl:attribute name="space-after">1em</xsl:attribute>
       </xsl:if>
       <xsl:apply-templates/>
@@ -405,16 +407,16 @@
   </fo:block>
 </xsl:template>
 
-<xsl:template match="refname">
-  <xsl:if test="not(preceding-sibling::refdescriptor)">
+<xsl:template match="d:refname">
+  <xsl:if test="not(preceding-sibling::d:refdescriptor)">
     <xsl:apply-templates/>
-    <xsl:if test="following-sibling::refname">
+    <xsl:if test="following-sibling::d:refname">
       <xsl:text>, </xsl:text>
     </xsl:if>
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="refpurpose">
+<xsl:template match="d:refpurpose">
   <xsl:if test="node()">
     <xsl:text> </xsl:text>
     <xsl:call-template name="dingbat">
@@ -425,11 +427,11 @@
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="refdescriptor">
+<xsl:template match="d:refdescriptor">
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="refclass">
+<xsl:template match="d:refclass">
   <xsl:if test="$refclass.suppress = 0">
   <fo:block font-weight="bold">
     <xsl:if test="@role">
@@ -441,13 +443,13 @@
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="refsynopsisdiv">
+<xsl:template match="d:refsynopsisdiv">
   <xsl:variable name="id">
     <xsl:call-template name="object.id"/>
   </xsl:variable>
 
   <fo:block id="{$id}">
-    <xsl:if test="not(refsynopsisdivinfo/title|docinfo/title|info/title|title)">
+    <xsl:if test="not(d:refsynopsisdivinfo/d:title|d:docinfo/d:title|d:info/d:title|d:title)">
       <!-- * if we there is no appropriate title for this Refsynopsisdiv, -->
       <!-- * then we need to call format.refentry.subheading to generate one -->
       <fo:block xmlns:fo="http://www.w3.org/1999/XSL/Format"
@@ -477,7 +479,7 @@
   </fo:block>
 </xsl:template>
 
-<xsl:template match="refsection">
+<xsl:template match="d:refsection">
   <xsl:variable name="id">
     <xsl:call-template name="object.id"/>
   </xsl:variable>
@@ -488,7 +490,7 @@
   </fo:block>
 </xsl:template>
 
-<xsl:template match="refsect1">
+<xsl:template match="d:refsect1">
   <xsl:variable name="id">
     <xsl:call-template name="object.id"/>
   </xsl:variable>
@@ -499,7 +501,7 @@
   </fo:block>
 </xsl:template>
 
-<xsl:template match="refsect2">
+<xsl:template match="d:refsect2">
   <xsl:variable name="id">
     <xsl:call-template name="object.id"/>
   </xsl:variable>
@@ -510,7 +512,7 @@
   </fo:block>
 </xsl:template>
 
-<xsl:template match="refsect3">
+<xsl:template match="d:refsect3">
   <xsl:variable name="id">
     <xsl:call-template name="object.id"/>
   </xsl:variable>
@@ -521,24 +523,24 @@
   </fo:block>
 </xsl:template>
 
-<xsl:template match="refsynopsisdiv/title
-                     |refsection/title
-                     |refsect1/title
-                     |refsect2/title
-                     |refsect3/title">
+<xsl:template match="d:refsynopsisdiv/d:title
+                     |d:refsection/d:title
+                     |d:refsect1/d:title
+                     |d:refsect2/d:title
+                     |d:refsect3/d:title">
   <!-- nop; titlepage.mode instead -->
 </xsl:template>
 
-<xsl:template match="refsynopsisdiv/title
-                     |refsection/title
-                     |refsect1/title
-                     |refsect2/title
-                     |refsect3/title
-                     |refsynopsisdiv/info/title
-                     |refsection/info/title
-                     |refsect1/info/title
-                     |refsect2/info/title
-                     |refsect3/info/title"
+<xsl:template match="d:refsynopsisdiv/d:title
+                     |d:refsection/d:title
+                     |d:refsect1/d:title
+                     |d:refsect2/d:title
+                     |d:refsect3/d:title
+                     |d:refsynopsisdiv/d:info/d:title
+                     |d:refsection/d:info/d:title
+                     |d:refsect1/d:info/d:title
+                     |d:refsect2/d:info/d:title
+                     |d:refsect3/d:info/d:title"
               mode="titlepage.mode"
               priority="2">
   <xsl:call-template name="format.refentry.subheading"/>
@@ -564,11 +566,11 @@
 <!--     </xsl:call-template> -->
 <!-- -->
   <xsl:param name="section" 
-             select="(ancestor::refsynopsisdiv 
-                     |ancestor::refsection
-                     |ancestor::refsect1
-                     |ancestor::refsect2
-                     |ancestor::refsect3)[last()]"/>
+             select="(ancestor::d:refsynopsisdiv 
+                     |ancestor::d:refsection
+                     |ancestor::d:refsect1
+                     |ancestor::d:refsect2
+                     |ancestor::d:refsect3)[last()]"/>
   <xsl:param name="offset" select="0"/>
   <xsl:param name="gentext.key"/>
 
@@ -628,10 +630,10 @@
   </fo:block>
 </xsl:template>
 
-<xsl:template match="refsectioninfo|refsection/info"></xsl:template>
-<xsl:template match="refsect1info|refsect1/info"></xsl:template>
-<xsl:template match="refsect2info|refsect2/info"></xsl:template>
-<xsl:template match="refsect3info|refsect3/info"></xsl:template>
+<xsl:template match="d:refsectioninfo|d:refsection/d:info"></xsl:template>
+<xsl:template match="d:refsect1info|d:refsect1/d:info"></xsl:template>
+<xsl:template match="d:refsect2info|d:refsect2/d:info"></xsl:template>
+<xsl:template match="d:refsect3info|d:refsect3/d:info"></xsl:template>
 
 <!-- ==================================================================== -->
 

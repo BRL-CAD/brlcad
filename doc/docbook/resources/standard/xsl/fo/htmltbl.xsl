@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:fo="http://www.w3.org/1999/XSL/Format"
+<xsl:stylesheet exclude-result-prefixes="d"
+                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 version="1.0">
 
 <!-- ********************************************************************
@@ -16,17 +18,17 @@
 <!-- ==================================================================== -->
 
 <!-- Outputs an fo:table only, not the caption -->
-<xsl:template match="table|informaltable" mode="htmlTable">
+<xsl:template match="d:table|d:informaltable" mode="htmlTable">
 
   <xsl:variable name="numcols">
     <xsl:call-template name="widest-html-row">
-      <xsl:with-param name="rows" select=".//tr"/>
+      <xsl:with-param name="rows" select=".//d:tr"/>
     </xsl:call-template>
   </xsl:variable>
 
   <xsl:variable name="prop-columns"
-                select=".//col[contains(@width, '%')] |
-                        .//colgroup[contains(@width, '%')]"/>
+                select=".//d:col[contains(@width, '%')] |
+                        .//d:colgroup[contains(@width, '%')]"/>
 
   <xsl:variable name="table.width">
     <xsl:call-template name="table.width"/>
@@ -81,15 +83,15 @@
       <xsl:with-param name="count" select="$numcols"/>
     </xsl:call-template>
 
-    <xsl:apply-templates select="thead" mode="htmlTable"/>
-    <xsl:apply-templates select="tfoot" mode="htmlTable"/>
+    <xsl:apply-templates select="d:thead" mode="htmlTable"/>
+    <xsl:apply-templates select="d:tfoot" mode="htmlTable"/>
     <xsl:choose>
-      <xsl:when test="tbody">
-        <xsl:apply-templates select="tbody" mode="htmlTable"/>
+      <xsl:when test="d:tbody">
+        <xsl:apply-templates select="d:tbody" mode="htmlTable"/>
       </xsl:when>
       <xsl:otherwise>
         <fo:table-body start-indent="0pt" end-indent="0pt">
-          <xsl:apply-templates select="tr" mode="htmlTable"/>
+          <xsl:apply-templates select="d:tr" mode="htmlTable"/>
         </fo:table-body>
       </xsl:otherwise>
     </xsl:choose>
@@ -100,11 +102,11 @@
 <!-- This template writes rowsep or colsep equivalant for html tables -->
 <xsl:template name="html.table.cell.rules">
   <xsl:variable name="border" 
-                select="(ancestor::table |
-                         ancestor::informaltable)[last()]/@border"/>
+                select="(ancestor::d:table |
+                         ancestor::d:informaltable)[last()]/@border"/>
   <xsl:variable name="table.rules"
-                select="(ancestor::table |
-                         ancestor::informaltable)[last()]/@rules"/>
+                select="(ancestor::d:table |
+                         ancestor::d:informaltable)[last()]/@rules"/>
 
   <xsl:variable name="rules">
     <xsl:choose>
@@ -154,16 +156,16 @@
       <xsl:variable name="rowborder">
         <xsl:choose>
           <!-- If in thead and tbody has rows, add border -->
-          <xsl:when test="parent::tr/parent::thead/
-                          following-sibling::tbody/tr">1</xsl:when>
+          <xsl:when test="parent::d:tr/parent::d:thead/
+                          following-sibling::d:tbody/d:tr">1</xsl:when>
           <!-- If in tbody and tfoot has rows, add border -->
-          <xsl:when test="parent::tr/parent::tbody/
-                          following-sibling::tfoot/tr">1</xsl:when>
-          <xsl:when test="parent::tr/parent::tbody/
-                          preceding-sibling::tfoot/tr">1</xsl:when>
+          <xsl:when test="parent::d:tr/parent::d:tbody/
+                          following-sibling::d:tfoot/d:tr">1</xsl:when>
+          <xsl:when test="parent::d:tr/parent::d:tbody/
+                          preceding-sibling::d:tfoot/d:tr">1</xsl:when>
           <!-- If following rows, but not rowspan reaches last row -->
-          <xsl:when test="parent::tr/following-sibling::tr and
-             not(@rowspan = count(parent::tr/following-sibling::tr) + 1)">1</xsl:when>
+          <xsl:when test="parent::d:tr/following-sibling::d:tr and
+             not(@rowspan = count(parent::d:tr/following-sibling::d:tr) + 1)">1</xsl:when>
           <xsl:otherwise>0</xsl:otherwise>
         </xsl:choose>
       </xsl:variable>
@@ -190,16 +192,16 @@
       <xsl:variable name="rowborder">
         <xsl:choose>
           <!-- If in thead and tbody has rows, add border -->
-          <xsl:when test="parent::tr/parent::thead/
-                          following-sibling::tbody/tr">1</xsl:when>
+          <xsl:when test="parent::d:tr/parent::d:thead/
+                          following-sibling::d:tbody/d:tr">1</xsl:when>
           <!-- If in tbody and tfoot has rows, add border -->
-          <xsl:when test="parent::tr/parent::tbody/
-                          following-sibling::tfoot/tr">1</xsl:when>
-          <xsl:when test="parent::tr/parent::tbody/
-                          preceding-sibling::tfoot/tr">1</xsl:when>
+          <xsl:when test="parent::d:tr/parent::d:tbody/
+                          following-sibling::d:tfoot/d:tr">1</xsl:when>
+          <xsl:when test="parent::d:tr/parent::d:tbody/
+                          preceding-sibling::d:tfoot/d:tr">1</xsl:when>
           <!-- If following rows, but not rowspan reaches last row -->
-          <xsl:when test="parent::tr/following-sibling::tr and
-             not(@rowspan = count(parent::tr/following-sibling::tr) + 1)">1</xsl:when>
+          <xsl:when test="parent::d:tr/following-sibling::d:tr and
+             not(@rowspan = count(parent::d:tr/following-sibling::d:tr) + 1)">1</xsl:when>
           <xsl:otherwise>0</xsl:otherwise>
         </xsl:choose>
       </xsl:variable>
@@ -229,8 +231,8 @@
         </xsl:attribute>
       </xsl:if>
     </xsl:when>
-    <xsl:when test="$rules = 'groups' and ancestor::thead 
-                    and not(parent::tr/following-sibling::tr)">
+    <xsl:when test="$rules = 'groups' and ancestor::d:thead 
+                    and not(parent::d:tr/following-sibling::d:tr)">
       <xsl:attribute name="border-start-style">none</xsl:attribute>
       <xsl:attribute name="border-end-style">none</xsl:attribute>
       <xsl:attribute name="border-top-style">none</xsl:attribute>
@@ -244,8 +246,8 @@
         <xsl:value-of select="$table.frame.border.color"/>
       </xsl:attribute>
     </xsl:when>
-    <xsl:when test="$rules = 'groups' and ancestor::tfoot 
-                    and not(parent::tr/preceding-sibling::tr)">
+    <xsl:when test="$rules = 'groups' and ancestor::d:tfoot 
+                    and not(parent::d:tr/preceding-sibling::d:tr)">
       <xsl:attribute name="border-start-style">none</xsl:attribute>
       <xsl:attribute name="border-end-style">none</xsl:attribute>
       <xsl:attribute name="border-top-style">none</xsl:attribute>
@@ -262,7 +264,7 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="caption" mode="htmlTable">
+<xsl:template match="d:caption" mode="htmlTable">
   <!-- Handled by formal.object.heading -->
 </xsl:template>
 
@@ -297,11 +299,11 @@
   <xsl:param name="number" select="1"/>
 
   <xsl:choose>
-    <xsl:when test="col|colgroup/col">
-      <xsl:for-each select="col|colgroup/col">
+    <xsl:when test="d:col|d:colgroup/d:col">
+      <xsl:for-each select="d:col|d:colgroup/d:col">
         <fo:table-column>
           <xsl:attribute name="column-number">
-            <xsl:number from="table|informaltable" level="any" format="1"/>
+            <xsl:number from="d:table|d:informaltable" level="any" format="1"/>
           </xsl:attribute>
           <xsl:if test="@width">
             <xsl:attribute name="column-width">
@@ -334,21 +336,21 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="tbody" mode="htmlTable">
+<xsl:template match="d:tbody" mode="htmlTable">
   <fo:table-body start-indent="0pt"
                  end-indent="0pt">
     <xsl:apply-templates mode="htmlTable"/>
   </fo:table-body>
 </xsl:template>
 
-<xsl:template match="tfoot" mode="htmlTable">
+<xsl:template match="d:tfoot" mode="htmlTable">
   <fo:table-footer start-indent="0pt"
                    end-indent="0pt">
     <xsl:apply-templates mode="htmlTable"/>
   </fo:table-footer>
 </xsl:template>
 
-<xsl:template match="th|td" mode="htmlTable">
+<xsl:template match="d:th|d:td" mode="htmlTable">
   <xsl:variable name="bgcolor.pi">
     <xsl:call-template name="pi.dbfo_bgcolor"/>
   </xsl:variable>
@@ -367,7 +369,7 @@
   <xsl:variable name="align">
     <xsl:call-template name="inherited.table.attribute">
       <xsl:with-param name="entry" select="."/>
-      <xsl:with-param name="row" select="parent::tr"/>
+      <xsl:with-param name="row" select="parent::d:tr"/>
       <xsl:with-param name="attribute" select="'align'"/>
     </xsl:call-template>
   </xsl:variable>
@@ -375,7 +377,7 @@
   <xsl:variable name="valign">
     <xsl:call-template name="inherited.table.attribute">
       <xsl:with-param name="entry" select="."/>
-      <xsl:with-param name="row" select="parent::tr"/>
+      <xsl:with-param name="row" select="parent::d:tr"/>
       <xsl:with-param name="attribute" select="'valign'"/>
     </xsl:call-template>
   </xsl:variable>
@@ -408,14 +410,14 @@
   </fo:table-cell>
 </xsl:template>
 
-<xsl:template match="thead" mode="htmlTable">
+<xsl:template match="d:thead" mode="htmlTable">
   <fo:table-header start-indent="0pt"
                    end-indent="0pt">
     <xsl:apply-templates mode="htmlTable"/>
   </fo:table-header>
 </xsl:template>
 
-<xsl:template match="tr" mode="htmlTable">
+<xsl:template match="d:tr" mode="htmlTable">
   <fo:table-row>
     <xsl:call-template name="table.row.properties"/>
     <xsl:apply-templates mode="htmlTable"/>

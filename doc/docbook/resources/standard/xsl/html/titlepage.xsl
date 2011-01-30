@@ -1,6 +1,8 @@
 <?xml version='1.0'?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                version='1.0'>
+<xsl:stylesheet exclude-result-prefixes="d"
+                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:d="http://docbook.org/ns/docbook"
+version='1.0'>
 
 <!-- ********************************************************************
      $Id$
@@ -123,7 +125,7 @@
   <xsl:apply-templates select="."/>
 </xsl:template>
 
-<xsl:template match="abbrev" mode="titlepage.mode">
+<xsl:template match="d:abbrev" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -131,7 +133,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="abstract" mode="titlepage.mode">
+<xsl:template match="d:abstract" mode="titlepage.mode">
   <div>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:call-template name="anchor"/>
@@ -147,10 +149,10 @@
   </div>
 </xsl:template>
 
-<xsl:template match="abstract/title" mode="titlepage.mode">
+<xsl:template match="d:abstract/d:title" mode="titlepage.mode">
 </xsl:template>
 
-<xsl:template match="address" mode="titlepage.mode">
+<xsl:template match="d:address" mode="titlepage.mode">
   <xsl:param name="suppress-numbers" select="'0'"/>
 
   <xsl:variable name="rtf">
@@ -189,14 +191,14 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="affiliation" mode="titlepage.mode">
+<xsl:template match="d:affiliation" mode="titlepage.mode">
   <div>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
   </div>
 </xsl:template>
 
-<xsl:template match="artpagenums" mode="titlepage.mode">
+<xsl:template match="d:artpagenums" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -204,20 +206,20 @@
   </span>
 </xsl:template>
 
-<xsl:template match="author|editor" mode="titlepage.mode">
+<xsl:template match="d:author|d:editor" mode="titlepage.mode">
   <xsl:call-template name="credits.div"/>
 </xsl:template>
 
 <xsl:template name="credits.div">
   <div>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
-    <xsl:if test="self::editor[position()=1] and not($editedby.enabled = 0)">
+    <xsl:if test="self::d:editor[position()=1] and not($editedby.enabled = 0)">
       <h4 class="editedby"><xsl:call-template name="gentext.edited.by"/></h4>
     </xsl:if>
     <h3>
       <xsl:apply-templates select="." mode="common.html.attributes"/>
       <xsl:choose>
-        <xsl:when test="orgname">
+        <xsl:when test="d:orgname">
           <xsl:apply-templates/>
         </xsl:when>
         <xsl:otherwise>
@@ -226,36 +228,36 @@
       </xsl:choose>
     </h3>
     <xsl:if test="not($contrib.inline.enabled = 0)">
-      <xsl:apply-templates mode="titlepage.mode" select="contrib"/>
+      <xsl:apply-templates mode="titlepage.mode" select="d:contrib"/>
     </xsl:if>
-    <xsl:apply-templates mode="titlepage.mode" select="affiliation"/>
-    <xsl:apply-templates mode="titlepage.mode" select="email"/>
+    <xsl:apply-templates mode="titlepage.mode" select="d:affiliation"/>
+    <xsl:apply-templates mode="titlepage.mode" select="d:email"/>
     <xsl:if test="not($blurb.on.titlepage.enabled = 0)">
       <xsl:choose>
         <xsl:when test="$contrib.inline.enabled = 0">
           <xsl:apply-templates mode="titlepage.mode"
-                               select="contrib|authorblurb|personblurb"/>
+                               select="d:contrib|d:authorblurb|d:personblurb"/>
         </xsl:when>
         <xsl:otherwise>
           <xsl:apply-templates mode="titlepage.mode"
-                               select="authorblurb|personblurb"/>
+                               select="d:authorblurb|d:personblurb"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:if>
   </div>
 </xsl:template>
 
-<xsl:template match="authorblurb|personblurb" mode="titlepage.mode">
+<xsl:template match="d:authorblurb|d:personblurb" mode="titlepage.mode">
   <div>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
   </div>
 </xsl:template>
 
-<xsl:template match="authorgroup" mode="titlepage.mode">
+<xsl:template match="d:authorgroup" mode="titlepage.mode">
   <div>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
-    <xsl:if test="parent::refentryinfo">
+    <xsl:if test="parent::d:refentryinfo">
       <h2>Authors</h2>
     </xsl:if>
       
@@ -264,7 +266,7 @@
   </div>
 </xsl:template>
 
-<xsl:template match="authorinitials" mode="titlepage.mode">
+<xsl:template match="d:authorinitials" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -272,15 +274,15 @@
   </span>
 </xsl:template>
 
-<xsl:template match="bibliomisc" mode="titlepage.mode">
+<xsl:template match="d:bibliomisc" mode="titlepage.mode">
   <xsl:apply-templates mode="titlepage.mode"/>
 </xsl:template>
 
-<xsl:template match="bibliomset" mode="titlepage.mode">
+<xsl:template match="d:bibliomset" mode="titlepage.mode">
   <xsl:apply-templates mode="titlepage.mode"/>
 </xsl:template>
 
-<xsl:template match="collab" mode="titlepage.mode">
+<xsl:template match="d:collab" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -288,21 +290,21 @@
   </span>
 </xsl:template>
 
-<xsl:template match="collabname" mode="titlepage.mode">
+<xsl:template match="d:collabname" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
   </span>
 </xsl:template>
 
-<xsl:template match="confgroup" mode="titlepage.mode">
+<xsl:template match="d:confgroup" mode="titlepage.mode">
   <div>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
   </div>
 </xsl:template>
 
-<xsl:template match="confdates" mode="titlepage.mode">
+<xsl:template match="d:confdates" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -310,7 +312,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="confsponsor" mode="titlepage.mode">
+<xsl:template match="d:confsponsor" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -318,7 +320,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="conftitle" mode="titlepage.mode">
+<xsl:template match="d:conftitle" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -326,11 +328,11 @@
   </span>
 </xsl:template>
 
-<xsl:template match="confnum" mode="titlepage.mode">
+<xsl:template match="d:confnum" mode="titlepage.mode">
   <!-- suppress -->
 </xsl:template>
 
-<xsl:template match="contractnum" mode="titlepage.mode">
+<xsl:template match="d:contractnum" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -338,7 +340,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="contractsponsor" mode="titlepage.mode">
+<xsl:template match="d:contractsponsor" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -346,7 +348,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="contrib" mode="titlepage.mode">
+<xsl:template match="d:contrib" mode="titlepage.mode">
   <xsl:choose>
     <xsl:when test="not($contrib.inline.enabled = 0)">
       <span>
@@ -363,9 +365,9 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="copyright" mode="titlepage.mode">
+<xsl:template match="d:copyright" mode="titlepage.mode">
 
-  <xsl:if test="generate-id() = generate-id(//refentryinfo/copyright[1])
+  <xsl:if test="generate-id() = generate-id(//d:refentryinfo/d:copyright[1])
       and ($stylesheet.result.type = 'html' or $stylesheet.result.type = 'xhtml')">
     <h2>Copyright</h2>
   </xsl:if>
@@ -381,17 +383,17 @@
     </xsl:call-template>
     <xsl:call-template name="gentext.space"/>
     <xsl:call-template name="copyright.years">
-      <xsl:with-param name="years" select="year"/>
+      <xsl:with-param name="years" select="d:year"/>
       <xsl:with-param name="print.ranges" select="$make.year.ranges"/>
       <xsl:with-param name="single.year.ranges"
                       select="$make.single.year.ranges"/>
     </xsl:call-template>
     <xsl:call-template name="gentext.space"/>
-    <xsl:apply-templates select="holder" mode="titlepage.mode"/>
+    <xsl:apply-templates select="d:holder" mode="titlepage.mode"/>
   </p>
 </xsl:template>
 
-<xsl:template match="year" mode="titlepage.mode">
+<xsl:template match="d:year" mode="titlepage.mode">
   <xsl:choose>
     <xsl:when test="$show.revisionflag != 0 and @revisionflag">
       <span class="{@revisionflag}">
@@ -404,7 +406,7 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="holder" mode="titlepage.mode">
+<xsl:template match="d:holder" mode="titlepage.mode">
   <xsl:choose>
     <xsl:when test="$show.revisionflag != 0 and @revisionflag">
       <span class="{@revisionflag}">
@@ -420,14 +422,14 @@
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="corpauthor" mode="titlepage.mode">
+<xsl:template match="d:corpauthor" mode="titlepage.mode">
   <h3>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
   </h3>
 </xsl:template>
 
-<xsl:template match="corpcredit" mode="titlepage.mode">
+<xsl:template match="d:corpcredit" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -435,7 +437,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="corpname" mode="titlepage.mode">
+<xsl:template match="d:corpname" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -443,7 +445,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="date" mode="titlepage.mode">
+<xsl:template match="d:date" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -451,7 +453,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="edition" mode="titlepage.mode">
+<xsl:template match="d:edition" mode="titlepage.mode">
   <p>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -462,12 +464,12 @@
   </p>
 </xsl:template>
 
-<xsl:template match="email" mode="titlepage.mode">
+<xsl:template match="d:email" mode="titlepage.mode">
   <!-- use the normal e-mail handling code -->
   <xsl:apply-templates select="."/>
 </xsl:template>
 
-<xsl:template match="firstname" mode="titlepage.mode">
+<xsl:template match="d:firstname" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -475,12 +477,12 @@
   </span>
 </xsl:template>
 
-<xsl:template match="graphic" mode="titlepage.mode">
+<xsl:template match="d:graphic" mode="titlepage.mode">
   <!-- use the normal graphic handling code -->
   <xsl:apply-templates select="."/>
 </xsl:template>
 
-<xsl:template match="honorific" mode="titlepage.mode">
+<xsl:template match="d:honorific" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -488,7 +490,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="isbn" mode="titlepage.mode">
+<xsl:template match="d:isbn" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -496,7 +498,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="issn" mode="titlepage.mode">
+<xsl:template match="d:issn" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -504,7 +506,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="biblioid" mode="titlepage.mode">
+<xsl:template match="d:biblioid" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -512,10 +514,10 @@
   </span>
 </xsl:template>
 
-<xsl:template match="itermset" mode="titlepage.mode">
+<xsl:template match="d:itermset" mode="titlepage.mode">
 </xsl:template>
 
-<xsl:template match="invpartnumber" mode="titlepage.mode">
+<xsl:template match="d:invpartnumber" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -523,7 +525,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="issuenum" mode="titlepage.mode">
+<xsl:template match="d:issuenum" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -531,7 +533,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="jobtitle" mode="titlepage.mode">
+<xsl:template match="d:jobtitle" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -539,10 +541,10 @@
   </span>
 </xsl:template>
 
-<xsl:template match="keywordset" mode="titlepage.mode">
+<xsl:template match="d:keywordset" mode="titlepage.mode">
 </xsl:template>
 
-<xsl:template match="legalnotice" mode="titlepage.mode">
+<xsl:template match="d:legalnotice" mode="titlepage.mode">
   <xsl:variable name="id"><xsl:call-template name="object.id"/></xsl:variable>
 
   <xsl:choose>
@@ -601,11 +603,11 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="legalnotice/title" mode="titlepage.mode">
+<xsl:template match="d:legalnotice/d:title" mode="titlepage.mode">
   <p class="legalnotice-title"><b><xsl:apply-templates/></b></p>
 </xsl:template>
 
-<xsl:template match="lineage" mode="titlepage.mode">
+<xsl:template match="d:lineage" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -613,11 +615,11 @@
   </span>
 </xsl:template>
 
-<xsl:template match="modespec" mode="titlepage.mode">
+<xsl:template match="d:modespec" mode="titlepage.mode">
 </xsl:template>
 
-<xsl:template match="orgdiv" mode="titlepage.mode">
-  <xsl:if test="preceding-sibling::*[1][self::orgname]">
+<xsl:template match="d:orgdiv" mode="titlepage.mode">
+  <xsl:if test="preceding-sibling::*[1][self::d:orgname]">
     <xsl:text> </xsl:text>
   </xsl:if>
   <span>
@@ -627,7 +629,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="orgname" mode="titlepage.mode">
+<xsl:template match="d:orgname" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -635,21 +637,21 @@
   </span>
 </xsl:template>
 
-<xsl:template match="othercredit" mode="titlepage.mode">
+<xsl:template match="d:othercredit" mode="titlepage.mode">
 <xsl:choose>
   <xsl:when test="not($othercredit.like.author.enabled = 0)">
-  <xsl:variable name="contrib" select="string(contrib)"/>
+  <xsl:variable name="contrib" select="string(d:contrib)"/>
   <xsl:choose>
-    <xsl:when test="contrib">
-      <xsl:if test="not(preceding-sibling::othercredit[string(contrib)=$contrib])">
+    <xsl:when test="d:contrib">
+      <xsl:if test="not(preceding-sibling::d:othercredit[string(d:contrib)=$contrib])">
         <xsl:call-template name="paragraph">
           <xsl:with-param name="class" select="local-name(.)"/>
           <xsl:with-param name="content">
-            <xsl:apply-templates mode="titlepage.mode" select="contrib"/>
+            <xsl:apply-templates mode="titlepage.mode" select="d:contrib"/>
             <xsl:text>: </xsl:text>
             <xsl:call-template name="person.name"/>
-            <xsl:apply-templates mode="titlepage.mode" select="affiliation"/>
-            <xsl:apply-templates select="following-sibling::othercredit[string(contrib)=$contrib]" mode="titlepage.othercredits"/>
+            <xsl:apply-templates mode="titlepage.mode" select="d:affiliation"/>
+            <xsl:apply-templates select="following-sibling::d:othercredit[string(d:contrib)=$contrib]" mode="titlepage.othercredits"/>
           </xsl:with-param>
         </xsl:call-template>
       </xsl:if>
@@ -661,7 +663,7 @@
           <xsl:call-template name="person.name"/>
         </xsl:with-param>
       </xsl:call-template>
-      <xsl:apply-templates mode="titlepage.mode" select="affiliation"/>
+      <xsl:apply-templates mode="titlepage.mode" select="d:affiliation"/>
     </xsl:otherwise>
   </xsl:choose>
   </xsl:when>
@@ -671,12 +673,12 @@
 </xsl:choose>
 </xsl:template>
 
-<xsl:template match="othercredit" mode="titlepage.othercredits">
+<xsl:template match="d:othercredit" mode="titlepage.othercredits">
   <xsl:text>, </xsl:text>
   <xsl:call-template name="person.name"/>
 </xsl:template>
 
-<xsl:template match="othername" mode="titlepage.mode">
+<xsl:template match="d:othername" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -684,7 +686,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="pagenums" mode="titlepage.mode">
+<xsl:template match="d:pagenums" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -692,14 +694,14 @@
   </span>
 </xsl:template>
 
-<xsl:template match="printhistory" mode="titlepage.mode">
+<xsl:template match="d:printhistory" mode="titlepage.mode">
   <div>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
   </div>
 </xsl:template>
 
-<xsl:template match="productname" mode="titlepage.mode">
+<xsl:template match="d:productname" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -707,7 +709,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="productnumber" mode="titlepage.mode">
+<xsl:template match="d:productnumber" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -715,7 +717,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="pubdate" mode="titlepage.mode">
+<xsl:template match="d:pubdate" mode="titlepage.mode">
   <xsl:call-template name="paragraph">
     <xsl:with-param name="class" select="local-name(.)"/>
     <xsl:with-param name="content">
@@ -724,7 +726,7 @@
   </xsl:call-template>
 </xsl:template>
 
-<xsl:template match="publisher" mode="titlepage.mode">
+<xsl:template match="d:publisher" mode="titlepage.mode">
   <xsl:call-template name="paragraph">
     <xsl:with-param name="class" select="local-name(.)"/>
     <xsl:with-param name="content">
@@ -733,7 +735,7 @@
   </xsl:call-template>
 </xsl:template>
 
-<xsl:template match="publishername" mode="titlepage.mode">
+<xsl:template match="d:publishername" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -741,7 +743,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="pubsnumber" mode="titlepage.mode">
+<xsl:template match="d:pubsnumber" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -749,7 +751,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="releaseinfo" mode="titlepage.mode">
+<xsl:template match="d:releaseinfo" mode="titlepage.mode">
   <xsl:call-template name="paragraph">
     <xsl:with-param name="class" select="local-name(.)"/>
     <xsl:with-param name="content">
@@ -758,10 +760,10 @@
   </xsl:call-template>
 </xsl:template>
 
-<xsl:template match="revhistory" mode="titlepage.mode">
+<xsl:template match="d:revhistory" mode="titlepage.mode">
   <xsl:variable name="numcols">
     <xsl:choose>
-      <xsl:when test=".//authorinitials|.//author">3</xsl:when>
+      <xsl:when test=".//d:authorinitials|.//d:author">3</xsl:when>
       <xsl:otherwise>2</xsl:otherwise>
     </xsl:choose>
   </xsl:variable>
@@ -826,8 +828,8 @@
               <xsl:call-template name="head.content">
                 <xsl:with-param name="title">
                     <xsl:value-of select="$title"/>
-                    <xsl:if test="../../title">
-                        <xsl:value-of select="concat(' (', ../../title, ')')"/>
+                    <xsl:if test="../../d:title">
+                        <xsl:value-of select="concat(' (', ../../d:title, ')')"/>
                     </xsl:if>
                 </xsl:with-param>
               </xsl:call-template>
@@ -848,12 +850,12 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="revhistory/revision" mode="titlepage.mode">
+<xsl:template match="d:revhistory/d:revision" mode="titlepage.mode">
   <xsl:param name="numcols" select="'3'"/>
-  <xsl:variable name="revnumber" select="revnumber"/>
-  <xsl:variable name="revdate"   select="date"/>
-  <xsl:variable name="revauthor" select="authorinitials|author"/>
-  <xsl:variable name="revremark" select="revremark|revdescription"/>
+  <xsl:variable name="revnumber" select="d:revnumber"/>
+  <xsl:variable name="revdate"   select="d:date"/>
+  <xsl:variable name="revauthor" select="d:authorinitials|d:author"/>
+  <xsl:variable name="revremark" select="d:revremark|d:revdescription"/>
   <tr>
     <td align="{$direction.align.start}">
       <xsl:if test="$revnumber">
@@ -893,31 +895,31 @@
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="revision/revnumber" mode="titlepage.mode">
+<xsl:template match="d:revision/d:revnumber" mode="titlepage.mode">
   <xsl:apply-templates mode="titlepage.mode"/>
 </xsl:template>
 
-<xsl:template match="revision/date" mode="titlepage.mode">
+<xsl:template match="d:revision/d:date" mode="titlepage.mode">
   <xsl:apply-templates mode="titlepage.mode"/>
 </xsl:template>
 
-<xsl:template match="revision/authorinitials" mode="titlepage.mode">
+<xsl:template match="d:revision/d:authorinitials" mode="titlepage.mode">
   <xsl:apply-templates mode="titlepage.mode"/>
 </xsl:template>
 
-<xsl:template match="revision/author" mode="titlepage.mode">
+<xsl:template match="d:revision/d:author" mode="titlepage.mode">
   <xsl:apply-templates mode="titlepage.mode"/>
 </xsl:template>
 
-<xsl:template match="revision/revremark" mode="titlepage.mode">
+<xsl:template match="d:revision/d:revremark" mode="titlepage.mode">
   <xsl:apply-templates mode="titlepage.mode"/>
 </xsl:template>
 
-<xsl:template match="revision/revdescription" mode="titlepage.mode">
+<xsl:template match="d:revision/d:revdescription" mode="titlepage.mode">
   <xsl:apply-templates mode="titlepage.mode"/>
 </xsl:template>
 
-<xsl:template match="seriesvolnums" mode="titlepage.mode">
+<xsl:template match="d:seriesvolnums" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -925,7 +927,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="shortaffil" mode="titlepage.mode">
+<xsl:template match="d:shortaffil" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -933,17 +935,17 @@
   </span>
 </xsl:template>
 
-<xsl:template match="subjectset" mode="titlepage.mode">
+<xsl:template match="d:subjectset" mode="titlepage.mode">
 </xsl:template>
 
-<xsl:template match="subtitle" mode="titlepage.mode">
+<xsl:template match="d:subtitle" mode="titlepage.mode">
   <h2>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
   </h2>
 </xsl:template>
 
-<xsl:template match="surname" mode="titlepage.mode">
+<xsl:template match="d:surname" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>
@@ -951,7 +953,7 @@
   </span>
 </xsl:template>
 
-<xsl:template match="title" mode="titlepage.mode">
+<xsl:template match="d:title" mode="titlepage.mode">
   <xsl:variable name="id">
     <xsl:choose>
       <!-- if title is in an *info wrapper, get the grandparent -->
@@ -986,11 +988,11 @@
   </h1>
 </xsl:template>
 
-<xsl:template match="titleabbrev" mode="titlepage.mode">
+<xsl:template match="d:titleabbrev" mode="titlepage.mode">
   <!-- nop; title abbreviations don't belong on the title page! -->
 </xsl:template>
 
-<xsl:template match="volumenum" mode="titlepage.mode">
+<xsl:template match="d:volumenum" mode="titlepage.mode">
   <span>
     <xsl:apply-templates select="." mode="common.html.attributes"/>
     <xsl:apply-templates mode="titlepage.mode"/>

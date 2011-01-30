@@ -1,7 +1,8 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
-                exclude-result-prefixes="doc"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
+                exclude-result-prefixes="doc d"
                 version='1.0'>
 
 <!-- ********************************************************************
@@ -43,13 +44,13 @@ element label.</para>
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="set|book" mode="label.markup">
+<xsl:template match="d:set|d:book" mode="label.markup">
   <xsl:if test="@label">
     <xsl:value-of select="@label"/>
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="part" mode="label.markup">
+<xsl:template match="d:part" mode="label.markup">
   <xsl:choose>
     <xsl:when test="@label">
       <xsl:value-of select="@label"/>
@@ -60,30 +61,30 @@ element label.</para>
           <xsl:with-param name="format" select="$part.autolabel"/>
         </xsl:call-template>
       </xsl:variable>
-      <xsl:number from="book" count="part" format="{$format}"/>
+      <xsl:number from="d:book" count="d:part" format="{$format}"/>
     </xsl:when>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="partintro" mode="label.markup">
+<xsl:template match="d:partintro" mode="label.markup">
   <!-- no label -->
 </xsl:template>
 
-<xsl:template match="preface" mode="label.markup">
+<xsl:template match="d:preface" mode="label.markup">
   <xsl:choose>
     <xsl:when test="@label">
       <xsl:value-of select="@label"/>
     </xsl:when>
     <xsl:when test="string($preface.autolabel) != 0">
       <xsl:if test="$component.label.includes.part.label != 0 and
-                      ancestor::part">
+                      ancestor::d:part">
         <xsl:variable name="part.label">
-          <xsl:apply-templates select="ancestor::part" 
+          <xsl:apply-templates select="ancestor::d:part" 
                                mode="label.markup"/>
         </xsl:variable>
         <xsl:if test="$part.label != ''">
           <xsl:value-of select="$part.label"/>
-          <xsl:apply-templates select="ancestor::part" 
+          <xsl:apply-templates select="ancestor::d:part" 
                                mode="intralabel.punctuation"/>
         </xsl:if>
       </xsl:if>
@@ -93,32 +94,32 @@ element label.</para>
         </xsl:call-template>
       </xsl:variable>
       <xsl:choose>
-        <xsl:when test="$label.from.part != 0 and ancestor::part">
-          <xsl:number from="part" count="preface" format="{$format}" level="any"/>
+        <xsl:when test="$label.from.part != 0 and ancestor::d:part">
+          <xsl:number from="d:part" count="d:preface" format="{$format}" level="any"/>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:number from="book" count="preface" format="{$format}" level="any"/>
+          <xsl:number from="d:book" count="d:preface" format="{$format}" level="any"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:when>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="chapter" mode="label.markup">
+<xsl:template match="d:chapter" mode="label.markup">
   <xsl:choose>
     <xsl:when test="@label">
       <xsl:value-of select="@label"/>
     </xsl:when>
     <xsl:when test="string($chapter.autolabel) != 0">
       <xsl:if test="$component.label.includes.part.label != 0 and
-                      ancestor::part">
+                      ancestor::d:part">
         <xsl:variable name="part.label">
-          <xsl:apply-templates select="ancestor::part" 
+          <xsl:apply-templates select="ancestor::d:part" 
                                mode="label.markup"/>
         </xsl:variable>
         <xsl:if test="$part.label != ''">
           <xsl:value-of select="$part.label"/>
-          <xsl:apply-templates select="ancestor::part" 
+          <xsl:apply-templates select="ancestor::d:part" 
                                mode="intralabel.punctuation"/>
         </xsl:if>
       </xsl:if>
@@ -128,32 +129,32 @@ element label.</para>
         </xsl:call-template>
       </xsl:variable>
       <xsl:choose>
-        <xsl:when test="$label.from.part != 0 and ancestor::part">
-          <xsl:number from="part" count="chapter" format="{$format}" level="any"/>
+        <xsl:when test="$label.from.part != 0 and ancestor::d:part">
+          <xsl:number from="d:part" count="d:chapter" format="{$format}" level="any"/>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:number from="book" count="chapter" format="{$format}" level="any"/>
+          <xsl:number from="d:book" count="d:chapter" format="{$format}" level="any"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:when>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="appendix" mode="label.markup">
+<xsl:template match="d:appendix" mode="label.markup">
   <xsl:choose>
     <xsl:when test="@label">
       <xsl:value-of select="@label"/>
     </xsl:when>
     <xsl:when test="string($appendix.autolabel) != 0">
       <xsl:if test="$component.label.includes.part.label != 0 and
-                      ancestor::part">
+                      ancestor::d:part">
         <xsl:variable name="part.label">
-          <xsl:apply-templates select="ancestor::part" 
+          <xsl:apply-templates select="ancestor::d:part" 
                                mode="label.markup"/>
         </xsl:variable>
         <xsl:if test="$part.label != ''">
           <xsl:value-of select="$part.label"/>
-          <xsl:apply-templates select="ancestor::part" 
+          <xsl:apply-templates select="ancestor::d:part" 
                                mode="intralabel.punctuation"/>
         </xsl:if>
       </xsl:if>
@@ -163,45 +164,45 @@ element label.</para>
         </xsl:call-template>
       </xsl:variable>
       <xsl:choose>
-        <xsl:when test="$label.from.part != 0 and ancestor::part">
-          <xsl:number from="part" count="appendix" format="{$format}" level="any"/>
+        <xsl:when test="$label.from.part != 0 and ancestor::d:part">
+          <xsl:number from="d:part" count="d:appendix" format="{$format}" level="any"/>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:number from="book|article"
-                      count="appendix" format="{$format}" level="any"/>
+          <xsl:number from="d:book|d:article"
+                      count="d:appendix" format="{$format}" level="any"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:when>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="article" mode="label.markup">
+<xsl:template match="d:article" mode="label.markup">
   <xsl:if test="@label">
     <xsl:value-of select="@label"/>
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="dedication|colophon" mode="label.markup">
+<xsl:template match="d:dedication|d:colophon" mode="label.markup">
   <xsl:if test="@label">
     <xsl:value-of select="@label"/>
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="reference" mode="label.markup">
+<xsl:template match="d:reference" mode="label.markup">
   <xsl:choose>
     <xsl:when test="@label">
       <xsl:value-of select="@label"/>
     </xsl:when>
     <xsl:when test="string($reference.autolabel) != 0">
       <xsl:if test="$component.label.includes.part.label != 0 and
-                      ancestor::part">
+                      ancestor::d:part">
         <xsl:variable name="part.label">
-          <xsl:apply-templates select="ancestor::part" 
+          <xsl:apply-templates select="ancestor::d:part" 
                                mode="label.markup"/>
         </xsl:variable>
         <xsl:if test="$part.label != ''">
           <xsl:value-of select="$part.label"/>
-          <xsl:apply-templates select="ancestor::part" 
+          <xsl:apply-templates select="ancestor::d:part" 
                                mode="intralabel.punctuation"/>
         </xsl:if>
       </xsl:if>
@@ -211,24 +212,24 @@ element label.</para>
         </xsl:call-template>
       </xsl:variable>
       <xsl:choose>
-        <xsl:when test="$label.from.part != 0 and ancestor::part">
-          <xsl:number from="part" count="reference" format="{$format}" level="any"/>
+        <xsl:when test="$label.from.part != 0 and ancestor::d:part">
+          <xsl:number from="d:part" count="d:reference" format="{$format}" level="any"/>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:number from="book" count="reference" format="{$format}" level="any"/>
+          <xsl:number from="d:book" count="d:reference" format="{$format}" level="any"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:when>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="refentry" mode="label.markup">
+<xsl:template match="d:refentry" mode="label.markup">
   <xsl:if test="@label">
     <xsl:value-of select="@label"/>
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="section" mode="label.markup">
+<xsl:template match="d:section" mode="label.markup">
   <!-- if this is a nested section, label the parent -->
   <xsl:if test="local-name(..) = 'section'">
     <xsl:variable name="parent.section.label">
@@ -269,7 +270,7 @@ element label.</para>
 
 <!--
   <xsl:message>
-    test: <xsl:value-of select="$label"/>, <xsl:number count="section"/>
+    test: <xsl:value-of select="$label"/>, <xsl:number count="d:section"/>
   </xsl:message>
 -->
 
@@ -283,12 +284,12 @@ element label.</para>
           <xsl:with-param name="format" select="$section.autolabel"/>
         </xsl:call-template>
       </xsl:variable>
-      <xsl:number format="{$format}" count="section"/>
+      <xsl:number format="{$format}" count="d:section"/>
     </xsl:when>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="sect1" mode="label.markup">
+<xsl:template match="d:sect1" mode="label.markup">
   <!-- if the parent is a component, maybe label that too -->
   <xsl:variable name="parent.is.component">
     <xsl:call-template name="is.component">
@@ -325,12 +326,12 @@ element label.</para>
         </xsl:call-template>
       </xsl:variable>
       <xsl:copy-of select="$component.label"/>
-      <xsl:number format="{$format}" count="sect1"/>
+      <xsl:number format="{$format}" count="d:sect1"/>
     </xsl:when>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="sect2|sect3|sect4|sect5" mode="label.markup">
+<xsl:template match="d:sect2|d:sect3|d:sect4|d:sect5" mode="label.markup">
   <!-- label the parent -->
   <xsl:variable name="parent.section.label">
     <xsl:call-template name="label.this.section">
@@ -358,16 +359,16 @@ element label.</para>
       </xsl:variable>
       <xsl:choose>
         <xsl:when test="local-name(.) = 'sect2'">
-          <xsl:number format="{$format}" count="sect2"/>
+          <xsl:number format="{$format}" count="d:sect2"/>
         </xsl:when>
         <xsl:when test="local-name(.) = 'sect3'">
-          <xsl:number format="{$format}" count="sect3"/>
+          <xsl:number format="{$format}" count="d:sect3"/>
         </xsl:when>
         <xsl:when test="local-name(.) = 'sect4'">
-          <xsl:number format="{$format}" count="sect4"/>
+          <xsl:number format="{$format}" count="d:sect4"/>
         </xsl:when>
         <xsl:when test="local-name(.) = 'sect5'">
-          <xsl:number format="{$format}" count="sect5"/>
+          <xsl:number format="{$format}" count="d:sect5"/>
         </xsl:when>
         <xsl:otherwise>
           <xsl:message>label.markup: this can't happen!</xsl:message>
@@ -377,27 +378,27 @@ element label.</para>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="bridgehead" mode="label.markup">
+<xsl:template match="d:bridgehead" mode="label.markup">
   <!-- FIXME: could we do a better job here? -->
   <xsl:variable name="contsec"
-                select="(ancestor::section
-                         |ancestor::simplesect
-                         |ancestor::sect1
-                         |ancestor::sect2
-                         |ancestor::sect3
-                         |ancestor::sect4
-                         |ancestor::sect5
-                         |ancestor::refsect1
-                         |ancestor::refsect2
-                         |ancestor::refsect3
-                         |ancestor::chapter
-                         |ancestor::appendix
-                         |ancestor::preface)[last()]"/>
+                select="(ancestor::d:section
+                         |ancestor::d:simplesect
+                         |ancestor::d:sect1
+                         |ancestor::d:sect2
+                         |ancestor::d:sect3
+                         |ancestor::d:sect4
+                         |ancestor::d:sect5
+                         |ancestor::d:refsect1
+                         |ancestor::d:refsect2
+                         |ancestor::d:refsect3
+                         |ancestor::d:chapter
+                         |ancestor::d:appendix
+                         |ancestor::d:preface)[last()]"/>
 
   <xsl:apply-templates select="$contsec" mode="label.markup"/>
 </xsl:template>
 
-<xsl:template match="refsect1" mode="label.markup">
+<xsl:template match="d:refsect1" mode="label.markup">
   <xsl:choose>
     <xsl:when test="@label">
       <xsl:value-of select="@label"/>
@@ -408,12 +409,12 @@ element label.</para>
           <xsl:with-param name="format" select="$section.autolabel"/>
         </xsl:call-template>
       </xsl:variable>
-      <xsl:number count="refsect1" format="{$format}"/>
+      <xsl:number count="d:refsect1" format="{$format}"/>
     </xsl:when>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="refsect2|refsect3" mode="label.markup">
+<xsl:template match="d:refsect2|d:refsect3" mode="label.markup">
   <!-- label the parent -->
   <xsl:variable name="parent.label">
     <xsl:apply-templates select=".." mode="label.markup"/>
@@ -435,17 +436,17 @@ element label.</para>
       </xsl:variable>
       <xsl:choose>
         <xsl:when test="local-name(.) = 'refsect2'">
-          <xsl:number count="refsect2" format="{$format}"/>
+          <xsl:number count="d:refsect2" format="{$format}"/>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:number count="refsect3" format="{$format}"/>
+          <xsl:number count="d:refsect3" format="{$format}"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:when>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="simplesect" mode="label.markup">
+<xsl:template match="d:simplesect" mode="label.markup">
   <!-- if this is a nested section, label the parent -->
   <xsl:if test="local-name(..) = 'section'
                 or local-name(..) = 'sect1'
@@ -497,27 +498,27 @@ element label.</para>
           <xsl:with-param name="format" select="$section.autolabel"/>
         </xsl:call-template>
       </xsl:variable>
-      <xsl:number format="{$format}" count="simplesect"/>
+      <xsl:number format="{$format}" count="d:simplesect"/>
     </xsl:when>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="qandadiv" mode="label.markup">
-  <xsl:variable name="lparent" select="(ancestor::set
-                                       |ancestor::book
-                                       |ancestor::chapter
-                                       |ancestor::appendix
-                                       |ancestor::preface
-                                       |ancestor::section
-                                       |ancestor::simplesect
-                                       |ancestor::sect1
-                                       |ancestor::sect2
-                                       |ancestor::sect3
-                                       |ancestor::sect4
-                                       |ancestor::sect5
-                                       |ancestor::refsect1
-                                       |ancestor::refsect2
-                                       |ancestor::refsect3)[last()]"/>
+<xsl:template match="d:qandadiv" mode="label.markup">
+  <xsl:variable name="lparent" select="(ancestor::d:set
+                                       |ancestor::d:book
+                                       |ancestor::d:chapter
+                                       |ancestor::d:appendix
+                                       |ancestor::d:preface
+                                       |ancestor::d:section
+                                       |ancestor::d:simplesect
+                                       |ancestor::d:sect1
+                                       |ancestor::d:sect2
+                                       |ancestor::d:sect3
+                                       |ancestor::d:sect4
+                                       |ancestor::d:sect5
+                                       |ancestor::d:refsect1
+                                       |ancestor::d:refsect2
+                                       |ancestor::d:refsect3)[last()]"/>
 
   <xsl:variable name="lparent.prefix">
     <xsl:apply-templates select="$lparent" mode="label.markup"/>
@@ -540,27 +541,27 @@ element label.</para>
         </xsl:call-template>
       </xsl:variable>
       <xsl:value-of select="$prefix"/>
-      <xsl:number level="multiple" count="qandadiv" format="{$format}"/>
+      <xsl:number level="multiple" count="d:qandadiv" format="{$format}"/>
     </xsl:when>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="question|answer" mode="label.markup">
-  <xsl:variable name="lparent" select="(ancestor::set
-                                       |ancestor::book
-                                       |ancestor::chapter
-                                       |ancestor::appendix
-                                       |ancestor::preface
-                                       |ancestor::section
-                                       |ancestor::simplesect
-                                       |ancestor::sect1
-                                       |ancestor::sect2
-                                       |ancestor::sect3
-                                       |ancestor::sect4
-                                       |ancestor::sect5
-                                       |ancestor::refsect1
-                                       |ancestor::refsect2
-                                       |ancestor::refsect3)[last()]"/>
+<xsl:template match="d:question|d:answer" mode="label.markup">
+  <xsl:variable name="lparent" select="(ancestor::d:set
+                                       |ancestor::d:book
+                                       |ancestor::d:chapter
+                                       |ancestor::d:appendix
+                                       |ancestor::d:preface
+                                       |ancestor::d:section
+                                       |ancestor::d:simplesect
+                                       |ancestor::d:sect1
+                                       |ancestor::d:sect2
+                                       |ancestor::d:sect3
+                                       |ancestor::d:sect4
+                                       |ancestor::d:sect5
+                                       |ancestor::d:refsect1
+                                       |ancestor::d:refsect2
+                                       |ancestor::d:refsect3)[last()]"/>
 
   <xsl:variable name="lparent.prefix">
     <xsl:apply-templates select="$lparent" mode="label.markup"/>
@@ -569,13 +570,13 @@ element label.</para>
   <xsl:variable name="prefix">
     <xsl:if test="$qanda.inherit.numeration != 0">
       <xsl:choose>
-        <xsl:when test="ancestor::qandadiv">
+        <xsl:when test="ancestor::d:qandadiv">
           <xsl:variable name="div.label">
-            <xsl:apply-templates select="ancestor::qandadiv[1]" mode="label.markup"/>
+            <xsl:apply-templates select="ancestor::d:qandadiv[1]" mode="label.markup"/>
           </xsl:variable>
           <xsl:if test="string-length($div.label) != 0">
             <xsl:copy-of select="$div.label"/>
-            <xsl:apply-templates select="ancestor::qandadiv[1]"
+            <xsl:apply-templates select="ancestor::d:qandadiv[1]"
                                  mode="intralabel.punctuation"/>
           </xsl:if>
         </xsl:when>
@@ -588,7 +589,7 @@ element label.</para>
   </xsl:variable>
 
   <xsl:variable name="inhlabel"
-                select="ancestor-or-self::qandaset/@defaultlabel[1]"/>
+                select="ancestor-or-self::d:qandaset/@defaultlabel[1]"/>
 
   <xsl:variable name="deflabel">
     <xsl:choose>
@@ -601,60 +602,60 @@ element label.</para>
     </xsl:choose>
   </xsl:variable>
 
-  <xsl:variable name="label" select="label"/>
+  <xsl:variable name="label" select="d:label"/>
 
   <xsl:choose>
     <xsl:when test="count($label)>0">
       <xsl:apply-templates select="$label"/>
     </xsl:when>
 
-    <xsl:when test="$deflabel = 'qanda' and self::question">
+    <xsl:when test="$deflabel = 'qanda' and self::d:question">
       <xsl:call-template name="gentext">
         <xsl:with-param name="key" select="'Question'"/>
       </xsl:call-template>
     </xsl:when>
 
-    <xsl:when test="$deflabel = 'qanda' and self::answer">
+    <xsl:when test="$deflabel = 'qanda' and self::d:answer">
       <xsl:call-template name="gentext">
         <xsl:with-param name="key" select="'Answer'"/>
       </xsl:call-template>
     </xsl:when>
 
     <xsl:when test="($deflabel = 'qnumber' or
-                     $deflabel = 'qnumberanda') and self::question">
+                     $deflabel = 'qnumberanda') and self::d:question">
       <xsl:call-template name="gentext">
         <xsl:with-param name="key" select="'Question'"/>
       </xsl:call-template>
       <xsl:text>&#xA0;</xsl:text>
       <xsl:value-of select="$prefix"/>
-      <xsl:number level="multiple" count="qandaentry" format="1"/>
+      <xsl:number level="multiple" count="d:qandaentry" format="1"/>
     </xsl:when>
 
-    <xsl:when test="$deflabel = 'qnumberanda' and self::answer">
+    <xsl:when test="$deflabel = 'qnumberanda' and self::d:answer">
       <xsl:call-template name="gentext">
         <xsl:with-param name="key" select="'Answer'"/>
       </xsl:call-template>
     </xsl:when>
 
-    <xsl:when test="$deflabel = 'number' and self::question">
+    <xsl:when test="$deflabel = 'number' and self::d:question">
       <xsl:value-of select="$prefix"/>
-      <xsl:number level="multiple" count="qandaentry" format="1"/>
+      <xsl:number level="multiple" count="d:qandaentry" format="1"/>
     </xsl:when>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="bibliography|glossary|
-                     qandaset|index|setindex" mode="label.markup">
+<xsl:template match="d:bibliography|d:glossary|
+                     d:qandaset|d:index|d:setindex" mode="label.markup">
   <xsl:if test="@label">
     <xsl:value-of select="@label"/>
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="figure|table|example" mode="label.markup">
+<xsl:template match="d:figure|d:table|d:example" mode="label.markup">
   <xsl:variable name="pchap"
-                select="(ancestor::chapter
-                        |ancestor::appendix
-                        |ancestor::article[ancestor::book])[last()]"/>
+                select="(ancestor::d:chapter
+                        |ancestor::d:appendix
+                        |ancestor::d:article[ancestor::d:book])[last()]"/>
 
   <xsl:variable name="prefix">
     <xsl:if test="count($pchap) &gt; 0">
@@ -671,21 +672,21 @@ element label.</para>
         <xsl:when test="$prefix != ''">
             <xsl:apply-templates select="$pchap" mode="label.markup"/>
             <xsl:apply-templates select="$pchap" mode="intralabel.punctuation"/>
-          <xsl:number format="1" from="chapter|appendix" level="any"/>
+          <xsl:number format="1" from="d:chapter|d:appendix" level="any"/>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:number format="1" from="book|article" level="any"/>
+          <xsl:number format="1" from="d:book|d:article" level="any"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="procedure" mode="label.markup">
+<xsl:template match="d:procedure" mode="label.markup">
   <xsl:variable name="pchap"
-                select="ancestor::chapter
-                        |ancestor::appendix
-                        |ancestor::article[ancestor::book]"/>
+                select="ancestor::d:chapter
+                        |ancestor::d:appendix
+                        |ancestor::d:article[ancestor::d:book]"/>
 
   <xsl:variable name="prefix">
     <xsl:if test="count($pchap) &gt; 0">
@@ -707,23 +708,23 @@ element label.</para>
             <xsl:apply-templates select="$pchap" mode="label.markup"/>
             <xsl:apply-templates select="$pchap" mode="intralabel.punctuation"/>
           </xsl:if>
-          <xsl:number count="procedure[title]" format="1" 
-                      from="chapter|appendix" level="any"/>
+          <xsl:number count="d:procedure[d:title]" format="1" 
+                      from="d:chapter|d:appendix" level="any"/>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:number count="procedure[title]" format="1" 
-                      from="book|article" level="any"/>
+          <xsl:number count="d:procedure[d:title]" format="1" 
+                      from="d:book|d:article" level="any"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="equation" mode="label.markup">
+<xsl:template match="d:equation" mode="label.markup">
   <xsl:variable name="pchap"
-                select="ancestor::chapter
-                        |ancestor::appendix
-                        |ancestor::article[ancestor::book]"/>
+                select="ancestor::d:chapter
+                        |ancestor::d:appendix
+                        |ancestor::d:article[ancestor::d:book]"/>
 
   <xsl:variable name="prefix">
     <xsl:if test="count($pchap) &gt; 0">
@@ -742,22 +743,22 @@ element label.</para>
             <xsl:apply-templates select="$pchap" mode="label.markup"/>
             <xsl:apply-templates select="$pchap" mode="intralabel.punctuation"/>
           </xsl:if>
-          <xsl:number format="1" count="equation" 
-                      from="chapter|appendix" level="any"/>
+          <xsl:number format="1" count="d:equation" 
+                      from="d:chapter|d:appendix" level="any"/>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:number format="1" count="equation" 
-                      from="book|article" level="any"/>
+          <xsl:number format="1" count="d:equation" 
+                      from="d:book|d:article" level="any"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="orderedlist/listitem" mode="label.markup">
+<xsl:template match="d:orderedlist/d:listitem" mode="label.markup">
   <xsl:variable name="numeration">
     <xsl:call-template name="list.numeration">
-      <xsl:with-param name="node" select="parent::orderedlist"/>
+      <xsl:with-param name="node" select="parent::d:orderedlist"/>
     </xsl:call-template>
   </xsl:variable>
 
@@ -786,11 +787,11 @@ element label.</para>
   <xsl:number value="$item-number" format="{$type}"/>
 </xsl:template>
 
-<xsl:template match="abstract" mode="label.markup">
+<xsl:template match="d:abstract" mode="label.markup">
   <!-- nop -->
 </xsl:template>
 
-<xsl:template match="sidebar" mode="label.markup">
+<xsl:template match="d:sidebar" mode="label.markup">
   <!-- nop -->
 </xsl:template>
 
