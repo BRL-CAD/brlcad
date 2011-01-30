@@ -114,9 +114,8 @@ EXTRA_DIST = \
 	specifications/en/Makefile.am \
 	system/README \
 	system/man1/en/Makefile.am \
-	system/man1/mged_cmd_template.xml \
+	system/mann/mged_cmd_template.xml \
 	system/man3/en/Makefile.am \
-	system/man3/mged_cmd_template.xml \
 	system/man5/en/Makefile.am \
 	system/mann/en/Makefile.am
 
