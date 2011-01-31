@@ -9,8 +9,6 @@ Remaining items:
 
 17. fix wish build on windows - current output exe doesn't run
 
-18. look into doxygen build
-
 Done (to first order, all this needs testing)
 
 1.  Detect OpenGL properly on Apple - choose X11 vs Aqua, and get the ogl code working
@@ -60,5 +58,7 @@ Done (to first order, all this needs testing)
 16. make the src/other build logic use the version numbers where needed
 
 14. Apply lessons learned to the SCL build logic
+
+18. look into doxygen build
 
 
