@@ -49,27 +49,30 @@
 
 /* private structures not used outside this file */
 struct rtserver_rti {
-    struct rt_i *rtrti_rtip;	/* pointer to an rti structure */
-    char *rtrti_name;		/* name of this "assembly" (bu_malloc'd storage) */
-    int rtrti_num_trees;		/* number of trees in this rti structure */
-    char **rtrti_trees;		/* array of pointers to tree-top names trees[num_trees] (bu_malloc'd storage) */
-    matp_t rtrti_xform;		/* transformation matrix from global coords to this rt instance (NULL -> identity) */
+    struct rt_i *rtrti_rtip;		/* pointer to an rti structure */
+    char *rtrti_name;			/* name of this "assembly" (bu_malloc'd storage) */
+    size_t rtrti_num_trees;		/* number of trees in this rti structure */
+    char **rtrti_trees;			/* array of pointers to tree-top names trees[num_trees] (bu_malloc'd storage) */
+    matp_t rtrti_xform;			/* transformation matrix from global coords to this rt instance (NULL -> identity) */
     matp_t rtrti_inv_xform;		/* inverse of above xform (NULL -> identity) */
-    Tcl_HashTable *rtrti_region_names; /* A Tcl hash table containing region names as keys and index numbers as values.
-                                           * The indices are used to reference region names in the Java return byte array
-                                           * rather than using the full name. */
-    int region_count;                  /* number of entries in above hash table */
+    Tcl_HashTable *rtrti_region_names;	/* A Tcl hash table containing region names as keys and index numbers as values.
+                                         * The indices are used to reference region names in the Java return byte array
+                                         * rather than using the full name.
+                                         */
+    int region_count;			/* number of entries in above hash table */
 };
 
 struct rtserver_geometry {
-    int rts_number_of_rtis;		/* number of rtserver_rti structures */
+    size_t rts_number_of_rtis;		/* number of rtserver_rti structures */
     struct rtserver_rti **rts_rtis;	/* array of pointers to rtserver_rti
-					   structures rts_rtis[rts_number_of_rtis] (bu_malloc'd storage ) */
+                                         * structures rts_rtis[rts_number_of_rtis] (bu_malloc'd storage )
+                                         */
     point_t		rts_mdl_min;	/* min corner of model bounding RPP */
     point_t		rts_mdl_max;	/* max corner of model bounding RPP */
     double		rts_radius;	/* radius of model bounding sphere */
-    Tcl_HashTable	*rts_comp_names;	/* A Tcl hash table containing ident numbers as keys
-						   and component names as values */
+    Tcl_HashTable	*rts_comp_names;/* A Tcl hash table containing ident numbers as keys
+                                         * and component names as values
+                                         */
 };
 
 static struct bu_ptbl apps; /* dynamic table of application structures, each incoming connection gets its own private struct */
@@ -133,17 +136,14 @@ static struct rtserver_geometry **rts_geometry=NULL;	/* array of rtserver_geomet
 							 * NULL entry -> unused slot
 							 * index 0 must never be NULL
 							 */
-static int num_geometries=0;	/* the length of the rts_geometry array */
+static size_t num_geometries=0;	/* the length of the rts_geometry array */
 static int used_session_0=0;	/* flag indicating if initial session has been used */
 
 /* hash tables for MUVES components */
 static int hash_table_exists=0;
 static Tcl_HashTable name_tbl;		/* all the MUVES component names (key is the MUVES component name,
-					   value = MUVES id number */
-#if 0
-static Tcl_HashTable ident_tbl;		/* all the non-air regions (key = ident, value = MUVES id number) */
-static Tcl_HashTable air_tbl;		/* all the air regions (key = aircode, value = MUVES id number) */
-#endif
+                                         * value = MUVES id number
+                                         */
 
 /* wrapper for the GET_APPLICATION macro */
 void
@@ -168,10 +168,10 @@ freeApplication(struct application *ap)
 void
 get_muves_components()
 {
-    Tcl_HashEntry *name_entry, *ident_entry, *air_entry;
+    Tcl_HashEntry *name_entry;
     Tcl_HashSearch search;
-    int i, j;
-    int sessionid;
+    size_t i, j;
+    size_t sessionid;
 
     /* make sure we have some geometry */
     if ( !rts_geometry ) {
@@ -190,10 +190,6 @@ get_muves_components()
 
     /* initialize the hash tables */
     Tcl_InitHashTable( &name_tbl, TCL_STRING_KEYS ); /* MUVES Component name to index table */
-#if 0
-    Tcl_InitHashTable( &ident_tbl, TCL_ONE_WORD_KEYS ); /* ident to MUVES_Component index table */
-    Tcl_InitHashTable( &air_tbl, TCL_ONE_WORD_KEYS ); /* aircode to MUVES_Componnet index table */
-#endif
     hash_table_exists = 1;
 
     /* visit each rt_i */
@@ -206,8 +202,7 @@ get_muves_components()
 	    struct region *rp=rtip->Regions[j];
 	    struct bu_mro *attrs=rp->attr_values[0];
 	    int new;
-	    CLIENTDATA_INT index=0;
-            CLIENTDATA_INT code;
+	    CLIENTDATA_INT idx=0;
 
 	    if ( !rp || BU_MRO_STRLEN(attrs) < 1 ) {
 		/* not a region, or does not have a MUVES_Component attribute */
@@ -224,27 +219,10 @@ get_muves_components()
 	    if ( new ) {
 		comp_count++;
 		Tcl_SetHashValue( name_entry, (ClientData)comp_count );
-		index = comp_count;
+		idx = comp_count;
 	    } else {
-		index = (CLIENTDATA_INT)Tcl_GetHashValue( name_entry );
+		idx = (CLIENTDATA_INT)Tcl_GetHashValue( name_entry );
 	    }
-#if 0
-	    if ( rp->reg_aircode > 0 ) {
-		/* this is an air region, create an air table entry */
-                code = rp->reg_aircode;
-		air_entry = Tcl_CreateHashEntry( &air_tbl, (ClientData)code, &new );
-		if ( new ) {
-		    Tcl_SetHashValue( air_entry, (ClientData)index );
-		}
-	    } else {
-		/* this is a solid region, create an ident table entry */
-                code = rp->reg_regionid;
-		ident_entry = Tcl_CreateHashEntry( &ident_tbl, (ClientData)code, &new );
-		if ( new ) {
-		    Tcl_SetHashValue( ident_entry, (ClientData)index );
-		}
-	    }
-#endif
 	}
     }
 
@@ -257,11 +235,11 @@ get_muves_components()
     name_entry = Tcl_FirstHashEntry( &name_tbl, &search );
     while ( name_entry ) {
 	char *name;
-	CLIENTDATA_INT index;
+	CLIENTDATA_INT idx;
 
 	name = Tcl_GetHashKey( &name_tbl, name_entry );
-	index = (CLIENTDATA_INT)Tcl_GetHashValue( name_entry );
-	names[index] = bu_strdup( name );
+	idx = (CLIENTDATA_INT)Tcl_GetHashValue( name_entry );
+	names[idx] = bu_strdup( name );
 
 	name_entry = Tcl_NextHashEntry( &search );
     }
@@ -278,10 +256,10 @@ void rts_set_verbosity( int v )
 int
 isLastUseOfRti( struct rt_i *rtip, int sessionid )
 {
-    int i, j;
+    size_t i, j;
 
     for ( i=0; i<num_geometries; i++ ) {
-	if ( i == sessionid )
+        if ( i == (size_t)sessionid )
 	    continue;
 	if ( !rts_geometry[i] )
 	    continue;
@@ -302,9 +280,9 @@ rts_clean( int sessionid)
 {
     struct application *ap;
     struct resource *resp;
-    int i, j;
+    size_t i, j;
 
-    if ( sessionid >= 0 && sessionid < num_geometries && rts_geometry[sessionid] ) {
+    if ( sessionid >= 0 && (size_t)sessionid < num_geometries && rts_geometry[sessionid] ) {
 	/* free all old geometry */
 	for ( i=0; i<rts_geometry[sessionid]->rts_number_of_rtis; i++ ) {
 	    struct rtserver_rti *rtsrtip;
@@ -357,10 +335,6 @@ rts_clean( int sessionid)
     
     if ( hash_table_exists ) {
 	Tcl_DeleteHashTable( &name_tbl );
-#if 0
-	Tcl_DeleteHashTable( &ident_tbl);
-	Tcl_DeleteHashTable( &air_tbl );
-#endif
 	hash_table_exists = 0;
     }
     
@@ -403,7 +377,7 @@ rts_clean( int sessionid)
  * any other session is deleted
  */
 void
-rts_close_session( int sessionid )
+rts_close_session( int UNUSED(sessionid) )
 {
     /* does nothing for now */
 }
@@ -444,13 +418,12 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
 {
     struct rt_i *rtip;
     struct db_i *dbip;
-    int i, j;
+    size_t i, j;
     int sessionid=0;
     const char *attrs[] = {(const char *)"muves_comp", (const char *)NULL };
     
     /* clean up any prior geometry data */
     if ( rts_geometry ) {
-	struct db_i *dbip;
 
 	dbip = rts_geometry[0]->rts_rtis[0]->rtrti_rtip->rti_dbip;
 	for ( i=0; i<num_geometries; i++ ) {
@@ -469,10 +442,6 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
 
     if ( hash_table_exists ) {
 	Tcl_DeleteHashTable( &name_tbl );
-#if 0
-	Tcl_DeleteHashTable( &ident_tbl);
-	Tcl_DeleteHashTable( &air_tbl );
-#endif
 	hash_table_exists = 0;
     }
 
@@ -529,8 +498,7 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
     /* for each RT instance, get its trees */
     for ( i=0; i<rts_geometry[sessionid]->rts_number_of_rtis; i++ ) {
 	struct rtserver_rti *rts_rtip;
-	struct rt_i *rtip;
-        CLIENTDATA_INT regno;
+        size_t regno;
 
 	/* cache the rtserver_rti pointer and its associated rt instance pointer */
 	rts_rtip = rts_geometry[sessionid]->rts_rtis[i];
@@ -618,7 +586,7 @@ rts_miss( struct application *ap )
  * this routine adds the list of ray_hit structures to the ray_result structure for this ray
  */
 int
-rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
+rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED(segs))
 {
     int sessionid = ap->a_user;
     struct partition *pp;
@@ -651,7 +619,6 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
         vect_t enterNormal;
         vect_t exitNormal;
 	Tcl_HashEntry *entry;
-        CLIENTDATA_INT code;
         double los;
         double inObl, outObl;
         double dot;
@@ -666,21 +633,6 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 
 	rp = pp->pt_regionp;
 
-	/* find has table entry, if we have a table (to get MUVES_Component index) */
-/*
-	if ( hash_table_exists ) {
-	    if ( rp->reg_aircode ) {
-                code = rp->reg_aircode;
-		entry = Tcl_FindHashEntry( &air_tbl, (ClientData)code );
-	    } else {
-                code = rp->reg_regionid;
-		entry = Tcl_FindHashEntry( &ident_tbl, (ClientData)code );
-	    }
-	} else {
-	    entry = NULL;
-	}
-*/
-            
         /* write partition info to the byte array */
         /* start with entrance point */
         htond(buffer, (unsigned char *)pp->pt_inhit->hit_point, 3);
@@ -1065,7 +1017,7 @@ fillItemTree( jobject parent_node,
 
 
 /* init routine called from java */
-JNIEXPORT jint JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_rtsInit(JNIEnv *env, jobject obj, jobjectArray args)
+JNIEXPORT jint JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_rtsInit(JNIEnv *env, jobject UNUSED(obj), jobjectArray args)
 {
 
     jsize len=(*env)->GetArrayLength(env, args);
@@ -1075,7 +1027,6 @@ JNIEXPORT jint JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_r
     int num_objects=(len - 3);
     jint ret=0;
     int rts_load_return=0;
-    int thread_count, queue_count;
     int i;
     
     if ( len < 2 ) {
@@ -1113,34 +1064,34 @@ JNIEXPORT jint JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_r
 
 }
 
-JNIEXPORT jstring JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getDbTitle(JNIEnv *env, jobject obj)
+JNIEXPORT jstring JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getDbTitle(JNIEnv *env, jobject UNUSED(obj))
 {
     return (*env)->NewStringUTF(env, title);
 }
 
-JNIEXPORT jstring JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getLibraryVersion(JNIEnv *env, jobject obj)
+JNIEXPORT jstring JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getLibraryVersion(JNIEnv *env, jobject UNUSED(obj))
 {
     return (*env)->NewStringUTF(env, rt_version());
 }
 
-JNIEXPORT jint JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_openSession(JNIEnv *env, jobject obj)
+JNIEXPORT jint JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_openSession(JNIEnv *UNUSED(env), jobject UNUSED(obj))
 {
     return 0;
 }
 
-JNIEXPORT void JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_closeSession(JNIEnv *env, jobject obj, jint sessionId)
+JNIEXPORT void JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_closeSession(JNIEnv *UNUSED(env), jobject UNUSED(obj), jint UNUSED(sessionId))
 {
     return;
 }
 
-JNIEXPORT jobject JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getBoundingBox(JNIEnv *env, jobject obj, jint sessionId)
+JNIEXPORT jobject JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getBoundingBox(JNIEnv *env, jobject UNUSED(obj), jint sessionId)
 {  
     jclass boundingBox_class, point_class;
     jmethodID boundingBox_constructor_id, point_constructor_id;
     jobject point1, point2, bb;
     pointp_t min_pt, max_pt;
 
-    if ( sessionId < 0 || sessionId >= num_geometries ) {
+    if ( sessionId < 0 || (size_t)sessionId >= num_geometries ) {
 	fprintf( stderr, "Called getItemTree with invalid sessionId\n" );
 	return (jobject)NULL;
     }
@@ -1214,7 +1165,7 @@ JNIEXPORT jobject JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrappe
  * return - a byte array containing the hit information for the ray
  */
 JNIEXPORT jbyteArray JNICALL
-Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, jobject jobj,
+Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, jobject UNUSED(jobj),
 								jobject jstart_pt, jobject jdir, jint sessionId )
 {
     jclass point_class, vect_class;
@@ -1223,7 +1174,6 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, j
     jbyteArray array;
     struct application *ap;
     struct bu_vlb *vlb;
-    struct xray aray;
     unsigned char buffer[SIZEOF_NETWORK_DOUBLE*3];
     int rayCount = 1;
 
@@ -1382,7 +1332,7 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, j
  *
  * return - a byte array containing the hit information for all the rays in the list
  */
-JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_shootList(JNIEnv *env, jobject obj, jobjectArray aRays, jint oneHit, jint sessionId)
+JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_shootList(JNIEnv *env, jobject UNUSED(obj), jobjectArray aRays, jint oneHit, jint sessionId)
 {
     jsize rayCount;
     jsize len; /* length of byte array */
@@ -1391,7 +1341,6 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
     jclass rayClass;
     jclass pointClass;
     jclass vector3Class;
-    jmethodID getStart, getDirection;
     jfieldID fidvx, fidvy, fidvz;
     jfieldID fidpx, fidpy, fidpz;
     jfieldID fidStart, fidDirection;
@@ -1603,15 +1552,12 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
  *
  * return - a byte array containing the hit information for all the rays in the grid
  */
-JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_shootArray(JNIEnv *env, jobject jobj,
+JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_shootArray(JNIEnv *env, jobject UNUSED(jobj),
         jobject jstart_pt, jobject jdir, jobject jrow_diff, jobject jcol_diff, jint num_rows, jint num_cols, jint oneHit, jint sessionId )
 {
-    jclass point_class, vect_class, rayResult_class, arrayClass;
-    jmethodID point_constructorID, arraySetID;
-    jobjectArray resultsArray;
+    jclass point_class, vect_class;
     jfieldID fidvx, fidvy, fidvz;
     jfieldID fidpx, fidpy, fidpz;
-    jobject jray_start_pt;
     jsize len; /* length of byte array */
     jbyteArray array;
     point_t base_pt;
@@ -1852,7 +1798,7 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
  */
 
 JNIEXPORT jobject JNICALL
-Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env, jobject obj, jint sessionId )
+Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env, jobject UNUSED(obj), jint sessionId )
 {
     jclass itemTree_class;
     jmethodID itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id, itemTree_setIdentNumber_id,
@@ -1861,9 +1807,9 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env,
     jstring nodeName;
     struct db_i *dbip;
     struct rtserver_geometry *rtsg;
-    int i;
+    size_t i;
 
-    if ( sessionId < 0 || sessionId >= num_geometries ) {
+    if ( sessionId < 0 || (size_t)sessionId >= num_geometries ) {
 	fprintf( stderr, "Called getItemTree with invalid sessionId\n" );
 	return (jobject)NULL;
     }
@@ -1947,7 +1893,7 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env,
     dbip = rtsg->rts_rtis[0]->rtrti_rtip->rti_dbip;
     for ( i=0; i<rtsg->rts_number_of_rtis; i++ ) {
 	struct rtserver_rti *rts_rti=rtsg->rts_rtis[i];
-	int j;
+	size_t j;
 
 	for ( j=0; j<rts_rti->rtrti_num_trees; j++ ) {
 	    fillItemTree( rootNode, dbip, env, rts_rti->rtrti_trees[j], itemTree_class,
@@ -1964,7 +1910,7 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env,
 /* Get the list of region names in this geometry
  *
  * The caller will use this to decode the region information returned in a byte array from the shoot methods */
-JNIEXPORT jobjectArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getRegionNames(JNIEnv *env, jobject obj, jint sessionId)
+JNIEXPORT jobjectArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getRegionNames(JNIEnv *env, jobject UNUSED(obj), jint sessionId)
 {
     Tcl_HashTable *hashTbl;
     Tcl_HashEntry *entry;
@@ -1990,7 +1936,7 @@ JNIEXPORT jobjectArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIW
     return jNameArray;
 }
 
-JNIEXPORT void JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_shutdownNative(JNIEnv *env, jobject obj)
+JNIEXPORT void JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_shutdownNative(JNIEnv *UNUSED(env), jobject UNUSED(obj))
 {
     bu_log( "Shutting down...");
     rts_clean(0);

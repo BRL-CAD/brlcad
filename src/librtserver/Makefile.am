@@ -7,7 +7,10 @@ endif
 
 librtserver_la_SOURCES = rtserver.c
 
-AM_CFLAGS = ${JAVA_CFLAGS}
+AM_CFLAGS = \
+	${JAVA_CFLAGS} \
+	${STRICT_FLAGS}
+
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 librtserver_la_LDFLAGS = -version-info 19:1 ${JAVA_LDFLAGS} -module -no-undefined -Wc,${FEXCEPTIONS}
