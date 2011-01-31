@@ -5,7 +5,6 @@ ENDIF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${TERMLIB_INCLUDE_DIR}
   ${PNG_INCLUDE_DIR}
   ${X11_INCLUDE_DIR}
   ${OPENGL_INCLUDE_DIR_GL}
@@ -14,10 +13,12 @@ include_directories(
   ${TK_INCLUDE_PATH}
 )
 
-# process.h in points dir makes Windows unhappy
+# process.h in points dir makes Windows unhappy,
+# and the TERMLIB_INCLUDE_DIR isn't set there
 IF(NOT WIN32)
 	include_directories(
 		${CMAKE_CURRENT_SOURCE_DIR}/points
+		${TERMLIB_INCLUDE_DIR}
 		)
 ENDIF(NOT WIN32)
 
