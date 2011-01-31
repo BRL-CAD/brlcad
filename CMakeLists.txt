@@ -382,10 +382,6 @@ INSTALL_DIR(MAN ${DATA_DIR}/man)
 # The location in which to install BRL-CAD documentation files 
 INSTALL_DIR(DOC ${DATA_DIR}/doc)
 
-# The location in which to install BRL-CAD doxygen documentation helper
-# files.
-INSTALL_DIR(DOXYGEN ${DOC_DIR}/doxygen)
-
 #---------------------------------------------------------------------
 # We will need a brlcad_config.h.in file to hold all the #cmakedefine 
 # statements, which will in turn be used to generate a brlcad_conf.h 
@@ -549,6 +545,9 @@ OPTION(BRLCAD-ENABLE_JOVE "Enable jove editor build." OFF)
 OPTION(BRLCAD-BUILD_EXTRADOCS "Build Docbook documentation" ON)
 OPTION(BRLCAD-BUILD_EXTRADOCS_PDF "Build PDF output from Docbook documentation" OFF)
 OPTION(BRLCAD-BUILD_EXTRADOCS_PDF_MAN "Build PDF output from Docbook documentation for man pages" ${BRLCAD-BUILD_EXTRADOCS_PDF})
+
+# Doxygen developer documentation build
+OPTION(BRLCAD-BUILD_DOXYGEN_DOCS "Build Doxygen documentation " OFF)
 
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler

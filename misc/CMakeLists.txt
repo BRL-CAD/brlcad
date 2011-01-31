@@ -28,3 +28,22 @@ BRLCAD_ADDDATA(density_DATAFILES data)
 
 BRLCAD_ADDFILE(nsis/brlcad.ico icons)
 BRLCAD_ADDFILE(nsis/archer.ico icons)
+
+find_package(Doxygen)
+IF(DOXYGEN_FOUND)
+	configure_file(Doxyfile.in ${CMAKE_BINARY_DIR}/misc/Doxyfile)
+	IF(BRLCAD-BUILD_DOXYGEN_DOCS)
+		ADD_CUSTOM_COMMAND(
+			OUTPUT ${CMAKE_BINARY_DIR}/misc/doxygen_output/html/index.html
+			COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/misc/Doxyfile
+			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+			)
+		ADD_CUSTOM_TARGET(dox ALL DEPENDS ${CMAKE_BINARY_DIR}/misc/doxygen_output/html/index.html)
+	ENDIF(BRLCAD-BUILD_DOXYGEN_DOCS)
+ELSE(DOXYGEN_FOUND)
+	IF(BRLCAD-BUILD_DOXYGEN_DOCS)
+		MESSAGE("Doxygen build requested but doxygen not found, disabling")
+	ENDIF(BRLCAD-BUILD_DOXYGEN_DOCS)
+ENDIF(DOXYGEN_FOUND)
+
+
