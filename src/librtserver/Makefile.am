@@ -8,8 +8,7 @@ endif
 librtserver_la_SOURCES = rtserver.c
 
 AM_CFLAGS = \
-	${JAVA_CFLAGS} \
-	${STRICT_FLAGS}
+	${JAVA_CFLAGS}
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
