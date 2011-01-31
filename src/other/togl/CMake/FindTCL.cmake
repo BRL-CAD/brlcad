@@ -249,7 +249,7 @@ MACRO(TK_GRAPHICS_SYSTEM wishcmd resultvar)
 	FILE(WRITE ${tkwin_scriptfile} ${tkwin_script})
 	EXEC_PROGRAM(${wishcmd} ARGS ${tkwin_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
 	FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM readresultvar)
-	STRING(REGEX REPLACE "\n" "" ${resultvar} ${readresultvar})
+	STRING(REGEX REPLACE "\n" "" "${resultvar}" "${readresultvar}")
 ENDMACRO()
 
 
@@ -267,7 +267,7 @@ MACRO(TCL_GET_VERSION tclshcmd resultvar)
 	FILE(WRITE ${tclversion_scriptfile} ${tclversion_script})
 	EXEC_PROGRAM(${tclshcmd} ARGS ${tclversion_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
 	FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TCL_VERSION readresultvar)
-	STRING(REGEX REPLACE "\n" "" ${resultvar} ${readresultvar})
+	STRING(REGEX REPLACE "\n" "" "${resultvar}" "${readresultvar}")
 ENDMACRO()
 
 
@@ -285,7 +285,7 @@ MACRO(TCL_ISTHREADED tclshcmd resultvar)
 	FILE(WRITE ${tclthreaded_scriptfile} ${tclthreaded_script})
 	EXEC_PROGRAM(${tclshcmd} ARGS ${tclthreaded_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
 	FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TCL_THREADED readresultvar)
-	STRING(REGEX REPLACE "\n" "" ${resultvar} ${readresultvar})
+	STRING(REGEX REPLACE "\n" "" "${resultvar}" "${readresultvar}")
 ENDMACRO()
 
 #-----------------------------------------------------------------------------
