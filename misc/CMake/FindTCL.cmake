@@ -249,7 +249,7 @@ MACRO(TK_GRAPHICS_SYSTEM wishcmd resultvar)
 	FILE(WRITE ${tkwin_scriptfile} ${tkwin_script})
 	EXEC_PROGRAM(${wishcmd} ARGS ${tkwin_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
 	FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM readresultvar)
-	STRING(REGEX REPLACE "\n" "" ${resultvar} ${readresultvar})
+	STRING(REGEX REPLACE "\n" "" "${resultvar}" "${readresultvar}")
 ENDMACRO()
 
 
@@ -267,7 +267,7 @@ MACRO(TCL_GET_VERSION tclshcmd resultvar)
 	FILE(WRITE ${tclversion_scriptfile} ${tclversion_script})
 	EXEC_PROGRAM(${tclshcmd} ARGS ${tclversion_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
 	FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TCL_VERSION readresultvar)
-	STRING(REGEX REPLACE "\n" "" ${resultvar} ${readresultvar})
+	STRING(REGEX REPLACE "\n" "" "${resultvar}" "${readresultvar}")
 ENDMACRO()
 
 
@@ -285,7 +285,7 @@ MACRO(TCL_ISTHREADED tclshcmd resultvar)
 	FILE(WRITE ${tclthreaded_scriptfile} ${tclthreaded_script})
 	EXEC_PROGRAM(${tclshcmd} ARGS ${tclthreaded_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
 	FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TCL_THREADED readresultvar)
-	STRING(REGEX REPLACE "\n" "" ${resultvar} ${readresultvar})
+	STRING(REGEX REPLACE "\n" "" "${resultvar}" "${readresultvar}")
 ENDMACRO()
 
 #-----------------------------------------------------------------------------
@@ -983,17 +983,20 @@ SET(TCL_TCLSH ${TCL_TCLSH_EXECUTABLE})
 SET(TK_WISH ${TCL_WISH_EXECUTABLE}) 
 SET(TK_LIBRARY ${TCL_TK_LIBRARY}) # Deprecated
 SET(TK_STUB_LIBRARY ${TCL_TK_STUB_LIBRARY}) 
-SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_PATH} ${TK_INCLUDE_PATH})
+SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_PATH} ${TK_INCLUDE_PATH} ${TCL_INCLUDE_PATH}/../generic)
 SET(TCL_LIBRARIES ${TCL_LIBRARY} ${TK_LIBRARY})
 SET(TCL_STUB_LIBRARIES ${TCL_STUB_LIBRARY} ${TK_STUB_LIBRARY})
 SET(TCL_ROOT_PATH ${TCL_CONF_PREFIX})
 SET(TCL_VERSION_STRING "${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}.${TCL_VERSION_PATCH}")
-
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCL DEFAULT_MSG TCL_LIBRARY ${PACKAGE_HANDLE_VARS})
 IF(TCL_REQUIRE_TK)
 	SET(PACKAGE_HANDLE_VARS "${PACKAGE_HANDLE_VARS};TCL_LIBRARY")
 	FIND_PACKAGE_HANDLE_STANDARD_ARGS(TK DEFAULT_MSG TCL_TK_LIBRARY ${PACKAGE_HANDLE_VARS})
 ENDIF(TCL_REQUIRE_TK)
+
+FOREACH(pkgvar ${PACKAGE_HANDLE_VARS})
+   SET(${pkgvar} ${${pkgvar}} CACHE STRING "set by FindTCL" FORCE)
+ENDFOREACH(pkgvar ${PACKAGE_HANDLE_VARS})
 
 MARK_AS_ADVANCED(
 	TCL_INCLUDE_DIRS
