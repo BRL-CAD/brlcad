@@ -108,7 +108,7 @@ struct hitdata_s {
 };
 
 static void *
-hitfunc(tie_ray_t *UNUSED(ray), tie_id_t *id, tie_tri_t *UNUSED(tri), void *ptr)
+hitfunc(struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, struct tie_tri_s *UNUSED(tri), void *ptr)
 {
     struct hitdata_s *h = (struct hitdata_s *)ptr;
     struct tri_specific *tsp;
@@ -126,7 +126,7 @@ hitfunc(tie_ray_t *UNUSED(ray), tie_id_t *id, tie_tri_t *UNUSED(tri), void *ptr)
 
     hp->hit_magic = RT_HIT_MAGIC;
     hp->hit_dist = id->dist;
-    VMOVE(tsp->tri_N, id->norm.v);
+    VMOVE(tsp->tri_N, id->norm);
 
     /* add hitdist into array and add one to nhits */
     return NULL;	/* continue firing */
@@ -138,8 +138,8 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     struct bot_specific *bot;
     struct tie_s *tie;
     struct hitdata_s hitdata;
-    tie_id_t id;
-    tie_ray_t ray;
+    struct tie_id_s id;
+    struct tie_ray_s ray;
 
     bot = (struct bot_specific *)stp->st_specific;
     tie = (struct tie_s *)bot->tie;
@@ -147,8 +147,8 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     hitdata.nhits = 0;
     hitdata.rp = &ap->a_ray;
 
-    VMOVE(ray.pos.v, rp->r_pt);
-    VMOVE(ray.dir.v, rp->r_dir);
+    VMOVE(ray.pos, rp->r_pt);
+    VMOVE(ray.dir, rp->r_dir);
     ray.depth = ray.kdtree_depth = 0;
 
     tie_work1(tie, &ray, &id, hitfunc, &hitdata);

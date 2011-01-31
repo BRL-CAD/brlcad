@@ -1,7 +1,7 @@
 /*                           T I E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,16 +22,13 @@
  *
  */
 
+#include "tie.h"
+
 #include "common.h"
 
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "tie.h"
-#include "bio.h"
-
-#include "bu.h"
 
 #ifdef TIE_SSE
 # include <xmmintrin.h>
@@ -41,23 +38,25 @@
 # include <stdint.h>
 #endif
 
-#ifdef _WIN32
-# undef near
-# undef far
-#endif
+#include "bio.h"
+#include "bu.h"
+
+#include "tieprivate.h"
+
+#define	TIE_TAB1		"\1\0\0\2\2\1"	/* Triangle Index Table */
 
 #define TIE_DEGENERATE_THRESHOLD 0.0001
-TIE_VAL(int tie_check_degenerate) = 1;
 
 /*************************************************************
  **************** PRIVATE FUNCTIONS **************************
  *************************************************************/
 
-static void tie_tri_prep(tie_t *tie)
+static void
+TIE_VAL(tie_tri_prep)(struct tie_s *tie)
 {
     TIE_3 v1, v2, u, v;
     unsigned int i, i1, i2;
-    tie_tri_t *tri;
+    struct tie_tri_s *tri;
 
     for (i = 0; i < tie->tri_num; i++) {
 	tri = &tie->tri_list[i];
@@ -111,7 +110,7 @@ static void tie_tri_prep(tie_t *tie)
  *************************************************************/
 
 /**
- * Initialize a tie_t data structure
+ * Initialize a struct tie_s data structure
  *
  * This needs to be called before any other libtie data structures are called.
  *
@@ -121,14 +120,14 @@ static void tie_tri_prep(tie_t *tie)
  * @param kdmethod Either TIE_KDTREE_FAST or TIE_KDTREE_OPTIMAL
  * @return void
  */
-void TIE_VAL(tie_init)(tie_t *tie, unsigned int tri_num, unsigned int kdmethod)
+void TIE_VAL(tie_init)(struct tie_s *tie, unsigned int tri_num, unsigned int kdmethod)
 {
     tie->kdtree = NULL;
     tie->kdmethod = kdmethod;
     tie->tri_num = 0;
     tie->tri_num_alloc = tri_num;
 	/* set to NULL if tri_num == 0. bu_malloc(0) causes issues. */
-    tie->tri_list = tri_num?(tie_tri_t *)bu_malloc(sizeof(tie_tri_t) * tri_num, "tie_init"):NULL;
+    tie->tri_list = tri_num?(struct tie_tri_s *)bu_malloc(sizeof(struct tie_tri_s) * tri_num, "tie_init"):NULL;
     tie->stat = 0;
     tie->rays_fired = 0;
 }
@@ -142,7 +141,7 @@ void TIE_VAL(tie_init)(tie_t *tie, unsigned int tri_num, unsigned int kdmethod)
  * @param tie pointer to a struct tie_t
  * @return void
  */
-void TIE_VAL(tie_free)(tie_t *tie)
+void TIE_VAL(tie_free)(struct tie_s *tie)
 {
     unsigned int i;
 
@@ -161,16 +160,17 @@ void TIE_VAL(tie_free)(tie_t *tie)
  *
  * Build the KDTREE tree for the triangles we have
  *
- * @param tie pointer to a struct tie_t which now has all the triangles in it
+ * @param tie pointer to a struct struct tie_s which now has all the triangles in it
  * @return void
  */
-void TIE_VAL(tie_prep)(tie_t *tie)
+void TIE_VAL(tie_prep)(struct tie_s *tie)
 {
 /* Build the kd-tree */
     tie_kdtree_prep (tie);
 
 /* Prep all the triangles */
-    tie_tri_prep (tie);
+    TIE_VAL(tie_tri_prep) (tie);
+    bu_log("total tri: %ld\n", tie->tri_num);
 }
 
 
@@ -182,7 +182,7 @@ void TIE_VAL(tie_prep)(tie_t *tie)
  * The last argument (void *ptr) is passed to the hitfunc as-is, to allow
  * application specific data to be passed to the hitfunc.
  *
- * @param tie a struct tie_t universe
+ * @param tie a struct struct tie_s universe
  * @param ray the ray to be intersected with the geometry
  * @param id the intersection data for each intersection
  * @param hitfunc the application routine to be called upon ray/triangle intersection.
@@ -195,20 +195,17 @@ void TIE_VAL(tie_prep)(tie_t *tie)
  * @retval 0 ray did not hit anything, or ray was propagated through the geometry completely.
  * @retval !0 the value returned from the last invokation of hitfunc()
  */
-void* TIE_VAL(tie_work)(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*, tie_id_t*, tie_tri_t*, void *ptr), void *ptr)
+void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_s *id, void *(*hitfunc)(struct tie_ray_s*, struct tie_id_s*, struct tie_tri_s*, void *ptr), void *ptr)
 {
-    tie_stack_t stack[40];
-    tie_id_t t, id_list[256];
-    tie_tri_t *hit_list[256], *tri;
-    tie_geom_t *data;
-    tie_kdtree_t *node_aligned, *temp[2];
+    struct tie_stack_s stack[40];
+    struct tie_id_s t, id_list[256];
+    struct tie_tri_s *hit_list[256], *tri;
+    struct tie_geom_s *data;
+    struct tie_kdtree_s *node_aligned, *temp[2];
     tfloat near, far, dirinv[3], dist;
     unsigned int i, n, hit_count;
     int ab[3], split, stack_ind;
     void *result;
-
-
-/*ErPLog( "ray: %f %f %f %f %f %f\n", ray->pos.v[0], ray->pos.v[1], ray->pos.v[2], ray->dir.v[0], ray->dir.v[1], ray->dir.v[2] );*/
 
     if (!tie->kdtree)
 	return NULL;
@@ -220,20 +217,20 @@ void* TIE_VAL(tie_work)(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfun
  * this allows those divides to become fast multiplies.
  */
     for (i = 0; i < 3; i++) {
-	if (NEAR_ZERO(ray->dir.v[i], TIE_PREC))
-	    ray->dir.v[i] = TIE_PREC;
-	dirinv[i] = 1.0 / ray->dir.v[i];
+	if (NEAR_ZERO(ray->dir[i], SMALL_FASTF))
+	    ray->dir[i] = TIE_PREC;
+	dirinv[i] = 1.0 / ray->dir[i];
 	ab[i] = dirinv[i] < 0.0 ? 1.0 : 0.0;
     }
 
 /* Extracting value of splitting plane from tie->kdtree pointer */
-    split = ((intptr_t)(((tie_kdtree_t *)((intptr_t)tie->kdtree & ~0x7L))->data)) & 0x3;
+    split = ((intptr_t)(((struct tie_kdtree_s *)((intptr_t)tie->kdtree & ~0x7L))->data)) & 0x3;
 
 /* Initialize ray segment */
-    if (ray->dir.v[split] < 0.0)
-	far = (tie->min.v[split] - ray->pos.v[split]) * dirinv[split];
+    if (ray->dir[split] < 0.0)
+	far = (tie->min.v[split] - ray->pos[split]) * dirinv[split];
     else
-	far = (tie->max.v[split] - ray->pos.v[split]) * dirinv[split];
+	far = (tie->max.v[split] - ray->pos[split]) * dirinv[split];
 
     stack_ind = 0;
     stack[0].node = tie->kdtree;
@@ -249,7 +246,7 @@ void* TIE_VAL(tie_work)(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfun
  * Take the pointer from stack[stack_ind] and remove lower pts bits used to store data to
  * give a valid ptr address.
  */
-	node_aligned = (tie_kdtree_t *)((intptr_t)stack[stack_ind].node & ~0x7L);
+	node_aligned = (struct tie_kdtree_s *)((intptr_t)stack[stack_ind].node & ~0x7L);
 	stack_ind--;
 
 /*
@@ -269,13 +266,13 @@ void* TIE_VAL(tie_work)(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfun
 	    split = ((intptr_t)(node_aligned->data)) & 0x3;
 
 /* Calculate the projected 1d distance to splitting axis */
-	    dist = (node_aligned->axis - ray->pos.v[split]) * dirinv[split];
+	    dist = (node_aligned->axis - ray->pos[split]) * dirinv[split];
 
-	    temp[0] = &((tie_kdtree_t *)(node_aligned->data))[ab[split]];
-	    temp[1] = &((tie_kdtree_t *)(node_aligned->data))[1-ab[split]];
+	    temp[0] = &((struct tie_kdtree_s *)(node_aligned->data))[ab[split]];
+	    temp[1] = &((struct tie_kdtree_s *)(node_aligned->data))[1-ab[split]];
 
 	    i = near >= dist; /* Node B Only? */
-	    node_aligned = (tie_kdtree_t *)((intptr_t)(temp[i]) & ~0x7L);
+	    node_aligned = (struct tie_kdtree_s *)((intptr_t)(temp[i]) & ~0x7L);
 
 	    if (far < dist || i)
 		continue;
@@ -293,7 +290,7 @@ void* TIE_VAL(tie_work)(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfun
  * RAY/TRIANGLE INTERSECTION - Only gets executed on geometry nodes.
  * This part of the function is being executed because the KDTREE Traversal is Complete.
  */
-	data = (tie_geom_t *)(node_aligned->data);
+	data = (struct tie_geom_s *)(node_aligned->data);
 	if (data->tri_num == 0)
 	    continue;
 
@@ -306,8 +303,8 @@ void* TIE_VAL(tie_work)(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfun
 	    int i1, i2;
 
 	    tri = data->tri_list[i];
-	    u0 = VDOT( tri->data[1].v,  ray->pos.v);
-	    v0 = VDOT( tri->data[1].v,  ray->dir.v);
+	    u0 = VDOT( tri->data[1].v,  ray->pos);
+	    v0 = VDOT( tri->data[1].v,  ray->dir);
 	    t.dist = -(tri->data[2].v[0] + u0) / v0;
 
 /*
@@ -320,8 +317,8 @@ void* TIE_VAL(tie_work)(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfun
 		continue;
 
 /* Compute Intersection Point (P = O + Dt) */
-	    VSCALE(t.pos.v,  ray->dir.v,  t.dist);
-	    VADD2(t.pos.v,  ray->pos.v,  t.pos.v);
+	    VSCALE(t.pos,  ray->dir,  t.dist);
+	    VADD2(t.pos,  ray->pos,  t.pos);
 
 /* Extract i1 and i2 indices from lower bits of the v pointer */
 	    v = (tfloat *)((intptr_t)(tri->v) & ~0x7L);
@@ -330,8 +327,8 @@ void* TIE_VAL(tie_work)(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfun
 	    i2 = TIE_TAB1[3 + ((intptr_t)(tri->v) & 0x7)];
 
 /* Compute U and V */
-	    u0 = t.pos.v[i1] - tri->data[0].v[i1];
-	    v0 = t.pos.v[i2] - tri->data[0].v[i2];
+	    u0 = t.pos[i1] - tri->data[0].v[i1];
+	    v0 = t.pos[i2] - tri->data[0].v[i2];
 
 /*
  * Compute the barycentric coordinates, and make sure the coordinates
@@ -376,7 +373,7 @@ void* TIE_VAL(tie_work)(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfun
 		}
 	    }
 
-	    id_list[i].norm = hit_list[i]->data[1];
+	    VMOVE(id_list[i].norm, hit_list[i]->data[1].v);
 	    result = hitfunc(ray, &id_list[i], hit_list[i], ptr);
 
 	    if (result) {
@@ -408,15 +405,15 @@ void* TIE_VAL(tie_work)(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfun
  * address of plist.
  * @return void
  */
-void TIE_VAL(tie_push)(tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride)
+void TIE_VAL(tie_push)(struct tie_s *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride)
 {
     unsigned int i;
 
 /* expand the tri buffer if needed */
     if (tnum + tie->tri_num > tie->tri_num_alloc) {
-	tie->tri_list = (tie_tri_t *)bu_realloc(
+	tie->tri_list = (struct tie_tri_s *)bu_realloc(
 	    tie->tri_list,
-	    sizeof(tie_tri_t) * (tie->tri_num + tnum),
+	    sizeof(struct tie_tri_s) * (tie->tri_num + tnum),
 	    "tri_list during tie_push");
 	tie->tri_num_alloc += tnum;
     }
@@ -431,7 +428,7 @@ void TIE_VAL(tie_push)(tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plist
 	    VCROSS(w.v,  u.v,  v.v);
 
 	    if (MAGNITUDE(w.v) < 0.0001 * 0.0001) {
-		bu_log("WARNING: degenerate triangle found: %f %f %f | %f %f %f | %f %f %f\n", 
+		bu_log("WARNING: degenerate triangle found: %f %f %f | %f %f %f | %f %f %f\n",
 			V3ARGS((*tlist[i*3+0]).v),  V3ARGS((*tlist[i*3+1]).v), V3ARGS((*tlist[i*3+2]).v));
 		continue;
 	    }
@@ -449,8 +446,6 @@ void TIE_VAL(tie_push)(tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plist
 
 /* ??? this looks like it might cause fragmentation? use a memory pool? */
 	tie->tri_list[tie->tri_num].v = (tfloat *)malloc(2*sizeof(tfloat));
-	if(tie->tri_list[tie->tri_num].v == NULL)
-	    bu_log("Bad malloc! %s:%s:%d\n", __FILE__, __FUNCTION__, __LINE__);
 	tie->tri_num++;
     }
     return;
