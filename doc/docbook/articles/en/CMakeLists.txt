@@ -102,8 +102,7 @@ SET(docbook_articles_EN_IMAGES
 )
 
 DOCBOOK_TO_HTML(article docbook_articles_EN html/articles/en)
-FILE(COPY ${docbook_articles_EN_IMAGES} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/html/articles/en/images)
-INSTALL(FILES ${docbook_articles_EN_IMAGES} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/articles/en/images)
+BRLCAD_ADDDATA(docbook_articles_EN_IMAGES html/articles/en/images)
 
 IF(BRLCAD-BUILD_EXTRADOCS_PDF)
   DOCBOOK_TO_PDF(article docbook_articles_EN pdf/articles/en)

@@ -24,12 +24,9 @@ IF(BRLCAD-ENABLE_X11)
 	ENDIF(BRLCAD-ENABLE_TK)
 ENDIF(BRLCAD-ENABLE_X11)
 
-FILE(COPY pl-dm.c DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/sample_applications)
-INSTALL(FILES pl-dm.c DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
+BRLCAD_ADDFILE(pl-dm.c sample_applications)
 
-# Don't have the libpc or boost stuff yet
-# BRLCAD_ADDEXEC(pc_test pc_test.c "libwdb libpc")
-
+BRLCAD_ADDEXEC(pc_test pc_test.c "libwdb libpc")
 
 BRLCAD_ADDEXEC(alias-pix alias-pix.c libbu STRICT)
 BRLCAD_ADDEXEC(ap-pix ap-pix.c libbu STRICT)
@@ -158,8 +155,7 @@ INSTALL(PROGRAMS morphedit.tcl DESTINATION bin)
 
 add_executable(roots_example roots_example.c)
 target_link_libraries(roots_example libbu librt)
-FILE(COPY roots_example.c DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/sample_applications)
-INSTALL(FILES roots_example.c DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
+BRLCAD_ADDFILE(roots_example.c sample_applications)
 
 set(util_MANS
   ap-pix.1 

@@ -460,6 +460,14 @@ OPTION(BRLCAD-ENABLE_BENCHMARK_ONLY "Enable just the benchmark target and its re
 # Enable the librtserver build
 OPTION(BRLCAD-ENABLE_RTSERVER "Enable the rtserver target." ON)
 
+# Enable data build targets - this will result in the build logic
+# being aware of changes in tclscripts, documentation files, and
+# other data and re-copying them to the build directory.  This
+# allows the build output to stay "current" without re-running
+# CMake, but at the expense of a large increase in the number
+# of build targets
+OPTION(BRLCAD-ENABLE_DATA_TARGETS "Enable the data build targets." OFF)
+
 # Turn on just the librtserver build.  This is not an exclusive flag -
 # enabling this does not force off other explicitly enabled targets.
 OPTION(BRLCAD-ENABLE_RTSERVER_ONLY "Enable just the rtserver target and its requirements." OFF)

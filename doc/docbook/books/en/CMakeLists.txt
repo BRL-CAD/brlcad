@@ -47,8 +47,7 @@ SET(docbook_books_EN_IMAGES
 )
 
 DOCBOOK_TO_HTML(book docbook_books_EN html/books/en)
-FILE(COPY ${docbook_books_EN_IMAGES} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/html/books/en/images)
-INSTALL(FILES ${docbook_books_EN_IMAGES} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/html/books/en/images)
+BRLCAD_ADDDATA(docbook_books_EN_IMAGES html/books/en/images)
 
 IF(BRLCAD-BUILD_EXTRADOCS_PDF)
   DOCBOOK_TO_PDF(book docbook_books_EN pdf/books/en)

@@ -9,8 +9,7 @@ IF(NOT MSVC)
 ENDIF(NOT MSVC)
 
 set(rtexample_SRCS rtexample.c)
-FILE(COPY rtexample.c DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/sample_applications)
-INSTALL(FILES rtexample.c DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
+BRLCAD_ADDFILE(rtexample.c sample_applications)
 
 set(reshoot_SRCS reshoot.c)
 
