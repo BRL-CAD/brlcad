@@ -21,7 +21,7 @@ extern "C" {
 //#ifdef __OSTORE__
 //#include <memory.h>
 //#else
-    extern void * memmove(void *, const void *, size_t) throw();
+    extern void * memmove(void *, const void *, size_t);
 /*    extern char * memset(char *, int, int); */
 //#endif
 }
