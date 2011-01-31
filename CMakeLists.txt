@@ -481,19 +481,15 @@ IF(BRLCAD-ENABLE_RTSERVER_ONLY)
 ENDIF(BRLCAD-ENABLE_RTSERVER_ONLY)
 
 # Global third party controls - these options enable and disable ALL
-# local copies of libraries in src/other.  For finer grain control,
-# leave both of these options off and options defined by the
-# src/other CMakeLists.txt file will come into play.  The default
-# action is to test system libs and enable local copies of any
-# either not found or not meeting requirements.  Forcing all
+# local copies of libraries in src/other.  Forcing all local
 # libraries off is not usually recommended unless attempting to
 # build packages for a distribution.  If both of these options are
 # on the enabling of local packages is the "senior" option and will
 # force the system libs option to off.
 OPTION(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY "Use only the system's libraries." OFF)
-MARK_AS_ADVANCED(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY)
 OPTION(BRLCAD-ENABLE_ALL_LOCAL_LIBS "Build all the local copies of libraries." OFF)
 IF(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY AND BRLCAD-ENABLE_ALL_LOCAL_LIBS)
+	MESSAGE("Both ENABLE and DISABLE all local libs set - using ENABLE")
 	SET(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY OFF CACHE BOOL "Use only the system's libraries." FORCE)
 ENDIF(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY AND BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 
@@ -517,6 +513,9 @@ if (BRLCAD-ENABLE_X11)
 	SET(BRLCAD-BUILD_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
 	SET(OPENGL_USE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
 endif (BRLCAD-ENABLE_X11)
+IF(NOT APPLE)
+	MARK_AS_ADVANCED(OPENGL_USE_AQUA)
+ENDIF(NOT APPLE)
 
 # Enable/disable features requiring the Tk toolkit - usually this should
 # be on, as a lot of functionality in BRL-CAD depends on Tk
@@ -764,28 +763,12 @@ IF(BRLCAD-ENABLE_X11)
    BRLCAD_INCLUDE_FILE(X11/Xlib.h HAVE_X11_XLIB_H)
 ENDIF(BRLCAD-ENABLE_X11)
 
-# Locate a terminal library
-OPTION(BRLCAD_BUILD_LOCAL_TERMLIB "Build the local TERMLIB library." ${BRLCAD-ENABLE_ALL_LOCAL_LIBS})
-BRLCAD_CHECK_LIBRARY(TERMLIB termlib tputs)
-BRLCAD_CHECK_LIBRARY(TERMLIB ncurses tputs)
-BRLCAD_CHECK_LIBRARY(TERMLIB curses tputs)
-BRLCAD_CHECK_LIBRARY(TERMLIB termcap tputs)
-BRLCAD_CHECK_LIBRARY(TERMLIB terminfo tputs)
-BRLCAD_CHECK_LIBRARY(TERMLIB tinfo tputs)
-BRLCAD_CHECK_LIBRARY(TERMLIB ccurses tputs)
-include(CheckCFileRuns)
-configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/termlib.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c)
-SET(CMAKE_REQUIRED_LIBRARIES ${TERMLIB_LIBRARY})
-CHECK_C_FILE_RUNS(${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c LIBTERM_RESULT)
-IF(NOT LIBTERM_RESULT)
-	SET(BRLCAD_BUILD_LOCAL_TERMLIB ON CACHE BOOL "Build the local TERMLIB library." FORCE)
-ENDIF(NOT LIBTERM_RESULT)
-#Only on WIN32 will the combination of the above tests and
-#libtermlib fail, so set variables accordingly
+#Only on WIN32 will the combination of the build search tests and
+#libtermlib fail to find a valid term, so set variables accordingly
 IF(NOT WIN32)
 	SET(HAVE_TERMLIB 1)
 ELSE(NOT WIN32)
-	SET(BRLCAD_BUILD_LOCAL_TERMLIB OFF CACHE BOOL "Build the local TERMLIB library." FORCE)
+	SET(BRLCAD_BUILD_LOCAL_TERMLIB_FORCE_OFF ON CACHE BOOL "Disable libtermlib	build." FORCE)
 	SET(HAVE_TERMLIB 0)
 ENDIF(NOT WIN32)
 
@@ -1028,14 +1011,6 @@ BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
 # *******************************************************************
 # ***          Check for System Services - Stage 8 of 9           ***
 # *******************************************************************
-
-
-
-# This is the top level control property for handling library building 
-set(BRLCAD-BUILD_SRC_OTHER "Auto" CACHE STRING
-	"Set build type" FORCE)
-set_property(CACHE BRLCAD-BUILD_SRC_OTHER PROPERTY STRINGS
-	"Yes" "No" "Auto")
 
 # We've done the toplevel configure steps, now add the subdirectories
 ADD_SUBDIRECTORY(src)
@@ -1373,6 +1348,7 @@ else()
 endif()
 file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}")
 FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/COUNT "\n") 
+MARK_AS_ADVANCED(countFile)
 
 # DATE
 file(READ ${CONFIG_TIMESTAMP_FILE} DATESTAMP)
@@ -1431,6 +1407,7 @@ MARK_AS_ADVANCED(BRLCAD_PREFIX)
 MARK_AS_ADVANCED(ENABLE_64_BIT)
 MARK_AS_ADVANCED(IEEE_QUIET)
 MARK_AS_ADVANCED(INET_QUIET)
+MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 
 #Done with everything else - do the configure time delta
 SET(DELTA_END "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_END")
