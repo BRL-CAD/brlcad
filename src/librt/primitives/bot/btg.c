@@ -37,6 +37,9 @@
 #include "tie.c"
 #include "tie_kdtree.c"
 
+int tie_check_degenerate = 0;
+fastf_t TIE_PREC = 0.1;
+
 int rt_bot_makesegs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp);
 
 void *
