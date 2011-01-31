@@ -123,6 +123,7 @@ IF(CMAKE_INSTALL_PREFIX AND BRLCAD_PREFIX)
 ELSE(CMAKE_INSTALL_PREFIX AND BRLCAD_PREFIX)
 	SET(CMAKE_SYSTEM_PREFIX_PATH ${CMAKE_SYSTEM_PREFIX_PATH} CACHE STRING "Tweaked to avoid inconsistent search results")
 ENDIF(CMAKE_INSTALL_PREFIX AND BRLCAD_PREFIX)
+MARK_AS_ADVANCED(CMAKE_SYSTEM_PREFIX_PATH)
 
 #---------------------------------------------------------------------
 # By default (as of version 2.8.2) CMake does not provide access to 
@@ -135,6 +136,8 @@ ENDIF(CMAKE_INSTALL_PREFIX AND BRLCAD_PREFIX)
 # http://www.cmake.org/pipermail/cmake/2010-September/039388.html
 # Zero out the lists at the beginning of the run to avoid duplicate
 # and stale entries.
+
+# !!! TODO !!! is this working???? check and perhaps fix
 SET(CMAKE_LIBRARY_TARGET_LIST "")
 SET(CMAKE_LIBRARY_TARGET_FILE_LIST "")
 function(add_library name)
@@ -165,7 +168,12 @@ function(add_custom_target name)
    get_target_property(targetfile ${name} LOCATION)
 	SET(CMAKE_CUSTOM_TARGET_FILE_LIST "${CMAKE_CUSTOM_TARGET_FILE_LIST};${targetfile}" CACHE STRING "list of custom target files" FORCE)
 endfunction(add_custom_target)
-
+MARK_AS_ADVANCED(CMAKE_LIBRARY_TARGET_LIST)
+MARK_AS_ADVANCED(CMAKE_LIBRARY_TARGET_FILE_LIST)
+MARK_AS_ADVANCED(CMAKE_EXEC_TARGET_LIST)
+MARK_AS_ADVANCED(CMAKE_EXEC_TARGET_FILE_LIST)
+MARK_AS_ADVANCED(CMAKE_CUSTOM_TARGET_LIST)
+MARK_AS_ADVANCED(CMAKE_CUSTOM_TARGET_FILE_LIST)
 
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
@@ -491,7 +499,10 @@ ENDIF(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY AND BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 
 # Enable Aqua widgets on Mac OSX.  This impacts Tcl/Tk building and OpenGL
 # building.
-# OPTION(BRLCAD-BUILD_AQUA "Use Aqua instead of X11 whenever possible on OSX." OFF)
+OPTION(BRLCAD-BUILD_AQUA "Use Aqua instead of X11 whenever possible on OSX." OFF)
+IF(NOT APPLE)
+	MARK_AS_ADVANCED(BRLCAD-BUILD_AQUA)
+ENDIF(NOT APPLE)
 
 # Install example BRL-CAD Geometry Files
 OPTION(BRLCAD-INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry files." ON)
@@ -732,6 +743,7 @@ ENDIF(APPLE)
 
 # crypt library (needed on some platforms for enigma)
 find_library(CRYPT_LIBRARY NAMES crypt)
+MARK_AS_ADVANCED(CRYPT_LIBRARY)
 
 # Find Java and JNI - conditionalize the include settings on 
 # the success of the find_package calls.
@@ -1413,6 +1425,12 @@ SET(CPACK_SOURCE_PACKAGE_FILE_NAME
 SET(CPACK_SOURCE_IGNORE_FILES "\\\\.svn/")
 INCLUDE(CPack)
 
+# Mark various miscellaneous things as advanced that we don't want in our
+# default view
+MARK_AS_ADVANCED(BRLCAD_PREFIX)
+MARK_AS_ADVANCED(ENABLE_64_BIT)
+MARK_AS_ADVANCED(IEEE_QUIET)
+MARK_AS_ADVANCED(INET_QUIET)
 
 #Done with everything else - do the configure time delta
 SET(DELTA_END "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_END")
