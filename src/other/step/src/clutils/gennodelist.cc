@@ -54,8 +54,7 @@ GenNodeList::Remove(GenericNode *node)
 	node->next = 0;
 	node->prev = 0;
     }
-};
-
+}
 void GenNodeList::ClearEntries()
 {
 //    if(debug_level >= PrintFunctionTrace)

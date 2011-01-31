@@ -483,12 +483,12 @@ GenericAggregate::ShallowCopy (const STEPaggregate& a)
 GenericAggrNode::GenericAggrNode (const char *str)
 {  
     value = str;
-};
+}
 
 GenericAggrNode::GenericAggrNode (GenericAggrNode& gan)
 {  
     value = gan.value;
-};
+}
 
 GenericAggrNode::GenericAggrNode()
 {

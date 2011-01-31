@@ -25,7 +25,7 @@ void DisplayNodeList::Remove(GenericNode *node)
 {
     GenNodeList::Remove(node);
 // DON'T DO THIS    ((DisplayNode *)node)->displayState = noMapState;
-};
+}
 
 	// deletes node from its previous list & appends
 	// actually it puts it at the front of the list.
