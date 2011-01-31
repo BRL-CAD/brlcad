@@ -108,3 +108,16 @@ MACRO(BRLCAD_ADDDATA datalist targetdir)
 	ENDFOREACH(filename ${${datalist}})
 ENDMACRO(BRLCAD_ADDDATA datalist targetdir)
 
+MACRO(BRLCAD_ADDFILE filename targetdir)
+	STRING(REGEX REPLACE "/" "_" targetprefix ${targetdir})
+	STRING(REGEX REPLACE "/" "_" filestring ${filename})
+	ADD_CUSTOM_COMMAND(
+		OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename}
+		COMMAND ${CMAKE_COMMAND} -E copy	${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename}
+		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+		)
+	ADD_CUSTOM_TARGET(${targetprefix}_${filestring}_cp ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename})
+	INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${filename} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
+ENDMACRO(BRLCAD_ADDFILE datalist targetdir)
+
+
