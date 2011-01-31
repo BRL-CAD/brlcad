@@ -50,14 +50,15 @@
  *		use last cur and next lines
  *	endif
  *
- * Author:
- *	Christopher T. Johnson
  */
 
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "bu.h"
+#include "vmath.h"
 
 
 extern int Debug;
@@ -70,12 +71,12 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
     static int linelen;
     int result;
     int newvalue;
-     int i, value;
+    int i, value;
 
 /*
  *	if no sharpening going on then just read from the file and exit.
  */
-    if (Beta == 0.0) {
+    if (NEAR_ZERO(Beta, SMALL_FASTF)) {
 	result = fread(buf, size, num, file);
 	if (!result) return result;
 	for (i=0; i<size*num; i++) {

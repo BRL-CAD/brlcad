@@ -71,7 +71,7 @@ static unsigned char	ordered[6][6] = {
  *	Christopher T. Johnson	- 90/03/21
  */
 int
-tone_classic(int pix, int x, int y, int nx, int ny, int new)
+tone_classic(int pix, int x, int y, int UNUSED(nx), int UNUSED(ny), int UNUSED(newrow))
 {
     int threshold = 14*ordered[( x + 3) % 6][ y % 6];
     if (RandomFlag) {
