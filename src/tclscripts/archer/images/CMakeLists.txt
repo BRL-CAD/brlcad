@@ -260,4 +260,4 @@ SET(archer_images
 	wizard.png
 	)
 
-tclscripts_BUILD(archer_images tclscripts/archer/images)
+BRLCAD_ADDDATA(archer_images tclscripts/archer/images)

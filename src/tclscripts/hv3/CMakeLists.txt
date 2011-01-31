@@ -7,7 +7,7 @@ SET(hv3_TCLSCRIPTS
 	hv3_util.tcl 
 	snit.tcl
 )
-tclscripts_BUILD(hv3_TCLSCRIPTS tclscripts/hv3)
+BRLCAD_ADDDATA(hv3_TCLSCRIPTS tclscripts/hv3)
 pkgIndex_BUILD(hv3 tclscripts/hv3)
 tclIndex_BUILD(hv3 tclscripts/hv3)
 install(FILES hv3.man DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/doc)

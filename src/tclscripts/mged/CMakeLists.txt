@@ -80,7 +80,7 @@ SET(mged_TCLSCRIPTS
 	tree.tcl 
 	xclone.tcl
 )
-tclscripts_BUILD(mged_TCLSCRIPTS tclscripts/mged)
+BRLCAD_ADDDATA(mged_TCLSCRIPTS tclscripts/mged)
 pkgIndex_BUILD(mged tclscripts/mged)
 tclIndex_BUILD(mged tclscripts/mged)
 
@@ -129,4 +129,4 @@ SET(mged_tcl_DATA
 	mike-tux.ppm 
 	mike-tux.png
 )
-tclscripts_BUILD(mged_tcl_DATA tclscripts/mged)
+BRLCAD_ADDDATA(mged_tcl_DATA tclscripts/mged)

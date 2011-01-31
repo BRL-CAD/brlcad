@@ -6,4 +6,4 @@ SET(swidgets_image_DATA
 	plus.xbm
 	tip.gif
 )
-tclscripts_BUILD(swidgets_image_DATA tclscripts/swidgets/images)
+BRLCAD_ADDDATA(swidgets_image_DATA tclscripts/swidgets/images)

@@ -16,7 +16,7 @@ IF(WIN32)
 	configure_file(rtwizard.bat ${CMAKE_BINARY_DIR}/bin/rtwizard.bat COPYONLY)
 	INSTALL(PROGRAMS rtwizard.bat DESTINATION bin)
 ENDIF(WIN32)
-tclscripts_BUILD(rtwizard_TCLSCRIPTS tclscripts/rtwizard)
+BRLCAD_ADDDATA(rtwizard_TCLSCRIPTS tclscripts/rtwizard)
 pkgIndex_BUILD(rtwizard tclscripts/rtwizard)
 tclIndex_BUILD(rtwizard tclscripts/rtwizard)
 
@@ -29,7 +29,7 @@ SET(PictureTypeA_DATA
 	examples/PictureTypeA/title.txt 
 	examples/PictureTypeA/preview.small.gif
 	)
-tclscripts_BUILD(PictureTypeA_DATA tclscripts/rtwizard/examples/PictureTypeA)
+BRLCAD_ADDDATA(PictureTypeA_DATA tclscripts/rtwizard/examples/PictureTypeA)
 
 SET(PictureTypeB_DATA
 	examples/PictureTypeB/desc.txt 
@@ -38,7 +38,7 @@ SET(PictureTypeB_DATA
 	examples/PictureTypeB/title.txt 
 	examples/PictureTypeB/preview.small.gif
 	)
-tclscripts_BUILD(PictureTypeB_DATA tclscripts/rtwizard/examples/PictureTypeB)
+BRLCAD_ADDDATA(PictureTypeB_DATA tclscripts/rtwizard/examples/PictureTypeB)
 
 SET(PictureTypeC_DATA
 	examples/PictureTypeC/desc.txt 
@@ -47,7 +47,7 @@ SET(PictureTypeC_DATA
 	examples/PictureTypeC/title.txt 
 	examples/PictureTypeC/preview.small.gif
 	)
-tclscripts_BUILD(PictureTypeC_DATA tclscripts/rtwizard/examples/PictureTypeC)
+BRLCAD_ADDDATA(PictureTypeC_DATA tclscripts/rtwizard/examples/PictureTypeC)
 
 SET(PictureTypeD_DATA
 	examples/PictureTypeD/desc.txt 
@@ -56,7 +56,7 @@ SET(PictureTypeD_DATA
 	examples/PictureTypeD/title.txt 
 	examples/PictureTypeD/preview.small.gif
 	)
-tclscripts_BUILD(PictureTypeD_DATA tclscripts/rtwizard/examples/PictureTypeD)
+BRLCAD_ADDDATA(PictureTypeD_DATA tclscripts/rtwizard/examples/PictureTypeD)
 
 SET(PictureTypeE_DATA
 	examples/PictureTypeE/desc.txt 
@@ -65,7 +65,7 @@ SET(PictureTypeE_DATA
 	examples/PictureTypeE/title.txt 
 	examples/PictureTypeE/preview.small.gif
 	)
-tclscripts_BUILD(PictureTypeE_DATA tclscripts/rtwizard/examples/PictureTypeE)
+BRLCAD_ADDDATA(PictureTypeE_DATA tclscripts/rtwizard/examples/PictureTypeE)
 
 SET(PictureTypeF_DATA
 	examples/PictureTypeF/desc.txt 
@@ -74,4 +74,4 @@ SET(PictureTypeF_DATA
 	examples/PictureTypeF/title.txt 
 	examples/PictureTypeF/preview.small.gif
 	)
-tclscripts_BUILD(PictureTypeF_DATA tclscripts/rtwizard/examples/PictureTypeF)
+BRLCAD_ADDDATA(PictureTypeF_DATA tclscripts/rtwizard/examples/PictureTypeF)

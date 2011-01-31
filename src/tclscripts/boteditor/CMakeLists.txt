@@ -3,4 +3,4 @@ SET(boteditor_TCLSCRIPTS
 	botPropertyBox.tcl
 	botTools.tcl
 )
-tclscripts_BUILD(boteditor_TCLSCRIPTS tclscripts/boteditor)
+BRLCAD_ADDDATA(boteditor_TCLSCRIPTS tclscripts/boteditor)

@@ -22,7 +22,7 @@ SET(lib_TCLSCRIPTS
 	View.tcl 
 	ViewAxesControl.tcl
 )
-tclscripts_BUILD(lib_TCLSCRIPTS tclscripts/lib)
+BRLCAD_ADDDATA(lib_TCLSCRIPTS tclscripts/lib)
 pkgIndex_BUILD(lib tclscripts/lib)
 tclIndex_BUILD(lib tclscripts/lib)
 

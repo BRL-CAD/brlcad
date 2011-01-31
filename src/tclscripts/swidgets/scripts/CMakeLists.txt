@@ -5,6 +5,6 @@ SET(swidgets_scripts_TCLSCRIPTS
 	tooltip.itk
 	tree.itk
 	)
-tclscripts_BUILD(swidgets_scripts_TCLSCRIPTS tclscripts/swidgets/scripts)
+BRLCAD_ADDDATA(swidgets_scripts_TCLSCRIPTS tclscripts/swidgets/scripts)
 tclIndex_BUILD(swidgets_scripts tclscripts/swidgets/scripts)
 

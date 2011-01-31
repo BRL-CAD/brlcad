@@ -3,6 +3,6 @@ SET(sdialogs_scripts_TCLSCRIPTS
 	listdialog.itk
 	stddlgs.tcl
 )
-tclscripts_BUILD(sdialogs_scripts_TCLSCRIPTS tclscripts/sdialogs/scripts)
+BRLCAD_ADDDATA(sdialogs_scripts_TCLSCRIPTS tclscripts/sdialogs/scripts)
 tclIndex_BUILD(sdialogs_scripts tclscripts/sdialogs/scripts)
 

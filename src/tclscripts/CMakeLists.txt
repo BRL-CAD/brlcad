@@ -1,21 +1,5 @@
 # Convenience macros for building pkgIndex.tcl and tclIndex files
 
-MACRO(tclscripts_BUILD scriptlist targetdir)
-	STRING(REGEX REPLACE "/" "_" targetprefix ${targetdir})
-	SET(${targetprefix}_dependslist "")
-	FOREACH(filename ${${scriptlist}})
-	   STRING(REGEX REPLACE "/" "_" filestring ${filename})
-		ADD_CUSTOM_COMMAND(
-			OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename}
-			COMMAND ${CMAKE_COMMAND} -E copy	${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename}
-			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
-			)
-		ADD_CUSTOM_TARGET(${targetprefix}_${filestring}_cp ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename})
-		SET(${targetprefix}_dependslist ${${targetprefix}_dependslist}	${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename})
-		INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${filename} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
-	ENDFOREACH(filename ${${scriptlist}})
-ENDMACRO(tclscripts_BUILD scriptlist targetdir)
-
 MACRO(pkgIndex_BUILD name targetdir)
 	STRING(REGEX REPLACE "/" "_" targetprefix ${targetdir})
 	ADD_CUSTOM_COMMAND(
@@ -68,6 +52,6 @@ SET(tclscripts_TCLSCRIPTS
 	mouse.tcl 
 	vmath.tcl
 )
-tclscripts_BUILD(tclscripts_TCLSCRIPTS tclscripts)
+BRLCAD_ADDDATA(tclscripts_TCLSCRIPTS tclscripts)
 pkgIndex_BUILD(tclscripts tclscripts)
 tclIndex_BUILD(tclscripts tclscripts)
