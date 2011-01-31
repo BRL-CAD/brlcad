@@ -546,9 +546,6 @@ OPTION(BRLCAD-BUILD_EXTRADOCS "Build Docbook documentation" ON)
 OPTION(BRLCAD-BUILD_EXTRADOCS_PDF "Build PDF output from Docbook documentation" OFF)
 OPTION(BRLCAD-BUILD_EXTRADOCS_PDF_MAN "Build PDF output from Docbook documentation for man pages" ${BRLCAD-BUILD_EXTRADOCS_PDF})
 
-# Doxygen developer documentation build
-OPTION(BRLCAD-BUILD_DOXYGEN_DOCS "Build Doxygen documentation " OFF)
-
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
 # and source code definition settings.  Typically these are set to 
