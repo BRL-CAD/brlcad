@@ -9,6 +9,8 @@ Remaining items:
 
 17. fix wish build on windows - current output exe doesn't run
 
+18. 64 bit Windows build - will need a few flags, at least in tcl/tk
+
 Done (to first order, all this needs testing)
 
 1.  Detect OpenGL properly on Apple - choose X11 vs Aqua, and get the ogl code working
