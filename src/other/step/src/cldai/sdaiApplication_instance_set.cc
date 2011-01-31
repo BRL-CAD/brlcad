@@ -34,7 +34,7 @@
 #ifndef HAVE_MEMMOVE
 extern "C"
 {
-void * memmove(void *__s1, const void *__s2, size_t __n) throw();
+void * memmove(void *__s1, const void *__s2, size_t __n);
 }
 #endif
 
