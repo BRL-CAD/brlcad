@@ -28,8 +28,10 @@ THIRD_PARTY_OPTION(ZLIB zlib)
 THIRD_PARTY_SUBDIR(ZLIB libz)
 
 # libtermlib Library
-THIRD_PARTY_OPTION(TERMLIB termlib)
-THIRD_PARTY_SUBDIR(TERMLIB libtermlib)
+IF(HAVE_TERMLIB)
+   THIRD_PARTY_OPTION(TERMLIB termlib)
+   THIRD_PARTY_SUBDIR(TERMLIB libtermlib)
+ENDIF(HAVE_TERMLIB)
 
 # libpng Library - Checks for ZLIB, so need to handle libpng AFTER zlib to set the variables
 # if using a local copy of zlib.  If not using a local copy of zlib, FindZLIB results will 
