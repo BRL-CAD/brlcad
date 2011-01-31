@@ -611,6 +611,7 @@ package provide cadwidgets::Ged 1.0
 	proc get_rgb_color {_color}
 	proc get_vdraw_color {_color}
 	proc rgb_to_tk {_r _g _b}
+	proc tk_to_rgb {_tkcolor}
     }
 
     protected {
@@ -3857,6 +3858,14 @@ package provide cadwidgets::Ged 1.0
 	    return "ffffff"
 	}
     }
+}
+
+::itcl::body cadwidgets::Ged::tk_to_rgb {_tkcolor} {
+    if {![regexp {^\#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$} $_tkcolor all r g b]} {
+	return {128 128 128}
+    }
+
+    return [list [expr int(0x$r)] [expr int(0x$g)] [expr int(0x$b)]]
 }
 
 ::itcl::body cadwidgets::Ged::rgb_to_tk {_r _g _b} {
