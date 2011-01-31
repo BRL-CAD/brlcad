@@ -9,8 +9,7 @@ set(archer_plugins
   plugins/utility.tcl
   plugins/wizards.tcl
 )
-FILE(COPY ${archer_plugins} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/plugins/archer)
-INSTALL(FILES ${archer_plugins} DESTINATION  ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/plugins/archer)
+BRLCAD_ADDDATA(archer_plugins plugins/archer)
 
 FILE(COPY plugins/Core/README DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/plugins/archer/Core)
 INSTALL(FILES plugins/Core/README DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/plugins/archer/Core)
@@ -24,8 +23,7 @@ SET(archer_utility_FILES
   plugins/Utility/attrGroupsDisplayUtilityP.tcl
   plugins/Utility/README
 )
-FILE(COPY ${archer_utility_FILES} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/plugins/archer/Utility)
-INSTALL(FILES ${archer_utility_FILES} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/plugins/archer/Utility)
+BRLCAD_ADDDATA(archer_utility_FILES plugins/archer/Utility)
 
 FILE(COPY plugins/Utility/botUtilityP/BotUtilityP.tcl DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/plugins/archer/Utility/botUtilityP)
 INSTALL(FILES plugins/Utility/botUtilityP/BotUtilityP.tcl DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/plugins/archer/Utility/botUtilityP)
@@ -38,8 +36,7 @@ SET(archer_wizard_FILES
   plugins/Wizards/tankwizard.tcl
   plugins/Wizards/tirewizard.tcl
 )
-FILE(COPY ${archer_wizard_FILES} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/plugins/archer/Wizards)
-INSTALL(FILES ${archer_wizard_FILES} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/plugins/archer/Wizards)
+BRLCAD_ADDDATA(archer_wizard_FILES plugins/archer/Wizards)
 
 FILE(COPY plugins/Wizards/humanwizard/HumanWizard.tcl DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/plugins/archer/Wizards/humanwizard)
 INSTALL(FILES plugins/Wizards/humanwizard/HumanWizard.tcl DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/plugins/archer/Wizards/humanwizard)
