@@ -763,11 +763,14 @@ rt_tcl_setup(Tcl_Interp *interp)
 {
     extern size_t rt_bot_minpieces;	/* from globals.c */
     extern size_t rt_bot_tri_per_piece;	/* from globals.c */
+    extern size_t rt_bot_mintie;	/* from globals.c */
 
     Tcl_LinkVar(interp, "rt_bot_minpieces", (char *)&rt_bot_minpieces, TCL_LINK_WIDE_INT);
 
     Tcl_LinkVar(interp, "rt_bot_tri_per_piece",
 		(char *)&rt_bot_tri_per_piece, TCL_LINK_WIDE_INT);
+
+    Tcl_LinkVar(interp, "rt_bot_mintie", (char *)&rt_bot_mintie, TCL_LINK_WIDE_INT);
 }
 
 
