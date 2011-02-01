@@ -77,7 +77,9 @@
 # Minimum required version of CMake
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 IF(COMMAND CMAKE_POLICY)
-	#CMAKE_POLICY(SET CMP0002 OLD)
+   # Needs to be old for per-directory make noprod, by default
+	# disable per-directory make noprod and keep new behavior
+	CMAKE_POLICY(SET CMP0002 OLD)	
 	CMAKE_POLICY(SET CMP0003 NEW)
 ENDIF(COMMAND CMAKE_POLICY)
 
@@ -135,10 +137,23 @@ MARK_AS_ADVANCED(CMAKE_SYSTEM_PREFIX_PATH)
 # the function names and call the _add_* functions to access the CMake
 # functionality previously available under the add_* functions. See
 # http://www.cmake.org/pipermail/cmake/2010-September/039388.html
-# Zero out the lists at the beginning of the run to avoid duplicate
-# and stale entries.
 
-# !!! TODO !!! is this working???? check and perhaps fix
+# A further compilcation is that functions have local variable scope,
+# hence the use of properties to allow access to directory-specific
+# and global information scopes.
+
+# The BRL-CAD build generates cmake_noprod.cmake files that can be
+# manually run to simulate the workings of make noprod in that directory:
+#
+# cmake -P ./cmake_noprod.cmake
+#
+# This will remove just the final output files from all exec and
+# library targets in that directory.  It is not practical to have
+# 'make noprod' targets in each directory in the current CMake
+# system, so there is one toplevel 'noprod' target and in subdirectories
+# the above command must be used.
+
+define_property(GLOBAL PROPERTY CHILD_LIST BRIEF_DOCS "child list" FULL_DOCS "tmp child target list")
 
 define_property(GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST BRIEF_DOCS "libtarget list" FULL_DOCS "Library target list")
 function(add_library name)
@@ -148,6 +163,7 @@ function(add_library name)
 		set_target_properties(${name} PROPERTIES PREFIX "")
 	ENDIF(${name} MATCHES "^lib*")
 	set_property(GLOBAL APPEND PROPERTY CMAKE_LIBRARY_TARGET_LIST ${name})
+	set_property(GLOBAL APPEND PROPERTY CHILD_LIST ${name})
 endfunction(add_library)
 
 define_property(GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST BRIEF_DOCS "exec target list" FULL_DOCS "Executable target list")
@@ -168,22 +184,73 @@ MARK_AS_ADVANCED(CMAKE_LIBRARY_TARGET_LIST)
 MARK_AS_ADVANCED(CMAKE_EXEC_TARGET_LIST)
 MARK_AS_ADVANCED(CMAKE_CUSTOM_TARGET_LIST)
 
-define_property(GLOBAL PROPERTY CHILD_LIST BRIEF_DOCS "child list" FULL_DOCS "tmp child target list")
-define_property(DIRECTORY PROPERTY EXEC_LIST BRIEF_DOCS "dir exec list" FULL_DOCS "Directory executable target list")
+define_property(DIRECTORY PROPERTY DIR_TARGET_LIST BRIEF_DOCS "dir list" FULL_DOCS "Directory target list")
 function(add_subdirectory name)
 	set_property(GLOBAL PROPERTY CHILD_LIST "")
 	_add_subdirectory(${name} ${ARGN})
-	get_property(exec_list GLOBAL PROPERTY CHILD_LIST)
-	set_property(DIRECTORY ${name} APPEND PROPERTY EXEC_LIST ${exec_list})
-	get_property(exec_list DIRECTORY ${name} PROPERTY EXEC_LIST)
-	#MESSAGE("Added directory ${name}, exec_list: ${exec_list}")
-	cmake_policy(GET CMP0002 POLICY)
-	IF(${POLICY} MATCHES "^OLD$")
-		#MESSAGE("Found old target naming policy - try to make noprod target for ${name} directory")
-	ENDIF(${POLICY} MATCHES "^OLD$")
-	set_property(DIRECTORY APPEND PROPERTY EXEC_LIST ${exec_list})
-	get_property(exec_list DIRECTORY PROPERTY EXEC_LIST)
-	#MESSAGE("Current directory ${CMAKE_CURRENT_SOURCE_DIR}, exec_list: ${exec_list}")
+	get_property(target_list GLOBAL PROPERTY CHILD_LIST)
+	set_property(DIRECTORY ${name} APPEND PROPERTY DIR_TARGET_LIST	${target_list})
+	set_property(DIRECTORY APPEND PROPERTY DIR_TARGET_LIST ${target_list})
+	get_property(target_list DIRECTORY ${name} PROPERTY DIR_TARGET_LIST)
+		IF(target_list)
+		SET(CMAKE_TARGET_FILE_LIST "")
+		FOREACH(target ${target_list})
+			get_target_property(targetfile ${target} LOCATION)
+			SET(CMAKE_TARGET_FILE_LIST "${CMAKE_TARGET_FILE_LIST};${targetfile}")
+		ENDFOREACH(target ${target_list})
+
+		STRING(REGEX REPLACE ";" "\\\;" TARGET_FILES "${CMAKE_TARGET_FILE_LIST}")
+		SET(noprod_file "
+SET(CMAKE_TARGET_FILE_LIST \"${TARGET_FILES}\")
+FOREACH(file \${CMAKE_TARGET_FILE_LIST})
+  IF(EXISTS \${file})
+    MESSAGE(\"removing \${file}\\n\")
+	 EXEC_PROGRAM(
+      ${CMAKE_COMMAND} ARGS \"-E remove \${file}\"
+      OUTPUT_VARIABLE rm_out
+      RETURN_VALUE rm_retval
+      )
+    IF(NOT \"\${rm_retval}\" STREQUAL 0)
+      MESSAGE(FATAL_ERROR \"Problem when removing \${file}\")
+    ENDIF(NOT \"\${rm_retval}\" STREQUAL 0)
+  ENDIF(EXISTS \${file})
+ENDFOREACH(file \${CMAKE_TARGET_FILE_LIST})
+"    )
+      FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${name}/cmake_noprod.cmake ${noprod_file})
+	   ENDIF(target_list)
+	get_property(target_list DIRECTORY PROPERTY DIR_TARGET_LIST)
+	get_property(child_list DIRECTORY ${name} PROPERTY DIR_TARGET_LIST)
+	IF(target_list)
+		LIST(APPEND target_list ${child_list})
+		LIST(REMOVE_DUPLICATES target_list)
+		set_property(DIRECTORY PROPERTY DIR_TARGET_LIST ${target_list})
+	ENDIF(target_list)
+	IF(target_list)
+		SET(CMAKE_TARGET_FILE_LIST "")
+		FOREACH(target ${target_list})
+			get_target_property(targetfile ${target} LOCATION)
+			SET(CMAKE_TARGET_FILE_LIST "${CMAKE_TARGET_FILE_LIST};${targetfile}")
+		ENDFOREACH(target ${target_list})
+
+		STRING(REGEX REPLACE ";" "\\\;" TARGET_FILES "${CMAKE_TARGET_FILE_LIST}")
+		SET(noprod_file "
+SET(CMAKE_TARGET_FILE_LIST \"${TARGET_FILES}\")
+FOREACH(file \${CMAKE_TARGET_FILE_LIST})
+  IF(EXISTS \${file})
+    MESSAGE(\"removing \${file}\\n\")
+	 EXEC_PROGRAM(
+      ${CMAKE_COMMAND} ARGS \"-E remove \${file}\"
+      OUTPUT_VARIABLE rm_out
+      RETURN_VALUE rm_retval
+      )
+    IF(NOT \"\${rm_retval}\" STREQUAL 0)
+      MESSAGE(FATAL_ERROR \"Problem when removing \${file}\")
+    ENDIF(NOT \"\${rm_retval}\" STREQUAL 0)
+  ENDIF(EXISTS \${file})
+ENDFOREACH(file \${CMAKE_TARGET_FILE_LIST})
+"    )
+      FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cmake_noprod.cmake ${noprod_file})
+   ENDIF(target_list)
 endfunction(add_subdirectory)
 
 #---------------------------------------------------------------------
@@ -1275,30 +1342,27 @@ FOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
 	endif(target_confcmd)
 ENDFOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
 
-# Set up the noprod rule.  Currently this is an "all or nothing"
-# command that will clear ALL products for lib or exec targets,
-# not just those in a particular subdirectory.  Must come after the
-# get_property statements above
-SET(CMAKE_LIBRARY_TARGET_FILE_LIST "")
-SET(CMAKE_EXEC_TARGET_FILE_LIST "")
+# We get one and only one noprod target - make it the
+# top level, since that's the only sensible choice.
+SET(CMAKE_TARGET_FILE_LIST "")
+get_property(CMAKE_LIBRARY_TARGET_LIST GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST)
 FOREACH(target ${CMAKE_LIBRARY_TARGET_LIST})
-get_target_property(targetfile ${target} LOCATION)
-   SET(CMAKE_LIBRARY_TARGET_FILE_LIST "${CMAKE_LIBRARY_TARGET_FILE_LIST};${targetfile}" CACHE STRING "list of lib target files" FORCE)
+	get_target_property(targetfile ${target} LOCATION)
+	SET(CMAKE_TARGET_FILE_LIST "${CMAKE_TARGET_FILE_LIST};${targetfile}")
 ENDFOREACH(target ${CMAKE_LIBRARY_TARGET_LIST})
+get_property(CMAKE_EXEC_TARGET_LIST GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST)
 FOREACH(target ${CMAKE_EXEC_TARGET_LIST})
 	get_target_property(targetfile ${target} LOCATION)
-	SET(CMAKE_EXEC_TARGET_FILE_LIST "${CMAKE_EXEC_TARGET_FILE_LIST};${targetfile}" CACHE STRING "list of target files" FORCE)
+	SET(CMAKE_TARGET_FILE_LIST "${CMAKE_TARGET_FILE_LIST};${targetfile}")
 ENDFOREACH(target ${CMAKE_EXEC_TARGET_LIST})
 
-STRING(REGEX REPLACE ";" "\\\;" LIBRARY_TARGET_FILES "${CMAKE_LIBRARY_TARGET_FILE_LIST}")
-STRING(REGEX REPLACE ";" "\\\;" EXEC_TARGET_FILES "${CMAKE_EXEC_TARGET_FILE_LIST}")
+STRING(REGEX REPLACE ";" "\\\;" TARGET_FILES "${CMAKE_TARGET_FILE_LIST}")
 SET(noprod_file "
-SET(CMAKE_LIBRARY_TARGET_FILE_LIST \"${LIBRARY_TARGET_FILES}\")
-    MESSAGE(\"current dir: \${CMAKE_CURRENT_BINARY_DIR}\\n\")
-FOREACH(file \${CMAKE_LIBRARY_TARGET_FILE_LIST})
+SET(CMAKE_TARGET_FILE_LIST \"${TARGET_FILES}\")
+FOREACH(file \${CMAKE_TARGET_FILE_LIST})
   IF(EXISTS \${file})
     MESSAGE(\"removing \${file}\\n\")
-    EXEC_PROGRAM(
+	 EXEC_PROGRAM(
       ${CMAKE_COMMAND} ARGS \"-E remove \${file}\"
       OUTPUT_VARIABLE rm_out
       RETURN_VALUE rm_retval
@@ -1307,28 +1371,10 @@ FOREACH(file \${CMAKE_LIBRARY_TARGET_FILE_LIST})
       MESSAGE(FATAL_ERROR \"Problem when removing \${file}\")
     ENDIF(NOT \"\${rm_retval}\" STREQUAL 0)
   ENDIF(EXISTS \${file})
-ENDFOREACH(file \${CMAKE_LIBRARY_TARGET_FILE_LIST})
-
-SET(CMAKE_EXEC_TARGET_FILE_LIST \"${EXEC_TARGET_FILES}\")
-FOREACH(file \${CMAKE_EXEC_TARGET_FILE_LIST})
-  IF(EXISTS \${file})
-    MESSAGE(\"removing \${file}\\n\")
-    EXEC_PROGRAM(
-      ${CMAKE_COMMAND} ARGS \"-E remove \${file}\"
-      OUTPUT_VARIABLE rm_out
-      RETURN_VALUE rm_retval
-      )
-    IF(NOT \"\${rm_retval}\" STREQUAL 0)
-      MESSAGE(FATAL_ERROR \"Problem when removing \${file}\")
-    ENDIF(NOT \"\${rm_retval}\" STREQUAL 0)
-  ENDIF(EXISTS \${file})
-ENDFOREACH(file \${CMAKE_EXEC_TARGET_FILE_LIST})
+ENDFOREACH(file \${CMAKE_TARGET_FILE_LIST})
 ")
-FILE(WRITE ${CMAKE_BINARY_DIR}/cmake_noprod.cmake ${noprod_file})
-ADD_CUSTOM_TARGET(noprod
-  "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/cmake_noprod.cmake")
-
-
+FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cmake_noprod.cmake ${noprod_file})
+ADD_CUSTOM_TARGET(noprod "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/cmake_noprod.cmake")
 
 # Generate the include/conf files
 
