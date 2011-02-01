@@ -1184,7 +1184,7 @@ go_create_cmd(Tcl_Interp *interp,
  *@n db close
  */
 HIDDEN int
-go_open_tcl(ClientData clientData,
+go_open_tcl(ClientData UNUSED(clientData),
 	    Tcl_Interp *interp,
 	    int argc,
 	    const char **argv)
@@ -1264,7 +1264,7 @@ HIDDEN int
 go_autoview(struct ged *gedp,
 	    int argc,
 	    const char *argv[],
-	    ged_func_ptr func,
+	    ged_func_ptr UNUSED(func),
 	    const char *usage,
 	    int UNUSED(maxargs))
 {
@@ -1703,10 +1703,10 @@ go_axes(struct ged *gedp,
 
 HIDDEN int
 go_base2local(struct ged *gedp,
-	      int argc,
-	      const char *argv[],
-	      ged_func_ptr func,
-	      const char *usage,
+	      int UNUSED(argc),
+	      const char *UNUSED(argv[]),
+	      ged_func_ptr UNUSED(func),
+	      const char *UNUSED(usage),
 	      int UNUSED(maxargs))
 {
     /* initialize result */
@@ -1721,7 +1721,7 @@ HIDDEN int
 go_bg(struct ged *gedp,
       int argc,
       const char *argv[],
-      ged_func_ptr func,
+      ged_func_ptr UNUSED(func),
       const char *usage,
       int UNUSED(maxargs))
 {
@@ -1791,8 +1791,8 @@ HIDDEN int
 go_blast(struct ged *gedp,
 	 int argc,
 	 const char *argv[],
-	 ged_func_ptr func,
-	 const char *usage,
+	 ged_func_ptr UNUSED(func),
+	 const char *UNUSED(usage),
 	 int UNUSED(maxargs))
 {
     int ret;
@@ -1811,7 +1811,7 @@ HIDDEN int
 go_bounds(struct ged *gedp,
 	  int argc,
 	  const char *argv[],
-	  ged_func_ptr func,
+	  ged_func_ptr UNUSED(func),
 	  const char *usage,
 	  int UNUSED(maxargs))
 {
@@ -1884,7 +1884,7 @@ HIDDEN int
 go_configure(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
-	     ged_func_ptr func,
+	     ged_func_ptr UNUSED(func),
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
@@ -1948,7 +1948,7 @@ HIDDEN int
 go_constrain_rmode(struct ged *gedp,
 		   int argc,
 		   const char *argv[],
-		   ged_func_ptr func,
+		   ged_func_ptr UNUSED(func),
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
@@ -2013,7 +2013,7 @@ HIDDEN int
 go_constrain_tmode(struct ged *gedp,
 		   int argc,
 		   const char *argv[],
-		   ged_func_ptr func,
+		   ged_func_ptr UNUSED(func),
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
@@ -2078,7 +2078,7 @@ HIDDEN int
 go_copy(struct ged *gedp,
 	int argc,
 	const char *argv[],
-	ged_func_ptr func,
+	ged_func_ptr UNUSED(func),
 	const char *usage,
 	int UNUSED(maxargs))
 {
@@ -2207,7 +2207,7 @@ HIDDEN int
 go_data_arrows(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
-	       ged_func_ptr func,
+	       ged_func_ptr UNUSED(func),
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
@@ -2434,7 +2434,7 @@ HIDDEN int
 go_data_axes(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
-	     ged_func_ptr func,
+	     ged_func_ptr UNUSED(func),
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
@@ -2635,7 +2635,7 @@ HIDDEN int
 go_data_labels(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
-	       ged_func_ptr func,
+	       ged_func_ptr UNUSED(func),
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
@@ -2863,7 +2863,7 @@ HIDDEN int
 go_data_lines(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
-	      ged_func_ptr func,
+	      ged_func_ptr UNUSED(func),
 	      const char *usage,
 	      int UNUSED(maxargs))
 {
@@ -3051,7 +3051,7 @@ HIDDEN int
 go_data_move(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
-	     ged_func_ptr func,
+	     ged_func_ptr UNUSED(func),
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
@@ -3253,7 +3253,7 @@ HIDDEN int
 go_data_pick(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
-	     ged_func_ptr func,
+	     ged_func_ptr UNUSED(func),
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
@@ -3744,7 +3744,7 @@ HIDDEN int
 go_fontsize(struct ged *gedp,
 	    int argc,
 	    const char *argv[],
-	    ged_func_ptr func,
+	    ged_func_ptr UNUSED(func),
 	    const char *usage,
 	    int UNUSED(maxargs))
 {
@@ -3801,7 +3801,7 @@ HIDDEN int
 go_init_view_bindings(struct ged *gedp,
 		      int argc,
 		      const char *argv[],
-		      ged_func_ptr func,
+		      ged_func_ptr UNUSED(func),
 		      const char *usage,
 		      int UNUSED(maxargs))
 {
@@ -3840,7 +3840,7 @@ HIDDEN int
 go_delete_view(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
-	       ged_func_ptr func,
+	       ged_func_ptr UNUSED(func),
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
@@ -3879,7 +3879,7 @@ HIDDEN int
 go_faceplate(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
-	     ged_func_ptr func,
+	     ged_func_ptr UNUSED(func),
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
@@ -4077,7 +4077,7 @@ HIDDEN int
 go_handle_expose(struct ged *gedp,
 		 int argc,
 		 const char *argv[],
-		 ged_func_ptr func,
+		 ged_func_ptr UNUSED(func),
 		 const char *usage,
 		 int UNUSED(maxargs))
 {
@@ -4130,7 +4130,7 @@ HIDDEN int
 go_idle_mode(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
-	     ged_func_ptr func,
+	     ged_func_ptr UNUSED(func),
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
@@ -4194,7 +4194,7 @@ HIDDEN int
 go_light(struct ged *gedp,
 	 int argc,
 	 const char *argv[],
-	 ged_func_ptr func,
+	 ged_func_ptr UNUSED(func),
 	 const char *usage,
 	 int UNUSED(maxargs))
 {
@@ -4252,8 +4252,8 @@ HIDDEN int
 go_list_views(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
-	      ged_func_ptr func,
-	      const char *usage,
+	      ged_func_ptr UNUSED(func),
+	      const char *UNUSED(usage),
 	      int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
@@ -4276,7 +4276,7 @@ HIDDEN int
 go_listen(struct ged *gedp,
 	  int argc,
 	  const char *argv[],
-	  ged_func_ptr func,
+	  ged_func_ptr UNUSED(func),
 	  const char *usage,
 	  int UNUSED(maxargs))
 {
@@ -4340,10 +4340,10 @@ go_listen(struct ged *gedp,
 
 HIDDEN int
 go_local2base(struct ged *gedp,
-	      int argc,
-	      const char *argv[],
-	      ged_func_ptr func,
-	      const char *usage,
+	      int UNUSED(argc),
+	      const char *UNUSED(argv[]),
+	      ged_func_ptr UNUSED(func),
+	      const char *UNUSED(usage),
 	      int UNUSED(maxargs))
 {
     /* initialize result */
@@ -4358,8 +4358,8 @@ HIDDEN int
 go_make(struct ged *gedp,
 	int argc,
 	const char *argv[],
-	ged_func_ptr func,
-	const char *usage,
+	ged_func_ptr UNUSED(func),
+	const char *UNUSED(usage),
 	int UNUSED(maxargs))
 {
     int ret;
@@ -4381,8 +4381,8 @@ HIDDEN int
 go_mirror(struct ged *gedp,
 	  int argc,
 	  const char *argv[],
-	  ged_func_ptr func,
-	  const char *usage,
+	  ged_func_ptr UNUSED(func),
+	  const char *UNUSED(usage),
 	  int UNUSED(maxargs))
 {
     int ret;
@@ -4404,7 +4404,7 @@ HIDDEN int
 go_model_axes(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
-	      ged_func_ptr func,
+	      ged_func_ptr UNUSED(func),
 	      const char *usage,
 	      int UNUSED(maxargs))
 {
@@ -4441,8 +4441,8 @@ HIDDEN int
 go_more_args_callback(struct ged *gedp,
 		      int argc,
 		      const char *argv[],
-		      ged_func_ptr func,
-		      const char *usage,
+		      ged_func_ptr UNUSED(func),
+		      const char *UNUSED(usage),
 		      int UNUSED(maxargs))
 {
     register int i;
@@ -4469,7 +4469,7 @@ HIDDEN int
 go_mouse_constrain_rot(struct ged *gedp,
 		       int argc,
 		       const char *argv[],
-		       ged_func_ptr func,
+		       ged_func_ptr UNUSED(func),
 		       const char *usage,
 		       int UNUSED(maxargs))
 {
@@ -4576,7 +4576,7 @@ HIDDEN int
 go_mouse_constrain_trans(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
-			 ged_func_ptr func,
+			 ged_func_ptr UNUSED(func),
 			 const char *usage,
 			 int UNUSED(maxargs))
 {
@@ -4685,7 +4685,7 @@ HIDDEN int
 go_mouse_move_arb_edge(struct ged *gedp,
 		       int argc,
 		       const char *argv[],
-		       ged_func_ptr func,
+		       ged_func_ptr UNUSED(func),
 		       const char *usage,
 		       int UNUSED(maxargs))
 {
@@ -4782,7 +4782,7 @@ HIDDEN int
 go_mouse_move_arb_face(struct ged *gedp,
 		       int argc,
 		       const char *argv[],
-		       ged_func_ptr func,
+		       ged_func_ptr UNUSED(func),
 		       const char *usage,
 		       int UNUSED(maxargs))
 {
@@ -4879,7 +4879,7 @@ HIDDEN int
 go_mouse_orotate(struct ged *gedp,
 		 int argc,
 		 const char *argv[],
-		 ged_func_ptr func,
+		 ged_func_ptr UNUSED(func),
 		 const char *usage,
 		 int UNUSED(maxargs))
 {
@@ -4982,7 +4982,7 @@ HIDDEN int
 go_mouse_oscale(struct ged *gedp,
 		int argc,
 		const char *argv[],
-		ged_func_ptr func,
+		ged_func_ptr UNUSED(func),
 		const char *usage,
 		int UNUSED(maxargs))
 {
@@ -5076,7 +5076,7 @@ HIDDEN int
 go_mouse_otranslate(struct ged *gedp,
 		    int argc,
 		    const char *argv[],
-		    ged_func_ptr func,
+		    ged_func_ptr UNUSED(func),
 		    const char *usage,
 		    int UNUSED(maxargs))
 {
@@ -5178,11 +5178,11 @@ go_mouse_otranslate(struct ged *gedp,
 }
 
 HIDDEN int
-go_mouse_ray(struct ged *gedp,
-	     int argc,
-	     const char *argv[],
-	     ged_func_ptr func,
-	     const char *usage,
+go_mouse_ray(struct ged *UNUSED(gedp),
+	     int UNUSED(argc),
+	     const char *UNUSED(argv[]),
+	     ged_func_ptr UNUSED(func),
+	     const char *UNUSED(usage),
 	     int UNUSED(maxargs))
 {
 #if 0
@@ -5262,7 +5262,7 @@ HIDDEN int
 go_mouse_rect(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
-	      ged_func_ptr func,
+	      ged_func_ptr UNUSED(func),
 	      const char *usage,
 	      int UNUSED(maxargs))
 {
@@ -5335,7 +5335,7 @@ HIDDEN int
 go_mouse_rot(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
-	     ged_func_ptr func,
+	     ged_func_ptr UNUSED(func),
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
@@ -5424,7 +5424,7 @@ HIDDEN int
 go_mouse_rotate_arb_face(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
-			 ged_func_ptr func,
+			 ged_func_ptr UNUSED(func),
 			 const char *usage,
 			 int UNUSED(maxargs))
 {
@@ -5519,7 +5519,7 @@ HIDDEN int
 go_mouse_scale(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
-	       ged_func_ptr func,
+	       ged_func_ptr UNUSED(func),
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
@@ -5613,7 +5613,7 @@ HIDDEN int
 go_mouse_protate(struct ged *gedp,
 		 int argc,
 		 const char *argv[],
-		 ged_func_ptr func,
+		 ged_func_ptr UNUSED(func),
 		 const char *usage,
 		 int UNUSED(maxargs))
 {
@@ -5707,7 +5707,7 @@ HIDDEN int
 go_mouse_pscale(struct ged *gedp,
 		int argc,
 		const char *argv[],
-		ged_func_ptr func,
+		ged_func_ptr UNUSED(func),
 		const char *usage,
 		int UNUSED(maxargs))
 {
@@ -5803,7 +5803,7 @@ HIDDEN int
 go_mouse_ptranslate(struct ged *gedp,
 		    int argc,
 		    const char *argv[],
-		    ged_func_ptr func,
+		    ged_func_ptr UNUSED(func),
 		    const char *usage,
 		    int UNUSED(maxargs))
 {
@@ -5900,7 +5900,7 @@ HIDDEN int
 go_mouse_trans(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
-	       ged_func_ptr func,
+	       ged_func_ptr UNUSED(func),
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
@@ -5988,10 +5988,10 @@ go_mouse_trans(struct ged *gedp,
 }
 
 HIDDEN int
-go_view_cmd(ClientData clientData,
-	    Tcl_Interp *interp,
-	    int argc,
-	    char **argv)
+go_view_cmd(ClientData UNUSED(clientData),
+	    Tcl_Interp *UNUSED(interp),
+	    int UNUSED(argc),
+	    char **UNUSED(argv))
 {
     return TCL_OK;
 }
@@ -6000,7 +6000,7 @@ HIDDEN int
 go_move_arb_edge_mode(struct ged *gedp,
 		      int argc,
 		      const char *argv[],
-		      ged_func_ptr func,
+		      ged_func_ptr UNUSED(func),
 		      const char *usage,
 		      int UNUSED(maxargs))
 {
@@ -6059,7 +6059,7 @@ HIDDEN int
 go_move_arb_face_mode(struct ged *gedp,
 		      int argc,
 		      const char *argv[],
-		      ged_func_ptr func,
+		      ged_func_ptr UNUSED(func),
 		      const char *usage,
 		      int UNUSED(maxargs))
 {
@@ -6118,7 +6118,7 @@ HIDDEN int
 go_new_view(struct ged *gedp,
 	    int argc,
 	    const char *argv[],
-	    ged_func_ptr func,
+	    ged_func_ptr UNUSED(func),
 	    const char *usage,
 	    int UNUSED(maxargs))
 {
@@ -6251,7 +6251,7 @@ HIDDEN int
 go_orotate_mode(struct ged *gedp,
 		int argc,
 		const char *argv[],
-		ged_func_ptr func,
+		ged_func_ptr UNUSED(func),
 		const char *usage,
 		int UNUSED(maxargs))
 {
@@ -6309,7 +6309,7 @@ HIDDEN int
 go_oscale_mode(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
-	       ged_func_ptr func,
+	       ged_func_ptr UNUSED(func),
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
@@ -6367,7 +6367,7 @@ HIDDEN int
 go_otranslate_mode(struct ged *gedp,
 		   int argc,
 		   const char *argv[],
-		   ged_func_ptr func,
+		   ged_func_ptr UNUSED(func),
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
@@ -6425,7 +6425,7 @@ HIDDEN int
 go_paint_rect_area(struct ged *gedp,
 		   int argc,
 		   const char *argv[],
-		   ged_func_ptr func,
+		   ged_func_ptr UNUSED(func),
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
@@ -6466,7 +6466,7 @@ HIDDEN int
 go_png(struct ged *gedp,
        int argc,
        const char *argv[],
-       ged_func_ptr func,
+       ged_func_ptr UNUSED(func),
        const char *usage,
        int UNUSED(maxargs))
 {
@@ -6668,8 +6668,8 @@ HIDDEN int
 go_prim_label(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
-	      ged_func_ptr func,
-	      const char *usage,
+	      ged_func_ptr UNUSED(func),
+	      const char *UNUSED(usage),
 	      int UNUSED(maxargs))
 {
     register int i;
@@ -6704,7 +6704,7 @@ HIDDEN int
 go_rect_mode(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
-	     ged_func_ptr func,
+	     ged_func_ptr UNUSED(func),
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
@@ -6796,7 +6796,7 @@ HIDDEN int
 go_refresh(struct ged *gedp,
 	   int argc,
 	   const char *argv[],
-	   ged_func_ptr func,
+	   ged_func_ptr UNUSED(func),
 	   const char *usage,
 	   int UNUSED(maxargs))
 {
@@ -6821,8 +6821,8 @@ HIDDEN int
 go_refresh_all(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
-	       ged_func_ptr func,
-	       const char *usage,
+	       ged_func_ptr UNUSED(func),
+	       const char *UNUSED(usage),
 	       int UNUSED(maxargs))
 {
     if (argc != 1) {
@@ -6839,8 +6839,8 @@ HIDDEN int
 go_refresh_on(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
-	      ged_func_ptr func,
-	      const char *usage,
+	      ged_func_ptr UNUSED(func),
+	      const char *UNUSED(usage),
 	      int UNUSED(maxargs))
 {
     int on;
@@ -6871,7 +6871,7 @@ HIDDEN int
 go_rotate_arb_face_mode(struct ged *gedp,
 			int argc,
 			const char *argv[],
-			ged_func_ptr func,
+			ged_func_ptr UNUSED(func),
 			const char *usage,
 			int UNUSED(maxargs))
 {
@@ -6931,7 +6931,7 @@ HIDDEN int
 go_rotate_mode(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
-	       ged_func_ptr func,
+	       ged_func_ptr UNUSED(func),
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
@@ -7010,8 +7010,8 @@ HIDDEN int
 go_rt_end_callback(struct ged *gedp,
 		   int argc,
 		   const char *argv[],
-		   ged_func_ptr func,
-		   const char *usage,
+		   ged_func_ptr UNUSED(func),
+		   const char *UNUSED(usage),
 		   int UNUSED(maxargs))
 {
     register int i;
@@ -7049,7 +7049,7 @@ int
 go_rt_gettrees(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
-	       ged_func_ptr func,
+	       ged_func_ptr UNUSED(func),
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
@@ -7140,7 +7140,7 @@ HIDDEN int
 go_protate_mode(struct ged *gedp,
 		int argc,
 		const char *argv[],
-		ged_func_ptr func,
+		ged_func_ptr UNUSED(func),
 		const char *usage,
 		int UNUSED(maxargs))
 {
@@ -7199,7 +7199,7 @@ HIDDEN int
 go_pscale_mode(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
-	       ged_func_ptr func,
+	       ged_func_ptr UNUSED(func),
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
@@ -7258,7 +7258,7 @@ HIDDEN int
 go_ptranslate_mode(struct ged *gedp,
 		   int argc,
 		   const char *argv[],
-		   ged_func_ptr func,
+		   ged_func_ptr UNUSED(func),
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
@@ -7317,7 +7317,7 @@ HIDDEN int
 go_scale_mode(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
-	      ged_func_ptr func,
+	      ged_func_ptr UNUSED(func),
 	      const char *usage,
 	      int UNUSED(maxargs))
 {
@@ -7374,7 +7374,7 @@ HIDDEN int
 go_screen2model(struct ged *gedp,
 		int argc,
 		const char *argv[],
-		ged_func_ptr func,
+		ged_func_ptr UNUSED(func),
 		const char *usage,
 		int UNUSED(maxargs))
 {
@@ -7433,7 +7433,7 @@ HIDDEN int
 go_screen2view(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
-	       ged_func_ptr func,
+	       ged_func_ptr UNUSED(func),
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
@@ -7490,7 +7490,7 @@ HIDDEN int
 go_set_coord(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
-	     ged_func_ptr func,
+	     ged_func_ptr UNUSED(func),
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
@@ -7541,7 +7541,7 @@ HIDDEN int
 go_set_fb_mode(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
-	       ged_func_ptr func,
+	       ged_func_ptr UNUSED(func),
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
@@ -7599,7 +7599,7 @@ HIDDEN int
 go_snap_view(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
-	     ged_func_ptr func,
+	     ged_func_ptr UNUSED(func),
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
@@ -7652,7 +7652,7 @@ HIDDEN int
 go_translate_mode(struct ged *gedp,
 		  int argc,
 		  const char *argv[],
-		  ged_func_ptr func,
+		  ged_func_ptr UNUSED(func),
 		  const char *usage,
 		  int UNUSED(maxargs))
 {
@@ -7709,7 +7709,7 @@ HIDDEN int
 go_transparency(struct ged *gedp,
 		int argc,
 		const char *argv[],
-		ged_func_ptr func,
+		ged_func_ptr UNUSED(func),
 		const char *usage,
 		int UNUSED(maxargs))
 {
@@ -7764,7 +7764,7 @@ HIDDEN int
 go_view_axes(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
-	     ged_func_ptr func,
+	     ged_func_ptr UNUSED(func),
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
@@ -7801,7 +7801,7 @@ HIDDEN int
 go_view_callback(struct ged *gedp,
 		 int argc,
 		 const char *argv[],
-		 ged_func_ptr func,
+		 ged_func_ptr UNUSED(func),
 		 const char *usage,
 		 int UNUSED(maxargs))
 {
@@ -7846,7 +7846,7 @@ HIDDEN int
 go_view_win_size(struct ged *gedp,
 		 int argc,
 		 const char *argv[],
-		 ged_func_ptr func,
+		 ged_func_ptr UNUSED(func),
 		 const char *usage,
 		 int UNUSED(maxargs))
 {
@@ -7913,7 +7913,7 @@ HIDDEN int
 go_vmake(struct ged *gedp,
 	 int argc,
 	 const char *argv[],
-	 ged_func_ptr func,
+	 ged_func_ptr UNUSED(func),
 	 const char *usage,
 	 int UNUSED(maxargs))
 {
@@ -7981,7 +7981,7 @@ HIDDEN int
 go_vslew(struct ged *gedp,
 	 int argc,
 	 const char *argv[],
-	 ged_func_ptr func,
+	 ged_func_ptr UNUSED(func),
 	 const char *usage,
 	 int UNUSED(maxargs))
 {
@@ -8064,7 +8064,7 @@ HIDDEN int
 go_zbuffer(struct ged *gedp,
 	   int argc,
 	   const char *argv[],
-	   ged_func_ptr func,
+	   ged_func_ptr UNUSED(func),
 	   const char *usage,
 	   int UNUSED(maxargs))
 {
@@ -8122,7 +8122,7 @@ HIDDEN int
 go_zclip(struct ged *gedp,
 	 int argc,
 	 const char *argv[],
-	 ged_func_ptr func,
+	 ged_func_ptr UNUSED(func),
 	 const char *usage,
 	 int UNUSED(maxargs))
 {
@@ -8183,8 +8183,8 @@ HIDDEN int
 go_autoview_func(struct ged *gedp,
 		 int argc,
 		 const char *argv[],
-		 ged_func_ptr func,
-		 const char *usage,
+		 ged_func_ptr UNUSED(func),
+		 const char *UNUSED(usage),
 		 int UNUSED(maxargs))
 {
     int ret;
@@ -8215,7 +8215,7 @@ go_edit_redraw(struct ged *gedp,
 		    int argc,
 		    const char *argv[])
 {
-    register int i;
+    size_t i;
     register struct ged_display_list *gdlp;
     register struct ged_display_list *next_gdlp;
     struct db_full_path fullpath, subpath;
@@ -8296,8 +8296,8 @@ HIDDEN int
 go_more_args_func(struct ged *gedp,
 		  int argc,
 		  const char *argv[],
-		  ged_func_ptr func,
-		  const char *usage,
+		  ged_func_ptr UNUSED(func),
+		  const char *UNUSED(usage),
 		  int UNUSED(maxargs))
 {
     register int i;
@@ -8388,8 +8388,8 @@ HIDDEN int
 go_pass_through_func(struct ged *gedp,
 		     int argc,
 		     const char *argv[],
-		     ged_func_ptr func,
-		     const char *usage,
+		     ged_func_ptr UNUSED(func),
+		     const char *UNUSED(usage),
 		     int UNUSED(maxargs))
 {
     return (*func)(gedp, argc, argv);
@@ -8399,8 +8399,8 @@ HIDDEN int
 go_pass_through_and_refresh_func(struct ged *gedp,
 				 int argc,
 				 const char *argv[],
-				 ged_func_ptr func,
-				 const char *usage,
+				 ged_func_ptr UNUSED(func),
+				 const char *UNUSED(usage),
 				 int UNUSED(maxargs))
 {
     int ret;

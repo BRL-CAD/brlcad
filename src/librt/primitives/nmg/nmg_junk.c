@@ -69,7 +69,7 @@
  * about not creating fundamental structures on his own...  :-)
  * Retired in favor of more modern tessellation strategies.
  */
-HIDDEN struct shell *
+struct shell *
 nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
 {
     int i, j, num_pts, num_facets, pts_this_face, facet;
@@ -180,7 +180,7 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
  * does only "interior" edges, and is not a general face/shell
  * intersector.
  */
-HIDDEN void
+void
 nmg_isect_face3p_shell_int(struct nmg_inter_struct *is, struct faceuse *fu1, struct shell *s2)
 {
     struct shell *s1;
