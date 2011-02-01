@@ -22,6 +22,10 @@
 
 #include "common.h"
 
+#ifdef _WIN32
+#include "windows.h"
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -91,10 +95,10 @@ _bu_ipwd()
     pwd = getenv("PWD"); /* not our memory to free */
     if (pwd && strlen(pwd) > 0) {
 #ifdef HAVE_REALPATH
-	ipwd = realpath(pwd, buffer);
-	if (ipwd) {
-	    return ipwd;
-	}
+       	ipwd = realpath(pwd, buffer);
+       	if (ipwd) {
+           return ipwd;
+       	}
 #endif
 	ipwd = pwd;
 	return ipwd;
@@ -104,7 +108,7 @@ _bu_ipwd()
 #ifdef HAVE_REALPATH
     ipwd = realpath(".", buffer);
     if (ipwd && strlen(ipwd) > 0) {
-	return ipwd;
+       return ipwd;
     }
 #endif
 
@@ -407,7 +411,6 @@ _bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct 
     return 0;
 }
 
-
 const char *
 bu_brlcad_root(const char *rhs, int fail_quietly)
 {
@@ -467,7 +470,11 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 	    bu_strlcpy(real_path, lhs, (size_t)MAXPATHLEN);
 	}
 #else
+#  ifdef _WIN32
+	GetFullPathName(lhs, MAXPATHLEN, real_path, NULL);
+#  else
 	bu_strlcpy(real_path, lhs, (size_t)MAXPATHLEN);
+#  endif
 #endif
 	dirpath = bu_dirname(real_path);
 	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
@@ -564,6 +571,21 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     lhs = _brlcad_data();
     snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_DATA compile-time path [%s]\n", lhs);
     if (_bu_find_path(result, lhs, rhs, &searched, where)) {
+        const char *ipwd = _bu_ipwd();
+	char full_path[MAXPATHLEN] = {0};
+	snprintf(full_path, MAXPATHLEN, "%s%c%s", ipwd, BU_DIR_SEPARATOR, result);
+#ifdef HAVE_REALPATH
+	if (realpath(full_path, result) == NULL) {
+	    perror("realpath");
+	    bu_strlcpy(result, full_path, (size_t)MAXPATHLEN);
+	}
+#else
+#  ifdef _WIN32
+	GetFullPathName(full_path, MAXPATHLEN, result, NULL);
+#  else
+	snprintf(result, MAXPATHLEN, "%s", full_path);
+#  endif
+#endif
 	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("Found: BRLCAD_DATA compile-time path [%s]\n", result);
 	}
