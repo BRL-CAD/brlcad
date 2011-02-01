@@ -693,7 +693,7 @@ int
 anim_steer_mat(mat_t mat, vect_t point, int end)
 {
     static vect_t p1, p2, p3;
-    vect_t dir;
+    vect_t dir = {0.0,0.0,0.0};
     static vect_t norm;
     static int state = ASM_EMPTY;
 
