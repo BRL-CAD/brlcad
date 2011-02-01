@@ -77,6 +77,7 @@
 # Minimum required version of CMake
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 IF(COMMAND CMAKE_POLICY)
+	#CMAKE_POLICY(SET CMP0002 OLD)
 	CMAKE_POLICY(SET CMP0003 NEW)
 ENDIF(COMMAND CMAKE_POLICY)
 
@@ -154,6 +155,7 @@ function(add_executable name)
 	get_property(CMAKE_EXEC_TARGET_LIST GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST)
    _add_executable(${name} ${ARGN})
 	set_property(GLOBAL APPEND PROPERTY CMAKE_EXEC_TARGET_LIST ${name})
+	set_property(GLOBAL APPEND PROPERTY CHILD_LIST ${name})
 endfunction(add_executable)
 
 define_property(GLOBAL PROPERTY CMAKE_CUSTOM_TARGET_LIST BRIEF_DOCS "custom target list" FULL_DOCS "Custom target list")
@@ -165,6 +167,24 @@ endfunction(add_custom_target)
 MARK_AS_ADVANCED(CMAKE_LIBRARY_TARGET_LIST)
 MARK_AS_ADVANCED(CMAKE_EXEC_TARGET_LIST)
 MARK_AS_ADVANCED(CMAKE_CUSTOM_TARGET_LIST)
+
+define_property(GLOBAL PROPERTY CHILD_LIST BRIEF_DOCS "child list" FULL_DOCS "tmp child target list")
+define_property(DIRECTORY PROPERTY EXEC_LIST BRIEF_DOCS "dir exec list" FULL_DOCS "Directory executable target list")
+function(add_subdirectory name)
+	set_property(GLOBAL PROPERTY CHILD_LIST "")
+	_add_subdirectory(${name} ${ARGN})
+	get_property(exec_list GLOBAL PROPERTY CHILD_LIST)
+	set_property(DIRECTORY ${name} APPEND PROPERTY EXEC_LIST ${exec_list})
+	get_property(exec_list DIRECTORY ${name} PROPERTY EXEC_LIST)
+	#MESSAGE("Added directory ${name}, exec_list: ${exec_list}")
+	cmake_policy(GET CMP0002 POLICY)
+	IF(${POLICY} MATCHES "^OLD$")
+		#MESSAGE("Found old target naming policy - try to make noprod target for ${name} directory")
+	ENDIF(${POLICY} MATCHES "^OLD$")
+	set_property(DIRECTORY APPEND PROPERTY EXEC_LIST ${exec_list})
+	get_property(exec_list DIRECTORY PROPERTY EXEC_LIST)
+	#MESSAGE("Current directory ${CMAKE_CURRENT_SOURCE_DIR}, exec_list: ${exec_list}")
+endfunction(add_subdirectory)
 
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
