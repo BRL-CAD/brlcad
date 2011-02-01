@@ -317,12 +317,6 @@ HIDDEN int go_mouse_otranslate(struct ged *gedp,
 			       ged_func_ptr func,
 			       const char *usage,
 			       int maxargs);
-HIDDEN int go_mouse_translate(struct ged *gedp,
-			      int argc,
-			      const char *argv[],
-			      ged_func_ptr func,
-			      const char *usage,
-			      int maxargs);
 HIDDEN int go_mouse_ray(struct ged *gedp,
 			int argc,
 			const char *argv[],
