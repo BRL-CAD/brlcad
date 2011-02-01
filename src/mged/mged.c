@@ -2777,11 +2777,16 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     }
 
     if (flip_v4) {
-	if (dbip->dbi_version != 4) {
+	if (db_version(dbip) != 4) {
 	    bu_log("WARNING: [%s] is not a v4 database.  The -f option will be ignored.\n", dbip->dbi_filename);
 	} else {
-	    dbip->dbi_version *= -1; /* flip the version number to indicate a flipped database */
-	    dbip->dbi_read_only = 1; /* do NOT write to a flipped database */
+	    /* flip the version number to indicate a flipped database */
+	    if (dbip->dbi_version > 0)
+		dbip->dbi_version *= -1;
+
+	    /* do NOT write to a flipped database */
+	    dbip->dbi_read_only = 1;
+
 	    bu_log("Treating file as a binary-incompatible v4 geometry database.\n");
 	}
     }
