@@ -192,7 +192,11 @@ CHECK_FUNCTION_EXISTS(memmove HAVE_MEMMOVE)
 CHECK_TYPE_SIZE("ssize_t" SSIZE_T)
 
 # Now that all the tests are done, configure the scl_config.h file:
-configure_file(${SCL_SOURCE_DIR}/include/scl_config.h.in ${SCL_BINARY_DIR}/include/scl_config.h)
+configure_file(${SCL_SOURCE_DIR}/include/scl_cf.h.in ${SCL_BINARY_DIR}/include/scl_cf.h)
+
+add_definitions(
+	-DHAVE_CONFIG_H
+	)
 
 include_directories(
 	${SCL_SOURCE_DIR}/include

@@ -43,7 +43,7 @@
 #include <dirent.h>
 
 #ifdef HAVE_CONFIG_H
-# include <scl_config.h>
+# include <scl_cf.h>
 #endif
 
 /* for getuid() */
