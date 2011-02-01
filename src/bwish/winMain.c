@@ -36,7 +36,7 @@
 
 #include "tkInt.h"
 #define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include "bio.h"
 #undef WIN32_LEAN_AND_MEAN
 #include <locale.h>
 
