@@ -139,10 +139,10 @@ MARK_AS_ADVANCED(CMAKE_SYSTEM_PREFIX_PATH)
 # hence the use of properties to allow access to directory-specific
 # and global information scopes.
 
-# The BRL-CAD build generates cmake_noprod.cmake files that can be
+# The BRL-CAD build generates noprod files that can be
 # manually run to simulate the workings of make noprod in that directory:
 #
-# cmake -P ./cmake_noprod.cmake
+# cmake -P ./noprod
 #
 # This will remove just the final output files from all exec and
 # library targets in that directory.  It is not practical to have
@@ -221,7 +221,7 @@ FOREACH(file \${CMAKE_TARGET_FILE_LIST})
   ENDIF(EXISTS \${file})
 ENDFOREACH(file \${CMAKE_TARGET_FILE_LIST})
 "    )
-      FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${name}/cmake_noprod.cmake ${noprod_file})
+      FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${name}/noprod ${noprod_file})
 	   ENDIF(target_list)
 	get_property(target_list DIRECTORY PROPERTY DIR_TARGET_LIST)
 	get_property(child_list DIRECTORY ${name} PROPERTY DIR_TARGET_LIST)
@@ -262,7 +262,7 @@ FOREACH(file \${CMAKE_TARGET_FILE_LIST})
   ENDIF(EXISTS \${file})
 ENDFOREACH(file \${CMAKE_TARGET_FILE_LIST})
 "    )
-      FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cmake_noprod.cmake ${noprod_file})
+      FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/noprod ${noprod_file})
    ENDIF(target_list)
 endfunction(add_subdirectory)
 
@@ -1400,8 +1400,8 @@ FOREACH(file \${CMAKE_TARGET_FILE_LIST})
   ENDIF(EXISTS \${file})
 ENDFOREACH(file \${CMAKE_TARGET_FILE_LIST})
 ")
-FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cmake_noprod.cmake ${noprod_file})
-ADD_CUSTOM_TARGET(noprod "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/cmake_noprod.cmake")
+FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/noprod ${noprod_file})
+ADD_CUSTOM_TARGET(noprod "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/noprod")
 
 # Generate the include/conf files
 
