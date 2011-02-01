@@ -22,13 +22,9 @@
 
 #include "common.h"
 
-#ifdef _WIN32
-#include "windows.h"
-#endif
-
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
+#include "bio.h"
 
 #ifdef HAVE_SYS_PARAM_H
 #  include <sys/param.h>
