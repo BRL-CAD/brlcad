@@ -6,6 +6,8 @@ debian/brlcad-mged.desktop usr/share/applications
 debian/brlcad-rtwizard.desktop usr/share/applications
 debian/brlcad-db.desktop usr/share/applications
 debian/brlcad-doc.desktop usr/share/applications
+debian/brlcad-doc-animation.desktop usr/share/applications
+debian/brlcad-doc-mged.desktop usr/share/applications
 debian/brlcad.directory usr/share/desktop-directories
 debian/brlcad-doc.directory usr/share/desktop-directories
 debian/brlcad.png usr/share/icons/hicolor/48x48/apps

@@ -47,7 +47,7 @@ ferror(){
 
 # show help
 if test -z $1 ;then
-    echo "Script to create binary deb package, or debian source packages."
+    echo "Script to create binary deb package, and debian source packages."
     echo
     echo "Usage:"
     echo "  sh/make_deb.sh -b | -s"
@@ -123,9 +123,17 @@ fdoc(){
     fi
 }
 
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/toc.html" "misc/debian/brlcad-doc.desktop"
+fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/toc.html" \
+ "misc/debian/brlcad-doc.desktop"
 
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/db" "misc/debian/brlcad-db.desktop"
+fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/db" \
+ "misc/debian/brlcad-db.desktop"
+
+fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/mged/index.html" \
+ "misc/debian/brlcad-doc-mged.desktop"
+
+fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/Anim_Tutorial/index.html" \
+ "misc/debian/brlcad-doc-animation.desktop"
 
 # update debian/chagelog if needed
 if test -s $CFILE && test `sed -n '1p' $CFILE | grep "brlcad ($BVERSION-" | wc -l` = 0 ; then

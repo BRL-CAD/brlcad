@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Type=Application
+Name=BRL-CAD Animation
+Comment=Animation Techniques in BRL-CAD
+Exec=xdg-open /usr/brlcad/share/brlcad/7.18.1/html/manuals/Anim_Tutorial/index.html
+Icon=brlcad-doc
+Categories=BRL-CAD-doc;
