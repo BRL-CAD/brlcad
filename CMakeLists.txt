@@ -679,8 +679,10 @@ ENDIF(NOT BRLCAD-ENABLE_RUNTIME_DEBUG)
 # Enable/disable strict compiler settings - these are limited to libraries that
 # specifically inform the BRLCAD_ADDLIB macro they can be built with STRICT flags.
 OPTION(BRLCAD-ENABLE_STRICT "Use strict compiler settings on libraries that support them" ON)
-MARK_AS_ADVANCED(BRLCAD-ENABLE_STRICT)
+OPTION(BRLCAD-ENABLE_CXX_STRICT "Use strict compiler settings on cxx files in libraries that build with strict" OFF)
 if (BRLCAD-ENABLE_STRICT)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_STRICT)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_CXX_STRICT)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define STRICT_FLAGS 1\n")
 endif (BRLCAD-ENABLE_STRICT)
 
