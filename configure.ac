@@ -2304,6 +2304,7 @@ AC_TYPE_SIGNAL
 # mktime, strftime, time
 
 AC_CHECK_FUNCS(\
+	GetFullPathName \
 	XQueryExtension \
 	alarm \
 	dlopen \

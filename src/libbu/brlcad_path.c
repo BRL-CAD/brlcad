@@ -470,7 +470,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 	    bu_strlcpy(real_path, lhs, (size_t)MAXPATHLEN);
 	}
 #else
-#  ifdef _WIN32
+#  ifdef HAVE_GETFULLPATHNAME
 	GetFullPathName(lhs, MAXPATHLEN, real_path, NULL);
 #  else
 	bu_strlcpy(real_path, lhs, (size_t)MAXPATHLEN);
@@ -580,7 +580,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	    bu_strlcpy(result, full_path, (size_t)MAXPATHLEN);
 	}
 #else
-#  ifdef _WIN32
+#  ifdef HAVE_GETFULLPATHNAME
 	GetFullPathName(full_path, MAXPATHLEN, result, NULL);
 #  else
 	snprintf(result, MAXPATHLEN, "%s", full_path);

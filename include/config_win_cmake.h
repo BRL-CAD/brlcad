@@ -61,7 +61,7 @@
 
 #define HAS_OPENGL		1
 #define HAVE_FCNTL_H		1
-#define HAVE_PUTENV     	1
+#define HAVE_GETFULLPATHNAME	1
 #define HAVE_GETHOSTNAME	1
 #define HAVE_GETPROGNAME        1
 #define HAVE_GL_GL_H		1
@@ -70,6 +70,7 @@
 #define HAVE_MEMSET		1
 #define HAVE_OFF_T		1
 #define HAVE_PROCESS_H  	1
+#define HAVE_PUTENV     	1
 #define HAVE_REGEX_H		1
 #define HAVE_SIG_T		1
 #define HAVE_STRCHR		1
@@ -80,8 +81,8 @@
 #define HAVE_SYS_TYPES_H	1
 #define HAVE_TIME		1
 #define HAVE_VFORK		1
-#define HAVE_WINSOCK_H		1
 #define HAVE_WINSOCK2_H		1
+#define HAVE_WINSOCK_H		1
 
 #define HAVE_SBRK 1
 #define sbrk(i) (NULL)
