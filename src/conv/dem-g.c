@@ -144,7 +144,7 @@ typedef struct {
 } ResultStruct;
 
 
-inline double
+double
 round_closest(double x)
 {
     return (x > 0.0) ? floor(x + 0.5) : ceil (x - 0.5);
