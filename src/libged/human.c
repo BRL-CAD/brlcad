@@ -256,7 +256,7 @@ setDirection(fastf_t *inVect, fastf_t *resultVect, fastf_t *outMatrix, fastf_t x
     return *rotMatrix;
 }
 
-
+#if 0
 HIDDEN void
 vectorTest(struct rt_wdb *file)
 {
@@ -292,6 +292,7 @@ findVector(fastf_t x, fastf_t y)
     w = y*y;
     return sqrt(v + w);
 }
+#endif
 
 
 /**
@@ -1523,7 +1524,7 @@ Manual(struct human_data_t *dude)
     bu_log("Height=%lf\n", dude->height);
 }
 
-
+#if 0
 /**
  * Goes through the human struct and sets all measurements to needed
  * measurements, i.e. if certain percentile person is needed, those
@@ -1541,7 +1542,6 @@ setMeasurements(struct human_data_t *UNUSED(dude), fastf_t percentile)
     bu_log("Setting %.0f percentile data\n", percentile);
 
 /*	Find a method of database storage first, then apply those values to here */
-/*
   dude->head.headSize=
   dude->head.neckLength=
   dude->head.neckWidth=
@@ -1575,9 +1575,8 @@ setMeasurements(struct human_data_t *UNUSED(dude), fastf_t percentile)
   dude->legs.legLength=dude->legs.thighLength + dude->legs.calfLength;
 
   dude.height=(dude->torso.torsoLength + dude->legs.legLength + dude->head.headSize);
-*/
 }
-
+#endif
 
 /**
  * Help message printed when -h/-? option is supplied

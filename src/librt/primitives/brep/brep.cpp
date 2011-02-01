@@ -534,7 +534,7 @@ typedef std::list<brep_hit> HitList;
 
 
 void
-brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R)
+brep_r(const ON_Surface* UNUSED(surf), plane_ray& pr, pt2d_t UNUSED(uv), ON_3dPoint& pt, ON_3dVector& UNUSED(su), ON_3dVector& UNUSED(sv), pt2d_t R)
 {
     assert(surf->Ev1Der(uv[0], uv[1], pt, su, sv));
     R[0] = VDOT(pr.n1, ((fastf_t*)pt)) - pr.d1;
