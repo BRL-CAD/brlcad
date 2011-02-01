@@ -447,6 +447,7 @@ do_subtract(struct seg *A,
 /* perform the union of two segments the types of A and B should be
  * the same
  */
+#if 0
 HIDDEN void
 do_union(struct seg *A,
 	 struct seg *B,
@@ -486,6 +487,7 @@ do_union(struct seg *A,
 
     BU_LIST_INSERT(seghead, &tmp->l);
 }
+#endif
 
 HIDDEN void
 promote_ints(struct bu_list *head,

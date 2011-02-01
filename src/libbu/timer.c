@@ -22,7 +22,8 @@
 #include "common.h"
 
 #include <time.h>
-#if !defined(_WIN32)
+#include "bio.h"
+
 #  ifdef HAVE_SYS_TIME_H
 #     include <sys/time.h>
 #  endif
@@ -32,8 +33,7 @@
 #  ifdef HAVE_SCHED_H
 #    include <sched.h>
 #  endif
-#else /* !defined(_WIN32) */
-#  include <windows.h>
+#if defined(_WIN32)
 #  include <mmsystem.h>
 #endif /* !defined(_WIN32) */
 

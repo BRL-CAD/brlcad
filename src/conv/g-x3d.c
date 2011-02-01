@@ -535,6 +535,79 @@ main(int argc, char **argv)
 }
 
 void
+process_non_light(struct model *m) {
+    struct nmgregion *reg;
+    /* static due to bu exception handling */
+    static struct shell *s;
+    static struct shell *next_s;
+    static struct faceuse *fu;
+    static struct faceuse *next_fu;
+    static struct loopuse *lu;
+
+    /* triangulate any faceuses with holes */
+    for ( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
+    {
+	NMG_CK_REGION( reg );
+	s = BU_LIST_FIRST( shell, &reg->s_hd );
+	while ( BU_LIST_NOT_HEAD( s, &reg->s_hd ) )
+	{
+	    NMG_CK_SHELL( s );
+	    next_s = BU_LIST_PNEXT( shell, &s->l );
+	    fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
+	    while ( BU_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
+	    {
+		int shell_is_dead=0;
+		int face_is_dead=0;
+
+		NMG_CK_FACEUSE( fu );
+
+		next_fu = BU_LIST_PNEXT( faceuse, &fu->l );
+
+		if ( fu->orientation != OT_SAME )
+		{
+		    fu = next_fu;
+		    continue;
+		}
+
+		/* check if this faceuse has any holes */
+		for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+		    NMG_CK_LOOPUSE( lu );
+		    if ( lu->orientation == OT_OPPOSITE )
+		    {
+			/* this is a hole, so
+			 * triangulate the faceuse
+			 */
+			if ( BU_SETJUMP )
+			{
+			    BU_UNSETJUMP;
+			    bu_log( "A face has failed triangulation!\n" );
+			    if ( next_fu == fu->fumate_p )
+				next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
+			    if ( nmg_kfu( fu ) )
+			    {
+				(void) nmg_ks( s );
+				shell_is_dead = 1;
+			    }
+			    face_is_dead = 1;
+			}
+			if ( !face_is_dead )
+			    nmg_triangulate_fu( fu, &tol );
+			BU_UNSETJUMP;
+			break;
+		    }
+
+		}
+		if ( shell_is_dead )
+		    break;
+		fu = next_fu;
+	    }
+	    s = next_s;
+	}
+    }
+}
+
+void
 nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct mater_info *mater)
 {
     struct nmgregion *reg;
@@ -671,74 +744,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 
     if ( !is_light )
     {
-	/* static due to bu exception handling */
-	static struct shell *s;
-	static struct shell *next_s;
-	static struct faceuse *fu;
-	static struct faceuse *next_fu;
-	static struct loopuse *lu;
-
-	/* triangulate any faceuses with holes */
-	for ( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
-	{
-	    NMG_CK_REGION( reg );
-	    s = BU_LIST_FIRST( shell, &reg->s_hd );
-	    while ( BU_LIST_NOT_HEAD( s, &reg->s_hd ) )
-	    {
-		NMG_CK_SHELL( s );
-		next_s = BU_LIST_PNEXT( shell, &s->l );
-		fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
-		while ( BU_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
-		{
-		    int shell_is_dead=0;
-		    int face_is_dead=0;
-
-		    NMG_CK_FACEUSE( fu );
-
-		    next_fu = BU_LIST_PNEXT( faceuse, &fu->l );
-
-		    if ( fu->orientation != OT_SAME )
-		    {
-			fu = next_fu;
-			continue;
-		    }
-
-		    /* check if this faceuse has any holes */
-		    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
-		    {
-			NMG_CK_LOOPUSE( lu );
-			if ( lu->orientation == OT_OPPOSITE )
-			{
-			    /* this is a hole, so
-			     * triangulate the faceuse
-			     */
-			    if ( BU_SETJUMP )
-			    {
-				BU_UNSETJUMP;
-				bu_log( "A face has failed triangulation!\n" );
-				if ( next_fu == fu->fumate_p )
-				    next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
-				if ( nmg_kfu( fu ) )
-				{
-				    (void) nmg_ks( s );
-				    shell_is_dead = 1;
-				}
-				face_is_dead = 1;
-			    }
-			    if ( !face_is_dead )
-				nmg_triangulate_fu( fu, &tol );
-			    BU_UNSETJUMP;
-			    break;
-			}
-
-		    }
-		    if ( shell_is_dead )
-			break;
-		    fu = next_fu;
-		}
-		s = next_s;
-	    }
-	}
+	process_non_light(m);
 	fprintf( fp, "\t\t</Appearance>\n");
     }
 

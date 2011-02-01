@@ -22,13 +22,9 @@
 
 #include "common.h"
 
-#ifdef _WIN32
-#include "windows.h"
-#endif
-
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
+#include "bio.h"
 
 #ifdef HAVE_SYS_PARAM_H
 #  include <sys/param.h>
@@ -470,7 +466,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 	    bu_strlcpy(real_path, lhs, (size_t)MAXPATHLEN);
 	}
 #else
-#  ifdef _WIN32
+#  ifdef HAVE_GETFULLPATHNAME
 	GetFullPathName(lhs, MAXPATHLEN, real_path, NULL);
 #  else
 	bu_strlcpy(real_path, lhs, (size_t)MAXPATHLEN);
@@ -575,9 +571,12 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	char full_path[MAXPATHLEN] = {0};
 	snprintf(full_path, MAXPATHLEN, "%s%c%s", ipwd, BU_DIR_SEPARATOR, result);
 #ifdef HAVE_REALPATH
-	realpath(full_path, result);
+	if (realpath(full_path, result) == NULL) {
+	    perror("realpath");
+	    bu_strlcpy(result, full_path, (size_t)MAXPATHLEN);
+	}
 #else
-#  ifdef _WIN32
+#  ifdef HAVE_GETFULLPATHNAME
 	GetFullPathName(full_path, MAXPATHLEN, result, NULL);
 #  else
 	snprintf(result, MAXPATHLEN, "%s", full_path);

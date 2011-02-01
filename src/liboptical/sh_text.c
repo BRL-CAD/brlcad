@@ -68,11 +68,8 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 HIDDEN int bwtxt_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
 HIDDEN int txt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *rtip), txt_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
 HIDDEN int ckr_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), ckr_render(struct application *ap, struct partition *pp, register struct shadework *swp, char *dp);
-HIDDEN int bmp_setup(), bmp_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void bwtxtprint(), bwtxtfree();
 HIDDEN void txt_print(register struct region *rp), txt_free(char *cp);
 HIDDEN void ckr_print(register struct region *rp), ckr_free(char *cp);
-HIDDEN void bmp_print(), bmp_free();
 HIDDEN int tstm_render(struct application *ap, struct partition *pp, register struct shadework *swp, char *dp);
 HIDDEN int star_render(register struct application *ap, register struct partition *pp, struct shadework *swp, char *dp);
 HIDDEN int envmap_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *rtip, struct mfuncs **headp);
@@ -80,31 +77,6 @@ extern int mlib_zero(), mlib_one();
 extern void mlib_void();
 
 
-struct mfuncs txt_mfuncs[] = {
-    {MF_MAGIC,	"texture",	0,		MFI_UV,		0,
-     txt_setup,	txt_render,	txt_print,	txt_free },
-
-    {MF_MAGIC,	"bwtexture",	0,		MFI_UV,		0,
-     txt_setup,	bwtxt_render,	txt_print,	txt_free },
-
-    {MF_MAGIC,	"checker",	0,		MFI_UV,		0,
-     ckr_setup,	ckr_render,	ckr_print,	ckr_free },
-
-    {MF_MAGIC,	"testmap",	0,		MFI_UV,		0,
-     mlib_one,	tstm_render,	mlib_void,	mlib_void },
-
-    {MF_MAGIC,	"fakestar",	0,		0,		0,
-     mlib_one,	star_render,	mlib_void,	mlib_void },
-
-    {MF_MAGIC,	"bump",		0,		MFI_UV|MFI_NORMAL, 0,
-     txt_setup,	bmp_render,	txt_print,	txt_free },
-
-    {MF_MAGIC,	"envmap",	0,		0,		0,
-     envmap_setup,	mlib_zero,	mlib_void,	mlib_void },
-
-    {0,		(char *)0,	0,		0,		0,
-     0,		0,		0,		0 }
-};
 
 
 struct bu_structparse txt_parse[] = {
@@ -1054,6 +1026,32 @@ void
 mlib_void()
 {
 }
+
+struct mfuncs txt_mfuncs[] = {
+    {MF_MAGIC,	"texture",	0,		MFI_UV,		0,
+     txt_setup,	txt_render,	txt_print,	txt_free },
+
+    {MF_MAGIC,	"bwtexture",	0,		MFI_UV,		0,
+     txt_setup,	bwtxt_render,	txt_print,	txt_free },
+
+    {MF_MAGIC,	"checker",	0,		MFI_UV,		0,
+     ckr_setup,	ckr_render,	ckr_print,	ckr_free },
+
+    {MF_MAGIC,	"testmap",	0,		MFI_UV,		0,
+     mlib_one,	tstm_render,	mlib_void,	mlib_void },
+
+    {MF_MAGIC,	"fakestar",	0,		0,		0,
+     mlib_one,	star_render,	mlib_void,	mlib_void },
+
+    {MF_MAGIC,	"bump",		0,		MFI_UV|MFI_NORMAL, 0,
+     txt_setup,	bmp_render,	txt_print,	txt_free },
+
+    {MF_MAGIC,	"envmap",	0,		0,		0,
+     envmap_setup,	mlib_zero,	mlib_void,	mlib_void },
+
+    {0,		(char *)0,	0,		0,		0,
+     0,		0,		0,		0 }
+};
 
 
 /*

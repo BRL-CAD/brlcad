@@ -296,19 +296,15 @@ bu_backtrace(FILE *fp)
     }
 
     /* make sure the debugger exists */
-    locate_gdb = bu_which("gdb");
-    if (locate_gdb) {
+    if ((locate_gdb = bu_which("gdb"))) {
 	debugger_args[0] = bu_strdup(locate_gdb);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("Found gdb in USER path: %s\n", locate_gdb);
 	}
-    } else {
-        locate_gdb = bu_whereis("gdb");
-	if (locate_gdb) {
-	    debugger_args[0] = bu_strdup(locate_gdb);
-	    if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	        bu_log("Found gdb in SYSTEM path: %s\n", locate_gdb);
-	    }
+    } else if ((locate_gdb = bu_whereis("gdb"))) {
+	debugger_args[0] = bu_strdup(locate_gdb);
+	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	    bu_log("Found gdb in SYSTEM path: %s\n", locate_gdb);
 	} else {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 		bu_log("gdb was NOT found, no backtrace available\n");
