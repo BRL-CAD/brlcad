@@ -8,7 +8,10 @@ target_link_libraries(fftc ${M_LIBRARY})
 ADD_EXECUTABLE(ifftc ifftc.c ditsplitc.c)
 target_link_libraries(ifftc ${M_LIBRARY})
 
-SET(FFT_NUMLIST "16;32;64;128;256;512;1024")
+# 512 and 1024 are tough in optimized compiles, don't
+# go that high until there's a demonstrated need. Only
+# use in BRL-CAD right now is 256.
+SET(FFT_NUMLIST "16;32;64;128;256")
 SET(FFT_GEN_SRCS "")
 
 FOREACH(filenum ${FFT_NUMLIST})
