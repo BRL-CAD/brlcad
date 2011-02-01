@@ -1941,3 +1941,13 @@ JNIEXPORT void JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_s
     bu_log( "Shutting down...");
     rts_clean(0);
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
