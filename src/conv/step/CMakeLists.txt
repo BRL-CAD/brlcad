@@ -375,11 +375,12 @@ SET(stepg_HDRS
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${BRLCAD_SCL_INCLUDE_DIR}
-	${BRLCAD_SOURCE_DIR}/src/other/step/src/cleditor
 	${BRLCAD_SOURCE_DIR}/src/other/step/src/clstepcore
+	${BRLCAD_SOURCE_DIR}/src/other/step/src/cleditor
 	${BRLCAD_SOURCE_DIR}/src/other/step/src/clutils
 	${BRLCAD_SOURCE_DIR}/src/other/step/src/cldai
 	${BRLCAD_SOURCE_DIR}/src/other/step/src/test
+	${CMAKE_BINARY_DIR}/src/other/step/include
 	${OPENNURBS_INCLUDE_DIR}
 	${TNT_INCLUDE_DIR}
 	${ZLIB_INCLUDE_DIR}
