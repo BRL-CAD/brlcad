@@ -256,45 +256,6 @@ setDirection(fastf_t *inVect, fastf_t *resultVect, fastf_t *outMatrix, fastf_t x
     return *rotMatrix;
 }
 
-#if 0
-HIDDEN void
-vectorTest(struct rt_wdb *file)
-{
-    /*
-     * This code here takes a direction vector, and then redirects it based on the angles given
-     * so it is as follows : startingVector, resultVector, xdegrees, ydegrees, zdegrees.
-     * and this will be used to position the arms and legs so they are joined yet flexable.
-     * Just a test with an rcc.
-     */
-
-    /*Vector shape modifying test */
-    vect_t test1, test2;
-    point_t testpoint;
-    mat_t rotMatrix;
-    VSET(testpoint, 0.0, 0.0, 0.0);
-    VSET(test1, 0, 0, 200);
-    setDirection(test1, test2, rotMatrix, 0, 90, 0);
-    bu_log("%f, %f, %f\n", test1[X], test1[Y], test1[Z]);
-    bu_log("%f, %f, %f\n", test2[X], test2[Y], test2[Z]);
-    mk_rcc(file, "NormalTest.s", testpoint, test1, (5*IN2MM));
-    mk_rcc(file, "ChangeTest.s", testpoint, test2, (5*IN2MM));
-    /* See, now wasn't that easy? */
-}
-
-
-/* Find the hypotenuse of 2 lengths / length vectors */
-HIDDEN fastf_t
-findVector(fastf_t x, fastf_t y)
-{
-    fastf_t w;
-    fastf_t v;
-    v = x*x;
-    w = y*y;
-    return sqrt(v + w);
-}
-#endif
-
-
 /**
  * Create a bounding box around the individual part, this one has only
  * 1 value for depth and width.  Currently is a big mess, as the boxes
