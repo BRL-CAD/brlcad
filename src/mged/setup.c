@@ -503,11 +503,6 @@ mged_setup(Tcl_Interp **interpreter)
 	}
 	init_tcl = 0;
 
-	/* warn if tcl_library isn't set by now */
-	if (try_auto_path) {
-	    tclcad_tcl_library(*interpreter);
-	}
-
 	/* Initialize [incr Tcl] */
 	Tcl_ResetResult(*interpreter);
 	if (init_itcl && Tcl_Eval(*interpreter, "package require Itcl") != TCL_OK) {

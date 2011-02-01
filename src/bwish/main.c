@@ -99,11 +99,6 @@ Cad_AppInit(Tcl_Interp *interp)
 	}
 	init_tcl=0;
 
-	/* warn if tcl_library isn't set by now */
-	if (try_auto_path) {
-	    tclcad_tcl_library(interp);
-	}
-
 #ifdef BWISH
 	/* Initialize Tk */
 	Tcl_ResetResult(interp);
