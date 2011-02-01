@@ -94,68 +94,6 @@ path_to_src(const char *path)
     return NULL;
 }
 
-
-/**
- * debug printing routine for printing out the tcl_library value(s)
- */
-void
-tclcad_tcl_library(Tcl_Interp *interp)
-{
-    int cnt = 0;
-    int pathcount = 0;
-    Tcl_Obj *dir = NULL;
-    Tcl_Obj *tclpath = NULL;
-    char buffer[MAX_BUF] = {0};
-
-    /* FIXME: this is a private internal call */
-    tclpath = TclGetLibraryPath();
-    if (!tclpath) {
-	bu_log("WARNING: Unable to get the library path\n");
-	return;
-    }
-
-    Tcl_IncrRefCount(tclpath);
-    Tcl_ListObjLength(NULL, tclpath, &pathcount);
-    if (pathcount > 1) {
-	bu_log("WARNING: tcl_library is set to multiple paths?\n");
-    } else if (pathcount <= 0) {
-	if (interp) {
-	    const char *setting;
-	    snprintf(buffer, MAX_BUF, "set tcl_library");
-	    Tcl_Eval(interp, buffer);
-	    setting = Tcl_GetStringResult(interp);
-	    if (setting && (strlen(setting) > 0)) {
-		Tcl_Obj *tcllib = Tcl_NewStringObj(setting, -1);
-		Tcl_Obj *listtl = Tcl_NewListObj(1, &tcllib);
-		TclSetLibraryPath(listtl);
-	    }
-	}
-
-	Tcl_DecrRefCount(tclpath);
-	/* FIXME: this is a private internal call */
-	tclpath = TclGetLibraryPath();
-	Tcl_IncrRefCount(tclpath);
-
-	Tcl_ListObjLength(NULL, tclpath, &pathcount);
-	if (pathcount <= 0) {
-	    bu_log("WARNING: tcl_library is unset (unexpected)\n");
-	}
-    }
-
-    for (cnt=0; cnt < pathcount; cnt++) {
-	Tcl_ListObjIndex(NULL, tclpath, cnt, &dir);
-	Tcl_IncrRefCount(dir);
-	if (dir) {
-#ifdef DEBUG
-	    bu_log("Using Tcl library at %s\n", Tcl_GetString(dir));
-#endif
-	}
-	Tcl_DecrRefCount(dir);
-    }
-    Tcl_DecrRefCount(tclpath);
-}
-
-
 /**
  * Set up the Tcl auto_path for locating various necessary BRL-CAD
  * scripting resources. Detect whether the current invocation is from
@@ -424,14 +362,6 @@ tclcad_auto_path(Tcl_Interp *interp)
 	if (!found_init_tcl) {
 	    snprintf(buffer, MAX_BUF, "%s%cinit.tcl", srcpath, BU_DIR_SEPARATOR);
 	    if (bu_file_exists(buffer)) {
-		/* these doesn't seem to do what one might expect
-		 * here, but call it anyways.
-		 */
-		Tcl_Obj *newpath = Tcl_NewStringObj(srcpath, -1);
-		Tcl_IncrRefCount(newpath);
-		TclSetLibraryPath(newpath);
-		Tcl_DecrRefCount(newpath);
-
 		/* this really sets it */
 		snprintf(buffer, MAX_BUF, "set tcl_library {%s}", srcpath);
 		if (Tcl_Eval(interp, buffer)) {
