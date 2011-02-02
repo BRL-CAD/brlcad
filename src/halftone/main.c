@@ -252,6 +252,8 @@ main(int argc, char **argv)
     int NewFlag = 1;
     int Scale;
     unsigned char Map[256];
+    size_t ret;
+
 /*
  *	parameter processing.
  */
@@ -335,7 +337,9 @@ main(int argc, char **argv)
 		NewFlag=0;
 	    }
 	}
-	fwrite(Out, 1, width, stdout);
+	ret = fwrite(Out, 1, width, stdout);
+	if ( ret < (size_t)width)
+	    perror("fwrite");
     }
     bu_free(Line, "Line");
     bu_free(Out, "Out");
