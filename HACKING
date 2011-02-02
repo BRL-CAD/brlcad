@@ -904,10 +904,14 @@ are modifying source code or not, and have similar obligations and
 expectations.  To summarize some of the expected responsibilities:
 
 0) Primum non nocere.  All contributors are expected in good faith to
-help, or at least to do no harm.
+help, or at least to do no harm.  Be helpful and respectful.
 
 1) Developers are expected to uphold the quality, functionality,
-maintainability, and portability of the source code at all times.
+maintainability, and portability of the source code at all times.  In
+part, this means that changes should be tested to avoid breaking the
+build and short-term fixes are discouraged.  Committing code that is
+actively being worked on is encouraged but care should be taken to
+minimize impact on others and to respond quickly when an issue arises.
 
 2) Bugs, typos, and compilation errors are to be expected as part of
 the process of active software development and documentation, but it
