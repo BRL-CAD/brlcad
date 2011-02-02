@@ -322,6 +322,7 @@ namespace eval ArcherCore {
 	variable mShowADC 0
 
 	# variables for preference state
+	variable mWindowGeometry ""
 	variable mEnableAffectedNodeHighlight 0
 	variable mEnableAffectedNodeHighlightPref ""
 	variable mEnableListView 0
@@ -1792,7 +1793,7 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body ArcherCore::updateRtControl {} {
     ::update
     if {[info exists itk_component(rtcntrl)]} {
-	$itk_component(rtcntrl) configure -size "Size of Pane"
+	$itk_component(rtcntrl) updateControlPanel
     }
 }
 

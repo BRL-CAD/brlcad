@@ -307,6 +307,7 @@ package provide Archer 1.0
 	method doAboutArcher {}
 	method doarcherHelp {}
 	method doarcherMan {}
+	method handleConfigure {}
 	method launchDisplayMenuBegin {_dm _m _x _y}
 	method launchDisplayMenuEnd {}
 	method fbActivePaneCallback {_pane}
@@ -548,8 +549,11 @@ package provide Archer 1.0
     $itk_component(primaryToolbar) itemconfigure new -state normal
     $itk_component(primaryToolbar) itemconfigure preferences -state normal
 
+
     ::update
     Load ""
+
+    bind [namespace tail $this] <Configure> [::itcl::code $this handleConfigure]
 }
 
 
@@ -4634,6 +4638,13 @@ proc title_node_handler {node} {
 
 }
 
+::itcl::body Archer::handleConfigure {} {
+    if {$mWindowGeometry != ""} {
+	wm geometry [namespace tail $this] $mWindowGeometry
+    }
+
+    bind [namespace tail $this] <Configure> {}
+}
 
 ::itcl::body Archer::launchDisplayMenuBegin {_dm _m _x _y} {
     set mCurrentPaneName $_dm
@@ -8715,6 +8726,8 @@ proc title_node_handler {node} {
     puts $_pfile "set mVPaneToggle1 $mVPaneToggle1"
     puts $_pfile "set mVPaneToggle3 $mVPaneToggle3"
     puts $_pfile "set mVPaneToggle5 $mVPaneToggle5"
+
+    puts $_pfile "set mWindowGeometry [winfo geometry [namespace tail $this]]"
 }
 
 
