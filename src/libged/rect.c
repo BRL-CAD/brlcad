@@ -274,7 +274,7 @@ ged_rect(struct ged	*gedp,
 	    i = (int)user_pt[X];
 
 	    if (i <= 0)
-		gedp->ged_gvp->gv_rect.grs_line_width = 1;
+		gedp->ged_gvp->gv_rect.grs_line_width = 0;
 	    else
 		gedp->ged_gvp->gv_rect.grs_line_width = i;
 

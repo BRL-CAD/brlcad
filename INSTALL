@@ -241,16 +241,27 @@ preparations.
 CONFIGURATION OPTIONS
 ---------------------
 
-Variables can be set in the environment passed to `configure'.
-However, the build may run configure again during the build, and the
-customized values of these variables may be lost.  In order to avoid
-this problem, you should set them in the `configure' command line,
-using `VAR=value'.  For example:
+The `configure' build script is used to set compilation options and
+supports a wide selection of compilation directives.  See the ENABLE
+OPTIONS and WITH OPTIONS lists below for the arguments presently
+available to configure in more descriptive detail.  The brief summary
+is that "enable" options focus INWARD and "with" options focus
+OUTWARD.  There are various --enable-* flags that toggle how BRL-CAD
+code is compiled.  There are various --with-* flags that toggle what
+system services are used and how to find them.
+
+In order to avoid compilation problems, you should set all compilation
+options on the `configure' command line, using `VAR=value'.  For
+example:
 
      ./configure CC=/usr/ucb/bin/cc
 
 will cause the specified executable program to be used as the C
-compiler.
+compiler.  The most common configuration tested is a default
+debuggable build intended for installation into /usr/brlcad with no
+external dependencies assumed:
+
+    ./configure --enable-all --disable-strict
 
 By default, BRL-CAD is configured to build the entire package and will
 install completely isolated into the /usr/brlcad directory.
@@ -258,9 +269,8 @@ Configuration will prepare the build for an unoptimized compilation by
 default and will attempt to utilize required system libraries if they
 are available, otherwise compiling the required library dependencies
 as needed.  Run `./configure --help' for a list of all of the possible
-configuration options.  See the ENABLE OPTIONS and WITH OPTIONS lists
-below for the arguments presently available to configure in more
-descriptive detail.
+configuration options.
+
 
 ENABLE OPTIONS:
 
@@ -578,6 +588,12 @@ Aliases:
 	--enable-progress-verbose
 	--enable-build-progress
 	--enable-progress-build
+
+--enable-rtgl turns on compilation of an experimental Ray Trace OpenGL
+display manager, providing shaded displays within MGED.  Default is
+"no".  Aliases:
+       None
+
 
 WITH OPTIONS:
 

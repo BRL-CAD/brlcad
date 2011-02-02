@@ -904,15 +904,14 @@ are modifying source code or not, and have similar obligations and
 expectations.  To summarize some of the expected responsibilities:
 
 0) Primum non nocere.  All contributors are expected in good faith to
-help, or at least to do no harm. In part, this means that changes
-should be tested to avoid commits that break existing code, and
-contributors should not make commits that prevent the package from
-building. Committing code that is "in process" is acceptable for
-collaborative reasons as long as the previous sentence is is not
-violated.
+help, or at least to do no harm.  Be helpful and respectful.
 
 1) Developers are expected to uphold the quality, functionality,
-maintainability, and portability of the source code at all times.
+maintainability, and portability of the source code at all times.  In
+part, this means that changes should be tested to avoid breaking the
+build and short-term fixes are discouraged.  Committing code that is
+actively being worked on is encouraged but care should be taken to
+minimize impact on others and to respond quickly when an issue arises.
 
 2) Bugs, typos, and compilation errors are to be expected as part of
 the process of active software development and documentation, but it
@@ -1235,6 +1234,9 @@ Source or binary release:
 
       Gentoo portage maintainer
       http://packages.gentoo.org/package/sci-misc/brlcad
+
+      Ubuntu/Debian .deb maintaner
+      Jordi Sayol <g.sayol@yahoo.es>
 
       Debian apt package maintainer
       http://git.debian.org/?p=debian-science/packages/brlcad.git

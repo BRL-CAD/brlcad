@@ -193,7 +193,7 @@ static int
 ged_vdraw_write(struct ged *gedp, int argc, const char *argv[])
 {
     size_t idx;
-    size_t uind;
+    unsigned long uind = 0;
     struct bn_vlist *vp, *cp;
     static const char *usage = "i|next c x y z";
 
@@ -235,7 +235,7 @@ ged_vdraw_write(struct ged *gedp, int argc, const char *argv[])
 	}
 	cp = vp;
 	idx = vp->nused;
-    } else if (sscanf(argv[2], "%lu", (long unsigned int *)&uind) < 1) {
+    } else if (sscanf(argv[2], "%lu", &uind) < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "vdraw: write index not an integer\n");
 	return GED_ERROR;
     } else {
@@ -243,7 +243,7 @@ ged_vdraw_write(struct ged *gedp, int argc, const char *argv[])
 	/* only allow one past the end */
 
 	for (BU_LIST_FOR(vp, bn_vlist, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
-	    if (uind < BN_VLIST_CHUNK) {
+	    if ((size_t)uind < BN_VLIST_CHUNK) {
 		/* this is the right vlist */
 		break;
 	    }
@@ -261,7 +261,7 @@ ged_vdraw_write(struct ged *gedp, int argc, const char *argv[])
 	    RT_GET_VLIST(vp);
 	    BU_LIST_INSERT(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
 	}
-	if (uind > vp->nused) {
+	if ((size_t)uind > vp->nused) {
 	    bu_vls_printf(&gedp->ged_result_str, "vdraw: write out of range\n");
 	    return GED_ERROR;
 	}
@@ -301,7 +301,7 @@ ged_vdraw_insert(struct ged *gedp, int argc, const char *argv[])
     struct bn_vlist *vp, *cp, *wp;
     size_t i;
     size_t idx;
-    size_t uind;
+    unsigned long uind = 0;
     static const char *usage = "i c x y z";
 
     /* must be wanting help */
@@ -318,14 +318,14 @@ ged_vdraw_insert(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "vdraw: not enough args");
 	return GED_ERROR;
     }
-    if (sscanf(argv[2], "%lu", (long unsigned int *)&uind) < 1) {
+    if (sscanf(argv[2], "%lu", &uind) < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "vdraw: insert index not an integer\n");
 	return GED_ERROR;
     }
 
     /* uinds hold user specified index */
     for (BU_LIST_FOR(vp, bn_vlist, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
-	if (uind < BN_VLIST_CHUNK) {
+	if ((size_t)uind < BN_VLIST_CHUNK) {
 	    /* this is the right vlist */
 	    break;
 	}
@@ -343,7 +343,7 @@ ged_vdraw_insert(struct ged *gedp, int argc, const char *argv[])
 	RT_GET_VLIST(vp);
 	BU_LIST_INSERT(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
     }
-    if (uind > vp->nused) {
+    if ((size_t)uind > vp->nused) {
 	bu_vls_printf(&gedp->ged_result_str, "vdraw: insert out of range\n");
 	return GED_ERROR;
     }
@@ -390,7 +390,7 @@ ged_vdraw_delete(struct ged *gedp, int argc, const char *argv[])
 {
     struct bn_vlist *vp, *wp;
     size_t i;
-    size_t uind;
+    unsigned long uind = 0;
     static const char *usage = "i|last|all";
 
     /* must be wanting help */
@@ -424,13 +424,13 @@ ged_vdraw_delete(struct ged *gedp, int argc, const char *argv[])
 	}
 	return GED_OK;
     }
-    if (sscanf(argv[2], "%lu", (long unsigned int *)&uind) < 1) {
+    if (sscanf(argv[2], "%lu", &uind) < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s %s: delete index not an integer\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
     for (BU_LIST_FOR(vp, bn_vlist, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
-	if (uind < BN_VLIST_CHUNK) {
+	if ((size_t)uind < BN_VLIST_CHUNK) {
 	    /* this is the right vlist */
 	    break;
 	}
@@ -441,12 +441,12 @@ ged_vdraw_delete(struct ged *gedp, int argc, const char *argv[])
 	uind -= vp->nused;
     }
 
-    if (uind >= vp->nused) {
+    if ((size_t)uind >= vp->nused) {
 	bu_vls_printf(&gedp->ged_result_str, "%s %s: delete out of range\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
-    for (i = uind; i < vp->nused - 1; i++) {
+    for (i = (size_t)uind; i < vp->nused - 1; i++) {
 	vp->cmd[i] = vp->cmd[i+1];
 	VMOVE(vp->pt[i], vp->pt[i+1]);
     }
@@ -486,7 +486,7 @@ static int
 ged_vdraw_read(struct ged *gedp, int argc, const char *argv[])
 {
     struct bn_vlist *vp;
-    size_t uind;
+    unsigned long uind = 0;
     int length;
     static const char *usage = "read i|color|length|name";
 
@@ -525,13 +525,13 @@ ged_vdraw_read(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "%d", length);
 	return GED_OK;
     }
-    if (sscanf(argv[2], "%lu", (long unsigned int *)&uind) < 1) {
+    if (sscanf(argv[2], "%lu", &uind) < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s %s: read index not an integer\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
     for (BU_LIST_FOR(vp, bn_vlist, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
-	if (uind < BN_VLIST_CHUNK) {
+	if ((size_t)uind < BN_VLIST_CHUNK) {
 	    /* this is the right vlist */
 	    break;
 	}
@@ -542,7 +542,7 @@ ged_vdraw_read(struct ged *gedp, int argc, const char *argv[])
 	uind -= vp->nused;
     }
 
-    if (uind >= vp->nused) {
+    if ((size_t)uind >= vp->nused) {
 	bu_vls_printf(&gedp->ged_result_str, "%s %s: read out of range\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
