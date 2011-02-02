@@ -886,9 +886,9 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
 	RT_BOT_CK_MAGIC( bot );
 	for ( i=0; i<bot->num_faces; i++ )
 	    fprintf( outfp, "\t\t\t\t%lu, %lu, %lu, -1,\n",
-		     vert_count+bot->faces[i*3],
-		     vert_count+bot->faces[i*3+1],
-		     vert_count+bot->faces[i*3+2]);
+		     (long unsigned int)vert_count+bot->faces[i*3],
+		     (long unsigned int)vert_count+bot->faces[i*3+1],
+		     (long unsigned int)vert_count+bot->faces[i*3+2]);
 	vert_count += bot->num_vertices;
     }
     /* close coordIndex */

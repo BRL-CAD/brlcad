@@ -275,7 +275,7 @@ void write_mesh_data()
 
 	if (verbose) {
 	    fprintf(stderr, ">> writing out mesh '%s' (%lu, %lu)\n", curr->name,
-		    curr->bot->num_vertices, curr->bot->num_faces);
+		    (long unsigned int)curr->bot->num_vertices, (long unsigned int)curr->bot->num_faces);
 	}
 
 	len = strlen(curr->name);

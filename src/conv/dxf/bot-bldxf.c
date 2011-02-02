@@ -124,7 +124,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, size_t faceidx, int vidx[4])
     point_t A, B, C, N1, N2;
     vect_t vAB, vAC;
     fastf_t *v = bot->vertices;
-    size_t i, tmp;
+    long unsigned int i, tmp;
 
     RT_BOT_CK_MAGIC(bot);
 
@@ -135,7 +135,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, size_t faceidx, int vidx[4])
     if (debug&DEBUG_QUAD) {
 	fprintf(stderr, "tris_are_planar_quad()\n");
 	for (i=0; i < 6;i++) {
-	    fprintf(stderr, "%lu: %lu   %7g %7g %7g\n", i, (size_t)vnum[i],
+	    fprintf(stderr, "%lu: %d   %7g %7g %7g\n", i, vnum[i],
 		    V3ARGS(&v[3* vnum[i]]));
 	}
     }
@@ -145,7 +145,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, size_t faceidx, int vidx[4])
      * this is probably a bogus face, and something bad has happened
      */
     if ((size_t)vnum[0] > bot->num_vertices-1) {
-	fprintf(stderr, "Bounds error %lu > %lu\n", (size_t)vnum[0], bot->num_vertices-1);
+	fprintf(stderr, "Bounds error %lu > %lu\n", (long unsigned int)vnum[0], (long unsigned int)bot->num_vertices-1);
 	abort();
     }
 
@@ -186,9 +186,9 @@ tris_are_planar_quad(struct rt_bot_internal *bot, size_t faceidx, int vidx[4])
     }
 
     if (debug&DEBUG_QUAD) {
-	fprintf(stderr, "numv %lu\n", bot->num_vertices);
+	fprintf(stderr, "numv %lu\n", (long unsigned int)bot->num_vertices);
 	fprintf(stderr, "possible quad %lu %lu %lu  %lu %lu %lu\n",
-		(size_t)vnum[0], (size_t)vnum[1], (size_t)vnum[2], (size_t)vnum[3], (size_t)vnum[4], (size_t)vnum[5]);
+		(long unsigned int)vnum[0], (long unsigned int)vnum[1], (long unsigned int)vnum[2], (long unsigned int)vnum[3], (long unsigned int)vnum[4], (long unsigned int)vnum[5]);
     }
 
     /* find adjacent/matching verticies */
@@ -201,7 +201,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, size_t faceidx, int vidx[4])
 	if (vnum[t[0]] == vnum[t[2]] && vnum[t[1]] == vnum[t[3]]) {
 	    if (debug&DEBUG_QUAD)
 		fprintf(stderr, "matched %lu, %lu and %lu, %lu,  (%d/%d %d/%d)\n",
-			(size_t)vnum[t[0]], (size_t)vnum[t[2]], (size_t)vnum[t[1]], (size_t)vnum[t[3]],
+			(long unsigned int)vnum[t[0]], (long unsigned int)vnum[t[2]], (long unsigned int)vnum[t[1]], (long unsigned int)vnum[t[3]],
 			t[0], t[2], t[1], t[3]);
 
 	    vidx[0] = vnum[t[4]];
@@ -232,7 +232,7 @@ size_t count_quad_faces(struct rt_bot_internal *bot)
     }
 
     if (debug&DEBUG_STATS)
-	fprintf(stderr, "%lu quads\n", count);
+	fprintf(stderr, "%lu quads\n", (long unsigned int)count);
     return count;
 }
 
@@ -289,17 +289,17 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     fprintf(FH, "64\n");
     fprintf(FH, "71\n"); /* number of verticies */
 
-    fprintf(FH, "%lu\n", num_vertices);
+    fprintf(FH, "%lu\n", (long unsigned int)num_vertices);
 
     quads = count_quad_faces(bot);
 
     fprintf(FH, "72\n"); /* number of faces */
-    fprintf(FH, "%lu\n", num_faces-quads);
+    fprintf(FH, "%lu\n", (long unsigned int)num_faces-quads);
     fprintf(FH, "0\n");
 
 
     if (debug&DEBUG_STATS)
-	fprintf(stderr, "writing %lu verticies\n", num_vertices);
+	fprintf(stderr, "writing %lu verticies\n", (long unsigned int)num_vertices);
     for (i=0; i < num_vertices; i++) {
 	fprintf(FH, "VERTEX\n");
 	fprintf(FH, "8\n");
@@ -319,7 +319,7 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     }
 
     if (debug&DEBUG_STATS)
-	fprintf(stderr, "writing %lu faces (- %lu for quads)\n", num_faces, quads);
+	fprintf(stderr, "writing %lu faces (- %lu for quads)\n", (long unsigned int)num_faces, (long unsigned int)quads);
     for (i=0; i < num_faces; i++) {
 	fprintf(FH, "VERTEX\n");
 	fprintf(FH, "8\n");
