@@ -57,6 +57,7 @@ EXTRA_DIST = \
 	debian/copyright \
 	debian/rules \
 	debian/source/format \
+	debian/source/include-binaries \
 	doxygen_structure \
 	flawfinder \
 	libtool.m4 \
