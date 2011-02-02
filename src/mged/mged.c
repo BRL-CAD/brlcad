@@ -2665,7 +2665,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 		if (classic_mged) {
 		    bu_log("Create new database (y|n)[n]? ");
 		    (void)bu_fgets(line, sizeof(line), stdin);
-		    if (bu_booleanize(line)) {
+		    if (!bu_booleanize(line)) {
 			bu_log("Warning: no database is currently open!\n");
 			bu_vls_free(&msg);
 			return TCL_OK;
