@@ -904,12 +904,7 @@ are modifying source code or not, and have similar obligations and
 expectations.  To summarize some of the expected responsibilities:
 
 0) Primum non nocere.  All contributors are expected in good faith to
-help, or at least to do no harm. In part, this means that changes
-should be tested to avoid commits that break existing code, and
-contributors should not make commits that prevent the package from
-building. Committing code that is "in process" is acceptable for
-collaborative reasons as long as the previous sentence is is not
-violated.
+help, or at least to do no harm.
 
 1) Developers are expected to uphold the quality, functionality,
 maintainability, and portability of the source code at all times.
