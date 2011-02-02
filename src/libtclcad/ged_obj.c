@@ -8948,7 +8948,7 @@ go_draw_faceplate(struct ged_dm_view *gdvp)
 	dm_draw_grid(gdvp->gdv_dmp, &gdvp->gdv_view->gv_grid, gdvp->gdv_view, gdvp->gdv_gop->go_gedp->ged_wdbp->dbip->dbi_base2local);
 
     /* Draw rect */
-    if (gdvp->gdv_view->gv_rect.grs_draw)
+    if (gdvp->gdv_view->gv_rect.grs_draw && gdvp->gdv_view->gv_rect.grs_line_width)
 	dm_draw_rect(gdvp->gdv_dmp, &gdvp->gdv_view->gv_rect);
 }
 
