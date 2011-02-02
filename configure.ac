@@ -361,6 +361,8 @@ BC_ARG_ENABLE([build_warnings], [warnings], [Enable verbose compilation warnings
 # build progress status
 BC_ARG_ENABLE([build_progress], [progress], [Enable verbose compilation progress], [no])
 
+# build libdm/mged's rtgl interface (presently the only dm interface
+# directly toggled instead of passively via --with options)
 BC_ARG_ENABLE([rtgl], [rtgl], [Enable compilation of experimental Ray Trace OpenGL display manager], [no])
 
 
