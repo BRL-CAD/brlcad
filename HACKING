@@ -1235,6 +1235,9 @@ Source or binary release:
       Gentoo portage maintainer
       http://packages.gentoo.org/package/sci-misc/brlcad
 
+      Ubuntu/Debian .deb maintaner
+      Jordi Sayol <g.sayol@yahoo.es>
+
       Debian apt package maintainer
       http://git.debian.org/?p=debian-science/packages/brlcad.git
 
