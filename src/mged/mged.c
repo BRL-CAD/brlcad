@@ -2783,7 +2783,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	    if (dbip->dbi_version < 0) {
 		bu_log("Database [%s] was already (perhaps automatically) flipped, -f is redundant.\n", dbip->dbi_filename);
 	    } else {
-		bu_log("Treating [%s] as a binary-incompatible v4 geometry database.\n", dbip->dbip_filename);
+		bu_log("Treating [%s] as a binary-incompatible v4 geometry database.\n", dbip->dbi_filename);
 
 		/* flip the version number to indicate a flipped database. */
 		dbip->dbi_version *= -1;
