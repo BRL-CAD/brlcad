@@ -32,7 +32,7 @@ int
 bu_booleanize(const char *str)
 {
     size_t len;
-    int val;
+    long val;
     struct bu_vls vls;
     const char *newstr;
     char *endptr;
