@@ -91,10 +91,10 @@ _bu_ipwd()
     pwd = getenv("PWD"); /* not our memory to free */
     if (pwd && strlen(pwd) > 0) {
 #ifdef HAVE_REALPATH
-       	ipwd = realpath(pwd, buffer);
-       	if (ipwd) {
-           return ipwd;
-       	}
+	ipwd = realpath(pwd, buffer);
+	if (ipwd) {
+	    return ipwd;
+	}
 #endif
 	ipwd = pwd;
 	return ipwd;
@@ -104,7 +104,7 @@ _bu_ipwd()
 #ifdef HAVE_REALPATH
     ipwd = realpath(".", buffer);
     if (ipwd && strlen(ipwd) > 0) {
-       return ipwd;
+	return ipwd;
     }
 #endif
 
@@ -461,8 +461,9 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 	char real_path[MAXPATHLEN] = {0};
 	char *dirpath;
 #ifdef HAVE_REALPATH
-	if (realpath(lhs, real_path) == NULL) {
-	    perror("realpath");
+	dirpath = realpath(lhs, real_path);
+	if (!dirpath) {
+	    /* if path lookup failed, resort to simple copy */
 	    bu_strlcpy(real_path, lhs, (size_t)MAXPATHLEN);
 	}
 #else
