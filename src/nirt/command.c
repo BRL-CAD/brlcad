@@ -506,7 +506,7 @@ nirt_units(char *buffer, com_table *ctp)
 	bu_strlcpy(local_u_name, bu_units_string(base2local), sizeof(local_u_name));
     } else {
 	tmp_dbl = bu_units_conversion(buffer + i);
-	if (tmp_dbl > 0.0) {
+	if (tmp_dbl <= 0.0) {
 	    bu_log("Invalid unit specification: '%s'\n", buffer + i);
 	    return;
 	}

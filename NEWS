@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2010-12-XX  Release 7.18.2                                     ---
 ----------------------------------------------------------------------
 
+# fixed nirt units command reporting invalid units - Cliff Yapp
 * dbupgrade support for binary-incompatible v4 files - Sean Morrison
 * new opendb -f endianness flip option for corrupt v4 - Sean Morrison
 * new mime-type geometry association for Debian platform - Jordi Sayol
