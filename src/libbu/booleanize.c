@@ -35,7 +35,6 @@ bu_booleanize(const char *str)
     struct bu_vls vls;
     const char *newstr;
 
-bu_log("BOOLEANIZING %s\n", str);
     /* no string */
     if (!str)
 	return 0;
@@ -66,8 +65,6 @@ bu_log("BOOLEANIZING %s\n", str);
 
     /* done with our string */
     bu_vls_free(&vls);
-
-bu_log("RETURNING TRUE!\n");
 
     /* anything else */
     return 1;
