@@ -313,9 +313,6 @@ BC_ARG_ENABLE([build_iwidgets], [iwidgets-install], [Install the included iwidge
 # tkhtml
 BC_ARG_ENABLE([build_tkhtml], [tkhtml-build], [Build the included tkhtml], [yes])
 
-# togl
-#BC_ARG_ENABLE([build_togl], [togl-build], [Build the included togl], [no])
-
 # tkpng
 BC_ARG_ENABLE([build_tkpng], [tkpng-build], [Build the included tkpng], [auto])
 
@@ -523,9 +520,6 @@ BC_ARG_ALIAS([build_tkhtml], [tkhtml-build])
 # aliases to force building tktable (help uses tktable-build)
 BC_ARG_ALIAS([build_tktable], [tktable])
 
-# aliases to force building togl (help uses togl-build)
-#BC_ARG_ALIAS([build_togl], [togl])
-
 # aliases to force building tkpng(help uses tkpng-build)
 BC_ARG_ALIAS([build_tkpng], [tkpng])
 BC_ARG_ALIAS([build_tkpng], [libtkpng])
@@ -698,9 +692,6 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_tkpng_set" = "xno" ; then
 		bc_build_tkpng="$set_everything"
 	fi
-	#if test "x$bc_build_togl" = "xno" ; then
-	#	bc_build_togl="$set_everything"
-	#fi
 	if test "x$bc_build_tktable" = "xno" ; then
 		bc_build_tktable="$set_everything"
 	fi
@@ -833,9 +824,6 @@ AC_MSG_RESULT($bc_build_tkhtml)
 
 AC_MSG_CHECKING(whether to build the tktable library)
 AC_MSG_RESULT($bc_build_tktable)
-
-#AC_MSG_CHECKING(whether to build the togl library)
-#AC_MSG_RESULT($bc_build_togl)
 
 AC_MSG_CHECKING(whether to build the tkpng library)
 AC_MSG_RESULT($bc_build_tkpng)
@@ -3254,22 +3242,6 @@ else
     AC_MSG_RESULT(no)
 fi
 
-dnl *** togl ***
-dnl figure out whether we need to build togl
-#TOGL_VERSION="2.1"
-#AC_SUBST(TOGL_VERSION)
-#TOGL_CPPFLAGS=""
-#AC_MSG_CHECKING(whether to build togl)
-#if test ! "x$bc_build_togl" = "xno" ; then
-#    build_brlcad_togl=yes
-#    TOGL_CPPFLAGS='-I${top_srcdir}/src/other/togl -I${top_builddir}/src/other/togl'
-#    AC_MSG_RESULT(yes)
-#else
-#    build_brlcad_togl=no
-#    AC_MSG_RESULT(no)
-#fi
-#AC_SUBST(TOGL_CPPFLAGS)
-
 dnl *** tktable ***
 dnl figure out whether we need to build tktable
 TKTABLE_VERSION="2.10"
@@ -3942,7 +3914,6 @@ AM_CONDITIONAL(BUILD_ITK, [test "x$build_brlcad_itk" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
 AM_CONDITIONAL(BUILD_TKHTML, [test "x$build_brlcad_tkhtml" = "xyes"])
 AM_CONDITIONAL(BUILD_TKTABLE, [test "x$build_brlcad_tktable" = "xyes"])
-#AM_CONDITIONAL(BUILD_TOGL, [test "x$build_brlcad_togl" = "xyes__disabled__"])
 AM_CONDITIONAL(BUILD_TKPNG, [test "x$build_brlcad_tkpng" = "xyes"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
@@ -4239,15 +4210,6 @@ if test "x$build_brlcad_tkhtml" = "xyes" ; then
     fi
     AC_CONFIG_SUBDIRS([src/other/tkhtml])
 fi
-
-#dnl configure togl
-#if test "x$build_brlcad_togl" = "xyes" ; then
-#    ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
-#    if test ! "x$TKINCDIR" = "x" ; then
-#	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
-#    fi
-#    AC_CONFIG_SUBDIRS([src/other/togl])
-#fi
 
 dnl configure tktable
 if test "x$build_brlcad_tktable" = "xyes" ; then
@@ -4556,7 +4518,6 @@ AC_MSG_RESULT([Build Utah Raster Toolkit.............: $build_brlcad_urt])
 AC_MSG_RESULT([Build Template Numerical Toolkit......: $build_brlcad_tnt])
 AC_MSG_RESULT([Build openNURBS.......................: $build_brlcad_opennurbs])
 AC_MSG_RESULT([Build NIST STEP Class Libraries.......: $build_brlcad_step])
-#AC_MSG_RESULT([Build TOGL............................: $build_brlcad_togl])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([X11 support (optional)................: $build_against_x11])
 AC_MSG_RESULT([OpenGL support (optional).............: $build_against_opengl])
