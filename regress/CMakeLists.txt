@@ -54,7 +54,20 @@ IF(SH_EXEC)
 		DEPENDS rt
 		)
 	ADD_CUSTOM_TARGET(regress
-		DEPENDS mged-regress moss-regress lights-regress solids-regress shaders-regress spdi-regress iges-regress weight-regress gqa-regress fastgen-regress bots-regress flawfinder-regress repository-regress
+		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/mged.sh ${CMAKE_SOURCE_DIR}
+		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/moss.sh ${CMAKE_SOURCE_DIR}
+		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/lights.sh ${CMAKE_SOURCE_DIR}
+		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/solids.sh ${CMAKE_SOURCE_DIR}
+		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/shaders.sh ${CMAKE_SOURCE_DIR}
+		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/spdi.sh ${CMAKE_SOURCE_DIR}
+		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/iges.sh ${CMAKE_SOURCE_DIR}
+		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/weight.sh ${CMAKE_SOURCE_DIR}
+		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/gqa.sh ${CMAKE_SOURCE_DIR}
+		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/fastgen.sh ${CMAKE_SOURCE_DIR}
+		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/bots.sh ${CMAKE_SOURCE_DIR}
+		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/flawfinder.sh ${CMAKE_SOURCE_DIR}
+		COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/repository.sh ${CMAKE_SOURCE_DIR}
+		DEPENDS rt mged pixdiff fast4-g g_diff g_qa rtweight iges-g g-iges asc2pix gencolor pix-png png-pix
 		)
 
 ENDIF(SH_EXEC)
