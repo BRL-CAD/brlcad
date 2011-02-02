@@ -438,14 +438,21 @@ if a suitable system Iwidgets functionality is not found.  Aliases:
 provided in a BRL-CAD source distribution.  Default is "yes".
 Aliases:
 	--enable-tkhtml
+	--enable-tkhtml-build
 
 --enable-tkpng-build turns on compilation of the tkpng library that is
 provided in a BRL-CAD source distribution.  Default is "auto", meaning
 that libtkpng will be compiled and installed only if a suitable system
 tkpng library is not found.  Aliases:
 	--enable-tkpng
+	--enable-tkpng-build
 	--enable-libtkpng
 	--enable-libtkpng-build
+
+--enable-tktable-build turns on compilation of the tktable library that is
+provided in a BRL-CAD source distribution.  Default is "yes". Aliases:
+	--enable-tktable
+	--enable-tktable-build
 
 --enable-tnt-install turns on installation of the Template Numerical
 Toolkit that is provided in a BRL-CAD source distribution.  Default is

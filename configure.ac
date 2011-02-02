@@ -523,6 +523,7 @@ BC_ARG_ALIAS([build_tktable], [tktable-build])
 
 # aliases to force building tkpng(help uses tkpng-build)
 BC_ARG_ALIAS([build_tkpng], [tkpng])
+BC_ARG_ALIAS([build_tkpng], [tkpng-build])
 BC_ARG_ALIAS([build_tkpng], [libtkpng])
 BC_ARG_ALIAS([build_tkpng], [libtkpng-build])
 
