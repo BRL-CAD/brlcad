@@ -199,6 +199,8 @@ BC_BRLCAD_ROOT
 
 # set up the BRLCAD_DATA install directory, sets bc_data_dir
 #   e.g. /usr/local/share/brlcad/7.4.0
+# Note that BRLCAD_DATA is expected to be a full path - relative
+# paths will not work
 BC_BRLCAD_DATA
 
 # if this is not a checkout, disable dependency tracking for a faster
@@ -4274,6 +4276,7 @@ AC_CONFIG_FILES([
 	doc/html/ReleaseNotes/Rel6.0/Makefile
 	doc/html/manuals/Anim_Tutorial/Makefile
 	doc/html/manuals/Makefile
+	doc/html/manuals/archer/Makefile
 	doc/html/manuals/cadwidgets/Makefile
 	doc/html/manuals/libbu/Makefile
 	doc/html/manuals/libdm/Makefile
