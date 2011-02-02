@@ -100,7 +100,7 @@ fi
 # make sure every configure option is documented
 FOUND=
 for i in `grep ARG_ENABLE ${TOPSRC}/configure.ac | sed 's/[^,]*,\([^,]*\).*/\1/' | awk '{print $1}' | sed 's/\[\(.*\)\]/\1/g'` ; do
-    if test "x`grep "enable-$i" INSTALL`" = "x" ; then
+    if test "x`grep "enable-$i" ${TOPSRC}/INSTALL`" = "x" ; then
 	echo "--enable-$i is not documented in INSTALL"
 	FOUND=1
     fi
