@@ -434,14 +434,6 @@ if a suitable system Iwidgets functionality is not found.  Aliases:
 	--enable-iwidgets
 	--enable-iwidgets-build
 
---enable-blt-build turns on compilation of the Blt library that is
-provided in a BRL-CAD source distribution.  Default is "auto", meaning
-that libblt will be compiled and installed only if a suitable system
-Blt library is not found.  Aliases:
-	--enable-blt
-	--enable-libblt
-	--enable-libblt-build
-
 --enable-tkhtml3-build turns on compilation of the tkhtml3 library that is
 provided in a BRL-CAD source distribution.  Default is "yes".
 Aliases:
