@@ -361,6 +361,9 @@ BC_ARG_ENABLE([build_warnings], [warnings], [Enable verbose compilation warnings
 # build progress status
 BC_ARG_ENABLE([build_progress], [progress], [Enable verbose compilation progress], [no])
 
+BC_ARG_ENABLE([rtgl], [rtgl], [Enable compilation of experimental Ray Trace OpenGL display manager], [no])
+
+
 dnl *** with options ***
 
 # provides convenience argument handlers for specifying CFLAGS,
@@ -375,9 +378,6 @@ BC_ARG_WITH([with_x11], [x11], [Specify use of or path to X11 (optional)], [auto
 
 # use opengl
 BC_ARG_WITH([with_opengl], [ogl], [Specify use of or path to OpenGL (optional)], [no])
-
-# use rtgl display manager (experimental)
-BC_ARG_WITH([with_rtgl], [rtgl], [Enable compilation of experimental Ray Trace OpenGL display manager], [no])
 
 # use Apple opengl
 BC_ARG_WITH([with_agl], [agl], [Specify use of or path to Apple OpenGL (optional)], [no])
@@ -613,9 +613,6 @@ BC_ARG_WITH_ALIAS([with_x11], [x])
 
 # with opengl aliases (help uses ogl)
 BC_ARG_WITH_ALIAS([with_opengl], [opengl])
-
-# with rtgl aliases (help uses rtgl)
-BC_ARG_WITH_ALIAS([with_rtgl], [rtgl])
 
 # with agl aliases (help uses agl)
 BC_ARG_WITH_ALIAS([with_agl], [agl])
@@ -878,9 +875,6 @@ AC_MSG_RESULT($bc_with_x11)
 AC_MSG_CHECKING(whether to compile the OpenGL interfaces)
 AC_MSG_RESULT($bc_with_opengl)
 
-AC_MSG_CHECKING(whether to compile the RTGL interfaces)
-AC_MSG_RESULT($bc_with_rtgl)
-
 AC_MSG_CHECKING(whether to compile the AGL interfaces)
 AC_MSG_RESULT($bc_with_agl)
 
@@ -889,6 +883,9 @@ AC_MSG_RESULT($bc_with_wgl)
 
 AC_MSG_CHECKING(whether to compile the Pro/ENGINEER plugin)
 AC_MSG_RESULT($bc_with_proe)
+
+AC_MSG_CHECKING(whether to compile experimental RTGL display manager)
+AC_MSG_RESULT($bc_rtgl)
 
 
 dnl **************************
@@ -3804,7 +3801,7 @@ AC_MSG_RESULT($build_against_wgl)
 
 dnl *** RTGL interface compilation ***
 build_rtgl="no"
-if test "x$bc_with_rtgl" = "xyes" ; then
+if test "x$bc_rtgl" = "xyes" ; then
     if test "x$build_against_opengl" = "xno" ; then
 	AC_MSG_NOTICE([RTGL was requested, but no system OpenGL libraries were found])
 	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
