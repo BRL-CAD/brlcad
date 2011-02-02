@@ -6,17 +6,34 @@ div.legalnotice {
   font-size: 80%;
 }
 
-div.note {
-  border-left: solid #d5dee3 20px;
-  border-right: solid #d5dee3 20px;
+div.note, div.tip, div.warning {
   margin-left: 5%;
   margin-right: 10%;
   padding: 5px;
 }
 
-div.note p {
+div.note, div.tip {
+  border-left: solid #d5dee3 20px;
+  border-right: solid #d5dee3 20px;
+}
+
+div.note, div.tip {
+  border-left: solid palegreen 20px;
+  border-right: solid palegreen 20px;
+}
+
+div.warning {
+  border-left: solid yellow 20px;
+  border-right: solid yellow 20px;
+}
+
+div.note p, div.tip p, div.warning p {
   margin-top: 0px;
   margin-bottom: 4px;
+}
+
+div.note h3, div.tip h3, div.warning h3 {
+  margin-top: 0;
 }
 
 div.informalexample {
@@ -44,6 +61,8 @@ pre.programlisting, pre.synopsis {
   border-bottom-color: #d3d3d3;
   padding: 4px;
   margin: 0em;
+  margin-top: 6px;
+  margin-bottom: 6px;
 }
 
 div.informalexample pre {
@@ -52,4 +71,9 @@ div.informalexample pre {
   border-top-width: 0px;
   border-bottom-width: 0px;
   padding: 0px;
+}
+
+/* Parameter and PI titles */
+  div.refnamediv h2 {
+  font-size: 2em; 
 }

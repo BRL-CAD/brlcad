@@ -1,20 +1,20 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Assigning Material Properties and Raytracing in <application>MGED</application></title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Assigning Material Properties and Raytracing in <application>MGED</application></title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="assigning_material_properties_and_raytracing_overviewlist">
+    <para xml:id="assigning_material_properties_and_raytracing_overviewlist">
       In this lesson, you will:
       
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Recall primitive shapes made previously.</para>
 	</listitem>
@@ -39,8 +39,8 @@
       </itemizedlist>
     </para>
 
-    <sect1 id="assigning_material_properties_and_raytracing_opendb">
-      <title>Opening the Database</title>
+    <section xml:id="assigning_material_properties_and_raytracing_opendb"><info><title>Opening the Database</title></info>
+      
       
       <para>
 	To recall the primitive shapes made in the previous lesson, start <application>MGED</application> and
@@ -55,10 +55,10 @@
 	
 	<command>draw sph2.s rcc2.s[Enter]</command>
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="create_region">
-      <title>Creating a Region</title>
+    <section xml:id="create_region"><info><title>Creating a Region</title></info>
+      
       
       <para>
 	Before you can raytrace your design, you have to make a region of the two
@@ -87,7 +87,7 @@
 	This command tells <application>MGED</application> to:
 	
 	<informaltable>
-	  <tgroup cols='6'>
+	  <tgroup cols="6">
 	    <tbody>
 	      <row>
 		<entry>r</entry>
@@ -109,10 +109,10 @@
 	  </tgroup>
 	</informaltable>
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="assign_material_prop">
-      <title>Assigning Material Properties to a Region</title>
+    <section xml:id="assign_material_prop"><info><title>Assigning Material Properties to a Region</title></info>
+      
 
       <para>
 	Now type in:
@@ -122,7 +122,7 @@
 	<application>MGED</application> will respond with:
 	
       </para>
-      <literallayout>
+      <literallayout class="normal">
    shader=
    
    Shader? ('del' to delete, CR to skip)
@@ -136,7 +136,7 @@
 	<application>MGED</application> will ask:
 	
       </para>
-      <literallayout>
+      <literallayout class="normal">
    Color = (no color specified)
 
    Color R G B (0..255)? ('del' to delete, CR to skip)
@@ -150,7 +150,7 @@
 	This will assign a light green color to the region. <application>MGED</application> will now ask:
       </para>
 
-      <literallayout>
+      <literallayout class="normal">
    Inherit = 0 lower nodes (towards leaves) override
 
    Inheritance (0/1)? (CR to skip)
@@ -168,7 +168,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged04_commandwindow.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged04_commandwindow.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -187,7 +187,7 @@
       </para>
       
       <informaltable>
-	<tgroup cols='5'>
+	<tgroup cols="5">
 	  <tbody>
 	    <row>
 	      <entry>mater</entry>
@@ -206,10 +206,10 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-    </sect1>
+    </section>
     
-    <sect1 id="clear_window_new_region">
-      <title>Clearing the Graphics Window and Drawing the New Region</title>
+    <section xml:id="clear_window_new_region"><info><title>Clearing the Graphics Window and Drawing the New Region</title></info>
+      
 
       <para>
 	An easy way to clear the Graphics Window of the old design and draw the
@@ -221,7 +221,7 @@
       </para>
       
       <informaltable>
-	<tgroup cols='2'>
+	<tgroup cols="2">
 	  <tbody>
 	    <row>
 	      <entry>B</entry>
@@ -239,10 +239,10 @@
 	The Blast command is shorthand for the combination of the Z and draw
 	commands.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="raytrace_model">
-      <title>Raytracing Your Model</title>
+    <section xml:id="raytrace_model"><info><title>Raytracing Your Model</title></info>
+      
       
       <para>
 	Now go to the File menu and select Raytrace. A dialog box called the
@@ -282,7 +282,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged04_raytracedshapes.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged04_raytracedshapes.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -302,10 +302,10 @@
 	this, select the desired color and then click the fbclear (framebuffer
 	clear) button at the bottom of the Raytrace Control Panel.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="layers_graphics_window">
-      <title>Changing Layers of the Graphics Window</title>
+    <section xml:id="layers_graphics_window"><info><title>Changing Layers of the Graphics Window</title></info>
+      
       
       <para>
 	The Graphics Window of <application>MGED</application> is used to display different types of
@@ -330,11 +330,11 @@
       </para>
       
       <informaltable frame="none">
-	<tgroup cols='2'>
+	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><inlinegraphic fileref="../../lessons/en/images/mged04_raytracedshapes.png" /></entry>
-	      <entry><inlinegraphic fileref="../../lessons/en/images/mged04_fb_overlay_mode.png" /></entry>
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged04_raytracedshapes.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged04_fb_overlay_mode.png"/></imageobject></inlinemediaobject></entry>
 	    </row>
 	    <row>
 	      <entry>Framebuffer in Underlay Mode</entry>
@@ -367,10 +367,10 @@
 	directly manipulate the view in the framebuffer. You must raytrace again
 	in order to update the framebuffer image.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="clear_graphics_window">
-      <title>Clearing the Graphics Window</title>
+    <section xml:id="clear_graphics_window"><info><title>Clearing the Graphics Window</title></info>
+      
       
       <para>
 	To completely clear the Graphics Window, you have to handle both the
@@ -396,15 +396,15 @@
 	  off.                          
 	</para>
       </note>
-    </sect1>
+    </section>
     
-    <sect1 id="assigning_material_properties_and_raytracing_review">
-      <title>Review</title>
+    <section xml:id="assigning_material_properties_and_raytracing_review"><info><title>Review</title></info>
+      
       
       <para>
 	In this lesson you:
 	
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Recalled primitive shapes made previously.</para>
 	  </listitem>
@@ -428,6 +428,6 @@
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

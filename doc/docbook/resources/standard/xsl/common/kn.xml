@@ -29,6 +29,8 @@
 
 <l:gentext key="Abstract" text="ಸಾರಾಂಶ"/>
 <l:gentext key="abstract" text="ಸಾರಾಂಶ"/>
+<l:gentext key="Acknowledgements" text="ಇವರಿಗೆ ಧನ್ಯವಾದಗಳು"/>
+<l:gentext key="acknowledgements" text="ಇವರಿಗೆ ಧನ್ಯವಾದಗಳು"/>
 <l:gentext key="Answer" text="ಉ:"/>
 <l:gentext key="answer" text="ಉ:"/>
 <l:gentext key="Appendix" text="ಅನುಬಂಧ"/>
@@ -36,8 +38,8 @@
 <l:gentext key="Article" text="ಲೇಖನ"/>
 <l:gentext key="article" text="ಲೇಖನ"/>
 <l:gentext key="Author" text="ಲೇಖಕ"/>
-<l:gentext key="Bibliography" text="Bibliography"/>
-<l:gentext key="bibliography" text="Bibliography"/>
+<l:gentext key="Bibliography" text="ಗ್ರಂಥಸೂಚಿ"/>
+<l:gentext key="bibliography" text="ಗ್ರಂಥಸೂಚಿ"/>
 <l:gentext key="Book" text="ಪುಸ್ತಕ"/>
 <l:gentext key="book" text="ಪುಸ್ತಕ"/>
 <l:gentext key="CAUTION" text="ಎಚ್ಚರಿಕೆ"/>
@@ -45,15 +47,15 @@
 <l:gentext key="caution" text="ಎಚ್ಚರಿಕೆ"/>
 <l:gentext key="Chapter" text="ಅಧ್ಯಾಯ"/>
 <l:gentext key="chapter" text="ಅಧ್ಯಾಯ"/>
-<l:gentext key="Colophon" text="Colophon"/>
-<l:gentext key="colophon" text="Colophon"/>
+<l:gentext key="Colophon" text="ಮುದ್ರಣ ಸಂಕೇತ"/>
+<l:gentext key="colophon" text="ಮುದ್ರಣ ಸಂಕೇತ"/>
 <l:gentext key="Copyright" text="ಕೃತಿಸ್ವಾಮ್ಯ"/>
 <l:gentext key="copyright" text="ಕೃತಿಸ್ವಾಮ್ಯ"/>
 <l:gentext key="Dedication" text="ಸಮರ್ಪಣೆ"/>
 <l:gentext key="dedication" text="ಸಮರ್ಪಣೆ"/>
 <l:gentext key="Edition" text="ಆವೃತ್ತಿ"/>
 <l:gentext key="edition" text="ಆವೃತ್ತಿ"/>
-<l:gentext key="Editor" text="Editor" lang="en"/>
+<l:gentext key="Editor" text="ಸಂಪಾದಕ"/>
 <l:gentext key="Equation" text="ಸಮೀಕರಣ"/>
 <l:gentext key="equation" text="ಸಮೀಕರಣ"/>
 <l:gentext key="Example" text="ಉದಾಹರಣೆ"/>
@@ -73,8 +75,8 @@
 <l:gentext key="index" text="ಅನುಕ್ರಮಣಿಕೆ"/>
 <l:gentext key="ISBN" text="ISBN"/>
 <l:gentext key="isbn" text="ISBN"/>
-<l:gentext key="LegalNotice" text="Legal Notice"/>
-<l:gentext key="legalnotice" text="Legal Notice"/>
+<l:gentext key="LegalNotice" text="ಲೀಗಲ್ ನೋಟೀಸ್"/>
+<l:gentext key="legalnotice" text="ಲೀಗಲ್ ನೋಟೀಸ್"/>
 <l:gentext key="MsgAud" text="ಶ್ರೋತೃಗಳು"/>
 <l:gentext key="msgaud" text="ಶ್ರೋತೃಗಳು"/>
 <l:gentext key="MsgLevel" text="ಸ್ತರ"/>
@@ -95,25 +97,25 @@
 <l:gentext key="pubdate" text="ಪ್ರಕಟನೆ ದಿನಾಂಕ"/>
 <l:gentext key="Published" text="ಪ್ರಕಾಶಪಡಿಸಿದ"/>
 <l:gentext key="published" text="ಪ್ರಕಾಶಪಡಿಸಿದ"/>
-<l:gentext key="Publisher" text="Publisher" lang="en"/>
-<l:gentext key="Qandadiv" text="ಪ್ರ &amp; ಉ"/>
-<l:gentext key="qandadiv" text="ಪ್ರ &amp; ಉ"/>
-<l:gentext key="QandASet" text="Frequently Asked Questions" lang="en"/>
-<l:gentext key="Question" text="ಪ್ರ:"/>
-<l:gentext key="question" text="ಪ್ರ:"/>
-<l:gentext key="RefEntry" text=""/>
-<l:gentext key="refentry" text=""/>
+<l:gentext key="Publisher" text="ಪ್ರಕಾಶಕ"/>
+<l:gentext key="Qandadiv" text="ಪ್ರಶ್ನೆ ಮತ್ತು ಉತ್ತರ"/>
+<l:gentext key="qandadiv" text="ಪ್ರಶ್ನೆ ಮತ್ತು ಉತ್ತರ"/>
+<l:gentext key="QandASet" text="ಪದೆ ಪದೆ ಕೇಳಲಾಗುವ ಪ್ರಶ್ನೆಗಳು"/>
+<l:gentext key="Question" text="ಪ್ರಶ್ನೆ:"/>
+<l:gentext key="question" text="ಪ್ರಶ್ನೆ:"/>
+<l:gentext key="RefEntry" text="ಪುಟ"/>
+<l:gentext key="refentry" text="ಪುಟ"/>
 <l:gentext key="Reference" text="ಉಲ್ಲೇಖ"/>
 <l:gentext key="reference" text="ಉಲ್ಲೇಖ"/>
-<l:gentext key="References" text="References" lang="en"/>
+<l:gentext key="References" text="ಉಲ್ಲೇಖಗಳು"/>
 <l:gentext key="RefName" text="ಹೆಸರು"/>
 <l:gentext key="refname" text="ಹೆಸರು"/>
-<l:gentext key="RefSection" text=""/>
-<l:gentext key="refsection" text=""/>
+<l:gentext key="RefSection" text="ವಿಭಾಗ"/>
+<l:gentext key="refsection" text="ವಿಭಾಗ"/>
 <l:gentext key="RefSynopsisDiv" text="ಸಾರಾಂಶ"/>
 <l:gentext key="refsynopsisdiv" text="ಸಾರಾಂಶ"/>
-<l:gentext key="RevHistory" text="ಪುರಾವೃತ್ತ ಪರಿಷ್ಕರಣೆ"/>
-<l:gentext key="revhistory" text="ಪುರಾವೃತ್ತ ಪರಿಷ್ಕರಣೆ"/>
+<l:gentext key="RevHistory" text="ಪರಿಷ್ಕರಣೆಯ ಇತಿಹಾಸ"/>
+<l:gentext key="revhistory" text="ಪರಿಷ್ಕರಣೆಯ ಇತಿಹಾಸ"/>
 <l:gentext key="revision" text="ಪರಿಷ್ಕರಣೆ"/>
 <l:gentext key="Revision" text="ಪರಿಷ್ಕರಣೆ"/>
 <l:gentext key="sect1" text="ವಿಭಾಗ"/>
@@ -132,14 +134,14 @@
 <l:gentext key="Set" text="ಹೊಂದಿಸು"/>
 <l:gentext key="setindex" text="ಅನುಕ್ರಮಣಿಕೆ ಹೊಂದಿಸು"/>
 <l:gentext key="SetIndex" text="ಅನುಕ್ರಮಣಿಕೆ ಹೊಂದಿಸು"/>
-<l:gentext key="Sidebar" text=""/>
-<l:gentext key="sidebar" text="sidebar"/>
+<l:gentext key="Sidebar" text="ಬದಿಪಟ್ಟಿಕೆ"/>
+<l:gentext key="sidebar" text="ಬದಿಪಟ್ಟಿಕೆ"/>
 <l:gentext key="step" text="ಹಂತ"/>
 <l:gentext key="Step" text="ಹಂತ"/>
 <l:gentext key="table" text="ಕೋಷ್ಟಕ"/>
 <l:gentext key="Table" text="ಕೋಷ್ಟಕ"/>
-<l:gentext key="task" text="Task" lang="en"/>
-<l:gentext key="Task" text="Task" lang="en"/>
+<l:gentext key="task" text="ಕಾರ್ಯ"/>
+<l:gentext key="Task" text="ಕಾರ್ಯ"/>
 <l:gentext key="tip" text="ಕಿವಿಮಾತು"/>
 <l:gentext key="TIP" text="ಕಿವಿಮಾತು"/>
 <l:gentext key="Tip" text="ಕಿವಿಮಾತು"/>
@@ -155,50 +157,50 @@
 <l:gentext key="in" text="in"/>
 <l:gentext key="lastlistcomma" text=","/>
 <l:gentext key="listcomma" text=","/>
-<l:gentext key="nonexistantelement" text="non-existant element"/>
-<l:gentext key="notes" text="ಟಿಪ್ಪಣಿ"/>
-<l:gentext key="Notes" text="ಟಿಪ್ಪಣಿ"/>
+<l:gentext key="notes" text="ಟಿಪ್ಪಣಿಗಳು"/>
+<l:gentext key="Notes" text="ಟಿಪ್ಪಣಿಗಳು"/>
 <l:gentext key="Pgs" text="ಪುಟಗಳು."/>
 <l:gentext key="pgs" text="ಪುಟಗಳು."/>
-<l:gentext key="Revisedby" text="Revised by: "/>
-<l:gentext key="revisedby" text="Revised by: "/>
-<l:gentext key="TableNotes" text="Notes"/>
-<l:gentext key="tablenotes" text="Notes"/>
+<l:gentext key="Revisedby" text="ಪರಿಷ್ಕರಿಸಿದವರು: "/>
+<l:gentext key="revisedby" text="ಪರಿಷ್ಕರಿಸಿದವರು: "/>
+<l:gentext key="TableNotes" text="ಟಿಪ್ಪಣಿಗಳು"/>
+<l:gentext key="tablenotes" text="ಟಿಪ್ಪಣಿಗಳು"/>
 <l:gentext key="TableofContents" text="ವಿಷಯಾನುಕ್ರಮಣಿಕೆ"/>
 <l:gentext key="tableofcontents" text="ವಿಷಯಾನುಕ್ರಮಣಿಕೆ"/>
 <l:gentext key="unexpectedelementname" text="ಅನಿರೀಕ್ಷಿತ ವಸ್ತುವಿನ ಹೆಸರು"/>
-<l:gentext key="unsupported" text="unsupported"/>
-<l:gentext key="xrefto" text="xref to"/>
-<l:gentext key="Authors" text="Authors" lang="en"/>
-<l:gentext key="copyeditor" text="Copy Editor" lang="en"/>
-<l:gentext key="graphicdesigner" text="Graphic Designer" lang="en"/>
-<l:gentext key="productioneditor" text="Production Editor" lang="en"/>
-<l:gentext key="technicaleditor" text="Technical Editor" lang="en"/>
-<l:gentext key="translator" text="Translator" lang="en"/>
+<l:gentext key="unsupported" text="ಬೆಂಬಲವಿರದ"/>
+<l:gentext key="xrefto" text="xref ಗಾಗಿ"/>
+<l:gentext key="Authors" text="ಕತೃಗಳು"/>
+<l:gentext key="copyeditor" text="ಪ್ರತಿಯ ಸಂಪಾದಕ"/>
+<l:gentext key="graphicdesigner" text="ಗ್ರಾಫಿಕ್ ವಿನ್ಯಾಸಗಾರ"/>
+<l:gentext key="productioneditor" text="ನಿರ್ಮಾಣ ಸಂಪಾದಕ"/>
+<l:gentext key="technicaleditor" text="ತಾಂತ್ರಿಕ ಸಂಪಾದಕ"/>
+<l:gentext key="translator" text="ಅನುವಾದಕ"/>
 <l:gentext key="listofequations" text="ಸಮೀಕರಣಪಟ್ಟಿ "/>
 <l:gentext key="ListofEquations" text="ಸಮೀಕರಣಪಟ್ಟಿ "/>
-<l:gentext key="ListofExamples" text="List of Examples"/>
-<l:gentext key="listofexamples" text="List of Examples"/>
-<l:gentext key="ListofFigures" text="List of Figures"/>
-<l:gentext key="listoffigures" text="List of Figures"/>
-<l:gentext key="ListofProcedures" text="List of Procedures"/>
-<l:gentext key="listofprocedures" text="List of Procedures"/>
-<l:gentext key="listoftables" text="List of Tables"/>
-<l:gentext key="ListofTables" text="List of Tables"/>
-<l:gentext key="ListofUnknown" text="List of Unknown"/>
-<l:gentext key="listofunknown" text="List of Unknown"/>
+<l:gentext key="ListofExamples" text="ಉದಾಹರಣೆಗಳ ಪಟ್ಟಿ"/>
+<l:gentext key="listofexamples" text="ಉದಾಹರಣೆಗಳ ಪಟ್ಟಿ"/>
+<l:gentext key="ListofFigures" text="ಆಕೃತಿಗಳ ಪಟ್ಟಿ"/>
+<l:gentext key="listoffigures" text="ಆಕೃತಿಗಳ ಪಟ್ಟಿ"/>
+<l:gentext key="ListofProcedures" text="ಕಾರ್ಯವಿಧಾನಗಳ ಪಟ್ಟಿ"/>
+<l:gentext key="listofprocedures" text="ಕಾರ್ಯವಿಧಾನಗಳ ಪಟ್ಟಿ"/>
+<l:gentext key="listoftables" text="ಕೋಷ್ಟಕಗಳ ಪಟ್ಟಿ"/>
+<l:gentext key="ListofTables" text="ಕೋಷ್ಟಕಗಳ ಪಟ್ಟಿ"/>
+<l:gentext key="ListofUnknown" text="ತಿಳಿಯದೆ ಇರುವವುಗಳ ಪಟ್ಟಿ"/>
+<l:gentext key="listofunknown" text="ತಿಳಿಯದೆ ಇರುವವುಗಳ ಪಟ್ಟಿ"/>
 <l:gentext key="nav-home" text="ಮನೆ"/>
 <l:gentext key="nav-next" text="ಮುಂದಿನ"/>
-<l:gentext key="nav-next-sibling" text="Fast Forward"/>
+<l:gentext key="nav-next-sibling" text="ಮುಂದಕ್ಕೆ ಓಡಿಸು"/>
 <l:gentext key="nav-prev" text="ಹಿಂದಿನ"/>
-<l:gentext key="nav-prev-sibling" text="Fast Backward"/>
+<l:gentext key="nav-prev-sibling" text="ಹಿಂದಕ್ಕೆ ಓಡಿಸು"/>
 <l:gentext key="nav-up" text="ಮೇಲೆ"/>
-<l:gentext key="nav-toc" text="ToC"/>
-<l:gentext key="Draft" text="Draft"/>
-<l:gentext key="above" text="above"/>
-<l:gentext key="below" text="below"/>
-<l:gentext key="sectioncalled" text="the section called"/>
-<l:gentext key="index symbols" text="Symbols"/>
+<l:gentext key="nav-toc" text="ವಿಷಯ ಸೂಚಿ"/>
+<l:gentext key="Draft" text="ಕರಡು ಪ್ರತಿ"/>
+<l:gentext key="above" text="ಮೇಲೆ"/>
+<l:gentext key="below" text="ಕೆಳಗೆ"/>
+<l:gentext key="sectioncalled" text="ಕೋರಲಾದ ವಿಭಾಗ"/>
+<l:gentext key="index symbols" text="ಸಂಕೇತಗಳು"/>
+<l:gentext key="writing-mode" text="lr-tb"/>
 <l:gentext key="lowercase.alpha" text="abcdefghijklmnopqrstuvwxyz"/>
 <l:gentext key="uppercase.alpha" text="ABCDEFGHIJKLMNOPQRSTUVWXYZ"/>
 <l:gentext key="normalize.sort.input" text="AaÀàÁáÂâÃãÄäÅåĀāĂăĄąǍǎǞǟǠǡǺǻȀȁȂȃȦȧḀḁẚẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặBbƀƁɓƂƃḂḃḄḅḆḇCcÇçĆćĈĉĊċČčƇƈɕḈḉDdĎďĐđƊɗƋƌǅǲȡɖḊḋḌḍḎḏḐḑḒḓEeÈèÉéÊêËëĒēĔĕĖėĘęĚěȄȅȆȇȨȩḔḕḖḗḘḙḚḛḜḝẸẹẺẻẼẽẾếỀềỂểỄễỆệFfƑƒḞḟGgĜĝĞğĠġĢģƓɠǤǥǦǧǴǵḠḡHhĤĥĦħȞȟɦḢḣḤḥḦḧḨḩḪḫẖIiÌìÍíÎîÏïĨĩĪīĬĭĮįİƗɨǏǐȈȉȊȋḬḭḮḯỈỉỊịJjĴĵǰʝKkĶķƘƙǨǩḰḱḲḳḴḵLlĹĺĻļĽľĿŀŁłƚǈȴɫɬɭḶḷḸḹḺḻḼḽMmɱḾḿṀṁṂṃNnÑñŃńŅņŇňƝɲƞȠǋǸǹȵɳṄṅṆṇṈṉṊṋOoÒòÓóÔôÕõÖöØøŌōŎŏŐőƟƠơǑǒǪǫǬǭǾǿȌȍȎȏȪȫȬȭȮȯȰȱṌṍṎṏṐṑṒṓỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợPpƤƥṔṕṖṗQqʠRrŔŕŖŗŘřȐȑȒȓɼɽɾṘṙṚṛṜṝṞṟSsŚśŜŝŞşŠšȘșʂṠṡṢṣṤṥṦṧṨṩTtŢţŤťŦŧƫƬƭƮʈȚțȶṪṫṬṭṮṯṰṱẗUuÙùÚúÛûÜüŨũŪūŬŭŮůŰűŲųƯưǓǔǕǖǗǘǙǚǛǜȔȕȖȗṲṳṴṵṶṷṸṹṺṻỤụỦủỨứỪừỬửỮữỰựVvƲʋṼṽṾṿWwŴŵẀẁẂẃẄẅẆẇẈẉẘXxẊẋẌẍYyÝýÿŸŶŷƳƴȲȳẎẏẙỲỳỴỵỶỷỸỹZzŹźŻżŽžƵƶȤȥʐʑẐẑẒẓẔẕẕ" lang="en"/>
@@ -216,6 +218,7 @@
 <l:context name="styles"><l:template name="person-name" text="first-last"/>
 </l:context>
 <l:context name="title"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="%t"/>
 <l:template name="appendix" text="ಅನುಬಂಧ %n. %t"/>
 <l:template name="article" text="%t"/>
@@ -321,6 +324,7 @@
 <l:template name="simplesect" text="%t"/>
 </l:context>
 <l:context name="subtitle"><l:template name="appendix" text="%s"/>
+<l:template name="acknowledgements" text="%s" lang="en"/>
 <l:template name="article" text="%s"/>
 <l:template name="bibliodiv" text="%s"/>
 <l:template name="biblioentry" text="%s"/>
@@ -360,6 +364,7 @@
 <l:template name="toc" text="%s"/>
 </l:context>
 <l:context name="xref"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="ಉ: %n"/>
 <l:template name="appendix" text="%t"/>
 <l:template name="article" text="%t"/>
@@ -405,9 +410,9 @@
 <l:template name="procedure" text="%t"/>
 <l:template name="productionset" text="%t"/>
 <l:template name="qandadiv" text="%t"/>
-<l:template name="qandaentry" text="ಪ್ರ: %n"/>
+<l:template name="qandaentry" text="ಪ್ರಶ್ನೆ: %n"/>
 <l:template name="qandaset" text="%t"/>
-<l:template name="question" text="ಪ್ರ: %n"/>
+<l:template name="question" text="ಪ್ರಶ್ನೆ: %n"/>
 <l:template name="reference" text="%t"/>
 <l:template name="refsynopsisdiv" text="%t"/>
 <l:template name="segmentedlist" text="%t"/>
@@ -429,18 +434,18 @@
 <l:template name="docnamelong" text=" in the document titled %o"/>
 <l:template name="pageabbrev" text="(p. %p)"/>
 <l:template name="Page" text="Page %p"/>
-<l:template name="bridgehead" text="the section called “%t”"/>
-<l:template name="refsection" text="the section called “%t”"/>
-<l:template name="refsect1" text="the section called “%t”"/>
-<l:template name="refsect2" text="the section called “%t”"/>
-<l:template name="refsect3" text="the section called “%t”"/>
-<l:template name="sect1" text="the section called “%t”"/>
-<l:template name="sect2" text="the section called “%t”"/>
-<l:template name="sect3" text="the section called “%t”"/>
-<l:template name="sect4" text="the section called “%t”"/>
-<l:template name="sect5" text="the section called “%t”"/>
-<l:template name="section" text="the section called “%t”"/>
-<l:template name="simplesect" text="the section called “%t”"/>
+<l:template name="bridgehead" text="ಕೋರಲಾದ ವಿಭಾಗ “%t”"/>
+<l:template name="refsection" text="ಕೋರಲಾದ ವಿಭಾಗ “%t”"/>
+<l:template name="refsect1" text="ಕೋರಲಾದ ವಿಭಾಗ “%t”"/>
+<l:template name="refsect2" text="ಕೋರಲಾದ ವಿಭಾಗ “%t”"/>
+<l:template name="refsect3" text="ಕೋರಲಾದ ವಿಭಾಗ “%t”"/>
+<l:template name="sect1" text="ಕೋರಲಾದ ವಿಭಾಗ “%t”"/>
+<l:template name="sect2" text="ಕೋರಲಾದ ವಿಭಾಗ “%t”"/>
+<l:template name="sect3" text="ಕೋರಲಾದ ವಿಭಾಗ “%t”"/>
+<l:template name="sect4" text="ಕೋರಲಾದ ವಿಭಾಗ “%t”"/>
+<l:template name="sect5" text="ಕೋರಲಾದ ವಿಭಾಗ “%t”"/>
+<l:template name="section" text="ಕೋರಲಾದ ವಿಭಾಗ “%t”"/>
+<l:template name="simplesect" text="ಕೋರಲಾದ ವಿಭಾಗ “%t”"/>
 </l:context>
 <l:context name="xref-number"><l:template name="answer" text="ಉ: %n"/>
 <l:template name="appendix" text="ಅನುಬಂಧ %n"/>
@@ -452,9 +457,9 @@
 <l:template name="part" text="ಭಾಗ %n"/>
 <l:template name="procedure" text="ಕಾರ್ಯವಿಧಾನ %n"/>
 <l:template name="productionset" text="ನಿರ್ಮಾಣ %n"/>
-<l:template name="qandadiv" text="ಪ್ರ &amp; ಉ %n"/>
-<l:template name="qandaentry" text="ಪ್ರ: %n"/>
-<l:template name="question" text="ಪ್ರ: %n"/>
+<l:template name="qandadiv" text="ಪ್ರಶ್ನೆ ಮತ್ತು ಉತ್ತರ %n"/>
+<l:template name="qandaentry" text="ಪ್ರಶ್ನೆ: %n"/>
+<l:template name="question" text="ಪ್ರಶ್ನೆ: %n"/>
 <l:template name="sect1" text="ವಿಭಾಗ %n"/>
 <l:template name="sect2" text="ವಿಭಾಗ %n"/>
 <l:template name="sect3" text="ವಿಭಾಗ %n"/>
@@ -472,18 +477,18 @@
 <l:template name="part" text="ಭಾಗ %n, “%t”"/>
 <l:template name="procedure" text="ಕಾರ್ಯವಿಧಾನ %n, “%t”"/>
 <l:template name="productionset" text="ನಿರ್ಮಾಣ %n, “%t”"/>
-<l:template name="qandadiv" text="ಪ್ರ &amp; ಉ %n, “%t”"/>
-<l:template name="refsect1" text="the section called “%t”"/>
-<l:template name="refsect2" text="the section called “%t”"/>
-<l:template name="refsect3" text="the section called “%t”"/>
-<l:template name="refsection" text="the section called “%t”"/>
+<l:template name="qandadiv" text="ಪ್ರಶ್ನೆ ಮತ್ತು ಉತ್ತರ %n, “%t”"/>
+<l:template name="refsect1" text="ಕೋರಲಾದ ವಿಭಾಗ “%t”"/>
+<l:template name="refsect2" text="ಕೋರಲಾದ ವಿಭಾಗ “%t”"/>
+<l:template name="refsect3" text="ಕೋರಲಾದ ವಿಭಾಗ “%t”"/>
+<l:template name="refsection" text="ಕೋರಲಾದ ವಿಭಾಗ “%t”"/>
 <l:template name="sect1" text="ವಿಭಾಗ %n, “%t”"/>
 <l:template name="sect2" text="ವಿಭಾಗ %n, “%t”"/>
 <l:template name="sect3" text="ವಿಭಾಗ %n, “%t”"/>
 <l:template name="sect4" text="ವಿಭಾಗ %n, “%t”"/>
 <l:template name="sect5" text="ವಿಭಾಗ %n, “%t”"/>
 <l:template name="section" text="ವಿಭಾಗ %n, “%t”"/>
-<l:template name="simplesect" text="the section called “%t”"/>
+<l:template name="simplesect" text="ಕೋರಲಾದ ವಿಭಾಗ “%t”"/>
 <l:template name="table" text="ಕೋಷ್ಟಕ %n, “%t”"/>
 </l:context>
 <l:context name="authorgroup"><l:template name="sep" text=", "/>
@@ -492,6 +497,7 @@
 </l:context>
 <l:context name="glossary"><l:template name="see" text="ಇದನ್ನು ನೋಡಿ %t"/>
 <l:template name="seealso" text="ಇದನ್ನೂ ಸಹ ನೋಡಿ %t"/>
+<l:template name="seealso-separator" text=", " lang="en"/>
 </l:context>
 <l:context name="msgset"><l:template name="MsgAud" text="ಶ್ರೋತೃಗಳು: "/>
 <l:template name="MsgLevel" text="ಸ್ತರ: "/>
@@ -597,7 +603,7 @@
 <l:template name="patnum.sep" text=". " lang="en"/>
 <l:template name="patdate.sep" text=". " lang="en"/>
 </l:context><l:letters><l:l i="-1"/>
-<l:l i="0">Symbols</l:l>
+<l:l i="0">ಸಂಕೇತಗಳು</l:l>
 <l:l i="10">A</l:l>
 <l:l i="10">a</l:l>
 <l:l i="10">À</l:l>

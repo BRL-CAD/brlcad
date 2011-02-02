@@ -34,7 +34,7 @@
     <synopsis><tag class="xmlpi">dbhtml background-color="<replaceable>color</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml background-color</tag> PI before or
       after an image (<tag>graphic</tag>, <tag>inlinegraphic</tag>,
@@ -63,16 +63,16 @@
 <refentry xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="dbhtml_bgcolor">
 <refnamediv>
 <refname>dbhtml_bgcolor</refname>
-<refpurpose>Sets background color on a table row or table cell</refpurpose>
+<refpurpose>Sets background color on a CALS table row or table cell</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml bgcolor="<replaceable>color</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
-<para>Use the <tag class="xmlpi">dbhtml bgcolor</tag> PI as child of a table row
+<para>Use the <tag class="xmlpi">dbhtml bgcolor</tag> PI as child of a CALS table row
       or cell to set a background color for that table row or cell.</para>
 
   </refsect1><refsect1><title>Parameters</title>
@@ -96,17 +96,17 @@
 <refentry xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="dbhtml_cellpadding">
 <refnamediv>
 <refname>dbhtml_cellpadding</refname>
-<refpurpose>Specifies cellpadding in table or qandaset output</refpurpose>
+<refpurpose>Specifies cellpadding in CALS table or qandaset output</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml cellpadding="<replaceable>number</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml cellpadding</tag> PI as a child of a
-      <tag>table</tag> or <tag>qandaset</tag> to specify the value
+      CALS <tag>table</tag> or <tag>qandaset</tag> to specify the value
       for the HTML <literal>cellpadding</literal> attribute in the
       output HTML table.</para>
 
@@ -136,17 +136,17 @@
 <refentry xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="dbhtml_cellspacing">
 <refnamediv>
 <refname>dbhtml_cellspacing</refname>
-<refpurpose>Specifies cellspacing in table or qandaset output</refpurpose>
+<refpurpose>Specifies cellspacing in CALS table or qandaset output</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml cellspacing="<replaceable>number</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml cellspacing</tag> PI as a child of a
-      <tag>table</tag> or <tag>qandaset</tag> to specify the value
+      CALS <tag>table</tag> or <tag>qandaset</tag> to specify the value
       for the HTML <literal>cellspacing</literal> attribute in the
       output HTML table.</para>
 
@@ -176,14 +176,14 @@
 <refentry xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="dbhtml_class">
 <refnamediv>
 <refname>dbhtml_class</refname>
-<refpurpose>Set value of the class attribute for a table row</refpurpose>
+<refpurpose>Set value of the class attribute for a CALS table row</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml class="<replaceable>name</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml class</tag> PI as a child of a
       <tag>row</tag> to specify a <literal>class</literal>
@@ -217,7 +217,7 @@
     <synopsis><tag class="xmlpi">dbhtml dir="<replaceable>path</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>When chunking output, use the <tag class="xmlpi">dbhtml dir</tag> PI
       as a child of a chunk source to cause the output of that
@@ -258,7 +258,7 @@
     <synopsis><tag class="xmlpi">dbhtml filename="<replaceable>filename</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>When chunking output, use the <tag class="xmlpi">dbhtml filename</tag>
       PI as a child of a chunk source to specify a filename for
@@ -296,7 +296,7 @@
     <synopsis><tag class="xmlpi">dbhtml funcsynopsis-style="kr"|"ansi"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml funcsynopsis-style</tag> PI as a child of
       a <tag>funcsynopsis</tag> or anywhere within a funcsynopsis
@@ -338,7 +338,7 @@
     <synopsis><tag class="xmlpi">dbhtml img.src.path="<replaceable>path</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml img.src.path</tag> PI before or
       after an image (<tag>graphic</tag>,
@@ -381,7 +381,7 @@
     <synopsis><tag class="xmlpi">dbhtml label-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml label-width</tag> PI as a child of a
       <tag>qandaset</tag> to specify the width of labels.</para>
@@ -407,14 +407,14 @@
 <refentry xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="dbhtml_linenumbering.everyNth">
 <refnamediv>
 <refname>dbhtml_linenumbering.everyNth</refname>
-<refpurpose>Specifies interval for lines numbers in verbatims</refpurpose>
+<refpurpose>Specifies interval for line numbers in verbatims</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml linenumbering.everyNth="<replaceable>N</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml linenumbering.everyNth</tag> PI as a child
       of a “verbatim” element – <tag>programlisting</tag>,
@@ -454,7 +454,7 @@
     <synopsis><tag class="xmlpi">dbhtml linenumbering.separator="<replaceable>text</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml linenumbering.separator</tag> PI as a child
       of a “verbatim” element – <tag>programlisting</tag>,
@@ -493,7 +493,7 @@
     <synopsis><tag class="xmlpi">dbhtml linenumbering.width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml linenumbering.width</tag> PI as a child
       of a “verbatim” element – <tag>programlisting</tag>,
@@ -533,7 +533,7 @@
     <synopsis><tag class="xmlpi">dbhtml list-presentation="list"|"table"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml list-presentation</tag> PI as a child of
       a <tag>variablelist</tag> or <tag>segmentedlist</tag> to
@@ -590,7 +590,7 @@
     <synopsis><tag class="xmlpi">dbhtml list-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml list-width</tag> PI as a child of a
       <tag>variablelist</tag> or a <tag>simplelist</tag> presented
@@ -617,14 +617,14 @@
 <refentry xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="dbhtml_row-height">
 <refnamediv>
 <refname>dbhtml_row-height</refname>
-<refpurpose>Specifies the height for a table row</refpurpose>
+<refpurpose>Specifies the height for a CALS table row</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml row-height="<replaceable>height</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml row-height</tag> PI as a child of a
       <tag>row</tag> to specify the height of the row.</para>
@@ -635,7 +635,7 @@
       <varlistentry><term>row-height="<replaceable>height</replaceable>"</term>
         <listitem>
           
-<para>Specifies the label height (including units)</para>
+<para>Specifies the row height (including units)</para>
 
         </listitem>
       </varlistentry>
@@ -657,7 +657,7 @@
     <synopsis><tag class="xmlpi">dbhtml start="<replaceable>character</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para><emphasis>This PI is obsolete</emphasis>. The intent of
       this PI was to provide a means for setting a specific starting
@@ -689,16 +689,16 @@
 <refentry xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="dbhtml_stop-chunking">
 <refnamediv>
 <refname>dbhtml_stop-chunking</refname>
-<refpurpose>Do not chunk any descendents of this element.</refpurpose>
+<refpurpose>Do not chunk any descendants of this element.</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml stop-chunking</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
-<para>When generating chunked html output, adding this as the child of an element that contains elements that would normally be generated on separate pages if generating chunked output causes chunking to stop at this point. No descendants of the current element will be split into new html pages:
+<para>When generating chunked HTML output, adding this PI as the child of an element that contains elements that would normally be generated on separate pages if generating chunked output causes chunking to stop at this point. No descendants of the current element will be split into new HTML pages:
 <programlisting>&lt;section&gt;
 &lt;title&gt;Configuring pencil&lt;/title&gt;
 &lt;?dbhtml stop-chunking?&gt;
@@ -717,17 +717,17 @@
 <refentry xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="dbhtml_table-summary">
 <refnamediv>
 <refname>dbhtml_table-summary</refname>
-<refpurpose>Specifies summary for table, variablelist, segmentedlist, or qandaset output</refpurpose>
+<refpurpose>Specifies summary for CALS table, variablelist, segmentedlist, or qandaset output</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml table-summary="<replaceable>text</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml table-summary</tag> PI as a child of
-      a <tag>table</tag>, <tag>variablelist</tag>,
+      a CALS <tag>table</tag>, <tag>variablelist</tag>,
       <tag>segmentedlist</tag>, or <tag>qandaset</tag> to specify
       the text for the HTML <literal>summary</literal> attribute
       in the output HTML table.</para>
@@ -754,17 +754,17 @@
 <refentry xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="dbhtml_table-width">
 <refnamediv>
 <refname>dbhtml_table-width</refname>
-<refpurpose>Specifies the width for a table</refpurpose>
+<refpurpose>Specifies the width for a CALS table</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml table-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml table-width</tag> PI as a child of a
-      <tag>table</tag> to specify the width of the table in
+      CALS <tag>table</tag> to specify the width of the table in
       output.</para>
 
   </refsect1><refsect1><title>Parameters</title>
@@ -799,7 +799,7 @@
     <synopsis><tag class="xmlpi">dbhtml term-presentation="bold"|"italic"|"bold-italic"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml term-presentation</tag> PI as a child
       of a <tag>variablelist</tag> to set character formatting for
@@ -847,7 +847,7 @@
     <synopsis><tag class="xmlpi">dbhtml term-separator="<replaceable>text</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml term-separator</tag> PI as a child
       of a <tag>variablelist</tag> to specify the separator text
@@ -885,7 +885,7 @@
     <synopsis><tag class="xmlpi">dbhtml term-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml term-width</tag> PI as a child of a
       <tag>variablelist</tag> to specify the width for
@@ -919,7 +919,7 @@
     <synopsis><tag class="xmlpi">dbhtml toc="0"|"1"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml toc</tag> PI as a child of a
       <tag>qandaset</tag> to specify whether a table of contents
@@ -962,7 +962,7 @@
     <synopsis><tag class="xmlpi">dbcmdlist</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbcmdlist</tag> PI as the child of any
       element (for example, <tag>refsynopsisdiv</tag>) containing multiple
@@ -987,7 +987,7 @@
     <synopsis><tag class="xmlpi">dbfunclist</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfunclist</tag> PI as the child of any
       element (for example, <tag>refsynopsisdiv</tag>) containing multiple
@@ -1012,7 +1012,7 @@
     <synopsis><tag class="xmlpi">dbhtml-include href="<replaceable>URI</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml-include href</tag> PI anywhere in a
       document to cause the contents of the file referenced by the
@@ -1080,7 +1080,7 @@
     <synopsis><tag class="xmlpi">dbhh topicname="<replaceable>name</replaceable>" topicid="<replaceable>id</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhh</tag> PI as a child of components
       that should be used as targets for context-sensitive help requests.</para>

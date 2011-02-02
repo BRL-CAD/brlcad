@@ -323,10 +323,19 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
     dp->d_animate = NULL;
     dp->d_nref = 0;
     dp->d_uses = 0;
+
+    /* v4 geometry databases do not use d_major/minor_type */
     if (db_version(dbip) > 4) {
 	dp->d_major_type = DB5_MAJORTYPE_BRLCAD;
-	dp->d_minor_type = *(unsigned char *)ptr;
+	if (ptr)
+	    dp->d_minor_type = *(unsigned char *)ptr;
+	else
+	    dp->d_minor_type = 0;
+    } else {
+	dp->d_major_type = 0;
+	dp->d_minor_type = 0;
     }
+
     bu_vls_free(&local);
     return dp;
 }
@@ -525,7 +534,7 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 	attr_count = 0;
     }
 
-    tbl = (struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl), "wdb_get_by_attr ptbl");
+    tbl = (struct bu_ptbl *)bu_calloc(sizeof(struct bu_ptbl), 1, "wdb_get_by_attr ptbl");
     bu_ptbl_init(tbl, 128, "wdb_get_by_attr ptbl_init");
 
     FOR_ALL_DIRECTORY_START(dp, dbip) {

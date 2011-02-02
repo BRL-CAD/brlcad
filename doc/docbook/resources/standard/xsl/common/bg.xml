@@ -28,144 +28,145 @@
 
 
 <l:gentext key="Abstract" text="Анотация"/>
-<l:gentext key="abstract" text="Анотация"/>
+<l:gentext key="abstract" text="анотация"/>
+<l:gentext key="Acknowledgements" text="Благодарности на"/>
+<l:gentext key="acknowledgements" text="благодарности на"/>
 <l:gentext key="Answer" text="О"/>
-<l:gentext key="answer" text="О"/>
+<l:gentext key="answer" text="о"/>
 <l:gentext key="Appendix" text="Приложение"/>
-<l:gentext key="appendix" text="Приложение"/>
+<l:gentext key="appendix" text="приложение"/>
 <l:gentext key="Article" text="Статия"/>
-<l:gentext key="article" text="Статия"/>
+<l:gentext key="article" text="статия"/>
 <l:gentext key="Author" text="Автор"/>
 <l:gentext key="Bibliography" text="Литература"/>
-<l:gentext key="bibliography" text="Литература"/>
+<l:gentext key="bibliography" text="литература"/>
 <l:gentext key="Book" text="Книга"/>
-<l:gentext key="book" text="Книга"/>
-<l:gentext key="CAUTION" text="Внимание"/>
+<l:gentext key="book" text="книга"/>
+<l:gentext key="CAUTION" text="ВНИМАНИЕ"/>
 <l:gentext key="Caution" text="Внимание"/>
-<l:gentext key="caution" text="Внимание"/>
+<l:gentext key="caution" text="внимание"/>
 <l:gentext key="Chapter" text="Глава"/>
-<l:gentext key="chapter" text="Глава"/>
+<l:gentext key="chapter" text="глава"/>
 <l:gentext key="Colophon" text="Библиографско каре"/>
 <l:gentext key="colophon" text="Библиографско каре"/>
 <l:gentext key="Copyright" text="Авторски права"/>
-<l:gentext key="copyright" text="Авторски права"/>
+<l:gentext key="copyright" text="авторски права"/>
 <l:gentext key="Dedication" text="Посвещение"/>
-<l:gentext key="dedication" text="Посвещение"/>
+<l:gentext key="dedication" text="посвещение"/>
 <l:gentext key="Edition" text="Издание"/>
-<l:gentext key="edition" text="Издание"/>
+<l:gentext key="edition" text="издание"/>
 <l:gentext key="Editor" text="Редактор"/>
 <l:gentext key="Equation" text="Формула"/>
-<l:gentext key="equation" text="Формула"/>
+<l:gentext key="equation" text="формула"/>
 <l:gentext key="Example" text="Пример"/>
-<l:gentext key="example" text="Пример"/>
+<l:gentext key="example" text="пример"/>
 <l:gentext key="Figure" text="Фигура"/>
-<l:gentext key="figure" text="Фигура"/>
+<l:gentext key="figure" text="фигура"/>
 <l:gentext key="Glossary" text="Терминологичен речник"/>
-<l:gentext key="glossary" text="Терминологичен речник"/>
-<l:gentext key="GlossSee" text="вж."/>
+<l:gentext key="glossary" text="терминологичен речник"/>
+<l:gentext key="GlossSee" text="Вж."/>
 <l:gentext key="glosssee" text="вж."/>
-<l:gentext key="GlossSeeAlso" text="вж."/>
+<l:gentext key="GlossSeeAlso" text="Вж."/>
 <l:gentext key="glossseealso" text="вж."/>
-<l:gentext key="IMPORTANT" text="Важно"/>
-<l:gentext key="important" text="Важно"/>
+<l:gentext key="IMPORTANT" text="ВАЖНО"/>
+<l:gentext key="important" text="важно"/>
 <l:gentext key="Important" text="Важно"/>
 <l:gentext key="Index" text="Азбучен указател"/>
-<l:gentext key="index" text="Азбучен указател"/>
+<l:gentext key="index" text="азбучен указател"/>
 <l:gentext key="ISBN" text="ISBN"/>
 <l:gentext key="isbn" text="ISBN"/>
 <l:gentext key="LegalNotice" text="Авторски права"/>
-<l:gentext key="legalnotice" text="Авторски права"/>
+<l:gentext key="legalnotice" text="авторски права"/>
 <l:gentext key="MsgAud" text="Насоченост"/>
-<l:gentext key="msgaud" text="Насоченост"/>
+<l:gentext key="msgaud" text="насоченост"/>
 <l:gentext key="MsgLevel" text="Ниво"/>
-<l:gentext key="msglevel" text="Ниво"/>
+<l:gentext key="msglevel" text="ниво"/>
 <l:gentext key="MsgOrig" text="Източник"/>
-<l:gentext key="msgorig" text="Източник"/>
-<l:gentext key="NOTE" text="Забележка"/>
+<l:gentext key="msgorig" text="източник"/>
+<l:gentext key="NOTE" text="ЗАБЕЛЕЖКА"/>
 <l:gentext key="Note" text="Забележка"/>
-<l:gentext key="note" text="Забележка"/>
+<l:gentext key="note" text="забележка"/>
 <l:gentext key="Part" text="Част"/>
-<l:gentext key="part" text="Част"/>
+<l:gentext key="part" text="част"/>
 <l:gentext key="Preface" text="Предговор"/>
-<l:gentext key="preface" text="Предговор"/>
+<l:gentext key="preface" text="предговор"/>
 <l:gentext key="Procedure" text="Процедура"/>
-<l:gentext key="procedure" text="Процедура"/>
-<l:gentext key="ProductionSet" text="Множество от декартови произведения по Бакхус-Наур"/>
+<l:gentext key="procedure" text="процедура"/>
+<l:gentext key="ProductionSet" text="Продукция"/>
 <l:gentext key="PubDate" text="Дата на издаване"/>
-<l:gentext key="pubdate" text="Дата на издаване"/>
+<l:gentext key="pubdate" text="дата на издаване"/>
 <l:gentext key="Published" text="Издаден"/>
-<l:gentext key="published" text="Издаден"/>
+<l:gentext key="published" text="издаден"/>
 <l:gentext key="Publisher" text="Издател"/>
 <l:gentext key="Qandadiv" text="Въпроси и отговори"/>
-<l:gentext key="qandadiv" text="Въпроси и отговори"/>
+<l:gentext key="qandadiv" text="въпроси и отговори"/>
 <l:gentext key="QandASet" text="Често задавани въпроси"/>
 <l:gentext key="Question" text="В"/>
-<l:gentext key="question" text="В"/>
-<l:gentext key="RefEntry" text="вж."/>
-<l:gentext key="refentry" text="вж."/>
+<l:gentext key="question" text="в"/>
+<l:gentext key="RefEntry" text="Страница"/>
+<l:gentext key="refentry" text="страница"/>
 <l:gentext key="Reference" text="Справочник"/>
-<l:gentext key="reference" text="Справочник"/>
+<l:gentext key="reference" text="справочник"/>
 <l:gentext key="References" text="Препратки"/>
 <l:gentext key="RefName" text="Название"/>
-<l:gentext key="refname" text="Название"/>
-<l:gentext key="RefSection" text="вж."/>
-<l:gentext key="refsection" text="вж."/>
+<l:gentext key="refname" text="название"/>
+<l:gentext key="RefSection" text="Раздел"/>
+<l:gentext key="refsection" text="раздел"/>
 <l:gentext key="RefSynopsisDiv" text="Синтаксис"/>
-<l:gentext key="refsynopsisdiv" text="Синтаксис"/>
+<l:gentext key="refsynopsisdiv" text="синтаксис"/>
 <l:gentext key="RevHistory" text="Промени"/>
-<l:gentext key="revhistory" text="Промени"/>
-<l:gentext key="revision" text="Издание"/>
-<l:gentext key="Revision" text="Издание"/>
+<l:gentext key="revhistory" text="промени"/>
+<l:gentext key="revision" text="издание"/>
+<l:gentext key="Revision" text="издание"/>
 <l:gentext key="sect1" text="Раздел"/>
 <l:gentext key="sect2" text="Раздел"/>
 <l:gentext key="sect3" text="Раздел"/>
 <l:gentext key="sect4" text="Раздел"/>
 <l:gentext key="sect5" text="Раздел"/>
-<l:gentext key="section" text="Раздел"/>
+<l:gentext key="section" text="раздел"/>
 <l:gentext key="Section" text="Раздел"/>
 <l:gentext key="see" text="вж."/>
-<l:gentext key="See" text="вж."/>
+<l:gentext key="See" text="Вж."/>
 <l:gentext key="seealso" text="вж."/>
-<l:gentext key="Seealso" text="вж."/>
-<l:gentext key="SeeAlso" text="вж."/>
-<l:gentext key="set" text="Указател"/>
-<l:gentext key="Set" text="Указател"/>
-<l:gentext key="setindex" text="Указател"/>
+<l:gentext key="Seealso" text="Вж."/>
+<l:gentext key="SeeAlso" text="Вж."/>
+<l:gentext key="set" text="група"/>
+<l:gentext key="Set" text="Група"/>
+<l:gentext key="setindex" text="указател"/>
 <l:gentext key="SetIndex" text="Указател"/>
 <l:gentext key="Sidebar" text="Разделител"/>
-<l:gentext key="sidebar" text="Разделител"/>
-<l:gentext key="step" text="Стъпка"/>
+<l:gentext key="sidebar" text="разделител"/>
+<l:gentext key="step" text="стъпка"/>
 <l:gentext key="Step" text="Стъпка"/>
-<l:gentext key="table" text="Таблица"/>
+<l:gentext key="table" text="таблица"/>
 <l:gentext key="Table" text="Таблица"/>
-<l:gentext key="task" text="Задача"/>
+<l:gentext key="task" text="задача"/>
 <l:gentext key="Task" text="Задача"/>
-<l:gentext key="tip" text="Подсказка"/>
-<l:gentext key="TIP" text="Подсказка"/>
+<l:gentext key="tip" text="подсказка"/>
+<l:gentext key="TIP" text="ПОДСКАЗКА"/>
 <l:gentext key="Tip" text="Подсказка"/>
 <l:gentext key="Warning" text="Внимание"/>
-<l:gentext key="warning" text="Внимание"/>
-<l:gentext key="WARNING" text="Внимание"/>
+<l:gentext key="warning" text="внимание"/>
+<l:gentext key="WARNING" text="ВНИМАНИЕ"/>
 <l:gentext key="and" text="и"/>
 <l:gentext key="by" text="от"/>
 <l:gentext key="Edited" text="Редактирано от"/>
-<l:gentext key="edited" text="Редактирано от"/>
+<l:gentext key="edited" text="редактирано от"/>
 <l:gentext key="Editedby" text="Редактирано от"/>
-<l:gentext key="editedby" text="Редактирано от"/>
+<l:gentext key="editedby" text="редактирано от"/>
 <l:gentext key="in" text="в"/>
 <l:gentext key="lastlistcomma" text=","/>
 <l:gentext key="listcomma" text=","/>
-<l:gentext key="nonexistantelement" text="липсващ елемент"/>
-<l:gentext key="notes" text="Забележки"/>
+<l:gentext key="notes" text="забележки"/>
 <l:gentext key="Notes" text="Забележки"/>
-<l:gentext key="Pgs" text="стр."/>
+<l:gentext key="Pgs" text="Стр."/>
 <l:gentext key="pgs" text="стр."/>
 <l:gentext key="Revisedby" text="Преработено от"/>
-<l:gentext key="revisedby" text="Преработено от"/>
+<l:gentext key="revisedby" text="преработено от"/>
 <l:gentext key="TableNotes" text="Забележки"/>
-<l:gentext key="tablenotes" text="Забележки"/>
+<l:gentext key="tablenotes" text="забележки"/>
 <l:gentext key="TableofContents" text="Съдържание"/>
-<l:gentext key="tableofcontents" text="Съдържание"/>
+<l:gentext key="tableofcontents" text="съдържание"/>
 <l:gentext key="unexpectedelementname" text="неочакван елемент"/>
 <l:gentext key="unsupported" text="неподдържан елемент"/>
 <l:gentext key="xrefto" text="вж."/>
@@ -175,18 +176,18 @@
 <l:gentext key="productioneditor" text="Редактор на изданието"/>
 <l:gentext key="technicaleditor" text="Технически редактор"/>
 <l:gentext key="translator" text="Преводач"/>
-<l:gentext key="listofequations" text="Списък на формулите"/>
+<l:gentext key="listofequations" text="списък на формулите"/>
 <l:gentext key="ListofEquations" text="Списък на формулите"/>
 <l:gentext key="ListofExamples" text="Списък на примерите"/>
-<l:gentext key="listofexamples" text="Списък на примерите"/>
+<l:gentext key="listofexamples" text="списък на примерите"/>
 <l:gentext key="ListofFigures" text="Списък на фигурите"/>
-<l:gentext key="listoffigures" text="Списък на фигурите"/>
+<l:gentext key="listoffigures" text="списък на фигурите"/>
 <l:gentext key="ListofProcedures" text="Списък на процедурите"/>
-<l:gentext key="listofprocedures" text="Списък на процедурите"/>
-<l:gentext key="listoftables" text="Списък на таблиците"/>
+<l:gentext key="listofprocedures" text="списък на процедурите"/>
+<l:gentext key="listoftables" text="списък на таблиците"/>
 <l:gentext key="ListofTables" text="Списък на таблиците"/>
 <l:gentext key="ListofUnknown" text="Списък с други неща"/>
-<l:gentext key="listofunknown" text="Списък с други неща"/>
+<l:gentext key="listofunknown" text="списък с други неща"/>
 <l:gentext key="nav-home" text="Начало"/>
 <l:gentext key="nav-next" text="Напред"/>
 <l:gentext key="nav-next-sibling" text="Прескачане напред"/>
@@ -199,6 +200,7 @@
 <l:gentext key="below" text="по-долу"/>
 <l:gentext key="sectioncalled" text="разделът със заглавие"/>
 <l:gentext key="index symbols" text="символи"/>
+<l:gentext key="writing-mode" text="lr-tb"/>
 <l:gentext key="lowercase.alpha" text="абвгдежзийклмнопрстуфхцчшщъыьэюя"/>
 <l:gentext key="uppercase.alpha" text="АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"/>
 <l:gentext key="normalize.sort.input" text="AaÀàÁáÂâÃãÄäÅåĀāĂăĄąǍǎǞǟǠǡǺǻȀȁȂȃȦȧḀḁẚẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặBbƀƁɓƂƃḂḃḄḅḆḇCcÇçĆćĈĉĊċČčƇƈɕḈḉDdĎďĐđƊɗƋƌǅǲȡɖḊḋḌḍḎḏḐḑḒḓEeÈèÉéÊêËëĒēĔĕĖėĘęĚěȄȅȆȇȨȩḔḕḖḗḘḙḚḛḜḝẸẹẺẻẼẽẾếỀềỂểỄễỆệFfƑƒḞḟGgĜĝĞğĠġĢģƓɠǤǥǦǧǴǵḠḡHhĤĥĦħȞȟɦḢḣḤḥḦḧḨḩḪḫẖIiÌìÍíÎîÏïĨĩĪīĬĭĮįİƗɨǏǐȈȉȊȋḬḭḮḯỈỉỊịJjĴĵǰʝKkĶķƘƙǨǩḰḱḲḳḴḵLlĹĺĻļĽľĿŀŁłƚǈȴɫɬɭḶḷḸḹḺḻḼḽMmɱḾḿṀṁṂṃNnÑñŃńŅņŇňƝɲƞȠǋǸǹȵɳṄṅṆṇṈṉṊṋOoÒòÓóÔôÕõÖöØøŌōŎŏŐőƟƠơǑǒǪǫǬǭǾǿȌȍȎȏȪȫȬȭȮȯȰȱṌṍṎṏṐṑṒṓỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợPpƤƥṔṕṖṗQqʠRrŔŕŖŗŘřȐȑȒȓɼɽɾṘṙṚṛṜṝṞṟSsŚśŜŝŞşŠšȘșʂṠṡṢṣṤṥṦṧṨṩTtŢţŤťŦŧƫƬƭƮʈȚțȶṪṫṬṭṮṯṰṱẗUuÙùÚúÛûÜüŨũŪūŬŭŮůŰűŲųƯưǓǔǕǖǗǘǙǚǛǜȔȕȖȗṲṳṴṵṶṷṸṹṺṻỤụỦủỨứỪừỬửỮữỰựVvƲʋṼṽṾṿWwŴŵẀẁẂẃẄẅẆẇẈẉẘXxẊẋẌẍYyÝýÿŸŶŷƳƴȲȳẎẏẙỲỳỴỵỶỷỸỹZzŹźŻżŽžƵƶȤȥʐʑẐẑẒẓẔẕẕ" lang="en"/>
@@ -216,6 +218,7 @@
 <l:context name="styles"><l:template name="person-name" text="first-last"/>
 </l:context>
 <l:context name="title"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="%t"/>
 <l:template name="appendix" text="Приложение %n. %t"/>
 <l:template name="article" text="%t"/>
@@ -265,7 +268,7 @@
 <l:template name="procedure" text="%t"/>
 <l:template name="procedure.formal" text="Процедура %n. %t"/>
 <l:template name="productionset" text="%t"/>
-<l:template name="productionset.formal" text="Множество от декартови произведения по Бакхус-Наур %n"/>
+<l:template name="productionset.formal" text="Продукция %n"/>
 <l:template name="qandadiv" text="%t"/>
 <l:template name="qandaentry" text="%t"/>
 <l:template name="qandaset" text="%t"/>
@@ -321,6 +324,7 @@
 <l:template name="simplesect" text="%t"/>
 </l:context>
 <l:context name="subtitle"><l:template name="appendix" text="%s"/>
+<l:template name="acknowledgements" text="%s" lang="en"/>
 <l:template name="article" text="%s"/>
 <l:template name="bibliodiv" text="%s"/>
 <l:template name="biblioentry" text="%s"/>
@@ -360,6 +364,7 @@
 <l:template name="toc" text="%s"/>
 </l:context>
 <l:context name="xref"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="О. %n"/>
 <l:template name="appendix" text="%t"/>
 <l:template name="article" text="%t"/>
@@ -451,7 +456,7 @@
 <l:template name="figure" text="Фигура %n"/>
 <l:template name="part" text="Част %n"/>
 <l:template name="procedure" text="Процедура %n"/>
-<l:template name="productionset" text="Множество от декартови произведения по Бакхус-Наур %n"/>
+<l:template name="productionset" text="Продукция %n"/>
 <l:template name="qandadiv" text="Въпроси и отговори %n"/>
 <l:template name="qandaentry" text="В. %n"/>
 <l:template name="question" text="В. %n"/>
@@ -471,7 +476,7 @@
 <l:template name="figure" text="Фигура %n, „%t“"/>
 <l:template name="part" text="Част %n, „%t“"/>
 <l:template name="procedure" text="Процедура %n, „%t“"/>
-<l:template name="productionset" text="Множество от декартови произведения по Бакхус-Наур %n, „%t“"/>
+<l:template name="productionset" text="Продукция %n, „%t“"/>
 <l:template name="qandadiv" text="Въпроси и отговори %n, „%t“"/>
 <l:template name="refsect1" text="разделът със заглавие „%t“"/>
 <l:template name="refsect2" text="разделът със заглавие „%t“"/>
@@ -490,8 +495,9 @@
 <l:template name="sep2" text=" и "/>
 <l:template name="seplast" text=" и "/>
 </l:context>
-<l:context name="glossary"><l:template name="see" text="вж. %t"/>
-<l:template name="seealso" text="вж. %t"/>
+<l:context name="glossary"><l:template name="see" text="Вж. %t."/>
+<l:template name="seealso" text="Вж. %t."/>
+<l:template name="seealso-separator" text=", "/>
 </l:context>
 <l:context name="msgset"><l:template name="MsgAud" text="Насоченост: "/>
 <l:template name="MsgLevel" text="Ниво: "/>

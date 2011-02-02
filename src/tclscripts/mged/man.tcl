@@ -70,7 +70,7 @@ proc man {cmdname} {
     set _mgedFramebufferId [ lindex $_mgedFramebufferId 0 ]
 
 
-    if {![file exists [file join [bu_brlcad_data "html"] mann en $cmdname.html]]]} {
+    if {![file exists [file join [bu_brlcad_data "html"] mann en $cmdname.html]]} {
     	puts "No man page found for $cmdname"
 	return
     } else {

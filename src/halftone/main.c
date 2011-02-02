@@ -74,8 +74,8 @@
 #include "fb.h"
 
 
-long int width=512;		/* width of pixture */
-long int height=512;		/* height of pixture */
+long int width=512;	/* width of pixture */
+long int height=512;	/* height of pixture */
 double Beta=0.0;	/* Beta for sharpening */
 
 #define	M_FLOYD	0
@@ -92,10 +92,10 @@ struct bn_unif *RandomFlag=0;	/* Use random numbers ? */
 void cubic_init(int n, int *x, int *y);
 void tonescale(unsigned char *map, float Slope, float B, int (*eqptr)() );
 int sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map);
-int tone_floyd(int pix, int x, int y, int nx, int ny, int new);
-int tone_folly(int pix, int x, int y, int nx, int ny, int new);
-int tone_simple(int pix, int x, int y, int nx, int ny, int new);
-int tone_classic(int pix, int x, int y, int nx, int ny, int new);
+int tone_floyd(int pix, int x, int y, int nx, int ny, int newrow);
+int tone_folly(int pix, int x, int y, int nx, int ny, int newrow);
+int tone_simple(int pix, int x, int y, int nx, int ny, int newrow);
+int tone_classic(int pix, int x, int y, int nx, int ny, int newrow);
 
 static const char usage[] = "\
 Usage: halftone [ -h -R -S -a] [-D Debug Level]\n\

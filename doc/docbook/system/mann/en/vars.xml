@@ -1,74 +1,37 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2011 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='vars'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="vars">
 
 <refmeta>
   <refentrytitle>VARS</refentrytitle>
   <manvolnum>nged</manvolnum>
-  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-  <refmiscinfo class='manual'>BRL-CAD MGED Commands</refmiscinfo>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD MGED Commands</refmiscinfo>
 </refmeta>
 
-<refnamediv id='name'>
+<refnamediv xml:id="name">
   <refname>vars</refname>
   <refpurpose>With no arguments, will list all the MGED variables and their
 values.   </refpurpose>
 </refnamediv>
 
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-  <cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
     <command>vars</command>    
     
-    <arg><replaceable>variable</replaceable>=<replaceable>value</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>variable</replaceable>=<replaceable>value</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsect1 id='description'>
-  <title>DESCRIPTION</title>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  
   <para>With no arguments, will list all the MGED variables and their
 values. If a <emphasis>variable=value</emphasis> string is included on the command line, then that <emphasis>value</emphasis> is
-assigned to the specified <emphasis>variable</emphasis>.  Note that no spaces are allowed around the “=”.
+assigned to the specified <emphasis>variable</emphasis>.  Note that no spaces are allowed around the Â“=Â”.
 The available <emphasis>variables</emphasis> are as follows:
   </para>
-<itemizedlist mark='bullet'>
+<itemizedlist mark="bullet">
 <listitem>
 <para>autosize -- if nonzero, then MGED will set the view size whenever it draws to an
 empty display.
@@ -90,7 +53,7 @@ otherwise, they act as absolute adjustments.
 </para>
 </listitem>
 <listitem>
-<para>orig_gui -- if nonzero, the “viewing” menu is displayed.
+<para>orig_gui -- if nonzero, the Â“viewingÂ” menu is displayed.
 </para>
 </listitem>
 
@@ -106,7 +69,7 @@ otherwise, they act as absolute adjustments.
 
 <listitem>
 <para>hot_key -- the X11 keysym definition for the key to toggle the <emphasis>send_key</emphasis> value.
-The default is “0xFFC6” (65478 decimal), which is the F9 key. The keysym
+The default is Â“0xFFC6Â” (65478 decimal), which is the F9 key. The keysym
 values are defined in the X11 file named <emphasis>keysymdef.h</emphasis>.
 </para>
 </listitem>
@@ -136,7 +99,7 @@ it). Note that this only affects primitive edit operations that use the <emphasi
 </listitem>
 
 <listitem>
-<para>listen -- if nonzero, listen for connections to MGED’s built-in fbserv.</para>
+<para>listen -- if nonzero, listen for connections to MGEDÂ’s built-in fbserv.</para>
 </listitem>
 
 <listitem>
@@ -164,7 +127,7 @@ draw geometry over the framebuffer image.
 <listitem>
 <para>mouse_behavior -- see the following list of mouse behaviors:
 </para>
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	<listitem>
 	<para>c -- fire ray for combination edit selection.
 	</para>
@@ -205,7 +168,7 @@ draw geometry over the framebuffer image.
 <listitem>
 <para>coords -- see the following list of coordinate systems to use for transformations:
 </para>
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	<listitem>
 	<para>m -- model coordinates.
 	</para>
@@ -224,7 +187,7 @@ draw geometry over the framebuffer image.
 <listitem>
 <para>rotate_about -- see the following list of centers of rotation:
 </para>
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	<listitem>
 	<para>v -- view center.
 	</para>
@@ -250,7 +213,7 @@ draw geometry over the framebuffer image.
 <listitem>
 <para>transform -- see the following list of things to transform:
 </para>
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	<listitem>
 	<para>a -- transform the angle distance cursor if active; otherwise same as v.
 	</para>
@@ -327,38 +290,34 @@ stereo viewing; otherwise, stereo is off.
 </para>
 </listitem>
 </itemizedlist>
-</refsect1>
+</refsection>
 
-<refsect1 id='examples'>
-  <title>EXAMPLES</title>
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  
   <para>The example shows the use of the <command>vars</command> command with an argument.
     
   </para>
  
        
-  <example>
-    <title>Display the sliders.</title>
+  <example><info><title>Display the sliders.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>vars sliders=1</userinput>
+      <prompt>mged&gt;</prompt><userinput>vars sliders=1</userinput>
     </para>
     <para>Turns on the <emphasis>sliders</emphasis>.
        
     </para>
   </example>
  
-</refsect1>
+</refsection>
 
-<refsect1 id='author'>
-  <title>AUTHOR</title>
-  <para>BRL-CAD Team</para>
-</refsect1>
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
 
-<refsect1 id='bug_reports'>
-  <title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
-</refsect1>
+</refsection>
 </refentry>
-

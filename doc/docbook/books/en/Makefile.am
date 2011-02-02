@@ -1,7 +1,8 @@
 booksDOCBOOK_EN = \
 	books/en/BRL-CAD_Tutorial_Series-VolumeI.xml \
 	books/en/BRL-CAD_Tutorial_Series-VolumeII.xml \
-	books/en/BRL-CAD_Tutorial_Series-VolumeIII.xml
+	books/en/BRL-CAD_Tutorial_Series-VolumeIII.xml \
+	books/en/BRL-CAD_Tutorial_Series-VolumeIV.xml
 
 booksDOCBOOK_EN_IMAGES = \
 	books/en/images/tutorial_series_volI_fig01.png \

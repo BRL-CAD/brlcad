@@ -1,19 +1,19 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Crear una copa</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Crear una copa</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
    <legalnotice>
        <para>Aprobada su publicación. Su distribución es ilimitada.</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="creating_a_goblet_overviewlist">
+    <para xml:id="creating_a_goblet_overviewlist">
       En esta lección podrás:
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Crear una nueva base de datos.</para>
 	</listitem>
@@ -36,13 +36,13 @@
       </itemizedlist>
     </para>
 
-   <para id="creating_a_goblet_intro">
+   <para xml:id="creating_a_goblet_intro">
       En esta lección podrás crear una copa similar a la del siguiente ejemplo:
 
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged06_rtgoblet.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged06_rtgoblet.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -54,8 +54,8 @@
 
     </para>
     
-    <sect1 id="goblet_new_database">
-      <title>Crear una nueva base de datos</title>
+    <section xml:id="goblet_new_database"><info><title>Crear una nueva base de datos</title></info>
+      
       <para>
 	Primero, inicie <application>MGED</application> desde una consola de 
 	comandos. Seleccione File (Archivo) desde la barra de menú y luego New 
@@ -64,13 +64,13 @@
 	El programa debería decirle que la base de datos fue creada exitosamente
 	 y que está usando milímetros como unidad de medida.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="create_edit_copy_goblet">
-      <title>Crear, editar, y copiar las partes de la copa</title>
+    <section xml:id="create_edit_copy_goblet"><info><title>Crear, editar, y copiar las partes de la copa</title></info>
       
-      <sect2>
-	<title>Crear la base de la copa</title>
+      
+      <section><info><title>Crear la base de la copa</title></info>
+	
 	
 	<para>
 	De la barra de menú, seleccione la categoría Cones and Cylinders 
@@ -81,10 +81,10 @@
 	Un delgado cilindro aparecerá en la ventana gráfica listo para ser 
 	editado.
 	</para>
-      </sect2>
+      </section>
       
-      <sect2>
-	<title>Editar la base de la copa</title>
+      <section><info><title>Editar la base de la copa</title></info>
+	
 	
 	<para>
 	De la barra de menú seleccione Edit (Editar) y luego Set H. Posicione 
@@ -102,7 +102,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged06_gobletbase.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged06_gobletbase.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -113,10 +113,10 @@
       </informalfigure>
 
 	</para>
-      </sect2>
+      </section>
       
-      <sect2>
-	<title>Crear el pie de la copa</title>
+      <section><info><title>Crear el pie de la copa</title></info>
+	
    
 	<para>
 	En la barra de menú seleccione Create (Crear), luego Ellipsoids 
@@ -135,7 +135,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged06_goblet1stsphere.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged06_goblet1stsphere.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -157,10 +157,10 @@
 	desde Izquierda. Cuando crea que la esfera está correctamente alineada 
 	con el rcc, seleccione la opción Editar y cliquee en Aceptar.  	  
 	</para>
-      </sect2>
+      </section>
       
-      <sect2>
-	<title>Agregando bolas adicionales al pie de la copa</title>
+      <section><info><title>Agregando bolas adicionales al pie de la copa</title></info>
+	
 	
 	<para>
 	El próximo paso es agregar más esferas al pie de tu copa. Una manera 
@@ -189,10 +189,10 @@
 	  <command>cp ball1.s ball3.s[Enter]</command>
 
 	</para>
-      </sect2>
+      </section>
      
-      <sect2>
-	<title>Editar las bolas del pie de la copa</title>
+      <section><info><title>Editar las bolas del pie de la copa</title></info>
+	
 	
 	<para>
 	Para editar la nuevas bolas que ha creado, vaya al menú Edit (Editar) 
@@ -221,7 +221,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged06_gobletstem.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged06_gobletstem.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -231,10 +231,10 @@
 	</mediaobject>
       </informalfigure>
 	</para>
-      </sect2>
+      </section>
       
-      <sect2>
-	<title>Haciendo la parte cóncava de la copa</title>
+      <section><info><title>Haciendo la parte cóncava de la copa</title></info>
+	
 	<para>
 	El próximo paso es hacer la cuenca de la copa. En el menú Create 
 	(Crear) cliquee en eto (por las palabras inglesas "elliptical torus") 
@@ -254,7 +254,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged06_gobletbasestembasin.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged06_gobletbasestembasin.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -264,11 +264,11 @@
 	</mediaobject>
       </informalfigure>
 	</para>
-      </sect2>
-    </sect1>
+      </section>
+    </section>
     
-    <sect1 id="making_goblet_regions">
-      <title>Haciendo las regiones de la base, pie y cuenca de la copa</title>
+    <section xml:id="making_goblet_regions"><info><title>Haciendo las regiones de la base, pie y cuenca de la copa</title></info>
+      
       
       <para>
 	Para saber a cuáles de las formas primitivas hacerle el trazado de rayos 
@@ -303,10 +303,10 @@
 	desde una forma primitiva. 
 
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="making_goblet_region_comb">
-      <title>Hacer una combinación de las regiones</title>
+    <section xml:id="making_goblet_region_comb"><info><title>Hacer una combinación de las regiones</title></info>
+      
       <para>
 	Para combinar todas las regiones dentro de un objeto, necesitará 
 	ejecutar una de las últimas operaciones Booleenas. En el prompt de la 
@@ -319,7 +319,7 @@
 	Esta operación le dice al programa <application>MGED</application> que:
       </para>
       <informaltable>
-	<tgroup cols='8'>
+	<tgroup cols="8">
 	  <tbody>
 	    <row>
 	      <entry>comb</entry>
@@ -344,10 +344,10 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-    </sect1>
+    </section>
     
-    <sect1 id="goblet_view_data_tree">
-      <title>Ver un árbol de datos</title>
+    <section xml:id="goblet_view_data_tree"><info><title>Ver un árbol de datos</title></info>
+      
       <para>
 	<application>MGED</application> requiere una cierta lógica para el árbol 
 	de datos, es decir, para saber como graficar varios elementos. La copa, 
@@ -366,7 +366,7 @@
       
       <para>
 	<application>MGED</application> responderá con:
-	<literallayout>
+	<literallayout class="normal">
    goblet1.c/
 
    u basin1.r/R
@@ -423,15 +423,15 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged06_base_subtracted_vol.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged06_base_subtracted_vol.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
       </informalfigure>
 
-    </sect1>
+    </section>
     
-    <sect1 id="raytracing_goblet">
-      <title>Hacer el trazado de rayos de la copa</title>
+    <section xml:id="raytracing_goblet"><info><title>Hacer el trazado de rayos de la copa</title></info>
+      
       <para>
 	Para graficar la copa usando las propiedades del material por defecto
 	de plástico gris, ve al menú Archivo y clickea en Raytrace. Cuando el 
@@ -451,7 +451,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged06_rtgobletaz_35el_25.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged06_rtgobletaz_35el_25.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -461,13 +461,13 @@
 	</mediaobject>
       </informalfigure>
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="creating_goblet_review">
-      <title>Repaso</title>
+    <section xml:id="creating_goblet_review"><info><title>Repaso</title></info>
+      
       <para>
 	En este tutorial usted aprendió a:
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Crear un nueva base de datos.</para>
 	  </listitem>
@@ -489,6 +489,6 @@
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

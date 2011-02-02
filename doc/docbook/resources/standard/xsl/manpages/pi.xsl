@@ -1,8 +1,9 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
                 xmlns:xlink="http://www.w3.org/1999/xlink"
-                exclude-result-prefixes="doc"
+                exclude-result-prefixes="doc d"
                 version='1.0'>
 
 <!-- ********************************************************************

@@ -1,18 +1,18 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Using the Build Pattern Tool</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Using the Build Pattern Tool</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-  <sect1 id="build_pattern_generalinfo">
-    <title>General Pattern Information</title>
+  <section xml:id="build_pattern_generalinfo"><info><title>General Pattern Information</title></info>
+    
     <para>
       As mentioned previously, the Build Pattern tool automates the process of
       making copies of existing geometry in rectangular, spherical, or
@@ -40,10 +40,10 @@
       object. That is to say, the object that is patterned is not included in
       the resultant pattern.
     </para>
-  </sect1>
+  </section>
 
-  <sect1 id="build_pattern_names">
-    <title>Pattern Names</title>
+  <section xml:id="build_pattern_names"><info><title>Pattern Names</title></info>
+    
     <para>
       As shown in Figure E-1, the tool appends three numbers to all patterned
       objects (unless you are using the increment option for primitives, in
@@ -56,10 +56,10 @@
       the second number references the height, and the third number references
       the azimuth.
     </para>
-  </sect1>
+  </section>
 
-  <sect1 id="build_pattern_fields">
-    <title>Common Fields for all Patterns:</title>
+  <section xml:id="build_pattern_fields"><info><title>Common Fields for all Patterns:</title></info>
+    
     <para>
       There are several fields in the pattern tool GUI that are common to all
       types of patterns.
@@ -75,11 +75,11 @@
       will replace the source string.
     </para>
 
-    <figure>
-      <title>Example of pattern-generated assembly names.</title>
+    <figure><info><title>Example of pattern-generated assembly names.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/build_pattern_fig01.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig01.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -91,7 +91,7 @@
       the largest span. For example, to create a pattern to the primitive level with 
       the following primitives (which may or may not be in regions or
       assemblies),
-      <literallayout>
+      <literallayout class="normal">
 part.s22 part.s22-1 part.s23 part.s24 part.s24+1 part.s24-1 part.s25,
       </literallayout>
       one needs to determine the span. Note that the leftmost numbers in these 
@@ -101,7 +101,7 @@ part.s22 part.s22-1 part.s23 part.s24 part.s24+1 part.s24-1 part.s25,
       *******NEED FIGURE HERE*****
 
       If we use an increment of four, we will get the following set of primitives.
-      <literallayout>
+      <literallayout class="normal">
 part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
       </literallayout>
       
@@ -113,23 +113,23 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
       Finally, the Objects field is used for the names of all the items to be
       patterned.
     </para>
-  </sect1>
+  </section>
 
-  <sect1 id="build_pattern_stringsub">
-    <title>String Substitution</title>
+  <section xml:id="build_pattern_stringsub"><info><title>String Substitution</title></info>
+    
     <para>
      It is also possible to create a pattern in which a string of characters in
-     each element in the object is changed (e.g., "l_" -> "r_"). This is useful
+     each element in the object is changed (e.g., "l_" -&gt; "r_"). This is useful
      for symmetry applications (e.g., left - right) or series (e.g., 1 - n).
      Each element of the object must have the source string so the user must be
      thorough and name each primitive, region, and assembly properly. Consider
      the following example: 
-     <inlinegraphic fileref="../../articles/en/images/build_pattern_fig07.png" />
+     <inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/build_pattern_fig07.png"/></imageobject></inlinemediaobject>
     </para>
     <para>
       Top-level duplications copy the patterned object and reference its entire 
       structure with matrices, as follows:
-      <literallayout>
+      <literallayout class="normal">
 /pattern group
        /COPIED assemblies [MATRICES]
             /assemblies
@@ -140,7 +140,7 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
       Region-level duplications copy all assembly and regions and reference from the
       region level down with matrices.
 
-      <literallayout>
+      <literallayout class="normal">
 /pattern group
        /COPIED assemblies
             /COPIED regions [MATRICES]
@@ -150,7 +150,7 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
       Primitive-level duplications copy the entire tree structure to the primitive 
       level without matrices using an increment on all primitives.
 
-      <literallayout>
+      <literallayout class="normal">
 /pattern group
        /COPIED assemblies       NO MATRICES
             /COPIED regions
@@ -158,10 +158,10 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
       </literallayout>
     </para>
     
-  </sect1>
+  </section>
 
-  <sect1 id="build_pattern_recpatterns">
-    <title>Rectangular Patterns</title>
+  <section xml:id="build_pattern_recpatterns"><info><title>Rectangular Patterns</title></info>
+    
     <para>
       The rectangular pattern GUI (shown in Figure E-2) is designed to
       facilitate one-, two-, or three-dimensional rectangular patterns. The
@@ -174,19 +174,19 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
       axis.
     </para>
 
-    <figure>
-      <title>The user interface for building rectangular patterns.</title>
+    <figure><info><title>The user interface for building rectangular patterns.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/build_pattern_fig02.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig02.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
   
-  </sect1>
+  </section>
 
-  <sect1 id="build_pattern_spherical">
-    <title>Spherical Patterns</title>
+  <section xml:id="build_pattern_spherical"><info><title>Spherical Patterns</title></info>
+    
     <para>
       The spherical pattern GUI (shown in Figure E-3) facilitates sphere-shaped
       patterns rotated around a center vertex using user-specified radii with
@@ -228,11 +228,11 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
       specifies a list of radius offsets.
     </para>
 
-    <figure>
-      <title>The user interface for building spherical patterns.</title>
+    <figure><info><title>The user interface for building spherical patterns.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/build_pattern_fig03.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig03.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -251,29 +251,29 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
     </para>
 
 
-    <figure>
-      <title>Examples of different spherical pattern orientations.</title>
+    <figure><info><title>Examples of different spherical pattern orientations.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/build_pattern_fig04.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig04.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
 
 
-    <figure>
-      <title>Implementation of spherical patterns.</title>
+    <figure><info><title>Implementation of spherical patterns.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/build_pattern_fig05.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig05.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
 
-  </sect1>
+  </section>
 
-  <sect1 id="build_pattern_cylind">
-    <title>Cylindrical Patterns</title>
+  <section xml:id="build_pattern_cylind"><info><title>Cylindrical Patterns</title></info>
+    
     <para>
       The cylindrical pattern GUI (shown in Figure E-6) facilitates the creation
       of cylinder-shaped patterns with user-defined center, direction, height,
@@ -286,15 +286,15 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
       pattern will place the Object Center.
     </para>
 
-    <figure>
-      <title>The user interface for building cylindrical patterns.</title>
+    <figure><info><title>The user interface for building cylindrical patterns.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/build_pattern_fig06.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig06.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
 
-  </sect1>
+  </section>
 
 </article>

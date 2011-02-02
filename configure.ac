@@ -4264,7 +4264,6 @@ AC_CONFIG_FILES([
 	db/Makefile
 	db/include/Makefile
 	doc/Makefile
-	doc/book/Makefile
 	doc/docbook/Makefile
 	doc/docbook/fop.xconf
 	doc/html/Makefile
@@ -4274,7 +4273,6 @@ AC_CONFIG_FILES([
 	doc/html/ReleaseNotes/Rel6.0/Makefile
 	doc/html/manuals/Anim_Tutorial/Makefile
 	doc/html/manuals/Makefile
-	doc/html/manuals/archer/Makefile
 	doc/html/manuals/cadwidgets/Makefile
 	doc/html/manuals/libbu/Makefile
 	doc/html/manuals/libdm/Makefile

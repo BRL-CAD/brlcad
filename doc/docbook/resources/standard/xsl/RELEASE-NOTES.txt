@@ -2,7 +2,7 @@ Release Notes for the DocBook XSL Stylesheets
 
 $Revision$ $Date$
 
-2008-06-02
+2010-11-01
 
 This release-notes document is available in the following formats: HTML, PDF,
 plain text; it provides a per-release list of enhancements and changes to the
@@ -13,12 +13,76 @@ NEWS (plain text) or NEWS.html files. Also available: An online hyperlinked
 change history (warning: big file) of all changes made over the entire history
 of the codebase.
 
-As with all DocBook Project dot-zero releases, this is an experimental release.
-It will be followed shortly by a stable release.
+As with all DocBook Project “dot one plus” releases, this release aspires to be
+stable (in contrast to dot-zero releases, which are experimental).
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Table of Contents
+
+Release Notes: 1.76.1
+
+    FO
+    HTML
+    Params
+
+Release Notes: 1.76.0
+
+    Gentext
+    Common
+    FO
+    HTML
+    Manpages
+    Epub
+    Eclipse
+    Params
+    XSL-Xalan
+
+Release Notes: 1.75.2
+
+    Gentext
+    Common
+    FO
+    HTML
+    Manpages
+    Epub
+    Profiling
+    XSL-Saxon
+    XSL-Xalan
+
+Release Notes: 1.75.1
+
+    FO
+    HTML
+    Epub
+    Params
+
+Release Notes: 1.75.0
+
+    Gentext
+    Common
+    FO
+    HTML
+    Manpages
+    ePub
+    HTMLHelp
+    Params
+    Highlighting
+    XSL-Saxon
+    XSL-Xalan
+
+Release Notes: 1.74.3
+Release Notes: 1.74.2
+Release Notes: 1.74.1
+
+    Gentext
+    FO
+    HTML
+    Manpages
+    ePub
+    Roundtrip
+    Params
+    Highlighting
 
 Release Notes: 1.74.0
 
@@ -150,6 +214,2043 @@ Release 1.56.0
 Older releases
 About dot-zero releases
 
+Release Notes: 1.76.1
+
+The following is a list of changes that have been made since the 1.76.0
+release.
+
+FO
+
+The following changes have been made to the fo code since the 1.76.0 release.
+
+  ● Robert Stayton: docbook.xsl; xref.xsl; fop1.xsl
+
+    Apply patch to support named destination in fop1.xsl, per Sourceforge
+    bug report #3029845.
+
+HTML
+
+The following changes have been made to the html code since the 1.76.0 release.
+
+  ● Keith Fahlgren: highlight.xsl
+
+    Implementing handling for <b> and <i>: transform to <strong> and <em> for XHTML outputs and do not use in the highliting output (per Mauritz Jeanson)
+
+Params
+
+The following changes have been made to the params code since the 1.76.0
+release.
+
+  ● Robert Stayton: draft.mode.xml
+
+    Change default for draft.mode to 'no'.
+
+Release Notes: 1.76.0
+
+This release includes important bug fixes and adds the following significant
+feature changes:
+
+Webhelp
+
+    A new browser-based, cross-platform help format with full-text search and
+    other features typically found in help systems. See webhelp/docs/content/
+    ch01.html for more information and a demo.
+
+Gentext
+
+    Many updates and additions to translation/locales thanks to Red Hat, the
+    Fedora Project, and other contributors.
+
+Common
+
+    Faster localization support, as language files are loaded on demand.
+
+FO
+
+    Support for SVG content in imagedata added.
+
+HTML
+
+    Output improved when using 'make.clean.html' and a stock CSS file is now
+    provided.
+
+EPUB
+
+    A number of improvements to NCX, cover and image selection, and XHTML 1.1
+    element choices
+
+The following is a list of changes that have been made since the 1.75.2
+release.
+
+Gentext
+
+The following changes have been made to the gentext code since the 1.75.2
+release.
+
+  ● rlandmann: locale/fa.xml
+
+                Update to Persian translation from the Fedora Project
+
+
+  ● rlandmann: locale/nds.xml
+
+                Locale for Low German
+
+
+  ● Mauritz Jeanson: locale/ka.xml; Makefile
+
+                Added support for Georgian based on patch #2917147.
+
+
+  ● rlandmann: locale/nl.xml; locale/ja.xml
+
+                Updated translations from Red Hat and the Fedora Project
+
+
+  ● rlandmann: locale/bs.xml; locale/ru.xml; locale/hr.xml
+
+                Updated locales from Red Hat and the Fedora Project
+
+
+  ● rlandmann: locale/pt.xml; locale/cs.xml; locale/es.xml; locale/bg.xml;
+    locale/nl.xml; loca⋯
+
+                Updated translations from Red Hat and the Fedora Project
+
+
+  ● rlandmann: locale/as.xml; locale/bn_IN.xml; locale/ast.xml; locale/ml.xml;
+    locale/te.xml; ⋯
+
+                New translations from Red Hat and the Fedora Project
+
+
+  ● rlandmann: locale/pt.xml; locale/ca.xml; locale/da.xml; locale/sr.xml;
+    locale/ru.xml; loca⋯
+
+                Updated translations from Red Hat and the Fedora Project
+
+
+Common
+
+The following changes have been made to the common code since the 1.75.2
+release.
+
+  ● Mauritz Jeanson: common.xsl
+
+                Fixed bug in output-orderedlist-starting-number template (@startingnumber did not work for FO).
+
+
+  ● Mauritz Jeanson: gentext.xsl
+
+                Added fix to catch ID also of descendants of listitem. Closes bug #2955077.
+
+
+  ● Jirka Kosek: l10n.xsl
+
+                Stripped down, faster version of gentext.template is used when there is no localization customization.
+
+
+  ● Mauritz Jeanson: stripns.xsl
+
+                Added fix that preserves link/@role (makes links in the reference documentation
+    with @role="tcg" work).
+
+
+  ● Mauritz Jeanson: l10n.xsl
+
+                Fixed bugs related to manpages and L10n.
+
+
+  ● Jirka Kosek: entities.ent; autoidx-kosek.xsl
+
+                Upgraded to use common entities. Fixed bug when some code used @sortas and some not for grouping/sorting of indexterms.
+
+
+  ● Jirka Kosek: l10n.xsl; l10n.dtd; l10n.xml; autoidx-kosek.xsl
+
+                Refactored localization support. Language files are loaded on demand. Speedup is about 30%.
+
+
+  ● Jirka Kosek: l10n.xsl
+
+                Added xsl:keys for improved performance of localization texts look up. Performance gain around 15%.
+
+
+  ● Mauritz Jeanson: titles.xsl
+
+                Fixed bug #2912677 (error with xref in title).
+
+
+  ● Robert Stayton: olink.xsl
+
+                Fix bug in xrefstyle "title" handling introduced with
+    the 'insert.targetdb.data' template.
+
+
+  ● Robert Stayton: gentext.xsl
+
+                Fix bug in xref to equation without title to use context="xref-number" instead
+    of "xref-number-and-title".
+
+
+  ● Robert Stayton: labels.xsl
+
+                Number all equations in one sequence, with or without title.
+
+
+  ● Robert Stayton: entities.ent
+
+                Fix bug #2896909 where duplicate @sortas on indexterms caused
+    some indexterms to drop out of index.
+
+
+  ● Robert Stayton: stripns.xsl
+
+                Expand the "Stripping namespace ..." message to advise users to
+    use the namespaced stylesheets.
+
+
+  ● Robert Stayton: stripns.xsl
+
+                need a local version of $exsl.node.set.available variable because
+    this module imported many places.
+
+
+  ● Mauritz Jeanson: olink.xsl
+
+                Added /node() to the select expression that is used to compute the title text
+    so that no <ttl> elements end up in the output. Closes bug #2830119.
+
+
+FO
+
+The following changes have been made to the fo code since the 1.75.2 release.
+
+  ● Robert Stayton: table.xsl
+
+                Fix bug 2979166 able - Attribute @rowheader not working
+
+
+  ● Mauritz Jeanson: inline.xsl
+
+                Improved glossterm auto-linking by using keys. The old code was inefficient when processing documents
+    with many inline glossterms.
+
+
+  ● Robert Stayton: titlepage.xsl
+
+                Fix bug 2805530 author/orgname not appearing on title page.
+
+
+  ● Mauritz Jeanson: graphics.xsl
+
+                Added support for SVG content in imagedata (inspired by patch #2909154).
+
+
+  ● Mauritz Jeanson: table.xsl
+
+                Removed superfluous test used when computing column-width. Closes bug #3000898.
+
+
+  ● Mauritz Jeanson: inline.xsl
+
+                Added missing <xsl:call-template name="anchor"/>. Closes bug #2998567.
+
+
+  ● Mauritz Jeanson: lists.xsl
+
+                Added table-layout="fixed" on segmentedlist table (required by XSL spec when  proportional-column-width() is used).
+
+
+  ● Jirka Kosek: autoidx-kosek.xsl
+
+                Upgraded to use common entities. Fixed bug when some code used @sortas and some not for grouping/sorting of indexterms.
+
+
+  ● Jirka Kosek: index.xsl
+
+                Upgraded to use common entities. Fixed bug when some code used @sortas and some not for grouping/sorting of indexterms.
+
+
+  ● Robert Stayton: xref.xsl
+
+                Fix bug in olink template when an olink has an id.
+    Add warning message with id value when trying to link
+    to an element that has no generated text.
+
+
+  ● Mauritz Jeanson: refentry.xsl
+
+                Fixed bug #2930968 (indexterm in refmeta not handled correctly).
+
+
+  ● Robert Stayton: block.xsl
+
+                fix bug 2949567 title in revhistory breaks FO transform.
+
+
+  ● Robert Stayton: glossary.xsl
+
+                Output id attributes on glossdiv blocks so they can be added to
+    xrefs or TOC.
+
+
+  ● Jirka Kosek: xref.xsl
+
+                Enabled hyphenation of URLs when ulink content is the same as link target
+
+
+  ● Robert Stayton: table.xsl
+
+                Apply patch to turn off row recursion if no @morerows attributes present.
+    This will enable very large tables without row spanning to
+    process without running into recursion limits.
+
+
+  ● Robert Stayton: formal.xsl
+
+                Format equation without title using table layout with equation number
+    next to the equation.
+
+
+  ● Robert Stayton: param.xweb; param.ent
+
+                Add equation.number.properties.
+
+
+HTML
+
+The following changes have been made to the html code since the 1.75.2 release.
+
+  ● Mauritz Jeanson: block.xsl
+
+                Modified acknowledgements template to avoid invalid output (<p> in <p>).
+
+
+  ● Mauritz Jeanson: titlepage.xsl
+
+                Added default sidebar attribute-sets.
+
+
+  ● Robert Stayton: table.xsl
+
+                Fix bug 2979166 able - Attribute @rowheader not working
+
+
+  ● Robert Stayton: footnote.xsl
+
+                Fix bug 3033191 footnotes in html tables.
+
+
+  ● Mauritz Jeanson: inline.xsl
+
+                Improved glossterm auto-linking by using keys. The old code was inefficient when processing documents
+    with many inline glossterms.
+
+
+  ● Robert Stayton: docbook.css.xml; verbatim.xsl
+
+                Fix bug 2844927 Validity error for callout bugs.
+
+
+  ● Robert Stayton: formal.xsl
+
+                Convert formal.object.heading to respect make.clean.html param.
+
+
+  ● Robert Stayton: titlepage.templates.xml; block.xsl
+
+                Fix bug 2840768 sidebar without title inserts empty b tag.
+
+
+  ● Mauritz Jeanson: docbook.xsl
+
+                Moved the template that outputs <base> so that the base URI also applies to relative CSS paths that come later.
+    See patch #2896121.
+
+
+  ● Jirka Kosek: autoidx-kosek.xsl
+
+                Upgraded to use common entities. Fixed bug when some code used @sortas and some not for grouping/sorting of indexterms.
+
+
+  ● Robert Stayton: chunk-code.xsl
+
+                fix bug 2948363 generated filename for refentry not unique, when
+    used in a set.
+
+
+  ● Robert Stayton: component.xsl
+
+                Fix missing "Chapter n" label when use chapter/info/title.
+
+
+  ● Robert Stayton: table.xsl
+
+                Row recursion turned off if no @morerows attributes in the table.
+    This will prevent failure on long table (with no @morerows) due
+    to excessive depth of recursion.
+
+
+  ● Robert Stayton: autotoc.xsl; docbook.css.xml
+
+                Support make.clean.html in autotoc.xsl.
+
+
+  ● Robert Stayton: docbook.css.xml; block.xsl
+
+                Add support for make.clean.html setting in block elements.
+
+
+  ● Robert Stayton: docbook.css.xml
+
+                Stock CSS styles for DocBook HTML output when 'make.clean.html' is non-zero.
+
+
+  ● Robert Stayton: html.xsl
+
+                Add templates for generating CSS files and links to them.
+
+
+  ● Robert Stayton: param.xweb
+
+                Fix bugs in new entity references.
+
+
+  ● Robert Stayton: chunk-common.xsl
+
+                List of Equations now includes on equations with titles.
+
+
+  ● Robert Stayton: table.xsl
+
+                If a colspec has a colname attribute, add it to the HTML col
+    element as a class attribute so it can be styled.
+
+
+  ● Robert Stayton: formal.xsl
+
+                Fix bug 2825842 where table footnotes not appearing in HTML-coded table.
+
+
+  ● Robert Stayton: chunktoc.xsl
+
+                Fix bug #2834826 where appendix inside part was not chunked as it should be.
+
+
+  ● Mauritz Jeanson: chunktoc.xsl
+
+                Added missing namespace declarations. Closes bug #2890069.
+
+
+  ● Mauritz Jeanson: footnote.xsl
+
+                Updated the template for footnote paras to use the 'paragraph' template. Closes bug #2803739.
+
+
+  ● Keith Fahlgren: inline.xsl; lists.xsl
+
+                Remove <b> and <i> elements "discouraged in favor of style sheets" from
+    XHTML, XHTML 1.1 (and therefore EPUB) outputs by changing html2xhtml.xsl.
+
+    Fixes bug #2873153: No <b> and <i> tags in XHTML/EPUB
+
+    Added regression to EPUB specs:
+
+
+  ● Mauritz Jeanson: inline.xsl
+
+                Fixed bug #2844916 (don't output @target if ulink.target is empty).
+
+
+  ● Keith Fahlgren: autoidx.xsl
+
+                Fix a bug when using index.on.type: an 'index symbols' section was created
+    even if that typed index didn't include any symbols (they were in the other types).
+
+
+Manpages
+
+The following changes have been made to the manpages code since the 1.75.2
+release.
+
+  ● Mauritz Jeanson: other.xsl
+
+                Modified the write.stubs template so that the section directory name is not output twice. Should fix bug #2831602.
+    Also ensured that $lang is added to the .so path (when man.output.lang.in.name.enabled=1).
+
+
+  ● Mauritz Jeanson: docbook.xsl; other.xsl
+
+                Fixed bug #2412738 (apostrophe escaping) by applying the submitted patch.
+
+
+  ● Norman Walsh: block.xsl; endnotes.xsl
+
+                Fix bug where simpara in footnote didn't work. Patch by Jonathan Nieder, jrnieder@gmail.com
+
+
+  ● dleidert: lists.xsl
+
+                Fix two indentation issues: In the first case there is no corresponding .RS
+    macro (Debian #519438, sf.net 2793873). In the second case an .RS instead of
+    the probably intended .sp leads to an indentation bug (Debian #527309,
+    sf.net #2642139).
+
+
+Epub
+
+The following changes have been made to the epub code since the 1.75.2 release.
+
+  ● Keith Fahlgren: bin/spec/examples/AMasqueOfDays.epub; docbook.xsl; bin/spec
+    /epub_spec.rb
+
+                Resolve some actual regressions in date output spotted by more recent versions of epubcheck
+
+
+  ● Keith Fahlgren: docbook.xsl
+
+                Updated mediaobject selection code that better uses roles (when available); based on contributons by  Glenn McDonald
+
+
+  ● Keith Fahlgren: bin/spec/epub_regressions_spec.rb; docbook.xsl
+
+                Ensure that NCX documents are always outputted with a default namespace
+    to prevent problems with the kindlegen machinery
+
+
+  ● Keith Fahlgren: bin/spec/epub_regressions_spec.rb; bin/spec/files/
+    partintro.xml; docbook.x⋯
+
+                Adding support for partintros with sect2s, 3s, etc
+
+
+  ● Keith Fahlgren: docbook.xsl
+
+                Adding param to workaround horrific ADE bug with the inability to process <br>
+
+
+  ● Keith Fahlgren: docbook.xsl
+
+                Add support for authorgroup/author in OPF metadata (via Michael Wiedmann)
+
+
+  ● Keith Fahlgren: bin/spec/epub_regressions_spec.rb
+
+                Remove <b> and <i> elements "discouraged in favor of style sheets" from
+    XHTML, XHTML 1.1 (and therefore EPUB) outputs by changing html2xhtml.xsl.
+
+    Fixes bug #2873153: No <b> and <i> tags in XHTML/EPUB
+
+    Added regression to EPUB specs:
+
+
+  ● Keith Fahlgren: bin/lib/docbook.rb; bin/spec/files/DejaVuSerif-Italic.otf;
+    docbook.xsl; bi⋯
+
+                This resolves bug #2873142, Please add support for multiple embedded fonts
+
+
+    If you navigate to a checkout of DocBook-XSL and go to:
+    xsl/epub/bin/spec/files
+    You can now run the following command:
+
+    ../../dbtoepub -f DejaVuSerif.otf -f DejaVuSerif-Italic.otf -c test.css
+    -s test_cust.xsl orm.book.001.xml
+
+    In dbtoepub, the following option can be used more than once:
+    -f, --font [OTF FILE] Embed OTF FILE in .epub.
+
+    The underlying stylesheet now accepts a comma-separated list of font file
+    names rather than just one as the RENAMED epub.embedded.fonts ('s' added).
+
+    The runnable EPUB spec now includes:
+    - should be valid .epub after including more than one embedded font
+
+
+  ● Keith Fahlgren: docbook.xsl
+
+                Improve the selection of cover images when working in DocBook 4.x land (work in progress)
+
+
+  ● Keith Fahlgren: bin/spec/epub_regressions_spec.rb; docbook.xsl
+
+                Improve the quality of the OPF spine regression by ensuring that the spine
+    elements for deeply nested refentries are in order and adjacent to their
+    opening wrapper XHTML chunk.
+
+
+  ● Keith Fahlgren: bin/spec/epub_regressions_spec.rb; docbook.xsl; bin/spec/
+    files/orm.book.00⋯
+
+                Add more careful handling of refentries to ensure that they always appear in the opf:spine.
+    This was only a problem when refentries were pushed deep into the hierarchy (like inside
+    a sect2), but presented navigational problems for many reading systems (despite the
+    correct NCX references). This may *not* be the best solution, but attacking a better
+    chunking strategy for refentries was too big a nut to crack at this time.
+
+
+Eclipse
+
+The following changes have been made to the eclipse code since the 1.75.2
+release.
+
+  ● Mauritz Jeanson: eclipse3.xsl
+
+                Added a stylesheet module that generates plug-ins conforming to the standard (OSGi-based) Eclipse 3.x
+    architecture. The main difference to the older format is that metadata is stored in a separate
+    manifest file. The module imports and extends the existing eclipse.xsl module. Based on code
+    contributed in patch #2624668.
+
+
+Params
+
+The following changes have been made to the params code since the 1.75.2
+release.
+
+  ● Robert Stayton: draft.watermark.image.xml
+
+                Fix bug 2922488 draft.watermark.image pointing to web resource.
+    Now the value is images/draft.png, and may require customization
+    for local resolution.
+
+
+  ● Mauritz Jeanson: equation.number.properties.xml
+
+                Corrected refpurpose.
+
+
+  ● Norman Walsh: paper.type.xml
+
+                Added USlegal and USlegallandscape paper types.
+
+
+  ● Jirka Kosek: highlight.xslthl.config.xml
+
+                Added note about specifying location as URL
+
+
+  ● Robert Stayton: docbook.css.source.xml; generate.css.header.xml;
+    custom.css.source.xml; ma⋯
+
+                Params to support generated CSS files.
+
+
+  ● Robert Stayton: equation.number.properties.xml
+
+                New attribute set for numbers appearing next to equations.
+
+
+XSL-Xalan
+
+The following changes have been made to the xsl-xalan code since the 1.75.2
+release.
+
+  ● dleidert: nbproject/genfiles.properties; nbproject/build-impl.xml
+
+                Rebuild netbeans build files after adding missing Netbeans configuration to allow easier packaging for Debian.
+
+
+Release Notes: 1.75.2
+
+The following is a list of changes that have been made since the 1.75.1
+release.
+
+Gentext
+
+The following changes have been made to the gentext code since the 1.75.1
+release.
+
+  ● dleidert: locale/ja.xml
+
+    Improved Japanese translation for Note(s). Closes bug #2823965.
+
+  ● dleidert: locale/pl.xml
+
+    Polish alphabet contains O with acute accent, not with grave accent. Closes bug #2823964.
+
+  ● Robert Stayton: locale/ja.xml
+
+    Fix translation of "index", per bug report 2796064.
+
+  ● Robert Stayton: locale/is.xml
+
+    New Icelandic locale file.
+
+Common
+
+The following changes have been made to the common code since the 1.75.1
+release.
+
+  ● Norman Walsh: stripns.xsl
+
+    Support more downconvert cases
+
+  ● Robert Stayton: titles.xsl
+
+    Make sure title inside info is used if no other title.
+
+FO
+
+The following changes have been made to the fo code since the 1.75.1 release.
+
+  ● Robert Stayton: pi.xsl
+
+    Turn off dbfo-need for fop1.extensions also, per bug #2816141.
+
+HTML
+
+The following changes have been made to the html code since the 1.75.1 release.
+
+  ● Mauritz Jeanson: titlepage.xsl
+
+    Output "Copyright" heading in XHTML too.
+
+  ● Mauritz Jeanson: titlepage.xsl
+
+    Added stylesheet.result.type test for copyright. Closes bug #2813289.
+
+  ● Norman Walsh: htmltbl.xsl
+
+    Remove ambiguity wrt @span, @rowspan, and @colspan
+
+Manpages
+
+The following changes have been made to the manpages code since the 1.75.1
+release.
+
+  ● Mauritz Jeanson: endnotes.xsl
+
+    Added normalize-space() for ulink content. Closes bug #2793877.
+
+  ● Mauritz Jeanson: docbook.xsl
+
+    Added stylesheet.result.type test for copyright. Closes bug #2813289.
+
+Epub
+
+The following changes have been made to the epub code since the 1.75.1 release.
+
+  ● Keith Fahlgren: bin/dbtoepub; bin/lib/docbook.rb
+
+    Corrected bugs caused by path and file assumptions were not met
+
+  ● Keith Fahlgren: bin/lib/docbook.rb; docbook.xsl
+
+    Cleaning up hardcoded values into parameters and fixing Ruby library to pass them properly; all thanks to patch from Liza Daly
+
+Profiling
+
+The following changes have been made to the profiling code since the 1.75.1
+release.
+
+  ● Robert Stayton: profile.xsl
+
+    Fix bug 2815493 missing exsl.node.set.available parameter.
+
+XSL-Saxon
+
+The following changes have been made to the xsl-saxon code since the 1.75.1
+release.
+
+  ● Mauritz Jeanson: src/com/nwalsh/saxon/ColumnUpdateEmitter.java; src/com/
+    nwalsh/saxon/Colum⋯
+
+    Added fixes so that colgroups in the XHTML namespace are processed properly.
+
+XSL-Xalan
+
+The following changes have been made to the xsl-xalan code since the 1.75.1
+release.
+
+  ● Mauritz Jeanson: nbproject/project.xml
+
+    Added missing NetBeans configuration.
+
+Release Notes: 1.75.1
+
+This release includes bug fixes.
+
+The following is a list of changes that have been made since the 1.75.0
+release.
+
+FO
+
+The following changes have been made to the fo code since the 1.75.0 release.
+
+  ● Keith Fahlgren: block.xsl
+
+    Switching to em dash for character before attribution in epigraph; resolves Bug #2793878
+
+  ● Robert Stayton: lists.xsl
+
+    Fixed bug 2789947, id attribute missing on simplelist fo output.
+
+HTML
+
+The following changes have been made to the html code since the 1.75.0 release.
+
+  ● Keith Fahlgren: block.xsl
+
+    Switching to em dash for character before attribution in epigraph; resolves Bug #2793878
+
+  ● Robert Stayton: lists.xsl
+
+    Fixed bug 2789678: apply-templates line accidentally deleted.
+
+Epub
+
+The following changes have been made to the epub code since the 1.75.0 release.
+
+  ● Keith Fahlgren: bin/spec/epub_regressions_spec.rb; docbook.xsl
+
+    Added regression and fix to correct "bug" with namespace-prefixed container elements in META-INF/container.xml ; resolves Issue #2790017
+
+  ● Keith Fahlgren: bin/spec/epub_regressions_spec.rb; bin/spec/files/
+    onegraphic.xinclude.xml;⋯
+
+    Another attempt at flexible named entity and XInclude processing
+
+  ● Keith Fahlgren: bin/lib/docbook.rb
+
+    Tweaking solution to Bug #2750442 following regression reported by Michael Wiedmann.
+
+Params
+
+The following changes have been made to the params code since the 1.75.0
+release.
+
+  ● Mauritz Jeanson: highlight.source.xml
+
+    Updated documentation to reflect changes made in r8419.
+
+Release Notes: 1.75.0
+
+This release includes important bug fixes and adds the following significant
+feature changes:
+
+Gentext
+
+    Modifications to translations have been made.
+
+Common
+
+    Added support for some format properties on tables using HTML table markup.
+
+    Added two new qanda.defaultlabel values so that numbered sections and
+    numbered questions can be distinguished. Satisfies Feature Request #
+    1539045.
+
+    Added code to handle acknowledgements in book and part. The element is
+    processed similarly to dedication. All acknowledgements will appear as
+    front matter, after any dedications.
+
+FO
+
+    The inclusion of highlighting code has been simplified.
+
+    Add support for pgwide on informal objects.
+
+    Added a new parameter, bookmarks.collapse, that controls the initial state
+    of the bookmark tree. Closes FR #1792326.
+
+    Add support for more dbfo processing instructions.
+
+    Add new variablelist.term.properties to format terms, per request #
+    1968513.
+
+    Add support for @width on screen and programlisting, fixes bug #2012736.
+
+    Add support for writing-mode="rl-tb" (right-to-left) in FO outputs.
+
+    Add writing.mode param for FO output.
+
+HTML
+
+    Convert all calls to class.attribute to calls to common.html.attributes to
+    support dir, lang, and title attributes in html output for all elements.
+    Fulfills feature request #1993833.
+
+    Inclusion of highlighting code was simplified. Only one import is now
+    necessary.
+
+    Add new param index.links.to.section.
+
+    Add support for the new index.links.to.section param which permits precise
+    links to indexterms in HTML output rather than to the section title.
+
+ePub
+
+    Slightly more nuanced handling of imageobject alternatives and better
+    support in dbtoepub for XIncludes and ENTITYs to resolve Issue #2750442
+    reported by Raphael Hertzog.
+
+    Added a colon after an abstract/title when mapping into the dc:description
+    for OPF metadata in ePub output to help the flat text have more
+    pseudo-semantics (sugestions from Michael Wiedmann)
+
+    Added DocBook subjectset -> OPF dc:subject mapping and tests
+
+    Added DocBook date -> OPF dc:date mapping and tests
+
+    Added DocBook abstract -> OPF dc:description mapping and tests
+
+    Added --output option to dbtoepub based on user request
+
+HTMLHelp
+
+    Add support for generating olink target database for htmlhelp files.
+
+Params
+
+    Add default setting for @rules attribute on HTML markup tables.
+
+    Added a new parameter, bookmarks.collapse, that controls the initial state
+    of the bookmark tree. When the parameter has a non-zero value (the
+    default), only the top-level bookmarks are displayed initially. Otherwise,
+    the whole tree of bookmarks is displayed. This is implemented for FOP 0.9X.
+    Closes FR #1792326.
+
+    Add new variablelist.term.properties to format terms, per request #
+    1968513.
+
+    Add two new qanda.defaultlabel values so that numbered sections and
+    numbered questions can be distinguished. Satisfies Feature Request #
+    1539045.
+
+    Add param to control whether an index entry links to a section title or to
+    the precise location of the indexterm.
+
+    New attribute list for glossentry in glossary.
+
+    New parameter to support @width on programlisting and screen.
+
+    Add attribute-sets for formatting glossary terms and defs.
+
+Highlighting
+
+    Inclusion of highlighting code was simplified. Only one import is now
+    necessary.
+
+The following is a list of changes that have been made since the 1.74.3
+release.
+
+Gentext
+
+The following changes have been made to the gentext code since the 1.74.3
+release.
+
+  ● Robert Stayton: locale/sv.xml; locale/ja.xml; locale/pl.xml
+
+    Check in translations of Legalnotice submitted on mailing list.
+
+  ● Robert Stayton: locale/es.xml
+
+    Fix spelling errors in Acknowledgements entries.
+
+  ● Robert Stayton: locale/es.xml
+
+    Check in translations for 4 elements submitted through docbook-apps
+    message of 14 April 2009.
+
+  ● David Cramer: locale/zh.xml; locale/ca.xml; locale/ru.xml; locale/ga.xml;
+    locale/gl.xml; l⋯
+
+    Internationalized punctuation in glosssee and glossseealso
+
+  ● Robert Stayton: Makefile
+
+    Check in fixes for DSSSL gentext targets from submitted patch #1689633.
+
+  ● Robert Stayton: locale/uk.xml
+
+    Check in major update submitted with bug report #2008524.
+
+  ● Robert Stayton: locale/zh_tw.xml
+
+    Check in fix to Note string submitted in bug #2441051.
+
+  ● Robert Stayton: locale/ru.xml
+
+    Checkin typo fix submitted in bug #2453406.
+
+Common
+
+The following changes have been made to the common code since the 1.74.3
+release.
+
+  ● Robert Stayton: gentext.xsl
+
+    Fix extra generated space when xrefstyle includes 'nopage'.
+
+  ● Robert Stayton: table.xsl
+
+    Add support for some format properties on tables using
+    HTML table markup.  These include:
+      - frame attribute on table (or uses $default.table.frame parameter).
+      - rules attribute on table (or uses $default.table.rules parameter).
+      - align attribute on td and th
+      - valign attribute on td and th
+      - colspan on td and th
+      - rowspan on td and th
+      - bgcolor on td and th
+
+  ● Robert Stayton: olink.xsl
+
+    Add placeholder template to massage olink hot text to make
+    customization easier, per Feature Request 1828608.
+
+  ● Robert Stayton: targets.xsl
+
+    Add support for collecting olink targets from a glossary
+    generated from a glossary.collection.
+
+  ● Robert Stayton: titles.xsl
+
+    Handle firstterm like glossterm in mode="title.markup".
+
+  ● Robert Stayton: titles.xsl
+
+    Add match on info/title in title.markup templates where missing.
+
+  ● Mauritz Jeanson: titles.xsl
+
+    Changed "ancestor::title" to "(ancestor::title and (@id or @xml:id))".
+    This enables proper formatting of inline elements in titles in TOCs,
+    as long as these inlines don't have id or xml:id attributes.
+
+  ● Robert Stayton: labels.xsl
+
+    Add two new qanda.defaultlabel values so that numbered sections
+    and numbered questions can be distinguished.  Satisfies
+    Feature Request #1539045.
+
+  ● Robert Stayton: stripns.xsl; pi.xsl
+
+    Convert function-available(exsl:node-set) to use the new param
+    so Xalan bug is isolated.
+
+  ● Mauritz Jeanson: titles.xsl
+
+    Added fixes for bugs #2112656 and #1759205:
+    1. Reverted mistaken commits r7485 and r7523.
+    2. Updated the template with match="link" and mode="no.anchor.mode" so that
+    @endterm is used if it exists and if the link has no content.
+
+  ● Mauritz Jeanson: titles.xsl
+
+    Added code to handle acknowledgements in book and part. The element is processed
+    similarly to dedication. All acknowledgements will appear as front matter, after
+    any dedications.
+
+  ● Robert Stayton: olink.xsl
+
+    Fix bug #2018717 use.local.olink.style uses wrong gentext context.
+
+  ● Robert Stayton: olink.xsl
+
+    Fix bug #1787167 incorrect hot text for some olinks.
+
+  ● Robert Stayton: common.xsl
+
+    Fix bug #1669654 Broken output if copyright <year> contains a range.
+
+  ● Robert Stayton: labels.xsl
+
+    Fix bug in labelling figure inside appendix inside article inside book.
+
+FO
+
+The following changes have been made to the fo code since the 1.74.3 release.
+
+  ● Jirka Kosek: highlight.xsl
+
+    Inclusion of highlighting code was simplified. Only one import is now necessary.
+
+  ● Robert Stayton: fop1.xsl
+
+    Add the new fop extensions namespace declaration, in case FOP
+    extension functions are used.
+
+  ● Robert Stayton: formal.xsl
+
+    Add support for pgwide on informal objects.
+
+  ● Robert Stayton: docbook.xsl
+
+    Fixed spurious closing quote on line 134.
+
+  ● Robert Stayton: docbook.xsl; autoidx-kosek.xsl; autoidx.xsl
+
+    Convert function-available for node-set() to use
+    new $exsl.node.set.available param in test.
+
+  ● David Cramer: xref.xsl
+
+    Suppress extra space after xref when xrefstyle='select: label nopage' (#2740472)
+
+  ● Mauritz Jeanson: pi.xsl
+
+    Fixed doc bug for row-height.
+
+  ● David Cramer: glossary.xsl
+
+    Internationalized punctuation in glosssee and glossseealso
+
+  ● Robert Stayton: param.xweb; param.ent; htmltbl.xsl; table.xsl
+
+    Add support for some format properties on tables using
+    HTML table markup.  These include:
+      - frame attribute on table (or uses $default.table.frame parameter).
+      - rules attribute on table (or uses $default.table.rules parameter).
+      - align attribute on td and th
+      - valign attribute on td and th
+      - colspan on td and th
+      - rowspan on td and th
+      - bgcolor on td and th
+
+  ● Robert Stayton: table.xsl
+
+    Add support bgcolor in td and th
+    elements in HTML table markup.
+
+  ● Robert Stayton: htmltbl.xsl
+
+    Add support for colspan and rowspan and bgcolor in td and th
+    elements in HTML table markup.
+
+  ● Robert Stayton: param.xweb
+
+    Fix working of page-master left and right margins.
+
+  ● Mauritz Jeanson: param.xweb; param.ent; fop1.xsl
+
+    Added a new parameter, bookmarks.collapse, that controls the initial state of the bookmark tree. When the parameter has a non-zero value (the default), only the top-level bookmarks are displayed initially. Otherwise, the whole tree of bookmarks is displayed.  This is implemented for FOP 0.9X. Closes FR #1792326.
+
+  ● Robert Stayton: table.xsl; pi.xsl
+
+    Add support for dbfo row-height processing instruction, like that in dbhtml.
+
+  ● Robert Stayton: lists.xsl
+
+    Add support for dbfo keep-together processing instruction for
+    entire list instances.
+
+  ● Robert Stayton: lists.xsl; block.xsl
+
+    Add support fo dbfo keep-together processing instruction to
+    more blocks like list items and paras.
+
+  ● Robert Stayton: lists.xsl; param.xweb; param.ent
+
+    Add new variablelist.term.properties to format terms, per request # 1968513.
+
+  ● Robert Stayton: inline.xsl
+
+    In simple.xlink, rearrange order of processing.
+
+  ● Robert Stayton: xref.xsl
+
+    Handle firstterm like glossterm in mode="xref-to".
+
+  ● Robert Stayton: glossary.xsl; xref.xsl; pi.xsl; footnote.xsl
+
+    Implement simple.xlink for glosssee and glossseealso so they can use
+    other types of linking besides otherterm.
+
+  ● Robert Stayton: qandaset.xsl
+
+    Add two new qanda.defaultlabel values so that numbered sections and numbered questions can be distinguished.  Satisfies Feature Request #1539045.
+
+  ● Robert Stayton: titlepage.xsl
+
+    For the book title templates, I changed info/title to book/info/title
+    so other element's titles will not be affected.
+
+  ● Robert Stayton: xref.xsl; verbatim.xsl
+
+    Use param exsl.node.set.available to test for function.
+
+  ● Robert Stayton: param.xweb; param.ent; footnote.xsl
+
+    Start using new param exsl.node.set.available to work around Xalan bug.
+
+  ● Robert Stayton: titlepage.templates.xml
+
+    Add comment on use of t:predicate for editor to prevent
+    extra processing of multiple editors. Fixes bug 2687842.
+
+  ● Robert Stayton: xref.xsl; autoidx.xsl
+
+    An indexterm primary, secondary, or tertiary element with an id or xml:id
+    now outputs that ID, so that index entries can be cross referenced to.
+
+  ● Mauritz Jeanson: synop.xsl
+
+    Added modeless template for ooclass|oointerface|ooexception.
+    Closes bug #1623468.
+
+  ● Robert Stayton: xref.xsl
+
+    Add template with match on indexterm in mode="xref-to" to fix bug 2102592.
+
+  ● Robert Stayton: xref.xsl
+
+    Now xref to qandaentry will use the label element in a question for
+    the link text if it has one.
+
+  ● Robert Stayton: inline.xsl
+
+    Add id if specified from @id to output for quote and phrase so
+    they can be xref'ed to.
+
+  ● Robert Stayton: xref.xsl
+
+    Add support for xref to phrase, simpara, anchor, and quote.
+    This assumes the author specifies something using xrefstyle since
+    the elements don't have ordinary link text.
+
+  ● Robert Stayton: toc.xsl
+
+    Fix bug in new toc templates.
+
+  ● Mauritz Jeanson: titlepage.xsl; component.xsl; division.xsl; xref.xsl;
+    titlepage.templates⋯
+
+    Added code to handle acknowledgements in book and part. The element is processed
+    similarly to dedication. All acknowledgements will appear as front matter, after
+    any dedications.
+
+  ● Robert Stayton: toc.xsl
+
+    Rewrite toc templates to support an empty toc or populated toc
+    in all permitted contexts.  Same for lot elements.
+    This fixes bug #1595969 for FO outputs.
+
+  ● Robert Stayton: index.xsl
+
+    Fix indents for seealsoie so they are consistent.
+
+  ● Mauritz Jeanson: param.xweb
+
+    Removed duplicate (monospace.font.family).
+
+  ● Robert Stayton: param.xweb; param.ent
+
+    Add glossentry.list.item.properties.
+
+  ● Robert Stayton: param.xweb; param.ent
+
+    Add monospace.verbatim.font.width param to support @width on programlisting.
+
+  ● Robert Stayton: verbatim.xsl
+
+    Put programlisting in fo:block-container with writing-mode="lr-tb"
+    when text direction is right to left because all program languages
+    are left-to-right.
+
+  ● Robert Stayton: verbatim.xsl
+
+    Add support for @width on screen and programlisting, fixes bug #2012736.
+
+  ● Robert Stayton: xref.xsl
+
+    Fix bug #1973585 xref to para with xrefstyle not handled correctly.
+
+  ● Mauritz Jeanson: block.xsl
+
+    Added support for acknowledgements in article.
+    Support in book/part remains to be added.
+
+  ● Robert Stayton: xref.xsl
+
+    Fix bug #1787167 incorrect hot text for some olinks.
+
+  ● Robert Stayton: fo.xsl
+
+    Add writing-mode="tb-rl" as well since some XSL-FO processors support it.
+
+  ● Robert Stayton: autotoc.xsl; lists.xsl; glossary.xsl; fo.xsl; table.xsl;
+    pagesetup.xsl
+
+    Add support for writing-mode="rl-tb" (right-to-left) in FO outputs.
+    Changed instances of margin-left to margin-{$direction.align.start}
+    and margin-right to margin-{$direction.align.end}. Those direction.align
+    params are computed from the writing mode value in each locale's
+    gentext key named 'writing-mode', introduced in 1.74.3 to add
+    right-to-left support to HTML outputs.
+
+  ● Robert Stayton: param.xweb; param.ent
+
+    Add attribute-sets for formatting glossary terms and defs.
+
+  ● Robert Stayton: param.xweb; param.ent
+
+    Add writing.mode param for FO output.
+
+  ● Robert Stayton: autotoc.xsl
+
+    Fix bug 1546008: in qandaentry in a TOC, use its blockinfo/titleabbrev or blockinfo/title
+    instead of question, if available. For DocBook 5, use the info versions.
+
+  ● Keith Fahlgren: verbatim.xsl
+
+    Add better pointer to README for XSLTHL
+
+  ● Keith Fahlgren: verbatim.xsl
+
+    More tweaking the way that XSLTHL does or does not get called
+
+  ● Keith Fahlgren: verbatim.xsl
+
+    Alternate attempt at sanely including/excluding XSLTHT code
+
+HTML
+
+The following changes have been made to the html code since the 1.74.3 release.
+
+  ● Robert Stayton: lists.xsl
+
+    Removed redundant lang and title attributes on list element inside
+    div element for lists.
+
+  ● Robert Stayton: inline.xsl; titlepage.xsl; division.xsl; toc.xsl;
+    sections.xsl; table.xsl;⋯
+
+    Convert all calls to class.attribute to calls to common.html.attributes
+    to support dir, lang, and title attributes in html output for all elements.
+    Fulfills feature request #1993833.
+
+  ● Robert Stayton: chunk-common.xsl
+
+    Fix bug #2750253 wrong links in list of figures in chunk.html
+    when target html is in a subdirectory and dbhtml filename used.
+
+  ● Jirka Kosek: highlight.xsl
+
+    Inclusion of highlighting code was simplified. Only one import is now necessary.
+
+  ● Robert Stayton: chunk-common.xsl; chunktoc.xsl; docbook.xsl;
+    chunk-changebars.xsl; autoidx⋯
+
+    Convert function-available for node-set() to use
+    new $exsl.node.set.available param in test.
+
+  ● Mauritz Jeanson: pi.xsl
+
+    Fixed doc bug for row-height.
+
+  ● David Cramer: glossary.xsl
+
+    Internationalized punctuation in glosssee and glossseealso
+
+  ● Robert Stayton: lists.xsl; html.xsl; block.xsl
+
+    More elements get common.html.attributes.
+    Added locale.html.attributes template which does the lang,
+    dir, and title attributes, but not the class attribute
+    (used on para, for example).
+
+  ● Robert Stayton: lists.xsl
+
+    Replace more literal class atts with mode="class.attribute" to support
+    easier customization.
+
+  ● Robert Stayton: glossary.xsl
+
+    Support olinking in glosssee and glossseealso.
+
+  ● Robert Stayton: inline.xsl
+
+    In simple.xlink, rearrange order of processing.
+
+  ● Robert Stayton: xref.xsl
+
+    Handle firstterm like glossterm in mode="xref-to".
+
+  ● Robert Stayton: lists.xsl; html.xsl; block.xsl
+
+    Added template named common.html.attributes to output
+    class, title, lang, and dir for most elements.
+    Started adding it to some list and block elements.
+
+  ● Robert Stayton: qandaset.xsl
+
+    Add two new qanda.defaultlabel values so that numbered sections
+    and numbered questions can be distinguished.  Satisfies
+    Feature Request #1539045.
+
+  ● Robert Stayton: param.xweb; chunk-code.xsl; param.ent; xref.xsl;
+    chunkfast.xsl; verbatim.x⋯
+
+    Use new param exsl.node.set.available to test, handles Xalan bug.
+
+  ● Robert Stayton: autoidx.xsl
+
+    Use named anchors for primary, secondary, and tertiary ids so
+    duplicate entries with different ids can still have an id output.
+
+  ● Robert Stayton: param.xweb; param.ent
+
+    Add new param index.links.to.section.
+
+  ● Robert Stayton: xref.xsl; autoidx.xsl
+
+    Pass through an id on primary, secondary, or tertiary to
+    the index entry, so that one could link to an index entry.
+    You can't link to the id on an indexterm because that is
+    used to place the main anchor in the text flow.
+
+  ● Robert Stayton: autoidx.xsl
+
+    Add support for the new index.links.to.section param which permits
+    precise links to indexterms in HTML output rather than to
+    the section title.
+
+  ● Mauritz Jeanson: synop.xsl
+
+    Added modeless template for ooclass|oointerface|ooexception.
+    Closes bug #1623468.
+
+  ● Robert Stayton: qandaset.xsl
+
+    Make sure a qandaset has an anchor, even when it has no title,
+    because it may be referenced in a TOC or xref.
+    Before, the anchor was output by the title, but there was no
+    anchor if there was no title.
+
+  ● Robert Stayton: xref.xsl
+
+    Add a template for indexterm with mode="xref-to" to fix bug 2102592.
+
+  ● Robert Stayton: xref.xsl
+
+    Now xref to qandaentry will use the label element in a question for
+    the link text if it has one.
+
+  ● Robert Stayton: qandaset.xsl; html.xsl
+
+    Create separate templates for computing label of question and answer
+    in a qandaentry, so such can be used for the alt text of an xref
+    to a qandaentry.
+
+  ● Robert Stayton: inline.xsl; xref.xsl
+
+    Now support xref to phrase, simpara, anchor, and quote,
+    most useful when an xrefstyle is used.
+
+  ● Robert Stayton: toc.xsl
+
+    Rewrite toc templates to support an empty toc or populated toc
+    in all permitted contexts.  Same for lot elements.
+    This fixes bug #1595969 for HTML outputs.
+
+  ● Mauritz Jeanson: titlepage.xsl; component.xsl; division.xsl; xref.xsl;
+    titlepage.templates⋯
+
+    Added code to handle acknowledgements in book and part. The element is processed
+    similarly to dedication. All acknowledgements will appear as front matter, after
+    any dedications.
+
+  ● Robert Stayton: index.xsl
+
+    Rewrote primaryie, secondaryie and tertiaryie templates to handle
+    nesting of elements and seeie and seealsoie, as reported in
+    bug # 1168912.
+
+  ● Robert Stayton: autotoc.xsl
+
+    Fix simplesect in toc problem.
+
+  ● Robert Stayton: verbatim.xsl
+
+    Add support for @width per bug report #2012736.
+
+  ● Robert Stayton: formal.xsl; htmltbl.xsl
+
+    Fix bug #1787140 HTML tables not handling attributes correctly.
+
+  ● Robert Stayton: param.xweb
+
+    Move writing-mode param.
+
+  ● Keith Fahlgren: refentry.xsl
+
+    Remove a nesting of <p> inside <p> for refclass (made XHTML* invalid, made HTML silly)
+
+  ● Robert Stayton: table.xsl
+
+    Fix bug #1945872 to allow passthrough of colwidth values to
+    HTML table when no tablecolumns.extension is available and
+    when no instance of * appears in the table's colspecs.
+
+  ● Mauritz Jeanson: block.xsl
+
+    Added support for acknowledgements in article.
+    Support in book/part remains to be added.
+
+  ● Robert Stayton: chunk-common.xsl
+
+    Fix bug #1787167 incorrect hot text for some olinks.
+
+  ● Robert Stayton: qandaset.xsl
+
+    Fix bug 1546008: in qandaentry in a TOC, use its blockinfo/titleabbrev or blockinfo/title
+    instead of question, if available. For DocBook 5, use the info versions.
+
+  ● Robert Stayton: chunktoc.xsl
+
+    Add support for generating olink database when using chunktoc.xsl.
+
+  ● Keith Fahlgren: verbatim.xsl
+
+    Add better pointer to README for XSLTHL
+
+  ● Keith Fahlgren: verbatim.xsl
+
+    Another stab at fixing the stupid XSLTHT includes across processors (Saxon regression reported by Sorin Ristache)
+
+  ● Keith Fahlgren: verbatim.xsl
+
+    More tweaking the way that XSLTHL does or does not get called
+
+  ● Keith Fahlgren: verbatim.xsl
+
+    Alternate attempt at sanely including/excluding XSLTHT code
+
+Manpages
+
+The following changes have been made to the manpages code since the 1.74.3
+release.
+
+  ● Robert Stayton: table.xsl
+
+    Convert function-available test for node-set() function to
+    test of $exsl.node.set.available param.
+
+  ● Mauritz Jeanson: lists.xsl
+
+    Added a template for bibliolist. Closes bug #1815916.
+
+ePub
+
+The following changes have been made to the epub code since the 1.74.3 release.
+
+  ● Keith Fahlgren: bin/spec/epub_regressions_spec.rb; bin/spec/files/
+    onegraphic.xinclude.xml;⋯
+
+    Slightly more nuanced handling of imageobject alternatives and better support in dbtoepub for XIncludes and ENTITYs to resolve Issue #2750442 reported by Raphael Hertzog.
+
+  ● Keith Fahlgren: docbook.xsl
+
+    Add a colon after an abstract/title when mapping into the dc:description for OPF metadata in ePub output to help the flat text have more pseudo-semantics (sugestions from Michael Wiedmann)
+
+  ● Keith Fahlgren: bin/spec/epub_regressions_spec.rb; docbook.xsl; bin/spec/
+    files/de.xml
+
+    Correctly set dc:language in OPF metadata when i18nizing. Closes Bug #2755150
+
+  ● Keith Fahlgren: bin/spec/epub_regressions_spec.rb; docbook.xsl
+
+    Corrected namespace declarations for literal XHTML elements to make them serialize "normally"
+
+  ● Keith Fahlgren: docbook.xsl
+
+    Be a little bit more nuanced about dates
+
+  ● Keith Fahlgren: docbook.xsl; bin/spec/epub_realbook_spec.rb; bin/spec/files
+    /orm.book.001.x⋯
+
+    Add DocBook subjectset -> OPF dc:subject mapping and tests
+
+  ● Keith Fahlgren: docbook.xsl; bin/spec/epub_realbook_spec.rb; bin/spec/files
+    /orm.book.001.x⋯
+
+    Add DocBook date -> OPF dc:date mapping and tests
+
+  ● Keith Fahlgren: docbook.xsl; bin/spec/epub_realbook_spec.rb; bin/spec/files
+    /orm.book.001.x⋯
+
+    Add DocBook abstract -> OPF dc:description mapping and tests
+
+  ● Robert Stayton: docbook.xsl
+
+    Check in patch submitted by user to add opf:file-as attribute
+    to dc:creator element.
+
+  ● Keith Fahlgren: bin/dbtoepub
+
+    Adding --output option to dbtoepub based on user request
+
+  ● Keith Fahlgren: docbook.xsl; bin/spec/epub_spec.rb
+
+    Cleaning and regularizing the generation of namespaced nodes for OPF, NCX, XHTML and other outputted filetypes (hat tip to bobstayton for pointing out the silly, incorrect code)
+
+  ● Keith Fahlgren: bin/spec/epub_regressions_spec.rb; bin/spec/files/
+    refclass.xml
+
+    Remove a nesting of <p> inside <p> for refclass (made XHTML* invalid, made HTML silly)
+
+  ● Keith Fahlgren: bin/spec/epub_regressions_spec.rb; bin/spec/files/
+    blockquotepre.xml
+
+    Added regression test and fix for XHTML validation problem with <a>s added inside <blockquote>; This potentially causes another problem (where something is referenced by has no anchor, but someone reporting that should cause the whole <a id='thing'/> thing to be reconsidered with modern browsers in mind.
+
+HTMLHelp
+
+The following changes have been made to the htmlhelp code since the 1.74.3
+release.
+
+  ● Robert Stayton: htmlhelp-common.xsl
+
+    Add support for generating olink target database for htmlhelp files.
+
+Params
+
+The following changes have been made to the params code since the 1.74.3
+release.
+
+  ● Robert Stayton: default.table.rules.xml
+
+    Add default setting for @rules attribute on HTML markup tables.
+
+  ● Mauritz Jeanson: bookmarks.collapse.xml
+
+    Added a new parameter, bookmarks.collapse, that controls the initial state
+    of the bookmark tree. When the parameter has a non-zero value (the default),
+    only the top-level bookmarks are displayed initially. Otherwise, the whole
+    tree of bookmarks is displayed.
+
+    This is implemented for FOP 0.9X. Closes FR #1792326.
+
+  ● Robert Stayton: variablelist.term.properties.xml
+
+    Add new variablelist.term.properties to format terms, per
+    request # 1968513.
+
+  ● Robert Stayton: qanda.defaultlabel.xml
+
+    Add two new qanda.defaultlabel values so that numbered sections
+    and numbered questions can be distinguished.  Satisfies
+    Feature Request #1539045.
+
+  ● Robert Stayton: index.links.to.section.xml
+
+    Change default to 1 to match past behavior.
+
+  ● Robert Stayton: exsl.node.set.available.xml
+
+    Isolate this text for Xalan bug regarding exsl:node-set available.
+    If it is ever fixed in Xalan, just fix it here.
+
+  ● Robert Stayton: index.links.to.section.xml
+
+    Add param to control whether an index entry links to
+    a section title or to the precise location of the
+    indexterm.
+
+  ● Robert Stayton: glossentry.list.item.properties.xml
+
+    New attribute list for glossentry in glossary.
+
+  ● Robert Stayton: monospace.verbatim.font.width.xml
+
+    New parameter to support @width on programlisting and screen.
+
+  ● Mauritz Jeanson: highlight.source.xml
+
+    Updated and reorganized the description.
+
+  ● Robert Stayton: page.margin.outer.xml; page.margin.inner.xml
+
+    Add caveat about XEP bug when writing-mode is right-to-left.
+
+  ● Robert Stayton: article.appendix.title.properties.xml; writing.mode.xml;
+    body.start.indent⋯
+
+    Change 'left' to 'start' and 'right' to 'end' to support right-to-left
+    writing mode.
+
+  ● Robert Stayton: glossdef.block.properties.xml;
+    glossdef.list.properties.xml; glossterm.blo⋯
+
+    Add attribute-sets for formatting glossary terms and defs.
+
+  ● Robert Stayton: glossterm.separation.xml
+
+    Clarify the description.
+
+  ● Robert Stayton: make.year.ranges.xml
+
+    Now handles year element containing a comma or dash without error.
+
+Highlighting
+
+The following changes have been made to the highlighting code since the 1.74.3
+release.
+
+  ● Jirka Kosek: README
+
+    Inclusion of highlighting code was simplified. Only one import is now necessary.
+
+  ● Keith Fahlgren: README
+
+    Adding XSLTHL readme
+
+  ● Keith Fahlgren: common.xsl
+
+    Alternate attempt at sanely including/excluding XSLTHT code
+
+XSL-Saxon
+
+The following changes have been made to the xsl-saxon code since the 1.74.3
+release.
+
+  ● Mauritz Jeanson: src/com/nwalsh/saxon/Text.java
+
+    Added a fix that prevents output of extra blank line.
+    Hopefully this closes bug #894805.
+
+XSL-Xalan
+
+The following changes have been made to the xsl-xalan code since the 1.74.3
+release.
+
+  ● Mauritz Jeanson: src/com/nwalsh/xalan/Text.java
+
+    Added a fix that prevents output of extra blank line.
+    Hopefully this closes bug #894805.
+
+Release Notes: 1.74.3
+
+This release fixes some bugs in the 1.74.2 release.
+
+See highlighting/README for XSLTHL usage instructions.
+
+Release Notes: 1.74.2
+
+This release fixes some bugs in the 1.74.1 release.
+
+Release Notes: 1.74.1
+
+This release includes important bug fixes and adds the following significant
+feature changes:
+
+Gentext
+
+    Kirghiz locale added and Chinese translations have been simplified.
+
+    Somme support for gentext and right-to-left languages has been added.
+
+FO
+
+    Various bugs have been resolved.
+
+    Support for a new processing instruction: dbfo funcsynopsis-style has been
+    added.
+
+    Added new param email.mailto.enabled for FO output. Patch from Paolo
+    Borelli.
+
+    Support for documented metadata in fop1 mode has been added.
+
+Highlighting
+
+    Support for the latest version of XSLTHL 2.0 and some new language syntaxes
+    have been added to a variety of outputs.
+
+Manpages
+
+    Added man.output.better.ps.enabled param (zero default). It non-zero, no
+    such markup is embedded in generated man pages, and no enhancements are
+    included in the PostScript output generated from those man pages by the man
+    -Tps command.
+
+HTML
+
+    Support for writing.mode to set text direction and alignment based on
+    document locale has been added.
+
+    Added a new top-level stylesheet module, chunk-changebars.xsl, to be used
+    for generating chunked output with highlighting based on change
+    (@revisionflag) markup. The module imports/includes the standard chunking
+    and changebars templates and contains additional logic for chunked output.
+    See FRs #1015180 and #1819915.
+
+ePub
+
+    Covers now look better in Adobe Digital Editions thanks to a patch from
+    Paul Norton of Adobe
+
+    Cover handling now more generic (including limited DocBook 5.0 cover
+    support thanks to patch contributed by Liza Daly.
+
+    Cover markup now carries more reliably into files destined for .mobi and
+    the Kindle.
+
+    dc:identifiers are now generated from more types of numbering schemes.
+
+    Both SEO and semantic structure of chunked ePub output by ensuring that we
+    always send out one and only one h1 in each XHTML chunk.
+
+    Primitive support for embedding a single font added.
+
+    Support for embedding a CSS customizations added.
+
+Roundtrip
+
+    Support for imagedata-metadata and table as images added.
+
+    Support for imagedata-metadata and legalnotice as images added.
+
+Params
+
+    man.output.better.ps.enabled added for Manpages output
+
+    writing.mode.xml added to set text direction.
+
+    Added new param email.mailto.enabled for FO output. Patch from Paolo
+    Borelli. Closes #2086321.
+
+    highlight.source upgraded to support the latest version of XSLTHL 2.0.
+
+The following is a list of changes that have been made since the 1.74.0
+release.
+
+Gentext
+
+The following changes have been made to the gentext code since the 1.74.0
+release.
+
+  ● Michael(tm) Smith: locale/ky.xml; Makefile
+
+    new Kirghiz locale from Ilyas Bakirov
+
+  ● Mauritz Jeanson: locale/en.xml
+
+    Added "Acknowledgements".
+
+  ● Dongsheng Song: locale/zh_cn.xml
+
+    Simplified Chinese translation.
+
+  ● Robert Stayton: locale/lv.xml; locale/ca.xml; locale/pt.xml; locale/tr.xml;
+    locale/af.xml;⋯
+
+    Add writing-mode gentext string to support right-to-left languages.
+
+FO
+
+The following changes have been made to the fo code since the 1.74.0 release.
+
+  ● David Cramer: footnote.xsl
+
+    Added a check to confirm that a footnoteref's linkend points to a footnote. Stylesheets stop processing if not and provide a useful error message.
+
+  ● Mauritz Jeanson: spaces.xsl
+
+    Convert spaces to fo:leader also in elements in the DB 5 namespace.
+
+  ● Mauritz Jeanson: pi.xsl; synop.xsl
+
+    Added support for a new processing instruction: dbfo funcsynopsis-style.
+    Closes bug #1838213.
+
+  ● Michael(tm) Smith: inline.xsl; param.xweb; param.ent
+
+    Added new param email.mailto.enabled for FO output.
+    Patch from Paolo Borelli. Closes #2086321.
+
+  ● Mauritz Jeanson: docbook.xsl
+
+    Added support for document metadata for fop1 (patch #2067318).
+
+  ● Jirka Kosek: param.ent; param.xweb; highlight.xsl
+
+    Upgraded to support the latest version of XSLTHL 2.0
+     -- nested markup in highlited code is now processed
+     -- it is no longer needed to specify path XSLTHL configuration file using Java property
+     -- support for new languages, including Perl, Python and Ruby was added
+
+HTML
+
+The following changes have been made to the html code since the 1.74.0 release.
+
+  ● Robert Stayton: param.xweb; docbook.xsl; param.ent; html.xsl
+
+    Add support for writing.mode to set text direction and alignment based on document locale.
+
+  ● Mauritz Jeanson: chunk-changebars.xsl
+
+    Added a new top-level stylesheet module, chunk-changebars.xsl, to be
+    used for generating chunked output with highlighting based on change
+    (@revisionflag) markup. The module imports/includes the standard chunking
+    and changebars templates and contains additional logic for chunked output.
+    See FRs #1015180 and #1819915.
+
+Manpages
+
+The following changes have been made to the manpages code since the 1.74.0
+release.
+
+  ● Michael(tm) Smith: docbook.xsl
+
+    Put the following at the top of generated roff for each page:
+      \" t
+    purpose is to explicitly tell AT&T troff that the page needs to be
+    pre-processed through tbl(1); groff can figure it out
+    automatically, but apparently AT&T troff needs to be explicitly told
+
+ePub
+
+The following changes have been made to the epub code since the 1.74.0 release.
+
+  ● Keith Fahlgren: docbook.xsl
+
+    Patch from Paul Norton of Adobe to get covers to look better in Adobe Digital Editions
+
+  ● Keith Fahlgren: bin/spec/epub_regressions_spec.rb; bin/spec/files/
+    v5cover.xml; bin/spec/sp⋯
+
+    Patch contributed by Liza Daly to make ePub cover handling more generic. Additionally
+    DocBook 5.0's <cover> now has some limited support:
+
+    - should reference a cover in the OPF guide for a DocBook 5.0 test document
+
+  ● Keith Fahlgren: bin/spec/files/isbn.xml; bin/spec/files/issn.xml; bin/spec/
+    files/biblioid.⋯
+
+    Liza Daly reported that the dc:identifer-generation code was garbage (she was right).
+
+    Added new tests:
+    - should include at least one dc:identifier
+    - should include an ISBN as URN for dc:identifier if an ISBN was in the metadata
+    - should include an ISSN as URN for dc:identifier if an ISSN was in the metadata
+    - should include an biblioid as a dc:identifier if an biblioid was in the metadata
+    - should include a URN for a biblioid with @class attribute as a dc:identifier if an biblioid was in the metadata
+
+  ● Keith Fahlgren: docbook.xsl; bin/spec/epub_spec.rb
+
+    Improve both SEO and  semantic structure of chunked ePub output by ensuring that
+    we always send out one and only one h1 in each XHTML chunk.
+
+    DocBook::Epub
+    - should include one and only one <h1> in each HTML file in rendered ePub files
+    for <book>s
+    - should include one and only one <h1> in each HTML file in rendered ePub files
+    for <book>s even if they do not have section markup
+
+  ● Keith Fahlgren: docbook.xsl; bin/spec/epub_realbook_spec.rb; bin/spec/files
+    /orm.book.001.x⋯
+
+    Adding better support for covers in epub files destined for .mobi and the Kindle
+
+  ● Keith Fahlgren: bin/dbtoepub; bin/lib/docbook.rb; bin/spec/files/
+    DejaVuSerif.otf; docbook.⋯
+
+    Adding primitive support for embedding a single font
+
+  ● Keith Fahlgren: bin/dbtoepub; bin/lib/docbook.rb; bin/spec/files/
+    test_cust.xsl; bin/spec/e⋯
+
+    Adding support for user-specified customization layers in dbtoepub
+
+  ● Keith Fahlgren: bin/dbtoepub; bin/spec/epub_regressions_spec.rb; bin/lib/
+    docbook.rb; bin/s⋯
+
+    Adding CSS support to .epub target & dbtoepub:
+        -c, --css [FILE]                 Use FILE for CSS on generated XHTML.
+
+
+    DocBook::Epub
+    ...
+    - should include a CSS link in HTML files when a CSS file has been provided
+    - should include CSS file in .epub when a CSS file has been provided
+    - should include a CSS link in OPF file when a CSS file has been provided
+
+Roundtrip
+
+The following changes have been made to the roundtrip code since the 1.74.0
+release.
+
+  ● Steve Ball: blocks2dbk.xsl; template.xml; template.dot
+
+    added support for imagedata-metadata
+    added support for table as images
+
+  ● Steve Ball: blocks2dbk.xsl; normalise2sections.xsl; sections2blocks.xsl
+
+    Improved support for personname inlines.
+
+  ● Steve Ball: blocks2dbk.xsl; blocks2dbk.dtd; template.xml
+
+    Added support for legalnotice.
+
+  ● Steve Ball: blocks2dbk.xsl; wordml2normalise.xsl
+
+    added support for orgname in author
+
+  ● Steve Ball: specifications.xml; supported.xml; blocks2dbk.xsl;
+    wordml2normalise.xsl; dbk2w⋯
+
+    Updated specification.
+    to-DocBook: add cols attribute to tgroup
+    from-DocBook: fix for blockquote title
+
+Params
+
+The following changes have been made to the params since the 1.74.0 release.
+
+  ● The change was to add man.output.better.ps.enabled parameter, with its
+    default value set to zero. If the value of the man.output.better.ps.enabled
+    parameter is non-zero, certain markup is embedded in each generated man
+    page such that PostScript output from the man -Tps command for that page
+    will include a number of enhancements designed to improve the quality of
+    that output. If man.output.better.ps.enabled is zero (the default), no such
+    markup is embedded in generated man pages, and no enhancements are included
+    in the PostScript output generated from those man pages by the man -Tps
+    command. WARNING: The enhancements provided by this parameter rely on
+    features that are specific to groff (GNU troff) and that are not part of
+    "classic" AT&T troff or any of its derivatives. Therefore, any man pages
+    you generate with this parameter enabled will be readable only on systems
+    on which the groff (GNU troff) program is installed, such as GNU/Linux
+    systems. The pages will not not be readable on systems on with the classic
+    troff (AT&T troff) command is installed. NOTE: The value of this parameter
+    only affects PostScript output generated from the man command. It has no
+    effect on output generated using the FO backend. TIP: You can generate
+    PostScript output for any man page by running the following command: man
+    FOO -Tps > FOO.ps You can then generate PDF output by running the following
+    command: ps2pdf FOO.ps
+
+  ● Robert Stayton: writing.mode.xml
+
+    writing mode param used to set text direction.
+
+  ● Michael(tm) Smith: email.mailto.enabled.xml
+
+    Added new param email.mailto.enabled for FO output.
+    Patch from Paolo Borelli. Closes #2086321.
+
+  ● Jirka Kosek: highlight.source.xml; highlight.xslthl.config.xml
+
+    Upgraded to support the latest version of XSLTHL 2.0
+     -- nested markup in highlited code is now processed
+     -- it is no longer needed to specify path XSLTHL configuration file using Java property
+     -- support for new languages, including Perl, Python and Ruby was added
+
+Highlighting
+
+The following changes have been made to the highlighting code since the 1.74.0
+release.
+
+  ● Jirka Kosek: cpp-hl.xml; c-hl.xml; tcl-hl.xml; php-hl.xml; common.xsl;
+    perl-hl.xml; delphi⋯
+
+    Upgraded to support the latest version of XSLTHL 2.0
+     -- nested markup in highlited code is now processed
+     -- it is no longer needed to specify path XSLTHL configuration file using Java property
+     -- support for new languages, including Perl, Python and Ruby was added
+
 Release Notes: 1.74.0
 
 This release includes important bug fixes and adds the following significant
@@ -181,6 +2282,12 @@ Roundtrip improvements
 
     Table, figure, template syncronization, and character style improvements
     have been made for WordML & Pages. Support added for OpenOffice.org.
+
+First implementation of a libxslt extension
+
+    A stylesheet extension for libxslt, written in Python, has been added. The
+    extension is a function for adjusting column widths in CALS tables. See
+    extensions/README.LIBXSLT for more information.
 
 The following is a list of changes that have been made since the 1.73.2
 release.

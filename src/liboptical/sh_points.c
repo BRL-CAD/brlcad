@@ -70,7 +70,6 @@ struct mfuncs points_mfuncs[] = {
 };
 
 
-HIDDEN
 struct points {
     fastf_t u;			/* u location */
     fastf_t v;			/* v location */

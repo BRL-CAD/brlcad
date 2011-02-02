@@ -30,6 +30,9 @@
   </xsl:attribute>
   <xsl:attribute name="font-selection-strategy">character-by-character</xsl:attribute>
   <xsl:attribute name="line-height-shift-adjustment">disregard-shifts</xsl:attribute>
+  <xsl:attribute name="writing-mode">
+    <xsl:value-of select="$direction.mode"/>
+  </xsl:attribute>
 </xsl:attribute-set>
 </src:fragment>
 </refsynopsisdiv>

@@ -1,19 +1,19 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Asignar más propiedades de los materiales a la copa</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Asignar más propiedades de los materiales a la copa</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Aprobado para su publicación. Su distribución es ilimitada.</para>
     </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="goblet_material_properties2_overviewlist">
+    <para xml:id="goblet_material_properties2_overviewlist">
 	En este tutorial usted aprenderá a:
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>
 	    Utilizar las opciones de reflexión especular y difusa del 
@@ -46,13 +46,13 @@
       </itemizedlist>
     </para>
     
-    <para id="goblet_material_properties2_intro1">
+    <para xml:id="goblet_material_properties2_intro1">
       Abra la base de datos goblet.g utilizando cualquiera de métodos 
       aprendidos. 
       Del menú Edit (Edición), seleccione la opción Combination Editor (Editor 
       de combinación). Seleccione basin1.r.
 
-    <para id="goblet_material_properties2_intro2">
+    <para xml:id="goblet_material_properties2_intro2">
       En el último tutorial, hemos asignado los valores para los atributos de 
       transparencia y de reflexión espejada. Ahora asignará valores de otras 
       propiedades de sombreado. Cuando selecciona el sombreado de plástico 
@@ -69,8 +69,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged08_goblet_combeditor.png" format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged08_goblet_combeditor.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -82,7 +81,7 @@
 
     </para>
 
-    <note id="goblet_material_properties2_intro3">
+    <note xml:id="goblet_material_properties2_intro3">
       <para>
 	Note que en versiones posteriores a <application>BRL-CAD</application> 
 	5.2, se aplican los valores por defecto, pero no son visualizados en 
@@ -90,13 +89,13 @@
       </para>
     </note>
    
-    <para id="goblet_material_properties2_intro4">
+    <para xml:id="goblet_material_properties2_intro4">
       En este ejemplo, el cuadro de entrada de sombreado indica que la 
       transparencia (tr) es de .5 y el reflejo espejado (re) es de .45. Los 
       ocho abreviaturas que se utilizan actualmente en el cuadro de entrada de 
       sombreado son las siguientes:
     <informaltable>
-      <tgroup cols='4'>
+      <tgroup cols="4">
 	<tbody>
 	  <row>
 	    <entry>tr - transparency - transparencia</entry>
@@ -115,8 +114,8 @@
     </informaltable>
     </para>
   
-    <sect1 id="goblet_specular_diffuse">
-      <title>Reflexión especular y difusa</title>
+    <section xml:id="goblet_specular_diffuse"><info><title>Reflexión especular y difusa</title></info>
+      
       <para>
 	Cuando la luz se refleja de una superficie brillante, produce dos 
 	tipos de reflexiones. Los puntos más notables son causados por 
@@ -131,8 +130,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged08_spec_vs_diff_reflectivity.png" format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged08_spec_vs_diff_reflectivity.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -167,10 +165,10 @@
 	complementario, de manera que la combinación de los valores sea igual 
 	a 1,0.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="goblet_refractive_index">
-      <title>Índice de refracción</title>
+    <section xml:id="goblet_refractive_index"><info><title>Índice de refracción</title></info>
+      
       
       <para>
 	Cuando la luz pasa a través de un medio (por ejemplo, aire) a otro 
@@ -193,8 +191,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged08_refractive_index.png" format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged08_refractive_index.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -204,20 +201,20 @@
 	</mediaobject>
       </informalfigure>
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="goblet_shininess">
-      <title>Brillo</title>
+    <section xml:id="goblet_shininess"><info><title>Brillo</title></info>
+      
       <para>
 	El brillo de un objeto afecta el índice del componente especular del 
 	sombreado de plástico. Mientras mas brillante es la superficie de un 
 	objeto, menor será el reflejo de la fuente de luz en la superficie del 
 	objeto. El rango de de brillo suele ser un valor entero de 1 a 10.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="goblet_extinction">
-      <title>Extinción</title>
+    <section xml:id="goblet_extinction"><info><title>Extinción</title></info>
+      
       <para>
 	El término extinción se aplica al componente transmisivo del sombreado 
 	del plástico, e indica la cantidad de luz absorbida por el material 
@@ -225,19 +222,19 @@
 	cualquier número negativo. Éste atributo puede afectar drásticamente 
 	otros atributos del sombreado, especialmente el índice de refracción.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="goblet_emission">
-      <title>Emisión</title>
+    <section xml:id="goblet_emission"><info><title>Emisión</title></info>
+      
       <para>
 	Emisión es una característica relativamente nueva que se ha añadido al 
 	paquete <application>BRL-CAD</application>. Se refiere a la 
 	cantidad de brillo artificial del objeto.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="goblet_shader_attributes">
-      <title>Aplicar atributos de material plático a la copa</title>
+    <section xml:id="goblet_shader_attributes"><info><title>Aplicar atributos de material plático a la copa</title></info>
+      
       <para>
 	Ahora que puede entender los diversos atributos del sombreado del 
 	plástico, es tiempo de experimentar con las formas en que afectan al 
@@ -262,8 +259,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged08_goblet_reflectivity_1.png" format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged08_goblet_reflectivity_1.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -276,8 +272,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged08_goblet_reflectivity_2.png" format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged08_goblet_reflectivity_2.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -296,8 +291,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged08_comb_editor_window_mater_prop.png" format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged08_comb_editor_window_mater_prop.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -315,13 +309,13 @@
 	reflejan los valores por defecto (por ejemplo, el brillo de 10).
 
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="goblet_material_properties2_review">
-      <title>Repasemos...</title>
+    <section xml:id="goblet_material_properties2_review"><info><title>Repasemos...</title></info>
+      
       <para>
 	  En este tutorial usted aprendió a:
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>
 	    Utilizar las opciones de reflexión especular y difusa del 
@@ -353,6 +347,6 @@
 	</listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

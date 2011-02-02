@@ -1,7 +1,6 @@
 
 SUBDIRS = \
 	Anim_Tutorial \
-	archer \
 	cadwidgets \
 	libbu \
 	libdm \

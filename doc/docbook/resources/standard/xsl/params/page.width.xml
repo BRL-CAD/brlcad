@@ -29,8 +29,8 @@
 <refsection><info><title>Description</title></info>
 
 <para>The page width is generally calculated from the
-<literal>paper.type</literal> and <literal>page.orientation</literal>.
-</para>
+<parameter>paper.type</parameter> and 
+<parameter>page.orientation</parameter> parameters.</para>
 
 </refsection>
 </refentry>

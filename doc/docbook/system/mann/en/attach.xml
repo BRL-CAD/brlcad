@@ -1,52 +1,15 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2011 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='attach'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="attach">
 
   <refmeta>
     <refentrytitle>ATTACH</refentrytitle>
     <manvolnum>nged</manvolnum>
-    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-    <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
   
-  <refnamediv id='name'>
+  <refnamediv xml:id="name">
     <refname>attach</refname>
     <refpurpose>
       Opens a display window.
@@ -54,22 +17,22 @@
   </refnamediv>
   
   <!-- body begins here -->
-  <refsynopsisdiv id='synopsis'>
-    <cmdsynopsis>
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
       <command>attach</command>    
-      <arg choice='opt'>-d <replaceable>display_string</replaceable></arg>
-      <arg choice='opt'>-i <replaceable>init_script</replaceable></arg>
-      <arg choice='opt'>-n <replaceable>name</replaceable></arg>
-      <arg choice='opt'>-t <replaceable>is_toplevel</replaceable></arg>
-      <arg choice='opt'>-W <replaceable>width</replaceable></arg>
-      <arg choice='opt'>-N <replaceable>height</replaceable></arg>
-      <arg choice='opt'>-S <replaceable>square_size</replaceable></arg>
-      <arg choice='opt'><replaceable>win_type</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-d <replaceable>display_string</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-i <replaceable>init_script</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-n <replaceable>name</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-t <replaceable>is_toplevel</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-W <replaceable>width</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-N <replaceable>height</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-S <replaceable>square_size</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>win_type</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   
-  <refsect1 id='description'>
-    <title>DESCRIPTION</title>
+  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+    
     <para>
       This command is used to open a display window. The set of supported
       window types includes X and ogl. It should be noted that 
@@ -77,19 +40,19 @@
       windows (i.e., multiple attaches are supported). To
       destroy a display window, use the <command>release</command> command.
     </para>
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='examples'>
-    <title>EXAMPLES</title>
+  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+    
     <para>
       These examples demonstrate the use of the <command>attach</command> command 
       to open ogl and X display windows.
     </para>
-    <example>
-      <title>Opening an ogl display window</title>
+    <example><info><title>Opening an ogl display window</title></info>
+      
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged></prompt> <userinput>attach ogl</userinput></term>
+	  <term><prompt>mged&gt;</prompt> <userinput>attach ogl</userinput></term>
 	  <listitem>
 	    <para>
 	      Opens an ogl display window named .dm_ogl0 (assuming this is the first 
@@ -106,7 +69,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged></prompt><userinput>attach -n myOgl -W 720 -N 486 ogl</userinput></term>
+	<term><prompt>mged&gt;</prompt><userinput>attach -n myOgl -W 720 -N 486 ogl</userinput></term>
 	<listitem>
 	  <para>
 	    Opens a 720 x 486 OpenGL display window named myOgl. 
@@ -114,7 +77,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged></prompt><userinput>attach -n myX -d remote_host:0 -i myInitX</userinput></term>
+	<term><prompt>mged&gt;</prompt><userinput>attach -n myX -d remote_host:0 -i myInitX</userinput></term>
 	<listitem>
 	  <para>
 	    Open an X display window named myX on remote_host that is initialized by
@@ -127,7 +90,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged></prompt><userinput>toplevel.t</userinput></term>
+	<term><prompt>mged&gt;</prompt><userinput>toplevel.t</userinput></term>
 	<listitem>
 	  <para>
 	    A top-level window named .t was created.
@@ -135,7 +98,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged></prompt><userinput>attach -t 0 -S 800 -n .t.ogl ogl</userinput></term>
+	<term><prompt>mged&gt;</prompt><userinput>attach -t 0 -S 800 -n .t.ogl ogl</userinput></term>
 	<listitem>
 	  <para>
 	    Opens a 800 x 800 OpenGL display window named .t.ogl that is not a top-level window.
@@ -143,7 +106,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged></prompt><userinput>button .t.dismiss -text Dismiss -command "release .t.ogl; destroy .t"</userinput></term>
+	<term><prompt>mged&gt;</prompt><userinput>button .t.dismiss -text Dismiss -command "release .t.ogl; destroy .t"</userinput></term>
 	<listitem>
 	  <para>
 	    Creates a button that dismisses the display manager, etc.
@@ -151,7 +114,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged></prompt><userinput>pack .t.ogl -expand 1 -fill both</userinput></term>
+	<term><prompt>mged&gt;</prompt><userinput>pack .t.ogl -expand 1 -fill both</userinput></term>
 	<listitem>
 	  <para>
 	    Packs the display manager inside .t.
@@ -159,7 +122,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged></prompt><userinput>pack .t.dismiss</userinput></term>
+	<term><prompt>mged&gt;</prompt><userinput>pack .t.dismiss</userinput></term>
 	<listitem>
 	  <para>
 	    Packs the Dismiss button inside .t.
@@ -167,7 +130,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged></prompt><userinput>attach</userinput></term>
+	<term><prompt>mged&gt;</prompt><userinput>attach</userinput></term>
 	<listitem>
 	  <para>
 	    Lists the help message that includes the valid display types.
@@ -176,19 +139,15 @@
       </varlistentry>
       </variablelist>
     </example>
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='author'>
-    <title>AUTHOR</title>
-    <para>BRL-CAD Team</para>
-  </refsect1>
+  <info><corpauthor>BRL-CAD Team</corpauthor></info>
   
-  <refsect1 id='bug_reports'>
-    <title>BUG REPORTS</title>
+  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+    
     <para>
       Reports of bugs or problems should be submitted via electronic
       mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
     </para>
-  </refsect1>
+  </refsection>
 </refentry>
-

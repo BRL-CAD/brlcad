@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="ASCII"?>
 <!--This file was created automatically by html2xhtml-->
 <!--from the HTML stylesheets.-->
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" version="1.0">
+<xsl:stylesheet exclude-result-prefixes="d"
+                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:d="http://docbook.org/ns/docbook"
+xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
 <xsl:template name="add.annotation.links">
   <xsl:param name="scripts" select="normalize-space($annotation.js)"/>
@@ -18,7 +20,7 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="annotation"/>
+<xsl:template match="d:annotation"/>
 
 <xsl:template name="apply-annotations">
   <xsl:if test="$annotation.support != 0">
@@ -26,7 +28,7 @@
   <xsl:variable name="id" select="(@id|@xml:id)[1]"/>
 
   <xsl:variable name="aids">
-    <xsl:for-each select="//annotation">
+    <xsl:for-each select="//d:annotation">
       <xsl:if test="@annotates=$id                     or starts-with(@annotates, concat($id, ' '))                     or contains(@annotates, concat(' ', $id, ' '))                     or substring(@annotates, string-length(@annotates)-3)                        = concat(' ', $id)">
         <xsl:value-of select="generate-id()"/>
         <xsl:text> </xsl:text>
@@ -87,15 +89,15 @@
   </xsl:choose>
 </xsl:template>
 
-<xsl:template match="annotation" mode="annotation-inline">
+<xsl:template match="d:annotation" mode="annotation-inline">
   <xsl:variable name="title">
     <xsl:choose>
-      <xsl:when test="title">
-        <xsl:value-of select="title"/>
+      <xsl:when test="d:title">
+        <xsl:value-of select="d:title"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:text>[Annotation #</xsl:text>
-        <xsl:number count="annotation" level="any" format="1"/>
+        <xsl:number count="d:annotation" level="any" format="1"/>
         <xsl:text>]</xsl:text>
       </xsl:otherwise>
     </xsl:choose>
@@ -114,12 +116,12 @@
   </a>
 </xsl:template>
 
-<xsl:template match="annotation" mode="annotation-popup">
+<xsl:template match="d:annotation" mode="annotation-popup">
   <div class="annotation-nocss">
     <p>
       <a id="annot-{generate-id(.)}"/>
       <xsl:text>Annotation #</xsl:text>
-      <xsl:number count="annotation" level="any" format="1"/>
+      <xsl:number count="d:annotation" level="any" format="1"/>
       <xsl:text>:</xsl:text>
     </p>
   </div>
@@ -145,8 +147,8 @@
 <xsl:template name="annotation-title">
   <div class="annotation-title">
     <xsl:choose>
-      <xsl:when test="title">
-        <xsl:apply-templates select="title/node()"/>
+      <xsl:when test="d:title">
+        <xsl:apply-templates select="d:title/node()"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:text>Annotation</xsl:text>

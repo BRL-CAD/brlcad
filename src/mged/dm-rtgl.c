@@ -104,7 +104,7 @@ Rtgl_dm_init(struct dm_list *o_dm_list,
 
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
 
-    if ((dmp = dm_open(interp, DM_TYPE_RTGL, argc-1, argv)) == DM_NULL)
+    if ((dmp = dm_open(INTERP, DM_TYPE_RTGL, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
     /*XXXX this eventually needs to move into Rtgl's private structure */
@@ -117,7 +117,7 @@ Rtgl_dm_init(struct dm_list *o_dm_list,
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_OK;
@@ -130,7 +130,7 @@ Rtgl_fb_open()
     char *rtgl_name = "/dev/rtgl";
 
     if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
-	Tcl_AppendResult(interp, "Rtgl_fb_open: failed to allocate framebuffer memory\n",
+	Tcl_AppendResult(INTERP, "Rtgl_fb_open: failed to allocate framebuffer memory\n",
 			 (char *)NULL);
 	return;
     }
@@ -219,7 +219,7 @@ Rtgl_dm(int argc,
 	    bu_vls_free(&tmp_vls);
 	}
 
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;

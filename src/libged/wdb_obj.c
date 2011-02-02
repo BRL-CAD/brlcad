@@ -270,8 +270,8 @@ int wdb_cmpdirname(const genptr_t a, const genptr_t b);
 void wdb_vls_col_item(struct bu_vls *str, char *cp, int *ccp, int *clp);
 void wdb_vls_col_eol(struct bu_vls *str, int *ccp, int *clp);
 void wdb_vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_list, int no_decorate);
-void wdb_vls_long_dpp(struct bu_vls *vls, struct directory **list_of_names, int num_in_list, int aflag, int cflag, int rflag, int sflag);
-void wdb_vls_line_dpp(struct bu_vls *vls, struct directory **list_of_names, int num_in_list, int aflag, int cflag, int rflag, int sflag);
+void wdb_vls_long_dpp(struct rt_wdb *wdbp, struct bu_vls *vls, struct directory **list_of_names, int num_in_list, int aflag, int cflag, int rflag, int sflag);
+void wdb_vls_line_dpp(struct rt_wdb *wdbp, struct bu_vls *vls, struct directory **list_of_names, int num_in_list, int aflag, int cflag, int rflag, int sflag);
 void wdb_do_list(struct db_i *dbip, Tcl_Interp *interp, struct bu_vls *outstrp, struct directory *dp, int verbose);
 struct directory ** wdb_getspace(struct db_i *dbip, size_t num_entries);
 struct directory *wdb_combadd(Tcl_Interp *interp, struct db_i *dbip, struct directory *objp, char *combname, int region_flag, int relation, int ident, int air, struct rt_wdb *wdbp);
@@ -2182,10 +2182,10 @@ wdb_ls_cmd(struct rt_wdb *wdbp,
     }
 
     if (lflag)
-	wdb_vls_long_dpp(&vls, dirp0, (int)(dirp - dirp0),
+	wdb_vls_long_dpp(wdbp, &vls, dirp0, (int)(dirp - dirp0),
 			 aflag, cflag, rflag, sflag);
     else if (aflag || cflag || rflag || sflag)
-	wdb_vls_line_dpp(&vls, dirp0, (int)(dirp - dirp0),
+	wdb_vls_line_dpp(wdbp, &vls, dirp0, (int)(dirp - dirp0),
 			 aflag, cflag, rflag, sflag);
     else
 	wdb_vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0), 0);
@@ -7727,8 +7727,11 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 		bu_vls_printf(&vls, "%s combination:\n", argv[2]);
 	    }
 	} else if (dp->d_flags & RT_DIR_SOLID) {
-	    bu_vls_printf(&vls, "%s %s:\n", argv[2],
-			  rt_functab[dp->d_minor_type].ft_label);
+	    struct rt_db_internal intern;
+	    if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+		bu_vls_printf(&vls, "%s %s:\n", argv[2], intern.idb_meth->ft_label);
+		rt_db_free_internal(&intern);
+	    }
 	} else {
 	    switch (dp->d_major_type) {
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
@@ -9079,7 +9082,8 @@ wdb_vls_col_pr4v(struct bu_vls *vls,
  *
  */
 void
-wdb_vls_long_dpp(struct bu_vls *vls,
+wdb_vls_long_dpp(struct rt_wdb *wdbp, 
+		 struct bu_vls *vls,
 		 struct directory **list_of_names,
 		 int num_in_list,
 		 int aflag,		/* print all objects */
@@ -9108,12 +9112,17 @@ wdb_vls_long_dpp(struct bu_vls *vls,
 	    max_nam_len = len;
 
 	if (dp->d_flags & RT_DIR_REGION)
-	    len = 6;
+	    len = 6; /* "region" */
 	else if (dp->d_flags & RT_DIR_COMB)
-	    len = 4;
-	else if (dp->d_flags & RT_DIR_SOLID)
-	    len = (int)strlen(rt_functab[dp->d_minor_type].ft_label);
-	else {
+	    len = 4; /* "comb" */
+	else if (dp->d_flags & RT_DIR_SOLID) {
+	    struct rt_db_internal intern;
+	    len = 9; /* "primitive" */
+	    if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+		len = strlen(intern.idb_meth->ft_label);
+		rt_db_free_internal(&intern);
+	    }
+	} else {
 	    switch (list_of_names[i]->d_major_type) {
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		    len = 6;
@@ -9146,9 +9155,14 @@ wdb_vls_long_dpp(struct bu_vls *vls,
 	    } else
 		isRegion = 0;
 	} else if (list_of_names[i]->d_flags & RT_DIR_SOLID) {
+	    struct rt_db_internal intern;
+	    type = "primitive";
+	    if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+		type = intern.idb_meth->ft_label;
+		rt_db_free_internal(&intern);
+	    }
 	    isComb = isRegion = 0;
 	    isSolid = 1;
-	    type = rt_functab[list_of_names[i]->d_minor_type].ft_label;
 	} else {
 	    switch (list_of_names[i]->d_major_type) {
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
@@ -9193,7 +9207,8 @@ wdb_vls_long_dpp(struct bu_vls *vls,
  * names in that list, sort and print that list on the same line.
  */
 void
-wdb_vls_line_dpp(struct bu_vls *vls,
+wdb_vls_line_dpp(struct rt_wdb *UNUSED(wdbp),
+		 struct bu_vls *vls,
 		 struct directory **list_of_names,
 		 int num_in_list,
 		 int aflag,	/* print all objects */

@@ -45,7 +45,7 @@ extern struct bn_unif *RandomFlag;
  *	y	Current row
  *	nx	Next column
  *	ny	Next row
- *	new	New row flag.
+ *	newrow	New row flag.
  *
  * Exit:
  *	returns	0 - Levels
@@ -63,7 +63,7 @@ extern struct bn_unif *RandomFlag;
  *	Christopher T. Johnson	- 90/03/21
  */
 int
-tone_floyd(int pix, int x, int y, int nx, int ny, int new)
+tone_floyd(int pix, int x, int UNUSED(y), int nx, int UNUSED(ny), int newrow)
 {
     static int *error = 0;
     static int *thisline;
@@ -96,7 +96,7 @@ tone_floyd(int pix, int x, int y, int nx, int ny, int new)
 /*
  *	if this is a new line then trade error for thisline.
  */
-    if (new) {
+    if (newrow) {
 	int *p;
 	p = error;
 	error = thisline;

@@ -1,20 +1,20 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Using the Insert Command in <application>MGED</application> to Size and Place Shapes</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Using the Insert Command in <application>MGED</application> to Size and Place Shapes</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="using_insert_command_overviewlist">
+    <para xml:id="using_insert_command_overviewlist">
       In this lesson, you will:
       
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Create a sphere and a right circular cylinder using the make command.</para>
 	</listitem>
@@ -39,7 +39,7 @@
       </itemizedlist>  
     </para>
     
-    <para id="using_insert_command_intropara1">
+    <para xml:id="using_insert_command_intropara1">
       This lesson focuses on creating shapes from the Command Window using the
       make and in commands. You will create a sphere (sph) and a right circular
       cylinder (rcc) using both commands so that you can see how each command
@@ -47,16 +47,16 @@
       different angles.
     </para>
     
-    <sect1 id="new_db_myShapes">
-      <title>Creating a New Database from the Command Window</title>
+    <section xml:id="new_db_myShapes"><info><title>Creating a New Database from the Command Window</title></info>
+      
       
       <para>
 	Create a new database and name it shapes.g. Title your database myShapes.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="sphere_make">
-      <title>Creating a Sphere Using the Make Command</title>
+    <section xml:id="sphere_make"><info><title>Creating a Sphere Using the Make Command</title></info>
+      
     
       <para>
 	Begin by making the Command Window active (usually by clicking anywhere in
@@ -69,7 +69,7 @@
 	As noted in Lesson 1, this command tells <application>MGED</application> to:
 	
 	<informaltable frame="all">
-	  <tgroup cols='3'>
+	  <tgroup cols="3">
 	    <tbody>
 	      <row><entry>make</entry><entry>sph1.s</entry><entry>sph</entry></row>
 	      <row><entry>Create a shape</entry><entry>Name it sph1.s</entry>
@@ -82,7 +82,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged03_wireframe_sph.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged03_wireframe_sph.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -111,7 +111,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged03_wireframe_sph_rcc.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged03_wireframe_sph_rcc.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -128,10 +128,10 @@
 	such as height and radius. So, a more precise way to create these shapes
 	is to use the in (insert) command.
       </para>
-    </sect1>
+    </section>
    
-    <sect1 id="using_in">
-      <title>Using the In Command to Create Shapes</title>
+    <section xml:id="using_in"><info><title>Using the In Command to Create Shapes</title></info>
+      
       
       <para>
 	Begin by making the Command Window active (usually done by clicking
@@ -171,7 +171,7 @@
 	millimeters. Notice that the numbers are separated by spaces followed by
 	the ENTER key. <application>MGED</application> will now ask you to:
       </para>  
-      <literallayout>
+      <literallayout class="normal">
       <prompt>Enter radius:</prompt>
       
       Type in:
@@ -184,7 +184,7 @@
 	should appear in your Command Window (including the appropriate
 	responses).
 	
-	<command><prompt>mged></prompt> in sph2.s sph</command>
+	<command><prompt>mged&gt;</prompt> in sph2.s sph</command>
 	
 	<literal>Enter X, Y, Z of vertex: 4 4 4</literal>
 	
@@ -228,8 +228,8 @@
 	like this:
       </para>
       
-      <literallayout>
-      <prompt>mged></prompt> in rcc2.s rcc
+      <literallayout class="normal">
+      <prompt>mged&gt;</prompt> in rcc2.s rcc
       
       Enter X, Y, Z of vertex: 4 4 0
       
@@ -249,11 +249,11 @@
       </para>
       
       <informaltable>
-	<tgroup cols='2'>
+	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><inlinegraphic fileref="../../lessons/en/images/mged03_shapes_make_command.png" /></entry>
-	      <entry><inlinegraphic fileref="../../lessons/en/images/mged03_shapes_in_command.png" /></entry>
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged03_shapes_make_command.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged03_shapes_in_command.png"/></imageobject></inlinemediaobject></entry>
 	    </row>
 	    <row>
 	      <entry>Shapes Created with Make Command</entry>
@@ -263,10 +263,10 @@
 	</tgroup>
       </informaltable>
 
-    </sect1>
+    </section>
    
-    <sect1 id="args_on_one_line">
-      <title>Combining Arguments on One Line</title>
+    <section xml:id="args_on_one_line"><info><title>Combining Arguments on One Line</title></info>
+      
       
       <para>
 	Another way to use the in command is to combine all of the required
@@ -288,7 +288,7 @@
       
       
       <informaltable>
-	<tgroup cols='7'>
+	<tgroup cols="7">
 	  <tbody>
 	    <row>
 	      <entry>in</entry>
@@ -324,17 +324,17 @@
       </para>
       
       <informaltable>
-	<tgroup cols='10' align='center' colsep='1' rowsep='1'>
-	  <colspec colname='c1'/>
-	  <colspec colname='c2'/>
-	  <colspec colname='c3'/>
-	  <colspec colname='c4'/>
-	  <colspec colname='c5'/>
-	  <colspec colname='c6'/>
-	  <colspec colname='c7'/>
-	  <colspec colname='c8'/>
-	  <colspec colname='c9'/>
-	  <colspec colname='c10'/>
+	<tgroup cols="10" align="center" colsep="1" rowsep="1">
+	  <colspec colname="c1"/>
+	  <colspec colname="c2"/>
+	  <colspec colname="c3"/>
+	  <colspec colname="c4"/>
+	  <colspec colname="c5"/>
+	  <colspec colname="c6"/>
+	  <colspec colname="c7"/>
+	  <colspec colname="c8"/>
+	  <colspec colname="c9"/>
+	  <colspec colname="c10"/>
 	  <tbody>
 	    <row>
 	      <entry>in</entry>
@@ -349,16 +349,16 @@
 	      <entry>3</entry>
 	    </row>
 	    <row>
-	      <entry morerows='1' valign='top'>Insert a primitive shape</entry>
-	      <entry morerows='1' valign='top'>Name it rcc3.s</entry>
-	      <entry morerows='1' valign='top'>Make the primitive shape a right circular cylinder</entry>
-	      <entry morerows='1' valign='top'>Make the x of the vertex a value of 4</entry>
-	      <entry morerows='1' valign='top'>Make the y of the vertex a value of 4</entry>
-	      <entry morerows='1' valign='top'>Make the z of the vertex a value of 0</entry>
+	      <entry morerows="1" valign="top">Insert a primitive shape</entry>
+	      <entry morerows="1" valign="top">Name it rcc3.s</entry>
+	      <entry morerows="1" valign="top">Make the primitive shape a right circular cylinder</entry>
+	      <entry morerows="1" valign="top">Make the x of the vertex a value of 4</entry>
+	      <entry morerows="1" valign="top">Make the y of the vertex a value of 4</entry>
+	      <entry morerows="1" valign="top">Make the z of the vertex a value of 0</entry>
 	      <entry>Make the x of the height vector a value of 0</entry>
 	      <entry>Make the y of the height vector a value of 0</entry>
 	      <entry>Make the z of the height vector a value of 4</entry>
-	      <entry morerows='1' valign='top'>Make the radius a value of 3</entry>
+	      <entry morerows="1" valign="top">Make the radius a value of 3</entry>
 	    </row>
 	    <row>
 	      <entry namest="c7" nameend="c9" align="center">Make the shape four units long, 
@@ -367,10 +367,10 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-    </sect1>
+    </section>
     
-    <sect1 id="command_combined_in">
-      <title>Making a Combined-Command Form for the In Command</title>
+    <section xml:id="command_combined_in"><info><title>Making a Combined-Command Form for the In Command</title></info>
+      
       
       <para>
 	When you are first starting to use <application>MGED</application>, if you want to use the Command
@@ -382,14 +382,14 @@
       </para>
       
       <informaltable>
-	<tgroup cols='10' align='center' colsep='1' rowsep='1'>
-	  <colspec colname='c1'/>
-	  <colspec colname='c2'/>
-	  <colspec colname='c3'/>
-	  <colspec colname='c4'/>
-	  <colspec colname='c5'/>
-	  <colspec colname='c6'/>
-	  <colspec colname='c7'/>
+	<tgroup cols="10" align="center" colsep="1" rowsep="1">
+	  <colspec colname="c1"/>
+	  <colspec colname="c2"/>
+	  <colspec colname="c3"/>
+	  <colspec colname="c4"/>
+	  <colspec colname="c5"/>
+	  <colspec colname="c6"/>
+	  <colspec colname="c7"/>
 	  <tbody>
 	    <row>
 	      <entry>in</entry>
@@ -401,13 +401,13 @@
 	      <entry>?</entry>
 	    </row>
 	    <row>
-	      <entry morerows='1' valign='top'>Insert a shape</entry>
-	      <entry morerows='1' valign='top'>Name of primitive shape</entry>
-	      <entry morerows='1' valign='top'>Type of shape is a sphere</entry>
+	      <entry morerows="1" valign="top">Insert a shape</entry>
+	      <entry morerows="1" valign="top">Name of primitive shape</entry>
+	      <entry morerows="1" valign="top">Type of shape is a sphere</entry>
 	      <entry>Value of x</entry>
 	      <entry>Value of y</entry>
 	      <entry>Value of z</entry>
-	      <entry morerows='1' valign='top'>Radius of sph</entry>
+	      <entry morerows="1" valign="top">Radius of sph</entry>
 	    </row>
 	    <row>
 	      <entry namest="c4" nameend="c6" align="center">Center</entry>
@@ -421,17 +421,17 @@
       </para>
       
       <informaltable>
-	<tgroup cols='10' align='center' colsep='1' rowsep='1'>
-	  <colspec colname='c1'/>
-	  <colspec colname='c2'/>
-	  <colspec colname='c3'/>
-	  <colspec colname='c4'/>
-	  <colspec colname='c5'/>
-	  <colspec colname='c6'/>
-	  <colspec colname='c7'/>
-	  <colspec colname='c8'/>
-	  <colspec colname='c9'/>
-	  <colspec colname='c10'/>
+	<tgroup cols="10" align="center" colsep="1" rowsep="1">
+	  <colspec colname="c1"/>
+	  <colspec colname="c2"/>
+	  <colspec colname="c3"/>
+	  <colspec colname="c4"/>
+	  <colspec colname="c5"/>
+	  <colspec colname="c6"/>
+	  <colspec colname="c7"/>
+	  <colspec colname="c8"/>
+	  <colspec colname="c9"/>
+	  <colspec colname="c10"/>
 	  <tbody>
 	    <row>
 	      <entry>in</entry>
@@ -442,16 +442,16 @@
 	      <entry>?</entry>
 	    </row>
 	    <row>
-	      <entry morerows='1' valign='top'>Insert a primative shape</entry>
-	      <entry morerows='1' valign='top'>Name of shape</entry>
-	      <entry morerows='1' valign='top'>Type of shape is a right circular cylinder</entry>
+	      <entry morerows="1" valign="top">Insert a primative shape</entry>
+	      <entry morerows="1" valign="top">Name of shape</entry>
+	      <entry morerows="1" valign="top">Type of shape is a right circular cylinder</entry>
 	      <entry>Value of x</entry>
 	      <entry>Value of y</entry>
 	      <entry>Value of z</entry>
 	      <entry>Value of x</entry>
 	      <entry>Value of y</entry>
 	      <entry>Value of z</entry>
-	      <entry morerows='1' valign='top'>Radius of rcc</entry>
+	      <entry morerows="1" valign="top">Radius of rcc</entry>
 	    </row>
 	    <row>
 	      <entry namest="c4" nameend="c6" align="center">Vertex</entry>
@@ -460,10 +460,10 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-    </sect1>
+    </section>
     
-    <sect1 id="mged_naming_conventions">
-      <title>Considering <application>MGED</application> Naming Conventions</title>
+    <section xml:id="mged_naming_conventions"><info><title>Considering <application>MGED</application> Naming Conventions</title></info>
+      
       
       <para>
 	You may have noticed that each time you have created a sphere, or rcc, you
@@ -491,36 +491,36 @@
 	set of conventions they use. If you work alone, develop a set of naming
 	conventions that works for you and then use it consistently.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="view_shapes">
-      <title>Viewing the Shapes</title>
+    <section xml:id="view_shapes"><info><title>Viewing the Shapes</title></info>
+      
 
       <para>
 	Practice viewing your new shapes using the View menu. Manipulate your view
 	using the various mouse-key combinations identified in the previous
 	lesson.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="using_insert_command_quit">
-      <title>Quitting <application>MGED</application></title>
+    <section xml:id="using_insert_command_quit"><info><title>Quitting <application>MGED</application></title></info>
+      
 
       <para>
 	If you wish to quit <application>MGED</application>, at this point, type either the letter q or the
 	word quit after the Command Window prompt and then press ENTER. You may
 	also quit the program by selecting Exit from the File menu.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="using_insert_command_review">
-      <title>Review</title>
+    <section xml:id="using_insert_command_review"><info><title>Review</title></info>
+      
       
       <para>
 	In this lesson, you:
       </para>
 
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Created a sphere and a right circular cylinder using the make command.</para>
 	</listitem>
@@ -543,6 +543,6 @@
 	  <para>Quit the <application>MGED</application> program.</para>
 	</listitem>
       </itemizedlist>
-    </sect1>
+    </section>
 
   </article>

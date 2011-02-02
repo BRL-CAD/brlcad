@@ -1,195 +1,158 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2011 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='knob'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="knob">
 
 <refmeta>
   <refentrytitle>KNOB</refentrytitle>
   <manvolnum>nged</manvolnum>
-  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-  <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
 </refmeta>
 
-<refnamediv id='name'>
+<refnamediv xml:id="name">
   <refname>knob</refname>
   <refpurpose>Provides a method for simulating knob input. With no options, it will display the 	current values for the knobs.
    </refpurpose>
 </refnamediv>
 
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-  <cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
     <command>knob</command>    
     
-    <arg>-e -i -m -v</arg>
-    <group choice='opt'>
-	<arg>-o</arg>
-	<arg>v</arg>
-      <arg>m</arg>
-	<arg>e</arg>
-	<arg>k</arg>
+    <arg choice="opt" rep="norepeat">-e -i -m -v</arg>
+    <group choice="opt" rep="norepeat">
+	<arg choice="opt" rep="norepeat">-o</arg>
+	<arg choice="opt" rep="norepeat">v</arg>
+      <arg choice="opt" rep="norepeat">m</arg>
+	<arg choice="opt" rep="norepeat">e</arg>
+	<arg choice="opt" rep="norepeat">k</arg>
     </group>
-    <group>
-     <arg>zap</arg>
-     <arg>zero</arg> 
-     <arg><replaceable>id</replaceable> <arg><replaceable>val</replaceable></arg></arg>
+    <group choice="opt" rep="norepeat">
+     <arg choice="opt" rep="norepeat">zap</arg>
+     <arg choice="opt" rep="norepeat">zero</arg> 
+     <arg choice="opt" rep="norepeat"><replaceable>id</replaceable> <arg choice="opt" rep="norepeat"><replaceable>val</replaceable></arg></arg>
     </group>
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsect1 id='description'>
-  <title>DESCRIPTION</title>
-  <para><emphasis remap='B' role="bold">The <command>knob</command> command is used internally by MGED in the processing of knob input devices and is not recommended for users.</emphasis> The <command>knob </command> command provides a method for simulating knob input. With no options, it will display the current values for the knobs. With the <command> zap or zero </command> command provided, all the knob values will be reset to zero. If an <emphasis>id</emphasis> and <emphasis>value</emphasis>are provided, the specified knob setting will be simulated. If the <emphasis>-i</emphasis> option is specified, then the value provided will be used as an
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  
+  <para><emphasis remap="B" role="bold">The <command>knob</command> command is used internally by MGED in the processing of knob input devices and is not recommended for users.</emphasis> The <command>knob </command> command provides a method for simulating knob input. With no options, it will display the current values for the knobs. With the <command> zap or zero </command> command provided, all the knob values will be reset to zero. If an <emphasis>id</emphasis> and <emphasis>value</emphasis>are provided, the specified knob setting will be simulated. If the <emphasis>-i</emphasis> option is specified, then the value provided will be used as an
 increment to be applied to the indicated knob. The knobs have different functions
 depending on the current mode. For example, if in primitive or matrix edit mode and
 a rotation or translation function is selected, the knob effects are applied to the edited
 object by default. However, the <emphasis>-v </emphasis>(view coordinates) and <emphasis>-m</emphasis> (model coordinates) options may be used to adjust the view without modifying primitives or matrices.  The <emphasis>-e</emphasis> option allows the knob effects to be applied to the edited object when they would normally be applied to the view. The <emphasis>-o</emphasis> option allows the origin of rotation to be specified with <emphasis>v, m, e,</emphasis> and <emphasis>k</emphasis>, indicating view, model, eye, and keypoint,
 respectively. The units for <emphasis>value</emphasis> are degrees for rotation and local units for translation. The available <emphasis>knob ids</emphasis> are:
   </para>
-<itemizedlist mark='bullet'>
+<itemizedlist mark="bullet">
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">x</emphasis> -- rate-based rotation about horizontal axis.
+    <emphasis remap="B" role="bold">x</emphasis> -- rate-based rotation about horizontal axis.
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">y</emphasis> -- rate-based rotation about vertical axis.
+    <emphasis remap="B" role="bold">y</emphasis> -- rate-based rotation about vertical axis.
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">z</emphasis> -- rate-based rotation about axis normal to   	screen.
+    <emphasis remap="B" role="bold">z</emphasis> -- rate-based rotation about axis normal to   	screen.
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">X</emphasis> -- rate-based translation in horizontal 	direction.
+    <emphasis remap="B" role="bold">X</emphasis> -- rate-based translation in horizontal 	direction.
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">Y</emphasis> -- rate-based translation in vertical direction.
+    <emphasis remap="B" role="bold">Y</emphasis> -- rate-based translation in vertical direction.
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">Z</emphasis> -- rate-based translation in direction normal to 	screen.
+    <emphasis remap="B" role="bold">Z</emphasis> -- rate-based translation in direction normal to 	screen.
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">S</emphasis> -- rate-based Scale or Zoom.
+    <emphasis remap="B" role="bold">S</emphasis> -- rate-based Scale or Zoom.
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">ax</emphasis> -- absolute rotation about horizontal axis.
+    <emphasis remap="B" role="bold">ax</emphasis> -- absolute rotation about horizontal axis.
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">ay</emphasis> -- absolute rotation about vertical axis.
+    <emphasis remap="B" role="bold">ay</emphasis> -- absolute rotation about vertical axis.
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">az</emphasis> -- absolute rotation about axis normal to  	screen.
+    <emphasis remap="B" role="bold">az</emphasis> -- absolute rotation about axis normal to  	screen.
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">aX</emphasis> -- absolute translation in horizontal direction.
+    <emphasis remap="B" role="bold">aX</emphasis> -- absolute translation in horizontal direction.
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">aY</emphasis> -- absolute translation in vertical direction.
+    <emphasis remap="B" role="bold">aY</emphasis> -- absolute translation in vertical direction.
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">aZ</emphasis> -- absolute translation in direction normal to  	screen.
+    <emphasis remap="B" role="bold">aZ</emphasis> -- absolute translation in direction normal to  	screen.
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">aS</emphasis> -- absolute Scale or Zoom.
+    <emphasis remap="B" role="bold">aS</emphasis> -- absolute Scale or Zoom.
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">xadc</emphasis> -- absolute translation of adc in horizontal 	direction (screen coordinates -2048 to +2048).
+    <emphasis remap="B" role="bold">xadc</emphasis> -- absolute translation of adc in horizontal 	direction (screen coordinates -2048 to +2048).
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">yadc</emphasis> -- absolute translation of adc in vertical 	direction (screen coordinates -2048 to +2048).
+    <emphasis remap="B" role="bold">yadc</emphasis> -- absolute translation of adc in vertical 	direction (screen coordinates -2048 to +2048).
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">ang1</emphasis> -- absolute rotation of adc angle1 (degrees).
+    <emphasis remap="B" role="bold">ang1</emphasis> -- absolute rotation of adc angle1 (degrees).
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">ang2</emphasis> -- absolute rotation of adc angle2 (degrees).
+    <emphasis remap="B" role="bold">ang2</emphasis> -- absolute rotation of adc angle2 (degrees).
   </para>
 </listitem>
 <listitem>
   <para>
-    <emphasis remap='B' role="bold">distadc</emphasis> -- distance setting of the adc (screen 	coordinates -2048 to +2048).
+    <emphasis remap="B" role="bold">distadc</emphasis> -- distance setting of the adc (screen 	coordinates -2048 to +2048).
   </para>
 </listitem>
 </itemizedlist>
-</refsect1>
+</refsection>
 
-<refsect1 id='examples'>
-  <title>EXAMPLES</title>
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  
   <para>The example shows the use of the <command>knob</command> command with the <emphasis>y	</emphasis> option to rotate a view about the vertical axis.
   </para>
-  <example>
-    <title>Rotate a view about the vertical axis.</title>
+  <example><info><title>Rotate a view about the vertical axis.</title></info>
+    
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged></prompt> <userinput>knob y 1</userinput></term>
+	   <term><prompt>mged&gt;</prompt> <userinput>knob y 1</userinput></term>
 	   <listitem>
 	     <para>Starts the view rotating about the vertical axis.
 	      	     </para>
@@ -198,19 +161,15 @@ respectively. The units for <emphasis>value</emphasis> are degrees for rotation 
      </variablelist>
   </example>
    
-</refsect1>
+</refsection>
 
-<refsect1 id='author'>
-  <title>AUTHOR</title>
-  <para>BRL-CAD Team</para>
-</refsect1>
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
 
-<refsect1 id='bug_reports'>
-  <title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
-</refsect1>
+</refsection>
 </refentry>
-

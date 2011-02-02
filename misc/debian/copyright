@@ -1,5 +1,5 @@
-This package was debianized by: Manuel A. Fernandez Montecelo
-<manuel.montezelo@gmail.com> on 2010-08-25 10:12:35 UTC
+This package was debianized by: Jordi Sayol <g.sayol@yahoo.es>
+on Thu, 27 Jan 2011 15:18:03 +0100
 
 It was downloaded from: http://brlcad.org/
 
@@ -22,7 +22,7 @@ Copyright:
 	and all contributions being made.  The following notice should be
 	prominent in the BRL-CAD sources:
 
-	  Copyright (c) 1984-2011 United States Government as represented by
+	  Copyright (c) 1984-2010 United States Government as represented by
 	  the U.S. Army Research Laboratory.
 
 License:

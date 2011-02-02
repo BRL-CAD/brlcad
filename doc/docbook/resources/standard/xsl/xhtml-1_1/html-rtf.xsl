@@ -105,7 +105,7 @@
 <xsl:template name="unwrap.p">
   <xsl:param name="p"/>
   <xsl:choose>
-    <xsl:when test="function-available('exsl:node-set')                     and function-available('set:leading')                     and function-available('set:trailing')">
+    <xsl:when test="$exsl.node.set.available != 0                     and function-available('set:leading')                     and function-available('set:trailing')">
       <xsl:apply-templates select="exsl:node-set($p)" mode="unwrap.p"/>
     </xsl:when>
     <xsl:otherwise>
@@ -287,7 +287,7 @@
 <xsl:template name="remove.empty.div">
   <xsl:param name="div"/>
   <xsl:choose>
-    <xsl:when test="function-available('exsl:node-set')">
+    <xsl:when test="$exsl.node.set.available != 0">
       <xsl:apply-templates select="exsl:node-set($div)" mode="remove.empty.div"/>
     </xsl:when>
     <xsl:otherwise>

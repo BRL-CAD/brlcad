@@ -72,12 +72,5 @@ equations in your document.</para>
     <parameter>passivetex.extensions</parameter>,
     <parameter>tex.math.file</parameter></para>
 </refsection>
-<refsection><info><title>More information</title></info>
-  <para>For how-to documentation on embedding TeX equations and
-    generating output from them, see
-    <link
-      role="tcg"
-      xlink:href="TexMath.html"
-      >DBTeXMath</link>.</para>
-</refsection>
+
 </refentry>

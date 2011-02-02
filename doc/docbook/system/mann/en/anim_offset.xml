@@ -1,71 +1,34 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-          "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2011 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='anim_offset1'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="anim_offset1">
   <refmeta>
     <refentrytitle>ANIM_OFFSET</refentrytitle>
     <manvolnum>nged</manvolnum>
-    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-    <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-  <refnamediv id='name'>
+  <refnamediv xml:id="name">
     <refname>anim_offset</refname>
     <refpurpose>create an animation table for an object rigidly attached to another object.</refpurpose>
   </refnamediv>
   
   <!-- body begins here -->
-  <refsynopsisdiv id='synopsis'>
-    <cmdsynopsis>
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
       <command>anim_offset</command>    
-      <arg choice='plain'>-o <replaceable>#</replaceable> <replaceable>#</replaceable> <replaceable>#</replaceable></arg>
-      <arg choice='opt'>-r </arg>
-      <arg choice='plain'><replaceable>in.table</replaceable></arg>
-      <arg choice='plain'><replaceable>out.table</replaceable></arg>
+      <arg choice="plain" rep="norepeat">-o <replaceable>#</replaceable> <replaceable>#</replaceable> <replaceable>#</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-r </arg>
+      <arg choice="plain" rep="norepeat"><replaceable>in.table</replaceable></arg>
+      <arg choice="plain" rep="norepeat"><replaceable>out.table</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   
   
-  <refsect1 id='description'>
-    <title>DESCRIPTION</title>
+  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+    
     <para>
-      This filter operates on animation tables of the type used by <emphasis remap='I'>tabsub</emphasis>
-      and <emphasis remap='I'>anim_script.</emphasis> Given a table specifying the position and
+      This filter operates on animation tables of the type used by <emphasis remap="I">tabsub</emphasis>
+      and <emphasis remap="I">anim_script.</emphasis> Given a table specifying the position and
       orientation of one object at every applicable time, <command>anim_offset</command>
       calculates the position of another object which is rigidly attached to it.
     </para>
@@ -85,10 +48,10 @@
       <option>-o # # #</option> option.  These offset values
       should be as measured from the centroid of the rigid  body.
     </para>
-  </refsect1>
+  </refsection>
 
-  <refsect1 id='examples'>
-    <title>EXAMPLES</title>
+  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+    
     <para>
       This filter could be used, for example, to do an animation where
       the camera is placed inside a moving vehicle.
@@ -99,7 +62,7 @@
       center of the front axle of the truck as well as its orientation at each
       time. One row of the table might look like this:
     </para>
-    <literallayout remap='.nf'>
+    <literallayout remap=".nf" class="normal">
 
 35.2	12450	-140	600	90.0 	0.0	0.0
 
@@ -119,7 +82,7 @@
       position in this case be (-600, 900, 1200), in units of mm. Now we use
       the routine:
     </para>
-    <literallayout remap='.nf'>
+    <literallayout remap=".nf" class="normal">
 
 anim_offset -o -600 900 1200 &lt; truck.table &gt; camera.table
 
@@ -129,7 +92,7 @@ anim_offset -o -600 900 1200 &lt; truck.table &gt; camera.table
       virtual camera at each time. The row corresponding to the sample row
       above would be:
     </para>
-    <literallayout remap='.nf'>
+    <literallayout remap=".nf" class="normal">
 
 35.2	11550	-740	1800
 
@@ -138,38 +101,40 @@ anim_offset -o -600 900 1200 &lt; truck.table &gt; camera.table
     <para>
       With the <option>-r</option> option, the output would have been:
     </para>
-    <literallayout remap='.nf'>
+    <literallayout remap=".nf" class="normal">
 
 35.2	11550	-740	1800	90.0 	0.0	0.0
 
     </literallayout> <!-- .fi -->
     
     <para>
-      Now <emphasis remap='I'>tabsub</emphasis> and/or <emphasis remap='I'>anim_script</emphasis>
+      Now <emphasis remap="I">tabsub</emphasis> and/or <emphasis remap="I">anim_script</emphasis>
       can be used to process these two animation tables into an animation script.
     </para>
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='bugs'>
-    <title>BUGS</title>
+  <refsection xml:id="bugs"><info><title>BUGS</title></info>
+    
     <para>
       The program will only use orientations specified as yaw, pitch, and roll. You can get around this using
-      <emphasis remap='I'>anim_orient</emphasis>, which converts between different orientation representations.
+      <emphasis remap="I">anim_orient</emphasis>, which converts between different orientation representations.
     </para>
-  </refsect1>
-  
-  <refsect1 id='author'><title>AUTHOR</title>
-  <para>Carl J. Nuzman</para>
-  </refsect1>
-  
-  <refsect1 id='copyright'><title>COPYRIGHT</title>
+  </refsection>
+
+  <info>
+    <author>
+      <personname>Carl J. Nuzman</personname>
+      <contrib></contrib>
+    </author>
+  </info>
+ 
+  <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
   <para> This software is Copyright (c) 1993-2011 by the United States
   Government as represented by U.S. Army Research Laboratory.</para>
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='bug_reports'><title>BUG REPORTS</title>
+  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
   <para>Reports of bugs or problems should be submitted via electronic
   mail to &lt;devs@brlcad.org&gt;.</para>
-  </refsect1>
+  </refsection>
 </refentry>
-

@@ -1,6 +1,8 @@
 <?xml version='1.0'?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:fo="http://www.w3.org/1999/XSL/Format"
+<xsl:stylesheet exclude-result-prefixes="d"
+                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:fo="http://www.w3.org/1999/XSL/Format"
                 version='1.0'>
 
 <!-- ********************************************************************
@@ -15,179 +17,158 @@
 
 <!-- ==================================================================== -->
 
-<!-- FIXME: in the contexts where <toc> can occur, I think it's always
-     the case that a page-sequence is required. Is that true? -->
+<!-- only set, book and part puts toc in its own page sequence -->
 
-<xsl:template match="toc">
-  <xsl:variable name="master-reference">
-    <xsl:call-template name="select.pagemaster"/>
+<xsl:template match="d:set/d:toc | d:book/d:toc | d:part/d:toc">
+  <xsl:variable name="toc.params">
+    <xsl:call-template name="find.path.params">
+      <xsl:with-param name="node" select="parent::*"/>
+      <xsl:with-param name="table" select="normalize-space($generate.toc)"/>
+    </xsl:call-template>
   </xsl:variable>
 
-  <xsl:choose>
-    <xsl:when test="*">
-      <xsl:if test="$process.source.toc != 0">
-        <!-- if the toc isn't empty, process it -->
-        <fo:page-sequence hyphenate="{$hyphenate}"
-                          master-reference="{$master-reference}">
-          <xsl:attribute name="language">
-            <xsl:call-template name="l10n.language"/>
-          </xsl:attribute>
-          <xsl:attribute name="format">
-            <xsl:call-template name="page.number.format">
-              <xsl:with-param name="element" select="'toc'"/>
-              <xsl:with-param name="master-reference" 
-                              select="$master-reference"/>
-            </xsl:call-template>
-          </xsl:attribute>
-
-          <xsl:attribute name="initial-page-number">
-            <xsl:call-template name="initial.page.number">
-              <xsl:with-param name="element" select="'toc'"/>
-              <xsl:with-param name="master-reference" 
-                              select="$master-reference"/>
-            </xsl:call-template>
-          </xsl:attribute>
-
-          <xsl:attribute name="force-page-count">
-            <xsl:call-template name="force.page.count">
-              <xsl:with-param name="master-reference" 
-	                      select="$master-reference"/>
-            </xsl:call-template>
-          </xsl:attribute>
-
-          <xsl:attribute name="hyphenation-character">
-            <xsl:call-template name="gentext">
-              <xsl:with-param name="key" select="'hyphenation-character'"/>
-            </xsl:call-template>
-          </xsl:attribute>
-          <xsl:attribute name="hyphenation-push-character-count">
-            <xsl:call-template name="gentext">
-              <xsl:with-param name="key" select="'hyphenation-push-character-count'"/>
-            </xsl:call-template>
-          </xsl:attribute>
-          <xsl:attribute name="hyphenation-remain-character-count">
-            <xsl:call-template name="gentext">
-              <xsl:with-param name="key" select="'hyphenation-remain-character-count'"/>
-            </xsl:call-template>
-          </xsl:attribute>
-
-          <xsl:apply-templates select="." mode="running.head.mode">
-            <xsl:with-param name="master-reference" select="$master-reference"/>
-          </xsl:apply-templates>
-          <xsl:apply-templates select="." mode="running.foot.mode">
-            <xsl:with-param name="master-reference" select="$master-reference"/>
-          </xsl:apply-templates>
-
-          <fo:flow flow-name="xsl-region-body">
-            <xsl:call-template name="set.flow.properties">
-              <xsl:with-param name="element" select="local-name(.)"/>
-              <xsl:with-param name="master-reference" 
-                              select="$master-reference"/>
-            </xsl:call-template>
-
-            <fo:block xsl:use-attribute-sets="toc.margin.properties">
-              <xsl:call-template name="table.of.contents.titlepage"/>
-              <xsl:apply-templates/>
-            </fo:block>
-          </fo:flow>
-        </fo:page-sequence>
-      </xsl:if>
-    </xsl:when>
-    <xsl:otherwise>
-      <xsl:if test="$process.empty.source.toc != 0">
-        <fo:page-sequence hyphenate="{$hyphenate}"
-                          master-reference="{$master-reference}">
-          <xsl:attribute name="language">
-            <xsl:call-template name="l10n.language"/>
-          </xsl:attribute>
-          <xsl:attribute name="format">
-            <xsl:call-template name="page.number.format">
-              <xsl:with-param name="element" select="'toc'"/>
-              <xsl:with-param name="master-reference" 
-                              select="$master-reference"/>
-            </xsl:call-template>
-          </xsl:attribute>
-
-          <xsl:attribute name="initial-page-number">
-            <xsl:call-template name="initial.page.number">
-              <xsl:with-param name="element" select="'toc'"/>
-              <xsl:with-param name="master-reference" 
-                              select="$master-reference"/>
-            </xsl:call-template>
-          </xsl:attribute>
-
-          <xsl:attribute name="hyphenation-character">
-            <xsl:call-template name="gentext">
-              <xsl:with-param name="key" select="'hyphenation-character'"/>
-            </xsl:call-template>
-          </xsl:attribute>
-          <xsl:attribute name="hyphenation-push-character-count">
-            <xsl:call-template name="gentext">
-              <xsl:with-param name="key" select="'hyphenation-push-character-count'"/>
-            </xsl:call-template>
-          </xsl:attribute>
-          <xsl:attribute name="hyphenation-remain-character-count">
-            <xsl:call-template name="gentext">
-              <xsl:with-param name="key" select="'hyphenation-remain-character-count'"/>
-            </xsl:call-template>
-          </xsl:attribute>
-
-          <xsl:apply-templates select="." mode="running.head.mode">
-            <xsl:with-param name="master-reference" select="$master-reference"/>
-          </xsl:apply-templates>
-          <xsl:apply-templates select="." mode="running.foot.mode">
-            <xsl:with-param name="master-reference" select="$master-reference"/>
-          </xsl:apply-templates>
-
-          <fo:flow flow-name="xsl-region-body">
+  <!-- Do not output the toc element if one is already generated
+       by the use of $generate.toc parameter, or if
+       generating a source toc is turned off -->
+  <xsl:if test="not(contains($toc.params, 'toc')) and
+                ($process.source.toc != 0 or $process.empty.source.toc != 0)">
+    <!-- Don't generate a page sequence unless there is content -->
+    <xsl:variable name="content">
+      <xsl:choose>
+        <xsl:when test="* and $process.source.toc != 0">
+          <xsl:apply-templates />
+        </xsl:when>
+        <xsl:when test="count(*) = 0 and $process.empty.source.toc != 0">
+          <!-- trick to switch context node to parent element -->
+          <xsl:for-each select="parent::*">
             <xsl:choose>
-              <xsl:when test="parent::section
-                              or parent::sect1
-                              or parent::sect2
-                              or parent::sect3
-                              or parent::sect4
-                              or parent::sect5">
-                <xsl:apply-templates select="parent::*"
-                                     mode="toc.for.section"/>
+              <xsl:when test="self::d:set">
+                <xsl:call-template name="set.toc">
+                  <xsl:with-param name="toc.title.p" 
+                                  select="contains($toc.params, 'title')"/>
+                </xsl:call-template>
               </xsl:when>
-              <xsl:when test="parent::article">
-                <xsl:apply-templates select="parent::*"
-                                     mode="toc.for.component"/>
+              <xsl:when test="self::d:book">
+                <xsl:call-template name="division.toc">
+                  <xsl:with-param name="toc.title.p" 
+                                  select="contains($toc.params, 'title')"/>
+                </xsl:call-template>
               </xsl:when>
-              <xsl:when test="parent::book
-                              or parent::part">
-                <xsl:apply-templates select="parent::*"
-                                     mode="toc.for.division"/>
+              <xsl:when test="self::d:part">
+                <xsl:call-template name="division.toc">
+                  <xsl:with-param name="toc.title.p" 
+                                  select="contains($toc.params, 'title')"/>
+                </xsl:call-template>
               </xsl:when>
-              <xsl:when test="parent::set">
-                <xsl:apply-templates select="parent::*"
-                                     mode="toc.for.set"/>
-              </xsl:when>
-              <!-- there aren't any other contexts that allow toc -->
-              <xsl:otherwise>
-                <xsl:message>
-                  <xsl:text>I don't know how to make a TOC in this context!</xsl:text>
-                </xsl:message>
-              </xsl:otherwise>
             </xsl:choose>
-          </fo:flow>
-        </fo:page-sequence>
-      </xsl:if>
-    </xsl:otherwise>
-  </xsl:choose>
+          </xsl:for-each>
+        </xsl:when>
+      </xsl:choose>
+    </xsl:variable>
+
+    <xsl:if test="string-length(normalize-space($content)) != 0">
+      <xsl:variable name="lot-master-reference">
+        <xsl:call-template name="select.pagemaster">
+          <xsl:with-param name="pageclass" select="'lot'"/>
+        </xsl:call-template>
+      </xsl:variable>
+    
+      <xsl:call-template name="page.sequence">
+        <xsl:with-param name="master-reference"
+                        select="$lot-master-reference"/>
+        <xsl:with-param name="element" select="'toc'"/>
+        <xsl:with-param name="gentext-key" select="'TableofContents'"/>
+        <xsl:with-param name="content" select="$content"/>
+      </xsl:call-template>
+    </xsl:if>
+  </xsl:if>
+</xsl:template>
+  
+<xsl:template match="d:chapter/d:toc | d:appendix/d:toc | d:preface/d:toc | d:article/d:toc">
+  <xsl:variable name="toc.params">
+    <xsl:call-template name="find.path.params">
+      <xsl:with-param name="node" select="parent::*"/>
+      <xsl:with-param name="table" select="normalize-space($generate.toc)"/>
+    </xsl:call-template>
+  </xsl:variable>
+
+  <!-- Do not output the toc element if one is already generated
+       by the use of $generate.toc parameter, or if
+       generating a source toc is turned off -->
+  <xsl:if test="not(contains($toc.params, 'toc')) and
+                ($process.source.toc != 0 or $process.empty.source.toc != 0)">
+    <xsl:choose>
+      <xsl:when test="* and $process.source.toc != 0">
+        <fo:block>
+          <xsl:apply-templates/> 
+        </fo:block>
+      </xsl:when>
+      <xsl:when test="count(*) = 0 and $process.empty.source.toc != 0">
+        <!-- trick to switch context node to section element -->
+        <xsl:for-each select="parent::*">
+          <xsl:call-template name="component.toc">
+            <xsl:with-param name="toc.title.p" 
+                            select="contains($toc.params, 'title')"/>
+          </xsl:call-template>
+        </xsl:for-each>
+      </xsl:when>
+    </xsl:choose>
+    <xsl:call-template name="component.toc.separator"/>
+  </xsl:if>
 </xsl:template>
 
-<xsl:template match="tocpart|tocchap
-                     |toclevel1|toclevel2|toclevel3|toclevel4|toclevel5">
-  <xsl:apply-templates select="tocentry"/>
-  <xsl:if test="tocchap|toclevel1|toclevel2|toclevel3|toclevel4|toclevel5">
+<xsl:template match="d:section/d:toc
+                    |d:sect1/d:toc
+                    |d:sect2/d:toc
+                    |d:sect3/d:toc
+                    |d:sect4/d:toc
+                    |d:sect5/d:toc">
+
+  <xsl:variable name="toc.params">
+    <xsl:call-template name="find.path.params">
+      <xsl:with-param name="node" select="parent::*"/>
+      <xsl:with-param name="table" select="normalize-space($generate.toc)"/>
+    </xsl:call-template>
+  </xsl:variable>
+
+  <!-- Do not output the toc element if one is already generated
+       by the use of $generate.toc parameter, or if
+       generating a source toc is turned off -->
+  <xsl:if test="not(contains($toc.params, 'toc')) and
+                ($process.source.toc != 0 or $process.empty.source.toc != 0)">
+    <xsl:choose>
+      <xsl:when test="* and $process.source.toc != 0">
+        <fo:block>
+          <xsl:apply-templates/> 
+        </fo:block>
+      </xsl:when>
+      <xsl:when test="count(*) = 0 and $process.empty.source.toc != 0">
+        <!-- trick to switch context node to section element -->
+        <xsl:for-each select="parent::*">
+          <xsl:call-template name="section.toc">
+            <xsl:with-param name="toc.title.p" 
+                            select="contains($toc.params, 'title')"/>
+          </xsl:call-template>
+        </xsl:for-each>
+      </xsl:when>
+    </xsl:choose>
+    <xsl:call-template name="section.toc.separator"/>
+  </xsl:if>
+</xsl:template>
+
+<!-- ==================================================================== -->
+
+<xsl:template match="d:tocpart|d:tocchap
+                     |d:toclevel1|d:toclevel2|d:toclevel3|d:toclevel4|d:toclevel5">
+  <xsl:apply-templates select="d:tocentry"/>
+  <xsl:if test="d:tocchap|d:toclevel1|d:toclevel2|d:toclevel3|d:toclevel4|d:toclevel5">
     <fo:block start-indent="{count(ancestor::*)*2}pc">
-      <xsl:apply-templates select="tocchap|toclevel1|toclevel2|toclevel3|toclevel4|toclevel5"/>
+      <xsl:apply-templates select="d:tocchap|d:toclevel1|d:toclevel2|d:toclevel3|d:toclevel4|d:toclevel5"/>
     </fo:block>
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="tocentry|tocfront|tocback">
+<xsl:template match="d:tocentry|d:lotentry|d:tocdiv|d:tocfront|d:tocback">
   <fo:block text-align-last="justify"
             end-indent="2pc"
             last-line-end-indent="-2pc">
@@ -244,37 +225,110 @@
   </fo:block>
 </xsl:template>
 
-<!-- ==================================================================== -->
-
-<xsl:template match="*" mode="toc.for.section">
-<!--
-  <xsl:call-template name="section.toc"/>
--->
+<xsl:template match="d:toc/d:title">
+  <fo:block font-weight="bold">
+    <xsl:apply-templates/>
+  </fo:block>
 </xsl:template>
 
-<xsl:template match="*" mode="toc.for.component">
-  <xsl:call-template name="component.toc"/>
+<xsl:template match="d:toc/d:subtitle">
+  <fo:block font-weight="bold">
+    <xsl:apply-templates/>
+  </fo:block>
 </xsl:template>
 
-<xsl:template match="*" mode="toc.for.section">
-<!--
-  <xsl:call-template name="section.toc"/>
--->
-</xsl:template>
-
-<xsl:template match="*" mode="toc.for.division">
-  <xsl:call-template name="division.toc"/>
-</xsl:template>
-
-<xsl:template match="*" mode="toc.for.set">
-<!--
-  <xsl:call-template name="set.toc"/>
--->
+<xsl:template match="d:toc/d:titleabbrev">
 </xsl:template>
 
 <!-- ==================================================================== -->
 
-<xsl:template match="lot|lotentry">
+<!-- A lot element must have content, because there is no attribute
+     to select what kind of list should be generated -->
+<xsl:template match="d:book/d:lot | d:part/d:lot">
+  <!-- Don't generate a page sequence unless there is content -->
+  <xsl:variable name="content">
+    <xsl:choose>
+      <xsl:when test="* and $process.source.toc != 0">
+        <xsl:apply-templates />
+      </xsl:when>
+      <xsl:when test="not(child::*) and $process.empty.source.toc != 0">
+        <xsl:call-template name="process.empty.lot"/>
+      </xsl:when>
+    </xsl:choose>
+  </xsl:variable>
+
+  <xsl:if test="string-length(normalize-space($content)) != 0">
+    <xsl:variable name="lot-master-reference">
+      <xsl:call-template name="select.pagemaster">
+        <xsl:with-param name="pageclass" select="'lot'"/>
+      </xsl:call-template>
+    </xsl:variable>
+  
+    <xsl:call-template name="page.sequence">
+      <xsl:with-param name="master-reference"
+                      select="$lot-master-reference"/>
+      <xsl:with-param name="element" select="'toc'"/>
+      <xsl:with-param name="content" select="$content"/>
+    </xsl:call-template>
+  </xsl:if>
+</xsl:template>
+  
+<xsl:template match="d:chapter/d:lot | d:appendix/d:lot | d:preface/d:lot | d:article/d:lot">
+  <xsl:choose>
+    <xsl:when test="* and $process.source.toc != 0">
+      <fo:block>
+        <xsl:apply-templates/> 
+      </fo:block>
+      <xsl:call-template name="component.toc.separator"/>
+    </xsl:when>
+    <xsl:when test="not(child::*) and $process.empty.source.toc != 0">
+      <xsl:call-template name="process.empty.lot"/>
+    </xsl:when>
+  </xsl:choose>
+</xsl:template>
+
+<xsl:template match="d:section/d:lot
+                    |d:sect1/d:lot
+                    |d:sect2/d:lot
+                    |d:sect3/d:lot
+                    |d:sect4/d:lot
+                    |d:sect5/d:lot">
+  <xsl:choose>
+    <xsl:when test="* and $process.source.toc != 0">
+      <fo:block>
+        <xsl:apply-templates/> 
+      </fo:block>
+      <xsl:call-template name="section.toc.separator"/>
+    </xsl:when>
+    <xsl:when test="not(child::*) and $process.empty.source.toc != 0">
+      <xsl:call-template name="process.empty.lot"/>
+    </xsl:when>
+  </xsl:choose>
+</xsl:template>
+
+<xsl:template name="process.empty.lot">
+  <!-- An empty lot element does not provide any information to indicate
+       what should be included in it.  You can customize this
+       template to generate a lot based on @role or something -->
+  <xsl:message>
+    <xsl:text>Warning: don't know what to generate for </xsl:text>
+    <xsl:text>lot that has no children.</xsl:text>
+  </xsl:message>
+</xsl:template>
+
+<xsl:template match="d:lot/d:title">
+  <fo:block font-weight="bold">
+    <xsl:apply-templates/>
+  </fo:block>
+</xsl:template>
+
+<xsl:template match="d:lot/d:subtitle">
+  <fo:block font-weight="bold">
+    <xsl:apply-templates/>
+  </fo:block>
+</xsl:template>
+
+<xsl:template match="d:lot/d:titleabbrev">
 </xsl:template>
 
 </xsl:stylesheet>

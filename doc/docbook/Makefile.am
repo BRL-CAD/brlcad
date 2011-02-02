@@ -2,26 +2,25 @@ XSLTPROC_FLAGS=-nonet -xinclude
 XSL_XHTML_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/xhtml-1_1/docbook.xsl
 XSL_MAN_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/manpages/docbook.xsl
 XSL_FO_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/fo/docbook.xsl
-XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 
 .xml.html:
 	@mkdir -p $$(dirname $@)
-	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_XHTML_STYLESHEET) $?
+	$(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_XHTML_STYLESHEET) $?
 
 .xml.1:
-	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
+	$(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .xml.3:
-	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
+	$(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .xml.5:
-	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
+	$(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .xml.nged:
-	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
+	$(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .fo.pdf: .xml.fo
@@ -29,7 +28,7 @@ XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 
 .xml.fo:
 	@mkdir -p $$(dirname $@)
-	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
+	$(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
 
 
 include $(srcdir)/articles/en/Makefile.am
@@ -115,9 +114,8 @@ EXTRA_DIST = \
 	specifications/en/Makefile.am \
 	system/README \
 	system/man1/en/Makefile.am \
-	system/man1/mged_cmd_template.xml \
+	system/mann/mged_cmd_template.xml \
 	system/man3/en/Makefile.am \
-	system/man3/mged_cmd_template.xml \
 	system/man5/en/Makefile.am \
 	system/mann/en/Makefile.am
 

@@ -24,12 +24,30 @@
 
 <refsection><info><title>Description</title></info>
 
-<para>The outer page margin is the distance from non-binding edge of the
-page to the last column of text. In the left-to-right, top-to-bottom writing
-direction, this is the right margin of recto pages.</para>
-<para>The inner and outer margins are usually the same unless the output
-is double-sided.
-</para>
+<para>The outer page margin is the distance from non-bound edge of the
+page to the outer edge of the last column of text.</para>
+
+<para>In left-to-right text direction,
+this is the right margin of recto (front side) pages.
+For single-sided output, it is the right margin
+of all pages.</para>
+
+<para>In right-to-left text direction,
+this is the left margin of recto pages.
+For single-sided output, this is the
+left margin of all pages.</para>
+
+<note>
+<para>Current versions (at least as of version 4.13)
+of the XEP XSL-FO processor do not
+correctly handle these margin settings for documents
+with right-to-left text direction.
+The workaround in that situation is to reverse
+the values for <parameter>page.margin.inner</parameter>
+and <parameter>page.margin.outer</parameter>, until
+this bug is fixed by RenderX.  It does not affect documents
+with left-to-right text direction.</para>
+</note>
 
 </refsection>
 </refentry>

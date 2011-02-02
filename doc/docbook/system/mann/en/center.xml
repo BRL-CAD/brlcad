@@ -1,52 +1,15 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2011 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='center'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="center">
 
   <refmeta>
     <refentrytitle>CENTER</refentrytitle>
     <manvolnum>nged</manvolnum>
-    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-    <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
   
-  <refnamediv id='name'>
+  <refnamediv xml:id="name">
     <refname>center</refname>
     <refpurpose>Positions the center of the <emphasis>mged</emphasis> viewing 
     cube at the specified model coordinates.
@@ -54,15 +17,15 @@
   </refnamediv>
   
   <!-- body begins here -->
-  <refsynopsisdiv id='synopsis'>
-    <cmdsynopsis>
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
       <command>center</command>    
-      <arg choice='opt'><replaceable>x y z</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>x y z</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   
-  <refsect1 id='description'>
-    <title>DESCRIPTION</title>
+  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+    
     <para>
       Positions the center of the <emphasis>mged</emphasis> viewing cube at the specified
       model coordinates. This is accomplished by moving the eye position while not
@@ -82,10 +45,10 @@
       default. This command provides the means to set and retrieve those values
       numerically.
     </para>
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='examples'>
-    <title>EXAMPLES</title>
+  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+    
     <para>
       The examples show the use of the <command>center</command> command to print 
       coordinates of the center of the mged display, move the center of the 
@@ -94,38 +57,38 @@
       in a given direction, and update a vertex in the database to be located at 
       the current center of view.
     </para>
-    <example>
-      <title>Printing the coordinates of the center of the <emphasis>mged</emphasis> display.</title>
+    <example><info><title>Printing the coordinates of the center of the <emphasis>mged</emphasis> display.</title></info>
+      
       <para>
-	<prompt>mged></prompt> <userinput>center</userinput>
+	<prompt>mged&gt;</prompt> <userinput>center</userinput>
       </para>
       <para>Prints out the coordinates of the center of the mged display.
       </para>
     </example>
     
-    <example>
-      <title>Moving the center of the <emphasis>mged</emphasis> display to a specified point.</title>
+    <example><info><title>Moving the center of the <emphasis>mged</emphasis> display to a specified point.</title></info>
+      
       <para>
-	<prompt>mged></prompt><userinput>center 12.5 5.6 8.7></userinput>
+	<prompt>mged&gt;</prompt><userinput>center 12.5 5.6 8.7&gt;</userinput>
       </para>
       <para>The center of the <emphasis>mged</emphasis> display is moved to the point (12.5, 5.6, 8.7).</para>
     </example>
     
-    <example>
-      <title>Set Tcl variable $oldcent to the display center coordinates.</title>
+    <example><info><title>Set Tcl variable $oldcent to the display center coordinates.</title></info>
+      
       <para>
-	<prompt>mged></prompt><userinput>set oldcent [center]</userinput>
+	<prompt>mged&gt;</prompt><userinput>set oldcent [center]</userinput>
       </para>
       <para>
 	Sets the Tcl variable $oldcent to the display center coordinates.
       </para>
     </example>
     
-    <example>
-      <title>Move the center point a given distance in a given direction.</title>
+    <example><info><title>Move the center point a given distance in a given direction.</title></info>
+      
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged></prompt> <userinput>set glob_compat_mode 0</userinput></term>
+	  <term><prompt>mged&gt;</prompt> <userinput>set glob_compat_mode 0</userinput></term>
       </varlistentry>
       <varlistentry>
 	   <term><prompt>mged</prompt> <userinput>units mm</userinput></term>
@@ -140,12 +103,12 @@
       </varlistentry>
       </variablelist>
     </example>
-    <example>
-      <title>Update the vertex of a shape in the database to be located at the current
-      center of the view and recreate the vector display lists of objects that were affected by the change.</title>
+    <example><info><title>Update the vertex of a shape in the database to be located at the current
+      center of the view and recreate the vector display lists of objects that were affected by the change.</title></info>
+      
       <variablelist>
 	<varlistentry>
-	   <term><prompt>mged></prompt> <userinput>units mm</userinput></term>
+	   <term><prompt>mged&gt;</prompt> <userinput>units mm</userinput></term>
 	</varlistentry>
 	<varlistentry>
 	  <term><prompt>mged</prompt> <userinput>db adjust sphere.s  V [center]</userinput></term>
@@ -162,19 +125,15 @@
 	</varlistentry>
       </variablelist>
     </example>
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='author'>
-    <title>AUTHOR</title>
-    <para>BRL-CAD Team</para>
-  </refsect1>
+  <info><corpauthor>BRL-CAD Team</corpauthor></info>
   
-  <refsect1 id='bug_reports'>
-    <title>BUG REPORTS</title>
+  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+    
     <para>
       Reports of bugs or problems should be submitted via electronic
       mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
     </para>
-  </refsect1>
+  </refsection>
 </refentry>
-

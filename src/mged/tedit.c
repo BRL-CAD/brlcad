@@ -57,6 +57,7 @@ extern int classic_mged;
 #define JOVE_EDITOR "jove"
 #define VIM_EDITOR "vim"
 #define VI_EDITOR "vi"
+#define NANO_EDITOR "nano"
 #define ED_EDITOR "ed"
 
 /* used to invoke the above editor if X11 is in use */
@@ -920,6 +921,11 @@ get_editor_string(struct bu_vls *editstring)
 	editor = bu_which(VI_EDITOR);
     }
 
+    /* still unset? try nano */
+    if (!editor) {
+	editor = bu_which(NANO_EDITOR);
+    }
+
     /* still unset? try ed */
     if (!editor) {
        	editor = bu_which(ED_EDITOR);
@@ -982,6 +988,9 @@ get_editor_string(struct bu_vls *editstring)
 	which = bu_which(VI_EDITOR);
 	if (which)
 	    count += BU_STR_EQUAL(editor, which);
+	which = bu_which(NANO_EDITOR);
+	if (which)
+	    count += BU_STR_EQUAL(editor, which);
 	which = bu_which(ED_EDITOR);
 	if (which)
 	    count += BU_STR_EQUAL(editor, which);
@@ -999,6 +1008,9 @@ get_editor_string(struct bu_vls *editstring)
 	    }
 	    if (!editor) {
 		editor = bu_which(VI_EDITOR);
+	    }
+	    if (!editor) {
+		editor = bu_which(NANO_EDITOR);
 	    }
 	    if (!editor) {
 		editor = bu_which(ED_EDITOR);
@@ -1050,6 +1062,11 @@ get_editor_string(struct bu_vls *editstring)
     	    }
     	    if (BU_STR_EQUAL(editor, VI_EDITOR)) {
     		terminal = bu_which(XTERM_COMMAND);
+		if (terminal)
+		    terminal_opt = "-e";
+    	    }
+	    if (BU_STR_EQUAL(editor, NANO_EDITOR)) {
+		    terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
     	    }

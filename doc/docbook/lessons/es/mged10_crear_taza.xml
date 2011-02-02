@@ -1,21 +1,21 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Crear una taza</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Crear una taza</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>
 	  Aprobado para su publicación. Su distribución es ilimitada.
 	</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="creating_mug_overviewlist">
+    <para xml:id="creating_mug_overviewlist">
       En este tutorial usted aprenderá a:
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Crear el cilindro externo utilizando el comando in.</para>
 	</listitem>
@@ -47,15 +47,15 @@
       </itemizedlist>
     </para>
     
-    <para id="creating_mug_intro1">
+    <para xml:id="creating_mug_intro1">
       En este tutorial usted continuará su trabajo de creación de objetos de 
       la vida real, en este caso, la forma básica del cuerpo de una taza de 
       café. En los próximos tutoriales, perfeccionará el cuerpo para que sea 
       más realista.
     </para>
     
-    <sect1 id="mug_new_db">
-      <title>Crear una nueva base de datos</title>
+    <section xml:id="mug_new_db"><info><title>Crear una nueva base de datos</title></info>
+      
       <para>
 	Cree una nueva base de datos y llamela mug.g. Vuelva al menú File 
 	(Archivo) y seleccione Preferences (Preferencias) a continuación, 
@@ -63,10 +63,10 @@
 	usando pulgadas como unidad de medida. (Nota: También puede hacer esto 
 	escribiendo "units in" en la ventana de comandos del sistema.)
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="mug_outside_cyl">
-      <title>Creando el cilindro externo utilizando el comando in</title>
+    <section xml:id="mug_outside_cyl"><info><title>Creando el cilindro externo utilizando el comando in</title></info>
+      
       <para>
 	Para comenzar a hacer el cuerpo de la taza, usted necesitará crear el 
 	cilindro externo. Para esto tipee lo siguiente en el prompt de 
@@ -79,7 +79,7 @@
 	El diagrama de este comando es:
       </para>
       <informaltable>
-	<tgroup cols='3'>
+	<tgroup cols="3">
 	  <tbody>
 	    <row>
 	      <entry>in</entry>
@@ -118,7 +118,7 @@
 	El diagrama de este comando es:
       </para>
       <informaltable>
-	<tgroup cols='6'>
+	<tgroup cols="6">
 	  <tbody>
 	    <row>
 	      <entry>in</entry>
@@ -143,10 +143,10 @@
 	La figura del cilindro, en forma de malla de alambre, aparecerá en la 
 	ventana gráfica.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="mug_inside_cyl">
-      <title>Creando el cilindro interno</title>
+    <section xml:id="mug_inside_cyl"><info><title>Creando el cilindro interno</title></info>
+      
       <para>
 
 	Utilizando este mismo método, escriba la información del cilindro 
@@ -163,7 +163,7 @@
 	El diagrama de este comando es:
       </para>
       <informaltable>
-	<tgroup cols='6'>
+	<tgroup cols="6">
 	  <tbody>
 	    <row>
 	      <entry>in</entry>
@@ -188,10 +188,10 @@
 	El segundo cilindro, en el interior del primer cilindro, deberá 
 	aparecer ahora en la ventana gráfica.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="mug_handle">
-      <title>Creando el asa</title>
+    <section xml:id="mug_handle"><info><title>Creando el asa</title></info>
+      
       <para>
 	Ahora tendrá que introducir algunos datos sobre el cuerpo del asa. El 
 	tipo de forma para el asa es un toro elíptico. En la ventana de comandos 
@@ -204,7 +204,7 @@
 	El diagrama de este comando es:
       </para>
       <informaltable>
-	<tgroup cols='5'>
+	<tgroup cols="5">
 	  <tbody>
 	    <row>
 	      <entry>in</entry>
@@ -240,10 +240,10 @@
 	Si usted mira atentamente, podrá ver que alrededor de un tercio del 
 	toro elíptico corta el cuerpo.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="mug_comb1">
-      <title>Creando la combinación Bodyout.s-Bodyin.s</title>
+    <section xml:id="mug_comb1"><info><title>Creando la combinación Bodyout.s-Bodyin.s</title></info>
+      
       <para>
 	El próximo paso será combinar los dos cilindros en el cuerpo de la 
 	taza. Para hacer esto tipee:
@@ -256,7 +256,7 @@
 	unión de bodyout.s menos bodyin.s.
       </para>
       <informaltable>
-	<tgroup cols='6'>
+	<tgroup cols="6">
 	  <tbody>
 	    <row>
 	      <entry>comb</entry>
@@ -278,17 +278,17 @@
 	</tgroup>
       </informaltable>
       
-    </sect1>
+    </section>
     
-    <sect1 id="mug_comb2">
-      <title>Creando la combinación Handle.s - Bodyout.s</title>
+    <section xml:id="mug_comb2"><info><title>Creando la combinación Handle.s - Bodyout.s</title></info>
+      
       <para>
 	Para combinar el asa con la parte externa del cilindro tipee:
 	
 	<command>comb handle.c u handle.s - bodyout.s[Enter]</command>
       </para>
       <informaltable>
-	<tgroup cols='6'>
+	<tgroup cols="6">
 	  <tbody>
 	    <row>
 	      <entry>comb</entry>
@@ -309,10 +309,10 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-    </sect1>
+    </section>
     
-    <sect1 id="mug_region">
-      <title>Creando la región Mug.r</title>
+    <section xml:id="mug_region"><info><title>Creando la región Mug.r</title></info>
+      
       
       <para>
 	El último paso en la creación de la taza es crear una región a partir 
@@ -321,7 +321,7 @@
 	<command>r mug.r u body.c u handle.c[Enter]</command>
       </para>
       <informaltable>
-	<tgroup cols='6'>
+	<tgroup cols="6">
 	  <tbody>
 	    <row>
 	      <entry>r</entry>
@@ -348,7 +348,7 @@
 	similar a:
       </para>
       
-      <literallayout>
+      <literallayout class="normal">
    Defaulting item number to 1002
 
    Creating region id=1001, air=0, GIFTmaterial=1, los=100
@@ -357,7 +357,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged10_mug_wireframe.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged10_mug_wireframe.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -376,13 +376,13 @@
 	diseño en el próximo tutorial.
       </para>
       
-    </sect1>
+    </section>
     
-    <sect1 id="mug_review">
-      <title>Repasemos...</title>
+    <section xml:id="mug_review"><info><title>Repasemos...</title></info>
+      
       <para>
 	En este tutorial usted aprendió a:
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	<listitem>
 	  <para>Crear el cilindro externo utilizando el comando in.</para>
 	</listitem>
@@ -413,6 +413,6 @@
 	</listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

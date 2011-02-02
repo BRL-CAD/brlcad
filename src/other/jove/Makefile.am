@@ -4,7 +4,8 @@ bin_SCRIPTS = teach-jove
 
 AM_CPPFLAGS = ${TERMLIB_CPPFLAGS} ${NOWARN}
 
-SRCS = \
+jove_LDADD = ${TERMLIB}
+jove_SOURCES = \
 	jove_buf.c \
 	jove_c.c \
 	jove_delete.c \
@@ -24,11 +25,6 @@ SRCS = \
 	jove_tune.c \
 	jove_wind.c
 
-jove_LDADD = ${TERMLIB}
-jove_SOURCES = \
-	$(SRCS) \
-	version.c
-
 findcom_SOURCES = \
 	findcom.c \
 	jove_tune.c
@@ -47,28 +43,19 @@ desc_DATA = \
 	jove.emacs \
 	jove-tutorial
 
-version.c: $(SRCS) Makefile
-	sh $(top_srcdir)/src/other/jove/mkversion.sh
-
-version.o: version.c
-	$(COMPILE) -c version.c
-
 EXTRA_DIST = \
 	$(BUILT_SOURCES) \
 	$(desc_DATA) \
 	BUGS \
 	README \
-	mkversion.sh \
 	teach-jove \
 	teach-jove.in
 
 BUILT_SOURCES = \
-	teach-jove \
-	version.c
+	teach-jove
 
 DISTCLEANFILES = \
-	$(BUILT_SOURCES) \
-	version.number
+	$(BUILT_SOURCES)
 
 include $(top_srcdir)/misc/Makefile.defs
 

@@ -5,7 +5,8 @@
                 xmlns:saxon="http://icl.com/saxon"
                 xmlns:NodeInfo="http://org.apache.xalan.lib.NodeInfo"
                 xmlns:exsl="http://exslt.org/common"
-                exclude-result-prefixes="db ng exsl saxon NodeInfo"
+		xmlns:xlink="http://www.w3.org/1999/xlink"
+                exclude-result-prefixes="db ng exsl saxon NodeInfo xlink"
                 version='1.0'>
 
 <!-- ********************************************************************
@@ -160,12 +161,60 @@
 </xsl:template>
 
 <xsl:template match="ng:tag|db:tag" mode="stripNS">
-  <sgmltag>
-    <xsl:copy-of select="@*[not(name(.) = 'xml:id')
-                         and not(name(.) = 'version')]"/>
-    <xsl:apply-templates mode="stripNS"/>
-  </sgmltag>
+  <xsl:choose>
+    <xsl:when test="@xlink:href">
+      <ulink url="{@xlink:href}">
+	<sgmltag>
+	  <xsl:copy-of select="@*[not(name(.) = 'xml:id')
+			       and not(name(.) = 'version')
+			       and not(local-name(.) = 'href')]"/>
+	  <xsl:apply-templates mode="stripNS"/>
+	</sgmltag>
+      </ulink>
+    </xsl:when>
+    <xsl:otherwise>
+      <sgmltag>
+	<xsl:copy-of select="@*[not(name(.) = 'xml:id')
+			     and not(name(.) = 'version')]"/>
+	<xsl:apply-templates mode="stripNS"/>
+      </sgmltag>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
+
+<xsl:template match="db:link[@xlink:href]" mode="stripNS">
+  <ulink url="{@xlink:href}">
+    <xsl:if test="@role">
+      <xsl:attribute name="role">
+        <xsl:value-of select="@role"/>
+      </xsl:attribute>
+    </xsl:if>
+    <xsl:apply-templates mode="stripNS"/>
+  </ulink>
+</xsl:template>
+
+<xsl:template match="db:citetitle[@xlink:href]" mode="stripNS">
+  <ulink url="{@xlink:href}">
+    <citetitle>
+      <xsl:copy-of select="@*[not(name(.) = 'xml:id')
+			   and not(name(.) = 'version')
+			   and not(local-name(.) = 'href')]"/>
+      <xsl:apply-templates mode="stripNS"/>
+    </citetitle>
+  </ulink>
+</xsl:template>
+
+<xsl:template match="db:citetitle[@linkend]" mode="stripNS">
+  <citetitle>
+    <xsl:copy-of select="@*[not(name(.) = 'xml:id')
+			 and not(name(.) = 'version')
+			 and not(name(.) = 'linkend')
+			 and not(local-name(.) = 'href')]"/>
+      <xsl:apply-templates mode="stripNS"/>
+  </citetitle>
+</xsl:template>
+
+<xsl:template match="db:alt" mode="stripNS"/>
 
 <xsl:template match="ng:textdata|db:textdata
                      |ng:imagedata|db:imagedata
@@ -268,12 +317,26 @@
 </xsl:template>
 
 <xsl:template match="/" priority="-1">
+  <!-- need a local version of this variable because this module imported many places-->
+  <xsl:variable name="local.exsl.node.set.available">
+    <xsl:choose>
+      <xsl:when exsl:foo="" xmlns:exsl="http://exslt.org/common"
+        test="function-available('exsl:node-set') or
+                         contains(system-property('xsl:vendor'),
+                           'Apache Software Foundation')">1</xsl:when>
+      <xsl:otherwise>0</xsl:otherwise>
+    </xsl:choose>
+  </xsl:variable>
   <xsl:choose>
-    <xsl:when test="(function-available('exsl:node-set') or
-                     contains(system-property('xsl:vendor'),
-                       'Apache Software Foundation'))
+    <xsl:when test="$local.exsl.node.set.available != 0
                     and (*/self::ng:* or */self::db:*)">
-      <xsl:message>Stripping namespace from DocBook 5 document.</xsl:message>
+      <xsl:message>
+        <xsl:text>Stripping namespace from DocBook 5 document. </xsl:text>
+        <xsl:text>It is suggested to use namespaced version of the stylesheets </xsl:text>
+        <xsl:text>available in distribution file 'docbook-xsl-ns' </xsl:text>
+        <xsl:text>at //http://sourceforge.net/projects/docbook/files/</xsl:text>
+        <xsl:text> which does not require namespace stripping step.</xsl:text>
+      </xsl:message>
       <xsl:variable name="nons">
         <xsl:apply-templates mode="stripNS"/>
       </xsl:variable>
@@ -281,7 +344,7 @@
       <xsl:apply-templates select="exsl:node-set($nons)"/>
     </xsl:when>
     <xsl:otherwise>
-      <xsl:copy-of select="@* | node()"/>
+      <xsl:copy-of select="node()"/>
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>

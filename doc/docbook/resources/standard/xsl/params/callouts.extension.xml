@@ -22,7 +22,7 @@
 <refsection><info><title>Description</title></info>
 <!-- DP. Note this is not used in the same manner as callout.graphics.extension -->
 <para>The callouts extension processes <tag>areaset</tag>
-elements in <tag>ProgramListingCO</tag> and other text-based
+elements in <tag>programlistingco</tag> and other text-based
 callout elements.
 </para>
 

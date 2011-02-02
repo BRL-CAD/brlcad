@@ -30,22 +30,37 @@ EXTRA_DIST = \
 	brlcad-config.in \
 	brlcad.spec \
 	brlcad.spec.in \
-	debian/brlcad-bin.docs \
-	debian/brlcad-bin.install \
-	debian/brlcad-bin.lintian-overrides \
-	debian/brlcad-data.install \
-	debian/brlcad-dev.install \
-	debian/brlcad-doc.install \
+	debian/application-x-brlcad-extension.png \
+	debian/application-x-brlcad-extension.xml \
+	debian/brlcad-archer.desktop \
+	debian/brlcad-archer.png \
+	debian/brlcad-db.desktop \
+	debian/brlcad-db.png \
+	debian/brlcad.directory \
+	debian/brlcad-doc-animation.desktop \
+	debian/brlcad-doc.desktop \
+	debian/brlcad-doc.directory \
+	debian/brlcad-doc-mged.desktop \
+	debian/brlcad-doc.png \
+	debian/brlcad.docs \
+	debian/brlcad.install \
+	debian/brlcad.menu \
+	debian/brlcad-mged.desktop \
+	debian/brlcad.png \
+	debian/brlcad.postinst \
+	debian/brlcad.postrm \
+	debian/brlcad-rtwizard.desktop \
+	debian/brlcad.sh \
 	debian/changelog \
 	debian/compat \
 	debian/control \
 	debian/copyright \
 	debian/rules \
 	debian/source/format \
-	debian/watch \
 	doxygen_structure \
 	flawfinder \
 	libtool.m4 \
+	nsis/archer.ico \
 	nsis/brlcad.ico \
 	nsis/brlcad.nsi \
 	nsis/header.bmp \

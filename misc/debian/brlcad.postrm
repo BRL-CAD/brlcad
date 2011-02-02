@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+
+F='/usr/share/applications/defaults.list'
+
+sed -i '/application\/x-brlcad-extension=brlcad-archer.desktop/d' $F
+
+if [ -x "`which update-mime-database 2>/dev/null`" ]; then
+	update-mime-database /usr/share/mime
+fi

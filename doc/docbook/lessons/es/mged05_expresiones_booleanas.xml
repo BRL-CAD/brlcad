@@ -1,20 +1,20 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Expresiones Booleanas</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Expresiones Booleanas</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Aprobado para su publicación. Su distribución es ilimitada.</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="learning_boolean_expressions_overviewlist">
+    <para xml:id="learning_boolean_expressions_overviewlist">
       En este tutorial usted aprenderá a:
       
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Manejar combinaciones y regiones.</para>
 	</listitem>
@@ -45,8 +45,8 @@
       </caution>
     </para>
 
-    <sect1 id="boolean_tools">
-      <title>Combinación de Regiones: Herramientas Booleanas</title>
+    <section xml:id="boolean_tools"><info><title>Combinación de Regiones: Herramientas Booleanas</title></info>
+      
       
       <para>
 	Conceptualmetne hay dos objetos en <application>MGED</application> 
@@ -88,10 +88,10 @@
 	lógica o jerárquica dentro de la base de datos, el resultado puede 
 	referirse a un grupo o a una combinación a ensamblar.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="boolean_operations">
-      <title>Operaciones Boolenas</title>
+    <section xml:id="boolean_operations"><info><title>Operaciones Boolenas</title></info>
+      
       
       <para>
 	Los tres operadores Booleanos empleados por el programa 
@@ -114,8 +114,8 @@
 	</itemizedlist>
       </para>
       
-      <sect2>
-	<title>Union (Unión)</title>
+      <section><info><title>Union (Unión)</title></info>
+	
 	<para>
 	El operador unión, u, junta las formas, por lo que cualquier punto en 
 	al menos una de ellas, será parte del resultado. La unión es un 
@@ -125,8 +125,7 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged05_unionspheres.png" format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged05_unionspheres.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -135,10 +134,10 @@
 	  </caption>
 	</mediaobject>
       </informalfigure>
-      </sect2>
+      </section>
       
-      <sect2>
-	<title>Subtracción</title>
+      <section><info><title>Subtracción</title></info>
+	
 	<para>
 	  Cuando una forma primitiva tiene una segunda forma solapada 
 	  substraída de él, el resultado es que la segunda forma desaparece, 
@@ -160,8 +159,7 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged05_subtractionspheres.png" format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged05_subtractionspheres.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -171,10 +169,10 @@
 	</mediaobject>
       </informalfigure>
 
-      </sect2>
+      </section>
 
-      <sect2>
-	<title>Intersección</title>
+      <section><info><title>Intersección</title></info>
+	
 	
 	<para>
 	  La operación Booleana de intersección, representada por el operador 
@@ -204,8 +202,7 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged05_intersectionspheres.png" format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged05_intersectionspheres.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -223,11 +220,11 @@
 	  combinación, el operador será ignorado, siendo reemplazado siempre 
 	  por el de unión.
 	</para>
-      </sect2>
-    </sect1>
+      </section>
+    </section>
     
-    <sect1 id="making_regions_bool_ops">
-      <title>Crear Regiones con Operaciones Booleanas</title>
+    <section xml:id="making_regions_bool_ops"><info><title>Crear Regiones con Operaciones Booleanas</title></info>
+      
       
       <para>
 	Comience abriendo la base de datos shapes.g que creó en la Lección 3.
@@ -242,8 +239,7 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged05_twoprimitivespheres.png" format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged05_twoprimitivespheres.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -263,7 +259,7 @@
       </para>
       
       <informaltable>
-	<tgroup cols='6'>
+	<tgroup cols="6">
 	  <tbody>
 	    <row>
 	      <entry>r</entry>
@@ -310,8 +306,7 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged05_combinationeditor.png" format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged05_combinationeditor.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -352,12 +347,12 @@
       </para>
       
       <informaltable>
-	<tgroup cols='2'>
+	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><inlinegraphic fileref="../../lessons/es/images/mged05_raytracedpart1.png" />
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged05_raytracedpart1.png"/></imageobject></inlinemediaobject>
 	      </entry>
-	      <entry><inlinegraphic fileref="../../lessons/es/images/mged05_raytracedpart2.png" />
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged05_raytracedpart2.png"/></imageobject></inlinemediaobject>
 	      </entry>
 	    </row>
 	    <row>
@@ -441,8 +436,7 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged05_raytracedpart3.png" format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged05_raytracedpart3.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -511,8 +505,7 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged05_raytraceddome.png" format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged05_raytraceddome.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -522,10 +515,10 @@
 	</mediaobject>
       </informalfigure>
 
-    </sect1>
+    </section>
     
-    <sect1 id="operator_precedence">
-      <title>Precedencia de operadores</title>
+    <section xml:id="operator_precedence"><info><title>Precedencia de operadores</title></info>
+      
       
       <para>
 	Las formas que hemos creado aquí son bastante simples. En cada caso, 
@@ -546,14 +539,14 @@
 	
 	<literal>(shape1 - shape2) u ( (shape3 - shape4) + shape5)</literal>
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="learning_boolean_operations_review">
-      <title>Repasemos...</title>
+    <section xml:id="learning_boolean_operations_review"><info><title>Repasemos...</title></info>
+      
       
       <para>
 	En este tutorial, usted aprendió a :
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Manejar combinaciones y regiones.</para>
 	  </listitem>
@@ -565,6 +558,6 @@
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

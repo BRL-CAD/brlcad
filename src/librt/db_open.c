@@ -210,6 +210,15 @@ db_open(const char *name, const char *mode)
     dbip->dbi_version = 0; /* make db_version() calculate */
     dbip->dbi_version = db_version(dbip);
 
+    if (dbip->dbi_version < 5) {
+	if (rt_db_flip_endian(dbip)) {
+	    bu_log("WARNING: Binary-incompatible v4 geometry database detected.  Flipping endianness.\n");
+	    if (dbip->dbi_version > 0)
+		dbip->dbi_version *= -1;
+	    dbip->dbi_read_only = 1;
+	}
+    }
+
     if (RT_G_DEBUG & DEBUG_DB) {
 	bu_log("db_open(%s) dbip=x%x version=%d\n", dbip->dbi_filename, dbip, dbip->dbi_version);
     }
@@ -219,23 +228,21 @@ db_open(const char *name, const char *mode)
 
 
 /**
- *			D B _ C R E A T E
+ * D B _ C R E A T E
  *
- *  Create a new database containing just a header record,
- *  regardless of whether the database previously existed or not,
- *  and open it for reading and writing.
+ * Create a new database containing just a header record,
+ * regardless of whether the database previously existed or not,
+ * and open it for reading and writing.
  *
- *  New in BRL-CAD Release 6.0 is that this routine also calls
- *  db_dirbuild(), so the caller shouldn't.
+ * This routine also calls db_dirbuild(), so the caller doesn't need
+ * to.
  *
- *
- *  Returns:
- *	DBI_NULL	error
- *	db_i *		success
+ * Returns:
+ * DBI_NULL on error
+ * db_i * on success
  */
 struct db_i *
-db_create(const char *name,
-	  int	     version)
+db_create(const char *name, int version)
 {
     FILE	*fp;
     struct db_i	*dbip;

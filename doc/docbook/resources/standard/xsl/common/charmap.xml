@@ -48,7 +48,7 @@
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>This template applies an <link xlink:href="http://www.w3.org/TR/xslt20/#character-maps">XSLT character map</link>; that is, it causes certain
       individual characters to be substituted with strings of one
@@ -124,7 +124,7 @@
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The XSLT 2.0 specification describes <link xlink:href="http://www.w3.org/TR/xslt20/#character-maps">character maps</link> and explains how they may be used
       to allow a specific character appearing in a text or

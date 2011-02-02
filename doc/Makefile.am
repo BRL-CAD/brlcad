@@ -7,12 +7,10 @@ endif
 
 SUBDIRS = \
 	${DOCBOOK_DIR} \
-	book \
 	html \
 	legal
 
 DIST_SUBDIRS = \
-	book \
 	docbook \
 	html \
 	legal

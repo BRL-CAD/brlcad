@@ -729,11 +729,11 @@
   </h1>
 
   <p class="toctitle">
-    <b>
+    <strong xmlns:xslo="http://www.w3.org/1999/XSL/Transform">
       <xsl:call-template name="gentext">
         <xsl:with-param name="key">TableofContents</xsl:with-param>
       </xsl:call-template>
-    </b>
+    </strong>
   </p>
   <dl class="toc">
     <xsl:apply-templates select="foilgroup|foil" mode="toc"/>

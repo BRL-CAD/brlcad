@@ -1,20 +1,17 @@
 <?xml version="1.0"?>
 <!DOCTYPE xsl:stylesheet [
-
-<!ENTITY primary   'normalize-space(concat(primary/@sortas, primary[not(@sortas) or @sortas = ""]))'>
-<!ENTITY secondary 'normalize-space(concat(secondary/@sortas, secondary[not(@sortas) or @sortas = ""]))'>
-<!ENTITY tertiary  'normalize-space(concat(tertiary/@sortas, tertiary[not(@sortas) or @sortas = ""]))'>
-
-<!ENTITY scope 'count(ancestor::node()|$scope) = count(ancestor::node()) and ($role = @role or $type = @type or (string-length($role) = 0 and string-length($type) = 0))'>
+<!ENTITY % common.entities SYSTEM "../common/entities.ent">
+%common.entities;
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:i="urn:cz-kosek:functions:index"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:i="urn:cz-kosek:functions:index"
                 xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0"
                 xmlns:func="http://exslt.org/functions"
                 xmlns:k="http://www.isogen.com/functions/com.isogen.saxoni18n.Saxoni18nService"
                 xmlns:exslt="http://exslt.org/common"
                 extension-element-prefixes="func exslt"
-                exclude-result-prefixes="func exslt i l k"
+                exclude-result-prefixes="func exslt i l k d"
                 version="1.0">
 
 <!-- ********************************************************************
@@ -33,7 +30,7 @@
 <xsl:include href="../common/autoidx-kosek.xsl"/>
 
 <xsl:template name="generate-kosek-index">
-  <xsl:param name="scope" select="(ancestor::book|/)[last()]"/>
+  <xsl:param name="scope" select="(ancestor::d:book|/)[last()]"/>
 
   <xsl:variable name="vendor" select="system-property('xsl:vendor')"/>
   <xsl:if test="contains($vendor, 'libxslt')">
@@ -50,8 +47,7 @@
     </xsl:message>
   </xsl:if>
 
-  <xsl:if test="not(function-available('exslt:node-set') or
-                    function-available('exslt:nodeSet'))">
+  <xsl:if test="$exsl.node.set.available = 0">
     <xsl:message terminate="yes">
       <xsl:text>ERROR: the 'kosek' index method requires the </xsl:text>
       <xsl:text>exslt:node-set() function. Use a processor that </xsl:text>
@@ -80,7 +76,7 @@
   </xsl:variable>
 
   <xsl:variable name="terms"
-                select="//indexterm[count(.|key('group-code', i:group-index(&primary;))[&scope;][1]) = 1 and not(@class = 'endofrange')]"/>
+                select="//d:indexterm[count(.|key('group-code', i:group-index(&primary;))[&scope;][1]) = 1 and not(@class = 'endofrange')]"/>
 
   <div class="index">
     <xsl:apply-templates select="$terms" mode="index-div-kosek">
@@ -92,7 +88,7 @@
   </div>
 </xsl:template>
 
-<xsl:template match="indexterm" mode="index-div-kosek">
+<xsl:template match="d:indexterm" mode="index-div-kosek">
   <xsl:param name="scope" select="."/>
   <xsl:param name="role" select="''"/>
   <xsl:param name="type" select="''"/>

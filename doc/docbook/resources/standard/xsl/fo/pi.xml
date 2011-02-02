@@ -36,7 +36,7 @@
     <synopsis><tag class="xmlpi">dbfo background-color="<replaceable>color</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo background-color</tag> PI before or
       after an image (<tag>graphic</tag>, <tag>inlinegraphic</tag>,
@@ -72,10 +72,13 @@
     <synopsis><tag class="xmlpi">dbfo bgcolor="<replaceable>color</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo bgcolor</tag> PI as child of a table row
       or cell to set a background color for that table row or cell.</para>
+
+    
+<para>This PI works for both CALS and HTML tables.</para>
 
   </refsect1><refsect1><title>Parameters</title>
     
@@ -105,7 +108,7 @@
     <synopsis><tag class="xmlpi">dbfo float-type="margin.note"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo float-type</tag> PI to specify the float
       behavior for a <tag>sidebar</tag> (to cause the sidebar to be
@@ -139,6 +142,48 @@
 
   </refsect1></refentry>
 
+<refentry xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="dbfo_funcsynopsis-style">
+<refnamediv>
+<refname>dbfo_funcsynopsis-style</refname>
+<refpurpose>Specifies presentation style for a funcsynopsis</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+
+    <synopsis><tag class="xmlpi">dbfo funcsynopsis-style="kr"|"ansi"</tag></synopsis>
+  
+</refsynopsisdiv>
+<refsect1><title>Description</title>
+    
+<para>Use the <tag class="xmlpi">dbfo funcsynopsis-style</tag> PI as a child of
+      a <tag>funcsynopsis</tag> or anywhere within a funcsynopsis
+      to control the presentation style for output of all
+      <tag>funcprototype</tag> instances within that funcsynopsis.</para>
+
+  </refsect1><refsect1><title>Parameters</title>
+    
+<variablelist>
+      <varlistentry><term>funcsynopsis-style="kr"</term>
+        <listitem>
+          
+<para>Displays <tag>funcprototype</tag> output in K&amp;R style</para>
+
+        </listitem>
+      </varlistentry>
+      <varlistentry><term>funcsynopsis-style="ansi"</term>
+        <listitem>
+          
+<para>Displays <tag>funcprototype</tag> output in ANSI style</para>
+
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+  </refsect1><refsect1 role="params"><title>Related Global Parameters</title>
+    
+<para><parameter>funcsynopsis.style</parameter></para>
+
+  </refsect1></refentry>
+
 <refentry xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="dbfo_glossary-presentation">
 <refnamediv>
 <refname>dbfo_glossary-presentation</refname>
@@ -149,7 +194,7 @@
     <synopsis><tag class="xmlpi">dbfo glossary-presentation="list"|"blocks"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo glossary-presentation</tag> PI as a child of
       a <tag>glossary</tag> to control its presentation style.</para>
@@ -194,7 +239,7 @@
     <synopsis><tag class="xmlpi">dbfo glosslist-presentation="list"|"blocks"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo glosslist-presentation</tag> PI as a child of
       a <tag>glosslist</tag> to control its presentation style.</para>
@@ -240,7 +285,7 @@
     <synopsis><tag class="xmlpi">dbfo glossterm-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo glossterm-width</tag> PI as a child of a
       <tag>glossary</tag> or <tag>glosslist</tag> to specify the
@@ -283,7 +328,7 @@
     <synopsis><tag class="xmlpi">dbfo keep-together="auto"|"always"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo keep-together</tag> PI as a child of a
       formal object (<tag>table</tag>, <tag>example</tag>,
@@ -338,7 +383,7 @@
     <synopsis><tag class="xmlpi">dbfo label-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo label-width</tag> PI as a child of a
       <tag>qandaset</tag>, <tag>itemizedlist</tag>, <tag>orderedlist</tag>, 
@@ -365,14 +410,14 @@
 <refentry xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="dbfo_linenumbering.everyNth">
 <refnamediv>
 <refname>dbfo_linenumbering.everyNth</refname>
-<refpurpose>Specifies interval for lines numbers in verbatims</refpurpose>
+<refpurpose>Specifies interval for line numbers in verbatims</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbfo linenumbering.everyNth="<replaceable>N</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo linenumbering.everyNth</tag> PI as a child
       of a “verbatim” element – <tag>programlisting</tag>,
@@ -412,7 +457,7 @@
     <synopsis><tag class="xmlpi">dbfo linenumbering.separator="<replaceable>text</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo linenumbering.separator</tag> PI as a child
       of a “verbatim” element – <tag>programlisting</tag>,
@@ -451,7 +496,7 @@
     <synopsis><tag class="xmlpi">dbfo linenumbering.width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo linenumbering.width</tag> PI as a child
       of a “verbatim” element – <tag>programlisting</tag>,
@@ -491,7 +536,7 @@
     <synopsis><tag class="xmlpi">dbfo list-presentation="list"|"blocks"|"table"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo list-presentation</tag> PI as a child of
       a <tag>variablelist</tag> or <tag>segmentedlist</tag> to
@@ -555,7 +600,7 @@
     <synopsis><tag class="xmlpi">dbfo list-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo list-width</tag> PI as a child of a
       <tag>simplelist</tag> whose <tag class="attribute">class</tag>
@@ -579,16 +624,16 @@
 <refentry xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="dbfo_orientation">
 <refnamediv>
 <refname>dbfo_orientation</refname>
-<refpurpose>Specifies the orientation for table row or cell</refpurpose>
+<refpurpose>Specifies the orientation for a CALS table row or cell</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbfo orientation="0"|"90"|"180"|"270"|"-90"|"-180"|"-270"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
-<para>Use the <tag class="xmlpi">dbfo orientation</tag> PI as a child of an
+<para>Use the <tag class="xmlpi">dbfo orientation</tag> PI as a child of a CALS
       <tag>table</tag> row or cell to specify the orientation
       (rotation) for the row or cell.</para>
 
@@ -617,7 +662,7 @@
     <synopsis><tag class="xmlpi">dbfo pgwide="0"|"1"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo pgwide</tag> PI as a child of an
       <tag>equation</tag> or <tag>example</tag> to specify that the
@@ -653,7 +698,7 @@
 <refentry xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="dbfo_rotated-width">
 <refnamediv>
 <refname>dbfo_rotated-width</refname>
-<refpurpose>Specifies the width for a table <tag>entry</tag> or
+<refpurpose>Specifies the width for a CALS table <tag>entry</tag> or
     <tag>row</tag></refpurpose>
 </refnamediv>
 <refsynopsisdiv>
@@ -661,10 +706,10 @@
     <synopsis><tag class="xmlpi">dbfo rotated-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
-<para>Use the <tag class="xmlpi">dbfo rotated-width</tag> PI as a child of an
-      <tag>entry</tag> or <tag>row</tag> instance to specify the
+<para>Use the <tag class="xmlpi">dbfo rotated-width</tag> PI as a child of 
+      <tag>entry</tag> or <tag>row</tag> instance in a CALS table to specify the
       width of that the <tag>entry</tag> or <tag>row</tag>; or
       use it higher up in table to cause the width to be inherited
       recursively down.</para>
@@ -693,7 +738,7 @@
     <synopsis><tag class="xmlpi">dbfo sidebar-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo sidebar-width</tag> PI as a child of a
       <tag>sidebar</tag> to specify the width of the sidebar.</para>
@@ -735,7 +780,7 @@
     <synopsis><tag class="xmlpi">dbfo start="<replaceable>character</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para><emphasis>This PI is obsolete</emphasis>. The intent of
       it was to provide a means for setting a specific starting
@@ -767,7 +812,7 @@
 <refentry xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="dbfo_table-width">
 <refnamediv>
 <refname>dbfo_table-width</refname>
-<refpurpose>Specifies the width for a table or for revhistory
+<refpurpose>Specifies the width for a CALS table or for revhistory
     output</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
@@ -775,11 +820,11 @@
     <synopsis><tag class="xmlpi">dbfo table-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo table-width</tag> PI as a child or
-      sibling of a <tag>table</tag>, or as a child of an
-      <tag>informaltable</tag>, <tag>entrybl</tag>, or
+      sibling of a CALS <tag>table</tag>, or as a child of an
+      <tag>informaltable</tag>, <tag>entrytbl</tag>, or
       <tag>revhistory</tag> instance (which is rendered as a table
       in output) to specify the width of the table in output.</para>
 
@@ -811,7 +856,7 @@
     <synopsis><tag class="xmlpi">dbfo term-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo term-width</tag> PI as a child of a
       <tag>variablelist</tag> to specify the width for
@@ -845,7 +890,7 @@
     <synopsis><tag class="xmlpi">dbfo toc="0"|"1"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo toc</tag> PI as a child of a
       <tag>qandaset</tag> to specify whether a table of contents
@@ -888,7 +933,7 @@
     <synopsis><tag class="xmlpi">dbfo-need height="<replaceable>n</replaceable>" [space-before="<replaceable>n</replaceable>"]</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>A “need” is a request for space on a page.  If the
       requested space is not available, the page breaks and the
@@ -918,6 +963,39 @@
   </refsect1><refsect1 role="tcg"><title>Related Information in <link xlink:href="http://www.sagehill.net/docbookxsl/">DocBook XSL: The Complete Guide</link></title>
     
 <para><link role="tcg" xlink:href="PageBreaking.html#SoftPageBreaks">Soft page breaks</link></para>
+
+  </refsect1></refentry>
+
+<refentry xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="dbfo_row-height">
+<refnamediv>
+<refname>dbfo_row-height</refname>
+<refpurpose>Specifies the height for a CALS table row</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+
+    <synopsis><tag class="xmlpi">dbfo row-height="<replaceable>height</replaceable>"</tag></synopsis>
+  
+</refsynopsisdiv>
+<refsect1><title>Description</title>
+    
+<para>Use the <tag class="xmlpi">dbfo row-height</tag> PI as a child of a
+      <tag>row</tag> to specify the height of the row.</para>
+
+  </refsect1><refsect1><title>Parameters</title>
+    
+<variablelist>
+      <varlistentry><term>row-height="<replaceable>height</replaceable>"</term>
+        <listitem>
+          
+<para>Specifies the row height (including units)</para>
+
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+  </refsect1><refsect1 role="tcg"><title>Related Information in <link xlink:href="http://www.sagehill.net/docbookxsl/">DocBook XSL: The Complete Guide</link></title>
+    
+<para><link role="tcg" xlink:href="RowHeight.html">Row height</link></para>
 
   </refsect1></refentry>
 </reference>

@@ -1,4 +1,4 @@
-itcl::delete class itk::Toplevel
+catch {itcl::delete class itk::Toplevel}
 
 itcl::class itk::Toplevel {
     inherit itk::Archetype

@@ -1,17 +1,15 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<refentry id='libfb'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="libfb">
 
 <refmeta>
   <refentrytitle>libfb - FrameBuffer Library</refentrytitle>
   <manvolnum>3</manvolnum>
-  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-  <refmiscinfo class='manual'>BRL-CAD Libraries</refmiscinfo>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD Libraries</refmiscinfo>
 </refmeta>
 
-<refnamediv id='name'>
+<refnamediv xml:id="name">
   <refname>libfb</refname>
   <refpurpose>
     multiple device, generic frame buffer library
@@ -20,8 +18,8 @@
 
 <!-- body begins here -->
 
-<refsect1 id='libfbgeneric'>
-  <title>Generic frame buffer routines</title>
+<refsection xml:id="libfbgeneric"><info><title>Generic frame buffer routines</title></info>
+  
   <funcprototype>
     <funcdef><function>FBIO</function> *fb_open</funcdef>
     <paramdef>* <parameter>fbfile</parameter></paramdef>
@@ -68,10 +66,10 @@
     <funcdef>int <function>fb_getheight</function></funcdef>
     <paramdef>* <parameter>fbp</parameter></paramdef>
   </funcprototype>
-</refsect1>
+</refsection>
 
-<refsect1 id='libfbhardware'>
-  <title>Hardware specific frame buffer routines</title>
+<refsection xml:id="libfbhardware"><info><title>Hardware specific frame buffer routines</title></info>
+  
   <funcprototype>
     <funcdef>int <function>fb_cursor</function></funcdef>
     <paramdef>* <parameter>fbp</parameter></paramdef>
@@ -117,13 +115,13 @@
   
   <funcprototype>
     <funcdef>void <function>fb_log</function></funcdef>
-    <paramdef>format [ <parameter></parameter></paramdef>
-    <paramdef>arg ] ... <parameter></parameter></paramdef>
+    <paramdef>format [ <parameter/></paramdef>
+    <paramdef>arg ] ... <parameter/></paramdef>
   </funcprototype>
-</refsect1>
+</refsection>
 
-<refsect1 id='description'>
-  <title>DESCRIPTION</title>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  
   <para>
     These routines are designed to provide a device-independent
     method of using frame buffers or files containing frame buffer
@@ -135,11 +133,11 @@
   <para>
     This version of the library assumes that red, green, and blue
     intensities are described by unsigned 8-bit bytes in the range (0..255).
-    The library interface uses arrays of <emphasis remap='B'>RGBpixel</emphasis>s,
+    The library interface uses arrays of <emphasis remap="B">RGBpixel</emphasis>s,
     which is a typedef for an array of three unsigned chars (this was
     done to avoid structure padding).  Note that a pointer to an
-    <emphasis remap='B'>RGBpixel</emphasis>
-    is thus the name of the <emphasis remap='B'>RGBpixel</emphasis>
+    <emphasis remap="B">RGBpixel</emphasis>
+    is thus the name of the <emphasis remap="B">RGBpixel</emphasis>
     itself, i.e. no ampersand is needed.
   </para>
 
@@ -154,20 +152,20 @@
   </para>
 
   <para>
-    <emphasis remap='I'>Fb_open</emphasis> is used to open a frame buffer 
-    file <emphasis remap='I'>fbfile</emphasis>. The file may be either the
+    <emphasis remap="I">Fb_open</emphasis> is used to open a frame buffer 
+    file <emphasis remap="I">fbfile</emphasis>. The file may be either the
     name of a supported frame buffer interface, referenced as "/dev/interface",
     or the name of a UNIX file. The routine will try to determine if the 
     file opened was a real frame buffer by examining the name, and if so 
     will perform whatever initialization actions are necessary.
-    If the value of <emphasis remap='I'>fbfile</emphasis> is
+    If the value of <emphasis remap="I">fbfile</emphasis> is
     <!-- B elided -->
     <acronym>NULL</acronym> and the environment variable
     <!-- B elided -->
     <envar>FB_FILE</envar> is set, then the value of <envar>FB_FILE</envar>
     is used; otherwise the default frame buffer device for the system is used.
-    See below for more details. The <emphasis remap='I'>width</emphasis>
-    and <emphasis remap='I'>height</emphasis> parameters specify the initial 
+    See below for more details. The <emphasis remap="I">width</emphasis>
+    and <emphasis remap="I">height</emphasis> parameters specify the initial 
     size of display desired. If these are zero the default sizes for that 
     device will be used. On a successful open, the frame buffer I/O (FBIO) 
     structure pointer is returned. This structure contains size you were 
@@ -176,41 +174,41 @@
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_close</emphasis> simply closes the frame buffer.
+    <emphasis remap="I">Fb_close</emphasis> simply closes the frame buffer.
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_read</emphasis> reads
-    <emphasis remap='I'>count</emphasis> pixels from the frame buffer 
-    starting at the location specified by <emphasis remap='I'>x</emphasis>
-    and <emphasis remap='I'>y</emphasis>, and places them at program 
-    memory address specified by <emphasis remap='I'>addr</emphasis>.
-    <emphasis remap='I'>Fb_read</emphasis> returns the number of 
+    <emphasis remap="I">Fb_read</emphasis> reads
+    <emphasis remap="I">count</emphasis> pixels from the frame buffer 
+    starting at the location specified by <emphasis remap="I">x</emphasis>
+    and <emphasis remap="I">y</emphasis>, and places them at program 
+    memory address specified by <emphasis remap="I">addr</emphasis>.
+    <emphasis remap="I">Fb_read</emphasis> returns the number of 
     pixels actually read, or -1 on error.
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_write</emphasis> writes 
-    <emphasis remap='I'>count</emphasis> pixels from program address
-    <emphasis remap='I'>addr</emphasis> into the frame buffer starting 
-    at the location specified by <emphasis remap='I'>x</emphasis>
-    and <emphasis remap='I'>y</emphasis>. <emphasis remap='I'>Fb_write</emphasis>
+    <emphasis remap="I">Fb_write</emphasis> writes 
+    <emphasis remap="I">count</emphasis> pixels from program address
+    <emphasis remap="I">addr</emphasis> into the frame buffer starting 
+    at the location specified by <emphasis remap="I">x</emphasis>
+    and <emphasis remap="I">y</emphasis>. <emphasis remap="I">Fb_write</emphasis>
     returns the number of pixels actually written, or -1 on error.
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_rmap</emphasis>
+    <emphasis remap="I">Fb_rmap</emphasis>
     reads in the color map from the frame buffer and
     leaves at the location pointed to by
-    <emphasis remap='I'>cmap</emphasis>.
+    <emphasis remap="I">cmap</emphasis>.
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_wmap</emphasis>
+    <emphasis remap="I">Fb_wmap</emphasis>
     writes the color map pointed to by
-    <emphasis remap='I'>cmap</emphasis>
+    <emphasis remap="I">cmap</emphasis>
     into the frame buffer.  If the value of
-    <emphasis remap='I'>cmap</emphasis>
+    <emphasis remap="I">cmap</emphasis>
     is
     <!-- B elided -->
     <acronym>NULL</acronym>
@@ -218,7 +216,7 @@
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_clear</emphasis>
+    <emphasis remap="I">Fb_clear</emphasis>
     erases the frame buffer by setting all pixels to the given
     color. If the color pointer is NULL, black will be used.
     On a UNIX file, this entails writing the entire file,
@@ -228,14 +226,14 @@
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_gettype</emphasis>
+    <emphasis remap="I">Fb_gettype</emphasis>
     returns a pointer to a string describing the frame buffer
     specified by the FBIO pointer.
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_getwidth</emphasis>
-    and <emphasis remap='I'>Fb_getheight</emphasis>
+    <emphasis remap="I">Fb_getwidth</emphasis>
+    and <emphasis remap="I">Fb_getheight</emphasis>
     returns the current size of the FBIO frame buffer.
   </para>
   
@@ -246,68 +244,68 @@
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_cursor</emphasis>
+    <emphasis remap="I">Fb_cursor</emphasis>
     places the cursor at the image space coordinates given by
-    <emphasis remap='I'>x</emphasis>
+    <emphasis remap="I">x</emphasis>
     and
-    <emphasis remap='I'>y</emphasis>.
+    <emphasis remap="I">y</emphasis>.
     If the mode is non-zero, the cursor is made visible, and
     if mode is zero, the cursor is turned off.
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_scursor</emphasis>
+    <emphasis remap="I">Fb_scursor</emphasis>
     is the same as
-    <emphasis remap='I'>fb_cursor</emphasis>
+    <emphasis remap="I">fb_cursor</emphasis>
     except that it
     places the cursor at the
-    <emphasis remap='B'>screen</emphasis>
+    <emphasis remap="B">screen</emphasis>
     space coordinates given by
-    <emphasis remap='I'>x</emphasis>
+    <emphasis remap="I">x</emphasis>
     and
-    <emphasis remap='I'>y</emphasis>.
+    <emphasis remap="I">y</emphasis>.
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_setcursor</emphasis>
+    <emphasis remap="I">Fb_setcursor</emphasis>
     allows the user to set the bitmap used to represent the cursor,
     thereby changing the cursor shape. This is not necessarily supported
-    by all hardware. The argument <emphasis remap='I'>bits</emphasis>
+    by all hardware. The argument <emphasis remap="I">bits</emphasis>
     is a pointer to an array of unsigned chars containing the bits of the cursor.
-    The arguments <emphasis remap='I'>xbits</emphasis>
-    and <emphasis remap='I'>ybits</emphasis>
+    The arguments <emphasis remap="I">xbits</emphasis>
+    and <emphasis remap="I">ybits</emphasis>
     specify the size of the cursor bitmap.  The number of bytes in the
-    <varname role='parameter'>bits</varname> array will be the width rounded
+    <varname role="parameter">bits</varname> array will be the width rounded
     up to a mutiple of eight (so that the cursor "scanlines" are byte aligned) 
     times the height.
-    <varname role='parameter'>bits</varname>[0]
+    <varname role="parameter">bits</varname>[0]
     is the lower left corner,
-    <varname role='parameter'>bits</varname>[1]
+    <varname role="parameter">bits</varname>[1]
     is to the right of it, etc.  The next line of the
-    <varname role='parameter'>bits</varname>
+    <varname role="parameter">bits</varname>
     array goes above the current one.  Within a byte the most significant
     bit is the leftmost.  The values
-    <emphasis remap='I'>xorig</emphasis>
-    and <emphasis remap='I'>yorig</emphasis>
+    <emphasis remap="I">xorig</emphasis>
+    and <emphasis remap="I">yorig</emphasis>
     specify which bit in the bitmap actually gets placed at the location
     specified in the cursor move routines.  Again, a first quadrant coordinate
     system is used.
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_window</emphasis>
+    <emphasis remap="I">Fb_window</emphasis>
     sets the frame buffer window center position to the image space coordinates
-    given by <emphasis remap='I'>x</emphasis> and <emphasis remap='I'>y</emphasis>.
+    given by <emphasis remap="I">x</emphasis> and <emphasis remap="I">y</emphasis>.
     This command is usually used in conjunction with the
-    <emphasis remap='I'>fb_zoom</emphasis> routine.
+    <emphasis remap="I">fb_zoom</emphasis> routine.
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_zoom</emphasis>
+    <emphasis remap="I">Fb_zoom</emphasis>
     sets the zoom factor for the X coordinate to
-    <emphasis remap='I'>x</emphasis>
+    <emphasis remap="I">x</emphasis>
     and the zoom factor for the Y coordinate to
-    <emphasis remap='I'>y</emphasis>.
+    <emphasis remap="I">y</emphasis>.
     Zooming is generally done by pixel replication in hardware.
   </para>
   
@@ -315,52 +313,52 @@
     The following routines work in conjunction with those described above
     to provide buffered reading and writing of frame buffer images
     either to a real frame buffer or a UNIX file.
-    The routines use a simple paging strategy to hold &ldquo;bands&rdquo; of
+    The routines use a simple paging strategy to hold “bands” of
     the image in core. Since horizontal bands are buffered, the
     ideal motion is to scan left to right, then bottom to top.
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_ioinit</emphasis>
+    <emphasis remap="I">Fb_ioinit</emphasis>
     should be called before using any of the other buffered I/O routines and
     repeated whenever the frame buffer is reopened.
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_seek</emphasis>
+    <emphasis remap="I">Fb_seek</emphasis>
     is used to position the current read/write pointer to
     the location to the next position to be read or written.
-    It is not necessary to do a <emphasis remap='I'>fb_seek</emphasis>
-    after every read or write since both <emphasis remap='I'>fb_rpixel</emphasis>
-    and <emphasis remap='I'>fb_wpixel</emphasis> imply an automatic move to 
+    It is not necessary to do a <emphasis remap="I">fb_seek</emphasis>
+    after every read or write since both <emphasis remap="I">fb_rpixel</emphasis>
+    and <emphasis remap="I">fb_wpixel</emphasis> imply an automatic move to 
     the next pixel. If you read or write the last pixel on a scan line,
     the pointer will automatically move to the beginning
     of the following scan line.
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_tell</emphasis>
+    <emphasis remap="I">Fb_tell</emphasis>
     returns the current location of the read write pointer
     in terms of (X,Y) coordinates on the frame buffer.
     The X and Y values are returned into the integers pointed to
-    by <emphasis remap='I'>xp</emphasis> and <emphasis remap='I'>yp</emphasis>.
+    by <emphasis remap="I">xp</emphasis> and <emphasis remap="I">yp</emphasis>.
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_rpixel</emphasis>
+    <emphasis remap="I">Fb_rpixel</emphasis>
     reads the pixel at the current frame buffer location
     and returns it into the location specifed
-    by <emphasis remap='I'>pixelp</emphasis>.
+    by <emphasis remap="I">pixelp</emphasis>.
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_wpixel</emphasis>
-    writes the pixel pointed to by <emphasis remap='I'>pixelp</emphasis>
+    <emphasis remap="I">Fb_wpixel</emphasis>
+    writes the pixel pointed to by <emphasis remap="I">pixelp</emphasis>
     at the current frame buffer location.
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_flush</emphasis>
+    <emphasis remap="I">Fb_flush</emphasis>
     caused any current buffered frame buffer pages to be written out.
     Unnecessary writes are avoided by the use of page reference bits.
   </para>
@@ -371,52 +369,52 @@
   </para>
   
   <para>
-    <emphasis remap='I'>Fb_log</emphasis> will convert, format and print its
-    <emphasis remap='I'>args</emphasis> under control of
-    <emphasis remap='I'>format</emphasis> to the standard error output. 
+    <emphasis remap="I">Fb_log</emphasis> will convert, format and print its
+    <emphasis remap="I">args</emphasis> under control of
+    <emphasis remap="I">format</emphasis> to the standard error output. 
     For more detailed information on the specification of the control string,
     see <citerefentry><refentrytitle>printf</refentrytitle>
     <manvolnum>3S</manvolnum></citerefentry>.
     This function may be supplied by the application if different behavior
     is desired.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='fb_file_devices'>
-  <title>FB_FILE DEVICES</title>
+<refsection xml:id="fb_file_devices"><info><title>FB_FILE DEVICES</title></info>
+  
   <para>
     The following devices are supported by the library; not all may
     be available on any given system.  New device support can be
   incorporated by the addition of a single module to the library.
   </para>
-  <variablelist remap='TP'>
+  <variablelist remap="TP">
     <varlistentry>
-      <term><filename>/dev/debug</filename><emphasis remap='I'>[num]</emphasis></term>
+      <term><filename>/dev/debug</filename><emphasis remap="I">[num]</emphasis></term>
       <listitem>
 	<para>The "/dev/debug" interface prints one line to logs each call
 	to the frame buffer library.
 	<!-- .br -->
-	<emphasis remap='I'>num</emphasis>
+	<emphasis remap="I">num</emphasis>
 	is a bitvector indicating the levels of verbosity of the output.  See
-	<emphasis remap='B'>fb.h</emphasis>
+	<emphasis remap="B">fb.h</emphasis>
 	for the bit definitions.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='I'>filename</emphasis></term>
+      <term><emphasis remap="I">filename</emphasis></term>
       <listitem>
 	<para>Disk file interface</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B'>hostname:</emphasis><emphasis remap='I'>[devicename]</emphasis></term>
+      <term><emphasis remap="B">hostname:</emphasis><emphasis remap="I">[devicename]</emphasis></term>
       <listitem>
 	<para>TCP-based network links to a remote framebuffer, where
-	<emphasis remap='I'>devicename</emphasis>
+	<emphasis remap="I">devicename</emphasis>
 	is any from this list, for example,
 	fictitious.brlcad.org:/dev/ik0 or fictitious.brlcad.org:/dev/sgi.
-	A <emphasis remap='B'>hostname</emphasis>
-	with a null<emphasis remap='I'>devicename</emphasis>
+	A <emphasis remap="B">hostname</emphasis>
+	with a null<emphasis remap="I">devicename</emphasis>
 	will select the default display device on that host.
 	If explicitly specifying a remote device,
 	be careful not to omit the colon between the host and device name,
@@ -426,77 +424,73 @@
       </listitem>
     </varlistentry>
   </variablelist>
-</refsect1>
+</refsection>
 
-<refsect1 id='examples'>
-  <title>EXAMPLES</title>
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  
   <para>
-    <emphasis remap='I'>Libfb</emphasis>
+    <emphasis remap="I">Libfb</emphasis>
     can be loaded with any C program:
   </para>
   
-  <literallayout remap='RS'>
-<synopsis>
-$ &thinsp;<filename>/bin/cc &thinsp;program.c &thinsp;-lfb -l\&lt;system-library...\&gt;</filename>
+  <literallayout remap="RS" class="normal">
+<synopsis format="linespecific">
+$  <filename>/bin/cc  program.c  -lfb -l\&lt;system-library...\&gt;</filename>
 </synopsis>
   </literallayout> <!-- remap='RE' -->
 
   <para>
-    where <emphasis remap='I'>&lt;system-library&gt;</emphasis>
+    where <emphasis remap="I">&lt;system-library&gt;</emphasis>
     denotes specific libraries necesary on a particular machine.  All machines
     with networking will require the "-lpkg" option.  Machines which support the
     X Windows(tm) system will require the "-lX11" option.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='return_values'>
-  <title>RETURN VALUES</title>
+<refsection xml:id="return_values"><info><title>RETURN VALUES</title></info>
+  
   <para>
-    <emphasis remap='I'>fb_close</emphasis>,
-    <emphasis remap='I'>fb_write</emphasis>,
-    <emphasis remap='I'>fb_read</emphasis>,
-    <emphasis remap='I'>fb_wmap</emphasis>,
-    <emphasis remap='I'>fb_rmap</emphasis>,
-    <emphasis remap='I'>fb_clear</emphasis>,
-    <emphasis remap='I'>fb_cursor</emphasis>,
-    <emphasis remap='I'>fb_scursor</emphasis>,
-    <emphasis remap='I'>fb_setcursor</emphasis>,
-    <emphasis remap='I'>fb_window</emphasis>,
-    <emphasis remap='I'>fb_zoom</emphasis>,
-    <emphasis remap='I'>fb_ioinit</emphasis>,
-    <emphasis remap='I'>fb_seek</emphasis>,
-    <emphasis remap='I'>fb_wpixel</emphasis>,
-    <emphasis remap='I'>fb_rpixel</emphasis>
+    <emphasis remap="I">fb_close</emphasis>,
+    <emphasis remap="I">fb_write</emphasis>,
+    <emphasis remap="I">fb_read</emphasis>,
+    <emphasis remap="I">fb_wmap</emphasis>,
+    <emphasis remap="I">fb_rmap</emphasis>,
+    <emphasis remap="I">fb_clear</emphasis>,
+    <emphasis remap="I">fb_cursor</emphasis>,
+    <emphasis remap="I">fb_scursor</emphasis>,
+    <emphasis remap="I">fb_setcursor</emphasis>,
+    <emphasis remap="I">fb_window</emphasis>,
+    <emphasis remap="I">fb_zoom</emphasis>,
+    <emphasis remap="I">fb_ioinit</emphasis>,
+    <emphasis remap="I">fb_seek</emphasis>,
+    <emphasis remap="I">fb_wpixel</emphasis>,
+    <emphasis remap="I">fb_rpixel</emphasis>
     and
-    <emphasis remap='I'>fb_flush</emphasis>
+    <emphasis remap="I">fb_flush</emphasis>
     return -1 to indicate failure.
-    <emphasis remap='I'>Fb_open</emphasis>
+    <emphasis remap="I">Fb_open</emphasis>
     returns FBIO_NULL to indicate failure, and a non-null FBIO structure pointer
     upon success.
-    <emphasis remap='I'>fb_read</emphasis>,
+    <emphasis remap="I">fb_read</emphasis>,
     and
-    <emphasis remap='I'>fb_write</emphasis>
+    <emphasis remap="I">fb_write</emphasis>
     return the number of pixels actually read or written.
-    <emphasis remap='I'>fb_gettype</emphasis>
+    <emphasis remap="I">fb_gettype</emphasis>
     returns a pointer to a NULL terminated description string.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='see_also'><title>SEE ALSO</title>
+<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
 <para><citerefentry><refentrytitle>fbhelp</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='author'>
-  <title>AUTHOR</title>
-  <para>BRL-CAD TEAM</para>
-</refsect1>
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
 
-<refsect1 id='bug_reports'>
-  <title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
-</refsect1>
+</refsection>
 </refentry>
-

@@ -1,52 +1,15 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2011 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='saveview'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="saveview">
 
 <refmeta>
   <refentrytitle>SAVEVIEW</refentrytitle>
   <manvolnum>nged</manvolnum>
-  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-  <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
 </refmeta>
 
-<refnamediv id='name'>
+<refnamediv xml:id="name">
   <refname>saveview</refname>
   <refpurpose>Saves the current viewing parameters in the specified <emphasis>file</emphasis>
 	in the form of a shell script that will run the BRL-CAD <emphasis>rt</emphasis> program as if it had been
@@ -54,29 +17,29 @@
   </refnamediv>
 
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-  <cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
     <command>saveview</command>    
-    <arg choice='req'><replaceable>file</replaceable></arg>
-    <arg><replaceable>args</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>file</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>args</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsect1 id='description'>
-  <title>DESCRIPTION</title>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  
   <para>Saves the current viewing parameters in the specified <emphasis>file</emphasis>
 	in the form of a shell script that will run the BRL-CAD <emphasis>rt</emphasis> program as if it had been
 	executed from within MGED using the <command>rt -s512</command> command.  Any <emphasis>args</emphasis> 	included on the <command>saveview</command> command line will be copied to the <emphasis>file</emphasis> as 	options to the <emphasis>rt</emphasis> program. If the <emphasis>file</emphasis> already exists, the script 	will be appended to it. This is useful in setting up images to be raytraced later. The default script 	produced by "saveview test.rt" looks like:</para>
 
 <blockquote>
-<literallayout>
+<literallayout class="normal">
 #!/bin/sh
 rt -M \
  -o test.rt.pix\
  $*\
  model.g\
  'object1' 'object2' \
- 2>> test.rt.log\
+ 2&gt;&gt; test.rt.log\
  &lt;&lt;EOF
 viewsize 2.780320739746094e+02;
 orientation 2.480973490458727e-01 4.765905732660483e-01
@@ -88,7 +51,7 @@ end;
 EOF
 </literallayout>
 </blockquote>  
-<para> When this script is executed, the image will be stored in <emphasis>test.rt.pix</emphasis>, and all 	messages and errors generated by the <emphasis>rt</emphasis> program will be stored in <emphasis>test.rt.log	</emphasis>. The above script will produce an image of <emphasis>object1</emphasis> and <emphasis>object2	</emphasis> from the BRL-CAD database named <emphasis>model.g</emphasis>. The <emphasis>viewsize</emphasis>, 	<emphasis>orientation</emphasis>, and <emphasis>eye_pt</emphasis> parameters reproduce the view displayed by 	MGED when the <command>saveview</command> command was executed. The presence of “$*” in the script causes 	any additional command-line options given when the script is invoked to be interpreted as additional 	<emphasis>rt</emphasis> options. Typically, a “-s” option might be used to set the image size (the default 	is 512 pixels square). See the <emphasis>man</emphasis> page on <emphasis>rt</emphasis> for details on 	available options.
+<para> When this script is executed, the image will be stored in <emphasis>test.rt.pix</emphasis>, and all 	messages and errors generated by the <emphasis>rt</emphasis> program will be stored in <emphasis>test.rt.log	</emphasis>. The above script will produce an image of <emphasis>object1</emphasis> and <emphasis>object2	</emphasis> from the BRL-CAD database named <emphasis>model.g</emphasis>. The <emphasis>viewsize</emphasis>, 	<emphasis>orientation</emphasis>, and <emphasis>eye_pt</emphasis> parameters reproduce the view displayed by 	MGED when the <command>saveview</command> command was executed. The presence of Â“$*Â” in the script causes 	any additional command-line options given when the script is invoked to be interpreted as additional 	<emphasis>rt</emphasis> options. Typically, a Â“-sÂ” option might be used to set the image size (the default 	is 512 pixels square). See the <emphasis>man</emphasis> page on <emphasis>rt</emphasis> for details on 	available options.
 </para>
 
 <para>If you have a <emphasis>saveview</emphasis> script and wish to change MGED to that view, merely cut-and-
@@ -98,36 +61,32 @@ EOF
 <para>Related MGED commands are <command>preview</command>, for viewing the effects of an entire animation
 	script, and <command>savekey</command>.  Related BRL-CAD programs are <emphasis>tabsub</emphasis> and 	<emphasis>tabinterp</emphasis>. 
 </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='examples'>
-  <title>EXAMPLES</title>
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  
   <para>The example shows the use of the <command>saveview</command> command to create a file that will contain a 	script to run the <emphasis>rt</emphasis> program and create a color-shaded image of the current MGED 	display.
    </para>
          
-  <example>
-    <title>Save current viewing parameters in a specified file in the form of a shell script to run the BRL-CAD 	<emphasis>rt</emphasis> program.</title>
+  <example><info><title>Save current viewing parameters in a specified file in the form of a shell script to run the BRL-CAD 	<emphasis>rt</emphasis> program.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>rt_script -s1024</userinput>
+      <prompt>mged&gt;</prompt><userinput>rt_script -s1024</userinput>
     </para>
     <para>Creates (or appends to) a file named <emphasis>rt_script</emphasis> that will contain a script to run 	the <emphasis>rt</emphasis> program and create a color-shaded image of the current MGED display. The image
 	produced will be 1024 pixels square.
     </para>
   </example>
  
-</refsect1>
+</refsection>
 
-<refsect1 id='author'>
-  <title>AUTHOR</title>
-  <para>BRL-CAD Team</para>
-</refsect1>
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
 
-<refsect1 id='bug_reports'>
-  <title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
-</refsect1>
+</refsection>
 </refentry>
-

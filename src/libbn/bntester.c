@@ -423,6 +423,72 @@ main(int argc, char **argv)
                                 } BU_UNSETJUMP;
                             }
                             break;
+                        case 3: /* function 'bn_isect_line3_line3' */
+                            (void)strcpy(dt_fmt, "dddddddddddddduddddi");
+                            if (parse_case(buf_p, i, l, d, u, dt_fmt, line_num, stream)) {
+                                /* Parse failed, skipping test case */
+                                ret = 1;
+                            } else {
+                                int result;
+                                double t_out = 0.0;
+                                double u_out = 0.0;
+                                int t_fail = 0;
+                                int u_fail = 0;
+
+                                if (!BU_SETJUMP) {
+                                    /* try */
+                                    tol.magic = u[1];
+                                    tol.dist = d[14];
+                                    tol.dist_sq = d[15];
+                                    tol.perp = d[16];
+                                    tol.para = d[17];
+                                    result = bn_isect_line3_line3(&t_out, &u_out, &d[2], &d[5], &d[8], &d[11], &tol);
+                                    if (result != i[0]) {
+                                        ret = 1;
+                                        failed_cnt++;
+                                        (void)fprintf(stream, "Failed function %lu test case on line %lu expected = %d result = %d\n",
+                                               u[0], line_num, i[0], result); 
+                                    } else if (result == 0) {
+                                        if (!NEAR_ZERO(t_out - d[0], VUNITIZE_TOL)) {
+                                            ret = 1;
+                                            failed_cnt++;
+                                            (void)fprintf(stream, "Failed function %lu test case on line %lu expected t = %.15f result = %.15f\n",
+                                                   u[0], line_num, t_out, d[0]); 
+                                        } else {
+                                            success_cnt++;
+                                        }
+                                    } else if (result == 1) {
+                                        t_fail = !NEAR_ZERO(t_out - d[0], VUNITIZE_TOL);
+                                        u_fail = !NEAR_ZERO(u_out - d[1], VUNITIZE_TOL);
+                                        if (t_fail) {
+                                            (void)fprintf(stream, "Failed function %lu test case on line %lu expected t = %.15f result = %.15f\n",
+                                                   u[0], line_num, t_out, d[0]); 
+                                        }
+                                        if (u_fail) {
+                                            (void)fprintf(stream, "Failed function %lu test case on line %lu expected u = %.15f result = %.15f\n",
+                                                   u[0], line_num, u_out, d[1]); 
+                                        }
+                                        if (t_fail || u_fail) {
+                                            ret = 1;
+                                            failed_cnt++;
+                                        } else {
+                                            /* No other output to validate when result matches expected and
+                                             * result is not 0 and not 1. 
+                                             */
+                                            success_cnt++;
+                                        }
+                                    } else {
+                                        success_cnt++;
+                                    }
+                                } else {
+                                    /* catch */
+                                    BU_UNSETJUMP;
+                                    ret = 1;
+                                    bomb_cnt++;
+                                    (void)fprintf(stream, "Failed function %lu test case on line %lu bu_bomb encountered.\n", u[0], line_num); 
+                                } BU_UNSETJUMP;
+                            }
+                            break;
                         default:
                             (void)fprintf(stream, "ERROR: Unknown function number %lu test case on line %lu, skipping test case.\n", u[0], line_num);
                             return EXIT_FAILURE;

@@ -26,29 +26,30 @@
   <!ENTITY metadata-content 'contains(@rnd:style, "-title") or
 			     contains(@rnd:style, "-subtitle") or
 			     @rnd:style = "abstract" or
-			     @rnd:style = "author" or
-			     @rnd:style = "editor" or
-			     @rnd:style = "publisher" or
-			     @rnd:style = "publisher-address" or
-			     @rnd:style = "othercredit" or
-			     @rnd:style = "revhistory" or
-			     @rnd:style = "revision" or
-			     @rnd:style = "date" or
-			     @rnd:style = "pubdate" or
-			     @rnd:style = "personblurb" or
 			     @rnd:style = "address" or
 			     @rnd:style = "affiliation" or
-			     @rnd:style = "contrib" or
-			     @rnd:style = "email" or
-			     @rnd:style = "pagenums" or
-			     @rnd:style = "issuenum" or
-			     @rnd:style = "volumenum" or
-			     @rnd:style = "edition" or
+			     @rnd:style = "author" or
 			     @rnd:style = "biblioid" or
-			     @rnd:style = "bibliosource" or
 			     @rnd:style = "bibliomisc" or
+			     @rnd:style = "bibliosource" or
+			     @rnd:style = "contrib" or
+			     @rnd:style = "date" or
+			     @rnd:style = "edition" or
+			     @rnd:style = "editor" or
+			     @rnd:style = "email" or
+			     @rnd:style = "issuenum" or
+			     @rnd:style = "keyword" or
+			     @rnd:style = "legalnotice" or
+			     @rnd:style = "othercredit" or
+			     @rnd:style = "pagenums" or
+			     @rnd:style = "personblurb" or
+			     @rnd:style = "pubdate" or
+			     @rnd:style = "publisher" or
+			     @rnd:style = "publisher-address" or
 			     @rnd:style = "releaseinfo" or
-			     @rnd:style = "keyword"
+			     @rnd:style = "revhistory" or
+			     @rnd:style = "revision" or
+			     @rnd:style = "volumenum"
 			     &metadata-extra;'>
 
   <!ENTITY author-extra ""> <!-- for customisation -->

@@ -1,21 +1,21 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Reconocer las opciones de vistas en 
-	   <application>MGED</application></title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Reconocer las opciones de vistas en 
+	   <application>MGED</application></title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Aprobada su publicación, su distribución es ilimitada.</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="learning_viewing_options_overviewlist">
+    <para xml:id="learning_viewing_options_overviewlist">
      En este tutorial usted aprenderá a:
       
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Crear un modelo de un radio (walkie-talkie).</para>
 	</listitem> 
@@ -35,7 +35,7 @@
       </itemizedlist>
     </para>
 
-    <para id="learning_viewing_options_intropara1">
+    <para xml:id="learning_viewing_options_intropara1">
 	Los diseños en <application>BRL-CAD</application> están estructurados en 
 	el sistema simple de coordenadas x, z e y, al cual nos referiremos a veces
 	 como modelo espacial. La ventana gráfica de <application>MGED</application>
@@ -44,14 +44,14 @@
 	 ventana gráfica.
     </para>
     
-    <para id="learning_viewing_options_intropara2">
+    <para xml:id="learning_viewing_options_intropara2">
       <application>MGED</application> ofrece una vista por defecto, pero 
 	también ofrece una variedad de opciones para modificarla. Usted puede 
 	alternar estas vistas durante y luego de la creación del modelo.
     </para>
     
-    <sect1 id="creating_radio">
-      <title>Creando el modelo de un radio</title>
+    <section xml:id="creating_radio"><info><title>Creando el modelo de un radio</title></info>
+      
      
       <para>
 	Para ganar práctica visualizando los modelos actuales vamos a 
@@ -80,7 +80,7 @@
 	siguiente lista.
 	</para>
       
-      <literallayout>
+      <literallayout class="normal">
        <command>in body.s rpp 0 16 0 32 0 48 [ENTER]</command>
        
        <command>in btn.s rec 8 30 36 0 3 0 4 0 0 0 0 2 [ENTER]</command>
@@ -110,7 +110,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged02_defaultradio.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged02_defaultradio.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -121,10 +121,10 @@
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="locating_viewing_info_cmd_window">
-      <title>Encontrar información sobre las vistas en la ventana de comandos</title>
+    <section xml:id="locating_viewing_info_cmd_window"><info><title>Encontrar información sobre las vistas en la ventana de comandos</title></info>
+      
       <para>
 	Tómese un minuto para observar la ventana de comandos.
 	Inclusive si no hay nada a la vista, en la parte inferior encontrará 
@@ -138,14 +138,14 @@
 	Como se detalla en la siguiente tabla, esta información contiene cuatro 
 	grupos de datos sobre la vista de la ventana gráfica.
 	
-	<table frame='all'><title>Vista de información en la parte inferior de 
-				  la ventana de comandos</title>
-	<tgroup cols='5' align='center' colsep='1' rowsep='1'>
-	  <colspec colname='c1'/>
-	  <colspec colname='c2'/>
-	  <colspec colname='c3'/>
-	  <colspec colname='c4'/>
-	  <colspec colname='c5'/>
+	<table frame="all"><info><title>Vista de información en la parte inferior de 
+				  la ventana de comandos</title></info>
+	<tgroup cols="5" align="center" colsep="1" rowsep="1">
+	  <colspec colname="c1"/>
+	  <colspec colname="c2"/>
+	  <colspec colname="c3"/>
+	  <colspec colname="c4"/>
+	  <colspec colname="c5"/>
 	  <thead>
 	    <row>
 	      <entry>Designación de pantalla</entry>
@@ -172,9 +172,9 @@
 	    </row>
 	    <row>
 	      <entry>az=</entry>
-	      <entry morerows='1' valign='middle'>Ángulo de vista</entry>
-	      <entry morerows='1' valign='middle'>5to-6to números</entry>
-	      <entry morerows='1' valign='middle'>Grados</entry>
+	      <entry morerows="1" valign="middle">Ángulo de vista</entry>
+	      <entry morerows="1" valign="middle">5to-6to números</entry>
+	      <entry morerows="1" valign="middle">Grados</entry>
 	      <entry>35.00</entry>
 	    </row>
 	    <row>
@@ -184,8 +184,8 @@
 	    <row>
 	      <entry>tw=</entry>
 	      <entry>Giro (Twist)</entry>
-	      <entry morerows='1' valign='middle'>7mo-10mo números</entry>
-	      <entry morerows='1' valign='middle'>Grados</entry>
+	      <entry morerows="1" valign="middle">7mo-10mo números</entry>
+	      <entry morerows="1" valign="middle">Grados</entry>
 	      <entry>0.00</entry>
 	    </row>
 	    <row>
@@ -197,14 +197,14 @@
 	</tgroup>
 	</table>
       </para>
-    </sect1>
+    </section>
      
-    <sect1 id="viewing_system_elements">
-      <title>Identificar elementos del sistema de visualización de 
-		<application>MGED</application>.</title>
+    <section xml:id="viewing_system_elements"><info><title>Identificar elementos del sistema de visualización de 
+		<application>MGED</application>.</title></info>
+      
      
-      <sect2>
-	<title>Vista centrada</title>
+      <section><info><title>Vista centrada</title></info>
+	
 	<para>
 	  El primer conjunto de la información le dirá el centro de lo que está
 	   viendo.
@@ -230,10 +230,10 @@
 	  números que están entre paréntesis luego del título cent= cambiarán 
 	  para reflejar el nuevo centro de la vista.
 	</para>
-      </sect2>
+      </section>
       
-      <sect2>
-	<title>Tamaño de la vista</title>
+      <section><info><title>Tamaño de la vista</title></info>
+	
      
 	<para>
 	  El tamaño de la vista es la cantidad de espacio modelo que se 
@@ -248,12 +248,12 @@
 	  En ambos casos, sin embargo, el tamaño real de la rosa es el mismo.
 	</para>
 	
-	<informaltable frame='none' pgwide="1">
-	  <tgroup cols='2' align='center'>
+	<informaltable frame="none" pgwide="1">
+	  <tgroup cols="2" align="center">
 	    <tbody>
 	      <row>
-		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_flower_zoomin.jpg" scale="60" /></entry>
-		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_flower_zoomout.jpg" /></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_flower_zoomin.jpg" scale="60"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_flower_zoomout.jpg"/></imageobject></inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>Zoom de acercamiento para ver detalles 
@@ -315,10 +315,10 @@
 	    tamaño del objeto. Sabrá como escalar el tamaño del objeto en el 
 	    tutorial #6.
 	</para>
-      </sect2>
+      </section>
       
-      <sect2>
-	<title>Ángulo de visualización</title>
+      <section><info><title>Ángulo de visualización</title></info>
+	
 	
 	<para>
 	  Acimut, elevación y giro (todos medidos en grados) determinan la 
@@ -350,13 +350,13 @@
 	
 	
 	<informaltable frame="none" pgwide="1">
-	  <tgroup cols='2' align='center'>
-	    <colspec colwidth="1*" />
-	    <colspec colwidth="3*" />
+	  <tgroup cols="2" align="center">
+	    <colspec colwidth="1*"/>
+	    <colspec colwidth="3*"/>
   	    <tbody>
 	      <row>
-		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_front.png" /></entry>
-		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_35_0.png" /></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_truck_front.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_truck_35_0.png"/></imageobject></inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>Front (az=0, el=0)</entry>
@@ -367,13 +367,13 @@
 	</informaltable>
 	
 	<informaltable frame="none" pgwide="1">
-	  <tgroup cols='2' align='center'>
-	    <colspec colwidth="3*" />
-	    <colspec colwidth="1*" />
+	  <tgroup cols="2" align="center">
+	    <colspec colwidth="3*"/>
+	    <colspec colwidth="1*"/>
 	    <tbody>
 	      <row>
-		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_left.png" /></entry>
-		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_rear.png" /></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_truck_left.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_truck_rear.png"/></imageobject></inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>Left (az=90, el=0)</entry>
@@ -384,10 +384,10 @@
 	</informaltable>
 	
 	<informaltable frame="none" pgwide="1">
-	  <tgroup cols='1' align='center'>
+	  <tgroup cols="1" align="center">
 	    <tbody>
 	      <row>
-		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_right.png" /></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_truck_right.png"/></imageobject></inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>Right (az=270, el=0)</entry>
@@ -411,27 +411,27 @@
 	</para>
 	
 	<informaltable frame="none" pgwide="1">
-	  <tgroup cols='2' align='center'>
+	  <tgroup cols="2" align="center">
 	    <tbody>
 	      <row>
-		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_35_0.png" /></entry>
-		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_35_25.png" /></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_truck_35_0.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_truck_35_25.png"/></imageobject></inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>az=35, el=0</entry>
 		<entry>az=35, el=25</entry>
 	      </row>
 	      <row>
-		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_35_60.png" /></entry>
-		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_35_90.png" /></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_truck_35_60.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_truck_35_90.png"/></imageobject></inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>az=35, el=60</entry>
 		<entry>az=35, el=90</entry>
 	      </row>
 	      <row>
-		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_270_90.png" /></entry>
-		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_270_-90.png" /></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_truck_270_90.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_truck_270_-90.png"/></imageobject></inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>Top (az=270, el=90)</entry>
@@ -454,10 +454,10 @@
 	  vista sobre el mismo. Para saber más sobre giros, mire el comando 
 	  <command>ae</command> en el apéndice A.
 	  <informaltable frame="none" pgwide="1">
-	    <tgroup cols='1' align='center'>
+	    <tgroup cols="1" align="center">
 	      <tbody>
 		<row>
-		  <entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_0_0_14.png" /></entry>
+		  <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_truck_0_0_14.png"/></imageobject></inlinemediaobject></entry>
 		</row>
 		<row>
 		  <entry>Front (az=0, el=0, tw=14)</entry>
@@ -466,11 +466,11 @@
 	    </tgroup>
 	  </informaltable>
 	</para>
-      </sect2>
-    </sect1>
+      </section>
+    </section>
     
-    <sect1 id="coord_sys_summary">
-      <title>Relación del Acimut y la Elevación con el sistema de coordenadas xyz</title>
+    <section xml:id="coord_sys_summary"><info><title>Relación del Acimut y la Elevación con el sistema de coordenadas xyz</title></info>
+      
      
       <para>
 	Como mencionamos al principio de este tutorial, <application>MGED</application>
@@ -486,7 +486,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged02_coordsys.png" scale="60" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged02_coordsys.png" scale="60" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -502,10 +502,10 @@
 	semieje negativo. Si el acimut no es 0'0, los ángulos de elevación 
 	están alineados con la dirección del acimut.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="view_radio_angles">
-      <title>Visualizando su radio desde distintos ángulos</title>
+    <section xml:id="view_radio_angles"><info><title>Visualizando su radio desde distintos ángulos</title></info>
+      
       
       <para>
 	Vamos ahora a experimentar con las distintas vistas de su radio. 
@@ -522,19 +522,19 @@
       </para>
       
       <informaltable frame="none" pgwide="1">
-	<tgroup cols='2' align='center'>
+	<tgroup cols="2" align="center">
 	  <tbody>
 	    <row>
-	      <entry><inlinegraphic fileref="../../lessons/es/images/mged02_radio_top.png" scale="90"/></entry>
-	      <entry><inlinegraphic fileref="../../lessons/es/images/mged02_radio_35_25.png" scale="90" /></entry>
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_radio_top.png" scale="90"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_radio_35_25.png" scale="90"/></imageobject></inlinemediaobject></entry>
 	    </row>
 	    <row>
 	      <entry>Top</entry>
 	      <entry>az35,el25</entry>
 	    </row>
 	    <row>
-	      <entry><inlinegraphic fileref="../../lessons/es/images/mged02_radio_right.png" scale="90" /></entry>
-	      <entry><inlinegraphic fileref="../../lessons/es/images/mged02_radio_front.png" scale="90" /></entry>
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_radio_right.png" scale="90"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged02_radio_front.png" scale="90"/></imageobject></inlinemediaobject></entry>
 	    </row>
 	    <row>
 	      <entry>Right</entry>
@@ -565,7 +565,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged02_multipane.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged02_multipane.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -575,10 +575,10 @@
 	</mediaobject>
       </informalfigure>      
 
-    </sect1>
+    </section>
 
-    <sect1 id="shift_grips">
-      <title>Trabajar con atajos de teclado (Shift Grips)</title>
+    <section xml:id="shift_grips"><info><title>Trabajar con atajos de teclado (Shift Grips)</title></info>
+      
       
       <para>
 	Las opciones de atajos de teclado (Shift Grip) de 
@@ -602,13 +602,13 @@
 	tabla muestra las distintas opciones y sus funciones.
       </para>
       
-      <table frame='all'>
-	<title>Los atajos de teclado y sus efectos</title>
-	<tgroup cols='5' align='center' colsep='1' rowsep='1'>
-	  <colspec colname='c1'/>
-	  <colspec colname='c2'/>
-	  <colspec colname='c3'/>
-	  <colspec colname='c4'/>
+      <table frame="all"><info><title>Los atajos de teclado y sus efectos</title></info>
+	
+	<tgroup cols="5" align="center" colsep="1" rowsep="1">
+	  <colspec colname="c1"/>
+	  <colspec colname="c2"/>
+	  <colspec colname="c3"/>
+	  <colspec colname="c4"/>
 	  <thead>
 	    <row>
 	      <entry>Función</entry>
@@ -631,7 +631,7 @@
 	      <entry>Rota el objeto en cualquier dirección</entry>
 	    </row>
 	    <row>
-	      <entry morerows='2' valign='middle'>Traslación limitada</entry>
+	      <entry morerows="2" valign="middle">Traslación limitada</entry>
 	      <entry>SHIFT + ALT + botón izquierdo + movimiento del mouse</entry>
 	      <entry>Mueve la vista en la dirección x</entry>
 	      <entry>Mueve el objeto en la dirección x</entry>
@@ -647,7 +647,7 @@
 	      <entry>Mueve el objeto en la dirección z</entry>
 	    </row>
 	    <row>
-	      <entry morerows='2' valign='middle'>Rotación limitada</entry>
+	      <entry morerows="2" valign="middle">Rotación limitada</entry>
 	      <entry>CTRL + ALT + botón izquierdo + movimiento del mouse</entry>
 	      <entry>Rota la vista según el eje x</entry>
 	      <entry>Rota el objeto según el eje x</entry>
@@ -698,15 +698,15 @@
 	  menos que usted se encuentre en el modo Edit (Edición), se modificará
 	   únicamente la visión de los diseños.                 
 	</para>
-    </sect1>
+    </section>
     
-    <sect1 id="learning_viewing_options_review">
-      <title>Revisión</title>
+    <section xml:id="learning_viewing_options_review"><info><title>Revisión</title></info>
+      
       
       <para>
 	En este tutorial usted aprendió a:
 	
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Crear el diseño de una radio.</para>
 	  </listitem>
@@ -724,5 +724,5 @@
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
   </article>

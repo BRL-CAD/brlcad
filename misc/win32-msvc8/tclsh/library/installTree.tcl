@@ -180,7 +180,7 @@ catch {
 
 puts "\[03 of 15] COPYING ICONS TO INSTALL DIRECTORY"
 catch {
-  copy_stuff [file join $rootDir doc html manuals archer archer.ico] [file join $installDir]
+  copy_stuff [file join $rootDir misc nsis archer.ico] [file join $installDir]
   copy_stuff [file join $rootDir misc nsis brlcad.ico] [file join $installDir]
 }
 

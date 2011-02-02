@@ -29,6 +29,8 @@
 
 <l:gentext key="Abstract" text="摘要"/>
 <l:gentext key="abstract" text="摘要"/>
+<l:gentext key="Acknowledgements" text="鸣谢"/>
+<l:gentext key="acknowledgements" text="鸣谢"/>
 <l:gentext key="Answer" text="答："/>
 <l:gentext key="answer" text="答："/>
 <l:gentext key="Appendix" text="附录"/>
@@ -45,8 +47,8 @@
 <l:gentext key="caution" text="小心"/>
 <l:gentext key="Chapter" text="章"/>
 <l:gentext key="chapter" text="章"/>
-<l:gentext key="Colophon" text="Colophon"/>
-<l:gentext key="colophon" text="Colophon"/>
+<l:gentext key="Colophon" text="后记"/>
+<l:gentext key="colophon" text="后记"/>
 <l:gentext key="Copyright" text="版权"/>
 <l:gentext key="copyright" text="版权"/>
 <l:gentext key="Dedication" text="题词"/>
@@ -96,20 +98,20 @@
 <l:gentext key="Published" text="出版方"/>
 <l:gentext key="published" text="出版方"/>
 <l:gentext key="Publisher" text="出版者"/>
-<l:gentext key="Qandadiv" text="质保"/>
-<l:gentext key="qandadiv" text="质保"/>
+<l:gentext key="Qandadiv" text="答问集"/>
+<l:gentext key="qandadiv" text="答问集"/>
 <l:gentext key="QandASet" text="常见问题"/>
 <l:gentext key="Question" text="问："/>
 <l:gentext key="question" text="问："/>
-<l:gentext key="RefEntry" text=""/>
-<l:gentext key="refentry" text=""/>
+<l:gentext key="RefEntry" text="页"/>
+<l:gentext key="refentry" text="页"/>
 <l:gentext key="Reference" text="参考"/>
 <l:gentext key="reference" text="参考"/>
 <l:gentext key="References" text="参考"/>
 <l:gentext key="RefName" text="名称"/>
 <l:gentext key="refname" text="名称"/>
-<l:gentext key="RefSection" text=""/>
-<l:gentext key="refsection" text=""/>
+<l:gentext key="RefSection" text="节"/>
+<l:gentext key="refsection" text="节"/>
 <l:gentext key="RefSynopsisDiv" text="大纲"/>
 <l:gentext key="refsynopsisdiv" text="大纲"/>
 <l:gentext key="RevHistory" text="修订历史"/>
@@ -128,12 +130,12 @@
 <l:gentext key="seealso" text="参见"/>
 <l:gentext key="Seealso" text="参见"/>
 <l:gentext key="SeeAlso" text="参见"/>
-<l:gentext key="set" text="Set"/>
-<l:gentext key="Set" text="Set"/>
-<l:gentext key="setindex" text="Set Index"/>
-<l:gentext key="SetIndex" text="Set Index"/>
-<l:gentext key="Sidebar" text=""/>
-<l:gentext key="sidebar" text="sidebar"/>
+<l:gentext key="set" text="集合"/>
+<l:gentext key="Set" text="集合"/>
+<l:gentext key="setindex" text="索引"/>
+<l:gentext key="SetIndex" text="索引"/>
+<l:gentext key="Sidebar" text="侧栏"/>
+<l:gentext key="sidebar" text="侧栏"/>
 <l:gentext key="step" text="步骤"/>
 <l:gentext key="Step" text="步骤"/>
 <l:gentext key="table" text="表"/>
@@ -150,12 +152,11 @@
 <l:gentext key="by" text="由"/>
 <l:gentext key="Edited" text="编辑时间"/>
 <l:gentext key="edited" text="编辑时间"/>
-<l:gentext key="Editedby" text="编辑者"/>
-<l:gentext key="editedby" text="编辑者"/>
+<l:gentext key="Editedby" text="编辑"/>
+<l:gentext key="editedby" text="编辑"/>
 <l:gentext key="in" text="于"/>
 <l:gentext key="lastlistcomma" text=""/>
 <l:gentext key="listcomma" text="、"/>
-<l:gentext key="nonexistantelement" text="不存在的元素"/>
 <l:gentext key="notes" text="备注"/>
 <l:gentext key="Notes" text="备注"/>
 <l:gentext key="Pgs" text="页"/>
@@ -199,6 +200,7 @@
 <l:gentext key="below" text="以下"/>
 <l:gentext key="sectioncalled" text="一节"/>
 <l:gentext key="index symbols" text="符号"/>
+<l:gentext key="writing-mode" text="lr-tb"/>
 <l:gentext key="lowercase.alpha" text="abcdefghijklmnopqrstuvwxyz"/>
 <l:gentext key="uppercase.alpha" text="ABCDEFGHIJKLMNOPQRSTUVWXYZ"/>
 <l:gentext key="normalize.sort.input" text="abcdefghijklmnopqrstuvwxyz"/>
@@ -216,6 +218,7 @@
 <l:context name="styles"><l:template name="person-name" text="first-last"/>
 </l:context>
 <l:context name="title"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t"/>
 <l:template name="answer" text="%t"/>
 <l:template name="appendix" text="附录 %n. %t"/>
 <l:template name="article" text="%t"/>
@@ -321,6 +324,7 @@
 <l:template name="simplesect" text="%t"/>
 </l:context>
 <l:context name="subtitle"><l:template name="appendix" text="%s"/>
+<l:template name="acknowledgements" text="%s"/>
 <l:template name="article" text="%s"/>
 <l:template name="bibliodiv" text="%s"/>
 <l:template name="biblioentry" text="%s"/>
@@ -360,6 +364,7 @@
 <l:template name="toc" text="%s"/>
 </l:context>
 <l:context name="xref"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t"/>
 <l:template name="answer" text="答： %n"/>
 <l:template name="appendix" text="%t"/>
 <l:template name="article" text="%t"/>
@@ -452,7 +457,7 @@
 <l:template name="part" text="第 %n 部分"/>
 <l:template name="procedure" text="过程 %n"/>
 <l:template name="productionset" text="产品 %n"/>
-<l:template name="qandadiv" text="质保 %n"/>
+<l:template name="qandadiv" text="答问集 %n"/>
 <l:template name="qandaentry" text="问： %n"/>
 <l:template name="question" text="问： %n"/>
 <l:template name="sect1" text="第 %n 节"/>
@@ -472,7 +477,7 @@
 <l:template name="part" text="第 %n 部分 “%t”"/>
 <l:template name="procedure" text="过程 %n, “%t”"/>
 <l:template name="productionset" text="产品 %n, “%t”"/>
-<l:template name="qandadiv" text="质保 %n, “%t”"/>
+<l:template name="qandadiv" text="答问集 %n, “%t”"/>
 <l:template name="refsect1" text="“%t”一节"/>
 <l:template name="refsect2" text="“%t”一节"/>
 <l:template name="refsect3" text="“%t”一节"/>
@@ -490,8 +495,9 @@
 <l:template name="sep2" text="和"/>
 <l:template name="seplast" text="和"/>
 </l:context>
-<l:context name="glossary"><l:template name="see" text="见%t"/>
-<l:template name="seealso" text="参见%t"/>
+<l:context name="glossary"><l:template name="see" text="见%t."/>
+<l:template name="seealso" text="参见%t."/>
+<l:template name="seealso-separator" text=", "/>
 </l:context>
 <l:context name="msgset"><l:template name="MsgAud" text="受众："/>
 <l:template name="MsgLevel" text="级别："/>

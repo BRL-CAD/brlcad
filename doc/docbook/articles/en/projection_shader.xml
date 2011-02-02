@@ -1,18 +1,18 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Using the Projection Shader</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Using the Projection Shader</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-  <sect1 id="projshader_general">
-    <title>General</title>
+  <section xml:id="projshader_general"><info><title>General</title></info>
+    
     <para>
       Though the U.S. Army Ballistic Research Laboratory - Computer-Aided Design
       (BRL-CAD) package has the capability to model highly detailed and complex
@@ -24,11 +24,11 @@
       to create realistic-looking "skin" for objects.
     </para>
 
-    <figure>
-      <title>The many components of a circuit board.</title>
+    <figure><info><title>The many components of a circuit board.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/projection_shader_fig01.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig01.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -120,10 +120,10 @@
       Each of these steps is discussed in the following paragraphs using the
       example of the previously mentioned circuit board.
     </para>
-  </sect1>
+  </section>
 
-  <sect1 id="projshader_getimage">
-    <title>Create/Obtain an Image to Project</title>
+  <section xml:id="projshader_getimage"><info><title>Create/Obtain an Image to Project</title></info>
+    
 
     <para>
       The first step in using the projection shader is to create or obtain the
@@ -150,10 +150,10 @@
 	 image/color data. 
       </para>
     </note>
-  </sect1>
+  </section>
 
-  <sect1 id="projshader_resize">
-    <title>Resize the Graphics Display Window to Match Image Dimensions</title>
+  <section xml:id="projshader_resize"><info><title>Resize the Graphics Display Window to Match Image Dimensions</title></info>
+    
     <para>
       The next step is to "prepare" the area on which the image will be
       displayed so that it is ready for the image. For the circuit board, the
@@ -163,11 +163,11 @@
       enlarge/shrink the graphics display window (by using the mouse to drag the
       window borders in or out) (see Figure B-2).
     </para>
-    <figure>
-      <title>Using the Raytrace Control Panel to size the graphics window.</title>
+    <figure><info><title>Using the Raytrace Control Panel to size the graphics window.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/projection_shader_fig02.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig02.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -190,10 +190,10 @@
       </para>
     </note>
 
-  </sect1>
+  </section>
 
-  <sect1 id="projshader_actframe">
-    <title>Ensure the Framebuffer is Active</title>
+  <section xml:id="projshader_actframe"><info><title>Ensure the Framebuffer is Active</title></info>
+    
     <para>
       A small but sometimes overlooked step before displaying any image onto the
       graphics display window is to make sure the framebuffer is active. If it
@@ -203,23 +203,23 @@
       selected Framebuffer, and made sure the box next to the Framebuffer Active
       option was toggled on.
     </para>
-  </sect1>
+  </section>
 
 
-  <sect1 id="projshader_dispimage">
-    <title>Display the Image in the Graphics Display Window</title>
+  <section xml:id="projshader_dispimage"><info><title>Display the Image in the Graphics Display Window</title></info>
+    
     <para>
       After the graphics display window has been prepared and the framebuffer
       checked/set, the image can be displayed in the graphics window. To do
       this, we entered the following command:
-      <literallayout>
+      <literallayout class="normal">
 pix-fb -F0 -s 950 circuit_back_950.pix
       </literallayout>
       Diagrammed, the command breaks down as follows:
     </para>
 
     <informaltable frame="all">
-      <tgroup cols='5'>
+      <tgroup cols="5">
 	<tbody>
 	  <row><entry>pix-fb</entry><entry>-F0</entry><entry>-s</entry><entry>950</entry><entry>circuit_back_950.pix</entry></row>
 	  <row>
@@ -248,10 +248,10 @@ pix-fb -F0 -s 950 circuit_back_950.pix
 	port" from the MGED command prompt. 
       </para>
     </note>
-  </sect1>
+  </section>
 
-  <sect1 id="projshader_overlayimage">
-    <title>Overlay the Image on the Geometry by Modifying the View Parameters</title>
+  <section xml:id="projshader_overlayimage"><info><title>Overlay the Image on the Geometry by Modifying the View Parameters</title></info>
+    
     <para>
       With the image and the target geometry displayed, edit the view parameters
       so that the image is aligned with the geometry on which it is to be
@@ -262,23 +262,23 @@ pix-fb -F0 -s 950 circuit_back_950.pix
       the functionality of the Shift-Grips, consult chapter 2, Volume II, of the
       BRL-CAD Tutorial Series.)
     </para>
-  </sect1>
+  </section>
   
-  <sect1 id="projshader_savesettingsfile">
-    <title>Save the Projection Shader Settings File</title>
+  <section xml:id="projshader_savesettingsfile"><info><title>Save the Projection Shader Settings File</title></info>
+    
     <para>
       After the geometry and image have been aligned, the projection settings
       (i.e., image file name, image width, image height, and current view
       parameters) can then be saved to a file using the prj_add command. The
       prj_add command appends the image file name and the current view
       parameters to the shader file. In our case, the command was:
-      <literallayout>
+      <literallayout class="normal">
 prj_add circuitboard.prj circuit_back_950.pix 950 950
       </literallayout>
 Diagrammed, this command breaks down as follows:
     </para>
     <informaltable frame="all">
-      <tgroup cols='5'>
+      <tgroup cols="5">
 	<tbody>
 	  <row><entry>prj_add</entry><entry>circuitboard.prj</entry><entry>circuit_back_950.pix</entry><entry>950</entry><entry>950</entry></row>
 	  <row>
@@ -291,19 +291,19 @@ Diagrammed, this command breaks down as follows:
       </tgroup>
     </informaltable>
 
-    <figure>
-      <title>Fitting the geometry view to the image dimensions.</title>
+    <figure><info><title>Fitting the geometry view to the image dimensions.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/projection_shader_fig03.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig03.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
 
-  </sect1>
+  </section>
 
-  <sect1 id="projshader_applysettingsfile">
-    <title>Apply the Shader Settings File to the Object in the Combination Editor</title>
+  <section xml:id="projshader_applysettingsfile"><info><title>Apply the Shader Settings File to the Object in the Combination Editor</title></info>
+    
     <para>
       The projection now needs to be applied to the object. We did this by
       opening the combination editor, typing in the region name cir.r1 in the
@@ -313,10 +313,10 @@ Diagrammed, this command breaks down as follows:
       shader file is typed into the Parameter File field, the same information
       is echoed into the Shader field.
     </para>
-  </sect1>
+  </section>
 
-  <sect1 id="projshader_render">
-    <title>Render the Image</title>
+  <section xml:id="projshader_render"><info><title>Render the Image</title></info>
+    
     <para>
       The final step in using the projection shader is to raytrace the object to
       determine if all the other steps have been performed correctly. In our
@@ -329,28 +329,28 @@ Diagrammed, this command breaks down as follows:
       the original image (a .jpg file) in an external photo editor.
     </para>
 
-    <figure>
-      <title>Applying the shader settings with the combination editor.</title>
+    <figure><info><title>Applying the shader settings with the combination editor.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/projection_shader_fig04.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig04.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
 
-    <figure>
-      <title>Original image (left) and image with circular cutouts (right).</title>
+    <figure><info><title>Original image (left) and image with circular cutouts (right).</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/projection_shader_fig05.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig05.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
 
-  </sect1>
+  </section>
 
-  <sect1 id="projshader_projectfront">
-    <title>Repeating the Steps to Project the Image on the Front</title>
+  <section xml:id="projshader_projectfront"><info><title>Repeating the Steps to Project the Image on the Front</title></info>
+    
     <para>
       After one side of the circuit board was finished, we proceeded to repeat
       the steps to add more projection parameters to the .prj file and thus
@@ -359,15 +359,15 @@ Diagrammed, this command breaks down as follows:
       geometry window, display the image and the geometry to the geometry
       window, and set up view parameters. After this was done, these parameters
       could be added to the existing .prj file by typing the following:
-      <literallayout>
+      <literallayout class="normal">
 prj_add circuitboard.prj circuit_front_950.pix 950 950
       </literallayout>
     </para>
-    <figure>
-      <title>The projection shader applied to the front of the circuit board.</title>
+    <figure><info><title>The projection shader applied to the front of the circuit board.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/projection_shader_fig06.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig06.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -376,14 +376,14 @@ prj_add circuitboard.prj circuit_front_950.pix 950 950
       is on top and the second projection is on the bottom.)
     </para>
     
-    <figure>
-      <title>The circuit board .prj file.</title>
+    <figure><info><title>The circuit board .prj file.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/en/images/projection_shader_fig07.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig07.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
 
-  </sect1>
+  </section>
 </article>

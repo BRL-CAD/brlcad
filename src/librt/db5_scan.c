@@ -333,7 +333,7 @@ db5_diradd_handler(
 int
 db_dirbuild(struct db_i *dbip)
 {
-    unsigned char header[8];
+    int version;
 
     if (!dbip) {
 	return -1;
@@ -346,13 +346,9 @@ db_dirbuild(struct db_i *dbip)
     }
 
     /* First, determine what version database this is */
-    rewind(dbip->dbi_fp);
-    if (fread(header, sizeof(header), 1, dbip->dbi_fp) != 1) {
-	bu_log("db_dirbuild(%s) ERROR, file too short to be BRL-CAD database\n", dbip->dbi_filename);
-	return -1;
-    }
+    version = db_version(dbip);
 
-    if (db5_header_is_valid(header)) {
+    if (version == 5) {
 	struct directory *dp;
 	struct bu_external ext;
 	struct db5_raw_internal raw;
@@ -362,7 +358,6 @@ db_dirbuild(struct db_i *dbip)
 	bu_avs_init_empty(&avs);
 
 	/* File is v5 format */
-	dbip->dbi_version = 5;
 	if (db5_scan(dbip, db5_diradd_handler, NULL) < 0) {
 	    bu_log("db_dirbuild(%s): db5_scan() failed\n", dbip->dbi_filename);
 	    return -1;
@@ -390,6 +385,9 @@ db_dirbuild(struct db_i *dbip)
 	    dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
 	    return 0;	/* not a fatal error, need to let user proceed to fix it */
 	}
+
+	/* Parse out the attributes */
+
 	if (db5_import_attributes(&avs, &raw.attributes) < 0) {
 	    bu_log("db_dirbuild(%s): improper database, corrupted attribute-only %s object\n",
 		   dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME);
@@ -398,12 +396,14 @@ db_dirbuild(struct db_i *dbip)
 	}
 	BU_CK_AVS(&avs);
 
-	/* Parse out the attributes */
+	/* 1/3: title */
 	if ((cp = bu_avs_get(&avs, "title")) != NULL) {
 	    dbip->dbi_title = bu_strdup(cp);
 	} else {
 	    dbip->dbi_title = bu_strdup("Untitled BRL-CAD database");
 	}
+
+	/* 2/3: units */
 	if ((cp = bu_avs_get(&avs, "units")) != NULL) {
 	    double dd;
 	    if (sscanf(cp, "%lf", &dd) != 1 || NEAR_ZERO(dd, VUNITIZE_TOL)) {
@@ -415,27 +415,29 @@ db_dirbuild(struct db_i *dbip)
 		dbip->dbi_base2local = 1/dd;
 	    }
 	}
+
+	/* 3/3: color table */
 	if ((cp = bu_avs_get(&avs, "regionid_colortable")) != NULL) {
 	    /* Import the region-id coloring table */
 	    db5_import_color_table((char *)cp);
 	}
 	bu_avs_free(&avs);
 	bu_free_external(&ext);	/* not until after done with avs! */
-	return 0;
-    }
 
-    /* Make a very simple check for a v4 database */
-    if (header[0] == 'I') {
-	dbip->dbi_version = 4;
+	return 0;		/* ok */
+
+    } else if (version == 4) {
+	/* things used to be pretty simple with v4 */
+
 	if (db_scan(dbip, (int (*)(struct db_i *, const char *, off_t, size_t, int, genptr_t))db_diradd, 1, NULL) < 0) {
-	    dbip->dbi_version = 0;
 	    return -1;
 	}
+
 	return 0;		/* ok */
     }
 
-    bu_log("db_dirbuild(%s) ERROR, file is not in BRL-CAD geometry database format\n",
-	   dbip->dbi_filename);
+    bu_log("ERROR: Cannot build object directory.\n\tFile does not seem to be in BRL-CAD geometry database format.\n", dbip->dbi_filename);
+
     return -1;
 }
 
@@ -451,8 +453,8 @@ db_version(struct db_i *dbip)
 
     RT_CK_DBI(dbip);
 
-    /* already calculated during an rt_dirbuild? */
-    if (dbip->dbi_version > 0)
+    /* already calculated during db_open? */
+    if (dbip->dbi_version != 0)
 	return abs(dbip->dbi_version);
 
     if (!dbip->dbi_fp) {

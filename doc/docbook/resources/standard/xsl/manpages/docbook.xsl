@@ -1,9 +1,10 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:exsl="http://exslt.org/common"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:exsl="http://exslt.org/common"
                 xmlns:ng="http://docbook.org/docbook-ng"
                 xmlns:db="http://docbook.org/ns/docbook"
-                exclude-result-prefixes="exsl"
+                exclude-result-prefixes="exsl d"
                 version='1.0'>
 
   <xsl:import href="../html/docbook.xsl"/>
@@ -46,6 +47,8 @@
   <xsl:param name="tbl.font.headings" select="$man.font.table.headings"/>
   <xsl:param name="tbl.font.title" select="$man.font.table.title"/>
 
+  <xsl:param name="stylesheet.result.type" select="'manpages'"/>
+
   <!-- ==================================================================== -->
 
   <xsl:template match="/">
@@ -57,32 +60,22 @@
     <xsl:choose>
       <!-- * when we find a namespaced document, strip the -->
       <!-- * namespace and then continue processing it. -->
-      <xsl:when test="//self::db:*">
-        <xsl:call-template name="log.message">
-          <xsl:with-param name="level">Note</xsl:with-param>
-          <xsl:with-param name="source" select="$doc.title"/>
-          <xsl:with-param name="context-desc">
-            <xsl:text>namesp. cut</xsl:text>
-          </xsl:with-param>
-          <xsl:with-param name="message">
-            <xsl:text>stripped namespace before processing</xsl:text>
-          </xsl:with-param>
-        </xsl:call-template>
-        <xsl:variable name="stripns">
-          <xsl:apply-templates mode="stripNS"/>
-        </xsl:variable>
-        <xsl:call-template name="log.message">
-          <xsl:with-param name="level">Note</xsl:with-param>
-          <xsl:with-param name="source" select="$doc.title"/>
-          <xsl:with-param name="context-desc">
-            <xsl:text>namesp. cut</xsl:text>
-          </xsl:with-param>
-          <xsl:with-param name="message">
-            <xsl:text>processing stripped document</xsl:text>
-          </xsl:with-param>
-        </xsl:call-template>
-        <xsl:apply-templates select="exsl:node-set($stripns)"/>
-      </xsl:when>
+      <xsl:when test="namespace-uri(*[1]) != 'http://docbook.org/ns/docbook'">
+ <xsl:call-template name="log.message">
+ <xsl:with-param name="level">Note</xsl:with-param>
+ <xsl:with-param name="source" select="$doc.title"/>
+ <xsl:with-param name="context-desc">
+ <xsl:text>namesp. add</xsl:text>
+ </xsl:with-param>
+ <xsl:with-param name="message">
+ <xsl:text>added namespace before processing</xsl:text>
+ </xsl:with-param>
+ </xsl:call-template>
+ <xsl:variable name="addns">
+    <xsl:apply-templates mode="addNS"/>
+  </xsl:variable>
+  <xsl:apply-templates select="exsl:node-set($addns)"/>
+</xsl:when>
       <xsl:when test="//*[local-name() = 'refentry']">
         <!-- * Check to see if we have any refentry children in this -->
         <!-- * document; if so, process them. The reason we use -->
@@ -92,7 +85,7 @@
         <!-- * manpages/profile-docbook.xsl, and the refentry child check -->
         <!-- * in the profile-docbook.xsl stylesheet won't work if we do -->
         <!-- * a simple //refentry check. -->
-        <xsl:apply-templates select="//refentry"/>
+        <xsl:apply-templates select="//d:refentry"/>
         <!-- * if $man.output.manifest.enabled is non-zero, -->
         <!-- * generate a manifest file -->
         <xsl:if test="not($man.output.manifest.enabled = 0)">
@@ -151,13 +144,13 @@
 
   <!-- ============================================================== -->
 
-  <xsl:template match="refentry">
+  <xsl:template match="d:refentry">
     <xsl:param name="lang">
       <xsl:call-template name="l10n.language"/>
     </xsl:param>
     <!-- * Just use the first refname found as the "name" of the man -->
     <!-- * page (which may different from the "title"...) -->
-    <xsl:variable name="first.refname" select="refnamediv[1]/refname[1]"/>
+    <xsl:variable name="first.refname" select="d:refnamediv[1]/d:refname[1]"/>
 
     <xsl:call-template name="root.messages">
       <xsl:with-param name="refname" select="$first.refname"/>
@@ -190,6 +183,10 @@
     <!-- * Assemble the various parts into a complete page, then store into -->
     <!-- * $manpage.contents so that we can manipluate them further. -->
     <xsl:variable name="manpage.contents">
+      <!-- * preprocessor invocation (need for legacy AT&T troff use) -->
+      <!-- * this tells troff to pre-process the page through tbl(1) -->
+      <!-- * (groff can figure it out automatically, but AT&T troff can't) -->
+      <xsl:text>'\" t&#10;</xsl:text>
       <!-- * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <!-- * top.comment = commented-out section at top of roff source -->
       <!-- * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
@@ -227,7 +224,10 @@
       <!-- * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <!-- * (re)define some macros -->
       <!-- * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-      <xsl:call-template name="define.macros"/>
+      <xsl:call-template name="define.portability.macros"/>
+      <xsl:if test="not($man.output.better.ps.enabled = 0)">
+        <xsl:call-template name="define.macros"/>
+      </xsl:if>
       <!-- * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
       <!-- * Set default hyphenation, justification, indentation, and -->
       <!-- * line-breaking -->

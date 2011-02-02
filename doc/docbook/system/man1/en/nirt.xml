@@ -1,88 +1,51 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2011 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='nirt1'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="nirt1">
   <refmeta>
     <refentrytitle>NIRT</refentrytitle>
     <manvolnum>1</manvolnum>
-    <refmiscinfo class='source'>BRL-CAD</refmiscinfo> 
-    <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo> 
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-  <refnamediv id='name'>
+  <refnamediv xml:id="name">
     <refname>nirt</refname>
     <refpurpose>interactively ray trace a BRL-CAD geometric model</refpurpose>
   </refnamediv>
   <!-- body begins here -->
-  <refsynopsisdiv id='synopsis'>
-    <cmdsynopsis>
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
       <command>nirt</command>    
-      <arg choice='opt'><replaceable>options</replaceable></arg>
-      <arg choice='plain'><replaceable>model.g</replaceable></arg>
-      <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>options</replaceable></arg>
+      <arg choice="plain" rep="norepeat"><replaceable>model.g</replaceable></arg>
+      <arg choice="plain" rep="repeat"><replaceable>objects</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   
   
-  <refsect1 id='description'><title>DESCRIPTION</title>
+  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
   <para>
-    <emphasis remap='I'>Nirt</emphasis> operates on the specified <emphasis remap='I'>objects</emphasis>
-    in the database <emphasis remap='I'>model.g,</emphasis> using 
+    <emphasis remap="I">Nirt</emphasis> operates on the specified <emphasis remap="I">objects</emphasis>
+    in the database <emphasis remap="I">model.g,</emphasis> using 
     <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
     to trace rays according to commands read from the standard input and producing an ASCII report of the results.
-    By default, the user can interact with <emphasis remap='I'>NIRT,</emphasis> repeatedly specifying 
+    By default, the user can interact with <emphasis remap="I">NIRT,</emphasis> repeatedly specifying 
     origination points and directions for rays and the format and destination for the reports.
-    Locations may be input and output in either model coordinates (<emphasis remap='I'>x</emphasis>,
-    <emphasis remap='I'>y</emphasis>, <emphasis remap='I'>z</emphasis>) or view (a.k.a. grid-plane) 
-    coordinates (<emphasis remap='I'>h</emphasis>, <emphasis remap='I'>v</emphasis>, 
-    <emphasis remap='I'>d</emphasis>). Similarly, direction may be input and output either as
+    Locations may be input and output in either model coordinates (<emphasis remap="I">x</emphasis>,
+    <emphasis remap="I">y</emphasis>, <emphasis remap="I">z</emphasis>) or view (a.k.a. grid-plane) 
+    coordinates (<emphasis remap="I">h</emphasis>, <emphasis remap="I">v</emphasis>, 
+    <emphasis remap="I">d</emphasis>). Similarly, direction may be input and output either as
     vectors expressed in model coordinates or as angles of azimuth and elevation.
   </para>
  
-  <refsect2 id='options'><title>Options</title>
-  <variablelist remap='TP'>
+  <refsection xml:id="options"><info><title>Options</title></info>
+  <variablelist remap="TP">
     <varlistentry>
-      <term><option rep='repeat'>-A <replaceable>attribute_name...</replaceable></option></term>
+      <term><option rep="repeat">-A <replaceable>attribute_name...</replaceable></option></term>
       <listitem>
 	<para>
 	  Adds the names to the list of attributes that will be reported
 	  when the "attributes" partition information value is specified.
-	  See also the <emphasis remap='B' role='B'>attr</emphasis>
+	  See also the <emphasis remap="B" role="B">attr</emphasis>
 	  command below.
 	</para>
       </listitem>
@@ -96,9 +59,9 @@
 	  view-rotation matrix (old format) from the standard input,
 	  and fire a single ray from the point in the specified direction.
 	  This option allows <command>nirt</command> to be called directly 
-	  from within <emphasis remap='I'>mged</emphasis>
+	  from within <emphasis remap="I">mged</emphasis>
 	  using the <command>nirt</command> and 
-	  <emphasis remap='B' role='B'>rrt</emphasis> commands.
+	  <emphasis remap="B" role="B">rrt</emphasis> commands.
 	</para>
       </listitem>
     </varlistentry>
@@ -107,8 +70,8 @@
       <listitem>
 	<para>
 	  Causes <command>nirt</command> to perform a
-	  <emphasis remap='B' role='B'>backout</emphasis>
-	  command before the first <emphasis remap='B' role='B'>shoot</emphasis>
+	  <emphasis remap="B" role="B">backout</emphasis>
+	  command before the first <emphasis remap="B" role="B">shoot</emphasis>
 	  command (see the description of these two commands below).
 	  This is probably only useful with the <option>-M</option>
 	  option.
@@ -120,11 +83,11 @@
       <listitem>
 	<para>
 	  Causes <command>nirt</command> to adjust the setting of
-	  <emphasis remap='I'>rt_bot_minpieces</emphasis>
+	  <emphasis remap="I">rt_bot_minpieces</emphasis>
 	  to the indicated value. A value of zero here indicates that 
 	  the "pieces" methodology should not be used. A value greater 
 	  than zero indicates that all BOT primitives containing more than
-	  <emphasis remap='I'>rt_bot_minpieces</emphasis> triangles should 
+	  <emphasis remap="I">rt_bot_minpieces</emphasis> triangles should 
 	  be broken down into a separate piece for each triangle. This can result
 	  in significant improvement in raytrace speed at the cost of more memory 
 	  use.
@@ -135,9 +98,9 @@
       <term><option>-e</option><replaceable> script</replaceable></term>
       <listitem>
 	<para>
-	  Causes <command>nirt</command> to run the <emphasis remap='I'>script</emphasis>
+	  Causes <command>nirt</command> to run the <emphasis remap="I">script</emphasis>
 	  string before reading the standard input. Multiple commands in
-	  <emphasis remap='I'>script</emphasis>  may be separated with a semicolon ';'.
+	  <emphasis remap="I">script</emphasis>  may be separated with a semicolon ';'.
 	  Scripts specified with either the <option>-e</option> or <option>-f</option>
 	  options are executed in the order in which they are specified
 	  on the command line.
@@ -158,7 +121,7 @@
       <listitem>
 	<para>
 	  Causes <command>nirt</command> to run the script file
-	  <emphasis remap='I'>sfile</emphasis> before reading the standard input.
+	  <emphasis remap="I">sfile</emphasis> before reading the standard input.
 	  Scripts specified with either the <option>-e</option> or <option>-f</option>
 	  options are executed in the order in which they are specified
 	  on the command line.
@@ -189,9 +152,9 @@
       <term><option>-u</option><replaceable> n</replaceable></term>
       <listitem>
 	<para>
-	  Sets the <emphasis remap='I'>useair</emphasis> member	of the 
-	  <emphasis remap='I'>rt_i</emphasis> structure to <emphasis remap='I'>n</emphasis>.
-	  See the discussion of the <emphasis remap='I'>useair</emphasis>
+	  Sets the <emphasis remap="I">useair</emphasis> member	of the 
+	  <emphasis remap="I">rt_i</emphasis> structure to <emphasis remap="I">n</emphasis>.
+	  See the discussion of the <emphasis remap="I">useair</emphasis>
 	  command below.
 	</para>
       </listitem>
@@ -201,10 +164,10 @@
       <listitem>
 	<para>
 	  Causes <command>nirt</command> to handle multiple regions' claims to segments of a ray
-	  according to action <emphasis remap='I'>n</emphasis>.	The argument
-	  <emphasis remap='I'>n</emphasis> may be any of the values 0, 1, 2, or 3,
+	  according to action <emphasis remap="I">n</emphasis>.	The argument
+	  <emphasis remap="I">n</emphasis> may be any of the values 0, 1, 2, or 3,
 	  or their corresponding key words "resolve," "rebuild_fastgen," "rebuild_all," or "retain."
-	  See the discussion of the <emphasis remap='I'>overlap_claims</emphasis>
+	  See the discussion of the <emphasis remap="I">overlap_claims</emphasis>
 	  command below.
 	</para>
       </listitem>
@@ -214,8 +177,8 @@
       <listitem>
 	<para>
 	  Sets the <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-	  debug flags to the hexadecimal bit vector <emphasis remap='I'>v</emphasis>.
-	  See the discussion of the <emphasis remap='I'>libdebug</emphasis>
+	  debug flags to the hexadecimal bit vector <emphasis remap="I">v</emphasis>.
+	  See the discussion of the <emphasis remap="I">libdebug</emphasis>
 	  command below.
 	</para>
       </listitem>
@@ -225,8 +188,8 @@
       <listitem>
 	<para>
 	  Sets <command>nirt</command>'s own debug flags to the hexadecimal 
-	  bit vector <emphasis remap='I'>v</emphasis>. See the discussion of the
-	  <emphasis remap='I'>debug</emphasis> command below.
+	  bit vector <emphasis remap="I">v</emphasis>. See the discussion of the
+	  <emphasis remap="I">debug</emphasis> command below.
 	</para>
       </listitem>
     </varlistentry>
@@ -240,68 +203,68 @@
     or initializing actions for output statements.
   </para>
   
-</refsect2>
+</refsection>
 
-<refsect2 id='commands'>
-  <title>Commands</title>
-  <variablelist remap='TP'>
+<refsection xml:id="commands"><info><title>Commands</title></info>
+  
+  <variablelist remap="TP">
     <varlistentry>
-      <term><emphasis remap='B' role='B'>xyz [</emphasis><emphasis remap='I'>x y z</emphasis><emphasis remap='B' role='B'>]</emphasis></term>
+      <term><emphasis remap="B" role="B">xyz [</emphasis><emphasis remap="I">x y z</emphasis><emphasis remap="B" role="B">]</emphasis></term>
       <listitem>
 	<para>
-	  Sets the ray origination point to (<emphasis remap='I'>x</emphasis>, <emphasis remap='I'>y</emphasis>, 
-	  <emphasis remap='I'>z</emphasis>). If this command is invoked with no arguments,
+	  Sets the ray origination point to (<emphasis remap="I">x</emphasis>, <emphasis remap="I">y</emphasis>, 
+	  <emphasis remap="I">z</emphasis>). If this command is invoked with no arguments,
 	  <command>nirt</command> prints the current ray origination point in model coordinates.
-	  Default is (0, 0, 0). Changing (<emphasis remap='I'>x</emphasis>, <emphasis remap='I'>y</emphasis>, 
-	  <emphasis remap='I'>z</emphasis>) will change (<emphasis remap='I'>h</emphasis>, 
-	  <emphasis remap='I'>v</emphasis>, <emphasis remap='I'>d</emphasis>),
+	  Default is (0, 0, 0). Changing (<emphasis remap="I">x</emphasis>, <emphasis remap="I">y</emphasis>, 
+	  <emphasis remap="I">z</emphasis>) will change (<emphasis remap="I">h</emphasis>, 
+	  <emphasis remap="I">v</emphasis>, <emphasis remap="I">d</emphasis>),
 	  according to the current direction vector.
 	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
       <term>
-	<emphasis remap='B' role ='B'>hv [</emphasis>
-	<emphasis remap='I'>h v</emphasis>
-	<emphasis remap='B' role='B'> [</emphasis>
-	<emphasis remap='I'>d</emphasis>
-	<emphasis remap='B' role='B'>]</emphasis>
+	<emphasis remap="B" role="B">hv [</emphasis>
+	<emphasis remap="I">h v</emphasis>
+	<emphasis remap="B" role="B"> [</emphasis>
+	<emphasis remap="I">d</emphasis>
+	<emphasis remap="B" role="B">]</emphasis>
       </term>
       <listitem>
 	<para>
 	  Sets the ray origination point to
-	  (<emphasis remap='I'>h</emphasis>, <emphasis remap='I'>v</emphasis>, <emphasis remap='I'>d</emphasis>).
+	  (<emphasis remap="I">h</emphasis>, <emphasis remap="I">v</emphasis>, <emphasis remap="I">d</emphasis>).
 	  If this command is invoked with only two arguments, <command>nirt</command>
-	  interprets them as <emphasis remap='I'>h</emphasis> and <emphasis remap='I'>v</emphasis>,
-	  and <emphasis remap='I'>d</emphasis> retains its previous value.
+	  interprets them as <emphasis remap="I">h</emphasis> and <emphasis remap="I">v</emphasis>,
+	  and <emphasis remap="I">d</emphasis> retains its previous value.
 	  If invoked with no argument, the command causes <command>nirt</command>
 	  to print the current ray origination point in view coordinates.
-	  Default is (0, 0, 0).  Changing (<emphasis remap='I'>h</emphasis>, <emphasis remap='I'>v</emphasis>, 
-	  <emphasis remap='I'>d</emphasis>) will change (<emphasis remap='I'>x</emphasis>, 
-	  <emphasis remap='I'>y</emphasis>, <emphasis remap='I'>z</emphasis>),
+	  Default is (0, 0, 0).  Changing (<emphasis remap="I">h</emphasis>, <emphasis remap="I">v</emphasis>, 
+	  <emphasis remap="I">d</emphasis>) will change (<emphasis remap="I">x</emphasis>, 
+	  <emphasis remap="I">y</emphasis>, <emphasis remap="I">z</emphasis>),
 	  according to the current direction vector.
 	</para>
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>dir [</emphasis><emphasis remap='I'>dx dy dz</emphasis><emphasis remap='B' role='B'>]</emphasis></term>
+    <term><emphasis remap="B" role="B">dir [</emphasis><emphasis remap="I">dx dy dz</emphasis><emphasis remap="B" role="B">]</emphasis></term>
     <listitem>
       <para>
 	Sets the direction vector to the unit vector in direction
-	(<emphasis remap='I'>dx</emphasis>, <emphasis remap='I'>dy</emphasis>, <emphasis remap='I'>dz</emphasis>).
+	(<emphasis remap="I">dx</emphasis>, <emphasis remap="I">dy</emphasis>, <emphasis remap="I">dz</emphasis>).
 	If this command is invoked with no arguments, <command>nirt</command> prints the current direction 
-	vector.  Default is (-1, 0, 0).  Changing (<emphasis remap='I'>dx</emphasis>, 
-	<emphasis remap='I'>dy</emphasis>, <emphasis remap='I'>dz</emphasis>) will change
+	vector.  Default is (-1, 0, 0).  Changing (<emphasis remap="I">dx</emphasis>, 
+	<emphasis remap="I">dy</emphasis>, <emphasis remap="I">dz</emphasis>) will change
 	the azimuth and elevation angles.
       </para>
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>ae [</emphasis><emphasis remap='I'>az el</emphasis><emphasis remap='B' role='B'>]</emphasis></term>
+    <term><emphasis remap="B" role="B">ae [</emphasis><emphasis remap="I">az el</emphasis><emphasis remap="B" role="B">]</emphasis></term>
     <listitem>
       <para>
-	Sets the direction vector to point <emphasis remap='I'>from</emphasis>
-	azimuth = <emphasis remap='I'>az</emphasis> and elevation = <emphasis remap='I'>el</emphasis>.
+	Sets the direction vector to point <emphasis remap="I">from</emphasis>
+	azimuth = <emphasis remap="I">az</emphasis> and elevation = <emphasis remap="I">el</emphasis>.
 	If this command is invoked with no arguments, <command>nirt</command>
 	prints the current values of the azimuth and elevation angles.
 	Default is (0, 0).  Changing azimuth and elevation will change the direction vector.
@@ -309,7 +272,7 @@
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>s</emphasis></term>
+    <term><emphasis remap="B" role="B">s</emphasis></term>
     <listitem>
       <para>
 	Fires a ray from the current origination point in the current direction.
@@ -317,64 +280,64 @@
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>bot_minpieces [n]</emphasis></term>
+    <term><emphasis remap="B" role="B">bot_minpieces [n]</emphasis></term>
     <listitem>
       <para>
-	Sets "rt_bot_minpieces" to the new value <emphasis remap='I'>n.</emphasis>
-	If <emphasis remap='I'>n</emphasis> is not provided, the current value of "rt_bot_minpieces" 
+	Sets "rt_bot_minpieces" to the new value <emphasis remap="I">n.</emphasis>
+	If <emphasis remap="I">n</emphasis> is not provided, the current value of "rt_bot_minpieces" 
 	is diplayed.  See the discussion of the <option>-B</option> option above for more details.
       </para>
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>backout [ n ]</emphasis></term>
+    <term><emphasis remap="B" role="B">backout [ n ]</emphasis></term>
     <listitem>
       <para>
 	Command to set the backout flag.  With no option, prints the current value. 
 	When activated, backs the ray origination point out of the geometry:
-	<emphasis remap='I'>h</emphasis> and <emphasis remap='I'>v</emphasis>
-	retain their previous values and <emphasis remap='I'>d</emphasis> is set to
-	<emphasis remap='I'>Dmax,</emphasis> the largest value of
-	<emphasis remap='I'>d</emphasis>  anywhere in the geometry.  Default is 0 (deactivated), 
+	<emphasis remap="I">h</emphasis> and <emphasis remap="I">v</emphasis>
+	retain their previous values and <emphasis remap="I">d</emphasis> is set to
+	<emphasis remap="I">Dmax,</emphasis> the largest value of
+	<emphasis remap="I">d</emphasis>  anywhere in the geometry.  Default is 0 (deactivated), 
 	1 is active.
       </para>
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>useair [</emphasis><emphasis remap='I'>n</emphasis><emphasis remap='B' role='B'>]</emphasis></term>
+    <term><emphasis remap="B" role="B">useair [</emphasis><emphasis remap="I">n</emphasis><emphasis remap="B" role="B">]</emphasis></term>
     <listitem>
       <para>
-	Sets the <emphasis remap='I'>useair</emphasis> member  of the <emphasis remap='I'>rt_i</emphasis> 
-	structure to the integer <emphasis remap='I'>n</emphasis>.  If <emphasis remap='I'>n</emphasis> is 0, 
+	Sets the <emphasis remap="I">useair</emphasis> member  of the <emphasis remap="I">rt_i</emphasis> 
+	structure to the integer <emphasis remap="I">n</emphasis>.  If <emphasis remap="I">n</emphasis> is 0, 
 	then <command>nirt</command> ignores any air in the geometry.  If this command is invoked with no 
-	arguments, <command>nirt</command> prints the current value of <emphasis remap='I'>useair.</emphasis>
+	arguments, <command>nirt</command> prints the current value of <emphasis remap="I">useair.</emphasis>
 	Default is 0.
       </para>
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>overlap_claims [</emphasis><emphasis remap='I'>n</emphasis><emphasis remap='B' role='B'>]</emphasis></term>
+    <term><emphasis remap="B" role="B">overlap_claims [</emphasis><emphasis remap="I">n</emphasis><emphasis remap="B" role="B">]</emphasis></term>
     <listitem>
       <para>
 	Specifies how to handle multiple regions' claims to segments of a ray.
-	If <emphasis remap='I'>n</emphasis> is 0 or "resolve," then all overlaps are resolved 
+	If <emphasis remap="I">n</emphasis> is 0 or "resolve," then all overlaps are resolved 
 	in favor of a single region  and any other claimants are ignored.  If
-	<emphasis remap='I'>n</emphasis> is 2 or "rebuild_all," then all overlaps are rebuilt,
+	<emphasis remap="I">n</emphasis> is 2 or "rebuild_all," then all overlaps are rebuilt,
 	so any overlapping regions along the ray create individual (geometrically intersecting) 
-	partitions.  If <emphasis remap='I'>n</emphasis> is 3 or "retain,"
+	partitions.  If <emphasis remap="I">n</emphasis> is 3 or "retain,"
 	then all overlaps are retained. In this case, the resulting partitions are always geometrically 
 	disjoint,  each one is owned by a single region according to the current overlap resolution strategy,
-	but every claimant is recorded. If <emphasis remap='I'>n</emphasis> is 1 or "rebuild_fastgen,"
-	then <command>nirt</command> takes on <emphasis remap='I'>FASTGEN</emphasis> behavior,
+	but every claimant is recorded. If <emphasis remap="I">n</emphasis> is 1 or "rebuild_fastgen,"
+	then <command>nirt</command> takes on <emphasis remap="I">FASTGEN</emphasis> behavior,
 	so overlaps of plate-mode primitives are rebuilt, but other overlaps are retained.
-	This command is useful with the <emphasis remap='I'>claimant_count,</emphasis>
-	<emphasis remap='I'>claimant_list,</emphasis> and <emphasis remap='I'>claimant_listn</emphasis>
+	This command is useful with the <emphasis remap="I">claimant_count,</emphasis>
+	<emphasis remap="I">claimant_list,</emphasis> and <emphasis remap="I">claimant_listn</emphasis>
 	output items.  Default is "resolve."
       </para>
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>attr {-f|-p|attr_names...}</emphasis></term>
+    <term><emphasis remap="B" role="B">attr {-f|-p|attr_names...}</emphasis></term>
     <listitem>
       <para>
 	When used with one or more names, adds the names to the list of attributes
@@ -393,22 +356,22 @@
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>units [</emphasis><emphasis remap='I'>u</emphasis><emphasis remap='B' role='B'>]</emphasis></term>
+    <term><emphasis remap="B" role="B">units [</emphasis><emphasis remap="I">u</emphasis><emphasis remap="B" role="B">]</emphasis></term>
     <listitem>
       <para>
 	Causes <command>nirt</command> to read and write all distances and locations in units 
-	of <emphasis remap='I'>u</emphasis>.  Valid choices for <emphasis remap='I'>u</emphasis> 
+	of <emphasis remap="I">u</emphasis>.  Valid choices for <emphasis remap="I">u</emphasis> 
 	are "mm"; "cm"; "m"; "in"; and "ft";   If this command is invoked with no arguments,
 	<command>nirt</command>  prints the current choice of I/O units.  Default is the units of
-	<emphasis remap='I'>model.g.</emphasis>
+	<emphasis remap="I">model.g.</emphasis>
       </para>
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>fmt [</emphasis><emphasis remap='I'>t format item item ...</emphasis><emphasis remap='B' role='B'>]</emphasis></term>
+    <term><emphasis remap="B" role="B">fmt [</emphasis><emphasis remap="I">t format item item ...</emphasis><emphasis remap="B" role="B">]</emphasis></term>
     <listitem>
       <para>
-	Sets the action for output statements of type <emphasis remap='I'>t</emphasis>.
+	Sets the action for output statements of type <emphasis remap="I">t</emphasis>.
 	If this command is invoked with only one argument, a valid statement type,
 	<command>nirt</command> prints the current format and items for the specified type.
 	See the discussion of output statements below.
@@ -416,36 +379,36 @@
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>dest [</emphasis><emphasis remap='I'>d</emphasis><emphasis remap='B' role='B'>]</emphasis></term>
+    <term><emphasis remap="B" role="B">dest [</emphasis><emphasis remap="I">d</emphasis><emphasis remap="B" role="B">]</emphasis></term>
     <listitem>
       <para>
-	Sets the destination for subsequent output actions to <emphasis remap='I'>d</emphasis>.
-	If the first character of <emphasis remap='I'>d</emphasis> is `|', then
-	<emphasis remap='I'>d</emphasis> is interpreted as a pipeline to which to write its output.
-	Otherwise, if <emphasis remap='I'>d</emphasis> is the string "default,"
+	Sets the destination for subsequent output actions to <emphasis remap="I">d</emphasis>.
+	If the first character of <emphasis remap="I">d</emphasis> is `|', then
+	<emphasis remap="I">d</emphasis> is interpreted as a pipeline to which to write its output.
+	Otherwise, if <emphasis remap="I">d</emphasis> is the string "default,"
 	<command>nirt</command> sets the destination to the standard output.
-	Otherwise, <emphasis remap='I'>d</emphasis> is interpreted as a file.
-	In any event, <emphasis remap='I'>d</emphasis> is not closed until the user quits
+	Otherwise, <emphasis remap="I">d</emphasis> is interpreted as a file.
+	In any event, <emphasis remap="I">d</emphasis> is not closed until the user quits
 	<command>nirt</command> or resets the destination by another invocation of the
-	<emphasis remap='I'>dest</emphasis> command. If this command is invoked with no arguments,
-	<command>nirt</command> prints the current value of <emphasis remap='I'>d</emphasis>.
+	<emphasis remap="I">dest</emphasis> command. If this command is invoked with no arguments,
+	<command>nirt</command> prints the current value of <emphasis remap="I">d</emphasis>.
 	Default is "default," that is, the standard output.
       </para>
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>statefile [</emphasis><emphasis remap='I'>f</emphasis><emphasis remap='B' role='B'>]</emphasis></term>
+    <term><emphasis remap="B" role="B">statefile [</emphasis><emphasis remap="I">f</emphasis><emphasis remap="B" role="B">]</emphasis></term>
     <listitem>
       <para>
 	Sets the name of the state file to which to dump and from which to load state information.
-	See the discussion of the <emphasis remap='I'>dump</emphasis> and <emphasis remap='I'>load</emphasis>
+	See the discussion of the <emphasis remap="I">dump</emphasis> and <emphasis remap="I">load</emphasis>
 	commands below.  If this command is invoked with no arguments, <command>nirt</command>
 	prints the current name of the state file.  Default is "nirt_state."
       </para>
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>dump</emphasis></term>
+    <term><emphasis remap="B" role="B">dump</emphasis></term>
     <listitem>
       <para>
 	Writes state information to the state file.  The ray origination point and direction vector,
@@ -454,7 +417,7 @@
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>load</emphasis></term>
+    <term><emphasis remap="B" role="B">load</emphasis></term>
     <listitem>
       <para>
 	Reads state information from the state file.  The state file loaded may contain any
@@ -463,54 +426,54 @@
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>print</emphasis><emphasis remap='I'> item</emphasis></term>
+    <term><emphasis remap="B" role="B">print</emphasis><emphasis remap="I"> item</emphasis></term>
     <listitem>
       <para>
-	Prints the current value of the output item <emphasis remap='I'>item</emphasis>.
+	Prints the current value of the output item <emphasis remap="I">item</emphasis>.
 	See the discussion of output statements below.
       </para>
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>libdebug</emphasis><emphasis remap='I'> v</emphasis></term>
+    <term><emphasis remap="B" role="B">libdebug</emphasis><emphasis remap="I"> v</emphasis></term>
     <listitem>
       <para>
 	Sets the <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-	debug flags (the <emphasis remap='I'>debug</emphasis> member of the <emphasis remap='I'>rt_g</emphasis> 
-	structure) to the hexadecimal bit vector <emphasis remap='I'>v</emphasis>. These flags control the 
+	debug flags (the <emphasis remap="I">debug</emphasis> member of the <emphasis remap="I">rt_g</emphasis> 
+	structure) to the hexadecimal bit vector <emphasis remap="I">v</emphasis>. These flags control the 
 	amount and kind of diagnostic print statements <citerefentry><refentrytitle>librt</refentrytitle>
-	<manvolnum>3</manvolnum></citerefentry> executes.  If <emphasis remap='I'>v</emphasis> is 0,
+	<manvolnum>3</manvolnum></citerefentry> executes.  If <emphasis remap="I">v</emphasis> is 0,
 	then no diagnostics are produced. If this command is invoked with no arguments,
-	<command>nirt</command> prints the current value of <emphasis remap='I'>v</emphasis>
+	<command>nirt</command> prints the current value of <emphasis remap="I">v</emphasis>
 	and the names of any of its bits that are set.  Default is 0.
       </para>
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>debug</emphasis><emphasis remap='I'> v</emphasis></term>
+    <term><emphasis remap="B" role="B">debug</emphasis><emphasis remap="I"> v</emphasis></term>
     <listitem>
       <para>
 	Sets <command>nirt</command>'s internal debug flags to the hexadecimal bit vector 
-	<emphasis remap='I'>v</emphasis>.  These flags control the amount and kind of diagnostic 
-	print statements <command>nirt</command> executes.  If <emphasis remap='I'>v</emphasis> is 0,
+	<emphasis remap="I">v</emphasis>.  These flags control the amount and kind of diagnostic 
+	print statements <command>nirt</command> executes.  If <emphasis remap="I">v</emphasis> is 0,
 	then no diagnostics are produced.  If this command is invoked with no arguments,
-	<command>nirt</command> prints the current value of <emphasis remap='I'>v</emphasis>
+	<command>nirt</command> prints the current value of <emphasis remap="I">v</emphasis>
 	and the names of any of its bits that are set.  Default is 0.
       </para>
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>! [</emphasis><emphasis remap='I'>command</emphasis><emphasis remap='B' role='B'>]</emphasis></term>
+    <term><emphasis remap="B" role="B">! [</emphasis><emphasis remap="I">command</emphasis><emphasis remap="B" role="B">]</emphasis></term>
     <listitem>
       <para>
-	Executes the shell pipeline <emphasis remap='I'>command.</emphasis>  If this command is 
+	Executes the shell pipeline <emphasis remap="I">command.</emphasis>  If this command is 
 	invoked with no arguments, <command>nirt</command> spins off a subshell, executing the 
 	program named in the environment variable SHELL.
       </para>
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>?</emphasis></term>
+    <term><emphasis remap="B" role="B">?</emphasis></term>
     <listitem>
       <para>
 	Prints a help menu to the standard output.
@@ -518,37 +481,37 @@
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap='B' role='B'>q</emphasis></term>
+    <term><emphasis remap="B" role="B">q</emphasis></term>
     <listitem>
       <para>
-	Quits <emphasis remap='I'>nirt.</emphasis>
+	Quits <emphasis remap="I">nirt.</emphasis>
       </para>
     </listitem>
   </varlistentry>
 </variablelist>
-</refsect2>
+</refsection>
 
-<refsect2 id='output_statements'>
-  <title>Output Statements</title>
+<refsection xml:id="output_statements"><info><title>Output Statements</title></info>
+  
   <para>
-    <emphasis remap='I'>Nirt</emphasis> allows the user a high degree of control,
-    via the <emphasis remap='I'>fmt</emphasis> command, over what information gets printed 
+    <emphasis remap="I">Nirt</emphasis> allows the user a high degree of control,
+    via the <emphasis remap="I">fmt</emphasis> command, over what information gets printed 
     out for each ray and in what format. There are six types of output statements,
     each of which is executed under appropriate circumstances.
     The types and their use are:
   </para>
-  <variablelist remap='TP'>
+  <variablelist remap="TP">
     <varlistentry>
-      <term><emphasis remap='B' role='B'>r</emphasis></term>
+      <term><emphasis remap="B" role="B">r</emphasis></term>
       <listitem>
 	<para>
 	  Ray. The first output statement executed whenever the
-	  <emphasis remap='I'>s</emphasis> command is invoked.
+	  <emphasis remap="I">s</emphasis> command is invoked.
 	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>h</emphasis></term>
+      <term><emphasis remap="B" role="B">h</emphasis></term>
       <listitem>
 	<para>
 	  Head.  Executed immediately after the ray statement if the ray hits anything.
@@ -556,7 +519,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>p</emphasis></term>
+      <term><emphasis remap="B" role="B">p</emphasis></term>
       <listitem>
 	<para>
 	  Partition.  Executed once for each partition along the ray if the ray hits anything.
@@ -564,7 +527,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>f</emphasis></term>
+      <term><emphasis remap="B" role="B">f</emphasis></term>
       <listitem>
 	<para>
 	  Foot. The last output statement executed if the ray hits anything.
@@ -572,7 +535,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>m</emphasis></term>
+      <term><emphasis remap="B" role="B">m</emphasis></term>
       <listitem>
 	<para>
 	  Miss.  Executed immediately after the ray statement if the ray hits nothing.
@@ -580,7 +543,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>o</emphasis></term>
+      <term><emphasis remap="B" role="B">o</emphasis></term>
       <listitem>
 	<para>
 	  Overlap.  Executed once for each overlap along the ray if the ray hits anything.
@@ -588,7 +551,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>g</emphasis></term>
+      <term><emphasis remap="B" role="B">g</emphasis></term>
       <listitem>
 	<para>
 	  Gap.  Executed once for each gap along the ray if the ray encounters any gaps.
@@ -609,69 +572,69 @@
   <!-- .ce -->
   <para>Ray Information</para>
   <!-- .PD .6v -->
-  <variablelist remap='TP'>
+  <variablelist remap="TP">
     <varlistentry>
-      <term><emphasis remap='B' role='B'>x_orig</emphasis></term>
+      <term><emphasis remap="B" role="B">x_orig</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>x</emphasis> coordinate of ray origination point.</para>
+	<para><emphasis remap="I">x</emphasis> coordinate of ray origination point.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>y_orig</emphasis></term>
+      <term><emphasis remap="B" role="B">y_orig</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>y</emphasis> coordinate of ray origination point.</para>
+	<para><emphasis remap="I">y</emphasis> coordinate of ray origination point.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>z_orig</emphasis></term>
+      <term><emphasis remap="B" role="B">z_orig</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>z</emphasis> coordinate of ray origination point.</para>
+	<para><emphasis remap="I">z</emphasis> coordinate of ray origination point.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>d_orig</emphasis></term>
+      <term><emphasis remap="B" role="B">d_orig</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>d</emphasis> coordinate of ray origination point.</para>
+	<para><emphasis remap="I">d</emphasis> coordinate of ray origination point.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>h</emphasis></term>
+      <term><emphasis remap="B" role="B">h</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>h</emphasis> coordinate for the entire ray.</para>
+	<para><emphasis remap="I">h</emphasis> coordinate for the entire ray.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>v</emphasis></term>
+      <term><emphasis remap="B" role="B">v</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>v</emphasis> coordinate for the entire ray.</para>
+	<para><emphasis remap="I">v</emphasis> coordinate for the entire ray.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>x_dir</emphasis></term>
+      <term><emphasis remap="B" role="B">x_dir</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>x</emphasis> component of direction vector.</para>
+	<para><emphasis remap="I">x</emphasis> component of direction vector.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>y_dir</emphasis></term>
+      <term><emphasis remap="B" role="B">y_dir</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>y</emphasis> component of direction vector.</para>
+	<para><emphasis remap="I">y</emphasis> component of direction vector.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>z_dir</emphasis></term>
+      <term><emphasis remap="B" role="B">z_dir</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>z</emphasis> component of direction vector.</para>
+	<para><emphasis remap="I">z</emphasis> component of direction vector.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>a</emphasis></term>
+      <term><emphasis remap="B" role="B">a</emphasis></term>
       <listitem>
 	<para>azimuth of view (i.e., of ray direction).</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>e</emphasis></term>
+      <term><emphasis remap="B" role="B">e</emphasis></term>
       <listitem>
 	<para>elevation of view (i.e., of ray direction).</para>
       </listitem>
@@ -682,74 +645,74 @@
   <para>Partition Information</para>
    <!-- .PD .6v -->
 
-  <variablelist remap='TP'>
+  <variablelist remap="TP">
     <varlistentry>
-      <term><emphasis remap='B' role='B'>attributes</emphasis></term>
+      <term><emphasis remap="B" role="B">attributes</emphasis></term>
       <listitem>
 	<para>A string variable consisting of the names and values of the attributes
 	requested by the
-	<emphasis remap='B' role='B'>attr</emphasis>
+	<emphasis remap="B" role="B">attr</emphasis>
 	command or the
 	<option>-A</option>
 	command line option.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>x_in</emphasis></term>
+      <term><emphasis remap="B" role="B">x_in</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>x</emphasis> coordinate of entry into current region.</para>
+	<para><emphasis remap="I">x</emphasis> coordinate of entry into current region.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>y_in</emphasis></term>
+      <term><emphasis remap="B" role="B">y_in</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>y</emphasis> coordinate of entry into current region.</para>
+	<para><emphasis remap="I">y</emphasis> coordinate of entry into current region.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>z_in</emphasis></term>
+      <term><emphasis remap="B" role="B">z_in</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>z</emphasis> coordinate of entry into current region.</para>
+	<para><emphasis remap="I">z</emphasis> coordinate of entry into current region.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>d_in</emphasis></term>
+      <term><emphasis remap="B" role="B">d_in</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>d</emphasis> coordinate of entry into current region.</para>
+	<para><emphasis remap="I">d</emphasis> coordinate of entry into current region.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>x_out</emphasis></term>
+      <term><emphasis remap="B" role="B">x_out</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>x</emphasis> coordinate of exit from current region.</para>
+	<para><emphasis remap="I">x</emphasis> coordinate of exit from current region.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>y_out</emphasis></term>
+      <term><emphasis remap="B" role="B">y_out</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>y</emphasis> coordinate of exit from current region.</para>
+	<para><emphasis remap="I">y</emphasis> coordinate of exit from current region.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>z_out</emphasis></term>
+      <term><emphasis remap="B" role="B">z_out</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>z</emphasis> coordinate of exit from current region.</para>
+	<para><emphasis remap="I">z</emphasis> coordinate of exit from current region.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>d_out</emphasis></term>
+      <term><emphasis remap="B" role="B">d_out</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>d</emphasis> coordinate of exit from current region.</para>
+	<para><emphasis remap="I">d</emphasis> coordinate of exit from current region.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>los</emphasis></term>
+      <term><emphasis remap="B" role="B">los</emphasis></term>
       <listitem>
 	<para>line-of-sight distance through current region.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>scaled_los</emphasis></term>
+      <term><emphasis remap="B" role="B">scaled_los</emphasis></term>
       <listitem>
 	<para>scaled line of sight:
 	product of line-of-sight distance through current region
@@ -757,140 +720,140 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>path_name</emphasis></term>
+      <term><emphasis remap="B" role="B">path_name</emphasis></term>
       <listitem>
 	<para>full path name of current region.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>reg_name</emphasis></term>
+      <term><emphasis remap="B" role="B">reg_name</emphasis></term>
       <listitem>
 	<para>name of current region, as might be obtained by passing
-	<emphasis remap='B' role='B'>path_name</emphasis>
+	<emphasis remap="B" role="B">path_name</emphasis>
 	to
 	<citerefentry><refentrytitle>basename</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>reg_id</emphasis></term>
+      <term><emphasis remap="B" role="B">reg_id</emphasis></term>
       <listitem>
 	<para>region ID of current region.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>claimant_count</emphasis></term>
+      <term><emphasis remap="B" role="B">claimant_count</emphasis></term>
       <listitem>
 	<para>number of regions claiming this partition
 	(that is, participating in a retained overlap).</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>claimant_list</emphasis></term>
+      <term><emphasis remap="B" role="B">claimant_list</emphasis></term>
       <listitem>
 	<para>space-separated list of names of regions claiming this partition
 	(that is, participating in a retained overlap).</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>claimant_listn</emphasis></term>
+      <term><emphasis remap="B" role="B">claimant_listn</emphasis></term>
       <listitem>
 	<para>Same as
-	<emphasis remap='I'>claimant_list,</emphasis>
+	<emphasis remap="I">claimant_list,</emphasis>
 	except that it is newline-, rather than space-separated.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>obliq_in</emphasis></term>
+      <term><emphasis remap="B" role="B">obliq_in</emphasis></term>
       <listitem>
 	<para>entry obliquity for current region.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>obliq_out</emphasis></term>
+      <term><emphasis remap="B" role="B">obliq_out</emphasis></term>
       <listitem>
 	<para>exit obliquity for current region.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>nm_x_in</emphasis></term>
+      <term><emphasis remap="B" role="B">nm_x_in</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>x</emphasis> component of entry normal vector</para>
+	<para><emphasis remap="I">x</emphasis> component of entry normal vector</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>nm_y_in</emphasis></term>
+      <term><emphasis remap="B" role="B">nm_y_in</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>y</emphasis> component of entry normal vector</para>
+	<para><emphasis remap="I">y</emphasis> component of entry normal vector</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>nm_z_in</emphasis></term>
+      <term><emphasis remap="B" role="B">nm_z_in</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>z</emphasis> component of entry normal vector</para>
+	<para><emphasis remap="I">z</emphasis> component of entry normal vector</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>nm_h_in</emphasis></term>
+      <term><emphasis remap="B" role="B">nm_h_in</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>h</emphasis> component of entry normal vector</para>
+	<para><emphasis remap="I">h</emphasis> component of entry normal vector</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>nm_v_in</emphasis></term>
+      <term><emphasis remap="B" role="B">nm_v_in</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>v</emphasis> component of entry normal vector</para>
+	<para><emphasis remap="I">v</emphasis> component of entry normal vector</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>nm_d_in</emphasis></term>
+      <term><emphasis remap="B" role="B">nm_d_in</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>d</emphasis> component of entry normal vector</para>
+	<para><emphasis remap="I">d</emphasis> component of entry normal vector</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>nm_x_out</emphasis></term>
+      <term><emphasis remap="B" role="B">nm_x_out</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>x</emphasis> component of exit normal vector</para>
+	<para><emphasis remap="I">x</emphasis> component of exit normal vector</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>nm_y_out</emphasis></term>
+      <term><emphasis remap="B" role="B">nm_y_out</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>y</emphasis> component of exit normal vector</para>
+	<para><emphasis remap="I">y</emphasis> component of exit normal vector</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>nm_z_out</emphasis></term>
+      <term><emphasis remap="B" role="B">nm_z_out</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>z</emphasis> component of exit normal vector</para>
+	<para><emphasis remap="I">z</emphasis> component of exit normal vector</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>nm_h_out</emphasis></term>
+      <term><emphasis remap="B" role="B">nm_h_out</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>h</emphasis> component of exit normal vector</para>
+	<para><emphasis remap="I">h</emphasis> component of exit normal vector</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>nm_v_out</emphasis></term>
+      <term><emphasis remap="B" role="B">nm_v_out</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>v</emphasis> component of exit normal vector</para>
+	<para><emphasis remap="I">v</emphasis> component of exit normal vector</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>nm_d_out</emphasis></term>
+      <term><emphasis remap="B" role="B">nm_d_out</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>d</emphasis> component of exit normal vector</para>
+	<para><emphasis remap="I">d</emphasis> component of exit normal vector</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>surf_num_in</emphasis></term>
+      <term><emphasis remap="B" role="B">surf_num_in</emphasis></term>
       <listitem>
 	<para>entry-surface ID of entry solid.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>surf_num_out</emphasis></term>
+      <term><emphasis remap="B" role="B">surf_num_out</emphasis></term>
       <listitem>
 	<para>exit-surface ID of exit solid.</para>
       </listitem>
@@ -902,25 +865,25 @@
   <!-- .PD .6v -->
   <variablelist>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>x_gap_in</emphasis></term>
+      <term><emphasis remap="B" role="B">x_gap_in</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>x</emphasis> coordinate of entry into gap.</para>
+	<para><emphasis remap="I">x</emphasis> coordinate of entry into gap.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B' >y_gap_in</emphasis></term>
+      <term><emphasis remap="B" role="B">y_gap_in</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>y</emphasis> coordinate of entry into gap.</para>
+	<para><emphasis remap="I">y</emphasis> coordinate of entry into gap.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B' >z_gap_in</emphasis></term>
+      <term><emphasis remap="B" role="B">z_gap_in</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>z</emphasis> coordinate of entry into gap.</para>
+	<para><emphasis remap="I">z</emphasis> coordinate of entry into gap.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>gap_los</emphasis></term>
+      <term><emphasis remap="B" role="B">gap_los</emphasis></term>
       <listitem>
 	<para>line-of-sight distance through gap.</para>
       </listitem>
@@ -932,195 +895,201 @@
   <!-- .PD .6v -->
   <variablelist>
     <varlistentry>
-      <term><emphasis remap='B' role='B' >ov_reg1_name</emphasis></term>
+      <term><emphasis remap="B" role="B">ov_reg1_name</emphasis></term>
       <listitem>
 	<para>name of one of the overlapping regions.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>ov_reg2_name</emphasis></term>
+      <term><emphasis remap="B" role="B">ov_reg2_name</emphasis></term>
       <listitem>
 	<para>name of the other overlapping region.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>ov_reg1_id</emphasis></term>
+      <term><emphasis remap="B" role="B">ov_reg1_id</emphasis></term>
       <listitem>
 	<para>region ID of one of the overlapping regions.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>ov_reg2_id</emphasis></term>
+      <term><emphasis remap="B" role="B">ov_reg2_id</emphasis></term>
       <listitem>
 	<para>region ID of the other overlapping region.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>ov_sol_in</emphasis></term>
+      <term><emphasis remap="B" role="B">ov_sol_in</emphasis></term>
       <listitem>
 	<para>name of one of the overlapping solids.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>ov_sol_out</emphasis></term>
+      <term><emphasis remap="B" role="B">ov_sol_out</emphasis></term>
       <listitem>
 	<para>name of the other overlapping solid.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>ov_los</emphasis></term>
+      <term><emphasis remap="B" role="B">ov_los</emphasis></term>
       <listitem>
 	<para>line-of-sight distance through the overlap.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>ov_x_in</emphasis></term>
+      <term><emphasis remap="B" role="B">ov_x_in</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>x</emphasis> coordinate of entry into overlap.</para>
+	<para><emphasis remap="I">x</emphasis> coordinate of entry into overlap.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B' >ov_y_in</emphasis></term>
+      <term><emphasis remap="B" role="B">ov_y_in</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>y</emphasis> coordinate of entry into overlap.</para>
+	<para><emphasis remap="I">y</emphasis> coordinate of entry into overlap.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>ov_z_in</emphasis></term>
+      <term><emphasis remap="B" role="B">ov_z_in</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>z</emphasis> coordinate of entry into overlap.</para>
+	<para><emphasis remap="I">z</emphasis> coordinate of entry into overlap.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>ov_d_in</emphasis></term>
+      <term><emphasis remap="B" role="B">ov_d_in</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>d</emphasis> coordinate of entry into overlap.</para>
+	<para><emphasis remap="I">d</emphasis> coordinate of entry into overlap.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>ov_x_out</emphasis></term>
+      <term><emphasis remap="B" role="B">ov_x_out</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>x</emphasis> coordinate of exit from overlap.</para>
+	<para><emphasis remap="I">x</emphasis> coordinate of exit from overlap.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>ov_y_out</emphasis></term>
+      <term><emphasis remap="B" role="B">ov_y_out</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>y</emphasis> coordinate of exit from overlap.</para>
+	<para><emphasis remap="I">y</emphasis> coordinate of exit from overlap.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>ov_z_out</emphasis></term>
+      <term><emphasis remap="B" role="B">ov_z_out</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>z</emphasis> coordinate of exit from overlap.</para>
+	<para><emphasis remap="I">z</emphasis> coordinate of exit from overlap.</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='B'>ov_d_out</emphasis></term>
+      <term><emphasis remap="B" role="B">ov_d_out</emphasis></term>
       <listitem>
-	<para><emphasis remap='I'>d</emphasis> coordinate of exit from overlap.</para>
+	<para><emphasis remap="I">d</emphasis> coordinate of exit from overlap.</para>
       </listitem>
     </varlistentry>
   </variablelist>
-</refsect2>
-</refsect1>
+</refsection>
+</refsection>
 
-<refsect1 id='hints'>
-  <title>HINTS</title>
+<refsection xml:id="hints"><info><title>HINTS</title></info>
+  
   <para>
-    Ray origination coordinates specified with the  <emphasis remap='I'>hv</emphasis>
+    Ray origination coordinates specified with the  <emphasis remap="I">hv</emphasis>
     command are immediately converted for internal use  to model coordinates,
     according to the current direction vector.  If you want to change the ray direction 
     and origination point, and you're using view coordinates, you probably want to change 
-    the ray direction <emphasis remap='I'>before</emphasis> you use the
-    <emphasis remap='I'>hv</emphasis> command.
+    the ray direction <emphasis remap="I">before</emphasis> you use the
+    <emphasis remap="I">hv</emphasis> command.
   </para>
   
   <para>
     The name "nirt" stands for "Natalie's interactive ray tracer."
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='definitions'>
-  <title>DEFINITIONS</title>
+<refsection xml:id="definitions"><info><title>DEFINITIONS</title></info>
+  
   <para>
     The usage in <command>nirt</command> of the following terms corresponds to that found in
     <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
     and elsewhere throughout BRL-CAD. We provide the definitions here for reference.
   </para>
   
-  <refsect2 id='view_coordinates'>
-    <title>View Coordinates</title>
+  <refsection xml:id="view_coordinates"><info><title>View Coordinates</title></info>
+    
     <para>
       We define the view coordinate system (more precisely its basis vectors 
-      <emphasis remap='B' role='B'>m</emphasis>, <emphasis remap='B' role='B'>n</emphasis>, and 
-      <emphasis remap='B'  role='B'>o</emphasis>) in terms of the basis vectors
-      <emphasis remap='B' role='B'>i</emphasis>, <emphasis remap='B' role='B'>j</emphasis>, and 
-      <emphasis remap='B' role='B'>k</emphasis>
+      <emphasis remap="B" role="B">m</emphasis>, <emphasis remap="B" role="B">n</emphasis>, and 
+      <emphasis remap="B" role="B">o</emphasis>) in terms of the basis vectors
+      <emphasis remap="B" role="B">i</emphasis>, <emphasis remap="B" role="B">j</emphasis>, and 
+      <emphasis remap="B" role="B">k</emphasis>
       of the model coordinate system as follows:
     </para>
     <!-- .in +5m -->
     
     <para>
-      <emphasis remap='B' role='B'>m</emphasis> is the opposite of the direction vector and 
-      corresponds to <emphasis remap='I'>d</emphasis>,
+      <emphasis remap="B" role="B">m</emphasis> is the opposite of the direction vector and 
+      corresponds to <emphasis remap="I">d</emphasis>,
       <!-- .br -->
-      <emphasis remap='B' role='B'>n</emphasis> = <emphasis remap='B' role='B'>k</emphasis> &times; <emphasis remap='B' role='b'>m</emphasis> corresponds to <emphasis remap='I'>h</emphasis>, and
+      <emphasis remap="B" role="B">n</emphasis> = <emphasis remap="B" role="B">k</emphasis> × <emphasis remap="B" role="b">m</emphasis> corresponds to <emphasis remap="I">h</emphasis>, and
       <!-- .br -->
-      <emphasis remap='B' role='B'>o</emphasis> = <emphasis remap='B' role='B'>m</emphasis> &times; <emphasis remap='B' role='B'>n</emphasis> corresponds to <emphasis remap='I'>v</emphasis>.
+      <emphasis remap="B" role="B">o</emphasis> = <emphasis remap="B" role="B">m</emphasis> × <emphasis remap="B" role="B">n</emphasis> corresponds to <emphasis remap="I">v</emphasis>.
     </para>
     
     <!-- .in \-5m -->
     <para>
       Thus if the direction vector is (-1, 0, 0), then
-      (<emphasis remap='I'>d</emphasis>, <emphasis remap='I'>h</emphasis>, <emphasis remap='I'>v</emphasis>) =
-      (<emphasis remap='I'>x</emphasis>, <emphasis remap='I'>y</emphasis>, <emphasis remap='I'>z</emphasis>).
+      (<emphasis remap="I">d</emphasis>, <emphasis remap="I">h</emphasis>, <emphasis remap="I">v</emphasis>) =
+      (<emphasis remap="I">x</emphasis>, <emphasis remap="I">y</emphasis>, <emphasis remap="I">z</emphasis>).
     </para>
-  </refsect2>
+  </refsection>
   
-  <refsect2 id='azimuth_and_elevation'>
-    <title>Azimuth and Elevation</title>
+  <refsection xml:id="azimuth_and_elevation"><info><title>Azimuth and Elevation</title></info>
+    
     <para>
-      Azimuth is the angle measured around <emphasis remap='B' role='B'>k</emphasis> (right-hand rule)
-      from the <emphasis remap='I'>xz</emphasis> plane to <emphasis remap='B' role='B'>m</emphasis>.
-      Elevation is the angle measured toward <emphasis remap='B' role='B'>k</emphasis>
-      from the <emphasis remap='I'>xy</emphasis> plane to <emphasis remap='B' role='B'>m</emphasis>.
+      Azimuth is the angle measured around <emphasis remap="B" role="B">k</emphasis> (right-hand rule)
+      from the <emphasis remap="I">xz</emphasis> plane to <emphasis remap="B" role="B">m</emphasis>.
+      Elevation is the angle measured toward <emphasis remap="B" role="B">k</emphasis>
+      from the <emphasis remap="I">xy</emphasis> plane to <emphasis remap="B" role="B">m</emphasis>.
     </para>
-  </refsect2>
-</refsect1>
+  </refsection>
+</refsection>
 
-<refsect1 id='files'>
-  <title>FILES</title>
-  <variablelist remap='TP'>
+<refsection xml:id="files"><info><title>FILES</title></info>
+  
+  <variablelist remap="TP">
     <varlistentry>
-      <term><emphasis remap='I'>&thinsp;~/.nirtrc&thinsp;</emphasis></term>
+      <term><emphasis remap="I"> ~/.nirtrc </emphasis></term>
       <listitem>
 	<para>run-time configuration file</para>
       </listitem>
     </varlistentry>
   </variablelist>
-</refsect1>
+</refsection>
 
-<refsect1 id='see_also'>
-  <title>SEE ALSO</title>
+<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+  
   <para>
     <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>printf</refentrytitle><manvolnum>3</manvolnum></citerefentry>
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='bugs'>
-  <title>BUGS</title>
+<refsection xml:id="bugs"><info><title>BUGS</title></info>
+  
   <para>
     The program sometimes complains about "previously unreported overlaps."  To the best of our knowledge, this 
     complaint may be safely ignored. We hope to fix this soon.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='authors'>
-  <title>AUTHORS</title>
-  <para>
-    Natalie Eberius, Paul Tanenbaum
-  </para>
-</refsect1>
+<info>
+  <author>
+      <personname>Natalie Eberius</personname>
+      <contrib></contrib>
+  </author>
+  <author>
+      <personname>Paul Tanenbaum</personname>
+      <contrib></contrib>
+  </author>
+</info>
+
+
+
 </refentry>
-

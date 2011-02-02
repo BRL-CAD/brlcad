@@ -95,10 +95,14 @@ __BEGIN_DECLS
  * file but if it isn't set, we create it.
  */
 #ifndef MAXPATHLEN
-#  ifdef _MAX_PATH
-#    define MAXPATHLEN _MAX_PATH
+#  ifdef PATH_MAX
+#    define MAXPATHLEN PATH_MAX
 #  else
-#    define MAXPATHLEN 1024
+#    ifdef _MAX_PATH
+#      define MAXPATHLEN _MAX_PATH
+#    else
+#      define MAXPATHLEN 1024
+#    endif
 #  endif
 #endif
 
@@ -1702,7 +1706,7 @@ BU_EXPORT extern int bu_debug;
 #define BU_DEBUG_COREDUMP	0x00000001	/* bu_bomb() should dump core on exit */
 #define BU_DEBUG_MEM_CHECK	0x00000002	/* Mem barrier & leak checking */
 #define BU_DEBUG_MEM_LOG	0x00000004	/* Print all dynamic memory operations */
-#define BU_DEBUG_DB		0x00000008	/* Database debug logging */
+#define BU_DEBUG_UNUSED_0	0x00000008	/* unused */
 
 #define BU_DEBUG_PARALLEL	0x00000010	/* Parallel debug logging */
 #define BU_DEBUG_MEM_QCHECK	0x00000020	/* Fast mem leak checking (won't work with corruption) */

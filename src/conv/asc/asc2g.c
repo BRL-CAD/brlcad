@@ -274,7 +274,7 @@ sktbld(void)
 {
     char *cp, *ptr;
     size_t i, j;
-    size_t vert_count, seg_count;
+    unsigned long vert_count, seg_count;
     float fV[3], fu[3], fv[3];
     point_t V;
     vect_t u, v;

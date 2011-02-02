@@ -421,25 +421,6 @@ cmd_setup(void)
     pathname = bu_brlcad_data("tclscripts", 1);
     snprintf(buffer, sizeof(buffer), "%s", pathname);
 
-#ifdef _WIN32
-    if (pathname) {
-	/* XXXXXXXXXXXXXXX UGLY XXXXXXXXXXXXXXXXXX*/
-	int i;
-        struct bu_vls vls;
-
-	bu_strlcat(buffer, "/", MAXPATHLEN);
-
-	for (i=0;i<strlen(buffer);i++) {
-	    if (buffer[i]=='\\')
-		buffer[i]='/'; }
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "source %s/mged/tree.tcl", buffer);
-	(void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-    }
-#endif
-
     /* link some tcl variables to these corresponding globals */
     Tcl_LinkVar(INTERP, "glob_compat_mode", (char *)&glob_compat_mode, TCL_LINK_BOOLEAN);
     Tcl_LinkVar(INTERP, "output_as_return", (char *)&output_as_return, TCL_LINK_BOOLEAN);
@@ -514,13 +495,13 @@ mged_setup(Tcl_Interp **interpreter)
 	Tcl_ResetResult(*interpreter);
 	if (init_tcl && Tcl_Init(*interpreter) == TCL_ERROR) {
 	    if (!try_auto_path) {
-		try_auto_path=1;
+		try_auto_path = 1;
 		continue;
 	    }
 	    bu_log("Tcl_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
 	    break;
 	}
-	init_tcl=0;
+	init_tcl = 0;
 
 	/* warn if tcl_library isn't set by now */
 	if (try_auto_path) {
@@ -531,7 +512,7 @@ mged_setup(Tcl_Interp **interpreter)
 	Tcl_ResetResult(*interpreter);
 	if (init_itcl && Tcl_Eval(*interpreter, "package require Itcl") != TCL_OK) {
 	    if (!try_auto_path) {
-		try_auto_path=1;
+		try_auto_path = 1;
 		/* Itcl_Init() leaves initialization in a bad state
 		 * and can cause retry failures.  cleanup manually.
 		 */
@@ -542,7 +523,7 @@ mged_setup(Tcl_Interp **interpreter)
 	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
 	    break;
 	}
-	init_itcl=0;
+	init_itcl = 0;
 
 	/* don't actually want to loop forever */
 	break;

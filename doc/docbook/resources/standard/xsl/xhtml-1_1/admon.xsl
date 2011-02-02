@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="ASCII"?>
 <!--This file was created automatically by html2xhtml-->
 <!--from the HTML stylesheets.-->
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" version="1.0">
+<xsl:stylesheet exclude-result-prefixes="d"
+                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:d="http://docbook.org/ns/docbook"
+xmlns="http://www.w3.org/1999/xhtml" version="1.0">
 
 <!-- ********************************************************************
      $Id$
@@ -18,7 +20,7 @@
   <xsl:text>25</xsl:text>
 </xsl:template>
 
-<xsl:template match="note|important|warning|caution|tip">
+<xsl:template match="d:note|d:important|d:warning|d:caution|d:tip">
   <xsl:choose>
     <xsl:when test="$admon.graphics != 0">
       <xsl:call-template name="graphical.admonition"/>
@@ -62,7 +64,7 @@
   </xsl:variable>
 
   <div>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:call-template name="common.html.attributes"/>
     <xsl:if test="$admon.style != ''">
       <xsl:attribute name="style">
         <xsl:value-of select="$admon.style"/>
@@ -72,9 +74,9 @@
     <table border="0">
       <xsl:attribute name="summary">
         <xsl:value-of select="$admon.type"/>
-        <xsl:if test="title|info/title">
+        <xsl:if test="d:title|d:info/d:title">
           <xsl:text>: </xsl:text>
-          <xsl:value-of select="(title|info/title)[1]"/>
+          <xsl:value-of select="(d:title|d:info/d:title)[1]"/>
         </xsl:if>
       </xsl:attribute>
       <tr>
@@ -86,15 +88,15 @@
             </xsl:attribute>
           </img>
         </td>
-        <th align="left">
+        <th align="{$direction.align.start}">
           <xsl:call-template name="anchor"/>
-          <xsl:if test="$admon.textlabel != 0 or title or info/title">
+          <xsl:if test="$admon.textlabel != 0 or d:title or d:info/d:title">
             <xsl:apply-templates select="." mode="object.title.markup"/>
           </xsl:if>
         </th>
       </tr>
       <tr>
-        <td align="left" valign="top">
+        <td align="{$direction.align.start}" valign="top">
           <xsl:apply-templates/>
         </td>
       </tr>
@@ -104,14 +106,16 @@
 
 <xsl:template name="nongraphical.admonition">
   <div>
-    <xsl:apply-templates select="." mode="class.attribute"/>
+    <xsl:call-template name="common.html.attributes">
+      <xsl:with-param name="inherit" select="1"/>
+    </xsl:call-template>
     <xsl:if test="$admon.style">
       <xsl:attribute name="style">
         <xsl:value-of select="$admon.style"/>
       </xsl:attribute>
     </xsl:if>
 
-    <xsl:if test="$admon.textlabel != 0 or title or info/title">
+    <xsl:if test="$admon.textlabel != 0 or d:title or d:info/d:title">
       <h3 class="title">
         <xsl:call-template name="anchor"/>
         <xsl:apply-templates select="." mode="object.title.markup"/>
@@ -122,10 +126,10 @@
   </div>
 </xsl:template>
 
-<xsl:template match="note/title"/>
-<xsl:template match="important/title"/>
-<xsl:template match="warning/title"/>
-<xsl:template match="caution/title"/>
-<xsl:template match="tip/title"/>
+<xsl:template match="d:note/d:title"/>
+<xsl:template match="d:important/d:title"/>
+<xsl:template match="d:warning/d:title"/>
+<xsl:template match="d:caution/d:title"/>
+<xsl:template match="d:tip/d:title"/>
 
 </xsl:stylesheet>
