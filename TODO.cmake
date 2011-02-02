@@ -11,6 +11,15 @@ Remaining items:
 
 18. 64 bit Windows build - will need a few flags, at least in tcl/tk
 
+19. See if you can auto-generate documentation for configure options by pulling
+    doc properties from options not marked as advanced and generating a formatted
+	 text file
+
+20. Update README, INSTALL, doc/*, etc.
+
+21. Test combinations of options, look more closely at what benchmark and rtserver only
+    intend to accomplish.
+
 Done (to first order, all this needs testing)
 
 1.  Detect OpenGL properly on Apple - choose X11 vs Aqua, and get the ogl code working
