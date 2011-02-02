@@ -199,6 +199,8 @@ BC_BRLCAD_ROOT
 
 # set up the BRLCAD_DATA install directory, sets bc_data_dir
 #   e.g. /usr/local/share/brlcad/7.4.0
+# Note that BRLCAD_DATA is expected to be a full path - relative
+# paths will not work
 BC_BRLCAD_DATA
 
 # if this is not a checkout, disable dependency tracking for a faster
