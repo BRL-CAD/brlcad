@@ -105,7 +105,6 @@ EXTRA_DIST = \
 	books/README \
 	books/en/Makefile.am \
 	books/en/tutorial_series_authors.xml \
-	catalog.xml \
 	fop.xconf.in \
 	lessons/en/Makefile.am \
 	lessons/es/Makefile.am \

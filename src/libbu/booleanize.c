@@ -29,35 +29,59 @@
 
 
 int
-bu_booleanize(const char *str)
+bu_str_true(const char *str)
 {
-    long val;
     size_t len;
+    long val;
+    struct bu_vls vls;
+    const char *newstr;
+    char *endptr;
 
     /* no string */
-    if (!str == 0)
+    if (!str)
 	return 0;
+
+    bu_vls_init(&vls);
+    bu_vls_strcpy(&vls, str);
+    bu_vls_trimspace(&vls);
+    newstr = bu_vls_addr(&vls);
 
     /* empty string */
-    len = strlen(str);
-    if (len == 0)
+    len = strlen(newstr);
+    if (len == 0) {
+	bu_vls_free(&vls);
 	return 0;
+    }
 
     /* starts with 'n', [nN]* looks like 'no' */
-    if (str[0] == 'n' || str[0] == 'N')
+    if (newstr[0] == 'n' || newstr[0] == 'N') {
+	bu_vls_free(&vls);
 	return 0;
+    }
 
     /* exactly "0" */
-    if (BU_STR_EQUAL(str, "0"))
+    if (BU_STR_EQUAL(newstr, "0")) {
+	bu_vls_free(&vls);
 	return 0;
+    }
 
     /* variant of "0" (e.g., 000) */
-    val = strtol(str, NULL, 10);
-    if (val == 0 && errno != EINVAL)
+    val = strtol(newstr, &endptr, 10);
+    if (val == 0 && errno != EINVAL && endptr == '\0')
 	return 0;
+
+    /* done with our string */
+    bu_vls_free(&vls);
 
     /* anything else */
     return 1;
+}
+
+
+int
+bu_str_false(const char *str)
+{
+    return !bu_str_true(str);
 }
 
 

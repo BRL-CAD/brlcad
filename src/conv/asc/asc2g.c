@@ -1379,9 +1379,9 @@ botbld(void)
 {
     char			my_name[NAME_LEN];
     char			type;
-    int			mode, orientation, error_mode;
-    size_t num_vertices, num_faces;
-    size_t			i, j;
+    int				mode, orientation, error_mode;
+    unsigned long int		num_vertices, num_faces;
+    unsigned long int		i, j;
     double			a[3];
     fastf_t			*vertices;
     fastf_t			*thick=NULL;

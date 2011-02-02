@@ -235,7 +235,7 @@ ged_vdraw_write(struct ged *gedp, int argc, const char *argv[])
 	}
 	cp = vp;
 	idx = vp->nused;
-    } else if (sscanf(argv[2], "%lu", &uind) < 1) {
+    } else if (sscanf(argv[2], "%lu", (long unsigned int *)&uind) < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "vdraw: write index not an integer\n");
 	return GED_ERROR;
     } else {
@@ -318,7 +318,7 @@ ged_vdraw_insert(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "vdraw: not enough args");
 	return GED_ERROR;
     }
-    if (sscanf(argv[2], "%lu", &uind) < 1) {
+    if (sscanf(argv[2], "%lu", (long unsigned int *)&uind) < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "vdraw: insert index not an integer\n");
 	return GED_ERROR;
     }
@@ -424,7 +424,7 @@ ged_vdraw_delete(struct ged *gedp, int argc, const char *argv[])
 	}
 	return GED_OK;
     }
-    if (sscanf(argv[2], "%lu", &uind) < 1) {
+    if (sscanf(argv[2], "%lu", (long unsigned int *)&uind) < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s %s: delete index not an integer\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
@@ -525,7 +525,7 @@ ged_vdraw_read(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "%d", length);
 	return GED_OK;
     }
-    if (sscanf(argv[2], "%lu", &uind) < 1) {
+    if (sscanf(argv[2], "%lu", (long unsigned int *)&uind) < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s %s: read index not an integer\n", argv[0], argv[1]);
 	return GED_ERROR;
     }

@@ -202,7 +202,7 @@ vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[
 	}
 	cp = vp;
 	idx = vp->nused;
-    } else if (sscanf(argv[1], "%lu", &uind) < 1) {
+    } else if (sscanf(argv[1], "%lu", (long unsigned int *)&uind) < 1) {
 	Tcl_AppendResult(interp, "vdraw: write index not an integer\n", (char *)NULL);
 	return TCL_ERROR;
     } else {
@@ -280,7 +280,7 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
 	Tcl_AppendResult(interp, "vdraw: not enough args", (char *)NULL);
 	return TCL_ERROR;
     }
-    if (sscanf(argv[1], "%lu", &uind) < 1) {
+    if (sscanf(argv[1], "%lu", (long unsigned int *)&uind) < 1) {
 	Tcl_AppendResult(interp, "vdraw: insert index not an integer\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -380,7 +380,7 @@ vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
 	}
 	return TCL_OK;
     }
-    if (sscanf(argv[1], "%lu", &uind) < 1) {
+    if (sscanf(argv[1], "%lu", (long unsigned int *)&uind) < 1) {
 	Tcl_AppendResult(interp, "vdraw: delete index not an integer\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -485,7 +485,7 @@ vdraw_read_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]
 	bu_vls_free(&vls);
 	return TCL_OK;
     }
-    if (sscanf(argv[1], "%lu", &uind) < 1) {
+    if (sscanf(argv[1], "%lu", (long unsigned int *)&uind) < 1) {
 	Tcl_AppendResult(interp, "vdraw: read index not an integer\n", (char *)NULL);
 	return TCL_ERROR;
     }

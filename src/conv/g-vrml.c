@@ -1185,7 +1185,7 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
 	    point_t pt;
 
 	    VSCALE( pt, &bot->vertices[i*3], scale_factor );
-	    fprintf( fp_out, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %lu\n", V3ARGS( pt ), vert_count );
+	    fprintf( fp_out, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %lu\n", V3ARGS( pt ), (long unsigned int)vert_count );
 	    vert_count++;
 	}
     }
@@ -1196,9 +1196,9 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
 	RT_BOT_CK_MAGIC( bot );
 	for ( i=0; i<bot->num_faces; i++ )
 	    fprintf( fp_out, "\t\t\t\t\t%lu, %lu, %lu, -1,\n",
-		     vert_count+bot->faces[i*3],
-		     vert_count+bot->faces[i*3+1],
-		     vert_count+bot->faces[i*3+2]);
+		     (long unsigned int)vert_count+bot->faces[i*3],
+		     (long unsigned int)vert_count+bot->faces[i*3+1],
+		     (long unsigned int)vert_count+bot->faces[i*3+2]);
 	vert_count += bot->num_vertices;
     }
     fprintf( fp_out, "\t\t\t\t]\n\t\t\t\tnormalPerVertex FALSE\n" );

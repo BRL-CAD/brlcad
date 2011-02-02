@@ -24,8 +24,6 @@
 
 #include "tie.h"
 
-#include "common.h"
-
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
