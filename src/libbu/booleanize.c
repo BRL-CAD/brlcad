@@ -34,6 +34,7 @@ bu_booleanize(const char *str)
     size_t len;
     struct bu_vls vls;
     const char *newstr;
+    char *endptr;
 
     /* no string */
     if (!str)
@@ -62,6 +63,11 @@ bu_booleanize(const char *str)
 	bu_vls_free(&vls);
 	return 0;
     }
+
+    /* variant of "0" (e.g., 000) */
+    val = strtol(newstr, &endptr, 10);
+    if (val == 0 && errno != EINVAL && endptr == '\0')
+	return 0;
 
     /* done with our string */
     bu_vls_free(&vls);
