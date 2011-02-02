@@ -14,12 +14,10 @@ exec tclsh "$0" "$@"
 # Copyright (C) 1997 Philip Quaife
 #
 
+package require Togl
+
 package provide gears 1.0
 
-# add parent directory to path to find Togl's pkgIndex in current directory
-if { [file exists pkgIndex.tcl] } {
-    set auto_path [linsert $auto_path 0 ..]
-}
 # following load also loads Tk and Togl packages
 load [file dirname [info script]]/gears[info sharedlibextension]
 
