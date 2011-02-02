@@ -385,6 +385,15 @@ suitable system openNURBS library is not found.  Aliases:
 	--enable-open-nurbs
 	--enable-open-nurbs-build
 
+--enable-step-build turns on compilation of the NIST Step Class 
+Libraries that are provided in a BRL-CAD source distribution.  Default 
+is "auto", meaning that step will be compiled and installed only if a
+suitable system NIST SCL libraries are not found.  Aliases:
+	--enable-step
+	--enable-steplibs
+	--enable-libstep
+	--enable-libstep-build
+
 --enable-termlib-build turns on compilation of the termlib library
 that is provided in a BRL-CAD source distribution.  Default is "auto",
 meaning that libtermlib will be compiled and installed only if a
@@ -412,6 +421,15 @@ library is not found.  Aliases:
 	--enable-tk
 	--enable-libtk
 	--enable-libtk-build
+
+--enable-aquatk-build turns on compilation of the Aqua Tk options for
+the Tk library on Mac OSX.  Default is "off". Aliases:
+	--enable-aquatk
+	--enable-aqua-tk
+	--enable-aqua-tk-build
+	--enable-tkaqua
+	--enable-tkaqua-build
+	--enable-tk-aqua-build
 
 --enable-itcl-build turns on compilation of the Incr Tcl/Tk library
 that is provided in a BRL-CAD source distribution.  Default is "auto",
@@ -482,7 +500,7 @@ Aliases:
 	--enable-endgame-framework
 	--enable-endgame-framework-build
 
---enable-ug-build turns on compilation of the Unigraphics (NX)
+--enable-unigraphics-build turns on compilation of the Unigraphics (NX)
 importer used to provide conversion support from Unigraphics format to
 a tessellated BRL-CAD geometry format.  Default is "no".  Aliases:
 	--enable-unigraphics
@@ -498,6 +516,13 @@ geometry models.  Default is "yes".  Aliases:
 	--enable-geometry
 	--enable-geometry-build
 	--enable-geometry-install
+
+--enable-documentation turns on documentation requiring Docbook based
+compilation.  Default is "auto", meaning it will build the documentation
+if suitable tools to do so are found. Aliases:
+	--enable-documentation-install
+	--enable-docs
+	--enable-docs-install
 
 --enable-optimized turns on optimized compilation.  Note that
 optimized compilation may potentially change the warnings produced by
