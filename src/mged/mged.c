@@ -2665,7 +2665,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 		if (classic_mged) {
 		    bu_log("Create new database (y|n)[n]? ");
 		    (void)bu_fgets(line, sizeof(line), stdin);
-		    if (!bu_booleanize(line)) {
+		    if (bu_str_false(line)) {
 			bu_log("Warning: no database is currently open!\n");
 			bu_vls_free(&msg);
 			return TCL_OK;
@@ -2716,7 +2716,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	}
 
 	/* did the caller specify not creating a new database? */
-	if (argc >= 3 && !bu_booleanize(argv[2])) {
+	if (argc >= 3 && bu_str_false(argv[2])) {
 	    gedp = save_gedp;
 	    dbip = save_dbip; /* restore previous database */
 	    rt_new_material_head(save_materp);

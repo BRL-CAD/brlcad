@@ -29,7 +29,7 @@
 
 
 int
-bu_booleanize(const char *str)
+bu_str_true(const char *str)
 {
     size_t len;
     long val;
@@ -75,6 +75,13 @@ bu_booleanize(const char *str)
 
     /* anything else */
     return 1;
+}
+
+
+int
+bu_str_false(const char *str)
+{
+    return !bu_str_true(str);
 }
 
 
