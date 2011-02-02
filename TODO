@@ -17,12 +17,16 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* upgrade source repository back-end to the latest SVN 1.5 so we can
-  benefit from proper merge tracking.
+* opendb is mishandling the trailing 'y'/'n'
+
+* strict failures on 32-bit fbsd
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* upgrade source repository back-end to the latest SVN 1.5 so we can
+  benefit from proper merge tracking.
 
 * annotation primitive.  specifically a means to create an object in
   the database that can optionally be associated with an object and/or
