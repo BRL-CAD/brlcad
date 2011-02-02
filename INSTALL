@@ -434,9 +434,10 @@ if a suitable system Iwidgets functionality is not found.  Aliases:
 	--enable-iwidgets
 	--enable-iwidgets-build
 
---enable-tkhtml3-build turns on compilation of the tkhtml3 library that is
+--enable-tkhtml-build turns on compilation of the tkhtml library that is
 provided in a BRL-CAD source distribution.  Default is "yes".
 Aliases:
+	--enable-tkhtml
 	--enable-tkhtml3
 
 --enable-tkimg-build turns on compilation of the tkimg library that is

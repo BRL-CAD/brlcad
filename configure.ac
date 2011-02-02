@@ -518,8 +518,7 @@ BC_ARG_ALIAS([build_iwidgets], [iwidgets-build])
 
 # aliases to force building tkhtml (help uses tkhtml-build)
 BC_ARG_ALIAS([build_tkhtml], [tkhtml])
-BC_ARG_ALIAS([build_tkhtml], [tkhtml3])
-BC_ARG_ALIAS([build_tkhtml], [tkhtml3-build])
+BC_ARG_ALIAS([build_tkhtml], [tkhtml-build])
 
 # aliases to force building tktable (help uses tktable-build)
 BC_ARG_ALIAS([build_tktable], [tktable])
