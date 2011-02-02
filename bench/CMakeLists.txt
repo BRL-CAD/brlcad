@@ -30,15 +30,13 @@ install(FILES ${bench_MANS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR}
 IF(SH_EXEC)
 	ADD_CUSTOM_TARGET(benchmark
 		${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark run
-		DEPENDS rt
+		DEPENDS rt pixcmp
 		)
 	ADD_DEPENDENCIES(benchmark bldg391.g m35.g moss.g sphflake.g star.g world.g)
 	ADD_CUSTOM_TARGET(benchmark-clean
 		${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark clean
-		DEPENDS rt
 		)
 	ADD_CUSTOM_TARGET(benchmark-clobber
 		${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark clobber
-		DEPENDS rt
 		)
 ENDIF(SH_EXEC)
