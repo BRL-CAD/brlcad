@@ -56,13 +56,14 @@ usage(const char *name)
     if (!name) {
 	name = unknown;
     }
+    /* this must be split, ISO C90 has a max static string length of 509 */
     bu_log("Usage: %s [OPTIONS] FILE1 [FILE2 [SKIP1 [SKIP2]]]\n%s", name,
 	   "Compare two PIX image files pixel by pixel.\n\n"
 	   "  -l   List pixel numbers and values for all pixels that differ.\n"
 	   "  -b   Output and process by bytes instead of pixels.\n"
 	   "  -i SKIP\n"
-	   "       Skip the first SKIP pixels of input (for FILE1 and FILE2)\n"
-	   "  -i SKIP1:SKIP2\n"
+	   "       Skip the first SKIP pixels of input (for FILE1 and FILE2)\n");
+    bu_log("  -i SKIP1:SKIP2\n"
 	   "       Skip the first SKIP1 pixels in FILE1 and SKIP2 pixels in FILE2.\n"
 	   "  -s   Silent output.  Only return an exit status.\n\n"
 	   "If FILE is `-' or is missing, then input is read from standard input.\n"
