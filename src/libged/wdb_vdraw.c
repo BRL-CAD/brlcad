@@ -167,7 +167,8 @@ static int
 vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     struct dg_obj *dgop = (struct dg_obj *)clientData;
-    size_t idx, uind;
+    size_t idx;
+    unsigned long uind = 0;
     struct bn_vlist *vp, *cp;
 
     if (!dgop->dgo_currVHead) {
@@ -202,7 +203,7 @@ vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[
 	}
 	cp = vp;
 	idx = vp->nused;
-    } else if (sscanf(argv[1], "%lu", (long unsigned int *)&uind) < 1) {
+    } else if (sscanf(argv[1], "%lu", &uind) < 1) {
 	Tcl_AppendResult(interp, "vdraw: write index not an integer\n", (char *)NULL);
 	return TCL_ERROR;
     } else {
@@ -210,7 +211,7 @@ vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[
 	/* only allow one past the end */
 
 	for (BU_LIST_FOR(vp, bn_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
-	    if (uind < BN_VLIST_CHUNK) {
+	    if ((size_t)uind < BN_VLIST_CHUNK) {
 		/* this is the right vlist */
 		break;
 	    }
@@ -228,7 +229,7 @@ vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[
 	    RT_GET_VLIST(vp);
 	    BU_LIST_INSERT(&(dgop->dgo_currVHead->vdc_vhd), &(vp->l));
 	}
-	if (uind > vp->nused) {
+	if ((size_t)uind > vp->nused) {
 	    Tcl_AppendResult(interp, "vdraw: write out of range\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -270,7 +271,7 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
     struct bn_vlist *vp, *cp, *wp;
     int i;
     int idx;
-    size_t uind;
+    unsigned long uind = 0;
 
     if (!dgop->dgo_currVHead) {
 	Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
@@ -280,14 +281,14 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
 	Tcl_AppendResult(interp, "vdraw: not enough args", (char *)NULL);
 	return TCL_ERROR;
     }
-    if (sscanf(argv[1], "%lu", (long unsigned int *)&uind) < 1) {
+    if (sscanf(argv[1], "%lu", &uind) < 1) {
 	Tcl_AppendResult(interp, "vdraw: insert index not an integer\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
     /* uinds hold user specified index */
     for (BU_LIST_FOR(vp, bn_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
-	if (uind < BN_VLIST_CHUNK) {
+	if ((size_t)uind < BN_VLIST_CHUNK) {
 	    /* this is the right vlist */
 	    break;
 	}
@@ -305,7 +306,7 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
 	RT_GET_VLIST(vp);
 	BU_LIST_INSERT(&(dgop->dgo_currVHead->vdc_vhd), &(vp->l));
     }
-    if (uind > vp->nused) {
+    if ((size_t)uind > vp->nused) {
 	Tcl_AppendResult(interp, "vdraw: insert out of range\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -353,7 +354,7 @@ vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
     struct dg_obj *dgop = (struct dg_obj *)clientData;
     struct bn_vlist *vp, *wp;
     size_t i;
-    size_t uind;
+    unsigned long uind = 0;
 
     if (!dgop->dgo_currVHead) {
 	Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
@@ -380,13 +381,13 @@ vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
 	}
 	return TCL_OK;
     }
-    if (sscanf(argv[1], "%lu", (long unsigned int *)&uind) < 1) {
+    if (sscanf(argv[1], "%lu", &uind) < 1) {
 	Tcl_AppendResult(interp, "vdraw: delete index not an integer\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
     for (BU_LIST_FOR(vp, bn_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
-	if (uind < BN_VLIST_CHUNK) {
+	if ((size_t)uind < BN_VLIST_CHUNK) {
 	    /* this is the right vlist */
 	    break;
 	}
@@ -397,7 +398,7 @@ vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
 	uind -= vp->nused;
     }
 
-    if (uind >= vp->nused) {
+    if ((size_t)uind >= vp->nused) {
 	Tcl_AppendResult(interp, "vdraw: delete out of range\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -444,7 +445,7 @@ vdraw_read_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]
     struct dg_obj *dgop = (struct dg_obj *)clientData;
     struct bn_vlist *vp;
     struct bu_vls vls;
-    size_t uind;
+    unsigned long uind = 0;
     int length;
 
     if (!dgop->dgo_currVHead) {
@@ -485,13 +486,13 @@ vdraw_read_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]
 	bu_vls_free(&vls);
 	return TCL_OK;
     }
-    if (sscanf(argv[1], "%lu", (long unsigned int *)&uind) < 1) {
+    if (sscanf(argv[1], "%lu", &uind) < 1) {
 	Tcl_AppendResult(interp, "vdraw: read index not an integer\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
     for (BU_LIST_FOR(vp, bn_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
-	if (uind < BN_VLIST_CHUNK) {
+	if ((size_t)uind < BN_VLIST_CHUNK) {
 	    /* this is the right vlist */
 	    break;
 	}
@@ -502,7 +503,7 @@ vdraw_read_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]
 	uind -= vp->nused;
     }
 
-    if (uind >= vp->nused) {
+    if ((size_t)uind >= vp->nused) {
 	Tcl_AppendResult(interp, "vdraw: read out of range\n", (char *)NULL);
 	return TCL_ERROR;
     }
