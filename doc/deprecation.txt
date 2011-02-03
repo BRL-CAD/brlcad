@@ -47,6 +47,15 @@ new names should be listed for reference.
 
 7.18
 ----
+bu.h xdr API
+        BU_GLONGLONG() -> ntohll() [deprecated 7.18]
+        BU_GLONG() -> ntohl() [deprecated 7.18]
+        BU_GSHORT() -> ntohs() [deprecated 7.18]
+        bu_gshort() -> ntohs() [deprecated 7.18]
+        bu_glong() -> ntohl() [deprecated 7.18]
+        bu_pshort() -> htons() [deprecated 7.18]
+        bu_plong() -> htonl() [deprecated 7.18]
+        bu_plonglong() -> htonll() [deprecated 7.18] 
 db.h
         rt_fastf_float() -> ntohf() [deprecated 7.18]
         rt_mat_dbmat() -> htonf() [deprecated 7.18]
