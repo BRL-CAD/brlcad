@@ -19,7 +19,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * strict failures on 32-bit fbsd
 
-* ars and poly need extra v4 flip import support
+* ars, poly, and bspline need extra v4 flip import support
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
