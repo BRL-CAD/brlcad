@@ -42,6 +42,8 @@
 #include "raytrace.h"
 #include "bot.h"
 
+#include "librt_private.h"
+
 
 #define TRI_NULL ((struct tri_specific *)0)
 
@@ -173,11 +175,8 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ari->magic = RT_ARS_INTERNAL_MAGIC;
 
     if (dbip->dbi_version < 0) {
-	/* FIXME: this is wrong half the time.  need to always flip,
-	 * not just on little endian platforms.
-	 */
-	ari->ncurves = bu_gshort((unsigned char *)&rp[0].a.a_m);
-	ari->pts_per_curve = bu_gshort((unsigned char *)&rp[0].a.a_n);
+	ari->ncurves = flip_short(rp[0].a.a_m);
+	ari->pts_per_curve = flip_short(rp[0].a.a_n);
     } else {
 	ari->ncurves = rp[0].a.a_m;
 	ari->pts_per_curve = rp[0].a.a_n;
