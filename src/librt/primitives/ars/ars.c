@@ -93,14 +93,13 @@ rt_ars_class(const struct soltab *stp,
 
 
 /**
- * R T _ A R S _ R D _ C U R V E
+ * A R S _ R D _ C U R V E
  *
- * rt_ars_rd_curve() reads a set of ARS B records and returns a
- * pointer to a malloc()'ed memory area of fastf_t's to hold the
- * curve.
+ * reads a set of ARS B records and returns a pointer to memory
+ * allocated for holding the curve's fastf_t values.
  */
-fastf_t *
-rt_ars_rd_curve(union record *rp, int npts)
+HIDDEN fastf_t *
+ars_rd_curve(union record *rp, int npts)
 {
     int lim;
     fastf_t *base;
@@ -118,7 +117,7 @@ rt_ars_rd_curve(union record *rp, int npts)
     for (; npts > 0; npts -= 8) {
 	rr = &rp[rec++];
 	if (rr->b.b_id != ID_ARS_B) {
-	    bu_log("rt_ars_rd_curve():  non-ARS_B record!\n");
+	    bu_log("ars_rd_curve():  non-ARS_B record!\n");
 	    break;
 	}
 	lim = (npts>8) ? 8 : npts;
@@ -179,7 +178,7 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     currec = 1;
     for (i=0; i < ari->ncurves; i++) {
 	ari->curves[i] =
-	    rt_ars_rd_curve(&rp[currec], ari->pts_per_curve);
+	    ars_rd_curve(&rp[currec], ari->pts_per_curve);
 	currec += (ari->pts_per_curve+7)/8;
     }
 
@@ -760,7 +759,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /*
      * Compute planar faces. Will examine curves[i][pts_per_curve],
-     * provided by rt_ars_rd_curve.
+     * provided by ars_rd_curve.
      */
     ncv = arip->ncurves-2;
     ntri = 0;
