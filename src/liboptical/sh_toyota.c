@@ -94,7 +94,7 @@ void lambda_to_rgb(fastf_t lambda, fastf_t irrad, fastf_t *rgb),
     spectral_dist_table(fastf_t lambda, fastf_t *e_mean, fastf_t *v1, fastf_t *v2);
 fastf_t
 atmos_irradiance(fastf_t lambda),
-    air_mass(fastf_t gamma),
+    air_mass(fastf_t in_gamma),
     background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fastf_t *Sun, fastf_t t_vl, struct shadework *swp),
     clear_sky_lum(fastf_t lz, fastf_t *Sky_elmt, fastf_t *Sun, fastf_t *Zenith),
     fresnel_refl(fastf_t cos_eps, fastf_t n1, fastf_t n2),
