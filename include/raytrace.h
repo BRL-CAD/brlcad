@@ -114,8 +114,8 @@ __BEGIN_DECLS
 #define DEBUG_UNUSED3	0x20000000	/**< @brief 30 unused */
 
 /* Options which will cause the library to write binary debugging output */
-#define DEBUG_PLOTSOLIDS 0x40000000	/**< @brief 31 plot all solids */
-#define DEBUG_PLOTBOX	0x80000000	/**< @brief 32 Plot(3) bounding boxes and cuts */
+#define DEBUG_PL_SOLIDS 0x40000000	/**< @brief 31 plot all solids */
+#define DEBUG_PL_BOX	0x80000000	/**< @brief 32 Plot(3) bounding boxes and cuts */
 
 /** Format string for bu_printb() */
 #define DEBUG_FORMAT	\
