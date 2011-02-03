@@ -240,22 +240,8 @@ bu_cv_pr_cookie(char *title, int cookie)
 }
 
 
-/**
- * c v
- * @brief
- * convert from one format to another.
- *
- * @param in	input pointer
- * @param out	output pointer
- * @param count	number of entries to convert.
- * @param size	size of output buffer.
- * @param infmt	input format
- * @param outfmt	output format
- *
- * FIXME: is this public API?
- */
 size_t
-cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count)
+bu_cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count)
 {
     int incookie, outcookie;
     incookie = bu_cv_cookie(infmt);
