@@ -205,7 +205,11 @@ typedef ptrdiff_t ssize_t;
 #  else
      /* MSVC/C++ */
 #    ifdef __cplusplus
-#      define UNUSED(parameter) /* parameter */
+#      if defined(NDEBUG)
+#        define UNUSED(parameter) /* parameter */
+#      else /* some of them are asserted */
+#         define UNUSED(parameter) (parameter)
+#      endif
 #    else
 #      if defined(_MSC_VER)
          /* disable reporting an "unreferenced formal parameter" */
