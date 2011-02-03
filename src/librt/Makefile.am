@@ -278,6 +278,7 @@ parsetest_LDADD = \
 
 
 noinst_HEADERS = \
+	librt_private.h \
 	opennurbs_ext.h \
 	primitives/fixpt.h \
 	primitives/brep/brep_debug.h \
