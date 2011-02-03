@@ -266,7 +266,7 @@ union record  {
 	char	B_pad;
 	char	B_name[NAMESIZE];
 	short	B_nsurf;	/* #  of surfaces in this solid */
-	dbfloat_t B_resolution;	/* resolution of flatness */
+	dbfloat_t B_unused;	/* UNUSED (was resolution of flatness) */
     } B;
     struct b_surf {
 	char    d_id;		/* = ID_BSURF */
