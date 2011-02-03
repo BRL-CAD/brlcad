@@ -261,13 +261,6 @@ union record  {
 	char	md_material[100]; /* UNUSED now */
     } md;
 
-    struct B_solid {
-	char	B_id;		/* = ID_BSOLID */
-	char	B_pad;
-	char	B_name[NAMESIZE];
-	short	B_nsurf;	/* #  of surfaces in this solid */
-	dbfloat_t B_resolution;	/* resolution of flatness */
-    } B;
     struct b_surf {
 	char    d_id;		/* = ID_BSURF */
 	short   d_order[2];	/* order of u and v directions */
