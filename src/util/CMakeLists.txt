@@ -26,7 +26,9 @@ ENDIF(BRLCAD-ENABLE_X11)
 
 BRLCAD_ADDFILE(pl-dm.c sample_applications)
 
-BRLCAD_ADDEXEC(pc_test pc_test.c "libwdb libpc")
+IF(NOT MSVC)
+	BRLCAD_ADDEXEC(pc_test pc_test.c "libwdb libpc")
+ENDIF(NOT MSVC)
 
 BRLCAD_ADDEXEC(alias-pix alias-pix.c libbu STRICT)
 BRLCAD_ADDEXEC(ap-pix ap-pix.c libbu STRICT)
