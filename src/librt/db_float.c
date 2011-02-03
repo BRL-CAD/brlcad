@@ -1,4 +1,4 @@
-/*                  D B _ F L O A T . C
+/*                   D B _ F L I P . C
  * BRL-CAD
  *
  * Copyright (c) 1995-2011 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file db_float.c
+/** @file db_flip.c
  *
  * v4 geometry database serialization routines.
  *
