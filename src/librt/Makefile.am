@@ -58,7 +58,7 @@ librt_nil_la_SOURCES = \
 	db_anim.c \
 	db_corrupt.c \
 	db_flags.c \
-	db_float.c \
+	db_flip.c \
 	db_inmem.c \
 	db_io.c \
 	db_lookup.c \

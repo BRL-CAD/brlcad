@@ -380,7 +380,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\db_float.c"
+				RelativePath="..\..\..\src\librt\db_flip.c"
 				>
 			</File>
 			<File
