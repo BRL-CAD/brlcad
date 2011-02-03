@@ -17,9 +17,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* opendb is mishandling the trailing 'y'/'n'
-
 * strict failures on 32-bit fbsd
+
+* ars and poly need extra v4 flip import support
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
