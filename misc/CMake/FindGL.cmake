@@ -61,6 +61,9 @@ ELSE (WIN32)
 		FIND_LIBRARY(OPENGL_glu_LIBRARY AGL DOC "AGL lib for OSX")
 		FIND_PATH(OPENGL_INCLUDE_DIR_GL OpenGL/gl.h DOC "Include for OpenGL on OSX")
 	ELSE(OPENGL_USE_AQUA)
+		# If we're on Apple and not using Aqua, we don't want frameworks
+		SET(CMAKE_FIND_FRAMEWORK "NEVER")
+
 		# Handle HP-UX cases where we only want to find OpenGL in either hpux64
 		# or hpux32 depending on if we're doing a 64 bit build.
 		IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
@@ -81,28 +84,26 @@ ELSE (WIN32)
 
 		FIND_PATH(OPENGL_INCLUDE_DIR_GL GL/gl.h
 			/usr/share/doc/NVIDIA_GLX-1.0/include
-			/usr/X11/include
 			/usr/openwin/share/include
-			/usr/X11R6/include
+			/opt/graphics/OpenGL/include /usr/X11R6/include
 			)
 
 		FIND_PATH(OPENGL_INCLUDE_DIR_GLX GL/glx.h
 			/usr/share/doc/NVIDIA_GLX-1.0/include
-			/usr/X11/include
 			/usr/openwin/share/include
-			/usr/X11R6/include
+			/opt/graphics/OpenGL/include /usr/X11R6/include
 			)
 
 		FIND_PATH(OPENGL_xmesa_INCLUDE_DIR GL/xmesa.h
 			/usr/share/doc/NVIDIA_GLX-1.0/include
-			/usr/X11/include
 			/usr/openwin/share/include
-			/usr/X11R6/include
+			/opt/graphics/OpenGL/include /usr/X11R6/include
 			)
 
 		FIND_LIBRARY(OPENGL_gl_LIBRARY
 			NAMES GL MesaGL
-			PATHS	/usr/X11/lib /usr/openwin/lib
+			PATHS /opt/graphics/OpenGL/lib
+			/usr/openwin/lib
 			/usr/shlib /usr/X11R6/lib
 			${HPUX_IA_OPENGL_LIB_PATH}
 			)
@@ -124,6 +125,7 @@ ELSE (WIN32)
 		FIND_LIBRARY(OPENGL_glu_LIBRARY
 			NAMES GLU MesaGLU
 			PATHS ${OPENGL_gl_LIBRARY}
+			/opt/graphics/OpenGL/lib
 			/usr/openwin/lib
 			/usr/shlib /usr/X11R6/lib
 			)
