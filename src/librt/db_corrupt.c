@@ -118,12 +118,18 @@ int
 rt_db_flip_endian(struct db_i *dbip)
 {
     struct counter cnt = {0, 0};
+    char *v4flip;
 
     RT_CK_DBI(dbip);
 
     /* does not apply to v5 geometry database */
     if (db_version(dbip) > 4)
 	return 0;
+
+    /* provide the user some means to override this automatic behavior */
+    v4flip = getenv("LIBRT_V4FLIP");
+    if (v4flip)
+	return bu_str_true(v4flip);
 
     /* iterate over all database objects looking for signs of
      * corruption keeping a tally of whether fliping the record fixed
