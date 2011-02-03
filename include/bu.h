@@ -384,6 +384,23 @@ typedef void *genptr_t;
  *
  */
 
+
+/**
+ * b u _ c v
+ *
+ * @brief
+ * convert from one format to another.
+ *
+ * @param in		input pointer
+ * @param out		output pointer
+ * @param count		number of entries to convert
+ * @param size		size of output buffer
+ * @param infmt		input format
+ * @param outfmt	output format
+ *
+ */
+BU_EXPORT BU_EXTERN(size_t bu_cv, (genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count));
+
 /**
  * b u _ c v _ c o o k i e
  *
