@@ -173,6 +173,9 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ari->magic = RT_ARS_INTERNAL_MAGIC;
 
     if (dbip->dbi_version < 0) {
+	/* FIXME: this is wrong half the time.  need to always flip,
+	 * not just on little endian platforms.
+	 */
 	ari->ncurves = htons(rp[0].a.a_m);
 	ari->pts_per_curve = htons(rp[0].a.a_n);
     } else {
