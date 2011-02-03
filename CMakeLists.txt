@@ -554,7 +554,7 @@ ENDIF(CMAKE_BUILD_TYPE)
 # of build targets
 OPTION(BRLCAD-ENABLE_DATA_TARGETS "Enable the data build targets." OFF)
 
-# Turn on librtserver build.
+# Turn on librtserver build.  
 OPTION(BRLCAD-ENABLE_RTSERVER "Enable the librtserver target." ON)
 
 # Global third party controls - these options enable and disable ALL
@@ -1289,8 +1289,30 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 endif(BRLCAD_PRINT_VERBOSE_SUMMARY)
 
 # Set up rules to print a timestamp string during build
+SET(BUILD_DELTA_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_FILE")
+SET(BUILD_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_START")
+SET(BUILD_DELTA_END "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_END")
+configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/builddelta_start.c.in
+	${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c)
+configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/builddelta_end.c.in
+	${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
 ADD_EXECUTABLE(printtimestamp ${BRLCAD_CMAKE_DIR}/test_srcs/print_timestamp.c)
-ADD_CUSTOM_TARGET(timestamp ALL	COMMAND printtimestamp)
+ADD_EXECUTABLE(buildtimestart ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c)
+ADD_EXECUTABLE(buildtimeend ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
+ADD_CUSTOM_COMMAND(
+	OUTPUT ${BUILD_DELTA_FILE}
+	COMMAND buildtimestart
+	COMMENT ""
+	)
+ADD_CUSTOM_TARGET(timestamp ALL	
+	COMMAND printtimestamp
+	COMMAND ${CMAKE_COMMAND} -E rename ${BUILD_DELTA_FILE} ${BUILD_DELTA_START}
+	DEPENDS ${BUILD_DELTA_FILE}
+	)
+ADD_CUSTOM_TARGET(buildtimedelta ALL	
+	COMMAND buildtimeend
+	COMMAND ${CMAKE_COMMAND} -E remove ${BUILD_DELTA_START}
+	)
 
 # Some of the BRL-CAD targets need to depend on the local
 # tcl/tk targets if they are present
@@ -1309,6 +1331,7 @@ endif(BRLCAD_BUILD_LOCAL_TK)
 # We want the timestamp to come first, so make ALL library,
 # exec and external targets depend on timestamp (except for
 # the exec target printtimestamp, which is needed by timestamp)
+# Similarly, buildtimedelta needs to depend on every target.
 get_property(CMAKE_LIBRARY_TARGET_LIST GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST)
 get_property(CMAKE_EXEC_TARGET_LIST GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST)
 get_property(CMAKE_CUSTOM_TARGET_LIST GLOBAL PROPERTY CMAKE_CUSTOM_TARGET_LIST)
@@ -1325,25 +1348,35 @@ FOREACH(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
 	get_target_property(target_location ${libtarget} LOCATION)
 	if(target_location)
 		ADD_DEPENDENCIES(${libtarget} timestamp)
+		ADD_DEPENDENCIES(buildtimedelta ${libtarget})
 	endif(target_location)
 ENDFOREACH(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
 FOREACH(exectarget ${CMAKE_EXEC_TARGET_LIST})
 	get_target_property(target_location ${exectarget} LOCATION)
 	if(target_location)
-		IF(NOT ${exectarget} MATCHES "printtimestamp")
+		IF(NOT ${exectarget} MATCHES "printtimestamp"
+				AND NOT ${custtarget} MATCHES "buildtimestart")
 			ADD_DEPENDENCIES(${exectarget} timestamp)
-		ENDIF(NOT ${exectarget} MATCHES "printtimestamp")
+		ENDIF()
+		ADD_DEPENDENCIES(buildtimedelta ${exectarget})
 	endif(target_location)
 ENDFOREACH(exectarget ${CMAKE_EXEC_TARGET_LIST})
 FOREACH(custtarget ${CMAKE_CUSTOM_TARGET_LIST})
 		IF(NOT ${custtarget} MATCHES "timestamp")
 			ADD_DEPENDENCIES(${custtarget} timestamp)
-		ENDIF(NOT ${custtarget} MATCHES "timestamp")
+		ENDIF()
+		IF(NOT ${custtarget} MATCHES "buildtimedelta")
+			get_target_property(not_in_all ${custtarget} EXCLUDE_FROM_ALL)
+			IF(NOT not_in_all)
+				ADD_DEPENDENCIES(buildtimedelta ${custtarget})
+			ENDIF(NOT not_in_all)
+		ENDIF(NOT ${custtarget} MATCHES "buildtimedelta")
 ENDFOREACH(custtarget ${CMAKE_CUSTOM_TARGET_LIST})
 FOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
 	get_target_property(target_confcmd ${externaltarget} _EP_CONFIGURE_COMMAND)
 	if(target_confcmd)
 		ADD_DEPENDENCIES(${externaltarget} timestamp)
+		ADD_DEPENDENCIES(buildtimedelta ${externaltarget})
 	endif(target_confcmd)
 ENDFOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
 
