@@ -949,7 +949,7 @@ xtTestInit.o: $(UNIX_DIR)/tclAppInit.c ${TCL_EXE}
 
 # Object files used on all Unix systems:
 
-REGHDRS=$(GENERIC_DIR)/regex.h $(GENERIC_DIR)/regguts.h \
+REGHDRS=$(GENERIC_DIR)/regextcl.h $(GENERIC_DIR)/regguts.h \
 		$(GENERIC_DIR)/regcustom.h
 TCLREHDRS=$(GENERIC_DIR)/tclRegexp.h
 COMPILEHDR=$(GENERIC_DIR)/tclCompile.h
