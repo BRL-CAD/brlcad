@@ -66,6 +66,13 @@ ADD_CUSTOM_TARGET(togl_stubs_gen ALL DEPENDS
 	${CMAKE_CURRENT_BINARY_DIR}/STUBSDONE
 )
 
+SET(TOGL_HDRS
+	${CMAKE_CURRENT_SOURCE_DIR}/../include/togl.h
+	${CMAKE_CURRENT_BINARY_DIR}/../include/togl_config.h
+	${CMAKE_CURRENT_BINARY_DIR}/toglDecls.h
+	)
+install(FILES ${TOGL_HDRS} DESTINATION include/togl)
+
 # If we re-run cmake, need to ensure we re-run togl_stubs_gen too
 FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/STUBSDONE)
 
