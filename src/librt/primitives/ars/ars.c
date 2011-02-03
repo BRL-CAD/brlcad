@@ -176,8 +176,8 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	/* FIXME: this is wrong half the time.  need to always flip,
 	 * not just on little endian platforms.
 	 */
-	ari->ncurves = htons(rp[0].a.a_m);
-	ari->pts_per_curve = htons(rp[0].a.a_n);
+	ari->ncurves = bu_gshort((unsigned char *)&rp[0].a.a_m);
+	ari->pts_per_curve = bu_gshort((unsigned char *)&rp[0].a.a_n);
     } else {
 	ari->ncurves = rp[0].a.a_m;
 	ari->pts_per_curve = rp[0].a.a_n;
