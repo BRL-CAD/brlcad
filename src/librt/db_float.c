@@ -37,6 +37,22 @@ typedef union {
     unsigned char c[4];
 } val;
 
+typedef union {
+    short s;
+    unsigned char c[2];
+} sval;
+
+
+short
+flip_short(const short s)
+{
+    sval v, v2;
+    v2.s = s;
+    v.c[0] = v2.c[1];
+    v.c[1] = v2.c[0];
+    return v.s;
+}
+
 
 /**
  * R T _ F A S T F _ F L O A T
