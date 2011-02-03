@@ -609,9 +609,9 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
      */
 
     bufsize = work_count * sizeof(double);
-    t1 = (genptr_t) bu_malloc(bufsize, "vert.c: t1");
-    t2 = (genptr_t) bu_malloc(bufsize, "vert.c: t2");
-    t3 = (genptr_t) bu_malloc(bufsize, "vert.c: t3");
+    t1 = (genptr_t) bu_malloc(bufsize, "convert.c: t1");
+    t2 = (genptr_t) bu_malloc(bufsize, "convert.c: t2");
+    t3 = (genptr_t) bu_malloc(bufsize, "convert.c: t3");
 
     /*
      * From here on we will be working on a chunk of process at a time.
@@ -886,9 +886,9 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
     /*
      * All Done!  Clean up and leave.
      */
-    bu_free(t1, "vert.c: t1");
-    bu_free(t2, "vert.c: t2");
-    bu_free(t3, "vert.c: t3");
+    bu_free(t1, "convert.c: t1");
+    bu_free(t2, "convert.c: t2");
+    bu_free(t3, "convert.c: t3");
     return number_done;
 }
 
