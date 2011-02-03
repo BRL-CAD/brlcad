@@ -98,7 +98,7 @@ db_corrupt_handler(struct db_i *dbip, const char *name, off_t offset, size_t siz
 		|| fabs(diskmat[4]) > 1 || fabs(diskmat[5]) > 1 || fabs(diskmat[6]) > 1
 		|| fabs(diskmat[8]) > 1 || fabs(diskmat[9]) > 1 || fabs(diskmat[10]) > 1)
 	    {
-		/* flipping didn't help */
+		bu_log("WARNING: Invalid matrix detected within %s\n", name);
 	    } else {
 		/* flipping helped */
 		cnt->fixed++;
@@ -137,8 +137,10 @@ rt_db_flip_endian(struct db_i *dbip)
      */
     db_scan(dbip, db_corrupt_handler, 0, &cnt);
 
-    /* it's all or nothing */
-    if (cnt.found > 0 && cnt.fixed == cnt.found) {
+    /* it has to help more than it hurts */
+    if (cnt.found > 0 && (double)cnt.fixed > ((double)cnt.found / 2.0)) {
+	if (cnt.fixed != cnt.found)
+	    bu_log("%d of %d objects were NOT fixed by flipping endian interpretation.  Manual inspection and repair required.\n", cnt.found - cnt.fixed, cnt.found);
 	return 1;
     }
 
