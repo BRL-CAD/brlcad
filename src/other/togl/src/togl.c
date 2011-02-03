@@ -52,7 +52,7 @@
 #    define PFD_SUPPORT_COMPOSITION 0x00008000
 #  endif
 #  include <objbase.h>
-#  include <GL/wglext.h>
+#  include "GL/wglew.h"
 #  ifdef _MSC_VER
 #    include <strsafe.h>
 #  else
@@ -77,22 +77,7 @@
 #      include <X11/Xmu/StdCmap.h>      /* for XmuLookupStandardColormap */
 #    endif
 #  endif
-#  define GLX_GLXEXT_LEGACY     /* include glxext.h separately */
-#  include <GL/glx.h>
-   /* we want the prototype typedefs from glxext.h */
-#  undef GLX_VERSION_1_3
-#  undef GLX_VERSION_1_4
-#  ifdef UNDEF_GET_PROC_ADDRESS
-#    undef GLX_ARB_get_proc_address
-#  endif
-#  ifdef GLX_SAMPLE_BUFFERS
-#    undef GLX_SAMPLE_BUFFERS
-#  endif 
-#  ifdef GLX_SAMPLES
-#    undef GLX_SAMPLES
-#  endif 
-#  define GLX_HAS_PNF
-#  include <GL/glxext.h>
+#  include "GL/glxew.h"
 #  ifdef __sgi
 #    include <X11/extensions/SGIStereo.h>
 #  endif
