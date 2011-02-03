@@ -1069,11 +1069,11 @@ materdump(void)	/* Print out material description record information */
 void
 bspldump(void)	/* Print out B-spline solid description record information */
 {
-    (void)fprintf(ofp,  "%c %.16s %d %.12e\n",
+    (void)fprintf(ofp,  "%c %.16s %d\n",
 		  record.B.B_id,		/* b */
 		  encode_name(record.B.B_name),	/* unique name */
-		  record.B.B_nsurf,	/* # of surfaces in this solid */
-		  record.B.B_resolution );	/* resolution of flatness */
+		  record.B.B_nsurf);	/* # of surfaces in this solid */
+		/*record.B.B_unused );	UNUSED (was resolution of flatness) */
 }
 
 void

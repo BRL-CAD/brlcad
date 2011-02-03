@@ -948,7 +948,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
 	rt_pr_cut(&rtip->rti_CutHead, 0);
     }
 
-    if (RT_G_DEBUG&DEBUG_PLOTBOX) {
+    if (RT_G_DEBUG&DEBUG_PL_BOX) {
 	/* Debugging code to plot cuts */
 	if ((plotfp=fopen("rtcut.pl", "wb"))!=NULL) {
 	    pdv_3space(plotfp, rtip->rti_pmin, rtip->rti_pmax);

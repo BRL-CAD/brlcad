@@ -2104,7 +2104,7 @@ if test "x$bc_use_debug" != "xno" ; then
 		AC_MSG_RESULT([$MACOSX_VERSION])
 	fi
 	case "x$MACOSX_VERSION" in
-	    x10.[1234])
+	    x10.[456])
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-gstabs+], [debug_flag])
 		;;
 	    *)

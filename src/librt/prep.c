@@ -405,7 +405,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     } RT_VISIT_ALL_SOLTABS_END;
 
     /* Plot bounding RPPs */
-    if ((RT_G_DEBUG&DEBUG_PLOTBOX)) {
+    if ((RT_G_DEBUG&DEBUG_PL_BOX)) {
 	FILE *plotfp;
 
 	plotfp = fopen("rtrpp.plot", "wb");
@@ -418,7 +418,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     }
 
     /* Plot solid outlines */
-    if ((RT_G_DEBUG&DEBUG_PLOTSOLIDS)) {
+    if ((RT_G_DEBUG&DEBUG_PL_SOLIDS)) {
 	FILE *plotfp;
 
 	plotfp = fopen("rtsolids.pl", "wb");

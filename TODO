@@ -17,9 +17,7 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* opendb is mishandling the trailing 'y'/'n'
-
-* strict failures on 32-bit fbsd
+* ars, poly, and bspline need extra v4 flip import support
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -295,9 +293,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * finish obj-g importer.  need to test more inputs and make sure all
   geometry is preserved on import in some form.
-
-* fix metaball "shelling" but that causes the primitive to invert and
-  just give paper thin surface (something wrong in the intersection).
 
 * deprecate dbfind - ensure functionality is fully captured by the
   search command, make it report a deprecation statement on use and

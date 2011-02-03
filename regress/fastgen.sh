@@ -87,6 +87,7 @@ CTRI          12       1       4       6       3           0.100       2
 EOF
 
 rm -f fastgen_unix.g
+echo "\$ $F4G fastgen_box.fast4 fastgen_unix.g"
 $F4G fastgen_box.fast4 fastgen_unix.g
 if test "$?" -ne 0 ; then
     echo "ERROR running $F4G fastgen_box.fast4 fastgen_unix.g"
@@ -106,6 +107,7 @@ rm -f fastgen_box.fast4
 cp $PATH_TO_THIS/fastgen_dos.fast4 fastgen_box.fast4
 
 rm -f fastgen_dos.g
+echo "\$ $F4G fastgen_box.fast4 fastgen_dos.g"
 $F4G fastgen_box.fast4 fastgen_dos.g
 if test "$?" -ne 0 ; then
     echo "ERROR running $F4G fastgen_box.fast4 fastgen_dos.g"
@@ -117,6 +119,7 @@ if test ! -f fastgen_dos.g ; then
 fi
 
 echo "Comparing geometry files from sources with DOS and UNIX line endings."
+echo "\$ $G_DIFF fastgen_unix.g fastgen_dos.g"
 $G_DIFF fastgen_unix.g fastgen_dos.g
 if test "$?" -ne 0 ; then
     echo "ERROR running $G_DIFF fastgen_unix.g fastgen_dos.g"
