@@ -48,6 +48,8 @@
 #include "mater.h"
 #include "raytrace.h"
 
+#include "../librt_private.h"
+
 
 #define STAT_ROT 1
 #define STAT_XLATE 2
