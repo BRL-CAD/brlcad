@@ -94,6 +94,19 @@ CHECK_CXX_FLAG(ftemplate-depth-50)
 # CHECK_C_FLAG(msse)
 # CHECK_C_FLAG(msse2)
 
+# Check for c99 support
+CHECK_C_FLAG("std=c99" C99_FLAG)
+MARK_AS_ADVANCED(C99_FLAG)
+
+# On some platforms (at least Gentoo linux, so far)
+# we'll need _XOPEN_SOURCE with std=c99.  Eventually,
+# we'll probably want to wrap this up with some
+# feature based testing - i.e. use it if we need it.
+IF(C99_FLAG)
+	CHECK_C_FLAG("D_XOPEN_SOURCE=600" XOPEN_DEFINE)
+	MARK_AS_ADVANCED(XOPEN_DEFINE)
+ENDIF(C99_FLAG)
+
 # 64bit compilation flags
 IF(BRLCAD-ENABLE_64BIT)
 	IF(NOT 64BIT_FLAG AND NOT N64BIT_FLAG)

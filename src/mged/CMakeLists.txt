@@ -49,6 +49,7 @@ ENDIF(BRLCAD-ENABLE_RTGL)
 
 add_definitions(
   ${MGED_DEFINES}
+  ${C99_FLAG}
 )
 
 SET(MGED_SOURCES

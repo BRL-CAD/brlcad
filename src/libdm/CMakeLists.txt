@@ -61,6 +61,7 @@ include_directories(
 
 add_definitions(
 	${DM_DEFINES}
+	${C99_FLAG}
 )
 
 FOREACH(xlib ${X11_LIBRARIES})

@@ -56,6 +56,8 @@ add_definitions(
 	-DIF_AB
 	${FBX11DEFS}
 	${FBOGLDEFS}
+	${C99_FLAG}
+	${XOPEN_DEFINE}
 )
 
 BRLCAD_ADDLIB(libfb "${LIBFB_SOURCES}" "libbu libpkg ${LINKLIBS}" STRICT)
