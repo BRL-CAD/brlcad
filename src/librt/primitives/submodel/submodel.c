@@ -837,9 +837,7 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
 
     bu_vls_init(&str);
     bu_vls_strcpy(&str, rp->ss.ss_args);
-#if 0
-    bu_log("rt_submodel_import4: '%s'\n", rp->ss.ss_args);
-#endif
+
     if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip) < 0) {
 	bu_vls_free(&str);
     fail:
@@ -855,10 +853,6 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
 	bu_log("rt_submodel_import4() treetop= must be specified\n");
 	goto fail;
     }
-#if 0
-    bu_log("import4: file='%s', treetop='%s', meth=%d\n", bu_vls_addr(&sip->file), bu_vls_addr(&sip->treetop), sip->meth);
-    bn_mat_print("root2leaf", sip->root2leaf);
-#endif
 
     return 0;			/* OK */
 }
@@ -882,9 +876,6 @@ rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     if (ip->idb_type != ID_SUBMODEL) return -1;
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     RT_SUBMODEL_CK_MAGIC(sip);
-#if 0
-    bu_log("export4: file='%s', treetop='%s', meth=%d\n", bu_vls_addr(&sip->file), bu_vls_addr(&sip->treetop), sip->meth);
-#endif
 
     /* Ignores scale factor */
     BU_ASSERT(NEAR_ZERO(local2mm - 1.0, SMALL_FASTF));
@@ -901,9 +892,6 @@ rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     bu_strlcpy(rec->ss.ss_keyword, "submodel", sizeof(rec->ss.ss_keyword));
     bu_strlcpy(rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN);
     bu_vls_free(&str);
-#if 0
-    bu_log("rt_submodel_export4: '%s'\n", rec->ss.ss_args);
-#endif
 
     return 0;
 }
@@ -940,9 +928,7 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
 
     bu_vls_init(&str);
     bu_vls_strncpy(&str, ep->ext_buf, ep->ext_nbytes);
-#if 0
-    bu_log("rt_submodel_import4: '%s'\n", rp->ss.ss_args);
-#endif
+
     if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip) < 0) {
 	bu_vls_free(&str);
     fail:
@@ -958,10 +944,6 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
 	bu_log("rt_submodel_import4() treetop= must be specified\n");
 	goto fail;
     }
-#if 0
-    bu_log("import4: file='%s', treetop='%s', meth=%d\n", bu_vls_addr(&sip->file), bu_vls_addr(&sip->treetop), sip->meth);
-    bn_mat_print("root2leaf", sip->root2leaf);
-#endif
 
     return 0;			/* OK */
 }
@@ -984,9 +966,6 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     if (ip->idb_type != ID_SUBMODEL) return -1;
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     RT_SUBMODEL_CK_MAGIC(sip);
-#if 0
-    bu_log("export4: file='%s', treetop='%s', meth=%d\n", bu_vls_addr(&sip->file), bu_vls_addr(&sip->treetop), sip->meth);
-#endif
 
     /* Ignores scale factor */
     BU_ASSERT(NEAR_ZERO(local2mm - 1.0, SMALL_FASTF));
@@ -999,10 +978,6 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
     bu_strlcpy(ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
     bu_vls_free(&str);
-
-#if 0
-    bu_log("rt_submodel_export4: '%s'\n", rec->ss.ss_args);
-#endif
 
     return 0;
 }
