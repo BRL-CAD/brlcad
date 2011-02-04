@@ -919,14 +919,6 @@ BRLCAD_CHECK_LIBRARY(GEN gen basename)
 # ***             Check for Headers - Stage 4 of 9                ***
 # *******************************************************************
 
-# make our minimum compliance goal explicit (needs to be tested here
-# so header files and types are tested properly)
-# CHECK_C_FLAG("std=c99")
-# IF(STD_C99_COMPILER_FLAG)
-#   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${STD_C99_COMPILER_FLAG}")
-#   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${STD_C99_COMPILER_FLAG}")
-# ENDIF(STD_C99_COMPILER_FLAG)
-
 # C89 headers: assert.h, ctype.h, errno.h, float.h, limits.h, locale.h,
 # math.h, setjmp.h, signal.h, stdarg.h, stddef.h, stdio.h, stdlib.h,
 # string.h, time.h
@@ -1051,6 +1043,12 @@ BRLCAD_TYPE_SIZE("sig_t" SIG "signal.h")
 SET(${CMAKE_C_FLAGS} "")
 SET(${CMAKE_CXX_FLAGS} "")
 INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
+# make our minimum compliance goal explicit (needs to be tested here
+# so header files and types are tested properly)
+CHECK_C_FLAG("std=c99")
+IF(STD_C99_COMPILER_FLAG)
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${STD_C99_COMPILER_FLAG}")
+ENDIF(STD_C99_COMPILER_FLAG)
 
 # *******************************************************************
 # ***             Check for Functions - Stage 7 of 9              ***

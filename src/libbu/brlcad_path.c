@@ -115,7 +115,7 @@ _bu_ipwd()
 	FILE *fp = NULL;
 
 	fp = popen(ipwd, "r");
-	if (LIKELY(fp)) {
+	if (LIKELY((int)fp)) {
 	    if (bu_fgets(buffer, MAXPATHLEN, fp)) {
 		ipwd = buffer;
 	    } else {
