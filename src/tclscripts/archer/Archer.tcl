@@ -154,6 +154,7 @@ package provide Archer 1.0
 
 	# General
 	method askToRevert {}
+	method fbclear {}
 	method raytracePlus {}
 
 	# ArcherCore Override Section
@@ -949,6 +950,11 @@ package provide Archer 1.0
 	$itk_component(ged) configure -autoViewEnable 1
 	SetNormalCursor $this
     }
+}
+
+
+::itcl::body Archer::fbclear {} {
+    $itk_component(rtcntrl) clear
 }
 
 
