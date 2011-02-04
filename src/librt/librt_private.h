@@ -29,6 +29,11 @@
  *
  */
 
+#include "common.h"
+
+
+__BEGIN_DECLS
+
 /**
  * db_flip.c
  * function similar to ntohs() but always flips the bytes
@@ -36,7 +41,7 @@
  */
 extern short flip_short(const short s);
 
-
+__END_DECLS
 
 /*
  * Local Variables:
