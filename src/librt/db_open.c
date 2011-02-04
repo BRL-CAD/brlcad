@@ -215,7 +215,8 @@ db_open(const char *name, const char *mode)
 	    if (dbip->dbi_version > 0)
 		dbip->dbi_version *= -1;
 	    dbip->dbi_read_only = 1;
-	    bu_log("WARNING: Binary-incompatible v4 geometry database detected.  Endianness flipped.\n");
+	    bu_log("WARNING: Binary-incompatible v4 geometry database detected.\n");
+	    bu_log("         Endianness flipped.  Converting to READ ONLY.\n");
 	}
     }
 
