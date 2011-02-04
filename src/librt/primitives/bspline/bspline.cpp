@@ -804,15 +804,39 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	m = sip->srfs[s]->ctl_points;
 	coords = d.d.d_geom_type;
 	i = (d.d.d_ctl_size[0] * d.d.d_ctl_size[1]);
-	if (mat == NULL) mat = bn_mat_identity;
+
+	if (mat == NULL)
+	    mat = bn_mat_identity;
+
 	if (coords == 3) {
 	    for (; i> 0; i--) {
-		MAT4X3PNT(m, mat, vp);
+		vect_t f;
+
+		if (dbip->dbi_version < 0) {
+		    f[0] = flip_dbfloat(vp[0]);
+		    f[1] = flip_dbfloat(vp[1]);
+		    f[2] = flip_dbfloat(vp[2]);
+		} else {
+		    VMOVE(f, vp);
+		}
+
+		MAT4X3PNT(m, mat, f);
 		m += 3;
 		vp += 3;
 	    }
 	} else if (coords == 4) {
 	    for (; i> 0; i--) {
+		hvect_t f;
+
+		if (dbip->dbi_version < 0) {
+		    f[0] = flip_dbfloat(vp[0]);
+		    f[1] = flip_dbfloat(vp[1]);
+		    f[2] = flip_dbfloat(vp[2]);
+		    f[3] = flip_dbfloat(vp[3]);
+		} else {
+		    HMOVE(f, vp);
+		}
+
 		MAT4X4PNT(m, mat, vp);
 		m += 4;
 		vp += 4;
