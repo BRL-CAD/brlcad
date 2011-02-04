@@ -1543,8 +1543,8 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     xip->ehy_c  = vec[3*3+2] / mat[15];
 
     if (xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF) {
-	bu_log("rt_ehy_import4: r1, r2, or c are zero\n");
-	bu_free((char *)ip->idb_ptr, "rt_ehy_import4: ip->idb_ptr");
+	bu_log("rt_ehy_import5: r1, r2, or c are zero\n");
+	bu_free((char *)ip->idb_ptr, "rt_ehy_import5: ip->idb_ptr");
 	return -1;
     }
 
