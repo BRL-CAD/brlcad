@@ -80,9 +80,12 @@ if test ! -e /etc/debian_version ; then
     ferror "Refusing to build on a non-debian system."
 fi
 
-# #
+# set variables
 BVERSION=`cat include/conf/MAJOR`"."`cat include/conf/MINOR`"."`cat include/conf/PATCH`
 BVERSION=`echo $BVERSION | sed 's/[^0-9.]//g'`
+CDATE=`date -R`
+CFILE="debian/changelog"
+RELEASE="0"
 
 # check needed packages
 E=0
@@ -146,10 +149,8 @@ fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/Anim_Tutorial/ind
  "debian/brlcad-doc-animation.desktop"
 
 # update debian/chagelog if needed
-CDATE=`date -R`
-CFILE="debian/changelog"
-if test -s $CFILE && test `sed -n '1p' $CFILE | grep "brlcad ($BVERSION-" | wc -l` -eq 0 ; then
-    L1="brlcad ($BVERSION-0) unstable; urgency=low\n\n"
+if test -s $CFILE && test `sed -n '1p' $CFILE | grep "brlcad ($BVERSION-$RELEASE" | wc -l` -eq 0 ; then
+    L1="brlcad ($BVERSION-$RELEASE) unstable; urgency=low\n\n"
     L2="  **** VERSION ENTRY AUTOMATICALLY ADDED BY \"sh\/make_deb.sh\" SCRIPT ****\n\n"
     L3=" -- Jordi Sayol <g.sayol@yahoo.es>  $CDATE\n\n/"
     sed -i "1s/^/$L1$L2$L3" $CFILE
