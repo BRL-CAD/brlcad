@@ -54,6 +54,21 @@ flip_short(short s)
 }
 
 
+fastf_t
+flip_dbfloat(dbfloat_t d)
+{
+    fastf_t f;
+    val v, v2;
+    v2.f = d;
+    v.c[0] = v2.c[3];
+    v.c[1] = v2.c[2];
+    v.c[2] = v2.c[1];
+    v.c[3] = v2.c[0];
+    f = v.f;
+    return f;
+}
+
+
 /**
  * R T _ F A S T F _ F L O A T
  *

@@ -34,12 +34,20 @@
 
 __BEGIN_DECLS
 
+/* db_flip.c */
+
 /**
- * db_flip.c
- * function similar to ntohs() but always flips the bytes
+ * function similar to ntohs() but always flips the bytes.
  * used for v4 compatibility.
  */
 extern short flip_short(short s);
+
+/**
+ * function similar to ntohf() but always flips the types.
+ * used for v4 compatibility.
+ */
+extern fastf_t flip_dbfloat(dbfloat_t d);
+
 
 __END_DECLS
 
