@@ -43,7 +43,8 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "nurb.h"
+
+#include "../../librt_private.h"
 
 
 const struct bu_structparse rt_superell_parse[] = {
@@ -795,8 +796,14 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     MAT4X3VEC(eip->a, mat, &vec[1*3]);
     MAT4X3VEC(eip->b, mat, &vec[2*3]);
     MAT4X3VEC(eip->c, mat, &vec[3*3]);
-    eip->n = rp->s.s_values[12];
-    eip->e = rp->s.s_values[13];
+
+    if (dbip->dbi_version < 0) {
+	eip->n = flip_dbfloat(rp->s.s_values[12]);
+	eip->e = flip_dbfloat(rp->s.s_values[13]);
+    } else {
+	eip->n = rp->s.s_values[12];
+	eip->e = rp->s.s_values[13];
+    }
 
     return 0;		/* OK */
 }
