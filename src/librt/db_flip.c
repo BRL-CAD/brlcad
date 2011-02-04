@@ -44,7 +44,7 @@ typedef union {
 
 
 short
-flip_short(const short s)
+flip_short(short s)
 {
     sval v, v2;
     v2.s = s;

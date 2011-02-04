@@ -39,7 +39,7 @@ __BEGIN_DECLS
  * function similar to ntohs() but always flips the bytes
  * used for v4 compatibility.
  */
-extern short flip_short(const short s);
+extern short flip_short(short s);
 
 __END_DECLS
 
