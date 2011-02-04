@@ -39,6 +39,8 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
+#include "../../librt_private.h"
+
 
 #define TRI_NULL ((struct tri_specific *)0)
 
@@ -692,16 +694,23 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	    return -1;
 	}
 	pp->npts = rp[rno].q.q_count;
-	pp->verts = (fastf_t *)bu_malloc(
-	    pp->npts * 3 * sizeof(fastf_t), "pg verts[]");
-	pp->norms = (fastf_t *)bu_malloc(
-	    pp->npts * 3 * sizeof(fastf_t), "pg norms[]");
+	pp->verts = (fastf_t *)bu_malloc(pp->npts * 3 * sizeof(fastf_t), "pg verts[]");
+	pp->norms = (fastf_t *)bu_malloc(pp->npts * 3 * sizeof(fastf_t), "pg norms[]");
 	for (i=0; i < pp->npts; i++) {
+	    point_t pnt;
+	    vect_t vec;
+
+	    if (dbip->dbi_version < 0) {
+		rt_fastf_float(pnt, rp[rno].q.q_verts[i], 1, 1);
+		rt_fastf_float(vec, rp[rno].q.q_norms[i], 1, 1);
+	    } else {
+		VMOVE(pnt, rp[rno].q.q_verts[i]);
+		VMOVE(vec, rp[rno].q.q_norms[i]);
+	    }
+
 	    /* Note:  side effect of importing dbfloat_t */
-	    MAT4X3PNT(&pp->verts[i*3], mat,
-		      rp[rno].q.q_verts[i]);
-	    MAT4X3VEC(&pp->norms[i*3], mat,
-		      rp[rno].q.q_norms[i]);
+	    MAT4X3PNT(&pp->verts[i*3], mat, pnt);
+	    MAT4X3VEC(&pp->norms[i*3], mat, vec);
 	}
 	if (pp->npts > pgp->max_npts) pgp->max_npts = pp->npts;
     }

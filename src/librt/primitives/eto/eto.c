@@ -39,6 +39,8 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
+#include "../../librt_private.h"
+
 
 /*
  * The ETO has the following input fields:
@@ -1193,6 +1195,7 @@ rt_eto_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 {
     struct rt_eto_internal *tip;
     union record *rp;
+    vect_t v1, v2, v3;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1214,11 +1217,31 @@ rt_eto_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(tip->eto_V, mat, &rp->s.s_values[0*3]);
-    MAT4X3VEC(tip->eto_N, mat, &rp->s.s_values[1*3]);
-    MAT4X3VEC(tip->eto_C, mat, &rp->s.s_values[2*3]);
-    tip->eto_r  = rp->s.s_values[3*3] / mat[15];
-    tip->eto_rd = rp->s.s_values[3*3+1] / mat[15];
+
+    if (dbip->dbi_version < 0) {
+	rt_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
+	rt_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
+	rt_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
+    } else {
+	VMOVE(v1, &rp->s.s_values[0*3]);
+	VMOVE(v2, &rp->s.s_values[1*3]);
+	VMOVE(v3, &rp->s.s_values[2*3]);
+    }
+
+    MAT4X3PNT(tip->eto_V, mat, v1);
+    MAT4X3VEC(tip->eto_N, mat, v2);
+    MAT4X3VEC(tip->eto_C, mat, v3);
+
+    if (dbip->dbi_version < 0) {
+	v1[X] = flip_dbfloat(rp->s.s_values[3*3+0]);
+	v1[Y] = flip_dbfloat(rp->s.s_values[3*3+1]);
+    } else {
+	v1[X] = rp->s.s_values[3*3+0];
+	v1[Y] = rp->s.s_values[3*3+1];
+    }
+
+    tip->eto_r  = v1[X] / mat[15];
+    tip->eto_rd = v1[Y] / mat[15];
 
     if (tip->eto_r <= SMALL || tip->eto_rd <= SMALL) {
 	bu_log("rt_eto_import4:  zero length R or Rd vector\n");

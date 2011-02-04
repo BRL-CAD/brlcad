@@ -54,6 +54,8 @@
 #  include "opennurbs.h"
 #endif /* CONVERT_TO_BREP */
 
+#include "../../librt_private.h"
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -721,8 +723,12 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
     sip = (struct rt_nurb_internal *)ip->idb_ptr;
     sip->magic = RT_NURB_INTERNAL_MAGIC;
 
+    if (dbip->dbi_version < 0) {
+	sip->nsrf = flip_short(rp->B.B_nsurf);
+    } else {
+	sip->nsrf = rp->B.B_nsurf;
+    }
 
-    sip->nsrf = rp->B.B_nsurf;
     sip->srfs = (struct face_g_snurb **) bu_malloc(sip->nsrf * sizeof(struct face_g_snurb), "nurb srfs[]");
     rp++;
 
@@ -731,6 +737,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	int coords;
 	register dbfloat_t *vp;
 	int pt_type;
+	union record d;
 
 	if (rp->d.d_id != ID_BSURF) {
 	    bu_log("rt_nurb_import4() surf %d bad ID\n", s);
@@ -742,42 +749,100 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	else
 	    pt_type = RT_NURB_MAKE_PT_TYPE(4, RT_NURB_PT_XYZ, RT_NURB_PT_RATIONAL);
 
+	/* fix endianness */
+	d.d.d_id = rp->d.d_id;
+	if (dbip->dbi_version < 0) {
+	    d.d.d_order[0] = flip_short(rp->d.d_order[0]);
+	    d.d.d_order[1] = flip_short(rp->d.d_order[1]);
+	    d.d.d_kv_size[0] = flip_short(rp->d.d_kv_size[0]);
+	    d.d.d_kv_size[1] = flip_short(rp->d.d_kv_size[1]);
+	    d.d.d_ctl_size[0] = flip_short(rp->d.d_ctl_size[0]);
+	    d.d.d_ctl_size[1] = flip_short(rp->d.d_ctl_size[1]);
+	    d.d.d_geom_type = flip_short(rp->d.d_geom_type);
+	    d.d.d_nknots = flip_short(rp->d.d_nknots);
+	    d.d.d_nctls = flip_short(rp->d.d_nctls);
+	} else {
+	    d.d.d_order[0] = rp->d.d_order[0];
+	    d.d.d_order[1] = rp->d.d_order[1];
+	    d.d.d_kv_size[0] = rp->d.d_kv_size[0];
+	    d.d.d_kv_size[1] = rp->d.d_kv_size[1];
+	    d.d.d_ctl_size[0] = rp->d.d_ctl_size[0];
+	    d.d.d_ctl_size[1] = rp->d.d_ctl_size[1];
+	    d.d.d_geom_type = rp->d.d_geom_type;
+	    d.d.d_nknots = rp->d.d_nknots;
+	    d.d.d_nctls = rp->d.d_nctls;
+	}
+
 	sip->srfs[s] = (struct face_g_snurb *) rt_nurb_new_snurb(
-	    rp->d.d_order[0], rp->d.d_order[1],
-	    rp->d.d_kv_size[0], rp->d.d_kv_size[1],
-	    rp->d.d_ctl_size[0], rp->d.d_ctl_size[1],
+	    d.d.d_order[0], d.d.d_order[1],
+	    d.d.d_kv_size[0], d.d.d_kv_size[1],
+	    d.d.d_ctl_size[0], d.d.d_ctl_size[1],
 	    pt_type, (struct resource *)NULL);
 
 	vp = (dbfloat_t *) &rp[1];
 
-	for (i = 0; i < rp->d.d_kv_size[0]; i++)
-	    sip->srfs[s]->u.knots[i] = (fastf_t) *vp++;
-
-	for (i = 0; i < rp->d.d_kv_size[1]; i++)
-	    sip->srfs[s]->v.knots[i] = (fastf_t) *vp++;
+	if (dbip->dbi_version < 0) {
+	    for (i = 0; i < d.d.d_kv_size[0]; i++) {
+		sip->srfs[s]->u.knots[i] = flip_dbfloat(*vp++);
+	    }
+	    for (i = 0; i < d.d.d_kv_size[1]; i++) {
+		sip->srfs[s]->v.knots[i] = flip_dbfloat(*vp++);
+	    }
+	} else {
+	    for (i = 0; i < d.d.d_kv_size[0]; i++) {
+		sip->srfs[s]->u.knots[i] = (fastf_t) *vp++;
+	    }
+	    for (i = 0; i < d.d.d_kv_size[1]; i++) {
+		sip->srfs[s]->v.knots[i] = (fastf_t) *vp++;
+	    }
+	}
 
 	rt_nurb_kvnorm(&sip->srfs[s]->u);
 	rt_nurb_kvnorm(&sip->srfs[s]->v);
 
-	vp = (dbfloat_t *) &rp[rp->d.d_nknots+1];
+	vp = (dbfloat_t *) &rp[d.d.d_nknots+1];
 	m = sip->srfs[s]->ctl_points;
-	coords = rp->d.d_geom_type;
-	i = (rp->d.d_ctl_size[0] *rp->d.d_ctl_size[1]);
-	if (mat == NULL) mat = bn_mat_identity;
+	coords = d.d.d_geom_type;
+	i = (d.d.d_ctl_size[0] * d.d.d_ctl_size[1]);
+
+	if (mat == NULL)
+	    mat = bn_mat_identity;
+
 	if (coords == 3) {
 	    for (; i> 0; i--) {
-		MAT4X3PNT(m, mat, vp);
+		vect_t f;
+
+		if (dbip->dbi_version < 0) {
+		    f[0] = flip_dbfloat(vp[0]);
+		    f[1] = flip_dbfloat(vp[1]);
+		    f[2] = flip_dbfloat(vp[2]);
+		} else {
+		    VMOVE(f, vp);
+		}
+
+		MAT4X3PNT(m, mat, f);
 		m += 3;
 		vp += 3;
 	    }
 	} else if (coords == 4) {
 	    for (; i> 0; i--) {
+		hvect_t f;
+
+		if (dbip->dbi_version < 0) {
+		    f[0] = flip_dbfloat(vp[0]);
+		    f[1] = flip_dbfloat(vp[1]);
+		    f[2] = flip_dbfloat(vp[2]);
+		    f[3] = flip_dbfloat(vp[3]);
+		} else {
+		    HMOVE(f, vp);
+		}
+
 		MAT4X4PNT(m, mat, vp);
 		m += 4;
 		vp += 4;
 	    }
 	} else {
-	    bu_log("rt_nurb_internal: %d invalid elements per vect\n", rp->d.d_geom_type);
+	    bu_log("rt_nurb_internal: %d invalid elements per vect\n", d.d.d_geom_type);
 	    return -1;
 	}
 
@@ -785,7 +850,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	rt_nurb_s_bound(sip->srfs[s], sip->srfs[s]->min_pt,
 			sip->srfs[s]->max_pt);
 
-	rp += 1 + rp->d.d_nknots + rp->d.d_nctls;
+	rp += 1 + d.d.d_nknots + d.d.d_nctls;
     }
     return 0;
 }

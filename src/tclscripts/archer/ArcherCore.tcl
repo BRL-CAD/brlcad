@@ -667,7 +667,7 @@ Popup Menu    Right or Ctrl-Left
 	variable mText2Node
 	variable mNodePDrawList
 	variable mNodeDrawList
-	variable mAffectedNodeList
+	variable mAffectedNodeList ""
 
 	# init functions
 	method initImages {}
@@ -1708,26 +1708,6 @@ Popup Menu    Right or Ctrl-Left
     bind $itk_component(rtcntrl) <FocusOut> "raise $itk_component(rtcntrl)"
     wm protocol $itk_component(rtcntrl) WM_DELETE_WINDOW "$itk_component(rtcntrl) deactivate"
 
-    # create view axes control panel
-    #    itk_component add vac {
-    #	ViewAxesControl $itk_interior.vac -mged $itk_component(ged)
-    #    } {
-    #	usual
-    #    }
-
-    # create model axes control panel
-    #    itk_component add mac {
-    #	ModelAxesControl $itk_interior.mac -mged $itk_component(ged)
-    #    } {
-    #	usual
-    #    }
-
-    #    wm protocol $itk_component(vac) WM_DELETE_WINDOW "$itk_component(vac) hide"
-    #    wm protocol $itk_component(mac) WM_DELETE_WINDOW "$itk_component(mac) hide"
-
-    #    $itk_component(ged) configure -unitsCallback "$itk_component(mac) updateControlPanel"
-    $itk_component(ged) configure -paneCallback [::itcl::code $this updateActivePane]
-
     # Other bindings for mged
     #bind $itk_component(ged) <Enter> {focus %W}
 
@@ -1780,7 +1760,42 @@ Popup Menu    Right or Ctrl-Left
     }
 
     bind $itk_component(canvasF) <Configure> [::itcl::code $this updateRtControl]
-    setActivePane ur
+
+    set mActivePane 1
+    set mActivePaneName ur
+
+    if {$mShowViewAxes} {
+	showViewAxes
+    }
+    if {$mShowModelAxes} {
+	showModelAxes
+    }
+    if {$mShowGroundPlane} {
+	showGroundPlane
+    }
+    if {$mShowPrimitiveLabels} {
+	showPrimitiveLabels
+    }
+    if {$mShowViewingParams} {
+	showViewParams
+    }
+    if {$mShowScale} {
+	showScale
+    }
+    if {$mLighting} {
+	doLighting
+    }
+    if {$mShowGrid} {
+	showGrid
+    }
+    if {$mSnapGrid} {
+	snapGrid
+    }
+    if {$mShowADC} {
+	showADC
+    }
+
+    $itk_component(ged) configure -paneCallback [::itcl::code $this updateActivePane]
 }
 
 ::itcl::body ArcherCore::closeMged {} {
@@ -5706,6 +5721,10 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::watchVar {_name1 _name2 _op} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
     switch -- $_name1 {
 	mFBBackgroundColor {
 	    $itk_component(rtcntrl) configure -color [cadwidgets::Ged::get_rgb_color $mFBBackgroundColor]
@@ -5717,7 +5736,7 @@ Popup Menu    Right or Ctrl-Left
 	    $itk_component(ged) configure -measuringStickColor $mMeasuringStickColor
 	}
 	mMeasuringStickMode {
-	    $itk_component(ged) configure -measuringStickMode $mMeasuringStickMode 
+	    $itk_component(ged) configure -measuringStickMode $mMeasuringStickMode
 	}
 	mModelAxesColor {
 	    if {$mModelAxesColor == "Triple"} {

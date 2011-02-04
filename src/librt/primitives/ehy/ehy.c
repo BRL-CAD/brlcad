@@ -161,6 +161,8 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
+#include "../../librt_private.h"
+
 
 extern fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
 
@@ -1402,6 +1404,7 @@ rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 {
     struct rt_ehy_internal *xip;
     union record *rp;
+    vect_t v1, v2, v3;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1423,13 +1426,36 @@ rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* Warning:  type conversion */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(xip->ehy_V, mat, &rp->s.s_values[0*3]);
-    MAT4X3VEC(xip->ehy_H, mat, &rp->s.s_values[1*3]);
-    MAT4X3VEC(xip->ehy_Au, mat, &rp->s.s_values[2*3]);
+
+    if (dbip->dbi_version < 0) {
+	rt_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
+	rt_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
+	rt_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
+    } else {
+	VMOVE(v1, &rp->s.s_values[0*3]);
+	VMOVE(v2, &rp->s.s_values[1*3]);
+	VMOVE(v3, &rp->s.s_values[2*3]);
+    }
+
+    MAT4X3PNT(xip->ehy_V, mat, v1);
+    MAT4X3VEC(xip->ehy_H, mat, v2);
+    MAT4X3VEC(xip->ehy_Au, mat, v3);
+
     VUNITIZE(xip->ehy_Au);
-    xip->ehy_r1 = rp->s.s_values[3*3] / mat[15];
-    xip->ehy_r2 = rp->s.s_values[3*3+1] / mat[15];
-    xip->ehy_c  = rp->s.s_values[3*3+2] / mat[15];
+
+    if (dbip->dbi_version < 0) {
+	v1[X] = flip_dbfloat(rp->s.s_values[3*3+0]);
+	v1[Y] = flip_dbfloat(rp->s.s_values[3*3+1]);
+	v1[Z] = flip_dbfloat(rp->s.s_values[3*3+2]);
+    } else {
+	v1[X] = rp->s.s_values[3*3+0];
+	v1[Y] = rp->s.s_values[3*3+1];
+	v1[Z] = rp->s.s_values[3*3+2];
+    }
+
+    xip->ehy_r1 = v1[X] / mat[15];
+    xip->ehy_r2 = v1[Y] / mat[15];
+    xip->ehy_c  = v1[Z] / mat[15];
 
     if (xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF) {
 	bu_log("rt_ehy_import4: r1, r2, or c are zero\n");
@@ -1543,8 +1569,8 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     xip->ehy_c  = vec[3*3+2] / mat[15];
 
     if (xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF) {
-	bu_log("rt_ehy_import4: r1, r2, or c are zero\n");
-	bu_free((char *)ip->idb_ptr, "rt_ehy_import4: ip->idb_ptr");
+	bu_log("rt_ehy_import5: r1, r2, or c are zero\n");
+	bu_free((char *)ip->idb_ptr, "rt_ehy_import5: ip->idb_ptr");
 	return -1;
     }
 

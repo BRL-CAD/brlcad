@@ -37,6 +37,8 @@
 #include "raytrace.h"
 #include "mater.h"
 
+#include "./librt_private.h"
+
 
 #define DEBUG_PR(aaa, rrr) 	{\
 	if (RT_G_DEBUG&DEBUG_DB) bu_log("db_scan x%x %c (0%o)\n", \
@@ -164,14 +166,18 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		break;
 	    case ID_MATERIAL:
 		if ( do_old_matter ) {
+		    short lo, hi;
+
+		    if (dbip->dbi_version < 0) {
+			lo = flip_short(record.md.md_low);
+			hi = flip_short(record.md.md_hi);
+		    } else {
+			lo = record.md.md_low;
+			hi = record.md.md_hi;
+		    }
+
 		    /* This is common to RT and MGED */
-		    rt_color_addrec(
-			record.md.md_low,
-			record.md.md_hi,
-			record.md.md_r,
-			record.md.md_g,
-			record.md.md_b,
-			addr );
+		    rt_color_addrec(lo, hi, record.md.md_r, record.md.md_g, record.md.md_b, addr);
 		}
 		break;
 	    case ID_P_HEAD:

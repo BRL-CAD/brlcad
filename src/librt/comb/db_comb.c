@@ -48,6 +48,8 @@
 #include "mater.h"
 #include "raytrace.h"
 
+#include "../librt_private.h"
+
 
 #define STAT_ROT 1
 #define STAT_XLATE 2
@@ -352,10 +354,17 @@ rt_comb_import4(
     }
 
     if (comb->region_flag) {
-	comb->region_id = rp[0].c.c_regionid;
-	comb->aircode = rp[0].c.c_aircode;
-	comb->GIFTmater = rp[0].c.c_material;
-	comb->los = rp[0].c.c_los;
+	if (dbip->dbi_version < 0) {
+	    comb->region_id = flip_short(rp[0].c.c_regionid);
+	    comb->aircode = flip_short(rp[0].c.c_aircode);
+	    comb->GIFTmater = flip_short(rp[0].c.c_material);
+	    comb->los = flip_short(rp[0].c.c_los);
+	} else {
+	    comb->region_id = rp[0].c.c_regionid;
+	    comb->aircode = rp[0].c.c_aircode;
+	    comb->GIFTmater = rp[0].c.c_material;
+	    comb->los = rp[0].c.c_los;
+	}
     } else {
 	/* set some reasonable defaults */
 	comb->region_id = 0;

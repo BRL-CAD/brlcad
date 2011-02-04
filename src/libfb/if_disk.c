@@ -26,12 +26,6 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#ifdef HAVE_SYS_FILE_H
-#  include <sys/file.h>
-#endif
 #include "bio.h"
 
 #include "fb.h"

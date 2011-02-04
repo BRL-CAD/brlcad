@@ -75,43 +75,53 @@ if test ! -f misc/debian/control ; then
     ferror "\"make_deb.sh\" should run from project root directory." "Exiting..."
 fi
 
-# variables
-BVERSION=`cat include/conf/MAJOR`"."`cat include/conf/MINOR`"."`cat include/conf/PATCH`
-BVERSION=`echo $BVERSION | sed 's/[^0-9.]//g'`
-CDATE=`date -R`
-CFILE="misc/debian/changelog"
-
 # test if in debian like system
 if test ! -e /etc/debian_version ; then
     ferror "Refusing to build on a non-debian system."
 fi
+
+# #
+BVERSION=`cat include/conf/MAJOR`"."`cat include/conf/MINOR`"."`cat include/conf/PATCH`
+BVERSION=`echo $BVERSION | sed 's/[^0-9.]//g'`
 
 # check needed packages
 E=0
 fcheck(){
     T="install ok installed"
     if test `dpkg -s $1 2>/dev/null | grep "$T" | wc -l` -eq 0 ; then
-	LLIST=$LLIST"\n"$1
+	LLIST=$LLIST" "$1
 	E=1
     fi
 }
 
-fcheck build-essential
-fcheck fakeroot
 fcheck debhelper
-fcheck bison
-fcheck flex
-fcheck libxi-dev
-fcheck xsltproc
-fcheck libgl1-mesa-dev
-fcheck libpango1.0-dev
-fcheck libncurses5-dev
-#fcheck libpng12-dev
-#fcheck zlib1g-dev
+fcheck fakeroot
+
+if test "$1" = "-b" ;then
+    fcheck build-essential
+    fcheck bison
+    fcheck flex
+    fcheck libxi-dev
+    fcheck xsltproc
+    fcheck libgl1-mesa-dev
+    fcheck libpango1.0-dev
+    fcheck libncurses5-dev
+    #fcheck fop # allows pdf creation
+fi
 
 if [ $E -eq 1 ]; then
-    ferror "Mandatory to install these packages first:" $LLIST
+    ferror "Mandatory to install these packages first:" "$LLIST"
 fi
+
+# if building sources, create *orig.tar.gz
+rm -Rf debian
+if test "$1" = "-s" ;then
+    echo "building brlcad_$BVERSION.orig.tar.gz..."
+    tar -czf "../brlcad_$BVERSION.orig.tar.gz" *
+fi
+
+# #
+cp -Rf misc/debian/ .
 
 # modify doc menu desktop files
 fdoc(){
@@ -124,36 +134,27 @@ fdoc(){
 }
 
 fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/toc.html" \
- "misc/debian/brlcad-doc.desktop"
+ "debian/brlcad-doc.desktop"
 
 fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/db" \
- "misc/debian/brlcad-db.desktop"
+ "debian/brlcad-db.desktop"
 
 fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/mged/index.html" \
- "misc/debian/brlcad-doc-mged.desktop"
+ "debian/brlcad-doc-mged.desktop"
 
 fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/Anim_Tutorial/index.html" \
- "misc/debian/brlcad-doc-animation.desktop"
+ "debian/brlcad-doc-animation.desktop"
 
 # update debian/chagelog if needed
-if test -s $CFILE && test `sed -n '1p' $CFILE | grep "brlcad ($BVERSION-" | wc -l` = 0 ; then
+CDATE=`date -R`
+CFILE="debian/changelog"
+if test -s $CFILE && test `sed -n '1p' $CFILE | grep "brlcad ($BVERSION-" | wc -l` -eq 0 ; then
     L1="brlcad ($BVERSION-0) unstable; urgency=low\n\n"
     L2="  **** VERSION ENTRY AUTOMATICALLY ADDED BY \"sh\/make_deb.sh\" SCRIPT ****\n\n"
     L3=" -- Jordi Sayol <g.sayol@yahoo.es>  $CDATE\n\n/"
     sed -i "1s/^/$L1$L2$L3" $CFILE
     echo "\"$CFILE\" has been modified!"
 fi
-
-# if build sources
-if test "$1" = "-s" ;then
-    rm -Rf debian
-    echo "building brlcad_$BVERSION.orig.tar.gz..."
-    tar -czf "../brlcad_$BVERSION.orig.tar.gz" *
-fi
-
-# copy misc/debian to debian
-rm -Rf debian
-cp -Rf misc/debian/ .
 
 # create deb or source packages
 case "$1" in
@@ -164,7 +165,7 @@ case "$1" in
     ;;
 esac
 
-# remove debian
+# #
 rm -Rf debian
 
 # Local Variables:

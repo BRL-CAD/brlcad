@@ -42,6 +42,8 @@
 #include "raytrace.h"
 #include "bot.h"
 
+#include "../../librt_private.h"
+
 
 #define TRI_NULL ((struct tri_specific *)0)
 
@@ -99,7 +101,7 @@ rt_ars_class(const struct soltab *stp,
  * allocated for holding the curve's fastf_t values.
  */
 HIDDEN fastf_t *
-ars_rd_curve(union record *rp, int npts)
+ars_rd_curve(union record *rp, int npts, int flip)
 {
     int lim;
     fastf_t *base;
@@ -117,13 +119,17 @@ ars_rd_curve(union record *rp, int npts)
     for (; npts > 0; npts -= 8) {
 	rr = &rp[rec++];
 	if (rr->b.b_id != ID_ARS_B) {
-	    bu_log("ars_rd_curve():  non-ARS_B record!\n");
+	    bu_log("ars_rd_curve(npts=%d):  non-ARS_B record [%d]!\n", npts, rr->b.b_id);
 	    break;
 	}
 	lim = (npts>8) ? 8 : npts;
 	for (i=0; i<lim; i++) {
+	    vect_t vec;
+
 	    /* cvt from dbfloat_t */
-	    VMOVE(fp, (&(rr->b.b_values[i*3])));
+	    rt_fastf_float(vec, (&(rr->b.b_values[i*3])), 1, flip);
+	    VMOVE(fp, vec);
+	    
 	    fp += ELEMENTS_PER_VECT;
 	}
     }
@@ -167,18 +173,24 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ip->idb_ptr = bu_malloc(sizeof(struct rt_ars_internal), "rt_ars_internal");
     ari = (struct rt_ars_internal *)ip->idb_ptr;
     ari->magic = RT_ARS_INTERNAL_MAGIC;
-    ari->ncurves = rp[0].a.a_m;
-    ari->pts_per_curve = rp[0].a.a_n;
+
+    if (dbip->dbi_version < 0) {
+	ari->ncurves = flip_short(rp[0].a.a_m);
+	ari->pts_per_curve = flip_short(rp[0].a.a_n);
+    } else {
+	ari->ncurves = rp[0].a.a_m;
+	ari->pts_per_curve = rp[0].a.a_n;
+    }
 
     /*
      * Read all the curves into internal form.
      */
     ari->curves = (fastf_t **)bu_malloc(
 	(ari->ncurves+1) * sizeof(fastf_t **), "ars curve ptrs");
+
     currec = 1;
     for (i=0; i < ari->ncurves; i++) {
-	ari->curves[i] =
-	    ars_rd_curve(&rp[currec], ari->pts_per_curve);
+	ari->curves[i] = ars_rd_curve(&rp[currec], ari->pts_per_curve, dbip->dbi_version < 0 ? 1 : 0);
 	currec += (ari->pts_per_curve+7)/8;
     }
 

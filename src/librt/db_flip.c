@@ -1,4 +1,4 @@
-/*                  D B _ F L O A T . C
+/*                   D B _ F L I P . C
  * BRL-CAD
  *
  * Copyright (c) 1995-2011 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file db_float.c
+/** @file db_flip.c
  *
  * v4 geometry database serialization routines.
  *
@@ -37,6 +37,37 @@ typedef union {
     unsigned char c[4];
 } val;
 
+typedef union {
+    short s;
+    unsigned char c[2];
+} sval;
+
+
+short
+flip_short(short s)
+{
+    sval v, v2;
+    v2.s = s;
+    v.c[0] = v2.c[1];
+    v.c[1] = v2.c[0];
+    return v.s;
+}
+
+
+fastf_t
+flip_dbfloat(dbfloat_t d)
+{
+    fastf_t f;
+    val v, v2;
+    v2.f = d;
+    v.c[0] = v2.c[3];
+    v.c[1] = v2.c[2];
+    v.c[2] = v2.c[1];
+    v.c[3] = v2.c[0];
+    f = v.f;
+    return f;
+}
+
 
 /**
  * R T _ F A S T F _ F L O A T
@@ -53,32 +84,11 @@ rt_fastf_float(fastf_t *ff, const dbfloat_t *fp, int n, int flip)
 	    *ff++ = *fp++;
 	    ff += ELEMENTS_PER_VECT-3;
 	}
-
     } else {
-	val v, v2;
-
 	while (n--) {
-	    v2.f = fp[0];
-	    v.c[0] = v2.c[3];
-	    v.c[1] = v2.c[2];
-	    v.c[2] = v2.c[1];
-	    v.c[3] = v2.c[0];
-	    *ff++ = v.f;
-
-	    v2.f = fp[1];
-	    v.c[0] = v2.c[3];
-	    v.c[1] = v2.c[2];
-	    v.c[2] = v2.c[1];
-	    v.c[3] = v2.c[0];
-	    *ff++ = v.f;
-
-	    v2.f = fp[2];
-	    v.c[0] = v2.c[3];
-	    v.c[1] = v2.c[2];
-	    v.c[2] = v2.c[1];
-	    v.c[3] = v2.c[0];
-	    *ff++ = v.f;
-
+	    *ff++ = flip_dbfloat(fp[0]);
+	    *ff++ = flip_dbfloat(fp[1]);
+	    *ff++ = flip_dbfloat(fp[2]);
 	    fp += 3;
 	}
     }
@@ -114,119 +124,25 @@ rt_mat_dbmat(fastf_t *ff, const dbfloat_t *dbp, int flip)
 	*ff++ = *dbp++;
 	*ff++ = *dbp++;
     } else {
-	val v, v2;
+	*ff++ = flip_dbfloat(dbp[0]);
+	*ff++ = flip_dbfloat(dbp[1]);
+	*ff++ = flip_dbfloat(dbp[2]);
+	*ff++ = flip_dbfloat(dbp[3]);
 
-	v2.f = dbp[0];
-	v.c[0] = v2.c[3];
-	v.c[1] = v2.c[2];
-	v.c[2] = v2.c[1];
-	v.c[3] = v2.c[0];
-	*ff++ = v.f;
+	*ff++ = flip_dbfloat(dbp[4]);
+	*ff++ = flip_dbfloat(dbp[5]);
+	*ff++ = flip_dbfloat(dbp[6]);
+	*ff++ = flip_dbfloat(dbp[7]);
 
-	v2.f = dbp[1];
-	v.c[0] = v2.c[3];
-	v.c[1] = v2.c[2];
-	v.c[2] = v2.c[1];
-	v.c[3] = v2.c[0];
-	*ff++ = v.f;
+	*ff++ = flip_dbfloat(dbp[8]);
+	*ff++ = flip_dbfloat(dbp[9]);
+	*ff++ = flip_dbfloat(dbp[10]);
+	*ff++ = flip_dbfloat(dbp[11]);
 
-	v2.f = dbp[2];
-	v.c[0] = v2.c[3];
-	v.c[1] = v2.c[2];
-	v.c[2] = v2.c[1];
-	v.c[3] = v2.c[0];
-	*ff++ = v.f;
-
-	v2.f = dbp[3];
-	v.c[0] = v2.c[3];
-	v.c[1] = v2.c[2];
-	v.c[2] = v2.c[1];
-	v.c[3] = v2.c[0];
-	*ff++ = v.f;
-
-	v2.f = dbp[4];
-	v.c[0] = v2.c[3];
-	v.c[1] = v2.c[2];
-	v.c[2] = v2.c[1];
-	v.c[3] = v2.c[0];
-	*ff++ = v.f;
-
-	v2.f = dbp[5];
-	v.c[0] = v2.c[3];
-	v.c[1] = v2.c[2];
-	v.c[2] = v2.c[1];
-	v.c[3] = v2.c[0];
-	*ff++ = v.f;
-
-	v2.f = dbp[6];
-	v.c[0] = v2.c[3];
-	v.c[1] = v2.c[2];
-	v.c[2] = v2.c[1];
-	v.c[3] = v2.c[0];
-	*ff++ = v.f;
-
-	v2.f = dbp[7];
-	v.c[0] = v2.c[3];
-	v.c[1] = v2.c[2];
-	v.c[2] = v2.c[1];
-	v.c[3] = v2.c[0];
-	*ff++ = v.f;
-
-	v2.f = dbp[8];
-	v.c[0] = v2.c[3];
-	v.c[1] = v2.c[2];
-	v.c[2] = v2.c[1];
-	v.c[3] = v2.c[0];
-	*ff++ = v.f;
-
-	v2.f = dbp[9];
-	v.c[0] = v2.c[3];
-	v.c[1] = v2.c[2];
-	v.c[2] = v2.c[1];
-	v.c[3] = v2.c[0];
-	*ff++ = v.f;
-
-	v2.f = dbp[10];
-	v.c[0] = v2.c[3];
-	v.c[1] = v2.c[2];
-	v.c[2] = v2.c[1];
-	v.c[3] = v2.c[0];
-	*ff++ = v.f;
-
-	v2.f = dbp[11];
-	v.c[0] = v2.c[3];
-	v.c[1] = v2.c[2];
-	v.c[2] = v2.c[1];
-	v.c[3] = v2.c[0];
-	*ff++ = v.f;
-
-	v2.f = dbp[12];
-	v.c[0] = v2.c[3];
-	v.c[1] = v2.c[2];
-	v.c[2] = v2.c[1];
-	v.c[3] = v2.c[0];
-	*ff++ = v.f;
-
-	v2.f = dbp[13];
-	v.c[0] = v2.c[3];
-	v.c[1] = v2.c[2];
-	v.c[2] = v2.c[1];
-	v.c[3] = v2.c[0];
-	*ff++ = v.f;
-
-	v2.f = dbp[14];
-	v.c[0] = v2.c[3];
-	v.c[1] = v2.c[2];
-	v.c[2] = v2.c[1];
-	v.c[3] = v2.c[0];
-	*ff++ = v.f;
-
-	v2.f = dbp[15];
-	v.c[0] = v2.c[3];
-	v.c[1] = v2.c[2];
-	v.c[2] = v2.c[1];
-	v.c[3] = v2.c[0];
-	*ff++ = v.f;
+	*ff++ = flip_dbfloat(dbp[12]);
+	*ff++ = flip_dbfloat(dbp[13]);
+	*ff++ = flip_dbfloat(dbp[14]);
+	*ff++ = flip_dbfloat(dbp[15]);
     }
 }
 

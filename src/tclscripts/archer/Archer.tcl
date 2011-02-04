@@ -8728,6 +8728,17 @@ proc title_node_handler {node} {
     puts $_pfile "set mVPaneToggle5 $mVPaneToggle5"
 
     puts $_pfile "set mWindowGeometry [winfo geometry [namespace tail $this]]"
+
+    puts $_pfile "set mShowViewAxes $mShowViewAxes"
+    puts $_pfile "set mShowModelAxes $mShowModelAxes"
+    puts $_pfile "set mShowGroundPlane $mShowGroundPlane"
+    puts $_pfile "set mShowPrimitiveLabels $mShowPrimitiveLabels"
+    puts $_pfile "set mShowViewingParams $mShowViewingParams"
+    puts $_pfile "set mShowScale $mShowScale"
+    puts $_pfile "set mLighting $mLighting"
+    puts $_pfile "set mShowGrid $mShowGrid"
+    puts $_pfile "set mSnapGrid $mSnapGrid"
+    puts $_pfile "set mShowADC $mShowADC"
 }
 
 

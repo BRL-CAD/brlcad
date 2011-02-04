@@ -384,6 +384,23 @@ typedef void *genptr_t;
  *
  */
 
+
+/**
+ * b u _ c v
+ *
+ * @brief
+ * convert from one format to another.
+ *
+ * @param in		input pointer
+ * @param out		output pointer
+ * @param count		number of entries to convert
+ * @param size		size of output buffer
+ * @param infmt		input format
+ * @param outfmt	output format
+ *
+ */
+BU_EXPORT BU_EXTERN(size_t bu_cv, (genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count));
+
 /**
  * b u _ c v _ c o o k i e
  *
@@ -5205,6 +5222,8 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 
 /** @file xdr.c
  *
+ * DEPRECATED
+ *
  * Routines to implement an external data representation (XDR)
  * compatible with the usual InterNet standards, e.g.:
  * big-endian, twos-compliment fixed point, and IEEE floating point.
@@ -5217,8 +5236,8 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
  */
 
 /**
- * Macro version of library routine bu_glong()
- *
+ * DEPRECATED: use ntohll()
+ * Macro version of library routine bu_glonglong()
  * The argument is expected to be of type "unsigned char"
  */
 #define BU_GLONGLONG(_cp)	\
@@ -5230,37 +5249,47 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 	     (((uint64_t)((_cp)[5])) << 16) |	\
 	     (((uint64_t)((_cp)[6])) <<  8) |	\
 	      ((uint64_t)((_cp)[7])))
+/**
+ * DEPRECATED: use ntohl()
+ * Macro version of library routine bu_glong()
+ * The argument is expected to be of type "unsigned char"
+ */
 #define BU_GLONG(_cp)	\
 	    ((((uint32_t)((_cp)[0])) << 24) |	\
 	     (((uint32_t)((_cp)[1])) << 16) |	\
 	     (((uint32_t)((_cp)[2])) <<  8) |	\
 	      ((uint32_t)((_cp)[3])))
+/**
+ * DEPRECATED: use ntohs()
+ * Macro version of library routine bu_gshort()
+ * The argument is expected to be of type "unsigned char"
+ */
 #define BU_GSHORT(_cp)	\
 	    ((((uint16_t)((_cp)[0])) << 8) | \
 		       (_cp)[1])
 
 /**
- * B U _ G S H O R T
+ * DEPRECATED: use ntohs()
  */
 BU_EXPORT BU_EXTERN(uint16_t bu_gshort, (const unsigned char *msgp));
 
 /**
- * B U _ G L O N G
+ * DEPRECATED: use ntohl()
  */
 BU_EXPORT BU_EXTERN(uint32_t bu_glong, (const unsigned char *msgp));
 
 /**
- * B U _ P S H O R T
+ * DEPRECATED: use htons()
  */
 BU_EXPORT BU_EXTERN(unsigned char *bu_pshort, (unsigned char *msgp, uint16_t s));
 
 /**
- * B U _ P L O N G
+ * DEPRECATED: use htonl()
  */
 BU_EXPORT BU_EXTERN(unsigned char *bu_plong, (unsigned char *msgp, uint32_t l));
 
 /**
- * B U _ P L O N G L O N G
+ * DEPRECATED: use htonll()
  */
 BU_EXPORT BU_EXTERN(unsigned char *bu_plonglong, (unsigned char *msgp, uint64_t l));
 
