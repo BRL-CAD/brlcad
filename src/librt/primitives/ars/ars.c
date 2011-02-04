@@ -42,7 +42,7 @@
 #include "raytrace.h"
 #include "bot.h"
 
-#include "librt_private.h"
+#include "../../librt_private.h"
 
 
 #define TRI_NULL ((struct tri_specific *)0)

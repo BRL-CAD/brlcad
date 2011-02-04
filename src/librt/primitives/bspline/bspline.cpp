@@ -54,7 +54,7 @@
 #  include "opennurbs.h"
 #endif /* CONVERT_TO_BREP */
 
-#include "librt_private.h"
+#include "../../librt_private.h"
 
 
 #ifdef __cplusplus

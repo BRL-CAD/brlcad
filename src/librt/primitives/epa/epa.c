@@ -158,7 +158,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-#include "librt_private.h"
+#include "../../librt_private.h"
 
 
 extern fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
