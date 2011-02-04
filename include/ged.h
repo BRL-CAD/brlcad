@@ -2405,6 +2405,36 @@ GED_EXPORT BU_EXTERN(int ged_zap, (struct ged *gedp, int argc, const char *argv[
 GED_EXPORT BU_EXTERN(int ged_zoom, (struct ged *gedp, int argc, const char *argv[]));
 
 
+
+/***************************************
+ * Conceptual Documentation for LIBGED *
+ ***************************************
+ *
+ * Below are developer notes for a data structure layout that this
+ * library is being migrated towards.  This is not necessarily the
+ * current status of the library, but rather a high-level concept for
+ * how the data might be organized down the road for the core data
+ * structures available for application and extension management.
+ *
+ * struct ged {
+ *   dbip
+ *   views * >-----.
+ *   result()      |
+ * }               |
+ *                 |
+ * struct view { <-'
+ *   geometry * >------.
+ *   update()          |
+ * }                   |
+ *                     |
+ * struct geometry { <-'
+ *   display lists
+ *   directory *
+ *   update()
+ * }
+ *
+ */
+
 __END_DECLS
 
 #endif /* __GED_H__ */

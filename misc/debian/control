@@ -11,15 +11,13 @@ Vcs-Browser: http://brlcad.svn.sourceforge.net/viewvc/brlcad/
 Package: brlcad
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}
-Description: Constructive Solid Geometry (CSG) solid modeling system, binary files
- BRL-CAD is a powerful cross-platform open source combinatorial
- Constructive Solid Geometry (CSG) solid modeling system that includes
- an interactive 3D solid geometry editor, a network-distributed
- symmetric multiprocessing high-performance ray-tracer,
+Description: BRL-CAD open source solid modeling
+ BRL-CAD is a powerful cross-platform Open Source combinatorial
+ Constructive Solid Geometry (CSG) solid modeling system that
+ includes interactive 3D solid geometry editing, high-performance
+ ray-tracing support for rendering and geometric analysis,
  network-distributed framebuffer support, image and signal-processing
- tools, ray-tracing support for rendering and geometric analysis,
- path-tracing and photon mapping support for realistic image synthesis,
- animation capabilities, ray-tracing and numerical processing
- libraries, a system performance analysis benchmark suite, an embedded
- scripting interface, and a robust high-performance geometric
- representation and analysis library.
+ tools, path-tracing and photon mapping support for realistic image
+ synthesis, a system performance analysis benchmark suite, an embedded
+ scripting interface, and libraries for robust high-performance
+ geometric representation and analysis.

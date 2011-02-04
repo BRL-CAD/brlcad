@@ -69,6 +69,7 @@ fi
 BVERSION=`cat include/conf/MAJOR`"."`cat include/conf/MINOR`"."`cat include/conf/PATCH`
 BVERSION=`echo $BVERSION | sed 's/[^0-9.]//g'`
 TMPDIR="misc/$DNAME-tmp"
+RELEASE="0"
 
 if test `uname -m | grep -iwE "i[3-6]86" | wc -l` -eq 1 ;then
     ARCH=`uname -m`
@@ -176,7 +177,7 @@ cp -f $TMPDIR/application-x-brlcad-extension.xml $TMPDIR/tmp/usr/share/mime/pack
 #Create brlcad.spec file
 echo -e 'Name: brlcad
 Version: '$BVERSION'
-Release: 0
+Release: '$RELEASE'
 Summary: BRL-CAD open source solid modeling
 
 Group: Productivity/Graphics/CAD
@@ -185,7 +186,7 @@ URL: http://brlcad.org
 Packager: Jordi Sayol <g.sayol@yahoo.es>
 
 ExclusiveArch: '$ARCH' 
-Provides: brlcad = '$BVERSION'-0, brlcad('$FARCH') = '$BVERSION'-0
+Provides: brlcad = '$BVERSION'-'$RELEASE', brlcad('$FARCH') = '$BVERSION'-'$RELEASE'
 
 %description
 BRL-CAD is a powerful cross-platform Open Source combinatorial
@@ -201,16 +202,34 @@ geometric representation and analysis.
 Homepage: http://brlcad.org
 
 %post
+set -e
+
+F="/usr/share/applications/defaults.list"
+
+if [ ! -f $F ]; then
+	echo "[Default Applications]" > $F
+fi
+
+sed -i "/application\/x-brlcad-extension=/d" $F
+
+echo "application/x-brlcad-extension=brlcad-archer.desktop" >> $F
+
 source /etc/profile.d/brlcad.sh
 
-update-desktop-database &> /dev/null
+if [ -x "`which update-desktop-database 2>/dev/null`" ]; then
+	update-desktop-database &> /dev/null
+fi
 
 if [ -x "`which update-mime-database 2>/dev/null`" ]; then
 	update-mime-database /usr/share/mime
 fi
 
 %postun
-update-desktop-database &> /dev/null
+set -e
+
+if [ -x "`which update-desktop-database 2>/dev/null`" ]; then
+	update-desktop-database &> /dev/null
+fi
 
 if [ -x "`which update-mime-database 2>/dev/null`" ]; then
 	update-mime-database /usr/share/mime
@@ -225,9 +244,9 @@ find $TMPDIR/tmp/ -type l | sed 's:'$TMPDIR'/tmp:":' | sed 's:$:":' >> $TMPDIR/b
 # create rpm file
 fakeroot rpmbuild -vv --buildroot=`pwd`/$TMPDIR/tmp -bb --target $ARCH $TMPDIR/brlcad.spec > $TMPDIR/rpmbuild.log
 
-RPMFILE=`cat $TMPDIR"/rpmbuild.log" | grep "brlcad-"$BVERSION"-0."$ARCH".rpm" | awk '{print $(NF)}'`
+RPMFILE=`cat $TMPDIR"/rpmbuild.log" | grep "brlcad-"$BVERSION"-"$RELEASE"."$ARCH".rpm" | awk '{print $(NF)}'`
 
-mv $RPMFILE ../brlcad-$BVERSION-0_$DNAME.$ARCH.rpm
+mv $RPMFILE ../brlcad-$BVERSION-$RELEASE.$DNAME.$ARCH.rpm
 
 # #
 rm -Rf $TMPDIR

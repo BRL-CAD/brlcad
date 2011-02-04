@@ -2780,14 +2780,18 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	if (db_version(dbip) != 4) {
 	    bu_log("WARNING: [%s] is not a v4 database.  The -f option will be ignored.\n", dbip->dbi_filename);
 	} else {
-	    /* flip the version number to indicate a flipped database */
-	    if (dbip->dbi_version > 0)
+	    if (dbip->dbi_version < 0) {
+		bu_log("Database [%s] was already (perhaps automatically) flipped, -f is redundant.\n", dbip->dbi_filename);
+	    } else {
+		bu_log("Treating [%s] as a binary-incompatible v4 geometry database.\n", dbip->dbi_filename);
+		bu_log("Endianness flipped.  Converting to READ ONLY.\n");
+
+		/* flip the version number to indicate a flipped database. */
 		dbip->dbi_version *= -1;
 
-	    /* do NOT write to a flipped database */
-	    dbip->dbi_read_only = 1;
-
-	    bu_log("Treating file as a binary-incompatible v4 geometry database.\n");
+		/* do NOT write to a flipped database */
+		dbip->dbi_read_only = 1;
+	    }
 	}
     }
 

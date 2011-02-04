@@ -118,12 +118,16 @@ Cad_AppInit(Tcl_Interp *interp)
 	Tcl_ResetResult(interp);
 	if (init_itcl && Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
 	    if (!try_auto_path) {
+		Tcl_Namespace *nsp;
+
 		try_auto_path=1;
 		/* Itcl_Init() leaves initialization in a bad state
 		 * and can cause retry failures.  cleanup manually.
 		 */
 		Tcl_DeleteCommand(interp, "::itcl::class");
-		Tcl_DeleteNamespace(Tcl_FindNamespace(interp, "::itcl", NULL, 0));
+		nsp = Tcl_FindNamespace(interp, "::itcl", NULL, 0);
+		if(nsp != NULL)
+		    Tcl_DeleteNamespace(nsp);
 		continue;
 	    }
 	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
