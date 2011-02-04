@@ -38,6 +38,11 @@
 
 #ifdef IF_OGL
 
+/* needed to make getpagesize in unistd.h visible with C99/XOPEN
+ * strictness. Needs to be before sys/types.h, but unistd has to be
+ * after the GL stuff. */
+#define __BSD_VISIBLE 1
+
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -73,7 +78,6 @@
 #  include <GL/gl.h>
 #endif
 
-#define __BSD_VISIBLE 1	/* needed to make getpagesize in unistd.h visible with C99/XOPEN strictness */
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>	/* for getpagesize */
 #endif
