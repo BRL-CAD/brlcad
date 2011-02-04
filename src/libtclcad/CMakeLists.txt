@@ -26,6 +26,8 @@ include_directories(
 
 add_definitions(
 	${TCLCAD_DEFINES}
+	${C99_FLAG}
+	${XOPEN_DEFINE}
 )
 
 FOREACH(xlib ${X11_LIBRARIES})
