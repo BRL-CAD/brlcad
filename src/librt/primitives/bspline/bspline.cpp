@@ -781,12 +781,20 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 
 	vp = (dbfloat_t *) &rp[1];
 
-	for (i = 0; i < d.d.d_kv_size[0]; i++) {
-	    sip->srfs[s]->u.knots[i] = (fastf_t) *vp++;
-	}
-
-	for (i = 0; i < d.d.d_kv_size[1]; i++) {
-	    sip->srfs[s]->v.knots[i] = (fastf_t) *vp++;
+	if (dbip->dbi_version < 0) {
+	    for (i = 0; i < d.d.d_kv_size[0]; i++) {
+		sip->srfs[s]->u.knots[i] = flip_dbfloat(*vp++);
+	    }
+	    for (i = 0; i < d.d.d_kv_size[1]; i++) {
+		sip->srfs[s]->v.knots[i] = flip_dbfloat(*vp++);
+	    }
+	} else {
+	    for (i = 0; i < d.d.d_kv_size[0]; i++) {
+		sip->srfs[s]->u.knots[i] = (fastf_t) *vp++;
+	    }
+	    for (i = 0; i < d.d.d_kv_size[1]; i++) {
+		sip->srfs[s]->v.knots[i] = (fastf_t) *vp++;
+	    }
 	}
 
 	rt_nurb_kvnorm(&sip->srfs[s]->u);
