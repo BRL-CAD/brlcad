@@ -1,0 +1,13 @@
+FILE(READ svnstatus SVNSTATUS)
+STRING(REGEX REPLACE "\r?\n" ";" STATUSLIST "${SVNSTATUS}")
+FOREACH(line ${STATUSLIST})
+	IF(NOT ${line} MATCHES "src/other/libz/zconf.h")
+		SET(SVNMESSAGE "${SVNMESSAGE}\n${line}")
+	ENDIF(NOT ${line} MATCHES "src/other/libz/zconf.h")
+ENDFOREACH(line ${STATUSLIST})
+
+IF(SVNMESSAGE)
+	MESSAGE(FATAL_ERROR "\nSVN Check:  Uncommitted files or changes in source tree, distcheck failed:\n${SVNMESSAGE}\n")
+ELSE(SVNMESSAGE)
+	MESSAGE("SVN Check: Passed")
+ENDIF(SVNMESSAGE)

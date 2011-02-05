@@ -1536,6 +1536,17 @@ SET(CPACK_SOURCE_PACKAGE_FILE_NAME
 SET(CPACK_SOURCE_IGNORE_FILES "\\\\.svn/")
 INCLUDE(CPack)
 
+configure_file(${BRLCAD_CMAKE_DIR}/svncheck.cmake ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/svncheck.cmake COPYONLY)
+ADD_CUSTOM_TARGET(distcheck
+	COMMAND svn status ${CMAKE_SOURCE_DIR} > svnstatus
+	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/svncheck.cmake
+	COMMAND cpack --config ${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake
+	COMMAND ${CMAKE_COMMAND} -E tar xvzf ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
+	COMMAND ${CMAKE_COMMAND} -E make_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
+	COMMAND ${CMAKE_COMMAND} -E chdir _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build	${CMAKE_COMMAND} ../${CPACK_SOURCE_PACKAGE_FILE_NAME}	-DBRLCAD-ENABLE_ALL_LOCAL_LIBS=ON
+	)
+	
+
 # Mark various miscellaneous things as advanced that we don't want in our
 # default view
 MARK_AS_ADVANCED(BRLCAD_PREFIX)
