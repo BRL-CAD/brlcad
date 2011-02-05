@@ -1,25 +1,7 @@
 #include <time.h>
 #include <stdio.h>
-int main(void) {
-  FILE *infp = NULL;
-  time_t t, ts, te;
-  struct tm *currenttime;
-  struct tm starttime;
-  int tdiff, d_mins, d_hrs, d_days;
-  t = time(NULL);
-  currenttime = localtime(&t);
-  infp = fopen("${BUILD_DELTA_START}", "r");
-/*  starttime.tm_zone = currenttime->tm_zone;
-  starttime.tm_gmtoff = currenttime->tm_gmtoff;*/
-  fscanf(infp, "%d/%d/%d/%d/%d/%d/%d/%d/%d", &(starttime.tm_sec), &(starttime.tm_min), &(starttime.tm_hour), &(starttime.tm_mday), &(starttime.tm_mon), &(starttime.tm_year), &(starttime.tm_wday), &(starttime.tm_yday), &(starttime.tm_isdst));
-  fclose(infp);
-  
-  ts = mktime(&starttime); 
-  te = mktime(currenttime); 
-
-  printf("\nDone.\n\nElapsed Compilation Time: ");
-
-  tdiff = (int)difftime(te, ts);
+void printtime(int tdiff) {
+  int d_mins, d_hrs, d_days;
   d_days = 0; 
   d_hrs = 0; 
   d_mins = 0; 
@@ -67,8 +49,48 @@ int main(void) {
   if (tdiff == 0 && d_mins == 0 && d_hrs == 0 && d_days == 0) {
      printf("0 seconds ");
   }
+}
 
-  printf("\n\n");
+int main(void) {
+  FILE *infp = NULL;
+  time_t t, ts, te;
+  struct tm *currenttime;
+  struct tm starttime;
+  int tdiff;
+  t = time(NULL);
+  currenttime = localtime(&t);
+  infp = fopen("${BUILD_DELTA_START}", "r");
+/*  starttime.tm_zone = currenttime->tm_zone;
+  starttime.tm_gmtoff = currenttime->tm_gmtoff;*/
+  fscanf(infp, "%d/%d/%d/%d/%d/%d/%d/%d/%d", &(starttime.tm_sec), &(starttime.tm_min), &(starttime.tm_hour), &(starttime.tm_mday), &(starttime.tm_mon), &(starttime.tm_year), &(starttime.tm_wday), &(starttime.tm_yday), &(starttime.tm_isdst));
+  fclose(infp);
+  
+  ts = mktime(&starttime); 
+  te = mktime(currenttime); 
+
+  printf("Done.\n\n");
+ 
+  printf("BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE}\n\n");
+  
+  printf("Elapsed compilation time: ");
+
+  tdiff = (int)difftime(te, ts);
+
+  printtime(tdiff);
+
+  printf("\nElapsed time since configuration: ");
+  
+  infp = fopen("${DELTA_START}", "r");
+  fscanf(infp, "%d/%d/%d/%d/%d/%d/%d/%d/%d", &(starttime.tm_sec), &(starttime.tm_min), &(starttime.tm_hour), &(starttime.tm_mday), &(starttime.tm_mon), &(starttime.tm_year), &(starttime.tm_wday), &(starttime.tm_yday), &(starttime.tm_isdst));
+  fclose(infp);
+  ts = mktime(&starttime); 
+  tdiff = (int)difftime(te, ts);
+  printtime(tdiff);
+  printf("\n---\n");
+
+  printf("Run 'make install' to begin installation into ${CMAKE_INSTALL_PREFIX}\n");
+  printf("Run 'make benchmark' to run the BRL-CAD Benchmark Suite\n");
+  printf("\n");
 
   return 0;
 }
