@@ -59,6 +59,14 @@ SET(libz_ignore_files
 	zlib.map
 	zlib.pc.in
 	zlib2ansi
+	win32/DLL_FAQ.txt
+	win32/Makefile.bor
+	win32/Makefile.emx
+	win32/Makefile.gcc
+	win32/Makefile.msc
+	win32/README-WIN32.txt
+	win32/VisualC.txt
+	win32/zlib.def
 	)
 DISTCHECK_IGNORE(libz libz_ignore_files)
 
@@ -245,8 +253,22 @@ SET(urtoolkit_cnv_ignore_files
 	rletorast.c
 	rletotiff.c
 	tifftorle.c
+	rletoabA62/COPYRIGHT
+	rletogif/rletogif.h
 	)
 DISTCHECK_IGNORE(URToolkit/cnv urtoolkit_cnv_ignore_files)
+SET(urtoolkit_tools_ignore_files
+	rleaddeof.c
+	rleskel.c
+	)
+DISTCHECK_IGNORE(URToolkit/tools urtoolkit_tools_ignore_files)
+SET(urtoolkit_clock_ignore_files
+	README
+	font.h
+	font.src
+	makeFont
+	)
+DISTCHECK_IGNORE(URToolkit/tools/clock urtoolkit_clock_ignore_files)
 
 
 # Tcl/Tk presents a number of complexities for BRL-CAD and CMake.  BRL-CAD requires
@@ -314,6 +336,90 @@ exit
 	FILE(APPEND ${CONFIG_H_FILE} "#define TCL_SYSTEM_INITTCL_PATH \"${tcl_inittcl}\"\n")
 ENDIF(BRLCAD_BUILD_LOCAL_TCL OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 
+SET(tcl_ignore_files
+	CMake
+	ChangeLog
+	ChangeLog.1999
+	ChangeLog.2000
+	ChangeLog.2001
+	ChangeLog.2002
+	ChangeLog.2003
+	ChangeLog.2004
+	ChangeLog.2005
+	README
+	changes
+	compat
+	generic/README
+	generic/regc_color.c
+	generic/regc_cvec.c
+	generic/regc_lex.c
+	generic/regc_locale.c
+	generic/regc_nfa.c
+	generic/regcustom.h
+	generic/rege_dfa.c
+	generic/regerrs.h
+	generic/regextcl.h
+	generic/regfronts.c
+	generic/regguts.h
+	generic/tcl.decls
+	generic/tcl.h
+	generic/tclCompile.h
+	generic/tclDTrace.d
+	generic/tclDecls.h
+	generic/tclFileSystem.h
+	generic/tclGetDate.y
+	generic/tclIO.h
+	generic/tclInt.decls
+	generic/tclInt.h
+	generic/tclIntDecls.h
+	generic/tclIntPlatDecls.h
+	generic/tclLoadNone.c
+	generic/tclPlatDecls.h
+	generic/tclPort.h
+	generic/tclRegexp.h
+	generic/tclTest.c
+	generic/tclTestObj.c
+	generic/tclTestProcBodyObj.c
+	generic/tclThreadTest.c
+	generic/tclTomMath.decls
+	generic/tclTomMath.h
+	generic/tclTomMathDecls.h
+	generic/tclTomMathInt.h
+	generic/tommath.h
+	libtommath/tommath.h
+	libtommath/tommath_class.h
+	libtommath/tommath_superclass.h
+	license.terms
+	macosx
+	tests
+	tools
+	unix
+	unix/Makefile.in
+	unix/README
+	unix/aclocal.m4
+	unix/configure.in
+	unix/dltest
+	unix/install-sh
+	unix/installManPage
+	unix/ldAix
+	unix/tcl.m4
+	unix/tcl.spec
+	unix/tclConfig.h.in
+	unix/tclConfig.sh.in
+	unix/tclLoadAix.c
+	unix/tclLoadDyld.c
+	unix/tclLoadNext.c
+	unix/tclLoadOSF.c
+	unix/tclLoadShl.c
+	unix/tclUnixPort.h
+	unix/tclUnixThrd.h
+	unix/tclXtNotify.c
+	unix/tclXtTest.c
+	win
+	)
+DISTCHECK_IGNORE(tcl tcl_ignore_files)
+
+
 IF(BRLCAD_BUILD_LOCAL_TK)
 	ADD_SUBDIRECTORY(tk)
    # Set the variables ourselves since FindTCL.cmake doesn't know about our build
@@ -352,6 +458,82 @@ MARK_AS_ADVANCED(TK_LIBRARY)
 MARK_AS_ADVANCED(TK_STUB_LIBRARY)
 MARK_AS_ADVANCED(TK_SYSTEM_GRAPHICS)
 MARK_AS_ADVANCED(TK_WISH)
+
+SET(tk_ignore_files
+	CMake
+	ChangeLog
+	ChangeLog.2002
+	ChangeLog.2004
+	README
+	bitmaps
+	changes
+	compat
+	generic/README
+	generic/default.h
+	generic/ks_names.h
+	generic/prolog.ps
+	generic/tk.decls
+	generic/tk.h
+	generic/tk3d.h
+	generic/tkButton.h
+	generic/tkCanvas.h
+	generic/tkColor.h
+	generic/tkDecls.h
+	generic/tkEntry.h
+	generic/tkFileFilter.c
+	generic/tkFileFilter.h
+	generic/tkFont.h
+	generic/tkImgUtil.c
+	generic/tkInt.decls
+	generic/tkInt.h
+	generic/tkIntDecls.h
+	generic/tkIntPlatDecls.h
+	generic/tkIntXlibDecls.h
+	generic/tkMacWinMenu.c
+	generic/tkMenu.h
+	generic/tkMenubutton.h
+	generic/tkOldTest.c
+	generic/tkPlatDecls.h
+	generic/tkPointer.c
+	generic/tkPort.h
+	generic/tkScale.h
+	generic/tkScrollbar.h
+	generic/tkSelect.h
+	generic/tkSquare.c
+	generic/tkTest.c
+	generic/tkText.h
+	generic/tkUndo.h
+	generic/ttk/ttk.decls
+	generic/ttk/ttkDecls.h
+	generic/ttk/ttkGenStubs.tcl
+	generic/ttk/ttkManager.h
+	generic/ttk/ttkTheme.h
+	generic/ttk/ttkThemeInt.h
+	generic/ttk/ttkWidget.h
+	license.terms
+	macosx
+	tests
+	unix
+	unix/Makefile.in
+	unix/README
+	unix/aclocal.m4
+	unix/configure.in
+	unix/install-sh
+	unix/installManPage
+	unix/license.terms
+	unix/tcl.m4
+	unix/tk.spec
+	unix/tkConfig.h.in
+	unix/tkConfig.sh.in
+	unix/tkUnixDefault.h
+	unix/tkUnixDialog.c
+	unix/tkUnixInt.h
+	unix/tkUnixPort.h
+	unix/tkUnixRFont.c
+	win
+	xlib
+	)
+DISTCHECK_IGNORE(tk tk_ignore_files)
 
 # Now that Tcl/Tk is settled, define the HAVE_TK flag for the config.h file
 IF(TCL_TK_LIBRARY)
@@ -435,6 +617,24 @@ ENDIF(BRLCAD_BUILD_LOCAL_ITCL)
 FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine ITCL_VERSION	\"${ITCL_VERSION}\"\n")
 MARK_AS_ADVANCED(ITCL_VERSION)
 MARK_AS_ADVANCED(BRLCAD_BUILD_LOCAL_ITCL)
+SET(itcl_ignore_files
+	CMake
+	aclocal.m4
+	doc
+	generic/itcl.decls
+	generic/itcl.h
+	generic/itclDecls.h
+	generic/itclInt.decls
+	generic/itclInt.h
+	generic/itclIntDecls.h
+	itclConfig.sh.in
+	library
+	license.terms
+	pkgIndex.tcl.in
+	tests
+	win
+	)
+DISTCHECK_IGNORE(incrTcl/itcl itcl_ignore_files)
 
 IF(BRLCAD_BUILD_LOCAL_ITK)
 	IF(NOT BRLCAD_BUILD_LOCAL_TK)
@@ -461,6 +661,24 @@ ELSE(BRLCAD_BUILD_LOCAL_ITCL OR BRLCAD_BUILD_LOCAL_ITK)
 	SET(BRLCAD_BUILD_LOCAL_INCRTCL OFF CACHE BOOL "incrtcl build status" FORCE)
 ENDIF(BRLCAD_BUILD_LOCAL_ITCL OR BRLCAD_BUILD_LOCAL_ITK)
 MARK_AS_ADVANCED(BRLCAD_BUILD_LOCAL_INCRTCL)
+SET(itk_ignore_files
+	CMake
+	aclocal.m4
+	demos
+	doc
+	examples
+	generic/itk.decls
+	generic/itk.h
+	generic/itkDecls.h
+	itkConfig.sh.in
+	library
+	license.terms
+	pkgIndex.tcl.in
+	tests
+	win
+	)
+DISTCHECK_IGNORE(incrTcl/itk itk_ignore_files)
+
 
 IF(BRLCAD_BUILD_LOCAL_IWIDGETS)
 	ADD_SUBDIRECTORY(iwidgets)
@@ -471,6 +689,25 @@ ENDIF(BRLCAD_BUILD_LOCAL_IWIDGETS)
 FILE(APPEND ${CONFIG_H_FILE} "#define IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
 MARK_AS_ADVANCED(IWIDGETS_VERSION)
 MARK_AS_ADVANCED(BRLCAD_BUILD_LOCAL_IWIDGETS)
+SET(iwidgets_ignore_files
+	CHANGES
+	ChangeLog
+	README
+	aclocal.m4
+	configure.in
+	demos
+	doc
+	incoming
+	iwidgets.tcl.in
+	license.terms
+	outgoing
+	pkgIndex.tcl
+	pkgIndex.tcl.in
+	tclconfig
+	tests
+	win
+	)
+DISTCHECK_IGNORE(iwidgets iwidgets_ignore_files)
 
 IF(BRLCAD_BUILD_LOCAL_TKHTML)
         ADD_SUBDIRECTORY(tkhtml)
