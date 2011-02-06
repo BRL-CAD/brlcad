@@ -29,7 +29,7 @@ SET(bench_MANS
   benchmark.1
   pixcmp.1
 )
-install(FILES ${bench_MANS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR}/man1)
+ADD_MAN_PAGES(1 bench_MANS)
 
 IF(SH_EXEC)
 	ADD_CUSTOM_TARGET(benchmark

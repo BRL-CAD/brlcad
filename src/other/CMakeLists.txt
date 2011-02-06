@@ -20,18 +20,54 @@ ENDIF(BRLCAD-DISABLE_SRC_OTHER_WARN)
 # subdirectory's CMake logic.
 #---------------------------------------------------------------------------------
 
+# Ignore the boost subdir - it's only used for the boost headers and is not
+# compiled
+DISTCHECK_IGNORE_ITEM(boost)
+
 # zlib Library
 # The autotools build needs this file, but the CMake zlib build doesn't tolerate 
 # it - remove it if it's there. 
 FILE(REMOVE ${CMAKE_CURRENT_SOURCE_DIR}/libz/zconf.h)
 THIRD_PARTY_OPTION(ZLIB zlib)
 THIRD_PARTY_SUBDIR(ZLIB libz)
+SET(libz_ignore_files
+	ChangeLog
+	FAQ
+	INDEX
+	README
+	amiga
+	configure
+	contrib
+	doc
+	examples
+	make_vms.com
+	msdos
+	nintendods
+	old
+	qnx
+	treebuild.xml
+	watcom
+	win32
+	zconf.h.cmakein
+	zconf.h.in
+	zlib.3
+	zlib.3.pdf
+	zlib.map
+	zlib.pc.in
+	zlib2ansi
+	)
+DISTCHECK_IGNORE(libz libz_ignore_files)
 
 # libtermlib Library
 IF(HAVE_TERMLIB)
    THIRD_PARTY_OPTION(TERMLIB termlib)
    THIRD_PARTY_SUBDIR(TERMLIB libtermlib)
 ENDIF(HAVE_TERMLIB)
+SET(termlib_ignore_files
+	termcap.h
+	termcap.src
+	)
+DISTCHECK_IGNORE(libtermlib termlib_ignore_files)
 
 # libpng Library - Checks for ZLIB, so need to handle libpng AFTER zlib to set the variables
 # if using a local copy of zlib.  If not using a local copy of zlib, FindZLIB results will 
@@ -67,11 +103,47 @@ MARK_AS_ADVANCED(PNG_SHARED)
 MARK_AS_ADVANCED(PNG_STATIC)
 MARK_AS_ADVANCED(PNG_TESTS)
 MARK_AS_ADVANCED(uname_executable)
+SET(png_ignore_files
+	ANNOUNCE
+	CHANGES
+	INSTALL
+	LICENSE
+	README
+	TODO
+	autogen.sh
+	configure.ac
+	contrib
+	example.c
+	libpng-1.4.5.txt
+	libpng-config.in
+	libpng.3
+	libpng.pc.in
+	libpngpf.3
+	png.5
+	pngbar.jpg
+	pngbar.png
+	pngnow.png
+	pngtest.png
+	projects
+	scripts
+	test-pngtest.sh
+	)
+DISTCHECK_IGNORE(libpng png_ignore_files)
 
 # libregex Library
 THIRD_PARTY_OPTION(REGEX regex)
 THIRD_PARTY_SUBDIR(REGEX libregex)
 BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
+SET(regex_ignore_files
+	cclass.h
+	cname.h
+	engine.c
+	regex.h
+	regex2.h
+	utils.h
+	)
+DISTCHECK_IGNORE(libregex regex_ignore_files)
+
 
 # libutahrle Library - The directory to perform ADD_SUBDIRECTORY on and the
 # include directory for utahrle are different, so override the macro's setting
@@ -84,12 +156,93 @@ IF(BRLCAD_BUILD_LOCAL_UTAHRLE)
 	MARK_AS_ADVANCED(UTAHRLE_INCLUDE_DIR)
 	MARK_AS_ADVANCED(BRLCAD_UTAHRLE_INCLUDE_DIR)
 ENDIF(BRLCAD_BUILD_LOCAL_UTAHRLE)
+SET(utahrle_ignore_files
+	buildmap.3
+	bwdithermap.3
+	colorquant.3
+	dither.3
+	ditherbw.3
+	dithergb.3
+	dithermap.3
+	float_to_exp.3
+	getopt.c
+	hilbert.3
+	hilbert_c2i.3
+	hilbert_i2c.3
+	include
+	inv_cmap.3
+	librle.3
+	libutahrle.3
+	make_square.3
+	rgb_to_bw.3
+	rle.5
+	rle_addhist.3
+	rle_cp.3
+	rle_debug.3
+	rle_delcom.3
+	rle_freeraw.3
+	rle_get_error.3
+	rle_get_set.3
+	rle_get_setup.3
+	rle_get_setup_ok.3
+	rle_getcom.3
+	rle_getraw.3
+	rle_getrow.3
+	rle_getskip.3
+	rle_hdr.3
+	rle_op.3
+	rle_open_f.3
+	rle_open_f_noexit.3
+	rle_put_init.3
+	rle_put_setup.3
+	rle_putcom.3
+	rle_puteof.3
+	rle_putraw.3
+	rle_putrow.3
+	rle_raw_alloc.3
+	rle_raw_free.3
+	rle_rawtorow.3
+	rle_row_alloc.3
+	rle_row_free.3
+	rle_skiprow.3
+	scanargs.3
+	)
+DISTCHECK_IGNORE(libutahrle utahrle_ignore_files)
 
 
 # URTToolkit
 # Programs, not a library - needs libutahrle, but the "check for system install" logic
 # will be different here.  Ignore for now, revisit later.
 ADD_SUBDIRECTORY(URToolkit)
+SET(urtoolkit_ignore_files
+	3.1-changes
+	CHANGES
+	MANIFEST
+	README
+	blurb
+	copyright
+	patchlevel.h
+	)
+DISTCHECK_IGNORE(URToolkit urtoolkit_ignore_files)
+SET(urtoolkit_cnv_ignore_files
+	README
+	iristorle.c
+	pgmtorle.c
+	ppmtorle.c
+	rastorle.c
+	rla_header.h
+	rlatorle.c
+	rlb_header.h
+	rletoabA62
+	rletocgm.c
+	rletogif
+	rletoiris.c
+	rletoppm.c
+	rletorast.c
+	rletotiff.c
+	tifftorle.c
+	)
+DISTCHECK_IGNORE(URToolkit/cnv urtoolkit_cnv_ignore_files)
 
 
 # Tcl/Tk presents a number of complexities for BRL-CAD and CMake.  BRL-CAD requires
