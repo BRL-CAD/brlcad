@@ -46,4 +46,24 @@ ELSE(DOXYGEN_FOUND)
 	ENDIF(BRLCAD-BUILD_DOXYGEN_DOCS)
 ENDIF(DOXYGEN_FOUND)
 
-
+SET(misc_ignore_files
+	CMake
+	Description.txt
+	Doxyfile
+	Doxyfile.in
+	Makefile.defs
+	archlinux
+	batch-indent-region.el
+	brlcad-config.1
+	brlcad-config.in
+	brlcad.spec.in
+	debian
+	doxygen_structure
+	flawfinder
+	libtool.m4
+	macosx
+	nsis
+	win32-msvc
+	win32-msvc8
+	)
+CMAKEFILES(${misc_ignore_files})

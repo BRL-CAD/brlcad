@@ -19,3 +19,12 @@ add_executable(tgf-g
 )
 target_link_libraries(tgf-g libwdb librt libbu)
 INSTALL(TARGETS tgf-g RUNTIME DESTINATION bin)
+
+SET(intaval_ignore_files
+	glob.h
+	read_dra.h
+	readme.txt
+	regtab.h
+	write_brl.h
+	)
+CMAKEFILES(${intaval_ignore_files})

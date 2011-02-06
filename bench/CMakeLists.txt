@@ -30,6 +30,7 @@ SET(bench_MANS
   pixcmp.1
 )
 ADD_MAN_PAGES(1 bench_MANS)
+CMAKEFILES(lgt.sh run.sh try.sh viewdiff.sh)
 
 IF(SH_EXEC)
 	ADD_CUSTOM_TARGET(benchmark

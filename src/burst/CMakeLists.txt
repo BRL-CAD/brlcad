@@ -35,4 +35,5 @@ if(HAVE_TERMLIB)
 		Sc.h 
 		trie.h
 		)
+	CMAKEFILES(${burst_noinst_HEADERS} burst.format)
 endif(HAVE_TERMLIB)

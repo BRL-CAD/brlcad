@@ -184,5 +184,21 @@ SET(conv_MANS
   tankill/tankill-g.1 
   viewpoint-g.1
 )
+ADD_MAN_PAGES(1 conv_MANS)
 
-install(FILES ${conv_MANS} DESTINATION ${MAN_DIR}/man1)
+SET(conv_ignore_files
+	Formats.csv
+	comgeom/3d.h
+	comgeom/try.sh
+	dbclean.sh
+	dxf/dxf.h
+	intaval-g.py
+	obj-g_new.c
+	off
+	patch/patch-g.h
+	patch/pull_comp.sh
+	patch/pull_solidsub.sh
+	patch/rpatch.f
+	walk_example.c
+	)
+CMAKEFILES(${conv_ignore_files})

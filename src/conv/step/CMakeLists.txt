@@ -368,6 +368,7 @@ SET(stepg_HDRS
 	VolumeSiUnit.h 
 	VolumeUnit.h 
 )
+CMAKEFILES(${stepg_HDRS})
 
 # FIXME: The fedex files are supposed to be generated, but the SCL stuff isn't
 # quite up to the job yet

@@ -22,3 +22,10 @@ add_library(libpoints ${MGED_POINTS_SRCS})
 target_link_libraries(libpoints libbu)
 INSTALL(TARGETS libpoints DESTINATION lib)
 SET_TARGET_PROPERTIES(libpoints PROPERTIES COMPILE_DEFINITIONS "ENABLE_POINTS")
+SET(mged_points_ignore_files
+	count.h
+	points_parse.y
+	points_scan.l
+	process.h
+	)
+CMAKEFILES(${mged_points_ignore_files})

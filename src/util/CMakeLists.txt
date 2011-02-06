@@ -254,4 +254,5 @@ set(util_MANS
   terrain.1 
   wavelet.1
 )
-install(FILES ${util_MANS} DESTINATION ${MAN_DIR}/man1)
+ADD_MAN_PAGES(1 util_MANS)
+CMAKEFILES(bombardier.h morphedit.tcl pldebug.c)

@@ -35,3 +35,17 @@ BRLCAD_ADDFILE(plugins/Wizards/humanwizard/HumanWizard.tcl plugins/archer/Wizard
 BRLCAD_ADDFILE(plugins/Wizards/tankwizard/TankWizard.tcl	plugins/archer/Wizards/tankwizard)
 BRLCAD_ADDFILE(plugins/Wizards/tankwizard/images/tank.png plugins/archer/Wizards/tankwizardIA/images)
 BRLCAD_ADDFILE(plugins/Wizards/tirewizard/TireWizard.tcl plugins/archer/Wizards/tirewizard)
+
+SET(archer_ignore_files
+	TODO
+	archer
+	archer.bat
+	plugins/Commands
+	plugins/Core
+	plugins/Utility/attrGroupsDisplayUtilityP
+	plugins/Utility/botUtilityP
+	plugins/Wizards/humanwizard
+	plugins/Wizards/tankwizard
+	plugins/Wizards/tirewizard
+	)
+CMAKEFILES(${archer_ignore_files})

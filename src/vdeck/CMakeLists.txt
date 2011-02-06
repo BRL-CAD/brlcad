@@ -4,4 +4,5 @@ include_directories(
 )
 
 BRLCAD_ADDEXEC(vdeck "cgarbs.c match.c parsarg.c vdeck.c" librt STRICT)
-install(FILES vdeck.1 DESTINATION ${MAN_DIR}/man1)
+ADD_MAN_PAGE(1 vdeck.1)
+CMAKEFILES(std.h vextern.h)

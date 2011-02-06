@@ -140,4 +140,30 @@ SET(mged_MANS
   cad_boundp.1
   cad_parea.1
 )
-install(FILES ${mged_MANS} DESTINATION ${MAN_DIR}/man1)
+ADD_MAN_PAGES(1 mged_MANS)
+set(mged_ignore_files
+	bool_rewrite.c
+	cmd.h
+	comb_bool.h
+	comb_bool_parse.y
+	comb_bool_scan.l
+	dm-rtgl.c
+	dm-tk.c
+	dm-wgl.c
+	fbserv.h
+	fbserv_win32.c
+	htmlLibraryUi.h
+	joints.h
+	menu.h
+	mgdev.h
+	mged.bat
+	mged.dsp
+	mged.h
+	mged_dm.h
+	qray.h
+	red.c
+	scroll.h
+	sedit.h
+	titles.h
+)
+CMAKEFILES(${mged_ignore_files})

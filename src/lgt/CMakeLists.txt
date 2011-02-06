@@ -28,5 +28,18 @@ IF(HAVE_TERMLIB)
    BRLCAD_ADDEXEC(lgt "${lgt_SOURCES}" "librt libfb libtermio libvfont libcursor")
    SET_TARGET_PROPERTIES(lgt PROPERTIES COMPILE_DEFINITIONS "BEHIND_ME_TOL=0.05")
 
-   install(FILES lgt.1  DESTINATION ${MAN_DIR}/man1)
+	ADD_MAN_PAGE(1 lgt.1)
 ENDIF(HAVE_TERMLIB)
+SET(lgt_ignore_files
+	ascii.h
+	cursors.h
+	extern.h
+	hmenu.h
+	lgt.1
+	lgt.h
+	mat_db.h
+	screen.h
+	texture.h
+	tree.h
+	)
+CMAKEFILES(${lgt_ignore_files})

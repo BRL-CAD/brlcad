@@ -41,5 +41,5 @@ set(anim_MANS
   chan_mult.1 
   chan_permute.1
 )
-
-install(FILES ${anim_MANS} DESTINATION ${MAN_DIR}/man1) 
+ADD_MAN_PAGES(1 anim_MANS)
+CMAKEFILES(cattrack.h)

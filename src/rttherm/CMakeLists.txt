@@ -21,4 +21,6 @@ set(rttherm_MANS
   rttherm.1
   ssamp-bw.1
 )
-install(FILES ${rttherm_MANS} DESTINATION ${MAN_DIR}/man1)
+ADD_MAN_PAGES(1 rttherm_MANS)
+
+CMAKEFILES(pixtest.c ssampview.tcl std_day_1km.dat test.sh)

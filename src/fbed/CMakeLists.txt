@@ -22,5 +22,6 @@ IF(HAVE_TERMLIB)
 
 	BRLCAD_ADDEXEC(fbed "${fbed_SOURCES}" "libfb libvfont libtermio libcursor ${TERMLIB_LIBRARY}")
 
-	install(FILES fbed.1 DESTINATION ${MAN_DIR}/man1)
+	ADD_MAN_PAGE(1 fbed.1)
+	CMAKEFILES(ascii.h cursorbits.h extern.h fb_ik.h popup.h std.h try.h)
 ENDIF(HAVE_TERMLIB)

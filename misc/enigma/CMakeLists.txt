@@ -13,4 +13,14 @@ IF(CRYPT_LIBRARY)
 ELSE(CRYPT_LIBRARY)
 	BRLCAD_ADDEXEC(enigma "enigma.c crypt.c" "${BSD_LIBRARY}")
 ENDIF(CRYPT_LIBRARY)
-INSTALL(FILES enigma.1 DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR}/man1)
+ADD_MAN_PAGE(1 enigma.1)
+SET(enigma_ignore_files
+	AUTHORS
+	COPYING
+	ChangeLog
+	INSTALL
+	NEWS
+	configure.ac
+	crypt.c
+)
+CMAKEFILES(${enigma_ignore_files})

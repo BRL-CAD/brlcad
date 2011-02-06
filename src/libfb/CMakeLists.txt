@@ -20,27 +20,27 @@ IF(MSVC)
 ENDIF(MSVC)
 
 set(LIBFB_SOURCES
-        asize.c 
-        fb_generic.c 
-        fb_log.c 
-        fb_obj.c 
-        fb_paged_io.c 
-        fb_rect.c 
-        fb_util.c 
-        fbserv_obj.c 
-        if_X.c 
-        if_X24.c 
-        if_debug.c 
-        if_disk.c 
-        if_mem.c 
-        if_null.c 
-        if_ogl.c 
-        if_remote.c 
-        if_stack.c 
-        if_tk.c 
-        if_wgl.c 
-        tcl.c 
-        vers.c
+	asize.c 
+	fb_generic.c 
+	fb_log.c 
+	fb_obj.c 
+	fb_paged_io.c 
+	fb_rect.c 
+	fb_util.c 
+	fbserv_obj.c 
+	if_X.c 
+	if_X24.c 
+	if_debug.c 
+	if_disk.c 
+	if_mem.c 
+	if_null.c 
+	if_ogl.c 
+	if_remote.c 
+	if_stack.c 
+	if_tk.c 
+	if_wgl.c 
+	tcl.c 
+	vers.c
 )
 
 include_directories(
@@ -66,4 +66,14 @@ IF(BRLCAD_BUILD_LOCAL_TK AND BRLCAD-ENABLE_TK)
 	ADD_DEPENDENCIES(libfb tk)
 ENDIF(BRLCAD_BUILD_LOCAL_TK AND BRLCAD-ENABLE_TK)
 
-install(FILES libfb.3 DESTINATION ${MAN_DIR}/man3)
+ADD_MAN_PAGE(3 libfb.3)
+
+SET(libfb_ignore_files
+	dmdfb.h
+	if_TEMPLATE.c
+	libfb.dsp
+	nilcursor.h
+	oglcursor.h
+)
+CMAKEFILES(${libfb_ignore_files})
+

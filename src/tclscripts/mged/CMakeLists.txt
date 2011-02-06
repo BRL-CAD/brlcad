@@ -130,3 +130,5 @@ SET(mged_tcl_DATA
 	mike-tux.png
 )
 BRLCAD_ADDDATA(mged_tcl_DATA tclscripts/mged)
+
+CMAKEFILES(rrmb.tcl)

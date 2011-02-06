@@ -109,4 +109,5 @@ SET(fb_MANS
   pp-fb.1 
   rle-fb.1
 )
-install(FILES ${fb_MANS} DESTINATION ${MAN_DIR}/man1)
+ADD_MAN_PAGES(1 fb_MANS)
+CMAKEFILES(fbthreadtest.c)

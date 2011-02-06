@@ -51,3 +51,22 @@ target_link_libraries(solver_test libpc)
 
 add_executable(vm_test vm_test.cpp)
 target_link_libraries(vm_test libpc)
+
+SET(pc_ignore_files
+	NOTES
+	TODO
+	pcBasic.h
+	pcConstraint.h
+	pcGenerator.h
+	pcInterval.h
+	pcMathGrammar.h
+	pcMathLF.h
+	pcMathVM.h
+	pcNetwork.h
+	pcParameter.h
+	pcParser.h
+	pcSolver.h
+	pcVCSet.h
+	pcVariable.h
+	)
+CMAKEFILES(${pc_ignore_files})

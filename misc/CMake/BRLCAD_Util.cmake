@@ -178,7 +178,7 @@ MACRO(DISTCHECK_IGNORE targetdir filestoignore)
 ENDMACRO(DISTCHECK_IGNORE)
 
 MACRO(ADD_MAN_PAGES num manlist)
-	CMAKEFILES(${${datalist}})
+	CMAKEFILES(${${manlist}})
 	FOREACH(manpage ${${manlist}})
 		install(FILES ${manpage} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR}/man${num})
 	ENDFOREACH(manpage ${${manlist}})

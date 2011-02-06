@@ -29,5 +29,5 @@ SET(irprep_MANS
 )
 #  pictsgi.1
 #  pictx.1
-
-install(FILES ${irprep_MANS} DESTINATION ${MAN_DIR}/man1)
+ADD_MAN_PAGES(1 irprep_MANS)
+CMAKEFILES(pictsgi.1 pictx.1 Compile.sgi pictsgi.c pictx.c)

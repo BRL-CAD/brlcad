@@ -4,4 +4,5 @@ include_directories(
 )
 
 BRLCAD_ADDEXEC(canonize "canonize.c canonlib.c" libfb STRICT)
-install(FILES canonize.1 DESTINATION ${MAN_DIR}/man1)
+ADD_MAN_PAGE(1 canonize.1)
+CMAKEFILES(canon.h chore.h)

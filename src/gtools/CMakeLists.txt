@@ -28,4 +28,10 @@ SET(gtools_MANS
   remapid.1
 )
 FILE(COPY ${gtools_MANS} DESTINATION ${CMAKE_BINARY_DIR}/${MAN_DIR}/man1)
-install(FILES ${gtools_MANS} DESTINATION ${MAN_DIR}/man1)
+ADD_MAN_PAGES(1 gtools_MANS)
+SET(gtools_ignore_files
+	beset/beset.h
+	beset/fitness.h
+	beset/population.h
+	)
+CMAKEFILES(${gtools_ignore_files})

@@ -20,4 +20,5 @@ SET(tab_MANS
   tabsub.1
   scriptsort.1
 )
-install(FILES ${tab_MANS} DESTINATION ${MAN_DIR}/man1)
+ADD_MAN_PAGES(1 tab_MANS)
+CMAKEFILES(script.l tokens.h)

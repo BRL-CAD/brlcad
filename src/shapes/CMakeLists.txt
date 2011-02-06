@@ -14,3 +14,5 @@ BRLCAD_ADDEXEC(tire tire.c "libged libwdb")
 BRLCAD_ADDEXEC(window window.c libwdb)
 BRLCAD_ADDEXEC(window_frame window_frame.c libwdb)
 BRLCAD_ADDEXEC(wire wire.c libwdb)
+
+CMAKEFILES(fence.h)

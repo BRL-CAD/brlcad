@@ -206,4 +206,17 @@ SET(rt_MANS
   rtweight.1 
   rtxray.1
 )
-install(FILES ${rt_MANS} DESTINATION ${MAN_DIR}/man1)
+ADD_MAN_PAGES(1 rt_MANS)
+
+SET(rt_ignore_files
+	ext.h
+	libfb-dummy.c
+	rad.h
+	rt.dsp
+	rtuif.h
+	scanline.h
+	viewdir.c
+	viewdummy.c
+	viewscat.c
+	)
+CMAKEFILES(${rt_ignore_files})

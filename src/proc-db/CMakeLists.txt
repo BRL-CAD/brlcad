@@ -44,3 +44,15 @@ BRLCAD_ADDEXEC(torii torii.c libwdb)
 BRLCAD_ADDEXEC(tube tube.c libwdb)
 BRLCAD_ADDEXEC(vegetation vegetation.c libwdb)
 BRLCAD_ADDEXEC(wdb_example wdb_example.c libwdb)
+
+set(proc-db_ignore_files
+	brepintersect.h
+	metaballs.pl
+	mkbuilding.h
+	sgi.sh
+	spiral.pl
+	surfaceintersect.h
+	tea.h
+	vegetation.h
+)
+CMAKEFILES(${proc-db_ignore_files})

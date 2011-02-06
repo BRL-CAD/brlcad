@@ -210,14 +210,30 @@ set(LIBRT_SOURCES
     wdb.c
 )
 
-set(IGNORED_SOURCES
-    brep_test.cpp
-    columnparse.c
-    namegen.c
-    prcomb.c
-    primitives/nmg/nmg_junk.c
-    primitives/xxx/xxx.c
+set(librt_ignored_files
+	brep_test.cpp
+	columnparse.c
+	librt.3
+	librt_private.h
+	namegen.c
+	opennurbs_ext.h
+	parse.c
+	pmalloc.c
+	prcomb.c
+	primitives/bot/g_bot_include.c
+	primitives/brep/brep_debug.h
+	primitives/fixpt.h
+	primitives/metaball/metaball.h
+	primitives/nmg/nmg_junk.c
+	primitives/revolve/revolve.h
+	primitives/xxx
+	timer-nt.c
+	timer52brl.c
+	timerhep.c
+	timerunix.c
+	uvpoints.cpp
 )
+CMAKEFILES(${librt_ignored_files})
 
 BRLCAD_ADDFILE(nurb_example.c sample_applications)
 BRLCAD_ADDFILE(raydebug.tcl sample_applications)

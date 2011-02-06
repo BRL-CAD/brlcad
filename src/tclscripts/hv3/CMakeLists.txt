@@ -12,5 +12,12 @@ pkgIndex_BUILD(hv3 tclscripts/hv3)
 tclIndex_BUILD(hv3 tclscripts/hv3)
 install(FILES hv3.man DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/doc)
 install(FILES tkhtml.n DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR}/mann)
-
+SET(hv3_ignore_files
+	demo
+	hv3.man
+	license.txt
+	license_snit.txt
+	tkhtml.n
+	)
+CMAKEFILES(${hv3_ignore_files})
 

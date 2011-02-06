@@ -101,3 +101,17 @@ SET(tie_HDRS
 )
 FILE(COPY ${tie_HDRS} DESTINATION ${CMAKE_BINARY_DIR}/include/tie)
 INSTALL(FILES ${tie_HDRS} DESTINATION include/tie)
+CMAKEFILES(${tie_HDRS})
+SET(adrt_ignore_files
+	isst.h
+	isst.tcl
+	isst_tcltk.c
+	libtie/tie.c
+	libtie/tie_kdtree.c
+	libtie/tieprivate.h
+	load.h
+	master
+	slave
+	tienet.h
+	)
+CMAKEFILES(${adrt_ignore_files})

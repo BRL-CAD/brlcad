@@ -21,7 +21,7 @@ BRLCAD_ADDEXEC(nirt "${NIRT_SRCS}" "librt libfb")
 SET_TARGET_PROPERTIES(nirt PROPERTIES COMPILE_DEFINITIONS "DFLT_SHELL=\"/bin/sh\"")
 
 BRLCAD_ADDEXEC(showshot showshot.c libbn)
-install(FILES showshot.1 DESTINATION ${MAN_DIR}/man1)
+ADD_MAN_PAGE(1 showshot.1)
 
 SET(nirt_sfiles
   sfiles/csv.nrt 
@@ -32,3 +32,10 @@ SET(nirt_sfiles
   sfiles/gap2.nrt
 )
 BRLCAD_ADDDATA(nirt_sfiles nirt)
+
+SET(nirt_ignore_files
+	dist_def.c
+	nirt.h
+	usrfmt.h
+	)
+CMAKEFILES(${nirt_ignore_files})

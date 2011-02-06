@@ -109,4 +109,31 @@ SET(iges_MANS
   g-iges.1
   iges-g.1
 )
-install(FILES ${iges_MANS} DESTINATION ${MAN_DIR}/man1)
+ADD_MAN_PAGES(1 iges_MANS)
+
+SET(iges_ignore_files
+	BrepHandler.cpp
+	PullbackCurve.cpp
+	PullbackCurve.h
+	add_face.cpp
+	arrange.c
+	brep.cpp
+	brlcad_brep.cpp
+	brlcad_brep.hpp
+	bubbleup.c
+	copytree.c
+	ge6.igs
+	get_outer_shell.cpp
+	iges.h
+	iges_extern.h
+	iges_struct.h
+	iges_types.h
+	n_iges.cpp
+	n_iges.hpp
+	n_main.cpp
+	spl.c
+	treecheck.c
+	wing128.igs
+	woodie.igs
+	)
+CMAKEFILES(${iges_ignore_files})

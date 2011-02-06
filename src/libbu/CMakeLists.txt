@@ -105,4 +105,10 @@ set(bu_MAN3
   libbu.3
   redblack.3
 )
-install(FILES ${bu_MAN3} DESTINATION ${MAN_DIR}/man3)
+ADD_MAN_PAGES(3 bu_MAN3)
+
+set(bu_ignore_files
+	rb_internals.h
+	uce-dirent.h
+	)
+CMAKEFILES(${bu_ignore_files})

@@ -334,3 +334,11 @@ SET(relnotes_5_summary_HTML
 BRLCAD_ADDDATA(relnotes_5_summary_HTML html/ReleaseNotes/Rel5.0/Summary)
 
 BRLCAD_ADDFILE(ReleaseNotes/Rel6.0/index.html html/ReleaseNotes/Rel6.0)
+
+SET(html_ignore_files
+	ReleaseNotes/Rel6.0
+	manuals/mged/animmate
+	manuals/shaders
+	manuals/small-eagleCAD.ico
+	)
+CMAKEFILES(${html_ignore_files})

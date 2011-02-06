@@ -75,3 +75,5 @@ SET(PictureTypeF_DATA
 	examples/PictureTypeF/preview.small.gif
 	)
 BRLCAD_ADDDATA(PictureTypeF_DATA tclscripts/rtwizard/examples/PictureTypeF)
+
+CMAKEFILES(examples)
