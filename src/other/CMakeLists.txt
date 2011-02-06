@@ -24,6 +24,10 @@ ENDIF(BRLCAD-DISABLE_SRC_OTHER_WARN)
 # compiled
 DISTCHECK_IGNORE_ITEM(boost)
 
+# The incrtTcl subdirectory isn't directly referenced, but its subdirectories
+# are used - mark incrTcl as ignored
+DISTCHECK_IGNORE_ITEM(incrTcl)
+
 # zlib Library
 # The autotools build needs this file, but the CMake zlib build doesn't tolerate 
 # it - remove it if it's there. 
