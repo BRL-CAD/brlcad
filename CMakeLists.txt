@@ -1573,6 +1573,8 @@ get_property(distcheck_list GLOBAL PROPERTY DISTCHECK_DIRS)
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distchecklist.cmake ${distcheck_list})
 configure_file(${BRLCAD_CMAKE_DIR}/distcheck_buildsys.cmake.in
 	${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake @ONLY)
+configure_file(${BRLCAD_CMAKE_DIR}/distcheck_success_message.cmake.in
+	${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_success_message.cmake @ONLY)
 configure_file(${BRLCAD_CMAKE_DIR}/svncheck.cmake ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/svncheck.cmake COPYONLY)
 ADD_CUSTOM_TARGET(distcheck
 	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake
@@ -1588,9 +1590,11 @@ ADD_CUSTOM_TARGET(distcheck
 	COMMAND TIMEFRAME=1 ${CMAKE_COMMAND} --build	_${CPACK_SOURCE_PACKAGE_FILE_NAME}-build --target benchmark
 	COMMAND ${CMAKE_COMMAND} --build _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build --target install
 	COMMAND TIMEFRAME=1 _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build/bin/benchmark	run
+	COMMAND _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build/bin/benchmark	clean
 	COMMAND ${CMAKE_COMMAND} -E remove_directory	${CPACK_SOURCE_PACKAGE_FILE_NAME}
 	COMMAND ${CMAKE_COMMAND} -E remove_directory	_${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
 	COMMAND ${CMAKE_COMMAND} -E remove_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
+	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_success_message.cmake
 	)
 	
 
