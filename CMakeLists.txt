@@ -1569,6 +1569,22 @@ SET(CPACK_SOURCE_PACKAGE_FILE_NAME
 SET(CPACK_SOURCE_IGNORE_FILES "\\\\.svn/")
 INCLUDE(CPack)
 
+SET(toplevel_ignore_files 
+	AUTHORS
+	BUGS
+	COPYING
+	ChangeLog
+	HACKING
+	INSTALL
+	NEWS
+	TODO
+	TODO.cmake
+	autogen.sh
+	configure.ac
+	m4
+	)
+CMAKEFILES(${toplevel_ignore_files})
+
 get_property(distcheck_list GLOBAL PROPERTY DISTCHECK_DIRS)
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distchecklist.cmake ${distcheck_list})
 configure_file(${BRLCAD_CMAKE_DIR}/distcheck_buildsys.cmake.in
