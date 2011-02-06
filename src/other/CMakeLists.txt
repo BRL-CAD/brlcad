@@ -719,6 +719,34 @@ IF(BRLCAD_BUILD_LOCAL_TKHTML)
 	ENDIF(BRLCAD_BUILD_LOCAL_TK)
 ENDIF(BRLCAD_BUILD_LOCAL_TKHTML)
 MARK_AS_ADVANCED(BRLCAD_BUILD_LOCAL_TKHTML)
+SET(tkhtml_ignore_files
+	AUTHORS
+	COPYING
+	ChangeLog
+	INSTALL
+	NEWS
+	README
+	acinclude.m4
+	configure.ac
+	doc
+	src/css.h
+	src/cssInt.h
+	src/cssprop.tcl
+	src/html.css
+	src/html.h
+	src/htmllayout.h
+	src/htmlmacros.h
+	src/htmlprop.h
+	src/main.c
+	src/mkdefaultstyle.tcl
+	src/quirks.css
+	src/restrack.h
+	src/swproc.h
+	src/tkhtml.tcl
+	src/tokenlist.txt
+	tclconfig
+	)
+DISTCHECK_IGNORE(tkhtml tkhtml_ignore_files)
 
 IF(BRLCAD_BUILD_LOCAL_TKPNG)
 	ADD_SUBDIRECTORY(tkpng)
@@ -730,6 +758,13 @@ IF(BRLCAD_BUILD_LOCAL_TKPNG)
 	ENDIF(BRLCAD_BUILD_LOCAL_TK)
 ENDIF(BRLCAD_BUILD_LOCAL_TKPNG)
 MARK_AS_ADVANCED(BRLCAD_BUILD_LOCAL_TKPNG)
+SET(tkpng_ignore_files
+	ChangeLog
+	README
+	license.terms
+	pkgIndex.tcl.in
+	)
+DISTCHECK_IGNORE(tkpng tkpng_ignore_files)
 
 IF(BRLCAD_BUILD_LOCAL_TKTABLE)
 	ADD_SUBDIRECTORY(tktable)
@@ -741,10 +776,62 @@ IF(BRLCAD_BUILD_LOCAL_TKTABLE)
 	ENDIF(BRLCAD_BUILD_LOCAL_TK)
 ENDIF(BRLCAD_BUILD_LOCAL_TKTABLE)
 MARK_AS_ADVANCED(BRLCAD_BUILD_LOCAL_TKTABLE)
+SET(tktable_ignore_files
+	ChangeLog
+	Makefile.in
+	README.blt
+	README.txt
+	TODO.txt
+	aclocal.m4
+	configure.in
+	demos
+	doc
+	generic/tkAppInit.c
+	generic/tkTable.h
+	generic/tkTableInitScript.h
+	generic/tkTablePs.c
+	generic/version.h
+	library
+	license.txt
+	mac
+	misc
+	tclconfig
+	tests
+	unix
+	win
+	)
+DISTCHECK_IGNORE(tktable tktable_ignore_files)
 
 # OpenNURBS Library
 THIRD_PARTY_OPTION(OPENNURBS openNURBS)
 THIRD_PARTY_SUBDIR(OPENNURBS openNURBS)
+get_directory_property(OPENNURBS_HEADERS DIRECTORY openNURBS DEFINITION	OPENNURBS_HEADERS)
+SET(opennurbs_ignore_files
+	${OPENNURBS_HEADERS}
+	BRL-CAD_changes.txt
+	example_brep
+	example_dump
+	example_gl
+	example_read
+	example_roundtrip
+	example_userdata
+	example_write
+	faq.txt
+	license.txt
+	opennurbs.rc
+	opennurbs.sln
+	opennurbs.vcproj
+	opennurbs_dll.cpp
+	opennurbs_dll_resource.h
+	opennurbs_gl.cpp
+	opennurbs_memory_new.cpp
+	opennurbs_precompiledheader.cpp
+	opennurbs_staticlib.vcproj
+	opennurbs_x.cpp
+	opennurbs_zlib_memory.cpp
+	readme.txt
+	)
+DISTCHECK_IGNORE(openNURBS opennurbs_ignore_files)
 
 # STEP Class Libraries
 # If we don't have Lex/Yacc, we can't do STEP - conditionalize
@@ -755,6 +842,122 @@ IF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 		SET(BRLCAD_SCL_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/step/include" CACHE STRING "Directory containing SCL headers" FORCE)
 		MARK_AS_ADVANCED(BRLCAD_SCL_INCLUDE_DIR)
 	ENDIF(BRLCAD_BUILD_LOCAL_SCL)
+	SET(step_ignore_files
+		AUTHORS
+		CMake
+		COPYING
+		ChangeLog
+		INSTALL
+		NEWS
+		README
+		TODO
+		config
+		configure.ac
+		m4
+		misc
+		src
+		)
+	DISTCHECK_IGNORE(step step_ignore_files)
+	SET(step_express_ignore_files
+		Changes
+		README
+		conf.h
+		expparse.y
+		expscan.l
+		exptoks.h
+		stack.h
+		y.tok.h
+		)
+	DISTCHECK_IGNORE(step/src/express step_express_ignore_files)
+	SET(step_exppp_ignore_files
+		README
+		)
+	DISTCHECK_IGNORE(step/src/exppp step_exppp_ignore_files)
+	SET(step_fedex_plus_ignore_files
+		classes.h
+		complexSupport.h
+		)
+	DISTCHECK_IGNORE(step/src/fedex_plus step_fedex_plus_ignore_files)
+	SET(step_clstepcore_ignore_files
+		ExpDict.h
+		ExpDict.h.s
+		README
+		Registry.h
+		STEPaggregate.h
+		STEPattribute.h
+		STEPattributeList.h
+		STEPcomplex.h
+		STEPundefined.h
+		Select.h
+		SingleLinkList.h
+		baseType.h
+		complexSupport.h
+		dict-pic.txt
+		dictdefs.h
+		notes.txt
+		read_func.h
+		scl_osschema.h
+		sdai.h
+		sdaiApplication_instance.h
+		sdaiBinary.h
+		sdaiEnum.h
+		sdaiSelect.h
+		sdaiString.h
+		)
+	DISTCHECK_IGNORE(step/src/clstepcore step_clstepcore_ignore_files)
+	SET(step_cleditor_ignore_files
+		README
+		STEPfile.h
+		cmdmgr.h
+		dispnode.h
+		dispnodelist.h
+		editordefines.h
+		instmgr.h
+		mgrnode.h
+		mgrnodearray.h
+		mgrnodelist.h
+		needFunc.h
+		s_HEADER_SCHEMA.h
+		seeinfodefault.h
+		)
+	DISTCHECK_IGNORE(step/src/cleditor step_cleditor_ignore_files)
+	SET(step_cldai_ignore_files
+		ErrorMap.cc
+		ErrorMap.hh
+		ErrorRpt.cc
+		ErrorRpt.hh
+		StrUtil.cc
+		StrUtil.hh
+		impconv.hh
+		imptypes.hh
+		sdaiApplication_instance_set.h
+		sdaiDaObject.h
+		sdaiEntity_extent.h
+		sdaiEntity_extent_set.h
+		sdaiModel_contents.h
+		sdaiModel_contents_list.h
+		sdaiObject.h
+		sdaiSession_instance.h
+		)
+	DISTCHECK_IGNORE(step/src/cldai step_cldai_ignore_files)
+	SET(step_clutils_ignore_files
+		README
+		Str.h
+		dirobj.h
+		errordesc.h
+		gennode.h
+		gennodearray.h
+		gennodelist.h
+		scl_char_str_list.h
+		scl_hash.h
+		scl_string.h
+		scldir.h
+		stat.h
+		str_list.h
+		)
+	DISTCHECK_IGNORE(step/src/clutils step_clutils_ignore_files)
+ELSE(LEX_EXECUTABLE AND YACC_EXECUTABLE)
+	DISTCHECK_IGNORE_ITEM(step)
 ENDIF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 
 # The jama/tnt headers are installed by default - BRL-CAD requires the altered headers
@@ -767,6 +970,51 @@ MARK_AS_ADVANCED(TNT_INCLUDE_DIR)
 # some logic to both look for package require and the C library, as both APIs will be needed.
 IF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
    ADD_SUBDIRECTORY(togl)
+	SET(togl_ignore_files
+		CMake
+		LICENSE
+		README
+		configure
+		configure.in
+		doc
+		include
+		tools
+		)
+	DISTCHECK_IGNORE(togl togl_ignore_files)
+	SET(togl_src_ignore_files
+		Togl.py
+		Xmu/README
+		Xmu/README.togl
+		Xmu/StdCmap.h
+		togl.decls
+		toglAGL.c
+		toglGLX.c
+		toglNSOpenGL.c
+		toglWGL.c
+		)
+	DISTCHECK_IGNORE(togl/src togl_src_ignore_files)
+	SET(togl_demo_ignore_files
+		ben.rgb
+		double.c
+		double.tcl
+		gears.tcl
+		image.h
+		index.c
+		index.tcl
+		multisample.tcl
+		overlay.c
+		overlay.tcl
+		pbuffer.c
+		pbuffer.tcl
+		stereo.c
+		stereo.tcl
+		texture.c
+		texture.tcl
+		tree2.rgba
+		)
+	DISTCHECK_IGNORE(togl/demo togl_demo_ignore_files)
+ELSE(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
+	DISTCHECK_IGNORE_ITEM(togl)
 ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
 
 # jove editor - technically this isn't a library,
@@ -776,8 +1024,24 @@ ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
 IF(BRLCAD-ENABLE_JOVE OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 	IF(NOT WIN32)
 		ADD_SUBDIRECTORY(jove)
+		SET(jove_ignore_files
+			BUGS
+			README
+			describe.com
+			jove-tutorial
+			jove.1
+			jove.emacs
+			jove.h
+			jove_temp.h
+			teach-jove.in
+			termcap.h
+			)
+		DISTCHECK_IGNORE(jove jove_ignore_files)
 	ELSE(NOT WIN32)
 		MESSAGE("jove was requested, but does not build on Windows - disabling")
 		SET(BRLCAD-ENABLE_JOVE OFF CACHE BOOL "jove disabled on WIN32" FORCE)
+		DISTCHECK_IGNORE_ITEM(jove)
 	ENDIF(NOT WIN32)
+ELSE(BRLCAD-ENABLE_JOVE OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
+	DISTCHECK_IGNORE_ITEM(jove)
 ENDIF(BRLCAD-ENABLE_JOVE OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
