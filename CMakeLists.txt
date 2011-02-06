@@ -156,6 +156,14 @@ define_property(GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST BRIEF_DOCS "libtarget 
 function(add_library name)
 	get_property(CMAKE_LIBRARY_TARGET_LIST GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST)
 	_add_library(${name} ${ARGN})
+	FOREACH(ITEM ${ARGN})
+		IF(NOT ${ITEM} MATCHES "^SHARED$"
+				AND NOT ${ITEM} MATCHES "^STATIC$")
+			GET_FILENAME_COMPONENT(ITEM_NAME ${ITEM} NAME)
+			FILE(APPEND ${CMAKE_CURRENT_BINARY_DIR}/cmakefiles.cmake
+				"\\${ITEM_NAME}")
+		ENDIF()
+	ENDFOREACH(ITEM ${ARGN})
 	IF(${name} MATCHES "^lib*")
 		set_target_properties(${name} PROPERTIES PREFIX "")
 	ENDIF(${name} MATCHES "^lib*")
@@ -167,6 +175,10 @@ define_property(GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST BRIEF_DOCS "exec target l
 function(add_executable name)
 	get_property(CMAKE_EXEC_TARGET_LIST GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST)
    _add_executable(${name} ${ARGN})
+	FOREACH(ITEM ${ARGN})
+		GET_FILENAME_COMPONENT(ITEM_NAME ${ITEM} NAME)
+		FILE(APPEND ${CMAKE_CURRENT_BINARY_DIR}/cmakefiles.cmake	"\\${ITEM_NAME}")
+	ENDFOREACH(ITEM ${ARGN})
 	set_property(GLOBAL APPEND PROPERTY CMAKE_EXEC_TARGET_LIST ${name})
 	set_property(GLOBAL APPEND PROPERTY CHILD_LIST ${name})
 endfunction(add_executable)
@@ -182,8 +194,12 @@ MARK_AS_ADVANCED(CMAKE_EXEC_TARGET_LIST)
 MARK_AS_ADVANCED(CMAKE_CUSTOM_TARGET_LIST)
 
 define_property(DIRECTORY PROPERTY DIR_TARGET_LIST BRIEF_DOCS "dir list" FULL_DOCS "Directory target list")
+define_property(GLOBAL PROPERTY DISTCHECK_DIRS BRIEF_DOCS "check during distcheck" FULL_DOCS "List of directories to check during make distcheck")
+set_property(GLOBAL PROPERTY DISTCHECK_DIRS "${CMAKE_CURRENT_SOURCE_DIR}")
 function(add_subdirectory name)
 	set_property(GLOBAL PROPERTY CHILD_LIST "")
+	FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/${name}/cmakefiles.cmake)
+	set_property(GLOBAL APPEND PROPERTY DISTCHECK_DIRS	"\\${CMAKE_CURRENT_SOURCE_DIR}/${name}")
 	_add_subdirectory(${name} ${ARGN})
 	get_property(target_list GLOBAL PROPERTY CHILD_LIST)
 	set_property(DIRECTORY ${name} APPEND PROPERTY DIR_TARGET_LIST	${target_list})
@@ -266,6 +282,9 @@ ENDFOREACH(file \${CMAKE_TARGET_FILE_LIST})
    ENDIF(target_list)
 endfunction(add_subdirectory)
 
+# The toplevel dir doesn't invoke add_subdirectory on itself,
+# so remove any old cmakefiles.cmake file manually
+FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/cmakefiles.cmake)
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.
@@ -1536,8 +1555,13 @@ SET(CPACK_SOURCE_PACKAGE_FILE_NAME
 SET(CPACK_SOURCE_IGNORE_FILES "\\\\.svn/")
 INCLUDE(CPack)
 
+get_property(distcheck_list GLOBAL PROPERTY DISTCHECK_DIRS)
+FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distchecklist.cmake ${distcheck_list})
+configure_file(${BRLCAD_CMAKE_DIR}/distcheck_buildsys.cmake.in
+	${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake @ONLY)
 configure_file(${BRLCAD_CMAKE_DIR}/svncheck.cmake ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/svncheck.cmake COPYONLY)
 ADD_CUSTOM_TARGET(distcheck
+	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake
 	COMMAND svn status ${CMAKE_SOURCE_DIR} > svnstatus
 	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/svncheck.cmake
 	COMMAND cpack --config ${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake
