@@ -1,4 +1,4 @@
-FILE(READ svnstatus SVNSTATUS)
+FILE(READ  ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/svnstatus SVNSTATUS)
 STRING(REGEX REPLACE "\r?\n" ";" STATUSLIST "${SVNSTATUS}")
 FOREACH(line ${STATUSLIST})
 	IF(NOT ${line} MATCHES "src/other/libz/zconf.h")
