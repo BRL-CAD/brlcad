@@ -79,6 +79,11 @@ SET(libfb_ignore_files
 	libfb.dsp
 	nilcursor.h
 	oglcursor.h
+	if_X.c
+	if_X24.c
+	if_ogl.c
+	if_wgl.c
+	if_tk.c
 )
 CMAKEFILES(${libfb_ignore_files})
 

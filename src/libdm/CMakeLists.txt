@@ -78,4 +78,13 @@ SET_TARGET_PROPERTIES(libdm PROPERTIES VERSION 19.0.1 SOVERSION 19)
 IF(BRLCAD_BUILD_LOCAL_TK AND BRLCAD-ENABLE_TK)
 	ADD_DEPENDENCIES(libdm tk)
 ENDIF(BRLCAD_BUILD_LOCAL_TK AND BRLCAD-ENABLE_TK)
-CMAKEFILES(TODO libdm.dsp)
+SET(libdm_ignore_files
+	dm-wgl.c
+	dm-X.c
+	dm-ogl.c
+	dm-rtgl.c
+	dm-tk.c
+	libdm.dsp
+	TODO
+	)
+CMAKEFILES(${libdm_ignore_files})
