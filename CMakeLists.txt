@@ -603,11 +603,11 @@ IF(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY AND BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 ENDIF(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY AND BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 
 # Enable Aqua widgets on Mac OSX.  This impacts Tcl/Tk building and OpenGL
-# building.
+# building. Not currently working - needs work in at least Tk and togl
+# CMake logic (probably more), and the display manager/framebuffer codes are known to depend
+# on either GLX or WGL specifically in their current forms.
 OPTION(BRLCAD-ENABLE_AQUA "Use Aqua instead of X11 whenever possible on OSX." OFF)
-IF(NOT APPLE)
-	MARK_AS_ADVANCED(BRLCAD-ENABLE_AQUA)
-ENDIF(NOT APPLE)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_AQUA)
 
 # Install example BRL-CAD Geometry Files
 OPTION(BRLCAD-INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry files." ON)

@@ -1,8 +1,5 @@
 Remaining items:
 
-12. Try enabling the Aqua compile logic - it still won't work, but get the build logic to the point
-    where the autotools logic is.
-
 17. fix wish build on windows - current output exe doesn't run
 
 18. 64 bit Windows build - will need a few flags, at least in tcl/tk
@@ -71,5 +68,9 @@ Done (to first order, all this needs testing)
 
 21. Test combinations of options, look more closely at what benchmark and rtserver only
     intend to accomplish.
+
+12. Try enabling the Aqua compile logic - it still won't work, but get the build logic to the point
+    where the autotools logic is. - ** Work on this later - fair amount of work here and the Aqua situation
+	 is in flux generally to begin with. Not a priority **
 
 
