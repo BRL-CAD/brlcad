@@ -391,6 +391,18 @@ SET(tcl_ignore_files
 	libtommath/tommath_superclass.h
 	license.terms
 	macosx
+	macosx/GNUmakefile
+	macosx/Tcl-Common.xcconfig
+	macosx/Tcl-Debug.xcconfig
+	macosx/Tcl-Info.plist.in
+	macosx/Tcl-Release.xcconfig
+	macosx/Tcl.pbproj
+	macosx/Tcl.xcode
+	macosx/Tcl.xcodeproj
+	macosx/Tclsh-Info.plist.in
+	macosx/configure
+	macosx/configure.ac
+	macosx/license.terms
 	tests
 	tools
 	unix
@@ -407,6 +419,7 @@ SET(tcl_ignore_files
 	unix/tclConfig.h.in
 	unix/tclConfig.sh.in
 	unix/tclLoadAix.c
+	unix/tclLoadDl.c
 	unix/tclLoadDyld.c
 	unix/tclLoadNext.c
 	unix/tclLoadOSF.c
