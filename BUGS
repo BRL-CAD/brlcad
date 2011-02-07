@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* run make to create all primitives at the origin.  there are raytrace
+  differences between default ungrouped "e *" view and adding all of
+  those primitives to a single region.
+
 * MGED on Mac OS X 10.6 mouse bindings fail to zoom in incrementally.
   Pan, zoom out, and interactive zoom work.  Shift-grip bindings need
   to be verified.
