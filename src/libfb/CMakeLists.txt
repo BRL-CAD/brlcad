@@ -5,21 +5,31 @@ if(BRLCAD-ENABLE_X11 AND X11_FOUND)
 	FOREACH(xlib ${X11_LIBRARIES})
 	   SET(LINKLIBS "${LINKLIBS} ${xlib}")
 	ENDFOREACH(xlib ${X11_LIBRARIES})
+	SET(fbX11_srcs if_X.c if_X24.c)
 endif()
 if(BRLCAD-ENABLE_OPENGL AND OPENGL_FOUND AND NOT MSVC)
    SET(FBOGLDEFS "-DIF_OGL")
 	FOREACH(ogllib ${OPENGL_LIBRARIES})
 	   SET(LINKLIBS "${LINKLIBS} ${ogllib}")
 	ENDFOREACH(ogllib ${OPENGL_LIBRARIES})
+	SET(fbogl_srcs if_ogl.c)
 endif()
-IF(MSVC)
+IF(WIN32)
 	add_definitions(
 		-DIF_WGL
 	)
    SET(LINKLIBS "${LINKLIBS} opengl32.lib ${TCL_TK_LIBRARY}")
-ENDIF(MSVC)
+	SET(fbwgl_srcs if_wgl.c)
+ENDIF(WIN32)
+IF(BRLCAD-ENABLE_TK)
+	SET(fbtk_srcs if_tk.c)
+ENDIF(BRLCAD-ENABLE_TK)
 
 set(LIBFB_SOURCES
+	${fbX11_srcs}
+	${fbogl_srcs}
+	${fbwgl_srcs}
+	${fbtk_srcs}
 	asize.c 
 	fb_generic.c 
 	fb_log.c 
@@ -28,17 +38,12 @@ set(LIBFB_SOURCES
 	fb_rect.c 
 	fb_util.c 
 	fbserv_obj.c 
-	if_X.c 
-	if_X24.c 
 	if_debug.c 
 	if_disk.c 
 	if_mem.c 
 	if_null.c 
-	if_ogl.c 
 	if_remote.c 
 	if_stack.c 
-	if_tk.c 
-	if_wgl.c 
 	tcl.c 
 	vers.c
 )
