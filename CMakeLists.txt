@@ -604,9 +604,9 @@ ENDIF(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY AND BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 
 # Enable Aqua widgets on Mac OSX.  This impacts Tcl/Tk building and OpenGL
 # building.
-OPTION(BRLCAD-BUILD_AQUA "Use Aqua instead of X11 whenever possible on OSX." OFF)
+OPTION(BRLCAD-ENABLE_AQUA "Use Aqua instead of X11 whenever possible on OSX." OFF)
 IF(NOT APPLE)
-	MARK_AS_ADVANCED(BRLCAD-BUILD_AQUA)
+	MARK_AS_ADVANCED(BRLCAD-ENABLE_AQUA)
 ENDIF(NOT APPLE)
 
 # Install example BRL-CAD Geometry Files
@@ -615,11 +615,13 @@ OPTION(BRLCAD-INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry fil
 # Enable features requiring X11
 if(WIN32)
 	OPTION(BRLCAD-ENABLE_X11 "Use X11." OFF)
-else()
+elseif(BRLCAD-ENABLE_AQUA)
+	OPTION(BRLCAD-ENABLE_X11 "Use X11." OFF)
+elseif(WIN32)
 	OPTION(BRLCAD-ENABLE_X11 "Use X11." ON)
 endif(WIN32)
 if (BRLCAD-ENABLE_X11)
-	SET(BRLCAD-BUILD_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
+	SET(BRLCAD-ENABLE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
 	SET(OPENGL_USE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
 endif (BRLCAD-ENABLE_X11)
 IF(NOT APPLE)
@@ -660,6 +662,9 @@ IF(NOT BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_RTGL)
 	MESSAGE("RTGL currently works only with GLX, and X11 is not enabled - disabling")
 	SET(BRLCAD-ENABLE_RTGL OFF CACHE BOOL "Enable experimental RTGL code." FORCE)
 ENDIF(NOT BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_RTGL)
+IF(BRLCAD-ENABLE_AQUA)
+	SET(OPENGL_USE_AQUA ON CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
+ENDIF(BRLCAD-ENABLE_AQUA)
 
 
 # Enable JOVE.
