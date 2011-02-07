@@ -1594,7 +1594,6 @@ configure_file(${BRLCAD_CMAKE_DIR}/distcheck_success_message.cmake.in
 configure_file(${BRLCAD_CMAKE_DIR}/svncheck.cmake ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/svncheck.cmake COPYONLY)
 ADD_CUSTOM_TARGET(distcheck
 	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake
-	COMMAND svn status ${CMAKE_SOURCE_DIR} > ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/svnstatus
 	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/svncheck.cmake
 	COMMAND cpack --config ${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake
 	COMMAND ${CMAKE_COMMAND} -E tar xvzf ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
