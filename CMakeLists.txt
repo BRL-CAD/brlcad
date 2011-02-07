@@ -1580,6 +1580,7 @@ SET(toplevel_ignore_files
 	TODO.cmake
 	autogen.sh
 	configure.ac
+	configure.cmake.sh
 	m4
 	)
 CMAKEFILES(${toplevel_ignore_files})
