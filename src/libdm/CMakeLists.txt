@@ -1,38 +1,43 @@
 IF(WIN32 AND BRLCAD-ENABLE_OPENGL)
 	SET(DM_DEFINES "${DM_DEFINES} -DDM_WGL -DIF_WGL")
+	SET(dmw32_srcs dm-wgl.c)
 ENDIF(WIN32 AND BRLCAD-ENABLE_OPENGL)
 
 IF(BRLCAD-ENABLE_X11)
 	SET(DM_DEFINES  "${DM_DEFINES} -DDM_X -DIF_X") 
+	SET(dmx11_srcs dm-X.c)
 ENDIF(BRLCAD-ENABLE_X11)
 
 IF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
 	SET(DM_DEFINES "${DM_DEFINES} -DDM_OGL -DIF_OGL")
+	SET(dmogl_srcs dm-ogl.c)
 ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
 
 IF(BRLCAD-ENABLE_RTGL)
 	SET(DM_DEFINES "${DM_DEFINES} -DDM_RTGL -DIF_RTGL")
+	SET(dmrtgl_srcs dm-rtgl.c)
 ENDIF(BRLCAD-ENABLE_RTGL)
 
 IF(BRLCAD-ENABLE_TK AND NOT MSVC)
 	SET(DM_DEFINES "${DM_DEFINES} -DDM_TK -DIF_TK")
 	SET(DM_TKLIB ${TCL_TK_LIBRARY})
+	SET(dmtk_srcs dm-tk.c)
 ENDIF(BRLCAD-ENABLE_TK AND NOT MSVC)
 
 SET(LIBDM_SRCS
+	${dmx11_srcs}
+	${dmw32_srcs}
+	${dmogl_srcs}
+	${dmrtgl_srcs}
+	${dmtk_srcs}
 	adc.c 
 	axes.c 
 	clip.c 
 	color.c 
 	dm-Null.c 
-	dm-X.c 
 	dm-generic.c 
-	dm-ogl.c 
-	dm-rtgl.c 
-	dm-tk.c
 	dm-plot.c 
 	dm-ps.c 
-	dm-wgl.c 
 	dm_obj.c 
 	focus.c 
 	grid.c 
