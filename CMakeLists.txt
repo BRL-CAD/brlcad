@@ -1614,7 +1614,15 @@ ADD_CUSTOM_TARGET(distcheck
 	COMMAND ${CMAKE_COMMAND} -E remove_directory	_${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
 	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_success_message.cmake
 	)
-	
+ADD_CUSTOM_TARGET(distclean
+	COMMAND ${CMAKE_COMMAND} -E remove_directory	${CPACK_SOURCE_PACKAGE_FILE_NAME}
+	COMMAND ${CMAKE_COMMAND} -E remove_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
+	COMMAND ${CMAKE_COMMAND} -E remove_directory	_${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
+	COMMAND ${CMAKE_COMMAND} -E remove summary
+	COMMAND ${CMAKE_COMMAND} -E remove run-*.log
+	COMMAND ${CMAKE_COMMAND} -E remove ${CPACK_SOURCE_PACKAGE_FILE_NAME}.*
+	)	
+
 
 # Mark various miscellaneous things as advanced that we don't want in our
 # default view
