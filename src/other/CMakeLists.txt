@@ -536,12 +536,12 @@ SET(tk_ignore_files
 DISTCHECK_IGNORE(tk tk_ignore_files)
 
 # Now that Tcl/Tk is settled, define the HAVE_TK flag for the config.h file
-IF(TCL_TK_LIBRARY)
+IF(TCL_TK_LIBRARY AND BRLCAD-ENABLE_TK)
 	SET(HAVE_TK 1 CACHE STRING "C level Tk flag" FORCE)
-	FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine HAVE_TK 1\n")
-ELSE(TCL_TK_LIBRARY)
+	FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine HAVE_TK\n")
+ELSE(TCL_TK_LIBRARY AND BRLCAD-ENABLE_TK)
 	SET(HAVE_TK 0 CACHE STRING "C level Tk flag" FORCE)
-ENDIF(TCL_TK_LIBRARY)
+ENDIF(TCL_TK_LIBRARY AND BRLCAD-ENABLE_TK)
 MARK_AS_ADVANCED(HAVE_TK)
 
 # Depending on the Tcl/Tk results, look for packages required by BRL-CAD.  If
