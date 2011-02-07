@@ -127,6 +127,14 @@ IF(APPLE)
 ENDIF(APPLE)
 #----------------------------------------------------------------------------
 
+# Probably should be part of SC_TCL_64BIT_FLAGS
+IF(BRLCAD-ENABLE_64BIT)
+       SET(TK_CFLAGS "${TCL_CFLAGS} -DTCL_CFG_DO64BIT=1")
+ENDIF(BRLCAD-ENABLE_64BIT)
+IF(CMAKE_CL_64)
+       SET(TK_CFLAGS "${TCL_CFLAGS} -D_stati64=_stat64")
+ENDIF(CMAKE_CL_64)
+
 SC_MISSING_POSIX_HEADERS()  
 SC_ENABLE_THREADS()
 
