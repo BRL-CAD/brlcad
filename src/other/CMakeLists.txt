@@ -1020,8 +1020,10 @@ ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
 # jove editor - technically this isn't a library,
 # but traditionally it's grouped into the "enable-all"
 # logic. Almost certainly won't build on Windows, and
-# it's not worth trying to make it do so.
-IF(BRLCAD-ENABLE_JOVE OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
+# it's not worth trying to make it do so.  Defaults to
+# on if BRLCAD-ENABLE_ALL_LOCAL_LIBS is enabled before
+# the first run of CMake, otherwise defaults to off.
+IF(BRLCAD-ENABLE_JOVE)
 	IF(NOT WIN32)
 		ADD_SUBDIRECTORY(jove)
 		SET(jove_ignore_files
@@ -1042,6 +1044,6 @@ IF(BRLCAD-ENABLE_JOVE OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 		SET(BRLCAD-ENABLE_JOVE OFF CACHE BOOL "jove disabled on WIN32" FORCE)
 		DISTCHECK_IGNORE_ITEM(jove)
 	ENDIF(NOT WIN32)
-ELSE(BRLCAD-ENABLE_JOVE OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
+ELSE(BRLCAD-ENABLE_JOVE)
 	DISTCHECK_IGNORE_ITEM(jove)
-ENDIF(BRLCAD-ENABLE_JOVE OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
+ENDIF(BRLCAD-ENABLE_JOVE)

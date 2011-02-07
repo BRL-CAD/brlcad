@@ -663,7 +663,7 @@ ENDIF(NOT BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_RTGL)
 
 
 # Enable JOVE.
-OPTION(BRLCAD-ENABLE_JOVE "Enable jove editor build." OFF)
+OPTION(BRLCAD-ENABLE_JOVE "Enable jove editor build."	${BRLCAD-ENABLE_ALL_LOCAL_LIBS})
 
 
 # There are extra documentation files available requiring Docbook
