@@ -1,9 +1,5 @@
 Remaining items:
 
-6.  Review the dist logic in the toplevel Makefile.am.  Gonna have to study up on CPack and CTest -
-	 figure out the process for checking permissions, install results, etc. in order to provide
-	 the same robustness for CMake generated tarballs that we have for autotools.
-
 12. Try enabling the Aqua compile logic - it still won't work, but get the build logic to the point
     where the autotools logic is.
 
@@ -16,9 +12,6 @@ Remaining items:
 	 text file
 
 20. Update README, INSTALL, doc/*, etc.
-
-21. Test combinations of options, look more closely at what benchmark and rtserver only
-    intend to accomplish.
 
 Done (to first order, all this needs testing)
 
@@ -71,5 +64,12 @@ Done (to first order, all this needs testing)
 14. Apply lessons learned to the SCL build logic
 
 18. look into doxygen build
+
+6.  Review the dist logic in the toplevel Makefile.am.  Gonna have to study up on CPack and CTest -
+	 figure out the process for checking permissions, install results, etc. in order to provide
+	 the same robustness for CMake generated tarballs that we have for autotools.
+
+21. Test combinations of options, look more closely at what benchmark and rtserver only
+    intend to accomplish.
 
 
