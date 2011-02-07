@@ -3,6 +3,7 @@ IF(COMMAND CMAKE_POLICY)
 	CMAKE_POLICY(SET CMP0007 OLD)
 ENDIF(COMMAND CMAKE_POLICY)
 
+MESSAGE("Checking source archive is in sync with build system: ...")
 SET(IGNORE_LIST_CORE CMakeLists.txt Makefile.am ".svn" README pkgIndex.tcl tclIndex)
 SET(CMAKE_ORIG_SRC_DIR @CMAKE_SOURCE_DIR@)
 SET(CMAKE_ORIG_BINARY_DIR @CMAKE_BINARY_DIR@)
@@ -108,4 +109,6 @@ FOREACH(DIR ${DISTCHECK_LIST})
 	ENDIF()
 ENDFOREACH(DIR ${DISTCHECK_LIST})
 
+# If we got this far, it worked
+MESSAGE("Checking source archive is in sync with build system: Passed")
 
