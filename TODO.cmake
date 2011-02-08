@@ -9,6 +9,7 @@ Remaining items:
 	 text file
 
 20. Update README, INSTALL, doc/*, etc.
+21. Unbreak Xcode generation (at least Tcl and almost certainly Tk, possibly others)
 
 Done (to first order, all this needs testing)
 
