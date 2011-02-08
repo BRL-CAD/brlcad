@@ -983,7 +983,6 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
     }
 
     if ((nhits&1)) {
-#if 1
 	/* XXX This consumes an extra hit structure in the array */
 	if (psp) {
 	    (void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
@@ -997,9 +996,6 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 	    hits[nhits].hit_vpriv[X] = -hits[nhits].hit_vpriv[X];
 	    nhits++;
 	}
-#else
-	nhits--;
-#endif
     }
 
     /* nhits is even, build segments */

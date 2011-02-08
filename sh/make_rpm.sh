@@ -47,7 +47,7 @@ ferror(){
 
 # test if in project root
 if test ! -f misc/debian/control ; then
-    ferror "\"make_rpm.sh\" should run from project root directory." "Exiting..."
+    ferror "\"make_rpm.sh\" should be run from project root directory." "Exiting..."
 fi
 
 # get distribution name
@@ -59,34 +59,19 @@ fdist(){
 }
 
 fdist fedora
-#fdist opensuse
+fdist openSUSE
 
 if test "$DNAME" = "" ;then
-    ferror "only \"fedora\" suported at this moment" "Exiting..."
-fi
-
-# set variables
-BVERSION=`cat include/conf/MAJOR`"."`cat include/conf/MINOR`"."`cat include/conf/PATCH`
-BVERSION=`echo $BVERSION | sed 's/[^0-9.]//g'`
-TMPDIR="misc/$DNAME-tmp"
-RELEASE="0"
-
-if test `uname -m | grep -iwE "i[3-6]86" | wc -l` -eq 1 ;then
-    ARCH=`uname -m`
-    SARCH="i[3-6]86"
-    FARCH="x86-32"
-fi
-if test `uname -m | grep -iwE "x86_64" | wc -l` -eq 1 ;then
-    ARCH=`uname -m`
-    SARCH=$ARCH
-    FARCH="x86-64"
+    ferror "Only \"fedora\" and \"openSUSE\" suported at this time" "Exiting..."
 fi
 
 # check needed packages
-echo "checking system..."
 E=0
+if test ! -x "`which rpm 2>/dev/null`" ; then
+    ferror "Missing \"rpm\" command" "Exiting..."
+fi
 fcheck(){
-    if test `yum list installed | grep -i "\<$1\.$SARCH" | wc -l` -eq 0 ; then
+    if ! `rpm -q $1 &>/dev/null` ; then
 	LLIST=$LLIST" "$1
 	E=1
     fi
@@ -106,8 +91,39 @@ if test "$DNAME" = "fedora" ;then
     fcheck ncurses-devel
 fi
 
+if test "$DNAME" = "openSUSE" ;then
+    fcheck rpm
+    fcheck fakeroot
+    fcheck gcc-c++
+    fcheck make
+    fcheck bison
+    fcheck flex
+    fcheck libXi6-devel
+    fcheck libxslt
+    fcheck Mesa-devel
+    fcheck pango-devel
+    fcheck ncurses-devel
+fi
+
 if [ $E -eq 1 ]; then
     ferror "Mandatory to install these packages first:" "$LLIST"
+fi
+
+# set variables
+BVERSION=`cat include/conf/MAJOR | sed 's/[^0-9]//g'`"."`cat include/conf/MINOR | sed 's/[^0-9]//g'`"."`cat include/conf/PATCH | sed 's/[^0-9]//g'`
+TMPDIR="misc/$DNAME-tmp"
+RELEASE="0"
+
+if test `gcc -dumpmachine | grep -iE "i[3-6]86" | wc -l` -eq 1 ;then
+    ARCH="i386"
+    SARCH="i[3-6]86"
+    FARCH="x86-32"
+elif test `gcc -dumpmachine | grep -iE "x86_64" | wc -l` -eq 1 ;then
+    ARCH=`uname -m`
+    SARCH=$ARCH
+    FARCH="x86-64"
+else
+    ferror "Unknown architecture. \"`gcc -dumpmachine`\"" "Exiting..."
 fi
 
 # #
@@ -224,6 +240,10 @@ if [ -x "`which update-mime-database 2>/dev/null`" ]; then
 	update-mime-database /usr/share/mime
 fi
 
+if [ -x "`which SuSEconfig 2>/dev/null`" ]; then
+	SuSEconfig
+fi
+
 %postun
 set -e
 
@@ -233,6 +253,10 @@ fi
 
 if [ -x "`which update-mime-database 2>/dev/null`" ]; then
 	update-mime-database /usr/share/mime
+fi
+
+if [ -x "`which SuSEconfig 2>/dev/null`" ]; then
+	SuSEconfig
 fi
 
 %files' > $TMPDIR/brlcad.spec
