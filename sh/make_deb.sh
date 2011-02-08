@@ -72,7 +72,7 @@ fi
 
 # test if in project root
 if test ! -f misc/debian/control ; then
-    ferror "\"make_deb.sh\" should run from project root directory." "Exiting..."
+    ferror "\"make_deb.sh\" should be run from project root directory." "Exiting..."
 fi
 
 # test if in debian like system
