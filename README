@@ -68,26 +68,28 @@ COMPILE AND INSTALL
 
 See the INSTALL file for details on configuring, compiling, and
 installing BRL-CAD.  In order to compile and install BRL-CAD from a
-source distribution, the following steps may be taken for a full
-default install:
+source distribution, the build tool CMake is required - see the
+website at http://www.cmake.org for source and binary installers.
+CMake is also available in many Linux and *BSD distributions.
 
-  ./configure
+Once CMake is installed, the following steps may be taken for a full
+default install (starting with a source tarball):
+
+  tar -xvzf brlcad-X.Y.Z.tar.gz
+  mkdir brlcad-build
+  cd brlcad-build
+  cmake ../brlcad-X.Y.Z
   make
   make install
 
-If you do not have a configure script in your source tree (at the same
-level as this README file), you will need a relatively up-to-date
-version of the GNU Build System (autoconf, automake, & libtool)
-installed.  The autogen.sh script will need to be run successfully in
-order to generate the configure script first:
+where "X.Y.Z" is the version number of BRL-CAD.  If the graphical
+interface available from CMake is installed cmake-gui may be
+substituted for cmake above.  This will bring up an interface
+displaying various configuration options available with CMake.
+These options may also be set directly via the command line, or
+a configure wrapper script may be substituted for cmake above to
+provide more autotools-line configuration options.
 
-  sh autogen.sh
-  ./configure
-  make
-  make install
-
-There are various options available to both configure and make.  Run
-"./configure --help" for a list of available configuration options.
 Users on multiprocessor systems will be able to speed up their builds
 by passing the -j option to make (e.g. make -j4, assuming GNU make).
 
@@ -96,9 +98,9 @@ permissions, you should be able to begin the installation by running
 the "make install" .  By default, the package is configured to install
 entirely into /usr/brlcad/.
 
-You will need to add /usr/brlcad/bin to your path (or whatever was
-used as a --prefix during configure) in order for the BRL-CAD binaries
-to be in your path.
+You will need to add /usr/brlcad/bin to your path (or whatever path the
+variable CMAKE_INSTALL_PREFIX was set to during configure) in order for
+the BRL-CAD binaries to be in your path.
 
 
 BENCHMARK
@@ -107,7 +109,8 @@ BENCHMARK
 After the build successfully completes, you will be able to verify
 basic functionality by running the BRL-CAD Benchmark.  Running the
 benchmark suite is integrated into the build system such that any time
-after configure, you may run:
+after running CMake (in the cmake gui, configure and generate must both 
+be performed) you may run:
 
   make benchmark
 

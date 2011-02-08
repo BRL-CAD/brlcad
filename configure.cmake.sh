@@ -14,6 +14,8 @@ do
                    	          shift;;
      --enable-debug) 	          options="$options -DCMAKE_BUILD_TYPE=Debug";
                    	          shift;;
+     --disable-docs)              options="$options -DBRLCAD-BUILD_EXTRADOCS=OFF";
+     			          shift;;
      --disable-strict)            options="$options -DBRLCAD-ENABLE_STRICT=OFF";
      			          shift;;
      --disable-warnings)          options="$options -DBRLCAD-ENABLE_WARNINGS=OFF";
