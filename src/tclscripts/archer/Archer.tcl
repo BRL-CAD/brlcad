@@ -226,6 +226,7 @@ package provide Archer 1.0
 	method track               {args}
 	method units               {args}
 	method vmake               {args}
+	method zap                 {args}
 	method initImages          {}
 	method initFbImages        {}
 	method setDefaultBindingMode {_mode}
@@ -1802,6 +1803,10 @@ package provide Archer 1.0
 ::itcl::body Archer::vmake {args} {
     eval createWrapper make $args
     #    eval ArcherCore::gedWrapper vmake 0 0 1 1 $args
+}
+
+::itcl::body Archer::zap {args} {
+    eval ArcherCore::gedWrapper zap 0 0 0 1 $args
 }
 
 
