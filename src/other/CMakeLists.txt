@@ -818,33 +818,37 @@ DISTCHECK_IGNORE(tktable tktable_ignore_files)
 # OpenNURBS Library
 THIRD_PARTY_OPTION(OPENNURBS openNURBS)
 THIRD_PARTY_SUBDIR(OPENNURBS openNURBS)
-get_directory_property(OPENNURBS_HEADERS DIRECTORY openNURBS DEFINITION	OPENNURBS_HEADERS)
-SET(opennurbs_ignore_files
-	${OPENNURBS_HEADERS}
-	BRL-CAD_changes.txt
-	example_brep
-	example_dump
-	example_gl
-	example_read
-	example_roundtrip
-	example_userdata
-	example_write
-	faq.txt
-	license.txt
-	opennurbs.rc
-	opennurbs.sln
-	opennurbs.vcproj
-	opennurbs_dll.cpp
-	opennurbs_dll_resource.h
-	opennurbs_gl.cpp
-	opennurbs_memory_new.cpp
-	opennurbs_precompiledheader.cpp
-	opennurbs_staticlib.vcproj
-	opennurbs_x.cpp
-	opennurbs_zlib_memory.cpp
-	readme.txt
-	)
-DISTCHECK_IGNORE(openNURBS opennurbs_ignore_files)
+IF(BRLCAD_BUILD_LOCAL_OPENNURBS)
+	get_directory_property(OPENNURBS_HEADERS DIRECTORY openNURBS DEFINITION	OPENNURBS_HEADERS)
+	SET(opennurbs_ignore_files
+		${OPENNURBS_HEADERS}
+		BRL-CAD_changes.txt
+		example_brep
+		example_dump
+		example_gl
+		example_read
+		example_roundtrip
+		example_userdata
+		example_write
+		faq.txt
+		license.txt
+		opennurbs.rc
+		opennurbs.sln
+		opennurbs.vcproj
+		opennurbs_dll.cpp
+		opennurbs_dll_resource.h
+		opennurbs_gl.cpp
+		opennurbs_memory_new.cpp
+		opennurbs_precompiledheader.cpp
+		opennurbs_staticlib.vcproj
+		opennurbs_x.cpp
+		opennurbs_zlib_memory.cpp
+		readme.txt
+		)
+	DISTCHECK_IGNORE(openNURBS opennurbs_ignore_files)
+ELSE(BRLCAD_BUILD_LOCAL_OPENNURBS)
+	CMAKEFILES(openNURBS)
+ENDIF(BRLCAD_BUILD_LOCAL_OPENNURBS)
 
 # STEP Class Libraries
 # If we don't have Lex/Yacc, we can't do STEP - conditionalize
