@@ -14,8 +14,8 @@ changes made.  See document footer for additional details.
 --- 2011-03-XX  Release 7.18.4                                     ---
 ----------------------------------------------------------------------
 
-* TBD
-
+* added rt_bot_mintie to trigger TIE bots - Erik Greenwald
+* libtie is now part of librt - Erik Greenwald
 
 ----------------------------------------------------------------------
 --- 2011-02-09  Release 7.18.2                                     ---

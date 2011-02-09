@@ -93,6 +93,8 @@ librt_nil_la_SOURCES = \
 	primitives/bot/bot.c \
 	primitives/bot/bot_brep.cpp \
 	primitives/bot/bot_mirror.c \
+	primitives/bot/btg.c \
+	primitives/bot/btgf.c \
 	primitives/brep/brep.cpp \
 	primitives/brep/brep_debug.cpp \
 	primitives/bspline/bspline.cpp \
@@ -280,8 +282,9 @@ parsetest_LDADD = \
 noinst_HEADERS = \
 	librt_private.h \
 	opennurbs_ext.h \
-	primitives/fixpt.h \
+	primitives/bot/btg.h \
 	primitives/brep/brep_debug.h \
+	primitives/fixpt.h \
 	primitives/metaball/metaball.h \
 	primitives/revolve/revolve.h \
 	primitives/xxx/xxx.h
@@ -303,6 +306,8 @@ EXTRA_DIST = \
 	namegen.c \
 	pmalloc.c \
 	primitives/bot/g_bot_include.c \
+	primitives/bot/tie.c \
+	primitives/bot/tie_kdtree.c \
 	timer-nt.c \
 	timer52brl.c \
 	timerhep.c \

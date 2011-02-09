@@ -58,6 +58,7 @@ extern const ToglStubs toglStubs;
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/toglStubInit.c "${TOGL_STUB_INIT_TXT}")
 
 ADD_CUSTOM_TARGET(togl_stubs_gen
+	MESSAGE("TCL_TCLSH: ${TCL_TCLSH}")
 	${TCL_TCLSH} ${CMAKE_CURRENT_SOURCE_DIR}/../tools/genStubs.tcl	${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/togl.decls
 )
 

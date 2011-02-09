@@ -2,20 +2,12 @@
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 AM_CFLAGS = \
 	-I${top_srcdir}/src/adrt \
-	-I${top_srcdir}/src/adrt/libtie \
 	-I${top_srcdir}/src/adrt/libcommon \
 	-I${top_srcdir}/src/adrt/librender \
 	-I${top_srcdir}/src/adrt/librender \
 	${TCL_CPPFLAGS}
 
-lib_LTLIBRARIES = libtie.la librender.la
-
-libtie_la_LIBADD = ${BU} ${BU_LIBS}
-libtie_la_SOURCES = \
-	libtie/tie0.c \
-	libtie/tie1.c \
-	libtie/tie_kdtree0.c \
-	libtie/tie_kdtree1.c
+lib_LTLIBRARIES = librender.la
 
 librender_la_SOURCES = \
 	load.c \
@@ -46,7 +38,6 @@ librender_la_SOURCES = \
 	librender/texture_stack.c
 
 librender_la_LIBADD = \
-	libtie.la \
 	${GCV} \
 	${GCV_LIBS}
 
@@ -59,11 +50,9 @@ tieinclude_HEADERS = \
 	librender/render_internal.h \
 	librender/render_util.h \
 	librender/texture.h \
-	librender/texture_internal.h \
-	libtie/tie.h
+	librender/texture_internal.h
 
 noinst_HEADERS = \
-	libtie/tieprivate.h \
 	load.h \
 	tienet.h
 
@@ -92,8 +81,6 @@ EXTRA_DIST = \
 	isst.h \
 	isst.tcl \
 	isst_tcltk.c \
-	libtie/tie.c \
-	libtie/tie_kdtree.c \
 	master/compnet.h \
 	master/master.h \
 	master/tienet_master.c \

@@ -123,7 +123,7 @@ struct tie_s {
     unsigned int kdmethod;		/* Optimal or Fast */
     /* all tfloat altered stuff should be at the end. */
     TIE_3 min, max;
-    vect_t mid;
+    vect_t amin, amax, mid;
     fastf_t radius;
 };
 
