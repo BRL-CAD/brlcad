@@ -42,6 +42,7 @@
  * strictness. Needs to be before sys/types.h, but unistd has to be
  * after the GL stuff. */
 #define __BSD_VISIBLE 1
+#define __USE_BSD 1
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
