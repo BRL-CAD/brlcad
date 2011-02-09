@@ -29,6 +29,7 @@ integration and usability enhancements for Debian, Ubuntu, Fedora, and
 other Linux platforms.  Included in Jordi Sayol's efforts are new
 desktop icons, new menu items, mime-type association, and more.
 
+* improved Fedora platform support with new menus, icons - Jordi Sayol
 * fixed nirt units command reporting all units as invalid - Cliff Yapp
 * dbupgrade support for binary-incompatible v4 files - Sean Morrison
 * new opendb -f endianness flip option for corrupt v4 - Sean Morrison
