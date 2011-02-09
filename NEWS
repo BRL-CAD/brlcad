@@ -10,8 +10,24 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2010-12-XX  Release 7.18.2                                     ---
+--- 2011-02-09  Release 7.18.2                                     ---
 ----------------------------------------------------------------------
+
+This release provides initial support for reading some older
+(platform-dependent) v4 geometry database files regardless of their
+originating platform.  Binary-incompatible v4 geometry database files
+can be opened read-only within MGED where geometry can be inspected,
+drawn, exported via the "keep" command, and updated to the newer
+(platform-independent) v5 geometry database file format via the
+"dbupgrade" command.  In order to override the otherwise automatic
+binary-incomaptible v4 detection, MGED's "opendb" command provides a
+new -f flip option and all applications can override behavior with a
+LIBRT_V4FLIP environment variable.
+
+Also introduced with this release are numerous binary platform
+integration and usability enhancements for Debian, Ubuntu, Fedora, and
+other Linux platforms.  Included in Jordi Sayol's efforts are new
+desktop icons, new menu items, mime-type association, and more.
 
 * fixed nirt units command reporting all units as invalid - Cliff Yapp
 * dbupgrade support for binary-incompatible v4 files - Sean Morrison
