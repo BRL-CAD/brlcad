@@ -1,7 +1,7 @@
 /*                            B U . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -95,10 +95,14 @@ __BEGIN_DECLS
  * file but if it isn't set, we create it.
  */
 #ifndef MAXPATHLEN
-#  ifdef _MAX_PATH
-#    define MAXPATHLEN _MAX_PATH
+#  ifdef PATH_MAX
+#    define MAXPATHLEN PATH_MAX
 #  else
-#    define MAXPATHLEN 1024
+#    ifdef _MAX_PATH
+#      define MAXPATHLEN _MAX_PATH
+#    else
+#      define MAXPATHLEN 1024
+#    endif
 #  endif
 #endif
 
@@ -379,6 +383,23 @@ typedef void *genptr_t;
  * the expected output format.
  *
  */
+
+
+/**
+ * b u _ c v
+ *
+ * @brief
+ * convert from one format to another.
+ *
+ * @param in		input pointer
+ * @param out		output pointer
+ * @param count		number of entries to convert
+ * @param size		size of output buffer
+ * @param infmt		input format
+ * @param outfmt	output format
+ *
+ */
+BU_EXPORT BU_EXTERN(size_t bu_cv, (genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count));
 
 /**
  * b u _ c v _ c o o k i e
@@ -1400,7 +1421,7 @@ struct bu_ptbl {
 #define BU_PTBL_BASEADDR(ptbl)	((ptbl)->buffer)
 #define BU_PTBL_LASTADDR(ptbl)	((ptbl)->buffer + (ptbl)->end - 1)
 #define BU_PTBL_END(ptbl)	((ptbl)->end)
-#define BU_PTBL_LEN(p)	((p)->end)
+#define BU_PTBL_LEN(ptbl)	((size_t)(ptbl)->end)
 #define BU_PTBL_GET(ptbl, i)	((ptbl)->buffer[(i)])
 #define BU_PTBL_SET(ptbl, i, val)	((ptbl)->buffer[(i)] = (long*)(val))
 #define BU_PTBL_TEST(ptbl)	((ptbl)->l.magic == BU_PTBL_MAGIC)
@@ -1702,7 +1723,7 @@ BU_EXPORT extern int bu_debug;
 #define BU_DEBUG_COREDUMP	0x00000001	/* bu_bomb() should dump core on exit */
 #define BU_DEBUG_MEM_CHECK	0x00000002	/* Mem barrier & leak checking */
 #define BU_DEBUG_MEM_LOG	0x00000004	/* Print all dynamic memory operations */
-#define BU_DEBUG_DB		0x00000008	/* Database debug logging */
+#define BU_DEBUG_UNUSED_0	0x00000008	/* unused */
 
 #define BU_DEBUG_PARALLEL	0x00000010	/* Parallel debug logging */
 #define BU_DEBUG_MEM_QCHECK	0x00000020	/* Fast mem leak checking (won't work with corruption) */
@@ -1791,11 +1812,7 @@ BU_EXPORT extern int bu_debug;
 #      define bu_byteoffset(_i)	((size_t)((char *)&(_i)))
 #    else
 #      if defined(__ia64__) || defined(__x86_64__) || defined(__sparc64__)
-#        if defined (__INTEL_COMPILER)
 #          define bu_byteoffset(_i)	((size_t)((char *)&(_i)))
-#        else
-#          define bu_byteoffset(_i)	((size_t)(((void *)&(_i))-((void *)0)))
-#        endif
 #      else
 /* "Conservative" way of finding # bytes as diff of 2 char ptrs */
 #        define bu_byteoffset(_i)	((size_t)(((char *)&(_i))-((char *)0)))
@@ -2529,7 +2546,7 @@ BU_EXPORT BU_EXTERN(int bu_count_path, (char *path, char *substr));
 /**
  * Return array with filenames with suffix matching substr
  */
-BU_EXPORT BU_EXTERN(void bu_list_path, (char *path, char *substr, char **filearray)); 
+BU_EXPORT BU_EXTERN(void bu_list_path, (char *path, char *substr, char **filearray));
 
 
 /** @file brlcad_path.c
@@ -3085,7 +3102,7 @@ BU_EXPORT BU_EXTERN(void bu_call_hook,
  *
  * BRL-CAD support library, error logging routine.  Note that the user
  * may provide his own logging routine, by replacing these functions.
- * That is why this is in file of it's own.  For example, LGT and
+ * That is why this is in file of its own.  For example, LGT and
  * RTSRV take advantage of this.
  *
  * Here is an example of how to set up a custom logging callback.
@@ -3240,7 +3257,7 @@ BU_EXPORT BU_EXTERN(void bu_free,
  *
  * While the string 'str' is provided for the log messages, don't
  * disturb the str value, so that this storage allocation can be
- * tracked back to it's original creator.
+ * tracked back to its original creator.
  */
 BU_EXPORT BU_EXTERN(genptr_t bu_realloc,
 		    (genptr_t ptr,
@@ -3324,6 +3341,9 @@ BU_EXPORT BU_EXTERN(int bu_mem_barriercheck,
  * Given a filesystem pathname, return a pointer to a dynamic string
  * which is the parent directory of that file/directory.
  *
+ * It is the caller's responsibility to bu_free() the pointer returned
+ * from this routine.  Examples of strings returned:
+ *
  *	/usr/dir/file	/usr/dir
  * @n	/usr/dir/	/usr
  * @n	/usr/file	/usr
@@ -3337,8 +3357,8 @@ BU_EXPORT BU_EXTERN(int bu_mem_barriercheck,
  * @n	a/		.
  * @n	../a/b		../a
  *
- * Warning: don't rely on non-constness of bu_dirname().. will change
- * to const.
+ * This routine will return "." if other valid results are not available
+ * but should never return NULL.
  */
 BU_EXPORT BU_EXTERN(char *bu_dirname,
 		    (const char *cp));
@@ -3555,7 +3575,7 @@ BU_EXPORT BU_EXTERN(int bu_set_realtime, ());
  * with private stack areas.  Locking and work dispatching are handled
  * by 'func' using a "self-dispatching" paradigm.
  *
- * 'func' is called with one parameter, it's thread number.  Threads
+ * 'func' is called with one parameter, its thread number.  Threads
  * are given increasing numbers, starting with zero.
  *
  * This function will not return control until all invocations of the
@@ -3618,8 +3638,12 @@ BU_EXPORT BU_EXTERN(int bu_struct_import,
  *
  * Put a structure in external form to a stdio file.  All formatting
  * must have been accomplished previously.
+ *
+ * Returns number of bytes written.  On error, a short byte count (or
+ * zero) is returned.  Use feof(3) or ferror(3) to determine which
+ * errors occur.
  */
-BU_EXPORT BU_EXTERN(int bu_struct_put,
+BU_EXPORT BU_EXTERN(size_t bu_struct_put,
 		    (FILE *fp,
 		     const struct bu_external *ext));
 
@@ -3627,8 +3651,11 @@ BU_EXPORT BU_EXTERN(int bu_struct_put,
  * B U _ S T R U C T _ G E T
  *
  * Obtain the next structure in external form from a stdio file.
+ *
+ * Returns number of bytes read into the bu_external.  On error, zero
+ * is returned.
  */
-BU_EXPORT BU_EXTERN(int bu_struct_get,
+BU_EXPORT BU_EXTERN(size_t bu_struct_get,
 		    (struct bu_external *ext,
 		     FILE *fp));
 
@@ -3842,7 +3869,7 @@ BU_EXPORT BU_EXTERN(void bu_structparse_get_terse_form,
 BU_EXPORT BU_EXTERN(int bu_structparse_argv,
 		    (struct bu_vls *logstr,
 		     int argc,
-		     char **argv,
+		     const char **argv,
 		     const struct bu_structparse *desc,
 		     char *base));
 
@@ -3857,6 +3884,36 @@ BU_EXPORT BU_EXTERN(int bu_structparse_argv,
 	while (*(_cp) && (*(_cp) == ' ' || *(_cp) == '\n' || \
 	*(_cp) == '\t' || *(_cp) == '{'))  ++(_cp); \
 }
+
+
+/** @file libbu/booleanize.c
+ *
+ * @brief routines for parsing boolean values from strings
+ */
+
+/**
+ * B U _ S T R _ T R U E
+ *
+ * Returns truthfully if a given input string represents an
+ * "affirmative string".
+ *
+ * Input values that are null, empty, begin with the letter 'n', or
+ * are 0-valued return as false.  Any other input value returns as
+ * true.
+ */
+BU_EXPORT BU_EXTERN(int bu_str_true, (const char *str));
+
+/**
+ * B U _ S T R _ F A L S E
+ *
+ * Returns truthfully if a given input string represents a
+ * "negative string".
+ *
+ * Input values that are null, empty, begin with the letter 'n', or
+ * are 0-valued return as true.  Any other input value returns as
+ * false.
+ */
+BU_EXPORT BU_EXTERN(int bu_str_false, (const char *str));
 
 
 /** @} */
@@ -5042,6 +5099,33 @@ BU_EXPORT BU_EXTERN(size_t bu_strlcpym, (char *dst, const char *src, size_t size
 BU_EXPORT BU_EXTERN(char *bu_strdupm, (const char *cp, const char *label));
 #define bu_strdup(s) bu_strdupm(s, BU_FLSTR)
 
+/**
+ * b u _ s t r c m p  / b u _ s t r c m p m
+ *
+ * Compares two strings more gracefully as standard library's strcmp().
+ * It accepts NULL as valid input values and considers "" and NULL as equal.
+ *
+ * bu_strcmp() is a macro that includes the current file name and line
+ * number that can be used when bu debugging is enabled.
+ *
+ */
+BU_EXPORT BU_EXTERN(int bu_strcmpm, (const char *string1, const char *string2, const char *label));
+#define bu_strcmp(s1, s2)    bu_strcmpm((s1), (s2), BU_FLSTR)
+
+/**
+ * BU_STR_EMPTY() is a convenience macro that tests a string for
+ * emptiness, i.e. "" or NULL.
+*/
+#define BU_STR_EMPTY(s) (bu_strcmpm((s), "", BU_FLSTR) == 0)
+
+/**
+ * BU_STR_EQUAL() is a convenience macro for testing two
+ * null-terminaed strings for equality, i.e. A == B, and is equivalent
+ * to (bu_strcmp(s1, s2) == 0) returning true if the strings match and
+ * false if they do not.
+ */
+#define BU_STR_EQUAL(s1, s2) (bu_strcmpm((s1), (s2), BU_FLSTR) == 0)
+
 /** @} */
 
 /** @addtogroup bu_log */
@@ -5138,6 +5222,8 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 
 /** @file xdr.c
  *
+ * DEPRECATED
+ *
  * Routines to implement an external data representation (XDR)
  * compatible with the usual InterNet standards, e.g.:
  * big-endian, twos-compliment fixed point, and IEEE floating point.
@@ -5150,8 +5236,8 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
  */
 
 /**
- * Macro version of library routine bu_glong()
- *
+ * DEPRECATED: use ntohll()
+ * Macro version of library routine bu_glonglong()
  * The argument is expected to be of type "unsigned char"
  */
 #define BU_GLONGLONG(_cp)	\
@@ -5163,37 +5249,47 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 	     (((uint64_t)((_cp)[5])) << 16) |	\
 	     (((uint64_t)((_cp)[6])) <<  8) |	\
 	      ((uint64_t)((_cp)[7])))
+/**
+ * DEPRECATED: use ntohl()
+ * Macro version of library routine bu_glong()
+ * The argument is expected to be of type "unsigned char"
+ */
 #define BU_GLONG(_cp)	\
 	    ((((uint32_t)((_cp)[0])) << 24) |	\
 	     (((uint32_t)((_cp)[1])) << 16) |	\
 	     (((uint32_t)((_cp)[2])) <<  8) |	\
 	      ((uint32_t)((_cp)[3])))
+/**
+ * DEPRECATED: use ntohs()
+ * Macro version of library routine bu_gshort()
+ * The argument is expected to be of type "unsigned char"
+ */
 #define BU_GSHORT(_cp)	\
 	    ((((uint16_t)((_cp)[0])) << 8) | \
 		       (_cp)[1])
 
 /**
- * B U _ G S H O R T
+ * DEPRECATED: use ntohs()
  */
 BU_EXPORT BU_EXTERN(uint16_t bu_gshort, (const unsigned char *msgp));
 
 /**
- * B U _ G L O N G
+ * DEPRECATED: use ntohl()
  */
 BU_EXPORT BU_EXTERN(uint32_t bu_glong, (const unsigned char *msgp));
 
 /**
- * B U _ P S H O R T
+ * DEPRECATED: use htons()
  */
 BU_EXPORT BU_EXTERN(unsigned char *bu_pshort, (unsigned char *msgp, uint16_t s));
 
 /**
- * B U _ P L O N G
+ * DEPRECATED: use htonl()
  */
 BU_EXPORT BU_EXTERN(unsigned char *bu_plong, (unsigned char *msgp, uint32_t l));
 
 /**
- * B U _ P L O N G L O N G
+ * DEPRECATED: use htonll()
  */
 BU_EXPORT BU_EXTERN(unsigned char *bu_plonglong, (unsigned char *msgp, uint64_t l));
 
@@ -5285,7 +5381,7 @@ BU_EXPORT BU_EXTERN(void bu_tcl_structparse_get_terse_form,
 BU_EXPORT BU_EXTERN(int bu_tcl_structparse_argv,
 		    (Tcl_Interp *interp,
 		     int argc,
-		     char **argv,
+		     const char **argv,
 		     const struct bu_structparse *desc,
 		     char *base));
 
@@ -5978,7 +6074,7 @@ struct bu_image_file {
 };
 
 BU_EXPORT BU_EXTERN(struct bu_image_file *bu_image_save_open,
-		    (char *filename,
+		    (const char *filename,
 		     int format,
 		     int width,
 		     int height,
@@ -6129,6 +6225,15 @@ BU_EXPORT BU_EXTERN(int bu_restore_interrupts, ());
 #define BU_SIMD_MMX 1
 #define BU_SIMD_NONE 0
 BU_EXPORT BU_EXTERN(int bu_simd_level, ());
+
+/** @} */
+
+/** @addtogroup file */
+/** @{ */
+/** @file timer.c
+ * Return microsecond accuracy time information.
+ */
+BU_EXPORT BU_EXTERN(int64_t bu_gettime, ());
 
 /** @} */
 

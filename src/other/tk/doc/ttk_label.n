@@ -15,6 +15,7 @@ ttk::label \- Display a text string and/or image
 \fBttk::label\fR \fIpathName \fR?\fIoptions\fR?
 .BE
 .SH DESCRIPTION
+.PP
 A \fBttk::label\fR widget displays a textual label and/or image.
 The label may be linked to a Tcl variable 
 to automatically change the displayed text.
@@ -68,8 +69,12 @@ then automatic wrapping is not performed; otherwise
 the text is split into lines such that no line is longer
 than the specified value.
 .SH "WIDGET COMMAND"
+.PP
 Supports the standard widget commands
 \fBconfigure\fR, \fBcget\fR, \fBidentify\fR, \fBinstate\fR, and \fBstate\fR;
 see \fIttk::widget(n)\fR.
 .SH "SEE ALSO"
 ttk::widget(n), label(n)
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

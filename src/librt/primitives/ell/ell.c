@@ -1,7 +1,7 @@
 /*                           E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -176,7 +176,7 @@ struct ell_specific {
  * !0 Error in description
  *
  * Implicit return -
- * A struct ell_specific is created, and it's address is stored in
+ * A struct ell_specific is created, and its address is stored in
  * stp->st_specific for use by rt_ell_shot().
  */
 int
@@ -1120,7 +1120,7 @@ rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     eip->magic = RT_ELL_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    rt_fastf_float(vec, rp->s.s_values, 4);
+    rt_fastf_float(vec, rp->s.s_values, 4, dbip->dbi_version < 0 ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;

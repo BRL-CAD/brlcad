@@ -1,19 +1,19 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Creating a Mug Model using the <application>MGED</application> Interface</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Creating a Mug Model using the <application>MGED</application> Interface</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-   <para id="mug_through_gui_overviewlist">
+   <para xml:id="mug_through_gui_overviewlist">
       In this lesson, you will:
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Create the shapes of the mug through the GUI.</para>
 	</listitem>
@@ -34,18 +34,18 @@
 	</listitem>
       </itemizedlist>
     </para>
-    <para id="mug_through_gui_intro1">
+    <para xml:id="mug_through_gui_intro1">
       In the previous two lessons, you created a mug by entering commands at the
       Command Window prompt. Now, you will create the same type of mug using the
       GUI and different shapes.
     </para>
 
-    <para id="mug_through_gui_intro2">
+    <para xml:id="mug_through_gui_intro2">
       Begin by opening a new database. Call it mug2.g.
     </para>
 
-    <sect1 id="mug_gui_create_body">
-      <title>Creating the Body of the Mug</title>
+    <section xml:id="mug_gui_create_body"><info><title>Creating the Body of the Mug</title></info>
+      
       <para>
 	Go to the Create menu and select rcc (right circular cylinder) under the
 	Cones and Cylinders category. Enter the name for the rcc. Call it outside.s.
@@ -54,11 +54,11 @@
 	Go to the Edit menu, where you will be offered the following options:
 	
 	<informaltable>
-	  <tgroup cols='4'>
+	  <tgroup cols="4">
 	    <tbody>
 	      <row>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 		    Set H
 		    Set H (Move V)
 		    Set A
@@ -75,7 +75,7 @@
 		  </literallayout>
 		</entry>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 		    Rotate
 		    Translate
 		    Scale
@@ -83,7 +83,7 @@
 		  </literallayout>
 		</entry>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 		    Reject
 		    Accept
 		    Apply
@@ -91,7 +91,7 @@
 		  </literallayout>
 		</entry>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 		    Primitive Editor
 		    Combination
 		    Editor
@@ -136,7 +136,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged12_cyls_frontview.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged12_cyls_frontview.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -156,10 +156,10 @@
 	  vice versa.                                                        
 	</para>
       </note>
-    </sect1>
+    </section>
 
-    <sect1 id="mug_gui_create_handle">
-      <title>Creating the Handle of the Mug</title>
+    <section xml:id="mug_gui_create_handle"><info><title>Creating the Handle of the Mug</title></info>
+      
 
       <para>
 	Previously, we made the handle of the mug using an elliptical torus. In
@@ -169,17 +169,17 @@
 	circular cylinders, as shown in the following list:
 
 	<informaltable>
-	  <tgroup cols='4'>
+	  <tgroup cols="4">
 	    <tbody>
 	      <row>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 		    Set Radius 1
 		    Set Radius 2
 		  </literallayout>
 		</entry>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 		    Rotate
 		    Translate
 		    Scale
@@ -187,7 +187,7 @@
 		  </literallayout>
 		</entry>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 		    Reject
 		    Accept
 		    Apply
@@ -195,7 +195,7 @@
 		  </literallayout>
 		</entry>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 		    Primitive Editor
 		    Combination
 		    Editor
@@ -213,11 +213,11 @@
 	examples:
 	
 	<informaltable>
-	  <tgroup cols='2'>
+	  <tgroup cols="2">
 	    <tbody>
 	      <row>
-		<entry><inlinegraphic fileref="../../lessons/en/images/mged12_mug_handle_frontview.png" /></entry>
-		<entry><inlinegraphic fileref="../../lessons/en/images/mged12_mug_handle_topview.png" /></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged12_mug_handle_frontview.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged12_mug_handle_topview.png"/></imageobject></inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>Mug and Handle from a Front View</entry>
@@ -230,10 +230,10 @@
 	Check your mug from the top to make sure the handle is aligned. Accept
 	your changes when you are finished.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="mug_gui_create_rim">
-      <title>Creating the Rim of the Mug</title>
+    <section xml:id="mug_gui_create_rim"><info><title>Creating the Rim of the Mug</title></info>
+      
       
       <para>
 	To make the rim of the mug, go to the Create, select tor, and name it
@@ -249,7 +249,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged12_mug_rim_frontview.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged12_mug_rim_frontview.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -259,10 +259,10 @@
 	</mediaobject>
       </informalfigure>
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="mug_gui_create_combinations">
-      <title>Creating Combinations of the Various Shapes</title>
+    <section xml:id="mug_gui_create_combinations"><info><title>Creating Combinations of the Various Shapes</title></info>
+      
 
       <para>
 	To combine the various shapes of the mug, type the following commands at
@@ -278,10 +278,10 @@
 	commands works.
 	
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="mug_gui_make_region">
-      <title>Making a Region of the Combinations</title>
+    <section xml:id="mug_gui_make_region"><info><title>Making a Region of the Combinations</title></info>
+      
 
       <para>
 	To make a region out of the combinations you just created, type at the
@@ -289,16 +289,16 @@
 	
 	<command>r mug.r u mug.c u handle.c[Enter]</command>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="mug_gui_check_tree">
-      <title>Checking the Data Tree</title>
+    <section xml:id="mug_gui_check_tree"><info><title>Checking the Data Tree</title></info>
+      
 
       <para>
 	Before continuing, it would be wise to check your data tree and make sure
 	it agrees with the following tree:
 
-	<literallayout>
+	<literallayout class="normal">
    mug.r/R
 
    u mug.c/
@@ -331,17 +331,17 @@
 	<command>kill rim2.s[Enter]</command>
 	
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="mug_gui_comb_edit_props">
-      <title>Assigning Material Properties Using the Combination Editor</title>
+    <section xml:id="mug_gui_comb_edit_props"><info><title>Assigning Material Properties Using the Combination Editor</title></info>
+      
 
       <para>
 	Go to the Edit menu and select Combination Editor. Type mug.r in the Name
 	entry box. Press ENTER. Type 0 148 0 in the Color entry box. Select a
 	plastic shader. Check the Boolean Expression box to make sure it says:
 	
-	<literallayout>
+	<literallayout class="normal">
    u mug.c
 
    u handle.c
@@ -353,10 +353,10 @@
 	<command>B mug.r[Enter]</command>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="mug_gui_raytracing">
-      <title>Raytracing the Design</title>
+    <section xml:id="mug_gui_raytracing"><info><title>Raytracing the Design</title></info>
+      
       <para>
 	Go to the View option of the menu bar and select az35, el25. Go to File
 	and then Raytrace. Select a white background color and Raytrace your
@@ -366,7 +366,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged12_mug_gui_finished_raytraced.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged12_mug_gui_finished_raytraced.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -376,13 +376,13 @@
 	</mediaobject>
       </informalfigure>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="mug_through_gui_review">
-      <title>Review</title>
+    <section xml:id="mug_through_gui_review"><info><title>Review</title></info>
+      
       <para>
 	In this lesson, you:
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Created the shapes of the mug through the GUI.</para>
 	  </listitem>
@@ -403,6 +403,6 @@
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

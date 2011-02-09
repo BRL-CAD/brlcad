@@ -1,52 +1,15 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2009-2010 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR AS IS'' AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='coil1'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="coil1">
 
 <refmeta>
   <refentrytitle>COIL</refentrytitle>
   <manvolnum>1</manvolnum>
-  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-  <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
 </refmeta>
 
-<refnamediv id='coil_name'>
+<refnamediv xml:id="coil_name">
   <refname>coil</refname>
   <refpurpose>
     Generate various types of coils, using pipe control points calculated
@@ -55,26 +18,26 @@
 </refnamediv>
 
 <!-- body begins here -->
-<refsynopsisdiv id='coil_synopsis'>
-  <cmdsynopsis>
+<refsynopsisdiv xml:id="coil_synopsis">
+  <cmdsynopsis sepchar=" ">
     <command>coil</command>    
-    <arg choice='opt' rep='repeat'><replaceable>options ...</replaceable></arg>
-    <arg><replaceable>name</replaceable></arg>
+    <arg choice="opt" rep="repeat"><replaceable>options ...</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>name</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsect1 id='coil_description'>
-  <title>DESCRIPTION</title>
+<refsection xml:id="coil_description"><info><title>DESCRIPTION</title></info>
+  
   <para>
-    <command>coil</command> creates a pipe shape within <emphasis remap='I'>coil.g</emphasis>
+    <command>coil</command> creates a pipe shape within <emphasis remap="I">coil.g</emphasis>
     or a user supplied file that implements a coil according to user provided dimensions.  
     If no dimensions are supplied defaults are used.  
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='coil_options'>
-  <title>OPTIONS:</title>
-  <variablelist remap='TP'>
+<refsection xml:id="coil_options"><info><title>OPTIONS:</title></info>
+  
+  <variablelist remap="TP">
     <varlistentry>
       <term><option>-n number_of_turns</option></term>
       <listitem>
@@ -168,67 +131,68 @@
       </listitem>
     </varlistentry>
   </variablelist>
-</refsect1>
+</refsection>
 
-<refsect1 id='coil_examples'>
-  <title>EXAMPLES</title>
+<refsection xml:id="coil_examples"><info><title>EXAMPLES</title></info>
+  
   <para>
     The following will create coils exercising the various options.
   </para>
-  <example>
-    <title>Creating a tight coil with default dimensions and ground ends</title>
+  <example><info><title>Creating a tight coil with default dimensions and ground ends</title></info>
+    
     <para>
       <userinput>coil -s 3 -e 3</userinput>
     </para>
   </example>
-  <example>
-    <title>Creating a coil with large helix angle and pitch</title>
+  <example><info><title>Creating a coil with large helix angle and pitch</title></info>
+    
     <para>
       <userinput>coil -h 40 -p 350</userinput>
     </para>
   </example>
-  <example>
-    <title>Creating a multi-section coil with right handed winding</title>
+  <example><info><title>Creating a multi-section coil with right handed winding</title></info>
+    
     <para>
       <userinput>coil -S 10,1000,50,60,800,1 -S 10,1000,50,0,100,1</userinput>
     </para>
   </example>
-</refsect1>
+</refsection>
 
-<refsect1 id='diagnostics'>
-  <title>DIAGNOSTICS</title>
+<refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
+  
   <para>
     Not much error checking yet - need to add.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='author'>
-  <title>AUTHOR</title>
-  <para>Clifford Yapp</para>
-</refsect1>
+<info>
+   <author>
+     <personname>Clifford Yapp</personname>
+     <contrib></contrib>
+   </author>
+</info>
 
-<refsect1 id='copyright'>
-  <title>COPYRIGHT</title>
+<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+  
   <para>
-    This software is Copyright (c) 2009-2010 United States Government as
+    This software is Copyright (c) 2009-2011 United States Government as
     represented by the U.S. Army Research Laboratory. All rights reserved.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='bugs'>
-  <title>BUGS</title>
+<refsection xml:id="bugs"><info><title>BUGS</title></info>
+  
   <para>
     There are many inputs that will be accepted but will attempt to generate
     invalid pipes.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='bug_reports'>
-  <title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
-</refsect1>
+</refsection>
 </refentry>
-

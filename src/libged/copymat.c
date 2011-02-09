@@ -1,7 +1,7 @@
 /*                         C O P Y M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -103,7 +103,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
     switch (rt_db_lookup_internal(gedp->ged_wdbp->dbip, parent, &dp, &intern, LOOKUP_NOISY, &rt_uniresource))
     {
 	case ID_COMBINATION:
-	    if (dp->d_flags & DIR_COMB)
+	    if (dp->d_flags & RT_DIR_COMB)
 		break;
 	    else {
 		bu_vls_printf(&gedp->ged_result_str,

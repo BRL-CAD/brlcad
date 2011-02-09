@@ -1,7 +1,7 @@
 /*                         C A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,7 +58,7 @@ ged_cat(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (arg = 1; arg < argc; arg++) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[arg], LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[arg], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
 	_ged_do_list(gedp, dp, 0);	/* non-verbose */

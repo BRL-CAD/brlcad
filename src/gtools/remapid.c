@@ -1,7 +1,7 @@
 /*                       R E M A P I D . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2010 United States Government as represented by
+ * Copyright (c) 1997-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -64,6 +64,7 @@ typedef struct remapid_file REMAPID_FILE;
 #define bu_stdin (&bu_iob[0])
 extern REMAPID_FILE bu_iob[1];
 #define REMAPID_FILE_NO_COMMENT -1
+#define COMMA ','
 
 
 /*
@@ -396,7 +397,7 @@ mk_curr_id(int region_id)
  *
  */
 void
-print_curr_id(void *v, int depth)
+print_curr_id(void *v, int UNUSED(depth))
 {
     struct curr_id *cip = (struct curr_id *) v;
     struct remap_reg *rp;
@@ -418,7 +419,7 @@ print_curr_id(void *v, int depth)
  *
  */
 void
-print_nonempty_curr_id(void *v, int depth)
+print_nonempty_curr_id(void *v, int UNUSED(depth))
 {
     struct curr_id *cip = (struct curr_id *) v;
     struct remap_reg *rp;
@@ -460,8 +461,8 @@ struct curr_id *
 lookup_curr_id(int region_id)
 {
     int rc;	/* Return code from bu_rb_insert() */
-    struct curr_id *qcip;	/* The query */
-    struct curr_id *cip;	/* Value to return */
+    struct curr_id *qcip = NULL;/* The query */
+    struct curr_id *cip = NULL;	/* Value to return */
 
     /*
      * Prepare the query
@@ -506,7 +507,7 @@ mk_remap_reg(char *region_name)
     rp->rr_name = (char *) bu_malloc(strlen(region_name)+1, "region name");
     bu_strlcpy(rp->rr_name, region_name, strlen(region_name)+1);
 
-    rp->rr_dp = DIR_NULL;
+    rp->rr_dp = RT_DIR_NULL;
     rp->rr_ip = (struct rt_db_internal *) 0;
 
     return rp;
@@ -604,7 +605,7 @@ read_block(REMAPID_FILE *sfp, int *ch, int *n1, int *n2)
     while (isspace(*ch))
 	*ch = remapid_fgetc(sfp);
     switch (*ch) {
-	case ', ':
+	case COMMA:
 	case ':':
 	    return 1;
 	case '-':
@@ -672,7 +673,7 @@ read_spec(REMAPID_FILE *sfp, char *sf_name)
 		ch = remapid_fgetc(sfp);
 
 	    switch (ch) {
-		case ', ':
+		case COMMA:
 		    continue;
 		case ':':
 		    ch = remapid_fgetc(sfp);
@@ -731,7 +732,7 @@ db_init(char *db_name)
     db_dirbuild(dbip);
 
     FOR_ALL_DIRECTORY_START(dp, dbip) {
-	if (!(dp->d_flags & DIR_REGION))
+	if (!(dp->d_flags & RT_DIR_REGION))
 	    continue;
 	ip = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "rt_db_internal");
 	if (rt_db_get_internal(ip, dp, dbip, (fastf_t *) NULL, &rt_uniresource) < 0) {
@@ -751,7 +752,7 @@ db_init(char *db_name)
  *
  */
 void
-write_assignment(void *v, int depth)
+write_assignment(void *v, int UNUSED(depth))
 {
     int region_id;
     struct curr_id *cip = (struct curr_id *) v;

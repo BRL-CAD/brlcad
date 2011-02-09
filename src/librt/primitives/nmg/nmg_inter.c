@@ -1,7 +1,7 @@
 /*                     N M G _ I N T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -171,7 +171,7 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
  * N M G _ E N L I S T _ V U
  *
  * Given a vu which represents a point of intersection between shells
- * s1 and s2, insert it and it's dual into lists l1 and l2.
+ * s1 and s2, insert it and its dual into lists l1 and l2.
  * First, determine whether the vu came from s1 or s2, and insert in
  * the corresponding list.
  *
@@ -1766,7 +1766,7 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
 	/*
 	 * Because nmg_isect_edge2p_face2p() calls the face cutter,
 	 * vu's in lone lu's that are listed in the current l1 or
-	 * l2 lists may have been destroyed.  It's ret is ours.
+	 * l2 lists may have been destroyed.  Its ret is ours.
 	 */
 
 	/* Only do this if list is still OK */
@@ -3197,7 +3197,7 @@ nmg_isect_two_ptbls(struct nmg_inter_struct *is, const struct bu_ptbl *t1, const
  * N M G _ F I N D _ E G _ O N _ L I N E
  *
  * Do a geometric search to find an edge_g_lseg on the given line.
- * If the fuser did it's job, there should be only one.
+ * If the fuser did its job, there should be only one.
  */
 struct edge_g_lseg *
 nmg_find_eg_on_line(const unsigned long *magic_p, const fastf_t *pt, const fastf_t *dir, const struct bn_tol *tol)
@@ -4371,7 +4371,7 @@ nmg_isect_line2_face2pNEW(struct nmg_inter_struct *is, struct faceuse *fu1, stru
 		 * These two fu's don't overlap at all.
 		 *
 		 * Rather than letting nmg_ck_v_in_2fus()
-		 * blow it's mind over this, catch it here
+		 * blow its mind over this, catch it here
 		 * and discard the point.
 		 * (Hopefully the RPP checks above will have
 		 * already discarded it).
@@ -6998,7 +6998,7 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 	/* Both at once */
 	nmg_pl_2fu("Iface%d.pl", fu2, fu1, 0);
 
-	/* Each in it's own file */
+	/* Each in its own file */
 	nmg_face_plot(fu1);
 	nmg_face_plot(fu2);
 

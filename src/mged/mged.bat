@@ -3,7 +3,7 @@
 REM                      M G E D . B A T
 REM  BRL-CAD
 REM 
-REM  Copyright (c) 2006-2010 United States Government as represented by
+REM  Copyright (c) 2006-2011 United States Government as represented by
 REM  the U.S. Army Research Laboratory.
 REM 
 REM  This library is free software; you can redistribute it and/or
@@ -22,20 +22,10 @@ REM
 
 SETLOCAL
 
-REM XXX FIXME: SHOULD NOT NEED TO SET BRLCAD_DATA OR CAD_VERSION XXX
-SET CAD_VERSION=7.17.10
-
-SET SAVE_CD=%CD%
-SET PATH=%~dp0
-CD %PATH%\..
-SET BRLCAD_DATA=%CD%\share\brlcad\%CAD_VERSION%
-CD %SAVE_CD%
-SET WEB_BROWSER=C:\Program Files\Internet Explorer\IEXPLORE.EXE
-
 IF "%1"=="-g" (
-    START /B mged.exe %2
+    "%~dp0\"mged.exe %2
 ) ELSE (
-    START /B mged.exe %1
+    "%~dp0\"mged.exe %1
 )
 
 CLS

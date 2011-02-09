@@ -1,7 +1,7 @@
 /*                      U T I L I T Y 1 . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -74,30 +74,6 @@ FILE *tabptr;
 char ctemp[7];
 
 
-HIDDEN int
-id_compare(const void *p1, const void *p2)
-{
-    int id1, id2;
-
-    id1 = atoi(*(char **)p1);
-    id2 = atoi(*(char **)p2);
-
-    return id1 - id2;
-}
-
-
-HIDDEN int
-reg_compare(const void *p1, const void *p2)
-{
-    char *reg1, *reg2;
-
-    reg1 = strchr(*(char **)p1, '/');
-    reg2 = strchr(*(char **)p2, '/');
-
-    return strcmp(reg1, reg2);
-}
-
-
 /*
  *
  * E D I T I T
@@ -138,9 +114,9 @@ editit(const char *command, const char *tempfile) {
  * control routine for editing color
  */
 int
-f_edcolor(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, char **argv)
+f_edcolor(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
-    char **av;
+    const char **av;
     int i;
     struct bu_vls editstring;
 
@@ -149,7 +125,7 @@ f_edcolor(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edcolor: av");
+    av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edcolor: av");
     av[0] = argv[0];
     av[1] = "-E";
     av[2] = bu_vls_addr(&editstring);
@@ -171,9 +147,9 @@ f_edcolor(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
  * control routine for editing region ident codes
  */
 int
-f_edcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
+f_edcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    char **av;
+    const char **av;
     struct bu_vls editstring;
     int i;
 
@@ -192,7 +168,7 @@ f_edcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edcodes: av");
+    av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edcodes: av");
     av[0] = argv[0];
     av[1] = "-E";
     av[2] = bu_vls_addr(&editstring);
@@ -217,7 +193,7 @@ f_edcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char
  * control routine for editing mater information
  */
 int
-f_edmater(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char **argv)
+f_edmater(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     const char **av;
     struct bu_vls editstring;
@@ -263,9 +239,9 @@ f_edmater(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
  * Get editing string and call ged_red
  */
 int
-f_red(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
+f_red(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    char **av;
+    const char **av;
     struct bu_vls editstring;
     int i;
 
@@ -284,7 +260,7 @@ f_red(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **a
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 3), "f_red: av");
+    av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_red: av");
     av[0] = argv[0];
     av[1] = "-E";
     av[2] = bu_vls_addr(&editstring);
@@ -321,11 +297,11 @@ printcodes(FILE *fp, struct directory *dp, int pathpos)
 	return TCL_ERROR;
     }
 
-    if (!(dp->d_flags & DIR_COMB))
+    if (!(dp->d_flags & RT_DIR_COMB))
 	return 0;
 
     if ((id=rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource)) < 0) {
-	Tcl_AppendResult(interp, "printcodes: Cannot get records for ",
+	Tcl_AppendResult(INTERP, "printcodes: Cannot get records for ",
 			 dp->d_namep, "\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -370,158 +346,15 @@ Do_printnode(struct db_i *dbip2, struct rt_comb_internal *UNUSED(comb), union tr
     RT_CK_DBI(dbip2);
     RT_CK_TREE(comb_leaf);
 
-    if ((nextdp=db_lookup(dbip2, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+    if ((nextdp=db_lookup(dbip2, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return;
 
     fp = (FILE *)user_ptr1;
     pathpos = (int *)user_ptr2;
 
     /* recurse on combinations */
-    if (nextdp->d_flags & DIR_COMB)
+    if (nextdp->d_flags & RT_DIR_COMB)
 	(void)printcodes(fp, nextdp, (*pathpos)+1);
-}
-
-
-/* write codes to a file */
-int
-f_wcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
-{
-    int i;
-    int status;
-    FILE *fp;
-    struct directory *dp;
-
-    CHECK_DBI_NULL;
-
-    if (argc < 3) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help wcodes");
-	Tcl_Eval(interpreter, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    if ((fp = fopen(argv[1], "w")) == NULL) {
-	Tcl_AppendResult(interpreter, "f_wcodes: Failed to open file - ", argv[1], (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    regflag = lastmemb = 0;
-    for (i = 2; i < argc; ++i) {
-	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL) {
-	    status = printcodes(fp, dp, 0);
-
-	    if (status == TCL_ERROR) {
-		(void)fclose(fp);
-		return TCL_ERROR;
-	    }
-	}
-    }
-
-    (void)fclose(fp);
-    return TCL_OK;
-}
-
-
-/* read codes from a file and load them into the database */
-int
-f_rcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
-{
-    int item, air, mat, los;
-    char name[256];
-    char line[LINELEN];
-    char *cp;
-    FILE *fp;
-    struct directory *dp;
-    struct rt_db_internal intern;
-    struct rt_comb_internal *comb;
-
-    CHECK_DBI_NULL;
-    CHECK_READ_ONLY;
-
-    if (argc < 2 || 2 < argc) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help rcodes");
-	Tcl_Eval(interpreter, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    if ((fp = fopen(argv[1], "r")) == NULL) {
-	Tcl_AppendResult(interpreter, "f_rcodes: Failed to read file - ", argv[1], (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    while (bu_fgets(line, LINELEN, fp) != NULL) {
-	int changed;
-
-	if (sscanf(line, "%d%d%d%d%256s", &item, &air, &mat, &los, name) != 5)
-	    continue; /* not useful */
-
-	/* skip over the path */
-	if ((cp = strrchr(name, (int)'/')) == NULL)
-	    cp = name;
-	else
-	    ++cp;
-
-	if (*cp == '\0')
-	    continue;
-
-	if ((dp = db_lookup(dbip, cp, LOOKUP_NOISY)) == DIR_NULL) {
-	    Tcl_AppendResult(interpreter, "f_rcodes: Warning - ", cp, " not found in database.\n",
-			     (char *)NULL);
-	    continue;
-	}
-
-	if (!(dp->d_flags & DIR_REGION)) {
-	    Tcl_AppendResult(interpreter, "f_rcodes: Warning ", cp, " not a region\n", (char *)NULL);
-	    continue;
-	}
-
-	if (rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource) != ID_COMBINATION) {
-	    Tcl_AppendResult(interpreter, "f_rcodes: Warning ", cp, " not a region\n", (char *)NULL);
-	    continue;
-	}
-
-	comb = (struct rt_comb_internal *)intern.idb_ptr;
-
-	/* make the changes */
-	changed = 0;
-	if (comb->region_id != item) {
-	    comb->region_id = item;
-	    changed = 1;
-	}
-	if (comb->aircode != air) {
-	    comb->aircode = air;
-	    changed = 1;
-	}
-	if (comb->GIFTmater != mat) {
-	    comb->GIFTmater = mat;
-	    changed = 1;
-	}
-	if (comb->los != los) {
-	    comb->los = los;
-	    changed = 1;
-	}
-
-	if (changed) {
-	    /* write out all changes */
-	    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource)) {
-		Tcl_AppendResult(interpreter, "Database write error, aborting.\n",
-				 (char *)NULL);
-		TCL_ERROR_RECOVERY_SUGGESTION;
-		rt_db_free_internal(&intern);
-		return TCL_ERROR;
-	    }
-	}
-
-    }
-
-    return TCL_OK;
 }
 
 
@@ -553,89 +386,13 @@ struct id_to_names {
 };
 
 
-/* F _ W H I C H _ S H A D E R
- *
- * Finds all combinations using the given shaders
- */
-int
-f_which_shader(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
-{
-    int j;
-    struct directory *dp;
-    struct rt_db_internal intern;
-    struct rt_comb_internal *comb;
-    int sflag;
-    int myArgc;
-    char **myArgv;
-
-    CHECK_DBI_NULL;
-
-    if (setjmp(jmp_env) == 0)
-	(void)signal(SIGINT, sig3);  /* allow interrupts */
-    else
-	return TCL_OK;
-
-    myArgc = argc;
-    myArgv = argv;
-    sflag = 0;
-
-    if (myArgc > 1 && strcmp(myArgv[1], "-s") == 0) {
-	--myArgc;
-	++myArgv;
-	sflag = 1;
-    }
-
-    if (myArgc < 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help which_shader");
-	Tcl_Eval(interpreter, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	(void)signal(SIGINT, SIG_IGN);
-	return TCL_ERROR;
-    }
-
-    for (j=1; j<myArgc; j++) {
-
-	if (!sflag)
-	    Tcl_AppendResult(interpreter, "Combination[s] with shader ", myArgv[j],
-			     ":\n", (char *)NULL);
-
-	/* Examine all COMB nodes */
-	FOR_ALL_DIRECTORY_START(dp, dbip) {
-	    if (!(dp->d_flags & DIR_COMB))
-		continue;
-
-	    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-		(void)signal(SIGINT, SIG_IGN);
-		TCL_READ_ERR_return;
-	    }
-	    comb = (struct rt_comb_internal *)intern.idb_ptr;
-
-	    if (!strstr(bu_vls_addr(&comb->shader), myArgv[j]))
-		continue;
-
-	    if (sflag)
-		Tcl_AppendElement(interpreter, dp->d_namep);
-	    else
-		Tcl_AppendResult(interpreter, "   ", dp->d_namep,
-				 "\n", (char *)NULL);
-	    intern.idb_meth->ft_ifree(&intern);
-	} FOR_ALL_DIRECTORY_END;
-    }
-
-    (void)signal(SIGINT, SIG_IGN);
-    return TCL_OK;
-}
-
-
 HIDDEN int
 sol_number(const matp_t matrix, char *name, int *old)
 {
     int i;
     struct identt idbuf1, idbuf2;
     int readval;
+    int ret;
 
     memset(&idbuf1, 0, sizeof(struct identt));
     bu_strlcpy(idbuf1.i_name, name, sizeof(idbuf1.i_name));
@@ -660,7 +417,9 @@ sol_number(const matp_t matrix, char *name, int *old)
     idbuf1.i_index = numsol;
 
     (void)lseek(idfd, (off_t)0L, 2);
-    (void)write(idfd, &idbuf1, sizeof identt);
+    ret = write(idfd, &idbuf1, sizeof identt);
+    if (ret < 0)
+	perror("write");
 
     *old = 0;
     return idbuf1.i_index;
@@ -683,7 +442,7 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
     RT_CK_DIR(dp);
     BU_CK_PTBL(cur_path);
 
-    if (!(dp->d_flags & DIR_COMB))
+    if (!(dp->d_flags & RT_DIR_COMB))
 	return;
 
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
@@ -695,7 +454,7 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
     if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
 	db_non_union_push(comb->tree, &rt_uniresource);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
-	    Tcl_AppendResult(interp, "Cannot flatten tree for editing\n", (char *)NULL);
+	    Tcl_AppendResult(INTERP, "Cannot flatten tree for editing\n", (char *)NULL);
 	    intern.idb_meth->ft_ifree(&intern);
 	    return;
 	}
@@ -716,7 +475,7 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 							   comb->tree, OP_UNION, 0, &rt_uniresource) - tree_list;
     BU_ASSERT_LONG(actual_count, ==, node_count);
 
-    if (dp->d_flags & DIR_REGION) {
+    if (dp->d_flags & RT_DIR_REGION) {
 	numreg++;
 	(void)fprintf(tabptr, " %-4ld %4ld %4ld %4ld %4ld  ",
 		      numreg, comb->region_id, comb->aircode, comb->GIFTmater,
@@ -758,12 +517,12 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 		    break;
 	    }
 
-	    if ((sol_dp=db_lookup(dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) != DIR_NULL) {
-		if (sol_dp->d_flags & DIR_COMB) {
+	    if ((sol_dp=db_lookup(dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
+		if (sol_dp->d_flags & RT_DIR_COMB) {
 		    (void)fprintf(tabptr, "   RG %c %s\n",
 				  op, sol_dp->d_namep);
 		    continue;
-		} else if (!(sol_dp->d_flags & DIR_SOLID)) {
+		} else if (!(sol_dp->d_flags & RT_DIR_SOLID)) {
 		    (void)fprintf(tabptr, "   ?? %c %s\n",
 				  op, sol_dp->d_namep);
 		    continue;
@@ -793,20 +552,20 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 	    } else
 		(void) fprintf(tabptr, "%s:  ", tree_list[i].tl_tree->tr_l.tl_name);
 
-	    if (!old && (sol_dp->d_flags & DIR_SOLID)) {
+	    if (!old && (sol_dp->d_flags & RT_DIR_SOLID)) {
 		/* if we get here, we must be looking for a solid table */
 		bu_vls_init_if_uninit(&tmp_vls);
 		if (rt_functab[sol_intern.idb_type].ft_describe(&tmp_vls, &sol_intern, 1, base2local, &rt_uniresource, dbip) < 0) {
-		    Tcl_AppendResult(interp, tree_list[i].tl_tree->tr_l.tl_name,
+		    Tcl_AppendResult(INTERP, tree_list[i].tl_tree->tr_l.tl_name,
 				     "describe error\n", (char *)NULL);
 		}
 		fprintf(tabptr, "%s", bu_vls_addr(&tmp_vls));
 		bu_vls_free(&tmp_vls);
 	    }
-	    if (nsoltemp && (sol_dp->d_flags & DIR_SOLID))
+	    if (nsoltemp && (sol_dp->d_flags & RT_DIR_SOLID))
 		rt_db_free_internal(&sol_intern);
 	}
-    } else if (dp->d_flags & DIR_COMB) {
+    } else if (dp->d_flags & RT_DIR_COMB) {
 	int cur_length;
 
 	bu_ptbl_ins(cur_path, (long *)dp);
@@ -817,8 +576,8 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 	    mat_t new_mat;
 
 	    nextdp = db_lookup(dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY);
-	    if (nextdp == DIR_NULL) {
-		Tcl_AppendResult(interp, "\tskipping this object\n", (char *)NULL);
+	    if (nextdp == RT_DIR_NULL) {
+		Tcl_AppendResult(INTERP, "\tskipping this object\n", (char *)NULL);
 		continue;
 	    }
 
@@ -832,7 +591,7 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 	    bu_ptbl_trunc(cur_path, cur_length);
 	}
     } else {
-	Tcl_AppendResult(interp, "Illegal flags for ", dp->d_namep,
+	Tcl_AppendResult(INTERP, "Illegal flags for ", dp->d_namep,
 			 "skipping\n", (char *)NULL);
 	return;
     }
@@ -848,7 +607,7 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
  * control routine for building ascii tables
  */
 int
-f_tables(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
+f_tables(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     static const char sortcmd[] = "sort -n +1 -2 -o /tmp/ord_id ";
     static const char catcmd[] = "cat /tmp/ord_id >> ";
@@ -892,13 +651,13 @@ f_tables(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char 
     status = TCL_OK;
 
     /* find out which ascii table is desired */
-    if (strcmp(argv[0], "solids") == 0) {
+    if (BU_STR_EQUAL(argv[0], "solids")) {
 	/* complete summary - down to solids/paremeters */
 	flag = SOL_TABLE;
-    } else if (strcmp(argv[0], "regions") == 0) {
+    } else if (BU_STR_EQUAL(argv[0], "regions")) {
 	/* summary down to solids as members of regions */
 	flag = REG_TABLE;
-    } else if (strcmp(argv[0], "idents") == 0) {
+    } else if (BU_STR_EQUAL(argv[0], "idents")) {
 	/* summary down to regions */
 	flag = ID_TABLE;
     } else {
@@ -960,7 +719,7 @@ f_tables(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char 
 	struct directory *dp;
 
 	bu_ptbl_reset(&cur_path);
-	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL)
+	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL)
 	    new_tables(dp, &cur_path, (const matp_t)bn_mat_identity, flag);
 	else
 	    Tcl_AppendResult(interpreter, " skip this object\n", (char *)NULL);
@@ -979,6 +738,8 @@ f_tables(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char 
 
 	(void)fclose(tabptr);
     } else {
+	int ret;
+
 	(void)fprintf(tabptr, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
 	(void)fclose(tabptr);
 
@@ -989,13 +750,17 @@ f_tables(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char 
 	bu_vls_strcpy(&cmd, sortcmd);
 	bu_vls_strcat(&cmd, argv[1]);
 	Tcl_AppendResult(interpreter, bu_vls_addr(&cmd), "\n", (char *)NULL);
-	(void)system(bu_vls_addr(&cmd));
+	ret = system(bu_vls_addr(&cmd));
+	if (ret != 0)
+	    bu_log("sort command failed\n");
 
 	bu_vls_trunc(&cmd, 0);
 	bu_vls_strcpy(&cmd, catcmd);
 	bu_vls_strcat(&cmd, argv[1]);
 	Tcl_AppendResult(interpreter, bu_vls_addr(&cmd), "\n", (char *)NULL);
-	(void)system(bu_vls_addr(&cmd));
+	ret = system(bu_vls_addr(&cmd));
+	if (ret != 0)
+	    bu_log("sort command failed\n");
 
 	(void)unlink("/tmp/ord_id\0");
     }

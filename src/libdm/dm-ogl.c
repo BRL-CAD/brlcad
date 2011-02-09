@@ -1,7 +1,7 @@
 /*                        D M - O G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -116,7 +116,7 @@ HIDDEN int ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsi
 HIDDEN int ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 HIDDEN int ogl_setLineAttr(struct dm *dmp, int width, int style);
 HIDDEN int ogl_configureWin_guts(struct dm *dmp, int force);
-HIDDEN int ogl_configureWin(struct dm *dmp);
+HIDDEN int ogl_configureWin(struct dm *dmp, int force);
 HIDDEN int ogl_setLight(struct dm *dmp, int lighting_on);
 HIDDEN int ogl_setTransparency(struct dm *dmp, int transparency_on);
 HIDDEN int ogl_setDepthMask(struct dm *dmp, int depthMask_on);
@@ -127,6 +127,7 @@ HIDDEN int ogl_beginDList(struct dm *dmp, unsigned int list);
 HIDDEN int ogl_endDList(struct dm *dmp);
 HIDDEN int ogl_drawDList(struct dm *dmp, unsigned int list);
 HIDDEN int ogl_freeDLists(struct dm *dmp, unsigned int list, int range);
+HIDDEN int ogl_getDisplayImage(struct dm *dmp, unsigned char **image);
 
 HIDDEN int ogl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 HIDDEN int ogl_setLight(struct dm *dmp, int lighting_on);
@@ -160,6 +161,7 @@ struct dm dm_ogl = {
     ogl_endDList,
     ogl_drawDList,
     ogl_freeDLists,
+    ogl_getDisplayImage, /* display to image function */
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */
@@ -171,6 +173,8 @@ struct dm dm_ogl = {
     1,
     0,
     0,
+    0,/* bytes per pixel */
+    0,/* bits per channel */
     0,
     0,
     1.0, /* aspect ratio */
@@ -191,6 +195,7 @@ struct dm dm_ogl = {
     1,				/* zbuffer */
     0,				/* no zclipping */
     0,                          /* clear back buffer after drawing and swap */
+    0,                          /* not overriding the auto font size */
     0				/* Tcl interpreter */
 };
 
@@ -339,69 +344,10 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 		    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
     }
 
-
-    /* Always try to choose a the font that best fits the window size.
-     */
-
-    if (dmp->dm_width < 582) {
-	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 5) {
+    if (DM_VALID_FONT_SIZE(dmp->dm_fontsize)) {
+	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != dmp->dm_fontsize) {
 	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						FONT5)) != NULL) {
-		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-	    }
-	}
-    } else if (dmp->dm_width < 679) {
-	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 6) {
-	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						FONT6)) != NULL) {
-		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-	    }
-	}
-    } else if (dmp->dm_width < 776) {
-	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 7) {
-	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						FONT7)) != NULL) {
-		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-	    }
-	}
-    } else if (dmp->dm_width < 873) {
-	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 8) {
-	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						FONT8)) != NULL) {
-		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-	    }
-	}
-    } else if (dmp->dm_width < 1455) {
-	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 9) {
-	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						FONT9)) != NULL) {
-		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-	    }
-	}
-    } else if (dmp->dm_width < 2037) {
-	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 10) {
-	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						FONT10)) != NULL) {
+						DM_FONT_SIZE_TO_NAME(dmp->dm_fontsize))) != NULL) {
 		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
@@ -410,14 +356,85 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 	    }
 	}
     } else {
-	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 11) {
-	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						FONT11)) != NULL) {
-		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+	/* Always try to choose a the font that best fits the window size.
+	 */
+
+	if (dmp->dm_width < 582) {
+	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 5) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+						    FONT5)) != NULL) {
+		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		}
+	    }
+	} else if (dmp->dm_width < 679) {
+	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 6) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+						    FONT6)) != NULL) {
+		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		}
+	    }
+	} else if (dmp->dm_width < 776) {
+	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 7) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+						    FONT7)) != NULL) {
+		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		}
+	    }
+	} else if (dmp->dm_width < 873) {
+	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 8) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+						    FONT8)) != NULL) {
+		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		}
+	    }
+	} else if (dmp->dm_width < 1455) {
+	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 9) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+						    FONT9)) != NULL) {
+		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		}
+	    }
+	} else if (dmp->dm_width < 2037) {
+	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 10) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+						    FONT10)) != NULL) {
+		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		}
+	    }
+	} else {
+	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 12) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+						    FONT12)) != NULL) {
+		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		}
 	    }
 	}
     }
@@ -427,9 +444,9 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 
 
 HIDDEN int
-ogl_configureWin(struct dm *dmp)
+ogl_configureWin(struct dm *dmp, int force)
 {
-    return ogl_configureWin_guts(dmp, 0);
+    return ogl_configureWin_guts(dmp, force);
 }
 
 
@@ -693,6 +710,8 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     *dmp = dm_ogl; /* struct copy */
     dmp->dm_interp = interp;
     dmp->dm_lineWidth = 1;
+	dmp->dm_bytes_per_pixel = sizeof(GLuint);
+	dmp->dm_bits_per_channel = 8;
 
     dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "ogl_open: dm_xvars");
     if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
@@ -910,7 +929,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 
     for (j = 0; j < ndevices; ++j, list++) {
 	if (list->use == IsXExtensionDevice) {
-	    if (!strcmp(list->name, "dial+buttons")) {
+	    if (BU_STR_EQUAL(list->name, "dial+buttons")) {
 		if ((dev = XOpenDevice(pubvars->dpy,
 				       list->id)) == (XDevice *)NULL) {
 		    bu_log("ogl_open: Couldn't open the dials+buttons\n");
@@ -1102,7 +1121,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	glXMakeCurrent(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy, None, NULL);
 	glXDestroyContext(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy, old_glxContext);
     } else {
-	/* dmp1 will share it's display lists with dmp2 */
+	/* dmp1 will share its display lists with dmp2 */
 
 	old_glxContext = ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc;
 
@@ -2054,7 +2073,7 @@ ogl_setZBuffer(struct dm *dmp, int zbuffer_on)
     return TCL_OK;
 }
 
-int
+HIDDEN int
 ogl_beginDList(struct dm *dmp, unsigned int list)
 {
     if (dmp->dm_debugLevel)
@@ -2071,7 +2090,7 @@ ogl_beginDList(struct dm *dmp, unsigned int list)
     return TCL_OK;
 }
 
-int
+HIDDEN int
 ogl_endDList(struct dm *dmp)
 {
     if (dmp->dm_debugLevel)
@@ -2081,7 +2100,7 @@ ogl_endDList(struct dm *dmp)
     return TCL_OK;
 }
 
-int
+HIDDEN int
 ogl_drawDList(struct dm *dmp, unsigned int list)
 {
     if (dmp->dm_debugLevel)
@@ -2091,7 +2110,7 @@ ogl_drawDList(struct dm *dmp, unsigned int list)
     return TCL_OK;
 }
 
-int
+HIDDEN int
 ogl_freeDLists(struct dm *dmp, unsigned int list, int range)
 {
     if (dmp->dm_debugLevel)
@@ -2106,6 +2125,107 @@ ogl_freeDLists(struct dm *dmp, unsigned int list, int range)
 
     glDeleteLists(dmp->dm_displaylist + list, (GLsizei)range);
     return TCL_OK;
+}
+
+HIDDEN int
+ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
+{
+    unsigned char *idata = NULL;
+    int width = 0;
+    int height = 0;
+    int found_valid_dm = 0;
+    int bytes_per_pixel = 3; /*rgb no alpha for raw pix */
+    GLuint *pixels;
+    unsigned int pixel;
+    unsigned int red_mask = 0xff000000;
+    unsigned int green_mask = 0x00ff0000;
+    unsigned int blue_mask = 0x0000ff00;
+    unsigned int alpha_mask = 0x000000ff;
+    int h,w;
+    int big_endian, swap_bytes;
+
+    if ((bu_byteorder() == BU_BIG_ENDIAN))
+	big_endian = 1;
+    else
+	big_endian = 0;
+
+#if defined(DM_WGL)
+    /* WTF */
+    swap_bytes = !big_endian;
+#else
+    swap_bytes = big_endian;
+#endif
+
+    if (dmp->dm_type == DM_TYPE_WGL || dmp->dm_type == DM_TYPE_OGL) {
+	int make_ret = 0;
+	found_valid_dm = 1;
+	width = dmp->dm_width;
+	height = dmp->dm_height;
+
+	pixels = bu_calloc(width * height, sizeof(GLuint), "pixels");
+
+#if defined(DM_WGL)
+	make_ret = wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
+				  ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc);
+#else
+	make_ret = glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+				  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+				  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc);
+#endif
+
+	{
+
+
+	    glReadBuffer(GL_FRONT);
+#if defined(DM_WGL)
+	    /* XXX GL_UNSIGNED_INT_8_8_8_8 is currently not
+	     * available on windows.  Need to update when it
+	     * becomes available.
+	     */
+	    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+#else
+	    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, pixels);
+#endif
+
+	    idata = (unsigned char *)bu_calloc(height * width * bytes_per_pixel,sizeof(unsigned char),"rgb data");
+	    *image = idata;
+
+	    for (h = 0; h < height; h++) {
+		    for (w = 0; w < width; w++) {
+		    	int i = h*width + w;
+		    	int i_h_inv = (height - h - 1)*width + w;
+		    	int j = i*bytes_per_pixel;
+				unsigned char *value = (unsigned char *)(idata + j);
+				unsigned char alpha;
+				pixel = pixels[i_h_inv];
+
+				value[0] = (pixel & red_mask) >> 24;
+				value[1] = (pixel & green_mask) >> 16;
+				value[2] = (pixel & blue_mask) >> 8;
+				alpha = pixel & alpha_mask;
+#if defined(DM_WGL)
+				if (swap_bytes) {
+					unsigned char tmp_byte;
+
+					value[0] = alpha;
+					/* swap byte1 and byte2 */
+					tmp_byte = value[1];
+					value[1] = value[2];
+					value[2] = tmp_byte;
+				}
+#endif
+			}
+
+	    }
+
+	    bu_free(pixels, "pixels");
+	}
+    } else {
+    	bu_log("ogl_getDisplayImage: Display type not set as OGL or WGL\n");
+    	return TCL_ERROR;
+    }
+
+    return TCL_OK; /* caller will need to bu_free(idata, "image data"); */
 }
 
 #endif /* DM_OGL */

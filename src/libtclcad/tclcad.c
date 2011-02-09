@@ -1,7 +1,7 @@
 /*                        T C L C A D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,10 +28,8 @@
 
 #define RESOURCE_INCLUDED 1
 #include <tcl.h>
-#include <itcl.h>
-
 #ifdef HAVE_TK
-#  include <itk.h>
+#  include <tk.h>
 #endif
 
 #include "bio.h"
@@ -64,16 +62,16 @@ Tclcad_Init(Tcl_Interp *interp)
     tclcad_auto_path(interp);
 
     /* Initialize [incr Tcl] */
-    if (Itcl_Init(interp) == TCL_ERROR) {
-	bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
+    if (Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
+      bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+      return TCL_ERROR;
     }
-
+   
 #ifdef HAVE_TK
     /* Initialize [incr Tk] */
-    if (Itk_Init(interp) == TCL_ERROR) {
-	bu_log("Itk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
+    if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
+      bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+      return TCL_ERROR;
     }
 #endif
 

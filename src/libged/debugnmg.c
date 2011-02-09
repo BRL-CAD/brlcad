@@ -1,7 +1,7 @@
 /*                         D E B U G N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ ged_debugnmg(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    bu_vls_printb(&gedp->ged_result_str, "librt rt_g.NMG_debug", bu_debug, NMG_DEBUG_FORMAT );
+    bu_vls_printb(&gedp->ged_result_str, "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
     bu_vls_printf(&gedp->ged_result_str, "\n");
 
     return GED_OK;

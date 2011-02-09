@@ -1,7 +1,7 @@
 /*                            U I . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -534,15 +534,15 @@ initUi()
 static int
 unitStrToInt(char *str)
 {
-    if (strcmp(str, UNITS_INCHES) == 0)
+    if (BU_STR_EQUAL(str, UNITS_INCHES))
 	return U_INCHES;
-    if (strcmp(str, UNITS_FEET) == 0)
+    if (BU_STR_EQUAL(str, UNITS_FEET))
 	return U_FEET;
-    if (strcmp(str, UNITS_MILLIMETERS) == 0)
+    if (BU_STR_EQUAL(str, UNITS_MILLIMETERS))
 	return U_MILLIMETERS;
-    if (strcmp(str, UNITS_CENTIMETERS) == 0)
+    if (BU_STR_EQUAL(str, UNITS_CENTIMETERS))
 	return U_CENTIMETERS;
-    if (strcmp(str, UNITS_METERS) == 0)
+    if (BU_STR_EQUAL(str, UNITS_METERS))
 	return U_METERS;
     return U_BAD;
 }

@@ -1,7 +1,7 @@
 /*                         S U M M A R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,13 +63,13 @@ ged_summary(struct ged *gedp, int argc, const char *argv[])
     cp = (char *)argv[1];
     while (*cp)  switch (*cp++) {
 	case 'p':
-	    flags |= DIR_SOLID;
+	    flags |= RT_DIR_SOLID;
 	    break;
 	case 'r':
-	    flags |= DIR_REGION;
+	    flags |= RT_DIR_REGION;
 	    break;
 	case 'g':
-	    flags |= DIR_COMB;
+	    flags |= RT_DIR_COMB;
 	    break;
 	default:
 	    bu_vls_printf(&gedp->ged_result_str, "%s:  p, r or g are the only valid parmaters\n", argv[0]);
@@ -86,7 +86,7 @@ ged_summary(struct ged *gedp, int argc, const char *argv[])
  *
  * Summarize the contents of the directory by categories
  * (solid, comb, region).  If flag is != 0, it is interpreted
- * as a request to print all the names in that category (eg, DIR_SOLID).
+ * as a request to print all the names in that category (eg, RT_DIR_SOLID).
  */
 static void
 ged_dir_summary(struct ged	*gedp,
@@ -100,11 +100,11 @@ ged_dir_summary(struct ged	*gedp,
 
     sol = comb = reg = 0;
     for (i = 0; i < RT_DBNHASH; i++)  {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_flags & DIR_SOLID)
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (dp->d_flags & RT_DIR_SOLID)
 		sol++;
-	    if (dp->d_flags & DIR_COMB) {
-		if (dp->d_flags & DIR_REGION)
+	    if (dp->d_flags & RT_DIR_COMB) {
+		if (dp->d_flags & RT_DIR_REGION)
 		    reg++;
 		else
 		    comb++;
@@ -130,7 +130,7 @@ ged_dir_summary(struct ged	*gedp,
      * of interest) to the array
      */
     for (i = 0; i < RT_DBNHASH; i++)
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    if (dp->d_flags & flag)
 		*dirp++ = dp;
 

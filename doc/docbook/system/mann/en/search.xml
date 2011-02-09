@@ -1,52 +1,15 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2008-2010 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR AS IS'' AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='search1'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="search1">
 
 <refmeta>
   <refentrytitle>SEARCH</refentrytitle>
   <manvolnum>nged</manvolnum>
-  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-  <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
 </refmeta>
 
-<refnamediv id='name'>
+<refnamediv xml:id="name">
   <refname>search</refname>
   <refpurpose>
     find and list objects in a BRL-CAD database
@@ -54,20 +17,20 @@
 </refnamediv>
 
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-  <cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
     <command>search</command>    
-    <arg choice='opt'><replaceable>path</replaceable></arg>
-    <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>path</replaceable></arg>
+    <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsect1 id='description'>
-  <title>DESCRIPTION</title>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  
   <para>
     <command>search</command> works in a fashion similar to Unix-style 
     find commands (internally it is based on OpenBSD's and NetBSD's find 
-    code) but searches <emphasis remap='I'>objects</emphasis> in the 
+    code) but searches <emphasis remap="I">objects</emphasis> in the 
     current open database in MGED rather than files in a file system.  By
     default, the output is a list of matches printed in the MGED command 
     window, but other output options are available. Matching of objects 
@@ -76,96 +39,96 @@
     <link linkend="operators">OPERATORS</link>
     described below.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='primitives'>
-  <title>PRIMITIVES:</title>
-  <variablelist remap='TP'>
+<refsection xml:id="primitives"><info><title>PRIMITIVES:</title></info>
+  
+  <variablelist remap="TP">
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>-attr</emphasis> <emphasis remap='I'>attrib[&gt;/&lt;/=val]</emphasis></term>
+      <term><emphasis remap="B" role="bold">-attr</emphasis> <emphasis remap="I">attrib[&gt;/&lt;/=val]</emphasis></term>
       <listitem>
 	<para>
 	  Returns TRUE if the object has attribute
-	  <emphasis remap='I'>attrib</emphasis>. If a specific value is 
+	  <emphasis remap="I">attrib</emphasis>. If a specific value is 
 	  also supplied for the attribute with an equal condition, TRUE is returned if 
 	  the object both has the attribute and the attribute is set to value
-	  <emphasis remap='I'>val.</emphasis>  In the case of &gt;, &lt;, &gt;=, and &lt;=
-	  there are two possibilities - if <emphasis remap='I'>val</emphasis> is numerical
+	  <emphasis remap="I">val.</emphasis>  In the case of &gt;, &lt;, &gt;=, and &lt;=
+	  there are two possibilities - if <emphasis remap="I">val</emphasis> is numerical
 	  a numerical comparison is performed, otherwise a string comparison is performed.
-	  Both <emphasis remap='I'>attrib</emphasis> and <emphasis remap='I'>val</emphasis> 
+	  Both <emphasis remap="I">attrib</emphasis> and <emphasis remap="I">val</emphasis> 
 	  are treated as patterns under shell pattern matching rules when a string comparison
 	  is performed, but in numerical mode only the attribute name is pattern matched.
 	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>-iname</emphasis> <emphasis remap='I'>pattern</emphasis></term>
+      <term><emphasis remap="B" role="bold">-iname</emphasis> <emphasis remap="I">pattern</emphasis></term>
       <listitem>
 	<para>
-	  Like <emphasis remap='B' role='bold'>name</emphasis> except the match is 
+	  Like <emphasis remap="B" role="bold">name</emphasis> except the match is 
 	  case insensitive.
 	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>-iregex</emphasis> <emphasis remap='I'>pattern</emphasis></term>
+      <term><emphasis remap="B" role="bold">-iregex</emphasis> <emphasis remap="I">pattern</emphasis></term>
       <listitem>
 	<para>
-	  Like <emphasis remap='B' role='bold'>regex</emphasis>
+	  Like <emphasis remap="B" role="bold">regex</emphasis>
 	  except the match is case insensitive.
 	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>-maxdepth</emphasis> <emphasis remap='I'>n</emphasis></term>
+      <term><emphasis remap="B" role="bold">-maxdepth</emphasis> <emphasis remap="I">n</emphasis></term>
       <listitem>
 	<para>
 	  True if the depth of the object in the tree is less than
-	  or equal to <emphasis remap='I'>n</emphasis>.
+	  or equal to <emphasis remap="I">n</emphasis>.
 	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>-mindepth</emphasis> <emphasis remap='I'>n</emphasis></term>
+      <term><emphasis remap="B" role="bold">-mindepth</emphasis> <emphasis remap="I">n</emphasis></term>
       <listitem>
 	<para>
-	  True if the depth of the object in the gree is greater than 
-	  or equal to <emphasis remap='I'>n</emphasis>.
+	  True if the depth of the object in the tree is greater than 
+	  or equal to <emphasis remap="I">n</emphasis>.
 	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>-name</emphasis> <emphasis remap='I'>pattern</emphasis></term>
+      <term><emphasis remap="B" role="bold">-name</emphasis> <emphasis remap="I">pattern</emphasis></term>
       <listitem>
 	<para>
 	  True if the object name (not the full path, just the name) matches
-	  <emphasis remap='I'>pattern</emphasis>. The evaluation is done according 
+	  <emphasis remap="I">pattern</emphasis>. The evaluation is done according 
 	  to shell pattern matching rules.
 	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>-nnodes</emphasis> <emphasis remap='I'>n</emphasis></term>
+      <term><emphasis remap="B" role="bold">-nnodes</emphasis> <emphasis remap="I">n</emphasis></term>
       <listitem>
 	<para>
-	  True if the object is a combination and has <emphasis remap='I'>n</emphasis> nodes.  This
+	  True if the object is a combination and has <emphasis remap="I">n</emphasis> nodes.  This
           option also supports supplying &lt;, &gt;, &lt;=, and &gt;= in front of the number to support
           returning true for objects with node counts less than, greater than, less than or equal to,
-          and greater than or equal to <emphasis remap='I'>n</emphasis>.
+          and greater than or equal to <emphasis remap="I">n</emphasis>.
 	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>-path</emphasis> <emphasis remap='I'>pattern</emphasis></term>
+      <term><emphasis remap="B" role="bold">-path</emphasis> <emphasis remap="I">pattern</emphasis></term>
       <listitem>
 	<para>
-	  True if the object path matches <emphasis remap='I'>pattern.</emphasis>
+	  True if the object path matches <emphasis remap="I">pattern.</emphasis>
 	  The evaluation is done according to shell pattern matching rules.
 	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>-print</emphasis></term>
+      <term><emphasis remap="B" role="bold">-print</emphasis></term>
       <listitem>
 	<para>
 	  Evaluates to TRUE - used to print out the path and name of the object.
@@ -173,7 +136,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>-print0</emphasis></term>
+      <term><emphasis remap="B" role="bold">-print0</emphasis></term>
       <listitem>
 	<para>
 	  Evaluates to TRUE - prints the pathname of the object to standard output, 
@@ -182,23 +145,23 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>-regex</emphasis> <emphasis remap='I'>pattern</emphasis></term>
+      <term><emphasis remap="B" role="bold">-regex</emphasis> <emphasis remap="I">pattern</emphasis></term>
       <listitem>
 	<para>
-	  True if the object path matches <emphasis remap='I'>pattern.</emphasis>
+	  True if the object path matches <emphasis remap="I">pattern.</emphasis>
 	  Pattern evaluation is done using Regular Expression matching.
 	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>-stdattr</emphasis></term>
+      <term><emphasis remap="B" role="bold">-stdattr</emphasis></term>
       <listitem>
 	<para>
 	  Returns TRUE if an object has ONLY standard attributes associated with it.  
 	  Standard attributes in BRL-CAD are:
-	  <table>
-	    <title>Standard Attributes</title>
-	    <tgroup cols='2'>
+	  <table><info><title>Standard Attributes</title></info>
+	    
+	    <tgroup cols="2">
 	      <tbody>
 		<row><entry>GIFTmater</entry><entry>inherit</entry></row>
 		<row><entry>material_id</entry><entry>oshader</entry></row>
@@ -210,14 +173,14 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>-type</emphasis> <emphasis remap='I'>pattern</emphasis></term>
+      <term><emphasis remap="B" role="bold">-type</emphasis> <emphasis remap="I">pattern</emphasis></term>
       <listitem>
 	<para>
-	  Returns TRUE if the type of the object matches <emphasis remap='I'>pattern.</emphasis>
+	  Returns TRUE if the type of the object matches <emphasis remap="I">pattern.</emphasis>
 	  Pattern evaluation is done using shell pattern matching.  Types recognized include:
-	  <table>
-	    <title>Primitives</title>
-	    <tgroup cols='6'>
+	  <table><info><title>Primitives</title></info>
+	    
+	    <tgroup cols="6">
 	      <tbody>
 		<row>
 		  <entry>arb4</entry>
@@ -264,16 +227,16 @@
 		  <entry>tgc</entry>
 		  <entry>tor</entry>
 		  <entry>vol</entry>
-		  <entry></entry>
-		  <entry></entry>
+		  <entry/>
+		  <entry/>
 		</row>
 	      </tbody>
 	    </tgroup>
 	  </table>
 	  
-	  <table>
-	    <title>Combinations</title>
-	    <tgroup cols='2'>
+	  <table><info><title>Combinations</title></info>
+	    
+	    <tgroup cols="2">
 	      <thead>
 		<row>
 		  <entry>Type</entry>
@@ -297,13 +260,13 @@
     </varlistentry>
   </variablelist>
   
-</refsect1>
+</refsection>
 
-<refsect1 id='operators'>
-  <title>OPERATORS</title>
-  <variablelist remap='TP'>
+<refsection xml:id="operators"><info><title>OPERATORS</title></info>
+  
+  <variablelist remap="TP">
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>(</emphasis> <emphasis remap='I'>expression</emphasis> <emphasis remap='B' role='bold'>)</emphasis></term>
+      <term><emphasis remap="B" role="bold">(</emphasis> <emphasis remap="I">expression</emphasis> <emphasis remap="B" role="bold">)</emphasis></term>
       <listitem>
 	<para>
 	  Evaluates to true if the expression inside the parenthesies evaluates to true.
@@ -312,7 +275,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>-above</emphasis> <emphasis remap='I'>expression</emphasis></term>
+      <term><emphasis remap="B" role="bold">-above</emphasis> <emphasis remap="I">expression</emphasis></term>
       <listitem>
 	<para>
 	  The above operator applies the expression to every object above the current
@@ -325,7 +288,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='I'>expression</emphasis> <emphasis remap='B' role='bold'>-and</emphasis> <emphasis remap='I'>expression</emphasis> (a.k.a -a)</term>
+      <term><emphasis remap="I">expression</emphasis> <emphasis remap="B" role="bold">-and</emphasis> <emphasis remap="I">expression</emphasis> (a.k.a -a)</term>
       <listitem>
 	<para>
 	  The and operator operates like the logical AND operator - TRUE only if both
@@ -335,7 +298,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>-below</emphasis> <emphasis remap='I'>expression</emphasis></term>
+      <term><emphasis remap="B" role="bold">-below</emphasis> <emphasis remap="I">expression</emphasis></term>
       <listitem>
 	<para>
 	  The below operator applies the expression to every object below the current
@@ -346,7 +309,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>-not</emphasis> <emphasis remap='I'>expression</emphasis> (a.k.a -!)</term>
+      <term><emphasis remap="B" role="bold">-not</emphasis> <emphasis remap="I">expression</emphasis> (a.k.a -!)</term>
       <listitem>
 	<para>
 	  The logical NOT operator - returns the opposite of the evaluation result of
@@ -355,7 +318,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='I'>expression</emphasis> <emphasis remap='B' role='bold'>-or</emphasis> <emphasis remap='I'>expression</emphasis> (a.k.a -o)</term>
+      <term><emphasis remap="I">expression</emphasis> <emphasis remap="B" role="bold">-or</emphasis> <emphasis remap="I">expression</emphasis> (a.k.a -o)</term>
       <listitem>
 	<para>
 	  The logical OR operator - true if either expression is true.
@@ -363,10 +326,10 @@
       </listitem>
     </varlistentry>
   </variablelist>
-</refsect1>
+</refsection>
 
-<refsect1 id='a_note_on_expressions'>
-  <title>A Note on Expressions</title>
+<refsection xml:id="a_note_on_expressions"><info><title>A Note on Expressions</title></info>
+  
   <para>
     All primaries and operands must be expressed as separate arguments to search.
     In practice, this means that there must be a space between each element in a
@@ -378,18 +341,18 @@
   <para>
     While this may seem like a rather verbose way of writing the expression, it greatly
     simplifies the parsing of the expression and is standard for virtually all
-    <emphasis remap='B' role='bold'>find</emphasis> type commands. Because [a-z] and [0-9] are atomic 
+    <emphasis remap="B" role="bold">find</emphasis> type commands. Because [a-z] and [0-9] are atomic 
     arguments as far as search is concerned, they should NOT be expanded in a similar fashion.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='examples'>
-  <title>EXAMPLES</title>
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  
   <para>
     The following are run from the MGED command prompt:
   </para>
-  <example>
-    <title>Shell Globbing Based Pattern Match of Object Name</title>
+  <example><info><title>Shell Globbing Based Pattern Match of Object Name</title></info>
+    
     <para>
       <userinput>search -name *.s</userinput>
     </para>
@@ -398,8 +361,8 @@
     </para>
   </example>
 
-  <example>
-    <title>Name Pattern Matching at Depth >= 3</title>
+  <example><info><title>Name Pattern Matching at Depth &gt;= 3</title></info>
+    
     <para>
       <userinput>search -name *.s -mindepth 3</userinput>
     </para>
@@ -409,8 +372,8 @@
     </para>
   </example>
 
-  <example>
-    <title>Searching by Type</title>
+  <example><info><title>Searching by Type</title></info>
+    
     <para>
       <userinput>search . -type eto</userinput>
     </para>
@@ -421,8 +384,8 @@
     </para>
   </example>
 
- <example>
-    <title>Finding all Nested Regions</title>
+ <example><info><title>Finding all Nested Regions</title></info>
+    
     <para>
       <userinput>search -type region -above -type region</userinput>
     </para>
@@ -433,8 +396,8 @@
     </para>
   </example>
 
-  <example>
-    <title>Finding all Assemblies</title>
+  <example><info><title>Finding all Assemblies</title></info>
+    
     <para>
       <userinput>search -below -type region ! -type region</userinput>
     </para>
@@ -444,8 +407,8 @@
     </para>
   </example>
 
-  <example>
-    <title>Finding all Combinations below Regions</title>
+  <example><info><title>Finding all Combinations below Regions</title></info>
+    
     <para>
       <userinput>search ! ( -below -type region ) ! -type region -type comb</userinput>
     </para>
@@ -454,8 +417,8 @@
     </para>
   </example>
 
-  <example>
-    <title>Finding all Empty Combinations</title>
+  <example><info><title>Finding all Empty Combinations</title></info>
+    
     <para>
       <userinput>search -nnodes 0</userinput>
     </para>
@@ -464,8 +427,8 @@
     </para>
   </example>
 
-  <example>
-    <title>Finding all Combinations With 10 or More Nodes</title>
+  <example><info><title>Finding all Combinations With 10 or More Nodes</title></info>
+    
     <para>
       <userinput>search -nnodes &gt;=10</userinput>
     </para>
@@ -475,46 +438,47 @@
   </example>
 
  
-</refsect1>
+</refsection>
 
-<refsect1 id='diagnostics'>
-  <title>DIAGNOSTICS</title>
+<refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
+  
   <para>
     Errors will be returned if parsing of the arguments fails, or one of the primaries's
     evaluation functions returns an error.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='author'>
-  <title>AUTHOR</title>
-  <para>Clifford Yapp</para>
-</refsect1>
+<info>
+  <author>
+    <personname>Clifford Yapp</personname>
+    <contrib></contrib>
+  </author>
+</info>
 
-<refsect1 id='copyright'>
-  <title>COPYRIGHT</title>
+<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+  
   <para>
-    This software is Copyright (c) 2008-2010 United States Government as
+    This software is Copyright (c) 2008-2011 United States Government as
     represented by the U.S. Army Research Laboratory. All rights reserved.
     Portions Copyright 1990, 1993, 1994 The Regents of the University of California,
     per copyright and license information from OpenBSD and NetBSD.  For more details
     see the copyright statements in search.c and search.h.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='bugs'>
-  <title>BUGS</title>
+<refsection xml:id="bugs"><info><title>BUGS</title></info>
+  
   <para>
     Bugs resulting from incorrect parsing of shell pattern expressions are the
     result of libbu's fnmatch.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='bug_reports'>
-  <title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
-</refsect1>
+</refsection>
 </refentry>
-

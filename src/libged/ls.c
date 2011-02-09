@@ -1,7 +1,7 @@
 /*                         L S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,29 +42,21 @@
  * G E D _ G E T S P A C E
  *
  * This routine walks through the directory entry list and mallocs
- * enough space for pointers to hold:
- *
- * a) all of the entries if called with an argument of 0, or
- * b) the number of entries specified by the argument if > 0.
+ * enough space for pointers to hold the number of entries specified
+ * by the argument if > 0.
  *
  */
 struct directory **
 _ged_getspace(struct db_i *dbip,
-	      int num_entries)
+	      size_t num_entries)
 {
     struct directory **dir_basep;
 
-    if (num_entries < 0) {
-	bu_log("_ged_getspace: was passed %d, used 0\n",
-	       num_entries);
-	num_entries = 0;
-    }
-
-    if (num_entries == 0) num_entries = db_get_directory_size(dbip);
+    if (num_entries == 0)
+	num_entries = db_directory_size(dbip);
 
     /* Allocate and cast num_entries worth of pointers */
-    dir_basep = (struct directory **) bu_malloc((num_entries+1) * sizeof(struct directory *),
-						"_ged_getspace *dir[]");
+    dir_basep = (struct directory **) bu_calloc((num_entries+1), sizeof(struct directory *), "_ged_getspace *dir[]");
     return dir_basep;
 }
 
@@ -76,14 +68,13 @@ _ged_getspace(struct db_i *dbip,
  * compare on the respective names and return that value.
  */
 static int
-cmpdirname(const genptr_t a,
-	   const genptr_t b)
+cmpdirname(const genptr_t a, const genptr_t b)
 {
     struct directory **dp1, **dp2;
 
     dp1 = (struct directory **)a;
     dp2 = (struct directory **)b;
-    return strcmp((*dp1)->d_namep, (*dp2)->d_namep);
+    return bu_strcmp((*dp1)->d_namep, (*dp2)->d_namep);
 }
 
 
@@ -97,67 +88,14 @@ cmpdirname(const genptr_t a,
 void
 _ged_vls_col_pr4v(struct bu_vls *vls,
 		  struct directory **list_of_names,
-		  int num_in_list,
+		  size_t num_in_list,
 		  int no_decorate)
 {
-#if 0
-    int lines, i, j, namelen, this_one;
-
-    qsort((genptr_t)list_of_names,
-	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)(const void *, const void *))cmpdirname);
-
-    /*
-     * For the number of (full and partial) lines that will be needed,
-     * print in vertical format.
-     */
-    lines = (num_in_list + 3) / 4;
-    for (i=0; i < lines; i++) {
-	for (j=0; j < 4; j++) {
-	    this_one = j * lines + i;
-	    /* Restrict the print to 16 chars per spec. */
-	    bu_vls_printf(vls,  "%.16s", list_of_names[this_one]->d_namep);
-	    namelen = strlen(list_of_names[this_one]->d_namep);
-	    if (namelen > 16)
-		namelen = 16;
-	    /*
-	     * Region and ident checks here....  Since the code has
-	     * been modified to push and sort on pointers, the
-	     * printing of the region and ident flags must be delayed
-	     * until now.  There is no way to make the decision on
-	     * where to place them before now.
-	     */
-	    if (list_of_names[this_one]->d_flags & DIR_COMB) {
-		bu_vls_putc(vls, '/');
-		namelen++;
-	    }
-	    if (list_of_names[this_one]->d_flags & DIR_REGION) {
-		bu_vls_putc(vls, 'R');
-		namelen++;
-	    }
-	    /*
-	     * Size check (partial lines), and line termination.  Note
-	     * that this will catch the end of the lines that are full
-	     * too.
-	     */
-	    if (this_one + lines >= num_in_list) {
-		bu_vls_putc(vls, '\n');
-		break;
-	    } else {
-		/*
-		 * Pad to next boundary as there will be another entry
-		 * to the right of this one.
-		 */
-		while (namelen++ < 20)
-		    bu_vls_putc(vls, ' ');
-	    }
-	}
-    }
-#else
-    int lines, i, j, k, namelen, this_one;
-    int maxnamelen;	/* longest name in list */
-    int cwidth;		/* column width */
-    int numcol;		/* number of columns */
+    size_t lines, i, j, k, this_one;
+    size_t namelen;
+    size_t maxnamelen;	/* longest name in list */
+    size_t cwidth;	/* column width */
+    size_t numcol;	/* number of columns */
 
     qsort((genptr_t)list_of_names,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
@@ -171,7 +109,7 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
      */
     maxnamelen = 0;
     for (k=0; k < num_in_list; k++) {
-	namelen = (int)strlen(list_of_names[k]->d_namep);
+	namelen = strlen(list_of_names[k]->d_namep);
 	if (namelen > maxnamelen)
 	    maxnamelen = namelen;
     }
@@ -193,7 +131,7 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
 	for (j=0; j < numcol; j++) {
 	    this_one = j * lines + i;
 	    bu_vls_printf(vls, "%s", list_of_names[this_one]->d_namep);
-	    namelen = (int)strlen(list_of_names[this_one]->d_namep);
+	    namelen = strlen(list_of_names[this_one]->d_namep);
 
 	    /*
 	     * Region and ident checks here....  Since the code has
@@ -202,12 +140,12 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
 	     * until now.  There is no way to make the decision on
 	     * where to place them before now.
 	     */
-	    if (!no_decorate && list_of_names[this_one]->d_flags & DIR_COMB) {
+	    if (!no_decorate && list_of_names[this_one]->d_flags & RT_DIR_COMB) {
 		bu_vls_putc(vls, '/');
 		namelen++;
 	    }
 
-	    if (!no_decorate && list_of_names[this_one]->d_flags & DIR_REGION) {
+	    if (!no_decorate && list_of_names[this_one]->d_flags & RT_DIR_REGION) {
 		bu_vls_putc(vls, 'R');
 		namelen++;
 	    }
@@ -230,11 +168,10 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
 	    }
 	}
     }
-#endif
 }
 
 static void
-vls_long_dpp(struct bu_vls *vls,
+vls_long_dpp(struct ged *gedp,
 	     struct directory **list_of_names,
 	     int num_in_list,
 	     int aflag,		/* print all objects */
@@ -262,13 +199,18 @@ vls_long_dpp(struct bu_vls *vls,
 	if (len > max_nam_len)
 	    max_nam_len = len;
 
-	if (dp->d_flags & DIR_REGION)
-	    len = 6;
-	else if (dp->d_flags & DIR_COMB)
-	    len = 4;
-	else if (dp->d_flags & DIR_SOLID)
-	    len = strlen(rt_functab[dp->d_minor_type].ft_label);
-	else {
+	if (dp->d_flags & RT_DIR_REGION)
+	    len = 6; /* "region" */
+	else if (dp->d_flags & RT_DIR_COMB)
+	    len = 4; /* "comb" */
+	else if (dp->d_flags & RT_DIR_SOLID) {
+	    struct rt_db_internal intern;
+	    len = 9; /* "primitive" */
+	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+		len = strlen(intern.idb_meth->ft_label);
+		rt_db_free_internal(&intern);
+	    }
+	} else {
 	    switch (list_of_names[i]->d_major_type) {
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		    len = 6;
@@ -290,22 +232,29 @@ vls_long_dpp(struct bu_vls *vls,
      * i - tracks the list item
      */
     for (i=0; i < num_in_list; ++i) {
-	if (list_of_names[i]->d_flags & DIR_COMB) {
+	dp = list_of_names[i];
+
+	if (dp->d_flags & RT_DIR_COMB) {
 	    isComb = 1;
 	    isSolid = 0;
 	    type = "comb";
 
-	    if (list_of_names[i]->d_flags & DIR_REGION) {
+	    if (dp->d_flags & RT_DIR_REGION) {
 		isRegion = 1;
 		type = "region";
 	    } else
 		isRegion = 0;
-	} else if (list_of_names[i]->d_flags & DIR_SOLID) {
+	} else if (dp->d_flags & RT_DIR_SOLID) {
+	    struct rt_db_internal intern;
+	    type = "primitive";
+	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+		type = intern.idb_meth->ft_label;
+		rt_db_free_internal(&intern);
+	    }
 	    isComb = isRegion = 0;
 	    isSolid = 1;
-	    type = rt_functab[list_of_names[i]->d_minor_type].ft_label;
 	} else {
-	    switch (list_of_names[i]->d_major_type) {
+	    switch (dp->d_major_type) {
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		    isSolid = 0;
 		    type = "global";
@@ -318,23 +267,22 @@ vls_long_dpp(struct bu_vls *vls,
 		case DB5_MAJORTYPE_BINARY_UNIF:
 		    isSolid = 0;
 		    isRegion = 0;
-		    type = binu_types[list_of_names[i]->d_minor_type];
+		    type = binu_types[dp->d_minor_type];
 		    break;
 	    }
 	}
 
 	/* print list item i */
-	dp = list_of_names[i];
 	if (aflag ||
 	    (!cflag && !rflag && !sflag) ||
 	    (cflag && isComb) ||
 	    (rflag && isRegion) ||
 	    (sflag && isSolid)) {
-	    bu_vls_printf(vls, "%s", dp->d_namep);
-	    bu_vls_spaces(vls, (int)(max_nam_len - strlen(dp->d_namep)));
-	    bu_vls_printf(vls, " %s", type);
-	    bu_vls_spaces(vls, (int)(max_type_len - strlen(type)));
-	    bu_vls_printf(vls,  " %2d %2d %ld\n",
+	    bu_vls_printf(&gedp->ged_result_str, "%s", dp->d_namep);
+	    bu_vls_spaces(&gedp->ged_result_str, (int)(max_nam_len - strlen(dp->d_namep)));
+	    bu_vls_printf(&gedp->ged_result_str, " %s", type);
+	    bu_vls_spaces(&gedp->ged_result_str, (int)(max_type_len - strlen(type)));
+	    bu_vls_printf(&gedp->ged_result_str,  " %2d %2d %ld\n",
 			  dp->d_major_type, dp->d_minor_type, (long)(dp->d_len));
 	}
     }
@@ -347,7 +295,7 @@ vls_long_dpp(struct bu_vls *vls,
  * in that list, sort and print that list on the same line.
  */
 static void
-vls_line_dpp(struct bu_vls *vls,
+vls_line_dpp(struct ged *gedp,
 	     struct directory **list_of_names,
 	     int num_in_list,
 	     int aflag,	/* print all objects */
@@ -367,11 +315,11 @@ vls_line_dpp(struct bu_vls *vls,
      * i - tracks the list item
      */
     for (i=0; i < num_in_list; ++i) {
-	if (list_of_names[i]->d_flags & DIR_COMB) {
+	if (list_of_names[i]->d_flags & RT_DIR_COMB) {
 	    isComb = 1;
 	    isSolid = 0;
 
-	    if (list_of_names[i]->d_flags & DIR_REGION)
+	    if (list_of_names[i]->d_flags & RT_DIR_REGION)
 		isRegion = 1;
 	    else
 		isRegion = 0;
@@ -386,7 +334,7 @@ vls_line_dpp(struct bu_vls *vls,
 	    (cflag && isComb) ||
 	    (rflag && isRegion) ||
 	    (sflag && isSolid)) {
-	    bu_vls_printf(vls,  "%s ", list_of_names[i]->d_namep);
+	    bu_vls_printf(&gedp->ged_result_str,  "%s ", list_of_names[i]->d_namep);
 	}
     }
 }
@@ -400,7 +348,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 {
     struct bu_vls vls;
     struct directory *dp;
-    int i;
+    size_t i;
     int c;
     int aflag = 0;		/* print all objects without formatting */
     int cflag = 0;		/* print combinations */
@@ -479,13 +427,13 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 
 	dir_flags = 0;
 	if (aflag) dir_flags = -1;
-	if (cflag) dir_flags = DIR_COMB;
-	if (sflag) dir_flags = DIR_SOLID;
-	if (rflag) dir_flags = DIR_REGION;
-	if (!dir_flags) dir_flags = -1 ^ DIR_HIDDEN;
+	if (cflag) dir_flags = RT_DIR_COMB;
+	if (sflag) dir_flags = RT_DIR_SOLID;
+	if (rflag) dir_flags = RT_DIR_REGION;
+	if (!dir_flags) dir_flags = -1 ^ RT_DIR_HIDDEN;
 
 	bu_avs_init(&avs, argc, "wdb_ls_cmd avs");
-	for (i = 0; i < argc; i += 2) {
+	for (i = 0; i < (size_t)argc; i += 2) {
 	    if (or_flag) {
 		bu_avs_add_nonunique(&avs, (char *)argv[i], (char *)argv[i+1]);
 	    } else {
@@ -511,8 +459,8 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	/*
 	 * Verify the names, and add pointers to them to the array.
 	 */
-	for (i = 0; i < argc; i++) {
-	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+	for (i = 0; i < (size_t)argc; i++) {
+	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 		continue;
 	    *dirp++ = dp;
 	}
@@ -525,19 +473,17 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	 * entries) to the array.
 	 */
 	for (i = 0; i < RT_DBNHASH; i++)
-	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-		if (!aflag && (dp->d_flags & DIR_HIDDEN))
+	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		if (!aflag && (dp->d_flags & RT_DIR_HIDDEN))
 		    continue;
 		*dirp++ = dp;
 	    }
     }
 
     if (lflag)
-	vls_long_dpp(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0),
-		     aflag, cflag, rflag, sflag);
+	vls_long_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag);
     else if (aflag || cflag || rflag || sflag)
-	vls_line_dpp(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0),
-		     aflag, cflag, rflag, sflag);
+	vls_line_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag);
     else
 	_ged_vls_col_pr4v(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0);
 

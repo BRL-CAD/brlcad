@@ -39,7 +39,7 @@ See the "entryfield" manual entry for details on the above associated options.
 \fBlabelFont\fR	\fBlabelMargin\fR
 .fi
 .LP
-See the "labeledwidget" manual entry for details on the above associated
+See the "labeledwidget" manual entry for details on the above associated 
 options.
 .LP
 .nf
@@ -57,7 +57,7 @@ Class:	\fBPosition\fR
 Command-Line Switch:	\fB-labelpos\fR
 .fi
 .IP
-Specifies the position of the label along the sides of the various
+Specifies the position of the label along the sides of the various 
 spinners: \fBn\fR, \fBe\fR, \fBs\fR, or \fBw\fR.  The default is w.
 .LP
 .nf
@@ -92,7 +92,7 @@ Class:	\fBmilitaryOn\fR
 Command-Line Switch:	\fB-militaryon\fR
 .fi
 .IP
-Specifies use of a 24 hour clock for hour display in any of the forms
+Specifies use of a 24 hour clock for hour display in any of the forms 
 acceptable to \fBTcl_GetBoolean\fR.  The default is true.
 .LP
 .nf
@@ -163,7 +163,7 @@ Class:	\fBMargin\fR
 Command-Line Switch:	\fB-timemargin\fR
 .fi
 .IP
-Specifies the margin space between the hour, minute, and second spinners is
+Specifies the margin space between the hour, minute, and second spinners is 
 any of the forms accpetable to \fBTcl_GetPixels\fR.  The default is 1 pixel.
 .LP
 .nf
@@ -211,16 +211,16 @@ this case the command returns an empty string.
 command.
 .TP
 \fIpathName \fBget\fR ?\fBformat\fR?
-Returns the current contents of the spintime widget in a format of
+Returns the current contents of the spintime widget in a format of 
 string or as an integer clock value using the \fB-string\fR and \fB-clicks\fR
-format options respectively.  The default is by string.  Reference the
+format options respectively.  The default is by string.  Reference the 
 clock command for more information on obtaining time and its
 formats.
 .TP
 \fIpathName \fBshow\fR \fItime\fR
-Changes the currently displayed time to be that of the time
+Changes the currently displayed time to be that of the time 
 argument.  The time may be specified either as a string, an
-integer clock value or the keyword "now".  Reference the clock
+integer clock value or the keyword "now".  Reference the clock 
 command for more information on obtaining times and its format.
 
 .ta 4c
@@ -231,7 +231,7 @@ Name:	\fBhour\fR
 Class:	\fBSpinint\fR
 .fi
 .IP
-The hour component is the hour spinner of the time spinner.  See the
+The hour component is the hour spinner of the time spinner.  See the 
 SpinInt widget manual entry for details on the hour component item.
 .LP
 .nf
@@ -239,7 +239,7 @@ Name:	\fBminute\fR
 Class:	\fBSpinint\fR
 .fi
 .IP
-The minute component is the minute spinner of the time spinner.  See
+The minute component is the minute spinner of the time spinner.  See 
 the SpinInt widget manual entry for details on the minute component item.
 .LP
 .nf

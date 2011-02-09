@@ -1,7 +1,7 @@
 /*                        R M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -123,7 +123,7 @@ ged_rmater(struct ged *gedp, int argc, const char *argv[])
 				     &r, &g, &b, &override, &inherit)) == GED_ERROR)
 	    continue;
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_NOISY)) == DIR_NULL) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "ged_rmater: Failed to find %s\n", name);
 	    status = GED_ERROR;
 	    continue;

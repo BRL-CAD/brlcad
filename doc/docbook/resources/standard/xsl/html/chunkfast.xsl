@@ -1,8 +1,9 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:exsl="http://exslt.org/common"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:exsl="http://exslt.org/common"
                 xmlns:cf="http://docbook.sourceforge.net/xmlns/chunkfast/1.0"
 		version="1.0"
-                exclude-result-prefixes="cf exsl">
+                exclude-result-prefixes="cf exsl d">
 
 <!-- ********************************************************************
      $Id$
@@ -25,7 +26,7 @@
 
 <xsl:template name="process-chunk-element">
   <xsl:choose>
-    <xsl:when test="$chunk.fast != 0 and function-available('exsl:node-set')">
+    <xsl:when test="$chunk.fast != 0 and $exsl.node.set.available != 0">
       <xsl:variable name="genid" select="generate-id()"/>
 
       <xsl:variable name="div" select="$chunks[@id=$genid or @xml:id=$genid]"/>

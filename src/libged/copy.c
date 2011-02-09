@@ -1,7 +1,7 @@
 /*                         C O P Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -96,7 +96,7 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
 
     GED_DB_LOOKUP(from_gedp, from_dp, from, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
 
-    if (!fflag && db_lookup(to_gedp->ged_wdbp->dbip, to, LOOKUP_QUIET) != DIR_NULL) {
+    if (!fflag && db_lookup(to_gedp->ged_wdbp->dbip, to, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(&from_gedp->ged_result_str, "%s already exists.", to);
 	return GED_ERROR;
     }
@@ -118,7 +118,7 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
     bu_free_external(&external);
 
     /* Need to do something extra for _GLOBAL */
-    if (to_gedp->ged_wdbp->dbip->dbi_version > 4 && !strcmp(to, DB5_GLOBAL_OBJECT_NAME)) {
+    if (db_version(to_gedp->ged_wdbp->dbip) > 4 && BU_STR_EQUAL(to, DB5_GLOBAL_OBJECT_NAME)) {
 	struct directory *to_dp;
 	struct bu_attribute_value_set avs;
 	const char *val;

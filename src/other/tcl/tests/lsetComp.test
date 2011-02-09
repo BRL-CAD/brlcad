@@ -36,7 +36,7 @@ test lsetComp-1.1 {lset, compiled, wrong \# args} {
     evalInProc {
 	lset
     }
-} "1 {wrong \# args: should be \"lset listVar index ?index...? value\"}"
+} "1 {wrong \# args: should be \"lset listVar ?index? ?index...? value\"}"
 
 test lsetComp-2.1 {lset, compiled, list of args, not a simple var name} {
     evalInProc {

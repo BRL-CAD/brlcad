@@ -1,7 +1,7 @@
 /*                      P I X M O R P H . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2010 United States Government as represented by
+ * Copyright (c) 1996-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -234,7 +234,7 @@ warp_image(unsigned char *dest, unsigned char *src,
 #define ICLAMP(d, a, b) (d < a ? (int)a : d > b ? (int)b : (int)d)
 
 	    /* Bilinear interpolation.
-	       It's the somewhat more expensive than it needs to be.
+	       It's somewhat more expensive than it needs to be.
 	       I'm going for clarity, here. */
 
 	    newcolor = ((1-frac_x)*(1-frac_y)*(double)src[findex+RED] +
@@ -282,8 +282,7 @@ lines_read(FILE *fp, long int numlines,
     for (i = 0; i < numlines; i++, lines++) {
 	if (fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf %lf ",
 		   &x_1, &y_1, &x_2, &y_2, &x_3, &y_3, &x_4, &y_4) < 4) {
-	    fprintf(stderr, "pixmorph: lines_read: failure\n");
-	    bu_exit (1, NULL);
+	    bu_exit(1, "pixmorph: lines_read: failure\n");
 	}
 
 	if ((fabs(x_1-x_2) < EPSILON && fabs(y_1-y_2) < EPSILON) ||
@@ -338,8 +337,7 @@ void
 lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, long int *np)
 {
     if (fscanf(fp, "%lf %lf %lf %ld ", ap, bp, pp, np) < 4) {
-	fprintf(stderr, "pixmorph: cannot read header info in lines file\n");
-	bu_exit (1, NULL);
+	bu_exit(1, "pixmorph: cannot read header info in lines file\n");
     }
 }
 
@@ -347,7 +345,7 @@ lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, long int *np)
 int
 get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **linesfilenamep,
 	 double *warpfracp, int *dissolvefracp, long int *autosizep,
-	 long int *widthp, long int *heightp)
+	 size_t *widthp, size_t *heightp)
 {
     long int c;
 
@@ -382,7 +380,7 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
 }
 
 
-int
+size_t
 pix_readpixels(FILE *fp, long int numpix, unsigned char *pixarray)
 {
     return fread(pixarray, 3, (size_t)numpix, fp);
@@ -401,7 +399,7 @@ main(int argc, char **argv)
 {
     char *picAname, *picBname, *linesfilename;
     FILE *picA, *picB, *linesfile;
-    long int pa_width = 0, pa_height = 0;
+    size_t pa_width = 0, pa_height = 0;
     int dissolvefrac;
     double warpfrac;
     unsigned char *pa, *pb, *wa, *wb, *morph;
@@ -448,7 +446,7 @@ main(int argc, char **argv)
     }
 
     if (autosize) {
-	if (fb_common_file_size((unsigned long int *)&pa_width, (unsigned long int *)&pa_height, argv[1], 3) == 0) {
+	if (fb_common_file_size(&pa_width, &pa_height, argv[1], 3) == 0) {
 	    fprintf(stderr, "pixmorph: unable to autosize\n");
 	    return 1;
 	}
@@ -462,13 +460,13 @@ main(int argc, char **argv)
 
 	if (pa_width > 0) {
 	    pa_height = sb.st_size/(3*pa_width);
-	    fprintf(stderr, "width = %ld, size = %ld, so height = %ld\n",
-		    pa_width, (long)sb.st_size, pa_height);
+	    fprintf(stderr, "width = %lu, size = %ld, so height = %lu\n",
+		    (unsigned long)pa_width, (long)sb.st_size, (unsigned long)pa_height);
 	} else if (pa_height > 0) pa_width = sb.st_size/(3*pa_height);
 
 	if (pa_width <= 0 || pa_height <= 0) {
-	    fprintf(stderr, "pixmorph: Bogus image dimensions: %ld %ld\n",
-		    pa_width, pa_height);
+	    fprintf(stderr, "pixmorph: Bogus image dimensions: %lu %lu\n",
+		    (unsigned long)pa_width, (unsigned long)pa_height);
 	    return 1;
 	}
     }
@@ -495,13 +493,13 @@ main(int argc, char **argv)
     fprintf(stderr, "pixmorph: Reading images and lines file.\n");
 
     if (pix_readpixels(picA, pa_width*pa_height, pa) < pa_width*pa_height) {
-	fprintf(stderr, "Error reading %ld pixels from %s\n",
-		pa_width*pa_height, picAname);
+	fprintf(stderr, "Error reading %lu pixels from %s\n",
+		(unsigned long)pa_width*pa_height, picAname);
 	return 1;
     }
     if (pix_readpixels(picB, pa_width*pa_height, pb) < pa_width*pa_height) {
-	fprintf(stderr, "Error reading %ld pixels from %s\n",
-		pa_width*pa_height,  picBname);
+	fprintf(stderr, "Error reading %lu pixels from %s\n",
+		(unsigned long)pa_width*pa_height,  picBname);
 	return 1;
     }
     fclose(picA);

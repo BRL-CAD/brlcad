@@ -1,7 +1,7 @@
 /*                         S P A L L . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,23 +35,23 @@
 #define TESSELATION 32
 #define SPALL_LEN 20
 
-typedef struct render_spall_s {
-    TIE_3 ray_pos;
-    TIE_3 ray_dir;
-    tfloat plane[4];
-    tfloat angle;
-    tie_t tie;
-} render_spall_t;
+struct render_spall_s {
+    point_t ray_pos;
+    vect_t ray_dir;
+    fastf_t plane[4];
+    fastf_t angle;
+    struct tie_s tie;
+};
 
-void* render_spall_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
-void render_plane(tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
+void* render_spall_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr);
+void render_plane(struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel);
 
-typedef struct render_spall_hit_s {
-    tie_id_t id;
+struct render_spall_hit_s {
+    struct tie_id_s id;
     adrt_mesh_t *mesh;
-    tfloat plane[4];
-    tfloat mod;
-} render_spall_hit_t;
+    fastf_t plane[4];
+    fastf_t mod;
+};
 
 
 
@@ -61,49 +61,46 @@ render_spall_free(render_t *render)
     bu_free(render->data, "render data");
 }
 
-
 static void *
-render_arrow_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
+render_arrow_hit(struct tie_ray_s *UNUSED(ray), struct tie_id_s *UNUSED(id), struct tie_tri_s *tri, void *UNUSED(ptr))
 {
     return tri;
 }
 
-
 void *
-render_spall_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
+render_spall_hit(struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, struct tie_tri_s *tri, void *ptr)
 {
-    render_spall_hit_t *hit = (render_spall_hit_t *)ptr;
+    struct render_spall_hit_s *hit = (struct render_spall_hit_s *)ptr;
 
     hit->id = *id;
     hit->mesh = (adrt_mesh_t *)(tri->ptr);
     return hit;
 }
 
-
 void
-render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
 {
-    render_spall_t *rd;
-    render_spall_hit_t hit;
-    TIE_3 color;
-    tie_id_t id;
+    struct render_spall_s *rd;
+    struct render_spall_hit_s hit;
+    vect_t color;
+    struct tie_id_s id;
     tfloat t, dot;
 
 
-    rd = (render_spall_t *)render->data;
+    rd = (struct render_spall_s *)render->data;
 
     /* Draw spall Cone */
     if (tie_work(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
-	pixel->v[0] = 0.4;
-	pixel->v[1] = 0.4;
-	pixel->v[2] = 0.4;
+	*pixel[0] = (tfloat)0.4;
+	*pixel[1] = (tfloat)0.4;
+	*pixel[2] = (tfloat)0.4;
     }
 
     /*
      * I don't think this needs to be done for every pixel?
      * Flip plane normal to face us.
      */
-    t = ray->pos.v[0]*rd->plane[0] + ray->pos.v[1]*rd->plane[1] + ray->pos.v[2]*rd->plane[2] + rd->plane[3];
+    t = ray->pos[0]*rd->plane[0] + ray->pos[1]*rd->plane[1] + ray->pos[2]*rd->plane[2] + rd->plane[3];
     hit.mod = t < 0 ? 1 : -1;
 
 
@@ -116,16 +113,16 @@ render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
      *
      */
 
-    t = (rd->plane[0]*ray->pos.v[0] + rd->plane[1]*ray->pos.v[1] + rd->plane[2]*ray->pos.v[2] + rd->plane[3]) /
-	(rd->plane[0]*ray->dir.v[0] + rd->plane[1]*ray->dir.v[1] + rd->plane[2]*ray->dir.v[2]);
+    t = (rd->plane[0]*ray->pos[0] + rd->plane[1]*ray->pos[1] + rd->plane[2]*ray->pos[2] + rd->plane[3]) /
+	(rd->plane[0]*ray->dir[0] + rd->plane[1]*ray->dir[1] + rd->plane[2]*ray->dir[2]);
 
     /* Ray never intersects plane */
     if (t > 0)
 	return;
 
-    ray->pos.v[0] += -t * ray->dir.v[0];
-    ray->pos.v[1] += -t * ray->dir.v[1];
-    ray->pos.v[2] += -t * ray->dir.v[2];
+    ray->pos[0] += -t * ray->dir[0];
+    ray->pos[1] += -t * ray->dir[1];
+    ray->pos[2] += -t * ray->dir[2];
 
     hit.plane[0] = rd->plane[0];
     hit.plane[1] = rd->plane[1];
@@ -142,48 +139,48 @@ render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
      * If the point after the splitting plane is an inhit, then just shade as usual.
      */
 
-    dot = VDOT( ray->dir.v,  hit.id.norm.v);
+    dot = VDOT( ray->dir,  hit.id.norm);
     /* flip normal */
     dot = fabs(dot);
 
 
     if (hit.mesh->flags == 1) {
-	VSET(color.v, 0.9, 0.2, 0.2);
+	VSET(color, 0.9, 0.2, 0.2);
     } else {
 	/* Mix actual color with white 4:1, shade 50% darker */
-	VSET(color.v, 1.0, 1.0, 1.0);
-	VSCALE(color.v,  color.v,  3.0);
-	VADD2(color.v,  color.v,  hit.mesh->attributes->color.v);
-	VSCALE(color.v,  color.v,  0.125);
+	VSET(color, 1.0, 1.0, 1.0);
+	VSCALE(color,  color,  3.0);
+	VADD2(color,  color,  hit.mesh->attributes->color.v);
+	VSCALE(color,  color,  0.125);
     }
 
 #if 0
     if (dot < 0) {
 #endif
 	/* Shade using inhit */
-	VSCALE(color.v,  color.v,  (dot*0.50));
-	VADD2((*pixel).v,  (*pixel).v,  color.v);
+	VSCALE(color,  color,  (dot*0.50));
+	VADD2(*pixel,  *pixel,  color);
 #if 0
     } else {
 	/* shade solid */
-	VSUB2(vec.v,  ray->pos.v,  hit.id.pos.v);
-	VUNITIZE(vec.v);
-	angle = vec.v[0]*hit.mod*-hit.plane[0] + vec.v[1]*-hit.mod*hit.plane[1] + vec.v[2]*-hit.mod*hit.plane[2];
-	VSCALE((*pixel).v,  color.v,  (angle*0.50));
+	VSUB2(vec,  ray->pos,  hit.id.pos);
+	VUNITIZE(vec);
+	angle = vec[0]*hit.mod*-hit.plane[0] + vec[1]*-hit.mod*hit.plane[1] + vec[2]*-hit.mod*hit.plane[2];
+	VSCALE((*pixel),  color,  (angle*0.50));
     }
 #endif
 
-    pixel->v[0] += 0.1;
-    pixel->v[1] += 0.1;
-    pixel->v[2] += 0.1;
+    *pixel[0] += (tfloat)0.1;
+    *pixel[1] += (tfloat)0.1;
+    *pixel[2] += (tfloat)0.1;
 }
 
 int
-render_spall_init(render_t *render, char *buf)
+render_spall_init(render_t *render, const char *buf)
 {
-    render_spall_t *d;
-    TIE_3 *tri_list, *vec_list, normal, up, ray_pos, ray_dir;
-    tfloat plane[4], angle;
+    struct render_spall_s *d;
+    vect_t *tri_list, *vec_list, normal, up, ray_pos, ray_dir;
+    fastf_t plane[4], angle;
     int i;
 
     if(buf == NULL)
@@ -192,59 +189,59 @@ render_spall_init(render_t *render, char *buf)
     render->work = render_spall_work;
     render->free = render_spall_free;
 
-    sscanf(buf, "(%g %g %g) (%g %g %g) %g",
-		    &ray_pos.v[0], &ray_pos.v[1], &ray_pos.v[2],
-		    &ray_dir.v[0], &ray_dir.v[1], &ray_dir.v[2],
+    sscanf(buf, "(%lg %lg %lg) (%lg %lg %lg) %lg",
+		    &ray_pos[0], &ray_pos[1], &ray_pos[2],
+		    &ray_dir[0], &ray_dir[1], &ray_dir[2],
 		    &angle);
 
-    render->data = (render_spall_t *)bu_malloc(sizeof(render_spall_t), "render_spall_init");
+    render->data = (struct render_spall_s *)bu_malloc(sizeof(struct render_spall_s), "render_spall_init");
     if (!render->data) {
 	perror("render->data");
 	exit(1);
     }
-    d = (render_spall_t *)render->data;
+    d = (struct render_spall_s *)render->data;
 
-    d->ray_pos = ray_pos;
-    d->ray_dir = ray_dir;
+    VMOVE(d->ray_pos, ray_pos);
+    VMOVE(d->ray_dir, ray_dir);
 
     tie_init(&d->tie, TESSELATION, TIE_KDTREE_FAST);
 
     /* Calculate the normal to be used for the plane */
-    up.v[0] = 0;
-    up.v[1] = 0;
-    up.v[2] = 1;
+    up[0] = 0;
+    up[1] = 0;
+    up[2] = 1;
 
-    VCROSS(normal.v,  ray_dir.v,  up.v);
-    VUNITIZE(normal.v);
+    VCROSS(normal,  ray_dir,  up);
+    VUNITIZE(normal);
 
     /* Construct the plane */
-    d->plane[0] = normal.v[0];
-    d->plane[1] = normal.v[1];
-    d->plane[2] = normal.v[2];
-    plane[3] = VDOT( normal.v,  ray_pos.v); /* up is really new ray_pos */
+    d->plane[0] = normal[0];
+    d->plane[1] = normal[1];
+    d->plane[2] = normal[2];
+    plane[3] = VDOT( normal,  ray_pos); /* up is really new ray_pos */
     d->plane[3] = -plane[3];
 
     /******************/
     /* The spall Cone */
     /******************/
-    vec_list = (TIE_3 *)bu_malloc(sizeof(TIE_3) * TESSELATION, "vec_list");
-    tri_list = (TIE_3 *)bu_malloc(sizeof(TIE_3) * TESSELATION * 3, "tri_list");
+    vec_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELATION, "vec_list");
+    tri_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELATION * 3, "tri_list");
 
     render_util_spall_vec(ray_dir, angle, TESSELATION, vec_list);
 
     /* triangles to approximate */
     for (i = 0; i < TESSELATION; i++) {
-	tri_list[3*i+0] = ray_pos;
+	VMOVE(tri_list[3*i+0], ray_pos);
 
-	VSCALE(tri_list[3*i+1].v,  vec_list[i].v,  SPALL_LEN);
-	VADD2(tri_list[3*i+1].v,  tri_list[3*i+1].v,  ray_pos.v);
+	VSCALE(tri_list[3*i+1],  vec_list[i],  SPALL_LEN);
+	VADD2(tri_list[3*i+1],  tri_list[3*i+1],  ray_pos);
 
 	if (i == TESSELATION - 1) {
-	    VSCALE(tri_list[3*i+2].v,  vec_list[0].v,  SPALL_LEN);
-	    VADD2(tri_list[3*i+2].v,  tri_list[3*i+2].v,  ray_pos.v);
+	    VSCALE(tri_list[3*i+2],  vec_list[0],  SPALL_LEN);
+	    VADD2(tri_list[3*i+2],  tri_list[3*i+2],  ray_pos);
 	} else {
-	    VSCALE(tri_list[3*i+2].v,  vec_list[i+1].v,  SPALL_LEN);
-	    VADD2(tri_list[3*i+2].v,  tri_list[3*i+2].v,  ray_pos.v);
+	    VSCALE(tri_list[3*i+2],  vec_list[i+1],  SPALL_LEN);
+	    VADD2(tri_list[3*i+2],  tri_list[3*i+2],  ray_pos);
 	}
     }
 

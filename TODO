@@ -17,18 +17,56 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* NADA!
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
-* update g-xxx_facets to use libgcv
+* upgrade source repository back-end to the latest SVN 1.5 so we can
+  benefit from proper merge tracking.
 
-* rename all the g_* tools sans "_"
+* annotation primitive.  specifically a means to create an object in
+  the database that can optionally be associated with an object and/or
+  location that a label refers to.  there are various styles such as
+  a single line from a point to text and two lines (e.g., indicating
+  measurement) to text.  the object should allow for different line
+  styles including having no lines.  there should also be support for
+  view-fixed or view-independent annotation placement (which requires
+  a change to plot()'s and possibly prep()'s signature).  it would
+  also be useful to allow an optional "thickness" so that the
+  annotations can represent physical geometry (so they raytrace).
 
-* explore the g_qa/plot issue
+* rt/rtedge command-line options for overriding object colors
 
-* release dm X get_color() memory
+* rtwizard enhancement to allow color overrides to be specified for
+  selected objects.
+
+* the 'cp' command no longer draws the object that was copied --
+  undoubtedly a libged change -- so restore previous functionality.
+  as that behavior was not intentional and is undesirable for large
+  objects, have some means to determine that something is "large and
+  complex" or at a minimum, provide an option to not draw on copy.
+
+* plate mode NURBS/BREP objects.  Similar, if not identical, to plate
+  mode BoTs, 'brep' objects need the ability to have a thickness
+  described so you could automatically handle non-solid NURBS and
+  sheet-metal style geometry without requiring surface solidity.
+
+
+THESE ARE UNSCHEDULED BACKLOG TASKS
+-----------------------------------
+
+* merge sed and oed commands
+
+* make the right-hand path to oed optional
+
+* deprecate dbcp and merge functionality (and improved
+  double-buffering) with the buffer tool.
+
+* make the converters export all top-level objects by default
+
+* rename all the g_* tools sans "_" [save until 7.20]
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
@@ -39,17 +77,42 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   or simply have an rt_*() for each function (e.g., rt_mirror(),
   rt_shot(), rt_describe(), etc).
 
+* explore the g_qa/plot issue
 
-THESE ARE UNSCHEDULED BACKLOG TASKS
------------------------------------
+* release dm X get_color() memory
+
+* update g-xxx_facets to use libgcv
+
+* bu_basename() says it'll return things that it probably won't
+  return.  like /path/to/file/ should return file and //// returning /
+  instead of empty.  probably should portably handle path separators
+  too, otherwise it's kind of meaningless in bu.
+
+* add distribution test for making sure the source code conventions
+  for function replacements are being respected (e.g., bu_strcmp()
+  instead of strcmp()).
+
+* let the cp command take multiple arguments for simultaneously
+  creating multiple named copies
+
+* add support to the attr command for listing keys in a user-specified
+  alphabetical (possibly case-insensitive) order in addition to or
+  instead of generated order.
+
+* investigate why solids.sh fails on three pixels on some 64-bit
+  platforms. it grazingly hits/misses a tgc causing a regression
+  failure.
+
+  havoc.g s.nos5g reliably exhibits the grazing edge bug where only
+  one hit point is being returned.  to reproduce:
+  e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
+
+* deprecate rtg3 and burst
 
 * make sure 'preview' works, particularly the 'tree' subcommand.
 
 * make nreed's new bot cleanup interface update interactively without
   resorting to calls to Tcl_DoOneEvent() down in librt.
-
-* upgrade source repository back-end to the latest SVN 1.5 so we can
-  benefit from proper merge tracking.
 
 * make sure mged/archer behave properly with relative paths to dbopen.
   Windows in particular is doing something different in
@@ -58,13 +121,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * convert all calls to BU_SETJUMP/BU_UNSETJUMP into familiar try/catch
   logic layout using if/else.
-
-* facetize creates BoTs crappily by only looking at first region,
-  first shell, instead of the whole nmg model.
-
-* nmg_bot() and nmg_from_bot() only work with shells.  verify that all
-  callers iterate over all shells or write a model version that does a
-  complete conversion correctly.
 
 * bu_cv_optimize() should be using bu_byteorder().
 
@@ -87,34 +143,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * investigate OpenEXR (BSD licensed HDE image format)
 
-* the 'cp' command no longer draws the object that was copied --
-  undoubtedly a libged change -- so restore previous functionality.
-  as that behavior was not intentional and is undesirable for large
-  objects, have some means to determine that something is "large and
-  complex" or at a minimum, provide an option to not draw on copy.
-
-* rt/rtedge command-line options for overriding object colors
-
-* rtwizard enhancement to allow color overrides to be specified for
-  selected objects.
-
-* plate mode NURBS/BREP objects.  Similar, if not identical, to plate
-  mode BoTs, 'brep' objects need the ability to have a thickness
-  described so you could automatically handle non-solid NURBS and
-  sheet-metal style geometry without requiring surface solidity.
-
 * fix archer/libdm labels/axes to not use pointer printing
-
-* annotation primitive.  specifically a means to create an object in
-  the database that can optionally be associated with an object and/or
-  location that a label refers to.  there are various styles such as
-  a single line from a point to text and two lines (e.g., indicating
-  measurement) to text.  the object should allow for different line
-  styles including having no lines.  there should also be support for
-  view-fixed or view-independent annotation placement (which requires
-  a change to plot()'s and possibly prep()'s signature).  it would
-  also be useful to allow an optional "thickness" so that the
-  annotations can represent physical geometry (so they raytrace).
 
 * add support for a custom unit conversion factor to the units command
   (e.g. 'units 9.3120223' or 'units metertons 9.3120223')
@@ -167,8 +196,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   ../src/gtools/g_qa -u m,m^3,kg -g 0.25m-0.5mm -p -Av -v gqa.g closed_box.r
   -rw-rw-r--  1 morrison users 41572569618 Apr 23 15:14 volume.pl
 
-* replace SCLstring with std::string
-
 * all of the rt* tracers share common code and common options, but do
   not share common documentation.  refactor documentation to use
   include directives so that there is one place where all of the
@@ -184,8 +211,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * add a force option to the tracers to support overwriting the current
   output file (so long as we're going to make it read-only by default).
-
-* improve min/max bounding box routines for BREP/NURBS
 
 * convert non-planar arb's to brep objects for ray-tracing.  see how
   well it works to see if we can remove an arb limitation.
@@ -273,9 +298,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * finish obj-g importer.  need to test more inputs and make sure all
   geometry is preserved on import in some form.
 
-* fix metaball "shelling" but that causes the primitive to invert and
-  just give paper thin surface (something wrong in the intersection).
-
 * deprecate dbfind - ensure functionality is fully captured by the
   search command, make it report a deprecation statement on use and
   utilize search under the hood.
@@ -300,9 +322,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   normals but at a rather expensive malloc cost (which is being seen
   on large BoT models) during prep.
 
-* need a simplified means to programmatically create and edit BoT
-  meshes via the command line without resorting to get/put.
-
 * make fbclear and raytrace control panel obey a -F advanced option,
   i.e., better remote framebuffer support.
 
@@ -313,14 +332,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   up mged in vim/emacs/jove/whatever without a controlling terminal,
   without breaking the ability to set a GUI editor like TextEdit,
   Wordpad, etc.
-
-* Simple GUI for repairing BoT normals.  Basically make it easier to
-  make all normals consistent and outward facing through some form of
-  MGED integration of bot_sync and bot_flip.
-
-* Machine-independent dbupgrade.  Make it so that dbupgrade will work
-  on an old v4 without being on a machine of the same original
-  architecture type.
 
 * complete conversion of existing manual pages into docbook format
 
@@ -348,15 +359,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * make rtarea display a cross-hair and perhaps coordinates for the
   center of area if run from within mged.
-
-* optimization of NMG ray tracing.  the hitmiss bookkeeping presently
-  used has a malloc/free occuring per shot().  allocations need to
-  occur during prep only.  the presently render more than an order of
-  magnitude slower than tracing that nmg converted to an equivalent
-  BoT due to malloc/free calls being made during shot(). Confirmable
-  with a simple test case of a sphere converted to an nmg:
-
-    make sph sph ; facetize -n sph.nmg sph
 
 * implement a "select" command in LIBGED that creates a selection set
   based on specified sampling parameters or object lists.  example
@@ -416,6 +418,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * add support to 'rtxray' for outputting inverted pixel values so that
   we have pixel values that are directly related to material thickness
+
+* gqa semaphore locking on results is very slow and gets worse as the
+  number of cores and speed of cpu increases.  resource contention on
+  semaphores slows everything down substantially.
 
 * g_qa (gqa in mged) needs to be more informative when it runs - 
   needs a header letting you know what it's doing, and if possible
@@ -482,9 +488,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * break up library headers into subheaders so includes can be more
   specific (and help speed up compilation) and locally documented.
 
-* implement a routine/command to convert from a bot to an nmg
-  (similar/related to the nmg-bot tool, but the reverse).
-
 * implement a jitter-style option to rt that makes it average the ray
   results to take a weighted light contribution for a given
   resolution.  saves more memory over rendering at 2x/4x/8x/whatever
@@ -506,6 +509,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * implement -exec support for 'search' command
 
 * implement -param support for 'search' command
+
+* make "search ." return object lists (no leading "/") but still
+  process hierarchically so things like "search . -maxdepth 0" return
+  a list of the top-level objects.  The "." implies returning only
+  unique names (i.e., a list).
 
 * make ged command names aware of object arguments for automatic
   globbing and regular expression expansion:
@@ -563,10 +571,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * give bot-bldxf the axe (reconcile and merge with bot_dump)
 
-* refactor all of the nmg processing (back) into its own library so
-  that external users can manage mesh geometry without needing to pull
-  in everything else in librt
-
 * implement support for exporting sketch objects via g-iges
 
 * implement mged object name globbing similar to tclsh's globbing
@@ -591,10 +595,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   segments)
 
 * address the TODO items in src/mged/clone.c
-
-* investigate why solids.sh fails on three pixels on some 64-bit
-  platforms. it grazingly hits/misses a tgc causing a regression
-  failure.
 
 * develop a low-level tool for investigating, reporting statistics on,
   and repairing geometry database files.  the tool should nominally
@@ -796,10 +796,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   NURBS format, trims surfaces, evaluates boolean expressions, and
   then generates tool paths on resulting surfaces and interior paths.
 
-* identify useful concepts implemented in the old NURBS code that are not
-  present in openNURBS, and port that code to openNURBS data structures
-  and routines.  This will eventually allow us to remove the old NURBS code.
-
 * incorporate some variety of spatial partitioning into the facetize command
   (may involve just rewriting it) to try and realize MUCH faster tessellation
   of CSG geometry.  Current routines are doing a lot of unnecessary work that
@@ -808,20 +804,78 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   idea is proven in that command, it should be made into a libgcv routine
   and convertors/other commands retargted to use it.
 
-NMG Concepts to Explore
------------------------
-Ensure robust and fast nmg->bot conversion, and enhance the bot data structure
-to contain a generic pointer that could be used to point back to the NMG it was 
-generated from.  This could allow ALL raytracing of polygonal models to use 
-libtie/BoT raytracing routines, speeding up NMG raytracing and simplifying the
-raytracing code.
 
-Break NMG out into its own libnmg library.  Over time, consider moving other polygonal
-specific logic to libnmg, eventually moving all polygonal logic out of librt/libtie/etc
-and into libnmg.  Would involve code and API cleanup.
+STEP
+----
 
-RTGL ITEMS
-__________
+* add hierarchy preservation support to step-g
+
+* replace SCLstring with std::string
+
+* document step-g
+
+* implement g-step exporter
+
+
+BREP/NURBS
+----------
+
+* implement conversion of implicit CSG to NURBS CSG.  partially
+  complete, but primitives are still fixed at origin.
+
+* identify useful concepts implemented in the old NURBS code that are not
+  present in openNURBS, and port that code to openNURBS data structures
+  and routines.  This will eventually allow us to remove the old NURBS code.
+
+* improve min/max bounding box routines for BREP/NURBS
+
+* document the new NURBS/BREP primitive, capabilities and limitations
+
+* implement boolean evaluation of nurbs surfaces
+
+
+NMG/BoT
+-------
+
+* ensure robust and fast nmg->bot conversion
+
+* facetize creates BoTs crappily by only looking at first region,
+  first shell, instead of the whole nmg model.
+
+* nmg_bot() and nmg_from_bot() only work with shells.  verify that all
+  callers iterate over all shells or write a model version that does a
+  complete conversion correctly.
+
+* refactor all of the nmg processing (back) into its own library so
+  that external users can manage mesh geometry without needing to pull
+  in everything else in librt.  consider moving other polygonal
+  specific logic to libnmg, eventually moving all polygonal logic out
+  of librt/libtie/etc and into libnmg.
+
+* enhance the bot data structure to contain a generic pointer that
+  could be used to point back to the NMG it was generated from.  This
+  could allow ALL raytracing of polygonal models to use libtie/BoT
+  raytracing routines, speeding up NMG raytracing and simplifying the
+  raytracing code.
+
+* optimization of NMG ray tracing.  the hitmiss bookkeeping presently
+  used has a malloc/free occuring per shot().  allocations need to
+  occur during prep only.  the presently render more than an order of
+  magnitude slower than tracing that nmg converted to an equivalent
+  BoT due to malloc/free calls being made during shot(). Confirmable
+  with a simple test case of a sphere converted to an nmg:
+
+    make sph sph ; facetize -n sph.nmg sph
+
+* implement a routine/command to convert from a bot to an nmg
+  (similar/related to the nmg-bot tool, but the reverse).
+
+* need a simplified means to programmatically create and edit BoT
+  meshes via the command line without resorting to get/put.
+
+
+RTGL
+____
 
 Need before enabling:
 

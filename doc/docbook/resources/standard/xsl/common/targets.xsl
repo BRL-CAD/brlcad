@@ -1,7 +1,9 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
-                exclude-result-prefixes="doc"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
+                xmlns:exsl="http://exslt.org/common"
+                exclude-result-prefixes="doc exsl d"
                 version='1.0'>
 
 <!-- ********************************************************************
@@ -209,57 +211,117 @@ document output.
 </xsl:template>
 -->
 
-<xsl:template match="set" mode="olink.mode">
+<xsl:template match="d:set" mode="olink.mode">
   <xsl:call-template name="div"/>
 </xsl:template>
 
-<xsl:template match="book" mode="olink.mode">
+<xsl:template match="d:book" mode="olink.mode">
   <xsl:call-template name="div"/>
 </xsl:template>
 
-<xsl:template match="preface|chapter|appendix" mode="olink.mode">
+<xsl:template match="d:preface|d:chapter|d:appendix" mode="olink.mode">
   <xsl:call-template name="div"/>
 </xsl:template>
 
-<xsl:template match="part|reference" mode="olink.mode">
+<xsl:template match="d:part|d:reference" mode="olink.mode">
   <xsl:call-template name="div"/>
 </xsl:template>
 
-<xsl:template match="article" mode="olink.mode">
+<xsl:template match="d:article" mode="olink.mode">
   <xsl:call-template name="div"/>
 </xsl:template>
 
-<xsl:template match="bibliography|bibliodiv" mode="olink.mode">
+<xsl:template match="d:bibliography|d:bibliodiv" mode="olink.mode">
   <xsl:call-template name="div"/>
 </xsl:template>
 
-<xsl:template match="biblioentry|bibliomixed" mode="olink.mode">
+<xsl:template match="d:biblioentry|d:bibliomixed" mode="olink.mode">
   <xsl:call-template name="obj"/>
 </xsl:template>
 
-<xsl:template match="refentry" mode="olink.mode">
+<xsl:template match="d:refentry" mode="olink.mode">
   <xsl:call-template name="div"/>
 </xsl:template>
 
-<xsl:template match="section|sect1|sect2|sect3|sect4|sect5" mode="olink.mode">
+<xsl:template match="d:section|d:sect1|d:sect2|d:sect3|d:sect4|d:sect5" mode="olink.mode">
   <xsl:call-template name="div"/>
 </xsl:template>
 
-<xsl:template match="refsection|refsect1|refsect2|refsect3" mode="olink.mode">
+<xsl:template match="d:refsection|d:refsect1|d:refsect2|d:refsect3" mode="olink.mode">
   <xsl:call-template name="div"/>
 </xsl:template>
 
-<xsl:template match="figure|example|table" mode="olink.mode">
+<xsl:template match="d:figure|d:example|d:table" mode="olink.mode">
   <xsl:call-template name="obj"/>
   <xsl:apply-templates mode="olink.mode"/>
 </xsl:template>
 
-<xsl:template match="equation[title or info/title]" mode="olink.mode">
+<xsl:template match="d:equation[d:title or d:info/d:title]" mode="olink.mode">
   <xsl:call-template name="obj"/>
 </xsl:template>
 
-<xsl:template match="qandaset|qandaentry" mode="olink.mode">
+<xsl:template match="d:qandaset|d:qandaentry" mode="olink.mode">
   <xsl:call-template name="div"/>
+</xsl:template>
+
+<!-- handle an glossary collection -->
+<xsl:template match="d:glossary[@role='auto']" mode="olink.mode" priority="2">
+  <xsl:variable name="collection" select="document($glossary.collection, .)"/>
+  <xsl:if test="$glossary.collection = ''">
+    <xsl:message>
+      <xsl:text>Warning: processing automatic glossary </xsl:text>
+      <xsl:text>without a glossary.collection file.</xsl:text>
+    </xsl:message>
+  </xsl:if>
+
+  <xsl:if test="not($collection) and $glossary.collection != ''">
+    <xsl:message>
+      <xsl:text>Warning: processing automatic glossary but unable to </xsl:text>
+      <xsl:text>open glossary.collection file '</xsl:text>
+      <xsl:value-of select="$glossary.collection"/>
+      <xsl:text>'</xsl:text>
+    </xsl:message>
+  </xsl:if>
+
+
+  <xsl:if test="$exsl.node.set.available != 0">
+    <xsl:variable name="auto.glossary">
+      <xsl:apply-templates select="." mode="assemble.auto.glossary"/>
+    </xsl:variable>
+    <xsl:variable name="auto.glossary.nodeset" select="exsl:node-set($auto.glossary)"/>
+    <xsl:apply-templates select="$auto.glossary.nodeset/*" mode="olink.mode"/>
+  </xsl:if>
+
+</xsl:template>
+
+<!-- construct a glossary in memory -->
+<xsl:template match="d:glossary" mode="assemble.auto.glossary">
+  <xsl:copy>
+    <xsl:copy-of select="@*[not(local-name() = 'role')]"/>
+    <xsl:apply-templates select="node()" mode="assemble.auto.glossary"/>
+    <xsl:call-template name="select.glossentries"/>
+  </xsl:copy>
+</xsl:template>
+
+<xsl:template name="select.glossentries">
+  <xsl:param name="collection" select="document($glossary.collection, .)"/>
+  <xsl:param name="terms" select="//d:glossterm[not(parent::d:glossdef)]|//d:firstterm"/>
+
+  <xsl:for-each select="$collection//d:glossentry">
+    <xsl:variable name="cterm" select="d:glossterm"/>
+    <xsl:if test="$terms[@baseform = $cterm or . = $cterm]">
+      <xsl:copy-of select="."/>
+    </xsl:if>
+  </xsl:for-each>
+</xsl:template>
+
+<xsl:template match="d:glossentry" mode="assemble.auto.glossary">
+  <!-- skip the dummy entries -->
+</xsl:template>
+
+<xsl:template match="*" mode="assemble.auto.glossary">
+  <!-- pass through any titles and intro stuff -->
+  <xsl:copy-of select="."/>
 </xsl:template>
 
 <xsl:template match="*" mode="olink.mode">

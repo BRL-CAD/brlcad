@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) dialog.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::dialog iwid
 .BS
@@ -29,7 +29,7 @@ See the "options" manual entry for details on the standard options.
 .nf
 .ta 4c 8c 12c
 \fBbuttonBoxPadX\fR	\fBbuttonBoxPadY\fR 	\fBbuttonBoxPos\fR	\fBpadX\fR
-\fBpadY\fR	\fBseparator\fR	\fBthickness\fR
+\fBpadY\fR	\fBseparator\fR	\fBthickness\fR	
 .fi
 .LP
 See the "dialogshell" manual entry for details on the above inherited options.
@@ -43,7 +43,7 @@ See the "shell" manual entry for details on the above inherited options.
 .LP
 .nf
 .ta 4c 8c 12c
-\fBtitle\fR
+\fBtitle\fR 
 .fi
 .LP
 See the "Toplevel" manual entry for details on the above inherited options.
@@ -53,7 +53,7 @@ See the "Toplevel" manual entry for details on the above inherited options.
 .PP
 The \fBiwidgets::dialog\fR command creates a dialog box providing standard
 buttons and a child site for use in derived classes.  The buttons
-include ok, apply, cancel, and help.  Methods and Options exist to
+include ok, apply, cancel, and help.  Methods and Options exist to 
 configure the buttons and their containing box.
 
 .SH "METHODS"
@@ -80,7 +80,7 @@ See the "buttonbox" manual entry for details on the above inherited methods.
 .LP
 .nf
 .ta 4c 8c 12c
-\fBchildsite\fR
+\fBchildsite\fR	
 .fi
 .LP
 See the "dialogshell" manual entry for details on the above inherited methods.
@@ -122,7 +122,7 @@ command.
  .d buttonconfigure Apply -command {puts Apply}
  .d buttonconfigure Cancel -command {puts Cancel; .d deactivate 0}
  .d buttonconfigure Help -command {puts Help}
-
+ 
  listbox [.d childsite].lb -relief sunken
  pack [.d childsite].lb -expand yes -fill both
 

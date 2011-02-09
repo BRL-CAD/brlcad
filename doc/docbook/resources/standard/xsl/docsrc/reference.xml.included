@@ -76,7 +76,7 @@ THE SOFTWARE.</para>
               <link xlink:href="http://docbook.sourceforge.net/release/xsl/current/doc/reference.txt">plain text</link></para>
           </listitem>
         </itemizedlist>
-        This is primarily documentation on the parameters you can adjust
+        This is primarily documentation on the parameters and processing instructions you can use
         to control the behavior of the stylesheets.
         <note>
           <para>This is purely reference documentation&#160;&#8211; not how-to
@@ -232,7 +232,7 @@ admonitions.</refpurpose>
 
 <refsynopsisdiv>
 <programlisting id="admon.style.frag">&lt;xsl:param name="admon.style"&gt;
-  &lt;xsl:text&gt;margin-left: 0.5in; margin-right: 0.5in;&lt;/xsl:text&gt;
+  &lt;xsl:value-of select="concat('margin-', $direction.align.start,            ': 0.5in; margin-', $direction.align.end, ': 0.5in;')"&gt;&lt;/xsl:value-of&gt;
 &lt;/xsl:param&gt;</programlisting>
 </refsynopsisdiv>
 
@@ -402,10 +402,10 @@ Default graphics are provided in the distribution.
 
 <refsection><info><title>Description</title></info>
 
-<para>The default presentation of <tag>CalloutList</tag>s uses
-an HTML <tag>DL</tag>. Some browsers don't align DLs very well
-if <parameter>callout.graphics</parameter> are used. With this option
-turned on, <tag>CalloutList</tag>s are presented in an HTML
+<para>The default presentation of <tag>calloutlist</tag>s uses
+an HTML <tag>DL</tag> element. Some browsers don't align DLs very well
+if <parameter>callout.graphics</parameter> is used. With this option
+turned on, <tag>calloutlist</tag>s are presented in an HTML
 <tag>TABLE</tag>, which usually results in better alignment
 of the callout number with the callout description.</para>
 
@@ -513,7 +513,7 @@ only 10102 is supported in the stylesheets for this parameter.
 <refsection><info><title>Description</title></info>
 
 <para>The callouts extension processes <tag>areaset</tag>
-elements in <tag>ProgramListingCO</tag> and other text-based
+elements in <tag>programlistingco</tag> and other text-based
 callout elements.
 </para>
 
@@ -646,7 +646,7 @@ in <tag>productionset</tag>.</para>
 <refsection><info><title>Description</title></info>
 
 <para>If true, TOCs will be annotated. At present, this just means
-that the <tag>RefPurpose</tag> of <tag>RefEntry</tag>
+that the <tag>refpurpose</tag> of <tag>refentry</tag>
 TOC entries will be displayed.
 </para>
 
@@ -1299,6 +1299,78 @@ on <tag>indexterm</tag> and <tag>index</tag>,
 and set the <parameter>index.on.type</parameter> to a nonzero
 value.
 </para>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="index.links.to.section">
+<refmeta>
+<refentrytitle>index.links.to.section</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">boolean</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>index.links.to.section</refname>
+<refpurpose>HTML index entries link to container section title</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="index.links.to.section.frag">
+&lt;xsl:param name="index.links.to.section" select="1"&gt;&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>If zero, then an index entry in an index links
+directly to the location of the
+generated <tag>anchor</tag> that is output
+for the indexterm. If two identical indexterm elements
+exist in the same section, then both entries appear
+in the index with the same title but link to different
+locations.</para>
+
+<para>If non-zero, then an index entry in an index links to the
+section title containing the <tag>indexterm</tag>, rather than
+directly to the <tag>anchor</tag> output for the indexterm.
+Duplicate indexterm entries in the same section are dropped.
+</para>
+
+<para>The default value is 1, so index entries link to
+section titles by default.</para>
+
+<para>In both cases, the link text in an index entry is the
+title of the section containing the indexterm.
+That is because HTML does not have numbered pages.
+It also provides the reader with context information
+for each link.</para>
+
+<para>This parameter lets you choose which style of
+index linking you want. </para>
+
+<itemizedlist>
+<listitem>
+<para>When set to 0, an index entry takes you 
+to the precise location of its corresponding indexterm.
+However, if you have a lot of duplicate
+entries in sections, then you have a lot of duplicate
+titles in the index, which makes it more cluttered.
+The reader may not recognize why duplicate titles
+appear until they follow the links. Also, the links
+may land the reader in the middle of a section where the
+section title is not visible, which may also be
+confusing to the reader.</para>
+</listitem>
+<listitem>
+<para>When set to 1, an index entry link is
+less precise, but duplicate titles in the
+index entries are eliminated. 
+Landing on the section title location may confirm the reader's
+expectation that a link that
+shows a section title will take them to that section title,
+not a location within the section.
+</para>
+</listitem>
+</itemizedlist>
 
 </refsection>
 </refentry>
@@ -2653,7 +2725,7 @@ be set to is a newline character: <code>&amp;#x0a;</code> or
 
 <refsynopsisdiv>
 <programlisting id="draft.mode.frag">
-&lt;xsl:param name="draft.mode"&gt;maybe&lt;/xsl:param&gt;
+&lt;xsl:param name="draft.mode"&gt;no&lt;/xsl:param&gt;
 </programlisting>
 </refsynopsisdiv>
 
@@ -2682,7 +2754,7 @@ on how their <literal>status</literal> attribute is set.
 
 <refsynopsisdiv>
 <programlisting id="draft.watermark.image.frag">
-&lt;xsl:param name="draft.watermark.image"&gt;http://docbook.sourceforge.net/release/images/draft.png&lt;/xsl:param&gt;
+&lt;xsl:param name="draft.watermark.image"&gt;images/draft.png&lt;/xsl:param&gt;
 </programlisting>
 </refsynopsisdiv>
 
@@ -2769,6 +2841,321 @@ will not suppress the anchors.</para>
 <para>If non-zero, document abstracts will be reproduced in the HTML
 <literal>head</literal>, with <literal>&gt;meta name="description" content="..."</literal></para>
 
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="make.clean.html">
+<refmeta>
+<refentrytitle>make.clean.html</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">boolean</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>make.clean.html</refname>
+<refpurpose>Make HTML conform to modern coding standards</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="make.clean.html.frag">
+&lt;xsl:param name="make.clean.html" select="0"&gt;&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>If <parameter>make.clean.html</parameter> is true, the stylesheets take
+extra effort to ensure that the resulting HTML is conforms to
+modern HTML coding standards.  In addition to eliminating
+excessive and noncompliant coding, it moves presentation
+HTML coding to a CSS stylesheet.</para>
+
+<para>The resulting HTML is dependent on
+CSS for formatting, and so the stylesheet is capable of
+generating a supporting CSS file. The <parameter>docbook.css.source</parameter>
+and <parameter>custom.css.source</parameter> parameters control
+how a CSS file is generated.</para>
+
+<para>If you require your CSS to reside in the HTML 
+<tag>head</tag> element, then the <parameter>generate.css.header</parameter>
+can be used to do that.</para>
+
+<para>The <parameter>make.clean.html</parameter> parameter is
+different from <parameter>html.cleanup</parameter>
+because the former changes the resulting markup; it does not use extension functions
+like the latter to manipulate result-tree-fragments,
+and is therefore applicable to any XSLT processor.</para>
+
+<para>If <parameter>make.clean.html</parameter> is set to zero (the default),
+then the stylesheet retains its original 
+<quote>old style</quote>
+HTML formatting features.</para>
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="docbook.css.source">
+  <refmeta>
+    <refentrytitle>docbook.css.source</refentrytitle>
+    <refmiscinfo class="other" otherclass="datatype">string</refmiscinfo>
+  </refmeta>
+  <refnamediv>
+    <refname>docbook.css.source</refname>
+    <refpurpose>Name of the default CSS input file</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <programlisting id="docbook.css.source.frag">&lt;xsl:param name="docbook.css.source"&gt;docbook.css.xml&lt;/xsl:param&gt;</programlisting>
+  </refsynopsisdiv>
+
+  <refsection><info><title>Description</title></info>
+
+<para>The <parameter>docbook.css.source</parameter> parameter
+specifies the name of the file containing the default DocBook
+CSS styles.  Those styles are necessary when the
+<parameter>make.clean.html</parameter> parameter is nonzero.</para>
+
+<para>The file is a well-formed XML file that
+must consist of a single <tag>style</tag> root
+element that contains CSS styles as its text content.
+The default value of the parameter (and filename)
+is <literal>docbook.css.xml</literal>.
+The stylesheets ship with the default file. You can substitute
+your own and specify its path in this parameter.</para>
+
+<para>If <parameter>docbook.css.source</parameter> is not blank,
+and <parameter>make.clean.html</parameter> is nonzero, then
+the stylesheet takes the following actions:</para>
+
+<orderedlist>
+  <listitem>
+    <para>The stylesheet uses the XSLT <literal>document()</literal>
+    function to open the file specified by the parameter and
+    load it into a variable.</para>
+  </listitem>
+  <listitem>
+    <para>The stylesheet forms an output pathname consisting of the
+    value of the <parameter>base.dir</parameter> parameter (if it is set)
+    and the value of <parameter>docbook.css.source</parameter>,
+    with the <literal>.xml</literal> suffix stripped off.
+    </para>
+  </listitem>
+  <listitem>
+    <para>The stylesheet removes the <tag>style</tag>
+    wrapper element and writes just the CSS text content to the output file.</para>
+  </listitem>
+  <listitem>
+    <para>The stylesheet adds a <tag>link</tag> element to the
+    HTML <tag>HEAD</tag> element to reference the external CSS stylesheet.
+    For example:</para>
+    <programlisting>&lt;link rel="stylesheet" href="docbook.css" type="text/css"&gt;
+    </programlisting>
+    <para>However, if the <parameter>docbook.css.link</parameter>
+    parameter is set to zero, then no <tag>link</tag> is written
+    for the default CSS file.  That is useful if a custom
+    CSS file will import the default CSS stylesheet to ensure
+    proper cascading of styles.</para>
+  </listitem>
+</orderedlist>
+
+<para>If the <parameter>docbook.css.source</parameter> parameter
+is changed from its default <literal>docbook.css.xml</literal> to blank,
+then no default CSS is generated. Likewise if the
+<parameter>make.clean.html</parameter> parameter is set to zero,
+then no default CSS is generated. The 
+<parameter>custom.css.source</parameter> parameter can be used
+instead to generate a complete custom CSS file.</para>
+
+<para>You can use the <parameter>generate.css.header</parameter>
+parameter to instead write the CSS to each HTML <tag>HEAD</tag>
+element in a <tag>style</tag> tag instead of an external CSS file.</para>
+
+  </refsection>
+</refentry>
+
+<refentry version="5.0" id="docbook.css.link">
+<refmeta>
+<refentrytitle>docbook.css.link</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">boolean</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>docbook.css.link</refname>
+<refpurpose>Insert a link referencing the default CSS stylesheet</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="docbook.css.link.frag">
+&lt;xsl:param name="docbook.css.link" select="1"&gt;&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>The stylesheets are capable of generating a default
+CSS stylesheet file.  The parameters 
+<parameter>make.clean.html</parameter> and
+<parameter>docbook.css.source</parameter> control that feature.</para>
+
+<para>Normally if a default CSS file is generated, then 
+the stylesheet inserts a <tag>link</tag> tag in the HTML
+<tag>HEAD</tag> element to reference it.
+However, you can omit that <tag>link</tag> reference if
+you set the <parameter>docbook.css.link</parameter> to zero
+(1 is the default).</para>
+
+<para>This parameter is useful when you want to import the 
+default CSS into a custom CSS file generated using the
+<parameter>custom.css.source</parameter> parameter.
+</para>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="custom.css.source">
+  <refmeta>
+    <refentrytitle>custom.css.source</refentrytitle>
+    <refmiscinfo class="other" otherclass="datatype">string</refmiscinfo>
+  </refmeta>
+  <refnamediv>
+    <refname>custom.css.source</refname>
+    <refpurpose>Name of a custom CSS input file</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <programlisting id="custom.css.source.frag">&lt;xsl:param name="custom.css.source"&gt;&lt;/xsl:param&gt;</programlisting>
+  </refsynopsisdiv>
+
+  <refsection><info><title>Description</title></info>
+
+<para>The <parameter>custom.css.source</parameter>
+parameter enables you to add CSS styles to DocBook's
+HTML output.</para>
+
+<para>The parameter
+specifies the name of a file containing custom
+CSS styles.  The file must be a well-formed XML file that
+consists of a single <tag>style</tag> root
+element that contains CSS styles as its text content.
+For example:</para>
+<programlisting>&lt;?xml version="1.0"?&gt;
+&lt;style&gt;
+h2 {
+  font-weight: bold;
+  color: blue;
+}
+...
+&lt;/style&gt;
+</programlisting>
+
+<para>The filename specified by the parameter
+should have a <literal>.xml</literal>
+filename suffix, although that is not required.
+The default value of this parameter is blank.</para>
+
+<para>If <parameter>custom.css.source</parameter> is not blank, then
+the stylesheet takes the following actions.
+These actions take place regardless of the value of
+the <parameter>make.clean.html</parameter> parameter.</para>
+
+<orderedlist>
+  <listitem>
+    <para>The stylesheet uses the XSLT <literal>document()</literal>
+    function to open the file specified by the parameter and
+    load it into a variable.</para>
+  </listitem>
+  <listitem>
+    <para>The stylesheet forms an output pathname consisting of the
+    value of the <parameter>base.dir</parameter> parameter (if it is set)
+    and the value of <parameter>custom.css.source</parameter>,
+    with the <literal>.xml</literal> suffix stripped off.
+    </para>
+  </listitem>
+  <listitem>
+    <para>The stylesheet removes the <tag>style</tag>
+    wrapper element and writes just the CSS text content to the output file.</para>
+  </listitem>
+  <listitem>
+    <para>The stylesheet adds a <tag>link</tag> element to the
+    HTML <tag>HEAD</tag> element to reference this external CSS stylesheet.
+    For example:
+    <programlisting>&lt;link rel="stylesheet" href="custom.css" type="text/css"&gt;
+    </programlisting>
+    </para>
+  </listitem>
+</orderedlist>
+
+
+
+<para>If the <parameter>make.clean.html</parameter> parameter is nonzero
+(the default is zero),
+and if the <parameter>docbook.css.source</parameter> parameter
+is not blank (the default is not blank),
+then the stylesheet will also generate a default CSS file
+and add a <tag>link</tag> tag to reference it.
+The <tag>link</tag> to the custom CSS comes after the 
+<tag>link</tag> to the default, so it should cascade properly
+in most browsers.
+If you do not want two <tag>link</tag> tags, and
+instead want your custom CSS to import the default generated
+CSS file, then do the following:
+</para>
+
+<orderedlist>
+  <listitem>
+    <para>Add a line like the following to your custom CSS source file:</para>
+    <programlisting>@import url("docbook.css")
+    </programlisting>
+  </listitem>
+  <listitem>
+    <para>Set the <parameter>docbook.css.link</parameter> parameter 
+    to zero. This will omit the <tag>link</tag> tag
+    that references the default CSS file.</para>
+  </listitem>
+</orderedlist>
+
+<para>If you set <parameter>make.clean.html</parameter> to nonzero but
+you do not want the default CSS generated, then also set
+the <parameter>docbook.css.source</parameter> parameter to blank.
+Then no default CSS will be generated, and so
+all CSS styles must come from your custom CSS file.</para>
+
+<para>You can use the <parameter>generate.css.header</parameter>
+parameter to instead write the CSS to each HTML <tag>HEAD</tag>
+element in a <tag>style</tag> tag instead of an external CSS file.</para>
+
+  </refsection>
+</refentry>
+
+<refentry version="5.0" id="generate.css.header">
+<refmeta>
+<refentrytitle>generate.css.header</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">boolean</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>generate.css.header</refname>
+<refpurpose>Insert generated CSS styles in HEAD element</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="generate.css.header.frag">
+&lt;xsl:param name="generate.css.header" select="0"&gt;&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>The stylesheets are capable of generating both default
+and custom CSS stylesheet files.  The parameters 
+<parameter>make.clean.html</parameter>,
+<parameter>docbook.css.source</parameter>, and
+<parameter>custom.css.source</parameter> control that feature.</para>
+
+<para>If you require that CSS styles reside in the HTML 
+<tag>HEAD</tag> element instead of external CSS files,
+then set the <parameter>generate.css.header</parameter>
+parameter to nonzero (it is zero by default).
+Then instead of generating the CSS in external files,
+they are wrapped in <tag>style</tag> elements in
+the <tag>HEAD</tag> element of each HTML output file.
+</para>
 
 </refsection>
 </refentry>
@@ -3011,9 +3398,10 @@ in range notation (1998-1999) instead of discrete notation
 collated into ranges.
 This works only if each year number is put into a separate
 year element.  The copyright element permits multiple
-year elements. The stylesheet will not successfully parse
-a complex year element such as <literal>&lt;year&gt;2001,2002,2003&lt;/year&gt;</literal> into
-a range.</para>
+year elements. If a year element contains a dash or
+a comma, then that year element will not be merged into
+any range.
+</para>
 
 </refsection>
 </refentry>
@@ -3130,8 +3518,8 @@ by</emphasis> heading is displayed above editor names in output of the
   <programlisting id="abstract.notitle.enabled.frag">&lt;xsl:param name="abstract.notitle.enabled" select="0"&gt;&lt;/xsl:param&gt;</programlisting>
 </refsynopsisdiv>
 <refsection><info><title>Description</title></info>
-<para>If non-zero, in output of the <tag>abstract</tag> element on
-  titlepages, display of the abstract title is suppressed.</para>
+<para>If non-zero, in output of the <tag>abstract</tag> element on titlepages,
+display of the abstract title is suppressed.</para>
 </refsection>
 </refentry>
 
@@ -3473,7 +3861,7 @@ will include generated parentheses.
 </refmeta>
 <refnamediv>
 <refname>refentry.generate.name</refname>
-<refpurpose>Output NAME header before 'RefName'(s)?</refpurpose>
+<refpurpose>Output NAME header before <tag>refname</tag>s?</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
@@ -3485,7 +3873,7 @@ will include generated parentheses.
 <refsection><info><title>Description</title></info>
 
 <para>If non-zero, a "NAME" section title is output before the list
-of 'RefName's. This parameter and
+of <tag>refname</tag>s. This parameter and
 <parameter>refentry.generate.title</parameter> are mutually
 exclusive. This means that if you change this parameter to zero, you
 should set <parameter>refentry.generate.title</parameter> to non-zero unless
@@ -3502,7 +3890,7 @@ you want get quite strange output.
 </refmeta>
 <refnamediv>
 <refname>refentry.generate.title</refname>
-<refpurpose>Output title before 'RefName'(s)?</refpurpose>
+<refpurpose>Output title before <tag>refname</tag>s?</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
@@ -3514,7 +3902,7 @@ you want get quite strange output.
 <refsection><info><title>Description</title></info>
 
 <para>If non-zero, the reference page title or first name is
-output before the list of 'RefName's. This parameter and
+output before the list of <tag>refname</tag>s. This parameter and
 <parameter>refentry.generate.name</parameter> are mutually exclusive.
 This means that if you change this parameter to non-zero, you
 should set <parameter>refentry.generate.name</parameter> to zero unless
@@ -3977,20 +4365,62 @@ in HTML tables. nn for pixels or nn% for percentage length. E.g. 5 or
 <refsection><info><title>Description</title></info>
 
 <para>If no <literal>defaultlabel</literal> attribute is specified on
-a <tag>qandaset</tag>, this value is used. It must be one of the legal
-values for the defaultlabel attribute, one from none, number or
-qanda. The default value is 'number'.
+a <tag>qandaset</tag>, this value is used. It is generally one of the legal
+values for the defaultlabel attribute (<literal>none</literal>, 
+<literal>number</literal> or
+<literal>qanda</literal>), or one of the additional stylesheet-specific values
+(<literal>qnumber</literal> or <literal>qnumberanda</literal>).
+The default value is 'number'.
 </para>
-<para>Meaning</para>
-<para>qanda -   <tag>question</tag>s are labeled &#8220;Q:&#8221; and <tag>answer</tag>s are labeled &#8220;A:&#8221;. </para>
-<para>number -    The entries are enumerated. </para>
-<para>none -    No distinguishing label precedes Questions or Answers. 
+<para>The values are rendered as follows:</para>
+<variablelist>
+<varlistentry><term><literal>qanda</literal></term>
+<listitem>
+<para><tag>question</tag>s are labeled "Q:" and
+<tag>answer</tag>s are labeled "A:". </para>
+</listitem>
+</varlistentry>
 
+<varlistentry><term><literal>number</literal></term>
+<listitem>
+<para>The questions are enumerated and the answers
+are not labeled. </para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>qnumber</literal></term>
+<listitem>
+<para>The questions are labeled "Q:" followed by a number, and answers are not 
+labeled. 
+When sections are numbered, adding a label
+to the number distinguishes the question numbers
+from the section numbers.
+This value is not allowed in the
+<tag class="attribute">defaultlabel</tag> attribute
+of a <tag>qandaset</tag> element.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>qnumberanda</literal></term>
+<listitem>
+<para>The questions are labeled "Q:" followed by a number, and
+the answers are labeled "A:". 
+When sections are numbered, adding a label
+to the number distinguishes the question numbers
+from the section numbers.
+This value is not allowed in the
+<tag class="attribute">defaultlabel</tag> attribute
+of a <tag>qandaset</tag> element.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>none</literal></term>
+<listitem>
+<para>No distinguishing label precedes Questions or Answers. 
 </para>
-
-
-
-
+</listitem>
+</varlistentry>
+</variablelist>
 
 </refsection>
 </refentry>
@@ -4978,18 +5408,15 @@ attribute whose value specifies a page reference.
 
 <refsection><info><title>Description</title></info>
 
+<para>In DocBook documents that conform to a schema older than V4.3, this parameter allows 
+<tag class="attribute">role</tag> to serve the purpose of specifying the cross reference style.</para>
+
 <para>If non-zero, the <tag class="attribute">role</tag> attribute on
 <tag>xref</tag> will be used to select the cross reference style.
-The <link xlink:href="http://www.oasis-open.org/docbook/">DocBook
-Technical Committee</link> recently added an
-<tag class="attribute">xrefstyle</tag> attribute for this purpose.
-If the <tag class="attribute">xrefstyle</tag> attribute
-is present, <tag class="attribute">role</tag> will be ignored, regardless
-of this setting.</para>
-
-<para>Until an official DocBook release that includes the new
-attribute, this flag allows <tag class="attribute">role</tag>
-to serve that purpose.</para>
+In DocBook V4.3, the <tag class="attribute">xrefstyle</tag> attribute was added for this purpose.
+If the <tag class="attribute">xrefstyle</tag> attribute is present, 
+<tag class="attribute">role</tag> will be ignored, regardless of the setting
+of this parameter.</para>
 
 </refsection>
 
@@ -5219,7 +5646,7 @@ tables.</para>
 <refsection><info><title>Description</title></info>
 
 <para>If non-zero, <tag>variablelist</tag>s will be formatted as
-tables. A processing instruction exists to specify a particualar width for the 
+tables. A processing instruction exists to specify a particular width for the 
 column containing the <tag>term</tag>s:   
 <tag class="xmlpi">dbhtml term-width=".25in"</tag></para>
 
@@ -5228,7 +5655,7 @@ child of <tag>variablelist</tag>: <tag class="xmlpi">dbhtml
 list-presentation="table"</tag> or <tag class="xmlpi">dbhtml
 list-presentation="list"</tag>.</para>
 
-<para>This parameter only applys to the HTML transformations. In the
+<para>This parameter only applies to the HTML transformations. In the
 FO case, proper list markup is robust enough to handle the formatting.
 But see also <parameter>variablelist.as.blocks</parameter>.</para>
 
@@ -6189,11 +6616,7 @@ equations in your document.</para>
     <parameter>passivetex.extensions</parameter>,
     <parameter>tex.math.file</parameter></para>
 </refsection>
-<refsection><info><title>More information</title></info>
-  <para>For how-to documentation on embedding TeX equations and
-    generating output from them, see
-    <link role="tcg" xlink:href="TexMath.html">DBTeXMath</link>.</para>
-</refsection>
+
 </refentry>
 
 <refentry version="5.0" id="tex.math.file">
@@ -6253,6 +6676,12 @@ surrounded by math mode delimiters?</refpurpose>
 <para>For compatibility with DSSSL based DBTeXMath from Allin Cottrell
 you should set this parameter to 0.</para>
 
+<warning>
+  <para>This feature is useful for print/PDF output only if you
+  use the obsolete and now unsupported PassiveTeX XSL-FO
+  engine.</para>
+</warning>
+
 </refsection>
 <refsection><info><title>Related Parameters</title></info>
   <para><parameter>tex.math.in.alt</parameter>,
@@ -6263,11 +6692,8 @@ you should set this parameter to 0.</para>
   <para>You can also use the <tag class="xmlpi">dbtex delims</tag> processing
     instruction to control whether delimiters are output.</para>
 </refsection>
-<refsection><info><title>More information</title></info>
-  <para>For how-to documentation on embedding TeX equations and
-    generating output from them, see
-    <link role="tcg" xlink:href="TexMath.html">DBTeXMath</link>.</para>
-</refsection>
+
+
 </refentry>
 
 <refentry version="5.0" id="pixels.per.inch">
@@ -6591,26 +7017,90 @@ be syntactically highlighted?</refpurpose>
 
 <refsection><info><title>Description</title></info>
 
-<para>When this parameter is non-zero, the stylesheets will try to do
-syntax highlighting of the content of the <tag>programlisting</tag> element. The highlighting is done by the 
-XSLTHL extension module. This is an external Java library which is not part of the DocBook XSL distribution.</para>
+<para>When this parameter is non-zero, the stylesheets will try to do syntax highlighting of the 
+content of <tag>programlisting</tag> elements. You specify the language for each programlisting 
+by using the <tag class="attribute">language</tag> attribute. The <parameter>highlight.default.language</parameter> 
+parameter can be used to specify the language for programlistings without a <tag class="attribute">language</tag> 
+attribute. Syntax highlighting also works for <tag>screen</tag> and <tag>synopsis</tag> elements.</para>
 
-<para>In order to use this extension, you must add
-<filename>xslthl.jar</filename> to your Java classpath. You can
-download this software from <link xlink:href="http://sourceforge.net/projects/xslthl">the XSLT syntax highlighting project</link> at SourceForge.</para>
+<para>The actual highlighting work is done by the XSLTHL extension module. This is an external Java library that has to be 
+downloaded separately (see below).</para>
 
-<para>The configuration of syntax highlighting is stored in 
-<filename>highlighting/xslthl-config.xml</filename>. The Java
-property <literal>xslthl.config</literal> must point to this
-file (using URL syntax).</para>
+<itemizedlist>
+<para>In order to use this extension, you must</para> 
 
-<para>This extension is known to work with Saxon 6.5.x. Here is an example of a modified Saxon command:</para>
+<listitem><para>add <filename>xslthl-2.x.x.jar</filename> to your Java classpath. The latest version is available
+from <link xlink:href="http://sourceforge.net/projects/xslthl">the XSLT syntax highlighting project</link> 
+at SourceForge.</para>
+</listitem>
+<listitem>
+<para>use a customization layer in which you import one of the following stylesheet modules: 
+<itemizedlist>
+  <listitem>
+    <para><filename>html/highlight.xsl</filename>
+    </para>
+  </listitem>
+<listitem>
+    <para><filename>xhtml/highlight.xsl</filename>
+    </para>
+  </listitem>
+<listitem>
+    <para><filename>xhtml-1_1/highlight.xsl</filename>
+    </para>
+  </listitem>
+<listitem>
+    <para><filename>fo/highlight.xsl</filename>
+    </para>
+</listitem>
+</itemizedlist>
+</para>
+</listitem>
+<listitem><para>let either the <literal>xslthl.config</literal> Java system property or the
+<parameter>highlight.xslthl.config</parameter> parameter point to the configuration file for syntax 
+highlighting (using URL syntax). DocBook XSL comes with a ready-to-use configuration file, 
+<filename>highlighting/xslthl-config.xml</filename>.</para>
+</listitem>
+</itemizedlist>
 
-<programlisting>java -cp c:\batch\;&#8230;;c:\path\to\xslthl.jar -Dxslthl.config=file:///c:/docbook-xsl/highlighting/xslthl-config.xml &#8230; com.icl.saxon.StyleSheet &#8230;</programlisting>
+<para>The extension works with Saxon 6.5.x and Xalan-J. (Saxon 8.5 or later is also supported, but since it is 
+an XSLT 2.0 processor it is not guaranteed to work with DocBook XSL in all circumstances.)</para>
 
-<para>You can specify the language for each programlisting by using the <tag class="attribute">language</tag> attribute. The
-<parameter>highlighting.default.language</parameter> parameter can be used for specifying the
-language to be used for programlistings without a <tag class="attribute">language</tag> attribute.</para>
+<para>The following is an example of a Saxon 6 command adapted for syntax highlighting, to be used on Windows:</para>
+
+<informalexample>
+<para><command>java -cp c:/Java/saxon.jar;c:/Java/xslthl-2.0.1.jar 
+-Dxslthl.config=file:///c:/docbook-xsl/highlighting/xslthl-config.xml com.icl.saxon.StyleSheet 
+-o test.html test.xml myhtml.xsl</command></para>
+</informalexample>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="highlight.xslthl.config">
+<refmeta>
+<refentrytitle>highlight.xslthl.config</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">uri</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>highlight.xslthl.config</refname>
+<refpurpose>Location of XSLTHL configuration file</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="highlight.xslthl.config.frag">
+&lt;xsl:param name="highlight.xslthl.config"&gt;&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>This location has precedence over the corresponding Java property.</para>
+
+<para>Please note that usually you have to specify location as URL not
+just as a simple path on the local
+filesystem. E.g. <filename>file:///home/user/xslthl/my-xslthl-config.xml</filename>.</para>
+
+
 
 </refsection>
 </refentry>
@@ -6664,6 +7154,42 @@ brackets.</para></footnote>
 
 are generated around e-mail addresses
 (the output of the <tag>email</tag> element).</para>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="exsl.node.set.available">
+<refmeta>
+<refentrytitle>exsl.node.set.available</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">boolean</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>exsl.node.set.available</refname>
+<refpurpose>Is the test function-available('exsl:node-set') true?</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="exsl.node.set.available.frag">&lt;xsl:param name="exsl.node.set.available"&gt; 
+  &lt;xsl:choose&gt;
+    &lt;xsl:when exsl:foo="" test="function-available('exsl:node-set') or                        contains(system-property('xsl:vendor'),                          'Apache Software Foundation')"&gt;1&lt;/xsl:when&gt;
+    &lt;xsl:otherwise&gt;0&lt;/xsl:otherwise&gt;
+  &lt;/xsl:choose&gt;
+&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>If non-zero,
+then the exsl:node-set() function is available to be used in
+the stylesheet.
+If zero, then the function is not available.
+This param automatically detects the presence of
+the function and does not normally need to be set manually.</para>
+
+<para>This param was created to handle a long-standing
+bug in the Xalan processor that fails to detect the
+function even though it is available.</para>
 
 </refsection>
 </refentry>
@@ -6952,10 +7478,8 @@ and the <tag class="attribute">format</tag> attribute is
 <refsection><info><title>Description</title></info>
 
 <para>If specified, this value will be used for the
-<tag class="attribute">width</tag> attribute on
-images that do not specify any
-<link xlink:href="http://docbook.org/tdg/en/html/imagedata.html#viewport.area">viewport
-dimensions</link>.</para>
+<tag class="attribute">width</tag> attribute on images that do not specify any 
+<emphasis xlink:title="DocBook 5: The Definitive Guide" xlink:href="http://docbook.org/tdg5/en/html/imagedata.html#viewport.area">viewport dimensions</emphasis>.</para>
 
 </refsection>
 </refentry>
@@ -7753,7 +8277,7 @@ The title page includes generated links to each of the separate files.
 </para>
 <para>
 This feature depends on the
-<literal>chunk.tocs.and.lots</literal>
+<parameter>chunk.tocs.and.lots</parameter>
 parameter also being non-zero. 
 </para>
 
@@ -9031,11 +9555,9 @@ ToC as a default.</para>
 
 <refsection><info><title>Description</title></info>
 
-<para>Set non-zero for folder-like icons or zero for book-like icons in the TOC
-ToC. If you want to use folder-like icons you must swith off binary
-ToC using (xref) <parameter>htmlhelp.hhc.binary</parameter>.
-
-
+<para>Set to non-zero for folder-like icons or zero for book-like icons in the ToC. 
+If you want to use folder-like icons, you must switch off the binary ToC using 
+<parameter>htmlhelp.hhc.binary</parameter>.
 
 </para>
 
@@ -10030,6 +10552,85 @@ to be treated as case insensitive".</para>
 </refsection>
 </refentry>
 
+<refentry version="5.0" id="writing.mode">
+<refmeta>
+<refentrytitle>writing.mode</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">string</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>writing.mode</refname>
+<refpurpose>Direction of text flow based on locale</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="writing.mode.frag">
+&lt;xsl:param name="writing.mode"&gt;
+  &lt;xsl:call-template name="gentext"&gt;
+    &lt;xsl:with-param name="key"&gt;writing-mode&lt;/xsl:with-param&gt;
+    &lt;xsl:with-param name="lang"&gt;
+      &lt;xsl:call-template name="l10n.language"&gt;
+        &lt;xsl:with-param name="target" select="/*[1]"&gt;&lt;/xsl:with-param&gt;
+      &lt;/xsl:call-template&gt;
+    &lt;/xsl:with-param&gt;
+  &lt;/xsl:call-template&gt;
+&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>Sets direction of text flow and text alignment based on locale.
+The value is normally taken from the gentext file for the 
+lang attribute of the document's root element, using the 
+key name 'writing-mode' to look it up in the gentext file.
+But the param can also be
+set on the command line to override that gentext value.
+</para>
+<para>Accepted values are:
+<variablelist>
+  <varlistentry>
+    <term>lr-tb</term>
+    <listitem>
+      <para>Left-to-right text flow in each line, lines stack top to bottom.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>rl-tb</term>
+    <listitem>
+      <para>Right-to-left text flow in each line, lines stack top to bottom.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>tb-rl</term>
+    <listitem>
+      <para>Top-to-bottom text flow in each vertical line, lines stack right to left.
+      Supported by only a few XSL-FO processors. Not supported in HTML output.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>lr</term>
+    <listitem>
+      <para>Shorthand for lr-tb.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>rl</term>
+    <listitem>
+      <para>Shorthand for rl-tb.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>tb</term>
+    <listitem>
+      <para>Shorthand for tb-rl.</para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+</para>
+
+</refsection>
+</refentry>
+
 </reference>
     </part>
     <part id="fo">
@@ -10245,8 +10846,8 @@ to the rest of the content.</para>
   &lt;xsl:attribute name="space-before.minimum"&gt;0.8em&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="space-before.optimum"&gt;1em&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="space-before.maximum"&gt;1.2em&lt;/xsl:attribute&gt;
-  &lt;xsl:attribute name="margin-left"&gt;0.25in&lt;/xsl:attribute&gt;
-  &lt;xsl:attribute name="margin-right"&gt;0.25in&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="margin-{$direction.align.start}"&gt;0.25in&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="margin-{$direction.align.end}"&gt;0.25in&lt;/xsl:attribute&gt;
 &lt;/xsl:attribute-set&gt;
 </programlisting>
 </refsynopsisdiv>
@@ -10556,7 +11157,7 @@ only 10102 is supported in the stylesheets for this parameter.
 <refsection><info><title>Description</title></info>
 
 <para>The callouts extension processes <tag>areaset</tag>
-elements in <tag>ProgramListingCO</tag> and other text-based
+elements in <tag>programlistingco</tag> and other text-based
 callout elements.
 </para>
 
@@ -11105,7 +11706,7 @@ significant index terms</refpurpose>
 <refsection><info><title>Description</title></info>
 
 <para>Properties used to emphasize page number references for
-significant index terms (<tag class="attribute">significance</tag>=<tag class="attvalue">preffered</tag>). Currently works only with
+significant index terms (<tag class="attribute">significance</tag>=<tag class="attvalue">preferred</tag>). Currently works only with
 XEP.</para>
 
 </refsection>
@@ -11154,7 +11755,7 @@ index</refpurpose>
 <refsynopsisdiv>
 <programlisting id="index.div.title.properties.frag">
 &lt;xsl:attribute-set name="index.div.title.properties"&gt;
-  &lt;xsl:attribute name="margin-left"&gt;0pt&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="margin-{$direction.align.start}"&gt;0pt&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="font-size"&gt;14.4pt&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="font-family"&gt;&lt;xsl:value-of select="$title.fontset"&gt;&lt;/xsl:value-of&gt;&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="font-weight"&gt;bold&lt;/xsl:attribute&gt;
@@ -11442,7 +12043,7 @@ because not all processors support expressions.</para>
 </refmeta>
 <refnamediv>
 <refname>toc.line.properties</refname>
-<refpurpose>Properties for lines in ToC and LoTs</refpurpose>
+<refpurpose>Properties for lines in ToCs and LoTs</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
@@ -11460,13 +12061,15 @@ because not all processors support expressions.</para>
 
 <para>Properties which are applied to every line in ToC (or LoT). You can
 modify them in order to change appearance of all, or some lines. For
-example in order to make lines for chapters in bold specify the
-following in your customization layer.</para>
+example, in order to make lines for chapters bold, specify the
+following in your customization layer:</para>
 
 <programlisting>&lt;xsl:attribute-set name="toc.line.properties"&gt;
   &lt;xsl:attribute name="font-weight"&gt;
-    &lt;xsl:when test="self::chapter | self::preface | self::appendix"&gt;bold&lt;/xsl:when&gt;
+   &lt;xsl:choose&gt;
+    &lt;xsl:when test="self::chapter"&gt;bold&lt;/xsl:when&gt;
     &lt;xsl:otherwise&gt;normal&lt;/xsl:otherwise&gt;
+   &lt;/xsl:choose&gt;
   &lt;/xsl:attribute&gt;
 &lt;/xsl:attribute-set&gt;</programlisting>
 
@@ -11802,11 +12405,7 @@ equations in your document.</para>
     <parameter>passivetex.extensions</parameter>,
     <parameter>tex.math.file</parameter></para>
 </refsection>
-<refsection><info><title>More information</title></info>
-  <para>For how-to documentation on embedding TeX equations and
-    generating output from them, see
-    <link role="tcg" xlink:href="TexMath.html">DBTeXMath</link>.</para>
-</refsection>
+
 </refentry>
 
 <refentry version="5.0" id="tex.math.delims">
@@ -11831,6 +12430,12 @@ surrounded by math mode delimiters?</refpurpose>
 <para>For compatibility with DSSSL based DBTeXMath from Allin Cottrell
 you should set this parameter to 0.</para>
 
+<warning>
+  <para>This feature is useful for print/PDF output only if you
+  use the obsolete and now unsupported PassiveTeX XSL-FO
+  engine.</para>
+</warning>
+
 </refsection>
 <refsection><info><title>Related Parameters</title></info>
   <para><parameter>tex.math.in.alt</parameter>,
@@ -11841,11 +12446,8 @@ you should set this parameter to 0.</para>
   <para>You can also use the <tag class="xmlpi">dbtex delims</tag> processing
     instruction to control whether delimiters are output.</para>
 </refsection>
-<refsection><info><title>More information</title></info>
-  <para>For how-to documentation on embedding TeX equations and
-    generating output from them, see
-    <link role="tcg" xlink:href="TexMath.html">DBTeXMath</link>.</para>
-</refsection>
+
+
 </refentry>
 
 <refentry version="5.0" id="xep.extensions">
@@ -12659,9 +13261,10 @@ in range notation (1998-1999) instead of discrete notation
 collated into ranges.
 This works only if each year number is put into a separate
 year element.  The copyright element permits multiple
-year elements. The stylesheet will not successfully parse
-a complex year element such as <literal>&lt;year&gt;2001,2002,2003&lt;/year&gt;</literal> into
-a range.</para>
+year elements. If a year element contains a dash or
+a comma, then that year element will not be merged into
+any range.
+</para>
 
 </refsection>
 </refentry>
@@ -12779,7 +13382,7 @@ will include generated parentheses.
 </refmeta>
 <refnamediv>
 <refname>refentry.generate.name</refname>
-<refpurpose>Output NAME header before 'RefName'(s)?</refpurpose>
+<refpurpose>Output NAME header before <tag>refname</tag>s?</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
@@ -12791,7 +13394,7 @@ will include generated parentheses.
 <refsection><info><title>Description</title></info>
 
 <para>If non-zero, a "NAME" section title is output before the list
-of 'RefName's. This parameter and
+of <tag>refname</tag>s. This parameter and
 <parameter>refentry.generate.title</parameter> are mutually
 exclusive. This means that if you change this parameter to zero, you
 should set <parameter>refentry.generate.title</parameter> to non-zero unless
@@ -12808,7 +13411,7 @@ you want get quite strange output.
 </refmeta>
 <refnamediv>
 <refname>refentry.generate.title</refname>
-<refpurpose>Output title before 'RefName'(s)?</refpurpose>
+<refpurpose>Output title before <tag>refname</tag>s?</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
@@ -12820,7 +13423,7 @@ you want get quite strange output.
 <refsection><info><title>Description</title></info>
 
 <para>If non-zero, the reference page title or first name is
-output before the list of 'RefName's. This parameter and
+output before the list of <tag>refname</tag>s. This parameter and
 <parameter>refentry.generate.name</parameter> are mutually exclusive.
 This means that if you change this parameter to non-zero, you
 should set <parameter>refentry.generate.name</parameter> to zero unless
@@ -13038,6 +13641,78 @@ table. </para>
 </refsection>
 </refentry>
 
+<refentry version="5.0" id="default.table.rules">
+<refmeta>
+<refentrytitle>default.table.rules</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">string</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>default.table.rules</refname>
+<refpurpose>The default column and row rules for tables using HTML markup</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="default.table.rules.frag">
+&lt;xsl:param name="default.table.rules"&gt;none&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>Tables using HTML markup elements can use an attribute
+named <tag class="attribute">rules</tag> on the <tag>table</tag> or
+<tag>informaltable</tag> element
+to specify whether column and row border rules should be 
+displayed. This parameter lets you specify a global default
+style for all HTML tables that don't otherwise have
+that attribute.</para>
+<para>These are the supported values:</para>
+
+<variablelist>
+<varlistentry><term>all</term>
+<listitem>
+<para>Rules will appear between all rows and columns.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term>rows</term>
+<listitem>
+<para>Rules will appear between rows only.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term>cols</term>
+<listitem>
+<para>Rules will appear between columns only.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term>groups</term>
+<listitem>
+<para>Rules will appear between row groups (thead, tfoot, tbody).
+No support for rules between column groups yet.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term>none</term>
+<listitem>
+<para>No rules.  This is the default value.
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+
+<para>The border after the last row and the border after
+the last column are not affected by
+this setting. Those borders are controlled by
+the <tag class="attribute">frame</tag> attribute on the table element.
+</para>
+
+</refsection>
+</refentry>
+
 <refentry version="5.0" id="table.cell.padding">
 <refmeta>
 <refentrytitle>table.cell.padding</refentrytitle>
@@ -13051,8 +13726,8 @@ table. </para>
 <refsynopsisdiv>
 <programlisting id="table.cell.padding.frag">
 &lt;xsl:attribute-set name="table.cell.padding"&gt;
-  &lt;xsl:attribute name="padding-left"&gt;2pt&lt;/xsl:attribute&gt;
-  &lt;xsl:attribute name="padding-right"&gt;2pt&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="padding-start"&gt;2pt&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="padding-end"&gt;2pt&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="padding-top"&gt;2pt&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="padding-bottom"&gt;2pt&lt;/xsl:attribute&gt;
 &lt;/xsl:attribute-set&gt;
@@ -14495,6 +15170,31 @@ after each <tag>term</tag> except the last.</para>
 </refsection>
 </refentry>
 
+<refentry version="5.0" id="variablelist.term.properties">
+<refmeta>
+<refentrytitle>variablelist.term.properties</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">attribute set</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>variablelist.term.properties</refname>
+<refpurpose>To add properties to the term elements in a variablelist.</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="variablelist.term.properties.frag">
+&lt;xsl:attribute-set name="variablelist.term.properties"&gt;
+&lt;/xsl:attribute-set&gt;
+</programlisting>
+</refsynopsisdiv>
+<refsection><info><title>Description</title></info>
+<para>These properties are added to the block containing a
+term in a variablelist.
+Use this attribute-set to set
+font properties or alignment, for example.</para>
+
+</refsection>
+</refentry>
+
 <refentry version="5.0" id="variablelist.term.break.after">
 <refmeta>
 <refentrytitle>variablelist.term.break.after</refentrytitle>
@@ -14601,20 +15301,62 @@ the ancestors of the <tag>qandaset</tag>.
 <refsection><info><title>Description</title></info>
 
 <para>If no <literal>defaultlabel</literal> attribute is specified on
-a <tag>qandaset</tag>, this value is used. It must be one of the legal
-values for the defaultlabel attribute, one from none, number or
-qanda. The default value is 'number'.
+a <tag>qandaset</tag>, this value is used. It is generally one of the legal
+values for the defaultlabel attribute (<literal>none</literal>, 
+<literal>number</literal> or
+<literal>qanda</literal>), or one of the additional stylesheet-specific values
+(<literal>qnumber</literal> or <literal>qnumberanda</literal>).
+The default value is 'number'.
 </para>
-<para>Meaning</para>
-<para>qanda -   <tag>question</tag>s are labeled &#8220;Q:&#8221; and <tag>answer</tag>s are labeled &#8220;A:&#8221;. </para>
-<para>number -    The entries are enumerated. </para>
-<para>none -    No distinguishing label precedes Questions or Answers. 
+<para>The values are rendered as follows:</para>
+<variablelist>
+<varlistentry><term><literal>qanda</literal></term>
+<listitem>
+<para><tag>question</tag>s are labeled "Q:" and
+<tag>answer</tag>s are labeled "A:". </para>
+</listitem>
+</varlistentry>
 
+<varlistentry><term><literal>number</literal></term>
+<listitem>
+<para>The questions are enumerated and the answers
+are not labeled. </para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>qnumber</literal></term>
+<listitem>
+<para>The questions are labeled "Q:" followed by a number, and answers are not 
+labeled. 
+When sections are numbered, adding a label
+to the number distinguishes the question numbers
+from the section numbers.
+This value is not allowed in the
+<tag class="attribute">defaultlabel</tag> attribute
+of a <tag>qandaset</tag> element.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>qnumberanda</literal></term>
+<listitem>
+<para>The questions are labeled "Q:" followed by a number, and
+the answers are labeled "A:". 
+When sections are numbered, adding a label
+to the number distinguishes the question numbers
+from the section numbers.
+This value is not allowed in the
+<tag class="attribute">defaultlabel</tag> attribute
+of a <tag>qandaset</tag> element.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>none</literal></term>
+<listitem>
+<para>No distinguishing label precedes Questions or Answers. 
 </para>
-
-
-
-
+</listitem>
+</varlistentry>
+</variablelist>
 
 </refsection>
 </refentry>
@@ -15177,54 +15919,6 @@ the &lt;parameter&gt;glossary.collection&lt;/parameter&gt; parameter.&lt;/para&g
 </refsection>
 </refentry>
 
-<refentry version="5.0" id="glossterm.separation">
-<refmeta>
-<refentrytitle>glossterm.separation</refentrytitle>
-<refmiscinfo class="other" otherclass="datatype">length</refmiscinfo>
-</refmeta>
-<refnamediv>
-<refname>glossterm.separation</refname>
-<refpurpose>Separation between glossary terms and descriptions in list mode</refpurpose>
-</refnamediv>
-
-<refsynopsisdiv>
-<programlisting id="glossterm.separation.frag">
-&lt;xsl:param name="glossterm.separation"&gt;0.25in&lt;/xsl:param&gt;
-</programlisting>
-</refsynopsisdiv>
-
-<refsection><info><title>Description</title></info>
-
-<para>Specifies the separation between glossary terms and descriptions when
-glossarys are presented using lists.</para>
-
-</refsection>
-</refentry>
-
-<refentry version="5.0" id="glossterm.width">
-<refmeta>
-<refentrytitle>glossterm.width</refentrytitle>
-<refmiscinfo class="other" otherclass="datatype">length</refmiscinfo>
-</refmeta>
-<refnamediv>
-<refname>glossterm.width</refname>
-<refpurpose>Width of glossterm in list presentation mode</refpurpose>
-</refnamediv>
-
-<refsynopsisdiv>
-<programlisting id="glossterm.width.frag">
-&lt;xsl:param name="glossterm.width"&gt;2in&lt;/xsl:param&gt;
-</programlisting>
-</refsynopsisdiv>
-
-<refsection><info><title>Description</title></info>
-
-<para>This parameter specifies the width reserved for glossary terms when
-a list presentation is used.</para>
-
-</refsection>
-</refentry>
-
 <refentry version="5.0" id="glossary.as.blocks">
 <refmeta>
 <refentrytitle>glossary.as.blocks</refentrytitle>
@@ -15278,6 +15972,196 @@ glossary-presentation="list"</tag></para>
 <refsection><info><title>Description</title></info>
 
 <para>See <parameter>glossary.as.blocks</parameter>.</para>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="glossentry.list.item.properties">
+<refmeta>
+<refentrytitle>glossentry.list.item.properties</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">attribute set</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>glossentry.list.item.properties</refname>
+<refpurpose>To add properties to each glossentry in a list.</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="glossentry.list.item.properties.frag">&lt;xsl:attribute-set name="glossentry.list.item.properties"&gt;
+  &lt;xsl:attribute name="space-before.optimum"&gt;1em&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="space-before.minimum"&gt;0.8em&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="space-before.maximum"&gt;1.2em&lt;/xsl:attribute&gt;
+&lt;/xsl:attribute-set&gt;
+</programlisting>
+</refsynopsisdiv>
+<refsection><info><title>Description</title></info>
+<para>These properties are added to the fo:list-item containing a
+glossentry in a glossary when the <parameter>glossary.as.blocks</parameter> parameter
+is zero.
+Use this attribute-set to set
+spacing between entries, for example.</para>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="glossterm.block.properties">
+<refmeta>
+<refentrytitle>glossterm.block.properties</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">attribute set</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>glossterm.block.properties</refname>
+<refpurpose>To add properties to the block of a glossentry's glossterm.</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="glossterm.block.properties.frag">&lt;xsl:attribute-set name="glossterm.block.properties"&gt;
+  &lt;xsl:attribute name="space-before.optimum"&gt;1em&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="space-before.minimum"&gt;0.8em&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="space-before.maximum"&gt;1.2em&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="keep-with-next.within-column"&gt;always&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="keep-together.within-column"&gt;always&lt;/xsl:attribute&gt;
+&lt;/xsl:attribute-set&gt;
+</programlisting>
+</refsynopsisdiv>
+<refsection><info><title>Description</title></info>
+<para>These properties are added to the block containing a
+glossary term in a glossary when the <parameter>glossary.as.blocks</parameter> parameter
+is non-zero.
+Use this attribute-set to set the space above and below,
+font properties,
+and any indent for the glossary term.</para>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="glossdef.block.properties">
+<refmeta>
+<refentrytitle>glossdef.block.properties</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">attribute set</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>glossdef.block.properties</refname>
+<refpurpose>To add properties to the block of a glossary definition.</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="glossdef.block.properties.frag">&lt;xsl:attribute-set name="glossdef.block.properties"&gt;
+  &lt;xsl:attribute name="margin-{$direction.align.start}"&gt;.25in&lt;/xsl:attribute&gt;
+&lt;/xsl:attribute-set&gt;
+</programlisting>
+</refsynopsisdiv>
+<refsection><info><title>Description</title></info>
+<para>These properties are added to the block containing a
+glossary definition in a glossary when
+the <parameter>glossary.as.blocks</parameter> parameter
+is non-zero.
+Use this attribute-set to set the space above and below,
+any font properties,
+and any indent for the glossary definition.</para>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="glossterm.list.properties">
+<refmeta>
+<refentrytitle>glossterm.list.properties</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">attribute set</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>glossterm.list.properties</refname>
+<refpurpose>To add properties to the glossterm in a list.</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="glossterm.list.properties.frag">
+&lt;xsl:attribute-set name="glossterm.list.properties"&gt;
+&lt;/xsl:attribute-set&gt;
+</programlisting>
+</refsynopsisdiv>
+<refsection><info><title>Description</title></info>
+<para>These properties are added to the block containing a
+glossary term in a glossary when the <parameter>glossary.as.blocks</parameter> parameter
+is zero.
+Use this attribute-set to set
+font properties, for example.</para>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="glossdef.list.properties">
+<refmeta>
+<refentrytitle>glossdef.list.properties</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">attribute set</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>glossdef.list.properties</refname>
+<refpurpose>To add properties to the glossary definition in a list.</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="glossdef.list.properties.frag">
+&lt;xsl:attribute-set name="glossdef.list.properties"&gt;
+&lt;/xsl:attribute-set&gt;
+</programlisting>
+</refsynopsisdiv>
+<refsection><info><title>Description</title></info>
+<para>These properties are added to the block containing a
+glossary definition in a glossary when
+the <parameter>glossary.as.blocks</parameter> parameter
+is zero.
+Use this attribute-set to set font properties, for example.</para>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="glossterm.width">
+<refmeta>
+<refentrytitle>glossterm.width</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">length</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>glossterm.width</refname>
+<refpurpose>Width of glossterm in list presentation mode</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="glossterm.width.frag">
+&lt;xsl:param name="glossterm.width"&gt;2in&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>This parameter specifies the width reserved for glossary terms when
+a list presentation is used.</para>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="glossterm.separation">
+<refmeta>
+<refentrytitle>glossterm.separation</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">length</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>glossterm.separation</refname>
+<refpurpose>Separation between glossary terms and descriptions in list mode</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="glossterm.separation.frag">
+&lt;xsl:param name="glossterm.separation"&gt;0.25in&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>Specifies the miminum horizontal
+separation between glossary terms and descriptions when
+they are presented side-by-side using lists
+when the <parameter>glossary.as.blocks</parameter>
+is zero.</para>
 
 </refsection>
 </refentry>
@@ -15603,8 +16487,8 @@ number of letters in the longest term.
 <refsynopsisdiv>
 <programlisting id="blockquote.properties.frag">
 &lt;xsl:attribute-set name="blockquote.properties"&gt;
-&lt;xsl:attribute name="margin-left"&gt;0.5in&lt;/xsl:attribute&gt;
-&lt;xsl:attribute name="margin-right"&gt;0.5in&lt;/xsl:attribute&gt;
+&lt;xsl:attribute name="margin-{$direction.align.start}"&gt;0.5in&lt;/xsl:attribute&gt;
+&lt;xsl:attribute name="margin-{$direction.align.end}"&gt;0.5in&lt;/xsl:attribute&gt;
 &lt;xsl:attribute name="space-after.minimum"&gt;0.5em&lt;/xsl:attribute&gt;
 &lt;xsl:attribute name="space-after.optimum"&gt;1em&lt;/xsl:attribute&gt;
 &lt;xsl:attribute name="space-after.maximum"&gt;2em&lt;/xsl:attribute&gt;
@@ -15850,7 +16734,7 @@ environments.</para>
 </refmeta>
 <refnamediv>
 <refname>hyphenate.verbatim.characters</refname>
-<refpurpose>List of characters after which line break can occur in listings</refpurpose>
+<refpurpose>List of characters after which a line break can occur in listings</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
@@ -15914,18 +16798,15 @@ to process the output from the stylesheet.</para>
 
 <refsection><info><title>Description</title></info>
 
+<para>In DocBook documents that conform to a schema older than V4.3, this parameter allows 
+<tag class="attribute">role</tag> to serve the purpose of specifying the cross reference style.</para>
+
 <para>If non-zero, the <tag class="attribute">role</tag> attribute on
 <tag>xref</tag> will be used to select the cross reference style.
-The <link xlink:href="http://www.oasis-open.org/docbook/">DocBook
-Technical Committee</link> recently added an
-<tag class="attribute">xrefstyle</tag> attribute for this purpose.
-If the <tag class="attribute">xrefstyle</tag> attribute
-is present, <tag class="attribute">role</tag> will be ignored, regardless
-of this setting.</para>
-
-<para>Until an official DocBook release that includes the new
-attribute, this flag allows <tag class="attribute">role</tag>
-to serve that purpose.</para>
+In DocBook V4.3, the <tag class="attribute">xrefstyle</tag> attribute was added for this purpose.
+If the <tag class="attribute">xrefstyle</tag> attribute is present, 
+<tag class="attribute">role</tag> will be ignored, regardless of the setting
+of this parameter.</para>
 
 </refsection>
 
@@ -16299,6 +17180,7 @@ applied to all table footnotes.</para>
 <refsynopsisdiv>
 <programlisting id="footnote.mark.properties.frag">
 &lt;xsl:attribute-set name="footnote.mark.properties"&gt;
+  &lt;xsl:attribute name="font-family"&gt;&lt;xsl:value-of select="$body.fontset"&gt;&lt;/xsl:value-of&gt;&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="font-size"&gt;75%&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="font-weight"&gt;normal&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="font-style"&gt;normal&lt;/xsl:attribute&gt;
@@ -16466,7 +17348,7 @@ In a stylesheet that sets the parameter
 <parameter>body.start.indent</parameter>
 to a non-zero value in order to indent body text,
 this attribute set can be used to outdent pgwide
-figures to the left margin.
+figures to the start margin.
 </para>
 
 <para>If a document uses a multi-column page layout,
@@ -16499,26 +17381,90 @@ be syntactically highlighted?</refpurpose>
 
 <refsection><info><title>Description</title></info>
 
-<para>When this parameter is non-zero, the stylesheets will try to do
-syntax highlighting of the content of the <tag>programlisting</tag> element. The highlighting is done by the 
-XSLTHL extension module. This is an external Java library which is not part of the DocBook XSL distribution.</para>
+<para>When this parameter is non-zero, the stylesheets will try to do syntax highlighting of the 
+content of <tag>programlisting</tag> elements. You specify the language for each programlisting 
+by using the <tag class="attribute">language</tag> attribute. The <parameter>highlight.default.language</parameter> 
+parameter can be used to specify the language for programlistings without a <tag class="attribute">language</tag> 
+attribute. Syntax highlighting also works for <tag>screen</tag> and <tag>synopsis</tag> elements.</para>
 
-<para>In order to use this extension, you must add
-<filename>xslthl.jar</filename> to your Java classpath. You can
-download this software from <link xlink:href="http://sourceforge.net/projects/xslthl">the XSLT syntax highlighting project</link> at SourceForge.</para>
+<para>The actual highlighting work is done by the XSLTHL extension module. This is an external Java library that has to be 
+downloaded separately (see below).</para>
 
-<para>The configuration of syntax highlighting is stored in 
-<filename>highlighting/xslthl-config.xml</filename>. The Java
-property <literal>xslthl.config</literal> must point to this
-file (using URL syntax).</para>
+<itemizedlist>
+<para>In order to use this extension, you must</para> 
 
-<para>This extension is known to work with Saxon 6.5.x. Here is an example of a modified Saxon command:</para>
+<listitem><para>add <filename>xslthl-2.x.x.jar</filename> to your Java classpath. The latest version is available
+from <link xlink:href="http://sourceforge.net/projects/xslthl">the XSLT syntax highlighting project</link> 
+at SourceForge.</para>
+</listitem>
+<listitem>
+<para>use a customization layer in which you import one of the following stylesheet modules: 
+<itemizedlist>
+  <listitem>
+    <para><filename>html/highlight.xsl</filename>
+    </para>
+  </listitem>
+<listitem>
+    <para><filename>xhtml/highlight.xsl</filename>
+    </para>
+  </listitem>
+<listitem>
+    <para><filename>xhtml-1_1/highlight.xsl</filename>
+    </para>
+  </listitem>
+<listitem>
+    <para><filename>fo/highlight.xsl</filename>
+    </para>
+</listitem>
+</itemizedlist>
+</para>
+</listitem>
+<listitem><para>let either the <literal>xslthl.config</literal> Java system property or the
+<parameter>highlight.xslthl.config</parameter> parameter point to the configuration file for syntax 
+highlighting (using URL syntax). DocBook XSL comes with a ready-to-use configuration file, 
+<filename>highlighting/xslthl-config.xml</filename>.</para>
+</listitem>
+</itemizedlist>
 
-<programlisting>java -cp c:\batch\;&#8230;;c:\path\to\xslthl.jar -Dxslthl.config=file:///c:/docbook-xsl/highlighting/xslthl-config.xml &#8230; com.icl.saxon.StyleSheet &#8230;</programlisting>
+<para>The extension works with Saxon 6.5.x and Xalan-J. (Saxon 8.5 or later is also supported, but since it is 
+an XSLT 2.0 processor it is not guaranteed to work with DocBook XSL in all circumstances.)</para>
 
-<para>You can specify the language for each programlisting by using the <tag class="attribute">language</tag> attribute. The
-<parameter>highlighting.default.language</parameter> parameter can be used for specifying the
-language to be used for programlistings without a <tag class="attribute">language</tag> attribute.</para>
+<para>The following is an example of a Saxon 6 command adapted for syntax highlighting, to be used on Windows:</para>
+
+<informalexample>
+<para><command>java -cp c:/Java/saxon.jar;c:/Java/xslthl-2.0.1.jar 
+-Dxslthl.config=file:///c:/docbook-xsl/highlighting/xslthl-config.xml com.icl.saxon.StyleSheet 
+-o test.html test.xml myhtml.xsl</command></para>
+</informalexample>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="highlight.xslthl.config">
+<refmeta>
+<refentrytitle>highlight.xslthl.config</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">uri</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>highlight.xslthl.config</refname>
+<refpurpose>Location of XSLTHL configuration file</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="highlight.xslthl.config.frag">
+&lt;xsl:param name="highlight.xslthl.config"&gt;&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>This location has precedence over the corresponding Java property.</para>
+
+<para>Please note that usually you have to specify location as URL not
+just as a simple path on the local
+filesystem. E.g. <filename>file:///home/user/xslthl/my-xslthl-config.xml</filename>.</para>
+
+
 
 </refsection>
 </refentry>
@@ -16572,6 +17518,31 @@ brackets.</para></footnote>
 
 are generated around e-mail addresses
 (the output of the <tag>email</tag> element).</para>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="email.mailto.enabled">
+<refmeta>
+<refentrytitle>email.mailto.enabled</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">boolean</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>email.mailto.enabled</refname>
+<refpurpose>Generate mailto: links for email addresses?</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="email.mailto.enabled.frag">
+&lt;xsl:param name="email.mailto.enabled" select="0"&gt;&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>If non-zero the generated output for the <tag>email</tag> element
+will be a clickable mailto: link that brings up the default mail client
+on the system.</para>
 
 </refsection>
 </refentry>
@@ -16634,6 +17605,105 @@ and need to use <literal>wrapper</literal>.
 </refsection>
 </refentry>
 
+<refentry version="5.0" id="monospace.verbatim.font.width">
+<refmeta>
+<refentrytitle>monospace.verbatim.font.width</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">length</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>monospace.verbatim.font.width</refname>
+<refpurpose>Width of a single monospace font character</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="monospace.verbatim.font.width.frag">
+&lt;xsl:param name="monospace.verbatim.font.width"&gt;0.60em&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>Specifies with em units the width of a single character
+of the monospace font. The default value is <literal>0.6em</literal>.</para>
+
+<para>This parameter is only used when a <tag>screen</tag>
+or <tag>programlisting</tag> element has a 
+<tag class="attribute">width</tag> attribute, which is
+expressed as a plain integer to indicate the maximum character count
+of each line.
+To convert this character count to an actual maximum width
+measurement, the width of the font characters must be provided.
+Different monospace fonts have different character width,
+so this parameter should be adjusted to fit the 
+monospace font being used.
+</para>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="exsl.node.set.available">
+<refmeta>
+<refentrytitle>exsl.node.set.available</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">boolean</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>exsl.node.set.available</refname>
+<refpurpose>Is the test function-available('exsl:node-set') true?</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="exsl.node.set.available.frag">&lt;xsl:param name="exsl.node.set.available"&gt; 
+  &lt;xsl:choose&gt;
+    &lt;xsl:when exsl:foo="" test="function-available('exsl:node-set') or                        contains(system-property('xsl:vendor'),                          'Apache Software Foundation')"&gt;1&lt;/xsl:when&gt;
+    &lt;xsl:otherwise&gt;0&lt;/xsl:otherwise&gt;
+  &lt;/xsl:choose&gt;
+&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>If non-zero,
+then the exsl:node-set() function is available to be used in
+the stylesheet.
+If zero, then the function is not available.
+This param automatically detects the presence of
+the function and does not normally need to be set manually.</para>
+
+<para>This param was created to handle a long-standing
+bug in the Xalan processor that fails to detect the
+function even though it is available.</para>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="bookmarks.collapse">
+<refmeta>
+<refentrytitle>bookmarks.collapse</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">boolean</refmiscinfo> 
+</refmeta>
+<refnamediv>
+<refname>bookmarks.collapse</refname>
+<refpurpose>Specifies the initial state of bookmarks</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="bookmarks.collapse.frag">
+&lt;xsl:param name="bookmarks.collapse" select="1"&gt;&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>If non-zero, the bookmark tree is collapsed so that only the 
+top-level bookmarks are displayed initially. Otherwise, the whole tree 
+of bookmarks is displayed.</para>
+
+<para>This parameter currently works with FOP 0.93 or later.</para>
+
+</refsection>
+</refentry>
+
 </reference><reference id="graphics" xml:base="../fo/param.xml"><title>Graphics</title>
 <refentry version="5.0" id="graphic.default.extension">
 <refmeta>
@@ -16679,10 +17749,8 @@ and the <tag class="attribute">format</tag> attribute is
 <refsection><info><title>Description</title></info>
 
 <para>If specified, this value will be used for the
-<tag class="attribute">width</tag> attribute on
-images that do not specify any
-<link xlink:href="http://docbook.org/tdg/en/html/imagedata.html#viewport.area">viewport
-dimensions</link>.</para>
+<tag class="attribute">width</tag> attribute on images that do not specify any 
+<emphasis xlink:title="DocBook 5: The Definitive Guide" xlink:href="http://docbook.org/tdg5/en/html/imagedata.html#viewport.area">viewport dimensions</emphasis>.</para>
 
 </refsection>
 </refentry>
@@ -16928,11 +17996,11 @@ but the DocBook stylesheets explicitly make it
 </para></listitem>
 <listitem><para>The sum of the page-master margin-left and the
 region-body margin-left. In DocBook, the region-body margin-left is
-zero by default, so this is simply the page-master region-left.
+zero by default, so this is simply the page-master margin-left.
 </para></listitem>
 <listitem><para>The sum of the page-master margin-right and the
 region-body margin-right. In DocBook, the region-body margin-right is
-zero by default, so this is simply the page-master region-left.
+zero by default, so this is simply the page-master margin-right.
 </para></listitem>
 </orderedlist>
 
@@ -16965,8 +18033,8 @@ zero by default, so this is simply the page-master region-left.
 <refsection><info><title>Description</title></info>
 
 <para>The page height is generally calculated from the
-<literal>paper.type</literal> and
-<literal>page.orientation</literal>.
+<parameter>paper.type</parameter> and
+<parameter>page.orientation</parameter> parameters.
 </para>
 
 </refsection>
@@ -17083,12 +18151,33 @@ to the physical bottom of the page.
 
 <refsection><info><title>Description</title></info>
 
-<para>The inner page margin is the distance from binding edge of the
-page to the first column of text. In the left-to-right, top-to-bottom writing
-direction, this is the left margin of recto pages.</para>
-<para>The inner and outer margins are usually the same unless the output
-is double-sided.
-</para>
+<para>The inner page margin is the distance from bound edge of the
+page to the first column of text. </para>
+
+<para>The inner page margin is the distance from bound edge of the
+page to the outer edge of the first column of text.</para>
+
+<para>In left-to-right text direction,
+this is the left margin of recto (front side) pages.
+For single-sided output, it is the left margin
+of all pages.</para>
+
+<para>In right-to-left text direction,
+this is the right margin of recto pages.
+For single-sided output, this is the
+right margin of all pages.</para>
+
+<note>
+<para>Current versions (at least as of version 4.13)
+of the XEP XSL-FO processor do not
+correctly handle these margin settings for documents
+with right-to-left text direction.
+The workaround in that situation is to reverse
+the values for <parameter>page.margin.inner</parameter>
+and <parameter>page.margin.outer</parameter>, until
+this bug is fixed by RenderX.  It does not affect documents
+with left-to-right text direction.</para>
+</note>
 
 </refsection>
 </refentry>
@@ -17114,12 +18203,30 @@ is double-sided.
 
 <refsection><info><title>Description</title></info>
 
-<para>The outer page margin is the distance from non-binding edge of the
-page to the last column of text. In the left-to-right, top-to-bottom writing
-direction, this is the right margin of recto pages.</para>
-<para>The inner and outer margins are usually the same unless the output
-is double-sided.
-</para>
+<para>The outer page margin is the distance from non-bound edge of the
+page to the outer edge of the last column of text.</para>
+
+<para>In left-to-right text direction,
+this is the right margin of recto (front side) pages.
+For single-sided output, it is the right margin
+of all pages.</para>
+
+<para>In right-to-left text direction,
+this is the left margin of recto pages.
+For single-sided output, this is the
+left margin of all pages.</para>
+
+<note>
+<para>Current versions (at least as of version 4.13)
+of the XEP XSL-FO processor do not
+correctly handle these margin settings for documents
+with right-to-left text direction.
+The workaround in that situation is to reverse
+the values for <parameter>page.margin.inner</parameter>
+and <parameter>page.margin.outer</parameter>, until
+this bug is fixed by RenderX.  It does not affect documents
+with left-to-right text direction.</para>
+</note>
 
 </refsection>
 </refentry>
@@ -17202,8 +18309,8 @@ landscape orientation, it is vertical.
 <refsection><info><title>Description</title></info>
 
 <para>The page width is generally calculated from the
-<literal>paper.type</literal> and <literal>page.orientation</literal>.
-</para>
+<parameter>paper.type</parameter> and 
+<parameter>page.orientation</parameter> parameters.</para>
 
 </refsection>
 </refentry>
@@ -17279,6 +18386,8 @@ edge of the physical page.
 <refmiscinfo class="other" otherclass="list-type">open</refmiscinfo>
 <refmiscinfo class="other" otherclass="value">USletter<alt>8.5x11in</alt></refmiscinfo>
 <refmiscinfo class="other" otherclass="value">USlandscape<alt>11x8.5in</alt></refmiscinfo>
+<refmiscinfo class="other" otherclass="value">USlegal<alt>8.5inx14in</alt></refmiscinfo>
+<refmiscinfo class="other" otherclass="value">USlegallandscape<alt>14inx8.5in</alt></refmiscinfo>
 <refmiscinfo class="other" otherclass="value">4A0<alt>2378x1682mm</alt></refmiscinfo>
 <refmiscinfo class="other" otherclass="value">2A0<alt>1682x1189mm</alt></refmiscinfo>
 <refmiscinfo class="other" otherclass="value">A0<alt>1189x841mm</alt></refmiscinfo>
@@ -17439,11 +18548,13 @@ region-before to the first line of text in the page body.</para>
 <refsection><info><title>Description</title></info>
 
 <para>This parameter provides
-one means of indenting the body text relative to
-the left page margin.
+the means of indenting the body text relative to
+section titles.
+For left-to-right text direction, it indents the left side.
+For right-to-left text direction, it indents the right side.
 It is used in place of the 
 <parameter>title.margin.left</parameter> for
-all XSL-FO processors except FOP.
+all XSL-FO processors except FOP 0.25.
 It enables support for side floats to appear
 in the indented margin area.
 </para>
@@ -17511,7 +18622,9 @@ master-reference, as well as appendixes and prefaces.
   <refmiscinfo class="other" otherclass="datatype">list</refmiscinfo>
   <refmiscinfo class="other" otherclass="list-type">open</refmiscinfo>
   <refmiscinfo class="other" otherclass="value">left</refmiscinfo>
+  <refmiscinfo class="other" otherclass="value">start</refmiscinfo>
   <refmiscinfo class="other" otherclass="value">right</refmiscinfo>
+  <refmiscinfo class="other" otherclass="value">end</refmiscinfo>
   <refmiscinfo class="other" otherclass="value">center</refmiscinfo>
   <refmiscinfo class="other" otherclass="value">justify</refmiscinfo>
 </refmeta>
@@ -17527,6 +18640,14 @@ master-reference, as well as appendixes and prefaces.
 <refsection><info><title>Description</title></info>
 
 <para>The default text alignment is used for most body text.
+Allowed values are 
+<literal>left</literal>,
+<literal>right</literal>,
+<literal>start</literal>,
+<literal>end</literal>,
+<literal>center</literal>,
+<literal>justify</literal>.
+The default value is <literal>justify</literal>.
 </para>
 
 </refsection>
@@ -17940,7 +19061,7 @@ are printed.
 <refsection><info><title>Description</title></info>
 
 <para>If an unqualified dimension is encountered (for example, in a
-graphic width), the <parameter>default-units</parameter> will be used for the
+graphic width), the <parameter>default.units</parameter> will be used for the
 units. Unqualified dimensions are not allowed in XSL Formatting Objects.
 </para>
 
@@ -17988,7 +19109,7 @@ units. Unqualified dimensions are not allowed in XSL Formatting Objects.
 <refsection><info><title>Description</title></info>
 
 <para>The body font size is specified in two parameters
-(<varname>body.font.master</varname> and <varname>body.font.size</varname>)
+(<parameter>body.font.master</parameter> and <parameter>body.font.size</parameter>)
 so that math can be performed on the font size by XSLT.
 </para>
 
@@ -18015,7 +19136,7 @@ so that math can be performed on the font size by XSLT.
 <refsection><info><title>Description</title></info>
 
 <para>The body font size is specified in two parameters
-(<varname>body.font.master</varname> and <varname>body.font.size</varname>)
+(<parameter>body.font.master</parameter> and <parameter>body.font.size</parameter>)
 so that math can be performed on the font size by XSLT.
 </para>
 
@@ -18071,36 +19192,37 @@ so that math can be performed on the font size by XSLT.
 <refsection><info><title>Description</title></info>
 
 <para>This parameter provides
-one means of adjusting the left margin for titles.
-The left margin of the body region
+the means of adjusting the left margin for titles
+when the XSL-FO processor being used is
+an old version of FOP (0.25 and earlier).
+It is only useful when the <parameter>fop.extensions</parameter>
+is nonzero.</para>
+
+<para>The left margin of the body region
 is calculated to include this space,
-and titles are outdented to the left by this amount,
-effectively leaving titles at the left margin
+and titles are outdented to the left outside
+the body region by this amount,
+effectively leaving titles at the intended left margin
 and the body text indented.
-Currently this method is only used for FOP because
+Currently this method is only used for old FOP because
 it cannot properly use the <parameter>body.start.indent</parameter>
 parameter.
-the relative 
 </para>
 <para>
-The default value for FOP is -4pc, which means the
+The default value when the <parameter>fop.extensions</parameter>
+parameter is nonzero is -4pc, which means the
 body text is indented 4 picas relative to
 the titles.
-The default value for other processors is 0pt, and
-the body indent is provided by the <parameter>body.start.indent</parameter>
+The default value when the <parameter>fop.extensions</parameter>
+parameter equals zero is 0pt, and
+the body indent should instead be specified
+using the <parameter>body.start.indent</parameter>
 parameter.
 </para>
 <para>
 If you set the value to zero, be sure to still include
 a unit indicator such as <literal>0pt</literal>, or
 the FO processor will report errors.
-</para>
-<para>
-This parameter must be set to 0pt if the
-<parameter>passivetex.extensions</parameter>
-parameter is nonzero because PassiveTeX cannot handle
-the math expression with negative values 
-used to calculate the indents.
 </para>
 
 </refsection>
@@ -18121,7 +19243,7 @@ used to calculate the indents.
 
 <refsynopsisdiv>
 <programlisting id="draft.mode.frag">
-&lt;xsl:param name="draft.mode"&gt;maybe&lt;/xsl:param&gt;
+&lt;xsl:param name="draft.mode"&gt;no&lt;/xsl:param&gt;
 </programlisting>
 </refsynopsisdiv>
 
@@ -18150,7 +19272,7 @@ on how their <literal>status</literal> attribute is set.
 
 <refsynopsisdiv>
 <programlisting id="draft.watermark.image.frag">
-&lt;xsl:param name="draft.watermark.image"&gt;http://docbook.sourceforge.net/release/images/draft.png&lt;/xsl:param&gt;
+&lt;xsl:param name="draft.watermark.image"&gt;images/draft.png&lt;/xsl:param&gt;
 </programlisting>
 </refsynopsisdiv>
 
@@ -18278,14 +19400,20 @@ three columns.  The default value is
 
 <para>The parameter value must be three numbers, separated
 by white space. The first number represents the relative
-width of the left header for
-single-sided output, or the inside header for
+width of the inside header for
 double-sided output.  The second number is the relative
 width of the center header.  The third number is the
-relative width of the right header for
-single-sided output, or the outside header for
+relative width of the outside header for
 double-sided output.
 </para>
+<para>For single-sided output, the first number is the
+relative width of left header for left-to-right
+text direction, or the right header for right-to-left
+text direction.  
+The third number is the
+relative width of right header for left-to-right
+text direction, or the left header for right-to-left
+text direction.</para>
 
 <para>The numbers are used to specify the column widths
 for the table that makes up the header area.
@@ -18348,14 +19476,20 @@ three columns.  The default value is
 
 <para>The parameter value must be three numbers, separated
 by white space. The first number represents the relative
-width of the left footer for
-single-sided output, or the inside footer for
+width of the inside footer for
 double-sided output.  The second number is the relative
 width of the center footer.  The third number is the
-relative width of the right footer for
-single-sided output, or the outside footer for
+relative width of the outside footer for
 double-sided output.
 </para>
+<para>For single-sided output, the first number is the
+relative width of left footer for left-to-right
+text direction, or the right footer for right-to-left
+text direction.  
+The third number is the
+relative width of right footer for left-to-right
+text direction, or the left footer for right-to-left
+text direction.</para>
 
 <para>The numbers are used to specify the column widths
 for the table that makes up the footer area.
@@ -18981,12 +20115,12 @@ formatter supports it.</para>
   &lt;xsl:attribute name="border-width"&gt;1pt&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="border-color"&gt;black&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="background-color"&gt;#DDDDDD&lt;/xsl:attribute&gt;
-  &lt;xsl:attribute name="padding-left"&gt;12pt&lt;/xsl:attribute&gt;
-  &lt;xsl:attribute name="padding-right"&gt;12pt&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="padding-start"&gt;12pt&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="padding-end"&gt;12pt&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="padding-top"&gt;6pt&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="padding-bottom"&gt;6pt&lt;/xsl:attribute&gt;
-  &lt;xsl:attribute name="margin-left"&gt;0pt&lt;/xsl:attribute&gt;
-  &lt;xsl:attribute name="margin-right"&gt;0pt&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="margin-{$direction.align.start}"&gt;0pt&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="margin-{$direction.align.end}"&gt;0pt&lt;/xsl:attribute&gt;
 &lt;!--
   &lt;xsl:attribute name="margin-top"&gt;6pt&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="margin-bottom"&gt;6pt&lt;/xsl:attribute&gt;
@@ -19072,20 +20206,37 @@ the float appears at the top of the page.  On some processors,
 that may be the next page rather than the current page.
 </para>
 </listitem>
+
 <listitem>
 <para>If <parameter>sidebar.float.type</parameter> is
-<quote><literal>left</literal></quote> or
-<quote><literal>start</literal></quote>, then 
-a left side float is used.
+<quote><literal>left</literal></quote>,
+then a left side float is used.
 </para>
 </listitem>
+
 <listitem>
 <para>If <parameter>sidebar.float.type</parameter> is
-<quote><literal>right</literal></quote> or
-<quote><literal>end</literal></quote>, then 
-a right side float is used.
+<quote><literal>start</literal></quote>,
+then when the text direction is left-to-right a left side float is used.
+When the text direction is right-to-left, a right side float is used.
 </para>
 </listitem>
+
+<listitem>
+<para>If <parameter>sidebar.float.type</parameter> is
+<quote><literal>right</literal></quote>,
+then a right side float is used.
+</para>
+</listitem>
+
+<listitem>
+<para>If <parameter>sidebar.float.type</parameter> is
+<quote><literal>end</literal></quote>,
+then when the text direction is left-to-right a right side float is used.
+When the text direction is right-to-left, a left side float is used.
+</para>
+</listitem>
+
 <listitem>
 <para>If your XSL-FO processor supports floats positioned on the
 <quote><literal>inside</literal></quote> or
@@ -19333,7 +20484,7 @@ this parameter is ignored.
   &lt;xsl:attribute name="text-align"&gt;
     &lt;xsl:choose&gt;
       &lt;xsl:when test="((parent::article | parent::articleinfo | parent::info/parent::article) and not(ancestor::book) and not(self::bibliography))         or (parent::slides | parent::slidesinfo)"&gt;center&lt;/xsl:when&gt;
-      &lt;xsl:otherwise&gt;left&lt;/xsl:otherwise&gt;
+      &lt;xsl:otherwise&gt;start&lt;/xsl:otherwise&gt;
     &lt;/xsl:choose&gt;
   &lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="start-indent"&gt;&lt;xsl:value-of select="$title.margin.left"&gt;&lt;/xsl:value-of&gt;&lt;/xsl:attribute&gt;
@@ -19372,7 +20523,7 @@ all the component title page information.
 Its main use is to set a <literal>span="all"</literal>
 property on the block that is a direct child of the flow.</para>
 
-<para>This attribute-set is empty by default.</para>
+<para>This attribute-set also applies to index titlepages. It is empty by default.</para>
 
 </refsection>
 </refentry>
@@ -19399,7 +20550,7 @@ property on the block that is a direct child of the flow.</para>
   &lt;xsl:attribute name="space-before.minimum"&gt;0.8em&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="space-before.optimum"&gt;1.0em&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="space-before.maximum"&gt;1.2em&lt;/xsl:attribute&gt;
-  &lt;xsl:attribute name="text-align"&gt;left&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="text-align"&gt;start&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="start-indent"&gt;&lt;xsl:value-of select="$title.margin.left"&gt;&lt;/xsl:value-of&gt;&lt;/xsl:attribute&gt;
 &lt;/xsl:attribute-set&gt;
 </programlisting>
@@ -19916,6 +21067,30 @@ general <tag>section.properties</tag> attribute set.
 </refsection>
 </refentry>
 
+<refentry version="5.0" id="equation.number.properties">
+<refmeta>
+<refentrytitle>equation.number.properties</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">attribute set</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>equation.number.properties</refname>
+<refpurpose>Properties that apply to the <tag>fo:table-cell</tag> containing the number
+of an <tag>equation</tag> that does not have a title.</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="equation.number.properties.frag">&lt;xsl:attribute-set name="equation.number.properties"&gt;
+  &lt;xsl:attribute name="text-align"&gt;end&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="display-align"&gt;center&lt;/xsl:attribute&gt;
+&lt;/xsl:attribute-set&gt;</programlisting>
+</refsynopsisdiv>
+<refsection><info><title>Description</title></info>
+<para>Properties that apply to the fo:table-cell containing the number
+of an equation when it has no title. The number in an equation with a
+title is formatted along with the title, and this attribute-set does not apply.</para>
+</refsection>
+</refentry>
+
 <refentry version="5.0" id="table.properties">
 <refmeta>
 <refentrytitle>table.properties</refentrytitle>
@@ -20095,6 +21270,9 @@ problems.</para>
   &lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="font-selection-strategy"&gt;character-by-character&lt;/xsl:attribute&gt;
   &lt;xsl:attribute name="line-height-shift-adjustment"&gt;disregard-shifts&lt;/xsl:attribute&gt;
+  &lt;xsl:attribute name="writing-mode"&gt;
+    &lt;xsl:value-of select="$direction.mode"&gt;&lt;/xsl:value-of&gt;
+  &lt;/xsl:attribute&gt;
 &lt;/xsl:attribute-set&gt;
 </programlisting>
 </refsynopsisdiv>
@@ -20323,7 +21501,7 @@ used for all titles below level 5.</para>
 <refsynopsisdiv>
 <programlisting id="article.appendix.title.properties.frag">
 &lt;xsl:attribute-set name="article.appendix.title.properties" use-attribute-sets="section.title.properties                          section.title.level1.properties"&gt;
-  &lt;xsl:attribute name="margin-left"&gt;
+  &lt;xsl:attribute name="margin-{$direction.align.start}"&gt;
     &lt;xsl:value-of select="$title.margin.left"&gt;&lt;/xsl:value-of&gt;
   &lt;/xsl:attribute&gt;
 &lt;/xsl:attribute-set&gt;
@@ -21242,6 +22420,85 @@ example, <literal>zh_CN</literal> in a source document becomes
 explicitly states that all "language tags" (as it calls them) "are
 to be treated as case insensitive".</para>
 </note>
+</para>
+
+</refsection>
+</refentry>
+
+<refentry version="5.0" id="writing.mode">
+<refmeta>
+<refentrytitle>writing.mode</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">string</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>writing.mode</refname>
+<refpurpose>Direction of text flow based on locale</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+<programlisting id="writing.mode.frag">
+&lt;xsl:param name="writing.mode"&gt;
+  &lt;xsl:call-template name="gentext"&gt;
+    &lt;xsl:with-param name="key"&gt;writing-mode&lt;/xsl:with-param&gt;
+    &lt;xsl:with-param name="lang"&gt;
+      &lt;xsl:call-template name="l10n.language"&gt;
+        &lt;xsl:with-param name="target" select="/*[1]"&gt;&lt;/xsl:with-param&gt;
+      &lt;/xsl:call-template&gt;
+    &lt;/xsl:with-param&gt;
+  &lt;/xsl:call-template&gt;
+&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+
+<refsection><info><title>Description</title></info>
+
+<para>Sets direction of text flow and text alignment based on locale.
+The value is normally taken from the gentext file for the 
+lang attribute of the document's root element, using the 
+key name 'writing-mode' to look it up in the gentext file.
+But the param can also be
+set on the command line to override that gentext value.
+</para>
+<para>Accepted values are:
+<variablelist>
+  <varlistentry>
+    <term>lr-tb</term>
+    <listitem>
+      <para>Left-to-right text flow in each line, lines stack top to bottom.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>rl-tb</term>
+    <listitem>
+      <para>Right-to-left text flow in each line, lines stack top to bottom.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>tb-rl</term>
+    <listitem>
+      <para>Top-to-bottom text flow in each vertical line, lines stack right to left.
+      Supported by only a few XSL-FO processors. Not supported in HTML output.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>lr</term>
+    <listitem>
+      <para>Shorthand for lr-tb.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>rl</term>
+    <listitem>
+      <para>Shorthand for rl-tb.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>tb</term>
+    <listitem>
+      <para>Shorthand for tb-rl.</para>
+    </listitem>
+  </varlistentry>
+</variablelist>
 </para>
 
 </refsection>
@@ -24368,6 +25625,63 @@ of this parameter.</para>
 </refsection>
 </refentry>
 
+<refentry version="5.0" id="man.output.better.ps.enabled">
+<refmeta>
+<refentrytitle>man.output.better.ps.enabled</refentrytitle>
+<refmiscinfo class="other" otherclass="datatype">boolean</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>man.output.better.ps.enabled</refname>
+<refpurpose>Enable enhanced print/PostScript output?</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+<programlisting id="man.output.better.ps.enabled.frag">
+&lt;xsl:param name="man.output.better.ps.enabled"&gt;0&lt;/xsl:param&gt;
+</programlisting>
+</refsynopsisdiv>
+<refsection><info><title>Description</title></info>
+
+<para>If the value of the
+<parameter>man.output.better.ps.enabled</parameter> parameter is
+non-zero, certain markup is embedded in each generated man page
+such that PostScript output from the <command>man -Tps</command>
+command for that page will include a number of enhancements
+designed to improve the quality of that output.</para>
+
+<para>If <parameter>man.output.better.ps.enabled</parameter> is
+zero (the default), no such markup is embedded in generated man
+pages, and no enhancements are included in the PostScript
+output generated from those man pages by the <command>man
+ -Tps</command> command.</para>
+
+<warning>
+  <para>The enhancements provided by this parameter rely on
+    features that are specific to groff (GNU troff) and that are
+    not part of &#8220;classic&#8221; AT&amp;T troff or any of its
+    derivatives. Therefore, any man pages you generate with this
+    parameter enabled will be readable only on systems on which
+    the groff (GNU troff) program is installed, such as GNU/Linux
+    systems. The pages <emphasis role="bold">will not not be
+      readable on systems on with the classic troff (AT&amp;T
+      troff) command is installed</emphasis>.</para>
+</warning>
+
+<para>The value of this parameter only affects PostScript output
+  generated from the <command>man</command> command. It has no
+  effect on output generated using the FO backend.</para>
+
+<tip>
+  <para>You can generate PostScript output for any man page by
+    running the following command:</para>
+  <programlisting>  man <replaceable>FOO</replaceable> -Tps &gt; <replaceable>FOO</replaceable>.ps</programlisting>
+  <para>You can then generate PDF output by running the following
+    command:</para>
+  <programlisting>  ps2pdf <replaceable>FOO</replaceable>.ps</programlisting>
+</tip>
+
+</refsection>
+</refentry>
+
   </reference><reference id="other" xml:base="../manpages/param.xml">
   <title>Other</title>
 <refentry version="5.0" id="man.table.footnotes.divider">
@@ -26028,8 +27342,8 @@ specification. The default unit is <literal>pt</literal>
       &lt;xsl:attribute name="font-family"&gt;
         &lt;xsl:value-of select="$slide.font.family"&gt;&lt;/xsl:value-of&gt;
       &lt;/xsl:attribute&gt;
-      &lt;xsl:attribute name="margin-left"&gt;1in&lt;/xsl:attribute&gt;
-      &lt;xsl:attribute name="margin-right"&gt;1in&lt;/xsl:attribute&gt;
+      &lt;xsl:attribute name="margin-{$direction.align.start}"&gt;1in&lt;/xsl:attribute&gt;
+      &lt;xsl:attribute name="margin-{$direction.align.end}"&gt;1in&lt;/xsl:attribute&gt;
       &lt;xsl:attribute name="font-size"&gt;
         &lt;xsl:value-of select="$body.font.size"&gt;&lt;/xsl:value-of&gt;
       &lt;/xsl:attribute&gt;
@@ -26877,7 +28191,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbhtml background-color="<replaceable>color</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml background-color</tag> PI before or
       after an image (<tag>graphic</tag>, <tag>inlinegraphic</tag>,
@@ -26906,16 +28220,16 @@ will be used to indent the TOC.</para>
 <refentry id="dbhtml_bgcolor" xml:base="../html/pi.xml">
 <refnamediv>
 <refname>dbhtml_bgcolor</refname>
-<refpurpose>Sets background color on a table row or table cell</refpurpose>
+<refpurpose>Sets background color on a CALS table row or table cell</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml bgcolor="<replaceable>color</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
-<para>Use the <tag class="xmlpi">dbhtml bgcolor</tag> PI as child of a table row
+<para>Use the <tag class="xmlpi">dbhtml bgcolor</tag> PI as child of a CALS table row
       or cell to set a background color for that table row or cell.</para>
 
   </refsect1><refsect1><title>Parameters</title>
@@ -26939,17 +28253,17 @@ will be used to indent the TOC.</para>
 <refentry id="dbhtml_cellpadding" xml:base="../html/pi.xml">
 <refnamediv>
 <refname>dbhtml_cellpadding</refname>
-<refpurpose>Specifies cellpadding in table or qandaset output</refpurpose>
+<refpurpose>Specifies cellpadding in CALS table or qandaset output</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml cellpadding="<replaceable>number</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml cellpadding</tag> PI as a child of a
-      <tag>table</tag> or <tag>qandaset</tag> to specify the value
+      CALS <tag>table</tag> or <tag>qandaset</tag> to specify the value
       for the HTML <literal>cellpadding</literal> attribute in the
       output HTML table.</para>
 
@@ -26979,17 +28293,17 @@ will be used to indent the TOC.</para>
 <refentry id="dbhtml_cellspacing" xml:base="../html/pi.xml">
 <refnamediv>
 <refname>dbhtml_cellspacing</refname>
-<refpurpose>Specifies cellspacing in table or qandaset output</refpurpose>
+<refpurpose>Specifies cellspacing in CALS table or qandaset output</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml cellspacing="<replaceable>number</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml cellspacing</tag> PI as a child of a
-      <tag>table</tag> or <tag>qandaset</tag> to specify the value
+      CALS <tag>table</tag> or <tag>qandaset</tag> to specify the value
       for the HTML <literal>cellspacing</literal> attribute in the
       output HTML table.</para>
 
@@ -27019,14 +28333,14 @@ will be used to indent the TOC.</para>
 <refentry id="dbhtml_class" xml:base="../html/pi.xml">
 <refnamediv>
 <refname>dbhtml_class</refname>
-<refpurpose>Set value of the class attribute for a table row</refpurpose>
+<refpurpose>Set value of the class attribute for a CALS table row</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml class="<replaceable>name</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml class</tag> PI as a child of a
       <tag>row</tag> to specify a <literal>class</literal>
@@ -27060,7 +28374,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbhtml dir="<replaceable>path</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>When chunking output, use the <tag class="xmlpi">dbhtml dir</tag> PI
       as a child of a chunk source to cause the output of that
@@ -27101,7 +28415,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbhtml filename="<replaceable>filename</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>When chunking output, use the <tag class="xmlpi">dbhtml filename</tag>
       PI as a child of a chunk source to specify a filename for
@@ -27139,7 +28453,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbhtml funcsynopsis-style="kr"|"ansi"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml funcsynopsis-style</tag> PI as a child of
       a <tag>funcsynopsis</tag> or anywhere within a funcsynopsis
@@ -27181,7 +28495,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbhtml img.src.path="<replaceable>path</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml img.src.path</tag> PI before or
       after an image (<tag>graphic</tag>,
@@ -27224,7 +28538,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbhtml label-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml label-width</tag> PI as a child of a
       <tag>qandaset</tag> to specify the width of labels.</para>
@@ -27250,14 +28564,14 @@ will be used to indent the TOC.</para>
 <refentry id="dbhtml_linenumbering.everyNth" xml:base="../html/pi.xml">
 <refnamediv>
 <refname>dbhtml_linenumbering.everyNth</refname>
-<refpurpose>Specifies interval for lines numbers in verbatims</refpurpose>
+<refpurpose>Specifies interval for line numbers in verbatims</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml linenumbering.everyNth="<replaceable>N</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml linenumbering.everyNth</tag> PI as a child
       of a &#8220;verbatim&#8221; element &#8211; <tag>programlisting</tag>,
@@ -27297,7 +28611,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbhtml linenumbering.separator="<replaceable>text</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml linenumbering.separator</tag> PI as a child
       of a &#8220;verbatim&#8221; element &#8211; <tag>programlisting</tag>,
@@ -27336,7 +28650,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbhtml linenumbering.width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml linenumbering.width</tag> PI as a child
       of a &#8220;verbatim&#8221; element &#8211; <tag>programlisting</tag>,
@@ -27376,7 +28690,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbhtml list-presentation="list"|"table"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml list-presentation</tag> PI as a child of
       a <tag>variablelist</tag> or <tag>segmentedlist</tag> to
@@ -27433,7 +28747,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbhtml list-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml list-width</tag> PI as a child of a
       <tag>variablelist</tag> or a <tag>simplelist</tag> presented
@@ -27460,14 +28774,14 @@ will be used to indent the TOC.</para>
 <refentry id="dbhtml_row-height" xml:base="../html/pi.xml">
 <refnamediv>
 <refname>dbhtml_row-height</refname>
-<refpurpose>Specifies the height for a table row</refpurpose>
+<refpurpose>Specifies the height for a CALS table row</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml row-height="<replaceable>height</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml row-height</tag> PI as a child of a
       <tag>row</tag> to specify the height of the row.</para>
@@ -27478,7 +28792,7 @@ will be used to indent the TOC.</para>
       <varlistentry><term>row-height="<replaceable>height</replaceable>"</term>
         <listitem>
           
-<para>Specifies the label height (including units)</para>
+<para>Specifies the row height (including units)</para>
 
         </listitem>
       </varlistentry>
@@ -27500,7 +28814,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbhtml start="<replaceable>character</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para><emphasis>This PI is obsolete</emphasis>. The intent of
       this PI was to provide a means for setting a specific starting
@@ -27532,16 +28846,16 @@ will be used to indent the TOC.</para>
 <refentry id="dbhtml_stop-chunking" xml:base="../html/pi.xml">
 <refnamediv>
 <refname>dbhtml_stop-chunking</refname>
-<refpurpose>Do not chunk any descendents of this element.</refpurpose>
+<refpurpose>Do not chunk any descendants of this element.</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml stop-chunking</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
-<para>When generating chunked html output, adding this as the child of an element that contains elements that would normally be generated on separate pages if generating chunked output causes chunking to stop at this point. No descendants of the current element will be split into new html pages:
+<para>When generating chunked HTML output, adding this PI as the child of an element that contains elements that would normally be generated on separate pages if generating chunked output causes chunking to stop at this point. No descendants of the current element will be split into new HTML pages:
 <programlisting>&lt;section&gt;
 &lt;title&gt;Configuring pencil&lt;/title&gt;
 &lt;?dbhtml stop-chunking?&gt;
@@ -27560,17 +28874,17 @@ will be used to indent the TOC.</para>
 <refentry id="dbhtml_table-summary" xml:base="../html/pi.xml">
 <refnamediv>
 <refname>dbhtml_table-summary</refname>
-<refpurpose>Specifies summary for table, variablelist, segmentedlist, or qandaset output</refpurpose>
+<refpurpose>Specifies summary for CALS table, variablelist, segmentedlist, or qandaset output</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml table-summary="<replaceable>text</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml table-summary</tag> PI as a child of
-      a <tag>table</tag>, <tag>variablelist</tag>,
+      a CALS <tag>table</tag>, <tag>variablelist</tag>,
       <tag>segmentedlist</tag>, or <tag>qandaset</tag> to specify
       the text for the HTML <literal>summary</literal> attribute
       in the output HTML table.</para>
@@ -27597,17 +28911,17 @@ will be used to indent the TOC.</para>
 <refentry id="dbhtml_table-width" xml:base="../html/pi.xml">
 <refnamediv>
 <refname>dbhtml_table-width</refname>
-<refpurpose>Specifies the width for a table</refpurpose>
+<refpurpose>Specifies the width for a CALS table</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbhtml table-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml table-width</tag> PI as a child of a
-      <tag>table</tag> to specify the width of the table in
+      CALS <tag>table</tag> to specify the width of the table in
       output.</para>
 
   </refsect1><refsect1><title>Parameters</title>
@@ -27642,7 +28956,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbhtml term-presentation="bold"|"italic"|"bold-italic"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml term-presentation</tag> PI as a child
       of a <tag>variablelist</tag> to set character formatting for
@@ -27690,7 +29004,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbhtml term-separator="<replaceable>text</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml term-separator</tag> PI as a child
       of a <tag>variablelist</tag> to specify the separator text
@@ -27728,7 +29042,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbhtml term-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml term-width</tag> PI as a child of a
       <tag>variablelist</tag> to specify the width for
@@ -27762,7 +29076,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbhtml toc="0"|"1"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml toc</tag> PI as a child of a
       <tag>qandaset</tag> to specify whether a table of contents
@@ -27805,7 +29119,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbcmdlist</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbcmdlist</tag> PI as the child of any
       element (for example, <tag>refsynopsisdiv</tag>) containing multiple
@@ -27830,7 +29144,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfunclist</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfunclist</tag> PI as the child of any
       element (for example, <tag>refsynopsisdiv</tag>) containing multiple
@@ -27855,7 +29169,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbhtml-include href="<replaceable>URI</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhtml-include href</tag> PI anywhere in a
       document to cause the contents of the file referenced by the
@@ -27923,7 +29237,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbhh topicname="<replaceable>name</replaceable>" topicid="<replaceable>id</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbhh</tag> PI as a child of components
       that should be used as targets for context-sensitive help requests.</para>
@@ -27991,7 +29305,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo background-color="<replaceable>color</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo background-color</tag> PI before or
       after an image (<tag>graphic</tag>, <tag>inlinegraphic</tag>,
@@ -28027,10 +29341,13 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo bgcolor="<replaceable>color</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo bgcolor</tag> PI as child of a table row
       or cell to set a background color for that table row or cell.</para>
+
+    
+<para>This PI works for both CALS and HTML tables.</para>
 
   </refsect1><refsect1><title>Parameters</title>
     
@@ -28060,7 +29377,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo float-type="margin.note"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo float-type</tag> PI to specify the float
       behavior for a <tag>sidebar</tag> (to cause the sidebar to be
@@ -28094,6 +29411,48 @@ will be used to indent the TOC.</para>
 
   </refsect1></refentry>
 
+<refentry id="dbfo_funcsynopsis-style" xml:base="../fo/pi.xml">
+<refnamediv>
+<refname>dbfo_funcsynopsis-style</refname>
+<refpurpose>Specifies presentation style for a funcsynopsis</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+
+    <synopsis><tag class="xmlpi">dbfo funcsynopsis-style="kr"|"ansi"</tag></synopsis>
+  
+</refsynopsisdiv>
+<refsect1><title>Description</title>
+    
+<para>Use the <tag class="xmlpi">dbfo funcsynopsis-style</tag> PI as a child of
+      a <tag>funcsynopsis</tag> or anywhere within a funcsynopsis
+      to control the presentation style for output of all
+      <tag>funcprototype</tag> instances within that funcsynopsis.</para>
+
+  </refsect1><refsect1><title>Parameters</title>
+    
+<variablelist>
+      <varlistentry><term>funcsynopsis-style="kr"</term>
+        <listitem>
+          
+<para>Displays <tag>funcprototype</tag> output in K&amp;R style</para>
+
+        </listitem>
+      </varlistentry>
+      <varlistentry><term>funcsynopsis-style="ansi"</term>
+        <listitem>
+          
+<para>Displays <tag>funcprototype</tag> output in ANSI style</para>
+
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+  </refsect1><refsect1 role="params"><title>Related Global Parameters</title>
+    
+<para><parameter>funcsynopsis.style</parameter></para>
+
+  </refsect1></refentry>
+
 <refentry id="dbfo_glossary-presentation" xml:base="../fo/pi.xml">
 <refnamediv>
 <refname>dbfo_glossary-presentation</refname>
@@ -28104,7 +29463,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo glossary-presentation="list"|"blocks"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo glossary-presentation</tag> PI as a child of
       a <tag>glossary</tag> to control its presentation style.</para>
@@ -28149,7 +29508,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo glosslist-presentation="list"|"blocks"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo glosslist-presentation</tag> PI as a child of
       a <tag>glosslist</tag> to control its presentation style.</para>
@@ -28195,7 +29554,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo glossterm-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo glossterm-width</tag> PI as a child of a
       <tag>glossary</tag> or <tag>glosslist</tag> to specify the
@@ -28238,7 +29597,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo keep-together="auto"|"always"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo keep-together</tag> PI as a child of a
       formal object (<tag>table</tag>, <tag>example</tag>,
@@ -28293,7 +29652,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo label-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo label-width</tag> PI as a child of a
       <tag>qandaset</tag>, <tag>itemizedlist</tag>, <tag>orderedlist</tag>, 
@@ -28320,14 +29679,14 @@ will be used to indent the TOC.</para>
 <refentry id="dbfo_linenumbering.everyNth" xml:base="../fo/pi.xml">
 <refnamediv>
 <refname>dbfo_linenumbering.everyNth</refname>
-<refpurpose>Specifies interval for lines numbers in verbatims</refpurpose>
+<refpurpose>Specifies interval for line numbers in verbatims</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbfo linenumbering.everyNth="<replaceable>N</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo linenumbering.everyNth</tag> PI as a child
       of a &#8220;verbatim&#8221; element &#8211; <tag>programlisting</tag>,
@@ -28367,7 +29726,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo linenumbering.separator="<replaceable>text</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo linenumbering.separator</tag> PI as a child
       of a &#8220;verbatim&#8221; element &#8211; <tag>programlisting</tag>,
@@ -28406,7 +29765,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo linenumbering.width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo linenumbering.width</tag> PI as a child
       of a &#8220;verbatim&#8221; element &#8211; <tag>programlisting</tag>,
@@ -28446,7 +29805,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo list-presentation="list"|"blocks"|"table"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo list-presentation</tag> PI as a child of
       a <tag>variablelist</tag> or <tag>segmentedlist</tag> to
@@ -28510,7 +29869,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo list-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo list-width</tag> PI as a child of a
       <tag>simplelist</tag> whose <tag class="attribute">class</tag>
@@ -28534,16 +29893,16 @@ will be used to indent the TOC.</para>
 <refentry id="dbfo_orientation" xml:base="../fo/pi.xml">
 <refnamediv>
 <refname>dbfo_orientation</refname>
-<refpurpose>Specifies the orientation for table row or cell</refpurpose>
+<refpurpose>Specifies the orientation for a CALS table row or cell</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 
     <synopsis><tag class="xmlpi">dbfo orientation="0"|"90"|"180"|"270"|"-90"|"-180"|"-270"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
-<para>Use the <tag class="xmlpi">dbfo orientation</tag> PI as a child of an
+<para>Use the <tag class="xmlpi">dbfo orientation</tag> PI as a child of a CALS
       <tag>table</tag> row or cell to specify the orientation
       (rotation) for the row or cell.</para>
 
@@ -28572,7 +29931,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo pgwide="0"|"1"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo pgwide</tag> PI as a child of an
       <tag>equation</tag> or <tag>example</tag> to specify that the
@@ -28608,7 +29967,7 @@ will be used to indent the TOC.</para>
 <refentry id="dbfo_rotated-width" xml:base="../fo/pi.xml">
 <refnamediv>
 <refname>dbfo_rotated-width</refname>
-<refpurpose>Specifies the width for a table <tag>entry</tag> or
+<refpurpose>Specifies the width for a CALS table <tag>entry</tag> or
     <tag>row</tag></refpurpose>
 </refnamediv>
 <refsynopsisdiv>
@@ -28616,10 +29975,10 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo rotated-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
-<para>Use the <tag class="xmlpi">dbfo rotated-width</tag> PI as a child of an
-      <tag>entry</tag> or <tag>row</tag> instance to specify the
+<para>Use the <tag class="xmlpi">dbfo rotated-width</tag> PI as a child of 
+      <tag>entry</tag> or <tag>row</tag> instance in a CALS table to specify the
       width of that the <tag>entry</tag> or <tag>row</tag>; or
       use it higher up in table to cause the width to be inherited
       recursively down.</para>
@@ -28648,7 +30007,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo sidebar-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo sidebar-width</tag> PI as a child of a
       <tag>sidebar</tag> to specify the width of the sidebar.</para>
@@ -28690,7 +30049,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo start="<replaceable>character</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para><emphasis>This PI is obsolete</emphasis>. The intent of
       it was to provide a means for setting a specific starting
@@ -28722,7 +30081,7 @@ will be used to indent the TOC.</para>
 <refentry id="dbfo_table-width" xml:base="../fo/pi.xml">
 <refnamediv>
 <refname>dbfo_table-width</refname>
-<refpurpose>Specifies the width for a table or for revhistory
+<refpurpose>Specifies the width for a CALS table or for revhistory
     output</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
@@ -28730,11 +30089,11 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo table-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo table-width</tag> PI as a child or
-      sibling of a <tag>table</tag>, or as a child of an
-      <tag>informaltable</tag>, <tag>entrybl</tag>, or
+      sibling of a CALS <tag>table</tag>, or as a child of an
+      <tag>informaltable</tag>, <tag>entrytbl</tag>, or
       <tag>revhistory</tag> instance (which is rendered as a table
       in output) to specify the width of the table in output.</para>
 
@@ -28766,7 +30125,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo term-width="<replaceable>width</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo term-width</tag> PI as a child of a
       <tag>variablelist</tag> to specify the width for
@@ -28800,7 +30159,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo toc="0"|"1"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbfo toc</tag> PI as a child of a
       <tag>qandaset</tag> to specify whether a table of contents
@@ -28843,7 +30202,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbfo-need height="<replaceable>n</replaceable>" [space-before="<replaceable>n</replaceable>"]</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>A &#8220;need&#8221; is a request for space on a page.  If the
       requested space is not available, the page breaks and the
@@ -28873,6 +30232,39 @@ will be used to indent the TOC.</para>
   </refsect1><refsect1 role="tcg"><title>Related Information in <link xlink:href="http://www.sagehill.net/docbookxsl/">DocBook XSL: The Complete Guide</link></title>
     
 <para><link role="tcg" xlink:href="PageBreaking.html#SoftPageBreaks">Soft page breaks</link></para>
+
+  </refsect1></refentry>
+
+<refentry id="dbfo_row-height" xml:base="../fo/pi.xml">
+<refnamediv>
+<refname>dbfo_row-height</refname>
+<refpurpose>Specifies the height for a CALS table row</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+
+    <synopsis><tag class="xmlpi">dbfo row-height="<replaceable>height</replaceable>"</tag></synopsis>
+  
+</refsynopsisdiv>
+<refsect1><title>Description</title>
+    
+<para>Use the <tag class="xmlpi">dbfo row-height</tag> PI as a child of a
+      <tag>row</tag> to specify the height of the row.</para>
+
+  </refsect1><refsect1><title>Parameters</title>
+    
+<variablelist>
+      <varlistentry><term>row-height="<replaceable>height</replaceable>"</term>
+        <listitem>
+          
+<para>Specifies the row height (including units)</para>
+
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+  </refsect1><refsect1 role="tcg"><title>Related Information in <link xlink:href="http://www.sagehill.net/docbookxsl/">DocBook XSL: The Complete Guide</link></title>
+    
+<para><link role="tcg" xlink:href="RowHeight.html">Row height</link></para>
 
   </refsect1></refentry>
 
@@ -28912,7 +30304,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbman funcsynopsis-style="kr"|"ansi"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbman
         funcsynopsis-style</tag> PI as a child of a
@@ -28981,7 +30373,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbchoice choice="and"|"or"|<replaceable>string</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbchoice choice</tag> PI to
       generate an appropriate localized &#8220;choice&#8221; separator (for
@@ -29034,7 +30426,7 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbtimestamp format="<replaceable>formatstring</replaceable>" [padding="0"|"1"]</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbtimestamp</tag> PI at any point in a
       source document to cause a date timestamp (a formatted
@@ -29080,13 +30472,20 @@ will be used to indent the TOC.</para>
     <synopsis><tag class="xmlpi">dbtex delims="no"|"yes"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbtex delims</tag> PI as a
       child of a <tag>textobject</tag> containing embedded TeX
       markup, to cause that markup to be surrounded by
       <literal>$</literal> delimiter characters in output.</para>
 
+      <warning>
+       
+<para>This feature is useful for print/PDF output only if you
+       use the obsolete and now unsupported PassiveTeX XSL-FO
+       engine.</para>
+
+      </warning>
   </refsect1><refsect1><title>Parameters</title>
     
 <variablelist>
@@ -29102,10 +30501,6 @@ will be used to indent the TOC.</para>
   </refsect1><refsect1 role="params"><title>Related Global Parameters</title>
     
 <para><parameter>tex.math.delims</parameter></para>
-
-  </refsect1><refsect1 role="tcg"><title>Related Information in <link xlink:href="http://www.sagehill.net/docbookxsl/">DocBook XSL: The Complete Guide</link></title>
-    
-<para><link role="tcg" xlink:href="TexMath.html">DBTeXMath</link></para>
 
   </refsect1></refentry>
 
@@ -30091,7 +31486,7 @@ which would effectively move <quote>up</quote> the hierarchy.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template returns '1' if the specified node is a component
 (Chapter, Appendix, etc.), and '0' otherwise.</para>
@@ -30126,7 +31521,7 @@ which would effectively move <quote>up</quote> the hierarchy.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template returns '1' if the specified node is a section
 (Section, Sect1, Sect2, etc.), and '0' otherwise.</para>
@@ -30161,7 +31556,7 @@ which would effectively move <quote>up</quote> the hierarchy.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template calculates the hierarchical level of a section.
 The element <tag>sect1</tag> is at level 1, <tag>sect2</tag> is
@@ -30199,7 +31594,7 @@ Defaults to the context node.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template name="qanda.section.level"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template calculates the hierarchical level of a QandASet.
 </para>
@@ -30222,7 +31617,7 @@ Defaults to the context node.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template takes a list of media objects (usually the
 children of a mediaobject or inlinemediaobject) and processes
@@ -30268,7 +31663,7 @@ in the list is appropriate.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template takes a list of media objects (usually the
 children of a mediaobject or inlinemediaobject) and determines
@@ -30331,7 +31726,7 @@ recursive process.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template examines a media object and returns '1' if the
 object is recognized as a graphic.</para>
@@ -30365,7 +31760,7 @@ object is recognized as a graphic.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>If passed an ID in <varname>linkend</varname>,
 <function>check.id.unique</function> prints
@@ -30386,7 +31781,7 @@ the ID is not unique.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>If passed an ID in <varname>linkend</varname>,
 <function>check.idref.targets</function> makes sure that the element
@@ -30410,7 +31805,7 @@ pointed to by the link is one of the elements listed in
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template prints a list of year elements with consecutive
 years printed as a range. In other words:</para>
@@ -30491,7 +31886,7 @@ year range is <quote>1991-1992</quote> but discretely it's
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template searches in a table for the value that most-closely
 (in the typical best-match sense of XSLT) matches the current (element)
@@ -30510,7 +31905,7 @@ node location.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>Given a string, this template does a language-aware conversion
 of that string to all uppercase letters, based on the values of the
@@ -30546,7 +31941,7 @@ unchanged.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>Given a string, this template does a language-aware conversion
 of that string to all lowercase letters, based on the values of the
@@ -30579,7 +31974,7 @@ unchanged.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template name="select.choice.separator"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>This template enables auto-generation of an appropriate
     localized "choice" separator (for example, "and" or "or") before
@@ -30632,7 +32027,7 @@ unchanged.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>This template evaluates an "info profile" matching the XPath
     expression given by the <parameter>profile</parameter>
@@ -30717,7 +32112,7 @@ unchanged.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Reference documentation for particular commands, functions,
     etc., is sometimes viewed in isolation from its greater "context". For
@@ -30856,7 +32251,7 @@ unchanged.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The <literal>man(7)</literal> man page describes this as "the
     title of the man page (e.g., <literal>MAN</literal>). This differs
@@ -30895,7 +32290,7 @@ unchanged.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The <literal>man(7)</literal> man page describes this as "the
     section number the man page should be placed in (e.g.,
@@ -30945,7 +32340,7 @@ unchanged.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The <literal>man(7)</literal> man page describes this as "the
     date of the last revision". If we cannot find a date in the source, we
@@ -31000,7 +32395,7 @@ unchanged.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The <literal>man(7)</literal> man page describes this as "the
     source of the command", and provides the following examples:
@@ -31131,7 +32526,7 @@ unchanged.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>A "source name" is one part of a (potentially) two-part
     <replaceable>Name</replaceable>&#160;<replaceable>Version</replaceable>
@@ -31190,7 +32585,7 @@ unchanged.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>A "version" is one part of a (potentially) two-part
     <replaceable>Name</replaceable>&#160;<replaceable>Version</replaceable>
@@ -31249,7 +32644,7 @@ unchanged.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The <literal>man(7)</literal> man page describes this as "the
     title of the manual (e.g., <citetitle>Linux Programmer's
@@ -31362,7 +32757,7 @@ unchanged.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template name="get.refentry.metadata.prefs"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The DocBook XSL stylesheets include several user-configurable
     global stylesheet parameters for controlling <tag>refentry</tag>
@@ -31406,7 +32801,7 @@ unchanged.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The <function>set.refentry.metadata</function> template is
     called each time a suitable source element is found for a certain
@@ -31552,7 +32947,7 @@ unchanged.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The <function>log.message</function> template is a utility
     template for logging/emitting formatted messages&#160;&#8211; that is,
@@ -31663,7 +33058,7 @@ unchanged.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template name="get.doc.title"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The <function>get.doc.title</function> template is a
       utility template for returning the first title found in the
@@ -31689,7 +33084,7 @@ unchanged.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>This function takes string <parameter>padVar</parameter> and
       pads it out in the direction <parameter>rightLeft</parameter> to
@@ -31760,7 +33155,7 @@ unchanged.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>This template applies an <link xlink:href="http://www.w3.org/TR/xslt20/#character-maps">XSLT character map</link>; that is, it causes certain
       individual characters to be substituted with strings of one
@@ -31836,7 +33231,7 @@ unchanged.</para>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The XSLT 2.0 specification describes <link xlink:href="http://www.w3.org/TR/xslt20/#character-maps">character maps</link> and explains how they may be used
       to allow a specific character appearing in a text or
@@ -31929,7 +33324,7 @@ CALS table column width specification.</refpurpose>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>CALS expresses table column widths in the following basic
 forms:</para>
@@ -32060,7 +33455,7 @@ proportional-column-width() function.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="t:templates"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>The <literal>t:templates</literal> element is the root of a
 set of templates. This template creates an appropriate
@@ -32082,7 +33477,7 @@ set of templates. This template creates an appropriate
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="xsl:*"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template simply copies the xsl: elements
 straight through into the result tree.</para>
@@ -32097,7 +33492,7 @@ straight through into the result tree.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="t:titlepage"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>The <literal>t:titlepage</literal> element creates a set of
 templates for processing the titlepage for an element. The
@@ -32170,7 +33565,7 @@ and <quote>verso</quote> sides of the title page.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="@*" mode="copy.literal.atts"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template copies all of the <quote>other</quote> attributes
 from a <literal>t:titlepage</literal> element onto the specified
@@ -32186,7 +33581,7 @@ wrapper.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="t:titlepage-content"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>The title page content, that is, the elements from the source
 document that are rendered on the title page, can be controlled independently
@@ -32304,7 +33699,7 @@ you'll have to construct the templates by hand.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="t:titlepage-separator"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>The title page is separated from the content which follows it by
 the markup specified in the <literal>t:titlepage-separator</literal>
@@ -32320,7 +33715,7 @@ element.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="t:titlepage-before"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>Each side of the title page is preceded by the markup specified
 in the <literal>t:titlepage-before</literal> element for that
@@ -32336,7 +33731,7 @@ side.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="*" mode="copy"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template simply copies the elements that it applies to
 straight through into the result tree.</para>
@@ -32351,7 +33746,7 @@ straight through into the result tree.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="@*" mode="copy"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template simply copies the attributes that it applies to
 straight through into the result tree.</para>
@@ -32366,7 +33761,7 @@ straight through into the result tree.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="*" mode="document.order"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template is called to process all of the children of the
 <literal>t:titlepage-content</literal> element. It creates the hairy
@@ -32397,7 +33792,7 @@ names.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="*" mode="document.order"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template is called to process all of the children of the
 <literal>t:titlepage-content</literal> element. It creates the set
@@ -32428,7 +33823,7 @@ names.</para>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="*" mode="titlepage.specialrules"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template is called to process all of the descendants of the
 <literal>t:titlepage-content</literal> element that require special
@@ -32445,7 +33840,7 @@ processing. At present, that's just <literal>t:or</literal> elements.
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="*" mode="titlepage.subrules"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template is called to process the children of special
 template elements.
@@ -32461,7 +33856,7 @@ template elements.
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="t:or"/&gt;&lt;xsl:template match="t:or" mode="titlepage.subrules"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>This template processes t:or.</para>
 
@@ -32476,7 +33871,7 @@ titlepage.subrules mode</refpurpose>
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template match="t:or" mode="titlepage.subrules"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>The titlepage.subrules mode doesn't apply to t:or, so just
 reprocess this node in the normal mode.</para>
@@ -32498,7 +33893,7 @@ special rules.</refpurpose>
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
 
 <para>Walk through each of the children of t:or, producing the
 text of the select attribute.</para>

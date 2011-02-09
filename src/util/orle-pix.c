@@ -1,7 +1,7 @@
 /*                      O R L E - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -139,7 +139,9 @@ main(int argc, char **argv)
 		}
 	    } else {
 		/* .pix files are streams of RGBpixels */
-		write(1, scanbuf, fb_size*sizeof(RGBpixel));
+		ssize_t ret = write(1, scanbuf, fb_size*sizeof(RGBpixel));
+		if (ret < 0)
+		    perror("write");
 	    }
 	} /* end for */
     } /* end block */

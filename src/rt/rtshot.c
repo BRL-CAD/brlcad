@@ -1,7 +1,7 @@
 /*                        R T S H O T . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2010 United States Government as represented by
+ * Copyright (c) 1987-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,20 +37,14 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
 #include "plot3.h"
 
+#include "./rtuif.h"
 
-extern void rt_raybundle_maker(struct xray *rp,
-			       double radius,
-			       const vect_t avec,
-			       const vect_t bvec,
-			       int rays_per_ring,
-			       int nring);
 
-extern int rt_shootray_bundle(struct application *ap,
-			      struct xray *rays,
-			      int nrays);
+extern int rt_shootray_bundle (struct application *ap, struct xray *rays, int nrays);
+extern int rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring);
+
 
 char usage[] = "\
 Usage:  rtshot [options] model.g objects...\n\
@@ -103,7 +97,7 @@ main(int argc, char **argv)
     struct application ap;
     static struct rt_i *rtip;
     char *title_file;
-    char idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
+    char idbuf[2048] = {0};		/* First ID record info */
     char *ptr;
     int attr_count=0, i;
     char **attrs = (char **)NULL;
@@ -255,13 +249,13 @@ main(int argc, char **argv)
 
 	case 'O':
 	    {
-		if (!strcmp(argv[1], "resolve") || !strcmp(argv[1], "0"))
+		if (BU_STR_EQUAL(argv[1], "resolve") || BU_STR_EQUAL(argv[1], "0"))
 		    overlap_claimant_handling = 0;
-		else if (!strcmp(argv[1], "rebuild_fastgen") || !strcmp(argv[1], "1"))
+		else if (BU_STR_EQUAL(argv[1], "rebuild_fastgen") || BU_STR_EQUAL(argv[1], "1"))
 		    overlap_claimant_handling = 1;
-		else if (!strcmp(argv[1], "rebuild_all") || !strcmp(argv[1], "2"))
+		else if (BU_STR_EQUAL(argv[1], "rebuild_all") || BU_STR_EQUAL(argv[1], "2"))
 		    overlap_claimant_handling = 2;
-		else if (!strcmp(argv[1], "retain") || !strcmp(argv[1], "3"))
+		else if (BU_STR_EQUAL(argv[1], "retain") || BU_STR_EQUAL(argv[1], "3"))
 		    overlap_claimant_handling = 3;
 		else {
 		    bu_log("Illegal argument (%s) to '-O' option.  Must be:\n", argv[1]);

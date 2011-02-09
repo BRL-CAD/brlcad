@@ -1,7 +1,7 @@
 /*                      M K B U N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,6 +52,8 @@
  *
  * XXX Should we require a and b as inputs, for efficiency?
  */
+RT_EXPORT BU_EXTERN(int rt_raybundle_maker,(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring));
+
 int
 rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring)
 {

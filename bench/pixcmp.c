@@ -1,7 +1,7 @@
 /*                        P I X C M P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,13 +56,14 @@ usage(const char *name)
     if (!name) {
 	name = unknown;
     }
+    /* this must be split, ISO C90 has a max static string length of 509 */
     bu_log("Usage: %s [OPTIONS] FILE1 [FILE2 [SKIP1 [SKIP2]]]\n%s", name,
 	   "Compare two PIX image files pixel by pixel.\n\n"
 	   "  -l   List pixel numbers and values for all pixels that differ.\n"
 	   "  -b   Output and process by bytes instead of pixels.\n"
 	   "  -i SKIP\n"
-	   "       Skip the first SKIP pixels of input (for FILE1 and FILE2)\n"
-	   "  -i SKIP1:SKIP2\n"
+	   "       Skip the first SKIP pixels of input (for FILE1 and FILE2)\n");
+    bu_log("  -i SKIP1:SKIP2\n"
 	   "       Skip the first SKIP1 pixels in FILE1 and SKIP2 pixels in FILE2.\n"
 	   "  -s   Silent output.  Only return an exit status.\n\n"
 	   "If FILE is `-' or is missing, then input is read from standard input.\n"
@@ -185,13 +186,13 @@ main(int argc, char *argv[])
 
     /* printf("Skip from FILE1: %ld and from FILE2: %ld\n", f1_skip, f2_skip); */
 
-    if (strcmp(argv[0], "-") == 0) {
+    if (BU_STR_EQUAL(argv[0], "-")) {
 	f1 = stdin;
     } else if ((f1 = fopen(argv[0], "rb")) == NULL) {
 	perror(argv[0]);
 	exit(FILE_ERROR);
     }
-    if ((argc < 2) || (strcmp(argv[1], "-") == 0)) {
+    if ((argc < 2) || BU_STR_EQUAL(argv[1], "-")) {
 	f2 = stdin;
     } else if ((f2 = fopen(argv[1], "rb")) == NULL) {
 	perror(argv[1]);

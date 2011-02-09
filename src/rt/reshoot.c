@@ -1,7 +1,7 @@
 /*                     S H O T L I N E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -83,7 +83,8 @@
 #include "vmath.h"		/* vector math macros */
 #include "bu.h"
 #include "raytrace.h"		/* librt interface definitions */
-#include "rtprivate.h"
+
+#include "./rtuif.h"
 
 
 char *progname = "(noname)";
@@ -203,17 +204,17 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	}
 
 	/* check the region name */
-	if (strcmp( pp->pt_regionp->reg_name, bu_vls_addr(&rh->regname) )) {
+	if (!BU_STR_EQUAL( pp->pt_regionp->reg_name, bu_vls_addr(&rh->regname) )) {
 	    /* region names don't match */
 	    bu_vls_printf(&result, "\tregion name mismatch %s %s\n", pp->pt_regionp->reg_name, bu_vls_addr(&rh->regname) );
 	    status = 1;
 	}
 
-	if ( strcmp(pp->pt_inseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->in_primitive))) {
+	if ( !BU_STR_EQUAL(pp->pt_inseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->in_primitive))) {
 	    bu_vls_printf(&result, "\tin primitive name mismatch %s %s\n", pp->pt_inseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->in_primitive));
 	    status = 1;
 	}
-	if ( strcmp(pp->pt_outseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->out_primitive))) {
+	if ( !BU_STR_EQUAL(pp->pt_outseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->out_primitive))) {
 	    bu_vls_printf(&result, "\tout primitive name mismatch %s %s\n", pp->pt_outseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->out_primitive));
 	    status = 1;
 	}
@@ -311,7 +312,7 @@ main(int argc, char **argv)
     /* every application needs one of these */
     struct application	ap;
     static struct rt_i *rtip;	/* rt_dirbuild returns this */
-    char idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
+    char idbuf[2048] = {0};	/* First ID record info */
 
     int arg_count;
     int status = 0;

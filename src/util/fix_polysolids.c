@@ -1,7 +1,7 @@
 /*                F I X _ P O L Y S O L I D S . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2010 United States Government as represented by
+ * Copyright (c) 1995-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -97,6 +97,7 @@ main(int argc, char *argv[])
 	struct vertex *verts[5];
 	union record rec2;
 	int i;
+	size_t ret;
 
 	if (done == 2) {
 	    rec = rec2;
@@ -155,7 +156,9 @@ main(int argc, char *argv[])
 
 		break;
 	    default:
-		fwrite(&rec, sizeof(union record), 1, stdout);
+		ret = fwrite(&rec, sizeof(union record), 1, stdout);
+		if (ret < 1)
+		    perror("fwrite");
 		break;
 	}
     }

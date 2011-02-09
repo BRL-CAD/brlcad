@@ -90,15 +90,17 @@ supplied, the behaviour of the command shall be as if the result of
 subsequent) arguments. This facilitates lookups in nested
 dictionaries. For example, the following two commands are equivalent:
 .RS
+.PP
 .CS
 dict get $dict foo bar spong
 dict get [dict get [dict get $dict foo] bar] spong
 .CE
-If no keys are provided, dict would return a list containing pairs of
+.PP
+If no keys are provided, \fBdict get\fR will return a list containing pairs of
 elements in a manner similar to \fBarray get\fR. That is, the first
 element of each pair would be the key and the second element would be
 the value for that key.
-
+.PP
 It is an error to attempt to retrieve a value for a key that is not
 present in the dictionary.
 .RE
@@ -116,7 +118,7 @@ This returns information (intended for display to people) about the
 given dictionary though the format of this data is dependent on the
 implementation of the dictionary. For dictionaries that are
 implemented by hash tables, it is expected that this will return the
-string produced by \fBTcl_HashStats\fR, similar to \fBarray info\fR.
+string produced by \fBTcl_HashStats\fR, similar to \fBarray statistics\fR.
 .TP
 \fBdict keys \fIdictionaryValue \fR?\fIglobPattern\fR?
 Return a list of all keys in the given dictionary value. If a pattern
@@ -184,9 +186,18 @@ to the dictionary within \fIdictionaryVariable\fR (unless
 are silently discarded), even if the result of \fIbody\fR is an error
 or some other kind of exceptional exit. The result of \fBdict
 update\fR is (unless some kind of error occurs) the result of the
-evaluation of \fIbody\fR. Note that the mapping of values to variables
+evaluation of \fIbody\fR.
+.RS
+.PP
+Each \fIvarName\fR is mapped in the scope enclosing the \fBdict update\fR;
+it is recommended that this command only be used in a local scope
+(\fBproc\fRedure or lambda term for \fBapply\fR). Because of
+this, the variables set by \fBdict update\fR will continue to
+exist after the command finishes (unless explicitly \fBunset\fR).
+Note that the mapping of values to variables
 does not use traces; changes to the \fIdictionaryVariable\fR's
 contents only happen when \fIbody\fR terminates.
+.RE
 .TP
 \fBdict values \fIdictionaryValue \fR?\fIglobPattern\fR?
 Return a list of all values in the given dictionary value. If a
@@ -207,10 +218,20 @@ dictionary be discarded, and this also happens if the contents of
 \fIdictionaryVariable\fR are adjusted so that the chain of
 dictionaries no longer exists. The result of \fBdict with\fR is
 (unless some kind of error occurs) the result of the evaluation of
-\fIbody\fR. Note that the mapping of values to variables does not use
+\fIbody\fR.
+.RS
+.PP
+The variables are mapped in the scope enclosing the \fBdict with\fR;
+it is recommended that this command only be used in a local scope
+(\fBproc\fRedure or lambda term for \fBapply\fR). Because of
+this, the variables set by \fBdict with\fR will continue to
+exist after the command finishes (unless explicitly \fBunset\fR).
+Note that the mapping of values to variables does not use
 traces; changes to the \fIdictionaryVariable\fR's contents only happen
 when \fIbody\fR terminates.
+.RE
 .SH "DICTIONARY VALUES"
+.PP
 Dictionaries are values that contain an efficient, order-preserving
 mapping from arbitrary keys to arbitrary values.
 Each key in the dictionary maps to a single value.
@@ -228,8 +249,42 @@ the others are ignored, meaning that,
 and
 .QW "apple carrot apple banana"
 are equivalent dictionaries (with different string representations).
+.PP
+Operations that derive a new dictionary from an old one (e.g., updates
+like \fBdict set\fR and \fBdict unset\fR) preserve the order of keys
+in the dictionary. The exceptions to this are for any new keys they
+add, which are appended to the sequence, and any keys that are
+removed, which are excised from the order.
 .SH EXAMPLES
+.PP
+Basic dictionary usage:
+.PP
+.CS
+# Make a dictionary to map extensions to descriptions
+set filetypes [\fBdict create\fR .txt "Text File" .tcl "Tcl File"]
+
+# Add/update the dictionary
+\fBdict set\fR filetypes .tcl "Tcl Script"
+\fBdict set\fR filetypes .tm  "Tcl Module"
+\fBdict set\fR filetypes .gif "GIF Image"
+\fBdict set\fR filetypes .png "PNG Image"
+
+# Simple read from the dictionary
+set ext ".tcl"
+set desc [\fBdict get\fR $filetypes $ext]
+puts "$ext is for a $desc"
+
+# Somewhat more complex, with existence test
+foreach filename [glob *] {
+    set ext [file extension $filename]
+    if {[\fBdict exists\fR $filetypes $ext]} {
+        puts "$filename is a [\fBdict get\fR $filetypes $ext]"
+    }
+}
+.CE
+.PP
 Constructing and using nested dictionaries:
+.PP
 .CS
 # Data for one employee
 \fBdict set\fR employeeInfo 12345-A forenames "Joe"
@@ -263,6 +318,7 @@ foreach id [\fBdict keys\fR $employeeInfo] {
 .CE
 .PP
 A localizable version of \fBstring toupper\fR:
+.PP
 .CS
 # Set up the basic C locale
 set capital [\fBdict create\fR C [\fBdict create\fR]]
@@ -280,6 +336,35 @@ foreach c [split {abcdefghijklmnopqrstuvwxyz} ""] {
 # Now get the mapping for the current locale and use it.
 set upperCaseMap [\fBdict get\fR $capital $env(LANG)]
 set upperCase [string map $upperCaseMap $string]
+.CE
+.PP
+Showing the detail of \fBdict with\fR:
+.PP
+.CS
+proc sumDictionary {varName} {
+   upvar 1 $varName vbl
+   foreach key [\fBdict keys\fR $vbl] {
+      # Manufacture an entry in the subdictionary
+      \fBdict set\fR vbl $key total 0
+      # Add the values and remove the old
+      \fBdict with\fR vbl $key {
+         set total [expr {$x + $y + $z}]
+         unset x y z
+      }
+   }
+   puts "last total was $total, for key $key"
+}
+
+set myDict {
+   a {x 1 y 2 z 3}
+   b {x 6 y 5 z 4}
+}
+
+sumDictionary myDict
+#    prints: \fIlast total was 15, for key b\fR
+
+puts "dictionary is now \\"$myDict\\""
+#    prints: \fIdictionary is now "a {total 6} b {total 15}"\fR
 .CE
 .SH "SEE ALSO"
 append(n), array(n), foreach(n), incr(n), list(n), lappend(n), set(n)

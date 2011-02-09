@@ -54,7 +54,7 @@ bind TRadiobutton <KeyPress-Down> 	{ ttk::button::RadioTraverse %W +1 }
 proc ttk::button::activate {w} {
     $w instate disabled { return }
     set oldState [$w state pressed]
-    update idletasks; after 100
+    update idletasks; after 100	;# block event loop to avoid reentrancy
     $w state $oldState
     $w invoke
 }

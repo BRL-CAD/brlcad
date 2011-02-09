@@ -1,7 +1,7 @@
 /*                     P I X C O L O R S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ void doit(FILE *fd)
 	    }
 	}
     }
-    (void) printf("%lu\n", count);
+    (void) printf("%lu\n", (long unsigned)count);
     if (verbose)
 	for (i=0; i < 1<<24; ++i)
 	    if ((vals[i>>3] & (1<<(i & 0x07))))

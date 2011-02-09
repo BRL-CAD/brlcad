@@ -1,7 +1,7 @@
 /*                         E D A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2010 United States Government as represented by
+ * Copyright (c) 1996-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ find_nearest_ars_pt(
     point_t pick_pt,
     vect_t dir)
 {
-    int i, j;
+    size_t i, j;
     int pt_no;
     int closest_i=0, closest_j=0;
     fastf_t min_dist_sq=MAX_FASTF;

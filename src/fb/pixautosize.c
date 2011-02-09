@@ -1,7 +1,7 @@
 /*                   P I X A U T O S I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,8 +42,8 @@ static int	bytes_per_sample = 3;
 static int	file_length = 0;
 static char	*file_name;
 
-static unsigned long int	width;
-static unsigned long int	height;
+static size_t	width;
+static size_t	height;
 
 static char usage[] = "\
 Usage:	pixautosize [-b bytes_per_sample] [-f file_name]\n\
@@ -110,7 +110,7 @@ main(int argc, char **argv)
      *  print out the width and height on stdout.
      *  They will be zero on error.
      */
-    printf("WIDTH=%lu; HEIGHT=%lu\n", width, height);
+    printf("WIDTH=%lu; HEIGHT=%lu\n", (unsigned long)width, (unsigned long)height);
     return ret;
 }
 

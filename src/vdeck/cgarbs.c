@@ -1,7 +1,7 @@
 /*                        C G A R B S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ cgarbs( cgtype, gp, uniq, svec, dist_tol )
 	if (done == NO)
 	    svec[si] = i;
 	for (j=i+1; j<8; j++) {
-	    if ( VAPPROXEQUAL( gp->pt[i], gp->pt[j], dist_tol ) )  {
+	    if ( VNEAR_EQUAL( gp->pt[i], gp->pt[j], dist_tol ) )  {
 		if ( done == NO ) svec[++si] = j;
 		unique = NO;
 	    }

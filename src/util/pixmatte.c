@@ -1,7 +1,7 @@
 /*                      P I X M A T T E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -117,7 +117,7 @@ open_file(int i, char *name)
     }
 
     file_name[i] = name;
-    if (strcmp(name, "-") == 0) {
+    if (BU_STR_EQUAL(name, "-")) {
 	fp[i] = stdin;
 	if (isatty(fileno(stdin)))
 	    return -1;	/* FAIL */

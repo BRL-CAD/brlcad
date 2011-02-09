@@ -1,52 +1,15 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2008 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='rpp-cap'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="rpp-cap">
 
 <refmeta>
   <refentrytitle>RPP-CAP</refentrytitle>
   <manvolnum>nged</manvolnum>
-  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-  <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
 </refmeta>
 
-<refnamediv id='name'>
+<refnamediv xml:id="name">
   <refname>rpp-cap</refname>
   <refpurpose>Creates an ARB6 with the specified height at a particular
 	face of the given RPP.
@@ -54,63 +17,59 @@
 </refnamediv>
 
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-  <cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
     <command>rpp-cap</command>    
-      <arg choice='req'><replaceable>rppname newname face height</replaceable></arg>
-    	<arg>0</arg>
-    	<arg>1</arg>
+      <arg choice="req" rep="norepeat"><replaceable>rppname newname face height</replaceable></arg>
+    	<arg choice="opt" rep="norepeat">0</arg>
+    	<arg choice="opt" rep="norepeat">1</arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsect1 id='description'>
-  <title>DESCRIPTION</title>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  
   <para>Creates an ARB6 with the specified height at a particular
-	face of the given RPP. The optional “0” and “1” refer to the orientation of the ARB6.
-	If “0” is chosen, the peaks of the ARB6 are positioned at the midpoint between the
+	face of the given RPP. The optional Â“0Â” and Â“1Â” refer to the orientation of the ARB6.
+	If Â“0Â” is chosen, the peaks of the ARB6 are positioned at the midpoint between the
 	first and second points and at the midpoint between the third and fourth points of the
-	specified face. If “1” is chosen, the peaks of the ARB6 are positioned at the midpoint
+	specified face. If Â“1Â” is chosen, the peaks of the ARB6 are positioned at the midpoint
 	between the first and fourth points and at the midpoint between the second and third
 	points of the specified face. The default is 0.
     </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='examples'>
-  <title>EXAMPLES</title>
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  
   <para>The two examples show the use of the <command>rpp-cap</command> command to create an ARB6 	with the specified height at a particular face of a given RPP.  The second example shows 	the use of the "1" option.
   </para>
         
-  <example>
-    <title>Create an ARB6 shape with a specified height from a given RPP face.</title>
+  <example><info><title>Create an ARB6 shape with a specified height from a given RPP face.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>rpp-cap rpp.s cap.s 1234 20</userinput>
+      <prompt>mged&gt;</prompt><userinput>rpp-cap rpp.s cap.s 1234 20</userinput>
     </para>
     <para>Creates an ARB6 shape named <emphasis>cap.s</emphasis> that extends 20 units from the 	1234 face of the RPP. The peaks of the ARB6 will be at the midpoint between points 1 and 2 	and at the midpoint between points 3 and 4.       
     </para>
   </example>
 
-  <example>
-    <title>Create an ARB6 shape with a specified height from a given RPP face and having peaks 	between points 1 and 4 and between 2 and 3. </title>
+  <example><info><title>Create an ARB6 shape with a specified height from a given RPP face and having peaks 	between points 1 and 4 and between 2 and 3. </title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>rcc-cap rcc.s cap.s 1234 20 1</userinput>
+      <prompt>mged&gt;</prompt><userinput>rcc-cap rcc.s cap.s 1234 20 1</userinput>
     </para>
     <para>Creates an ARB6 shape named <emphasis>cap.s</emphasis> that extends 20 units from the 	1234 face of the RPP. The peaks of the ARB6 will be at the midpoint between point 1 and 4 	and at the midpoint between points 2 and 3.
     </para>
   </example>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='author'>
-  <title>AUTHOR</title>
-  <para>BRL-CAD Team</para>
-</refsect1>
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
 
-<refsect1 id='bug_reports'>
-  <title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
-</refsect1>
+</refsection>
 </refentry>
-

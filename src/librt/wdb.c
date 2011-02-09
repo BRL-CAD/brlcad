@@ -1,7 +1,7 @@
 /*                           W D B . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2010 United States Government as represented by
+ * Copyright (c) 2000-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -132,7 +132,7 @@ wdb_import(struct rt_wdb *wdbp,	struct rt_db_internal *internp,	const char *name
 {
     struct directory *dp;
 
-    if ((dp = db_lookup(wdbp->dbip, name, LOOKUP_QUIET)) == DIR_NULL)
+    if ((dp = db_lookup(wdbp->dbip, name, LOOKUP_QUIET)) == RT_DIR_NULL)
 	return -4;
 
     return rt_db_get_internal(internp, dp, wdbp->dbip, mat, &rt_uniresource);
@@ -157,14 +157,16 @@ wdb_export_external(
     unsigned char type)
 {
     struct directory *dp;
+    int version;
 
     RT_CK_WDB(wdbp);
     BU_CK_EXTERNAL(ep);
 
     /* Stash name into external representation */
-    if (wdbp->dbip->dbi_version <= 4) {
+    version = db_version(wdbp->dbip);
+    if (version < 5) {
 	db_wrap_v4_external(ep, name);
-    } else if (wdbp->dbip->dbi_version == 5) {
+    } else if (version == 5) {
 	if (db_wrap_v5_external(ep, name) < 0) {
 	    bu_log("wdb_export_external(%s): db_wrap_v5_external error\n",
 		   name);
@@ -172,7 +174,7 @@ wdb_export_external(
 	}
     } else {
 	bu_log("wdb_export_external(%s): version %d unsupported\n",
-	       name, wdbp->dbip->dbi_version);
+	       name, version);
 	return -4;
     }
 
@@ -185,8 +187,8 @@ wdb_export_external(
 	    }
 	    /* If name already exists, that object will be updated. */
 	    dp = db_lookup(wdbp->dbip, name, LOOKUP_QUIET);
-	    if (dp == DIR_NULL) {
-		if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type)) == DIR_NULL) {
+	    if (dp == RT_DIR_NULL) {
+		if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type)) == RT_DIR_NULL) {
 		    bu_log("wdb_export_external(%s): db_diradd error\n", name);
 		    return -3;
 		}
@@ -209,7 +211,7 @@ wdb_export_external(
 		return -5;
 	    }
 	    /* If name already exists, new non-conflicting name will be generated */
-	    if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type)) == DIR_NULL) {
+	    if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type)) == RT_DIR_NULL) {
 		bu_log("wdb_export_external(%s): db_diradd error\n", name);
 		return -3;
 	    }
@@ -221,11 +223,11 @@ wdb_export_external(
 	    break;
 
 	case RT_WDB_TYPE_DB_INMEM_APPEND_ONLY:
-	    if ((dp = db_lookup(wdbp->dbip, name, 0)) != DIR_NULL) {
+	    if ((dp = db_lookup(wdbp->dbip, name, 0)) != RT_DIR_NULL) {
 		bu_log("wdb_export_external(%s): ERROR, that name is already in use, and APPEND_ONLY mode has been specified.\n", name);
 		return -3;
 	    }
-	    if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type)) == DIR_NULL) {
+	    if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type)) == RT_DIR_NULL) {
 		bu_log("wdb_export_external(%s): db_diradd error\n",
 		       name);
 		return -3;
@@ -236,8 +238,8 @@ wdb_export_external(
 	    break;
 
 	case RT_WDB_TYPE_DB_INMEM:
-	    if ((dp = db_lookup(wdbp->dbip, name, 0)) == DIR_NULL) {
-		if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type)) == DIR_NULL) {
+	    if ((dp = db_lookup(wdbp->dbip, name, 0)) == RT_DIR_NULL) {
+		if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type)) == RT_DIR_NULL) {
 		    bu_log("wdb_export_external(%s): db_diradd error\n", name);
 		    bu_free_external(ep);
 		    return -3;
@@ -286,7 +288,7 @@ wdb_put_internal(
     RT_CK_WDB(wdbp);
     RT_CK_DB_INTERNAL(ip);
 
-    if (wdbp->dbip->dbi_version <= 4) {
+    if (db_version(wdbp->dbip) < 5) {
 	BU_INIT_EXTERNAL(&ext);
 
 	ret = -1;

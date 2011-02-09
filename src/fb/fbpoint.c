@@ -1,7 +1,7 @@
 /*                       F B P O I N T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -150,7 +150,7 @@ main(int argc, char **argv)
     curX = curY = -1;
 
     while ( argc > 1 ) {
-	if ( strcmp( argv[1], "-h" ) == 0 ) {
+	if ( BU_STR_EQUAL( argv[1], "-h" ) ) {
 	    width = height = 1024;
 	} else if ( strncmp( argv[1], "-x", 2 ) == 0 ) {
 	    if ( xflag++ != 0 )

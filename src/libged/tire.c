@@ -1,7 +1,7 @@
 /*                          T I R E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,6 @@
 
 #define ROWS 5
 #define COLS 5
-#define F_PI 3.1415926535897932384626433832795029L
 
 static char *options="an:c:d:W:R:D:g:j:p:s:t:u:w:h";
 
@@ -66,24 +65,24 @@ show_help(struct ged *gedp, const char *name)
     }
 
     bu_vls_printf(&gedp->ged_result_str, "usage: %s [-%s] [tire_name]\n", name, bu_vls_addr(&str));
-    bu_vls_printf(&gedp->ged_result_str, "options:\n"
-		  "\t-a\n\t\tAuto-generate top-level object name using\n"
-		  "\t\t(tire-<width>-<aspect>R<rim size>)\n"
-		  "\t-n <name>\n\t\tSpecify custom top-level object name\n"
-		  "\t-c <count>\n\t\tSpecify number of tread patterns around tire\n"
-		  "\t-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions\n"
-		  "\t\t(U.S. customary units, integer values only)\n"
-		  "\t-W <width>\n\t\tSpecify tire width in inches (overrides -d)\n"
-		  "\t-R <aspect>\n\t\tSpecify tire aspect ratio (#/100) (overrides -d)\n"
-		  "\t-D <rim size>\n\t\tSpecify rim size in inches (overrides -d)\n"
-		  "\t-g <depth>\n\t\tSpecify tread depth in terms of 32nds of an inch.\n"
-		  "\t-j <width>\n\t\tSpecify rim width in inches.\n"
-		  "\t-p <type>\n\t\tGenerate tread with tread pattern as specified\n"
-		  "\t-s <radius>\n\t\tSpecify the radius of the maximum sidewall width\n"
-		  "\t-t <type>\n\t\tGenerate tread with tread type as specified\n"
-		  "\t-u <thickness>\n\t\tSpecify tire thickness in mm\n"
-		  "\t-w <0|1>\n\t\tWhether to include the wheel or not\n"
-		  "\t-h\n\t\tShow help\n\n");
+    bu_vls_printf(&gedp->ged_result_str, "options:\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-a\n\t\tAuto-generate top-level object name using\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t\t(tire-<width>-<aspect>R<rim size>)\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-n <name>\n\t\tSpecify custom top-level object name\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-c <count>\n\t\tSpecify number of tread patterns around tire\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t\t(U.S. customary units, integer values only)\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-W <width>\n\t\tSpecify tire width in inches (overrides -d)\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-R <aspect>\n\t\tSpecify tire aspect ratio (#/100) (overrides -d)\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-D <rim size>\n\t\tSpecify rim size in inches (overrides -d)\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-g <depth>\n\t\tSpecify tread depth in terms of 32nds of an inch.\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-j <width>\n\t\tSpecify rim width in inches.\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-p <type>\n\t\tGenerate tread with tread pattern as specified\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-s <radius>\n\t\tSpecify the radius of the maximum sidewall width\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-t <type>\n\t\tGenerate tread with tread type as specified\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-u <thickness>\n\t\tSpecify tire thickness in mm\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-w <0|1>\n\t\tWhether to include the wheel or not\n");
+    bu_vls_printf(&gedp->ged_result_str, "\t-h\n\t\tShow help\n\n");
 
     bu_vls_free(&str);
     return;
@@ -166,48 +165,48 @@ GetValueAtZPoint(fastf_t *inarray, fastf_t y)
 static void
 Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf_t ztire)
 {
-    fastf_t y1, z1, y2, z2, y3, z3, y4, z4, y5, z5;
+    fastf_t y_1, z_1, y_2, z_2, y_3, z_3, y_4, z_4, y_5, z_5;
 
-    y1 = dytred / 2;
-    z1 = ztire - dztred;
-    y2 = dytred / 2;
-    z2 = ztire - (dztred + 2 * (d1 - dztred));
-    y3 = 0.0;
-    z3 = ztire;
-    y4 = 0.0;
-    z4 = ztire - 2 * d1;
-    y5 = -dytred / 2;
-    z5 = ztire - dztred;
+    y_1 = dytred / 2;
+    z_1 = ztire - dztred;
+    y_2 = dytred / 2;
+    z_2 = ztire - (dztred + 2 * (d1 - dztred));
+    y_3 = 0.0;
+    z_3 = ztire;
+    y_4 = 0.0;
+    z_4 = ztire - 2 * d1;
+    y_5 = -dytred / 2;
+    z_5 = ztire - dztred;
 
-    mat[0][0] = y1 * y1;
-    mat[0][1] = y1 * z1;
-    mat[0][2] = z1 * z1;
-    mat[0][3] = y1;
-    mat[0][4] = z1;
+    mat[0][0] = y_1 * y_1;
+    mat[0][1] = y_1 * z_1;
+    mat[0][2] = z_1 * z_1;
+    mat[0][3] = y_1;
+    mat[0][4] = z_1;
     mat[0][5] = -1;
-    mat[1][0] = y2 * y2;
-    mat[1][1] = y2 * z2;
-    mat[1][2] = z2 * z2;
-    mat[1][3] = y2;
-    mat[1][4] = z2;
+    mat[1][0] = y_2 * y_2;
+    mat[1][1] = y_2 * z_2;
+    mat[1][2] = z_2 * z_2;
+    mat[1][3] = y_2;
+    mat[1][4] = z_2;
     mat[1][5] = -1;
-    mat[2][0] = y3 * y3;
-    mat[2][1] = y3 * z3;
-    mat[2][2] = z3 * z3;
-    mat[2][3] = y3;
-    mat[2][4] = z3;
+    mat[2][0] = y_3 * y_3;
+    mat[2][1] = y_3 * z_3;
+    mat[2][2] = z_3 * z_3;
+    mat[2][3] = y_3;
+    mat[2][4] = z_3;
     mat[2][5] = -1;
-    mat[3][0] = y4 * y4;
-    mat[3][1] = y4 * z4;
-    mat[3][2] = z4 * z4;
-    mat[3][3] = y4;
-    mat[3][4] = z4;
+    mat[3][0] = y_4 * y_4;
+    mat[3][1] = y_4 * z_4;
+    mat[3][2] = z_4 * z_4;
+    mat[3][3] = y_4;
+    mat[3][4] = z_4;
     mat[3][5] = -1;
-    mat[4][0] = y5 * y5;
-    mat[4][1] = y5 * z5;
-    mat[4][2] = z5 * z5;
-    mat[4][3] = y5;
-    mat[4][4] = z5;
+    mat[4][0] = y_5 * y_5;
+    mat[4][1] = y_5 * z_5;
+    mat[4][2] = z_5 * z_5;
+    mat[4][3] = y_5;
+    mat[4][4] = z_5;
     mat[4][5] = -1;
 }
 
@@ -257,7 +256,7 @@ Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf
 static void
 Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred,
 		fastf_t dyside1, fastf_t zside1, fastf_t ztire,
-		fastf_t dyhub, fastf_t zhub, fastf_t ell1partial)
+		fastf_t UNUSED(dyhub), fastf_t UNUSED(zhub), fastf_t ell1partial)
 {
     mat[0][0] = (dyside1 / 2) * (dyside1 / 2);
     mat[0][1] = (zside1 * dyside1 / 2);
@@ -303,9 +302,9 @@ Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred,
  * the top ellipse(s) to the bottom one is smooth.
  */
 static void
-Create_Ell3_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred,
-		fastf_t dyside1, fastf_t zside1, fastf_t ztire,
-		fastf_t dyhub, fastf_t zhub, fastf_t ell1partial)
+Create_Ell3_Mat(fastf_t **mat, fastf_t UNUSED(dytred), fastf_t UNUSED(dztred),
+		fastf_t dyside1, fastf_t zside1, fastf_t UNUSED(ztire),
+		fastf_t dyhub, fastf_t zhub, fastf_t UNUSED(ell1partial))
 {
     mat[0][0] = (dyside1 / 2) * (dyside1 / 2);
     mat[0][1] = (zside1 * dyside1 / 2);
@@ -434,7 +433,7 @@ CalcInputVals(fastf_t *inarray, fastf_t *outarray)
 {
     fastf_t A, B, C, D, E, Fp;
     fastf_t App, Bpp, Cpp;
-    fastf_t x0, y0;
+    fastf_t x_0, y_0;
     fastf_t theta;
     fastf_t length1, length2;
     fastf_t semiminor;
@@ -447,11 +446,11 @@ CalcInputVals(fastf_t *inarray, fastf_t *outarray)
     E = inarray[4];
 
     /* Translation to Center of Ellipse */
-    x0 = -(B * E - 2 * C * D) / (4 * A * C - B * B);
-    y0 = -(B * D - 2 * A * E) / (4 * A * C - B * B);
+    x_0 = -(B * E - 2 * C * D) / (4 * A * C - B * B);
+    y_0 = -(B * D - 2 * A * E) / (4 * A * C - B * B);
 
     /* Translate to the Origin for Rotation */
-    Fp = 1 - y0 * E - x0 * D + y0 * y0 * C+x0 * y0 * B + x0 * x0 * A;
+    Fp = 1 - y_0 * E - x_0 * D + y_0 * y_0 * C+x_0 * y_0 * B + x_0 * x_0 * A;
 
     /* Rotation Angle */
     theta = .5 * atan(1000 * B / (1000 * A - 1000 * C));
@@ -477,8 +476,8 @@ CalcInputVals(fastf_t *inarray, fastf_t *outarray)
     }
 
     /* Return final BRL-CAD input parameters */
-    outarray[0] = -x0;
-    outarray[1] = -y0;
+    outarray[0] = -x_0;
+    outarray[1] = -y_0;
     outarray[2] = semimajorx;
     outarray[3] = semimajory;
     outarray[4] = semiminor;
@@ -800,14 +799,14 @@ MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub,
  **********************************************************************/
 static void
 MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
-	    int vertcount, fastf_t patternwidth1, fastf_t patternwidth2,
+	    size_t vertcount, fastf_t patternwidth1, fastf_t patternwidth2,
 	    fastf_t tirewidth, fastf_t zbase, fastf_t ztire)
 {
     struct rt_sketch_internal *skt;
     struct line_seg *lsg;
     point_t V;
     vect_t u_vec, v_vec, h;
-    int i;
+    size_t i;
     struct bu_vls str;
     struct bu_vls str2;
     point2d_t tmpvert[] = {{0, 0}};
@@ -937,8 +936,8 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     bu_vls_init(&str);
     bu_vls_init(&str2);
 
-    patternwidth1 = ztire * sin(F_PI / number_of_patterns);
-    patternwidth2 = z_base * sin(F_PI / number_of_patterns);
+    patternwidth1 = ztire * sin(M_PI / number_of_patterns);
+    patternwidth2 = z_base * sin(M_PI / number_of_patterns);
 
     verts[0] = verts1;
     vertcounts[0] = 12;
@@ -975,7 +974,7 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
     for ( i = 1; i <= number_of_patterns; i++) {
 	bu_vls_sprintf(&str, "tread_master%s.c", suffix);
-	getYRotMat(&y, i * 2 * F_PI / number_of_patterns);
+	getYRotMat(&y, i * 2 * M_PI / number_of_patterns);
 	(void)mk_addmember(bu_vls_addr(&str), &tread.l, y, WMOP_SUBTRACT);
     }
 
@@ -1072,8 +1071,8 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     bu_vls_init(&str);
     bu_vls_init(&str2);
 
-    patternwidth1 = ztire * sin(F_PI / number_of_patterns);
-    patternwidth2 = z_base * sin(F_PI / number_of_patterns);
+    patternwidth1 = ztire * sin(M_PI / number_of_patterns);
+    patternwidth2 = z_base * sin(M_PI / number_of_patterns);
 
     verts[0] = verts1;
     vertcounts[0] = 8;
@@ -1126,7 +1125,7 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
     for (i=1; i<=number_of_patterns; i++) {
 	bu_vls_sprintf(&str, "tread_master%s.c", suffix);
-	getYRotMat(&y, i * 2 * F_PI / number_of_patterns);
+	getYRotMat(&y, i * 2 * M_PI / number_of_patterns);
 	(void)mk_addmember(bu_vls_addr(&str), &tread.l, y, WMOP_SUBTRACT);
     }
 
@@ -1144,9 +1143,7 @@ TreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 	     fastf_t z_base, fastf_t ztire, int number_of_patterns,
 	     int patterntype)
 {
-    typedef void (* MakeTreadPattern)(struct rt_wdb (*file), char *suffix,
-				      fastf_t dwidth, fastf_t z_base,
-				      fastf_t ztire, int number_of_patterns);
+    typedef void (* MakeTreadPattern)(struct rt_wdb (*), char *, fastf_t, fastf_t, fastf_t, int);
     MakeTreadPattern TreadPatterns[2];
     TreadPatterns[0] = &MakeTreadPattern1;
     TreadPatterns[1] = &MakeTreadPattern2;
@@ -1345,7 +1342,7 @@ static void
 MakeTreadSolid(struct rt_wdb (*file), char *suffix,
 	       fastf_t *ell2coefficients, fastf_t ztire, fastf_t dztred,
 	       fastf_t d1, fastf_t dytred, fastf_t dyhub, fastf_t zhub,
-	       fastf_t dyside1, int number_of_tread_patterns,
+	       fastf_t UNUSED(dyside1), int number_of_tread_patterns,
 	       int pattern_type)
 {
     fastf_t **matrixelltread1, **matrixelltread2;
@@ -1474,8 +1471,8 @@ MakeTreadSolid(struct rt_wdb (*file), char *suffix,
 static void
 MakeTreadSolid1(struct rt_wdb (*file), char *suffix,
 		fastf_t *ell2coefficients, fastf_t ztire, fastf_t dztred,
-		fastf_t d1, fastf_t dytred, fastf_t dyhub, fastf_t zhub,
-		fastf_t dyside1, int number_of_tread_patterns,
+		fastf_t d1, fastf_t dytred, fastf_t UNUSED(dyhub), fastf_t UNUSED(zhub),
+		fastf_t UNUSED(dyside1), int number_of_tread_patterns,
 		int patterntype)
 {
     fastf_t **matrixelltred1, **matrixelltred2;
@@ -2073,18 +2070,18 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     dytred = .8 * width;
     d1 = (ztire-zhub)/2.5;
 
-    if (hub_width == 0) {
+    if (NEAR_ZERO(hub_width, SMALL_FASTF)) {
 	dyhub = dytred;
     } else {
 	dyhub = hub_width*bu_units_conversion("in");
     }
 
-    if (zside1 == 0)
+    if (NEAR_ZERO(zside1, SMALL_FASTF))
 	zside1 = ztire-((ztire-zhub)/2*1.2);
 
     dztred = .001*ratio*zside1;
 
-    if (tire_thickness == 0)
+    if (NEAR_ZERO(tire_thickness, SMALL_FASTF))
 	tire_thickness = dztred;
 
     bu_vls_printf(&gedp->ged_result_str, "radius of sidewall max: %f\n", zside1);

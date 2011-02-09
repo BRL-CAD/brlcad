@@ -140,7 +140,8 @@ Fortran_Array3D<T> & Fortran_Array3D<T>::operator=(const T &a)
 
 	T *end = data_ + m_*n_*k_;
 
-	for (T *p=data_; p != end; *p++ = a);
+	for (T *p=data_; p != end; *p++ = a)
+          ;
 
 	return *this;
 }
@@ -165,7 +166,8 @@ Fortran_Array3D<T> & Fortran_Array3D<T>::inject(const Fortran_Array3D &A)
 		T *p = data_;
 		T *end = data_ + m_*n_*k_;
 		const T* q = A.data_;
-		for (; p < end; *p++ =  *q++);
+		for (; p < end; *p++ =  *q++)
+                  ;
 	}
 	return *this;
 }

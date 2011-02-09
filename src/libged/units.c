@@ -1,7 +1,7 @@
 /*                         U N I T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,12 +53,12 @@ ged_units(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argc == 2) {
-	if (strcmp(argv[1], "-s") == 0) {
+	if (BU_STR_EQUAL(argv[1], "-s")) {
 	    --argc;
 	    ++argv;
 
 	    sflag = 1;
-	} else if (strcmp(argv[1], "-t") == 0) {
+	} else if (BU_STR_EQUAL(argv[1], "-t")) {
 	    struct bu_vls *vlsp = bu_units_strings_vls();
 
 	    bu_vls_printf(&gedp->ged_result_str, "%V", vlsp);

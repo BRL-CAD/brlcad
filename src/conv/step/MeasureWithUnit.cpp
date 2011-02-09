@@ -1,7 +1,7 @@
 /*                 MeasureWithUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,8 +55,8 @@ MeasureWithUnit::~MeasureWithUnit() {
 
 double
 MeasureWithUnit::GetLengthConversionFactor() {
-	double sifactor;
-	double mfactor;
+	double sifactor = 0.0;
+	double mfactor = 0.0;
 	SiUnit *si = dynamic_cast<SiUnit *>(unit_component);
 	if (si != NULL) {
 		//found SI length unit
@@ -69,8 +69,8 @@ MeasureWithUnit::GetLengthConversionFactor() {
 
 double
 MeasureWithUnit::GetPlaneAngleConversionFactor() {
-	double sifactor;
-	double mfactor;
+	double sifactor = 0.0;
+	double mfactor = 0.0;
 	SiUnit *si = dynamic_cast<SiUnit *>(unit_component);
 	if (si != NULL) {
 		//found SI length unit
@@ -83,8 +83,8 @@ MeasureWithUnit::GetPlaneAngleConversionFactor() {
 
 double
 MeasureWithUnit::GetSolidAngleConversionFactor() {
-	double sifactor;
-	double mfactor;
+	double sifactor = 0.0;
+	double mfactor = 0.0;
 	SiUnit *si = dynamic_cast<SiUnit *>(unit_component);
 	if (si != NULL) {
 		//found SI length unit

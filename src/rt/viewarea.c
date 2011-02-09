@@ -1,7 +1,7 @@
 /*                      V I E W A R E A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,9 +35,11 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "./ext.h"
 #include "plot3.h"
-#include "rtprivate.h"
+
+#include "./rtuif.h"
+#include "./ext.h"
+
 
 extern int	npsw;			/* number of worker PSWs to run */
 
@@ -136,7 +138,7 @@ int area_center(struct point_list *ptlist, int number, point_t *center);
  *  			V I E W _ I N I T
  */
 int
-view_init( register struct application *ap, char *file, char *obj )
+view_init(struct application *ap, char *file, char *obj, int UNUSED(minus_o), int UNUSED(minus_F))
 {
     ap->a_hit = rayhit;
     ap->a_miss = raymiss;
@@ -161,7 +163,7 @@ view_init( register struct application *ap, char *file, char *obj )
  *  main().
  */
 void
-view_2init( struct application *ap )
+view_2init( struct application *ap, char *UNUSED(framename) )
 {
     register struct region *rp;
     register struct rt_i *rtip = ap->a_rt_i;
@@ -245,7 +247,7 @@ view_2init( struct application *ap )
  *  do_frame().
  */
 int
-raymiss(register struct application *ap)
+raymiss(struct application *UNUSED(ap))
 {
     return 0;
 }
@@ -256,7 +258,7 @@ raymiss(register struct application *ap)
  *  This routine is called from do_run(), and in this case does nothing.
  */
 void
-view_pixel()
+view_pixel(struct application *UNUSED(ap))
 {
     return;
 }
@@ -318,7 +320,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
                  * structure, increment number of exposures & hits and
                  * increment seen, then exit for-loop.
                  */
-		if ( (strcmp(area_record_ptr->name, &buffer[l])==0) ) {
+		if ( (BU_STR_EQUAL(area_record_ptr->name, &buffer[l])) ) {
 		    if (type == EXPOSED_AREA) {
 			if (!area_record_ptr->seen) {
 			    area_record_ptr->exposures++;
@@ -706,7 +708,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
  *  View_eol() is called by rt_shootray() in do_run().  In this case,
  *  it does nothing.
  */
-void	view_eol()
+void view_eol(struct application *UNUSED(ap))
 {
 }
 
@@ -741,7 +743,7 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
 		struct area_list *newNode;
 
 		while (listp->next) {
-		    if (!listp->cell || (strcmp(cell->name, listp->cell->name) < 0)) {
+		    if (!listp->cell || (bu_strcmp(cell->name, listp->cell->name) < 0)) {
 			break;
 		    }
 		    prev = listp;
@@ -893,7 +895,7 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 		if ((!listp->cell) || (cellp->depth > listp->cell->depth)) {
 		    break;
 		}
-		if ((cellp->depth == listp->cell->depth) && (strcmp(cellp->name, listp->cell->name) < 0)) {
+		if ((cellp->depth == listp->cell->depth) && (bu_strcmp(cellp->name, listp->cell->name) < 0)) {
 		    break;
 		}
 
@@ -1105,11 +1107,11 @@ view_end(struct application *ap)
     /* output of center of exposed area */
     if (rtarea_compute_centers) {
         bu_log("Center of Exposed Area     (%lu hits) = (%.4lf, %.4lf, %.4lf) %s\n",
-		exposed_hit_sum,
-		exposed_hit_x_sum / (fastf_t)exposed_hit_sum / units,
-		exposed_hit_y_sum / (fastf_t)exposed_hit_sum / units,
-		exposed_hit_z_sum / (fastf_t)exposed_hit_sum / units,
-		bu_units_string(units)
+	       (long unsigned)exposed_hit_sum,
+	       exposed_hit_x_sum / (fastf_t)exposed_hit_sum / units,
+	       exposed_hit_y_sum / (fastf_t)exposed_hit_sum / units,
+	       exposed_hit_z_sum / (fastf_t)exposed_hit_sum / units,
+	       bu_units_string(units)
 	);
     }
     bu_log("Number of Presented Regions:    %8d\n", presented_region_count);
@@ -1195,8 +1197,8 @@ view_end(struct application *ap)
     return;
 }
 
-void view_setup() {}
-void view_cleanup() {}
+void view_setup(struct rt_i *UNUSED(rtip)) {}
+void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 void application_init () {}
 
 /*

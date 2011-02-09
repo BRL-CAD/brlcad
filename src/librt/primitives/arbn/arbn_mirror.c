@@ -1,7 +1,7 @@
 /*                   A R B N _ M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ rt_arbn_mirror(struct rt_db_internal *ip, register const plane_t plane)
 {
     struct rt_arbn_internal *arbn;
 
-    int i;
+    size_t i;
     mat_t mirmat;
     mat_t rmat;
     mat_t temp;

@@ -1,7 +1,7 @@
 /*                    A R B 8 _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ extern "C" {
  * R T _ A R B 8 _ B R E P
  */
 extern "C" void
-rt_arb8_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_arb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_db_internal *tmp_internal = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "allocate structure");
     RT_INIT_DB_INTERNAL(tmp_internal);

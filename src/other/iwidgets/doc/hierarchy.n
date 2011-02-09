@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) hierarchy.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::hierarchy iwid
 .BS
@@ -63,7 +63,7 @@ Command-Line Switch:	\fB-alwaysquery\fR
 .IP
 Boolean flag which tells the hierarchy widget weather or not
 each refresh of the display should be via a new query using
-the command value of the -querycommand option or use the values
+the command value of the -querycommand option or use the values 
 previous found the last time the query was made.  The default
 is no.
 .LP
@@ -73,9 +73,9 @@ Class:	\fBIcon\fR
 Command-Line Switch:	\fB-closedicon\fR
 .fi
 .IP
-Specifies the name of an existing closed icon image to be used in the
-hierarchy before those nodes that are collapsed.  Should one not be
-provided, then a folder icon will be generated, pixmap if possible,
+Specifies the name of an existing closed icon image to be used in the 
+hierarchy before those nodes that are collapsed.  Should one not be 
+provided, then a folder icon will be generated, pixmap if possible, 
 bitmap otherwise.
 .LP
 .nf
@@ -115,11 +115,11 @@ Command-Line Switch:	\fB-height\fR
 .fi
 .IP
 Specifies the height of the hierarchy as an entire unit.
-The value may be specified in any of the forms acceptable to
+The value may be specified in any of the forms acceptable to 
 \fBTk_GetPixels\fR.  Any additional space needed to display the other
 components such as labels, margins, and scrollbars force the hierarchy
-to be compressed.  A value of zero along with the same value for
-the width causes the value given for the visibleitems option
+to be compressed.  A value of zero along with the same value for 
+the width causes the value given for the visibleitems option 
 to be applied which administers geometry constraints in a different
 manner.  The default height is zero.
 .LP
@@ -131,8 +131,8 @@ Command-Line Switch:	\fB-iconcommand\fR
 .IP
 Specifies a command to be executed upon user selection via mouse button
 one of any additional icons given in the values returned by the command
-associated with the -querycommand option.  If this command contains "%n",
-it is replaced with the name of the node the icon belongs to.  Should it
+associated with the -querycommand option.  If this command contains "%n", 
+it is replaced with the name of the node the icon belongs to.  Should it 
 contain "%i" then the icon name is  substituted.
 .LP
 .nf
@@ -199,7 +199,7 @@ Class:	\fBCursor\fR
 Command-Line Switch:	\fB-menucursor\fR
 .fi
 .IP
-Specifies the mouse cursor to be used for the item and background
+Specifies the mouse cursor to be used for the item and background 
 menus.  The value may have any of the forms accept able to Tk_GetCursor.
 .LP
 .nf
@@ -208,9 +208,9 @@ Class:	\fBIcon\fR
 Command-Line Switch:	\fB-nodeicon\fR
 .fi
 .IP
-Specifies the name of an existing node icon image to be used in the
-hierarchy before those nodes that are leafs.  Should one not be provided,
-then a dog-eared page icon will be generated, pixmap if possible, bitmap
+Specifies the name of an existing node icon image to be used in the 
+hierarchy before those nodes that are leafs.  Should one not be provided, 
+then a dog-eared page icon will be generated, pixmap if possible, bitmap 
 otherwise.
 .LP
 .nf
@@ -219,9 +219,9 @@ Class:	\fBIcon\fR
 Command-Line Switch:	\fB-openicon\fR
 .fi
 .IP
-Specifies the name of an existing open icon image to be used in the
-hierarchy before those nodes that are expanded.  Should one not be provided,
-then an open folder icon will be generated, pixmap if possible, bitmap
+Specifies the name of an existing open icon image to be used in the 
+hierarchy before those nodes that are expanded.  Should one not be provided, 
+then an open folder icon will be generated, pixmap if possible, bitmap 
 otherwise.
 .LP
 .nf
@@ -230,13 +230,13 @@ Class:	\fBCommand\fR
 Command-Line Switch:	\fB-querycommand\fR
 .fi
 .IP
-Specifies the command executed to query the contents of each node.  If this
-command contains "%n", it is replaced with the name of the desired
-node.  In its simpilest form it should return the children of the
+Specifies the command executed to query the contents of each node.  If this 
+command contains "%n", it is replaced with the name of the desired 
+node.  In its simpilest form it should return the children of the 
 given node as a list which will be depicted in the display.
-Since the names of the children are used as tags in the underlying
+Since the names of the children are used as tags in the underlying 
 text widget, each child must be unique in the hierarchy.  Due to
-the unique requirement, the nodes shall be reffered to as uids
+the unique requirement, the nodes shall be reffered to as uids 
 or uid in the singular sense.  The format of returned list is
 .IP
   {uid [uid ...]}
@@ -244,14 +244,14 @@ or uid in the singular sense.  The format of returned list is
   where uid is a unique id and primary key for the hierarchy entry
 .IP
 Should the unique requirement pose a problem, the list returned
-can take on another more extended form which enables the
+can take on another more extended form which enables the 
 association of text to be displayed with the uids.  The uid must
 still be unique, but the text does not have to obey the unique
 rule.  In addition, the format also allows the specification of
 additional tags to be used on the same entry in the hierarchy
 as the uid and additional icons to be displayed just before
 the node.  The tags and icons are considered to be the property of
-the user in that the hierarchy widget will not depend on any of
+the user in that the hierarchy widget will not depend on any of 
 their values.  The extended format is
 .IP
   {{uid [text [tags [icons]]]} {uid [text [tags [icons]]]} ...}
@@ -275,9 +275,9 @@ Command-Line Switch:	\fB-hscrollmode\fR
 .fi
 .IP
 Specifies the the display mode to be used for the horizontal
-scrollbar: \fBstatic, dynamic,\fR or \fBnone\fR.  In static mode, the
+scrollbar: \fBstatic, dynamic,\fR or \fBnone\fR.  In static mode, the 
 scroll bar is displayed at all times.  Dynamic mode displays the
-scroll bar as required, and none disables the scroll bar display.  The
+scroll bar as required, and none disables the scroll bar display.  The 
 default is static.
 .LP
 .nf
@@ -287,7 +287,7 @@ Command-Line Switch:	\fB-sbwidth\fR
 .fi
 .IP
 Specifies the width of the scrollbar in any of the forms
-acceptable to \fBTk_GetPixels\fR.
+acceptable to \fBTk_GetPixels\fR.  
 .LP
 .nf
 Name:	\fBscrollMargin\fR
@@ -295,8 +295,8 @@ Class:	\fBMargin\fR
 Command-Line Switch:	\fB-scrollmargin\fR
 .fi
 .IP
-Specifies the distance between the text portion of the hierarchy and
-the scrollbars in any of the forms acceptable to \fBTk_GetPixels\fR.  The
+Specifies the distance between the text portion of the hierarchy and 
+the scrollbars in any of the forms acceptable to \fBTk_GetPixels\fR.  The 
 default is 3 pixels.
 .LP
 .nf
@@ -315,7 +315,7 @@ Class:	\fBBackground\fR
 Command-Line Switch:	\fB-textbackground\fR
 .fi
 .IP
-Specifies the background color for the text portion of the hierarchy in
+Specifies the background color for the text portion of the hierarchy in 
 any of the forms acceptable to \fBTk_GetColor\fR.
 .LP
 .nf
@@ -344,13 +344,13 @@ Command-Line Switch:	\fB-visibleitems\fR
 Specifies the widthxheight in characters and lines for the hierarchy.
 This option is only administered if the width and height options
 are both set to zero, otherwise they take precedence.  The default value
-is 80x24.  With the visibleitems option engaged, geometry constraints
-are maintained only on the text portion of the hierarchy.  The size of
-the other components such as
-labels, margins, and scroll bars, are additive and independent,
+is 80x24.  With the visibleitems option engaged, geometry constraints 
+are maintained only on the text portion of the hierarchy.  The size of 
+the other components such as 
+labels, margins, and scroll bars, are additive and independent, 
 effecting the overall size of the hierarchy.  In contrast,
 should the width and height options have non zero values, they
-are applied to the hierarchy as a whole.  The hierarchy
+are applied to the hierarchy as a whole.  The hierarchy 
 is compressed or expanded to maintain the geometry constraints.
 .LP
 .nf
@@ -360,9 +360,9 @@ Command-Line Switch:	\fB-vscrollmode\fR
 .fi
 .IP
 Specifies the the display mode to be used for the vertical
-scrollbar: \fBstatic, dynamic,\fR or \fBnone\fR.  In static mode, the
-scroll bar is displayed at all times.  Dynamic mode displays the
-scroll bar as required, and none disables the scroll bar display.  The
+scrollbar: \fBstatic, dynamic,\fR or \fBnone\fR.  In static mode, the 
+scroll bar is displayed at all times.  Dynamic mode displays the 
+scroll bar as required, and none disables the scroll bar display.  The 
 default is static.
 .LP
 .nf
@@ -372,12 +372,12 @@ Command-Line Switch:	\fB-width\fR
 .fi
 .IP
 Specifies the width of the hierarchy as an entire unit.
-The value may be specified in any of the forms acceptable to
+The value may be specified in any of the forms acceptable to 
 \fBTk_GetPixels\fR.  Any additional space needed to display the other
 components such as labels, margins, and scrollbars force the text portion
 of the hierarchy
-to be compressed.  A value of zero along with the same value for
-the height causes the value given for the visibleitems option
+to be compressed.  A value of zero along with the same value for 
+the height causes the value given for the visibleitems option 
 to be applied which administers geometry constraints in a different
 manner.  The default width is zero.
 .LP
@@ -387,7 +387,7 @@ manner.  The default width is zero.
 
 .SH DESCRIPTION
 .PP
-The \fBiwidgets::hierarchy\fR command creates a hierarchical data view widget.
+The \fBiwidgets::hierarchy\fR command creates a hierarchical data view widget.  
 It allows the graphical management of a a list of nodes that can be
 expanded or collapsed.  Individual nodes can be highlighted.
 Clicking with the right mouse button on any item brings up a
@@ -395,8 +395,8 @@ special item menu.  Clicking on the background area brings up
 a different popup menu.  Options exist to provide user control over
 the loading of the nodes and actions associated with node selection.
 Since the hierarchy is based on the scrolledtext widget, it includes
-options to control the method in which the scrollbars are displayed,
-i.e. statically or  dynamically.  Options also exist for adding a
+options to control the method in which the scrollbars are displayed, 
+i.e. statically or  dynamically.  Options also exist for adding a 
 label to the hierarchy and controlling its position.
 
 .SH "METHODS"
@@ -415,7 +415,7 @@ commands are possible for hierarchy widgets:
 .LP
 .nf
 .ta 4c 8c 12c
-\fBbbox\fR	\fBcompare\fR	\fBdebug\fR	\fBdelete\fR
+\fBbbox\fR	\fBcompare\fR	\fBdebug\fR	\fBdelete\fR	
 \fBdlineinfo\fR	\fBdump\fR	\fBget\fR	\fBindex\fR
 \fBinsert\fR	\fBscan\fR	\fBsearch\fR	\fBsee\fR
 \fBtag\fR	\fBwindow\fR	\fBxview\fR	\fByview\fR
@@ -432,13 +432,13 @@ by \fIoption\fR.
 command.
 .TP
 \fIpathName \fBclear\fR
-Removes all items from the hierarchy display including all tags and icons.
-The display will remain empty until the -filter or -querycommand
+Removes all items from the hierarchy display including all tags and icons.  
+The display will remain empty until the -filter or -querycommand 
 options are set.
 .TP
 \fIpathName \fBcollapse\fR \fIuid\fR
-Collapses the hierarchy beneath the node with the specified unique id by
-one level.  Since this can take a moment for large hierarchies, the
+Collapses the hierarchy beneath the node with the specified unique id by 
+one level.  Since this can take a moment for large hierarchies, the 
 cursor will be changed to a watch during the collapse.  Also, if any
 of the nodes beneath the node being collapsed are selected, their
 status is changed to unselected.
@@ -458,7 +458,7 @@ this case the command returns an empty string.
 command.
 .TP
 \fIpathName \fBcurrent\fR
-Returns the tags for the node that was most recently selected by the
+Returns the tags for the node that was most recently selected by the 
 right mouse button when the item menu was posted.  Usually used by the code
 in the item menu to figure out what item is being manipulated.
 .TP
@@ -468,7 +468,7 @@ or -eventually where the latter means the draw can be performed after idle.
 .TP
 \fIpathName \fBexpand\fR \fIuid\fR
 Expands the hierarchy beneath the node with the specified unique id by
-one level.  Since this can take a moment for large hierarchies, the cursor
+one level.  Since this can take a moment for large hierarchies, the cursor 
 will be changed to a watch during the expansion.
 .TP
 \fIpathName \fBexpanded\fR \fIuid\fR
@@ -479,10 +479,10 @@ id.
 Returns a list of all expanded nodes in the tree.
 .TP
 \fIpathName \fBmark\fR \fIoption ?arg arg ...?\fR
-This command is used to manipulate marks which is quite similar to
-selection, adding a secondary means of hilighting an item in the
-hierarchy.  The exact behavior of the command depends on the
-\fIoption\fR argument that follows the \fBmark\fR argument.  The
+This command is used to manipulate marks which is quite similar to 
+selection, adding a secondary means of hilighting an item in the 
+hierarchy.  The exact behavior of the command depends on the 
+\fIoption\fR argument that follows the \fBmark\fR argument.  The 
 following forms of the command are currently supported:
 .RS
 .TP
@@ -490,14 +490,14 @@ following forms of the command are currently supported:
 Clears all the currently marked nodes in the hierarchy.
 .TP
 \fIpathName \fBmark add \fIuid \fR?\fIuid uid ...\fR?
-Marks the nodes with the specified uids in the hierarchy using the
+Marks the nodes with the specified uids in the hierarchy using the 
 \fB-markbackground\fR and \fB-markforeground\fR options and without
-affecting the mark state of any other nodes that were already
+affecting the mark state of any other nodes that were already 
 marked.
 .TP
 \fIpathName \fBmark remove \fIuid \fR?\fIuid uid ...\fR?
 Unmarks the nodes with the specified uids in the hierarchy without
-affecting the mark state of any other nodes that were already
+affecting the mark state of any other nodes that were already 
 marked.
 .TP
 \fIpathName \fBmark get\fR
@@ -510,13 +510,13 @@ is not currently visible or in other words already drawn on the text,
 then no action is taken.
 .TP
 \fIpathName \fBprune\fR \fIuid\fR
-Removes the node specified by the given uid from the hierarchy.  Should
+Removes the node specified by the given uid from the hierarchy.  Should 
 the node have children, then all of its children will be removed as well.
 .TP
 \fIpathName \fBselection\fR \fIoption \fR?\fIarg arg ...\fR?
 This command is used to manipulate the selection of nodes in the
-hierarchy.  The exact behavior of the command depends on the
-\fIoption\fR argument that follows the \fBselection\fR argument.  The
+hierarchy.  The exact behavior of the command depends on the 
+\fIoption\fR argument that follows the \fBselection\fR argument.  The 
 following forms of the command are currently supported:
 .RS
 .TP
@@ -524,25 +524,25 @@ following forms of the command are currently supported:
 Clears all the currently selected nodes in the hierarchy.
 .TP
 \fIpathName \fBselection add \fIuid \fR?\fIuid uid ...\fR?
-Selects the nodes with the specified uids in the hierarchy using the
+Selects the nodes with the specified uids in the hierarchy using the 
 \fB-selectionbackground\fR and \fB-selectionforeground\fR options and without
-affecting the selection state of any other nodes that were already
+affecting the selection state of any other nodes that were already 
 selected.
 .TP
 \fIpathName \fBselection remove \fIuid \fR?\fIuid uid ...\fR?
 Deselects the nodes with the specified uids in the hierarchy without
-affecting the selection state of any other nodes that were already
+affecting the selection state of any other nodes that were already 
 selected.
 .TP
 \fIpathName \fBselection get\fR
 Returns a list of the unique ids that are currently selected.
 .RE
-A nodes selection status is also dependent on it being visible.  If a
+A nodes selection status is also dependent on it being visible.  If a 
 node is selected and its parent is then collapsed making the selected
 node not visible, then its selection status is changed to unselected.
 .TP
 \fIpathName \fBtoggle\fR \fIuid\fR
-Toggles the hierarchy beneath the node with the specified unique id.  If
+Toggles the hierarchy beneath the node with the specified unique id.  If 
 the hierarchy is currently expanded, then it is collapsed, and vice-versa.
 
 .SH "COMPONENTS"
@@ -562,7 +562,7 @@ Class:	\fBMenu\fR
 .IP
 The bgMenu component is the popup menu which is displayed upon pressing
 the right mouse button in the background, i.e. not over a specific node.  Menu
-items can be added along with their commands via the component command.
+items can be added along with their commands via the component command.  
 See the "menu" widget manual entry for details on the bgMenu component item.
 .LP
 .nf
@@ -570,7 +570,7 @@ Name:	\fBhorizsb\fR
 Class:	\fBScrollbar\fR
 .fi
 .IP
-The horizsb component is the horizontal scroll bar.  See the "scrollbar"
+The horizsb component is the horizontal scroll bar.  See the "scrollbar" 
 widget manual entry for details on the horizsb component item.
 .LP
 .nf
@@ -579,8 +579,8 @@ Class:	\fBMenu\fR
 .fi
 .IP
 The itemMenu component is the popup menu which is displayed upon selection
-of a hierarchy node with the right mouse button.  Menu items can be
-added along with their commands via the component command.  See the "menu"
+of a hierarchy node with the right mouse button.  Menu items can be 
+added along with their commands via the component command.  See the "menu" 
 widget manual entry for details on the itemMenu component item.
 .LP
 .nf
@@ -588,7 +588,7 @@ Name:	\fBvertsb\fR
 Class:	\fBScrollbar\fR
 .fi
 .IP
-The vertsb component is the vertical scroll bar.  See the "scrollbar" widget
+The vertsb component is the vertical scroll bar.  See the "scrollbar" widget 
 manual entry for details on the vertsb component item.
 .fi
 

@@ -1,7 +1,7 @@
 #                      I N S T A L L T R E E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2010 United States Government as represented by
+# Copyright (c) 2002-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -180,7 +180,7 @@ catch {
 
 puts "\[03 of 15] COPYING ICONS TO INSTALL DIRECTORY"
 catch {
-  copy_stuff [file join $rootDir doc html manuals archer archer.ico] [file join $installDir]
+  copy_stuff [file join $rootDir misc nsis archer.ico] [file join $installDir]
   copy_stuff [file join $rootDir misc nsis brlcad.ico] [file join $installDir]
 }
 
@@ -191,6 +191,7 @@ catch {
   copy_stuff [file join $rootDir src archer archer] [file join $installDir bin]
   copy_stuff [file join $rootDir src mged mged.bat] [file join $installDir bin]
   copy_stuff [file join $rootDir src tclscripts rtwizard rtwizard.bat] [file join $installDir bin]
+  copy_stuff [file join $rootDir src tclscripts rtwizard rtwizard.tcl] [file join $installDir bin]
 }
 
 
@@ -303,8 +304,23 @@ catch {
 
 puts "\[12 of 15] COPYING REDIST FILES"
 catch {
-  copy_stuff "C:/Program Files/Microsoft Visual Studio 8/VC/redist/x86/Microsoft.VC80.CRT" [file join $installDir bin]
-  copy_stuff "C:/Program Files/Microsoft Visual Studio 8/VC/redist/x86/Microsoft.VC80.MFC" [file join $installDir bin]
+    if {[info exists "C:/Program Files/Microsoft Visual Studio 8/VC/redist/x86/Microsoft.VC80.CRT"]} {
+	if {$platform == "x64"} {
+	    copy_stuff "C:/Program Files/Microsoft Visual Studio 8/VC/redist/amd64/Microsoft.VC80.CRT" [file join $installDir bin]
+	    copy_stuff "C:/Program Files/Microsoft Visual Studio 8/VC/redist/amd64/Microsoft.VC80.MFC" [file join $installDir bin]
+	} else {
+	    copy_stuff "C:/Program Files/Microsoft Visual Studio 8/VC/redist/x86/Microsoft.VC80.CRT" [file join $installDir bin]
+	    copy_stuff "C:/Program Files/Microsoft Visual Studio 8/VC/redist/x86/Microsoft.VC80.MFC" [file join $installDir bin]
+	}
+    } else {
+	if {$platform == "x64"} {
+	    copy_stuff "C:/Program Files (x86)/Microsoft Visual Studio 8/VC/redist/amd64/Microsoft.VC80.CRT" [file join $installDir bin]
+	    copy_stuff "C:/Program Files (x86)/Microsoft Visual Studio 8/VC/redist/amd64/Microsoft.VC80.MFC" [file join $installDir bin]
+	} else {
+	    copy_stuff "C:/Program Files (x86)/Microsoft Visual Studio 8/VC/redist/x86/Microsoft.VC80.CRT" [file join $installDir bin]
+	    copy_stuff "C:/Program Files (x86)/Microsoft Visual Studio 8/VC/redist/x86/Microsoft.VC80.MFC" [file join $installDir bin]
+	}
+    }
 }
 
 

@@ -1,7 +1,7 @@
 /*                            D O . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2010 United States Government as represented by
+ * Copyright (c) 1987-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,8 +43,11 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "rtprivate.h"
 #include "bu.h"
+
+#include "./rtuif.h"
+#include "./ext.h"
+
 
 /***** Variables shared with viewing model *** */
 extern FILE *outfp;			/* optional pixel output file */
@@ -56,40 +59,10 @@ extern mat_t model2view;
 extern void grid_setup(void);
 extern void worker(int cpu, genptr_t arg);
 
-/***** variables shared with worker() ******/
-extern struct application ap;
-extern int hypersample;		/* number of extra rays to fire */
-extern fastf_t aspect;		/* view aspect ratio X/Y */
-extern fastf_t cell_width;	/* model space grid cell width */
-extern fastf_t cell_height;	/* model space grid cell height */
-extern point_t eye_model;	/* model-space location of eye */
-extern fastf_t eye_backoff;	/* dist of eye from center */
-extern fastf_t rt_perspective;	/* persp (degrees X) 0 => ortho */
-extern size_t width;		/* # of pixels in X */
-extern size_t height;		/* # of lines in Y */
-extern mat_t Viewrotscale;	/* view orientation quaternion */
-extern fastf_t viewsize;
-extern int incr_mode;		/* !0 for incremental resolution */
-extern int incr_level;		/* current incremental level */
-extern int incr_nlevel;		/* number of levels */
-extern int npsw;
-extern struct resource resource[];
-/***** end variables shared with worker() */
-
 /***** variables shared with rt.c *****/
 extern char *string_pix_start;	/* string spec of starting pixel */
 extern char *string_pix_end;	/* string spec of ending pixel */
-extern int pix_start;		/* pixel to start at */
-extern int pix_end;		/* pixel to end at */
-extern int nobjs;		/* Number of cmd-line treetops */
-extern char **objtab;		/* array of treetop strings */
-extern int matflag;		/* read matrix from stdin */
-extern int desiredframe;	/* frame to start at */
 extern int finalframe;		/* frame to halt at */
-extern int curframe;		/* current frame number */
-extern char *outputfile;	/* name of base of output file */
-extern int interactive;		/* human is watching results */
-extern int save_overlaps;	/* flag for setting rti_save_overlaps */
 /***** end variables shared with rt.c *****/
 
 /***** variables shared with viewg3.c *****/
@@ -266,7 +239,7 @@ int cm_lookat_pt(int argc, char **argv)
      * from the lookat point or the lookat point will be from the
      * "front"
      */
-    if (VAPPROXEQUAL(pt, eye_model, VDIVIDE_TOL)) {
+    if (VNEAR_EQUAL(pt, eye_model, VDIVIDE_TOL)) {
 	VSETALLN(quat, 0.5, 4);
 	quat_quat2mat(Viewrotscale, quat); /* front */
     } else {
@@ -748,7 +721,7 @@ do_frame(int framenumber)
 	 * in).
 	 *
 	 * view_2init() can depend on the file being open for both
-	 * reading and writing, but must do it's own positioning.
+	 * reading and writing, but must do its own positioning.
 	 */
 	{
 	    struct stat sb;

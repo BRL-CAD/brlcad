@@ -50,13 +50,13 @@ test Menubar-1.$c {Menubar construction} {
 			command quit -label "Quit"
 		}
 	}
-    pack .mb
-    update
+    pack .mb 
+    update 
     .mb add menubutton .other -text Other -menu {
 		radiobutton r1 -label "Radio One"
 		radiobutton r2 -label "Radio Two"
 	}
-    update
+    update 
 	.mb add menubutton view -text View -menu {
 		command uno -label Uno
 		command dos -label Dos
@@ -78,7 +78,7 @@ test Menubar-1.$c {Menubar construction} {
 			}
 		}
 	}
-    update
+    update 
 } {}
 
 incr c
@@ -116,10 +116,10 @@ foreach test {
 	} {
 	set option [lindex $test 0]
 	test Menubar-2.$o "configuration options, $option" {
-	    .mb configure $option [lindex $test 1]
+	    .mb configure $option [lindex $test 1] 
 		.mb cget $option
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -150,10 +150,10 @@ foreach test {
 		set index  [lindex $test 0]
 		set option [lindex $test 1]
 		test Menubar-2.$o "tab configuration options, $option" {
-			.mb menuconfigure $index $option [lindex $test 2]
+			.mb menuconfigure $index $option [lindex $test 2] 
 			.mb menucget $index $option
 		} [lindex $test 3]
-	update
+	update 
 	incr o
 }
 
@@ -182,10 +182,10 @@ foreach test {
 		set index  [lindex $test 0]
 		set option [lindex $test 1]
 		test Menubar-2.$o "tab configuration options, $option" {
-			.mb menuconfigure $index $option [lindex $test 2]
+			.mb menuconfigure $index $option [lindex $test 2] 
 			.mb menucget $index $option
 		} [lindex $test 3]
-	update
+	update 
 	incr o
 }
 
@@ -327,7 +327,7 @@ foreach test {
 	append testContents "set result\n"
 	test Menubar-4.$m "\[$method_invoke\]" $testContents \
 		[list 0 1]
-	update
+	update 
 	incr m
 }
 
@@ -336,67 +336,67 @@ foreach test {
 # Specifically, deals with method invocation on empty menubar.
 #
 foreach test {
-		{1 {.mb delete .0 .last}
+		{1 {.mb delete .0 .last} 
 			{bad path:}}
-		{0 {.mb index .0}
+		{0 {.mb index .0} 
 			{-1}}
-		{0 {.mb index .end}
+		{0 {.mb index .end} 
 			{-1}}
-		{0 {.mb index .last}
+		{0 {.mb index .last} 
 			{-1}}
-		{0 {.mb index .help}
+		{0 {.mb index .help} 
 			{-1}}
-		{1 {.mb delete .0}
+		{1 {.mb delete .0} 
 			{bad path:}}
-		{1 {.mb delete .end}
+		{1 {.mb delete .end} 
 			{bad path:}}
-		{1 {.mb delete .last}
+		{1 {.mb delete .last} 
 			{bad path:}}
-		{1 {.mb delete .help}
+		{1 {.mb delete .help} 
 			{bad path:}}
-		{1 {.mb insert .0 menubutton file -text File}
+		{1 {.mb insert .0 menubutton file -text File} 
 			{bad path:}}
-		{1 {.mb insert .end menubutton file -text File}
+		{1 {.mb insert .end menubutton file -text File} 
 			{bad path:}}
-		{1 {.mb insert .last menubutton file -text File}
+		{1 {.mb insert .last menubutton file -text File} 
 			{bad path:}}
-		{1 {.mb insert .help menubutton file -text File}
+		{1 {.mb insert .help menubutton file -text File} 
 			{bad path:}}
-		{1 {.mb invoke .0.0}
+		{1 {.mb invoke .0.0} 
 			{bad path:}}
-		{1 {.mb invoke .end.0}
+		{1 {.mb invoke .end.0} 
 			{bad path:}}
-		{1 {.mb invoke .last.0}
+		{1 {.mb invoke .last.0} 
 			{bad path:}}
-		{1 {.mb invoke .help.0}
+		{1 {.mb invoke .help.0} 
 			{bad path:}}
-		{1 {.mb menucget .0 -text}
+		{1 {.mb menucget .0 -text} 
 			{bad path:}}
-		{1 {.mb menucget .end -text}
+		{1 {.mb menucget .end -text} 
 			{bad path:}}
-		{1 {.mb menucget .last -text}
+		{1 {.mb menucget .last -text} 
 			{bad path:}}
-		{1 {.mb menucget .help -text}
+		{1 {.mb menucget .help -text} 
 			{bad path:}}
-		{1 {.mb menuconfigure .0 -text}
+		{1 {.mb menuconfigure .0 -text} 
 			{bad path:}}
-		{1 {.mb menuconfigure .end -text}
+		{1 {.mb menuconfigure .end -text} 
 			{bad path:}}
-		{1 {.mb menuconfigure .last -text}
+		{1 {.mb menuconfigure .last -text} 
 			{bad path:}}
-		{1 {.mb menuconfigure .help -text}
+		{1 {.mb menuconfigure .help -text} 
 			{bad path:}}
-		{0 {.mb path *quit}
+		{0 {.mb path *quit} 
 			{}}
-		{1 {.mb type .0.0}
+		{1 {.mb type .0.0} 
 			{bad path:}}
-		{1 {.mb type .0.end}
+		{1 {.mb type .0.end} 
 			{bad path:}}
-		{1 {.mb type .0.last}
+		{1 {.mb type .0.last} 
 			{bad path:}}
-		{1 {.mb type .0.new}
+		{1 {.mb type .0.new} 
 			{bad path:}}
-		{1 {.mb yposition .0.new}
+		{1 {.mb yposition .0.new} 
 			{bad path:}}
 	} {
 		set method_status [lindex $test 0]
@@ -426,17 +426,17 @@ foreach test {
 			}
 		}}
 			{}}
-		{1 {.mb delete .file.hello}
+		{1 {.mb delete .file.hello} 
 			{bad path}}
-		{0 {.mb index .0.hello}
+		{0 {.mb index .0.hello} 
 			{-1}}
-		{0 {.mb index .0.quit}
+		{0 {.mb index .0.quit} 
 			{1}}
-		{0 {.mb index 0.end}
+		{0 {.mb index 0.end} 
 			{1}}
-		{0 {.mb index .file.last}
+		{0 {.mb index .file.last} 
 			{1}}
-		{0 {.mb index .file.ok}
+		{0 {.mb index .file.ok} 
 			{0}}
 		{1 {.mb delete .view .file}
 			{bad path:}}
@@ -450,39 +450,39 @@ foreach test {
 			{bad name}}
 		{1 {.mb add command .file.2}
 			{bad name}}
-		{1 {.mb insert .0 menu view -text View}
+		{1 {.mb insert .0 menu view -text View} 
 			{bad type}}
-		{1 {.mb insert .file command view -text View}
+		{1 {.mb insert .file command view -text View} 
 			{bad entry path}}
-		{0 {.mb insert .file menubutton view -text View}
+		{0 {.mb insert .file menubutton view -text View} 
 			{[.]mb[.]menubar[.]view}}
-		{1 {.mb invoke .0.quit}
+		{1 {.mb invoke .0.quit} 
 			{bad path}}
-		{0 {.mb menucget .0 -text}
+		{0 {.mb menucget .0 -text} 
 			{View}}
-		{0 {.mb menucget .end -text}
+		{0 {.mb menucget .end -text} 
 			{File}}
-		{0 {.mb menucget .last -text}
+		{0 {.mb menucget .last -text} 
 			{File}}
-		{1 {.mb menucget .help -text}
+		{1 {.mb menucget .help -text} 
 			{bad path}}
-		{0 {.mb menuconfigure .0 -text}
+		{0 {.mb menuconfigure .0 -text} 
 			{-text text Text {} View}}
-		{0 {.mb menuconfigure .end.last -label}
+		{0 {.mb menuconfigure .end.last -label} 
 			{-label {} {} {} Quit}}
-		{0 {.mb menuconfigure .last -text}
+		{0 {.mb menuconfigure .last -text} 
 			{-text text Text {} File}}
-		{1 {.mb menuconfigure .help -text}
+		{1 {.mb menuconfigure .help -text} 
 			{bad path}}
-		{0 {.mb path *quit}
+		{0 {.mb path *quit} 
 			{[.]file[.]quit}}
-		{0 {.mb type .end.0}
+		{0 {.mb type .end.0} 
 			{command}}
-		{0 {.mb type .end.end}
+		{0 {.mb type .end.end} 
 			{command}}
-		{0 {.mb type .end.last}
+		{0 {.mb type .end.last} 
 			{command}}
-		{1 {.mb type .0.new}
+		{1 {.mb type .0.new} 
 			{bad path}}
 	} {
 		set method_status [lindex $test 0]
@@ -505,7 +505,7 @@ foreach test {
 #
 test Menubar-1.$c {Menubar destruction} {
     destroy .mb
-    update
+    update 
 } {}
 
 incr c
@@ -518,13 +518,13 @@ test Menubar-1.$c {Menubar construction} {
 			command quit -label "Quit"
 		}
 	}
-    pack .mb
-    update
+    pack .mb 
+    update 
     .mb add menubutton .other -text Other -menu {
 		radiobutton r1 -label "Radio One"
 		radiobutton r2 -label "Radio Two"
 	}
-    update
+    update 
 	.mb add menubutton view -text View -menu {
 		command uno -label Uno
 		command dos -label Dos
@@ -546,14 +546,14 @@ test Menubar-1.$c {Menubar construction} {
 			}
 		}
 	}
-    update
+    update 
 } {}
 
 incr c
 
 test Menubar-1.$c {Menubar destruction} {
 	destroy .mb
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

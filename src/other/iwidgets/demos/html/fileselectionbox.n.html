@@ -108,14 +108,14 @@ Class:                  <B>Position</B>
 Command-Line Switch:	<B>-childsitepos</B>
 </pre>
 <UL>
-Specifies the position of the child site in the selection box: <B>n</B>,
-<B>s</B>, <B>e</B>, <B>w</B>, <B>top</B>, <B>bottom</B>, or <B>center</B>.  The
+Specifies the position of the child site in the selection box: <B>n</B>, 
+<B>s</B>, <B>e</B>, <B>w</B>, <B>top</B>, <B>bottom</B>, or <B>center</B>.  The 
 default is s.
 </UL>
 </table>
 <UL>
 Specifies a Tcl command procedure which is called when an file list item is
-double clicked.  Typically this occurs when mouse button 1 is double
+double clicked.  Typically this occurs when mouse button 1 is double 
 clicked over a file name.
 </UL>
 <P>
@@ -125,7 +125,7 @@ Class:                  <B>Directory</B>
 Command-Line Switch:	<B>-directory</B>
 </pre>
 <UL>
-Specifies the initial default directory.  The default is the present
+Specifies the initial default directory.  The default is the present 
 working directory.
 </UL>
 <P>
@@ -211,7 +211,7 @@ Command-Line Switch:	<B>-filtercommand</B>
 </pre>
 <UL>
 Specifies a Tcl command to be executed upon hitting the Return key
-in the filter entry widget.
+in the filter entry widget.  
 </UL>
 <P>
 <pre>
@@ -241,7 +241,7 @@ Class:                  <B>Height</B>
 Command-Line Switch:	<B>-height</B>
 </pre>
 <UL>
-Specifies the height of the selection box.  The value may be specified in
+Specifies the height of the selection box.  The value may be specified in 
 any of the forms acceptable to Tk_GetPixels.  The default is 360 pixels.
 </UL>
 <P>
@@ -251,7 +251,7 @@ Class:                  <B>Command</B>
 Command-Line Switch:	<B>-invalid</B>
 </pre>
 <UL>
-Command to be executed should the filter contents be proven
+Command to be executed should the filter contents be proven 
 invalid.  The default is {bell}.
 </UL>
 <P>
@@ -280,7 +280,7 @@ Class:                  <B>Command</B>
 Command-Line Switch:	<B>-selectdirommand</B>
 </pre>
 <UL>
-Specifies a Tcl command to be executed following selection of a
+Specifies a Tcl command to be executed following selection of a 
 directory in the directory list.
 </UL>
 <P>
@@ -290,7 +290,7 @@ Class:                  <B>Command</B>
 Command-Line Switch:	<B>-selectfileommand</B>
 </pre>
 <UL>
-Specifies a Tcl command to be executed following selection of a
+Specifies a Tcl command to be executed following selection of a 
 file in the files list.
 </UL>
 <P>
@@ -301,7 +301,7 @@ Command-Line Switch:	<B>-selectioncommand</B>
 </pre>
 <UL>
 Specifies a Tcl command to be executed upon hitting the Return key
-in the selection entry widget.
+in the selection entry widget.  
 </UL>
 <P>
 <pre>
@@ -331,7 +331,7 @@ Class:                  <B>Width</B>
 Command-Line Switch:	<B>-width</B>
 </pre>
 <UL>
-Specifies the width of the selection box.  The value may be specified in
+Specifies the width of the selection box.  The value may be specified in 
 any of the forms acceptable to Tk_GetPixels.  The default is 470 pixels.
 </UL>
 <P>
@@ -339,9 +339,9 @@ any of the forms acceptable to Tk_GetPixels.  The default is 470 pixels.
 
 </pre><H2>DESCRIPTION</H2>
 <P>
-The <B>fileselectionbox</B> command creates a file selection box similar
-to the OSF/Motif standard Xmfileselectionbox composite widget.  The
-fileselectionbox is composed of directory and file scrolled lists as
+The <B>fileselectionbox</B> command creates a file selection box similar 
+to the OSF/Motif standard Xmfileselectionbox composite widget.  The 
+fileselectionbox is composed of directory and file scrolled lists as 
 well as filter and selection entry fields.  Bindings are in place such that
 selection of a directory list item loads the filter entry field and
 selection of a file list item loads the selection entry field.  Options
@@ -410,7 +410,7 @@ Class:                  <B>Scrolledlistbox</B>
 </pre>
 <UL>
 The dirs component is the directory list box for the file selection box.
-See the <A HREF="scrolledlistbox.n.html"> "scrolledlistbox" </A> widget manual entry for details on the dirs
+See the <A HREF="scrolledlistbox.n.html"> "scrolledlistbox" </A> widget manual entry for details on the dirs 
 component item.
 </UL>
 <P>
@@ -430,7 +430,7 @@ Class:                  <B>Entryfield</B>
 </pre>
 <UL>
 The filter component is the entry field for user input of the filter value.
-See the <A HREF="entryfield.n.html"> "entryfield" </A> widget manual entry for details on the filter
+See the <A HREF="entryfield.n.html"> "entryfield" </A> widget manual entry for details on the filter 
 component item.
 </UL>
 <P>
@@ -440,7 +440,7 @@ Class:                  <B>Entryfield</B>
 </pre>
 <UL>
 The selection component is the entry field for user input of the currently
-selected file value.  See the "entryfield" widget manual entry for details
+selected file value.  See the "entryfield" widget manual entry for details 
 on the selection component item.
 </UL>
 </table>
@@ -448,7 +448,7 @@ on the selection component item.
 </pre><H2>EXAMPLE</H2>
 <pre>
 fileselectionbox .fsb
-pack .fsb -padx 10 -pady 10 -fill both -expand yes
+pack .fsb -padx 10 -pady 10 -fill both -expand yes 
 </pre>
 </pre><H2>AUTHOR</H2>
 Mark L. Ulferts

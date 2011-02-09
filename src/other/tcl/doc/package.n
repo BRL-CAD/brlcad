@@ -79,7 +79,8 @@ interpreter for which a version has been provided (via
 script is available.
 The order of elements in the list is arbitrary.
 .TP
-\fBpackage present\fR
+\fBpackage present\fR ?\fB\-exact\fR? \fIpackage\fR ?\fIrequirement...\fR?
+.
 This command is equivalent to \fBpackage require\fR except that it
 does not try and load the package if it is not already loaded.
 .TP
@@ -95,7 +96,7 @@ returns the version number that is currently provided, or an
 empty string if no \fBpackage provide\fR command has been
 invoked for \fIpackage\fR in this interpreter.  
 .TP
-\fBpackage require \fR\fIpackage \fR?\fIrequirement...\fR?
+\fBpackage require\fR \fIpackage \fR?\fIrequirement...\fR?
 This command is typically invoked by Tcl code that wishes to use
 a particular version of a particular package.  The arguments
 indicate which package is wanted, and the command ensures that

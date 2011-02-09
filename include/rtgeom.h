@@ -1,7 +1,7 @@
 /*                        R T G E O M . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -164,8 +164,8 @@ struct rt_arb_internal {
  */
 struct rt_ars_internal {
     unsigned long magic;
-    int	ncurves;
-    int	pts_per_curve;
+    size_t ncurves;
+    size_t pts_per_curve;
     fastf_t	**curves;
 };
 #define RT_ARS_CK_MAGIC(_p)	BU_CKMAG(_p, RT_ARS_INTERNAL_MAGIC, "rt_ars_internal")
@@ -196,14 +196,14 @@ struct rt_grip_internal {
  */
 struct rt_pg_internal {
     unsigned long magic;
-    size_t	npoly;
+    size_t npoly;
     struct rt_pg_face_internal {
-	int	npts;		/**< @brief  number of points for this polygon */
+	size_t npts;		/**< @brief  number of points for this polygon */
 	fastf_t	*verts;		/**< @brief  has 3*npts elements */
 	fastf_t	*norms;		/**< @brief  has 3*npts elements */
     } *poly;			/**< @brief  has npoly elements */
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
-    int	max_npts;		/**< @brief  maximum value of npts in poly[] */
+    size_t max_npts;		/**< @brief  maximum value of npts in poly[] */
 };
 #define RT_PG_CK_MAGIC(_p)	BU_CKMAG(_p, RT_PG_INTERNAL_MAGIC, "rt_pg_internal")
 
@@ -248,8 +248,8 @@ struct rt_brep_internal {
 struct rt_ebm_internal  {
     unsigned long	magic;
     char		file[RT_EBM_NAME_LEN];
-    int		xdim;			/**< @brief  X dimension (w cells) */
-    int		ydim;			/**< @brief  Y dimension (n cells) */
+    size_t		xdim;		/**< @brief  X dimension (w cells) */
+    size_t		ydim;		/**< @brief  Y dimension (n cells) */
     fastf_t		tallness;	/**< @brief  Z dimension (mm) */
     mat_t		mat;		/**< @brief  convert local coords to model space */
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
@@ -264,11 +264,11 @@ struct rt_ebm_internal  {
 struct rt_vol_internal  {
     unsigned long	magic;
     char		file[RT_VOL_NAME_LEN];
-    int		xdim;			/**< @brief  X dimension */
-    int		ydim;			/**< @brief  Y dimension */
-    int		zdim;			/**< @brief  Z dimension */
-    int		lo;			/**< @brief  Low threshold */
-    int		hi;			/**< @brief  High threshold */
+    size_t		xdim;			/**< @brief  X dimension */
+    size_t		ydim;			/**< @brief  Y dimension */
+    size_t		zdim;			/**< @brief  Z dimension */
+    size_t		lo;			/**< @brief  Low threshold */
+    size_t		hi;			/**< @brief  High threshold */
     vect_t		cellsize;	/**< @brief  ideal coords: size of each cell */
     mat_t		mat;		/**< @brief  convert local coords to model space */
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
@@ -285,9 +285,9 @@ struct rt_hf_internal {
     char		cfile[128];	/**< @brief  name of control file (optional) */
     char		dfile[128];	/**< @brief  name of data file */
     char		fmt[8];		/**< @brief  CV style file format descriptor */
-    int		w;			/**< @brief  # samples wide of data file.  ("i", "x") */
-    int		n;			/**< @brief  nlines of data file.  ("j", "y") */
-    int		shorts;			/**< @brief  !0 --> memory array is short, not float */
+    size_t		w;			/**< @brief  # samples wide of data file.  ("i", "x") */
+    size_t		n;			/**< @brief  nlines of data file.  ("j", "y") */
+    int			shorts;			/**< @brief  !0 --> memory array is short, not float */
     fastf_t		file2mm;	/**< @brief  scale factor to cvt file units to mm */
     vect_t		v;		/**< @brief  origin of HT in model space */
     vect_t		x;		/**< @brief  model vect corresponding to "w" dir (will be unitized) */
@@ -305,7 +305,7 @@ struct rt_hf_internal {
  */
 struct rt_arbn_internal  {
     unsigned long magic;
-    int	neqn;
+    size_t	neqn;
     plane_t	*eqn;
 };
 #define RT_ARBN_CK_MAGIC(_p)	BU_CKMAG(_p, RT_ARBN_INTERNAL_MAGIC, "rt_arbn_internal")
@@ -423,28 +423,28 @@ struct rt_eto_internal {
  */
 #define DSP_NAME_LEN 128
 struct rt_dsp_internal{
-    unsigned long	magic;
+    unsigned long magic;
 #define dsp_file dsp_name 		/**< @brief for backwards compatibility */
-    struct bu_vls	dsp_name;	/**< @brief  name of data file */
-    unsigned int	dsp_xcnt;	/**< @brief  # samples in row of data */
-    unsigned int	dsp_ycnt;	/**< @brief  # of columns in data */
-    unsigned short	dsp_smooth;	/**< @brief  bool: surf normal interp */
+    struct bu_vls dsp_name;	/**< @brief  name of data file */
+    size_t dsp_xcnt;	/**< @brief  # samples in row of data */
+    size_t dsp_ycnt;	/**< @brief  # of columns in data */
+    unsigned short dsp_smooth;	/**< @brief  bool: surf normal interp */
 #define DSP_CUT_DIR_ADAPT	'a'
 #define DSP_CUT_DIR_llUR	'l'
 #define DSP_CUT_DIR_ULlr	'L'
-    unsigned char   dsp_cuttype;	/**< @brief  type of cut to make */
+    unsigned char dsp_cuttype;	/**< @brief  type of cut to make */
 
-    mat_t		dsp_mtos;	/**< @brief  model to solid space */
+    mat_t dsp_mtos;	/**< @brief  model to solid space */
     /* END OF USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
-    mat_t		dsp_stom;	/**< @brief  solid to model space
+    mat_t dsp_stom;	/**< @brief  solid to model space
 					 * computed from dsp_mtos */
-    unsigned short	*dsp_buf;	/**< @brief  actual data */
+    unsigned short *dsp_buf;	/**< @brief  actual data */
     struct bu_mapped_file *dsp_mp;	/**< @brief  mapped file for data */
     struct rt_db_internal *dsp_bip;	/**< @brief  db object for data */
 #define RT_DSP_SRC_V4_FILE	'4'
 #define RT_DSP_SRC_FILE	'f'
 #define RT_DSP_SRC_OBJ	'o'
-    char		dsp_datasrc;	/**< @brief  which type of data source */
+    char dsp_datasrc;	/**< @brief  which type of data source */
 };
 #define RT_DSP_CK_MAGIC(_p)	BU_CKMAG(_p, RT_DSP_INTERNAL_MAGIC, "rt_dsp_internal")
 
@@ -456,21 +456,20 @@ struct rt_dsp_internal{
 #define SKETCH_NAME_LEN	16
 struct rt_sketch_internal
 {
-    unsigned long	magic;
-    point_t		V;		/**< @brief  default embedding of sketch */
-    vect_t		u_vec;		/**< @brief  u_vec and v_vec are unit vectors defining the plane of */
-    vect_t		v_vec;		/**< @brief  the sketch */
-    int		vert_count;		/**< @brief  number of vertices in this sketch */
-    point2d_t	*verts;			/**< @brief array of 2D
-				 	 * vertices that may be used
-				 	 * as endpoints, centers, or
-				 	 * spline control points.
-					 */
+    unsigned long magic;
+    point_t V;		/**< @brief  default embedding of sketch */
+    vect_t u_vec;	/**< @brief  u_vec and v_vec are unit vectors defining the plane of */
+    vect_t v_vec;	/**< @brief  the sketch */
+    size_t vert_count;	/**< @brief  number of vertices in this sketch */
+    point2d_t *verts;	/**< @brief array of 2D vertices that may be
+			 * used as endpoints, centers, or spline
+			 * control points.
+			 */
 /* FIXME: this should have a distinctive name, like rt_curve */
     struct curve {
-	int		seg_count;	/**< @brief  number of segments in this curve */
-	int		*reverse;	/**< @brief  array of ints indicating if segment should be reversed */
-	genptr_t	*segments;	/**< @brief  array of pointers to segments in this curve */
+	size_t seg_count;	/**< @brief  number of segments in this curve */
+	int *reverse;		/**< @brief  array of ints indicating if segment should be reversed */
+	genptr_t *segments;	/**< @brief  array of pointers to segments in this curve */
     } skt_curve;			/**< @brief  the curve in this sketch */
 };
 #define RT_SKETCH_CK_MAGIC(_p)	BU_CKMAG(_p, RT_SKETCH_INTERNAL_MAGIC, "rt_sketch_internal")
@@ -479,13 +478,13 @@ struct rt_sketch_internal
  *	ID_SUBMODEL
  */
 struct rt_submodel_internal {
-    unsigned long	magic;
-    struct bu_vls	file;		/**< @brief  .g filename, 0-len --> this database. */
-    struct bu_vls	treetop;	/**< @brief  one treetop only */
-    int		meth;			/**< @brief  space partitioning method */
+    unsigned long magic;
+    struct bu_vls file;		/**< @brief  .g filename, 0-len --> this database. */
+    struct bu_vls treetop;	/**< @brief  one treetop only */
+    int meth;			/**< @brief  space partitioning method */
     /* other option flags (lazy prep, etc.)?? */
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
-    mat_t		root2leaf;
+    mat_t root2leaf;
     const struct db_i *dbip;
 };
 #define RT_SUBMODEL_CK_MAGIC(_p)	BU_CKMAG(_p, RT_SUBMODEL_INTERNAL_MAGIC, "rt_submodel_internal")
@@ -558,8 +557,8 @@ struct rt_bot_internal
     unsigned char bot_flags;	/**< @brief flags, (indicates surface
 				 * normals available, for example)
 				 */
-    int num_vertices;
-    int num_faces;
+    size_t num_vertices;
+    size_t num_faces;
     int *faces;			/**< @brief array of ints for faces
 				 * [num_faces*3]
 				 */
@@ -579,11 +578,11 @@ struct rt_bot_internal
 				 * modes RT_BOT_SURFACE and
 				 * RT_BOT_SOLID).
 				 */
-    int num_normals;
+    size_t num_normals;
     fastf_t *normals;		/**< @brief array of unit surface
 				 * normals [num_normals*3]
 				 */
-    int num_face_normals;	/**< @brief current size of the
+    size_t num_face_normals;	/**< @brief current size of the
 				 * face_normals array below (number of
 				 * faces in the array)
 				 */

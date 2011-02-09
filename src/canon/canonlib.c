@@ -1,7 +1,7 @@
 /*                      C A N O N L I B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1160,8 +1160,8 @@ int  ipu_bytes_per_pixel = 3;
 int tray = IPU_UPPER_CASSETTE;
 char conv = IPU_AUTOSCALE;
 char clear = 0;
-unsigned long width = 512;
-unsigned long height = 512;
+size_t width = 512;
+size_t height = 512;
 int zoom = 0;
 int scr_width;
 int scr_height;

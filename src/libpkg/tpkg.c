@@ -1,7 +1,7 @@
 /*                          T P K G . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2010 United States Government as represented by
+ * Copyright (c) 2006-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -184,7 +184,7 @@ run_server(int port) {
 	    client = PKC_NULL;
 	} else {
 	    /* validate magic header that client should have sent */
-	    if (strcmp(buffer, MAGIC_ID) != 0) {
+	    if (!BU_STR_EQUAL(buffer, MAGIC_ID)) {
 		bu_log("Bizarre corruption, received a HELO without at matching MAGIC ID!\n");
 		pkg_close(client);
 		client = PKC_NULL;

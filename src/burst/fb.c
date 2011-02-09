@@ -1,7 +1,7 @@
 /*                            F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ imageInit()
     if (fbiop == FBIO_NULL || fb_getwidth(fbiop) != devwid)
 	needopen = 1; /* not currently open or size changed */
     else
-	if (lastfbfile[0] != NUL && strcmp(fbfile, lastfbfile) != 0)
+	if (lastfbfile[0] != NUL && !BU_STR_EQUAL(fbfile, lastfbfile))
 	    needopen = 1; /* name changed */
     bu_strlcpy(lastfbfile, fbfile, LNBUFSZ);
 

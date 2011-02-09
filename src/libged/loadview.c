@@ -1,7 +1,7 @@
 /*                         L O A D V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -92,6 +92,7 @@ struct command_tab ged_loadview_cmdtab[] = {
 int
 ged_loadview(struct ged *gedp, int argc, const char *argv[])
 {
+    int ret;
     FILE *fp;
     char buffer[512] = {0};
 
@@ -141,7 +142,9 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
     /* TODO: change to bu_fgets or bu_vls_fgets */
     while (!feof(fp)) {
 	memset(buffer, 0, 512);
-	fscanf(fp, "%512s", buffer);
+	ret = fscanf(fp, "%512s", buffer);
+	if (ret != 1)
+	    bu_log("Failed to read buffer\n");
 
 	if (strncmp(buffer, "-p", 2)==0) {
 	    /* we found perspective */
@@ -158,7 +161,9 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	     */
 
 	    memset(dbName, 0, MAX_DBNAME);
-	    fscanf(fp, "%2048s", dbName); /* MAX_DBNAME */
+	    ret = fscanf(fp, "%2048s", dbName); /* MAX_DBNAME */
+	    if (ret != 1)
+		bu_log("Failed to read database name\n");
 
 	    /* if the last character is a line termination,
 	     * remove it (it should always be unless the user
@@ -188,7 +193,10 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	    (void)ged_zap(gedp, 1, NULL);
 
 	    /* now get the objects listed */
-	    fscanf(fp, "%10000s", objects);
+	    ret = fscanf(fp, "%10000s", objects);
+	    if (ret != 1)
+		bu_log("Failed to read object names\n");
+
 	    /*		  bu_log("OBJECTS=%s\n", objects);*/
 	    while ((!feof(fp)) && (strncmp(objects, "\\", 1)!=0)) {
 
@@ -207,7 +215,9 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 		}
 
 		/* bu_log("objects=%s\n", objects);*/
-		fscanf(fp, "%10000s", objects);
+		ret = fscanf(fp, "%10000s", objects);
+		if (ret != 1)
+		    bu_log("Failed to read object names\n");
 	    }
 
 	    /* end iteration over reading in listed objects */

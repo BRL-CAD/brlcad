@@ -1,7 +1,7 @@
 /*                   V I E W P O I N T - G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -228,7 +228,7 @@ main(int argc, char **argv)
 
 		/* check the list to see if this name is already there */
 		for (i=0; i<BU_PTBL_END(&names); i++) {
-		    if (!strcmp((char *)BU_PTBL_GET(&names, i), name)) {
+		    if (BU_STR_EQUAL((char *)BU_PTBL_GET(&names, i), name)) {
 			/* found it, so go back and read the next line */
 			found = 1;
 			break;
@@ -290,7 +290,7 @@ main(int argc, char **argv)
 
 	    /* skip elements with the wrong name */
 	    name = NULL;
-	    while (name == NULL || strcmp(name, curr_name)) {
+	    while (name == NULL || !BU_STR_EQUAL(name, curr_name)) {
 		/* check for enf of file */
 		if (bu_fgets(line, MAX_LINE_SIZE, elems) == NULL) {
 		    eof = 1;

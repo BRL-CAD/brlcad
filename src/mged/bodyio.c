@@ -1,7 +1,7 @@
 /*                        B O D Y I O . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2010 United States Government as represented by
+ * Copyright (c) 2000-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@
  *
  */
 int
-cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct stat stat_buf;
@@ -59,13 +59,11 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     struct rt_db_internal intern;
     struct rt_binunif_internal *bip;
     int fd;
-    size_t gotten;
+    ssize_t gotten;
 
     CHECK_DBI_NULL;
 
     if (argc != 4) {
-	struct bu_vls vls;
-
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -112,7 +110,7 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     /*
      * Check to see if we need to create a new object
      */
-    if ((dp = db_lookup(dbip, argv[1], LOOKUP_QUIET)) == DIR_NULL) {
+    if ((dp = db_lookup(dbip, argv[1], LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "object \"%s\" does not exist.\n", argv[1]);
 	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
@@ -218,21 +216,18 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  *
  */
 int
-cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_export_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct directory *dp;
     int fd;
     void *bufp;
     size_t nbytes = 0;
-    long int written;
+    ssize_t written;
     struct bu_external ext;
     struct db5_raw_internal raw;
     struct rt_db_internal intern;
     struct rt_binunif_internal *bip;
     struct bu_vls vls;
-#if 0
-    int status;
-#endif
     char *tmp;
 
     CHECK_DBI_NULL;
@@ -248,7 +243,7 @@ cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     /*
      * Find the guy we're told to write
      */
-    if ((dp = db_lookup(dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL) {
+    if ((dp = db_lookup(dbip, argv[2], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls,
 		      "Cannot find object %s for writing\n", argv[2]);
@@ -357,7 +352,8 @@ cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	if (RT_G_DEBUG & DEBUG_VOL)
 	    bu_log("going to write %ld bytes\n", nbytes);
 
-	if ((written = write(fd, bufp, nbytes)) != nbytes) {
+	written = write(fd, bufp, nbytes);
+	if (written != (ssize_t)nbytes) {
 	    perror(argv[1]);
 	    bu_log("%s:%d\n", __FILE__, __LINE__);
 	    bu_free_external(&ext);

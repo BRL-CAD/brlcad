@@ -268,6 +268,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\bbox.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\bezier_2d_isect.c"
 				>
 			</File>
@@ -364,11 +368,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\db_corrupt.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\comb\db_comb.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\db_flags.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\db_flip.c"
 				>
 			</File>
 			<File
@@ -977,10 +989,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\primitives\sph\sph_brep.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\storage.c"
 				>
 			</File>
 			<File

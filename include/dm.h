@@ -1,7 +1,7 @@
 /*                          D M . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -89,7 +89,14 @@
 #define FONT8 "8x13"
 #define FONT9 "9x15"
 #define FONT10 "10x20"
-#define FONT11 "12x24"
+#define FONT12 "12x24"
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  define DM_VALID_FONT_SIZE(_size) (14 <= (_size) && (_size) <= 29)
+#else
+#  define DM_VALID_FONT_SIZE(_size) (5 <= (_size) && (_size) <= 12 && (_size) != 11)
+#  define DM_FONT_SIZE_TO_NAME(_size) (((_size) == 5) ? FONT5 : (((_size) == 6) ? FONT6 : (((_size) == 7) ? FONT7 : (((_size) == 8) ? FONT8 : (((_size) == 9) ? FONT9 : (((_size) == 10) ? FONT10 : FONT12))))))
+#endif
 
 /* Display Manager Types */
 #define DM_TYPE_BAD     -1
@@ -164,6 +171,28 @@
 	(_dr) == (_sr) &&\
 	(_dg) == (_sg) &&\
 	(_db) == (_sb))
+#if defined(DM_X) || defined(DM_OGL)
+#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask) {	\
+	_shift = 24 - _shift;				\
+	switch (_shift) {				\
+	    case 0:					\
+		_mask >>= 24;				\
+		break;					\
+	    case 8:					\
+		_mask >>= 8;				\
+		break;					\
+	    case 16:					\
+		_mask <<= 8;				\
+		break;					\
+	    case 24:					\
+		_mask <<= 24;				\
+		break;					\
+	}						\
+    }
+#else
+/* Do nothing */
+#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask)
+#endif
 
 /* Command parameter to dmr_viewchange() */
 #define DM_CHGV_REDO	0	/* Display has changed substantially */
@@ -217,6 +246,7 @@ struct dm {
     int (*dm_endDList)();
     int (*dm_drawDList)();
     int (*dm_freeDLists)();
+    int (*dm_getDisplayImage)(struct dm *dmp, unsigned char **image);
     unsigned long dm_id;          /**< @brief window id */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */
@@ -228,6 +258,8 @@ struct dm {
     int dm_top;                   /**< @brief !0 means toplevel window */
     int dm_width;
     int dm_height;
+    int dm_bytes_per_pixel;
+    int dm_bits_per_channel;  /* bits per color channel */
     int dm_lineWidth;
     int dm_lineStyle;
     fastf_t dm_aspect;
@@ -248,6 +280,7 @@ struct dm {
     int dm_zbuffer;		/**< @brief !0 means zbuffer on */
     int dm_zclip;			/**< @brief !0 means zclipping */
     int dm_clearBufferAfter;	/**< @brief 1 means clear back buffer after drawing and swap */
+    int dm_fontsize;		/**< @brief !0 override's the auto font size */
     Tcl_Interp *dm_interp;	/**< @brief Tcl interpreter */
 };
 
@@ -288,7 +321,7 @@ struct dm_obj {
 #define DM_SET_FGCOLOR(_dmp, _r, _g, _b, _strict, _transparency) _dmp->dm_setFGColor(_dmp, _r, _g, _b, _strict, _transparency)
 #define DM_SET_BGCOLOR(_dmp, _r, _g, _b) _dmp->dm_setBGColor(_dmp, _r, _g, _b)
 #define DM_SET_LINE_ATTR(_dmp, _width, _dashed) _dmp->dm_setLineAttr(_dmp, _width, _dashed)
-#define DM_CONFIGURE_WIN(_dmp) _dmp->dm_configureWin(_dmp)
+#define DM_CONFIGURE_WIN(_dmp,_force) _dmp->dm_configureWin((_dmp),(_force))
 #define DM_SET_WIN_BOUNDS(_dmp, _w) _dmp->dm_setWinBounds(_dmp, _w)
 #define DM_SET_LIGHT(_dmp, _on) _dmp->dm_setLight(_dmp, _on)
 #define DM_SET_TRANSPARENCY(_dmp, _on) _dmp->dm_setTransparency(_dmp, _on)
@@ -299,6 +332,7 @@ struct dm_obj {
 #define DM_ENDDLIST(_dmp) _dmp->dm_endDList(_dmp)
 #define DM_DRAWDLIST(_dmp, _list) _dmp->dm_drawDList(_dmp, _list)
 #define DM_FREEDLISTS(_dmp, _list, _range) _dmp->dm_freeDLists(_dmp, _list, _range)
+#define DM_GET_DISPLAY_IMAGE(_dmp, _image) _dmp->dm_getDisplayImage(_dmp, _image)
 
 DM_EXPORT extern struct dm dm_Null;
 
@@ -308,7 +342,7 @@ DM_EXPORT BU_EXTERN(struct dm *dm_open,
 		    (Tcl_Interp *interp,
 		     int type,
 		     int argc,
-		     char *argv[]));
+		     const char *argv[]));
 DM_EXPORT BU_EXTERN(int dm_share_dlist,
 		    (struct dm *dmp1,
 		     struct dm *dmp2));
@@ -430,7 +464,7 @@ DM_EXPORT BU_EXTERN(const char *dm_version, (void));
    HIDDEN int _dmtype##_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b); \
    HIDDEN int _dmtype##_setLineAttr(struct dm *dmp, int width, int style); \
    HIDDEN int _dmtype##_configureWin_guts(struct dm *dmp, int force); \
-   HIDDEN int _dmtype##_configureWin(struct dm *dmp); \
+   HIDDEN int _dmtype##_configureWin(struct dm *dmp, int force);		      \
    HIDDEN int _dmtype##_setLight(struct dm *dmp, int lighting_on); \
    HIDDEN int _dmtype##_setTransparency(struct dm *dmp, int transparency_on); \
    HIDDEN int _dmtype##_setDepthMask(struct dm *dmp, int depthMask_on); \
@@ -440,7 +474,8 @@ DM_EXPORT BU_EXTERN(const char *dm_version, (void));
    HIDDEN int _dmtype##_beginDList(struct dm *dmp, unsigned int list); \
    HIDDEN int _dmtype##_endDList(struct dm *dmp); \
    HIDDEN int _dmtype##_drawDList(struct dm *dmp, unsigned int list); \
-   HIDDEN int _dmtype##_freeDLists(struct dm *dmp, unsigned int list, int range); 
+   HIDDEN int _dmtype##_freeDLists(struct dm *dmp, unsigned int list, int range); \
+   HIDDEN int _dmtype##_getDisplayImage(struct dm *dmp, unsigned char **image);
 
 #endif /* __DM_H__ */
 

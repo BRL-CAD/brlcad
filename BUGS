@@ -15,6 +15,27 @@ on-going issues.
 Recent Bugs
 -----------
 
+* run make to create all primitives at the origin.  there are raytrace
+  differences, crashes, and overall bad behavior between default
+  ungrouped "e *" view and adding all of those primitives to a single
+  region.  Script for creating all primitives via make command:
+
+  for i in `mged -c test.g make asdf asdf 2>&1 | awk '{print $12}' | sed 's/[<>|]/ /g'` ; do mged -c test.g make $i $i ; done
+  mged -c test.g "g primitives *"
+  mged -c test.g r primitives.r u primitives
+  rt -a 35 -e 25 test.g primitives
+  rt -a 35 -e 25 test.g primitives.r
+
+* MGED on Mac OS X 10.6 mouse bindings fail to zoom in incrementally.
+  Pan, zoom out, and interactive zoom work.  Shift-grip bindings need
+  to be verified.
+
+* rt -i -s4096 -H16 -F/dev/null boolean-ops.g all
+
+* asc2g of a .asc file containing the first line as a "#" comment
+  results in a bu_malloc(0) bomb.  comment lines should be valid in
+  .asc files.
+
 * compilation reportedly fails when building Tcl if the path to the
   source directory includes a space.
 

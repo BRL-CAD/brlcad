@@ -1,7 +1,7 @@
 /*                         B U R S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -155,7 +155,7 @@ readBatchInput(FILE *fp)
 		brst_log(" ");
 	    brst_log("^\n");
 	} else
-	    if (strcmp(cmdname, CMD_COMMENT) == 0) {
+	    if (BU_STR_EQUAL(cmdname, CMD_COMMENT)) {
 		/* special handling for comments */
 		cmdptr = cmdbuf;
 		cmdbuf[strlen(cmdbuf)-1] = '\0'; /* clobber newline */

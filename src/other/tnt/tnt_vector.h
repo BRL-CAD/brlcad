@@ -154,11 +154,10 @@ class Vector
 
     iterator begin() { return v_;}
     iterator end()   { return v_ + n_; }
-    const iterator begin() const { return v_;}
-    const iterator end() const  { return v_ + n_; }
+    iterator begin() const { return v_;}
+    iterator end() const  { return v_ + n_; }
 
-		operator const T* const() { return v_; } 
-		operator T*() { return v_; }
+    operator T*() { return v_; }
 
     // destructor
 

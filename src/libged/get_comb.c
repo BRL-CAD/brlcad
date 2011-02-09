@@ -1,7 +1,7 @@
 /*                         G E T _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,8 +68,8 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 
     dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
 
-    if (dp != DIR_NULL) {
-	if (!(dp->d_flags & DIR_COMB)) {
+    if (dp != RT_DIR_NULL) {
+	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s is not a combination, so cannot be edited this way\n", argv[1]);
 	    return GED_ERROR;
 	}

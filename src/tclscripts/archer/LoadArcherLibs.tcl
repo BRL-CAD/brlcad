@@ -1,7 +1,7 @@
 #              L O A D A R C H E R L I B S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2006-2010 United States Government as represented by
+# Copyright (c) 2006-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -30,24 +30,13 @@ proc LoadArcherCoreLibs {} {
     global tcl_platform
 
     # load tkpng
-    if {$tcl_platform(platform) == "windows"} {
-	set ext "dll"
-	set tkpngdir [bu_brlcad_root "bin"]
-    } else {
-	set ext "so"
-	set tkpngdir [bu_brlcad_root "lib"]
-	if {![file exists $tkpngdir]} {
-	    set tkpngdir [file join [bu_brlcad_data "src"] other tkpng .libs]
-	}
-    }
-
-    # can't use sharedlibextension without changing tkpng build
-    if {![file exists [file join $tkpngdir tkpng.$ext]]} {
-	puts "ERROR: Unable to initialize ArcherCore imagery"
+    if { [catch {package require tkpng} _initialized] } {
+	puts "$_initialized"
+	puts ""
+	puts "ERROR: Unable to load tkpng"
 	exit 1
     }
 
-    load [file join $tkpngdir tkpng.$ext]
 
     if { [catch {package require Swidgets} _initialized] } {
 	puts "$_initialized"
@@ -55,7 +44,9 @@ proc LoadArcherCoreLibs {} {
 	puts "ERROR: Unable to load ArcherCore Scripting"
 	exit 1
     }
-    package require hv3 0.1
+
+    # load Tkhtml
+    catch {package require hv3 0.1} hv3
 }
 
 proc LoadArcherLibs {} {

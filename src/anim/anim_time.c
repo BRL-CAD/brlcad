@@ -1,7 +1,7 @@
 /*                     A N I M _ T I M E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,29 +62,31 @@ fastf_t
 gettime(fastf_t dist, fastf_t a, fastf_t b, fastf_t c, fastf_t init)
 {
 
-    fastf_t old, new, temp;
+    fastf_t oldtime = 0.0;
+    fastf_t newtime = 0.0;
+    fastf_t temp = 0.0;
     int countdown, success;
-    countdown = MAXITS;
 
-    old = init;
     success = 0;
+    countdown = MAXITS;
+    oldtime = init;
     while (countdown-->0) {
-	temp = (3.0*a*old+2.0*b)*old+c;
+	temp = (3.0*a*oldtime+2.0*b)*oldtime+c;
 	if (temp<VDIVIDE_TOL) {
-	    new = 0.75*old;
+	    newtime = 0.75*oldtime;
 	} else {
-	    new = old - (((a*old+b)*old+c)*old-dist)/temp;
+	    newtime = oldtime - (((a*oldtime+b)*oldtime+c)*oldtime-dist)/temp;
 	}
-	if (((new-old)<DELTA)&&((old-new)<DELTA)) {
+	if (((newtime-oldtime)<DELTA)&&((oldtime-newtime)<DELTA)) {
 	    success = 1;
 	    break;
 	}
 	if (debug)
-	    printf("c: %d %f\t%f\n", countdown, new, new-old);
-	old = new;
+	    printf("c: %d %f\t%f\n", countdown, newtime, newtime-oldtime);
+	oldtime = newtime;
     }
     if (!success) fprintf(stderr, "warning - max iterations reached\n");
-    return new;
+    return newtime;
 
 }
 

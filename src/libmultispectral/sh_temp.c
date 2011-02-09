@@ -1,7 +1,7 @@
 /*                       S H _ T E M P . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2010 United States Government as represented by
+ * Copyright (c) 1999-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,8 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
+
 
 extern struct region	env_region;		/* import from view.c */
 
@@ -62,11 +63,11 @@ struct temp_specific {
 #define TX_O(m)	bu_offsetof(struct temp_specific, m)
 
 struct bu_structparse temp_parse[] = {
-    {"%s",	TXT_NAME_LEN, "file", bu_offsetofarray(struct temp_specific, t_file),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "w",		TX_O(t_w),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "n",		TX_O(t_n),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "l",		TX_O(t_n),		BU_STRUCTPARSE_FUNC_NULL }, /*compat*/
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%s", TXT_NAME_LEN, "file", bu_offsetofarray(struct temp_specific, t_file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1,		"w",		TX_O(t_w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1,		"n",		TX_O(t_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1,		"l",		TX_O(t_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }, /*compat*/
+    {"",   0,		(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 /*
@@ -229,13 +230,13 @@ temp_render(struct application *ap, struct partition *pp, struct shadework *swp,
  *			T X T _ S E T U P
  */
 HIDDEN int
-temp_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
+temp_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 
 
     /* New since 4.4 release */
 {
     register struct temp_specific *tp;
-    int		pixelbytes = 8;
+    size_t pixelbytes = 8;
 
     BU_CK_VLS( matparm );
     BU_GETSTRUCT( tp, temp_specific );

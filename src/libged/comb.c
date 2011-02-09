@@ -1,7 +1,7 @@
 /*                  C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,8 +68,8 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 
     /* Save combination name, for use inside loop */
     comb_name = (char *)argv[1];
-    if ((dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET)) != DIR_NULL) {
-	if (!(dp->d_flags & DIR_COMB)) {
+    if ((dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
+	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    bu_vls_printf(&gedp->ged_result_str, "ERROR: %s is not a combination", comb_name);
 	    return GED_ERROR;
 	}
@@ -82,7 +82,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 	oper = argv[i][0];
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == DIR_NULL) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "skipping %s\n", argv[i+1]);
 	    continue;
 	}
@@ -93,7 +93,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	if (_ged_combadd(gedp, dp, comb_name, 0, oper, 0, 0) == DIR_NULL) {
+	if (_ged_combadd(gedp, dp, comb_name, 0, oper, 0, 0) == RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "error in combadd");
 	    return GED_ERROR;
 	}
@@ -133,13 +133,13 @@ _ged_combadd(struct ged			*gedp,
     /*
      * Check to see if we have to create a new combination
      */
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip,  combname, LOOKUP_QUIET)) == DIR_NULL) {
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip,  combname, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	int flags;
 
 	if (region_flag)
-	    flags = DIR_REGION | DIR_COMB;
+	    flags = RT_DIR_REGION | RT_DIR_COMB;
 	else
-	    flags = DIR_COMB;
+	    flags = RT_DIR_COMB;
 
 	RT_INIT_DB_INTERNAL(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -179,9 +179,9 @@ _ged_combadd(struct ged			*gedp,
 
 	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, 0);
 	return dp;
-    } else if (!(dp->d_flags & DIR_COMB)) {
+    } else if (!(dp->d_flags & RT_DIR_COMB)) {
 	bu_vls_printf(&gedp->ged_result_str, "%s exists, but is not a combination\n", dp->d_namep);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     /* combination exists, add a new member */
@@ -192,7 +192,7 @@ _ged_combadd(struct ged			*gedp,
 
     if (region_flag && !comb->region_flag) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: not a region\n", dp->d_namep);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
@@ -200,7 +200,7 @@ _ged_combadd(struct ged			*gedp,
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot flatten tree for editing\n");
 	    rt_db_free_internal(&intern);
-	    return DIR_NULL;
+	    return RT_DIR_NULL;
 	}
     }
 

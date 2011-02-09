@@ -45,8 +45,6 @@ static Tcl_ThreadDataKey dataKey;
 
 static void		ContainerEventProc(ClientData clientData,
 			    XEvent *eventPtr);
-static void		EmbeddedEventProc(ClientData clientData,
-			    XEvent *eventPtr);
 static void		EmbedGeometryRequest(Container *containerPtr,
 			    int width, int height);
 static void		EmbedWindowDeleted(TkWindow *winPtr);
@@ -388,39 +386,6 @@ TkpMakeContainer(
     Tk_CreateEventHandler(tkwin, StructureNotifyMask,
 	    ContainerEventProc, (ClientData) containerPtr);
 }
-
-#if 0
-/*
- *----------------------------------------------------------------------
- *
- * EmbeddedEventProc --
- *
- *	This procedure is invoked by the Tk event dispatcher when various
- *	useful events are received for a window that is embedded in another
- *	application.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	Our internal state gets cleaned up when an embedded window is
- *	destroyed.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-EmbeddedEventProc(
-    ClientData clientData,	/* Token for container window. */
-    XEvent *eventPtr)		/* ResizeRequest event. */
-{
-    TkWindow *winPtr = (TkWindow *) clientData;
-
-    if (eventPtr->type == DestroyNotify) {
-	EmbedWindowDeleted(winPtr);
-    }
-}
-#endif
 
 /*
  *----------------------------------------------------------------------

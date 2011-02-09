@@ -1,39 +1,21 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../../resources/standard/dtd/docbookx.dtd">
-<article>
-  <articleinfo>
-    <title>Object Editing - the <command>oed</command> Command</title>
-    <author>
-      <firstname>Clifford</firstname>
-      <surname>Yapp</surname>
-    </author>
+<!-- Converted by db4-upgrade version 1.0 -->
+
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Object Editing - the <command>oed</command> Command</title>
+    
+    <author><personname><firstname>Clifford</firstname><surname>Yapp</surname></personname></author>
 
     <legalnotice>
       <para>Approved for public release; distribution is unlimited.</para>
       <para>Date approved:  05/09/2008</para> 
     </legalnotice>
 
-  </articleinfo>
+  </info>
 
-  <abstract>
-    <para> The <command>oed</command> command in MGED is used to enter
-    what is called "object edit mode"
-    <footnote>
-      <para>In some places in MGED this will be referred to as "matrix 
-      edit mode" - the terms both refer to the same concept.</para>
-    </footnote> 
-    - practically speaking, this mode allows transformations on combined
-    objects (combinations of primitives created with 
-    <command>comb</command>, for example.) These transformations are not
-    (by default) made to the coordinate information in the primitatives 
-    in question but are stored instead in a <emphasis>transformation 
-    matrix</emphasis>.  This article provides a brief overview and 
-    explanation of the behavior of the <command>oed</command> command 
-    and its uses.</para>
-  </abstract>
   
-  <sect1>
-    <title><command>oed</command> - Basic Syntax and Operations</title>
+  
+  <section><info><title><command>oed</command> - Basic Syntax and Operations</title></info>
+    
     
     <para> The syntax of <command>oed</command> is fairly
     straightforward:
@@ -46,10 +28,10 @@
     </footnote>
     </para>
 
-    <cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
       <command>oed</command>
-      <arg choice='req'><replaceable>path_lhs</replaceable></arg>
-      <arg choice='req'><replaceable>path_rhs</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable>path_lhs</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable>path_rhs</replaceable></arg>
     </cmdsynopsis>
     
     <para><command>oed</command> serves primarily to make working with
@@ -74,7 +56,7 @@
     
     <para>
     <screenshot>
-      <graphic align = "center" fileref="../../articles/en/images/oed_fig01.png"></graphic>
+      <mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig01.png"/></imageobject></mediaobject>
     </screenshot>
     </para>
 
@@ -88,7 +70,7 @@
     </footnote>
     
     <literallayout class="monospaced">
-mged> tree lollipop
+mged&gt; tree lollipop
 lollipop/
         u outer-candy-shell.r/R
                 u outer-candy-sphere.c/
@@ -206,7 +188,7 @@ lollipop/
     
     <literallayout class="monospaced">comb object1.c u sphere.s u cube.s</literallayout>
     
-    After this command both the primitives and the combination are \
+    After this command both the primitives and the combination are
     present in the display, which will result in overlaps.  Use the 
     <command>B</command> command to reduce the display to just the 
     combination.
@@ -221,7 +203,7 @@ lollipop/
     
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/en/images/oed_fig02.png"></graphic>
+	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig02.png"/></imageobject></mediaobject>
       </screenshot>
     </para>
     
@@ -234,12 +216,12 @@ lollipop/
     </note>
     
     <literallayout class="monospaced">
-mged> l object1.c
+mged&gt; l object1.c
 object1.c:  --
    u sphere.s
    u cube.s
 
-mged> l sphere.s
+mged&gt; l sphere.s
 sphere.s:  ellipsoid (ELL)
         V (0, 0, 0)
         A (4, 0, 0) mag=4
@@ -252,7 +234,7 @@ sphere.s:  ellipsoid (ELL)
         C direction cosines=(90, 90, 0)
         C rotation angle=0, fallback angle=90
 
-mged> l cube.s
+mged&gt; l cube.s
 cube.s:  ARB8
         1 (5, 5, 0)
         2 (8, 5, 0)
@@ -284,7 +266,7 @@ cube.s:  ARB8
 
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/en/images/oed_fig03.png"></graphic>
+	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig03.png"/></imageobject></mediaobject>
       </screenshot>
     </para>
 
@@ -297,7 +279,7 @@ cube.s:  ARB8
 
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/en/images/oed_fig04.png"></graphic>
+	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig04.png"/></imageobject></mediaobject>
       </screenshot>
     </para>
 
@@ -309,7 +291,7 @@ cube.s:  ARB8
 
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/en/images/oed_fig05.png"></graphic>
+	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig05.png"/></imageobject></mediaobject>
       </screenshot>
     </para>
     
@@ -317,12 +299,12 @@ cube.s:  ARB8
     combination and its component primitives.
     
     <literallayout class="monospaced">
-mged> l object1.c
+mged&gt; l object1.c
 object1.c:  --
    u sphere.s <emphasis>[0,0,5]</emphasis>
    u cube.s <emphasis>[0,0,5]</emphasis>
    
-mged> l sphere.s
+mged&gt; l sphere.s
 sphere.s:  ellipsoid (ELL)
         V (0, 0, 0)
         A (4, 0, 0) mag=4
@@ -335,7 +317,7 @@ sphere.s:  ellipsoid (ELL)
         C direction cosines=(90, 90, 0)
         C rotation angle=0, fallback angle=90
 
-mged> l cube.s
+mged&gt; l cube.s
 cube.s:  ARB8
         1 (5, 5, 0)
         2 (8, 5, 0)
@@ -360,7 +342,7 @@ cube.s:  ARB8
     
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/en/images/oed_fig06.png"></graphic>
+	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig06.png"/></imageobject></mediaobject>
       </screenshot>
     </para>
     
@@ -369,12 +351,12 @@ cube.s:  ARB8
     again unchanged.
 
     <literallayout class="monospaced">
-mged> l object1.c
+mged&gt; l object1.c
 object1.c:  --
    u sphere.s <emphasis>az=90, el=0,</emphasis>  [0,0,5]
    u cube.s <emphasis>az=90, el=0,</emphasis>  [0,0,5]
 
-mged> l sphere.s
+mged&gt; l sphere.s
 sphere.s:  ellipsoid (ELL)
         V (0, 0, 0)
         A (4, 0, 0) mag=4
@@ -387,7 +369,7 @@ sphere.s:  ellipsoid (ELL)
         C direction cosines=(90, 90, 0)
         C rotation angle=0, fallback angle=90
 
-mged> l cube.s
+mged&gt; l cube.s
 cube.s:  ARB8
         1 (5, 5, 0)
         2 (8, 5, 0)
@@ -411,12 +393,12 @@ cube.s:  ARB8
     <literallayout class="monospaced">push object1.c</literallayout>
     
     <literallayout class="monospaced">
-mged> l object1.c
+mged&gt; l object1.c
 object1.c:  --
    u sphere.s
    u cube.s
 
-mged> l sphere.s
+mged&gt; l sphere.s
 sphere.s:  ellipsoid (ELL)
         V (0, 0, <emphasis>5</emphasis>)
         A (<emphasis>0</emphasis>, <emphasis>-4</emphasis>, 0) mag=4
@@ -429,7 +411,7 @@ sphere.s:  ellipsoid (ELL)
         C direction cosines=(90, 90, 0)
         C rotation angle=0, fallback angle=90
 
-mged> l cube.s
+mged&gt; l cube.s
 cube.s:  ARB8
         1 <emphasis>(5, -5, 5)</emphasis>
         2 <emphasis>(5, -8, 5)</emphasis>
@@ -450,11 +432,11 @@ cube.s:  ARB8
     return things to their original state.  Any complex sequence of transformations
     becomes hard to undo - use <command>push</command> with care!</para>
     
-  </sect1>
+  </section>
 
-  <sect1>
-    <title>Right Hand Path Selection - Reasons and 
-    Implications</title>
+  <section><info><title>Right Hand Path Selection - Reasons and 
+    Implications</title></info>
+    
   
     <para> Notice in the previous section that sphere.s was selected 
     when using the <command>oed</command> command as part of the 
@@ -488,7 +470,7 @@ cube.s:  ARB8
     
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/en/images/oed_fig07.png"></graphic>
+	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig07.png"/></imageobject></mediaobject>
       </screenshot>
     </para>
     
@@ -529,13 +511,13 @@ cube.s:  ARB8
     
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/en/images/oed_fig08.png"></graphic>
+	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig08.png"/></imageobject></mediaobject>
       </screenshot>
     </para>
     
     <para>
       <literallayout class="monospaced">
-mged> l object2.c
+mged&gt; l object2.c
 object2.c:  --
    u sphere.s az=180, el=0,  [-5,5,5]
    u cube.s az=180, el=0,  [-5,5,5]
@@ -549,12 +531,12 @@ object2.c:  --
     supplied for every <command>oed</command> operation.
     </para>
 
-  </sect1>
+  </section>
 
 
-  <sect1>
-    <title>Flexible Manipulation with <emphasis>keypoint</emphasis>
-    </title>
+  <section><info><title>Flexible Manipulation with <emphasis>keypoint</emphasis>
+    </title></info>
+    
     
     <para> It might be reasonable to expect the <command>oed</command>
     command to use the center of the combination bounding box as a 
@@ -601,11 +583,11 @@ object2.c:  --
     <literallayout class="monospaced">accept</literallayout>
 
     <screenshot>
-      <graphic align="center" fileref="../../articles/en/images/oed_fig09.png"></graphic>
+      <mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig09.png"/></imageobject></mediaobject>
     </screenshot>
         
     <literallayout class="monospaced">
-mged> l object2.c
+mged&gt; l object2.c
 object2.c:  --
    u sphere.s az=<emphasis>270</emphasis>, el=0,  [<emphasis>5</emphasis>,<emphasis>9</emphasis>,5]
    u cube.s az=<emphasis>270</emphasis>, el=0,  [<emphasis>5</emphasis>,<emphasis>9</emphasis>,5]
@@ -619,11 +601,11 @@ object2.c:  --
     track what is done if retracing the steps performed on an object is
     important.</para>
     
-  </sect1>
+  </section>
   
-  <sect1>
-    <title>Sub-Combination Editing - using Left Hand Path 
-    Selection</title>
+  <section><info><title>Sub-Combination Editing - using Left Hand Path 
+    Selection</title></info>
+    
 
     <para> The importance of the <emphasis>path_lhs</emphasis> portion 
     of the <command>oed</command> command is better understood in the 
@@ -638,13 +620,13 @@ object2.c:  --
     
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/en/images/oed_fig10.png"></graphic>
+	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig10.png"/></imageobject></mediaobject>
       </screenshot>
     </para>
     
     <para>
       <literallayout class="monospaced">
-mged> tree bigobject.r
+mged&gt; tree bigobject.r
 bigobject.r/R
         u object1.c/
                 u sphere.s
@@ -664,7 +646,7 @@ bigobject.r/R
     work directly with object1.c:
 
     <literallayout class="monospaced">
-mged> l object1.c
+mged&gt; l object1.c
 object1.c:  --
    u sphere.s
    u cube.s
@@ -688,7 +670,7 @@ object1.c:  --
 
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/en/images/oed_fig11.png"></graphic>
+	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig11.png"/></imageobject></mediaobject>
       </screenshot>
     </para>
 
@@ -703,7 +685,7 @@ object1.c:  --
 
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/en/images/oed_fig12.png"></graphic>
+	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig12.png"/></imageobject></mediaobject>
       </screenshot>
     </para>
     
@@ -721,7 +703,7 @@ object1.c:  --
     bigobject.r, no transformation matrix is observed next to object1.c:
 
     <literallayout class="monospaced">
-mged> l bigobject.r
+mged&gt; l bigobject.r
 bigobject.r:  REGION id=1005  (air=0, los=100, GIFTmater=1) --
    u object1.c
    u object3.c
@@ -732,17 +714,17 @@ bigobject.r:  REGION id=1005  (air=0, los=100, GIFTmater=1) --
     object1.c was intended to change:
 
     <literallayout class="monospaced">
-mged> l bigobject.r/object1.c
+mged&gt; l bigobject.r/object1.c
 bigobject.r/object1.c:  --
    u sphere.s [0,0,4]
    u cube.s [0,0,4]
 
-mged> l bigobject.r/object3.c/object1.c
+mged&gt; l bigobject.r/object3.c/object1.c
 bigobject.r/object3.c/object1.c:  --
    u sphere.s [0,0,4]
    u cube.s [0,0,4]
 
-mged> l object1.c
+mged&gt; l object1.c
 object1.c:  --
    u sphere.s [0,0,4]
    u cube.s [0,0,4]
@@ -769,7 +751,7 @@ object1.c:  --
     <literallayout class="monospaced">B bigobject.r</literallayout>
 
     <screenshot>
-      <graphic align="center" fileref="../../articles/en/images/oed_fig13.png"></graphic>
+      <mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig13.png"/></imageobject></mediaobject>
     </screenshot>
     </para>
 
@@ -780,22 +762,22 @@ object1.c:  --
     reports showing differences:
     
     <literallayout class="monospaced">
-mged> l bigobject.r
+mged&gt; l bigobject.r
 bigobject.r:  REGION id=1005  (air=0, los=100, GIFTmater=1) --
    u object1.c [0,0,4]
    u object3.c
 
-mged> l bigobject.r/object1.c
+mged&gt; l bigobject.r/object1.c
 bigobject.r/object1.c:  --
    u sphere.s [0,0,4]
    u cube.s [0,0,4]
 
-mged> l bigobject.r/object3.c/object1.c
+mged&gt; l bigobject.r/object3.c/object1.c
 bigobject.r/object3.c/object1.c:  --
    u sphere.s
    u cube.s
 
-mged> l object1.c
+mged&gt; l object1.c
 object1.c:  --
    u sphere.s
    u cube.s
@@ -813,14 +795,14 @@ object1.c:  --
       </para>
     </footnote>
     </para>
-  </sect1>
+  </section>
 
-  <sect1>
-    <title>Summary</title>  
+  <section><info><title>Summary</title></info>
+      
     <para>
       The major points of the <command>oed</command> command are:
       
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>
 	    <command>oed</command> is the standard tool when working 
@@ -867,12 +849,19 @@ object1.c:  --
 	  are possible if the wrong path is used.
 	</para>
       </listitem>
+      <listitem>
+	<para>
+	  When using <command>oed</command> in a script, the object must be in view so a
+          <command>B</command> or <command>draw</command> command to select the object must
+          be entered before using the <command>oed</command> command on it.
+	</para>
+      </listitem>
       </itemizedlist>
     </para>
-  </sect1>
+  </section>
 
-  <ackno>
+  <acknowledgements><para>
     Thanks to Christopher Sean Morrison, Paul Tanenbaum and Ruth Foutz for proofreading, suggestions and corrections.
-  </ackno>
+  </para></acknowledgements>
 
 </article>

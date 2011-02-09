@@ -172,7 +172,12 @@ main(argc, argv)
 		}
 		setup(cp);
 	} else if (argc != 2) {
+#ifndef WIN32
 		setup(getpass("Enter key:"));
+#else
+	        fprintf(stderr, "Windows does not support getpass - please supply key on command line\n");
+		return 0;
+#endif /*not WIN32*/
 	}
 	else
 		setup(argv[1]);

@@ -1,7 +1,7 @@
 /*                       D B _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2010 United States Government as represented by
+ * Copyright (c) 1996-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,6 +47,8 @@
 #include "db.h"
 #include "mater.h"
 #include "raytrace.h"
+
+#include "../librt_private.h"
 
 
 #define STAT_ROT 1
@@ -271,7 +273,7 @@ rt_comb_import4(
 
 	    tp->tr_l.tl_name = bu_strdup(namebuf);
 
-	    rt_mat_dbmat(diskmat, rp[j+1].M.m_mat);
+	    rt_mat_dbmat(diskmat, rp[j+1].M.m_mat, dbip->dbi_version < 0 ? 1 : 0);
 
 	    /* Verify that rotation part is pure rotation */
 	    if (fabs(diskmat[0]) > 1 || fabs(diskmat[1]) > 1 ||
@@ -352,10 +354,17 @@ rt_comb_import4(
     }
 
     if (comb->region_flag) {
-	comb->region_id = rp[0].c.c_regionid;
-	comb->aircode = rp[0].c.c_aircode;
-	comb->GIFTmater = rp[0].c.c_material;
-	comb->los = rp[0].c.c_los;
+	if (dbip->dbi_version < 0) {
+	    comb->region_id = flip_short(rp[0].c.c_regionid);
+	    comb->aircode = flip_short(rp[0].c.c_aircode);
+	    comb->GIFTmater = flip_short(rp[0].c.c_material);
+	    comb->los = flip_short(rp[0].c.c_los);
+	} else {
+	    comb->region_id = rp[0].c.c_regionid;
+	    comb->aircode = rp[0].c.c_aircode;
+	    comb->GIFTmater = rp[0].c.c_material;
+	    comb->los = rp[0].c.c_los;
+	}
     } else {
 	/* set some reasonable defaults */
 	comb->region_id = 0;

@@ -1,77 +1,40 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2008 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='t'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="t">
 
 <refmeta>
   <refentrytitle>T</refentrytitle>
   <manvolnum>nged</manvolnum>
-  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-  <refmiscinfo class='manual'>BRL-CAD MGED Commands</refmiscinfo>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD MGED Commands</refmiscinfo>
 </refmeta>
 
-<refnamediv id='name'>
+<refnamediv xml:id="name">
   <refname>t</refname>
   <refpurpose>Lists the names of specified objects in the database in alphabetical order depending on the argument given.
    </refpurpose>
 </refnamediv>
 
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-  <cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
     <command>t</command>    
     
-    <arg>-a</arg>
-    <arg>-c</arg>
-    <arg>-r</arg>
-    <arg>-s</arg>
-    <arg><replaceable>objects</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-a</arg>
+    <arg choice="opt" rep="norepeat">-c</arg>
+    <arg choice="opt" rep="norepeat">-r</arg>
+    <arg choice="opt" rep="norepeat">-s</arg>
+    <arg choice="opt" rep="norepeat"><replaceable>objects</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsect1 id='description'>
-  <title>DESCRIPTION</title>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  
   <para>The <command>t</command> command with no <emphasis>object</emphasis> argument lists the name of every object in the database (in alphabetical order) except those marked as hidden with the hide
 command. If the <emphasis>object</emphasis> argument is supplied, only those <emphasis>objects</emphasis> are listed. The <emphasis>object</emphasis> argument may include regular expressions for matching. The following options are also allowed:  
   </para>
 
-<itemizedlist mark='bullet'>
+<itemizedlist mark="bullet">
 <listitem>
 <para>
 a - list all objects in the database.
@@ -96,72 +59,68 @@ s - list all nonhidden shapes in the database.
 
 <para>The <command>t</command> command is a synonym for the <command>ls</command> command. Note that when any of the above options are used, the output is not formatted.
 </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='examples'>
-  <title>EXAMPLES</title>
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  
   <para>The five examples show the use of the <command>t</command> command with different arguments to list names of objects, combinations, regions, or shapes.
     </para>
-   <example>
-    <title>List all objects with names beginning with "shape."</title>
+   <example><info><title>List all objects with names beginning with "shape."</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>t shape*</userinput>
+      <prompt>mged&gt;</prompt><userinput>t shape*</userinput>
     </para>
-    <para>Lists all objects with names beginning with “shape.”
+    <para>Lists all objects with names beginning with Â“shape.Â”
 (output is formatted)
        
     </para>
   </example>
- <example>
-    <title>List all objects with names beginning with "shape."</title>
+ <example><info><title>List all objects with names beginning with "shape."</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>t -a shape*</userinput>
+      <prompt>mged&gt;</prompt><userinput>t -a shape*</userinput>
     </para>
     <para>
-       Lists all objects with names beginning with “shape.”
+       Lists all objects with names beginning with Â“shape.Â”
     </para>
   </example>
-<example>
-    <title>List all shapes with names beginning with “wheel.”</title>
+<example><info><title>List all shapes with names beginning with Â“wheel.Â”</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>t -s wheel*</userinput>
+      <prompt>mged&gt;</prompt><userinput>t -s wheel*</userinput>
     </para>
-    <para>Lists all shapes with names beginning with “wheel.”
+    <para>Lists all shapes with names beginning with Â“wheel.Â”
        
     </para>
   </example>
-<example>
-    <title>List all regions with names beginning with “wheel.”</title>
+<example><info><title>List all regions with names beginning with Â“wheel.Â”</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>t -r wheel*</userinput>
+      <prompt>mged&gt;</prompt><userinput>t -r wheel*</userinput>
     </para>
     <para>
-       Lists all regions with names beginning with “wheel.”
+       Lists all regions with names beginning with Â“wheel.Â”
     </para>
   </example>
-<example>
-    <title>List all combinations with names beginning with “suspension.”</title>
+<example><info><title>List all combinations with names beginning with Â“suspension.Â”</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>t -c suspension*</userinput>
+      <prompt>mged&gt;</prompt><userinput>t -c suspension*</userinput>
     </para>
-    <para>Lists all combinations with names beginning with “suspension.”
+    <para>Lists all combinations with names beginning with Â“suspension.Â”
        
     </para>
   </example>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='author'>
-  <title>AUTHOR</title>
-  <para>BRL-CAD Team</para>
-</refsect1>
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
 
-<refsect1 id='bug_reports'>
-  <title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
-</refsect1>
+</refsection>
 </refentry>
-

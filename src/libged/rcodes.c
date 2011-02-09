@@ -1,7 +1,7 @@
 /*                         R C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -84,12 +84,12 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 	if (*cp == '\0')
 	    continue;
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY)) == DIR_NULL) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[1], cp);
 	    continue;
 	}
 
-	if (!(dp->d_flags & DIR_REGION)) {
+	if (!(dp->d_flags & RT_DIR_REGION)) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not a region\n", argv[1], cp);
 	    continue;
 	}

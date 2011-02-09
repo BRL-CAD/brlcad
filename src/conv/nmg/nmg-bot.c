@@ -1,7 +1,7 @@
 /*                       N M G - B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ main(int argc, char **argv)
     }
 
     if (argc == 4) {
-	if (!strcmp(argv[1], "-v"))
+	if (BU_STR_EQUAL(argv[1], "-v"))
 	    verbose = 1;
 	else {
 	    bu_log("Illegal option: %s\n", argv[1]);

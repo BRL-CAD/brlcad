@@ -1,7 +1,7 @@
 /*                         M O V E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,10 +60,10 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return GED_ERROR;
 
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[2], LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(gedp->ged_wdbp->dbip, argv[2], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: already exists", argv[2]);
 	return GED_ERROR;
     }
@@ -91,8 +91,8 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
 	int first = 1;
 	int found = 0;
 	struct bu_vls new_path;
-	char *dup = strdup(bu_vls_addr(&gdlp->gdl_path));
-	char *tok = strtok(dup, "/");
+	char *dupstr = strdup(bu_vls_addr(&gdlp->gdl_path));
+	char *tok = strtok(dupstr, "/");
 
 	bu_vls_init(&new_path);
 
@@ -100,7 +100,7 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
 	    if (first) {
 		first = 0;
 
-		if (!strcmp(tok, argv[1])) {
+		if (BU_STR_EQUAL(tok, argv[1])) {
 		    found = 1;
 		    bu_vls_printf(&new_path, "%s", argv[2]);
 		} else
@@ -116,7 +116,7 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gdlp->gdl_path, "%V", &new_path);
 	}
 
-	free((void *)dup);
+	free((void *)dupstr);
 	bu_vls_free(&new_path);
     }
 

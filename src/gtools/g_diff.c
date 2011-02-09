@@ -1,7 +1,7 @@
 /*                        G _ D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -86,100 +86,78 @@ compare_colors(void)
     int found1 = 0, found2 = 0;
     int is_diff = 0;
 
-    for (mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw) {
+    /* find a match for all color table entries of file1 in file2 */
+    for (mp1 = mater_hd1; is_diff == 0 && mp1 != MATER_NULL; mp1 = mp1->mt_forw) {
 	found1 = 0;
 	mp2 = mater_hd2;
 	while (mp2 != MATER_NULL) {
-	    if (mp1->mt_low == mp2->mt_low &&
-		mp1->mt_high == mp2->mt_high &&
-		mp1->mt_r == mp2->mt_r &&
-		mp1->mt_g == mp2->mt_g &&
-		mp1->mt_b == mp2->mt_b) {
+	    if (mp1->mt_low == mp2->mt_low
+		&& mp1->mt_high == mp2->mt_high
+		&& mp1->mt_r == mp2->mt_r
+		&& mp1->mt_g == mp2->mt_g
+		&& mp1->mt_b == mp2->mt_b)
+	    {
 		found1 = 1;
 		break;
-	    } else {
-		mp2 = mp2->mt_forw;
 	    }
-	}
-	if (!found1)
-	    break;
-    }
-    for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
-	found1 = 0;
-	mp1 = mater_hd1;
-	while (mp1 != MATER_NULL) {
-	    if (mp1->mt_low == mp2->mt_low &&
-		mp1->mt_high == mp2->mt_high &&
-		mp1->mt_r == mp2->mt_r &&
-		mp1->mt_g == mp2->mt_g &&
-		mp1->mt_b == mp2->mt_b) {
-		found2 = 1;
-		break;
-	    } else {
-		mp1 = mp1->mt_forw;
-	    }
-	}
-	if (!found2)
-	    break;
-    }
-    if (!found1 && !found2) {
-	return 0;
-    } else if (!found1 || !found2) {
-	is_diff = 1;
-    } else {
-	/* actually compare two color tables */
-	mp1 = mater_hd1;
-	mp2 = mater_hd2;
-	while (mp1 != MATER_NULL && mp2 != MATER_NULL) {
-	    if (mp1->mt_low != mp2->mt_low) {
-		is_diff = 1;
-		break;
-	    }
-	    if (mp1->mt_high != mp2->mt_high) {
-		is_diff = 1;
-		break;
-	    }
-	    if (mp1->mt_r != mp2->mt_r) {
-		is_diff = 1;
-		break;
-	    }
-	    if (mp1->mt_g != mp2->mt_g) {
-		is_diff = 1;
-		break;
-	    }
-	    if (mp1->mt_b != mp2->mt_b) {
-		is_diff = 1;
-		break;
-	    }
-	    mp1 = mp1->mt_forw;
 	    mp2 = mp2->mt_forw;
+	}
+	if (!found1) {
+	    /* bu_log("could not find %d..%d: %d %d %d\n", mp1->mt_low, mp1->mt_high, mp1->mt_r, mp1->mt_g, mp1->mt_b); */
+	    is_diff = 1;
 	}
     }
 
-    if (is_diff) {
-	if (mode == HUMAN) {
-	    printf("Color table has changed from:\n");
-	    for (mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw) {
-		printf("\t%d..%d %d %d %d\n", mp1->mt_low, mp1->mt_high,
-		       mp1->mt_r, mp1->mt_g, mp1->mt_b);
+    /* find a match for all color tabl eentries of file2 in file1 */
+    for (mp2 = mater_hd2; is_diff == 0 && mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
+	found2 = 0;
+	mp1 = mater_hd1;
+	while (mp1 != MATER_NULL) {
+	    if (mp1->mt_low == mp2->mt_low
+		&& mp1->mt_high == mp2->mt_high
+		&& mp1->mt_r == mp2->mt_r
+		&& mp1->mt_g == mp2->mt_g
+		&& mp1->mt_b == mp2->mt_b)
+	    {
+		found2 = 1;
+		break;
 	    }
-	    printf("\t\tto:\n");
-	    for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
-		printf("\t%d..%d %d %d %d\n", mp2->mt_low, mp2->mt_high,
-		       mp2->mt_r, mp2->mt_g, mp2->mt_b);
-	    }
-	} else {
-	    if (version2 > 4)
-		printf("attr rm _GLOBAL regionid_colortable\n");
+	    mp1 = mp1->mt_forw;
+	}
+	if (!found2) {
+	    /* bu_log("could not find %d..%d: %d %d %d\n", mp1->mt_low, mp1->mt_high, mp1->mt_r, mp1->mt_g, mp1->mt_b); */
+	    is_diff = 1;
+	}
+    }
+
+    if (is_diff == 0) {
+	return 0;
+    }
+
+    if (mode == HUMAN) {
+	printf("Color table has changed from:\n");
+	for (mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw) {
+	    printf("\t%d..%d %d %d %d\n", mp1->mt_low, mp1->mt_high,
+		   mp1->mt_r, mp1->mt_g, mp1->mt_b);
+	}
+	printf("\t\tto:\n");
+	for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
+	    printf("\t%d..%d %d %d %d\n", mp2->mt_low, mp2->mt_high,
+		   mp2->mt_r, mp2->mt_g, mp2->mt_b);
+	}
+    } else {
+	if (version2 > 4) {
+	    /* punt, just delete the existing colortable and print a new one */
+	    printf("attr rm _GLOBAL regionid_colortable\n");
 	    for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
 		printf("color %d %d %d %d %d\n", mp2->mt_low, mp2->mt_high,
 		       mp2->mt_r, mp2->mt_g, mp2->mt_b);
 	    }
 	}
-	return 1;
     }
-    return 0;
+    return 1;
 }
+
 
 void
 kill_obj(char *name)
@@ -246,13 +224,13 @@ compare_values(int type, Tcl_Obj *val1, Tcl_Obj *val2)
 {
     int len1, len2;
     int i;
-    int str_ret;
+    int str_eq;
     float a, b;
     Tcl_Obj *obj1, *obj2;
 
-    str_ret = strcmp(Tcl_GetStringFromObj(val1, NULL), Tcl_GetStringFromObj(val2, NULL));
+    str_eq = BU_STR_EQUAL(Tcl_GetStringFromObj(val1, NULL), Tcl_GetStringFromObj(val2, NULL));
 
-    if (str_ret == 0 || type == ATTRS) {
+    if (str_eq || type == ATTRS) {
 	return 0;
     }
 
@@ -297,7 +275,7 @@ compare_values(int type, Tcl_Obj *val1, Tcl_Obj *val2)
 		return 1;
 	    }
 	} else {
-	    if (strcmp(str1, str2)) {
+	    if (!BU_STR_EQUAL(str1, str2)) {
 		return strstr(str2, str1)?2:1;
 	    }
 	}
@@ -357,7 +335,7 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 		fprintf(stderr, "%s\n", Tcl_GetStringResult(interp));
 		bu_exit (1, NULL);
 	    }
-	    if (!strcmp(Tcl_GetStringFromObj(key1, &junk), Tcl_GetStringFromObj(key2, &junk))) {
+	    if (BU_STR_EQUAL(Tcl_GetStringFromObj(key1, &junk), Tcl_GetStringFromObj(key2, &junk))) {
 
 		found = 1;
 		if (Tcl_ListObjIndex(interp, obj2, j+1, &val2) == TCL_ERROR) {
@@ -466,7 +444,7 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 		fprintf(stderr, "%s\n", Tcl_GetStringResult(interp));
 		bu_exit (1, NULL);
 	    }
-	    if (!strcmp(Tcl_GetStringFromObj(key1, &junk), Tcl_GetStringFromObj(key2, &junk))) {
+	    if (BU_STR_EQUAL(Tcl_GetStringFromObj(key1, &junk), Tcl_GetStringFromObj(key2, &junk))) {
 		found = 1;
 		break;
 	    }
@@ -545,7 +523,7 @@ compare_tcl_solids(char *str1, Tcl_Obj *obj1, struct directory *dp1, char *str2,
 	    printf("kill %s\ndb put %s %s\n", dp1->d_namep, dp1->d_namep, str2);
 
 	return 1;
-    } else if (!strcmp(str1, str2)) {
+    } else if (BU_STR_EQUAL(str1, str2)) {
 	return 0;		/* no difference */
     }
 
@@ -576,7 +554,7 @@ compare_tcl_combs(Tcl_Obj *obj1, struct directory *dp1, Tcl_Obj *obj2)
     bu_vls_init(&adjust);
 
     /* first check if there is any difference */
-    if (!strcmp(Tcl_GetStringFromObj(obj1, &junk), Tcl_GetStringFromObj(obj2, &junk)))
+    if (BU_STR_EQUAL(Tcl_GetStringFromObj(obj1, &junk), Tcl_GetStringFromObj(obj2, &junk)))
 	return 0;
 
     if (mode != HUMAN) {
@@ -621,7 +599,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 
 	key = Tcl_GetStringFromObj(objs[i-1], NULL);
 	value = Tcl_GetStringFromObj(objs[i], NULL);
-	if (!strcmp(key, "region_id")) {
+	if (BU_STR_EQUAL(key, "region_id")) {
 	    long id;
 
 	    id = strtol(value, NULL, 0);
@@ -629,7 +607,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 		fprintf(stderr, "WARNING: %s in %s: \"region_id\" attribute says %ld, while region says %ld\n",
 			dp->d_namep, dbip->dbi_filename, id, comb->region_id);
 	    }
-	} else if (!strcmp(key, "giftmater")) {
+	} else if (BU_STR_EQUAL(key, "giftmater")) {
 	    long GIFTmater;
 
 	    GIFTmater = strtol(value, NULL, 0);
@@ -637,7 +615,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 		fprintf(stderr, "WARNING: %s in %s: \"giftmater\" attribute says %ld, while region says %ld\n",
 			dp->d_namep, dbip->dbi_filename, GIFTmater, comb->GIFTmater);
 	    }
-	} else if (!strcmp(key, "los")) {
+	} else if (BU_STR_EQUAL(key, "los")) {
 	    long los;
 
 	    los = strtol(value, NULL, 0);
@@ -645,7 +623,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 		fprintf(stderr, "WARNING: %s in %s: \"los\" attribute says %ld, while region says %ld\n",
 			dp->d_namep, dbip->dbi_filename, los, comb->los);
 	    }
-	} else if (!strcmp(key, "material")) {
+	} else if (BU_STR_EQUAL(key, "material")) {
 	    if (!strncmp(value, "gift", 4)) {
 		long GIFTmater;
 
@@ -655,7 +633,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 			    dp->d_namep, dbip->dbi_filename, value, comb->GIFTmater);
 		}
 	    }
-	} else if (!strcmp(key, "aircode")) {
+	} else if (BU_STR_EQUAL(key, "aircode")) {
 	    long aircode;
 
 	    aircode = strtol(value, NULL, 0);
@@ -697,13 +675,13 @@ remove_region_attrs(Tcl_Obj *obj)
 	key = Tcl_GetStringFromObj(objs[i-1], NULL);
 	j = 0;
 	while (region_attrs[j]) {
-	    if (!strcmp(key, region_attrs[j])) {
+	    if (BU_STR_EQUAL(key, region_attrs[j])) {
 		Tcl_ListObjReplace(interp, obj, i-1, 2, 0, NULL);
 		break;
 	    }
 	    j++;
 	}
-	if (!found_material && !strcmp(key, "material")) {
+	if (!found_material && BU_STR_EQUAL(key, "material")) {
 	    found_material = 1;
 	    if (!strncmp(Tcl_GetStringFromObj(objs[i], NULL), "gift", 4)) {
 		Tcl_ListObjReplace(interp, obj, i-1, 2, 0, NULL);
@@ -722,7 +700,7 @@ compare_attrs(struct directory *dp1, struct directory *dp2)
 
     bu_vls_init(&vls);
 
-    if (dbip1->dbi_version > 4) {
+    if (db_version(dbip1) > 4) {
 	bu_vls_printf(&vls, "_db1 attr get %s", dp1->d_namep);
 	if (Tcl_Eval(interp, bu_vls_addr(&vls)) != TCL_OK) {
 	    fprintf(stderr, "Cannot get attributes for %s\n", dp1->d_namep);
@@ -732,14 +710,14 @@ compare_attrs(struct directory *dp1, struct directory *dp2)
 
 	obj1 = Tcl_DuplicateObj(Tcl_GetObjResult(interp));
 	Tcl_ResetResult(interp);
-	if (dp1->d_flags & DIR_REGION && verify_region_attribs) {
+	if (dp1->d_flags & RT_DIR_REGION && verify_region_attribs) {
 	    verify_region_attrs(dp1, dbip1, obj1);
 	}
     } else {
 	obj1 = Tcl_NewObj();
     }
 
-    if (dbip2->dbi_version > 4) {
+    if (db_version(dbip2) > 4) {
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "_db2 attr get %s", dp1->d_namep);
 	if (Tcl_Eval(interp, bu_vls_addr(&vls)) != TCL_OK) {
@@ -750,14 +728,14 @@ compare_attrs(struct directory *dp1, struct directory *dp2)
 
 	obj2 = Tcl_DuplicateObj(Tcl_GetObjResult(interp));
 	Tcl_ResetResult(interp);
-	if (dp1->d_flags & DIR_REGION && verify_region_attribs) {
+	if (dp1->d_flags & RT_DIR_REGION && verify_region_attribs) {
 	    verify_region_attrs(dp2, dbip2, obj2);
 	}
     } else {
 	obj2 = Tcl_NewObj();
     }
 
-    if ((dp1->d_flags & DIR_REGION) && (dp2->d_flags & DIR_REGION)) {
+    if ((dp1->d_flags & RT_DIR_REGION) && (dp2->d_flags & RT_DIR_REGION)) {
 	/* don't complain about "region" attributes */
 	remove_region_attrs(obj1);
 	remove_region_attrs(obj2);
@@ -794,7 +772,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	Tcl_Obj *obj1, *obj2;
 
 	/* check if this object exists in the other database */
-	if ((dp2 = db_lookup(dbip2, dp1->d_namep, 0)) == DIR_NULL) {
+	if ((dp2 = db_lookup(dbip2, dp1->d_namep, 0)) == RT_DIR_NULL) {
 	    kill_obj(dp1->d_namep);
 	    continue;
 	}
@@ -847,7 +825,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	Tcl_ResetResult(interp);
 
 	/* got TCL versions of both */
-	if ((dp1->d_flags & DIR_SOLID) && (dp2->d_flags & DIR_SOLID)) {
+	if ((dp1->d_flags & RT_DIR_SOLID) && (dp2->d_flags & RT_DIR_SOLID)) {
 	    /* both are solids */
 	    has_diff += compare_tcl_solids(str1, obj1, dp1, str2, obj2);
 	    if (pre_5_vers != 2) {
@@ -856,7 +834,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	    continue;
 	}
 
-	if ((dp1->d_flags & DIR_COMB) && (dp2->d_flags & DIR_COMB)) {
+	if ((dp1->d_flags & RT_DIR_COMB) && (dp2->d_flags & RT_DIR_COMB)) {
 	    /* both are combinations */
 	    has_diff += compare_tcl_combs(obj1, dp1, obj2);
 	    if (pre_5_vers != 2) {
@@ -866,7 +844,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	}
 
 	/* the two objects are different types */
-	if (strcmp(str1, str2)) {
+	if (!BU_STR_EQUAL(str1, str2)) {
 	    has_diff += 1;
 	    if (mode == HUMAN)
 		printf("%s:\n\twas: %s\n\tis now: %s\n\n",
@@ -887,7 +865,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	    continue;
 
 	/* check if this object exists in the other database */
-	if ((dp1 = db_lookup(dbip1, dp2->d_namep, 0)) == DIR_NULL) {
+	if ((dp1 = db_lookup(dbip1, dp2->d_namep, 0)) == RT_DIR_NULL) {
 	    /* need to add this object */
 	    has_diff += 1;
 	    argv[2] = dp2->d_namep;
@@ -969,10 +947,9 @@ main(int argc, char **argv)
 	bu_exit(1, "%s and %s are the same file\n", file1, file2);
     }
 
-    Tcl_FindExecutable(argv[0]);
+    Tcl_FindExecutable(invoked_as);
     interp = Tcl_CreateInterp();
     tclcad_auto_path(interp);
-    tclcad_tcl_library(interp);
 
     if (Tcl_Init(interp) == TCL_ERROR) {
 	bu_log("Tcl_Init failure:\n%s\n", Tcl_GetStringResult(interp));
@@ -1010,7 +987,7 @@ main(int argc, char **argv)
     mater_hd1 = rt_dup_material_head();
     rt_color_free();
 
-    if (dbip1->dbi_version < 5) {
+    if (db_version(dbip1) < 5) {
 	pre_5_vers++;
     }
 
@@ -1048,7 +1025,7 @@ main(int argc, char **argv)
     mater_hd2 = rt_dup_material_head();
     rt_color_free();
 
-    if (dbip2->dbi_version < 5) {
+    if (db_version(dbip2) < 5) {
 	pre_5_vers++;
 	version2 = 4;
     } else {
@@ -1060,7 +1037,7 @@ main(int argc, char **argv)
     }
 
     /* compare titles */
-    if (strcmp(dbip1->dbi_title, dbip2->dbi_title)) {
+    if (!BU_STR_EQUAL(dbip1->dbi_title, dbip2->dbi_title)) {
 	different = 1;
 	if (mode == HUMAN) {
 	    printf("Title has changed from: \"%s\" to: \"%s\"\n\n", dbip1->dbi_title, dbip2->dbi_title);

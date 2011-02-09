@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2010 United States Government as represented by
+ * Copyright (c) 1997-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <string.h>
+
+#ifdef HAVE_STRINGS_H
+# include <strings.h>
+#endif
 
 #include "bio.h"
 #include "tcl.h"
@@ -373,7 +376,7 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 int
 fb_cmd_common_file_size(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
-    unsigned long int width, height;
+    size_t width, height;
     int pixel_size = 3;
 
     if (argc != 2 && argc != 3) {
@@ -388,7 +391,7 @@ fb_cmd_common_file_size(ClientData UNUSED(clientData), Tcl_Interp *interp, int a
     if (fb_common_file_size(&width, &height, argv[1], pixel_size) > 0) {
 	struct bu_vls vls;
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "%lu %lu", width, height);
+	bu_vls_printf(&vls, "%lu %lu", (unsigned long)width, (unsigned long)height);
 	Tcl_SetObjResult(interp,
 			 Tcl_NewStringObj(bu_vls_addr(&vls), bu_vls_strlen(&vls)));
 	bu_vls_free(&vls);

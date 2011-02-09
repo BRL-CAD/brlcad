@@ -2,7 +2,7 @@
  ----------------- [incr Widgets] Outgoing Widgets ---------------------
 ==========================================================================
 
-  This directory contains mega-widgets which appear to be failing in
+  This directory contains mega-widgets which appear to be failing in 
 public acceptance.  The negative feedback has out paced the positive.
 They still have doc, test, and demos, but should be considered on their
 way out of the distribution.  If you are one of the minority which feels

@@ -1,7 +1,7 @@
 /*               O P E N N U R B S _ E X T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,8 @@
 #include "brep.h"
 #include "dvec.h"
 
-#include "opennurbs_ext.h"
+/* our interface header */
+#include "./opennurbs_ext.h"
 
 
 #define RANGE_HI 0.55
@@ -457,7 +458,7 @@ BRNode*
 CurveTree::curveBBox(const ON_Curve* curve, int adj_face_index, ON_Interval& t, bool isLeaf, bool innerTrim, const ON_BoundingBox& bb)
 {
     BRNode* node;
-    fastf_t vdot = 1.0;
+    int vdot = 1;
 
     if (isLeaf) {
 	TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() << ") v(" << v.Min() << ", " << v.Max() << ")");
@@ -747,16 +748,16 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf, bool isLeaf, ON_3dPoint *m
     ON_BoundingBox bbox = localsurf->BoundingBox();
 
     VSETALL(buffer, BREP_EDGE_MISS_TOLERANCE);
-    VSETALL(min, MAX_FASTF);
-    VSETALL(max, -MAX_FASTF);
-    for (int i = 0; i < 9; i++) {
-	VMINMAX(min, max, ((double*)m_corners[i]));
+    //VSETALL(min, MAX_FASTF);
+    //VSETALL(max, -MAX_FASTF);
+    //for (int i = 0; i < 9; i++) {
+	//VMINMAX(min, max, ((double*)m_corners[i]));
 	//bu_log("in c%d_%d sph %f %f %f %f\n", bb_cnt, i, m_corners[i].x, m_corners[i].y, m_corners[i].z, 1.0);
-    }
+    //}
 
 	//bu_log("in bb%d rpp %f %f %f %f %f %f\n", bb_cnt, min[0], max[0], min[1], max[1], min[2], max[2]);
-    //VMOVE(min,bbox.Min());
-    //VMOVE(max,bbox.Max());
+    VMOVE(min,bbox.Min());
+    VMOVE(max,bbox.Max());
 
 	//bu_log("in b%d rpp %f %f %f %f %f %f\n", bb_cnt++, bbox.m_min.x, bbox.m_max.x, bbox.m_min.y, bbox.m_max.y, bbox.m_min.z, bbox.m_max.z);
 	//bu_log("in bc%d rpp %f %f %f %f %f %f\n", bb_cnt++, min[0], max[0], min[1], max[1], min[2], max[2]);
@@ -773,15 +774,15 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf, bool isLeaf, ON_3dPoint *m
 
     BBNode* node;
     if (isLeaf) {
-	vect_t delta;
+/*	vect_t delta; */
 
 	VSUB2(min, min, buffer);
 	VADD2(max, max, buffer);
-	VSUB2(delta, max, min);
+/*	VSUB2(delta, max, min);
 	VSCALE(delta, delta, BBOX_GROW_3D);
 	VSUB2(min, min, delta);
 	VADD2(max, max, delta);
-
+*/
 	TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() <<
 	      ") v(" << v.Min() << ", " << v.Max() << ")");
 	node = new BBNode(ctree, ON_BoundingBox(ON_3dPoint(min),
@@ -1417,6 +1418,7 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	} else {
 		//return surfaceBBox(localsurf, true, corners, normals, u, v);
 		//parent->addChild(subdivideSurface(localsurf, u, v, frames, corners, normals,0));
+	    ((ON_Surface *)localsurf)->ClearBoundingBox();
 		return subdivideSurface(localsurf, u, v, frames, corners, normals,0, depthLimit);
 	}
 	delete [] spanu;
@@ -1440,15 +1442,11 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	const ON_Surface* surf = m_face->SurfaceOf();
 	ON_Interval usurf = surf->Domain(0);
 	ON_Interval vsurf = surf->Domain(1);
-	fastf_t ufactor = (u[1] - u[0]) / (usurf[1] - usurf[0]);
-	fastf_t vfactor = (v[1] - v[0]) / (vsurf[1] - vsurf[0]);
 	point_t a, b;
 	VSET(a, usurf[0], vsurf[0], 0.0);
 	VSET(b, usurf[1], vsurf[1], 0.0);
-	double dsurf = DIST_PT_PT(a, b);
 	VSET(a, u[0], v[0], 0.0);
 	VSET(b, u[1], v[1], 0.0);
-	double dsubsurf = DIST_PT_PT(a, b);
 	double uq = u.Length()*0.25;
 	double vq = v.Length()*0.25;
 	localsurf->FrameAt(u.Mid() - uq, v.Mid() - vq, frames[5]);
@@ -1468,8 +1466,9 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	double width,height;
 	double ratio = 5.0;
 	localsurf->GetSurfaceSize(&width, &height);
-	if (((width/height < ratio) && (width/height > 1.0/ratio))
-					&& (isFlat(localsurf, frames, normals, corners, u, v)) || (divDepth >= depthLimit)) { //BREP_MAX_FT_DEPTH))) {
+	if ((((width/height < ratio) && (width/height > 1.0/ratio))
+					&& isFlat(localsurf, frames, normals, corners, u, v)
+					&& isStraight(localsurf, frames, normals, corners, u, v)) || (divDepth >= depthLimit)) { //BREP_MAX_FT_DEPTH))) {
 		return surfaceBBox(localsurf, true, corners, normals, u, v);
 	} else {
 		fastf_t uflat = isFlatU(localsurf, frames, normals, corners, u, v);
@@ -2076,8 +2075,9 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #define SE 4
 
 bool
-SurfaceTree::isFlat(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *m_normals, ON_3dPoint *corners, const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
+SurfaceTree::isFlat(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *UNUSED(m_normals), ON_3dPoint *UNUSED(corners), const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
 {
+	/*
     ON_3dVector normals[8];
     for (int i = 0; i < 4; i++) {
 	normals[i] = m_normals[i];
@@ -2125,43 +2125,8 @@ SurfaceTree::isFlat(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVecto
 	dvec<4> dots = xa * xb + ya * yb + za * zb;
 	product *= dots.foldr(1, dvec<4>::mul(), 3);
     }
-    ///////////////////////////////////////////////////////////////////////
-    double Xdot = frames[0].xaxis * frames[1].xaxis;
-    Xdot = Xdot * (frames[0].xaxis * frames[2].xaxis);
-    Xdot = Xdot * (frames[0].xaxis * frames[3].xaxis);
-    Xdot = Xdot * (frames[0].xaxis * frames[4].xaxis);
-    Xdot = Xdot * (frames[0].xaxis * frames[5].xaxis);
-    Xdot = Xdot * (frames[0].xaxis * frames[6].xaxis);
-    Xdot = Xdot * (frames[0].xaxis * frames[7].xaxis);
-    Xdot = Xdot * (frames[0].xaxis * frames[8].xaxis);
-    Xdot = Xdot * (frames[1].xaxis * frames[2].xaxis);
-    Xdot = Xdot * (frames[1].xaxis * frames[3].xaxis);
-    Xdot = Xdot * (frames[1].xaxis * frames[4].xaxis);
-    Xdot = Xdot * (frames[1].xaxis * frames[5].xaxis);
-    Xdot = Xdot * (frames[1].xaxis * frames[6].xaxis);
-    Xdot = Xdot * (frames[1].xaxis * frames[7].xaxis);
-    Xdot = Xdot * (frames[1].xaxis * frames[8].xaxis);
-    Xdot = Xdot * (frames[2].xaxis * frames[3].xaxis);
-    Xdot = Xdot * (frames[2].xaxis * frames[4].xaxis);
-    Xdot = Xdot * (frames[2].xaxis * frames[5].xaxis);
-    Xdot = Xdot * (frames[2].xaxis * frames[6].xaxis);
-    Xdot = Xdot * (frames[2].xaxis * frames[7].xaxis);
-    Xdot = Xdot * (frames[2].xaxis * frames[8].xaxis);
-    Xdot = Xdot * (frames[3].xaxis * frames[4].xaxis);
-    Xdot = Xdot * (frames[3].xaxis * frames[5].xaxis);
-    Xdot = Xdot * (frames[3].xaxis * frames[6].xaxis);
-    Xdot = Xdot * (frames[3].xaxis * frames[7].xaxis);
-    Xdot = Xdot * (frames[3].xaxis * frames[8].xaxis);
-    Xdot = Xdot * (frames[4].xaxis * frames[5].xaxis);
-    Xdot = Xdot * (frames[4].xaxis * frames[6].xaxis);
-    Xdot = Xdot * (frames[4].xaxis * frames[7].xaxis);
-    Xdot = Xdot * (frames[4].xaxis * frames[8].xaxis);
-    Xdot = Xdot * (frames[5].xaxis * frames[6].xaxis);
-    Xdot = Xdot * (frames[5].xaxis * frames[7].xaxis);
-    Xdot = Xdot * (frames[5].xaxis * frames[8].xaxis);
-    Xdot = Xdot * (frames[6].xaxis * frames[7].xaxis);
-    Xdot = Xdot * (frames[6].xaxis * frames[8].xaxis);
-    Xdot = Xdot * (frames[7].xaxis * frames[8].xaxis);
+    return product >= BREP_SURFACE_FLATNESS;
+    */
 
     double Ndot = frames[0].zaxis * frames[1].zaxis;
     Ndot = Ndot * (frames[0].zaxis * frames[2].zaxis);
@@ -2200,29 +2165,55 @@ SurfaceTree::isFlat(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVecto
     Ndot = Ndot * (frames[6].zaxis * frames[8].zaxis);
     Ndot = Ndot * (frames[7].zaxis * frames[8].zaxis);
 
-    ON_3dVector udir0,udir1,vdir0,vdir1;
-    udir0 = frames[0].origin - frames[3].origin;
-    udir0.Unitize();
-    udir1 = frames[1].origin - frames[2].origin;
-    udir1.Unitize();
-    vdir0 = frames[1].origin - frames[0].origin;
-    vdir0.Unitize();
-    vdir1 = frames[2].origin - frames[3].origin;
-    vdir1.Unitize();
+    return (fabs(Ndot) >= BREP_SURFACE_FLATNESS); // && fabs(uvdot) >= BREP_SURFACE_FLATNESS;
 
-    double uvdot = 1.0 - fabs(udir0 * vdir0);
-    uvdot = uvdot*(1.0 - fabs(udir0 * vdir1));
-    uvdot = uvdot*(1.0 - fabs(udir1 * vdir0));
-    uvdot = uvdot*(1.0 - fabs(udir1 * vdir1));
+}
 
-    product = fabs(Xdot*Ndot);
+bool
+SurfaceTree::isStraight(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *UNUSED(m_normals), ON_3dPoint *UNUSED(corners), const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
+{
+    double Xdot = frames[0].xaxis * frames[1].xaxis;
+    Xdot = Xdot * (frames[0].xaxis * frames[2].xaxis);
+    Xdot = Xdot * (frames[0].xaxis * frames[3].xaxis);
+    Xdot = Xdot * (frames[0].xaxis * frames[4].xaxis);
+    Xdot = Xdot * (frames[0].xaxis * frames[5].xaxis);
+    Xdot = Xdot * (frames[0].xaxis * frames[6].xaxis);
+    Xdot = Xdot * (frames[0].xaxis * frames[7].xaxis);
+    Xdot = Xdot * (frames[0].xaxis * frames[8].xaxis);
+    Xdot = Xdot * (frames[1].xaxis * frames[2].xaxis);
+    Xdot = Xdot * (frames[1].xaxis * frames[3].xaxis);
+    Xdot = Xdot * (frames[1].xaxis * frames[4].xaxis);
+    Xdot = Xdot * (frames[1].xaxis * frames[5].xaxis);
+    Xdot = Xdot * (frames[1].xaxis * frames[6].xaxis);
+    Xdot = Xdot * (frames[1].xaxis * frames[7].xaxis);
+    Xdot = Xdot * (frames[1].xaxis * frames[8].xaxis);
+    Xdot = Xdot * (frames[2].xaxis * frames[3].xaxis);
+    Xdot = Xdot * (frames[2].xaxis * frames[4].xaxis);
+    Xdot = Xdot * (frames[2].xaxis * frames[5].xaxis);
+    Xdot = Xdot * (frames[2].xaxis * frames[6].xaxis);
+    Xdot = Xdot * (frames[2].xaxis * frames[7].xaxis);
+    Xdot = Xdot * (frames[2].xaxis * frames[8].xaxis);
+    Xdot = Xdot * (frames[3].xaxis * frames[4].xaxis);
+    Xdot = Xdot * (frames[3].xaxis * frames[5].xaxis);
+    Xdot = Xdot * (frames[3].xaxis * frames[6].xaxis);
+    Xdot = Xdot * (frames[3].xaxis * frames[7].xaxis);
+    Xdot = Xdot * (frames[3].xaxis * frames[8].xaxis);
+    Xdot = Xdot * (frames[4].xaxis * frames[5].xaxis);
+    Xdot = Xdot * (frames[4].xaxis * frames[6].xaxis);
+    Xdot = Xdot * (frames[4].xaxis * frames[7].xaxis);
+    Xdot = Xdot * (frames[4].xaxis * frames[8].xaxis);
+    Xdot = Xdot * (frames[5].xaxis * frames[6].xaxis);
+    Xdot = Xdot * (frames[5].xaxis * frames[7].xaxis);
+    Xdot = Xdot * (frames[5].xaxis * frames[8].xaxis);
+    Xdot = Xdot * (frames[6].xaxis * frames[7].xaxis);
+    Xdot = Xdot * (frames[6].xaxis * frames[8].xaxis);
+    Xdot = Xdot * (frames[7].xaxis * frames[8].xaxis);
 
-    ///////////////////////////////////////////////////////////////////////
-    return (fabs(Xdot) >= BREP_SURFACE_FLATNESS) && (fabs(Ndot) >= BREP_SURFACE_FLATNESS); // && fabs(uvdot) >= BREP_SURFACE_FLATNESS;
+    return (fabs(Xdot) >= BREP_SURFACE_STRAIGHTNESS);
 }
 
 fastf_t
-SurfaceTree::isFlatU(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *m_normals, ON_3dPoint *corners, const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
+SurfaceTree::isFlatU(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *m_normals, ON_3dPoint *UNUSED(corners), const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
 {
     fastf_t product = 1.0;
     product *= m_normals[0]*m_normals[1];
@@ -2244,7 +2235,7 @@ SurfaceTree::isFlatU(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVect
 }
 
 fastf_t
-SurfaceTree::isFlatV(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *m_normals, ON_3dPoint *corners, const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
+SurfaceTree::isFlatV(const ON_Surface* UNUSED(surf), ON_Plane *frames, ON_3dVector *m_normals, ON_3dPoint *UNUSED(corners), const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
 {
 	fastf_t product = 1.0;
     product *= m_normals[0]*m_normals[3];

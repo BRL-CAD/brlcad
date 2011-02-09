@@ -22,10 +22,9 @@
 <refsection><info><title>Description</title></info>
 
 <para>If specified, this value will be used for the
-<tag class="attribute">width</tag> attribute on
-images that do not specify any
-<link xlink:href="http://docbook.org/tdg/en/html/imagedata.html#viewport.area">viewport
-dimensions</link>.</para>
+<tag class="attribute">width</tag> attribute on images that do not specify any 
+<emphasis xlink:title="DocBook 5: The Definitive Guide"
+	  xlink:href="http://docbook.org/tdg5/en/html/imagedata.html#viewport.area">viewport dimensions</emphasis>.</para>
 
 </refsection>
 </refentry>

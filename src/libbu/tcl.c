@@ -1,7 +1,7 @@
 /*                        B U _ T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -110,10 +110,10 @@ bu_tcl_structparse_get_terse_form(Tcl_Interp *interp,
 	Tcl_AppendElement(interp, sp->sp_name);
 	bu_vls_trunc(&str, 0);
 	/* These types are specified by lengths, e.g. %80s */
-	if (strcmp(sp->sp_fmt, "%c") == 0 ||
-	    strcmp(sp->sp_fmt, "%s") == 0 ||
-	    strcmp(sp->sp_fmt, "%S") == 0 || /* XXX - DEPRECATED [7.14] */
-	    strcmp(sp->sp_fmt, "%V") == 0) {
+	if (BU_STR_EQUAL(sp->sp_fmt, "%c") ||
+	    BU_STR_EQUAL(sp->sp_fmt, "%s") ||
+	    BU_STR_EQUAL(sp->sp_fmt, "%S") || /* XXX - DEPRECATED [7.14] */
+	    BU_STR_EQUAL(sp->sp_fmt, "%V")) {
 	    if (sp->sp_count > 1) {
 		/* Make them all look like %###s */
 		bu_vls_printf(&str, "%%%lds", sp->sp_count);
@@ -138,7 +138,7 @@ bu_tcl_structparse_get_terse_form(Tcl_Interp *interp,
 int
 bu_tcl_structparse_argv(Tcl_Interp *interp,
 			int argc,
-			char **argv,
+			const char **argv,
 			const struct bu_structparse *desc,
 			char *base)
 {
@@ -322,7 +322,7 @@ bu_tcl_get_value_by_keyword(ClientData clientData,
     }
 
     for (i=0; i < listc; i += 2) {
-	if (strcmp(iwant, listv[i]) == 0) {
+	if (BU_STR_EQUAL(iwant, listv[i])) {
 	    /* If value is a list, don't nest it in another list */
 	    if (listv[i+1][0] == '{') {
 		struct bu_vls str;

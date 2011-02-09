@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ P E R L I N . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2010 United States Government as represented by
+ * Copyright (c) 2002-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,28 +38,28 @@
 
 #define	PRAND (int)(bn_randmt()*16384)
 #define	S_CURVE(t) (t * t * (3.0 - 2.0 * t))
-#define	AT3(rx, ry, rz) (rx*q.v[0] + ry*q.v[1] + rz*q.v[2]);
+#define	AT3(rx, ry, rz) (rx*q[0] + ry*q[1] + rz*q[2]);
 #define	LERP(t, a, b) (a+t*(b-a))
 
 
-void	texture_perlin_init(texture_perlin_t *P);
-void	texture_perlin_free(texture_perlin_t *P);
-tfloat	texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, tfloat Size, int Depth);
-tfloat	texture_perlin_omega(texture_perlin_t *P, TIE_3 V);
+void	texture_perlin_init(struct texture_perlin_s *P);
+void	texture_perlin_free(struct texture_perlin_s *P);
+fastf_t	texture_perlin_noise3(struct texture_perlin_s *P, vect_t V, fastf_t Size, int Depth);
+fastf_t	texture_perlin_omega(struct texture_perlin_s *P, vect_t V);
 
-
-void texture_perlin_init(texture_perlin_t *P) {
+void
+texture_perlin_init(struct texture_perlin_s *P) {
     int i, j, k;
 
     P->PV = (int *)bu_malloc(sizeof(int)*(2*B+2), "PV");
-    P->RV = (TIE_3 *)bu_malloc(sizeof(TIE_3)*(2*B+2), "RV");
+    P->RV = (vect_t *)bu_malloc(sizeof(vect_t)*(2*B+2), "RV");
 
     /* Generate Random Vectors */
     for (i = 0; i < B; i++) {
-	P->RV[i].v[0] = (tfloat)((PRAND % (2*B)) - B) / B;
-	P->RV[i].v[1] = (tfloat)((PRAND % (2*B)) - B) / B;
-	P->RV[i].v[2] = (tfloat)((PRAND % (2*B)) - B) / B;
-	VUNITIZE(P->RV[i].v);
+	P->RV[i][0] = (fastf_t)((PRAND % (2*B)) - B) / B;
+	P->RV[i][1] = (fastf_t)((PRAND % (2*B)) - B) / B;
+	P->RV[i][2] = (fastf_t)((PRAND % (2*B)) - B) / B;
+	VUNITIZE(P->RV[i]);
 	P->PV[i] = i;
     }
 
@@ -72,40 +72,40 @@ void texture_perlin_init(texture_perlin_t *P) {
 
     for (i = 0; i < B + 2; i++) {
 	P->PV[B+i] = P->PV[i];
-	P->RV[B+i] = P->RV[i];
+	VMOVE(P->RV[B+i], P->RV[i]);
     }
 }
 
-
-void texture_perlin_free(texture_perlin_t *P) {
+void
+texture_perlin_free(struct texture_perlin_s *P) {
     bu_free(P->PV, "PV");
     bu_free(P->RV, "RV");
 }
 
-
-tfloat texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, tfloat Size, int Depth) {
+fastf_t
+texture_perlin_noise3(struct texture_perlin_s *P, vect_t V, fastf_t Size, int Depth) {
     int i;
-    tfloat sum;
+    fastf_t sum;
 
     sum = 0;
     for (i = 0; i < Depth; i++) {
 	sum += texture_perlin_omega(P, V);
-	VSCALE(V.v,  V.v,  Size);
+	VSCALE(V,  V,  Size);
     }
 
     return sum;
 }
 
-
-tfloat texture_perlin_omega(texture_perlin_t *P, TIE_3 V) {
-    TIE_3		q;
-    tfloat	r0[3], r1[3], sy, sz, a, b, c, d, t, u, v;
+fastf_t
+texture_perlin_omega(struct texture_perlin_s *P, vect_t V) {
+    vect_t		q;
+    fastf_t	r0[3], r1[3], sy, sz, a, b, c, d, t, u, v;
     int		b0[3], b1[3], b00, b10, b01, b11;
     int		i, j;
 
 
     for (i = 0; i < 3; i++) {
-	t = V.v[i] + N;
+	t = V[i] + N;
 	b0[i] = ((int)t) & BM;
 	b1[i] = (b0[i]+1) & BM;
 	r0[i] = t - (int)t;
@@ -124,29 +124,29 @@ tfloat texture_perlin_omega(texture_perlin_t *P, TIE_3 V) {
     sy = S_CURVE(r0[1]);
     sz = S_CURVE(r0[2]);
 
-    q = P->RV[b00 + b0[2]];
+    VMOVE(q, P->RV[b00 + b0[2]]);
     u = AT3(r0[0], r0[1], r0[2]);
-    q = P->RV[b10 + b0[2]];
+    VMOVE(q, P->RV[b10 + b0[2]]);
     v = AT3(r1[0], r0[1], r0[2]);
     a = LERP(t, u, v);
 
-    q = P->RV[b01 + b0[2]];
+    VMOVE(q, P->RV[b01 + b0[2]]);
     u = AT3(r0[0], r1[1], r0[2]);
-    q = P->RV[b11 + b0[2]];
+    VMOVE(q, P->RV[b11 + b0[2]]);
     v = AT3(r1[0], r1[1], r0[2]);
     b = LERP(t, u, v);
 
     c = LERP(sy, a, b);
 
-    q = P->RV[b00 + b1[2]];
+    VMOVE(q, P->RV[b00 + b1[2]]);
     u = AT3(r0[0], r0[1], r1[2]);
-    q = P->RV[b10 + b1[2]];
+    VMOVE(q, P->RV[b10 + b1[2]]);
     v = AT3(r1[0], r0[1], r1[2]);
     a = LERP(t, u, v);
 
-    q = P->RV[b01 + b1[2]];
+    VMOVE(q, P->RV[b01 + b1[2]]);
     u = AT3(r0[0], r1[1], r1[2]);
-    q = P->RV[b11 + b1[2]];
+    VMOVE(q, P->RV[b11 + b1[2]]);
     v = AT3(r1[0], r1[1], r1[2]);
     b = LERP(t, u, v);
 

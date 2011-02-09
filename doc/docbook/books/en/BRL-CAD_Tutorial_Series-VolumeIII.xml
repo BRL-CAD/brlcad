@@ -1,14 +1,13 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<book xmlns:xi="http://www.w3.org/2001/XInclude">
-  <bookinfo>
-    <title><application>BRL-CAD</application> Tutorial Series: Volume III - Principles of Effective Modeling</title>
+<book xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title><application>BRL-CAD</application> Tutorial Series: Volume III - Principles of Effective Modeling</title>
+    
 
-    <xi:include href="./tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="./tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
     <publishername>Army Research Laboratory</publishername>
-    <pubsnumber>ARL-SR-119</pubsnumber>
+    <biblioid class="pubsnumber">ARL-SR-119</biblioid>
     <pubdate>September 2003</pubdate>
     
     <legalnotice>
@@ -28,31 +27,11 @@
       trademarks of the U.S. Army.</para>
     </legalnotice>      
     
-    <abstract>
-      <para>
-	Since 1979, the U.S. Army Research Laboratory has been developing and
-	distributing the <application>BRL-CAD</application> constructive solid geometry (CSG) modeling
-	package for a wide range of military and industrial applications. The
-	package includes a large collection of tools and utilities including an
-	interactive geometry editor, ray-tracing and generic framebuffer
-	libraries, a network-distributed image-processing and signal-processing
-	capability, and an embedded scripting language.
-      </para>
-      
-      <para>
-	As part of this effort, a multivolume tutorial series is being developed
-	to assist users in the many features of the <application>BRL-CAD</application> package. 
-	"Principles of Effective Modeling," which is the third 
-	volume in the series, addresses the modeling process and suggests 
-	principles and techniques for maximizing <application>BRL-CAD</application>'s 
-	capabilities. Other volumes focus on package installation and specific 
-	features and utilities within the software package.
-      </para>
-    </abstract>
-  </bookinfo>
+    
+  </info>
 
-  <preface>
-    <title>Acknowledgements</title>
+  <preface><info><title>Acknowledgements</title></info>
+    
 
     <para>
       The authors would like to acknowledge Mr. John Anderson, Mr. Sean
@@ -77,8 +56,8 @@
     </para>
   </preface>
 
-  <chapter id="volIIIintro">
-    <title>Introduction</title>
+  <chapter xml:id="volIIIintro"><info><title>Introduction</title></info>
+    
     <para>
       Since 1979, the U.S. Army Research Laboratory (ARL) has been developing
       and distributing the U.S. Army Ballistic Research Laboratory -
@@ -117,10 +96,10 @@
     </para>
   </chapter> 
 
-  <chapter id="volIIImodelprocess">
-    <title>The Model Process</title>
-    <sect1>
-      <title>The Importance of the Model Mission</title>
+  <chapter xml:id="volIIImodelprocess"><info><title>The Model Process</title></info>
+    
+    <section><info><title>The Importance of the Model Mission</title></info>
+      
       <para>
 	The key to knowing how to build successful, effective models in BRL-CAD is
 	to know why you are building them. Thus, before any measurements are
@@ -156,20 +135,20 @@
 	internal components are usually unnecessary (see Figure 2).
       </para>
 
-      <figure>
-	<title>Ballistic penetration model with transparent exterior.</title>
+      <figure><info><title>Ballistic penetration model with transparent exterior.</title></info>
+	
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig01.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig01.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
       </figure>
 
-      <figure>
-	<title>External detail commonly used in radar signature models.</title>
+      <figure><info><title>External detail commonly used in radar signature models.</title></info>
+	
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig02.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig02.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
       </figure>
@@ -181,10 +160,10 @@
 	users requires (and, of course, that time/resources permit).
       </para>
 
-    </sect1>
+    </section>
 
-    <sect1>
-      <title>M-O-D-E-L: A Five-Step Approach to Creating Effective Models</title>
+    <section><info><title>M-O-D-E-L: A Five-Step Approach to Creating Effective Models</title></info>
+      
       
       <para>
 	After one has explicitly and unequivocally established the "why" of a
@@ -243,11 +222,11 @@
 	altogether as a project develops.
       </para>
 
-      <figure>
-	<title>M-O-D-E-L: the five-stage modeling process.</title>
+      <figure><info><title>M-O-D-E-L: the five-stage modeling process.</title></info>
+	
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig03.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig03.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
       </figure>
@@ -262,11 +241,11 @@
 	from another source, the measurement and development phases might be
 	nonapplicable, and a modeler might skip directly to the evaluation phase.
       </para>
-    </sect1>
+    </section>
   </chapter>
 
-  <chapter id="volIIImeasuringdata">
-    <title>Measuring data</title>
+  <chapter xml:id="volIIImeasuringdata"><info><title>Measuring data</title></info>
+    
     
     <para>
       Unless a modeler is creating a conceptually new geometry, he must work
@@ -279,9 +258,9 @@
       user's point of view.
     </para>
 
-    <table>
-      <title>Various modeling data sources.</title>
-      <tgroup cols='3' align='center'>
+    <table><info><title>Various modeling data sources.</title></info>
+      
+      <tgroup cols="3" align="center">
 	<tbody>
 	  <row>
 	    <entry>
@@ -300,7 +279,7 @@
 		Blueprints/schematics/mechanical drawings/photographs
 	      </para>
 	      <para>
-		<inlinegraphic fileref="../../books/en/images/tutorial_series_volIII_fig30.png" />
+		<inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volIII_fig30.png"/></imageobject></inlinemediaobject>
 	      </para>
 	    </entry>
 	    <entry>
@@ -320,7 +299,7 @@
 		Measurable objects
 	      </para>
 	      <para>
-		<inlinegraphic fileref="../../books/en/images/tutorial_series_volIII_fig21.png" />
+		<inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volIII_fig21.png"/></imageobject></inlinemediaobject>
 	      </para>
 	    </entry>
 	    <entry>
@@ -338,7 +317,7 @@
 		Converted geometry
 	      </para>
 	      <para>
-		<inlinegraphic fileref="../../books/en/images/tutorial_series_volIII_fig22.png" />
+		<inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volIII_fig22.png"/></imageobject></inlinemediaobject>
 	      </para>
 	    </entry>
 	    <entry>
@@ -475,13 +454,13 @@
 		  assumed to be other units, etc. The table below lists some standard symbols and
 		  abbreviations that are commonly used when recording measurements.
 		</para>
-		<figure>
-		  <title>Commonly used measurement symbols and abbreviations.</title>
+		<figure><info><title>Commonly used measurement symbols and abbreviations.</title></info>
+		  
 		    <mediaobject>
 	               <imageobject>
-			   <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_table_image_1.png" format="PNG"></imagedata>
+			   <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_table_image_1.png" format="PNG"/>
 		       </imageobject>
-		       <caption align = "left">
+		       <caption align="left">
 			  <para>[a] Intersection and union symbols presented here
 			  should not be confused with the intersection (+) and union (u) symbols used
 			  to represent and execute Boolean operations in BRL-CAD.</para>
@@ -495,8 +474,8 @@
       </itemizedlist>
     </chapter>
  
-  <chapter id="volIIIorganizing">
-    <title>Organizing the Structure</title>
+  <chapter xml:id="volIIIorganizing"><info><title>Organizing the Structure</title></info>
+    
      <para>
        Taking the time to map out a tree structure of an object before building
        it is another important step in the modeling process, especially if the
@@ -590,9 +569,9 @@
 		  shapes and modeling levels, see Section 5, as well as Lesson 5 and
 		  Appendix C of BRL-CAD Tutorial Volume II (Butler et al., 2001).
 		</para>
-		<table>
-		  <title>Examples of naming conventions.</title>
-		  <tgroup cols='2' align='center'>
+		<table><info><title>Examples of naming conventions.</title></info>
+		  
+		  <tgroup cols="2" align="center">
 		    <tbody>
 		      <row>
 			<entry>
@@ -604,7 +583,7 @@
 		      </row>
 		      <row>
 			<entry>
-			  <literallayout  class="monospaced">
+			  <literallayout class="monospaced">
 sph.s1,
 sph.r1,
 sph.c1
@@ -621,7 +600,7 @@ sph.c1
 		      </row>
 		      <row>
 			<entry>
-			  <literallayout  class="monospaced">
+			  <literallayout class="monospaced">
 ant.s1,
 ant.r1, 
 ant.c1
@@ -634,7 +613,7 @@ ant.c1
 		      </row>
 		      <row>
 			<entry>
-			  <literallayout  class="monospaced">
+			  <literallayout class="monospaced">
 frf.s1-1,
 frf.s1+1,
 frf.s1
@@ -651,7 +630,7 @@ frf.s1
 		      </row>
 		      <row>
 			<entry>
-			  <literallayout  class="monospaced">
+			  <literallayout class="monospaced">
 front_face.a, 
 right_antenna.a, 
 left_roadwheel.a
@@ -664,7 +643,7 @@ left_roadwheel.a
 		      </row>
 		      <row>
 			<entry>
-			  <literallayout  class="monospaced">
+			  <literallayout class="monospaced">
 Driver  Main_Gun 
 M1A1
 			  </literallayout>
@@ -824,19 +803,19 @@ mvall oldname newname
 	    al., 2001) could be set up in several ways. Figure 4 shows a structure
 	    based on location, and Figure 5 shows a structure based on functionality.
 	  </para>
-	  <figure>
-	    <title>Location-based structure of the radio in Volume II.</title>
+	  <figure><info><title>Location-based structure of the radio in Volume II.</title></info>
+	    
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig04.png" format="PNG"></imagedata>
+		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig04.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
-	  <figure>
-	    <title>Function-based structure of the radio in Volume II.</title>
+	  <figure><info><title>Function-based structure of the radio in Volume II.</title></info>
+	    
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig05.png" format="PNG"></imagedata>
+		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig05.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -869,8 +848,8 @@ mvall oldname newname
 
   </chapter>
 
-  <chapter id="volIIIdevgeometry">
-    <title>Developing Geometry</title>
+  <chapter xml:id="volIIIdevgeometry"><info><title>Developing Geometry</title></info>
+    
     <para>
       In the end, the heart of the modeling process is the actual construction
       of the geometry. All the best measurement, organization, evaluation, and
@@ -928,9 +907,9 @@ mvall oldname newname
 	    is one of the first keys to developing effective geometry.
 	  </para>
 
-	  <table>
-	    <title>The four modeling levels in BRL-CAD</title>
-	    <tgroup cols='2' align='center'>
+	  <table><info><title>The four modeling levels in BRL-CAD</title></info>
+	    
+	    <tgroup cols="2" align="center">
 	      <tbody>
 		<row>
 		  <entry>
@@ -999,9 +978,9 @@ mvall oldname newname
 	    primitives and understand the data needed to produce accurate models.
 	  </para>
 
-	  <table>
-	    <title>The major BRL-CAD primitives and parameters.</title>
-	    <tgroup cols='2' align='center'>
+	  <table><info><title>The major BRL-CAD primitives and parameters.</title></info>
+	    
+	    <tgroup cols="2" align="center">
 	      <tbody>
 		<row>
 		  <entry>
@@ -1019,7 +998,7 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject>
-			    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig24.png" format="PNG"></imagedata>
+			    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig24.png" format="PNG"/>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1047,7 +1026,7 @@ mvall oldname newname
 			  Illegal variations include the following: 
 			</para>
 			<para>
-			  <inlinegraphic fileref="../../books/en/images/tutorial_series_volIII_fig23.png" />
+			  <inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volIII_fig23.png"/></imageobject></inlinemediaobject>
 			</para>
 		      </listitem>
 		    </itemizedlist>
@@ -1059,7 +1038,7 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject>
-			    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig25.png" format="PNG"></imagedata>
+			    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig25.png" format="PNG"/>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1092,7 +1071,7 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject>
-			    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig26.png" format="PNG"></imagedata>
+			    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig26.png" format="PNG"/>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1134,7 +1113,7 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject>
-			    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig27.png" format="PNG"></imagedata>
+			    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig27.png" format="PNG"/>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1182,7 +1161,7 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject>
-			    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig28.png" format="PNG"></imagedata>
+			    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig28.png" format="PNG"/>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1224,7 +1203,7 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject>
-			    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig29.png"></imagedata>
+			    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig29.png"/>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1326,9 +1305,9 @@ mvall oldname newname
 	    and 9).
 	  </para>
 	  
-	  <table>
-	    <title>Various ways to build primitives.</title>
-	    <tgroup cols='4' align='center'>
+	  <table><info><title>Various ways to build primitives.</title></info>
+	    
+	    <tgroup cols="4" align="center">
 	      <tbody>
 		<row>
 		  <entry>
@@ -1483,35 +1462,35 @@ mvall oldname newname
 	  </note>
 
 
-	  <figure>
-	    <title>Coordinate axes of a turreted ground vehicle.</title>
+	  <figure><info><title>Coordinate axes of a turreted ground vehicle.</title></info>
+	    
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig06.png" format="PNG"></imagedata>
+		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig06.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
-	  <figure>
-	    <title>Coordinate axes of a nonturreted ground vehicle.</title>
+	  <figure><info><title>Coordinate axes of a nonturreted ground vehicle.</title></info>
+	    
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig07.png" format="PNG"></imagedata>
+		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig07.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
-	  <figure>
-	    <title>Coordinate axes of a fixed-wing aircraft.</title>
+	  <figure><info><title>Coordinate axes of a fixed-wing aircraft.</title></info>
+	    
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig08.png" format="PNG"></imagedata>
+		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig08.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
-	  <figure>
-	    <title>Coordinate axes of a rotary-wing aircraft.</title>
+	  <figure><info><title>Coordinate axes of a rotary-wing aircraft.</title></info>
+	    
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig09.png" format="PNG"></imagedata>
+		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig09.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1547,27 +1526,27 @@ mvall oldname newname
 	    occurrences.
 	  </para>
 
-	  <figure>
-	    <title>Building multiple occurrences through replication.</title>
+	  <figure><info><title>Building multiple occurrences through replication.</title></info>
+	    
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig10.png" format="PNG"></imagedata>
+		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig10.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
 
-	  <figure>
-	    <title>Building multiple occurrences through referencing.</title>
+	  <figure><info><title>Building multiple occurrences through referencing.</title></info>
+	    
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig11.png" format="PNG"></imagedata>
+		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig11.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
 	  
-	  <table>
-	    <title>Advantages and disadvantages of replication vs. referencing.</title>
-	    <tgroup cols='3' align='center'>
+	  <table><info><title>Advantages and disadvantages of replication vs. referencing.</title></info>
+	    
+	    <tgroup cols="3" align="center">
 	      <tbody>
 		<row>
 		  <entry>
@@ -1725,16 +1704,16 @@ mvall oldname newname
 	    For the first method, the keep command exports data either creating a new
 	    database file or appending objects to an existing database. The form of
 	    the command is as follows:
-	    <literallayout>
-mged>  keep filename.g object(s)
+	    <literallayout class="normal">
+mged&gt;  keep filename.g object(s)
 	    </literallayout>
 	    The <command>dbconcat</command> command adds the contents of an existing database file to the
 	    database currently open. The user may import the database as is or choose
 	    to rename each element of the geometry by specifying a prefix. The user
 	    may alternatively use the -s or -p option to add a computer-generated
 	    suffix (-s) or prefix (-p). The form of the command is as follows:
-	    <literallayout>
-mged>  dbconcat [-s, -p] filename.g [prefix]
+	    <literallayout class="normal">
+mged&gt;  dbconcat [-s, -p] filename.g [prefix]
 	    </literallayout>
 	    As mentioned previously, every BRL-CAD object must have a unique name;
 	    however, when combining geometry from more than one database, there may be
@@ -1762,8 +1741,8 @@ mged>  dbconcat [-s, -p] filename.g [prefix]
 	    command from the command line. This command compares external database
 	    file object names with current database file object names and reports
 	    duplicate names. The form of the dup command is as follows:
-	    <literallayout>
-mged>  dbconcat [-s, -p] filename.g [prefix]
+	    <literallayout class="normal">
+mged&gt;  dbconcat [-s, -p] filename.g [prefix]
 	    </literallayout>
 	    Note that there is currently no GUI equivalent to the dup command.
 	  </para>
@@ -1790,27 +1769,27 @@ mged>  dbconcat [-s, -p] filename.g [prefix]
 	    for that region (see Figure 13). Therefore, whenever possible, the use of
 	    smaller, more compact bounding primitives is recommended (see Figure 14).
 	  </para>
-	  <figure>
-	    <title>Target geometry.</title>
+	  <figure><info><title>Target geometry.</title></info>
+	    
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig12.png" format="PNG"></imagedata>
+		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig12.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
-	  <figure>
-	    <title>Example of an Overly Large Bounding Primitive.</title>
+	  <figure><info><title>Example of an Overly Large Bounding Primitive.</title></info>
+	    
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig13.png" format="PNG"></imagedata>
+		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig13.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
-	  <figure>
-	    <title>Example of a compact bounding primitive.</title>
+	  <figure><info><title>Example of a compact bounding primitive.</title></info>
+	    
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig14.png" format="PNG"></imagedata>
+		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig14.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1844,11 +1823,11 @@ mged>  dbconcat [-s, -p] filename.g [prefix]
 	    turret, etc.) should be grouped together in assembly combinations (as
 	    shown in Figure 15).
 
-	    <figure>
-	      <title>Example of grouping objects for articulation.</title>
+	    <figure><info><title>Example of grouping objects for articulation.</title></info>
+	      
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig15.png" format="PNG"></imagedata>
+		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig15.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	    </figure>
@@ -1905,11 +1884,11 @@ mged>  dbconcat [-s, -p] filename.g [prefix]
 	    </listitem>
 	  </itemizedlist>
 	  
-	  <figure>
-	    <title>Sample Boolean operations.</title>
+	  <figure><info><title>Sample Boolean operations.</title></info>
+	    
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig16.png" format="PNG"></imagedata>
+		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig16.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1928,11 +1907,11 @@ mged>  dbconcat [-s, -p] filename.g [prefix]
 		notation used in BRL-CAD.</para></footnote> format.
 		Proceeding left to right, intersections (+) and subtractions (") are
 		performed before unions (u). For example, the command
-		<literallayout>
+		<literallayout class="normal">
 comb comb_name u a - b + c
 		</literallayout>
 		is evaluated as
-		<literallayout>
+		<literallayout class="normal">
 ((a - b) + c).
 		</literallayout>
 	      </para>
@@ -1994,11 +1973,11 @@ comb comb_name u a - b + c
 	    </listitem>
 	  </itemizedlist>
 	  
-	  <figure>
-	    <title>Properly (top) and improperly (bottom) ordered regions.</title>
+	  <figure><info><title>Properly (top) and improperly (bottom) ordered regions.</title></info>
+	    
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig17.png" format="PNG"></imagedata>
+		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig17.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -2055,9 +2034,9 @@ comb comb_name u a - b + c
 	</listitem>
       </itemizedlist>
 
-      <table id="mgedcolors">
-	<title>Traditionally used MGED colors.</title>
-	<tgroup cols='2' align='center'>
+      <table xml:id="mgedcolors"><info><title>Traditionally used MGED colors.</title></info>
+	
+	<tgroup cols="2" align="center">
 	  <tbody>
 	    <row>
 	      <entry>
@@ -2583,9 +2562,9 @@ comb comb_name u a - b + c
 	</tgroup>
       </table>
 
-      <table id="system-color-codes">
-	<title>Commonly used system-color codes.</title>
-	<tgroup cols='3' align='center'>
+      <table xml:id="system-color-codes"><info><title>Commonly used system-color codes.</title></info>
+	
+	<tgroup cols="3" align="center">
 	  <tbody>
 	    <row>
 	      <entry>
@@ -2611,7 +2590,7 @@ comb comb_name u a - b + c
 	    </row>
 	    <row>
 	      <entry>
-		Exterior armor<footnote id="armygreenrecommended"><para>Army green (RGB 42 98 48) is recommended for white backgrounds (e.g., printouts).</para></footnote>
+		Exterior armor<footnote xml:id="armygreenrecommended"><para>Army green (RGB 42 98 48) is recommended for white backgrounds (e.g., printouts).</para></footnote>
 	      </entry>
 	      <entry>
 		Gray
@@ -2822,10 +2801,10 @@ comb comb_name u a - b + c
 	</tgroup>
       </table>
 
-      <note>
-	<title>
+      <note><info><title>
 	  A Final Word About Modeling Ease vs. Modeling Precision 
-	</title>
+	</title></info>
+	
         <para>                                                                   
 	  Modelers can be tempted to use the "quickest" methods of creating and 
 	  aligning objects (e.g., using mouse clicks to size objects and the    
@@ -2843,8 +2822,8 @@ comb comb_name u a - b + c
 
   </chapter>
 
-  <chapter>
-    <title>Evaluating Geometry</title>
+  <chapter><info><title>Evaluating Geometry</title></info>
+    
     <para>
       Evaluating geometry for correctness is an important companion to building
       real-world models. In fact, without testing the validity of the geometry's
@@ -2880,11 +2859,11 @@ comb comb_name u a - b + c
       (see Figure 18).
     </para>
 
-    <figure>
-      <title>Shotline through a tank.</title>
+    <figure><info><title>Shotline through a tank.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig18.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig18.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -2954,11 +2933,11 @@ comb comb_name u a - b + c
       operations). For more details, see the on-line man page on rt.
     </para>
 
-    <figure>
-      <title>Example of overlaps in the graphics window.</title>
+    <figure><info><title>Example of overlaps in the graphics window.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig19.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig19.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -2975,11 +2954,11 @@ comb comb_name u a - b + c
       </para>
     </note>
 
-    <figure>
-      <title>Example of an overlap report in the command window.</title>
+    <figure><info><title>Example of an overlap report in the command window.</title></info>
+      
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig20.png" format="PNG"></imagedata>
+	  <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig20.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -3073,8 +3052,8 @@ comb comb_name u a - b + c
      </itemizedlist>
   </chapter>
 
-  <chapter>
-    <title>Logging Documentation</title>
+  <chapter><info><title>Logging Documentation</title></info>
+    
  
     <para>
       The final step in the modeling process--documentation--is extremely
@@ -3206,7 +3185,7 @@ comb comb_name u a - b + c
        Finally, it is a good idea to imbed the documentation (e.g., as a text
        file) directly into the database so that it always remains connected to
        the geometry it addresses. For example, the command
-       <literallayout>
+       <literallayout class="normal">
 dbbinary -i u c documentation /home/fred/doc.txt
        </literallayout>
        will create a BRL-CAD binary object named documentation, and the object
@@ -3216,19 +3195,19 @@ dbbinary -i u c documentation /home/fred/doc.txt
   </chapter>
 
  
-  <bibliography>
-    <title>References</title>
+  <bibliography><info><title>References</title></info>
+    
     
     <biblioentry xreflabel="dummyentry1">
       <authorgroup>
-	<author><firstname>John</firstname><surname>Smith</surname></author>
+	<author><personname><firstname>John</firstname><surname>Smith</surname></personname></author>
       </authorgroup>
       <copyright><year>1988</year>
       </copyright>
       :<publisher>
 	<publishername>Somebody</publishername>
       </publisher>
-      <title>Placeholder until xincludes from bibliography file are set up</title>
+      <citetitle>Placeholder until xincludes from bibliography file are set up</citetitle>
       <subtitle>sometitle</subtitle>
       <pagenums>000-999</pagenums>
     </biblioentry>
@@ -3237,85 +3216,85 @@ dbbinary -i u c documentation /home/fred/doc.txt
   </bibliography>
 
 
-  <appendix label="A">
-    <title>Using the Pipe Primitive</title>
-    <xi:include href="../../articles/en/pipes.xml" xpointer="pipe_general_use"/>
-    <xi:include href="../../articles/en/pipes.xml" xpointer="pipe_make_coil"/>
+  <appendix label="A"><info><title>Using the Pipe Primitive</title></info>
+    
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/pipes.xml" xpointer="pipe_general_use"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/pipes.xml" xpointer="pipe_make_coil"/>
   </appendix>
 
-  <appendix label="B">
-    <title>Using the Projection Shader</title>
-    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_general"/>
-    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_getimage"/>
-    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_resize"/>
-    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_actframe"/>
-    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_dispimage"/>
-    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_overlayimage"/>
-    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_savesettingsfile"/>
-    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_applysettingsfile"/>
-    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_render"/>
-    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_projectfront"/>
+  <appendix label="B"><info><title>Using the Projection Shader</title></info>
+    
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_general"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_getimage"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_resize"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_actframe"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_dispimage"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_overlayimage"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_savesettingsfile"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_applysettingsfile"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_render"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_projectfront"/>
   </appendix>
     
-  <appendix label="C">
-    <title>Using the Extruded Bitmap Primitive</title>
-    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm1"/>
-    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm2"/>
-    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm3"/>
-    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm4"/>
-    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm5"/>
-    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm6"/>
-    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm7"/>
-    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm8"/>
-    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm9"/>
+  <appendix label="C"><info><title>Using the Extruded Bitmap Primitive</title></info>
+    
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm1"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm2"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm3"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm4"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm5"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm6"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm7"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm8"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm9"/>
   </appendix>
 
-  <appendix label="D">
-    <title>Setting Up a .mgedrc File</title>
-    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc1"/>
-    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc2"/>
-    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc3"/>
-    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc4"/>
-    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc5"/>
-    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc6"/>
-    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc7"/>
-    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc8"/>
-    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc9"/>
-    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc10"/>
-    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc11"/>
-    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc12"/>
-    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc13"/>
-    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc14"/>
-    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc15"/>
-    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc16"/>
+  <appendix label="D"><info><title>Setting Up a .mgedrc File</title></info>
+    
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc1"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc2"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc3"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc4"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc5"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc6"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc7"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc8"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc9"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc10"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc11"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc12"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc13"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc14"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc15"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc16"/>
   </appendix>
 
-  <appendix label="E">
-    <title>Using the Build Pattern Tool</title>
-    <xi:include href="../../articles/en/build_pattern.xml" xpointer="build_pattern_generalinfo"/>
-    <xi:include href="../../articles/en/build_pattern.xml" xpointer="build_pattern_names"/>
-    <xi:include href="../../articles/en/build_pattern.xml" xpointer="build_pattern_fields"/>
-    <xi:include href="../../articles/en/build_pattern.xml" xpointer="build_pattern_stringsub"/>
-    <xi:include href="../../articles/en/build_pattern.xml" xpointer="build_pattern_recpatterns"/>
-    <xi:include href="../../articles/en/build_pattern.xml" xpointer="build_pattern_spherical"/>
-    <xi:include href="../../articles/en/build_pattern.xml" xpointer="build_pattern_cylind"/>
+  <appendix label="E"><info><title>Using the Build Pattern Tool</title></info>
+    
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_pattern.xml" xpointer="build_pattern_generalinfo"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_pattern.xml" xpointer="build_pattern_names"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_pattern.xml" xpointer="build_pattern_fields"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_pattern.xml" xpointer="build_pattern_stringsub"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_pattern.xml" xpointer="build_pattern_recpatterns"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_pattern.xml" xpointer="build_pattern_spherical"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_pattern.xml" xpointer="build_pattern_cylind"/>
   </appendix>
 
-  <appendix label="F">
-    <title>Using the build_region Command</title>
-    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region1"/>
-    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region2"/>
-    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region3"/>
-    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region4"/>
-    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region5"/>
-    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region6"/>
-    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region7"/>
-    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region8"/>
-    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region9"/>
-    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region10"/>
-    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region11"/>
-    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region12"/>
-    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region13"/>
+  <appendix label="F"><info><title>Using the build_region Command</title></info>
+    
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region1"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region2"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region3"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region4"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region5"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region6"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region7"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region8"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region9"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region10"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region11"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region12"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region13"/>
   </appendix>
 
 </book>

@@ -1,7 +1,7 @@
 /*                         P A T H S U M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,11 +65,11 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
     pos_in = 1;
 
     /* find out which command was entered */
-    if (strcmp(argv[0], "paths") == 0) {
+    if (BU_STR_EQUAL(argv[0], "paths")) {
 	/* want to list all matching paths */
 	gtd.gtd_flag = _GED_LISTPATH;
     }
-    if (strcmp(argv[0], "listeval") == 0) {
+    if (BU_STR_EQUAL(argv[0], "listeval")) {
 	/* want to list evaluated solid[s] */
 	gtd.gtd_flag = _GED_LISTEVAL;
     }
@@ -80,7 +80,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 
 	tok = strtok((char *)argv[1], "/");
 	while (tok) {
-	    if ((gtd.gtd_obj[gtd.gtd_objpos++] = db_lookup(gedp->ged_wdbp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL)
+	    if ((gtd.gtd_obj[gtd.gtd_objpos++] = db_lookup(gedp->ged_wdbp->dbip, tok, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return GED_ERROR;
 	    tok = strtok((char *)NULL, "/");
 	}
@@ -89,7 +89,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 
 	/* build directory pointer array for desired path */
 	for (i=0; i<gtd.gtd_objpos; i++) {
-	    if ((gtd.gtd_obj[i] = db_lookup(gedp->ged_wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == DIR_NULL)
+	    if ((gtd.gtd_obj[i] = db_lookup(gedp->ged_wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == RT_DIR_NULL)
 		return GED_ERROR;
 	}
     }

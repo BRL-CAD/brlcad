@@ -1,7 +1,7 @@
 /*                      S P E C T R U M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -116,7 +116,7 @@ rt_spect_make_CIE_XYZ(struct bn_tabdata **x, struct bn_tabdata **y, struct bn_ta
     struct bn_tabdata *a, *b, *c;
     fastf_t xyz_scale;
     int i;
-    int j;
+    size_t j;
 
     BN_CK_TABLE(tabp);
 
@@ -195,7 +195,7 @@ rt_spect_make_CIE_XYZ(struct bn_tabdata **x, struct bn_tabdata **y, struct bn_ta
 void
 rt_spect_reflectance_rgb(struct bn_tabdata *curve, const float *rgb)
 {
-    register int i;
+    register size_t i;
     register const struct bn_table *tabp;
 
     BN_CK_TABDATA(curve);
@@ -248,7 +248,7 @@ rt_spect_black_body(struct bn_tabdata *data, double temp, unsigned int n)
 /* # wavelengths to eval at */
 {
     const struct bn_table *tabp;
-    int j;
+    size_t j;
 
     BN_CK_TABDATA(data);
     tabp = data->table;
@@ -307,7 +307,7 @@ rt_spect_black_body_fast(struct bn_tabdata *data, double temp)
 /* Degrees Kelvin */
 {
     const struct bn_table *tabp;
-    int j;
+    size_t j;
 
     BN_CK_TABDATA(data);
     tabp = data->table;
@@ -338,7 +338,7 @@ rt_spect_black_body_points(struct bn_tabdata *data, double temp)
 /* Degrees Kelvin */
 {
     const struct bn_table *tabp;
-    int j;
+    size_t j;
 
     BN_CK_TABDATA(data);
     tabp = data->table;

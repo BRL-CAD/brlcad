@@ -1,7 +1,7 @@
 /*                         E X P A N D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -78,7 +78,7 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 
 	/* If it isn't a regexp, copy directly and continue */
 	if (regexp == 0) {
-	    if (db_lookup(gedp->ged_wdbp->dbip, argv[whicharg], LOOKUP_QUIET) != DIR_NULL) {
+	    if (db_lookup(gedp->ged_wdbp->dbip, argv[whicharg], LOOKUP_QUIET) != RT_DIR_NULL) {
 		if (nummatch > 0)
 		    bu_vls_printf(&gedp->ged_result_str, " ");
 		ged_scrape_escapes_AppendResult(&gedp->ged_result_str, argv[whicharg]);
@@ -97,7 +97,7 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 	pattern = (char *)argv[whicharg];
 	thismatch = 0;
 	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		if (!db_regexp_match(pattern, dp->d_namep))
 		    continue;
 		/* Successful match */

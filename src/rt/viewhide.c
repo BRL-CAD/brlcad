@@ -1,7 +1,7 @@
 /*                      V I E W H I D E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,8 +46,8 @@
 #include "plot3.h"
 
 /* private */
+#include "./rtuif.h"
 #include "./ext.h"
-#include "rtprivate.h"
 
 
 #define SEEKING_START_PT 0
@@ -113,7 +113,7 @@ int	raymiss(register struct application *ap);
  */
 
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(register struct application *ap, char *file, char *obj, int minus_o, int UNUSED(minus_F))
 {
 
     ap->a_hit = rayhit;
@@ -139,7 +139,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
  */
 
 void
-view_2init(struct application *ap)
+view_2init(struct application *ap, char *UNUSED(framename))
 {
 
     if ( outfp == NULL )
@@ -187,7 +187,7 @@ view_2init(struct application *ap)
      * shading to take place.  Note that the option for ambient light
      * intensity had been reused since that will not be needed here.
      * The default of 5 degrees is used when AmbientIntensity is less
-     * than 0.5 because it's default is set to 0.4, and the permissible
+     * than 0.5 because its default is set to 0.4, and the permissible
      * range for light intensity is 0 -> 1.
      */
 
@@ -265,13 +265,13 @@ raymiss(register struct application *ap)
  */
 
 void
-view_pixel(void)
+view_pixel(struct application *UNUSED(ap))
 {
     return;
 }
 
-void view_setup(void) {}
-void view_cleanup(void) {}
+void view_setup(struct rt_i *UNUSED(rtip)) {}
+void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 
 /*
@@ -358,7 +358,8 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
  *  and a new one is read into memory until end-of-file is reached.
  */
 
-void	view_eol(struct application *ap)
+void
+view_eol(struct application *ap)
 {
 
 

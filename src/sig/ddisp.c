@@ -1,7 +1,7 @@
 /*                         D D I S P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,17 +56,17 @@ int main(int argc, char **argv)
     int	n, L;
 
     while ( argc > 1 ) {
-	if ( strcmp(argv[1], "-v") == 0 ) {
+	if ( BU_STR_EQUAL(argv[1], "-v") ) {
 	    mode = VERT;
 	    pause_time = 0;
 	    Clear = 0;
-	} else if ( strcmp(argv[1], "-b") == 0 ) {
+	} else if ( BU_STR_EQUAL(argv[1], "-b") ) {
 	    mode = BARS;
-	} else if ( strcmp(argv[1], "-p") == 0 ) {
+	} else if ( BU_STR_EQUAL(argv[1], "-p") ) {
 	    pause_time = 3;
-	} else if ( strcmp(argv[1], "-c") == 0 ) {
+	} else if ( BU_STR_EQUAL(argv[1], "-c") ) {
 	    Clear++;
-	} else if ( strcmp(argv[1], "-h") == 0 ) {
+	} else if ( BU_STR_EQUAL(argv[1], "-h") ) {
 	    fbsize = 1024;
 	} else
 	    break;
@@ -317,7 +317,7 @@ disp_phase( buf, size )
     for (i = 1; i < size/2; i++) {
 #ifdef FHT
 	if ( fabs(buf[i]+buf[size-i]) < 0.0001 )
-	    angle = PI / 2.0;
+	    angle = M_PI_2;
 	else
 	    angle = atan( (buf[i]-buf[size-i])/
 			  (buf[i]+buf[size-i]) );
@@ -329,7 +329,7 @@ disp_phase( buf, size )
 	    if ( fabs( buf[i].im ) < 1.0e-10 )
 		angle = 0.0;
 	    else
-		angle = (buf[i].im > 0.0) ? PI/2.0 : -PI/2.0;
+		angle = (buf[i].im > 0.0) ? M_PI_2 : -M_PI_2;
 	} else {
 	    angle = atan( buf[i].im / buf[i].re );
 	    if ( buf[i].re < 0.0 )
@@ -337,7 +337,7 @@ disp_phase( buf, size )
 	}
 /*fprintf( stderr, "%10f Deg\n", RtoD(angle) );*/
 #endif
-	mag = (128.0/PI)*angle + 0.5;
+	mag = (128.0/M_PI)*angle + 0.5;
 #ifdef DEBUG
 	printf("(%6.3f,%6.3f): angle = %7.3f (%6.2f), mag = %d\n",
 	       buf[i].re, buf[i].im, angle, RtoD( angle ), mag );

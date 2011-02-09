@@ -1,7 +1,7 @@
 /*                          G R I P . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -304,7 +304,7 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     gip->magic = RT_GRIP_INTERNAL_MAGIC;
 
-    rt_fastf_float(orig_eqn, rp->s.s_values, 3);	/* 2 floats to many */
+    rt_fastf_float(orig_eqn, rp->s.s_values, 3, dbip->dbi_version < 0 ? 1 : 0);	/* 2 floats to many */
 
     /* Transform the point, and the normal */
     if (mat == NULL) mat = bn_mat_identity;

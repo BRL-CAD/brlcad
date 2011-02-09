@@ -1,7 +1,7 @@
 /*                         E D C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,7 +58,7 @@ edcodes_reg_compare(const void *p1, const void *p2)
     reg1 = strchr(*(char **)p1, '/');
     reg2 = strchr(*(char **)p2, '/');
 
-    return strcmp(reg1, reg2);
+    return bu_strcmp(reg1, reg2);
 }
 
 
@@ -75,14 +75,14 @@ edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), 
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
 
-    if ((nextdp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+    if ((nextdp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return;
 
     pathpos = (int *)user_ptr1;
     gedp = (struct ged *)user_ptr2;
 
     /* recurse on combinations */
-    if (nextdp->d_flags & DIR_COMB) {
+    if (nextdp->d_flags & RT_DIR_COMB) {
 	int *status = (int *)user_ptr3;
 	ret = edcodes_collect_regnames(gedp, nextdp, (*pathpos)+1);
 	if (status && ret == EDCODES_HALT)
@@ -208,7 +208,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp;
 
 	for (i = 1; i < argc; ++i) {
-	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL) {
+	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
 		status = edcodes_collect_regnames(gedp, dp, 0);
 
 		if (status != EDCODES_OK) {

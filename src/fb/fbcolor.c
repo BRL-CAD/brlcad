@@ -1,7 +1,7 @@
 /*                       F B C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,9 @@
 #include "bu.h"
 #include "fb.h"
 #include "libtermio.h"
+
+#define COMMA ','
+
 
 int curchan = 0;	/* 0=r, 1=g, 2=b */
 
@@ -228,7 +231,7 @@ doKeyPad(void)
 	    new_rgb();
 	    break;
 	case '-':
-	case ',':
+	case COMMA:
 	    col[curchan]--;
 	    new_rgb();
 	    break;

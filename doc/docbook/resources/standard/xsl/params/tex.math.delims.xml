@@ -25,6 +25,12 @@ surrounded by math mode delimiters?</refpurpose>
 <para>For compatibility with DSSSL based DBTeXMath from Allin Cottrell
 you should set this parameter to 0.</para>
 
+<warning>
+  <para>This feature is useful for print/PDF output only if you
+  use the obsolete and now unsupported PassiveTeX XSL-FO
+  engine.</para>
+</warning>
+
 </refsection>
 <refsection><info><title>Related Parameters</title></info>
   <para><parameter>tex.math.in.alt</parameter>,
@@ -36,12 +42,6 @@ you should set this parameter to 0.</para>
       class="xmlpi">dbtex delims</tag> processing
     instruction to control whether delimiters are output.</para>
 </refsection>
-<refsection><info><title>More information</title></info>
-  <para>For how-to documentation on embedding TeX equations and
-    generating output from them, see
-    <link
-      role="tcg"
-      xlink:href="TexMath.html"
-      >DBTeXMath</link>.</para>
-</refsection>
+
+
 </refentry>

@@ -2,7 +2,7 @@
 #                   C O N V E R S I O N . S H
 # BRL-CAD
 #
-# Copyright (c) 2010 United States Government as represented by
+# Copyright (c) 2010-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,9 @@ fi
 LC_ALL=C
 
 # force posix behavior
-set -o posix >/dev/null 2>&1
+POSIX_PEDANTIC=1
+POSIXLY_CORRECT=1
+export POSIX_PEDANTIC POSIXLY_CORRECT
 
 
 #######################
@@ -148,45 +150,44 @@ elapsed ( ) {
 ####################
 
 # process the argument list for commands
-for arg in $ARGS ; do
+while test $# -gt 0 ; do
+    arg="$1"
     case "x$arg" in
 	x*[hH])
 	    HELP=1
-	    shift
 	    ;;
 	x*[hH][eE][lL][pP])
 	    HELP=1
-	    shift
 	    ;;
 	x*[iI][nN][sS][tT][rR][uU][cC][tT]*)
 	    INSTRUCTIONS=1
-	    shift
 	    ;;
 	x*[qQ][uU][iI][eE][tT])
 	    QUIET=1
-	    shift
 	    ;;
 	x*[vV][eE][rR][bB][oO][sS][eE])
 	    VERBOSE=1
-	    shift
 	    ;;
 	x*=*)
-	    VAR=`echo $arg | sed 's/=.*//g'`
+	    VAR=`echo $arg | sed 's/=.*//g' | sed 's/^[-]*//g'`
 	    if test ! "x$VAR" = "x" ; then
 		VAL=`echo $arg | sed 's/.*=//g'`
-		CMD="$VAR=$VAL"
+		CMD="$VAR=\"$VAL\""
 		eval $CMD
 		export $VAR
 	    fi
-	    shift
 	    ;;
 	x*)
+	    # should be geometry database files, so stop
+	    break
 	    ;;
     esac
+    shift
 done
 
 # validate and clean up options (all default to 0)
 booleanize HELP INSTRUCTIONS VERBOSE
+
 
 ###
 # handle instructions before main processing
@@ -209,14 +210,31 @@ will convert, what percentage, and how long the conversion will take.
 There are several environment variables that will modify how this
 script behaves:
 
-  GED - pathname to the BRL-CAD geometry editor (i.e., mged)
+  GED - path to BRL-CAD geometry editor (i.e., mged) for converting
+  SEARCH - path to BRL-CAD geometry editor to use for searching
+  OBJECTS - parameters for selecting objects to convert
   MAXTIME - maximum number of seconds allowed for each conversion
-  VERBOSE - turn on extra debug output for testing/development
   QUIET - turn off all printing output (writes results to log file)
+  VERBOSE - turn on extra debug output for testing/development
   INSTRUCTIONS - display these more detailed instructions
 
 The GED option allows you to specify a specific pathname for MGED.
 The default is to search the system path for 'mged'.
+
+The SEARCH option allows you to specify a different MGED that will be
+used for finding objects.  As MGED's "search" command was added in
+release 7.14.0, this option allows you to find objects using a 7.14.0+
+version of MGED but then attempt to convert geometry with a
+potentially older version of MGED.  The default is to use the same
+mged (specified by the GED option) being used for conversions.
+
+The OBJECTS option allows you to specify which objects you want to
+convert.  Any of the parameters recognized by the GED 'search' command
+can be used.  See the 'search' manual page for details on all
+available parameters.  Examples:
+
+OBJECTS="-type region"  # only convert regions
+OBJECTS="-not -type comb"  # only convert primitives
 
 The MAXTIME option specifies how many seconds are allowed to elapse
 before the conversion is aborted.  Some conversions can take days or
@@ -246,8 +264,26 @@ if test "x$HELP" = "x1" ; then
     echo "  verbose"
     echo ""
     echo "Available options:"
-    echo "  GED=/path/to/geometry/editor (default mged)"
-    echo "  MAXTIME=#seconds (default 300)"
+    if test "x$GED" = "x" ; then
+	echo "  GED=/path/to/mged (default mged)"
+    else
+	echo "  GED=/path/to/mged (using $GED)"
+    fi
+    if test "x$SEARCH" = "x" ; then
+	echo "  SEARCH=/path/to/search-enabled/mged (default mged)"
+    else
+	echo "  SEARCH=/path/to/search-enabled/mged (using $SEARCH)"
+    fi
+    if test "x$OBJECTS" = "x" ; then
+	echo "  OBJECTS=\"search params\" (default \"\" for all objects)"
+    else
+	echo "  OBJECTS=\"search params\" (using \"$OBJECTS\")"
+    fi
+    if test "x$MAXTIME" = "x" ; then
+	echo "  MAXTIME=#seconds (default 300)"
+    else
+	echo "  MAXTIME=#seconds (using $MAXTIME)"
+    fi
     echo ""
     echo "BRL-CAD is a powerful cross-platform open source solid modeling system."
     echo "For more information about BRL-CAD, see http://brlcad.org"
@@ -305,6 +341,7 @@ set_if_unset ( ) {
 
 # approximate maximum time in seconds that a given conversion is allowed to take
 set_if_unset GED mged
+set_if_unset SEARCH $GED
 set_if_unset MAXTIME 300
 
 # commands that this script expects, make sure we can find MGED
@@ -351,11 +388,11 @@ while test $# -gt 0 ; do
     work="${file}.conversion"
     cmd="cp \"$file\" \"$work\""
     $VERBOSE_ECHO "\$ $cmd"
-    eval $cmd
+    eval "$cmd"
 
     # execute in a coprocess
-    cmd="$GED -c \"$work\" search ."
-    objects=`eval $cmd 2>&1 | grep -v Using`
+    cmd="$SEARCH -c \"$work\" search . $OBJECTS"
+    objects=`eval "$cmd" 2>&1 | grep -v Using`
     $VERBOSE_ECHO "\$ $cmd"
     $VERBOSE_ECHO "$objects"
 
@@ -371,7 +408,7 @@ EOF
     while read object ; do
 
 	obj="`basename \"$object\"`"
-	found=`$GED -c "$work" search . -name \"${obj}\" 2>&1 | grep -v Using`
+	found=`$SEARCH -c "$work" search . -name \"${obj}\" 2>&1 | grep -v Using`
 	if test "x$found" != "x$object" ; then
 	    $ECHO "INTERNAL ERROR: Failed to find [$object] with [$obj] (got [$found])"
 	    continue
@@ -383,14 +420,14 @@ EOF
 	# leaving orphaned 'sleep' processes that accumualte, this
 	# method had to be executed in the current shell environment.
 
-	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && $ECHO "\tNMG conversion time limit exceeded: $file:$object" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && `touch "./${obj}.nmg.extl"` && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
         spid=$!
 
 	# convert NMG
-	nmg=FAIL
+	nmg=fail
 	cmd="$GED -c "$work" facetize -n \"${obj}.nmg\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
-	output=`eval time $cmd 2>&1 | grep -v Using`
+	output=`eval time "$cmd" 2>&1 | grep -v Using`
 
 	# stop the limit timer.  when we get here, see if there is a
 	# sleep process still running.  if any found, the sleep
@@ -411,21 +448,25 @@ EOF
 	real_nmg="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
 	# verify NMG
-	found=`$GED -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
+	found=`$SEARCH -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
 	if test "x$found" = "x${object}.nmg" ; then
 	    nmg=pass
 	    nmg_count=`expr $nmg_count + 1`
 	fi
+	if [ -e "./${obj}.nmg.extl" ] ; then
+            `rm "./${obj}.nmg.extl"`
+	    nmg=extl
+	fi
 
 	# start the limit timer, same as above.
-	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && $ECHO "\tBoT conversion time limit exceeded: $file:$object" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && `touch "./${obj}.bot.extl"` && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
         spid=$!
 
 	# convert BoT
-	bot=FAIL
+	bot=fail
 	cmd="$GED -c "$work" facetize \"${obj}.bot\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
-	output=`eval time $cmd 2>&1 | grep -v Using`
+	output=`eval time "$cmd" 2>&1 | grep -v Using`
 
 	# stop the limit timer, same as above.
 	for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
@@ -441,20 +482,24 @@ EOF
 	real_bot="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
 	# verify BoT
-	found=`$GED -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
+	found=`$SEARCH -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
 	if test "x$found" = "x${object}.bot" ; then
 	    bot=pass
 	    bot_count=`expr $bot_count + 1`
 	fi
+	if [ -e "./${obj}.bot.extl" ] ; then
+            `rm "./${obj}.bot.extl"`
+	    bot=extl
+	fi
 
 	# print result for this object
-	status=FAIL
+	status=fail
 	if test "x$nmg" = "xpass" && test "x$bot" = "xpass" ; then
-	    status=OK
+	    status=ok
 	fi
 
 	count=`expr $count + 1`
-	$ECHO "%-4s\tnmg: %s %s\tbot: %s %s %6lds %*s%ld %s:%s" $status $nmg $real_nmg $bot $real_bot $SECONDS \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
+	$ECHO "%-4s\tnmg: %s %s\tbot: %s %s %6.0fs %*s%.0f %s:%s" \"$status\" \"$nmg\" \"$real_nmg\" \"$bot\" \"$real_bot\" \"$SECONDS\" \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
     done
 
     # restore stdin
@@ -489,14 +534,14 @@ $ECHO "... Done."
 $ECHO
 $ECHO "Summary:"
 $ECHO
-$ECHO "   Files:  %ld" $files
-$ECHO " Objects:  %ld" $count
-$ECHO "Failures:  %ld NMG, %ld BoT" $nmg_fail $bot_fail
-$ECHO "NMG conversion:  %.1f%%  (%ld of %ld objects)" $nmg_percent $nmg_count $count
-$ECHO "BoT conversion:  %.1f%%  (%ld of %ld objects)" $bot_percent $bot_count $count
+$ECHO "   Files:  %.0f" $files
+$ECHO " Objects:  %.0f" $count
+$ECHO "Failures:  %.0f NMG, %.0f BoT" $nmg_fail $bot_fail
+$ECHO "NMG conversion:  %.1f%%  (%.0f of %.0f objects)" $nmg_percent $nmg_count $count
+$ECHO "BoT conversion:  %.1f%%  (%.0f of %.0f objects)" $bot_percent $bot_count $count
 $ECHO "  Success rate:  %.1f%%" $rate
 $ECHO
-$ECHO "Elapsed:  %d seconds" $elp
+$ECHO "Elapsed:  %.0f seconds" $elp
 $ECHO "Average:  %.1f seconds per object" $avg
 $ECHO
 $ECHO "Finished running $THIS on `date`"

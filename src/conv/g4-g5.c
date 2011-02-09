@@ -1,7 +1,7 @@
 /* BRL-CAD	G 4 - G 5 . C
  *
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -84,7 +84,7 @@ main(int argc, char **argv)
 	return 3;
     }
 
-    if ( dbip->dbi_version != 4 ) {
+    if ( db_version(dbip) != 4 ) {
 	bu_log( "Input database must be a version 4 datbase!!!!\n" );
 	return 4;
     }

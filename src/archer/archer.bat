@@ -3,7 +3,7 @@
 REM                      A R C H E R . B A T
 REM  BRL-CAD
 REM 
-REM  Copyright (c) 2006-2010 United States Government as represented by
+REM  Copyright (c) 2006-2011 United States Government as represented by
 REM  the U.S. Army Research Laboratory.
 REM 
 REM  This library is free software; you can redistribute it and/or
@@ -22,17 +22,7 @@ REM
 
 SETLOCAL
 
-REM XXX FIXME: SHOULD NOT NEED TO SET BRLCAD_DATA OR CAD_VERSION XXX
-SET CAD_VERSION=7.17.0
-
-SET SAVE_CD=%CD%
-SET PATH=%~dp0
-SET ARCHER=%~dp0archer
-CD %PATH%\..
-SET BRLCAD_DATA=%CD%\share\brlcad\%CAD_VERSION%
-CD %SAVE_CD%
-
-START /B bwish "%ARCHER%" %1
+"%~dp0\"bwish.exe "%~dp0\"archer %1
 
 CLS
 EXIT

@@ -1,7 +1,7 @@
 /*                         E A C . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -76,7 +76,7 @@ ged_eac(struct ged *gedp, int argc, const char *argv[])
 	    struct rt_db_internal intern;
 	    struct rt_comb_internal *comb;
 
-	    if (!(dp->d_flags & DIR_REGION))
+	    if (!(dp->d_flags & RT_DIR_REGION))
 		continue;
 
 	    bu_vls_printf(&gedp->ged_result_str, "%s: looking at %s\n", argv[0], dp->d_namep);

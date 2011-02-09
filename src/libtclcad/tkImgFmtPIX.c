@@ -1,7 +1,7 @@
 /*                   T K I M G F M T P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -139,7 +139,7 @@ FileMatchPIX(Tcl_Channel UNUSED(chan), const char *fileName, Tcl_Obj *format, in
        use those.  Otherwise, guess from the file size. */
     char *formatString;
     int len;
-    unsigned long int width, height;
+    size_t width, height;
 
     if (format == NULL || interp == NULL)
 	return 0;
@@ -197,7 +197,7 @@ FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj 
     /* Coordinates of top-left pixel to be used
      * in image being read. */
 {
-    unsigned long int fileWidth, fileHeight;
+    size_t fileWidth, fileHeight;
     int nBytes, h, count;
     unsigned char *pixelPtr;
     Tk_PhotoImageBlock block;

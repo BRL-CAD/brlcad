@@ -1,7 +1,7 @@
 #                        H E L P . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -116,7 +116,7 @@ set mged_help_data(db_glob)	{{cmd_string}	{globs cmd_string against the MGED dat
     resulting in an expanded command string}}
 set mged_help_data(dbconcat)	$helplib_data(wdb_concat)
 set mged_help_data(dbfind)	$helplib_data(wdb_find)
-set mged_help_data(dbupgrade)	{{[-f|-help]}	{upgrade your database to the current format}}
+set mged_help_data(dbupgrade)	{{[-f|-help] [upgrade|cancel|help]}	{upgrade your database to the current format}}
 set mged_help_data(dbversion)	{{}	{return the database version}}
 set mged_help_data(debugbu)	{{[hex_code]}	{show/set debugging bit vector for libbu}}
 set mged_help_data(debugdir)	{{}	{Print in-memory directory, for debugging}}
@@ -208,7 +208,7 @@ set mged_help_data(nmg_collapse)	$helplib_data(wdb_nmg_collapse)
 set mged_help_data(nmg_fix_normals)	{{NMG object} {Attempt to fix the normals of an NMG object.}}
 set mged_help_data(nmg_simplify)	$helplib_data(wdb_nmg_simplify)
 set mged_help_data(oed)		{{path_lhs path_rhs}	{go from view to object_edit of path_lhs/path_rhs}}
-set mged_help_data(opendb)	{{[database.g] [y|n]}	{close any currently open .g file and open the specified database.g file, or return the name of the currently open geometry database.  A trailing 'y' or 'n' indicates whether to create a new database if one does not already exist.}}
+set mged_help_data(opendb)	{{[-f] [database.g] [y|n]}	{close any currently open .g file and open the specified database.g file, or return the name of the currently open geometry database.  A trailing 'y' or 'n' indicates whether to create a new database if one does not already exist.  A -f option specifies that binary-incompatible v4 files should have their endianness flipped.}}
 set mged_help_data(orientation)	$helplib_data(vo_orient)
 set mged_help_data(orot)	{{[-i] xdeg ydeg zdeg}	{rotate object being edited}}
 set mged_help_data(oscale)	{{factor}	{scale object by factor}}
@@ -219,13 +219,14 @@ set mged_help_data(paths)	$helplib_data(wdb_paths)
 set mged_help_data(permute)	{{tuple}	{permute vertices of an ARB}}
 set mged_help_data(plot)	{{[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]}	{make UNIX-plot of view}}
 set mged_help_data(pl)		{{[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]}	{Experimental - uses dm-plot:make UNIX-plot of view}}
+set mged_help_data(png)		{{[-c r/g/b] [-s size] file}	{save graphics window to PNG image file}}
 set mged_help_data(polybinout)	{{file}	{store vlist polygons into polygon file (experimental)}}
 set mged_help_data(pov)		$helplib_data(vo_pov)
 set mged_help_data(prcolor)	$helplib_data(wdb_prcolor)
 set mged_help_data(prefix)	{{new_prefix object(s)}	{prefix each occurrence of object name(s)}}
 set mged_help_data(press)	{{button_label}	{emulate button press}}
 set mged_help_data(prj_add)	{{ [-t] [-b] [-n] shaderfile [image_file] [image_width] [image_height]} {Appends image filename + current view parameters to shaderfile}}
-set mged_help_data(preview)	{{[-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file}	{preview new style RT animation script}}
+set mged_help_data(preview)	{{[-v] [-o imagename.ext] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file}	{preview new style RT animation script}}
 set mged_help_data(ps)		{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file}	{creates a postscript file of the current view}}
 set mged_help_data(push)	$helplib_data(wdb_push)
 set mged_help_data(put)		$helplib_data(wdb_put)
@@ -282,6 +283,7 @@ Save the current view to specified 'file' as an rt render script
       -i inputfile   specify input data file (default is opendb filepath)
 }}
 set mged_help_data(sca)		$helplib_data(vo_sca)
+set mged_help_data(screengrab)	{{imagename.ext}	{output active graphics window to image file typed by extension(i.e. mged> screengrab imagename.png)\n");}}
 set mged_help_data(search)	$helplib_data(wdb_search)
 set mged_help_data(sed)		{{<path>}	{solid-edit named solid}}
 set mged_help_data(setview)	$helplib_data(vo_setview)

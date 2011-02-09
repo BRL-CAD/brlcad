@@ -1,7 +1,7 @@
 /*                         T O O L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,14 +24,23 @@
 
 #include "common.h"
 
+#include <stdlib.h>
+
 #define PADCHR		~(1<<15)		/* non data value.*/
 
 char *
 endstr(char *str)
 {
-    while ( *str != 0 )	*str++;
+    if (!str)
+	return NULL;
+
+    while ( *str != '\0' ) {
+	str++;
+    }
+
     return str;
 }
+
 
 void
 strappend(char *s, char *t)	/* === */

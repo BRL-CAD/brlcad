@@ -1,7 +1,7 @@
 /*                 Axis2Placement2D.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -58,7 +58,7 @@ Axis2Placement2D::~Axis2Placement2D() {
 void
 Axis2Placement2D::BuildAxis() {
 	double d[3];
-	double ortho_comp[3];
+	double ortho_comp[3] = {0.0, 0.0, 0.0};
 
 	if (ref_direction == NULL) {
 		VSET(d,1.0,0.0,0.0);

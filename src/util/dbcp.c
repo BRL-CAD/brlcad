@@ -1,7 +1,7 @@
 /*                          D B C P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -78,16 +78,22 @@ main(int argc, char **argv)
     char msgchar;
     pipefds par2chld, chld2par;
     int c;
+    int deprecated = 1;
 
     while ((c = bu_getopt(argc, argv, "v")) != EOF) {
 	switch (c) {
 	    case 'v':
 		verbose++;
 		break;
+	    case 'D':
+		deprecated=0;
 	    default:
 		bu_exit(1, "%s", usage);
 	}
     }
+
+    if (deprecated)
+	bu_log("DEPRECATED: dbcp is no longer being maintained.  Please contact the developers if you use this tool.  Use -D to suppress this message.\n");
 
     if (bu_optind >= argc) {
 	bu_exit(2, "%s", usage);

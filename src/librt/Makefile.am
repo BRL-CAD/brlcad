@@ -30,11 +30,15 @@ noinst_PROGRAMS = \
 	parsetest \
 	prcomb
 
-# make sure the example compiles, but don't include it in librt
-librt_xxx_la_SOURCES = primitives/xxx/xxx.c
+# make sure example and temporary code compiles, but don't include it in librt
+librt_xxx_la_SOURCES = \
+	parse.c \
+	primitives/nmg/nmg_junk.c \
+	primitives/xxx/xxx.c
 
 librt_nil_la_SOURCES = \
 	attributes.c \
+	bbox.c \
 	bezier_2d_isect.c \
 	binunif/binunif.c \
 	binunif/db5_bin.c \
@@ -52,7 +56,9 @@ librt_nil_la_SOURCES = \
 	db5_types.c \
 	db_alloc.c \
 	db_anim.c \
+	db_corrupt.c \
 	db_flags.c \
+	db_flip.c \
 	db_inmem.c \
 	db_io.c \
 	db_lookup.c \
@@ -159,7 +165,6 @@ librt_nil_la_SOURCES = \
 	primitives/nmg/nmg_index.c \
 	primitives/nmg/nmg_info.c \
 	primitives/nmg/nmg_inter.c \
-	primitives/nmg/nmg_junk.c \
 	primitives/nmg/nmg_manif.c \
 	primitives/nmg/nmg_mesh.c \
 	primitives/nmg/nmg_mirror.c \
@@ -234,7 +239,6 @@ librt_nil_la_SOURCES = \
 	roots.c \
 	shoot.c \
 	spectrum.c \
-	storage.c \
 	tcl.c \
 	timer42.c \
 	transform.c \
@@ -274,6 +278,8 @@ parsetest_LDADD = \
 
 
 noinst_HEADERS = \
+	librt_private.h \
+	opennurbs_ext.h \
 	primitives/fixpt.h \
 	primitives/brep/brep_debug.h \
 	primitives/metaball/metaball.h \
@@ -295,13 +301,13 @@ EXTRA_DIST = \
 	brep_test.cpp \
 	columnparse.c \
 	namegen.c \
-	parse.c \
 	pmalloc.c \
 	primitives/bot/g_bot_include.c \
 	timer-nt.c \
 	timer52brl.c \
 	timerhep.c \
-	timerunix.c
+	timerunix.c \
+	uvpoints.cpp
 
 if BUILD_REGEX
 DEPADD = src/other/libregex

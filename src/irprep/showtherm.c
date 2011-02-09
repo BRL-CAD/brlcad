@@ -1,7 +1,7 @@
 /*                     S H O W T H E R M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
     /*  START # 1  */
     struct application ap;	/*  Application struct, passed between functions.  */
 
-    int index;		/*  Index for rt_dirbuild & rt_gettree.  */
+    int idx;		/*  Index for rt_dirbuild & rt_gettree.  */
     static struct rt_i *rtip;/*  Used for building directory, ect.  */
     char idbuf[132];	/*  First id record in .g file.  */
 
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
     double cbeta, sbeta;	/*  Cosine & sine of beta.  */
 
     /*  Check to see if arguments implemented correctly.  */
-    if (argv[1]==NULL || argv[2]==NULL)
+    if (argc < 3 || argv[1]==NULL || argv[2]==NULL)
     {
 	(void)fprintf(stderr, "\nusage:  showtherm file.g objects\n\n");
     }
@@ -312,7 +312,7 @@ int main(int argc, char **argv)
 	    (void)bu_fgets(line, 150, fpr);
 	    (void)sscanf(line, "%lf", &eltim_read);
 
-	    while (eltim_read != eltim)	/*  Page through to end of data.  */
+	    while (!EQUAL(eltim_read, eltim))	/*  Page through to end of data.  */
 	    {
 		for (i=0; i<numreg; i++)
 		{
@@ -391,9 +391,9 @@ int main(int argc, char **argv)
 	/*  Build the directory.  */
 	(void)printf("Building directory.\n");
 	(void)fflush(stdout);
-	index = 1;		/*  Set index for rt_dirbuild.  */
-	rtip = rt_dirbuild(argv[index], idbuf, sizeof(idbuf));
-	(void)printf("File:  %s\n", argv[index]);
+	idx = 1;		/*  Set index for rt_dirbuild.  */
+	rtip = rt_dirbuild(argv[idx], idbuf, sizeof(idbuf));
+	(void)printf("File:  %s\n", argv[idx]);
 	(void)fflush(stdout);
 	(void)printf("Database Title:  %s\n", idbuf);
 	(void)fflush(stdout);
@@ -403,13 +403,13 @@ int main(int argc, char **argv)
 	rtip->useair = 1;
 
 	/*  Load desired objects.  */
-	index = 2;		/*  Set index for rt_gettree.  */
-	while (argv[index] != NULL)
+	idx = 2;		/*  Set index for rt_gettree.  */
+	while (argv[idx] != NULL)
 	{
-	    rt_gettree(rtip, argv[index]);
-	    (void)printf("\t%s loaded.\n", argv[index]);
+	    rt_gettree(rtip, argv[idx]);
+	    (void)printf("\t%s loaded.\n", argv[idx]);
 	    (void)fflush(stdout);
-	    index++;
+	    idx++;
 	}
 
 	/*  Find the total number of regions in the .g file & add one  */
@@ -574,7 +574,7 @@ int main(int argc, char **argv)
 /****************************************************************************/
 /*  User supplied hit function.  */
 int
-hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
+hit(struct application *UNUSED(ap_p), struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     struct partition *pp;
 
@@ -597,7 +597,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 /****************************************************************************/
 /*  User supplied miss function.  */
 int
-miss(struct application *ap_p)
+miss(struct application *UNUSED(ap_p))
 {
     /*
      * (void)printf("It is a miss.\n");
@@ -610,7 +610,7 @@ miss(struct application *ap_p)
 /****************************************************************************/
 /*  User supplied overlap function.  */
 int
-overlap(struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp)
+overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct region *UNUSED(r1), struct region *UNUSED(r2), struct partition *UNUSED(hp))
 {
     (void)printf("It is an overlap.\n");
     (void)fflush(stdout);

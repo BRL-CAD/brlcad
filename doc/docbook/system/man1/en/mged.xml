@@ -1,75 +1,38 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2010 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='mged1'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="mged1">
   <refmeta>
     <refentrytitle>MGED</refentrytitle>
     <manvolnum>1</manvolnum>
-    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-    <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-  <refnamediv id='name'>
+  <refnamediv xml:id="name">
     <refname>mged</refname>
     <refpurpose>multi-display interactive combinatorial solid geometry editor</refpurpose>
   </refnamediv>
   
   <!-- body begins here -->
-  <refsynopsisdiv id='synopsis'>
-    <cmdsynopsis>
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
       <command>mged</command>
-      <arg choice='opt'>-a attach</arg>
-      <arg choice='opt'>-b </arg>
-      <arg choice='opt'>-c </arg>
-      <arg choice='opt'>-d display</arg>
-      <arg choice='opt'>-h </arg>
-      <arg choice='opt'>-r </arg>
-      <arg choice='opt'>-x#</arg>
-      <arg choice='opt'>-X#</arg>
-      <arg choice='opt'>-v</arg>
-      <arg choice='opt'><replaceable>database.g</replaceable></arg>
-      <arg choice='opt'><replaceable>mged_command</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-a attach</arg>
+      <arg choice="opt" rep="norepeat">-b </arg>
+      <arg choice="opt" rep="norepeat">-c </arg>
+      <arg choice="opt" rep="norepeat">-d display</arg>
+      <arg choice="opt" rep="norepeat">-h </arg>
+      <arg choice="opt" rep="norepeat">-r </arg>
+      <arg choice="opt" rep="norepeat">-x#</arg>
+      <arg choice="opt" rep="norepeat">-X#</arg>
+      <arg choice="opt" rep="norepeat">-v</arg>
+      <arg choice="opt" rep="norepeat"><replaceable>database.g</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>mged_command</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   
 
-  <refsect1 id='description'>
-    <title>DESCRIPTION</title>
+  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+    
     <para>
       <application>MGED</application>, a.k.a the "Multi-Device Geometry Editor" is the
       central interaction environment for the BRL-CAD package.  It offers both command line
@@ -97,11 +60,11 @@
       Technically, <application>MGED</application> can be opened without a database file
       being supplied, but until one <emphasis>is</emphasis> supplied it will not be terribly useful.  
       This can be done either by supplying a file name on the command line or by opening a database from
-      with <application>MGED</application> using the File->Open... menu or the <command>opendb</command>
+      with <application>MGED</application> using the File-&gt;Open... menu or the <command>opendb</command>
       command.  
     </para>
   
-    <variablelist remap='TP'>
+    <variablelist remap="TP">
       <varlistentry>
         <term><option>-a attach</option></term>
         <listitem>
@@ -203,10 +166,10 @@
       </varlistentry>
     </variablelist>
 
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='hints'>
-    <title>HINTS</title>
+  <refsection xml:id="hints"><info><title>HINTS</title></info>
+    
     <para>
       <application>MGED</application> database names conventionally end with
       <markup>.g</markup>.
@@ -223,7 +186,7 @@
     <para>
       The ".mgedrc" file is searched for in three places.
       The first one found is used, and any others are ignored.
-      <orderedlist numeration='loweralpha'>
+      <orderedlist numeration="loweralpha" inheritnum="ignore" continuation="restarts">
 	<listitem>
 	  <para>If the environment variable MGED_RCFILE is set, it is used
 	  as a path name for the file to be used.</para>
@@ -239,20 +202,20 @@
     </para>
 
 
-  </refsect1>
+  </refsection>
 
-  <refsect1 id='examples'>
-    <title>EXAMPLES</title>
+  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+    
     <para>
       The following are run from the operating system command prompt:
     </para>
      
-    <example>
-      <title>Running the <application>MGED</application> <command>l</command> from the operating
-      system command line.</title>
+    <example><info><title>Running the <application>MGED</application> <command>l</command> from the operating
+      system command line.</title></info>
+      
       <para>
 	<prompt>user:~ </prompt><userinput>mged /usr/brlcad/share/brlcad/7.12.2/db/m35.g l component</userinput>
-	<literallayout>
+	<literallayout class="normal">
 Opened in READ ONLY mode
 component:  --
    u bed
@@ -265,67 +228,63 @@ component:  --
       </para>
     </example>
 
-    <example>
-      <title>Running <application>MGED</application> without a dislay manager.</title>
+    <example><info><title>Running <application>MGED</application> without a dislay manager.</title></info>
+      
       <para>
 	<prompt>user:~ </prompt><userinput>mged -c</userinput>
-	<literallayout>
+	<literallayout class="normal">
 BRL-CAD Release 7.13.0  Geometry Editor (MGED)
     Thu, 09 Oct 2008 22:31:41 -0400, Compilation 1
     user@localhost:/usr/brlcad/
 
 attach (nu|X|ogl)[nu]? <userinput>nu</userinput>
-mged> 
+mged&gt; 
 	</literallayout>
       </para>
     </example>
 
-    <example>
-      <title>Running <application>MGED</application> and bypassing the attach prompt by specifying
-      the X11 dislay manager.</title>
+    <example><info><title>Running <application>MGED</application> and bypassing the attach prompt by specifying
+      the X11 dislay manager.</title></info>
+      
       <para>
         <prompt>user:~ </prompt><userinput>mged -a X -c</userinput>
-        <literallayout>
+        <literallayout class="normal">
 BRL-CAD Release 7.15.0  Geometry Editor (MGED)
     Tue, 22 Sep 2009 12:40:01 -0400, Compilation 1
     user@localhost:/usr/brlcad/
 
 ATTACHING X (X Window System (X11))
 
-mged> 
+mged&gt; 
         </literallayout>
       </para>
     </example>
 
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='see_also'>
-    <title>SEE ALSO</title>
+  <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+    
     <para>
-      <emphasis remap='I'>Computer Graphics for Target Descriptions</emphasis>, BRL Technical Report ARBRL-TR-02480, <emphasis remap='I'>GED:  An Interactive Solid Modeling System for Vulnerability Assessments</emphasis>     
+      <emphasis remap="I">Computer Graphics for Target Descriptions</emphasis>, BRL Technical Report ARBRL-TR-02480, <emphasis remap="I">GED:  An Interactive Solid Modeling System for Vulnerability Assessments</emphasis>     
     </para>
     <para>
     <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>comgeom-g</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>vdeck</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
     </para>
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='diagnostics'>
-    <title>DIAGNOSTICS</title>
+  <refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
+    
     <para>Error messages are intended to be self-explanatory.</para>
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='author'>
-    <title>AUTHOR</title>
-    <para>BRL-CAD Team</para>
-  </refsect1>
+  <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 
-  <refsect1 id='bug_reports'>
-    <title>BUG REPORTS</title>
+  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+    
     <para>
       Reports of bugs or problems should be submitted via electronic
       mail to &lt;devs@brlcad.org&gt;.
     </para>
-  </refsect1>
+  </refsection>
 </refentry>
-

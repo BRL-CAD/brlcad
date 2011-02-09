@@ -1,7 +1,7 @@
 #                     H E L P L I B . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -74,7 +74,7 @@ set helplib_data(wdb_cat)		{{<objects>} {list attributes (brief)}}
 set helplib_data(wdb_color)		{{[-e] [low high r g b]} {text edit color table or make new color entry}}
 set helplib_data(wdb_comb)		{{comb_name <operation solid>}	{create or extend combination w/booleans}}
 set helplib_data(wdb_comb_std)		{{[-cr] comb_name <boolean_expr>}	{create or extend a combination using standard notation}}
-set helplib_data(wdb_concat)		{{[-s|-p] file.g [suffix|prefix]} {import a database into the current database using an auto-incrementing or custom affix}}
+set helplib_data(wdb_concat)		{{[-t] [-u] [-c] [-s|-p] file.g [suffix|prefix]} {import a database into the current database using an auto-incrementing or custom affix}}
 set helplib_data(wdb_copy)		{{from to} {copy a database object}}
 set helplib_data(wdb_copyeval)		{{new_solid path_to_old_solid}	{copy an 'evaluated' path solid}}
 set helplib_data(wdb_dbip)		{{} {get dbip}}

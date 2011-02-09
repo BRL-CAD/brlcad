@@ -1,77 +1,40 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2008 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='draw'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="draw">
 
 <refmeta>
   <refentrytitle>DRAW</refentrytitle>
   <manvolnum>nged</manvolnum>
-  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-  <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
 </refmeta>
 
-<refnamediv id='name'>
+<refnamediv xml:id="name">
   <refname>draw</refname>
-  <refpurpose>Adds <emphasis>objects</emphasis>> to the display list so that they will appear on the
+  <refpurpose>Adds <emphasis>objects</emphasis>&gt; to the display list so that they will appear on the
  <emphasis>MGED</emphasis> display. The <command>e</command> command is a synonym for <command>draw</command>.
    </refpurpose>
 </refnamediv>
 
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-  <cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
     <command>draw</command>    
     
-    <arg>-A <replaceable>attribute name/value pairs</replaceable></arg>
-    <arg>-s</arg>
-    <arg>-A -o<replaceable>attribute name/value pairs</replaceable></arg>
-    <arg>-C#/#/#</arg>
-    <arg><replaceable>objects</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-A <replaceable>attribute name/value pairs</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-s</arg>
+    <arg choice="opt" rep="norepeat">-A -o<replaceable>attribute name/value pairs</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-C#/#/#</arg>
+    <arg choice="opt" rep="norepeat"><replaceable>objects</replaceable></arg>
 
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsect1 id='description'>
-  <title>DESCRIPTION</title>
-  <para>Adds <emphasis>objects</emphasis>> to the display list so that they will appear on the MGED display. The <command>e</command> command is a synonym for draw.
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  
+  <para>Adds <emphasis>objects</emphasis>&gt; to the display list so that they will appear on the MGED display. The <command>e</command> command is a synonym for draw.
   </para>
-<itemizedlist mark='bullet'>
+<itemizedlist mark="bullet">
 <listitem>
 <para>
 	The <emphasis>-C</emphasis> option provides the user a way to specify a color that overrides all other
@@ -93,19 +56,19 @@
 </para>
 </listitem>
 </itemizedlist>
-</refsect1>
+</refsection>
 
-<refsect1 id='examples'>
-  <title>EXAMPLES</title>
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  
   <para>The following examples show the use of the <command>draw</command> command to draw particular objects, 
 	to specify color, to draw with shape lines rather than dot-dash lines, and to limit the objects to be drawn
  to those having specific attribute names and value pairs.
   </para>
-  <example>
-    <title>Draw specific objects in the <emphasis>MGED</emphasis> display.</title>
+  <example><info><title>Draw specific objects in the <emphasis>MGED</emphasis> display.</title></info>
+    
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged></prompt> <userinput>draw object1 object2</userinput></term>
+	   <term><prompt>mged&gt;</prompt> <userinput>draw object1 object2</userinput></term>
 	   <listitem>
 	     <para><emphasis>Object1</emphasis> and <emphasis>object2</emphasis> are drawn in the <emphasis>MGED</emphasis> display.
 	     </para>
@@ -114,38 +77,34 @@
     </variablelist>
   </example>
        
-  <example>
-    <title>Specify the color used to draw the object.</title>
+  <example><info><title>Specify the color used to draw the object.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>draw -C 255/255/255 object2</userinput>
+      <prompt>mged&gt;</prompt><userinput>draw -C 255/255/255 object2</userinput>
     </para>
     <para>Object2 is drawn in white.
     </para>
   </example>
 
- <example>
-    <title>Limit the objects to be drawn to those having specific attribute names and value pairs.
- </title>
+ <example><info><title>Limit the objects to be drawn to those having specific attribute names and value pairs.
+ </title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>draw -A -o Comment {First comment} Comment {Second comment}</userinput>
+      <prompt>mged&gt;</prompt><userinput>draw -A -o Comment {First comment} Comment {Second comment}</userinput>
     </para>
     <para>Objects having a Comment attribute with a value of either "First comment" or "Second comment" are drawn.
     </para>
   </example>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='author'>
-  <title>AUTHOR</title>
-  <para>BRL-CAD Team</para>
-</refsect1>
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
 
-<refsect1 id='bug_reports'>
-  <title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
-</refsect1>
+</refsection>
 </refentry>
-

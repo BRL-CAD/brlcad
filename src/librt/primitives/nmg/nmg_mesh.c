@@ -1,7 +1,7 @@
 /*                      N M G _ M E S H . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ nmg_is_angle_in_wedge(double a, double b, double t)
     if (NEAR_ZERO(a-t, 1.0e-8)) return -2;
     if (NEAR_ZERO(b-t, 1.0e-8)) return -1;
 
-    /* If A==B, if T is not also equal, it's outside the wedge */
+    /* If A==B, if T is not also equal, its outside the wedge */
     if (NEAR_ZERO(a-b, 1.0e-8)) return 0;
 
     if (b < a) {
@@ -402,7 +402,7 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 	    bu_bomb("nmg_radial_join_eu: infinite loop (2)\n");
 	}
 
-	/* find the next use of the edge eu2 is on.  If eu2 and it's
+	/* find the next use of the edge eu2 is on.  If eu2 and its
 	 * mate are the last uses of the edge, there will be no next
 	 * edgeuse to move. (Loop termination condition).
 	 */

@@ -1,7 +1,7 @@
 /*                     C O N V - V G 2 G . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,6 +56,7 @@ main(int argc, char **argv)
     static int count;
     static int i;
     double factor = 1.0;
+    int ret;
 
     if ( argc != 3 )  {
 	printf("Usage: conv-vg2g file.vg file.g\n");
@@ -83,7 +84,7 @@ main(int argc, char **argv)
 
     if (rec.u_id == ID_IDENT) {
 	/* have an mged type file - check its version */
-	if ( strcmp(rec.i.i_version, ID_VERSION) == 0 ) {
+	if ( BU_STR_EQUAL(rec.i.i_version, ID_VERSION) ) {
 	    (void)printf("%s: NO conversion necessary\n", argv[1]);
 	    (void)putchar(7);
 	    return 0;
@@ -130,7 +131,10 @@ main(int argc, char **argv)
 	printf("Title=%s\n", rec.i.i_title );
     }
 
-    write( ofd, &rec, sizeof rec );
+    ret = write( ofd, &rec, sizeof rec );
+    if (ret < 0)
+	perror("write");
+
     count = 1;
 
     /* find the units scale factor */
@@ -222,7 +226,10 @@ main(int argc, char **argv)
 		m[11] *= factor;
 		break;
 	}
-	write( ofd, &rec, sizeof(rec) );
+	ret = write( ofd, &rec, sizeof(rec) );
+	if (ret < 0)
+	    perror("write");
+
 	count++;
     }
     printf("%d database granules written\n", count);

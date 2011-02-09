@@ -1,7 +1,7 @@
 /*                  S H _ B I L L B O A R D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,10 +19,10 @@
  */
 /** @file sh_billboard.c
  *
- *	A billboard shader for use with RCC geometry
+ * A billboard shader for use with RCC geometry
  *
- *	6) Edit shaders.tcl and comb.tcl in the ../tclscripts/mged directory to
- *		add a new gui for this shader.
+ * 6) Edit shaders.tcl and comb.tcl in the ../tclscripts/mged directory to
+ * add a new gui for this shader.
  */
 
 #include "common.h"
@@ -36,26 +36,26 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "rtprivate.h"
+#include "optical.h"
 #include "plot3.h"
 
 
-extern int rr_render(struct application	*ap,
-		     struct partition	*pp,
-		     struct shadework   *swp);
+extern int rr_render(struct application *ap,
+		     struct partition *pp,
+		     struct shadework *swp);
 #define bbd_MAGIC 0x62626400	/* "bbd" */
 #define CK_bbd_SP(_p) BU_CKMAG(_p, bbd_MAGIC, "bbd_specific")
 
 struct bbd_img {
-    struct bu_list	l;	/* must be first */
-    plane_t	img_plane;	/* plane eqn for image plane */
-    point_t	img_origin;	/* image origin in XYZ */
-    vect_t	img_x;		/* u direction in image plane */
-    double	img_xlen;	/* length of image in u direction */
-    vect_t	img_y;		/* v direction in image plane */
-    double	img_ylen;	/* length of image in v direction */
-    size_t	img_width;	/* dimension of image */
-    size_t 	img_height;
+    struct bu_list l;	/* must be first */
+    plane_t img_plane;	/* plane eqn for image plane */
+    point_t img_origin;	/* image origin in XYZ */
+    vect_t img_x;		/* u direction in image plane */
+    double img_xlen;	/* length of image in u direction */
+    vect_t img_y;		/* v direction in image plane */
+    double img_ylen;	/* length of image in v direction */
+    size_t img_width;	/* dimension of image */
+    size_t img_height;
     struct bu_mapped_file *img_mf; /* image data */
 };
 
@@ -65,7 +65,7 @@ struct bbd_img {
  * to any particular use of the shader.
  */
 struct bbd_specific {
-    long	magic;	/* magic # for memory validity check, must come 1st */
+    long magic;	/* magic # for memory validity check, must come 1st */
     int img_threshold;
     size_t img_width;
     size_t img_height;
@@ -83,23 +83,30 @@ struct bbd_specific {
 };
 #define MAX_IMAGES 64
 /* The default values for the variables in the shader specific structure */
-const static
+static const
 struct bbd_specific bbd_defaults = {
     bbd_MAGIC,
     10,		/* img_threshold */
     512,	/* img_width */
     512,	/* img_height */
-    100.0	/* img_scale */
+    100.0,	/* img_scale */
+    {0, NULL, 0, 0, 0},
+    0,
+    {0, NULL, NULL},
+    NULL,
+    {0.0, 0.0, 0.0, 0.0},
+    {0.0, 0.0, 0.0, 0.0}
 };
 
-#define SHDR_NULL	((struct bbd_specific *)0)
-#define SHDR_O(m)	bu_offsetof(struct bbd_specific, m)
-#define SHDR_AO(m)	bu_offsetofarray(struct bbd_specific, m)
 
-void new_image(register const struct bu_structparse	*sdp,
-	       register const char			*name,
-	       char					*base,
-	       const char				*value);
+#define SHDR_NULL ((struct bbd_specific *)0)
+#define SHDR_O(m) bu_offsetof(struct bbd_specific, m)
+#define SHDR_AO(m) bu_offsetofarray(struct bbd_specific, m)
+
+void new_image(register const struct bu_structparse *sdp,
+	       register const char *name,
+	       char *base,
+	       const char *value);
 
 
 /* description of how to parse/print the arguments to the shader
@@ -107,20 +114,21 @@ void new_image(register const struct bu_structparse	*sdp,
  * structure above
  */
 struct bu_structparse bbd_print_tab[] = {
-    {"%ld",  1, "w",	SHDR_O(img_width),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%ld",  1, "n",	SHDR_O(img_height),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "t",	SHDR_O(img_threshold),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "h",	SHDR_O(img_scale),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%V",  1, "f",	SHDR_O(img_filename),	new_image },
-    {"",    0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%ld",  1, "w",	SHDR_O(img_width),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%ld",  1, "n",	SHDR_O(img_height),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "t",	SHDR_O(img_threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",  1, "h",	SHDR_O(img_scale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%V",  1, "f",	SHDR_O(img_filename),	new_image, NULL, NULL },
+    {"",    0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 struct bu_structparse bbd_parse_tab[] = {
-    {"%p", bu_byteoffset(bbd_print_tab[0]), "bbd_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
+    {"%p", bu_byteoffset(bbd_print_tab[0]), "bbd_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
-HIDDEN int	bbd_setup(), bbd_render();
-HIDDEN void	bbd_print(), bbd_free();
+
+HIDDEN int bbd_setup(), bbd_render();
+HIDDEN void bbd_print(), bbd_free();
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -139,10 +147,10 @@ struct mfuncs bbd_mfuncs[] = {
 };
 
 
-void new_image(register const struct bu_structparse	*sdp,	/*struct desc*/
-	       register const char			*name,	/*member name*/
-	       char					*base,	/*struct base*/
-	       const char				*value) /*string valu*/
+void new_image(register const struct bu_structparse *UNUSED(sdp),	/*struct desc*/
+	       register const char *UNUSED(name),	/*member name*/
+	       char *base,	/*struct base*/
+	       const char *UNUSED(value)) /*string value */
 {
     struct bbd_specific *bbd_sp = (struct bbd_specific *)base;
     struct bbd_img *bbdi;
@@ -169,26 +177,26 @@ void new_image(register const struct bu_structparse	*sdp,	/*struct desc*/
 }
 
 
-/*	B I L L B O A R D _ S E T U P
+/* B I L L B O A R D _ S E T U P
  *
- *	This routine is called (at prep time)
- *	once for each region which uses this shader.
- *	Any shader-specific initialization should be done here.
+ * This routine is called (at prep time)
+ * once for each region which uses this shader.
+ * Any shader-specific initialization should be done here.
  *
- * 	Returns:
- *	1	success
- *	0	success, but delete region
- *	-1	failure
+ * Returns:
+ * 1 success
+ * 0 success, but delete region
+ * -1 failure
  */
 HIDDEN int
-bbd_setup( struct region *rp,
-	   struct bu_vls *matparm,
-	   char **dpp, /* pointer to reg_udata in *rp */
-	   struct mfuncs *mfp,
-	   struct rt_i *rtip
+bbd_setup(struct region *rp,
+	  struct bu_vls *matparm,
+	  char **dpp, /* pointer to reg_udata in *rp */
+	  struct mfuncs *mfp,
+	  struct rt_i *rtip
     )
 {
-    register struct bbd_specific	*bbd_sp;
+    register struct bbd_specific *bbd_sp;
     struct rt_db_internal intern;
     struct rt_tgc_internal *tgc;
     int s;
@@ -201,7 +209,7 @@ bbd_setup( struct region *rp,
 
     /* check the arguments */
     RT_CHECK_RTI(rtip);
-    BU_CK_VLS( matparm );
+    BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
 
 
@@ -215,7 +223,7 @@ bbd_setup( struct region *rp,
     }
 
     RT_CK_SOLTAB(rp->reg_treetop->tr_a.tu_stp);
-    if ( rp->reg_treetop->tr_a.tu_stp->st_id != ID_REC) {
+    if (rp->reg_treetop->tr_a.tu_stp->st_id != ID_REC) {
 	bu_log("--- Warning: Region %s shader %s", rp->reg_name, mfp->mf_name);
 	bu_log("Shader should be used on region of single REC/RCC primitive %d\n",
 	       rp->reg_treetop->tr_a.tu_stp->st_id);
@@ -224,7 +232,7 @@ bbd_setup( struct region *rp,
 
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT( bbd_sp, bbd_specific );
+    BU_GETSTRUCT(bbd_sp, bbd_specific);
     *dpp = (char *)bbd_sp;
 
     /* initialize the default values for the shader */
@@ -235,7 +243,7 @@ bbd_setup( struct region *rp,
     bbd_sp->img_count = 0;
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse( matparm, bbd_parse_tab, (char *)bbd_sp ) < 0 )
+    if (bu_struct_parse(matparm, bbd_parse_tab, (char *)bbd_sp) < 0)
 	return -1;
 
     if (bbd_sp->img_count > MAX_IMAGES) {
@@ -267,7 +275,7 @@ bbd_setup( struct region *rp,
     VMOVE(vv, tgc->h);
     VUNITIZE(vv);
     for (BU_LIST_FOR(bi, bbd_img, &bbd_sp->imgs)) {
-	static const point_t o = { 0.0, 0.0, 0.0 };
+	static const point_t o = VINIT_ZERO;
 	bn_mat_arb_rot(mat, o, vv, angle*img_num);
 
 	/* compute plane equation */
@@ -303,35 +311,38 @@ bbd_setup( struct region *rp,
     rt_db_free_internal(&intern);
 
     if (rdebug&RDEBUG_SHADE) {
-	bu_struct_print( " Parameters:", bbd_print_tab, (char *)bbd_sp );
+	bu_struct_print(" Parameters:", bbd_print_tab, (char *)bbd_sp);
     }
 
     return 1;
 }
 
-/*
- *	B I L L B O A R D _ P R I N T
- */
-HIDDEN void
-bbd_print( struct region *rp, char *dp )
-{
-    bu_struct_print( rp->reg_name, bbd_print_tab, (char *)dp );
-}
 
 /*
- *	B I L L B O A R D _ F R E E
+ * B I L L B O A R D _ P R I N T
  */
 HIDDEN void
-bbd_free( char *cp )
+bbd_print(struct region *rp, char *dp)
 {
-    bu_free( cp, "bbd_specific" );
+    bu_struct_print(rp->reg_name, bbd_print_tab, (char *)dp);
 }
+
+
+/*
+ * B I L L B O A R D _ F R E E
+ */
+HIDDEN void
+bbd_free(char *cp)
+{
+    bu_free(cp, "bbd_specific");
+}
+
 
 static void
-plot_ray_img(struct application	*ap,
-	     struct partition	*pp,
-	     double		dist,
-	     struct bbd_img	*bi)
+plot_ray_img(struct application *ap,
+	     struct partition *pp,
+	     double dist,
+	     struct bbd_img *bi)
 {
     static int plot_num;
     FILE *pfd;
@@ -347,7 +358,7 @@ plot_ray_img(struct application	*ap,
     /* red line from ray origin to hit point */
     VJOIN1(pp->pt_inhit->hit_point, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
 	   ap->a_ray.r_dir);
-    if (VAPPROXEQUAL(ap->a_ray.r_pt, pp->pt_inhit->hit_point, 0.125)) {
+    if (VNEAR_EQUAL(ap->a_ray.r_pt, pp->pt_inhit->hit_point, 0.125)) {
 	/* start and hit point identical, make special allowance */
 	vect_t vtmp;
 
@@ -374,15 +385,16 @@ plot_ray_img(struct application	*ap,
 
 }
 
+
 /*
- *	d o _ r a y _ i m a g e
+ * d o _ r a y _ i m a g e
  *
- *	Handle ray interaction with 1 image
+ * Handle ray interaction with 1 image
  */
 static void
-do_ray_image(struct application	*ap,
-	     struct partition	*pp,
-	     struct shadework	*swp,	/* defined in ../h/shadework.h */
+do_ray_image(struct application *ap,
+	     struct partition *pp,
+	     struct shadework *swp,	/* defined in ../h/shadework.h */
 	     struct bbd_specific *bbd_sp,
 	     struct bbd_img *bi,
 	     double dist)
@@ -478,7 +490,7 @@ do_ray_image(struct application	*ap,
     if (rdebug&RDEBUG_SHADE)
 	bu_log("tot:%d color_count: %d\n", tot, color_count);
 
-    if (color_count == 0)  {
+    if (color_count == 0) {
 	if (rdebug&RDEBUG_SHADE)
 	    bu_log("no color contribution, leaving color as %g %g %g\n",
 		   V3ARGS(swp->sw_color));
@@ -514,22 +526,23 @@ struct imgdist {
     int index;
 };
 
+
 int
 imgdist_compare(const void *a, const void *b)
 {
     return (int)(((struct imgdist *)a)->dist - ((struct imgdist *)b)->dist);
 }
 /*
- *	B I L L B O A R D _ R E N D E R
+ * B I L L B O A R D _ R E N D E R
  *
- *	This is called (from viewshade() in shade.c) once for each hit point
- *	to be shaded.  The purpose here is to fill in values in the shadework
- *	structure.
+ * This is called (from viewshade() in shade.c) once for each hit point
+ * to be shaded.  The purpose here is to fill in values in the shadework
+ * structure.
  *
- *  dp is a pointer to the shader-specific struct
+ * dp is a pointer to the shader-specific struct
  */
 int
-bbd_render( struct application *ap, struct partition *pp, struct shadework *swp, char *dp )
+bbd_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
     register struct bbd_specific *bbd_sp = (struct bbd_specific *)dp;
     union tree *tp;
@@ -543,8 +556,8 @@ bbd_render( struct application *ap, struct partition *pp, struct shadework *swp,
     CK_bbd_SP(bbd_sp);
 
     if (rdebug&RDEBUG_SHADE) {
-	bu_struct_print( "bbd_render Parameters:",
-			 bbd_print_tab, (char *)bbd_sp );
+	bu_struct_print("bbd_render Parameters:",
+			bbd_print_tab, (char *)bbd_sp);
 	bu_log("pixel %d %d\n", ap->a_x, ap->a_y);
 	bu_log("bbd region: %s\n", pp->pt_regionp->reg_name);
     }
@@ -584,10 +597,10 @@ bbd_render( struct application *ap, struct partition *pp, struct shadework *swp,
      * 0 < swp->sw_transmit <= 1 causes transmission computations
      * 0 < swp->sw_reflect <= 1 causes reflection computations
      */
-    if (swp->sw_reflect > 0 || swp->sw_transmit > 0 ) {
+    if (swp->sw_reflect > 0 || swp->sw_transmit > 0) {
 	int level = ap->a_level;
 	ap->a_level = 0; /* Bogus hack to keep rr_render from giving up */
-	(void)rr_render( ap, pp, swp );
+	(void)rr_render(ap, pp, swp);
 	ap->a_level = level;
     }
     if (rdebug&RDEBUG_SHADE) {
@@ -595,6 +608,7 @@ bbd_render( struct application *ap, struct partition *pp, struct shadework *swp,
     }
     return 1;
 }
+
 
 /*
  * Local Variables:

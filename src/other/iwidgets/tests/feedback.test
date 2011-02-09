@@ -45,7 +45,7 @@ set m 1
 test Feedback-1.$c {Feedback construction} {
     iwidgets::Feedback .f
     pack .f -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -60,19 +60,19 @@ test Feedback-2.$o {configuration option} {
 incr o
 
 foreach test {
-    {-background #d9d9d9 #d9d9d9}
-    {-cursor gumby gumby}
-    {-foreground Black Black}
-    {-labelmargin 5 5}
+    {-background #d9d9d9 #d9d9d9} 
+    {-cursor gumby gumby} 
+    {-foreground Black Black} 
+    {-labelmargin 5 5} 
     {-labeltext Label Label}
-    {-labelpos n n}
-    {-labelpos ne ne}
-    {-labelpos e e}
-    {-labelpos se se}
-    {-labelpos s s}
-    {-labelpos sw sw}
-    {-labelpos w w}
-    {-labelpos nw nw}
+    {-labelpos n n} 
+    {-labelpos ne ne} 
+    {-labelpos e e} 
+    {-labelpos se se} 
+    {-labelpos s s} 
+    {-labelpos sw sw} 
+    {-labelpos w w} 
+    {-labelpos nw nw} 
     {-barcolor red red}
     {-steps 50 50}
     {-sticky w w}
@@ -90,7 +90,7 @@ foreach test {
 	    .f configure $option [lindex $test 1]
 	    lindex [.f configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -115,7 +115,7 @@ foreach test {
 	test Feedback-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -124,7 +124,7 @@ foreach test {
 #
 test Feedback-1.$c {Feedback destruction} {
     destroy .f
-    update
+    update 
 } {}
 
 incr c
@@ -133,14 +133,14 @@ test Feedback-1.$c {Feedback construction} {
     iwidgets::feedback .f -labeltext "Label" \
 	    -labelpos n -labelmargin 5
     pack .f -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Feedback-1.$c {Feedback destruction} {
     destroy .f
-    update
+    update 
 } {}
 
 incr c
@@ -149,7 +149,7 @@ test Feedback-1.$c {Feedback destruction} {
     iwidgets::feedback .f
     pack .f
     destroy .f
-    update
+    update 
 } {}
 
 

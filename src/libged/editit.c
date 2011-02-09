@@ -1,7 +1,7 @@
 /*                        E D I T I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ _ged_editit(char *editstring, const char *filename)
 {
 #ifdef HAVE_UNISTD_H
     int xpid = 0;
-    int stat = 0;
+    int status = 0;
 #endif
     int pid = 0;
     char **avtmp;
@@ -69,13 +69,13 @@ _ged_editit(char *editstring, const char *filename)
     avtmp = (char **)bu_malloc(sizeof(char *)*5, "ged_editit: editstring args");
     bu_argv_from_string(avtmp, 4, editstring);
 
-    if (avtmp[0] && strcmp(avtmp[0], "(null)"))
+    if (avtmp[0] && !BU_STR_EQUAL(avtmp[0], "(null)"))
 	terminal = avtmp[0];
-    if (avtmp[1] && strcmp(avtmp[1], "(null)"))
+    if (avtmp[1] && !BU_STR_EQUAL(avtmp[1], "(null)"))
 	terminal_opt = avtmp[1];
-    if (avtmp[2] && strcmp(avtmp[2], "(null)"))
+    if (avtmp[2] && !BU_STR_EQUAL(avtmp[2], "(null)"))
 	editor = avtmp[2];
-    if (avtmp[3] && strcmp(avtmp[3], "(null)"))
+    if (avtmp[3] && !BU_STR_EQUAL(avtmp[3], "(null)"))
 	editor_opt = avtmp[3];
 
     if (!editor) {
@@ -150,7 +150,7 @@ _ged_editit(char *editstring, const char *filename)
 	    return 1;
 #else
 
-	    if (!strcmp(bu_basename(editor), "TextEdit")) {
+	    if (BU_STR_EQUAL(bu_basename(editor), "TextEdit")) {
 		/* close stdout/stderr so we don't get blather from TextEdit about service registration failure */
 		close(fileno(stdout));
 		close(fileno(stderr));
@@ -176,7 +176,7 @@ _ged_editit(char *editstring, const char *filename)
 
 #ifdef HAVE_UNISTD_H
     /* wait for the editor to terminate */
-    while ((xpid = wait(&stat)) >= 0) {
+    while ((xpid = wait(&status)) >= 0) {
 	if (xpid == pid) {
 	    break;
 	}

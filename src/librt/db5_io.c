@@ -1,7 +1,7 @@
 /*                        D B 5 _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -777,7 +777,7 @@ db_wrap_v5_external(struct bu_external *ep, const char *name)
     BU_ASSERT_LONG(raw.h_dli, ==, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT);
 
     /* See if name needs to be changed */
-    if (raw.name.ext_buf == NULL || strcmp(name, raw.name.ext_buf) != 0) {
+    if (raw.name.ext_buf == NULL || !BU_STR_EQUAL(name, raw.name.ext_buf)) {
 	/* Name needs to be changed.  Create new external form.
 	 * Make temporary copy so input isn't smashed
 	 * as new external object is constructed.
@@ -1056,7 +1056,7 @@ rt_db_external5_to_internal5(
 /**
  * R T _ D B _ G E T _ I N T E R N A L 5
  *
- * Get an object from the database, and convert it into it's internal
+ * Get an object from the database, and convert it into its internal
  * representation.
  *
  * Applications and middleware shouldn't call this directly, they

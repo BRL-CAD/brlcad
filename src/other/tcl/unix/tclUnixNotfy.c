@@ -292,7 +292,9 @@ Tcl_FinalizeNotifier(
 	 * 4139] [Bug: 1222872]
 	 */
 
-	write(triggerPipe, "q", 1);
+	if (write(triggerPipe, "q", 1) != 1) {
+		    Tcl_Panic("Tcl_FinalizeNotifier: unable to write q to triggerPipe");
+	}
 	close(triggerPipe);
 	while(triggerPipe >= 0) {
 	    Tcl_ConditionWait(&notifierCV, &notifierMutex, NULL);
@@ -771,7 +773,9 @@ Tcl_WaitForEvent(
 	waitingListPtr = tsdPtr;
 	tsdPtr->onList = 1;
 
-	write(triggerPipe, "", 1);
+	if (write(triggerPipe, "", 1) != 1) {
+		Tcl_Panic("Tcl_WaitForEvent: unable to write to triggerPipe");
+	}
     }
 
     FD_ZERO(&(tsdPtr->readyMasks.readable));
@@ -801,7 +805,9 @@ Tcl_WaitForEvent(
 	}
 	tsdPtr->nextPtr = tsdPtr->prevPtr = NULL;
 	tsdPtr->onList = 0;
-	write(triggerPipe, "", 1);
+	if (write(triggerPipe, "", 1) != 1) {
+		Tcl_Panic("Tcl_WaitForEvent: unable to write to triggerPipe");
+	}
     }
 
 #else

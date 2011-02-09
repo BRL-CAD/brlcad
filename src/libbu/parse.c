@@ -1,7 +1,7 @@
 /*                         P A R S E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -408,35 +408,36 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 }
 
 
-int
+size_t
 bu_struct_put(FILE *fp, const struct bu_external *ext)
 {
     BU_CK_GETPUT(ext);
 
-    /* FIXME: possible loss of data here */
-    return (int)(fwrite(ext->ext_buf, 1, ext->ext_nbytes, fp));
+    return fwrite(ext->ext_buf, 1, ext->ext_nbytes, fp);
 }
 
 
-int
+size_t
 bu_struct_get(struct bu_external *ext, FILE *fp)
 {
-    register long i, len;
+    size_t i;
+    uint32_t len;
 
     BU_INIT_EXTERNAL(ext);
     ext->ext_buf = (genptr_t) bu_malloc(6, "bu_struct_get buffer head");
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 
-    i=(long)fread((char *) ext->ext_buf, 1, 6, fp);	/* res_syscall */
+    i = fread((char *) ext->ext_buf, 1, 6, fp);	/* res_syscall */
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
     if (i != 6) {
 	if (i == 0)
 	    return 0;
 
+	perror("fread");
 	bu_log("ERROR: bu_struct_get bad fread (%ld), file %s, line %d\n",
 	       i, __FILE__, __LINE__);
-	bu_bomb("Bad fread");
+	return 0;
     }
 
     i = (((unsigned char *)(ext->ext_buf))[0] << 8)
@@ -457,22 +458,32 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     ext->ext_buf = (genptr_t) bu_realloc((char *) ext->ext_buf, len,
 					 "bu_struct_get full buffer");
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    i=(long)fread((char *) ext->ext_buf + 6, 1, len-6, fp);	/* res_syscall */
+    i = fread((char *) ext->ext_buf + 6, 1, len-6, fp);	/* res_syscall */
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
+
     if (UNLIKELY(i != len-6)) {
 	bu_log("ERROR: bu_struct_get bad fread (%ld), file %s, line %d\n",
 	       i, __FILE__, __LINE__);
-	bu_bomb("Bad fread");
+	ext->ext_nbytes = 0;
+	bu_free(ext->ext_buf, "bu_struct_get full buffer");
+	ext->ext_buf = NULL;
+	return 0;
     }
-    i = (((unsigned char *)(ext->ext_buf))[len-2] <<8) |
-	((unsigned char *)(ext->ext_buf))[len-1];
+
+    i = (((unsigned char *)(ext->ext_buf))[len-2] << 8)
+	| ((unsigned char *)(ext->ext_buf))[len-1];
+
     if (UNLIKELY(i != BU_GETPUT_MAGIC_2)) {
 	bu_log("ERROR: bad getput buffer %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
 	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_2,
 	       bu_identify_magic(i), i, __FILE__, __LINE__);
-	bu_bomb("Bad getput buffer");
+	ext->ext_nbytes = 0;
+	bu_free(ext->ext_buf, "bu_struct_get full buffer");
+	ext->ext_buf = NULL;
+	return 0;
     }
-    return 1;
+
+    return (size_t)len;
 }
 
 
@@ -603,7 +614,7 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 
     for (; sdp->sp_name != (char *)0; sdp++) {
 
-	if (strcmp(sdp->sp_name, name) != 0	/* no name match */
+	if (!BU_STR_EQUAL(sdp->sp_name, name)	/* no name match */
 	    && sdp->sp_fmt[0] != 'i'
 	    && sdp->sp_fmt[1] != 'p')		/* no include desc */
 
@@ -1038,7 +1049,7 @@ bu_vls_struct_item_named(struct bu_vls *vp, const struct bu_structparse *parseta
     register const struct bu_structparse *sdp;
 
     for (sdp = parsetab; sdp->sp_name != NULL; sdp++)
-	if (strcmp(sdp->sp_name, name) == 0) {
+	if (BU_STR_EQUAL(sdp->sp_name, name)) {
 	    bu_vls_struct_item(vp, sdp, base, sep_char);
 	    return 0;
 	}
@@ -2003,7 +2014,7 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
     shader = _bu_list_elem(in, 0);
     params = _bu_list_elem(in, 1);
 
-    if (!strcmp(shader, "envmap")) {
+    if (BU_STR_EQUAL(shader, "envmap")) {
 	/* environment map */
 
 	if (bu_vls_strlen(vls))
@@ -2011,7 +2022,7 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 	bu_vls_strcat(vls, "envmap");
 
 	bu_shader_to_key_eq(params, vls);
-    } else if (!strcmp(shader, "stack")) {
+    } else if (BU_STR_EQUAL(shader, "stack")) {
 	/* stacked shaders */
 
 	int i;
@@ -2161,10 +2172,10 @@ bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse
     while (sp->sp_name != NULL) {
 	bu_vls_printf(logstr, "%s ", sp->sp_name);
 	/* These types are specified by lengths, e.g. %80s */
-	if (strcmp(sp->sp_fmt, "%c") == 0 ||
-	    strcmp(sp->sp_fmt, "%s") == 0 ||
-	    strcmp(sp->sp_fmt, "%S") == 0 || /* XXX - DEPRECATED [7.14] */
-	    strcmp(sp->sp_fmt, "%V") == 0) {
+	if (BU_STR_EQUAL(sp->sp_fmt, "%c") ||
+	    BU_STR_EQUAL(sp->sp_fmt, "%s") ||
+	    BU_STR_EQUAL(sp->sp_fmt, "%S") || /* XXX - DEPRECATED [7.14] */
+	    BU_STR_EQUAL(sp->sp_fmt, "%V")) {
 	    if (sp->sp_count > 1) {
 		/* Make them all look like %###s */
 		bu_vls_printf(logstr, "%%%lds", sp->sp_count);
@@ -2192,14 +2203,15 @@ bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse
 int
 bu_structparse_argv(struct bu_vls *logstr,
 		    int argc,
-		    char **argv,
+		    const char **argv,
 		    const struct bu_structparse *desc,
 		    char *base)
 {
-    register char *cp, *loc;
-    register const struct bu_structparse *sdp;
+    register const struct bu_structparse *sdp = NULL;
     register size_t j;
     register size_t ii;
+    const char *cp = NULL;
+    char *loc = NULL;
     struct bu_vls str;
 
     if (UNLIKELY(desc == (struct bu_structparse *)NULL)) {
@@ -2213,7 +2225,7 @@ bu_structparse_argv(struct bu_vls *logstr,
     while (argc > 0) {
 	/* Find the attribute which matches this argument. */
 	for (sdp = desc; sdp->sp_name != NULL; sdp++) {
-	    if (strcmp(sdp->sp_name, *argv) != 0)
+	    if (!BU_STR_EQUAL(sdp->sp_name, *argv))
 		continue;
 
 	    /* if we get this far, we've got a name match
@@ -2414,7 +2426,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 		    int dot_seen;
 		    double tmp_double;
 		    register double *dp;
-		    char *numstart;
+		    const char *numstart;
 
 		    dp = (double *)loc;
 

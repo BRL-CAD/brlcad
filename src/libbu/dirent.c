@@ -1,7 +1,7 @@
 /*                           D I R E N T . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2010 United States Government as represented by
+ * Copyright (c) 2001-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ bu_count_path(char *path, char *substr)
 	if (strlen(substr) == 0) {
 	    filecount++;
 	} else {
-	    if (strcmp(dp->d_name+(strlen(dp->d_name)-strlen(substr)), substr) == 0) {
+	    if (BU_STR_EQUAL(dp->d_name+(strlen(dp->d_name)-strlen(substr)), substr)) {
 		filecount++;
 	    }
 	}
@@ -59,7 +59,7 @@ bu_list_path(char *path, char *substr, char **filearray)
 	    filecount++;
 	    filearray[filecount]=dp->d_name;
 	} else {
-	    if (strcmp(dp->d_name+(strlen(dp->d_name)-strlen(substr)), substr) == 0) {
+	    if (BU_STR_EQUAL(dp->d_name+(strlen(dp->d_name)-strlen(substr)), substr)) {
 		filecount++;
 		filearray[filecount]=dp->d_name;
 	    }

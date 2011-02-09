@@ -1,40 +1,14 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title><application>BRL-CAD</application> Tutorial Series: Volume I - An Overview of BRL-CAD</title>
-  </articleinfo>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title><application>BRL-CAD</application> Tutorial Series: Volume I - An Overview of BRL-CAD</title>
+    
+  </info>
 
-    <abstract>
-      <para>
-	Since 1979, the U.S. Army Research Laboratory has been developing and
-	distributing the <application>BRL-CAD</application> constructive solid geometry (CSG) modeling
-	package for a wide range of military and industrial applications. The
-	package includes a large collection of tools and utilities including an
-	interactive geometry editor, ray-tracing and generic framebuffer
-	libraries, a network-distributed image-processing and signal-processing
-	capability, and an embedded scripting language.
-      </para>
-      
-      <para>
-	As part of this effort, a multivolume tutorial series is being developed
-	to assist users in the many features of the <application>BRL-CAD</application> package.
-	This document serves as Volume I of the series.
-	Volume II provides a series of lessons designed to introduce
-	a new user to the MGED modeling application - available either in one large book ("Introduction to MGED")
-	or a series of sixteen individual lessons. Volume III, "Principles of Effective Modeling," addresses the 
-	modeling process and suggests principles and techniques for maximizing <application>BRL-CAD</application>'s 
-	capabilities. Volume III includes a series of appendices covering various advanced uses of BRL-CAD - these
-	are also available individually as articles.  New documentation not included in the volumes typically
-	is included as an article.  For help with individual commands the user is directed to the Man Pages,
-	available either through a graphical browser in MGED or using the <command>brlman</command> command from
-	the operating system command line.
-      </para>
-    </abstract>
+    
 
-  <section id="whatisbrlcad">
-    <title>What is BRL-CAD?</title>
+  <section xml:id="whatisbrlcad"><info><title>What is BRL-CAD?</title></info>
+    
     <para>
 	Since the late 1950s, computers have been used to assist with the design 
 	and study of combat vehicle systems. The result has been a reduction in the 
@@ -71,8 +45,8 @@
     </para>
   </section> 
 
-  <section id="whycsg">
-    <title>Why CSG Modeling?</title>
+  <section xml:id="whycsg"><info><title>Why CSG Modeling?</title></info>
+    
     <para>
 	Although BRL-CAD has been used for a wide variety of engineering and graphics 
 	applications, the package's primary purpose continues to be the support of (1) ballistic 
@@ -89,8 +63,8 @@
 	types of transport.
     </para>
   </section>
-  <section id="packagecontent">
-     <title>Package Content</title>
+  <section xml:id="packagecontent"><info><title>Package Content</title></info>
+     
      <para>
 	In keeping with the UNIX philosophy of developing independent tools to perform single, 
 	specific tasks and then linking the tools together in a package, BRL-CAD is basically a 
@@ -99,19 +73,19 @@
 	of the package is illustrated below.
      </para>
 
-      <figure>
-	<title>BRL-CAD Data Flow Structure</title>
+      <figure><info><title>BRL-CAD Data Flow Structure</title></info>
+	
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volI_fig01.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volI_fig01.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
       </figure>
 
    </section>
 
-  <section id="libraries">
-    <title>Libraries</title>
+  <section xml:id="libraries"><info><title>Libraries</title></info>
+    
     <para>
 	The BRL-CAD libraries (designated by the prefix "lib") are designed primarily for the 
 	geometric modeler who also wants to tinker with software and, perhaps, design custom tools. 
@@ -174,8 +148,8 @@
     </para>
   </section>
 
-  <section id="toolsutilities">
-    <title>Tools and Utilities</title>
+  <section xml:id="toolsutilities"><info><title>Tools and Utilities</title></info>
+    
     <para>
       The application side of BRL-CAD also offers a number of tools and utilities. They primarily concern (1) geometric conversion, (2) geometric interrogation, (3) image format conversion, and (4) command-line-oriented image manipulation. The following is a list of the major BRL-CAD tools and utilities.
       <itemizedlist>
@@ -270,8 +244,8 @@
      </para>
   </section>
  
-  <section id="benchmarkingimages">
-    <title>Benchmark Testing</title>
+  <section xml:id="benchmarkingimages"><info><title>Benchmark Testing</title></info>
+    
 	<para>
 	   As changes are implemented in BRL-CAD, ARL developers run a standard set of 
 	   computationally intensive image files (shown in Figure 2) on a common machine 
@@ -282,14 +256,14 @@
 	<para>
 	   To run the benchmark images, run the script run.sh in the "bench" directory of the source directory tree.
 	</para>
-     <table frame="none" pgwide="1">
-	<title>Standard Benchmark Images</title>	
-        <tgroup cols='3' align='center'>
+     <table frame="none" pgwide="1"><info><title>Standard Benchmark Images</title></info>
+		
+        <tgroup cols="3" align="center">
           <tbody>
             <row>
-	      <entry><inlinegraphic fileref="../../books/en/images/tutorial_series_volI_fig02.png" /> </entry>
-	      <entry><inlinegraphic fileref="../../books/en/images/tutorial_series_volI_fig03.png" /> </entry>
-	      <entry><inlinegraphic fileref="../../books/en/images/tutorial_series_volI_fig04.png" /> </entry>
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volI_fig02.png"/></imageobject></inlinemediaobject> </entry>
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volI_fig03.png"/></imageobject></inlinemediaobject> </entry>
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volI_fig04.png"/></imageobject></inlinemediaobject> </entry>
             </row>
             <row>
               <entry>Moss</entry>
@@ -297,9 +271,9 @@
               <entry>Star</entry>
             </row>
             <row>
-	      <entry><inlinegraphic fileref="../../books/en/images/tutorial_series_volI_fig05.png" /> </entry>
-	      <entry><inlinegraphic fileref="../../books/en/images/tutorial_series_volI_fig06.png" /> </entry>
-	      <entry><inlinegraphic fileref="../../books/en/images/tutorial_series_volI_fig07.png" /> </entry>
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volI_fig05.png"/></imageobject></inlinemediaobject> </entry>
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volI_fig06.png"/></imageobject></inlinemediaobject> </entry>
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volI_fig07.png"/></imageobject></inlinemediaobject> </entry>
             </row>
             <row>
               <entry>Bldg 391</entry>
@@ -311,8 +285,8 @@
       </table>
 
   </section> 
-  <section id="acknowledgements">
-    <title>Acknowledgements</title>
+  <section xml:id="acknowledgements"><info><title>Acknowledgements</title></info>
+    
 	<para>
 	The authors would like to thank the members of the Advanced Computer Systems Team, who reviewed this document in a timely manner and made many helpful suggestions to improve its accuracy and presentation. At the time this document was prepared team members included John Anderson, TraNese Christy, Bob Parker, Ron Bowers, and Sean Morrison.
 	</para>

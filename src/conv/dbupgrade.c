@@ -1,7 +1,7 @@
 /*                    D B U P G R A D E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,6 +59,7 @@ main(int argc, char **argv)
     int in_arg=1;
     int out_arg=2;
     long	errors = 0, skipped = 0;
+    int version;
     name[16] = '\0';
 
     /* this tolerance structure is only used for converting polysolids to BOT's
@@ -69,8 +70,6 @@ main(int argc, char **argv)
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
-
-    bu_debug = BU_DEBUG_COREDUMP;
 
     rt_init_resource( &rt_uniresource, 0, NULL );
 
@@ -83,7 +82,7 @@ main(int argc, char **argv)
 	/* undocumented option to revert to an old db version
 	 * currently, can only revert to db version 4
 	 */
-	if ( strcmp( argv[1], "-r" ) ) {
+	if ( !BU_STR_EQUAL( argv[1], "-r" ) ) {
 	    fprintf(stderr, "Usage: %s input.g output.g\n", argv[0]);
 	    return 1;
 	} else {
@@ -120,18 +119,19 @@ main(int argc, char **argv)
 
     }
 
+    version = db_version(dbip);
     if ( !reverse ) {
-	if ( dbip->dbi_version == 5 ) {
+	if ( version == 5 ) {
 	    bu_log( "This database (%s) is already at the current version\n",
 		    argv[in_arg] );
 	    return 5;
 	}
-	if ( dbip->dbi_version != 4 ) {
+	if ( version != 4 ) {
 	    bu_log( "Input database version not recognized!!!!\n" );
 	    return 4;
 	}
     } else if ( reverse ) {
-	if ( dbip->dbi_version != 5 ) {
+	if ( version != 5 ) {
 	    bu_log( "Can only revert from db version 5\n" );
 	    return 6;
 	}
@@ -142,7 +142,7 @@ main(int argc, char **argv)
     if ( db_dirbuild( dbip ) )
 	bu_exit(1, "db_dirbuild failed\n" );
 
-    if ( (strcmp( dbip->dbi_title, "Untitled v4 BRL-CAD Database" )==0) && (dbip->dbi_version == 4) ) {
+    if ( (BU_STR_EQUAL( dbip->dbi_title, "Untitled v4 BRL-CAD Database" )) && (version == 4) ) {
 	dbip->dbi_title=bu_strdup( "Untitled BRL-CAD Database" );
     }
     db_update_ident( fp->dbip, dbip->dbi_title, dbip->dbi_local2base );

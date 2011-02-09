@@ -1,7 +1,7 @@
 /*                           R E C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -168,7 +168,7 @@ struct rec_specific {
  * 0 REC is OK
  * !0 Error in description
  *
- * Implicit return - A struct rec_specific is created, and it's
+ * Implicit return - A struct rec_specific is created, and its
  * address is stored in stp->st_specific for use by rt_rec_shot().  If
  * the TGC is really an REC, stp->st_id is modified to ID_REC.
  */

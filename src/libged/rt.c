@@ -1,7 +1,7 @@
 /*                         R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -94,7 +94,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 
     for (i=1; i < argc; i++) {
 	if (argv[i][0] == '-' && argv[i][1] == 'u' &&
-	    strcmp(argv[1], "-u") == 0) {
+	    BU_STR_EQUAL(argv[1], "-u")) {
 	    units_supplied=1;
 	} else if (argv[i][0] == '-' && argv[i][1] == '-' &&
 		   argv[i][2] == '\0') {
@@ -170,9 +170,14 @@ _ged_run_rt(struct ged *gedp)
     struct _ged_rt_client_data *drcdp;
 #ifndef _WIN32
     int pid;
+    int ret;
 
-    (void)pipe(pipe_in);
-    (void)pipe(pipe_err);
+    ret = pipe(pipe_in);
+    if (ret < 0)
+	perror("pipe");
+    ret = pipe(pipe_err);
+    if (ret < 0)
+	perror("pipe");
 
     if ((pid = fork()) == 0) {
 	/* make this a process group leader */
@@ -180,9 +185,13 @@ _ged_run_rt(struct ged *gedp)
 
 	/* Redirect stdin and stderr */
 	(void)close(0);
-	(void)dup(pipe_in[0]);
+	ret = dup(pipe_in[0]);
+	if (ret < 0)
+	    perror("dup");
 	(void)close(2);
-	(void)dup(pipe_err[1]);
+	ret = dup(pipe_err[1]);
+	if (ret < 0)
+	    perror("dup");
 
 	/* close pipes */
 	(void)close(pipe_in[0]);
@@ -313,7 +322,7 @@ _ged_rt_write(struct ged *gedp,
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
-    int i;
+    size_t i;
     quat_t quat;
     struct solid *sp;
 
@@ -331,7 +340,7 @@ _ged_rt_write(struct ged *gedp,
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for (i=0;i<sp->s_fullpath.fp_len;i++) {
-		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~DIR_USED;
+		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
 	    }
 	}
 
@@ -344,13 +353,13 @@ _ged_rt_write(struct ged *gedp,
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for (i=0; i<sp->s_fullpath.fp_len; i++) {
-		if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & DIR_USED)) {
+		if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & RT_DIR_USED)) {
 		    struct animate *anp;
 		    for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
 			 anp=anp->an_forw) {
 			db_write_anim(fp, anp);
 		    }
-		    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags |= DIR_USED;
+		    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags |= RT_DIR_USED;
 		}
 	    }
 	}
@@ -364,7 +373,7 @@ _ged_rt_write(struct ged *gedp,
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for (i=0;i< sp->s_fullpath.fp_len;i++) {
-		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~DIR_USED;
+		DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~RT_DIR_USED;
 	    }
 	}
 
@@ -517,15 +526,18 @@ ged_build_tops(struct ged *gedp, char **start, char **end)
 	if (gdlp->gdl_dp->d_addr == RT_DIR_PHONY_ADDR)
 	    continue;
 
-	if (vp < end)
-	    *vp++ = bu_vls_addr(&gdlp->gdl_path);
+	if ((vp != NULL) && (vp < end))
+	    *vp++ = bu_strdup(bu_vls_addr(&gdlp->gdl_path));
 	else {
 	    bu_vls_printf(&gedp->ged_result_str, "libged: ran out of command vector space at %s\n", gdlp->gdl_dp->d_namep);
 	    break;
 	}
     }
 
-    *vp = (char *) 0;
+    if ((vp != NULL) && (vp < end)) {
+    	*vp = (char *) 0;
+    }
+
     return vp-start;
 }
 

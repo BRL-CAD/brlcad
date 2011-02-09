@@ -1,7 +1,7 @@
 /*                         O S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
 	    return TCL_ERROR;
 
 	dp = gtd.gtd_obj[gtd.gtd_objpos-1];
-	if (!(dp->d_flags & DIR_SOLID)) {
+	if (!(dp->d_flags & RT_DIR_SOLID)) {
 	    if (_ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == TCL_ERROR)
 		return TCL_ERROR;
 	}
@@ -105,7 +105,7 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
 
 	VSCALE(keypoint, keypoint, gedp->ged_wdbp->dbip->dbi_local2base);
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET)) == DIR_NULL) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET)) == RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: %s not found", argv[0], argv[1]);
 	    return GED_ERROR;
 	}

@@ -1,7 +1,7 @@
 /*                         W H I C H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
-    if (!strcmp(argv[0], "whichair"))
+    if (BU_STR_EQUAL(argv[0], "whichair"))
 	isAir = 1;
     else
 	isAir = 0;
@@ -68,7 +68,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (strcmp(argv[1], "-s") == 0) {
+    if (BU_STR_EQUAL(argv[1], "-s")) {
 	--argc;
 	++argv;
 
@@ -142,8 +142,8 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & DIR_REGION))
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (!(dp->d_flags & RT_DIR_REGION))
 		continue;
 
 	    if (rt_db_get_internal( &intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource ) < 0) {

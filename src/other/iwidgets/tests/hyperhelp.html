@@ -27,7 +27,7 @@ set m 1
 test Hyperhelp-1.$c {Hyperhelp construction} {
     Hyperhelp .h
     .h activate
-    update
+    update 
 } {}
 
 incr c
@@ -42,31 +42,31 @@ test Hyperhelp-2.$o {configuration option} {
 incr o
 
 foreach test [concat {
-    {-activebackground #ececec #ececec}
+    {-activebackground #ececec #ececec} 
     {-activeforeground Black Black}
     {-activerelief raised raised}
-    {-background #d9d9d9 #d9d9d9}
-    {-borderwidth 3 3}
-    {-cursor gumby gumby}
+    {-background #d9d9d9 #d9d9d9} 
+    {-borderwidth 3 3} 
+    {-cursor gumby gumby} 
     {-font -Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-* \
        -Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*}
-    {-foreground Black Black}
+    {-foreground Black Black} 
     {-highlightcolor Black Black}
     {-highlightthickness 3 3}
-    {-height 120 120}
+    {-height 120 120} 
     {-width 500 500}
-    {-relief raised raised}
-    {-relief sunken sunken}
-    {-vscrollmode none none}
-    {-vscrollmode static static}
-    {-vscrollmode dynamic dynamic}
-    {-hscrollmode none none}
-    {-hscrollmode static static}
-    {-hscrollmode dynamic dynamic}
-    {-sbwidth 20 20}
-    {-scrollmargin 5 5}
-    {-selectborderwidth 2 2}
-    {-textbackground GhostWhite GhostWhite}
+    {-relief raised raised} 
+    {-relief sunken sunken} 
+    {-vscrollmode none none} 
+    {-vscrollmode static static} 
+    {-vscrollmode dynamic dynamic} 
+    {-hscrollmode none none} 
+    {-hscrollmode static static} 
+    {-hscrollmode dynamic dynamic} 
+    {-sbwidth 20 20} 
+    {-scrollmargin 5 5} 
+    {-selectborderwidth 2 2} 
+    {-textbackground GhostWhite GhostWhite} 
     {-visibleitems 72x40 72x40}
     {-height 0 0}
     {-width 0 0}
@@ -86,7 +86,7 @@ foreach test [concat {
 	    .h configure $option [lindex $test 1]
 	    lindex [.h configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -109,7 +109,7 @@ foreach test {
 
 #
 # Method tests which are successful.
-#
+# 
 foreach test {
     {{.h showtopic hyperhelp} -1}
     {{.h followlink scrolledhtml.test#} -1}
@@ -119,7 +119,7 @@ foreach test {
 	test Hyperhelp-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -128,7 +128,7 @@ foreach test {
 #
 test Hyperhelp-1.$c {Hyperhelp destruction} {
     destroy .h
-    update
+    update 
 } {}
 
 incr c
@@ -136,14 +136,14 @@ incr c
 test Hyperhelp-1.$c {Hyperhelp construction} {
     hyperhelp .h -topics {index} -helpdir ~/public_html
     .h activate
-    update
+    update 
 } {}
 
 incr c
 
 test Hyperhelp-1.$c {Hyperhelp destruction} {
     destroy .h
-    update
+    update 
 } {}
 
 incr c
@@ -153,5 +153,5 @@ test Hyperhelp-1.$c {Hyperhelp destruction} {
     .h activate
     .h deactivate
     destroy .h
-    update
+    update 
 } {}

@@ -1,7 +1,7 @@
 /*                         R T C H E C K . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -94,6 +94,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     char **vp;
     int i;
 #ifndef _WIN32
+    int ret;
     int	pid;
     int	i_pipe[2];	/* object reads results for building vectors */
     int	o_pipe[2];	/* object writes view parameters */
@@ -112,7 +113,6 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     struct ged_rtcheck *rtcp;
     struct ged_rtcheck_output *rtcop;
     vect_t eye_model;
-    static const char *usage = "options";
 
     const char *bin;
     char rtcheck[256] = {0};
@@ -175,18 +175,30 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 
 #ifndef _WIN32
 
-    (void)pipe(i_pipe);
-    (void)pipe(o_pipe);
-    (void)pipe(e_pipe);
+    ret = pipe(i_pipe);
+    if (ret < 0)
+	perror("pipe");
+    ret = pipe(o_pipe);
+    if (ret < 0)
+	perror("pipe");
+    ret = pipe(e_pipe);
+    if (ret < 0)
+	perror("pipe");
 
     if ((pid = fork()) == 0) {
 	/* Redirect stdin, stdout and stderr */
 	(void)close(0);
-	(void)dup(o_pipe[0]);
+	ret = dup(o_pipe[0]);
+	if (ret < 0)
+	    perror("dup");
 	(void)close(1);
-	(void)dup(i_pipe[1]);
+	ret = dup(i_pipe[1]);
+	if (ret < 0)
+	    perror("dup");
 	(void)close(2);
-	(void)dup(e_pipe[1]);
+	ret = dup(e_pipe[1]);
+	if (ret < 0)
+	    perror("dup");
 
 	/* close pipes */
 	(void)close(i_pipe[0]);
@@ -357,7 +369,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 
 #ifndef _WIN32
 static void
-ged_rtcheck_vector_handler(ClientData clientData, int mask)
+ged_rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
@@ -412,7 +424,7 @@ ged_rtcheck_vector_handler(ClientData clientData, int mask)
 }
 
 static void
-ged_rtcheck_output_handler(ClientData clientData, int mask)
+ged_rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 {
     int count;
     char line[RT_MAXLINE] = {0};

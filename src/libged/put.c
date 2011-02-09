@@ -1,7 +1,7 @@
 /*                         P U T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ ged_put(struct ged *gedp, int argc, const char *argv[])
      * stdout/file wdb objects don't, but can still be written to.
      * If not, just skip the lookup test and write the object
      */
-    if (gedp->ged_wdbp->dbip && db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != DIR_NULL) {
+    if (gedp->ged_wdbp->dbip && db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s already exists", argv[1]);
 	return GED_ERROR;
     }
@@ -93,7 +93,7 @@ ged_put(struct ged *gedp, int argc, const char *argv[])
 	rt_generic_make(ftp, &intern);
     }
 
-    if (!ftp->ft_adjust || ftp->ft_adjust(&gedp->ged_result_str, &intern, argc-3, (char **)argv+3) == GED_ERROR) {
+    if (!ftp->ft_adjust || ftp->ft_adjust(&gedp->ged_result_str, &intern, argc-3, argv+3) == GED_ERROR) {
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }

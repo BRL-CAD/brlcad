@@ -1,7 +1,7 @@
 /*                          P R E P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -132,13 +132,13 @@ rt_new_rti(struct db_i *dbip)
      *
      * There is a race (collision!) here on d_uses if rt_gettrees() is
      * called on another rtip of the same dbip before this rtip is
-     * done with all it's treewalking.
+     * done with all its treewalking.
      */
     for (i=0; i < RT_DBNHASH; i++) {
 	register struct directory *dp;
 
 	dp = rtip->rti_dbip->dbi_Head[i];
-	for (; dp != DIR_NULL; dp = dp->d_forw)
+	for (; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    dp->d_uses = 0;
     }
 
@@ -405,7 +405,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     } RT_VISIT_ALL_SOLTABS_END;
 
     /* Plot bounding RPPs */
-    if ((RT_G_DEBUG&DEBUG_PLOTBOX)) {
+    if ((RT_G_DEBUG&DEBUG_PL_BOX)) {
 	FILE *plotfp;
 
 	plotfp = fopen("rtrpp.plot", "wb");
@@ -418,7 +418,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     }
 
     /* Plot solid outlines */
-    if ((RT_G_DEBUG&DEBUG_PLOTSOLIDS)) {
+    if ((RT_G_DEBUG&DEBUG_PL_SOLIDS)) {
 	FILE *plotfp;
 
 	plotfp = fopen("rtsolids.pl", "wb");
@@ -1057,7 +1057,7 @@ rt_clean(register struct rt_i *rtip)
      *
      * There is a race (collision!) here on d_uses if rt_gettrees() is
      * called on another rtip of the same dbip before this rtip is
-     * done with all it's treewalking.
+     * done with all its treewalking.
      *
      * This must be done for each 'clean' to keep
      * rt_find_identical_solid() working properly as d_uses goes up.
@@ -1066,7 +1066,7 @@ rt_clean(register struct rt_i *rtip)
 	register struct directory *dp;
 
 	dp = rtip->rti_dbip->dbi_Head[i];
-	for (; dp != DIR_NULL; dp = dp->d_forw)
+	for (; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    dp->d_uses = 0;
     }
 
@@ -1229,7 +1229,7 @@ int rt_load_attrs(struct rt_i *rtip, char **attrs)
     RT_CHECK_RTI(rtip);
     RT_CK_DBI(rtip->rti_dbip);
 
-    if (rtip->rti_dbip->dbi_version < 5)
+    if (db_version(rtip->rti_dbip) < 5)
 	return 0;
 
     while (attrs[attr_count])
@@ -1272,7 +1272,7 @@ int rt_load_attrs(struct rt_i *rtip, char **attrs)
 	else
 	    reg_name++;
 
-	if ((dp=db_lookup(rtip->rti_dbip, reg_name, LOOKUP_NOISY)) == DIR_NULL)
+	if ((dp=db_lookup(rtip->rti_dbip, reg_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
 	bu_avs_init_empty(&avs);
@@ -1323,7 +1323,7 @@ rt_find_path(struct db_i *dbip,
     switch (tp->tr_op) {
 	case OP_DB_LEAF:
 	    dp = db_lookup(dbip, tp->tr_l.tl_name, 1);
-	    if (dp == DIR_NULL) {
+	    if (dp == RT_DIR_NULL) {
 		bu_log("Unable to lookup geometry [%s]\nAborting.\n", tp->tr_l.tl_name);
 		return;
 	    }
@@ -1335,7 +1335,7 @@ rt_find_path(struct db_i *dbip,
 		db_full_path_init(newpath);
 		db_dup_full_path(newpath, (*curr_path));
 		(*curr_path) = newpath;
-	    } else if ((dp->d_flags & DIR_COMB) && !(dp->d_flags & DIR_REGION)) {
+	    } else if ((dp->d_flags & RT_DIR_COMB) && !(dp->d_flags & RT_DIR_REGION)) {
 		if (rt_db_get_internal(&intern, dp, dbip, NULL, resp) < 0) {
 		    bu_log("Unable to load [%s]\nAborting.\n", tp->tr_l.tl_name);
 		    return;
@@ -1391,7 +1391,7 @@ rt_find_paths(struct db_i *dbip,
 	return 0;
     }
 
-    if (!(start->d_flags & DIR_COMB) || (start->d_flags & DIR_REGION)) {
+    if (!(start->d_flags & RT_DIR_COMB) || (start->d_flags & RT_DIR_REGION)) {
 	bu_log("Cannot find path from %s to %s\n",
 	       start->d_namep, end->d_namep);
 	db_free_full_path(path);
@@ -1540,7 +1540,7 @@ unprep_leaf(struct db_tree_state *tsp,
 	    if (stp->st_rtip == rtip) {
 		long bit=stp->st_bit;
 		struct region *rp;
-		int i, j;
+		size_t i, j;
 
 		/* found soltab for this instance */
 
@@ -1589,7 +1589,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 {
     struct bu_ptbl unprep_regions;
     struct db_full_path *path;
-    int i, j, k;
+    size_t i, j, k;
 
     rt_res_pieces_clean(resp, rtip);
 
@@ -1599,8 +1599,8 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	struct directory *start, *end;
 
 	start = db_lookup(rtip->rti_dbip, objs->topobjs[i], 1);
-	if (start == DIR_NULL) {
-	    for (k=0; k<BU_PTBL_END(&objs->paths); k++) {
+	if (start == RT_DIR_NULL) {
+	    for (k=0; k<BU_PTBL_LEN(&objs->paths); k++) {
 		path = (struct db_full_path *)BU_PTBL_GET(&objs->paths, k);
 		db_free_full_path(path);
 	    }
@@ -1609,8 +1609,8 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	}
 	for (j=0; j<objs->nunprepped; j++) {
 	    end = db_lookup(rtip->rti_dbip, objs->unprepped[j], 1);
-	    if (end == DIR_NULL) {
-		for (k=0; k<BU_PTBL_END(&objs->paths); k++) {
+	    if (end == RT_DIR_NULL) {
+		for (k=0; k<BU_PTBL_LEN(&objs->paths); k++) {
 		    path = (struct db_full_path *)BU_PTBL_GET(&objs->paths, k);
 		    db_free_full_path(path);
 		}
@@ -1652,7 +1652,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	path = (struct db_full_path *)BU_PTBL_GET(&objs->paths, i);
 	if (db_follow_path(tree_state, &another_path, path, 1, 0)) {
 	    bu_log("rt_unprep(): db_follow_path failed!!\n");
-	    for (k=0; k<BU_PTBL_END(&objs->paths); k++) {
+	    for (k=0; k<BU_PTBL_LEN(&objs->paths); k++) {
 		if (objs->tsp[k]) {
 		    db_free_db_tree_state(objs->tsp[k]);
 		    bu_free((char *)objs->tsp[k], "tree_state");
@@ -1675,7 +1675,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 			 unprep_reg_start, unprep_reg_end, unprep_leaf,
 			 (genptr_t)objs)) {
 	    bu_log("rt_unprep(): db_walk_tree failed!!!\n");
-	    for (k=0; k<BU_PTBL_END(&objs->paths); k++) {
+	    for (k=0; k<BU_PTBL_LEN(&objs->paths); k++) {
 		if (objs->tsp[k]) {
 		    db_free_db_tree_state(objs->tsp[k]);
 		    bu_free((char *)objs->tsp[k], "tree_state");
@@ -1784,12 +1784,12 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 int
 rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *resp)
 {
-    int i;
+    size_t i;
     char **argv;
     struct region *rp;
     struct soltab *stp;
     fastf_t old_min[3], old_max[3];
-    long bitno;
+    size_t bitno;
 
     VMOVE(old_min, rtip->mdl_min);
     VMOVE(old_max, rtip->mdl_max);
@@ -1870,8 +1870,8 @@ rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 
     bu_ptbl_free(&rtip->rti_new_solids);
 
-    if (!VAPPROXEQUAL(rtip->mdl_min, old_min, SMALL_FASTF)
-	|| !VAPPROXEQUAL(rtip->mdl_max, old_min, SMALL_FASTF))
+    if (!VNEAR_EQUAL(rtip->mdl_min, old_min, SMALL_FASTF)
+	|| !VNEAR_EQUAL(rtip->mdl_max, old_min, SMALL_FASTF))
     {
 	/* fill out BSP, it must completely fill the model BB */
 	fastf_t bb[6];

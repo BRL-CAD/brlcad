@@ -1,7 +1,7 @@
 /*                           F - D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     scale = 1.0;
 
     if ( argc > 1 ) {
-	if ( strcmp( argv[1], "-n" ) == 0 )
+	if ( BU_STR_EQUAL( argv[1], "-n" ) )
 	    scale = 1.0;
 	else
 	    scale = atof( argv[1] );

@@ -1,7 +1,7 @@
 /*                      B U B B L E U P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,35 +27,26 @@
  * Traverses the tree in LRN order.  Returns 1 if no change was made
  * to the tree, 0 otherwise.
  *
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
  */
 
 #include "./iges_struct.h"
 
-Bubbleup( root )
+Bubbleup(root)
     struct node *root;
 {
     struct node *Copytree(), *Pop(), *ptr, *ptra, *ptrb, *ptrc, *ptr1, *ptr2;
     int op, retval=1;
 
     ptr = root;
-    while ( 1 )
-    {
-	while ( ptr != NULL )
-	{
-	    Push( ptr );
+    while (1) {
+	while (ptr != NULL) {
+	    Push(ptr);
 	    ptr = ptr->left;
 	}
 	ptr = Pop();
-	if ( ptr->right != NULL && ptr->right->op == Union )
-	{
-	    if ( ptr->op == Subtract )
-	    {
-		/*	(a-(buc)) => ((a-b)-c)	*/
+	if (ptr->right != NULL && ptr->right->op == Union) {
+	    if (ptr->op == Subtract) {
+		/* (a-(buc)) => ((a-b)-c)	*/
 		retval = 0;
 		ptr1 = ptr->right;
 		ptra = ptr->left;
@@ -69,12 +60,10 @@ Bubbleup( root )
 		ptra->parent = ptr1;
 		ptrb->parent = ptr1;
 		ptrc->parent = ptr;
-	    }
-	    else if ( ptr->op == Intersect )
-	    {
-		/*	(a+(buc)) => (a+b)u(a+c)	*/
+	    } else if (ptr->op == Intersect) {
+		/* (a+(buc)) => (a+b)u(a+c)	*/
 		retval = 0;
-		ptr2 = (struct node *)bu_malloc( sizeof( struct node ), "Bubbleup: ptr2" );
+		ptr2 = (struct node *)bu_malloc(sizeof(struct node), "Bubbleup: ptr2");
 		ptr1 = ptr->right;
 		ptra = ptr->left;
 		ptrb = ptr->right->left;
@@ -86,29 +75,26 @@ Bubbleup( root )
 		ptr1->right = ptrc;
 		ptr1->op = Intersect;
 		ptr->op = Union;
-		ptr1->left = Copytree( ptra, ptr1 );
+		ptr1->left = Copytree(ptra, ptr1);
 		ptra->parent = ptr2;
 		ptrb->parent = ptr2;
 		ptr2->parent = ptr;
 	    }
-	}
-	else if ( ptr->left != NULL && ptr->left->op == Union )
-	{
-	    if ( ptr->op == Intersect || ptr->op == Subtract )
-	    {
-		/*	((aub)"+ or -"c) => (a"+ or -"c)u(b"+ or -"c)	*/
+	} else if (ptr->left != NULL && ptr->left->op == Union) {
+	    if (ptr->op == Intersect || ptr->op == Subtract) {
+		/* ((aub)"+ or -"c) => (a"+ or -"c)u(b"+ or -"c)	*/
 		retval = 0;
 		op = ptr->op;
 		ptra = ptr->left->left;
 		ptrb = ptr->left->right;
 		ptrc = ptr->right;
 		ptr1 = ptr->left;
-		ptr2 = (struct node *)bu_malloc( sizeof( struct node ), "Bubbleup: ptr2" );
+		ptr2 = (struct node *)bu_malloc(sizeof(struct node), "Bubbleup: ptr2");
 		ptr->op = Union;
 		ptr->right = ptr2;
 		ptr2->op = op;
 		ptr2->left = ptrb;
-		ptr2->right = Copytree( ptrc, ptr2 );
+		ptr2->right = Copytree(ptrc, ptr2);
 		ptr1->op = op;
 		ptr1->right = ptrc;
 		ptrc->parent = ptr1;
@@ -117,16 +103,17 @@ Bubbleup( root )
 	    }
 	}
 
-	if ( ptr == root ) /* entire tree has been looked at */
+	if (ptr == root) /* entire tree has been looked at */
 	    return retval;
 
-	if ( ptr != ptr->parent->right ) /* we must be at the left node */
+	if (ptr != ptr->parent->right) /* we must be at the left node */
 	    ptr = ptr->parent->right; /* so push the right node */
 	else				/* we must be at the right node */
 	    ptr = NULL;	/* so don't push anything */
 
     }
 }
+
 
 /*
  * Local Variables:

@@ -76,7 +76,7 @@ See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/entry.n.html"> "en
 </td>
 </table>
 <P>
-See the <A HREF="labeledwidget.n.html"> "labeledwidget" </A> class manual entry for details on the
+See the <A HREF="labeledwidget.n.html"> "labeledwidget" </A> class manual entry for details on the 
 inherited options.
 </pre><H2>WIDGET-SPECIFIC OPTIONS</H2>
 <P>
@@ -86,7 +86,7 @@ Class:                  <B>Position</B>
 Command-Line Switch:	<B>-childsitepos</B>
 </pre>
 <UL>
-Specifies the position of the child site in the entry field: <B>n</B>,
+Specifies the position of the child site in the entry field: <B>n</B>, 
 <B>s</B>, <B>e</B>, or <B>w</B>.  The default is e.
 </UL>
 <P>
@@ -96,7 +96,7 @@ Class:                  <B>Command</B>
 Command-Line Switch:	<B>-command</B>
 </pre>
 <UL>
-Specifies a Tcl command to be executed upon detection of a Return key
+Specifies a Tcl command to be executed upon detection of a Return key 
 press event.
 </UL>
 <P>
@@ -107,9 +107,9 @@ Command-Line Switch:	<B>-fixed</B>
 </pre>
 <UL>
 Restrict entry to the specified number of chars.  A value of 0, which is the
-default, denotes no limit.  The value is the maximum number of chars the
+default, denotes no limit.  The value is the maximum number of chars the 
 user may type into the field, regardles of field width.  For example,
-if the field width is set to 20 and the fixed value is 10, the user will
+if the field width is set to 20 and the fixed value is 10, the user will 
 only be able to type 10 characters into the field which is 20 characters long.
 </UL>
 <P>
@@ -160,11 +160,11 @@ Command-Line Switch:	<B>-validate</B>
 <UL>
 The validate option allows specification of a validation mechanism.  Standard
 character validation such as <B>numeric</B>, <B>alphabetic</B>, <B>integer</B>,
-<B>hexidecimal</B>, <B>real</B>, and <B>alphanumeric</B> can be handled through
+<B>hexidecimal</B>, <B>real</B>, and <B>alphanumeric</B> can be handled through 
 the use of keywords.  Should more
 extensive validation be necessary, the value may contain the name of
-a command script.  The script should return a boolean value.  True for
-valid, false for invalid.  If false is returned, then the procedure
+a command script.  The script should return a boolean value.  True for 
+valid, false for invalid.  If false is returned, then the procedure 
 associated with the invalid option will be invoked.
 If the validation script contains
 any <B>%</B> characters, then the script will not be
@@ -203,7 +203,7 @@ keystroke being added.
 </pre><H2>DESCRIPTION</H2>
 <P>
 The <B>entryfield</B> command creates an enhanced text entry widget with an
-optional associated label.  Addtional options support validation and
+optional associated label.  Addtional options support validation and 
 establishing a upper limit on the number of characters which may be
 entered in the field.
 </pre>
@@ -285,7 +285,7 @@ Name:                   <B>efchildsite</B>
 Class:                  <B>frame</B>
 </pre>
 <UL>
-The efchildsite component is the user child site for the entry field.  See
+The efchildsite component is the user child site for the entry field.  See 
 the "frame" widget manual entry for details on the efchildsite component item.
 </UL>
 <P>
@@ -302,27 +302,27 @@ See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/entry.n.html"> "en
 </pre><H2>EXAMPLE</H2>
 <pre>
  option add *textBackground white
-
+ 
  proc returnCmd {} {
      puts stdout "Return Pressed"
  }
-
+ 
  proc invalidCmd {} {
      puts stdout "Alphabetic contents invalid"
  }
-
+ 
  entryfield .ef -command returnCmd
-
+ 
  entryfield .fef -labeltext "Fixed:" -fixed 10 -width 12
-
+ 
  entryfield .nef -labeltext "Numeric:" -validate numeric -width 12
-
+ 
  entryfield .aef -labeltext "Alphabetic:" \\
     -validate alphabetic -width 12 -invalid invalidCmd
-
+ 
  entryfield .pef -labeltext "Password:" \\
     -show \267 -width 12 -command returnCmd
-
+ 
  Labeledwidget::alignlabels .ef .fef .nef .aef .pef
 
  pack .ef -fill x -expand yes -padx 10 -pady 5

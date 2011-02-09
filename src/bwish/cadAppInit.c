@@ -1,7 +1,7 @@
 /*                          C A D A P P I N I T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,10 +31,10 @@
 #endif
 #include "bio.h"
 
-#include "itcl.h"
+#include "tcl.h"
 
 #ifdef BWISH
-#  include "itk.h"
+#  include "tk.h"
 #  include "dm.h"
 #  include "fb.h"
 #endif
@@ -59,14 +59,14 @@ Cad_AppInit(Tcl_Interp *interp)
     tclcad_auto_path(interp);
 
 /* Initialize [incr Tcl] */
-    if (Itcl_Init(interp) == TCL_ERROR) {
+    if (Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
 	bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 
 #ifdef BWISH
 /* Initialize [incr Tk] */
-    if (Itk_Init(interp) == TCL_ERROR) {
+    if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
 	bu_log("Itk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }

@@ -1,7 +1,7 @@
 /*                          P R N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -530,7 +530,7 @@ prntRegionHdr(struct application *ap, struct partition *pt_headp, struct partiti
     /* calculate cosine of obliquity angle */
     cosobliquity = VDOT(ap->a_ray.r_dir, entrynorm);
     cosobliquity = -cosobliquity;
-#if DEBUG
+#ifdef DEBUG
     if (cosobliquity - COS_TOL > 1.0) {
 	brst_log("cosobliquity=%12.8f\n", cosobliquity);
 	brst_log("normal=<%g, %g, %g>\n",

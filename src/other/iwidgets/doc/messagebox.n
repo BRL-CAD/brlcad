@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) messagebox.n 1.21 94/12/17 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::messagebox iwid
 .BS
@@ -72,7 +72,7 @@ Class:	\fBFileName\fR
 Command-Line Switch:	\fB-filename\fR
 .fi
 .IP
-Specifies the filename to be displayed in the file selection dialog when
+Specifies the filename to be displayed in the file selection dialog when 
 it pops up during a save of the messagebox contents operation.
 .LP
 .nf
@@ -81,8 +81,8 @@ Class:	\fBMaxLines\fR
 Command-Line Switch:	\fB-maxlines\fR
 .fi
 .IP
-Specifies the maximum number of lines allowed in the text area of the
-messagebox. When this limit is reached, the oldest line will be deleted
+Specifies the maximum number of lines allowed in the text area of the 
+messagebox. When this limit is reached, the oldest line will be deleted 
 such that the total number of lines remains \fImaxlines\fR.
 .LP
 .nf
@@ -91,16 +91,16 @@ Class:	\fBSaveDir\fR
 Command-Line Switch:	\fB-savedir\fR
 .fi
 .IP
-Specifies the default directory to display when the file selection dialog
-pops up during a save of the messagebox contents operation. If this
-parameter is not specified, then the files in the current working directory
+Specifies the default directory to display when the file selection dialog 
+pops up during a save of the messagebox contents operation. If this 
+parameter is not specified, then the files in the current working directory 
 are displayed.
 .LP
 .BE
 
 .SH DESCRIPTION
 .PP
-The \fBiwidgets::messagebox\fR command creates
+The \fBiwidgets::messagebox\fR command creates 
 a scrolled information messages area widget.
 Message types can be user defined and configured.  Their options
 include foreground, background, font, bell, and their display
@@ -110,12 +110,12 @@ method is provided for file I/O.
 
 .PP
 The number of lines displayed may be limited with
-the default being 1000. When this limit is reached, the oldest line
+the default being 1000. When this limit is reached, the oldest line 
 is removed.  A popup menu which appears when the right mouse button
 has been pressed in the message area has been predefined.  The contents
 of the popup menu by default support clearing the area and saving its
 contents to a file.  Additional operations may be defined or existing
-operations removed by using the component command to access the
+operations removed by using the component command to access the 
 popup menu.
 
 .SH "MESSAGE TYPES"
@@ -132,7 +132,7 @@ It may have any of the forms accepted by \fBTk_GetColor\fR.
 .TP
 \fB\-bell \fIboolean\fR
 Specifies whether or not to ring the bell whenenver a message of this
-type is issued.  \fIBoolean\fR may have any of the forms accepted by
+type is issued.  \fIBoolean\fR may have any of the forms accepted by 
 \fBTk_GetBoolean\fR.  The default is 0.
 .TP
 \fB-font\ \fIfontName\fR
@@ -147,7 +147,7 @@ It may have any of the forms accepted by \fBTk_GetColor\fR.
 .TP
 \fB\-show \fIboolean\fR
 Specifies whether of not to display this message type when issued.
-\fIBoolean\fR may have any of the forms accepted by
+\fIBoolean\fR may have any of the forms accepted by 
 \fBTk_GetBoolean\fR.  The default is 1.
 
 .SH "METHODS"
@@ -193,15 +193,15 @@ this case the command returns an empty string.
 command.
 .TP
 \fIpathName \fBtype\fR \fIoption\fR \fImsgtype\fR ?\fIarg arg ...\fR?
-This  command  is  used to manipulate message types.  The behavior of
-the command depends on the option argument that follows the type keyword.
+This  command  is  used to manipulate message types.  The behavior of 
+the command depends on the option argument that follows the type keyword. 
 The following forms of the command are supported:
 .RS
 .TP
 .TP
 \fIpathName \fBtype add\fR \fImsgtype\fR ?\fIoption value ...\fR?
 Adds a new message type given by \fImsgtype\fR with the display
-properties defined by the option value pairs.
+properties defined by the option value pairs.  
 See MESSAGE TYPES for information on the options that
 are supported.
 .TP
@@ -222,7 +222,7 @@ modifies the given option(s) to have the given value(s);  in
 this case the command returns an empty string.
 See MESSAGE TYPES for information on the options that
 are supported.
-\fIpathName \fBtype remove\fR \fImsgtype\fR
+\fIpathName \fBtype remove\fR \fImsgtype\fR 
 Removes an existing message type given by \fImsgtype\fR.
 .RE
 .TP
@@ -237,7 +237,7 @@ Name:	\fBitemMenu\fR
 Class:	\fBMenu\fR
 .fi
 .IP
-This is the popup menu that gets displayed when you right-click in the
+This is the popup menu that gets displayed when you right-click in the 
 text area of the messagebox.  Its contents may be modified via the component
 command.
 .LP
@@ -246,7 +246,7 @@ Name:	\fBtext\fR
 Class:	\fBScrolledtext\fR
 .fi
 .IP
-The text component is the scrolledtext widget.  See the "scrolledtext" widget
+The text component is the scrolledtext widget.  See the "scrolledtext" widget 
 manual entry for details on the text component item.
 .fi
 

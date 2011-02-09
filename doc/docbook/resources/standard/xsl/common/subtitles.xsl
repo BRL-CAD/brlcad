@@ -1,7 +1,8 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
-                exclude-result-prefixes="doc"
+                xmlns:d="http://docbook.org/ns/docbook"
+xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
+                exclude-result-prefixes="doc d"
                 version='1.0'>
 
 <!-- ********************************************************************
@@ -36,116 +37,116 @@ subtitle of the element.
   <xsl:text>???SUBTITLE???</xsl:text>
 </xsl:template>
 
-<xsl:template match="subtitle" mode="subtitle.markup">
+<xsl:template match="d:subtitle" mode="subtitle.markup">
   <xsl:param name="allow-anchors" select="'0'"/>
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="set" mode="subtitle.markup">
+<xsl:template match="d:set" mode="subtitle.markup">
   <xsl:param name="allow-anchors" select="'0'"/>
-  <xsl:apply-templates select="(setinfo/subtitle|info/subtitle|subtitle)[1]"
+  <xsl:apply-templates select="(d:setinfo/d:subtitle|d:info/d:subtitle|d:subtitle)[1]"
                        mode="subtitle.markup">
     <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
   </xsl:apply-templates>
 </xsl:template>
 
-<xsl:template match="book" mode="subtitle.markup">
+<xsl:template match="d:book" mode="subtitle.markup">
   <xsl:param name="allow-anchors" select="'0'"/>
-  <xsl:apply-templates select="(bookinfo/subtitle|info/subtitle|subtitle)[1]"
+  <xsl:apply-templates select="(d:bookinfo/d:subtitle|d:info/d:subtitle|d:subtitle)[1]"
                        mode="subtitle.markup">
     <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
   </xsl:apply-templates>
 </xsl:template>
 
-<xsl:template match="part" mode="subtitle.markup">
+<xsl:template match="d:part" mode="subtitle.markup">
   <xsl:param name="allow-anchors" select="'0'"/>
-  <xsl:apply-templates select="(partinfo/subtitle
-                                |docinfo/subtitle
-                                |info/subtitle
-                                |subtitle)[1]"
+  <xsl:apply-templates select="(d:partinfo/d:subtitle
+                                |d:docinfo/d:subtitle
+                                |d:info/d:subtitle
+                                |d:subtitle)[1]"
                        mode="subtitle.markup">
     <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
   </xsl:apply-templates>
 </xsl:template>
 
-<xsl:template match="preface|chapter|appendix" mode="subtitle.markup">
+<xsl:template match="d:preface|d:chapter|d:appendix" mode="subtitle.markup">
   <xsl:param name="allow-anchors" select="'0'"/>
-  <xsl:apply-templates select="(docinfo/subtitle
-                                |info/subtitle
-                                |prefaceinfo/subtitle
-                                |chapterinfo/subtitle
-                                |appendixinfo/subtitle
-                                |subtitle)[1]"
+  <xsl:apply-templates select="(d:docinfo/d:subtitle
+                                |d:info/d:subtitle
+                                |d:prefaceinfo/d:subtitle
+                                |d:chapterinfo/d:subtitle
+                                |d:appendixinfo/d:subtitle
+                                |d:subtitle)[1]"
                        mode="subtitle.markup">
     <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
   </xsl:apply-templates>
 </xsl:template>
 
-<xsl:template match="article" mode="subtitle.markup">
+<xsl:template match="d:article" mode="subtitle.markup">
   <xsl:param name="allow-anchors" select="'0'"/>
-  <xsl:apply-templates select="(artheader/subtitle
-                                |articleinfo/subtitle
-                                |info/subtitle
-                                |subtitle)[1]"
+  <xsl:apply-templates select="(d:artheader/d:subtitle
+                                |d:articleinfo/d:subtitle
+                                |d:info/d:subtitle
+                                |d:subtitle)[1]"
                        mode="subtitle.markup">
     <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
   </xsl:apply-templates>
 </xsl:template>
 
-<xsl:template match="dedication|colophon" mode="subtitle.markup">
+<xsl:template match="d:dedication|d:colophon" mode="subtitle.markup">
   <xsl:param name="allow-anchors" select="'0'"/>
-  <xsl:apply-templates select="(subtitle|info/subtitle)[1]"
+  <xsl:apply-templates select="(d:subtitle|d:info/d:subtitle)[1]"
                        mode="subtitle.markup">
     <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
   </xsl:apply-templates>
 </xsl:template>
 
-<xsl:template match="reference" mode="subtitle.markup">
+<xsl:template match="d:reference" mode="subtitle.markup">
   <xsl:param name="allow-anchors" select="'0'"/>
-  <xsl:apply-templates select="(referenceinfo/subtitle
-                                |docinfo/subtitle
-                                |info/subtitle
-                                |subtitle)[1]"
+  <xsl:apply-templates select="(d:referenceinfo/d:subtitle
+                                |d:docinfo/d:subtitle
+                                |d:info/d:subtitle
+                                |d:subtitle)[1]"
                        mode="subtitle.markup">
     <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
   </xsl:apply-templates>
 </xsl:template>
 
-<xsl:template match="qandaset" mode="subtitle.markup">
+<xsl:template match="d:qandaset" mode="subtitle.markup">
   <xsl:param name="allow-anchors" select="'0'"/>
-  <xsl:apply-templates select="(blockinfo/subtitle|info/subtitle)[1]"
+  <xsl:apply-templates select="(d:blockinfo/d:subtitle|d:info/d:subtitle)[1]"
                        mode="subtitle.markup">
     <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
   </xsl:apply-templates>
 </xsl:template>
 
-<xsl:template match="refentry" mode="subtitle.markup">
+<xsl:template match="d:refentry" mode="subtitle.markup">
   <xsl:param name="allow-anchors" select="'0'"/>
-  <xsl:apply-templates select="(refentryinfo/subtitle
-                                |info/subtitle
-                                |docinfo/subtitle)[1]"
+  <xsl:apply-templates select="(d:refentryinfo/d:subtitle
+                                |d:info/d:subtitle
+                                |d:docinfo/d:subtitle)[1]"
                        mode="subtitle.markup">
     <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
   </xsl:apply-templates>
 </xsl:template>
 
-<xsl:template match="section
-                     |sect1|sect2|sect3|sect4|sect5
-                     |refsect1|refsect2|refsect3
-                     |simplesect"
+<xsl:template match="d:section
+                     |d:sect1|d:sect2|d:sect3|d:sect4|d:sect5
+                     |d:refsect1|d:refsect2|d:refsect3
+                     |d:simplesect"
               mode="subtitle.markup">
   <xsl:param name="allow-anchors" select="'0'"/>
-  <xsl:apply-templates select="(info/subtitle
-                                |sectioninfo/subtitle
-                                |sect1info/subtitle
-                                |sect2info/subtitle
-                                |sect3info/subtitle
-                                |sect4info/subtitle
-                                |sect5info/subtitle
-                                |refsect1info/subtitle
-                                |refsect2info/subtitle
-                                |refsect3info/subtitle
-                                |subtitle)[1]"
+  <xsl:apply-templates select="(d:info/d:subtitle
+                                |d:sectioninfo/d:subtitle
+                                |d:sect1info/d:subtitle
+                                |d:sect2info/d:subtitle
+                                |d:sect3info/d:subtitle
+                                |d:sect4info/d:subtitle
+                                |d:sect5info/d:subtitle
+                                |d:refsect1info/d:subtitle
+                                |d:refsect2info/d:subtitle
+                                |d:refsect3info/d:subtitle
+                                |d:subtitle)[1]"
                        mode="subtitle.markup">
     <xsl:with-param name="allow-anchors" select="$allow-anchors"/>
   </xsl:apply-templates>

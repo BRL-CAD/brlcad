@@ -1,7 +1,7 @@
 /*                         B O T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,11 +41,10 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     struct directory *bot_dp;
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
-    char *cmd = argv[0];
-    char *sub;
-    char *arg;
-    char *primitive = argv[argc - 1];
-    char prop = '\0';
+    const char *cmd = argv[0];
+    const char *sub;
+    const char *arg;
+    const char *primitive = argv[argc - 1];
     size_t len;
     fastf_t tmp;
     fastf_t propVal;
@@ -86,12 +85,12 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	propVal = rt_bot_propget(bot, arg);
 
 	/* print result string */
-	if (propVal != -1) {
+	if (!EQUAL(propVal, -1.0)) {
 
 	    tmp = (int) propVal;
 
 	    /* int result */
-	    if (propVal == tmp) {
+	    if (EQUAL(propVal, tmp)) {
 		bu_vls_printf(&gedp->ged_result_str, "%d", (int) propVal);
 	    }
 	    

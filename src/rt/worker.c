@@ -1,7 +1,7 @@
 /*                        W O R K E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,9 +35,11 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "./ext.h"
-#include "rtprivate.h"
 #include "fb.h"		/* Added because RGBpixel is now needed in do_pixel() */
+
+#include "./rtuif.h"
+#include "./ext.h"
+
 
 /* for fork/pipe linux timing hack */
 #ifdef USE_FORKED_THREADS

@@ -1,7 +1,7 @@
 /*                        P R O E - G . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -61,38 +61,6 @@ static int debug=0;		/* Debug flag */
 static int cut_count=0;		/* count of assembly cut HAF solids created */
 static int do_regex=0;		/* flag to indicate if 'u' option is in effect */
 static regex_t reg_cmp;		/* compiled regular expression */
-static char *proe_usage="%s [-darS] [-t tolerance] [-i initial_ident] [-I constant_ident] [-m material_code] [-u reg_exp] [-x rt_debug_flag] proe_file.brl output.g\n\
-	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
-	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
-	The -d option prints additional debugging information.\n\
-	The -i option sets the initial region ident number (default is 1000).\n\
-	The -I option sets the non-negative ident number that will be assigned to all regions (conflicts with -i).\n\
-	The -m option sets the integer material code for all the parts. (default is 1)\n\
-	The -u option indicates that portions of object names that match the regular expression\n\
-		'reg_exp' should be ignored.\n\
-	The -a option creates BRL-CAD 'air' regions from everything in the model.\n\
-	The -r option indicates that the model should not be re-oriented or scaled, \n\
-		but left in the same orientation as it was in Pro/E.\n\
-		This is to allow conversion of parts to be included in\n\
-		previously converted Pro/E assemblies.\n\
-	The -S option indicates that the input file is raw STL (STereoLithography) format.\n\
-	The -t option specifies the minumim distance between two distinct vertices (mm).\n\
-	The -x option specifies an RT debug flags (see raytrace.h).\n";
-static char *stl_usage="%s [-da] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-u reg_exp] [-x rt_debug_flag] input.stl output.g\n\
-	where input.stl is a STereoLithography file\n\
-	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
-	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\", ... default is \"mm\"\n\
-	The -N option specifies a name to use for the object.\n\
-	The -d option prints additional debugging information.\n\
-	The -i option sets the initial region ident number (default is 1000).\n\
-	The -I option sets the ident number that will be assigned to all regions (conflicts with -i).\n\
-	The -m option sets the integer material code for all the parts (default is 1).\n\
-	The -u option indicates that portions of object names that match the regular expression\n\
-		'reg_exp' should be ignored.\n\
-	The -a option creates BRL-CAD 'air' regions from everything in the model.\n\
-	The -t option specifies the minumim distance between two distinct vertices (mm).\n\
-	The -x option specifies an RT debug flags (see raytrace.h).\n";
-static char *usage;
 static FILE *fd_in;		/* input file (from Pro/E) */
 static struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
 static struct bu_ptbl null_parts; /* Table of NULL solids */
@@ -174,8 +142,8 @@ Build_unique_name(char *name)
     bu_vls_strcpy(&ret_name, name);
     ptr = name_root;
     while (ptr) {
-	if (!strcmp(bu_vls_addr(&ret_name), ptr->brlcad_name) ||
-	    (ptr->solid_name && !strcmp(bu_vls_addr(&ret_name), ptr->solid_name))) {
+	if (BU_STR_EQUAL(bu_vls_addr(&ret_name), ptr->brlcad_name) ||
+	    (ptr->solid_name && BU_STR_EQUAL(bu_vls_addr(&ret_name), ptr->solid_name))) {
 	    /* this name already exists, build a new one */
 	    ++tries;
 	    bu_vls_trunc(&ret_name, name_len);
@@ -617,7 +585,7 @@ Convert_part(char *line)
     int face_count=0;
     int degenerate_count=0;
     int small_count=0;
-    float colr[3]={ 0.5, 0.5, 0.5 };
+    float colr[3] = VINITALL(0.5);
     unsigned char color[3]={ 128, 128, 128 };
     char *brlcad_name;
     struct wmember head;
@@ -939,9 +907,9 @@ Rm_nulls(void)
 
     dbip = fd_out->dbip;
 
-    if (debug || BU_PTBL_END(&null_parts) ) {
+    if (debug || BU_PTBL_LEN(&null_parts) ) {
 	bu_log("Deleting references to the following null parts:\n");
-	for (i=0; i<BU_PTBL_END(&null_parts); i++) {
+	for (i=0; i<BU_PTBL_LEN(&null_parts); i++) {
 	    char *save_name;
 
 	    save_name = (char *)BU_PTBL_GET(&null_parts, i);
@@ -959,11 +927,11 @@ Rm_nulls(void)
 	int changed=0;
 
 	/* skip solids */
-	if (dp->d_flags & DIR_SOLID)
+	if (dp->d_flags & RT_DIR_SOLID)
 	    continue;
 
 	/* skip non-geometry */
-	if (!(dp->d_flags & (DIR_SOLID | DIR_COMB)))
+	if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 	    continue;
 
 	if (rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource) < 1) {
@@ -994,11 +962,11 @@ Rm_nulls(void)
 	    size_t k;
 	    int found=0;
 
-	    for (k=0; k<BU_PTBL_END(&null_parts); k++) {
+	    for (k=0; k<BU_PTBL_LEN(&null_parts); k++) {
 		char *save_name;
 
 		save_name = (char *)BU_PTBL_GET(&null_parts, k);
-		if (!strcmp(save_name, tree_list[j].tl_tree->tr_l.tl_name)) {
+		if (BU_STR_EQUAL(save_name, tree_list[j].tl_tree->tr_l.tl_name)) {
 		    found = 1;
 		    break;
 		}
@@ -1038,6 +1006,28 @@ Rm_nulls(void)
     } FOR_ALL_DIRECTORY_END;
 }
 
+static void
+proe_usage(const char *argv0)
+{
+    bu_log("%s [-darS] [-t tolerance] [-i initial_ident] [-I constant_ident] [-m material_code] [-u reg_exp] [-x rt_debug_flag] proe_file.brl output.g\n", argv0);
+    bu_log("	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n");
+    bu_log("	and output.g is the name of a BRL-CAD database file to receive the conversion.\n");
+    bu_log("	The -d option prints additional debugging information.\n");
+    bu_log("	The -i option sets the initial region ident number (default is 1000).\n");
+    bu_log("	The -I option sets the non-negative ident number that will be assigned to all regions (conflicts with -i).\n");
+    bu_log("	The -m option sets the integer material code for all the parts. (default is 1)\n");
+    bu_log("	The -u option indicates that portions of object names that match the regular expression\n");
+    bu_log("		'reg_exp' should be ignored.\n");
+    bu_log("	The -a option creates BRL-CAD 'air' regions from everything in the model.\n");
+    bu_log("	The -r option indicates that the model should not be re-oriented or scaled, \n");
+    bu_log("		but left in the same orientation as it was in Pro/E.\n");
+    bu_log("		This is to allow conversion of parts to be included in\n");
+    bu_log("		previously converted Pro/E assemblies.\n");
+    bu_log("	The -S option indicates that the input file is raw STL (STereoLithography) format.\n");
+    bu_log("	The -t option specifies the minumim distance between two distinct vertices (mm).\n");
+    bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
+}
+
 /*
  *			M A I N
  */
@@ -1063,18 +1053,10 @@ main(int argc, char **argv)
 
     forced_name = NULL;
 
-    if (strstr(argv[0], "stl-g")) {
-	/* this code was called as stl-g */
-	stl_format = 1;
-	do_reorient = 0;
-	conv_factor = 1.0;	/* default */
-	usage = stl_usage;
-    } else {
-	usage = proe_usage;
+    if (argc < 2) {
+	proe_usage(argv[0]);
+	bu_exit(1, NULL);
     }
-
-    if (argc < 2)
-	bu_exit(1, usage, argv[0]);
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "St:i:I:m:rsdax:u:N:c:")) != EOF) {
@@ -1115,7 +1097,7 @@ main(int argc, char **argv)
 		const_id = atoi(bu_optarg);
 		if (const_id < 0) {
 		    bu_log("Illegal value for '-I' option, must be zero or greater!!!\n");
-		    bu_log(usage, argv[0]);
+		    proe_usage(argv[0]);
 		    bu_exit(EXIT_FAILURE,  "Illegal value for option '-I'\n");
 		}
 		break;
@@ -1134,7 +1116,8 @@ main(int argc, char **argv)
 		do_regex = 1;
 		if (regcomp(&reg_cmp, bu_optarg, 0)) {
 		    bu_log("Bad regular expression (%s)\n", bu_optarg);
-		    bu_exit(1, usage, argv[0]);
+		    proe_usage(argv[0]);
+		    bu_exit(1, "ERROR: Bad regular expression\n");
 		}
 		break;
 	    case 'a':
@@ -1144,7 +1127,8 @@ main(int argc, char **argv)
 		do_reorient = 0;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		proe_usage(argv[0]);
+		bu_exit(1, "ERROR: unrecognized argument\n");
 		break;
 	}
     }

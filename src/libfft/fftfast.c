@@ -1,7 +1,7 @@
 /*                       F F T F A S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,13 +42,6 @@
 
 #define MAXSIZE 65536	/* Needed for sin/cos tables */
 int _init_size = 0;	/* Internal: shows last initialized size */
-
-
-/* The COMPLEX type used throughout */
-typedef struct {
-    double re;	/* Real Part */
-    double im;	/* Imaginary Part */
-} COMPLEX;
 
 void scramble(int numpoints, COMPLEX *dat);
 void butterflies(int numpoints, int inverse, COMPLEX *dat);

@@ -1,7 +1,7 @@
 /*                             B O . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* check that we are using a version 5 database */
-    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
+    if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	bu_vls_printf(&gedp->ged_result_str, "This is an older database version.\nIt does not support binary objects.Use \"dbupgrade\" to upgrade this database to the current version.\n");
 	return GED_ERROR;
     }
@@ -181,7 +181,7 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 
 	obj_name = (char *)*argv;
 
-	if ( (dp=db_lookup(gedp->ged_wdbp->dbip, obj_name, LOOKUP_NOISY )) == DIR_NULL ) {
+	if ( (dp=db_lookup(gedp->ged_wdbp->dbip, obj_name, LOOKUP_NOISY )) == RT_DIR_NULL ) {
 	    return GED_ERROR;
 	}
 	if ( !( dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK) ) {

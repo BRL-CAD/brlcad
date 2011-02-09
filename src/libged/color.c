@@ -1,7 +1,7 @@
 /*                         C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -106,7 +106,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
+    if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	/* Zap all the current records, both in core and on disk */
 	while (rt_material_head() != MATER_NULL) {
 	    zot = rt_material_head();
@@ -230,7 +230,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
+    if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	/* Delete all color records from the database */
 	mp = rt_material_head();
 	while (mp != MATER_NULL) {

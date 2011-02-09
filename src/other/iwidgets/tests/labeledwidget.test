@@ -47,7 +47,7 @@ test Labeledwidget-1.$c {Labeledwidget construction} {
     pack [listbox [.lw childsite].lb -relief sunken] -padx 10 -pady 10
     pack .lw -fill both -expand yes -padx 10 -pady 10
     image create bitmap flagup -file $tk_library/demos/images/flagup.bmp
-    update
+    update 
 } {}
 
 incr c
@@ -107,7 +107,7 @@ foreach test {
 	    .lw configure $option [lindex $test 1]
 	    lindex [.lw configure $option] 4
 	} [lindex $test 2]
-        update
+        update 
 	incr o
     }
 
@@ -139,7 +139,7 @@ incr m
 test Labeledwidget-1.$c {Labeledwidget destruction} {
     destroy .b
     destroy .lw
-    update
+    update 
     image delete flagup
 } {}
 
@@ -149,23 +149,23 @@ test Labeledwidget-1.$c {Labeledwidget construction} {
     iwidgets::labeledwidget .lw -labeltext "ListBox" -labelpos s
     pack [listbox [.lw childsite].lb -relief sunken] -padx 10 -pady 10
     pack .lw -fill both -expand yes -padx 10 -pady 10
-    update
+    update 
 } {}
 
 incr c
 
 test Labeledwidget-1.$c {Labeledwidget destruction} {
     destroy .lw
-    update
+    update 
 } {}
 
 incr c
 
 test Labeledwidget-1.$c {Labeledwidget construction} {
-    iwidgets::labeledwidget .lw
-    pack .lw
+    iwidgets::labeledwidget .lw 
+    pack .lw 
     destroy .lw
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

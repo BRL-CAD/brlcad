@@ -80,6 +80,11 @@ proc ::tk::TearOffMenu {w {x 0} {y 0}} {
 	}
     }
 
+    if {[tk windowingsystem] eq "win32"} {
+	wm transient $menu [winfo toplevel $parent]
+	wm attributes $menu -toolwindow 1
+    }
+
     $menu post $x $y
 
     if {[winfo exists $menu] == 0} {

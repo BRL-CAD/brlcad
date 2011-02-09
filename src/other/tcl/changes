@@ -7410,3 +7410,75 @@ among multiple interps (kupries)
 (kupries)
 
 --- Released 8.5.8, November 16, 2009 --- See ChangeLog for details ---
+
+2009-11-16 (bug fix)[2891556] encoding finalization crash (mistachkin,ferrieux)
+
+2009-12-09 (enhancement) rewrite of the Safe Base commands (kupries)
+
+2009-12-16 (bug fix)[2913616] msgcat: improved safe interp support (fellows)
+=> msgcat 1.4.3
+
+2009-12-23 (bug fix)[2913625] [info script/nameof] in safe interps (fellows)
+
+2009-12-28 (bug fix)[2891362] enable time limit in child interps (fellows)
+
+2009-12-28 (bug fix)[2895741] enable min(), max() in safe interps (fellows)
+
+2010-01-05 (bug fix)[2918610] [file rootname] corruption (magerya,porter)
+
+2010-01-06 (enhancement) Haiku, CYGWIN support improvements (nijtmans)
+
+2010-01-18 (bug fix)[2932421] less [format %s] shimmer (ferrieux)
+
+2010-01-18 (bug fix)[2918110] [chan postevent] crash (bron,kupries)
+
+2010-02-01 (bug fix)[2942697] faster match: some pathological regexp patterns
+(lane,fellows)
+
+2010-02-02 (bug fix)[2939073] [array unset] unset trace crash (ferrieux)
+
+2010-02-02 (bug fix)[2933089] [info frame] shared lit trouble (kupries)
+
+2010-02-11 (bug fix)[2949740] [open |noSuch rb] crash (kovalenko,fellows)
+
+2010-02-11 (bug fix)[2954959] get sign of abs($zero) right (nijtmans)
+
+2010-03-09 (bug fix)[2936225] stop [chan copy] to slow channel consuming all
+memory with buffer backup (ferrieux)
+
+2010-03-20 (enhancement) permit [fcopy] of > 2**31 bytes (fellows)
+
+2010-03-24 (bug fix)[2383005] [return -errorcode] reject non-list (porter)
+
+2010-03-25 (bug fix)[2976504] broken fstatfs() call (reeuwijk,fellows)
+
+2010-03-30 (bug fix)[2978773] refchan mem preservation (kupries)
+
+2010-05-19 (bug fix)[3004007] dict/list shimmer w/o string rep loss (fellows)
+
+2010-06-09 (bug fixes) platform: several fixes for 64 bit systems (kupries)
+=> platform 1.0.9
+
+2010-06-16 (bug fix)[3016135] [clock format] in he_IL locale (nijtmans)
+
+2010-06-28 (bug fix)[3019634] support errno.h changes in MSVC++ 2010 (nijtmans)
+
+2010-07-02 (enhancement) -errorcode for [expr] domain errors (fellows)
+
+2010-07-28 (bug fix)[3037525] crash deleting vars @ callframe pop (sofer)
+
+2010-08-04 (bug fix)[3034840] mem corrupt when refchan loses interp (kupries)
+
+2010-08-04 (enhancement) Win [load] use LOAD_WITH_ALTERED_SEARCH_PATH (hobbs)
+	*** POTENTIAL INCOMPATIBILITY ***
+
+2010-08-12 (bug fix)[2826551] line-sensitive matching in regexp (dejong)
+
+2010-08-19 (bug fix)[3048354] buffer overflow detect in Fortify build (fellows)
+
+2010-08-23 tzdata updated to Olson's tzdata2010l (kenny)
+
+2010-09-01 (bug fix)[3057639] no read traces [lappend arr(elem) ...] (hobbs)
+	*** POTENTIAL INCOMPATIBILITY ***
+
+--- Released 8.5.9, September 8, 2010 --- See ChangeLog for details ---

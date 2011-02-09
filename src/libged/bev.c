@@ -1,7 +1,7 @@
 /*                         B E V . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,18 +83,21 @@ ged_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_
 int
 ged_bev(struct ged *gedp, int argc, const char *argv[])
 {
-    int			i;
-    int	c;
-    int			ncpu;
-    int			triangulate;
-    char			*cmdname;
-    char			*newname;
-    struct rt_db_internal	intern;
-    struct directory	*dp;
-    union tree		*tmp_tree;
-    char		op;
-    int			failed;
     static const char *usage = "[P|t] new_obj obj1 op obj2 op obj3 ...";
+
+    int i;
+    int	c;
+    int ncpu;
+    char *cmdname;
+    char *newname;
+    struct rt_db_internal intern;
+    struct directory *dp;
+    char op;
+    int failed;
+
+    /* static due to longjmp */
+    static int triangulate = 0;
+    static union tree *tmp_tree = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -316,7 +319,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     intern.idb_ptr = (genptr_t)ged_nmg_model;
     ged_nmg_model = (struct model *)NULL;
 
-    GED_DB_DIRADD(gedp, dp, newname, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
 
     tmp_tree->tr_d.td_r = (struct nmgregion *)NULL;

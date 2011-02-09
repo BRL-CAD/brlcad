@@ -1,7 +1,7 @@
 /*                    V E C T O R _ F P U . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ inline dvec<LEN>::dvec(double s)
 }
 
 template<int LEN>
-inline dvec<LEN>::dvec(const double* vals, bool aligned)
+inline dvec<LEN>::dvec(const double* vals, bool UNUSED(aligned))
 {
     for (int i = 0; i < LEN; i++)
 	data.v[i] = vals[i];
@@ -218,8 +218,8 @@ public:
 	_init(0, 0);
     }
 
-    vec2d(double x, double y) {
-	_init(x, y);
+    vec2d(double xin, double yin) {
+	_init(xin, yin);
     }
 
     vec2d(const vec2d& proto) {
@@ -265,11 +265,11 @@ private:
     double* v;
     double  m[4];
 
-    void _init(double x, double y) {
+    void _init(double xin, double yin) {
 	// align to 16-byte boundary
 	v = (double*)((((uintptr_t)m) + 0x10L) & ~0xFL);
-	v[0] = x;
-	v[1] = y;
+	v[0] = xin;
+	v[1] = yin;
     }
 };
 

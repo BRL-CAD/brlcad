@@ -319,7 +319,7 @@ in a .CPP file.
     /* virtual bool CopyFrom( const ON_Object* src )      */    \
                                                                 \
   public:                                                       \
-    cls * Duplicate() const;                                    \
+    cls * Duplicate() const                                     \
     /*Description: Expert level tool - no support available.*/  \
     /*If this class is derived from CRhinoObject, use CRhinoObject::DuplicateRhinoObject instead*/
 
@@ -332,14 +332,14 @@ in a .CPP file.
 // The Cast() and ClassId() members work on objects defined with either
 // ON_VIRTUAL_OBJECT_IMPLEMENT or ON_OBJECT_IMPLEMENT.
 #define ON_VIRTUAL_OBJECT_IMPLEMENT( cls, basecls, uuid ) \
-  void* cls::m_s_##cls##_ptr = 0;\
   const ON_ClassId cls::m_##cls##_class_id(#cls,#basecls,0,0,uuid);\
   cls * cls::Cast( ON_Object* p) {return(cls *)Cast((const ON_Object*)p);} \
   const cls * cls::Cast( const ON_Object* p) {return(p&&p->IsKindOf(&cls::m_##cls##_class_id))?(const cls *)p:0;} \
   const ON_ClassId* cls::ClassId() const {return &cls::m_##cls##_class_id;} \
   ON_Object* cls::DuplicateObject() const {return 0;} \
   bool cls::Copy##cls( const ON_Object*, ON_Object* ) {return false;} \
-  cls * cls::Duplicate() const {return static_cast<cls *>(DuplicateObject());}
+  cls * cls::Duplicate() const {return static_cast<cls *>(DuplicateObject());} \
+  void* cls::m_s_##cls##_ptr = 0
 
 // Objects derived from ON_Object that use ON_OBJECT_IMPLEMENT must
 // have a valid operator= and copy constructor.  Objects defined with
@@ -347,7 +347,6 @@ in a .CPP file.
 // ON_BinaryArchive::ReadObject()/WriteObject()
 // and duplicated by calling ON_Object::Duplicate().
 #define ON_OBJECT_IMPLEMENT( cls, basecls, uuid ) \
-  void* cls::m_s_##cls##_ptr = 0;\
   static ON_Object* CreateNew##cls() {return new cls();} \
   const ON_ClassId cls::m_##cls##_class_id(#cls,#basecls,CreateNew##cls,cls::Copy##cls,uuid);\
   cls * cls::Cast( ON_Object* p) {return(cls *)Cast((const ON_Object*)p);} \
@@ -355,7 +354,8 @@ in a .CPP file.
   const ON_ClassId* cls::ClassId() const {return &cls::m_##cls##_class_id;} \
   ON_Object* cls::DuplicateObject() const {cls* p = new cls(); if (p) *p=*this; return p;} \
   bool cls::Copy##cls( const ON_Object* src, ON_Object* dst ){cls* d;const cls* s;if (0!=(s=cls::Cast(src))&&0!=(d=cls::Cast(dst))) {d->cls::operator=(*s);return true;}return false;} \
-  cls * cls::Duplicate() const {return static_cast<cls *>(DuplicateObject());}
+  cls * cls::Duplicate() const {return static_cast<cls *>(DuplicateObject());} \
+  void* cls::m_s_##cls##_ptr = 0
 
 #define ON__SET__THIS__PTR(ptr) if (ptr) *((void**)this) = ptr
 

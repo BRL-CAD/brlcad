@@ -27,7 +27,11 @@ int TtkXPTheme_Init(Tcl_Interp *interp, HWND hwnd) { return TCL_OK; }
 
 #include <windows.h>
 #include <uxtheme.h>
-#include <tmschema.h>
+#ifdef HAVE_VSSYM32_H
+#   include <vssym32.h>
+#else
+#   include <tmschema.h>
+#endif
 
 #include <tkWinInt.h>
 
@@ -97,7 +101,7 @@ LoadXPThemeProcs(HINSTANCE *phlib)
      * if we are running at least on Windows XP.
      */
     HINSTANCE handle;
-    *phlib = handle = LoadLibrary("uxtheme.dll");
+    *phlib = handle = LoadLibrary(TEXT("uxtheme.dll"));
     if (handle != 0)
     {
 	/*
@@ -315,6 +319,14 @@ static Ttk_StateTable rightarrow_statemap[] =
     { ABS_RIGHTPRESSED, TTK_STATE_PRESSED, 0 },
     { ABS_RIGHTHOT,	TTK_STATE_ACTIVE, 0 },
     { ABS_RIGHTNORMAL, 	0, 0 }
+};
+
+static Ttk_StateTable spinbutton_statemap[] =
+{
+    { DNS_DISABLED,	TTK_STATE_DISABLED, 0 },
+    { DNS_PRESSED,	TTK_STATE_PRESSED,  0 },
+    { DNS_HOT,		TTK_STATE_ACTIVE,   0 },
+    { DNS_NORMAL,	0,		    0 },
 };
 
 /*
@@ -583,6 +595,36 @@ static Ttk_ElementSpec GenericSizedElementSpec = {
     sizeof(NullElement),
     TtkNullElementOptions,
     GenericSizedElementSize,
+    GenericElementDraw
+};
+
+/*----------------------------------------------------------------------
+ * +++ Spinbox arrow element.
+ *     These are half-height scrollbar buttons.
+ */
+
+static void
+SpinboxArrowElementSize(
+    void *clientData, void *elementRecord, Tk_Window tkwin,
+    int *widthPtr, int *heightPtr, Ttk_Padding *paddingPtr)
+{
+    ElementData *elementData = clientData;
+
+    if (!InitElementData(elementData, tkwin, 0))
+	return;
+
+    GenericSizedElementSize(clientData, elementRecord, tkwin,
+	widthPtr, heightPtr, paddingPtr);
+
+    /* force the arrow button height to half size */
+    *heightPtr /= 2;
+}
+
+static Ttk_ElementSpec SpinboxArrowElementSpec = {
+    TK_STYLE_VERSION_2,
+    sizeof(NullElement),
+    TtkNullElementOptions,
+    SpinboxArrowElementSize,
     GenericElementDraw
 };
 
@@ -975,6 +1017,14 @@ static ElementInfo ElementInfoTable[] = {
     	HP_HEADERITEM, header_statemap, PAD(4,0,4,0),0 },
     { "sizegrip", &GenericElementSpec, L"STATUS",
     	SP_GRIPPER, null_statemap, NOPAD,0 },
+    { "Spinbox.field", &GenericElementSpec, L"EDIT",
+	EP_EDITTEXT, edittext_statemap, PAD(1, 1, 1, 1), 0 },
+    { "Spinbox.uparrow", &SpinboxArrowElementSpec, L"SPIN",
+	SPNP_UP, spinbutton_statemap, NOPAD,
+	PAD_MARGINS | ((SM_CXVSCROLL << 8) | SM_CYVSCROLL) },
+    { "Spinbox.downarrow", &SpinboxArrowElementSpec, L"SPIN",
+	SPNP_DOWN, spinbutton_statemap, NOPAD,
+	PAD_MARGINS | ((SM_CXVSCROLL << 8) | SM_CYVSCROLL) },
 
 #if BROKEN_TEXT_ELEMENT
     { "Labelframe.text", &TextElementSpec, L"BUTTON",

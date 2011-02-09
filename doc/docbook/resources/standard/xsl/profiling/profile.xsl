@@ -1,11 +1,13 @@
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                version="1.0">
+<xsl:stylesheet exclude-result-prefixes="d"
+                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:d="http://docbook.org/ns/docbook"
+version="1.0">
 
 <!-- Include common profiling stylesheet -->
 <xsl:import href="profile-mode.xsl"/>
 
 <!-- This file must be included, because profile-mode is using templates from it -->
-<xsl:import href="../common/stripns.xsl"/>
+<xsl:import href="../common/addns.xsl"/>
 
 <!-- In the two pass processing there is no need for base URI fixup -->
 <xsl:param name="profile.baseuri.fixup" select="false()"/>
@@ -39,6 +41,13 @@
 <xsl:param name="profile.attribute" select="''"/>
 <xsl:param name="profile.value" select="''"/>
 <xsl:param name="profile.separator" select="';'"/>
+
+<xsl:param name="exsl.node.set.available"> 
+  <xsl:choose>
+    <xsl:when xmlns:exsl="http://exslt.org/common" exsl:foo="" test="function-available('exsl:node-set') or contains(system-property('xsl:vendor'), 'Apache Software Foundation')">1</xsl:when>
+    <xsl:otherwise>0</xsl:otherwise>
+  </xsl:choose>
+</xsl:param>
 
 <!-- Call common profiling mode -->
 <xsl:template match="/">

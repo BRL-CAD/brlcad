@@ -1,7 +1,7 @@
 /*                   S U B R O U T I N E S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,11 +30,6 @@
 
 #include <stdio.h>
 #include <math.h>
-
-
-#if !defined(PI)
-#define PI 3.14159265358979323846264		/*  Pi.  */
-#endif
 
 
 /*  Subroutine to rotate a point, given a point (3 coordinates)  */
@@ -101,7 +96,7 @@ double radians(double a)
 
     double b;	/*  Angle in radians.  */
 
-    b = a * PI / 180.;
+    b = a * M_PI / 180.;
 
     return b;
 

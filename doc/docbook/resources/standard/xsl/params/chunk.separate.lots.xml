@@ -28,7 +28,7 @@ The title page includes generated links to each of the separate files.
 </para>
 <para>
 This feature depends on the
-<literal>chunk.tocs.and.lots</literal>
+<parameter>chunk.tocs.and.lots</parameter>
 parameter also being non-zero. 
 </para>
 

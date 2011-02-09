@@ -1,7 +1,7 @@
 /*                         Q M A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,12 +60,6 @@
 #include "vmath.h"
 #include "bn.h"
 
-#ifdef M_PI
-#define PI M_PI
-#else
-#define PI	3.14159265358979323264
-#endif
-#define	RTODEG	(180.0/PI)
 
 /**
  *			Q U A T _ M A T 2 Q U A T
@@ -251,16 +245,16 @@ quat_slerp(fastf_t *qout, const fastf_t *q1, const fastf_t *q2, double f)
 	QBLEND2( qout, s1, q1, s2, q2 );
     } else {
 	/*
-	 *  cos_omega == -1, omega = PI.
-	 *  The ends are nearly opposite, 180 degrees (PI) apart.
+	 *  cos_omega == -1, omega = M_PI.
+	 *  The ends are nearly opposite, 180 degrees (M_PI) apart.
 	 */
 	/* (I have no idea what permuting the elements accomplishes,
 	 * perhaps it creates a perpendicular? */
 	qout[X] = -q1[Y];
 	qout[Y] =  q1[X];
 	qout[Z] = -q1[W];
-	s1 = sin( (0.5-f) * PI );
-	s2 = sin( f * PI );
+	s1 = sin( (0.5-f) * M_PI );
+	s2 = sin( f * M_PI );
 	VBLEND2( qout, s1, q1, s2, qout );
 	qout[W] =  q1[Z];
     }
@@ -335,7 +329,7 @@ quat_print(const char *title, const fastf_t *quat)
 	fprintf( stderr, "%8f  ", quat[i] );
     fprintf( stderr, "\n" );
 
-    fprintf( stderr, "rot_angle = %8f deg", RTODEG * 2.0 * acos( quat[W] ) );
+    fprintf( stderr, "rot_angle = %8f deg", RAD2DEG * 2.0 * acos( quat[W] ) );
     VMOVE( axis, quat );
     VUNITIZE( axis );
     fprintf( stderr, ", Axis = (%f, %f, %f)\n",

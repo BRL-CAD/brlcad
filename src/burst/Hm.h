@@ -1,7 +1,7 @@
 /*                            H M . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -168,7 +168,7 @@ int HmMaxVis
 
 If this routine is not called, default parameters will be used.
 
-HmInit() also opens "/dev/tty" for input and stores it's file
+HmInit() also opens "/dev/tty" for input and stores its file
 descriptor in HmTtyFd and associated stream handle in HmTtyFp.
 
 int HmTtyFd

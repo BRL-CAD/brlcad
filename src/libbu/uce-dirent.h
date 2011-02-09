@@ -624,7 +624,7 @@ _initdir (DIR *dirp)
   }
 # endif
 
-  /* initialize DIR and it's first entry */
+  /* initialize DIR and its first entry */
   _setdirname (dirp);
   dirp->dirent_filled = 1;
   return 1;

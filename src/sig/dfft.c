@@ -1,7 +1,7 @@
 /*                          D F F T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -247,7 +247,7 @@ fftphase(double *dat, int N)
 
     for (i = 1; i < N/2; i++) {
 	value = atan2(dat[N-i], dat[i]);
-	out[i] = value / M_PI;
+	out[i] = value * M_1_PI;
     }
     /* DC */
     out[i] = 0;

@@ -1,7 +1,7 @@
 /*                           V L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -453,7 +453,7 @@ bu_vls_strcmp(struct bu_vls *s1, struct bu_vls *s2)
     }
 
     /* neither empty, straight up comparison */
-    return strcmp(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset);
+    return bu_strcmp(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset);
 }
 
 
@@ -501,6 +501,7 @@ bu_argv_from_string(char *argv[], int lim, char *lp)
 {
     int argc = 0; /* number of words seen */
     int skip = 0;
+    int quoted = 0;
 
     if (UNLIKELY(!argv)) {
 	/* do this instead of crashing */
@@ -528,8 +529,33 @@ bu_argv_from_string(char *argv[], int lim, char *lp)
 
     for (; *lp != '\0'; lp++) {
 
+	if (*lp == '"') {
+	    if (!quoted) {
+		/* start collecting quoted string */
+		quoted = 1;
+
+		/* skip past the quote character */
+		argv[argc] = lp + 1;
+		continue;
+	    }
+
+	    /* end qoute */
+	    quoted = 0;
+	    *lp++ = '\0';
+
+	    /* skip leading whitespace */
+	    while (*lp != '\0' && isspace(*lp)) {
+		/* null out spaces */
+		*lp = '\0';
+		lp++;
+	    }
+
+	    skip = 0;
+	    goto nextword;
+	}
+
 	/* skip over current word */
-	if (!isspace(*lp))
+	if (quoted || !isspace(*lp))
 	    continue;
 
 	skip = 0;
@@ -545,6 +571,7 @@ bu_argv_from_string(char *argv[], int lim, char *lp)
 	if (*(lp + skip) == '\0')
 	    break;
 
+    nextword:
 	/* make sure argv[] isn't full, need room for NULL */
 	if (argc >= lim-1)
 	    break;
@@ -734,7 +761,8 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 #define SIZETINT 0x080
 
     int flags;
-    int fieldlen=-1;
+    int fieldlen = -1;
+    int left_justify = 0;
 
     char fbuf[64] = {0}; /* % format buffer */
     char buf[BUFSIZ] = {0};
@@ -767,8 +795,10 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	ep = sp;
 	while (*ep) {
 	    ++ep;
-	    if (*ep == ' ' || *ep == '#' || *ep == '-' || *ep == '+' || *ep == '.' || isdigit(*ep)) {
+	    if (*ep == ' ' || *ep == '#' || *ep == '+' || *ep == '.' || isdigit(*ep)) {
 		continue;
+	    } else if (*ep == '-') {
+		left_justify = 1;
 	    } else if (*ep == 'l' || *ep == 'U' || *ep == 'O') {
 		if (flags & LONG_INT) {
 		    flags ^= LONG_INT;
@@ -797,6 +827,15 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		break;
 	}
 
+	/* libc left-justifies if there's a '-' char, even if the
+	 * value is already negative so no need to check current value
+	 * of left_justify.
+	 */
+	if (fieldlen < 0) {
+	    fieldlen = -fieldlen;
+	    left_justify = 1;
+	}
+
 	/* Copy off the format string */
 	len = ep-sp+1;
 	if ((size_t)len > sizeof(fbuf)-1)
@@ -814,11 +853,6 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    if (str) {
 			if (flags & FIELDLEN) {
 			    int stringlen = (int)strlen(str);
-			    int left_justify;
-
-			    left_justify = (fieldlen < 0);
-			    if (left_justify)
-				fieldlen *= -1; /* make positive */
 
 			    if (stringlen >= fieldlen)
 				bu_vls_strncat(vls, str, (size_t)fieldlen);
@@ -858,11 +892,6 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			BU_CK_VLS(vp);
 			if (flags & FIELDLEN) {
 			    int stringlen = bu_vls_strlen(vp);
-			    int left_justify;
-
-			    left_justify = (fieldlen < 0);
-			    if (left_justify)
-				fieldlen *= -1;
 
 			    if (stringlen >= fieldlen)
 				bu_vls_strncat(vls, bu_vls_addr(vp), (size_t)fieldlen);

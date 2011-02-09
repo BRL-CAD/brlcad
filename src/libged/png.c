@@ -1,7 +1,7 @@
 /*                         P N G . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "solid.h"
+#include "dm.h"
 
 #include "./ged_private.h"
 
@@ -444,7 +445,7 @@ ged_png(struct ged *gedp, int argc, const char *argv[])
 
 		break;
 	    case 's':
-		if (sscanf(bu_optarg, "%d", &size) != 1) {
+		if (sscanf(bu_optarg, "%u", &size) != 1) {
 		    bu_vls_printf(&gedp->ged_result_str, "%s: bad size - %s", argv[0], bu_optarg);
 		    return GED_ERROR;
 		}
@@ -478,7 +479,6 @@ ged_png(struct ged *gedp, int argc, const char *argv[])
 
     return ret;
 }
-
 
 /*
  * Local Variables:

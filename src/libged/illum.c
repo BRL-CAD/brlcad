@@ -1,7 +1,7 @@
 /*                         I L L U M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -77,11 +77,11 @@ ged_illum(struct ged *gedp, int argc, const char *argv[])
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    int i;
+	    size_t i;
 
 	    for (i = 0; i < sp->s_fullpath.fp_len; ++i) {
 		if (*argv[1] == *DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep &&
-		    strcmp(argv[1], DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep) == 0) {
+		    BU_STR_EQUAL(argv[1], DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep)) {
 		    found = 1;
 		    if (illum)
 			sp->s_iflag = UP;

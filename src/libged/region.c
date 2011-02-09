@@ -1,7 +1,7 @@
 /*                         R E G I O N . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,7 +70,7 @@ ged_region(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) == DIR_NULL) {
+    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
 	/* will attempt to create the region */
 	if (gedp->ged_wdbp->wdb_item_default) {
 	    gedp->ged_wdbp->wdb_item_default++;
@@ -86,7 +86,7 @@ ged_region(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 	oper = argv[i][0];
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY )) == DIR_NULL) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY )) == RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "skipping %s\n", argv[i+1]);
 	    continue;
 	}
@@ -98,17 +98,17 @@ ged_region(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* Adding region to region */
-	if (dp->d_flags & DIR_REGION) {
+	if (dp->d_flags & RT_DIR_REGION) {
 	    bu_vls_printf(&gedp->ged_result_str, "Note: %s is a region\n", dp->d_namep);
 	}
 
-	if (_ged_combadd(gedp, dp, (char *)argv[1], 1, oper, ident, air) == DIR_NULL) {
+	if (_ged_combadd(gedp, dp, (char *)argv[1], 1, oper, ident, air) == RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "error in combadd");
 	    return GED_ERROR;
 	}
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) == DIR_NULL) {
+    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
 	/* failed to create region */
 	if (gedp->ged_wdbp->wdb_item_default > 1)
 	    gedp->ged_wdbp->wdb_item_default--;

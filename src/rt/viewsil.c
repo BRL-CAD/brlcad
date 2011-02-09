@@ -1,7 +1,7 @@
 /*                       V I E W S I L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,11 +31,12 @@
 #include "common.h"
 
 #include <stdio.h>
+
 #include "vmath.h"
 #include "raytrace.h"
 
 /* private */
-#include "rtprivate.h"
+#include "./rtuif.h"
 
 
 extern	FILE	*outfp;
@@ -77,7 +78,7 @@ int	raymiss(register struct application *ap);
  *  Returns 1 if framebuffer should be opened, else 0.
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(register struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
 {
     if (rt_g.rtg_parallel) {
 	rt_g.rtg_parallel = 0;
@@ -95,7 +96,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
  *  Called by do_frame() just before raytracing starts.
  */
 void
-view_2init(struct application *ap)
+view_2init(struct application *ap, char *UNUSED(framename))
 {
     ap->a_hit = rayhit;
     ap->a_miss = raymiss;
@@ -108,7 +109,7 @@ view_2init(struct application *ap)
  *  Called by worker() after the end of proccessing for each pixel.
  */
 void
-view_pixel(register struct application *ap)
+view_pixel(struct application *UNUSED(ap))
 {
 }
 
@@ -119,7 +120,7 @@ view_pixel(register struct application *ap)
  *  Any end-of-line processing should be done in view_pixel().
  */
 void
-view_eol(register struct application *ap)
+view_eol(struct application *ap)
 {
     bu_semaphore_acquire( BU_SEM_SYSCALL );
     if ( outfp != NULL )
@@ -138,7 +139,7 @@ view_eol(register struct application *ap)
  *  just after raytracing completes.
  */
 void
-view_end(register struct application *ap)
+view_end(struct application *UNUSED(ap))
 {
 }
 
@@ -150,7 +151,7 @@ view_end(register struct application *ap)
  *  e.g., generate lights, associate materials routines, etc.
  */
 void
-view_setup(struct rt_i *rtip)
+view_setup(struct rt_i *UNUSED(rtip))
 {
 }
 
@@ -160,7 +161,7 @@ view_setup(struct rt_i *rtip)
  *  Called by "clean" command, just before rt_clean() is called, in do.c
  */
 void
-view_cleanup(struct rt_i *rtip)
+view_cleanup(struct rt_i *UNUSED(rtip))
 {
 }
 

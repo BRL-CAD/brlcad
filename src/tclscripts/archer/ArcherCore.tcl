@@ -1,7 +1,7 @@
 #                      A R C H E R C O R E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2010 United States Government as represented by
+# Copyright (c) 2002-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -73,7 +73,6 @@ namespace eval ArcherCore {
 	common OBJ_EDIT_VIEW_MODE 0
 	common OBJ_ATTR_VIEW_MODE 1
 
-	common brlcadDataPath
 	common SystemWindowFont
 	common SystemWindowText
 	common SystemWindow
@@ -240,7 +239,6 @@ namespace eval ArcherCore {
 	method Z                   {args}
 	method zap                 {args}
 
-	set brlcadDataPath [bu_brlcad_data ""]
 	if {$tcl_platform(platform) != "windows"} {
 	    set SystemWindowFont Helvetica
 	    set SystemWindowText black
@@ -324,6 +322,7 @@ namespace eval ArcherCore {
 	variable mShowADC 0
 
 	# variables for preference state
+	variable mWindowGeometry ""
 	variable mEnableAffectedNodeHighlight 0
 	variable mEnableAffectedNodeHighlightPref ""
 	variable mEnableListView 0
@@ -345,6 +344,8 @@ namespace eval ArcherCore {
 	variable mBackground "0 0 0"
 	variable mBackgroundColor Black
 	variable mBackgroundColorPref ""
+	variable mFBBackgroundColor Black
+	variable mFBBackgroundColorPref ""
 	variable mPrimitiveLabelColor Yellow
 	variable mPrimitiveLabelColorPref
 	variable mViewingParamsColor Yellow
@@ -358,6 +359,10 @@ namespace eval ArcherCore {
 	variable mMeasuringStickColorVDraw ffff00
 	variable mEnableBigE 0
 	variable mEnableBigEPref ""
+
+	variable mDisplayFontSize 0
+	variable mDisplayFontSizePref ""
+	variable mDisplayFontSizes {}
 
 	variable mGridAnchor "0 0 0"
 	variable mGridAnchorXPref ""
@@ -662,7 +667,7 @@ Popup Menu    Right or Ctrl-Left
 	variable mText2Node
 	variable mNodePDrawList
 	variable mNodeDrawList
-	variable mAffectedNodeList
+	variable mAffectedNodeList ""
 
 	# init functions
 	method initImages {}
@@ -805,6 +810,12 @@ Popup Menu    Right or Ctrl-Left
     global env
     global tcl_platform
 
+    if {$tcl_platform(platform) == "windows"} {
+	set mDisplayFontSizes {0 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29}
+    } else {
+	set mDisplayFontSizes {0 5 6 7 8 9 10 12}
+    }
+
     set mLastSelectedDir [pwd]
 
     set mFontText [list $SystemWindowFont 8]
@@ -822,7 +833,7 @@ Popup Menu    Right or Ctrl-Left
 	set env(DISPLAY) ":0"
     }
 
-    set mImgDir [file join $brlcadDataPath tclscripts archer images]
+    set mImgDir [file join [bu_brlcad_data "tclscripts"] archer images]
 
     if {[llength $args] == 1} {
 	set args [lindex $args 0]
@@ -1023,6 +1034,9 @@ Popup Menu    Right or Ctrl-Left
     trace add variable [::itcl::scope mViewingParamsColor] write watchVar
     trace add variable [::itcl::scope mViewAxesColor] write watchVar
     trace add variable [::itcl::scope mViewAxesLabelColor] write watchVar
+
+    trace add variable [::itcl::scope mFBBackgroundColor] write watchVar
+    trace add variable [::itcl::scope mDisplayFontSize] write watchVar
 
     eval itk_initialize $args
 
@@ -1694,26 +1708,6 @@ Popup Menu    Right or Ctrl-Left
     bind $itk_component(rtcntrl) <FocusOut> "raise $itk_component(rtcntrl)"
     wm protocol $itk_component(rtcntrl) WM_DELETE_WINDOW "$itk_component(rtcntrl) deactivate"
 
-    # create view axes control panel
-    #    itk_component add vac {
-    #	ViewAxesControl $itk_interior.vac -mged $itk_component(ged)
-    #    } {
-    #	usual
-    #    }
-
-    # create model axes control panel
-    #    itk_component add mac {
-    #	ModelAxesControl $itk_interior.mac -mged $itk_component(ged)
-    #    } {
-    #	usual
-    #    }
-
-    #    wm protocol $itk_component(vac) WM_DELETE_WINDOW "$itk_component(vac) hide"
-    #    wm protocol $itk_component(mac) WM_DELETE_WINDOW "$itk_component(mac) hide"
-
-    #    $itk_component(ged) configure -unitsCallback "$itk_component(mac) updateControlPanel"
-    $itk_component(ged) configure -paneCallback [::itcl::code $this updateActivePane]
-
     # Other bindings for mged
     #bind $itk_component(ged) <Enter> {focus %W}
 
@@ -1766,7 +1760,42 @@ Popup Menu    Right or Ctrl-Left
     }
 
     bind $itk_component(canvasF) <Configure> [::itcl::code $this updateRtControl]
-    setActivePane ur
+
+    set mActivePane 1
+    set mActivePaneName ur
+
+    if {$mShowViewAxes} {
+	showViewAxes
+    }
+    if {$mShowModelAxes} {
+	showModelAxes
+    }
+    if {$mShowGroundPlane} {
+	showGroundPlane
+    }
+    if {$mShowPrimitiveLabels} {
+	showPrimitiveLabels
+    }
+    if {$mShowViewingParams} {
+	showViewParams
+    }
+    if {$mShowScale} {
+	showScale
+    }
+    if {$mLighting} {
+	doLighting
+    }
+    if {$mShowGrid} {
+	showGrid
+    }
+    if {$mSnapGrid} {
+	snapGrid
+    }
+    if {$mShowADC} {
+	showADC
+    }
+
+    $itk_component(ged) configure -paneCallback [::itcl::code $this updateActivePane]
 }
 
 ::itcl::body ArcherCore::closeMged {} {
@@ -1779,7 +1808,7 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body ArcherCore::updateRtControl {} {
     ::update
     if {[info exists itk_component(rtcntrl)]} {
-	$itk_component(rtcntrl) configure -size "Size of Pane"
+	$itk_component(rtcntrl) updateControlPanel
     }
 }
 
@@ -5692,12 +5721,22 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::watchVar {_name1 _name2 _op} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
     switch -- $_name1 {
+	mFBBackgroundColor {
+	    $itk_component(rtcntrl) configure -color [cadwidgets::Ged::get_rgb_color $mFBBackgroundColor]
+	}
+	mDisplayFontSize {
+	    $itk_component(ged) fontsize $mDisplayFontSize
+	}
 	mMeasuringStickColor {
 	    $itk_component(ged) configure -measuringStickColor $mMeasuringStickColor
 	}
 	mMeasuringStickMode {
-	    $itk_component(ged) configure -measuringStickMode $mMeasuringStickMode 
+	    $itk_component(ged) configure -measuringStickMode $mMeasuringStickMode
 	}
 	mModelAxesColor {
 	    if {$mModelAxesColor == "Triple"} {

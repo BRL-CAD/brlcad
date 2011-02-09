@@ -1,7 +1,7 @@
 #                        M G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2010 United States Government as represented by
+# Copyright (c) 1995-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -51,9 +51,9 @@ if { [info exists tk_strictMotif] == 0 } {
 #   bu_brlcad_data/html/manuals/mged
 
 if ![info exists mged_default(html_dir)] {
-    set mged_default(html_dir) [file normalize [bu_brlcad_data "html/manuals/mged"]]
+    set mged_default(html_dir) [file normalize [file join [bu_brlcad_data "html"] manuals mged]]
     if {![file exists $mged_default(html_dir)]} {
-	set mged_default(html_dir) [file normalize [bu_brlcad_data "doc/html/manuals/mged"]]
+	set mged_default(html_dir) [file normalize [file join [bu_brlcad_data "doc"] html manuals mged]]
     }
 }
 

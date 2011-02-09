@@ -1,7 +1,7 @@
 /*                      S U P E R E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,8 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "nurb.h"
+
+#include "../../librt_private.h"
 
 
 const struct bu_structparse rt_superell_parse[] = {
@@ -180,7 +181,7 @@ struct superell_specific {
  * 0 SUPERELL is OK
  * !0 Error in description
  *
- * Implicit return - A struct superell_specific is created, and it's
+ * Implicit return - A struct superell_specific is created, and its
  * address is stored in stp->st_specific for use by rt_superell_shot()
  */
 int
@@ -787,7 +788,7 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    rt_fastf_float(vec, rp->s.s_values, 4);
+    rt_fastf_float(vec, rp->s.s_values, 4, dbip->dbi_version < 0 ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -795,8 +796,14 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     MAT4X3VEC(eip->a, mat, &vec[1*3]);
     MAT4X3VEC(eip->b, mat, &vec[2*3]);
     MAT4X3VEC(eip->c, mat, &vec[3*3]);
-    eip->n = rp->s.s_values[12];
-    eip->e = rp->s.s_values[13];
+
+    if (dbip->dbi_version < 0) {
+	eip->n = flip_dbfloat(rp->s.s_values[12]);
+	eip->e = flip_dbfloat(rp->s.s_values[13]);
+    } else {
+	eip->n = rp->s.s_values[12];
+	eip->e = rp->s.s_values[13];
+    }
 
     return 0;		/* OK */
 }

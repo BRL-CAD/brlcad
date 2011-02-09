@@ -1,7 +1,7 @@
 /*                          C M D . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,7 +44,19 @@
 #  include <sys/time.h>
 #endif
 #include <time.h>
-#include "bio.h" /* for timeval via windows.h */
+
+/* for timeval via windows.h */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  define NOMINMAX
+#  include <windows.h>
+#  include <io.h>
+
+#   undef rad1 /* Win32 radio button 1 */
+#   undef rad2 /* Win32 radio button 2 */
+#   undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
+#   undef IN
+#   undef OUT
+#endif
 
 #include "bu.h"
 

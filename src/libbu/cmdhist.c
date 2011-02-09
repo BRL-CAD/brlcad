@@ -1,7 +1,7 @@
 /*                       C M D H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ _bu_history_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct time
     struct bu_cmdhist *new_hist;
     const char *eol = "\n";
 
-    if (UNLIKELY(strcmp(bu_vls_addr(cmdp), eol) == 0))
+    if (UNLIKELY(BU_STR_EQUAL(bu_vls_addr(cmdp), eol)))
 	return;
 
     new_hist = (struct bu_cmdhist *)bu_malloc(sizeof(struct bu_cmdhist),
@@ -103,15 +103,15 @@ bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 	const char *delays = "-delays";
 	const char *outfile = "-outfile";
 
-	if (strcmp(argv[2], delays) == 0)
+	if (BU_STR_EQUAL(argv[2], delays))
 	    with_delays = 1;
-	else if (strcmp(argv[2], outfile) == 0) {
+	else if (BU_STR_EQUAL(argv[2], outfile)) {
 	    if (fp != NULL) {
 		fclose(fp);
 		Tcl_AppendResult(interp, "history: -outfile option given more than once\n",
 				 (char *)NULL);
 		return TCL_ERROR;
-	    } else if (argc < 4 || strcmp(argv[3], delays) == 0) {
+	    } else if (argc < 4 || BU_STR_EQUAL(argv[3], delays)) {
 		Tcl_AppendResult(interp, "history: I need a file name\n", (char *)NULL);
 		return TCL_ERROR;
 	    } else {

@@ -1,7 +1,7 @@
 /*                     V I E W C H E C K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -172,7 +172,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 	    /* if we already have an entry for this region pair,
 	     * we increase the counter and return
 	     */
-	    if ( (strcmp(reg1->reg_name, op->reg1) == 0) && (strcmp(reg2->reg_name, op->reg2) == 0) ) {
+	    if ( (BU_STR_EQUAL(reg1->reg_name, op->reg1)) && (BU_STR_EQUAL(reg2->reg_name, op->reg2)) ) {
 		op->count++;
 		if ( depth > op->maxdepth )
 		    op->maxdepth = depth;
@@ -184,7 +184,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 
 	for ( op=olist; op; prev_ol=op, op=op->next ) {
 	    /* if this pair was seen in reverse, decrease the unique counter */
-	    if ( (strcmp(reg1->reg_name, op->reg2) == 0) && (strcmp(reg2->reg_name, op->reg1) == 0) ) {
+	    if ( (BU_STR_EQUAL(reg1->reg_name, op->reg2)) && (BU_STR_EQUAL(reg2->reg_name, op->reg1)) ) {
 		unique_overlap_count--;
 		break;
 	    }
@@ -225,7 +225,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
  *  Called once for this run.
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(register struct application *ap, char *file, char *obj, int minus_o, int UNUSED(minus_F))
 {
     ap->a_hit = hit;
     ap->a_miss = miss;
@@ -249,7 +249,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
  *  Called at the beginning of each frame
  */
 void
-view_2init(register struct application *ap)
+view_2init(register struct application *ap, char *UNUSED(framename))
 {
     register struct rt_i *rtip = ap->a_rt_i;
 
@@ -287,7 +287,7 @@ static void print_overlap_summary(void) {
 
 		/* iterate over the list and see if we already printed this one */
 		for ( backop=olist; (backop!=op) && (backop); backop=backop->next ) {
-		    if ((strcmp(op->reg1, backop->reg1) == 0) || (strcmp(op->reg1, backop->reg2) == 0)) break;
+		    if ((BU_STR_EQUAL(op->reg1, backop->reg1)) || (BU_STR_EQUAL(op->reg1, backop->reg2))) break;
 		}
 		/* if we got to the end of the list (backop points to the match) */
 		if (!backop || (backop==op)) {
@@ -298,7 +298,7 @@ static void print_overlap_summary(void) {
 		/* iterate over the list again up to where we are to see if the second
 		 * region was already printed */
 		for (backop=olist; backop; backop=backop->next) {
-		    if ((strcmp(op->reg2, backop->reg1) == 0) || (strcmp(op->reg2, backop->reg2) == 0)) break;
+		    if ((BU_STR_EQUAL(op->reg2, backop->reg1)) || (BU_STR_EQUAL(op->reg2, backop->reg2))) break;
 		}
 		if ( !backop || (backop==op)) {
 		    bu_log("%s  ", op->reg2);
@@ -319,7 +319,7 @@ static void print_overlap_summary(void) {
  *  Called at the end of each frame
  */
 void
-view_end(void) {
+view_end(struct application *UNUSED(ap)) {
     pl_flush(outfp);
     fflush(outfp);
     /*	bu_log("%d overlap%c detected\n\n", noverlaps, (noverlaps==1)?(char)NULL:'s');*/
@@ -345,7 +345,7 @@ view_end(void) {
 	     * see if we hit the reverse previously.
 	     */
 	    for ( backop=olist; (backop!=op) && (backop); backop=backop->next ) {
-		if ((strcmp(op->reg2, backop->reg1) == 0) && (strcmp(op->reg1, backop->reg2) == 0)) break;
+		if ((BU_STR_EQUAL(op->reg2, backop->reg1)) && (BU_STR_EQUAL(op->reg1, backop->reg2))) break;
 	    }
 	    if (backop && (backop!=op)) continue;
 
@@ -359,8 +359,8 @@ view_end(void) {
 		 * reverse matching pair (done inside loop
 		 * explicitly)*/
 		for ( nextop=op; nextop; nextop=nextop->next) {
-		    if ((strcmp(op->reg1, nextop->reg2) == 0) &&
-			(strcmp(op->reg2, nextop->reg1) == 0))
+		    if ((BU_STR_EQUAL(op->reg1, nextop->reg2)) &&
+			(BU_STR_EQUAL(op->reg2, nextop->reg1)))
 			break;
 		}
 		/* when we leave the loop, nextop is either
@@ -401,12 +401,10 @@ view_end(void) {
 /*
  *	Stubs
  */
-void view_pixel(void) {}
-
-void view_eol(void) {}
-
-void view_setup(void) {}
-void view_cleanup(void) {}
+void view_pixel(struct application *UNUSED(ap)) {}
+void view_eol(struct application *UNUSED(ap)) {}
+void view_setup(struct rt_i *UNUSED(rtip)) {}
+void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 void application_init (void) {}
 
 /*

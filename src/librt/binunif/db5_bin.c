@@ -1,7 +1,7 @@
 /*                       D B 5 _ B I N . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2010 United States Government as represented by
+ * Copyright (c) 2000-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -431,7 +431,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
     /*
      *Find the guy we're told to write
      */
-    if ( (dp = db_lookup( dbip, name, LOOKUP_NOISY)) == DIR_NULL )
+    if ( (dp = db_lookup( dbip, name, LOOKUP_NOISY)) == RT_DIR_NULL )
 	return -1;
 
     RT_INIT_DB_INTERNAL(intern);
@@ -556,9 +556,9 @@ rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 	}
 
     } else {
-	if ( !strcmp( attr, "T" ) ) {
+	if ( BU_STR_EQUAL( attr, "T" ) ) {
 	    bu_vls_printf( logstr, "%d", bip->type );
-	} else if ( !strcmp( attr, "D" ) ) {
+	} else if ( BU_STR_EQUAL( attr, "D" ) ) {
 	    /* export the object to get machine independent form */
 	    if ( rt_binunif_export5( &ext, intern, 1.0, NULL, NULL ) ) {
 		bu_vls_strcpy( logstr, "Failed to export binary object!!\n" );
@@ -591,7 +591,7 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
     RT_CHECK_BINUNIF( bip );
 
     while ( argc >= 2 ) {
-	if ( !strcmp( argv[0], "T" ) ) {
+	if ( BU_STR_EQUAL( argv[0], "T" ) ) {
 	    int new_type=-1;
 	    char *c;
 	    int type_is_digit=1;
@@ -683,7 +683,7 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 		bip->type = new_type;
 		intern->idb_type = new_type;
 	    }
-	} else if ( !strcmp( argv[0], "D" ) ) {
+	} else if ( BU_STR_EQUAL( argv[0], "D" ) ) {
 	    Tcl_Obj *obj, *list, **obj_array;
 	    int list_len;
 	    unsigned char *buf, *d;

@@ -1,7 +1,7 @@
 /*                        M A K E _ N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
 
     switch (argc) {
 	case 2:
-	    if (strcmp(argv[1], "-s") != 0)
+	    if (!BU_STR_EQUAL(argv[1], "-s"))
 		break;
 	    else {
 		i = 0;
@@ -60,7 +60,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
 	{
 	    int	new_i;
 
-	    if ((strcmp(argv[1], "-s") == 0)
+	    if ((BU_STR_EQUAL(argv[1], "-s"))
 		&& (sscanf(argv[2], "%d", &new_i) == 1)) {
 		i = new_i;
 		return GED_OK;
@@ -89,7 +89,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&obj_name, "%d", i++);
 	bu_vls_strcat(&obj_name, tp);
     }
-    while (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != DIR_NULL);
+    while (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != RT_DIR_NULL);
 
     bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&obj_name));
     bu_vls_free(&obj_name);

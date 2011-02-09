@@ -1,7 +1,7 @@
 /*                     B A C K T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -305,12 +305,12 @@ bu_backtrace(FILE *fp)
 	debugger_args[0] = bu_strdup(locate_gdb);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("Found gdb in SYSTEM path: %s\n", locate_gdb);
+	} else {
+	    if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+		bu_log("gdb was NOT found, no backtrace available\n");
+	    }
+	    return 0;
 	}
-    } else {
-	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("gdb was NOT found, no backtrace available\n");
-	}
-	return 0;
     }
     locate_gdb = NULL;
 

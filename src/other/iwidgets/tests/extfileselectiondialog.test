@@ -1,5 +1,5 @@
-# This file is a Tcl script to test out [incr Widgets] Extfileselectiondialog
-# class.  It is organized in the standard fashion for Tcl tests with the
+# This file is a Tcl script to test out [incr Widgets] Extfileselectiondialog 
+# class.  It is organized in the standard fashion for Tcl tests with the 
 # following notation for test case labels:
 #
 #   1.x - Construction/Destruction tests
@@ -62,57 +62,57 @@ incr o
 foreach test {
     {-activebackground #ececec #ececec}
     {-borderwidth 2 2}
-    {-childsitepos n n}
-    {-childsitepos s s}
-    {-childsitepos e e}
-    {-childsitepos w w}
-    {-childsitepos top top}
-    {-childsitepos bottom bottom}
-    {-cursor gumby gumby}
+    {-childsitepos n n} 
+    {-childsitepos s s} 
+    {-childsitepos e e} 
+    {-childsitepos w w} 
+    {-childsitepos top top} 
+    {-childsitepos bottom bottom} 
+    {-cursor gumby gumby} 
     {-sashcursor xterm xterm}
-    {-directory {..} {..}}
-    {-textbackground GhostWhite GhostWhite}
+    {-directory {..} {..}} 
+    {-textbackground GhostWhite GhostWhite} 
     {-foreground Black Black}
-    {-insertbackground Black Black}
-    {-insertborderwidth 1 1}
-    {-insertofftime 200 200}
-    {-insertontime  500 500}
-    {-insertwidth 3 3}
-    {-dirslabel "Dirs Label" "Dirs Label"}
-    {-dirson no no}
-    {-dirson yes yes}
-    {-fileslabel "Files Label" "Files Label"}
-    {-fileson no no}
-    {-directory ../tests ../tests}
-    {-mask *.* *.*}
-    {-nomatchstring {No Files} {No Files}}
-    {-fileson yes yes}
-    {-filetype any any}
-    {-filetype directory directory}
-    {-filetype regular regular}
-    {-filterlabel "Filter Label" "Filter Label"}
-    {-filteron no no}
-    {-filteron yes yes}
-    {-selectbackground #c3c3c3 #c3c3c3}
-    {-selectionlabel "Selection Label" "Selection Label"}
-    {-selectionon no no}
-    {-selectionon yes yes}
-    {-textfont -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*}
-    {-labelfont -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*}
-    {-background #d9d9d9 #d9d9d9}
-    {-buttonboxpos n n}
-    {-buttonboxpos e e}
-    {-buttonboxpos w w}
-    {-buttonboxpos s s}
-    {-cursor gumby gumby}
-    {-modality global global}
-    {-modality application application}
-    {-modality none none}
-    {-padx 15 15}
-    {-pady 15 15}
-    {-separator off off}
-    {-thickness 4 4}
-    {-separator on on}
+    {-insertbackground Black Black} 
+    {-insertborderwidth 1 1} 
+    {-insertofftime 200 200} 
+    {-insertontime  500 500} 
+    {-insertwidth 3 3} 
+    {-dirslabel "Dirs Label" "Dirs Label"} 
+    {-dirson no no} 
+    {-dirson yes yes} 
+    {-fileslabel "Files Label" "Files Label"} 
+    {-fileson no no} 
+    {-directory ../tests ../tests} 
+    {-mask *.* *.*} 
+    {-nomatchstring {No Files} {No Files}} 
+    {-fileson yes yes} 
+    {-filetype any any} 
+    {-filetype directory directory} 
+    {-filetype regular regular} 
+    {-filterlabel "Filter Label" "Filter Label"} 
+    {-filteron no no} 
+    {-filteron yes yes} 
+    {-selectbackground #c3c3c3 #c3c3c3} 
+    {-selectionlabel "Selection Label" "Selection Label"} 
+    {-selectionon no no} 
+    {-selectionon yes yes} 
+    {-textfont -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*} 
+    {-labelfont -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*} 
+    {-background #d9d9d9 #d9d9d9} 
+    {-buttonboxpos n n} 
+    {-buttonboxpos e e} 
+    {-buttonboxpos w w} 
+    {-buttonboxpos s s} 
+    {-cursor gumby gumby} 
+    {-modality global global} 
+    {-modality application application} 
+    {-modality none none} 
+    {-padx 15 15} 
+    {-pady 15 15} 
+    {-separator off off} 
+    {-thickness 4 4} 
+    {-separator on on} 
     {-title Extfileselectiondialog Extfileselectiondialog}} {
 	set option [lindex $test 0]
 	test Extfileselectiondialog-2.$o "configuration options, $option" {

@@ -1,20 +1,20 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Crear Figuras Primitivas with <application>MGED</application></title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Crear Figuras Primitivas with <application>MGED</application></title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Aprobado para su publicación. La distribución es ilimitada.</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="creating_primitive_shapes_overviewlist">
+    <para xml:id="creating_primitive_shapes_overviewlist">
       Este tutorial le ayudará a:
       
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Arrancar con el programa <application>MGED</application></para>.
 	</listitem>
@@ -72,17 +72,17 @@
 	</listitem>
       </itemizedlist>  
     </para>
-    <sect1 id="launching_mged">
-      <title>Utilizar el programa <application>MGED</application></title> 
+    <section xml:id="launching_mged"><info><title>Utilizar el programa <application>MGED</application></title></info>
+       
 
       <para>
 	Para abrir el programa <application>MGED</application>, tipee "mged" en una 		terminal (tty) y luego presione [ENTER]. Esto trae dos ventanas principales: la 	ventana de comandos de <application>MGED</application> y la ventana gráfica de 		<application>MGED</application>. Ambas ventanas estarán inicialmente en blanco, 	esperando a que ingrese algo. Para abandonar el programa en cualquier momento, 		en la línea de comandos tipee la letra "q" o la palabra "quit" y presione luego 	[ENTER].
       </para>
 
 
-    </sect1>
-    <sect1 id="entering_commands">
-      <title>Ingresar comandos en una ventana de comandos.</title> 
+    </section>
+    <section xml:id="entering_commands"><info><title>Ingresar comandos en una ventana de comandos.</title></info>
+       
       
       <para>
 	Puede tipear cualquier comando en la terminal de <prompt>mged</prompt>. Muchos 		usuarios experimentados de UNIX prefieren este método porque les permite crear 		rápidamente un modelo (a lo que preferimos llamar diseño) sin tener que buscar y 		cliquear sobre un montón de opciones. La lista completa de comandos de edición y 		lo que éstos hacen, se encuentran en al Apéndice A.
@@ -98,10 +98,10 @@
 	</para>
       </caution>
       
-    </sect1>
+    </section>
     
-    <sect1 id="using_gui">
-      <title>Usar el entorno gráfico.</title>
+    <section xml:id="using_gui"><info><title>Usar el entorno gráfico.</title></info>
+      
       
       <para>
 	Los usuarios más acostumbrados a Microsoft Windows tal vez prefieran usar el
@@ -114,10 +114,10 @@
 	Antes de crear un modelo, necesita abrir una base de datos, así sea por
 	comandos o iniciando el entorno gráfico de <application>MGED</application>, luego 		de iniciar el <application>MGED</application>.
       </para>
-    </sect1>
+    </section>
    
-    <sect1 id="open_new_database">
-      <title>Abrir o crear una nueva base de datos con <application>MGED</application></title>
+    <section xml:id="open_new_database"><info><title>Abrir o crear una nueva base de datos con <application>MGED</application></title></info>
+      
     
       <para>
 	Usted puede abrir una base de datos o crear una nueva al mismo tiempo que abre
@@ -131,7 +131,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged01_terminal.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged01_terminal.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -147,10 +147,10 @@
 	nueva base de datos. En el caso de que sphere.g existiera, se abrirá
 	la existente.
       </para>
-    </sect1> 
+    </section> 
 
-    <sect1 id="create_new_database">
-      <title>Usar el entorno gráfico para crear una nueva base de datos</title>
+    <section xml:id="create_new_database"><info><title>Usar el entorno gráfico para crear una nueva base de datos</title></info>
+      
   
       <para>
 	Al iniciar <application>MGED</application> usted puede crear o abrir una
@@ -164,7 +164,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged01_commandwindow.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged01_commandwindow.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -177,7 +177,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged01_graphicswindow.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged01_graphicswindow.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -189,10 +189,10 @@
 	Una de las ventajas de usar el entorno gráfico, sobre todo si usted no está 		familiarizado con el administrador de archivos de UNIX, es que le mostrará 
 	su nombre de ruta de acceso actual, indicándole exactamente dónde va a ser 		localizada su base de datos. Será especialmente útil si tiene muchos directorios y 		archivos para manejar.
       </para>  
-    </sect1>
+    </section>
 
-    <sect1 id="assign_title">
-      <title>Asignarle un título a una base de datos</title>
+    <section xml:id="assign_title"><info><title>Asignarle un título a una base de datos</title></info>
+      
 
       <para>
 	
@@ -202,14 +202,14 @@
 	Cuando haya terminado, pulse la tecla [ENTER].
 	Por ejemplo:
 
-	<command><prompt>mged></prompt> title MySphere [ENTER]</command>.
+	<command><prompt>mged&gt;</prompt> title MySphere [ENTER]</command>.
 	
 	Note que en las versiones de <application>BRL-CAD</application> anteriores a la 	6.0, el título está limitado a 72 caracteres.
       </para>  
-    </sect1>
+    </section>
     
-    <sect1 id="set_units">
-      <title>Seleccionar una unidad de medida</title>
+    <section xml:id="set_units"><info><title>Seleccionar una unidad de medida</title></info>
+      
       
       <para>
 	<application>MGED</application> utiliza milímetros para todo proceso matemático 	interno. A pesar de eso, usted puede crear un diseño usando cualquier otra unidad, 		como por ejemplo, pies. Para el siguiente ejemplo usaremos pulgadas.
@@ -217,12 +217,12 @@
 	Si prefiere la línea de comandos, tipee en una la palabra "units" y luego presione 		 [ENTER].
 	En la terminal de <application>MGED</application> aparecerá una línea que dirá:
 	
-	<command><prompt>mged></prompt> units in [ENTER]</command>.
+	<command><prompt>mged&gt;</prompt> units in [ENTER]</command>.
       </para>  
-    </sect1>
+    </section>
 
-    <sect1 id="select_primitive">
-      <title>Seleccionar figuras primitivas</title>
+    <section xml:id="select_primitive"><info><title>Seleccionar figuras primitivas</title></info>
+      
       
       <para>
 	<application>MGED</application> provee de una variedad de figuras primitivas que 		puede usar para construir modelos. Cada tipo de figura tiene parámetros que 		definen su posición, orientación y tamaño. La lista de las figuras y los 		parámetros están disponibles en el Apéndice C.
@@ -237,10 +237,10 @@
 	  "figura primitiva".
 	</para>
       </note>  
-    </sect1>
+    </section>
 
-    <sect1 id="create_sphere_cmd_line">
-      <title>Crear una esfera desde la línea de comandos</title>
+    <section xml:id="create_sphere_cmd_line"><info><title>Crear una esfera desde la línea de comandos</title></info>
+      
 
       <para>
 	Para este ejemplo, crearemos una esfera simple. Hay dos maneras de crear una 	  	  figura primitiva: por comando o por entorno gráfico.
@@ -257,7 +257,7 @@
 	Este comando le dice al programa <application>MGED</application>:
 	
 	<informaltable frame="all">
-	  <tgroup cols='3'>
+	  <tgroup cols="3">
 	    <tbody>
 	      <row><entry>make</entry><entry>sph1.s</entry><entry>sph</entry></row>
 	      <row><entry>Hace la figura primitiva</entry><entry>y la llama sph1.s</entry>
@@ -277,10 +277,10 @@
       <para>
 	Este comando creará la figura primitiva en la ventana gráfica.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="clear_window">
-      <title>Limpiar la ventana gráfica</title>
+    <section xml:id="clear_window"><info><title>Limpiar la ventana gráfica</title></info>
+      
       
       <para>
 	Para construir otro objeto o trabajo sobre otra figura primitiva, puede fácilmente 		limpiar la ventana gráfica desde la línea de comandos tipeando la letra Z (de zap) 		en mayúsculas y luego presionando la tecla [ENTER].
@@ -291,10 +291,10 @@
 	  Antes de usar la opción zap, asegúrese de haber hecho foco en la ventana de 		  comandos, o sea, de estar sobre la ventana de comandos. Si tipea la Z y aún esta 		  en la ventana gráfica, iniciará la rotación de su diseño. Para detener la 		  rotación, tipee cero (0).
 	</para>
       </note>
-    </sect1> 
+    </section> 
     
-    <sect1 id="draw_object">
-      <title>Dibujar un objeto prediseñado</title>
+    <section xml:id="draw_object"><info><title>Dibujar un objeto prediseñado</title></info>
+      
       
       <para>
 	Para dibujar una esfera ya guardada, tipee en la linea de comandos lo siguiente:
@@ -304,7 +304,7 @@
 	Este comando le dice al programa <application>MGED</application> que:
 	
 	<informaltable frame="all">
-	  <tgroup cols='2'>
+	  <tgroup cols="2">
 	    <tbody>
 	      <row><entry>draw</entry><entry>sph1.s</entry></row>
 	      <row><entry>Dibuje el objeto prediseñado</entry>
@@ -314,20 +314,20 @@
 	  </tgroup>
 	</informaltable>
       </para>
-    </sect1> 
+    </section> 
     
-    <sect1 id="erase_from_window">
-      <title>Borrar un objeto de la ventana gráfica</title>
+    <section xml:id="erase_from_window"><info><title>Borrar un objeto de la ventana gráfica</title></info>
+      
       
       <para>
 	Cuando desee borrar un objeto concreto de la pantalla de la ventana gráfica, usted 	   puede utilizar el comando "erase" para eliminar el objeto de la ventana, pero no 		de la base de datos. Para eliminar el objeto sph1.s de la pantalla, en la línea de 		comandos tipee:
 	
 	<command>erase sph1.s [ENTER].</command>
       </para>
-    </sect1>     
+    </section>     
 
-    <sect1 id="create_sphere_gui">
-      <title>Crear una esfera usando el entorno gráfico</title>
+    <section xml:id="create_sphere_gui"><info><title>Crear una esfera usando el entorno gráfico</title></info>
+      
       
       <para>
 	Otra forma de crear una esfera es utilizar el sistema de menú gráfico que se 		encuentra duplicado en la parte superior de la ventana de comandos. 
@@ -337,10 +337,10 @@
 	Una nueva esfera será creada y dibujada en la ventana de gráficos. 
 	Cuando se crea una forma a través de la interfaz gráfica de usuario, la forma 		aparecerá automáticamente en modo de edición para que usted pueda cambiar los 		parámetros según sea necesario, definiendo su posición, orientación y tamaño a la 		vista.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="view_params">
-      <title>Ver los parámetros de la figura</title>
+    <section xml:id="view_params"><info><title>Ver los parámetros de la figura</title></info>
+      
 
       <para>
 	A veces, cuando usted está creando un diseño, desea ver sus parámetros (tales como 		altura, radio, ancho) en la linea de comandos.
@@ -360,8 +360,8 @@
       
       <para>
 	Un ejemplo de diálogo que podría darse en la ventana de comandos para mostrar los 		parámetros o atributos de la primera esfera que ha creado es el siguiente:	
-	<literallayout>
-<prompt>mged></prompt> <command>l sph1.s</command>
+	<literallayout class="normal">
+<prompt>mged&gt;</prompt> <command>l sph1.s</command>
 <computeroutput>
 sph1.s: ellipsoid (ELL)
 
@@ -399,20 +399,20 @@ sph1.s: ellipsoid (ELL)
 	Use el comando l para listar sph1.s y sph2.s antes de continuar los ejemplos
       </para>
       
-    </sect1>
+    </section>
 
-    <sect1 id="list_db_contents">
-      <title>Listar los contenidos de una base de datos</title>
+    <section xml:id="list_db_contents"><info><title>Listar los contenidos de una base de datos</title></info>
+      
 
       <para>
 	Además de ver los parámetros de una figura, también puede ser que desee ver la 		lista de los contenidos de la base de datos para ver qué artículos han sido 		creados. Para esto, escriba en la ventana de línea de comandos:
 	
 	<command>ls [ENTER].</command>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="kill_object">
-      <title>Eliminar un objeto de la base de datos</title>
+    <section xml:id="kill_object"><info><title>Eliminar un objeto de la base de datos</title></info>
+      
       
       <para>
 	A veces, cuando crea un modelo, puede que tenga que eliminar una forma o un
@@ -438,10 +438,10 @@ sph1.s: ellipsoid (ELL)
 	no existen los modos guardar o guardar como. Del mismo modo, no existe actualmente 		una forma de deshacer la supresión. Por lo tanto, asegúrese de que está seguro que 		quiere eliminar permanentemente los datos antes de utilizar el comando kill.
 	</para>
       </note>
-    </sect1>
+    </section>
 
-    <sect1 id="editing_commands">
-      <title>Editar comandos en la ventana de comandos</title>
+    <section xml:id="editing_commands"><info><title>Editar comandos en la ventana de comandos</title></info>
+      
       
       <para>
 	Ocasionalmente, cuando usted ingresa comandos, puede equivocarse al tipear.
@@ -455,23 +455,23 @@ sph1.s: ellipsoid (ELL)
       <para>
 	<application>MGED</application> guarda un historial de los comandos que se han 		ingresado. Con las flechas arriba y abajo puede seleccionar los comandos 		previamente usados dando la posibilidad de reutilizarlos tal cual fueron 		ejecutados antes, o modificándolos, por ejemplo, en el nombre de la figura.
       </para>  
-    </sect1>
+    </section>
     
-    <sect1 id="quitting">
-      <title>Salir de <application>MGED</application></title>
+    <section xml:id="quitting"><info><title>Salir de <application>MGED</application></title></info>
+      
       
       <para>
 	Recuerde que para salir del programa en cualquier momento, debe tipear en la línea 		de comandos la letra q o el comando quit y luego presionar la tecla [ENTER]. 		También puede ir al menú gráfico File (Archivo) y seleccionar la opción Exit 		(Salir).
       </para>  
-    </sect1>
+    </section>
     
-    <sect1 id="creating_primitive_shapes_review">
-      <title>Repasemos</title>
+    <section xml:id="creating_primitive_shapes_review"><info><title>Repasemos</title></info>
+      
       
       <para>
 	En este tutorial usted:
 	
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Inició el programa <application>MGED</application>.</para>
 	  </listitem>
@@ -529,5 +529,5 @@ sph1.s: ellipsoid (ELL)
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
   </article>

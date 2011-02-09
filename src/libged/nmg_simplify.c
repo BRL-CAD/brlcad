@@ -1,7 +1,7 @@
 /*                         N M G _ S I M P L I F Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -96,12 +96,12 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	nmg_name = (char *)argv[2];
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s already exists\n", new_name);
 	return GED_ERROR;
     }
 
-    if ((dp=db_lookup(gedp->ged_wdbp->dbip, nmg_name, LOOKUP_QUIET)) == DIR_NULL) {
+    if ((dp=db_lookup(gedp->ged_wdbp->dbip, nmg_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s does not exist\n", nmg_name);
 	return GED_ERROR;
     }
@@ -256,8 +256,8 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 
 	rt_db_free_internal(&nmg_intern);
 
-	dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type);
-	if (dp == DIR_NULL) {
+	dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+	if (dp == RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
 	    return GED_ERROR;
 	}

@@ -1,7 +1,7 @@
 /*                           A D C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -104,7 +104,7 @@ ged_adc(struct ged	*gedp,
 
     command = (char *)argv[0];
 
-    if (strcmp(argv[1], "-i") == 0) {
+    if (BU_STR_EQUAL(argv[1], "-i")) {
 	if (argc < 5) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: -i option specified without an op-val pair", command);
 	    return GED_ERROR;
@@ -127,7 +127,7 @@ ged_adc(struct ged	*gedp,
 	    return GED_ERROR;
 	}
 
-    if (strcmp(parameter, "draw") == 0) {
+    if (BU_STR_EQUAL(parameter, "draw")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_draw);
 	    return GED_OK;
@@ -146,7 +146,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "a1") == 0) {
+    if (BU_STR_EQUAL(parameter, "a1")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%g", gedp->ged_gvp->gv_adc.gas_a1);
 	    return GED_OK;
@@ -167,7 +167,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "a2") == 0) {
+    if (BU_STR_EQUAL(parameter, "a2")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%g", gedp->ged_gvp->gv_adc.gas_a2);
 	    return GED_OK;
@@ -188,7 +188,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "dst") == 0) {
+    if (BU_STR_EQUAL(parameter, "dst")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%g", gedp->ged_gvp->gv_adc.gas_dst * gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
 	    return GED_OK;
@@ -209,7 +209,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "odst") == 0) {
+    if (BU_STR_EQUAL(parameter, "odst")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_dv_dist);
 	    return GED_OK;
@@ -230,7 +230,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "dh") == 0) {
+    if (BU_STR_EQUAL(parameter, "dh")) {
 	if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_adc.gas_anchor_pos) {
 		gedp->ged_gvp->gv_adc.gas_pos_grid[X] += user_pt[0] / (gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
@@ -245,7 +245,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "dv") == 0) {
+    if (BU_STR_EQUAL(parameter, "dv")) {
 	if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_adc.gas_anchor_pos) {
 		gedp->ged_gvp->gv_adc.gas_pos_grid[Y] += user_pt[0] / (gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
@@ -260,7 +260,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "hv") == 0) {
+    if (BU_STR_EQUAL(parameter, "hv")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%g %g",
 			  gedp->ged_gvp->gv_adc.gas_pos_grid[X] * gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local,
@@ -288,7 +288,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "dx") == 0) {
+    if (BU_STR_EQUAL(parameter, "dx")) {
 	if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_adc.gas_anchor_pos) {
 		gedp->ged_gvp->gv_adc.gas_pos_model[X] += user_pt[0] * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -303,7 +303,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "dy") == 0) {
+    if (BU_STR_EQUAL(parameter, "dy")) {
 	if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_adc.gas_anchor_pos) {
 		gedp->ged_gvp->gv_adc.gas_pos_model[Y] += user_pt[0] * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -318,7 +318,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "dz") == 0) {
+    if (BU_STR_EQUAL(parameter, "dz")) {
 	if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_adc.gas_anchor_pos) {
 		gedp->ged_gvp->gv_adc.gas_pos_model[Z] += user_pt[0] * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -333,7 +333,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "xyz") == 0) {
+    if (BU_STR_EQUAL(parameter, "xyz")) {
 	if (argc == 0) {
 	    VSCALE(scaled_pos, gedp->ged_gvp->gv_adc.gas_pos_model, gedp->ged_wdbp->dbip->dbi_base2local);
 	    bu_vls_printf(&gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
@@ -357,7 +357,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "x") == 0) {
+    if (BU_STR_EQUAL(parameter, "x")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_dv_x);
 	    return GED_OK;
@@ -382,7 +382,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "y") == 0) {
+    if (BU_STR_EQUAL(parameter, "y")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_dv_y);
 	    return GED_OK;
@@ -407,7 +407,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "anchor_pos") == 0) {
+    if (BU_STR_EQUAL(parameter, "anchor_pos")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_anchor_pos);
 	    return GED_OK;
@@ -429,7 +429,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "anchor_a1") == 0) {
+    if (BU_STR_EQUAL(parameter, "anchor_a1")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_anchor_a1);
 	    return GED_OK;
@@ -450,7 +450,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "anchorpoint_a1") == 0) {
+    if (BU_STR_EQUAL(parameter, "anchorpoint_a1")) {
 	if (argc == 0) {
 	    VSCALE(scaled_pos, gedp->ged_gvp->gv_adc.gas_anchor_pt_a1, gedp->ged_wdbp->dbip->dbi_base2local);
 	    bu_vls_printf(&gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
@@ -474,7 +474,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "anchor_a2") == 0) {
+    if (BU_STR_EQUAL(parameter, "anchor_a2")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_anchor_a2);
 
@@ -496,7 +496,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "anchorpoint_a2") == 0) {
+    if (BU_STR_EQUAL(parameter, "anchorpoint_a2")) {
 	if (argc == 0) {
 	    VSCALE(scaled_pos, gedp->ged_gvp->gv_adc.gas_anchor_pt_a2, gedp->ged_wdbp->dbip->dbi_base2local);
 
@@ -521,7 +521,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "anchor_dst") == 0) {
+    if (BU_STR_EQUAL(parameter, "anchor_dst")) {
 	if (argc == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_anchor_dst);
 
@@ -543,7 +543,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "anchorpoint_dst") == 0) {
+    if (BU_STR_EQUAL(parameter, "anchorpoint_dst")) {
 	if (argc == 0) {
 	    VSCALE(scaled_pos, gedp->ged_gvp->gv_adc.gas_anchor_pt_dst, gedp->ged_wdbp->dbip->dbi_base2local);
 	    bu_vls_printf(&gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
@@ -567,7 +567,7 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "reset") == 0) {
+    if (BU_STR_EQUAL(parameter, "reset")) {
 	if (argc == 0) {
 	    ged_adc_reset(gedp->ged_gvp);
 
@@ -578,12 +578,12 @@ ged_adc(struct ged	*gedp,
 	return GED_ERROR;
     }
 
-    if (strcmp(parameter, "vars") == 0) {
+    if (BU_STR_EQUAL(parameter, "vars")) {
 	ged_adc_vls_print(gedp->ged_gvp, gedp->ged_wdbp->dbip->dbi_base2local, &gedp->ged_result_str);
 	return GED_OK;
     }
 
-    if (strcmp(parameter, "help") == 0) {
+    if (BU_STR_EQUAL(parameter, "help")) {
 	adc_usage(&gedp->ged_result_str, command);
 	return GED_HELP;
     }

@@ -1,7 +1,7 @@
 #                       G 2 A S C . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -61,11 +61,7 @@ to put the acsii converted database."}} OK Cancel]
 		}
 	    }
 
-	    if {$tcl_platform(platform) == "windows"} {
-		set g2asc [bu_brlcad_root "bin/g2asc.exe"]
-	    } else {
-		set g2asc [bu_brlcad_root "bin/g2asc"]
-	    }
+	    set g2asc [file join [bu_brlcad_root "bin"] g2asc]
 	    catch {exec $g2asc $db_name $ascii_filename} msg
 	}
     } else {

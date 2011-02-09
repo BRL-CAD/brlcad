@@ -1,7 +1,7 @@
 /*                         V D E C K . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -61,9 +61,6 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
 #include "bio.h"
 
 #include "vmath.h"
@@ -88,7 +85,6 @@ char	*cmd[] = {
     "remove [object[s]]             Remove an object from current list.",
     "sort                           Sort table of contents alphabetically.",
     "toc [object[s]]                Table of contents of solids database.",
-    "! [shell command]              Execute a UNIX shell command.",
     "",
     "NOTE:",
     "First letter of command is sufficient, and all arguments are optional.",
@@ -177,7 +173,6 @@ extern int		insert();
 extern int		col_prt();
 extern int		match();
 extern int		delete();
-extern int		shell();
 extern int		cgarbs();
 extern int		redoarb();
 
@@ -216,7 +211,7 @@ sortFunc(const void *a, const void *b)
     const char **lhs = (const char **)a;
     const char **rhs = (const char **)b;
 
-    return strcmp( *lhs, *rhs );
+    return bu_strcmp( *lhs, *rhs );
 }
 
 
@@ -323,14 +318,6 @@ main( int argc, char *argv[] )
 	    case RETURN :
 		prompt( PROMPT );
 		continue;
-	    case SHELL :
-		if ( arg_list[1] == 0 )
-		{
-		    prompt( "enter shell command: " );
-		    (void) getcmd( arg_list, arg_ct );
-		}
-		(void) shell( arg_list );
-		break;
 	    case SORT_TOC :
 		qsort( (genptr_t)toc_list, (unsigned)ndir,
 		       sizeof(char *), sortFunc );
@@ -427,7 +414,7 @@ flatten_tree( struct bu_vls *vls, union tree *tp, char *op, int neg )
  * in this region have been visited.
  */
 union tree *
-region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data )
+region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data) )
 {
     struct directory	*dp;
     char			*fullname;
@@ -438,9 +425,9 @@ region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union t
     char			*cp;
     int			left;
     int			length;
-    struct directory	*regdp = DIR_NULL;
-    int			i;
-    int			first;
+    struct directory	*regdp = RT_DIR_NULL;
+    size_t i;
+    int first;
 
     bu_vls_init( &ident );
     bu_vls_init( &reg );
@@ -453,7 +440,7 @@ region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union t
     /* For name, find pointer to region combination */
     for ( i=0; i < pathp->fp_len; i++ )  {
 	regdp = pathp->fp_names[i];
-	if ( regdp->d_flags & DIR_REGION )  break;
+	if ( regdp->d_flags & RT_DIR_REGION )  break;
     }
 
     nnr++;			/* Start new region */
@@ -559,7 +546,7 @@ region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union t
  * Re-use the librt "soltab" structures here, for our own purposes.
  */
 union tree *
-gettree_leaf( struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data )
+gettree_leaf( struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data) )
 {
     fastf_t	f;
     struct soltab	*stp;
@@ -796,7 +783,7 @@ addhalf(struct bu_vls *v, struct rt_half_internal *gp, char *name, int num )
 void
 addarbn(struct bu_vls *v, struct rt_arbn_internal *gp, char *name, int num )
 {
-    int	i;
+    size_t i;
 
     BU_CK_VLS(v);
     RT_ARBN_CK_MAGIC(gp);
@@ -1031,7 +1018,7 @@ addtgc(struct bu_vls *v, struct rt_tgc_internal *gp, char *name, int num )
 
     /* TEC if ratio top and bot vectors equal and base parallel to top.
      */
-    if ( mc != 0.0 && md != 0.0 &&
+    if ( !NEAR_ZERO(mc, SMALL_FASTF) && !NEAR_ZERO(md, SMALL_FASTF) &&
 	 fabs( (mb/md)-(ma/mc) ) < CONV_EPSILON &&
 	 fabs( fabs(VDOT(axb, cxd)) - (maxb*mcxd) ) < CONV_EPSILON )  {
 	cgtype = TEC;
@@ -1200,7 +1187,7 @@ ars_curve_out(struct bu_vls *v, fastf_t *fp, int todo, int curveno, int num )
 void
 addars(struct bu_vls *v, struct rt_ars_internal *gp, char *name, int num )
 {
-    int	i;
+    size_t i;
 
     RT_ARS_CK_MAGIC(gp);
 
@@ -1348,65 +1335,6 @@ deck( char *prefix )
     delsol = delreg = 0;
     /* XXX should free soltab list */
 }
-
-
-/**
- * s h e l l
- *
- * Execute shell command.
- */
-int
-shell(char *args[])
-{
-    char	*from, *to;
-    char		*argv[4], cmdbuf[MAXLN];
-    int		pid, ret, status;
-    int	i;
-
-    (void) signal( SIGINT, SIG_IGN );
-
-    /* Build arg vector.						*/
-    argv[0] = "Shell( deck )";
-    argv[1] = "-c";
-    to = argv[2] = cmdbuf;
-    for ( i = 1; i < arg_ct; i++ ) {
-	from = args[i];
-	if ( (to + strlen( args[i] )) - argv[2] > MAXLN - 1 ) {
-	    (void) fprintf( stderr, "\ncommand line too long\n" );
-	    bu_exit( 10, NULL );
-	}
-	(void) printf( "%s ", args[i] );
-	while ( *from )
-	    *to++ = *from++;
-	*to++ = ' ';
-    }
-    to[-1] = '\0';
-    (void) printf( "\n" );
-    argv[3] = 0;
-    if ( (pid = fork()) == -1 ) {
-	perror( "shell()" );
-	return -1;
-    } else	if ( pid == 0 ) {
-	/*
-	 * CHILD process - execs a shell command
-	 */
-	(void) signal( SIGINT, SIG_DFL );
-	(void) execv( "/bin/sh", argv );
-	perror( "/bin/sh -c" );
-	bu_exit( 99, NULL );
-    } else	/*
-		 * PARENT process - waits for shell command
-		 * to finish.
-		 */
-	do {
-	    if ( (ret = wait( &status )) == -1 ) {
-		perror( "wait( /bin/sh -c )" );
-		break;
-	    }
-	} while ( ret != pid );
-    return 0;
-}
-
 
 /**
  * t o c
@@ -1870,7 +1798,7 @@ abort_sig( int sig )
  * Terminate run.
  */
 void
-quit( int sig )
+quit( int UNUSED(sig) )
 {
     (void) fprintf( stdout, "quitting...\n" );
     bu_exit( 0, NULL );

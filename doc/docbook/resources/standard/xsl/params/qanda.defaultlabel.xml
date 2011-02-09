@@ -25,20 +25,62 @@
 <refsection><info><title>Description</title></info>
 
 <para>If no <literal>defaultlabel</literal> attribute is specified on
-a <tag>qandaset</tag>, this value is used. It must be one of the legal
-values for the defaultlabel attribute, one from none, number or
-qanda. The default value is 'number'.
+a <tag>qandaset</tag>, this value is used. It is generally one of the legal
+values for the defaultlabel attribute (<literal>none</literal>, 
+<literal>number</literal> or
+<literal>qanda</literal>), or one of the additional stylesheet-specific values
+(<literal>qnumber</literal> or <literal>qnumberanda</literal>).
+The default value is 'number'.
 </para>
-<para>Meaning</para>
-<para>qanda -   <tag>question</tag>s are labeled “Q:” and <tag>answer</tag>s are labeled “A:”. </para>
-<para>number -    The entries are enumerated. </para>
-<para>none -    No distinguishing label precedes Questions or Answers. 
+<para>The values are rendered as follows:</para>
+<variablelist>
+<varlistentry><term><literal>qanda</literal></term>
+<listitem>
+<para><tag>question</tag>s are labeled "Q:" and
+<tag>answer</tag>s are labeled "A:". </para>
+</listitem>
+</varlistentry>
 
+<varlistentry><term><literal>number</literal></term>
+<listitem>
+<para>The questions are enumerated and the answers
+are not labeled. </para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>qnumber</literal></term>
+<listitem>
+<para>The questions are labeled "Q:" followed by a number, and answers are not 
+labeled. 
+When sections are numbered, adding a label
+to the number distinguishes the question numbers
+from the section numbers.
+This value is not allowed in the
+<tag class="attribute">defaultlabel</tag> attribute
+of a <tag>qandaset</tag> element.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>qnumberanda</literal></term>
+<listitem>
+<para>The questions are labeled "Q:" followed by a number, and
+the answers are labeled "A:". 
+When sections are numbered, adding a label
+to the number distinguishes the question numbers
+from the section numbers.
+This value is not allowed in the
+<tag class="attribute">defaultlabel</tag> attribute
+of a <tag>qandaset</tag> element.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>none</literal></term>
+<listitem>
+<para>No distinguishing label precedes Questions or Answers. 
 </para>
-
-
-
-
+</listitem>
+</varlistentry>
+</variablelist>
 
 </refsection>
 </refentry>

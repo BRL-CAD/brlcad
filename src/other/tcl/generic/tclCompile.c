@@ -1003,6 +1003,8 @@ TclInitCompileEnv(
 	TclStackFree(interp, ctxPtr);
     }
 
+    envPtr->extCmdMapPtr->start = envPtr->line;
+
     /*
      * Initialize the data about invisible continuation lines as empty,
      * i.e. not used. The caller (TclSetByteCodeFromAny) will set this up, if

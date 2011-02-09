@@ -1,7 +1,7 @@
 /*                     D B _ L O O K U P . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,29 +52,24 @@ db_is_directory_non_empty(const struct db_i *dbip)
     RT_CK_DBI(dbip);
 
     for (i = 0; i < RT_DBNHASH; i++) {
-	if (dbip->dbi_Head[i] != DIR_NULL)
+	if (dbip->dbi_Head[i] != RT_DIR_NULL)
 	    return 1;
     }
     return 0;
 }
 
 
-/**
- * D B _ G E T _ D I R E C T O R Y _ S I Z E
- *
- * Return the number of "struct directory" nodes in the given database.
- */
-int
-db_get_directory_size(const struct db_i *dbip)
+size_t
+db_directory_size(const struct db_i *dbip)
 {
     struct directory *dp;
-    int count = 0;
-    int i;
+    size_t count = 0;
+    size_t i;
 
     RT_CK_DBI(dbip);
 
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    count++;
     }
     return count;
@@ -96,7 +91,7 @@ db_ck_directory(const struct db_i *dbip)
     RT_CK_DBI(dbip);
 
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    RT_CK_DIR(dp);
     }
 }
@@ -166,11 +161,11 @@ db_dircheck(struct db_i *dbip,
     /* Compute hash only once (almost always the case) */
     *headp = &(dbip->dbi_Head[db_dirhash(cp)]);
 
-    for (dp = **headp; dp != DIR_NULL; dp=dp->d_forw) {
+    for (dp = **headp; dp != RT_DIR_NULL; dp=dp->d_forw) {
 	char *this;
 	if (n0 == *(this=dp->d_namep)  &&	/* speed */
 	    n1 == this[1]  &&			/* speed */
-	    strcmp(cp, this) == 0) {
+	    BU_STR_EQUAL(cp, this)) {
 	    /* Name exists in directory already */
 	    int c;
 
@@ -179,7 +174,7 @@ db_dircheck(struct db_i *dbip,
 
 	    for (c = 'A'; c <= 'Z'; c++) {
 		*cp = c;
-		if (db_lookup(dbip, cp, noisy) == DIR_NULL)
+		if (db_lookup(dbip, cp, noisy) == RT_DIR_NULL)
 		    break;
 	    }
 	    if (c > 'Z') {
@@ -212,7 +207,7 @@ db_dircheck(struct db_i *dbip,
  *
  * Returns -
  * struct directory if name is found
- * DIR_NULL on failure
+ * RT_DIR_NULL on failure
  */
 struct directory *
 db_lookup(const struct db_i *dbip, const char *name, int noisy)
@@ -224,7 +219,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
     if (!name || name[0] == '\0') {
 	if (noisy || RT_G_DEBUG&DEBUG_DB)
 	    bu_log("db_lookup received NULL or empty name\n");
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     n0 = name[0];
@@ -233,11 +228,11 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
     RT_CK_DBI(dbip);
 
     dp = dbip->dbi_Head[db_dirhash(name)];
-    for (; dp != DIR_NULL; dp=dp->d_forw) {
+    for (; dp != RT_DIR_NULL; dp=dp->d_forw) {
 	char *this;
 
 	/* first two checks are for speed */
-	if ((n0 == *(this=dp->d_namep)) && (n1 == this[1]) && (strcmp(name, this) == 0)) {
+	if ((n0 == *(this=dp->d_namep)) && (n1 == this[1]) && (BU_STR_EQUAL(name, this))) {
 	    if (RT_G_DEBUG&DEBUG_DB)
 		bu_log("db_lookup(%s) x%x\n", name, dp);
 	    return dp;
@@ -247,7 +242,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
     if (noisy || RT_G_DEBUG&DEBUG_DB)
 	bu_log("db_lookup(%s) failed: %s does not exist\n", name, name);
 
-    return DIR_NULL;
+    return RT_DIR_NULL;
 }
 
 
@@ -266,7 +261,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
  *
  * len is the length of the object, number of db granules used
  *
- * flags are defined in raytrace.h (DIR_SOLID, DIR_COMB, DIR_REGION,
+ * flags are defined in raytrace.h (RT_DIR_SOLID, RT_DIR_COMB, RT_DIR_REGION,
  * RT_DIR_INMEM, etc) for db version 5, ptr is the minor_type
  * (non-null pointer to valid unsigned char code)
  *
@@ -292,27 +287,27 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
 	/* if this is a version 4 database and the offending char is beyond NAMESIZE
 	 * then it is not really a problem
 	 */
-	if (dbip->dbi_version < 5 && (tmp_ptr - name) < NAMESIZE) {
+	if (db_version(dbip) < 5 && (tmp_ptr - name) < NAMESIZE) {
 	    bu_log("db_diradd() object named '%s' is illegal, ignored\n", name);
-	    return DIR_NULL;
+	    return RT_DIR_NULL;
 	}
     }
 
     bu_vls_init(&local);
-    if (dbip->dbi_version < 5) {
+    if (db_version(dbip) < 5) {
 	bu_vls_strncpy(&local, name, NAMESIZE);
     } else {
 	/* must provide a valid minor type */
 	if (!ptr) {
 	    bu_log("WARNING: db_diradd() called with a null minor type pointer for object %s\nIgnoring %s\n", name, name);
 	    bu_vls_free(&local);
-	    return DIR_NULL;
+	    return RT_DIR_NULL;
 	}
 	bu_vls_strcpy(&local, name);
     }
     if (db_dircheck(dbip, &local, 0, &headp) < 0) {
 	bu_vls_free(&local);
-	return DIR_NULL;
+	return RT_DIR_NULL;
     }
 
     /* 'name' not found in directory, add it */
@@ -328,10 +323,19 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
     dp->d_animate = NULL;
     dp->d_nref = 0;
     dp->d_uses = 0;
-    if (dbip->dbi_version > 4) {
+
+    /* v4 geometry databases do not use d_major/minor_type */
+    if (db_version(dbip) > 4) {
 	dp->d_major_type = DB5_MAJORTYPE_BRLCAD;
-	dp->d_minor_type = *(unsigned char *)ptr;
+	if (ptr)
+	    dp->d_minor_type = *(unsigned char *)ptr;
+	else
+	    dp->d_minor_type = 0;
+    } else {
+	dp->d_major_type = 0;
+	dp->d_minor_type = 0;
     }
+
     bu_vls_free(&local);
     return dp;
 }
@@ -375,7 +379,7 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
 	rt_uniresource.re_directory_hd = dp;
 	return 0;
     }
-    for (findp = *headp; findp != DIR_NULL; findp = findp->d_forw) {
+    for (findp = *headp; findp != RT_DIR_NULL; findp = findp->d_forw) {
 	if (findp->d_forw != dp)
 	    continue;
 	RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
@@ -415,7 +419,7 @@ db_rename(struct db_i *dbip, struct directory *dp, const char *newname)
 	/* Was first on list, dequeue */
 	*headp = dp->d_forw;
     } else {
-	for (findp = *headp; findp != DIR_NULL; findp = findp->d_forw) {
+	for (findp = *headp; findp != RT_DIR_NULL; findp = findp->d_forw) {
 	    if (findp->d_forw != dp)
 		continue;
 	    /* Dequeue */
@@ -460,14 +464,14 @@ db_pr_dir(const struct db_i *dbip)
     /* units ? */
 
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp=dp->d_forw) {
-	    if (dp->d_flags & DIR_SOLID)
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp=dp->d_forw) {
+	    if (dp->d_flags & RT_DIR_SOLID)
 		flags = "SOL";
-	    else if ((dp->d_flags & (DIR_COMB|DIR_REGION)) ==
-		     (DIR_COMB|DIR_REGION))
+	    else if ((dp->d_flags & (RT_DIR_COMB|RT_DIR_REGION)) ==
+		     (RT_DIR_COMB|RT_DIR_REGION))
 		flags = "REG";
-	    else if ((dp->d_flags & (DIR_COMB|DIR_REGION)) ==
-		     DIR_COMB)
+	    else if ((dp->d_flags & (RT_DIR_COMB|RT_DIR_REGION)) ==
+		     RT_DIR_COMB)
 		flags = "COM";
 	    else
 		flags = "Bad";
@@ -485,41 +489,6 @@ db_pr_dir(const struct db_i *dbip)
 	    else
 		bu_log("\n");
 	}
-    }
-}
-
-
-/**
- * D B _ G E T _ D I R E C T O R Y
- *
- * This routine is called by the RT_GET_DIRECTORY macro when the
- * freelist is exhausted.  Rather than simply getting one additional
- * structure, we get a whole batch, saving overhead.
- */
-void
-db_get_directory(struct resource *resp)
-{
-    struct directory *dp;
-    size_t bytes;
-
-    RT_CK_RESOURCE(resp);
-    BU_CK_PTBL(&resp->re_directory_blocks);
-
-    BU_ASSERT_PTR(resp->re_directory_hd, ==, NULL);
-
-    /* Get a BIG block */
-    bytes = (size_t)bu_malloc_len_roundup(1024*sizeof(struct directory));
-    dp = (struct directory *)bu_malloc(bytes, "re_directory_blocks from db_get_directory() " BU_FLSTR);
-
-    /* Record storage for later */
-    bu_ptbl_ins(&resp->re_directory_blocks, (long *)dp);
-
-    while (bytes >= sizeof(struct directory)) {
-	dp->d_magic = RT_DIR_MAGIC;
-	dp->d_forw = resp->re_directory_hd;
-	resp->re_directory_hd = dp;
-	dp++;
-	bytes -= sizeof(struct directory);
     }
 }
 
@@ -565,7 +534,7 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 	attr_count = 0;
     }
 
-    tbl = (struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl), "wdb_get_by_attr ptbl");
+    tbl = (struct bu_ptbl *)bu_calloc(sizeof(struct bu_ptbl), 1, "wdb_get_by_attr ptbl");
     bu_ptbl_init(tbl, 128, "wdb_get_by_attr ptbl_init");
 
     FOR_ALL_DIRECTORY_START(dp, dbip) {
@@ -586,8 +555,8 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 	    match_count = 0;
 	    for (i=0; (size_t)i<(size_t)avs->count; i++) {
 		for (j=0; (size_t)j<(size_t)obj_avs.count; j++) {
-		    if (!strcmp(avs->avp[i].name, obj_avs.avp[j].name)) {
-			if (!strcmp(avs->avp[i].value, obj_avs.avp[j].value)) {
+		    if (BU_STR_EQUAL(avs->avp[i].name, obj_avs.avp[j].name)) {
+			if (BU_STR_EQUAL(avs->avp[i].value, obj_avs.avp[j].value)) {
 			    if (op == 2) {
 				draw = 1;
 				break;

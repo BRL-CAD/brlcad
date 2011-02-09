@@ -1,7 +1,7 @@
 /*                           P K G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -415,7 +415,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     memset((char *)&sinme, 0, sizeof(sinme));
 
 #ifdef HAVE_SYS_UN_H
-    if (host == NULL || strlen(host) == 0 || strcmp(host, "unix") == 0) {
+    if (host == NULL || strlen(host) == 0 || strcmp(host, "unix")==0) {
 	/* UNIX Domain socket, port = pathname */
 	sunhim.sun_family = AF_UNIX;
 	strncpy(sunhim.sun_path, service, sizeof(sunhim.sun_path));
@@ -507,7 +507,7 @@ pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(char *))
 
     /*
      * XXX - Somehow the system has to know what connection was
-     * accepted, it's protocol, etc.  For UNIX/inetd we use stdin.
+     * accepted, its protocol, etc.  For UNIX/inetd we use stdin.
      */
     conn = _pkg_makeconn(STDIN_FILENO, switchp, errlog);
     return conn;

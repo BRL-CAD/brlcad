@@ -94,7 +94,7 @@
 #
 # This code is based on Angel Li's (angel@flipper.rsmas.miami.edu) HTML
 
-
+ 
 #
 # Default resources.
 #
@@ -171,13 +171,13 @@ itcl::class iwidgets::Scrolledhtml {
   protected method _entity_address {}
   protected method _entity_/address {}
   protected method _entity_b {}
-  protected method _entity_/b {}
+  protected method _entity_/b {} 
   protected method _entity_base {{args {}}}
   protected method _entity_basefont {{args {}}}
   protected method _entity_big {}
-  protected method _entity_/big {}
+  protected method _entity_/big {} 
   protected method _entity_blockquote {}
-  protected method _entity_/blockquote {}
+  protected method _entity_/blockquote {} 
   protected method _entity_body {{args {}}}
   protected method _entity_/body {}
   protected method _entity_br {{args {}}}
@@ -231,11 +231,11 @@ itcl::class iwidgets::Scrolledhtml {
   protected method _entity_samp {}
   protected method _entity_/samp {}
   protected method _entity_small {}
-  protected method _entity_/small {}
+  protected method _entity_/small {} 
   protected method _entity_sub {}
-  protected method _entity_/sub {}
+  protected method _entity_/sub {} 
   protected method _entity_sup {}
-  protected method _entity_/sup {}
+  protected method _entity_/sup {} 
   protected method _entity_strong {}
   protected method _entity_/strong {}
   protected method _entity_table {{args {}}}
@@ -286,10 +286,10 @@ itcl::class iwidgets::Scrolledhtml {
   protected variable _intitle 0            ;# in <title>...</title>
   protected variable _anchorcount 0        ;# number of anchors
   protected variable _stack                ;# array of stacks
-  protected variable _pointsndx 2          ;#
+  protected variable _pointsndx 2          ;# 
   protected variable _fontnames            ;# list of accepted font names
   protected variable _fontinfo             ;# array of font info given font name
-  protected variable _tag                  ;#
+  protected variable _tag                  ;# 
   protected variable _tagl                 ;#
   protected variable _tagfont              ;#
   protected variable _cwd .                ;# base directory of current page
@@ -360,7 +360,7 @@ itcl::body iwidgets::Scrolledhtml::destructor {} {
 # ------------------------------------------------------------------
 #                             OPTIONS
 # ------------------------------------------------------------------
-
+ 
 # ------------------------------------------------------------------
 # OPTION: -fontsize
 #
@@ -473,7 +473,7 @@ itcl::configbody iwidgets::Scrolledhtml::update {
 # ------------------------------------------------------------------
 #                            METHODS
 # ------------------------------------------------------------------
-
+ 
 # ------------------------------------------------------------------
 # METHOD: clear
 #
@@ -493,9 +493,9 @@ itcl::body iwidgets::Scrolledhtml::clear {} {
 # ------------------------------------------------------------------
 # METHOD import ?-link? filename?#anchorname?
 #
-# read html text from a file (import filename) if the keyword link is present,
-# pathname is relative to last page, otherwise it is relative to current
-# directory. This allows the user to use a linkcommand of
+# read html text from a file (import filename) if the keyword link is present, 
+# pathname is relative to last page, otherwise it is relative to current 
+# directory. This allows the user to use a linkcommand of 
 # "<widgetname> import -link"
 #
 # if '#anchorname' is appended to the filename, the page is displayed starting
@@ -583,8 +583,8 @@ itcl::body iwidgets::Scrolledhtml::import {args} {
 # ------------------------------------------------------------------
 # METHOD: render text ?wd?
 #
-# Clear the text, then render html formatted text. Optional wd argument
-# sets the base directory for any links or images.
+# Clear the text, then render html formatted text. Optional wd argument 
+# sets the base directory for any links or images. 
 # ------------------------------------------------------------------
 itcl::body iwidgets::Scrolledhtml::render {html {wd .}} {
 
@@ -800,7 +800,7 @@ itcl::body iwidgets::Scrolledhtml::_set_tag {} {
 	C { append args " -justify center" }
     }
     append args " -offset $_offset"
-
+        
     set pts [lindex [set [format "_%spoints" $itk_option(-fontsize)]] \
                   $_pointsndx]
     append _tag $_pointsndx - $_left \
@@ -976,7 +976,7 @@ itcl::body iwidgets::Scrolledhtml::_set_align {align} {
 #
 # fix table width & height
 # essentially, with nested tables the outer table must be configured before
-# the inner table, but the idle tasks get queued up in the opposite order,
+# the inner table, but the idle tasks get queued up in the opposite order, 
 # so process later idle tasks before sizing yourself.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Scrolledhtml::_fixtablewidth {hottext table multiplier} {
@@ -990,7 +990,7 @@ itcl::body iwidgets::Scrolledhtml::_fixtablewidth {hottext table multiplier} {
            -height [winfo height $table]
   grid propagate $table 0
 }
-
+		 
 
 # ------------------------------------------------------------------
 # PRIVATE METHOD: _header level
@@ -1004,7 +1004,7 @@ itcl::body iwidgets::Scrolledhtml::_header {level args} {
     if [info exists ar(align)] {
       _entity_p align=$ar(align)
     } else {
-      _entity_p
+      _entity_p 
     }
     if [info exists ar(src)] {
         _entity_img src=$ar(src)
@@ -1092,9 +1092,9 @@ itcl::body iwidgets::Scrolledhtml::_entity_/address {} {
 #
 # Change current font to bold
 # ------------------------------------------------------------------
-itcl::body iwidgets::Scrolledhtml::_entity_b {} {
+itcl::body iwidgets::Scrolledhtml::_entity_b {} { 
     incr _textweight
-    _set_tag
+    _set_tag 
 }
 
 # ------------------------------------------------------------------
@@ -1112,7 +1112,7 @@ itcl::body iwidgets::Scrolledhtml::_entity_/b {} {
 #
 # set the cwd of the document
 # ------------------------------------------------------------------
-itcl::body iwidgets::Scrolledhtml::_entity_base {{args {}}} {
+itcl::body iwidgets::Scrolledhtml::_entity_base {{args {}}} { 
     _parse_fields ar $args
     if [info exists ar(href)] {
       set _cwd [file dirname $ar(href)]
@@ -1124,7 +1124,7 @@ itcl::body iwidgets::Scrolledhtml::_entity_base {{args {}}} {
 #
 # set base font size
 # ------------------------------------------------------------------
-itcl::body iwidgets::Scrolledhtml::_entity_basefont {{args {}}} {
+itcl::body iwidgets::Scrolledhtml::_entity_basefont {{args {}}} { 
     _parse_fields ar $args
     if {[info exists ar(size)]} {
       set _basefontsize $ar(size)
@@ -1136,12 +1136,12 @@ itcl::body iwidgets::Scrolledhtml::_entity_basefont {{args {}}} {
 #
 # Change current font to a bigger size
 # ------------------------------------------------------------------
-itcl::body iwidgets::Scrolledhtml::_entity_big {} {
+itcl::body iwidgets::Scrolledhtml::_entity_big {} { 
     _push pointsndx $_pointsndx
     if {[incr _pointsndx 2] > 6} {
        set _pointsndx 6
     }
-    _set_tag
+    _set_tag 
 }
 
 # ------------------------------------------------------------------
@@ -1159,13 +1159,13 @@ itcl::body iwidgets::Scrolledhtml::_entity_/big {} {
 #
 # display a block quote
 # ------------------------------------------------------------------
-itcl::body iwidgets::Scrolledhtml::_entity_blockquote {} {
+itcl::body iwidgets::Scrolledhtml::_entity_blockquote {} { 
     _entity_p
     _push left $_left
     incr _left $_indentincr
     _push left2 $_left2
     set _left2 $_left
-    _set_tag
+    _set_tag 
 }
 
 # ------------------------------------------------------------------
@@ -1418,7 +1418,7 @@ itcl::body iwidgets::Scrolledhtml::_entity_font {{args {}}} {
       if {![regexp {^[+-].*} $ar(size)]} {
          set _pointsndx $ar(size)
       } else {
-        set _pointsndx [expr {$_basefontsize $ar(size)}]
+        set _pointsndx [expr $_basefontsize $ar(size)]
       }
       if { $_pointsndx > 6 } {
        set _pointsndx 6
@@ -1448,7 +1448,7 @@ itcl::body iwidgets::Scrolledhtml::_entity_/font {} {
 # ------------------------------------------------------------------
 # PRIVATE METHOD: _entity_h1
 #
-# display header level 1.
+# display header level 1. 
 # Accepts argument of the form ?align=[left,right,center]? ?src=<image pname>?
 # ------------------------------------------------------------------
 itcl::body iwidgets::Scrolledhtml::_entity_h1 {{args {}}} {
@@ -1480,7 +1480,7 @@ itcl::body iwidgets::Scrolledhtml::_entity_h2 {{args {}}} {
 # change state back from header 2
 # ------------------------------------------------------------------
 itcl::body iwidgets::Scrolledhtml::_entity_/h2 {} {
-    _/header 2
+    _/header 2 
 }
 
 # ------------------------------------------------------------------
@@ -1499,7 +1499,7 @@ itcl::body iwidgets::Scrolledhtml::_entity_h3 {{args {}}} {
 # change state back from header 3
 # ------------------------------------------------------------------
 itcl::body iwidgets::Scrolledhtml::_entity_/h3 {} {
-    _/header 3
+    _/header 3 
 }
 
 # ------------------------------------------------------------------
@@ -1508,7 +1508,7 @@ itcl::body iwidgets::Scrolledhtml::_entity_/h3 {} {
 # display header level 4
 # Accepts argument of the form ?align=[left,right,center]? ?src=<image pname>?
 # ------------------------------------------------------------------
-itcl::body iwidgets::Scrolledhtml::_entity_h4 {{args {}}} {
+itcl::body iwidgets::Scrolledhtml::_entity_h4 {{args {}}} { 
     _header 4 $args
 }
 
@@ -1674,7 +1674,7 @@ itcl::body iwidgets::Scrolledhtml::_entity_img {{args {}}} {
         label $win -image $_unknownimg -borderwidth 0 -background $_bgcolor
       }
       pack $win -fill both -expand true
-
+ 
     } else {   ;# no error loading image
       lappend _images $img
       set win $imgframe.$img
@@ -1732,7 +1732,7 @@ itcl::body iwidgets::Scrolledhtml::_entity_img {{args {}}} {
 # ------------------------------------------------------------------
 itcl::body iwidgets::Scrolledhtml::_entity_kbd {} {
     incr _textweight
-    _entity_tt
+    _entity_tt 
     _set_tag
 }
 
@@ -1925,7 +1925,7 @@ itcl::body iwidgets::Scrolledhtml::_entity_p {{args {}}} {
 #
 # display preformatted text
 # ------------------------------------------------------------------
-itcl::body iwidgets::Scrolledhtml::_entity_pre {{args {}}} {
+itcl::body iwidgets::Scrolledhtml::_entity_pre {{args {}}} { 
     _entity_tt
     _entity_br
     incr _pre
@@ -1965,12 +1965,12 @@ itcl::body iwidgets::Scrolledhtml::_entity_/samp {} {
 #
 # Change current font to a smaller size
 # ------------------------------------------------------------------
-itcl::body iwidgets::Scrolledhtml::_entity_small {} {
+itcl::body iwidgets::Scrolledhtml::_entity_small {} { 
     _push pointsndx $_pointsndx
     if {[incr _pointsndx -2] < 0} {
        set _pointsndx 0
     }
-    _set_tag
+    _set_tag 
 }
 
 # ------------------------------------------------------------------
@@ -2042,7 +2042,7 @@ itcl::body iwidgets::Scrolledhtml::_entity_strong {} {
 # ------------------------------------------------------------------
 itcl::body iwidgets::Scrolledhtml::_entity_/strong {} {
     incr _textweight -1
-    _set_tag
+    _set_tag 
 }
 
 # ------------------------------------------------------------------
@@ -2331,7 +2331,7 @@ itcl::body iwidgets::Scrolledhtml::_entity_/th {} {
 # begin title of document
 # ------------------------------------------------------------------
 itcl::body iwidgets::Scrolledhtml::_entity_title {} {
-    set _intitle 1
+    set _intitle 1 
 }
 
 # ------------------------------------------------------------------
@@ -2431,7 +2431,7 @@ itcl::body iwidgets::Scrolledhtml::_entity_/tt {} {
 #
 # display underlined text
 # ------------------------------------------------------------------
-itcl::body iwidgets::Scrolledhtml::_entity_u {} {
+itcl::body iwidgets::Scrolledhtml::_entity_u {} { 
     incr _underline
     _set_tag
 }
@@ -2441,7 +2441,7 @@ itcl::body iwidgets::Scrolledhtml::_entity_u {} {
 #
 # change back from underlined text
 # ------------------------------------------------------------------
-itcl::body iwidgets::Scrolledhtml::_entity_/u {} {
+itcl::body iwidgets::Scrolledhtml::_entity_/u {} { 
     incr _underline -1
     _set_tag
 }

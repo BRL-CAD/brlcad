@@ -1,7 +1,7 @@
 /*                       P I X T I L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -116,6 +116,7 @@ main(int argc, char **argv)
     int islist = 0;		/* set if a list, zero if basename */
     int is_stream = 0;	/* set if input is stream on stdin */
     char name[256] = {0};
+    ssize_t ret;
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
@@ -202,13 +203,20 @@ main(int argc, char **argv)
 	    }
 	    if (fd > 0) close(fd);
 	}
-	(void)write(1, obuf, swathbytes);
+        ret = write(1, obuf, swathbytes);
+	if (ret < 0)
+	    perror("write");
+
 	rel = 0;	/* in case we fall through */
     }
  done:
     /* Flush partial frame? */
-    if (rel != 0)
-	(void)write(1, obuf, swathbytes);
+    if (rel != 0) {
+	ret = write(1, obuf, swathbytes);
+	if (ret < 0)
+	    perror("write");
+    }
+
     fprintf(stderr, "\n");
 
     return 0;

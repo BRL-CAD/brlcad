@@ -1,7 +1,7 @@
 /*                    B O T _ M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ rt_bot_mirror(struct rt_db_internal *ip, register const plane_t plane)
     point_t mirror_pt;
     fastf_t ang;
 
-    int i;
+    size_t i;
 
     static point_t origin = {0.0, 0.0, 0.0};
 

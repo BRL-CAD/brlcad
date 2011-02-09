@@ -1,7 +1,7 @@
 /*                        J A C K - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ main(int argc, char **argv)
 {
     char		*base, *bfile, *grp_name, *jfile, *reg_name;
     FILE		*fpin;
-    struct rt_wdb	*fpout;
+    struct rt_wdb	*fpout = NULL;
     int		doti;
     int	c;
 
@@ -125,7 +125,7 @@ main(int argc, char **argv)
 	bu_strlcpy(reg_name, base, sizeof(base)+1);
 	/* Ignore .pss extension if it's there. */
 	doti = strlen(reg_name) - 4;
-	if (doti > 0 && !strcmp(".pss", reg_name+doti))
+	if (doti > 0 && BU_STR_EQUAL(".pss", reg_name+doti))
 	    reg_name[doti] = '\0';
     }
 
@@ -168,6 +168,7 @@ read_psurf_vertices(FILE *fp, struct vlist *vert)
     fastf_t	x, y, z;
     int	i;
     int	bomb=0;
+    size_t ret;
 
     /* Read vertices. */
     for (i = 0; fscanf(fp, "%lf %lf %lf", &x, &y, &z) == 3; i++) {
@@ -180,9 +181,13 @@ read_psurf_vertices(FILE *fp, struct vlist *vert)
 	    vert->pt[3*i+2] = z * 10.;
 	    vert->vt[i] = (struct vertex *)0;
 	}
-	fscanf(fp, "%*[^\n]");
+	ret = fscanf(fp, "%*[^\n]");
+	if (ret > 0)
+	    bu_log("unknown parsing error\n");
     }
-    fscanf(fp, ";;");
+    ret = fscanf(fp, ";;");
+    if (ret > 0)
+	bu_log("unknown parsing error\n");
 
     if ( bomb )
     {
@@ -201,10 +206,14 @@ int
 read_psurf_face(FILE *fp, int *lst)
 {
     int	i, n;
+    size_t ret;
 
     for (i = 0; fscanf(fp, "%d", &n) == 1; i++)
 	lst[i] = n;
-    fscanf(fp, "%*[^\n]");
+    ret = fscanf(fp, "%*[^\n]");
+    if (ret > 0)
+	bu_log("unknown parsing error\n");
+	
     return i;
 }
 
@@ -237,6 +246,8 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
     s = BU_LIST_FIRST(shell, &r->s_hd);
 
     while ( (nv = read_psurf_vertices(fp, &vert)) != 0 ) {
+	size_t ret;
+
 	while ( (nf = read_psurf_face(fp, lst)) != 0 ) {
 
 	    /* Make face out of vertices in lst (ccw ordered). */
@@ -249,7 +260,9 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 	    for (i = 0; i < nf; i++)
 		vert.vt[lst[i]-1] = vertlist[i];
 	}
-	fscanf(fp, ";;");
+	ret = fscanf(fp, ";;");
+	if (ret > 0)
+	    bu_log("unknown parsing error\n");
 
 	/* Associate the vertex geometry, ccw. */
 	for (i = 0; i < nv; i++)

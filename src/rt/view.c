@@ -1,7 +1,7 @@
 /*                          V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -52,11 +52,12 @@
 #include "mater.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "rtprivate.h"
-#include "./ext.h"
 #include "plot3.h"
 #include "photonmap.h"
 #include "scanline.h"
+
+#include "./rtuif.h"
+#include "./ext.h"
 
 
 const char title[] = "The BRL-CAD Raytracer RT";
@@ -449,8 +450,8 @@ view_pixel(struct application *ap)
     switch (buf_mode) {
 	case BUFMODE_INCR:
 	    {
-		size_t dy, yy;
-		size_t spread;
+		long dy, yy;
+		long spread;
 		size_t npix = 0;
 
 		if (fbp == FBIO_NULL)
@@ -503,7 +504,7 @@ view_pixel(struct application *ap)
 	    }
 	    if (bif != NULL) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		bu_image_save_writeline(bif, ap->a_y, (const unsigned char *)scanline[ap->a_y].sl_buf);
+		bu_image_save_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf);
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	    } else if (outfp != NULL) {
 		size_t count;

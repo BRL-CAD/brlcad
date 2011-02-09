@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,8 @@
  * should not use config defines)
  */
 #if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
-#  if defined(_WIN32) && !defined(__CYGWIN__)
+
+#  if defined(_WIN32) && !defined(__CYGWIN__) && !defined(CMAKE_HEADERS)
 #    include "config_win.h"
 #  else
 #    include "brlcad_config.h"
@@ -54,6 +55,7 @@
 #  ifndef HAVE_DRAND48
 #    define drand48() ((double)rand() / (double)(RAND_MAX + 1))
 #    define HAVE_DRAND48 1
+#	 define srand48(seed) (srand(seed))
 #  endif
 
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */
@@ -112,7 +114,12 @@ typedef ptrdiff_t ssize_t;
  * optional uintptr_t type.
  */
 #if !defined(INT8_MAX) || !defined(INT16_MAX) || !defined(INT32_MAX) || !defined(INT64_MAX)
-#  if defined(__STDC__) || defined(__STRICT_ANSI__) || defined(__SIZE_TYPE__) || defined(HAVE_STDINT_H)
+#  if (defined _MSC_VER && (_MSC_VER <= 1500))	
+     /* Older Versions of Visual C++ seem to need pstdint.h 
+      * but still pass the tests below, so force it based on
+      * version (ugh.) */
+#    include "pstdint.h"
+#  elif defined(__STDC__) || defined(__STRICT_ANSI__) || defined(__SIZE_TYPE__) || defined(HAVE_STDINT_H)
 #    define __STDC_LIMIT_MACROS 1
 #    define __STDC_CONSTANT_MACROS 1
 #    include <stdint.h>
@@ -198,7 +205,11 @@ typedef ptrdiff_t ssize_t;
 #  else
      /* MSVC/C++ */
 #    ifdef __cplusplus
-#      define UNUSED(parameter) /* parameter */
+#      if defined(NDEBUG)
+#        define UNUSED(parameter) /* parameter */
+#      else /* some of them are asserted */
+#         define UNUSED(parameter) (parameter)
+#      endif
 #    else
 #      if defined(_MSC_VER)
          /* disable reporting an "unreferenced formal parameter" */
@@ -281,6 +292,15 @@ typedef ptrdiff_t ssize_t;
 #  undef DEPRECATED
 #  define DEPRECATED /* deprecated */
 #  warning "DEPRECATED was previously defined.  Disabling the declaration."
+#endif
+
+/* ActiveState Tcl doesn't include this catch in tclPlatDecls.h, so we
+ * have to add it for them
+ */
+#if defined(_MSC_VER) && defined(__STDC__)
+   #include <tchar.h>
+   /* MSVC++ misses this. */
+   typedef _TCHAR TCHAR;
 #endif
 
 

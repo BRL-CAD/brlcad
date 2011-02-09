@@ -1,7 +1,7 @@
 /*                         P P - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -128,6 +128,7 @@ main(int argc, char **argv)
     int i, j, k, lclr, iquit=0, ichg=0, gclr(void), cclr(char *pc);
     int il, iu, iclr, iskp, jclr, bsp(void);
     int scr_w=512, scr_h=512, scr_set=0;
+    int ret;
 
     printf("GIFT-PRETTY File painted on Generic Framebuffer\n");
 /* check invocation */
@@ -142,7 +143,7 @@ main(int argc, char **argv)
 	bu_exit(10, NULL);
     }
     for (i=1;i<argc;i++) {
-	if (strcmp("-F", argv[i])==0) {
+	if (BU_STR_EQUAL("-F", argv[i])) {
 #if 0
 	    argv[++i];
 #else
@@ -152,10 +153,10 @@ main(int argc, char **argv)
 	     */
 	    ++i;
 #endif
-	} else if (strcmp("-W", argv[i])==0) {
+	} else if (BU_STR_EQUAL("-W", argv[i])) {
 	    sscanf(argv[++i], "%d", &scr_w);
 	    scr_set=1;
-	} else if (strcmp("-N", argv[i])==0) {
+	} else if (BU_STR_EQUAL("-N", argv[i])) {
 	    sscanf(argv[++i], "%d", &scr_h);
 	    scr_set=1;
 	} else if (strncmp("-", argv[i], 1)==0) {
@@ -255,14 +256,18 @@ main(int argc, char **argv)
 		break;
 	    case 'a':
 		printf("Old color? ");
-		scanf("%3s", cs);
+		ret = scanf("%3s", cs);
+		if (ret != 1)
+		    perror("scanf");
 		iclr=cclr(cs);
 		if (iclr<0) {
 		    prtclr(0);
 		    break;
 		}
 		printf("New color? ");
-		scanf("%3s", cs);
+		ret = scanf("%3s", cs);
+		if (ret != 1)
+		    perror("scanf");
 		jclr=cclr(cs);
 		if (jclr<0) {
 		    prtclr(0);
@@ -284,7 +289,9 @@ main(int argc, char **argv)
 		break;
 	    case 'b':
 		printf("%s background changed to ", colortab[ibc].name);
-		scanf("%3s", cs);
+		ret = scanf("%3s", cs);
+		if (ret != 1)
+		    perror("scanf");
 		ibc=cclr(cs);
 		if (ibc<0) {
 		    ibc=0;
@@ -294,7 +301,9 @@ main(int argc, char **argv)
 	    case 't':
 		printf("%s transparent color changed to ",
 		       colortab[itc].name);
-		scanf("%3s", cs);
+		ret = scanf("%3s", cs);
+		if (ret != 1)
+		    perror("scanf");
 		itc=cclr(cs);
 		if (itc<0) {
 		    prtclr(0);
@@ -319,7 +328,9 @@ main(int argc, char **argv)
 		    if ((i%20)==19) {
 			char cbuf[16];
 			printf("(c)ontine, (s)top? ");
-			scanf("%1s", cbuf);
+			ret = scanf("%1s", cbuf);
+			if (ret != 1)
+			    perror("scanf");
 			c = cbuf[0];
 			if (c=='s') break;
 		    }
@@ -341,6 +352,7 @@ main(int argc, char **argv)
 		iquit=1;
 	    case 'v':
 		if (ichg!=0) {
+		    ssize_t writeret;
 		    for (i=0;i<ni;i++) {
 			loci+=6;
 			lseek(ifd, (off_t)loci, 0);
@@ -348,7 +360,9 @@ main(int argc, char **argv)
 			for (j=0, cp=colortab[itmc[i]].name;j<3;
 			     cp++, j++) {
 			    loci++;
-			    write(ifd, cp, 1);
+			    writeret = write(ifd, cp, 1);
+			    if (writeret < 0)
+				perror("write");
 			}
 			lseek(ifd, (off_t)++loci, 0);
 			while ((c=gc())!='\n') loci++;
@@ -364,11 +378,17 @@ main(int argc, char **argv)
 		goto view;
 	    case 'r':
 		printf("Lower limit? ");
-		scanf("%d", &il);
+		ret = scanf("%d", &il);
+		if (ret != 1)
+		    perror("scanf");
 		printf("Upper limit? ");
-		scanf("%d", &iu);
+		ret = scanf("%d", &iu);
+		if (ret != 1)
+		    perror("scanf");
 		printf("Color? ");
-		scanf("%3s", cs);
+		ret = scanf("%3s", cs);
+		if (ret != 1)
+		    perror("scanf");
 		iclr=cclr(cs);
 		if (iclr<0) {
 		    prtclr(0);
@@ -452,10 +472,14 @@ paint(void)
     char c;
     int i, j, iw, ih, iwih, trnf, flop;
     int	inten = 0;
-    int	inten_high;
+    int	inten_high = 0;
     long li, lj, numb(void);
-    RGBpixel ocl, tcl, pmix, tp, bp;
-    unsigned char *fb_p;	/* Current position in buffer.	*/
+    RGBpixel ocl = {0, 0, 0};
+    RGBpixel tcl = {0, 0, 0};
+    RGBpixel pmix = {0, 0, 0};
+    RGBpixel tp = {0, 0, 0};
+    RGBpixel bp = {0, 0, 0};
+    unsigned char *fb_p = NULL;	/* Current position in buffer.	*/
 
     printf("Picture is being painted\n");
     bp[RED]=colortab[ibc].c_pixel[RED];

@@ -1,7 +1,7 @@
 /*                         S H A D E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,9 +37,9 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "rtprivate.h"
 #include "light.h"
 #include "plot3.h"
+
 
 #ifdef RT_MULTISPECTRAL
 #  include "spectrum.h"
@@ -89,21 +89,21 @@ pr_shadework(const char *str, const struct shadework *swp)
     bu_log(" sw_xmitonly %d\n", swp->sw_xmitonly);
     bu_log("\n");
     if (swp->sw_inputs & MFI_LIGHT) for (i=0; i < SW_NLIGHTS; i++) {
-	if (swp->sw_visible[i] == (struct light_specific *)NULL)  continue;
-	RT_CK_LIGHT(swp->sw_visible[i]);
+	    if (swp->sw_visible[i] == (struct light_specific *)NULL) continue;
+	    RT_CK_LIGHT(swp->sw_visible[i]);
 #ifdef RT_MULTISPECTRAL
-	bu_log("   light %d visible, dir=(%g, %g, %g)\n",
-	       i,
-	       V3ARGS(&swp->sw_tolight[i*3]));
-	BN_CK_TABDATA(swp->msw_intensity[i]);
-	bn_pr_tabdata("light intensity", swp->msw_intensity[i]);
+	    bu_log("   light %d visible, dir=(%g, %g, %g)\n",
+		   i,
+		   V3ARGS(&swp->sw_tolight[i*3]));
+	    BN_CK_TABDATA(swp->msw_intensity[i]);
+	    bn_pr_tabdata("light intensity", swp->msw_intensity[i]);
 #else
-	bu_log("   light %d visible, intensity=%g, dir=(%g, %g, %g)\n",
-	       i,
-	       swp->sw_intensity[i],
-	       V3ARGS(&swp->sw_tolight[i*3]));
+	    bu_log("   light %d visible, intensity=%g, dir=(%g, %g, %g)\n",
+		   i,
+		   swp->sw_intensity[i],
+		   V3ARGS(&swp->sw_tolight[i*3]));
 #endif
-    }
+	}
 }
 
 
@@ -209,8 +209,8 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 	    swp->sw_uv.uv_u = swp->sw_uv.uv_v = 0.5;
 	    swp->sw_uv.uv_du = swp->sw_uv.uv_dv = 0;
 	} else {
-	    RT_HIT_UVCOORD(	ap, pp->pt_inseg->seg_stp,
-				&(swp->sw_hit), &(swp->sw_uv));
+	    RT_HIT_UVCOORD(ap, pp->pt_inseg->seg_stp,
+			   &(swp->sw_hit), &(swp->sw_uv));
 	}
 	if (swp->sw_uv.uv_u < 0 || swp->sw_uv.uv_u > 1 ||
 	    swp->sw_uv.uv_v < 0 || swp->sw_uv.uv_v > 1) {
@@ -322,7 +322,7 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
      * "safe" values, and claim that the light is visible, in case
      * they are used.
      */
-    if (swp->sw_xmitonly)  want &= ~MFI_LIGHT;
+    if (swp->sw_xmitonly) want &= ~MFI_LIGHT;
     if (!(want & MFI_LIGHT)) {
 	register int i;
 
@@ -369,6 +369,7 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
 
     return 1;
 }
+
 
 /*
  * Local Variables:

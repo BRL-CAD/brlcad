@@ -1,7 +1,7 @@
 /*                         S E L E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,11 +34,14 @@
 int
 _ged_select(struct ged *gedp, fastf_t vx, fastf_t vy, fastf_t vwidth, fastf_t vheight, int rflag)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
-    struct solid	*sp;
-    fastf_t vr;
-    fastf_t vmin_x, vmin_y, vmax_x, vmax_y;
+    struct ged_display_list *gdlp = NULL;
+    struct ged_display_list *next_gdlp = NULL;
+    struct solid *sp = NULL;
+    fastf_t vr = 0.0;
+    fastf_t vmin_x = 0.0;
+    fastf_t vmin_y = 0.0;
+    fastf_t vmax_x = 0.0;
+    fastf_t vmax_y = 0.0;
 
     if (rflag) {
 	vr = vwidth;

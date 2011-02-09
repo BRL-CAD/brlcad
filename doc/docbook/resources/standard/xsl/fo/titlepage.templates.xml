@@ -51,6 +51,10 @@
     <author space-before="0.5em"
             font-size="&hsize2;"/>
 
+    <!-- If you add editor, include this t:predicate attribute
+         because only the first editor generates the list of editors.
+    <editor t:predicate="[position() = 1]"/>
+    -->
     <othercredit space-before="0.5em"/>
     <releaseinfo space-before="0.5em"/>
     <copyright space-before="0.5em"/>
@@ -146,6 +150,10 @@
       <author font-size="&hsize3;"
 	      space-before="&hsize2space;"
 	      keep-with-next.within-column="always"/>
+      <!-- If you add editor, include this t:predicate attribute
+           because only the first editor generates the list of editors.
+      <editor t:predicate="[position() = 1]"/>
+      -->
     </t:titlepage-content>
 
   <t:titlepage-content t:side="verso">
@@ -157,6 +165,10 @@
       <corpauthor/>
       <authorgroup t:named-template="verso.authorgroup"/>
       <author/>
+      <!-- If you add editor, include this t:predicate attribute
+           because only the first editor generates the list of editors.
+      <editor t:predicate="[position() = 1]"/>
+      -->
       <othercredit/>
       <releaseinfo space-before="0.5em"/>
       <pubdate space-before="1em"/>
@@ -425,6 +437,37 @@
   <t:titlepage-before t:side="verso">
   </t:titlepage-before>
 </t:titlepage>
+
+<!-- ==================================================================== -->
+
+<!-- Same formatting as dedication -->
+ <t:titlepage t:element="acknowledgements" t:wrapper="fo:block">
+    <t:titlepage-content t:side="recto">
+      <title
+	     t:force="1"
+	     t:named-template="component.title"
+	     param:node="ancestor-or-self::acknowledgements[1]"
+	     margin-left="{$title.margin.left}"
+	     font-size="&hsize5;"
+	     font-family="{$title.fontset}"
+	     font-weight="bold"/>
+      <subtitle
+		font-family="{$title.fontset}"/>
+    </t:titlepage-content>
+
+  <t:titlepage-content t:side="verso">
+  </t:titlepage-content>
+
+  <t:titlepage-separator>
+  </t:titlepage-separator>
+
+  <t:titlepage-before t:side="recto">
+  </t:titlepage-before>
+
+  <t:titlepage-before t:side="verso">
+  </t:titlepage-before>
+</t:titlepage>
+
 
 <!-- ==================================================================== -->
 

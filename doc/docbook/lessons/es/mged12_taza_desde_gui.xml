@@ -1,22 +1,22 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>
+<!-- Converted by db4-upgrade version 1.0 -->
+
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>
 	Crear el modelo de una taza utilizando la interfaz de 
 	<application>MGED</application>
     </title>
+    
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Aprobado para su publicación. Su distribución es ilimitada.</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-   <para id="mug_through_gui_overviewlist">
+   <para xml:id="mug_through_gui_overviewlist">
      En este tutorial usted aprenderá a:
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Crear la figura de una taza desde el GUI.</para>
 	</listitem>
@@ -42,18 +42,18 @@
 	</listitem>
       </itemizedlist>
     </para>
-    <para id="mug_through_gui_intro1">
+    <para xml:id="mug_through_gui_intro1">
       En los anteriores dos tutoriales, usted creó una taza mediante es uso de 
       comandos desde el prompt de la ventana de comandos. Ahora usted creará 
       la misma figura desde el GUI.
     </para>
 
-    <para id="mug_through_gui_intro2">
+    <para xml:id="mug_through_gui_intro2">
       Comience por abrir una nueva base de datos. Llámela mug2.g.
     </para>
 
-    <sect1 id="mug_gui_create_body">
-      <title>Crear el cuerpo de la taza</title>
+    <section xml:id="mug_gui_create_body"><info><title>Crear el cuerpo de la taza</title></info>
+      
       <para>
 	Diríjase al menú Create (Crear) y seleccione rcc (right circular 
 	cylinder = cilindro circular recto) bajo la categoría Cones and 
@@ -63,11 +63,11 @@
       <para>
 	Vaya al menú Edit (Edición), donde encontrará las siguientes opciones:
 	<informaltable>
-	  <tgroup cols='4'>
+	  <tgroup cols="4">
 	    <tbody>
 	      <row>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 		    Set H
 		    Set H (Move V)
 		    Set A
@@ -84,7 +84,7 @@
 		  </literallayout>
 		</entry>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 		    Rotate
 		    Translate
 		    Scale
@@ -92,7 +92,7 @@
 		  </literallayout>
 		</entry>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 		    Reject
 		    Accept
 		    Apply
@@ -100,7 +100,7 @@
 		  </literallayout>
 		</entry>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 		    Primitive Editor
 		    Combination
 		    Editor
@@ -151,11 +151,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata 
-align = "center" 
-fileref="../../lessons/es/images/mged12_cyls_frontview.png" 
-format="PNG">
-	  </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged12_cyls_frontview.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -176,10 +172,10 @@ format="PNG">
 	y viceversa.
 	</para>
 
-    </sect1>
+    </section>
 
-    <sect1 id="mug_gui_create_handle">
-      <title>Crear el asa de la taza</title>
+    <section xml:id="mug_gui_create_handle"><info><title>Crear el asa de la taza</title></info>
+      
 
       <para>
 	Anteriormente, hemos hecho el asa de la taza con un toro elíptico. En 
@@ -188,17 +184,17 @@ format="PNG">
 	Nómbrelo handle.s. El menú Edición ahora ofrecerá un conjunto diferente 
 	de parámetros detallados en la siguiente lista:
 <informaltable>
-	  <tgroup cols='4'>
+	  <tgroup cols="4">
 	    <tbody>
 	      <row>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 		    Set Radius 1
 		    Set Radius 2
 		  </literallayout>
 		</entry>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 		    Rotate
 		    Translate
 		    Scale
@@ -206,7 +202,7 @@ format="PNG">
 		  </literallayout>
 		</entry>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 		    Reject
 		    Accept
 		    Apply
@@ -214,7 +210,7 @@ format="PNG">
 		  </literallayout>
 		</entry>
 		<entry>
-		  <literallayout>
+		  <literallayout class="normal">
 		    Primitive Editor
 		    Combination
 		    Editor
@@ -230,16 +226,14 @@ format="PNG">
 	misma técnica utilizada en la edición de las formas rcc, modificar el 
 	tamaño del toro hasta que se vea similar los siguientes ejemplos:
 	<informaltable>
-	  <tgroup cols='2'>
+	  <tgroup cols="2">
 	    <tbody>
 	      <row>
 		<entry>
-		  <inlinegraphic 
-fileref="../../lessons/es/images/mged12_mug_handle_frontview.png" />
+		  <inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged12_mug_handle_frontview.png"/></imageobject></inlinemediaobject>
 		</entry>
 		<entry>
-		  <inlinegraphic 
-fileref="../../lessons/es/images/mged12_mug_handle_topview.png" />
+		  <inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged12_mug_handle_topview.png"/></imageobject></inlinemediaobject>
 		</entry>
 	      </row>
 	      <row>
@@ -253,10 +247,10 @@ fileref="../../lessons/es/images/mged12_mug_handle_topview.png" />
 	Visualice su taza desde arriba para asegurarse de que esté alineada. 
 	Acepte los cambios cuando esté terminada.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="mug_gui_create_rim">
-      <title>Creando el borde de la boca de la taza</title>
+    <section xml:id="mug_gui_create_rim"><info><title>Creando el borde de la boca de la taza</title></info>
+      
       
       <para>
 	Para hacer el borde de la taza, seleccione del menú Create (Crear), 
@@ -273,9 +267,7 @@ fileref="../../lessons/es/images/mged12_mug_handle_topview.png" />
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" 
-fileref="../../lessons/es/images/mged12_mug_rim_frontview.png" format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged12_mug_rim_frontview.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -285,10 +277,10 @@ fileref="../../lessons/es/images/mged12_mug_rim_frontview.png" format="PNG">
 	</mediaobject>
       </informalfigure>
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="mug_gui_create_combinations">
-      <title>Crear combinaciones de varias figuras</title>
+    <section xml:id="mug_gui_create_combinations"><info><title>Crear combinaciones de varias figuras</title></info>
+      
 
       <para>
 	Para combinar las distintas figuras de su taza, tipee los siguientes 
@@ -305,10 +297,10 @@ fileref="../../lessons/es/images/mged12_mug_rim_frontview.png" format="PNG">
 	trabaja cada uno de estos comandos.
 	
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="mug_gui_make_region">
-      <title>Crear una region con las combinaciones</title>
+    <section xml:id="mug_gui_make_region"><info><title>Crear una region con las combinaciones</title></info>
+      
 
       <para>
 	Para crear una región partiendo de las combinaciones que acaba de 
@@ -316,15 +308,15 @@ fileref="../../lessons/es/images/mged12_mug_rim_frontview.png" format="PNG">
 	
 	<command>r mug.r u mug.c u handle.c[Enter]</command>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="mug_gui_check_tree">
-      <title>Controlando el árbol de datos (Data Tree)</title>
+    <section xml:id="mug_gui_check_tree"><info><title>Controlando el árbol de datos (Data Tree)</title></info>
+      
 
       <para>
 	Antes de continuar, sería recomendable controlar el árbol de datos. 
 	Asegúrese de que está de acuerdo con el siguiente árbol:
-	<literallayout>
+	<literallayout class="normal">
    mug.r/R
 
    u mug.c/
@@ -356,13 +348,13 @@ fileref="../../lessons/es/images/mged12_mug_rim_frontview.png" format="PNG">
 	<command>kill rim2.s[Enter]</command>
 	
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="mug_gui_comb_edit_props">
-     <title>
+    <section xml:id="mug_gui_comb_edit_props"><info><title>
 	Asignar propiedades de los materiales utilizando el Combination 
 	Editor (Editor de combinaciones)
-      </title>
+      </title></info>
+     
 
       <para>
 	Vaya al menú Edit (Edición) y seleccione la combinación Editor (Editor).
@@ -370,7 +362,7 @@ fileref="../../lessons/es/images/mged12_mug_rim_frontview.png" format="PNG">
 	Tipee 0 148 0 en el cuadro de entrada de color. Seleccione un sombreado 
 	de plástico. Marque la casilla Boolean Expression (Expresión booleana) 
 	para asegurarse de que diga:
-	<literallayout>
+	<literallayout class="normal">
    u mug.c
 
    u handle.c
@@ -382,10 +374,10 @@ fileref="../../lessons/es/images/mged12_mug_rim_frontview.png" format="PNG">
 	<command>B mug.r[Enter]</command>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="mug_gui_raytracing">
-      <title>Haciendo el trazado de rayos (Raytracing) del diseño</title>
+    <section xml:id="mug_gui_raytracing"><info><title>Haciendo el trazado de rayos (Raytracing) del diseño</title></info>
+      
       <para>
 	Ir a la opción View (Vista) de la barra de menús y seleccione az35, el25.
 	Ir a File (Archivo) y luego a Raytrace. Seleccione un color de fondo 
@@ -396,11 +388,7 @@ fileref="../../lessons/es/images/mged12_mug_rim_frontview.png" format="PNG">
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata 
-align = "center" 
-fileref="../../lessons/es/images/mged12_mug_gui_finished_raytraced.png" 
-format="PNG">
-	    </imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged12_mug_gui_finished_raytraced.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -410,13 +398,13 @@ format="PNG">
 	</mediaobject>
       </informalfigure>
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="mug_through_gui_review">
-      <title>Repasemos...</title>
+    <section xml:id="mug_through_gui_review"><info><title>Repasemos...</title></info>
+      
       <para>
 	En este tutorial usted aprenderá a:
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Crear la figura de una taza desde el GUI.</para>
 	</listitem>
@@ -442,5 +430,5 @@ format="PNG">
 	</listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
   </article>

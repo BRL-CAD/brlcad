@@ -1,7 +1,7 @@
 /*                       V I E W M L T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,9 +35,9 @@
 #include "raytrace.h"
 #include "fb.h"
 
-#include "ext.h"
-#include "rtprivate.h"
-#include "scanline.h"
+#include "./scanline.h"
+#include "./rtuif.h"
+#include "./ext.h"
 
 
 static int	buf_mode=0;
@@ -122,7 +122,7 @@ struct mlt_app {
  *  Called by main() at the start of a run.
  *  Returns 1 if framebuffer should be opened, else 0.
  */
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
 {
      return 1;		/* framebuffer needed */
 }
@@ -134,7 +134,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
  *  Called by do_frame() just before raytracing starts.
  */
 void
-view_2init(struct application *ap)
+view_2init(struct application *ap, char *UNUSED(framename))
 {
     int i;
     struct mlt_app* mlt_application;
@@ -690,7 +690,7 @@ view_pixel(register struct application *ap)
     }
     if (outputfile != NULL) {
 	    bu_semaphore_acquire (BU_SEM_SYSCALL);
-	    bu_image_save_writeline(bif, ap->a_y, scanline[ap->a_y].sl_buf);
+	    bu_image_save_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf);
             bu_semaphore_release(BU_SEM_SYSCALL);
     }
     bu_free(scanline[ap->a_y].sl_buf, "sl_buf scanline buffer");
@@ -1291,7 +1291,7 @@ reproject_worker(int cpu, genptr_t arg)
  *  Any end-of-line processing should be done in view_pixel().
  */
 void
-view_eol(register struct application *ap) {}
+view_eol(struct application *UNUSED(ap)) {}
 
 /*
  * Local Variables:

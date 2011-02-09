@@ -1,7 +1,7 @@
 /*                       D S P _ A D D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -175,10 +175,11 @@ main(int ac, char *av[])
     int next_arg;
     FILE *in1, *in2;
     unsigned short *buf1, *buf2;
-    unsigned long count;
+    size_t count;
     int in_cookie, out_cookie;
     int conv;
     struct stat sb;
+    size_t ret;
 
     next_arg = parse_args(ac, av);
 
@@ -195,7 +196,7 @@ main(int ac, char *av[])
 	return -1;
     }
 
-    count = (unsigned long)sb.st_size;
+    count = sb.st_size;
     buf1 = bu_malloc((size_t)sb.st_size, "buf1");
 
     next_arg++;
@@ -206,7 +207,7 @@ main(int ac, char *av[])
 	return -1;
     }
 
-    if (sb.st_size != count)
+    if ((size_t)sb.st_size != count)
 	bu_exit(EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
 
     buf2 = bu_malloc((size_t)sb.st_size, "buf2");
@@ -214,10 +215,14 @@ main(int ac, char *av[])
     count = count >> 1; /* convert count of char to count of short */
 
     /* Read the terrain data */
-    fread(buf1, sizeof(short), count, in1);
+    ret = fread(buf1, sizeof(short), count, in1);
+    if (ret < count)
+	perror("fread");
     fclose(in1);
 
-    fread(buf2, sizeof(short), count, in2);
+    ret = fread(buf2, sizeof(short), count, in2);
+    if (ret < count)
+	perror("fread");
     fclose(in2);
 
 

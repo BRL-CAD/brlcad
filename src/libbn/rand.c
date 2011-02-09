@@ -1,7 +1,7 @@
 /*                          R A N D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -727,7 +727,7 @@ const float bn_rand_table[BN_RAND_TABSIZE] = {
 };
 
 
-double bn_sin_scale = 325.949323452232;	/**< @brief SINTABSIZE / TWOPI */
+double bn_sin_scale = BN_SINTABSIZE / (2.0 * M_PI);
 
 /**
  * table of floating point sine values in the closed (i.e. inclusive)

@@ -24,7 +24,7 @@ iwidgets::dialogshell .ds
 
 .ds add dismiss -text "Dismiss" -command {.ds deactivate}
 .ds default dismiss
-
+ 
 #
 # Add something to the top of the dialog...
 #

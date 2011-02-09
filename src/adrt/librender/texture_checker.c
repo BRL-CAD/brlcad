@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ C H E C K E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2010 United States Government as represented by
+ * Copyright (c) 2002-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,40 +30,41 @@
 
 #include "bu.h"
 
-void texture_checker_init(texture_t *texture, int tile) {
-    texture_checker_t   *td;
+void
+texture_checker_init(struct texture_s *texture, int tile) {
+    struct texture_checker_s   *td;
 
-    texture->data = bu_malloc(sizeof(texture_checker_t), "checker data");
+    texture->data = bu_malloc(sizeof(struct texture_checker_s), "checker data");
     texture->free = texture_checker_free;
     texture->work = (texture_work_t *)texture_checker_work;
 
-    td = (texture_checker_t *)texture->data;
+    td = (struct texture_checker_s *)texture->data;
     td->tile = tile;
 }
 
-
-void texture_checker_free(texture_t *texture) {
+void
+texture_checker_free(struct texture_s *texture) {
     bu_free(texture->data, "checker data");
 }
 
-
-void texture_checker_work(__TEXTURE_WORK_PROTOTYPE__) {
-    texture_checker_t	*td;
-    TIE_3			pt;
+void
+texture_checker_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, vect_t *pixel) {
+    struct texture_checker_s	*td;
+    vect_t			pt;
     int			u, v;
 
 
-    td = (texture_checker_t *)texture->data;
+    td = (struct texture_checker_s *)texture->data;
 
     /* Transform the Point */
     MATH_VEC_TRANSFORM(pt, id->pos, ADRT_MESH(mesh)->matinv);
 
-    if (pt.v[0]+TIE_PREC > ADRT_MESH(mesh)->max.v[0]) pt.v[0] = ADRT_MESH(mesh)->max.v[0];
-    if (pt.v[1]+TIE_PREC > ADRT_MESH(mesh)->max.v[1]) pt.v[1] = ADRT_MESH(mesh)->max.v[1];
-    u = ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0] > 0 ? (int)((pt.v[0] - ADRT_MESH(mesh)->min.v[0]) / ((ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0])/td->tile))%2 : 0;
-    v = ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1] > 0 ? (int)((pt.v[1] - ADRT_MESH(mesh)->min.v[1]) / ((ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1])/td->tile))%2 : 0;
+    if (pt[0]+TIE_PREC > ADRT_MESH(mesh)->max[0]) pt[0] = ADRT_MESH(mesh)->max[0];
+    if (pt[1]+TIE_PREC > ADRT_MESH(mesh)->max[1]) pt[1] = ADRT_MESH(mesh)->max[1];
+    u = ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[0] > 0 ? (int)((pt[0] - ADRT_MESH(mesh)->min[0]) / ((ADRT_MESH(mesh)->max[0] - ADRT_MESH(mesh)->min[0])/td->tile))%2 : 0;
+    v = ADRT_MESH(mesh)->max[1] - ADRT_MESH(mesh)->min[1] > 0 ? (int)((pt[1] - ADRT_MESH(mesh)->min[1]) / ((ADRT_MESH(mesh)->max[1] - ADRT_MESH(mesh)->min[1])/td->tile))%2 : 0;
 
-    pixel->v[0] = pixel->v[1] = pixel->v[2] = u ^ v ? 1.0 : 0.0;
+    *pixel[0] = *pixel[1] = *pixel[2] = u ^ v ? 1.0 : 0.0;
 }
 
 /*

@@ -1,82 +1,44 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2010 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-
-<refentry id='anim_hardtrack1'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="anim_hardtrack1">
   <refmeta>
     <refentrytitle>ANIM_HARDTRACK</refentrytitle>
     <manvolnum>nged</manvolnum>
-    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-    <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-  <refnamediv id='name'>
+  <refnamediv xml:id="name">
     <refname>anim_hardtrack</refname>
     <refpurpose>make an animation script for the links and/or wheels of a tracked vehicle with rigid axles.</refpurpose>
   </refnamediv>
   
   <!-- body begins here -->
-  <refsynopsisdiv id='synopsis'>
-    <cmdsynopsis>
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
       <command>anim_hardtrack</command>
-      <arg choice='opt'>-l <replaceable>num_links</replaceable><replaceable>linkname</replaceable></arg>
-      <arg choice='opt'>-w <replaceable>wheelname</replaceable></arg>
-      <arg choice='opt'><replaceable>options</replaceable></arg>
-      <arg choice='plain'><replaceable>wheelfile</replaceable></arg>
-      <arg choice='plain'><replaceable>in.table</replaceable></arg>
-      <arg choice='plain'><replaceable>out.script</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-l <replaceable>num_links</replaceable><replaceable>linkname</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-w <replaceable>wheelname</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>options</replaceable></arg>
+      <arg choice="plain" rep="norepeat"><replaceable>wheelfile</replaceable></arg>
+      <arg choice="plain" rep="norepeat"><replaceable>in.table</replaceable></arg>
+      <arg choice="plain" rep="norepeat"><replaceable>out.script</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   
-  <refsect1 id='description'>
-    <title>DESCRIPTION</title>
+  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+    
     <para>
-      <emphasis remap='I'>Anim_hardtrack</emphasis> is designed to produce an animation script for the
+      <emphasis remap="I">Anim_hardtrack</emphasis> is designed to produce an animation script for the
       animation of a track and/or the wheels defining a track, where the wheels
       are rigidly fixed in place with respect to the vehicle. The main
-      difference between <command>anim_hardtrack</command> and <emphasis remap='I'>anim_track</emphasis>
-      is that <emphasis remap='I'>anim_track</emphasis> handles vehicles with dynamic axles. Both are 
-      designed to be use in conjunction with <emphasis remap='I'>anim_script,</emphasis>
+      difference between <command>anim_hardtrack</command> and <emphasis remap="I">anim_track</emphasis>
+      is that <emphasis remap="I">anim_track</emphasis> handles vehicles with dynamic axles. Both are 
+      designed to be use in conjunction with <emphasis remap="I">anim_script,</emphasis>
       to achieve the final result.
     </para>
     
     <para>
-      <emphasis remap='B' role='B'>in.table</emphasis> is the file that will be used to animate the
+      <emphasis remap="B" role="B">in.table</emphasis> is the file that will be used to animate the
       vehicle itself. By default, it is assumed that it contains a time column,
       three columns of translation information, and three columns specifying the
       vehicle's yaw, pitch, and roll. If it is desired that the vehicle be steered
@@ -85,7 +47,7 @@
     </para>
     
     <para>
-      The track's geometry is defined by <emphasis remap='B' role='B'>wheelfile</emphasis>,
+      The track's geometry is defined by <emphasis remap="B" role="B">wheelfile</emphasis>,
       a table which contains one row for each wheel defining the track. The
       first three columns of the table specify the x, y, and z coordinates of
       the wheel centers. The fourth column specifies the radius of each wheel.
@@ -108,7 +70,7 @@
       with the wheel-contacting surface centered on the origin and the
       ground-contacting surface facing up. The sides of each link which
       connect to other links should face the positive and negative x-axes.
-      <emphasis remap='I'>Anim_hardtrack</emphasis> prints the appropriate
+      <emphasis remap="I">Anim_hardtrack</emphasis> prints the appropriate
       commands to move the links from the origin to the correct place around the wheels.
     </para>
     
@@ -117,23 +79,23 @@
       and <option>-i</option> options are needed.
     </para>
     
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='options'>
-    <title>OPTIONS:</title>
+  <refsection xml:id="options"><info><title>OPTIONS:</title></info>
+    
     <para>
       One or both of the first two options should always be specified.
     </para>
-    <variablelist remap='TP'>
+    <variablelist remap="TP">
       <varlistentry>
 	<term><option>-l num linkname</option></term>
 	<listitem>
 	  <para>
 	    Print animation scripts to animate the links of the track. Animation
-	    commands will be printed for <emphasis remap='I'>num</emphasis>
-	    different links named <emphasis remap='I'>linkname</emphasis>.0,
-	    <emphasis remap='I'>linkname</emphasis>.1, up through
-	    <emphasis remap='I'>linkname</emphasis>.(<emphasis remap='I'>num</emphasis>-1).
+	    commands will be printed for <emphasis remap="I">num</emphasis>
+	    different links named <emphasis remap="I">linkname</emphasis>.0,
+	    <emphasis remap="I">linkname</emphasis>.1, up through
+	    <emphasis remap="I">linkname</emphasis>.(<emphasis remap="I">num</emphasis>-1).
 	    A typical example of a linkname might be "tank/righttrack/links/link." The full 
 	    pathname must be specified, because <command>anim_hardtrack</command>'s method is 
 	    to roll the links around within the vehicle's tree structure so that when the 
@@ -147,9 +109,9 @@
 	<listitem>
 	  <para>
 	    Print animation scripts to rotate each wheel. The wheels are named 
-	    <emphasis remap='I'>wheelname</emphasis>.0, <emphasis remap='I'>wheelname</emphasis>.1,
-	    and so on, where <emphasis remap='I'>wheelname</emphasis>.0 is the first wheel listed in
-	    <emphasis remap='B' role='B'>wheelfile</emphasis>. As with the links, the full pathname 
+	    <emphasis remap="I">wheelname</emphasis>.0, <emphasis remap="I">wheelname</emphasis>.1,
+	    and so on, where <emphasis remap="I">wheelname</emphasis>.0 is the first wheel listed in
+	    <emphasis remap="B" role="B">wheelfile</emphasis>. As with the links, the full pathname 
 	    for the wheels should be specified.
 	  </para>
 	</listitem>
@@ -175,28 +137,28 @@
     </variablelist>
 
     <para>
-      When calling <emphasis remap='I'>anim_script</emphasis> to handle the animation of the vehicle
+      When calling <emphasis remap="I">anim_script</emphasis> to handle the animation of the vehicle
       itself, the parameters following the <option>-b</option> and <option>-d</option>
       options should be identical to those used for <command>anim_hardtrack</command>.
     </para>
 
-    <variablelist remap='TP'>
+    <variablelist remap="TP">
       <varlistentry>
 	<term><option>-r #</option></term>
 	<listitem>
 	  <para>
 	    Specify the common radius of all wheels. In this case, the fourth column
-	    should be omitted from the <emphasis remap='B' role='B'>wheelfile</emphasis>.
+	    should be omitted from the <emphasis remap="B" role="B">wheelfile</emphasis>.
 	  </para>
 	</listitem>
       </varlistentry>
       <varlistentry>
 	<term><option>-s</option></term>
 	<listitem>
-	  <para>Automatic steering. In this case, <emphasis remap='B' role='B'>in.table</emphasis>
+	  <para>Automatic steering. In this case, <emphasis remap="B" role="B">in.table</emphasis>
 	  specifies only the time and position of the vehicle. The orientation is calculated to always 
 	  face the vehicle in the direction of motion. This should be used when the <option>-s</option>
-	  option is used by <emphasis remap='I'>anim_script</emphasis> to animate the vehicle.
+	  option is used by <emphasis remap="I">anim_script</emphasis> to animate the vehicle.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -251,14 +213,14 @@
 	<term><option>-ml&lt;string&gt;</option></term>
 	<listitem>
 	  <para>
-	    Use <emphasis remap='B' role='B'>&lt;string&gt;</emphasis> for the link command. Defaults to "rarc."
+	    Use <emphasis remap="B" role="B">&lt;string&gt;</emphasis> for the link command. Defaults to "rarc."
 	  </para>
 	</listitem>
       </varlistentry>
       <varlistentry>
 	<term><option>-mw&lt;string&gt;</option></term>
 	<listitem>
-	  <para>Use <emphasis remap='B' role='B'>&lt;string&gt;</emphasis> for the wheel command. 
+	  <para>Use <emphasis remap="B" role="B">&lt;string&gt;</emphasis> for the wheel command. 
 	  Defaults to "lmul."
 	  </para>
 	</listitem>
@@ -271,15 +233,15 @@
       </varlistentry>
     </variablelist>
     
-    <refsect2 id='output'>
-      <title>Output:</title>
+    <refsection xml:id="output"><info><title>Output:</title></info>
+      
       <para>
 	The output is a script containing as many frames as there are positions in
-	<emphasis remap='B' role='B'>in.table</emphasis>. If there are <emphasis remap='I'>n</emphasis>
-	links and <emphasis remap='I'>k</emphasis> wheels, each frame contains up to
-	<emphasis remap='I'>n</emphasis>+<emphasis remap='I'>k</emphasis> anim commands, either:
+	<emphasis remap="B" role="B">in.table</emphasis>. If there are <emphasis remap="I">n</emphasis>
+	links and <emphasis remap="I">k</emphasis> wheels, each frame contains up to
+	<emphasis remap="I">n</emphasis>+<emphasis remap="I">k</emphasis> anim commands, either:
       </para>
-      <literallayout remap='.nf'>
+      <literallayout remap=".nf" class="normal">
 
 anim linkname.i matrix lmul
 [... matrix ...] ;
@@ -290,11 +252,11 @@ anim wheelname.j matrix lmul
 for 0&lt;=i&lt;n and 0&lt;=j&lt;k.
 
       </literallayout>
-    </refsect2>
-  </refsect1>
+    </refsection>
+  </refsection>
 
-  <refsect1 id='examples'>
-    <title>EXAMPLES</title>
+  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+    
     <para>
       Suppose you want to make an animation of a tank rolling across
       flat ground. A list of desired positions is created, perhaps by
@@ -309,10 +271,10 @@ for 0&lt;=i&lt;n and 0&lt;=j&lt;k.
     </para>
     <para>
       Suppose that there are two roadwheels and a drivewheel (tank/rwheel/wheel.i, 0&lt;=i&lt;3) which define
-      the shape of the right track. A file called <emphasis remap='B' role='B'>rwheelfile</emphasis>
+      the shape of the right track. A file called <emphasis remap="B" role="B">rwheelfile</emphasis>
       is created:
     </para>
-    <literallayout remap='.nf'>
+    <literallayout remap=".nf" class="normal">
 
 1500   -2000    30      30
 1500   0        1000    35
@@ -320,7 +282,7 @@ for 0&lt;=i&lt;n and 0&lt;=j&lt;k.
 
     </literallayout>
     <para>
-      This <emphasis remap='B' role='B'>rwheelfile</emphasis> lists the position and
+      This <emphasis remap="B" role="B">rwheelfile</emphasis> lists the position and
       radius of each of the three wheels.
     </para>
 
@@ -346,10 +308,10 @@ for 0&lt;=i&lt;n and 0&lt;=j&lt;k.
       Suppose that the left track is similar to the right track,
       except that all the wheels are of radius 30 units, and the links, rather
       than being stored at the origin, are actually placed in position around
-      the left wheels to begin with. The <emphasis remap='B' role='B'>lwheelfile</emphasis>
+      the left wheels to begin with. The <emphasis remap="B" role="B">lwheelfile</emphasis>
       would be:
     </para>
-    <literallayout remap='.nf'>
+    <literallayout remap=".nf" class="normal">
 
 -1500   -2000   30
 -1500   0       1000
@@ -389,38 +351,39 @@ for 0&lt;=i&lt;n and 0&lt;=j&lt;k.
     conventional name with the real name; for example, in this case it may
     be necessary to replace "rwheel.1" with "r_drivewheel".</para>
     
-    <para><emphasis remap='B' role='B'>Tank.script</emphasis>,
-    <emphasis remap='B' role='B'>rtrack.script</emphasis>, and <emphasis remap='B' role='B'>ltrack.script</emphasis>
-    can be combined with <emphasis remap='I'>anim_sort</emphasis> to make the complete script.</para>
+    <para><emphasis remap="B" role="B">Tank.script</emphasis>,
+    <emphasis remap="B" role="B">rtrack.script</emphasis>, and <emphasis remap="B" role="B">ltrack.script</emphasis>
+    can be combined with <emphasis remap="I">anim_sort</emphasis> to make the complete script.</para>
 
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='bugs'>
-    <title>BUGS</title>
+  <refsection xml:id="bugs"><info><title>BUGS</title></info>
+    
     <para>Tracks must have at least two wheels, and they must be listed in clockwise
     order, or the results are unpredictable.</para>
-  </refsect1>
+  </refsection>
 
-  <refsect1 id='see_also'>
-    <title>SEE ALSO</title>
+  <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+    
     <para><citerefentry><refentrytitle>anim_script</refentrytitle><manvolnum>nged</manvolnum></citerefentry>, <citerefentry><refentrytitle>anim_track</refentrytitle><manvolnum>nged</manvolnum></citerefentry></para>
-  </refsect1>
+  </refsection>
 
-  <refsect1 id='author'>
-    <title>AUTHOR</title>
-    <para>Carl J. Nuzman</para>
-  </refsect1>
+  <info>
+    <author>
+      <personname>Carl J. Nuzman</personname>
+      <contrib></contrib>
+    </author>
+  </info>
   
-  <refsect1 id='copyright'>
-    <title>COPYRIGHT</title>
-    <para>This software is Copyright (c) 1993-2010 by the United States
+  <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+    
+    <para>This software is Copyright (c) 1993-2011 by the United States
     Government as represented by U.S. Army Research Laboratory.</para>
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='bug_reports'>
-    <title>BUG REPORTS</title>
+  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+    
     <para>Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;.</para>
-  </refsect1>
+  </refsection>
 </refentry>
-

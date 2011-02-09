@@ -1,7 +1,7 @@
 /*                       H I S T O R Y . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2010 United States Government as represented by
+ * Copyright (c) 1995-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ history_record(
 {
     struct mged_hist *new_hist;
 
-    if (strcmp(bu_vls_addr(cmdp), "\n") == 0)
+    if (BU_STR_EQUAL(bu_vls_addr(cmdp), "\n"))
 	return;
 
     new_hist = (struct mged_hist *)bu_malloc(sizeof(struct mged_hist),
@@ -137,7 +137,7 @@ history_journalize(struct mged_hist *hptr)
  */
 
 int
-f_journal(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_journal(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     if (argc < 1 || 3 < argc) {
 	struct bu_vls vls;
@@ -188,43 +188,13 @@ f_journal(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 
 /*
- * F _ D E L A Y
- *
- * Uses select to delay for the specified amount of seconds and
- * microseconds.
- */
-
-int
-f_delay(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-    struct timeval tv;
-
-    if (argc < 3 || 3 < argc) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help delay");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    tv.tv_sec = atoi(argv[1]);
-    tv.tv_usec = atoi(argv[2]);
-    select(0, NULL, NULL, NULL, &tv);
-
-    return TCL_OK;
-}
-
-
-/*
  * F _ H I S T O R Y
  *
  * Prints out the command history, either to bu_log or to a file.
  */
 
 int
-f_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     FILE *fp;
     int with_delays = 0;
@@ -244,14 +214,14 @@ f_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     fp = NULL;
     while (argc >= 2) {
-	if (strcmp(argv[1], "-delays") == 0)
+	if (BU_STR_EQUAL(argv[1], "-delays"))
 	    with_delays = 1;
-	else if (strcmp(argv[1], "-outfile") == 0) {
+	else if (BU_STR_EQUAL(argv[1], "-outfile")) {
 	    if (fp != NULL) {
 		Tcl_AppendResult(interp, "history: -outfile option given more than once\n",
 				 (char *)NULL);
 		return TCL_ERROR;
-	    } else if (argc < 3 || strcmp(argv[2], "-delays") == 0) {
+	    } else if (argc < 3 || BU_STR_EQUAL(argv[2], "-delays")) {
 		Tcl_AppendResult(interp, "history: I need a file name\n", (char *)NULL);
 		return TCL_ERROR;
 	    } else {
@@ -361,7 +331,7 @@ history_next(const char *pat)
 
 
 int
-cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct bu_vls *vp;
     struct bu_vls vls;
@@ -375,7 +345,7 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "add") == 0) {
+    if (BU_STR_EQUAL(argv[1], "add")) {
 	struct timeval zero;
 
 	if (argc != 3) {
@@ -399,7 +369,7 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "next") == 0) {
+    if (BU_STR_EQUAL(argv[1], "next")) {
 	if (argc == 2) {
 	    vp = history_next((const char *)NULL);
 	    if (vp == NULL)
@@ -420,7 +390,7 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "prev") == 0) {
+    if (BU_STR_EQUAL(argv[1], "prev")) {
 	if (argc == 2) {
 	    vp = history_prev((const char *)NULL);
 	    if (vp == NULL)
@@ -442,7 +412,7 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "cur") == 0) {
+    if (BU_STR_EQUAL(argv[1], "cur")) {
 	if (argc != 2) {
 	    bu_vls_printf(&vls, "helpdevel hist");
 	    Tcl_Eval(interp, bu_vls_addr(&vls));

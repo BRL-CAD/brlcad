@@ -43,9 +43,9 @@ set m 1
 # Initial construction test
 #
 test Calendar-1.$c {Calendar construction} {
-    iwidgets::Calendar .cal
+    iwidgets::Calendar .cal 
     pack .cal -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -85,7 +85,7 @@ foreach test {
 	    .cal configure $option [lindex $test 1]
 	    lindex [.cal configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -117,7 +117,7 @@ foreach test {
 	test Calendar-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -125,8 +125,8 @@ test Calendar-3.$m "object methods, clock clicks" {
     set clicks [clock scan "06/08/1964"]
     .cal show $clicks
     .cal select $clicks
-    update
-    .cal get
+    update 
+    .cal get 
 } {06/08/1964}
 incr m
 
@@ -149,22 +149,22 @@ foreach test {
 #
 test Calendar-1.$c {Calendar destruction} {
     destroy .cal
-    update
+    update 
 } {}
 
 incr c
 
 test Calendar-1.$c {Calendar construction} {
-    iwidgets::calendar .cal
+    iwidgets::calendar .cal 
     pack .cal -padx 10 -pady 10
-    update
+    update 
 } {}
 
 incr c
 
 test Calendar-1.$c {Calendar destruction} {
     destroy .cal
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

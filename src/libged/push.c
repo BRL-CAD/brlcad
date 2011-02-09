@@ -1,7 +1,7 @@
 /*                         P U S H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -146,10 +146,7 @@ ged_push_leaf(struct db_tree_state	*tsp,
  * A null routine that does nothing.
  */
 static union tree *
-ged_push_region_end(struct db_tree_state *tsp,
-		    const struct db_full_path *pathp,
-		    union tree *curtree,
-		    genptr_t client_data)
+ged_push_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *UNUSED(curtree), genptr_t UNUSED(client_data))
 {
     return curtree;
 }
@@ -298,12 +295,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 
 
 static void
-ged_do_identitize(struct db_i		*dbip,
-		  struct rt_comb_internal *comb,
-		  union tree		*comb_leaf,
-		  genptr_t		user_ptr1,
-		  genptr_t		user_ptr2,
-		  genptr_t		user_ptr3)
+ged_do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3))
 {
     struct directory *dp;
     struct bu_vls *msg = (struct bu_vls *)user_ptr1;
@@ -315,7 +307,7 @@ ged_do_identitize(struct db_i		*dbip,
 	comb_leaf->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t), "tl_mat");
     }
     MAT_IDN(comb_leaf->tr_l.tl_mat);
-    if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return;
 
     ged_identitize(dp, dbip, msg);
@@ -335,7 +327,7 @@ ged_identitize(struct directory	*dp,
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
-    if (dp->d_flags & DIR_SOLID)
+    if (dp->d_flags & RT_DIR_SOLID)
 	return;
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(msg, "Database read error, aborting\n");

@@ -1,7 +1,7 @@
 /*                         C A N O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -108,8 +108,8 @@ extern int  ipu_bytes_per_pixel;
 extern int tray;
 extern char conv;
 extern char clear;
-extern unsigned long width;
-extern unsigned long height;
+extern size_t width;
+extern size_t height;
 extern int zoom;
 extern int scr_width;
 extern int scr_height;

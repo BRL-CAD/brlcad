@@ -1,7 +1,7 @@
 /*                      H E A T G R A P H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,10 +40,10 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "rtprivate.h"
 #include "plot3.h"
 #include "scanline.h"
 
+#include "./rtuif.h"
 #include "./ext.h"
 
 

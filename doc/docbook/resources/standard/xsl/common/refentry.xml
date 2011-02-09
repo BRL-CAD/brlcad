@@ -39,7 +39,7 @@
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Reference documentation for particular commands, functions,
     etc., is sometimes viewed in isolation from its greater "context". For
@@ -178,7 +178,7 @@
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The <literal>man(7)</literal> man page describes this as "the
     title of the man page (e.g., <literal>MAN</literal>). This differs
@@ -217,7 +217,7 @@
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The <literal>man(7)</literal> man page describes this as "the
     section number the man page should be placed in (e.g.,
@@ -267,7 +267,7 @@
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The <literal>man(7)</literal> man page describes this as "the
     date of the last revision". If we cannot find a date in the source, we
@@ -322,7 +322,7 @@
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The <literal>man(7)</literal> man page describes this as "the
     source of the command", and provides the following examples:
@@ -453,7 +453,7 @@
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>A "source name" is one part of a (potentially) two-part
     <replaceable>Name</replaceable> <replaceable>Version</replaceable>
@@ -512,7 +512,7 @@
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>A "version" is one part of a (potentially) two-part
     <replaceable>Name</replaceable> <replaceable>Version</replaceable>
@@ -571,7 +571,7 @@
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The <literal>man(7)</literal> man page describes this as "the
     title of the manual (e.g., <citetitle>Linux Programmer's
@@ -684,7 +684,7 @@
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template name="get.refentry.metadata.prefs"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The DocBook XSL stylesheets include several user-configurable
     global stylesheet parameters for controlling <tag>refentry</tag>
@@ -728,7 +728,7 @@
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The <function>set.refentry.metadata</function> template is
     called each time a suitable source element is found for a certain

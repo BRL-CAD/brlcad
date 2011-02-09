@@ -1,7 +1,7 @@
 /*                           L G T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -71,36 +71,6 @@
 #define B_PAGE		1	/* Buffered I/O (DMA paging scheme).	*/
 #define B_LINE		2	/* Line-buffered I/O (DMA).		*/
 #define Rotate( f )	(f) = (f) + 1 > 2 ? 0 : (f) + 1
-
-/* !!! rely on raytrace.h */
-#ifndef DEBUG_OFF
-#define DEBUG_OFF	0	/* No debugging */
-
-/* These definitions are each for one bit */
-
-/* Options useful for debugging applications */
-#define DEBUG_ALLRAYS	0x00000001	/* Print calls to shootray() */
-#define DEBUG_SHOOT	0x00000002	/* Info about shootray() processing */
-
-/* Options useful for debugging the database */
-#define DEBUG_DB	0x00000010	/* Database debugging */
-#define DEBUG_SOLIDS	0x00000020	/* Print prep'ed solids */
-#define DEBUG_REGIONS	0x00000040	/* Print regions & boolean trees */
-#define DEBUG_ARB8	0x00000080	/* Print voluminus ARB8 details */
-#define DEBUG_SPLINE	0x00000100	/* Splines */
-
-/* Options useful for debugging the library */
-#define DEBUG_ROOTS	0x00001000	/* Print rootfinder details */
-#define DEBUG_PARTITION	0x00002000	/* Info about bool_weave() */
-#define DEBUG_CUT	0x00004000	/* Print space cutting details */
-#define DEBUG_BOXING	0x00008000	/* Object/box checking details */
-#define DEBUG_MEM	0x00010000	/* Debug dynamic memory operations */
-#define DEBUG_TESTING	0x00020000	/* One-shot debugging flag */
-#define DEBUG_FDIFF	0x00040000	/* bool/fdiff debugging */
-
-/* These will cause binary debugging output */
-#define DEBUG_PLOTBOX	0x80000000	/* Plot(3) bounding boxes to stdout */
-#endif
 
 /* Application debugging flags.						*/
 #define DEBUG_RGB	0x80000

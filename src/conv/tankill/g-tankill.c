@@ -1,7 +1,7 @@
 /*                     G - T A N K I L L . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -104,7 +104,7 @@ insert_id(int id)
 
 /* routine used in tree walker to select regions with the current ident number */
 static int
-select_region(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_region(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
 {
     if ( tsp->ts_regionid == curr_id )
 	return 0;
@@ -114,7 +114,7 @@ select_region(struct db_tree_state *tsp, const struct db_full_path *pathp, const
 
 /* routine used in tree walker to collect region ident numbers */
 static int
-get_reg_id(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+get_reg_id(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
 {
     insert_id( tsp->ts_regionid );
     return -1;
@@ -122,7 +122,7 @@ get_reg_id(struct db_tree_state *tsp, const struct db_full_path *pathp, const st
 
 /* stubs to warn of the unexpected */
 static union tree *
-region_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, union tree *UNUSED(curtree), genptr_t UNUSED(client_data))
 {
     struct directory *fp_name;	/* name from pathp */
 
@@ -132,7 +132,7 @@ region_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, union t
 }
 
 static union tree *
-leaf_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *UNUSED(ip), genptr_t UNUSED(client_data))
 {
     struct directory *fp_name;	/* name from pathp */
 
@@ -585,11 +585,11 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 
 	/* Now write the data out */
 	if ( fp_id )	/* Use id count instead of actual id */
-	    fprintf( fp_out, "%ul %d %d           " ,
-		     BU_PTBL_END( &vertices ), id_counter, surr_code );
+	    fprintf( fp_out, "%lu %d %d           " ,
+		     (unsigned long)BU_PTBL_END( &vertices ), id_counter, surr_code );
 	else
-	    fprintf( fp_out, "%ul %d %d           " ,
-		     BU_PTBL_END( &vertices ), tsp->ts_regionid, surr_code );
+	    fprintf( fp_out, "%lu %d %d           " ,
+		     (unsigned long)BU_PTBL_END( &vertices ), tsp->ts_regionid, surr_code );
 	for ( i=0; i<BU_PTBL_END( &vertices ); i++ )
 	{
 	    struct vertex *v;
@@ -805,6 +805,92 @@ main(int argc, char **argv)
     return 0;
 }
 
+
+static void
+process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp)
+{
+    if (!BU_SETJUMP) {
+	/* try */
+
+	/* Write the region to the TANKILL file */
+	Write_tankill_region( r, tsp, pathp );
+
+    } else {
+	/* catch */
+
+	char *sofar;
+
+	sofar = db_path_to_string(pathp);
+	bu_log( "FAILED in triangulator: %s\n", sofar );
+	bu_free( (char *)sofar, "sofar" );
+
+	/* Sometimes the NMG library adds debugging bits when
+	 * it detects an internal error, before bombing out.
+	 */
+	rt_g.NMG_debug = NMG_debug;	/* restore mode */
+
+	/* Release any intersector 2d tables */
+	nmg_isect2d_final_cleanup();
+
+	/* Get rid of (m)any other intermediate structures */
+	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
+	    nmg_km(*tsp->ts_m);
+	} else {
+	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	}
+
+	/* Now, make a new, clean model structure for next pass. */
+	*tsp->ts_m = nmg_mm();
+    }  BU_UNSETJUMP;
+}
+
+
+static union tree *
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
+{
+    union tree *ret_tree = TREE_NULL;
+
+    /* Begin bomb protection */
+    if ( !BU_SETJUMP ) {
+	/* try */
+
+	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+
+    } else  {
+	/* catch */
+	char *name = db_path_to_string( pathp );
+
+	/* Error, bail out */
+	bu_log( "conversion of %s FAILED!\n", name );
+
+	/* Sometimes the NMG library adds debugging bits when
+	 * it detects an internal error, before before bombing out.
+	 */
+	rt_g.NMG_debug = NMG_debug;/* restore mode */
+
+	/* Release any intersector 2d tables */
+	nmg_isect2d_final_cleanup();
+
+	/* Release the tree memory & input regions */
+	db_free_tree(curtree, &rt_uniresource);/* Does an nmg_kr() */
+
+	/* Get rid of (m)any other intermediate structures */
+	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
+	    nmg_km(*tsp->ts_m);
+	} else {
+	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	}
+
+	bu_free( name, "db_path_to_string" );
+	/* Now, make a new, clean model structure for next pass. */
+	*tsp->ts_m = nmg_mm();
+    } BU_UNSETJUMP;/* Relinquish the protection */
+
+    return ret_tree;
+}
+
+
 /*
  *			D O _ R E G I O N _ E N D
  *
@@ -838,51 +924,15 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
     regions_tried++;
 
-    /* Begin bomb protection */
-    if ( BU_SETJUMP )
-    {
-	char *sofar;
-
-	/* Error, bail out */
-	BU_UNSETJUMP;		/* Relinquish the protection */
-
-	sofar = db_path_to_string(pathp);
-	bu_log( "FAILED in Boolean evaluation: %s\n", sofar );
-	bu_free( (char *)sofar, "sofar" );
-
-	/* Sometimes the NMG library adds debugging bits when
-	 * it detects an internal error, before before bombing out.
-	 */
-	rt_g.NMG_debug = NMG_debug;	/* restore mode */
-
-	/* Release any intersector 2d tables */
-	nmg_isect2d_final_cleanup();
-
-	/* Get rid of (m)any other intermediate structures */
-	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
-	{
-	    nmg_km(*tsp->ts_m);
-	}
-	else
-	{
-	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-	}
-
-	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
-	goto out;
-    }
-    (void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-    /* librt/nmg_bool.c */
-    ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+    ret_tree = process_boolean(curtree, tsp, pathp);
 
     if ( ret_tree )
 	r = ret_tree->tr_d.td_r;
     else
 	r = (struct nmgregion *)NULL;
 
-    BU_UNSETJUMP;		/* Relinquish the protection */
     regions_converted++;
+
     if (r != (struct nmgregion *)NULL)
     {
 	struct shell *s;
@@ -915,52 +965,16 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
 	if ( !empty_region && !empty_model )
 	{
-	    if ( BU_SETJUMP )
-	    {
-		char *sofar;
-
-		BU_UNSETJUMP;
-
-		sofar = db_path_to_string(pathp);
-		bu_log( "FAILED in triangulator: %s\n", sofar );
-		bu_free( (char *)sofar, "sofar" );
-
-		/* Sometimes the NMG library adds debugging bits when
-		 * it detects an internal error, before before bombing out.
-		 */
-		rt_g.NMG_debug = NMG_debug;	/* restore mode */
-
-		/* Release any intersector 2d tables */
-		nmg_isect2d_final_cleanup();
-
-		/* Get rid of (m)any other intermediate structures */
-		if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
-		{
-		    nmg_km(*tsp->ts_m);
-		}
-		else
-		{
-		    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-		}
-
-		/* Now, make a new, clean model structure for next pass. */
-		*tsp->ts_m = nmg_mm();
-		goto out;
-	    }
-
-	    /* Write the region to the TANKILL file */
-	    Write_tankill_region( r, tsp, pathp );
+	    process_triangulation(r, pathp, tsp);
 
 	    regions_written++;
 
-	    BU_UNSETJUMP;
 	}
 
 	if ( !empty_model )
 	    nmg_kr( r );
     }
 
- out:
     /*
      *  Dispose of original tree, so that all associated dynamic
      *  memory is released now, not at the end of all regions.

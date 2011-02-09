@@ -2,10 +2,10 @@
 # Promptdialog
 # ----------------------------------------------------------------------
 # Implements a prompt dialog similar to the OSF/Motif standard prompt
-# dialog composite widget.  The Promptdialog is derived from the
+# dialog composite widget.  The Promptdialog is derived from the 
 # Dialog class and is composed of a EntryField with methods to
 # manipulate the dialog buttons.
-#
+# 
 # ----------------------------------------------------------------------
 #  AUTHOR: Mark L. Ulferts              EMAIL: mulferts@austin.dsccc.com
 #
@@ -13,24 +13,24 @@
 # ----------------------------------------------------------------------
 #            Copyright (c) 1995 DSC Technologies Corporation
 # ======================================================================
-# Permission to use, copy, modify, distribute and license this software
-# and its documentation for any purpose, and without fee or written
-# agreement with DSC, is hereby granted, provided that the above copyright
-# notice appears in all copies and that both the copyright notice and
-# warranty disclaimer below appear in supporting documentation, and that
-# the names of DSC Technologies Corporation or DSC Communications
-# Corporation not be used in advertising or publicity pertaining to the
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
 # software without specific, written prior permission.
-#
-# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
 # ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
 # INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
-# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE,
-# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL
-# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
 # WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
-# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
 # SOFTWARE.
 # ======================================================================
 
@@ -53,20 +53,20 @@ itcl::class iwidgets::Promptdialog {
 
     constructor {args} {}
 
-    public method get {}
-    public method clear {}
-    public method insert {args}
-    public method delete {args}
-    public method icursor {args}
-    public method index {args}
-    public method scan {args}
-    public method selection {args}
-    method xview {args}
+    public method get {} 
+    public method clear {} 
+    public method insert {args} 
+    public method delete {args} 
+    public method icursor {args} 
+    public method index {args} 
+    public method scan {args} 
+    public method selection {args} 
+    method xview {args} 
 }
 
 #
 # Provide a lowercased access method for the Dialogshell class.
-#
+# 
 proc ::iwidgets::promptdialog {pathName args} {
     uplevel ::iwidgets::Promptdialog $pathName $args
 }
@@ -87,8 +87,8 @@ itcl::body iwidgets::Promptdialog::constructor {args} {
     # Set the borderwidth to zero.
     #
     component hull configure -borderwidth 0
-
-    #
+    
+    # 
     # Create an entry field widget.
     #
     itk_component add prompt {
@@ -97,19 +97,19 @@ itcl::body iwidgets::Promptdialog::constructor {args} {
 	usual
 
 	keep -exportselection -invalid -labelpos -labeltext -relief \
-	    -show -textbackground -textfont -validate
+	    -show -textbackground -textfont -validate 
     }
-
+    
     pack $itk_component(prompt) -fill x -expand yes
     set itk_interior [childsite]
-
+    
     hide Help
 
     #
     # Initialize the widget based on the command line options.
     #
     eval itk_initialize $args
-}
+}   
 
 # ------------------------------------------------------------------
 #                            METHODS
@@ -125,7 +125,7 @@ itcl::body iwidgets::Promptdialog::get {} {
 }
 
 # ------------------------------------------------------------------
-# METHOD: clear
+# METHOD: clear 
 #
 # Thinwrapped method of entry field class.
 # ------------------------------------------------------------------

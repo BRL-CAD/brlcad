@@ -1,7 +1,7 @@
 /*                       P N G - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,6 +57,7 @@ main(int argc, char **argv)
     int file_width, file_height;
     unsigned char *image;
     unsigned char **rows;
+    size_t ret;
 
     while ((c=bu_getopt(argc, argv, "v")) != EOF) {
 	switch (c) {
@@ -181,7 +182,9 @@ main(int argc, char **argv)
 
     png_read_image(png_p, rows);
 
-    fwrite(image, file_width*file_height*3, 1, stdout);
+    ret = fwrite(image, file_width*file_height*3, 1, stdout);
+    if (ret < 1)
+	perror("fwrite");
 
     if (verbose) {
 	png_timep mod_time;

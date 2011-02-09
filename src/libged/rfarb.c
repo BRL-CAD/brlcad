@@ -1,7 +1,7 @@
 /*                         R F A R B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s already exists\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
@@ -101,7 +101,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
     for (i=0; i<3; i++) {
 	switch (argv[7+3*i][0]) {
 	    case 'x':
-		if (norm[0] == 0.0) {
+		if (NEAR_ZERO(norm[0], SMALL_FASTF)) {
 		    bu_vls_printf(&gedp->ged_result_str, "X not unique in this face\n");
 		    return GED_ERROR;
 		}
@@ -118,7 +118,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 		break;
 
 	    case 'y':
-		if (norm[1] == 0.0) {
+		if (NEAR_ZERO(norm[1], SMALL_FASTF)) {
 		    bu_vls_printf(&gedp->ged_result_str, "Y not unique in this face\n");
 		    return GED_ERROR;
 		}
@@ -135,7 +135,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 		break;
 
 	    case 'z':
-		if (norm[2] == 0.0) {
+		if (NEAR_ZERO(norm[2], SMALL_FASTF)) {
 		    bu_vls_printf(&gedp->ged_result_str, "Z not unique in this face\n");
 		    return GED_ERROR;
 		}
@@ -157,7 +157,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (sscanf(argv[7+3*3], "%lf", &thick) != 1 || thick == 0.0) {
+    if (sscanf(argv[7+3*3], "%lf", &thick) != 1 || NEAR_ZERO(thick, SMALL_FASTF)) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: bad thicknes - %s", argv[0], argv[7+3*3]);
 	return GED_ERROR;
     }
@@ -220,8 +220,8 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 	VJOIN1(aip->pt[i+4], aip->pt[i], thick, norm);
     }
 
-    dp = db_diradd(gedp->ged_wdbp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&internal.idb_type);
-    if (dp == DIR_NULL) {
+    dp = db_diradd(gedp->ged_wdbp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type);
+    if (dp == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add %s to the directory\n", argv[0], argv[1]);
 	return GED_ERROR;
     }

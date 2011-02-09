@@ -1,7 +1,7 @@
 /*                         W C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
 
-    if ((nextdp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+    if ((nextdp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return;
 
     fp = (FILE *)user_ptr1;
@@ -68,7 +68,7 @@ wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union
     gedp = (struct ged *)user_ptr3; 
 
     /* recurse on combinations */
-    if (nextdp->d_flags & DIR_COMB)
+    if (nextdp->d_flags & RT_DIR_COMB)
 	(void)wcodes_printcodes(gedp, fp, nextdp, (*pathpos)+1);
 }
 
@@ -81,7 +81,7 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
     struct rt_comb_internal *comb;
     int id;
 
-    if (!(dp->d_flags & DIR_COMB))
+    if (!(dp->d_flags & RT_DIR_COMB))
 	return GED_OK;
 
     if ((id=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource)) < 0) {
@@ -161,7 +161,7 @@ ged_wcodes(struct ged *gedp, int argc, const char *argv[])
     path_capacity = PATH_STEP;
 
     for (i = 2; i < argc; ++i) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
 	    status = wcodes_printcodes(gedp, fp, dp, 0);
 
 	    if (status == GED_ERROR) {

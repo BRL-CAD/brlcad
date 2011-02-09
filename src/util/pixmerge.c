@@ -1,7 +1,7 @@
 /*                      P I X M E R G E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -121,7 +121,7 @@ get_args(int argc, char **argv)
 	return 0;
 
     f1_name = argv[bu_optind++];
-    if (strcmp(f1_name, "-") == 0)
+    if (BU_STR_EQUAL(f1_name, "-"))
 	f1 = stdin;
     else if ((f1 = fopen(f1_name, "r")) == NULL) {
 	perror(f1_name);
@@ -132,7 +132,7 @@ get_args(int argc, char **argv)
     }
 
     f2_name = argv[bu_optind++];
-    if (strcmp(f2_name, "-") == 0)
+    if (BU_STR_EQUAL(f2_name, "-"))
 	f2 = stdin;
     else if ((f2 = fopen(f2_name, "r")) == NULL) {
 	perror(f2_name);
@@ -152,6 +152,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
+    size_t ret;
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);
@@ -254,7 +255,9 @@ main(int argc, char **argv)
 	    }
 	    bg_cnt++;
 	}
-	fwrite(b3, width, len, stdout);
+	ret = fwrite(b3, width, len, stdout);
+	if (ret < (size_t)len)
+	    perror("fwrite");
     }
     fprintf(stderr, "pixmerge: %ld foreground, %ld background\n",
 	    fg_cnt, bg_cnt);

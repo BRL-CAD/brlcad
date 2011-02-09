@@ -1,7 +1,7 @@
 /*                        V R L I N K . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2010 United States Government as represented by
+ * Copyright (c) 1992-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,9 +53,9 @@ static char *tcp_port = "5555";	/* "gedd", remote mged */
 void ph_cmd(struct pkg_conn *pc, char *buf);
 void ph_vlist(struct pkg_conn *pc, char *buf);
 static struct pkg_switch pkgswitch[] = {
-    { VRMSG_CMD,		ph_cmd,		"Command" },
-    { VRMSG_VLIST,		ph_vlist,	"Import vlist" },
-    { 0,			0,		(char *)0 }
+    { VRMSG_CMD,		ph_cmd,		"Command", NULL },
+    { VRMSG_VLIST,		ph_vlist,	"Import vlist", NULL },
+    { 0,			0,		NULL, NULL }
 };
 
 
@@ -167,10 +167,10 @@ vr_viewpoint_hook(void)
  * Syntax:  vrmgr host role
  */
 int
-f_vrmgr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_vrmgr(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct bu_vls str;
-    char *role;
+    const char *role;
 
     if (argc < 3) {
 	struct bu_vls vls;
@@ -195,9 +195,9 @@ f_vrmgr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     vr_host = bu_strdup(argv[1]);
     role = argv[2];
 
-    if (strcmp(role, "master") == 0) {
-    } else if (strcmp(role, "slave") == 0) {
-    } else if (strcmp(role, "overview") == 0) {
+    if (BU_STR_EQUAL(role, "master")) {
+    } else if (BU_STR_EQUAL(role, "slave")) {
+    } else if (BU_STR_EQUAL(role, "overview")) {
     } else {
 	Tcl_AppendResult(interp, "role '", role, "' unknown, must be master/slave/overview\n",
 			 (char *)NULL);
@@ -224,11 +224,11 @@ f_vrmgr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     /* Establish appropriate hooks */
-    if (strcmp(role, "master") == 0) {
+    if (BU_STR_EQUAL(role, "master")) {
 	viewpoint_hook = vr_viewpoint_hook;
-    } else if (strcmp(role, "slave") == 0) {
+    } else if (BU_STR_EQUAL(role, "slave")) {
 	cmdline_hook = vr_event_hook;
-    } else if (strcmp(role, "overview") == 0) {
+    } else if (BU_STR_EQUAL(role, "overview")) {
 	/* No hooks required, just listen */
     }
     Tcl_CreateFileHandler(vrmgr->pkc_fd, TCL_READABLE,
@@ -253,8 +253,8 @@ ph_cmd(struct pkg_conn *pc, char *buf)
 #define CMD_BUFSIZE 1024
     char buffer[CMD_BUFSIZE] = {0};
 
-    status = Tcl_Eval(interp, buf);
-    result = Tcl_GetStringResult(interp);
+    status = Tcl_Eval(INTERP, buf);
+    result = Tcl_GetStringResult(INTERP);
 
     snprintf(buffer, CMD_BUFSIZE, "%s", result);
 
@@ -277,7 +277,7 @@ ph_cmd(struct pkg_conn *pc, char *buf)
  * Install whatever phantom solids he wants.
  */
 void
-ph_vlist(struct pkg_conn *pc, char *buf)
+ph_vlist(struct pkg_conn *UNUSED(pc), char *buf)
 {
     struct bu_list vhead;
     struct bu_vls name;

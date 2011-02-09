@@ -1,7 +1,7 @@
 /*                     I F _ R E M O T E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -182,7 +182,7 @@ done:
      * Eventually this may invoke UNIX Domain PKG (if we can figure
      * out what to do about socket pathnames).
      */
-    if (strcmp(host, "unix") == 0)
+    if (BU_STR_EQUAL(host, "unix"))
 	bu_strlcpy(host, "localhost", length);
 
     /* copy out port and device */
@@ -295,7 +295,7 @@ rem_close(FBIO *ifp)
 	return -2;
     /*
      * When some libfb interfaces with a "linger mode" window gets
-     * it's fb_close() call here, it closes down the network file
+     * its fb_close() call here, it closes down the network file
      * descriptor, and so the PKG connection is terminated at this
      * point.  If there was no transmission error noted in the
      * pkg_send() above, but the pkg_waitfor () here gets an error,

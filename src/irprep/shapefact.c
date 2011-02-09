@@ -1,7 +1,7 @@
 /*                     S H A P E F A C T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,9 +69,6 @@
 #include "raytrace.h"
 
 
-#if !defined(PI)
-#  define PI 3.14159265358979323846262	/*  Pi.  */
-#endif
 #define ADJTOL 1.e-1	/*  Tolerance for adjacent regions.  */
 #define ZEROTOL 1.e-20	/*  Zero tolerance.  */
 #define MAXREG 200	/*  Maximum number of regions.  */
@@ -379,7 +376,7 @@ int main(int argc, char **argv)
 	    rho = sqrt(rho) / 2. + .5;
 
 	    /*  find surface area of bounding sphere.  */
-	    areabs = 4. * PI * rho * rho;
+	    areabs = 4. * M_PI * rho * rho;
 
 	    /*  Second way to find starting point and direction.  */
 	    /*  This approach finds the starting point and direction  */
@@ -393,7 +390,7 @@ int main(int argc, char **argv)
 	     *	   (void)fflush(stdout);
 	     */
 	    q = BN_UNIF_DOUBLE(msr) + 0.5;
-	    theta = q * 2. * PI;
+	    theta = q * 2. * M_PI;
 	    /*
 	     *	   (void)printf("random number:  %f, theta:  %f\n", q, theta);
 	     *	   (void)fflush(stdout);
@@ -415,7 +412,7 @@ int main(int argc, char **argv)
 	     */
 
 	    /*  Elevation and azimuth for finding a vector in a plane.  */
-	    elev = PI / 2. - phi;
+	    elev = M_PI / 2. - phi;
 	    az = theta;
 	    /*
 	     *	   (void)printf("elevation:  %f, azimuth:  %f\n", elev, az);
@@ -425,7 +422,7 @@ int main(int argc, char **argv)
 	    /*  Find vector in yz-plane.  */
 
 	    q = BN_UNIF_DOUBLE(msr) + 0.5;
-	    theta = q * 2. * PI;
+	    theta = q * 2. * M_PI;
 	    /*
 	     *	   (void)printf("random number:  %f, theta:  %f\n", q, theta);
 	     *	   (void)fflush(stdout);

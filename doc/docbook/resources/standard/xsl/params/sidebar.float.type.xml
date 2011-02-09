@@ -45,20 +45,37 @@ the float appears at the top of the page.  On some processors,
 that may be the next page rather than the current page.
 </para>
 </listitem>
+
 <listitem>
 <para>If <parameter>sidebar.float.type</parameter> is
-<quote><literal>left</literal></quote> or
-<quote><literal>start</literal></quote>, then 
-a left side float is used.
+<quote><literal>left</literal></quote>,
+then a left side float is used.
 </para>
 </listitem>
+
 <listitem>
 <para>If <parameter>sidebar.float.type</parameter> is
-<quote><literal>right</literal></quote> or
-<quote><literal>end</literal></quote>, then 
-a right side float is used.
+<quote><literal>start</literal></quote>,
+then when the text direction is left-to-right a left side float is used.
+When the text direction is right-to-left, a right side float is used.
 </para>
 </listitem>
+
+<listitem>
+<para>If <parameter>sidebar.float.type</parameter> is
+<quote><literal>right</literal></quote>,
+then a right side float is used.
+</para>
+</listitem>
+
+<listitem>
+<para>If <parameter>sidebar.float.type</parameter> is
+<quote><literal>end</literal></quote>,
+then when the text direction is left-to-right a right side float is used.
+When the text direction is right-to-left, a left side float is used.
+</para>
+</listitem>
+
 <listitem>
 <para>If your XSL-FO processor supports floats positioned on the
 <quote><literal>inside</literal></quote> or

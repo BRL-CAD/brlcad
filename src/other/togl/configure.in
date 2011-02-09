@@ -104,9 +104,6 @@ TEA_ADD_TCL_SOURCES([])
 if test "${TEA_PLATFORM}" = "windows" ; then
     AC_DEFINE(BUILD_togl, 1, [Build windows export dll])
     CLEANFILES="$CLEANFILES *.lib *.dll *.exp *.ilk *.pdb vc*.pch *.manifest"
-    if test "$GCC" != "yes" ; then
-	    TEA_ADD_LIBS([StereoI/StereoI.lib])
-    fi
     #TEA_ADD_SOURCES([win/winFile.c])
     #TEA_ADD_INCLUDES([-I\"$(${CYGPATH} ${srcdir}/win)\"])
 else
@@ -188,7 +185,7 @@ case "${TEA_WINDOWINGSYSTEM}" in
 			[-lXt -lX11]
 		    )])
 		AS_IF([test "x$with_Xmu" = xno],
-			[TEA_ADD_SOURCES([Xmu_CmapAlloc.c Xmu_CrCmap.c Xmu_DelCmap.c Xmu_LookupCmap.c Xmu_StdCmap.c])])
+			[TEA_ADD_SOURCES([Xmu/CmapAlloc.c Xmu/CrCmap.c Xmu/DelCmap.c Xmu/LookupCmap.c Xmu/StdCmap.c])])
 		TEA_ADD_LIBS([-lGL])
 		LIBGLU=-lGLU
 		TOGL_UNDEF_GET_PROC_ADDRESS
@@ -201,7 +198,6 @@ case "${TEA_WINDOWINGSYSTEM}" in
 		else
 			# assume Microsoft compiler
 			LIBGLU=glu32.lib
-			TEA_ADD_CFLAGS([-TP])
 		fi
 		;;
 	*)
@@ -282,6 +278,4 @@ TEA_PROG_TCLSH
 # which require substituting th AC variables in.  Include these here.
 #--------------------------------------------------------------------
 
-AC_CONFIG_FILES([Makefile pkgIndex.tcl togl_ws.h])
-
-AC_OUTPUT
+AC_OUTPUT([Makefile pkgIndex.tcl togl_ws.h])

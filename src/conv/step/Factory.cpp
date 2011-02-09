@@ -1,7 +1,7 @@
 /*                 Factory.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -76,7 +76,7 @@ Factory::CreateObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
 {
 	string methodname = sse->EntityName();
 	FACTORYMAP &methodmap = GetMap();
-	FactoryMethod f;
+	FactoryMethod f = NULL;
 	FACTORYMAP::iterator i;
 
 	if (sse->IsComplex()) {
@@ -133,7 +133,7 @@ Factory::CreateCurveObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
 {
 	string methodname = sse->EntityName();
 	FACTORYMAP &methodmap = GetMap();
-	FactoryMethod f;
+	FactoryMethod f = NULL;
 	FACTORYMAP::iterator i;
 
 	if (sse->IsComplex()) {
@@ -200,7 +200,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SCLP23(Application_instance) *ss
 {
 	string methodname = sse->EntityName();
 	FACTORYMAP &methodmap = GetMap();
-	FactoryMethod f;
+	FactoryMethod f = NULL;
 	FACTORYMAP::iterator i;
 
 	if (sse->IsComplex()) {
@@ -545,7 +545,7 @@ Factory::CreateSurfaceObject(STEPWrapper *sw, SCLP23(Application_instance) *sse)
 {
 	string methodname = sse->EntityName();
 	FACTORYMAP &methodmap = GetMap();
-	FactoryMethod f;
+	FactoryMethod f = NULL;
 	FACTORYMAP::iterator i;
 
 	if (sse->IsComplex()) {

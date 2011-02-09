@@ -1,7 +1,7 @@
 /*                        I N S I D E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -386,6 +386,11 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
     fastf_t ratio;
 
     RT_TGC_CK_MAGIC(tgc);
+
+    VSETALL(unit_a, 0);
+    VSETALL(unit_b, 0);
+    VSETALL(unit_c, 0);
+    VSETALL(unit_d, 0);
 
     VCROSS(norm, tgc->a, tgc->b);
     VUNITIZE(norm);
@@ -951,11 +956,11 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	bu_vls_printf(&gedp->ged_result_str, "Enter name of the inside solid: ");
 	return GED_MORE;
     }
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[arg], LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(gedp->ged_wdbp->dbip, argv[arg], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s already exists.\n", argv[0], argv[arg]);
 	return GED_ERROR;
     }
-    if (gedp->ged_wdbp->dbip->dbi_version < 5 && (int)strlen(argv[arg]) > NAMESIZE) {
+    if (db_version(gedp->ged_wdbp->dbip) < 5 && (int)strlen(argv[arg]) > NAMESIZE) {
 	bu_vls_printf(&gedp->ged_result_str, "Database version 4 names are limited to %d characters\n", NAMESIZE);
 	return GED_ERROR;
     }
@@ -1152,8 +1157,8 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
     }
 
     /* Add to in-core directory */
-    dp = db_diradd(gedp->ged_wdbp->dbip, newname, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&ip->idb_type);
-    if (dp == DIR_NULL) {
+    dp = db_diradd(gedp->ged_wdbp->dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&ip->idb_type);
+    if (dp == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Database alloc error, aborting\n", argv[0]);
 	return GED_ERROR;
     }
@@ -1187,7 +1192,7 @@ ged_inside(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "Enter name of outside solid: ");
 	return GED_MORE;
     }
-    if ((outdp = db_lookup(gedp->ged_wdbp->dbip,  argv[arg], LOOKUP_QUIET)) == DIR_NULL) {
+    if ((outdp = db_lookup(gedp->ged_wdbp->dbip,  argv[arg], LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s not found", argv[0], argv[arg]);
 	return GED_ERROR;
     }

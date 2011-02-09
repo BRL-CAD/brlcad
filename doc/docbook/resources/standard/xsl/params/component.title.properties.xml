@@ -24,7 +24,7 @@
   <xsl:attribute name="text-align">
     <xsl:choose>
       <xsl:when test="((parent::article | parent::articleinfo | parent::info/parent::article) and not(ancestor::book) and not(self::bibliography))         or (parent::slides | parent::slidesinfo)">center</xsl:when>
-      <xsl:otherwise>left</xsl:otherwise>
+      <xsl:otherwise>start</xsl:otherwise>
     </xsl:choose>
   </xsl:attribute>
   <xsl:attribute name="start-indent"><xsl:value-of select="$title.margin.left"/></xsl:attribute>

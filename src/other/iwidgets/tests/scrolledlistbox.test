@@ -46,7 +46,7 @@ test Scrolledlistbox-1.$c {Scrolledlistbox construction} {
     iwidgets::Scrolledlistbox .slb -height 300 -width 300
     pack .slb -padx 10 -pady 10 -fill both -expand yes
     .slb insert end {Hello World} {Hello World}
-    update
+    update 
 } {}
 
 incr c
@@ -76,22 +76,22 @@ foreach test {
     {-labelpos w w}
     {-labelpos ws ws}
     {-labelpos n n}
-    {-borderwidth 3 3}
-    {-hscrollmode none none}
-    {-hscrollmode static static}
-    {-hscrollmode dynamic dynamic}
-    {-relief raised raised}
-    {-relief sunken sunken}
-    {-sbwidth 20 20}
-    {-sbwidth 15 15}
-    {-textbackground GhostWhite GhostWhite}
-    {-scrollmargin 10 10}
-    {-selectborderwidth 3 3}
-    {-selectforeground blue blue}
-    {-selectmode browse browse}
-    {-selectmode extended extended}
-    {-selectmode single single}
-    {-selectmode multiple multiple}
+    {-borderwidth 3 3} 
+    {-hscrollmode none none} 
+    {-hscrollmode static static} 
+    {-hscrollmode dynamic dynamic} 
+    {-relief raised raised} 
+    {-relief sunken sunken} 
+    {-sbwidth 20 20} 
+    {-sbwidth 15 15} 
+    {-textbackground GhostWhite GhostWhite} 
+    {-scrollmargin 10 10} 
+    {-selectborderwidth 3 3} 
+    {-selectforeground blue blue} 
+    {-selectmode browse browse} 
+    {-selectmode extended extended} 
+    {-selectmode single single} 
+    {-selectmode multiple multiple} 
     {-sticky w w}
     {-sticky nw nw}
     {-sticky n n}
@@ -101,10 +101,10 @@ foreach test {
     {-sticky s s}
     {-sticky sw sw}
     {-sticky news news}
-    {-textfont 6x13 6x13}
-    {-vscrollmode none none}
-    {-vscrollmode static static}
-    {-vscrollmode dynamic dynamic}
+    {-textfont 6x13 6x13} 
+    {-vscrollmode none none} 
+    {-vscrollmode static static} 
+    {-vscrollmode dynamic dynamic} 
     {-visibleitems 30x20 30x20}
     {-width 0 0}
     {-height 0 0}} {
@@ -113,7 +113,7 @@ foreach test {
 	    .slb configure $option [lindex $test 1]
 	    lindex [.slb configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -169,7 +169,7 @@ foreach test {
 	test Scrolledlistbox-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -193,7 +193,7 @@ foreach test {
 #
 test Scrolledlistbox-1.$c {Scrolledlistbox destruction} {
     destroy .slb
-    update
+    update 
 } {}
 
 incr c
@@ -201,16 +201,16 @@ incr c
 test Scrolledlistbox-1.$c {Scrolledlistbox construction} {
     iwidgets::scrolledlistbox .slb -selectmode extended \
 	-vscrollmode static -hscrollmode dynamic -labeltext "List" \
-	-labelpos nw
+	-labelpos nw 
     pack .slb -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Scrolledlistbox-1.$c {Scrolledlistbox destruction} {
     destroy .slb
-    update
+    update 
 } {}
 
 incr c
@@ -219,7 +219,7 @@ test Scrolledlistbox-1.$c {Scrolledlistbox destruction} {
     iwidgets::scrolledlistbox .slb
     pack .slb
     destroy .slb
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

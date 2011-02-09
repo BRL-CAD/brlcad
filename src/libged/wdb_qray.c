@@ -1,7 +1,7 @@
 /*                          Q R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,19 +59,24 @@ static struct dg_qray_fmt_data def_qray_fmt_data[] = {
 };
 
 
-static char qray_syntax[] = "\
- qray vars			print a list of all variables (i.e. var = val)\n\
- qray basename [str]		set or get basename for query ray primitives\n\
- qray effects [t|g|b]		set or get effects (i.e. text, graphical or both)\n\
- qray echo [0|1]		set or get command echo\n\
- qray oddcolor [r g b]		set or get color of odd partitions\n\
- qray evencolor [r g b]		set or get color of even partitions\n\
- qray voidcolor [r g b]		set or get color of void areas\n\
- qray overlapcolor [r g b]	set or get color of overlap areas\n\
- qray fmt [r|h|p|f|m|o|g [str]]	set or get format string(s)\n\
- qray script [str]		set or get the nirt script string\n\
- qray [help]			print this help message\n\
-";
+static void
+usage(Tcl_Interp *interp)
+{
+    Tcl_AppendResult(interp, "Usage:\n",
+		     " qray vars			print a list of all variables (i.e. var = val)\n",
+		     " qray basename [str]		set or get basename for query ray primitives\n",
+		     " qray effects [t|g|b]		set or get effects (i.e. text, graphical or both)\n",
+		     " qray echo [0|1]			set or get command echo\n",
+		     " qray oddcolor [r g b]		set or get color of odd partitions\n",
+		     " qray evencolor [r g b]		set or get color of even partitions\n",
+		     " qray voidcolor [r g b]		set or get color of void areas\n",
+		     " qray overlapcolor [r g b]	set or get color of overlap areas\n",
+		     " qray fmt [r|h|p|f|m|o|g [str]]	set or get format string(s)\n",
+		     " qray script [str]		set or get the nirt script string\n",
+		     " qray [help]			print this help message\n",
+		     (char *)NULL);
+}
+
 
 static void
 qray_print_fmts(struct dg_obj *dgop,
@@ -144,11 +149,11 @@ dgo_qray_cmd(struct dg_obj *dgop,
 
     /* print help message */
     if (argc == 1) {
-	Tcl_AppendResult(interp, "Usage:\n", qray_syntax, (char *)NULL);
+	usage(interp);
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "fmt") == 0) {
+    if (BU_STR_EQUAL(argv[1], "fmt")) {
 	int i;
 
 	if (argc == 2) {
@@ -160,7 +165,8 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	    if ((i = qray_get_fmt_index(dgop, *argv[2])) < 0) {
 		Tcl_AppendResult(interp,
 				 "qray: unrecognized format type: '",
-				 argv[2], "'\nUsage:\n", qray_syntax, (char *)NULL);
+				 argv[2], "'\n", NULL);
+		usage(interp);
 		return TCL_ERROR;
 	    }
 
@@ -171,7 +177,8 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	    if ((i = qray_get_fmt_index(dgop, *argv[2])) < 0) {
 		Tcl_AppendResult(interp,
 				 "qray: unrecognized format type: '",
-				 argv[2], "'\nUsage:\n", qray_syntax, (char *)NULL);
+				 argv[2], "'\n", NULL);
+		usage(interp);
 		return TCL_ERROR;
 	    }
 
@@ -186,7 +193,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "basename") == 0) {
+    if (BU_STR_EQUAL(argv[1], "basename")) {
 	if (argc == 2) {
 	    /* get value */
 	    Tcl_AppendResult(interp, bu_vls_addr(&dgop->dgo_qray_basename), (char *)NULL);
@@ -204,7 +211,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "script") == 0) {
+    if (BU_STR_EQUAL(argv[1], "script")) {
 	if (argc == 2) {
 	    /* get value */
 	    Tcl_AppendResult(interp, bu_vls_addr(&dgop->dgo_qray_script), (char *)NULL);
@@ -222,7 +229,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "effects") == 0) {
+    if (BU_STR_EQUAL(argv[1], "effects")) {
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_init(&vls);
@@ -253,7 +260,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "echo") == 0) {
+    if (BU_STR_EQUAL(argv[1], "echo")) {
 	if (argc == 2) {
 	    /* get value */
 	    if (dgop->dgo_qray_cmd_echo)
@@ -289,7 +296,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "oddcolor") == 0) {
+    if (BU_STR_EQUAL(argv[1], "oddcolor")) {
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_init(&vls);
@@ -333,7 +340,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "evencolor") == 0) {
+    if (BU_STR_EQUAL(argv[1], "evencolor")) {
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_init(&vls);
@@ -373,7 +380,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "voidcolor") == 0) {
+    if (BU_STR_EQUAL(argv[1], "voidcolor")) {
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_init(&vls);
@@ -413,7 +420,7 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "overlapcolor") == 0) {
+    if (BU_STR_EQUAL(argv[1], "overlapcolor")) {
 	if (argc == 2) {
 	    /* get value */
 	    bu_vls_init(&vls);
@@ -453,18 +460,19 @@ dgo_qray_cmd(struct dg_obj *dgop,
 	return TCL_ERROR;
     }
 
-    if (strcmp(argv[1], "vars") == 0) {
+    if (BU_STR_EQUAL(argv[1], "vars")) {
 	qray_print_vars(dgop, interp);
 	return TCL_OK;
     }
 
-    if (strcmp(argv[1], "help") == 0) {
-	Tcl_AppendResult(interp, "Usage:\n", qray_syntax, (char *)NULL);
+    if (BU_STR_EQUAL(argv[1], "help")) {
+	usage(interp);
 	return TCL_OK;
     }
 
     Tcl_AppendResult(interp, "qray: unrecognized command: '",
-		     argv[1], "'\nUsage:\n", qray_syntax, (char *)NULL);
+		     argv[1], "'\n", NULL);
+    usage(interp);
     return TCL_ERROR;
 }
 
@@ -529,6 +537,8 @@ dgo_qray_data_to_vlist(struct dg_obj *dgop,
     vect_t in_pt, out_pt;
     vect_t last_out_pt;
 
+    VSETALL(last_out_pt, 0);
+
     for (BU_LIST_FOR(ndlp, dg_qray_dataList, &headp->l)) {
 	if (do_overlaps)
 	    vhead = rt_vlblock_find(vbp,
@@ -553,7 +563,7 @@ dgo_qray_data_to_vlist(struct dg_obj *dgop,
 	RT_ADD_VLIST(vhead, in_pt, BN_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead, out_pt, BN_VLIST_LINE_DRAW);
 
-	if (!do_overlaps && i > 1 && !VAPPROXEQUAL(last_out_pt, in_pt, SQRT_SMALL_FASTF)) {
+	if (!do_overlaps && i > 1 && !VNEAR_EQUAL(last_out_pt, in_pt, SQRT_SMALL_FASTF)) {
 	    vhead = rt_vlblock_find(vbp,
 				    dgop->dgo_qray_void_color.r,
 				    dgop->dgo_qray_void_color.g,

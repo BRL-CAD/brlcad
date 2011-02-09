@@ -1,53 +1,15 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2010 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-
-<refentry id='bwscale1'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="bwscale1">
 
 <refmeta>
   <refentrytitle>BWSCALE</refentrytitle>
   <manvolnum>1</manvolnum>
-  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-  <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
 </refmeta>
 
-<refnamediv id='name'>
+<refnamediv xml:id="name">
   <refname>bwscale</refname>
  <refpurpose>
    change the size of a black and white bw file
@@ -55,28 +17,28 @@
 </refnamediv>
 
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-  <cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
   <command>bwscale</command>    
-    <arg choice='opt'>-r </arg>
-    <arg choice='opt'>-s <replaceable>squareinsize</replaceable></arg>
-    <arg choice='opt'>-w <replaceable>in_width</replaceable></arg>
-    <arg choice='opt'>-n <replaceable>in_height</replaceable></arg>
-    <arg choice='opt'>-S <replaceable>squareoutsize</replaceable></arg>
-    <arg choice='opt'>-W <replaceable>out_width</replaceable></arg>
-    <arg choice='opt'>-N <replaceable>out_height</replaceable></arg>
-    <arg choice='opt'>-h </arg>
-    <arg choice='opt'><replaceable>infile.bw</replaceable></arg>
-    <arg choice='plain'><replaceable>outfile.bw</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-r </arg>
+    <arg choice="opt" rep="norepeat">-s <replaceable>squareinsize</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-w <replaceable>in_width</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-n <replaceable>in_height</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-S <replaceable>squareoutsize</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-W <replaceable>out_width</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-N <replaceable>out_height</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-h </arg>
+    <arg choice="opt" rep="norepeat"><replaceable>infile.bw</replaceable></arg>
+    <arg choice="plain" rep="norepeat"><replaceable>outfile.bw</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
-<refsect1 id='description'>
-  <title>DESCRIPTION</title>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  
   <para>
     <command>bwscale</command>
-    <emphasis remap='I'>Bwscale</emphasis>
+    <emphasis remap="I">Bwscale</emphasis>
     will take a black and white
     <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
     format file of given dimensions and produce a larger or smaller
@@ -124,9 +86,9 @@
   differently depending on the display size.  Without this flag,
   the default size for the selected device will be used (usually
   the entire screen).</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='see_also'><title>SEE ALSO</title>
+<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
 <para>
   <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, 
   <citerefentry><refentrytitle>bwcrop</refentrytitle><manvolnum>1</manvolnum></citerefentry>, 
@@ -134,9 +96,9 @@
   <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>, 
   <citerefentry><refentrytitle>pixscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='bugs'><title>BUGS</title>
+<refsection xml:id="bugs"><info><title>BUGS</title></info>
 <para>This program cannot scale up in one dimension and down in the other
 at the same time.</para>
 <para>
@@ -144,16 +106,12 @@ The box filter used for scaling down results in the usual high-frequency
 ripple.</para>
 <para>
 Optional cubic interpolation would be nice.</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='author'>
-  <title>AUTHOR</title>
-  <para>BRL-CAD Team</para>
-  </refsect1>
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
 
-<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
 <para>Reports of bugs or problems should be submitted via electronic
 mail to devs@brlcad.org.</para>
-</refsect1>
+</refsection>
 </refentry>
-

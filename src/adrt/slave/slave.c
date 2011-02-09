@@ -1,7 +1,7 @@
 /*                         S L A V E . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -473,7 +473,7 @@ void adrt_slave_mesg(void *mesg, unsigned int mesg_len)
 
 		/* set hit flag */
 		for (n = 0; n < db.mesh_num; n++) {
-		    if (!strcmp(db.mesh_list[n]->name, name)) {
+		    if (BU_STR_EQUAL(db.mesh_list[n]->name, name)) {
 			db.mesh_list[n]->flags |= MESH_HIT;
 			continue;
 		    }

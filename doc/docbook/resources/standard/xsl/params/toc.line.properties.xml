@@ -10,7 +10,7 @@
 </refmeta>
 <refnamediv>
 <refname>toc.line.properties</refname>
-<refpurpose>Properties for lines in ToC and LoTs</refpurpose>
+<refpurpose>Properties for lines in ToCs and LoTs</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
@@ -28,13 +28,15 @@
 
 <para>Properties which are applied to every line in ToC (or LoT). You can
 modify them in order to change appearance of all, or some lines. For
-example in order to make lines for chapters in bold specify the
-following in your customization layer.</para>
+example, in order to make lines for chapters bold, specify the
+following in your customization layer:</para>
 
 <programlisting>&lt;xsl:attribute-set name="toc.line.properties"&gt;
   &lt;xsl:attribute name="font-weight"&gt;
-    &lt;xsl:when test="self::chapter | self::preface | self::appendix"&gt;bold&lt;/xsl:when&gt;
+   &lt;xsl:choose>
+    &lt;xsl:when test="self::chapter">bold&lt;/xsl:when&gt;
     &lt;xsl:otherwise&gt;normal&lt;/xsl:otherwise&gt;
+   &lt;/xsl:choose>
   &lt;/xsl:attribute&gt;
 &lt;/xsl:attribute-set&gt;</programlisting>
 

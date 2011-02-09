@@ -30,7 +30,7 @@ Class:                  <B>DisabledForeground</B>
 Command-Line Switch:	<B>-disabledforeground</B>
 </pre>
 <UL>
-Specifies the foreground to be used when the state is disabled.
+Specifies the foreground to be used when the state is disabled. 
 </UL>
 <P>
 <pre>
@@ -39,7 +39,7 @@ Class:                  <B>Bitmap</B>
 Command-Line Switch:	<B>-labelbitmap</B>
 </pre>
 <UL>
-Specifies a bitmap to display in the widget, in any of the forms
+Specifies a bitmap to display in the widget, in any of the forms 
 acceptable to <B>Tk_GetBitmap</B>.  This option overrides the <I>labeltext</I>
 option.
 </UL>
@@ -80,8 +80,8 @@ Class:                  <B>Position</B>
 Command-Line Switch:	<B>-labelpos</B>
 </pre>
 <UL>
-Specifies the position of the label along the side of the childsite:
-<B>nw</B>, <B>n</B>, <B>ne</B>, <B>sw</B>, <B>s</B>, <B>se</B>, <B>en</B>, <B>e</B>,
+Specifies the position of the label along the side of the childsite: 
+<B>nw</B>, <B>n</B>, <B>ne</B>, <B>sw</B>, <B>s</B>, <B>se</B>, <B>en</B>, <B>e</B>, 
 <B>es</B>, <B>wn</B>, <B>w</B>, or <B>ws</B>.  The default is w.
 </UL>
 <P>
@@ -118,11 +118,11 @@ color.  The default is normal.
 
 </pre><H2>DESCRIPTION</H2>
 <P>
-The <B>labeledwidget</B> command creates a labeled widget which contains
-a label and child site.  The child site is a frame
-which can filled with any widget via a derived class or though the use
+The <B>labeledwidget</B> command creates a labeled widget which contains 
+a label and child site.  The child site is a frame 
+which can filled with any widget via a derived class or though the use 
 of the childsite method.  This class
-was designed to be a general purpose base class for supporting the
+was designed to be a general purpose base class for supporting the 
 combination of label widget and a childsite.  The options include the
 ability to position the label around the childsite widget, modify the
 font and margin, and control the display of the labels.
@@ -177,7 +177,7 @@ command.
 <DD> The alignlabels procedure takes a list of widgets derived from
 the Labeledwidget class and uses the label margin to make each widget
 have the same total space for the combination of label and margin.  The
-net effect is to left align the labels.  Generally, this method is only
+net effect is to left align the labels.  Generally, this method is only 
 useful with a label position of w, which is the default.
 
 </DL>
@@ -188,7 +188,7 @@ Name:                   <B>label</B>
 Class:                  <B>label</B>
 </pre>
 <UL>
-The label component provides the label for the labeled widget.  See the
+The label component provides the label for the labeled widget.  See the 
 "label" widget manual entry for details on the label component item.
 </UL>
 <P>
@@ -197,7 +197,7 @@ Name:                   <B>lwchildsite</B>
 Class:                  <B>frame</B>
 </pre>
 <UL>
-The lwchildsite component is the user child site for the labeled widget.  See
+The lwchildsite component is the user child site for the labeled widget.  See 
 the "frame" widget manual entry for details on the lwchildsite component item.
 </UL>
 </table>

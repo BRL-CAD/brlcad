@@ -1,7 +1,7 @@
 /*                   B R L C A D _ P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
+#include "bio.h"
 
 #ifdef HAVE_SYS_PARAM_H
 #  include <sys/param.h>
@@ -80,21 +80,42 @@ _bu_ipwd()
     /* private stash */
     static const char *ipwd = NULL;
     static char buffer[MAXPATHLEN] = {0};
+    const char *pwd = NULL;
 
+    /* already found the path before */
     if (ipwd) {
 	return ipwd;
     }
 
-    ipwd = getenv("PWD"); /* not our memory to free */
-    if (!ipwd)
-	ipwd = bu_which("pwd");
+    /* FIRST: try environment */
+    pwd = getenv("PWD"); /* not our memory to free */
+    if (pwd && strlen(pwd) > 0) {
+#ifdef HAVE_REALPATH
+	ipwd = realpath(pwd, buffer);
+	if (ipwd) {
+	    return ipwd;
+	}
+#endif
+	ipwd = pwd;
+	return ipwd;
+    }
 
+    /* SECOND: try to query path */
+#ifdef HAVE_REALPATH
+    ipwd = realpath(".", buffer);
+    if (ipwd && strlen(ipwd) > 0) {
+	return ipwd;
+    }
+#endif
+
+    /* THIRD: try calling the 'pwd' command */
+    ipwd = bu_which("pwd");
     if (ipwd) {
 #if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	FILE *fp = NULL;
 
 	fp = popen(ipwd, "r");
-	if (LIKELY(fp)) {
+	if (LIKELY(fp != NULL)) {
 	    if (bu_fgets(buffer, MAXPATHLEN, fp)) {
 		ipwd = buffer;
 	    } else {
@@ -107,10 +128,10 @@ _bu_ipwd()
 	memset(buffer, 0, MAXPATHLEN); /* quellage */
 	ipwd = ".";
 #endif
-    } else {
-	ipwd = ".";
     }
 
+    /* LAST: punt (but do not return NULL) */
+    ipwd = ".";
     return ipwd;
 }
 
@@ -386,7 +407,6 @@ _bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct 
     return 0;
 }
 
-
 const char *
 bu_brlcad_root(const char *rhs, int fail_quietly)
 {
@@ -436,25 +456,30 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 #endif
 
     /* run-time path identification */
-    lhs = bu_getprogname();
+    lhs = bu_argv0_full_path();
     if (lhs) {
-	char argv0[MAX_WHERE_SIZE] = {0};
-	size_t len = strlen(lhs);
-	snprintf(argv0, MAX_WHERE_SIZE, "%s", lhs);
-
-	/* need to trim off the trailing binary */
-	while (len-1 > 0) {
-	    if (argv0[len-1] == BU_DIR_SEPARATOR) {
-		argv0[len] = '.';
-		argv0[len+1] = '.';
-		argv0[len+2] = '\0';
-		break;
-	    }
-	    len--;
+	char real_path[MAXPATHLEN] = {0};
+	char *dirpath;
+#ifdef HAVE_REALPATH
+	dirpath = realpath(lhs, real_path);
+	if (!dirpath) {
+	    /* if path lookup failed, resort to simple copy */
+	    bu_strlcpy(real_path, lhs, (size_t)MAXPATHLEN);
 	}
-
-	snprintf(where, MAX_WHERE_SIZE, "\trun-time path identification [%s]\n", argv0);
-	if (_bu_find_path(result, argv0, rhs, &searched, where)) {
+#else
+#  ifdef HAVE_GETFULLPATHNAME
+	GetFullPathName(lhs, MAXPATHLEN, real_path, NULL);
+#  else
+	bu_strlcpy(real_path, lhs, (size_t)MAXPATHLEN);
+#  endif
+#endif
+	dirpath = bu_dirname(real_path);
+	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
+	bu_free(dirpath, "free bu_dirname");
+	dirpath = bu_dirname(real_path);
+	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
+	bu_free(dirpath, "free bu_dirname");
+	if (_bu_find_path(result, real_path, rhs, &searched, where)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		bu_log("Found: Run-time path identification [%s]\n", result);
 	    }

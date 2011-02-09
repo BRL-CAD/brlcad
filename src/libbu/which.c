@@ -1,7 +1,7 @@
 /*                         W H I C H . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2010 United States Government as represented by
+ * Copyright (c) 2005-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ bu_which(const char *cmd)
 
     /* check for full/relative path match */
     bu_strlcpy(bu_which_result, cmd, MAXPATHLEN);
-    if (strcmp(bu_which_result, cmd) != 0) {
+    if (!BU_STR_EQUAL(bu_which_result, cmd)) {
 	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("command [%s] is too long\n", cmd);
 	}
@@ -68,6 +68,8 @@ bu_which(const char *cmd)
     }
 
     if (bu_file_exists(bu_which_result) && strchr(bu_which_result, BU_DIR_SEPARATOR)) {
+	if (bu_which_result[0] == '\0')
+	    return NULL; /* never return empty */
 	return bu_which_result;
     }
 
@@ -77,7 +79,7 @@ bu_which(const char *cmd)
 	bu_strlcpy(PATH, gotpath, MAXPATHENV);
 
 	/* make sure it fit, we have a problem if it did not */
-	if (strcmp(PATH, gotpath) != 0) {
+	if (!BU_STR_EQUAL(PATH, gotpath)) {
 	    position = strrchr(PATH, BU_PATH_SEPARATOR);
 	    if (position) {
 		position = '\0';
@@ -115,6 +117,8 @@ bu_which(const char *cmd)
 
 	snprintf(bu_which_result, MAXPATHLEN, "%s/%s", directory, cmd);
 	if (bu_file_exists(bu_which_result)) {
+	    if (bu_which_result[0] == '\0')
+		return NULL; /* never return empty */
 	    return bu_which_result;
 	}
 

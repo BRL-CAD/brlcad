@@ -40,6 +40,9 @@
 #include <time.h>
 #include <sys/types.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
@@ -2125,16 +2128,15 @@ X24_getmem(FBIO *ifp)
 #ifdef HAVE_SYS_MMAN_H
 		int fd;
 
-		if ((fd = open(BS_NAME, O_RDWR | O_CREAT, 0666)) < 0)
-		    fb_log("X24_getmem: can't create fb file, using \
-private memory instead, errno %d\n", errno);
-		else if (ftruncate(fd, size) < 0)
-		    fb_log("X24_getmem: can't ftruncate fb file, using \
-private memory instead, errno %d\n", errno);
-		else if ((mem = mmap(NULL, size, PROT_READ |
-				     PROT_WRITE, MAP_SHARED, fd, 0)) == (char *) -1)
-		    fb_log("X24_getmem: can't mmap fb file, \
-using private memory instead, errno %d\n", errno);
+		fd = open(BS_NAME, O_RDWR | O_CREAT, 0666);
+		if (fd < 0)
+		    fb_log("X24_getmem: can't create fb file, using private memory instead, errno %d\n", errno);
+		else if (lseek(fd, size, SEEK_SET) < 0)
+		    fb_log("X24_getmem: can't seek fb file, using private memory instead, errno %d\n", errno);
+		else if (lseek(fd, 0, SEEK_SET) < 0)
+		    fb_log("X24_getmem: can't seek fb file, using private memory instead, errno %d\n", errno);
+		else if ((mem = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) == (char *) -1)
+		    fb_log("X24_getmem: can't mmap fb file, using private memory instead, errno %d\n", errno);
 		else {
 		    close(fd);
 		    break;

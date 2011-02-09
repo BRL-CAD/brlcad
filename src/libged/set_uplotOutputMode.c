@@ -1,7 +1,7 @@
 /*                         S E T _ U P L O T O U T P U T M O D E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,10 +62,10 @@ ged_set_uplotOutputMode(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argv[1][0] == 'b' &&
-	!strcmp("binary", argv[1]))
+	BU_STR_EQUAL("binary", argv[1]))
 	gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     else if (argv[1][0] == 't' &&
-	     !strcmp("text", argv[1]))
+	     BU_STR_EQUAL("text", argv[1]))
 	gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_TEXT;
     else {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);

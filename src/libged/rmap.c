@@ -1,7 +1,7 @@
 /*                         R M A P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
+    if (db_version(gedp->ged_wdbp->dbip) < 5) {
 	bu_vls_printf(&gedp->ged_result_str, "%s is not available prior to version 5 of the .g file format\n", argv[0]);
 	return GED_ERROR;
     }
@@ -64,11 +64,11 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 
     /* For all regions not hidden */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    int found = 0;
 
-	    if (!(dp->d_flags & DIR_REGION) ||
-		(dp->d_flags & DIR_HIDDEN))
+	    if (!(dp->d_flags & RT_DIR_REGION) ||
+		(dp->d_flags & RT_DIR_HIDDEN))
 		continue;
 
 	    if (rt_db_get_internal(&intern,

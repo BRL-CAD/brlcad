@@ -1,7 +1,7 @@
 /*                          D M - T K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,302 +64,13 @@
 #include "dm_xvars.h"
 #include "solid.h"
 
-
-struct dm *tk_open_dm(Tcl_Interp *interp, int argc, char **argv);
-
-HIDDEN void label();
-HIDDEN void draw();
-HIDDEN void x_var_init();
-
-/* Display Manager package interface */
-
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
-
-HIDDEN_DM_FUNCTION_PROTOTYPES(tk)
-
-struct dm dm_tk = {
-    tk_close,
-    tk_drawBegin,
-    tk_drawEnd,
-    tk_normal,
-    tk_loadMatrix,
-    tk_drawString2D,
-    tk_drawLine2D,
-    tk_drawLine3D,
-    tk_drawLines3D,
-    tk_drawPoint2D,
-    tk_drawVList,
-    tk_drawVList,
-    tk_draw,
-    tk_setFGColor,
-    tk_setBGColor,
-    tk_setLineAttr,
-    tk_configureWin,
-    tk_setWinBounds,
-    tk_setLight,
-    Nu_int0,
-    Nu_int0,
-    tk_setZBuffer,
-    tk_debug,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    0,
-    0,				/* no displaylist */
-    0,                            /* no stereo */
-    PLOTBOUND,			/* zoom-in limit */
-    1,				/* bound flag */
-    "Tk",
-    "Tk Abstraction Layer",
-    DM_TYPE_TK,
-    1,
-    0,
-    0,
-    0,
-    0,
-    1.0, /* aspect ratio */
-    0,
-    {0, 0},
-    {0, 0, 0, 0, 0},		/* bu_vls path name*/
-    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
-    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
-    {0, 0, 0},			/* bg color */
-    {0, 0, 0},			/* fg color */
-    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
-    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
-    0,				/* no debugging */
-    0,				/* no perspective */
-    0,				/* no lighting */
-    0,				/* no transparency */
-    0,				/* depth buffer is not writable */
-    0,				/* no zbuffer */
-    0,				/* no zclipping */
-    1,                            /* clear back buffer after drawing and swap */
-    0				/* Tcl interpreter */
-};
-
 
 static fastf_t min_short = (fastf_t)SHRT_MIN;
 static fastf_t max_short = (fastf_t)SHRT_MAX;
 
 extern int vectorThreshold;	/* defined in libdm/tcl.c */
 
-
-/*
- * T k _ O P E N
- *
- * Fire up the display manager, and the display processor.
- *
- */
-struct dm *
-tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
-{
-    static int count = 0;
-    int make_square = -1;
-    XGCValues gcv;
-
-    struct bu_vls str;
-    struct bu_vls init_proc_vls;
-    struct dm *dmp = (struct dm *)NULL;
-    Tk_Window tkwin;
-    Display *dpy = (Display *)NULL;
-    XColor fg, bg;
-
-    INIT_XCOLOR(&fg);
-    INIT_XCOLOR(&bg);
-
-    if ((tkwin = Tk_MainWindow(interp)) == NULL) {
-	return DM_NULL;
-    }
-
-    BU_GETSTRUCT(dmp, dm);
-    if (dmp == DM_NULL)
-	return DM_NULL;
-
-    *dmp = dm_tk; /* struct copy */
-    dmp->dm_interp = interp;
-
-    dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "tk_open: dm_xvars");
-    if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
-	bu_free(dmp, "tk_open: dmp");
-	return DM_NULL;
-    }
-
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct tk_vars), "tk_open: tk_vars");
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
-	bu_free(dmp->dm_vars.pub_vars, "tk_open: dmp->dm_vars.pub_vars");
-	bu_free(dmp, "tk_open: dmp");
-	return DM_NULL;
-    }
-
-    bu_vls_init(&dmp->dm_pathName);
-    bu_vls_init(&dmp->dm_tkName);
-    bu_vls_init(&dmp->dm_dName);
-    bu_vls_init(&init_proc_vls);
-
-    dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
-
-    if (bu_vls_strlen(&dmp->dm_pathName) == 0) {
-	bu_vls_printf(&dmp->dm_pathName, ".dm_tk%d", count);
-    }
-
-    ++count;
-    if (bu_vls_strlen(&dmp->dm_dName) == 0) {
-	char *dp;
-
-	dp = DisplayString(Tk_Display(tkwin));
-
-	if (dp)
-	    bu_vls_strcpy(&dmp->dm_dName, dp);
-	else
-	    bu_vls_strcpy(&dmp->dm_dName, ":0.0");
-    }
-    if (bu_vls_strlen(&init_proc_vls) == 0)
-	bu_vls_strcpy(&init_proc_vls, "bind_dm");
-
-    /* initialize dm specific variables */
-    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devmotionnotify = LASTEvent;
-    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonpress = LASTEvent;
-    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonrelease = LASTEvent;
-    dmp->dm_aspect = 1.0;
-
-    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontset = 0;
-
-    if (dmp->dm_top) {
-	/* Make xtkwin a toplevel window */
-	((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
-										     bu_vls_addr(&dmp->dm_pathName),
-										     bu_vls_addr(&dmp->dm_dName));
-	((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin;
-    } else {
-	char *cp;
-
-	cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
-	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
-	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = tkwin;
-	} else {
-	    struct bu_vls top_vls;
-
-	    bu_vls_init(&top_vls);
-	    bu_vls_printf(&top_vls, "%*s", cp - bu_vls_addr(&dmp->dm_pathName),
-			  bu_vls_addr(&dmp->dm_pathName));
-	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top =
-		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
-	    bu_vls_free(&top_vls);
-	}
-
-	/* Make xtkwin an embedded window */
-	((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin =
-	    Tk_CreateWindow(interp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top,
-			    cp + 1, (char *)NULL);
-    }
-
-    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL) {
-	bu_log("tk_open: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
-	(void)tk_close(dmp);
-	return DM_NULL;
-    }
-
-    bu_vls_printf(&dmp->dm_tkName, "%s",
-		  (char *)Tk_Name(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
-
-    bu_vls_init(&str);
-    bu_vls_printf(&str, "_init_dm %V %V\n",
-		  &init_proc_vls,
-		  &dmp->dm_pathName);
-
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
-	bu_vls_free(&str);
-	(void)tk_close(dmp);
-
-	return DM_NULL;
-    }
-
-    bu_vls_free(&init_proc_vls);
-    bu_vls_free(&str);
-
-    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy =
-	Tk_Display(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top);
-    dpy = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy;
-
-    /* make sure there really is a display before proceeding. */
-    if (!dpy) {
-	(void)tk_close(dmp);
-	return DM_NULL;
-    }
-
-    if (dmp->dm_width == 0) {
-	dmp->dm_width =
-	    WidthOfScreen(Tk_Screen((
-					(struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) - 30;
-	++make_square;
-    }
-
-    if (dmp->dm_height == 0) {
-	dmp->dm_height =
-	    HeightOfScreen(Tk_Screen((
-					 (struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) - 30;
-	++make_square;
-    }
-
-    if (make_square > 0) {
-	/* Make window square */
-	if (dmp->dm_height <
-	    dmp->dm_width)
-	    dmp->dm_width = dmp->dm_height;
-	else
-	    dmp->dm_height = dmp->dm_width;
-    }
-
-    Tk_GeometryRequest(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
-		       dmp->dm_width,
-		       dmp->dm_height);
-
-    Tk_MakeWindowExist(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
-    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win =
-	Tk_WindowId(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
-    dmp->dm_id = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win;
-
-    ((struct x_vars *)dmp->dm_vars.priv_vars)->pix =
-	Tk_GetPixmap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-		     DefaultRootWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy),
-		     dmp->dm_width,
-		     dmp->dm_height,
-		     Tk_Depth(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
-
-    fg.red = 65535;
-    fg.green = fg.blue = 0;
-
-    ((struct x_vars *)dmp->dm_vars.priv_vars)->fg =
-	Tk_GetColorByValue(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
-			   &fg)->pixel;
-
-    bg.red = bg.green = bg.blue = 3277;
-
-    ((struct x_vars *)dmp->dm_vars.priv_vars)->bg =
-	Tk_GetColorByValue(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
-			   &bg)->pixel;
-
-    gcv.background = ((struct x_vars *)dmp->dm_vars.priv_vars)->bg;
-    gcv.foreground = ((struct x_vars *)dmp->dm_vars.priv_vars)->fg;
-
-    ((struct x_vars *)dmp->dm_vars.priv_vars)->gc =
-	Tk_GetGC(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
-		 (GCForeground|GCBackground), &gcv);
-
-    (void)tk_configureWin_guts(dmp, 1);
-
-    /*
-      Tk_SetWindowBackground(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
-      ((struct x_vars *)dmp->dm_vars.priv_vars)->bg);
-    */
-    Tk_MapWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
-
-    MAT_IDN(((struct x_vars *)dmp->dm_vars.priv_vars)->xmat);
-
-    return dmp;
-}
 
 
 /**
@@ -398,7 +109,6 @@ tk_close(struct dm *dmp)
 
     return TCL_OK;
 }
-
 
 /**
  * @proc tk_drawBegin
@@ -1059,10 +769,10 @@ tk_configureWin_guts(struct dm *dmp, int force)
 
 
 HIDDEN int
-tk_configureWin(struct dm *dmp)
+tk_configureWin(struct dm *dmp, int force)
 {
     /* don't force */
-    return tk_configureWin_guts(dmp, 0);
+    return tk_configureWin_guts(dmp, force);
 }
 
 
@@ -1088,6 +798,298 @@ tk_setZBuffer(struct dm *dmp, int zbuffer_on)
 
     return TCL_OK;
 }
+
+
+
+struct dm dm_tk = {
+    tk_close,
+    tk_drawBegin,
+    tk_drawEnd,
+    tk_normal,
+    tk_loadMatrix,
+    tk_drawString2D,
+    tk_drawLine2D,
+    tk_drawLine3D,
+    tk_drawLines3D,
+    tk_drawPoint2D,
+    tk_drawVList,
+    tk_drawVList,
+    tk_draw,
+    tk_setFGColor,
+    tk_setBGColor,
+    tk_setLineAttr,
+    tk_configureWin,
+    tk_setWinBounds,
+    tk_setLight,
+    Nu_int0,
+    Nu_int0,
+    tk_setZBuffer,
+    tk_debug,
+    Nu_int0,
+    Nu_int0,
+    Nu_int0,
+    Nu_int0,
+    Nu_int0, /* display to image function */
+    0,
+    0,				/* no displaylist */
+    0,                            /* no stereo */
+    PLOTBOUND,			/* zoom-in limit */
+    1,				/* bound flag */
+    "Tk",
+    "Tk Abstraction Layer",
+    DM_TYPE_TK,
+    1,
+    0,
+    0,
+    0,/* bytes per pixel */
+    0,/* bits per channel */
+    0,
+    0,
+    1.0, /* aspect ratio */
+    0,
+    {0, 0},
+    {0, 0, 0, 0, 0},		/* bu_vls path name*/
+    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
+    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* fg color */
+    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
+    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
+    0,				/* no debugging */
+    0,				/* no perspective */
+    0,				/* no lighting */
+    0,				/* no transparency */
+    0,				/* depth buffer is not writable */
+    0,				/* no zbuffer */
+    0,				/* no zclipping */
+    1,                          /* clear back buffer after drawing and swap */
+    0,                          /* not overriding the auto font size */
+    0				/* Tcl interpreter */
+};
+
+
+
+struct dm *tk_open_dm(Tcl_Interp *interp, int argc, char **argv);
+
+/* Display Manager package interface */
+
+
+/*
+ * T k _ O P E N
+ *
+ * Fire up the display manager, and the display processor.
+ *
+ */
+struct dm *
+tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
+{
+    static int count = 0;
+    int make_square = -1;
+    XGCValues gcv;
+
+    struct bu_vls str;
+    struct bu_vls init_proc_vls;
+    struct dm *dmp = (struct dm *)NULL;
+    Tk_Window tkwin;
+    Display *dpy = (Display *)NULL;
+    XColor fg, bg;
+
+    INIT_XCOLOR(&fg);
+    INIT_XCOLOR(&bg);
+
+    if ((tkwin = Tk_MainWindow(interp)) == NULL) {
+	return DM_NULL;
+    }
+
+    BU_GETSTRUCT(dmp, dm);
+    if (dmp == DM_NULL)
+	return DM_NULL;
+
+    *dmp = dm_tk; /* struct copy */
+    dmp->dm_interp = interp;
+
+    dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "tk_open: dm_xvars");
+    if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
+	bu_free(dmp, "tk_open: dmp");
+	return DM_NULL;
+    }
+
+    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct tk_vars), "tk_open: tk_vars");
+    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
+	bu_free(dmp->dm_vars.pub_vars, "tk_open: dmp->dm_vars.pub_vars");
+	bu_free(dmp, "tk_open: dmp");
+	return DM_NULL;
+    }
+
+    bu_vls_init(&dmp->dm_pathName);
+    bu_vls_init(&dmp->dm_tkName);
+    bu_vls_init(&dmp->dm_dName);
+    bu_vls_init(&init_proc_vls);
+
+    dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
+
+    if (bu_vls_strlen(&dmp->dm_pathName) == 0) {
+	bu_vls_printf(&dmp->dm_pathName, ".dm_tk%d", count);
+    }
+
+    ++count;
+    if (bu_vls_strlen(&dmp->dm_dName) == 0) {
+	char *dp;
+
+	dp = DisplayString(Tk_Display(tkwin));
+
+	if (dp)
+	    bu_vls_strcpy(&dmp->dm_dName, dp);
+	else
+	    bu_vls_strcpy(&dmp->dm_dName, ":0.0");
+    }
+    if (bu_vls_strlen(&init_proc_vls) == 0)
+	bu_vls_strcpy(&init_proc_vls, "bind_dm");
+
+    /* initialize dm specific variables */
+    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devmotionnotify = LASTEvent;
+    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonpress = LASTEvent;
+    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonrelease = LASTEvent;
+    dmp->dm_aspect = 1.0;
+
+    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontset = 0;
+
+    if (dmp->dm_top) {
+	/* Make xtkwin a toplevel window */
+	((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
+										     bu_vls_addr(&dmp->dm_pathName),
+										     bu_vls_addr(&dmp->dm_dName));
+	((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin;
+    } else {
+	char *cp;
+
+	cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
+	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
+	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = tkwin;
+	} else {
+	    struct bu_vls top_vls;
+
+	    bu_vls_init(&top_vls);
+	    bu_vls_printf(&top_vls, "%*s", cp - bu_vls_addr(&dmp->dm_pathName),
+			  bu_vls_addr(&dmp->dm_pathName));
+	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top =
+		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
+	    bu_vls_free(&top_vls);
+	}
+
+	/* Make xtkwin an embedded window */
+	((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin =
+	    Tk_CreateWindow(interp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top,
+			    cp + 1, (char *)NULL);
+    }
+
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL) {
+	bu_log("tk_open: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
+	(void)tk_close(dmp);
+	return DM_NULL;
+    }
+
+    bu_vls_printf(&dmp->dm_tkName, "%s",
+		  (char *)Tk_Name(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
+
+    bu_vls_init(&str);
+    bu_vls_printf(&str, "_init_dm %V %V\n",
+		  &init_proc_vls,
+		  &dmp->dm_pathName);
+
+    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
+	bu_vls_free(&str);
+	(void)tk_close(dmp);
+
+	return DM_NULL;
+    }
+
+    bu_vls_free(&init_proc_vls);
+    bu_vls_free(&str);
+
+    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy =
+	Tk_Display(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top);
+    dpy = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy;
+
+    /* make sure there really is a display before proceeding. */
+    if (!dpy) {
+	(void)tk_close(dmp);
+	return DM_NULL;
+    }
+
+    if (dmp->dm_width == 0) {
+	dmp->dm_width =
+	    WidthOfScreen(Tk_Screen((
+					(struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) - 30;
+	++make_square;
+    }
+
+    if (dmp->dm_height == 0) {
+	dmp->dm_height =
+	    HeightOfScreen(Tk_Screen((
+					 (struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) - 30;
+	++make_square;
+    }
+
+    if (make_square > 0) {
+	/* Make window square */
+	if (dmp->dm_height <
+	    dmp->dm_width)
+	    dmp->dm_width = dmp->dm_height;
+	else
+	    dmp->dm_height = dmp->dm_width;
+    }
+
+    Tk_GeometryRequest(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
+		       dmp->dm_width,
+		       dmp->dm_height);
+
+    Tk_MakeWindowExist(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win =
+	Tk_WindowId(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+    dmp->dm_id = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win;
+
+    ((struct x_vars *)dmp->dm_vars.priv_vars)->pix =
+	Tk_GetPixmap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		     DefaultRootWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy),
+		     dmp->dm_width,
+		     dmp->dm_height,
+		     Tk_Depth(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
+
+    fg.red = 65535;
+    fg.green = fg.blue = 0;
+
+    ((struct x_vars *)dmp->dm_vars.priv_vars)->fg =
+	Tk_GetColorByValue(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
+			   &fg)->pixel;
+
+    bg.red = bg.green = bg.blue = 3277;
+
+    ((struct x_vars *)dmp->dm_vars.priv_vars)->bg =
+	Tk_GetColorByValue(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
+			   &bg)->pixel;
+
+    gcv.background = ((struct x_vars *)dmp->dm_vars.priv_vars)->bg;
+    gcv.foreground = ((struct x_vars *)dmp->dm_vars.priv_vars)->fg;
+
+    ((struct x_vars *)dmp->dm_vars.priv_vars)->gc =
+	Tk_GetGC(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
+		 (GCForeground|GCBackground), &gcv);
+
+    (void)tk_configureWin_guts(dmp, 1);
+
+    /*
+      Tk_SetWindowBackground(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
+      ((struct x_vars *)dmp->dm_vars.priv_vars)->bg);
+    */
+    Tk_MapWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+
+    MAT_IDN(((struct x_vars *)dmp->dm_vars.priv_vars)->xmat);
+
+    return dmp;
+}
+
+
 
 
 #endif /* DM_TK */

@@ -2,7 +2,7 @@
 .\"                        L I B R T . 3
 .\" BRL-CAD
 .\"
-.\" Copyright (c) 1985-2010 United States Government as represented by
+.\" Copyright (c) 1985-2011 United States Government as represented by
 .\" the U.S. Army Research Laboratory.
 .\"
 .\" Redistribution and use in source (Docbook format) and 'compiled'
@@ -436,16 +436,26 @@ to add more sub-trees to the active model after calling
 is called more than once.
 ``rt_prep: no solids to prep'' when there are no valid solids
 in the model.
-
-The LIBRT_DEBUG environment variable may be set to the hexadecimal
-bit vector as descibed by raytrace.h.
+.PP
+The LIBRT_DEBUG environment variable may be set to the hexadecimal bit
+vector as described by the DEBUG_* flags listed in the raytrace.h
+header.  Similarly, many LIBRT applications provide a ``-x #''
+command-line option which will take precendence over the environment
+variable.
+.PP
+The LIBRT_V4FLIP environment variable may be set to a true or false
+value to respectively force or disable endianness interpretation of v4
+geometry database files.  The default behavior is to automatically
+detect whether flipping the endian interpretation will help LIBRT read
+a binary-incompatible v4 geometry database file.  Setting LIBRT_V4FLIP
+will override automatic detection.
 .SH BUGS
 On a VAX, the rootfinder detects ``hard'' cases by taking a SIGFPE
 and retrying
 with a slower but more stable algorithm.
 This is unfortunate.
 .SH COPYRIGHT
-This software is Copyright (c) 1985-2010 United States Government as
+This software is Copyright (c) 1985-2011 United States Government as
 represented by the U.S. Army Research Laboratory. All rights reserved.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic

@@ -1,7 +1,7 @@
 #                        A N I M . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2004-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -56,8 +56,8 @@ proc sketch_init_main {} {
     uplevel #0 set mged_sketch_temp1 "./_mged_sketch_temp1_"
     uplevel #0 set mged_sketch_temp2 "./_mged_sketch_temp2_"
 
-    uplevel #0 {set mged_sketch_anim_path [bu_brlcad_root "bin/"]}
-    uplevel #0 {set mged_sketch_tab_path [bu_brlcad_root "bin/"]}
+    uplevel #0 {set mged_sketch_anim_path [bu_brlcad_root "bin"]}
+    uplevel #0 {set mged_sketch_tab_path [bu_brlcad_root "bin"]}
 
     #variable shared between draw and table
     uplevel #0 set mged_sketch_fps "30"

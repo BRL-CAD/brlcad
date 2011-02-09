@@ -1,7 +1,7 @@
 /*                      D I R N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,17 +31,17 @@ bu_dirname(const char *cp)
     char *ret;
     char *slash;
     size_t len;
-    const char *SLASH = "/";
+    char SLASH = BU_DIR_SEPARATOR;
     const char *DOT = ".";
     const char *DOTDOT = "..";
 
     /* Special cases */
     if (cp == NULL)  return bu_strdup(".");
-    if (strcmp(cp, SLASH) == 0)
-	return bu_strdup(SLASH);
-    if (strcmp(cp, DOT) == 0 ||
-	strcmp(cp, DOTDOT) == 0 ||
-	strrchr(cp, '/') == NULL)
+    if (BU_STR_EQUAL(cp, &SLASH))
+	return bu_strdup(&SLASH);
+    if (BU_STR_EQUAL(cp, DOT) ||
+	BU_STR_EQUAL(cp, DOTDOT) ||
+	strrchr(cp, SLASH) == NULL)
 	return bu_strdup(DOT);
 
     /* Make a duplicate copy of the string, and shorten it in place */
@@ -49,10 +49,10 @@ bu_dirname(const char *cp)
 
     /* A trailing slash doesn't count */
     len = strlen(ret);
-    if (ret[len-1] == '/')  ret[len-1] = '\0';
+    if (ret[len-1] == SLASH)  ret[len-1] = '\0';
 
     /* If no slashes remain, return "." */
-    if ((slash = strrchr(ret, '/')) == NULL) {
+    if ((slash = strrchr(ret, SLASH)) == NULL) {
 	bu_free(ret, "bu_dirname");
 	return bu_strdup(DOT);
     }

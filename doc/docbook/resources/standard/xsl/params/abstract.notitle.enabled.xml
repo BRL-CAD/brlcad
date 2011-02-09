@@ -16,7 +16,7 @@
   <src:fragment xml:id="abstract.notitle.enabled.frag"><xsl:param name="abstract.notitle.enabled" select="0"/></src:fragment>
 </refsynopsisdiv>
 <refsection><info><title>Description</title></info>
-<para>If non-zero, in output of the <tag>abstract</tag> element on
-  titlepages, display of the abstract title is suppressed.</para>
+<para>If non-zero, in output of the <tag>abstract</tag> element on titlepages,
+display of the abstract title is suppressed.</para>
 </refsection>
 </refentry>

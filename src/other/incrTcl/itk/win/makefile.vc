@@ -83,18 +83,20 @@ ITCLIMPLIB	= "$(ITCLDIR)\win\Release\$(ITCLIMPLIBNAME)"
 !if $(TCLINSTALL)
 TKSTUBLIB	= "$(TCLDIR)\lib\tkstub$(TCL_VERSION).lib"
 TKIMPLIB	= "$(TCLDIR)\lib\tk$(TCL_VERSION)$(DBGX).lib"
+TKLIB		= "$(TCLDIR)\bin\tk$(TCL_VERSION)$(DBGX).dll"
 WISH		= "$(TCLDIR)\bin\wish$(TCL_VERSION)$(DBGX).exe"
 TCL_LIBRARY	= 
 TK_LIBRARY	= 
 !else
 TKSTUBLIB	= "$(TKDIR)\win\Release\tkstub$(TCL_VERSION).lib"
 TKIMPLIB	= "$(TKDIR)\win\$(OUT_DIR)\tk$(TCL_VERSION)$(DBGX).lib"
+TKLIB		= "$(TKDIR)\win\$(OUT_DIR)\tk$(TCL_VERSION)$(DBGX).dll"
 WISH		= "$(TKDIR)\win\$(OUT_DIR)\wish$(TCL_VERSION)$(DBGX).exe"
 TCL_LIBRARY	= "$(TCLDIR)\library"
 TK_LIBRARY	= "$(TKDIR)\library"
 !endif
 ITCL_LIBRARY	= "$(ITCLDIR:\=/)/library"
-ITK_LIBRARY	= "$(ROOT)/library
+ITK_LIBRARY	= "$(ROOT)/library"
 
 ITCLSTUBLIBNAME	= itclstub$(ITCL_VERSION).lib
 ITCLSTUBLIB	= "$(ITCLDIR)\win\Release\$(ITCLSTUBLIBNAME)"
@@ -224,11 +226,11 @@ ITK_EXE_CFLAGS	= $(cdebug) $(cflags) $(crt) $(ITCL_INCLUDES) $(ITK_INCLUDES) \
 ### By convention, static builds do not use Stubs.  This is just a practice,
 ### not a technical limitation.
 !if $(STATIC_BUILD)
-ITK_CFLAGS	= $(ITK_EXE_CFLAGS) -DSTATIC_BUILD
+ITK_CFLAGS	= $(ITK_EXE_CFLAGS) -DSTATIC_BUILD $(OPTDEFINES)
 !elseif $(TCL_DOES_STUBS)
-ITK_CFLAGS	= $(ITK_EXE_CFLAGS) -DUSE_TCL_STUBS -DUSE_TK_STUBS -DUSE_ITCL_STUBS
+ITK_CFLAGS	= $(ITK_EXE_CFLAGS) -DUSE_TCL_STUBS -DUSE_TK_STUBS -DUSE_ITCL_STUBS $(OPTDEFINES)
 !else
-ITK_CFLAGS	= $(ITK_EXE_CFLAGS)
+ITK_CFLAGS	= $(ITK_EXE_CFLAGS) $(OPTDEFINES)
 !endif
 
 #---------------------------------------------------------------------
@@ -244,12 +246,12 @@ test :
 	@echo test target not supported for a static library.
 !else
 test : setup $(ITKLIB) $(ITKSTUBLIB)
-	set TCL_LIBRARY=$(TCL_LIBRARY)
-	set TK_LIBRARY=$(TK_LIBRARY)
-	set ITCL_LIBRARY=$(ITCL_LIBRARY)
-	set ITK_LIBRARY=$(ITK_LIBRARY)
 	$(TCLSH) ..\tests\all.tcl $(TESTFLAGS) -loadfile <<
+	set env(TK_LIBRARY) $(TK_LIBRARY:\=/)
+	set env(ITCL_LIBRARY) [file normalize $(ITCL_LIBRARY:\=/)]
+	set env(ITK_LIBRARY) [file normalize $(ITK_LIBRARY:\=/)]
 	load [file normalize $(ITCLLIB:\=/)] Itcl
+	load [file normalize $(TKLIB:\=/)] Tk
 	load [file normalize $(ITKLIB:\=/)] Itk
 <<
 !endif
@@ -321,6 +323,35 @@ genstubs:
 genstubs:
     @echo ERROR: Can't rebuild stubs tables without the Tcl source distribution
 !endif
+
+#---------------------------------------------------------------------
+# Generate the source dependencies.
+#---------------------------------------------------------------------
+
+depend:
+!if !exist($(TCLSH))
+	@echo Build tclsh first!
+!else
+	$(TCLSH) $(TCLTOOLSDIR)\mkdepend.tcl -vc32 -out:"$(OUT_DIR)\depend.mk" \
+		-passthru:"-DBUILD_itcl $(ITCL_INCLUDES) $(TCL_INCLUDES) $(ITK_INCLUDES) $(TK_INCLUDES)" \
+		$(GENERICDIR),$$(GENERICDIR) $(WINDIR),$$(WINDIR) @<<
+$(ITKOBJS)
+<<
+!endif
+
+#---------------------------------------------------------------------
+# Dependency rules
+#---------------------------------------------------------------------
+
+!if exist("$(OUT_DIR)\depend.mk")
+!include "$(OUT_DIR)\depend.mk"
+!message *** Dependency rules in use.
+!else
+!message *** Dependency rules are not being used.
+!endif
+
+### add a spacer in the output
+!message
 
 #---------------------------------------------------------------------
 # Special case object file targets

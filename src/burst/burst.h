@@ -1,7 +1,7 @@
 /*                         B U R S T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 
 /* for genptr_t */
 #include "bu.h"
+#include "vmath.h"
 
 
 /* NSIG not always defined in <signal.h> */
@@ -160,7 +161,7 @@
 #define C_MAIN		0
 #define C_CRIT		1
 
-#define TWO_PI		6.28318530717958647692528676655900576839433879875022
+#define TWO_PI		(2.0 * M_PI)
 
 #define COS_TOL		0.01
 #define LOS_TOL		0.1

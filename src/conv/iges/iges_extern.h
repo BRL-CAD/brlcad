@@ -1,7 +1,7 @@
 /*                   I G E S _ E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,12 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file iges_extern.h
- *
- */
 
-#define		CARDLEN		71 /* length of data portion in Global records */
-#define		PARAMLEN	63 /* length of data portion in Parameter records */
+#define CARDLEN 71 /* length of data portion in Global records */
+#define PARAMLEN 63 /* length of data portion in Parameter records */
 
 extern int do_projection;
 extern char eor; /* IGES end of record delimeter */

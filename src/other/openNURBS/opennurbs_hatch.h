@@ -47,7 +47,7 @@ public:
   enum eLoopType
   {
     ltOuter = 0,
-    ltInner = 1,
+    ltInner = 1
   };
 
   ON_HatchLoop();

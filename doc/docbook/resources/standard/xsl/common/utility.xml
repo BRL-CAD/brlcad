@@ -96,7 +96,7 @@
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The <function>log.message</function> template is a utility
     template for logging/emitting formatted messages – that is,
@@ -207,7 +207,7 @@
 <refsynopsisdiv>
 <synopsis>&lt;xsl:template name="get.doc.title"/&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>The <function>get.doc.title</function> template is a
       utility template for returning the first title found in the
@@ -233,7 +233,7 @@
   ...
 &lt;/xsl:template&gt;</synopsis>
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>This function takes string <parameter>padVar</parameter> and
       pads it out in the direction <parameter>rightLeft</parameter> to

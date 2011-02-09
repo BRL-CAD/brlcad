@@ -1,7 +1,7 @@
 /*                         M A G I C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
  * uninitialized data.
  *
  * The one ugly thing about this implementation is that every BRL-CAD
- * structure needs to have it's magic number registered here and in
+ * structure needs to have its magic number registered here and in
  * the header.
  *
  */

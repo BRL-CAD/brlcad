@@ -1,7 +1,7 @@
 /*                         B W - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -190,7 +190,7 @@ main(int argc, char **argv)
 
     /* autosize input? */
     if (fileinput && autosize) {
-	unsigned long int w, h;
+	size_t w, h;
 	if (fb_common_file_size(&w, &h, file_name, 1)) {
 	    file_width = w;
 	    file_height = h;

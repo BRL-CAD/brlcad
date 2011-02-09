@@ -1,7 +1,7 @@
 /*                         M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2010 United States Government as represented by
+ * Copyright (c) 2000-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ int
 mk_write_color_table(struct rt_wdb *ofp)
 {
     RT_CK_WDB(ofp);
-    if (ofp->dbip->dbi_version <= 4) {
+    if (db_version(ofp->dbip) < 5) {
 	const struct mater *mp;
 
 	BU_ASSERT_LONG(mk_version, ==, 4);

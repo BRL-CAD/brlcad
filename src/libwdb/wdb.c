@@ -1,7 +1,7 @@
 /*                           W D B . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2010 United States Government as represented by
+ * Copyright (c) 1987-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -710,13 +710,13 @@ int
 mk_metaball(
     struct rt_wdb *wdbp,
     const char *name,
-    const int nctlpt, /* number of control points */
+    const size_t nctlpt, /* number of control points */
     const int method,
     const fastf_t threshold,
     const fastf_t *verts[5])
 {
     struct rt_metaball_internal *mb;
-    int i;
+    size_t i;
 
     BU_GETSTRUCT(mb, rt_metaball_internal);
     mb->magic = RT_METABALL_INTERNAL_MAGIC;

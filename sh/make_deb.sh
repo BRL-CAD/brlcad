@@ -35,30 +35,139 @@
 #
 ###
 
-set -e
+test -e
 
+ferror(){
+    echo "=========================================================="
+    echo $1
+    echo $2
+    echo "=========================================================="
+    exit 1
+}
+
+# show help
+if test -z $1 ;then
+    echo "Script to create binary deb package, and debian source packages."
+    echo
+    echo "Usage:"
+    echo "  sh/make_deb.sh -b | -s"
+    echo
+    echo "Options:"
+    echo "  -b       build the binary deb package"
+    echo "  -s *     build the debian source packages"
+    echo
+    echo "           * (use with a clean brlcad tree)"
+    exit 1
+fi
+
+# too many parameters
+if test $# -gt 1 ;then
+    ferror "Too many arguments" "Exiting..."
+fi
+
+# unknown parameter
+if test "$1" != "-s" && test "$1" != "-b" ;then
+    ferror "Unknown argument" "Exiting..."
+fi
+
+# test if in project root
+if test ! -f misc/debian/control ; then
+    ferror "\"make_deb.sh\" should be run from project root directory." "Exiting..."
+fi
+
+# test if in debian like system
 if test ! -e /etc/debian_version ; then
-    echo "Refusing to build on a non-debian system."
-    exit 1
+    ferror "Refusing to build on a non-debian system."
 fi
 
-if test ! -e /usr/bin/fakeroot ; then
-    echo "Need the fakeroot package."
-    exit 1
+# set variables
+BVERSION=`cat include/conf/MAJOR`"."`cat include/conf/MINOR`"."`cat include/conf/PATCH`
+BVERSION=`echo $BVERSION | sed 's/[^0-9.]//g'`
+CDATE=`date -R`
+CFILE="debian/changelog"
+RELEASE="0"
+
+# check needed packages
+E=0
+fcheck(){
+    T="install ok installed"
+    if test `dpkg -s $1 2>/dev/null | grep "$T" | wc -l` -eq 0 ; then
+	LLIST=$LLIST" "$1
+	E=1
+    fi
+}
+
+fcheck debhelper
+fcheck fakeroot
+
+if test "$1" = "-b" ;then
+    fcheck build-essential
+    fcheck bison
+    fcheck flex
+    fcheck libxi-dev
+    fcheck xsltproc
+    fcheck libgl1-mesa-dev
+    fcheck libpango1.0-dev
+    fcheck libncurses5-dev
+    #fcheck fop # allows pdf creation
 fi
 
-if test ! -e /usr/bin/debuild ; then
-    echo "Need the devscripts package."
-    exit 1
+if [ $E -eq 1 ]; then
+    ferror "Mandatory to install these packages first:" "$LLIST"
 fi
 
-if test ! -e ./debian && test ! -e ./debian/control ; then
-    ln -fs misc/debian debian
+# if building sources, create *orig.tar.gz
+rm -Rf debian
+if test "$1" = "-s" ;then
+    echo "building brlcad_$BVERSION.orig.tar.gz..."
+    tar -czf "../brlcad_$BVERSION.orig.tar.gz" *
 fi
 
-fakeroot debian/rules binary && debuild -us -uc
+# #
+cp -Rf misc/debian/ .
 
-if test -L ./debian ; then rm debian ; fi
+# modify doc menu desktop files
+fdoc(){
+    L=`sed -n '/Exec=/=' $2`
+    A=`sed -n $L'p' $2`
+    if test ! "Exec=$1" = "$A" ;then
+	sed -i "s:$A:Exec=$1:" $2
+	echo "\"$2\" has been modified!"
+    fi
+}
+
+fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/toc.html" \
+ "debian/brlcad-doc.desktop"
+
+fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/db" \
+ "debian/brlcad-db.desktop"
+
+fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/mged/index.html" \
+ "debian/brlcad-doc-mged.desktop"
+
+fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/Anim_Tutorial/index.html" \
+ "debian/brlcad-doc-animation.desktop"
+
+# update debian/chagelog if needed
+if test -s $CFILE && test `sed -n '1p' $CFILE | grep "brlcad ($BVERSION-$RELEASE" | wc -l` -eq 0 ; then
+    L1="brlcad ($BVERSION-$RELEASE) unstable; urgency=low\n\n"
+    L2="  **** VERSION ENTRY AUTOMATICALLY ADDED BY \"sh\/make_deb.sh\" SCRIPT ****\n\n"
+    L3=" -- Jordi Sayol <g.sayol@yahoo.es>  $CDATE\n\n/"
+    sed -i "1s/^/$L1$L2$L3" $CFILE
+    echo "\"$CFILE\" has been modified!"
+fi
+
+# create deb or source packages
+case "$1" in
+-b) fakeroot debian/rules clean && \
+    fakeroot debian/rules binary
+    ;;
+-s) fakeroot dpkg-buildpackage -S -us -uc
+    ;;
+esac
+
+# #
+rm -Rf debian
 
 # Local Variables:
 # mode: sh

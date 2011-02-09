@@ -200,6 +200,7 @@ libged_nil_la_SOURCES = \
 	scale_superell.c \
 	scale_tgc.c \
 	scale_tor.c \
+	screengrab.c \
 	search.c \
 	select.c \
 	set_output_script.c \
@@ -261,7 +262,7 @@ libged_nil_la_SOURCES = \
 	zap.c \
 	zoom.c
 
-# AM_CFLAGS = ${STRICT_FLAGS}
+AM_CFLAGS = ${STRICT_FLAGS}
 
 # cannot set per-target CPPFLAGS until automake 1.7+
 AM_CPPFLAGS = \

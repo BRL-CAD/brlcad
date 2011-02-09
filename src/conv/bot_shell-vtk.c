@@ -1,7 +1,7 @@
 /*                 B O T _ S H E L L - V T K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -571,7 +571,7 @@ main(int argc, char *argv[])
 	database_index++;
     }
     fprintf( fd_out, "\nASCII\n\nDATASET POLYDATA\n" );
-    fprintf( fd_out, "POINTS %ld float\n", verts->curr_vert );
+    fprintf( fd_out, "POINTS %ld float\n", (long int)verts->curr_vert );
     for ( i=0; i<(size_t)verts->curr_vert; i++ ) {
 	if ( use_normals ) {
 	    fprintf( fd_out, "%g %g %g\n", V3ARGS( &verts->the_array[i*6] ) );
@@ -584,7 +584,7 @@ main(int argc, char *argv[])
 	fprintf( fd_out, "3 %ld %ld %ld\n", V3ARGS( &faces[i*3] ) );
     }
     if ( use_normals ) {
-	fprintf( fd_out, "POINT_DATA %ld\n", verts->curr_vert );
+	fprintf( fd_out, "POINT_DATA %ld\n", (long int)verts->curr_vert );
 	fprintf( fd_out, "NORMALS default float\n" );
 	for ( i=0; i<(size_t)verts->curr_vert; i++ ) {
 	    fprintf( fd_out, "%g %g %g\n", V3ARGS( &verts->the_array[i*6+3] ) );

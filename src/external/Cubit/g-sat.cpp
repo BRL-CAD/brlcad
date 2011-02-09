@@ -1,7 +1,7 @@
 /*                         G - S A T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -215,7 +215,7 @@ main(int argc, char *argv[])
 	struct directory *dp;
 
 	dp = db_lookup( rtip->rti_dbip, argv[i], LOOKUP_QUIET );
-	if ( dp == DIR_NULL ) {
+	if ( dp == RT_DIR_NULL ) {
 	    bu_log( "Cannot find %s\n", argv[i] );
 	    continue;
 	}

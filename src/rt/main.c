@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United  States Government as represented by
+ * Copyright (c) 1985-2011 United  States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,8 +45,8 @@
 #include "pkg.h"
 
 /* private */
+#include "./rtuif.h"
 #include "./ext.h"
-#include "rtprivate.h"
 #include "brlcad_version.h"
 
 
@@ -150,7 +150,7 @@ int main(int argc, char **argv)
 {
     struct rt_i *rtip = NULL;
     char *title_file = NULL, *title_obj = NULL;	/* name of file and first object */
-    char idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
+    char idbuf[2048] = {0};			/* First ID record info */
     struct bu_vls	times;
     int i;
 
@@ -379,7 +379,7 @@ int main(int argc, char **argv)
 	rt_pr_tol( &rtip->rti_tol );
 
     /* before view_init */
-    if ( outputfile && strcmp( outputfile, "-") == 0 )
+    if ( outputfile && BU_STR_EQUAL( outputfile, "-") )
 	outputfile = (char *)0;
 
     /*

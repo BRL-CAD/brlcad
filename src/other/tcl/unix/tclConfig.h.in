@@ -16,6 +16,9 @@
 /* Define to 1 if you have the <AvailabilityMacros.h> header file. */
 #undef HAVE_AVAILABILITYMACROS_H
 
+/* Define to 1 if the system has the type `blkcnt_t'. */
+#undef HAVE_BLKCNT_T
+
 /* Do we have BSDgettimeofday()? */
 #undef HAVE_BSDGETTIMEOFDAY
 
@@ -193,12 +196,8 @@
 /* Define to 1 if `st_blksize' is member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_BLKSIZE
 
-/* Define to 1 if `tm_zone' is member of `struct tm'. */
-#undef HAVE_STRUCT_TM_TM_ZONE
-
-/* Define to 1 if your `struct stat' has `st_blksize'. Deprecated, use
-   `HAVE_STRUCT_STAT_ST_BLKSIZE' instead. */
-#undef HAVE_ST_BLKSIZE
+/* Define to 1 if `st_blocks' is member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_BLOCKS
 
 /* Define to 1 if you have the <sys/filio.h> header file. */
 #undef HAVE_SYS_FILIO_H
@@ -233,16 +232,8 @@
 /* Should we use the tm_tzadj field of struct tm? */
 #undef HAVE_TM_TZADJ
 
-/* Define to 1 if your `struct tm' has `tm_zone'. Deprecated, use
-   `HAVE_STRUCT_TM_TM_ZONE' instead. */
-#undef HAVE_TM_ZONE
-
 /* Is off64_t in <sys/types.h>? */
 #undef HAVE_TYPE_OFF64_T
-
-/* Define to 1 if you don't have `tm_zone' but do have the external array
-   `tzname'. */
-#undef HAVE_TZNAME
 
 /* Do we have the uintptr_t type? */
 #undef HAVE_UINTPTR_T
@@ -406,14 +397,8 @@
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
 
-/* Define to 1 if your <sys/time.h> declares `struct tm'. */
-#undef TM_IN_SYS_TIME
-
 /* Is getcwd Posix-compliant? */
 #undef USEGETWD
-
-/* Do we need a special AIX hack for timezones? */
-#undef USE_DELTA_FOR_TZ
 
 /* May we include <dirent2.h>? */
 #undef USE_DIRENT2_H

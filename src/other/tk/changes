@@ -1,4 +1,4 @@
-This file summarizes all changes made to Tk since version 1.0 was
+hhis file summarizes all changes made to Tk since version 1.0 was
 released on March 13, 1991.  Changes that aren't backward compatible
 are marked specially.
 
@@ -6606,7 +6606,7 @@ in screen distances, reducing precision loss (ferrieux)
 
 2009-04-23 (bug fix)[2779910] updated Win chooseDir (hobbs)
 
-2009-04-43 (bug fix) prevent delete of selected folder in Win dialog (hobbs)
+2009-04-24 (bug fix) prevent delete of selected folder in Win dialog (hobbs)
 
 2009-04-30 (bug fix)[2080533] panedwindow sash draw crash (fellows)
 
@@ -6673,3 +6673,57 @@ in screen distances, reducing precision loss (ferrieux)
 2009-11-03 (bug fix)[2891541] fix grab behaviour for main window (thoyts)
 
 --- Released 8.5.8, November 16, 2009 --- See ChangeLog for details ---
+
+2009-11-22 (bug fix)[2899949] crash on widget destroy (meier,thoyts)
+
+2009-11-24 (bug fix)[2902814] fix [wm iconphoto] on LP64 systems (fellows)
+
+2009-12-06 (bug fix)[2548661] crash in GetFontFamilyName (riefenstahl)
+
+2009-12-06 (bug fix)[2864685] Compiz menu item animation (gavilan,thoyts)
+
+2009-12-09 (bug fix)[2902573] Update Safe Tk to new Safe Base (kurpies)
+
+2009-12-11 (bug fix)[2912473] accept :: in DISPLAY name (fellows)
+
+2009-12-16 (bug fix)[2496162] crash calling Tk_DeleteOptionTable() (english)
+
+2009-12-20 (bug fix)[2917663] [send] accept SI:* on auth list (fellows)
+
+2009-12-22 (bug fix)[2919205] syntax bug in [tk_messageBox] (zaroo)
+
+2009-12-22 (bug fix)[2912356] [ttk::sizegrip] accommodate Compiz (english)
+
+2009-12-27 (bug fix)[2879927] Win: cascade menu highlight (pawlak,thoyts)
+
+2010-01-01 (bug fix)[1924761] stop [event generate] / XIM conflict (fellows)
+
+2010-01-03 (bug fix)[2848897] ODS_NOACCEL flag support (kovalenko,thoyts)
+
+2010-01-05 (bug fix)[220950] [$menu delete] bounds check (fellows)
+
+2010-01-05 [2898255] unlimited multi-file select (pawlak,fellows,thoyts)
+
+2010-01-06 (bug fix)[1163496] X: [wm transient] fix (bateman,fellows)
+
+2010-01-09 (new feature)[TIP 360] Modernize X11 Menus (thoyts)
+
+2010-01-18 (bug fix)[2932808] canvas update on state change (mcdonald,nijtmans)
+
+2010-01-19 (bug fix)[2931374] overflow in complex tag search (schmitz)
+
+2010-01-19 (new feature)[TIP 359] Extended Window Manager Hint Support (thoyts)
+
+2010-02-17 (bug fix)[2952745] crash in menu deletion (english)
+
+2010-03-11 (bug fix)[2968379] crash in peer text dump (fellows)
+
+2010-05-31 (bug fix)[3006842] crash on empty bind scripts (english)
+
+2010-08-03 (bug fix) entry validation compat with Itcl scope (hobbs)
+
+2010-08-12 (bug fix)[2585265] text <Delete>,<Backspace> note selection (fellows)
+
+2010-08-25 (feature)[3053320] update Ttk to tile 0.8.6 feature set (hobbs)
+
+--- Released 8.5.9, September 6, 2010 --- See ChangeLog for details ---

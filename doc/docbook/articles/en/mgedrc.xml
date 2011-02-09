@@ -1,17 +1,17 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Setting Up a .mgedrc File</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Setting Up a .mgedrc File</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-  <para id="mgedrc1">
+  <para xml:id="mgedrc1">
     Similar to the preferences or settings options in other computer
     applications, the .mgedrc file is a useful tool to customize the look and
     functionality of the U.S. Army Ballistic Research Laboratory -
@@ -23,14 +23,14 @@
     and size the command and geometry windows, and perform a host of other
     customizations.
   </para>
-  <para id="mgedrc2">
+  <para xml:id="mgedrc2">
     The command to create/update a .mgedrc file with the graphical user
     interface (GUI) is found under the File drop-down menu. When the
     Create/Update .mgedrc command is called, it writes an extensive list (~500
     lines) of default settings and comments representing the default state of
     the command and graphics windows.
   </para>
-  <para id="mgedrc3">
+  <para xml:id="mgedrc3">
     As shown in Figure D-1, there are two basic parts to a .mgedrc file: (1)
     the information before the MGEDRC_HEADER and (2) the information after the
     MGEDRC_HEADER. The information before the header is any text created by
@@ -42,7 +42,7 @@
     The information before the HEADER, however, is not changed.
   </para>
 
-  <note id="mgedrc4">
+  <note xml:id="mgedrc4">
     <para>
       Remember that when creating/updating .mgedrc files, if any            
       conflicting/repeated commands are found, BRL-CAD "obeys" the last     
@@ -50,24 +50,24 @@
     </para>
   </note>
 
-  <para id="mgedrc5">
+  <para xml:id="mgedrc5">
     In Figure D-1, note that lines have been added before the header to show
     different raytracing options and the commands have been sectioned into
     functional divisions separated by comment fields (comment fields are
     denoted by the symbol "#").
   </para>
 
-  <figure id="mgedrc6">
-    <title>The two basic parts of the .mgedrc file: (1) information before header, and (2) information
-    after header.</title>
+  <figure xml:id="mgedrc6"><info><title>The two basic parts of the .mgedrc file: (1) information before header, and (2) information
+    after header.</title></info>
+    
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../articles/en/images/mgedrc_fig01.png" format="PNG"></imagedata>
+	<imagedata align="center" fileref="../../articles/en/images/mgedrc_fig01.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
 
-  <para id="mgedrc7">
+  <para xml:id="mgedrc7">
     Each command includes the following four basic components:
     
     <itemizedlist>
@@ -94,24 +94,24 @@
     </itemizedlist>  
   </para>
 
-  <para id="mgedrc8">
+  <para xml:id="mgedrc8">
     The symbol ";" signifies command separation (a return), and the symbol "$"
     inserts the value of the subsequently named variable.
   </para>
-  <para id="mgedrc9">
+  <para xml:id="mgedrc9">
     The following text discusses some specific examples of the type of
     shortcuts that can be created by users to expedite common operations such
     as executing raytraces with particular parameters, accepting and rejecting
     edits, setting azimuth and elevation, etc.
   </para>
-  <para id="mgedrc10">
+  <para xml:id="mgedrc10">
     First, the command to execute a specific kind of raytrace can often be
     long and tedious to type. For example, if a user wanted to render an image
     in a window 256 pixels high and wide, with a background color of white,
     and with the ambient light set to 0.7, the following text would have to be
     typed:
     
-    <literallayout>
+    <literallayout class="normal">
 rt -s256 -C255/255/255 -A.7
     </literallayout>
     
@@ -119,13 +119,13 @@ rt -s256 -C255/255/255 -A.7
     automate the calling of this instruction. The user's line might be as
     follows:
     
-    <literallayout>
+    <literallayout class="normal">
 proc 256wa {} {rt -s256 -C255/255/255 -A.7}
     </literallayout>
     
     Diagrammed, this line breaks down as follows:
     <informaltable>
-      <tgroup cols='4'>
+      <tgroup cols="4">
 	<tbody>
 	  <row>
 	    <entry>proc</entry>
@@ -151,7 +151,7 @@ proc 256wa {} {rt -s256 -C255/255/255 -A.7}
     Now, all the user has to type on the command line to execute a rendering with the previously
     listed options is the following procedure name:
 
-    <literallayout>
+    <literallayout class="normal">
 256wa
     </literallayout>
 
@@ -163,19 +163,19 @@ proc 256wa {} {rt -s256 -C255/255/255 -A.7}
     commands (e.g., create).
   </para>
 
-  <para id="mgedrc11">
+  <para xml:id="mgedrc11">
     The .mgedrc file can also be used to create shortcuts for other types of command line or GUI
     commands. For example, the syntax for creating a shortcut for accepting and rejecting edits
     from the command line might be as follows:
     
-    <literallayout>
+    <literallayout class="normal">
 proc acc {} {press accept}
 proc rej {} {press reject}
     </literallayout>
 
     In addition, a possible shortcut for calling a standard viewing geometry might be as follows:
     
-    <literallayout>
+    <literallayout class="normal">
 proc 145 {} {ae 145 25}
     </literallayout>
 
@@ -183,37 +183,37 @@ proc 145 {} {ae 145 25}
     procedure syntax for combining the make and sed commands and copy and sed commands
     might be as follows:
 
-    <literallayout>
+    <literallayout class="normal">
 proc mks {newprim primtype} {make $newprim $primtype; sed $newprim}
     </literallayout>
 
 and
 
-    <literallayout>
+    <literallayout class="normal">
 proc cps {oldprim newprim} {cp $oldprim $newprim; sed $newprim}
     </literallayout>
 
   </para>
 
-  <para id="mgedrc12">
+  <para xml:id="mgedrc12">
     Figure D-2 shows a sample section of a .mgedrc file that allows the user to specify the command
     line editor, customize the window size and placement, and toggle the function keys.
   </para>
 
-  <figure id="mgedrc13">
-    <title>Sample elements and functionality of a .mgedrc file.</title>
+  <figure xml:id="mgedrc13"><info><title>Sample elements and functionality of a .mgedrc file.</title></info>
+    
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../articles/en/images/mgedrc_fig02.png" format="PNG"></imagedata>
+	<imagedata align="center" fileref="../../articles/en/images/mgedrc_fig02.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
 
 
-  <para id="mgedrc14">
+  <para xml:id="mgedrc14">
     The diagrammed command for sizing and positioning the command window is as follows:
     <informaltable>
-      <tgroup cols='4'>
+      <tgroup cols="4">
 	<tbody>
 	  <row>
 	    <entry>set mged_default</entry>
@@ -233,7 +233,7 @@ proc cps {oldprim newprim} {cp $oldprim $newprim; sed $newprim}
     </informaltable>
   </para>
 
-  <para id="mgedrc15">
+  <para xml:id="mgedrc15">
     As illustrated in Figure D-3, to specify the window size, the user inputs
     width-by-height dimensions for each window (i.e., 475 × 250). To specify
     the placement of the windows on the display, the user specifies offset
@@ -248,11 +248,11 @@ proc cps {oldprim newprim} {cp $oldprim $newprim; sed $newprim}
     display to the bottom of the window.
   </para>
 
-  <figure id="mgedrc16">
-    <title>Sample window dimension input and positioning.</title>
+  <figure xml:id="mgedrc16"><info><title>Sample window dimension input and positioning.</title></info>
+    
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../articles/en/images/mgedrc_fig03.png" format="PNG"></imagedata>
+	<imagedata align="center" fileref="../../articles/en/images/mgedrc_fig03.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>

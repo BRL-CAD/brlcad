@@ -1,7 +1,7 @@
 /*                      B W H I S T E Q . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,8 +57,9 @@ main(int argc, char **argv)
     int left[256], right[256];
     double hint, havg;
     long r;
+    size_t ret;
 
-    if (argc > 1 && strcmp(argv[1], "-v") == 0) {
+    if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
 	verbose++;
 	argc--;
 	argv++;
@@ -119,7 +120,11 @@ main(int argc, char **argv)
 #endif /* Not METHOD2 */
 	    }
 	}
-	fwrite(obuf, 1, n, stdout);
+	ret = fwrite(obuf, 1, n, stdout);
+	if (ret == 0) {
+	    perror("fwrite");
+	    break;
+	}
     }
     return 0;
 }

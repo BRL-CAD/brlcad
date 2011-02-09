@@ -1,7 +1,7 @@
 /*                    N M G _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -129,7 +129,10 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		nmg_tabulate_face_g_verts(&vert_table, fg);
 		point_t tmppt, center, max_pt;
 		struct vertex **pt;
+
 		VSET(tmppt, 0, 0, 0);
+		VSET(max_pt, 0, 0, 0);
+
 		int ptcnt = 0;
 		for (BU_PTBL_FOR(pt, (struct vertex **), &vert_table)) {
 		    tmppt[0] += (*pt)->vg_p->coord[0];

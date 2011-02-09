@@ -1,19 +1,19 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Refinando el modelo de la taza</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Refinando el modelo de la taza</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
  
     <legalnotice>
        <para>Aprobado para su publicación. Su distribución es ilimitada.</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-   <para id="refining_mug_overviewlist">
+   <para xml:id="refining_mug_overviewlist">
       En este tutorial usted aprenderá a:
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Asignar propiedades de los materiales a la taza utilizando el comando mater.</para>
 	</listitem>
@@ -26,17 +26,17 @@
       </itemizedlist>
     </para>
 
-    <para id="refining_mug_intro1">
+    <para xml:id="refining_mug_intro1">
 	En este capítulo, vamos a refinar la taza que usted hizo en el 
 	tutorial anterior.
 	Abra la base de datos creada anteriormente llamada mug.g.
     </para>
 
-    <sect1 id="mug_mater_prop_mater_cmd">
-      <title>
+    <section xml:id="mug_mater_prop_mater_cmd"><info><title>
 	Asignando propiedades de los materiales a la taza utilizando el 
 	comando <command>mater</command>
-      </title>
+      </title></info>
+      
       <para>
 	La asignación de propiedades de los materiales a una región se puede 
 	hacer ya sea con el comando mater (materia) o con el comando shader 
@@ -49,10 +49,10 @@
 	plástico y establezca el color en un tono medio de sombreado verde. El 
 	diálogo en la ventana de comandos debería similar al siguiente:
 
-	<command><prompt>mged></prompt> mater mug.r[Enter]</command>
+	<command><prompt>mged&gt;</prompt> mater mug.r[Enter]</command>
       </para>
       
-      <literallayout>
+      <literallayout class="normal">
 	   Shader =
 
 	   Shader? ('del' to delete, CR to skip) plastic[Enter]
@@ -85,7 +85,7 @@
       <para>
 	El diagrama de este comando es:
 	<informaltable>
-	  <tgroup cols='5'>
+	  <tgroup cols="5">
 	    <tbody>
 	      <row>
 		<entry>mater</entry>
@@ -111,10 +111,10 @@
 	  Herencia (Inheritance) es un tema más avanzado que no se verá en este tutorial.
 	</para>
       </note>
-    </sect1>
+    </section>
 
-    <sect1 id="mug_raytrace1">
-      <title>Realizando el trazado de rayos de su taza (Raytrace)</title>
+    <section xml:id="mug_raytrace1"><info><title>Realizando el trazado de rayos de su taza (Raytrace)</title></info>
+      
       <para>
 	Abra el Panel de control de Raytrace y seleccione Raytrace. Usted debe 
 	obtener una imagen de una taza verde sobre un fondo oscuro (se utiliza 
@@ -126,7 +126,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged11_mug_raytraced_norim.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged11_mug_raytraced_norim.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -137,10 +137,10 @@
 	</mediaobject>
       </informalfigure>
 
-    </sect1>
+    </section>
     
-    <sect1 id="mug_refining">
-      <title>Refinando la taza</title>
+    <section xml:id="mug_refining"><info><title>Refinando la taza</title></info>
+      
       <para>
 	Ahora vamos a mejorar la taza. Observe que el borde de la taza se ve 
 	un poco angulado. Para solucionar este problema, tendrá que añadir un 
@@ -156,7 +156,7 @@
       </para>
       
       <informaltable>
-	<tgroup cols='7'>
+	<tgroup cols="7">
 	  <tbody>
 	    <row>
 	      <entry>in</entry>
@@ -179,10 +179,10 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-    </sect1>
+    </section>
 
-    <sect1 id="mug_torus_cup_combine">
-      <title>Combinando las figuras</title>
+    <section xml:id="mug_torus_cup_combine"><info><title>Combinando las figuras</title></info>
+      
       <para>
 	Para combinar el toro con la taza, necesitará tipear en el prompt:
 	
@@ -215,7 +215,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged11_mug_raytraced_rim.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged11_mug_raytraced_rim.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -226,13 +226,13 @@
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="refining_mug_review">
-      <title>Repasemos...</title>
+    <section xml:id="refining_mug_review"><info><title>Repasemos...</title></info>
+      
       <para>
 	En este tutorial usted aprendió a:
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Asignar propiedades de los materiales a la taza utilizando el comando mater.</para>
 	</listitem>
@@ -244,6 +244,6 @@
 	</listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

@@ -1,7 +1,7 @@
 dnl                    C O N F I G U R E . A C
 dnl BRL-CAD
 dnl
-dnl Copyright (c) 2004-2010 United States Government as represented by
+dnl Copyright (c) 2004-2011 United States Government as represented by
 dnl the U.S. Army Research Laboratory.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -199,6 +199,8 @@ BC_BRLCAD_ROOT
 
 # set up the BRLCAD_DATA install directory, sets bc_data_dir
 #   e.g. /usr/local/share/brlcad/7.4.0
+# Note that BRLCAD_DATA is expected to be a full path - relative
+# paths will not work
 BC_BRLCAD_DATA
 
 # if this is not a checkout, disable dependency tracking for a faster
@@ -311,10 +313,7 @@ BC_ARG_ENABLE([build_iwidgets], [iwidgets-install], [Install the included iwidge
 # tkhtml
 BC_ARG_ENABLE([build_tkhtml], [tkhtml-build], [Build the included tkhtml], [yes])
 
-# togl
-#BC_ARG_ENABLE([build_togl], [togl-build], [Build the included togl], [no])
-
-# tkpng 
+# tkpng
 BC_ARG_ENABLE([build_tkpng], [tkpng-build], [Build the included tkpng], [auto])
 
 # tktable
@@ -357,11 +356,13 @@ BC_ARG_ENABLE([use_dtrace], [dtrace], [Enable dtrace support], [no])
 BC_ARG_ENABLE([build_verbose], [verbose], [Enable verbose compilation], [auto])
 
 # warnings
-BC_ARG_ENABLE([build_warnings], [warnings], [Enable verbose compilation warnings], [no])
+BC_ARG_ENABLE([build_warnings], [warnings], [Enable verbose compilation warnings], [yes])
 
 # build progress status
 BC_ARG_ENABLE([build_progress], [progress], [Enable verbose compilation progress], [no])
 
+# build libdm/mged's rtgl interface.  this is presently the only dm
+# interface directly toggled instead of passively via --with options.
 BC_ARG_ENABLE([rtgl], [rtgl], [Enable compilation of experimental Ray Trace OpenGL display manager], [no])
 
 
@@ -516,14 +517,9 @@ BC_ARG_ALIAS([build_iwidgets], [iwidgets-build])
 
 # aliases to force building tkhtml (help uses tkhtml-build)
 BC_ARG_ALIAS([build_tkhtml], [tkhtml])
-BC_ARG_ALIAS([build_tkhtml], [tkhtml3])
-BC_ARG_ALIAS([build_tkhtml], [tkhtml3-build])
 
 # aliases to force building tktable (help uses tktable-build)
 BC_ARG_ALIAS([build_tktable], [tktable])
-
-# aliases to force building togl (help uses togl-build)
-#BC_ARG_ALIAS([build_togl], [togl])
 
 # aliases to force building tkpng(help uses tkpng-build)
 BC_ARG_ALIAS([build_tkpng], [tkpng])
@@ -697,9 +693,6 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_tkpng_set" = "xno" ; then
 		bc_build_tkpng="$set_everything"
 	fi
-	#if test "x$bc_build_togl" = "xno" ; then
-	#	bc_build_togl="$set_everything"
-	#fi
 	if test "x$bc_build_tktable" = "xno" ; then
 		bc_build_tktable="$set_everything"
 	fi
@@ -832,9 +825,6 @@ AC_MSG_RESULT($bc_build_tkhtml)
 
 AC_MSG_CHECKING(whether to build the tktable library)
 AC_MSG_RESULT($bc_build_tktable)
-
-#AC_MSG_CHECKING(whether to build the togl library)
-#AC_MSG_RESULT($bc_build_togl)
 
 AC_MSG_CHECKING(whether to build the tkpng library)
 AC_MSG_RESULT($bc_build_tkpng)
@@ -1535,10 +1525,12 @@ BC_CONFIGURE_STAGE([headers], [4 of 9])
 
 # make our minimum compliance goal explicit (needs to be tested here
 # so header files and types are tested properly)
-dnl BC_COMPILER_AND_LINKER_RECOGNIZES([-std=c99], [cstd], [no])
-dnl if test "x$bc_cstd_works" = "xyes" ; then
-dnl     CFLAGS="$CFLAGS -std=c99"
-dnl fi
+BC_COMPILER_AND_LINKER_RECOGNIZES([-std=c99], [cstd], [no])
+STD_C99_FLAGS=""
+if test "x$bc_cstd_works" = "xyes" ; then
+   STD_C99_FLAGS="-std=c99"
+fi
+AC_SUBST(STD_C99_FLAGS)
 
 # C89 headers: assert.h, ctype.h, errno.h, float.h, limits.h, locale.h,
 # math.h, setjmp.h, signal.h, stdarg.h, stddef.h, stdio.h, stdlib.h,
@@ -1961,8 +1953,11 @@ dnl     AC_SUBST(SSE)
     dnl library path search order, not biasing a preference for dylibs.
     BC_LINKER_RECOGNIZES([-Wl,-search_paths_first -Wnewline-eof])
 
-    dnl 64bit compilation flags
+    dnl 32-bit/64-bit compilation flags
     if test "x$bc_build_64bit" = "xyes" ; then
+
+	# 64-bit enabled, try to force 64-bit
+
 	found_64bit_flag=no
 
 	AC_MSG_CHECKING([if configure snuck on a 32bit flag to ld])
@@ -2009,6 +2004,56 @@ dnl     AC_SUBST(SSE)
 			found_64bit_flag=yes
 		fi
 	fi
+
+    elif test "x$bc_build_64bit" = "xno" ; then
+
+	# 64-bit disabled, try to force 32-bit
+
+	found_32bit_flag=no
+
+	AC_MSG_CHECKING([if configure snuck on a 64bit flag to ld])
+	PRELD="$LD"
+	LD="`echo $LD | sed 's/64/32/'`"
+	if test "x$LD" = "x$PRELD" ; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+	fi
+
+	if test "x$found_32bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-arch i386], [32_flag])
+		if test "x$bc_32_flag_works" = "xyes" ; then
+			found_32bit_flag=yes
+		fi
+	fi
+
+	if test "x$found_32bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-32], [32_flag])
+		if test "x$bc_32_flag_works" = "xyes" ; then
+			found_32bit_flag=yes
+		fi
+	fi
+
+	if test "x$found_32bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-mabi=32], [32_flag])
+		if test "x$bc_32_flag_works" = "xyes" ; then
+			found_32bit_flag=yes
+		fi
+	fi
+
+	if test "x$found_32bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-m32], [32_flag])
+		if test "x$bc_32_flag_works" = "xyes" ; then
+			found_32bit_flag=yes
+		fi
+	fi
+
+	if test "x$found_32bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-q32], [32_flag])
+		if test "x$bc_32_flag_works" = "xyes" ; then
+			found_32bit_flag=yes
+		fi
+	fi
     fi
 
 # end check for automatic flags
@@ -2047,7 +2092,25 @@ fi
 
 dnl debug flags
 if test "x$bc_use_debug" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-ggdb3], [debug_flag])
+
+	dnl FIXME: fugly workaround as there is no known
+	dnl feature-specific way to detect -ggdb3 or -gstabs+ is
+	dnl preferred and libtool+Mac 10.4 will work with -ggdb3.
+
+	AC_CHECK_PROGS(SW_VERS, sw_vers)
+	if test "x$SW_VERS" != "x"; then
+		AC_MSG_CHECKING(Mac OS X version for debugging)
+		MACOSX_VERSION=`$SW_VERS | sed -n "s/^ProductVersion:[[[:space:]]]//p" | cut -f 1-3 -d.`
+		AC_MSG_RESULT([$MACOSX_VERSION])
+	fi
+	case "x$MACOSX_VERSION" in
+	    x10.[456])
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-gstabs+], [debug_flag])
+		;;
+	    *)
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-ggdb3], [debug_flag])
+		;;
+	esac
 	if test "x$bc_debug_flag_works" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
 	fi
@@ -2118,7 +2181,7 @@ else
 fi
 AC_SUBST(NOWARN)
 if test "x$bc_build_warnings" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Winline], [warning])
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long], [warning])
 	# XXX also of interest
 	# -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
 	# -Wstrict-prototypes -Wold-style-definition -Wshorten-64-to-32 -Wmissing-field-initializers
@@ -2136,10 +2199,10 @@ fi
 
 dnl we are more strict on clean dirs by default (no-long-long needed due to tcl.h)
 if test "x$bc_build_strict" = "xyes" ; then
-   BC_COMPILER_AND_LINKER_RECOGNIZES([-w -pedantic -W -Wall -Werror -Wno-long-long], [strict], [no])
+   BC_COMPILER_AND_LINKER_RECOGNIZES([-w -pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long -Werror], [strict], [no])
    if test "x$bc_strict_works" = "xyes" ; then
        # do not include -w as that was just to suppress any test warnings
-       STRICT_FLAGS="-pedantic -W -Wall -Werror -Wno-long-long"
+       STRICT_FLAGS="-pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long  -Werror"
        AC_SUBST(STRICT_FLAGS)
        AC_DEFINE([STRICT_FLAGS], [1], [Define to 1 if strict standards compliance compilation is enabled.])
    fi
@@ -2231,6 +2294,7 @@ AC_TYPE_SIGNAL
 # mktime, strftime, time
 
 AC_CHECK_FUNCS(\
+	GetFullPathName \
 	XQueryExtension \
 	alarm \
 	dlopen \
@@ -2249,6 +2313,7 @@ AC_CHECK_FUNCS(\
 	mkstemp \
 	pipe \
 	popen \
+	realpath \
 	sbrk \
 	setenv \
 	setpgid \
@@ -2359,7 +2424,7 @@ fi
 	#AC_MSG_NOTICE([Installation of a modern GNU Flex before continuing is recommended.])
      #fi
 #fi
-	
+
 AC_MSG_CHECKING([whether we have the essentials to make parsers])
 if test "x$build_parsers" = "xyes" ; then
     AC_MSG_RESULT(yes)
@@ -3178,22 +3243,6 @@ else
     AC_MSG_RESULT(no)
 fi
 
-dnl *** togl ***
-dnl figure out whether we need to build togl
-#TOGL_VERSION="2.1"
-#AC_SUBST(TOGL_VERSION)
-#TOGL_CPPFLAGS=""
-#AC_MSG_CHECKING(whether to build togl)
-#if test ! "x$bc_build_togl" = "xno" ; then
-#    build_brlcad_togl=yes
-#    TOGL_CPPFLAGS='-I${top_srcdir}/src/other/togl -I${top_builddir}/src/other/togl'
-#    AC_MSG_RESULT(yes)
-#else
-#    build_brlcad_togl=no
-#    AC_MSG_RESULT(no)
-#fi
-#AC_SUBST(TOGL_CPPFLAGS)
-
 dnl *** tktable ***
 dnl figure out whether we need to build tktable
 TKTABLE_VERSION="2.10"
@@ -3211,8 +3260,9 @@ AC_SUBST(TKTABLE)
 
 
 dnl *** tkpng ***
-dnl figure out whether we need to build tkpng 
-TKPNG_VERSION="0.9"
+dnl figure out whether we need to build tkpng
+TKPNG_VERSION="0.8"
+TKPNG_LIB_FILE="libtkpng${SHLIB_SUFFIX}"
 case $host_os in
      *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
 	 # some OS's don't like dots in the lib name
@@ -3220,10 +3270,11 @@ case $host_os in
 	 ;;
 esac
 AC_SUBST(TKPNG_VERSION)
+AC_SUBST(TKPNG_LIB_FILE)
 AC_MSG_CHECKING(whether to build tkpng)
 if test ! "x$bc_build_tkpng" = "xno" ; then
     build_brlcad_tkpng=yes
-    TKPNG='${top_builddir}/src/other/tkpng/tkpng${TKPNG_VERSION}.la'
+    TKPNG='${top_builddir}/src/other/tkpng/libtkpng${TKPNG_VERSION}.la'
     AC_MSG_RESULT(yes)
 else
     build_brlcad_tkpng=no
@@ -3320,7 +3371,7 @@ AC_TRY_RUN([
 #ifdef HAVE_TERMLIB_H
 #  include <termlib.h>
 #else
-#  if HAVE_NCURSES_H
+#  ifdef HAVE_NCURSES_H
 #    include <ncurses.h>
 #  else
 #    ifdef HAVE_CURSES_H
@@ -3339,7 +3390,7 @@ AC_TRY_RUN([
 #      endif
 #    endif
 #  endif
-#  if HAVE_TERM_H
+#  ifdef HAVE_TERM_H
 #    include <term.h>
 #  endif
 #endif
@@ -3864,7 +3915,6 @@ AM_CONDITIONAL(BUILD_ITK, [test "x$build_brlcad_itk" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
 AM_CONDITIONAL(BUILD_TKHTML, [test "x$build_brlcad_tkhtml" = "xyes"])
 AM_CONDITIONAL(BUILD_TKTABLE, [test "x$build_brlcad_tktable" = "xyes"])
-#AM_CONDITIONAL(BUILD_TOGL, [test "x$build_brlcad_togl" = "xyes__disabled__"])
 AM_CONDITIONAL(BUILD_TKPNG, [test "x$build_brlcad_tkpng" = "xyes"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
@@ -4154,22 +4204,13 @@ fi
 dnl configure tkhtml
 if test "x$build_brlcad_tkhtml" = "xyes" ; then
     ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
-    # this is a hack to all tkhtml to see when the tk headers are in odd 
+    # this is a hack to all tkhtml to see when the tk headers are in odd
     # places. it seems to ignore the CPPFLAGS in it's configure phase.
     if test ! "x$TKINCDIR" = "x" ; then
 	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
     fi
     AC_CONFIG_SUBDIRS([src/other/tkhtml])
 fi
-
-#dnl configure togl
-#if test "x$build_brlcad_togl" = "xyes" ; then
-#    ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
-#    if test ! "x$TKINCDIR" = "x" ; then
-#	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
-#    fi
-#    AC_CONFIG_SUBDIRS([src/other/togl])
-#fi
 
 dnl configure tktable
 if test "x$build_brlcad_tktable" = "xyes" ; then
@@ -4188,7 +4229,6 @@ AC_CONFIG_FILES([
 	db/Makefile
 	db/include/Makefile
 	doc/Makefile
-	doc/book/Makefile
 	doc/docbook/Makefile
 	doc/docbook/fop.xconf
 	doc/html/Makefile
@@ -4198,7 +4238,6 @@ AC_CONFIG_FILES([
 	doc/html/ReleaseNotes/Rel6.0/Makefile
 	doc/html/manuals/Anim_Tutorial/Makefile
 	doc/html/manuals/Makefile
-	doc/html/manuals/archer/Makefile
 	doc/html/manuals/cadwidgets/Makefile
 	doc/html/manuals/libbu/Makefile
 	doc/html/manuals/libdm/Makefile
@@ -4315,7 +4354,6 @@ AC_CONFIG_FILES([
 	src/other/URToolkit/man/Makefile
 	src/other/URToolkit/tools/Makefile
 	src/other/URToolkit/tools/clock/Makefile
-	src/other/awf/Makefile
 	src/other/incrTcl/Makefile
 	src/other/incrTcl/doc/Makefile
 	src/other/incrTcl/itcl/Makefile
@@ -4345,6 +4383,7 @@ AC_CONFIG_FILES([
 	src/other/tcl/Makefile
 	src/other/tk/Makefile
 	src/other/tkpng/Makefile
+	src/other/tkpng/pkgIndex.tcl
 	src/other/tnt/Makefile
 	src/proc-db/Makefile
 	src/remrt/Makefile
@@ -4356,16 +4395,11 @@ AC_CONFIG_FILES([
 	src/tclscripts/Makefile
 	src/tclscripts/archer/Makefile
 	src/tclscripts/archer/images/Makefile
-	src/tclscripts/archer/images/Themes/Makefile
-	src/tclscripts/archer/images/Themes/Crystal/Makefile
-	src/tclscripts/archer/images/Themes/Crystal_Large/Makefile
-	src/tclscripts/archer/images/Themes/Windows/Makefile
 	src/tclscripts/boteditor/Makefile
 	src/tclscripts/geometree/Makefile
 	src/tclscripts/hv3/Makefile
 	src/tclscripts/lib/Makefile
 	src/tclscripts/mged/Makefile
-	src/tclscripts/nirt/Makefile
 	src/tclscripts/pl-dm/Makefile
 	src/tclscripts/rtwizard/Makefile
 	src/tclscripts/rtwizard/examples/Makefile
@@ -4485,7 +4519,6 @@ AC_MSG_RESULT([Build Utah Raster Toolkit.............: $build_brlcad_urt])
 AC_MSG_RESULT([Build Template Numerical Toolkit......: $build_brlcad_tnt])
 AC_MSG_RESULT([Build openNURBS.......................: $build_brlcad_opennurbs])
 AC_MSG_RESULT([Build NIST STEP Class Libraries.......: $build_brlcad_step])
-#AC_MSG_RESULT([Build TOGL............................: $build_brlcad_togl])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([X11 support (optional)................: $build_against_x11])
 AC_MSG_RESULT([OpenGL support (optional).............: $build_against_opengl])

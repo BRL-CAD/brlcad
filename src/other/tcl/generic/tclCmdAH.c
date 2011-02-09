@@ -1500,13 +1500,13 @@ StoreStatData(
      */
 
 #define STORE_ARY(fieldName, object) \
-    TclNewLiteralStringObj(field, fieldName); \
-    Tcl_IncrRefCount(field); \
-    value = (object); \
+    TclNewLiteralStringObj(field, fieldName);				\
+    Tcl_IncrRefCount(field);						\
+    value = (object);							\
     if (Tcl_ObjSetVar2(interp,varName,field,value,TCL_LEAVE_ERR_MSG)==NULL) { \
-	TclDecrRefCount(field); \
-	return TCL_ERROR; \
-    } \
+	TclDecrRefCount(field);						\
+	return TCL_ERROR;						\
+    }									\
     TclDecrRefCount(field);
 
     /*
@@ -1520,8 +1520,11 @@ StoreStatData(
     STORE_ARY("uid",	Tcl_NewLongObj((long)statPtr->st_uid));
     STORE_ARY("gid",	Tcl_NewLongObj((long)statPtr->st_gid));
     STORE_ARY("size",	Tcl_NewWideIntObj((Tcl_WideInt)statPtr->st_size));
-#ifdef HAVE_ST_BLOCKS
+#ifdef HAVE_STRUCT_STAT_ST_BLOCKS
     STORE_ARY("blocks",	Tcl_NewWideIntObj((Tcl_WideInt)statPtr->st_blocks));
+#endif
+#ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
+    STORE_ARY("blksize", Tcl_NewLongObj((long)statPtr->st_blksize));
 #endif
     STORE_ARY("atime",	Tcl_NewLongObj((long)statPtr->st_atime));
     STORE_ARY("mtime",	Tcl_NewLongObj((long)statPtr->st_mtime));

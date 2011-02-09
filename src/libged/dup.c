@@ -1,7 +1,7 @@
 /*                         D U P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -84,7 +84,7 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
 	(void)bu_vls_strcpy(&gedp->ged_wdbp->wdb_prestr, argv[2]);
 
     gedp->ged_wdbp->wdb_num_dups = 0;
-    if ( gedp->ged_wdbp->dbip->dbi_version < 5 ) {
+    if ( db_version(gedp->ged_wdbp->dbip) < 5 ) {
 	if ((gedp->ged_wdbp->wdb_ncharadd = bu_vls_strlen(&gedp->ged_wdbp->wdb_prestr)) > 12) {
 	    gedp->ged_wdbp->wdb_ncharadd = 12;
 	    bu_vls_trunc( &gedp->ged_wdbp->wdb_prestr, 12 );
@@ -120,7 +120,7 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
     dcs.main_dbip = gedp->ged_wdbp->dbip;
     dcs.wdbp = gedp->ged_wdbp;
     dcs.dup_dirp = dirp0;
-    if ( newdbp->dbi_version < 5 ) {
+    if ( db_version(newdbp) < 5 ) {
 	if (db_scan(newdbp, ged_dir_check, 0, (genptr_t)&dcs) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "dup: db_scan failure");
 	    bu_free((genptr_t)dirp0, "_ged_getspace array");
@@ -182,7 +182,7 @@ ged_dir_check5(struct db_i		*input_dbip,
 
     /* Add the prefix, if any */
     bu_vls_init( &local );
-    if ( dcsp->main_dbip->dbi_version < 5 ) {
+    if ( db_version(dcsp->main_dbip) < 5 ) {
 	if (dcsp->wdbp->wdb_ncharadd > 0) {
 	    bu_vls_strncpy( &local, bu_vls_addr( &dcsp->wdbp->wdb_prestr ), dcsp->wdbp->wdb_ncharadd );
 	    bu_vls_strcat( &local, name );
@@ -200,7 +200,7 @@ ged_dir_check5(struct db_i		*input_dbip,
     }
 
     /* Look up this new name in the existing (main) database */
-    if ((dupdp = db_lookup(dcsp->main_dbip, bu_vls_addr( &local ), LOOKUP_QUIET)) != DIR_NULL) {
+    if ((dupdp = db_lookup(dcsp->main_dbip, bu_vls_addr( &local ), LOOKUP_QUIET)) != RT_DIR_NULL) {
 	/* Duplicate found, add it to the list */
 	dcsp->wdbp->wdb_num_dups++;
 	*dcsp->dup_dirp++ = dupdp;
@@ -230,7 +230,7 @@ ged_dir_check(struct db_i *input_dbip, const char *name, off_t UNUSED(laddr), si
 
     /* Add the prefix, if any */
     bu_vls_init( &local );
-    if ( dcsp->main_dbip->dbi_version < 5 ) {
+    if ( db_version(dcsp->main_dbip) < 5 ) {
 	if (dcsp->wdbp->wdb_ncharadd > 0) {
 	    bu_vls_strncpy( &local, bu_vls_addr( &dcsp->wdbp->wdb_prestr ), dcsp->wdbp->wdb_ncharadd );
 	    bu_vls_strcat( &local, name );
@@ -248,7 +248,7 @@ ged_dir_check(struct db_i *input_dbip, const char *name, off_t UNUSED(laddr), si
     }
 
     /* Look up this new name in the existing (main) database */
-    if ((dupdp = db_lookup(dcsp->main_dbip, bu_vls_addr( &local ), LOOKUP_QUIET)) != DIR_NULL) {
+    if ((dupdp = db_lookup(dcsp->main_dbip, bu_vls_addr( &local ), LOOKUP_QUIET)) != RT_DIR_NULL) {
 	/* Duplicate found, add it to the list */
 	dcsp->wdbp->wdb_num_dups++;
 	*dcsp->dup_dirp++ = dupdp;

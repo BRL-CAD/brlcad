@@ -1,7 +1,7 @@
 /*                V I E W _ B O T _ F A C E S . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2010 United States Government as represented by
+ * Copyright (c) 2003-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,9 +40,10 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "./ext.h"
 #include "plot3.h"
-#include "rtprivate.h"
+
+#include "./rtuif.h"
+#include "./ext.h"
 
 
 extern char *outputfile;		/* output file name */
@@ -60,7 +61,7 @@ static Tcl_HashTable bots;		/* hash table with a bot_face_list entry for each BO
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -147,7 +148,7 @@ raymiss(struct application *UNUSED(ap))
  */
 
 int
-view_init(struct application *ap, char *file, char *obj, int minus_o)
+view_init(struct application *ap, char *file, char *obj, int minus_o, int UNUSED(minus_F))
 {
     /* report air regions */
     use_air = 1;
@@ -213,7 +214,7 @@ view_2init(struct application *ap, char *framename)
 		j = i;
 		while (line[j] != '\0' && !isspace(line[j])) j++;
 		line[j] = '\0';
-		if ((dp=db_lookup(ap->a_rt_i->rti_dbip, &line[i], LOOKUP_QUIET)) == DIR_NULL) {
+		if ((dp=db_lookup(ap->a_rt_i->rti_dbip, &line[i], LOOKUP_QUIET)) == RT_DIR_NULL) {
 		    bot_name = bu_strdup(&line[i]);
 		} else {
 		    bot_name = dp->d_namep;
@@ -251,7 +252,7 @@ view_2init(struct application *ap, char *framename)
  * This routine is called from do_run(), and in this case does nothing.
  */
 void
-view_pixel()
+view_pixel(struct application *UNUSED(ap))
 {
     return;
 }
@@ -263,7 +264,7 @@ view_pixel()
  * View_eol() is called by rt_shootray() in do_run().  In this case,
  * it does nothing.
  */
-void view_eol()
+void view_eol(struct application *UNUSED(ap))
 {
 }
 
@@ -275,7 +276,7 @@ void view_eol()
  *
  */
 void
-view_end()
+view_end(struct application *UNUSED(ap))
 {
     Tcl_HashEntry *entry;
     Tcl_HashSearch search;
@@ -292,7 +293,7 @@ view_end()
 	fprintf(outfp, "BOT: %s\n", Tcl_GetHashKey(&bots, entry));
 	faces = (struct bu_ptbl *)Tcl_GetHashValue(entry);
 	for (i=0; i<BU_PTBL_LEN(faces); i++) {
-	    fprintf(outfp, "\t%llu\n", (unsigned long long)BU_PTBL_GET(faces, i));
+	    fprintf(outfp, "\t%llu\n", (long)BU_PTBL_GET(faces, i));
 	}
 	entry = Tcl_NextHashEntry(&search);
     }
@@ -301,9 +302,15 @@ view_end()
 }
 
 
-void view_setup() {}
-void view_cleanup() {}
-void application_init () {}
+void view_setup(struct rt_i *UNUSED(rtip))
+{
+}
+void view_cleanup(struct rt_i *UNUSED(rtip))
+{
+}
+void application_init()
+{
+}
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                           A R B . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -283,7 +283,7 @@ rt_arb_get_cgtype(
 /**
  * R T _ A R B _ S T D _ T Y P E
  *
- * Given an ARB in internal form, return it's specific ARB type.
+ * Given an ARB in internal form, return its specific ARB type.
  *
  * Set tol.dist = 0.0001 to obtain past behavior.
  *
@@ -1191,7 +1191,7 @@ rt_arb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    rt_fastf_float(vec, rp->s.s_values, 8);
+    rt_fastf_float(vec, rp->s.s_values, 8, dbip->dbi_version < 0 ? 1 : 0);
 
     /*
      * Convert from vector notation (in database) to point notation.

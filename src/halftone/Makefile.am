@@ -1,7 +1,9 @@
 
 bin_PROGRAMS = halftone
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = \
+	${STRICT_FLAGS} \
+	${TCL_CPPFLAGS}
 
 halftone_SOURCES = \
 	main.c \

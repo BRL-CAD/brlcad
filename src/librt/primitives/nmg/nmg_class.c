@@ -1,7 +1,7 @@
 /*                     N M G _ C L A S S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
  * Possible classifications are AinB, AoutB, AinBshared, AinBanti.
  *
  * The first set of routines (nmg_class_pt_xxx) are used to classify
- * an arbitrary point specified by it's Cartesian coordinates, against
+ * an arbitrary point specified by its Cartesian coordinates, against
  * various kinds of NMG elements.  nmg_class_pt_f() and
  * nmg_class_pt_s() are available to applications programmers for
  * direct use, and have no side effects.
@@ -284,7 +284,7 @@ nmg_class_pt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse
 	     * point inside A near the contact with B.  If loop B is
 	     * processed first, the closest result will be NMG_CLASS_AoutB,
 	     * and when loop A is visited the distances will be exactly
-	     * equal, not giving A a chance to claim it's hit.
+	     * equal, not giving A a chance to claim its hit.
 	     */
 	    if (closest->class == NMG_CLASS_AinB ||
 		closest->class == NMG_CLASS_AonBshared) {
@@ -485,7 +485,7 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
  *
  * This is intended as an internal routine to support nmg_lu_reorient().
  *
- * Given a loopuse in a face, pick one of it's vertexuses, and classify
+ * Given a loopuse in a face, pick one of its vertexuses, and classify
  * that point with respect to all the rest of the loopuses in the face.
  * The containment status of that point is the status of the loopuse.
  *
@@ -1202,7 +1202,7 @@ nmg_2lu_identical(const struct edgeuse *eu1, const struct edgeuse *eu2)
  * Make all the edges and vertices of a loop carry the same classification
  * as the loop.
  * There is no intrinsic way to tell if an edge is "shared" or
- * "antishared", except by reference to it's loopuse, but the heritage
+ * "antishared", except by reference to its loopuse, but the heritage
  * of the edgeuse makes a difference to the boolean evaluator.
  *
  * "newclass" should only be AonBshared or AonBanti.

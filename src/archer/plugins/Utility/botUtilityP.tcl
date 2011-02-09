@@ -1,7 +1,7 @@
 #                B O T U T I L I T Y P. T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2010 United States Government as represented by
+# Copyright (c) 2002-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -23,13 +23,10 @@
 #	 This is a script for loading/registering the bot editor utility.
 #
 
-set brlcadDataPath [bu_brlcad_data "plugins"]
-# puts "pwd is [pwd], path is $brlcadDataPath"
-set filename [file join $brlcadDataPath archer Utility botUtilityP BotUtilityP.tcl]
+set filename [file join [bu_brlcad_data "plugins"] archer Utility botUtilityP BotUtilityP.tcl]
 if { ![file exists $filename] } {
     # non-tclscript resource, look in the source invocation path
-    set brlcadDataPath [bu_brlcad_data "src"]
-    set filename [file join $brlcadDataPath archer plugins Utility botUtilityP BotUtilityP.tcl]
+    set filename [file join [bu_brlcad_data "src"] archer plugins Utility botUtilityP BotUtilityP.tcl]
 }
 if { ![file exists $filename] } {
     puts "Could not load the BotUtilityP plugin, skipping $filename"

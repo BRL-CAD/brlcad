@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -208,7 +208,7 @@ is_socket(int fd)
 
 #ifdef SIGALRM
 static void
-sigalarm(int code)
+sigalarm(int UNUSED(code))
 {
     printf("alarm %s\n", fb_server_fbp ? "FBP" : "NULL");
     if ( fb_server_fbp != FBIO_NULL ) {
@@ -302,14 +302,14 @@ main(int argc, char **argv)
 	max_fd = 8;
 	once_only = 1;
 	main_loop();
-	bu_exit(0, NULL);
+	return 0;
     }
 #endif
 
     /* for now, make them set a port_num, for usage message */
     if ( !get_args( argc, argv ) || !port_set ) {
 	(void)fputs(usage, stderr);
-	bu_exit( 1, NULL );
+	return 1;
     }
 
     /* Single-Frame-Buffer Server */
@@ -341,7 +341,7 @@ main(int argc, char **argv)
 	    max_fd = netfd;
 
 	main_loop();
-	bu_exit(0, NULL);
+	return 0;
     }
 
 #ifndef _WIN32
@@ -365,7 +365,7 @@ main(int argc, char **argv)
 	    continue;
 	}
 	comm_error("Unable to start the stand-alone framebuffer daemon after 60 seconds, giving up.");
-	bu_exit(1, NULL);
+	return 1;
     }
 
     while (1) {
@@ -386,10 +386,10 @@ main(int argc, char **argv)
 		new_client( pcp );
 		once_only = 1;
 		main_loop();
-		bu_exit(0, NULL);
+		return 0;
 	    } else {
 		/* 1st level child -- vanish */
-		bu_exit(1, NULL);
+		return 1;
 	    }
 	} else {
 	    /* Parent: lingering server daemon */
@@ -400,7 +400,7 @@ main(int argc, char **argv)
     }
 #endif  /* _WIN32 */
 
-    bu_exit(2, NULL);	/* ERROR exit */
+    return 2;
 }
 
 /*

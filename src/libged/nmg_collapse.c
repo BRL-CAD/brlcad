@@ -1,7 +1,7 @@
 /*                         N M G _ C O L L A P S E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -73,15 +73,15 @@ ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
 
     new_name = (char *)argv[2];
 
-    if (db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s already exists\n", new_name);
 	return GED_ERROR;
     }
 
-    if ((dp=db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL)
+    if ((dp=db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return GED_ERROR;
 
-    if (dp->d_flags & DIR_COMB) {
+    if (dp->d_flags & RT_DIR_COMB) {
 	bu_vls_printf(&gedp->ged_result_str, "%s is a combination, only NMG primitives are allowed here\n", argv[1]);
 	return GED_ERROR;
     }
@@ -133,8 +133,8 @@ ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
 
     count = nmg_edge_collapse(m, &gedp->ged_wdbp->wdb_tol, tol_coll, min_angle);
 
-    dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type);
-    if (dp == DIR_NULL) {
+    dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
+    if (dp == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
 	rt_db_free_internal(&intern);
 	return GED_ERROR;

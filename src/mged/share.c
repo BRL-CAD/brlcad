@@ -1,7 +1,7 @@
 /*                         S H A R E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -95,7 +95,7 @@ void free_all_resources(struct dm_list *dlp);
  *	share -u res_type p	--->	causes 'p' to no longer share resource of type 'res_type'
  */
 int
-f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
+f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     int uflag = 0;		/* unshare flag */
     struct dm_list *dlp1 = (struct dm_list *)NULL;
@@ -119,7 +119,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char *
     }
 
     FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l)
-	if (!strcmp(argv[2], bu_vls_addr(&dlp1->dml_dmp->dm_pathName)))
+	if (BU_STR_EQUAL(argv[2], bu_vls_addr(&dlp1->dml_dmp->dm_pathName)))
 	    break;
 
     if (dlp1 == &head_dm_list) {
@@ -132,7 +132,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char *
 
     if (!uflag) {
 	FOR_ALL_DISPLAYS(dlp2, &head_dm_list.l)
-	    if (!strcmp(argv[3], bu_vls_addr(&dlp2->dml_dmp->dm_pathName)))
+	    if (BU_STR_EQUAL(argv[3], bu_vls_addr(&dlp2->dml_dmp->dm_pathName)))
 		break;
 
 	if (dlp2 == &head_dm_list) {
@@ -273,7 +273,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char *
  *	rset c bg 0 0 50	--->	sets the background color to dark blue
  */
 int
-f_rset (ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
+f_rset (ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     struct bu_vls vls;
 

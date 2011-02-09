@@ -1,7 +1,7 @@
 /*                          H A L F . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -572,7 +572,7 @@ rt_hlf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     hip = (struct rt_half_internal *)ip->idb_ptr;
     hip->magic = RT_HALF_INTERNAL_MAGIC;
 
-    rt_fastf_float(orig_eqn, rp->s.s_values, 2);	/* 2 floats too many */
+    rt_fastf_float(orig_eqn, rp->s.s_values, 2, dbip->dbi_version < 0 ? 1 : 0);	/* 2 floats too many */
 
     /* Pick a point on the original halfspace */
     VSCALE(orig_pt, orig_eqn, orig_eqn[1*ELEMENTS_PER_VECT]);

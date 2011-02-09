@@ -1,7 +1,7 @@
 /*                     R E A D S T A R T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,15 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file readstart.c
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
- */
-
-/*		Read and print Start Section		*/
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
@@ -36,20 +27,18 @@ Readstart()
 
     int i=0, done=0;
 
-    while ( !done )
-    {
-	if ( Readrec( ++i ) )
-	    bu_exit( 1, "End of file encountered\n" );
+    while (!done) {
+	if (Readrec(++i))
+	    bu_exit(1, "End of file encountered\n");
 
-	if ( card[72] != 'S' )
-	{
+	if (card[72] != 'S') {
 	    done = 1;
 	    break;
 	}
 	card[72] = '\0';
-	bu_log( "%s\n", card );
+	bu_log("%s\n", card);
     }
-    bu_log( "%c", '\n' );
+    bu_log("%c", '\n');
 }
 
 

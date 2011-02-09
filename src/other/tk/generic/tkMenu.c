@@ -395,7 +395,8 @@ static Tk_ClassProcs menuClass = {
 
 static void
 FreeOptionTables(
-    ClientData clientData)
+    ClientData clientData,
+    Tcl_Interp *interp)
 {
     ckfree(clientData);
 }
@@ -423,8 +424,8 @@ TkCreateMenuCmd(
     optionTablesPtr->entryOptionTables[CHECK_BUTTON_ENTRY] =
 	    Tk_CreateOptionTable(interp, specsArray[CHECK_BUTTON_ENTRY]);
 
-    Tcl_CreateObjCommand(interp, "menu", MenuCmd,
-	    (ClientData) optionTablesPtr, FreeOptionTables);
+    Tcl_CreateObjCommand(interp, "menu", MenuCmd, optionTablesPtr, 0);
+    Tcl_CallWhenDeleted(interp, FreeOptionTables, optionTablesPtr);
 
     if (Tcl_IsSafe(interp)) {
 	Tcl_HideCommand(interp, "menu", "menu");
@@ -777,7 +778,18 @@ MenuWidgetObjCmd(
 	    Tcl_WrongNumArgs(interp, 2, objv, "first ?last?");
 	    goto error;
 	}
-	if (TkGetMenuIndex(interp, menuPtr, objv[2], 0, &first) != TCL_OK) {
+
+	/*
+	 * If 'first' explicitly refers to past the end of the menu, we don't
+	 * do anything. [Bug 220950]
+	 */
+
+	if (isdigit(UCHAR(Tcl_GetString(objv[2])[0]))
+		&& Tcl_GetIntFromObj(NULL, objv[2], &first) == TCL_OK) {
+	    if (first >= menuPtr->numEntries) {
+		goto done;
+	    }
+	} else if (TkGetMenuIndex(interp,menuPtr,objv[2],0,&first) != TCL_OK){
 	    goto error;
 	}
 	if (objc == 3) {
@@ -2905,16 +2917,16 @@ MenuDoYPosition(
  *
  * GetIndexFromCoords --
  *
- *	Given a string of the form "@int", return the menu item corresponding
- *	to int.
+ *	Given a string of the form "@integer", return the menu item
+ *	corresponding to the provided y-coordinate in the menu window.
  *
  * Results:
  *	If int is a valid number, *indexPtr will be the number of the
- *	menuentry that is the correct height. If int is invaled, *indexPtr
+ *	menuentry that is the correct height. If int is invalid, *indexPtr
  *	will be unchanged. Returns appropriate Tcl error number.
  *
  * Side effects:
- *	If int is invalid, interp's result will set to NULL.
+ *	If int is invalid, interp's result will be set to NULL.
  *
  *----------------------------------------------------------------------
  */
@@ -2928,6 +2940,7 @@ GetIndexFromCoords(
 {
     int x, y, i;
     char *p, *end;
+    int x2, borderwidth, max;
 
     TkRecomputeMenu(menuPtr);
     p = string + 1;
@@ -2935,6 +2948,8 @@ GetIndexFromCoords(
     if (end == p) {
 	goto error;
     }
+    Tk_GetPixelsFromObj(interp, menuPtr->tkwin,
+	menuPtr->borderWidthPtr, &borderwidth);
     if (*end == ',') {
 	x = y;
 	p = end + 1;
@@ -2943,23 +2958,32 @@ GetIndexFromCoords(
 	    goto error;
 	}
     } else {
-	Tk_GetPixelsFromObj(interp, menuPtr->tkwin,
-		menuPtr->borderWidthPtr, &x);
+	x = borderwidth;
     }
 
+    *indexPtr = -1;
+
+    /* set the width of the final column to the remainder of the window 
+     * being aware of windows that may not be mapped yet.
+     */
+    max = Tk_IsMapped(menuPtr->tkwin) 
+      ? Tk_Width(menuPtr->tkwin) : Tk_ReqWidth(menuPtr->tkwin);
+    max -= borderwidth;
+
     for (i = 0; i < menuPtr->numEntries; i++) {
+	if (menuPtr->entries[i]->entryFlags & ENTRY_LAST_COLUMN) {
+	    x2 = max;
+	} else {
+	    x2 = menuPtr->entries[i]->x + menuPtr->entries[i]->width;
+	}
 	if ((x >= menuPtr->entries[i]->x) && (y >= menuPtr->entries[i]->y)
-		&& (x < (menuPtr->entries[i]->x + menuPtr->entries[i]->width))
+		&& (x < x2)
 		&& (y < (menuPtr->entries[i]->y
 		+ menuPtr->entries[i]->height))) {
+	    *indexPtr = i;
 	    break;
 	}
     }
-    if (i >= menuPtr->numEntries) {
-	/* i = menuPtr->numEntries - 1; */
-	i = -1;
-    }
-    *indexPtr = i;
     return TCL_OK;
 
   error:

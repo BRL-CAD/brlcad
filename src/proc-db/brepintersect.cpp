@@ -1,7 +1,7 @@
 /*                 B R E P I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -102,21 +102,21 @@ bool PointInTriangle(
 	    return true;
 	} else if (VNEAR_ZERO(v3, tol)) {
 	    return true;
-	} else if (VAPPROXEQUAL(v2, v3, tol)) {
+	} else if (VNEAR_EQUAL(v2, v3, tol)) {
 	    return true;
 	} else
 	    return false;
     } else if (VNEAR_ZERO(v2, tol)) {
 	if (VNEAR_ZERO(v3, tol)) {
 	    return true;
-	} else if (VAPPROXEQUAL(v1, v3, tol)) {
+	} else if (VNEAR_EQUAL(v1, v3, tol)) {
 	    return true;
 	} else
 	    return false;
-    } else if (VAPPROXEQUAL(v1, v2, tol)) {
+    } else if (VNEAR_EQUAL(v1, v2, tol)) {
 	if (VNEAR_ZERO(v3, tol)) {
 	    return true;
-	} else if (VAPPROXEQUAL(v2, v3, tol)) {
+	} else if (VNEAR_EQUAL(v2, v3, tol)) {
 	    return true;
 	} else
 	    return false;
@@ -335,7 +335,7 @@ int SegmentSegmentIntersect(
 	if (-tol <= s && s <= 1.0 + tol && -tol <= t && t <= 1.0 + tol) {
 	    ON_3dPoint Ps = x1 + s * (x2 - x1); /* The answer according to equation P*/
 	    ON_3dPoint Qt = x3 + t * (x4 - x3); /* The answer according to equation Q*/
-	    assert(VAPPROXEQUAL(Ps, Qt, tol)); /* check to see if they agree, just a sanity check*/
+	    assert(VNEAR_EQUAL(Ps, Qt, tol)); /* check to see if they agree, just a sanity check*/
 	    x[0] = Ps;
 	    return 1;
 	} else {
@@ -472,7 +472,7 @@ int SegmentTriangleIntersect(
 		for (i = 0; i < 3; i++) {
 		    rv = SegmentSegmentIntersect(triangle[i], triangle[(i+1)%3], p, q, x, tol);
 		    if (rv == 1) {
-			if (points_found == 0 || !VAPPROXEQUAL(out[0], x[0], tol)) { /* in rare cases we can get the same point twice*/
+			if (points_found == 0 || !VNEAR_EQUAL(out[0], x[0], tol)) { /* in rare cases we can get the same point twice*/
 			    out[points_found] = x[0];
 			    points_found++;
 			}
@@ -538,7 +538,7 @@ int TriangleTriangleIntersect(
 	    ON_3dPoint P = result[j];
 	    bool dup = false;
 	    for (k = 0; k < number_found; k++) {
-		if (VAPPROXEQUAL(out[k], P, tol)) {
+		if (VNEAR_EQUAL(out[k], P, tol)) {
 		    dup = true;
 		    break;
 		}
@@ -558,7 +558,7 @@ int TriangleTriangleIntersect(
 	    ON_3dPoint P = result[j];
 	    bool dup = false;
 	    for (k = 0; k < number_found; k++) {
-		if (VAPPROXEQUAL(out[k], P, tol)) {
+		if (VNEAR_EQUAL(out[k], P, tol)) {
 		    dup = true;
 		    break;
 		}
@@ -863,13 +863,13 @@ int TriIntersections::Faces(
 	while (!outline.IsClosed(tol)) {
 	    if (i >= segments.Count()) {
 		return -1;
-	    } else if (VAPPROXEQUAL(segments[i].from, outline[outline.Count() - 1], tol)) {
+	    } else if (VNEAR_EQUAL(segments[i].from, outline[outline.Count() - 1], tol)) {
 		outline.Append(segments[i].to);
-	    } else if (VAPPROXEQUAL(segments[i].to, outline[0], tol)) {
+	    } else if (VNEAR_EQUAL(segments[i].to, outline[0], tol)) {
 		outline.Insert(0, segments[i].from);
-	    } else if (VAPPROXEQUAL(segments[i].from, outline[0], tol) && flippable[i]) {
+	    } else if (VNEAR_EQUAL(segments[i].from, outline[0], tol) && flippable[i]) {
 		outline.Insert(0, segments[i].to);
-	    } else if (VAPPROXEQUAL(segments[i].to, outline[outline.Count() - 1], tol) && flippable[i]) {
+	    } else if (VNEAR_EQUAL(segments[i].to, outline[outline.Count() - 1], tol) && flippable[i]) {
 		outline.Append(segments[i].from);
 	    } else {
 		i++;
@@ -918,7 +918,7 @@ int PointIndex::InsertPoint(
 {
     /* This will eventually be implemented in a much more efficient way */
     for (int i = 0; i < mesh->m_V.Count(); i++) {
-	if (VAPPROXEQUAL(mesh->m_V[i], P, tol)) {
+	if (VNEAR_EQUAL(mesh->m_V[i], P, tol)) {
 	    return i;
 	}
     }

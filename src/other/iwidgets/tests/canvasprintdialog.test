@@ -1,5 +1,5 @@
-# This file is a Tcl script to test out [incr Widgets] Canvasprintdialog
-# class.  It is organized in the standard fashion for Tcl tests with the
+# This file is a Tcl script to test out [incr Widgets] Canvasprintdialog 
+# class.  It is organized in the standard fashion for Tcl tests with the 
 # following notation for test case labels:
 #
 #   1.x - Construction/Destruction tests
@@ -59,26 +59,26 @@ test Canvasprintdialog-2.$o {configuration option} {
 incr o
 
 foreach test {
-    {-background #d9d9d9 #d9d9d9}
+    {-background #d9d9d9 #d9d9d9} 
     {-buttonboxpadx 15 15}
     {-buttonboxpady 15 15}
-    {-buttonboxpos e e}
-    {-buttonboxpos n n}
-    {-buttonboxpos s s}
-    {-buttonboxpos w w}
-    {-cursor gumby gumby}
+    {-buttonboxpos e e} 
+    {-buttonboxpos n n} 
+    {-buttonboxpos s s} 
+    {-buttonboxpos w w} 
+    {-cursor gumby gumby} 
     {-filename test.ps test.ps}
     {-foreground Black Black}
     {-hpagecnt 2 2}
-    {-modality application application}
-    {-modality global global}
-    {-modality none none}
+    {-modality application application} 
+    {-modality global global} 
+    {-modality none none} 
     {-orient portrait portrait}
     {-orient landscape landscape}
     {-output file file}
     {-output printer printer}
-    {-padx 15 15}
-    {-pady 15 15}
+    {-padx 15 15} 
+    {-pady 15 15} 
     {-pagesize a5 a5}
     {-pagesize a4 a4}
     {-pagesize a3 a3}
@@ -92,11 +92,11 @@ foreach test {
     {-printcmd lpr lpr}
     {-printregion {10 10 100 100} {10 10 100 100}}
     {-printregion {} {}}
-    {-separator off off}
-    {-separator on on}
+    {-separator off off} 
+    {-separator on on} 
     {-stretch 1 1}
     {-stretch 0 0}
-    {-thickness 4 4}
+    {-thickness 4 4} 
     {-title Test Test}
     {-vpagecnt 2 2}} {
 	set option [lindex $test 0]

@@ -1,7 +1,7 @@
 /*                         S I M D . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2010 United States Government as represented by
+ * Copyright (c) 2010-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
 int
 bu_simd_level()
 {
-#if __GNUC__ && __SSE__
+#if defined(__GNUC__) && defined(__SSE__)
     int d;
     /* since we're PIC, we need to stash EBX on ia32 */
 #ifdef __i386__

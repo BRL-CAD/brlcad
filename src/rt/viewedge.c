@@ -1,7 +1,7 @@
 /*                      V I E W E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2010 United States Government as represented by
+ * Copyright (c) 2001-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -91,10 +91,10 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
 #include "fb.h"
 #include "bu.h"
 
+#include "./rtuif.h"
 #include "./ext.h"
 
 
@@ -565,7 +565,7 @@ view_init(struct application *ap, char *file, char *obj, int minus_o, int minus_
  * beginning of a frame
  */
 void
-view_2init(struct application *ap)
+view_2init(struct application *ap, char *UNUSED(framename))
 {
     int i;
 
@@ -819,7 +819,7 @@ view_eol(struct application *ap)
 }
 
 
-void view_setup(void)
+void view_setup(struct rt_i *UNUSED(rtip))
 {
 }
 
@@ -827,7 +827,7 @@ void view_setup(void)
 /**
  * end of a frame, called after rt_clean()
  */
-void view_cleanup(void)
+void view_cleanup(struct rt_i *UNUSED(rtip))
 {
 }
 
@@ -835,7 +835,7 @@ void view_cleanup(void)
 /**
  * end of each frame
  */
-void view_end(void) { 
+void view_end(struct application *UNUSED(ap)) { 
     if (bif)
 	bu_image_save_close(bif); 
     bif = NULL;

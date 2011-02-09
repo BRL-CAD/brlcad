@@ -1,7 +1,7 @@
 /*                         S T L - G . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2010 United States Government as represented by
+ * Copyright (c) 2002-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,19 +55,6 @@ static int const_id=-1;		/* Constant ident number (assigned to all regions if no
 static int mat_code=1;		/* default material code */
 static int debug=0;		/* Debug flag */
 static int binary=0;		/* flag indicating input is binary format */
-
-static char *usage="%s [-db] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-x rt_debug_flag] input.stl output.g\n\
-	where input.stl is a STereoLithography file\n\
-	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
-	The -b option specifies that the input file is in the binary STL format (default is ASCII). \n\
-	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\", ... default is \"mm\"\n\
-	The -N option specifies a name to use for the object.\n\
-	The -d option prints additional debugging information.\n\
-	The -i option sets the initial region ident number (default is 1000).\n\
-	The -I option sets the ident number that will be assigned to all regions (conflicts with -i).\n\
-	The -m option sets the integer material code for all the parts (default is 1).\n\
-	The -t option specifies the minumim distance between two distinct vertices (mm).\n\
-	The -x option specifies an RT debug flags (see raytrace.h).\n";
 static FILE *fd_in;		/* input file */
 static struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
 static float conv_factor=1.0;	/* conversion factor from model units to mm */
@@ -80,6 +67,25 @@ static int bot_fcurr=0;		/* current bot face */
 #define BOT_FBLOCK 128
 
 #define MAX_LINE_SIZE 512
+
+
+static void
+usage(const char *argv0)
+{
+    bu_log("%s [-db] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-x rt_debug_flag] input.stl output.g\n", argv0);
+    bu_log("	where input.stl is a STereoLithography file\n");
+    bu_log("	and output.g is the name of a BRL-CAD database file to receive the conversion.\n");
+    bu_log("	The -b option specifies that the input file is in the binary STL format (default is ASCII). \n");
+    bu_log("	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\", ... default is \"mm\"\n");
+    bu_log("	The -N option specifies a name to use for the object.\n");
+    bu_log("	The -d option prints additional debugging information.\n");
+    bu_log("	The -i option sets the initial region ident number (default is 1000).\n");
+    bu_log("	The -I option sets the ident number that will be assigned to all regions (conflicts with -i).\n");
+    bu_log("	The -m option sets the integer material code for all the parts (default is 1).\n");
+    bu_log("	The -t option specifies the minumim distance between two distinct vertices (mm).\n");
+    bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
+}
+
 
 void
 Add_face(int face[3])
@@ -114,7 +120,7 @@ mk_unique_brlcad_name(struct bu_vls *name)
     }
 
     len = bu_vls_strlen(name);
-    while (db_lookup(fd_out->dbip, bu_vls_addr(name), LOOKUP_QUIET) != DIR_NULL) {
+    while (db_lookup(fd_out->dbip, bu_vls_addr(name), LOOKUP_QUIET) != RT_DIR_NULL) {
 	char suff[10];
 
 	bu_vls_trunc(name, len);
@@ -399,6 +405,7 @@ Convert_part_binary()
     int face_count=0;
     int degenerate_count=0;
     int small_count=0;
+    size_t ret;
 
     solid_count++;
     bu_vls_init(&solid_name);
@@ -414,7 +421,9 @@ Convert_part_binary()
     bu_log("\tUsing solid name: %s\n", bu_vls_addr(&solid_name));
 
 
-    fread(buf, 4, 1, fd_in);
+    ret = fread(buf, 4, 1, fd_in);
+    if (ret != 1)
+	perror("fread");
 
     /* swap bytes to convert from Little-endian to network order (big-endian) */
     lswap((unsigned int *)buf);
@@ -436,7 +445,9 @@ Convert_part_binary()
 	ntohf((unsigned char *)flts, buf, 12);
 
 	/* unused attribute byte count */
-	fread(buf, 2, 1, fd_in);
+	ret = fread(buf, 2, 1, fd_in);
+	if (ret != 1)
+	    perror("fread");
 
 	VMOVE(normal, flts);
 	VSCALE(pt, &flts[3], conv_factor);
@@ -583,8 +594,10 @@ main(int argc, char *argv[])
 
     conv_factor = 1.0;	/* default */
 
-    if (argc < 2)
-	bu_exit(1, usage, argv[0]);
+    if (argc < 2) {
+	usage(argv[0]);
+	bu_exit(1, NULL);
+    }
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "bt:i:I:m:dx:N:c:")) != EOF) {
@@ -623,7 +636,7 @@ main(int argc, char *argv[])
 		const_id = atoi(bu_optarg);
 		if (const_id < 0) {
 		    bu_log("Illegal value for '-I' option, must be zero or greater!\n");
-		    bu_log(usage, argv[0]);
+		    usage(argv[0]);
 		    bu_exit(EXIT_FAILURE, "Illegal value for option '-I'\n");
 		}
 		break;
@@ -639,7 +652,8 @@ main(int argc, char *argv[])
 		bu_log("\n");
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		usage(argv[0]);
+		bu_exit(1, NULL);
 		break;
 	}
     }

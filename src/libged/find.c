@@ -1,7 +1,7 @@
 /*                         F I N D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ find_ref(struct db_i *dbip,
     RT_CK_TREE(comb_leaf);
 
     obj_name = (char *)object;
-    if (strcmp(comb_leaf->tr_l.tl_name, obj_name))
+    if (!BU_STR_EQUAL(comb_leaf->tr_l.tl_name, obj_name))
 	return;
 
     comb_name = (char *)comb_name_ptr;
@@ -98,9 +98,9 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & DIR_COMB) ||
-		(!aflag && (dp->d_flags & DIR_HIDDEN)))
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (!(dp->d_flags & RT_DIR_COMB) ||
+		(!aflag && (dp->d_flags & RT_DIR_HIDDEN)))
 		continue;
 
 	    if (rt_db_get_internal(&intern,

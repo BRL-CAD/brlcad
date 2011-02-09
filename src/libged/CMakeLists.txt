@@ -196,6 +196,7 @@ set(LIBGED_SOURCES
     scale_superell.c
     scale_tgc.c
     scale_tor.c
+	 screengrab.c
     search.c
     select.c
     set_output_script.c

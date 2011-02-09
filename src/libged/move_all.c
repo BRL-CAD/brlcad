@@ -1,7 +1,7 @@
 /*                         M O V E _ A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,10 +45,10 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
     struct bu_ptbl stack;
 
     /* rename the record itself */
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, old, LOOKUP_NOISY )) == DIR_NULL)
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, old, LOOKUP_NOISY )) == RT_DIR_NULL)
 	return GED_ERROR;
 
-    if (db_lookup(gedp->ged_wdbp->dbip, new, LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(gedp->ged_wdbp->dbip, new, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: already exists", new);
 	return GED_ERROR;
     }
@@ -66,7 +66,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 	struct directory *dirp;
 
 	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dirp = gedp->ged_wdbp->dbip->dbi_Head[i]; dirp != DIR_NULL; dirp = dirp->d_forw) {
+	    for (dirp = gedp->ged_wdbp->dbip->dbi_Head[i]; dirp != RT_DIR_NULL; dirp = dirp->d_forw) {
 
 		if (dirp->d_major_type == DB5_MAJORTYPE_BRLCAD && \
 		    dirp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
@@ -79,7 +79,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 		    extrude = (struct rt_extrude_internal *)intern.idb_ptr;
 		    RT_EXTRUDE_CK_MAGIC(extrude);
 
-		    if (!strcmp(extrude->sketch_name, old)) {
+		    if (BU_STR_EQUAL(extrude->sketch_name, old)) {
 			if (nflag) {
 			    bu_vls_printf(&gedp->ged_result_str, "%s ", dirp->d_namep);
 			    rt_db_free_internal(&intern);
@@ -122,13 +122,13 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    union tree	*comb_leaf;
 	    int		done=0;
 	    int		changed=0;
 
 
-	    if (!(dp->d_flags & DIR_COMB))
+	    if (!(dp->d_flags & RT_DIR_COMB))
 		continue;
 
 	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
@@ -145,7 +145,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 			comb_leaf = comb_leaf->tr_b.tb_left;
 		    }
 
-		    if (!strcmp(comb_leaf->tr_l.tl_name, old)) {
+		    if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, old)) {
 			if (nflag)
 			    bu_vls_printf(&gedp->ged_result_str, "%s ", dp->d_namep);
 			else {
@@ -187,13 +187,13 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 	    int first = 1;
 	    int found = 0;
 	    struct bu_vls new_path;
-	    char *dup = strdup(bu_vls_addr(&gdlp->gdl_path));
-	    char *tok = strtok(dup, "/");
+	    char *dupstr = strdup(bu_vls_addr(&gdlp->gdl_path));
+	    char *tok = strtok(dupstr, "/");
 
 	    bu_vls_init(&new_path);
 
 	    while (tok) {
-		if (!strcmp(tok, old)) {
+		if (BU_STR_EQUAL(tok, old)) {
 		    found = 1;
 
 		    if (first) {
@@ -217,7 +217,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 		bu_vls_printf(&gdlp->gdl_path, "%s", bu_vls_addr(&new_path));
 	    }
 
-	    free((void *)dup);
+	    free((void *)dupstr);
 	    bu_vls_free(&new_path);
 	}
     }
@@ -281,7 +281,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (gedp->ged_wdbp->dbip->dbi_version < 5 && (int)strlen(argv[2]) > NAMESIZE) {
+    if (db_version(gedp->ged_wdbp->dbip) < 5 && (int)strlen(argv[2]) > NAMESIZE) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR: name length limited to %d characters in v4 databases\n", strlen(argv[2]));
 	return GED_ERROR;
     }

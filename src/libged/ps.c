@@ -1,7 +1,7 @@
 /*                         P S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,13 +68,17 @@ ged_draw_ps_header(FILE *fp, char *font, char *title, char *creator, int linewid
 
     fprintf(fp, "\
 %d setlinewidth\n\
-\n\
+\n", linewidth);
+
+    fprintf(fp, "\
 %% Sizes, made functions to avoid scaling if not needed\n\
 /FntH /%s findfont 80 scalefont def\n\
 /DFntL { /FntL /%s findfont 73.4 scalefont def } def\n\
 /DFntM { /FntM /%s findfont 50.2 scalefont def } def\n\
 /DFntS { /FntS /%s findfont 44 scalefont def } def\n\
-\n\
+\n", font, font, font, font);
+
+    fprintf(fp, "\
 %% line styles\n\
 /NV { [] 0 setdash } def	%% normal vectors\n\
 /DV { [8] 0 setdash } def	%% dotted vectors\n\
@@ -90,7 +94,7 @@ ged_draw_ps_header(FILE *fp, char *font, char *title, char *creator, int linewid
 FntH  setfont\n\
 NEWPG\n\
 ",
-	    linewidth, font, font, font, font, xoffset, yoffset, scale, scale);
+	    xoffset, yoffset, scale, scale);
 }
 
 static void

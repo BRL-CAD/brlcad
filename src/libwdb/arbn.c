@@ -1,7 +1,7 @@
 /*                          A R B N . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2010 United States Government as represented by
+ * Copyright (c) 1989-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@
  *	 0	OK
  */
 int
-mk_arbn(struct rt_wdb *filep, const char *name, int neqn, plane_t (*eqn))
+mk_arbn(struct rt_wdb *filep, const char *name, size_t neqn, plane_t (*eqn))
 {
     struct rt_arbn_internal	*arbn;
 

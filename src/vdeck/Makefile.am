@@ -1,7 +1,7 @@
 
 bin_PROGRAMS = vdeck
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = ${TCL_CPPFLAGS} ${STRICT_FLAGS}
 
 vdeck_LDADD = ${RT}
 vdeck_SOURCES = \

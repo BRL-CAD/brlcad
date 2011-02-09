@@ -1,17 +1,15 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<refentry id='gattributes'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="gattributes">
 
 <refmeta>
   <refentrytitle>Standard Attributes</refentrytitle>
   <manvolnum>5</manvolnum>
-  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-  <refmiscinfo class='manual'>BRL-CAD Standard Conventions</refmiscinfo>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD Standard Conventions</refmiscinfo>
 </refmeta>
 
-<refnamediv id='name'>
+<refnamediv xml:id="name">
   <refname>gattributes</refname>
   <refpurpose>
 	standard attribute conventions in BRL-CAD databases
@@ -19,8 +17,8 @@
 </refnamediv>
 
 <!-- body begins here -->
-<refsect1 id='gift_background'>
-  <title>BACKGROUND</title>
+<refsection xml:id="gift_background"><info><title>BACKGROUND</title></info>
+  
   <para>
 	Starting with BRL-CAD database format version 5, BRL-CAD supports
 	the storage of arbitrary attribute/value data on any database object.
@@ -58,10 +56,10 @@
 	attributes (which may also be represented in core data structures) are referred
 	to as core attributes.
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='core_attributes'>
-  <title>CORE ATTRIBUTES</title>
+<refsection xml:id="core_attributes"><info><title>CORE ATTRIBUTES</title></info>
+  
   <para>
 	The following table lists all known core BRL-CAD attributes and
 	aliases.  Any code setting or reading the value of one of these attributes
@@ -70,16 +68,16 @@
   </para>
 
   <para>
-	<table>
-	   <title>Core Attributes</title>
-	   <tgroup cols='7'>
-	     <colspec colname='c1' />
-	     <colspec colname='c2' />
-	     <colspec colname='c3' />
-	     <colspec colname='c4' />
-	     <colspec colname='c5' />
-	     <colspec colname='c6' />
-	     <colspec colname='c7' />
+	<table><info><title>Core Attributes</title></info>
+	   
+	   <tgroup cols="7">
+	     <colspec colname="c1"/>
+	     <colspec colname="c2"/>
+	     <colspec colname="c3"/>
+	     <colspec colname="c4"/>
+	     <colspec colname="c5"/>
+	     <colspec colname="c6"/>
+	     <colspec colname="c7"/>
 	     <tbody>
 	       <row>
 		 <entry>Property</entry>
@@ -90,9 +88,9 @@
 		 <entry>Region Flag</entry>
 	         <entry>region</entry>
 	         <entry>REGION</entry>
-	         <entry></entry>
-	         <entry></entry>
-	         <entry></entry>
+	         <entry/>
+	         <entry/>
+	         <entry/>
 		 <entry>Yes, R or 1</entry>
                </row>
       	       <row>
@@ -101,7 +99,7 @@
 	         <entry>REGION_ID</entry>
 	         <entry>id</entry>
 	         <entry>ID</entry>
-	         <entry></entry>
+	         <entry/>
 		 <entry>-1, 0, and positive integers</entry>
                </row>
                <row>
@@ -118,18 +116,18 @@
 	         <entry>air</entry>
 	         <entry>AIR</entry>
 	         <entry>AIRCODE</entry>
-	         <entry></entry>
-	         <entry></entry>
+	         <entry/>
+	         <entry/>
 		 <entry>0 or 1</entry>
                </row>
                <row>
 		 <entry>Line Of Sight Thickness Equivalence</entry>
 	         <entry>los</entry>
 	         <entry>LOS</entry>
-	         <entry></entry>
-	         <entry></entry>
-	         <entry></entry>
-	         <entry></entry>
+	         <entry/>
+	         <entry/>
+	         <entry/>
+	         <entry/>
                </row>
                <row>
 		 <entry>Color (Red Green Blue)</entry>
@@ -137,25 +135,25 @@
 	         <entry>rgb</entry>
 	         <entry>RGB</entry>
 	         <entry>COLOR</entry>
-	         <entry></entry>
+	         <entry/>
 		 <entry>###/###/###</entry>
                </row>
                <row>
 		 <entry>Shader Name</entry>
 	         <entry>oshader</entry>
 	         <entry>SHADER</entry>
-	         <entry></entry>
-	         <entry></entry>
-	         <entry></entry>
+	         <entry/>
+	         <entry/>
+	         <entry/>
 		 <entry>string</entry>
                </row>
                <row>
 		 <entry>Inherit Properties</entry>
 	         <entry>inherit</entry>
 	         <entry>INHERIT</entry>
-	         <entry></entry>
-		 <entry></entry>
-	         <entry></entry>
+	         <entry/>
+		 <entry/>
+	         <entry/>
 	         <entry>Yes or 1</entry>
                </row>
              </tbody>
@@ -167,9 +165,9 @@
      Given the importance of these attributes, it is appropriate to briefly outline the
      meaning and purpose of each of them:
 
-     <variablelist remap='TP'>
+     <variablelist remap="TP">
        <varlistentry>
-	 <term><emphasis remap='B' role='bold'>Region Flag:</emphasis></term>
+	 <term><emphasis remap="B" role="bold">Region Flag:</emphasis></term>
 	 <listitem>
 	   <para>
 	   The Region Flag identifies a particular geometric combination as being a solid material - 
@@ -180,7 +178,7 @@
 	 </listitem>
        </varlistentry>
        <varlistentry>                                                                                              
-         <term><emphasis remap='B' role='bold'>Region ID Flag:</emphasis></term>                     
+         <term><emphasis remap="B" role="bold">Region ID Flag:</emphasis></term>                     
          <listitem>                                                                                                
            <para>                                                                                                  
            The Region ID Flag identifies a particular region with a unique number.  This allows
@@ -190,7 +188,7 @@
 	 </listitem>        
        </varlistentry>
         <varlistentry>
-	 <term><emphasis remap='B' role='bold'>Material ID Number:</emphasis></term>
+	 <term><emphasis remap="B" role="bold">Material ID Number:</emphasis></term>
 	 <listitem>
 	   <para>
 	   The Material ID Number corresponds to an entry in a DENSITIES table, usually
@@ -200,7 +198,7 @@
 	 </listitem>
        </varlistentry>
        <varlistentry>
-	 <term><emphasis remap='B' role='bold'>Air Flag:</emphasis></term>
+	 <term><emphasis remap="B" role="bold">Air Flag:</emphasis></term>
 	 <listitem>
 	   <para>
 	   The Air Flag alerts the raytracer that the region in question is modeling air,
@@ -209,21 +207,21 @@
 	 </listitem>
        </varlistentry>
        <varlistentry>
-	 <term><emphasis remap='B' role='bold'>Line of Sight:</emphasis></term>
+	 <term><emphasis remap="B" role="bold">Line of Sight:</emphasis></term>
 	 <listitem>
 	   <para>
 	   </para>
 	 </listitem>
        </varlistentry>
        <varlistentry>
-	 <term><emphasis remap='B' role='bold'>Color:</emphasis></term>
+	 <term><emphasis remap="B" role="bold">Color:</emphasis></term>
 	 <listitem>
 	   <para>
 	   </para>
 	 </listitem>
        </varlistentry>
        <varlistentry>
-	 <term><emphasis remap='B' role='bold'>Shader Name:</emphasis></term>
+	 <term><emphasis remap="B" role="bold">Shader Name:</emphasis></term>
 	 <listitem>
 	   <para>
 	   LIBRT can utilize a variety of shaders when rendering - this attribute holds a
@@ -232,7 +230,7 @@
 	 </listitem>
        </varlistentry>
        <varlistentry>
-	 <term><emphasis remap='B' role='bold'>Inherit:</emphasis></term>
+	 <term><emphasis remap="B" role="bold">Inherit:</emphasis></term>
 	 <listitem>
 	   <para>
 	   </para>
@@ -243,29 +241,25 @@
    </para>
        
 
-</refsect1>
+</refsection>
 
-<refsect1 id='examples'>
-  <title>EXAMPLES</title>
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  
   <para>
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='see_also'><title>SEE ALSO</title>
+<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
 <para><citerefentry><refentrytitle>attr</refentrytitle><manvolnum>n</manvolnum></citerefentry>.</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='author'>
-  <title>AUTHOR</title>
-  <para>BRLCAD-TEAM</para>
-</refsect1>
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
 
-<refsect1 id='bug_reports'>
-  <title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
-</refsect1>
+</refsection>
 </refentry>
-

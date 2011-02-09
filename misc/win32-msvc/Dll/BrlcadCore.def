@@ -68,6 +68,7 @@ bu_ptbl_rm
 bu_realloc
 bu_setjmp_valid
 bu_setlinebuf
+bu_strcmpm
 bu_strdupm
 bu_strlcatm
 bu_strlcpym
@@ -91,6 +92,7 @@ bu_vls_strlen
 bu_vls_strncmp
 bu_vls_trimspace
 bu_vls_trunc
+bu_vls_trunc2
 bu_vls_vlscat
 
 db5_get_attributes
@@ -113,6 +115,7 @@ db_tree_funcleaf
 db_tree_nleaves
 db_update_ident
 db_update_nref
+db_version
 db_walk_tree
 
 gcv_region_end

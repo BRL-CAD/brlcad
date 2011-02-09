@@ -1,7 +1,7 @@
 /*                      R A Y T R A C E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -109,9 +109,13 @@ __BEGIN_DECLS
 #define DEBUG_EBM	0x02000000	/**< @brief 26 Extruded bit-map solids */
 #define DEBUG_HF	0x04000000	/**< @brief 27 Height Field solids */
 
+#define DEBUG_UNUSED1	0x08000000	/**< @brief 28 unused */
+#define DEBUG_UNUSED2	0x10000000	/**< @brief 29 unused */
+#define DEBUG_UNUSED3	0x20000000	/**< @brief 30 unused */
+
 /* Options which will cause the library to write binary debugging output */
-#define DEBUG_PLOTSOLIDS 0x40000000	/**< @brief 31 plot all solids */
-#define DEBUG_PLOTBOX	0x80000000	/**< @brief 32 Plot(3) bounding boxes and cuts */
+#define DEBUG_PL_SOLIDS 0x40000000	/**< @brief 31 plot all solids */
+#define DEBUG_PL_BOX	0x80000000	/**< @brief 32 Plot(3) bounding boxes and cuts */
 
 /** Format string for bu_printb() */
 #define DEBUG_FORMAT	\
@@ -221,8 +225,8 @@ struct rt_db_internal  {
  */
 struct db_full_path {
     unsigned long	magic;
-    int			fp_len;
-    int			fp_maxlen;
+    size_t		fp_len;
+    size_t		fp_maxlen;
     struct directory **	fp_names;	/**< @brief array of dir pointers */
 };
 #define DB_FULL_PATH_POP(_pp) { \
@@ -289,26 +293,9 @@ struct hit {
 #define RT_CK_HIT(_p)	BU_CKMAG(_p, RT_HIT_MAGIC, "struct hit")
 
 /**
- * Old macro: DEPRECATED, use RT_HIT_NORMAL
- *
- * Only the hit_dist field of pt_inhit and pt_outhit are valid when
- * a_hit() is called; to compute both hit_point and hit_normal, use
- * RT_HIT_NORMAL() macro; to compute just hit_point, use
- * VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
- */
-#define RT_HIT_NORM(_hitp, _stp, _unused) { \
-	RT_CK_HIT(_hitp); \
-	RT_CK_SOLTAB(_stp); \
-	RT_CK_FUNCTAB((_stp)->st_meth); \
-	if ((_stp)->st_meth->ft_norm) { \
-		(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
-	} \
-}
-
-/**
- * New macro: Compute normal into (_hitp)->hit_normal, but leave it
- * un-flipped, as one hit may be shared between multiple partitions
- * with different flip status.
+ * Compute normal into (_hitp)->hit_normal.  Set flip-flag accordingly
+ * depending on boolean logic, as one hit may be shared between
+ * multiple partitions with different flip status.
  *
  * Example: box.r = box.s - sph.s; sph.r = sph.s
  *
@@ -426,7 +413,7 @@ struct seg {
 
 #define RT_GET_SEG(p, res) { \
 	while (!BU_LIST_WHILE((p), seg, &((res)->re_seg)) || !(p)) \
-		rt_get_seg(res); \
+		rt_alloc_seg_block(res); \
 	BU_LIST_DEQUEUE(&((p)->l)); \
 	(p)->l.forw = (p)->l.back = BU_LIST_NULL; \
 	(p)->seg_in.hit_magic = (p)->seg_out.hit_magic = RT_HIT_MAGIC; \
@@ -752,11 +739,11 @@ union cutter  {
 	fastf_t		bn_min[3];
 	fastf_t		bn_max[3];
 	struct soltab **bn_list;	/**< @brief bn_list[bn_len] */
-	int		bn_len;		/**< @brief # of solids in list */
-	int		bn_maxlen;	/**< @brief # of ptrs allocated to list */
+	size_t		bn_len;		/**< @brief # of solids in list */
+	size_t		bn_maxlen;	/**< @brief # of ptrs allocated to list */
 	struct rt_piecelist *bn_piecelist; /**< @brief [] solids with pieces */
-	int		bn_piecelen;	/**< @brief # of piecelists used */
-	int		bn_maxpiecelen; /**< @brief # of piecelists allocated */
+	size_t		bn_piecelen;	/**< @brief # of piecelists used */
+	size_t		bn_maxpiecelen; /**< @brief # of piecelists allocated */
     } bn;
     struct nugridnode {
 	int nu_type;
@@ -799,6 +786,7 @@ struct mem_map {
 #define	RT_DBHASH(sum)	((unsigned)(sum) & ((RT_DBNHASH)-1))
 #endif
 
+
 /**
  * D B _ I
  *
@@ -811,34 +799,38 @@ struct mem_map {
  * allocated.
  */
 struct db_i  {
-    unsigned long		dbi_magic;	/**< @brief magic number */
-    /* THESE ELEMENTS ARE AVAILABLE FOR APPLICATIONS TO READ */
-    char *			dbi_filename;	/**< @brief file name */
-    int				dbi_read_only;	/**< @brief !0 => read only file */
-    double			dbi_local2base;	/**< @brief local2mm */
-    double			dbi_base2local;	/**< @brief unit conversion factors */
-    char *			dbi_title;	/**< @brief title from IDENT rec */
-    char *const*		dbi_filepath;	/**< @brief search path for aux file opens (convenience var) */
-    /* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
-    struct directory *		dbi_Head[RT_DBNHASH];
-    FILE *			dbi_fp;		/**< @brief standard file pointer */
-    off_t			dbi_eof;	/**< @brief End+1 pos after db_scan() */
-    size_t			dbi_nrec;	/**< @brief # records after db_scan() */
-    int				dbi_uses;	/**< @brief # of uses of this struct */
-    struct mem_map *		dbi_freep;	/**< @brief map of free granules */
-    genptr_t			dbi_inmem;	/**< @brief ptr to in-memory copy */
-    struct animate *		dbi_anroot;	/**< @brief heads list of anim at root lvl */
-    struct bu_mapped_file *	dbi_mf;		/**< @brief Only in read-only mode */
-    struct bu_ptbl		dbi_clients;	/**< @brief List of rtip's using this db_i */
-    int				dbi_version;	/**< @brief 4 or 5 */
-    struct rt_wdb *		dbi_wdbp;	/**< @brief ptr back to containing rt_wdb */
-};
-#define DBI_NULL	((struct db_i *)0)
+    unsigned long dbi_magic;		/**< @brief magic number */
 
+    /* THESE ELEMENTS ARE AVAILABLE FOR APPLICATIONS TO READ */
+
+    char * dbi_filename;		/**< @brief file name */
+    int dbi_read_only;			/**< @brief !0 => read only file */
+    double dbi_local2base;		/**< @brief local2mm */
+    double dbi_base2local;		/**< @brief unit conversion factors */
+    char * dbi_title;			/**< @brief title from IDENT rec */
+    char * const * dbi_filepath;	/**< @brief search path for aux file opens (convenience var) */
+
+    /* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
+
+    struct directory * dbi_Head[RT_DBNHASH]; /** @brief PRIVATE: object hash table */
+    FILE * dbi_fp;			/**< @brief PRIVATE: standard file pointer */
+    off_t dbi_eof;			/**< @brief PRIVATE: End+1 pos after db_scan() */
+    size_t dbi_nrec;			/**< @brief PRIVATE: # records after db_scan() */
+    int dbi_uses;			/**< @brief PRIVATE: # of uses of this struct */
+    struct mem_map * dbi_freep;		/**< @brief PRIVATE: map of free granules */
+    genptr_t dbi_inmem;			/**< @brief PRIVATE: ptr to in-memory copy */
+    struct animate * dbi_anroot;	/**< @brief PRIVATE: heads list of anim at root lvl */
+    struct bu_mapped_file * dbi_mf;	/**< @brief PRIVATE: Only in read-only mode */
+    struct bu_ptbl dbi_clients;		/**< @brief PRIVATE: List of rtip's using this db_i */
+    int dbi_version;			/**< @brief PRIVATE: use db_verison() */
+    struct rt_wdb * dbi_wdbp;		/**< @brief PRIVATE: ptr back to containing rt_wdb */
+};
+#define DBI_NULL ((struct db_i *)0)
 #define RT_CHECK_DBI(_p)		BU_CKMAG(_p, DBI_MAGIC, "struct db_i")
 #define RT_CHECK_DBI_TCL(_interp, _p)	BU_CKMAG_TCL(_interp, _p, DBI_MAGIC, "struct db_i")
 #define RT_CK_DBI(_p)			RT_CHECK_DBI(_p)
 #define RT_CK_DBI_TCL(_interp, _p)	RT_CHECK_DBI_TCL(_interp, _p)
+
 
 /**
  * D I R E C T O R Y
@@ -868,28 +860,29 @@ struct db_i  {
  * on the object to modify the on-disk name.
  */
 struct directory  {
-    unsigned long	d_magic;		/**< @brief Magic number */
-    char *		d_namep;		/**< @brief pointer to name string */
+    unsigned long d_magic;	/**< @brief Magic number */
+    char * d_namep;		/**< @brief pointer to name string */
     union {
-	off_t		file_offset;		/**< @brief disk address in obj file */
-	genptr_t	ptr;			/**< @brief ptr to in-memory-only obj */
+	off_t file_offset;	/**< @brief disk address in obj file */
+	genptr_t ptr;		/**< @brief ptr to in-memory-only obj */
     } d_un;
-    struct directory *	d_forw;			/**< @brief link to next dir entry */
-    struct animate *	d_animate;		/**< @brief link to animation */
-    long		d_uses;			/**< @brief # uses, from instancing */
-    size_t		d_len;			/**< @brief # of db granules used */
-    long		d_nref;			/**< @brief # times ref'ed by COMBs */
-    int			d_flags;		/**< @brief flags */
-    unsigned char	d_major_type;		/**< @brief object major type */
-    unsigned char 	d_minor_type;		/**< @brief object minor type */
-    struct bu_list	d_use_hd;		/**< @brief heads list of uses (struct soltab l2) */
-    char		d_shortname[16];	/**< @brief Stash short names locally */
+    struct directory * d_forw;	/**< @brief link to next dir entry */
+    struct animate * d_animate;	/**< @brief link to animation */
+    long d_uses;		/**< @brief # uses, from instancing */
+    size_t d_len;		/**< @brief # of db granules used */
+    long d_nref;		/**< @brief # times ref'ed by COMBs */
+    int d_flags;		/**< @brief flags */
+    unsigned char d_major_type;	/**< @brief object major type */
+    unsigned char d_minor_type;	/**< @brief object minor type */
+    struct bu_list d_use_hd;	/**< @brief heads list of uses (struct soltab l2) */
+    char d_shortname[16];	/**< @brief Stash short names locally */
 };
 #define RT_DIR_NULL	((struct directory *)0)
 #define RT_CK_DIR(_dp)	BU_CKMAG(_dp, RT_DIR_MAGIC, "(librt)directory")
 
 #define d_addr	d_un.file_offset
 #define RT_DIR_PHONY_ADDR	((off_t)-1)	/**< @brief Special marker for d_addr field */
+
 
 /* flags for db_diradd() and friends */
 #define RT_DIR_SOLID    0x1   /**< @brief this name is a solid */
@@ -945,7 +938,7 @@ struct directory  {
  */
 #define RT_GET_DIRECTORY(_p, _res) { \
 	while (((_p) = (_res)->re_directory_hd) == NULL) \
-		db_get_directory(_res); \
+		db_alloc_directory_block(_res); \
 	(_res)->re_directory_hd = (_p)->d_forw; \
 	(_p)->d_forw = NULL; }
 
@@ -1356,7 +1349,7 @@ struct rt_piecestate  {
  */
 struct rt_piecelist  {
     unsigned long	magic;
-    long		npieces;	/**< @brief  number of pieces in pieces[] array */
+    size_t		npieces;	/**< @brief  number of pieces in pieces[] array */
     long		*pieces;	/**< @brief  pieces[npieces], piece indices */
     struct soltab	*stp;		/**< @brief  ref back to solid */
 };
@@ -1464,19 +1457,19 @@ RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined 
  * Structure used by the "reprep" routines
  */
 struct rt_reprep_obj_list {
-    int ntopobjs;		/**< @brief  number of objects in the original call to gettrees */
+    size_t ntopobjs;		/**< @brief  number of objects in the original call to gettrees */
     char **topobjs;		/**< @brief  list of the above object names */
-    int nunprepped;		/**< @brief  number of objects to be unprepped and re-prepped */
+    size_t nunprepped;		/**< @brief  number of objects to be unprepped and re-prepped */
     char **unprepped;		/**< @brief  list of the above objects */
     /* Above here must be filled in by application */
     /* Below here is used by dynamic geometry routines, should be zeroed by application before use */
     struct bu_ptbl paths;	/**< @brief  list of all paths from topobjs to unprepped objects */
     struct db_tree_state **tsp;	/**< @brief  tree state used by tree walker in "reprep" routines */
     struct bu_ptbl unprep_regions;	/**< @brief  list of region structures that will be "unprepped" */
-    long old_nsolids;		/**< @brief  rtip->nsolids before unprep */
-    long old_nregions;		/**< @brief  rtip->nregions before unprep */
-    long nsolids_unprepped;	/**< @brief  number of soltab structures eliminated by unprep */
-    long nregions_unprepped;	/**< @brief  number of region structures eliminated by unprep */
+    size_t old_nsolids;		/**< @brief  rtip->nsolids before unprep */
+    size_t old_nregions;	/**< @brief  rtip->nregions before unprep */
+    size_t nsolids_unprepped;	/**< @brief  number of soltab structures eliminated by unprep */
+    size_t nregions_unprepped;	/**< @brief  number of region structures eliminated by unprep */
 };
 
 
@@ -1755,17 +1748,17 @@ struct rt_i {
     genptr_t		Orca_hash_tbl;	/**< @brief  Hash table in matrices for ORCA */
     struct bu_ptbl	delete_regs;	/**< @brief  list of region pointers to delete after light_init() */
     /* Ray-tracing statistics */
-    long		nregions;	/**< @brief  total # of regions participating */
-    long		nsolids;	/**< @brief  total # of solids participating */
-    long		rti_nrays;	/**< @brief  # calls to rt_shootray() */
-    long		nmiss_model;	/**< @brief  rays missed model RPP */
-    long		nshots;		/**< @brief  # of calls to ft_shot() */
-    long		nmiss;		/**< @brief  solid ft_shot() returned a miss */
-    long		nhits;		/**< @brief  solid ft_shot() returned a hit */
-    long		nmiss_tree;	/**< @brief  shots missed sub-tree RPP */
-    long		nmiss_solid;	/**< @brief  shots missed solid RPP */
-    long		ndup;		/**< @brief  duplicate shots at a given solid */
-    long		nempty_cells;	/**< @brief  number of empty NUgrid cells */
+    size_t		nregions;	/**< @brief  total # of regions participating */
+    size_t		nsolids;	/**< @brief  total # of solids participating */
+    size_t		rti_nrays;	/**< @brief  # calls to rt_shootray() */
+    size_t		nmiss_model;	/**< @brief  rays missed model RPP */
+    size_t		nshots;		/**< @brief  # of calls to ft_shot() */
+    size_t		nmiss;		/**< @brief  solid ft_shot() returned a miss */
+    size_t		nhits;		/**< @brief  solid ft_shot() returned a hit */
+    size_t		nmiss_tree;	/**< @brief  shots missed sub-tree RPP */
+    size_t		nmiss_solid;	/**< @brief  shots missed solid RPP */
+    size_t		ndup;		/**< @brief  duplicate shots at a given solid */
+    size_t		nempty_cells;	/**< @brief  number of empty NUgrid cells */
     union cutter	rti_CutHead;	/**< @brief  Head of cut tree */
     union cutter	rti_inf_box;	/**< @brief  List of infinite solids */
     union cutter *	rti_CutFree;	/**< @brief  cut Freelist */
@@ -1786,13 +1779,13 @@ struct rt_i {
     struct bu_list	rti_solidheads[RT_DBNHASH]; /**< @brief  active solid lists */
     struct bu_ptbl	rti_resources;	/**< @brief  list of 'struct resource'es encountered */
     double		rti_nu_gfactor;	/**< @brief  constant in numcells computation */
-    int			rti_cutlen;	/**< @brief  goal for # solids per boxnode */
-    int			rti_cutdepth;	/**< @brief  goal for depth of NUBSPT cut tree */
+    size_t		rti_cutlen;	/**< @brief  goal for # solids per boxnode */
+    size_t		rti_cutdepth;	/**< @brief  goal for depth of NUBSPT cut tree */
     /* Parameters required for rt_submodel */
     char *		rti_treetop;	/**< @brief  bu_strduped, for rt_submodel rti's only */
-    int			rti_uses;	/**< @brief  for rt_submodel */
+    size_t		rti_uses;	/**< @brief  for rt_submodel */
     /* Parameters for accelerating "pieces" of solids */
-    int			rti_nsolids_with_pieces; /**< @brief  # solids using pieces */
+    size_t		rti_nsolids_with_pieces; /**< @brief  # solids using pieces */
     /* Parameters for dynamic geometry */
     int			rti_add_to_new_solids_list;
     struct bu_ptbl	rti_new_solids;
@@ -1999,6 +1992,9 @@ struct rt_functab {
 			     struct model * /*m*/,
 			     struct rt_db_internal * /*ip*/,
 			     const struct bn_tol * /*tol*/));
+    void (*ft_brep) BU_ARGS((ON_Brep ** /*b*/,
+			    struct rt_db_internal * /*ip*/,
+			    const struct bn_tol * /*tol*/));
     int (*ft_import5) BU_ARGS((struct rt_db_internal * /*ip*/,
 			       const struct bu_external * /*ep*/,
 			       const mat_t /*mat*/,
@@ -2034,7 +2030,7 @@ struct rt_functab {
     size_t ft_internal_size;	/**< @brief  sizeof(struct rt_xxx_internal) */
     unsigned long ft_internal_magic;	/**< @brief  RT_XXX_INTERNAL_MAGIC */
     int	(*ft_get) BU_ARGS((struct bu_vls *, const struct rt_db_internal *, const char *item));
-    int	(*ft_adjust) BU_ARGS((struct bu_vls *, struct rt_db_internal *, int /*argc*/, char ** /*argv*/));
+    int	(*ft_adjust) BU_ARGS((struct bu_vls *, struct rt_db_internal *, int /*argc*/, const char ** /*argv*/));
     int	(*ft_form) BU_ARGS((struct bu_vls *, const struct rt_functab *));
 
     void (*ft_make) BU_ARGS((const struct rt_functab *, struct rt_db_internal */*ip*/));
@@ -2341,12 +2337,9 @@ struct nmg_inter_struct {
  *          Applications interface to the RT library             *
  *                                                               *
  *****************************************************************/
-/* Read named MGED db, build toc */
-RT_EXPORT BU_EXTERN(struct rt_i *rt_dirbuild,
-		    (const char *filename,
-		     char *buf,
-		     int len));
+
 /* Prepare for raytracing */
+
 RT_EXPORT BU_EXTERN(struct rt_i *rt_new_rti,
 		    (struct db_i *dbip));
 RT_EXPORT BU_EXTERN(void rt_free_rti,
@@ -2382,6 +2375,7 @@ RT_EXPORT BU_EXTERN(int rt_gen_elliptical_grid,
 		     const fastf_t *avec,
 		     const fastf_t *bvec,
 		     fastf_t gridsize));
+
 RT_EXPORT BU_EXTERN(int rt_gen_circular_grid,
 		    (struct xrays *ray_bundle,
 		     const struct xray *center_ray,
@@ -2431,14 +2425,14 @@ RT_EXPORT BU_EXTERN(void rt_pr_partitions,
 RT_EXPORT BU_EXTERN(struct soltab *rt_find_solid,
 		    (const struct rt_i *rtip,
 		     const char *name));
-/* Start the timer */
+/* Start the global timer */
 RT_EXPORT BU_EXTERN(void rt_prep_timer,
 		    (void));
-/* Read timer, return time + str */
+/* Read global timer, return time + str */
 RT_EXPORT BU_EXTERN(double rt_get_timer,
 		    (struct bu_vls *vp,
 		     double *elapsed));
-/* Return CPU time, text, & wall clock time */
+/* Return CPU time, text, & wall clock time off the global timer */
 RT_EXPORT BU_EXTERN(double rt_read_timer,
 		    (char *str, int len));
 /* Plot a solid */
@@ -2524,9 +2518,6 @@ RT_EXPORT BU_EXTERN(void rt_pr_hit,
 /* rt_fastf_float, rt_mat_dbmat, rt_dbmat_mat
  * declarations moved to db.h */
 
-/* storage obtainers */
-RT_EXPORT BU_EXTERN(void rt_get_seg,
-		    (struct resource *res));
 RT_EXPORT BU_EXTERN(void rt_cut_it,
 		    (struct rt_i *rtip,
 		     int ncpu));
@@ -2704,14 +2695,14 @@ RT_EXPORT BU_EXTERN(void db_dup_full_path,
 		     const struct db_full_path *oldp));
 RT_EXPORT BU_EXTERN(void db_extend_full_path,
 		    (struct db_full_path *pathp,
-		     int incr));
+		     size_t incr));
 RT_EXPORT BU_EXTERN(void db_append_full_path,
 		    (struct db_full_path *dest,
 		     const struct db_full_path *src));
 RT_EXPORT BU_EXTERN(void db_dup_path_tail,
-		    (struct db_full_path	*newp,
-		     const struct db_full_path	*oldp,
-		     int			start));
+		    (struct db_full_path *newp,
+		     const struct db_full_path *oldp,
+		     off_t start));
 RT_EXPORT BU_EXTERN(char *db_path_to_string,
 		    (const struct db_full_path *pp));
 RT_EXPORT BU_EXTERN(void db_path_to_vls,
@@ -3049,8 +3040,6 @@ RT_EXPORT BU_EXTERN(struct directory *db5_diradd,
 		     const struct db5_raw_internal *rip,
 		     off_t laddr,
 		     genptr_t client_data));
-RT_EXPORT BU_EXTERN(int db_get_version,
-		    (struct db_i *dbip));
 RT_EXPORT BU_EXTERN(int db5_scan,
 		    (struct db_i *dbip,
 		     void (*handler)(struct db_i *,
@@ -3058,6 +3047,28 @@ RT_EXPORT BU_EXTERN(int db5_scan,
 				     off_t addr,
 				     genptr_t client_data),
 		     genptr_t client_data));
+
+/**
+ * obtain the database version for a given database instance.
+ *
+ * presently returns only a 4 or 5 accordingly.
+ */
+RT_EXPORT BU_EXTERN(int db_version, (struct db_i *dbip));
+
+
+/* db_corrupt.c */
+
+/**
+ * Detect whether a given geometry database file seems to be corrupt
+ * or invalid due to flipped endianness.  Only relevant for v4
+ * geometry files that are binary-incompatible with the runtime
+ * platform.
+ *
+ * Returns true if flipping the endian type fixes all combination
+ * member matrices.
+ */
+RT_EXPORT BU_EXTERN(int rt_db_flip_endian, (struct db_i *dbip));
+
 
 /* db5_comb.c */
 RT_EXPORT BU_EXTERN(int rt_comb_import5, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp));
@@ -3078,8 +3089,15 @@ RT_EXPORT BU_EXTERN(void db_inmem,
 		     struct db_i	*dbip));
 
 /* db_lookup.c */
-RT_EXPORT BU_EXTERN(int db_get_directory_size,
-		    (const struct db_i	*dbip));
+
+/**
+ * D B _ D I R E C T O R Y _ S I Z E
+ *
+ * Return the number of "struct directory" nodes in the given
+ * database.
+ */
+RT_EXPORT BU_EXTERN(size_t db_directory_size, (const struct db_i *dbip));
+
 RT_EXPORT BU_EXTERN(void db_ck_directory,
 		    (const struct db_i *dbip));
 
@@ -3137,7 +3155,6 @@ RT_EXPORT BU_EXTERN(int db_rename,
 		     struct directory *,
 		     const char *newname));
 
-
 /* db_match.c */
 RT_EXPORT BU_EXTERN(void db_update_nref,
 		    (struct db_i *dbip,
@@ -3179,6 +3196,26 @@ RT_EXPORT BU_EXTERN(int db_zapper,
 		    (struct db_i *,
 		     struct directory *dp,
 		     size_t start));
+
+/**
+ * D B _ A L L O C _ D I R E C T O R Y
+ *
+ * This routine is called by the RT_GET_DIRECTORY macro when the
+ * freelist is exhausted.  Rather than simply getting one additional
+ * structure, we get a whole batch, saving overhead.
+ */
+RT_EXPORT BU_EXTERN(void db_alloc_directory_block, (struct resource *resp));
+
+/**
+ * R T _ A L L O C _ S E G _ B L O C K
+ *
+ * This routine is called by the GET_SEG macro when the freelist is
+ * exhausted.  Rather than simply getting one additional structure, we
+ * get a whole batch, saving overhead.  When this routine is called,
+ * the seg resource must already be locked.  malloc() locking is done
+ * in bu_malloc.
+ */
+RT_EXPORT BU_EXTERN(void rt_alloc_seg_block, (struct resource *res));
 
 /* db_tree.c */
 RT_EXPORT BU_EXTERN(void db_dup_db_tree_state,
@@ -3244,11 +3281,11 @@ RT_EXPORT BU_EXTERN(void db_tree_funcleaf,
 		     genptr_t		user_ptr2,
 		     genptr_t		user_ptr3));
 RT_EXPORT BU_EXTERN(int db_follow_path,
-		    (struct db_tree_state	*tsp,
-		     struct db_full_path	*total_path,
-		     const struct db_full_path	*new_path,
-		     int			noisy,
-		     int			depth));
+		    (struct db_tree_state *tsp,
+		     struct db_full_path *total_path,
+		     const struct db_full_path *new_path,
+		     int noisy,
+		     long pdepth));
 RT_EXPORT BU_EXTERN(int db_follow_path_for_state,
 		    (struct db_tree_state *tsp,
 		     struct db_full_path *pathp,
@@ -3320,8 +3357,8 @@ RT_EXPORT BU_EXTERN(int db_region_mat,
 		     struct db_i	*dbip,
 		     const char	*name,
 		     struct resource *resp));
-/* FIXME: db_shader_mat (DEPRECATED), should be called rt_shader_mat */
-RT_EXPORT BU_EXTERN(int db_shader_mat,
+
+RT_EXPORT BU_EXTERN(int rt_shader_mat,
 		    (mat_t			model_to_shader,	/* result */
 		     const struct rt_i	*rtip,
 		     const struct region	*rp,
@@ -3333,9 +3370,12 @@ RT_EXPORT BU_EXTERN(union tree *db_tree_parse, (struct bu_vls *vls, const char *
 
 
 /* dir.c */
-RT_EXPORT BU_EXTERN(struct rt_i *rt_dirbuild,
-		    (const char *filename,
-		     char *buf, int len));
+
+/**
+ * Read named MGED db, build toc.
+ */
+RT_EXPORT BU_EXTERN(struct rt_i *rt_dirbuild, (const char *filename, char *buf, int len));
+
 RT_EXPORT BU_EXTERN(int rt_db_get_internal,
 		    (struct rt_db_internal	*ip,
 		     const struct directory	*dp,
@@ -3363,8 +3403,6 @@ RT_EXPORT BU_EXTERN(int rt_db_lookup_internal,
 RT_EXPORT BU_EXTERN(void rt_optim_tree,
 		    (union tree *tp,
 		     struct resource *resp));
-RT_EXPORT BU_EXTERN(void db_get_directory,
-		    (struct resource *resp));
 
 /* db_walk.c */
 RT_EXPORT BU_EXTERN(void db_functree,
@@ -4709,7 +4747,7 @@ RT_EXPORT BU_EXTERN(int rt_bot_edge_in_list,
 		    (const int v1,
 		     const int v2,
 		     const int edge_list[],
-		     const int edge_count0));
+		     const size_t edge_count0));
 RT_EXPORT BU_EXTERN(int rt_bot_plot,
 		    (struct bu_list		*vhead,
 		     struct rt_db_internal	*ip,
@@ -4724,15 +4762,10 @@ RT_EXPORT BU_EXTERN(int rt_bot_find_v_nearest_pt2,
 		    (const struct rt_bot_internal *bot,
 		     const point_t	pt2,
 		     const mat_t	mat));
-RT_EXPORT BU_EXTERN(int rt_bot_find_e_nearest_pt2,
-		    (int *vert1,
-		     int *vert2,
-		     const struct rt_bot_internal *bot,
-		     const point_t	pt2,
-		     const mat_t	mat));
+RT_EXPORT BU_EXTERN(int rt_bot_find_e_nearest_pt2, (int *vert1, int *vert2, const struct rt_bot_internal *bot, const point_t pt2, const mat_t mat));
 RT_EXPORT BU_EXTERN(fastf_t rt_bot_propget,
 		    (struct rt_bot_internal *bot,
-		    char *property));
+		    const char *property));
 RT_EXPORT BU_EXTERN(int rt_bot_vertex_fuse,
 		    (struct rt_bot_internal *bot));
 RT_EXPORT BU_EXTERN(int rt_bot_face_fuse,
@@ -4865,7 +4898,7 @@ RT_EXPORT BU_EXTERN(int tcl_list_to_int_array,
 
 RT_EXPORT BU_EXTERN(int tcl_list_to_fastf_array,
 		    (Tcl_Interp *interp,
-		     char *char_list,
+		     const char *char_list,
 		     fastf_t **array,
 		     int *array_len));
 
@@ -5920,11 +5953,11 @@ RT_EXPORT BU_EXTERN(void rt_binunif_dump,
 RT_EXPORT extern fastf_t rt_cline_radius;
 
 /* defined in bot.c */
-RT_EXPORT extern int rt_bot_minpieces;
-RT_EXPORT extern int rt_bot_tri_per_piece;
+RT_EXPORT extern size_t rt_bot_minpieces;
+RT_EXPORT extern size_t rt_bot_tri_per_piece;
 RT_EXPORT BU_EXTERN(int rt_bot_sort_faces,
 		    (struct rt_bot_internal *bot,
-		     int tris_per_piece));
+		     size_t tris_per_piece));
 RT_EXPORT BU_EXTERN(int rt_bot_decimate,
 		    (struct rt_bot_internal *bot,
 		     fastf_t max_chord_error,

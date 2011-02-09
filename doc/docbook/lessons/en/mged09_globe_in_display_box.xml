@@ -1,20 +1,20 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Creating a Globe in a Display Box</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Creating a Globe in a Display Box</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-  <para id="globe_in_display_overviewlist">
+  <para xml:id="globe_in_display_overviewlist">
     In this lesson you will:
 
-    <itemizedlist mark='bullet'>
+    <itemizedlist mark="bullet">
       <listitem>
 	<para>Use the GUI to create a display box using arb8 shapes.</para>
       </listitem>
@@ -33,15 +33,15 @@
     </itemizedlist>
   </para>
     
-    <sect1 id="globe_in_display_newdb">
-      <title>Create a New Database</title>
+    <section xml:id="globe_in_display_newdb"><info><title>Create a New Database</title></info>
+      
       <para>
 	Begin by creating a new database. Name your new file cube.g.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="globe_create_display_box">
-      <title>Creating the Display Box</title>
+    <section xml:id="globe_create_display_box"><info><title>Creating the Display Box</title></info>
+      
       <para>
 	Go to the Create menu, select the Arbs category, and then select an arb8
 	(arbitrary convex polyhedron with eight vertices). When asked to provide a
@@ -52,7 +52,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged09_globe_outside_display_box.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged09_globe_outside_display_box.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -74,7 +74,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged09_globe_inside_outside_box.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged09_globe_inside_outside_box.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -94,10 +94,10 @@
 	center of the outside cube when viewed from all perspectives. When you are
 	finished, go back to Edit and click on Accept.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="create_globe_in_box">
-      <title>Create a Globe Inside the Display Box</title>
+    <section xml:id="create_globe_in_box"><info><title>Create a Globe Inside the Display Box</title></info>
+      
       <para>
 	Go to the Create menu and select sph from the list of Ellipsoids. Name the
 	shape globe1.s and click on Apply.
@@ -117,7 +117,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged09_globe_wireframe.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged09_globe_wireframe.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -143,11 +143,11 @@
 	
 	<command>r globe1.r u globe1.s[Enter]</command>
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="globe_assign_mater_prop">
-      <title>Using the Combination Editor to Assign Material Properties that Make
-      the Objects Appear More Realistic</title>
+    <section xml:id="globe_assign_mater_prop"><info><title>Using the Combination Editor to Assign Material Properties that Make
+      the Objects Appear More Realistic</title></info>
+      
       
       <para>
 	Go to Edit and select Combination Editor. In the dialog box, click the
@@ -193,7 +193,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged09_globe_raytraced.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged09_globe_raytraced.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -220,10 +220,10 @@
 	two options a few times to get an acceptable size. When finished, however,
 	do not click on Accept  yet, as we have more changes to make.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="globe_move_rotate">
-      <title>Moving and Rotating an Object</title>
+    <section xml:id="globe_move_rotate"><info><title>Moving and Rotating an Object</title></info>
+      
       <para>
 	As with other features in <application>MGED</application>, moving and rotating objects can be
 	accomplished in several ways, according to the amount of precision
@@ -292,7 +292,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged09_globe_base_box_wireframe.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged09_globe_base_box_wireframe.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -308,11 +308,11 @@
 	
 	<command>r base1.r u base1.s u base2.s[Enter]</command>
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="globe_use_color_tool">
-      <title>Use the Color Tool of the Combination Editor to Produce Customized
-      Colors.</title>
+    <section xml:id="globe_use_color_tool"><info><title>Use the Color Tool of the Combination Editor to Produce Customized
+      Colors.</title></info>
+      
       
       <para>
 	In the Combination Editor window, click the button  to the right of the
@@ -339,20 +339,20 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged09_globe_base_box_raytraced.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged09_globe_base_box_raytraced.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
       </informalfigure>
  
 
      </para>
-    </sect1>
+    </section>
     
-    <sect1 id="globe_in_display_box_review">
-      <title>Review</title>
+    <section xml:id="globe_in_display_box_review"><info><title>Review</title></info>
+      
       <para>
 	In this lesson, you:
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Used the GUI to create a display box using arb8 shapes.</para>
 	  </listitem>
@@ -370,6 +370,6 @@
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

@@ -1,7 +1,7 @@
 /*                       V I E W R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,8 +40,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 
-#include "rtprivate.h"
-
+#include "./rtuif.h"
 #include "./ext.h"
 
 
@@ -66,9 +65,9 @@ Options:\n\
 ";
 
 
-void	view_pixel(void) {}
-void	view_setup(void) {}
-void	view_cleanup(void) {}
+void	view_pixel(struct application *UNUSED(ap)) {}
+void	view_setup(struct rt_i *UNUSED(rtip)) {}
+void	view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 
 /* "paint" types are negative ==> interpret as "special" air codes */
@@ -191,7 +190,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
  *  			V I E W _ I N I T
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int (minus_o), int UNUSED(minus_F))
 {
     /* Handling of air in librt */
     use_air = 1;
@@ -203,16 +202,19 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
     return 0;		/* No framebuffer needed */
 }
 
-void	view_eol(void) {;}
+void
+view_eol(struct application *UNUSED(ap))
+{
+}
 
 void
-view_end(void)
+view_end(struct application *UNUSED(ap))
 {
     fflush(outfp);
 }
 
 void
-view_2init(struct application *ap)
+view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
 {
 
     if ( outfp == NULL )

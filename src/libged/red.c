@@ -1,7 +1,7 @@
 /*                        R E D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -331,7 +331,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 	    bu_vls_trunc(&current_substring, 0);
 	    bu_vls_strncpy(&current_substring, currptr + attrstart, attrend - attrstart);
 	    if (get_attr_val_pair(bu_vls_addr(&current_substring), &attr_vls, &val_vls)) {
-		if (strcmp(bu_vls_addr(&val_vls), "") && strcmp(bu_vls_addr(&attr_vls), "name"))
+		if (!BU_STR_EQUAL(bu_vls_addr(&val_vls), "") && !BU_STR_EQUAL(bu_vls_addr(&attr_vls), "name"))
 		    (void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls)); 
 	    }
 	    currptr = currptr + attrend;
@@ -774,7 +774,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 
     /* Now, sanity check to make sure a comb is in instead of a solid, and either write out existing contents
      * for an existing comb or a blank template for a new comb */
-    if (dp != DIR_NULL) {
+    if (dp != RT_DIR_NULL) {
 
 	/* Stash original primitive name and find appropriate temp name */
 	bu_vls_sprintf(&comb_name, "%s", dp->d_namep);
@@ -783,12 +783,12 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	have_tmp_name = 0;
 	while (!have_tmp_name) {
 	    bu_vls_sprintf(&temp_name, "%s_red%d", dp->d_namep, counter);
-	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), LOOKUP_QUIET) == DIR_NULL)
+	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), LOOKUP_QUIET) == RT_DIR_NULL)
 		have_tmp_name = 1;
 	    else
 		counter++;
 	}
-	if (!(dp->d_flags & DIR_COMB)) {
+	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: %s must be a combination to use this command\n", argv[0], argv[1]);
 	    bu_vls_free(&comb_name);
 	    bu_vls_free(&temp_name);
@@ -867,7 +867,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		}
 	    
  
-		if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, DIR_COMB, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+		if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
 		    bu_vls_printf(&gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
 		    bu_vls_free(&comb_name);
 		    bu_vls_free(&temp_name);
@@ -886,7 +886,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		intern.idb_type = ID_COMBINATION;
 		intern.idb_meth = &rt_functab[ID_COMBINATION];
 
-		GED_DB_DIRADD(gedp, tmp_dp, bu_vls_addr(&temp_name), -1, 0, DIR_COMB, (genptr_t)&intern.idb_type, 0);
+		GED_DB_DIRADD(gedp, tmp_dp, bu_vls_addr(&temp_name), -1, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type, 0);
 
 		BU_GETSTRUCT(comb, rt_comb_internal);
 		intern.idb_ptr = (genptr_t)comb;
@@ -913,7 +913,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	    } else {
 		/* it worked - kill the original and put the updated copy in its place if a pre-existing
 		 * comb was being edited - otherwise everything is already fine.*/
-		if (strcmp(bu_vls_addr(&comb_name), bu_vls_addr(&temp_name))) {
+		if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(&temp_name))) {
 		    av[0] = "kill";
 		    av[1] = bu_vls_addr(&comb_name);
 		    av[2] = NULL;

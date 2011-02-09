@@ -1,7 +1,7 @@
 /*                        B W - R L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -195,8 +195,8 @@ main(int argc, char **argv)
     for (y = 0; y < file_height; y++) {
 	if (fread((char *)scan_buf, sizeof(unsigned char), (size_t)file_width, infp) != file_width) {
 	    (void) fprintf(stderr,
-			   "pix-rle: read of %ld pixels on line %ld failed!\n",
-			   file_width, y);
+			   "pix-rle: read of %lu pixels on line %lu failed!\n",
+			   (unsigned long)file_width, (unsigned long)y);
 	    bu_exit (1, NULL);
 	}
 

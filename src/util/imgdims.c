@@ -1,7 +1,7 @@
 /*                       I M G D I M S . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2010 United States Government as represented by
+ * Copyright (c) 1997-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -86,7 +86,7 @@ static int pixel_size (char *buf)
 	++ep;
 
     for (ap = a_tbl; ap->ext; ++ap)
-	if (strcmp(ep, ap->ext) == 0)
+	if (BU_STR_EQUAL(ep, ap->ext))
 	    return ap->size;
 
     return DFLT_PIXEL_SIZE;
@@ -101,9 +101,9 @@ main (int argc, char **argv)
     int ch;
     int how = BELIEVE_NAME;
     int nm_bytes = -1;
-    int nm_pixels;
-    unsigned long int width;
-    unsigned long int height;
+    int nm_pixels = 0;
+    size_t width;
+    size_t height;
     struct stat stat_buf;
 
     /*
@@ -165,7 +165,7 @@ main (int argc, char **argv)
 	bu_exit (0, NULL);
 
  done:
-    bu_log("%lu %lu\n", width, height);
+    bu_log("%zu %zu\n", width, height);
     return 0;
 }
 

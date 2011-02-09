@@ -1,7 +1,7 @@
 /*                            H F . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -204,7 +204,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
  * !0 Error in description
  *
  * Implicit return -
- * A struct hf_specific is created, and it's address is stored in
+ * A struct hf_specific is created, and its address is stored in
  * stp->st_specific for use by hf_shot().
  */
 int
@@ -1600,8 +1600,8 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
     vect_t zbasis;
     point_t start;
     point_t cur;
-    int x;
-    int y;
+    size_t x;
+    size_t y;
     int cmd;
     int step;
     int half_step;
@@ -1734,10 +1734,10 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 
     /* Apply relative tolerance, if specified */
     if (!NEAR_ZERO(ttol->rel, SMALL_FASTF)) {
-	int rstep;
+	size_t rstep;
 	rstep = xip->w;
 	V_MAX(rstep, xip->n);
-	step = (int)(ttol->rel * rstep);
+	step = ttol->rel * rstep;
     } else {
 	/* No relative tol specified, limit drawing to 'goal' # of vectors */
 	if (goal <= 0) return 0;		/* no vectors for interior */
@@ -2037,7 +2037,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
  * file.  Note that any parameters taken from a cfile are included in
  * the new string solid.  This isn't a problem, because if the cfile
  * is changed (perhaps to substitute a different resolution height
- * field of the same location in space), it's new parameters will
+ * field of the same location in space), its new parameters will
  * override those stored in the string solid (including the dfile
  * name).
  */

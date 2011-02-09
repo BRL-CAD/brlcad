@@ -147,7 +147,7 @@ Class:                  <B>Command</B>
 Command-Line Switch:	<B>-clearcommand</B>
 </pre>
 <UL>
-Specifies a command to be invoked following a clear operation.
+Specifies a command to be invoked following a clear operation. 
 The option is meant to be used as means of notification that the
 clear has taken place and allow other actions to take place such
 as disabling a find again menu.
@@ -159,7 +159,7 @@ Class:                  <B>Command</B>
 Command-Line Switch:	<B>-matchcommand</B>
 </pre>
 <UL>
-Specifies a command to be invoked following a find operation.
+Specifies a command to be invoked following a find operation. 
 The command is called with a match point as an argument which identifies
 where exactly where in the text or scrolledtext widget that the match
 is located.  Should a match not be found the match point is {}.  The
@@ -196,7 +196,7 @@ Class:                  <B>Background</B>
 Command-Line Switch:	<B>-searchbackground</B>
 </pre>
 <UL>
-Specifies the background color of the line containing the matching
+Specifies the background color of the line containing the matching 
 the search pattern.  It may have any of the forms accepted by Tk_GetColor.
 The default is gray77.
 </UL>
@@ -207,7 +207,7 @@ Class:                  <B>Background</B>
 Command-Line Switch:	<B>-searchforeground</B>
 </pre>
 <UL>
-Specifies the foreground color of the line containing the matching
+Specifies the foreground color of the line containing the matching 
 the search pattern.  It may have any of the forms accepted by Tk_GetColor.
 The default is black.
 </UL>
@@ -226,8 +226,8 @@ Specifies the text or scrolledtext widget to be searched.
 <P>
 The <B>finddialog</B> command creates a find dialog that works in
 conjunction with a text or scrolledtext widget to provide a means
-of performing search operations.  The user is prompted for a text
-pattern to be found in the text or scrolledtext widget.  The
+of performing search operations.  The user is prompted for a text 
+pattern to be found in the text or scrolledtext widget.  The 
 search can be for all occurances, by regular expression, considerate
 of the case, or backwards.
 
@@ -293,7 +293,7 @@ command.
 <DL>
 <DT> <I>pathName <B>clear</B>
 </I></B>
-<DD> Clears the pattern in the entry field and the pattern matchin
+<DD> Clears the pattern in the entry field and the pattern matchin 
 indicators in the text or scrolledtext widget.
 </DL>
 <DL>
@@ -317,7 +317,7 @@ command.
 </I></B>
 <DD> Search for a specific text string in the text widget given by
 the -textwidget option.  This method is the standard callback
-for the Find button.  It is made available such that it can be
+for the Find button.  It is made available such that it can be 
 bound to a find again action.
 
 </DL>
@@ -329,7 +329,7 @@ Class:                  <B>Checkbutton</B>
 </pre>
 <UL>
 The all component specifies that all the matches of the pattern should be
-found when performing the search.  See the "checkbutton" widget manual
+found when performing the search.  See the "checkbutton" widget manual 
 entry for details on the all component item.
 </UL>
 <P>
@@ -340,7 +340,7 @@ Class:                  <B>Checkbutton</B>
 <UL>
 The backwards component specifies that the search should continue in
 a backwards direction towards the beginning of the text or scrolledtext
-widget.  See the "checkbutton" widget manual entry for details on the
+widget.  See the "checkbutton" widget manual entry for details on the 
 backwards component item.
 </UL>
 <P>
@@ -350,7 +350,7 @@ Class:                  <B>Checkbutton</B>
 </pre>
 <UL>
 The case component specifies that the case of the pattern should be
-taken into consideration when performing the search.  See the
+taken into consideration when performing the search.  See the 
 "checkbutton" widget manual entry for details on the case component item.
 </UL>
 <P>
@@ -359,7 +359,7 @@ Name:                   <B>pattern</B>
 Class:                  <B>Entryfield</B>
 </pre>
 <UL>
-The pattern component provides the pattern entry field.  See the
+The pattern component provides the pattern entry field.  See the 
 "entryfield" widget manual entry for details on the pattern component item.
 </UL>
 <P>
@@ -369,7 +369,7 @@ Class:                  <B>Checkbutton</B>
 </pre>
 <UL>
 The regexp component specifies that the pattern is a regular expression.
-See the "checkbutton" widget manual entry for details on the regexp
+See the "checkbutton" widget manual entry for details on the regexp 
 component item.
 </UL>
 </table>
@@ -378,7 +378,7 @@ component item.
 <pre>
  scrolledtext .st
  pack .st
- .st insert end "Now is the time for all good men\\n"
+ .st insert end "Now is the time for all good men\\n" 
  .st insert end "to come to the aid of their country"
 
  finddialog .fd -textwidget .st

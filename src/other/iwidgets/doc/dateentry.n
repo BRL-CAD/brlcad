@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) dateentry.n 1.0 97/04/30 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::dateentry iwid
 .BS
@@ -42,7 +42,7 @@ inherited options.
 .nf
 .ta 4c 8c 12c
 \fBcommand\fR	\fBiq\fR	\fBstate\fR	\fBtextBackground\fR
-\fBtextFont\fR
+\fBtextFont\fR	
 .fi
 .LP
 See the "datefield" class manual entry for details on these
@@ -66,7 +66,7 @@ Class:	\fBGrab\fR
 Command-Line Switch:	\fB-grab\fR
 .fi
 .IP
-Specifies the grab level, \fBlocal\fR or \fBglobal\fR, to be obtained before
+Specifies the grab level, \fBlocal\fR or \fBglobal\fR, to be obtained before 
 bringing up the popup calendar.  The default is global.  For more information
 concerning grab levels, consult the documentation for Tk's \fBgrab\fR command.
 .LP
@@ -76,19 +76,19 @@ Class:	\fBIcon\fR
 Command-Line Switch:	\fB-icon\fR
 .fi
 .IP
-Specifies the calendar icon image to be used in the dateentry.
-This image must have been created previously with
-the \fBimage create\fR command.  Should one not be provided,
+Specifies the calendar icon image to be used in the dateentry.  
+This image must have been created previously with 
+the \fBimage create\fR command.  Should one not be provided, 
 then one will be generated, pixmap if possible, bitmap otherwise.
 .LP
 .BE
 
 .SH DESCRIPTION
 .PP
-The \fBiwidgets::dateentry\fR command creates a quicken style date entry field
-with a popup calendar by combining the datefield and calendar
-widgets together.  This allows a user to enter the date via the
-keyboard or by using the mouse and selecting the calendar icon
+The \fBiwidgets::dateentry\fR command creates a quicken style date entry field 
+with a popup calendar by combining the datefield and calendar 
+widgets together.  This allows a user to enter the date via the 
+keyboard or by using the mouse and selecting the calendar icon 
 which brings up a popup calendar.
 .DE
 
@@ -149,10 +149,10 @@ Name:	\fBiconbutton\fR
 Class:	\fBLabel\fR
 .fi
 .IP
-The iconbutton component provides a labelbutton component to act as a
+The iconbutton component provides a labelbutton component to act as a 
 lightweight button
 displaying the calendar icon.  Upon pressing the labelbutton, the calendar
-appears.  See the "label" widget manual entry for details on the
+appears.  See the "label" widget manual entry for details on the 
 labelbutton component item.
 .LP
 .nf

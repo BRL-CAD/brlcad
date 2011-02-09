@@ -1,7 +1,7 @@
 /*                   T O N E _ S I M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ extern struct bn_unif *RandomFlag;
  *	y	Current row
  *	nx	Next column
  *	ny	Next row
- *	new	New row flag.
+ *	newrow	New row flag.
  *
  * Exit:
  *	returns	0 or 1
@@ -63,7 +63,7 @@ extern struct bn_unif *RandomFlag;
  *	Christopher T. Johnson	- 90/03/21
  */
 int
-tone_simple(int pix, int x, int y, int nx, int ny, int new)
+tone_simple(int pix, int UNUSED(x), int UNUSED(y), int UNUSED(nx), int UNUSED(ny), int UNUSED(newrow))
 {
     int threshold;
     if (RandomFlag) {

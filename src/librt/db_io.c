@@ -1,7 +1,7 @@
 /*                         D B _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -116,7 +116,7 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
 
-    if (dbip->dbi_version >= 5) {
+    if (dbip->dbi_version > 4) {
 	/* can't get an mrec on a v5 */
 	return (union record *)NULL;
     }
@@ -320,7 +320,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 	return -1;		/* was dummy DB entry */
 
     BU_INIT_EXTERNAL(ep);
-    if (dbip->dbi_version <= 4)
+    if (dbip->dbi_version < 5)
 	ep->ext_nbytes = dp->d_len * sizeof(union record);
     else
 	ep->ext_nbytes = dp->d_len;
@@ -378,10 +378,10 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 	return -1;
     }
 
-    if (dbip->dbi_version == 5)
+    if (db_version(dbip) == 5)
 	return db_put_external5(ep, dp, dbip);
 
-    if (dbip->dbi_version <= 4) {
+    if (db_version(dbip) < 5) {
 	size_t ngran;
 
 	ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);

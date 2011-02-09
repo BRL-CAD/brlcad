@@ -34,7 +34,7 @@ catch {unset y}
 catch {unset i}
 catch {unset a}
 catch {unset arr}
-
+
 test var-1.1 {TclLookupVar, Array handling} {
     catch {unset a}
     set x "incr"  ;# force no compilation and runtime call to Tcl_IncrCmd 
@@ -716,9 +716,9 @@ test var-15.1 {segfault in [unset], [Bug 735335]} {
 
 
 test var-16.1 {CallVarTraces: save/restore interp error state} {
-    trace add variable ::errorCode write { ;#}
+    trace add variable ::errorCode write " ;#"
     catch {error foo bar baz}
-    trace remove variable ::errorCode write { ;#}
+    trace remove variable ::errorCode write " ;#"
     set ::errorInfo
 } bar
 
@@ -727,13 +727,40 @@ test var-17.1 {TclArraySet [Bug 1669489]} -setup {
 } -body {
     namespace eval :: {
 	set elements {1 2 3 4}
-	trace add variable a write {string length $elements ;#}
+	trace add variable a write "string length \$elements ;#"
 	array set a $elements
     }
 } -cleanup {
     unset -nocomplain ::a ::elements
 } -result {}
 
+test var-18.1 {array unset and unset traces: Bug 2939073} -setup {
+    set already 0
+    unset x
+} -body {
+    array set x {e 1 i 1}
+    trace add variable x unset {apply {args {
+	global already x
+	if {!$already} {
+	    set already 1
+	    unset x(i)
+	}
+    }}}
+    # The next command would crash reliably with memory debugging prior to the
+    # bug fix.
+    array unset x *
+    array size x
+} -cleanup {
+    unset x already
+} -result 0
+
+
+test var-19.1 {crash when freeing locals hashtable: Bug 3037525} {
+    proc foo {} { catch {upvar 0 dummy \$index} }
+    foo ; # This crashes without the fix for the bug
+    rename foo {}
+} {}
+
 catch {namespace delete ns}
 catch {unset arr}
 catch {unset v}
@@ -752,3 +779,7 @@ catch {unset aaaaa}
 # cleanup
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# End:

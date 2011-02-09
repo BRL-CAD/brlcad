@@ -52,9 +52,9 @@ set m 1
 # Initial construction test
 #
 test Extbutton-1.$c {Extbutton construction} {
-    iwidgets::Extbutton .eb
+    iwidgets::Extbutton .eb 
     pack .eb -padx 10 -pady 10 -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -92,7 +92,7 @@ foreach test {
 	    .eb configure $option [lindex $test 1]
 	    lindex [.eb configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -119,7 +119,7 @@ foreach test {
 	test Extbutton-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -128,22 +128,22 @@ foreach test {
 #
 test Extbutton-1.$c {Extbutton destruction} {
     destroy .eb
-    update
+    update 
 } {}
 
 incr c
 
 test Extbutton-1.$c {Extbutton construction} {
-    iwidgets::extbutton .eb
+    iwidgets::extbutton .eb 
     pack .eb -padx 10 -pady 10
-    update
+    update 
 } {}
 
 incr c
 
 test Extbutton-1.$c {Extbutton destruction} {
     destroy .eb
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

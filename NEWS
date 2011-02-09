@@ -10,6 +10,49 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
+--- 2011-02-09  Release 7.18.2                                     ---
+----------------------------------------------------------------------
+
+This release provides initial support for reading some older
+(platform-dependent) v4 geometry database files regardless of their
+originating platform.  Binary-incompatible v4 geometry database files
+can be opened read-only within MGED where geometry can be inspected,
+drawn, exported via the "keep" command, and updated to the newer
+(platform-independent) v5 geometry database file format via the
+"dbupgrade" command.  In order to override the otherwise automatic
+binary-incomaptible v4 detection, MGED's "opendb" command provides a
+new -f flip option and all applications can override behavior with a
+LIBRT_V4FLIP environment variable.
+
+Also introduced with this release are numerous binary platform
+integration and usability enhancements for Debian, Ubuntu, Fedora, and
+other Linux platforms.  Included in Jordi Sayol's efforts are new
+desktop icons, new menu items, mime-type association, and more.
+
+* improved Fedora platform support with new menus, icons - Jordi Sayol
+* fixed nirt units command reporting all units as invalid - Cliff Yapp
+* dbupgrade support for binary-incompatible v4 files - Sean Morrison
+* new opendb -f endianness flip option for corrupt v4 - Sean Morrison
+* new mime-type geometry association for Debian platform - Jordi Sayol
+* improved Debian platform support with new menus, icons - Jordi Sayol
+* improved mged 'ls' command support for v4 databases - Sean Morrison
+* dbconcat supports title, units, & color table import - John Anderson
+* 'tree -a' command lists object attributes - Tom Browder
+* fixed Mac build failure running asc2g before install - Sean Morrison
+* fixed g_diff color table difference false positive - Sean Morrison
+* fixed asc2g color table bug parsing 'color' lines - Sean Morrison
+* 'attr show' command displays attributes sorted by name - Tom Browder
+* fixed ted command to work using new editor support - Cliff Yapp
+* fixed mged text editor invocation bug when editor wasn't installed
+	- Sean Morrison, Daniel Roßberg, Cliff Yapp
+* support for comment lines at beginning of .asc files - John Anderson
+* disabled adrt_master and adrt_slave tools - Erik Greenwald
+* ported pixblend image processing tool to Windows - Erik Greenwald
+* upgraded libpng to version 1.4.5 - Cliff Yapp
+* upgraded zlib to version 1.2.5 - Cliff Yapp
+* removed shell execution ! command from vdeck - Cliff Yapp
+
+----------------------------------------------------------------------
 --- 2010-12-07  Release 7.18.0                                     ---
 ----------------------------------------------------------------------
 

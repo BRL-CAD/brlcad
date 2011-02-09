@@ -1,7 +1,7 @@
 /*                     D B _ I N M E M . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2010 United States Government as represented by
+ * Copyright (c) 2006-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@ db_open_inmem(void)
 
     /* Initialize fields */
     for (i=0; i<RT_DBNHASH; i++) {
-	dbip->dbi_Head[i] = DIR_NULL;
+	dbip->dbi_Head[i] = RT_DIR_NULL;
     }
 
     dbip->dbi_local2base = 1.0;		/* mm */
@@ -131,7 +131,7 @@ db_create_inmem(void) {
 		       DB5_GLOBAL_OBJECT_NAME, DB5HDR_HFLAGS_HIDDEN_OBJECT, &attr, NULL,
 		       DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
 		       DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
-    flags = DIR_HIDDEN | DIR_NON_GEOM | RT_DIR_INMEM;
+    flags = RT_DIR_HIDDEN | RT_DIR_NON_GEOM | RT_DIR_INMEM;
     wdb_export_external(dbip->dbi_wdbp, &obj, DB5_GLOBAL_OBJECT_NAME, flags, 0);
 
     bu_free_external(&obj);
@@ -158,7 +158,7 @@ db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *
     if (dp->d_flags & RT_DIR_INMEM)
 	bu_free(dp->d_un.ptr, "db_inmem() ext ptr");
     dp->d_un.ptr = ext->ext_buf;
-    if (dbip->dbi_version < 5) {
+    if (db_version(dbip) < 5) {
 	/* DB_MINREC granule size */
 	dp->d_len = ext->ext_nbytes / 128;
     } else {

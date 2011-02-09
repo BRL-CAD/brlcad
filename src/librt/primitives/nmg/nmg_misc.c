@@ -1,7 +1,7 @@
 /*                      N M G _ M I S C . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -4623,7 +4623,7 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
     intern.idb_meth = &rt_functab[ID_NMG];
     intern.idb_ptr = (genptr_t)m;
 
-    if (fp->dbip->dbi_version <= 4) {
+    if (db_version(fp->dbip) < 5) {
 	BU_INIT_EXTERNAL(&ext);
 	ret = intern.idb_meth->ft_export4(&ext, &intern, 1.0, fp->dbip, &rt_uniresource);
 	if (ret < 0) {
@@ -11106,7 +11106,7 @@ nmg_bot(struct shell *s, const struct bn_tol *tol)
     struct rt_bot_internal *bot;
     struct bu_ptbl nmg_vertices;
     struct bu_ptbl nmg_faces;
-    int i, face_no;
+    size_t i, face_no;
     struct vertex *v;
 
     NMG_CK_SHELL(s);
@@ -11205,7 +11205,7 @@ nmg_bot(struct shell *s, const struct bn_tol *tol)
 
 	for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
 	    struct edgeuse *eu;
-	    int vertex_no=0;
+	    size_t vertex_no=0;
 
 	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		continue;

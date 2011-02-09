@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2010 United States Government as represented by
+ * Copyright (c) 1997-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -141,7 +141,7 @@ rt_tcl_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 {
     static const char xyz[4] = "XYZ";
     struct bu_vls str;
-    int i;
+    size_t i;
 
     bu_vls_init(&str);
 
@@ -166,7 +166,7 @@ rt_tcl_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 	    bu_vls_printf(&str, "} pieces {");
 	    for (i = 0; i < cutp->bn.bn_piecelen; i++) {
 		struct rt_piecelist *plp = &cutp->bn.bn_piecelist[i];
-		int j;
+		size_t j;
 		RT_CK_PIECELIST(plp);
 		/* These can be taken by user positionally */
 		bu_vls_printf(&str, "{%s {", plp->stp->st_name);
@@ -370,7 +370,7 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
     struct rt_i *rtip;
     int idx;
 
-    if ((argc != 5 && argc != 6) || (argc == 6 && strcmp(argv[2], "-R"))) {
+    if ((argc != 5 && argc != 6) || (argc == 6 && !BU_STR_EQUAL(argv[2], "-R"))) {
 	Tcl_AppendResult(interp,
 			 "wrong # args: should be \"",
 			 argv[0], " ", argv[1], " [-R] {P} dir|at {V}\"",
@@ -605,7 +605,7 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
     }
 
     for (dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++) {
-	if (strcmp(dbcmd->cmdname, argv[1]) == 0) {
+	if (BU_STR_EQUAL(dbcmd->cmdname, argv[1])) {
 	    return (*dbcmd->cmdfunc)(clientData, interp,
 				     argc, argv);
 	}
@@ -761,13 +761,13 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
 void
 rt_tcl_setup(Tcl_Interp *interp)
 {
-    extern int rt_bot_minpieces;	/* from globals.c */
-    extern int rt_bot_tri_per_piece;	/* from globals.c */
+    extern size_t rt_bot_minpieces;	/* from globals.c */
+    extern size_t rt_bot_tri_per_piece;	/* from globals.c */
 
-    Tcl_LinkVar(interp, "rt_bot_minpieces", (char *)&rt_bot_minpieces, TCL_LINK_INT);
+    Tcl_LinkVar(interp, "rt_bot_minpieces", (char *)&rt_bot_minpieces, TCL_LINK_WIDE_INT);
 
     Tcl_LinkVar(interp, "rt_bot_tri_per_piece",
-		(char *)&rt_bot_tri_per_piece, TCL_LINK_INT);
+		(char *)&rt_bot_tri_per_piece, TCL_LINK_WIDE_INT);
 }
 
 
@@ -816,7 +816,7 @@ Rt_Init(Tcl_Interp *interp)
 void
 db_full_path_appendresult(Tcl_Interp *interp, const struct db_full_path *pp)
 {
-    register int i;
+    size_t i;
 
     RT_CK_FULL_PATH(pp);
 
@@ -928,7 +928,7 @@ tcl_obj_to_fastf_array(Tcl_Interp *interp, Tcl_Obj *list, fastf_t **array, int *
  * returns the number of elements converted.
  */
 int
-tcl_list_to_fastf_array(Tcl_Interp *interp, char *char_list, fastf_t **array, int *array_len)
+tcl_list_to_fastf_array(Tcl_Interp *interp, const char *char_list, fastf_t **array, int *array_len)
 {
     Tcl_Obj *obj;
     int ret;

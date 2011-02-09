@@ -1,52 +1,15 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2008 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='rt'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="rt">
 
 <refmeta>
   <refentrytitle>RT</refentrytitle>
   <manvolnum>nged</manvolnum>
-  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-  <refmiscinfo class='manual'>BRL-CAD MGED Commands</refmiscinfo>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD MGED Commands</refmiscinfo>
 </refmeta>
 
-<refnamediv id='name'>
+<refnamediv xml:id="name">
   <refname>rt</refname>
   <refpurpose>Executes the BRL-CAD <emphasis>rt</emphasis> program with the default options of
 	"-s50  M."
@@ -54,60 +17,56 @@
 </refnamediv>
 
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-  <cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
     <command>rt</command>    
     
-    <arg><replaceable>options</replaceable></arg>
-    <arg><replaceable>--objects</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>options</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>--objects</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsect1 id='description'>
-  <title>DESCRIPTION</title>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  
   <para>Executes the BRL-CAD <emphasis>rt</emphasis> program with the default options of
-	"-s50 –M." If perspective is turned on, then the <emphasis>-p</emphasis> option will be 	included with the value of the perspective angle. The current database name is added to the 	end of the <command>rt</command> command line along with either the specified <emphasis>	objects</emphasis> or, if none is specified, the list of currently displayed objects. The 	<emphasis>rt</emphasis> program is written such that options may be repeated, and the 	last occurrence of an option will override any earlier occurrences.  This allows the user 	to specify other <emphasis>size (-s)</emphasis> options. The <command>rrt</command> command 	performs a similar function, but may be used to execute other programs as well. The 	<emphasis>-M</emphasis> option tells <emphasis>rt</emphasis> to read the viewing parameters 	from standard input.  See the <emphasis>man</emphasis> page on <emphasis>rt</emphasis>  	for details.  A related command is <command>saveview</command>, which can be used to 	create a shell script (batch job) to raytrace this view in the background.
+	"-s50 Â–M." If perspective is turned on, then the <emphasis>-p</emphasis> option will be 	included with the value of the perspective angle. The current database name is added to the 	end of the <command>rt</command> command line along with either the specified <emphasis>	objects</emphasis> or, if none is specified, the list of currently displayed objects. The 	<emphasis>rt</emphasis> program is written such that options may be repeated, and the 	last occurrence of an option will override any earlier occurrences.  This allows the user 	to specify other <emphasis>size (-s)</emphasis> options. The <command>rrt</command> command 	performs a similar function, but may be used to execute other programs as well. The 	<emphasis>-M</emphasis> option tells <emphasis>rt</emphasis> to read the viewing parameters 	from standard input.  See the <emphasis>man</emphasis> page on <emphasis>rt</emphasis>  	for details.  A related command is <command>saveview</command>, which can be used to 	create a shell script (batch job) to raytrace this view in the background.
  
   </para>
-</refsect1>
+</refsection>
 
-<refsect1 id='examples'>
-  <title>EXAMPLES</title>
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  
   <para>The first example shows the use of the <command>rt</command> command to run the rt 	program to produce a color-shaded image of the current view. The second example shows the 	use of the <command>rt</command> command to produce a color-shaded image of an object using 	MGED's current viewing parameters.
      </para>
   
-  <example>
-    <title>Run the <emphasis>rt</emphasis> program to produce a color-shaded image of the current 	view in MGED.</title>
+  <example><info><title>Run the <emphasis>rt</emphasis> program to produce a color-shaded image of the current 	view in MGED.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>rt -s1024 -F/dev/Xl</userinput>
+      <prompt>mged&gt;</prompt><userinput>rt -s1024 -F/dev/Xl</userinput>
     </para>
     <para>Runs the <emphasis>rt</emphasis> program to produce a color-shaded image of the current 	view in the MGED display. The image will be 1024 pixels square and will be displayed on a
 	lingering <emphasis>X</emphasis> framebuffer.
     </para>
   </example>
  
-  <example>
-    <title>Run the <emphasis>rt</emphasis> program to produce a color-shaded image of an object  	using MGED's current viewing parameters.</title>
+  <example><info><title>Run the <emphasis>rt</emphasis> program to produce a color-shaded image of an object  	using MGED's current viewing parameters.</title></info>
+    
     <para>
-      <prompt>mged></prompt><userinput>rt -C 200/200/255 -- roof</userinput>
+      <prompt>mged&gt;</prompt><userinput>rt -C 200/200/255 -- roof</userinput>
     </para>
     <para>Runs the <emphasis>rt</emphasis> program to produce a color-shaded image of the object 	<emphasis>roof</emphasis> using MGED's current viewing parameters. The image will have a 	sky-blue background and will be displayed on the framebuffer specified by the FB_FILE shell 	variable.
     </para>
   </example>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='author'>
-  <title>AUTHOR</title>
-  <para>BRL-CAD Team</para>
-</refsect1>
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
 
-<refsect1 id='bug_reports'>
-  <title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
-</refsect1>
+</refsection>
 </refentry>
-

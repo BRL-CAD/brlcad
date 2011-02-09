@@ -1,7 +1,7 @@
 /*                           X X X . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -81,7 +81,7 @@
  * !0 Error in description
  *
  * Implicit return -
- * A struct xxx_specific is created, and it's address is stored in
+ * A struct xxx_specific is created, and its address is stored in
  * stp->st_specific for use by xxx_shot().
  */
 int

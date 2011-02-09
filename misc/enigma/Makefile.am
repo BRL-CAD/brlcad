@@ -13,6 +13,7 @@ EXTRA_DIST = \
 	INSTALL \
 	NEWS \
 	README \
+	crypt.c \
 	configure.ac
 
 DISTCLEANFILES = \

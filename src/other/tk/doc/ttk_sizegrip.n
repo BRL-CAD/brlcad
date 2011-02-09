@@ -15,6 +15,7 @@ ttk::sizegrip \- Bottom-right corner resize widget
 \fBttk::sizegrip\fR \fIpathName \fR?\fIoptions\fR?
 .BE
 .SH DESCRIPTION
+.PP
 A \fBttk::sizegrip\fR widget (also known as a \fIgrow box\fR)
 allows the user to resize the containing toplevel window
 by pressing and dragging the grip.
@@ -23,10 +24,12 @@ by pressing and dragging the grip.
 \-style	\-takefocus
 .SE
 .SH "WIDGET COMMAND"
+.PP
 Sizegrip widgets support the standard
 \fBcget\fR, \fBconfigure\fR, \fBidentify\fR, \fBinstate\fR, and \fBstate\fR
 methods.  No other widget methods are used.
 .SH "PLATFORM-SPECIFIC NOTES"
+.PP
 On Mac OSX, toplevel windows automatically include a built-in
 size grip by default.
 Adding a \fBttk::sizegrip\fR there is harmless, since
@@ -47,6 +50,7 @@ grid [\fBttk::sizegrip\fR $top.statusbar.grip] \e
 # ... optional: add horizontal scrollbar in $lastRow
 .CE
 .SH "BUGS"
+.PP
 If the containing toplevel's position was specified
 relative to the right or bottom of the screen
 (e.g.,
@@ -62,3 +66,6 @@ resizing.
 ttk::widget(n)
 .SH "KEYWORDS"
 widget, sizegrip, grow box
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

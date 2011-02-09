@@ -1,7 +1,7 @@
 /*                      P I X P A S T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -136,7 +136,7 @@ get_args(int argc, char **argv)
 	return 0;
     } else {
 	orig_name = argv[bu_optind];
-	if (strcmp(orig_name, "-") == 0) {
+	if (BU_STR_EQUAL(orig_name, "-")) {
 	    if (isatty(fileno(stdin))) return 0;
 	    orig = stdin;
 	} else {
@@ -154,7 +154,7 @@ get_args(int argc, char **argv)
 	return 0;
     } else {
 	paste_name = argv[bu_optind];
-	if (strcmp(paste_name, "-") == 0) {
+	if (BU_STR_EQUAL(paste_name, "-")) {
 	    if (isatty(fileno(stdin))) return 0;
 	    paste = stdin;
 	    if (!orig_isfile) {
@@ -191,7 +191,7 @@ main(int argc, char **argv)
     }
     /* Should we autosize the original? */
     if (orig_isfile && orig_autosize) {
-	unsigned long int w, h;
+	size_t w, h;
 	if (fb_common_file_size(&w, &h, orig_name, num_bytes)) {
 	    org_width = (long)w;
 	    org_height = (long)h;
@@ -202,7 +202,7 @@ main(int argc, char **argv)
 
     /* Should we autosize the paste file? */
     if (paste_isfile && paste_autosize) {
-	unsigned long int w, h;
+	size_t w, h;
 	if (fb_common_file_size(&w, &h, paste_name, num_bytes)) {
 	    paste_width = (long)w;
 	    paste_height = (long)h;

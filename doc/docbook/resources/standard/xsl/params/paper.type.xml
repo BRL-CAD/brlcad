@@ -11,6 +11,8 @@
 <refmiscinfo class="other" otherclass="list-type">open</refmiscinfo>
 <refmiscinfo class="other" otherclass="value">USletter<alt>8.5x11in</alt></refmiscinfo>
 <refmiscinfo class="other" otherclass="value">USlandscape<alt>11x8.5in</alt></refmiscinfo>
+<refmiscinfo class="other" otherclass="value">USlegal<alt>8.5inx14in</alt></refmiscinfo>
+<refmiscinfo class="other" otherclass="value">USlegallandscape<alt>14inx8.5in</alt></refmiscinfo>
 <refmiscinfo class="other" otherclass="value">4A0<alt>2378x1682mm</alt></refmiscinfo>
 <refmiscinfo class="other" otherclass="value">2A0<alt>1682x1189mm</alt></refmiscinfo>
 <refmiscinfo class="other" otherclass="value">A0<alt>1189x841mm</alt></refmiscinfo>

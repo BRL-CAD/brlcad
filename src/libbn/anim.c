@@ -1,7 +1,7 @@
 /*                          A N I M . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -693,7 +693,7 @@ int
 anim_steer_mat(mat_t mat, vect_t point, int end)
 {
     static vect_t p1, p2, p3;
-    vect_t dir;
+    vect_t dir = VINIT_ZERO;
     static vect_t norm;
     static int state = ASM_EMPTY;
 

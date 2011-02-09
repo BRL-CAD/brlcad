@@ -31,13 +31,14 @@ test interp-1.1 {create a slave interp with [incr Tk]} {
     list [slave eval "namespace children :: ::itk"] [interp delete slave]
 } {::itk {}}
 
-test interp-1.2 {can't load [incr Tk] into a safe interp} {
-    interp create -safe slave
+test interp-1.2 {can load [incr Tk] into a safe interp} {
+    safe::interpCreate slave
+    safe::loadTk slave
     load "" Itcl slave
     set result [list [catch {load "" Itk slave} msg] $msg]
-    interp delete slave
+    safe::interpDelete slave
     set result
-} {1 {can't use package in a safe interpreter: no Itk_SafeInit procedure}}
+} {0 {}}
 
 test interp-1.3 {errors are okay when slave interp is deleted} {
     interp create slave

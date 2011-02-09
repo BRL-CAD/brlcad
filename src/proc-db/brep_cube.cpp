@@ -1,7 +1,7 @@
 /*                           B R E P _ C U B E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -187,7 +187,7 @@ namespace {
     int // return value not used?
     MakeTwistedCubeTrimmingLoop(ON_Brep& brep,
 				ON_BrepFace& face,
-				int v0, int v1, int v2, int v3, // indices of corner vertices
+				int UNUSED(v0), int UNUSED(v1), int UNUSED(v2), int UNUSED(v3), // indices of corner vertices
 				int e0, int eo0, // edge index + orientation w.r.t surface trim
 				int e1, int eo1,
 				int e2, int eo2,
@@ -432,6 +432,9 @@ main(int argc, char** argv)
     const char* id_name = "B-Rep Example";
     const char* geom_name = "cube.s";
 
+    if (argc > 1)
+	bu_log("%s: Not expecting any arguments.\n", argv[0]);
+
     ON::Begin();
 
     /* export brep to file */
@@ -456,7 +459,7 @@ main(int argc, char** argv)
     }
     db_dirbuild(dbip);
     struct directory* dirp;
-    if ((dirp = db_lookup(dbip, "cube.s", 0)) != DIR_NULL) {
+    if ((dirp = db_lookup(dbip, "cube.s", 0)) != RT_DIR_NULL) {
 	bu_log("\tfound cube.s\n");
 	struct rt_db_internal ip;
 	mat_t mat;

@@ -1,7 +1,7 @@
 /*                        P I X - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -82,7 +82,7 @@ prolog(FILE *fp, char *name, size_t w, size_t h)
 	fputs("%%Creator: BRL-CAD pix-ps\n", fp);
 	fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime));
     }
-    fprintf(fp, "%%%%BoundingBox: 0 0 %ld %ld\n", w, h);
+    fprintf(fp, "%%%%BoundingBox: 0 0 %lu %lu\n", (unsigned long)w, (unsigned long)h);
     fputs("%%EndComments\n\n", fp);
 
     if (!encapsulated && landscape) {
@@ -91,15 +91,15 @@ prolog(FILE *fp, char *name, size_t w, size_t h)
 	pagewidth = pageheight;
 	pageheight = tmp;
 	fprintf(fp, "90 rotate\n");
-	fprintf(fp, "0 -%ld translate\n", pageheight);
+	fprintf(fp, "0 -%lu translate\n", (unsigned long)pageheight);
     }
     if (!encapsulated && center) {
 	size_t xtrans, ytrans;
 	xtrans = (pagewidth - w)/2.0;
 	ytrans = (pageheight - h)/2.0;
-	fprintf(fp, "%ld %ld translate\n", xtrans, ytrans);
+	fprintf(fp, "%lu %lu translate\n", (unsigned long)xtrans, (unsigned long)ytrans);
     }
-    fprintf(fp, "%ld %ld scale\n\n", (unsigned long)w, (unsigned long)h);
+    fprintf(fp, "%lu %lu scale\n\n", (unsigned long)w, (unsigned long)h);
 }
 
 
@@ -243,10 +243,10 @@ main(int argc, char **argv)
 
 	/* start a patch */
 	fprintf(ofp, "save\n");
-	fprintf(ofp, "%ld %ld 8 [%ld 0 0 %ld 0 %ld] {<\n ",
-		width, scans_per_patch,		/* patch size */
-		width, height,			/* total size = 1.0 */
-		-y);				/* patch y origin */
+	fprintf(ofp, "%lu %lu 8 [%lu 0 0 %lu 0 %lu] {<\n ",
+		(unsigned long)width, (unsigned long)scans_per_patch,		/* patch size */
+		(unsigned long)width, (unsigned long)height,			/* total size = 1.0 */
+		(unsigned long)-y);				/* patch y origin */
 
 	/* data */
 	num = 0;

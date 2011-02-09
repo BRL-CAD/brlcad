@@ -1,7 +1,7 @@
 /*                     D U N N C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ main(int argc, char **argv)
 	bu_exit(50, "dunncolor:  camera not ready\n");
     }
 
-    if (argc > 2 && strcmp(argv[1], "-p") == 0) {
+    if (argc > 2 && BU_STR_EQUAL(argv[1], "-p")) {
 	/* Polaroid rather than external camera */
 	polaroid = 1;
 	argc--; argv++;

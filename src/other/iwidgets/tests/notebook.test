@@ -44,14 +44,14 @@ set m 1
 #
 test Notebook-1.$c {Notebook construction} {
     iwidgets::Notebook .nb
-    pack .nb
-    update
+    pack .nb 
+    update 
     .nb add -label one
-    update
+    update 
     .nb add -label two
-    update
+    update 
     .nb add -label three
-    update
+    update 
 } {}
 
 incr c
@@ -75,10 +75,10 @@ foreach test {
 	} {
 	set option [lindex $test 0]
 	test Notebook-2.$o "configuration options, $option" {
-	    .nb configure $option [lindex $test 1]
+	    .nb configure $option [lindex $test 1] 
 		lindex [.nb configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -91,16 +91,16 @@ test Notebook-2.$o {page configuration option} {
 
 # do pageconfigure tests also...
 foreach test {
-		{0 -label Hello Hello}
-		{end -label "Hello World" "Hello World"}
+		{0 -label Hello Hello} 
+		{end -label "Hello World" "Hello World"} 
 	} {
 		set index  [lindex $test 0]
 		set option [lindex $test 1]
 		test Notebook-2.$o "configuration options, $option" {
-			.nb pageconfigure $index $option [lindex $test 2]
+			.nb pageconfigure $index $option [lindex $test 2] 
 			lindex [.nb pageconfigure $index $option] 4
 		} [lindex $test 3]
-	update
+	update 
 	incr o
 }
 
@@ -121,103 +121,103 @@ foreach test {
 # Method tests which are successful.
 #
 foreach test {
-    {0 {.nb add}
+    {0 {.nb add} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb add}
+    {0 {.nb add} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb add}
+    {0 {.nb add} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb add -label Never}
+    {0 {.nb add -label Never} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb add}
+    {0 {.nb add} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-	{0 {.nb add -label "Hello World" -disabledforeground gray}
+	{0 {.nb add -label "Hello World" -disabledforeground gray} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb childsite Never}
+    {0 {.nb childsite Never} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb childsite 0}
+    {0 {.nb childsite 0} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb childsite end}
+    {0 {.nb childsite end} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb index end}
+    {0 {.nb index end} 
 		{[0-9]+}}
-    {0 {.nb index Never}
+    {0 {.nb index Never} 
 		{[0-9]+}}
-    {0 {.nb index 0}
+    {0 {.nb index 0} 
 		{0}}
-    {0 {.nb select 0}
+    {0 {.nb select 0} 
 		{0}}
-    {0 {.nb select select}
+    {0 {.nb select select} 
 		{0}}
-    {0 {.nb select end}
+    {0 {.nb select end} 
 		{[0-9]+}}
-    {0 {.nb select "Hello World"}
+    {0 {.nb select "Hello World"} 
 		{[0-9]+}}
-    {0 {.nb insert 0}
+    {0 {.nb insert 0} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb insert select -label "An Insert"}
+    {0 {.nb insert select -label "An Insert"} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb insert end -label "Next To Last"}
+    {0 {.nb insert end -label "Next To Last"} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb select 0}
+    {0 {.nb select 0} 
 		{0}}
-    {0 {.nb next}
+    {0 {.nb next} 
 		{1}}
-    {0 {.nb next}
+    {0 {.nb next} 
 		{2}}
-    {0 {.nb prev}
+    {0 {.nb prev} 
 		{1}}
-    {0 {.nb prev}
+    {0 {.nb prev} 
 		{0}}
-    {0 {.nb delete Never}
+    {0 {.nb delete Never} 
 		{}}
-    {0 {.nb delete 1 2}
+    {0 {.nb delete 1 2} 
 		{}}
-    {0 {.nb delete 0 "Hello World"}
+    {0 {.nb delete 0 "Hello World"} 
 		{}}
-    {0 {.nb add}
+    {0 {.nb add} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb add}
+    {0 {.nb add} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb add}
+    {0 {.nb add} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb add}
+    {0 {.nb add} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb delete 0 end}
+    {0 {.nb delete 0 end} 
 		{}}
-    {0 {.nb add}
+    {0 {.nb add} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb add}
+    {0 {.nb add} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb add}
+    {0 {.nb add} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb add}
+    {0 {.nb add} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb select 2}
+    {0 {.nb select 2} 
 		{[-]*[0-9]+}}
-    {0 {.nb delete select end}
+    {0 {.nb delete select end} 
 		{}}
-    {0 {.nb delete 0 end}
+    {0 {.nb delete 0 end} 
 		{}}
-    {0 {.nb add -label "First Page"}
+    {0 {.nb add -label "First Page"} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb add -label "Second Page"}
+    {0 {.nb add -label "Second Page"} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb add -label "Third Page"}
+    {0 {.nb add -label "Third Page"} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb add -label "Fourth Page"}
+    {0 {.nb add -label "Fourth Page"} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb add -label "Fifth Page"}
+    {0 {.nb add -label "Fifth Page"} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb add -label "Sixth Page"}
+    {0 {.nb add -label "Sixth Page"} 
 		{[.]nb[.]cs[.]page[0-9]+[.]cs}}
-    {0 {.nb select "First Page"}
+    {0 {.nb select "First Page"} 
 		{[-]*[0-9]+}}
-    {0 {.nb delete select "Second Page"}
+    {0 {.nb delete select "Second Page"} 
 		{}}
-    {0 {.nb delete "Third Page" 1}
+    {0 {.nb delete "Third Page" 1} 
 		{}}
-    {0 {.nb delete "Fifth Page" "Sixth Page"}
+    {0 {.nb delete "Fifth Page" "Sixth Page"} 
 		{}}
 	} {
 	set method_status [lindex $test 0]
@@ -232,7 +232,7 @@ foreach test {
 	append testContents "set result\n"
 	test Notebook-3.$m "\[$method_invoke\]" $testContents \
 		[list $method_status 1]
-	update
+	update 
 	incr m
 }
 
@@ -297,28 +297,28 @@ foreach test {
 #
 test Notebook-1.$c {Notebook destruction} {
     destroy .nb
-    update
+    update 
 } {}
 
 incr c
 
 test Notebook-1.$c {Notebook construction} {
     iwidgets::Notebook .nb -width 100 -height 100
-    pack .nb
-    update
+    pack .nb 
+    update 
     .nb add -label one
-    update
+    update 
     .nb add -label two
-    update
+    update 
     .nb add -label three
-    update
+    update 
 } {}
 
 incr c
 
 test Notebook-1.$c {Notebook destruction} {
 	destroy .nb
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2010 United States Government as represented by
+ * Copyright (c) 1998-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ struct _grid_state default_grid_state = {
     /* gr_rc */		1,
     /* gr_draw */		0,
     /* gr_snap */		0,
-    /* gr_anchor */		{ 0.0, 0.0, 0.0 },
+    /* gr_anchor */		VINIT_ZERO,
     /* gr_res_h */		1.0,
     /* gr_res_v */		1.0,
     /* gr_res_major_h */	5,
@@ -62,14 +62,14 @@ struct _grid_state default_grid_state = {
 #define GRID_O(_m) bu_offsetof(struct _grid_state, _m)
 #define GRID_OA(_m) bu_offsetofarray(struct _grid_state, _m)
 struct bu_structparse grid_vparse[] = {
-    {"%d", 1, "draw",		GRID_O(gr_draw),		set_grid_draw },
-    {"%d", 1, "snap",		GRID_O(gr_snap),		grid_set_dirty_flag },
-    {"%f", 3, "anchor",		GRID_OA(gr_anchor),	grid_set_dirty_flag },
-    {"%f", 1, "rh",		GRID_O(gr_res_h),		set_grid_res },
-    {"%f", 1, "rv",		GRID_O(gr_res_v),		set_grid_res },
-    {"%d", 1, "mrh",		GRID_O(gr_res_major_h),	set_grid_res },
-    {"%d", 1, "mrv",		GRID_O(gr_res_major_v),	set_grid_res },
-    {"",   0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%d", 1, "draw",	GRID_O(gr_draw),	set_grid_draw, NULL, NULL },
+    {"%d", 1, "snap",	GRID_O(gr_snap),	grid_set_dirty_flag, NULL, NULL },
+    {"%f", 3, "anchor",	GRID_OA(gr_anchor),	grid_set_dirty_flag, NULL, NULL },
+    {"%f", 1, "rh",	GRID_O(gr_res_h),	set_grid_res, NULL, NULL },
+    {"%f", 1, "rv",	GRID_O(gr_res_v),	set_grid_res, NULL, NULL },
+    {"%d", 1, "mrh",	GRID_O(gr_res_major_h),	set_grid_res, NULL, NULL },
+    {"%d", 1, "mrv",	GRID_O(gr_res_major_v),	set_grid_res, NULL, NULL },
+    {"",   0, NULL,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -282,12 +282,12 @@ snap_keypoint_to_grid(void)
     if (dbip == DBI_NULL)
 	return;
 
-    if (state != ST_S_EDIT && state != ST_O_EDIT) {
+    if (STATE != ST_S_EDIT && STATE != ST_O_EDIT) {
 	bu_log("snap_keypoint_to_grid: must be in an edit state\n");
 	return;
     }
 
-    if (state == ST_S_EDIT) {
+    if (STATE == ST_S_EDIT) {
 	MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
     } else {
 	MAT4X3PNT(model_pt, modelchanges, e_axes_pos);
@@ -298,11 +298,11 @@ snap_keypoint_to_grid(void)
     VSCALE(model_pt, model_pt, base2local);
 
     bu_vls_init(&cmd);
-    if (state == ST_S_EDIT)
+    if (STATE == ST_S_EDIT)
 	bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
     else
 	bu_vls_printf(&cmd, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
-    (void)Tcl_Eval(interp, bu_vls_addr(&cmd));
+    (void)Tcl_Eval(INTERP, bu_vls_addr(&cmd));
     bu_vls_free(&cmd);
 
     /* save model_pt in local units */
@@ -424,12 +424,12 @@ update_grids(fastf_t sf)
     bu_vls_init(&save_result);
     bu_vls_init(&cmd);
 
-    bu_vls_strcpy(&save_result, Tcl_GetStringResult(interp));
+    bu_vls_strcpy(&save_result, Tcl_GetStringResult(INTERP));
 
     bu_vls_printf(&cmd, "grid_control_update %lf\n", sf);
-    (void)Tcl_Eval(interp, bu_vls_addr(&cmd));
+    (void)Tcl_Eval(INTERP, bu_vls_addr(&cmd));
 
-    Tcl_SetResult(interp, bu_vls_addr(&save_result), TCL_VOLATILE);
+    Tcl_SetResult(INTERP, bu_vls_addr(&save_result), TCL_VOLATILE);
 
     bu_vls_free(&save_result);
     bu_vls_free(&cmd);
@@ -437,7 +437,7 @@ update_grids(fastf_t sf)
 
 
 int
-f_grid_set (ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+f_grid_set (ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     struct bu_vls vls;
 

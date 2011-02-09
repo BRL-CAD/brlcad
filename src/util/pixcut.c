@@ -1,7 +1,7 @@
 /*                        P I X C U T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -146,7 +146,7 @@ get_args(int argc, char **argv)
 	input = stdin;
     } else {
 	in_name = argv[bu_optind];
-	if (strcmp(in_name, "-") == 0) {
+	if (BU_STR_EQUAL(in_name, "-")) {
 	    if (isatty(fileno(stdin))) return 0;
 	    input = stdin;
 	} else {
@@ -185,7 +185,7 @@ main(int argc, char **argv)
     }
     /* Should we autosize the input? */
     if (isfile && autosize) {
-	unsigned long int w, h;
+	size_t w, h;
 	if (fb_common_file_size(&w, &h, in_name, num_bytes)) {
 	    org_width = (long)w;
 	    org_height = (long)h;

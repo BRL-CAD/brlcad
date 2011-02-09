@@ -47,38 +47,53 @@ new names should be listed for reference.
 
 7.18
 ----
+bu.h xdr API
+        BU_GLONGLONG() -> ntohll() [deprecated 7.18]
+        BU_GLONG() -> ntohl() [deprecated 7.18]
+        BU_GSHORT() -> ntohs() [deprecated 7.18]
+        bu_gshort() -> ntohs() [deprecated 7.18]
+        bu_glong() -> ntohl() [deprecated 7.18]
+        bu_pshort() -> htons() [deprecated 7.18]
+        bu_plong() -> htonl() [deprecated 7.18]
+        bu_plonglong() -> htonll() [deprecated 7.18] 
+db.h
+        rt_fastf_float() -> ntohf() [deprecated 7.18]
+        rt_mat_dbmat() -> htonf() [deprecated 7.18]
+        rt_dbmat_mat() -> ntohf() [deprecated 7.18]
+dbcp
+        dbcp -> dd [deprecated 7.18]
 mged
-        ?(*) -> ? -(*)
-        apropos(*) -> apropos -(*)
-        dbconcat -> db concat
-        dbupgrade -> db upgrade
-        dbversion -> db version
-        dbfind -> search
-        debug* -> debug
-        comb_std -> comb
-        comb_color -> comb
-        combmem -> comb
-        kill(*) -> kill
-        rotobj -> rot
-        qvrot -> rot -q -v
-        qorot -> rot -q
-        ([amov])rot -> rot -([amv])
-        ([op])scale -> sca -(p)
-        ([op])translate -> tra -(p)
-        nmg_(*) -> nmg (*)
-        bot_(*) -> bot (*)
-        [so]ed -> edit
-        [tr]ed -> edit -t
-        ls -oA -> ls -O
-        draw -oA -> draw -O
-        erase -oA -> erase -O
-        erase_all -> erase -r
-        move_all -> move -r
-        query_ray -> nirt
-        vdraw -> draw -v
-        vnirt -> nirt -v
-        vquery_ray -> nirt -v
-        xpush -> push -x
+        ?(*) -> ? -(*) [deprecated 7.18]
+        apropos(*) -> apropos -(*) [deprecated 7.18]
+        dbconcat -> db concat [deprecated 7.18]
+        dbupgrade -> db upgrade [deprecated 7.18]
+        dbversion -> db version [deprecated 7.18]
+        dbfind -> search [deprecated 7.18]
+        debug* -> debug [deprecated 7.18]
+        comb_std -> comb [deprecated 7.18]
+        comb_color -> comb [deprecated 7.18]
+        combmem -> comb [deprecated 7.18]
+        kill(*) -> kill [deprecated 7.18]
+        rotobj -> rot [deprecated 7.18]
+        qvrot -> rot -q -v [deprecated 7.18]
+        qorot -> rot -q [deprecated 7.18]
+        ([amov])rot -> rot -([amv]) [deprecated 7.18]
+        ([op])scale -> sca -(p) [deprecated 7.18]
+        ([op])translate -> tra -(p) [deprecated 7.18]
+        nmg_(*) -> nmg (*) [deprecated 7.18]
+        bot_(*) -> bot (*) [deprecated 7.18]
+        [so]ed -> edit [deprecated 7.18]
+        [tr]ed -> edit -t [deprecated 7.18]
+        ls -oA -> ls -O [deprecated 7.18]
+        draw -oA -> draw -O [deprecated 7.18]
+        erase -oA -> erase -O [deprecated 7.18]
+        erase_all -> erase -r [deprecated 7.18]
+        move_all -> move -r [deprecated 7.18]
+        query_ray -> nirt [deprecated 7.18]
+        vdraw -> draw -v [deprecated 7.18]
+        vnirt -> nirt -v [deprecated 7.18]
+        vquery_ray -> nirt -v [deprecated 7.18]
+        xpush -> push -x [deprecated 7.18]
 
 7.16
 ----
@@ -176,8 +191,6 @@ include/raytrace.h
 pre 7.0
 -------
 include/raytrace.h
-	db_free_external -> bu_free_external [deprecated pre-7.0]
-	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
 	struct hit.hit_point -> RT_HIT_POINT [deprecated pre-7.0]
 	struct hit.hit_normal -> RT_HIT_NORMAL [deprecated pre-7.0]
 
@@ -185,6 +198,11 @@ include/raytrace.h
 ************
 * OBSOLETE *
 ************
+
+7.18.2
+------
+	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
+	g-shell.rect renamed to g-shell-rect [minor tool rename]
 
 7.18.0
 ------
@@ -320,6 +338,23 @@ Included in following are various minimally impacting API changes that
 have been identified in reverse chronological order.  As expressions
 are not extensively tested, use with caution.
 
+s/db_shader_mat(/rt_shader_mat(/g
+        db_shader_mat() renamed to rt_shader_mat() [7.18]
+
+s/rt_get_seg(/rt_alloc_sed_block(/g
+        rt_get_seg() renamed to rt_alloc_seg_block() [7.18]
+
+s/db_get_directory(/db_alloc_directory_block(/g
+        db_get_directory() renamed to db_alloc_directory_block() [7.18]
+
+s/db_get_directory_size(/db_directory_size(/g
+        db_get_directory_size() renamed to db_directory_size() [7.18]
+
+s/db_get_version(/db_version(/g
+        db_get_version() renamed to db_version() [7.18]
+
+s/VAPPROXEQUAL(/VNEAR_EQUAL(/g
+        VAPPROXEQUAL() renamed to VNEAR_EQUAL() [7.18]
 
 s/bu_vlb_getBufferLength(/bu_vlb_buflen(/g
         bu_vlb_getBufferLength() remamed to bu_vlb_buflen() [7.18]

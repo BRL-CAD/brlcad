@@ -1,7 +1,7 @@
 /*                        G - J A C K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -213,6 +213,52 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
 }
 
 
+static union tree *
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
+{
+    union tree *ret_tree = TREE_NULL;
+
+    /* Begin bomb protection */
+    if ( !BU_SETJUMP ) {
+	/* try */
+
+	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+
+    } else  {
+	/* catch */
+	char *name = db_path_to_string( pathp );
+
+	/* Error, bail out */
+	bu_log( "conversion of %s FAILED!\n", name );
+
+	/* Sometimes the NMG library adds debugging bits when
+	 * it detects an internal error, before before bombing out.
+	 */
+	rt_g.NMG_debug = NMG_debug;/* restore mode */
+
+	/* Release any intersector 2d tables */
+	nmg_isect2d_final_cleanup();
+
+	/* Release the tree memory & input regions */
+	db_free_tree(curtree, &rt_uniresource);/* Does an nmg_kr() */
+
+	/* Get rid of (m)any other intermediate structures */
+	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
+	    nmg_km(*tsp->ts_m);
+	} else {
+	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	}
+
+	bu_free( name, "db_path_to_string" );
+	/* Now, make a new, clean model structure for next pass. */
+	*tsp->ts_m = nmg_mm();
+    } BU_UNSETJUMP;/* Relinquish the protection */
+
+    return ret_tree;
+}
+
+
 /*
  *			D O _ R E G I O N _ E N D
  *
@@ -245,42 +291,15 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
     regions_tried++;
 
-    /* Begin bomb protection */
-    if ( ncpu == 1 ) {
-	if ( BU_SETJUMP )  {
-	    /* Error, bail out */
-	    BU_UNSETJUMP;		/* Relinquish the protection */
+    ret_tree = process_boolean(curtree, tsp, pathp);
 
-	    /* Sometimes the NMG library adds debugging bits when
-	     * it detects an internal error, before bombing out.
-	     */
-	    rt_g.NMG_debug = NMG_debug;	/* restore mode */
-
-	    /* Release any intersector 2d tables */
-	    nmg_isect2d_final_cleanup();
-
-	    /* Release the tree memory & input regions */
-	    db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
-
-	    /* Get rid of (m)any other intermediate structures */
-	    if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )  {
-		nmg_km(*tsp->ts_m);
-	    } else {
-		bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-	    }
-
-	    /* Now, make a new, clean model structure for next pass. */
-	    *tsp->ts_m = nmg_mm();
-	    goto out;
-	}
-    }
-    ret_tree = nmg_booltree_evaluate( curtree, tsp->ts_tol, &rt_uniresource );	/* librt/nmg_bool.c */
-    BU_UNSETJUMP;		/* Relinquish the protection */
     if ( ret_tree )
 	r = ret_tree->tr_d.td_r;
     else
 	r = (struct nmgregion *)NULL;
+
     regions_done++;
+
     if ( r && !no_file_output )  {
 	FILE	*fp_psurf;
 	int	i;
@@ -381,7 +400,6 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
- out:
     BU_GETUNION(curtree, tree);
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;

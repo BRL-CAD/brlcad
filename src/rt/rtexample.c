@@ -1,7 +1,7 @@
 /*                     R T E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -85,7 +85,7 @@
  * The 'segs' segment list is unused in this example.
  */
 int
-hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
+hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     /* iterating over partitions, this will keep track of the current
      * partition we're working on.
@@ -199,7 +199,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
  * rt_shootray() if the ray encounters nothing.
  */
 int
-miss(struct application *ap)
+miss(struct application *UNUSED(ap))
 {
     bu_log("missed\n");
     return 0;

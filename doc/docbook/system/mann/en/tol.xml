@@ -1,81 +1,44 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2008 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='tol'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="tol">
 
 <refmeta>
   <refentrytitle>TOL</refentrytitle>
   <manvolnum>nged</manvolnum>
-  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-  <refmiscinfo class='manual'>BRL-CAD MGED Commands</refmiscinfo>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD MGED Commands</refmiscinfo>
 </refmeta>
 
-<refnamediv id='name'>
+<refnamediv xml:id="name">
   <refname>tol</refname>
   <refpurpose>Used with no arguments, <command>tol</command> lists the current tolerance settings.
    </refpurpose>
 </refnamediv>
 
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-  <cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
     <command>tol</command>    
     
-    <arg>abs<replaceable>#</replaceable></arg>
-    <arg>rel<replaceable>#</replaceable></arg>
-    <arg>norm<replaceable>#</replaceable></arg>
-    <arg>dist<replaceable>#</replaceable></arg>
-    <arg>perp<replaceable>#</replaceable></arg>
-   <arg></arg>
+    <arg choice="opt" rep="norepeat">abs<replaceable>#</replaceable></arg>
+    <arg choice="opt" rep="norepeat">rel<replaceable>#</replaceable></arg>
+    <arg choice="opt" rep="norepeat">norm<replaceable>#</replaceable></arg>
+    <arg choice="opt" rep="norepeat">dist<replaceable>#</replaceable></arg>
+    <arg choice="opt" rep="norepeat">perp<replaceable>#</replaceable></arg>
+   <arg choice="opt" rep="norepeat"/>
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsect1 id='description'>
-  <title>DESCRIPTION</title>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  
   <para>The <command>tol</command> command, with no arguments, lists the current tolerance settings. If the command line includes any of the 	keywords followed by a number, then that tolerance setting will be modified. The keywords are as follows:
    </para>
-   <para><emphasis remap='B' role='B'>Tessellation tolerances:</emphasis>
+   <para><emphasis remap="B" role="B">Tessellation tolerances:</emphasis>
 	The tessellation tolerances are used to control the facetization of primitive shapes.
 	If more than one tolerance value is specified, the tessellation is performed to meet
 	the most stringent.
   </para>
-<itemizedlist mark='bullet'>
+<itemizedlist mark="bullet">
 <listitem>
 <para>abs -- This <emphasis>absolute</emphasis> tolerance is specified in model units and represents
 	the maximum allowable error in the distance from the actual shape surface
@@ -100,13 +63,13 @@
 </listitem>
 </itemizedlist>
 
-<para><emphasis remap='B' role='B'>Calculational tolerances:</emphasis>
+<para><emphasis remap="B" role="B">Calculational tolerances:</emphasis>
 	The calculational tolerances are used in evaluating the Boolean operations
 	specified in a combination. This is used, for example, in the <command>ev, facetize,</command> and <command>bev</command>
 	commands.
 </para>
 
-<itemizedlist mark='bullet'>
+<itemizedlist mark="bullet">
 <listitem>
 <para>
 	dist -- The <emphasis>distance</emphasis> tolerance is specified in model units and represents the
@@ -123,34 +86,30 @@
 </listitem>
 </itemizedlist>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='examples'>
-  <title>EXAMPLES</title>
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  
   <para>The example shows the use of the <command>tol</command> command to set the relative and perpendicularity tolerances.
     
   </para>
-  <example>
-    <title>Set the relative and perpendicularity tolerances.</title>
+  <example><info><title>Set the relative and perpendicularity tolerances.</title></info>
+    
     <para>
-	<prompt>mged></prompt> <userinput>tol rel .05 perp 1e-6</userinput></para>
-	<para>Sets the <emphasis>relative</emphasis> tolerance to 5% and the <emphasis>perpendicularity</emphasis> tolerance to 1e-06 			(cosine of 89.9999°).
+	<prompt>mged&gt;</prompt> <userinput>tol rel .05 perp 1e-6</userinput></para>
+	<para>Sets the <emphasis>relative</emphasis> tolerance to 5% and the <emphasis>perpendicularity</emphasis> tolerance to 1e-06 			(cosine of 89.9999Â°).
       </para>
 	</example>
   
-</refsect1>
+</refsection>
 
-<refsect1 id='author'>
-  <title>AUTHOR</title>
-  <para>BRL-CAD Team</para>
-</refsect1>
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
 
-<refsect1 id='bug_reports'>
-  <title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
-</refsect1>
+</refsection>
 </refentry>
-

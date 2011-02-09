@@ -31,7 +31,7 @@ trace add variable noWrite write failTrace
 
 test lset-1.1 {lset, not compiled, arg count} testevalex {
     list [catch {testevalex lset} msg] $msg
-} "1 {wrong \# args: should be \"lset listVar index ?index...? value\"}"
+} "1 {wrong \# args: should be \"lset listVar ?index? ?index...? value\"}"
 test lset-1.2 {lset, not compiled, no such var} testevalex {
     list [catch {testevalex {lset noSuchVar 0 {}}} msg] $msg
 } "1 {can't read \"noSuchVar\": no such variable}"

@@ -1,7 +1,7 @@
 #                       P A T C H . M 4
 # BRL-CAD
 #
-# Copyright (c) 2007-2010 United States Government as represented by
+# Copyright (c) 2007-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -56,14 +56,26 @@ for script in $ac_top_builddir $ac_abs_builddir $ac_builddir . ; do
 	if test -w ${libtoolscript} ; then
 
 	    case $host_os in
-		# remove any -all_load option.
+		# 1) remove any -all_load option.
 		# provokes libtool linker bug with noinst libraries.
+		#
+		# 2) add src/other/tcl and src/other/tk to search
+		# paths so wrapper scripts will run and find the
+		# bundled Tcl/Tk before the system Tcl/Tk frameworks.
+		#
 	        darwin*)
 		    sed 's/-all_load.*convenience//g' < $libtoolscript > ${libtoolscript}.sed
-		    sed "s/temp_rpath=\$/temp_rpath=$TCL_PATH:$TK_PATH/g" < $libtoolscript.sed > ${libtoolscript}.sed2
-		    if test ! "x`cat ${libtoolscript}`" = "x`cat ${libtoolscript}.sed2`" ; then
+		    if test ! "x`cat ${libtoolscript}`" = "x`cat ${libtoolscript}.sed`" ; then
 			AC_MSG_RESULT([Found -all_load in libtool script, removing])
-			cp ${libtoolscript}.sed2 ${libtoolscript}
+			cp ${libtoolscript}.sed ${libtoolscript}
+			rm -f ${libtoolscript}.sed
+		    fi
+		    # trailing ':' is REQUIRED so it prepends paths correctly
+		    sed "s/temp_rpath=\$/temp_rpath=$TCL_PATH:$TK_PATH:/g" < $libtoolscript > ${libtoolscript}.sed
+		    if test ! "x`cat ${libtoolscript}`" = "x`cat ${libtoolscript}.sed`" ; then
+			AC_MSG_RESULT([Added Tcl/Tk to temp_rpath for libtool wrapper scripts])
+			cp ${libtoolscript}.sed ${libtoolscript}
+			rm -f ${libtoolscript}.sed
 		    fi
 		    rm -f ${libtoolscript}.sed ${libtoolscript}.sed2
 		    ;;

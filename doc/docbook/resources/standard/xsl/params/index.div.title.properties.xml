@@ -17,7 +17,7 @@ index</refpurpose>
 <refsynopsisdiv>
 <src:fragment xml:id="index.div.title.properties.frag">
 <xsl:attribute-set name="index.div.title.properties">
-  <xsl:attribute name="margin-left">0pt</xsl:attribute>
+  <xsl:attribute name="margin-{$direction.align.start}">0pt</xsl:attribute>
   <xsl:attribute name="font-size">14.4pt</xsl:attribute>
   <xsl:attribute name="font-family"><xsl:value-of select="$title.fontset"/></xsl:attribute>
   <xsl:attribute name="font-weight">bold</xsl:attribute>

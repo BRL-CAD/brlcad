@@ -1,7 +1,7 @@
 /*               P U L L B A C K C U R V E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,9 +35,14 @@
 
 #include "tnt.h"
 #include "jama_lu.h"
-#include "opennurbs_ext.h"
 #include "brep.h"
 
+/* FIXME: should not be peeking into a private header and cannot be a
+ * public header (of librt).
+ */
+#include "../../librt/opennurbs_ext.h"
+
+/* interface header */
 #include "PullbackCurve.h"
 
 
@@ -407,7 +412,7 @@ interpolateLocalCubicCurve(ON_2dPointArray &Q)
     int num_samples = Q.Count();
     int num_segments = Q.Count() - 1;
     int qsize = num_samples + 3;
-    ON_2dVector qarray[qsize];
+    std::vector<ON_2dVector> qarray(qsize);
     ON_2dVector *q = &qarray[1];
 
     for (int i=1; i < Q.Count(); i++) {
@@ -420,8 +425,8 @@ interpolateLocalCubicCurve(ON_2dPointArray &Q)
     q[num_samples+1] = 2*q[num_samples] - q[num_samples-1];
     q[num_samples+2] = 2*q[num_samples+1] - q[num_samples];
 
-    ON_2dVector T[num_samples];
-	double A[num_samples];
+    std::vector<ON_2dVector> T(num_samples);
+    std::vector<double> A(num_samples);
     for (int k=0; k < num_samples; k++) {
 	ON_3dVector a = ON_CrossProduct(q[k-1], q[k]);
 	ON_3dVector b = ON_CrossProduct(q[k+1], q[k+2]);
@@ -434,7 +439,7 @@ interpolateLocalCubicCurve(ON_2dPointArray &Q)
 		T[k] = (1.0 - A[k])*q[k] + A[k]*q[k+1];
 	T[k].Unitize();
     }
-    ON_2dPointArray P[num_samples-1];
+    std::vector<ON_2dPointArray> P(num_samples-1);
     ON_2dPointArray control_points;
     control_points.Append(Q[0]);
     for (int i=1; i<num_samples; i++) {
@@ -465,7 +470,7 @@ interpolateLocalCubicCurve(ON_2dPointArray &Q)
     control_points.Append(Q[num_samples-1]);
 
     //generateParameters(spline);
-    double u[num_segments+1];
+    std::vector<double> u(num_segments+1);
     u[0] = 0.0;
     for (int k=0;k<num_segments;k++) {
 	u[k+1] = u[k] + 3.0*(P[k][1]-P[k][0]).Length();
@@ -507,7 +512,7 @@ interpolateLocalCubicCurve(ON_3dPointArray &Q)
     int num_samples = Q.Count();
     int num_segments = Q.Count() - 1;
     int qsize = num_samples + 3;
-    ON_3dVector qarray[qsize];
+    std::vector<ON_3dVector> qarray(qsize);
     ON_3dVector *q = &qarray[1];
 
     for (int i = 1; i < Q.Count(); i++) {
@@ -520,8 +525,8 @@ interpolateLocalCubicCurve(ON_3dPointArray &Q)
     q[num_samples + 1] = 2 * q[num_samples] - q[num_samples - 1];
     q[num_samples + 2] = 2 * q[num_samples + 1] - q[num_samples];
 
-    ON_3dVector T[num_samples];
-    double A[num_samples];
+    std::vector<ON_3dVector> T(num_samples);
+    std::vector<double> A(num_samples);
     for (int k = 0; k < num_samples; k++) {
 	ON_3dVector avec = ON_CrossProduct(q[k - 1], q[k]);
 	ON_3dVector bvec = ON_CrossProduct(q[k + 1], q[k + 2]);
@@ -534,7 +539,7 @@ interpolateLocalCubicCurve(ON_3dPointArray &Q)
 	T[k] = (1.0 - A[k]) * q[k] + A[k] * q[k + 1];
 	T[k].Unitize();
     }
-    ON_3dPointArray P[num_samples - 1];
+    std::vector<ON_3dPointArray> P(num_samples - 1);
     ON_3dPointArray control_points;
     control_points.Append(Q[0]);
     for (int i = 1; i < num_samples; i++) {
@@ -565,7 +570,7 @@ interpolateLocalCubicCurve(ON_3dPointArray &Q)
     control_points.Append(Q[num_samples - 1]);
 
     //generateParameters(spline);
-    double u[num_segments + 1];
+    std::vector<double> u(num_segments + 1);
     u[0] = 0.0;
     for (int k = 0; k < num_segments; k++) {
 	u[k + 1] = u[k] + 3.0 * (P[k][1] - P[k][0]).Length();

@@ -1,7 +1,7 @@
 /*                           R P C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -171,6 +171,8 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
+#include "../../librt_private.h"
+
 
 struct rpc_specific {
     point_t rpc_V;		/* vector to rpc origin */
@@ -205,7 +207,7 @@ const struct bu_structparse rt_rpc_parse[] = {
  * !0 Error in description
  *
  * Implicit return -
- * A struct rpc_specific is created, and it's address is stored in
+ * A struct rpc_specific is created, and its address is stored in
  * stp->st_specific for use by rpc_shot().
  */
 int
@@ -1157,6 +1159,7 @@ rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 {
     struct rt_rpc_internal *xip;
     union record *rp;
+    vect_t v1, v2, v3;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1178,10 +1181,28 @@ rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* Warning:  type conversion */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(xip->rpc_V, mat, &rp->s.s_values[0*3]);
-    MAT4X3VEC(xip->rpc_H, mat, &rp->s.s_values[1*3]);
-    MAT4X3VEC(xip->rpc_B, mat, &rp->s.s_values[2*3]);
-    xip->rpc_r = rp->s.s_values[3*3] / mat[15];
+
+    if (dbip->dbi_version < 0) {
+	rt_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
+	rt_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
+	rt_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
+    } else {
+	VMOVE(v1, &rp->s.s_values[0*3]);
+	VMOVE(v2, &rp->s.s_values[1*3]);
+	VMOVE(v3, &rp->s.s_values[2*3]);
+    }
+
+    MAT4X3PNT(xip->rpc_V, mat, v1);
+    MAT4X3VEC(xip->rpc_H, mat, v2);
+    MAT4X3VEC(xip->rpc_B, mat, v3);
+
+    if (dbip->dbi_version < 0) {
+	v1[X] = flip_dbfloat(rp->s.s_values[3*3+0]);
+    } else {
+	v1[X] = rp->s.s_values[3*3+0];
+    }
+
+    xip->rpc_r = v1[X] / mat[15];
 
     if (xip->rpc_r <= SMALL_FASTF) {
 	bu_log("rt_rpc_import4: r is zero\n");

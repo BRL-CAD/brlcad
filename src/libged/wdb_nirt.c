@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -82,6 +82,8 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     FILE *fp_in;
     FILE *fp_out, *fp_err;
 #ifndef _WIN32
+    int ret;
+    size_t sret;
     int pid, rpid;
     int retcode;
     int pipe_in[2];
@@ -269,18 +271,30 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	Tcl_AppendResult(interp, "\nFiring from view center...\n", (char *)NULL);
 
 #ifndef _WIN32
-    (void)pipe(pipe_in);
-    (void)pipe(pipe_out);
-    (void)pipe(pipe_err);
+    ret = pipe(pipe_in);
+    if (ret < 0)
+	perror("pipe");
+    ret = pipe(pipe_out);
+    if (ret < 0)
+	perror("pipe");
+    ret = pipe(pipe_err);
+    if (ret < 0)
+	perror("pipe");
     (void)signal(SIGINT, SIG_IGN);
     if ((pid = fork()) == 0) {
 	/* Redirect stdin, stdout, stderr */
 	(void)close(0);
-	(void)dup( pipe_in[0] );
+	ret = dup( pipe_in[0] );
+	if (ret < 0)
+	    perror("dup");
 	(void)close(1);
-	(void)dup( pipe_out[1] );
+	ret = dup( pipe_out[1] );
+	if (ret < 0)
+	    perror("dup");
 	(void)close(2);
-	(void)dup ( pipe_err[1] );
+	ret = dup( pipe_err[1] );
+	if (ret < 0)
+	    perror("dup");
 
 	/* close pipes */
 	(void)close(pipe_in[0]);
@@ -310,7 +324,10 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     fp_err = fdopen(pipe_err[0], "r");
 
     /* send quit command to nirt */
-    fwrite("q\n", 1, 2, fp_in);
+    sret = fwrite("q\n", 1, 2, fp_in);
+    if (sret != 2)
+	bu_log("fwrite failure\n");
+
     (void)fclose(fp_in);
 
 #else

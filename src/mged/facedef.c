@@ -1,7 +1,7 @@
 /*                       F A C E D E F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -70,8 +70,8 @@ char *p_nupnt[] = {
 };
 
 
-static void get_pleqn(fastf_t *plane, char **argv), get_rotfb(fastf_t *plane, char **argv, const struct rt_arb_internal *arb), get_nupnt(fastf_t *plane, char **argv);
-static int get_3pts(fastf_t *plane, char **argv, const struct bn_tol *tol);
+static void get_pleqn(fastf_t *plane, const char *argv[]), get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb), get_nupnt(fastf_t *plane, const char *argv[]);
+static int get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol);
 
 /*
  * F _ F A C E D E F
@@ -81,7 +81,7 @@ static int get_3pts(fastf_t *plane, char **argv, const struct bn_tol *tol);
  * one of four functions before calculating new vertices.
  */
 int
-f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     short int i;
     int face, prod, plane;
@@ -109,7 +109,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     else
 	return TCL_OK;
 
-    if (state != ST_S_EDIT) {
+    if (STATE != ST_S_EDIT) {
 	Tcl_AppendResult(interp, "Facedef: must be in solid edit mode\n", (char *)NULL);
 	status = TCL_ERROR;
 	goto end;
@@ -331,7 +331,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * into 'plane'.
  */
 static void
-get_pleqn(fastf_t *plane, char **argv)
+get_pleqn(fastf_t *plane, const char *argv[])
 {
     int i;
 
@@ -358,7 +358,7 @@ get_pleqn(fastf_t *plane, char **argv)
  * -1 failure
  */
 static int
-get_3pts(fastf_t *plane, char **argv, const struct bn_tol *tol)
+get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol)
 {
     int i;
     point_t a, b, c;
@@ -373,7 +373,7 @@ get_3pts(fastf_t *plane, char **argv, const struct bn_tol *tol)
 	c[i] = atof(argv[6+i]) * local2base;
 
     if (bn_mk_plane_3pts(plane, a, b, c, tol) < 0) {
-	Tcl_AppendResult(interp, "Facedef: not a plane\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "Facedef: not a plane\n", (char *)NULL);
 	return -1;		/* failure */
     }
     return 0;			/* success */
@@ -389,7 +389,7 @@ get_3pts(fastf_t *plane, char **argv, const struct bn_tol *tol)
  * a vertex is chosen as fixed point.
  */
 static void
-get_rotfb(fastf_t *plane, char **argv, const struct rt_arb_internal *arb)
+get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
 {
     fastf_t rota, fb;
     short int i, temp;
@@ -398,8 +398,8 @@ get_rotfb(fastf_t *plane, char **argv, const struct rt_arb_internal *arb)
     if (dbip == DBI_NULL)
 	return;
 
-    rota= atof(argv[0]) * degtorad;
-    fb  = atof(argv[1]) * degtorad;
+    rota= atof(argv[0]) * DEG2RAD;
+    fb  = atof(argv[1]) * DEG2RAD;
 
     /* calculate normal vector (length=1) from rot, fb */
     plane[0] = cos(fb) * cos(rota);
@@ -428,7 +428,7 @@ get_rotfb(fastf_t *plane, char **argv, const struct rt_arb_internal *arb)
  * input point.
  */
 static void
-get_nupnt(fastf_t *plane, char **argv)
+get_nupnt(fastf_t *plane, const char *argv[])
 {
     int i;
     point_t pt;

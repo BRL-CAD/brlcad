@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -157,7 +157,7 @@ crregion(struct rt_wdb *wdbp,
     for (i=0; i<number; i++) {
 	solidname[grpname_len + extraTypeChars] = '\0';
 	crname(interp, solidname, members[i], maxlen);
-	if (db_lookup(wdbp->dbip, solidname, LOOKUP_QUIET) == DIR_NULL) {
+	if (db_lookup(wdbp->dbip, solidname, LOOKUP_QUIET) == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "region: ", region, " will skip member: ",
 			     solidname, "\n", (char *)NULL);
 	    continue;
@@ -304,7 +304,7 @@ wdb_track_cmd(struct rt_wdb *wdbp,
     ++arg;
     tr[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
-    if (tr[0] == tr[1]) {
+    if (EQUAL(tr[0], tr[1])) {
 	Tcl_AppendResult(interp, "MIN == MAX ... STOP\n", (char *)NULL);
 	edit_result = TCL_ERROR;
 	goto end;
@@ -361,8 +361,8 @@ wdb_track_cmd(struct rt_wdb *wdbp,
     for (i=0; i<10; i++) {
 	crname(interp, solname, i, len);
 	crname(interp, regname, i, len);
-	if ((db_lookup(wdbp->dbip, solname, LOOKUP_QUIET) != DIR_NULL) ||
-	    (db_lookup(wdbp->dbip, regname, LOOKUP_QUIET) != DIR_NULL)) {
+	if ((db_lookup(wdbp->dbip, solname, LOOKUP_QUIET) != RT_DIR_NULL) ||
+	    (db_lookup(wdbp->dbip, regname, LOOKUP_QUIET) != RT_DIR_NULL)) {
 	    /* name already exists */
 	    Tcl_AppendResult(interp, "Track: naming error -- STOP\n",
 			     (char *)NULL);
@@ -386,7 +386,7 @@ wdb_track_cmd(struct rt_wdb *wdbp,
     bu_strlcpy(sol.s_name, solname, len);
 
     sol.s_type = ID_ARB8;
-    if (wrobj(wdbp, interp, solname, DIR_SOLID))
+    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
 	return TCL_ERROR;
 
     solname[grpname_len + extraTypeChars] = '\0';
@@ -399,7 +399,7 @@ wdb_track_cmd(struct rt_wdb *wdbp,
     trcurve(iw, tr);
     crname(interp, solname, 1, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, DIR_SOLID))
+    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
     /* idler dummy rcc */
@@ -410,7 +410,7 @@ wdb_track_cmd(struct rt_wdb *wdbp,
     /* solid 2 */
     crname(interp, solname, 2, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, DIR_SOLID))
+    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -422,7 +422,7 @@ wdb_track_cmd(struct rt_wdb *wdbp,
     bu_strlcpy(sol.s_name, solname, len);
     sol.s_type = ID_ARB8;
     crdummy(iw, tr, 1);
-    if (wrobj(wdbp, interp, solname, DIR_SOLID))
+    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -434,7 +434,7 @@ wdb_track_cmd(struct rt_wdb *wdbp,
     VMOVE(temp1, &sol.s_values[0]);
     crname(interp, solname, 4, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, DIR_SOLID))
+    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -446,7 +446,7 @@ wdb_track_cmd(struct rt_wdb *wdbp,
     trcurve(dw, tr);
     crname(interp, solname, 5, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, DIR_SOLID))
+    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -458,7 +458,7 @@ wdb_track_cmd(struct rt_wdb *wdbp,
     VMOVE(&sol.s_values[15], &sol.s_values[9]);
     crname(interp, solname, 6, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, DIR_SOLID))
+    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -470,7 +470,7 @@ wdb_track_cmd(struct rt_wdb *wdbp,
     bu_strlcpy(sol.s_name, solname, len);
     sol.s_type = ID_ARB8;
     crdummy(dw, tr, 2);
-    if (wrobj(wdbp, interp, solname, DIR_SOLID))
+    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -480,7 +480,7 @@ wdb_track_cmd(struct rt_wdb *wdbp,
     bottom(temp1, temp2, tr);
     crname(interp, solname, 8, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, DIR_SOLID))
+    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -494,7 +494,7 @@ wdb_track_cmd(struct rt_wdb *wdbp,
     top(temp1, temp2, tr);
     crname(interp, solname, 9, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, DIR_SOLID))
+    if (wrobj(wdbp, interp, solname, RT_DIR_SOLID))
 	return TCL_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -565,7 +565,7 @@ wdb_track_cmd(struct rt_wdb *wdbp,
 	    continue;
 	regname[grpname_len + extraTypeChars] = '\0';
 	crname(interp, regname, i, len);
-	if (db_lookup(wdbp->dbip, regname, LOOKUP_QUIET) == DIR_NULL) {
+	if (db_lookup(wdbp->dbip, regname, LOOKUP_QUIET) == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "group: ", grpname, " will skip member: ",
 			     regname, "\n", (char *)NULL);
 	    continue;
@@ -617,13 +617,13 @@ wrobj(struct rt_wdb *wdbp,
     if (wdbp->dbip == DBI_NULL)
 	return 0;
 
-    if (db_lookup(wdbp->dbip, name, LOOKUP_QUIET) != DIR_NULL) {
+    if (db_lookup(wdbp->dbip, name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "track naming error: ", name,
 			 " already exists\n", (char *)NULL);
 	return -1;
     }
 
-    if (flags != DIR_SOLID) {
+    if (flags != RT_DIR_SOLID) {
 	Tcl_AppendResult(interp, "wrobj can only write solids, aborting\n");
 	return -1;
     }
@@ -674,7 +674,7 @@ wrobj(struct rt_wdb *wdbp,
 	    return -1;
     }
 
-    if ((tdp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+    if ((tdp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(interp, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL);
 	return -1;

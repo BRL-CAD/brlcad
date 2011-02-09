@@ -1,7 +1,7 @@
 /*                           A V S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -89,7 +89,7 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
 
     if (avsp->count) {
 	for (BU_AVS_FOR(app, avsp)) {
-	    if (strcmp(app->name, name) != 0) continue;
+	    if (!BU_STR_EQUAL(app->name, name)) continue;
 
 	    /* found a match, replace it fully */
 	    if (app->name && AVS_IS_FREEABLE(avsp, app->name))
@@ -171,7 +171,7 @@ bu_avs_get(const struct bu_attribute_value_set *avsp, const char *name)
 	return NULL;
 
     for (BU_AVS_FOR(app, avsp)) {
-	if (strcmp(app->name, name) != 0) {
+	if (!BU_STR_EQUAL(app->name, name)) {
 	    continue;
 	}
 	return app->value;
@@ -193,7 +193,7 @@ bu_avs_remove(struct bu_attribute_value_set *avsp, const char *name)
 
     if (avsp->count) {
 	for (BU_AVS_FOR(app, avsp)) {
-	    if (strcmp(app->name, name) != 0)  continue;
+	    if (!BU_STR_EQUAL(app->name, name))  continue;
 	    if (app->name && AVS_IS_FREEABLE(avsp, app->name))
 		bu_free((genptr_t)app->name, "app->name");
 	    app->name = NULL;	/* sanity */

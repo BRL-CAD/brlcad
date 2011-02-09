@@ -41,3 +41,10 @@ add_definitions(
 )
 
 add_library(libbn ${LIBBN_SOURCES})
+
+set(BNTESTER_SOURCES
+    bntester.c
+)
+
+add_executable(bntester ${BNTESTER_SOURCES})
+target_link_libraries(bntester libbu libbn)

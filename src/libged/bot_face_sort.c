@@ -1,7 +1,7 @@
 /*                         B O T _ F A C E _ S O R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -73,7 +73,7 @@ ged_bot_face_sort(struct ged *gedp, int argc, const char *argv[])
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;
 
-	if ((dp=db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL) {
+	if ((dp=db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    continue;
 	}
 

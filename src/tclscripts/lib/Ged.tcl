@@ -1,7 +1,7 @@
 #                          G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2010 United States Government as represented by
+# Copyright (c) 1998-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -183,6 +183,7 @@ package provide cadwidgets::Ged 1.0
 	method eye_pos {args}
 	method faceplate {args}
 	method facetize {args}
+	method fontsize {args}
 	method form {args}
 	method fracture {args}
 	method g {args}
@@ -349,6 +350,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_savekey {_pane args}
 	method pane_saveview {_pane args}
 	method pane_sca {_pane args}
+	method pane_screengrab {_pane args}
 	method pane_scale_mode {_pane args}
 	method pane_screen2view {args}
 	method pane_set_coord {_pane args}
@@ -362,6 +364,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_v2m_point {_pane args}
 	method pane_view {_pane args}
 	method pane_view2model {_pane args}
+	method pane_view_callback {_pane args}
 	method pane_viewdir {_pane args}
 	method pane_vmake {_pane args}
 	method pane_vnirt {_pane args}
@@ -429,6 +432,7 @@ package provide cadwidgets::Ged 1.0
 	method savekey {args}
 	method saveview {args}
 	method sca {args}
+	method screengrab {args}
 	method protate {args}
 	method protate_mode {args}
 	method pscale {args}
@@ -479,6 +483,8 @@ package provide cadwidgets::Ged 1.0
 	method view {args}
 	method view2model {args}
 	method view_axes {args}
+	method view_callback {args}
+	method view_callback_all {args}
 	method viewdir {args}
 	method vmake {args}
 	method vnirt {args}
@@ -605,6 +611,7 @@ package provide cadwidgets::Ged 1.0
 	proc get_rgb_color {_color}
 	proc get_vdraw_color {_color}
 	proc rgb_to_tk {_r _g _b}
+	proc tk_to_rgb {_tkcolor}
     }
 
     protected {
@@ -1250,6 +1257,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::facetize {args} {
     eval $mGed facetize $args
+}
+
+::itcl::body cadwidgets::Ged::fontsize {args} {
+    eval $mGed fontsize $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::form {args} {
@@ -1924,6 +1935,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed sca $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_screengrab {_pane args} {
+    eval $mGed screengrab $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_scale_mode {_pane args} {
     eval $mGed scale_mode $itk_component($_pane) $args
 }
@@ -1978,6 +1993,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_view2model {_pane args} {
     eval $mGed view2model $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_view_callback {_pane args} {
+    eval $mGed view_callback $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_viewdir {_pane args} {
@@ -2279,6 +2298,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed sca $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::screengrab {args} {
+    eval $mGed screengrab $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::screen2view {args} {
     eval $mGed screen2view $itk_component($itk_option(-pane)) $args
 }
@@ -2516,6 +2539,16 @@ package provide cadwidgets::Ged 1.0
     }
 
     return $ret
+}
+
+::itcl::body cadwidgets::Ged::view_callback {args} {
+    eval $mGed view_callback $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::view_callback_all {args} {
+    foreach dm {ur ul ll lr} {
+	eval $mGed view_callback $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::viewdir {args} {
@@ -3827,6 +3860,14 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
+::itcl::body cadwidgets::Ged::tk_to_rgb {_tkcolor} {
+    if {![regexp {^\#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$} $_tkcolor all r g b]} {
+	return {128 128 128}
+    }
+
+    return [list [expr int(0x$r)] [expr int(0x$g)] [expr int(0x$b)]]
+}
+
 ::itcl::body cadwidgets::Ged::rgb_to_tk {_r _g _b} {
     return [format \#%.2x%.2x%.2x $_r $_g $_b]
 }
@@ -3849,7 +3890,7 @@ package provide cadwidgets::Ged 1.0
     foreach dm {ur ul ll lr} {
 	bind $itk_component($dm) <$_button> ""
 	bind $itk_component($dm) <ButtonRelease-$_button> ""
-	$mGed rect $itk_component($dm) draw 0
+#	$mGed rect $itk_component($dm) draw 0
     }
 }
 
@@ -4007,7 +4048,7 @@ package provide cadwidgets::Ged 1.0
     $help add copymat		{{a/b c/d}	{copy matrix from one combination's arc to another's}}
     $help add cp		{{from to} {copy [duplicate] object}}
     $help add cpi		{{from to}	{copy cylinder and position at end of original cylinder}}
-    $help add dbconcat		{{file [prefix]} {concatenate 'file' onto end of present database.  Run 'dup file' first.}}
+    $help add dbconcat		{{[-t] [-u] [-c] [-s|-p] file [prefix]} {concatenate 'file' onto end of present database.  Run 'dup file' first.}}
     $help add dbfind		{{[-s] <objects>} {find all references to objects}}
     $help add dbip		{{} {get dbip}}
     $help add dbot_dump	{{[-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] \n} {dump the displayed bots}}
@@ -4137,6 +4178,7 @@ package provide cadwidgets::Ged 1.0
     $help add savekey		{{file [time]} {save key frame data to file}}
     $help add saveview		{{[-e] [-i] [-l] [-o] filename [args]} {save the current view to file}}
     $help add sca		{{sfactor} {scale by sfactor}}
+    $help add screengrab	{{imagename.ext}	{output active graphics window to image file typed by extension(i.e. mged> screengrab imagename.png)\n");}}
     $help add search		{{options} {see search man page}}
     $help add select		{{vx vy {vr | vw vh}} {select objects within the specified circle or rectangle}}
     $help add setview		{{x y z} {set the view given angles x, y, and z in degrees}}

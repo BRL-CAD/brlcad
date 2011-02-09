@@ -1,7 +1,7 @@
 /*                       B W S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -160,6 +160,7 @@ get_args(int argc, char **argv)
 static void
 fill_buffer(int y)
 {
+    size_t ret;
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
 
@@ -167,7 +168,9 @@ fill_buffer(int y)
 	fprintf(stderr, "bwscale: Can't seek to input pixel!\n");
 	/* bu_exit (3, NULL); */
     }
-    fread(buffer, scanlen, buflines, buffp);
+    ret = fread(buffer, scanlen, buflines, buffp);
+    if (ret != (size_t)buflines) 
+	perror("fread");
 }
 
 
@@ -215,6 +218,7 @@ binterp(FILE *ofp, int ix, int iy, int ox, int oy)
 
     /* For each output pixel */
     for (j = 0; j < oy; j++) {
+	size_t ret;
 	y = j * ystep;
 	/*
 	 * Make sure we have this row (and the one after it)
@@ -244,7 +248,9 @@ binterp(FILE *ofp, int ix, int iy, int ox, int oy)
 	    *op++ = mid1 + dy * (mid2 - mid1);
 	}
 
-	(void) fwrite(outbuf, 1, ox, ofp);
+	ret = fwrite(outbuf, 1, ox, ofp);
+	if (ret != (size_t)ox) 
+	    perror("fwrite");
     }
 }
 
@@ -261,6 +267,7 @@ ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
     double x, y;
     double xstep, ystep;
     unsigned char *op, *lp;
+    size_t ret;
 
     xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
     ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
@@ -286,7 +293,9 @@ ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
 	    *op++ = lp[0];
 	}
 
-	(void) fwrite(outbuf, 1, ox, ofp);
+	ret = fwrite(outbuf, 1, ox, ofp);
+	if (ret != (size_t)ox) 
+	    perror("fwrite");
     }
 }
 
@@ -328,6 +337,8 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 
     /* for each output pixel */
     for (j = 0; j < oy; j++) {
+	size_t ret;
+
 	ystart = j * pylen;
 	yend = ystart + pylen;
 	op = outbuf;
@@ -370,7 +381,9 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 	    if (op > (outbuf+scanlen))
 		abort();
 	}
-	(void) fwrite(outbuf, 1, ox, ofp);
+	ret = fwrite(outbuf, 1, ox, ofp);
+	if (ret != (size_t)ox) 
+	    perror("fwrite");
     }
     return 1;
 }

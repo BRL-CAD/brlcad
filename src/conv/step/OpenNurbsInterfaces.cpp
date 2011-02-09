@@ -1,7 +1,7 @@
 /*                 OpenNurbsInterfaces.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2010 United States Government as represented by
+ * Copyright (c) 1994-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,6 @@
 #include "common.h"
 
 #include "opennurbs.h"
-#include "opennurbs_ext.h"
 
 #include "sdai.h"
 class SCLP23(Application_instance);
@@ -94,6 +93,12 @@ class SCLP23(Application_instance);
 
 #include "AdvancedBrepShapeRepresentation.h"
 #include "PullbackCurve.h"
+
+
+/* FIXME: should not be peeking into a private header and cannot be a
+ * public header (of librt).
+ */
+#include "../../librt/opennurbs_ext.h"
 
 
 ON_Brep *
@@ -1293,7 +1298,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 		    // insert trim
 		    // insert singular trim along
 		    // 0 = south, 1 = east, 2 = north, 3 = west
-		    ON_Surface::ISO iso;
+		    ON_Surface::ISO iso = ON_Surface::N_iso;
 		    switch (is) {
 			case 0:
 			    //south
@@ -1656,7 +1661,7 @@ Circle::LoadONBrep(ON_Brep *brep)
     double w = cos(dtheta/2.0);
     ON_3dPointArray cpts(2*narcs + 1);
     double angle = t_theta;
-    double W[2*narcs + 1];
+    double W[2 * 4 + 1]; /* 2 * max narcs + 1 */
     ON_3dPoint P0, P1, P2, PM, PT;
     ON_3dVector T0, T2;
 
@@ -1693,7 +1698,7 @@ Circle::LoadONBrep(ON_Brep *brep)
     int p = degree;
     int m = n + p - 1;
     int dimension = 3;
-    double u[narcs+1];
+    double u[4 + 1]; /* max narcs + 1 */
 
     for (int k = 0; k < narcs+1; k++) {
 	u[k] = ((double)k)/narcs;
@@ -2431,28 +2436,28 @@ VertexLoop::LoadONBrep(ON_Brep *brep)
     corner[3] = surface->PointAt(U.m_t[1], V.m_t[1]);
 
     ON_2dPoint start, end;
-    ON_Surface::ISO iso;
-    if (VAPPROXEQUAL(vertex, corner[0], POINT_CLOSENESS_TOLERANCE)) {
+    ON_Surface::ISO iso = ON_Surface::N_iso;
+    if (VNEAR_EQUAL(vertex, corner[0], POINT_CLOSENESS_TOLERANCE)) {
 	start = ON_2dPoint(U.m_t[0], V.m_t[0]);
-	if (VAPPROXEQUAL(vertex, corner[1], POINT_CLOSENESS_TOLERANCE)) {
+	if (VNEAR_EQUAL(vertex, corner[1], POINT_CLOSENESS_TOLERANCE)) {
 	    //south;
 	    end = ON_2dPoint(U.m_t[1], V.m_t[0]);
 	    iso = ON_Surface::S_iso;
-	} else if (VAPPROXEQUAL(vertex, corner[2], POINT_CLOSENESS_TOLERANCE)) {
+	} else if (VNEAR_EQUAL(vertex, corner[2], POINT_CLOSENESS_TOLERANCE)) {
 	    //west
 	    end = ON_2dPoint(U.m_t[0], V.m_t[1]);
 	    iso = ON_Surface::W_iso;
 	}
-    } else if (VAPPROXEQUAL(vertex, corner[1], POINT_CLOSENESS_TOLERANCE)) {
+    } else if (VNEAR_EQUAL(vertex, corner[1], POINT_CLOSENESS_TOLERANCE)) {
 	start = ON_2dPoint(U.m_t[1], V.m_t[0]);
-	if (VAPPROXEQUAL(vertex, corner[3], POINT_CLOSENESS_TOLERANCE)) {
+	if (VNEAR_EQUAL(vertex, corner[3], POINT_CLOSENESS_TOLERANCE)) {
 	    //east
 	    end = ON_2dPoint(U.m_t[1], V.m_t[1]);
 	    iso = ON_Surface::E_iso;
 	}
-    } else if (VAPPROXEQUAL(vertex, corner[2], POINT_CLOSENESS_TOLERANCE)) {
+    } else if (VNEAR_EQUAL(vertex, corner[2], POINT_CLOSENESS_TOLERANCE)) {
 	start = ON_2dPoint(U.m_t[0], V.m_t[1]);
-	if (VAPPROXEQUAL(vertex, corner[3], POINT_CLOSENESS_TOLERANCE)) {
+	if (VNEAR_EQUAL(vertex, corner[3], POINT_CLOSENESS_TOLERANCE)) {
 	    //north
 	    end = ON_2dPoint(U.m_t[1], V.m_t[1]);
 	    iso = ON_Surface::N_iso;

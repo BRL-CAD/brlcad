@@ -1,21 +1,21 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Usar el comando Insert en <application>MGED</application> para 
-    dimensionar y ubicar figuras.</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Usar el comando Insert en <application>MGED</application> para 
+    dimensionar y ubicar figuras.</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Aprobado para su publicación. Su distribucuón es ilimitada.</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="using_insert_command_overviewlist">
+    <para xml:id="using_insert_command_overviewlist">
       En este tutorial usted aprenderá a:
       
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Crear una esfera y un cilindro circular recto (rcc por sus 
 	  siglas en inglés: right circular cylinder)usando el comando make
@@ -46,7 +46,7 @@
       </itemizedlist>  
     </para>
     
-    <para id="using_insert_command_intropara1">
+    <para xml:id="using_insert_command_intropara1">
 	Esta lección se centra en la creación de formas a partir de la ventana 	
 	de comandos utilizando los comandos in y make. Va a crear una esfera 
 	(SPH) y un cilindro circular recto (RCC), utilizando los comandos de 
@@ -55,17 +55,17 @@
 
     </para>
     
-    <sect1 id="new_db_myShapes">
-      <title>Crear una nueva base de datos desde la línea de comandos.</title>
+    <section xml:id="new_db_myShapes"><info><title>Crear una nueva base de datos desde la línea de comandos.</title></info>
+      
       
       <para>
 	Crear una nueva base de datos y nombrarla shapes.g. Agréguele como 
 	título el nombre myShapes.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="sphere_make">
-      <title>Crear una esfera utilizando el comando make.</title>
+    <section xml:id="sphere_make"><info><title>Crear una esfera utilizando el comando make.</title></info>
+      
     
       <para>
 	Comience por activar la ventana (por lo general, se logra haciendo clic 
@@ -79,7 +79,7 @@
 	Como pudo apreciar en el tuorial #1, este comando le dice a <application>MGED</application> que:
 	
 	<informaltable frame="all">
-	  <tgroup cols='3'>
+	  <tgroup cols="3">
 	    <tbody>
 	      <row><entry>make</entry><entry>sph1.s</entry><entry>sph</entry></row>
 	      <row><entry>Cree una figura</entry><entry>La nombre sph1.s</entry>
@@ -92,7 +92,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/mged/using_insert_command_images/wireframesphere.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/mged/using_insert_command_images/wireframesphere.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -120,7 +120,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/es/images/mged03_wireframespherecylinder.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/es/images/mged03_wireframespherecylinder.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -137,10 +137,10 @@
 	con parámetros específicos, como altura y radio. Por lo tanto, la manera 
 	más precisa de crear estas figuras es utilizando el comando in (insert).
       </para>
-    </sect1>
+    </section>
    
-    <sect1 id="using_in">
-      <title>Utilizar el comando in para crear figuras</title>
+    <section xml:id="using_in"><info><title>Utilizar el comando in para crear figuras</title></info>
+      
       
       <para>
 	Una vez que la ventana de comandos esté activa al cliquear sobre ella, 
@@ -183,7 +183,7 @@
 	presiona la tecla ENTER luego. <application>MGED</application> le 
 	preguntará entonces.
       </para>  
-      <literallayout>
+      <literallayout class="normal">
       <prompt>Enter radius:</prompt>
       <prompt>(Ingrese radio:)</prompt>
       Tipee.
@@ -196,7 +196,7 @@
 	aparecerá en la ventana de comandos (incluyendo las respuestas 
 	correspondientes):
 	
-	<command><prompt>mged></prompt> in sph2.s sph</command>
+	<command><prompt>mged&gt;</prompt> in sph2.s sph</command>
 	
 	<literal>Enter X, Y, Z of vertex: 4 4 4</literal>
 	
@@ -243,8 +243,8 @@
 	verso como el siguiente:
       </para>
       
-      <literallayout>
-      <prompt>mged></prompt> in rcc2.s rcc
+      <literallayout class="normal">
+      <prompt>mged&gt;</prompt> in rcc2.s rcc
       
       Enter X, Y, Z of vertex: 4 4 0
       
@@ -266,11 +266,11 @@
       </para>
       
       <informaltable>
-	<tgroup cols='2'>
+	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><inlinegraphic fileref="../../lessons/es/images/mged03_shapes_make_command.png" /></entry>
-	      <entry><inlinegraphic fileref="../../lessons/es/images/mged03_shapes_in_command.png" /></entry>
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged03_shapes_make_command.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged03_shapes_in_command.png"/></imageobject></inlinemediaobject></entry>
 	    </row>
 	    <row>
 	      <entry>Figuras creadas con el comando make</entry>
@@ -280,10 +280,10 @@
 	</tgroup>
       </informaltable>
 
-    </sect1>
+    </section>
    
-    <sect1 id="args_on_one_line">
-      <title>Combinar arugmentos en una línea</title>
+    <section xml:id="args_on_one_line"><info><title>Combinar arugmentos en una línea</title></info>
+      
       
       <para>
 	Otra forma de usar el comando in es combinar toda la información 
@@ -305,7 +305,7 @@
       
       
       <informaltable>
-	<tgroup cols='7'>
+	<tgroup cols="7">
 	  <tbody>
 	    <row>
 	      <entry>in</entry>
@@ -341,17 +341,17 @@
       </para>
       
       <informaltable>
-	<tgroup cols='10' align='center' colsep='1' rowsep='1'>
-	  <colspec colname='c1'/>
-	  <colspec colname='c2'/>
-	  <colspec colname='c3'/>
-	  <colspec colname='c4'/>
-	  <colspec colname='c5'/>
-	  <colspec colname='c6'/>
-	  <colspec colname='c7'/>
-	  <colspec colname='c8'/>
-	  <colspec colname='c9'/>
-	  <colspec colname='c10'/>
+	<tgroup cols="10" align="center" colsep="1" rowsep="1">
+	  <colspec colname="c1"/>
+	  <colspec colname="c2"/>
+	  <colspec colname="c3"/>
+	  <colspec colname="c4"/>
+	  <colspec colname="c5"/>
+	  <colspec colname="c6"/>
+	  <colspec colname="c7"/>
+	  <colspec colname="c8"/>
+	  <colspec colname="c9"/>
+	  <colspec colname="c10"/>
 	  <tbody>
 	    <row>
 	      <entry>in</entry>
@@ -366,20 +366,20 @@
 	      <entry>3</entry>
 	    </row>
 	    <row>
-	      <entry morerows='1' valign='top'>Insertar una figura primitiva</entry>
-	      <entry morerows='1' valign='top'>Llamarla rcc3.s</entry>
-	      <entry morerows='1' valign='top'>Hacer de la figura primitiva un 
+	      <entry morerows="1" valign="top">Insertar una figura primitiva</entry>
+	      <entry morerows="1" valign="top">Llamarla rcc3.s</entry>
+	      <entry morerows="1" valign="top">Hacer de la figura primitiva un 
 		cilindro circular recto (RCC)</entry>
-	      <entry morerows='1' valign='top'>Dar a la x del vértice el valor 
+	      <entry morerows="1" valign="top">Dar a la x del vértice el valor 
 		4</entry>
-	      <entry morerows='1' valign='top'>Dar a la y del vértice el valor 
+	      <entry morerows="1" valign="top">Dar a la y del vértice el valor 
 		4</entry>
-	      <entry morerows='1' valign='top'>Dar a la z del vértice el valor 
+	      <entry morerows="1" valign="top">Dar a la z del vértice el valor 
 		0</entry>
 	      <entry>Dar a la x del vector de altura el valor 0</entry>
 	      <entry>Dar a la y del vector de altura el valor 0</entry>
 	      <entry>Dar a la z del vector de altura el valor 4</entry>
-	      <entry morerows='1' valign='top'>Dar al radio el valor de 3</entry>
+	      <entry morerows="1" valign="top">Dar al radio el valor de 3</entry>
 	    </row>
 	    <row>
 	      <entry namest="c7" nameend="c9" align="center">Hacer la forma de 
@@ -389,11 +389,11 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-    </sect1>
+    </section>
     
-    <sect1 id="command_combined_in">
-      <title>Desarrollar un formato de comando combinado para el comando in
-      </title>
+    <section xml:id="command_combined_in"><info><title>Desarrollar un formato de comando combinado para el comando in
+      </title></info>
+      
       
       <para>
 	Cuando usted comienza a usar <application> MGED </application>, si 
@@ -407,14 +407,14 @@
       </para>
       
       <informaltable>
-	<tgroup cols='10' align='center' colsep='1' rowsep='1'>
-	  <colspec colname='c1'/>
-	  <colspec colname='c2'/>
-	  <colspec colname='c3'/>
-	  <colspec colname='c4'/>
-	  <colspec colname='c5'/>
-	  <colspec colname='c6'/>
-	  <colspec colname='c7'/>
+	<tgroup cols="10" align="center" colsep="1" rowsep="1">
+	  <colspec colname="c1"/>
+	  <colspec colname="c2"/>
+	  <colspec colname="c3"/>
+	  <colspec colname="c4"/>
+	  <colspec colname="c5"/>
+	  <colspec colname="c6"/>
+	  <colspec colname="c7"/>
 	  <tbody>
 	    <row>
 	      <entry>in</entry>
@@ -426,13 +426,13 @@
 	      <entry>?</entry>
 	    </row>
 	    <row>
-	      <entry morerows='1' valign='top'>Insertar una figura</entry>
-	      <entry morerows='1' valign='top'>Nombre de la figura</entry>
-	      <entry morerows='1' valign='top'>La figura es una esfera</entry>
+	      <entry morerows="1" valign="top">Insertar una figura</entry>
+	      <entry morerows="1" valign="top">Nombre de la figura</entry>
+	      <entry morerows="1" valign="top">La figura es una esfera</entry>
 	      <entry>Valor de x</entry>
 	      <entry>Valor de y</entry>
 	      <entry>Valor de z</entry>
-	      <entry morerows='1' valign='top'>radio de la esfera</entry>
+	      <entry morerows="1" valign="top">radio de la esfera</entry>
 	    </row>
 	    <row>
 	      <entry namest="c4" nameend="c6" align="center">Centro</entry>
@@ -446,17 +446,17 @@
       </para>
       
       <informaltable>
-	<tgroup cols='10' align='center' colsep='1' rowsep='1'>
-	  <colspec colname='c1'/>
-	  <colspec colname='c2'/>
-	  <colspec colname='c3'/>
-	  <colspec colname='c4'/>
-	  <colspec colname='c5'/>
-	  <colspec colname='c6'/>
-	  <colspec colname='c7'/>
-	  <colspec colname='c8'/>
-	  <colspec colname='c9'/>
-	  <colspec colname='c10'/>
+	<tgroup cols="10" align="center" colsep="1" rowsep="1">
+	  <colspec colname="c1"/>
+	  <colspec colname="c2"/>
+	  <colspec colname="c3"/>
+	  <colspec colname="c4"/>
+	  <colspec colname="c5"/>
+	  <colspec colname="c6"/>
+	  <colspec colname="c7"/>
+	  <colspec colname="c8"/>
+	  <colspec colname="c9"/>
+	  <colspec colname="c10"/>
 	  <tbody>
 	    <row>
 	      <entry>in</entry>
@@ -467,9 +467,9 @@
 	      <entry>?</entry>
 	    </row>
 	    <row>
-	      <entry morerows='1' valign='top'>Insertar figura primitiva</entry>
-	      <entry morerows='1' valign='top'>Nombre de la figura</entry>
-	      <entry morerows='1' valign='top'>La figura es un cilindro circular 
+	      <entry morerows="1" valign="top">Insertar figura primitiva</entry>
+	      <entry morerows="1" valign="top">Nombre de la figura</entry>
+	      <entry morerows="1" valign="top">La figura es un cilindro circular 
 		recto</entry>
 	      <entry>Valor de x</entry>
 	      <entry>Valor de y</entry>
@@ -477,7 +477,7 @@
 	      <entry>Valor de x</entry>
 	      <entry>Valor de y</entry>
 	      <entry>Valor de z</entry>
-	      <entry morerows='1' valign='top'>radio del rcc</entry>
+	      <entry morerows="1" valign="top">radio del rcc</entry>
 	    </row>
 	    <row>
 	      <entry namest="c4" nameend="c6" align="center">Vértice</entry>
@@ -487,12 +487,12 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-    </sect1>
+    </section>
     
-    <sect1 id="mged_naming_conventions">
-      <title>Considerar los nombres convencionales para las figuras en 
+    <section xml:id="mged_naming_conventions"><info><title>Considerar los nombres convencionales para las figuras en 
 	<application>MGED</application>
-      </title>
+      </title></info>
+      
       
       <para>
 	Usted puede haber notado que cada vez que se crea una esfera o CCR, se
@@ -523,20 +523,20 @@
 	desarrolle su un conjunto de convenciones al nombrar sus figuras de 
 	forma que funcione para usted, y úselo de forma coherente.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="view_shapes">
-	 <title>Visualización de las figuras </title>
+    <section xml:id="view_shapes"><info><title>Visualización de las figuras </title></info>
+	 
 
       <para>
 	Practique ver sus nuevas formas mediante el menú View (Vistas). 
 	Manipule la vista con las diferentes combinaciones entre el mouse y las 
 	teclas identificadas en el tutorial anterior.
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="using_insert_command_quit">
-	<title>Salir de <application> MGED </application> </title>
+    <section xml:id="using_insert_command_quit"><info><title>Salir de <application> MGED </application> </title></info>
+	
 
       <para>
 	Si desea salir de <application> MGED </application> tipee la letra q o 
@@ -544,15 +544,15 @@
 	presione ENTER. También puede cerrar el programa seleccionando Exit 
 	(Salir) en el menú File (Archivo).
       </para>
-    </sect1>
+    </section>
     
-    <sect1 id="using_insert_command_review">
-      <title>Repasemos</title>
+    <section xml:id="using_insert_command_review"><info><title>Repasemos</title></info>
+      
       
       <para>
 	En este tutorial usted aprendió a:
       </para>
-<itemizedlist mark='bullet'>
+<itemizedlist mark="bullet">
 	<listitem>
 	<para>Crear una esfera y un cilindro circular recto usando el comando 
 	make.</para>
@@ -580,6 +580,6 @@
 	  <para>Cerrar el programa <application>MGED</application>.</para>
     	</listitem>
       </itemizedlist>
-    </sect1>
+    </section>
 
   </article>

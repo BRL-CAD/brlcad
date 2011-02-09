@@ -21,10 +21,10 @@
 
 <refsection><info><title>Description</title></info>
 
-<para>The default presentation of <tag>CalloutList</tag>s uses
-an HTML <tag>DL</tag>. Some browsers don't align DLs very well
-if <parameter>callout.graphics</parameter> are used. With this option
-turned on, <tag>CalloutList</tag>s are presented in an HTML
+<para>The default presentation of <tag>calloutlist</tag>s uses
+an HTML <tag>DL</tag> element. Some browsers don't align DLs very well
+if <parameter>callout.graphics</parameter> is used. With this option
+turned on, <tag>calloutlist</tag>s are presented in an HTML
 <tag>TABLE</tag>, which usually results in better alignment
 of the callout number with the callout description.</para>
 

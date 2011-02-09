@@ -1,7 +1,7 @@
 /*                       D M - W G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2010 United States Government as represented by
+ * Copyright (c) 1988-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -579,7 +579,7 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 		       ((struct wgl_vars *)dmp1->dm_vars.priv_vars)->glxc);
 	wglDeleteContext(old_glxContext);
     } else {
-	/* dmp1 will share it's display lists with dmp2 */
+	/* dmp1 will share its display lists with dmp2 */
 
 	old_glxContext = ((struct wgl_vars *)dmp2->dm_vars.priv_vars)->glxc;
 
@@ -1634,194 +1634,12 @@ wgl_configureWin_guts(struct dm *dmp,
     }
 
 
-    if (dmp->dm_width < 582) {
-	if (logfont.lfHeight != 14) {
-	    logfont.lfHeight = 14;
+    if (DM_VALID_FONT_SIZE(dmp->dm_fontsize)) {
+	if (logfont.lfHeight != dmp->dm_fontsize) {
+	    logfont.lfHeight = dmp->dm_fontsize;
 	    logfont.lfWidth = 0;
 	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
 
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 679) {
-	if (logfont.lfHeight != 15) {
-	    logfont.lfHeight = 15;
-	    logfont.lfWidth = 0;
-
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 776) {
-	if (logfont.lfHeight != 16) {
-	    logfont.lfHeight = 16;
-	    logfont.lfWidth = 0;
-
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-		DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 873) {
-	if (logfont.lfHeight != 17) {
-	    logfont.lfHeight = 17;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 970) {
-	if (logfont.lfWidth != 18) {
-	    logfont.lfHeight = 18;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1067) {
-	if (logfont.lfWidth != 19) {
-	    logfont.lfHeight = 19;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1164) {
-	if (logfont.lfWidth != 20) {
-	    logfont.lfHeight = 20;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1261) {
-	if (logfont.lfWidth != 21) {
-	    logfont.lfHeight = 21;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1358) {
-	if (logfont.lfWidth != 22) {
-	    logfont.lfHeight = 22;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1455) {
-	if (logfont.lfWidth != 23) {
-	    logfont.lfHeight = 23;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1552) {
-	if (logfont.lfWidth != 24) {
-	    logfont.lfHeight = 24;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1649) {
-	if (logfont.lfWidth != 25) {
-	    logfont.lfHeight = 25;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1746) {
-	if (logfont.lfWidth != 26) {
-	    logfont.lfHeight = 26;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1843) {
-	if (logfont.lfWidth != 27) {
-	    logfont.lfHeight = 27;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-
-		if (oldfont != NULL)
-		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
-	    }
-	}
-    } else if (dmp->dm_width < 1940) {
-	if (logfont.lfWidth != 28) {
-	    logfont.lfHeight = 28;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
 		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
@@ -1831,16 +1649,214 @@ wgl_configureWin_guts(struct dm *dmp,
 	    }
 	}
     } else {
-	if (logfont.lfWidth != 29) {
-	    logfont.lfHeight = 29;
-	    logfont.lfWidth = 0;
-	    if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
-		wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+	if (dmp->dm_width < 582) {
+	    if (logfont.lfHeight != 14) {
+		logfont.lfHeight = 14;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
 
-		if (oldfont != NULL)
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 679) {
+	    if (logfont.lfHeight != 15) {
+		logfont.lfHeight = 15;
+		logfont.lfWidth = 0;
+
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 776) {
+	    if (logfont.lfHeight != 16) {
+		logfont.lfHeight = 16;
+		logfont.lfWidth = 0;
+
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 		    DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 873) {
+	    if (logfont.lfHeight != 17) {
+		logfont.lfHeight = 17;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 970) {
+	    if (logfont.lfWidth != 18) {
+		logfont.lfHeight = 18;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1067) {
+	    if (logfont.lfWidth != 19) {
+		logfont.lfHeight = 19;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1164) {
+	    if (logfont.lfWidth != 20) {
+		logfont.lfHeight = 20;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1261) {
+	    if (logfont.lfWidth != 21) {
+		logfont.lfHeight = 21;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1358) {
+	    if (logfont.lfWidth != 22) {
+		logfont.lfHeight = 22;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1455) {
+	    if (logfont.lfWidth != 23) {
+		logfont.lfHeight = 23;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1552) {
+	    if (logfont.lfWidth != 24) {
+		logfont.lfHeight = 24;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1649) {
+	    if (logfont.lfWidth != 25) {
+		logfont.lfHeight = 25;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1746) {
+	    if (logfont.lfWidth != 26) {
+		logfont.lfHeight = 26;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1843) {
+	    if (logfont.lfWidth != 27) {
+		logfont.lfHeight = 27;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else if (dmp->dm_width < 1940) {
+	    if (logfont.lfWidth != 28) {
+		logfont.lfHeight = 28;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
+	    }
+	} else {
+	    if (logfont.lfWidth != 29) {
+		logfont.lfHeight = 29;
+		logfont.lfWidth = 0;
+		if ((newfontstruct = CreateFontIndirect(&logfont)) != NULL) {
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    wglUseFontBitmaps(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, 0, 256, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+
+		    if (oldfont != NULL)
+			DeleteObject(SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, oldfont));
+		}
 	    }
 	}
     }
@@ -1850,9 +1866,9 @@ wgl_configureWin_guts(struct dm *dmp,
 
 
 HIDDEN int
-wgl_configureWin(struct dm *dmp)
+wgl_configureWin(struct dm *dmp, int force)
 {
-    return wgl_configureWin_guts(dmp, 0);
+    return wgl_configureWin_guts(dmp, force);
 }
 
 HIDDEN int
@@ -2052,6 +2068,7 @@ struct dm dm_wgl = {
     wgl_endDList,
     wgl_drawDList,
     wgl_freeDLists,
+    Nu_int0, /* display to image function */
     0,
     1,				/* has displaylist */
     0,                            /* no stereo by default */
@@ -2063,6 +2080,8 @@ struct dm dm_wgl = {
     1,
     0,
     0,
+    0,/* bytes per pixel */
+    0,/* bits per channel */
     1,
     0,
     1.0, /* aspect ratio */
@@ -2083,6 +2102,7 @@ struct dm dm_wgl = {
     1,				/* zbuffer */
     0,				/* no zclipping */
     0,                          /* clear back buffer after drawing and swap */
+    0,                          /* not overriding the auto font size */
     0				/* Tcl interpreter */
 };
 

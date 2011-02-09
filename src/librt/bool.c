@@ -1,7 +1,7 @@
 /*                          B O O L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -221,7 +221,8 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    VPRINT(" OPoint", pt);
 	    bu_log("***********\n");
 	}
-	if (segp->seg_stp->st_bit >= rtip->nsolids) bu_bomb("rt_boolweave: st_bit");
+	if ((size_t)segp->seg_stp->st_bit >= rtip->nsolids)
+	    bu_bomb("rt_boolweave: st_bit");
 
 	BU_LIST_DEQUEUE(&(segp->l));
 	BU_LIST_INSERT(&(out_hd->l), &(segp->l));
@@ -432,7 +433,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 		 * though the two distances are "equal" within
 		 * tolerance, they are not exactly the same.  If the
 		 * new segment is slightly closer to the ray origin,
-		 * then use it's IN point.
+		 * then use its IN point.
 		 *
 		 * This is an attempt to reduce the deflected normals
 		 * sometimes seen along the edges of e.g. a cylinder
@@ -999,7 +1000,8 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
     int n_regions;
     int n_fastgen = 0;
     int code;
-    int i;
+    size_t i;
+    int counter;
 
     RT_CK_AP(ap);
     RT_CK_PARTITION(pp);
@@ -1011,8 +1013,8 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 
     /* Count number of FASTGEN regions */
     n_regions = BU_PTBL_LEN(regiontable);
-    for (i = n_regions-1; i >= 0; i--) {
-	struct region *regp = (struct region *)BU_PTBL_GET(regiontable, i);
+    for (counter = n_regions-1; counter >= 0; counter--) {
+	struct region *regp = (struct region *)BU_PTBL_GET(regiontable, counter);
 	RT_CK_REGION(regp);
 	if (regp->reg_is_fastgen != REGION_NON_FASTGEN) n_fastgen++;
     }
@@ -1072,8 +1074,8 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 
 	/* Finally, think up a way to pass plate/plate overlaps on */
 	n_fastgen = 0;
-	for (i = n_regions-1; i >= 0; i--) {
-	    struct region *regp = (struct region *)BU_PTBL_GET(regiontable, i);
+	for (counter = n_regions-1; counter >= 0; counter--) {
+	    struct region *regp = (struct region *)BU_PTBL_GET(regiontable, counter);
 	    if (regp == REGION_NULL) continue;	/* empty slot in table */
 	    RT_CK_REGION(regp);
 	    if (regp->reg_is_fastgen != REGION_NON_FASTGEN) n_fastgen++;
@@ -1230,7 +1232,7 @@ rt_default_logoverlap(struct application *ap, const struct partition *pp, const 
     point_t pt;
     static long count = 0; /* Not PARALLEL, shouldn't hurt */
     register fastf_t depth;
-    int i;
+    size_t i;
     struct bu_vls str;
 
     RT_CK_AP(ap);
@@ -1585,7 +1587,7 @@ pop:
 	case OP_XNOP:
 	    /*
 	     * Special NOP for XOR.  lhs was false.  If rhs is true,
-	     * take note of it's regionp.
+	     * take note of its regionp.
 	     */
 	    sp--;			/* pop temp val */
 	    if (ret) {
@@ -1661,14 +1663,14 @@ pop:
  * (or the a_ray_length value), and always get correct results.  Need
  * to take into account some additional factors:
  *
- * 1) A region shouldn't be evaluated until all it's solids have been
+ * 1) A region shouldn't be evaluated until all its solids have been
  * intersected, to prevent the "CERN" problem of out points being
  * wrong because subtracted solids aren't intersected yet.
  *
  * Maybe "all" solids don't have to be intersected, but some strong
  * statements are needed along these lines.
  *
- * A region is definitely ready to be evaluated IF all it's solids
+ * A region is definitely ready to be evaluated IF all its solids
  * have been intersected.
  *
  * 2) A partition shouldn't be evaluated until all the regions within
@@ -1814,7 +1816,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	 * If partition is behind ray start point, discard it.
 	 *
 	 * Partition may start before current box starts, because it's
-	 * still waiting for all it's solids to be shot.
+	 * still waiting for all its solids to be shot.
 	 */
 	if (pp->pt_outhit->hit_dist <= 0.001 /* milimeters */) {
 	    register struct partition *zap_pp;

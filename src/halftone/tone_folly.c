@@ -1,7 +1,7 @@
 /*                    T O N E _ F O L L Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ static unsigned char	ordered[4][4] = {
  *	y	Current row
  *	nx	Next column
  *	ny	Next row
- *	new	New row flag.
+ *	newrow	New row flag.
  *
  * Exit:
  *	returns	0 to Levels
@@ -67,11 +67,9 @@ static unsigned char	ordered[4][4] = {
  * Calls:
  *	BN_UNIF_DOUBLE() - to get random numbers from -0.5 to 0.5
  *
- * Author:
- *	Christopher T. Johnson	- 90/03/21
  */
 int
-tone_folly(int pix, int x, int y, int nx, int ny, int new)
+tone_folly(int pix, int x, int y, int UNUSED(nx), int UNUSED(ny), int UNUSED(newrow))
 {
     int threshold = 16*ordered[ x % 4][ y % 4];
 

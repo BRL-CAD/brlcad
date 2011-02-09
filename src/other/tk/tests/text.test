@@ -2936,6 +2936,15 @@ test text-22.26 {TextDumpCmd procedure, unicode characters} {
     .t insert 1.0 abc\xb1\xb1\xb1
     .t dump -all 1.0 2.0
 } "text abc\xb1\xb1\xb1 1.0 mark insert 1.6 mark current 1.6 text {\n} 1.6"
+test text-22.27 {TextDumpCmd procedure, peer present} -setup {
+    destroy .t
+} -body {
+    text .t
+    .t peer create .t.t
+    .t dump -all 1.0 end
+} -cleanup {
+    destroy .t
+} -result "mark insert 1.0 mark current 1.0 text {\n} 1.0"
 
 set l [interp hidden]
 deleteWindows

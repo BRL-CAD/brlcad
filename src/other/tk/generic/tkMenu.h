@@ -50,6 +50,19 @@ enum compound {
 };
 
 /*
+ * Additional menu entry drawing parameters for Windows platform.
+ * DRAW_MENU_ENTRY_ARROW makes TkpDrawMenuEntry draw the arrow
+ * itself when cascade entry is disabled.
+ * DRAW_MENU_ENTRY_NOUNDERLINE forbids underline when ODS_NOACCEL
+ * is set, thus obeying the system-wide Windows UI setting.
+ */
+
+enum drawingParameters {
+    DRAW_MENU_ENTRY_ARROW = (1<<0),
+    DRAW_MENU_ENTRY_NOUNDERLINE = (1<<1)
+};
+
+/*
  * One of the following data structures is kept for each entry of each menu
  * managed by this file:
  */
@@ -548,7 +561,7 @@ MODULE_SCOPE void	TkpDrawMenuEntry(TkMenuEntry *mePtr,
 			    Drawable d, Tk_Font tkfont,
 			    const Tk_FontMetrics *menuMetricsPtr, int x,
 			    int y, int width, int height, int strictMotif,
-			    int drawArrow);
+			    int drawingParameters);
 MODULE_SCOPE void	TkpMenuInit(void);
 MODULE_SCOPE int	TkpMenuNewEntry(TkMenuEntry *mePtr);
 MODULE_SCOPE int	TkpNewMenu(TkMenu *menuPtr);

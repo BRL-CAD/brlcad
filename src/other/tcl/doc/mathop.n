@@ -240,7 +240,8 @@ result will be minus one.
 .
 Returns the bit-wise OR of each of the arbitrarily many arguments. Each
 \fInumber\fR must have an integral value. If no arguments are given, the
-result will be zero..TP
+result will be zero.
+.TP
 \fB^\fR ?\fInumber\fR ...?
 .
 Returns the bit-wise XOR of each of the arbitrarily many arguments. Each

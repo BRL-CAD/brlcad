@@ -1,7 +1,7 @@
 /*                        D S T A T S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ int main(int ac, char *av[])
     FILE *fp;
 
     /* check for verbose flag */
-    if (ac > 1 && strcmp(av[1], "-v") == 0) {
+    if (ac > 1 && BU_STR_EQUAL(av[1], "-v")) {
 	verbose++;
 	av++;
 	ac--;

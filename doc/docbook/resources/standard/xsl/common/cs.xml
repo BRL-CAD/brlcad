@@ -29,6 +29,8 @@
 
 <l:gentext key="Abstract" text="Abstrakt"/>
 <l:gentext key="abstract" text="Abstrakt"/>
+<l:gentext key="Acknowledgements" text="Poděkování"/>
+<l:gentext key="acknowledgements" text="poděkování"/>
 <l:gentext key="Answer" text="Odpověď:"/>
 <l:gentext key="answer" text="Odpověď:"/>
 <l:gentext key="Appendix" text="Příloha"/>
@@ -53,7 +55,7 @@
 <l:gentext key="dedication" text="Věnování"/>
 <l:gentext key="Edition" text="Vydání"/>
 <l:gentext key="edition" text="Vydání"/>
-<l:gentext key="Editor" text="Editor" lang="en"/>
+<l:gentext key="Editor" text="Editor"/>
 <l:gentext key="Equation" text="Rovnice"/>
 <l:gentext key="equation" text="Rovnice"/>
 <l:gentext key="Example" text="Příklad"/>
@@ -95,21 +97,21 @@
 <l:gentext key="pubdate" text="Datum vydání"/>
 <l:gentext key="Published" text="Vydáno"/>
 <l:gentext key="published" text="Vydáno"/>
-<l:gentext key="Publisher" text="Publisher" lang="en"/>
+<l:gentext key="Publisher" text="Vydavatel"/>
 <l:gentext key="Qandadiv" text="Otázky a odpovědi"/>
 <l:gentext key="qandadiv" text="Otázky a odpovědi"/>
-<l:gentext key="QandASet" text="Frequently Asked Questions" lang="en"/>
+<l:gentext key="QandASet" text="Časté dotazy"/>
 <l:gentext key="Question" text="Otázka:"/>
 <l:gentext key="question" text="Otázka:"/>
-<l:gentext key="RefEntry" text=""/>
-<l:gentext key="refentry" text=""/>
+<l:gentext key="RefEntry" text="Strana"/>
+<l:gentext key="refentry" text="strana"/>
 <l:gentext key="Reference" text="Odkaz"/>
 <l:gentext key="reference" text="Odkaz"/>
-<l:gentext key="References" text="References" lang="en"/>
+<l:gentext key="References" text="Odkazy"/>
 <l:gentext key="RefName" text="Jméno"/>
 <l:gentext key="refname" text="Jméno"/>
-<l:gentext key="RefSection" text=""/>
-<l:gentext key="refsection" text=""/>
+<l:gentext key="RefSection" text="Oddíl"/>
+<l:gentext key="refsection" text="oddíl"/>
 <l:gentext key="RefSynopsisDiv" text="Přehled"/>
 <l:gentext key="refsynopsisdiv" text="Přehled"/>
 <l:gentext key="RevHistory" text="Přehled revizí"/>
@@ -138,8 +140,8 @@
 <l:gentext key="Step" text="Krok"/>
 <l:gentext key="table" text="Tabulka"/>
 <l:gentext key="Table" text="Tabulka"/>
-<l:gentext key="task" text="Task" lang="en"/>
-<l:gentext key="Task" text="Task" lang="en"/>
+<l:gentext key="task" text="úloha"/>
+<l:gentext key="Task" text="Úloha"/>
 <l:gentext key="tip" text="Tip"/>
 <l:gentext key="TIP" text="Tip"/>
 <l:gentext key="Tip" text="Tip"/>
@@ -155,7 +157,6 @@
 <l:gentext key="in" text="v"/>
 <l:gentext key="lastlistcomma" text=""/>
 <l:gentext key="listcomma" text=","/>
-<l:gentext key="nonexistantelement" text="neexistující prvek"/>
 <l:gentext key="notes" text="Poznámky"/>
 <l:gentext key="Notes" text="Poznámky"/>
 <l:gentext key="Pgs" text="Str."/>
@@ -199,6 +200,7 @@
 <l:gentext key="below" text="pod"/>
 <l:gentext key="sectioncalled" text="oddíl nazvaný"/>
 <l:gentext key="index symbols" text="Symboly"/>
+<l:gentext key="writing-mode" text="lr-tb"/>
 <l:gentext key="lowercase.alpha" text="aábcčdďeéěfghiíjklmnňoópqrřsštťuúůvwxyýzž"/>
 <l:gentext key="uppercase.alpha" text="AÁBCČDĎEÉĚFGHIÍJKLMNŇOÓPQRŘSŠTŤUÚŮVWXYÝZŽ"/>
 <l:gentext key="normalize.sort.input" text="aábcčdďeéěfghiíjklmnňoópqrřsštťuúůvwxyýzž"/>
@@ -216,6 +218,7 @@
 <l:context name="styles"><l:template name="person-name" text="first-last"/>
 </l:context>
 <l:context name="title"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="%t"/>
 <l:template name="appendix" text="Příloha %n. %t"/>
 <l:template name="article" text="%t"/>
@@ -321,6 +324,7 @@
 <l:template name="simplesect" text="%n. %t"/>
 </l:context>
 <l:context name="subtitle"><l:template name="appendix" text="%s"/>
+<l:template name="acknowledgements" text="%s" lang="en"/>
 <l:template name="article" text="%s"/>
 <l:template name="bibliodiv" text="%s"/>
 <l:template name="biblioentry" text="%s"/>
@@ -360,6 +364,7 @@
 <l:template name="toc" text="%s"/>
 </l:context>
 <l:context name="xref"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="%n"/>
 <l:template name="appendix" text="%t"/>
 <l:template name="article" text="%t"/>
@@ -490,8 +495,9 @@
 <l:template name="sep2" text=" a "/>
 <l:template name="seplast" text=" a "/>
 </l:context>
-<l:context name="glossary"><l:template name="see" text="Viz %t"/>
-<l:template name="seealso" text="Viz též %t"/>
+<l:context name="glossary"><l:template name="see" text="Viz %t."/>
+<l:template name="seealso" text="Viz též %t."/>
+<l:template name="seealso-separator" text=", "/>
 </l:context>
 <l:context name="msgset"><l:template name="MsgAud" text="Publikum: "/>
 <l:template name="MsgLevel" text="Úroveň: "/>
@@ -499,8 +505,8 @@
 </l:context>
 <l:context name="datetime"><l:template name="format" text="d. B Y"/>
 </l:context>
-<l:context name="termdef"><l:template name="prefix" text="[Definition: " lang="en"/>
-<l:template name="suffix" text="]" lang="en"/>
+<l:context name="termdef"><l:template name="prefix" text="[Definice: "/>
+<l:template name="suffix" text="]"/>
 </l:context>
 <l:context name="datetime-full"><l:template name="January" text="ledna"/>
 <l:template name="February" text="února"/>

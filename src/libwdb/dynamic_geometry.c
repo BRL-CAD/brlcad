@@ -1,7 +1,7 @@
 /*              D Y N A M I C _ G E O M E T R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2010 United States Government as represented by
+ * Copyright (c) 2003-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -122,7 +122,7 @@ make_hole(struct rt_wdb *wdbp,		/* datbase to be modified */
      */
     for (i=0; i<num_objs; i++) {
 	RT_CK_DIR(dp[i]);
-	if (!(dp[i]->d_flags & DIR_COMB)) {
+	if (!(dp[i]->d_flags & RT_DIR_COMB)) {
 	    bu_log("make_hole(): can only make holes in combinations\n");
 	    bu_log("\t%s is not a combination\n", dp[i]->d_namep);
 	    return 4;
@@ -136,7 +136,7 @@ make_hole(struct rt_wdb *wdbp,		/* datbase to be modified */
     bu_vls_strcat(&tmp_name, "make_hole_");
     base_len = bu_vls_strlen(&tmp_name);
     bu_vls_strcat(&tmp_name, "0");
-    while ((dp_tmp=db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) != DIR_NULL) {
+    while ((dp_tmp=db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) != RT_DIR_NULL) {
 	count++;
 	bu_vls_trunc(&tmp_name, base_len);
 	bu_vls_printf(&tmp_name, "%d", count);
@@ -226,7 +226,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 							 */
 {
     struct bu_vls tmp_name;
-    int i, base_len, count=0;
+    size_t i, base_len, count=0;
     struct directory *dp;
     struct rt_db_internal intern;
     struct soltab *stp;
@@ -238,7 +238,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     bu_vls_strcat(&tmp_name, "make_hole_");
     base_len = bu_vls_strlen(&tmp_name);
     bu_vls_strcat(&tmp_name, "0");
-    while ((dp=db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) != DIR_NULL) {
+    while ((dp=db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) != RT_DIR_NULL) {
 	count++;
 	bu_vls_trunc(&tmp_name, base_len);
 	bu_vls_printf(&tmp_name, "%d", count);
@@ -252,7 +252,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     }
 
     /* lookup the newly created RCC */
-    if ((dp=db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) == DIR_NULL) {
+    if ((dp=db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_log("Failed to lookup RCC (%s) just made by make_hole_in_prepped_regions()!!!\n",
 	       bu_vls_addr(&tmp_name));
 	bu_bomb("Failed to lookup RCC just made by make_hole_in_prepped_regions()!!!\n");

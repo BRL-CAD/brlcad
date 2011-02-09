@@ -1,7 +1,7 @@
 /*                         S E D I T . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -141,18 +141,18 @@
 #define ECMD_HYP_ROT_H		91
 #define ECMD_HYP_ROT_A		92
 
-#define SEDIT_ROTATE (state == ST_S_EDIT && \
+#define SEDIT_ROTATE (STATE == ST_S_EDIT && \
 		      (es_edflag == SROT || \
 		       es_edflag == ECMD_TGC_ROT_H || \
 		       es_edflag ==  ECMD_TGC_ROT_AB || \
 		       es_edflag == ECMD_ARB_ROTATE_FACE || \
 		       es_edflag == ECMD_EXTR_ROT_H || \
 		       es_edflag == ECMD_ETO_ROT_C))
-#define OEDIT_ROTATE (state == ST_O_EDIT && \
+#define OEDIT_ROTATE (STATE == ST_O_EDIT && \
 		      edobj == BE_O_ROTATE)
 #define EDIT_ROTATE (SEDIT_ROTATE || OEDIT_ROTATE)
 
-#define SEDIT_SCALE (state == ST_S_EDIT && \
+#define SEDIT_SCALE (STATE == ST_S_EDIT && \
 		     (es_edflag == SSCALE || \
 		      es_edflag == PSCALE || \
 		      es_edflag == ECMD_VOL_THRESH_LO || \
@@ -166,14 +166,14 @@
 		      es_edflag == ECMD_CLINE_SCALE_R || \
 		      es_edflag == ECMD_CLINE_SCALE_T || \
 		      es_edflag == ECMD_EXTR_SCALE_H))
-#define OEDIT_SCALE (state == ST_O_EDIT && \
+#define OEDIT_SCALE (STATE == ST_O_EDIT && \
 		     (edobj == BE_O_XSCALE || \
 		      edobj == BE_O_YSCALE || \
 		      edobj == BE_O_ZSCALE || \
 		      edobj == BE_O_SCALE))
 #define EDIT_SCALE (SEDIT_SCALE || OEDIT_SCALE)
 
-#define SEDIT_TRAN (state == ST_S_EDIT && \
+#define SEDIT_TRAN (STATE == ST_S_EDIT && \
 		    (es_edflag == STRANS || \
 		     es_edflag == ECMD_TGC_MV_H || \
 		     es_edflag == ECMD_TGC_MV_HH || \
@@ -196,13 +196,13 @@
 		     es_edflag == ECMD_BOT_MOVET || \
 		     es_edflag == ECMD_CLINE_MOVE_H || \
 		     es_edflag == ECMD_EXTR_MOV_H))
-#define OEDIT_TRAN (state == ST_O_EDIT && \
+#define OEDIT_TRAN (STATE == ST_O_EDIT && \
 		    (edobj == BE_O_X || \
 		     edobj == BE_O_Y || \
 		     edobj == BE_O_XY))
 #define EDIT_TRAN (SEDIT_TRAN || OEDIT_TRAN)
 
-#define SEDIT_PICK (state == ST_S_EDIT && \
+#define SEDIT_PICK (STATE == ST_S_EDIT && \
 		    (es_edflag == ECMD_NMG_EPICK || \
 		     es_edflag == ECMD_PIPE_PICK || \
 		     es_edflag == ECMD_ARS_PICK || \

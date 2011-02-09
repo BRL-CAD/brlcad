@@ -1,7 +1,7 @@
 /*                            H M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -194,22 +194,6 @@ HmPrntWindows(void)
 	(void) ErLog("\tnext=0x%x\n", win->next);
 	HmPrntMenu(win->menup);
     }
-    return;
-}
-
-
-/*
-  void HmPrntLList(HmLList *listp)	(DEBUG)
-
-  Print all HmItem's in listp.
-*/
-static void
-HmPrntLList(HmLList *listp)
-{
-    if (listp == (HmLList *) NULL)
-	return;
-    HmPrntItem(listp->itemp);
-    HmPrntLList(listp->next);
     return;
 }
 

@@ -1,7 +1,7 @@
 /*                            D B . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -266,7 +266,7 @@ union record  {
 	char	B_pad;
 	char	B_name[NAMESIZE];
 	short	B_nsurf;	/* #  of surfaces in this solid */
-	dbfloat_t B_resolution;	/* resolution of flatness */
+	dbfloat_t B_unused;	/* UNUSED (was resolution of flatness) */
     } B;
     struct b_surf {
 	char    d_id;		/* = ID_BSURF */
@@ -451,11 +451,13 @@ union record  {
 #endif
 
 
-/* convert dbfloat->fastf_t */
-void rt_fastf_float DB_ARGS( (fastf_t *ff, const dbfloat_t *fp, int n) );
+/* DEPRECATED: do not use. */
+void rt_fastf_float DB_ARGS( (fastf_t *ff, const dbfloat_t *fp, int n, int flip) );
 
-/* convert dbfloat mat->fastf_t */
-void rt_mat_dbmat DB_ARGS( (fastf_t *ff, const dbfloat_t *dbp) );
+/* DEPRECATED: do not use. */
+void rt_mat_dbmat DB_ARGS( (fastf_t *ff, const dbfloat_t *dbp, int flip) );
+
+/* DEPRECATED: do not use. */
 void rt_dbmat_mat DB_ARGS( (dbfloat_t *dbp, const fastf_t *ff) );
 
 #endif	/* __DB_H__ */

@@ -30,7 +30,7 @@ public:
     arrow = 4,
     rectangle = 5,
     longtriangle = 6,     // 4:1
-    longertriangle = 7,   // 6:1
+    longertriangle = 7    // 6:1
   };
 
   ON_DimStyle();

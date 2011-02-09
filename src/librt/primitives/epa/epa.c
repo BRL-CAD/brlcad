@@ -1,7 +1,7 @@
 /*                           E P A . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -158,6 +158,8 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
+#include "../../librt_private.h"
+
 
 extern fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
 
@@ -197,7 +199,7 @@ const struct bu_structparse rt_epa_parse[] = {
  * !0 Error in description
  *
  * Implicit return -
- * A struct epa_specific is created, and it's address is stored in
+ * A struct epa_specific is created, and its address is stored in
  * stp->st_specific for use by epa_shot().
  */
 int
@@ -1441,6 +1443,7 @@ rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 {
     struct rt_epa_internal *xip;
     union record *rp;
+    vect_t v1, v2, v3;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1462,12 +1465,33 @@ rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* Warning:  type conversion */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(xip->epa_V, mat, &rp->s.s_values[0*3]);
-    MAT4X3VEC(xip->epa_H, mat, &rp->s.s_values[1*3]);
-    MAT4X3VEC(xip->epa_Au, mat, &rp->s.s_values[2*3]);
+
+    if (dbip->dbi_version < 0) {
+	rt_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
+	rt_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
+	rt_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
+    } else {
+	VMOVE(v1, &rp->s.s_values[0*3]);
+	VMOVE(v2, &rp->s.s_values[1*3]);
+	VMOVE(v3, &rp->s.s_values[2*3]);
+    }
+
+    MAT4X3PNT(xip->epa_V, mat, v1);
+    MAT4X3VEC(xip->epa_H, mat, v2);
+    MAT4X3VEC(xip->epa_Au, mat, v3);
+
     VUNITIZE(xip->epa_Au);
-    xip->epa_r1 = rp->s.s_values[3*3] / mat[15];
-    xip->epa_r2 = rp->s.s_values[3*3+1] / mat[15];
+
+    if (dbip->dbi_version < 0) {
+	v1[X] = flip_dbfloat(rp->s.s_values[3*3+0]);
+	v1[Y] = flip_dbfloat(rp->s.s_values[3*3+1]);
+    } else {
+	v1[X] = rp->s.s_values[3*3+0];
+	v1[Y] = rp->s.s_values[3*3+1];
+    }
+
+    xip->epa_r1 = v1[X] / mat[15];
+    xip->epa_r2 = v1[Y] / mat[15];
 
     if (xip->epa_r1 <= SMALL_FASTF || xip->epa_r2 <= SMALL_FASTF) {
 	bu_log("rt_epa_import4: r1 or r2 are zero\n");

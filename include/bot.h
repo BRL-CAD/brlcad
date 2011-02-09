@@ -1,7 +1,7 @@
 /*                           B O T . H
  * BRL-CAD
  *
- * Copyright (c) 2001-2010 United States Government as represented by
+ * Copyright (c) 2001-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,28 +31,28 @@ struct bot_specific {
     unsigned char bot_mode;
     unsigned char bot_orientation;
     unsigned char bot_flags;
-    int bot_ntri;
+    size_t bot_ntri;
     fastf_t *bot_thickness;
     struct bu_bitv *bot_facemode;
     genptr_t bot_facelist;	/* head of linked list */
     genptr_t *bot_facearray;	/* head of face array */
-    unsigned int bot_tri_per_piece;	/* log # tri per peice. 1 << bot_ltpp is tri per piece */
+    size_t bot_tri_per_piece;	/* log # tri per peice. 1 << bot_ltpp is tri per piece */
 
 };
 
 RT_EXPORT BU_EXTERN(void rt_bot_prep_pieces,
 		    (struct bot_specific	*bot,
 		     struct soltab		*stp,
-		     int			ntri,
+		     size_t			ntri,
 		     const struct bn_tol	*tol));
 
-RT_EXPORT BU_EXTERN(int rt_botface,
+RT_EXPORT BU_EXTERN(size_t rt_botface,
 		    (struct soltab		*stp,
 		     struct bot_specific	*bot,
 		     fastf_t			*ap,
 		     fastf_t			*bp,
 		     fastf_t			*cp,
-		     int			face_no,
+		     size_t			face_no,
 		     const struct bn_tol	*tol));
 
 /*

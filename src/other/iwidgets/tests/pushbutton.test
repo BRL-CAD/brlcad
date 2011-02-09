@@ -43,10 +43,10 @@ set m 1
 # Initial construction test
 #
 test Pushbutton-1.$c {Pushbutton construction} {
-    iwidgets::Pushbutton .pb
+    iwidgets::Pushbutton .pb 
     pack .pb -padx 10 -pady 10
     image create bitmap flagup -file $tk_library/demos/images/flagup.bmp
-    update
+    update 
 } {}
 
 incr c
@@ -62,34 +62,34 @@ incr o
 
 foreach test {
 	{-activebackground #ececec #ececec}
-	{-activeforeground Black Black}
+	{-activeforeground Black Black} 
 	{-background #d9d9d9 #d9d9d9}
         {-borderwidth 2 2}
 	{-command {.pb configure -background Red} {.pb configure -background Red}}
-	{-defaultring 1 1}
+	{-defaultring 1 1} 
 	{-text Hello Hello}
 	{-width 100 100}
-	{-bitmap error error}
+	{-bitmap error error} 
 	{-image flagup flagup}
-	{-defaultring 0 0}
-	{-padx 10 10}
-	{-padx 8 8}
-	{-pady 8 8}
-	{-pady 4 4}
+	{-defaultring 0 0} 
+	{-padx 10 10} 
+	{-padx 8 8} 
+	{-pady 8 8} 
+	{-pady 4 4} 
 	{-image {} {}}
-	{-cursor gumby gumby}
+	{-cursor gumby gumby} 
 	{-bitmap {} {}}
-	{-font 6x13 6x13}
-	{-foreground Black Black}
-	{-height 70 70}
+	{-font 6x13 6x13} 
+	{-foreground Black Black} 
+	{-height 70 70} 
 	{-width 100 100}
 	{-underline 0 0}
 	{-highlightthickness 3 3}
-	{-highlightcolor blue blue}
-	{-highlightcolor black black}
+	{-highlightcolor blue blue} 
+	{-highlightcolor black black} 
 	{-highlightthickness 2 2}
-	{-state disabled disabled}
-	{-state normal normal}
+	{-state disabled disabled} 
+	{-state normal normal} 
         {-defaultringpad 6 6}
 	{-width 120 120}} {
 	set option [lindex $test 0]
@@ -97,7 +97,7 @@ foreach test {
 	    .pb configure $option [lindex $test 1]
 	    lindex [.pb configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -111,7 +111,7 @@ foreach test {
 	test Pushbutton-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -120,23 +120,23 @@ foreach test {
 #
 test Pushbutton-1.$c {Pushbutton destruction} {
     destroy .pb
-    update
+    update 
     image delete flagup
 } {}
 
 incr c
 
 test Pushbutton-1.$c {Pushbutton construction} {
-    iwidgets::pushbutton .pb -text "Push Button" -defaultring yes
-    pack .pb -padx 10 -pady 10
-    update
+    iwidgets::pushbutton .pb -text "Push Button" -defaultring yes 
+    pack .pb -padx 10 -pady 10 
+    update 
 } {}
 
 incr c
 
 test Pushbutton-1.$c {Pushbutton destruction} {
     destroy .pb
-    update
+    update 
 } {}
 
 incr c
@@ -145,7 +145,7 @@ test Pushbutton-1.$c {Pushbutton destruction} {
     iwidgets::pushbutton .pb
     pack .pb
     destroy .pb
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

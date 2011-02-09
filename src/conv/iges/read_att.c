@@ -1,7 +1,7 @@
 /*                      R E A D _ A T T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file read_att.c
- *
- */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
@@ -29,15 +26,14 @@
  * (att_de) and stores the values in the structure (att)
  */
 void
-Read_att( att_de, att )
+Read_att(att_de, att)
     int att_de;
     struct brlcad_att *att;
 {
-    int			entityno;
-    int			i;
+    int entityno;
+    int i;
 
-    if ( att_de == 0 )
-    {
+    if (att_de == 0) {
 	/* fill structure with default info */
 	att->material_name = (char *)NULL;
 	att->material_params = (char *)NULL;
@@ -55,31 +51,30 @@ Read_att( att_de, att )
 
     entityno = (att_de-1)/2;
 
-    if ( dir[entityno]->param <= pstart )
-    {
-	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-		dir[entityno]->direct, dir[entityno]->name );
+    if (dir[entityno]->param <= pstart) {
+	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
+	       dir[entityno]->direct, dir[entityno]->name);
 	return;
     }
 
-    Readrec( dir[entityno]->param );
-    Readint( &i, "" );
-    if ( i != 422 )
-    {
-	bu_log( "Read_att: Expecting attribute instance, found type %d\n", i );
+    Readrec(dir[entityno]->param);
+    Readint(&i, "");
+    if (i != 422) {
+	bu_log("Read_att: Expecting attribute instance, found type %d\n", i);
 	return;
     }
 
-    Readname( &att->material_name, "" );
-    Readname( &att->material_params, "" );
-    Readint( &att->region_flag, "" );
-    Readint( &att->ident, "" );
-    Readint( &att->air_code, "" );
-    Readint( &att->material_code, "" );
-    Readint( &att->los_density, "" );
-    Readint( &att->inherit, "" );
-    Readint( &att->color_defined, "" );
+    Readname(&att->material_name, "");
+    Readname(&att->material_params, "");
+    Readint(&att->region_flag, "");
+    Readint(&att->ident, "");
+    Readint(&att->air_code, "");
+    Readint(&att->material_code, "");
+    Readint(&att->los_density, "");
+    Readint(&att->inherit, "");
+    Readint(&att->color_defined, "");
 }
+
 
 /*
  * Local Variables:

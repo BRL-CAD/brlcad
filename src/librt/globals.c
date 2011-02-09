@@ -1,7 +1,7 @@
 /*                       G L O B A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -281,12 +281,12 @@ fastf_t rt_cline_radius = (fastf_t)-1.0;
 /**
  * minimum number of bot pieces
  */
-int rt_bot_minpieces = RT_DEFAULT_MINPIECES;
+size_t rt_bot_minpieces = RT_DEFAULT_MINPIECES;
 
 /**
  * minimum triangles per piece
  */
-int rt_bot_tri_per_piece = RT_DEFAULT_TRIS_PER_PIECE;
+size_t rt_bot_tri_per_piece = RT_DEFAULT_TRIS_PER_PIECE;
 
 /**
  * rt vlist command descriptions
@@ -313,24 +313,15 @@ const struct db_tree_state rt_initial_tree_state = {
     0,				/* ts_dbip */
     0,				/* ts_sofar */
     0, 0, 0, 0,			/* region, air, gmater, LOS */
-    {
-	/* struct mater_info ts_mater */
-	{
-	    1.0, 1.0, 1.0
-	}
-	,	/* color, RGB */
+    { /* struct mater_info ts_mater */
+	VINITALL(1.0),		/* color, RGB */
 	-1.0,			/* Temperature */
 	0,			/* ma_color_valid=0 --> use default */
 	DB_INH_LOWER,		/* color inherit */
 	DB_INH_LOWER,		/* mater inherit */
 	NULL			/* shader */
     },
-    {
-	1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0
-    },
+    MAT_INIT_IDN,
     REGION_NON_FASTGEN,		/* ts_is_fastgen */
     {
 	/* attribute value set */

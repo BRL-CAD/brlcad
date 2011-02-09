@@ -45,7 +45,7 @@ set m 1
 test Messagebox-1.$c {Messagebox construction} {
     iwidgets::Messagebox .mb
     pack .mb -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
@@ -62,20 +62,20 @@ incr o
 foreach test {
     {-activebackground #ececec #ececec}
     {-activeforeground Black Black}
-    {-background #d9d9d9 #d9d9d9}
-    {-borderwidth 3 3}
-    {-cursor gumby gumby}
-    {-exportselection 0 0}
-    {-exportselection 1 1}
+    {-background #d9d9d9 #d9d9d9} 
+    {-borderwidth 3 3} 
+    {-cursor gumby gumby} 
+    {-exportselection 0 0} 
+    {-exportselection 1 1} 
     {-filename /tmp/foo /tmp/foo}
-    {-foreground Black Black}
-    {-height 0 0}
+    {-foreground Black Black} 
+    {-height 0 0} 
     {-width 0 0}
     {-width 550 550}
     {-height 120 120}
     {-highlightcolor Black Black}
     {-highlightthickness 2 2}
-    {-labelmargin 5 5}
+    {-labelmargin 5 5} 
     {-labeltext Label Label}
     {-labelpos nw nw}
     {-labelpos ne ne}
@@ -89,25 +89,25 @@ foreach test {
     {-labelpos w w}
     {-labelpos ws ws}
     {-labelpos n n}
-    {-relief raised raised}
-    {-relief sunken sunken}
-    {-vscrollmode none none}
-    {-vscrollmode static static}
-    {-vscrollmode dynamic dynamic}
-    {-hscrollmode none none}
-    {-hscrollmode static static}
-    {-hscrollmode dynamic dynamic}
+    {-relief raised raised} 
+    {-relief sunken sunken} 
+    {-vscrollmode none none} 
+    {-vscrollmode static static} 
+    {-vscrollmode dynamic dynamic} 
+    {-hscrollmode none none} 
+    {-hscrollmode static static} 
+    {-hscrollmode dynamic dynamic} 
     {-maxlines 1200 1200}
-    {-sbwidth 20 20}
+    {-sbwidth 20 20} 
     {-savedir /tmp /tmp}
-    {-scrollmargin 5 5}
+    {-scrollmargin 5 5} 
     {-textbackground GhostWhite GhostWhite}} {
 	set option [lindex $test 0]
 	test Messagebox-2.$o "configuration options, $option" {
 	    .mb configure $option [lindex $test 1]
 	    lindex [.mb configure $option] 4
 	} [lindex $test 2]
-	update
+	update 
 	incr o
 }
 
@@ -141,7 +141,7 @@ foreach test {
 	test Messagebox-3.$m "object methods, $method" {
 	    list [catch {eval [lindex $test 0]} msg] $msg
 	} [list 0 [lindex $test 1]]
-	update
+	update 
 	incr m
 }
 
@@ -163,7 +163,7 @@ foreach test {
 #
 test Messagebox-1.$c {Messagebox destruction} {
     destroy .mb
-    update
+    update 
 } {}
 
 incr c
@@ -172,14 +172,14 @@ test Messagebox-1.$c {Messagebox construction} {
     iwidgets::messagebox .mb -hscrollmode dynamic -labeltext "Label" \
 	    -labelpos n -labelmargin 5
     pack .mb -padx 10 -pady 10 -fill both -expand yes
-    update
+    update 
 } {}
 
 incr c
 
 test Messagebox-1.$c {Messagebox destruction} {
     destroy .mb
-    update
+    update 
 } {}
 
 incr c
@@ -188,7 +188,7 @@ test Messagebox-1.$c {Messagebox destruction} {
     iwidgets::messagebox .mb
     pack .mb
     destroy .mb
-    update
+    update 
 } {}
 
 ::tcltest::cleanupTests

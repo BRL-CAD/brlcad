@@ -1,7 +1,7 @@
 /*                           R E V O L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ extern void rt_sketch_bounds(struct rt_sketch_internal *, fastf_t *);
  * !0 Error in description
  *
  * Implicit return -
- * A struct revolve_specific is created, and it's address is stored
+ * A struct revolve_specific is created, and its address is stored
  * in stp->st_specific for use by revolve_shot().
  */
 int
@@ -80,7 +80,7 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     vect_t xEnd, yEnd;
 
     int *endcount;
-    int nseg, i, j, k;
+    size_t nseg, i, j, k;
 
     if (rtip) RT_CK_RTI(rtip);
 
@@ -120,7 +120,8 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
      * if odd, the point is at the end of a path
      */
     endcount = (int *)bu_calloc(rev->sk->vert_count, sizeof(int), "endcount");
-    for (i=0; i<rev->sk->vert_count; i++) endcount[i] = 0;
+    for (i=0; i<rev->sk->vert_count; i++)
+	endcount[i] = 0;
     nseg = rev->sk->skt_curve.seg_count;
 
     for (i=0; i<nseg; i++) {
@@ -239,7 +240,8 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     struct hit *hitp;
     struct hit *hits[MAX_HITS], hit[MAX_HITS];
 
-    int i, j, nseg, nhits, in, out;
+    size_t i, j, nseg, nhits;
+    int in, out;
 
     fastf_t k, m, h, aa, bb;
     point_t dp, pr, xlated;
@@ -709,6 +711,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		    bn_poly_t sum_sq;		/* {f(y) + g(y)/(2cx)}^2 */
 		    bn_poly_t answer;		/* {f(y) + g(y)/(2cx)}^2 - g(y) */
 		    bn_complex_t roots[4];
+		    int rootcnt;
 
 		    fastf_t cx, cy, crsq = 0;	/* carc's (x, y) coords and radius^2 */
 		    point2d_t center, radius;
@@ -789,11 +792,12 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		    /* It is known that the equation is 4th order.  Therefore, if the
 		     * root finder returns other than 4 roots, error.
 		     */
-		    if ((i = rt_poly_roots(&answer, roots, stp->st_dp->d_namep)) != 4) {
-			if (i > 0) {
-			    bu_log("tor:  rt_poly_roots() 4!=%d\n", i);
-			    bn_pr_roots(stp->st_name, roots, i);
-			} else if (i < 0) {
+		    rootcnt = rt_poly_roots(&answer, roots, stp->st_dp->d_namep);
+		    if (rootcnt != 4) {
+			if (rootcnt > 0) {
+			    bu_log("tor:  rt_poly_roots() 4!=%d\n", rootcnt);
+			    bn_pr_roots(stp->st_name, roots, rootcnt);
+			} else if (rootcnt < 0) {
 			    static int reported=0;
 			    bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
 			    if (!reported) {
@@ -1090,7 +1094,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 {
     struct rt_revolve_internal *rip;
 
-    int nvert, narc, nadd, nseg, i, j, k;
+    size_t nvert, narc, nadd, nseg, i, j, k;
     point2d_t *verts;
     struct curve *crv;
 
@@ -1362,13 +1366,13 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     sketch_name = (char *)ptr + (ELEMENTS_PER_VECT*3 + 1)*SIZEOF_NETWORK_DOUBLE;
     if (!dbip)
 	rip->sk = (struct rt_sketch_internal *)NULL;
-    else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL) {
-	bu_log("rt_revolve_import4: ERROR: Cannot find sketch (%s) for extrusion\n",
+    else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	bu_log("ERROR: Cannot find sketch (%s) for extrusion\n",
 	       sketch_name);
 	rip->sk = (struct rt_sketch_internal *)NULL;
     } else {
 	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, resp) != ID_SKETCH) {
-	    bu_log("rt_revolve_import4: ERROR: Cannot import sketch (%s) for extrusion\n",
+	    bu_log("ERROR: Cannot import sketch (%s) for extrusion\n",
 		   sketch_name);
 	    bu_free(ip->idb_ptr, "extrusion");
 	    return -1;

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Type=Application
+Name=BRL-CAD Examples
+Comment=BRL-CAD Database examples
+Exec=xdg-open /usr/brlcad/share/brlcad/7.18.1/db
+Icon=brlcad-db
+Categories=BRL-CAD-doc;

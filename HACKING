@@ -180,7 +180,7 @@ For each source file in BRL-CAD, the following checklist applies:
   scope and passing as parameters or embedding them in structures as
   data.
 
-In addtion, don't be afraid to rewrite code or throw away code that
+In addition, don't be afraid to rewrite code or throw away code that
 "smells bad".  No code is sacred.  Perfection is achieved not when
 there is nothing more to add but, rather, when there is nothing more
 to take away.
@@ -341,65 +341,65 @@ sources are organized in the source distribution.  For the directories
 under src/, see the src/README file for more details on subdirectories
 not covered here.
 
-bench/
+  bench/
 	The BRL-CAD Benchmark Suite
-db/
+  db/
 	Example geometry databases
-doc/
+  doc/
 	Documentation
-include/
+  include/
 	Public headers
-m4/
+  m4/
 	Autoconf compilation resource files
-misc/
+  misc/
 	Anything not categorized or is sufficiently en masse
-pix/
+  pix/
 	Sample raytrace images, includes benchmark reference images
-regress/
+  regress/
 	Scripts and resources for regression testing
-sh/
+  sh/
 	Utility scripts, used primarily by the build system
-src/
+  src/
 	Sources, see src/README for more details
-src/adrt
+  src/adrt
 	Advanced Distributed Ray Tracer
-src/conv/
+  src/conv/
 	Various geometry converters
-src/conv/iges/
+  src/conv/iges/
 	IGES converter
-src/fb/
+  src/fb/
 	Tools for displaying data to or reading from framebuffers
-src/fbserv/
+  src/fbserv/
 	Framebuffer server
-src/java/
+  src/java/
 	Java geometry server interface to librt
-src/libbn/
+  src/libbn/
 	BRL-CAD numerics library
-src/libbu
+  src/libbu
 	BRL-CAD utility library
-src/libfb/
+  src/libfb/
 	BRL-CAD Framebuffer library
-src/libfft/
+  src/libfft/
 	Fast Fourier transform library
-src/libged/
+  src/libged/
 	Geometry editing library
-src/libpkg/
+  src/libpkg/
 	Network "package" library
-src/librt/
+  src/librt/
 	BRL-CAD Ray-trace library
-src/libwdb/
+  src/libwdb/
 	Write database library
-src/mged/
+  src/mged/
 	Multi-device geometry editor
-src/other/
+  src/other/
 	External frameworks (Tcl/Tk, libpng, zlib, etc)
-src/proc-db/
+  src/proc-db/
 	Procedural geometry tools, create models programmatically
-src/remrt/
+  src/remrt/
 	Distributed raytrace support
-src/rt/
+  src/rt/
 	Raytracers, various
-src/util/
+  src/util/
 	Various image processing utilities
 
 
@@ -421,16 +421,17 @@ migrated to build system declarations, preprocessor defines, or being
 removed outright.  It's okay to make modifications that assume
 compiler conformance with the ANSI C standard (c89).
 
-There currently no C++ interface to the core BRL-CAD libraries.  There
-are a few tools and enhancements to libraries that are implemented in
-C++ (the new BREP object type in librt, for example), but there are
-presently no C++ bindings available beyond experimental developments.
-While C++ as an implementation language of new tools and new library
-interfaces is not prohibited, the mixing of C++ semantics and C++ code
-(including simple // style comments) in the existing C files is not
-allowed.  As new interfaces are developed, new contributors become
-involved, and C++ code integration becomes more prevalent, the
-contributor guidelines will become reinforced with more details.
+There is currently no C++ interface to the core BRL-CAD libraries.
+There are a few tools and enhancements to libraries that are
+implemented in C++ (the new BREP object type in librt, for example),
+but there are presently no C++ bindings available beyond experimental
+developments.  While C++ as an implementation language of new tools
+and new library interfaces is not prohibited, the mixing of C++
+semantics and C++ code (including simple // style comments) in the
+existing C files is not allowed.  As new interfaces are developed, new
+contributors become involved, and C++ code integration becomes more
+prevalent, the contributor guidelines will become reinforced with more
+details.
 
 
 CODING STYLE & STANDARDS
@@ -453,7 +454,9 @@ should be put in a library and not in application directories.
 C files use the .c extension.  Header files use the .h extension.  C++
 files use the .cpp extension.  PHP files use the .php extension.
 Tcl/Tk files use the .tcl/.tk extensions.  POSIX Bourne-style shell
-scripts use the .sh extension.
+scripts use the .sh extension.  Perl files use the .pl (program) or
+.pm (module) extensions.
+
 
 Source files go into the src/ directory on the top level, into a
 corresponding directory for the category of binary or library that it
@@ -552,6 +555,7 @@ variables should be utilized instead of the standard C facility:
   bu_optarg instead of optarg
   bu_strlcat instead of strcat(), strncat(), and strlcat()
   bu_strlcpy instead of strcpy(), strncpy(), and strlcpy()
+  bu_strcmp and BU_STR_EQUAL() instead of strcmp()
 
 Similarly, ANSI C functions are preferred over the BSD and POSIX
 interfaces.  The following functions should be used:
@@ -754,28 +758,51 @@ importance on various forms of testing is becoming necessary.
 While specific plans for unit and black box testing are not yet
 finalized, the Corredor Automation Test Suite will be used to assist
 in performing cross-platform build tests, regression tests, and
-various integration and operability tests.
+various integration and operability tests.  The suite's home is at:
+
+  http://sourceforge.net/projects/corredor/
 
 A debug build may be specified via:
 
-./configure --enable-debug
+  ./configure --enable-debug
 
 A profile build may be specified via:
 
-./configure --enable-profiling
+  ./configure --enable-profiling
 
 Verbose compilation warnings may be enabled:
 
-./configure --enable-warnings
+  ./configure --enable-warnings
 
 To perform a run of the benchmark suite to validate raytrace behavior:
 
-make benchmark
+  make benchmark
 
 To perform a run of the test suite:
 
-make test
+  make test
 
+Note that individual programs may be tested after a build without
+installing.  In the top of the local brlcad source directory find the
+in-tree program of interest, say 'mged', like this:
+
+  $ find . -name mged
+
+You will see something like:
+
+  ./mged
+  ./src/mged
+  ./src/mged/mged            # <-- mged executable in a shell wrapper
+  ./src/mged/.libs/mged
+  ./src/tclscripts/mged
+  ./misc/win32-msvc8/mged
+  ./regress/mged
+  ./doc/docbook/lessons/mged
+  ./doc/mged
+  ./doc/html/manuals/mged
+
+Use that wrapper which takes care of using the correct libraries for
+execution of the in-tree command.
 
 PATCH SUBMISSION GUIDELINES
 ---------------------------
@@ -792,7 +819,7 @@ it's feasible to create one either using SVN or using the unmodified
 original file.  This is generally the "-u" option to diff, and is also
 supported by the SVN diff command:
 
-svn diff > mychanges.patch
+  svn diff > mychanges.patch
 
 Where possible, patch files should be generated against the latest
 sources available to make it easier to review and apply the changes.
@@ -877,10 +904,14 @@ are modifying source code or not, and have similar obligations and
 expectations.  To summarize some of the expected responsibilities:
 
 0) Primum non nocere.  All contributors are expected in good faith to
-help, or at least to do no harm.
+help, or at least to do no harm.  Be helpful and respectful.
 
 1) Developers are expected to uphold the quality, functionality,
-maintainability, and portability of the source code at all times.
+maintainability, and portability of the source code at all times.  In
+part, this means that changes should be tested to avoid breaking the
+build and short-term fixes are discouraged.  Committing code that is
+actively being worked on is encouraged but care should be taken to
+minimize impact on others and to respond quickly when an issue arises.
 
 2) Bugs, typos, and compilation errors are to be expected as part of
 the process of active software development and documentation, but it
@@ -962,7 +993,7 @@ NAMING A SOURCE RELEASE
 In order to achieve some consistency when preparing a source release,
 the following format should be used as the filename convention:
 
-brlcad-{VERSION}.{EXTENSION}
+  brlcad-{VERSION}.{EXTENSION}
 
 VERSION is the usual version triplet described above under the section
 entitled VERSION NUMBERS & COMPATIBILITY.  Example: 7.12.4
@@ -970,11 +1001,12 @@ entitled VERSION NUMBERS & COMPATIBILITY.  Example: 7.12.4
 EXTENSION is the filename extension.  Compressed tar files should use
 the expanded form (i.e. not tgz, etc) unless otherwise dictated as
 necessary convention by a source package management system.  Examples:
-tar.gz
-tar.bz2
-dmg
-exe
-zip
+
+  tar.gz
+  tar.bz2
+  dmg
+  exe
+  zip
 
 
 NAMING A BINARY RELEASE
@@ -983,7 +1015,7 @@ NAMING A BINARY RELEASE
 In order to achieve some consistency when preparing a binary release,
 the following format should be used as the filename convention:
 
-BRL-CAD_{VERSION}[_{OS}][_{VENDOR}][_{CPU}][_{NOTE}].{EXTENSION}
+  BRL-CAD_{VERSION}[_{OS}][_{VENDOR}][_{CPU}][_{NOTE}].{EXTENSION}
 
 Notably, the filename should use 'BRL-CAD' instead of 'brlcad' for the
 name, it should delimit sections of the filename with underscores
@@ -1002,10 +1034,11 @@ not already platform specific (e.g., .dmg already indicates Mac OS X,
 autotools OS identifier without the version number.  If there are
 other platform considerations like the version of libc or the version
 of the OS that need to be called out, they can be included.  Examples:
-freebsd
-linux
-linux_glibc3
-solaris
+
+  freebsd
+  linux
+  linux_glibc3
+  solaris
 
 VENDOR is an optional operating system qualifier that isn't necessary
 for most platforms.  It's generally only useful for vendors that use
@@ -1016,29 +1049,32 @@ Altix line.  In that case, it's useful to include the vendor: sgi
 CPU is the hardware architecture identifier.  It should be the first
 identifier in the config.guess triplet or the lowercase hardware
 identifier returned by uname -a (if any).  Examples:
-x86
-x86_64
-ia64
-sparc
-ppc
-power5
-mips
-mips_64
+
+  x86
+  x86_64
+  ia64
+  sparc
+  ppc
+  power5
+  mips
+  mips_64
 
 NOTE can be just about anything but should only be used when
 absolutely necessary.  As an example, a note might be used to indicate
 that a binary distribution is a partial or custom release.  Examples:
-dll
-benchmark
+
+  dll
+  benchmark
 
 EXTENSION is the filename extension.  Compressed tar files should use
 the expanded form (i.e. not tgz, etc) unless otherwise dictated as
 necessary convention by a binary package management system.  Examples:
-tar.gz
-tar.bz2
-dmg
-exe
-zip
+
+  tar.gz
+  tar.bz2
+  dmg
+  exe
+  zip
 
 
 MAKING A RELEASE
@@ -1198,6 +1234,9 @@ Source or binary release:
 
       Gentoo portage maintainer
       http://packages.gentoo.org/package/sci-misc/brlcad
+
+      Ubuntu/Debian .deb maintaner
+      Jordi Sayol <g.sayol@yahoo.es>
 
       Debian apt package maintainer
       http://git.debian.org/?p=debian-science/packages/brlcad.git

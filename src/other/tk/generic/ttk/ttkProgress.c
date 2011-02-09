@@ -19,7 +19,7 @@
 enum {
     TTK_PROGRESSBAR_DETERMINATE, TTK_PROGRESSBAR_INDETERMINATE
 };
-static const char *ProgressbarModeStrings[] = {
+static const char *const ProgressbarModeStrings[] = {
     "determinate", "indeterminate", NULL
 };
 
@@ -185,12 +185,11 @@ static void VariableChanged(void *recordPtr, const char *value)
  * +++ Widget class methods:
  */
 
-static int ProgressbarInitialize(Tcl_Interp *interp, void *recordPtr)
+static void ProgressbarInitialize(Tcl_Interp *interp, void *recordPtr)
 {
     Progressbar *pb = recordPtr;
     pb->progress.variableTrace = 0;
     pb->progress.timer = 0;
-    return TCL_OK;
 }
 
 static void ProgressbarCleanup(void *recordPtr)
@@ -292,7 +291,7 @@ static int ProgressbarSize(void *recordPtr, int *widthPtr, int *heightPtr)
 
 static void ProgressbarDeterminateLayout(
     Progressbar *pb,
-    Ttk_LayoutNode *pbarNode,
+    Ttk_Element pbar,
     Ttk_Box parcel,
     double fraction,
     Ttk_Orient orient)
@@ -307,17 +306,17 @@ static void ProgressbarDeterminateLayout(
 	parcel.y += (parcel.height - newHeight);
 	parcel.height = newHeight;
     }
-    Ttk_PlaceLayoutNode(pb->core.layout, pbarNode, parcel);
+    Ttk_PlaceElement(pb->core.layout, pbar, parcel);
 }
 
 static void ProgressbarIndeterminateLayout(
     Progressbar *pb,
-    Ttk_LayoutNode *pbarNode,
+    Ttk_Element pbar,
     Ttk_Box parcel,
     double fraction,
     Ttk_Orient orient)
 {
-    Ttk_Box pbarBox = Ttk_LayoutNodeParcel(pbarNode);
+    Ttk_Box pbarBox = Ttk_ElementParcel(pbar);
 
     fraction = fmod(fabs(fraction), 2.0);
     if (fraction > 1.0) {
@@ -329,18 +328,16 @@ static void ProgressbarIndeterminateLayout(
     } else {
 	pbarBox.y = parcel.y + (int)(fraction * (parcel.height-pbarBox.height));
     }
-    Ttk_PlaceLayoutNode(pb->core.layout, pbarNode, pbarBox);
+    Ttk_PlaceElement(pb->core.layout, pbar, pbarBox);
 }
 
 static void ProgressbarDoLayout(void *recordPtr)
 {
     Progressbar *pb = recordPtr;
     WidgetCore *corePtr = &pb->core;
-    Ttk_LayoutNode *pbarNode = Ttk_LayoutFindNode(corePtr->layout, "pbar");
-    Ttk_LayoutNode *troughNode = Ttk_LayoutFindNode(corePtr->layout, "trough");
+    Ttk_Element pbar = Ttk_FindElement(corePtr->layout, "pbar");
     double value = 0.0, maximum = 100.0;
     int orient = TTK_ORIENT_HORIZONTAL;
-    Ttk_Box parcel = Ttk_WinBox(corePtr->tkwin);
 
     Ttk_PlaceLayout(corePtr->layout,corePtr->state,Ttk_WinBox(corePtr->tkwin));
 
@@ -351,19 +348,16 @@ static void ProgressbarDoLayout(void *recordPtr)
     Tcl_GetDoubleFromObj(NULL, pb->progress.maximumObj, &maximum);
     Ttk_GetOrientFromObj(NULL, pb->progress.orientObj, &orient);
 
-    if (pbarNode) {
+    if (pbar) {
 	double fraction = value / maximum;
-
-	if (troughNode) {
-	    parcel = Ttk_LayoutNodeInternalParcel(corePtr->layout, troughNode);
-	}
+	Ttk_Box parcel = Ttk_ClientRegion(corePtr->layout, "trough");
 
 	if (pb->progress.mode == TTK_PROGRESSBAR_DETERMINATE) {
 	    ProgressbarDeterminateLayout(
-		pb, pbarNode, parcel, fraction, orient);
+		pb, pbar, parcel, fraction, orient);
 	} else {
 	    ProgressbarIndeterminateLayout(
-		pb, pbarNode, parcel, fraction, orient);
+		pb, pbar, parcel, fraction, orient);
 	}
     }
 }
@@ -399,7 +393,7 @@ static Ttk_Layout ProgressbarGetLayout(
 /* $sb step ?amount?
  */
 static int ProgressbarStepCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
+    void *recordPtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 {
     Progressbar *pb = recordPtr;
     double value = 0.0, stepAmount = 1.0;
@@ -453,7 +447,7 @@ static int ProgressbarStepCommand(
  * and pass to interpreter.
  */
 static int ProgressbarStartStopCommand(
-    Tcl_Interp *interp, const char *cmdName, int objc, Tcl_Obj *CONST objv[])
+    Tcl_Interp *interp, const char *cmdName, int objc, Tcl_Obj *const objv[])
 {
     Tcl_Obj *cmd = Tcl_NewListObj(objc, objv);
     Tcl_Obj *prefix[2];
@@ -473,30 +467,29 @@ static int ProgressbarStartStopCommand(
 }
 
 static int ProgressbarStartCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
+    void *recordPtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 {
     return ProgressbarStartStopCommand(
 	interp, "::ttk::progressbar::start", objc, objv);
 }
 
 static int ProgressbarStopCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
+    void *recordPtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 {
     return ProgressbarStartStopCommand(
 	interp, "::ttk::progressbar::stop", objc, objv);
 }
 
-static WidgetCommandSpec ProgressbarCommands[] =
-{
-    { "configure",	TtkWidgetConfigureCommand },
-    { "cget",		TtkWidgetCgetCommand },
-    { "identify",	TtkWidgetIdentifyCommand },
-    { "instate",	TtkWidgetInstateCommand },
-    { "start", 		ProgressbarStartCommand },
-    { "state",  	TtkWidgetStateCommand },
-    { "step", 		ProgressbarStepCommand },
-    { "stop", 		ProgressbarStopCommand },
-    { NULL, NULL }
+static const Ttk_Ensemble ProgressbarCommands[] = {
+    { "configure",	TtkWidgetConfigureCommand,0 },
+    { "cget",		TtkWidgetCgetCommand,0 },
+    { "identify",	TtkWidgetIdentifyCommand,0 },
+    { "instate",	TtkWidgetInstateCommand,0 },
+    { "start", 		ProgressbarStartCommand,0 },
+    { "state",  	TtkWidgetStateCommand,0 },
+    { "step", 		ProgressbarStepCommand,0 },
+    { "stop", 		ProgressbarStopCommand,0 },
+    { 0,0,0 }
 };
 
 /*

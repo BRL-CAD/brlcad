@@ -1,7 +1,7 @@
 /*                            O P T I C A L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -85,6 +85,13 @@ viewshade(struct application *app, const struct partition *pp, struct shadework 
 /* defined in vers.c */
 OPTICAL_EXPORT extern const char *optical_version(void);
 
+/* for libmultispectral */
+OPTICAL_EXPORT extern struct mfuncs camo_mfuncs[];
+OPTICAL_EXPORT extern struct mfuncs light_mfuncs[];
+OPTICAL_EXPORT extern struct mfuncs stk_mfuncs[];
+OPTICAL_EXPORT extern struct mfuncs phg_mfuncs[];
+OPTICAL_EXPORT extern struct mfuncs noise_mfuncs[];
+OPTICAL_EXPORT extern struct bn_table *spectrum;
 
 OPTICAL_EXPORT extern int	rdebug;
 

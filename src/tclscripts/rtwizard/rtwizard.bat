@@ -1,7 +1,7 @@
 REM                      R T W I Z A R D . B A T
 REM  BRL-CAD
 REM 
-REM  Copyright (c) 2006-2010 United States Government as represented by
+REM  Copyright (c) 2006-2011 United States Government as represented by
 REM  the U.S. Army Research Laboratory.
 REM 
 REM  This library is free software; you can redistribute it and/or
@@ -22,16 +22,7 @@ REM REM REM
 
 SETLOCAL
 
-REM XXX FIXME: SHOULD NOT NEED TO SET BRLCAD_DATA OR CAD_VERSION XXX
-SET CAD_VERSION=7.17.10
-
-SET SAVE_CD=%CD%
-SET PATH=%~dp0
-CD %PATH%\..
-SET RTWIZARD=%CD%\share\brlcad\%CAD_VERSION%\tclscripts\rtwizard\RaytraceWizard.tcl
-CD %SAVE_CD%
-
-START /B bwish "%RTWIZARD%" %1
+"%~dp0\"bwish.exe "%~dp0\"rtwizard %1
 
 CLS
 EXIT

@@ -1,7 +1,7 @@
 /*                       S H _ F L A T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
  * without taking any effects such as curvature, emission, reflection, etc
  * into consideration.  It simply shades an object constantly with either
  * (in order of reverse priority) 1) the default flat color (white),
- * 2) it's set region color, 2) the specified flat shader color (given via
+ * 2) its set region color, 2) the specified flat shader color (given via
  * the color attribute).
  *
  * Optionally a transparency value may be shown as well.  With transparency
@@ -48,12 +48,13 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
+#include "optical.h"
 
-extern int rr_render(struct application	*ap, struct partition *pp, struct shadework *swp);
 
-HIDDEN int	flat_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), flat_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	flat_print(register struct region *rp, char *dp), flat_free(char *cp);
+extern int rr_render(struct application *ap, struct partition *pp, struct shadework *swp);
+
+HIDDEN int flat_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), flat_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void flat_print(register struct region *rp, char *dp), flat_free(char *cp);
 
 /* these are two helper functions to process input color and transparency values */
 void normalizedInput_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
@@ -64,7 +65,7 @@ void singleNormalizedInput_hook(register const struct bu_structparse *sdp, regis
  * to any particular use of the shader.
  */
 struct flat_specific {
-    long	magic;	/* magic # for memory validity check, must come 1st */
+    long magic;	/* magic # for memory validity check, must come 1st */
     point_t color;  /* overriding flat color */
     point_t transparency; /* how transparent the object is per rgb channel*/
 };
@@ -72,16 +73,17 @@ struct flat_specific {
 #define CK_FLAT_SP(_p) BU_CKMAG(_p, FLAT_MAGIC, "flat_specific")
 
 /* The default values for the variables in the shader specific structure */
-const static
+static const
 struct flat_specific flat_defaults = {
     FLAT_MAGIC,
-    { 1.0, 1.0, 1.0 }, /* full white */
-    { 0.0, 0.0, 0.0 }  /* completely opaque (no transparency)*/
+    VINITALL(1.0), /* full white */
+    VINIT_ZERO  /* completely opaque (no transparency)*/
 };
 
-#define SHDR_FLAT	((struct flat_specific *)0)
-#define SHDR_O(m)	bu_offsetof(struct flat_specific, m)
-#define SHDR_AO(m)	bu_offsetofarray(struct flat_specific, m)
+
+#define SHDR_FLAT ((struct flat_specific *)0)
+#define SHDR_O(m) bu_offsetof(struct flat_specific, m)
+#define SHDR_AO(m) bu_offsetofarray(struct flat_specific, m)
 
 
 /* description of how to parse/print the arguments to the shader
@@ -89,24 +91,25 @@ struct flat_specific flat_defaults = {
  * structure above.
  *
  * color := is a 0.0 to 1.0 or 0.0 to 255.0 color intensity triplet
- *          representing the RGB color values.
+ * representing the RGB color values.
  * rgb := the same as color, just shorter (and implies 0 to 255)
  * bright := sets all three color channels to the same single given intensity.
- *           e.g. a grey value (bright==.2 => color=={.2 .2 .2}==rgb
+ * e.g. a grey value (bright==.2 => color=={.2 .2 .2}==rgb
  * transparency := a color intensity triplet mask to indicate how much of
- *                 background object light are visible through this object.
+ * background object light are visible through this object.
  * alpha := similar to bright, sets this object's alpha transparency to a
- *          single mask value that gets set for each channel.  e.g 40% opaque
- *          is alpha==.4 which is equiv to transparency=={.4 .4 .4}).
+ * single mask value that gets set for each channel.  e.g 40% opaque
+ * is alpha==.4 which is equiv to transparency=={.4 .4 .4}).
  */
 struct bu_structparse flat_parse_tab[] = {
-    { "%f", 3, "color", SHDR_O(color), normalizedInput_hook}, /* for 0->1 color values */
-    { "%f", 3, "rgb", SHDR_O(color), normalizedInput_hook}, /* for 0->255 color values */
-    { "%f", 1, "bright", SHDR_O(color), singleNormalizedInput_hook}, /* for luminosity gray value */
-    { "%f", 3, "transparency", SHDR_O(transparency), normalizedInput_hook}, /* for rgb 0->1 transparency */
-    { "%f", 1, "alpha", SHDR_O(transparency), singleNormalizedInput_hook}, /* for single channel alpha transparency */
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    { "%f", 3, "color", SHDR_O(color), normalizedInput_hook, NULL, NULL }, /* for 0->1 color values */
+    { "%f", 3, "rgb", SHDR_O(color), normalizedInput_hook, NULL, NULL }, /* for 0->255 color values */
+    { "%f", 1, "bright", SHDR_O(color), singleNormalizedInput_hook, NULL, NULL }, /* for luminosity gray value */
+    { "%f", 3, "transparency", SHDR_O(transparency), normalizedInput_hook, NULL, NULL }, /* for rgb 0->1 transparency */
+    { "%f", 1, "alpha", SHDR_O(transparency), singleNormalizedInput_hook, NULL, NULL }, /* for single channel alpha transparency */
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
+
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -134,15 +137,15 @@ struct mfuncs flat_mfuncs[] = {
  * value == string containing value
  */
 void
-normalizedInput_hook( register const struct bu_structparse *sdp, register const char *name, char *base, const char *value ) {
-
+normalizedInput_hook(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *UNUSED(value))
+{
     register double *p = (double *)(base+sdp->sp_offset);
     size_t i;
     int ok;
 
     /* if all the values are in the range [0..1] there's nothing to do */
     for (ok=1, i=0; i < sdp->sp_count; i++, p++) {
-	if ( (*p > 1.0) || (*p < 0.0) ) ok = 0;
+	if ((*p > 1.0) || (*p < 0.0)) ok = 0;
     }
     if (ok) return;
 
@@ -155,7 +158,7 @@ normalizedInput_hook( register const struct bu_structparse *sdp, register const 
     }
 
     for (ok=1, i=0; i < sdp->sp_count; i++, p++) {
-	if ( (*p > 1.0) || (*p < 0.0) ) ok = 0;
+	if ((*p > 1.0) || (*p < 0.0)) ok = 0;
     }
     if (ok) bu_log ("User specified values are out of range (0.0 to either 1.0 or 255.0)");
 }
@@ -168,7 +171,7 @@ normalizedInput_hook( register const struct bu_structparse *sdp, register const 
  * it three times.  the value is normalized from 0.0 to 1.0
  */
 void
-singleNormalizedInput_hook( register const struct bu_structparse *sdp, register const char *name, char *base, const char *value ) {
+singleNormalizedInput_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value) {
 
     register double *p = (double *)(base+sdp->sp_offset);
 
@@ -180,34 +183,34 @@ singleNormalizedInput_hook( register const struct bu_structparse *sdp, register 
 }
 
 
-/*	F L A T _ S E T U P
+/* F L A T _ S E T U P
  *
  * This routine is called (at prep time) once for each region which uses this
  * shader.  The shader specific flat_specific structure is allocated and
  * default values are set.  Then any user-given values override.
  */
 HIDDEN int
-flat_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip) {
+flat_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip) {
 
-    register struct flat_specific	*flat_sp;
+    register struct flat_specific *flat_sp;
 
     /* check the arguments */
     RT_CHECK_RTI(rtip);
-    BU_CK_VLS( matparm );
+    BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
 
     if (rdebug&RDEBUG_SHADE)
 	bu_log("flat_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT( flat_sp, flat_specific );
+    BU_GETSTRUCT(flat_sp, flat_specific);
     *dpp = (char *)flat_sp;
 
     /* color priority:
      *
      * priority goes first to the flat shader's color parameter
      * second priority is to the material color value
-     * third  priority is to the flat shader's default color (white)
+     * third priority is to the flat shader's default color (white)
      */
 
     /* initialize the default values for the shader */
@@ -219,11 +222,11 @@ flat_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, stru
     }
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse( matparm, flat_parse_tab, (char *)flat_sp ) < 0 )
+    if (bu_struct_parse(matparm, flat_parse_tab, (char *)flat_sp) < 0)
 	return -1;
 
     if (rdebug&RDEBUG_SHADE) {
-	bu_struct_print( " Parameters:", flat_parse_tab, (char *)flat_sp );
+	bu_struct_print(" Parameters:", flat_parse_tab, (char *)flat_sp);
     }
 
     return 1;
@@ -231,20 +234,20 @@ flat_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
 
 /*
- *	F L A T _ R E N D E R
+ * F L A T _ R E N D E R
  *
- *	This is called (from viewshade() in shade.c) once for each hit point
- *	to be shaded.  The purpose here is to fill in values in the shadework
- *	structure.
+ * This is called (from viewshade() in shade.c) once for each hit point
+ * to be shaded.  The purpose here is to fill in values in the shadework
+ * structure.
  *
- *  The flat shader is probably the second most simple shader (second to
- *  the null/invisible shader -- it does nothing).  It shades an object
- *  a constant color.  The only complexity comes into play when a
- *  transparency value is set.  Then we get the color value behind the
- *  one we are shading and blend accordingly with the flat color.
+ * The flat shader is probably the second most simple shader (second to
+ * the null/invisible shader -- it does nothing).  It shades an object
+ * a constant color.  The only complexity comes into play when a
+ * transparency value is set.  Then we get the color value behind the
+ * one we are shading and blend accordingly with the flat color.
  */
 int
-flat_render( struct application *ap, struct partition *pp, struct shadework *swp, char *dp ) {
+flat_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp) {
 
     register struct flat_specific *flat_sp = (struct flat_specific *)dp;
     const point_t unit = {1.0, 1.0, 1.0};
@@ -256,7 +259,7 @@ flat_render( struct application *ap, struct partition *pp, struct shadework *swp
     CK_FLAT_SP(flat_sp);
 
     if (rdebug&RDEBUG_SHADE)
-	bu_struct_print( "flat_render Parameters:", flat_parse_tab, (char *)flat_sp );
+	bu_struct_print("flat_render Parameters:", flat_parse_tab, (char *)flat_sp);
 
     /* do the actual flat color shading for the flat object. if the object is
      * not transparent, just put the color.  if the object is transparent, do
@@ -272,7 +275,7 @@ flat_render( struct application *ap, struct partition *pp, struct shadework *swp
 	/* this gets the background pixel value, if the transparency is not 0 */
 	swp->sw_transmit=1.0; /*!!! try to remove */
 	VMOVE(swp->sw_basecolor, flat_sp->transparency);
-	(void)rr_render( ap, pp, swp );
+	(void)rr_render(ap, pp, swp);
 
 	/* now blend with the foreground object being shaded */
 	VSUB2(intensity, unit, flat_sp->transparency);  /* inverse transparency is how much we want */
@@ -285,20 +288,20 @@ flat_render( struct application *ap, struct partition *pp, struct shadework *swp
 
 
 /*
- *	F L A T _ P R I N T
+ * F L A T _ P R I N T
  */
 HIDDEN void
-flat_print( register struct region *rp, char *dp ) {
-    bu_struct_print( rp->reg_name, flat_parse_tab, (char *)dp );
+flat_print(register struct region *rp, char *dp) {
+    bu_struct_print(rp->reg_name, flat_parse_tab, (char *)dp);
 }
 
 
 /*
- *	F L A T _ F R E E
+ * F L A T _ F R E E
  */
 HIDDEN void
-flat_free( char *cp ) {
-    bu_free( cp, "flat_specific" );
+flat_free(char *cp) {
+    bu_free(cp, "flat_specific");
 }
 
 

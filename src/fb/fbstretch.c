@@ -1,7 +1,7 @@
 /*                     F B S T R E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -337,7 +337,7 @@ main(int argc, char **argv)
 		);
 
 	if (src_file == NULL
-	    || (dst_file != NULL && strcmp(src_file, dst_file) == 0)
+	    || (dst_file != NULL && BU_STR_EQUAL(src_file, dst_file))
 	    )
 	    dst_fbp = src_fbp;	/* No No No Not a Second Time */
 	else if ((dst_fbp = fb_open(dst_file, dst_width, dst_height))

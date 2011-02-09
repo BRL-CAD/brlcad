@@ -1,7 +1,7 @@
 /*                       C O N V E R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -240,22 +240,8 @@ bu_cv_pr_cookie(char *title, int cookie)
 }
 
 
-/**
- * c v
- * @brief
- * convert from one format to another.
- *
- * @param in	input pointer
- * @param out	output pointer
- * @param count	number of entries to convert.
- * @param size	size of output buffer.
- * @param infmt	input format
- * @param outfmt	output format
- *
- * FIXME: is this public API?
- */
 size_t
-cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count)
+bu_cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count)
 {
     int incookie, outcookie;
     incookie = bu_cv_cookie(infmt);
@@ -623,9 +609,9 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
      */
 
     bufsize = work_count * sizeof(double);
-    t1 = (genptr_t) bu_malloc(bufsize, "vert.c: t1");
-    t2 = (genptr_t) bu_malloc(bufsize, "vert.c: t2");
-    t3 = (genptr_t) bu_malloc(bufsize, "vert.c: t3");
+    t1 = (genptr_t) bu_malloc(bufsize, "convert.c: t1");
+    t2 = (genptr_t) bu_malloc(bufsize, "convert.c: t2");
+    t3 = (genptr_t) bu_malloc(bufsize, "convert.c: t3");
 
     /*
      * From here on we will be working on a chunk of process at a time.
@@ -900,9 +886,9 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
     /*
      * All Done!  Clean up and leave.
      */
-    bu_free(t1, "vert.c: t1");
-    bu_free(t2, "vert.c: t2");
-    bu_free(t3, "vert.c: t3");
+    bu_free(t1, "convert.c: t1");
+    bu_free(t2, "convert.c: t2");
+    bu_free(t3, "convert.c: t3");
     return number_done;
 }
 

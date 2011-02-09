@@ -1,32 +1,32 @@
 #
 # Menubar widget
 # ----------------------------------------------------------------------
-# The Menubar command creates a new window (given by the pathName
-# argument) and makes it into a Pull down menu widget. Additional
-# options, described above may be specified on the command line or
-# in the option database to configure aspects of the Menubar such
-# as its colors and font. The Menubar command returns its pathName
-# argument. At the time this command is invoked, there must not exist
+# The Menubar command creates a new window (given by the pathName 
+# argument) and makes it into a Pull down menu widget. Additional 
+# options, described above may be specified on the command line or 
+# in the option database to configure aspects of the Menubar such 
+# as its colors and font. The Menubar command returns its pathName 
+# argument. At the time this command is invoked, there must not exist 
 # a window named pathName, but pathName's parent must exist.
-#
-# A Menubar is a widget that simplifies the task of creating
-# menu hierarchies. It encapsulates a frame widget, as well
-# as menubuttons, menus, and menu entries. The Menubar allows
-# menus to be specified and refer enced in a more consistent
+# 
+# A Menubar is a widget that simplifies the task of creating 
+# menu hierarchies. It encapsulates a frame widget, as well 
+# as menubuttons, menus, and menu entries. The Menubar allows 
+# menus to be specified and refer enced in a more consistent 
 # manner than using Tk to build menus directly. First, Menubar
-# allows a menu tree to be expressed in a hierachical "language".
-# The Menubar accepts a menuButtons option that allows a list of
+# allows a menu tree to be expressed in a hierachical "language". 
+# The Menubar accepts a menuButtons option that allows a list of 
 # menubuttons to be added to the Menubar. In turn, each menubutton
-# accepts a menu option that spec ifies a list of menu entries
-# to be added to the menubutton's menu (as well as an option
-# set for the menu).   Cascade entries in turn, accept a menu
-# option that specifies a list of menu entries to be added to
-# the cascade's menu (as well as an option set for the menu). In
-# this manner, a complete menu grammar can be expressed to the
-# Menubar. Additionally, the Menubar allows each component of
-# the Menubar system to be referenced by a simple componentPathName
-# syntax. Finally, the Menubar extends the option set of menu
-# entries to include the helpStr option used to implement status
+# accepts a menu option that spec ifies a list of menu entries 
+# to be added to the menubutton's menu (as well as an option 
+# set for the menu).   Cascade entries in turn, accept a menu 
+# option that specifies a list of menu entries to be added to 
+# the cascade's menu (as well as an option set for the menu). In 
+# this manner, a complete menu grammar can be expressed to the 
+# Menubar. Additionally, the Menubar allows each component of 
+# the Menubar system to be referenced by a simple componentPathName 
+# syntax. Finally, the Menubar extends the option set of menu 
+# entries to include the helpStr option used to implement status 
 # bar help.
 #
 # WISH LIST:
@@ -41,24 +41,24 @@
 # ----------------------------------------------------------------------
 #            Copyright (c) 1995 DSC Technologies Corporation
 # ======================================================================
-# Permission to use, copy, modify, distribute and license this software
-# and its documentation for any purpose, and without fee or written
-# agreement with DSC, is hereby granted, provided that the above copyright
-# notice appears in all copies and that both the copyright notice and
-# warranty disclaimer below appear in supporting documentation, and that
-# the names of DSC Technologies Corporation or DSC Communications
-# Corporation not be used in advertising or publicity pertaining to the
+# Permission to use, copy, modify, distribute and license this software 
+# and its documentation for any purpose, and without fee or written 
+# agreement with DSC, is hereby granted, provided that the above copyright 
+# notice appears in all copies and that both the copyright notice and 
+# warranty disclaimer below appear in supporting documentation, and that 
+# the names of DSC Technologies Corporation or DSC Communications 
+# Corporation not be used in advertising or publicity pertaining to the 
 # software without specific, written prior permission.
-#
-# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+# 
+# DSC DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING 
 # ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, AND NON-
 # INFRINGEMENT. THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND THE
-# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE,
-# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL
-# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+# AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, 
+# SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. IN NO EVENT SHALL 
+# DSC BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR 
+# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, 
 # WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION,
-# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
 # SOFTWARE.
 # ======================================================================
 
@@ -80,12 +80,12 @@ itcl::class iwidgets::Menubar {
 
     itk_option define -foreground foreground Foreground Black
     itk_option define -activebackground activeBackground Foreground "#ececec"
-    itk_option define -activeborderwidth activeBorderWidth BorderWidth 2
+    itk_option define -activeborderwidth activeBorderWidth BorderWidth 2 
     itk_option define -activeforeground activeForeground Background black
     itk_option define -anchor anchor Anchor center
     itk_option define -borderwidth borderWidth BorderWidth 2
     itk_option define \
-	    -disabledforeground disabledForeground DisabledForeground #a3a3a3
+	    -disabledforeground disabledForeground DisabledForeground #a3a3a3 
     itk_option define \
 	    -font font Font "-Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*"
     itk_option define \
@@ -346,10 +346,10 @@ itcl::configbody iwidgets::Menubar::wraplength {
 # ------------------------------------------------------------------
 # OPTION -menubuttons
 #
-# The menuButton option is a string which specifies the arrangement
-# of menubuttons on the Menubar frame. Each menubutton entry is
-# delimited by the newline character. Each entry is treated as
-# an add command to the Menubar.
+# The menuButton option is a string which specifies the arrangement 
+# of menubuttons on the Menubar frame. Each menubutton entry is 
+# delimited by the newline character. Each entry is treated as 
+# an add command to the Menubar. 
 #
 # ------------------------------------------------------------------
 itcl::configbody iwidgets::Menubar::menubuttons {
@@ -359,7 +359,7 @@ itcl::configbody iwidgets::Menubar::menubuttons {
 	# a new one
 	if { ! [catch {_parsePath .0}] } {
 	    delete .0 .last
-	}
+	} 
 
 	#
 	# Determine the context level to evaluate the option string at
@@ -382,13 +382,13 @@ itcl::configbody iwidgets::Menubar::menubuttons {
 # ------------------------------------------------------------------
 # OPTION -helpvariable
 #
-# Specifies the global variable to update whenever the mouse is in
-# motion over a menu entry. This global variable is updated with the
-# current value of the active menu entry's helpStr. Other widgets
-# can "watch" this variable with the trace command, or as is the
-# case with entry or label widgets, they can set their textVariable
-# to the same global variable. This allows for a simple implementation
-# of a help status bar. Whenever the mouse leaves a menu entry,
+# Specifies the global variable to update whenever the mouse is in 
+# motion over a menu entry. This global variable is updated with the 
+# current value of the active menu entry's helpStr. Other widgets 
+# can "watch" this variable with the trace command, or as is the 
+# case with entry or label widgets, they can set their textVariable 
+# to the same global variable. This allows for a simple implementation 
+# of a help status bar. Whenever the mouse leaves a menu entry, 
 # the helpVariable is set to the empty string {}.
 # ------------------------------------------------------------------
 itcl::configbody iwidgets::Menubar::helpvariable {
@@ -731,7 +731,7 @@ itcl::body iwidgets::Menubar::menuconfigure { path args } {
 #       matched  against each component path using the same rules as
 #       the string match command.
 #
-#     -regexp   Pattern is treated as a regular  expression
+#     -regexp   Pattern is treated as a regular  expression  
 #       and matched against each component path using the same
 #       rules as the regexp command.
 #
@@ -756,7 +756,7 @@ itcl::body iwidgets::Menubar::path { args } {
 	    # '''''''''''''''''''''''''''''''''''''''''''''''''''''
 	    set pattern [lindex $args 0]
 	    set found [lindex $pathList [lsearch -glob $pathList $pattern]]
-	}
+	} 
 	2 {
 	    # ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 	    # Case: search modes present (-glob, -regexp)
@@ -878,7 +878,7 @@ itcl::body iwidgets::Menubar::yposition { entryPath } {
 # option for the Menubar.
 #
 # It adds a new menubutton and processes any -menu options
-# for creating entries on the menu pane associated with the
+# for creating entries on the menu pane associated with the 
 # menubutton
 # -------------------------------------------------------------
 itcl::body iwidgets::Menubar::menubutton { menuName args } {
@@ -988,7 +988,7 @@ itcl::body iwidgets::Menubar::separator { sepName args } {
 #
 # -------------------------------------------------------------
 itcl::body iwidgets::Menubar::cascade { casName args } {
-
+    
     # Save the current menu we are adding to, cascade can change
     # the current menu through -menu options.
     set saveOMP $_ourMenuPath
@@ -1034,7 +1034,7 @@ itcl::body iwidgets::Menubar::_addMenuButton { buttonName args} {
 #
 # PRIVATE METHOD: _insertMenuButton
 #
-# inserts a menubutton named $buttonName on a menu bar before
+# inserts a menubutton named $buttonName on a menu bar before 
 # another menubutton specified by $beforeMenuPath
 #
 # -------------------------------------------------------------
@@ -1086,7 +1086,7 @@ itcl::body iwidgets::Menubar::_makeMenuButton {buttonName args} {
     itk_component add $buttonName {
         eval ::menubutton \
                 $itk_component(menubar).$buttonName \
-                $args
+                $args 
     } {
         keep \
                 -activebackground \
@@ -1106,7 +1106,7 @@ itcl::body iwidgets::Menubar::_makeMenuButton {buttonName args} {
                 -pady \
                 -wraplength
     }
-
+    
     set _pathMap(.$buttonName) $itk_component($buttonName)
 
     _makeMenu \
@@ -1116,7 +1116,7 @@ itcl::body iwidgets::Menubar::_makeMenuButton {buttonName args} {
 	    $menuEvalStr
 
     return $itk_component($buttonName)
-
+    
 }
 
 # -------------------------------------------------------------
@@ -1147,7 +1147,7 @@ itcl::body iwidgets::Menubar::_makeMenu \
 		-cursor \
 		-disabledforeground \
 		-font \
-		-foreground
+		-foreground 
     }
 
     set _pathMap($menuPath.menu) $itk_component($componentName)
@@ -1180,7 +1180,7 @@ itcl::body iwidgets::Menubar::_makeMenu \
     eval $menuEvalStr
 
     #
-    # leaving, so done with this parse level, so bump it back down
+    # leaving, so done with this parse level, so bump it back down 
     #
     incr _parseLevel -1
 }
@@ -1235,7 +1235,7 @@ itcl::body iwidgets::Menubar::_deleteMenu { menuPath {menuPath2 {}} } {
 	set menuEndPath [_parsePath $menuPath2]
 
 	regsub {[.]menu$} $menuEndPath "" menuEndPath
-
+	
 	# get the menu position (0 based) of the start and end menus.
 	set start [lsearch -exact $menuList $menuStartPath]
 	if { $start == -1 } {
@@ -1263,7 +1263,7 @@ itcl::body iwidgets::Menubar::_deleteMenu { menuPath {menuPath2 {}} } {
 #
 # PRIVATE METHOD: _deleteAMenu
 #
-# _deleteMenu menuPath
+# _deleteMenu menuPath 
 #
 # deletes a single Menu (menubutton and menu pane with entries)
 #
@@ -1290,7 +1290,7 @@ itcl::body iwidgets::Menubar::_deleteAMenu { path } {
     # the component on the destroy in some cases...
     catch {itk_component delete $buttonName-menu}
     catch {itk_component delete $buttonName}
-
+    
     # unset our paths
     _unsetPaths $menuButtonPath
 
@@ -1387,7 +1387,7 @@ itcl::body iwidgets::Menubar::_addCascade { tkMenuPath path args } {
 
     # Create the cascade entry
     eval $tkMenuPath add cascade $args
-
+    
     # Keep the -menu string in case of menuconfigure or menucget
     if { $menuEvalStr != "" } {
 	set _menuOption($path) $menuEvalStr
@@ -1441,9 +1441,9 @@ itcl::body iwidgets::Menubar::_insertEntry { beforeEntryPath type name args } {
     # ENTRIES is a zero based list...
     set entries [_getEntryList $menuPathPrefix]
 
-    #
+    # 
     # Adjust the entries after the inserted item, to have
-    # the correct index numbers. Note, we stay zero based
+    # the correct index numbers. Note, we stay zero based 
     # even though tk flips back and forth depending on tearoffs.
     #
     for {set i $bfIndex} {$i < [llength $entries]} {incr i} {
@@ -1502,14 +1502,14 @@ itcl::body iwidgets::Menubar::_insertEntry { beforeEntryPath type name args } {
 	    }
 	    error $errMsg
 	}
-
+	
 
 	# add the helpstr option to our options list (attach to entry)
 	set _helpString($path) $helpStr
 
 	# Insert the new entry path into pathmap giving it an index value
 	set _pathMap($menuPathPrefix.$name) $bfIndex
-
+	
     }
 
     return [_getTkIndex $tkMenuPath $bfIndex]
@@ -1547,7 +1547,7 @@ itcl::body iwidgets::Menubar::_insertCascade { bfIndex tkMenuPath path args } {
     # invoke the menu's insert command
     eval "$tkMenuPath insert \
 	    [_getTkIndex $tkMenuPath $bfIndex] cascade $args"
-
+    
     # Insert the new entry path into pathmap giving it an index value
     set _pathMap($path) $bfIndex
     _makeMenu \
@@ -1568,7 +1568,7 @@ itcl::body iwidgets::Menubar::_insertCascade { bfIndex tkMenuPath path args } {
 #   either
 # deletes the entry entryPath
 #   or
-# deletes the entries from entryPath to entryPath2
+# deletes the entries from entryPath to entryPath2 
 #
 # -------------------------------------------------------------
 itcl::body iwidgets::Menubar::_deleteEntry { entryPath {entryPath2 {}} } {
@@ -1625,7 +1625,7 @@ itcl::body iwidgets::Menubar::_deleteEntry { entryPath {entryPath2 {}} } {
 	    _unsetPaths $path
 	}
 
-    } else {
+    } else { 
 	# get a corrected path (subst for number, last, end)
 	set path1 [_parsePath $entryPath]
 	set path2 [_parsePath $entryPath2]
@@ -1688,7 +1688,7 @@ itcl::body iwidgets::Menubar::_deleteEntry { entryPath {entryPath2 {}} } {
 # PRIVATE METHOD: _configureMenu
 #
 # This configures a menu. A menu is a true tk widget, thus we
-# pass the tkPath variable. This path may point to either a
+# pass the tkPath variable. This path may point to either a 
 # menu button (does not end with the name 'menu', or a menu
 # which ends with the name 'menu'
 #
@@ -1874,7 +1874,7 @@ itcl::body iwidgets::Menubar::_configureMenuEntry { path index {option {}} args 
 	    eval "_configureMenuOption cascade $path $args"
 	} else {
 	    # invoke the menu's entryconfigure command
-	    # being careful to ajust the INDEX to be 0 or 1 based
+	    # being careful to ajust the INDEX to be 0 or 1 based 
 	    # depending on the tearoff status
 	    # if the stripping process brought us down to no options
 	    # to set, then forget the configure of widget.
@@ -1936,23 +1936,23 @@ itcl::body iwidgets::Menubar::_entryPathToTkMenuPath {entryPath} {
 # These two methods address the issue of menu entry indices being
 # zero-based when the menu is not a tearoff menu and 1-based when
 # it is a tearoff menu. Our strategy is to hide this difference.
-#
+# 
 # _getTkIndex returns the index as tk likes it: 0 based for non-tearoff
 # and 1 based for tearoff menus.
-#
+# 
 # _getPdIndex (get pulldown index) always returns it as 0 based.
-#
+# 
 # -------------------------------------------------------------
 
 # -------------------------------------------------------------
-#
+# 
 # PRIVATE METHOD: _getTkIndex
 #
 # give us a zero or 1-based answer depending on the tearoff
 # status of the menu. If the menu denoted by tkMenuPath is a
-# tearoff menu it returns a 1-based result, otherwise a
+# tearoff menu it returns a 1-based result, otherwise a 
 # zero-based result.
-#
+# 
 # -------------------------------------------------------------
 itcl::body iwidgets::Menubar::_getTkIndex { tkMenuPath tkIndex} {
 
@@ -1965,7 +1965,7 @@ itcl::body iwidgets::Menubar::_getTkIndex { tkMenuPath tkIndex} {
 }
 
 # -------------------------------------------------------------
-#
+# 
 # PRIVATE METHOD: _getPdIndex
 #
 # Take a tk index and give me a zero based numerical index
@@ -1993,7 +1993,7 @@ itcl::body iwidgets::Menubar::_getPdIndex { tkMenuPath tkIndex } {
 }
 
 # -------------------------------------------------------------
-#
+# 
 # PRIVATE METHOD: _getMenuList
 #
 # Returns the list of menus in the order they are on the interface
@@ -2011,7 +2011,7 @@ itcl::body iwidgets::Menubar::_getMenuList { } {
 }
 
 # -------------------------------------------------------------
-#
+# 
 # PRIVATE METHOD: _getEntryList
 #
 #
@@ -2057,7 +2057,7 @@ itcl::body iwidgets::Menubar::_getEntryList { menu } {
 }
 
 # -------------------------------------------------------------
-#
+# 
 # PRIVATE METHOD: _parsePath
 #
 # given path, PATH, _parsePath splits the path name into its
@@ -2082,7 +2082,7 @@ itcl::body iwidgets::Menubar::_parsePath { path } {
 }
 
 # -------------------------------------------------------------
-#
+# 
 # PRIVATE METHOD: _getSymbolicPath
 #
 # Given a PATH, _getSymbolicPath looks for the last segment of
@@ -2126,11 +2126,11 @@ itcl::body iwidgets::Menubar::_getSymbolicPath { parent segment } {
 }
 
 # -------------------------------------------------------------
-#
+# 
 # PRIVATE METHOD: _helpHandler
 #
 # Bound to the <Motion> event on a menu pane. This puts the
-# help string associated with the menu entry into the
+# help string associated with the menu entry into the 
 # status widget help area. If no help exists for the current
 # entry, the status widget is cleared.
 #
@@ -2176,7 +2176,7 @@ itcl::body iwidgets::Menubar::_helpHandler { menuPath } {
 # PRIVATE METHOD: _getCallerLevel
 #
 # Starts at stack frame #0 and works down till we either hit
-# a ::Menubar stack frame or an ::itk::Archetype stack frame
+# a ::Menubar stack frame or an ::itk::Archetype stack frame 
 # (the latter happens when a configure is called via the 'component'
 # method
 #

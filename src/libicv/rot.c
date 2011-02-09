@@ -1,7 +1,7 @@
 /*                           R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2010 United States Government as represented by
+ * Copyright (c) 1986-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -133,7 +133,7 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 	in_file_name = argv[bu_optind];
     }
 
-    if (strcmp(in_file_name, "-") == 0) {
+    if (BU_STR_EQUAL(in_file_name, "-")) {
 	*ifp = stdin;
     } else {
 	*ifp = fopen(in_file_name, "rb");
@@ -218,7 +218,7 @@ reverse_buffer(unsigned char *buf)
 static void
 arbrot(double a, FILE *ifp, unsigned char *buf)
 {
-#define DtoR(x)	((x)*M_PI/180.0)
+#define DtoR(x)	((x)*DEG2RAD)
     size_t x, y;				/* working coord */
     double x2, y2;				/* its rotated position */
     double xc, yc;				/* rotation origin */

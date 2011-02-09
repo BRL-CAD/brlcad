@@ -1,7 +1,7 @@
 /*                         T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 
 static void
 ged_do_trace(struct db_i		*dbip,
-	     struct rt_comb_internal	*comb,
+	     struct rt_comb_internal	*UNUSED(comb),
 	     union tree			*comb_leaf,
 	     genptr_t			user_ptr1,
 	     genptr_t			user_ptr2,
@@ -45,7 +45,7 @@ ged_do_trace(struct db_i		*dbip,
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
 
-    if ((nextdp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+    if ((nextdp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return;
 
     pathpos = (int *)user_ptr1;
@@ -102,7 +102,7 @@ _ged_trace(struct directory	*dp,
 	return;
     }
 
-    if (dp->d_flags & DIR_COMB) {
+    if (dp->d_flags & RT_DIR_COMB) {
 	if (rt_db_get_internal(&intern, dp, gtdp->gtd_gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "Database read error, aborting");
 	    return;

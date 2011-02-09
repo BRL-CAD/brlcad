@@ -1,7 +1,7 @@
 /*                         G - X 3 D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -89,18 +89,18 @@ struct vrml_mat {
 #define PL_OA(_m)	bu_offsetofarray(struct vrml_mat, _m)
 
 struct bu_structparse vrml_mat_parse[]={
-    {"%s", TXT_NAME_SIZE, "ma_shader", PL_OA(shader), 	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "shine",		PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "sh",			PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f", 1, "transmit",		PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f", 1, "tr",			PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "angle",		PL_O(lt_angle),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "fract",		PL_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3, "aim",		PL_OA(lt_dir),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "w",         	PL_O(tx_w),             BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "n",         	PL_O(tx_n),             BU_STRUCTPARSE_FUNC_NULL },
-    {"%s",  TXT_NAME_SIZE, "file",	PL_OA(tx_file), 	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%s", TXT_NAME_SIZE, "ma_shader", PL_OA(shader),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "shine",		PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "sh",		PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "transmit",	PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 1, "tr",		PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "angle",	PL_O(lt_angle),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "fract",	PL_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3, "aim",	PL_OA(lt_dir),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "w",         	PL_O(tx_w),             BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "n",         	PL_O(tx_n),             BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s",  TXT_NAME_SIZE, "file", PL_OA(tx_file), 	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",    0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
@@ -113,7 +113,7 @@ static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose=0;
 /* static int	ncpu = 1; */		/* Number of processors */
 static char	*out_file = NULL;	/* Output filename */
-static FILE	*fp_out;		/* Output file pointer */
+static FILE	*outfp;		/* Output file pointer */
 static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
@@ -176,7 +176,7 @@ struct rt_bot_internal *
 dup_bot( struct rt_bot_internal *bot_in )
 {
     struct rt_bot_internal *bot;
-    int i;
+    size_t i;
 
     RT_BOT_CK_MAGIC( bot_in );
 
@@ -206,7 +206,7 @@ dup_bot( struct rt_bot_internal *bot_in )
 }
 
 static int
-select_lights(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -216,7 +216,7 @@ select_lights(struct db_tree_state *tsp, const struct db_full_path *pathp, const
     RT_CK_FULL_PATH( pathp );
     dp = DB_FULL_PATH_CUR_DIR( pathp );
 
-    if ( !(dp->d_flags & DIR_COMB) )
+    if ( !(dp->d_flags & RT_DIR_COMB) )
 	return -1;
 
     id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource );
@@ -236,7 +236,7 @@ select_lights(struct db_tree_state *tsp, const struct db_full_path *pathp, const
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB( comb );
 
-    if ( !strcmp( bu_vls_addr( &comb->shader ), "light" ) )
+    if ( BU_STR_EQUAL( bu_vls_addr( &comb->shader ), "light" ) )
     {
 	rt_db_free_internal(&intern);
 	return 0;
@@ -301,8 +301,8 @@ leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt
 }
 
 void
-writeX3dHeader(FILE *fp_out,
-	       char *x3dFileName) {
+writeX3dHeader(FILE *fp_out, char *x3dFileName)
+{
     fprintf(fp_out, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     fprintf(fp_out, "<!DOCTYPE X3D PUBLIC \"http://www.web3D.org/TaskGroups/x3d/translation/x3d-compact.dtd\"\n\"/www.web3D.org/TaskGroups/x3d/translation/x3d-compact.dtd\">\n");
     fprintf(fp_out, "<X3D>\n");
@@ -429,7 +429,7 @@ main(int argc, char **argv)
 	    case 'u':
 		units = bu_strdup( bu_optarg );
 		scale_factor = bu_units_conversion( units );
-		if ( scale_factor == 0.0 )
+		if ( NEAR_ZERO(scale_factor, SMALL_FASTF) )
 		{
 		    bu_exit(1, "Unrecognized units (%s)\n", units );
 		}
@@ -459,19 +459,19 @@ main(int argc, char **argv)
     }
 
     if (out_file == NULL) {
-	fp_out = stdout;
+	outfp = stdout;
 #if defined(_WIN32) && !defined(__CYGWIN__)
-	setmode(fileno(fp_out), O_BINARY);
+	setmode(fileno(outfp), O_BINARY);
 #endif
     } else {
-	if ((fp_out = fopen( out_file, "wb")) == NULL)
+	if ((outfp = fopen( out_file, "wb")) == NULL)
 	{
 	    perror( argv[0] );
 	    bu_exit(2, "Cannot open %s\n", out_file );
 	}
     }
 
-    writeX3dHeader(fp_out, out_file);
+    writeX3dHeader(outfp, out_file);
     bu_optind++;
 
     BARRIER_CHECK;
@@ -486,14 +486,14 @@ main(int argc, char **argv)
 	struct directory *dp;
 
 	dp = db_lookup( dbip, argv[i], LOOKUP_QUIET );
-	if ( dp == DIR_NULL )
+	if ( dp == RT_DIR_NULL )
 	{
 	    bu_log( "Cannot find %s\n", argv[i] );
 	    continue;
 	}
 
 	/* light source must be a combibation */
-	if ( !(dp->d_flags & DIR_COMB) )
+	if ( !(dp->d_flags & RT_DIR_COMB) )
 	    continue;
 
 	/* walk trees selecting only light source regions */
@@ -525,13 +525,86 @@ main(int argc, char **argv)
     db_close(dbip);
 
     /* Now we need to close each group set */
-    writeX3dEnd(fp_out);
+    writeX3dEnd(outfp);
 
     if ( verbose )
 	bu_log( "Total of %d regions converted of %d regions attempted\n",
 		regions_converted, regions_tried );
 
     return 0;
+}
+
+void
+process_non_light(struct model *m) {
+    struct nmgregion *reg;
+    /* static due to bu exception handling */
+    static struct shell *s;
+    static struct shell *next_s;
+    static struct faceuse *fu;
+    static struct faceuse *next_fu;
+    static struct loopuse *lu;
+
+    /* triangulate any faceuses with holes */
+    for ( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
+    {
+	NMG_CK_REGION( reg );
+	s = BU_LIST_FIRST( shell, &reg->s_hd );
+	while ( BU_LIST_NOT_HEAD( s, &reg->s_hd ) )
+	{
+	    NMG_CK_SHELL( s );
+	    next_s = BU_LIST_PNEXT( shell, &s->l );
+	    fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
+	    while ( BU_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
+	    {
+		int shell_is_dead=0;
+		int face_is_dead=0;
+
+		NMG_CK_FACEUSE( fu );
+
+		next_fu = BU_LIST_PNEXT( faceuse, &fu->l );
+
+		if ( fu->orientation != OT_SAME )
+		{
+		    fu = next_fu;
+		    continue;
+		}
+
+		/* check if this faceuse has any holes */
+		for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+		    NMG_CK_LOOPUSE( lu );
+		    if ( lu->orientation == OT_OPPOSITE )
+		    {
+			/* this is a hole, so
+			 * triangulate the faceuse
+			 */
+			if ( BU_SETJUMP )
+			{
+			    BU_UNSETJUMP;
+			    bu_log( "A face has failed triangulation!\n" );
+			    if ( next_fu == fu->fumate_p )
+				next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
+			    if ( nmg_kfu( fu ) )
+			    {
+				(void) nmg_ks( s );
+				shell_is_dead = 1;
+			    }
+			    face_is_dead = 1;
+			}
+			if ( !face_is_dead )
+			    nmg_triangulate_fu( fu, &tol );
+			BU_UNSETJUMP;
+			break;
+		    }
+
+		}
+		if ( shell_is_dead )
+		    break;
+		fu = next_fu;
+	    }
+	    s = next_s;
+	}
+    }
 }
 
 void
@@ -570,7 +643,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     RT_CK_FULL_PATH( pathp );
     dp = DB_FULL_PATH_CUR_DIR( pathp );
 
-    if ( !(dp->d_flags & DIR_COMB) )
+    if ( !(dp->d_flags & RT_DIR_COMB) )
 	return;
 
     id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource );
@@ -671,74 +744,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 
     if ( !is_light )
     {
-	/* triangulate any faceuses with holes */
-	for ( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
-	{
-	    struct shell *s;
-
-	    NMG_CK_REGION( reg );
-	    s = BU_LIST_FIRST( shell, &reg->s_hd );
-	    while ( BU_LIST_NOT_HEAD( s, &reg->s_hd ) )
-	    {
-		struct shell *next_s;
-		struct faceuse *fu;
-
-		NMG_CK_SHELL( s );
-		next_s = BU_LIST_PNEXT( shell, &s->l );
-		fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
-		while ( BU_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
-		{
-		    struct faceuse *next_fu;
-		    struct loopuse *lu;
-		    int shell_is_dead=0;
-		    int face_is_dead=0;
-
-		    NMG_CK_FACEUSE( fu );
-
-		    next_fu = BU_LIST_PNEXT( faceuse, &fu->l );
-
-		    if ( fu->orientation != OT_SAME )
-		    {
-			fu = next_fu;
-			continue;
-		    }
-
-		    /* check if this faceuse has any holes */
-		    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
-		    {
-			NMG_CK_LOOPUSE( lu );
-			if ( lu->orientation == OT_OPPOSITE )
-			{
-			    /* this is a hole, so
-			     * triangulate the faceuse
-			     */
-			    if ( BU_SETJUMP )
-			    {
-				BU_UNSETJUMP;
-				bu_log( "A face has failed triangulation!\n" );
-				if ( next_fu == fu->fumate_p )
-				    next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
-				if ( nmg_kfu( fu ) )
-				{
-				    (void) nmg_ks( s );
-				    shell_is_dead = 1;
-				}
-				face_is_dead = 1;
-			    }
-			    if ( !face_is_dead )
-				nmg_triangulate_fu( fu, &tol );
-			    BU_UNSETJUMP;
-			    break;
-			}
-
-		    }
-		    if ( shell_is_dead )
-			break;
-		    fu = next_fu;
-		}
-		s = next_s;
-	    }
-	}
+	process_non_light(m);
 	fprintf( fp, "\t\t</Appearance>\n");
     }
 
@@ -857,8 +863,8 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
     int appearance;
     struct rt_bot_internal *bot;
     int bot_num;
-    int i;
-    int vert_count=0;
+    size_t i;
+    size_t vert_count=0;
 
     BARRIER_CHECK;
 
@@ -866,35 +872,35 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
     /* replace all occurences of '.' with '_' */
     char_replace(path_str, '.', '_');
 
-    fprintf( fp_out, "\t<Shape DEF=\"%s\">\n", path_str);
+    fprintf( outfp, "\t<Shape DEF=\"%s\">\n", path_str);
     bu_free( path_str, "result of db_path_to_string" );
 
     appearance = region_id / 1000;
     appearance = appearance * 1000 + 999;
-    fprintf( fp_out, "\t\t<Appearance USE=\"Material_%d\">\n", appearance);
+    fprintf( outfp, "\t\t<Appearance USE=\"Material_%d\">\n", appearance);
 
-    fprintf( fp_out, "\t\t<IndexedFaceSet coordIndex=\"\n");
+    fprintf( outfp, "\t\t<IndexedFaceSet coordIndex=\"\n");
     vert_count = 0;
     for ( bot_num = 0; bot_num < pmp->num_bots; bot_num++ ) {
 	bot = pmp->bots[bot_num];
 	RT_BOT_CK_MAGIC( bot );
 	for ( i=0; i<bot->num_faces; i++ )
-	    fprintf( fp_out, "\t\t\t\t%d, %d, %d, -1,\n",
-		     vert_count+bot->faces[i*3],
-		     vert_count+bot->faces[i*3+1],
-		     vert_count+bot->faces[i*3+2]);
+	    fprintf( outfp, "\t\t\t\t%lu, %lu, %lu, -1,\n",
+		     (long unsigned int)vert_count+bot->faces[i*3],
+		     (long unsigned int)vert_count+bot->faces[i*3+1],
+		     (long unsigned int)vert_count+bot->faces[i*3+2]);
 	vert_count += bot->num_vertices;
     }
     /* close coordIndex */
-    fprintf( fp_out, "\" ");
-    fprintf( fp_out, "normalPerVertex=\"false\" ");
-    fprintf( fp_out, "convex=\"true\" ");
-    fprintf( fp_out, "creaseAngle=\"0.5\" ");
-    fprintf( fp_out, "solid=\"false\" ");
+    fprintf( outfp, "\" ");
+    fprintf( outfp, "normalPerVertex=\"false\" ");
+    fprintf( outfp, "convex=\"true\" ");
+    fprintf( outfp, "creaseAngle=\"0.5\" ");
+    fprintf( outfp, "solid=\"false\" ");
     /* close IndexedFaceSet open tag */
-    fprintf( fp_out, ">\n");
+    fprintf( outfp, ">\n");
 
-    fprintf( fp_out, "\t\t<Coordinate point=\"");
+    fprintf( outfp, "\t\t<Coordinate point=\"");
     for ( bot_num = 0; bot_num < pmp->num_bots; bot_num++ ) {
 	bot = pmp->bots[bot_num];
 	RT_BOT_CK_MAGIC( bot );
@@ -903,18 +909,18 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
 	    point_t pt;
 
 	    VSCALE( pt, &bot->vertices[i*3], scale_factor );
-	    fprintf( fp_out, "%10.10e %10.10e %10.10e, ", V3ARGS( pt ));
+	    fprintf( outfp, "%10.10e %10.10e %10.10e, ", V3ARGS( pt ));
 	    vert_count++;
 	}
     }
     /* close point */
-    fprintf(fp_out, "\"");
+    fprintf(outfp, "\"");
     /* close Coordinate */
-    fprintf(fp_out, "/>\n");
+    fprintf(outfp, "/>\n");
     /* IndexedFaceSet end tag */
-    fprintf( fp_out, "\t\t</IndexedFaceSet>\n");
+    fprintf( outfp, "\t\t</IndexedFaceSet>\n");
     /* Shape end tag */
-    fprintf( fp_out, "\t</Shape>\n");
+    fprintf( outfp, "\t</Shape>\n");
 
     BARRIER_CHECK;
 }
@@ -962,8 +968,54 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     return (union tree *)NULL;
 }
 
+
+static union tree *
+process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
+{
+    union tree *ret_tree = TREE_NULL;
+
+    /* Begin bomb protection */
+    if ( !BU_SETJUMP ) {
+	/* try */
+
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+
+    } else  {
+	/* catch */
+	char *name = db_path_to_string( pathp );
+
+	/* Error, bail out */
+	bu_log( "conversion of %s FAILED!\n", name );
+
+	/* Sometimes the NMG library adds debugging bits when
+	 * it detects an internal error, before before bombing out.
+	 */
+	rt_g.NMG_debug = NMG_debug;	/* restore mode */
+
+	/* Release any intersector 2d tables */
+	nmg_isect2d_final_cleanup();
+
+	/* Release the tree memory & input regions */
+	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
+
+	/* Get rid of (m)any other intermediate structures */
+	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC ) {
+	    nmg_km(*tsp->ts_m);
+	} else {
+	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	}
+
+	bu_free( name, "db_path_to_string" );
+	/* Now, make a new, clean model structure for next pass. */
+	*tsp->ts_m = nmg_mm();
+    } BU_UNSETJUMP;		/* Relinquish the protection */
+
+    return ret_tree;
+}
+
+
 union tree *
-nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
     struct nmgregion	*r;
     struct bu_list		vhead;
@@ -991,47 +1043,13 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
     regions_tried++;
 
-    /* Begin bomb protection */
-    if ( BU_SETJUMP )
-    {
-	/* Error, bail out */
-	BU_UNSETJUMP;		/* Relinquish the protection */
-	bu_log( "conversion of %s FAILED!\n", name );
-
-	/* Sometimes the NMG library adds debugging bits when
-	 * it detects an internal error, before before bombing out.
-	 */
-	rt_g.NMG_debug = NMG_debug;	/* restore mode */
-
-	/* Release any intersector 2d tables */
-	nmg_isect2d_final_cleanup();
-
-	/* Release the tree memory & input regions */
-	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
-
-	/* Get rid of (m)any other intermediate structures */
-	if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
-	{
-	    nmg_km(*tsp->ts_m);
-	}
-	else
-	{
-	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-	}
-
-	bu_free( name, "db_path_to_string" );
-	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
-	goto out;
-    }
-    ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+    ret_tree = process_boolean(curtree, tsp, pathp);
 
     if ( ret_tree )
 	r = ret_tree->tr_d.td_r;
     else
 	r = (struct nmgregion *)NULL;
 
-    BU_UNSETJUMP;		/* Relinquish the protection */
     bu_free( name, "db_path_to_string" );
     regions_converted++;
     if (r != (struct nmgregion *)NULL)
@@ -1067,7 +1085,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	if ( !empty_region && !empty_model )
 	{
 	    /* Write the nmgregion to the output file */
-	    nmg_2_vrml( fp_out, pathp, r->m_p, &tsp->ts_mater );
+	    nmg_2_vrml( outfp, pathp, r->m_p, &tsp->ts_mater );
 	}
 
 	/* NMG region is no longer necessary */
@@ -1087,7 +1105,6 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
- out:
     BU_GETUNION(curtree, tree);
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;

@@ -8,7 +8,7 @@
  */
 
 #include "tcl.h"
-#include <windows.h>
+#include "bio.h"
 #include <locale.h>
 
 /*

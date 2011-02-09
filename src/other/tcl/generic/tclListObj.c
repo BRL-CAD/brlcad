@@ -832,7 +832,11 @@ Tcl_ListObjReplace(
     }
     if (count < 0) {
 	count = 0;
-    } else if (numElems < first+count) {
+    } else if (numElems < first+count || first+count < 0) {
+	/*
+	 * The 'first+count < 0' condition here guards agains integer
+	 * overflow in determining 'first+count'
+	 */
 	count = numElems - first;
     }
 
@@ -1669,10 +1673,12 @@ SetListFromAny(
     /*
      * Dictionaries are a special case; they have a string representation such
      * that *all* valid dictionaries are valid lists. Hence we can convert
-     * more directly.
+     * more directly. Only do this when there's no existing string rep; if
+     * there is, it is the string rep that's authoritative (because it could
+     * describe duplicate keys).
      */
 
-    if (objPtr->typePtr == &tclDictType) {
+    if (objPtr->typePtr == &tclDictType && !objPtr->bytes) {
 	Tcl_Obj *keyPtr, *valuePtr;
 	Tcl_DictSearch search;
 	int done, size;

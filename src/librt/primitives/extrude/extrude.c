@@ -1,7 +1,7 @@
 /*                       E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -102,7 +102,7 @@ static struct bn_tol extr_tol={
  * !0 Error in description
  *
  * Implicit return -
- * A struct extrude_specific is created, and it's address is stored in
+ * A struct extrude_specific is created, and its address is stored in
  * stp->st_specific for use by extrude_shot().
  */
 int
@@ -113,9 +113,9 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     struct rt_sketch_internal *skt;
     vect_t tmp, xyz[3];
     fastf_t tmp_f, ldir[3];
-    int i, j;
-    int vert_count;
-    int curr_vert;
+    size_t i, j;
+    size_t vert_count;
+    size_t curr_vert;
 
     if (rtip) RT_CK_RTI(rtip);
 
@@ -570,7 +570,8 @@ int
 rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
-    int i, j, k;
+    size_t i, j, k;
+    long counter;
     fastf_t dist_top, dist_bottom, to_bottom=0;
     fastf_t dist[2];
     fastf_t dot_pl1, dir_dot_z;
@@ -581,9 +582,9 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     fastf_t dists_before[MAX_HITS];
     fastf_t dists_after[MAX_HITS];
     fastf_t *dists=NULL;
-    int dist_count=0;
-    int hit_count=0;
-    int hits_before_bottom=0, hits_after_top=0;
+    size_t dist_count=0;
+    size_t hit_count=0;
+    size_t hits_before_bottom=0, hits_after_top=0;
     int code;
     int check_inout=0;
     int top_face=TOP_FACE, bot_face=BOTTOM_FACE;
@@ -710,7 +711,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
 		verts = (point2d_t *)bu_calloc(bsg->degree + 1, sizeof(point2d_t), "Bezier verts");
-		for (j=0; j<=bsg->degree; j++) {
+		for (j=0; j<=(size_t)bsg->degree; j++) {
 		    V2MOVE(verts[j], extr->verts[bsg->ctl_points[j]]);
 		}
 		V2MOVE(ray_dir_unit, ray_dir);
@@ -749,7 +750,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    while (k < dist_count) {
 		diff = dists[k] - hits[j].hit_dist;
 		if (NEAR_ZERO(diff, extr_tol.dist)) {
-		    int n;
+		    size_t n;
 		    for (n=k; n<dist_count-1; n++) {
 			dists[n] = dists[n+1];
 			if (*lng == CURVE_BEZIER_MAGIC) {
@@ -771,8 +772,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    while (k < dist_count) {
 		diff = dists[k] - dists_before[j];
 		if (NEAR_ZERO(diff, extr_tol.dist)) {
-		    int n;
-
+		    size_t n;
 		    for (n=k; n<dist_count-1; n++) {
 			dists[n] = dists[n+1];
 			if (*lng == CURVE_BEZIER_MAGIC) {
@@ -794,8 +794,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    while (k < dist_count) {
 		diff = dists[k] - dists_after[j];
 		if (NEAR_ZERO(diff, extr_tol.dist)) {
-		    int n;
-
+		    size_t n;
 		    for (n=k; n<dist_count-1; n++)
 			dists[n] = dists[n+1];
 		    dist_count--;
@@ -908,8 +907,8 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		   stp->st_dp->d_namep, MAX_HITS);
 	    bu_bomb("Too many hits on extrusion\n");
 	}
-	for (i=hit_count-1; i>=0; i--)
-	    hits[i+1] = hits[i];
+	for (counter=hit_count-1; counter>=0; counter--)
+	    hits[counter+1] = hits[counter];
 	hits[0].hit_magic = RT_HIT_MAGIC;
 	hits[0].hit_dist = dist_bottom;
 	hits[0].hit_surfno = bot_face;
@@ -945,13 +944,14 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 
     /* build segments */
     {
+	size_t cnt;
 	struct seg *segp;
 
-	for (i=0; i < hit_count; i += 2) {
+	for (cnt=0; cnt < hit_count; cnt += 2) {
 	    RT_GET_SEG(segp, ap->a_resource);
 	    segp->seg_stp = stp;
-	    segp->seg_in = hits[i];	/* struct copy */
-	    segp->seg_out = hits[i+1];	/* struct copy */
+	    segp->seg_in = hits[cnt];	/* struct copy */
+	    segp->seg_out = hits[cnt+1];	/* struct copy */
 	    segp->seg_out.hit_surfno = -segp->seg_out.hit_surfno;	/* for exit hits */
 	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	}
@@ -1115,7 +1115,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     struct curve *crv=(struct curve *)NULL;
     struct rt_sketch_internal *sketch_ip;
     point_t end_of_h;
-    int i1, i2, nused1, nused2;
+    size_t i1, i2, nused1, nused2;
     struct bn_vlist *vp1, *vp2, *vp2_start;
 
     BU_CK_LIST_HEAD(vhead);
@@ -1745,15 +1745,15 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     struct faceuse *fu;
     struct vertex ***verts;
     struct vertex **vertsa;
-    int vert_count=0;
     struct rt_extrude_internal *extrude_ip;
     struct rt_sketch_internal *sketch_ip;
     struct curve *crv=(struct curve *)NULL;
     struct bu_ptbl *aloop=NULL, loops, **containing_loops, *outer_loop;
-    int i, j, k;
-    int *used_seg;
-    struct bn_vlist *vlp;
     plane_t pl;
+    int *used_seg;
+    size_t i, j, k;
+    size_t vert_count=0;
+    struct bn_vlist *vlp;
 
     RT_CK_DB_INTERNAL(ip);
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
@@ -1813,7 +1813,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 		bu_log("rt_extrude_tess: A loop is not closed in sketch %s\n",
 		       extrude_ip->sketch_name);
 		bu_log("\ttessellation failed!!\n");
-		for (j=0; j<BU_PTBL_END(&loops); j++) {
+		for (j=0; j<(size_t)BU_PTBL_END(&loops); j++) {
 		    aloop = (struct bu_ptbl *)BU_PTBL_GET(&loops, j);
 		    bu_ptbl_free(aloop);
 		    bu_free((char *)aloop, "aloop");
@@ -1830,16 +1830,16 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     /* sort the loops to find inside/outside relationships */
     containing_loops = (struct bu_ptbl **)bu_calloc(BU_PTBL_END(&loops),
 						    sizeof(struct bu_ptbl *), "containing_loops");
-    for (i=0; i<BU_PTBL_END(&loops); i++) {
+    for (i=0; i<(size_t)BU_PTBL_END(&loops); i++) {
 	containing_loops[i] = (struct bu_ptbl *)bu_calloc(1, sizeof(struct bu_ptbl), "containing_loops[i]");
 	bu_ptbl_init(containing_loops[i], BU_PTBL_END(&loops), "containing_loops[i]");
     }
 
-    for (i=0; i<BU_PTBL_END(&loops); i++) {
+    for (i=0; i<(size_t)BU_PTBL_END(&loops); i++) {
 	struct bu_ptbl *loopa;
 
 	loopa = (struct bu_ptbl *)BU_PTBL_GET(&loops, i);
-	for (j=i+1; j<BU_PTBL_END(&loops); j++) {
+	for (j=i+1; j<(size_t)BU_PTBL_END(&loops); j++) {
 	    struct bu_ptbl *loopb;
 
 	    loopb = (struct bu_ptbl *)BU_PTBL_GET(&loops, j);
@@ -1863,7 +1863,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 
     /* find an outermost loop */
     outer_loop = (struct bu_ptbl *)NULL;
-    for (i=0; i<BU_PTBL_END(&loops); i++) {
+    for (i=0; i<(size_t)BU_PTBL_END(&loops); i++) {
 	if (BU_PTBL_END(containing_loops[i]) == 0) {
 	    outer_loop = (struct bu_ptbl *)BU_PTBL_GET(&loops, i);
 	    break;
@@ -1873,7 +1873,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     if (!outer_loop) {
 	bu_log("No outer loop in sketch %s\n", extrude_ip->sketch_name);
 	bu_log("\ttessellation failed\n");
-	for (i=0; i<BU_PTBL_END(&loops); i++) {
+	for (i=0; i<(size_t)BU_PTBL_END(&loops); i++) {
 	    aloop = (struct bu_ptbl *)BU_PTBL_GET(&loops, i);
 	    bu_ptbl_free(aloop);
 	    bu_free((char *)aloop, "aloop");
@@ -1888,7 +1888,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     if (BU_LIST_UNINITIALIZED(&rt_g.rtg_vlfree)) {
 	BU_LIST_INIT(&rt_g.rtg_vlfree);
     }
-    for (i=0; i<BU_PTBL_END(outer_loop); i++) {
+    for (i=0; i<(size_t)BU_PTBL_END(outer_loop); i++) {
 	genptr_t seg;
 
 	seg = (genptr_t)BU_PTBL_GET(outer_loop, i);
@@ -1939,7 +1939,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     }
 
     /* add the rest of the loops */
-    for (i=0; i<BU_PTBL_END(&loops); i++) {
+    for (i=0; i<(size_t)BU_PTBL_END(&loops); i++) {
 	int fdir;
 	vect_t cross;
 	fastf_t pt_count=0.0;
@@ -1956,7 +1956,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	    fdir = OT_SAME;
 	}
 
-	for (j=0; j<BU_PTBL_END(aloop); j++) {
+	for (j=0; j<(size_t)BU_PTBL_END(aloop); j++) {
 	    genptr_t seg;
 
 	    seg = (genptr_t)BU_PTBL_GET(aloop, j);
@@ -2026,7 +2026,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     return 0;
 
  failed:
-    for (i=0; i<BU_PTBL_END(&loops); i++) {
+    for (i=0; i<(size_t)BU_PTBL_END(&loops); i++) {
 	bu_ptbl_free(containing_loops[i]);
 	bu_free((char *)containing_loops[i], "containing_loops[i]");
     }
@@ -2073,7 +2073,7 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
     sketch_name = (char *)rp + sizeof(struct extr_rec);
     if (!dbip) {
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
-    } else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL) {
+    } else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_log("rt_extrude_import4: ERROR: Cannot find sketch (%.16s) for extrusion (%.16s)\n",
 	       sketch_name, rp->extr.ex_name);
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
@@ -2233,7 +2233,7 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     sketch_name = (char *)ptr + ELEMENTS_PER_VECT*4*SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG;
     if (!dbip) {
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
-    } else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL) {
+    } else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_log("rt_extrude_import4: ERROR: Cannot find sketch (%s) for extrusion\n",
 	       sketch_name);
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
@@ -2449,7 +2449,7 @@ rt_extrude_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 
 
 int
-rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_extrude_internal *extr;
     fastf_t *new;

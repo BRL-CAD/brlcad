@@ -1199,7 +1199,7 @@ The command returns an empty string.
 If more indices are given, multiple ranges of text will be deleted.
 All indices are first checked for validity before any deletions are made.
 They are sorted and the text is removed from the last range to the
-first range to deleted text does not cause an undesired index shifting
+first range so deleted text does not cause an undesired index shifting
 side-effects.  If multiple ranges with the same start index are given,
 then the longest range is used.  If overlapping ranges are given, then
 they will be merged into spans that do not cause deletion of text

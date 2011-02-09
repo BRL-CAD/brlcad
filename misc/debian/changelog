@@ -1,3 +1,15 @@
+brlcad (7.18.2-0) unstable; urgency=low
+
+  * created new menu entries
+  * added new icons
+  * created new brlcad geometry mime-type
+  * added brlcad geometry mime-type file association
+  * switched from shared libraries to build-in ones
+  * switched --prefix from /usr to /usr/brlcad
+  * modified sh/make_deb.sh builder script
+
+ -- Jordi Sayol <g.sayol@yahoo.es>  Sat, 29 Jan 2011 12:05:33 +0100
+
 brlcad (7.16.10-1) unstable; urgency=low
 
   * Initial release (Closes: #289632).

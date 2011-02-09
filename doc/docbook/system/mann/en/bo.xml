@@ -1,71 +1,34 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "../../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<!-- Copyright (c) 2005-2010 United States Government as represented by -->
-<!-- the U.S. Army Research Laboratory.                                 -->
-<!--                                                                    -->
-<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
-<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
-<!-- modification, are permitted provided that the following conditions -->
-<!-- are met:                                                           -->
-<!--                                                                    -->
-<!-- 1. Redistributions of source code (Docbook format) must retain the -->
-<!-- above copyright notice, this list of conditions and the following  -->
-<!-- disclaimer.                                                        -->
-<!--                                                                    -->
-<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
-<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
-<!-- reproduce the above copyright notice, this list of conditions and  -->
-<!-- the following disclaimer in the documentation and/or other         -->
-<!-- materials provided with the distribution.                          -->
-<!--                                                                    -->
-<!-- 3. The name of the author may not be used to endorse or promote    -->
-<!-- products derived from this documentation without specific prior    -->
-<!-- written permission.                                                -->
-<!--                                                                    -->
-<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
-<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
-<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
-<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
-<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
-<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
-<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
-<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
-<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
-<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
-<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
-<!-- SUCH DAMAGE.                                                       -->
-
-<refentry id='bo'>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="bo">
 
   <refmeta>
     <refentrytitle>BO</refentrytitle>
     <manvolnum>nged</manvolnum>
-    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-    <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
   
-  <refnamediv id='name'>
+  <refnamediv xml:id="name">
     <refname>bo</refname>
     <refpurpose>Used to create or retrieve binary opaque objects.</refpurpose>
   </refnamediv>
   
   <!-- body begins here -->
-  <refsynopsisdiv id='synopsis'>
-    <cmdsynopsis>
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
       <command>bo</command>
-      <group choice='req'>
-	<arg>-i u</arg>
-	<arg>-o</arg>
+      <group choice="req" rep="norepeat">
+	<arg choice="opt" rep="norepeat">-i u</arg>
+	<arg choice="opt" rep="norepeat">-o</arg>
       </group>
-      <arg choice='req'><replaceable>type dest source</replaceable></arg>
-      <arg choice='req'><replaceable>type dest source</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable>type dest source</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable>type dest source</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   
-  <refsect1 id='description'>
-    <title>DESCRIPTION</title>
+  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+    
     <para>
       Used to create or retrieve binary opaque objects. Currently, only uniform binary 
       objects (arrays of values) are supported. One of <emphasis>-i</emphasis> or
@@ -79,59 +42,55 @@
       binary object whose name appears in <emphasis>source</emphasis>. The 
     <emphasis>type</emphasis> may be one of:
     
-    <simplelist type='vert'>
-      <member>f -> float</member>
-      <member>d -> double</member>
-      <member>c -> char (8 bit)</member>
-      <member>s -> short (16 bit)</member>
-      <member>i -> int (32 bit)</member>
-      <member>l -> long (64 bit)</member>
-      <member>C -> unsigned char (8 bit)</member>
-      <member>S -> unsigned short (16 bit)</member>
-      <member>I -> unsigned int (32 bit)</member>
-      <member>L -> unsigned long (64 bit)</member>
+    <simplelist type="vert">
+      <member>f -&gt; float</member>
+      <member>d -&gt; double</member>
+      <member>c -&gt; char (8 bit)</member>
+      <member>s -&gt; short (16 bit)</member>
+      <member>i -&gt; int (32 bit)</member>
+      <member>l -&gt; long (64 bit)</member>
+      <member>C -&gt; unsigned char (8 bit)</member>
+      <member>S -&gt; unsigned short (16 bit)</member>
+      <member>I -&gt; unsigned int (32 bit)</member>
+      <member>L -&gt; unsigned long (64 bit)</member>
     </simplelist>
     </para>
     <para>Note:  this command was previously named "dbbinary".</para>
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='examples'>
-    <title>EXAMPLES</title>
+  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+    
     <para>
       The examples show the use of the <command>bo</command> command to both create 
       (<emphasis>-i</emphasis> option) and to retrieve a binary object (<emphasis>-o</emphasis> option).
     </para>
-    <example>
-      <title>Create an opaque uniform binary object of characters with a specified name 
-      containing the contents of a particular file.</title>
-      <para><prompt>mged></prompt> <userinput>bo -i u c cmds /usr/brlcad/html/manuals/mged/mged_cmds.html</userinput></para>
+    <example><info><title>Create an opaque uniform binary object of characters with a specified name 
+      containing the contents of a particular file.</title></info>
+      
+      <para><prompt>mged&gt;</prompt> <userinput>bo -i u c cmds /usr/brlcad/html/manuals/mged/mged_cmds.html</userinput></para>
       <para>
 	Creates an opaque uniform binary object of characters with the name <emphasis>cmds</emphasis> 
 	that contains the contents of the file <emphasis>/usr/brlcad/html/manuals/mged/mged_cmds.html</emphasis>.
       </para>
     </example>
     
-    <example>
-      <title>Copy the contents of a particular binary object into a specified file.</title>
-      <para><prompt>mged></prompt><userinput>bo -o /home/jim/cmds.html cmds</userinput></para>
+    <example><info><title>Copy the contents of a particular binary object into a specified file.</title></info>
+      
+      <para><prompt>mged&gt;</prompt><userinput>bo -o /home/jim/cmds.html cmds</userinput></para>
       <para>
 	Copies the contents of the binary object named <emphasis>cmds</emphasis> into the file named
 	<emphasis>/home/jim/cmds.html</emphasis>.
       </para>
     </example>
-  </refsect1>
+  </refsection>
   
-  <refsect1 id='author'>
-    <title>AUTHOR</title>
-    <para>BRL-CAD Team</para>
-  </refsect1>
+  <info><corpauthor>BRL-CAD Team</corpauthor></info>
   
-  <refsect1 id='bug_reports'>
-    <title>BUG REPORTS</title>
+  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+    
     <para>
       Reports of bugs or problems should be submitted via electronic
       mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
     </para>
-  </refsect1>
+  </refsection>
 </refentry>
-

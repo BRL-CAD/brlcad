@@ -1,7 +1,7 @@
 /*                       N M G - S G P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2010 United States Government as represented by
+ * Copyright (c) 1997-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -191,7 +191,7 @@ main(int argc, char *argv[])
 	int id;
 	struct model *m;
 
-	if ( (dp=db_lookup( dbip, argv[bu_optind], LOOKUP_NOISY)) == DIR_NULL )
+	if ( (dp=db_lookup( dbip, argv[bu_optind], LOOKUP_NOISY)) == RT_DIR_NULL )
 	    continue;
 
 	if ( (id=rt_db_get_internal( &ip, dp, dbip, bn_mat_identity, &rt_uniresource )) < 0 )

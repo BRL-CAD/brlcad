@@ -1,7 +1,7 @@
 /*                      S S A M P - B W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "spectrum.h"
+#include "optical.h"
 
 
 int verbose = 0;
@@ -45,8 +46,6 @@ int nwave = 2;
 
 char *datafile_basename = "mtherm";
 char spectrum_name[100];
-
-extern struct bn_table *spectrum;	/* spectrum table from liboptical */
 
 struct bn_tabdata *data;		/* a big array */
 

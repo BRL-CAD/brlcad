@@ -5,7 +5,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" @(#) timefield.n 1.0 97/04/30 16:04:44
-'\"
+'\" 
 .so man.macros
 .HS iwidgets::timefield iwid
 .BS
@@ -36,7 +36,7 @@ See the "options" manual entry for details on the standard options.
 \fBstate\fR	\fBsticky\fR
 .fi
 .LP
-See the "labeledwidget" class manual entry for details on the
+See the "labeledwidget" class manual entry for details on the 
 inherited options.
 .SH "WIDGET-SPECIFIC OPTIONS"
 .LP
@@ -46,7 +46,7 @@ Class:	\fBPosition\fR
 Command-Line Switch:	\fB-childsitepos\fR
 .fi
 .IP
-Specifies the position of the child site in the time field: \fBn\fR,
+Specifies the position of the child site in the time field: \fBn\fR, 
 \fBs\fR, \fBe\fR, or \fBw\fR.  The default is e.
 .LP
 .nf
@@ -55,7 +55,7 @@ Class:	\fBCommand\fR
 Command-Line Switch:	\fB-command\fR
 .fi
 .IP
-Specifies a Tcl command to be executed upon detection of a Return key
+Specifies a Tcl command to be executed upon detection of a Return key 
 press event.
 .LP
 .nf
@@ -138,10 +138,10 @@ this case the command returns an empty string.
 command.
 .TP
 \fIpathName \fBget\fR ?\fBformat\fR?
-Returns the current contents of the timefield in a format of
+Returns the current contents of the timefield in a format of 
 string or as an integer clock value using the \fB-string\fR and \fB-clicks\fR
-format options respectively.  The default is by string.  Reference the
-clock command for more information on obtaining times and their
+format options respectively.  The default is by string.  Reference the 
+clock command for more information on obtaining times and their 
 formats.
 .TP
 \fIpathName \fBisvalid\fR
@@ -150,9 +150,9 @@ displayed time value.  For example, 12:59:59 is valid whereas
 25:59:59 is invalid.
 .TP
 \fIpathName \fBshow\fR \fItime\fR
-Changes the currently displayed time to be that of the time
+Changes the currently displayed time to be that of the time 
 argument.  The time may be specified either as a string, an
-integer clock value or the keyword "now" (the default).
+integer clock value or the keyword "now" (the default). 
 Reference the clock command for more information on obtaining
 times and their formats.
 

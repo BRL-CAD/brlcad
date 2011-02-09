@@ -1,5 +1,13 @@
 [incr Widgets] CHANGES
 ----------------------
+==========================================================================
+CURRENT VERSION:  4.0.2
+PREVIOUS VERSION: 4.0.1
+
+
+
+
+
 
 ==========================================================================
 CURRENT VERSION:  4.0.1
@@ -95,15 +103,15 @@ o - Error checking was added to hierarchy's -alwaysquery option to enforce
 
   [incr Widgets] version 3.0.0 is compatable with itcl3.0
 
-  [incr Widgets] has undergone a major overhaul between the last version
-and 3.0.0.  Since so many changes have taken place it made more since to
+  [incr Widgets] has undergone a major overhaul between the last version 
+and 3.0.0.  Since so many changes have taken place it made more since to 
 list them by widget class name rather than the old style of new features
 and bug fixes.  The majority of the changes are under the covers and will
-have minimal impact of existing scripts, but there are a few that may
+have minimal impact of existing scripts, but there are a few that may 
 bite you.  To locate possible incompatabilities, just search this file
-for the key words "POSSIBLE INCOMPATIBILITY".
+for the key words "POSSIBLE INCOMPATIBILITY".  
 
-  In addition, quite a few new widgets have been added to the set.  They
+  In addition, quite a few new widgets have been added to the set.  They 
 include the following:
 
 	Calendar
@@ -117,13 +125,13 @@ include the following:
 	Hierarchy
 	Labeledframe
 	Mainwindow
-	Messagebox
+	Messagebox		
 	Scrolledwidget
 	Timeentry
 	Timefield
 	Watch
 
-  Thanx to the following contributors who have been kind enough to help
+  Thanx to the following contributors who have been kind enough to help 
 me support this effort through enhancements, bug fixes, and new widgets.
 
 	John Tucker		jatucker@austin.dsccc.com
@@ -131,7 +139,7 @@ me support this effort through enhancements, bug fixes, and new widgets.
 	John Reekie 		johnr@EECS.Berkeley.EDU
 	Alfredo Jahn		ajahn@spd.dsccc.com
 	Michael McLennan	mmclennan@lucent.com
-
+	
 
 Labeledwidget
 ______________________________________________________________________________
@@ -153,7 +161,7 @@ ______________________________________________________________________________
 >> POSSIBLE INCOMPATIBILITY - The childsite is now a protected component.
    If you need access to it, use the childsite command.
 
->> Added new label position orientation settings.  The current label
+>> Added new label position orientation settings.  The current label 
    positions are nw, n, ne, sw, s, se, en, e, es, wn, w, and ws.
 
 >> Updated the test script and man page.
@@ -171,17 +179,17 @@ ______________________________________________________________________________
 >> Changed component option basis to be that of the "usuals".
 
 >> Added a -state option that allows you to disable the listbox.  Selection
-   is blocked.  The foreground of the scrolledlistbox label is changed
+   is blocked.  The foreground of the scrolledlistbox label is changed 
    to disbabledforeground.
 
->> Fixed the infinite looping problem which would occur with -hscrollmode
-   set to dynamic and a really long line added just out of the view port.
-   As you'd scroll down the horizontal scrollbar bar would start flashing
-   on and off.
+>> Fixed the infinite looping problem which would occur with -hscrollmode 
+   set to dynamic and a really long line added just out of the view port.  
+   As you'd scroll down the horizontal scrollbar bar would start flashing 
+   on and off.  
 
 >> Removed the margin frame components used for implementing a margin
-   between the listbox and scrollbars.  This is now accomplished via
-   the grid by maintaining an empty row/column for the margin and
+   between the listbox and scrollbars.  This is now accomplished via 
+   the grid by maintaining an empty row/column for the margin and 
    adjusting its minsize.
 
 >> POSSIBLE INCOMPATIBILITY - Removed -items option.  This was originally
@@ -222,11 +230,11 @@ ______________________________________________________________________________
 >> POSSIBLE INCOMPATABILITY - The pushButton component has been changed
    to pushbutton.
 
->> POSSIBLE INCOMPATABILITY - The following options have been removed
+>> POSSIBLE INCOMPATABILITY - The following options have been removed 
    and are not directly available in the pushbutton anymore:
 	-anchor -justify -textvariable
 
-   The underlying button component still maintains them , but not the
+   The underlying button component still maintains them , but not the 
    pushbutton itself.  You can still set them via the component
    command, i.e. ".pb component pushButton configure -justify left"
 
@@ -242,16 +250,16 @@ ______________________________________________________________________________
 
 >> Changed component option basis to be that of the "usuals".
 
->> Added a -width and -height option.  A value of zero causes the width
-   and/or height to be adjusted to the required value based on the size
-   requests of the components placed in the childsite.  Otherwise, the
+>> Added a -width and -height option.  A value of zero causes the width 
+   and/or height to be adjusted to the required value based on the size 
+   requests of the components placed in the childsite.  Otherwise, the 
    width and/or height is fixed.  The default is zero.
 
 >> Added -width and -height tests to the test script and updated the
    man page.
 
 >> The activate method no longer returns an error if it is called when
-   the shell is already active.  Instead, the shell is just raised.
+   the shell is already active.  Instead, the shell is just raised.  
 
 
 Dialogshell
@@ -282,29 +290,29 @@ ______________________________________________________________________________
 >> Modified the insert and delete methods to use the items insert and
    delete method rather than configuring the -items option which has
    been removed from the underlying scrolledlistbox.
-
+   
 >> Removed the margin frame component used for implementing a margin
-   between the items and selection.  This is now accomplished via
-   the grid by maintaining an empty row for the margin and adjusting
+   between the items and selection.  This is now accomplished via 
+   the grid by maintaining an empty row for the margin and adjusting 
    its minsize.
 
 >> Removed the unecessary frame that was used to contrain the width
-   and height of the widget.  This is now performed directly on the
+   and height of the widget.  This is now performed directly on the 
    widget hull.
 
->> POSSIBLE INCOMPATABILITY - The following options have been removed
+>> POSSIBLE INCOMPATABILITY - The following options have been removed 
    and are not directly available in the selectionbox anymore:
-	-hscrollmode -itemslabelpos -labelmargin -margin -relief
-	-sbwidth -scrollmargin -selectionlabelpos -vscrollmode
+	-hscrollmode -itemslabelpos -labelmargin -margin -relief 
+	-sbwidth -scrollmargin -selectionlabelpos -vscrollmode 
 
-   The underlying components still maintain them, but not the
+   The underlying components still maintain them, but not the 
    selectionbox itself.  You can still set them via the component
    command, i.e. ".sb component selection configure -labelpos nw" or
    ".sb component items configure -hscrollmode static"
 
->> Added a -width and -height option.  A value of zero causes the width
-   and/or height to be adjusted to the required value based on the size
-   requests of the components placed in the childsite.  Otherwise, the
+>> Added a -width and -height option.  A value of zero causes the width 
+   and/or height to be adjusted to the required value based on the size 
+   requests of the components placed in the childsite.  Otherwise, the 
    width and/or height is fixed.  The default is zero.
 
 >> Updated the test script, demo, and man page.
@@ -324,19 +332,19 @@ ______________________________________________________________________________
 >> POSSIBLE INCOMPATABILITY - The "sb" component has been renamed to be
    "selectionbox".  This is much more descriptive.
 
->> POSSIBLE INCOMPATABILITY - The following options have been removed
+>> POSSIBLE INCOMPATABILITY - The following options have been removed 
    and are not directly available in the selectiondialog anymore:
-	-hscrollmode -itemslabelpos -labelmargin -margin -relief
-	-sbwidth -scrollmargin -selectionlabelpos -vscrollmode
+	-hscrollmode -itemslabelpos -labelmargin -margin -relief 
+	-sbwidth -scrollmargin -selectionlabelpos -vscrollmode 
 
-   The underlying components still maintain them, but not the
+   The underlying components still maintain them, but not the 
    selectiondialog itself.  You can still set them via the component
    command, i.e. ".sd component selectionbox configure -margin 10" or
    ".sd component selectionbox component items configure -hscrollmode static"
 
->> The -width and -height options are now controlled by the shell class.
-   A value of zero causes the width and/or height to be adjusted to the
-   required value based on the size requests of the components.  Otherwise,
+>> The -width and -height options are now controlled by the shell class.  
+   A value of zero causes the width and/or height to be adjusted to the 
+   required value based on the size requests of the components.  Otherwise, 
    the width and/or height is fixed.  The default is zero.
 
 
@@ -353,8 +361,8 @@ ______________________________________________________________________________
 >> Changed component option basis to be that of the "usuals".
 
 >> Removed the margin frame components used for implementing a margin
-   between the text and scrollbars.  This is now accomplished via
-   the grid by maintaining an empty row/column for the margin and
+   between the text and scrollbars.  This is now accomplished via 
+   the grid by maintaining an empty row/column for the margin and 
    adjusting its minsize.
 
 >> The -state option changes the label to disabledforeground when the
@@ -362,8 +370,8 @@ ______________________________________________________________________________
 
 >> Fixed the infinite looping problem which would occur with -wrap set
    to none, -hscrollmode set to dynamic and a really long line added
-   just out of the view port.  As you'd scroll down the horizontal
-   scrollbar bar would start flashing on and off.
+   just out of the view port.  As you'd scroll down the horizontal 
+   scrollbar bar would start flashing on and off.  
 
 >> Added an index argument to the import method so a file can be
    imported into the text area at positions other than just the end.
@@ -420,8 +428,8 @@ ______________________________________________________________________________
 >> Changed component option basis to be that of the "usuals".
 
 >> Removed the margin frame components used for implementing a margin
-   between the canvas and scrollbars.  This is now accomplished via
-   the grid by maintaining an empty row/column for the margin and
+   between the canvas and scrollbars.  This is now accomplished via 
+   the grid by maintaining an empty row/column for the margin and 
    adjusting its minsize.
 
 >> Updated the test script, demo, and man page.
@@ -444,14 +452,14 @@ ______________________________________________________________________________
 
 >> Changed component option basis to be that of the "usuals".
 
->> Fixed the infinite looping problem which would occur with -hscrollmode
-   set to dynamic and a really long component added just out of the view
-   port.  As you'd scroll down the horizontal scrollbar bar would start
-   flashing on and off.
+>> Fixed the infinite looping problem which would occur with -hscrollmode 
+   set to dynamic and a really long component added just out of the view 
+   port.  As you'd scroll down the horizontal scrollbar bar would start 
+   flashing on and off.  
 
 >> Removed the margin frame components used for implementing a margin
-   between the canvas and scrollbars.  This is now accomplished via
-   the grid by maintaining an empty row/column for the margin and
+   between the canvas and scrollbars.  This is now accomplished via 
+   the grid by maintaining an empty row/column for the margin and 
    adjusting its minsize.
 
 >> Updated the test script, demo, and man page.
@@ -464,14 +472,14 @@ ______________________________________________________________________________
 
 >> POSSIBLE INCOMPATABILITY - Renamed the "ef" component to "prompt".
 
->> POSSIBLE INCOMPATABILITY - The following options have been removed
+>> POSSIBLE INCOMPATABILITY - The following options have been removed 
    and are not directly available in the promptdialog anymore:
-	-fixed -justify -labelbitmap -labelimage -labelmargin
+	-fixed -justify -labelbitmap -labelimage -labelmargin 
 	-state -textvariable -width
 
-   The underlying components still maintain them, but not the
+   The underlying components still maintain them, but not the 
    promptdialog itself.  You can still set them via the component
-   command, i.e. ".pd component prompt configure -labelpos w"
+   command, i.e. ".pd component prompt configure -labelpos w" 
 
 >> Updated the test script, demo, and man page.
 
@@ -483,13 +491,13 @@ ______________________________________________________________________________
 
 >> POSSIBLE INCOMPATABILITY - Renamed the "msg" component to "message".
 
->> POSSIBLE INCOMPATABILITY - The following options have been removed
+>> POSSIBLE INCOMPATABILITY - The following options have been removed 
    and are not directly available in the messagedialog anymore:
 	-anchor -justify -wraplength
 
-   The underlying components still maintain them, but not the
+   The underlying components still maintain them, but not the 
    messagedialog itself.  You can still set them via the component
-   command, i.e. ".md component message configure -justify left"
+   command, i.e. ".md component message configure -justify left" 
 
 >> Reimplemented geometry management using the grid instead of the packer.
 
@@ -499,9 +507,9 @@ ______________________________________________________________________________
 Hierarchy
 ______________________________________________________________________________
 
->> New iwidgets hierarchical data viewer mega-widget which manages a list
-   of nodes that can be expanded or collapsed.  Individual nodes can be
-   highlighted.  Clicking with the right mouse button on any item brings
+>> New iwidgets hierarchical data viewer mega-widget which manages a list 
+   of nodes that can be expanded or collapsed.  Individual nodes can be 
+   highlighted.  Clicking with the right mouse button on any item brings 
    up a special item menu.  Clicking on the background area brings up
    a different popup menu.
 
@@ -518,7 +526,7 @@ ______________________________________________________________________________
 >> New iwidget checkbox mega-widget which manages a group of check
    buttons quite similar to that of the existing radiobox.
 
->> Thanks to John Tucker for the contributed code.
+>> Thanks to John Tucker for the contributed code. 
 
 >> Man page, test script, and demo have been produced.
 
@@ -554,7 +562,7 @@ ______________________________________________________________________________
 Datefield
 ______________________________________________________________________________
 
->> New iwidget.  The datefield is a smart date entry field with adjustable
+>> New iwidget.  The datefield is a smart date entry field with adjustable 
    built-in intelligence levels.  It can be made smart enough not to accept
    any bad dates or made dumb enough to accept any old thing typed.  Since
    it is derived from the labeledwidget, it also includes an optional label.
@@ -568,18 +576,18 @@ Calendar
 ______________________________________________________________________________
 
 >> New iwidget.  The calendar widget provide for the selection and/or
-   display of dates.  It displays a single month at a time.  Buttons exist
+   display of dates.  It displays a single month at a time.  Buttons exist 
    on the top to change the month in effect turning th pages of a calendar.
-   As a page is turned, the dates for the month are modified.  Selection
-   of a date visually marks that date.  The selected value can be monitored
-   via the -command option or just retrieved using the get method.  Methods
-   also exist to select a date and show a particular month.
+   As a page is turned, the dates for the month are modified.  Selection 
+   of a date visually marks that date.  The selected value can be monitored 
+   via the -command option or just retrieved using the get method.  Methods 
+   also exist to select a date and show a particular month.  
 
    The option set allows the calendars appearance to take on many forms.
-   For example, the background of the weekdays and weekends can be
+   For example, the background of the weekdays and weekends can be 
    independently changed, the starting day of the week can be set to
    any of the days, the titles and fonts of everything is configurable,
-   and an outline can be displayed around the each day.
+   and an outline can be displayed around the each day. 
 
 >> Many thanks to Michael McLennan who provided me a early copy of his
    book which gave me the example on which this code is based.
@@ -592,10 +600,10 @@ ______________________________________________________________________________
 Dateentry
 ______________________________________________________________________________
 
->> New iwidget.  Dateentry is a quicken style date entry field with a
-   popup calendar produced by combining the datefield and calendar widgets
-   together.  This allows a user to enter the date via the keyboard or by
-   using the mouse by selecting the calendar icon which brings up a popup
+>> New iwidget.  Dateentry is a quicken style date entry field with a 
+   popup calendar produced by combining the datefield and calendar widgets 
+   together.  This allows a user to enter the date via the keyboard or by 
+   using the mouse by selecting the calendar icon which brings up a popup 
    calendar.  Since it is based on both the datefield and calendar, both
    option sets exists under the same roof in the dateentry.
 
@@ -607,15 +615,15 @@ ______________________________________________________________________________
 Messagebox
 ______________________________________________________________________________
 
->> New iwidget.  Implements an information messages area widget with
-   scrollbars.  Message types can be user defined and configured.  Their
+>> New iwidget.  Implements an information messages area widget with 
+   scrollbars.  Message types can be user defined and configured.  Their 
    options include foreground, background, font, bell, and their display
    mode of on or off.  This allows message types to defined as needed,
-   removed when no longer so, and modified when necessary.
+   removed when no longer so, and modified when necessary.  
 
-   The number of lines that can be displayed may be limited.  When this
-   limit is reached, the oldest line is removed.  There is also support
-   for saving the contents to a file, using the standard file selection
+   The number of lines that can be displayed may be limited.  When this 
+   limit is reached, the oldest line is removed.  There is also support 
+   for saving the contents to a file, using the standard file selection 
    dialog.
 
 >> Many thanks to Alfredo Jahn who came up with idea and provided me a
@@ -633,8 +641,8 @@ ______________________________________________________________________________
 >> Reimplemented geometry management using the grid instead of the packer.
 
 >> Removed the margin frame component used for implementing a margin
-   between the hour, minute and second components.  This is now accomplished
-   via the grid by maintaining an empty row for the margin and adjusting
+   between the hour, minute and second components.  This is now accomplished 
+   via the grid by maintaining an empty row for the margin and adjusting 
    its minsize.
 
 >> POSSIBLE INCOMPATIBILITY - The delete, clear, and insert methods have
@@ -659,14 +667,14 @@ ______________________________________________________________________________
 >> Reimplemented geometry management using the grid instead of the packer.
 
 >> Removed the margin frame component used for implementing a margin
-   between the month, day and year components.  This is now accomplished
-   via the grid by maintaining an empty row for the margin and adjusting
+   between the month, day and year components.  This is now accomplished 
+   via the grid by maintaining an empty row for the margin and adjusting 
    its minsize.
 
 >> Spindate now uses the clock command during the spinning of the date
    components.  Only valid dates are spun now.
 
->> POSSIBLE INCOMPATIBILITY - Changed the -monthformat option to be
+>> POSSIBLE INCOMPATIBILITY - Changed the -monthformat option to be 
    string, brief, and full doing away with the optional user specified list.
 
 >> POSSIBLE INCOMPATIBILITY - The delete, clear, and insert methods have
@@ -701,7 +709,7 @@ ______________________________________________________________________________
 Scrolledhtml
 ______________________________________________________________________________
 
->> Added -alink (same as -linkhighlight, but matches html naming) and -update
+>> Added -alink (same as -linkhighlight, but matches html naming) and -update 
    options.
 
 >> Added new tags to come up to html3.2:
@@ -717,12 +725,12 @@ ______________________________________________________________________________
 
 >> Fixed to delete images after page is cleared.
 
->> Fixed to bring anchor points to middle when moving down to a nearby
+>> Fixed to bring anchor points to middle when moving down to a nearby 
    anchor point.
 
 >> Fixes to regular expression matches.
 
->> Performance enhancements with stack algorithm and regular expression
+>> Performance enhancements with stack algorithm and regular expression 
    searches.
 
 
@@ -731,8 +739,8 @@ ______________________________________________________________________________
 
 >> Added -closecmd and -maxhistory options.
 
->> Made itk_components public/private (which could conceivably break
-   someone, if they were using a component directly that is now private)
+>> Made itk_components public/private (which could conceivably break 
+   someone, if they were using a component directly that is now private) 
 
 >> Fixed bindings.
 
@@ -749,10 +757,10 @@ ______________________________________________________________________________
 Finddialog
 ______________________________________________________________________________
 
->> New iwidget.  Finddialog works in conjunction with a text or
-   scrolledtext widget to provide a means of performing search operations.
-   The user is prompted for a text pattern to be found in the text or
-   scrolledtext widget.  The search can be for all occurances, by regular
+>> New iwidget.  Finddialog works in conjunction with a text or 
+   scrolledtext widget to provide a means of performing search operations.  
+   The user is prompted for a text pattern to be found in the text or 
+   scrolledtext widget.  The search can be for all occurances, by regular 
    expression, considerate of the case, or backwards.
 
 >> Man page, test script, and demo have been produced.
@@ -775,7 +783,7 @@ ______________________________________________________________________________
 Combobox
 ______________________________________________________________________________
 
->> Mitch Gorman (emrys@net-gate.com) has taken over maintenance of the
+>> Mitch Gorman (emrys@net-gate.com) has taken over maintenance of the 
    combobox from John Sigler.
 
 >> Entry completion has been added.  Should your typing in the entry
@@ -789,7 +797,7 @@ ______________________________________________________________________________
 
 >> Reimplemented geometry management using the grid instead of the packer.
 
->> A -grab option has been added to do both local and global grabs
+>> A -grab option has been added to do both local and global grabs 
    of the drop-down listbox.
 
 >> POSSIBLE INCOMPATIBILITY - Removed -items option.  This was originally
@@ -803,16 +811,16 @@ ______________________________________________________________________________
 >> The combobox now utilizes built-in bitmaps for button glyphs.
 
 >> Removed the margin frame component used for implementing a margin
-   between the entry and arrow button.  This is now accomplished via
-   the grid by maintaining an empty column for the margin and adjusting
+   between the entry and arrow button.  This is now accomplished via 
+   the grid by maintaining an empty column for the margin and adjusting 
    its minsize.
 
 >> List elements are preserved when switching between drop-down and simple
    styles via the -dropdown option.
 
 >> The functionality of the -state and -editable options have been made
-   completely independent of each other.  It can be editable/normal,
-   non-editable/normal, or disabled, and toggling one option will not
+   completely independent of each other.  It can be editable/normal, 
+   non-editable/normal, or disabled, and toggling one option will not 
    impact the other option when the first is toggled back
 
 >> Corrected the validation processing in the -unique option.
@@ -827,30 +835,30 @@ ______________________________________________________________________________
 
 >> Changed component option basis to be that of the "usuals".
 
->> Removed frame components used for margins.  This is now accomplished
-   via the grid by maintaining an empty row/column for the margin and
+>> Removed frame components used for margins.  This is now accomplished 
+   via the grid by maintaining an empty row/column for the margin and 
    setting its minsize.
 
 >> Changed the default value of -nomatchstring to "".
 
 >> The directory and files lists are now shown without the leading
-   directory name.  Although this differs from the Motif standard, it
+   directory name.  Although this differs from the Motif standard, it 
    keeps the fileselectionbox more in line with the tk_getSaveFile dialog.
 
 >> POSSIBLE INCOMPATIBILITY - The -style option which allowed you to
-   display the fileselectionbox in a "notif" style using comboboxes
-   for the filter and selection and kept the lists in a panedwindow
+   display the fileselectionbox in a "notif" style using comboboxes 
+   for the filter and selection and kept the lists in a panedwindow 
    has been removed.  A related option, -dirsfraction is also gone.
 
    This feature caused the fileselectionbox to be much slower during
-   construction than anticipated.  If you liked the "notif" style, it
-   exists in a new mega-widget call extfileselectionbox and
+   construction than anticipated.  If you liked the "notif" style, it 
+   exists in a new mega-widget call extfileselectionbox and 
    extfileselectiondialog.
 
 >> POSSIBLE INCOMPATIBILITY - The childsite is now a protected component.
    If you need access to it, use the childsite command.
 
->> POSSIBLE INCOMPATABILITY - The following options have been removed
+>> POSSIBLE INCOMPATABILITY - The following options have been removed 
    and are not directly available in the fileselectionbox anymore:
 
 	-relief -repeatdelay -repeatinterval -labelmargin
@@ -859,7 +867,7 @@ ______________________________________________________________________________
 	-selectionimage- selectionlabelpos -filterfocuscommand
 	-selectionfocuscommand -dbldirscommand -dblfilescommand
 
-   The underlying components still maintain them , but not the
+   The underlying components still maintain them , but not the 
    fileselectionbox itself.  You can still set them via the component
    command, i.e. ".fsb component dirs configure -hscrollmode none"
 
@@ -867,7 +875,7 @@ ______________________________________________________________________________
    have been removed.  I doubt if anybody other than the most picky
    of people will be effected.
 
->> Added new childsite position orientation settings.  The new
+>> Added new childsite position orientation settings.  The new 
    positions are n, s, e, w, top, bottom, and center.
 
 >> Updated the test script and man page.
@@ -876,7 +884,7 @@ ______________________________________________________________________________
 Extfileselectionbox
 ______________________________________________________________________________
 
->> New Iwidget.  The extfileselectionbox is basically the "notif" portion
+>> New Iwidget.  The extfileselectionbox is basically the "notif" portion 
    of the previous version of the fileselectionbox.  It was separated from
    the fileselectionbox for performance reasons.
 
@@ -891,7 +899,7 @@ ______________________________________________________________________________
 
    Some additional updates were installed in tab selection and deselection.
    They will only be invoke should the os be HP-UX.  Also, the ability
-   to scroll the tabs via MB2 has been disabled for HPs.  Thanks to
+   to scroll the tabs via MB2 has been disabled for HPs.  Thanks to 
    tilt@designacc.com (Thomas Tempero) for first reporting the problem
    mikesz@pcs.mot.com (Michael Szilagyi) for sending me the fix which
    was implemented.
@@ -901,7 +909,7 @@ Timefield
 ______________________________________________________________________________
 
 >> New iwidget.  The timefield is a smart time entry field.  It verifies
-   user time input prior to its display.  Since it is derived from the
+   user time input prior to its display.  Since it is derived from the 
    labeledwidget, it also includes an optional label.
 
 >> Man page, test script, and demo have been produced.
@@ -928,10 +936,10 @@ ______________________________________________________________________________
 Timeentry
 ______________________________________________________________________________
 
->> New iwidget.  Timeentry, like the dateentry, is along the quicken
+>> New iwidget.  Timeentry, like the dateentry, is along the quicken 
    lines as well.  It displays a timefield with a watch icon  button
    beside it.  Selection of button presents a popup watch which enables
-   you to select the time by dragging the hands about the face.  The
+   you to select the time by dragging the hands about the face.  The 
    popup has a close button that removes the popup and sets the timefield
    to the value previously displayed in the watch.  You can also just
    enter the time directly as you would in the standard timefield.
@@ -975,14 +983,14 @@ BUG FIXES
 ------------------------------------------------------------------------------
 >> Corrected selectborderwidth option class name in the toolbar
 
-   The class name was set to SelectBorderWidth rather than BorderWidth.
+   The class name was set to SelectBorderWidth rather than BorderWidth.  
    This created problems when attempting to use the toolbar with
-   other widgets like the scrolledcanvas.  Bug report by csmith@adc.com
+   other widgets like the scrolledcanvas.  Bug report by csmith@adc.com 
    (Chad Smith).
 
 >> Allow negative indexes in scrolledlistbox
 
-   Negative indicies are reasonable and valid.  Bug report by
+   Negative indicies are reasonable and valid.  Bug report by 
    wfarel@cas.org (Bill Farel).
 
 >> Corrected problem with caps-lock and num-lock in entryfields
@@ -1000,17 +1008,17 @@ BUG FIXES
 >> Made the relayout method in pushbutton protected.
 
    The relayout method in the pushbutton needed to be changed from private
-   to protected so parent classes can have access.  Bug discovered by
+   to protected so parent classes can have access.  Bug discovered by 
    Mario Weilguni <e8732250@student.tuwien.ac.at>
 
 >> Corrected html tag parsing in scrolledhtml mega-widget
 
-   Fixed regular expressions parsing html tags to ignore text in quotes
+   Fixed regular expressions parsing html tags to ignore text in quotes 
    and only examine first attribute in list.
 
 >> Corrected optionmenu insert bug
 
-   The option menu would not allow you to insert an entry beyond the
+   The option menu would not allow you to insert an entry beyond the 
    current length of the popup menu.  It should just default to using
    the end in this case.
 
@@ -1027,23 +1035,23 @@ BUG FIXES
    there is no selection.  Instead it should return -1 as documented.
    Changed it to always return -1 in case of error.  This makes more
    sense.
-
-   If there are no items in the notebook, the -scrollcommand should
+ 
+   If there are no items in the notebook, the -scrollcommand should 
    still be run (if it is set).  Otherwise, you end up with a
    scrollbar that looks odd, and when you try to scroll you get
    errors.  Changed it so that it will tell the scrollbar that
-   the entire notebook is being displayed.  Reported by Tom Tromey
+   the entire notebook is being displayed.  Reported by Tom Tromey 
    (tromey@cygnus.com)
 
 >> Corrected menubar menucget command to return errors for bad options.
 
    The command "<menubar> menucget .element" returned something other
-   than an error message.  This has been corrected.  Reported by Tom
+   than an error message.  This has been corrected.  Reported by Tom 
    Tromey (tromey@cygnus.com)
 
 >> Corrected menubar man page.
 
-   The usage for the menubar menucget command was wrong and has been
+   The usage for the menubar menucget command was wrong and has been 
    fixed.  Reported by Tom Tromey (tromey@cygnus.com)
 
 
@@ -1067,12 +1075,12 @@ NEW FEATURES
    of them up a bit.
 
 >> The hyperhelp mega-widget has been enhanced such that topic items
-   don't need to be in the help directory.
+   don't need to be in the help directory.  
 
-   It's just an added option in specifying topics.  To use it, you would
-   replace '-topics {topic1 topic2 topic3}' with
-   '-topics {topic1 {topicname2 filename2} {topic3 filename3}}'.  In other
-   words, you only have to change where you want to specify a pathname. If
+   It's just an added option in specifying topics.  To use it, you would 
+   replace '-topics {topic1 topic2 topic3}' with 
+   '-topics {topic1 {topicname2 filename2} {topic3 filename3}}'.  In other 
+   words, you only have to change where you want to specify a pathname. If 
    you don't specify a filename, everything works the same.
 
 >> Added a -autoclear option to the combobox.
@@ -1138,14 +1146,14 @@ NEW FEATURES
    The borderwidth, relief, and hightlight options have been removed from
    the canvas widget and placed on the new encompassing frame widget.  This
    fixes the problem with canvas widgets including the border and highlight
-   ring in the clipping region.
+   ring in the clipping region.  
 
 >> Added extra frame around text widget in Scrolledtext class
 
    The borderwidth, relief, and hightlight options have been removed from
    the text widget and placed on the new encompassing frame widget.  This
    fixes the problem with text widgets including the border and highlight
-   ring in the clipping region.
+   ring in the clipping region.  
 
 >> The canvasprintbox stamp supports resizing and default print buttons
 
@@ -1156,38 +1164,38 @@ NEW FEATURES
 
 >> Added feedback mega-widget to [incr Widgets]
 
-   The feedback widget is a gage for displaying process status.  Display
-   is given as a percentage and as a thermometer type bar. Options exist
+   The feedback widget is a gage for displaying process status.  Display 
+   is given as a percentage and as a thermometer type bar. Options exist 
    for adding a label and controlling its position.
 
-   Special thanks go to Sam Shen(SLShen@lbl.gov), as this code is based on his
+   Special thanks go to Sam Shen(SLShen@lbl.gov), as this code is based on his 
    feedback.tcl code from tk inspect. The original code is copyright 1995
    Lawrence Berkeley Laboratory.
 
 >> Added scrolledhtml mega-widget to [incr Widgets]
 
    The scrolledhtml widget implements a scrollable html text widget through
-   inheritance from scrolledtext.  Import reads from an html file, while
-   export still writes plain text.  Also provides a render command, to
+   inheritance from scrolledtext.  Import reads from an html file, while 
+   export still writes plain text.  Also provides a render command, to 
    display html text passed in as an argument.
 
-   Special thanks go to Sam Shen(SLShen@lbl.gov), as this code is based on his
+   Special thanks go to Sam Shen(SLShen@lbl.gov), as this code is based on his 
    tkhtml.tcl code from tk inspect. The original code is copyright 1995
    Lawrence Berkeley Laboratory.
 
 >> Added hyperhelp mega-widget to [incr Widgets]
 
-   The hyperhelp widget implements a help facility using html formatted
+   The hyperhelp widget implements a help facility using html formatted 
    hypertext files.
 
-   Special thanks go to Sam Shen(SLShen@lbl.gov), as this code is based on his
+   Special thanks go to Sam Shen(SLShen@lbl.gov), as this code is based on his 
    help.tcl code from tk inspect.
 
 >> Added menubar mega-widget to [incr Widgets]
 
    Actually it was kind-of already an iwidget.  It was living in the incoming
    directory for a time.  No one had a complaints about it so now it is
-   a full citizen.
+   a full citizen. 
 
 
 BUG FIXES
@@ -1200,7 +1208,7 @@ BUG FIXES
 >> Corrected problem with dialogs being unable to acquire a grab.
 
    The dialogshell activate method would generate an error if unable to
-   acquire a grab for application and global modal dialogs.  The fix
+   acquire a grab for application and global modal dialogs.  The fix 
    installed adds a catch and a reattempt loop with a delay.  In other
    words, the dialog shell will continuously attempt to acquire the grab
    with a delay between attempts.
@@ -1212,7 +1220,7 @@ BUG FIXES
 
 >> Corrected scrolledlistbox getcurselection method with multiple selectmode.
 
-   If the current scrolledlistbox selectmode is multiple, then the
+   If the current scrolledlistbox selectmode is multiple, then the 
    getcurselection method should always return the selected items as
    a list, regardless of the number of items selected.  It used to
    return a list only if more than one item is selected.
@@ -1224,7 +1232,7 @@ BUG FIXES
    a button.  Next, activate it again and you'd notice that the dialog's
    buttonbox had not been resized.  The problem was that the resizing
    of the buttonbox was bound to the map event, which once mapped, was
-   removed when it shouldn't have been.
+   removed when it shouldn't have been.  
 
 >> Buttonbox wasn't adjusting properly following button additions which
    were preceeded by deletions.
@@ -1236,7 +1244,7 @@ BUG FIXES
 
 >> Removed underlining of listbox items in the combobox.
 
-   Milind Khandekar requested that this feature be removed.  It was
+   Milind Khandekar requested that this feature be removed.  It was 
    annoying.
 
 
@@ -1260,12 +1268,12 @@ NEW FEATURES
 
 >> Added several new mega-widgets.
 
-   The new mega-widgets include the toolbar, tabnotebook, tabset, and
+   The new mega-widgets include the toolbar, tabnotebook, tabset, and 
    notebook.  Check the man pages for details.
 
 >> Added demo catalog.
 
-   The demos directory now contains a catalog program.  It displays the
+   The demos directory now contains a catalog program.  It displays the 
    code for each demo upon single select.  Double-click starts the demo.
 
 >> Added incoming directory for experimental mega-widgets.
@@ -1291,7 +1299,7 @@ NEW FEATURES
 >> Added curselection method to selectionbox and selectiondialog class.
 
    The curselection command from the contained listbox of the selectionbox
-   has been thinwrapped.
+   has been thinwrapped.  
 
 >> Removed BLT dependency for implementing application modal dialogs.
 
@@ -1315,10 +1323,10 @@ NEW FEATURES
 >> Added center command to the dialogshell.
 
    The dialogshell provides a center command which takes an optional argument
-   of the path for another widget.  Upon activation, the dialogshell will
-   be centered with respect to it.  The command may also be invoked with
-   no arguments to center the dialogshell on the screen as a whole.  Since
-   all other dialog classes are derived from dialogshell, all dialogs now
+   of the path for another widget.  Upon activation, the dialogshell will 
+   be centered with respect to it.  The command may also be invoked with 
+   no arguments to center the dialogshell on the screen as a whole.  Since 
+   all other dialog classes are derived from dialogshell, all dialogs now 
    have the center command available.
 
 >> Made the Help button hidden by default for dialogs
@@ -1329,7 +1337,7 @@ NEW FEATURES
 >> Comboxbox now derived from entryfield.
 
    The combobox structure has been modified to be derived from the entryfield
-   class.  Now combobox labels can be aligned using the labeledwidget
+   class.  Now combobox labels can be aligned using the labeledwidget 
    alignlabels method along with optionmenus, entryfields and such.
 
 >> Added -justify and -wraplength to Messagedialog.
@@ -1347,9 +1355,9 @@ NEW FEATURES
 >> Added the canvasprintbox and canvasprintdialog mega-widgets.
 
    Two new mega-widgets, canvasprintbox and canvasprintdialog, have been
-   contributed to [incr Widgets].  Thanks to Tako Schotanus,
+   contributed to [incr Widgets].  Thanks to Tako Schotanus, 
    Tako.Schotanus@bouw.tno.nl.
-
+   
 >> Added the textbackground option to the scrolledcanvas widget
 
    The textbackground option has been added to the scrolledcanvas widget
@@ -1360,7 +1368,7 @@ BUG FIXES
 ------------------------------------------------------------------------------
 >> Enabled repeat action in spinners.
 
-   This was available in iwidgets two versions ago.  I made in incorrect
+   This was available in iwidgets two versions ago.  I made in incorrect 
    merge and lost the change.  It has now been added back into the spinner.
 
 >> Eliminated use of #auto in panedwindow.
@@ -1382,14 +1390,14 @@ BUG FIXES
 >> Corrected flicker problem in scrolled* widgets.
 
    Modified the scrolled* widgets to only change the current scrollbar
-   display if different than the current setting.  This fixes the flicker
-   problem which was apparent during horizontal scrolling.
+   display if different than the current setting.  This fixes the flicker 
+   problem which was apparent during horizontal scrolling.  
 
 >> Entryfield command option performs a break.
 
    Following evaluation of the command option for entryfield widgets, a
    break is performed.  This caused a problem when entryfields were in
-   a dialog.  Hitting return in the entryfield, invoked the dialogs
+   a dialog.  Hitting return in the entryfield, invoked the dialogs 
    default button.  This has been fixed.
 
 
@@ -1419,17 +1427,17 @@ NEW FEATURES
    Mega-widgets can now be created using the new lower case, more tk'ish
    method or still using the class name.
 
-   Entryfield .ef   and   entryfield .ef
+   Entryfield .ef   and   entryfield .ef  
 
    both perform the same operation.
 
->> The demos should now all work.
+>> The demos should now all work.  
 
    The correct wish is now called.  itkwish instead of the old itcl_wish.
 
 >> The man pages have all been updated to the best of my ability.
 
->> A new more minimal format for the code style has been implemented.
+>> A new more minimal format for the code style has been implemented.  
 
    The class declaration only contains declarations.  All implementation is
    spearate.  This creates a much more readable class.
@@ -1439,7 +1447,7 @@ NEW FEATURES
 
 >> Several new validate types such as hexidecimal and real have been added
    to the Entryfield.
-
+   
 >> The Panedwindow class additional commands:
 
    A paneconfigure command exists for configuring indiviual tagged panes.
@@ -1468,7 +1476,7 @@ NEW FEATURES
 
 	.bb insert Cancel Apply -text Apply
 
-   The invoke command no long excepts a list of buttons to invoke.  That
+   The invoke command no long excepts a list of buttons to invoke.  That 
    didn't make much sense.  It takes an optional index for a single button
    to invoke.  Without any arguments, the default button is invoked.
 
@@ -1497,7 +1505,7 @@ BUG FIXES
 
    Several variables were incorrectly declared to be private rather than
    protected.  Also, the _scroll* method was incorrectly declared private
-   instead of protected.  These problems prevented inheritance from the
+   instead of protected.  These problems prevented inheritance from the 
    scrolled* classes.
 
 
@@ -1519,7 +1527,7 @@ INCOMPATIBLE CHANGES
 >> Labeledwidget class changes:
 
    The -labelon option has been removed.  The mega-widget now unpacks both
-   the label and margin if neither the -labeltext, -labelbitmap, or
+   the label and margin if neither the -labeltext, -labelbitmap, or 
    -labeimage have a value.
 
    The -font option has been removed.  The -labelfont option should be used
@@ -1530,18 +1538,18 @@ INCOMPATIBLE CHANGES
    The -labelon option is not inherited by the Entryfield anymore.  See the
    Labeledwidget changes above.
 
-   The Entryfield fixed option has a different meaning.  It now specified
+   The Entryfield fixed option has a different meaning.  It now specified 
    the maximum number of characters allowed.  A value of zero is unlimited.
-   This frees up the width option to be able to specify a greater number
+   This frees up the width option to be able to specify a greater number 
    of characters than the fixed amount for visual effect.
 
-   The -type and -validate options have been combined to just -validate
+   The -type and -validate options have been combined to just -validate 
    which now takes either a type keyword or a command.  The command receives
    additional trailing arguments consisting of the input character and the
    the widget.  I hope to change this soon to use substitutions like %c
    for the character at a later date.
 
-   The -background option has been removed.  The -textbackground option
+   The -background option has been removed.  The -textbackground option 
    should be used instead.
 
    The -validate option now has several substitution strings which may be
@@ -1558,7 +1566,7 @@ INCOMPATIBLE CHANGES
 >> Panedwindow class changes:
 
    Panes are now tagged.  This means the add, and insert methods take an
-   additional argument which is the tag for that pane.
+   additional argument which is the tag for that pane.  
 
    The panedwindow index method now takes the tag as well as the number and
    keyword "end".  Other methods such as delete, hide, and show now can use
@@ -1572,7 +1580,7 @@ INCOMPATIBLE CHANGES
 
    The refresh method has been renamed to reset.
 
-   The semi-private -state option has been removed.  The only method of
+   The semi-private -state option has been removed.  The only method of 
    controlling the display of panes is via the hide and show methods.
 
 >> Dialogshell class changes:
@@ -1600,5 +1608,5 @@ INCOMPATIBLE CHANGES
 
    The binditem method is now been renamed back to bind.  This is what it
    should have been all along.  A problem in the alpha version of [incr Tcl]
-   prevented use of this word.
+   prevented use of this word.  
 

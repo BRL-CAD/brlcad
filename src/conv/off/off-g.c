@@ -1,7 +1,7 @@
 /*                         O F F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,6 +59,7 @@ int read_faces(struct model *m, FILE *fgeom)
     struct faceuse 	 **outfaceuses;
     struct nmgregion  *r;
     struct shell 	  *s;
+    size_t ret;
 
     /* Get numbers of vertices and faces, and grab the appropriate amount of memory */
     if (fscanf(fgeom, "%d %d %d", &nverts, &nfaces, &nedges) != 3)
@@ -74,7 +75,9 @@ int read_faces(struct model *m, FILE *fgeom)
 	    bu_exit(1, "Not enough data points in geometry file.\n");
 
 	verts[i] = (struct vertex *) 0;
-	fscanf(fgeom, "%*[^\n]");
+	ret = fscanf(fgeom, "%*[^\n]");
+	if (ret > 0)
+	    bu_log("unknown parsing error\n");
     }
 
     r = nmg_mrsv(m);		/* Make region, empty shell, vertex. */
@@ -107,7 +110,9 @@ int read_faces(struct model *m, FILE *fgeom)
 	for (j = 0; j < nedges; j++)		/* Save (possibly) newly created vertex structs. */
 	    verts[pinds[j]-1] = vlist[j];
 
-	fscanf(fgeom, "%*[^\n]");
+	ret = fscanf(fgeom, "%*[^\n]");
+	if (ret > 0)
+	    bu_log("unknown parsing error\n");
 
 	bu_free((char *)vlist, "vertext list");
 	bu_free((char *)pinds, "point indicies");
@@ -160,7 +165,7 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 	    char dtype[40], format[40];
 	    if (sscanf(buf2, "%40s %40s %64s", dtype, format, geom_fname) != 3)
 		bu_exit(1, "Incomplete geometry field in input file.");
-	    if (strcmp(dtype, "indexed_poly") != 0)
+	    if (!BU_STR_EQUAL(dtype, "indexed_poly"))
 		bu_exit(1, "Unknown geometry data type. Must be \"indexed_poly\".");
 	}
 	bu_fgets(buf, sizeof(buf), fpin);

@@ -16,7 +16,6 @@ brlcadinclude_required = \
 	raytrace.h \
 	rtfunc.h \
 	rtgeom.h \
-	rtprivate.h \
 	rtserver.h \
 	tclcad.h
 
@@ -47,13 +46,13 @@ brlcadinclude_wanted = \
 	fb.h \
 	fbio.h \
 	fbserv_obj.h \
+	fft.h \
 	gcv.h \
 	libtermio.h \
 	light.h \
 	mater.h \
 	nmg.h \
 	nurb.h \
-	opennurbs_ext.h \
 	optical.h \
 	orle.h \
 	photonmap.h \
@@ -84,7 +83,8 @@ noinst_HEADERS = \
 	sysv.h
 
 EXTRA_DIST = \
-	sed4
+	sed4 \
+	config_win_cmake.h
 
 if ONLY_BENCHMARK
 brlcadinclude_HEADERS = $(brlcadinclude_required)

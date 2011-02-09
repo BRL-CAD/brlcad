@@ -71,7 +71,6 @@ typedef struct ThreadSpecificData {
     LPSTR boxesBits;		/* Pointer to bitmap data. */
     DWORD boxHeight;		/* Height of each sub-image. */
     DWORD boxWidth;		/* Width of each sub-image. */
-    char defWidth[TCL_INTEGER_SPACE];
 } ThreadSpecificData;
 static Tcl_ThreadDataKey dataKey;
 
@@ -167,40 +166,6 @@ InitBoxes(void)
 /*
  *----------------------------------------------------------------------
  *
- * ButtonDefaultsExitHandler --
- *
- *	Frees the defaults for the buttons.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-ButtonDefaultsExitHandler(
-    ClientData clientData)	/* Points to an array of option specs,
-				 * terminated by one with type
-				 * TK_OPTION_END. */
-{
-    Tk_OptionSpec *specPtr = (Tk_OptionSpec *)clientData;
-
-    for ( ; specPtr->type != TK_OPTION_END; specPtr++) {
-	if (specPtr->internalOffset == Tk_Offset(TkButton, borderWidth)) {
-	    if (specPtr->defValue != NULL) {
-		ckfree((char *) specPtr->defValue);
-		specPtr->defValue = NULL;
-	    }
-	}
-    }
-}
-
-/*
- *----------------------------------------------------------------------
- *
  * TkpButtonSetDefaults --
  *
  *	This procedure is invoked before option tables are created for
@@ -222,26 +187,10 @@ TkpButtonSetDefaults(
 				 * terminated by one with type
 				 * TK_OPTION_END. */
 {
-    int width;
-    Tk_OptionSpec *savedSpecPtr = specPtr;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
-	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
-
-    if (tsdPtr->defWidth[0] == 0) {
-	width = GetSystemMetrics(SM_CXEDGE);
-	if (width == 0) {
-	    width = 1;
-	}
-	sprintf(tsdPtr->defWidth, "%d", width);
+    int width = GetSystemMetrics(SM_CXEDGE);
+    if (width > 0) {
+	sprintf(tkDefButtonBorderWidth, "%d", width);
     }
-    for ( ; specPtr->type != TK_OPTION_END; specPtr++) {
-	if (specPtr->internalOffset == Tk_Offset(TkButton, borderWidth)) {
-	    char *defValue = (char *) ckalloc(strlen(tsdPtr->defWidth) + 1);
-	    strcpy(defValue, tsdPtr->defWidth);
-	    specPtr->defValue = defValue;
-	}
-    }
-    TkCreateExitHandler(ButtonDefaultsExitHandler, (ClientData) savedSpecPtr);
 }
 
 /*

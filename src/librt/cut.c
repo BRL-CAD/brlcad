@@ -1,7 +1,7 @@
 /*                           C U T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@
 
 HIDDEN int rt_ck_overlap BU_ARGS((const vect_t min, const vect_t max, const struct soltab *stp, const struct rt_i *rtip));
 HIDDEN int rt_ct_box BU_ARGS((struct rt_i *rtip, union cutter *cutp, int axis, double where, int force));
-HIDDEN void rt_ct_optim BU_ARGS((struct rt_i *rtip, union cutter *cutp, int depth));
+HIDDEN void rt_ct_optim BU_ARGS((struct rt_i *rtip, union cutter *cutp, size_t depth));
 HIDDEN void rt_ct_free BU_ARGS((struct rt_i *rtip, union cutter *cutp));
 HIDDEN void rt_ct_release_storage BU_ARGS((union cutter *cutp));
 
@@ -239,8 +239,8 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
     int nu_ncells;		/* # cells along one axis */
     int nu_sol_per_cell;	/* avg # solids per cell */
     int nu_max_ncells;		/* hard limit on nu_ncells */
-    int pseudo_depth;		/* "fake" depth to tell rt_ct_optim */
-    register int i;
+    size_t pseudo_depth;		/* "fake" depth to tell rt_ct_optim */
+    register size_t i;
     int xp, yp, zp;
     vect_t xmin, xmax, ymin, ymax, zmin, zmax;
     struct boxnode nu_xbox, nu_ybox, nu_zbox;
@@ -690,7 +690,7 @@ rt_split_mostly_empty_cells(struct rt_i *rtip, union cutter *cutp)
     int upper_or_lower[3];
     fastf_t max_empty;
     int max_empty_dir;
-    int i;
+    size_t i;
     int num_splits=0;
 
     switch (cutp->cut_type) {
@@ -713,7 +713,7 @@ rt_split_mostly_empty_cells(struct rt_i *rtip, union cutter *cutp)
 	    }
 
 	    for (i=0; i<cutp->bn.bn_piecelen; i++) {
-		int j;
+		size_t j;
 
 		pl = cutp->bn.bn_piecelist[i];
 		for (j=0; j<pl.npieces; j++) {
@@ -948,7 +948,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
 	rt_pr_cut(&rtip->rti_CutHead, 0);
     }
 
-    if (RT_G_DEBUG&DEBUG_PLOTBOX) {
+    if (RT_G_DEBUG&DEBUG_PL_BOX) {
 	/* Debugging code to plot cuts */
 	if ((plotfp=fopen("rtcut.pl", "wb"))!=NULL) {
 	    pdv_3space(plotfp, rtip->rti_pmin, rtip->rti_pmax);
@@ -1465,11 +1465,11 @@ rt_ck_overlap(register const fastf_t *min, register const fastf_t *max, register
  *
  * Returns the total number of solids and solid "pieces" in a boxnode.
  */
-HIDDEN int
+HIDDEN size_t
 rt_ct_piececount(const union cutter *cutp)
 {
-    int i;
-    int count;
+    long i;
+    size_t count;
 
     BU_ASSERT(cutp->cut_type == CUT_BOXNODE);
 
@@ -1494,9 +1494,9 @@ rt_ct_piececount(const union cutter *cutp)
  * overlap in space.
  */
 HIDDEN void
-rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, int depth)
+rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, size_t depth)
 {
-    int oldlen;
+    size_t oldlen;
 
     if (cutp->cut_type == CUT_CUTNODE) {
 	rt_ct_optim(rtip, cutp->cn.cn_l, depth+1);
@@ -1618,7 +1618,8 @@ rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p
     double middle;		/* midpoint */
     double d;
     fastf_t max, min;
-    register int i;
+    register size_t i;
+    long il;
     register double left, right;
 
     if (RT_G_DEBUG&DEBUG_CUTDETAIL)
@@ -1661,8 +1662,8 @@ rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p
     }
 
     /* Loop over all the solid pieces */
-    for (i = cutp->bn.bn_piecelen-1; i >= 0; i--) {
-	struct rt_piecelist *plp = &cutp->bn.bn_piecelist[i];
+    for (il = cutp->bn.bn_piecelen-1; il >= 0; il--) {
+	struct rt_piecelist *plp = &cutp->bn.bn_piecelist[il];
 	struct soltab *stp = plp->stp;
 	int j;
 
@@ -1766,7 +1767,7 @@ rt_ct_get(struct rt_i *rtip)
 HIDDEN void
 rt_ct_release_storage(register union cutter *cutp)
 {
-    int i;
+    size_t i;
 
     switch (cutp->cut_type) {
 
@@ -1843,7 +1844,7 @@ rt_ct_free(struct rt_i *rtip, register union cutter *cutp)
 void
 rt_pr_cut(const union cutter *cutp, int lvl)
 {
-    int i, j;
+    size_t i, j;
 
     bu_log("%p ", (void *)cutp);
     for (i=lvl; i>0; i--)
@@ -2278,8 +2279,8 @@ rt_pr_cut_info(const struct rt_i *rtip, const char *str)
 void
 remove_from_bsp(struct soltab *stp, union cutter *cutp, struct bn_tol *tol)
 {
-    int idx;
-    int i;
+    size_t idx;
+    size_t i;
 
     switch (cutp->cut_type) {
 	case CUT_BOXNODE:

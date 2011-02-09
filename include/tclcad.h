@@ -1,7 +1,7 @@
 /*                        T C L C A D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,6 +69,7 @@ __BEGIN_DECLS
 
 struct ged_dm_view {
     struct bu_list		l;
+    struct bu_vls		gdv_callback;
     struct bu_vls		gdv_name;
     struct ged_view		*gdv_view;
     struct dm			*gdv_dmp;

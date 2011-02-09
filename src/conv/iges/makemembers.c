@@ -1,7 +1,7 @@
 /*                   M A K E M E M B E R S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2010 United States Government as represented by
+ * Copyright (c) 1990-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,20 +23,13 @@
  * BRL-CAD acceptable format, and creates the member records for the
  * region.  The tree is traversed in LNR order.
  *
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
  */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 void
-Makemembers( root, head )
-    struct node *root;
-    struct wmember *head;
+Makemembers(struct node *root, struct wmember *head)
 {
     struct node *ptr;
     struct wmember *wmem;
@@ -45,41 +38,38 @@ Makemembers( root, head )
 
     Freestack();
     ptr = root;
-    while ( 1 )
-    {
-	while ( ptr != NULL )
-	{
-	    Push( (union tree *)ptr );
+    while (1) {
+	while (ptr != NULL) {
+	    Push((union tree *)ptr);
 	    ptr = ptr->left;
 	}
-	ptr = ( struct node *)Pop();
+	ptr = (struct node *)Pop();
 
-	if ( ptr == NULL )
+	if (ptr == NULL)
 	    return;
 
-	if ( ptr->op < 0 ) /* this is an operand */
-	{
+	if (ptr->op < 0) {
+	    /* this is an operand */
 	    entno = (-(1+ptr->op)/2); /* entity number */
 
 	    /* make the member record */
-	    wmem = mk_addmember( dir[entno]->name, &(head->l), NULL, operator[op] );
+	    wmem = mk_addmember(dir[entno]->name, &(head->l), NULL, operator[op]);
 	    flt = (fastf_t *)dir[entno]->rot;
-	    for ( i=0; i<16; i++ )
-	    {
+	    for (i=0; i<16; i++) {
 		wmem->wm_mat[i] = (*flt);
 		flt++;
 	    }
 
 	    /* increment the reference count */
 	    dir[entno]->referenced++;
-	}
-	else	/* this is an operator, save it*/
+	} else	/* this is an operator, save it*/
 	    op = ptr->op;
 
 	ptr = ptr->right;
 
     }
 }
+
 
 /*
  * Local Variables:

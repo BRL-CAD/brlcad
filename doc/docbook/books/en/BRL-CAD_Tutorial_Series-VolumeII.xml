@@ -1,14 +1,13 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
+<!-- Converted by db4-upgrade version 1.0 -->
 
-<book xmlns:xi="http://www.w3.org/2001/XInclude">
-  <bookinfo>
-    <title><application>BRL-CAD</application> Tutorial Series: Volume II - Introduction to MGED</title>
+<book xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title><application>BRL-CAD</application> Tutorial Series: Volume II - Introduction to MGED</title>
+    
 
-    <xi:include href="./tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="./tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <publishername>Army Research Laboratory</publishername>
-    <pubsnumber>ARL-SR-102</pubsnumber>
+    <biblioid class="pubsnumber">ARL-SR-102</biblioid>
     <pubdate>April 2001</pubdate>
     
     <legalnotice>
@@ -25,32 +24,11 @@
       it to the originator.</para>
     </legalnotice>      
     
-    <abstract>
-      <para>
-	Since 1979, the U.S. Army Research Laboratory has been developing and
-	distributing the <application>BRL-CAD</application> constructive solid geometry (CSG) modeling
-	package for a wide range of military and industrial applications. The
-	package includes a large collection of tools and utilities including an
-	interactive geometry editor, ray-tracing and generic framebuffer
-	libraries, a network-distributed image-processing and signal-processing
-	capability, and an embedded scripting language.
-      </para>
-      
-      <para>
-	As part of this effort, a multivolume tutorial series is being developed
-	to assist users in the many features of the <application>BRL-CAD</application> package. The
-	"Introduction to <application>MGED</application>," which is the second volume in the series, is
-	intended to provide new users with a basic understanding of the
-	<application>Multi-Device Geometry Editor</application> (<application>MGED</application>), 
-	which is the heart of <application>BRL-CAD</application>. Other
-	volumes focus on installation procedures, advanced features, and
-	programming.
-      </para>
-    </abstract>
-  </bookinfo>
+    
+  </info>
 
-  <preface>
-    <title>Preface</title>
+  <preface><info><title>Preface</title></info>
+    
     <para>
       Since 1979, the U.S. Army Research Laboratory (formerly the Ballistic
       Research Laboratory) has been developing the <application>BRL-CAD</application> constructive solid
@@ -87,8 +65,8 @@
     </para>
   </preface>
   
-  <preface>
-    <title>Acknowledgements</title>
+  <preface><info><title>Acknowledgements</title></info>
+    
     <para>
       The authors would like to thank Paul Tanenbaum, TraNese Christy, Sean
       Morrison, and the other members of the Advanced Computer Systems Team who
@@ -116,124 +94,124 @@
     </para>
   </preface>
 
-  <chapter id="Lesson-1">
-    <title>Creating Primitive Shapes</title>
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="creating_primitive_shapes_overviewlist"/>
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="launching_mged"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="entering_commands"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="using_gui"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="open_new_database"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="create_new_database"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="assign_title"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="set_units"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="select_primitive"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="create_sphere_cmd_line"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="clear_window"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="draw_object"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="erase_from_window"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="create_sphere_gui"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="view_params"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="list_db_contents"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="kill_object"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="editing_commands"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="quitting"/> 
-    <xi:include href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="creating_primitive_shapes_review"/> 
+  <chapter xml:id="Lesson-1"><info><title>Creating Primitive Shapes</title></info>
+    
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="creating_primitive_shapes_overviewlist"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="launching_mged"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="entering_commands"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="using_gui"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="open_new_database"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="create_new_database"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="assign_title"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="set_units"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="select_primitive"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="create_sphere_cmd_line"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="clear_window"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="draw_object"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="erase_from_window"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="create_sphere_gui"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="view_params"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="list_db_contents"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="kill_object"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="editing_commands"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="quitting"/> 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged01_creating_primitive_shapes.xml" xpointer="creating_primitive_shapes_review"/> 
   </chapter> 
 
-  <chapter id="Lesson-2">
-    <title>Learning the Viewing Options</title>
-    <xi:include href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="learning_viewing_options_overviewlist"/>
-    <xi:include href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="learning_viewing_options_intropara1"/>
-    <xi:include href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="learning_viewing_options_intropara2"/>
-    <xi:include href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="creating_radio"/>
-    <xi:include href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="locating_viewing_info_cmd_window"/>
-    <xi:include href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="viewing_system_elements"/>
-    <xi:include href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="coord_sys_summary"/>
-    <xi:include href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="view_radio_angles"/>
-    <xi:include href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="shift_grips"/>
-    <xi:include href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="learning_viewing_options_review"/>
+  <chapter xml:id="Lesson-2"><info><title>Learning the Viewing Options</title></info>
+    
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="learning_viewing_options_overviewlist"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="learning_viewing_options_intropara1"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="learning_viewing_options_intropara2"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="creating_radio"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="locating_viewing_info_cmd_window"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="viewing_system_elements"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="coord_sys_summary"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="view_radio_angles"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="shift_grips"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged02_learning_viewing_options.xml" xpointer="learning_viewing_options_review"/>
   </chapter>
   
-  <chapter id="Lesson-3">
-    <title>Using the Insert Command to Size and Place Shapes</title>
-    <xi:include href="../../lessons/en/mged03_using_insert_command.xml" xpointer="using_insert_command_overviewlist"/>
-    <xi:include href="../../lessons/en/mged03_using_insert_command.xml" xpointer="using_insert_command_intropara1"/>
-    <xi:include href="../../lessons/en/mged03_using_insert_command.xml" xpointer="new_db_myShapes"/>
-    <xi:include href="../../lessons/en/mged03_using_insert_command.xml" xpointer="sphere_make"/>
-    <xi:include href="../../lessons/en/mged03_using_insert_command.xml" xpointer="using_in"/>
-    <xi:include href="../../lessons/en/mged03_using_insert_command.xml" xpointer="args_on_one_line"/>
-    <xi:include href="../../lessons/en/mged03_using_insert_command.xml" xpointer="command_combined_in"/>
-    <xi:include href="../../lessons/en/mged03_using_insert_command.xml" xpointer="mged_naming_conventions"/>
-    <xi:include href="../../lessons/en/mged03_using_insert_command.xml" xpointer="view_shapes"/>
-    <xi:include href="../../lessons/en/mged03_using_insert_command.xml" xpointer="using_insert_command_quit"/>
-    <xi:include href="../../lessons/en/mged03_using_insert_command.xml" xpointer="using_insert_command_review"/>
+  <chapter xml:id="Lesson-3"><info><title>Using the Insert Command to Size and Place Shapes</title></info>
+    
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged03_using_insert_command.xml" xpointer="using_insert_command_overviewlist"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged03_using_insert_command.xml" xpointer="using_insert_command_intropara1"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged03_using_insert_command.xml" xpointer="new_db_myShapes"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged03_using_insert_command.xml" xpointer="sphere_make"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged03_using_insert_command.xml" xpointer="using_in"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged03_using_insert_command.xml" xpointer="args_on_one_line"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged03_using_insert_command.xml" xpointer="command_combined_in"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged03_using_insert_command.xml" xpointer="mged_naming_conventions"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged03_using_insert_command.xml" xpointer="view_shapes"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged03_using_insert_command.xml" xpointer="using_insert_command_quit"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged03_using_insert_command.xml" xpointer="using_insert_command_review"/>
   </chapter>
 
-  <chapter id="Lesson-4">
-    <title>Assigning Material Properties and Raytracing</title>
-    <xi:include href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="assigning_material_properties_and_raytracing_overviewlist"/>
-    <xi:include href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="assigning_material_properties_and_raytracing_opendb"/>
-    <xi:include href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="create_region"/>
-    <xi:include href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="assign_material_prop"/>
-    <xi:include href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="clear_window_new_region"/>
-    <xi:include href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="raytrace_model"/>
-    <xi:include href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="layers_graphics_window"/>
-    <xi:include href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="clear_graphics_window"/>
-    <xi:include href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="assigning_material_properties_and_raytracing_review"/>
+  <chapter xml:id="Lesson-4"><info><title>Assigning Material Properties and Raytracing</title></info>
+    
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="assigning_material_properties_and_raytracing_overviewlist"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="assigning_material_properties_and_raytracing_opendb"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="create_region"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="assign_material_prop"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="clear_window_new_region"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="raytrace_model"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="layers_graphics_window"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="clear_graphics_window"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged04_assign_mat_prop_rt.xml" xpointer="assigning_material_properties_and_raytracing_review"/>
   </chapter>
 
-  <chapter id="Lesson-5">
-    <title>Lesson 5: Learning About Boolean Expressions</title>
-    <xi:include href="../../lessons/en/mged05_learning_boolean_expressions.xml" xpointer="learning_boolean_expressions_overviewlist"/>
-    <xi:include href="../../lessons/en/mged05_learning_boolean_expressions.xml" xpointer="boolean_tools"/>
-    <xi:include href="../../lessons/en/mged05_learning_boolean_expressions.xml" xpointer="boolean_operations"/>
-    <xi:include href="../../lessons/en/mged05_learning_boolean_expressions.xml" xpointer="making_regions_bool_ops"/>
-    <xi:include href="../../lessons/en/mged05_learning_boolean_expressions.xml" xpointer="operator_precedence"/>
-    <xi:include href="../../lessons/en/mged05_learning_boolean_expressions.xml" xpointer="learning_boolean_operations_review"/>
+  <chapter xml:id="Lesson-5"><info><title>Lesson 5: Learning About Boolean Expressions</title></info>
+    
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged05_learning_boolean_expressions.xml" xpointer="learning_boolean_expressions_overviewlist"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged05_learning_boolean_expressions.xml" xpointer="boolean_tools"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged05_learning_boolean_expressions.xml" xpointer="boolean_operations"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged05_learning_boolean_expressions.xml" xpointer="making_regions_bool_ops"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged05_learning_boolean_expressions.xml" xpointer="operator_precedence"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged05_learning_boolean_expressions.xml" xpointer="learning_boolean_operations_review"/>
   </chapter>
 
-  <chapter id="Lesson-6">
-    <title>Creating a Goblet</title>
-    <xi:include href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="creating_a_goblet_overviewlist"/>
-    <xi:include href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="creating_a_goblet_intro"/>
-    <xi:include href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="goblet_new_database"/>
-    <xi:include href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="create_edit_copy_goblet"/>
-    <xi:include href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="making_goblet_regions"/>
-    <xi:include href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="making_goblet_region_comb"/>
-    <xi:include href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="goblet_view_data_tree"/>
-    <xi:include href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="raytracing_goblet"/>
-    <xi:include href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="creating_goblet_review"/>
+  <chapter xml:id="Lesson-6"><info><title>Creating a Goblet</title></info>
+    
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="creating_a_goblet_overviewlist"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="creating_a_goblet_intro"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="goblet_new_database"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="create_edit_copy_goblet"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="making_goblet_regions"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="making_goblet_region_comb"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="goblet_view_data_tree"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="raytracing_goblet"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged06_creating_a_goblet.xml" xpointer="creating_goblet_review"/>
   </chapter>
   
-  <chapter id="Lesson-7">
-    <title>Assigning Material Properties to Your Goblet</title>
-    <xi:include href="../../lessons/en/mged07_goblet_material_properties.xml" xpointer="goblet_material_properties_overviewlist"/>
-    <xi:include href="../../lessons/en/mged07_goblet_material_properties.xml" xpointer="goblet_material_properties_intro1"/>
-    <xi:include href="../../lessons/en/mged07_goblet_material_properties.xml" xpointer="goblet_review_opening_db"/>
-    <xi:include href="../../lessons/en/mged07_goblet_material_properties.xml" xpointer="goblet_assign_colors"/>
-    <xi:include href="../../lessons/en/mged07_goblet_material_properties.xml" xpointer="goblet_transparency_mirror"/>
-    <xi:include href="../../lessons/en/mged07_goblet_material_properties.xml" xpointer="goblet_newforms_raytrace"/>
-    <xi:include href="../../lessons/en/mged07_goblet_material_properties.xml" xpointer="goblet_material_properties_review"/>
+  <chapter xml:id="Lesson-7"><info><title>Assigning Material Properties to Your Goblet</title></info>
+    
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged07_goblet_material_properties.xml" xpointer="goblet_material_properties_overviewlist"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged07_goblet_material_properties.xml" xpointer="goblet_material_properties_intro1"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged07_goblet_material_properties.xml" xpointer="goblet_review_opening_db"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged07_goblet_material_properties.xml" xpointer="goblet_assign_colors"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged07_goblet_material_properties.xml" xpointer="goblet_transparency_mirror"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged07_goblet_material_properties.xml" xpointer="goblet_newforms_raytrace"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged07_goblet_material_properties.xml" xpointer="goblet_material_properties_review"/>
   </chapter>
 
-  <chapter id="Lesson-8">
-    <title>Assigning More Material Properties to Your Goblet</title>
-    <xi:include href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_material_properties2_overviewlist"/>
-    <xi:include href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_material_properties2_intro1"/>
-    <xi:include href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_material_properties2_intro2"/>
-    <xi:include href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_material_properties2_intro3"/>
-    <xi:include href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_material_properties2_intro4"/>
-    <xi:include href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_specular_diffuse"/>
-    <xi:include href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_refractive_index"/>
-    <xi:include href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_shininess"/>
-    <xi:include href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_extinction"/>
-    <xi:include href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_emission"/>
-    <xi:include href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_shader_attributes"/>
-    <xi:include href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_material_properties2_review"/>
+  <chapter xml:id="Lesson-8"><info><title>Assigning More Material Properties to Your Goblet</title></info>
+    
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_material_properties2_overviewlist"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_material_properties2_intro1"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_material_properties2_intro2"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_material_properties2_intro3"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_material_properties2_intro4"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_specular_diffuse"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_refractive_index"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_shininess"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_extinction"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_emission"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_shader_attributes"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged08_goblet_material_properties2.xml" xpointer="goblet_material_properties2_review"/>
  </chapter>
 
-  <chapter id="Lesson-9">
-    <title>Creating a Globe in a Display Box</title>
+  <chapter xml:id="Lesson-9"><info><title>Creating a Globe in a Display Box</title></info>
+    
     <para>
       In previous lessons, you combined various shapes into new objects. These
       new objects have been created using solid building blocks, much like those
@@ -242,133 +220,133 @@
       parts.
     </para>
     
-    <xi:include href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_in_display_overviewlist"/>
-    <xi:include href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_in_display_newdb"/>
-    <xi:include href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_create_display_box"/>
-    <xi:include href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="create_globe_in_box"/>
-    <xi:include href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_assign_mater_prop"/>
-    <xi:include href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_move_rotate"/>
-    <xi:include href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_use_color_tool"/>
-    <xi:include href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_in_display_box_review"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_in_display_overviewlist"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_in_display_newdb"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_create_display_box"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="create_globe_in_box"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_assign_mater_prop"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_move_rotate"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_use_color_tool"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged09_globe_in_display_box.xml" xpointer="globe_in_display_box_review"/>
   </chapter>
   
-  <chapter id="Lesson-10">
-    <title>Creating a Mug</title>
-    <xi:include href="../../lessons/en/mged10_creating_mug.xml" xpointer="creating_mug_overviewlist"/>
-    <xi:include href="../../lessons/en/mged10_creating_mug.xml" xpointer="creating_mug_intro1"/>
-    <xi:include href="../../lessons/en/mged10_creating_mug.xml" xpointer="mug_new_db"/>
-    <xi:include href="../../lessons/en/mged10_creating_mug.xml" xpointer="mug_outside_cyl"/>
-    <xi:include href="../../lessons/en/mged10_creating_mug.xml" xpointer="mug_inside_cyl"/>
-    <xi:include href="../../lessons/en/mged10_creating_mug.xml" xpointer="mug_handle"/>
-    <xi:include href="../../lessons/en/mged10_creating_mug.xml" xpointer="mug_comb1"/>
-    <xi:include href="../../lessons/en/mged10_creating_mug.xml" xpointer="mug_comb2"/>
-    <xi:include href="../../lessons/en/mged10_creating_mug.xml" xpointer="mug_region"/>
-    <xi:include href="../../lessons/en/mged10_creating_mug.xml" xpointer="mug_review"/>
+  <chapter xml:id="Lesson-10"><info><title>Creating a Mug</title></info>
+    
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged10_creating_mug.xml" xpointer="creating_mug_overviewlist"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged10_creating_mug.xml" xpointer="creating_mug_intro1"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged10_creating_mug.xml" xpointer="mug_new_db"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged10_creating_mug.xml" xpointer="mug_outside_cyl"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged10_creating_mug.xml" xpointer="mug_inside_cyl"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged10_creating_mug.xml" xpointer="mug_handle"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged10_creating_mug.xml" xpointer="mug_comb1"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged10_creating_mug.xml" xpointer="mug_comb2"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged10_creating_mug.xml" xpointer="mug_region"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged10_creating_mug.xml" xpointer="mug_review"/>
   </chapter>
 
-  <chapter id="Lesson-11">
-    <title>Refining the Mug</title>
-     <xi:include href="../../lessons/en/mged11_refining_mug.xml" xpointer="refining_mug_overviewlist"/>
-     <xi:include href="../../lessons/en/mged11_refining_mug.xml" xpointer="refining_mug_intro1"/>
-     <xi:include href="../../lessons/en/mged11_refining_mug.xml" xpointer="mug_mater_prop_mater_cmd"/>
-     <xi:include href="../../lessons/en/mged11_refining_mug.xml" xpointer="mug_raytrace1"/>
-     <xi:include href="../../lessons/en/mged11_refining_mug.xml" xpointer="mug_refining"/>
-     <xi:include href="../../lessons/en/mged11_refining_mug.xml" xpointer="mug_torus_cup_combine"/>
-     <xi:include href="../../lessons/en/mged11_refining_mug.xml" xpointer="refining_mug_review"/>
+  <chapter xml:id="Lesson-11"><info><title>Refining the Mug</title></info>
+    
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged11_refining_mug.xml" xpointer="refining_mug_overviewlist"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged11_refining_mug.xml" xpointer="refining_mug_intro1"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged11_refining_mug.xml" xpointer="mug_mater_prop_mater_cmd"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged11_refining_mug.xml" xpointer="mug_raytrace1"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged11_refining_mug.xml" xpointer="mug_refining"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged11_refining_mug.xml" xpointer="mug_torus_cup_combine"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged11_refining_mug.xml" xpointer="refining_mug_review"/>
   </chapter>
 
-  <chapter id="Lesson-12">
-    <title>Creating the Mug Through the GUI</title>
-     <xi:include href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_through_gui_overviewlist"/>
-     <xi:include href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_through_gui_intro1"/>
-     <xi:include href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_through_gui_intro2"/>
-     <xi:include href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_gui_create_body"/>
-     <xi:include href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_gui_create_handle"/>
-     <xi:include href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_gui_create_rim"/>
-     <xi:include href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_gui_create_combinations"/>
-     <xi:include href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_gui_make_region"/>
-     <xi:include href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_gui_check_tree"/>
-     <xi:include href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_gui_comb_edit_props"/>
-     <xi:include href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_gui_raytracing"/>
-     <xi:include href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_through_gui_review"/>
+  <chapter xml:id="Lesson-12"><info><title>Creating the Mug Through the GUI</title></info>
+    
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_through_gui_overviewlist"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_through_gui_intro1"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_through_gui_intro2"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_gui_create_body"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_gui_create_handle"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_gui_create_rim"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_gui_create_combinations"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_gui_make_region"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_gui_check_tree"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_gui_comb_edit_props"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_gui_raytracing"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged12_mug_through_gui.xml" xpointer="mug_through_gui_review"/>
   </chapter>
  
-  <chapter id="lesson-13">
-    <title>Placing Shapes in 3-D Space</title>
-     <xi:include href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="placing_shapes_in_3d_overviewlist"/>
-     <xi:include href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="placing_shapes_in_3d_intro1"/>
-     <xi:include href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="placing_shapes_in_3d_intro2"/>
-     <xi:include href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="placing_shapes_in_3d_intro3"/>
-     <xi:include href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="candle_create_tabletop"/>
-     <xi:include href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="candle_create_base"/>
-     <xi:include href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="candle_create_candle"/>
-     <xi:include href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="candle_create_flame"/>
-     <xi:include href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="candle_create_combination"/>
-     <xi:include href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="candle_check_data_tree"/>
-     <xi:include href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="candle_assign_mater_prop"/>
-     <xi:include href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="candle_raytrace"/>
-     <xi:include href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="placing_shapes_in_3d_review"/>
+  <chapter xml:id="lesson-13"><info><title>Placing Shapes in 3-D Space</title></info>
+    
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="placing_shapes_in_3d_overviewlist"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="placing_shapes_in_3d_intro1"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="placing_shapes_in_3d_intro2"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="placing_shapes_in_3d_intro3"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="candle_create_tabletop"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="candle_create_base"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="candle_create_candle"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="candle_create_flame"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="candle_create_combination"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="candle_check_data_tree"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="candle_assign_mater_prop"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="candle_raytrace"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged13_placing_shapes_in_3d.xml" xpointer="placing_shapes_in_3d_review"/>
   </chapter>
 
-  <chapter id="lesson-14">
-    <title>Gaining More Practice Placing Shapes in Space</title>
-     <xi:include href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="placing_shapes_in_3d_2_overviewlist"/>
-     <xi:include href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="placing_shapes_in_3d_2_intro1"/>
-     <xi:include href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="placing_shapes_in_3d_2_intro2"/>
-     <xi:include href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="candle_base_1st_sphere"/>
-     <xi:include href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="draw_grid_feature"/>
-     <xi:include href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="multipane_feature"/>
-     <xi:include href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="copies_of_shapes"/>
-     <xi:include href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="practice_make_regions_spheres"/>
-     <xi:include href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="candle_base_spheres_combine"/>
-     <xi:include href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="placing_shapes_in_3d_2_review"/>
+  <chapter xml:id="lesson-14"><info><title>Gaining More Practice Placing Shapes in Space</title></info>
+    
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="placing_shapes_in_3d_2_overviewlist"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="placing_shapes_in_3d_2_intro1"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="placing_shapes_in_3d_2_intro2"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="candle_base_1st_sphere"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="draw_grid_feature"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="multipane_feature"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="copies_of_shapes"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="practice_make_regions_spheres"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="candle_base_spheres_combine"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged14_placing_shapes_in_3d_2.xml" xpointer="placing_shapes_in_3d_2_review"/>
   </chapter>
 
-  <chapter id="lesson-15">
-    <title>Creating a Toy Truck</title>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="creating_toy_truck_overviewlist"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="creating_toy_truck_intro1"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="creating_toy_truck_intro2"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_cab_in_cmd"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_hood_in_cmd"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_cab_wheel_well"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="ok_accept_apply_reset_cancel_dismiss"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_wheel_well_prim_edit_cpy"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_cab_shape_comb"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_body_in_cmd"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="prim_ed_wheel_wells"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_body_wheel_wells_comb"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_cab_body_region"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_wheels"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_wheels_region"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_regions_mater_props"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="on_screen_help"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="stacker_shading"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="using_stacker_shading"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_combine_regions"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_raytracing"/>
-     <xi:include href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="creating_toy_truck_review"/>
+  <chapter xml:id="lesson-15"><info><title>Creating a Toy Truck</title></info>
+    
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="creating_toy_truck_overviewlist"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="creating_toy_truck_intro1"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="creating_toy_truck_intro2"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_cab_in_cmd"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_hood_in_cmd"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_cab_wheel_well"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="ok_accept_apply_reset_cancel_dismiss"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_wheel_well_prim_edit_cpy"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_cab_shape_comb"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_body_in_cmd"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="prim_ed_wheel_wells"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_body_wheel_wells_comb"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_cab_body_region"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_wheels"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_wheels_region"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_regions_mater_props"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="on_screen_help"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="stacker_shading"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="using_stacker_shading"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_combine_regions"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="truck_raytracing"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged15_creating_a_toy_truck.xml" xpointer="creating_toy_truck_review"/>
   </chapter>
 
 
 
-  <chapter id="lesson-16">
-    <title>Learning Modeling Techniques and Structures</title>
-     <xi:include href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="modeling_techniques_and_structures_overviewlist"/>
-     <xi:include href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="modeling_techniques_and_structures_intro1"/>
-     <xi:include href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="radio_shapes_to_regions"/>
-     <xi:include href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="body_of_radio"/>
-     <xi:include href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="radio_other_regions"/>
-     <xi:include href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="radio_assembly_comb"/>
-     <xi:include href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="radio_assign_mater_props"/>
-     <xi:include href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="radio_internal_components"/>
-     <xi:include href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="radio_specialty_models"/>
-     <xi:include href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="radio_structure_redefinition"/>
-     <xi:include href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="modeling_techniques_and_structures_review"/>
+  <chapter xml:id="lesson-16"><info><title>Learning Modeling Techniques and Structures</title></info>
+    
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="modeling_techniques_and_structures_overviewlist"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="modeling_techniques_and_structures_intro1"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="radio_shapes_to_regions"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="body_of_radio"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="radio_other_regions"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="radio_assembly_comb"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="radio_assign_mater_props"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="radio_internal_components"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="radio_specialty_models"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="radio_structure_redefinition"/>
+     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../lessons/en/mged16_mod_tech_struct.xml" xpointer="modeling_techniques_and_structures_review"/>
   </chapter>
 
-<appendix label="A">
-  <title><application>MGED</application> Commands</title>
+<appendix label="A"><info><title><application>MGED</application> Commands</title></info>
+  
 </appendix>
 
 </book>

@@ -1,7 +1,7 @@
 /*                      N M G _ B O O L . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2010 United States Government as represented by
+ * Copyright (c) 1993-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -822,7 +822,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	nmg_class_nothing_broken = 1;
 
 	/* Show each loop, one at a time, non-fancy */
-	/* XXX Should have it's own bit, or combination -- not always wanted */
+	/* XXX Should have its own bit, or combination -- not always wanted */
 	nmg_show_each_loop(sA, &classlist[0], 1, 0, "sA lu");
 	nmg_show_each_loop(sB, &classlist[4], 1, 0, "sB lu");
 
@@ -1117,7 +1117,7 @@ int nmg_bool_eval_silent=0;
  * For an example of several, see mged/dodraw.c.
  *
  * Returns an OP_NMG_TESS union tree node, which will contain the
- * resulting region and it's name, as a dynamic string.  The caller is
+ * resulting region and its name, as a dynamic string.  The caller is
  * responsible for releasing the string, and the node, by calling
  * db_free_tree() on the node.
  *
@@ -1170,7 +1170,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 	    bu_log("nmg_booltree_evaluate: bad op %d\n", tp->tr_op);
 	    return 0;
     }
-    /* Handle a boolean operation node.  First get it's leaves. */
+    /* Handle a boolean operation node.  First get its leaves. */
     tl = nmg_booltree_evaluate(tp->tr_b.tb_left, tol, resp);
     tr = nmg_booltree_evaluate(tp->tr_b.tb_right, tol, resp);
     if (tl == 0 || !tl->tr_d.td_r) {
@@ -1221,6 +1221,17 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
     /* move operands into the same model */
     if (tr->tr_d.td_r->m_p != tl->tr_d.td_r->m_p)
 	nmg_merge_models(tl->tr_d.td_r->m_p, tr->tr_d.td_r->m_p);
+
+    /* The 'nmg_model_fuse' function is best to be run here, i.e. just before
+     * the actual boolean operation is performed because at this point all
+     * the geometry to be operated upon is in one single nmg model structure
+     * which is necessary for all the geometry to be fused. Pointer compares
+     * are done in some cases instead of distance testing to determine if
+     * geometry is equal, if fuse is not performed, equal geometry will not
+     * have the same address pointer and therefore an equal test will fail
+     * and break the logic used to perform the boolean operation.
+     */
+    nmg_model_fuse(tl->tr_d.td_r->m_p, tol);
 
     /* input r1 and r2 are destroyed, output is new region */
     reg = nmg_do_bool(tl->tr_d.td_r, tr->tr_d.td_r, op, tol);
@@ -1285,13 +1296,16 @@ nmg_boolean(union tree *tp, struct model *m, const struct bn_tol *tol, struct re
 	       tp, m);
     }
 
-    /*
-     * Find all entities within geometric tolerance of each other and
-     * "fuse" them, establishing topological sharing.  Also breaks all
-     * edges on all vertices that are within tolerance.  Operate on
-     * the entire model at once.
+    /* The nmg_model_fuse function was removed from this point in the
+     * boolean process since not all geometry that is to be processed is
+     * always within the single 'm' nmg model structure passed into this
+     * function. In some cases the geometry resides in multiple nmg model
+     * structures within the 'tp' tree that is passed into this function.
+     * Running nmg_model_fuse is still required but is done later, i.e.
+     * within the nmg_booltree_evaluate function just before the nmg_do_bool
+     * function is called which is when the geometry, in which the boolean
+     * to be performed, is always in a single nmg model structure.
      */
-    (void)nmg_model_fuse(m, tol);
 
     /*
      * Evaluate the nodes of the boolean tree one at a time, until

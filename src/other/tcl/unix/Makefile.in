@@ -158,7 +158,7 @@ INSTALL_DATA		= ${INSTALL} -m 664
 # make for the first time. Certain build targets (make genstubs) need it to be
 # available on the PATH. This executable should *NOT* be required just to do a
 # normal build although it can be required to run make dist.
-TCL_EXE			= tclsh
+TCL_EXE			= tclsh@EXEEXT@
 
 # The symbols below provide support for dynamic loading and shared libraries.
 # See configure.in for a description of what the symbols mean. The values of
@@ -198,9 +198,6 @@ LIB_FILE		= ${TCL_LIB_FILE}
 
 TCL_LIB_FLAG		= @TCL_LIB_FLAG@
 #TCL_LIB_FLAG		= -ltcl
-
-TCL_EXP_FILE		= @TCL_EXP_FILE@
-TCL_BUILD_EXP_FILE	= @TCL_BUILD_EXP_FILE@
 
 # support for embedded libraries on Darwin / Mac OS X
 DYLIB_INSTALL_DIR	= ${LIB_RUNTIME_DIR}
@@ -395,7 +392,7 @@ GENERIC_SRCS = \
 	$(GENERIC_DIR)/tclNamesp.c \
 	$(GENERIC_DIR)/tclNotify.c \
 	$(GENERIC_DIR)/tclObj.c \
-        $(GENERIC_DIR)/tclParse.c \
+	$(GENERIC_DIR)/tclParse.c \
 	$(GENERIC_DIR)/tclPathObj.c \
 	$(GENERIC_DIR)/tclPipe.c \
 	$(GENERIC_DIR)/tclPkg.c \
@@ -540,7 +537,7 @@ SRCS = $(GENERIC_SRCS) $(TOMMATH_SRCS) $(UNIX_SRCS) $(NOTIFY_SRCS) \
 
 all: binaries libraries doc
 
-binaries: ${LIB_FILE} $(STUB_LIB_FILE) $(TCL_BUILD_EXP_FILE) tclsh
+binaries: ${LIB_FILE} $(STUB_LIB_FILE) ${TCL_EXE}
 
 libraries:
 
@@ -577,21 +574,21 @@ tclLibObjs:
 objs: ${OBJS}
 
 
-tclsh: ${TCLSH_OBJS} ${TCL_LIB_FILE}
+${TCL_EXE}: ${TCLSH_OBJS} ${TCL_LIB_FILE}
 	${CC} ${CFLAGS} ${LDFLAGS} ${TCLSH_OBJS} @TCL_BUILD_LIB_SPEC@ ${LIBS} @EXTRA_TCLSH_LIBS@ \
-		${CC_SEARCH_FLAGS} -o tclsh
+		${CC_SEARCH_FLAGS} -o ${TCL_EXE}
 
 # Resetting the LIB_RUNTIME_DIR below is required so that the generated
 # tcltest executable gets the build directory burned into its ld search path.
 # This keeps tcltest from picking up an already installed version of the Tcl
 # library.
 
-tcltest: ${TCLTEST_OBJS} ${TCL_LIB_FILE} ${BUILD_DLTEST}
+tcltest@EXEEXT@: ${TCLTEST_OBJS} ${TCL_LIB_FILE} ${BUILD_DLTEST}
 	$(MAKE) tcltest-real LIB_RUNTIME_DIR="`pwd`"
 
 tcltest-real:
 	${CC} ${CFLAGS} ${LDFLAGS} ${TCLTEST_OBJS} @TCL_BUILD_LIB_SPEC@ ${LIBS} @EXTRA_TCLSH_LIBS@ \
-		${CC_SEARCH_FLAGS} -o tcltest
+		${CC_SEARCH_FLAGS} -o tcltest@EXEEXT@
 
 # Note, in the targets below TCL_LIBRARY needs to be set or else "make test"
 # won't work in the case where the compilation directory isn't the same as the
@@ -601,63 +598,63 @@ tcltest-real:
 # tcltest, ie:
 #	% make test TESTFLAGS="-verbose bps -file fileName.test"
 
-test: tcltest
+test: tcltest@EXEEXT@
 	@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
-	./tcltest $(TOP_DIR)/tests/all.tcl $(TESTFLAGS)
+	./tcltest@EXEEXT@ $(TOP_DIR)/tests/all.tcl $(TESTFLAGS)
 
-gdb-test: tcltest
+gdb-test: tcltest@EXEEXT@
 	@echo "set env @LD_LIBRARY_PATH_VAR@=\"`pwd`:$${@LD_LIBRARY_PATH_VAR@}\"" > gdb.run
 	@echo "set env TCL_LIBRARY=${TCL_BUILDTIME_LIBRARY}" >> gdb.run
 	@echo "set args $(TOP_DIR)/tests/all.tcl $(TESTFLAGS) -singleproc 1" >> gdb.run
-	$(GDB) ./tcltest --command=gdb.run
+	$(GDB) ./tcltest@EXEEXT@ --command=gdb.run
 	rm gdb.run
 
 # Useful target to launch a built tcltest with the proper path,...
-runtest: tcltest
+runtest: tcltest@EXEEXT@
 	@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
-	./tcltest
+	./tcltest@EXEEXT@
 
 # Useful target for running the test suite with an unwritable current
 # directory...
-ro-test: tcltest
+ro-test: tcltest@EXEEXT@
 	@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
-	echo 'exec chmod -w .;package require tcltest;tcltest::temporaryDirectory /tmp;source ../tests/all.tcl;exec chmod +w .' | ./tcltest
+	echo 'exec chmod -w .;package require tcltest;tcltest::temporaryDirectory /tmp;source ../tests/all.tcl;exec chmod +w .' | ./tcltest@EXEEXT@
 
 # This target can be used to run tclsh from the build directory
 # via `make shell SCRIPT=/tmp/foo.tcl`
-shell: tclsh
+shell: ${TCL_EXE}
 	@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
-	./tclsh $(SCRIPT)
+	./${TCL_EXE} $(SCRIPT)
 
 # This target can be used to run tclsh inside either gdb or insight
-gdb: tclsh
+gdb: ${TCL_EXE}
 	@echo "set env @LD_LIBRARY_PATH_VAR@=\"`pwd`:$${@LD_LIBRARY_PATH_VAR@}\"" > gdb.run
 	@echo "set env TCL_LIBRARY=${TCL_BUILDTIME_LIBRARY}" >> gdb.run
-	$(GDB) ./tclsh --command=gdb.run
+	$(GDB) ./${TCL_EXE} --command=gdb.run
 	rm gdb.run
 
 # This target can be used to run tclsh inside ddd
-ddd: tclsh
+ddd: ${TCL_EXE}
 	@echo "set env @LD_LIBRARY_PATH_VAR@=\"`pwd`:$${@LD_LIBRARY_PATH_VAR@}\"" > gdb.run
 	@echo "set env TCL_LIBRARY=${TCL_BUILDTIME_LIBRARY}" >> gdb.run
-	$(DDD) -command=gdb.run ./tclsh
+	$(DDD) -command=gdb.run ./${TCL_EXE}
 	rm gdb.run
 
 VALGRINDARGS=--tool=memcheck --num-callers=8 --leak-resolution=high --leak-check=yes --show-reachable=yes -v
 
-valgrind: tclsh tcltest
+valgrind: ${TCL_EXE} tcltest@EXEEXT@
 	@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
-	valgrind $(VALGRINDARGS) ./tcltest $(TOP_DIR)/tests/all.tcl -singleproc 1 $(TESTFLAGS)
+	valgrind $(VALGRINDARGS) ./tcltest@EXEEXT@ $(TOP_DIR)/tests/all.tcl -singleproc 1 $(TESTFLAGS)
 
-valgrindshell: tclsh
+valgrindshell: ${TCL_EXE}
 	@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
-	valgrind $(VALGRINDARGS) ./tclsh $(SCRIPT)
+	valgrind $(VALGRINDARGS) ./${TCL_EXE} $(SCRIPT)
 
 # The following target outputs the name of the top-level source directory for
 # Tcl (it is used by Tk's configure script, for example). The .NO_PARALLEL
@@ -742,15 +739,11 @@ install-binaries: binaries
 	    $(INSTALL_LIBRARY) libtcl$(SHLIB_SUFFIX) $(LIB_INSTALL_DIR)/libtcl$(SHLIB_SUFFIX);\
 	    chmod 775 $(LIB_INSTALL_DIR)/libtcl$(SHLIB_SUFFIX) ; \
 	fi
-	@if test "$(TCL_BUILD_EXP_FILE)" != ""; then \
-	    echo "Installing $(TCL_EXP_FILE) to $(LIB_INSTALL_DIR)/"; \
-	    $(INSTALL_DATA) $(TCL_BUILD_EXP_FILE) \
-			"$(LIB_INSTALL_DIR)"/$(TCL_EXP_FILE); \
-	    fi
-	@echo "Installing tclsh as $(BIN_INSTALL_DIR)/tclsh$(VERSION)"
-	@$(INSTALL_PROGRAM) tclsh "$(BIN_INSTALL_DIR)"/tclsh$(VERSION)
-	@echo "Installing tclsh as $(BIN_INSTALL_DIR)/tclsh"
-	@$(INSTALL_PROGRAM) tclsh "$(BIN_INSTALL_DIR)"/tclsh
+
+	@echo "Installing ${TCL_EXE} as $(BIN_INSTALL_DIR)/tclsh$(VERSION)@EXEEXT@"
+	@$(INSTALL_PROGRAM) ${TCL_EXE} "$(BIN_INSTALL_DIR)"/tclsh$(VERSION)@EXEEXT@
+	@echo "Installing ${TCL_EXE} as $(BIN_INSTALL_DIR)/tclsh"
+	@$(INSTALL_PROGRAM) ${TCL_EXE} "$(BIN_INSTALL_DIR)"/tclsh
 	@echo "Installing tclConfig.sh to $(LIB_INSTALL_DIR)/"
 	@$(INSTALL_DATA) tclConfig.sh "$(LIB_INSTALL_DIR)"/tclConfig.sh
 	@if test "$(STUB_LIB_FILE)" != "" ; then \
@@ -812,13 +805,13 @@ install-libraries: libraries $(INSTALL_TZDATA) install-msgs
 	    do \
 	    $(INSTALL_DATA) $$i "$(SCRIPT_INSTALL_DIR)"/opt0.4; \
 	    done;
-	@echo "Installing package msgcat 1.4.2 as a Tcl Module";
-	@$(INSTALL_DATA) $(TOP_DIR)/library/msgcat/msgcat.tcl "$(SCRIPT_INSTALL_DIR)"/../tcl8/8.5/msgcat-1.4.2.tm;
-	@echo "Installing package tcltest 2.3.0 as a Tcl Module";
-	@$(INSTALL_DATA) $(TOP_DIR)/library/tcltest/tcltest.tcl "$(SCRIPT_INSTALL_DIR)"/../tcl8/8.5/tcltest-2.3.0.tm;
+	@echo "Installing package msgcat 1.4.3 as a Tcl Module";
+	@$(INSTALL_DATA) $(TOP_DIR)/library/msgcat/msgcat.tcl "$(SCRIPT_INSTALL_DIR)"/../tcl8/8.5/msgcat-1.4.3.tm;
+	@echo "Installing package tcltest 2.3.2 as a Tcl Module";
+	@$(INSTALL_DATA) $(TOP_DIR)/library/tcltest/tcltest.tcl "$(SCRIPT_INSTALL_DIR)"/../tcl8/8.5/tcltest-2.3.2.tm;
 
-	@echo "Installing package platform 1.0.3 as a Tcl Module";
-	@$(INSTALL_DATA) $(TOP_DIR)/library/platform/platform.tcl "$(SCRIPT_INSTALL_DIR)"/../tcl8/8.4/platform-1.0.3.tm;
+	@echo "Installing package platform 1.0.9 as a Tcl Module";
+	@$(INSTALL_DATA) $(TOP_DIR)/library/platform/platform.tcl "$(SCRIPT_INSTALL_DIR)"/../tcl8/8.4/platform-1.0.9.tm;
 	@echo "Installing package platform::shell 1.1.4 as a Tcl Module";
 	@$(INSTALL_DATA) $(TOP_DIR)/library/platform/shell.tcl "$(SCRIPT_INSTALL_DIR)"/../tcl8/8.4/platform/shell-1.1.4.tm;
 
@@ -832,18 +825,18 @@ install-libraries: libraries $(INSTALL_TZDATA) install-msgs
 	        "$(SCRIPT_INSTALL_DIR)"/tm.tcl; \
 	fi
 
-install-tzdata: tclsh
+install-tzdata: ${TCL_EXE}
 	@echo "Installing time zone data"
 	@@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
-	./tclsh $(TOOL_DIR)/installData.tcl \
+	./${TCL_EXE} $(TOOL_DIR)/installData.tcl \
 	    $(TOP_DIR)/library/tzdata "$(SCRIPT_INSTALL_DIR)"/tzdata
 
-install-msgs: tclsh
+install-msgs: ${TCL_EXE}
 	@echo "Installing message catalogs"
 	@@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
-	./tclsh $(TOOL_DIR)/installData.tcl \
+	./${TCL_EXE} $(TOOL_DIR)/installData.tcl \
 	    $(TOP_DIR)/library/msgs "$(SCRIPT_INSTALL_DIR)"/msgs
 
 install-doc: doc
@@ -906,7 +899,7 @@ Makefile: $(UNIX_DIR)/Makefile.in $(DLTEST_DIR)/Makefile.in
 
 clean:
 	rm -f *.a *.o libtcl* core errs *~ \#* TAGS *.E a.out \
-		errors tclsh tcltest lib.exp Tcl @DTRACE_HDR@
+		errors ${TCL_EXE} tcltest@EXEEXT@ lib.exp Tcl @DTRACE_HDR@
 	cd dltest ; $(MAKE) clean
 
 distclean: clean
@@ -926,7 +919,7 @@ depend:
 # tclAppInit.o does not execute concurrently with the renaming and recompiling
 # of that same object file in the targets below.
 
-tclTestInit.o: $(UNIX_DIR)/tclAppInit.c tclsh
+tclTestInit.o: $(UNIX_DIR)/tclAppInit.c ${TCL_EXE}
 	@if test -f tclAppInit.o ; then \
 	    rm -f tclAppInit.sav; \
 	    mv tclAppInit.o tclAppInit.sav; \
@@ -940,7 +933,7 @@ tclTestInit.o: $(UNIX_DIR)/tclAppInit.c tclsh
 	    mv tclAppInit.sav tclAppInit.o; \
 	fi;
 
-xtTestInit.o: $(UNIX_DIR)/tclAppInit.c tclsh
+xtTestInit.o: $(UNIX_DIR)/tclAppInit.c ${TCL_EXE}
 	@if test -f tclAppInit.o ; then \
 	    rm -f tclAppInit.sav; \
 	    mv tclAppInit.o tclAppInit.sav; \
@@ -1773,20 +1766,20 @@ allpatch: dist
 # tk8.* up two directories from the TOOL_DIR.
 #
 
-html: tclsh
+html: ${TCL_EXE}
 	$(BUILD_HTML)
 	@EXTRA_BUILD_HTML@
-html-tcl: tclsh
+html-tcl: ${TCL_EXE}
 	$(BUILD_HTML) --tcl
 	@EXTRA_BUILD_HTML@
-html-tk: tclsh
+html-tk: ${TCL_EXE}
 	$(BUILD_HTML) --tk
 	@EXTRA_BUILD_HTML@
 
 BUILD_HTML = \
 	@@LD_LIBRARY_PATH_VAR@="`pwd`:$${@LD_LIBRARY_PATH_VAR@}"; export @LD_LIBRARY_PATH_VAR@; \
 	TCL_LIBRARY="${TCL_BUILDTIME_LIBRARY}"; export TCL_LIBRARY; \
-	./tclsh $(TOOL_DIR)/tcltk-man2html.tcl --htmldir="$(HTML_INSTALL_DIR)" \
+	./${TCL_EXE} $(TOOL_DIR)/tcltk-man2html.tcl --htmldir="$(HTML_INSTALL_DIR)" \
 		--srcdir=$(TOP_DIR)/.. $(BUILD_HTML_FLAGS)
 
 #

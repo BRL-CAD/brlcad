@@ -29,13 +29,15 @@
 
 <l:gentext key="Abstract" text="خلاصة"/>
 <l:gentext key="abstract" text="خلاصة"/>
+<l:gentext key="Acknowledgements" text="عرفان"/>
+<l:gentext key="acknowledgements" text="عرفان"/>
 <l:gentext key="Answer" text="ج:"/>
 <l:gentext key="answer" text="ج:"/>
 <l:gentext key="Appendix" text="ملحق"/>
 <l:gentext key="appendix" text="ملحق"/>
 <l:gentext key="Article" text="مقال"/>
 <l:gentext key="article" text="مقال"/>
-<l:gentext key="Author" text="Author" lang="en"/>
+<l:gentext key="Author" text="مؤلف"/>
 <l:gentext key="Bibliography" text="قائمة المراجع"/>
 <l:gentext key="bibliography" text="قائمة المراجع"/>
 <l:gentext key="Book" text="كتاب"/>
@@ -53,7 +55,7 @@
 <l:gentext key="dedication" text="إهداء"/>
 <l:gentext key="Edition" text="نسخة"/>
 <l:gentext key="edition" text="نسخة"/>
-<l:gentext key="Editor" text="Editor" lang="en"/>
+<l:gentext key="Editor" text="محرر"/>
 <l:gentext key="Equation" text="معادلة"/>
 <l:gentext key="equation" text="معادلة"/>
 <l:gentext key="Example" text="مثال"/>
@@ -91,25 +93,25 @@
 <l:gentext key="Procedure" text="إجراء"/>
 <l:gentext key="procedure" text="إجراء"/>
 <l:gentext key="ProductionSet" text="منتج"/>
-<l:gentext key="PubDate" text="Publication Date" lang="en"/>
-<l:gentext key="pubdate" text="Publication date" lang="en"/>
+<l:gentext key="PubDate" text="تاريخ النشر"/>
+<l:gentext key="pubdate" text="تاريخ النشر"/>
 <l:gentext key="Published" text="منشور"/>
 <l:gentext key="published" text="منشور"/>
-<l:gentext key="Publisher" text="Publisher" lang="en"/>
+<l:gentext key="Publisher" text="الناشر"/>
 <l:gentext key="Qandadiv" text="س و ج"/>
 <l:gentext key="qandadiv" text="س و ج"/>
 <l:gentext key="QandASet" text="Frequently Asked Questions" lang="en"/>
 <l:gentext key="Question" text="س:"/>
 <l:gentext key="question" text="س:"/>
-<l:gentext key="RefEntry" text=""/>
-<l:gentext key="refentry" text=""/>
+<l:gentext key="RefEntry" text="صفحة"/>
+<l:gentext key="refentry" text="صفحة"/>
 <l:gentext key="Reference" text="مرجع"/>
 <l:gentext key="reference" text="مرجع"/>
-<l:gentext key="References" text="References" lang="en"/>
+<l:gentext key="References" text="مراجع"/>
 <l:gentext key="RefName" text="الاسم"/>
 <l:gentext key="refname" text="الاسم"/>
-<l:gentext key="RefSection" text=""/>
-<l:gentext key="refsection" text=""/>
+<l:gentext key="RefSection" text="قسم"/>
+<l:gentext key="refsection" text="قسم"/>
 <l:gentext key="RefSynopsisDiv" text="المختصر"/>
 <l:gentext key="refsynopsisdiv" text="المختصر"/>
 <l:gentext key="RevHistory" text="تاريخ المراجعة"/>
@@ -124,10 +126,10 @@
 <l:gentext key="section" text="قسم"/>
 <l:gentext key="Section" text="قسم"/>
 <l:gentext key="see" text="استعرض"/>
-<l:gentext key="See" text="See" lang="en"/>
+<l:gentext key="See" text="استعرض"/>
 <l:gentext key="seealso" text="استعرض أيضاً"/>
-<l:gentext key="Seealso" text="See also" lang="en"/>
-<l:gentext key="SeeAlso" text="See Also" lang="en"/>
+<l:gentext key="Seealso" text="استعرض أيضاً"/>
+<l:gentext key="SeeAlso" text="استعرض أيضاً"/>
 <l:gentext key="set" text="مجموعة"/>
 <l:gentext key="Set" text="مجموعة"/>
 <l:gentext key="setindex" text="فهرس المجموعة"/>
@@ -138,8 +140,8 @@
 <l:gentext key="Step" text="خطوة"/>
 <l:gentext key="table" text="جدول"/>
 <l:gentext key="Table" text="جدول"/>
-<l:gentext key="task" text="Task" lang="en"/>
-<l:gentext key="Task" text="Task" lang="en"/>
+<l:gentext key="task" text="مَهمة"/>
+<l:gentext key="Task" text="مَهمة"/>
 <l:gentext key="tip" text="فكرة مفيدة"/>
 <l:gentext key="TIP" text="فكرة مفيدة"/>
 <l:gentext key="Tip" text="فكرة مفيدة"/>
@@ -155,7 +157,6 @@
 <l:gentext key="in" text="في"/>
 <l:gentext key="lastlistcomma" text="،"/>
 <l:gentext key="listcomma" text="،"/>
-<l:gentext key="nonexistantelement" text="عنصر مفقود"/>
 <l:gentext key="notes" text="ملاحظات"/>
 <l:gentext key="Notes" text="ملاحظات"/>
 <l:gentext key="Pgs" text="صفحات"/>
@@ -169,12 +170,12 @@
 <l:gentext key="unexpectedelementname" text="اسم عنصر غير متوقع"/>
 <l:gentext key="unsupported" text="غير مدعوم"/>
 <l:gentext key="xrefto" text="إشارة إلى"/>
-<l:gentext key="Authors" text="Authors" lang="en"/>
-<l:gentext key="copyeditor" text="Copy Editor" lang="en"/>
-<l:gentext key="graphicdesigner" text="Graphic Designer" lang="en"/>
-<l:gentext key="productioneditor" text="Production Editor" lang="en"/>
-<l:gentext key="technicaleditor" text="Technical Editor" lang="en"/>
-<l:gentext key="translator" text="Translator" lang="en"/>
+<l:gentext key="Authors" text="مؤلفون"/>
+<l:gentext key="copyeditor" text="محرر النسخة"/>
+<l:gentext key="graphicdesigner" text="مصمم جرافيكي"/>
+<l:gentext key="productioneditor" text="محرر إنتاج"/>
+<l:gentext key="technicaleditor" text="محرر فني"/>
+<l:gentext key="translator" text="مترجم"/>
 <l:gentext key="listofequations" text="قائمة المعادلات"/>
 <l:gentext key="ListofEquations" text="قائمة المعادلات"/>
 <l:gentext key="ListofExamples" text="قائمة الأمثلة"/>
@@ -199,6 +200,7 @@
 <l:gentext key="below" text="فيما يلي"/>
 <l:gentext key="sectioncalled" text="القسم المسمى"/>
 <l:gentext key="index symbols" text="الرموز"/>
+<l:gentext key="writing-mode" text="rl-tb"/>
 <l:gentext key="lowercase.alpha" text="abcdefghijklmnopqrstuvwxyz"/>
 <l:gentext key="uppercase.alpha" text="ABCDEFGHIJKLMNOPQRSTUVWXYZ"/>
 <l:gentext key="normalize.sort.input" text="AaÀàÁáÂâÃãÄäÅåĀāĂăĄąǍǎǞǟǠǡǺǻȀȁȂȃȦȧḀḁẚẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặBbƀƁɓƂƃḂḃḄḅḆḇCcÇçĆćĈĉĊċČčƇƈɕḈḉDdĎďĐđƊɗƋƌǅǲȡɖḊḋḌḍḎḏḐḑḒḓEeÈèÉéÊêËëĒēĔĕĖėĘęĚěȄȅȆȇȨȩḔḕḖḗḘḙḚḛḜḝẸẹẺẻẼẽẾếỀềỂểỄễỆệFfƑƒḞḟGgĜĝĞğĠġĢģƓɠǤǥǦǧǴǵḠḡHhĤĥĦħȞȟɦḢḣḤḥḦḧḨḩḪḫẖIiÌìÍíÎîÏïĨĩĪīĬĭĮįİƗɨǏǐȈȉȊȋḬḭḮḯỈỉỊịJjĴĵǰʝKkĶķƘƙǨǩḰḱḲḳḴḵLlĹĺĻļĽľĿŀŁłƚǈȴɫɬɭḶḷḸḹḺḻḼḽMmɱḾḿṀṁṂṃNnÑñŃńŅņŇňƝɲƞȠǋǸǹȵɳṄṅṆṇṈṉṊṋOoÒòÓóÔôÕõÖöØøŌōŎŏŐőƟƠơǑǒǪǫǬǭǾǿȌȍȎȏȪȫȬȭȮȯȰȱṌṍṎṏṐṑṒṓỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợPpƤƥṔṕṖṗQqʠRrŔŕŖŗŘřȐȑȒȓɼɽɾṘṙṚṛṜṝṞṟSsŚśŜŝŞşŠšȘșʂṠṡṢṣṤṥṦṧṨṩTtŢţŤťŦŧƫƬƭƮʈȚțȶṪṫṬṭṮṯṰṱẗUuÙùÚúÛûÜüŨũŪūŬŭŮůŰűŲųƯưǓǔǕǖǗǘǙǚǛǜȔȕȖȗṲṳṴṵṶṷṸṹṺṻỤụỦủỨứỪừỬửỮữỰựVvƲʋṼṽṾṿWwŴŵẀẁẂẃẄẅẆẇẈẉẘXxẊẋẌẍYyÝýÿŸŶŷƳƴȲȳẎẏẙỲỳỴỵỶỷỸỹZzŹźŻżŽžƵƶȤȥʐʑẐẑẒẓẔẕẕ" lang="en"/>
@@ -216,6 +218,7 @@
 <l:context name="styles"><l:template name="person-name" text="first-last"/>
 </l:context>
 <l:context name="title"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="%t"/>
 <l:template name="appendix" text="ملحق %n. %t"/>
 <l:template name="article" text="%t"/>
@@ -321,6 +324,7 @@
 <l:template name="simplesect" text="%t"/>
 </l:context>
 <l:context name="subtitle"><l:template name="appendix" text="%s"/>
+<l:template name="acknowledgements" text="%s" lang="en"/>
 <l:template name="article" text="%s"/>
 <l:template name="bibliodiv" text="%s"/>
 <l:template name="biblioentry" text="%s"/>
@@ -360,6 +364,7 @@
 <l:template name="toc" text="%s"/>
 </l:context>
 <l:context name="xref"><l:template name="abstract" text="%t"/>
+<l:template name="acknowledgements" text="%t" lang="en"/>
 <l:template name="answer" text="ج: %n"/>
 <l:template name="appendix" text="%t"/>
 <l:template name="article" text="%t"/>
@@ -490,8 +495,9 @@
 <l:template name="sep2" text=" و "/>
 <l:template name="seplast" text="، و "/>
 </l:context>
-<l:context name="glossary"><l:template name="see" text="انظر %t"/>
-<l:template name="seealso" text="انظر أيضاً %t"/>
+<l:context name="glossary"><l:template name="see" text="انظر %t."/>
+<l:template name="seealso" text="انظر أيضاً %t."/>
+<l:template name="seealso-separator" text=", "/>
 </l:context>
 <l:context name="msgset"><l:template name="MsgAud" text="الجمهور: "/>
 <l:template name="MsgLevel" text="المستوى: "/>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2010 United States Government as represented by
+ * Copyright (c) 2005-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -194,8 +194,8 @@ list_geometry(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *cons
    }
    db_dirbuild(dbip);
    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
- 	   if (dp->d_flags & DIR_HIDDEN) continue;
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+ 	   if (dp->d_flags & RT_DIR_HIDDEN) continue;
            bu_vls_sprintf(&tclstr, "set %s [concat $%s [list %s]]", Tcl_GetString(objv[2]), Tcl_GetString(objv[2]), dp->d_namep);
 	   Tcl_Eval(interp, bu_vls_addr(&tclstr));
         }

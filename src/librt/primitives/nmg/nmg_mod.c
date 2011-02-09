@@ -1,7 +1,7 @@
 /*                       N M G _ M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2010 United States Government as represented by
+ * Copyright (c) 1991-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -616,7 +616,7 @@ nmg_sanitize_s_lv(struct shell *s, int orient)
 	}
 
 	/* step forward, avoiding re-processing our mate (which would
-	 * have had it's loops processed with ours)
+	 * have had its loops processed with ours)
 	 */
 	if (BU_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
 	    fu = BU_LIST_PNEXT_PNEXT(faceuse, fu);
@@ -1633,7 +1633,7 @@ nmg_reverse_face(register struct faceuse *fu)
  *
  * When moving faces between shells, sometimes this parity
  * relationship needs to be fixed, which can be easily accomplished by
- * exchanging the incorrect edgeuse with it's mate in the radial edge
+ * exchanging the incorrect edgeuse with its mate in the radial edge
  * linkages.
  *
  * XXX Note that this routine will not work right in the presence of
@@ -1649,7 +1649,7 @@ nmg_reverse_face(register struct faceuse *fu)
  * established.
  *
  * XXXX I am of the opinion this routine is neither useful nor correct
- * XXXX in it's present form, except for limited special cases.
+ * XXXX in its present form, except for limited special cases.
  *
  * The 'tol' arg is used strictly for printing purposes.
  *
@@ -2009,7 +2009,7 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
  * Join two loops together which share a common edge, such that both
  * occurances of the common edge are deleted.  This routine always
  * leaves "lu" intact, and kills the loop radial to "eu" (after
- * stealing all it's edges).
+ * stealing all its edges).
  *
  * Either both loops must be of the same orientation, or then first
  * loop must be OT_SAME, and the second loop must be OT_OPPOSITE.
@@ -2086,7 +2086,7 @@ nmg_jl(struct loopuse *lu, struct edgeuse *eu)
 
     /*
      * The other loop just has the one (shared) edgeuse left in it.
-     * Delete the other loop (and it's mate).
+     * Delete the other loop (and its mate).
      */
     nmg_klu(lu2);
 
@@ -3792,10 +3792,10 @@ nmg_set_lu_orientation(struct loopuse *lu, int is_opposite)
 /**
  * N M G _ L U _ R E O R I E N T
  *
- * Based upon a geometric calculation, reorient a loop and it's mate,
+ * Based upon a geometric calculation, reorient a loop and its mate,
  * if the stored orientation differs from the geometric one.
  *
- * Note that the loopuse and it's mate have the same orientation; it's
+ * Note that the loopuse and its mate have the same orientation; it's
  * the faceuses that are normalward and anti-normalward.  The loopuses
  * either both agree with their faceuse, or both differ.
  */
@@ -4145,7 +4145,7 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
  * Note that eu->e_p changes value upon return, because the old edge
  * is incrementally replaced by two new ones.
  *
- * Geometry will be preserved on eu and it's mates (by nmg_eusplit),
+ * Geometry will be preserved on eu and its mates (by nmg_eusplit),
  * if any.  ret_eu and mates will share that geometry if share_geom is
  * set non-zero, otherwise they will have null geom pointers.
  *
@@ -4430,7 +4430,7 @@ nmg_e2break(struct edgeuse *eu1, struct edgeuse *eu2)
  *
  * XXX for t-NURBS, this should probably be re-stated as saying that
  * all the edgeuses must share the same 2 edges, and that every eu1
- * needs to share geom with it's corresponding eu2, and similarly for
+ * needs to share geom with its corresponding eu2, and similarly for
  * the two mates.
  *
  *		     eu1          eu2
@@ -4930,7 +4930,7 @@ nmg_eins(struct edgeuse *eu)
 /**
  * N M G _ M V _ E U _ B E T W E E N _ S H E L L S
  *
- * Move a wire edgeuse and it's mate from one shell to another.
+ * Move a wire edgeuse and its mate from one shell to another.
  */
 void
 nmg_mv_eu_between_shells(struct shell *dest, register struct shell *src, register struct edgeuse *eu)

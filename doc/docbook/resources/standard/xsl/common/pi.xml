@@ -34,7 +34,7 @@
     <synopsis><tag class="xmlpi">dbchoice choice="and"|"or"|<replaceable>string</replaceable>"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbchoice choice</tag> PI to
       generate an appropriate localized “choice” separator (for
@@ -87,7 +87,7 @@
     <synopsis><tag class="xmlpi">dbtimestamp format="<replaceable>formatstring</replaceable>" [padding="0"|"1"]</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbtimestamp</tag> PI at any point in a
       source document to cause a date timestamp (a formatted
@@ -133,13 +133,20 @@
     <synopsis><tag class="xmlpi">dbtex delims="no"|"yes"</tag></synopsis>
   
 </refsynopsisdiv>
-<refsect1><title/>
+<refsect1><title>Description</title>
     
 <para>Use the <tag class="xmlpi">dbtex delims</tag> PI as a
       child of a <tag>textobject</tag> containing embedded TeX
       markup, to cause that markup to be surrounded by
       <literal>$</literal> delimiter characters in output.</para>
 
+      <warning>
+       
+<para>This feature is useful for print/PDF output only if you
+       use the obsolete and now unsupported PassiveTeX XSL-FO
+       engine.</para>
+
+      </warning>
   </refsect1><refsect1><title>Parameters</title>
     
 <variablelist>
@@ -155,10 +162,6 @@
   </refsect1><refsect1 role="params"><title>Related Global Parameters</title>
     
 <para><parameter>tex.math.delims</parameter></para>
-
-  </refsect1><refsect1 role="tcg"><title>Related Information in <link xlink:href="http://www.sagehill.net/docbookxsl/">DocBook XSL: The Complete Guide</link></title>
-    
-<para><link role="tcg" xlink:href="TexMath.html">DBTeXMath</link></para>
 
   </refsect1></refentry>
 </reference>

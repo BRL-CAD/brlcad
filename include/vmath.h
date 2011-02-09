@@ -1,7 +1,7 @@
 /*                         V M A T H . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -287,9 +287,50 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 
 /**
- * return truthfully whether a value is within some epsilon from zero.
+ * Return truthfully whether a value is within a specified epsilon
+ * distance from zero.
  */
 #define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
+
+/**
+ * Return truthfully whether all elements of a given vector are within
+ * a specified epsilon distance from zero.
+ */
+#define VNEAR_ZERO(v, tol) \
+	(NEAR_ZERO(v[X], tol) \
+	 && NEAR_ZERO(v[Y], tol) \
+	 && NEAR_ZERO(v[Z], tol))
+
+/**
+ * Return truthfully whether two values are within a specified epsilon
+ * distance from each other.
+ */
+#define NEAR_EQUAL(_a, _b, _tol) NEAR_ZERO((_a) - (_b), (_tol))
+
+/**
+ * Return truthfully whether two vectors are approximately equal,
+ * within a specified absolute tolerance.
+ */
+#define VNEAR_EQUAL(_a, _b, _tol) \
+	(NEAR_ZERO((_a)[X]-(_b)[X], (_tol)) \
+	 && NEAR_ZERO((_a)[Y]-(_b)[Y], (_tol)) \
+	 && NEAR_ZERO((_a)[Z]-(_b)[Z], (_tol)))
+
+/**
+ * Return truthfully whether two values are within a minimum
+ * representation tolerance from each other.
+ *
+ * Unspecified unreliable tolerance.  Use not recommended.
+ */
+#define EQUAL(_a, _b) NEAR_EQUAL((_a), (_b), SMALL_FASTF)
+
+/**
+ * Return truthfully whether two vectors are equal within a minimum
+ * representation tolerance.
+ *
+ * Unspecified unreliable tolerance.  Use not recommended.
+ */
+#define VEQUAL(_a, _b) VNEAR_EQUAL((_a), (_b), SMALL_FASTF)
 
 /**
  * clamp a value to a low/high number.
@@ -1162,27 +1203,6 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(fabs(MAGSQ(_vec)) < 0.0001 || fabs(fabs(MAGSQ(_vec))-1) > 0.0001)
 
 /**
- * @brief Compare two vectors for equality within minimum computation
- * tolerance.  Use carefully.
- */
-#define VEQUAL(a, b) VAPPROXEQUAL(a, b, SMALL_FASTF)
-
-/**
- * @brief Compare two vectors for approximate equality, within the
- * specified absolute tolerance.
- */
-#define VAPPROXEQUAL(a, b, tol) \
-	(NEAR_ZERO((a)[X]-(b)[X], tol) \
-	 && NEAR_ZERO((a)[Y]-(b)[Y], tol) \
-	 && NEAR_ZERO((a)[Z]-(b)[Z], tol))
-
-/** @brief Test for all elements of `v' being smaller than `tol'. */
-#define VNEAR_ZERO(v, tol) \
-	(NEAR_ZERO(v[X], tol) \
-	 && NEAR_ZERO(v[Y], tol) \
-	 && NEAR_ZERO(v[Z], tol))
-
-/**
  * @brief Included below are macros to update min and max X, Y, Z
  * values to contain a point
  */
@@ -1483,6 +1503,38 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(_a) = ((NEAR_ZERO((_d)[X], SMALL_FASTF)) && (NEAR_ZERO((_d)[Y], SMALL_FASTF))) ? 0.0 : atan2(-((_d)[Y]), -((_d)[X])) * -RAD2DEG; \
 	(_e) = atan2(-((_d)[Z]), sqrt((_d)[X]*(_d)[X] + (_d)[Y]*(_d)[Y])) * -RAD2DEG; \
 }
+
+/*** Macros suitable for declaration statement initialization. ***/
+
+/**
+ * vector macro suitable for declaration statement initialization.
+ * this sets all vector elements to the specified value similar to
+ * VSETALL() but as an initializer array declaration instead of as a
+ * statement.
+ */
+#define VINITALL(_v) {(_v), (_v), (_v)}
+
+/**
+ * vector macro suitable for declaration statement initialization.
+ * this sets all vector elements to zero similar to calling
+ * VSETALL(0.0) but as an initializer array declaration instead of as
+ * a statement.
+ */
+#define VINIT_ZERO {0.0, 0.0, 0.0}
+
+/**
+ * matrix macro suitable for declaration statement initialization.
+ * this sets up an identity matrix similar to calling MAT_IDN but as
+ * an initializer array declaration instead of as a statement.
+ */
+#define MAT_INIT_IDN {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0}
+
+/**
+ * matrix macro suitable for declaration statement initialization.
+ * this sets up a zero matrix similar to calling MAT_ZERO but as an
+ * initializer array declaration instead of as a statement.
+ */
+#define MAT_INIT_ZERO {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 __END_DECLS
 

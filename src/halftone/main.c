@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -71,10 +71,11 @@
 
 #include "vmath.h"
 #include "raytrace.h"
+#include "fb.h"
 
 
-long int width=512;		/* width of pixture */
-long int height=512;		/* height of pixture */
+long int width=512;	/* width of pixture */
+long int height=512;	/* height of pixture */
 double Beta=0.0;	/* Beta for sharpening */
 
 #define	M_FLOYD	0
@@ -91,10 +92,10 @@ struct bn_unif *RandomFlag=0;	/* Use random numbers ? */
 void cubic_init(int n, int *x, int *y);
 void tonescale(unsigned char *map, float Slope, float B, int (*eqptr)() );
 int sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map);
-int tone_floyd(int pix, int x, int y, int nx, int ny, int new);
-int tone_folly(int pix, int x, int y, int nx, int ny, int new);
-int tone_simple(int pix, int x, int y, int nx, int ny, int new);
-int tone_classic(int pix, int x, int y, int nx, int ny, int new);
+int tone_floyd(int pix, int x, int y, int nx, int ny, int newrow);
+int tone_folly(int pix, int x, int y, int nx, int ny, int newrow);
+int tone_simple(int pix, int x, int y, int nx, int ny, int newrow);
+int tone_classic(int pix, int x, int y, int nx, int ny, int newrow);
 
 static const char usage[] = "\
 Usage: halftone [ -h -R -S -a] [-D Debug Level]\n\
@@ -232,7 +233,7 @@ setup(int argc, char **argv)
 	    bu_exit(1, "halftone: cannot open \"%s\" for reading.\n", argv[bu_optind]);
 	}
 	if (autosize) {
-	    if ( !fb_common_file_size((unsigned long int *)&width, (unsigned long int *)&height, argv[bu_optind], 1)) {
+	    if ( !fb_common_file_size((size_t *)&width, (size_t *)&height, argv[bu_optind], 1)) {
 		(void) fprintf(stderr, "halftone: unable to autosize.\n");
 	    }
 	}
@@ -251,6 +252,8 @@ main(int argc, char **argv)
     int NewFlag = 1;
     int Scale;
     unsigned char Map[256];
+    size_t ret;
+
 /*
  *	parameter processing.
  */
@@ -334,7 +337,9 @@ main(int argc, char **argv)
 		NewFlag=0;
 	    }
 	}
-	fwrite(Out, 1, width, stdout);
+	ret = fwrite(Out, 1, width, stdout);
+	if ( ret < (size_t)width)
+	    perror("fwrite");
     }
     bu_free(Line, "Line");
     bu_free(Out, "Out");

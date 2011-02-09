@@ -1053,7 +1053,7 @@ ON__ClassIdDumpNode::ON__ClassIdDumpNode()
   m_class_id=0;
   m_parent_node=0;
   m_depth=0;
-};
+}
 
 ON__ClassIdDumpNode::~ON__ClassIdDumpNode() 
 {

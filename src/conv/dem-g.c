@@ -1,7 +1,7 @@
 /*                        D E M - G . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -144,7 +144,7 @@ typedef struct {
 } ResultStruct;
 
 
-inline double
+double
 round_closest(double x)
 {
     return (x > 0.0) ? floor(x + 0.5) : ceil (x - 0.5);
@@ -792,7 +792,7 @@ int process_manual_scale_factor(
         return BRLCAD_ERROR;
     }
 
-    if (*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr == *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr) {
+    if (EQUAL(*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr, *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr)) {
         /* manual scale factor = auto scale
 	 * factor. derived_dem_max_raw_elevation is any value
 	 * 0-999999
@@ -891,7 +891,7 @@ int process_manual_dem_max_raw_elevation(
         return BRLCAD_ERROR;
     }
 
-    if (*in_manual_dem_max_raw_elevation_ptr == *in_derived_dem_max_raw_elevation_ptr) {
+    if (EQUAL(*in_manual_dem_max_raw_elevation_ptr, *in_derived_dem_max_raw_elevation_ptr)) {
         /* user input 'dem max raw elevation' = 'derived dem max raw
          * elevation'.  the derived raw dem elevation must be derived
          * from the real elevation listed in the 'a' record.
@@ -998,7 +998,7 @@ int process_manual_dem_max_real_elevation(
     dem_max_raw_elevation = (adjusted_manual_dem_max_real_elevation - *in_datum_elevation_in_curr_b_record_ptr) / *in_z_spatial_resolution_ptr;
 
     /* report to user the actual max real elevation used if not the value the user entered */
-    if (adjusted_manual_dem_max_real_elevation != *in_manual_dem_max_real_elevation_ptr) {
+    if (!EQUAL(adjusted_manual_dem_max_real_elevation, *in_manual_dem_max_real_elevation_ptr)) {
         /* real elevations are processed in the unit milimeters, convert to meters before reporting to user */
         bu_log("Using max real elevation '%g' meters instead of '%g' meters to allow correct scaling.\n",
 	       (adjusted_manual_dem_max_real_elevation / conversion_factor_to_milimeters[2]),
@@ -1030,6 +1030,7 @@ read_dem(
     double *out_y_cell_size,                           /* y scaling factor in milimeters */
     double *out_unit_elevation)                        /* z scaling factor in milimeters */
 {
+    size_t ret;
     int status = BRLCAD_ERROR;
     FILE *fp;
     FILE *fp2;
@@ -1083,7 +1084,10 @@ read_dem(
     /* Reads 1st 1024 character block from dem-g file; this block
      * contains the record 'a' data.
      */
-    fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+    ret = fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+    if (ret < sizeof(buf) / sizeof(buf[0])) {
+	bu_log("Failed to read the 'A' record\n");
+    }
 
     /* Validates all 'A' record sub_elements can be read and that all
      * required sub_elements contain values.
@@ -1190,7 +1194,10 @@ read_dem(
 
         /* Reads 1024 character block from dem-g file */
         /* this block contains the record 'b' header and data. */
-        fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+        ret = fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+	if (ret < sizeof(buf) / sizeof(buf[0])) {
+	    bu_log("Failed to read the 'B' record\n");
+	}
 
         /* Validates all 'B' record header sub_elements can be read
          * and all required sub_elements contain values.
@@ -1234,7 +1241,7 @@ read_dem(
          * record but this is not supported by this code.
 	 */
         if (curr_b_record > 1) {
-            if (datum_elevation_in_curr_b_record != datum_elevation_in_previous_b_record) {
+            if (!EQUAL(datum_elevation_in_curr_b_record, datum_elevation_in_previous_b_record)) {
                 bu_log("Datum elevation in 'B' record number '%ld' does not match previous 'B' record datum elevations.\n", 
 		       curr_b_record);
                 bu_log("Datum elevation in current b record is: %g\n", datum_elevation_in_curr_b_record);
@@ -1285,7 +1292,7 @@ read_dem(
             }
 
             /* test for zero to avoid divide by 0 math error */
-            if (derived_dem_max_raw_elevation != 0) {
+            if (!NEAR_ZERO(derived_dem_max_raw_elevation, SMALL_FASTF)) {
                 raw_dem_2_raw_dsp_auto_scale_factor = DSP_MAX_RAW_ELEVATION / (double)derived_dem_max_raw_elevation;
             } else {
                 raw_dem_2_raw_dsp_auto_scale_factor = 1;
@@ -1448,7 +1455,10 @@ read_dem(
                     /* no equal used in condition here because don't want to process last chunk in */
                     /* since the last chunk is a partial chunk */
 
-                    fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+                    ret = fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+		    if (ret < sizeof(buf) / sizeof(buf[0])) {
+			bu_log("Failed to read elevation chunk\n");
+		    }
 
                     for (indx5 = 1; indx5 <= 170; indx5++) {
                         /* loop thru 170 elevations in b type buffer with no b header */ 
@@ -1483,7 +1493,10 @@ read_dem(
                 number_of_previous_b_elevations = 146 + ((additional_1024char_chunks - 1)*170);
                 number_of_last_elevations = tot_elevations_in_curr_b_record - number_of_previous_b_elevations;
 
-                fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+                ret = fread(buf, sizeof(buf[0]), sizeof(buf)/sizeof(buf[0]), fp);
+		if (ret < sizeof(buf) / sizeof(buf[0])) {
+		    bu_log("Failed to read input chunk\n");
+		}
 
                 for (indx6 = 1; indx6 <= number_of_last_elevations; indx6++) {
                     /* loop thru remaining elevations in b type buffer with no b header */ 
@@ -1563,30 +1576,39 @@ convert_load_order(
     FILE *fp4;
     long int offset = 0;
     long int column = 0;
+    unsigned short int *buf3 = NULL;
     unsigned short int buf4 = 0;
+    size_t ret;
 
-    /* FIXME: C90 forbids variable size array declarations.  use bu_malloc/bu_free instead. */
-    /* size of buf3 determined at run time */
-    unsigned short int buf3[*in_ydim];
+    buf3 = bu_calloc(1, *in_ydim, "buf3");
 
     if ((fp4=fopen(in_dsp_output_filename, "wb")) == NULL) {
         bu_log("Could not open '%s' for write.\n", in_dsp_output_filename);
+	bu_free(buf3, "buf3");
         return BRLCAD_ERROR;
     }
     for (offset = 0; offset <= *in_ydim-1; offset++) {
         if ((fp3=fopen(in_temp_filename, "rb")) == NULL) {
             bu_log("Could not open '%s' for read.\n", in_temp_filename);
             fclose(fp4);
-            return BRLCAD_ERROR;
+	    bu_free(buf3, "buf3");
+	    return BRLCAD_ERROR;
         } 
         for (column = 1; column <= *in_xdim; column++) {
-            fread(buf3, sizeof(buf3[0]), sizeof(buf3)/sizeof(buf3[0]), fp3);
-            buf4 = buf3[offset];
-            fwrite(&buf4, sizeof(buf4), 1, fp4);   
+            ret = fread(buf3, sizeof(unsigned short int), sizeof(unsigned short int) * (*in_ydim)/sizeof(unsigned short int), fp3);
+	    if (ret < sizeof(unsigned short int) * (*in_ydim)/sizeof(unsigned short int)) {
+		bu_log("Failed to read input chunk\n");
+	    }
+            buf4 = *(buf3 + offset);
+            ret = fwrite(&buf4, sizeof(buf4), 1, fp4);   
+	    if (ret < 1) {
+		bu_log("Failed to write to output file\n");
+	    }
         }
         fclose(fp3);
     }
     fclose(fp4);
+    bu_free(buf3, "buf3");
 
     return BRLCAD_OK;
 }
@@ -1663,6 +1685,11 @@ main(int ac, char *av[])
     double unit_elevation = 0;                         /* z scaling factor in milimeters */
     char *tmp_ptr = '\0';
     int string_length = 0;
+
+    char *temp_filename;           /* temp file path and file name */
+    char *input_filename;          /* dem input file path and file name */
+    char *dsp_output_filename;     /* dsp output file path and file name */
+    char *model_output_filename;   /* model output file path and file name */
 
     /*
      * element_counts[]
@@ -2079,11 +2106,10 @@ main(int ac, char *av[])
     remove_whitespace(av[1]);
     string_length = strlen(av[1]) + 5;
 
-    /* FIXME: C90 forbids variable size array declarations.  use bu_malloc/bu_free instead. */
-    char input_filename[string_length];          /* dem input file path and file name */
-    char temp_filename[string_length];           /* temp file path and file name */
-    char dsp_output_filename[string_length];     /* dsp output file path and file name */
-    char model_output_filename[string_length];   /* model output file path and file name */
+    temp_filename = bu_calloc(1, string_length, "temp_filename");
+    input_filename = bu_calloc(1, string_length, "input_filename");
+    dsp_output_filename = bu_calloc(1, string_length, "dsp_output_filename");
+    model_output_filename = bu_calloc(1, string_length, "model_output_filename");
 
     tmp_ptr = strcpy(input_filename, av[1]);
     tmp_ptr = strcpy(temp_filename, input_filename);
@@ -2116,10 +2142,18 @@ main(int ac, char *av[])
 	    &x_cell_size,
 	    &y_cell_size,
 	    &unit_elevation) == BRLCAD_ERROR) {
+	    bu_free(input_filename, "input_filename");
+	    bu_free(temp_filename, "temp_filename");
+	    bu_free(dsp_output_filename, "dsp_output_filename");
+	    bu_free(model_output_filename, "model_output_filename");
         bu_exit(BRLCAD_ERROR, "Error occured within function 'read_dem'. Import can not continue.\n");
     }
 
     if (convert_load_order(temp_filename, dsp_output_filename, &xdim, &ydim) == BRLCAD_ERROR) {
+	    bu_free(input_filename, "input_filename");
+	    bu_free(temp_filename, "temp_filename");
+	    bu_free(dsp_output_filename, "dsp_output_filename");
+	    bu_free(model_output_filename, "model_output_filename");
         bu_exit(BRLCAD_ERROR, "Error occured within function 'convert_load_order'. Import can not continue.\n");
     }
 
@@ -2132,8 +2166,24 @@ main(int ac, char *av[])
 	    &x_cell_size,
 	    &y_cell_size,
 	    &unit_elevation) == BRLCAD_ERROR) {
+	    bu_free(input_filename, "input_filename");
+	    bu_free(temp_filename, "temp_filename");
+	    bu_free(dsp_output_filename, "dsp_output_filename");
+	    bu_free(model_output_filename, "model_output_filename");
         bu_exit(BRLCAD_ERROR, "Error occured within function 'create_model'. Model creation can not continue.\n");
     }
+    bu_free(input_filename, "input_filename");
+    bu_free(temp_filename, "temp_filename");
+    bu_free(dsp_output_filename, "dsp_output_filename");
+    bu_free(model_output_filename, "model_output_filename");
+    bu_free(temp_filename, "temp_filename");
+    bu_free(input_filename, "input_filename");
+    bu_free(dsp_output_filename, "dsp_output_filename");
+    bu_free(model_output_filename, "model_output_filename");
+    temp_filename = NULL;
+    input_filename = NULL;
+    dsp_output_filename = NULL;
+    model_output_filename = NULL;
 
     return 0;
 }

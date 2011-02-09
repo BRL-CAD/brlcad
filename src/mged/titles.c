@@ -1,7 +1,7 @@
 /*                        T I T L E S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2010 United States Government as represented by
+ * Copyright (c) 1985-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,9 @@
 
 #define USE_OLD_MENUS 0
 
-int state;
+/* should only be accessed via STATE define in mged.h */
+int ged_state;
+
 char *state_str[] = {
     "-ZOT-",
     "VIEWING",
@@ -95,7 +97,7 @@ create_text_overlay(struct bu_vls *vp)
     }
 
     /* display path info for object editing also */
-    if (state == ST_O_EDIT) {
+    if (STATE == ST_O_EDIT) {
 	bu_vls_strcat(vp, "** PATH --  ");
 	db_path_to_vls(vp, &illump->s_fullpath);
 	bu_vls_strcat(vp, ": ");
@@ -156,7 +158,7 @@ create_text_overlay(struct bu_vls *vp)
 	    }
 	}
 
-	Tcl_SetVar(interp, "edit_info", bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
+	Tcl_SetVar(INTERP, "edit_info", bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	bu_vls_free(&vls);
     }
 }
@@ -213,7 +215,7 @@ screen_vls(
 void
 dotitles(struct bu_vls *overlay_vls)
 {
-    int i = 0;
+    size_t i = 0;
 
     /* for menu computations */
     int x = 0;
@@ -256,7 +258,7 @@ dotitles(struct bu_vls *overlay_vls)
 
 	bu_vls_init(&path_lhs);
 	bu_vls_init(&path_rhs);
-	for (i = 0; i < ipathpos; i++) {
+	for (i = 0; i < (size_t)ipathpos; i++) {
 	    dp = DB_FULL_PATH_GET(dbfp, i);
 	    if (dp && dp->d_namep) {
 		bu_vls_printf(&path_lhs, "/%s", dp->d_namep);
@@ -270,18 +272,18 @@ dotitles(struct bu_vls *overlay_vls)
 	}
 
 	bu_vls_printf(&vls, "%s(path_lhs)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(interp, bu_vls_addr(&vls), bu_vls_addr(&path_lhs), TCL_GLOBAL_ONLY);
+	Tcl_SetVar(INTERP, bu_vls_addr(&vls), bu_vls_addr(&path_lhs), TCL_GLOBAL_ONLY);
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "%s(path_rhs)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(interp, bu_vls_addr(&vls), bu_vls_addr(&path_rhs), TCL_GLOBAL_ONLY);
+	Tcl_SetVar(INTERP, bu_vls_addr(&vls), bu_vls_addr(&path_rhs), TCL_GLOBAL_ONLY);
 	bu_vls_free(&path_rhs);
 	bu_vls_free(&path_lhs);
     } else {
 	bu_vls_printf(&vls, "%s(path_lhs)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(interp, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(INTERP, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "%s(path_rhs)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(interp, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(INTERP, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
     }
 
     /* take some care here to avoid buffer overrun */
@@ -305,7 +307,7 @@ dotitles(struct bu_vls *overlay_vls)
     }
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "cent=(%s %s %s)", cent_x, cent_y, cent_z);
-    Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_center_name),
+    Tcl_SetVar(INTERP, bu_vls_addr(&curr_dm_list->dml_center_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     tmp_val = view_state->vs_gvp->gv_size*base2local;
@@ -314,17 +316,17 @@ dotitles(struct bu_vls *overlay_vls)
     } else {
 	sprintf(size, "sz=%.3g", tmp_val);
     }
-    Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_size_name),
+    Tcl_SetVar(INTERP, bu_vls_addr(&curr_dm_list->dml_size_name),
 	       size, TCL_GLOBAL_ONLY);
 
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "%s(units)", MGED_DISPLAY_VAR);
-    Tcl_SetVar(interp, bu_vls_addr(&vls),
+    Tcl_SetVar(INTERP, bu_vls_addr(&vls),
 	       (char *)bu_units_string(dbip->dbi_local2base), TCL_GLOBAL_ONLY);
 
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "az=%3.2f  el=%3.2f  tw=%3.2f", V3ARGS(view_state->vs_gvp->gv_aet));
-    Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_aet_name),
+    Tcl_SetVar(INTERP, bu_vls_addr(&curr_dm_list->dml_aet_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     sprintf(ang_x, "%.2f", view_state->vs_rate_rotate[X]);
@@ -333,13 +335,13 @@ dotitles(struct bu_vls *overlay_vls)
 
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "ang=(%s %s %s)", ang_x, ang_y, ang_z);
-    Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_ang_name),
+    Tcl_SetVar(INTERP, bu_vls_addr(&curr_dm_list->dml_ang_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, 0);
 
     /* Label the vertices of the edited solid */
-    if (es_edflag >= 0 || (state == ST_O_EDIT && illump->s_Eflag == 0)) {
+    if (es_edflag >= 0 || (STATE == ST_O_EDIT && illump->s_Eflag == 0)) {
 	mat_t xform;
 	struct rt_point_labels pl[8+1];
 	point_t lines[2*4];	/* up to 4 lines to draw */
@@ -360,7 +362,7 @@ dotitles(struct bu_vls *overlay_vls)
 		       color_scheme->cs_geo_label[0],
 		       color_scheme->cs_geo_label[1],
 		       color_scheme->cs_geo_label[2], 1, 1.0);
-	for (i=0; i<num_lines; i++)
+	for (i=0; i<(size_t)num_lines; i++)
 	    DM_DRAW_LINE_2D(dmp,
 			    GED2PM1(((int)(lines[i*2][X]*GED_MAX))),
 			    GED2PM1(((int)(lines[i*2][Y]*GED_MAX)) * dmp->dm_aspect),
@@ -409,7 +411,7 @@ dotitles(struct bu_vls *overlay_vls)
 			   color_scheme->cs_state_text1[0],
 			   color_scheme->cs_state_text1[1],
 			   color_scheme->cs_state_text1[2], 1, 1.0);
-	    DM_DRAW_STRING_2D(dmp, state_str[state],
+	    DM_DRAW_STRING_2D(dmp, state_str[STATE],
 			      GED2PM1(MENUX), GED2PM1(MENUY - MENU_DY), 1, 0);
 	} else {
 	    scroll_ybot = SCROLLY;
@@ -421,9 +423,9 @@ dotitles(struct bu_vls *overlay_vls)
 	 * Print information about object illuminated
 	 */
 	if (illump != SOLID_NULL &&
-	    (state==ST_O_PATH || state==ST_O_PICK || state==ST_S_PICK)) {
+	    (STATE==ST_O_PATH || STATE==ST_O_PICK || STATE==ST_S_PICK)) {
 	    for (i=0; i < illump->s_fullpath.fp_len; i++) {
-		if (i == ipathpos  &&  state == ST_O_PATH) {
+		if (i == (size_t)ipathpos  &&  STATE == ST_O_PATH) {
 		    DM_SET_FGCOLOR(dmp,
 				   color_scheme->cs_state_text1[0],
 				   color_scheme->cs_state_text1[1],
@@ -457,7 +459,7 @@ dotitles(struct bu_vls *overlay_vls)
 	    mmenu_display(y);
 
 	    /* print parameter locations on screen */
-	    if (state == ST_O_EDIT && illump->s_Eflag) {
+	    if (STATE == ST_O_EDIT && illump->s_Eflag) {
 		/* region is a processed region */
 		MAT4X3PNT(temp, view_state->vs_model2objview, es_keypoint);
 		xloc = (int)(temp[X]*GED_MAX);
@@ -546,14 +548,14 @@ dotitles(struct bu_vls *overlay_vls)
 	    DM_DRAW_STRING_2D(dmp, bu_vls_addr(&vls),
 			      GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0);
 	}
-	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_adc_name),
+	Tcl_SetVar(INTERP, bu_vls_addr(&curr_dm_list->dml_adc_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	ss_line_not_drawn = 0;
     } else {
-	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_adc_name), "", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(INTERP, bu_vls_addr(&curr_dm_list->dml_adc_name), "", TCL_GLOBAL_ONLY);
     }
 
-    if (state == ST_S_EDIT || state == ST_O_EDIT) {
+    if (STATE == ST_S_EDIT || STATE == ST_O_EDIT) {
 	struct bu_vls kp_vls;
 
 	bu_vls_init(&kp_vls);
@@ -576,13 +578,13 @@ dotitles(struct bu_vls *overlay_vls)
 
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "%s(keypoint)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(interp, bu_vls_addr(&vls), bu_vls_addr(&kp_vls), TCL_GLOBAL_ONLY);
+	Tcl_SetVar(INTERP, bu_vls_addr(&vls), bu_vls_addr(&kp_vls), TCL_GLOBAL_ONLY);
 
 	bu_vls_free(&kp_vls);
     } else {
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "%s(keypoint)", MGED_DISPLAY_VAR);
-	Tcl_SetVar(interp, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(INTERP, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
     }
 
     if (illump != SOLID_NULL) {
@@ -592,8 +594,8 @@ dotitles(struct bu_vls *overlay_vls)
 	    /* Illuminated path */
 	    bu_vls_strcat(&vls, " Path: ");
 	    for (i=0; i < illump->s_fullpath.fp_len; i++) {
-		if (i == ipathpos  &&
-		    (state == ST_O_PATH || state == ST_O_EDIT))
+		if (i == (size_t)ipathpos  &&
+		    (STATE == ST_O_PATH || STATE == ST_O_EDIT))
 		    bu_vls_strcat(&vls, "/__MATRIX__");
 		bu_vls_printf(&vls, "/%s",
 			      DB_FULL_PATH_GET(&illump->s_fullpath, i)->d_namep);
@@ -619,7 +621,7 @@ dotitles(struct bu_vls *overlay_vls)
 	DM_DRAW_STRING_2D(dmp, bu_vls_addr(&vls),
 			  GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0);
     }
-    Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_fps_name),
+    Tcl_SetVar(INTERP, bu_vls_addr(&curr_dm_list->dml_fps_name),
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     bu_vls_free(&vls);

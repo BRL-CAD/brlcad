@@ -1,7 +1,7 @@
 /*                      N M G _ F C U T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2010 United States Government as represented by
+ * Copyright (c) 2007-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -4079,7 +4079,7 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 	    }
 
 	    /* XXX If an edge has been built between prev_vu and vu,
-	     * force it's geometry to lie on the ray.
+	     * force its geometry to lie on the ray.
 	     */
 	    vu = rs->vu[pos];
 	    lu = nmg_find_lu_of_vu(vu);

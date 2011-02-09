@@ -1,7 +1,7 @@
 /*                          B I G E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2010 United States Government as represented by
+ * Copyright (c) 1997-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -266,7 +266,7 @@ build_etree(union tree *tp,
 	    BU_LIST_INIT(&eptr->l.seghead);
 	    break;
 	case OP_DB_LEAF:
-	    if ((dp=db_lookup(dgcdp->gedp->ged_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL) {
+	    if ((dp=db_lookup(dgcdp->gedp->ged_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 		eptr->l.m = (struct model *)NULL;
 		break;
 	    }
@@ -442,49 +442,6 @@ do_subtract(struct seg *A,
 	    return;
 	}
     }
-}
-
-/* perform the union of two segments the types of A and B should be
- * the same
- */
-HIDDEN void
-do_union(struct seg *A,
-	 struct seg *B,
-	 struct bu_list *seghead,
-	 struct _ged_client_data *dgcdp)
-{
-    struct seg *tmp;
-
-    RT_GET_SEG(tmp, dgcdp->ap->a_resource)
-
-	if (NOT_SEG_OVERLAP(A, B)) {
-	    if (A->seg_in.hit_dist <= B->seg_in.hit_dist) {
-		*tmp = *A;
-		BU_LIST_INSERT(seghead, &tmp->l);
-		RT_GET_SEG(tmp, dgcdp->ap->a_resource);
-		*tmp = *B;
-		BU_LIST_INSERT(seghead, &tmp->l);
-	    } else {
-		*tmp = *B;
-		BU_LIST_INSERT(seghead, &tmp->l);
-		RT_GET_SEG(tmp, dgcdp->ap->a_resource);
-		*tmp = *A;
-		BU_LIST_INSERT(seghead, &tmp->l);
-	    }
-	    return;
-	}
-
-    if (A->seg_in.hit_dist <= B->seg_in.hit_dist) {
-	*tmp = *A;
-	if (B->seg_out.hit_dist > A->seg_out.hit_dist)
-	    tmp->seg_out.hit_dist = B->seg_out.hit_dist;
-    } else {
-	*tmp = *B;
-	if (A->seg_out.hit_dist > B->seg_out.hit_dist)
-	    tmp->seg_out.hit_dist = B->seg_out.hit_dist;
-    }
-
-    BU_LIST_INSERT(seghead, &tmp->l);
 }
 
 HIDDEN void

@@ -1,7 +1,7 @@
 /*                  N M G _ F I X _ N O R M A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2010 United States Government as represented by
+ * Copyright (c) 2009-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ ged_nmg_fix_normals(struct ged *gedp, int argc, const char *argv[])
     /* attempt to resolve and verify before we jump in */
     nmg_name = argv[1];
 
-    if ((dp=db_lookup(gedp->ged_wdbp->dbip, nmg_name, LOOKUP_QUIET)) == DIR_NULL) {
+    if ((dp=db_lookup(gedp->ged_wdbp->dbip, nmg_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s does not exist\n", nmg_name);
 	return GED_ERROR;
     }

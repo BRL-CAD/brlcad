@@ -1,7 +1,7 @@
 /*                C O M B _ B O O L _ S C A N . L
  * BRL-CAD
  *
- * Copyright (c) 2008-2010 United States Government as represented by
+ * Copyright (c) 2008-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,13 +41,13 @@ white		[ \t\n]+
 		}
 {vanilla}+	{
 		    if ((*yytext == *bool_op_lexeme[OPN_UNION])
-		     && (strcmp(yytext, bool_op_lexeme[OPN_UNION]) == 0))
+		     && (BU_STR_EQUAL(yytext, bool_op_lexeme[OPN_UNION])))
 			return TKN_UNION;
 		    if ((*yytext == *bool_op_lexeme[OPN_INTERSECTION])
-		     && (strcmp(yytext, bool_op_lexeme[OPN_INTERSECTION]) == 0))
+		     && (BU_STR_EQUAL(yytext, bool_op_lexeme[OPN_INTERSECTION])))
 			return TKN_INTERSECTION;
 		    if ((*yytext == *bool_op_lexeme[OPN_DIFFERENCE])
-		     && (strcmp(yytext, bool_op_lexeme[OPN_DIFFERENCE]) == 0))
+		     && (BU_STR_EQUAL(yytext, bool_op_lexeme[OPN_DIFFERENCE])))
 			return TKN_DIFFERENCE;
 		    else
 		    {

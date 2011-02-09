@@ -1,7 +1,7 @@
 /*                     D B _ F L A G S . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2010 United States Government as represented by
+ * Copyright (c) 2006-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,14 +54,14 @@ db_flags_internal(const struct rt_db_internal *intern)
     RT_CK_DB_INTERNAL(intern);
 
     if ( intern->idb_type != ID_COMBINATION )
-	return DIR_SOLID;
+	return RT_DIR_SOLID;
 
     comb = (struct rt_comb_internal *)intern->idb_ptr;
     RT_CK_COMB(comb);
 
     if ( comb->region_flag )
-	return DIR_COMB | DIR_REGION;
-    return DIR_COMB;
+	return RT_DIR_COMB | RT_DIR_REGION;
+    return RT_DIR_COMB;
 }
 
 
@@ -79,27 +79,27 @@ db_flags_raw_internal(const struct db5_raw_internal *raw)
     struct bu_attribute_value_set avs;
 
     if (raw->major_type != DB5_MAJORTYPE_BRLCAD) {
-	return DIR_NON_GEOM;
+	return RT_DIR_NON_GEOM;
     }
     if (raw->minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION) {
 	if (raw->attributes.ext_buf) {
 	    bu_avs_init_empty(&avs);
 	    if (db5_import_attributes(&avs, &raw->attributes) < 0) {
 		/* could not load attributes, so presume not a region */
-		return DIR_COMB;
+		return RT_DIR_COMB;
 	    }
 	    if (avs.count == 0) {
-		return DIR_COMB;
+		return RT_DIR_COMB;
 	    }
 	    if (bu_avs_get( &avs, "region" ) != NULL) {
-		return DIR_COMB|DIR_REGION;
+		return RT_DIR_COMB|RT_DIR_REGION;
 	    }
 	}
-	return DIR_COMB;
+	return RT_DIR_COMB;
     }
 
     /* anything else is a solid? */
-    return DIR_SOLID;
+    return RT_DIR_SOLID;
 }
 
 /** @} */

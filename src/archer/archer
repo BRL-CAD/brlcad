@@ -2,7 +2,7 @@
 #                         A R C H E R
 # BRL-CAD
 #
-# Copyright (c) 2002-2010 United States Government as represented by
+# Copyright (c) 2002-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -57,6 +57,18 @@ for ish in bwish bwish_d ; do
 done
 #\
 exec $WISH $0 $@
+
+# Itk's default class doesn't keep the menu, but Archer needs it - redefine itk:Toplevel
+set itk_file [file join [bu_brlcad_data "tclscripts"] archer itk_redefines.tcl]
+if { ![file exists $itk_file] } {
+	#try src tree
+	set itk_file [file join [bu_brlcad_data "src"] tclscripts archer itk_redefines.tcl]
+	if { ![file exists $itk_file] } {
+		#try local relative
+		set itk_file [file join src tclscripts archer itk_redefines.tcl]
+	}
+}
+source $itk_file
 
 # Set ttk theme
 if {[tk windowingsystem] eq "aqua"} {
@@ -132,11 +144,20 @@ proc showMainWindow {} {
 proc createSplashScreen {} {
     global env
 
-    # XXX disabled until tkimg is working better
     set useImage 1
 
     if {$useImage} {
-	set image [image create photo -file [file join [bu_brlcad_data "tclscripts"] archer images aboutArcher.png]]
+	# try installed, uninstalled
+	set imgfile [file join [bu_brlcad_data "tclscripts"] archer images aboutArcher.png]
+	if { ![file exists $imgfile] } {
+	    # try src tree
+	    set imgfile [file join [bu_brlcad_data "src"] archer images aboutArcher.png]
+	    if { [!file exists $imgfile] } {
+		# try local relative
+	        set imgfile [file join tclscripts archer images aboutArcher.png]
+	    }
+	}
+	set image [image create photo -file $imgfile]
 	set ::ArcherCore::splash [Splash .splash -image $image]
     } else {
 	set ::ArcherCore::splash [Splash .splash -message "Loading Archer ... please wait ..."]
@@ -216,7 +237,7 @@ proc main {} {
 	wm title $::ArcherCore::application "Archer"
 	if {$tcl_platform(os) == "Windows NT"} {
 	    wm iconbitmap $::ArcherCore::application -default \
-		[file join [bu_brlcad_data "html"] manuals archer archer.ico]
+		[file join [bu_brlcad_data "icons"] archer.ico]
 	}
 	set size [wm maxsize $::ArcherCore::application]
 	set w [lindex $size 0]

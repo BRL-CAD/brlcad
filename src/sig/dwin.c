@@ -1,7 +1,7 @@
 /*                          D W I N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,8 @@
 #include <stdlib.h> /* for atof() */
 #include <math.h>
 #include "bio.h"
+
+#include "bu.h"
 
 
 /*
@@ -83,20 +85,20 @@ int main(int argc, char **argv)
     }
 
     while ( argc > 1 ) {
-	if ( strcmp(argv[1], "-w") == 0 ) {
+	if ( BU_STR_EQUAL(argv[1], "-w") ) {
 	    window++;
-	} else if ( strcmp(argv[1], "-h") == 0 ) {
+	} else if ( BU_STR_EQUAL(argv[1], "-h") ) {
 	    window++;
 	    hamming++;
-	} else if ( strcmp(argv[1], "-B") == 0 ) {
+	} else if ( BU_STR_EQUAL(argv[1], "-B") ) {
 	    window++;
 	    bias++;
-	} else if ( strcmp(argv[1], "-b") == 0 ) {
+	} else if ( BU_STR_EQUAL(argv[1], "-b") ) {
 	    window++;
 	    bartlett++;
-	} else if ( strcmp(argv[1], "-e") == 0 ) {
+	} else if ( BU_STR_EQUAL(argv[1], "-e") ) {
 	    endwin++;
-	} else if ( strcmp(argv[1], "-m") == 0 ) {
+	} else if ( BU_STR_EQUAL(argv[1], "-m") ) {
 	    midwin++;
 	} else
 	    break;

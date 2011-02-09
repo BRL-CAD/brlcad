@@ -1,7 +1,7 @@
 /*                      A N I M E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2010 United States Government as represented by
+ * Copyright (c) 2004-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,22 +64,22 @@ static unsigned int joint_debug = 0;
 void joint_move(struct joint *jp);
 void joint_clear(void);
 
-static int f_jfhelp(int argc, char **argv);
-int f_fhelp2(int argc, char **argv, struct funtab *functions);
-static int f_jhelp(int argc, char **argv);
-int f_help2(int argc, char **argv, struct funtab *functions);
-int f_jmesh(int argc, char **argv);
-int f_jdebug(int argc, char **argv);
-int f_jload(int argc, char **argv);
-int f_junload(int argc, char **argv);
-int f_jmove(int argc, char **argv);
-int f_jlist(int argc, char **argv);
-int f_jaccept(int argc, char **argv);
-int f_jreject(int argc, char **argv);
-int f_jsave(int argc, char **argv);
-int f_jhold(int argc, char **argv);
-int f_jsolve(int argc, char **argv);
-int f_jtest(int argc, char **argv);
+static int f_jfhelp(int argc, const char *argv[]);
+int f_fhelp2(int argc, const char *argv[], struct funtab *functions);
+static int f_jhelp(int argc, const char *argv[]);
+int f_help2(int argc, const char *argv[], struct funtab *functions);
+int f_jmesh(int argc, const char *argv[]);
+int f_jdebug(int argc, const char *argv[]);
+int f_jload(int argc, const char *argv[]);
+int f_junload(int argc, const char *argv[]);
+int f_jmove(int argc, const char *argv[]);
+int f_jlist(int argc, const char *argv[]);
+int f_jaccept(int argc, const char *argv[]);
+int f_jreject(int argc, const char *argv[]);
+int f_jsave(int argc, const char *argv[]);
+int f_jhold(int argc, const char *argv[]);
+int f_jsolve(int argc, char *argv[]);
+int f_jtest(int argc, const char *argv[]);
 
 static struct funtab joint_tab[] = {
     {"joint ", "", "Joint command table",
@@ -119,7 +119,7 @@ static struct funtab joint_tab[] = {
 
 int
 f_jdebug(int argc,
-	 char **argv)
+	 const char *argv[])
 {
     struct bu_vls vls;
 
@@ -134,13 +134,13 @@ f_jdebug(int argc,
     bu_vls_printb(&vls, "joint_debug", joint_debug, JOINT_DEBUG_FORMAT);
     bu_vls_printf(&vls, "\n");
 
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
     return CMD_OK;
 }
 int
-f_joint(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_joint(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     int status;
 
@@ -167,7 +167,7 @@ f_joint(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 
 static int
-f_jfhelp(int argc, char **argv)
+f_jfhelp(int argc, const char *argv[])
 {
     int status;
 
@@ -181,7 +181,7 @@ f_jfhelp(int argc, char **argv)
 
 
 static int
-f_jhelp(int argc, char **argv)
+f_jhelp(int argc, const char *argv[])
 {
     int status;
 
@@ -201,12 +201,12 @@ struct bu_list hold_head = {
     &hold_head, &hold_head
 };
 static struct joint *
-joint_lookup(char *name)
+joint_lookup(const char *name)
 {
     struct joint *jp;
 
     for (BU_LIST_FOR(jp, joint, &joint_head)) {
-	if (strcmp(jp->name, name) == 0) return jp;
+	if (BU_STR_EQUAL(jp->name, name)) return jp;
     }
     return (struct joint *) 0;
 }
@@ -359,7 +359,7 @@ read_hold_point(pp, name, fip)
 	    pp->name = arc[arc_last];
 	    /*
 	     * NOTE: we are not freeing the last entry which should be
-	     * a grip as we save it's name in pp->name.
+	     * a grip as we save its name in pp->name.
 	     */
 	    for (i=0; i< arc_last; i++) {
 		bu_free((genptr_t)arc[i], "arc entry");
@@ -417,7 +417,7 @@ read_hold_point(pp, name, fip)
 	    pp->name = arc[arc_last];
 	    /*
 	     * NOTE: we are not freeing the last entry which should be
-	     * a joint as we save it's name in pp->name.
+	     * a joint as we save its name in pp->name.
 	     */
 	    for (i=0; i< arc_last; i++) {
 		bu_free((genptr_t)arc[i], "arc entry");
@@ -456,13 +456,17 @@ if (!read_hold_point(&hp->objective, "objective", fip)) {
 #endif /* 0 */
 
 int
-f_junload(int argc, char **argv)
+f_junload(int argc, const char *argv[])
 {
     struct joint *jp;
     struct hold *hp;
     int joints, holds;
 
     CHECK_DBI_NULL;
+
+    if (argc > 1) {
+	bu_log("Unexpected parameter [%s]\n", argv[1]);
+    }
 
     db_free_anim(dbip);
     holds = 0;
@@ -476,7 +480,7 @@ f_junload(int argc, char **argv)
 	joints++;
 	BU_LIST_DEQUEUE(&(jp->l));
 	if (joint_debug & DEBUG_J_LOAD) {
-	    Tcl_AppendResult(interp, "joint unload: unloading '",
+	    Tcl_AppendResult(INTERP, "joint unload: unloading '",
 			     jp->name, "'.\n", (char *)NULL);
 	}
 	free_joint(jp);
@@ -487,7 +491,7 @@ f_junload(int argc, char **argv)
 	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "joint unload: unloaded %d joints, %d constraints.\n",
 		      joints, holds);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
     }
 
@@ -517,7 +521,7 @@ f_junload(int argc, char **argv)
 #define KEY_INF		22
 #define KEY_VERTEX	23
 
-static struct bu_lex_key keys[] = {
+static struct bu_lex_key animkeys[] = {
     {KEY_JOINT, "joint"},
     {KEY_CON,   "constraint"},
     {KEY_ARC,   "arc"},
@@ -579,7 +583,7 @@ static struct bu_lex_key lex_solids[] = {
 #define SYM_MINUS	9
 #define SYM_PLUS	10
 
-static struct bu_lex_key syms[] = {
+static struct bu_lex_key animsyms[] = {
     {SYM_OP_GROUP,	"{"},
     {SYM_CL_GROUP,	"}"},
     {SYM_OP_PT,	"("},
@@ -593,7 +597,7 @@ static struct bu_lex_key syms[] = {
     {0, 0}};
 
 static int lex_line;
-static char *lex_name;
+static const char *lex_name;
 static double mm2base, base2mm;
 
 static void
@@ -607,7 +611,7 @@ parse_error(struct bu_vls *str, char *error)
 
 	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "%s:%d %s\n", lex_name, lex_line, error);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
 	return;
     }
@@ -623,7 +627,7 @@ parse_error(struct bu_vls *str, char *error)
 
 	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "%s:%d %s\n%s\n%s\n", lex_name, lex_line, error, str->vls_str, text);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
     }
 
@@ -675,7 +679,7 @@ get_token(union bu_lex_token *token, FILE *fip, struct bu_vls *str, struct bu_le
 	    }
 	}
 
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
     }
     return used;
@@ -696,7 +700,7 @@ gobble_token(int type_wanted, int value_wanted, FILE *fip, struct bu_vls *str)
     union bu_lex_token token;
     char error[160];
 
-    if (get_token(&token, fip, str, keys, syms) == EOF) {
+    if (get_token(&token, fip, str, animkeys, animsyms) == EOF) {
 	snprintf(error, 160, "parse: Unexpected EOF while getting %s",
 		 types[type_wanted]);
 	parse_error(str, error);
@@ -731,11 +735,11 @@ skip_group(FILE *fip, struct bu_vls *str)
     union bu_lex_token tok;
     int count = 1;
     if (joint_debug & DEBUG_J_PARSE) {
-	Tcl_AppendResult(interp, "skip_group: Skipping....\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "skip_group: Skipping....\n", (char *)NULL);
     }
 
     while (count) {
-	if (get_token(&tok, fip, str, keys, syms) == EOF) {
+	if (get_token(&tok, fip, str, animkeys, animsyms) == EOF) {
 	    parse_error(str, "skip_group: Unexpect EOF while searching for group end.");
 	    return;
 	}
@@ -748,7 +752,7 @@ skip_group(FILE *fip, struct bu_vls *str)
 	}
     }
     if (joint_debug & DEBUG_J_PARSE) {
-	Tcl_AppendResult(interp, "skip_group: Done....\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "skip_group: Done....\n", (char *)NULL);
     }
 
 }
@@ -757,7 +761,7 @@ parse_units(FILE *fip, struct bu_vls *str)
 {
     union bu_lex_token token;
 
-    if (get_token(&token, fip, str, units, syms) == EOF) {
+    if (get_token(&token, fip, str, units, animsyms) == EOF) {
 	parse_error(str, "parse_units: Unexpect EOF reading units.");
 	return 0;
     }
@@ -790,7 +794,7 @@ parse_path(struct arc *ap, FILE *fip, struct bu_vls *str)
     int max;
 
     if (joint_debug & DEBUG_J_PARSE) {
-	Tcl_AppendResult(interp, "parse_path: open.\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "parse_path: open.\n", (char *)NULL);
     }
     /*
      * clear the arc if there is anything there.
@@ -802,7 +806,7 @@ parse_path(struct arc *ap, FILE *fip, struct bu_vls *str)
     ap->arc_last = -1;
     ap->type = ARC_PATH;
     for (;;) {
-	if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
+	if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
 	    parse_error(str, "parse_path: Unexpect EOF.");
 	    free_arc(ap);
 	    return 0;
@@ -818,7 +822,7 @@ parse_path(struct arc *ap, FILE *fip, struct bu_vls *str)
 					   sizeof(char *)*max, "arc table");
 	}
 	ap->arc[ap->arc_last] = token.t_id.value;
-	if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
+	if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
 	    parse_error(str, "parse_path: Unexpect EOF while getting '/' or '-'");
 	    free_arc(ap);
 	    return 0;
@@ -842,7 +846,7 @@ parse_path(struct arc *ap, FILE *fip, struct bu_vls *str)
     /*
      * Just got the '-' so this is the "destination" part.
      */
-    if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
+    if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
 	parse_error(str, "parse_path: Unexpected EOF while getting destination.");
 	free_arc(ap);
 	return 0;
@@ -865,7 +869,7 @@ parse_list(struct arc *ap, FILE *fip, struct bu_vls *str)
     int max;
 
     if (joint_debug & DEBUG_J_PARSE) {
-	Tcl_AppendResult(interp, "parse_path: open.\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "parse_path: open.\n", (char *)NULL);
     }
     /*
      * clear the arc if there is anything there.
@@ -878,7 +882,7 @@ parse_list(struct arc *ap, FILE *fip, struct bu_vls *str)
     ap->arc_last = -1;
     ap->type = ARC_LIST;
     for (;;) {
-	if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
+	if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
 	    parse_error(str, "parse_path: Unexpect EOF.");
 	    free_arc(ap);
 	    return 0;
@@ -894,7 +898,7 @@ parse_list(struct arc *ap, FILE *fip, struct bu_vls *str)
 					   sizeof(char *)*max, "arc table");
 	}
 	ap->arc[ap->arc_last] = token.t_id.value;
-	if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
+	if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
 	    parse_error(str, "parse_path: Unexpect EOF while getting ',' or ';'");
 	    free_arc(ap);
 	    return 0;
@@ -925,7 +929,7 @@ parse_ARC(struct arc *ap, FILE *fip, struct bu_vls *str)
     char *error;
 
     if (joint_debug & DEBUG_J_PARSE) {
-	Tcl_AppendResult(interp, "parse_ARC: open.\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "parse_ARC: open.\n", (char *)NULL);
     }
 
     free_arc(ap);
@@ -936,7 +940,7 @@ parse_ARC(struct arc *ap, FILE *fip, struct bu_vls *str)
     ap->arc_last = -1;
 
     error = "parse_ARC: Unexpected EOF while getting arc.";
-    while (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) != EOF) {
+    while (get_token(&token, fip, str, (struct bu_lex_key *)NULL, animsyms) != EOF) {
 	if (token.type != BU_LEX_IDENT) {
 	    error = "parse_ARC: syntax error. Missing identifier.";
 	    break;
@@ -947,7 +951,7 @@ parse_ARC(struct arc *ap, FILE *fip, struct bu_vls *str)
 					   sizeof(char *)*max, "arc table");
 	}
 	ap->arc[ap->arc_last] = token.t_id.value;
-	if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
+	if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
 	    error = "parse_ARC: Unexpected EOF while getting '/' or ';'.";
 	    break;
 	}
@@ -960,7 +964,7 @@ parse_ARC(struct arc *ap, FILE *fip, struct bu_vls *str)
 	}
 	if (token.t_key.value == SYM_END) {
 	    if (joint_debug & DEBUG_J_PARSE) {
-		Tcl_AppendResult(interp, "parse_ARC: close.\n", (char *)NULL);
+		Tcl_AppendResult(INTERP, "parse_ARC: close.\n", (char *)NULL);
 	    }
 
 	    return 1;
@@ -983,16 +987,16 @@ parse_double(double *dbl, FILE *fip, struct bu_vls *str)
     sign = 1.0;
 
     if (joint_debug & DEBUG_J_PARSE) {
-	Tcl_AppendResult(interp, "parse_double: open\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "parse_double: open\n", (char *)NULL);
     }
 
-    if (get_token(&token, fip, str, keys, syms) == EOF) {
+    if (get_token(&token, fip, str, animkeys, animsyms) == EOF) {
 	parse_error(str, "parse_double: Unexpect EOF while getting number.");
 	return 0;
     }
     if (token.type == BU_LEX_SYMBOL && token.t_key.value == SYM_MINUS) {
 	sign = -1;
-	if (get_token(&token, fip, str, keys, syms) == EOF) {
+	if (get_token(&token, fip, str, animkeys, animsyms) == EOF) {
 	    parse_error(str, "parse_double: Unexpect EOF while getting number.");
 	    return 0;
 	}
@@ -1035,7 +1039,7 @@ parse_vect(fastf_t *vect, FILE *fip, struct bu_vls *str)
     int i;
 
     if (joint_debug & DEBUG_J_PARSE) {
-	Tcl_AppendResult(interp, "parse_vect: open.\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "parse_vect: open.\n", (char *)NULL);
     }
 
     if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_PT, fip, str)) return 0;
@@ -1050,16 +1054,16 @@ parse_vect(fastf_t *vect, FILE *fip, struct bu_vls *str)
     return 1;
 }
 static int
-parse_trans(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
+parse_trans(struct joint *jp, int idx, FILE *fip, struct bu_vls *str)
 {
     union bu_lex_token token;
     int dirfound=0, upfound = 0, lowfound=0, curfound=0, accfound=0;
 
     if (joint_debug & DEBUG_J_PARSE) {
-	Tcl_AppendResult(interp, "parse_trans: open\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "parse_trans: open\n", (char *)NULL);
     }
 
-    if (index >= 3) {
+    if (idx >= 3) {
 	parse_error(str, "parse_trans: To many translations for this joint.");
 	if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
 	skip_group(fip, str);
@@ -1067,21 +1071,21 @@ parse_trans(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
     }
     if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
 
-    while (get_token(&token, fip, str, keys, syms) != EOF) {
+    while (get_token(&token, fip, str, animkeys, animsyms) != EOF) {
 	if (token.type == BU_LEX_IDENT) {
 	    bu_free(token.t_id.value, "unit token");
 	}
 	if (token.type == BU_LEX_SYMBOL &&
 	    token.t_key.value == SYM_CL_GROUP) {
 	    if (joint_debug & DEBUG_J_PARSE) {
-		Tcl_AppendResult(interp, "parse_trans: closing.\n", (char *)NULL);
+		Tcl_AppendResult(INTERP, "parse_trans: closing.\n", (char *)NULL);
 	    }
 
 	    if (!dirfound) {
 		parse_error(str, "parse_trans: Direction vector not given.");
 		return 0;
 	    }
-	    VUNITIZE(jp->dirs[index].unitvec);
+	    VUNITIZE(jp->dirs[idx].unitvec);
 	    if (!lowfound) {
 		parse_error(str, "parse_trans: lower bound not given.");
 		return 0;
@@ -1090,31 +1094,31 @@ parse_trans(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 		parse_error(str, "parse_trans: upper bound not given.");
 		return 0;
 	    }
-	    if (jp->dirs[index].lower > jp->dirs[index].upper) {
+	    if (jp->dirs[idx].lower > jp->dirs[idx].upper) {
 		double tmp;
-		tmp = jp->dirs[index].lower;
-		jp->dirs[index].lower = jp->dirs[index].upper;
-		jp->dirs[index].upper = tmp;
+		tmp = jp->dirs[idx].lower;
+		jp->dirs[idx].lower = jp->dirs[idx].upper;
+		jp->dirs[idx].upper = tmp;
 		parse_error(str, "parse_trans: lower > upper, exchanging.");
 	    }
-	    if (!accfound) jp->dirs[index].accepted = 0.0;
-	    if (!curfound) jp->dirs[index].current = 0.0;
-	    jp->dirs[index].lower *= base2mm;
-	    jp->dirs[index].upper *= base2mm;
-	    jp->dirs[index].current *= base2mm;
-	    jp->dirs[index].accepted *= base2mm;
+	    if (!accfound) jp->dirs[idx].accepted = 0.0;
+	    if (!curfound) jp->dirs[idx].current = 0.0;
+	    jp->dirs[idx].lower *= base2mm;
+	    jp->dirs[idx].upper *= base2mm;
+	    jp->dirs[idx].current *= base2mm;
+	    jp->dirs[idx].accepted *= base2mm;
 
-	    if (jp->dirs[index].accepted < jp->dirs[index].lower) {
-		jp->dirs[index].accepted = jp->dirs[index].lower;
+	    if (jp->dirs[idx].accepted < jp->dirs[idx].lower) {
+		jp->dirs[idx].accepted = jp->dirs[idx].lower;
 	    }
-	    if (jp->dirs[index].accepted > jp->dirs[index].upper) {
-		jp->dirs[index].accepted = jp->dirs[index].upper;
+	    if (jp->dirs[idx].accepted > jp->dirs[idx].upper) {
+		jp->dirs[idx].accepted = jp->dirs[idx].upper;
 	    }
-	    if (jp->dirs[index].current < jp->dirs[index].lower) {
-		jp->dirs[index].current = jp->dirs[index].lower;
+	    if (jp->dirs[idx].current < jp->dirs[idx].lower) {
+		jp->dirs[idx].current = jp->dirs[idx].lower;
 	    }
-	    if (jp->dirs[index].current > jp->dirs[index].upper) {
-		jp->dirs[index].current = jp->dirs[index].upper;
+	    if (jp->dirs[idx].current > jp->dirs[idx].upper) {
+		jp->dirs[idx].current = jp->dirs[idx].upper;
 	    }
 	    return 1;
 	}
@@ -1130,7 +1134,7 @@ parse_trans(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 		    skip_group(fip, str);
 		    return 0;
 		}
-		if (!parse_double(&jp->dirs[index].lower, fip, str)) {
+		if (!parse_double(&jp->dirs[idx].lower, fip, str)) {
 		    skip_group(fip, str);
 		    return 0;
 		}
@@ -1139,7 +1143,7 @@ parse_trans(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 		    skip_group(fip, str);
 		    return 0;
 		}
-		if (!parse_double(&jp->dirs[index].upper, fip, str)) {
+		if (!parse_double(&jp->dirs[idx].upper, fip, str)) {
 		    skip_group(fip, str);
 		    return 0;
 		}
@@ -1148,7 +1152,7 @@ parse_trans(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 		    skip_group(fip, str);
 		    return 0;
 		}
-		if (!parse_double(&jp->dirs[index].current, fip, str)) {
+		if (!parse_double(&jp->dirs[idx].current, fip, str)) {
 		    skip_group(fip, str);
 		    return 0;
 		}
@@ -1156,28 +1160,28 @@ parse_trans(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 		(void) gobble_token(BU_LEX_SYMBOL, SYM_END, fip, str);
 		break;
 	    case KEY_UP:
-		if (!parse_assign(&jp->dirs[index].upper, fip, str)) {
+		if (!parse_assign(&jp->dirs[idx].upper, fip, str)) {
 		    skip_group(fip, str);
 		    return 0;
 		}
 		upfound = 1;
 		break;
 	    case KEY_LOW:
-		if (!parse_assign(&jp->dirs[index].lower, fip, str)) {
+		if (!parse_assign(&jp->dirs[idx].lower, fip, str)) {
 		    skip_group(fip, str);
 		    return 0;
 		}
 		lowfound = 1;
 		break;
 	    case KEY_CUR:
-		if (!parse_assign(&jp->dirs[index].current, fip, str)) {
+		if (!parse_assign(&jp->dirs[idx].current, fip, str)) {
 		    skip_group(fip, str);
 		    return 0;
 		}
 		curfound = 1;
 		break;
 	    case KEY_ACC:
-		if (!parse_assign(&jp->dirs[index].accepted, fip, str)) {
+		if (!parse_assign(&jp->dirs[idx].accepted, fip, str)) {
 		    skip_group(fip, str);
 		    return 0;
 		}
@@ -1188,7 +1192,7 @@ parse_trans(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 		    skip_group(fip, str);
 		    return 0;
 		}
-		if (!parse_vect(jp->dirs[index].unitvec, fip, str)) {
+		if (!parse_vect(jp->dirs[idx].unitvec, fip, str)) {
 		    skip_group(fip, str);
 		    return 0;
 		}
@@ -1208,16 +1212,16 @@ parse_trans(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
     return 0;
 }
 static int
-parse_rots(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
+parse_rots(struct joint *jp, int idx, FILE *fip, struct bu_vls *str)
 {
     union bu_lex_token token;
     int dirfound=0, upfound = 0, lowfound=0, curfound=0, accfound=0;
 
     if (joint_debug & DEBUG_J_PARSE) {
-	Tcl_AppendResult(interp, "parse_rots: open\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "parse_rots: open\n", (char *)NULL);
     }
 
-    if (index >= 3) {
+    if (idx >= 3) {
 	parse_error(str, "parse_rot: To many rotations for this joint.");
 	if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
 	skip_group(fip, str);
@@ -1225,22 +1229,22 @@ parse_rots(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
     }
     if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
 
-    while (get_token(&token, fip, str, keys, syms) != EOF) {
+    while (get_token(&token, fip, str, animkeys, animsyms) != EOF) {
 	if (token.type == BU_LEX_IDENT) {
 	    bu_free(token.t_id.value, "unit token");
 	}
 	if (token.type == BU_LEX_SYMBOL &&
 	    token.t_key.value == SYM_CL_GROUP) {
 	    if (joint_debug & DEBUG_J_PARSE) {
-		Tcl_AppendResult(interp, "parse_rots: closing.\n", (char *)NULL);
+		Tcl_AppendResult(INTERP, "parse_rots: closing.\n", (char *)NULL);
 	    }
 
 	    if (!dirfound) {
 		parse_error(str, "parse_rots: Direction vector not given.");
 		return 0;
 	    }
-	    VUNITIZE(jp->rots[index].quat);
-	    jp->rots[index].quat[W] = 0.0;
+	    VUNITIZE(jp->rots[idx].quat);
+	    jp->rots[idx].quat[W] = 0.0;
 	    if (!lowfound) {
 		parse_error(str, "parse_rots: lower bound not given.");
 		return 0;
@@ -1249,30 +1253,30 @@ parse_rots(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 		parse_error(str, "parse_rots: upper bound not given.");
 		return 0;
 	    }
-	    if (jp->rots[index].lower > jp->rots[index].upper) {
+	    if (jp->rots[idx].lower > jp->rots[idx].upper) {
 		double tmp;
-		tmp = jp->rots[index].lower;
-		jp->rots[index].lower = jp->rots[index].upper;
-		jp->rots[index].upper = tmp;
+		tmp = jp->rots[idx].lower;
+		jp->rots[idx].lower = jp->rots[idx].upper;
+		jp->rots[idx].upper = tmp;
 		parse_error(str, "parse_rots: lower > upper, exchanging.");
 	    }
 	    if (!accfound) {
-		jp->rots[index].accepted = 0.0;
+		jp->rots[idx].accepted = 0.0;
 	    }
-	    if (jp->rots[index].accepted < jp->rots[index].lower) {
-		jp->rots[index].accepted = jp->rots[index].lower;
+	    if (jp->rots[idx].accepted < jp->rots[idx].lower) {
+		jp->rots[idx].accepted = jp->rots[idx].lower;
 	    }
-	    if (jp->rots[index].accepted > jp->rots[index].upper) {
-		jp->rots[index].accepted = jp->rots[index].upper;
+	    if (jp->rots[idx].accepted > jp->rots[idx].upper) {
+		jp->rots[idx].accepted = jp->rots[idx].upper;
 	    }
 	    if (!curfound) {
-		jp->rots[index].current = 0.0;
+		jp->rots[idx].current = 0.0;
 	    }
-	    if (jp->rots[index].current < jp->rots[index].lower) {
-		jp->rots[index].current = jp->rots[index].lower;
+	    if (jp->rots[idx].current < jp->rots[idx].lower) {
+		jp->rots[idx].current = jp->rots[idx].lower;
 	    }
-	    if (jp->rots[index].current > jp->rots[index].upper) {
-		jp->rots[index].current = jp->rots[index].upper;
+	    if (jp->rots[idx].current > jp->rots[idx].upper) {
+		jp->rots[idx].current = jp->rots[idx].upper;
 	    }
 	    return 1;
 	}
@@ -1288,7 +1292,7 @@ parse_rots(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 		    skip_group(fip, str);
 		    return 0;
 		}
-		if (!parse_double(&jp->rots[index].lower, fip, str)) {
+		if (!parse_double(&jp->rots[idx].lower, fip, str)) {
 		    skip_group(fip, str);
 		    return 0;
 		}
@@ -1297,7 +1301,7 @@ parse_rots(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 		    skip_group(fip, str);
 		    return 0;
 		}
-		if (!parse_double(&jp->rots[index].upper, fip, str)) {
+		if (!parse_double(&jp->rots[idx].upper, fip, str)) {
 		    skip_group(fip, str);
 		    return 0;
 		}
@@ -1306,7 +1310,7 @@ parse_rots(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 		    skip_group(fip, str);
 		    return 0;
 		}
-		if (!parse_double(&jp->rots[index].current, fip, str)) {
+		if (!parse_double(&jp->rots[idx].current, fip, str)) {
 		    skip_group(fip, str);
 		    return 0;
 		}
@@ -1314,28 +1318,28 @@ parse_rots(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 		(void) gobble_token(BU_LEX_SYMBOL, SYM_END, fip, str);
 		break;
 	    case KEY_UP:
-		if (!parse_assign(&jp->rots[index].upper, fip, str)) {
+		if (!parse_assign(&jp->rots[idx].upper, fip, str)) {
 		    skip_group(fip, str);
 		    return 0;
 		}
 		upfound = 1;
 		break;
 	    case KEY_LOW:
-		if (!parse_assign(&jp->rots[index].lower, fip, str)) {
+		if (!parse_assign(&jp->rots[idx].lower, fip, str)) {
 		    skip_group(fip, str);
 		    return 0;
 		}
 		lowfound = 1;
 		break;
 	    case KEY_CUR:
-		if (!parse_assign(&jp->rots[index].current, fip, str)) {
+		if (!parse_assign(&jp->rots[idx].current, fip, str)) {
 		    skip_group(fip, str);
 		    return 0;
 		}
 		curfound = 1;
 		break;
 	    case KEY_ACC:
-		if (!parse_assign(&jp->rots[index].accepted, fip, str)) {
+		if (!parse_assign(&jp->rots[idx].accepted, fip, str)) {
 		    skip_group(fip, str);
 		    return 0;
 		}
@@ -1346,7 +1350,7 @@ parse_rots(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 		    skip_group(fip, str);
 		    return 0;
 		}
-		if (!parse_vect(jp->rots[index].quat, fip, str)) {
+		if (!parse_vect(jp->rots[idx].quat, fip, str)) {
 		    skip_group(fip, str);
 		    return 0;
 		}
@@ -1375,7 +1379,7 @@ parse_joint(FILE *fip, struct bu_vls *str)
     int arcfound, locfound;
 
     if (joint_debug & DEBUG_J_PARSE) {
-	Tcl_AppendResult(interp, "parse_joint: reading joint.\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "parse_joint: reading joint.\n", (char *)NULL);
     }
 
     BU_GETSTRUCT(jp, joint);
@@ -1384,7 +1388,7 @@ parse_joint(FILE *fip, struct bu_vls *str)
     jp->path.type = ARC_UNSET;
     jp->name = NULL;
 
-    if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
+    if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
 	parse_error(str, "parse_joint: Unexpected EOF getting name.");
 	free_joint(jp);
 	return 0;
@@ -1402,7 +1406,7 @@ parse_joint(FILE *fip, struct bu_vls *str)
     locfound = 0;
     rots = trans = 0;
     for (;;) {
-	if (get_token(&token, fip, str, keys, syms) == EOF) {
+	if (get_token(&token, fip, str, animkeys, animsyms) == EOF) {
 	    parse_error(str, "parse_joint: Unexpected EOF getting joint contents.");
 	    skip_group(fip, str);
 	    free_joint(jp);
@@ -1411,7 +1415,7 @@ parse_joint(FILE *fip, struct bu_vls *str)
 	if (token.type == BU_LEX_SYMBOL &&
 	    token.t_key.value == SYM_CL_GROUP) {
 	    if (joint_debug & DEBUG_J_PARSE) {
-		Tcl_AppendResult(interp, "parse_joint: closing.\n", (char *)NULL);
+		Tcl_AppendResult(INTERP, "parse_joint: closing.\n", (char *)NULL);
 	    }
 	    if (!arcfound) {
 		parse_error(str, "parse_joint: Arc not defined.");
@@ -1530,13 +1534,13 @@ parse_jset(struct hold *hp, FILE *fip, struct bu_vls *str)
     int jointfound=0, listfound=0, arcfound=0, pathfound=0;
 
     if (joint_debug & DEBUG_J_PARSE) {
-	Tcl_AppendResult(interp, "parse_jset: open\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "parse_jset: open\n", (char *)NULL);
     }
 
     if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
 
     for (;;) {
-	if (get_token(&token, fip, str, keys, syms) == EOF) {
+	if (get_token(&token, fip, str, animkeys, animsyms) == EOF) {
 	    parse_error(str, "parse_jset: Unexpect EOF getting contents of joint set");
 	    return 0;
 	}
@@ -1548,7 +1552,7 @@ parse_jset(struct hold *hp, FILE *fip, struct bu_vls *str)
 		return 0;
 	    }
 	    if (joint_debug & DEBUG_J_PARSE) {
-		Tcl_AppendResult(interp, "parse_jset: close\n", (char *)NULL);
+		Tcl_AppendResult(INTERP, "parse_jset: close\n", (char *)NULL);
 	    }
 	    return 1;
 	}
@@ -1562,7 +1566,7 @@ parse_jset(struct hold *hp, FILE *fip, struct bu_vls *str)
 		    skip_group(fip, str);
 		    return 0;
 		}
-		if (get_token(&token, fip, str, keys, syms) == EOF) {
+		if (get_token(&token, fip, str, animkeys, animsyms) == EOF) {
 		    parse_error(str, "parse_jset: Unexpect EOF getting '='");
 		    return 0;
 		}
@@ -1620,13 +1624,13 @@ parse_solid(struct hold_point *pp, FILE *fip, struct bu_vls *str)
     double vertex;
 
     if (joint_debug & DEBUG_J_PARSE) {
-	Tcl_AppendResult(interp, "parse_solid: open\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "parse_solid: open\n", (char *)NULL);
     }
 
     if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
 
     for (;;) {
-	if (get_token(&token, fip, str, keys, syms) == EOF) {
+	if (get_token(&token, fip, str, animkeys, animsyms) == EOF) {
 	    parse_error(str, "parse_solid: Unexpect EOF.");
 	    return 0;
 	}
@@ -1638,7 +1642,7 @@ parse_solid(struct hold_point *pp, FILE *fip, struct bu_vls *str)
 	    }
 	    if (!vertexfound) pp->vertex_number = 1;
 	    if (joint_debug & DEBUG_J_PARSE) {
-		Tcl_AppendResult(interp, "parse_solid: close\n", (char *)NULL);
+		Tcl_AppendResult(INTERP, "parse_solid: close\n", (char *)NULL);
 	    }
 
 	    return 1;
@@ -1681,7 +1685,7 @@ parse_point(struct hold_point *pp, FILE *fip, struct bu_vls *str)
 {
     union bu_lex_token token;
 
-    if (get_token(&token, fip, str, lex_solids, syms) == EOF) {
+    if (get_token(&token, fip, str, lex_solids, animsyms) == EOF) {
 	parse_error(str, "parse_point: Unexpect EOF getting solid type.");
 	return 0;
     }
@@ -1714,7 +1718,7 @@ parse_point(struct hold_point *pp, FILE *fip, struct bu_vls *str)
 	return 0;
     }
     if (joint_debug & DEBUG_J_PARSE) {
-	Tcl_AppendResult(interp, "parse_point: close.\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "parse_point: close.\n", (char *)NULL);
     }
     return 1;
 }
@@ -1726,7 +1730,7 @@ parse_hold(FILE *fip, struct bu_vls *str)
     int jsetfound = 0, efffound=0, goalfound=0, weightfound=0, prifound=0;
 
     if (joint_debug & DEBUG_J_PARSE) {
-	Tcl_AppendResult(interp, "parse_hold: reading constraint\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "parse_hold: reading constraint\n", (char *)NULL);
     }
     BU_GETSTRUCT(hp, hold);
     hp->l.magic = MAGIC_HOLD_STRUCT;
@@ -1745,14 +1749,14 @@ parse_hold(FILE *fip, struct bu_vls *str)
     hp->j_set.path.type = ARC_UNSET;
     hp->j_set.exclude.type = ARC_UNSET;
 
-    if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
+    if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
 	parse_error(str, "parse_hold: Unexpected EOF getting name.");
 	free_hold(hp);
 	return 0;
     }
     if (token.type == BU_LEX_IDENT) {
 	hp->name = token.t_id.value;
-	if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
+	if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
 	    parse_error(str, "parse_hold: Unexpected EOF getting open group.");
 	    free_hold(hp);
 	    return 0;
@@ -1766,7 +1770,7 @@ parse_hold(FILE *fip, struct bu_vls *str)
     }
 
     for (;;) {
-	if (get_token(&token, fip, str, keys, syms) == EOF) {
+	if (get_token(&token, fip, str, animkeys, animsyms) == EOF) {
 	    parse_error(str, "parse_hold: Unexpected EOF getting constraint contents.");
 	    skip_group(fip, str);
 	    free_hold(hp);
@@ -1775,7 +1779,7 @@ parse_hold(FILE *fip, struct bu_vls *str)
 
 	if (token.type == BU_LEX_SYMBOL && token.t_key.value == SYM_CL_GROUP) {
 	    if (joint_debug & DEBUG_J_PARSE) {
-		Tcl_AppendResult(interp, "parse_hold: closing.\n", (char *)NULL);
+		Tcl_AppendResult(INTERP, "parse_hold: closing.\n", (char *)NULL);
 	    }
 
 	    if (!jsetfound) {
@@ -1881,7 +1885,7 @@ parse_hold(FILE *fip, struct bu_vls *str)
 }
 static struct bu_list path_head;
 int
-f_jload(int argc, char **argv)
+f_jload(int argc, const char *argv[])
 {
     FILE *fip;
     struct bu_vls *instring;
@@ -1894,19 +1898,19 @@ f_jload(int argc, char **argv)
     CHECK_DBI_NULL;
 
     bu_optind = 1;
-    while ((c=bu_getopt(argc, argv, "uam")) != EOF) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "uam")) != EOF) {
 	switch (c) {
 	    case 'u': no_unload = 1;break;
 	    case 'a': no_apply = 1; break;
 	    case 'm': no_mesh = 1; break;
 	    default:
-		Tcl_AppendResult(interp, "Usage: joint load [-uam] file_name [files]\n", (char *)NULL);
+		Tcl_AppendResult(INTERP, "Usage: joint load [-uam] file_name [files]\n", (char *)NULL);
 		break;
 	}
     }
     argv += bu_optind;
     argc -= bu_optind;
-    if (!no_unload) f_junload(0, (char **)0);
+    if (!no_unload) f_junload(0, NULL);
 
     base2mm = dbip->dbi_base2local;
     mm2base = dbip->dbi_local2base;
@@ -1917,20 +1921,20 @@ f_jload(int argc, char **argv)
     while (argc) {
 	fip = fopen(*argv, "rb");
 	if (fip == NULL) {
-	    Tcl_AppendResult(interp, "joint load: unable to open '", *argv,
+	    Tcl_AppendResult(INTERP, "joint load: unable to open '", *argv,
 			     "'.\n", (char *)NULL);
 	    ++argv;
 	    --argc;
 	    continue;
 	}
 	if (joint_debug & DEBUG_J_LOAD) {
-	    Tcl_AppendResult(interp, "joint load: loading from '", *argv,
+	    Tcl_AppendResult(INTERP, "joint load: loading from '", *argv,
 			     "'.\n", (char *)NULL);
 	}
 	lex_line = 0;
 	lex_name = *argv;
 
-	while (get_token(&token, fip, instring, keys, syms) != EOF) {
+	while (get_token(&token, fip, instring, animkeys, animsyms) != EOF) {
 	    if (token.type == BU_LEX_KEYWORD) {
 		if (token.t_key.value == KEY_JOINT) {
 		    if (parse_joint(fip, instring)) {
@@ -2032,12 +2036,12 @@ f_jload(int argc, char **argv)
     return CMD_OK;
 }
 int
-f_jtest(int argc, char **argv)
+f_jtest(int UNUSED(argc), const char *UNUSED(argv[]))
 {
     return CMD_OK;
 }
 int
-f_jsave(int argc, char **argv)
+f_jsave(int argc, const char *argv[])
 {
     struct joint *jp;
     int i;
@@ -2049,12 +2053,12 @@ f_jsave(int argc, char **argv)
     ++argv;
 
     if (argc <1) {
-	Tcl_AppendResult(interp, "joint save: missing file name", (char *)NULL);
+	Tcl_AppendResult(INTERP, "joint save: missing file name", (char *)NULL);
 	return CMD_BAD;
     }
     fop = fopen(*argv, "wb");
     if (!fop) {
-	Tcl_AppendResult(interp, "joint save: unable to open '", *argv,
+	Tcl_AppendResult(INTERP, "joint save: unable to open '", *argv,
 			 "' for writing.\n", (char *)NULL);
 	return CMD_BAD;
     }
@@ -2117,7 +2121,7 @@ f_jsave(int argc, char **argv)
     return CMD_OK;
 }
 int
-f_jaccept(int argc, char **argv)
+f_jaccept(int argc, const char *argv[])
 {
     struct joint *jp;
     int i;
@@ -2125,11 +2129,11 @@ f_jaccept(int argc, char **argv)
     int no_mesh = 0;
 
     bu_optind=1;
-    while ((c=bu_getopt(argc, argv, "m")) != EOF) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "m")) != EOF) {
 	switch (c) {
 	    case 'm': no_mesh=1;break;
 	    default:
-		Tcl_AppendResult(interp, "Usage: joint accept [-m] [joint_names]\n", (char *)NULL);
+		Tcl_AppendResult(INTERP, "Usage: joint accept [-m] [joint_names]\n", (char *)NULL);
 		break;
 	}
     }
@@ -2139,7 +2143,7 @@ f_jaccept(int argc, char **argv)
     for (BU_LIST_FOR(jp, joint, &joint_head)) {
 	if (argc) {
 	    for (i=0; i<argc; i++) {
-		if (strcmp(argv[i], jp->name) == 0) break;
+		if (BU_STR_EQUAL(argv[i], jp->name)) break;
 	    }
 	    if (i>=argc) continue;
 	}
@@ -2152,7 +2156,7 @@ f_jaccept(int argc, char **argv)
     return CMD_OK;
 }
 int
-f_jreject(int argc, char **argv)
+f_jreject(int argc, const char *argv[])
 {
     struct joint *jp;
     int i;
@@ -2160,11 +2164,11 @@ f_jreject(int argc, char **argv)
     int no_mesh = 0;
 
     bu_optind=1;
-    while ((c=bu_getopt(argc, argv, "m")) != EOF) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "m")) != EOF) {
 	switch (c) {
 	    case 'm': no_mesh=1;break;
 	    default:
-		Tcl_AppendResult(interp, "Usage: joint accept [-m] [joint_names]\n", (char *)NULL);
+		Tcl_AppendResult(INTERP, "Usage: joint accept [-m] [joint_names]\n", (char *)NULL);
 		break;
 	}
     }
@@ -2174,7 +2178,7 @@ f_jreject(int argc, char **argv)
     for (BU_LIST_FOR(jp, joint, &joint_head)) {
 	if (argc) {
 	    for (i=0; i<argc; i++) {
-		if (strcmp(argv[i], jp->name) == 0) break;
+		if (BU_STR_EQUAL(argv[i], jp->name)) break;
 	    }
 	    if (i>=argc) continue;
 	}
@@ -2232,7 +2236,7 @@ hold_point_location(fastf_t *loc, struct hold_point *hp)
 	    }
 	    jp = joint_lookup(hp->arc.arc[hp->arc.arc_last]);
 	    if (!jp) {
-		Tcl_AppendResult(interp, "hold_eval: Lost joint!  ",
+		Tcl_AppendResult(INTERP, "hold_eval: Lost joint!  ",
 				 hp->arc.arc[hp->arc.arc_last],
 				 " not found!\n", (char *)NULL);
 		return 0;
@@ -2256,14 +2260,14 @@ hold_eval(struct hold *hp)
      */
     if (!hold_point_location(e_loc, &hp->effector)) {
 	if (joint_debug & DEBUG_J_EVAL) {
-	    Tcl_AppendResult(interp, "hold_eval: unable to find location of effector for ",
+	    Tcl_AppendResult(INTERP, "hold_eval: unable to find location of effector for ",
 			     hp->name, ".\n", (char *)NULL);
 	}
 	return 0.0;
     }
     if (!hold_point_location(o_loc, &hp->objective)) {
 	if (joint_debug & DEBUG_J_EVAL) {
-	    Tcl_AppendResult(interp, "hold_eval: unable to find location of objective for ",
+	    Tcl_AppendResult(INTERP, "hold_eval: unable to find location of objective for ",
 			     hp->name, ".\n", (char *)NULL);
 	}
 	return 0.0;
@@ -2274,7 +2278,7 @@ hold_eval(struct hold *hp)
 
 	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "hold_eval: PT->PT of %s is %g\n", hp->name, value);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
     }
     return value;
@@ -2319,22 +2323,22 @@ part_solve(struct hold *hp, double limits, double tol)
     struct jointH *jh;
 
     if (joint_debug & DEBUG_J_SOLVE) {
-	Tcl_AppendResult(interp, "part_solve: solving for ", hp->name,
+	Tcl_AppendResult(INTERP, "part_solve: solving for ", hp->name,
 			 ".\n", (char *)NULL);
     }
 
     if (BU_LIST_IS_EMPTY(&hp->j_head)) {
-	int i, j;
+	size_t i, j;
 	int startjoint;
 	startjoint = -1;
 	if (joint_debug & DEBUG_J_SOLVE) {
-	    Tcl_AppendResult(interp, "part_solve: looking for joints on arc.\n",
+	    Tcl_AppendResult(INTERP, "part_solve: looking for joints on arc.\n",
 			     (char *)NULL);
 	}
 	for (BU_LIST_FOR(jp, joint, &joint_head)) {
 	    if (hp->j_set.path.type == ARC_LIST) {
-		for (i=0; i<= hp->j_set.path.arc_last; i++) {
-		    if (strcmp(jp->name, hp->j_set.path.arc[i]) == 0) {
+		for (i=0; i <= (size_t)hp->j_set.path.arc_last; i++) {
+		    if (BU_STR_EQUAL(jp->name, hp->j_set.path.arc[i])) {
 			BU_GETSTRUCT(jh, jointH);
 			jh->l.magic = MAGIC_JOINT_HANDLE;
 			jh->p = jp;
@@ -2348,18 +2352,18 @@ part_solve(struct hold *hp, double limits, double tol)
 		continue;
 	    }
 	    for (i=0;i<hp->effector.path.fp_len; i++) {
-		if (strcmp(jp->path.arc[0],
+		if (!BU_STR_EQUAL(jp->path.arc[0],
 			   hp->effector.path.fp_names[i]->d_namep)==0) break;
 	    }
 	    if (i+jp->path.arc_last >= hp->effector.path.fp_len) continue;
-	    for (j=1; j<=jp->path.arc_last;j++) {
-		if (strcmp(jp->path.arc[j],
+	    for (j=1; j <= (size_t)jp->path.arc_last;j++) {
+		if (!BU_STR_EQUAL(jp->path.arc[j],
 			   hp->effector.path.fp_names[i+j]->d_namep)
 		    != 0) break;
 	    }
-	    if (j>jp->path.arc_last) {
+	    if (j>(size_t)jp->path.arc_last) {
 		if (joint_debug & DEBUG_J_SOLVE) {
-		    Tcl_AppendResult(interp, "part_solve: found ",
+		    Tcl_AppendResult(INTERP, "part_solve: found ",
 				     jp->name, "\n", (char *)NULL);
 		}
 		BU_GETSTRUCT(jh, jointH);
@@ -2369,13 +2373,13 @@ part_solve(struct hold *hp, double limits, double tol)
 		jh->arc_loc = i+j-1;
 		jh->flag = 0;
 		BU_LIST_APPEND(&hp->j_head, &jh->l);
-		if (strcmp(hp->joint, jp->name) == 0) {
+		if (BU_STR_EQUAL(hp->joint, jp->name)) {
 		    startjoint = jh->arc_loc;
 		}
 	    }
 	}
 	if (startjoint < 0) {
-	    Tcl_AppendResult(interp, "part_solve: ", hp->name,
+	    Tcl_AppendResult(INTERP, "part_solve: ", hp->name,
 			     ", joint ", hp->joint, " not on arc.\n", (char *)NULL);
 	}
 	for (BU_LIST_FOR(jh, jointH, &hp->j_head)) {
@@ -2387,7 +2391,7 @@ part_solve(struct hold *hp, double limits, double tol)
 	    if (jh->arc_loc < startjoint) {
 		struct jointH *hold;
 		if (joint_debug & DEBUG_J_SOLVE) {
-		    Tcl_AppendResult(interp, "part_solve: dequeuing ", jh->p->name,
+		    Tcl_AppendResult(INTERP, "part_solve: dequeuing ", jh->p->name,
 				     " from ", hp->name, "\n", (char *)NULL);
 		}
 		hold=(struct jointH *)jh->l.back;
@@ -2405,7 +2409,7 @@ part_solve(struct hold *hp, double limits, double tol)
 	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "part_solve: solved, original(%g) < tol(%g)\n",
 			  origvalue, tol);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 	}
 	return 0;
@@ -2488,7 +2492,7 @@ part_solve(struct hold *hp, double limits, double tol)
 		    bu_vls_init(&tmp_vls);
 		    bu_vls_printf(&tmp_vls, "part_solve: NEW min %s(%d, %g) %g <%g\n",
 				  jp->name, i, x0, f0, besteval);
-		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		    bu_vls_free(&tmp_vls);
 		}
 		besteval = f0;
@@ -2501,7 +2505,7 @@ part_solve(struct hold *hp, double limits, double tol)
 		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "part_solve: OLD min %s(%d, %g)%g >= %g\n",
 			      jp->name, i, x0, f0, besteval);
-		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 	    }
 	}
@@ -2574,7 +2578,7 @@ part_solve(struct hold *hp, double limits, double tol)
 		    bu_vls_init(&tmp_vls);
 		    bu_vls_printf(&tmp_vls, "part_solve: NEW min %s(%d, %g) %g <%g delta=%g\n",
 				  jp->name, i+3, x0, f0, besteval, besteval-f0);
-		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		    bu_vls_free(&tmp_vls);
 		}
 		besteval = f0;
@@ -2587,7 +2591,7 @@ part_solve(struct hold *hp, double limits, double tol)
 		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "part_solve: OLD min %s(%d, %g)%g >= %g\n",
 			      jp->name, i, x0, f0, besteval);
-		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 	    }
 
@@ -2598,13 +2602,13 @@ part_solve(struct hold *hp, double limits, double tol)
      */
     if (!bestjoint) {
 	if (joint_debug & DEBUG_J_SOLVE) {
-	    Tcl_AppendResult(interp, "part_solve: No joint configuration found to be better.\n", (char *)NULL);
+	    Tcl_AppendResult(INTERP, "part_solve: No joint configuration found to be better.\n", (char *)NULL);
 	}
 	return 0;
     }
     if (origvalue - besteval < (tol/100.0)) {
 	if (joint_debug & DEBUG_J_SOLVE) {
-	    Tcl_AppendResult(interp, "part_solve: No reasonable improvement found.\n", (char *)NULL);
+	    Tcl_AppendResult(INTERP, "part_solve: No reasonable improvement found.\n", (char *)NULL);
 	}
 	return 0;
     }
@@ -2638,7 +2642,7 @@ reject_move(void)
 	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "reject_move: rejecting %s(%d, %g)->%g\n", ssp->jp->name,
 		      ssp->freedom, ssp->new, ssp->old);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
     }
     if (ssp->freedom<3) {
@@ -2705,7 +2709,7 @@ system_solve(int pri, double delta, double epsilon)
 		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "system_solve: priority %d has system weight of %g.\n",
 			      i, pri_weights[i]);
-		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 	    }
 	}
@@ -2737,7 +2741,7 @@ system_solve(int pri, double delta, double epsilon)
     for (; pri>=0 && pri_weights[pri] < epsilon; pri--);
     if (pri <0) {
 	if (joint_debug & DEBUG_J_SYSTEM) {
-	    Tcl_AppendResult(interp, "system_solve: returning 1\n", (char *)NULL);
+	    Tcl_AppendResult(INTERP, "system_solve: returning 1\n", (char *)NULL);
 	}
 	return 1;	/* solved */
     }
@@ -2777,7 +2781,7 @@ system_solve(int pri, double delta, double epsilon)
 	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "system_solve: old eval = %g, new eval = %g\n",
 		      pri_weights[pri], new_eval);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
     }
     /*
@@ -2853,7 +2857,7 @@ system_solve(int pri, double delta, double epsilon)
 	}
 	reject_move();
 	if (joint_debug & DEBUG_J_SYSTEM) {
-	    Tcl_AppendResult(interp, "system_solve: returning -1\n", (char *)NULL);
+	    Tcl_AppendResult(INTERP, "system_solve: returning -1\n", (char *)NULL);
 	}
 	return -1;
     }
@@ -2863,23 +2867,23 @@ system_solve(int pri, double delta, double epsilon)
 	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "system_solve: new_weights[%d] = %g, returning ", pri,
 		      new_weights[pri]);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
     }
     if (new_weights[pri] < epsilon) {
 	if (joint_debug & DEBUG_J_SYSTEM) {
-	    Tcl_AppendResult(interp, "1\n", (char *)NULL);
+	    Tcl_AppendResult(INTERP, "1\n", (char *)NULL);
 	}
 	return 1;
     }
     if (joint_debug & DEBUG_J_SYSTEM) {
-	Tcl_AppendResult(interp, "0\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "0\n", (char *)NULL);
     }
     return 0;
 
 }
 int
-f_jsolve(int argc, char **argv)
+f_jsolve(int argc, char *argv[])
 {
     struct hold *hp;
     int loops, count;
@@ -2919,7 +2923,7 @@ f_jsolve(int argc, char **argv)
      * reset bu_getopt.
      */
     bu_optind=1;
-    while ((count=bu_getopt(argc, argv, "l:e:d:m")) != EOF) {
+    while ((count=bu_getopt(argc, (char * const *)argv, "l:e:d:m")) != EOF) {
 	switch (count) {
 	    case 'l': loops = atoi(bu_optarg);break;
 	    case 'e': epsilon = atof(bu_optarg);break;
@@ -2939,7 +2943,7 @@ f_jsolve(int argc, char **argv)
     while (argc) {
 	found = 0;
 	for (BU_LIST_FOR(hp, hold, &hold_head)) {
-	    if (strcmp(*argv, hp->name)==0) {
+	    if (BU_STR_EQUAL(*argv, hp->name)) {
 		found = 1;
 		for (count=0; count<loops; count++) {
 		    if (!part_solve(hp, delta, epsilon)) break;
@@ -2956,7 +2960,7 @@ f_jsolve(int argc, char **argv)
 		    bu_vls_init(&tmp_vls);
 		    bu_vls_printf(&tmp_vls, "joint solve: finished %d loops of %s.\n",
 				  count, hp->name);
-		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		    bu_vls_free(&tmp_vls);
 		}
 
@@ -2964,7 +2968,7 @@ f_jsolve(int argc, char **argv)
 	    }
 	}
 	if (!found) {
-	    Tcl_AppendResult(interp, "joint solve: constraint ", *argv,
+	    Tcl_AppendResult(INTERP, "joint solve: constraint ", *argv,
 			     " not found.\n", (char *)NULL);
 	}
 	--argc;
@@ -3007,7 +3011,7 @@ f_jsolve(int argc, char **argv)
 		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "joint solve: spliting delta (%g)\n",
 			      delta);
-		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 	    }
 	    if (delta < epsilon) break;
@@ -3042,7 +3046,7 @@ f_jsolve(int argc, char **argv)
 		    bu_vls_init(&tmp_vls);
 		    bu_vls_printf(&tmp_vls, "joint solve: spliting delta (%g)\n",
 				  delta);
-		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		    bu_vls_free(&tmp_vls);
 		}
 		if (delta < epsilon) break;
@@ -3055,7 +3059,7 @@ f_jsolve(int argc, char **argv)
 	}
     }
     if (result == 1) {
-	Tcl_AppendResult(interp, "joint solve: system has convereged to a result.\n",
+	Tcl_AppendResult(INTERP, "joint solve: system has convereged to a result.\n",
 			 (char *)NULL);
     } else if (result == 0) {
 	struct bu_vls tmp_vls;
@@ -3063,10 +3067,10 @@ f_jsolve(int argc, char **argv)
 	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "joint solve: system has not converged in %d loops.\n",
 		      count);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
     } else {
-	Tcl_AppendResult(interp, "joint solve: system will not converge.\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "joint solve: system will not converge.\n", (char *)NULL);
     }
     joint_clear();
     if (domesh) {
@@ -3105,7 +3109,7 @@ print_hold(struct hold *hp)
 
     t1 = hold_point_to_string(&hp->effector);
     t2 = hold_point_to_string(&hp->objective);
-    Tcl_AppendResult(interp, "holds:\t", (hp->name) ? hp->name : "UNNAMED",
+    Tcl_AppendResult(INTERP, "holds:\t", (hp->name) ? hp->name : "UNNAMED",
 		     " with ", hp->joint, "\n\tfrom:", t1, "\n\tto: ", t2, (char *)NULL);
     bu_free(t1, "hold_point_to_string");
     bu_free(t2, "hold_point_to_string");
@@ -3116,12 +3120,12 @@ print_hold(struct hold *hp)
 	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "\n\twith a weight: %g, pull %g\n",
 		      hp->weight, hold_eval(hp));
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
     }
 }
 int
-f_jhold(int argc, char **argv)
+f_jhold(int argc, const char *argv[])
 {
     struct hold *hp;
     ++argv;
@@ -3130,7 +3134,7 @@ f_jhold(int argc, char **argv)
 	if (argc) {
 	    int i;
 	    for (i=0; i<argc; i++) {
-		if (strcmp(argv[i], hp->name) == 0) break;
+		if (BU_STR_EQUAL(argv[i], hp->name)) break;
 	    }
 	    if (i>=argc) continue;
 	}
@@ -3140,7 +3144,7 @@ f_jhold(int argc, char **argv)
     return CMD_OK;
 }
 int
-f_jlist(int argc, char **argv)
+f_jlist(int UNUSED(argc), const char *UNUSED(argv[]))
 {
     struct joint *jp;
     struct bu_vls vls;
@@ -3151,7 +3155,7 @@ f_jlist(int argc, char **argv)
     }
     vls_col_eol(&vls);
 
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
     return CMD_OK;
 }
@@ -3201,7 +3205,7 @@ joint_move(struct joint *jp)
 	    sofar = db_path_to_string(&jp->anim->an_path);
 	    bu_vls_printf(&tmp_vls, "joint move: %s added animate %s to %s(%p)\n",
 			  jp->name, sofar, dp->d_namep, (void *)dp);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 	}
     }
@@ -3226,15 +3230,15 @@ joint_move(struct joint *jp)
 	/*
 	 * Build a quat from that.
 	 */
-	tmp = (jp->rots[i].current * bn_degtorad)/2.0;
+	tmp = (jp->rots[i].current * DEG2RAD)/2.0;
 	VMOVE(q1, jp->rots[i].quat);
 	if (joint_debug & DEBUG_J_MOVE) {
 	    struct bu_vls tmp_vls;
 
 	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "joint move: rotating %g around (%g %g %g)\n",
-			  tmp*2*bn_radtodeg, q1[X], q1[Y], q1[Z]);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			  tmp*2*RAD2DEG, q1[X], q1[Y], q1[Z]);
+	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 	}
 	{double srot = sin(tmp);
@@ -3274,7 +3278,7 @@ joint_move(struct joint *jp)
 	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "joint move: moving %g along (%g %g %g)\n",
 			  tmp*base2local, m2[3], m2[7], m2[11]);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 	}
 	MAT_COPY(m1, ANIM_MAT);
@@ -3292,7 +3296,7 @@ joint_move(struct joint *jp)
     }
 }
 int
-f_jmove(int argc, char **argv)
+f_jmove(int argc, const char *argv[])
 {
     struct joint *jp;
     int i;
@@ -3309,7 +3313,7 @@ f_jmove(int argc, char **argv)
 
     jp = joint_lookup(*argv);
     if (!jp) {
-	Tcl_AppendResult(interp, "joint move: ", *argv, " not found\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "joint move: ", *argv, " not found\n", (char *)NULL);
 	return CMD_BAD;
     }
 
@@ -3336,7 +3340,7 @@ f_jmove(int argc, char **argv)
 			  tmp);
 	    bu_vls_printf(&tmp_vls, "joint move: %s lower=%g, upper=%g\n",
 			  jp->name, jp->rots[i].lower, jp->rots[i].upper);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 	}
 	if (tmp <= jp->rots[i].upper &&
@@ -3348,7 +3352,7 @@ f_jmove(int argc, char **argv)
 	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "joint move: %s, rotation %d, %s out of range.\n",
 			  jp->name, i, *argv);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 	}
 	argv++;
@@ -3374,7 +3378,7 @@ f_jmove(int argc, char **argv)
 	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "joint move: %s, vector %d, %s out of range.\n",
 			  jp->name, i, *argv);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 	}
     }
@@ -3406,7 +3410,7 @@ struct bu_list artic_head = {
 struct joint *
 findjoint(const struct db_full_path *pathp)
 {
-    int i, j;
+    size_t i, j;
     struct joint *jp;
     int best;
     struct joint *bestjp = NULL;
@@ -3414,7 +3418,7 @@ findjoint(const struct db_full_path *pathp)
     if (joint_debug & DEBUG_J_MESH) {
 	char *sofar = db_path_to_string(pathp);
 
-	Tcl_AppendResult(interp, "joint mesh: PATH = '", sofar, "'\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "joint mesh: PATH = '", sofar, "'\n", (char *)NULL);
 	bu_free(sofar, "path string");
     }
 
@@ -3423,15 +3427,15 @@ findjoint(const struct db_full_path *pathp)
 	for (i=0; i< pathp->fp_len; i++) {
 	    int good=1;
 	    if (jp->path.arc_last+i >= pathp->fp_len) break;
-	    for (j=0; j<=jp->path.arc_last;j++) {
+	    for (j=0; j<=(size_t)jp->path.arc_last;j++) {
 		if ((*pathp->fp_names[i+j]->d_namep != *jp->path.arc[j]) ||
-		    (strcmp(pathp->fp_names[i+j]->d_namep, jp->path.arc[j]) !=0)) {
+		    (!BU_STR_EQUAL(pathp->fp_names[i+j]->d_namep, jp->path.arc[j]))) {
 		    good=0;
 		    break;
 		}
 	    }
 
-	    if (good && j>best) {
+	    if (good && (long)j>best) {
 		best = j;
 		bestjp = jp;
 	    }
@@ -3439,21 +3443,21 @@ findjoint(const struct db_full_path *pathp)
     }
     if (best > 0) {
 	if (joint_debug & DEBUG_J_MESH) {
-	    Tcl_AppendResult(interp, "joint mesh: returning joint '",
+	    Tcl_AppendResult(INTERP, "joint mesh: returning joint '",
 			     bestjp->name, "'\n", (char *)NULL);
 	}
 	return bestjp;
     }
 
     if (joint_debug & DEBUG_J_MESH) {
-	Tcl_AppendResult(interp, "joint mesh: returning joint 'NULL'\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "joint mesh: returning joint 'NULL'\n", (char *)NULL);
     }
     return (struct joint *) 0;
 }
 
 
 HIDDEN union tree *
-mesh_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+mesh_leaf(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
 {
     struct rt_grip_internal *gip;
     struct artic_joints *newJoint;
@@ -3512,7 +3516,7 @@ mesh_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt
 
 
 HIDDEN union tree *
-mesh_end_region (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+mesh_end_region (struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, genptr_t UNUSED(client_data))
 {
     return curtree;
 }
@@ -3530,12 +3534,8 @@ static struct db_tree_state mesh_initial_tree_state = {
 	0,		/* color inherit */
 	0,		/* mater inherit */
 	(char *)NULL	/* shader */
-    }
-    ,
-    {1.0, 0.0, 0.0, 0.0,
-     0.0, 1.0, 0.0, 0.0,
-     0.0, 0.0, 1.0, 0.0,
-     0.0, 0.0, 0.0, 1.0},
+    },
+    MAT_INIT_IDN,
     REGION_NON_FASTGEN,		/* ts_is_fastgen */
     {
 	/* attribute value set */
@@ -3558,9 +3558,9 @@ static struct db_tree_state mesh_initial_tree_state = {
     NULL				/* ts_resp */
 };
 int
-f_jmesh(int argc, char **argv)
+f_jmesh(int argc, const char *argv[])
 {
-    char *name;
+    const char *name;
     struct bn_vlblock*vbp;
     struct bu_list *vhead;
     struct artic_joints *jp;
@@ -3628,7 +3628,7 @@ f_jmesh(int argc, char **argv)
 	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "joint mesh: %s has %d grips.\n",
 			  (jp->joint) ? jp->joint->name: "UNGROUPED", i);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 	}
     }

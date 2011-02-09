@@ -1,19 +1,19 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"../../resources/standard/dtd/docbookx.dtd">
-<article xmlns:xi="http://www.w3.org/2001/XInclude">
-  <articleinfo>
-    <title>Additional Exercises Placing Shapes in 3-D Space</title>
+<!-- Converted by db4-upgrade version 1.0 -->
 
-    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info><title>Additional Exercises Placing Shapes in 3-D Space</title>
+    
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
    </legalnotice>
-  </articleinfo>
+  </info>
 
-    <para id="placing_shapes_in_3d_2_overviewlist">
+    <para xml:id="placing_shapes_in_3d_2_overviewlist">
       In this lesson, you will:
-      <itemizedlist mark='bullet'>
+      <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Create copies of a shape using the Primitive Editor.</para>
 	</listitem>
@@ -29,18 +29,18 @@
       </itemizedlist>
     </para>
 
-    <para id="placing_shapes_in_3d_2_intro1">
+    <para xml:id="placing_shapes_in_3d_2_intro1">
       In previous lessons, we created and edited shapes and placed objects in
       3-D space. This lesson provides more advanced practice in these areas
       using the candle design you created in the last lesson.
     </para>
     
-    <para id="placing_shapes_in_3d_2_intro2">
+    <para xml:id="placing_shapes_in_3d_2_intro2">
       Open the candle.g database if it isn't already open and draw candle1.c.
     </para>
 
-    <sect1 id="candle_base_1st_sphere">
-      <title>Making the First Sphere</title>
+    <section xml:id="candle_base_1st_sphere"><info><title>Making the First Sphere</title></info>
+      
       
       <para>
 	Using the GUI, create a sphere named sph1.s. Go to the View menu and
@@ -51,7 +51,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged14_candle_base_sphere_topview.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged14_candle_base_sphere_topview.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -62,10 +62,10 @@
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="draw_grid_feature">
-      <title>Using the Draw Grid Feature</title>
+    <section xml:id="draw_grid_feature"><info><title>Using the Draw Grid Feature</title></info>
+      
       
       <para>
 	Drag the sphere into position on the rcc, as shown in the previous
@@ -74,10 +74,10 @@
 	Graphics Window, which can help you position your spheres on the candle
 	base.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="multipane_feature">
-      <title>Using the Multipane Feature</title>
+    <section xml:id="multipane_feature"><info><title>Using the Multipane Feature</title></info>
+      
       <para>
 	As discussed earlier, another feature that is available to help you
 	position each sphere is the Multipane  option under the Modes  menu. This
@@ -86,7 +86,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged14_candle_multipane.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged14_candle_multipane.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -107,10 +107,10 @@
 	or the multipane functions, go back to Modes and click on the feature you
 	want to disable.
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="copies_of_shapes">
-      <title>Creating Copies of a Shape</title>
+    <section xml:id="copies_of_shapes"><info><title>Creating Copies of a Shape</title></info>
+      
       <para>
 	To make more jewels for the base, you could use the copy command on the
 	Command Line (cp sph1.s sph2.s), but another way to do this is to go to
@@ -123,7 +123,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged14_primitive_editor.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged14_primitive_editor.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -143,7 +143,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged14_primitive_selection_dropdown.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged14_primitive_selection_dropdown.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -160,11 +160,11 @@
 	following ones when viewed from the top and front.
 	
 	<informaltable>
-	  <tgroup cols='2'>
+	  <tgroup cols="2">
 	    <tbody>
 	      <row>
-		<entry><inlinegraphic fileref="../../lessons/en/images/mged14_candle_spheres_topview.png" /></entry>
-		<entry><inlinegraphic fileref="../../lessons/en/images/mged14_candle_spheres_frontview.png" /></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged14_candle_spheres_topview.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged14_candle_spheres_frontview.png"/></imageobject></inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>Candle from Top View</entry>
@@ -188,7 +188,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged14_candle_spheres_az35el25.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged14_candle_spheres_az35el25.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -199,10 +199,10 @@
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="practice_make_regions_spheres">
-      <title>Making Regions of the Spheres</title>
+    <section xml:id="practice_make_regions_spheres"><info><title>Making Regions of the Spheres</title></info>
+      
       <para>
 	Now that all your spheres are made and in place, it is time to make a
 	region of each sphere. To do this, type the following in the Command
@@ -254,7 +254,7 @@
 	  However, if there were many more spheres (say 1000 or more), then it  
 	  might be easier to use a third approach, which employs a different    
 	  loop type:                                                            
-	  <literallayout>                                              
+	  <literallayout class="normal">                                              
     for {set i 1} {i `&lt;= 1000} {incr i} {[Enter]                           
                                                                           
     r sph$i.r u sph$i.s [Enter]                                           
@@ -292,10 +292,10 @@
 	  best performed using a Command Line interface.                        
 	</para>
       </note>
-    </sect1>
+    </section>
 
-    <sect1 id="candle_base_spheres_combine">
-      <title>Combining the Spheres with the Candle Base</title>
+    <section xml:id="candle_base_spheres_combine"><info><title>Combining the Spheres with the Candle Base</title></info>
+      
       <para>
 	We are now faced with an important decision. At the moment, the jewels
 	overlap a portion of the candle base (specifically, the rcc1.s portion).
@@ -335,7 +335,7 @@
 	OK.
 	
 	The tree of base1.r should now look like:
-	<literallayout>
+	<literallayout class="normal">
    u base1.r/R
 
    u eto1.s
@@ -393,7 +393,7 @@
 	</para>
 	<para>
 	  This would have resulted in a very similar tree as above:             
-	  <literallayout>
+	  <literallayout class="normal">
     u base1.r/R                                                           
                                                                           
     u eto1.s                                                              
@@ -445,7 +445,7 @@
 	  base1.r and then subtracting each of the jewels from base1.r (hence,  
 	  removing material from rcc1.s). This would have resulted in:          
 	  
-	  <literallayout>
+	  <literallayout class="normal">
     u base1.r/R                                                           
                                                                           
     u eto1.s                                                              
@@ -516,7 +516,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/en/images/mged14_candle_spheres_raytraced.png" format="PNG"></imagedata>
+	    <imagedata align="center" fileref="../../lessons/en/images/mged14_candle_spheres_raytraced.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -527,13 +527,13 @@
       </informalfigure>
 
       </para>
-    </sect1>
+    </section>
 
-    <sect1 id="placing_shapes_in_3d_2_review">
-      <title>Review</title>
+    <section xml:id="placing_shapes_in_3d_2_review"><info><title>Review</title></info>
+      
       <para>
 	In this lesson, you:
-	<itemizedlist mark='bullet'>
+	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Created copies of a shape using the Primitive Editor.</para>
 	  </listitem>
@@ -548,6 +548,6 @@
 	  </listitem>
 	</itemizedlist>
       </para>
-    </sect1>
+    </section>
 
   </article>

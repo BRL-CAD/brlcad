@@ -1,6 +1,75 @@
-=-=-=-=-=-=-=-=-=-=-= BEGIN IWIDGETS 4.0.1 CHANGES =-=-=-=-=-=-=-=-=-=-=-
+2008-08-20  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/disjointlistbox.itk (::iwidgets::disjointlistbox): fix
+	8.5 grid anchoring. [Bug 2062394]
+
+2007-06-10  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/shell.itk (::iwidgets::shell): fix problem with "tkwait
+	visibility" in iwidget's dialog box (allaert)
+
+	* generic/pushbutton.itk (::iwidgets::pushbutton): handle Tk 8.4
+	frame padx/y changes.
+
+	* iwidgets.tcl.in: don't add non-existent path to auto_path
+
+	* generic/datefield.itk (::iwidgets::datefield): use string match
+	instead of regexp
+
+2007-05-24  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/combobox.itk: use -state readonly for combobox.
+	[Bug 998874] (griffin)
+
+	* generic/calendar.itk: 8.5-compatible last day of month
+	calculation. [Bug 1311531] (broeken)
+
+	* demos/catalog: make location independent. [Bug 1631754] (kupries)
+
+2006-04-11  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/extfileselectionbox.itk
+	(iwidgets::Extfileselectionbox::_setDirList): set currentIndex to
+	default value
+
+2005-04-11  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* configure, tclconfig/tcl.m4: TEA 3.2 update
+	* configure.in (AC_PROG_INSTALL): add back @INSTALL*@ check
+
+2005-01-24  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tclconfig/install-sh, tclconfig/tcl.m4 (new):
+	* tcl.m4 (removed):
+	* Makefile.in, aclocal.m4: Updated to TEA 3.1 build system
+	* configure, configure.in:
+	* iwidgets.tcl.in, pkgIndex.tcl.in:
+
+2002-10-25  Andreas Kupries  <andreask@activestate.com>
+
+	* configure.in: Added determination of EXEEXT or else
+	  SC_PROG_TCLSH may pick up the wrong file as executable (In my
+	  case it mistook tclsh83g.pdb for the tclsh).
+	  Regen'd configure.
+
+2002-09-25  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* Makefile.in: improved libdir support (steffen)
+
+2002-09-22  Marty Backe <marty@lucidway.org>
+    * generic/shell.itk: SF ticket 611739
+        Changed _return from a private to protected.
+    * generic/entryfield.itk
+        <Return> bindings are now passed to the parent unless the -command
+        option is defined.
+
 2002-09-09  Chad Smith  <csmith@adc.com>
-    * Makefile.in: SF ticket 227921
+
+	********************************
+	**** IWIDGETS 4.0.1 RELEASE ****
+	********************************
+
+	* Makefile.in: SF ticket 227921
 	Updated man page installation such that "iwidgets_" is now
 	prepended to the man page filename.  This is done to avoid
 	naming conflicts with man pages in other extensions.
@@ -59,7 +128,7 @@
     * demos/html/disjointlistbox.n.html
         Updated the html version of the man page
     * tests/disjointlistbox.test
-        Added tests for the the two new options.
+        Added tests for the the two new options. 
 
 2002-03-19  Marty Backe <mgbacke@usa.net>
     * generic/messagebox.itk
@@ -104,7 +173,7 @@
         Rearranged the layout of the popup menu. Moved the 'Clear' menu
         to the end of the list. It was too easy to generate the popup and
         accidentally choose the 'Clear' function.
-
+    
     * generic/hyperhelp.itk
         Removed the 'error' statement that would cause any application that
         used Hyperhelp to stacktrace if a file to be rendered couldn't be
@@ -153,12 +222,12 @@
     * generic/scrolledlistbox.ikt: SF ticket 521326
         The <B1-Motion> binding was removed to eliminate multiple triggers
         of the command specified by the -selectioncommand option if the
-        mouse is moved while the item is being selected.
-
+        mouse is moved while the item is being selected. 
+        
 2002-02-16  Marty Backe <mgbacke@usa.net>
     * generic/scrolledhtml.itk: SF ticket 481956
         Fixed potential for lengthy page renderings to throw a bgerror.
-
+        
 2001-12-11  Chad Smith  <csmith@adc.com>
 	* generic/combobox.itk: SF ticket 474817
 		Fixed an auto-completion problem.
@@ -200,9 +269,12 @@
 		Had to do an "undo" of some previous code that was causing an
 		infinite resizing on <Configure> events.
 
-=-=-=-=-=-=-=-=-=-=-= END IWIDGETS 4.0.1 CHANGES =-=-=-=-=-=-=-=-=-=-=-=-
-
 2001-08-07  Chad Smith  <csmith@adc.com>
+
+	********************************
+	**** IWIDGETS 4.0.0 RELEASE ****
+	********************************
+
 	* Merged iwidgets_overhaul branch to CVS head.  This branch
 	included all modifications necessary to extract the iwidgets
 	from the itcl distribution.
@@ -488,7 +560,7 @@
 2000-12-19  smithc
 	* generic/combobox.itk:
 		Fixed 3 bugs:
-
+		
 		1) bug with -state config option
 		2) added some performance enhancements
 		3) added code to restore grabs following dropdown listbox unmap
@@ -506,7 +578,7 @@
 	* generic/scrolledlistbox.itk:
 		Patch submitted by Shaun Lowry - I don't know the ticket number, but here's
 		part of the ticket description:
-
+		
 		Name:  Shaun Lowry
 		email:  slowry@iss.net
 		Support:  Gold
@@ -515,7 +587,7 @@
 		OperatingSystemVersion:  NT4 SP6
 		Machine:  Beige :-) (home built PC)
 		Synopsis:  scrolledlistbox "pattern" based selection doesn't work properly
-
+		
 		ReproducibleScript:
 		package require Iwidgets
 		iwidgets::scrolledlistbox .f
@@ -537,7 +609,7 @@
 	* generic/timeentry.itk:
 		Same problem as dateentry.  See documentation for dateentry version 1.2 in
 		CVS.  I don't have a ticket number.
-
+		
 		-chad smith
 
 	* generic/dateentry.itk:
@@ -546,10 +618,10 @@
 		told Michael about it, and he's fixed it in 3.2.  This broke the dateentry
 		because it was explicitly unsetting the component from the itk_component
 		array.  I simply deleted that line of code.
-
+		
 		I need to make a pass at the rest of the iwidgets to see which other ones were
 		also unsetting the component.
-
+		
 		-chad smith
 
 2000-08-08  csmith
@@ -562,7 +634,7 @@
 			-imagedblcommand
 			-imagemenuloadcommand
 			-textmenuloadcommand
-
+		
 		He also added two public methods: expanded and expState.  Multiple non-public
 		methods were added to support the new configuration options.  I have updated
 		the man page for each new option and public method.
@@ -608,15 +680,15 @@
 	* unix/install-sh:
 	* unix/iwidgets.tcl.in:
 	* unix/pkgIndex.tcl.in:
-
+		
 		6/26/00 (bug fix)
 		  Fixed Itcl_ClassVarResolver so that the formal parameters in a
 		  method/proc take precedence over class data members.
-
+		
 		6/30/00 (bug fix)
 		  Fixed all itcl/itk/iwidgets3.0.0 tests to run cleanly with the new
 		  tcltest package.
-
+		
 		7/1/00 (bug fix)
 		  Fixed "itk_component delete" so that the composite option list is
 		  cleaned up whenever a component is deleted.  For example, suppose
@@ -625,14 +697,14 @@
 		  as well.  Also fixed the handling of the itk-delete-* binding for
 		  the component.  When the component is removed, the binding tag
 		  is also removed by itk::remove_destroy_hook.
-
+		
 		7/5/00 (bug fix)
 		  Fixed the check done during object creation to avoid clobbering
 		  existing commands.  Previously, itcl would look for any command--
 		  in the local *and* global namespace--that might be clobbered.
 		  Now, it looks for commands only in the local namespace, since
 		  those are the only ones that could truly be clobbered.
-
+		
 		7/5/00 (cleanup)
 		  Removed obsolete Makefile/configure files in the various "unix"
 		  directories.  Makefiles and configure files now reside one level
@@ -700,8 +772,8 @@
 	* generic/timefield.itk:
 		Here are the comments from an itcl mailing list poster as well as
 		my comments interspersed.
-
-
+		
+		
 		iwidgets::timefield
 
 2000-04-26  csmith
@@ -712,14 +784,14 @@
 2000-04-19  mmc
 	* configure:
 	* configure.in:
-
+		
 		- fixed itcl::find to find classes/objects in *all* namespaces
 		- fixed tests to run cleanly
 
 2000-03-28  csmith
 	* generic/scrolledhtml.itk:
 		Applied patches submitted by Brian Griffin.  The patches are as follows:
-
+		
 		*** scrolledhtml.itk	1999/02/21 02:50:38	1.3
 		--- scrolledhtml.itk	2000/03/14 18:07:27
 		*************** class iwidgets::Scrolledhtml {
@@ -933,7 +1005,7 @@
 2000-03-21  csmith
 	* generic/fileselectionbox.itk:
 		From a patch I received from Brett Schwarz:
-
+		
 		BUG
 		---
 		When the -fileson option is set to false, then only the directory
@@ -941,12 +1013,12 @@
 		However, when single clicking on a directory, the selection entry widget
 		only gets updated with the tail of the directory name (what is actually
 		in the directory listbox), not the whole path.
-
+		
 		DESIRED BEHAVIOR
 
 	* generic/extfileselectionbox.itk:
 		From a patch I received from Brett Schwarz:
-
+		
 		BUG
 		---
 		When the -fileson option is set to false, then only the directory
@@ -954,12 +1026,12 @@
 		However, when single clicking on a directory, the selection entry widget
 		only gets updated with the tail of the directory name (what is actually
 		in the directory listbox), not the whole path.
-
+		
 		DESIRED BEHAVIOR
 
 2000-03-10  csmith
 	* doc/checkbox.n:
-		Updated man page to reflect addition of new config option:
+		Updated man page to reflect addition of new config option: 
 		orient.
 
 	* generic/radiobox.itk:
@@ -972,7 +1044,7 @@
 		vertically (default).
 
 	* doc/radiobox.n:
-		Updated man page to reflect the new config option I added:
+		Updated man page to reflect the new config option I added: 
 		orient.
 
 2000-03-09  csmith
@@ -1107,14 +1179,14 @@
 		   class definition: -command, -disabledforeground, and -selectcolor.
 		   These options are now only applicable after checkbuttons have been
 		   added to the checkbox.
-
+		
 			a) The -command option never worked anyway.  It was defined
 			   via 'itk_option define' but was not implemented.  The easiest
 			   solution was to keep this option when adding a new checkbutton.
 			   This at least adds -command functionality but doesn't provide
 			   for % variable substitutions, which would be a nice addition
 			   for future revisions.
-
+		
 			b) The -disabledforeground and -selectcolor options were valid
 			   options for initial checkbox creation but had no error checking.
 			   You could therefore create a new checkbox with -selectcolor set
@@ -1124,9 +1196,9 @@
 			   confusion, so these two options are now only valid after (or
 			   during) the addition of checkbuttons.  Tk then handles the error
 			   checking.
-
+		
 		2) Added -state to the keep fragment during checkbutton addition.
-
+		
 		So in a nutshell, these 4 options are now valid checkbox options after
 		at least one checkbutton has been added:
 			-command
@@ -1155,9 +1227,9 @@
 
 	* configure:
 		tcl.m4:  Updated to reflect recent TEA changes
-
+		
 		*/configure:  Regnereated with new tcl.m4
-
+		
 		iwidgets2.2.0/Makefile.in:  Don't copy nonexistent files
 
 1999-11-18  csmith
@@ -1190,14 +1262,14 @@
 1999-09-10  wart
 	* Makefile.in:
 		Fixed bug when calling mkIndex.tcl for itk
-
+		
 		reduced amount of output from "make install" in iwidgets
 
 1999-09-09  wart
 	* iwidgets.tcl.in:
 	* pkgIndex.tcl.in:
 		Added pkgIndex files for Iwidgets
-
+		
 		Top level Makefile should no longer loop endlessly if the configure went bad.
 
 1999-09-04  wart
@@ -1207,7 +1279,7 @@
 	* configure.in:
 		TEA changes.  Itcl now uses the same Makefiles and configure scripts for
 		both Windows and Unix.
-
+		
 		Note that static shells are not yet done in this TEA implementation.
 
 1999-08-21  matt
@@ -1238,18 +1310,18 @@
 1999-07-08  rjohnson
 	* demos/html/iwidgets2.2.0UserCmds.html:
 	* demos/html/iwidgets3.0.0UserCmds.htm:
-
+		
 		Updated html index file to 3.0.
 
 	* demos/html/iwidgets3.0.0UserCmds.htm:
 	* demos/html/iwidgets3.0.0UserCmds.html:
-
+		
 		Messed up extension.
 
 1999-06-16  csmith
 	* generic/toolbar.itk:
 		This fix is contributed by Raviv Gil.  Below is his description of the bug.
-
+		
 		"Working with iwidgets3.0.0 we've encountered the following problem :
 		We created a toolbar containing several buttons, each button with a short
 		help string. Passing above the toolbar and then closing the window sometimes
@@ -1267,7 +1339,7 @@
 	* unix/configure.in:
 		Fix the makefile and configure files, etc., for Unix
 		in order to compile with Tcl/Tk 8.1 with stubs.
-
+		
 		Builds itclsh and itkwish properly.
 
 1999-03-30  csmith
@@ -1293,15 +1365,15 @@
 		pasting text.
 
 	* generic/entryfield.itk:
-		1) Added a new configuration option, -pasting, which allows the user to
-		   disable pasting text into the entry component of the entryfield.
-		   Previously, when using -validate, the user was allowed to paste text
-		   which could cause stack dumps into the entryfield because pasting was
-		   not caught.  The user, for instance, could paste a 40 digit number and
-		   kill any expr's since the integer is too large for tcl to handle.
-		2) The _keyPress method hardcoded state comparisons for <Ctrl>, <Alt>,
-		   <NumLock><Ctrl>, and <NumLock><Alt>.  The problem was that these
-		   hardcoded values were UNIX-specific.  I added platform-independant code.
+	1) Added a new configuration option, -pasting, which allows the user to
+	   disable pasting text into the entry component of the entryfield.
+	   Previously, when using -validate, the user was allowed to paste text
+	   which could cause stack dumps into the entryfield because pasting was
+	   not caught.  The user, for instance, could paste a 40 digit number and
+	   kill any expr's since the integer is too large for tcl to handle.
+	2) The _keyPress method hardcoded state comparisons for <Ctrl>, <Alt>,
+	   <NumLock><Ctrl>, and <NumLock><Alt>.  The problem was that these
+	   hardcoded values were UNIX-specific.  I added platform-independant code.
 
 	* CHANGES:
 		Added to entries under the Entryfield section: 1) documented new configuration
@@ -1323,28 +1395,25 @@
 
 1999-02-21  rjohnson
 	* generic/scrolledhtml.itk:
-
+		
 		Removed stack trace error in widget.  However, the widget still
 		doesn't display correctly...
 
 1999-01-25  stanton
 	* unix/iwidgets.tcl.in:
 	* win/iwidgets.tcl:
-		Changed so iwidgets.tcl does a "namespace import -force itcl::*"
-		This is a hack to get around the fact that iwidgets uses "class"
-		instead of "itcl::class".  The correct long term solution is to change
-		all of the iwidgets code to use qualified names.
+	Changed so iwidgets.tcl does a "namespace import -force itcl::*"
+	This is a hack to get around the fact that iwidgets uses "class"
+	instead of "itcl::class".  The correct long term solution is to change
+	all of the iwidgets code to use qualified names.
 
 1998-12-22  rjohnson
-	* demos/watch:
-
-		Fixed bug in watch demo.
+	* demos/watch: Fixed bug in watch demo.
 
 1998-12-18  rjohnson
 	* demos/catalog:
-
-		Removed the mainwindow demo from the catalog demo.  It was not a well
-		behaved demo and running would break the catalog demo.  [Bug ID: 508]
+	Removed the mainwindow demo from the catalog demo.  It was not a well
+	behaved demo and running would break the catalog demo.  [Bug ID: 508]
 
 1998-09-14  stanton
 	* demos/images/clear.gif:
