@@ -170,14 +170,15 @@ IF(TCL_TOMMATH)
 ENDIF(TCL_TOMMATH)
 
 #----------------------------------------------------------------------------
-IF(0)
+
+#This should probably be part of SC_TCL_64BIT_FLAGS()
 IF(BRLCAD-ENABLE_64BIT)
 	SET(TCL_CFLAGS "${TCL_CFLAGS} -DTCL_CFG_DO64BIT=1")
 ENDIF(BRLCAD-ENABLE_64BIT)
 IF(CMAKE_CL_64)
 	SET(TCL_CFLAGS "${TCL_CFLAGS} -D_stati64=_stat64")
 ENDIF(CMAKE_CL_64)
-ENDIF(0)
+
 
 SC_MISSING_POSIX_HEADERS()
 
