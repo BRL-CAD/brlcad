@@ -125,28 +125,22 @@ MACRO(BRLCAD_ADDDATA datalist targetdir)
 	# This first line shouldn't be needed if target dependencies are set up correctly
 	FILE(COPY ${${datalist}} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
 	STRING(REGEX REPLACE "/" "_" targetprefix ${targetdir})
-	IF(BRLCAD-ENABLE_DATA_TARGETS)
-		SET(inputlist)
-		FOREACH(filename ${${datalist}})
-			SET(inputlist ${inputlist} ${CMAKE_CURRENT_SOURCE_DIR}/${filename})
-		ENDFOREACH(filename ${${datalist}})
-		SET(${targetprefix}_cmake_contents "
-		SET(FILES_TO_COPY ${inputlist})
-		FILE(COPY \${FILES_TO_COPY} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
-		")
-		FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.cmake "${${targetprefix}_cmake_contents}")
-		SET(outputlist)
-		FOREACH(filename ${${datalist}})
-			GET_FILENAME_COMPONENT(ITEM_NAME ${filename} NAME)
-			SET(outputlist ${outputlist} ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
-		ENDFOREACH(filename ${${datalist}})
-		ADD_CUSTOM_COMMAND(
-			OUTPUT ${outputlist}
-			COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.cmake
-			DEPENDS ${${datalist}}
-			)
-		ADD_CUSTOM_TARGET(${datalist}_cp ALL DEPENDS ${outputlist})
-	ENDIF(BRLCAD-ENABLE_DATA_TARGETS)
+	SET(inputlist)
+	FOREACH(filename ${${datalist}})
+		SET(inputlist ${inputlist} ${CMAKE_CURRENT_SOURCE_DIR}/${filename})
+	ENDFOREACH(filename ${${datalist}})
+	SET(${targetprefix}_cmake_contents "
+	SET(FILES_TO_COPY ${inputlist})
+	FILE(COPY \${FILES_TO_COPY} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
+	")
+	FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.cmake "${${targetprefix}_cmake_contents}")
+	ADD_CUSTOM_COMMAND(
+		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel
+		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.cmake
+		COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel
+		DEPENDS ${${datalist}}
+		)
+	ADD_CUSTOM_TARGET(${datalist}_cp ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel)
 	FOREACH(filename ${${datalist}})
 		INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${filename} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
 	ENDFOREACH(filename ${${datalist}})

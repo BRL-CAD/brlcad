@@ -5,7 +5,7 @@ MACRO(pkgIndex_BUILD name targetdir)
 	ADD_CUSTOM_COMMAND(
 		OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl
 		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ampi.tcl ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}
-		DEPENDS btclsh ${${targetprefix}_dependslist}
+		DEPENDS btclsh ${targetprefix}.sentinel
 		)
 	ADD_CUSTOM_TARGET(${name}_pkgIndex.tcl ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl)
 	INSTALL(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
@@ -16,7 +16,7 @@ MACRO(tclIndex_BUILD name targetdir)
 	ADD_CUSTOM_COMMAND(
 		OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex
 		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ami.tcl ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir} 
-		DEPENDS btclsh ${${targetprefix}_dependslist}
+		DEPENDS btclsh ${targetprefix}.sentinel
 		)
 	ADD_CUSTOM_TARGET(${name}_tclIndex ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex)
 	INSTALL(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})

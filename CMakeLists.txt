@@ -578,13 +578,6 @@ ELSE(CMAKE_BUILD_TYPE)
 	OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
 ENDIF(CMAKE_BUILD_TYPE)
 
-# Enable data build targets - this will result in the build logic
-# being aware of changes in tclscripts, documentation files, and
-# other data and re-copying them to the build directory.  This
-# allows the build output to stay "current" without re-running
-# CMake
-OPTION(BRLCAD-ENABLE_DATA_TARGETS "Enable the data build targets." ON)
-
 # Turn on librtserver build.  
 OPTION(BRLCAD-ENABLE_RTSERVER "Enable the librtserver target." ON)
 
