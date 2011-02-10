@@ -1,9 +1,16 @@
+brlcad (7.18.4-0) unstable; urgency=low
+
+  * add magic mime-type association for geometry db file
+  * updated debian changelog
+
+ -- Jordi Sayol <g.sayol@yahoo.es>  Thu, 10 Feb 2011 07:26:55 +0100
+
 brlcad (7.18.2-0) unstable; urgency=low
 
   * created new menu entries
   * added new icons
   * created new brlcad geometry mime-type
-  * added brlcad geometry mime-type file association
+  * added brlcad geometry file mime-type association
   * switched from shared libraries to build-in ones
   * switched --prefix from /usr to /usr/brlcad
   * modified sh/make_deb.sh builder script
