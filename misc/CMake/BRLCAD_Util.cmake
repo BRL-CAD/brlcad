@@ -131,6 +131,10 @@ ENDMACRO(BRLCAD_ADDLIB libname srcs libs)
 # triggered if source files are edited in order to allow the build system to take any further
 # actions that may be needed (the current example is re-generating tclIndex and pkgIndex.tcl
 # files when the source .tcl files change).
+
+# In principle it may be possible to go even further and add rules to copy files in the build
+# dir that are different from their source originals back into the source tree... need to
+# think about complexity/robustness tradeoffs
 MACRO(BRLCAD_ADDDATA datalist targetdir)
 	IF(NOT WIN32)
 		IF(NOT EXISTS "${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}")
