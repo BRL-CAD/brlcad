@@ -371,8 +371,9 @@ f_attach(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 int
 gui_setup(const char *dstr)
 {
+#ifdef HAVE_TK
     Tk_GenericProc *handler = doEvent;
-
+#endif
     /* initialize only once */
     if (tkwin != NULL)
 	return TCL_OK;
