@@ -762,6 +762,7 @@ static struct go_cmdtab go_cmds[] = {
     {"eye_pos",	"[x y z]", 5, go_view_func_plus, ged_eye_pos},
     {"faceplate",	"center_dot|prim_labels|view_params|view_scale color|draw [val(s)]", GO_UNLIMITED, go_faceplate, GED_FUNC_PTR_NULL},
     {"facetize",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_facetize},
+    {"fb2pix",  	"[-h -i -c] [-s squaresize] [-w width] [-n height] [file.pix]", GO_UNLIMITED, go_view_func, ged_fb2pix},
     {"fontsize",	"[fontsize]", 3, go_fontsize, GED_FUNC_PTR_NULL},
     {"form",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_form},
     {"fracture",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_fracture},
@@ -856,6 +857,7 @@ static struct go_cmdtab go_cmds[] = {
     {"pathlist",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_pathlist},
     {"paths",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_pathsum},
     {"perspective",	"[angle]", 3, go_view_func_plus, ged_perspective},
+    {"pix2fb",  	"[options] [file.pix]", GO_UNLIMITED, go_view_func, ged_pix2fb},
     {"plot",	"[options] file.pl", 16, go_view_func, ged_plot},
     {"pmat",	"[mat]", 3, go_view_func, ged_pmat},
     {"pmodel2view",	"vname", 2, go_view_func, ged_pmodel2view},
@@ -8460,6 +8462,7 @@ go_view_func_common(struct ged *gedp,
 
     /* Copy argv into av while skipping argv[1] (i.e. the view name) */
     gedp->ged_gvp = gdvp->gdv_view;
+    gedp->ged_fbsp = &gdvp->gdv_fbs;
     gedp->ged_refresh_clientdata = (void *)gdvp;
     av[0] = (char *)argv[0];
     ac = argc-1;
