@@ -344,7 +344,7 @@ main(int argc, char *argv[])
 	return 0;
     }
     num_wheels = -1;
-    if (!NEAR_ZERO(radius, SMALL_FASTF)) {
+    if (!ZERO(radius)) {
 	while (!feof(stream)) {
 	    count = fscanf(stream, "%*f %*f %*f");
 	    if (count != 3)
@@ -368,7 +368,7 @@ main(int argc, char *argv[])
 	count = fscanf(stream, "%lf %lf %lf", temp, temp+1, temp+2);
 	if (count != 3)
 	    break;
-	if (!NEAR_ZERO(radius, SMALL_FASTF))
+	if (!ZERO(radius))
 	    x[i].w.rad = radius;
 	else {
 	    count = fscanf(stream, "%lf", & x[i].w.rad);
