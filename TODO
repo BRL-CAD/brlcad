@@ -18,11 +18,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
 * implement new makesegs for tie
+
 * png support in rtwizard
-
-
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
 
 * upgrade source repository back-end to the latest SVN 1.5 so we can
   benefit from proper merge tracking.
@@ -40,6 +37,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * rt/rtedge command-line options for overriding object colors
 
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
 * rtwizard enhancement to allow color overrides to be specified for
   selected objects.
 
@@ -48,11 +49,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   as that behavior was not intentional and is undesirable for large
   objects, have some means to determine that something is "large and
   complex" or at a minimum, provide an option to not draw on copy.
-
-* plate mode NURBS/BREP objects.  Similar, if not identical, to plate
-  mode BoTs, 'brep' objects need the ability to have a thickness
-  described so you could automatically handle non-solid NURBS and
-  sheet-metal style geometry without requiring surface solidity.
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
@@ -828,11 +824,14 @@ BREP/NURBS
   present in openNURBS, and port that code to openNURBS data structures
   and routines.  This will eventually allow us to remove the old NURBS code.
 
-* improve min/max bounding box routines for BREP/NURBS
-
 * document the new NURBS/BREP primitive, capabilities and limitations
 
 * implement boolean evaluation of nurbs surfaces
+
+* plate mode NURBS/BREP objects.  Similar, if not identical, to plate
+  mode BoTs, 'brep' objects need the ability to have a thickness
+  described so you could automatically handle non-solid NURBS and
+  sheet-metal style geometry without requiring surface solidity.
 
 
 NMG/BoT
