@@ -80,10 +80,8 @@ SET(brlcadnoinst_HEADERS
 	sysv.h
 )
 
-FILE(COPY ${brlcadinclude_required} DESTINATION	${CMAKE_BINARY_DIR}/include/brlcad)
 INSTALL(FILES ${brlcadinclude_required} DESTINATION include/brlcad)
 
 IF(NOT BRLCAD-BUILD_BENCHMARK_ONLY AND NOT BRLCAD-BUILD_RTSERVER_ONLY)
-	FILE(COPY ${brlcadinclude_wanted} DESTINATION ${CMAKE_BINARY_DIR}/include/brlcad)
 	INSTALL(FILES ${brlcadinclude_wanted} DESTINATION include/brlcad)
 ENDIF(NOT BRLCAD-BUILD_BENCHMARK_ONLY AND NOT BRLCAD-BUILD_RTSERVER_ONLY)

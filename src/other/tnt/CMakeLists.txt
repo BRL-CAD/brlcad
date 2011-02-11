@@ -29,5 +29,4 @@ SET(tnt_HEADERS
 	tnt_vector.h 
 	tnt_version.h
 )
-FILE(COPY ${tnt_HEADERS} DESTINATION ${CMAKE_BINARY_DIR}/include)
 INSTALL(FILES ${tnt_HEADERS} DESTINATION include)
