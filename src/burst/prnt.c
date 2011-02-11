@@ -102,13 +102,11 @@ compute exit point along normal direction and normal thickness.
 Thickness returned in "a_rbeam".
 */
 static int
-f_Normal(struct application *ap, struct partition *pt_headp, struct seg *segp)
+f_Normal(struct application *ap, struct partition *pt_headp, struct seg *UNUSED(segp))
 {
     struct partition *pp = pt_headp->pt_forw;
     struct partition *cp;
     struct hit *ohitp;
-
-    segp = segp; /* quell */
 
     for (cp = pp->pt_forw;
 	 cp != pt_headp && SameCmp(pp->pt_regionp, cp->pt_regionp);

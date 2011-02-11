@@ -54,8 +54,6 @@ struct identt {
 #define REG_TABLE	2
 #define ID_TABLE	3
 
-static struct identt identt = {0, {0}, MAT_INIT_ZERO};
-
 static int idfd = 0;
 static int rd_idfd = 0;
 static FILE *tabptr = NULL;
@@ -78,6 +76,7 @@ tables_sol_number(matp_t matrix, char *name, int *old, long *numsol)
 {
     int i;
     struct identt idbuf1, idbuf2;
+    static struct identt identt = {0, {0}, MAT_INIT_ZERO};
     int readval;
 
     memset(&idbuf1, 0, sizeof(struct identt));

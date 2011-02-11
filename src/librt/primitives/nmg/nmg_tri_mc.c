@@ -469,13 +469,11 @@ struct whack {
 };
 
 static int
-bangbang(struct application * a, struct partition *PartHeadp, struct seg * s)
+bangbang(struct application * a, struct partition *PartHeadp, struct seg * UNUSED(s))
 {
     struct partition *pp;
     struct whack *t = (struct whack *)a->a_uptr;
     int intersects = 0;
-
-    s=s;
 
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 	if(pp->pt_outhit->hit_dist>0.0) {

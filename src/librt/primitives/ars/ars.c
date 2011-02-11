@@ -1403,9 +1403,8 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
  *
  */
 int
-rt_ars_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_ars_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

@@ -2166,9 +2166,8 @@ rt_hf_ifree(struct rt_db_internal *ip)
  *
  */
 int
-rt_hf_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_hf_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

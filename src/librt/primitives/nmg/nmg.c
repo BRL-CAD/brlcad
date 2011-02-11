@@ -2985,9 +2985,8 @@ rt_nmg_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
  * R T _ N M G _ P A R A M S
  */
 int
-rt_nmg_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_nmg_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

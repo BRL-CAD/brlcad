@@ -353,7 +353,7 @@ nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse
 	/* skip this checking until we get by the first edgeuse */
 	if (edges) {
 	    /* Are we back to the begining? */
-	    if ((eu->vu_p->v_p == start_eu->vu_p->v_p)) {
+	    if (eu->vu_p->v_p == start_eu->vu_p->v_p) {
 		/* done with this loop */
 		done = 1;
 		break;

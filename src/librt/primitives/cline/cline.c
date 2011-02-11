@@ -1104,9 +1104,8 @@ rt_cline_form(struct bu_vls *logstr, const struct rt_functab *ftp)
  *
  */
 int
-rt_cline_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_cline_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

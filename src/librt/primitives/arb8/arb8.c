@@ -2142,9 +2142,8 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
  *
  */
 int
-rt_arb_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_arb_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

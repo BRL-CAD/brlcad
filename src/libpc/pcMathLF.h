@@ -135,7 +135,7 @@ struct reset_impl {
     template <typename T>
     void operator()(boost::shared_ptr<T> *shptr, T *ptr = 0) const
     {
-	shptr.reset(ptr);
+	shptr->reset(ptr);
     }
 };
 phoenix::function<reset_impl> const reset = reset_impl();

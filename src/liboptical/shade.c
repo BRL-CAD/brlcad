@@ -61,7 +61,7 @@ pr_shadework(const char *str, const struct shadework *swp)
 
     bu_log("Shadework%s: 0x%x\n", str ? str : "", swp);
     bu_printb(" sw_inputs", swp->sw_inputs, MFI_FORMAT);
-    if (swp->sw_inputs && MFI_HIT)
+    if (swp->sw_inputs & MFI_HIT)
 	bu_log(" sw_hit.dist:%g @ sw_hit.point(%g %g %g)\n",
 	       swp->sw_hit.hit_dist,
 	       V3ARGS(swp->sw_hit.hit_point));

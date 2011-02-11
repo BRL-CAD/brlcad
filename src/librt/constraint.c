@@ -82,7 +82,7 @@ int
 rt_constraint_export5(
     struct bu_external *ep,
     const struct rt_db_internal *ip,
-    double local2mm,
+    double UNUSED(local2mm),
     const struct db_i *dbip,
     struct resource *resp)
 {
@@ -98,8 +98,6 @@ rt_constraint_export5(
     cip = (struct rt_constraint_internal *) ip->idb_ptr;
     /*RT_CONSTRAINT_CK_MAGIC(cip);*/
     constraint = *cip;
-
-    local2mm = local2mm; /* quell */
 
     BU_INIT_EXTERNAL(ep);
 
@@ -120,11 +118,10 @@ rt_constraint_export5(
  *
  */
 int
-rt_constraint_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)
+rt_constraint_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t UNUSED(mat), const struct db_i *dbip, struct resource *resp)
 {
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
-    mat = mat;
     RT_CK_DBI(dbip);
     if (resp) RT_CK_RESOURCE(resp);
 

@@ -674,15 +674,13 @@ error:
 
 
 int
-bn_cmd_noise_perlin(ClientData clientData,
+bn_cmd_noise_perlin(ClientData UNUSED(clientData),
 		    Tcl_Interp *interp,
 		    int argc,
 		    char **argv)
 {
     point_t pt;
     double v;
-
-    clientData = clientData; /* quell warning */
 
     if (argc != 4) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -707,7 +705,7 @@ bn_cmd_noise_perlin(ClientData clientData,
  *
  */
 int
-bn_cmd_noise(ClientData clientData,
+bn_cmd_noise(ClientData UNUSED(clientData),
 	     Tcl_Interp *interp,
 	     int argc,
 	     char **argv)
@@ -717,8 +715,6 @@ bn_cmd_noise(ClientData clientData,
     double lacunarity;
     double octaves;
     double val;
-
-    clientData = clientData; /* quell warning */
 
     if (argc != 7) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -760,7 +756,7 @@ bn_cmd_noise(ClientData clientData,
  * avoiding the overhead of doing this in Tcl.
  */
 int
-bn_cmd_noise_slice(ClientData clientData,
+bn_cmd_noise_slice(ClientData UNUSED(clientData),
 		   Tcl_Interp *interp,
 		   int argc,
 		   char **argv)
@@ -780,8 +776,6 @@ bn_cmd_noise_slice(ClientData clientData,
     int noise_type = NOISE_FBM;
     double val;
     point_t pt;
-
-    clientData = clientData; /* quell warning */
 
     if (argc != 7) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -854,7 +848,7 @@ bn_cmd_noise_slice(ClientData clientData,
 
 
 int
-bn_cmd_random(ClientData clientData,
+bn_cmd_random(ClientData UNUSED(clientData),
 	      Tcl_Interp *interp,
 	      int argc,
 	      char **argv)
@@ -863,8 +857,6 @@ bn_cmd_random(ClientData clientData,
     const char *str;
     double rnd;
     char buf[32];
-
-    clientData = clientData; /* quell warning */
 
     if (argc != 2) {
 	Tcl_AppendResult(interp, "Wrong # args:  Should be \"",
