@@ -69,6 +69,7 @@ set(LIBGED_SOURCES
     eye.c
     eye_pos.c
     facetize.c
+	 fb2pix.c
     find.c
     form.c
     fracture.c
@@ -139,6 +140,7 @@ set(LIBGED_SOURCES
     pathlist.c
     pathsum.c
     perspective.c
+	 pix2fb.c
     plot.c
     pmat.c
     pmodel2view.c
@@ -266,7 +268,7 @@ include_directories(
     ${TCL_INCLUDE_DIRS}
 )
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb librt libbu libanalyze ${REGEX_LIBRARY}" STRICT)
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb librt libfb libbu libanalyze ${REGEX_LIBRARY}" STRICT)
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 SET(ged_ignore_files

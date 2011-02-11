@@ -55,6 +55,8 @@ set(LIBRT_SOURCES
     primitives/bot/bot.c
     primitives/bot/bot_brep.cpp
     primitives/bot/bot_mirror.c
+    primitives/bot/btg.c
+    primitives/bot/btgf.c
     primitives/brep/brep.cpp
     primitives/brep/brep_debug.cpp
     primitives/bspline/bspline.cpp
@@ -220,7 +222,11 @@ set(librt_ignored_files
 	parse.c
 	pmalloc.c
 	prcomb.c
+	primitives/bot/btg.h
 	primitives/bot/g_bot_include.c
+	primitives/bot/tieprivate.h
+	primitives/bot/tie.c
+	primitives/bot/tie_kdtree.c
 	primitives/brep/brep_debug.h
 	primitives/fixpt.h
 	primitives/metaball/metaball.h
