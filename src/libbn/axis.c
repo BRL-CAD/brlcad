@@ -91,7 +91,7 @@ tp_3axis(FILE *fp,
     else
 	ccw = 1;			/* clockwise */
 
-    if (NEAR_ZERO(tick_separation, SMALL)) tick_separation = 1;
+    if (ZERO(tick_separation)) tick_separation = 1;
 
     /*
      *  The point "origin" will be the center of the axis rotation.

@@ -52,7 +52,7 @@ bn_cx_div(register bn_complex_t *ap, register const bn_complex_t *bp)
     r = bp->re;
     s = bp->im;
     if (fabs(r) >= fabs(s)) {
-	if (NEAR_ZERO(r, SQRT_SMALL_FASTF))
+	if (ZERO(r))
 	    goto err;
 	r = s / r;			/* <= 1 */
 	s = 1.0 / (bp->re + r * s);
@@ -60,7 +60,7 @@ bn_cx_div(register bn_complex_t *ap, register const bn_complex_t *bp)
 	ap->im = (ap->im - ap__re * r) * s;
 	return;
     } else {
-	if (NEAR_ZERO(s, SQRT_SMALL_FASTF))
+	if (ZERO(s))
 	    goto err;
 	r = r / s;			/* < 1 */
 	s = 1.0 / (s + r * bp->re);
@@ -92,8 +92,8 @@ bn_cx_sqrt(bn_complex_t *op, const bn_complex_t *ip)
     const fastf_t im = ip->im;
 
     /* special cases are not necessary; they are here for speed */
-    if (NEAR_ZERO(re, SMALL_FASTF)) {
-	if (NEAR_ZERO(im, SMALL_FASTF)) {
+    if (ZERO(re)) {
+	if (ZERO(im)) {
 	    op->re = op->im = 0.0;
 	} else if (im > 0.0) {
 	    op->re = op->im = sqrt(im * 0.5);
@@ -101,7 +101,7 @@ bn_cx_sqrt(bn_complex_t *op, const bn_complex_t *ip)
 	    /* ip->im < 0.0 */
 	    op->re = -(op->im = sqrt(im * -0.5));
 	}
-    } else if (NEAR_ZERO(im, SMALL_FASTF)) {
+    } else if (ZERO(im)) {
 	if (re > 0.0) {
 	    op->re = sqrt(re);
 	    op->im = 0.0;

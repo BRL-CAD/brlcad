@@ -333,7 +333,7 @@ bn_mkpoint_3planes(fastf_t *pt, const fastf_t *a, const fastf_t *b, const fastf_
      * is some deep significance to this!)
      */
     det = VDOT(a, v1);
-    if (NEAR_ZERO(det, SMALL_FASTF)) return -1;
+    if (ZERO(det)) return -1;
 
     VCROSS(v2, a, c);
     VCROSS(v3, a, b);
@@ -1298,13 +1298,13 @@ bn_isect_line3_line3(fastf_t *t,
      * than x, y, z.  Subscript s is the smallest component, used for
      * checking later.
      */
-    if (NEAR_ZERO(n[X], SMALL_FASTF)) {
+    if (ZERO(n[X])) {
         n[X] = 0.0;
     }
-    if (NEAR_ZERO(n[Y], SMALL_FASTF)) {
+    if (ZERO(n[Y])) {
         n[Y] = 0.0;
     }
-    if (NEAR_ZERO(n[Z], SMALL_FASTF)) {
+    if (ZERO(n[Z])) {
         n[Z] = 0.0;
     }
     abs_n[X] = (n[X] >= 0) ? n[X] : (-n[X]);
@@ -2433,7 +2433,7 @@ bn_does_ray_isect_tri(
     VUNITIZE(pl);
 
     NdotDir = VDOT(pl, dir);
-    if (NEAR_ZERO(NdotDir, SMALL_FASTF))
+    if (ZERO(NdotDir))
 	return 0;
 
     pl[W] = VDOT(pl, V);
@@ -2649,12 +2649,12 @@ bn_distsq_line3_line3(fastf_t *dist, fastf_t *P, fastf_t *d_in, fastf_t *Q, fast
     int ret=0;
 
     len_e = MAGNITUDE(e_in);
-    if (NEAR_ZERO(len_e, SMALL_FASTF))
+    if (ZERO(len_e))
 	bu_bomb("bn_distsq_line3_line3() called with zero length vector\n");
     inv_len_e = 1.0 / len_e;
 
     len_d = MAGNITUDE(d_in);
-    if (NEAR_ZERO(len_d, SMALL_FASTF))
+    if (ZERO(len_d))
 	bu_bomb("bn_distsq_line3_line3() called with zero length vector\n");
     inv_len_d = 1.0 / len_d;
 
@@ -2662,14 +2662,14 @@ bn_distsq_line3_line3(fastf_t *dist, fastf_t *P, fastf_t *d_in, fastf_t *Q, fast
     VSCALE(d, d_in, inv_len_d);
     de = VDOT(d, e);
 
-    if (NEAR_ZERO(de, SMALL_FASTF)) {
+    if (ZERO(de)) {
 	/* lines are perpendicular */
 	dist[0] = VDOT(Q, d) - VDOT(P, d);
 	dist[1] = VDOT(P, e) - VDOT(Q, e);
     } else {
 	VSUB2(PmQ, P, Q);
 	denom = 1.0 - de*de;
-	if (NEAR_ZERO(denom, SMALL_FASTF)) {
+	if (ZERO(denom)) {
 	    /* lines are parallel */
 	    dist[0] = 0.0;
 	    dist[1] = VDOT(PmQ, d);
@@ -2757,7 +2757,7 @@ bn_isect_planes(fastf_t *pt, const fastf_t (*planes)[4], const size_t pl_count)
 
     /* Check that we don't have a singular matrix */
     det = bn_mat_determinant(matrix);
-    if (NEAR_ZERO(det, SMALL_FASTF))
+    if (ZERO(det))
 	return 1;
 
     bn_mat_inv(inverse, matrix);

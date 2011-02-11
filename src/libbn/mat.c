@@ -316,7 +316,7 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 	    }
 	}
 
-	if (NEAR_ZERO(y, SQRT_SMALL_FASTF)) {
+	if (ZERO(y)) {
 	    /* SINGULAR */
 	    return 0;
 	}
@@ -398,10 +398,10 @@ bn_htov_move(register vect_t v, register const vect_t h)
 {
     register fastf_t inv;
 
-    if (NEAR_ZERO(h[3] - 1.0, SMALL_FASTF)) {
+    if (ZERO(h[3] - 1.0)) {
 	VMOVE(v, h);
     } else {
-	if (NEAR_ZERO(h[W], SMALL_FASTF)) {
+	if (ZERO(h[W])) {
 	    bu_log("bn_htov_move: divide by %f!\n", h[W]);
 	    return;
 	}
@@ -600,17 +600,17 @@ bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double gga
      * result in errors when some codes try to convert this back to
      * azimuth and elevation.  do_frame() uses this technique!!!
      */
-    if (NEAR_ZERO(alpha_in - 180.0, SMALL_FASTF))
+    if (ZERO(alpha_in - 180.0))
 	salpha = 0.0;
     else
 	salpha = sin(alpha);
 
-    if (NEAR_ZERO(beta_in - 180.0, SMALL_FASTF))
+    if (ZERO(beta_in - 180.0))
 	sbeta = 0.0;
     else
 	sbeta = sin(beta);
 
-    if (NEAR_ZERO(ggamma_in - 180.0, SMALL_FASTF))
+    if (ZERO(ggamma_in - 180.0))
 	sgamma = 0.0;
     else
 	sgamma = sin(ggamma);
@@ -655,7 +655,7 @@ bn_mat_angles_rad(register mat_t mat,
     double calpha, cbeta, cgamma;
     double salpha, sbeta, sgamma;
 
-    if (NEAR_ZERO(alpha, SMALL_FASTF) && NEAR_ZERO(beta, SMALL_FASTF) && NEAR_ZERO(ggamma, SMALL_FASTF)) {
+    if (ZERO(alpha) && ZERO(beta) && ZERO(ggamma)) {
 	MAT_IDN(mat);
 	return;
     }
@@ -761,7 +761,7 @@ bn_vec_perp(vect_t new, const vect_t old)
     if (fabs(old[Z])<fabs(old[i])) i=Z;
     VSETALL(another, 0);
     another[i] = 1.0;
-    if (NEAR_ZERO(old[X], SMALL_FASTF) && NEAR_ZERO(old[Y], SMALL_FASTF) && NEAR_ZERO(old[Z], SMALL_FASTF)) {
+    if (ZERO(old[X]) && ZERO(old[Y]) && ZERO(old[Z])) {
 	VMOVE(new, another);
     } else {
 	VCROSS(new, another, old);
@@ -1059,7 +1059,7 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
 	k = Y;
     }
     f = hypot(in[j], in[k]);
-    if (NEAR_ZERO(f, SMALL_FASTF)) {
+    if (ZERO(f)) {
 	bu_log("bn_vec_ortho(): zero hypot on %lf %lf %lf\n", V3ARGS(in));
 	VSETALL(out, 0);
 	return;
@@ -1094,7 +1094,7 @@ bn_mat_scale_about_pt(mat_t mat, const point_t pt, const double scale)
     MAT_DELTAS_VEC_NEG(xlate, pt);
 
     MAT_IDN(s);
-    if (NEAR_ZERO(scale, SMALL)) {
+    if (ZERO(scale)) {
 	MAT_ZERO(mat);
 	return -1;			/* ERROR */
     }
@@ -1218,7 +1218,7 @@ bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
     double n1_sq, n2_sq, n3_sq;
     double n1_n2, n1_n3, n2_n3;
 
-    if (NEAR_ZERO(ang, SMALL_FASTF)) {
+    if (ZERO(ang)) {
 	MAT_IDN(m);
 	return;
     }
@@ -1411,7 +1411,7 @@ bn_mat_is_non_unif (const mat_t m)
 	return 1;
     }
 
-    if (!NEAR_ZERO(m[12], SMALL_FASTF) || !NEAR_ZERO(m[13], SMALL_FASTF) || !NEAR_ZERO(m[14], SMALL_FASTF))
+    if (!ZERO(m[12]) || !ZERO(m[13]) || !ZERO(m[14]))
 	return 2;
 
     return 0;

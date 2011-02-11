@@ -507,8 +507,8 @@ find_spec_wgt(double h, double l, double o)
     for (ep = etbl, i=0; i < etbl_next; i++, ep++) {
 	if (ep->magic != MAGIC_fbm_spec_wgt)
 	    bu_bomb("find_spec_wgt");
-	if (NEAR_ZERO(ep->lacunarity - l, SMALL_FASTF)
-	    && NEAR_ZERO(ep->h_val - h, SMALL_FASTF)
+	if (ZERO(ep->lacunarity - l)
+	    && ZERO(ep->h_val - h)
 	    && ep->octaves > (o - SMALL_FASTF))
 	{
 	    return ep;
@@ -527,8 +527,8 @@ find_spec_wgt(double h, double l, double o)
     for (ep = etbl, i=0; i < etbl_next; i++, ep++) {
 	if (ep->magic != MAGIC_fbm_spec_wgt)
 	    bu_bomb("find_spec_wgt");
-	if (NEAR_ZERO(ep->lacunarity - l, SMALL_FASTF)
-	    && NEAR_ZERO(ep->h_val - h, SMALL_FASTF)
+	if (ZERO(ep->lacunarity - l)
+	    && ZERO(ep->h_val - h)
 	    && ep->octaves > (o - SMALL_FASTF))
 	    break;
     }
@@ -597,7 +597,7 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
     }
 
     noise_remainder = octaves - (int)octaves;
-    if (!NEAR_ZERO(noise_remainder, SMALL_FASTF)) {
+    if (!ZERO(noise_remainder)) {
 	/* add in ``octaves'' noise_remainder ``i'' and spatial freq. are
 	 * preset in loop above
 	 */
@@ -673,7 +673,7 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
     }
 
     noise_remainder = octaves - (int)octaves;
-    if (!NEAR_ZERO(noise_remainder, SMALL_FASTF)) {
+    if (!ZERO(noise_remainder)) {
 	/* add in ``octaves'' noise_remainder ``i'' and spatial freq. are
 	 * preset in loop above
 	 */
