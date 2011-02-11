@@ -80,7 +80,7 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     for (i=0; i<aip->neqn; i++) {
 	double normalLen = MAGNITUDE(aip->eqn[i]);
 	double scale;
-	if (NEAR_ZERO(normalLen, SMALL_FASTF)) {
+	if (ZERO(normalLen)) {
 	    bu_log("arbn has zero length normal vector\n");
 	    return 1;
 	}

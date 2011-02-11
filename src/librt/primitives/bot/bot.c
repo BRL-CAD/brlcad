@@ -2895,7 +2895,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 	    max_xval = (&bot->vertices[i*3])[X];
 
 	/* sanity to make sure our book-keeping doesn't go haywire */
-	if (NEAR_ZERO((&bot->vertices[i*3])[X] - deleted[X], SMALL_FASTF)) {
+	if (ZERO((&bot->vertices[i*3])[X] - deleted[X])) {
 	    bu_log("WARNING: Unable to fuse due to vertex with infinite value (idx=%ld)\n", i);
 	    return 0;
 	}
@@ -2914,8 +2914,8 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
     if (min_xval < (fastf_t)LONG_MIN) {
 	min_xval = (fastf_t)LONG_MIN;
     }
-    if (NEAR_ZERO(max_xval - min_xval, SMALL_FASTF)) {
-	if (NEAR_ZERO(max_xval - (fastf_t)LONG_MAX, SMALL_FASTF)) {
+    if (ZERO(max_xval - min_xval)) {
+	if (ZERO(max_xval - (fastf_t)LONG_MAX)) {
 	    max_xval += VDIVIDE_TOL;
 	} else {
 	    min_xval -= VDIVIDE_TOL;
@@ -2924,7 +2924,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 
     /* calculate the width of a bin */
     delta = fabs(max_xval - min_xval) / (fastf_t)256.0;
-    if (NEAR_ZERO(delta, SMALL_FASTF))
+    if (ZERO(delta))
 	delta = (fastf_t)1.0;
 
     /* second pass to sort the vertices into bins based on their X value */
@@ -3084,7 +3084,7 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 		case RT_BOT_PLATE:
 		case RT_BOT_PLATE_NOCOS:
 		    /* check the face thickness and face mode */
-		    if (!NEAR_ZERO(bot->thickness[i] - bot->thickness[j], SMALL_FASTF) ||
+		    if (!ZERO(bot->thickness[i] - bot->thickness[j]) ||
 			(BU_BITTEST(bot->face_mode, i)?1:0) != (BU_BITTEST(bot->face_mode, j)?1:0))
 			break;
 		case RT_BOT_SOLID:

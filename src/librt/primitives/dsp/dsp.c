@@ -1163,7 +1163,7 @@ add_seg(struct isect_stuff *isect,
      */
     delta = out_hit->hit_dist - in_hit->hit_dist;
 
-    if (NEAR_ZERO(delta, SMALL_FASTF)) {
+    if (ZERO(delta)) {
 	return 0;
     }
 
@@ -1399,13 +1399,13 @@ isect_ray_triangle(struct isect_stuff *isect,
      * AB and AC will be unit length, so only the sign counts.
      */
 
-    if (NEAR_ZERO(AB[X], SMALL_FASTF)) {
+    if (ZERO(AB[X])) {
 	beta = AB[Y] * AP[Y];
     } else {
 	beta = AB[X] * AP[X];
     }
 
-    if (NEAR_ZERO(AC[X], SMALL_FASTF)) {
+    if (ZERO(AC[X])) {
 	alpha = AC[Y] * AP[Y];
     } else {
 	alpha = AC[X] * AP[X];
@@ -2901,8 +2901,8 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("interpolated %g %g %g  dot:%g\n", V3ARGS(N), dot);
 
-    if ((NEAR_ZERO(hitp->hit_vpriv[Z], SMALL_FASTF) && dot > 0.0)/* in-hit needs fix */ ||
-	(NEAR_ZERO(hitp->hit_vpriv[Z] - 1.0, SMALL_FASTF) && dot < 0.0)/* out-hit needs fix */) {
+    if ((ZERO(hitp->hit_vpriv[Z]) && dot > 0.0)/* in-hit needs fix */ ||
+	(ZERO(hitp->hit_vpriv[Z] - 1.0) && dot < 0.0)/* out-hit needs fix */) {
 	/* bring the normal back to being perpindicular to the ray to
 	 * avoid "flipped normal" warnings
 	 */
@@ -3018,7 +3018,7 @@ rt_dsp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     VJOIN1(UV_dir, rev_dir, -dot_N, norm);
     VUNITIZE(UV_dir);
 
-    if (NEAR_ZERO(dot_N, SMALL_FASTF)) {
+    if (ZERO(dot_N)) {
 	/* ray almost perfectly 90 degrees to surface */
 	uvp->uv_du = min_r_U;
 	uvp->uv_dv = min_r_V;
@@ -3222,7 +3222,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     }
 
     /* now draw the body of the top */
-    if (!NEAR_ZERO(ttol->rel, SMALL_FASTF)) {
+    if (!ZERO(ttol->rel)) {
 	unsigned int rstep;
 	rstep = dsp_ip->dsp_xcnt;
 	V_MAX(rstep, dsp_ip->dsp_ycnt);
@@ -3253,7 +3253,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     for (y=yfudge; y < ylim; y += step) {
 	VSET(s_pt, 0.0, y, DSP(dsp_ip, 0, y));
 	VMOVE(o_pt, s_pt);
-	if (!NEAR_ZERO(o_pt[Z], SMALL_FASTF)) {
+	if (!ZERO(o_pt[Z])) {
 	    drawing = 1;
 	    MOVE(o_pt);
 	} else {
@@ -3264,7 +3264,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    s_pt[X] = x;
 
 	    s_pt[Z] = DSP(dsp_ip, x, y);
-	    if (!NEAR_ZERO(s_pt[Z], SMALL_FASTF)) {
+	    if (!ZERO(s_pt[Z])) {
 		if (drawing) {
 		    DRAW(s_pt);
 		} else {
@@ -3284,7 +3284,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 	s_pt[X] = xlim;
 	s_pt[Z] = DSP(dsp_ip, xlim, y);
-	if (!NEAR_ZERO(s_pt[Z], SMALL_FASTF)) {
+	if (!ZERO(s_pt[Z])) {
 	    if (drawing) {
 		DRAW(s_pt);
 	    } else {
@@ -3304,7 +3304,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     for (x=xfudge; x < xlim; x += step) {
 	VSET(s_pt, x, 0.0, DSP(dsp_ip, x, 0));
 	VMOVE(o_pt, s_pt);
-	if (!NEAR_ZERO(o_pt[Z], SMALL_FASTF)) {
+	if (!ZERO(o_pt[Z])) {
 	    drawing = 1;
 	    MOVE(o_pt);
 	} else {
@@ -3316,7 +3316,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    s_pt[Y] = y;
 
 	    s_pt[Z] = DSP(dsp_ip, x, y);
-	    if (!NEAR_ZERO(s_pt[Z], SMALL_FASTF)) {
+	    if (!ZERO(s_pt[Z])) {
 		if (drawing) {
 		    DRAW(s_pt);
 		} else {
@@ -3336,7 +3336,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 	s_pt[Y] = ylim;
 	s_pt[Z] = DSP(dsp_ip, x, ylim);
-	if (!NEAR_ZERO(s_pt[Z], SMALL_FASTF)) {
+	if (!ZERO(s_pt[Z])) {
 	    if (drawing) {
 		DRAW(s_pt);
 	    } else {

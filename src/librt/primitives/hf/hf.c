@@ -1733,7 +1733,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
     goal -= 4 + 2 * (xip->w + xip->n);
 
     /* Apply relative tolerance, if specified */
-    if (!NEAR_ZERO(ttol->rel, SMALL_FASTF)) {
+    if (!ZERO(ttol->rel)) {
 	size_t rstep;
 	rstep = xip->w;
 	V_MAX(rstep, xip->n);

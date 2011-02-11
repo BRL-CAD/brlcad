@@ -134,7 +134,7 @@ rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd, fastf_t *out_norm, fastf
 
     norm_dist_min = in - VDOT(rp->r_pt, out_norm);
     slant_factor = VDOT(rp->r_dir, out_norm);	/* always abs < 1 */
-    if (NEAR_ZERO(slant_factor, SQRT_SMALL_FASTF)) {
+    if (ZERO(slant_factor)) {
 	if (norm_dist_min < 0.0) {
 	    bu_log("rt_seg_planeclip ERROR -- ray parallel to baseplane, outside \n");
 	    /* XXX Free segp chain */
@@ -147,7 +147,7 @@ rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd, fastf_t *out_norm, fastf
     VREVERSE(in_norm, out_norm);
     norm_dist_max = out - VDOT(rp->r_pt, in_norm);
     slant_factor = VDOT(rp->r_dir, in_norm);	/* always abs < 1 */
-    if (NEAR_ZERO(slant_factor, SQRT_SMALL_FASTF)) {
+    if (ZERO(slant_factor)) {
 	if (norm_dist_max < 0.0) {
 	    bu_log("rt_seg_planeclip ERROR -- ray parallel to baseplane, outside \n");
 	    /* XXX Free segp chain */
@@ -226,19 +226,19 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     int j;
 
     /* Compute the inverse of the direction cosines */
-    if (!NEAR_ZERO(rp->r_dir[X], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp->r_dir[X])) {
 	invdir[X]=1.0/rp->r_dir[X];
     } else {
 	invdir[X] = INFINITY;
 	rp->r_dir[X] = 0.0;
     }
-    if (!NEAR_ZERO(rp->r_dir[Y], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp->r_dir[Y])) {
 	invdir[Y]=1.0/rp->r_dir[Y];
     } else {
 	invdir[Y] = INFINITY;
 	rp->r_dir[Y] = 0.0;
     }
-    if (!NEAR_ZERO(rp->r_dir[Z], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp->r_dir[Z])) {
 	invdir[Z]=1.0/rp->r_dir[Z];
     } else {
 	invdir[Z] = INFINITY;
@@ -272,7 +272,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     }
     if (RT_G_DEBUG&DEBUG_EBM)bu_log("g[X] = %d, g[Y] = %d\n", igrid[X], igrid[Y]);
 
-    if (NEAR_ZERO(rp->r_dir[X], SMALL_FASTF) && NEAR_ZERO(rp->r_dir[Y], SMALL_FASTF)) {
+    if (ZERO(rp->r_dir[X]) && ZERO(rp->r_dir[Y])) {
 	register struct seg *segp;
 
 	/* Ray is traveling exactly along Z axis.  Just check the one
@@ -308,7 +308,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     }
 
     /* X setup */
-    if (NEAR_ZERO(rp->r_dir[X], SMALL_FASTF)) {
+    if (ZERO(rp->r_dir[X])) {
 	t[X] = INFINITY;
 	delta[X] = 0;
     } else {
@@ -319,7 +319,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 	delta[X] = ebmp->ebm_cellsize[X] * fabs(invdir[X]);
     }
     /* Y setup */
-    if (NEAR_ZERO(rp->r_dir[Y], SMALL_FASTF)) {
+    if (ZERO(rp->r_dir[Y])) {
 	t[Y] = INFINITY;
 	delta[Y] = 0;
     } else {
@@ -331,7 +331,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     }
 #if 0
     /* Z setup */
-    if (NEAR_ZERO(rp->r_dir[Z], SMALL_FASTF)) {
+    if (ZERO(rp->r_dir[Z])) {
 	t[Z] = INFINITY;
     } else {
 	/* Consider igrid[Z] to be either 0 or 1 */
@@ -349,10 +349,10 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     if (RT_G_DEBUG&DEBUG_EBM)bu_log("t[Y] = %g, delta[Y] = %g\n", t[Y], delta[Y]);
 
     /* Find face of entry into first cell -- max initial t value */
-    if (NEAR_ZERO(t[X] - INFINITY, SMALL_FASTF)) {
+    if (ZERO(t[X] - INFINITY)) {
 	in_index = Y;
 	t0 = t[Y];
-    } else if (NEAR_ZERO(t[Y] - INFINITY, SMALL_FASTF)) {
+    } else if (ZERO(t[Y] - INFINITY)) {
 	in_index = X;
 	t0 = t[X];
     } else if (t[X] >= t[Y]) {

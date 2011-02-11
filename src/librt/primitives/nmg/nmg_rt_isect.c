@@ -2500,7 +2500,7 @@ guess_class_from_hitlist_max(struct ray_data *rd, int *hari_kari, int in_or_out_
 		       nmg_rt_inout_str(a_hit->in_out));
 	    plus_hit = a_hit;
 	    *hari_kari = 0;
-	} else if (NEAR_ZERO(a_hit->hit.hit_dist - plus_hit->hit.hit_dist, SMALL_FASTF)) {
+	} else if (ZERO(a_hit->hit.hit_dist - plus_hit->hit.hit_dist)) {
 	    *hari_kari = 1;
 	}
     }
@@ -2593,7 +2593,7 @@ guess_class_from_hitlist_min(struct ray_data *rd, int *hari_kari, int in_or_out_
 		       nmg_rt_inout_str(a_hit->in_out));
 	    minus_hit = a_hit;
 	    *hari_kari = 0;
-	} else if (NEAR_ZERO(a_hit->hit.hit_dist - minus_hit->hit.hit_dist, SMALL_FASTF)) {
+	} else if (ZERO(a_hit->hit.hit_dist - minus_hit->hit.hit_dist)) {
 	    *hari_kari = 1;
 	}
     }
@@ -2706,19 +2706,19 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
     }
 
     /* Compute the inverse of the direction cosines */
-    if (!NEAR_ZERO(rp->r_dir[X], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp->r_dir[X])) {
 	rd.rd_invdir[X]=1.0/rp->r_dir[X];
     } else {
 	rd.rd_invdir[X] = INFINITY;
 	rp->r_dir[X] = 0.0;
     }
-    if (!NEAR_ZERO(rp->r_dir[Y], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp->r_dir[Y])) {
 	rd.rd_invdir[Y]=1.0/rp->r_dir[Y];
     } else {
 	rd.rd_invdir[Y] = INFINITY;
 	rp->r_dir[Y] = 0.0;
     }
-    if (!NEAR_ZERO(rp->r_dir[Z], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp->r_dir[Z])) {
 	rd.rd_invdir[Z]=1.0/rp->r_dir[Z];
     } else {
 	rd.rd_invdir[Z] = INFINITY;

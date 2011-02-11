@@ -166,7 +166,7 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	if (b < diff)
 	    continue;
 
-	if (NEAR_ZERO(diff, SMALL_FASTF))
+	if (ZERO(diff))
 	    return i; /* OK -- can't do better */
 
 	/* FIXME: figure out why SMALL_FASTF is too sensitive, why
@@ -260,7 +260,7 @@ rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
      * root, Quadratic for a complex root (since they come in con-
      * jugate pairs).
      */
-    if (NEAR_ZERO(root->im, SMALL)) {
+    if (ZERO(root->im)) {
 	/* root is real */
 	divisor.dgr = 1;
 	divisor.cf[0] = 1;
@@ -303,7 +303,7 @@ rt_poly_roots(register bn_poly_t *eqn,	/* equation to be solved */
     /* Remove leading coefficients which are too close to zero,
      * to prevent the polynomial factoring from blowing up, below.
      */
-    while (NEAR_ZERO(eqn->cf[0], SMALL)) {
+    while (ZERO(eqn->cf[0])) {
 	for (n=0; n <= eqn->dgr; n++) {
 	    eqn->cf[n] = eqn->cf[n+1];
 	}
@@ -321,7 +321,7 @@ rt_poly_roots(register bn_poly_t *eqn,	/* equation to be solved */
     /* A trailing coefficient of zero indicates that zero
      * is a root of the equation.
      */
-    while (NEAR_ZERO(eqn->cf[eqn->dgr], SMALL)) {
+    while (ZERO(eqn->cf[eqn->dgr])) {
 	roots[n].re = roots[n].im = 0.0;
 	--eqn->dgr;
 	++n;

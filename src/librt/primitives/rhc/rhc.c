@@ -370,7 +370,7 @@ rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
     x = rhc->rhc_cprime;
 
-    if (NEAR_ZERO(dprime[Y], SMALL) && NEAR_ZERO(dprime[Z], SMALL))
+    if (ZERO(dprime[Y]) && ZERO(dprime[Z]))
 	goto check_plates;
 
     /* Find roots of the equation, using formula for quadratic */
@@ -438,7 +438,7 @@ rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
      */
  check_plates:
     /* check front and back plates */
-    if (hitp < &hits[2]  &&  !NEAR_ZERO(dprime[X], SMALL)) {
+    if (hitp < &hits[2]  &&  !ZERO(dprime[X])) {
 	/* 0 or 1 hits so far, this is worthwhile */
 	k1 = -pprime[X] / dprime[X];		/* front plate */
 	k2 = (-1.0 - pprime[X]) / dprime[X];	/* back plate */
@@ -471,7 +471,7 @@ rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     }
 
     /* check top plate */
-    if (hitp == &hits[1]  &&  !NEAR_ZERO(dprime[Z], SMALL)) {
+    if (hitp == &hits[1]  &&  !ZERO(dprime[Z])) {
 	/* 0 or 1 hits so far, this is worthwhile */
 	k1 = -pprime[Z] / dprime[Z];		/* top plate */
 

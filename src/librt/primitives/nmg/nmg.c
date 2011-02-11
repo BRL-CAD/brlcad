@@ -173,19 +173,19 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	bu_bomb("end of NMG st_specific structure corrupted\n");
 
     /* Compute the inverse of the direction cosines */
-    if (!NEAR_ZERO(rp->r_dir[X], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp->r_dir[X])) {
 	nmg->nmg_invdir[X]=1.0/rp->r_dir[X];
     } else {
 	nmg->nmg_invdir[X] = INFINITY;
 	rp->r_dir[X] = 0.0;
     }
-    if (!NEAR_ZERO(rp->r_dir[Y], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp->r_dir[Y])) {
 	nmg->nmg_invdir[Y]=1.0/rp->r_dir[Y];
     } else {
 	nmg->nmg_invdir[Y] = INFINITY;
 	rp->r_dir[Y] = 0.0;
     }
-    if (!NEAR_ZERO(rp->r_dir[Z], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp->r_dir[Z])) {
 	nmg->nmg_invdir[Z]=1.0/rp->r_dir[Z];
     } else {
 	nmg->nmg_invdir[Z] = INFINITY;
@@ -856,7 +856,7 @@ rt_nmg_export4_fastf(const fastf_t *fp, int count, int pt_type, double scale)
     cp = rt_nmg_fastf_p;
     (void)bu_plong(cp + 0, DISK_DOUBLE_ARRAY_MAGIC);
     (void)bu_plong(cp + 4, count);
-    if (pt_type == 0 || NEAR_ZERO(scale - 1.0, SMALL_FASTF)) {
+    if (pt_type == 0 || ZERO(scale - 1.0)) {
 	htond(cp + (4+4), (unsigned char *)fp, count);
     } else {
 	fastf_t *new;

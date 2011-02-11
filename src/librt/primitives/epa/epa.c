@@ -407,7 +407,7 @@ rt_epa_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
      */
  check_plates:
     /* check top plate */
-    if (hitp == &hits[1]  &&  !NEAR_ZERO(dprime[Z], SMALL)) {
+    if (hitp == &hits[1]  &&  !ZERO(dprime[Z])) {
 	/* 1 hit so far, this is worthwhile */
 	k1 = -pprime[Z] / dprime[Z];		/* top plate */
 
@@ -567,7 +567,7 @@ rt_epa_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
     switch (hitp->hit_surfno) {
 	case EPA_NORM_BODY:
 	    /* top plate, polar coords */
-	    if (NEAR_ZERO(pprime[Z] + 1.0, SMALL_FASTF)) { /* i.e., == -1.0 */
+	    if (ZERO(pprime[Z] + 1.0)) { /* i.e., == -1.0 */
 		/* bottom pt of body */
 		uvp->uv_u = 0;
 	    } else {

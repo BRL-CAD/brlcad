@@ -276,7 +276,7 @@ ptbl_vsort(struct bu_ptbl *b, fastf_t *pt, fastf_t *dir, fastf_t *mag, fastf_t d
 	    if (tmag < -dist_tol) continue;
 	    if (tmag > dist_tol) continue;
 	    /* Nearly equal at same vertex */
-	    if (!NEAR_ZERO(mag[i] - mag[j], SMALL_FASTF)
+	    if (!ZERO(mag[i] - mag[j])
 		&& vu[i]->v_p == vu[j]->v_p)
 	    {
 		bu_log("ptbl_vsort: forcing vu=x%x & vu=x%x mag equal\n", vu[i], vu[j]);
@@ -289,7 +289,7 @@ ptbl_vsort(struct bu_ptbl *b, fastf_t *pt, fastf_t *dir, fastf_t *mag, fastf_t d
 	for (j=i+1; j < b->end; ++j) {
 
 	    if (mag[i] < mag[j]) continue;
-	    if (NEAR_ZERO(mag[i] - mag[j], SMALL_FASTF)) {
+	    if (ZERO(mag[i] - mag[j])) {
 		if (vu[i]->v_p < vu[j]->v_p) continue;
 		if (vu[i]->v_p == vu[j]->v_p) {
 		    if (vu[i] < vu[j]) continue;
@@ -492,14 +492,14 @@ nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int a
      * angles are not exactly 0 or pi.
      */
 #define RADIAN_TWEEK 1.0e-14	/* low bits of double prec., re: 6.28... */
-    if (NEAR_ZERO(ang, SMALL_FASTF)) {
+    if (ZERO(ang)) {
 	if (this_ass == NMG_E_ASSESSMENT_RIGHT) {
 	    ang = RADIAN_TWEEK;
 	} else {
 	    /* Assuming NMG_E_ASSESSMENT_LEFT */
 	    ang = bn_twopi - RADIAN_TWEEK;
 	}
-    } else if (NEAR_ZERO(ang - bn_pi, SMALL_FASTF)) {
+    } else if (ZERO(ang - bn_pi)) {
 	if (this_ass == NMG_E_ASSESSMENT_RIGHT) {
 	    ang = bn_pi - RADIAN_TWEEK;
 	} else {
@@ -2038,7 +2038,7 @@ nmg_face_next_vu_interval(struct nmg_ray_state *rs, int cur, fastf_t *mag, int o
     BN_CK_TOL(rs->tol);
     if (rs->eg_p) NMG_CK_EDGE_G_LSEG(rs->eg_p);
 
-    if (cur == rs->nvu-1 || !NEAR_ZERO(mag[cur+1] - mag[cur], SMALL_FASTF)) {
+    if (cur == rs->nvu-1 || !ZERO(mag[cur+1] - mag[cur])) {
 	/* Single vertexuse at this dist */
 	if (rt_g.NMG_debug&DEBUG_FCUT)
 	    bu_log("nmg_face_next_vu_interval() fu=x%x, single vertexuse at index %d\n", rs->fu1, cur);
@@ -2055,7 +2055,7 @@ nmg_face_next_vu_interval(struct nmg_ray_state *rs, int cur, fastf_t *mag, int o
     v = rs->vu[cur]->v_p;
     for (j = cur+1; j < rs->nvu; j++) {
 	/* If distance along the ray changes, start a new interval */
-	if (!NEAR_ZERO(mag[j] - mag[cur], SMALL_FASTF)) break;
+	if (!ZERO(mag[j] - mag[cur])) break;
     }
 
     /* vu Interval runs from [cur] to [j-1] inclusive */

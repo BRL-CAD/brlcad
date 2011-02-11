@@ -464,7 +464,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 	}
     }
     pt2d = &is->vert2d[v->index*3];
-    if (NEAR_ZERO(pt2d[2], SMALL_FASTF)) {
+    if (ZERO(pt2d[2])) {
 	/* Flag set.  Conversion is done.  Been here before */
 	v2d[0] = pt2d[0];
 	v2d[1] = pt2d[1];
@@ -1446,7 +1446,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
     VSUB2(dir3d, vu1b->v_p->vg_p->coord, vu1a->v_p->vg_p->coord);
     VJOIN1(hit_pt, vu1a->v_p->vg_p->coord, dist[0], dir3d);
 
-    if (NEAR_ZERO(dist[0], SMALL_FASTF)) {
+    if (ZERO(dist[0])) {
 	/* First point of eu1 is on eu2, by geometry */
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 	    bu_log("\tvu=x%x vu1a is intersect point\n", vu1a);
@@ -1460,7 +1460,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	/* Edges not colinear. Either join up with a matching vertex,
 	 * or break eu2 on our vert.
 	 */
-	if (NEAR_ZERO(dist[1], SMALL_FASTF)) {
+	if (ZERO(dist[1])) {
 	    if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		bu_log("\tvu2a matches vu1a\n");
 	    nmg_jv(vu1a->v_p, vu2a->v_p);
@@ -1468,7 +1468,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	    ret = ISECT_SHARED_V;
 	    goto topo;
 	}
-	if (NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) {
+	if (ZERO(dist[1] - 1.0)) {
 	    if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		bu_log("\tsecond point of eu2 matches vu1a\n");
 	    nmg_jv(vu1a->v_p, vu2b->v_p);
@@ -1485,7 +1485,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	goto topo;
     }
 
-    if (NEAR_ZERO(dist[0] - 1.0, SMALL_FASTF)) {
+    if (ZERO(dist[0] - 1.0)) {
 	/* Second point of eu1 is on eu2, by geometry */
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 	    bu_log("\tvu=x%x vu1b is intersect point\n", vu1b);
@@ -1499,7 +1499,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	/* Edges not colinear. Either join up with a matching vertex,
 	 * or break eu2 on our vert.
 	 */
-	if (NEAR_ZERO(dist[1], SMALL_FASTF)) {
+	if (ZERO(dist[1])) {
 	    if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		bu_log("\tvu2a matches vu1b\n");
 	    nmg_jv(vu1b->v_p, vu2a->v_p);
@@ -1507,7 +1507,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	    ret = ISECT_SHARED_V;
 	    goto topo;
 	}
-	if (NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) {
+	if (ZERO(dist[1] - 1.0)) {
 	    if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		bu_log("\tsecond point of eu2 matches vu1b\n");
 	    nmg_jv(vu1b->v_p, vu2b->v_p);
@@ -1531,11 +1531,11 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 	    bu_log("\tIntersect point on eu2 is outside vu1a...vu1b.  Break eu2 anyway.\n");
 
-	if (NEAR_ZERO(dist[1], SMALL_FASTF)) {
+	if (ZERO(dist[1])) {
 	    nmg_enlist_vu(is, vu2a, 0, MAX_FASTF);
 	    ret = ISECT_SHARED_V;		/* eu1 was not broken */
 	    goto topo;
-	} else if (NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) {
+	} else if (ZERO(dist[1] - 1.0)) {
 	    nmg_enlist_vu(is, vu2b, 0, MAX_FASTF);
 	    ret = ISECT_SHARED_V;		/* eu1 was not broken */
 	    goto topo;
@@ -1569,14 +1569,14 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
     /* Edges not colinear. Either join up with a matching vertex,
      * or break eu2 on our vert.
      */
-    if (NEAR_ZERO(dist[1], SMALL_FASTF)) {
+    if (ZERO(dist[1])) {
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 	    bu_log("\t\tintersect point is vu2a\n");
 	vu = nmg_ebreaker(vu2a->v_p, eu1, &is->tol)->vu_p;
 	nmg_enlist_vu(is, vu2a, vu, MAX_FASTF);
 	ret |= ISECT_SPLIT1;
 	goto topo;
-    } else if (NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) {
+    } else if (ZERO(dist[1] - 1.0)) {
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 	    bu_log("\t\tintersect point is vu2b\n");
 	vu = nmg_ebreaker(vu2b->v_p, eu1, &is->tol)->vu_p;
@@ -2519,11 +2519,11 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 
 		hitv = (struct vertex *)NULL;
 
-		if (NEAR_ZERO(dist[hit_no], SMALL_FASTF)) {
+		if (ZERO(dist[hit_no])) {
 		    hit_vu = eu1->vu_p;
 		    hitv = hit_vu->v_p;
 		    VMOVE(hit_pt, hitv->vg_p->coord);
-		} else if (NEAR_ZERO(dist[hit_no] - 1.0, SMALL_FASTF)) {
+		} else if (ZERO(dist[hit_no] - 1.0)) {
 		    hit_vu = eu1->eumate_p->vu_p;
 		    hitv = hit_vu->v_p;
 		    VMOVE(hit_pt, hitv->vg_p->coord);
@@ -3001,14 +3001,14 @@ nmg_isect_line2_edge2p(struct nmg_inter_struct *is, struct bu_ptbl *list, struct
     /* Edges not colinear. Either list a vertex,
      * or break eu1.
      */
-    if (status == 1 || NEAR_ZERO(dist[1], SMALL_FASTF)) {
+    if (status == 1 || ZERO(dist[1])) {
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 	    bu_log("\t\tintersect point is vu1a\n");
 	if (!bn_pt3_pt3_equal(hit_pt, vu1a->v_p->vg_p->coord, &(is->tol)))
 	    bu_bomb("vu1a does not match calculated point\n");
 	nmg_enlist_vu(is, vu1a, 0, MAX_FASTF);
 	ret = 0;
-    } else if (status == 2 || NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) {
+    } else if (status == 2 || ZERO(dist[1] - 1.0)) {
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 	    bu_log("\t\tintersect point is vu1b\n");
 	if (!bn_pt3_pt3_equal(hit_pt, vu1b->v_p->vg_p->coord, &(is->tol)))
@@ -3628,14 +3628,14 @@ nmg_isect_eu_eu(struct edgeuse *eu1, struct vertex_g *vg1a, struct vertex_g *vg1
 	    eu1->eumate_p->vu_p->v_p == eu2->eumate_p->vu_p->v_p)
 	    return;
 
-	if (NEAR_ZERO(dist[0], SMALL_FASTF) || NEAR_ZERO(dist[0] - 1.0, SMALL_FASTF))
+	if (ZERO(dist[0]) || ZERO(dist[0] - 1.0))
 	    return;
 
-	if (NEAR_ZERO(dist[1], SMALL_FASTF)) {
+	if (ZERO(dist[1])) {
 	    bu_ptbl_ins_unique(inters, (long *)eu2->vu_p->v_p);
 	    return;
 	}
-	if (NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) {
+	if (ZERO(dist[1] - 1.0)) {
 	    bu_ptbl_ins_unique(inters, (long *)eu2->eumate_p->vu_p->v_p);
 	    return;
 	}
@@ -5714,11 +5714,11 @@ nmg_isect_coplanar_edges(struct nmg_inter_struct *is, struct bu_ptbl *eu1_list, 
 		hitv = (struct vertex *)NULL;
 		hit_vu = (struct vertexuse *)NULL;
 
-		if (NEAR_ZERO(dist[hit_no], SMALL_FASTF)) {
+		if (ZERO(dist[hit_no])) {
 		    hit_vu = eu1->vu_p;
 		    hitv = hit_vu->v_p;
 		    VMOVE(hit_pt, hitv->vg_p->coord);
-		} else if (NEAR_ZERO(dist[hit_no] - len_vt1, SMALL_FASTF)) {
+		} else if (ZERO(dist[hit_no] - len_vt1)) {
 		    hit_vu = eu1->eumate_p->vu_p;
 		    hitv = hit_vu->v_p;
 		    VMOVE(hit_pt, hitv->vg_p->coord);
@@ -6022,9 +6022,9 @@ nmg_check_radial_angles(char *str, struct shell *s, const struct bn_tol *tol)
 	increasing =  (-1);
 	start = 1;
 	for (j=2; j<=face_count; j++) {
-	    if (NEAR_ZERO(angle[j], SMALL_FASTF) || NEAR_ZERO(angle[j] - bn_twopi, SMALL_FASTF))
+	    if (ZERO(angle[j]) || ZERO(angle[j] - bn_twopi))
 		continue;
-	    if (NEAR_ZERO(angle[j] - angle[j-1], SMALL_FASTF))
+	    if (ZERO(angle[j] - angle[j-1]))
 		continue;
 	    else if (angle[j] > angle[j-1]) {
 		start = j;
@@ -7119,13 +7119,13 @@ nmg_isect_edge3p_edge3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
      */
 
     /* dist[0] is distance along eu1 */
-    if (NEAR_ZERO(dist[0], SMALL_FASTF)) {
+    if (ZERO(dist[0])) {
 	/* Hit is at vu1a */
-	if (NEAR_ZERO(dist[1], SMALL_FASTF)) {
+	if (ZERO(dist[1])) {
 	    /* Hit is at vu2a */
 	    nmg_jv(vu1a->v_p, vu2a->v_p);
 	    return;
-	} else if (NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) {
+	} else if (ZERO(dist[1] - 1.0)) {
 	    /* Hit is at vu2b */
 	    nmg_jv(vu1a->v_p, vu2b->v_p);
 	    return;
@@ -7133,13 +7133,13 @@ nmg_isect_edge3p_edge3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	/* Break eu2 on vu1a */
 	nmg_ebreaker(vu1a->v_p, eu2, &is->tol);
 	return;
-    } else if (NEAR_ZERO(dist[0] - 1.0, SMALL_FASTF)) {
+    } else if (ZERO(dist[0] - 1.0)) {
 	/* Hit is at vu1b */
-	if (NEAR_ZERO(dist[1], SMALL_FASTF)) {
+	if (ZERO(dist[1])) {
 	    /* Hit is at vu2a */
 	    nmg_jv(vu1b->v_p, vu2a->v_p);
 	    return;
-	} else if (NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) {
+	} else if (ZERO(dist[1] - 1.0)) {
 	    /* Hit is at vu2b */
 	    nmg_jv(vu1b->v_p, vu2b->v_p);
 	    return;
@@ -7151,11 +7151,11 @@ nmg_isect_edge3p_edge3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	/* Hit on eu1 is between vu1a and vu1b */
 	if (dist[1] < 0 || dist[1] > 1) return;	/* Don't bother breaking eu1, it doesn't touch eu2. */
 
-	if (NEAR_ZERO(dist[1], SMALL_FASTF)) {
+	if (ZERO(dist[1])) {
 	    /* Hit is at vu2a */
 	    nmg_ebreaker(vu2a->v_p, eu1, &is->tol);
 	    return;
-	} else if (NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) {
+	} else if (ZERO(dist[1] - 1.0)) {
 	    /* Hit is at vu2b */
 	    nmg_ebreaker(vu2b->v_p, eu1, &is->tol);
 	    return;
