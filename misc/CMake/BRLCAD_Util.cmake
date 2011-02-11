@@ -121,26 +121,52 @@ MACRO(BRLCAD_ADDLIB libname srcs libs)
   ENDIF(LOCAL_COMPILE_FLAGS)
 ENDMACRO(BRLCAD_ADDLIB libname srcs libs)
 
+# We attempt here to strike a balance between competing needs.  Ideally, any error messages
+# returned as a consequence of using data while running programs should point the developer
+# back to the version controlled source code, not a copy in the build directory.  However,
+# another design goal is to replicate the install tree layout in the build directory.  On
+# platforms with symbolic links, we can do both by linking the source data files to their
+# locations in the build directory.  On Windows, this is not possible and we have to fall
+# back on an explicit file copy mechanism.  In both cases we have a build target that is
+# triggered if source files are edited in order to allow the build system to take any further
+# actions that may be needed (the current example is re-generating tclIndex and pkgIndex.tcl
+# files when the source .tcl files change).
 MACRO(BRLCAD_ADDDATA datalist targetdir)
-	# This first line shouldn't be needed if target dependencies are set up correctly
-	FILE(COPY ${${datalist}} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
-	STRING(REGEX REPLACE "/" "_" targetprefix ${targetdir})
-	SET(inputlist)
-	FOREACH(filename ${${datalist}})
-		SET(inputlist ${inputlist} ${CMAKE_CURRENT_SOURCE_DIR}/${filename})
-	ENDFOREACH(filename ${${datalist}})
-	SET(${targetprefix}_cmake_contents "
-	SET(FILES_TO_COPY ${inputlist})
-	FILE(COPY \${FILES_TO_COPY} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
-	")
-	FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.cmake "${${targetprefix}_cmake_contents}")
-	ADD_CUSTOM_COMMAND(
-		OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel
-		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.cmake
-		COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel
-		DEPENDS ${${datalist}}
-		)
-	ADD_CUSTOM_TARGET(${datalist}_cp ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel)
+	IF(NOT WIN32)
+		IF(NOT EXISTS "${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}")
+			EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
+		ENDIF(NOT EXISTS "${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}")
+		FOREACH(filename ${${datalist}})
+			GET_FILENAME_COMPONENT(ITEM_NAME ${filename} NAME)
+			EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${ITEM_NAME})
+		ENDFOREACH(filename ${${datalist}})
+		STRING(REGEX REPLACE "/" "_" targetprefix ${targetdir})
+		ADD_CUSTOM_COMMAND(
+			OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel
+			COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel
+			DEPENDS ${${datalist}}
+			)
+		ADD_CUSTOM_TARGET(${datalist}_cp ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel)
+	ELSE(NOT WIN32)
+		FILE(COPY ${${datalist}} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
+		STRING(REGEX REPLACE "/" "_" targetprefix ${targetdir})
+		SET(inputlist)
+		FOREACH(filename ${${datalist}})
+			SET(inputlist ${inputlist} ${CMAKE_CURRENT_SOURCE_DIR}/${filename})
+		ENDFOREACH(filename ${${datalist}})
+		SET(${targetprefix}_cmake_contents "
+		SET(FILES_TO_COPY ${inputlist})
+		FILE(COPY \${FILES_TO_COPY} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
+		")
+		FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.cmake "${${targetprefix}_cmake_contents}")
+		ADD_CUSTOM_COMMAND(
+			OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel
+			COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.cmake
+			COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel
+			DEPENDS ${${datalist}}
+			)
+		ADD_CUSTOM_TARGET(${datalist}_cp ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.sentinel)
+	ENDIF(NOT WIN32)
 	FOREACH(filename ${${datalist}})
 		INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${filename} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
 	ENDFOREACH(filename ${${datalist}})
