@@ -302,6 +302,14 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	 && NEAR_ZERO(v[Z], tol))
 
 /**
+ * Return truthfully whether a value is within a minimum
+ * representation tolerance from zero.
+ *
+ * Use not recommended due to compilation-variant tolerance.
+ */
+#define ZERO(_a) NEAR_ZERO((_a), SMALL_FASTF)
+
+/**
  * Return truthfully whether two values are within a specified epsilon
  * distance from each other.
  */
@@ -320,7 +328,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * Return truthfully whether two values are within a minimum
  * representation tolerance from each other.
  *
- * Unspecified unreliable tolerance.  Use not recommended.
+ * Use not recommended due to compilation-variant tolerance.
  */
 #define EQUAL(_a, _b) NEAR_EQUAL((_a), (_b), SMALL_FASTF)
 
@@ -328,7 +336,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * Return truthfully whether two vectors are equal within a minimum
  * representation tolerance.
  *
- * Unspecified unreliable tolerance.  Use not recommended.
+ * Use not recommended due to compilation-variant tolerance.
  */
 #define VEQUAL(_a, _b) VNEAR_EQUAL((_a), (_b), SMALL_FASTF)
 
