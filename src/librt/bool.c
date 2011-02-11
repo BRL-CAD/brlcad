@@ -1208,12 +1208,11 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
  * just set ap->a_logoverlap = rt_silent_logoverlap.
  */
 void
-rt_silent_logoverlap(struct application *ap, const struct partition *pp, const struct bu_ptbl *regiontable, const struct partition *InputHdp)
+rt_silent_logoverlap(struct application *ap, const struct partition *pp, const struct bu_ptbl *regiontable, const struct partition *UNUSED(InputHdp))
 {
     RT_CK_AP(ap);
     RT_CK_PT(pp);
     BU_CK_PTBL(regiontable);
-    InputHdp = InputHdp; /* quell */
     return;
 }
 
@@ -1227,7 +1226,7 @@ rt_silent_logoverlap(struct application *ap, const struct partition *pp, const s
  * replaced by an application setting a_logoverlap().
  */
 void
-rt_default_logoverlap(struct application *ap, const struct partition *pp, const struct bu_ptbl *regiontable, const struct partition *InputHdp)
+rt_default_logoverlap(struct application *ap, const struct partition *pp, const struct bu_ptbl *regiontable, const struct partition *UNUSED(InputHdp))
 {
     point_t pt;
     static long count = 0; /* Not PARALLEL, shouldn't hurt */
@@ -1238,7 +1237,6 @@ rt_default_logoverlap(struct application *ap, const struct partition *pp, const 
     RT_CK_AP(ap);
     RT_CK_PT(pp);
     BU_CK_PTBL(regiontable);
-    InputHdp = InputHdp; /* quell */
 
     /* Attempt to control tremendous error outputs */
     if (++count > 100) {

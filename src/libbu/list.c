@@ -219,11 +219,10 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
 
 /* XXX - apparently needed by muves */
 struct bu_list *
-bu_list_dequeue_next(struct bu_list *hp, struct bu_list *p)
+bu_list_dequeue_next(struct bu_list *UNUSED(hp), struct bu_list *p)
 {
     struct bu_list *p2;
 
-    hp = hp;
     p2 = BU_LIST_NEXT(bu_list, p);
     BU_LIST_DEQUEUE(p2);
 

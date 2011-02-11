@@ -3054,9 +3054,8 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
  *
  */
 int
-rt_tgc_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_tgc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

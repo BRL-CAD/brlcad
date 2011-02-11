@@ -1038,9 +1038,8 @@ static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
  *
  */
 int
-rt_superell_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_superell_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

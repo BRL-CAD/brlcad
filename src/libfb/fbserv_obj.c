@@ -174,6 +174,7 @@ setup_socket(int fd)
 /*
  * N E W _ C L I E N T
  */
+#if defined(_WIN32) && !defined(__CYGWIN__)
 HIDDEN void
 new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel chan)
 {
@@ -193,18 +194,11 @@ new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel chan)
 	fbsp->fbs_clients[i].fbsc_fbsp = fbsp;
 	setup_socket(pcp->pkc_fd);
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	fbsp->fbs_clients[i].fbsc_chan = chan;
 	fbsp->fbs_clients[i].fbsc_handler = existing_client_handler;
 	Tcl_CreateChannelHandler(fbsp->fbs_clients[i].fbsc_chan, TCL_READABLE,
 				 fbsp->fbs_clients[i].fbsc_handler,
 				 (ClientData)&fbsp->fbs_clients[i]);
-#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
-	chan = chan; /* quellage */
-	Tcl_CreateFileHandler(fbsp->fbs_clients[i].fbsc_fd, TCL_READABLE,
-			      existing_client_handler, (ClientData)&fbsp->fbs_clients[i]);
-#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
-
 	return;
     }
 
@@ -212,6 +206,35 @@ new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel chan)
     pkg_close(pcp);
 }
 
+#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
+HIDDEN void
+new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel UNUSED(chan))
+{
+    int i;
+
+    if (pcp == PKC_ERROR)
+	return;
+
+    for (i = MAX_CLIENTS-1; i >= 0; i--) {
+	/* this slot is being used */
+	if (fbsp->fbs_clients[i].fbsc_fd != 0)
+	    continue;
+
+	/* Found an available slot */
+	fbsp->fbs_clients[i].fbsc_fd = pcp->pkc_fd;
+	fbsp->fbs_clients[i].fbsc_pkg = pcp;
+	fbsp->fbs_clients[i].fbsc_fbsp = fbsp;
+	setup_socket(pcp->pkc_fd);
+
+	Tcl_CreateFileHandler(fbsp->fbs_clients[i].fbsc_fd, TCL_READABLE,
+			      existing_client_handler, (ClientData)&fbsp->fbs_clients[i]);
+	return;
+    }
+
+    bu_log("new_client: too many clients\n");
+    pkg_close(pcp);
+}
+#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 HIDDEN struct pkg_conn *
@@ -785,6 +808,7 @@ fbs_rfbhelp(struct pkg_conn *pcp, char *buf)
 /*
  * Accept any new client connections.
  */
+#if defined(_WIN32) && !defined(__CYGWIN__)
 HIDDEN void
 new_client_handler(ClientData clientData,
 		   Tcl_Channel chan,
@@ -829,15 +853,57 @@ new_client_handler(ClientData clientData,
 	{ 0, NULL, NULL, NULL }
     };
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
 	new_client(fbsp, fbs_makeconn(fd, pswitch), chan);
-#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
-    chan = chan; /* quellage */
-    new_client(fbsp, pkg_getclient(fd, pswitch, comm_error, 0), 0);
-#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
 }
+#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
+HIDDEN void
+new_client_handler(ClientData clientData,
+		   Tcl_Channel UNUSED(chan),
+		   char *UNUSED(host),
+		   int UNUSED(port))
+{
+    struct fbserv_listener *fbslp = (struct fbserv_listener *)clientData;
+    struct fbserv_obj *fbsp = fbslp->fbsl_fbsp;
+    int fd = fbslp->fbsl_fd;
 
+    static struct pkg_switch pswitch[] = {
+	{ MSG_FBOPEN, fbs_rfbopen, "Open Framebuffer", NULL },
+	{ MSG_FBCLOSE, fbs_rfbclose, "Close Framebuffer", NULL },
+	{ MSG_FBCLEAR, fbs_rfbclear, "Clear Framebuffer", NULL },
+	{ MSG_FBREAD, fbs_rfbread, "Read Pixels", NULL },
+	{ MSG_FBWRITE, fbs_rfbwrite, "Write Pixels", NULL },
+	{ MSG_FBWRITE + MSG_NORETURN, fbs_rfbwrite, "Asynch write", NULL },
+	{ MSG_FBCURSOR, fbs_rfbcursor, "Cursor", NULL },
+	{ MSG_FBGETCURSOR, fbs_rfbgetcursor, "Get Cursor", NULL },  /*NEW*/
+	{ MSG_FBSCURSOR, fbs_rfbscursor, "Screen Cursor", NULL }, /*OLD*/
+	{ MSG_FBWINDOW, fbs_rfbwindow, "Window", NULL },  /*OLD*/
+	{ MSG_FBZOOM, fbs_rfbzoom, "Zoom", NULL },  /*OLD*/
+	{ MSG_FBVIEW, fbs_rfbview, "View", NULL },  /*NEW*/
+	{ MSG_FBGETVIEW, fbs_rfbgetview, "Get View", NULL },  /*NEW*/
+	{ MSG_FBRMAP, fbs_rfbrmap, "R Map", NULL },
+	{ MSG_FBWMAP, fbs_rfbwmap, "W Map", NULL },
+	{ MSG_FBHELP, fbs_rfbhelp, "Help Request", NULL },
+	{ MSG_ERROR, fbs_rfbunknown, "Error Message", NULL },
+	{ MSG_CLOSE, fbs_rfbunknown, "Close Connection", NULL },
+	{ MSG_FBREADRECT, fbs_rfbreadrect, "Read Rectangle", NULL },
+	{ MSG_FBWRITERECT, fbs_rfbwriterect, "Write Rectangle", NULL },
+	{ MSG_FBWRITERECT + MSG_NORETURN, fbs_rfbwriterect, "Write Rectangle", NULL },
+	{ MSG_FBBWREADRECT, fbs_rfbbwreadrect, "Read BW Rectangle", NULL },
+	{ MSG_FBBWWRITERECT, fbs_rfbbwwriterect, "Write BW Rectangle", NULL },
+	{ MSG_FBBWWRITERECT+MSG_NORETURN, fbs_rfbbwwriterect, "Write BW Rectangle", NULL },
+	{ MSG_FBFLUSH, fbs_rfbflush, "Flush Output", NULL },
+	{ MSG_FBFLUSH + MSG_NORETURN, fbs_rfbflush, "Flush Output", NULL },
+	{ MSG_FBFREE, fbs_rfbfree, "Free Resources", NULL },
+	{ MSG_FBPOLL, fbs_rfbpoll, "Handle Events", NULL },
+	{ MSG_FBSETCURSOR, fbs_rfbsetcursor, "Set Cursor Shape", NULL },
+	{ MSG_FBSETCURSOR + MSG_NORETURN, fbs_rfbsetcursor, "Set Cursor Shape", NULL },
+	{ 0, NULL, NULL, NULL }
+    };
+
+    new_client(fbsp, pkg_getclient(fd, pswitch, comm_error, 0), 0);
+}
+#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
 
 int
 fbs_open(struct fbserv_obj *fbsp, int port)

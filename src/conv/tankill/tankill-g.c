@@ -215,7 +215,7 @@ main(int argc, char **argv)
 		output_file = bu_optarg;
 		break;
 	    default:
-		usage(argv[0]);
+		usage();
 		bu_exit( EXIT_FAILURE,  NULL );
 		break;
 	}

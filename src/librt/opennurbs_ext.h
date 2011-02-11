@@ -799,7 +799,7 @@ public:
     // of the node - if so, and node is not a leaf node, query
     // children.  If leaf node, and intersects, add to list.
     bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
-    bool intersectsHierarchy(ON_Ray& ray, std::list<BVNode<ON_BoundingBox>*>& results = 0);
+    bool intersectsHierarchy(ON_Ray& ray, std::list<BVNode<ON_BoundingBox>*>& results);
 
     // Report if a given uv point is within the uv boundardies
     // defined by a node.

@@ -1236,15 +1236,13 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
  *
  */
 int
-rt_arbn_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_arbn_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     struct rt_arbn_internal *aip;
 
     RT_CK_DB_INTERNAL(ip);
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
     RT_ARBN_CK_MAGIC(aip);
-
-    ps = ps; /* quellage */
 
     return 0;			/* OK */
 }

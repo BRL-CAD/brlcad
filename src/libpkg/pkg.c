@@ -332,7 +332,7 @@ _pkg_ck_debug(void)
 
 
 struct pkg_conn *
-pkg_open(const char *host, const char *service, const char *protocol, const char *uname, const char *passwd, const struct pkg_switch *switchp, void (*errlog) (char *msg))
+pkg_open(const char *host, const char *service, const char *protocol, const char *uname, const char *UNUSED(passwd), const struct pkg_switch *switchp, void (*errlog) (char *msg))
 {
 #ifdef HAVE_WINSOCK_H
     LPHOSTENT lpHostEntry;
@@ -351,9 +351,6 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     struct sockaddr *addr;			/* UNIX or INET addr */
     size_t addrlen;			/* length of address */
 #endif
-
-    /* presently unused */
-    passwd = passwd;
 
     _pkg_ck_debug();
     if (_pkg_debug) {

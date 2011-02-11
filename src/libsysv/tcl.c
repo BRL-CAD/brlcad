@@ -13,9 +13,8 @@
 #include <stdio.h>
 
 SYSV_EXPORT int
-Sysv_Init(Tcl_Interp *interp)
+Sysv_Init(Tcl_Interp *UNUSED(interp))
 {
-    interp = interp; /* quell warning */
     return TCL_OK;
 }
 
