@@ -590,6 +590,7 @@ struct rt_bot_internal
 				 * "normals" array, one per face
 				 * vertex [num_face_normals*3]
 				 */
+    void *tie;	/* FIXME: blind casting. TIE needs to move from TIE_FUNC to XGLUE before this can not suck. */
 };
 
 struct rt_bot_list {

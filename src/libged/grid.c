@@ -49,8 +49,8 @@ ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy)
     if (gedp->ged_gvp == GED_VIEW_NULL)
 	return;
 
-    if (NEAR_ZERO(gedp->ged_gvp->gv_grid.ggs_res_h, (fastf_t)SMALL_FASTF) ||
-	NEAR_ZERO(gedp->ged_gvp->gv_grid.ggs_res_v, (fastf_t)SMALL_FASTF))
+    if (ZERO(gedp->ged_gvp->gv_grid.ggs_res_h) ||
+	ZERO(gedp->ged_gvp->gv_grid.ggs_res_v))
 	return;
 
     sf = gedp->ged_gvp->gv_scale*gedp->ged_wdbp->dbip->dbi_base2local;

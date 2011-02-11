@@ -9,10 +9,35 @@ first and are grouped by release.  Each release also includes optional
 descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
+
 ----------------------------------------------------------------------
---- 2010-12-XX  Release 7.18.2                                     ---
+--- 2011-03-XX  Release 7.18.4                                     ---
 ----------------------------------------------------------------------
 
+* added rt_bot_mintie to trigger TIE bots - Erik Greenwald
+* libtie is now part of librt - Erik Greenwald
+
+----------------------------------------------------------------------
+--- 2011-02-09  Release 7.18.2                                     ---
+----------------------------------------------------------------------
+
+This release provides initial support for reading some older
+(platform-dependent) v4 geometry database files regardless of their
+originating platform.  Binary-incompatible v4 geometry database files
+can be opened read-only within MGED where geometry can be inspected,
+drawn, exported via the "keep" command, and updated to the newer
+(platform-independent) v5 geometry database file format via the
+"dbupgrade" command.  In order to override the otherwise automatic
+binary-incomaptible v4 detection, MGED's "opendb" command provides a
+new -f flip option and all applications can override behavior with a
+LIBRT_V4FLIP environment variable.
+
+Also introduced with this release are numerous binary platform
+integration and usability enhancements for Debian, Ubuntu, Fedora, and
+other Linux platforms.  Included in Jordi Sayol's efforts are new
+desktop icons, new menu items, mime-type association, and more.
+
+* improved Fedora platform support with new menus, icons - Jordi Sayol
 * fixed nirt units command reporting all units as invalid - Cliff Yapp
 * dbupgrade support for binary-incompatible v4 files - Sean Morrison
 * new opendb -f endianness flip option for corrupt v4 - Sean Morrison
@@ -34,6 +59,7 @@ changes made.  See document footer for additional details.
 * upgraded libpng to version 1.4.5 - Cliff Yapp
 * upgraded zlib to version 1.2.5 - Cliff Yapp
 * removed shell execution ! command from vdeck - Cliff Yapp
+
 
 ----------------------------------------------------------------------
 --- 2010-12-07  Release 7.18.0                                     ---

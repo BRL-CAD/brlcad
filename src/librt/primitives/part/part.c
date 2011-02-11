@@ -501,7 +501,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
     VSUB2(xlated, rp->r_pt, part->part_int.part_V);
     MAT4X3VEC(pprime, part->part_SoR, xlated);
 
-    if (NEAR_ZERO(dprime[X], SMALL) && NEAR_ZERO(dprime[Y], SMALL)) {
+    if (ZERO(dprime[X]) && ZERO(dprime[Y])) {
 	check_v = check_h = 1;
 	goto check_hemispheres;
     }

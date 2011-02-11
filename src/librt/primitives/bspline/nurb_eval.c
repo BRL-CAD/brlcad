@@ -176,7 +176,7 @@ rt_nurb_eval_crv(register fastf_t *crv, int order, fastf_t param, const struct k
 
 	k2 =  k_vec->knots[ (j) ];
 
-	if (!NEAR_ZERO(k1 - k2, SMALL_FASTF)) {
+	if (!ZERO(k1 - k2)) {
 	    for (i= 0; i < coords; i++) {
 		*((crv + ((j) * coords)) + i) =
 		    ((k1 - param) *

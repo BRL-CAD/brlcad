@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>
+	<mime-type type="application/x-brlcad">
+		<comment>BRL-CAD Geometry Database</comment>
+		<icon name="application-x-brlcad"/>
+		<magic priority="50">
+			<match value="\x76" type="string" offset="0">
+				<match value="\x35" type="string" offset="7"/>
+			</match>
+		</magic>
+		<glob pattern="*.g"/>
+	</mime-type>
+</mime-info>

@@ -35,7 +35,7 @@
 #
 ###
 
-test -e
+set -e
 
 ferror(){
     echo "=========================================================="
@@ -185,10 +185,10 @@ cp -f $TMPDIR/brlcad-db.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 cp -f $TMPDIR/brlcad-doc.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 
 mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
-cp -f $TMPDIR/application-x-brlcad-extension.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
+cp -f $TMPDIR/application-x-brlcad.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
 
 mkdir -p $TMPDIR/tmp/usr/share/mime/packages
-cp -f $TMPDIR/application-x-brlcad-extension.xml $TMPDIR/tmp/usr/share/mime/packages
+cp -f $TMPDIR/application-x-brlcad.xml $TMPDIR/tmp/usr/share/mime/packages
 
 #Create brlcad.spec file
 echo -e 'Name: brlcad

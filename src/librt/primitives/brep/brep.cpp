@@ -2768,7 +2768,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 					if (crudestep == 0)
 						domainval = find_next_point(crv, domainval, 0.1,
 								tol->dist * 100, 0);
-					if (crudestep >= 1 || NEAR_ZERO(domainval, SMALL_FASTF)) {
+					if (crudestep >= 1 || ZERO(domainval)) {
 						crudestep++;
 						domainval = olddomainval + (1.0 - olddomainval)
 								/ 100 * crudestep;

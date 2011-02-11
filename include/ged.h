@@ -164,6 +164,26 @@ __BEGIN_DECLS
 	return (_flags); \
     }
 
+#define GED_CHECK_FBSERV(_gedp, _flags) \
+    if (_gedp->ged_fbsp == FBSERV_OBJ_NULL) { \
+	int ged_check_view_quiet = (_flags) & GED_QUIET; \
+	if (!ged_check_view_quiet) { \
+	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "A framebuffer server object does not exist."); \
+	} \
+	return (_flags); \
+    }
+
+#define GED_CHECK_FBSERV_FBP(_gedp, _flags) \
+    if (_gedp->ged_fbsp->fbs_fbp == FBIO_NULL) { \
+	int ged_check_view_quiet = (_flags) & GED_QUIET; \
+	if (!ged_check_view_quiet) { \
+	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "A framebuffer IO structure does not exist."); \
+	} \
+	return (_flags); \
+    }
+
 /** Lookup database object */
 #define GED_CHECK_EXISTS(_gedp, _name, _noisy, _flags) \
     if (db_lookup((_gedp)->ged_wdbp->dbip, (_name), (_noisy)) != RT_DIR_NULL) { \
@@ -494,6 +514,7 @@ struct ged {
 
     struct ged_drawable		*ged_gdp;
     struct ged_view		*ged_gvp;
+    struct fbserv_obj		*ged_fbsp;
 
     void			*ged_dmp;
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
@@ -1601,6 +1622,11 @@ GED_EXPORT BU_EXTERN(int ged_expand, (struct ged *gedp, int argc, const char *ar
 GED_EXPORT BU_EXTERN(int ged_facetize, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Fb2pix writes a framebuffer image to a .pix file.
+ */
+GED_EXPORT BU_EXTERN(int ged_fb2pix, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Find combinations that reference object
  */
 GED_EXPORT BU_EXTERN(int ged_find, (struct ged *gedp, int argc, const char *argv[]));
@@ -1937,6 +1963,11 @@ GED_EXPORT BU_EXTERN(int ged_pathsum, (struct ged *gedp, int argc, const char *a
  * Set/get the perspective angle.
  */
 GED_EXPORT BU_EXTERN(int ged_perspective, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Pix2fb reads a pix file into a framebuffer.
+ */
+GED_EXPORT BU_EXTERN(int ged_pix2fb, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Create a unix plot file of the currently displayed objects.

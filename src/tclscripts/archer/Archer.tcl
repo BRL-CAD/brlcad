@@ -8123,6 +8123,8 @@ proc title_node_handler {node} {
 
 	activateMenusEtc
 	updateSaveMode
+
+	$itk_component(ged) set_outputHandler "$itk_component(cmd) putstring"
     }
 
     if {$mEnableBigEPref != $mEnableBigE} {

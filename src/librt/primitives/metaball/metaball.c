@@ -117,7 +117,7 @@ rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_me
 		max[i] = mbpt->coord[i];
 	}
     /* return -1 if no points are defined. */
-    if (NEAR_ZERO(min[X] - INFINITY, SMALL_FASTF) || min[X] > INFINITY)
+    if (ZERO(min[X] - INFINITY) || min[X] > INFINITY)
 	return -1;
 
     /* compute the center of the generated box, call that the center */

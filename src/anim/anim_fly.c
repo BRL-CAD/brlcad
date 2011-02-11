@@ -134,7 +134,7 @@ get_orientation(fastf_t *p0, fastf_t *p1, fastf_t *p2, fastf_t (*function) (/* ?
     *p_pch = xyz2pch(vel);
     *p_rll = bank(accel, vel);
 
-    if (NEAR_ZERO(fabs(*p_pch) - 90.0, SMALL_FASTF)) /* don't change yaw if velocity vertical */
+    if (ZERO(fabs(*p_pch) - 90.0)) /* don't change yaw if velocity vertical */
 	*p_yaw = last_yaw;
 
     /* avoid sudden yaw changes in vertical loops */

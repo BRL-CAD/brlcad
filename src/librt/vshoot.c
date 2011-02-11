@@ -187,19 +187,19 @@ rt_vshootray(struct application *ap)
     }
 
     /* Compute the inverse of the direction cosines */
-    if (!NEAR_ZERO(ap->a_ray.r_dir[X], SQRT_SMALL_FASTF)) {
+    if (!ZERO(ap->a_ray.r_dir[X])) {
 	inv_dir[X]=1.0/ap->a_ray.r_dir[X];
     } else {
 	inv_dir[X] = INFINITY;
 	ap->a_ray.r_dir[X] = 0.0;
     }
-    if (!NEAR_ZERO(ap->a_ray.r_dir[Y], SQRT_SMALL_FASTF)) {
+    if (!ZERO(ap->a_ray.r_dir[Y])) {
 	inv_dir[Y]=1.0/ap->a_ray.r_dir[Y];
     } else {
 	inv_dir[Y] = INFINITY;
 	ap->a_ray.r_dir[Y] = 0.0;
     }
-    if (!NEAR_ZERO(ap->a_ray.r_dir[Z], SQRT_SMALL_FASTF)) {
+    if (!ZERO(ap->a_ray.r_dir[Z])) {
 	inv_dir[Z]=1.0/ap->a_ray.r_dir[Z];
     } else {
 	inv_dir[Z] = INFINITY;

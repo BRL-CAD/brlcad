@@ -17,7 +17,8 @@ brlcadinclude_required = \
 	rtfunc.h \
 	rtgeom.h \
 	rtserver.h \
-	tclcad.h
+	tclcad.h \
+	tie.h
 
 brlcadinclude_wanted = \
 	analyze.h \

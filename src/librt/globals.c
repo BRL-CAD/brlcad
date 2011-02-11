@@ -284,6 +284,11 @@ fastf_t rt_cline_radius = (fastf_t)-1.0;
 size_t rt_bot_minpieces = RT_DEFAULT_MINPIECES;
 
 /**
+ * minimum number of bot for TIE
+ */
+size_t rt_bot_mintie = RT_DEFAULT_MINTIE;
+
+/**
  * minimum triangles per piece
  */
 size_t rt_bot_tri_per_piece = RT_DEFAULT_TRIS_PER_PIECE;

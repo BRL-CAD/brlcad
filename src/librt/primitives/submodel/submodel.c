@@ -878,7 +878,7 @@ rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     RT_SUBMODEL_CK_MAGIC(sip);
 
     /* Ignores scale factor */
-    BU_ASSERT(NEAR_ZERO(local2mm - 1.0, SMALL_FASTF));
+    BU_ASSERT(ZERO(local2mm - 1.0));
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
@@ -968,7 +968,7 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     RT_SUBMODEL_CK_MAGIC(sip);
 
     /* Ignores scale factor */
-    BU_ASSERT(NEAR_ZERO(local2mm - 1.0, SMALL_FASTF));
+    BU_ASSERT(ZERO(local2mm - 1.0));
     BU_CK_EXTERNAL(ep);
 
     bu_vls_init(&str);

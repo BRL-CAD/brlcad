@@ -45,6 +45,8 @@
 #define GLUE(_a, _b)      _a ## _b
 #define XGLUE(_a, _b) GLUE(_a, _b)
 
+#include "tie.h"
+#include "btg.h"	/* for the bottie_ functions */
 
 #define MAXHITS 128
 
@@ -68,7 +70,7 @@
 
 
 /* forward declarations needed for the included routines below */
-HIDDEN int
+int
 rt_bot_makesegs(
     struct hit *hits,
     size_t nhits,
@@ -203,11 +205,12 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
-    if (bot_ip->bot_flags & RT_BOT_USE_FLOATS) {
+    if ( bot_ip->num_faces >= rt_bot_mintie && (bot_ip->face_normals != NULL || bot_ip->orientation != RT_BOT_UNORIENTED) )
+	return bottie_prep_double(stp, bot_ip, rtip);
+    else if (bot_ip->bot_flags & RT_BOT_USE_FLOATS)
 	return rt_bot_prep_float(stp, bot_ip, rtip);
-    } else {
+    else
 	return rt_bot_prep_double(stp, bot_ip, rtip);
-    }
 }
 
 
@@ -261,7 +264,7 @@ rt_bot_unoriented_segs(struct hit *hits,
  * Given an array of hits, make segments out of them.  Exactly how
  * this is to be done depends on the mode of the BoT.
  */
-HIDDEN int
+int
 rt_bot_makesegs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp)
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
@@ -298,7 +301,9 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
 
-    if (bot->bot_flags & RT_BOT_USE_FLOATS) {
+    if (bot->tie != NULL) {
+	return bottie_shot_double(stp, rp, ap, seghead);
+    } else if (bot->bot_flags & RT_BOT_USE_FLOATS) {
 	return rt_bot_shot_float(stp, rp, ap, seghead);
     } else {
 	return rt_bot_shot_double(stp, rp, ap, seghead);
@@ -419,6 +424,11 @@ rt_bot_free(struct soltab *stp)
 {
     struct bot_specific *bot =
 	(struct bot_specific *)stp->st_specific;
+
+    if (bot->tie != NULL) {
+	bottie_free_double(bot->tie);
+	bot->tie = NULL;
+    }
 
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
 	rt_bot_free_float(bot);
@@ -976,6 +986,8 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	bip->num_face_normals = 0;
     }
 
+    bip->tie = NULL;
+
     return 0;			/* OK */
 }
 
@@ -1258,6 +1270,9 @@ rt_bot_ifree2(struct rt_bot_internal *bot_ip)
 {
     RT_BOT_CK_MAGIC(bot_ip);
     bot_ip->magic = 0;			/* sanity */
+
+    if (bot_ip->tie)
+	bot_ip->tie = NULL;
 
     if (bot_ip->vertices) {
 	bu_free(bot_ip->vertices, "BOT vertices");
@@ -2880,7 +2895,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 	    max_xval = (&bot->vertices[i*3])[X];
 
 	/* sanity to make sure our book-keeping doesn't go haywire */
-	if (NEAR_ZERO((&bot->vertices[i*3])[X] - deleted[X], SMALL_FASTF)) {
+	if (ZERO((&bot->vertices[i*3])[X] - deleted[X])) {
 	    bu_log("WARNING: Unable to fuse due to vertex with infinite value (idx=%ld)\n", i);
 	    return 0;
 	}
@@ -2899,8 +2914,8 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
     if (min_xval < (fastf_t)LONG_MIN) {
 	min_xval = (fastf_t)LONG_MIN;
     }
-    if (NEAR_ZERO(max_xval - min_xval, SMALL_FASTF)) {
-	if (NEAR_ZERO(max_xval - (fastf_t)LONG_MAX, SMALL_FASTF)) {
+    if (ZERO(max_xval - min_xval)) {
+	if (ZERO(max_xval - (fastf_t)LONG_MAX)) {
 	    max_xval += VDIVIDE_TOL;
 	} else {
 	    min_xval -= VDIVIDE_TOL;
@@ -2909,7 +2924,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 
     /* calculate the width of a bin */
     delta = fabs(max_xval - min_xval) / (fastf_t)256.0;
-    if (NEAR_ZERO(delta, SMALL_FASTF))
+    if (ZERO(delta))
 	delta = (fastf_t)1.0;
 
     /* second pass to sort the vertices into bins based on their X value */
@@ -3069,7 +3084,7 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 		case RT_BOT_PLATE:
 		case RT_BOT_PLATE_NOCOS:
 		    /* check the face thickness and face mode */
-		    if (!NEAR_ZERO(bot->thickness[i] - bot->thickness[j], SMALL_FASTF) ||
+		    if (!ZERO(bot->thickness[i] - bot->thickness[j]) ||
 			(BU_BITTEST(bot->face_mode, i)?1:0) != (BU_BITTEST(bot->face_mode, j)?1:0))
 			break;
 		case RT_BOT_SOLID:

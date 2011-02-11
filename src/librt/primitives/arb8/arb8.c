@@ -384,7 +384,7 @@ rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, 
 	case 1:
 	    VSUB2(ofp->arb_U, point, afp->A);	/* B-A */
 	    f = MAGNITUDE(ofp->arb_U);
-	    if (NEAR_ZERO(f, SQRT_SMALL_FASTF)) {
+	    if (ZERO(f)) {
 		return -1;			/* BAD */
 	    }
 	    ofp->arb_Ulen = f;
@@ -2027,7 +2027,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 	/* calculate edge direction */
 	VSUB2(edge_dir, arb->pt[pt2], arb->pt[pt1]);
 
-	if (NEAR_ZERO(MAGNITUDE(edge_dir), SMALL_FASTF))
+	if (ZERO(MAGNITUDE(edge_dir)))
 	    goto err;
 
 	/* bounding planes bp1, bp2 */

@@ -388,7 +388,7 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 
 	roots[0].im = 0.0;
 	roots[2].im = -(roots[1].im = (A - B)*SQRT3*0.5);
-    } else if (NEAR_ZERO(delta, SMALL_FASTF)) {
+    } else if (ZERO(delta)) {
 	fastf_t b_2;
 	b_2 = -0.5 * b;
 
@@ -471,7 +471,7 @@ bn_poly_quartic_roots(register struct bn_complex *roots, register const struct b
     if (!bn_poly_cubic_roots(u, &cube)) {
 	return 0;		/* FAIL */
     }
-    if (!NEAR_ZERO(u[1].im, SMALL_FASTF)) {
+    if (!ZERO(u[1].im)) {
 	U = u[0].re;
     } else {
 	U = Max3(u[0].re, u[1].re, u[2].re);

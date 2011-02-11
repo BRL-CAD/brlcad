@@ -599,7 +599,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 
     /* intersect with top and bottom planes */
     dot_pl1 = VDOT(rp->r_dir, extr->pl1);
-    if (NEAR_ZERO(dot_pl1, SMALL_FASTF)) {
+    if (ZERO(dot_pl1)) {
 	/* ray is parallel to top and bottom faces */
 	dist_bottom = DIST_PT_PLANE(rp->r_pt, extr->pl1);
 	dist_top = DIST_PT_PLANE(rp->r_pt, extr->pl2);
@@ -632,7 +632,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     if (dir_dot_z < 0.0)
 	dir_dot_z = -dir_dot_z;
 
-    if (NEAR_ZERO(dir_dot_z - 1.0, SMALL_FASTF)) {
+    if (ZERO(dir_dot_z - 1.0)) {
 	/* ray is parallel to extrusion vector set mode to just count
 	 * intersections for Jordan Theorem
 	 */

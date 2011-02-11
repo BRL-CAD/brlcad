@@ -442,7 +442,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
     }
 
     /* Calculate new vertex from base thickness */
-    if (!NEAR_ZERO(thick[0], SMALL_FASTF)) {
+    if (!ZERO(thick[0])) {
 	/* calculate new vertex using similar triangles */
 	ratio = thick[0]/normal_height;
 	VJOIN1(v, tgc->v, ratio, tgc->h);
@@ -458,7 +458,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
     }
 
     /* calculate new height vector */
-    if (!NEAR_ZERO(thick[1], SMALL_FASTF)) {
+    if (!ZERO(thick[1])) {
 	/* calculate new height vector using simialr triangles */
 	ratio = thick[1]/normal_height;
 	VJOIN1(top, tgc->v, 1.0 - ratio, tgc->h);
@@ -476,7 +476,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
     /* calculate new height vector based on new vertex and top */
     VSUB2(h, top, v);
 
-    if (!NEAR_ZERO(thick[2], SMALL_FASTF)) {
+    if (!ZERO(thick[2])) {
 	/* ther is a side thickness */
 	vect_t ctoa;	/* unit vector from tip of C to tip of A */
 	vect_t dtob;	/* unit vector from tip of D to tip of B */
@@ -548,7 +548,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 	    else
 		ratio = ratio2;
 
-	    if (NEAR_ZERO(ratio1 - ratio, SMALL_FASTF) && ratio1 < 1.0) /* c vector must go to zero */
+	    if (ZERO(ratio1 - ratio) && ratio1 < 1.0) /* c vector must go to zero */
 		new_mag_c = SQRT_SMALL_FASTF;
 	    else if (ratio1 > ratio && ratio < 1.0) {
 		/* vector d will go to zero, but vector c will not */
@@ -561,7 +561,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 	    } else /* just change c vector length by delta */
 		new_mag_c -= delta_ac;
 
-	    if (NEAR_ZERO(ratio2 - ratio, SMALL_FASTF) && ratio2 < 1.0) /* vector d must go to zero */
+	    if (ZERO(ratio2 - ratio) && ratio2 < 1.0) /* vector d must go to zero */
 		new_mag_d = SQRT_SMALL_FASTF;
 	    else if (ratio2 > ratio && ratio < 1.0) {
 		/* calculate vector length at new top vertex */
@@ -595,7 +595,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 	    else
 		ratio = ratio2;
 
-	    if (NEAR_ZERO(ratio1 - ratio, SMALL_FASTF) && ratio1 < 1.0) /* vector a must go to zero */
+	    if (ZERO(ratio1 - ratio) && ratio1 < 1.0) /* vector a must go to zero */
 		new_mag_a = SQRT_SMALL_FASTF;
 	    else if (ratio1 > ratio && ratio < 1.0) {
 		/* calculate length of vector a if it were at new base location */
@@ -606,7 +606,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 	    } else /* just subtract delta */
 		new_mag_a -= delta_ac;
 
-	    if (NEAR_ZERO(ratio2 - ratio, SMALL_FASTF) && ratio2 < 1.0) /* vector b must go to zero */
+	    if (ZERO(ratio2 - ratio) && ratio2 < 1.0) /* vector b must go to zero */
 		new_mag_b = SQRT_SMALL_FASTF;
 	    else if (ratio2 > ratio && ratio < 1.0) {
 		/* Calculate length of b if it were at new base vector */
@@ -650,7 +650,7 @@ torin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
     struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
 
     RT_TOR_CK_MAGIC(tor);
-    if (NEAR_ZERO(thick[0], SMALL_FASTF))
+    if (ZERO(thick[0]))
 	return GED_OK;
 
     if (thick[0] < 0) {

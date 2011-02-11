@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>
-	<mime-type type="application/x-brlcad-extension">
-		<comment>BRL-CAD Document</comment>
-    <icon name="application-x-brlcad-extension"/>
-		<glob pattern="*.g"/>
-	</mime-type>
-</mime-info>

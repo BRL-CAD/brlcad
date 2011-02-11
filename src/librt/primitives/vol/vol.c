@@ -145,19 +145,19 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     rp = &ideal_ray;	/* XXX */
 
     /* Compute the inverse of the direction cosines */
-    if (!NEAR_ZERO(rp->r_dir[X], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp->r_dir[X])) {
 	invdir[X]=1.0/rp->r_dir[X];
     } else {
 	invdir[X] = INFINITY;
 	rp->r_dir[X] = 0.0;
     }
-    if (!NEAR_ZERO(rp->r_dir[Y], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp->r_dir[Y])) {
 	invdir[Y]=1.0/rp->r_dir[Y];
     } else {
 	invdir[Y] = INFINITY;
 	rp->r_dir[Y] = 0.0;
     }
-    if (!NEAR_ZERO(rp->r_dir[Z], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp->r_dir[Z])) {
 	invdir[Z]=1.0/rp->r_dir[Z];
     } else {
 	invdir[Z] = INFINITY;
@@ -200,7 +200,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     if (RT_G_DEBUG&DEBUG_VOL)bu_log("igrid=(%d, %d, %d)\n", igrid[X], igrid[Y], igrid[Z]);
 
     /* X setup */
-    if (NEAR_ZERO(rp->r_dir[X], SMALL_FASTF)) {
+    if (ZERO(rp->r_dir[X])) {
 	t[X] = INFINITY;
 	delta[X] = 0;
     } else {
@@ -211,7 +211,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	delta[X] = volp->vol_i.cellsize[X] * fabs(invdir[X]);
     }
     /* Y setup */
-    if (NEAR_ZERO(rp->r_dir[Y], SMALL_FASTF)) {
+    if (ZERO(rp->r_dir[Y])) {
 	t[Y] = INFINITY;
 	delta[Y] = 0;
     } else {
@@ -222,7 +222,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	delta[Y] = volp->vol_i.cellsize[Y] * fabs(invdir[Y]);
     }
     /* Z setup */
-    if (NEAR_ZERO(rp->r_dir[Z], SMALL_FASTF)) {
+    if (ZERO(rp->r_dir[Z])) {
 	t[Z] = INFINITY;
 	delta[Z] = 0;
     } else {

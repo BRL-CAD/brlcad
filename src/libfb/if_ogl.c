@@ -41,7 +41,15 @@
 /* needed to make getpagesize in unistd.h visible with C99/XOPEN
  * strictness. Needs to be before sys/types.h, but unistd has to be
  * after the GL stuff. */
-#define __BSD_VISIBLE 1
+#ifndef __BSD_VISIBLE
+#  define __BSD_VISIBLE 1
+#endif
+#ifndef __USE_XOPEN
+#  define __USE_XOPEN 1
+#endif
+#ifndef __USE_BSD
+#  define __USE_BSD 1
+#endif
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>

@@ -92,7 +92,7 @@ anim_mat2zyx(const mat_t viewrot, vect_t angle)
     fastf_t sin_x, sin_z, cos_x, cos_z, big_x, big_z;
     static fastf_t previous[3];
 
-    if (NEAR_ZERO(viewrot[1], SMALL_FASTF) && NEAR_ZERO(viewrot[0], SMALL_FASTF)) {
+    if (ZERO(viewrot[1]) && ZERO(viewrot[0])) {
 	return_value = ERROR1;
 	angle[0] = 0.0;
 	angle[2] = atan2(viewrot[4], viewrot[5]);
@@ -152,7 +152,7 @@ anim_mat2ypr(mat_t viewrot, vect_t angle)
     fastf_t sin_y, sin_r, cos_y, cos_r, big_y, big_r;
     static fastf_t prev_angle[3];
 
-    if (NEAR_ZERO(viewrot[9], SMALL_FASTF) && NEAR_ZERO(viewrot[10], SMALL_FASTF)) {
+    if (ZERO(viewrot[9]) && ZERO(viewrot[10])) {
 	return_value = ERROR1;
 	angle[2] = 0.0;
 	angle[0] = atan2(-viewrot[1], viewrot[5]);
@@ -212,7 +212,7 @@ anim_mat2quat(quat_t quat, const mat_t viewrot)
     static fastf_t prev_quat[4];
 
     square = 0.25 * (1 + viewrot[0] + viewrot[5] + viewrot[10]);
-    if (!NEAR_ZERO(square, SMALL_FASTF)) {
+    if (!ZERO(square)) {
 	quat[W] = sqrt(square);
 	quat[X] = 0.25 * (viewrot[9] - viewrot[6])/ quat[W];
 	quat[Y] = 0.25 * (viewrot[2] - viewrot[8])/ quat[W];
@@ -220,14 +220,14 @@ anim_mat2quat(quat_t quat, const mat_t viewrot)
     } else {
 	quat[W] = 0.0;
 	square = -0.5 * (viewrot[5] + viewrot[10]);
-	if (!NEAR_ZERO(square, SMALL_FASTF)) {
+	if (!ZERO(square)) {
 	    quat[X] = sqrt(square);
 	    quat[Y] = 0.5 * viewrot[4] / quat[X];
 	    quat[Z] = 0.5 * viewrot[8] / quat[X];
 	} else {
 	    quat[X] = 0.0;
 	    square = 0.5 * (1 - viewrot[10]);
-	    if (!NEAR_ZERO(square, SMALL_FASTF)) {
+	    if (!ZERO(square)) {
 		quat[Y] = sqrt(square);
 		quat[Z] = 0.5 * viewrot[9]/ quat[Y];
 	    } else {

@@ -273,11 +273,11 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
     int surface = 0;
 
     invdir[0] = invdir[1] = invdir[2] = INFINITY;
-    if (!NEAR_ZERO(rp->r_dir[0], SQRT_SMALL_FASTF))
+    if (!ZERO(rp->r_dir[0]))
 	invdir[0] = 1.0 / rp->r_dir[0];
-    if (!NEAR_ZERO(rp->r_dir[1], SQRT_SMALL_FASTF))
+    if (!ZERO(rp->r_dir[1]))
 	invdir[1] = 1.0 / rp->r_dir[1];
-    if (!NEAR_ZERO(rp->r_dir[2], SQRT_SMALL_FASTF))
+    if (!ZERO(rp->r_dir[2]))
 	invdir[2] = 1.0 / rp->r_dir[2];
 
     /* Create two orthogonal Planes their intersection contains the

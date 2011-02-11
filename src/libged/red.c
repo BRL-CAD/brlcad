@@ -87,7 +87,7 @@ _ged_print_matrix(FILE *fp, matp_t matrix)
     for (k=0; k<16; k++) {
 	sprintf(buf, "%g", matrix[k]);
 	tmp = atof(buf);
-	if (NEAR_ZERO(tmp - matrix[k], SMALL_FASTF))
+	if (ZERO(tmp - matrix[k]))
 	    fprintf(fp, " %g", matrix[k]);
 	else
 	    fprintf(fp, " %.12e", matrix[k]);

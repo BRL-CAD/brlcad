@@ -156,8 +156,8 @@ _ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attrib
 
 		if (0 <= VDOT(tgc->c, c) &&
 		    0 <= VDOT(tgc->d, d) &&
-		    !NEAR_ZERO(MAGNITUDE(c), SMALL_FASTF) &&
-		    !NEAR_ZERO(MAGNITUDE(d), SMALL_FASTF)) {
+		    !ZERO(MAGNITUDE(c)) &&
+		    !ZERO(MAGNITUDE(d))) {
 		    /* adjust c, d and h */
 		    VMOVE(tgc->c, c);
 		    VMOVE(tgc->d, d);
@@ -202,8 +202,8 @@ _ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attrib
 
 		    if (0 <= VDOT(tgc->a, a) &&
 			0 <= VDOT(tgc->b, b) &&
-			!NEAR_ZERO(MAGNITUDE(a), SMALL_FASTF) &&
-			!NEAR_ZERO(MAGNITUDE(b), SMALL_FASTF)) {
+			!ZERO(MAGNITUDE(a)) &&
+			!ZERO(MAGNITUDE(b))) {
 			/* adjust a, b, v and h */
 			VMOVE(tgc->a, a);
 			VMOVE(tgc->b, b);

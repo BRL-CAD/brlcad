@@ -529,7 +529,7 @@ discont_radius_shot(struct xray *rp, point_t center, vect_t norm, fastf_t or1_sq
     dist_to_plane = VDOT(norm, center);
     norm_dist = dist_to_plane - VDOT(norm, rp->r_pt);
     slant_factor = VDOT(norm, rp->r_dir);
-    if (!NEAR_ZERO(slant_factor, SMALL_FASTF)) {
+    if (!ZERO(slant_factor)) {
         vect_t to_center;
         struct hit *hitp;
         
@@ -1060,7 +1060,7 @@ pipe_start_shot(struct soltab *stp, struct xray *rp, struct id_pipe *id_p, struc
         dist_to_plane = VDOT(lin->pipe_H, lin->pipe_V);
         norm_dist = dist_to_plane - VDOT(lin->pipe_H, rp->r_pt);
         slant_factor = VDOT(lin->pipe_H, rp->r_dir);
-        if (!NEAR_ZERO(slant_factor, SMALL_FASTF)) {
+        if (!ZERO(slant_factor)) {
             vect_t to_center;
             
             t_tmp = norm_dist/slant_factor;
@@ -1089,7 +1089,7 @@ pipe_start_shot(struct soltab *stp, struct xray *rp, struct id_pipe *id_p, struc
         norm_dist = dist_to_plane - VDOT(bend->bend_rb, rp->r_pt);
         slant_factor = VDOT(bend->bend_rb, rp->r_dir);
         
-        if (!NEAR_ZERO(slant_factor, SMALL_FASTF)) {
+        if (!ZERO(slant_factor)) {
             vect_t to_center;
             
             t_tmp = norm_dist/slant_factor;
@@ -1131,7 +1131,7 @@ pipe_end_shot(struct soltab *stp, struct xray *rp, struct id_pipe *id_p, struct 
         dist_to_plane = VDOT(lin->pipe_H, top);
         norm_dist = dist_to_plane - VDOT(lin->pipe_H, rp->r_pt);
         slant_factor = VDOT(lin->pipe_H, rp->r_dir);
-        if (!NEAR_ZERO(slant_factor, SMALL_FASTF)) {
+        if (!ZERO(slant_factor)) {
             vect_t to_center;
             
             t_tmp = norm_dist/slant_factor;
@@ -1166,7 +1166,7 @@ pipe_end_shot(struct soltab *stp, struct xray *rp, struct id_pipe *id_p, struct 
         norm_dist = dist_to_plane - VDOT(plane_norm, rp->r_pt);
         slant_factor = VDOT(plane_norm, rp->r_dir);
         
-        if (!NEAR_ZERO(slant_factor, SMALL_FASTF)) {
+        if (!ZERO(slant_factor)) {
             vect_t to_center;
             
             t_tmp = norm_dist/slant_factor;

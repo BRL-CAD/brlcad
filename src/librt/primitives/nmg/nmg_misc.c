@@ -1505,7 +1505,7 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 	if (!got_dir && BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
 	    /* get general direction for face normal */
 	    nmg_loop_plane_newell(lu, old_pl);
-	    if (!NEAR_ZERO(old_pl[X], SMALL_FASTF) || !NEAR_ZERO(old_pl[Y], SMALL_FASTF) || !NEAR_ZERO(old_pl[Z], SMALL_FASTF))
+	    if (!ZERO(old_pl[X]) || !ZERO(old_pl[Y]) || !ZERO(old_pl[Z]))
 		got_dir = 1;
 	}
 
@@ -1594,7 +1594,7 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
     /* Check that we don't have a singular matrix */
     det = bn_mat_determinant(matrix);
 
-    if (!NEAR_ZERO(det, SMALL_FASTF)) {
+    if (!ZERO(det)) {
 	fastf_t inv_len_pl;
 
 	/* invert matrix */
@@ -1629,11 +1629,11 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 	for (i=1; i<BU_PTBL_END(&verts); i++) {
 	    v = (struct vertex *)BU_PTBL_GET(&verts, i);
 
-	    if (!NEAR_ZERO(v->vg_p->coord[X] - v0->vg_p->coord[X], SMALL_FASTF))
+	    if (!ZERO(v->vg_p->coord[X] - v0->vg_p->coord[X]))
 		x_same = 0;
-	    if (!NEAR_ZERO(v->vg_p->coord[Y] - v0->vg_p->coord[Y], SMALL_FASTF))
+	    if (!ZERO(v->vg_p->coord[Y] - v0->vg_p->coord[Y]))
 		y_same = 0;
-	    if (!NEAR_ZERO(v->vg_p->coord[Z] - v0->vg_p->coord[Z], SMALL_FASTF))
+	    if (!ZERO(v->vg_p->coord[Z] - v0->vg_p->coord[Z]))
 		z_same = 0;
 
 	    if (!x_same && !y_same && !z_same)
@@ -3097,7 +3097,7 @@ nmg_shell_is_void(const struct shell *s)
 
     NMG_GET_FU_NORMAL(normal, fu);
 
-    if (NEAR_ZERO(normal[dir], SMALL_FASTF))
+    if (ZERO(normal[dir]))
 	return -1;
     if (normal[dir] < 0.0)
 	return 1;
@@ -6558,13 +6558,13 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
 	    len0 = MAGNITUDE(i_dir);
 
 	    /* calculate intersection point */
-	    if (NEAR_ZERO(dist[0], SMALL_FASTF)) {
+	    if (ZERO(dist[0])) {
 		VMOVE(new_pt, i_start->vg_p->coord);
-	    } else if (NEAR_ZERO(dist[0] - 1.0, SMALL_FASTF)) {
+	    } else if (ZERO(dist[0] - 1.0)) {
 		VMOVE(new_pt, i_end_pt);
-	    } else if (NEAR_ZERO(dist[1], SMALL_FASTF)) {
+	    } else if (ZERO(dist[1])) {
 		VMOVE(new_pt, j_start->vg_p->coord);
-	    } else if (NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) {
+	    } else if (ZERO(dist[1] - 1.0)) {
 		VMOVE(new_pt, j_end_pt);
 	    } else {
 		VJOIN1(new_pt, i_start->vg_p->coord, dist[0], i_dir);
@@ -8846,26 +8846,26 @@ nmg_intersect_loops_self(struct shell *s, const struct bn_tol *tol)
 			continue;
 
 		    if (code == 0) {
-			if (dist[0] > 0.0 && !NEAR_ZERO(dist[0] - 1.0, SMALL_FASTF)) {
+			if (dist[0] > 0.0 && !ZERO(dist[0] - 1.0)) {
 			    VJOIN1(int_pt, eu->vu_p->v_p->vg_p->coord, dist[0], eu_dir);
 			    v = (struct vertex *)NULL;
 			    new_eu = nmg_ebreaker(v, eu, tol);
 			    nmg_vertex_gv(new_eu->vu_p->v_p, int_pt);
 			}
-			if (dist[1] > 0.0 && !NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) {
+			if (dist[1] > 0.0 && !ZERO(dist[1] - 1.0)) {
 			    VJOIN1(int_pt, eu->vu_p->v_p->vg_p->coord, dist[1], eu_dir);
 			    v = (struct vertex *)NULL;
 			    new_eu = nmg_ebreaker(v, eu, tol);
 			    nmg_vertex_gv(new_eu->vu_p->v_p, int_pt);
 			}
 		    } else {
-			if (!NEAR_ZERO(dist[0], SMALL_FASTF) && !NEAR_ZERO(dist[0] - 1.0, SMALL_FASTF)) {
+			if (!ZERO(dist[0]) && !ZERO(dist[0] - 1.0)) {
 			    VJOIN1(int_pt, eu->vu_p->v_p->vg_p->coord, dist[0], eu_dir);
 			    v = (struct vertex *)NULL;
 			    new_eu = nmg_ebreaker(v, eu, tol);
 			    nmg_vertex_gv(new_eu->vu_p->v_p, int_pt);
 			}
-			if (!NEAR_ZERO(dist[1], SMALL_FASTF) && !NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) {
+			if (!ZERO(dist[1]) && !ZERO(dist[1] - 1.0)) {
 			    VJOIN1(int_pt, eu2->vu_p->v_p->vg_p->coord, dist[1], eu2_dir);
 			    v = (struct vertex *)NULL;
 			    new_eu = nmg_ebreaker(v, eu2, tol);
@@ -8926,7 +8926,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
 	    max_order = crv->order;
 
 	i = 0;
-	while (NEAR_ZERO(crv->k.knots[++i] - crv->k.knots[0], SMALL_FASTF));
+	while (ZERO(crv->k.knots[++i] - crv->k.knots[0]));
 	if (i != crv->order) {
 	    bu_log("Curve does not have multiplicity equal to order at start:\n");
 	    rt_nurb_c_print(crv);
@@ -8934,7 +8934,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
 	}
 
 	i = crv->k.k_size - 1;
-	while (NEAR_ZERO(crv->k.knots[--i] - crv->k.knots[crv->k.k_size - 1], SMALL_FASTF));
+	while (ZERO(crv->k.knots[--i] - crv->k.knots[crv->k.k_size - 1]));
 	if (crv->k.k_size - i - 1 != crv->order) {
 	    bu_log("Curve does not have multiplicity equal to order at end:\n");
 	    rt_nurb_c_print(crv);
@@ -8982,7 +8982,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
 	    /* It is tempting to use a tolerance here, but these coordinates may be
 	     * x/y/z or x/y or u/v, ...
 	     */
-	    if (NEAR_ZERO(crv->ctl_points[(crv->c_size-1)*ncoords+i] - next_crv->ctl_points[i], SMALL_FASTF))
+	    if (ZERO(crv->ctl_points[(crv->c_size-1)*ncoords+i] - next_crv->ctl_points[i]))
 		continue;
 	    else {
 		endpoints_equal = 0;
