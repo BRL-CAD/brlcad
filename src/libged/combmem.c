@@ -224,10 +224,10 @@ combmem_assemble_mat(matp_t matp, vect_t aetvec, vect_t tvec, hvect_t svec, poin
     if (!matp)
 	return;
 
-    if (NEAR_ZERO(svec[X], SMALL) ||
-	NEAR_ZERO(svec[Y], SMALL) ||
-	NEAR_ZERO(svec[Z], SMALL) ||
-	NEAR_ZERO(svec[W], SMALL)) {
+    if (ZERO(svec[X]) ||
+	ZERO(svec[Y]) ||
+	ZERO(svec[Z]) ||
+	ZERO(svec[W])) {
 	return;
     }
 

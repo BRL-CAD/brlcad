@@ -1224,7 +1224,7 @@ MakeTireSurface(struct rt_wdb (*file), char *suffix,
     VSET(height, 0, dytred, 0);
     bu_vls_sprintf(&str, "InnerSolid%s.s", suffix);
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire-dztred);
-    if (!NEAR_ZERO(dytred/2 - dyhub/2, SMALL_FASTF)) {
+    if (!ZERO(dytred/2 - dyhub/2)) {
 	VSET(normal, 0, 1, 0);
 	bu_vls_sprintf(&str, "LeftCone%s.s", suffix);
 	mk_cone(file, bu_vls_addr(&str), vertex, normal, dytred / 2 - dyhub / 2,
@@ -1243,14 +1243,14 @@ MakeTireSurface(struct rt_wdb (*file), char *suffix,
     bu_vls_sprintf(&str, "InnerSolid%s.s", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_UNION);
     if ( (dytred / 2 - dyhub / 2) > 0 &&
-	 !NEAR_ZERO(dytred / 2 - dyhub / 2, SMALL_FASTF) ) {
+	 !ZERO(dytred / 2 - dyhub / 2) ) {
 	bu_vls_sprintf(&str, "LeftCone%s.s", suffix);
 	(void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_SUBTRACT);
 	bu_vls_sprintf(&str, "RightCone%s.s", suffix);
 	(void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_SUBTRACT);
     }
     if ( (dytred / 2 - dyhub / 2) < 0 &&
-	 !NEAR_ZERO(dytred / 2 - dyhub / 2, SMALL_FASTF) ) {
+	 !ZERO(dytred / 2 - dyhub / 2) ) {
 	bu_vls_sprintf(&str, "LeftCone%s.s", suffix);
 	(void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_UNION);
 	bu_vls_sprintf(&str, "RightCone%s.s", suffix);
@@ -2070,18 +2070,18 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     dytred = .8 * width;
     d1 = (ztire-zhub)/2.5;
 
-    if (NEAR_ZERO(hub_width, SMALL_FASTF)) {
+    if (ZERO(hub_width)) {
 	dyhub = dytred;
     } else {
 	dyhub = hub_width*bu_units_conversion("in");
     }
 
-    if (NEAR_ZERO(zside1, SMALL_FASTF))
+    if (ZERO(zside1))
 	zside1 = ztire-((ztire-zhub)/2*1.2);
 
     dztred = .001*ratio*zside1;
 
-    if (NEAR_ZERO(tire_thickness, SMALL_FASTF))
+    if (ZERO(tire_thickness))
 	tire_thickness = dztred;
 
     bu_vls_printf(&gedp->ged_result_str, "radius of sidewall max: %f\n", zside1);

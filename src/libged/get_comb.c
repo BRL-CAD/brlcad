@@ -181,7 +181,7 @@ _ged_vls_print_matrix(struct bu_vls *vls, matp_t matrix)
     for (k=0; k<16; k++) {
 	sprintf(buf, "%g", matrix[k]);
 	tmp = atof(buf);
-	if (NEAR_ZERO(tmp - matrix[k], SMALL_FASTF))
+	if (ZERO(tmp - matrix[k]))
 	    bu_vls_printf(vls, " %g", matrix[k]);
 	else
 	    bu_vls_printf(vls, " %.12e", matrix[k]);
