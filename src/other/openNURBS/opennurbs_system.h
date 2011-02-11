@@ -101,6 +101,11 @@
 #define ON_COMPILER_BORLAND
 #endif
 
+// Sun Studio wants a prototype for _finite, give it one
+#if defined(ON_COMPILER_SUN)
+ int _finite(double);
+#endif
+
 /*
 // Define ON_NO_WINDOWS if you are compiling on a Windows system but want
 // to explicitly exclude inclusion of windows.h.
@@ -278,7 +283,7 @@ extern "C" {
 
 /* 16-bit wide character ("UNICODE") */
 
-#if !defined(ON_COMPILER_MSC) && !defined(ON_COMPILER_GNU)
+#if !defined(ON_COMPILER_MSC) && !defined(ON_COMPILER_GNU) && !defined(ON_COMPILER_SUN)
 typedef unsigned short wchar_t;
 #endif
 
@@ -357,6 +362,18 @@ typedef long long ON__INT64;
 
 // 64 bit unsigned integer
 typedef unsigned long long ON__UINT64;
+
+#elif defined(ON_COMPILER_SUN)
+
+// Don't know for sure what Sun Studio
+// uses, try long long
+
+// 64 bit integer
+typedef long long ON__INT64;
+
+// 64 bit unsigned integer
+typedef unsigned long long ON__UINT64;
+
 
 #else
 
