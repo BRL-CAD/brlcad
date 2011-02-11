@@ -30,9 +30,9 @@ bu_simd_level()
     int d;
     /* since we're PIC, we need to stash EBX on ia32 */
 #ifdef __i386__
-    __asm ("pushl %%ebx;cpuid;popl %%ebx;movl $0,%%eax": "=d" (d): "a" (0x1));
+    asm ("pushl %%ebx;cpuid;popl %%ebx;movl $0,%%eax": "=d" (d): "a" (0x1));
 #else
-    __asm ("cpuid;movl $0,%%eax": "=d"(d): "a"(0x1));
+    asm ("cpuid;movl $0,%%eax": "=d"(d): "a"(0x1));
 #endif
     if(d & 0x1<<26)
 	return BU_SIMD_SSE2;

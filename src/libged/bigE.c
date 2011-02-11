@@ -444,51 +444,6 @@ do_subtract(struct seg *A,
     }
 }
 
-/* perform the union of two segments the types of A and B should be
- * the same
- */
-#if 0
-HIDDEN void
-do_union(struct seg *A,
-	 struct seg *B,
-	 struct bu_list *seghead,
-	 struct _ged_client_data *dgcdp)
-{
-    struct seg *tmp;
-
-    RT_GET_SEG(tmp, dgcdp->ap->a_resource)
-
-	if (NOT_SEG_OVERLAP(A, B)) {
-	    if (A->seg_in.hit_dist <= B->seg_in.hit_dist) {
-		*tmp = *A;
-		BU_LIST_INSERT(seghead, &tmp->l);
-		RT_GET_SEG(tmp, dgcdp->ap->a_resource);
-		*tmp = *B;
-		BU_LIST_INSERT(seghead, &tmp->l);
-	    } else {
-		*tmp = *B;
-		BU_LIST_INSERT(seghead, &tmp->l);
-		RT_GET_SEG(tmp, dgcdp->ap->a_resource);
-		*tmp = *A;
-		BU_LIST_INSERT(seghead, &tmp->l);
-	    }
-	    return;
-	}
-
-    if (A->seg_in.hit_dist <= B->seg_in.hit_dist) {
-	*tmp = *A;
-	if (B->seg_out.hit_dist > A->seg_out.hit_dist)
-	    tmp->seg_out.hit_dist = B->seg_out.hit_dist;
-    } else {
-	*tmp = *B;
-	if (A->seg_out.hit_dist > B->seg_out.hit_dist)
-	    tmp->seg_out.hit_dist = B->seg_out.hit_dist;
-    }
-
-    BU_LIST_INSERT(seghead, &tmp->l);
-}
-#endif
-
 HIDDEN void
 promote_ints(struct bu_list *head,
 	     struct _ged_client_data *dgcdp)
