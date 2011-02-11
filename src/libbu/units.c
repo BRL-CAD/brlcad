@@ -31,6 +31,7 @@
 
 /* done specifically to avoid a libbn dependency */
 #define NEAR_ZERO(val, epsilon) (((val) > -epsilon) && ((val) < epsilon))
+#define ZERO(val) NEAR_ZERO((val), SMALL_FASTF)
 
 
 struct cvt_tab {
@@ -221,7 +222,7 @@ bu_units_string(register const double mm)
     for (tp=bu_units_length_tab; tp->name[0]; tp++) {
 	fastf_t diff, bigger;
 
-	if (NEAR_ZERO(mm - tp->val, SMALL_FASTF))
+	if (ZERO(mm - tp->val))
 	    return tp->name;
 
 	/* Check for near-miss */
@@ -254,7 +255,7 @@ bu_units_strings_vls()
     BU_GETSTRUCT(vlsp, bu_vls);
     bu_vls_init(vlsp);
     for (tp=bu_units_length_tab; tp->name[0]; tp++) {
-	if (NEAR_ZERO(prev_val - tp->val, SMALL_FASTF))
+	if (ZERO(prev_val - tp->val))
 	    continue;
 
 	bu_vls_printf(vlsp, "%s, ", tp->name);
@@ -284,11 +285,11 @@ bu_nearest_units_string(register const double mm)
 	double nearness;
 
 	/* skip zero so we don't return 'none' */
-	if (NEAR_ZERO(tp->val, SMALL_FASTF))
+	if (ZERO(tp->val))
 	    continue;
 
 	/* break early on perfect match */
-	if (NEAR_ZERO(mm - tp->val, SMALL_FASTF))
+	if (ZERO(mm - tp->val))
 	    return tp->name;
 
 	/* Check for nearness */
