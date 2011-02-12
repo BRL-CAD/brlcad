@@ -523,7 +523,17 @@ package provide Archer 1.0
 	set mVPaneToggle5 $mVPaneFraction5
 
 	readPreferences
+	set save_hpanefraction1 $mHPaneFraction1
+	set save_hpanefraction2 $mHPaneFraction2
 	buildCommandViewNew 1
+
+	if {!$mSeparateCommandWindow} {
+	    set mHPaneFraction1 $save_hpanefraction1
+	    set mHPaneFraction2 $save_hpanefraction2
+	    $itk_component(hpane) fraction $mHPaneFraction1 $mHPaneFraction2
+	}
+
+
 	set mDelayCommandViewBuild 0
 	pack $itk_component(advancedTabs) -fill both -expand yes
 	::update
