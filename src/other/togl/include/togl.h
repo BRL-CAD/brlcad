@@ -45,6 +45,7 @@
 
 #  include <tcl.h>
 #  include <tk.h>
+#  include "GL/glew.h"
 #  if defined(TOGL_AGL)
 #    include <OpenGL/gl.h>
 #  elif defined(TOGL_NSOPENGL)
