@@ -174,6 +174,11 @@ SET(BRLCAD_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "SCL install prefix")
 OPTION(SCL-BUILD_EXPRESS_ONLY "Only build express parser." OFF)
 MARK_AS_ADVANCED(SCL-BUILD_EXPRESS_ONLY)
 
+# Take the scl config file template and copy it to the build directory so CMake
+# scripts can append to it if need be
+configure_file(${SCL_SOURCE_DIR}/include/scl_cf_cmake.h.in ${SCL_BINARY_DIR}/include/scl_cf.h.in COPYONLY)
+SET(CONFIG_H_FILE ${SCL_SOURCE_DIR}/include/scl_cf_cmake.h.in)
+
 INCLUDE(CheckLibraryExists)
 INCLUDE(CheckIncludeFile)
 INCLUDE(CheckFunctionExists)
@@ -193,8 +198,8 @@ CHECK_FUNCTION_EXISTS(memmove HAVE_MEMMOVE)
 
 CHECK_TYPE_SIZE("ssize_t" SSIZE_T)
 
-# Now that all the tests are done, configure the scl_config.h file:
-configure_file(${SCL_SOURCE_DIR}/include/scl_cf.h.in ${SCL_BINARY_DIR}/include/scl_cf.h)
+# Now that all the tests are done, configure the scl_cf.h file:
+configure_file(${SCL_BINARY_DIR}/include/scl_cf.h.in ${SCL_BINARY_DIR}/include/scl_cf.h)
 
 add_definitions(
 	-DHAVE_CONFIG_H
