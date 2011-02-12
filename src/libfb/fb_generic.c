@@ -39,6 +39,10 @@
 # include <strings.h>
 #endif
 
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif 
+
 #include "fb.h"
 
 
@@ -531,7 +535,7 @@ fb_skip_bytes(int fd, off_t num, int fileinput, int scanbytes, unsigned char *sc
 
 
 int
-fb_read_fd(FBIO *ifp, int fd, int file_width, int file_height, int file_xoff, int file_yoff, int scr_width, int scr_height, int scr_xoff, int scr_yoff, int fileinput, char *file_name, int one_line_only, int multiple_lines, int autosize, int inverse, int clear, int zoom, struct bu_vls *result)
+fb_read_fd(FBIO *ifp, int fd, int file_width, int file_height, int file_xoff, int file_yoff, int scr_width, int scr_height, int scr_xoff, int scr_yoff, int fileinput, char *file_name, int one_line_only, int multiple_lines, int autosize, int inverse, int clear, int zoom, struct bu_vls *UNUSED(result))
 {
     int y;
     int xout, yout, n, m, xstart, xskip;
@@ -573,7 +577,7 @@ fb_read_fd(FBIO *ifp, int fd, int file_width, int file_height, int file_xoff, in
 
     if (xout < 0)
 	bu_exit(0, NULL);			/* off screen */
-    if ((size_t)xout > (file_width-file_xoff))
+    if ((size_t)xout > (size_t)(file_width-file_xoff))
 	xout = (file_width-file_xoff);
     scanpix = xout;				/* # pixels on scanline */
 
@@ -583,7 +587,7 @@ fb_read_fd(FBIO *ifp, int fd, int file_width, int file_height, int file_xoff, in
     yout = scr_height - scr_yoff;
     if (yout < 0)
 	bu_exit(0, NULL);			/* off screen */
-    if ((size_t)yout > (file_height-file_yoff))
+    if ((size_t)yout > (size_t)(file_height-file_yoff))
 	yout = (file_height-file_yoff);
 
     /* Only in the simplest case use multi-line writes */
@@ -591,8 +595,8 @@ fb_read_fd(FBIO *ifp, int fd, int file_width, int file_height, int file_xoff, in
 	&& multiple_lines > 0
 	&& !inverse
 	&& !zoom
-	&& (size_t)xout == file_width
-	&& file_width <= (size_t)scr_width)
+	&& (size_t)xout == (size_t)file_width
+	&& (size_t)file_width <= (size_t)scr_width)
     {
 	scanpix *= multiple_lines;
     }
@@ -670,7 +674,7 @@ fb_read_fd(FBIO *ifp, int fd, int file_width, int file_height, int file_xoff, in
 			m, xout);
 	    }
 	    /* slop at the end of the line? */
-	    if ((size_t)file_xoff+xskip+scanpix < file_width)
+	    if ((size_t)file_xoff+xskip+scanpix < (size_t)file_width)
 		fb_skip_bytes(fd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 	}
     } else {
@@ -692,7 +696,7 @@ fb_read_fd(FBIO *ifp, int fd, int file_width, int file_height, int file_xoff, in
 			m, xout);
 	    }
 	    /* slop at the end of the line? */
-	    if ((size_t)file_xoff+xskip+scanpix < file_width)
+	    if ((size_t)file_xoff+xskip+scanpix < (size_t)file_width)
 		fb_skip_bytes(fd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 	}
     }
