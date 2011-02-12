@@ -1531,6 +1531,22 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define VINIT_ZERO {0.0, 0.0, 0.0}
 
 /**
+ * homogeneous vector macro suitable for declaration statement
+ * initialization.  this sets all vector elements to the specified
+ * value similar to VSETALLN(hvect_t,val,4) but as an initializer
+ * array declaration instead of as a statement.
+ */
+#define HINITALL(_v) {(_v), (_v), (_v), (_v)}
+
+/**
+ * homogenous vector macro suitable for declaration statement
+ * initialization.  this sets all vector elements to zero similar to
+ * calling VSETALLN(hvect_t,0.0,4) but as an initializer array
+ * declaration instead of as a statement.
+ */
+#define HINIT_ZERO {0.0, 0.0, 0.0, 0.0}
+
+/**
  * matrix macro suitable for declaration statement initialization.
  * this sets up an identity matrix similar to calling MAT_IDN but as
  * an initializer array declaration instead of as a statement.
