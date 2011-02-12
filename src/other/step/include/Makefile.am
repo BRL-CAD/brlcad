@@ -1,6 +1,5 @@
 
 SUBDIRS = \
-	conf \
 	express \
 	exppp
 
