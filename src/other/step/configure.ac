@@ -80,13 +80,10 @@ dnl minimum version of autoconf required.  should coincide with
 dnl setting in autogen.sh script.
 AC_PREREQ(2.52)
 
-dnl See HACKING for details on how to properly update the version
-define([MAJOR_VERSION], [patsubst(esyscmd([cat include/conf/MAJOR]), [
-])])
-define([MINOR_VERSION], [patsubst(esyscmd([cat include/conf/MINOR]), [
-])])
-define([PATCH_VERSION], [patsubst(esyscmd([cat include/conf/PATCH]), [
-])])
+define([AC_LIBTOOL_LANG_F77_CONFIG], [:])dnl
+define([MAJOR_VERSION], [3])
+define([MINOR_VERSION], [2])
+define([PATCH_VERSION], [0])
 define([SCL_VERSION], [patsubst([MAJOR_VERSION.MINOR_VERSION.PATCH_VERSION], [
 ])])
 
@@ -187,7 +184,7 @@ BC_SCL_DATA
 AM_INIT_AUTOMAKE([1.6 dist-zip dist-bzip2])
 
 # write out all of our definitions to this header
-AM_CONFIG_HEADER([include/scl_config.h])
+AM_CONFIG_HEADER([include/scl_cf.h])
 
 # automatically enable and load our configure cache file if available
 BC_CONFIG_CACHE([config.cache.${host_os}.${ac_hostname}])
@@ -788,7 +785,6 @@ AC_CONFIG_FILES([
 	m4/Makefile
 	misc/Makefile
 	include/Makefile
-	include/conf/Makefile
 	include/express/Makefile
 	include/exppp/Makefile
 	doc/Makefile

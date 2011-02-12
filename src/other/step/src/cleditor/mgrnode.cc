@@ -41,7 +41,7 @@ void MgrNode::Remove()
 //	cout << "MgrNode::this : '" << this << "'\n";
     GenericNode::Remove();
 // DON'T DO THIS!!    currState = noStateSE;
-};
+}
 
 	// searches current list for fileId
 MgrNode *MgrNode::StateFindFileId(int fileId)

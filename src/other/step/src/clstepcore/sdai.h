@@ -20,6 +20,10 @@
 
 /* $Id: sdai.h,v 3.0.1.12 1997/11/05 22:52:58 sauderd DP3.1 $ */
 
+#ifdef HAVE_CONFIG_H
+# include <scl_cf.h>
+#endif
+
 extern const char *SCLversion;
 
 #include <ctype.h>
