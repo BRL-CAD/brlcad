@@ -545,7 +545,7 @@ inline Matrix<T> mult(const Matrix<T>  &A, const Matrix<T> &B)
 #endif
 
     Subscript M = A.num_rows();
-    Subscript N = A.num_cols();
+    //Subscript N = A.num_cols();
     Subscript K = B.num_cols();
 
     Matrix<T> tmp(M,K);
