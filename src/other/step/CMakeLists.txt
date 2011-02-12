@@ -174,8 +174,10 @@ SET(BRLCAD_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "SCL install prefix")
 OPTION(SCL-BUILD_EXPRESS_ONLY "Only build express parser." OFF)
 MARK_AS_ADVANCED(SCL-BUILD_EXPRESS_ONLY)
 
-INCLUDE (CheckLibraryExists)
-
+INCLUDE(CheckLibraryExists)
+INCLUDE(CheckIncludeFile)
+INCLUDE(CheckFunctionExists)
+INCLUDE(CheckTypeSize)
 INCLUDE(${SCL_CMAKE_DIR}/FindLEX.cmake)
 INCLUDE(${SCL_CMAKE_DIR}/FindYACC.cmake)
 
