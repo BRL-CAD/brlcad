@@ -35,9 +35,9 @@ bin_PROGRAMS = \
 else !ONLY_BENCHMARK
 
 SUBDIRS = \
-	${STEPDIR} \
 	${IGESDIR} \
 	${INTAVALDIR}
+	${STEPDIR}
 
 DIST_SUBDIRS = \
 	iges \
