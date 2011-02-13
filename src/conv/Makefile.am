@@ -4,6 +4,9 @@ else !BUILD_STEP
 STEPDIR=
 endif
 
+IGESDIR=iges
+INTAVALDIR=intaval
+
 EXTRA_DIST = \
 	CMakeLists.txt \
 	Formats.csv \
@@ -33,8 +36,8 @@ else !ONLY_BENCHMARK
 
 SUBDIRS = \
 	${STEPDIR} \
-	iges \
-	intaval
+	${IGESDIR} \
+	${INTAVALDIR}
 
 DIST_SUBDIRS = \
 	iges \
