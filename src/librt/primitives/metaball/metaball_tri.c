@@ -111,9 +111,9 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
      * caching 4 point values, more by actually marching or doing active
      * refinement. This is the simplest pattern for now.
      */
-    for (i = min[X]; i<max[X]; i+=mtol)
-	for (j = min[Y]; j<max[Y]; j+=mtol)
-	    for (k = min[Z]; k<max[Z]; k+=mtol) {
+    for (i = min[X]; i < max[X]; i += mtol)
+	for (j = min[Y]; j < max[Y]; j += mtol)
+	    for (k = min[Z]; k < max[Z]; k += mtol) {
 		point_t p[8];
 		int pv = 0;
 
