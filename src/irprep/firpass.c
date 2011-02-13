@@ -139,7 +139,7 @@ int main(int argc, char **argv)
     int i, j, k, ii;	/*  variables used in loops  */
     int ia;		/*  variable used to set short to int  */
 
-    int index;	/*  Index for rt_dirbuild and  */
+    int idx;	/*  Index for rt_dirbuild and  */
     /*  rt_gettree.  */
     static struct rt_i *rtip;	/*  rtip is a pointer to  */
     /*  a structure of type  */
@@ -429,8 +429,8 @@ int main(int argc, char **argv)
 	}
 
 	/*  Build the directory.  */
-	index = 1;	/*  Setup index for rt_dirbuild  */
-	rtip=rt_dirbuild(argv[index], idbuf, sizeof(idbuf));
+	idx = 1;	/*  Setup index for rt_dirbuild  */
+	rtip=rt_dirbuild(argv[idx], idbuf, sizeof(idbuf));
 	(void)printf("Database Title:  %s\n", idbuf);
 	(void)fflush(stdout);
 	if (iwrite == 1)
@@ -443,11 +443,11 @@ int main(int argc, char **argv)
 	rtip->useair = 1;
 
 	/*  Load desired objects.  */
-	index = 2;	/*  Set index for rt_gettree.  */
-	while (argv[index] != NULL)
+	idx = 2;	/*  Set index for rt_gettree.  */
+	while (argv[idx] != NULL)
 	{
-	    rt_gettree(rtip, argv[index]);
-	    index=index+1;
+	    rt_gettree(rtip, argv[idx]);
+	    idx=idx+1;
 	}
 
 	/*  Find total number of regions.  */
