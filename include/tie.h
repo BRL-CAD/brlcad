@@ -139,7 +139,7 @@ TIE_EXPORT extern fastf_t TIE_PREC;
 #define tie_kdtree_cache_load TIE_VAL(tie_kdtree_cache_load)
 #define tie_kdtree_prep TIE_VAL(tie_kdtree_prep)
 
-TIE_EXPORT BU_EXTERN(int tie_check_degenerate,);
+TIE_EXPORT extern int tie_check_degenerate;
 
 TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_init), (struct tie_s *tie, unsigned int tri_num, unsigned int kdmethod));
 TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_free), (struct tie_s *tie));
