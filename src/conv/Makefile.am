@@ -20,6 +20,9 @@ EXTRA_DIST = \
 	patch/pull_comp.sh \
 	patch/pull_solidsub.sh \
 	patch/rpatch.f \
+	shp/README \
+	shp/shapelib/LICENSE.LGPL \
+	shp/shapelib/license.html \
 	walk_example.c
 
 if ONLY_BENCHMARK
@@ -93,6 +96,7 @@ bin_PROGRAMS = \
 	poly-bot \
 	proe-g \
 	rpatch \
+	shp-g \
 	stl-g \
 	tankill-g \
 	viewpoint-g
@@ -349,6 +353,10 @@ rpatch_LDADD = \
 	${BU} \
 	${BU_LIBS} \
 	${SYSV}
+
+shp_g_SOURCES = shp/shp-g.c shp/shapelib/safileio.c shp/shapelib/shpopen.c
+shp_g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
+shp_g_LDADD = ${WDB}
 
 stl_g_SOURCES = stl/stl-g.c
 stl_g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
