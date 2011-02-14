@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 
     while (!feof(stdin)) {
 	n = fread( data, sizeof(*data), L, stdin );
-	if ( n <= 0 )
+	if (n <= 0)
 	    break;
 	if ( n < L )
 	    memset((char *)&data[n], 0, (L-n)*sizeof(*data));
