@@ -36,7 +36,7 @@
 double	data[BSIZE];		/* Input buffer */
 
 int	numpeaks;
-struct	peaks {
+struct peaks {
     int	sample;
     double	value;
 } peaks[BSIZE];
@@ -51,8 +51,8 @@ int main(int argc, char **argv)
     int	i, n, L;
     double	last1, last2;
 
-    if ( isatty(fileno(stdin)) /*|| isatty(fileno(stdout))*/ ) {
-	bu_exit(1, "%s", usage );
+    if (isatty(fileno(stdin)) /*|| isatty(fileno(stdout))*/ ) {
+	bu_exit(1, "%s", usage);
     }
 
     L = (argc > 1) ? atoi(argv[1]) : 512;
