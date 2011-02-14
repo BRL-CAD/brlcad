@@ -177,7 +177,7 @@ MARK_AS_ADVANCED(SCL-BUILD_EXPRESS_ONLY)
 # Take the scl config file template and copy it to the build directory so CMake
 # scripts can append to it if need be
 configure_file(${SCL_SOURCE_DIR}/include/scl_cf_cmake.h.in ${SCL_BINARY_DIR}/include/scl_cf.h.in COPYONLY)
-SET(CONFIG_H_FILE ${SCL_SOURCE_DIR}/include/scl_cf_cmake.h.in)
+SET(CONFIG_H_FILE ${SCL_BINARY_DIR}/include/scl_cf.h.in)
 
 INCLUDE(CheckLibraryExists)
 INCLUDE(CheckIncludeFile)
