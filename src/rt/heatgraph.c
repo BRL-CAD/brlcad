@@ -285,7 +285,7 @@ timeTable_process(fastf_t **timeTable, struct application *ap, FBIO *fbp)
     bu_log("MaxX =%d MaxY =%d\n", maxX, maxY);
     for (x = 0; x < maxX; x++) {
 	for (y = 0; y < maxY; y++) {
-	    if (timeTable[x][y] != -1) {
+	    if (timeTable[x][y] >= 0) {
 		/* Semaphore acquire goes here */
 		if (timeTable[x][y] > maxTime)
 		    maxTime = timeTable[x][y];
