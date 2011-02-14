@@ -274,7 +274,13 @@ timeTable_process(fastf_t **timeTable, struct application *ap, FBIO *fbp)
     RGBpixel p;					/* Pixel colors for particular pixel */
     int maxX = width;
     int maxY = height; 	/* Maximum render size, uses evil globals */
-    
+    int Rcolor = 0;
+    int Gcolor = 0;
+    int Bcolor = 0;
+    int npix = 0;
+    int zoomH = 0;
+    int zoomW = 0;
+
     /* The following loop will work as follows, it will loop through
      * timeTable and search for pixels which have a non-negative value.
      * Once a value is found, it will assign a color value from 1-255,
@@ -300,13 +306,6 @@ timeTable_process(fastf_t **timeTable, struct application *ap, FBIO *fbp)
     meanTime = totalTime / pixels;
     range = maxTime - minTime;
     bu_log("Time:%lf Max = %lf Min = %lf Mean = %lf Range = %lf\n", totalTime, maxTime, minTime, meanTime, range);
-    
-    int Rcolor = 0;
-    int Gcolor = 0;
-    int Bcolor = 0;
-    int npix = 0;
-    int zoomH = 0;
-    int zoomW = 0;
 
     /* Now fill out the framebuffer with the Heat Graph information */
 
