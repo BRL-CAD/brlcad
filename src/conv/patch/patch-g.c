@@ -121,7 +121,7 @@ make_inside_trc(fastf_t *base, fastf_t *top, fastf_t rbase, fastf_t rtop, fastf_
     *new_rtop = rtop;
     *new_rbase = rbase;
 
-    if ((!do_base && !do_top && !do_sides) || NEAR_ZERO(thickness, SMALL_FASTF))
+    if ((!do_base && !do_top && !do_sides) || ZERO(thickness))
 	return 0;
 
     VSUB2(h, new_top, new_base);
@@ -616,7 +616,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 
 	    /* phantom armor */
 	    if (aflg > 0) {
-		if (NEAR_ZERO(in[0].rsurf_thick, SMALL_FASTF)) {
+		if (ZERO(in[0].rsurf_thick)) {
 		    in[0].rsurf_thick = 1;
 		}
 	    }
@@ -1289,7 +1289,7 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
     /* Check that we don't have a singular matrix */
     det = bn_mat_determinant(matrix);
 
-    if (!NEAR_ZERO(det, SMALL_FASTF)) {
+    if (!ZERO(det)) {
 	fastf_t inv_len_pl;
 
 	/* invert matrix */
@@ -2810,11 +2810,11 @@ proc_cylin(int cnt)
 	    /* change valid 0 radius cone pts to very small radii,
 	     * also treat negative value radii as positive.
 	     */
-	    if (NEAR_ZERO(in[k+2].x, SMALL_FASTF))
+	    if (ZERO(in[k+2].x))
 		in[k+2].x = .00001;
 	    if (in[k+2].x < 0.0)
 		in[k+2].x = -in[k+2].x;
-	    if (NEAR_ZERO(in[k+2].y, SMALL_FASTF))
+	    if (ZERO(in[k+2].y))
 		in[k+2].y = .00001;
 	    if (in[k+2].y < 0.0)
 		in[k+2].y = -in[k+2].y;
@@ -2876,11 +2876,11 @@ proc_cylin(int cnt)
 	    /* change valid 0 radius cone pts to very small radii,
 	     * also treat negative value radii as positive.
 	     */
-	    if (NEAR_ZERO(in[k+2].x, SMALL_FASTF))
+	    if (ZERO(in[k+2].x))
 		in[k+2].x = .00001;
 	    if (in[k+2].x < 0.0)
 		in[k+2].x = -in[k+2].x;
-	    if (NEAR_ZERO(in[k+2].y, SMALL_FASTF))
+	    if (ZERO(in[k+2].y))
 		in[k+2].y = .00001;
 	    if (in[k+2].y < 0.0)
 		in[k+2].y = -in[k+2].y;
@@ -3736,7 +3736,7 @@ main(int argc, char **argv)
 
 		    if ((nflg > 0)&&(in[i-1].surf_mode== '+')) {
 			proc_triangle(i);
-		    } else if ((in[i-1].surf_mode == '-') && (NEAR_ZERO(in[i-1].rsurf_thick, SMALL_FASTF))) {
+		    } else if ((in[i-1].surf_mode == '-') && (ZERO(in[i-1].rsurf_thick))) {
 			proc_triangle(i);
 		    } else {
 			proc_plate(i);

@@ -208,9 +208,9 @@ cmd_size(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	if (view_state->vs_absolute_scale < 0.0)
 	    view_state->vs_absolute_scale /= 9.0;
 
-	if (!NEAR_ZERO(view_state->vs_absolute_tran[X], SMALL_FASTF)
-	    || !NEAR_ZERO(view_state->vs_absolute_tran[Y], SMALL_FASTF)
-	    || !NEAR_ZERO(view_state->vs_absolute_tran[Z], SMALL_FASTF))
+	if (!ZERO(view_state->vs_absolute_tran[X])
+	    || !ZERO(view_state->vs_absolute_tran[Y])
+	    || !ZERO(view_state->vs_absolute_tran[Z]))
 	{
 	    set_absolute_tran();
 	}
@@ -1157,85 +1157,85 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 static void
 check_nonzero_rates(void)
 {
-    if (!NEAR_ZERO(view_state->vs_rate_model_rotate[X], SMALL_FASTF)
-	|| !NEAR_ZERO(view_state->vs_rate_model_rotate[Y], SMALL_FASTF)
-	|| !NEAR_ZERO(view_state->vs_rate_model_rotate[Z], SMALL_FASTF))
+    if (!ZERO(view_state->vs_rate_model_rotate[X])
+	|| !ZERO(view_state->vs_rate_model_rotate[Y])
+	|| !ZERO(view_state->vs_rate_model_rotate[Z]))
     {
 	view_state->vs_rateflag_model_rotate = 1;
     } else {
 	view_state->vs_rateflag_model_rotate = 0;
     }
 
-    if (!NEAR_ZERO(view_state->vs_rate_model_tran[X], SMALL_FASTF)
-	|| !NEAR_ZERO(view_state->vs_rate_model_tran[Y], SMALL_FASTF)
-	|| !NEAR_ZERO(view_state->vs_rate_model_tran[Z], SMALL_FASTF))
+    if (!ZERO(view_state->vs_rate_model_tran[X])
+	|| !ZERO(view_state->vs_rate_model_tran[Y])
+	|| !ZERO(view_state->vs_rate_model_tran[Z]))
     {
 	view_state->vs_rateflag_model_tran = 1;
     } else {
 	view_state->vs_rateflag_model_tran = 0;
     }
 
-    if (!NEAR_ZERO(view_state->vs_rate_rotate[X], SMALL_FASTF)
-	|| !NEAR_ZERO(view_state->vs_rate_rotate[Y], SMALL_FASTF)
-	|| !NEAR_ZERO(view_state->vs_rate_rotate[Z], SMALL_FASTF))
+    if (!ZERO(view_state->vs_rate_rotate[X])
+	|| !ZERO(view_state->vs_rate_rotate[Y])
+	|| !ZERO(view_state->vs_rate_rotate[Z]))
     {
 	view_state->vs_rateflag_rotate = 1;
     } else {
 	view_state->vs_rateflag_rotate = 0;
     }
 
-    if (!NEAR_ZERO(view_state->vs_rate_tran[X], SMALL_FASTF)
-	|| !NEAR_ZERO(view_state->vs_rate_tran[Y], SMALL_FASTF)
-	|| !NEAR_ZERO(view_state->vs_rate_tran[Z], SMALL_FASTF))
+    if (!ZERO(view_state->vs_rate_tran[X])
+	|| !ZERO(view_state->vs_rate_tran[Y])
+	|| !ZERO(view_state->vs_rate_tran[Z]))
     {
 	view_state->vs_rateflag_tran = 1;
     } else {
 	view_state->vs_rateflag_tran = 0;
     }
 
-    if (!NEAR_ZERO(view_state->vs_rate_scale, SMALL_FASTF))
+    if (!ZERO(view_state->vs_rate_scale))
 	view_state->vs_rateflag_scale = 1;
     else
 	view_state->vs_rateflag_scale = 0;
 
-    if (!NEAR_ZERO(edit_rate_model_tran[X], SMALL_FASTF)
-	|| !NEAR_ZERO(edit_rate_model_tran[Y], SMALL_FASTF)
-	|| !NEAR_ZERO(edit_rate_model_tran[Z], SMALL_FASTF)) {
+    if (!ZERO(edit_rate_model_tran[X])
+	|| !ZERO(edit_rate_model_tran[Y])
+	|| !ZERO(edit_rate_model_tran[Z])) {
 	edit_rateflag_model_tran = 1;
     } else {
 	edit_rateflag_model_tran = 0;
     }
 
-    if (!NEAR_ZERO(edit_rate_view_tran[X], SMALL_FASTF)
-	|| !NEAR_ZERO(edit_rate_view_tran[Y], SMALL_FASTF)
-	|| !NEAR_ZERO(edit_rate_view_tran[Z], SMALL_FASTF))
+    if (!ZERO(edit_rate_view_tran[X])
+	|| !ZERO(edit_rate_view_tran[Y])
+	|| !ZERO(edit_rate_view_tran[Z]))
     {
 	edit_rateflag_view_tran = 1;
     } else {
 	edit_rateflag_view_tran = 0;
     }
 
-    if (!NEAR_ZERO(edit_rate_model_rotate[X], SMALL_FASTF)
-	|| !NEAR_ZERO(edit_rate_model_rotate[Y], SMALL_FASTF)
-	|| !NEAR_ZERO(edit_rate_model_rotate[Z], SMALL_FASTF))
+    if (!ZERO(edit_rate_model_rotate[X])
+	|| !ZERO(edit_rate_model_rotate[Y])
+	|| !ZERO(edit_rate_model_rotate[Z]))
     {
 	edit_rateflag_model_rotate = 1;
     } else {
 	edit_rateflag_model_rotate = 0;
     }
 
-    if (!NEAR_ZERO(edit_rate_object_rotate[X], SMALL_FASTF)
-	|| !NEAR_ZERO(edit_rate_object_rotate[Y], SMALL_FASTF)
-	|| !NEAR_ZERO(edit_rate_object_rotate[Z], SMALL_FASTF))
+    if (!ZERO(edit_rate_object_rotate[X])
+	|| !ZERO(edit_rate_object_rotate[Y])
+	|| !ZERO(edit_rate_object_rotate[Z]))
     {
 	edit_rateflag_object_rotate = 1;
     } else {
 	edit_rateflag_object_rotate = 0;
     }
 
-    if (!NEAR_ZERO(edit_rate_view_rotate[X], SMALL_FASTF)
-	|| !NEAR_ZERO(edit_rate_view_rotate[Y], SMALL_FASTF)
-	|| !NEAR_ZERO(edit_rate_view_rotate[Z], SMALL_FASTF))
+    if (!ZERO(edit_rate_view_rotate[X])
+	|| !ZERO(edit_rate_view_rotate[Y])
+	|| !ZERO(edit_rate_view_rotate[Z]))
     {
 	edit_rateflag_view_rotate = 1;
     } else {
@@ -2551,9 +2551,9 @@ abs_zoom(void)
     av[2] = (char *)0;
     ged_zoom(gedp, 2, (const char **)av);
 
-    if (!NEAR_ZERO(view_state->vs_absolute_tran[X], SMALL_FASTF)
-	|| !NEAR_ZERO(view_state->vs_absolute_tran[Y], SMALL_FASTF)
-	|| !NEAR_ZERO(view_state->vs_absolute_tran[Z], SMALL_FASTF))
+    if (!ZERO(view_state->vs_absolute_tran[X])
+	|| !ZERO(view_state->vs_absolute_tran[Y])
+	|| !ZERO(view_state->vs_absolute_tran[Z]))
     {
 	set_absolute_tran();
     }
@@ -2590,9 +2590,9 @@ mged_zoom(double val)
     if (view_state->vs_absolute_scale < 0.0)
 	view_state->vs_absolute_scale /= 9.0;
 
-    if (!NEAR_ZERO(view_state->vs_absolute_tran[X], SMALL_FASTF)
-	|| !NEAR_ZERO(view_state->vs_absolute_tran[Y], SMALL_FASTF)
-	|| !NEAR_ZERO(view_state->vs_absolute_tran[Z], SMALL_FASTF))
+    if (!ZERO(view_state->vs_absolute_tran[X])
+	|| !ZERO(view_state->vs_absolute_tran[Y])
+	|| !ZERO(view_state->vs_absolute_tran[Z]))
     {
 	set_absolute_tran();
     }
@@ -2693,9 +2693,9 @@ cmd_setview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     if (ret != GED_OK)
 	return TCL_ERROR;
 
-    if (!NEAR_ZERO(view_state->vs_absolute_tran[X], SMALL_FASTF)
-	|| !NEAR_ZERO(view_state->vs_absolute_tran[Y], SMALL_FASTF)
-	|| !NEAR_ZERO(view_state->vs_absolute_tran[Z], SMALL_FASTF))
+    if (!ZERO(view_state->vs_absolute_tran[X])
+	|| !ZERO(view_state->vs_absolute_tran[Y])
+	|| !ZERO(view_state->vs_absolute_tran[Z]))
     {
 	set_absolute_tran();
     }
@@ -2892,9 +2892,9 @@ setview(double a1,
     av[4] = (char *)0;
     ged_setview(gedp, 4, (const char **)av);
 
-    if (!NEAR_ZERO(view_state->vs_absolute_tran[X], SMALL_FASTF)
-	|| !NEAR_ZERO(view_state->vs_absolute_tran[Y], SMALL_FASTF)
-	|| !NEAR_ZERO(view_state->vs_absolute_tran[Z], SMALL_FASTF))
+    if (!ZERO(view_state->vs_absolute_tran[X])
+	|| !ZERO(view_state->vs_absolute_tran[Y])
+	|| !ZERO(view_state->vs_absolute_tran[Z]))
     {
 	set_absolute_tran();
     }

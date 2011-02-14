@@ -75,7 +75,7 @@ main(int argc, char *argv[])
     for (i = 1; i < argc; i++) {
 	double dval = atof(argv[i]);
 	int ival = atoi(argv[i]);
-	if (!NEAR_ZERO(dval - (double)ival, SMALL_FASTF)) {
+	if (!ZERO(dval - (double)ival)) {
 	    status = REAL;
 	    break;
 	}

@@ -415,7 +415,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
     bu_close_mapped_file(tt_file);
 
-    if (NEAR_ZERO(tthrm_sp->tt_min_temp, SMALL_FASTF) && EQUAL(tthrm_sp->tt_max_temp, SMALL_FASTF)) {
+    if (ZERO(tthrm_sp->tt_min_temp) && EQUAL(tthrm_sp->tt_max_temp, SMALL_FASTF)) {
 	tthrm_sp->tt_min_temp = min_temp;
 	tthrm_sp->tt_max_temp = max_temp;
 	bu_log("computed temp min/max on %s: %g/%g\n", rp->reg_name, min_temp, max_temp);
@@ -429,7 +429,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	tthrm_sp->tt_temp_scale = 1.0 / (max_temp - min_temp);
     } else {
 	/* min and max are equal, maybe zero */
-	if (NEAR_ZERO(max_temp, SQRT_SMALL_FASTF))
+	if (ZERO(max_temp))
 	    tthrm_sp->tt_temp_scale = 0.0;
 	else
 	    tthrm_sp->tt_temp_scale = 255.0/max_temp;

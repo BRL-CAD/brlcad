@@ -214,7 +214,7 @@ persp_hook(register const struct bu_structparse *UNUSED(sdp), register const cha
 	bu_bomb("");
     }
 
-    if (!NEAR_ZERO(img_sp->i_perspective, SMALL_FASTF))
+    if (!ZERO(img_sp->i_perspective))
 	bu_bomb("non-ortho perspective not yet implemented!\n");
 }
 

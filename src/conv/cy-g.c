@@ -492,11 +492,11 @@ main(int argc, char **argv)
 		prev = ptr - 3;
 	    next = ptr + 3;
 
-	    if (!NEAR_ZERO(ptr[0], SMALL_FASTF) || !NEAR_ZERO(ptr[1], SMALL_FASTF)) {
-		if (NEAR_ZERO(prev[0], SMALL_FASTF) &&
-		    NEAR_ZERO(prev[1], SMALL_FASTF) &&
-		    NEAR_ZERO(next[0], SMALL_FASTF) &&
-		    NEAR_ZERO(next[1], SMALL_FASTF))
+	    if (!ZERO(ptr[0]) || !ZERO(ptr[1])) {
+		if (ZERO(prev[0]) &&
+		    ZERO(prev[1]) &&
+		    ZERO(next[0]) &&
+		    ZERO(next[1]))
 		{
 		    ptr[0] = 0.0;
 		    ptr[1] = 0.0;

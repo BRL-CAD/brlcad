@@ -261,10 +261,10 @@ arbrot(double a, FILE *ifp, unsigned char *buf)
 	for (x = x_min; x < x_max; x++) {
 	    /* check for in bounds */
 	    if (x2 > 0.0
-		&& NEAR_ZERO(x2, SMALL_FASTF)
+		&& ZERO(x2)
 		&& x2 < (double)nxin
 		&& y2 > 0.0
-		&& NEAR_ZERO(y2, SMALL_FASTF)
+		&& ZERO(y2)
 		&& y2 < (double)nyin)
 	    {
 		putchar(buf[(int)y2*nyin + (int)x2]);

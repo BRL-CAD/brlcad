@@ -73,27 +73,27 @@ rgbhsv(double *rgb, double *hsv)
     v = ((v > b) ? v : b);
     x = ((r < g) ? r : g);
     x = ((x < b) ? x : b);
-    if (!NEAR_ZERO(v - x, SMALL_FASTF)) { /* v != x */
+    if (!ZERO(v - x)) { /* v != x */
 	dif = (double) (v - x);
-	if (!NEAR_ZERO(r - v, SMALL_FASTF)) /* r != v */
-	    if (NEAR_ZERO(g - v, SMALL_FASTF)) /* g == v */
-		if (!NEAR_ZERO(b - x, SMALL_FASTF)) /* b != x */
+	if (!ZERO(r - v)) /* r != v */
+	    if (ZERO(g - v)) /* g == v */
+		if (!ZERO(b - x)) /* b != x */
 		    h = (double) (42.5 * (3. - (double)(v-b) / dif));
 		else
 		    h = (double) (42.5 * (1. + (double)(v-r) / dif));
 	    else
-		if (!NEAR_ZERO(r - x, SMALL_FASTF)) /* r != x */
+		if (!ZERO(r - x)) /* r != x */
 		    h = (double) (42.5 * (5. - (double)(v-r) / dif));
 		else
 		    h = (double) (42.5 * (3. + (double)(v-g) / dif));
 	else
-	    if (!NEAR_ZERO(g - x, SMALL_FASTF)) /* g != x */
+	    if (!ZERO(g - x)) /* g != x */
 		h = (double) (42.5 * (1. - (double)(v-g) / dif));
 	    else
 		h = (double) (42.5 * (5. + (double)(v-b) / dif));
     }
 
-    if (!NEAR_ZERO(v, SMALL_FASTF))
+    if (!ZERO(v))
 	s = (double)(255. * dif / (double)v);
     else
 	s = 0;
@@ -116,7 +116,7 @@ hsvrgb(double *hsv, double *rgb)
     double h, s, v;
     double f;
 
-    if (!NEAR_ZERO(hsv[1], SMALL_FASTF)) {
+    if (!ZERO(hsv[1])) {
 	s = (double)hsv[1] / 255.;
 	h = (double)hsv[0] / 42.666;
 	f = modf(h, &foo);

@@ -1,0 +1,5 @@
+Contained in the "shapelib" directory is a subset of shapelib 1.2
+(http://shapelib.maptools.org/) including source files and their legal
+files.  The shapelib library is MIT/LGPL dual licensed, suitable for
+BRL-CAD use (particularly as MIT-licensed).  Consult the individual
+files for more details.

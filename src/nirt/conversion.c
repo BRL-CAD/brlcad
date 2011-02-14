@@ -40,7 +40,7 @@ void
 dir2ae(void)
 {
     double square;
-    int zeroes = NEAR_ZERO(direct(Y), SMALL_FASTF) && NEAR_ZERO(direct(X), SMALL_FASTF);
+    int zeroes = ZERO(direct(Y)) && ZERO(direct(X));
 
     azimuth() = zeroes ? 0.0 : atan2 (-(direct(Y)), -(direct(X))) / DEG2RAD;
 

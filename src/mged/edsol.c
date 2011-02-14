@@ -2875,7 +2875,7 @@ dsp_scale(struct rt_dsp_internal *dsp, int idx)
     if (inpara > 0) {
 	m[idx] = es_para[0];
 	bu_log("Keyboard %g\n", es_para[0]);
-    } else if (!NEAR_ZERO(es_scale, SMALL_FASTF)) {
+    } else if (!ZERO(es_scale)) {
 	m[idx] *= es_scale;
 	bu_log("es_scale %g\n", es_scale);
 	es_scale = 0.0;
@@ -2969,8 +2969,8 @@ pscale(void)
 
 		if (0 <= VDOT(tgc->c, c) &&
 		    0 <= VDOT(tgc->d, d) &&
-		    !NEAR_ZERO(MAGNITUDE(c), SMALL_FASTF) &&
-		    !NEAR_ZERO(MAGNITUDE(d), SMALL_FASTF)) {
+		    !ZERO(MAGNITUDE(c)) &&
+		    !ZERO(MAGNITUDE(d))) {
 		    /* adjust c, d and h */
 		    VMOVE(tgc->c, c);
 		    VMOVE(tgc->d, d);
@@ -3007,8 +3007,8 @@ pscale(void)
 
 		if (0 <= VDOT(tgc->a, a) &&
 		    0 <= VDOT(tgc->b, b) &&
-		    !NEAR_ZERO(MAGNITUDE(a), SMALL_FASTF) &&
-		    !NEAR_ZERO(MAGNITUDE(b), SMALL_FASTF)) {
+		    !ZERO(MAGNITUDE(a)) &&
+		    !ZERO(MAGNITUDE(b))) {
 		    /* adjust a, b, v and h */
 		    VMOVE(tgc->a, a);
 		    VMOVE(tgc->b, b);

@@ -167,7 +167,7 @@ calc_adc_a1(void)
 	dx = view_pt[X] * GED_MAX - adc_state->adc_dv_x;
 	dy = view_pt[Y] * GED_MAX - adc_state->adc_dv_y;
 
-	if (!NEAR_ZERO(dx, SMALL_FASTF) || !NEAR_ZERO(dy, SMALL_FASTF)) {
+	if (!ZERO(dx) || !ZERO(dy)) {
 	    adc_state->adc_a1 = RAD2DEG*atan2(dy, dx);
 	    adc_state->adc_dv_a1 = (1.0 - (adc_state->adc_a1 / 45.0)) * GED_MAX;
 	}
@@ -186,7 +186,7 @@ calc_adc_a2(void)
 	dx = view_pt[X] * GED_MAX - adc_state->adc_dv_x;
 	dy = view_pt[Y] * GED_MAX - adc_state->adc_dv_y;
 
-	if (!NEAR_ZERO(dx, SMALL_FASTF) || !NEAR_ZERO(dy, SMALL_FASTF)) {
+	if (!ZERO(dx) || !ZERO(dy)) {
 	    adc_state->adc_a2 = RAD2DEG*atan2(dy, dx);
 	    adc_state->adc_dv_a2 = (1.0 - (adc_state->adc_a2 / 45.0)) * GED_MAX;
 	}

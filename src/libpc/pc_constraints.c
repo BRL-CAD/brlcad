@@ -43,7 +43,7 @@ pc_isperpendicular(double **v)
       v[0][0], v[0][1], v[0][2], v[1][0], v[1][1], v[1][2], \
       (v[0][0]*v[1][0] + v[0][1]*v[1][1] +v[0][2]*v[1][2]));
     */
-    if (NEAR_ZERO((VDOT(v[0], v[1])), SMALL_FASTF)) /* TODO: this needs to be toleranced properly */
+    if (ZERO((VDOT(v[0], v[1])))) /* TODO: this needs to be toleranced properly */
     	return 0;
     else
     	return -1;
@@ -69,7 +69,7 @@ int
 pc_isfixed(double **v)
 {
     
-    if (NEAR_ZERO(MAGSQ(v[0]), SMALL_FASTF)) /* TODO: this needs to be toleranced properly */
+    if (ZERO(MAGSQ(v[0]))) /* TODO: this needs to be toleranced properly */
     	return 0;
     else
     	return -1;

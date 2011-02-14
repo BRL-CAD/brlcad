@@ -4,7 +4,9 @@ set -e
 
 F='/usr/share/applications/defaults.list'
 
-sed -i '/application\/x-brlcad=brlcad-archer.desktop/d' $F
+if [ -f $F ]; then
+	sed -i '/application\/x-brlcad-/d' $F
+fi
 
 if [ -x "`which update-desktop-database 2>/dev/null`" ]; then
 	update-desktop-database &> /dev/null

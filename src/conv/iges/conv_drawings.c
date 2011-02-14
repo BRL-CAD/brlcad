@@ -490,7 +490,7 @@ Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t 
 		    vp->pt[i][Z] = 0.0;
 
 		/* scale, rotate, and translate */
-		if (NEAR_ZERO(ang, SMALL_FASTF)) {
+		if (ZERO(ang)) {
 		    vp->pt[i][X] = local_scale * tmp_pt[X] + x;
 		    vp->pt[i][Y] = local_scale * tmp_pt[Y] + y;
 		    if (!do_projection)

@@ -120,17 +120,17 @@ main(int argc, char **argv)
     }
 
     /* Hack for multiple color planes */
-    if (red + green + blue > 1 || !NEAR_ZERO(rweight, SMALL_FASTF) || !NEAR_ZERO(gweight, SMALL_FASTF) || !NEAR_ZERO(bweight, SMALL_FASTF))
+    if (red + green + blue > 1 || !ZERO(rweight) || !ZERO(gweight) || !ZERO(bweight))
 	multiple_colors = 1;
     else
 	multiple_colors = 0;
 
     num_color_planes = red + green + blue;
-    if (red != 0 && NEAR_ZERO(rweight, SMALL_FASTF))
+    if (red != 0 && ZERO(rweight))
 	rweight = 1.0 / (double)num_color_planes;
-    if (green != 0 && NEAR_ZERO(gweight, SMALL_FASTF))
+    if (green != 0 && ZERO(gweight))
 	gweight = 1.0 / (double)num_color_planes;
-    if (blue != 0 && NEAR_ZERO(bweight, SMALL_FASTF))
+    if (blue != 0 && ZERO(bweight))
 	bweight = 1.0 / (double)num_color_planes;
 
     clip_high = clip_low = 0;

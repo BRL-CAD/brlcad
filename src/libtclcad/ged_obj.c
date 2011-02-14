@@ -8622,7 +8622,7 @@ go_drawDList(struct dm *dmp, struct bu_list *hdlp)
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 		/* already drawn above */
-		if (NEAR_ZERO(sp->s_transparency - 1.0, SMALL_FASTF))
+		if (ZERO(sp->s_transparency - 1.0))
 		    continue;
 
 		if (line_style != sp->s_soldash) {
@@ -8819,7 +8819,7 @@ go_draw(struct ged_dm_view *gdvp)
 	VSET(l, -1.0, -1.0, -1.0);
 	VSET(h, 1.0, 1.0, 200.0);
 
-	if (NEAR_ZERO(gdvp->gdv_view->gv_eye_pos[Z] - 1.0, SMALL_FASTF)) {
+	if (ZERO(gdvp->gdv_view->gv_eye_pos[Z] - 1.0)) {
 	    /* This way works, with reasonable Z-clipping */
 	    ged_persp_mat(perspective_mat, gdvp->gdv_view->gv_perspective,
 			  (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);

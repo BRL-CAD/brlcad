@@ -301,6 +301,14 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	 && NEAR_ZERO(v[Y], tol) \
 	 && NEAR_ZERO(v[Z], tol))
 
+/** 
+ * @brief Test for all elements of `v' being smaller than `tol'. 
+ * Version for degree 2 vectors.
+ */
+#define V2NEAR_ZERO(v, tol) (NEAR_ZERO(v[X], tol) && NEAR_ZERO(v[Y], tol))
+
+/* FIXME: need HNEAR_ZERO */
+
 /**
  * Return truthfully whether a value is within a minimum
  * representation tolerance from zero.
@@ -308,6 +316,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * Use not recommended due to compilation-variant tolerance.
  */
 #define ZERO(_a) NEAR_ZERO((_a), SMALL_FASTF)
+
 
 /**
  * Return truthfully whether two values are within a specified epsilon
@@ -325,12 +334,25 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	 && NEAR_ZERO((_a)[Z]-(_b)[Z], (_tol)))
 
 /**
+ * @brief Compare two vectors for approximate equality, within the
+ * specified absolute tolerance.
+ * Version for degree 2 vectors.
+ */
+#define V2APPROXEQUAL(a, b, tol)	(\
+	NEAR_ZERO((a)[X]-(b)[X], tol) && \
+	NEAR_ZERO((a)[Y]-(b)[Y], tol))
+
+/* FIXME: need HNEAR_EQUAL */
+
+
+/**
  * Return truthfully whether two values are within a minimum
  * representation tolerance from each other.
  *
  * Use not recommended due to compilation-variant tolerance.
  */
 #define EQUAL(_a, _b) NEAR_EQUAL((_a), (_b), SMALL_FASTF)
+
 
 /**
  * Return truthfully whether two vectors are equal within a minimum
@@ -339,6 +361,19 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * Use not recommended due to compilation-variant tolerance.
  */
 #define VEQUAL(_a, _b) VNEAR_EQUAL((_a), (_b), SMALL_FASTF)
+
+/**
+ * @brief Compare two vectors for EXACT equality.  Use carefully. 
+ * Version for degree 2 vectors.  FIXME: no such thing as exact.
+ */
+#define V2EQUAL(a, b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y])
+
+/**
+ * @brief Compare two vectors for EXACT equality.  Use carefully. 
+ * Version for degree 4 vectors.   FIXME: no such thing as exact.
+ */
+#define HEQUAL(a, b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y] && (a)[Z]==(b)[Z] && (a)[W]==(b)[W])
+
 
 /**
  * clamp a value to a low/high number.
@@ -576,17 +611,43 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(d)[15] = (s)[15]; \
 }
 
-/** @brief Set vector at `a' to have coordinates `b', `c', and `d'. */
+/** @brief Set 3D vector at `a' to have coordinates `b', `c', and `d'. */
 #define VSET(a, b, c, d) { \
 	(a)[X] = (b); \
 	(a)[Y] = (c); \
 	(a)[Z] = (d); \
 }
 
-/** @brief Set all elements of vector to same scalar value. */
+/** @brief Set 2D vector at `a' to have coordinates `b' and `c'. */
+#define V2SET(a, b, c) { \
+	(a)[X] = (b); \
+	(a)[Y] = (c); \
+}
+
+/** @brief Set 4D vector at `a' to homogenous coordinates `b', `c', `d', and `e'. */
+#define HSET(a, b, c, d, e) { \
+	(a)[X] = (b); \
+	(a)[Y] = (c); \
+	(a)[Z] = (d); \
+	(a)[H] = (e); \
+}
+
+
+/** @brief Set all elements of 3D vector to same scalar value. */
 #define VSETALL(a, s) { \
 	(a)[X] = (a)[Y] = (a)[Z] = (s); \
 }
+
+/** @brief Set 2D vector elements to same scalar value. */
+#define V2SETALL(a, s) { \
+	(a)[X] = (a)[Y] = (s); \
+}
+
+/** @brief Set 4D vector elements to same scalar value. */
+#define HSETALL(a, s) { \
+	(a)[X] = (a)[Y] = (a)[Z] = (a)[H] = (s); \
+}
+
 
 /** @brief Set all elements of N-vector to same scalar value. */
 #define VSETALLN(v, s, n) { \
@@ -594,19 +655,18 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	for (_j=0; _j<n; _j++) v[_j]=(s); \
 }
 
-/** @brief Transfer vector at `b' to vector at `a'. */
+
+/** @brief Transfer 3D vector at `b' to vector at `a'. */
 #define VMOVE(a, b) { \
 	(a)[X] = (b)[X]; \
 	(a)[Y] = (b)[Y]; \
 	(a)[Z] = (b)[Z]; \
 }
 
-/** @brief Transfer vector of length `n' at `b' to vector at `a'. */
-#define VMOVEN(a, b, n) { \
-	register int _vmove; \
-	for (_vmove = 0; _vmove < (n); _vmove++) { \
-		(a)[_vmove] = (b)[_vmove]; \
-	} \
+/** @brief Move a 2D vector. */
+#define V2MOVE(a, b) { \
+	(a)[X] = (b)[X]; \
+	(a)[Y] = (b)[Y]; \
 }
 
 /** @brief Move a homogeneous 4-tuple. */
@@ -617,17 +677,26 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(a)[W] = (b)[W]; \
 }
 
-/** @brief Move a 2D vector. */
-#define V2MOVE(a, b) { \
-	(a)[X] = (b)[X]; \
-	(a)[Y] = (b)[Y]; \
+/** @brief Transfer vector of length `n' at `b' to vector at `a'. */
+#define VMOVEN(a, b, n) { \
+	register int _vmove; \
+	for (_vmove = 0; _vmove < (n); _vmove++) { \
+		(a)[_vmove] = (b)[_vmove]; \
+	} \
 }
 
-/** @brief Reverse the direction of vector b and store it in `a'. */
+
+/** @brief Reverse the direction of 3D vector `b' and store it in `a'. */
 #define VREVERSE(a, b) { \
 	(a)[X] = -(b)[X]; \
 	(a)[Y] = -(b)[Y]; \
 	(a)[Z] = -(b)[Z]; \
+}
+
+/** @brief Reverse the direction of 2D vector `b' and store it in `a'. */
+#define V2REVERSE(a, b) { \
+	(a)[X] = -(b)[X]; \
+	(a)[Y] = -(b)[Y]; \
 }
 
 /**
@@ -641,11 +710,25 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(a)[W] = -(b)[W]; \
 }
 
-/** @brief Add vectors at `b' and `c', store result at `a'. */
+/** @brief Add 3D vectors at `b' and `c', store result at `a'. */
 #define VADD2(a, b, c) { \
 	(a)[X] = (b)[X] + (c)[X]; \
 	(a)[Y] = (b)[Y] + (c)[Y]; \
 	(a)[Z] = (b)[Z] + (c)[Z]; \
+}
+
+/** @brief Add 2D vectors at `b' and `c', store result at `a'. */
+#define V2ADD2(a, b, c) { \
+	(a)[X] = (b)[X] + (c)[X]; \
+	(a)[Y] = (b)[Y] + (c)[Y]; \
+}
+
+/** @brief Add 4D vectors at `b' and `c', store result at `a'. */
+#define HADD2(a, b, c) { \
+	(a)[X] = (b)[X] + (c)[X]; \
+	(a)[Y] = (b)[Y] + (c)[Y]; \
+	(a)[Z] = (b)[Z] + (c)[Z]; \
+	(a)[W] = (b)[W] + (c)[W]; \
 }
 
 /**
@@ -659,19 +742,35 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	} \
 }
 
-#define V2ADD2(a, b, c) { \
-	(a)[X] = (b)[X] + (c)[X]; \
-	(a)[Y] = (b)[Y] + (c)[Y]; \
-}
 
 /**
- * @brief Subtract vector at `c' from vector at `b', store result at
+ * @brief Subtract 3D vector at `c' from vector at `b', store result at
  * `a'.
  */
 #define VSUB2(a, b, c) { \
 	(a)[X] = (b)[X] - (c)[X]; \
 	(a)[Y] = (b)[Y] - (c)[Y]; \
 	(a)[Z] = (b)[Z] - (c)[Z]; \
+}
+
+/**
+ * @brief Subtract 2D vector at `c' from vector at `b', store result at
+ * `a'.
+ */
+#define V2SUB2(a, b, c) { \
+	(a)[X] = (b)[X] - (c)[X]; \
+	(a)[Y] = (b)[Y] - (c)[Y]; \
+}
+
+/**
+ * @brief Subtract 4D vector at `c' from vector at `b', store result at
+ * `a'.
+ */
+#define HSUB2(a, b, c) { \
+	(a)[X] = (b)[X] - (c)[X]; \
+	(a)[Y] = (b)[Y] - (c)[Y]; \
+	(a)[Z] = (b)[Z] - (c)[Z]; \
+	(a)[W] = (b)[W] - (c)[W]; \
 }
 
 /**
@@ -685,16 +784,26 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	} \
 }
 
-#define V2SUB2(a, b, c) { \
-	(a)[X] = (b)[X] - (c)[X]; \
-	(a)[Y] = (b)[Y] - (c)[Y]; \
-}
 
-/** @brief Vectors:  A = B - C - D */
+/** @brief 3D Vectors:  A = B - C - D */
 #define VSUB3(a, b, c, d) { \
 	(a)[X] = (b)[X] - (c)[X] - (d)[X]; \
 	(a)[Y] = (b)[Y] - (c)[Y] - (d)[Y]; \
 	(a)[Z] = (b)[Z] - (c)[Z] - (d)[Z]; \
+}
+
+/** @brief 2D Vectors:  A = B - C - D */
+#define V2SUB3(a, b, c, d) { \
+	(a)[X] = (b)[X] - (c)[X] - (d)[X]; \
+	(a)[Y] = (b)[Y] - (c)[Y] - (d)[Y]; \
+}
+
+/** @brief 4D Vectors:  A = B - C - D */
+#define HSUB3(a, b, c, d) { \
+	(a)[X] = (b)[X] - (c)[X] - (d)[X]; \
+	(a)[Y] = (b)[Y] - (c)[Y] - (d)[Y]; \
+	(a)[Z] = (b)[Z] - (c)[Z] - (d)[Z]; \
+	(a)[W] = (b)[W] - (c)[W] - (d)[W]; \
 }
 
 /** @brief Vectors:  A = B - C - D for vectors of length `n'. */
@@ -705,11 +814,26 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	} \
 }
 
-/** @brief Add 3 vectors at `b', `c', and `d', store result at `a'. */
+
+/** @brief Add 3 3D vectors at `b', `c', and `d', store result at `a'. */
 #define VADD3(a, b, c, d) { \
 	(a)[X] = (b)[X] + (c)[X] + (d)[X]; \
 	(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y]; \
 	(a)[Z] = (b)[Z] + (c)[Z] + (d)[Z]; \
+}
+
+/** @brief Add 3 2D vectors at `b', `c', and `d', store result at `a'. */
+#define V2ADD3(a, b, c, d) { \
+	(a)[X] = (b)[X] + (c)[X] + (d)[X]; \
+	(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y]; \
+}
+
+/** @brief Add 3 4D vectors at `b', `c', and `d', store result at `a'. */
+#define HADD3(a, b, c, d) { \
+	(a)[X] = (b)[X] + (c)[X] + (d)[X]; \
+	(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y]; \
+	(a)[Z] = (b)[Z] + (c)[Z] + (d)[Z]; \
+	(a)[W] = (b)[W] + (c)[W] + (d)[W]; \
 }
 
 /**
@@ -723,10 +847,6 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	} \
 }
 
-#define V2ADD3(a, b, c, d) { \
-	(a)[X] = (b)[X] + (c)[X] + (d)[X]; \
-	(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y]; \
-}
 
 /**
  * @brief Add 4 vectors at `b', `c', `d', and `e', store result at
@@ -736,6 +856,26 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(a)[X] = (b)[X] + (c)[X] + (d)[X] + (e)[X]; \
 	(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y] + (e)[Y]; \
 	(a)[Z] = (b)[Z] + (c)[Z] + (d)[Z] + (e)[Z]; \
+}
+
+/**
+ * @brief Add 4 2D vectors at `b', `c', `d', and `e', store result at
+ * `a'.
+ */
+#define V2ADD4(a, b, c, d, e) { \
+	(a)[X] = (b)[X] + (c)[X] + (d)[X] + (e)[X]; \
+	(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y] + (e)[Y]; \
+}
+
+/**
+ * @brief Add 4 4D vectors at `b', `c', `d', and `e', store result at
+ * `a'.
+ */
+#define HADD4(a, b, c, d, e) { \
+	(a)[X] = (b)[X] + (c)[X] + (d)[X] + (e)[X]; \
+	(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y] + (e)[Y]; \
+	(a)[Z] = (b)[Z] + (c)[Z] + (d)[Z] + (e)[Z]; \
+	(a)[W] = (b)[W] + (c)[W] + (d)[W] + (e)[W]; \
 }
 
 /**
@@ -749,13 +889,21 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	} \
 }
 
-/** @brief Scale vector at `b' by scalar `c', store result at `a'. */
+
+/** @brief Scale 3D vector at `b' by scalar `c', store result at `a'. */
 #define VSCALE(a, b, c) { \
 	(a)[X] = (b)[X] * (c); \
 	(a)[Y] = (b)[Y] * (c); \
 	(a)[Z] = (b)[Z] * (c); \
 }
 
+/** @brief Scale 2D vector at `b' by scalar `c', store result at `a'. */
+#define V2SCALE(a, b, c) { \
+	(a)[X] = (b)[X] * (c); \
+	(a)[Y] = (b)[Y] * (c); \
+}
+
+/** @brief Scale 4D vector at `b' by scalar `c', store result at `a'. */
 #define HSCALE(a, b, c) { \
 	(a)[X] = (b)[X] * (c); \
 	(a)[Y] = (b)[Y] * (c); \
@@ -772,11 +920,6 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	for (_vscale = 0; _vscale < (n); _vscale++) { \
 		(a)[_vscale] = (b)[_vscale] * (c); \
 	} \
-}
-
-#define V2SCALE(a, b, c) { \
-	(a)[X] = (b)[X] * (c); \
-	(a)[Y] = (b)[Y] * (c); \
 }
 
 /** @brief Normalize vector `a' to be a unit vector. */
@@ -884,8 +1027,9 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(a)[Z] = (b)[Z] + (c)*(d)[Z] + (e)*(f)[Z] + (g)*(h)[Z]; \
 }
 
+
 /**
- * @brief Compose vector at `a' of:
+ * @brief Compose 3D vector at `a' of:
  * Vector at `b' plus
  * scalar `c' times vector at `d' plus
  * scalar `e' times vector at `f'
@@ -894,6 +1038,30 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(a)[X] = (b)[X] + (c) * (d)[X] + (e) * (f)[X]; \
 	(a)[Y] = (b)[Y] + (c) * (d)[Y] + (e) * (f)[Y]; \
 	(a)[Z] = (b)[Z] + (c) * (d)[Z] + (e) * (f)[Z]; \
+}
+
+/**
+ * @brief Compose 2D vector at `a' of:
+ * Vector at `b' plus
+ * scalar `c' times vector at `d' plus
+ * scalar `e' times vector at `f'
+ */
+#define V2JOIN2(a, b, c, d, e, f) { \
+	(a)[X] = (b)[X] + (c) * (d)[X] + (e) * (f)[X]; \
+	(a)[Y] = (b)[Y] + (c) * (d)[Y] + (e) * (f)[Y]; \
+}
+
+/**
+ * @brief Compose 4D vector at `a' of:
+ * Vector at `b' plus
+ * scalar `c' times vector at `d' plus
+ * scalar `e' times vector at `f'
+ */
+#define HJOIN2(a, b, c, d, e, f) { \
+	(a)[X] = (b)[X] + (c) * (d)[X] + (e) * (f)[X]; \
+	(a)[Y] = (b)[Y] + (c) * (d)[Y] + (e) * (f)[Y]; \
+	(a)[Z] = (b)[Z] + (c) * (d)[Z] + (e) * (f)[Z]; \
+	(a)[W] = (b)[W] + (c) * (d)[W] + (e) * (f)[W]; \
 }
 
 #define VJOIN2N(a, b, c, d, e, f, n) { \
@@ -905,10 +1073,23 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	} \
 }
 
+
 #define VJOIN1(a, b, c, d) { \
 	(a)[X] = (b)[X] + (c) * (d)[X]; \
 	(a)[Y] = (b)[Y] + (c) * (d)[Y]; \
 	(a)[Z] = (b)[Z] + (c) * (d)[Z]; \
+}
+
+#define V2JOIN1(a, b, c, d) { \
+	(a)[X] = (b)[X] + (c) * (d)[X]; \
+	(a)[Y] = (b)[Y] + (c) * (d)[Y]; \
+}
+
+#define HJOIN1(a, b, c, d) { \
+	(a)[X] = (b)[X] + (c) * (d)[X]; \
+	(a)[Y] = (b)[Y] + (c) * (d)[Y]; \
+	(a)[Z] = (b)[Z] + (c) * (d)[Z]; \
+	(a)[W] = (b)[W] + (c) * (d)[W]; \
 }
 
 #define VJOIN1N(a, b, c, d, n) { \
@@ -920,17 +1101,6 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	} \
 }
 
-#define HJOIN1(a, b, c, d) { \
-	(a)[X] = (b)[X] + (c) * (d)[X]; \
-	(a)[Y] = (b)[Y] + (c) * (d)[Y]; \
-	(a)[Z] = (b)[Z] + (c) * (d)[Z]; \
-	(a)[W] = (b)[W] + (c) * (d)[W]; \
-}
-
-#define V2JOIN1(a, b, c, d) { \
-	(a)[X] = (b)[X] + (c) * (d)[X]; \
-	(a)[Y] = (b)[Y] + (c) * (d)[Y]; \
-}
 
 /**
  * @brief Blend into vector `a'
@@ -951,6 +1121,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 		(a)[_vblend2] = (b) * (c)[_vblend2] + (d) * (e)[_vblend2]; \
 	} \
 }
+
 
 /**
  * @brief Project vector `a' onto `b'
@@ -993,6 +1164,9 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define VDOT(a, b)	((a)[X]*(b)[X] + (a)[Y]*(b)[Y] + (a)[Z]*(b)[Z])
 
 #define V2DOT(a, b)	((a)[X]*(b)[X] + (a)[Y]*(b)[Y])
+
+#define HDOT(a, b)	((a)[X]*(b)[X] + (a)[Y]*(b)[Y] + (a)[Z]*(b)[Z] + (a)[W]*(b)[W])
+
 
 /**
  * @brief Subtract two points to make a vector, dot with another
@@ -1259,28 +1433,6 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define VSCALE_2D(a, b, c) V2SCALE(a, b, c)
 #define VJOIN1_2D(a, b, c, d) V2JOIN1(a, b, c, d)
 
-/**
- * @brief Compare two vectors for EXACT equality.  Use carefully. 
- * Version for degree 2 vectors. 
- */
-#define V2EQUAL(a, b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y])
-
-/**
- * @brief Compare two vectors for approximate equality, within the
- * specified absolute tolerance.
- * Version for degree 2 vectors.
- */
-#define V2APPROXEQUAL(a, b, tol)	(\
-	NEAR_ZERO((a)[X]-(b)[X], tol) && \
-	NEAR_ZERO((a)[Y]-(b)[Y], tol))
-
-/** 
- * @brief Test for all elements of `v' being smaller than `tol'. 
- * Version for degree 2 vectors.
- */
-#define V2NEAR_ZERO(v, tol)	(\
-	NEAR_ZERO(v[X], tol) && NEAR_ZERO(v[Y], tol))
-
 
 /**
  * @brief Quaternion math definitions.
@@ -1529,6 +1681,22 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * a statement.
  */
 #define VINIT_ZERO {0.0, 0.0, 0.0}
+
+/**
+ * homogeneous vector macro suitable for declaration statement
+ * initialization.  this sets all vector elements to the specified
+ * value similar to VSETALLN(hvect_t,val,4) but as an initializer
+ * array declaration instead of as a statement.
+ */
+#define HINITALL(_v) {(_v), (_v), (_v), (_v)}
+
+/**
+ * homogenous vector macro suitable for declaration statement
+ * initialization.  this sets all vector elements to zero similar to
+ * calling VSETALLN(hvect_t,0.0,4) but as an initializer array
+ * declaration instead of as a statement.
+ */
+#define HINIT_ZERO {0.0, 0.0, 0.0, 0.0}
 
 /**
  * matrix macro suitable for declaration statement initialization.

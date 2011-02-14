@@ -7,5 +7,5 @@ Comment=Mged - Constructive solid geometry (CSG) solid modeling computer-aided d
 Exec=/usr/brlcad/bin/mged %f
 Terminal=true
 Icon=brlcad-mged
-MimeType=application/x-brlcad;
+MimeType=application/x-brlcad-v4;application/x-brlcad-v5;
 Categories=BRL-CAD;

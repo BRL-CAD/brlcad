@@ -1018,7 +1018,7 @@ addtgc(struct bu_vls *v, struct rt_tgc_internal *gp, char *name, int num )
 
     /* TEC if ratio top and bot vectors equal and base parallel to top.
      */
-    if ( !NEAR_ZERO(mc, SMALL_FASTF) && !NEAR_ZERO(md, SMALL_FASTF) &&
+    if ( !ZERO(mc) && !ZERO(md) &&
 	 fabs( (mb/md)-(ma/mc) ) < CONV_EPSILON &&
 	 fabs( fabs(VDOT(axb, cxd)) - (maxb*mcxd) ) < CONV_EPSILON )  {
 	cgtype = TEC;

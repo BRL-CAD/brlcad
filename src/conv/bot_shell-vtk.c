@@ -466,7 +466,7 @@ main(int argc, char *argv[])
 	verts = create_vert_tree();
     }
 
-    if (!NEAR_ZERO(cell_size, SMALL_FASTF)) {
+    if (!ZERO(cell_size)) {
 	/* do a grid of shots */
 
 	ap.a_onehit = 0;

@@ -44,25 +44,6 @@
 /* bleh */
 int need_prep = 1;
 
-
-const char usage[] = "\
-Usage: 'nirt [options] model.g objects...'\n\
-Options:\n\
- -b         back out of geometry before first shot\n\
- -B n       set rt_bot_minpieces=n\n\
- -e script  run script before interacting\n\
- -f sfile   run script sfile before interacting\n\
- -L         list output formatting options\n\
- -M         read matrix, cmds on stdin\n\
- -O action  handle overlap claims via action\n\
- -s         run in silent (non-verbose) mode\n\
- -u n       set use_air=n (default 0)\n\
- -v         run in verbose mode\n\
- -x v       set librt(3) diagnostic flag=v\n\
- -X v       set nirt diagnostic flag=v\n\
-";
-
-
 const com_table ComTab[] = {
     { "attr", cm_attr, "select attributes", "<-f(flush) | -p(print) | attribute_name>" },
     { "ae", az_el, "set/query azimuth and elevation", "azimuth elevation" },
@@ -122,7 +103,20 @@ char *db_name;
 
 void printusage(void)
 {
-    bu_log("%s", usage);
+    bu_log("Usage: 'nirt [options] model.g objects...'\n");
+    bu_log("Options:\n");
+    bu_log(" -b         back out of geometry before first shot\n");
+    bu_log(" -B n       set rt_bot_minpieces=n\n");
+    bu_log(" -e script  run script before interacting\n");
+    bu_log(" -f sfile   run script sfile before interacting\n");
+    bu_log(" -L         list output formatting options\n");
+    bu_log(" -M         read matrix, cmds on stdin\n");
+    bu_log(" -O action  handle overlap claims via action\n");
+    bu_log(" -s         run in silent (non-verbose) mode\n ");
+    bu_log(" -u n       set use_air=n (default 0)\n");
+    bu_log(" -v         run in verbose mode\n");
+    bu_log(" -x v       set librt(3) diagnostic flag=v\n");
+    bu_log(" -X v       set nirt diagnostic flag=v\n");
 }
 
 /**

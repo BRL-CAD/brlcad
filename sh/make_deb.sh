@@ -108,7 +108,7 @@ if test "$1" = "-b" ;then
     fcheck xsltproc
     fcheck libgl1-mesa-dev
     fcheck libpango1.0-dev
-    fcheck libncurses5-dev
+    #fcheck libncurses5-dev
     #fcheck fop # allows pdf creation
 fi
 

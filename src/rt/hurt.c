@@ -653,7 +653,7 @@ int get_args( int argc, const char *argv[] )
 		/* set expected playback rate in frames-per-second.
 		 * This actually gets stored as the delta-t per frame.
 		 */
-		if ( NEAR_ZERO(frame_delta_t=atof( bu_optarg ), SMALL) ) {
+		if ( ZERO(frame_delta_t=atof( bu_optarg )) ) {
 		    fprintf(stderr, "Invalid frames/sec (%s) == 0.0\n",
 			    bu_optarg);
 		    frame_delta_t = 30.0;
@@ -671,7 +671,7 @@ int get_args( int argc, const char *argv[] )
 			|| *cp == '.' )  cp++;
 		while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
 		yy = atof(cp);
-		if ( NEAR_ZERO(yy, SMALL) )
+		if ( ZERO(yy) )
 		    aspect = xx;
 		else
 		    aspect = xx/yy;
@@ -1127,7 +1127,7 @@ grid_setup(void)
 	ap.a_rbeam = 0.5 * viewsize / width;
 	ap.a_diverge = 0;
     }
-    if ( NEAR_ZERO(ap.a_rbeam, SMALL) && NEAR_ZERO(ap.a_diverge, SMALL) )
+    if ( ZERO(ap.a_rbeam) && ZERO(ap.a_diverge) )
 	bu_exit(EXIT_FAILURE, "zero-radius beam");
     MAT4X3PNT( viewbase_model, view2model, temp );
 

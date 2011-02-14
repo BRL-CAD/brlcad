@@ -477,7 +477,7 @@ rr_render(register struct application *ap,
      * through a glass armor plate. :-)
      */
     if (NEAR_ZERO(pp->pt_inhit->hit_dist, AIR_GAP_TOL)
-	&& NEAR_ZERO(ap->a_refrac_index - swp->sw_refrac_index, SMALL_FASTF))
+	&& ZERO(ap->a_refrac_index - swp->sw_refrac_index))
     {
 	transmit += reflect;
 	reflect = 0;
@@ -537,7 +537,7 @@ rr_render(register struct application *ap,
 	if (pp->pt_inhit->hit_dist > AIR_GAP_TOL)
 	    sub_ap.a_refrac_index = RI_AIR;
 
-	if (!NEAR_ZERO(sub_ap.a_refrac_index - swp->sw_refrac_index, SMALL_FASTF)
+	if (!ZERO(sub_ap.a_refrac_index - swp->sw_refrac_index)
 	    && !rr_refract(incident_dir,		/* input direction */
 			   swp->sw_hit.hit_normal,	/* exit normal */
 			   sub_ap.a_refrac_index,	/* current RI */
@@ -654,7 +654,7 @@ vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 
 	 * Calculate refraction at exit point.
 	 * Use "look ahead" RI value from rr_hit.
 	 */
-	if (!NEAR_ZERO(sub_ap.a_refrac_index - swp->sw_refrac_index, SMALL_FASTF)
+	if (!ZERO(sub_ap.a_refrac_index - swp->sw_refrac_index)
 	    && !rr_refract(incident_dir,		/* input direction */
 			   sub_ap.a_vvec,		/* exit normal */
 			   swp->sw_refrac_index,	/* current RI */

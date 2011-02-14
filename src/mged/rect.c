@@ -152,8 +152,8 @@ draw_rect(void)
 {
     int line_style;
 
-    if (NEAR_ZERO(rubber_band->rb_width, (fastf_t)SMALL_FASTF) &&
-	NEAR_ZERO(rubber_band->rb_height, (fastf_t)SMALL_FASTF))
+    if (ZERO(rubber_band->rb_width) &&
+	ZERO(rubber_band->rb_height))
 	return;
 
     if (rubber_band->rb_linestyle == 'd')
@@ -216,8 +216,8 @@ rt_rect_area(void)
     if (!fbp)
 	return;
 
-    if (NEAR_ZERO(rubber_band->rb_width, (fastf_t)SMALL_FASTF) &&
-	NEAR_ZERO(rubber_band->rb_height, (fastf_t)SMALL_FASTF))
+    if (ZERO(rubber_band->rb_width) &&
+	ZERO(rubber_band->rb_height))
 	return;
 
     if (mged_variables->mv_port < 0) {
@@ -265,8 +265,8 @@ zoom_rect_area(void)
     point_t old_view_center;
     point_t new_view_center;
 
-    if (NEAR_ZERO(rubber_band->rb_width, (fastf_t)SMALL_FASTF) &&
-	NEAR_ZERO(rubber_band->rb_height, (fastf_t)SMALL_FASTF))
+    if (ZERO(rubber_band->rb_width) &&
+	ZERO(rubber_band->rb_height))
 	return;
 
     adjust_rect_for_zoom();

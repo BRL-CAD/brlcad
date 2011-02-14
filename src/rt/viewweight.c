@@ -306,22 +306,22 @@ view_end(struct application *ap)
      * for mass. Once it does, this section should be
      * reorganized.*/
     
-    if ( NEAR_ZERO(dbp->dbi_local2base - 304.8, SMALL_FASTF) )  {
+    if ( ZERO(dbp->dbi_local2base - 304.8) )  {
 	/* Feet */
 	bu_strlcpy( units, "grams", sizeof(units) );
-    } else if ( NEAR_ZERO(dbp->dbi_local2base - 25.4, SMALL_FASTF) )  {
+    } else if ( ZERO(dbp->dbi_local2base - 25.4) )  {
 	/* inches */
 	conversion = 0.002204623;  /* lbs./gram */
 	bu_strlcpy( units, "lbs.", sizeof(units) );
-    } else if ( NEAR_ZERO(dbp->dbi_local2base - 1.0, SMALL_FASTF) )  {
+    } else if ( ZERO(dbp->dbi_local2base - 1.0) )  {
 	/* mm */
 	conversion = 0.001;  /* kg/gram */
 	bu_strlcpy( units, "kg", sizeof(units) );
-    } else if ( NEAR_ZERO(dbp->dbi_local2base - 1000.0, SMALL_FASTF) )  {
+    } else if ( ZERO(dbp->dbi_local2base - 1000.0) )  {
 	/* km */
 	conversion = 0.001;  /* kg/gram */
 	bu_strlcpy( units, "kg", sizeof(units) );
-    } else if ( NEAR_ZERO(dbp->dbi_local2base - 0.1, SMALL_FASTF) )  {
+    } else if ( ZERO(dbp->dbi_local2base - 0.1) )  {
 	/* cm */
 	bu_strlcpy( units, "grams", sizeof(units) );
     } else {

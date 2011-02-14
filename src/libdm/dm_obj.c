@@ -1440,7 +1440,7 @@ dmo_drawSList(struct dm_obj *dmop,
 	/* Second, draw transparent stuff */
 	FOR_ALL_SOLIDS(sp, hsp) {
 	    /* already drawn above */
-	    if (NEAR_ZERO(sp->s_transparency - 1.0, SMALL_FASTF))
+	    if (ZERO(sp->s_transparency - 1.0))
 		continue;
 
 	    if (linestyle != sp->s_soldash) {

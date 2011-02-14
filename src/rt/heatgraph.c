@@ -173,7 +173,6 @@ void
 timeTable_free(fastf_t **timeTable)
 {
     /* Temporarily assigned variables, until real ones are found */
-    int x = width;
     int y = height;
     int i = 0;
     

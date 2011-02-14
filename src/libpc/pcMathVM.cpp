@@ -474,7 +474,7 @@ std::size_t OrNode::OrFunc::arity() const
 
 double OrNode::OrFunc::evalp(std::vector<double> const & params) const
 {
-    return (!NEAR_ZERO(params[0], SMALL_FASTF)) ? 1.0 : evaluate(rhs_stack_);
+    return (!ZERO(params[0])) ? 1.0 : evaluate(rhs_stack_);
 }
 
 
@@ -558,7 +558,7 @@ std::size_t BranchNode::BranchFunc::arity() const
 
 double BranchNode::BranchFunc::evalp(std::vector<double> const & params) const
 {
-    return evaluate(!NEAR_ZERO(params[0], SMALL_FASTF) ? stack1_ : stack2_);
+    return evaluate(!ZERO(params[0]) ? stack1_ : stack2_);
 }
 
 

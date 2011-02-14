@@ -208,7 +208,7 @@ points_render(struct application *ap, struct partition *UNUSED(partp), struct sh
     /*bu_log("points_render ([%g %g][%g %g]) = %g\n",
       umin, umax, vmin, vmax, mag);*/
 
-    if (NEAR_ZERO(mag, SMALL_FASTF)) {
+    if (ZERO(mag)) {
 	VSET(swp->sw_color, 0, 0, 0);
     } else {
 	VSET(swp->sw_color, mag/255.0, mag/255.0, mag/255.0);

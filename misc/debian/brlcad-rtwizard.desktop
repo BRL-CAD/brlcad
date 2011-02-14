@@ -6,5 +6,5 @@ Name=RtWizard
 Comment=Rt Wizard
 Exec=/usr/brlcad/bin/rtwizard %f
 Icon=text-x-script
-MimeType=application/x-brlcad;
+MimeType=application/x-brlcad-v4;application/x-brlcad-v5;
 Categories=BRL-CAD;

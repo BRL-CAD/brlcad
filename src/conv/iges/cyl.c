@@ -66,11 +66,11 @@ cyl(entityno)
     if (radius < SMALL_FASTF || scale_height < SMALL_FASTF) {
 	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
 	       dir[entityno]->direct, dir[entityno]->name);
-	if (NEAR_ZERO(radius, SMALL_FASTF)) {
+	if (ZERO(radius)) {
 	    bu_log("\tradius of cylinder is zero!!!\n");
 	    return 0;
 	}
-	if (NEAR_ZERO(scale_height, SMALL_FASTF)) {
+	if (ZERO(scale_height)) {
 	    bu_log("\theight of cylinder is zero!!!\n");
 	    return 0;
 	}

@@ -271,7 +271,7 @@ compare_values(int type, Tcl_Obj *val1, Tcl_Obj *val2)
 	    a = atof(str1);
 	    b = atof(str2);
 
-	    if (!NEAR_ZERO(a - b, SMALL_FASTF)) {
+	    if (!ZERO(a - b)) {
 		return 1;
 	    }
 	} else {
@@ -1047,7 +1047,7 @@ main(int argc, char **argv)
     }
 
     /* and units */
-    if (!NEAR_ZERO(dbip1->dbi_local2base - dbip2->dbi_local2base, SMALL_FASTF)) {
+    if (!ZERO(dbip1->dbi_local2base - dbip2->dbi_local2base)) {
 	different = 1;
 	if (mode == HUMAN) {
 	    printf("Units changed from %s to %s\n", bu_units_string(dbip1->dbi_local2base), bu_units_string(dbip2->dbi_local2base));

@@ -448,11 +448,11 @@ ir_shootray_octree(struct application *ap)
     vect_t	inv_dir;	/* Inverses of ap->a_ray.r_dir	*/
     Octree	*leafp = NULL;	/* Intersected octree leaf.	*/
     inv_dir[X] = inv_dir[Y] = inv_dir[Z] = INFINITY;
-    if ( !NEAR_ZERO(ap->a_ray.r_dir[X], SMALL_FASTF) )
+    if ( !ZERO(ap->a_ray.r_dir[X]) )
 	inv_dir[X] = 1.0 / ap->a_ray.r_dir[X];
-    if ( !NEAR_ZERO(ap->a_ray.r_dir[Y], SMALL_FASTF) )
+    if ( !ZERO(ap->a_ray.r_dir[Y]) )
 	inv_dir[Y] = 1.0 / ap->a_ray.r_dir[Y];
-    if ( !NEAR_ZERO(ap->a_ray.r_dir[Z], SMALL_FASTF) )
+    if ( !ZERO(ap->a_ray.r_dir[Z]) )
 	inv_dir[Z] = 1.0 / ap->a_ray.r_dir[Z];
     /* Descend octree from root to find the closest intersected leaf node.
        Store minimum hit distance in "a_uvec[0]" field of application

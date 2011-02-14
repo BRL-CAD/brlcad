@@ -35,6 +35,7 @@ libtclcad_la_SOURCES = \
 	ged_obj.c
 
 libtclcad_la_CFLAGS = \
+	${STD_C99_FLAGS} \
 	${STRICT_FLAGS} \
 	${DM_X_CFLAGS} \
 	${DM_TK_CFLAGS} \

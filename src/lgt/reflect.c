@@ -237,7 +237,7 @@ getCellSize(int gsize)
     if ( save_view_flag )
     {
 	/* Saved view from GED, match view size. */
-	if ( !NEAR_ZERO(rel_perspective, SMALL_FASTF) )
+	if ( !ZERO(rel_perspective) )
 	    /* Animation sequence, perspective gridding. */
 	    cell_sz = EYE_SIZE / (fastf_t) gsize;
 	else
@@ -439,8 +439,8 @@ render_Scan(int cpu, void *UNUSED(data))
 	assert( a.a_miss == ag.a_miss );
 	assert( a.a_overlap == ag.a_overlap );
 	assert( a.a_rt_i == ag.a_rt_i );
-	assert( NEAR_ZERO(a.a_rbeam - ag.a_rbeam, SMALL_FASTF) );
-	assert( NEAR_ZERO(a.a_diverge - ag.a_diverge, SMALL_FASTF) );
+	assert( ZERO(a.a_rbeam - ag.a_rbeam) );
+	assert( ZERO(a.a_diverge - ag.a_diverge) );
 	a.a_x = grid_x_org;
 	a.a_y = com;
 	a.a_onehit = false;
@@ -470,7 +470,7 @@ render_Scan(int cpu, void *UNUSED(data))
 		)
 	    {
 		fastf_t aim_pt[3];
-		if ( NEAR_ZERO(rel_perspective, SMALL_FASTF) )
+		if ( ZERO(rel_perspective) )
 		{
 		    /* Parallel rays emanating from grid. */
 		    VADD2( aim_pt, grid_loc, grid_y_inc );
@@ -1042,7 +1042,7 @@ correct_Lgt(struct application *ap, struct partition *pp, Lgt_Source *lgt_entry)
 	/* Fetch attenuated lgt intensity into "ap_hit.a_diverge". */
 	(void) rt_shootray( &ap_hit );
 	energy_attenuation = ap_hit.a_diverge;
-	if ( NEAR_ZERO(energy_attenuation, SMALL_FASTF) )
+	if ( ZERO(energy_attenuation) )
 	    /* Shadowed by opaque object(s). */
 	    return	energy_attenuation;
     }
@@ -1160,7 +1160,7 @@ glass_Refract(struct application *ap, struct partition *pp, Mat_Db_Entry *entry,
     if ( entry->refrac_index < 0.001 )
 	entry->refrac_index = 1.0;
 
-    if ( NEAR_ZERO(entry->refrac_index - RI_AIR, SMALL_FASTF) )
+    if ( ZERO(entry->refrac_index - RI_AIR) )
     {
 	/* No refraction necessary. */
 	struct partition *pt_headp = pp->pt_back;
@@ -1564,7 +1564,7 @@ f_Shadow(struct application *ap, struct partition *pt_headp, struct seg * unused
 	    break;
 	}
     }
-    if ( !NEAR_ZERO(ap->a_diverge - 1.0, SMALL_FASTF) )
+    if ( !ZERO(ap->a_diverge - 1.0) )
 	/* Light source is obstructed, object shadowed. */
     {
 	if ( RT_G_DEBUG & DEBUG_SHADOW )
@@ -1638,7 +1638,7 @@ model_Reflectance(struct application *ap, struct partition *pp, Mat_Db_Entry *md
     {
 	/* Compute attenuated light intensity due to shadowing. */
 	lgt_energy = correct_Lgt( ap, pp, lgt_entry);
-	if ( NEAR_ZERO(lgt_energy, SMALL_FASTF) )
+	if ( ZERO(lgt_energy) )
 	{
 	    /* Shadowed by an opaque object. */
 	    VSETALL( ap->a_color, 0.0 );
@@ -1766,7 +1766,7 @@ static fastf_t
 myIpow(fastf_t d, int n)
 {
     fastf_t result = 1.0;
-    if ( NEAR_ZERO(d, SMALL_FASTF) )
+    if ( ZERO(d) )
 	return	0.0;
     while ( n-- > 0 )
 	result *= d;
