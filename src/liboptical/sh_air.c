@@ -415,7 +415,7 @@ emist_render(struct application *ap, struct partition *pp, struct shadework *swp
     Ze = (air_sp->delta + out_pt[Z]) * air_sp->scale;
     Zd = ap->a_ray.r_dir[Z];
 
-    if (NEAR_ZERO(Zd, SQRT_SMALL_FASTF))
+    if (ZERO(Zd))
 	tau = air_sp->d_p_mm * te * exp(-Zo);
     else
 	tau = ((air_sp->d_p_mm * te) /  Zd) * (exp(-Zo) - exp(-Ze));

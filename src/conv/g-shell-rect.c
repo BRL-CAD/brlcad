@@ -425,19 +425,19 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss, 
     rd.seghead = &seghead;
 
     /* Compute the inverse of the direction cosines */
-    if ( !NEAR_ZERO( rp->r_dir[X], SQRT_SMALL_FASTF ) )  {
+    if ( !ZERO(rp->r_dir[X]) )  {
 	rd.rd_invdir[X]=1.0/rp->r_dir[X];
     } else {
 	rd.rd_invdir[X] = INFINITY;
 	rp->r_dir[X] = 0.0;
     }
-    if ( !NEAR_ZERO( rp->r_dir[Y], SQRT_SMALL_FASTF ) )  {
+    if ( !ZERO(rp->r_dir[Y]) )  {
 	rd.rd_invdir[Y]=1.0/rp->r_dir[Y];
     } else {
 	rd.rd_invdir[Y] = INFINITY;
 	rp->r_dir[Y] = 0.0;
     }
-    if ( !NEAR_ZERO( rp->r_dir[Z], SQRT_SMALL_FASTF ) )  {
+    if ( !ZERO( rp->r_dir[Z]) )  {
 	rd.rd_invdir[Z]=1.0/rp->r_dir[Z];
     } else {
 	rd.rd_invdir[Z] = INFINITY;

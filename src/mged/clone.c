@@ -947,7 +947,7 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	    links[(i-arg)/2].pct = 1.0;
 	totlen += links[(i-arg)/2].pct;
     }
-    if (!NEAR_ZERO(totlen - 1.0, SMALL_FASTF))
+    if (!ZERO(totlen - 1.0))
 	fprintf(stdout, "ERROR\n");
 
     /* Read in knots from specified file *************/

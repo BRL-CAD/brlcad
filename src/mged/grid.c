@@ -143,8 +143,8 @@ draw_grid(void)
     fastf_t inv_aspect;
 
     if (dbip == DBI_NULL ||
-	NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
-	NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
+	ZERO(grid_state->gr_res_h) ||
+	ZERO(grid_state->gr_res_v))
 	return;
 
     inv_grid_res_h= 1.0 / grid_state->gr_res_h;
@@ -231,8 +231,8 @@ snap_to_grid(
     fastf_t inv_sf;
 
     if (dbip == DBI_NULL ||
-	NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
-	NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
+	ZERO(grid_state->gr_res_h) ||
+	ZERO(grid_state->gr_res_v))
 	return;
 
     sf = view_state->vs_gvp->gv_scale*base2local;
@@ -347,8 +347,8 @@ round_to_grid(fastf_t *view_dx, fastf_t *view_dy)
     int nh, nv;
 
     if (dbip == DBI_NULL ||
-	NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
-	NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
+	ZERO(grid_state->gr_res_h) ||
+	ZERO(grid_state->gr_res_v))
 	return;
 
     sf = view_state->vs_gvp->gv_scale*base2local;
@@ -388,8 +388,8 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
     point_t vcenter, diff;
 
     if (dbip == DBI_NULL ||
-	NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
-	NEAR_ZERO(grid_state->gr_res_v, (fastf_t)SMALL_FASTF))
+	ZERO(grid_state->gr_res_h) ||
+	ZERO(grid_state->gr_res_v))
 	return;
 
     round_to_grid(&view_dx, &view_dy);

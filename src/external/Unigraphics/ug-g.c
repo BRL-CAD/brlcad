@@ -2784,7 +2784,7 @@ do_cyl_pocket(
 	}
 	VSCALE( height, dir, tmp_ht );
 	radius4 = radius3 - round_rad * cos( angle );
-	if ( NEAR_ZERO( radius2 - round_rad, SMALL_FASTF ) ) {
+	if ( ZERO(radius2 - round_rad) ) {
 	    /* bottom is spherical */
 	    point_t center;
 

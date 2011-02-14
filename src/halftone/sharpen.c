@@ -76,7 +76,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 /*
  *	if no sharpening going on then just read from the file and exit.
  */
-    if (NEAR_ZERO(Beta, SMALL_FASTF)) {
+    if (ZERO(Beta)) {
 	result = fread(buf, size, num, file);
 	if (!result) return result;
 	for (i=0; i<size*num; i++) {

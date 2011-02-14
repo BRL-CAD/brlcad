@@ -653,7 +653,7 @@ grid_setup(void)
 	ap.a_rbeam = 0.5 * viewsize / width;
 	ap.a_diverge = 0;
     }
-    if (NEAR_ZERO(ap.a_rbeam, SMALL) && NEAR_ZERO(ap.a_diverge, SMALL))
+    if (ZERO(ap.a_rbeam) && ZERO(ap.a_diverge))
 	bu_exit(EXIT_FAILURE, "zero-radius beam");
     MAT4X3PNT(viewbase_model, view2model, temp);
 

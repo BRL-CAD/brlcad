@@ -134,7 +134,7 @@ int add_segment(struct xray *rp, struct hit *ihitp, struct hit *outp, struct reg
     depth = ohitp->hit_dist - ihitp->hit_dist;
     
     /* If depth is so small as to be within floating point tolerance, don't report it */
-    if (NEAR_ZERO(depth, SMALL_FASTF))
+    if (ZERO(depth))
 	return 0;
     
     /* Filter based on overlap tolerance, if any */

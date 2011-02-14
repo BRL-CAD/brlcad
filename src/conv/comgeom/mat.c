@@ -338,7 +338,7 @@ htov_move(float *v, float *h)
 {
     static float inv;
 
-    if ( NEAR_ZERO(h[3] - 1.0, SMALL_FASTF) )  {
+    if ( ZERO(h[3] - 1.0) )  {
 	*v++ = *h++;
 	*v++ = *h++;
 	*v   = *h;

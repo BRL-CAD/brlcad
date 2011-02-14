@@ -179,7 +179,7 @@ interpolate_Frame(int frame)
     else
     {
 	lgts[0].over = 0;
-	if ( NEAR_ZERO(movie.m_pers_beg, SMALL_FASTF) && NEAR_ZERO(movie.m_pers_end, SMALL_FASTF) )
+	if ( ZERO(movie.m_pers_beg) && ZERO(movie.m_pers_end) )
 	{
 	    rel_perspective = 0.0;
 	    grid_dist = movie.m_grid_beg +

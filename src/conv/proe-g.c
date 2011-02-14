@@ -383,7 +383,7 @@ Convert_assy(char *line)
 		bn_mat_print(brlcad_name, wmem->wm_mat);
 		bu_log("\tscale = %g, conv_factor = %g\n", scale, conv_factor);
 	    }
-	    if (!NEAR_ZERO(scale - 1.0, SMALL_FASTF)) {
+	    if (!ZERO(scale - 1.0)) {
 		inv_scale = 1.0/scale;
 		for (j=0; j<3; j++)
 		    HSCALE(&wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale)
@@ -1075,7 +1075,7 @@ main(int argc, char **argv)
 		break;
 	    case 'c':	/* convert from units */
 		conv_factor = bu_units_conversion(bu_optarg);
-		if (NEAR_ZERO(conv_factor, SMALL_FASTF)) {
+		if (ZERO(conv_factor)) {
 		    bu_log("Illegal units: (%s)\n", bu_optarg);
 		    bu_exit(EXIT_FAILURE,  "Illegal units!!\n");
 		} else {

@@ -1285,7 +1285,7 @@ read_dem(
             }
 
             /* test for zero to avoid divide by 0 math error */
-            if (!NEAR_ZERO(derived_dem_max_raw_elevation, SMALL_FASTF)) {
+            if (!ZERO(derived_dem_max_raw_elevation)) {
                 raw_dem_2_raw_dsp_auto_scale_factor = DSP_MAX_RAW_ELEVATION / (double)derived_dem_max_raw_elevation;
             } else {
                 raw_dem_2_raw_dsp_auto_scale_factor = 1;

@@ -813,7 +813,7 @@ spline(struct chan *chp, fastf_t *times)
 	linear_interpolate(chp, times);
 
     if (chp->c_periodic
-	&& !NEAR_ZERO(chp->c_ival[0] - chp->c_ival[chp->c_ilen-1], SMALL_FASTF))
+	&& !ZERO(chp->c_ival[0] - chp->c_ival[chp->c_ilen-1]))
     {
 	bu_log("spline(%s): endpoints don't match, replacing final data value\n", chp->c_itag);
 	chp->c_ival[chp->c_ilen-1] = chp->c_ival[0];

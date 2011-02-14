@@ -361,11 +361,11 @@ val_To_RGB(cell_val cv, unsigned char *rgb)
 	return;
     }
     val = (cv.v_scalar - dom_min) * dom_cvt;
-    if ((boolean_flag && !NEAR_ZERO(cv.v_scalar - bool_val, SMALL_FASTF))
+    if ((boolean_flag && !ZERO(cv.v_scalar - bool_val))
 	|| (val < SMALL_FASTF) || (val > 10.0))
     {
 	COPYRGB(rgb, BACKGROUND);
-    } else if (NEAR_ZERO(val, SMALL_FASTF)) {
+    } else if (ZERO(val)) {
 	COPYRGB(rgb, WHITE);
     } else {
 	int idx;
@@ -455,9 +455,9 @@ display_Cells(long int ncells)
 	int x0, x1;
 
 	/* Whenever Y changes, write out row of cells. */
-	if (!NEAR_ZERO(lasty - gp->c_y, SMALL_FASTF)) {
+	if (!ZERO(lasty - gp->c_y)) {
 	    /* If first time, nothing to write out. */
-	    if (!NEAR_ZERO(lasty - INFINITY, SMALL_FASTF)) {
+	    if (!ZERO(lasty - INFINITY)) {
 		if (debug_flag & CFB_DBG_GRID)
 		    bu_log("%g = V2SCRY(%g)\n", V2SCRY(lasty), lasty);
 		y_0 = V2SCRY(lasty);
@@ -476,7 +476,7 @@ display_Cells(long int ncells)
 	    }
 
 	    /* Draw grid line between rows of cells. */
-	    if (grid_flag && !NEAR_ZERO(lasty - INFINITY, SMALL_FASTF)) {
+	    if (grid_flag && !ZERO(lasty - INFINITY)) {
 		if (fb_write(fbiop, 0, y_0, buf, fb_width) == -1) {
 		    bu_log("Couldn't write to <%d, %d>\n", 0, y_0);
 		    (void) fb_close(fbiop);

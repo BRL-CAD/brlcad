@@ -781,17 +781,17 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
 	double factor = 1.0; /* show mm in parens by default */
 
 	/* show some common larger units in parens otherwise default to mm^2*/
-	if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
+	if (ZERO(units - 1.0)) {
 	    factor = bu_units_conversion("m");
-	} else if (NEAR_ZERO(units - 10.0, SMALL_FASTF)) {
+	} else if (ZERO(units - 10.0)) {
 	    factor = bu_units_conversion("m");
-	} else if (NEAR_ZERO(units - 100.0, SMALL_FASTF)) {
+	} else if (ZERO(units - 100.0)) {
 	    factor = bu_units_conversion("m");
-	} else if (NEAR_ZERO(units - 1000.0, SMALL_FASTF)) {
+	} else if (ZERO(units - 1000.0)) {
 	    factor = bu_units_conversion("km");
-	} else if (NEAR_ZERO(units - 25.4, SMALL_FASTF)) {
+	} else if (ZERO(units - 25.4)) {
 	    factor = bu_units_conversion("ft");
-	} else if (NEAR_ZERO(units - 304.8, SMALL_FASTF)) {
+	} else if (ZERO(units - 304.8)) {
 	    factor = bu_units_conversion("yd");
 	} else {
 		factor = bu_units_conversion("mm");
@@ -932,17 +932,17 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 	double factor = 1.0; /* show mm in parens by default */
 
 	/* show some common larger units in parens otherwise default to mm^2*/
-	if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
+	if (ZERO(units - 1.0)) {
 	    factor = bu_units_conversion("m");
-	} else if (NEAR_ZERO(units - 10.0, SMALL_FASTF)) {
+	} else if (ZERO(units - 10.0)) {
 	    factor = bu_units_conversion("m");
-	} else if (NEAR_ZERO(units - 100.0, SMALL_FASTF)) {
+	} else if (ZERO(units - 100.0)) {
 	    factor = bu_units_conversion("m");
-	} else if (NEAR_ZERO(units - 1000.0, SMALL_FASTF)) {
+	} else if (ZERO(units - 1000.0)) {
 	    factor = bu_units_conversion("km");
-	} else if (NEAR_ZERO(units - 25.4, SMALL_FASTF)) {
+	} else if (ZERO(units - 25.4)) {
 	    factor = bu_units_conversion("ft");
-	} else if (NEAR_ZERO(units - 304.8, SMALL_FASTF)) {
+	} else if (ZERO(units - 304.8)) {
 	    factor = bu_units_conversion("yd");
 	} else {
 		factor = bu_units_conversion("mm");
@@ -1039,17 +1039,17 @@ view_end(struct application *ap)
     }
 
     /* show some common larger units in parens otherwise default to mm^2*/
-    if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
+    if (ZERO(units - 1.0)) {
 	factor = bu_units_conversion("m");
-    } else if (NEAR_ZERO(units - 10.0, SMALL_FASTF)) {
+    } else if (ZERO(units - 10.0)) {
 	factor = bu_units_conversion("m");
-    } else if (NEAR_ZERO(units - 100.0, SMALL_FASTF)) {
+    } else if (ZERO(units - 100.0)) {
 	factor = bu_units_conversion("m");
-    } else if (NEAR_ZERO(units - 1000.0, SMALL_FASTF)) {
+    } else if (ZERO(units - 1000.0)) {
 	factor = bu_units_conversion("km");
-    } else if (NEAR_ZERO(units - 25.4, SMALL_FASTF)) {
+    } else if (ZERO(units - 25.4)) {
 	factor = bu_units_conversion("ft");
-    } else if (NEAR_ZERO(units - 304.8, SMALL_FASTF)) {
+    } else if (ZERO(units - 304.8)) {
 	factor = bu_units_conversion("yd");
     } else {
 	factor = bu_units_conversion("mm");

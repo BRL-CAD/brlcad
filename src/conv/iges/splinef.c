@@ -37,7 +37,7 @@ splinef(fastf_t c[4], fastf_t s)
     retval = c[0];
     for (i=1; i<4; i++) {
 	stopow *= s;
-	if (!NEAR_ZERO(c[i], SMALL_FASTF))
+	if (!ZERO(c[i]))
 	    retval += c[i]*stopow;
     }
 

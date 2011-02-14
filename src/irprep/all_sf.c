@@ -427,7 +427,7 @@ int main(int argc, char **argv)
 	    (void)fflush(fpw);
 
 	    /*  Find shape factors & print.  */
-	    if (NEAR_ZERO(info[i].lvrays, SMALL_FASTF))
+	    if (ZERO(info[i].lvrays))
 	    {
 		/*  START # 1060  */
 		(void)fprintf(fpw1, "**  ERROR - # or rays hitting region ");
@@ -477,7 +477,7 @@ int main(int argc, char **argv)
 	    k = 0;
 	    for (j=0; j<numreg; j++)
 	    {
-		if (!NEAR_ZERO(info[i].sf[j], SMALL_FASTF)) k++;
+		if (!ZERO(info[i].sf[j])) k++;
 	    }
 	    (void)fprintf(fpw2, "Bij\t%d\n", k);
 
@@ -486,7 +486,7 @@ int main(int argc, char **argv)
 	    for (j=0; j<numreg; j++)
 	    {
 		/*  START # 1100  */
-		if (!NEAR_ZERO(info[i].sf[j], SMALL_FASTF))
+		if (!ZERO(info[i].sf[j]))
 		{
 		    /*  START # 1110  */
 		    (void)fprintf(fpw2, "%4d   %.4f   ", (j + 1),

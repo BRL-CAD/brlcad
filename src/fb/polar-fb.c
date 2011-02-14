@@ -158,7 +158,7 @@ LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_
 	if ((theta < 0.0) || (npf_index(theta / Deg2Rad) * Quantum > 360)) {
 	    (void) fprintf(stderr,
 			   "Fatal:  Theta out of range: %g %s\n",
-			   theta / convert, (NEAR_ZERO(convert - 1.0, SMALL_FASTF)) ? "radians" : "degrees");
+			   theta / convert, (ZERO(convert - 1.0)) ? "radians" : "degrees");
 	    Warnings = 2;
 	}
 	if ((rho < 0.0) || (rho > 1.0)) {
@@ -176,7 +176,7 @@ LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_
     gap_min = gap_max = -1;
     for (angle = floor(arc_min); angle < ceil(arc_max); angle+=Quantum) {
 	/* if == -1 */
-	if (NEAR_ZERO(*(Table + npf_index(angle)) + 1.0, SMALL_FASTF)) {
+	if (ZERO(*(Table + npf_index(angle)) + 1.0)) {
 	    *(Table + npf_index(angle)) = 0.0;
 	    if (gap_min == -1)
 		gap_min = angle;

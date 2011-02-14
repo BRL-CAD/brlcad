@@ -88,10 +88,10 @@ Basis(int i /* interval number (0 through k) */, int k /* degree of basis functi
 	denom1 = knots[i+k-1] - knots[i];
 	denom2 = knots[i+k] - knots[i+1];
 
-	if (!NEAR_ZERO(denom1, SMALL_FASTF))
+	if (!ZERO(denom1))
 	    retval += (t - knots[i])*Basis(i, k-1, t)/denom1;
 
-	if (!NEAR_ZERO(denom2, SMALL_FASTF))
+	if (!ZERO(denom2))
 	    retval += (knots[i+k] - t)*Basis(i+1, k-1, t)/denom2;
 
 	return retval;

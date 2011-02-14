@@ -92,7 +92,7 @@ get_args(int argc, char **argv)
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
 
-		if (NEAR_ZERO(d, SMALL_FASTF)) {
+		if (ZERO(d)) {
 		    bu_exit(2, "bwmod: cannot divide by zero!\n");
 		}
 		val[ numop++ ] = 1.0 / d;
@@ -108,7 +108,7 @@ get_args(int argc, char **argv)
 	    case 'r':
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
-		if (NEAR_ZERO(d, SMALL_FASTF)) {
+		if (ZERO(d)) {
 		    bu_exit(2, "bwmod: zero root!\n");
 		}
 		val[ numop++ ] = 1.0 / d;
