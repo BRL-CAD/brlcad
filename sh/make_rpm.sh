@@ -88,7 +88,7 @@ if test "$DNAME" = "fedora" ;then
     fcheck libxslt
     fcheck mesa-libGL-devel
     fcheck pango-devel
-    fcheck ncurses-devel
+    #fcheck ncurses-devel
 fi
 
 if test "$DNAME" = "openSUSE" ;then
@@ -102,7 +102,7 @@ if test "$DNAME" = "openSUSE" ;then
     fcheck libxslt
     fcheck Mesa-devel
     fcheck pango-devel
-    fcheck ncurses-devel
+    #fcheck ncurses-devel
 fi
 
 if [ $E -eq 1 ]; then
@@ -154,7 +154,7 @@ fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/Anim_Tutorial/ind
  "$TMPDIR/brlcad-doc-animation.desktop"
 
 # compile and install in tmp dir
-./configure --enable-optimized --with-ogl --disable-debug
+./configure --enable-optimized --enable-almost-everything --with-ogl --disable-debug
 make -j`getconf _NPROCESSORS_ONLN`
 fakeroot make install DESTDIR=`pwd`"/$TMPDIR/tmp"
 

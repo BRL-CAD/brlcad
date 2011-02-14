@@ -28,7 +28,7 @@ build: build-stamp
 build-stamp:
 	dh_testdir
 
-	./configure --enable-optimized --with-ogl --disable-debug && \
+	./configure --enable-optimized --enable-almost-everything --with-ogl --disable-debug && \
 	$(MAKE) $(PARALLEL_OPTIONS)
 
 	touch build-stamp
