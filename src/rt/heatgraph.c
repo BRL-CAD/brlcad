@@ -317,7 +317,7 @@ timeTable_process(fastf_t **timeTable, struct application *ap, FBIO *fbp)
 		Gcolor = 255;
 		Bcolor = 0;
 	    }
-	    if (timeTable[x][y] == minTime) {
+	    if (timeTable[x][y] <= minTime) {
 		Rcolor = Gcolor = Bcolor = 1;
 	    }
 	    if (timeTable[x][y] > minTime && timeTable[x][y] <= maxTime) {
