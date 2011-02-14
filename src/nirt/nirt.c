@@ -103,7 +103,6 @@ char *db_name;
 
 void printusage(void)
 {
-    bu_log("%s", USAGE USAGE2);
     bu_log("Usage: 'nirt [options] model.g objects...'\n");
     bu_log("Options:\n");
     bu_log(" -b         back out of geometry before first shot\n");
