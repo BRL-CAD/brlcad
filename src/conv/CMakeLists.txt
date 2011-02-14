@@ -132,6 +132,8 @@ BRLCAD_ADDEXEC(poly-bot poly-bot.c libwdb STRICT)
 
 BRLCAD_ADDEXEC(proe-g proe-g.c "libwdb librt libbu" STRICT)
 
+BRLCAD_ADDEXEC(shp-g "shp/shp-g.c shp/shapelib/safileio.c shp/shapelib/shpopen.c" "libwdb librt libbu" STRICT)
+
 BRLCAD_ADDEXEC(viewpoint-g viewpoint-g.c "libwdb librt libbu" STRICT)
 
 add_executable(g-xxx_facets g-xxx_facets.c)
