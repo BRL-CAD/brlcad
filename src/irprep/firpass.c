@@ -303,7 +303,7 @@ int main(int argc, char **argv)
 	(void)scanf("%d", &typeout);
 
 	/*  Get facet file name.  */
-	if ( typeout == 0 )
+	if (typeout == 0)
 	{
 	    (void)printf("Enter name of facet file to be created. ");
 	    (void)printf("(15 char max)  ");
@@ -322,7 +322,7 @@ int main(int argc, char **argv)
 	}
 
 	/*  Get generic file name.  */
-	if ( typeout == 1 )
+	if (typeout == 1)
 	{
 	    (void)printf("Enter name of generic file to be created. ");
 	    (void)printf("(15 char max)  ");
@@ -331,7 +331,7 @@ int main(int argc, char **argv)
 	}
 
 	/*  Get geometric file name.  */
-	if ( typeout == 2 )
+	if (typeout == 2)
 	{
 	    (void)printf("Do you want a readable (0) or non-readable (1) ");
 	    (void)printf("geometric file?  ");
@@ -464,18 +464,18 @@ int main(int argc, char **argv)
 	(void)printf("Mallocing arrays.\n");
 	(void)fflush(stdout);
 
-	region = (struct table *)bu_malloc(num * sizeof (*region), "region" );
-	overlaps = (struct structovr *)bu_malloc(num * sizeof (*overlaps), "overlaps" );
+	region = (struct table *)bu_malloc(num * sizeof (*region), "region");
+	overlaps = (struct structovr *)bu_malloc(num * sizeof (*overlaps), "overlaps");
 
 	for (i=0; i<num; i++)
 	{
-	    region[i].adjreg = (int *)bu_malloc(num * sizeof (int), "region[i]adjreg" );
-	    region[i].ssurarea[0] = (double *)bu_malloc(num * sizeof (double), "region[i].ssurarea[0]" );
-	    region[i].ssurarea[1] = (double *)bu_malloc(num * sizeof (double), "region[i].ssurarea[1]" );
-	    region[i].ssurarea[2] = (double *)bu_malloc(num * sizeof (double), "region[i].ssurarea[2]" );
+	    region[i].adjreg = (int *)bu_malloc(num * sizeof (int), "region[i]adjreg");
+	    region[i].ssurarea[0] = (double *)bu_malloc(num * sizeof (double), "region[i].ssurarea[0]");
+	    region[i].ssurarea[1] = (double *)bu_malloc(num * sizeof (double), "region[i].ssurarea[1]");
+	    region[i].ssurarea[2] = (double *)bu_malloc(num * sizeof (double), "region[i].ssurarea[2]");
 
-	    overlaps[i].ovrreg = (int *)bu_malloc(num * sizeof (int), "overlaps[i].ovrreg" );
-	    overlaps[i].ovrdep = (double *)bu_malloc(num * sizeof (double), "overlaps[i].ovrdep" );
+	    overlaps[i].ovrreg = (int *)bu_malloc(num * sizeof (int), "overlaps[i].ovrreg");
+	    overlaps[i].ovrdep = (double *)bu_malloc(num * sizeof (double), "overlaps[i].ovrdep");
 	}
 
 	/*  Now that the arrays are 'dimensioned' zero ALL variables.  */
@@ -553,7 +553,7 @@ int main(int argc, char **argv)
 
 	/*  Print center of bounding rpp, diagonal, maximum, &  */
 	/*  minimum.  */
-	(void)printf("Center of bounding rpp ( %f, %f, %f )\n",
+	(void)printf("Center of bounding rpp (%f, %f, %f)\n",
 		     center[X], center[Y], center[Z]);
 	(void)printf("Length of diagonal of bounding rpp:  %f\n",
 		     diagonal);
@@ -663,7 +663,7 @@ int main(int argc, char **argv)
 	ap.a_ray.r_dir[Y] = r[Y];
 	ap.a_ray.r_dir[Z] = r[Z];
 
-	while ( strtpt[Z] <= zmax )
+	while (strtpt[Z] <= zmax)
 	{
 
 	    /*  Set to show no previous shots.  */
@@ -693,10 +693,10 @@ int main(int argc, char **argv)
 	    lnormal[Z]=0.;
 
 	    /*  Call rt_shootray.  */
-	    (void)rt_shootray( &ap );
+	    (void)rt_shootray(&ap);
 
 	    strtpt[Y] += gridspace;
-	    if ( strtpt[Y] > ymax )
+	    if (strtpt[Y] > ymax)
 	    {
 		strtpt[Y] = ymin + gridspace / 2.;
 		strtpt[Z] += gridspace;
@@ -879,7 +879,7 @@ int main(int argc, char **argv)
 
 	/*  Compute the volume & surface area of each region.  */
 	i=0;
-	while ( i < num )
+	while (i < num)
 	{
 	    /*  Finish computing centroids.  */
 	    /*
@@ -897,7 +897,7 @@ int main(int argc, char **argv)
 	     *		(void)printf("\tcummulative volume:  %f", total);
 	     *		(void)fflush(stdout);
 	     */
-	    if ( (total < -ZEROTOL) || (ZEROTOL < total) )
+	    if ((total < -ZEROTOL) || (ZEROTOL < total))
 	    {
 		region[i].centroid[X] = region[i].centroid[X]/total;
 		region[i].centroid[Y] = region[i].centroid[Y]/total;
@@ -917,23 +917,23 @@ int main(int argc, char **argv)
 		/*  START # 1040  */
               if ((!NEAR_ZERO(region[i].cumvol[0],FLT_MIN)) &&
                   (!NEAR_ZERO(region[i].cumvol[1],FLT_MIN)) &&
-                  (!NEAR_ZERO(region[i].cumvol[2],FLT_MIN)) )
+                  (!NEAR_ZERO(region[i].cumvol[2],FLT_MIN)))
 		{
 		    /*  START # 1045  */
 		    diff = region[i].cumvol[0] - region[i].cumvol[1];
 		    if (diff < 0.) diff = (-diff);
-		    if ( (diff / region[i].cumvol[0]) > VOLVAR) flag = 1;
-		    if ( (diff / region[i].cumvol[1]) > VOLVAR) flag = 1;
+		    if ((diff / region[i].cumvol[0]) > VOLVAR) flag = 1;
+		    if ((diff / region[i].cumvol[1]) > VOLVAR) flag = 1;
 
 		    diff = region[i].cumvol[0] - region[i].cumvol[2];
 		    if (diff < 0.) diff = (-diff);
-		    if ( (diff / region[i].cumvol[0]) > VOLVAR) flag = 1;
-		    if ( (diff / region[i].cumvol[2]) > VOLVAR) flag = 1;
+		    if ((diff / region[i].cumvol[0]) > VOLVAR) flag = 1;
+		    if ((diff / region[i].cumvol[2]) > VOLVAR) flag = 1;
 
 		    diff = region[i].cumvol[1] - region[i].cumvol[2];
 		    if (diff < 0.) diff = (-diff);
-		    if ( (diff / region[i].cumvol[1]) > VOLVAR) flag = 1;
-		    if ( (diff / region[i].cumvol[2]) > VOLVAR) flag = 1;
+		    if ((diff / region[i].cumvol[1]) > VOLVAR) flag = 1;
+		    if ((diff / region[i].cumvol[2]) > VOLVAR) flag = 1;
 		}					/*  END # 1045  */
 
 		else if ((NEAR_ZERO(region[i].cumvol[0],FLT_MIN)) ||
@@ -985,18 +985,18 @@ int main(int argc, char **argv)
 		    /*  START # 1055  */
 		    diff = region[i].surarea[0] - region[i].surarea[1];
 		    if (diff < 0.) diff = (-diff);
-		    if ( (diff / region[i].surarea[0]) > VOLVAR) flag = 1;
-		    if ( (diff / region[i].surarea[1]) > VOLVAR) flag = 1;
+		    if ((diff / region[i].surarea[0]) > VOLVAR) flag = 1;
+		    if ((diff / region[i].surarea[1]) > VOLVAR) flag = 1;
 
 		    diff = region[i].surarea[0] - region[i].surarea[2];
 		    if (diff < 0.) diff = (-diff);
-		    if ( (diff / region[i].surarea[0]) > VOLVAR) flag = 1;
-		    if ( (diff / region[i].surarea[2]) > VOLVAR) flag = 1;
+		    if ((diff / region[i].surarea[0]) > VOLVAR) flag = 1;
+		    if ((diff / region[i].surarea[2]) > VOLVAR) flag = 1;
 
 		    diff = region[i].surarea[1] - region[i].surarea[2];
 		    if (diff < 0.) diff = (-diff);
-		    if ( (diff / region[i].surarea[1]) > VOLVAR) flag = 1;
-		    if ( (diff / region[i].surarea[2]) > VOLVAR) flag = 1;
+		    if ((diff / region[i].surarea[1]) > VOLVAR) flag = 1;
+		    if ((diff / region[i].surarea[2]) > VOLVAR) flag = 1;
 		}					/*  END # 1055  */
 
                 else if ((NEAR_ZERO(region[i].surarea[0],FLT_MIN)) ||
@@ -1061,25 +1061,25 @@ int main(int argc, char **argv)
 			    diff = region[i].ssurarea[0][j]
 				- region[i].ssurarea[1][j];
 			    if (diff < 0.) diff = (-diff);
-			    if ( (diff / region[i].ssurarea[0][j]) > VOLVAR)
+			    if ((diff / region[i].ssurarea[0][j]) > VOLVAR)
 				flag = 1;
-			    if ( (diff / region[i].ssurarea[1][j]) > VOLVAR)
+			    if ((diff / region[i].ssurarea[1][j]) > VOLVAR)
 				flag = 1;
 
 			    diff = region[i].ssurarea[0][j]
 				- region[i].ssurarea[2][j];
 			    if (diff < 0.) diff = (-diff);
-			    if ( (diff / region[i].ssurarea[0][j]) > VOLVAR)
+			    if ((diff / region[i].ssurarea[0][j]) > VOLVAR)
 				flag = 1;
-			    if ( (diff / region[i].ssurarea[2][j]) > VOLVAR)
+			    if ((diff / region[i].ssurarea[2][j]) > VOLVAR)
 				flag = 1;
 
 			    diff = region[i].ssurarea[1][j]
 				- region[i].ssurarea[2][j];
 			    if (diff < 0.) diff = (-diff);
-			    if ( (diff / region[i].ssurarea[1][j]) > VOLVAR)
+			    if ((diff / region[i].ssurarea[1][j]) > VOLVAR)
 				flag = 1;
-			    if ( (diff / region[i].ssurarea[2][j]) > VOLVAR)
+			    if ((diff / region[i].ssurarea[2][j]) > VOLVAR)
 				flag = 1;
 			}				/*  END # 1065  */
 
@@ -1143,25 +1143,25 @@ int main(int argc, char **argv)
 			diff = region[i].cumfs[k][0]
 			    - region[i].cumfs[k][1];
 			if (diff < 0.) diff = (-diff);
-			if ( (diff / region[i].cumfs[k][0]) > VOLVAR)
+			if ((diff / region[i].cumfs[k][0]) > VOLVAR)
 			    flag = 1;
-			if ( (diff / region[i].cumfs[k][1]) > VOLVAR)
+			if ((diff / region[i].cumfs[k][1]) > VOLVAR)
 			    flag = 1;
 
 			diff = region[i].cumfs[k][0]
 			    - region[i].cumfs[k][2];
 			if (diff < 0.) diff = (-diff);
-			if ( (diff / region[i].cumfs[k][0]) > VOLVAR)
+			if ((diff / region[i].cumfs[k][0]) > VOLVAR)
 			    flag = 1;
-			if ( (diff / region[i].cumfs[k][2]) > VOLVAR)
+			if ((diff / region[i].cumfs[k][2]) > VOLVAR)
 			    flag = 1;
 
 			diff = region[i].cumfs[k][1]
 			    - region[i].cumfs[k][2];
 			if (diff < 0.) diff = (-diff);
-			if ( (diff / region[i].cumfs[k][1]) > VOLVAR)
+			if ((diff / region[i].cumfs[k][1]) > VOLVAR)
 			    flag = 1;
-			if ( (diff / region[i].cumfs[k][2]) > VOLVAR)
+			if ((diff / region[i].cumfs[k][2]) > VOLVAR)
 			    flag = 1;
 		    }				/*  END # 1090  */
 
@@ -1195,12 +1195,12 @@ int main(int argc, char **argv)
 	     *		(void)fflush(stdout);
 	     */
 
-	    if ( ( (-NORMTOL < region[i].cumnorm[X]) &&
-		   (region[i].cumnorm[X] < NORMTOL) ) &&
-		 ( (-NORMTOL < region[i].cumnorm[Y]) &&
-		   (region[i].cumnorm[Y] < NORMTOL) ) &&
-		 ( (-NORMTOL < region[i].cumnorm[Z]) &&
-		   (region[i].cumnorm[Z] < NORMTOL) ) )
+	    if (((-NORMTOL < region[i].cumnorm[X]) &&
+		   (region[i].cumnorm[X] < NORMTOL)) &&
+		 ((-NORMTOL < region[i].cumnorm[Y]) &&
+		   (region[i].cumnorm[Y] < NORMTOL)) &&
+		 ((-NORMTOL < region[i].cumnorm[Z]) &&
+		   (region[i].cumnorm[Z] < NORMTOL)))
 	    {
 		region[i].cumnorm[X] = 0.;
 		region[i].cumnorm[Y] = 0.;
@@ -1209,7 +1209,7 @@ int main(int argc, char **argv)
 
 	    else
 	    {
-		denom = sqrt( region[i].cumnorm[X] * region[i].cumnorm[X] +
+		denom = sqrt(region[i].cumnorm[X] * region[i].cumnorm[X] +
 			      region[i].cumnorm[Y] * region[i].cumnorm[Y] +
 			      region[i].cumnorm[Z] * region[i].cumnorm[Z]);
 		if (denom > ZEROTOL)
@@ -1233,7 +1233,7 @@ int main(int argc, char **argv)
 	{ (void)printf("\n\n\nPRINT OUT STRUCTURE\n");
 	(void)fflush(stdout);
 	i=0;
-	while ( i < num )
+	while (i < num)
 	{
 	    (void)printf("region #:  %d, name:  %s\n", (i+1),
 			 region[i].regname);
@@ -1340,7 +1340,7 @@ int main(int argc, char **argv)
 	if (iwrite == 1)
 	{
 	    i=0;
-	    while ( i < num )
+	    while (i < num)
 	    {
 		(void)fprintf(fp, "region #:  %d, name:  %s\n",
 			      (i+1), region[i].regname);
@@ -1844,7 +1844,7 @@ int main(int argc, char **argv)
 
 	/*  Open and write to geometric file if needed.  */
 
-	if ( (typeout == 2) || (typeout==3) )
+	if ((typeout == 2) || (typeout==3))
 	{
 	    /*  START # 13  */
 
@@ -2064,7 +2064,7 @@ int main(int argc, char **argv)
 		    ii = 0;
 		    for (j=0; j<num; j++)
 		    {
-			if ( (region[i].adjreg[j] == 1) && (ii < 20) )
+			if ((region[i].adjreg[j] == 1) && (ii < 20))
 			{
 			    (void)fprintf(fp6, "%d,", (j+1));
 			    (void)fflush(fp6);
@@ -2221,9 +2221,9 @@ int main(int argc, char **argv)
 	/*  Write overlaps to error file.  */
 	(void)fprintf(fp3, "\n\n\tOVERLAPS\n\n");
 	(void)fflush(fp3);
-	for (i=0; i<num; i++)
+	for (i = 0; i < num; i++)
 	{
-	    for (j=0; j<num; j++)
+	    for (j = 0; j < num; j++)
 	    {
 		if (overlaps[i].ovrreg[j] == 1)
 		{
@@ -2248,10 +2248,10 @@ int main(int argc, char **argv)
 	/*  Write number of adjacent regions to error file.  */
 	(void)fprintf(fp3, "\n\nREGION NUMBER     NUMBER OF ADJACENT REGIONS\n");
 	(void)fflush(fp3);
-	for (i=0; i<num; i++)
+	for (i = 0; i < num; i++)
 	{
 	    numadjreg = 0;
-	    for (j=0; j<num; j++)
+	    for (j = 0; j < num; j++)
 	    {
 		if (region[i].adjreg[j] == 1) numadjreg++;
 	    }
@@ -2280,14 +2280,14 @@ int main(int argc, char **argv)
 	(void)printf("\tsecond pass file created:  %s\n", spfile);
 	(void)printf("\terror file created:  %s\n", fileerr);
 	(void)printf("\tregion # & name file created:  %s\n", filernn);
-	if ( typeout == 0 )
+	if (typeout == 0)
 	{
 	    (void)printf("\tfacet file created:  %s\n", facfile);
 	    (void)printf("\t  (format is PRISM %d.0)\n\n\n", prmrel);
 	}
-	if ( typeout == 1 ) (void)printf(
+	if (typeout == 1) (void)printf(
 	    "\tgeneric file created:  %s\n\n\n", filegen);
-	if ( (typeout == 2) || (typeout == 3) ) (void)printf(
+	if ((typeout == 2) || (typeout == 3)) (void)printf(
 	    "\tgeometric file created:  %s\n\n\n", filegeo);
 	(void)fflush(stdout);
 
@@ -2299,7 +2299,7 @@ int main(int argc, char **argv)
 	(void)printf("Freeing memory.\n");
 	(void)fflush(stdout);
 
-	for (i=0; i<num; i++)
+	for (i = 0; i < num; i++)
 	{
 	    bu_free(region[i].adjreg, "region[i].adjreg");
 	    bu_free(region[i].ssurarea[0], "region[i].ssurarea[0]");
@@ -2394,7 +2394,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 	    + hitp->hit_normal[Y] * ap_p->a_ray.r_dir[Y]
 	    + hitp->hit_normal[Z] * ap_p->a_ray.r_dir[Z];
 	if (costheta1 < 0) costheta1 = (-costheta1);
-	if ( costheta1 > COSTOL)
+	if (costheta1 > COSTOL)
 	    region[icur].surarea[whichview] += (area/costheta1);
 
 	if (
@@ -2404,13 +2404,13 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 	    ((hitp->hit_point[Y] - leavept[Y]) < ADJTOL) &&
 	    (-ADJTOL < (hitp->hit_point[Z] - leavept[Z])) &&
 	    ((hitp->hit_point[Z] - leavept[Z]) < ADJTOL)
-	    )
+	   )
 
 	{
 	    /*  Find adjacent regions.  Occasionally a  */
 	    /*  a region will seem to be adjacent to self,  */
 	    /*  disreguard this.  */
-	    if ( icur != iprev)
+	    if (icur != iprev)
 	    {
 		region[icur].adjreg[iprev]=1;
 		region[iprev].adjreg[icur]=1;
@@ -2420,8 +2420,8 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 	    costheta = lnormal[X]*ap_p->a_ray.r_dir[X]
 		+ lnormal[Y]*ap_p->a_ray.r_dir[Y]
 		+ lnormal[Z]*ap_p->a_ray.r_dir[Z];
-	    if ( costheta < 0 ) costheta = (-costheta);
-	    if ( costheta > COSTOL )
+	    if (costheta < 0) costheta = (-costheta);
+	    if (costheta > COSTOL)
 	    {
 		region[icur].ssurarea[whichview][iprev] +=
 		    (area/costheta);
@@ -2460,7 +2460,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 	    ((hitp->hit_point[Y] - leavept[Y]) < ADJTOL) &&
 	    (-ADJTOL < (hitp->hit_point[Z] - leavept[Z])) &&
 	    ((hitp->hit_point[Z] - leavept[Z]) < ADJTOL)
-	    )
+	   )
 	{
 	    if ((prevregid == 0) && (pp->pt_regionp->reg_regionid != 0))
 	    {
@@ -2642,8 +2642,8 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 	costheta1 = hitp->hit_normal[X] * ap_p->a_ray.r_dir[X]
 	    + hitp->hit_normal[Y] * ap_p->a_ray.r_dir[Y]
 	    + hitp->hit_normal[Z] * ap_p->a_ray.r_dir[Z];
-	if ( costheta1 < 0 ) costheta1 = (-costheta1);
-	if ( costheta1 > COSTOL )
+	if (costheta1 < 0) costheta1 = (-costheta1);
+	if (costheta1 > COSTOL)
 	    region[icur].surarea[whichview] += (area/costheta1);
 
 	/*  Save normal of leaving ray.  */
@@ -2679,11 +2679,11 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 	    region[icur].cumvol[whichview] + (distance * area);
 
 	/*  Find centroid.  */
-	region[icur].centroid[X] += ( distance * area * (enterpt[X] +
+	region[icur].centroid[X] += (distance * area * (enterpt[X] +
 							 hitp->hit_point[X]) / 2.);
-	region[icur].centroid[Y] += ( distance * area * (enterpt[Y] +
+	region[icur].centroid[Y] += (distance * area * (enterpt[Y] +
 							 hitp->hit_point[Y]) / 2.);
-	region[icur].centroid[Z] += ( distance * area * (enterpt[Z] +
+	region[icur].centroid[Z] += (distance * area * (enterpt[Z] +
 							 hitp->hit_point[Z]) / 2.);
 
 	/*  Find the cummulative normal & free surface area  */
@@ -2751,8 +2751,8 @@ ovrlap(struct application *ap_p, struct partition *PartHeadp, struct region *reg
      *	(void)fflush(stdout);
      */
 
-    a=(int)reg1->reg_bit;
-    b=(int)reg2->reg_bit;
+    a = (int)reg1->reg_bit;
+    b = (int)reg2->reg_bit;
 
     /*
      *	(void)printf("a=%d, b=%d.  ", a, b);
