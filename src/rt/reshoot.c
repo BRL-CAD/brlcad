@@ -314,7 +314,6 @@ main(int argc, char **argv)
     static struct rt_i *rtip;	/* rt_dirbuild returns this */
     char idbuf[2048] = {0};	/* First ID record info */
 
-    int arg_count;
     int status = 0;
     struct bu_vls buf;
     struct shot sh;
@@ -322,7 +321,7 @@ main(int argc, char **argv)
 
     progname = argv[0];
 
-    if ( argc < 3 )  {
+    if (argc < 3) {
 	usage("insufficient args\n");
     }
 
@@ -346,7 +345,7 @@ main(int argc, char **argv)
      * Here you identify any object trees in the database that you
      * want included in the ray trace.
      */
-    while ( argc > 2 )  {
+    while (argc > 2) {
 	if ( rt_gettree(rtip, argv[2]) < 0 )
 	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[0]);
 	argc--;
