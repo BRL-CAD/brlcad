@@ -58,7 +58,7 @@ int main(int argc, char **argv)
     L = (argc > 1) ? atoi(argv[1]) : 512;
 
     while (!feof(stdin)) {
-	n = fread( data, sizeof(*data), L, stdin );
+	n = fread(data, sizeof(*data), L, stdin);
 	if (n <= 0)
 	    break;
 	if ( n < L )
