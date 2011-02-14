@@ -915,9 +915,9 @@ int main(int argc, char **argv)
 	    if (ifire == 0)
 	    {
 		/*  START # 1040  */
-		if ( (region[i].cumvol[0] != 0.) &&
-		     (region[i].cumvol[1] != 0.) &&
-		     (region[i].cumvol[2] != 0.) )
+              if ((!NEAR_ZERO(region[i].cumvol[0],FLT_MIN)) &&
+                  (!NEAR_ZERO(region[i].cumvol[1],FLT_MIN)) &&
+                  (!NEAR_ZERO(region[i].cumvol[2],FLT_MIN)) )
 		{
 		    /*  START # 1045  */
 		    diff = region[i].cumvol[0] - region[i].cumvol[1];
@@ -936,9 +936,9 @@ int main(int argc, char **argv)
 		    if ( (diff / region[i].cumvol[2]) > VOLVAR) flag = 1;
 		}					/*  END # 1045  */
 
-		else if ( (region[i].cumvol[0] == 0.) ||
-			  (region[i].cumvol[1] == 0.) ||
-			  (region[i].cumvol[2] == 0.) )
+		else if ((NEAR_ZERO(region[i].cumvol[0],FLT_MIN)) ||
+			 (NEAR_ZERO(region[i].cumvol[1],FLT_MIN)) ||
+			 (NEAR_ZERO(region[i].cumvol[2],FLT_MIN)))
 		{
 		    flag = 2;
 		}
@@ -978,9 +978,9 @@ int main(int argc, char **argv)
 	    if (ifire == 0)
 	    {
 		/*  START # 1050  */
-		if ( (region[i].surarea[0] != 0.) &&
-		     (region[i].surarea[1] != 0.) &&
-		     (region[i].surarea[2] != 0.) )
+              if ((!NEAR_ZERO(region[i].surarea[0],FLT_MIN)) &&
+                  (!NEAR_ZERO(region[i].surarea[1],FLT_MIN)) &&
+                  (!NEAR_ZERO(region[i].surarea[2],FLT_MIN)))
 		{
 		    /*  START # 1055  */
 		    diff = region[i].surarea[0] - region[i].surarea[1];
@@ -999,9 +999,9 @@ int main(int argc, char **argv)
 		    if ( (diff / region[i].surarea[2]) > VOLVAR) flag = 1;
 		}					/*  END # 1055  */
 
-		else if ( (region[i].surarea[0] == 0.) ||
-			  (region[i].surarea[1] == 0.) ||
-			  (region[i].surarea[2] == 0.) )
+                else if ((NEAR_ZERO(region[i].surarea[0],FLT_MIN)) ||
+			 (NEAR_ZERO(region[i].surarea[1],FLT_MIN)) ||
+			 (NEAR_ZERO(region[i].surarea[2],FLT_MIN)))
 		{
 		    flag = 2;
 		}
@@ -1053,9 +1053,9 @@ int main(int argc, char **argv)
 		    if (ifire == 0)
 		    {
 			/*  START # 1060  */
-			if ( (region[i].ssurarea[0][j] != 0.) &&
-			     (region[i].ssurarea[1][j] != 0.) &&
-			     (region[i].ssurarea[2][j] != 0.) )
+                      if ((!NEAR_ZERO(region[i].ssurarea[0][j],FLT_MIN)) &&
+                          (!NEAR_ZERO(region[i].ssurarea[1][j],FLT_MIN)) &&
+                          (!NEAR_ZERO(region[i].ssurarea[2][j],FLT_MIN)))
 			{
 			    /*  START # 1065  */
 			    diff = region[i].ssurarea[0][j]
@@ -1083,9 +1083,9 @@ int main(int argc, char **argv)
 				flag = 1;
 			}				/*  END # 1065  */
 
-			else if ( (region[i].ssurarea[0][j] == 0.) ||
-				  (region[i].ssurarea[1][j] == 0.) ||
-				  (region[i].ssurarea[2][j] == 0.) )
+                      else if ((NEAR_ZERO(region[i].ssurarea[0][j],FLT_MIN)) ||
+                               (NEAR_ZERO(region[i].ssurarea[1][j],FLT_MIN)) ||
+                               (NEAR_ZERO(region[i].ssurarea[2][j],FLT_MIN)))
 			{
 			    flag = 2;
 			}
@@ -1135,9 +1135,9 @@ int main(int argc, char **argv)
 		if (ifire == 0)
 		{
 		    /*  START # 1080  */
-		    if ( (region[i].cumfs[k][0] != 0.) &&
-			 (region[i].cumfs[k][1] != 0.) &&
-			 (region[i].cumfs[k][2] != 0.) )
+                  if ((!NEAR_ZERO(region[i].cumfs[k][0],FLT_MIN)) &&
+                      (!NEAR_ZERO(region[i].cumfs[k][1],FLT_MIN)) &&
+                      (!NEAR_ZERO(region[i].cumfs[k][2],FLT_MIN)))
 		    {
 			/*  START # 1090  */
 			diff = region[i].cumfs[k][0]
@@ -1165,9 +1165,9 @@ int main(int argc, char **argv)
 			    flag = 1;
 		    }				/*  END # 1090  */
 
-		    else if ( (region[i].cumfs[k][0] == 0.) ||
-			      (region[i].cumfs[k][1] == 0.) ||
-			      (region[i].cumfs[k][2] == 0.) )
+                  else if ((NEAR_ZERO(region[i].cumfs[k][0],FLT_MIN)) ||
+                           (NEAR_ZERO(region[i].cumfs[k][1],FLT_MIN)) ||
+                           (NEAR_ZERO(region[i].cumfs[k][2],FLT_MIN)))
 		    {
 			flag = 2;
 		    }
@@ -1240,7 +1240,7 @@ int main(int argc, char **argv)
 	    (void)printf("\tmaterial code:  %d\n", region[i].mat);
 	    (void)fflush(stdout);
 
-	    if (region[i].cumvol[1] == 1.)
+	    if (NEAR_EQUAL(region[i].cumvol[1],1.,FLT_MIN))
 	    {
 		(void)printf("\tvolume:  %f - difference is above",
 			     region[i].cumvol[0]);
@@ -1254,7 +1254,7 @@ int main(int argc, char **argv)
 		(void)fflush(stdout);
 	    }
 
-	    if (region[i].surarea[1] == 1.)
+	    if (NEAR_EQUAL(region[i].surarea[1],1.,FLT_MIN))
 	    {
 		(void)printf("\tarea:  %f - difference is above",
 			     region[i].surarea[0]);
@@ -1276,36 +1276,44 @@ int main(int argc, char **argv)
 			 region[i].cumnorm[X], region[i].cumnorm[Y],
 			 region[i].cumnorm[Z]);
 	    (void)fflush(stdout);
+
 	    (void)printf("\text sur air:  %f", region[i].cumfs[0][0]);
-	    if (region[i].cumfs[0][1] == 0.) (void)printf(" - ok\n");
-	    if (region[i].cumfs[0][1] == 1.) (void)printf(" - not ok\n");
-	    if (region[i].cumfs[0][1] == 2.) (void)printf(" - none\n");
+	    if (NEAR_ZERO(region[i].cumfs[0][1],FLT_MIN)) (void)printf(" - ok\n");
+	    if (NEAR_EQUAL(region[i].cumfs[0][1],1.,FLT_MIN)) (void)printf(" - not ok\n");
+	    if (NEAR_EQUAL(region[i].cumfs[0][1],2.,FLT_MIN)) (void)printf(" - none\n");
+
 	    (void)printf("\tcrew comp air:  %f", region[i].cumfs[1][0]);
-	    if (region[i].cumfs[1][1] == 0.) (void)printf(" - ok\n");
-	    if (region[i].cumfs[1][1] == 1.) (void)printf(" - not ok\n");
-	    if (region[i].cumfs[1][1] == 2.) (void)printf(" - none\n");
+	    if (NEAR_ZERO(region[i].cumfs[1][1],FLT_MIN)) (void)printf(" - ok\n");
+	    if (NEAR_EQUAL(region[i].cumfs[1][1],1.,FLT_MIN)) (void)printf(" - not ok\n");
+	    if (NEAR_EQUAL(region[i].cumfs[1][1],2.,FLT_MIN)) (void)printf(" - none\n");
+
 	    (void)printf("\teng comp air:  %f", region[i].cumfs[2][0]);
-	    if (region[i].cumfs[2][1] == 0.) (void)printf(" - ok\n");
-	    if (region[i].cumfs[2][1] == 1.) (void)printf(" - not ok\n");
-	    if (region[i].cumfs[2][1] == 2.) (void)printf(" - none\n");
+	    if (NEAR_ZERO(region[i].cumfs[2][1],FLT_MIN)) (void)printf(" - ok\n");
+	    if (NEAR_EQUAL(region[i].cumfs[2][1],1.,FLT_MIN)) (void)printf(" - not ok\n");
+	    if (NEAR_EQUAL(region[i].cumfs[2][1],2.,FLT_MIN)) (void)printf(" - none\n");
+
 	    (void)printf("\tclosed comp air:  %f", region[i].cumfs[3][0]);
-	    if (region[i].cumfs[3][1] == 0.) (void)printf(" - ok\n");
-	    if (region[i].cumfs[3][1] == 1.) (void)printf(" - not ok\n");
-	    if (region[i].cumfs[3][1] == 2.) (void)printf(" - none\n");
+	    if (NEAR_ZERO(region[i].cumfs[3][1],FLT_MIN)) (void)printf(" - ok\n");
+	    if (NEAR_EQUAL(region[i].cumfs[3][1],1.,FLT_MIN)) (void)printf(" - not ok\n");
+	    if (NEAR_EQUAL(region[i].cumfs[3][1],2.,FLT_MIN)) (void)printf(" - none\n");
+
 	    (void)printf("\texhaust air:  %f", region[i].cumfs[4][0]);
-	    if (region[i].cumfs[4][1] == 0.) (void)printf(" - ok\n");
-	    if (region[i].cumfs[4][1] == 1.) (void)printf(" - not ok\n");
-	    if (region[i].cumfs[4][1] == 2.) (void)printf(" - none\n");
+	    if (NEAR_ZERO(region[i].cumfs[4][1],FLT_MIN)) (void)printf(" - ok\n");
+	    if (NEAR_EQUAL(region[i].cumfs[4][1],1.,FLT_MIN)) (void)printf(" - not ok\n");
+	    if (NEAR_EQUAL(region[i].cumfs[4][1],2.,FLT_MIN)) (void)printf(" - none\n");
+
 	    (void)printf("\tgen air 1:  %f", region[i].cumfs[5][0]);
-	    if (region[i].cumfs[5][1] == 0.) (void)printf(" - ok\n");
-	    if (region[i].cumfs[5][1] == 1.) (void)printf(" - not ok\n");
-	    if (region[i].cumfs[5][1] == 2.) (void)printf(" - none\n");
+	    if (NEAR_ZERO(region[i].cumfs[5][1],FLT_MIN)) (void)printf(" - ok\n");
+	    if (NEAR_EQUAL(region[i].cumfs[5][1],1.,FLT_MIN)) (void)printf(" - not ok\n");
+	    if (NEAR_EQUAL(region[i].cumfs[5][1],2.,FLT_MIN)) (void)printf(" - none\n");
+
 	    (void)printf("\tgen air 2:  %f", region[i].cumfs[6][0]);
-	    if (region[i].cumfs[6][1] == 0.) (void)printf(" - ok\n");
-	    if (region[i].cumfs[6][1] == 1.) (void)printf(" - not ok\n");
-	    if (region[i].cumfs[6][1] == 2.) (void)printf(" - none\n");
+	    if (NEAR_ZERO(region[i].cumfs[6][1],FLT_MIN)) (void)printf(" - ok\n");
+	    if (NEAR_EQUAL(region[i].cumfs[6][1],1.,FLT_MIN)) (void)printf(" - not ok\n");
+	    if (NEAR_EQUAL(region[i].cumfs[6][1],2.,FLT_MIN)) (void)printf(" - none\n");
+
 	    (void)fflush(stdout);
-	    for (j=0; j<num; j++)
+	    for (j = 0; j < num; j++)
 	    {
 		if (region[i].adjreg[j] == 1)
 		{
@@ -1314,7 +1322,7 @@ int main(int argc, char **argv)
 		    (void)printf("shared surface area:  %f\n",
 				 region[i].ssurarea[0][j]);
 		    (void)fflush(stdout);
-		    if (region[i].ssurarea[1][j] == 1.)
+		    if (NEAR_EQUAL(region[i].ssurarea[1][j],1.,FLT_MIN))
 		    {
 			(void)printf("\tdifference is above %f variance\n",
 				     VOLVAR);
@@ -1338,7 +1346,7 @@ int main(int argc, char **argv)
 			      (i+1), region[i].regname);
 		(void)fprintf(fp, "\tmaterial code:  %d\n", region[i].mat);
 
-		if (region[i].cumvol[1] == 1.)
+		if (NEAR_EQUAL(region[i].cumvol[1],1.,FLT_MIN))
 		{
 		    (void)fprintf(fp, "\tvolume:  %f - difference is above",
 				  region[i].cumvol[0]);
@@ -1352,7 +1360,7 @@ int main(int argc, char **argv)
 		    (void)fflush(fp);
 		}
 
-		if (region[i].surarea[1] == 1.)
+		if (NEAR_EQUAL(region[i].surarea[1],1.,FLT_MIN))
 		{
 		    (void)fprintf(fp, "\tarea:  %f - difference is above",
 				  region[i].surarea[0]);
@@ -1375,36 +1383,44 @@ int main(int argc, char **argv)
 			      region[i].cumnorm[X], region[i].cumnorm[Y],
 			      region[i].cumnorm[Z]);
 		(void)fflush(fp);
+
 		(void)fprintf(fp, "\text sur air:  %f", region[i].cumfs[0][0]);
-		if (region[i].cumfs[0][1] == 0.) (void)fprintf(fp, " - ok\n");
-		if (region[i].cumfs[0][1] == 1.) (void)fprintf(fp, " - not ok\n");
-		if (region[i].cumfs[0][1] == 2.) (void)fprintf(fp, " - none\n");
+		if (NEAR_ZERO(region[i].cumfs[0][1],FLT_MIN)) (void)fprintf(fp, " - ok\n");
+		if (NEAR_EQUAL(region[i].cumfs[0][1],1.,FLT_MIN)) (void)fprintf(fp, " - not ok\n");
+		if (NEAR_EQUAL(region[i].cumfs[0][1],2.,FLT_MIN)) (void)fprintf(fp, " - none\n");
+
 		(void)fprintf(fp, "\tcrew comp air:  %f", region[i].cumfs[1][0]);
-		if (region[i].cumfs[1][1] == 0.) (void)fprintf(fp, " - ok\n");
-		if (region[i].cumfs[1][1] == 1.) (void)fprintf(fp, " - not ok\n");
-		if (region[i].cumfs[1][1] == 2.) (void)fprintf(fp, " - none\n");
+		if (NEAR_ZERO(region[i].cumfs[1][1],FLT_MIN)) (void)fprintf(fp, " - ok\n");
+		if (NEAR_EQUAL(region[i].cumfs[1][1],1.,FLT_MIN)) (void)fprintf(fp, " - not ok\n");
+		if (NEAR_EQUAL(region[i].cumfs[1][1],2.,FLT_MIN)) (void)fprintf(fp, " - none\n");
+
 		(void)fprintf(fp, "\teng comp air:  %f", region[i].cumfs[2][0]);
-		if (region[i].cumfs[2][1] == 0.) (void)fprintf(fp, " - ok\n");
-		if (region[i].cumfs[2][1] == 1.) (void)fprintf(fp, " - not ok\n");
-		if (region[i].cumfs[2][1] == 2.) (void)fprintf(fp, " - none\n");
+		if (NEAR_ZERO(region[i].cumfs[2][1],FLT_MIN)) (void)fprintf(fp, " - ok\n");
+		if (NEAR_EQUAL(region[i].cumfs[2][1],1.,FLT_MIN)) (void)fprintf(fp, " - not ok\n");
+		if (NEAR_EQUAL(region[i].cumfs[2][1],2.,FLT_MIN)) (void)fprintf(fp, " - none\n");
+
 		(void)fprintf(fp, "\tclsd comp air:  %f", region[i].cumfs[3][0]);
-		if (region[i].cumfs[3][1] == 0.) (void)fprintf(fp, " - ok\n");
-		if (region[i].cumfs[3][1] == 1.) (void)fprintf(fp, " - not ok\n");
-		if (region[i].cumfs[3][1] == 2.) (void)fprintf(fp, " - none\n");
+		if (NEAR_ZERO(region[i].cumfs[3][1],FLT_MIN)) (void)fprintf(fp, " - ok\n");
+		if (NEAR_EQUAL(region[i].cumfs[3][1],1.,FLT_MIN)) (void)fprintf(fp, " - not ok\n");
+		if (NEAR_EQUAL(region[i].cumfs[3][1],2.,FLT_MIN)) (void)fprintf(fp, " - none\n");
+
 		(void)fprintf(fp, "\texhaust air:  %f", region[i].cumfs[4][0]);
-		if (region[i].cumfs[4][1] == 0.) (void)fprintf(fp, " - ok\n");
-		if (region[i].cumfs[4][1] == 1.) (void)fprintf(fp, " - not ok\n");
-		if (region[i].cumfs[4][1] == 2.) (void)fprintf(fp, " - none\n");
+		if (NEAR_ZERO(region[i].cumfs[4][1],FLT_MIN)) (void)fprintf(fp, " - ok\n");
+		if (NEAR_EQUAL(region[i].cumfs[4][1],1.,FLT_MIN)) (void)fprintf(fp, " - not ok\n");
+		if (NEAR_EQUAL(region[i].cumfs[4][1],2.,FLT_MIN)) (void)fprintf(fp, " - none\n");
+
 		(void)fprintf(fp, "\tgen air 1:  %f", region[i].cumfs[5][0]);
-		if (region[i].cumfs[5][1] == 0.) (void)fprintf(fp, " - ok\n");
-		if (region[i].cumfs[5][1] == 1.) (void)fprintf(fp, " - not ok\n");
-		if (region[i].cumfs[5][1] == 2.) (void)fprintf(fp, " - none\n");
+		if (NEAR_ZERO(region[i].cumfs[5][1],FLT_MIN)) (void)fprintf(fp, " - ok\n");
+		if (NEAR_EQUAL(region[i].cumfs[5][1],1.,FLT_MIN)) (void)fprintf(fp, " - not ok\n");
+		if (NEAR_EQUAL(region[i].cumfs[5][1],2.,FLT_MIN)) (void)fprintf(fp, " - none\n");
+
 		(void)fprintf(fp, "\tgen air 2:  %f", region[i].cumfs[6][0]);
-		if (region[i].cumfs[6][1] == 0.) (void)fprintf(fp, " - ok\n");
-		if (region[i].cumfs[6][1] == 1.) (void)fprintf(fp, " - not ok\n");
-		if (region[i].cumfs[6][1] == 2.) (void)fprintf(fp, " - none\n");
+		if (NEAR_ZERO(region[i].cumfs[6][1],FLT_MIN)) (void)fprintf(fp, " - ok\n");
+		if (NEAR_EQUAL(region[i].cumfs[6][1],1.,FLT_MIN)) (void)fprintf(fp, " - not ok\n");
+		if (NEAR_EQUAL(region[i].cumfs[6][1],2.,FLT_MIN)) (void)fprintf(fp, " - none\n");
+
 		(void)fflush(fp);
-		for (j=0; j<num; j++)
+		for (j = 0; j < num; j++)
 		{
 		    if (region[i].adjreg[j] == 1)
 		    {
@@ -1413,7 +1429,7 @@ int main(int argc, char **argv)
 			(void)fprintf(fp, "shared surface area:  %f;\n",
 				      region[i].ssurarea[0][j]);
 			(void)fflush(fp);
-			if (region[i].ssurarea[1][j] == 1.)
+			if (NEAR_EQUAL(region[i].ssurarea[1][j],1.,FLT_MIN))
 			{
 			    (void)fprintf(fp, "\tdifference is above ");
 			    (void)fprintf(fp, "%f variance\n",
@@ -1451,14 +1467,14 @@ int main(int argc, char **argv)
 	    (void)fprintf(fp, "\terror file created:  %s\n", fileerr);
 	    (void)fprintf(fp, "\tregion # & name file created:  %s\n",
 			  filernn);
-	    if ( typeout == 0 )
+	    if (typeout == 0)
 	    {
 		(void)fprintf(fp, "\tfacet file created:  %s\n", facfile);
 		(void)fprintf(fp, "\t  (format is PRISM %d.0)\n", prmrel);
 	    }
-	    if ( typeout == 1 ) (void)fprintf(fp,
+	    if (typeout == 1) (void)fprintf(fp,
 					      "\tgeneric file created:  %s\n", filegen);
-	    if ( (typeout == 2) || (typeout == 3) ) (void)fprintf(fp,
+	    if ((typeout == 2) || (typeout == 3)) (void)fprintf(fp,
 								  "\tgeometric file created:  %s\n", filegeo);
 	    (void)fflush(fp);
 
@@ -1467,14 +1483,14 @@ int main(int argc, char **argv)
 	/****************************************************************************/
 	/*  Write region # & name file, for use with shapefact.  */
 	fp7 = fopen(filernn, "wb");
-	for (i=0; i<num; i++)
+	for (i = 0; i < num; i++)
 	{
 	    (void)fprintf(fp7, "%d\t%s\n", (i+1), region[i].regname);
 	    (void)fflush(fp7);
 	}
 	(void)fclose(fp7);
 	/****************************************************************************/
-	if ( typeout == 0 ) {
+	if (typeout == 0) {
 	    /*  START # 11 */
 
 	    /*  Open facet file for writing to .  */
@@ -1551,9 +1567,9 @@ int main(int argc, char **argv)
 		/*  surface area is small (< .001) set the area of the  */
 		/*  facet to .001.  This is done since PRISM will not  */
 		/*  accept a 0 surface area.  */
-		if ( (region[i].cumnorm[0] == 0.) &&
-		     (region[i].cumnorm[1] == 0.) &&
-		     (region[i].cumnorm[2] == 0.) )
+		if ((NEAR_ZERO(region[i].cumnorm[0],FLT_MIN)) &&
+		    (NEAR_ZERO(region[i].cumnorm[1],FLT_MIN)) &&
+		    (NEAR_ZERO(region[i].cumnorm[2],FLT_MIN)))
 		{
 		    facarea = region[i].surarea[0] * (1.e-6);
 		    (void)printf("There are no exterior surfaces on region ");
@@ -2126,9 +2142,9 @@ int main(int argc, char **argv)
 	    (void)fprintf(fp3, "Geometric file, %s, was created.\n\n", filegeo);
 	}
 	(void)fflush(fp3);
-	for (i=0; i<num; i++)
+	for (i = 0; i < num; i++)
 	{
-	    if (region[i].cumvol[1] == 1)
+            if (NEAR_EQUAL(region[i].cumvol[1],1.,FLT_MIN))
 	    {
 		(void)fprintf(fp3, "region %d:  ", (i + 1));
 		(void)fprintf(fp3, "large variance on volume:  %f\n",
@@ -2136,7 +2152,7 @@ int main(int argc, char **argv)
 		(void)fflush(fp3);
 	    }
 
-	    if (region[i].surarea[1] == 1)
+	    if (NEAR_EQUAL(region[i].surarea[1],1.,FLT_MIN))
 	    {
 		(void)fprintf(fp3, "region %d:  large variance ", (i + 1));
 		(void)fprintf(fp3, "on surface area:  %f\n",
@@ -2144,9 +2160,9 @@ int main(int argc, char **argv)
 		(void)fflush(fp3);
 	    }
 
-	    for (j=0; j<num; j++)
+	    for (j = 0; j < num; j++)
 	    {
-		if (region[i].ssurarea[1][j] == 1)
+                if (NEAR_EQUAL(region[i].ssurarea[1][j],1.,FLT_MIN))
 		{
 		    (void)fprintf(fp3, "region %d:  adjacent region %d:\n",
 				  (i + 1), (j + 1));
@@ -2156,10 +2172,10 @@ int main(int argc, char **argv)
 		}
 	    }
 
-	    for (j=0; j<7; j++)
+	    for (j = 0; j < 7; j++)
 	    {
 		/*  START # 2000  */
-		if (region[i].cumfs[j][1] == 1.)
+                if (NEAR_EQUAL(region[i].cumfs[j][1],1.,FLT_MIN))
 		{
 		    /*  START # 2010  */
 		    if (j == 0)
