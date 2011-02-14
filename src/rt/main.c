@@ -146,10 +146,10 @@ memory_summary(void)
 /*
  *			M A I N
  */
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
     struct rt_i *rtip = NULL;
-    char *title_file = NULL, *title_obj = NULL;	/* name of file and first object */
+    const char *title_file = NULL, *title_obj = NULL;	/* name of file and first object */
     char idbuf[2048] = {0};			/* First ID record info */
     struct bu_vls	times;
     int i;
@@ -254,7 +254,7 @@ int main(int argc, char **argv)
 	size_t x = height;
 	if (x < width) x = width;
 	incr_nlevel = 1;
-	while ((1 << incr_nlevel) < x )
+	while ((size_t)(1 << incr_nlevel) < x )
 	    incr_nlevel++;
 	height = width = 1 << incr_nlevel;
 	if (rt_verbosity & VERBOSE_INCREMENTAL)
@@ -319,7 +319,7 @@ int main(int argc, char **argv)
     title_file = argv[bu_optind];
     title_obj = argv[bu_optind+1];
     nobjs = argc - bu_optind - 1;
-    objtab = &(argv[bu_optind+1]);
+    objtab = (char **)&(argv[bu_optind+1]);
 
     if (nobjs <= 0) {
 	bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
@@ -387,7 +387,7 @@ int main(int argc, char **argv)
      *  Note that width & height may not have been set yet,
      *  since they may change from frame to frame.
      */
-    if (view_init(&ap, title_file, title_obj, outputfile != (char *)0, framebuffer != (char *)0) != 0)  {
+    if (view_init(&ap, (char *)title_file, (char *)title_obj, outputfile != (char *)0, framebuffer != (char *)0) != 0)  {
 	/* Framebuffer is desired */
 	size_t xx, yy;
 	int	zoom;
@@ -415,7 +415,7 @@ int main(int argc, char **argv)
 	/* If the fb is lots bigger (>= 2X), zoom up & center */
 	if (width > 0 && height > 0) {
 	    zoom = fb_getwidth(fbp)/width;
-	    if ((size_t)fb_getheight(fbp)/height < zoom)
+	    if ((size_t)fb_getheight(fbp)/height < (size_t)zoom)
 		zoom = fb_getheight(fbp)/height;
 	} else {
 	    zoom = 1;
@@ -480,7 +480,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "cmd: %s\n", buf);
 	    ret = rt_do_cmd( rtip, buf, rt_cmdtab);
 	    bu_free( buf, "rt_read_cmd command buffer");
-	    if (ret < 0
+	    if (ret < 0)
 		break;
 	}
 	if (curframe < desiredframe) {
