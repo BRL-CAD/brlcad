@@ -179,7 +179,7 @@ cp -f $TMPDIR/brlcad.directory $TMPDIR/tmp/usr/share/desktop-directories
 cp -f $TMPDIR/brlcad-doc.directory $TMPDIR/tmp/usr/share/desktop-directories
 
 mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
-cp -f $TMPDIR/brlcad.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
+cp -f $TMPDIR/brlcad-mged.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 cp -f $TMPDIR/brlcad-archer.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 cp -f $TMPDIR/brlcad-db.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 cp -f $TMPDIR/brlcad-doc.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
