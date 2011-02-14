@@ -305,7 +305,9 @@ timeTable_process(fastf_t **timeTable, struct application *ap, FBIO *fbp)
     int Gcolor = 0;
     int Bcolor = 0;
     int npix = 0;
-    
+    int zoomH = 0;
+    int zoomW = 0;
+
     /* Now fill out the framebuffer with the Heat Graph information */
 
     for (x = 0; x < maxX; x++) {
@@ -338,8 +340,6 @@ timeTable_process(fastf_t **timeTable, struct application *ap, FBIO *fbp)
 	    }
  	}
     }
-    int zoomH = 0;
-    int zoomW = 0;
     zoomH = fb_getheight(fbp) / height;
     zoomW = fb_getwidth(fbp) / width;
     (void)fb_view(fbp, width/2, height/2, zoomH, zoomW);
