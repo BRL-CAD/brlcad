@@ -226,9 +226,10 @@ if [ ! -f $F ]; then
 	echo "[Default Applications]" > $F
 fi
 
-sed -i "/application\/x-brlcad-extension=/d" $F
+sed -i "/application\/x-brlcad-/d" $F
 
-echo "application/x-brlcad-extension=brlcad-archer.desktop" >> $F
+echo "application/x-brlcad-v4=brlcad-mged.desktop" >> $F
+echo "application/x-brlcad-v5=brlcad-mged.desktop" >> $F
 
 source /etc/profile.d/brlcad.sh
 
