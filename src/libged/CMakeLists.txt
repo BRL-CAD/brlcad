@@ -262,6 +262,7 @@ set(LIBGED_SOURCES
 include_directories(
     ../../include
     ../other/libpng
+    ../other/libregex
     ../other/libz
     ../other/tcl/generic
     ../other/tcl/win
