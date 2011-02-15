@@ -55,6 +55,8 @@ set(LIBRT_SOURCES
     primitives/bot/bot.c
     primitives/bot/bot_brep.cpp
     primitives/bot/bot_mirror.c
+    primitives/bot/btg.c
+    primitives/bot/btgf.c
     primitives/brep/brep.cpp
     primitives/brep/brep_debug.cpp
     primitives/bspline/bspline.cpp
