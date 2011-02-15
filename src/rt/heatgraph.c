@@ -232,7 +232,7 @@ timeTable_singleProcess(struct application *ap, fastf_t **timeTable, fastf_t *ti
      * making a gradient of black-white in between.
      */
     
-    if (time <= 0.00001) {
+    if (time < 0.00001 || EQUAL(time, 0.00001)) {
 	Rcolor = 1;
 	Gcolor = 1;
 	Bcolor = 1;
@@ -291,7 +291,7 @@ timeTable_process(fastf_t **timeTable, struct application *ap, FBIO *fbp)
     bu_log("MaxX =%d MaxY =%d\n", maxX, maxY);
     for (x = 0; x < maxX; x++) {
 	for (y = 0; y < maxY; y++) {
-	    if (timeTable[x][y] >= 0) {
+	    if (timeTable[x][y] > 0.0 || ZERO(timeTable[x][y])) {
 		/* Semaphore acquire goes here */
 		if (timeTable[x][y] > maxTime)
 		    maxTime = timeTable[x][y];
@@ -317,10 +317,11 @@ timeTable_process(fastf_t **timeTable, struct application *ap, FBIO *fbp)
 		Gcolor = 255;
 		Bcolor = 0;
 	    }
-	    if (timeTable[x][y] <= minTime) {
+	    if (timeTable[x][y] < minTime || EQUAL(timeTable[x][y], minTime)) {
 		Rcolor = Gcolor = Bcolor = 1;
 	    }
-	    if (timeTable[x][y] > minTime && timeTable[x][y] <= maxTime) {
+	    if (timeTable[x][y] > minTime
+		&& (timeTable[x][y] < maxTime || EQUAL(timeTable[x][y], maxTime))) {
 		Rcolor = Gcolor = Bcolor = (255/range)*timeTable[x][y];
 	    }
 	    if (timeTable[x][y] > maxTime)
