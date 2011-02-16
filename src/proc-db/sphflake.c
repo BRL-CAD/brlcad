@@ -469,7 +469,7 @@ void createPlane(params_t *p)
     printf("\nPlane created");
 }
 
-void createEnvironMap(params_t *p)
+void createEnvironMap(params_t *UNUSED(p))
 {
     char name[MAX_INPUT_LENGTH];
 

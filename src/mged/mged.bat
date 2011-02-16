@@ -22,10 +22,12 @@ REM
 
 SETLOCAL
 
+SET MGED=%~dp0mged
+
 IF "%1"=="-g" (
-    "%~dp0\"mged.exe %2
+    START /B "" "%MGED%" %2
 ) ELSE (
-    "%~dp0\"mged.exe %1
+    START /B "" "%MGED%" %1
 )
 
 CLS

@@ -36,7 +36,7 @@
 double	data[BSIZE];		/* Input buffer */
 
 int	numpeaks;
-struct	peaks {
+struct peaks {
     int	sample;
     double	value;
 } peaks[BSIZE];
@@ -51,27 +51,27 @@ int main(int argc, char **argv)
     int	i, n, L;
     double	last1, last2;
 
-    if ( isatty(fileno(stdin)) /*|| isatty(fileno(stdout))*/ ) {
-	bu_exit(1, "%s", usage );
+    if (isatty(fileno(stdin)) /*|| isatty(fileno(stdout))*/ ) {
+	bu_exit(1, "%s", usage);
     }
 
     L = (argc > 1) ? atoi(argv[1]) : 512;
 
-    while ( !feof( stdin ) ) {
-	n = fread( data, sizeof(*data), L, stdin );
-	if ( n <= 0 )
+    while (!feof(stdin)) {
+	n = fread(data, sizeof(*data), L, stdin);
+	if (n <= 0)
 	    break;
-	if ( n < L )
+	if (n < L)
 	    memset((char *)&data[n], 0, (L-n)*sizeof(*data));
 
 	last2 = last1 = 0;
 	numpeaks = 0;
-	for ( i = 0; i < L; i++ ) {
-	    if ( data[i] == last1 )
+	for (i = 0; i < L; i++) {
+	    if (data[i] == last1)
 		continue;
-	    if ( (data[i] < last1) && (last2 < last1) && i > 5 ) {
+	    if ((data[i] < last1) && (last2 < last1) && i > 5) {
 		/* PEAK */
-		/*printf("sample %d, value = %f\n", i-1, last1 );*/
+		/*printf("sample %d, value = %f\n", i-1, last1);*/
 		peaks[numpeaks].sample = i-1;
 		peaks[numpeaks].value = last1;
 		numpeaks++;
@@ -94,17 +94,17 @@ dumpmax(void)
     struct	peaks max;
     double	d;
 
-    for ( n = 0; n < NUMPEAKS; n++ ) {
+    for (n = 0; n < NUMPEAKS; n++) {
 	max.value = -1000000;
 	max.sample = -1;
-	for ( i = 0; i < numpeaks; i++ ) {
-	    if ( peaks[i].value > max.value ) {
+	for (i = 0; i < numpeaks; i++) {
+	    if (peaks[i].value > max.value) {
 		max = peaks[i];
 		peaks[i].value = -1000000;
 	    }
 	}
 /*
-  printf( "Sample %3d: %f\n", max.sample, max.value );
+  printf("Sample %3d: %f\n", max.sample, max.value);
 */
 	d = max.sample;
 	fwrite(&d, sizeof(d), 1, stdout);

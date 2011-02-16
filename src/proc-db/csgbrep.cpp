@@ -67,6 +67,9 @@ main(int argc, char** argv)
     vect_t a, b, c, h, N;
     ON_TextLog error_log;
 
+    if (argc > 0)
+	bu_log("Usage: %s\n", argv[0]);
+
     ON::Begin();
 
     outfp = wdb_fopen("csgbrep.g");
@@ -513,7 +516,7 @@ main(int argc, char** argv)
 	{ 125, 0 },     // 8 
 	{ 200, 200 }    // 9 
     };
-    int cnti;
+    size_t cnti;
     VSET(V, 10, 20, 30);
     VSET(u_vec, 1, 0, 0);
     VSET(v_vec, 0, 1, 0);
@@ -681,8 +684,8 @@ main(int argc, char** argv)
     VMOVE(extrude->h, h);
     VMOVE(extrude->u_vec, u_vec);
     VMOVE(extrude->v_vec, v_vec);
-    char* esketch_name = "esketch_nurb.s";
-    extrude->sketch_name = esketch_name;
+    const char* esketch_name = "esketch_nurb.s";
+    extrude->sketch_name = bu_strdup(esketch_name);
     extrude->skt = eskt;
     tmp_internal->idb_ptr = (genptr_t)extrude;
     tmp_internal->idb_meth = &rt_functab[ID_EXTRUDE];
@@ -782,8 +785,6 @@ main(int argc, char** argv)
     VSET(h, 0, 1, 0);
     VMOVE(revolve->v3d, V);
     VMOVE(revolve->axis3d, h);
-    char* rsketch_name = "rsketch_nurb.s";
-    //revolve->sketch_name = rsketch_name;
     revolve->sk = rskt;
     tmp_internal->idb_ptr = (genptr_t)revolve;
     tmp_internal->idb_meth = &rt_functab[ID_REVOLVE];

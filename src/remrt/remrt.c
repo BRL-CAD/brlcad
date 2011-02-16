@@ -65,6 +65,7 @@
 #include "pkg.h"
 
 /* private */
+#include "../rt/ext.h"  /* for get_args */
 #include "../rt/rtuif.h"
 #include "./protocol.h"
 #include "./ihost.h"
@@ -85,7 +86,7 @@ struct command_tab rt_cmdtab[] = {
 struct frame {
     struct frame	*fr_forw;
     struct frame	*fr_back;
-    int		fr_magic;	/* magic number */
+    unsigned long	fr_magic;	/* magic number */
     long		fr_number;	/* frame number */
     long		fr_server;	/* server number assigned. */
     char		*fr_filename;	/* name of output file */
@@ -237,16 +238,16 @@ void	ph_gettrees_reply(struct pkg_conn *pc, char *buf);
 void	ph_version(struct pkg_conn *pc, char *buf);
 void	ph_cmd(struct pkg_conn *pc, char *buf);
 struct pkg_switch pkgswitch[] = {
-    { MSG_DIRBUILD_REPLY,	ph_dirbuild_reply,	"Dirbuild ACK" },
-    { MSG_GETTREES_REPLY,	ph_gettrees_reply,	"gettrees ACK" },
-    { MSG_MATRIX,	ph_default,	"Set Matrix" },
-    { MSG_LINES,	ph_default,	"Compute lines" },
-    { MSG_END,	ph_default,	"End" },
-    { MSG_PIXELS,	ph_pixels,	"Pixels" },
-    { MSG_PRINT,	ph_print,	"Log Message" },
-    { MSG_VERSION,	ph_version,	"Protocol version check" },
-    { MSG_CMD,	ph_cmd,		"Run one command" },
-    { 0,		0,		(char *)0 }
+    { MSG_DIRBUILD_REPLY,	ph_dirbuild_reply,	"Dirbuild ACK", NULL },
+    { MSG_GETTREES_REPLY,	ph_gettrees_reply,	"gettrees ACK", NULL },
+    { MSG_MATRIX,		ph_default,		"Set Matrix", NULL },
+    { MSG_LINES,		ph_default,		"Compute lines", NULL },
+    { MSG_END,			ph_default,		"End", NULL },
+    { MSG_PIXELS,		ph_pixels,		"Pixels", NULL },
+    { MSG_PRINT,		ph_print,		"Log Message", NULL },
+    { MSG_VERSION,		ph_version,		"Protocol version check", NULL },
+    { MSG_CMD,			ph_cmd,			"Run one command", NULL },
+    { 0,			0,			(char *)0, NULL }
 };
 
 fd_set clients;
@@ -359,8 +360,8 @@ extern unsigned int	jitter;
 extern fastf_t	rt_perspective;
 extern fastf_t	aspect;
 extern fastf_t	eye_backoff;
-extern int	width;
-extern int	height;
+extern size_t	width;
+extern size_t	height;
 
 /* variables shared with do.c */
 extern int	matflag;
@@ -523,7 +524,7 @@ remrt_log(char *msg)
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     struct servers *sp;
     int i, done;
@@ -547,7 +548,6 @@ main(int argc, char **argv)
 
     /* Listen for our PKG connections */
     if ( (tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, remrt_log)) < 0 )  {
-	int	i;
 	char	num[8];
 	/* Do it by the numbers */
 	for (i=0; i<10; i++ )  {
@@ -595,7 +595,7 @@ main(int argc, char **argv)
 
 	/* parse command line args for sizes, etc */
 	finalframe = -1;
-	if ( !get_args( argc, argv ) )  {
+	if ( !get_args( argc, (const char **)argv ) )  {
 	    fprintf(stderr, "remrt:  bad arg list\n");
 	    bu_exit(1, NULL);
 	}
@@ -772,8 +772,6 @@ check_input(int waittime)
 
     /* Fourth, get any new traffic off the network into libpkg buffers */
     for ( i=0; i<MAXSERVERS; i++ )  {
-	struct pkg_conn *pc;
-
 	if ( !feof(stdin) && i == fileno(stdin) )  continue;
 	if ( !FD_ISSET(i, &ifdset) )  continue;
 	pc = servers[i].sr_pc;
@@ -1320,7 +1318,7 @@ prep_frame(struct frame *fr)
     bu_vls_strcat( &fr->fr_cmd, buf );
     if ( interactive )  bu_vls_strcat( &fr->fr_cmd, " -I");
     if ( benchmark )  bu_vls_strcat( &fr->fr_cmd, " -B");
-    if ( aspect != 1.0 )  {
+    if ( !EQUAL(aspect, 1.0) )  {
 	sprintf(buf, " -V%g", aspect);
 	bu_vls_strcat( &fr->fr_cmd, buf );
     }
@@ -2244,7 +2242,7 @@ ph_cmd(struct pkg_conn *pc, char *buf)
 void
 ph_pixels(struct pkg_conn *pc, char *buf)
 {
-    int		i;
+    size_t		i;
     struct servers	*sp;
     struct frame	*fr;
     struct list	*lp;
@@ -2252,7 +2250,7 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     struct timeval		tvnow;
     int			npix;
     int			fd;
-    int			cnt;
+    ssize_t			cnt;
     struct	bu_external	ext;
 
     (void)gettimeofday( &tvnow, (struct timezone *)0 );
@@ -2283,12 +2281,14 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     (void)gettimeofday( &sp->sr_sendtime, (struct timezone *)0 );
     bu_struct_wrap_buf(&ext, (genptr_t) buf);
 
-    i = bu_struct_import( (genptr_t)&info, desc_line_info, &ext );
-    if ( i < 0 )  {
-	bu_log("bu_struct_import error, %d\n", i);
+    cnt = bu_struct_import( (genptr_t)&info, desc_line_info, &ext );
+    if ( cnt < 0 )  {
+	bu_log("bu_struct_import error, %d\n", cnt);
 	drop_server( sp, "bu_struct_import error" );
 	goto out;
     }
+    i = (size_t)cnt;
+
     if ( rem_debug )  {
 	bu_log("%s %s %d/%d..%d, ray=%d, cpu=%.2g, el=%g\n",
 	       stamp(),
@@ -2359,7 +2359,8 @@ ph_pixels(struct pkg_conn *pc, char *buf)
 	fd = -1;
 	/* The bad fd will trigger a write error, below */
     }
-    if ( (cnt = write( fd, buf+ext.ext_nbytes, i )) != i )  {
+    cnt = write( fd, buf+ext.ext_nbytes, i );
+    if (cnt != (ssize_t)i) {
 	perror( fr->fr_filename );
 	bu_log("write s/b %d, got %d\n", i, cnt );
 	/*
@@ -2604,7 +2605,7 @@ repaint_fb(struct frame *fr)
 int
 init_fb(char *name)
 {
-    int xx, yy;
+    size_t xx, yy;
 
     if ( fbp != FBIO_NULL )  fb_close(fbp);
 
@@ -2905,16 +2906,10 @@ host_helper(FILE *fp)
 		    /* worker Child */
 
 		    /* First, try direct exec. */
-		    execl(
-			RSH,
-			"rsh", host,
-			"-n", cmd, 0 );
+		    execl(RSH, "rsh", host, "-n", cmd, NULL);
 
 		    /* Second, try $PATH exec */
-		    execlp(
-			"rsh",
-			"rsh", host,
-			"-n", cmd, 0 );
+		    execlp("rsh", "rsh", host, "-n", cmd, NULL);
 		    perror("rsh execl");
 		    bu_exit(0, NULL);
 		}
@@ -2944,8 +2939,7 @@ host_helper(FILE *fp)
 
 		if ( vfork() == 0 )  {
 		    /* worker Child */
-		    execl("/bin/sh", "remrt_sh",
-			  "-c", cmd, 0);
+		    execl("/bin/sh", "remrt_sh", "-c", cmd, NULL);
 		    perror("/bin/sh");
 		    bu_exit(0, NULL);
 		}
@@ -3089,6 +3083,9 @@ cd_rdebug(int argc, char **argv)
     int		len;
     struct bu_vls	cmd;
 
+    if (argc < 2)
+	return 1;
+
     bu_vls_init( &cmd );
     bu_vls_strcpy( &cmd, "opt " );
     bu_vls_strcat( &cmd, argv[1] );
@@ -3105,6 +3102,9 @@ int
 cd_f(int argc, char **argv)
 {
 
+    if (argc < 2)
+	return 1;
+
     width = height = atoi( argv[1] );
     if ( width < 4 || width > 16*1024 )
 	width = 64;
@@ -3116,6 +3116,9 @@ cd_f(int argc, char **argv)
 int
 cd_S(int argc, char **argv)
 {
+    if (argc < 2)
+	return 1;
+
     fbwidth = fbheight = atoi( argv[1] );
     if ( fbwidth < 4 || fbwidth > 16*1024 )
 	fbwidth = 512;
@@ -3129,6 +3132,9 @@ cd_S(int argc, char **argv)
 int
 cd_N(int argc, char **argv)
 {
+    if (argc < 2)
+	return 1;
+
     fbheight = atoi( argv[1] );
     if ( fbheight < 4 || fbheight > 16*1024 )
 	fbheight = 512;
@@ -3140,6 +3146,9 @@ cd_N(int argc, char **argv)
 int
 cd_hyper(int argc, char **argv)
 {
+    if (argc < 2)
+	return 1;
+
     hypersample = atoi( argv[1] );
     bu_log("hypersample=%d, takes effect after next MAT\n", hypersample);
     return 0;
@@ -3148,6 +3157,9 @@ cd_hyper(int argc, char **argv)
 int
 cd_bench(int argc, char **argv)
 {
+    if (argc < 2)
+	return 1;
+
     benchmark = atoi( argv[1] );
     bu_log("Benchmark flag=%d, takes effect after next MAT\n", benchmark);
     return 0;
@@ -3156,6 +3168,9 @@ cd_bench(int argc, char **argv)
 int
 cd_persp(int argc, char **argv)
 {
+    if (argc < 2)
+	return 1;
+
     rt_perspective = atof( argv[1] );
     if ( rt_perspective < 0.0 )  rt_perspective = 0.0;
     bu_log("perspective angle=%g, takes effect after next MAT\n", rt_perspective);
@@ -3166,6 +3181,9 @@ int
 cd_read(int argc, char **argv)
 {
     FILE *fp;
+
+    if (argc < 2)
+	return 1;
 
     if ( (fp = fopen(argv[1], "r")) == NULL )  {
 	perror(argv[1]);
@@ -3189,7 +3207,7 @@ source(FILE *fp)
 }
 
 int
-cd_detach(int argc, char **argv)
+cd_detach(int UNUSED(argc), char **UNUSED(argv))
 {
     detached = 1;
     FD_CLR( fileno(stdin), &clients);	/* drop stdin */
@@ -3200,6 +3218,9 @@ cd_detach(int argc, char **argv)
 int
 cd_file(int argc, char **argv)
 {
+    if (argc < 2)
+	return 1;
+
     if (outputfile)  bu_free(outputfile, "outputfile");
     outputfile = bu_strdup( argv[1] );
     return 0;
@@ -3256,6 +3277,9 @@ cd_movie(int argc, char **argv)
     struct frame		dummy_frame;
     int		a, b;
     int		i;
+
+    if (argc < 4)
+	return 1;
 
     /* movie mat a b */
     if ( running )  {
@@ -3321,6 +3345,9 @@ cd_drop(int argc, char **argv)
 {
     struct servers *sp;
 
+    if (argc < 2)
+	return 1;
+
     sp = get_server_by_name( argv[1] );
     if ( sp == SERVERS_NULL || sp->sr_pc == PKC_NULL )  return -1;
     drop_server(sp, "drop command issued");
@@ -3332,6 +3359,9 @@ cd_hold(int argc, char **argv)
 {
     struct servers *sp;
     struct ihost *ihp;
+
+    if (argc < 2)
+	return 1;
 
     ihp = host_lookup_by_name( argv[1], 0);
     if (ihp == IHOST_NULL) return -1;
@@ -3348,6 +3378,9 @@ cd_resume(int argc, char **argv)
 {
     struct ihost	*ihp;
 
+    if (argc < 2)
+	return 1;
+
     ihp = host_lookup_by_name( argv[1], 0);
     if (ihp == IHOST_NULL ) return -1;
     ihp->ht_flags &= ~HT_HOLD;
@@ -3358,6 +3391,9 @@ cd_resume(int argc, char **argv)
 int
 cd_allocate(int argc, char **argv)
 {
+    if (argc < 2)
+	return 1;
+
     if (BU_STR_EQUAL(argv[1], "frame")) {
 	work_allocate_method = OPT_FRAME;
     } else if ( BU_STR_EQUAL(argv[1], "movie") ) {
@@ -3394,7 +3430,7 @@ cd_restart(int argc, char **argv)
 }
 
 int
-cd_stop( int argc, char **argv )
+cd_stop( int UNUSED(argc), char **UNUSED(argv) )
 {
     bu_log("%s No more scanlines being scheduled, done soon\n", stamp() );
     running = 0;
@@ -3402,7 +3438,7 @@ cd_stop( int argc, char **argv )
 }
 
 int
-cd_reset(int argc, char **argv)
+cd_reset(int UNUSED(argc), char **UNUSED(argv))
 {
     struct frame *fr;
 
@@ -3439,7 +3475,7 @@ cd_attach(int argc, char **argv)
 }
 
 int
-cd_release(int argc, char **argv)
+cd_release(int UNUSED(argc), char **UNUSED(argv))
 {
     if (fbp != FBIO_NULL) fb_close(fbp);
     fbp = FBIO_NULL;
@@ -3454,7 +3490,7 @@ cd_release(int argc, char **argv)
  *	Usage: frames [-v]
  */
 int
-cd_frames( int argc, char **argv )
+cd_frames( int UNUSED(argc), char **UNUSED(argv) )
 {
     struct frame *fr;
 
@@ -3482,6 +3518,9 @@ cd_frames( int argc, char **argv )
 int
 cd_memprint(int argc, char **argv)
 {
+    if (argc < 2)
+	return 1;
+
     if (BU_STR_EQUAL(argv[1], "on")) {
 	rt_g.debug |= (DEBUG_MEM|DEBUG_MEM_FULL);
     } else if (BU_STR_EQUAL(argv[1], "off")) {
@@ -3498,7 +3537,7 @@ cd_memprint(int argc, char **argv)
  *  Brief version
  */
 int
-cd_stat( int argc, char **argv )
+cd_stat( int UNUSED(argc), char **UNUSED(argv) )
 {
     struct servers *sp;
     int	frame;
@@ -3552,7 +3591,7 @@ cd_stat( int argc, char **argv )
  *  Full status version
  */
 int
-cd_status(int argc, char **argv)
+cd_status(int UNUSED(argc), char **UNUSED(argv))
 {
     struct servers *sp;
     int	num;
@@ -3617,7 +3656,7 @@ cd_status(int argc, char **argv)
 }
 
 int
-cd_clear(int argc, char **argv)
+cd_clear(int UNUSED(argc), char **UNUSED(argv))
 {
     if ( fbp == FBIO_NULL )  return -1;
     fb_clear( fbp, PIXEL_NULL );
@@ -3646,14 +3685,14 @@ cd_print(int argc, char **argv)
 }
 
 int
-cd_go(int argc, char **argv)
+cd_go(int UNUSED(argc), char **UNUSED(argv))
 {
     do_a_frame();
     return 0;
 }
 
 int
-cd_wait(int argc, char **argv)
+cd_wait(int UNUSED(argc), char **UNUSED(argv))
 {
     struct timeval	now;
 
@@ -3689,7 +3728,7 @@ cd_wait(int argc, char **argv)
 }
 
 int
-cd_help(int argc, char **argv)
+cd_help(int UNUSED(argc), char **UNUSED(argv))
 {
     struct command_tab	*tp;
 
@@ -3803,10 +3842,11 @@ cd_host(int argc, char **argv)
  *			C D _ E X I T
  */
 int
-cd_exit(int argc, char **argv)
+cd_exit(int UNUSED(argc), char **UNUSED(argv))
 {
     bu_exit(0, NULL);
     /*NOTREACHED*/
+    return 0;
 }
 
 /* 		C D _ F R A M E
@@ -3822,6 +3862,9 @@ cd_exit(int argc, char **argv)
 int
 cd_EOFrame(int argc, char **argv)
 {
+    if (argc < 2)
+	return 1;
+
     if (frame_script) {
 	(void) free(frame_script);
 	frame_script = (char *)0;

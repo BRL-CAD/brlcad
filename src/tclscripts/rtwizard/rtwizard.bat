@@ -22,7 +22,10 @@ REM REM REM
 
 SETLOCAL
 
-"%~dp0\"bwish.exe "%~dp0\"rtwizard %1
+SET BWISH=%~dp0bwish
+SET RTWIZARD=%~dp0rtwizard
+
+START /B "" "%BWISH%" "%RTWIZARD%" %1
 
 CLS
 EXIT

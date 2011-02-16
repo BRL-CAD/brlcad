@@ -87,7 +87,7 @@ sgetc (char *string)
  * the key word, the command is executed.
  */
 void
-interact(int input_source, void *sPtr)
+interact(int input_source, void *sPtr, struct rt_i *rtip)
 {
     int Ch;			/* individual characters of the input line */
     int Prev_ch=0;		/* previous character */
@@ -188,7 +188,7 @@ interact(int input_source, void *sPtr)
 		    line_buffer);
 	} else {
 	    /* call the callback */
-	    (*(ctp->com_func)) (&line_buffer[key_len], ctp);
+	    (*(ctp->com_func)) (&line_buffer[key_len], ctp, rtip);
 	}
     }
 }

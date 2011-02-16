@@ -34,6 +34,7 @@
 #include "bio.h"
 
 #include "bu.h"
+#include "vmath.h"
 
 
 char	*file_name = NULL;
@@ -75,7 +76,7 @@ get_args(int argc, char **argv)
 	    case 'd':
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
-		if ( d == 0.0 ) {
+		if (ZERO(d)) {
 		    bu_exit(2, "dmod: divide by zero!\n" );
 		}
 		val[ numop++ ] = 1.0 / d;
@@ -91,7 +92,7 @@ get_args(int argc, char **argv)
 	    case 'r':
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
-		if ( d == 0.0 ) {
+		if (ZERO(d)) {
 		    bu_exit(2, "dmod: zero root!\n" );
 		}
 		val[ numop++ ] = 1.0 / d;

@@ -22,7 +22,10 @@ REM
 
 SETLOCAL
 
-"%~dp0\"bwish.exe "%~dp0\"archer %1
+SET BWISH=%~dp0bwish
+SET ARCHER=%~dp0archer
+
+START /B "" "%BWISH%" "%ARCHER%" %1
 
 CLS
 EXIT

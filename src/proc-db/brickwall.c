@@ -33,6 +33,7 @@
 #include "bio.h"
 
 #include "bu.h"
+#include "vmath.h"
 
 /* declarations to support use of bu_getopt() */
 char *options = "w:h:d:W:H:sn:t:Du:mc:C:";
@@ -90,41 +91,68 @@ int parse_args(int ac, char **av)
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != EOF)
 	switch (c) {
-	    case 'c'	: if ((c=sscanf(bu_optarg, "%d/%d/%d",
-					&red, &grn, &blu)) == 3)
+	    case 'c':
+		if ((c=sscanf(bu_optarg, "%d/%d/%d",
+			      &red, &grn, &blu)) == 3)
 		(void)sprintf(color, "%d %d %d", red&0x0ff,
 			      grn&0x0ff, blu&0x0ff);
 		break;
-	    case 'C'	: if ((c=sscanf(bu_optarg, "%d/%d/%d",
-					&red, &grn, &blu)) == 3)
+	    case 'C':
+		if ((c=sscanf(bu_optarg, "%d/%d/%d",
+			      &red, &grn, &blu)) == 3)
 		(void)sprintf(mortar_color, "%d %d %d",
 			      red&0x0ff, grn&0x0ff, blu&0x0ff);
 
 		break;
-	    case 'm'	: make_mortar = !make_mortar;
+	    case 'm':
+		make_mortar = !make_mortar;
 		break;
-	    case 'u'	: units_conv = bu_units_conversion(bu_optarg);
+	    case 'u':
+		units_conv = bu_units_conversion(bu_optarg);
 		break;
-	    case 'D'	: debug = !debug;
+	    case 'D':
+		debug = !debug;
 		break;
-	    case 't'	: if ((d=atof(bu_optarg)) != 0.0) tol = d;
+	    case 't':
+		d=atof(bu_optarg);
+		if (!ZERO(d))
+		    tol = d;
 		break;
-	    case 'w'	: if ((d=atof(bu_optarg)) != 0.0) brick_width = d;
+	    case 'w':
+		d=atof(bu_optarg);
+		if (!ZERO(d))
+		    brick_width = d;
 		break;
-	    case 'h'	: if ((d=atof(bu_optarg)) != 0.0) brick_height = d;
+	    case 'h':
+		d=atof(bu_optarg);
+		if (!ZERO(d))
+		    brick_height = d;
 		break;
-	    case 'd'	: if ((d=atof(bu_optarg)) != 0.0) brick_depth = d;
+	    case 'd':
+		d=atof(bu_optarg);
+		if (!ZERO(d))
+		    brick_depth = d;
 		break;
-	    case 'W'	: if ((d=atof(bu_optarg)) != 0.0) wall_width = d;
+	    case 'W':
+		d=atof(bu_optarg);
+		if (!ZERO(d))
+		    wall_width = d;
 		break;
-	    case 'H'	: if ((d=atof(bu_optarg)) != 0.0) wall_height = d;
+	    case 'H':
+		d=atof(bu_optarg);
+		if (!ZERO(d))
+		    wall_height = d;
 		break;
-	    case 'n'	: brick_name = bu_optarg;
+	    case 'n':
+		brick_name = bu_optarg;
 		break;
-	    case 's'	: standalone = !standalone;
+	    case 's':
+		standalone = !standalone;
 		break;
-	    case '?'	:
-	    default		: usage("bad command line option"); break;
+	    case '?':
+	    default:
+		usage("bad command line option");
+		break;
 	}
 
     brick_width *= units_conv;

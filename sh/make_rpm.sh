@@ -179,7 +179,7 @@ cp -f $TMPDIR/brlcad.directory $TMPDIR/tmp/usr/share/desktop-directories
 cp -f $TMPDIR/brlcad-doc.directory $TMPDIR/tmp/usr/share/desktop-directories
 
 mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
-cp -f $TMPDIR/brlcad.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
+cp -f $TMPDIR/brlcad-mged.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 cp -f $TMPDIR/brlcad-archer.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 cp -f $TMPDIR/brlcad-db.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 cp -f $TMPDIR/brlcad-doc.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
@@ -226,9 +226,10 @@ if [ ! -f $F ]; then
 	echo "[Default Applications]" > $F
 fi
 
-sed -i "/application\/x-brlcad-extension=/d" $F
+sed -i "/application\/x-brlcad-/d" $F
 
-echo "application/x-brlcad-extension=brlcad-archer.desktop" >> $F
+echo "application/x-brlcad-v4=brlcad-mged.desktop" >> $F
+echo "application/x-brlcad-v5=brlcad-mged.desktop" >> $F
 
 source /etc/profile.d/brlcad.sh
 

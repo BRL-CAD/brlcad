@@ -110,7 +110,7 @@ int main(int argc, char **argv)
     struct application ap;	/*  Structure passed between functions.  */
     extern struct table info[];	/*  Structure is external.  */
     struct rt_i *rtip;
-    int index;		/*  Index for rt_dirbuild & rt_gettree.  */
+    int idx;		/*  Index for rt_dirbuild & rt_gettree.  */
     char idbuf[32];	/*  Contains database name.  */
     struct region *pr;	/*  Used in finding region names.  */
     double rho, phi, theta;/*  Spherical coordinates for starting point.  */
@@ -162,12 +162,9 @@ int main(int argc, char **argv)
     struct bn_unif *msr = NULL;
 
     /*  Check to see if arguments are implimented correctly.  */
-    if ( (argv[1] == NULL) || (argv[2] == NULL) )
-    {
+    if ( (argc < 3 || argv[1] == NULL) || (argv[2] == NULL) ) {
 	(void)fprintf(stderr, "\nusage:  %s file.g objects\n\n", *argv);
-    }
-    else
-    {
+    } else {
 	/*  START # 1  */
 
 	/*  Ask what type of file is to be created - regualar  */
@@ -278,8 +275,8 @@ int main(int argc, char **argv)
 	 */
 
 	/*  Build directory.  */
-	index = 1;	/*  Set index for rt_dirbuild.  */
-	rtip = rt_dirbuild(argv[index], idbuf, sizeof(idbuf));
+	idx = 1;	/*  Set index for rt_dirbuild.  */
+	rtip = rt_dirbuild(argv[idx], idbuf, sizeof(idbuf));
 	(void)printf("Database Title:  %s\n", idbuf);
 	(void)fflush(stdout);
 
@@ -287,11 +284,11 @@ int main(int argc, char **argv)
 	rtip->useair = 1;
 
 	/*  Load desired objects.  */
-	index = 2;	/*  Set index.  */
-	while (argv[index] != NULL)
+	idx = 2;	/*  Set index.  */
+	while (argv[idx] != NULL)
 	{
-	    rt_gettree(rtip, argv[index]);
-	    index += 1;
+	    rt_gettree(rtip, argv[idx]);
+	    idx += 1;
 	}
 
 	/*  Find number of regions.  */
@@ -515,7 +512,7 @@ int main(int argc, char **argv)
 	     *	   (void)fflush(stdout);
 	     */
 
-	    if ( r == (dump - 1.) )
+	    if (EQUAL(r, (dump - 1.0)))
 	    {
 		(void)printf("%f rays have been fired in forward direction.\n",
 			     (r+1));
@@ -752,7 +749,7 @@ int main(int argc, char **argv)
 /*****************************************************************************/
 /*  User supplied hit function.  */
 int
-hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
+hit(struct application *UNUSED(ap_p), struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     /*  START # 0H  */
     extern struct table info[];	/*  Structure is external.  */
@@ -965,7 +962,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 
 /*  User supplied miss function.  */
 int
-miss(struct application *ap)
+miss(struct application *UNUSED(ap))
 {
     /*
      * (void)printf("In miss function.\n");
@@ -979,7 +976,7 @@ miss(struct application *ap)
 
 /*  User supplied overlap function.  */
 int
-overlap(struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp)
+overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct region *UNUSED(r1), struct region *UNUSED(r2), struct partition *UNUSED(hp))
 {
     /*
      * (void)printf("In overlap function.\n");

@@ -30,6 +30,9 @@
 #include <fcntl.h>
 #include <math.h>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "bu.h"
 #include "fb.h"

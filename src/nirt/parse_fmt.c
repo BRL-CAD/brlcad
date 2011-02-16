@@ -132,7 +132,7 @@ extern char *ocname[];
 
 
 void
-format_output (const char* buffer, com_table* ctp)
+format_output (const char* buffer, com_table* ctp, struct rt_i *UNUSED(rtip))
 {
     const char* bp = buffer;	/* was + 1; */
     int fmt_type = FMT_NONE;
@@ -458,7 +458,7 @@ report(int outcom_type)
 
 
 void
-print_item (char *buffer, com_table *ctp)
+print_item (char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     char *bp = buffer;
     char *bp0;
@@ -636,7 +636,7 @@ check_conv_spec(outitem *oip)
 
 
 void
-direct_output(const char *buffer, com_table *ctp)
+direct_output(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     size_t i = 0;      /* current position on the *buffer */
     size_t j = 0;      /* position of last non-whitespace char in the *buffer */
@@ -716,7 +716,7 @@ direct_output(const char *buffer, com_table *ctp)
 
 
 void
-state_file(const char *buffer, com_table *ctp)
+state_file(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     int i = 0;      /* current position on the *buffer */
     static char *new_name;
@@ -752,7 +752,7 @@ state_file(const char *buffer, com_table *ctp)
 
 
 void
-dump_state(const char *buffer, com_table *ctp)
+dump_state(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     char *c;
     static const char fmt_char[] = {'r', 'h', 'p', 'f', 'm', 'o', 'g'};
@@ -804,7 +804,7 @@ dump_state(const char *buffer, com_table *ctp)
 
 
 void
-load_state(char *buffer, com_table *ctp)
+load_state(char *buffer, com_table *ctp, struct rt_i *rtip)
 {
     FILE *sfPtr;
 
@@ -817,7 +817,7 @@ load_state(char *buffer, com_table *ctp)
 	return;
     }
     bu_log("Loading NIRT state from file '%s'...", sf_name);
-    interact(READING_FILE, sfPtr);
+    interact(READING_FILE, sfPtr, rtip);
     bu_log("\n");
     fclose(sfPtr);
 }

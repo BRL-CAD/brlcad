@@ -54,7 +54,7 @@ extern int			nirt_debug;
 /**
  * R E A D _ M A T
  */
-void read_mat (void)
+void read_mat (struct rt_i *rtip)
 {
     char	*buf;
     int		status = 0x0;
@@ -114,7 +114,7 @@ void read_mat (void)
     dir2ae();
 
     targ2grid();
-    shoot("", 0);
+    shoot("", 0, rtip);
 }
 
 /*

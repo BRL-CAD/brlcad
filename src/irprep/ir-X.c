@@ -97,7 +97,7 @@ main(void)
     char **a=(char **)NULL;	/*  Place holder for XSetStandard  */
 				/*  Properties.  */
     char *winttl = "SEE";	/*  Window title.  */
-    char *exit = "QUIT";		/*  Exit label.  */
+    char *quit = "QUIT";		/*  Exit label.  */
     Font font;			/*  Structure for setting font.  */
 
     /*  Other variables.  */
@@ -105,8 +105,8 @@ main(void)
     FILE *fpw;			/*  Used to write a file.  */
     char file[MAXFIL];		/*  File to be read.  */
     char line[151];		/*  Used to read one line of a file.  */
-    unsigned int main_w, main_h;	/*  Width & height of main window.  */
-    unsigned int wide, high;	/*  Width and height of picture window.  */
+    size_t main_w, main_h;	/*  Width & height of main window.  */
+    size_t wide, high;	/*  Width and height of picture window.  */
     double pixval[MAXPIX][MAXPIX];/*  Pixel value (width, height).  */
     double min=0.0, max=0.0;	/*  Minimum & maximum pixel values.  */
     int i, j, k, m;			/*  Loop counters.  */
@@ -366,20 +366,20 @@ main(void)
 
     /*  Read width and height of window.  */
     (void)bu_fgets(line, 150, fpr);
-    (void)sscanf(line, "%u %u", &wide, &high);
+    (void)sscanf(line, "%lu %lu", &wide, &high);
 
     /*  Check that width and height are not too big.  */
-    if (wide > MAXPIX)
+    if (wide > (size_t)MAXPIX)
     {
-	(void)printf("The width of the window, %d, is greater\n", wide);
-	(void)printf("than the maximum for width, %d.  Press\n", MAXPIX);
+	(void)printf("The width of the window, %lu, is greater\n", wide);
+	(void)printf("than the maximum for width, %lu.  Press\n", (unsigned long)MAXPIX);
 	(void)printf("delete to end program.\n");
 	(void)fflush(stdout);
     }
     if (high > MAXPIX)
     {
-	(void)printf("The height of the window, %d, is greater\n", wide);
-	(void)printf("than the maximum for height, %d.  Press\n", MAXPIX);
+	(void)printf("The height of the window, %lu, is greater\n", wide);
+	(void)printf("than the maximum for height, %lu.  Press\n", (unsigned long)MAXPIX);
 	(void)printf("delete to end program.\n");
 	(void)fflush(stdout);
     }
@@ -401,8 +401,8 @@ main(void)
     (void)fflush(stdout);
 
     /*  Print out width and height of window.  */
-    (void)printf("Width:  %d\n", wide);
-    (void)printf("Height:  %d\n", high);
+    (void)printf("Width:  %lu\n", wide);
+    (void)printf("Height:  %lu\n", high);
     (void)fflush(stdout);
 
     /*  Print out the first ten values as check.  */
@@ -428,9 +428,9 @@ main(void)
     (void)fflush(stdout);
 
     /*  Find minimum and maximum of pixel values.  */
-    for (i=0; i<high; i++)
+    for (i=0; (size_t)i<high; i++)
     {
-	for (j=0; j<wide; j++)
+	for (j=0; (size_t)j<wide; j++)
 	{
 	    if ( (j==0) && (i==0) )
 	    {
@@ -460,9 +460,9 @@ main(void)
     pixbin[MAXCOL] = max;
 
     /*  Find the color for each pixel.  */
-    for (i=0; i<high; i++)
+    for (i=0; (size_t)i<high; i++)
     {
-	for (j=0; j<wide; j++)
+	for (j=0; (size_t)j<wide; j++)
 	{
 	    /*  Determine the color associated with pixval[j][i].  */
 	    m = 0;
@@ -488,9 +488,9 @@ main(void)
     (void)fflush(stdout);
 
     /*  Put color info in arrays.  */
-    for (i=0; i<high; i++)
+    for (i=0; (size_t)i<high; i++)
     {
-	for (j=0; j<wide; j++)
+	for (j=0; (size_t)j<wide; j++)
 	{
 	    if (array[color[j][i]].cnt < MAXARR)
 	    {
@@ -680,8 +680,8 @@ main(void)
 		    XSetForeground(my_display, my_gc, white);
 		    font = XLoadFont(my_display, "8x13bold");
 		    XSetFont(my_display, my_gc, font);
-		    XDrawString(my_display, wind_exit, my_gc, 25, 20, exit,
-				strlen(exit));
+		    XDrawString(my_display, wind_exit, my_gc, 25, 20, quit,
+				strlen(quit));
 		}						/*  END # 2  */
 
 		/*  If color scale window is exposed put up color scale.  */
@@ -737,7 +737,7 @@ main(void)
 			for (i=high; i>0; i--)
 			{
 			    /*  START # 2.  */
-			    for (j=0; j<wide; j++)
+			    for (j=0; (size_t)j<wide; j++)
 			    {
 				/*  START # 3.  */
 				c = (unsigned char)( (int)(colval[color[j][i-1]].red

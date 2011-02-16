@@ -272,16 +272,16 @@ Face_X_Event::Face_X_Event()
  * @brief create a new Face_X_Event using a set of given values
  */
 Face_X_Event::Face_X_Event(
-    ON_BrepFace *face1,
-    ON_BrepFace *face2,
-    ON_Curve *curve1,
-    ON_Curve *curve2
+    ON_BrepFace *f1,
+    ON_BrepFace *f2,
+    ON_Curve *c1,
+    ON_Curve *c2
     )
 {
-    this->face1 = face1;
-    this->face2 = face2;
-    this->curve1 = curve1;
-    this->curve2 = curve2;
+    this->face1 = f1;
+    this->face2 = f2;
+    this->curve1 = c1;
+    this->curve2 = c2;
     this->loop_flags1.SetCapacity(face1->LoopCount());
     this->loop_flags1.SetCount(face1->LoopCount());
     this->loop_flags2.SetCapacity(face2->LoopCount());
@@ -884,7 +884,6 @@ int FaceFaceIntersect(
 bool BrepBrepIntersect(
     ON_Brep *brep1,
     ON_Brep *brep2,
-    ON_Brep **out,
     double stepsize,
     double tol
     )
@@ -1119,7 +1118,7 @@ TwistedCubeTrimmingCurve(const ON_Surface& s,
 int // return value not used?
 MakeTwistedCubeTrimmingLoop(ON_Brep& brep,
 			    ON_BrepFace& face,
-			    int v0, int v1, int v2, int v3, // indices of corner vertices
+			    int UNUSED(v0), int UNUSED(v1), int UNUSED(v2), int UNUSED(v3), // indices of corner vertices
 			    int e0, int eo0, // edge index + orientation w.r.t surface trim
 			    int e1, int eo1,
 			    int e2, int eo2,
@@ -1365,8 +1364,7 @@ int main()
 
     brep1.Create(surf1);
     brep2.Create(surf2);
-    ON_Brep *out;
-    BrepBrepIntersect(&brep1, &brep2, &out, 1e-3, 1e-9);
+    BrepBrepIntersect(&brep1, &brep2, 1e-3, 1e-9);
     return 0;
 }
 

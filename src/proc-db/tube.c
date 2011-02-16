@@ -122,6 +122,9 @@ main(int argc, char **argv)
     vect_t from, to;
     vect_t offset;
 
+    if (argc > 0)
+	bu_log("Usage: %s\n", argv[0]);
+
     BU_LIST_INIT(&head.l);
     BU_LIST_INIT(&ghead.l);
 
@@ -391,8 +394,9 @@ read_frame(FILE *fp)
     }
 
     for (nsamples=0;;nsamples++) {
-	int nmass;
+	size_t nmass;
 	float kx, ky, kz;
+	int nmassval;
 	
 	buf[0] = '\0';
 	if (bu_fgets(buf, sizeof(buf), fp) == NULL)  return -1;
@@ -400,13 +404,14 @@ read_frame(FILE *fp)
 	if (buf[0] == '\0' || buf[0] == '\n')
 	    break;		/* stop at a blank line */
 	i = sscanf(buf, "%d %f %f %f",
-		   &nmass, &kx, &ky, &kz);
+		   &nmassval, &kx, &ky, &kz);
 	if (i != 4) {
 	    fprintf(stderr, "input line in error: %s\n", buf);
 	    return -1;
 	}
+	nmass = (size_t)nmassval;
 	if (nmass-1 != nsamples) {
-	    fprintf(stderr, "nmass %d / nsamples %d mismatch\n",
+	    fprintf(stderr, "nmass %lu / nsamples %lu mismatch\n",
 		    nmass, nsamples);
 	    return -1;
 	}
@@ -483,7 +488,7 @@ build_cyl(char *cname, int npts, double radius)
 void
 xfinddir(fastf_t *dir, double x, fastf_t *loc)
 {
-    int i;
+    size_t i;
     fastf_t ratio;
 
     for (i=0; i<nsamples-1; i++) {

@@ -68,7 +68,7 @@ main (int argc, char **argv)
 		bu_strlcpy(rayname, bu_optarg, BUF_LEN);
 		break;
 	    case 'r':
-		if (sscanf(bu_optarg, "%F", &ray_radius) != 1) {
+		if (sscanf(bu_optarg, "%lf", &ray_radius) != 1) {
 		    bu_exit(1, "Illegal radius: '%s'\n", bu_optarg);
 		}
 		break;
@@ -114,7 +114,7 @@ main (int argc, char **argv)
 	rname[i] = '\0';
 
 	/* Read entry and exit coordinates for this partition */
-	if (sscanf(bp, "%F%F%F%F%F%F",
+	if (sscanf(bp, "%lf%lf%lf%lf%lf%lf",
 		   &entryp[X], &entryp[Y], &entryp[Z],
 		   &exitp[X], &exitp[Y], &exitp[Z]) != 6) {
 	    bu_exit(1, "Illegal data on line %d: '%s'\n", line_nm, bp);
@@ -139,6 +139,8 @@ main (int argc, char **argv)
 	   ray_radius);
     printf("g %s %s.r\n", rayname, rayname);
     fprintf(stderr, "Group is '%s'\n", rayname);
+
+    return 0;
 }
 
 

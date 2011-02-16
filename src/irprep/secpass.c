@@ -114,7 +114,7 @@ int main(int argc, char **argv)
 				/*  type rt_i  */
     char idbuf[132];	/*  first ID record info, used in  */
 			/*  rt_dirbuild  */
-    int index;		/*  index for rt_dirbuild & rt_gettree  */
+    int idx;		/*  index for rt_dirbuild & rt_gettree  */
 
     FILE *fp;		/*  used in opening file for second pass  */
     char spfile[16];	/*  second pass file name  */
@@ -169,7 +169,7 @@ int main(int argc, char **argv)
 			/*  from 1 position.  */
 
     /*  Check to see if arguments implimented correctly.  */
-    if (argv[1] == NULL || argv[2] == NULL)
+    if (argc < 2 || argv[1] == NULL || argv[2] == NULL)
     {
 	(void)fprintf(stderr, "\nusage:  secpass file.g objects\n\n");
     }
@@ -322,8 +322,8 @@ int main(int argc, char **argv)
 	 */
 
 	/*  Build the directory.  */
-	index = 1;	/*  Set index for rt_dirbuild.  */
-	rtip=rt_dirbuild(argv[index], idbuf, sizeof(idbuf));
+	idx = 1;	/*  Set index for rt_dirbuild.  */
+	rtip=rt_dirbuild(argv[idx], idbuf, sizeof(idbuf));
 	(void)fprintf(stdout, "Database title:  %s\n", idbuf);
 	(void)fflush(stdout);
 
@@ -331,11 +331,11 @@ int main(int argc, char **argv)
 	rtip->useair = 1;
 
 	/*  Load desired objects.  */
-	index = 2;	/*  Set index for rt_gettree.  */
-	while (argv[index] != NULL)
+	idx = 2;	/*  Set index for rt_gettree.  */
+	while (argv[idx] != NULL)
 	{
-	    rt_gettree(rtip, argv[index]);
-	    index += 1;
+	    rt_gettree(rtip, argv[idx]);
+	    idx += 1;
 	}
 
 	/*  Find total number of regions in mged file.  */
@@ -833,7 +833,7 @@ int main(int argc, char **argv)
 	    {
 	    	/*  START # 7  */
 
-		if ( (cond[i].avglen[j] != 0) )
+		if (!ZERO(cond[i].avglen[j]))
 		{
 		    /*  START # 8  */
 		    /*  Find correct thermal conductivity.  */
@@ -1045,7 +1045,7 @@ int main(int argc, char **argv)
 	    for (j=0; j<numreg; j++)
 	    {
 	    	/*  START # 10  */
-		if (cond[i].shrarea[j] != 0)
+		if (!ZERO(cond[i].shrarea[j]))
 		{
 		    /*  START # 11  */
 		    a1 = cond[i].shrarea[j] * 1.e-6;
@@ -1169,7 +1169,7 @@ int main(int argc, char **argv)
 
 /*  User supplied hit function.  */
 int
-hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
+hit(struct application *UNUSED(ap_p), struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     /*  START # 1H  */
 
@@ -1321,7 +1321,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 
 /*  User supplied miss function.  */
 int
-miss(struct application *ap_p)
+miss(struct application *UNUSED(ap_p))
 {
     /*  START # 1M  */
 
@@ -1335,7 +1335,7 @@ miss(struct application *ap_p)
 
 /*  User supplied overlap function that does nothing.  */
 int
-ovrlap(struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2, struct partition *hp)
+ovrlap(struct application *UNUSED(ap_p), struct partition *UNUSED(PartHeadp), struct region *UNUSED(reg1), struct region *UNUSED(reg2), struct partition *UNUSED(hp))
 {
     return 1;
 }
