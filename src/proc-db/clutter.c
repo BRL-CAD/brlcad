@@ -96,10 +96,12 @@ main(int argc, char **argv)
 
 #define rand_num(p)	(BN_UNIF_DOUBLE(p)+0.5)
 
+    if (argc > 0)
+	bu_log("Usage: %s\n", argv[0]);
 
     BU_LIST_INIT(&head.l);
 
-    sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0);
+    sin60 = sin(60.0 * M_PI / 180.0);
 
     outfp = wdb_fopen("clutter.g");
     mk_id(outfp, "Procedural Clutter");

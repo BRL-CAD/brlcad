@@ -35,7 +35,7 @@
 #include "./vegetation.h"
 
 static void ageStructure(structure_t *structure) {
-    int i;
+    size_t i;
 
     /*
       printf("Aging structure\n");
@@ -54,8 +54,8 @@ static void ageStructure(structure_t *structure) {
 
 
 static int getSegmentCount(structure_t *structure, unsigned int minAge, unsigned int maxAge) {
-    int i;
-    int total;
+    size_t i;
+    size_t total;
 
     for (total=i=0; i < structure->subStructureCount; i++) {
 	total += getSegmentCount(structure->subStructure[i], minAge, maxAge);
@@ -270,8 +270,8 @@ static segmentList_t *findIntersectors(const growthSegment_t * const segment, co
 
 
 static int branchWithProbability(plant_t *plant, structure_t* structure, unsigned int minAge, unsigned int maxAge, double probability) {
-    int i;
-    int total;
+    size_t i;
+    size_t total;
 
     /* make sure there is something to do.. */
     if (probability <= 0.0) {
@@ -436,7 +436,7 @@ static void branchGrowthPoints(plant_t *plant) {
 static void growPlant(plant_t *plant) {
     size_t i;
     size_t growthSteps;
-    int retryCount;
+    size_t retryCount;
     growthSegment_t *segment;
     growthPoint_t *point;
 
@@ -711,7 +711,7 @@ static plant_t *createPlant(unsigned int age, vect_t position, double radius, ve
 
 
 static int writeStructureToDisk(struct rt_wdb *fp, structure_t *structure, outputCounter_t *oc) {
-    int i;
+    size_t i;
     vect_t height;
 
     for (i=0; i < structure->segmentCount; i++) {

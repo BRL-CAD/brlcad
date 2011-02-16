@@ -430,6 +430,9 @@ main(int argc, char *argv[])
     ON_Brep *brep = NULL;
     int ret;
 
+    if (argc > 0)
+	bu_log("Usage: %0\n", argv[0]);
+
     bu_log("Breplicating...please wait...\n");
 
     ON_3dPoint points[8] = {

@@ -110,6 +110,9 @@ main(int argc, char **argv)
     int i;
     struct bu_list head;
 
+    if (argc > 0)
+	bu_log("Usage: %s\n", argv[0]);
+
     outfp = wdb_fopen("pipetest.g");
     mk_conversion("meters");
     mk_id(outfp, "Pipe & Particle Test");
