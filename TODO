@@ -292,9 +292,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   obtain a bu_log()-style callback function returned from a
   logger registration function.
 
-* finish obj-g importer.  need to test more inputs and make sure all
-  geometry is preserved on import in some form.
-
 * deprecate dbfind - ensure functionality is fully captured by the
   search command, make it report a deprecation statement on use and
   utilize search under the hood.
@@ -535,8 +532,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * readd support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901 
-
-* X3D/VRML importer
 
 * make Mac OS X universal binaries actually work.
 
@@ -789,10 +784,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   of these primitives, provided their continuity at the ends ensures
   continuity all along "seams" - something to consider.
 
-* implement a g-gcode exporter.  ideally this converts geometry to
-  NURBS format, trims surfaces, evaluates boolean expressions, and
-  then generates tool paths on resulting surfaces and interior paths.
-
 * incorporate some variety of spatial partitioning into the facetize command
   (may involve just rewriting it) to try and realize MUCH faster tessellation
   of CSG geometry.  Current routines are doing a lot of unnecessary work that
@@ -805,15 +796,21 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 CONVERTERS
 ----------
 
+* finish obj-g importer.  need to test more inputs and make sure all
+  geometry is preserved on import in some form.  make sure new libobj
+  parser works and is integrated with new front-end.
+
 * implement a g-step exporter (with NURBS, implicit CSG, and NMG/BoT options)
 
 * implement a g-dae (Collada) exporter and dae-g importer
   http://en.wikipedia.org/wiki/Collada
 
-* implement an x3d-g (Web3D) importer
+* implement an x3d-g (Web3D, VRML successor) importer
   http://en.wikipedia.org/wiki/X3D
 
-* implement a g-nc (g-code) exporter
+* implement a g-nc (g-code) exporter.  ideally this converts geometry
+  to NURBS format, trims surfaces, evaluates boolean expressions, and
+  then generates tool paths on resulting surfaces and interior paths.
   http://en.wikipedia.org/wiki/G-code
 
 * implement a u3d-g importer
@@ -845,7 +842,7 @@ STEP
 
 * document step-g
 
-* implement g-step exporter
+* implement g-step exporter (see above)
 
 
 BREP/NURBS
