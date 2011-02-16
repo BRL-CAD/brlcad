@@ -198,7 +198,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 	    srcp = (unsigned char *) ep->ext_buf;
 	    ldestp = (unsigned long *) bip->u.uint8;
 	    for (i = 0; i < bip->count; ++i, ++ldestp, srcp += 4) {
-		*ldestp = bu_glong( srcp );
+		*ldestp = ntohl( *srcp );
 	    }
 	    break;
 	case DB5_MINORTYPE_BINU_64BITINT:
@@ -310,7 +310,7 @@ rt_binunif_export5( struct bu_external		*ep,
 	    lsrcp = (unsigned long *) bip->u.uint8;
 	    destp = (unsigned char *) ep->ext_buf;
 	    for (i = 0; i < bip->count; ++i, ++destp, ++lsrcp) {
-		(void) bu_plong( destp, *lsrcp );
+		*destp = htonl( *lsrcp );
 	    }
 	    break;
 	case DB5_MINORTYPE_BINU_64BITINT:
