@@ -23,6 +23,13 @@
  *
  */
 
+#include "common.h"
+
+#ifdef HAVE_NETDB_H
+#  include <netdb.h>
+#endif
+
+
 /* Internal Host table */
 struct ihost {
     struct bu_list	l;
