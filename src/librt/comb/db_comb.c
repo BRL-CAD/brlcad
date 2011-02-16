@@ -273,7 +273,7 @@ rt_comb_import4(
 
 	    tp->tr_l.tl_name = bu_strdup(namebuf);
 
-	    rt_mat_dbmat(diskmat, rp[j+1].M.m_mat, dbip->dbi_version < 0 ? 1 : 0);
+	    flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, dbip->dbi_version < 0 ? 1 : 0);
 
 	    /* Verify that rotation part is pure rotation */
 	    if (fabs(diskmat[0]) > 1 || fabs(diskmat[1]) > 1 ||
@@ -498,9 +498,9 @@ rt_comb_export4(
 	NAMEMOVE(tp->tr_l.tl_name, rp[j+1].M.m_instname);
 
 	if (tp->tr_l.tl_mat) {
-	    rt_dbmat_mat(rp[j+1].M.m_mat, tp->tr_l.tl_mat);
+	    flip_dbmat_mat(rp[j+1].M.m_mat, tp->tr_l.tl_mat);
 	} else {
-	    rt_dbmat_mat(rp[j+1].M.m_mat, bn_mat_identity);
+	    flip_dbmat_mat(rp[j+1].M.m_mat, bn_mat_identity);
 	}
 	db_free_tree(tp, resp);
     }
