@@ -132,17 +132,17 @@ void	ph_cd(struct pkg_conn *pc, char *buf);
 void	prepare(void);
 
 struct pkg_switch pkgswitch[] = {
-    { MSG_DIRBUILD,	ph_dirbuild,	"DirBuild" },
-    { MSG_GETTREES,	ph_enqueue,	"Get Trees" },
-    { MSG_MATRIX,	ph_enqueue,	"Set Matrix" },
-    { MSG_OPTIONS,	ph_enqueue,	"Options" },
-    { MSG_LINES,	ph_enqueue,	"Compute lines" },
-    { MSG_END,	ph_end,		"End" },
-    { MSG_PRINT,	ph_unexp,	"Log Message" },
-    { MSG_LOGLVL,	ph_loglvl,	"Change log level" },
-    { MSG_RESTART,	ph_restart,	"Restart" },
-    { MSG_CD,	ph_cd,		"Change Dir" },
-    { 0,		0,		(char *)0 }
+    { MSG_DIRBUILD,	ph_dirbuild,	"DirBuild", NULL },
+    { MSG_GETTREES,	ph_enqueue,	"Get Trees", NULL },
+    { MSG_MATRIX,	ph_enqueue,	"Set Matrix", NULL },
+    { MSG_OPTIONS,	ph_enqueue,	"Options", NULL },
+    { MSG_LINES,	ph_enqueue,	"Compute lines", NULL },
+    { MSG_END,		ph_end,		"End", NULL },
+    { MSG_PRINT,	ph_unexp,	"Log Message", NULL },
+    { MSG_LOGLVL,	ph_loglvl,	"Change log level", NULL },
+    { MSG_RESTART,	ph_restart,	"Restart", NULL },
+    { MSG_CD,		ph_cd,		"Change Dir", NULL },
+    { 0,		0,		NULL, NULL }
 };
 
 struct pkg_conn *pcsrv;		/* PKG connection to server */
