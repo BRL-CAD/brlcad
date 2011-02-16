@@ -802,6 +802,40 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   and convertors/other commands retargted to use it.
 
 
+CONVERTERS
+----------
+
+* implement a g-step exporter (with NURBS, implicit CSG, and NMG/BoT options)
+
+* implement a g-dae (Collada) exporter and dae-g importer
+  http://en.wikipedia.org/wiki/Collada
+
+* implement an x3d-g (Web3D) importer
+  http://en.wikipedia.org/wiki/X3D
+
+* implement a g-nc (g-code) exporter
+  http://en.wikipedia.org/wiki/G-code
+
+* implement a u3d-g importer
+  http://en.wikipedia.org/wiki/Universal_3D
+  http://libharu.org/wiki/Main_Page
+
+* implement a g-pdf exporter and/or open source 3D PDF library
+  http://developer.techsoft3d.com/adobePDF/index.html
+
+* implement a g-sat (Solidworks) exporter and sat-g importer
+  http://local.wasp.uwa.edu.au/~pbourke/dataformats/sat/sat.pdf
+
+* implement a g-ply exporter
+  http://en.wikipedia.org/wiki/PLY_(file_format)
+
+* implement a g-json exporter
+  http://www.json.org/
+
+* implement a g-xml exporter
+  http://en.wikipedia.org/wiki/XML
+
+
 STEP
 ----
 
