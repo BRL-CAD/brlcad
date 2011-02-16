@@ -1443,11 +1443,19 @@ c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), PLAN **result
  * -print functions --
  *
  * Always true, causes the current pathame to be written to
- * standard output.
+ * standard output.  Will also append the directory pointer
+ * of the leaf object to the results direcotry pointer list,
+ * if that list is initialized. 
  */
 int
 f_print(PLAN *UNUSED(plan), struct db_full_path *entry, struct rt_search_dbinfo *UNUSED(dbinfo), struct rt_search_results *results)
 {
+    struct rt_search_dir_list *new_dirp;
+    if (!BU_LIST_UNINITIALIZED(&(results->dir_list.l))) {
+	BU_GETSTRUCT(new_dirp, rt_search_dir_list);
+	new_dirp->dp = DB_FULL_PATH_GET(entry, entry->fp_len - 1);
+	BU_LIST_PUSH(&(results->dir_list.l), &(new_dirp->l));
+    }
     bu_vls_printf(&results->result_str, "%s\n", db_path_to_string(entry));
     isoutput = 0;
     return 1;
