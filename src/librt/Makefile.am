@@ -239,7 +239,6 @@ librt_nil_la_SOURCES = \
 	primitives/vol/vol_mirror.c \
 	regionfix.c \
 	roots.c \
-	search.c \
 	shoot.c \
 	spectrum.c \
 	tcl.c \
@@ -288,8 +287,7 @@ noinst_HEADERS = \
 	primitives/fixpt.h \
 	primitives/metaball/metaball.h \
 	primitives/revolve/revolve.h \
-	primitives/xxx/xxx.h \
-	search.h
+	primitives/xxx/xxx.h
 
 dist_man_MANS = librt.3
 

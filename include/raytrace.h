@@ -6000,34 +6000,6 @@ RT_EXPORT BU_EXTERN(void db5_update_std_attributes,
                          (struct db_i *dbip, struct directory *dp, const struct rt_comb_internal *comb));
 
 
-
-/**
- * S E A R C H
- *
- * Structures and functions related to searching geometry
- */
-
-struct rt_search_dbinfo {
-    struct db_i *dbip;
-    struct rt_wdb *wdbp;
-};
-
-struct rt_search_dir_list {
-    struct bu_list l;
-    struct directory *dp;
-};
-
-struct rt_search_results {
-    struct bu_vls result_str;
-    struct rt_search_dir_list dir_list;
-};
-
-RT_EXPORT BU_EXTERN(int rt_search,
-		    (struct rt_search_dbinfo *dbinfo,
-		     struct rt_search_results *results,
-		     int argc,
-		     const char *argv_orig[]));
-
 /*
  *  Constants provided and used by the RT library.
  */
