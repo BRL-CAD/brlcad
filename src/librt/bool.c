@@ -932,7 +932,8 @@ rt_fastgen_plate_vol_overlap(struct region **fr1, struct region **fr2, struct pa
 	return;
     }
 
-    if (rt_fdiff(prev->pt_outhit->hit_dist, pp->pt_inhit->hit_dist) != 0) {
+    /* arbitrary tolerance is the dominant absolute tolerance from f_diff() */
+    if (!NEAR_EQUAL(prev->pt_outhit->hit_dist, pp->pt_inhit->hit_dist, 0.001)) {
 	/* There is a gap between previous partition and this one.  So
 	 * both plate and vol start at same place, d=0, plate wins.
 	 */
