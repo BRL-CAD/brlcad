@@ -90,7 +90,6 @@ int nirt_debug = 0;			/* Control of diagnostics */
 
 /* Parallel structures needed for operation w/ and w/o air */
 struct rt_i *rti_tab[2];
-struct rt_i *rtip;
 struct resource res_tab;
 
 struct application ap;
@@ -304,7 +303,7 @@ free_script(struct script_rec *srp)
 
 
 static void
-run_scripts(struct bu_list *sl)
+run_scripts(struct bu_list *sl, struct rt_i *rtip)
 {
     struct script_rec *srp;
     char *cp;
@@ -327,13 +326,13 @@ run_scripts(struct bu_list *sl)
 
 	switch (srp->sr_type) {
 	    case READING_STRING:
-		interact(READING_STRING, cp);
+		interact(READING_STRING, cp, rtip);
 		break;
 	    case READING_FILE:
 		if ((fPtr = fopen(cp, "rb")) == NULL) {
 		    bu_log("Cannot open script file '%s'\n", cp);
 		} else {
-		    interact(READING_FILE, fPtr);
+		    interact(READING_FILE, fPtr, rtip);
 		    fclose(fPtr);
 		}
 		break;
@@ -351,6 +350,8 @@ run_scripts(struct bu_list *sl)
 int
 main(int argc, char *argv[])
 {
+    struct rt_i *rtip = NULL;
+
     char db_title[TITLE_LEN+1];/* title from MGED file */
     const char *tmp_str;
     extern char local_u_name[65];
@@ -583,19 +584,19 @@ main(int argc, char *argv[])
 
     /* Run the run-time configuration file, if it exists */
     if ((fPtr = fopenrc()) != NULL) {
-	interact(READING_FILE, fPtr);
+	interact(READING_FILE, fPtr, rtip);
 	fclose(fPtr);
     }
 
     /* Run all scripts specified on the command line */
-    run_scripts(&script_list);
+    run_scripts(&script_list, rtip);
 
     /* Perform the user interface */
     if (mat_flag) {
-	read_mat();
+	read_mat(rtip);
 	return 0;
     } else {
-	interact(READING_FILE, stdin);
+	interact(READING_FILE, stdin, rtip);
     }
 
     return 0;
