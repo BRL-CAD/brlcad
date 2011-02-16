@@ -246,14 +246,9 @@ int main(int argc, char **argv)
     double diff;		/*  Difference, used in finding variance.  */
 
     /*  Check to see if arguments implimented correctly.  */
-    if (argv[1]==NULL || argv[2]==NULL)
-    {
+    if (argc < 3 || argv[1]==NULL || argv[2]==NULL) {
 	(void)fprintf(stderr, "\nusage:  firpass file.g objects\n\n");
-    }
-
-    else
-    {
-
+    } else {
 
 	/*  Ask if output goes to standard out or a file.  */
 	(void)printf("Write output to standard out (0) or a file (1) or ");
@@ -2316,7 +2311,7 @@ int main(int argc, char **argv)
 }
 
 int
-hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
+hit(struct application *ap_p, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     struct partition *pp;
     struct hit *hitp;
@@ -2728,7 +2723,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 
 /*  User supplied miss function.  */
 int
-miss(struct application *ap_p)
+miss(struct application *UNUSED(ap_p))
 {
     /*
      *	(void)printf("It was a miss.\n");
@@ -2739,7 +2734,7 @@ miss(struct application *ap_p)
 
 /*  User supplied overlap function.  */
 int
-ovrlap(struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2, struct partition *hp)
+ovrlap(struct application *UNUSED(ap_p), struct partition *PartHeadp, struct region *reg1, struct region *reg2, struct partition *UNUSED(hp))
 {
     int a, b;
     double depth;
