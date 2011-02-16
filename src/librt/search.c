@@ -739,7 +739,7 @@ c_iregex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), PLAN **resu
  * supplied to the attr option
  */
 int
-f_attr(PLAN *plan, struct db_full_path *entry, struct rt_search_dbinfo *dbinfo, struct rt_search_results *results)
+f_attr(PLAN *plan, struct db_full_path *entry, struct rt_search_dbinfo *dbinfo, struct rt_search_results *UNUSED(results))
 {
     struct bu_vls attribname;
     struct bu_vls value;
@@ -994,7 +994,7 @@ c_attr(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), PLAN **result
  * associated with an object.
  */
 int
-f_stdattr(PLAN *UNUSED(plan), struct db_full_path *entry, struct rt_search_dbinfo *dbinfo, struct rt_search_results *results)
+f_stdattr(PLAN *UNUSED(plan), struct db_full_path *entry, struct rt_search_dbinfo *dbinfo, struct rt_search_results *UNUSED(results))
 {
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
@@ -1053,7 +1053,7 @@ c_stdattr(char *UNUSED(pattern), char ***UNUSED(ignored), int UNUSED(unused), PL
  * are matched based on whether they are a combination or region.
  */
 int
-f_type(PLAN *plan, struct db_full_path *entry, struct rt_search_dbinfo *dbinfo, struct rt_search_results *results)
+f_type(PLAN *plan, struct db_full_path *entry, struct rt_search_dbinfo *dbinfo, struct rt_search_results *UNUSED(results))
 {
     struct rt_db_internal intern;
     int type_match = 0;
@@ -1297,7 +1297,7 @@ c_mindepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), PLAN **re
  *
  */
 int
-f_nnodes(PLAN *plan, struct db_full_path *entry, struct rt_search_dbinfo *dbinfo, struct rt_search_results *results)
+f_nnodes(PLAN *plan, struct db_full_path *entry, struct rt_search_dbinfo *dbinfo, struct rt_search_results *UNUSED(results))
 {
     int dogreaterthan = 0;
     int dolessthan = 0;
@@ -1446,7 +1446,7 @@ c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), PLAN **result
  * standard output.
  */
 int
-f_print(PLAN *UNUSED(plan), struct db_full_path *entry, struct rt_search_dbinfo *dbinfo, struct rt_search_results *results)
+f_print(PLAN *UNUSED(plan), struct db_full_path *entry, struct rt_search_dbinfo *UNUSED(dbinfo), struct rt_search_results *results)
 {
     bu_vls_printf(&results->result_str, "%s\n", db_path_to_string(entry));
     isoutput = 0;
@@ -1456,9 +1456,9 @@ f_print(PLAN *UNUSED(plan), struct db_full_path *entry, struct rt_search_dbinfo 
 
 /* ARGSUSED */
 int
-f_print0(PLAN *UNUSED(plan), struct db_full_path *entry, struct rt_search_dbinfo *dbinfo, struct rt_search_results *results)
+f_print0(PLAN *UNUSED(plan), struct db_full_path *entry, struct rt_search_dbinfo *UNUSED(dbinfo), struct rt_search_results *results)
 {
-    bu_vls_printf(&results->result_str, "%s\0", db_path_to_string(entry));
+    bu_vls_printf(&results->result_str, "%s ", db_path_to_string(entry));
     return 1;
 }
 
@@ -1492,7 +1492,7 @@ c_print0(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), PLAN
  * this switch stuff.
  */
 int
-find_create(char ***argvp, PLAN **resultplan, struct rt_search_dbinfo *dbinfo, struct rt_search_results *results)
+find_create(char ***argvp, PLAN **resultplan, struct rt_search_dbinfo *UNUSED(dbinfo), struct rt_search_results *results)
 {
     OPTION *p;
     PLAN *new;
@@ -2061,7 +2061,7 @@ find_execute(PLAN *plan,        /* search plan */
 int isoutput;
 
 int
-rt_search(struct rt_search_results *results, struct rt_search_dbinfo *dbinfo,  int argc, const char *argv_orig[])
+rt_search(struct rt_search_dbinfo *dbinfo, struct rt_search_results *results, int argc, const char *argv_orig[])
 {
     PLAN *dbplan;
     int i;
