@@ -39,7 +39,7 @@
 /*	30 September 1994- Change name from see2.c to ir-sgi.c & the one  */
 /*			reference to see2 was changed.  */
 
-#if HAS_SGIGL
+#ifdef HAS_SGIGL
 
 /*  Include files needed.  */
 #include <stdlib.h>
@@ -589,7 +589,7 @@ int
 main(void)
 {
     fprintf(stderr, "ir-sgi: This program only works on an SGI workstation\n");
-    bu_exit(1, NULL);
+    return 1;
 }
 #endif	/* !defined(IRIX) */
 
