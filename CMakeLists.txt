@@ -1560,19 +1560,17 @@ SET(CPACK_SOURCE_IGNORE_FILES "\\\\.svn/")
 INCLUDE(CPack)
 
 SET(toplevel_ignore_files 
-	AUTHORS
+	${toplevel_DOCFILES}
 	BUGS
-	COPYING
 	ChangeLog
-	HACKING
-	INSTALL
-	NEWS
 	TODO
 	TODO.cmake
 	autogen.sh
 	configure.ac
 	configure.cmake.sh
 	m4
+	INSTALL.cmake
+	README.cmake
 	)
 CMAKEFILES(${toplevel_ignore_files})
 
