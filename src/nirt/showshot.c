@@ -50,13 +50,13 @@ main (int argc, char **argv)
     char rname[BUF_LEN];	/* Name of current region */
     char rayname[BUF_LEN];	/* Name of ray */
     fastf_t ray_radius = 1.0;	/* Thickness of the RCC */
-    point_t entryp;		/* Ray's entry into current region */
-    point_t exitp;		/* Ray's exit from current region */
-    point_t first_entryp;	/* Ray's entry into the entire geometry */
     int i;			/* Index into rname */
     int line_nm = 0;		/* Number of current line of input */
     int opt;			/* Command-line option returned by bu_getopt */
     int pid;			/* Process ID for unique group name */
+    point_t entryp = VINIT_ZERO;	/* Ray's entry into current region */
+    point_t exitp = VINIT_ZERO;		/* Ray's exit from current region */
+    point_t first_entryp = VINIT_ZERO;	/* Ray's entry into the entire geometry */
 
     pid = bu_process_id();
 
