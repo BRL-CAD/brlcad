@@ -478,7 +478,7 @@
     set cooked_dest [get_cooked_dest]
 
     set fbclear [file join [bu_brlcad_root "bin"] fbclear]
-    set result [catch {eval exec $fbclear -F $cooked_dest $rtColor &} rt_error]
+    set result [catch {eval exec "\"$fbclear\"" -F $cooked_dest $rtColor &} rt_error]
 
     if {$result} {
 	error $rt_error
