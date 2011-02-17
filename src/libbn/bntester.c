@@ -513,25 +513,16 @@ main(int argc, char **argv)
                                         failed_cnt++;
                                         (void)fprintf(stream, "Failed function %lu test case on line %lu expected = %d result = %d\n",
                                                u[0], line_num, i[0], result); 
-                                    } else if (result == 0) {
-                                        if (!NEAR_ZERO(dist[0] - d[0], tol.dist)) {
-                                            ret = 1;
-                                            failed_cnt++;
-                                            (void)fprintf(stream, "Failed function %lu test case on line %lu expected t = %.15f result = %.15f\n",
-                                                   u[0], line_num, dist[0], d[0]); 
-                                        } else {
-                                            success_cnt++;
-                                        }
-                                    } else if (result == 1) {
-                                        d0_fail = !NEAR_ZERO(dist[0] - d[0], tol.dist);
-                                        d1_fail = !NEAR_ZERO(dist[1] - d[1], tol.dist);
+                                    } else if (result == 0 || result == 1) {
+                                        d0_fail = !NEAR_ZERO(dist[0] - d[0], VUNITIZE_TOL);
+                                        d1_fail = !NEAR_ZERO(dist[1] - d[1], VUNITIZE_TOL);
                                         if (d0_fail) {
                                             (void)fprintf(stream, "Failed function %lu test case on line %lu expected t = %.15f result = %.15f\n",
-                                                   u[0], line_num, dist[0], d[0]); 
+                                                   u[0], line_num, d[0], dist[0]); 
                                         }
                                         if (d1_fail) {
                                             (void)fprintf(stream, "Failed function %lu test case on line %lu expected u = %.15f result = %.15f\n",
-                                                   u[0], line_num, dist[1], d[1]); 
+                                                   u[0], line_num, d[1], dist[1]); 
                                         }
                                         if (d0_fail || d1_fail) {
                                             ret = 1;
