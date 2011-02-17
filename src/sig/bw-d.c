@@ -35,6 +35,7 @@
 #include "bio.h"
 
 #include "bu.h"
+#include "vmath.h"
 
 unsigned char	ibuf[512];
 double	obuf[512];
@@ -55,12 +56,12 @@ int main(int argc, char **argv)
 	argc--;
     }
 
-    if ( argc > 1 || scale == 0 || isatty(fileno(stdin)) ) {
+    if ( argc > 1 || ZERO(scale) || isatty(fileno(stdin)) ) {
 	bu_exit(1, "Usage: bw-d [-n || scale] < unsigned_chars > doubles\n");
     }
 
     while ( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {
-	if ( scale == 1.0 ) {
+	if ( EQUAL(scale, 1.0) ) {
 	    for ( i = 0; i < num; i++ )
 		obuf[i] = ibuf[i];
 	} else {

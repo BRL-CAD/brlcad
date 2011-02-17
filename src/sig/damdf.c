@@ -32,6 +32,8 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu.h"
+
 
 #define	BSIZE	2048		/* Must be AT LEAST 2*Points in spectrum */
 double	data[BSIZE];		/* Input buffer */

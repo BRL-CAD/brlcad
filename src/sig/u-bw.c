@@ -33,7 +33,7 @@ unsigned char obuf[512];
 
 int main(int ac, char **av)
 {
-    int num, i;
+    size_t num, i;
 
     if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
 	(void)fprintf(stderr, "Usage: %s < u_shorts > bwfile\n",

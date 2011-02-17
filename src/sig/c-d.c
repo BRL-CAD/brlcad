@@ -27,6 +27,10 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu.h"
+#include "vmath.h"
+
+
 static const char usage[] = "\
 Usage: c-d -r -i -m -p -z < complex_data > doubles\n";
 
@@ -87,7 +91,7 @@ int main(int argc, char **argv)
 		onum++;
 	    }
 	    if ( pflag ) {
-		if ( ibuf[i] == 0 && ibuf[i+1] == 0 )
+		if ( ZERO(ibuf[i]) && ZERO(ibuf[i+1]) )
 		    *obp++ = 0;
 		else
 		    *obp++ = atan2( ibuf[i], ibuf[i+1] );
