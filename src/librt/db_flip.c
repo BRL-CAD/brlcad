@@ -101,7 +101,7 @@ flip_fastf_float(fastf_t *ff, const dbfloat_t *fp, int n, int flip)
 void
 rt_fastf_float(fastf_t *ff, const dbfloat_t *fp, int n, int flip)
 {
-    return flip_fastf_float(ff, fp, n, flip);
+    flip_fastf_float(ff, fp, n, flip);
 }
 
 
