@@ -233,67 +233,69 @@ struct application **occlusion_apps;
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"%d", 1, "detect_regions", bu_byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "dr", bu_byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "detect_distance", bu_byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "dd", bu_byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "detect_normals", bu_byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "dn", bu_byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "detect_ids", bu_byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "di", bu_byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 3, "foreground", bu_byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 3, "fg", bu_byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 3, "background", bu_byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 3, "bg", bu_byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "overlay", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "ov", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "blend", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "bl", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "region_color", bu_byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "rc", bu_byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL},
-    {"%V", 1, "occlusion_objects", bu_byteoffset(occlusion_objects), BU_STRUCTPARSE_FUNC_NULL},
-    {"%V", 1, "oo", bu_byteoffset(occlusion_objects), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "occlusion_mode", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "om", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL},
-    {"%f", 1, "max_dist", bu_byteoffset(max_dist), BU_STRUCTPARSE_FUNC_NULL},
-    {"%f", 1, "md", bu_byteoffset(max_dist), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "antialias", bu_byteoffset(antialias), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "aa", bu_byteoffset(antialias), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "both_sides", bu_byteoffset(both_sides), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "bs", bu_byteoffset(both_sides), BU_STRUCTPARSE_FUNC_NULL},
-    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"%d", 1, "detect_regions", bu_byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "dr", bu_byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "detect_distance", bu_byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "dd", bu_byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "detect_normals", bu_byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "dn", bu_byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "detect_ids", bu_byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "di", bu_byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 3, "foreground", bu_byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 3, "fg", bu_byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 3, "background", bu_byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 3, "bg", bu_byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "overlay", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "ov", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "blend", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "bl", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "region_color", bu_byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "rc", bu_byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%V", 1, "occlusion_objects", bu_byteoffset(occlusion_objects), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%V", 1, "oo", bu_byteoffset(occlusion_objects), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "occlusion_mode", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "om", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "max_dist", bu_byteoffset(max_dist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "md", bu_byteoffset(max_dist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "antialias", bu_byteoffset(antialias), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "aa", bu_byteoffset(antialias), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "both_sides", bu_byteoffset(both_sides), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "bs", bu_byteoffset(both_sides), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 const char title[] = "RT Hidden-Line Renderer";
-const char usage[] = "\
-Usage:  rtedge [options] model.g objects... >file.pix\n\
-Options:\n\
- -r		Report overlaps (default)\n\
- -R		Do not report overlaps\n\
- -M		Read matrix+commands on stdin\n\
- -o model.pix	Output .pix format file (default is window)\n\
- -s #		Square grid size in pixels (default is 512)\n\
- -w # -n #	Grid size width (w) and height (n) in pixels\n\
- -a # -e #	Azimuth (a) and elevation (e) in degrees\n\
- -V #		View (pixel) aspect ratio (width/height)\n\
- -p #		Perspective angle, degrees side to side\n\
- -P #		Set number of processors\n\
- -T #/#		Tolerance: distance/angular\n\
- -l #		Set lighting model rendering style\n\
- -U #		Use air if # is greater than 0\n\
- -x #		librt debug flags\n\
- -N #		NMG debug flags\n\
- -X #		rt debug flags\n\
- -c		Auxillary commands (see man page)\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects... >file.pix\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -r		Report overlaps (default)\n");
+    bu_log(" -R		Do not report overlaps\n");
+    bu_log(" -M		Read matrix+commands on stdin\n");
+    bu_log(" -o model.pix	Output .pix format file (default is window)\n");
+    bu_log(" -s #		Square grid size in pixels (default is 512)\n");
+    bu_log(" -w # -n #	Grid size width (w) and height (n) in pixels\n");
+    bu_log(" -a # -e #	Azimuth (a) and elevation (e) in degrees\n");
+    bu_log(" -V #		View (pixel) aspect ratio (width/height)\n");
+    bu_log(" -p #		Perspective angle, degrees side to side\n");
+    bu_log(" -P #		Set number of processors\n");
+    bu_log(" -T #/#		Tolerance: distance/angular\n");
+    bu_log(" -l #		Set lighting model rendering style\n");
+    bu_log(" -U #		Use air if # is greater than 0\n");
+    bu_log(" -x #		librt debug flags\n");
+    bu_log(" -N #		NMG debug flags\n");
+    bu_log(" -X #		rt debug flags\n");
+    bu_log(" -c		Auxillary commands (see man page)\n");
+}
 
 
 int handle_main_ray(struct application *ap, register struct partition *PartHeadp, struct seg *segp);
 int diffpixel(RGBpixel a, RGBpixel b);
 
-static int occlusion_hit(struct application *ap, struct partition *pt,
-			 struct seg *segp)
+static int occlusion_hit(struct application *ap, struct partition *pt, struct seg *UNUSED(segp))
 {
     struct hit *hitp = pt->pt_forw->pt_inhit;
 
@@ -414,7 +416,7 @@ void choose_color(RGBpixel col, double intensity, struct cell *me,
  * Returns 1 if framebuffer should be opened, else 0.
  */
 int
-view_init(struct application *ap, char *file, char *obj, int minus_o, int minus_F)
+view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, int minus_F)
 {
     /*
      * Allocate a scanline for each processor.
@@ -565,7 +567,7 @@ view_init(struct application *ap, char *file, char *obj, int minus_o, int minus_
  * beginning of a frame
  */
 void
-view_2init(struct application *ap, char *UNUSED(framename))
+view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
 {
     int i;
 
@@ -639,7 +641,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 /**
  * end of each pixel
  */
-void view_pixel(struct application *ap)
+void view_pixel(struct application *UNUSED(ap))
 {
 }
 
@@ -845,8 +847,7 @@ void view_end(struct application *UNUSED(ap)) {
 /**
  * R A Y H I T 2
  */
-int rayhit2(struct application *ap, register struct partition *pt,
-	    struct seg *segp)
+int rayhit2(struct application *ap, register struct partition *pt, struct seg *UNUSED(segp))
 {
     struct partition *pp = pt->pt_forw;
     struct hit *hitp = pt->pt_forw->pt_inhit;
@@ -896,7 +897,7 @@ is_edge(double *intensity, struct application *ap, const struct cell *here,
  * this edge cell.
  */
 static void
-get_intensity(double *intensity, struct application *ap, const struct cell *here, const struct cell *left, const struct cell *below, const struct cell *right, const struct cell *above)
+get_intensity(double *intensity, struct application *ap, const struct cell *UNUSED(here), const struct cell *left, const struct cell *below, const struct cell *right, const struct cell *above)
 {
     vect_t dy, dx, dy3, dx3;
     struct application aaap;

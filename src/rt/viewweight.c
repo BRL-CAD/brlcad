@@ -38,36 +38,40 @@
 #include "vmath.h"
 #include "raytrace.h"
 
-#include "./rtuif.h"
-
 #include "db.h"  /* FIXME: Yes, I know I shouldn't be peeking, put I
 		    am only looking to see what units we prefer... */
+
+#include "./rtuif.h"
+#include "./ext.h"
 
 
 extern struct resource resource[];
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL}
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 const char title[] = "RT Weight";
-const char usage[] = "\
-Usage:  rtweight [options] model.g objects...\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -g #		Grid cell width [and height] in mm\n\
- -G #		Grid cell height [and width] in mm\n\
- -a Az		Azimuth in degrees\n\
- -e Elev	Elevation in degrees\n\
- -o file.out	Weights and Moments output file\n\
- -M		Read matrix, cmds on stdin\n\
- -r 		Report verbosely mass of each region\n\
- -x #		Set librt debug flags\n\
-Files:\n\
- .density, OR\n\
- $HOME/.density\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  rtweight [options] model.g objects...\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512\n");
+    bu_log(" -g #		Grid cell width [and height] in mm\n");
+    bu_log(" -G #		Grid cell height [and width] in mm\n");
+    bu_log(" -a Az		Azimuth in degrees\n");
+    bu_log(" -e Elev	Elevation in degrees\n");
+    bu_log(" -o file.out	Weights and Moments output file\n");
+    bu_log(" -M		Read matrix, cmds on stdin\n");
+    bu_log(" -r 		Report verbosely mass of each region\n");
+    bu_log(" -x #		Set librt debug flags\n");
+    bu_log("Files:\n");
+    bu_log(" .density, OR\n");
+    bu_log(" $HOME/.density\n");
+}
 
 
 int	noverlaps = 0;
@@ -94,7 +98,7 @@ extern int	output_is_binary;	/* !0 means output is binary */
 
 
 int
-hit(struct application *ap, struct partition *PartHeadp, struct seg *segp)
+hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     struct partition *pp;
     register struct xray *rp = &ap->a_ray;
@@ -158,14 +162,14 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segp)
 
 
 int
-miss(register struct application *ap)
+miss(register struct application *UNUSED(ap))
 {
     return 0;
 }
 
 
 int
-overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp)
+overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct region *UNUSED(reg1), struct region *UNUSED(reg2), struct partition *UNUSED(hp))
 {
     bu_semaphore_acquire( BU_SEM_SYSCALL );
     noverlaps++;
@@ -224,23 +228,23 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
     /* Read in density in terms of grams/cm^3 */
 
     for (line = 1; feof( densityfp ) != EOF; line++) {
-	int index;
+	int idx;
 	float dens;
 
-	i = fscanf(densityfp, "%d %f %[^\n]", &index, &dens, buf);
-	if (i == EOF)
+	i = fscanf(densityfp, "%d %f %[^\n]", &idx, &dens, buf);
+	if ((int)i == EOF)
 	    break;
 	if (i != 3) {
 	    bu_log("error parsing line %d of density file.\n%d args recognized instead of 3\n", line, i);
 	    continue;
 	}
 
-	if ( index > 0 && index < MAXMATLS ) {
-	    density[ index ] = dens;
-	    dens_name[ index ] = bu_strdup(buf);
+	if ( idx > 0 && idx < MAXMATLS ) {
+	    density[ idx ] = dens;
+	    dens_name[ idx ] = bu_strdup(buf);
 	} else
 	    bu_log( "Material index %d in \"%s\" is out of range.\n",
-		    index, densityfile );
+		    idx, densityfile );
     }
     ap->a_hit = hit;
     ap->a_miss = miss;
@@ -289,7 +293,7 @@ view_end(struct application *ap)
     char units[128] = {0};
     char unit2[128] = {0};
     int MAX_ITEM = 0;
-    time_t clock;
+    time_t clockval;
     struct tm *locltime;
     char *timeptr;
 
@@ -297,8 +301,8 @@ view_end(struct application *ap)
     bu_strlcpy(units, "grams", sizeof(units));
     bu_strlcpy(unit2, bu_units_string(dbp->dbi_local2base), sizeof(unit2));
 
-    (void) time( &clock );
-    locltime = localtime( &clock );
+    (void) time( &clockval );
+    locltime = localtime( &clockval );
     timeptr = asctime( locltime );
 
     /* This section is necessary because libbu doesn't yet
@@ -394,17 +398,20 @@ view_end(struct application *ap)
 	item_wt = (fastf_t *) bu_malloc( sizeof(fastf_t) * (MAX_ITEM + 1), "item_wt" );
 	for ( i=1; i<=MAX_ITEM; i++ )
 	    item_wt[i] = -1.0;
+
 	fprintf(outfp, "Weight by item number (in %s):\n\n", units);
 	fprintf(outfp, "Item  Weight  Region Names\n" );
 	fprintf(outfp, "---- -------- --------------------\n" );
+
 	for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
-	    register int i = rp->reg_regionid;
+	    i = rp->reg_regionid;
 
 	    if ( item_wt[i] < 0 )
 		item_wt[i] = *(fastf_t *)rp->reg_udata;
 	    else
 		item_wt[i] += *(fastf_t *)rp->reg_udata;
 	}
+
 	for ( i=1; i<MAX_ITEM; i++ ) {
 	    int CR = 0;
 	    if ( item_wt[i] < 0 )
@@ -438,12 +445,18 @@ view_end(struct application *ap)
     fprintf( outfp, "\nTotal mass = %g %s\n\n", total_weight, units );
 }
 
-void view_setup(struct rt_i *rtip) {}
+void view_setup(struct rt_i *UNUSED(rtip))
+{
+}
 
 /* Associated with "clean" command, before new tree is loaded  */
-void view_cleanup(struct rt_i *rtip) {}
+void view_cleanup(struct rt_i *UNUSED(rtip))
+{
+}
 
-void application_init (void) {}
+void application_init (void)
+{
+}
 
 /*
  * Local Variables:

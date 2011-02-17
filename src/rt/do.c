@@ -147,7 +147,7 @@ old_way(FILE *fp)
     }
     bu_log("Interpreting command stream in old format\n");
 
-    def_tree(ap.a_rt_i);	/* Load the default trees */
+    def_tree(APP.a_rt_i);	/* Load the default trees */
 
     curframe = 0;
     do {
@@ -170,6 +170,9 @@ int cm_start(int argc, char **argv)
 {
     char *buf = (char *)NULL;
     int frame;
+
+    if (argc < 2)
+	return 1;
 
     frame = atoi(argv[1]);
     if (finalframe >= 0 && frame > finalframe)
@@ -204,6 +207,9 @@ int cm_start(int argc, char **argv)
 
 int cm_vsize(int argc, char **argv)
 {
+    if (argc < 2)
+	return 1;
+
     viewsize = atof(argv[1]);
     return 0;
 }
@@ -212,6 +218,9 @@ int cm_vsize(int argc, char **argv)
 int cm_eyept(int argc, char **argv)
 {
     register int i;
+
+    if (argc < 2)
+	return 1;
 
     for (i=0; i<3; i++)
 	eye_model[i] = atof(argv[i+1]);
@@ -256,6 +265,9 @@ int cm_vrot(int argc, char **argv)
 {
     register int i;
 
+    if (argc < 16)
+	return 1;
+
     for (i=0; i<16; i++)
 	Viewrotscale[i] = atof(argv[i+1]);
     return 0;
@@ -267,6 +279,9 @@ int cm_orientation(int argc, char **argv)
     register int i;
     quat_t quat;
 
+    if (argc < 4)
+	return 1;
+
     for (i=0; i<4; i++)
 	quat[i] = atof(argv[i+1]);
     quat_quat2mat(Viewrotscale, quat);
@@ -274,9 +289,9 @@ int cm_orientation(int argc, char **argv)
 }
 
 
-int cm_end(int argc, char **argv)
+int cm_end(int UNUSED(argc), char **UNUSED(argv))
 {
-    struct rt_i *rtip = ap.a_rt_i;
+    struct rt_i *rtip = APP.a_rt_i;
 
     if (rtip && BU_LIST_IS_EMPTY(&rtip->HeadRegion)) {
 	def_tree(rtip);		/* Load the default trees */
@@ -293,7 +308,7 @@ int cm_end(int argc, char **argv)
 
 int cm_tree(int argc, const char **argv)
 {
-    register struct rt_i *rtip = ap.a_rt_i;
+    register struct rt_i *rtip = APP.a_rt_i;
     struct bu_vls times;
 
     if (argc <= 1) {
@@ -314,9 +329,9 @@ int cm_tree(int argc, const char **argv)
 }
 
 
-int cm_multiview(int argc, char **argv)
+int cm_multiview(int UNUSED(argc), char **UNUSED(argv))
 {
-    register struct rt_i *rtip = ap.a_rt_i;
+    register struct rt_i *rtip = APP.a_rt_i;
     size_t i;
     static int a[] = {
 	35,   0,
@@ -350,7 +365,7 @@ int cm_multiview(int argc, char **argv)
 int cm_anim(int argc, const char **argv)
 {
 
-    if (db_parse_anim(ap.a_rt_i->rti_dbip, argc, argv) < 0) {
+    if (db_parse_anim(APP.a_rt_i->rti_dbip, argc, argv) < 0) {
 	bu_log("cm_anim:  %s %s failed\n", argv[1], argv[2]);
 	return -1;		/* BAD */
     }
@@ -363,12 +378,12 @@ int cm_anim(int argc, const char **argv)
  *
  * Clean out results of last rt_prep(), and start anew.
  */
-int cm_clean(int argc, char **argv)
+int cm_clean(int UNUSED(argc), char **UNUSED(argv))
 {
     /* Allow lighting model clean up (e.g. lights, materials, etc) */
-    view_cleanup(ap.a_rt_i);
+    view_cleanup(APP.a_rt_i);
 
-    rt_clean(ap.a_rt_i);
+    rt_clean(APP.a_rt_i);
 
     if (R_DEBUG&RDEBUG_RTMEM_END)
 	bu_prmem("After cm_clean");
@@ -384,13 +399,13 @@ int cm_clean(int argc, char **argv)
  * "leaks".  This terminates the program, as there is no longer a
  * database.
  */
-int cm_closedb(int argc, char **argv)
+int cm_closedb(int UNUSED(argc), char **UNUSED(argv))
 {
-    db_close(ap.a_rt_i->rti_dbip);
-    ap.a_rt_i->rti_dbip = DBI_NULL;
+    db_close(APP.a_rt_i->rti_dbip);
+    APP.a_rt_i->rti_dbip = DBI_NULL;
 
-    bu_free((genptr_t)ap.a_rt_i, "struct rt_i");
-    ap.a_rt_i = RTI_NULL;
+    bu_free((genptr_t)APP.a_rt_i, "struct rt_i");
+    APP.a_rt_i = RTI_NULL;
 
     bu_prmem("After _closedb");
     bu_exit(0, NULL);
@@ -403,19 +418,19 @@ int cm_closedb(int argc, char **argv)
 extern struct bu_structparse view_parse[];
 
 struct bu_structparse set_parse[] = {
-    {"%d",	1, "width",	bu_byteoffset(width),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "height",	bu_byteoffset(height),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "save_overlaps", bu_byteoffset(save_overlaps),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "perspective", bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "angle",	bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "width",			bu_byteoffset(width),			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "height",			bu_byteoffset(height),			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "save_overlaps",		bu_byteoffset(save_overlaps),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "perspective",		bu_byteoffset(rt_perspective),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "angle",			bu_byteoffset(rt_perspective),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 #if !defined(_WIN32) || defined(__CYGWIN__)
-    {"%d",  1, "rt_bot_minpieces", bu_byteoffset(rt_bot_minpieces), BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "rt_bot_tri_per_piece", bu_byteoffset(rt_bot_tri_per_piece), BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "rt_cline_radius", bu_byteoffset(rt_cline_radius), BU_STRUCTPARSE_FUNC_NULL },
+    {"%d",	1, "rt_bot_minpieces",		bu_byteoffset(rt_bot_minpieces),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "rt_bot_tri_per_piece",	bu_byteoffset(rt_bot_tri_per_piece),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "rt_cline_radius",		bu_byteoffset(rt_cline_radius),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 #endif
-    {"%V",  1, "ray_data_file", bu_byteoffset(ray_data_file), BU_STRUCTPARSE_FUNC_NULL },
-    {"%p", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
+    {"%V",	1, "ray_data_file",		bu_byteoffset(ray_data_file),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%p", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,						BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -449,6 +464,9 @@ int cm_set(int argc, char **argv)
  */
 int cm_ae(int argc, char **argv)
 {
+    if (argc < 3)
+	return 1;
+
     azimuth = atof(argv[1]);	/* set elevation and azimuth */
     elevation = atof(argv[2]);
     do_ae(azimuth, elevation);
@@ -464,7 +482,7 @@ int cm_opt(int argc, char **argv)
 {
     int old_bu_optind=bu_optind;	/* need to restore this value after calling get_args() */
 
-    if (get_args(argc, argv) <= 0) {
+    if (get_args(argc, (const char **)argv) <= 0) {
 	bu_optind = old_bu_optind;
 	return -1;
     }
@@ -548,7 +566,7 @@ do_frame(int framenumber)
 {
     struct bu_vls times;
     char framename[128] = {0};		/* File name to hold current frame */
-    struct rt_i *rtip = ap.a_rt_i;
+    struct rt_i *rtip = APP.a_rt_i;
     double utime = 0.0;			/* CPU time used */
     double nutime = 0.0;		/* CPU time used, normalized by ncpu */
     double wallclock = 0.0;		/* # seconds of wall clock time */
@@ -630,7 +648,7 @@ do_frame(int framenumber)
 	       cell_width, cell_height,
 	       width, height);
 	bu_log("Beam: radius=%g mm, divergence=%g mm/1mm\n",
-	       ap.a_rbeam, ap.a_diverge);
+	       APP.a_rbeam, APP.a_diverge);
     }
 
     /* Process -b and ??? options now, for this frame */
@@ -727,7 +745,7 @@ do_frame(int framenumber)
 	    struct stat sb;
 	    if (stat(framename, &sb) >= 0 &&
 		sb.st_size > 0 &&
-		sb.st_size < width*height*sizeof(RGBpixel)) {
+		(size_t)sb.st_size < width*height*sizeof(RGBpixel)) {
 		/* File exists, with partial results */
 		register int fd;
 		if ((fd = open(framename, 2)) < 0 ||
@@ -760,7 +778,7 @@ do_frame(int framenumber)
     }
 
     /* initialize lighting, may update pix_start */
-    view_2init(&ap, framename);
+    view_2init(&APP, framename);
 
     /* Just while doing the ray-tracing */
     if (R_DEBUG&RDEBUG_RTMEM)
@@ -788,7 +806,7 @@ do_frame(int framenumber)
     if (incr_mode) {
 	for (incr_level = 1; incr_level <= incr_nlevel; incr_level++) {
 	    if (incr_level > 1)
-		view_2init(&ap, framename);
+		view_2init(&APP, framename);
 
 	    do_run(0, (1<<incr_level)*(1<<incr_level)-1);
 	}
@@ -806,7 +824,7 @@ do_frame(int framenumber)
      * End of application.  Done outside of timing section.
      * Typically, writes any remaining results out.
      */
-    view_end(&ap);
+    view_end(&APP);
 
     /* Stop memory debug printing until next frame, leave full checking on */
     if (R_DEBUG&RDEBUG_RTMEM)
@@ -916,7 +934,7 @@ do_ae(double azim, double elev)
     vect_t temp;
     vect_t diag;
     mat_t toEye;
-    struct rt_i *rtip = ap.a_rt_i;
+    struct rt_i *rtip = APP.a_rt_i;
 
     if (rtip->nsolids <= 0)
 	bu_exit(EXIT_FAILURE, "ERROR: no primitives active\n");

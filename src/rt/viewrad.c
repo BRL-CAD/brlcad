@@ -66,21 +66,25 @@ int numreflect = DEFAULTREFLECT;	/* max number of reflections */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"%d", 1, "maxreflect", bu_byteoffset(numreflect), BU_STRUCTPARSE_FUNC_NULL},
-    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
+    {"%d", 1, "maxreflect", bu_byteoffset(numreflect), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 const char title[] = "RTRAD";
-const char usage[] = "\
-Usage:  rtrad [options] model.g objects... >file.rad\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -a Az		Azimuth in degrees\n\
- -e Elev	Elevation in degrees\n\
- -M		Read matrix, cmds on stdin\n\
- -o file.rad	Output file name, else stdout\n\
- -x #		Set librt debug flags\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects... >file.rad\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512\n");
+    bu_log(" -a Az		Azimuth in degrees\n");
+    bu_log(" -e Elev	Elevation in degrees\n");
+    bu_log(" -M		Read matrix, cmds on stdin\n");
+    bu_log(" -o file.rad	Output file name, else stdout\n");
+    bu_log(" -x #		Set librt debug flags\n");
+}
+
 
 static struct xray firstray;
 
@@ -182,7 +186,7 @@ writerec(union radrec *rp, FILE *fp)
 
 /* beginning of a frame */
 void
-view_2init(struct application *ap, char *UNUSED(framename))
+view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
 {
     extern double azimuth, elevation;
     vect_t temp, aimpt;
@@ -229,13 +233,22 @@ view_2init(struct application *ap, char *UNUSED(framename))
 }
 
 /* end of each pixel */
-void view_pixel(struct application *UNUSED(ap)) {}
+void view_pixel(struct application *UNUSED(ap))
+{
+}
 
 /* end of each line */
-void view_eol(struct application *UNUSED(ap)) {}
+void view_eol(struct application *UNUSED(ap))
+{
+}
 
-void view_setup(struct rt_i *rtip) {}
-void view_cleanup(struct rt_i *rtip) {}
+void view_setup(struct rt_i *UNUSED(rtip))
+{
+}
+
+void view_cleanup(struct rt_i *UNUSED(rtip))
+{
+}
 
 /* end of a frame */
 void
@@ -251,7 +264,7 @@ view_end(struct application *UNUSED(ap))
 }
 
 static int
-radhit(register struct application *ap, struct partition *PartHeadp, struct seg *segHeadp)
+radhit(register struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segHeadp))
 {
     register struct partition *pp;
     register struct hit *hitp;
@@ -344,7 +357,7 @@ radhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 }
 
 static int
-radmiss(struct application *ap)
+radmiss(struct application *UNUSED(ap))
 {
     return 0;
 }
@@ -355,7 +368,7 @@ radmiss(struct application *ap)
  * of the first ray in a chain.  Called via isvisible on a hit.
  */
 static int
-hiteye(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp)
+hiteye(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segHeadp))
 {
     register struct partition *pp;
     register struct hit *hitp;
@@ -400,7 +413,7 @@ hiteye(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
  * Called via isvisible on a miss.
  */
 static int
-hittrue(struct application *ap)
+hittrue(struct application *UNUSED(ap))
 {
     return 1;
 }

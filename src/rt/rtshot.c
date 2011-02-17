@@ -46,26 +46,30 @@ extern int rt_shootray_bundle (struct application *ap, struct xray *rays, int nr
 extern int rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring);
 
 
-char usage[] = "\
-Usage:  rtshot [options] model.g objects...\n\
- -U #		Set reporting of air regions (default=1)\n\
- -u #		Set libbu debug flag\n\
- -x #		Set librt debug flags\n\
- -X #		Set rt program debug flags\n\
- -N #		Set NMG debug flags\n\
- -d # # #	Set direction vector\n\
- -p # # #	Set starting point\n\
- -a # # #	Set shoot-at point\n\
- -t #		Set number of triangles per piece for BOT's (default is 4)\n\
- -b #		Set threshold number of triangles to use pieces (default is 32)\n\
- -O #		Set overlap-claimant handling\n\
- -o #		Set onehit flag\n\
- -r #		Set ray length\n\
- -n #		Set number of rings for ray bundle\n\
- -c #		Set number of rays per ring for ray bundle\n\
- -R #		Set radius for ray bundle in mm\n\
- -g #		Set ray bundle grid size in mm(default 1mm)\n\
- -v \"attribute_name1 attribute_name2 ...\" Show attribute values\n";
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  rtshot [options] model.g objects...\n", argv0);
+    bu_log(" -U #		Set reporting of air regions (default=1)\n");
+    bu_log(" -u #		Set libbu debug flag\n");
+    bu_log(" -x #		Set librt debug flags\n");
+    bu_log(" -X #		Set rt program debug flags\n");
+    bu_log(" -N #		Set NMG debug flags\n");
+    bu_log(" -d # # #	Set direction vector\n");
+    bu_log(" -p # # #	Set starting point\n");
+    bu_log(" -a # # #	Set shoot-at point\n");
+    bu_log(" -t #		Set number of triangles per piece for BOT's (default is 4)\n");
+    bu_log(" -b #		Set threshold number of triangles to use pieces (default is 32)\n");
+    bu_log(" -O #		Set overlap-claimant handling\n");
+    bu_log(" -o #		Set onehit flag\n");
+    bu_log(" -r #		Set ray length\n");
+    bu_log(" -n #		Set number of rings for ray bundle\n");
+    bu_log(" -c #		Set number of rays per ring for ray bundle\n");
+    bu_log(" -R #		Set radius for ray bundle in mm\n");
+    bu_log(" -g #		Set ray bundle grid size in mm(default 1mm)\n");
+    bu_log(" -v \"attribute_name1 attribute_name2 ...\" Show attribute values\n");
+}
+
 
 static FILE *plotfp;		/* For plotting into */
 
@@ -104,7 +108,8 @@ main(int argc, char **argv)
     const char *argv0 = argv[0];
 
     if (argc < 3) {
-	bu_exit(1, usage);
+	usage(argv0);
+	return 1;
     }
 
     RT_APPLICATION_INIT(&ap);
@@ -146,7 +151,8 @@ main(int argc, char **argv)
 
 	    if (attr_count == 0) {
 		bu_log("missing list of attribute names!\n");
-		bu_exit(1, usage);
+		usage(argv0);
+		return 1;
 	    }
 
 	    /* allocate enough for a null terminated list */
@@ -272,10 +278,11 @@ main(int argc, char **argv)
 
 	default:
     err:
-	    bu_exit(1, usage);
+	    usage(argv0);
+	    return 1;
     }
     if (argc < 2) {
-	(void)fputs(usage, stderr);
+	usage(argv0);
 	bu_exit(1, "%s: BRL-CAD geometry database not specified\n", argv0);
     }
 
@@ -375,9 +382,6 @@ main(int argc, char **argv)
     } else if (bundle_radius > 0.0) {
 	vect_t avec, bvec;
 	struct xray center_ray;
-	struct xray *rp;
-	struct xray *rays=NULL;
-	struct xrays *ray_bundle;
 	struct application_bundle b;
 	int numrays;
 	struct xrays *xr;
@@ -420,7 +424,7 @@ main(int argc, char **argv)
 }
 
 
-int hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
+int hit(register struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     register struct partition *pp;
     register struct soltab *stp;
@@ -572,7 +576,6 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
     register struct partition *pp;
     register struct soltab *stp;
     struct curvature cur;
-    fastf_t out;
     point_t inpt, outpt;
     vect_t inormal, onormal;
     int raycnt=1;
@@ -582,11 +585,11 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 
     /* First, plot bundle's application ray */
     if (R_DEBUG & RDEBUG_RAYPLOT) {
-	vect_t out;
+	vect_t vout;
 
-	VJOIN1(out, bundle->b_ap.a_ray.r_pt, 10000, bundle->b_ap.a_ray.r_dir); /* to imply direction */
+	VJOIN1(vout, bundle->b_ap.a_ray.r_pt, 10000, bundle->b_ap.a_ray.r_dir); /* to imply direction */
 	pl_color(plotfp, 0, 0, 255);
-	pdv_3line(plotfp, bundle->b_ap.a_ray.r_pt, out);
+	pdv_3line(plotfp, bundle->b_ap.a_ray.r_pt, vout);
     }
 
     for (BU_LIST_FOR(pl, partition_list, &(PartBundlep->list->l))) {
@@ -602,6 +605,7 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 	    }
 	}
 	for (; pp != &pl->PartHeadp; pp = pp->pt_forw) {
+	    fastf_t out;
 	    matp_t inv_mat;
 	    Tcl_HashEntry *entry;
 

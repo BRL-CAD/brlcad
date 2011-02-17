@@ -51,30 +51,35 @@ extern int	output_is_binary;
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 extern FILE	*outfp;
 
 
 const char title[] = "RT Check";
-const char usage[] = "Usage:  rtcheck [options] model.g objects...\n\
-Options:\n\
- -s #       Square grid size in pixels (default 512)\n\
- -w # -n #  Grid size width and height in pixels\n\
- -V #       View (pixel) aspect ratio (width/height)\n\
- -a #       Azimuth in degrees\n\
- -e #       Elevation in degrees\n\
- -g #       Grid cell width\n\
- -G #       Grid cell height\n\
- -M         Read matrix, cmds on stdin\n\
- -N #	    Set NMG debug flags\n\
- -o file.pl Specify UNIX-plot output file\n\
- -x #       Set librt debug flags\n\
- -X #       Set rt debug flags\n\
- -r         Report only unique overlaps\n\
- -P #       Set number of processors\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects...\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #       Square grid size in pixels (default 512)\n");
+    bu_log(" -w # -n #  Grid size width and height in pixels\n");
+    bu_log(" -V #       View (pixel) aspect ratio (width/height)\n");
+    bu_log(" -a #       Azimuth in degrees\n");
+    bu_log(" -e #       Elevation in degrees\n");
+    bu_log(" -g #       Grid cell width\n");
+    bu_log(" -G #       Grid cell height\n");
+    bu_log(" -M         Read matrix, cmds on stdin\n");
+    bu_log(" -N #	    Set NMG debug flags\n");
+    bu_log(" -o file.pl Specify UNIX-plot output file\n");
+    bu_log(" -x #       Set librt debug flags\n");
+    bu_log(" -X #       Set rt debug flags\n");
+    bu_log(" -r         Report only unique overlaps\n");
+    bu_log(" -P #       Set number of processors\n");
+}
+
 
 static int	noverlaps;		/* Number of overlaps seen */
 static int	overlap_count;		/* Number of overlap pairs seen */
@@ -102,7 +107,7 @@ static struct overlap_list *olist=NULL;	/* root of the list */
  */
 /*ARGSUSED*/
 int
-hit(struct application *ap, register struct partition *PartHeadp, struct seg *segHeadp)
+hit(struct application *UNUSED(ap), register struct partition *UNUSED(PartHeadp), struct seg *UNUSED(segHeadp))
 {
     return	1;
 }
@@ -114,7 +119,7 @@ hit(struct application *ap, register struct partition *PartHeadp, struct seg *se
  */
 /*ARGSUSED*/
 int
-miss(struct application *ap)
+miss(struct application *UNUSED(ap))
 {
     return	0;
 }
@@ -127,7 +132,7 @@ miss(struct application *ap)
  *  from the boolean evaluation.
  */
 int
-overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp)
+overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *UNUSED(hp))
 {
     register struct xray	*rp = &ap->a_ray;
     register struct hit	*ihitp = pp->pt_inhit;
@@ -225,7 +230,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
  *  Called once for this run.
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o, int UNUSED(minus_F))
+view_init(register struct application *ap, char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
 {
     ap->a_hit = hit;
     ap->a_miss = miss;

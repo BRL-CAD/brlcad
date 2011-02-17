@@ -56,22 +56,25 @@ struct cell	*cellp;
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 
 const char title[] = "RT Range Plot";
-const char usage[] = "\
-Usage:  rtrange [options] model.g objects... >file.ray\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -a Az		Azimuth in degrees	(conflicts with -M)\n\
- -e Elev	Elevation in degrees	(conflicts with -M)\n\
- -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -o model.g	Specify output file (default=stdout)\n\
- -U #		Set use_air boolean to # (default=0)\n\
- -x #		Set librt debug flags\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects... >file.ray\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512\n");
+    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
+    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
+    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
+    bu_log(" -o model.g	Specify output file (default=stdout)\n");
+    bu_log(" -U #		Set use_air boolean to # (default=0)\n");
+    bu_log(" -x #		Set librt debug flags\n");
+}
 
 
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
@@ -176,7 +179,7 @@ raymiss(register struct application *ap)
     struct	cell	*posp;		/* store the current cell position */
 
     /* Getting defensive.... just in case. */
-    if (ap->a_x > width)  {
+    if ((size_t)ap->a_x > width)  {
 	bu_exit(EXIT_FAILURE, "raymiss: pixels exceed width\n");
     }
 
@@ -216,7 +219,7 @@ void view_cleanup(struct rt_i *UNUSED(rtip)) {}
  */
 
 int
-rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *segp)
+rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     register struct partition *pp = PartHeadp->pt_forw;
     struct	cell	*posp;		/* stores current cell position */
@@ -227,7 +230,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 
 
     /* Getting defensive.... just in case. */
-    if (ap->a_x > width)  {
+    if ((size_t)ap->a_x > width)  {
 	bu_exit(EXIT_FAILURE, "rayhit: pixels exceed width\n");
     }
 
@@ -264,10 +267,10 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
  */
 
 void
-view_eol(struct application *ap)
+view_eol(struct application *UNUSED(ap))
 {
     struct cell	*posp;
-    int		i;
+    size_t i;
     int		cont;		/* continue flag */
 
     posp = &(cellp[0]);
@@ -284,7 +287,7 @@ view_eol(struct application *ap)
     pdv_3move( outfp, posp->c_hit );
 
     for ( i = 0; i < width-1; i++, posp++ )  {
-	if ( posp->c_dist == (posp+1)->c_dist )  {
+	if (EQUAL(posp->c_dist, (posp+1)->c_dist))  {
 	    cont = 1;
 	    continue;
 	} else  {

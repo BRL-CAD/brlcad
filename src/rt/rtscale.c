@@ -185,8 +185,7 @@ main(int argc, char **argv)
 	make_border(stdout, view2model);
     }
 
-    bu_exit(0, NULL);
-
+    return 0;
 }
 
 

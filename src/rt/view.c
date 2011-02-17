@@ -61,26 +61,29 @@
 
 
 const char title[] = "The BRL-CAD Raytracer RT";
-const char usage[] = "\
-Usage:  rt [options] model.g objects...\n\
-Options:\n\
- -r		Report overlaps (default)\n\
- -R		Do not report overlaps\n\
- -M		Read matrix+commands on stdin\n\
- -o model.pix	Output .pix format file (default is window)\n\
- -s #		Square grid size in pixels (default is 512)\n\
- -w # -n #	Grid size width (w) and height (n) in pixels\n\
- -a # -e #	Azimuth (a) and elevation (e) in degrees\n\
- -V #		View (pixel) aspect ratio (width/height)\n\
- -p #		Perspective angle, degrees side to side\n\
- -P #		Set number of processors\n\
- -T #/#		Tolerance: distance/angular\n\
- -l #		Set lighting model rendering style\n\
- -U #		Use air if # is greater than 0\n\
- -x #		librt debug flags\n\
- -N #		NMG debug flags\n\
- -X #		rt debug flags\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects...\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -r		Report overlaps (default)\n");
+    bu_log(" -R		Do not report overlaps\n");
+    bu_log(" -M		Read matrix+commands on stdin\n");
+    bu_log(" -o model.pix	Output .pix format file (default is window)\n");
+    bu_log(" -s #		Square grid size in pixels (default is 512)\n");
+    bu_log(" -w # -n #	Grid size width (w) and height (n) in pixels\n");
+    bu_log(" -a # -e #	Azimuth (a) and elevation (e) in degrees\n");
+    bu_log(" -V #		View (pixel) aspect ratio (width/height)\n");
+    bu_log(" -p #		Perspective angle, degrees side to side\n");
+    bu_log(" -P #		Set number of processors\n");
+    bu_log(" -T #/#		Tolerance: distance/angular\n");
+    bu_log(" -l #		Set lighting model rendering style\n");
+    bu_log(" -U #		Use air if # is greater than 0\n");
+    bu_log(" -x #		librt debug flags\n");
+    bu_log(" -N #		NMG debug flags\n");
+    bu_log(" -X #		rt debug flags\n");
+}
 
 
 extern FBIO *fbp;			/* Framebuffer handle */
@@ -106,12 +109,12 @@ int inonbackground[3] = {0};	/* integer non-background */
 #ifdef RTSRV
 extern int srv_startpix;		/* offset for view_pixel */
 extern int srv_scanlen;		/* BUFMODE_RTSRV buffer length */
-extern char *scanbuf;		/* scanline(s) buffer */
 #endif
 
 void free_scanlines(int, struct scanline *);
 struct scanline* alloc_scanlines(int);
 extern fastf_t** timeTable_init(int x, int y);
+extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *fbp);
 
 static int buf_mode=0;
 #define BUFMODE_UNBUF     1	/* No output buffering */
@@ -154,14 +157,14 @@ static int overlay = 0;
  * struct shadework.
  */
 struct bu_structparse view_parse[] = {
-    {"%f", 1, "gamma", 0, BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "bounces", 0, BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "ireflect", 0, BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "a_onehit", 0, BU_STRUCTPARSE_FUNC_NULL},
-    {"%f", ELEMENTS_PER_VECT, "background", 0, BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "overlay", 0, BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "ov", 0, BU_STRUCTPARSE_FUNC_NULL},
-    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL}
+    {"%f", 1, "gamma", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "bounces", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "ireflect", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "a_onehit", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", ELEMENTS_PER_VECT, "background", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "overlay", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "ov", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 
@@ -175,7 +178,7 @@ void
 view_pixel(struct application *ap)
 {
     int r, g, b;
-    char *pixelp;
+    unsigned char *pixelp;
     struct scanline *slp;
     int do_eol = 0;
     unsigned char dist[8];	/* pixel distance (in IEEE format) */
@@ -197,7 +200,7 @@ view_pixel(struct application *ap)
 	 * valued colors (eg, from texture maps) retain their original
 	 * values.
 	 */
-	if (gamma_corr != 0) {
+	if (!ZERO(gamma_corr)) {
 	    /*
 	     * Perform gamma correction in floating-point space, and
 	     * avoid nasty mach bands in dark areas from doing it in
@@ -321,8 +324,7 @@ view_pixel(struct application *ap)
 #ifdef RTSRV
 	case BUFMODE_RTSRV:
 	    /* Multi-pixel buffer */
-	    pixelp = scanbuf+ pwidth *
-		((ap->a_y*width) + ap->a_x - srv_startpix);
+	    pixelp = scanbuf + pwidth * ((ap->a_y*width) + ap->a_x - srv_startpix);
 	    bu_semaphore_acquire(RT_SEM_RESULTS);
 	    *pixelp++ = r;
 	    *pixelp++ = g;
@@ -350,7 +352,7 @@ view_pixel(struct application *ap)
 	case BUFMODE_DYNAMIC:
 	    slp = &scanline[ap->a_y];
 	    bu_semaphore_acquire(RT_SEM_RESULTS);
-	    if (slp->sl_buf == (char *)0) {
+	    if (slp->sl_buf == (unsigned char *)0) {
 		slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
 	    }
 	    pixelp = slp->sl_buf+(ap->a_x*pwidth);
@@ -378,7 +380,7 @@ view_pixel(struct application *ap)
 	     */
 	case BUFMODE_SCANLINE:
 	    slp = &scanline[ap->a_y];
-	    if (slp->sl_buf == (char *)0) {
+	    if (slp->sl_buf == (unsigned char *)0) {
 		slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
 	    }
 	    pixelp = slp->sl_buf+(ap->a_x*pwidth);
@@ -410,7 +412,7 @@ view_pixel(struct application *ap)
 		for (dy=0; dy<spread; dy++) {
 		    if ((size_t)ap->a_y+dy >= height) break;
 		    slp = &scanline[ap->a_y+dy];
-		    if (slp->sl_buf == (char *)0)
+		    if (slp->sl_buf == (unsigned char *)0)
 			slp->sl_buf = bu_calloc(width+32,
 						pwidth, "sl_buf scanline buffer");
 
@@ -462,7 +464,7 @@ view_pixel(struct application *ap)
 		for (dy=spread; dy >= 0; dy--) {
 		    yy = ap->a_y + dy;
 		    if (sub_grid_mode) {
-			if (dy < (size_t)sub_ymin || dy > (size_t)sub_ymax)
+			if (dy < sub_ymin || dy > sub_ymax)
 			    continue;
 			npix = fb_write(fbp, sub_xmin, yy,
 					(unsigned char *)scanline[yy].sl_buf+3*sub_xmin,
@@ -519,7 +521,7 @@ view_pixel(struct application *ap)
 		    bu_exit(EXIT_FAILURE, "view_pixel:  fwrite failure\n");
 	    }
 	    bu_free(scanline[ap->a_y].sl_buf, "sl_buf scanline buffer");
-	    scanline[ap->a_y].sl_buf = (char *)0;
+	    scanline[ap->a_y].sl_buf = (unsigned char *)0;
     }
 }
 
@@ -531,7 +533,7 @@ view_pixel(struct application *ap)
  * pixel of a scanline is really done, for parallel considerations.
  */
 void
-view_eol(struct application *ap)
+view_eol(struct application *UNUSED(ap))
 {
     return;
 }
@@ -1009,7 +1011,7 @@ out:
     /*
      * e ^(-density * distance)
      */
-    if (airdensity != 0.0) {
+    if (!ZERO(airdensity)) {
 	double g;
 	double f = exp(-hitp->hit_dist * airdensity);
 	g = (1.0 - f);
@@ -1036,7 +1038,7 @@ out:
  */
 int viewit(struct application *ap,
 	   struct partition *PartHeadp,
-	   struct seg *segHeadp)
+	   struct seg *UNUSED(segHeadp))
 {
     struct partition *pp;
     struct hit *hitp;
@@ -1197,7 +1199,7 @@ int viewit(struct application *ap,
 
 
 void
-kut_ft_norm(struct hit *hitp, struct soltab *stp, struct xray *ray)
+kut_ft_norm(struct hit *hitp, struct soltab *UNUSED(stp), struct xray *UNUSED(ray))
 {
     VMOVE(hitp->hit_normal, kut_norm);
 }
@@ -1209,7 +1211,7 @@ kut_ft_norm(struct hit *hitp, struct soltab *stp, struct xray *ray)
  * Called once, early on in RT setup, before view size is set.
  */
 int
-view_init(struct application *ap, char *file, char *obj, int minus_o, int minus_F)
+view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj), int minus_o, int minus_F)
 {
     if (rt_verbosity & VERBOSE_LIBVERSIONS)
 	bu_log("%s", optical_version());
@@ -1294,7 +1296,7 @@ extern int last_pixel;		/* last pixel number */
  * R E P R O J E C T _ W O R K E R
  */
 void
-reproject_worker(int cpu, genptr_t arg)
+reproject_worker(int UNUSED(cpu), genptr_t UNUSED(arg))
 {
     int pixel_start;
     int pixelnum;
@@ -1404,7 +1406,7 @@ collect_soltabs(struct bu_ptbl *stp_list, union tree *tr)
  * Called each time a new image is about to be done.
  */
 void
-view_2init(struct application *ap, char *framename)
+view_2init(struct application *ap, char *UNUSED(framename))
 {
     size_t i;
     struct bu_ptbl stps;
@@ -1441,7 +1443,7 @@ view_2init(struct application *ap, char *framename)
 	buf_mode = BUFMODE_INCR;
     } else if (width <= 96) {
 	buf_mode = BUFMODE_UNBUF;
-    } else if (npsw <= height/4) {
+    } else if ((size_t)npsw <= (size_t)height/4) {
 	/* Have each CPU do a whole scanline.  Saves lots of semaphore
 	 * overhead.  For load balancing make sure each CPU has
 	 * several lines to do.
@@ -1632,7 +1634,7 @@ view_2init(struct application *ap, char *framename)
     for (i=0; i<BU_PTBL_LEN(&ap->a_rt_i->delete_regs); i++) {
 	struct region *rp;
 	struct soltab *stp;
-	int j;
+	size_t j;
 
 
 	rp = (struct region *)BU_PTBL_GET(&ap->a_rt_i->delete_regs, i);

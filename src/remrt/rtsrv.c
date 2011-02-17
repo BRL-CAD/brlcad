@@ -73,20 +73,20 @@ struct pkg_queue {
 };
 
 /***** Variables shared with viewing model *** */
-FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
-FILE		*outfp = NULL;		/* optional pixel output file */
-mat_t		view2model;
-mat_t		model2view;
-int		srv_startpix;		/* offset for view_pixel */
-int		srv_scanlen = REMRT_MAX_PIXELS;	/* max assignment */
-char		*scanbuf;
+FBIO *fbp = FBIO_NULL;	/* Framebuffer handle */
+FILE *outfp = NULL;		/* optional pixel output file */
+mat_t view2model;
+mat_t model2view;
+int srv_startpix;		/* offset for view_pixel */
+int srv_scanlen = REMRT_MAX_PIXELS;	/* max assignment */
+unsigned char *scanbuf;
 /***** end of sharing with viewing model *****/
 
 extern void grid_setup();
 extern void worker();
 
 /***** variables shared with worker() ******/
-struct application ap;
+struct application APP;
 vect_t		left_eye_delta;
 int		report_progress;	/* !0 = user wants progress report */
 /***** end variables shared with worker() *****/
@@ -108,7 +108,6 @@ static char *title_file, *title_obj;	/* name of file and first object */
 #define MAX_WIDTH	(16*1024)
 
 static int	avail_cpus;		/* # of cpus avail on this system */
-static int	max_cpus;		/* max # cpus for use, <= avail_cpus */
 
 int	save_overlaps=0;
 
@@ -293,10 +292,9 @@ main(int argc, char **argv)
      */
 
     avail_cpus = bu_avail_cpus();
-    max_cpus = bu_get_public_cpus();
 
     /* Need to set rtg_parallel non_zero here for RES_INIT to work */
-    npsw = max_cpus;
+    npsw = avail_cpus;
     if ( npsw > 1 )  {
 	rt_g.rtg_parallel = 1;
     } else
@@ -305,10 +303,6 @@ main(int argc, char **argv)
 
     bu_log("using %d of %d cpus\n",
 	   npsw, avail_cpus );
-    if ( max_cpus <= 0 )  {
-	pkg_close(pcsrv);
-	return 0;
-    }
 
     /*
      *  Initialize the non-parallel memory resource.
@@ -406,7 +400,7 @@ ph_enqueue(struct pkg_conn *pc, char *buf)
 }
 
 void
-ph_cd(struct pkg_conn *pc, char *buf)
+ph_cd(struct pkg_conn *UNUSED(pc), char *buf)
 {
     if (debug)fprintf(stderr, "ph_cd %s\n", buf);
     if ( chdir( buf ) < 0 )
@@ -415,7 +409,7 @@ ph_cd(struct pkg_conn *pc, char *buf)
 }
 
 void
-ph_restart(struct pkg_conn *pc, char *buf)
+ph_restart(struct pkg_conn *UNUSED(pc), char *buf)
 {
 
     if (debug)fprintf(stderr, "ph_restart %s\n", buf);
@@ -432,12 +426,12 @@ ph_restart(struct pkg_conn *pc, char *buf)
  *  The only argument is the name of the database file.
  */
 void
-ph_dirbuild(struct pkg_conn *pc, char *buf)
+ph_dirbuild(struct pkg_conn *UNUSED(pc), char *buf)
 {
     long max_argc = 0;
     char **argv = NULL;
     struct rt_i *rtip = NULL;
-    int	n = 0;
+    size_t n = 0;
 
     if ( debug )  fprintf(stderr, "ph_dirbuild: %s\n", buf );
 
@@ -467,7 +461,7 @@ ph_dirbuild(struct pkg_conn *pc, char *buf)
     /* Build directory of GED database */
     if ( (rtip=rt_dirbuild( title_file, idbuf, sizeof(idbuf) )) == RTI_NULL )
 	bu_exit(2, "ph_dirbuild:  rt_dirbuild(%s) failure\n", title_file);
-    ap.a_rt_i = rtip;
+    APP.a_rt_i = rtip;
     seen_dirbuild = 1;
 
     /*
@@ -490,13 +484,13 @@ ph_dirbuild(struct pkg_conn *pc, char *buf)
  *  Each word in the command buffer is the name of a treetop.
  */
 void
-ph_gettrees(struct pkg_conn *pc, char *buf)
+ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
 {
-    int n = 0;
+    size_t n = 0;
     long max_argc = 0;
     char **argv = NULL;
     int	argc = 0;
-    struct rt_i *rtip = ap.a_rt_i;
+    struct rt_i *rtip = APP.a_rt_i;
 
     RT_CK_RTI(rtip);
 
@@ -530,7 +524,7 @@ ph_gettrees(struct pkg_conn *pc, char *buf)
     if ( rtip->needprep == 0 )  {
 	/* First clean up after the end of the previous frame */
 	if (debug)bu_log("Cleaning previous model\n");
-	view_end( &ap );
+	view_end( &APP );
 	view_cleanup( rtip );
 	rt_clean(rtip);
 	if (rdebug&RDEBUG_RTMEM_END)
@@ -582,14 +576,14 @@ process_cmd(char *buf)
 	*cp++ = '\0';
 	/* Process this command */
 	if ( debug )  bu_log("process_cmd '%s'\n", sp);
-	if ( rt_do_cmd( ap.a_rt_i, sp, rt_cmdtab ) < 0 )
+	if ( rt_do_cmd( APP.a_rt_i, sp, rt_cmdtab ) < 0 )
 	    bu_exit(1, "process_cmd: error on '%s'\n", sp );
 	sp = cp;
     }
 }
 
 void
-ph_options(struct pkg_conn *pc, char *buf)
+ph_options(struct pkg_conn *UNUSED(pc), char *buf)
 {
 
     if ( debug )  fprintf(stderr, "ph_options: %s\n", buf );
@@ -598,10 +592,15 @@ ph_options(struct pkg_conn *pc, char *buf)
 
     /* Just in case command processed was "opt -P" */
     if ( npsw < 0 )  {
-	/* Negative number means "all but" npsw */
-	npsw = max_cpus + npsw;
+	/* Negative number means "all but #" available */
+	npsw = avail_cpus - npsw;
     }
-    if ( npsw > MAX_PSW )  npsw = MAX_PSW;
+
+    /* basic bounds sanity */
+    if (npsw > MAX_PSW)
+	npsw = MAX_PSW;
+    if (npsw <= 0)
+	npsw = 1;
 
     if ( width <= 0 || height <= 0 )
 	bu_exit(3, "ph_options:  width=%d, height=%d\n", width, height);
@@ -609,10 +608,10 @@ ph_options(struct pkg_conn *pc, char *buf)
 }
 
 void
-ph_matrix(struct pkg_conn *pc, char *buf)
+ph_matrix(struct pkg_conn *UNUSED(pc), char *buf)
 {
 #ifndef NO_MAGIC_CHECKING
-    struct rt_i *rtip = ap.a_rt_i;
+    struct rt_i *rtip = APP.a_rt_i;
 
     RT_CK_RTI(rtip);
 #endif
@@ -644,7 +643,7 @@ ph_matrix(struct pkg_conn *pc, char *buf)
 void
 prepare(void)
 {
-    struct rt_i *rtip = ap.a_rt_i;
+    struct rt_i *rtip = APP.a_rt_i;
 
     RT_CK_RTI(rtip);
 
@@ -654,7 +653,7 @@ prepare(void)
      * initialize application -- it will allocate 1 line and
      * set buf_mode=1, as well as do mlib_init().
      */
-    (void)view_init( &ap, title_file, title_obj, 0, 0);
+    (void)view_init( &APP, title_file, title_obj, 0, 0);
 
     do_prep( rtip );
 
@@ -664,7 +663,7 @@ prepare(void)
     grid_setup();
 
     /* initialize lighting */
-    view_2init( &ap, NULL );
+    view_2init( &APP, NULL );
 
     rtip->nshots = 0;
     rtip->nmiss_model = 0;
@@ -686,11 +685,11 @@ prepare(void)
  *  because that is the size of the buffer (for now).
  */
 void
-ph_lines(struct pkg_conn *pc, char *buf)
+ph_lines(struct pkg_conn *UNUSED(pc), char *buf)
 {
     auto int		a, b, fr;
     struct line_info	info;
-    struct rt_i	*rtip = ap.a_rt_i;
+    struct rt_i	*rtip = APP.a_rt_i;
     struct	bu_external	ext;
 
     RT_CK_RTI(rtip);
@@ -734,7 +733,7 @@ ph_lines(struct pkg_conn *pc, char *buf)
 		info.li_startpix, info.li_endpix,
 		info.li_nrays, info.li_cpusec);
     }
-    if ( pkg_2send( MSG_PIXELS, ext.ext_buf, ext.ext_nbytes, scanbuf, (b-a+1)*3, pcsrv ) < 0 )  {
+    if ( pkg_2send( MSG_PIXELS, ext.ext_buf, ext.ext_nbytes, (const char *)scanbuf, (b-a+1)*3, pcsrv ) < 0 )  {
 	fprintf(stderr, "MSG_PIXELS send error\n");
 	bu_free_external(&ext);
     }
@@ -745,7 +744,7 @@ ph_lines(struct pkg_conn *pc, char *buf)
 int print_on = 1;
 
 void
-ph_loglvl(struct pkg_conn *pc, char *buf)
+ph_loglvl(struct pkg_conn *UNUSED(pc), char *buf)
 {
     if (debug) fprintf(stderr, "ph_loglvl %s\n", buf);
     if ( buf[0] == '0' )
@@ -792,14 +791,14 @@ bu_log_indent_vls(struct bu_vls *v)
 void
 bu_log( const char *fmt, ... )
 {
-    va_list ap;
+    va_list vap;
     char buf[512];		/* a generous output line.  Must be AUTO, else non-PARALLEL. */
 
     if ( print_on == 0 )  return;
     bu_semaphore_acquire( BU_SEM_SYSCALL );
-    va_start( ap, fmt );
-    (void)vsprintf( buf, fmt, ap );
-    va_end(ap);
+    va_start( vap, fmt );
+    (void)vsprintf( buf, fmt, vap );
+    va_end(vap);
 
     if ( pcsrv == PKC_NULL || pcsrv == PKC_ERROR )  {
 	fprintf(stderr, "%s", buf);
@@ -862,7 +861,7 @@ ph_unexp(struct pkg_conn *pc, char *buf)
  *			P H _ E N D
  */
 void
-ph_end(struct pkg_conn *pc, char *buf)
+ph_end(struct pkg_conn *UNUSED(pc), char *UNUSED(buf))
 {
     if ( debug )  fprintf(stderr, "ph_end\n");
     pkg_close(pcsrv);
@@ -873,7 +872,7 @@ ph_end(struct pkg_conn *pc, char *buf)
  *			P H _ P R I N T
  */
 void
-ph_print(struct pkg_conn *pc, char *buf)
+ph_print(struct pkg_conn *UNUSED(pc), char *buf)
 {
     fprintf(stderr, "msg: %s\n", buf);
     (void)free(buf);
