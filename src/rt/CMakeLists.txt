@@ -17,8 +17,6 @@ set(rtwalk_SRCS rtwalk.c)
 
 set(rtshot_SRCS rtshot.c)
 
-set(hurt_SRCS hurt.c)
-
 set(rtmlt_SRCS
     ${RT_COMMON_SRCS}
     scanline.c
@@ -137,10 +135,6 @@ include_directories(
 
 add_executable(rtexample "${rtexample_SRCS}")
 target_link_libraries(rtexample librt libfb liboptical)
-
-add_executable(hurt "${hurt_SRCS}")
-target_link_libraries(hurt librt libfb liboptical)
-
 
 BRLCAD_ADDEXEC(reshoot "${reshoot_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical")
 

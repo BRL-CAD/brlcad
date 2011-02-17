@@ -480,8 +480,8 @@ f_IR_Model(struct application *ap, Octree *op)
 {
     fastf_t		octnt_min[3], octnt_max[3];
     fastf_t		delta = modl_radius / pow_Of_2( ap->a_level );
-    fastf_t		point[3]; /* Intersection point.	*/
-    fastf_t		norml[3]; /* Unit normal at point.	*/
+    fastf_t		point[3] = VINIT_ZERO; /* Intersection point.	*/
+    fastf_t		norml[3] = VINIT_ZERO; /* Unit normal at point.	*/
     /* Push ray origin along ray direction to intersection point.	*/
     VJOIN1( point, ap->a_ray.r_pt, ap->a_uvec[0], ap->a_ray.r_dir );
 

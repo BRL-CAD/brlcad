@@ -1,5 +1,8 @@
 EXPORTS
 
+bu_avs_free
+bu_avs_get
+bu_avs_init_empty
 bu_badmagic
 bu_bitv_clear
 bu_bitv_free
@@ -15,6 +18,8 @@ bu_optarg
 bu_ptbl_free
 bu_ptbl_init
 bu_setjmp_valid
+
+db5_get_attributes
 
 db_ck_v4gift_tree
 db_close
@@ -52,10 +57,12 @@ rt_db_get_internal
 rt_db_put_internal
 rt_dirbuild
 rt_free_rti
+rt_g
 rt_gettree
 rt_init_resource
 rt_initial_tree_state
 rt_prep
+rt_rpp_region
 rt_shootray
 rt_uniresource
 

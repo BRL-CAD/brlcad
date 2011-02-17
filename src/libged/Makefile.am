@@ -273,6 +273,7 @@ AM_CPPFLAGS = \
 	${TCL_CPPFLAGS}
 
 noinst_HEADERS = \
+	search.h \
 	ged_private.h \
 	qray.h \
 	wdb_qray.h

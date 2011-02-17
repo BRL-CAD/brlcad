@@ -71,31 +71,34 @@ fastf_t		maxangle;		/* value of the cosine of the angle bet. surface normals tha
 
 void		swapbuff(struct cell **onepp, struct cell **twopp);
 void		cleanline(struct cell *inbuffp, int file_width);
-void		horiz_cmp(struct cell *botp, int mem_width, int y);
-void		vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y);
+void		horiz_cmp(struct cell *botp, int mem_width);
+void		vert_cmp(struct cell *botp, struct cell *topp, int mem_width);
 struct cell	*find_cell(struct cell *cur_cellp, struct cell *next_cellp);
-struct cell	*botp;			/* pointer to bottom line   */
+struct cell	*bottomp;		/* pointer to bottom line   */
 struct cell	*topp;			/* pointer to top line	    */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 const char title[] = "RT Hidden-Line Plot";
-const char usage[] = "\
-Usage:  rthide [options] model.g objects... >file.pl\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -A angle	Angle between surface normals (default=5degrees)\n\
- -a Az		Azimuth in degrees	(conflicts with -M)\n\
- -e Elev	Elevation in degrees	(conflicts with -M)\n\
- -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -o output.pl	Specify output file (default=stdout)\n\
- -U #		Set use_air boolean to # (default=0)\n\
- -x #		Set librt debug flags\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects... >file.pl\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512\n");
+    bu_log(" -A angle	Angle between surface normals (default=5degrees)\n");
+    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
+    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
+    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
+    bu_log(" -o output.pl	Specify output file (default=stdout)\n");
+    bu_log(" -U #		Set use_air boolean to # (default=0)\n");
+    bu_log(" -x #		Set librt debug flags\n");
+}
 
 
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *);
@@ -113,7 +116,7 @@ int	raymiss(register struct application *ap);
  */
 
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o, int UNUSED(minus_F))
+view_init(register struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
 {
 
     ap->a_hit = rayhit;
@@ -166,7 +169,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
      */
 
 
-    botp = (struct cell *)bu_malloc(sizeof(struct cell) * (width + 2),
+    bottomp = (struct cell *)bu_malloc(sizeof(struct cell) * (width + 2),
 				    "bottom cell buffer" );
     topp = (struct cell *)bu_malloc(sizeof(struct cell) * (width + 2),
 				    "top cell buffer" );
@@ -176,7 +179,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
      * in-memory buffer for comparisons.
      */
 
-    cleanline(botp, width);
+    cleanline(bottomp, width);
     cleanline(topp, width);
 
 
@@ -233,7 +236,7 @@ raymiss(register struct application *ap)
     struct	cell	*posp;		/* store the current cell position */
 
     /* Getting defensive.... just in case. */
-    if (ap->a_x > width)  {
+    if ((size_t)ap->a_x > width)  {
 	bu_exit(EXIT_FAILURE, "raymiss: pixels exceed width\n");
     }
 
@@ -284,7 +287,7 @@ void view_cleanup(struct rt_i *UNUSED(rtip)) {}
  */
 
 int
-rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *segp)
+rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     register struct partition *pp = PartHeadp->pt_forw;
     struct	cell	*posp;			/* stores current cell position */
@@ -295,7 +298,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 
 
     /* Getting defensive.... just in case. */
-    if (ap->a_x > width)  {
+    if ((size_t)ap->a_x > width)  {
 	bu_exit(EXIT_FAILURE, "rayhit: pixels exceed width\n");
     }
 
@@ -359,7 +362,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
  */
 
 void
-view_eol(struct application *ap)
+view_eol(struct application *UNUSED(ap))
 {
 
 
@@ -372,9 +375,9 @@ view_eol(struct application *ap)
      * cell buffer.
      */
 
-    horiz_cmp(botp, width + 2, ap->a_y);
-    vert_cmp(botp, topp, width + 2, ap->a_y);
-    swapbuff(&botp, &topp);
+    horiz_cmp(bottomp, width + 2);
+    vert_cmp(bottomp, topp, width + 2);
+    swapbuff(&bottomp, &topp);
 
 }
 
@@ -391,12 +394,12 @@ view_eol(struct application *ap)
  */
 
 void
-view_end(struct application *ap)
+view_end(struct application *UNUSED(ap))
 {
 
     cleanline(topp, width);
-    horiz_cmp(botp, width + 2, ap->a_y);
-    vert_cmp(botp, topp, width + 2, ap->a_y);
+    horiz_cmp(bottomp, width + 2);
+    vert_cmp(bottomp, topp, width + 2);
 
     fflush(outfp);
 }
@@ -417,7 +420,7 @@ view_end(struct application *ap)
  */
 
 void
-horiz_cmp(struct cell *botp, int mem_width, int y)
+horiz_cmp(struct cell *botp, int mem_width)
 {
     int		x;
     struct	cell	*cellp;
@@ -506,7 +509,7 @@ horiz_cmp(struct cell *botp, int mem_width, int y)
  */
 
 void
-vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y)
+vert_cmp(struct cell *downp, struct cell *upp, int mem_width)
 {
 
     register int	x;
@@ -526,29 +529,29 @@ vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y)
      * a sense of curvature.
      */
 
-    for (x=0; x < mem_width; x++, botp++, topp++)  {
+    for (x=0; x < mem_width; x++, downp++, upp++)  {
 
 	/* If the id's are not the same, or if bottom id is not
-	 * zero, find pits (botp->c_dist+pit_depth < topp->c_dist)
-	 * and mountains (topp->c_dist+pit_depth < botp->c_dist).
+	 * zero, find pits (downp->c_dist+pit_depth < upp->c_dist)
+	 * and mountains (upp->c_dist+pit_depth < downp->c_dist).
 	 */
 
-	if (botp->c_id != topp->c_id ||
-	    ( botp->c_id != ID_BACKGROUND &&
-	      ((botp->c_dist + pit_depth < topp->c_dist) ||
-	       (topp->c_dist + pit_depth < botp->c_dist) ||
-	       (VDOT(botp->c_normal, topp->c_normal) < maxangle))))  {
+	if (downp->c_id != upp->c_id ||
+	    ( downp->c_id != ID_BACKGROUND &&
+	      ((downp->c_dist + pit_depth < upp->c_dist) ||
+	       (upp->c_dist + pit_depth < downp->c_dist) ||
+	       (VDOT(downp->c_normal, upp->c_normal) < maxangle))))  {
 	    if ( state == FOUND_START_PT ) {
 		continue;
 	    } else {
 		/* find the correct cell. */
-		start_cellp = find_cell(botp, topp);
+		start_cellp = find_cell(downp, upp);
 
 		/* Move to and remember left point.  If start_cellp
-		 * is botp, then move left and up half a cell.
+		 * is downp, then move left and up half a cell.
 		 */
 
-		if (botp == start_cellp)  {
+		if (downp == start_cellp)  {
 		    VJOIN2(start, start_cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
 		} else  {
 		    VJOIN2(start, start_cellp->c_hit, -0.5, dx_model, -0.5, dy_model);
@@ -572,14 +575,14 @@ vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y)
 		 * subtracting 0.5 cell for centering.
 		 */
 
-		cellp = find_cell( (botp-1), (topp-1) );
+		cellp = find_cell( (downp-1), (upp-1) );
 
-		/* If botp-1 is cellp, then move right and up
+		/* If downp-1 is cellp, then move right and up
 		 * by half a cell.  Otherwise, move right and down
 		 * by half a cell.
 		 */
 
-		if ( (botp-1) == cellp)  {
+		if ( (downp-1) == cellp)  {
 		    VJOIN2(stop, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
 		} else {
 		    VJOIN2(stop, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
@@ -606,14 +609,14 @@ vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y)
 	 * centering.
 	 */
 
-	cellp = find_cell( (botp-1), (topp-1) );
+	cellp = find_cell( (downp-1), (upp-1) );
 
-	/* If botp-1 is cellp, then move right and up
+	/* If downp-1 is cellp, then move right and up
 	 * by half a cell.  Otherwise, move right and down
 	 * by half a cell.
 	 */
 
-	if ( (botp-1) == cellp)  {
+	if ( (downp-1) == cellp)  {
 	    VJOIN2(stop, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
 	} else {
 	    VJOIN2(stop, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
@@ -645,9 +648,9 @@ find_cell (struct cell *cur_cellp, struct cell *next_cellp)
 {
     struct cell	*cellp;
 
-    if (cur_cellp->c_dist == 0)
+    if (ZERO(cur_cellp->c_dist))
 	cellp = next_cellp;
-    else if (next_cellp->c_dist == 0)
+    else if (ZERO(next_cellp->c_dist))
 	cellp = cur_cellp;
     else if (cur_cellp->c_dist < next_cellp->c_dist )
 	cellp = cur_cellp;

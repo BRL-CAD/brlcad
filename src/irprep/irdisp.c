@@ -41,15 +41,15 @@
 int
 main(void)
 {
-    int ichoice;			/*  Choice.  */
+    int ichoice;		/*  Choice.  */
     char *irX = "ir-X";		/*  Calls ir-X program.  */
     char *irsgi = "ir-sgi";	/*  Calls ir-sgi program.  */
-    char *X_or_SGI;		/*  will be set to one of the above */
-    char showtherm[125];		/*  Calls showtherm program.  */
+    char *X_or_SGI = NULL;	/*  will be set to one of the above */
+    char showtherm[125];	/*  Calls showtherm program.  */
     char gfile[16];		/*  .g file.  */
     char group[26];		/*  Group names.  */
     int ngrp;			/*  Number of groups.  */
-    int i, j, k;			/*  Loop counters.  */
+    int i, j, k;		/*  Loop counters.  */
 
     /*  Find option.  */
     (void)printf("This takes a BRL-CAD mged model with a PRISM\n");

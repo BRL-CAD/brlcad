@@ -53,7 +53,6 @@
 extern void application_init();
 
 extern const char title[];
-extern const char usage[];
 
 
 /***** Variables shared with viewing model *** */
@@ -65,7 +64,7 @@ mat_t		model2view;
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() ******/
-struct application ap;
+struct application APP;
 vect_t		left_eye_delta;
 int		report_progress;	/* !0 = user wants progress report */
 extern int	incr_mode;		/* !0 for incremental resolution */
@@ -178,12 +177,12 @@ int main(int argc, const char **argv)
     if (npsw > MAX_PSW)  npsw = MAX_PSW;
 
     /* Before option processing, do application-specific initialization */
-    RT_APPLICATION_INIT( &ap );
+    RT_APPLICATION_INIT( &APP );
     application_init();
 
     /* Process command line options */
     if (!get_args(argc, argv))  {
-	(void)fputs(usage, stderr);
+	usage(argv[0]);
 	return 1;
     }
     /* Identify the versions of the libraries we are using. */
@@ -217,14 +216,14 @@ int main(int argc, const char **argv)
 
     if (bu_optind >= argc) {
 	fprintf(stderr, "%s:  BRL-CAD geometry database not specified\n", argv[0]);
-	(void)fputs(usage, stderr);
+	usage(argv[0]);
 	return 1;
     }
 
     if (rpt_overlap)
-	ap.a_logoverlap = ((void (*)(struct application *, const struct partition *, const struct bu_ptbl *, const struct partition *))0);
+	APP.a_logoverlap = ((void (*)(struct application *, const struct partition *, const struct bu_ptbl *, const struct partition *))0);
     else
-	ap.a_logoverlap = rt_silent_logoverlap;
+	APP.a_logoverlap = rt_silent_logoverlap;
 
     /* If user gave no sizing info at all, use 512 as default */
     if (width <= 0 && cell_width <= 0)
@@ -259,7 +258,7 @@ int main(int argc, const char **argv)
 	height = width = 1 << incr_nlevel;
 	if (rt_verbosity & VERBOSE_INCREMENTAL)
 	    fprintf(stderr,
-		    "incremental resolution, nlevels = %d, width=%lu\n",
+		    "incremental resolution, nlevels = %lu, width=%lu\n",
 		    incr_nlevel, (unsigned long)width);
     }
 
@@ -352,7 +351,7 @@ int main(int argc, const char **argv)
 	bu_log("rt:  rt_dirbuild(%s) failure\n", title_file);
 	return 2;
     }
-    ap.a_rt_i = rtip;
+    APP.a_rt_i = rtip;
     (void)rt_get_timer(&times, NULL);
     if (rt_verbosity & VERBOSE_MODELTITLE)
 	bu_log("db title:  %s\n", idbuf);
@@ -387,7 +386,7 @@ int main(int argc, const char **argv)
      *  Note that width & height may not have been set yet,
      *  since they may change from frame to frame.
      */
-    if (view_init(&ap, (char *)title_file, (char *)title_obj, outputfile != (char *)0, framebuffer != (char *)0) != 0)  {
+    if (view_init(&APP, (char *)title_file, (char *)title_obj, outputfile != (char *)0, framebuffer != (char *)0) != 0)  {
 	/* Framebuffer is desired */
 	size_t xx, yy;
 	int	zoom;

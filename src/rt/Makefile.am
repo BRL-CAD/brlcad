@@ -33,7 +33,6 @@ bin_PROGRAMS = \
 	rtxray
 
 noinst_PROGRAMS = \
-	hurt \
 	rtexample
 
 endif
@@ -82,12 +81,6 @@ rtexample_SOURCES = rtexample.c
 reshoot_SOURCES = reshoot.c
 rtwalk_SOURCES = rtwalk.c
 rtshot_SOURCES = rtshot.c
-
-hurt_SOURCES = hurt.c
-hurt_LDADD = \
-	${OPTICAL} \
-	${RT} \
-	${FB}
 
 rtmlt_SOURCES = \
 	$(COMMON) \

@@ -33,7 +33,7 @@ free_scanlines(int height, struct scanline* scanline)
     for (y = 0; y < height; y++)  {
         if (scanline[y].sl_buf)  {
             bu_free(scanline[y].sl_buf, "sl_buf scanline buffer");
-	        scanline[y].sl_buf = (char *) 0;
+	        scanline[y].sl_buf = (unsigned char *) 0;
     	}
     }
     bu_free((char*) scanline, "struct scanline[height]");

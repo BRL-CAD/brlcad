@@ -484,6 +484,9 @@ wgl_xmit_scanlines(FBIO *ifp, int ybase, int nlines, int xbase, int npix)
 	glRasterPos2i(xbase, ybase);
 	glDrawPixels(npix, nlines, GL_BGRA_EXT, GL_UNSIGNED_BYTE,
 		     (const GLvoid *) ifp->if_mem);
+
+	glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+	glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
     }
 }
 

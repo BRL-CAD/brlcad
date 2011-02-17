@@ -174,7 +174,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
     }
     
     /* Obtain fresh copy of global application struct */
-    a = ap;				/* struct copy */
+    a = APP;				/* struct copy */
     a.a_resource = &resource[cpu];
 
     if (incr_mode) {
@@ -287,7 +287,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	    }
 	} else {
 	    VMOVE(a.a_ray.r_pt, point);
-	    VMOVE(a.a_ray.r_dir, ap.a_ray.r_dir);
+	    VMOVE(a.a_ray.r_dir, APP.a_ray.r_dir);
 
 	    if (a.a_rt_i->rti_prismtrace) {
 		VMOVE(pe.corner[0].r_dir, a.a_ray.r_dir);
@@ -367,7 +367,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 		}
 	    } else {
 		VMOVE(a.a_ray.r_pt, point);
-		VMOVE(a.a_ray.r_dir, ap.a_ray.r_dir);
+		VMOVE(a.a_ray.r_dir, APP.a_ray.r_dir);
 
 		if (a.a_rt_i->rti_prismtrace) {
 		    VMOVE(pe.corner[0].r_dir, a.a_ray.r_dir);
@@ -641,19 +641,19 @@ grid_setup(void)
 	 * perspective is a full angle while divergence is the tangent
 	 * (slope) of a half angle.
 	 */
-	ap.a_diverge = tan(bn_degtorad * rt_perspective * 0.5 / width);
-	ap.a_rbeam = 0;
+	APP.a_diverge = tan(bn_degtorad * rt_perspective * 0.5 / width);
+	APP.a_rbeam = 0;
     } else {
 	/* all rays go this direction */
 	VSET(temp, 0, 0, -1);
-	MAT4X3VEC(ap.a_ray.r_dir, view2model, temp);
-	VUNITIZE(ap.a_ray.r_dir);
+	MAT4X3VEC(APP.a_ray.r_dir, view2model, temp);
+	VUNITIZE(APP.a_ray.r_dir);
 
 	VSET(temp, -1, -1/aspect, 0);	/* eye plane */
-	ap.a_rbeam = 0.5 * viewsize / width;
-	ap.a_diverge = 0;
+	APP.a_rbeam = 0.5 * viewsize / width;
+	APP.a_diverge = 0;
     }
-    if (ZERO(ap.a_rbeam) && ZERO(ap.a_diverge))
+    if (ZERO(APP.a_rbeam) && ZERO(APP.a_diverge))
 	bu_exit(EXIT_FAILURE, "zero-radius beam");
     MAT4X3PNT(viewbase_model, view2model, temp);
 
@@ -789,7 +789,7 @@ do_run(int a, int b)
 	    bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
 	    continue;
 	}
-	rt_add_res_stats(ap.a_rt_i, &tmp_res[cpu]);
+	rt_add_res_stats(APP.a_rt_i, &tmp_res[cpu]);
 	rt_zero_res_stats(&resource[cpu]);
     }
 #else
@@ -799,7 +799,7 @@ do_run(int a, int b)
 	    bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
 	    continue;
 	}
-	rt_add_res_stats(ap.a_rt_i, &resource[cpu]);
+	rt_add_res_stats(APP.a_rt_i, &resource[cpu]);
     }
 #endif
     return;

@@ -201,7 +201,6 @@ set(LIBRT_SOURCES
     primitives/vol/vol_mirror.c
     regionfix.c
     roots.c
-	 search.c
     shoot.c
     spectrum.c
     tcl.c
@@ -234,7 +233,6 @@ set(librt_ignored_files
 	primitives/nmg/nmg_junk.c
 	primitives/revolve/revolve.h
 	primitives/xxx
-	search.h
 	timer-nt.c
 	timer52brl.c
 	timerhep.c
