@@ -18,15 +18,11 @@
  * information.
  */
 /** @file txyz-pl.c
- *			X Y Z - P L . C
  *
  *  Program to take (up to) 4-column input, expressed as
  *	time x y z
  *  and produce a plot file of the resulting space curve.
  *  Mostly useful to preview animation results.
- *
- *  Author -
- *	Michael John Muuss
  *
  */
 
@@ -40,15 +36,16 @@ char	buf[2048];
 int	debug = 0;
 
 int
-main( argc, argv )
-    int	argc;
-    char	*argv[];
+main(int argc, char *argv[])
 {
     double	t, xyz[3];
     int	i;
     int	first = 1;
 
-    if ( argc > 1 )  debug = 1;
+    if ( argc > 1 ) {
+	bu_log("Usage: %s\nDebugging enabled.\n", argv[0]);
+	debug = 1;
+    }
 
     for (;;)  {
 	t = xyz[0] = xyz[1] = xyz[2] = 0.0;
