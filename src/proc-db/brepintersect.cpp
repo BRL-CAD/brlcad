@@ -359,8 +359,8 @@ int SegmentPolylineIntersect(
     double tol
     )
 {
-    int rv;
-    int my_rv; /* what this function will return at the end */
+    int rv = 0;
+    int my_rv = 0; /* what this function will return at the end */
     ON_3dPoint result[2];
     for (int i = 0; i < (pline.Count() - 1); i++) {
 	rv = SegmentSegmentIntersect(P, Q, pline[i], pline[i+1], result, tol);

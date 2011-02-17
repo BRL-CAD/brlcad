@@ -262,7 +262,7 @@ int ReadArgs(int argc, char **argv, int *lens_1side_2side, fastf_t *ref_ind, fas
 
 int main(int ac, char *av[])
 {
-    struct rt_wdb *db_fp;
+    struct rt_wdb *db_fp = NULL;
     struct bu_vls lens_type;
     struct bu_vls name;
     struct bu_vls str;

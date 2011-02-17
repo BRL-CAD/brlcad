@@ -312,7 +312,7 @@ int Face_X_Event::Render_Curves()
 {
     /* the curve can be active or inactive in either face */
     bool active1 = false, active2 = false;
-    double last;
+    double last = 0.0;
     int i;
 
     /* Now we step through the X events activating and deactivating
