@@ -172,7 +172,7 @@ rt_spect_make_NTSC_RGB(struct bn_tabdata **rp,
  * Gives the XYZ coordinates of the NTSC primaries and D6500 white.
  * Note:  X+Y+Z=1 for primaries (cf. equations of pg.54)
  */
-const static point_t rgb_NTSC[4] = {
+static const point_t rgb_NTSC[4] = {
     {0.670,     0.330,      0.000},     /* red */
     {0.210,     0.710,      0.080},     /* green */
     {0.140,     0.080,      0.780},     /* blue */
@@ -235,7 +235,7 @@ rt_clr__cspace_to_xyz (const point_t cspace[4],
 		ind[ii]=tmp_i;
 	    }
 	}
-	if (tmat(ind[ii], ii) == 0.0) return 0;
+	if (ZERO(tmat(ind[ii], ii))) return 0;
 
 	for (jj=ii+1; jj<=2; jj++) {
 	    mult = tmat(ind[jj], ii) / tmat(ind[ii], ii);
@@ -244,7 +244,7 @@ rt_clr__cspace_to_xyz (const point_t cspace[4],
 	    white[ind[jj]] -= white[ind[ii]] * mult;
 	}
     }
-    if (tmat(ind[2], 2) == 0.0) return 0;
+    if (ZERO(tmat(ind[2], 2))) return 0;
 
     /* back substitution to solve for scale */
     scale[ind[2]] = white[ind[2]] / tmat(ind[2], 2);
