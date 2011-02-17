@@ -80,7 +80,7 @@ BU_EXTERN(struct bn_table *bn_table_make_visible_and_uniform, (int num,
 
 const char title[] = "Thermal Multi-Spectral RT";
 
-static void
+void
 usage(const char *argv0)
 {
     bu_log("Usage:  %s [options] model.g objects...\n", argv0);
