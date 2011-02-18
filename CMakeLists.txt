@@ -822,6 +822,19 @@ IF(BRLCAD-ENABLE_DTRACE)
 	FIND_PROGRAM(DTRACE_EXEC NAMES dtrace DOC "path to dtrace executable")
 ENDIF(BRLCAD-ENABLE_DTRACE)
 
+
+# Load various wrapper macros for checking libraries, headers and 
+# functions
+INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake)
+
+# The src/other subdirectory does not share (at least, not universally)
+# certain definitions common to all other directories in BRL-CAD.  Also,
+# we don't want flags that are otherwise global to BRL-CAD to be passed
+# to the src/other directory (particularly things like strict compiler
+# flags) so add src/other before any of that setup occurs.
+ADD_SUBDIRECTORY(src/other)
+
+
 # *******************************************************************
 # ***            Check for Libraries - Stage 3 of 9               ***
 # *******************************************************************
@@ -834,10 +847,6 @@ ENDIF(BRLCAD-ENABLE_DTRACE)
 
 # TODO - need to make LINKOPT vars for anything here that will
 # be referenced in a pkgconfig file
-
-# Load various wrapper macros for checking libraries, headers and 
-# functions
-INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake)
 
 # Look for threads (doesn't check for headers)
 # The variable CMAKE_THREAD_LIBS_INIT is the one of interest

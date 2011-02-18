@@ -1,10 +1,15 @@
+include_directories(
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	)
+
 #-----------------------------------------------------------------------------
 # Load some CMake macros to handle the special case of third party libraries.
 INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty.cmake)
 
 # Quiet all warnings in this directory
 IF(BRLCAD-DISABLE_SRC_OTHER_WARN)
-	add_definitions(-w)
+	#add_definitions(-w)
 ENDIF(BRLCAD-DISABLE_SRC_OTHER_WARN)
 
 #---------------------------------------------------------------------------------
@@ -1040,27 +1045,27 @@ ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
 # it's not worth trying to make it do so.  Defaults to
 # on if BRLCAD-ENABLE_ALL_LOCAL_LIBS is enabled before
 # the first run of CMake, otherwise defaults to off.
-IF(BRLCAD-ENABLE_JOVE)
-	IF(NOT WIN32)
-		ADD_SUBDIRECTORY(jove)
-		SET(jove_ignore_files
-			BUGS
-			README
-			describe.com
-			jove-tutorial
-			jove.1
-			jove.emacs
-			jove.h
-			jove_temp.h
-			teach-jove.in
-			termcap.h
-			)
-		DISTCHECK_IGNORE(jove jove_ignore_files)
-	ELSE(NOT WIN32)
-		MESSAGE("jove was requested, but does not build on Windows - disabling")
-		SET(BRLCAD-ENABLE_JOVE OFF CACHE BOOL "jove disabled on WIN32" FORCE)
-		DISTCHECK_IGNORE_ITEM(jove)
-	ENDIF(NOT WIN32)
-ELSE(BRLCAD-ENABLE_JOVE)
+#IF(BRLCAD-ENABLE_JOVE)
+#	IF(NOT WIN32)
+#		ADD_SUBDIRECTORY(jove)
+#		SET(jove_ignore_files
+#			BUGS
+#			README
+#			describe.com
+#			jove-tutorial
+#			jove.1
+#			jove.emacs
+#			jove.h
+#			jove_temp.h
+#			teach-jove.in
+#			termcap.h
+#			)
+#		DISTCHECK_IGNORE(jove jove_ignore_files)
+#	ELSE(NOT WIN32)
+#		MESSAGE("jove was requested, but does not build on Windows - disabling")
+#		SET(BRLCAD-ENABLE_JOVE OFF CACHE BOOL "jove disabled on WIN32" FORCE)
+#		DISTCHECK_IGNORE_ITEM(jove)
+#	ENDIF(NOT WIN32)
+#ELSE(BRLCAD-ENABLE_JOVE)
 	DISTCHECK_IGNORE_ITEM(jove)
-ENDIF(BRLCAD-ENABLE_JOVE)
+#ENDIF(BRLCAD-ENABLE_JOVE)

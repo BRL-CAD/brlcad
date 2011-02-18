@@ -1,12 +1,5 @@
 # Minimal directories required for any BRL-CAD functionality
 
-# The other subdirectory does not share (at least, not universally)
-# certain definitions common to all other directories in BRL-CAD, 
-# so add this first.  It is always on in any case, and if any src/other
-# directory requires BRL-CAD specific directories or definitions they
-# will need to call them out explicitly
-ADD_SUBDIRECTORY(other)
-
 # Define some common definitions and includes here that are used
 # in all BRL-CAD builds
 
