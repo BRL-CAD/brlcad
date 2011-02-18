@@ -3882,6 +3882,10 @@ if test "x$host_os" = "xirix6.5" ; then
     fi
 fi
 
+# XXX want to include strict flags pervasively throughout if strict
+# building is enabled.  alas, can't enable this until src/other has
+# NOWARN (-w) added to the build: CFLAGS="$CFLAGS \${STRICT_FLAGS}"
+
 dnl search the BRL-CAD include directory (required for non-srcdir builds).
 dnl should come after the system services checks otherwise or our headers
 dnl may conflict.
