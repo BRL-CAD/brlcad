@@ -1079,8 +1079,8 @@ BRLCAD_TYPE_SIZE("sig_t" SIG "signal.h")
 # ***       Check for Compile Characteristics - Stage 6 of 9      ***
 # *******************************************************************
 
-SET(${CMAKE_C_FLAGS} "")
-SET(${CMAKE_CXX_FLAGS} "")
+SET(CMAKE_C_FLAGS "" CACHE STRING "compiler flags" FORCE)
+SET(CMAKE_CXX_FLAGS "" CACHE STRING "cxx compiler flags" FORCE)
 INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
 
 # *******************************************************************
