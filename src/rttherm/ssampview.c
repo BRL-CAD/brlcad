@@ -642,7 +642,7 @@ doit(ClientData UNUSED(cd), Tcl_Interp *interp, int UNUSED(argc), char **UNUSED(
     char cmd[96];
 
     for (wl = 0; wl < spectrum->nx; wl++) {
-	sprintf(cmd, "doit1 %lu", wl);
+	sprintf(cmd, "doit1 %lu", (unsigned long)wl);
 	Tcl_Eval(interp, cmd);
     }
     return TCL_OK;
@@ -685,7 +685,7 @@ doit1(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 
     /* export C variables to TCL, one-way */
     /* These are being traced by Tk, this will cause update */
-    sprintf(buf, "%lu", wl);
+    sprintf(buf, "%lu", (unsigned long)wl);
     Tcl_SetVar(interp, "x", buf, TCL_GLOBAL_ONLY);
     sprintf(buf, "%g", spectrum->x[wl] * 0.001);
     Tcl_SetVar(interp, "lambda", buf, TCL_GLOBAL_ONLY);

@@ -39,7 +39,6 @@ extern struct region	env_region;		/* import from view.c */
 
 HIDDEN int	temp_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *rtip), temp_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
 HIDDEN void	temp_print(register struct region *rp), temp_free(char *cp);
-HIDDEN void	temp_transp_hook();
 
 extern int mlib_zero(), mlib_one();
 extern void	mlib_void();

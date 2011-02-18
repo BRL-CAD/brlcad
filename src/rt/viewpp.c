@@ -185,7 +185,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 
     fprintf(stdout, "%s: %s (RT)\n", file, obj);
     fprintf(stdout, "%10d%10d", (int)azimuth, (int)elevation);
-    fprintf(stdout, "%10lu%10lu\n", width, height);
+    fprintf(stdout, "%10lu%10lu\n", (unsigned long int)width, (unsigned long int)height);
     return 0;		/* no framebuffer needed */
 }
 

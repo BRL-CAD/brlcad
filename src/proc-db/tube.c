@@ -412,7 +412,7 @@ read_frame(FILE *fp)
 	nmass = (size_t)nmassval;
 	if (nmass-1 != nsamples) {
 	    fprintf(stderr, "nmass %lu / nsamples %lu mismatch\n",
-		    nmass, nsamples);
+		    (unsigned long)nmass, (unsigned long)nsamples);
 	    return -1;
 	}
 #define EXAGERATION (4 * oradius)
