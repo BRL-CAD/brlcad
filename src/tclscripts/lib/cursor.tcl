@@ -22,13 +22,13 @@
 # DESCRIPTION
 #    Cursor setting utilities
 #
-# AUTHOR
-#    Doug Howard
-#    Bob Parker
-#
 #***
 ##############################################################
 
+
+namespace eval cadwidgets {
+    set cursorWaitcount 0
+}
 
 # PROCEDURE: SetWaitCursor
 #
@@ -41,9 +41,9 @@
 #       None
 #
 proc SetWaitCursor {_w} {
-    incr ::ArcherCore::cursorWaitCount
+    incr ::cadwidgets::cursorWaitCount
 
-    if {1 < $::ArcherCore::cursorWaitCount} {
+    if {1 < $::cadwidgets::cursorWaitCount} {
 	# Already in cursor wait mode
 	return
     }
@@ -63,9 +63,9 @@ proc SetWaitCursor {_w} {
 #       None
 #
 proc SetNormalCursor {_w} {
-    incr ::ArcherCore::cursorWaitCount -1
+    incr ::cadwidgets::cursorWaitCount -1
 
-    if {$::ArcherCore::cursorWaitCount != 0} {
+    if {$::cadwidgets::cursorWaitCount != 0} {
 	return
     }
 
