@@ -2307,10 +2307,12 @@ AC_CHECK_FUNCS(\
 	getloadavg \
 	getopt_long \
 	getprogname \
+	htonll \
 	kill \
 	lrand48 \
 	memset \
 	mkstemp \
+	ntohll \
 	pipe \
 	popen \
 	realpath \
