@@ -313,7 +313,7 @@ rt_binunif_export5( struct bu_external		*ep,
 	    lsrcp = (unsigned long *) bip->u.uint8;
 	    destp = (unsigned char *) ep->ext_buf;
 	    for (i = 0; i < bip->count; ++i, ++destp, ++lsrcp) {
-		*(uint32_t &)&destp[0] = htonl( *lsrcp );
+		*(uint32_t *)&destp[0] = htonl( *lsrcp );
 	    }
 	    break;
 	case DB5_MINORTYPE_BINU_64BITINT:
