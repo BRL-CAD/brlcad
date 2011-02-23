@@ -1891,10 +1891,9 @@ struct bu_structparse {
 struct bu_external  {
     unsigned long ext_magic;
     size_t ext_nbytes;
-    genptr_t ext_buf;
+    uint8_t *ext_buf;
 };
-#define BU_INIT_EXTERNAL(_p) {(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
-	(_p)->ext_buf = (genptr_t)NULL; (_p)->ext_nbytes = 0;}
+#define BU_INIT_EXTERNAL(_p) { (_p)->ext_magic = BU_EXTERNAL_MAGIC; (_p)->ext_buf = NULL; (_p)->ext_nbytes = 0; }
 #define BU_CK_EXTERNAL(_p)	BU_CKMAG(_p, BU_EXTERNAL_MAGIC, "bu_external")
 
 /** @} */

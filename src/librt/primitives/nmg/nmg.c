@@ -2501,7 +2501,7 @@ rt_nmg_export5(
     const struct db_i *dbip)
 {
     struct model *m;
-    char *dp;
+    unsigned char *dp;
     unsigned long **ptrs;
     struct nmg_struct_counts cntbuf;
     struct nmg_exp_counts *ecnt;
@@ -2637,16 +2637,16 @@ rt_nmg_export5(
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = tot_size;
     ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "nmg external5");
-    dp = ep->ext_buf;
-    (void)bu_plong((unsigned char *)dp, DISK_MODEL_VERSION);
+    dp = (unsigned char *)ep->ext_buf;
+    (void)bu_plong(dp, DISK_MODEL_VERSION);
     dp+=SIZEOF_NETWORK_LONG;
 
     for (kind=0; kind <NMG_N_KINDS; kind++) {
-	(void)bu_plong((unsigned char *) dp, kind_counts[kind]);
+	(void)bu_plong(dp, kind_counts[kind]);
 	dp+=SIZEOF_NETWORK_LONG;
     }
     for (i=0; i< NMG_N_KINDS; i++) {
-	disk_arrays[i] = (genptr_t)dp;
+	disk_arrays[i] = dp;
 	dp += kind_counts[i] * rt_nmg_disk_sizes[i];
     }
     rt_nmg_fastf_p = (unsigned char*)disk_arrays[NMG_KIND_DOUBLE_ARRAY];

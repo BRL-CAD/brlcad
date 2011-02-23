@@ -237,7 +237,7 @@ main(int argc, char **argv)
 		}
 		BU_INIT_EXTERNAL( &ext );
 		ext.ext_nbytes = curr_poly * sizeof( union record );
-		ext.ext_buf = (char *)poly;
+		ext.ext_buf = (uint8_t *)poly;
 		if ( rt_functab[ID_POLY].ft_import4( &intern, &ext, bn_mat_identity, (struct db_i *)NULL, &rt_uniresource ) )
 		{
 		    bu_exit(1, "Import failed for polysolid %s\n", poly[0].p.p_name );
