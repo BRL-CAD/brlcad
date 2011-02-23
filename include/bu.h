@@ -5238,7 +5238,7 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 /**
  * DEPRECATED: use ntohll()
  * Macro version of library routine bu_glonglong()
- * The argument is expected to be of type "unsigned char"
+ * The argument is expected to be of type "unsigned char *"
  */
 #define BU_GLONGLONG(_cp)	\
 	    ((((uint64_t)((_cp)[0])) << 56) |	\
@@ -5252,7 +5252,7 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 /**
  * DEPRECATED: use ntohl()
  * Macro version of library routine bu_glong()
- * The argument is expected to be of type "unsigned char"
+ * The argument is expected to be of type "unsigned char *"
  */
 #define BU_GLONG(_cp)	\
 	    ((((uint32_t)((_cp)[0])) << 24) |	\
@@ -5262,7 +5262,7 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 /**
  * DEPRECATED: use ntohs()
  * Macro version of library routine bu_gshort()
- * The argument is expected to be of type "unsigned char"
+ * The argument is expected to be of type "unsigned char *"
  */
 #define BU_GSHORT(_cp)	\
 	    ((((uint16_t)((_cp)[0])) << 8) | \
