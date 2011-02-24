@@ -81,7 +81,7 @@ RT_EXPORT extern int rt_obj_curve(struct curvature *cvp, struct hit *hitp, struc
 /**
  * DEPRECATED: Unimplemented.
  */
-RT_EXPORT extern int rt_obj_class();
+DEPRECATED RT_EXPORT extern int rt_obj_class();
 
 /**
  * release the memory used by a solid
