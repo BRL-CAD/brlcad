@@ -122,6 +122,8 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
+#include "../../librt_private.h"
+
 
 /*
  * The TORUS has the following input fields:
@@ -182,7 +184,7 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_TOR_CK_MAGIC(tip);
 
     /* Validate that |A| == |B| (for now) */
-    if (rt_fdiff(tip->r_a, tip->r_b) != 0) {
+    if (!NEAR_EQUAL(tip->r_a, tip->r_b, 0.001)) {
 	bu_log("tor(%s):  (|A|=%f) != (|B|=%f) \n",
 	       stp->st_name, tip->r_a, tip->r_b);
 	return 1;		/* BAD */
