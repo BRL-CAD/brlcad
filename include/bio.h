@@ -44,7 +44,6 @@
 #  define NOMINMAX
 #  include <windows.h>
 #  include <io.h>
-#  include <Winsock2.h> /* hton/ntoh family functions */
 
 #   undef rad1 /* Win32 radio button 1 */
 #   undef rad2 /* Win32 radio button 2 */
