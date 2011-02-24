@@ -44,6 +44,7 @@
 #  define NOMINMAX
 #  include <windows.h>
 #  include <io.h>
+#  include <Winsock2.h> /* hton/ntoh family functions */
 
 #   undef rad1 /* Win32 radio button 1 */
 #   undef rad2 /* Win32 radio button 2 */
@@ -53,6 +54,9 @@
 
 #else
 #  include <unistd.h>
+#  ifdef HAVE_ARPA_INET_H
+#    include <arpa/inet.h> /* hton/ntoh family functions */
+#  endif
 #endif
 
 /* needed for testing O_TEMPORARY and O_BINARY */

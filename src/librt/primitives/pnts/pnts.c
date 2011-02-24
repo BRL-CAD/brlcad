@@ -24,6 +24,7 @@
  */
 
 #include "common.h"
+#include "bio.h"
 
 #include "bn.h"
 #include "bu.h"
