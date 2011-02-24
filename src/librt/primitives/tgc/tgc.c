@@ -44,6 +44,8 @@
 #include "raytrace.h"
 #include "nurb.h"
 
+#include "../../librt_private.h"
+
 
 BU_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip));
 
@@ -249,8 +251,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      * the cone equation reduces to a much simpler quadratic form.
      * Otherwise it is a (gah!) quartic equation.
      */
-    f = rt_reldiff((tgc->tgc_A*tgc->tgc_D), (tgc->tgc_C*tgc->tgc_B));
-    tgc->tgc_AD_CB = (f < 0.0001);		/* A*D == C*B */
+    tgc->tgc_AD_CB = NEAR_EQUAL((tgc->tgc_A*tgc->tgc_D), (tgc->tgc_C*tgc->tgc_B), 0.0001);		/* A*D == C*B */
     rt_tgc_rotate(tip->a, tip->b, tip->h, Rot, iRot, tgc);
     MAT4X3VEC(nH, Rot, tip->h);
     tgc->tgc_sH = nH[Z];
