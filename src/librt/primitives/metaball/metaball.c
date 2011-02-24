@@ -698,7 +698,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
-    metaball_count = bu_glong((unsigned char *)ep->ext_buf);
+    metaball_count = ntohl(*(uint32_t *)ep->ext_buf);
     buf = (fastf_t *)bu_malloc((metaball_count*5+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_import5: buf");
     ntohd((unsigned char *)buf, (unsigned char *)ep->ext_buf+2*SIZEOF_NETWORK_LONG, metaball_count*5+1);
 
@@ -709,7 +709,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
     ip->idb_ptr = bu_malloc(sizeof(struct rt_metaball_internal), "rt_metaball_internal");
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     mb->magic = RT_METABALL_INTERNAL_MAGIC;
-    mb->method = bu_glong((unsigned char *)ep->ext_buf + SIZEOF_NETWORK_LONG);
+    mb->method = ntohl(*(uint32_t *)(ep->ext_buf + SIZEOF_NETWORK_LONG));
     mb->threshold = buf[0];
     BU_LIST_INIT(&mb->metaball_ctrl_head);
     if (mat == NULL) mat = bn_mat_identity;
@@ -768,8 +768,8 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "metaball external");
     if (ep->ext_buf == NULL)
 	bu_bomb("Failed to allocate DB space!\n");
-    bu_plong((unsigned char *)ep->ext_buf, metaball_count);
-    bu_plong((unsigned char *)ep->ext_buf + SIZEOF_NETWORK_LONG, mb->method);
+    *(uint32_t *)ep->ext_buf = htonl(metaball_count);
+    *(uint32_t *)(ep->ext_buf + SIZEOF_NETWORK_LONG) = htonl(mb->method);
 
     /* pack the point data */
     buf = (fastf_t *)bu_malloc((metaball_count*5+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_export5: buf");
