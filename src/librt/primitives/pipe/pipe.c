@@ -3271,7 +3271,7 @@ rt_pipe_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
     ip->idb_ptr = bu_malloc(sizeof(struct rt_pipe_internal), "rt_pipe_internal");
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     pip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
-    pip->pipe_count = bu_glong(rp->pwr.pwr_pt_count);
+    pip->pipe_count = ntohl(*(uint32_t *)rp->pwr.pwr_pt_count);
     
     /*
      * Walk the array of segments in reverse order, allocating a
@@ -3346,8 +3346,8 @@ rt_pipe_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     rec = (union record *)ep->ext_buf;
     
     rec->pwr.pwr_id = DBID_PIPE;
-    (void)bu_plong(rec->pwr.pwr_count, ngran-1);	/* # EXTRA grans */
-    (void)bu_plong(rec->pwr.pwr_pt_count, count);
+    *(uint32_t *)rec->pwr.pwr_count = htonl(ngran-1);	/* # EXTRA grans */
+    *(uint32_t *)rec->pwr.pwr_pt_count = htonl(count);
     
     /* Convert the pipe segments to external form */
     epp = &rec->pwr.pwr_data[0];
@@ -3385,7 +3385,7 @@ rt_pipe_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
     
-    pipe_count = bu_glong((unsigned char *)ep->ext_buf);
+    pipe_count = ntohl(*(uint32_t *)ep->ext_buf);
     double_count = pipe_count * 6;
     byte_count = double_count * SIZEOF_NETWORK_DOUBLE;
     total_count = 4 + byte_count;
@@ -3472,7 +3472,7 @@ rt_pipe_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     ep->ext_nbytes = total_count;
     ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "pipe external");
     
-    (void)bu_plong((unsigned char *)ep->ext_buf, pipe_count);
+    *(uint32_t *)ep->ext_buf = htonl(pipe_count);
     
     /* Convert the pipe segments to external form */
     for (BU_LIST_FOR(ppt, wdb_pipept, headp), i += 6) {
