@@ -733,7 +733,7 @@ ph_lines(struct pkg_conn *UNUSED(pc), char *buf)
 		info.li_startpix, info.li_endpix,
 		info.li_nrays, info.li_cpusec);
     }
-    if ( pkg_2send( MSG_PIXELS, ext.ext_buf, ext.ext_nbytes, (const char *)scanbuf, (b-a+1)*3, pcsrv ) < 0 )  {
+    if ( pkg_2send( MSG_PIXELS, (const char *)ext.ext_buf, ext.ext_nbytes, (const char *)scanbuf, (b-a+1)*3, pcsrv ) < 0 )  {
 	fprintf(stderr, "MSG_PIXELS send error\n");
 	bu_free_external(&ext);
     }
