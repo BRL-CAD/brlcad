@@ -379,7 +379,8 @@ dist_bin_SCRIPTS = intaval-g.py
 noinst_HEADERS = \
 	comgeom/3d.h \
 	dxf/dxf.h \
-	patch/patch-g.h
+	patch/patch-g.h \
+	shp/shapelib/shapefil.h
 
 dist_man_MANS = \
 	asc/g2asc.1 \
