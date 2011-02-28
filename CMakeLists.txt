@@ -1133,6 +1133,12 @@ BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
 # ***          Check for System Services - Stage 8 of 9           ***
 # *******************************************************************
 
+# For Windows, we need some dlls to be redistributed with the
+# installer
+IF(MSVC)
+	INCLUDE(InstallRequiredSystemLibraries)
+ENDIF(MSVC)
+
 # We've done the toplevel configure steps, now add the subdirectories
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(db)
