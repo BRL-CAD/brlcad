@@ -125,6 +125,7 @@ mged_SOURCES = \
 # per-program CPPFLAGS wasn't added until automake 1.7
 mged_CFLAGS = \
 	${STD_C99_FLAGS} \
+	${STRICT_FLAGS} \
 	$(OGL_CFLAGS) \
 	$(RTGL_CFLAGS) \
 	$(WGL_CFLAGS) \

@@ -1,7 +1,9 @@
 
 bin_PROGRAMS = remrt rtsrv
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = \
+	${STRICT_FLAGS} \
+	${TCL_CPPFLAGS}
 
 dist_man_MANS = remrt.1
 

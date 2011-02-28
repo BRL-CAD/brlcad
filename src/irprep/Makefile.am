@@ -19,7 +19,9 @@ bin_PROGRAMS = \
 	secpass \
 	shapefact
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = \
+	${STRICT_FLAGS} \
+	${TCL_CPPFLAGS}
 
 all_sf_SOURCES = all_sf.c
 all_sf_LDADD = ${RT}
