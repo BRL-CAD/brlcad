@@ -35,6 +35,7 @@
 #include <math.h>
 #include <string.h>
 #include "bio.h"
+#include "bin.h"
 
 /* interface headers */
 #include "vmath.h"
