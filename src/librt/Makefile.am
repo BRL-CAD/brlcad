@@ -283,6 +283,7 @@ noinst_HEADERS = \
 	librt_private.h \
 	opennurbs_ext.h \
 	primitives/bot/btg.h \
+	primitives/bot/tieprivate.h \
 	primitives/brep/brep_debug.h \
 	primitives/fixpt.h \
 	primitives/metaball/metaball.h \
