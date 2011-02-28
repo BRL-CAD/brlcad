@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include "bin.h"
 
 #include "vmath.h"
 #include "nmg.h"
