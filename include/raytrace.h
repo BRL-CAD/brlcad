@@ -38,6 +38,7 @@
 #include "common.h"
 
 /* interface headers */
+#include "regex.h"
 #include "tcl.h"
 #include "bu.h"
 #include "bn.h"
