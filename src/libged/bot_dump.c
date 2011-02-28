@@ -31,6 +31,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "bio.h"
+#include "bin.h"
 
 #include "vmath.h"
 #include "nmg.h"
