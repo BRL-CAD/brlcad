@@ -36,7 +36,7 @@
 /* for isnan() function */
 #include <float.h>
 #include <math.h>
-#include "bio.h"
+#include "bin.h"
 
 #include "tcl.h"
 #include "vmath.h"

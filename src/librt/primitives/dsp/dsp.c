@@ -53,7 +53,7 @@
 #include <string.h>
 #include <math.h>
 #include <setjmp.h>
-#include "bio.h"
+#include "bin.h"
 
 #include "vmath.h"
 #include "raytrace.h"

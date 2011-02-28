@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
+#include "bin.h"
 
 #include "vmath.h"
 #include "bu.h"

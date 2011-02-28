@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
+#include "bin.h"
 
 #include "tcl.h"
 #include "vmath.h"
