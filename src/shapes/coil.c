@@ -54,7 +54,7 @@ struct coil_data_t {
 
 
 fastf_t
-cap_squared(struct rt_wdb *file, struct bu_list *head, char *prefix, struct wmember *coil_subtractions, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, fastf_t starting_pitch, int is_start, int *need_subtraction, int lhf)
+cap_squared(struct bu_list *head, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, fastf_t starting_pitch, int is_start, int *need_subtraction, int lhf)
 {
     fastf_t pipe_bend, coil_radius;
     point_t pnt1, pnt2, pnt4, pnt6, pnt8;
@@ -212,11 +212,11 @@ cap_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, struct wmemb
 
 
 fastf_t
-helical_coil_plain(struct bu_list *head, struct wmember *coil, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, fastf_t starting_pitch, int nt, int lhf)
+helical_coil_plain(struct bu_list *head, fastf_t mean_outer_diameter, fastf_t wire_diameter, fastf_t helix_angle, fastf_t pitch, fastf_t starting_pitch, int nt, int lhf)
 {
     int i;
     fastf_t coil_radius, pipe_bend;
-    point_t pnt1, pnt2, pnt4, pnt6, pnt8;
+    point_t pnt2, pnt4, pnt6, pnt8;
 
     coil_radius = mean_outer_diameter/2 - wire_diameter/2;
     pipe_bend = coil_radius;
@@ -267,7 +267,7 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
        	    mk_add_pipe_pt(&head, pnt1, s_data->wd, 0.0, (s_data->od/2-s_data->wd/2));
 	    break;
 	case 1:
-	    last_pitch_pt = cap_squared(file, &head, prefix, &coil_subtractions, s_data->od, s_data->wd, s_data->ha, s_data->p, 0, 1, &need_subtractions, s_data->lhf);
+	    last_pitch_pt = cap_squared(&head, s_data->od, s_data->wd, s_data->ha, s_data->p, 0, 1, &need_subtractions, s_data->lhf);
 	    break;
 	case 2:
 	    last_pitch_pt = cap_ground(file, &head, prefix, &coil_subtractions, s_data->od, s_data->wd, s_data->ha, s_data->p, 0, 1, &need_subtractions, s_data->lhf);
@@ -280,7 +280,7 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
     }
    
     for (BU_LIST_FOR(cd, coil_data_t, &(*sections))) {
-        last_pitch_pt = helical_coil_plain(&head, &coil_subtractions, cd->od, cd->wd, cd->ha, cd->p, last_pitch_pt, cd->nt, cd->lhf);
+        last_pitch_pt = helical_coil_plain(&head, cd->od, cd->wd, cd->ha, cd->p, last_pitch_pt, cd->nt, cd->lhf);
     }
 
     switch (end_cap_type) {
@@ -289,7 +289,7 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
 	    mk_add_pipe_pt(&head, pnt1, e_data->wd, 0.0, (e_data->od/2-e_data->wd/2));
 	    break;
 	case 1:
-	    last_pitch_pt = cap_squared(file, &head, prefix, &coil_subtractions, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions, s_data->lhf);
+	    last_pitch_pt = cap_squared(&head, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions, s_data->lhf);
 	    break;
 	case 2:
 	    last_pitch_pt = cap_ground(file, &head, prefix, &coil_subtractions, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions, s_data->lhf);
@@ -403,14 +403,14 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
 int
 main(int ac, char *av[])
 {
-    struct rt_wdb *db_fp;
+    struct rt_wdb *db_fp = NULL;
     struct bu_vls coil_type;
     struct bu_vls name;
     struct bu_vls str;
     fastf_t mean_outer_diameter, wire_diameter, overall_length, nominal_length;
     fastf_t helix_angle, pitch;
 
-    struct coil_data_t *coil_data;
+    struct coil_data_t *coil_data = NULL;
     struct bu_list sections;
     
     int nt; /* Number of turns */
@@ -446,20 +446,20 @@ main(int ac, char *av[])
 	if (mean_outer_diameter < 0 || wire_diameter < 0 || helix_angle < 0 || pitch < 0 || nt < 0 || start_cap_type < 0 || end_cap_type < 0) 
 	    bu_exit(-1, " Error - negative value in one or more arguments supplied to coil");
     
-        if (wire_diameter == 0 && mean_outer_diameter == 0) {
+        if (ZERO(wire_diameter) && ZERO(mean_outer_diameter)) {
             mean_outer_diameter = 1000;
             wire_diameter = 100;       
         }
    
-        if (wire_diameter == 0 && mean_outer_diameter > 0) {
+        if (ZERO(wire_diameter) && mean_outer_diameter > 0) {
 	    wire_diameter = mean_outer_diameter/10;
         }
 
-        if (mean_outer_diameter == 0 && wire_diameter > 0) {
+        if (ZERO(mean_outer_diameter) && wire_diameter > 0) {
 	    mean_outer_diameter = wire_diameter * 10;
         }
 
-        if (pitch == 0) {
+        if (ZERO(pitch)) {
 	    pitch = wire_diameter;
         }
 
@@ -488,14 +488,14 @@ main(int ac, char *av[])
 
     /* If hard clamping the length, have to check some things and maybe clamp some values */
 
-    if (overall_length != 0) {
+    if (!ZERO(overall_length)) {
 	bu_log("Caution:  Length clamping overrides other specified values - if supplied values are\ninconsistent with specified length, they will be overriden in this order:\n\nWhen Shrinking:  pitch, number of turns, wire diameter\nWhen Expanding:  number of turns, pitch\n\nCurrently, this override order is independent of whether the value is supplied by the user or calculated\ninternally - i.e. there is no preference for protecting user specified properties.\n");
 	if (start_cap_type != 0 || end_cap_type != 0) {
 	    bu_log("Note:  At this time only uncapped coils are allowed when length is constrained.\n");
 	    start_cap_type = 0;
 	    end_cap_type = 0;
 	}
-	if (helix_angle != 0) {
+	if (!ZERO(helix_angle)) {
 	    bu_log("Note:  At this time variable helix angles are unsupported when length is constrained.\n");
 	    helix_angle = 0;
 	}
@@ -518,7 +518,7 @@ main(int ac, char *av[])
 		}
 	    }
 	} else {
-	    if (nominal_length != overall_length) {
+	    if (!EQUAL(nominal_length, overall_length)) {
 		/* Add turns first, then adjust pitch */
 		while (nominal_length < overall_length) {
 		    coil_data->nt++;

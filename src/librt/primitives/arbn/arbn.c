@@ -796,7 +796,7 @@ rt_arbn_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
     ip->idb_ptr = bu_malloc(sizeof(struct rt_arbn_internal), "rt_arbn_internal");
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
     aip->magic = RT_ARBN_INTERNAL_MAGIC;
-    aip->neqn = bu_glong(rp->n.n_neqn);
+    aip->neqn = ntohl(*(uint32_t *)rp->n.n_neqn);
     if (aip->neqn <= 0) return -1;
     aip->eqn = (plane_t *)bu_malloc(aip->neqn*sizeof(plane_t), "arbn plane eqn[]");
 
@@ -868,8 +868,8 @@ rt_arbn_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     rec = (union record *)ep->ext_buf;
 
     rec[0].n.n_id = DBID_ARBN;
-    (void)bu_plong(rec[0].n.n_neqn, aip->neqn);
-    (void)bu_plong(rec[0].n.n_grans, ngrans);
+    *(uint32_t *)rec[0].n.n_neqn = htonl(aip->neqn);
+    *(uint32_t *)rec[0].n.n_grans = htonl(ngrans);
 
     /* Take the data from the caller, and scale it, into sbuf */
     sp = sbuf = (double *)bu_malloc(
@@ -908,7 +908,7 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     BU_CK_EXTERNAL(ep);
     if (dbip) RT_CK_DBI(dbip);
 
-    neqn = bu_glong((unsigned char *)ep->ext_buf);
+    neqn = ntohl(*(uint32_t *)ep->ext_buf);
     double_count = neqn * ELEMENTS_PER_PLANE;
     byte_count = double_count * SIZEOF_NETWORK_DOUBLE;
 
@@ -987,7 +987,7 @@ rt_arbn_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     ep->ext_nbytes = 4 + byte_count;
     ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "arbn external");
 
-    (void)bu_plong((unsigned char *)ep->ext_buf, aip->neqn);
+    *(uint32_t *)ep->ext_buf = htonl(aip->neqn);
 
     /* Take the data from the caller, and scale it, into vec */
     sp = vec = (double *)bu_malloc(byte_count, "arbn temp");

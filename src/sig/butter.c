@@ -48,16 +48,16 @@ butter(double w)
     /* relative frequency (1.0 = center freq) */
 {
     bn_complex_t	denom, num, h;
-    double		gamma, k1, k2, k3, k4;
+    double		gammaval, k1, k2, k3, k4;
 
-    /* 1/3 octave gamma */
-    gamma = pow( 2.0, 1.0/6.0 ) - pow( 2.0, -1.0/6.0 );
+    /* 1/3 octave gammaval */
+    gammaval = pow( 2.0, 1.0/6.0 ) - pow( 2.0, -1.0/6.0 );
 
     /* coefficients */
-    k1 = pow( gamma, 3.0 );
-    k2 = 2.0 * gamma;
-    k3 = 3.0 + 2.0 * pow( gamma, 2.0 );
-    k4 = gamma * (4.0 + pow( gamma, 2.0 ));
+    k1 = pow( gammaval, 3.0 );
+    k2 = 2.0 * gammaval;
+    k3 = 3.0 + 2.0 * pow( gammaval, 2.0 );
+    k4 = gammaval * (4.0 + pow( gammaval, 2.0 ));
 
     num.re = 0.0;
     num.im = -k1 * pow( w, 3.0 );

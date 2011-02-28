@@ -75,6 +75,9 @@ main(int argc, char *argv[])
     char temp[10];			/* Temporary char string. */
     char temp1[10];			/* Temporary char string. */
 
+    if (argc > 1)
+	bu_exit(1, "Usage: %s\n", argv[0]);
+
     /* Set up solid, region, & group names. */
     solcyl[0] = 's';
     solcyl[1] = '.';

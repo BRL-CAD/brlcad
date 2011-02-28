@@ -429,7 +429,7 @@ Convert_part_binary()
     lswap((unsigned int *)buf);
 
     /* now use our network to native host format conversion tools */
-    num_facets = bu_glong(buf);
+    num_facets = ntohl(*(uint32_t *)buf);
 
     bu_log("\t%d facets\n", num_facets);
     while (fread(buf, 48, 1, fd_in)) {

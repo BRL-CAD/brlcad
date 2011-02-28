@@ -31,11 +31,14 @@
 #include "raytrace.h"
 #include "db.h"
 
+#include "./librt_private.h"
+
 
 struct counter {
     size_t found;
     size_t fixed;
 };
+
 
 static int
 db_corrupt_handler(struct db_i *dbip, const char *name, off_t offset, size_t size, int UNUSED(type), genptr_t data)
@@ -82,7 +85,7 @@ db_corrupt_handler(struct db_i *dbip, const char *name, off_t offset, size_t siz
     for (j=0; j<nodecount; j++) {
 
 	/* try without flipping */
-	rt_mat_dbmat(diskmat, rp[j+1].M.m_mat, 0);
+	flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, 0);
 	if ((bn_mat_ck(name, diskmat) < 0)
 	    || fabs(diskmat[0]) > 1 || fabs(diskmat[1]) > 1 || fabs(diskmat[2]) > 1
 	    || fabs(diskmat[4]) > 1 || fabs(diskmat[5]) > 1 || fabs(diskmat[6]) > 1
@@ -92,7 +95,7 @@ db_corrupt_handler(struct db_i *dbip, const char *name, off_t offset, size_t siz
 	    cnt->found++;
 
 	    /* invalid, so try flipped */
-	    rt_mat_dbmat(diskmat, rp[j+1].M.m_mat, 1);
+	    flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, 1);
 	    if ((bn_mat_ck(name, diskmat) < 0)
 		|| fabs(diskmat[0]) > 1 || fabs(diskmat[1]) > 1 || fabs(diskmat[2]) > 1
 		|| fabs(diskmat[4]) > 1 || fabs(diskmat[5]) > 1 || fabs(diskmat[6]) > 1

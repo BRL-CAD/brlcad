@@ -190,27 +190,6 @@ remapid_fgetc(REMAPID_FILE *bfp)
 
 
 /*
- * Diagnostic routine to print out the contents of a struct remapid_file
- */
-HIDDEN void
-remapid_printfile(REMAPID_FILE *bfp)
-{
-    BU_CK_FILE(bfp);
-
-    bu_log("File     '%s'...\n", bfp->file_name);
-    bu_log("  ptr      %x\n", bfp->file_ptr);
-    bu_log("  buf      '%s'\n", bu_vls_addr(&(bfp->file_buf)));
-    bu_log("  bp       %d", bfp->file_bp - bu_vls_addr(&(bfp->file_buf)));
-    bu_log(": '%c' (%03o)\n", *(bfp->file_bp), *(bfp->file_bp));
-    bu_log("  needline %d\n", bfp->file_needline);
-    bu_log("  linenm   %d\n", bfp->file_linenm);
-    bu_log("  comment  '%c' (%d)\n",
-	   bfp->file_comment, bfp->file_comment);
-    bu_log("  buflen   %d\n", bfp->file_buflen);
-}
-
-
-/*
  * Print out a syntax error message about a REMAPID_FILE
  */
 void

@@ -2830,7 +2830,7 @@ public:
      * Generate a byte-array copy of this memory archive.  Allocates
      * memory using bu_malloc, so must be freed with bu_free
      */
-    genptr_t CreateCopy() const;
+    uint8_t* CreateCopy() const;
 
 protected:
     size_t Read(size_t, void*);
@@ -2903,13 +2903,13 @@ RT_MemoryArchive::Size() const
 }
 
 
-genptr_t
+uint8_t*
 RT_MemoryArchive::CreateCopy() const
 {
-    genptr_t memory = (genptr_t)bu_malloc(m_buffer.size()*sizeof(char), "rt_memoryarchive createcopy");
+    uint8_t *memory = (uint8_t *)bu_malloc(m_buffer.size()*sizeof(uint8_t), "rt_memoryarchive createcopy");
     const size_t size = m_buffer.size();
     for (size_t i = 0; i < size; i++) {
-	((char*)memory)[i] = m_buffer[i];
+	memory[i] = m_buffer[i];
     }
     return memory;
 }

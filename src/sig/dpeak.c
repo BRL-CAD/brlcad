@@ -31,6 +31,9 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu.h"
+#include "vmath.h"
+
 
 #define	BSIZE	2048		/* Must be AT LEAST 2*Points in spectrum */
 double	data[BSIZE];		/* Input buffer */
@@ -67,7 +70,7 @@ int main(int argc, char **argv)
 	last2 = last1 = 0;
 	numpeaks = 0;
 	for (i = 0; i < L; i++) {
-	    if (data[i] == last1)
+	    if (EQUAL(data[i], last1))
 		continue;
 	    if ((data[i] < last1) && (last2 < last1) && i > 5) {
 		/* PEAK */

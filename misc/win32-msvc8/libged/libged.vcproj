@@ -84,7 +84,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib opennurbs.lib librt.lib libwdb.lib libanalyze.lib libpng.lib ws2_32.lib"
+				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib opennurbs.lib librt.lib libwdb.lib libanalyze.lib libpng.lib ws2_32.lib libfb.lib"
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libged.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -506,6 +506,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\fb2pix.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\find.c"
 				>
 			</File>
@@ -779,6 +783,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\perspective.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\pix2fb.c"
 				>
 			</File>
 			<File

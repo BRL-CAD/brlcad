@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
     vect_t c0c = {4, 0, 0};
     vect_t c0d = {0, 0, 0};
     vect_t c0h = {0, 0, 0};
-    fastf_t x0, y0, z0, x1, y1, z1;
+    fastf_t x_0, y_0, z_0, x_1, y_1, z_1;
     fastf_t height;
     fastf_t width;
     fastf_t pwidth;
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
     fastf_t zstep;
     unsigned char matcolor[3] = {0, 0, 0};
 
-    int round = 0;
+    int post = 0;
 
     if (argc < 11) {
 	bu_exit(1, "Usage: picket_fence <filename> <prefix> <height_in_mm> <spacing> [-r] <x0> <y0> <z0> ... <xn> <yn> <zn>\n");
@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
     }
 
     if (BU_STR_EQUAL(argv[5], "-r")) {
-	round = 1;
+	post = 1;
 	argc--; argv++;
     }
 
@@ -132,31 +132,31 @@ int main(int argc, char *argv[])
     BU_LIST_INIT(&swm.l);
 
     for (j = 0; j < (argc / 3) - 1; j++) {
-	x0 = (fastf_t)atof(argv[0 + (3 * j)]);
-	y0 = (fastf_t)atof(argv[1 + (3 * j)]);
-	z0 = (fastf_t)atof(argv[2 + (3 * j)]);
-	x1 = (fastf_t)atof(argv[3 + (3 * j)]);
-	y1 = (fastf_t)atof(argv[4 + (3 * j)]);
-	z1 = (fastf_t)atof(argv[5 + (3 * j)]);
-	if (isnan(x0) || isnan(y0) || isnan(z0) || isnan(x1) || isnan(y1) || isnan(z1)) {
+	x_0 = (fastf_t)atof(argv[0 + (3 * j)]);
+	y_0 = (fastf_t)atof(argv[1 + (3 * j)]);
+	z_0 = (fastf_t)atof(argv[2 + (3 * j)]);
+	x_1 = (fastf_t)atof(argv[3 + (3 * j)]);
+	y_1 = (fastf_t)atof(argv[4 + (3 * j)]);
+	z_1 = (fastf_t)atof(argv[5 + (3 * j)]);
+	if (isnan(x_0) || isnan(y_0) || isnan(z_0) || isnan(x_1) || isnan(y_1) || isnan(z_1)) {
 	    bu_exit(1, "Invalid argument, position is not a valid coordiate\n");
 	}
 
-	width = sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0)));
+	width = sqrt(((x_1 - x_0) * (x_1 - x_0)) + ((y_1 - y_0) * (y_1 - y_0)));
 	pwidth = ((fastf_t)width /
 		  (fastf_t)(((int)(width / (51+ps))) * (51+ps))) * (51+ps);
 	numposts = (width / pwidth);
-	zstep = (z1 - z0) / numposts;
+	zstep = (z_1 - z_0) / numposts;
 	zlen = -.076001 * height;
 	s0[4] = s0[7] = s0[16] = s0[19] = pwidth - ps;
 	s0[14] = s0[17] = s0[20] = s0[23] = height;
 	c0[1] = (pwidth - ps) / 2.0;
 	w0[2] = w1[2] = .924 * height;
 	w1[1] = pwidth - ps;
-	s1[2] = s1[11] = z0 + (height / 3);
-	s1[5] = s1[8] = z1 + (height / 3);
-	s1[14] = s1[23] = z0 + ((height / 3) + 102);
-	s1[17] = s1[20] = z1 + ((height / 3) + 102);
+	s1[2] = s1[11] = z_0 + (height / 3);
+	s1[5] = s1[8] = z_1 + (height / 3);
+	s1[14] = s1[23] = z_0 + ((height / 3) + 102);
+	s1[17] = s1[20] = z_1 + ((height / 3) + 102);
 	s1[4] = s1[7] = s1[16] = s1[19] = width;
 	c0b[1] = (pwidth - ps) / 2.0;
 	c0d[1] = (pwidth - ps) / 2.0;
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 	mk_addmember(w1name, &wm.l, NULL, WMOP_SUBTRACT);
 	mk_addmember(w2name, &wm.l, NULL, WMOP_SUBTRACT);
 
-	if (round) {
+	if (post) {
 	    snprintf(name, sizeof(name), "%spost_c.s", prefix);
 	    mk_tgc(fp_db, name, c0, c0h, c0a, c0b, c0c, c0d);
 	    mk_addmember(name, &wm.l, NULL, WMOP_UNION);
@@ -226,33 +226,33 @@ int main(int argc, char *argv[])
 	mk_lcomb(fp_db, name, &swm, 0, "plastic", "", matcolor, 0);
 
 	nwm = mk_addmember(name, &fwm.l, NULL, WMOP_SUBTRACT);
-	xt = x1 - x0;
-	yt = y1 - y0;
+	xt = x_1 - x_0;
+	yt = y_1 - y_0;
 	xt /= sqrt((xt * xt) + (yt * yt));
 	yt /= sqrt((xt * xt) + (yt * yt));
 	nwm->wm_mat[0] = nwm->wm_mat[5] = cos(atan2(-xt, yt));
 	nwm->wm_mat[1] = -sin(atan2(-xt, yt));
-	nwm->wm_mat[3] = x0;
+	nwm->wm_mat[3] = x_0;
 	nwm->wm_mat[4] = -(nwm->wm_mat[1]);
 	nwm->wm_mat[5] = nwm->wm_mat[0];
-	nwm->wm_mat[7] = y0;
+	nwm->wm_mat[7] = y_0;
 	nwm->wm_mat[10] = 1;
-	nwm->wm_mat[11] = z0;
+	nwm->wm_mat[11] = z_0;
 	nwm->wm_mat[15] = 1;
 
 	nwm = mk_addmember(name, &fwm.l, NULL, WMOP_UNION);
-	xt = x1 - x0;
-	yt = y1 - y0;
+	xt = x_1 - x_0;
+	yt = y_1 - y_0;
 	xt /= sqrt((xt * xt) + (yt * yt));
 	yt /= sqrt((xt * xt) + (yt * yt));
 	nwm->wm_mat[0] = nwm->wm_mat[5] = cos(atan2(-xt, yt));
 	nwm->wm_mat[1] = -sin(atan2(-xt, yt));
-	nwm->wm_mat[3] = x0;
+	nwm->wm_mat[3] = x_0;
 	nwm->wm_mat[4] = -(nwm->wm_mat[1]);
 	nwm->wm_mat[5] = nwm->wm_mat[0];
-	nwm->wm_mat[7] = y0;
+	nwm->wm_mat[7] = y_0;
 	nwm->wm_mat[10] = 1;
-	nwm->wm_mat[11] = z0;
+	nwm->wm_mat[11] = z_0;
 	nwm->wm_mat[15] = 1;
 
 	if (j == 0) {

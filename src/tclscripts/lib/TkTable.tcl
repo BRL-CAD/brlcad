@@ -33,6 +33,7 @@
     itk_option define -tablePopupHandler tablePopupHandler TablePopupHandler ""
     itk_option define -validatecommand validatecommand ValidateCommand ""
     itk_option define -vclientdata vclientdata VClientData ""
+    itk_option define -entercommand entercommand EnterCommand ""
 
     public {
 	method handlePaste {}
@@ -57,6 +58,7 @@
 	method doBreak {}
 	method handleCopy {_win}
 	method handleCut {_win}
+	method handleEnter {_win}
 	method handleKey {_win _key}
 	method handleLeftRight {_win _sflag}
 	method handleTablePopup {_win _x _y _X _Y}
@@ -181,6 +183,7 @@
     bind $itk_component(table) <Control-p> "[::itcl::code $this handleUpDown %W 1]; break"
     bind $itk_component(table) <Control-v> "[::itcl::code $this handlePaste]; break"
     bind $itk_component(table) <Control-y> "[::itcl::code $this handlePaste]; break"
+    bind $itk_component(table) <Key-Return> "[::itcl::code $this handleEnter %W]; break"
 
     bind $itk_component(table) <Control-Key> "\# nothing; break"
     bind $itk_component(table) <Key-Insert> [::itcl::code $this setInsertMode 1]
@@ -347,6 +350,21 @@
     $_win delete active insert end
 }
 
+
+::itcl::body cadwidgets::TkTable::handleEnter {_win} {
+    if {$itk_option(-entercommand) != ""} {
+	set index [$_win index active]
+	set ilist [split $index ,]
+	set row [lindex $ilist 0]
+	set col [lindex $ilist 1]
+
+	$_win selection clear all
+	$_win activate $row,$col
+	$_win selection set $row,$col
+
+	catch {$itk_option(-entercommand) $row $col}
+    }
+}
 
 ::itcl::body cadwidgets::TkTable::handleKey {_win _key} {
     set index [$_win index active]

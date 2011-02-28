@@ -127,7 +127,7 @@ ars_rd_curve(union record *rp, int npts, int flip)
 	    vect_t vec;
 
 	    /* cvt from dbfloat_t */
-	    rt_fastf_float(vec, (&(rr->b.b_values[i*3])), 1, flip);
+	    flip_fastf_float(vec, (&(rr->b.b_values[i*3])), 1, flip);
 	    VMOVE(fp, vec);
 	    
 	    fp += ELEMENTS_PER_VECT;
@@ -330,9 +330,9 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ari->magic = RT_ARS_INTERNAL_MAGIC;
 
     cp = (unsigned char *)ep->ext_buf;
-    ari->ncurves = bu_glong(cp);
+    ari->ncurves = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
-    ari->pts_per_curve = bu_glong(cp);
+    ari->pts_per_curve = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
 
     /*
@@ -384,9 +384,9 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "ars external");
     cp = (unsigned char *)ep->ext_buf;
 
-    (void)bu_plong(cp, arip->ncurves);
+    *(uint32_t *)cp = htonl(arip->ncurves);
     cp += SIZEOF_NETWORK_LONG;
-    (void)bu_plong(cp, arip->pts_per_curve);
+    *(uint32_t *)cp = htonl(arip->pts_per_curve);
     cp += SIZEOF_NETWORK_LONG;
 
     for (cur=0; cur<arip->ncurves; cur++) {

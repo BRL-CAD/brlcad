@@ -575,10 +575,10 @@ main(int argc, char *argv[])
 
 	/* Go until no more clients */
 /* Aargh.  We really need a FD_ISZERO macro. */
-	for ( i = 0, done = 1; i < FD_SETSIZE; i++)
+	for ( i = 0, done = 1; i < (int)FD_SETSIZE; i++)
 	    if (FD_ISSET(i, &clients)) { done = 0; break; }
 	while ( !done ) {
-	    for ( i = 0, done = 1; i < FD_SETSIZE; i++)
+	    for ( i = 0, done = 1; i < (int)FD_SETSIZE; i++)
 		if (FD_ISSET(i, &clients)) { done = 0; break; }
 	    do_work(0);	/* no auto starting of servers */
 	}
@@ -671,7 +671,7 @@ do_work(int auto_start)
 	} else {
 /* Aargh.  We really need a FD_ISZERO macro. */
 	    int done, i;
-	    for ( i = 0, done = 1; i < FD_SETSIZE; i++)
+	    for ( i = 0, done = 1; i < (int)FD_SETSIZE; i++)
 		if (FD_ISSET(i, &clients)) { done = 0; break; }
 	    if (done) break;
 	}
@@ -738,7 +738,7 @@ check_input(int waittime)
     int	val;
 
     /* First, handle any packages waiting in internal buffers */
-    for ( i=0; i<MAXSERVERS; i++ )  {
+    for ( i=0; i<(int)MAXSERVERS; i++ )  {
 	pc = servers[i].sr_pc;
 	if ( pc == PKC_NULL )  continue;
 	if ( (val = pkg_process(pc)) < 0 )
@@ -771,7 +771,7 @@ check_input(int waittime)
     }
 
     /* Fourth, get any new traffic off the network into libpkg buffers */
-    for ( i=0; i<MAXSERVERS; i++ )  {
+    for ( i=0; i<(int)MAXSERVERS; i++ )  {
 	if ( !feof(stdin) && i == fileno(stdin) )  continue;
 	if ( !FD_ISSET(i, &ifdset) )  continue;
 	pc = servers[i].sr_pc;
@@ -786,7 +786,7 @@ check_input(int waittime)
     }
 
     /* Fifth, handle any new packages now waiting in internal buffers */
-    for ( i=0; i<MAXSERVERS; i++ )  {
+    for ( i=0; i<(int)MAXSERVERS; i++ )  {
 	pc = servers[i].sr_pc;
 	if ( pc == PKC_NULL )  continue;
 	if ( pkg_process(pc) < 0 )
@@ -892,7 +892,7 @@ drop_server(struct servers *sp, char *why)
 
     /* Clear the bits from "clients" now, to prevent further select()s */
     fd = pc->pkc_fd;
-    if ( fd <= 3 || fd >= MAXSERVERS )  {
+    if ( fd <= 3 || fd >= (int)MAXSERVERS )  {
 	bu_log("drop_server: fd=%d is unreasonable, forget it!\n", fd);
 	return;
     }
@@ -1220,7 +1220,7 @@ get_server_by_name(char *str)
     if ( isdigit( *str ) )  {
 	int	i;
 	i = atoi( str );
-	if ( i < 0 || i >= MAXSERVERS )  return SERVERS_NULL;
+	if ( i < 0 || i >= (int)MAXSERVERS )  return SERVERS_NULL;
 	return &servers[i];
     }
 
@@ -3705,7 +3705,7 @@ cd_wait(int UNUSED(argc), char **UNUSED(argv))
 /* Aargh.  We really need a FD_ISZERO macro. */
 	int done = 0, i;
 	while ( !done && FrameHead.fr_forw != &FrameHead )  {
-	    for (i = 0, done = 1; i < FD_SETSIZE; i++)
+	    for (i = 0, done = 1; i < (int)FD_SETSIZE; i++)
 		if (FD_ISSET(i, &clients)) { done = 0; break; }
 	    check_input( 30 );	/* delay up to 30 secs */
 

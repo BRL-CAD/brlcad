@@ -1183,9 +1183,9 @@ rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (mat == NULL) mat = bn_mat_identity;
 
     if (dbip->dbi_version < 0) {
-	rt_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
-	rt_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
-	rt_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
+	flip_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
+	flip_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
+	flip_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
     } else {
 	VMOVE(v1, &rp->s.s_values[0*3]);
 	VMOVE(v2, &rp->s.s_values[1*3]);

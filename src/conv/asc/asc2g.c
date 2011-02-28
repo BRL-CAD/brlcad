@@ -465,7 +465,7 @@ nmgbld(void)
     BU_INIT_EXTERNAL(&ext);
     ext.ext_nbytes = SIZEOF_NETWORK_LONG + 26*SIZEOF_NETWORK_LONG + 128 * granules;
     ext.ext_buf = bu_malloc(ext.ext_nbytes, "nmg ext_buf");
-    bu_plong(ext.ext_buf, version);
+    *(uint32_t *)ext.ext_buf = htonl(version);
     BU_ASSERT_LONG(version, ==, 1);	/* DISK_MODEL_VERSION */
 
     /* Get next line of input with the 26 counts on it */
@@ -476,8 +476,7 @@ nmgbld(void)
     cp = strtok(buf, " ");
     for (j=0; j<26; j++) {
 	struct_count[j] = atol(cp);
-	bu_plong(((unsigned char *)ext.ext_buf)+
-		 SIZEOF_NETWORK_LONG*(j+1), struct_count[j]);
+	*(uint32_t *)(ext.ext_buf + SIZEOF_NETWORK_LONG*(j+1)) = htonl(struct_count[j]);
 	cp = strtok((char *)NULL, " ");
     }
 

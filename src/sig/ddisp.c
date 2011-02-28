@@ -33,8 +33,6 @@
 
 #define	MAXPTS 4096
 
-double	buf[MAXPTS];
-
 int	Clear = 0;
 int	pause_time = 0;
 int	mode = 0;
@@ -51,8 +49,11 @@ void	disp_bars(double *buf, int size);
 static const char usage[] = "\
 Usage: ddisp [-v -b -p -c -h] [width (512)]\n";
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
+    double	buf[MAXPTS];
+
     int	n, L;
 
     while ( argc > 1 ) {

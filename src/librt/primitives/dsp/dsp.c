@@ -4328,7 +4328,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* get x, y counts */
     cp = (unsigned char *)ep->ext_buf;
 
-    dsp_ip->dsp_xcnt = (unsigned) bu_glong(cp);
+    dsp_ip->dsp_xcnt = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
     if (dsp_ip->dsp_xcnt < 2) {
 	bu_log("%s:%d DSP X dimension (%d) < 2 \n",
@@ -4337,7 +4337,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     }
 
 
-    dsp_ip->dsp_ycnt = (unsigned) bu_glong(cp);
+    dsp_ip->dsp_ycnt = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
     if (dsp_ip->dsp_ycnt < 2) {
 	bu_log("%s:%d DSP X dimension (%d) < 2 \n",
@@ -4351,7 +4351,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
 
     /* convert smooth flag */
-    dsp_ip->dsp_smooth = bu_gshort(cp);
+    dsp_ip->dsp_smooth = ntohs(*(uint16_t *)cp);
     cp += SIZEOF_NETWORK_SHORT;
 
     dsp_ip->dsp_datasrc = *cp;
@@ -4442,11 +4442,11 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
      * converted to Big-Endian IEEE
      */
 
-    bu_plong(cp, (unsigned long)dsp_ip->dsp_xcnt);
+    *(uint32_t *)cp = htonl((uint32_t)dsp_ip->dsp_xcnt);
     cp += SIZEOF_NETWORK_LONG;
     rem -= SIZEOF_NETWORK_LONG;
 
-    bu_plong(cp, (unsigned long)dsp_ip->dsp_ycnt);
+    *(uint32_t *)cp = htonl((uint32_t)dsp_ip->dsp_ycnt);
     cp += SIZEOF_NETWORK_LONG;
     rem -= SIZEOF_NETWORK_LONG;
 
@@ -4460,7 +4460,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     cp += SIZEOF_NETWORK_DOUBLE * 16;
     rem -= SIZEOF_NETWORK_DOUBLE * 16;
 
-    bu_pshort(cp, (int)dsp_ip->dsp_smooth);
+    *(uint16_t *)cp = htons((uint16_t)dsp_ip->dsp_smooth);
     cp += SIZEOF_NETWORK_SHORT;
     rem -= SIZEOF_NETWORK_SHORT;
 

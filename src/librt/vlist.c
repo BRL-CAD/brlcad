@@ -396,9 +396,13 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
     namelen = strlen(name)+1;
     nbytes = namelen + 4 + nelem * (1+3*8) + 2;
 
+    /* FIXME: this is pretty much an abuse of vls.  should be using
+     * vlb for variable-length byte buffers.
+     */
     bu_vls_setlen(vls, (int)nbytes);
     buf = (unsigned char *)bu_vls_addr(vls);
-    bp = bu_plong(buf, (uint32_t)nelem);
+    *(uint32_t *)buf = htonl((uint32_t)nelem);
+    bp = buf+sizeof(uint32_t);
     bu_strlcpy((char *)bp, name, namelen);
     bp += namelen;
 
@@ -443,7 +447,7 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
 
     BU_CK_VLS(namevls);
 
-    nelem = (size_t)bu_glong(buf);
+    nelem = ntohl(*(uint32_t *)buf);
     bp = buf+4;
 
     namelen = strlen((char *)bp)+1;

@@ -203,10 +203,10 @@ server_geom(struct pkg_conn *UNUSED(connection), char *buf)
      * it to the directory.
      */
     BU_INIT_EXTERNAL(&ext);
-    ext.ext_buf = buf;
+    ext.ext_buf = (uint8_t *)buf;
     ext.ext_nbytes = raw.object_length;
     flags = db_flags_raw_internal(&raw) | RT_DIR_INMEM;
-    wdb_export_external(DBIP->dbi_wdbp, &ext, raw.name.ext_buf, flags, raw.minor_type);
+    wdb_export_external(DBIP->dbi_wdbp, &ext, (const char *)raw.name.ext_buf, flags, raw.minor_type);
 
     bu_log("Received %s (MAJOR=%d, MINOR=%d)\n", raw.name.ext_buf, raw.major_type, raw.minor_type);
 }
@@ -356,7 +356,7 @@ send_to_server(struct db_i *dbip, struct directory *dp, genptr_t connection)
     bu_log("Sending %s\n", dp->d_namep);
 
     /* pad the data with the length in ascii for convenience */
-    bytes_sent = pkg_send(MSG_GEOM, ext.ext_buf, ext.ext_nbytes, stash->connection);
+    bytes_sent = pkg_send(MSG_GEOM, (const char *)ext.ext_buf, ext.ext_nbytes, stash->connection);
     if (bytes_sent < 0) {
 	pkg_close(stash->connection);
 	bu_log("Unable to successfully send %s to %s, port %d.\n", dp->d_namep, stash->server, stash->port);

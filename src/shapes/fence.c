@@ -335,7 +335,7 @@ int parseArguments(int argc, char **argv)
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters to height: need x, y, z values");
 		    bu_exit(1, NULL);
 		}
-		if ((double)MAGNITUDE(fenceHeight) == 0.0) {
+		if (ZERO((double)MAGNITUDE(fenceHeight))) {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence height may not be set to zero");
 		    bu_exit(1, NULL);
 		}
@@ -343,16 +343,16 @@ int parseArguments(int argc, char **argv)
 		meshHeight = (double) poleHeight;
 		break;
 	    case 'H' :
-		if ((d=(double)atof(bu_optarg))!=0.0) {
-		    fenceHeight[0]=0.0;
-		    fenceHeight[1]=0.0;
-		    fenceHeight[2]=d;
-		    poleHeight=(double)MAGNITUDE(fenceHeight);
-		    meshHeight=(double)poleHeight;
-		} else {
+		d=(double)atof(bu_optarg);
+		if (ZERO(d)) {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence height may not be set to zero");
 		    bu_exit(1, NULL);
 		}
+		fenceHeight[0]=0.0;
+		fenceHeight[1]=0.0;
+		fenceHeight[2]=d;
+		poleHeight=(double)MAGNITUDE(fenceHeight);
+		meshHeight=(double)poleHeight;
 		break;
 
 	    case 'l' :
@@ -360,73 +360,73 @@ int parseArguments(int argc, char **argv)
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters to width: need x, y, z values");
 		    bu_exit(1, NULL);
 		}
-		if ((double)MAGNITUDE(fenceWidth) == 0.0) {
+		if (ZERO((double)MAGNITUDE(fenceWidth))) {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence width may not be set to zero");
 		    bu_exit(1, NULL);
 		}
 		meshWidth = (double) MAGNITUDE(fenceWidth);
 		break;
 	    case 'L' :
-		if ((d=(double)atof(bu_optarg))!=0.0) {
-		    fenceWidth[0]=d;
-		    fenceWidth[1]=0.0;
-		    fenceWidth[2]=0.0;
-		    meshWidth=(double)MAGNITUDE(fenceWidth);
-		} else {
+		d=(double)atof(bu_optarg);
+		if (ZERO(d)) {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence width may not be set to zero");
 		    bu_exit(1, NULL);
 		}
+		fenceWidth[0]=d;
+		fenceWidth[1]=0.0;
+		fenceWidth[2]=0.0;
+		meshWidth=(double)MAGNITUDE(fenceWidth);
 		break;
 
 	    case 'r' :
-		if ((d=(double)atof(bu_optarg))!=0.0) {
-		    wireRadius=d;
-		} else {
+		d=(double)atof(bu_optarg);
+		if (ZERO(d)) {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Wire radius may not be set to zero");
 		    bu_exit(1, NULL);
 		}
+		wireRadius=d;
 		break;
 	    case 'R' :
-		if ((d=(double)atof(bu_optarg))!=0.0) {
-		    poleRadius=d;
-		} else {
+		d=(double)atof(bu_optarg);
+		if (ZERO(d)) {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Pole radius may not be set to zero");
 		    bu_exit(1, NULL);
 		}
+		poleRadius=d;
 		break;
 
 	    case 'a' :
-		if ((d=(double)atof(bu_optarg))!=0.0) {
-		    wireAngle=d;
-		} else {
+		d=(double)atof(bu_optarg);
+		if (ZERO(d)) {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Wire angle may not be set to zero");
 		    bu_exit(1, NULL);
 		}
+		wireAngle=d;
 		break;
 	    case 'A' :
-		if ((d=(double)atof(bu_optarg))!=0.0) {
-		    wireAngle=d;
-		} else {
+		d=(double)atof(bu_optarg);
+		if (ZERO(d)) {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Wire angle may not be set to zero");
 		    bu_exit(1, NULL);
 		}
+		wireAngle=d;
 		break;
 
 	    case 'j' :
-		if ((d=(double)atof(bu_optarg))!=0.0) {
-		    fencePoleSpacing=d;
-		} else {
+		d=(double)atof(bu_optarg);
+		if (ZERO(d)) {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Pole spacing may not be set to zero");
 		    bu_exit(1, NULL);
 		}
+		fencePoleSpacing=d;
 		break;
 	    case 'J' :
-		if ((d=(double)atof(bu_optarg))!=0.0) {
-		    fencePoleSpacing=d;
-		} else {
+		d=(double)atof(bu_optarg);
+		if (ZERO(d)) {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Pole spacing may not be set to zero");
 		    bu_exit(1, NULL);
 		}
+		fencePoleSpacing=d;
 		break;
 
 	    case 't' :
@@ -654,21 +654,21 @@ void printMatrix(FILE *fp, char *n, fastf_t *m)
 
 /*
  * getName() returns a name back based on a base string, a numerical
- * id and a parameter string for merging those two parameters.
- * Basically it adds the id number to the end of the base so that we
- * can set unique ids for our objects and groups.  (i.e. base="rcc",
- * id="5"==> returns "rcc005.s" or something like that)
+ * num suffix and a parameter string for merging those two parameters.
+ * Basically it adds the number to the end of the base so that we
+ * can set unique names for our objects and groups.  (i.e. base="rcc",
+ * num="5"==> returns "rcc005.s" or something similar)
  ***********************************/
-char *getName(const char *base, int id, const char *paramstring)
+char *getName(const char *base, int num, const char *paramstring)
 {
     static char name[DEFAULT_MAXNAMELENGTH];
 
     memset(name, 0, DEFAULT_MAXNAMELENGTH);
 
-    if (id>=0) snprintf(name, DEFAULT_MAXNAMELENGTH, paramstring, base, id);
+    if (num>=0) snprintf(name, DEFAULT_MAXNAMELENGTH, paramstring, base, num);
     else snprintf(name, DEFAULT_MAXNAMELENGTH, paramstring, base);
 
-    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "getName(): base[%s], id[%d]\n", base, id);
+    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "getName(): base[%s], num[%d]\n", base, num);
     if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Using name[%s]\n", name);
 
     return name;
@@ -1005,7 +1005,7 @@ int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fast
     if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh: width[%f], MAGNITUDE(incrementvector)[%f]\n", width, MAGNITUDE(incrementvector));
     if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh: incrementvector[%f][%f][%f]\n", incrementvector[0], incrementvector[1], incrementvector[2]);
 
-    if (MAGNITUDE(incrementvector)!=0) {
+    if (!ZERO(MAGNITUDE(incrementvector))) {
 	for (count2=0, step=0.0, dx=0, dy=0, dz=0; step <= width; step += (double) MAGNITUDE(incrementvector), count2++);
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Mesh will require [%d] basic mesh wire-pairs to reach width [%f]\n", count2, width);
 

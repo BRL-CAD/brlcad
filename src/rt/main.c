@@ -259,7 +259,7 @@ int main(int argc, const char **argv)
 	if (rt_verbosity & VERBOSE_INCREMENTAL)
 	    fprintf(stderr,
 		    "incremental resolution, nlevels = %lu, width=%lu\n",
-		    incr_nlevel, (unsigned long)width);
+		    (unsigned long)incr_nlevel, (unsigned long)width);
     }
 
     /*

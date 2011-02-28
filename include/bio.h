@@ -53,6 +53,9 @@
 
 #else
 #  include <unistd.h>
+#  ifdef HAVE_ARPA_INET_H
+#    include <arpa/inet.h> /* hton/ntoh family functions */
+#  endif
 #endif
 
 /* needed for testing O_TEMPORARY and O_BINARY */

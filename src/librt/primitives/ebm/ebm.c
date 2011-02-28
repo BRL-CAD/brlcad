@@ -684,7 +684,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     MAT_IDN(eip->mat);
 
     bu_vls_init(&str);
-    bu_vls_strcpy(&str, ep->ext_buf);
+    bu_vls_strcpy(&str, (const char *)ep->ext_buf);
     if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip) < 0) {
 	bu_vls_free(&str);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
@@ -791,7 +791,7 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     ep->ext_nbytes = bu_vls_strlen(&str) + 1;
     ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "ebm external");
 
-    bu_strlcpy(ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
+    bu_strlcpy((char *)ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
     bu_vls_free(&str);
 
     return 0;

@@ -144,6 +144,8 @@ int main(int argc, char **argv)
 	for ( i = 0; i < numop; i++ ) {
 	    arg = val[ i ];
 	    switch ( op[i] ) {
+		double d;
+
 		case ADD:
 		    bp = &buf[0];
 		    for ( j = n; j > 0; j-- ) {
@@ -159,7 +161,8 @@ int main(int argc, char **argv)
 		case POW:
 		    bp = &buf[0];
 		    for ( j = n; j > 0; j-- ) {
-			*bp++ = pow( *bp, arg );
+			d = pow( *bp, arg );
+			*bp++ = d;
 		    }
 		    break;
 		case ABS:

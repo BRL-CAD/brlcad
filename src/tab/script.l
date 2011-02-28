@@ -20,6 +20,7 @@
 /** @file script.l
  *
  */
+%option nounput
 %{
 /*                        S C R I P T . C
  * BRL-CAD

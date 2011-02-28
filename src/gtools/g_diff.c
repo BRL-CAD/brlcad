@@ -185,7 +185,7 @@ compare_external(struct directory *dp1, struct directory *dp2)
     }
 
     if (ext1.ext_nbytes != ext2.ext_nbytes) {
-	printf("Byte counts are different on %s (%ld != %ld)\n", dp1->d_namep, ext1.ext_nbytes, ext2.ext_nbytes);
+	printf("Byte counts are different on %s (%ld != %ld)\n", dp1->d_namep, (long int)ext1.ext_nbytes, (long int)ext2.ext_nbytes);
 	kill = 1;
     }
 
