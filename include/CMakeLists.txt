@@ -73,6 +73,7 @@ SET(brlcadinclude_wanted
 # public headers should NOT include these headers.
 SET(brlcadnoinst_HEADERS
 	brlcad_version.h 
+	bin.h
 	bio.h 
 	conf.h 
 	fbmsg.h 

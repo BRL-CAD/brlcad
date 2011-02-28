@@ -17,6 +17,12 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* de-net bio.h header, create binet.h header
+ 
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
 * implement new makesegs for tie
 
 * png support in rtwizard
@@ -36,10 +42,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   annotations can represent physical geometry (so they raytrace).
 
 * rt/rtedge command-line options for overriding object colors
-
-
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
 
 * rtwizard enhancement to allow color overrides to be specified for
   selected objects.

@@ -21,7 +21,7 @@ ENDIF(MSVC)
 BRLCAD_ADDEXEC(3dm-g 3dm/3dm-g.cpp "libwdb ${OPENNURBS_LIBRARY}")
 set_target_properties(3dm-g PROPERTIES COMPILE_DEFINITIONS "OBJ_BREP=1")
 
-BRLCAD_ADDEXEC(asc2g asc/asc2g.c "libged libwdb librt libbu") 
+BRLCAD_ADDEXEC(asc2g asc/asc2g.c "libged libwdb librt libbu ${WINSOCK_LIB}") 
 
 BRLCAD_ADDEXEC(asc2pix asc/asc2pix.c libbu) 
 
@@ -29,7 +29,7 @@ BRLCAD_ADDEXEC(pix2asc asc/pix2asc.c libbu)
 
 BRLCAD_ADDEXEC(asc-nmg nmg/asc-nmg.c libwdb) 
 
-BRLCAD_ADDEXEC(g2asc asc/g2asc.c "librt libbu")
+BRLCAD_ADDEXEC(g2asc asc/g2asc.c "librt libbu ${WINSOCK_LIB}")
 
 BRLCAD_ADDEXEC(bot-bldxf dxf/bot-bldxf.c "librt libbu")
 
@@ -88,9 +88,9 @@ BRLCAD_ADDEXEC(g-off off/g-off.c "librt libbu")
 
 BRLCAD_ADDEXEC(off-g off/off-g.c "libwdb librt libbu")
 
-BRLCAD_ADDEXEC(stl-g stl/stl-g.c "libwdb librt libbu")
+BRLCAD_ADDEXEC(stl-g stl/stl-g.c "libwdb librt libbu ${WINSOCK_LIB}")
 
-BRLCAD_ADDEXEC(g-stl stl/g-stl.c "librt libgcv libbu")
+BRLCAD_ADDEXEC(g-stl stl/g-stl.c "librt libgcv libbu ${WINSOCK_LIB}")
 
 add_executable(g4-g5 g4-g5.c)
 target_link_libraries(g4-g5 librt libbu)
@@ -128,7 +128,7 @@ BRLCAD_ADDEXEC(nmg-sgp nmg/nmg-sgp.c libwdb)
 
 BRLCAD_ADDEXEC(ply-g ply-g.c "librt libbu")
 
-BRLCAD_ADDEXEC(poly-bot poly-bot.c libwdb) 
+BRLCAD_ADDEXEC(poly-bot poly-bot.c "libwdb ${WINSOCK_LIB}") 
 
 BRLCAD_ADDEXEC(proe-g proe-g.c "libwdb librt libbu")
 

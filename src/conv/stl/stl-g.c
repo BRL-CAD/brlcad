@@ -30,11 +30,12 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include "bio.h"
+#include "bin.h"
 
 #include "vmath.h"
 #include "nmg.h"

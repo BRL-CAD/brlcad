@@ -24,8 +24,11 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
+/* system headers */
+#include "bin.h"
+
+/* common headers */
 #include "bn.h"
 #include "bu.h"
 #include "raytrace.h"

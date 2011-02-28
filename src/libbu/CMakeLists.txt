@@ -82,7 +82,7 @@ set(LIBBU_SOURCES
 )
 
 IF(MSVC)
-    SET(WIN32LIBS ws2_32.lib)
+	 SET(WIN32LIBS ${WINSOCK_LIB})
     add_definitions(
 	    -DBU_EXPORT_DLL
 	 )    

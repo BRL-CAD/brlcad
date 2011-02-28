@@ -6,7 +6,7 @@ include_directories(
 )
 
 IF(MSVC)
-	SET(WIN32LIBS ws2_32.lib Rpcrt4.lib)
+	SET(WIN32LIBS ${WINSOCK_LIB} Rpcrt4.lib)
 	add_definitions(
 		-DON_DLL_IMPORTS
 		)

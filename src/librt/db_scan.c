@@ -30,7 +30,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "bio.h"
+#include "bin.h"
 
 #include "vmath.h"
 #include "db.h"

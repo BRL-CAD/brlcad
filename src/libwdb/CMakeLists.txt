@@ -31,7 +31,6 @@ include_directories(
 )
 
 if(MSVC)
-	SET(WIN32LIBS ws2_32.lib Rpcrt4.lib)
    add_definitions(
        -DOBJ_BREP=1
        -DON_DLL_IMPORTS

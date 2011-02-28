@@ -18,6 +18,7 @@ IF(MSVC)
 	   -D_CRT_SECURE_NO_WARNINGS
 	   -DCMAKE_HEADERS
    )
+   SET(WINSOCK_LIB ws2_32.lib)
 ENDIF(MSVC)
 
 # We will always need the required directories,

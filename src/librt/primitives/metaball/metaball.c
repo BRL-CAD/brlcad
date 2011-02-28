@@ -51,7 +51,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "bio.h"
+#include "bin.h"
 
 #include "vmath.h"
 #include "db.h"
