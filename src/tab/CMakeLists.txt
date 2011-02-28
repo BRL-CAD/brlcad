@@ -8,6 +8,7 @@ IF(LEX_EXECUTABLE)
 	LEX_TARGET(SS_Scanner script.l
 		${CMAKE_CURRENT_BINARY_DIR}/script.c COMPILE_FLAGS "-l")
 	BRLCAD_ADDEXEC(scriptsort "scriptsort.c ${LEX_SS_Scanner_OUTPUTS}" librt)
+	SET_TARGET_PROPERTIES(scriptsort PROPERTIES COMPILE_FLAGS "-Wno-error")
 ENDIF(LEX_EXECUTABLE)
 
 BRLCAD_ADDEXEC(script-tab script-tab.c "librt libbn libbu")
