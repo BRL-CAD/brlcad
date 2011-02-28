@@ -639,7 +639,7 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 	    lseek(fd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
-	    bu_plong(tot_buffer, (unsigned long)total_faces);
+	    *(uint32_t *)tot_buffer = htonl((unsigned long)total_faces);
 	    lswap((unsigned int *)tot_buffer);
 	    ret = write(fd, tot_buffer, 4);
 	    if (ret < 0) {
@@ -1026,7 +1026,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	    lseek(fd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
-	    bu_plong(tot_buffer, (unsigned long)total_faces);
+	    *(uint32_t *)tot_buffer = htonl((unsigned long)total_faces);
 	    lswap((unsigned int *)tot_buffer);
 	    ret = write(fd, tot_buffer, 4);
 	    if (ret < 0) {
@@ -1554,7 +1554,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	    lseek(fd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
-	    bu_plong(tot_buffer, (unsigned long)total_faces);
+	    *(uint32_t *)tot_buffer = htonl((unsigned long)total_faces);
 	    lswap((unsigned int *)tot_buffer);
 	    ret = write(fd, tot_buffer, 4);
 	    if (ret < 0) {
