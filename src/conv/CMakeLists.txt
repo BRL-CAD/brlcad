@@ -27,6 +27,7 @@ add_executable(asc2g
 target_link_libraries(asc2g
     BrlcadCore
     tcl85
+    Ws2_32
 )
 
 add_executable(g2asc
@@ -35,6 +36,7 @@ add_executable(g2asc
 target_link_libraries(g2asc
     BrlcadCore
     tcl85
+    Ws2_32
 )
 
 add_executable(comgeom-g
@@ -111,6 +113,7 @@ add_executable(stl-g
 )
 target_link_libraries(stl-g
     BrlcadCore
+    Ws2_32
 )
 
 add_executable(g-stl
@@ -118,6 +121,7 @@ add_executable(g-stl
 )
 target_link_libraries(g-stl
     BrlcadCore
+    Ws2_32
 )
 
 add_executable(dbupgrade

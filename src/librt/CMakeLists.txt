@@ -250,3 +250,9 @@ add_definitions(
 )
 
 add_library(librt ${LIBRT_SOURCES})
+
+if(MSVC)
+    target_link_libraries(librt
+	Ws2_32
+    )
+endif(MSVC)
