@@ -111,7 +111,7 @@ main(int argc, char **argv)
 		continue;
 
 	    case DBID_SKETCH:
-		num_rec = bu_glong( (const unsigned char *)&record.skt.skt_count );
+		num_rec = ntohl(*(uint32_t *)&record.skt.skt_count);
 		others += num_rec + 1;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
@@ -124,7 +124,7 @@ main(int argc, char **argv)
 		}
 		break;
 	    case DBID_EXTR:
-		num_rec = bu_glong( (const unsigned char *)&record.extr.ex_count );
+		num_rec = ntohl(*(uint32_t *)&record.extr.ex_count);
 		others += num_rec + 1;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
@@ -137,7 +137,7 @@ main(int argc, char **argv)
 		}
 		break;
 	    case DBID_NMG:
-		num_rec = bu_glong( (const unsigned char *)&record.nmg.N_count );
+		num_rec = ntohl(*(uint32_t *)&record.nmg.N_count);
 		others += num_rec + 1;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 		}
 		break;
 	    case DBID_PIPE:
-		num_rec = bu_glong( (const unsigned char *)&record.pwr.pwr_count );
+		num_rec = ntohl(*(uint32_t *)&record.pwr.pwr_count);
 		others += num_rec + 1;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
@@ -163,7 +163,7 @@ main(int argc, char **argv)
 		}
 		break;
 	    case DBID_ARBN:
-		num_rec = bu_glong( (const unsigned char *)&record.n.n_grans );
+		num_rec = ntohl(*(uint32_t *)&record.n.n_grans);
 		others += num_rec + 1;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
@@ -205,7 +205,7 @@ main(int argc, char **argv)
 		bots++;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
-		num_rec = bu_glong( (const unsigned char *)&record.bot.bot_nrec );
+		num_rec = ntohl(*(uint32_t *)&record.bot.bot_nrec);
 		for ( i=0; i<num_rec; i++ )
 		{
 		    if ( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
