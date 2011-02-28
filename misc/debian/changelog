@@ -1,9 +1,8 @@
 brlcad (7.18.4-0) unstable; urgency=low
 
-  * add magic mime-type association for geometry db file
-  * updated debian changelog
+  * add magic mime-type association for geometry db file v.4 and v.5
 
- -- Jordi Sayol <g.sayol@yahoo.es>  Thu, 10 Feb 2011 07:26:55 +0100
+ -- Jordi Sayol <g.sayol@yahoo.es>  Mon, 28 Feb 2011 17:59:18 +0100
 
 brlcad (7.18.2-0) unstable; urgency=low
 
