@@ -113,7 +113,7 @@ IF(NOT WIN32)
 ENDIF(NOT WIN32)
 
 IF(NOT WIN32)
-	BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm libtermio ${pointstarget}" STRICT)
+	BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm libtermio ${pointstarget}")
 ELSE(NOT WIN32)
 	BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm ws2_32.lib opengl32.lib")
 ENDIF(NOT WIN32)

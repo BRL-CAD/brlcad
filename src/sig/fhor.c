@@ -53,9 +53,9 @@ static	int	upper[HSCREEN], lower[HSCREEN];
 FBIO	*fbp;	/* XXX - debug */
 
 void	Efill(void);
-void	Horizon(int x1, int y1, int x2, int y2);
-void	Intersect(int x1, int y1, int x2, int y2, int *hor, int *xi, int *yi);
-void	Draw(int x1, int y1, int x2, int y2);
+void	Horizon(int sx1, int sy1, int sx2, int sy2);
+void	Intersect(int sx1, int sy1, int x2, int y2, int *hor, int *xi, int *yi);
+void	Draw(int sx1, int sy1, int x2, int y2);
 int	fhvis(int x, int y);
 int	sign(int i);
 

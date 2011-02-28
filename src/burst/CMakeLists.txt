@@ -24,7 +24,7 @@ if(HAVE_TERMLIB)
 		ui.c
 		)
 
-	BRLCAD_ADDEXEC(burst "${burst_SOURCES}" "librt libfb libtermio ${TERMLIB_LIBRARY}" STRICT)
+	BRLCAD_ADDEXEC(burst "${burst_SOURCES}" "librt libfb libtermio ${TERMLIB_LIBRARY}")
 
 	SET(burst_noinst_HEADERS
 		ascii.h 

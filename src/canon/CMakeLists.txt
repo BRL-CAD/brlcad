@@ -3,6 +3,6 @@ include_directories(
   ${TCL_INCLUDE_DIRS}
 )
 
-BRLCAD_ADDEXEC(canonize "canonize.c canonlib.c" libfb STRICT)
+BRLCAD_ADDEXEC(canonize "canonize.c canonlib.c" libfb)
 ADD_MAN_PAGE(1 canonize.1)
 CMAKEFILES(canon.h chore.h)

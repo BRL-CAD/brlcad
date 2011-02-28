@@ -114,7 +114,7 @@ extern int srv_scanlen;		/* BUFMODE_RTSRV buffer length */
 void free_scanlines(int, struct scanline *);
 struct scanline* alloc_scanlines(int);
 extern fastf_t** timeTable_init(int x, int y);
-extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *fbp);
+extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *efbp);
 
 static int buf_mode=0;
 #define BUFMODE_UNBUF     1	/* No output buffering */

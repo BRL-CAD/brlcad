@@ -1441,7 +1441,7 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
 
 	ray = (*env)->GetObjectArrayElement(env, aRays, rayIndex);
 	if ( (*env)->ExceptionOccurred(env) ) {
-	    fprintf( stderr, "Exception thrown while getting ray #%d from array\n", rayIndex );
+	    fprintf( stderr, "Exception thrown while getting ray #%d from array\n", (int)rayIndex );
 	    (*env)->ExceptionDescribe(env);
 	    return (jobject)NULL;
 	}
