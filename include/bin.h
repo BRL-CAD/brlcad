@@ -43,6 +43,7 @@
 #    define <winsock2.h> /* link against ws2_32 library */
 #  endif
 #else
+#  include <sys/types.h>
 #  include <netinet/in.h> /* sockaddr */
 #  include <netinet/tcp.h> /* for TCP_NODELAY sockopt */
 #  include <arpa/inet.h> /* hton/ntoh, inet_addr functions */
