@@ -40,7 +40,7 @@
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  ifndef _WINSOCKAPI_
-#    define <winsock2.h> /* link against ws2_32 library */
+#    include <winsock2.h> /* link against ws2_32 library */
 #  endif
 #else
 #  include <sys/types.h>
