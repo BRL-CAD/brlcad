@@ -890,16 +890,6 @@ IF(BRLCAD-ENABLE_X11)
    BRLCAD_INCLUDE_FILE(X11/Xlib.h HAVE_X11_XLIB_H)
 ENDIF(BRLCAD-ENABLE_X11)
 
-#Only on WIN32 will the combination of the build search tests and
-#libtermlib fail to find a valid term, so set variables accordingly
-IF(NOT WIN32)
-	SET(HAVE_TERMLIB 1 CACHE BOOL "Have some termlib" FORCE)
-ELSE(NOT WIN32)
-	SET(BRLCAD_BUILD_LOCAL_TERMLIB_FORCE_OFF ON CACHE BOOL "Disable libtermlib	build." FORCE)
-	SET(HAVE_TERMLIB 0 CACHE BOOL "Have some termlib" FORCE)
-ENDIF(NOT WIN32)
-MARK_AS_ADVANCED(HAVE_TERMLIB)
-
 # on SunOS with Sun Studio we need sunmath
 CHECK_LIBRARY_EXISTS(sunmath ieee_flags "" HAVE_SUNMATH_LIBRARY)
 IF(HAVE_SUNMATH_LIBRARY)

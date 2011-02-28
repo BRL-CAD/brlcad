@@ -76,6 +76,16 @@ SET(libz_ignore_files
 DISTCHECK_IGNORE(libz libz_ignore_files)
 
 # libtermlib Library
+#Only on WIN32 will the combination of the build search tests and
+#libtermlib fail to find a valid term, so set variables accordingly
+IF(NOT WIN32)
+       SET(HAVE_TERMLIB 1 CACHE BOOL "Have some termlib" FORCE)
+ELSE(NOT WIN32)
+       SET(BRLCAD_BUILD_LOCAL_TERMLIB_FORCE_OFF ON CACHE BOOL "Disable libtermlib      build." FORCE)
+       SET(HAVE_TERMLIB 0 CACHE BOOL "Have some termlib" FORCE)
+ENDIF(NOT WIN32)
+MARK_AS_ADVANCED(HAVE_TERMLIB)
+
 IF(HAVE_TERMLIB)
    THIRD_PARTY_OPTION(TERMLIB termlib)
    THIRD_PARTY_SUBDIR(TERMLIB libtermlib)
