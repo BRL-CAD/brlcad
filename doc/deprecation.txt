@@ -338,6 +338,9 @@ Included in following are various minimally impacting API changes that
 have been identified in reverse chronological order.  As expressions
 are not extensively tested, use with caution.
 
+s/V2APPROXEQUAL(/V2NEAR_EQUAL(/g
+        V2APPROXEQUAL() renamed to V2NEAR_EQUAL() [7.18]
+
 s/SMALL\([^_]\)/SMALL_FAST\1/g
         SMALL renamed to SMALL_FASTF [7.18]
 
