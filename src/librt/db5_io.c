@@ -179,7 +179,7 @@ db5_decode_signed(size_t *lenp, const unsigned char *cp, int format)
  * D B 5 _ E N C O D E _ L E N G T H
  *
  * Given a value and a variable-width format spec, store it in network
- * order (XDR).
+ * order.
  *
  * Returns -
  * pointer to next available byte.
@@ -193,16 +193,19 @@ db5_encode_length(
     switch (format) {
 	case DB5HDR_WIDTHCODE_8BIT:
 	    *cp = (unsigned char)val & 0xFF;
-	    return cp+1;
+	    return cp + sizeof(unsigned char);
 	case DB5HDR_WIDTHCODE_16BIT:
-	    return bu_pshort(cp, (short)val);
+	    *(uint16_t *)&cp[0] = htons((uint16_t)val);
+	    return cp + sizeof(uint16_t);
 	case DB5HDR_WIDTHCODE_32BIT:
-	    return bu_plong(cp, (uint32_t)val);
+	    *(uint32_t *)&cp[0] = htonl((uint32_t)val);
+	    return cp + sizeof(uint32_t);
 	case DB5HDR_WIDTHCODE_64BIT:
-	    return bu_plonglong(cp, (uint64_t)val);
+	    *(uint64_t *)&cp[0] = htonll((uint64_t)val);
+	    return cp + sizeof(uint64_t);
     }
     bu_bomb("db5_encode_length(): unknown width code\n");
-    return 0;
+    return NULL;
 }
 
 

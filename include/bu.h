@@ -651,6 +651,17 @@ typedef enum {
 BU_EXPORT BU_EXTERN(bu_endian_t bu_byteorder, (void));
 
 
+/* provide for 64-bit network/host conversions using ntohl() */
+#ifndef HAVE_NTOHLL
+#  define ntohll(_val) ((bu_byteorder() == BU_LITTLE_ENDIAN) ?				\
+			((((uint64_t)ntohl((_val))) << 32) + ntohl((_val) >> 32)) : \
+			(_val)) /* sorry pdp-endian */
+#endif
+#ifndef HAVE_HTONLL
+#  define htonll(_val) ntohll(_val)
+#endif
+
+
 /**@}*/
 
 /*----------------------------------------------------------------------*/
@@ -5270,27 +5281,27 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 /**
  * DEPRECATED: use ntohs()
  */
-BU_EXPORT BU_EXTERN(uint16_t bu_gshort, (const unsigned char *msgp));
+DEPRECATED BU_EXPORT BU_EXTERN(uint16_t bu_gshort, (const unsigned char *msgp));
 
 /**
  * DEPRECATED: use ntohl()
  */
-BU_EXPORT BU_EXTERN(uint32_t bu_glong, (const unsigned char *msgp));
+DEPRECATED BU_EXPORT BU_EXTERN(uint32_t bu_glong, (const unsigned char *msgp));
 
 /**
  * DEPRECATED: use htons()
  */
-BU_EXPORT BU_EXTERN(unsigned char *bu_pshort, (unsigned char *msgp, uint16_t s));
+DEPRECATED BU_EXPORT BU_EXTERN(unsigned char *bu_pshort, (unsigned char *msgp, uint16_t s));
 
 /**
  * DEPRECATED: use htonl()
  */
-BU_EXPORT BU_EXTERN(unsigned char *bu_plong, (unsigned char *msgp, uint32_t l));
+DEPRECATED BU_EXPORT BU_EXTERN(unsigned char *bu_plong, (unsigned char *msgp, uint32_t l));
 
 /**
  * DEPRECATED: use htonll()
  */
-BU_EXPORT BU_EXTERN(unsigned char *bu_plonglong, (unsigned char *msgp, uint64_t l));
+DEPRECATED BU_EXPORT BU_EXTERN(unsigned char *bu_plonglong, (unsigned char *msgp, uint64_t l));
 
 /** @} */
 
