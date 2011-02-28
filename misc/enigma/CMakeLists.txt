@@ -8,11 +8,17 @@ add_definitions(
   -DHAVE_CONFIG_H
   -DBRLCADBUILD
 )
+
 IF(CRYPT_LIBRARY)
-	BRLCAD_ADDEXEC(enigma enigma.c "${BSD_LIBRARY} ${CRYPT_LIBRARY}")
+	add_executable(enigma enigma.c)
+	target_link_libraries(enigma ${BSD_LIBRARY} ${CRYPT_LIBRARY})
 ELSE(CRYPT_LIBRARY)
-	BRLCAD_ADDEXEC(enigma "enigma.c crypt.c" "${BSD_LIBRARY}")
+	add_executable(enigma enigma.c crypt.c)
+	target_link_libraries(enigma ${BSD_LIBRARY})
 ENDIF(CRYPT_LIBRARY)
+install(TARGETS enigma DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+set_target_properties(enigma PROPERTIES COMPILE_FLAGS "-w")
+
 ADD_MAN_PAGE(1 enigma.1)
 SET(enigma_ignore_files
 	AUTHORS
