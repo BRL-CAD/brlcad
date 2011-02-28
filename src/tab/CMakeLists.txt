@@ -13,7 +13,6 @@ ENDIF(LEX_EXECUTABLE)
 BRLCAD_ADDEXEC(script-tab script-tab.c "librt libbn libbu")
 BRLCAD_ADDEXEC(tabinterp tabinterp.c "librt libbu")
 BRLCAD_ADDEXEC(tabsub tabsub.c "libbn libbu")
-BRLCAD_ADDEXEC(txyz-pl txyz-pl.c "libbn libbu") 
 
 SET(tab_MANS
   tabinterp.1
