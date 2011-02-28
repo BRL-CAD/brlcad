@@ -131,8 +131,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	/* Obtain next inhit normals & hit point, for code below */
 	RT_HIT_NORMAL( inormal2, np->pt_inhit, np->pt_inseg->seg_stp, &(ap->a_ray), np->pt_inflip );
 
-	if ( rt_fdiff( pp->pt_outhit->hit_dist,
-		       np->pt_inhit->hit_dist) >= 0 )  {
+	if (NEAR_EQUAL(pp->pt_outhit->hit_dist, np->pt_inhit->hit_dist, 0.001)) {
 	    /*
 	     *  The two partitions touch (or overlap!).
 	     *  If both are air, or both are solid, then don't
