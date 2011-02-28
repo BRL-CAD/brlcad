@@ -21,6 +21,7 @@ SET(lib_TCLSCRIPTS
 	TkTable.tcl
 	View.tcl 
 	ViewAxesControl.tcl
+	cursor.tcl
 )
 BRLCAD_ADDDATA(lib_TCLSCRIPTS tclscripts/lib)
 pkgIndex_BUILD(lib tclscripts/lib)

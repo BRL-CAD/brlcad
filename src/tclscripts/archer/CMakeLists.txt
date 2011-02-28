@@ -34,7 +34,6 @@ SET(archer_TCLSCRIPTS
 	Utility.tcl 
 	Wizard.tcl
 	bgerror.tcl 
-	cursor.tcl 
 	itk_redefines.tcl
 	tabwindow.itk 
 )
