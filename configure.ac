@@ -1525,10 +1525,10 @@ BC_CONFIGURE_STAGE([headers], [4 of 9])
 
 # make our minimum compliance goal explicit (needs to be tested here
 # so header files and types are tested properly)
-BC_COMPILER_AND_LINKER_RECOGNIZES([-std=c99], [cstd], [no])
+BC_COMPILER_AND_LINKER_RECOGNIZES([-std=gnu99], [cstd], [no])
 STD_C99_FLAGS=""
 if test "x$bc_cstd_works" = "xyes" ; then
-   STD_C99_FLAGS="-std=c99"
+   STD_C99_FLAGS="-std=gnu99"
 fi
 AC_SUBST(STD_C99_FLAGS)
 
