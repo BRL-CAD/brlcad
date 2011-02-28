@@ -23,21 +23,19 @@
 
 #include "common.h"
 
-#ifdef _WIN32
-#  include <winsock2.h>
-#endif
+#include <stdlib.h>
+#include <string.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* for struct timeval */
 #endif
-
-#include <stdlib.h>
-#include <string.h>
-#include "bio.h"
 
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"
 #endif
+
+#include "bio.h"
+#include "bin.h"
 
 #include "bu.h"
 #include "vmath.h"
