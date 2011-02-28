@@ -325,7 +325,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define NEAR_EQUAL(_a, _b, _tol) NEAR_ZERO((_a) - (_b), (_tol))
 
 /**
- * Return truthfully whether two vectors are approximately equal,
+ * Return truthfully whether two 3D vectors are approximately equal,
  * within a specified absolute tolerance.
  */
 #define VNEAR_EQUAL(_a, _b, _tol) \
@@ -334,16 +334,22 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	 && NEAR_ZERO((_a)[Z]-(_b)[Z], (_tol)))
 
 /**
- * @brief Compare two vectors for approximate equality, within the
- * specified absolute tolerance.
- * Version for degree 2 vectors.
+ * Return truthfully whether two 2D vectors are approximately equal,
+ * within a specified absolute tolerance.
  */
-#define V2APPROXEQUAL(a, b, tol)	(\
+#define V2NEAR_EQUAL(a, b, tol)	(\
 	NEAR_ZERO((a)[X]-(b)[X], tol) && \
 	NEAR_ZERO((a)[Y]-(b)[Y], tol))
 
-/* FIXME: need HNEAR_EQUAL */
-
+/**
+ * Return truthfully whether two 4D vectors are approximately equal,
+ * within a specified absolute tolerance.
+ */
+#define HNEAR_EQUAL(_a, _b, _tol) \
+	(NEAR_ZERO((_a)[X]-(_b)[X], (_tol)) \
+	 && NEAR_ZERO((_a)[Y]-(_b)[Y], (_tol)) \
+	 && NEAR_ZERO((_a)[Z]-(_b)[Z], (_tol)) \
+	 && NEAR_ZERO((_a)[W]-(_b)[W], (_tol)))
 
 /**
  * Return truthfully whether two values are within a minimum

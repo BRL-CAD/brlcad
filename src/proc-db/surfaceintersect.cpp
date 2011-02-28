@@ -211,7 +211,7 @@ int Curve_Compare_start(
     ON_3dVector A = ON_2dVector((*a)->PointAtStart().x, (*a)->PointAtStart().y);
     ON_3dVector B = ON_2dVector((*b)->PointAtStart().x, (*b)->PointAtStart().y);
 
-    if (V2APPROXEQUAL(A, B, 1e-9)) {
+    if (V2NEAR_EQUAL(A, B, 1e-9)) {
 	return 0;
     } else if (A.x < B.x) {
 	return -1;
@@ -240,7 +240,7 @@ int Curve_Compare_end(
 {
     ON_3dVector A = ON_2dVector((*a)->PointAtEnd().x, (*a)->PointAtEnd().y);
     ON_3dVector B = ON_2dVector((*b)->PointAtEnd().x, (*b)->PointAtEnd().y);
-    if (V2APPROXEQUAL(A, B, 1e-9)) {
+    if (V2NEAR_EQUAL(A, B, 1e-9)) {
 	return 0;
     } else if (A.x < B.x) {
 	return -1;
@@ -549,7 +549,7 @@ int MakeLoops(
 
 	loop.Append(*new_trims.First());
 	new_trims.Remove(0);
-	while (!V2APPROXEQUAL((*loop.First())->PointAtStart(), (*loop.Last())->PointAtEnd(), tol)) {
+	while (!V2NEAR_EQUAL((*loop.First())->PointAtStart(), (*loop.Last())->PointAtEnd(), tol)) {
 
 	    /* bit hacky, makes a curve we can use to search for the
 	     * arrays for matching trims
@@ -614,10 +614,10 @@ bool IsClosed(
 {
     if (l.Count() < 3) {
 	return false;
-    } else if (V2APPROXEQUAL(l[0], l[l.Count() - 1], tol)) {
+    } else if (V2NEAR_EQUAL(l[0], l[l.Count() - 1], tol)) {
 	int i;
 	for (i = 1; i < l.Count() - 1; i++) {
-	    if (!V2APPROXEQUAL(l[0], l[i], tol) && !V2APPROXEQUAL(l[l.Count() - 1], l[i], tol)) {
+	    if (!V2NEAR_EQUAL(l[0], l[i], tol) && !V2NEAR_EQUAL(l[l.Count() - 1], l[i], tol)) {
 		return true;
 	    }
 	}
