@@ -69,6 +69,7 @@ set(LIBGED_SOURCES
     eye.c
     eye_pos.c
     facetize.c
+    fb2pix.c
     find.c
     form.c
     fracture.c
@@ -139,6 +140,7 @@ set(LIBGED_SOURCES
     pathlist.c
     pathsum.c
     perspective.c
+    pix2fb.c
     plot.c
     pmat.c
     pmodel2view.c
