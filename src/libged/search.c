@@ -102,13 +102,16 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 {
     void *dbplan;
     int i;
-    int plan_argv, plan_found;
+    int plan_argv = 1;
+    int plan_found = 0;
+    int build_uniq_list = 0;
     struct directory *dp;
     struct db_full_path dfp;
     struct db_full_path_list *entry;
     struct db_full_path_list *new_entry;
     struct db_full_path_list *path_list;
     struct db_full_path_list *search_results;
+    struct bu_ptbl uniq_db_objs;
     /* COPY argv_orig to argv; */
     char **argv = bu_dup_argv(argc, argv_orig);
 
@@ -125,8 +128,12 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	/* initialize result */
 	bu_vls_trunc(&gedp->ged_result_str, 0);
 
-	plan_argv = 1;
-	plan_found = 0;
+	/* Check if we're doing a unique object list */
+	if ((BU_STR_EQUAL(argv[plan_argv], "."))) {
+		build_uniq_list = 1;
+		plan_argv++;
+	}
+
 	while (!plan_found) {
 		if (!((argv[plan_argv][0] == '-') || (argv[plan_argv][0] == '!')  || (argv[plan_argv][0] == '(')) && (!BU_STR_EQUAL(argv[plan_argv], "/")) && (!BU_STR_EQUAL(argv[plan_argv], "."))) {
 			/* We seem to have a path - make sure it's valid */
@@ -185,16 +192,32 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	    }
 	}
 
-	/* Assign results to string */
-	while (BU_LIST_WHILE(entry, db_full_path_list, &(search_results->l))) {
-		 bu_vls_printf(&gedp->ged_result_str, "%s\n", db_path_to_string(entry->path));
-		 BU_LIST_DEQUEUE(&(entry->l));
-		 db_free_full_path(entry->path);
-		 bu_free(entry, "free db_full_path_list entry");
+	/* Assign results to string - if we're doing a list, process the results for unique objects - otherwise
+	 * just assemble the full path list and return it */
+	if (build_uniq_list) {
+		bu_ptbl_init(&uniq_db_objs, 8, "initialize ptr table");
+		while (BU_LIST_WHILE(entry, db_full_path_list, &(search_results->l))) {
+			bu_ptbl_ins_unique(&uniq_db_objs, (long *)entry->path->fp_names[entry->path->fp_len - 1]);
+			BU_LIST_DEQUEUE(&(entry->l));
+			db_free_full_path(entry->path);
+			bu_free(entry, "free db_full_path_list entry");
+		}
+		for (i=0; i < (int)BU_PTBL_LEN(&uniq_db_objs); i++) {
+			dp = (struct directory *)BU_PTBL_GET(&uniq_db_objs, i);
+			bu_vls_printf(&gedp->ged_result_str, "%s\n", dp->d_namep);
+		}
+		bu_ptbl_free(&uniq_db_objs);
+	} else {
+		while (BU_LIST_WHILE(entry, db_full_path_list, &(search_results->l))) {
+			bu_vls_printf(&gedp->ged_result_str, "%s\n", db_path_to_string(entry->path));
+			BU_LIST_DEQUEUE(&(entry->l));
+			db_free_full_path(entry->path);
+			bu_free(entry, "free db_full_path_list entry");
+		}
+		db_free_full_path(&dfp);
+		bu_free_argv(argc, argv);	
+		bu_free(search_results, "free search_results");
 	}
-	db_free_full_path(&dfp);
-	bu_free_argv(argc, argv);	
-	bu_free(search_results, "free search_results");
     }
     return TCL_OK;
 }
