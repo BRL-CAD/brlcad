@@ -47,6 +47,20 @@
 
 #include "../tab/tokens.h"
 
+/* quell flex stupidities */
+#ifndef YY_STACK_USED
+#  define YY_STACK_USED 0
+#endif
+#ifndef YY_ALWAYS_INTERACTIVE
+#  define YY_ALWAYS_INTERACTIVE 0
+#endif
+#ifndef YY_NEVER_INTERACTIVE
+#  define YY_NEVER_INTERACTIVE 0
+#endif
+#ifndef YY_MAIN
+#  define YY_MAIN 0
+#endif
+
 %}
 
 D	[0-9]

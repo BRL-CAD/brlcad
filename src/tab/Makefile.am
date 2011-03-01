@@ -16,6 +16,7 @@ bin_PROGRAMS = \
 	tabsub
 
 AM_CPPFLAGS = \
+	${STRICT_FLAGS} \
 	${TCL_CPPFLAGS}
 
 LDADD = ${RT}

@@ -1,5 +1,7 @@
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = \
+	${STRICT_FLASGS} \
+	${TCL_CPPFLAGS}
 
 noinst_PROGRAMS = beset
 

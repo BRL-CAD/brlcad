@@ -30,7 +30,9 @@ bin_PROGRAMS = \
 
 noinst_PROGRAMS = pixtest
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = \
+	${STRICT_FLAGS} \
+	${TCL_CPPFLAGS}
 
 dist_bin_SCRIPTS = ssampview.tcl
 

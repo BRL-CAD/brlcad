@@ -65,7 +65,7 @@ struct sgttyb tty;
 struct termio tty;
 #  endif
 
-#endif /* _POSIX_SOURCE */
+#endif /* HAVE_TERMIOS_H */
 
 #include "bu.h"
 

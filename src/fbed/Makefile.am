@@ -24,8 +24,9 @@ noinst_HEADERS = \
 	std.h \
 	try.h
 
-fbed_CFLAGS = \
+fbed_CPPFLAGS = \
 	${TERMLIB_CPPFLAGS} \
+	${STRICT_FLAGS} \
 	${TCL_CPPFLAGS}
 
 fbed_LDADD = \
