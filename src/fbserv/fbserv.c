@@ -369,7 +369,7 @@ main(int argc, char **argv)
     }
 
     while (1) {
-	int stat;
+	int fbstat;
 	struct pkg_conn	*pcp;
 
 	pcp = pkg_getclient( netfd, fb_server_pkg_switch, comm_error, 0 );
@@ -395,7 +395,7 @@ main(int argc, char **argv)
 	    /* Parent: lingering server daemon */
 	    pkg_close(pcp);	/* Daemon is not the server */
 	    /* Collect status from 1st level child */
-	    (void)wait( &stat );
+	    (void)wait( &fbstat );
 	}
     }
 #endif  /* _WIN32 */
