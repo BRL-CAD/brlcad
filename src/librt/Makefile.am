@@ -239,6 +239,7 @@ librt_nil_la_SOURCES = \
 	primitives/vol/vol_mirror.c \
 	regionfix.c \
 	roots.c \
+	search.c \
 	shoot.c \
 	spectrum.c \
 	tcl.c \
@@ -309,7 +310,6 @@ EXTRA_DIST = \
 	primitives/bot/g_bot_include.c \
 	primitives/bot/tie.c \
 	primitives/bot/tie_kdtree.c \
-	search.c \
 	search.h \
 	timer-nt.c \
 	timer52brl.c \
