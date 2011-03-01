@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="g2stl"
 	ProjectGUID="{B8A3EACB-468E-4F28-BF95-77DD565DD3DC}"
+	RootNamespace="g2stl"
 	>
 	<Platforms>
 		<Platform
@@ -78,7 +79,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib libgcv.lib"
+				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib libgcv.lib ws2_32.lib"
 				OutputFile="$(PlatformName)\$(ConfigurationName)/g-stl.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
