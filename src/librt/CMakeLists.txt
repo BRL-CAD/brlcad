@@ -234,6 +234,7 @@ set(librt_ignored_files
 	primitives/nmg/nmg_junk.c
 	primitives/revolve/revolve.h
 	primitives/xxx
+	search.h
 	timer-nt.c
 	timer52brl.c
 	timerhep.c
