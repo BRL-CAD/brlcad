@@ -72,8 +72,15 @@
 #  define YYDEBUG 0
 #endif
 #ifndef YYMAXDEPTH
-#  define YYMAXDEPTH 0
+#  define YYMAXDEPTH 1 /* >0 to quell size_t always true warning */
 #endif
+#ifndef YYENABLE_NLS
+#  define YYENABLE_NLS 0
+#endif
+#ifndef YYLTYPE_IS_TRIVIAL
+#  define YYLTYPE_IS_TRIVIAL 0
+#endif
+
 
 extern FILE *yyin;
 extern int yylex();
