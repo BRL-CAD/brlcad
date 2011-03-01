@@ -140,17 +140,6 @@ MARK_AS_ADVANCED(CMAKE_SYSTEM_PREFIX_PATH)
 # hence the use of properties to allow access to directory-specific
 # and global information scopes.
 
-# The BRL-CAD build generates noprod files that can be
-# manually run to simulate the workings of make noprod in that directory:
-#
-# cmake -P ./noprod
-#
-# This will remove just the final output files from all exec and
-# library targets in that directory.  It is not practical to have
-# 'make noprod' targets in each directory in the current CMake
-# system, so there is one toplevel 'noprod' target and in subdirectories
-# the above command must be used.
-
 MACRO(CMAKEFILES)
 	FOREACH(ITEM ${ARGN})
 		IF(NOT ${ITEM} MATCHES "^SHARED$"
@@ -170,8 +159,6 @@ MACRO(CMAKEFILES)
 ENDMACRO(CMAKEFILES FILESLIST)
 
 
-define_property(GLOBAL PROPERTY CHILD_LIST BRIEF_DOCS "child list" FULL_DOCS "tmp child target list")
-
 define_property(GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST BRIEF_DOCS "libtarget list" FULL_DOCS "Library target list")
 function(add_library name)
 	get_property(CMAKE_LIBRARY_TARGET_LIST GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST)
@@ -182,7 +169,6 @@ function(add_library name)
 		set_target_properties(${name} PROPERTIES PREFIX "")
 	ENDIF(${name} MATCHES "^lib*")
 	set_property(GLOBAL APPEND PROPERTY CMAKE_LIBRARY_TARGET_LIST ${name})
-	set_property(GLOBAL APPEND PROPERTY CHILD_LIST ${name})
 endfunction(add_library)
 
 define_property(GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST BRIEF_DOCS "exec target list" FULL_DOCS "Executable target list")
@@ -191,7 +177,6 @@ function(add_executable name)
    _add_executable(${name} ${ARGN})
 	CMAKEFILES(${ARGN})
 	set_property(GLOBAL APPEND PROPERTY CMAKE_EXEC_TARGET_LIST ${name})
-	set_property(GLOBAL APPEND PROPERTY CHILD_LIST ${name})
 endfunction(add_executable)
 
 define_property(GLOBAL PROPERTY CMAKE_CUSTOM_TARGET_LIST BRIEF_DOCS "custom target list" FULL_DOCS "Custom target list")
@@ -208,97 +193,18 @@ define_property(DIRECTORY PROPERTY DIR_TARGET_LIST BRIEF_DOCS "dir list" FULL_DO
 define_property(GLOBAL PROPERTY DISTCHECK_DIRS BRIEF_DOCS "check during distcheck" FULL_DOCS "List of directories to check during make distcheck")
 set_property(GLOBAL PROPERTY DISTCHECK_DIRS "${CMAKE_CURRENT_SOURCE_DIR}")
 function(add_subdirectory name)
-	set_property(GLOBAL PROPERTY CHILD_LIST "")
 	FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/${name}/cmakefiles.cmake)
 	FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/${name}/cmakepaths.cmake)
 	set_property(GLOBAL APPEND PROPERTY DISTCHECK_DIRS	"\\${CMAKE_CURRENT_SOURCE_DIR}/${name}")
 	_add_subdirectory(${name} ${ARGN})
 	GET_FILENAME_COMPONENT(ITEM_NAME ${name} NAME)
 	FILE(APPEND ${CMAKE_CURRENT_BINARY_DIR}/cmakefiles.cmake	"\\${ITEM_NAME}")
-	get_property(target_list GLOBAL PROPERTY CHILD_LIST)
-	set_property(DIRECTORY ${name} APPEND PROPERTY DIR_TARGET_LIST	${target_list})
-	set_property(DIRECTORY APPEND PROPERTY DIR_TARGET_LIST ${target_list})
-	get_property(target_list DIRECTORY ${name} PROPERTY DIR_TARGET_LIST)
-		IF(target_list)
-		SET(CMAKE_TARGET_FILE_LIST "")
-		FOREACH(target ${target_list})
-			get_target_property(targetfile ${target} LOCATION)
-			get_target_property(targetversion ${target} VERSION)
-			get_target_property(targetsoversion ${target} SOVERSION)
-			SET(CMAKE_TARGET_FILE_LIST "${CMAKE_TARGET_FILE_LIST};${targetfile}")
-			IF(targetsoversion)
-				SET(CMAKE_TARGET_FILE_LIST "${CMAKE_TARGET_FILE_LIST};${targetfile}.${targetsoversion}")
-			ENDIF(targetsoversion)
-			IF(targetversion)
-				SET(CMAKE_TARGET_FILE_LIST "${CMAKE_TARGET_FILE_LIST};${targetfile}-${targetversion};${targetfile}.${targetversion}")
-			ENDIF(targetversion)
-		ENDFOREACH(target ${target_list})
-
-		STRING(REGEX REPLACE ";" "\\\;" TARGET_FILES "${CMAKE_TARGET_FILE_LIST}")
-		SET(noprod_file "
-SET(CMAKE_TARGET_FILE_LIST \"${TARGET_FILES}\")
-FOREACH(file \${CMAKE_TARGET_FILE_LIST})
-  IF(EXISTS \${file})
-    MESSAGE(\"removing \${file}\\n\")
-	 EXEC_PROGRAM(
-      ${CMAKE_COMMAND} ARGS \"-E remove \${file}\"
-      OUTPUT_VARIABLE rm_out
-      RETURN_VALUE rm_retval
-      )
-    IF(NOT \"\${rm_retval}\" STREQUAL 0)
-      MESSAGE(FATAL_ERROR \"Problem when removing \${file}\")
-    ENDIF(NOT \"\${rm_retval}\" STREQUAL 0)
-  ENDIF(EXISTS \${file})
-ENDFOREACH(file \${CMAKE_TARGET_FILE_LIST})
-"    )
-      FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${name}/noprod ${noprod_file})
-	   ENDIF(target_list)
-	get_property(target_list DIRECTORY PROPERTY DIR_TARGET_LIST)
-	get_property(child_list DIRECTORY ${name} PROPERTY DIR_TARGET_LIST)
-	IF(target_list)
-		LIST(APPEND target_list ${child_list})
-		LIST(REMOVE_DUPLICATES target_list)
-		set_property(DIRECTORY PROPERTY DIR_TARGET_LIST ${target_list})
-	ENDIF(target_list)
-	IF(target_list)
-		SET(CMAKE_TARGET_FILE_LIST "")
-		FOREACH(target ${target_list})
-			get_target_property(targetfile ${target} LOCATION)
-			get_target_property(targetversion ${target} VERSION)
-			get_target_property(targetsoversion ${target} SOVERSION)
-			SET(CMAKE_TARGET_FILE_LIST "${CMAKE_TARGET_FILE_LIST};${targetfile}")
-			IF(targetsoversion)
-				SET(CMAKE_TARGET_FILE_LIST	"${CMAKE_TARGET_FILE_LIST};${targetfile}.${targetsoversion}")
-			ENDIF(targetsoversion)
-			IF(targetversion)
-				SET(CMAKE_TARGET_FILE_LIST "${CMAKE_TARGET_FILE_LIST};${targetfile}-${targetversion};${targetfile}.${targetversion}")
-			ENDIF(targetversion)
-		ENDFOREACH(target ${target_list})
-
-		STRING(REGEX REPLACE ";" "\\\;" TARGET_FILES "${CMAKE_TARGET_FILE_LIST}")
-		SET(noprod_file "
-SET(CMAKE_TARGET_FILE_LIST \"${TARGET_FILES}\")
-FOREACH(file \${CMAKE_TARGET_FILE_LIST})
-  IF(EXISTS \${file})
-    MESSAGE(\"removing \${file}\\n\")
-	 EXEC_PROGRAM(
-      ${CMAKE_COMMAND} ARGS \"-E remove \${file}\"
-      OUTPUT_VARIABLE rm_out
-      RETURN_VALUE rm_retval
-      )
-    IF(NOT \"\${rm_retval}\" STREQUAL 0)
-      MESSAGE(FATAL_ERROR \"Problem when removing \${file}\")
-    ENDIF(NOT \"\${rm_retval}\" STREQUAL 0)
-  ENDIF(EXISTS \${file})
-ENDFOREACH(file \${CMAKE_TARGET_FILE_LIST})
-"    )
-      FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/noprod ${noprod_file})
-   ENDIF(target_list)
 endfunction(add_subdirectory)
 
 # The toplevel dir doesn't invoke add_subdirectory on itself,
 # so remove any old cmakefiles.cmake file manually
 FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/cmakefiles.cmake)
+FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/cmakepaths.cmake)
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.
@@ -1411,52 +1317,6 @@ FOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
 		ADD_DEPENDENCIES(buildtimedelta ${externaltarget})
 	endif(target_confcmd)
 ENDFOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
-
-# We get one and only one noprod target - make it the
-# top level, since that's the only sensible choice.
-SET(CMAKE_TARGET_FILE_LIST "")
-get_property(CMAKE_LIBRARY_TARGET_LIST GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST)
-FOREACH(target ${CMAKE_LIBRARY_TARGET_LIST})
-	get_target_property(targetfile ${target} LOCATION)
-	get_target_property(targetversion ${target} VERSION)
-	get_target_property(targetsoversion ${target} SOVERSION)
-	SET(CMAKE_TARGET_FILE_LIST "${CMAKE_TARGET_FILE_LIST};${targetfile}")
-	IF(targetsoversion)
-		SET(CMAKE_TARGET_FILE_LIST	"${CMAKE_TARGET_FILE_LIST};${targetfile}.${targetsoversion}")
-	ENDIF(targetsoversion)
-	IF(targetversion)
-		SET(CMAKE_TARGET_FILE_LIST	"${CMAKE_TARGET_FILE_LIST};${targetfile}-${targetversion};${targetfile}.${targetversion}")
-	ENDIF(targetversion)
-ENDFOREACH(target ${CMAKE_LIBRARY_TARGET_LIST})
-get_property(CMAKE_EXEC_TARGET_LIST GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST)
-FOREACH(target ${CMAKE_EXEC_TARGET_LIST})
-	get_target_property(targetfile ${target} LOCATION)
-	get_target_property(targetversion ${target} VERSION)
-	SET(CMAKE_TARGET_FILE_LIST "${CMAKE_TARGET_FILE_LIST};${targetfile}")
-	IF(targetversion)
-		SET(CMAKE_TARGET_FILE_LIST "${CMAKE_TARGET_FILE_LIST};${targetfile}-${targetversion};${targetfile}.${targetversion}")
-	ENDIF(targetversion)
-ENDFOREACH(target ${CMAKE_EXEC_TARGET_LIST})
-
-STRING(REGEX REPLACE ";" "\\\;" TARGET_FILES "${CMAKE_TARGET_FILE_LIST}")
-SET(noprod_file "
-SET(CMAKE_TARGET_FILE_LIST \"${TARGET_FILES}\")
-FOREACH(file \${CMAKE_TARGET_FILE_LIST})
-  IF(EXISTS \${file})
-    MESSAGE(\"removing \${file}\\n\")
-	 EXEC_PROGRAM(
-      ${CMAKE_COMMAND} ARGS \"-E remove \${file}\"
-      OUTPUT_VARIABLE rm_out
-      RETURN_VALUE rm_retval
-      )
-    IF(NOT \"\${rm_retval}\" STREQUAL 0)
-      MESSAGE(FATAL_ERROR \"Problem when removing \${file}\")
-    ENDIF(NOT \"\${rm_retval}\" STREQUAL 0)
-  ENDIF(EXISTS \${file})
-ENDFOREACH(file \${CMAKE_TARGET_FILE_LIST})
-")
-FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/noprod ${noprod_file})
-ADD_CUSTOM_TARGET(noprod "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/noprod")
 
 # Generate the include/conf files
 
