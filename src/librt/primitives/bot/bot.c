@@ -2831,16 +2831,7 @@ int
 rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 {
     size_t i, j, k;
-    long slot;
     size_t count=0;
-    size_t total = 0;
-    long *bin[256];
-    size_t bin_capacity[256];
-    size_t bin_todonext[256];
-    const int DEFAULT_CAPACITY = 32;
-    fastf_t min_xval = (fastf_t)LONG_MAX;
-    fastf_t max_xval = (fastf_t)LONG_MIN;
-    fastf_t delta = (fastf_t)0.0;
 
     vect_t deleted;
     VSETALL(deleted, INFINITY);
@@ -2866,9 +2857,9 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 
 		/* update face references */
 		for (k=0; k<bot->num_faces*3; k++) {
-		    if (bot->faces[k] == j) {
+		    if ((size_t)bot->faces[k] == j) {
 			bot->faces[k] = i;
-		    } else if (bot->faces[k] > j)
+		    } else if ((size_t)bot->faces[k] > j)
 			bot->faces[k]--;
 		}
 	    } else {
