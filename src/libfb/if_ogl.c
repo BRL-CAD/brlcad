@@ -886,9 +886,9 @@ ogl_do_event(FBIO *ifp)
 			 */
 			if (event.xbutton.state & ControlMask) {
 			    button = Button2;
-			} else if (event->xbutton.state & Mod1Mask) {
+			} else if (event.xbutton.state & Mod1Mask) {
 			    button = Button3;
-			} else if (event->xbutton.state & Mod2Mask) {
+			} else if (event.xbutton.state & Mod2Mask) {
 			    button = Button3;
 			}
 		    }
