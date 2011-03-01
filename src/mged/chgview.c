@@ -869,7 +869,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     int nm_pieces;
     int illum_only = 0;
     char **path_piece = 0;
-    char *basename;
+    char *mged_basename;
     char *sname;
 
     int early_out = 0;
@@ -973,16 +973,16 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	goto bail_out;
     }
 
-    basename = path_piece[nm_pieces - 1];
+    mged_basename = path_piece[nm_pieces - 1];
 
-    if ((dp = db_lookup(dbip,  basename, LOOKUP_NOISY)) == RT_DIR_NULL) {
-	Tcl_AppendResult(interp, "db_lookup failed for '", basename, "'\n", (char *)NULL);
+    if ((dp = db_lookup(dbip,  mged_basename, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	Tcl_AppendResult(interp, "db_lookup failed for '", mged_basename, "'\n", (char *)NULL);
 	goto bail_out;
     }
 
     nmatch = 0;
     if (!(dp->d_flags & RT_DIR_SOLID)) {
-	Tcl_AppendResult(interp, basename, " is not a solid\n", (char *)NULL);
+	Tcl_AppendResult(interp, mged_basename, " is not a solid\n", (char *)NULL);
 	goto bail_out;
     }
 
