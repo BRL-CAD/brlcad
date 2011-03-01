@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="stl2g"
 	ProjectGUID="{AF7942C6-4E22-4544-B16B-7522DD063EE9}"
+	RootNamespace="stl2g"
 	>
 	<Platforms>
 		<Platform
@@ -78,7 +79,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib"
+				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib ws2_32.lib"
 				OutputFile="$(PlatformName)\$(ConfigurationName)/stl-g.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

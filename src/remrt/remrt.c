@@ -52,7 +52,7 @@
 #include "bio.h"
 
 #ifndef FD_MOVE
-#  define FD_MOVE(a, b) { int _i; for (_i = 0; _i < FD_SETSIZE; _i++) \
+#  define FD_MOVE(a, b) { unsigned int _i; for (_i = 0; _i < FD_SETSIZE; _i++) \
 		if (FD_ISSET(_i, b)) FD_SET(_i, a); else FD_CLR(_i, a); }
 #endif
 

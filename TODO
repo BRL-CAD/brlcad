@@ -94,9 +94,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * let the cp command take multiple arguments for simultaneously
   creating multiple named copies
 
-* add support to the attr command for listing keys in a user-specified
-  alphabetical (possibly case-insensitive) order in addition to or
-  instead of generated order.
+* add support for user-specified sorting for the attr command (case,
+  case-insensitive, creation, value, etc)
 
 * investigate why solids.sh fails on three pixels on some 64-bit
   platforms. it grazingly hits/misses a tgc causing a regression
@@ -324,11 +323,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * MINOR: add tolerance parameters to the bn_*() functions that have
   near-zero tests.
 
-* verify/improve kicking off an EDITOR in mged so that we don't lock
-  up mged in vim/emacs/jove/whatever without a controlling terminal,
-  without breaking the ability to set a GUI editor like TextEdit,
-  Wordpad, etc.
-
 * complete conversion of existing manual pages into docbook format
 
 * add an option to bot_dump for outputting surface normals.  Make sure
@@ -344,8 +338,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   command may have a bug in its calculations.  This needs to be
   investigated along with a review of the taxonomy used by rtarea for
   describing presented/projected areas.
-
-* obliterate verbose compilation warnings
 
 * modify g_qa to search for >1 region flag in a tree path.
 

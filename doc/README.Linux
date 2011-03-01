@@ -7,15 +7,25 @@ Linux distributions.
 Table of Contents
 -----------------
 64-bit Compile
+32-bit Compile
 Arch Linux
 Ubuntu/Debian
 PPC64 Linux
 
-64-bit Compile
---------------
-Supply configure options as follows:
 
-./configure CFLAGS=-m64 CXXFLAGS=-m64 LDFLAGS=-m64 --enable-64bit-build --enable-optimized --enable-all --prefix=/usr/brlcad/rel-MAJOR.MINOR.PATCH
+64-bit Compile (on a platform that defaults to 32-bit)
+--------------
+
+rm -rf *cache*   # remove any previous configure results
+./configure --prefix=/usr/brlcad/rel-MAJOR.MINOR.PATCH --enable-all --enable-64bit-build CFLAGS=-m64 CXXFLAGS=-m64 LDFLAGS=-m64
+
+
+32-bit Compile (on a platform that defaults to 64-bit)
+--------------
+
+rm -rf *cache*   # remove any previous configure results
+../configure --prefix=/usr/brlcad/rel-MAJOR.MINOR.PATCH --enable-all --disable-64bit-build CFLAGS=-m32 LDFLAGS=-m32 CXXFLAGS=-m32
+
 
 Arch Linux
 ----------
@@ -63,6 +73,7 @@ apt-get install xserver-xorg-dev libx11-dev libxi-dev
 Required: make (>= 3.8.0), bison, flex, xserver-xorg-dev, libx11-dev, libxi-dev
 Optional: libpng-dev, zlib1g-dev, tcl8.5-dev (>= 8.5), tk8.5-dev (>= 8.5), tcl3-dev, itk3-dev, iwidgets4, blt-dev
 
+
 Redhat/Fedora
 -------------
 
@@ -71,6 +82,7 @@ these files:
 
 cat /etc/redhat-release
 cat /etc/fedora-release
+
 
 PPC64 Linux
 -----------

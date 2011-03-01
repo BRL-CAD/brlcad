@@ -7302,7 +7302,7 @@ oedit_abs_scale(void)
  * V L S _ S O L I D
  */
 void
-vls_solid(struct bu_vls *vp, const struct rt_db_internal *ip, const mat_t mat)
+vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
 {
     struct rt_db_internal intern;
     int id;

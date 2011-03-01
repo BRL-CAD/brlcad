@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="poly2bot"
 	ProjectGUID="{1B396184-C850-4D07-9C2B-0E0B2E2A5561}"
+	RootNamespace="poly2bot"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -71,7 +72,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib"
+				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib ws2_32.lib"
 				OutputFile="$(PlatformName)\$(ConfigurationName)/poly-bot.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

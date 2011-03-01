@@ -9,7 +9,6 @@ add_definitions(
     -DSTDC_HEADERS
 )
 
-add_subdirectory(../../src/other/libregex ./libregex)
 add_subdirectory(../../src/other/libz ./libz)
 add_subdirectory(../../src/other/openNURBS ./openNURBS)
 add_subdirectory(../../src/other/tcl ./tcl)

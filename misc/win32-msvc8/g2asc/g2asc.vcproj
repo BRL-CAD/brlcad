@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="g2asc"
 	ProjectGUID="{745CE333-57DA-4B3F-B402-1FCACA82D86B}"
+	RootNamespace="g2asc"
 	>
 	<Platforms>
 		<Platform
@@ -78,7 +79,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib"
+				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib ws2_32.lib"
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)/g2asc.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

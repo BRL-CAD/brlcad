@@ -1036,7 +1036,7 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     fprintf(stdout, "\n");
 
     /* Write out interpolation info ******************/
-    fprintf(stdout, "%ld Iterations; Final link lengths:\n", i);
+    fprintf(stdout, "%ld Iterations; Final link lengths:\n", (unsigned long)i);
     for (i = 0; i < n_links; i++)
 	fprintf(stdout, "  %s\t%.15f\n", bu_vls_addr(&links[i].name), links[i].len);
     fflush(stdin);

@@ -56,7 +56,7 @@ extern int need_prep;
 
 
 void
-bot_minpieces(char *buffer, com_table *ctp)
+bot_minpieces(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     long new_lvalue;
     int i=0;
@@ -80,6 +80,35 @@ bot_minpieces(char *buffer, com_table *ctp)
 
     if ((size_t)new_lvalue != rt_bot_minpieces) {
 	rt_bot_minpieces = (size_t)new_lvalue;
+	need_prep = 1;
+    }
+}
+
+void
+bot_mintie(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+{
+    long new_lvalue;
+    int i=0;
+
+    ctp = ctp; /* quell warning */
+
+    while (isspace(*(buffer+i)))
+	++i;
+    if (*(buffer+i) == '\0') {
+	/* display current rt_bot_mintie */
+	bu_log("rt_bot_mintie = %d\n", rt_bot_mintie);
+	return;
+    }
+
+    new_lvalue = atol(buffer);
+
+    if (new_lvalue < 0) {
+	bu_log("Error: rt_bot_mintie cannot be less than 0\n");
+	return;
+    }
+
+    if ((size_t)new_lvalue != rt_bot_mintie) {
+	rt_bot_mintie = (size_t)new_lvalue;
 	need_prep = 1;
     }
 }
