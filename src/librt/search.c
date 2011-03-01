@@ -1454,6 +1454,7 @@ f_print(struct db_plan_t *UNUSED(plan), struct db_full_path *entry, struct db_i 
 {
     struct db_full_path_list *new_entry;
     BU_GETSTRUCT(new_entry, db_full_path_list);
+    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
     db_full_path_init(new_entry->path);
     db_dup_full_path(new_entry->path, (const struct db_full_path *)entry);
     BU_LIST_PUSH(&(results->l), &(new_entry->l));
@@ -2023,7 +2024,11 @@ db_search_execute(struct db_plan_t *searchplan,        /* search plan */
     BU_LIST_INIT(&(searchresults->l));
     while (BU_LIST_WHILE(currentpath, db_full_path_list, &(pathnames->l))) {
 	    db_fullpath_traverse(dbip, wdbp, searchresults, currentpath->path, find_execute_plans, find_execute_plans, wdbp->wdb_resp, searchplan);
+	    db_free_full_path(currentpath->path);
+	    BU_LIST_DEQUEUE((struct bu_list *)currentpath);
+	    bu_free(currentpath, "free db_full_path_list entry");
     }
+    bu_free(pathnames, "free pathnames");
     return searchresults;
 }
 
