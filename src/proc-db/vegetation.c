@@ -942,7 +942,7 @@ int main (int argc, char *argv[]) {
 	bu_exit(1, NULL);
     }
 
-    printf("There are %ld segments\n", plant->segmentCount);
+    printf("There are %ld segments\n", (long)plant->segmentCount);
 
     if (writePlantToDisk(fp, plant) != 0) {
 	fprintf(stderr, "Unable to write plant to disk\n");
