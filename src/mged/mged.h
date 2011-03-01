@@ -580,7 +580,7 @@ int wrobj(char name[], int flags);
 
 /* edsol.c */
 extern int inpara;	/* parameter input from keyboard flag */
-void vls_solid(struct bu_vls *vp, const struct rt_db_internal *ip, const mat_t mat);
+void vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat);
 void transform_editing_solid(
     struct rt_db_internal *os,		/* output solid */
     const mat_t mat,
