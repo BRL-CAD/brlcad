@@ -139,6 +139,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 				return GED_ERROR;
 			} else {
 				BU_GETSTRUCT(new_entry, db_full_path_list);
+				new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
 				db_full_path_init(new_entry->path);
 				db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
 				BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
