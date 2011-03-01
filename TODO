@@ -339,8 +339,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   investigated along with a review of the taxonomy used by rtarea for
   describing presented/projected areas.
 
-* obliterate verbose compilation warnings
-
 * modify g_qa to search for >1 region flag in a tree path.
 
 * the binary windows installer is missing headers for our external
