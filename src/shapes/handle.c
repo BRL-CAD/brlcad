@@ -67,6 +67,7 @@ main(int argc, char **argv)
     struct wmember comb1;	/* Used to make groups. */
 
     int i, j, k;		/* Loop counters. */
+    int ret;
 
     /* Set up solid, region, and group names. */
     solnam[0] = 's';
@@ -106,27 +107,36 @@ main(int argc, char **argv)
 	(void)printf("Enter the name of the mged file to be created ");
 	(void)printf("(25 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%26s", filemged);
+	ret = scanf("%26s", filemged);
+	if (ret == 0)
+	    perror("scanf");
 
 	/* Find number of handles to create (<=26). */
 	(void)printf("Enter number of handles to create (26 max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%d", &numhan);
+	ret = scanf("%d", &numhan);
+	if (ret == 0)
+	    perror("scanf");
 	if (numhan > 26) numhan = 26;
 
 	/* Find dimensions of handle. */
 	(void)printf("Enter the length and height of handle in mm.\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%lf %lf", &len, &hgt);
+	ret = scanf("%lf %lf", &len, &hgt);
+	if (ret == 0)
+	    perror("scanf");
 
 	(void)printf("Enter the radius of the tori in mm.\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%lf", &r1);
+	ret = scanf("%lf", &r1);
+	if (ret == 0)
+	    perror("scanf");
 
 	(void)printf("Enter the radius of the cylinders in mm.\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%lf", &r2);
-
+	ret = scanf("%lf", &r2);
+	if (ret == 0)
+	    perror("scanf");
     }							/* END # 3 */
 
     /* if there are arguments get the answers from the arguments. */

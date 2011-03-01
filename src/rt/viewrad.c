@@ -132,6 +132,7 @@ writephysrec(FILE *fp)
     long length;
     static int totbuf = 0;
     int buf = 0;
+    size_t ret;
 
     /* Pad out the record if not full */
     memset((char *)&skiprec, 0, sizeof(skiprec));
@@ -143,12 +144,18 @@ writephysrec(FILE *fp)
     }
 
     length = sizeof(physrec);
-    fwrite(&length, sizeof(length), 1, fp);
+    ret = fwrite(&length, sizeof(length), 1, fp);
+    if (ret < 1)
+	perror("fwrite");
+
     if (fwrite(physrec, sizeof(physrec), 1, fp) != 1) {
 	bu_log("writephysrec: error writing physical record\n");
 	return 0;
     }
-    fwrite(&length, sizeof(length), 1, fp);
+
+    ret = fwrite(&length, sizeof(length), 1, fp);
+    if (ret < 1)
+	perror("fwrite");
 
     memset((char *)physrec, 0, sizeof(physrec));	/* paranoia */
     precindex = 0;

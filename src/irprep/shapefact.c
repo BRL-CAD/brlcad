@@ -158,6 +158,7 @@ int main(int argc, char **argv)
     double rcpi, rcpj;	/*  Used to check reciprocity.  */
     double rcp_diff;	/*  Difference in reciprocity.  */
     double rcp_pdiff;	/*  Percent difference in reciprocity.  */
+    int ret;
 
     struct bn_unif *msr = NULL;
 
@@ -172,25 +173,33 @@ int main(int argc, char **argv)
 	(void)printf("Enter type of file to be written (0=>regular or ");
 	(void)printf("1=>generic).  ");
 	(void)fflush(stdout);
-	(void)scanf("%d", &itype);
+	ret = scanf("%d", &itype);
+	if (ret == 0)
+	    perror("scanf");
 	if (itype != 1) itype = 0;
 
 	/*  Enter names of files to be used.  */
 	(void)fprintf(stderr, "Enter name of output file (15 char max).\n\t");
 	(void)fflush(stderr);
-	(void)scanf("%15s", outfile);
+	ret = scanf("%15s", outfile);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Read name of the error file to be written.  */
 	(void)printf("Enter the name of the error file (15 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%15s", errfile);
+	ret = scanf("%15s", errfile);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Enter name of region # & name file to be read.  */
 	{
 	    (void)printf("Enter region # & name file to be read ");
 	    (void)printf("(15 char max).\n\t");
 	    (void)fflush(stdout);
-	    (void)scanf("%15s", rnnfile);
+	    ret = scanf("%15s", rnnfile);
+	    if (ret == 0)
+		perror("scanf");
 	}
 
 	/*  Check if dump is to occur.  */
@@ -198,24 +207,32 @@ int main(int argc, char **argv)
 	(void)printf("Do you want to dump intermediate shape factors to ");
 	(void)printf("screen (0-no, 1-yes)?  ");
 	(void)fflush(stdout);
-	(void)scanf("%d", &idump);
+	ret = scanf("%d", &idump);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Find number of rays to be fired.  */
 	(void)fprintf(stderr, "Enter number of rays to be fired.  ");
 	(void)fflush(stderr);
-	(void)scanf("%lf", &loops);
+	ret = scanf("%lf", &loops);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Set seed for random number generator.  */
 	seed = 1;
 	(void)fprintf(stderr, "Do you wish to enter your own seed (0) or ");
 	(void)fprintf(stderr, "use the default of 1 (1)?  ");
 	(void)fflush(stderr);
-	(void)scanf("%d", &ians);
+	ret = scanf("%d", &ians);
+	if (ret == 0)
+	    perror("scanf");
 	if (ians == 0)
 	{
 	    (void)fprintf(stderr, "Enter unsigned integer seed.  ");
 	    (void)fflush(stderr);
-	    (void)scanf("%ld", &seed);
+	    ret = scanf("%ld", &seed);
+	    if (ret == 0)
+		perror("scanf");
 	}
 	msr = bn_unif_init(seed, 0);
 	bu_log("seed initialized\n");

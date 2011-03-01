@@ -1531,8 +1531,12 @@ main(int argc, char *argv[])
 
 		/* close out stdout/stderr as we're proceeding in GUI mode */
 #ifdef HAVE_PIPE
-		(void)pipe(pipe_out);
-		(void)pipe(pipe_err);
+		result = pipe(pipe_out);
+		if (result == -1)
+		    perror("pipe");
+		result = pipe(pipe_err);
+		if (result == -1)
+		    perror("pipe");
 #endif  /* HAVE_PIPE */
 
 		bu_add_hook(&bu_bomb_hook_list, mged_bomb_hook, INTERP);
@@ -1617,12 +1621,16 @@ main(int argc, char *argv[])
 
 	    /* Redirect stdout */
 	    (void)close(1);
-	    (void)dup(pipe_out[1]);
+	    result = dup(pipe_out[1]);
+	    if (result == -1)
+		perror("dup");
 	    (void)close(pipe_out[1]);
 
 	    /* Redirect stderr */
 	    (void)close(2);
-	    (void)dup(pipe_err[1]);
+	    result = dup(pipe_err[1]);
+	    if (result == -1)
+		perror("dup");
 	    (void)close(pipe_err[1]);
 
 	    outpipe = (ClientData)(size_t)pipe_out[0];
@@ -2483,7 +2491,9 @@ log_event(const char *event, const char *arg)
     }
 
     if (logfd >= 0) {
-	(void)write(logfd, bu_vls_addr(&line), (unsigned)bu_vls_strlen(&line));
+	ssize_t ret = write(logfd, bu_vls_addr(&line), (unsigned)bu_vls_strlen(&line));
+	if (ret < 0)
+	    perror("write");
 	(void)close(logfd);
     } else {
 	if (notified) {

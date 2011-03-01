@@ -121,6 +121,7 @@ main(int argc, char **argv)
     mat_t rot1, rot2, rot3;
     vect_t from, to;
     vect_t offset;
+    int ret;
 
     if (argc > 0)
 	bu_log("Usage: %s\n", argv[0]);
@@ -229,7 +230,9 @@ main(int argc, char **argv)
     }
     wdb_close(outfp);
     fflush(stderr);
-    system("cat ke.g");	/* XXX need library routine */
+    ret = system("cat ke.g");	/* XXX need library routine */
+    if (ret < 0)
+	perror("system");
 
     return 0;
 }
@@ -443,12 +446,16 @@ read_pos(FILE *fp)
 {
     static float last_read_time = -5;
     static float pos = 0;
+    int ret;
 
 /* Skip over needless intermediate time steps */
     while (last_read_time < cur_time) {
 	if (feof(fp))
 	    break;
-	fscanf(fp, "%f %f", &last_read_time, &pos);
+	ret = fscanf(fp, "%f %f", &last_read_time, &pos);
+	if (ret == -1)
+	    perror("fscanf");
+
 	/* HACK:  tmax[kathy]=6.155ms, tmax[kurt]=9.17 */
 	/* we just read a Kurt number, make it a Kathy number */
 	last_read_time = last_read_time / 9.17 * 6.155;

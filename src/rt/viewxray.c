@@ -167,7 +167,10 @@ view_eol(struct application *ap)
 	    if (rt_g.rtg_parallel) {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    }
-	    fwrite( scanbuf, pixsize, width, outfp );
+	    i = fwrite( scanbuf, pixsize, width, outfp );
+	    if (i < width) {
+		perror("fwrite");
+	    }
 	    if (rt_g.rtg_parallel) {
 		bu_semaphore_release( BU_SEM_SYSCALL );
 	    }
@@ -187,6 +190,9 @@ view_eol(struct application *ap)
 		    bu_semaphore_acquire( BU_SEM_SYSCALL );
 		}
 		fb_write( fbp, 0, ap->a_y, buf, width );
+		if (i < width) {
+		    perror("fwrite");
+		}
 		if (rt_g.rtg_parallel) {
 		    bu_semaphore_release( BU_SEM_SYSCALL );
 		}
@@ -226,6 +232,7 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
     fastf_t	totdist;
     fastf_t	fvalue;
     unsigned char value;
+    size_t ret;
 
     for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 	if ( pp->pt_outhit->hit_dist >= 0.0 )  break;
@@ -268,7 +275,9 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
     switch ( lightmodel ) {
 	case LGT_FLOAT:
 	    bu_semaphore_acquire( BU_SEM_SYSCALL );
-	    fwrite( &totdist, sizeof(totdist), 1, outfp );
+	    ret = fwrite( &totdist, sizeof(totdist), 1, outfp );
+	    if (ret < 1)
+		perror("fwrite");
 	    bu_semaphore_release( BU_SEM_SYSCALL );
 	    break;
 	case LGT_BW:
@@ -294,7 +303,8 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
 static int
 xraymiss(register struct application *ap)
 {
-    static	double	zero = 0;
+    static double zero = 0;
+    size_t ret;
 
     switch ( lightmodel ) {
 	case LGT_BW:
@@ -310,7 +320,9 @@ xraymiss(register struct application *ap)
 	    break;
 	case LGT_FLOAT:
 	    bu_semaphore_acquire( BU_SEM_SYSCALL );
-	    fwrite( &zero, sizeof(zero), 1, outfp );
+	    ret = fwrite( &zero, sizeof(zero), 1, outfp );
+	    if (ret < 1)
+		perror("fwrite");
 	    bu_semaphore_release( BU_SEM_SYSCALL );
 	    break;
 	default:

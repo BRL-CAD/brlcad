@@ -124,13 +124,16 @@ main(void)
 				/*  written.  */
     char file_pix[MAXFIL];	/*  Pix file name.  */
     unsigned char c;		/*  Used to write pix file.  */
+    int ret;
 
     struct colstr array[MAXCOL + EXTRA];	/*  Array for color information.  */
 
     /*  Get file name to be read.  */
     (void)printf("Enter name of file to be read (%d char max).\n\t", MAXFIL);
     (void)fflush(stdout);
-    (void)scanf("%25s", file);
+    ret = scanf("%25s", file);
+    if (ret == 0)
+	perror("scanf");
 
     /*  Find what color shading to use.  */
     (void)printf("Indicate type of color shading to use.\n");
@@ -139,21 +142,27 @@ main(void)
     (void)printf("\t2 - black-blue-cyan-green-yellow-white\n");
     (void)printf("\t3 - black-blue-magenta-red-yellow-white\n");
     (void)fflush(stdout);
-    (void)scanf("%d", &icol);
+    ret = scanf("%d", &icol);
+    if (ret == 0)
+	perror("scanf");
     if ( (icol != 1) && (icol != 2) && (icol != 3) ) icol = 0;
 
     /*  Determine if a pix file is to be written.  */
     flag_pix = 0;
     (void)printf("Do you wish to create a pix file (0-no, 1-yes)?\n\t");
     (void)fflush(stdout);
-    (void)scanf("%d", &flag_pix);
+    ret = scanf("%d", &flag_pix);
+    if (ret == 0)
+	perror("scanf");
     if (flag_pix != 1) flag_pix = 0;
     if (flag_pix == 1)
     {
 	(void)printf("Enter name of the pix file to be created ");
 	(void)printf("(%d char max).\n\t", MAXFIL);
 	(void)fflush(stdout);
-	(void)scanf("%25s", file_pix);
+	ret = scanf("%25s", file_pix);
+	if (ret == 0)
+	    perror("scanf");
     }
 
     (void)printf("Zeroing color info array ");
@@ -360,7 +369,11 @@ main(void)
     {
 	(void)printf("\nThis file does not exist, please try again.\n");
 	(void)fflush(stdout);
-	(void)scanf("%25s", file);
+	ret = scanf("%25s", file);
+	if (ret == 0) {
+	    perror("scanf");
+	    break;
+	}
 	fpr = fopen(file, "rb");
     }
 

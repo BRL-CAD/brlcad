@@ -113,35 +113,61 @@ read_data(void)
     int b_1, b_2;
     int red, green, blue;
     int i = 0;
-
+    int ret;
 
     while (scanf(" %d", &data_type) != 0) {
 
 	switch (data_type) {
 	    case (0):
-		scanf("%d", &i);
-		scanf("%128s", atom_list[i].a_name);
-		scanf("%d", &red);
-		scanf("%d", &green);
-		scanf("%d", &blue);
+		ret = scanf("%d", &i);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%128s", atom_list[i].a_name);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%d", &red);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%d", &green);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%d", &blue);
+		if (ret == 0)
+		    perror("scanf");
 		atom_list[i].red  = red;
 		atom_list[i].green  = green;
 		atom_list[i].blue  = blue;
 		break;
 	    case (1):
-		scanf("%d", &sphere_id);
-		scanf("%f", &x);
-		scanf("%f", &y);
-		scanf("%f", &z);
-		scanf("%f", &sphere_radius);
-		scanf("%d", &atom_type);
+		ret = scanf("%d", &sphere_id);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%f", &x);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%f", &y);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%f", &z);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%f", &sphere_radius);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%d", &atom_type);
+		if (ret == 0)
+		    perror("scanf");
 		VSET(center, x, y, z);
 		process_sphere(sphere_id, center, sphere_radius,
 			       atom_type);
 		break;
 	    case (2):
-		scanf("%d", &b_1);
-		scanf("%d", &b_2);
+		ret = scanf("%d", &b_1);
+		if (ret == 0)
+		    perror("scanf");
+		ret = scanf("%d", &b_2);
+		if (ret == 0)
+		    perror("scanf");
 		(void)make_bond(b_1, b_2);
 		break;
 	    case (4):

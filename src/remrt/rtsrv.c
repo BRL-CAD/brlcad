@@ -266,8 +266,12 @@ main(int argc, char **argv)
 
 	/* For stdio & perror safety, reopen 0, 1, 2 */
 	(void)open("/dev/null", 0);	/* to fd 0 */
-	(void)dup(0);			/* to fd 1 */
-	(void)dup(0);			/* to fd 2 */
+	n = dup(0);			/* to fd 1 */
+	if (n == -1)
+	    perror("dup");
+	n = dup(0);			/* to fd 2 */
+	if (n == -1)
+	    perror("dup");
 
 #if defined(HAVE_SYS_IOCTL_H) && defined(TIOCNOTTY)
 	n = open("/dev/tty", 2);

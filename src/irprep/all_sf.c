@@ -104,6 +104,7 @@ int main(int argc, char **argv)
     FILE *fpw2;		/*  Allows a file to be written.  */
     char lwxfile[26];	/*  Longwave radiation exchange file for PRISM  */
 			/*  (not quite PRISM ready).  */
+    int ret;
 
     struct bn_unif *msr = NULL;
 
@@ -120,19 +121,25 @@ int main(int argc, char **argv)
 	/*  Find name of output file.  */
 	(void)printf("Enter name of output file (25 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%25s", outfile);
+	ret = scanf("%25s", outfile);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Find name of longwave radiation exchange (lwx) file  */
 	/*  for use with PRISM (not quite PRISM ready).  */
 	(void)printf("Enter name of longwave radiation exchange");
 	(void)printf(" file (25 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%25s", lwxfile);
+	ret = scanf("%25s", lwxfile);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Find name of error file.  */
 	(void)printf("Enter name of error file (25 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%25s", errfile);
+	ret = scanf("%25s", errfile);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Open files.  */
 	fpw = fopen(outfile, "w");
@@ -249,7 +256,9 @@ int main(int argc, char **argv)
 	/*  Find number of rays to fire.  */
 	(void)printf("Enter the number of rays to be fired.\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%lf", &rayfir);
+	ret = scanf("%lf", &rayfir);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Write info to files.  */
 	(void)fprintf(fpw, "Min & max for entire region:\n");
@@ -299,12 +308,16 @@ int main(int argc, char **argv)
 	(void)printf("Do you wish to enter your own seed (0) or ");
 	(void)printf("use the default of 1 (1)?\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%d", &ians);
+	ret = scanf("%d", &ians);
+	if (ret == 0)
+	    perror("scanf");
 	if (ians == 0)
 	{
 	    (void)printf("Enter unsigned integer seed.\n\t");
 	    (void)fflush(stdout);
-	    (void)scanf("%ld", &seed);
+	    ret = scanf("%ld", &seed);
+	    if (ret == 0)
+		perror("scanf");
 	}
 	msr = bn_unif_init(seed, 0);
 

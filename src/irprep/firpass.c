@@ -244,6 +244,7 @@ int main(int argc, char **argv)
     /*  0=>fire from 3 orthogonal postions,  */
     /*  1=>fire from 1 postion.  */
     double diff;		/*  Difference, used in finding variance.  */
+    int ret;
 
     /*  Check to see if arguments implimented correctly.  */
     if (argc < 3 || argv[1]==NULL || argv[2]==NULL) {
@@ -254,14 +255,18 @@ int main(int argc, char **argv)
 	(void)printf("Write output to standard out (0) or a file (1) or ");
 	(void)printf("not at all (2)?  ");
 	(void)fflush(stdout);
-	(void)scanf("%d", &iwrite);
+	ret = scanf("%d", &iwrite);
+	if (ret == 0)
+	    perror("scanf");
 	if ((iwrite != 0) && (iwrite != 1)) iwrite=2;
 	if (iwrite == 1)
 	{
 	    (void)printf("Enter name of file output is to be written ");
 	    (void)printf("to (15 char max).  ");
 	    (void)fflush(stdout);
-	    (void)scanf("%15s", filename);
+	    ret = scanf("%15s", filename);
+	    if (ret == 0)
+		perror("scanf");
 	    fp=fopen(filename, "wb");
 	}
 
@@ -269,25 +274,33 @@ int main(int argc, char **argv)
 	(void)printf("Enter name of error file to be created ");
 	(void)printf("(15 char max).  ");
 	(void)fflush(stdout);
-	(void)scanf("%15s", fileerr);
+	ret = scanf("%15s", fileerr);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Get second pass file name.  */
 	(void)printf("Enter name of second pass file to be ");
 	(void)printf("created (15 char max).  ");
 	(void)fflush(stdout);
-	(void)scanf("%15s", spfile);
+	ret = scanf("%15s", spfile);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Get region # & name file (for use w/shapefact).  */
 	(void)printf("Enter name of region # & name file to be  ");
 	(void)printf("created (15 char max).  ");
 	(void)fflush(stdout);
-	(void)scanf("%15s", filernn);
+	ret = scanf("%15s", filernn);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Get name of material id file.  */
 	(void)printf("Enter name of material id file to be read ");
 	(void)printf("(15 char max).  ");
 	(void)fflush(stdout);
-	(void)scanf("%15s", fileden);
+	ret = scanf("%15s", fileden);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  What types of files are to be written?  */
 	(void)printf("Enter type of file to be written.\n");
@@ -295,7 +308,9 @@ int main(int argc, char **argv)
 	(void)printf("\t1 - Generic file\n");
 	(void)printf("\t2 - Geometric properties file\n");
 	(void)fflush(stdout);
-	(void)scanf("%d", &typeout);
+	ret = scanf("%d", &typeout);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Get facet file name.  */
 	if (typeout == 0)
@@ -303,7 +318,9 @@ int main(int argc, char **argv)
 	    (void)printf("Enter name of facet file to be created. ");
 	    (void)printf("(15 char max)  ");
 	    (void)fflush(stdout);
-	    (void)scanf("%15s", facfile);
+	    ret = scanf("%15s", facfile);
+	    if (ret == 0)
+		perror("scanf");
 
 	    /*  Find which PRISM release is being used.  The facet number  */
 	    /*  in release 3.0 is written with an I6 & in release 2.0 it  */
@@ -312,7 +329,9 @@ int main(int argc, char **argv)
 	    (void)printf("Which release of PRISM is being used, 2.0 (2) ");
 	    (void)printf("or 3.0 (3)?  ");
 	    (void)fflush(stdout);
-	    (void)scanf("%d", &prmrel);
+	    ret = scanf("%d", &prmrel);
+	    if (ret == 0)
+		perror("scanf");
 	    if (prmrel != 3) prmrel = 2;
 	}
 
@@ -322,7 +341,9 @@ int main(int argc, char **argv)
 	    (void)printf("Enter name of generic file to be created. ");
 	    (void)printf("(15 char max)  ");
 	    (void)fflush(stdout);
-	    (void)scanf("%15s", filegen);
+	    ret = scanf("%15s", filegen);
+	    if (ret == 0)
+		perror("scanf");
 	}
 
 	/*  Get geometric file name.  */
@@ -331,12 +352,16 @@ int main(int argc, char **argv)
 	    (void)printf("Do you want a readable (0) or non-readable (1) ");
 	    (void)printf("geometric file?  ");
 	    (void)fflush(stdout);
-	    (void)scanf("%d", &typeouta);
+	    ret = scanf("%d", &typeouta);
+	    if (ret == 0)
+		perror("scanf");
 	    typeout += typeouta;
 	    (void)printf("Enter name of geometric properties file to be ");
 	    (void)printf("created (15 char max).  ");
 	    (void)fflush(stdout);
-	    (void)scanf("%15s", filegeo);
+	    ret = scanf("%15s", filegeo);
+	    if (ret == 0)
+		perror("scanf");
 	}
 
 	/*
@@ -350,7 +375,9 @@ int main(int argc, char **argv)
 	(void)printf("(0) or 1 set\n");
 	(void)printf("of rays fired (1)?\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%d", &ifire);
+	ret = scanf("%d", &ifire);
+	if (ret == 0)
+	    perror("scanf");
 	if (ifire != 0) ifire = 1;
 	if (ifire == 0)
 	{
@@ -579,7 +606,9 @@ int main(int argc, char **argv)
 	/*  User enters grid spacing.  All units are in mm.  */
 	(void)printf("Enter grid spacing (mm) for fired rays.\n");
 	(void)fflush(stdout);
-	(void)scanf("%lf", &gridspace);
+	ret = scanf("%lf", &gridspace);
+	if (ret == 0)
+	    perror("scanf");
 
 	if (iwrite == 0)
 	{
