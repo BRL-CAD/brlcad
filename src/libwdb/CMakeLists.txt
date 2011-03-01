@@ -27,6 +27,7 @@ include_directories(
     ../../include
     ../other/libz
     ../other/openNURBS
+    ../other/libregex
     ../other/tcl/generic
 )
 
