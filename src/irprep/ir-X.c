@@ -379,19 +379,24 @@ main(void)
 
     /*  Read width and height of window.  */
     (void)bu_fgets(line, 150, fpr);
-    (void)sscanf(line, "%lu %lu", &wide, &high);
+    {
+	unsigned long w, h;
+	(void)sscanf(line, "%lu %lu", &w, &h);
+	wide = w;
+	high = h;
+    }
 
     /*  Check that width and height are not too big.  */
     if (wide > (size_t)MAXPIX)
     {
-	(void)printf("The width of the window, %lu, is greater\n", wide);
+	(void)printf("The width of the window, %lu, is greater\n", (unsigned long)wide);
 	(void)printf("than the maximum for width, %lu.  Press\n", (unsigned long)MAXPIX);
 	(void)printf("delete to end program.\n");
 	(void)fflush(stdout);
     }
     if (high > MAXPIX)
     {
-	(void)printf("The height of the window, %lu, is greater\n", wide);
+	(void)printf("The height of the window, %lu, is greater\n", (unsigned long)wide);
 	(void)printf("than the maximum for height, %lu.  Press\n", (unsigned long)MAXPIX);
 	(void)printf("delete to end program.\n");
 	(void)fflush(stdout);
@@ -414,8 +419,8 @@ main(void)
     (void)fflush(stdout);
 
     /*  Print out width and height of window.  */
-    (void)printf("Width:  %lu\n", wide);
-    (void)printf("Height:  %lu\n", high);
+    (void)printf("Width:  %lu\n", (unsigned long)wide);
+    (void)printf("Height:  %lu\n", (unsigned long)high);
     (void)fflush(stdout);
 
     /*  Print out the first ten values as check.  */
