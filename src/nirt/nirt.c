@@ -62,6 +62,7 @@ const com_table ComTab[] = {
     { "load", load_state, "read new state for NIRT from the state file", NULL },
     { "print", print_item, "query an output item", "item" },
     { "bot_minpieces", bot_minpieces, "Get/Set value for rt_bot_minpieces (0 means do not use pieces, default is 32)", "min_pieces" },
+    { "bot_mintie", bot_mintie, "Get/Set value for rt_bot_mintie (0 means do not use pieces, default is 4294967295)", "min_tie" },
     { "libdebug", cm_libdebug, "set/query librt debug flags", "hex_flag_value" },
     { "debug", cm_debug, "set/query nirt debug flags", "hex_flag_value" },
     { "!", sh_esc, "escape to the shell", NULL },
@@ -106,6 +107,7 @@ void printusage(void)
     bu_log("Options:\n");
     bu_log(" -b         back out of geometry before first shot\n");
     bu_log(" -B n       set rt_bot_minpieces=n\n");
+    bu_log(" -T n       set rt_bot_mintie=n\n");
     bu_log(" -e script  run script before interacting\n");
     bu_log(" -f sfile   run script sfile before interacting\n");
     bu_log(" -L         list output formatting options\n");
@@ -389,6 +391,9 @@ main(int argc, char *argv[])
 		break;
 	    case 'B':
 		rt_bot_minpieces = atoi(bu_optarg);
+		break;
+	    case 'T':
+		rt_bot_mintie = atoi(bu_optarg);
 		break;
 	    case 'b':
 		do_backout = 1;
