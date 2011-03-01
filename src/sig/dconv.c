@@ -81,6 +81,7 @@ int main(int argc, char **argv)
     int	i;
     int	N, M, L;
     FILE	*fp;
+    size_t ret;
 
     M = 128;	/* kernel size */
     N = 2*M;	/* input sub-section length (fft size) */
@@ -147,7 +148,9 @@ int main(int argc, char **argv)
 	else
 	    irfft( xbuf, N );
 
-	fwrite( &xbuf[M-1], sizeof(*xbuf), L, stdout );
+	ret = fwrite( &xbuf[M-1], sizeof(*xbuf), L, stdout );
+	if (ret != (size_t)L)
+	    perror("fwrite");
     }
 
     return 0;

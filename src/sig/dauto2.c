@@ -47,6 +47,7 @@ int main(int argc, char **argv)
     int	i, j, n, L;
     int *dp1, *dp2;
     double	max1, max2, m, m2;
+    size_t ret;
 
     if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
 	bu_exit(1, "%s", usage );
@@ -98,7 +99,9 @@ int main(int argc, char **argv)
 	for ( i = 0; i < L; i++ ) {
 	    r[i] = out[i];
 	}
-	fwrite( r, sizeof(*r), L, stdout );
+	ret = fwrite( r, sizeof(*r), L, stdout );
+	if (ret != (size_t)L)
+	    perror("fwrite");
     }
 
     return 0;

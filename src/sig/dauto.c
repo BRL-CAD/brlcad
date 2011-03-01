@@ -47,6 +47,7 @@ int main(int argc, char **argv)
 {
     int	i, j, n, L;
     double *dp1, *dp2;
+    size_t ret;
 
     if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
 	bu_exit(1, "%s", usage );
@@ -82,7 +83,9 @@ int main(int argc, char **argv)
 	    r[i] *= weight[i];
 	}
 
-	fwrite( r, sizeof(*r), L, stdout );
+	ret = fwrite( r, sizeof(*r), L, stdout );
+	if (ret != (size_t)L)
+	    perror("fwrite");
     }
 
     bu_free(data, "data");

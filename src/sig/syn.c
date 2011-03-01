@@ -55,6 +55,7 @@ main(int argc, char *argv[])
     double d;
     double period, stepsize, findex;
     int setsize;
+    size_t ret;
 
     static const char usage[] = "\
 Usage: syn samples_per_set [ratio] > doubles\n";
@@ -76,7 +77,9 @@ Usage: syn samples_per_set [ratio] > doubles\n";
 	for (i = setsize; i > 0; i--) {
 	    d = sintab[(int)findex];
 	    d *= 0.4;
-	    fwrite(&d, sizeof(d), 1, stdout);
+	    ret = fwrite(&d, sizeof(d), 1, stdout);
+	    if (ret != 1)
+		perror("fwrite");
 	    findex += stepsize;
 	    if (findex > TABSIZE)
 		findex -= TABSIZE;
