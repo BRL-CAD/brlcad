@@ -424,7 +424,12 @@ struct bu_structparse set_parse[] = {
     {"%f",	1, "perspective",		bu_byteoffset(rt_perspective),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "angle",			bu_byteoffset(rt_perspective),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 #if !defined(_WIN32) || defined(__CYGWIN__)
-    /* FIXME: need to test compilation on windows, these shouldn't need to be be commented out */
+    /* FIXME: these cannot be listed in here because they are LIBRT
+     * globals.  due to the way symbols are not imported until a DLL
+     * is loaded on Windows, the byteoffset address of the global is
+     * not known at compile-time.  they would needed to be added to
+     * set_parse() during runtime initialization.
+     */
     {"%d",	1, "rt_bot_mintie",		bu_byteoffset(rt_bot_mintie),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "rt_bot_minpieces",		bu_byteoffset(rt_bot_minpieces),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "rt_bot_tri_per_piece",	bu_byteoffset(rt_bot_tri_per_piece),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
