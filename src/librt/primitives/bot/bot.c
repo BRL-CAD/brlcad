@@ -2847,7 +2847,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 
     RT_BOT_CK_MAGIC(bot);
 
-#if 0
+#if 1
     /* THE OLD WAY .. possibly O(n^3) with the vertex shifting */
 
     for (i=0; i<bot->num_vertices; i++) {
