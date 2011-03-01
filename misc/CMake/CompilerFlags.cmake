@@ -94,8 +94,8 @@ CHECK_CXX_FLAG(ftemplate-depth-50)
 # CHECK_C_FLAG(msse)
 # CHECK_C_FLAG(msse2)
 
-# Check for c99 support
-CHECK_C_FLAG("std=c99" C99_FLAG)
+# Check for gnu c99 support
+CHECK_C_FLAG("std=gnu99" C99_FLAG)
 MARK_AS_ADVANCED(C99_FLAG)
 
 # On some platforms (at least Gentoo linux, so far)
