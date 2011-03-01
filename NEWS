@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2011-03-XX  Release 7.18.4                                     ---
 ----------------------------------------------------------------------
 
+* added -T bot_mintie BoT optimization options to nirt - Sean Morrison
 * mged command-click zoom binding for one button mice - Sean Morrison
 * removed 'txyz-pl' utility tool in favor of 'xyz-pl' - Sean Morrison
 * new shp-g importer for Esri Shapefile geometry files - Sean Morrison
