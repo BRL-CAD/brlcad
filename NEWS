@@ -18,8 +18,8 @@ changes made.  See document footer for additional details.
 * mged command-click zoom binding for one button mice - Sean Morrison
 * removed 'txyz-pl' utility tool in favor of 'xyz-pl' - Sean Morrison
 * new shp-g importer for Esri Shapefile geometry files - Sean Morrison
-* added rt_bot_mintie to trigger TIE bots - Erik Greenwald
-* libtie is now part of librt - Erik Greenwald
+* new 'rt_bot_mintie' option for triggering TIE BoTs  - Erik Greenwald
+* integrated optimized TIE BoT raytracing with LIBRT - Erik Greenwald
 
 ----------------------------------------------------------------------
 --- 2011-02-09  Release 7.18.2                                     ---
