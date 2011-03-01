@@ -382,7 +382,7 @@ pkgIndex.tcl:
 # variable in configure.in
 #========================================================================
 
-clean:  
+clean: clean-am
 	-test -z "$(BINARIES)" || rm -f $(BINARIES)
 	-rm -f *.$(OBJEXT) core *.core
 	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
