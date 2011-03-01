@@ -38,7 +38,10 @@
 #include "common.h"
 
 /* interface headers */
-#include "regex.h"
+#ifdef HAVE_REGEX_H
+# include "regex.h"
+#endif
+
 #include "tcl.h"
 #include "bu.h"
 #include "bn.h"
