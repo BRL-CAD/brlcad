@@ -201,6 +201,7 @@ set(LIBRT_SOURCES
     primitives/vol/vol_mirror.c
     regionfix.c
     roots.c
+	 search.c
     shoot.c
     spectrum.c
     tcl.c
@@ -251,6 +252,7 @@ else(MSVC)
 endif(MSVC)
 
 include_directories(
+	 ${CMAKE_CURRENT_SOURCE_DIR}
     ${REGEX_INCLUDE_DIR}
     ${ZLIB_INCLUDE_DIR}
     ${OPENNURBS_INCLUDE_DIR}
