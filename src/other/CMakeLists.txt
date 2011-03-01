@@ -9,7 +9,7 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty.cmake)
 
 # Quiet all warnings in this directory
 IF(BRLCAD-DISABLE_SRC_OTHER_WARN)
-	#add_definitions(-w)
+	add_definitions(-w)
 ENDIF(BRLCAD-DISABLE_SRC_OTHER_WARN)
 
 #---------------------------------------------------------------------------------
