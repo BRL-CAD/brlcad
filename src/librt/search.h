@@ -57,6 +57,7 @@
  *
  */
 
+#include "regex.h"
 #include "raytrace.h"
 
 /**
