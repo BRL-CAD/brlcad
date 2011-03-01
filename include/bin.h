@@ -41,6 +41,13 @@
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  ifndef _WINSOCKAPI_
 #    include <winsock2.h> /* link against ws2_32 library */
+
+#   undef rad1 /* Win32 radio button 1 */
+#   undef rad2 /* Win32 radio button 2 */
+#   undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
+#   undef IN
+#   undef OUT
+
 #  endif
 #else
 #  include <sys/types.h>
