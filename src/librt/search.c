@@ -1916,7 +1916,7 @@ or_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)           /* pl
  * process the command line and create a "plan" corresponding to the
  * command arguments.
  */
-struct db_plan_t *
+void *
 db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results) {
     struct db_plan_t *plan, *tail, *new;
 
@@ -1998,7 +1998,7 @@ db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp, struct d
     if (below_squish(plan, &plan) != BRLCAD_OK) return NULL;                /* below's */
     if (not_squish(plan, &plan) != BRLCAD_OK) return NULL;                /* !'s */
     if (or_squish(plan, &plan) != BRLCAD_OK) return NULL;                 /* -o's */
-    return plan;
+    return (void *)plan;
 }
 
 
@@ -2013,7 +2013,7 @@ find_execute_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_l
 
 
 struct db_full_path_list *
-db_search_execute(struct db_plan_t *searchplan,        /* search plan */
+db_search_execute(void *searchplan,        /* search plan */
 	     struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
 	     struct db_i *dbip,
 	     struct rt_wdb *wdbp)
@@ -2023,7 +2023,7 @@ db_search_execute(struct db_plan_t *searchplan,        /* search plan */
     BU_GETSTRUCT(searchresults, db_full_path_list);
     BU_LIST_INIT(&(searchresults->l));
     while (BU_LIST_WHILE(currentpath, db_full_path_list, &(pathnames->l))) {
-	    db_fullpath_traverse(dbip, wdbp, searchresults, currentpath->path, find_execute_plans, find_execute_plans, wdbp->wdb_resp, searchplan);
+	    db_fullpath_traverse(dbip, wdbp, searchresults, currentpath->path, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)searchplan);
 	    db_free_full_path(currentpath->path);
 	    BU_LIST_DEQUEUE((struct bu_list *)currentpath);
 	    bu_free(currentpath, "free db_full_path_list entry");

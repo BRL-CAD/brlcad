@@ -91,18 +91,16 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <time.h>
-#include <regex.h>
 #include "bio.h"
 
 #include "cmd.h"
 
 #include "./ged_private.h"
-#include "../librt/search.h"
 
 int
 ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 {
-    struct db_plan_t *dbplan;
+    void *dbplan;
     int i;
     int plan_argv, plan_found;
     struct directory *dp;

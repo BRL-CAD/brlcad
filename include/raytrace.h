@@ -2737,6 +2737,53 @@ RT_EXPORT BU_EXTERN(int db_full_path_search,
 		    (const struct db_full_path *a,
 		     const struct directory *dp));
 
+/**
+ * search the database using a supplied list of filter criteria,
+ * returning a bu_list of db_full_path structs to instances of
+ * objects matching the filter criteria.  Note that this is a
+ * full path tree search of the entire database, not just the toplevel
+ * objects that would be reported by the ls command.  E.g., a
+ * database with the following objects:
+ *
+ *       r1            r2
+ *       |             |
+ *       s1            s1
+ *
+ * would, if searched from the top level for s1,  return both
+ *
+ *  r1/s1
+ *
+ * and
+ *  
+ *  r2/s1
+ *
+ * instead of just s1.
+ *
+ * If a command wishes to return only unique objects and not
+ * all instances of an object matching the criteria, post-processing
+ * will be needed.
+ *
+ */
+
+/* search.c */
+
+struct db_full_path_list {
+	struct bu_list l;
+	struct db_full_path *path;
+};
+
+RT_EXPORT BU_EXTERN(void *db_search_formplan,
+		(char **argv,
+		 struct db_i *dbip,
+		 struct rt_wdb *wdbp,
+		 struct db_full_path_list *results));
+
+
+RT_EXPORT BU_EXTERN(struct db_full_path_list *db_search_execute,
+		(void *searchplan,
+		 struct db_full_path_list *searchresults,
+		 struct db_i *dbip,
+		 struct rt_wdb *wdbp));
 
 /* db_open.c */
 RT_EXPORT BU_EXTERN(void db_sync,

@@ -60,34 +60,6 @@
 #include "regex.h"
 #include "raytrace.h"
 
-/**
- * search the database using a supplied list of filter criteria,
- * returning a bu_list of db_full_path structs to instances of
- * objects matching the filter criteria.  Note that this is a
- * full path tree search of the entire database, not just the toplevel
- * objects that would be reported by the ls command.  E.g., a
- * database with the following objects:
- *
- *       r1            r2
- *       |             |
- *       s1            s1
- *
- * would, if searched from the top level for s1,  return both
- *
- *  r1/s1
- *
- * and
- *  
- *  r2/s1
- *
- * instead of just s1.
- *
- * If a command wishes to return only unique objects and not
- * all instances of an object matching the criteria, post-processing
- * will be needed.
- *
- */
-
 /* search node type */
 enum db_search_ntype {
 	N_ABOVE = 1,                        /* must start > 0 */
@@ -96,11 +68,6 @@ enum db_search_ntype {
 	N_FLAGS, N_INAME, N_IREGEX, N_LS, N_MAXDEPTH,
 	N_MINDEPTH, N_NAME, N_NNODES, N_NOT, N_OK, N_OPENPAREN, N_OR, N_PATH,
 	N_PRINT, N_PRUNE, N_REGEX, N_STDATTR, N_TYPE
-};
-
-struct db_full_path_list {
-	struct bu_list l;
-	struct db_full_path *path;
 };
 
 struct db_plan_t {
@@ -142,23 +109,6 @@ struct db_plan_t {
 	int _min_data;			/* tree depth */
     } p_un;
 };
-
-
-RT_EXPORT BU_EXTERN(struct db_plan_t *db_search_formplan,
-		(char **argv,
-		 struct db_i *dbip,
-		 struct rt_wdb *wdbp,
-		 struct db_full_path_list *results));
-
-
-RT_EXPORT BU_EXTERN(struct db_full_path_list *db_search_execute,
-		(struct db_plan_t *searchplan,
-		 struct db_full_path_list *searchresults,
-		 struct db_i *dbip,
-		 struct rt_wdb *wdbp));
-
-/*Content between this line and the raytrace.h include should be
- *moved to raytrace.h after the next release.*/
 
 #define	a_data		p_un._a_data
 #define	c_data		p_un._c_data
