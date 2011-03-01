@@ -424,6 +424,8 @@ struct bu_structparse set_parse[] = {
     {"%f",	1, "perspective",		bu_byteoffset(rt_perspective),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "angle",			bu_byteoffset(rt_perspective),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 #if !defined(_WIN32) || defined(__CYGWIN__)
+    /* FIXME: need to test compilation on windows, these shouldn't need to be be commented out */
+    {"%d",	1, "rt_bot_mintie",		bu_byteoffset(rt_bot_mintie),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "rt_bot_minpieces",		bu_byteoffset(rt_bot_minpieces),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "rt_bot_tri_per_piece",	bu_byteoffset(rt_bot_tri_per_piece),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "rt_cline_radius",		bu_byteoffset(rt_cline_radius),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
