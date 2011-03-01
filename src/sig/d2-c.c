@@ -61,6 +61,7 @@ main(int argc, char *argv[])
     double *obufp;
     FILE *rfp, *ifp;
     double real[1024], imag[1024];
+    size_t ret;
 
     if (argc != 3 || isatty(fileno(stdout))) {
 	bu_exit(1, "Usage: d2-c real_file imag_file > complex (- stdin, . skip)\n");
@@ -87,7 +88,9 @@ main(int argc, char *argv[])
 	    *obufp++ = real[i];
 	    *obufp++ = imag[i];
 	}
-	fwrite(obuf, sizeof(double), num*2, stdout);
+	ret = fwrite(obuf, sizeof(double), num*2, stdout);
+	if (ret != (size_t)(num*2))
+	    perror("fwrite");
     }
     return 0;
 }

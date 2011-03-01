@@ -47,6 +47,7 @@ double	*obp;
 int main(int argc, char **argv)
 {
     int	i, num, onum;
+    size_t ret;
 
     if ( argc <= 1 || isatty(fileno(stdin)) ) {
 	bu_exit(1, "%s", usage );
@@ -102,7 +103,9 @@ int main(int argc, char **argv)
 		onum++;
 	    }
 	}
-	fwrite( &obuf[0], sizeof( obuf[0] ), onum, stdout );
+	ret = fwrite( &obuf[0], sizeof( obuf[0] ), onum, stdout );
+	if (ret != (size_t)onum)
+	    perror("fwrite");
     }
     return 0;
 }

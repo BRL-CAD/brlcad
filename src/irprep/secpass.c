@@ -167,6 +167,7 @@ int main(int argc, char **argv)
     int ifire;		/*  Number of sets of rays to be fired, 0=>  */
 			/*  fire from 3 orthogonal postions, 1=>fire  */
 			/*  from 1 position.  */
+    int ret;
 
     /*  Check to see if arguments implimented correctly.  */
     if (argc < 2 || argv[1] == NULL || argv[2] == NULL)
@@ -182,13 +183,17 @@ int main(int argc, char **argv)
 	(void)fprintf(stdout, "Write output to standard out (0) or a file(1) ");
 	(void)fprintf(stdout, "not at all (2)?  ");
 	(void)fflush(stdout);
-	(void)scanf("%d", &iwrite);
+	ret = scanf("%d", &iwrite);
+	if (ret == 0)
+	    perror("scanf");
 	if ((iwrite != 0) && (iwrite != 1)) iwrite=2;
 	if (iwrite == 1)
 	{
 	    (void)fprintf(stdout, "Enter name of output file (15 char max).  ");
 	    (void)fflush(stdout);
-	    (void)scanf("%15s", filename);
+	    ret = scanf("%15s", filename);
+	    if (ret == 0)
+		perror("scanf");
 	    fp3 = fopen(filename, "wb");
 	}
 
@@ -196,14 +201,18 @@ int main(int argc, char **argv)
 	(void)fprintf(stdout, "Enter name of file that has second pass ");
 	(void)fprintf(stdout, "information\nin it (15 char max).  ");
 	(void)fflush(stdout);
-	(void)scanf("%15s", spfile);
+	ret = scanf("%15s", spfile);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Ask for type of output file to be generated.  */
 	(void)printf("Enter type of output file to be generated.\n");
 	(void)printf("\t 0 - PRISM File\n");
 	(void)printf("\t 1 - Generic File\n");
 	(void)fflush(stdout);
-	(void)scanf("%d", &typeout);
+	ret = scanf("%d", &typeout);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Read name of file to write conductivity information  */
 	/*  to for use in PRISM.  */
@@ -212,7 +221,9 @@ int main(int argc, char **argv)
 	    (void)fprintf(stdout, "Enter name of file to be created for PRISM ");
 	    (void)fprintf(stdout, "conductivity\ninformation (15 char max).  ");
 	    (void)fflush(stdout);
-	    (void)scanf("%15s", confile);
+	    ret = scanf("%15s", confile);
+	    if (ret == 0)
+		perror("scanf");
 
 	    /*  Find which release of PRISM is being used.  The format  */
 	    /*  for writing region numbers is I3 for PRISM 2.0 & I6 for  */
@@ -221,7 +232,9 @@ int main(int argc, char **argv)
 	    (void)printf("Which release of PRISM is being used, 2.0 (2) ");
 	    (void)printf("or 3.0 (3)?  ");
 	    (void)fflush(stdout);
-	    (void)scanf("%d", &prmrel);
+	    ret = scanf("%d", &prmrel);
+	    if (ret == 0)
+		perror("scanf");
 	    if (prmrel != 3) prmrel = 2;
 	}
 
@@ -231,7 +244,9 @@ int main(int argc, char **argv)
 	    (void)printf("Enter name of generic file to be created (15 char ");
 	    (void)printf("max).  ");
 	    (void)fflush(stdout);
-	    (void)scanf("%15s", genfile);
+	    ret = scanf("%15s", genfile);
+	    if (ret == 0)
+		perror("scanf");
 	}
 
 	/*  Which calculated length should be used when writing to  */
@@ -244,33 +259,43 @@ int main(int argc, char **argv)
 	(void)fprintf(stdout, "\t3 - minimum length\n");
 	(void)fprintf(stdout, "\t4 - maximum length\n");
 	(void)fflush(stdout);
-	(void)scanf("%d", &itype);
+	ret = scanf("%d", &itype);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Read name of file to write conductivity information to  */
 	/*  in table format.  */
 	(void)fprintf(stdout, "Enter name of file to be created for ");
 	(void)fprintf(stdout, "conductivity\ntable (15 char max).  ");
 	(void)fflush(stdout);
-	(void)scanf("%15s", tblfile);
+	ret = scanf("%15s", tblfile);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Read name of material file that contains thermal  */
 	/*  conductivity information.  */
 	(void)fprintf(stdout, "Enter name of material file (15 char max).  ");
 	(void)fflush(stdout);
-	(void)scanf("%15s", filemat);
+	ret = scanf("%15s", filemat);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Read name of error file.  */
 	(void)fprintf(stdout, "Enter name of error file to be created ");
 	(void)fprintf(stdout, "(15 char max).  ");
 	(void)fflush(stdout);
-	(void)scanf("%15s", fileerr);
+	ret = scanf("%15s", fileerr);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Choose whether 3 orthogonal sets of rays are to be fired  */
 	/*  or 1 set of rays is to be fired.  */
 	(void)printf("Should there be 3 sets of orhogonal rays fired ");
 	(void)printf("(0) or 1 set (1)?\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%d", &ifire);
+	ret = scanf("%d", &ifire);
+	if (ret == 0)
+	    perror("scanf");
 	if (ifire != 0) ifire = 1;
 	if (ifire == 0)
 	{
@@ -403,7 +428,9 @@ int main(int argc, char **argv)
 	(void)fflush(stdout);
 
 	/*  Read number of regions in file.  */
-	(void)fscanf(fp, "%d\n", &numreg);
+	ret = fscanf(fp, "%d\n", &numreg);
+	if (ret == 0)
+	    perror("fscanf");
 	(void)fprintf(stdout, "The number of regions read was %d\n", numreg);
 	(void)fflush(stdout);
 
@@ -417,9 +444,12 @@ int main(int argc, char **argv)
 	/*  Read all information in file.  */
 	for (i=0; i<numreg; i++)
 	{
-	    (void)fscanf(fp, "%*d%le%le%le%d\n", &cond[i].centroid[0],
+	    ret = fscanf(fp, "%*d%le%le%le%d\n", &cond[i].centroid[0],
 			 &cond[i].centroid[1],
 			 &cond[i].centroid[2], &cond[i].mat);
+	    if (ret == 0)
+		perror("fscanf");
+	    
 	    /*
 	     *	   (void)fprintf(stdout, "reg=%8d, centroid:  %10.0f, %10.0f, %10.0f\n",
 	     *		i, cond[i].centroid[0], cond[i].centroid[1], cond[i].centroid[2]);
@@ -428,7 +458,9 @@ int main(int argc, char **argv)
 
 	    for (j=0; j<numreg; j++)
 	    {
-		(void)fscanf(fp, "%*d%le\n", &cond[i].shrarea[j]);
+		ret = fscanf(fp, "%*d%le\n", &cond[i].shrarea[j]);
+		if (ret == 0)
+		    perror("scanf");
 		/*
 		 *		(void)fprintf(stdout, "\treg=%8d, area=%10.0f\n",
 		 *		   j, cond[i].shrarea[j]);
@@ -525,7 +557,7 @@ int main(int argc, char **argv)
 	/*  User enters grid spacing.  All units are in mm.  */
 	(void)fprintf(stdout, "Enter spacing (mm) between fired rays.  ");
 	(void)fflush(stdout);
-	(void)scanf("%lf", &gridspace);
+	ret = scanf("%lf", &gridspace);
 
 	(void)fprintf(stdout, "\ngrid spacing:  %f\n", gridspace);
 	(void)fflush(stdout);

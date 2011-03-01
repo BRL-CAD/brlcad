@@ -54,12 +54,15 @@ void
 keep(int num)
 {
     int	n, m;
+    size_t ret;
 
     while ( num > 0 ) {
 	n = num > 1024 ? 1024 : num;
 	if ( (m = fread( buf, sizeof(*buf), n, stdin )) == 0 )
 	    exit( 0 );
-	fwrite( buf, sizeof(*buf), m, stdout );
+	ret = fwrite( buf, sizeof(*buf), m, stdout );
+	if (ret != (size_t)m)
+	    perror("fwrite");
 	num -= n;
     }
 }

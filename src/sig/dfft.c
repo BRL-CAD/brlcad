@@ -129,6 +129,7 @@ fftdisp(double *dat, int N)
 {
     int i, j;
     double mags[MAXOUT];
+    size_t ret;
 
     /* Periodogram scaling */
     for (i = 0; i < N; i++)
@@ -194,7 +195,9 @@ fftdisp(double *dat, int N)
 	if (value < 0) value = 0;
 	else if (value > 1.0) value = 1.0;
 #endif
-	fwrite(mags, sizeof(*mags), N/2, stdout);
+	ret = fwrite(mags, sizeof(*mags), N/2, stdout);
+	if (ret != (size_t)(N/2))
+	    perror("fwrite");
     }
 }
 
@@ -241,6 +244,7 @@ fftphase(double *dat, int N)
 {
     int i;
     double value, out[MAXFFT];
+    size_t ret;
 
     for (i = 0; i < N; i++)
 	dat[i] /= (double)N;
@@ -252,7 +256,9 @@ fftphase(double *dat, int N)
     /* DC */
     out[i] = 0;
 
-    fwrite(out, sizeof(*out), N/2, stdout);
+    ret = fwrite(out, sizeof(*out), N/2, stdout);
+    if (ret != (size_t)(N/2))
+	perror("fwrite");
 }
 
 /*

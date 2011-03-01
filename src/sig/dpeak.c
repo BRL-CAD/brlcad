@@ -96,6 +96,7 @@ dumpmax(void)
     int	i, n;
     struct	peaks max;
     double	d;
+    size_t ret;
 
     for (n = 0; n < NUMPEAKS; n++) {
 	max.value = -1000000;
@@ -110,7 +111,9 @@ dumpmax(void)
   printf("Sample %3d: %f\n", max.sample, max.value);
 */
 	d = max.sample;
-	fwrite(&d, sizeof(d), 1, stdout);
+	ret = fwrite(&d, sizeof(d), 1, stdout);
+	if (ret != 1)
+	    perror("fwrite");
     }
 }
 

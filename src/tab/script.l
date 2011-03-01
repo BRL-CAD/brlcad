@@ -61,6 +61,11 @@
 #  define YY_MAIN 0
 #endif
 
+/* flex is being stupid.  need to check fwrite() return value to quell warning. */
+#ifndef ECHO
+#  define ECHO  if (fwrite( yytext, yyleng, 1, yyout ) != 1) perror("fwrite")
+#endif
+
 %}
 
 D	[0-9]

@@ -49,6 +49,7 @@ int main(int argc, char **argv)
     double	scale;
     double	value;
     int	clip_high, clip_low;
+    size_t ret;
 
     scale = 1.0;
 
@@ -79,7 +80,9 @@ int main(int argc, char **argv)
 		obuf[i] = (unsigned short)value;
 	}
 
-	fwrite( &obuf[0], sizeof( obuf[0] ), num, stdout );
+	ret = fwrite( &obuf[0], sizeof( obuf[0] ), num, stdout );
+	if (ret != (size_t)num)
+	    perror("fwrite");
     }
 
     if ( clip_low != 0 || clip_high != 0 )

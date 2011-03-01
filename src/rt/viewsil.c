@@ -125,9 +125,13 @@ view_pixel(struct application *UNUSED(ap))
 void
 view_eol(struct application *UNUSED(ap))
 {
+    size_t ret;
     bu_semaphore_acquire( BU_SEM_SYSCALL );
-    if ( outfp != NULL )
-	fwrite( scanbuf, 1, width, outfp );
+    if ( outfp != NULL ) {
+	ret = fwrite( scanbuf, 1, width, outfp );
+	if (ret < (size_t)width)
+	    perror("fwrite");
+    }
 #if 0
     else if ( fbp != FBIO_NULL )
 	fb_write( fbp, 0, ap->a_y, scanbuf, width );

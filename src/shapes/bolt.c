@@ -63,6 +63,7 @@ main(int argc, char **argv)
 
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
+    int ret;
 
     /* Zero all dimnsions of bolt. */
     iopt = 0;
@@ -110,17 +111,23 @@ main(int argc, char **argv)
 	(void)printf("\t3 - bolt head, washer, & stem\n");
 	(void)printf("\t4 - bolt head & stem\n");
 	(void)fflush(stdout);
-	(void)scanf("%d", &iopt);
+	ret = scanf("%d", &iopt);
+	if (ret == 0)
+	    perror("scanf");
 
 	/* Get file name of mged file to be created. */
 	(void)printf("Enter name of mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%26s", filemged);
+	ret = scanf("%26s", filemged);
+	if (ret == 0)
+	    perror("scanf");
 
 	/* Find the number of bolts to be created (<=26). */
 	(void)printf("Enter the number of bolts to be created (26 max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%d", &numblt);
+	ret = scanf("%d", &numblt);
+	if (ret == 0)
+	    perror("scanf");
 	if (numblt > 26) numblt = 26;
 
 	/* Find dimensions of the bolt. */
@@ -128,18 +135,25 @@ main(int argc, char **argv)
 	(void)printf("Enter diameter (flat edge to flat edge) & height of ");
 	(void)printf("bolt head.\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%lf %lf", &hd, &hh);
+	ret = scanf("%lf %lf", &hd, &hh);
+	if (ret == 0)
+	    perror("scanf");
+
 	/* Find dimensions of washer if necessary. */
 	if ((iopt == 2) || (iopt == 3)) {
 	    (void)printf("Enter diameter & height of washer.\n\t");
 	    (void)fflush(stdout);
-	    (void)scanf("%lf %lf", &wd, &wh);
+	    ret = scanf("%lf %lf", &wd, &wh);
+	    if (ret == 0)
+		perror("scanf");
 	}
 	/* Find dimensions of bolt stem if necessary. */
 	if ((iopt == 3) || (iopt == 4)) {
 	    (void)printf("Enter diameter & height of bolt stem.\n\t");
 	    (void)fflush(stdout);
-	    (void)scanf("%lf %lf", &sd, &sh);
+	    ret = scanf("%lf %lf", &sd, &sh);
+	    if (ret == 0)
+		perror("scanf");
 	}
 
     }							/* END # 1 */

@@ -79,6 +79,7 @@ Usage: dwin [options] [width (1024)] [step (width)] [start]\n\
 int main(int argc, char **argv)
 {
     int	L, step;
+    size_t ret;
 
     if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
 	bu_exit(1, "%s", usage );
@@ -177,10 +178,12 @@ int main(int argc, char **argv)
 		biaswin( temp, L ); /* Bias window */
 	    else
 		coswin( temp, L, 0.80 ); /* 80% cosine window */
-	    fwrite( temp, sizeof(*temp), L, stdout );
+	    ret = fwrite( temp, sizeof(*temp), L, stdout );
 	} else {
-	    fwrite( &buf[buf_index], sizeof(*buf), L, stdout );
+	    ret = fwrite( &buf[buf_index], sizeof(*buf), L, stdout );
 	}
+	if (ret != (size_t)L)
+	    perror("fwrite");
 
 	/* Bump out pointers */
 	xform_start += step;
@@ -200,10 +203,13 @@ void
 seek_sample(int n)
 {
     double	foo;
+    size_t ret;
 
     fprintf(stderr, "seeking sample %d\n", n );
     while ( input_sample < n ) {
-	fread( &foo, sizeof(foo), 1, stdin );
+	ret = fread( &foo, sizeof(foo), 1, stdin );
+	if (ret != 1)
+	    perror("fread");
 	input_sample++;
     }
 }

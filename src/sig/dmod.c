@@ -134,6 +134,7 @@ int main(int argc, char **argv)
 #endif
     double	arg;
     int j;
+    size_t ret;
 
     if ( !get_args( argc, argv ) || isatty(fileno(infp))
 	 || isatty(fileno(stdout)) ) {
@@ -177,7 +178,9 @@ int main(int argc, char **argv)
 		    break;
 	    }
 	}
-	fwrite( buf, sizeof(*buf), n, stdout );
+	ret = fwrite( buf, sizeof(*buf), n, stdout );
+	if (ret != (size_t)n)
+	    perror("fwrite");
     }
 
     return 0;

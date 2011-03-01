@@ -3079,15 +3079,22 @@ X24_handle_event(FBIO *ifp, XEvent *event)
 	case ButtonPress:
 	    {
 		int button = (int) event->xbutton.button;
+
+
 		if (button == Button1) {
 		    /* Check for single button mouse remap.
 		     * ctrl-1 => 2
 		     * meta-1 => 3
+		     * cmdkey => 3
 		     */
-		    if (event->xbutton.state & ControlMask)
+		    if (event->xbutton.state & ControlMask) {
 			button = Button2;
-		    else if (event->xbutton.state & Mod1Mask)
+		    } else if (event->xbutton.state & Mod1Mask) {
 			button = Button3;
+		    } else if (event->xbutton.state & Mod2Mask) {
+			button = Button3;
+		    }
+
 		}
 
 		switch (button) {

@@ -41,6 +41,7 @@ int main(int argc, char **argv)
 {
     double	d;
     int	i;
+    size_t ret;
 
     if ( isatty(fileno(stdout)) ) {
 	bu_exit(1, "Usage: a-d [values] < ascii > doubles\n");
@@ -50,7 +51,9 @@ int main(int argc, char **argv)
 	/* get them from the command line */
 	for ( i = 1; i < argc; i++ ) {
 	    d = atof( argv[i] );
-	    fwrite( &d, sizeof(d), 1, stdout );
+	    ret = fwrite( &d, sizeof(d), 1, stdout );
+	    if (ret != 1)
+		perror("fwrite");
 	}
     } else {
 	/* get them from stdin */
@@ -76,7 +79,9 @@ int main(int argc, char **argv)
 
 		if ( scanf("%lf", &d) == 1 ) {
 #endif
-		    fwrite( &d, sizeof(d), 1, stdout );
+		    ret = fwrite( &d, sizeof(d), 1, stdout );
+		    if (ret != 1)
+			perror("fwrite");
 		}
 		else if (feof(stdin))
 		    bu_exit(0, NULL);

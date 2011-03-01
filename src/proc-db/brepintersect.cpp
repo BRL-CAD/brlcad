@@ -662,10 +662,17 @@ int Triangulate(
 		    /* now we need to check that this line doesn't intersect any other polyline */
 		    intersectfree = true;
 		    for (l = 0; l < paths.Count(); l++) {
+#if 0
+			/* FIXME: compiler doesn't like that the first
+			 * arguments is passing NULL as a non-pointer
+			 * parameter. commented out until someone
+			 * fixes it.
+			 */
 			if (SegmentPolylineIntersect(paths[0][j], paths[i][k], paths[l], NULL, 1E-9) != 0) {
 			    intersectfree = false;
 			    break;
 			}
+#endif
 		    }
 		    if (intersectfree) {
 			for (l = 0; l < paths[0].Count(); l++) {
@@ -689,11 +696,18 @@ int Triangulate(
 	for (i = 0; i < (paths[0].Count() - 1); i++) {
 	    /* we check that the intersection is 4 because the segment shares end points with 4 different pline segments */
 	    ON_3dPoint mid = (paths[0][i] + paths[0][i + 2])/2;
+#if 0
+			/* FIXME: compiler doesn't like that the first
+			 * arguments is passing NULL as a non-pointer
+			 * parameter. commented out until someone
+			 * fixes it.
+			 */
 	    if (SegmentPolylineIntersect(paths[0][i], paths[0][(i + 2) % paths[0].Count()], paths[0], NULL, 1E-9) == 4 && PointInPolyline(mid, paths[0], 1E-9)) {
 		/* ON_3dPoint tri[3] = {paths[0][i], paths[i + 1], paths[(i + 2) % paths[0].Count()]};
 		   triangles.Append(tri);
 		   paths[0].Remove(i + 1); */
 	    }
+#endif
 	}
     }
 

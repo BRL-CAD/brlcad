@@ -81,6 +81,12 @@ static int first_token = 1;
 char previous_linebuffer[YYLMAX+1] = {0};
 char linebuffer[YYLMAX+1] = {0};
 
+/* flex is being stupid.  need to check fwrite() return value to quell warning. */
+#ifndef ECHO
+#  define ECHO  if (fwrite( yytext, yyleng, 1, yyout ) != 1) perror("fwrite")
+#endif
+
+
 %}
 
 %s LINE

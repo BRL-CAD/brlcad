@@ -57,16 +57,6 @@ static void	init_Lgts(void);
 void		exit_Neatly(int status);
 int		key_Frame(void);
 
-static int
-substr(char *str, char *pattern)
-{
-    if ( *str == '\0' )
-	return	0;
-    if ( *str != *pattern || strncmp( str, pattern, strlen( pattern ) ) )
-	return	substr( str+1, pattern );
-    return	1;
-}
-
 /*	m a i n ( )							*/
 int
 main(int argc, char **argv)

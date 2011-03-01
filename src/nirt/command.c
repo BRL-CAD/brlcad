@@ -139,6 +139,7 @@ az_el(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 void
 sh_esc(char *buffer)
 {
+    int ret;
     static char *shell = "";
     static char *last_cmd = "";
 
@@ -147,9 +148,13 @@ sh_esc(char *buffer)
     }
 
     if (*buffer == '!') {
-	(void) system(last_cmd);
+	ret = system(last_cmd);
+	if (ret == -1)
+	    perror("system");
     } else if (*buffer) {
-	(void) system(buffer);
+	ret = system(buffer);
+	if (ret == -1)
+	    perror("system");
 	last_cmd = buffer;
     } else {
 	if ((*shell == '\0') && (shell = getenv("SHELL")) == 0) {
@@ -159,7 +164,9 @@ sh_esc(char *buffer)
 	    shell = "cmd.exe";
 #endif
 	}
-	(void) system(shell);
+	ret = system(shell);
+	if (ret == -1)
+	    perror("system");
     }
 }
 

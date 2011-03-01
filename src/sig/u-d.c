@@ -46,6 +46,7 @@ int main(int argc, char **argv)
 {
     int	i, num;
     double	scale;
+    size_t ret;
 
     scale = 1.0;
 
@@ -69,7 +70,9 @@ int main(int argc, char **argv)
 	    for ( i = 0; i < num; i++ )
 		obuf[i] = (double)ibuf[i] * scale;
 	}
-	fwrite( &obuf[0], sizeof( obuf[0] ), num, stdout );
+	ret = fwrite( &obuf[0], sizeof( obuf[0] ), num, stdout );
+	if (ret != (size_t)num)
+	    perror("fwrite");
     }
 
     return 0;

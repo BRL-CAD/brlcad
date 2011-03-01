@@ -21,6 +21,7 @@ file(WRITE ../../../../rt^3/include/brlcad/brlcadversion.h
 # for all targets
 include_directories(
     ../../../include
+    ../../../src/other/libregex
     ../../../src/other/tcl/generic
 )
 

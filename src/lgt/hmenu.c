@@ -88,32 +88,6 @@ struct nmllist {
     HMllist	*next;
 };
 
-static void
-prnt_HMitem(HMitem *itemp)
-{
-    if ( itemp->text == NULL )
-	return;
-    (void) fprintf( stderr, "text=\"%s\"\n", itemp->text );
-    (void) fprintf( stderr, "help=\"%s\"\n", itemp->help == NULL ? "(null)" : itemp->help );
-    (void) fprintf( stderr, "next=0x%lx\n", (unsigned long int)itemp->next );
-#ifndef sgi
-    (void) fprintf( stderr, "dfn=0x%lx\n", (unsigned long int)itemp->dfn );
-    (void) fprintf( stderr, "bfn=0x%lx\n", (unsigned long int)itemp->bfn );
-#endif
-    (void) fprintf( stderr, "hfn=0x%lx\n", (unsigned long int)itemp->hfn );
-    (void) fprintf( stderr, "data=%ld\n--\n", itemp->data );
-    return;
-}
-
-static void
-prnt_HMllist(HMllist *listp)
-{
-    if ( listp == (HMllist *) 0 )
-	return;
-    prnt_HMitem( listp->itemp );
-    prnt_HMllist( listp->next );
-    return;
-}
 
 static void
 free_HMitems(HMitem *itemp)

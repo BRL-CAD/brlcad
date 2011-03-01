@@ -4,6 +4,7 @@ set(LIBGCV_SOURCES
 )
 
 include_directories(
+	 ${REGEX_INCLUDE_DIR}
     ${TCL_INCLUDE_DIRS}
 )
 

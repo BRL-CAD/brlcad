@@ -1539,7 +1539,9 @@ frame_is_done(struct frame *fr)
 	snprintf(cmd, len, "%s %s %ld", frame_script, fr->fr_filename,
 		 fr->fr_number);
 	if (rem_debug) bu_log("%s %s\n", stamp(), cmd);
-	(void) system(cmd);
+	len = system(cmd);
+	if (len < 0)
+	    perror("system");
 	(void) free(cmd);
     }
 

@@ -130,6 +130,7 @@ int main(int argc, char **argv)
     double alpha, beta;	/*  Angles for rotation (rad).  */
     double calpha, salpha;	/*  Cosine & sine of alpha.  */
     double cbeta, sbeta;	/*  Cosine & sine of beta.  */
+    int ret;
 
     /*  Check to see if arguments implemented correctly.  */
     if (argc < 3 || argv[1]==NULL || argv[2]==NULL)
@@ -147,41 +148,55 @@ int main(int argc, char **argv)
 	/*  Ask type of temperature file to be used.  */
 	(void)fprintf(stderr, "Type of output file to be read 0=>PRISM, ");
 	(void)fprintf(stderr, "1=>generic.\n\t");
-	(void)scanf("%d", &itype);
+	ret = scanf("%d", &itype);
+	if (ret == 0)
+	    perror("scanf");
 	if (itype != 1) itype = 0;
 
 	if (itype == 0)	/*  Read info about (name & # regions) PRISM file.  */
 	{
 	    (void)fprintf(stderr, "Enter name of the PRISM output ");
 	    (void)fprintf(stderr, "file to be read (%d char max).\n\t", MAXFIL);
-	    (void)scanf("%25s", filetmp); /* MAXFIL */
+	    ret = scanf("%25s", filetmp); /* MAXFIL */
+	    if (ret == 0)
+		perror("scanf");
 
 	    /*  Ask for number of regions.  */
 	    (void)fprintf(stderr, "Enter the number of regions in the PRISM ");
 	    (void)fprintf(stderr, "file, must be more\n");
 	    (void)fprintf(stderr, "than eight (not including the background).\n\t");
-	    (void)scanf("%d", &numreg);
+	    ret = scanf("%d", &numreg);
+	    if (ret == 0)
+		perror("scanf");
 	}
 	else			/*  Read info about (name) generic file.  */
 	{
 	    (void)fprintf(stderr, "Enter name of the generic output file to be ");
 	    (void)fprintf(stderr, "read (%d char max).\n\t", MAXFIL);
-	    (void)scanf("%25s", filetmp); /* MAXFIL */
+	    ret = scanf("%25s", filetmp); /* MAXFIL */
+	    if (ret == 0)
+		perror("scanf");
 	}
 
 	/*  Find name of region # & name file.  */
 	(void)fprintf(stderr, "Enter name of region # & name file to be read ");
 	(void)fprintf(stderr, "(%d char max).\n\t", MAXFIL);
-	(void)scanf("%25s", filernn); /* MAXFIL */
+	ret = scanf("%25s", filernn); /* MAXFIL */
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Find name of output file.  */
 	(void)fprintf(stderr, "Enter name of output file (%d char max).\n\t", MAXFIL);
-	(void)scanf("%25s", fileout); /*MAXFIL */
+	ret = scanf("%25s", fileout); /*MAXFIL */
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Find elasped time to create graphical representation of.  */
 	(void)fprintf(stderr, "Enter the elapsed time to create graphical ");
 	(void)fprintf(stderr, "representation of.\n\t");
-	(void)scanf("%lf", &eltim);
+	ret = scanf("%lf", &eltim);
+	if (ret == 0)
+	    perror("scanf");
 
 	/*  Open generic file and read number of regions if necessary.  */
 	if (itype == 1)
@@ -467,7 +482,9 @@ int main(int argc, char **argv)
 	(void)printf("Radius of bounding sphere:  %f\n", radius);
 	(void)printf("Enter multiplication factor for radius.\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%lf", &multi);
+	ret = scanf("%lf", &multi);
+	if (ret == 0)
+	    perror("scanf");
 	/*  Multiply radius by multiplication factor.  */
 	radius = radius * multi;
 
@@ -486,12 +503,16 @@ int main(int argc, char **argv)
 
 	/*  User enters grid size.  */
 	(void)fprintf(stderr, "Enter grid size.\n\t");
-	(void)scanf("%d", &wide);
+	ret = scanf("%d", &wide);
+	if (ret == 0)
+	    perror("scanf");
 	high = wide;
 
 	/*  User enters azimuth & elevation for viewing.  */
 	(void)fprintf(stderr, "Enter azimuth & elevation.\n\t");
-	(void)scanf("%lf %lf", &az, &el);
+	ret = scanf("%lf %lf", &az, &el);
+	if (ret == 0)
+	    perror("scanf");
 	alpha = az * M_PI / 180.;
 	beta = (-el) * M_PI / 180.;
 	calpha = cos(alpha);
