@@ -73,6 +73,7 @@ main(int ac, char **av)
     float src[3];
     point_t dest;
     point_t xyz;
+    size_t ret;
 
     if (ac > 1)
 	bu_log("Usage: %s\n", av[0]);
@@ -110,7 +111,9 @@ main(int ac, char **av)
 
 	VSCALE(rgb, dest, 255.0);
 
-	fwrite(rgb, 1, 3, stdout);
+	ret = fwrite(rgb, 1, 3, stdout);
+	if (ret != 3)
+	    perror("fwrite");
     }
 
     return 0;
