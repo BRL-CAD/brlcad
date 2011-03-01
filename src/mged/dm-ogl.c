@@ -72,21 +72,21 @@ static void boundFlag_hook();
 static void do_fogHint();
 
 struct bu_structparse Ogl_vparse[] = {
-    {"%d",  1, "depthcue",		Ogl_MV_O(cueing_on),	Ogl_colorchange },
-    {"%d",  1, "zclip",		Ogl_MV_O(zclipping_on),	zclip_hook },
-    {"%d",  1, "zbuffer",		Ogl_MV_O(zbuffer_on),	establish_zbuffer },
-    {"%d",  1, "lighting",		Ogl_MV_O(lighting_on),	establish_lighting },
-    {"%d",  1, "transparency",	Ogl_MV_O(transparency_on), establish_transparency },
-    {"%d",  1, "fastfog",		Ogl_MV_O(fastfog),	do_fogHint },
-    {"%f",  1, "density",		Ogl_MV_O(fogdensity),	dirty_hook },
-    {"%d",  1, "has_zbuf",		Ogl_MV_O(zbuf),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "has_rgb",		Ogl_MV_O(rgb),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "has_doublebuffer",	Ogl_MV_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "depth",		Ogl_MV_O(depth),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "debug",		Ogl_MV_O(debug),	debug_hook },
-    {"%f",  1, "bound",		Ogl_MV_O(bound),	bound_hook },
-    {"%d",  1, "useBound",		Ogl_MV_O(boundFlag),	boundFlag_hook },
-    {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%d",  1, "depthcue",		Ogl_MV_O(cueing_on),	Ogl_colorchange, NULL, NULL },
+    {"%d",  1, "zclip",		Ogl_MV_O(zclipping_on),	zclip_hook, NULL, NULL },
+    {"%d",  1, "zbuffer",		Ogl_MV_O(zbuffer_on),	establish_zbuffer, NULL, NULL },
+    {"%d",  1, "lighting",		Ogl_MV_O(lighting_on),	establish_lighting, NULL, NULL },
+    {"%d",  1, "transparency",	Ogl_MV_O(transparency_on), establish_transparency, NULL, NULL },
+    {"%d",  1, "fastfog",		Ogl_MV_O(fastfog),	do_fogHint, NULL, NULL },
+    {"%f",  1, "density",		Ogl_MV_O(fogdensity),	dirty_hook, NULL, NULL },
+    {"%d",  1, "has_zbuf",		Ogl_MV_O(zbuf),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "has_rgb",		Ogl_MV_O(rgb),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "has_doublebuffer",	Ogl_MV_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "depth",		Ogl_MV_O(depth),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "debug",		Ogl_MV_O(debug),	debug_hook, NULL, NULL },
+    {"%f",  1, "bound",		Ogl_MV_O(bound),	bound_hook, NULL, NULL },
+    {"%d",  1, "useBound",		Ogl_MV_O(boundFlag),	boundFlag_hook, NULL, NULL },
+    {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -157,7 +157,7 @@ Ogl_fb_open()
   This routine is being called from doEvent() to handle Expose events.
 */
 static int
-Ogl_doevent(ClientData clientData,
+Ogl_doevent(ClientData UNUSED(clientData),
 	    XEvent *eventPtr)
 {
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
