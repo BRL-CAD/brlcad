@@ -14,6 +14,7 @@ int main(void) {
   outfpmonth = fopen("${CONFIG_TIME_MONTH_FILE}", "w");
   outfpyear = fopen("${CONFIG_TIME_YEAR_FILE}", "w");
   fprintf(outfpts, "%s", asctime(currenttime));
+  if (currenttime->tm_mday + 1 < 10) fprintf(outfpday, "0");
   fprintf(outfpday, "%d", currenttime->tm_mday);
   if (currenttime->tm_mon + 1 < 10) fprintf(outfpmonth, "0");
   fprintf(outfpmonth, "%d", currenttime->tm_mon + 1);
