@@ -1,4 +1,3 @@
-
 SET(fedex_srcs
 	SdaiAll.cc 
 	SdaiCONFIG_CONTROL_DESIGN.cc 
@@ -388,6 +387,4 @@ include_directories(
 	${TCL_INCLUDE_DIRS}
 )
 
-add_executable(step-g ${stepg_SOURCES})
-target_link_libraries(step-g libwdb librt libbu steputils stepcore stepdai stepeditor ${OPENNURBS_LIBRARY})
-INSTALL(TARGETS step-g RUNTIME DESTINATION bin)
+BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "libwdb librt libbu steputils stepcore stepdai stepeditor ${OPENNURBS_LIBRARY}")
