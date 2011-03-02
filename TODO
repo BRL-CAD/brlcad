@@ -17,8 +17,14 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* de-net bio.h header, create binet.h header
- 
+* unbust nmg (host/net conversion bug)
+
+* test mintie optimization, test performance for release notes
+
+* test search . vs search /
+
+* test red & ted
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------

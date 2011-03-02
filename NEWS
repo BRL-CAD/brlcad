@@ -14,12 +14,28 @@ changes made.  See document footer for additional details.
 --- 2011-03-XX  Release 7.18.4                                     ---
 ----------------------------------------------------------------------
 
+After considerable development, this release marks the integration of
+our high-performance Triangle Intersection Engine (TIE) with BRL-CAD's
+LIBRT raytrace library.  TIE uses specialized acceleration techniques
+for faster raytracing of triangle mesh models.  TIE was experimentally
+developed as part of our Advanced Distributed Ray Tracer (ADRT) tool
+suite, but is now also configurably Integrated with LIBRT (BoT) mesh
+raytracing.  Particularly for BoT models with high polygon counts, the
+optimization is providing performance improvements from 2x-10x faster.
+
+Also included in this release is the development of a new "shp-g"
+geometry importer for Shapefile data.  Shapefiles are a common file
+format for storing geospatial vector data commonly used by geographic
+information systems (GIS) software.  Shapefiles may be imported as 2D
+sketch geometry that can be extruded to a 3D representation.
+
 * added -T bot_mintie BoT optimization options to nirt - Sean Morrison
 * mged command-click zoom binding for one button mice - Sean Morrison
 * removed 'txyz-pl' utility tool in favor of 'xyz-pl' - Sean Morrison
 * new shp-g importer for Esri Shapefile geometry files - Sean Morrison
 * new 'rt_bot_mintie' option for triggering TIE BoTs  - Erik Greenwald
 * integrated optimized TIE BoT raytracing with LIBRT - Erik Greenwald
+
 
 ----------------------------------------------------------------------
 --- 2011-02-09  Release 7.18.2                                     ---

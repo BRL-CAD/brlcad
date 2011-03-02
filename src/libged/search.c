@@ -110,7 +110,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     struct db_full_path_list *entry;
     struct db_full_path_list *new_entry;
     struct db_full_path_list *path_list;
-    struct db_full_path_list *search_results;
+    struct db_full_path_list *search_results = NULL;
     struct bu_ptbl uniq_db_objs;
     /* COPY argv_orig to argv; */
     char **argv = bu_dup_argv(argc, argv_orig);

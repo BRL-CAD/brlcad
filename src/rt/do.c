@@ -993,6 +993,14 @@ do_ae(double azim, double elev)
 	    viewsize *= aspect;
 	}
     }
+
+    /* sanity check: make sure viewsize still isn't zero in case
+     * bounding box is empty, otherwise bn_mat_int() will bomb.
+     */
+    if (viewsize < 0 || ZERO(viewsize)) {
+	viewsize = 2.0; /* arbitrary so Viewrotscale is normal
+    }
+
     Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
     bn_mat_mul(model2view, Viewrotscale, toEye);
     bn_mat_inv(view2model, model2view);
