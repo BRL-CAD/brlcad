@@ -92,8 +92,8 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
 
     tie_prep1((struct tie_s *)bot->tie);
 
-    VMOVE(stp->st_min, tie->amin.v);
-    VMOVE(stp->st_max, tie->amax.v);
+    VMOVE(stp->st_min, tie->amin);
+    VMOVE(stp->st_max, tie->amax);
     VMOVE(stp->st_center, tie->mid);
     stp->st_aradius = tie->radius;
     stp->st_bradius = tie->radius;
