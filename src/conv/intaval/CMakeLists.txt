@@ -11,14 +11,13 @@ add_definitions(
 )
 ENDIF(MSVC)
 
-add_executable(tgf-g
-    read_dra.cpp
+SET(tgf_SRCS
+	 read_dra.cpp
     regtab.cpp
     tgf-g.cpp
     write_brl.cpp
 )
-target_link_libraries(tgf-g libwdb librt libbu)
-INSTALL(TARGETS tgf-g RUNTIME DESTINATION bin)
+BRLCAD_ADDEXEC(tgf-g "${tgf_SRCS}" "libwdb librt libbu")
 
 SET(intaval_ignore_files
 	glob.h
