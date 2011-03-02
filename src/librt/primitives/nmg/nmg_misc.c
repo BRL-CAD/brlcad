@@ -1481,7 +1481,7 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 {
     struct faceuse *fu;
     struct bu_ptbl verts;
-    plane_t old_pl = {0.0, 0.0, 0.0, 0.0};
+    plane_t old_pl = HINIT_ZERO;
     struct face *f;
     struct face_g_plane *fg;
     struct loopuse *lu;
