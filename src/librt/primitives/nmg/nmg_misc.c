@@ -1481,7 +1481,7 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 {
     struct faceuse *fu;
     struct bu_ptbl verts;
-    plane_t old_pl;
+    plane_t old_pl = {0.0, 0.0, 0.0, 0.0};
     struct face *f;
     struct face_g_plane *fg;
     struct loopuse *lu;
@@ -1496,10 +1496,6 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
     int got_dir=0;
     int failed=0;
     int loop_count=0;
-
-    /* initializations to make compiler happy */
-    VSETALL(old_pl, 0.0);
-    old_pl[3] = 0.0; 
 
     fu = fu_in;
     NMG_CK_FACEUSE(fu);
