@@ -120,16 +120,13 @@ tie_kdtree_free_node(struct tie_kdtree_s *node)
 {
     struct tie_kdtree_s *node_aligned = (struct tie_kdtree_s *)((intptr_t)node & ~0x7L);
 
-    if (((intptr_t)(node_aligned->data)) & 0x4)
-    {
-/* Node Data is KDTREE Children, Recurse */
+    if (((intptr_t)(node_aligned->data)) & 0x4) {
+	/* Node Data is KDTREE Children, Recurse */
 	tie_kdtree_free_node(&((struct tie_kdtree_s *)(((intptr_t)(node_aligned->data)) & ~0x7L))[0]);
 	tie_kdtree_free_node(&((struct tie_kdtree_s *)(((intptr_t)(node_aligned->data)) & ~0x7L))[1]);
 	bu_free((void*)((intptr_t)(node_aligned->data) & ~0x7L), "node data");
-    }
-    else
-    {
-/* This node points to a geometry node, free it */
+    } else {
+	/* This node points to a geometry node, free it */
 	bu_free(((struct tie_geom_s *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_list, "node data list");
 	bu_free((void *)((intptr_t)(node_aligned->data) & ~0x7L), "node data");
     }
@@ -140,93 +137,87 @@ tie_kdtree_prep_head(struct tie_s *tie, struct tie_tri_s *tri_list, unsigned int
 {
     struct tie_geom_s *g;
     TIE_3 min, max;
-    vect_t edge;
     unsigned int i;
 
-
-    if (!tri_num)
+    if (tri_num == 0 || tie->kdtree != NULL)
 	return;
 
-/* Insert all triangles into the Head Node */
-    if (!tie->kdtree) {
-	tie->kdtree = (struct tie_kdtree_s *)bu_malloc(sizeof(struct tie_kdtree_s), __FUNCTION__);
-	tie->kdtree->data = (void *)bu_malloc(sizeof(struct tie_geom_s), __FUNCTION__);
-	g = ((struct tie_geom_s *)(tie->kdtree->data));
-	g->tri_num = 0;
+    /* Insert all triangles into the Head Node */
+    tie->kdtree = (struct tie_kdtree_s *)bu_malloc(sizeof(struct tie_kdtree_s), __FUNCTION__);
+    tie->kdtree->data = (void *)bu_malloc(sizeof(struct tie_geom_s), __FUNCTION__);
+    g = ((struct tie_geom_s *)(tie->kdtree->data));
+    g->tri_num = 0;
+    VSETALL(tie->min.v, +INFINITY);
+    VSETALL(tie->max.v, -INFINITY);
 
-	MATH_BBOX(tie->min, tie->max, tri_list[0].data[0], tri_list[0].data[1], tri_list[0].data[2]);
+    g->tri_list = (struct tie_tri_s **)bu_malloc(sizeof(struct tie_tri_s *) * tri_num, __FUNCTION__);
 
-	g->tri_list = (struct tie_tri_s **)bu_malloc(sizeof(struct tie_tri_s *) * tri_num, __FUNCTION__);
+    /* form bounding box of scene */
+    for (i = 0; i < tri_num; i++) {
+	g->tri_list[i] = &tri_list[i];
 
-/* form bounding box of scene */
-	for (i = 0; i < tri_num; i++) {
-	    g->tri_list[i] = &tri_list[i];
-
-/* Get Bounding Box of Triangle */
-	    MATH_BBOX(min, max, tri_list[i].data[0], tri_list[i].data[1], tri_list[i].data[2]);
-/* Check to see if defines a new Max or Min point */
-	    MATH_VEC_MIN(tie->min, min);
-	    MATH_VEC_MAX(tie->max, max);
-	}
-	VADD2SCALE(tie->mid, tie->min.v, tie->max.v, 0.5);
-	VSUB2(edge, tie->max.v, tie->mid);
-	tie->radius = MAGNITUDE(edge);
-
-	((struct tie_geom_s *)(tie->kdtree->data))->tri_num = tri_num;
+	/* Get Bounding Box of Triangle */
+	MATH_BBOX(min, max, tri_list[i].data[0], tri_list[i].data[1], tri_list[i].data[2]);
+	/* Check to see if defines a new Max or Min point */
+	MATH_VEC_MIN(tie->min, min);
+	MATH_VEC_MAX(tie->max, max);
     }
+    VADD2SCALE(tie->mid, tie->min.v, tie->max.v, 0.5);
+    tie->radius = DIST_PT_PT(tie->max.v, tie->mid);
+    g->tri_num = tri_num;
 }
 
 static int
-tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 triverts[3])
+tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 *triverts)
 {
-/*
- * use separating axis theorem to test overlap between triangle and box
- * need to test for overlap in these directions:
- * 1) the {x, y, z}-directions (actually, since we use the AABB of the triangle
- *    we do not even need to test these)
- * 2) normal of the triangle
- * 3) crossproduct(edge from tri, {x, y, z}-directin)
- *    this gives 3x3=9 more tests
- */
+    /*
+     * use separating axis theorem to test overlap between triangle and box
+     * need to test for overlap in these directions:
+     * 1) the {x, y, z}-directions (actually, since we use the AABB of the triangle
+     *    we do not even need to test these)
+     * 2) normal of the triangle
+     * 3) crossproduct(edge from tri, {x, y, z}-directin)
+     *    this gives 3x3=9 more tests
+     */
     TIE_3 v0, v1, v2, normal, e0, e1, e2, fe, p;
     tfloat min, max, d, t, rad;
 
-/* move everything so that the boxcenter is in (0, 0, 0) */
+    /* move everything so that the boxcenter is in (0, 0, 0) */
     VSUB2(v0.v,  triverts[0].v,  (*center).v);
     VSUB2(v1.v,  triverts[1].v,  (*center).v);
     VSUB2(v2.v,  triverts[2].v,  (*center).v);
 
-/*
- * First test overlap in the {x, y, z}-directions
- * find min, max of the triangle each direction, and test for overlap in
- * that direction -- this is equivalent to testing a minimal AABB around
- * the triangle against the AABB
- */
+    /*
+     * First test overlap in the {x, y, z}-directions
+     * find min, max of the triangle each direction, and test for overlap in
+     * that direction -- this is equivalent to testing a minimal AABB around
+     * the triangle against the AABB
+     */
 
-/* test in X-direction */
+    /* test in X-direction */
     MATH_MIN3(min, v0.v[0], v1.v[0], v2.v[0]);
     MATH_MAX3(max, v0.v[0], v1.v[0], v2.v[0]);
     if (min > half_size->v[0] || max < -half_size->v[0])
 	return 0;
 
-/* test in Y-direction */
+    /* test in Y-direction */
     MATH_MIN3(min, v0.v[1], v1.v[1], v2.v[1]);
     MATH_MAX3(max, v0.v[1], v1.v[1], v2.v[1]);
     if (min > half_size->v[1] || max < -half_size->v[1])
 	return 0;
 
-/* test in Z-direction */
+    /* test in Z-direction */
     MATH_MIN3(min, v0.v[2], v1.v[2], v2.v[2]);
     MATH_MAX3(max, v0.v[2], v1.v[2], v2.v[2]);
     if (min > half_size->v[2] || max < -half_size->v[2])
 	return 0;
 
-/* compute triangle edges */
+    /* compute triangle edges */
     VSUB2(e0.v,  v1.v,  v0.v); /* tri edge 0 */
     VSUB2(e1.v,  v2.v,  v1.v); /* tri edge 1 */
     VSUB2(e2.v,  v0.v,  v2.v); /* tri edge 2 */
 
-/* Perform the 9 tests */
+    /* Perform the 9 tests */
     fe.v[0] = fabs(e0.v[0]);
     fe.v[1] = fabs(e0.v[1]);
     fe.v[2] = fabs(e0.v[2]);
@@ -251,10 +242,10 @@ tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 triverts[3])
     AXISTEST_Y1(e2.v[2], e2.v[0], fe.v[2], fe.v[0]);
     AXISTEST_Z12(e2.v[1], e2.v[0], fe.v[1], fe.v[0]);
 
-/*
- * Test if the box intersects the plane of the triangle
- * compute plane equation of triangle: normal*x+d=0
- */
+    /*
+     * Test if the box intersects the plane of the triangle
+     * compute plane equation of triangle: normal*x+d=0
+     */
     VCROSS(normal.v,  e0.v,  e1.v);
     d = VDOT( normal.v,  v0.v);  /* plane eq: normal . x + d = 0 */
 
@@ -267,25 +258,356 @@ tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 triverts[3])
 }
 
 static void
+find_split_fast(struct tie_kdtree_s *node, TIE_3 *cmin, TIE_3 *cmax, unsigned int *split)
+{
+    /**********************
+     * MID-SPLIT ALGORITHM *
+     ***********************/
+    TIE_3 vec, center[2];
+
+    VADD2(center[0].v, cmax[0].v, cmin[0].v);
+    VSCALE(center[0].v, center[0].v, 0.5);
+
+    /* Split along largest Axis to keep node sizes relatively cube-like (Naive) */
+    VSUB2(vec.v, cmax[0].v, cmin[0].v);
+
+    /* Determine the largest Axis */
+    if (vec.v[0] >= vec.v[1] && vec.v[0] >= vec.v[2]) {
+	cmax[0].v[0] = center[0].v[0];
+	cmin[1].v[0] = center[0].v[0];
+	node->axis = center[0].v[0];
+	*split = 0;
+    } else if (vec.v[1] >= vec.v[0] && vec.v[1] >= vec.v[2]) {
+	cmax[0].v[1] = center[0].v[1];
+	cmin[1].v[1] = center[0].v[1];
+	node->axis = center[0].v[1];
+	*split = 1;
+    } else {
+	cmax[0].v[2] = center[0].v[2];
+	cmin[1].v[2] = center[0].v[2];
+	node->axis = center[0].v[2];
+	*split = 2;
+    }
+}
+
+static void
+find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TIE_3 *cmax, unsigned int *split) 
+{
+    /****************************************
+     * Justin's Aggressive KD-Tree Algorithm *
+     *****************************************/
+    unsigned int slice[3][MAX_SLICES+MIN_SLICES], gap[3][2], active, split_slice = 0;
+    unsigned int side[3][MAX_SLICES+MIN_SLICES][2], i, j, d, s, n, k, smax[3], smin, slice_num;
+    tfloat coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end, d_min = 0.0, d_max = 0.0;
+    struct tie_tri_s *tri;
+    struct tie_geom_s *node_gd = (struct tie_geom_s *)(node->data);
+    TIE_3 min, max;
+    TIE_3 center[2], half_size[2]; 
+
+    /*
+     * Calculate number of slices to use as a function of triangle density.
+     * Setting slices as a function of relative node size does not work so well.
+     */
+    /*  slice_num = MIN_SLICES + MAX_SLICES * ((tfloat)node_gd->tri_num / (tfloat)tie->tri_num); */
+    slice_num = 1*node_gd->tri_num > MAX_SLICES ? MAX_SLICES : 1*node_gd->tri_num;
+
+    for (d = 0; d < 3; d++) {
+	/*
+	 * Optimization: Walk each triangle and find the min and max for the given dimension
+	 * of the complete triangle list.  This will tell us what slices we needn't bother
+	 * doing any computations for.
+	 */
+	for (i = 0; i < node_gd->tri_num; i++) {
+	    tri = node_gd->tri_list[i];
+	    /* Set min anx max */
+	    MATH_MIN3(tri->v[0], tri->data[0].v[d], tri->data[1].v[d], tri->data[2].v[d]);
+	    MATH_MAX3(tri->v[1], tri->data[0].v[d], tri->data[1].v[d], tri->data[2].v[d]);
+
+	    /* Clamp to node AABB */
+	    if (tri->v[0] < min.v[d])
+		tri->v[0] = min.v[d];
+	    if (tri->v[1] > max.v[d])
+		tri->v[1] = max.v[d];
+
+	    if (i == 0 || tri->v[0] < d_min)
+		d_min = tri->v[0];
+
+	    if (i == 0 || tri->v[1] > d_max)
+		d_max = tri->v[1];
+	}
+
+	for (k = 0; k < slice_num; k++) {
+	    slice[d][k] = 0;
+	    side[d][k][0] = 0;
+	    side[d][k][1] = 0;
+
+	    /* Left Child */
+	    cmin[0] = min;
+	    cmax[0] = max;
+
+	    /* Right Child */
+	    cmin[1] = min;
+	    cmax[1] = max;
+
+	    /* construct slices so as not to use the boundaries as slices */
+	    coef[d][k] = ((tfloat)k / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
+	    cmax[0].v[d] = min.v[d]*(1.0-coef[d][k]) + max.v[d]*coef[d][k];
+	    cmin[1].v[d] = cmax[0].v[d];
+
+	    /* determine whether to bother with this slice */
+	    if (cmax[0].v[d] < d_min || cmax[0].v[d] > d_max)
+		continue;
+
+	    for (n = 0; n < 2; n++) {
+		VADD2(center[n].v,  cmax[n].v,  cmin[n].v);
+		VSCALE(center[n].v,  center[n].v,  0.5);
+		VSUB2(half_size[n].v,  cmax[n].v,  cmin[n].v);
+		VSCALE(half_size[n].v,  half_size[n].v,  0.5);
+	    }
+
+	    for (i = 0; i < node_gd->tri_num; i++) {
+		/*
+		 * Optimization: If the points for the triangle of the dimension being tested
+		 * do not span the cutting plane, then do not bother with the next test.
+		 */
+		if ((node_gd->tri_list[i]->data[0].v[d] > cmax[0].v[d] &&
+			    node_gd->tri_list[i]->data[1].v[d] > cmax[0].v[d] &&
+			    node_gd->tri_list[i]->data[2].v[d] > cmax[0].v[d])||
+			(node_gd->tri_list[i]->data[0].v[d] < cmax[0].v[d] &&
+			 node_gd->tri_list[i]->data[1].v[d] < cmax[0].v[d] &&
+			 node_gd->tri_list[i]->data[2].v[d] < cmax[0].v[d]))
+		    continue;
+
+		/* Check that the triangle is in both node A and B for it to span. */
+		s = 0;
+		for (n = 0; n < 2; n++) {
+		    /*
+		     * Check to see if any triangle points are inside of the node before
+		     * spending alot of cycles on the full blown triangle box overlap
+		     */
+		    for (j = 0; j < 3; j++)
+			if (node_gd->tri_list[i]->data[j].v[0] > cmin[n].v[0] &&
+				node_gd->tri_list[i]->data[j].v[0] < cmax[n].v[0] &&
+				node_gd->tri_list[i]->data[j].v[1] > cmin[n].v[1] &&
+				node_gd->tri_list[i]->data[j].v[1] < cmax[n].v[1] &&
+				node_gd->tri_list[i]->data[j].v[2] > cmin[n].v[2] &&
+				node_gd->tri_list[i]->data[j].v[2] < cmax[n].v[2]) {
+			    j = 4;
+			}
+
+		    if (j == 5) {
+			s++;
+			side[d][k][n]++;
+		    } else {
+			if (tie_kdtree_tri_box_overlap(&center[n], &half_size[n], node_gd->tri_list[i]->data)) {
+			    s++;
+			    side[d][k][n]++;
+			}
+		    }
+		}
+
+		if (s == 2)
+		    slice[d][k]++;
+	    }
+	}
+    }
+
+    /* Store the max value from each of the 3 Slice arrays */
+    for (d = 0; d < 3; d++) {
+	smax[d] = 0;
+	for (k = 0; k < slice_num; k++)
+	    if (slice[d][k] > smax[d])
+		smax[d] = slice[d][k];
+    }
+
+    /*
+     * To eliminate "empty" areas, build a list of spans where geometric complexity is
+     * less than MIN_SPAN of the overal nodes size and then selecting the splitting plane
+     * the corresponds to the span slice domain nearest the center to bias towards a balanced tree
+     */
+
+    for (d = 0; d < 3; d++) {
+	gap[d][0] = 0;
+	gap[d][1] = 0;
+	beg = 0;
+	end = 0;
+	active = 0;
+
+	for (k = 0; k < slice_num; k++) {
+	    /*      printf("slice[%d][%d]: %d < %d\n", d, k, slice[d][k], (int)(MIN_DENSITY * (tfloat)smax[d])); */
+	    if (slice[d][k] < (unsigned int)(MIN_DENSITY * (tfloat)smax[d])) {
+		if (!active) {
+		    active = 1;
+		    beg = k;
+		    end = k;
+		} else
+		    end = k;
+	    } else {
+		if (active)
+		    if (end - beg > gap[d][1] - gap[d][0]) {
+			gap[d][0] = beg;
+			gap[d][1] = end;
+		    }
+		active = 0;
+	    }
+	}
+
+	if (active)
+	    if (end - beg > gap[d][1] - gap[d][0]) {
+		gap[d][0] = beg;
+		gap[d][1] = end;
+	    }
+    }
+
+#if 0
+    printf("gap_x: %d->%d = %d\n", gap[0][0], gap[0][1], gap[0][1]-gap[0][0]);
+    printf("gap_y: %d->%d = %d\n", gap[1][0], gap[1][1], gap[1][1]-gap[1][0]);
+    printf("gap_z: %d->%d = %d\n", gap[2][0], gap[2][1], gap[2][1]-gap[2][0]);
+#endif
+
+    /*
+     * If there is a gap atleast MIN_SPAN in side wrt the nodes dimension size
+     * then use the nearest edge of the gap to 0.5 as the splitting plane,
+     * Use the the gap with the largest span.
+     * If no gaps are found meeting the criteria then weight the span values to
+     * bias towards a balanced kd-tree and choose the minima of that weighted curve.
+     */
+
+    /* Largest gap */
+    d = 0;
+    if (gap[1][1] - gap[1][0] > gap[d][1] - gap[d][0])
+	d = 1;
+    if (gap[2][1] - gap[2][0] > gap[d][1] - gap[d][0])
+	d = 2;
+
+    /*
+     * Largest gap found must meet MIN_SPAN requirements
+     * There must be atleast 500 triangles or we don't bother.
+     * Lower triangle numbers means there is a higher probability that
+     * triangles lack any sort of coherent structure.
+     */
+    if ((tfloat)(gap[d][1] - gap[d][0]) / (tfloat)slice_num > MIN_SPAN && node_gd->tri_num > 500) {
+	/*  printf("choosing slice[%d]: %d->%d :: %d tris\n", d, gap[d][0], gap[d][1], node_gd->tri_num); */
+	*split = d;
+	if (abs(gap[d][0] - slice_num/2) < abs(gap[d][1] - slice_num/2)) {
+	    /* choose gap[d][0] as splitting plane */
+	    split_coef = ((tfloat)gap[d][0] / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
+	    split_slice = gap[d][0];
+	} else {
+	    /* choose gap[d][1] as splitting plane */
+	    split_coef = ((tfloat)gap[d][1] / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
+	    split_slice = gap[d][1];
+	}
+    } else {
+	/*
+	 * Weight the slices based on a heuristic driven linear scaling function to bias values
+	 * towards the center as more desirable.  This solves the case of a partially linear graph
+	 * to prevent marching in order to determine a desirable splitting point.  If this section of code
+	 * is being executed it's typically because most 'empty space' has now been eliminated
+	 * and/or the resulting geometry is now losing structure as the smaller cells are being
+	 * created, i.e dividing a fraction of a wing-nut instead of an engine-block.
+	 */
+	for (d = 0; d < 3; d++)
+	    for (k = 0; k < slice_num; k++)
+		slice[d][k] += fabs(coef[d][k]-0.5) * SCALE_COEF * smax[d];
+	/*        printf("%.3f %d\n", coef[d][k], slice[d][k]); */
+
+	/* Choose the slice with the graphs minima as the splitting plane. */
+	split = 0;
+	smin = tie->tri_num;
+	split_coef = 0.5;
+	for (d = 0; d < 3; d++) {
+	    for (k = 0; k < slice_num; k++) {
+		if (slice[d][k] < smin) {
+		    split_coef = coef[d][k];
+		    *split = d;
+		    split_slice = k;
+		    smin = slice[d][k];
+		}
+	    }
+	}
+
+	/*
+	 * If the dimension chosen to split along has a value of 0 for the maximum value
+	 * then the geometry was aligned such that it fell undetectable between the slices
+	 * and therefore was not picked up by the marching slices.  In the event that this
+	 * happens, choose to naively split along the middle as this last ditch decision
+	 * will give better results than the algorithm naively picking the first of the
+	 * the slices forming these irregular, short followed by a long box, splits.
+	 */
+	if (smax[*split] == 0) {
+	    split_slice = slice_num / 2;
+	    split_coef = coef[*split][split_slice];
+	}
+    }
+
+    /*
+     * Lastly, after we have supposedly chosen the ideal splitting point,
+     * check to see that the subdivision that is about to take place is worth
+     * doing.  In other words, if one of the children have the same number of triangles
+     * as the parent does then stop.
+     */
+    if (side[*split][split_slice][0] == node_gd->tri_num || side[*split][split_slice][1] == node_gd->tri_num) {
+	tie->stat += node_gd->tri_num;
+	return;
+    }
+
+#if 0
+    if (side[split][split_slice][0] == node_a && side[split][split_slice][1] == node_b) {
+	if (node_gd->tri_num < 10)
+	    return;
+	/*      printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]); */
+	/*      printf("moo: %d - %d\n", depth, node_gd->tri_num); */
+    }
+#endif
+
+
+#if 0
+    printf("winner: depth: %d, dim = %d, smin = %d, coef: %.3f\n", depth, split, smin, split_coef);
+    printf("winner: min: %.3f %.3f %.3f, max: %.3f %.3f %.3f, tris: %d\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2], node_gd->tri_num);
+#endif
+
+    /* Based on the winner, construct the two child nodes */
+    /* Left Child */
+    cmin[0] = min;
+    cmax[0] = max;
+
+    /* Right Child */
+    cmin[1] = min;
+    cmax[1] = max;
+
+    cmax[0].v[*split] = min.v[*split]*(1.0-split_coef) + max.v[*split]*split_coef;
+    cmin[1].v[*split] = cmax[0].v[*split];
+    node->axis = cmax[0].v[*split];
+}
+
+static void
 tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int depth, TIE_3 min, TIE_3 max)
 {
     struct tie_geom_s *child[2], *node_gd = (struct tie_geom_s *)(node->data);
     TIE_3 cmin[2], cmax[2], center[2], half_size[2];
     unsigned int i, j, n, split = 0, cnt[2];
 
+    if(node_gd == NULL) {
+	bu_log("null geom, aborting\n");
+	return;
+    }
+
+
     /* initialize cmax to make the compiler happy */
-    VSETALL(cmax, max);
-    VSETALL(cmin, min);
+    VMOVE(cmax[0].v, max.v);
+    VMOVE(cmin[0].v, min.v);
+    VMOVE(cmax[1].v, max.v);
+    VMOVE(cmin[1].v, min.v);
 
 #if 0
-/*  if (depth >= 26) */
+    /*  if (depth >= 26) */
     printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
-#endif
-/* Terminating criteria for KDTREE subdivision */
     fflush (stdout);
-    if (node_gd->tri_num <= TIE_KDTREE_NODE_MAX || depth > tie->max_depth)
-    {
-/*    tie->stat++; */
+#endif
+    /* Terminating criteria for KDTREE subdivision */
+    if (node_gd->tri_num <= TIE_KDTREE_NODE_MAX || depth > tie->max_depth) {
+	/*    tie->stat++; */
 	tie->stat += node_gd->tri_num;
 #if 0
 	if (node_gd->tri_num > tie->stat)
@@ -302,344 +624,21 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	return;
     }
 
-    if (tie->kdmethod == TIE_KDTREE_FAST)
-    {
-/**********************
- * MID-SPLIT ALGORITHM *
- ***********************/
-	TIE_3 vec;
-
-/* Left Child */
-	cmin[0] = min;
-	cmax[0] = max;
-
-/* Right Child */
-	cmin[1] = min;
-	cmax[1] = max;
-
-	VADD2(center[0].v,  max.v,  min.v);
-	VSCALE(center[0].v,  center[0].v,  0.5);
-
-/* Split along largest Axis to keep node sizes relatively cube-like (Naive) */
-	VSUB2(vec.v,  max.v,  min.v);
-
-/* Determine the largest Axis */
-	if (vec.v[0] >= vec.v[1] && vec.v[0] >= vec.v[2]) {
-	    cmax[0].v[0] = center[0].v[0];
-	    cmin[1].v[0] = center[0].v[0];
-	    node->axis = center[0].v[0];
-	    split = 0;
-	} else if (vec.v[1] >= vec.v[0] && vec.v[1] >= vec.v[2]) {
-	    cmax[0].v[1] = center[0].v[1];
-	    cmin[1].v[1] = center[0].v[1];
-	    node->axis = center[0].v[1];
-	    split = 1;
-	} else {
-	    cmax[0].v[2] = center[0].v[2];
-	    cmin[1].v[2] = center[0].v[2];
-	    node->axis = center[0].v[2];
-	    split = 2;
-	}
-    }
-    else if (tie->kdmethod == TIE_KDTREE_OPTIMAL) {
-/****************************************
- * Justin's Aggressive KD-Tree Algorithm *
- *****************************************/
-	unsigned int slice[3][MAX_SLICES+MIN_SLICES], gap[3][2], active, split_slice = 0;
-	unsigned int side[3][MAX_SLICES+MIN_SLICES][2], d, s, k, smax[3], smin, slice_num;
-	tfloat coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end, d_min = 0.0, d_max = 0.0;
-	struct tie_tri_s *tri;
-
-/*
- * Calculate number of slices to use as a function of triangle density.
- * Setting slices as a function of relative node size does not work so well.
- */
-/*  slice_num = MIN_SLICES + MAX_SLICES * ((tfloat)node_gd->tri_num / (tfloat)tie->tri_num); */
-	slice_num = 1*node_gd->tri_num > MAX_SLICES ? MAX_SLICES : 1*node_gd->tri_num;
-
-	for (d = 0; d < 3; d++) {
-/*
- * Optimization: Walk each triangle and find the min and max for the given dimension
- * of the complete triangle list.  This will tell us what slices we needn't bother
- * doing any computations for.
- */
-	    for (i = 0; i < node_gd->tri_num; i++) {
-		tri = node_gd->tri_list[i];
-/* Set min anx max */
-		MATH_MIN3(tri->v[0], tri->data[0].v[d], tri->data[1].v[d], tri->data[2].v[d]);
-		MATH_MAX3(tri->v[1], tri->data[0].v[d], tri->data[1].v[d], tri->data[2].v[d]);
-
-/* Clamp to node AABB */
-		if (tri->v[0] < min.v[d])
-		    tri->v[0] = min.v[d];
-		if (tri->v[1] > max.v[d])
-		    tri->v[1] = max.v[d];
-
-		if (i == 0 || tri->v[0] < d_min)
-		    d_min = tri->v[0];
-
-		if (i == 0 || tri->v[1] > d_max)
-		    d_max = tri->v[1];
-	    }
-
-	    for (k = 0; k < slice_num; k++) {
-		slice[d][k] = 0;
-		side[d][k][0] = 0;
-		side[d][k][1] = 0;
-
-/* Left Child */
-		cmin[0] = min;
-		cmax[0] = max;
-
-/* Right Child */
-		cmin[1] = min;
-		cmax[1] = max;
-
-/* construct slices so as not to use the boundaries as slices */
-		coef[d][k] = ((tfloat)k / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
-		cmax[0].v[d] = min.v[d]*(1.0-coef[d][k]) + max.v[d]*coef[d][k];
-		cmin[1].v[d] = cmax[0].v[d];
-
-/* determine whether to bother with this slice */
-		if (cmax[0].v[d] < d_min || cmax[0].v[d] > d_max)
-		    continue;
-
-		for (n = 0; n < 2; n++) {
-		    VADD2(center[n].v,  cmax[n].v,  cmin[n].v);
-		    VSCALE(center[n].v,  center[n].v,  0.5);
-		    VSUB2(half_size[n].v,  cmax[n].v,  cmin[n].v);
-		    VSCALE(half_size[n].v,  half_size[n].v,  0.5);
-		}
-
-		for (i = 0; i < node_gd->tri_num; i++) {
-/*
- * Optimization: If the points for the triangle of the dimension being tested
- * do not span the cutting plane, then do not bother with the next test.
- */
-		    if ((node_gd->tri_list[i]->data[0].v[d] > cmax[0].v[d] &&
-			 node_gd->tri_list[i]->data[1].v[d] > cmax[0].v[d] &&
-			 node_gd->tri_list[i]->data[2].v[d] > cmax[0].v[d])||
-			(node_gd->tri_list[i]->data[0].v[d] < cmax[0].v[d] &&
-			 node_gd->tri_list[i]->data[1].v[d] < cmax[0].v[d] &&
-			 node_gd->tri_list[i]->data[2].v[d] < cmax[0].v[d]))
-			continue;
-
-/* Check that the triangle is in both node A and B for it to span. */
-		    s = 0;
-		    for (n = 0; n < 2; n++) {
-/*
- * Check to see if any triangle points are inside of the node before
- * spending alot of cycles on the full blown triangle box overlap
- */
-			for (j = 0; j < 3; j++)
-			    if (node_gd->tri_list[i]->data[j].v[0] > cmin[n].v[0] &&
-				node_gd->tri_list[i]->data[j].v[0] < cmax[n].v[0] &&
-				node_gd->tri_list[i]->data[j].v[1] > cmin[n].v[1] &&
-				node_gd->tri_list[i]->data[j].v[1] < cmax[n].v[1] &&
-				node_gd->tri_list[i]->data[j].v[2] > cmin[n].v[2] &&
-				node_gd->tri_list[i]->data[j].v[2] < cmax[n].v[2]) {
-				j = 4;
-			    }
-
-			if (j == 5) {
-			    s++;
-			    side[d][k][n]++;
-			} else {
-			    if (tie_kdtree_tri_box_overlap(&center[n], &half_size[n], node_gd->tri_list[i]->data)) {
-				s++;
-				side[d][k][n]++;
-			    }
-			}
-		    }
-
-		    if (s == 2)
-			slice[d][k]++;
-		}
-	    }
-	}
-
-/* Store the max value from each of the 3 Slice arrays */
-	for (d = 0; d < 3; d++) {
-	    smax[d] = 0;
-	    for (k = 0; k < slice_num; k++) {
-		if (slice[d][k] > smax[d])
-		    smax[d] = slice[d][k];
-	    }
-	}
-
-/*
- * To eliminate "empty" areas, build a list of spans where geometric complexity is
- * less than MIN_SPAN of the overal nodes size and then selecting the splitting plane
- * the corresponds to the span slice domain nearest the center to bias towards a balanced tree
- */
-
-	for (d = 0; d < 3; d++) {
-	    gap[d][0] = 0;
-	    gap[d][1] = 0;
-	    beg = 0;
-	    end = 0;
-	    active = 0;
-
-	    for (k = 0; k < slice_num; k++) {
-/*      printf("slice[%d][%d]: %d < %d\n", d, k, slice[d][k], (int)(MIN_DENSITY * (tfloat)smax[d])); */
-		if (slice[d][k] < (unsigned int)(MIN_DENSITY * (tfloat)smax[d])) {
-		    if (!active) {
-			active = 1;
-			beg = k;
-			end = k;
-		    } else {
-			end = k;
-		    }
-		} else {
-		    if (active) {
-			if (end - beg > gap[d][1] - gap[d][0]) {
-			    gap[d][0] = beg;
-			    gap[d][1] = end;
-			}
-		    }
-		    active = 0;
-		}
-	    }
-
-	    if (active)
-		if (end - beg > gap[d][1] - gap[d][0]) {
-		    gap[d][0] = beg;
-		    gap[d][1] = end;
-		}
-	}
-
-#if 0
-	printf("gap_x: %d->%d = %d\n", gap[0][0], gap[0][1], gap[0][1]-gap[0][0]);
-	printf("gap_y: %d->%d = %d\n", gap[1][0], gap[1][1], gap[1][1]-gap[1][0]);
-	printf("gap_z: %d->%d = %d\n", gap[2][0], gap[2][1], gap[2][1]-gap[2][0]);
-#endif
-
-/*
- * If there is a gap atleast MIN_SPAN in side wrt the nodes dimension size
- * then use the nearest edge of the gap to 0.5 as the splitting plane,
- * Use the the gap with the largest span.
- * If no gaps are found meeting the criteria then weight the span values to
- * bias towards a balanced kd-tree and choose the minima of that weighted curve.
- */
-
-/* Largest gap */
-	d = 0;
-	if (gap[1][1] - gap[1][0] > gap[d][1] - gap[d][0])
-	    d = 1;
-	if (gap[2][1] - gap[2][0] > gap[d][1] - gap[d][0])
-	    d = 2;
-
-/*
- * Largest gap found must meet MIN_SPAN requirements
- * There must be atleast 500 triangles or we don't bother.
- * Lower triangle numbers means there is a higher probability that
- * triangles lack any sort of coherent structure.
- */
-	if ((tfloat)(gap[d][1] - gap[d][0]) / (tfloat)slice_num > MIN_SPAN && node_gd->tri_num > 500) {
-/*  printf("choosing slice[%d]: %d->%d :: %d tris\n", d, gap[d][0], gap[d][1], node_gd->tri_num); */
-	    split = d;
-	    if (abs(gap[d][0] - slice_num/2) < abs(gap[d][1] - slice_num/2)) {
-/* choose gap[d][0] as splitting plane */
-		split_coef = ((tfloat)gap[d][0] / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
-		split_slice = gap[d][0];
-	    } else {
-/* choose gap[d][1] as splitting plane */
-		split_coef = ((tfloat)gap[d][1] / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
-		split_slice = gap[d][1];
-	    }
-	} else {
-/*
- * Weight the slices based on a heuristic driven linear scaling function to bias values
- * towards the center as more desirable.  This solves the case of a partially linear graph
- * to prevent marching in order to determine a desirable splitting point.  If this section of code
- * is being executed it's typically because most 'empty space' has now been eliminated
- * and/or the resulting geometry is now losing structure as the smaller cells are being
- * created, i.e dividing a fraction of a wing-nut instead of an engine-block.
- */
-	    for (d = 0; d < 3; d++) {
-		for (k = 0; k < slice_num; k++) {
-		    slice[d][k] += fabs(coef[d][k]-0.5) * SCALE_COEF * smax[d];
-/*        printf("%.3f %d\n", coef[d][k], slice[d][k]); */
-		}
-	    }
-
-/* Choose the slice with the graphs minima as the splitting plane. */
-	    split = 0;
-	    smin = tie->tri_num;
-	    split_coef = 0.5;
-	    for (d = 0; d < 3; d++) {
-		for (k = 0; k < slice_num; k++) {
-		    if (slice[d][k] < smin) {
-			split_coef = coef[d][k];
-			split = d;
-			split_slice = k;
-			smin = slice[d][k];
-		    }
-		}
-	    }
-
-/*
- * If the dimension chosen to split along has a value of 0 for the maximum value
- * then the geometry was aligned such that it fell undetectable between the slices
- * and therefore was not picked up by the marching slices.  In the event that this
- * happens, choose to naively split along the middle as this last ditch decision
- * will give better results than the algorithm naively picking the first of the
- * the slices forming these irregular, short followed by a long box, splits.
- */
-	    if (smax[split] == 0) {
-		split_slice = slice_num / 2;
-		split_coef = coef[split][split_slice];
-	    }
-	}
-
-/*
- * Lastly, after we have supposedly chosen the ideal splitting point,
- * check to see that the subdivision that is about to take place is worth
- * doing.  In other words, if one of the children have the same number of triangles
- * as the parent does then stop.
- */
-	if (side[split][split_slice][0] == node_gd->tri_num || side[split][split_slice][1] == node_gd->tri_num) {
-	    tie->stat += node_gd->tri_num;
-	    return;
-	}
-
-#if 0
-	if (side[split][split_slice][0] == node_a && side[split][split_slice][1] == node_b) {
-	    if (node_gd->tri_num < 10)
-		return;
-/*      printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]); */
-/*      printf("moo: %d - %d\n", depth, node_gd->tri_num); */
-	}
-#endif
-
-
-#if 0
-	printf("winner: depth: %d, dim = %d, smin = %d, coef: %.3f\n", depth, split, smin, split_coef);
-	printf("winner: min: %.3f %.3f %.3f, max: %.3f %.3f %.3f, tris: %d\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2], node_gd->tri_num);
-#endif
-
-/* Based on the winner, construct the two child nodes */
-/* Left Child */
-	cmin[0] = min;
-	cmax[0] = max;
-
-/* Right Child */
-	cmin[1] = min;
-	cmax[1] = max;
-
-	cmax[0].v[split] = min.v[split]*(1.0-split_coef) + max.v[split]*split_coef;
-	cmin[1].v[split] = cmax[0].v[split];
-	node->axis = cmax[0].v[split];
-    } else
+    if (tie->kdmethod == TIE_KDTREE_FAST)  
+	find_split_fast(node, &cmin[0], &cmax[0], &split);
+    else if (tie->kdmethod == TIE_KDTREE_OPTIMAL) 
+	find_split_optimal(tie, node, &cmin[0], &cmax[0], &split);
+    
+     else
 	bu_bomb("Illegal tie kdtree method\n");
 
 
-/* Allocate 2 children nodes for the parent node */
+    /* Allocate 2 children nodes for the parent node */
     node->data = (void *)bu_malloc(2 * sizeof(struct tie_kdtree_s), __FUNCTION__);
     ((struct tie_kdtree_s *)(node->data))[0].data = bu_malloc(sizeof(struct tie_geom_s), __FUNCTION__);
     ((struct tie_kdtree_s *)(node->data))[1].data = bu_malloc(sizeof(struct tie_geom_s), __FUNCTION__);
 
-/* Initialize Triangle List */
+    /* Initialize Triangle List */
     child[0] = ((struct tie_geom_s *)(((struct tie_kdtree_s *)(node->data))[0].data));
     child[1] = ((struct tie_geom_s *)(((struct tie_kdtree_s *)(node->data))[1].data));
 
@@ -650,10 +649,10 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
     child[1]->tri_num = 0;
 
 
-/*
- * Determine if the triangles touch either of the two children nodes,
- * if it does insert it into them respectively.
- */
+    /*
+     * Determine if the triangles touch either of the two children nodes,
+     * if it does insert it into them respectively.
+     */
     for (n = 0; n < 2; n++) {
 	cnt[n] = 0;
 
@@ -663,32 +662,31 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	VSCALE(half_size[n].v,  half_size[n].v,  0.5);
 
 	for (i = 0; i < node_gd->tri_num; i++) {
-/*
- * Check to see if any triangle points are inside of the node before
- * spending alot of cycles on the full blown triangle box overlap
- */
+	    /*
+	     * Check to see if any triangle points are inside of the node before
+	     * spending alot of cycles on the full blown triangle box overlap
+	     */
 	    for (j = 0; j < 3; j++)
 		if (node_gd->tri_list[i]->data[j].v[0] > cmin[n].v[0] &&
-		    node_gd->tri_list[i]->data[j].v[0] < cmax[n].v[0] &&
-		    node_gd->tri_list[i]->data[j].v[1] > cmin[n].v[1] &&
-		    node_gd->tri_list[i]->data[j].v[1] < cmax[n].v[1] &&
-		    node_gd->tri_list[i]->data[j].v[2] > cmin[n].v[2] &&
-		    node_gd->tri_list[i]->data[j].v[2] < cmax[n].v[2]) {
+			node_gd->tri_list[i]->data[j].v[0] < cmax[n].v[0] &&
+			node_gd->tri_list[i]->data[j].v[1] > cmin[n].v[1] &&
+			node_gd->tri_list[i]->data[j].v[1] < cmax[n].v[1] &&
+			node_gd->tri_list[i]->data[j].v[2] > cmin[n].v[2] &&
+			node_gd->tri_list[i]->data[j].v[2] < cmax[n].v[2]) {
 		    j = 4;
 		}
 
 	    if (j == 5) {
 		child[n]->tri_list[child[n]->tri_num++] = node_gd->tri_list[i];
 		cnt[n]++;
-	    } else {
+	    } else
 		if (tie_kdtree_tri_box_overlap(&center[n], &half_size[n], node_gd->tri_list[i]->data)) {
 		    child[n]->tri_list[child[n]->tri_num++] = node_gd->tri_list[i];
 		    cnt[n]++;
 		}
-	    }
 	}
 
-/* Resize Tri List to actual ammount of memory used */
+	/* Resize Tri List to actual amount of memory used */
 	/* TODO: examine if this is correct. A 0 re-alloc is probably a very bad
 	 * thing. */
 	if( child[n]->tri_num == 0 ) {
@@ -700,20 +698,20 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	    child[n]->tri_list = (struct tie_tri_s **)bu_realloc(child[n]->tri_list, sizeof(struct tie_tri_s *)*child[n]->tri_num, __FUNCTION__);
     }
 
-/*
- * Now that the triangles have been propogated to the appropriate child nodes,
- * free the triangle list on this node.
- */
+    /*
+     * Now that the triangles have been propogated to the appropriate child nodes,
+     * free the triangle list on this node.
+     */
     node_gd->tri_num = 0;
     bu_free(node_gd->tri_list, __FUNCTION__);
     bu_free(node_gd, __FUNCTION__);
 
-/* Push each child through the same process. */
+    /* Push each child through the same process. */
     tie_kdtree_build(tie, &((struct tie_kdtree_s *)(node->data))[0], depth+1, cmin[0], cmax[0]);
     tie_kdtree_build(tie, &((struct tie_kdtree_s *)(node->data))[1], depth+1, cmin[1], cmax[1]);
 
-/* Assign the splitting dimension to the node */
-/* If we've come this far then YES, this node DOES have child nodes, MARK it as so. */
+    /* Assign the splitting dimension to the node */
+    /* If we've come this far then YES, this node DOES have child nodes, MARK it as so. */
     node->data = (void *)((intptr_t)(node->data) + split + 4);
 }
 
@@ -724,8 +722,8 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 void
 TIE_VAL(tie_kdtree_free)(struct tie_s *tie)
 {
-/* Free KDTREE Nodes */
-/* prevent tie from crashing when a tie_free() is called right after a tie_init() */
+    /* Free KDTREE Nodes */
+    /* prevent tie from crashing when a tie_free() is called right after a tie_init() */
     if (tie->kdtree)
 	tie_kdtree_free_node(tie->kdtree);
     bu_free(tie->kdtree, "kdtree");
@@ -736,31 +734,33 @@ TIE_VAL(tie_kdtree_prep)(struct tie_s *tie)
 {
     TIE_3 delta;
     int already_built;
-
+    struct tie_geom_s *g;
 
     already_built = tie->kdtree ? 1 : 0;
 
-/* Set bounding volume and make head node a geometry node */
+    /* Set bounding volume and make head node a geometry node */
     if (!already_built)
 	tie_kdtree_prep_head(tie, tie->tri_list, tie->tri_num);
 
     if (!tie->kdtree)
 	return;
 
-/* Trim KDTREE to number of actual triangles if it's not that size already. */
-	/* TODO: examine if this is correct. A 0 re-alloc is probably a very bad
-	 * thing. */
-    if (!already_built) {
-	if (((struct tie_geom_s *)(tie->kdtree->data))->tri_num)
-	    ((struct tie_geom_s *)(tie->kdtree->data))->tri_list = (struct tie_tri_s **)bu_realloc(((struct tie_geom_s *)(tie->kdtree->data))->tri_list, sizeof(struct tie_tri_s *) * ((struct tie_geom_s *)(tie->kdtree->data))->tri_num, "prep tri_list");
-	else
-	    bu_free (((struct tie_geom_s *)(tie->kdtree->data))->tri_list, "freeing tri list");
-    }
+    g = (struct tie_geom_s *)tie->kdtree->data;
 
-/*
- * Compute Floating Fuzz Precision Value
- * For now, take largest dimension as basis for TIE_PREC
- */
+    /* Trim KDTREE to number of actual triangles if it's not that size already. */
+    /* TODO: examine if this is correct. A 0 re-alloc is probably a very bad
+     * thing. */
+
+    if (!already_built) {
+	if (g->tri_num)
+	    g->tri_list = (struct tie_tri_s **)bu_realloc(g->tri_list, sizeof(struct tie_tri_s *) * g->tri_num, "prep tri_list");
+    } else
+	bu_free (g->tri_list, "freeing tri list");
+
+    /*
+     * Compute Floating Fuzz Precision Value
+     * For now, take largest dimension as basis for TIE_PREC
+     */
     VMOVE(tie->amin, tie->min.v);
     VMOVE(tie->amax, tie->max.v);
     VSUB2(delta.v,  tie->max.v,  tie->min.v);
@@ -771,22 +771,22 @@ TIE_VAL(tie_kdtree_prep)(struct tie_s *tie)
     TIE_PREC *= 0.000000000001;
 #endif
 
-/* Grow the head node to avoid floating point fuzz in the building process with edges */
+    /* Grow the head node to avoid floating point fuzz in the building process with edges */
     VSCALE(delta.v,  delta.v,  1.0);
     VSUB2(tie->min.v,  tie->min.v,  delta.v);
     VADD2(tie->max.v,  tie->max.v,  delta.v);
 
-/* Compute Max Depth to allow the KD-Tree to grow to */
+    /* Compute Max Depth to allow the KD-Tree to grow to */
     tie->max_depth = (int)(TIE_KDTREE_DEPTH_K1 * (log(tie->tri_num) / log(2)) + TIE_KDTREE_DEPTH_K2);
-/* printf("max_depth: %d\n", tie->max_depth); */
+    /* printf("max_depth: %d\n", tie->max_depth); */
 
-/* Build the KDTREE */
+    /* Build the KDTREE */
     if (!already_built)
 	tie_kdtree_build(tie, tie->kdtree, 0, tie->min, tie->max);
 
-/*  printf("stat: %d\n", tie->stat); */
+    /*  printf("stat: %d\n", tie->stat); */
     tie->stat = 0;
-/*  exit(0); */ /* uncomment to profile prep phase only */
+    /*  exit(0); */ /* uncomment to profile prep phase only */
 }
 
 /*
