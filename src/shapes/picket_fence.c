@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
     struct wmember swm;
     struct wmember *nwm;
 
-    fastf_t first_mat[16];
+    fastf_t first_mat[16] = MAT_INIT_ZERO;
 
     fastf_t s0[24] = {0, 0, 0,
 		      0, 0, 0,
