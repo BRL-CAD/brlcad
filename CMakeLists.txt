@@ -1237,6 +1237,9 @@ configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/builddelta_start.c.in
 	${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c)
 configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/builddelta_end.c.in
 	${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
+SET_SOURCE_FILES_PROPERTIES(${BRLCAD_CMAKE_DIR}/test_srcs/print_timestamp.c PROPERTIES COMPILE_FLAGS "-w")
+SET_SOURCE_FILES_PROPERTIES(${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c PROPERTIES COMPILE_FLAGS "-w")
+SET_SOURCE_FILES_PROPERTIES(${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c PROPERTIES COMPILE_FLAGS "-w")
 ADD_EXECUTABLE(printtimestamp ${BRLCAD_CMAKE_DIR}/test_srcs/print_timestamp.c)
 ADD_EXECUTABLE(buildtimestart ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c)
 ADD_EXECUTABLE(buildtimeend ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
