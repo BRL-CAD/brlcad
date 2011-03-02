@@ -333,6 +333,10 @@ static void tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsig
     TIE_3 cmin[2], cmax[2], center[2], half_size[2];
     unsigned int i, j, n, split = 0, cnt[2];
 
+    /* initialize cmax to make the compiler happy */
+    cmax[0] = max;
+    cmax[1] = max;
+
 #if 0
 /*  if (depth >= 26) */
     printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
