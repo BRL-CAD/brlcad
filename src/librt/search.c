@@ -1918,7 +1918,8 @@ or_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)           /* pl
  */
 void *
 db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results) {
-    struct db_plan_t *plan, *tail, *new;
+    struct db_plan_t *plan, *tail;
+    struct db_plan_t *new = NULL;
 
     /*
      * for each argument in the command line, determine what kind of node
