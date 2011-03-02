@@ -334,8 +334,8 @@ static void tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsig
     unsigned int i, j, n, split = 0, cnt[2];
 
     /* initialize cmax to make the compiler happy */
-    cmax[0] = max;
-    cmax[1] = max;
+    VSETALL(cmax, max);
+    VSETALL(cmin, min);
 
 #if 0
 /*  if (depth >= 26) */
