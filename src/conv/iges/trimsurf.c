@@ -1439,6 +1439,9 @@ Convtrimsurfs()
 	point_t mid_pt;
 	vect_t ray_dir;
 
+	/* initialize for compiler */
+	VSETALL(mid_pt, 0.0);
+
 	if (fu->orientation != OT_SAME)
 	    continue;
 

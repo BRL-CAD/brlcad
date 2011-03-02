@@ -137,7 +137,7 @@ Note_to_vlist(entno, vhead)
 	double local_scale;
 	char one_char[2];
 	point_t loc, tmp;
-	char *str;
+	char *str = NULL;
 
 	Readint(&str_len, "");
 	Readcnv(&width, "");
