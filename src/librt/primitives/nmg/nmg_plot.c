@@ -1083,7 +1083,7 @@ nmg_vlblock_around_eu(struct bn_vlblock *vbp, const struct edgeuse *arg_eu, long
     const struct edgeuse *orig_eu;
     register const struct edgeuse *eu;
     vect_t xvec, yvec, zvec;
-    point_t center;
+    point_t center = {0.0, 0.0, 0.0};
     mat_t mat;
     struct bu_list *vh;
     fastf_t len;
