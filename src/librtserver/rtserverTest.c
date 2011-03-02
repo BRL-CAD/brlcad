@@ -60,7 +60,7 @@ loadGeometry( char *fileName, struct bu_ptbl *objs) {
         int i;
 
 	objects = (char **)bu_malloc( BU_PTBL_LEN( objs ) * sizeof( char *), "objects" );
-	for ( i=0; i<BU_PTBL_LEN( objs ); i++ ) {
+	for ( i=0; i<(int)BU_PTBL_LEN( objs ); i++ ) {
 	    objects[i] = (char *)BU_PTBL_GET( objs, i );
 	}
 	sess_id = rts_load_geometry(fileName, BU_PTBL_LEN( objs ), objects);
@@ -132,18 +132,15 @@ int
 main( int argc, char *argv[] )
 {
     struct application *ap;
-    int ret;
     int c;
-    struct xray aray;
     int verbose = 0;
-    char *name;
     int i, j;
     int grid_size = 64;
     fastf_t cell_size;
     vect_t model_size;
     vect_t xdir, zdir;
     int job_count=0;
-    char **result_map;
+    char **result_map = NULL;
     struct bu_ptbl objs;
     int my_session_id;
     int do_plot=0;
@@ -231,7 +228,7 @@ main( int argc, char *argv[] )
         printHits(vlb);
 
         freeApplication(ap);
-        rts_clean( my_session_id );
+        /*rts_clean( my_session_id );*/
         bu_log( "\n\n********* %d\n", i);
         if (bu_debug & BU_DEBUG_MEM_CHECK) {
             bu_prmem("memory after shutdown");
@@ -243,7 +240,7 @@ main( int argc, char *argv[] )
     /* submit some jobs */
     fprintf( stderr, "\nfiring a grid (%dx%d) of rays at",
 	     grid_size, grid_size );
-    for ( i=0; i<BU_PTBL_LEN( &objs ); i++ ) {
+    for ( i=0; i<(int)BU_PTBL_LEN( &objs ); i++ ) {
 	fprintf( stderr, " %s", (char *)BU_PTBL_GET( &objs, i ) );
     }
     fprintf( stderr, "...\n" );

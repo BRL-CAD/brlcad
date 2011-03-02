@@ -115,7 +115,8 @@
  *************************************************************/
 
 
-static void tie_kdtree_free_node(struct tie_kdtree_s *node)
+static void
+tie_kdtree_free_node(struct tie_kdtree_s *node)
 {
     struct tie_kdtree_s *node_aligned = (struct tie_kdtree_s *)((intptr_t)node & ~0x7L);
 
@@ -134,71 +135,8 @@ static void tie_kdtree_free_node(struct tie_kdtree_s *node)
     }
 }
 
-static void tie_kdtree_cache_free_node(struct tie_s *tie, struct tie_kdtree_s *node, void **cache, uint32_t *size, uint32_t *mem)
-{
-    struct tie_kdtree_s *node_aligned = (struct tie_kdtree_s *)((intptr_t)node & ~0x7L);
-    uint32_t tri_num, i, tri_ind;
-    uint8_t type, split;
-
-/*
- * If the available size for this cache is under 1MB, then grow it 4MB larger.
- * This reduces the number of bu_realloc's required.  Makes things much much faster
- * on systems like FreeBSD that do a full copy for each bu_realloc.
- */
-    if (*mem - *size < 1<<20)
-    {
-	(*mem) += 1<<23;
-	*cache = bu_realloc(*cache, *mem, __FUNCTION__);
-    }
-
-    if (((intptr_t)(node_aligned->data)) & 0x4)
-    {
-/* Create a KD-Tree Node in the cache */
-	type = 0;
-	TCOPY(uint8_t, &type, 0, *cache, *size);
-	(*size) += 1;
-
-	TCOPY(tfloat, &(node_aligned->axis), 0, *cache, *size);
-	(*size) += sizeof(tfloat);
-
-	split = ((intptr_t)(node_aligned->data)) & 0x3;
-	TCOPY(uint8_t, &split, 0, *cache, *size);
-	(*size) += 1;
-
-/* Node Data is KDTREE Children, Recurse */
-	tie_kdtree_cache_free_node(tie, &((struct tie_kdtree_s *)(((intptr_t)(node_aligned->data)) & ~0x7L))[0], cache, size, mem);
-	tie_kdtree_cache_free_node(tie, &((struct tie_kdtree_s *)(((intptr_t)(node_aligned->data)) & ~0x7L))[1], cache, size, mem);
-	bu_free((void *)((intptr_t)(node_aligned->data) & ~0x7L), __FUNCTION__);
-    }
-    else
-    {
-	type = 1;
-	TCOPY(uint8_t, &type, 0, *cache, *size);
-	(*size) += 1;
-
-	tri_num = ((struct tie_geom_s *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_num;
-
-	TCOPY(uint32_t, &tri_num, 0, *cache, *size);
-	(*size) += sizeof(uint32_t);
-
-	for (i = 0; i < tri_num; i++)
-	{
-/*
- * Pointer subtraction gives us the index of the triangle since the block of memory
- * that the triangle exists in is contiguous memory.
- */
-	    tri_ind = ((struct tie_geom_s *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_list[i] - &tie->tri_list[0];
-	    TCOPY(uint32_t, &tri_ind, 0, *cache, *size);
-	    (*size) += sizeof(uint32_t);
-	}
-
-/* This node points to a geometry node, free it */
-	bu_free(((struct tie_geom_s *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_list, __FUNCTION__);
-	bu_free((void *)((intptr_t)(node_aligned->data) & ~0x7L), __FUNCTION__);
-    }
-}
-
-static void tie_kdtree_prep_head(struct tie_s *tie, struct tie_tri_s *tri_list, unsigned int tri_num)
+static void
+tie_kdtree_prep_head(struct tie_s *tie, struct tie_tri_s *tri_list, unsigned int tri_num)
 {
     struct tie_geom_s *g;
     TIE_3 min, max;
@@ -238,7 +176,8 @@ static void tie_kdtree_prep_head(struct tie_s *tie, struct tie_tri_s *tri_list, 
     }
 }
 
-static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 triverts[3])
+static int
+tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 triverts[3])
 {
 /*
  * use separating axis theorem to test overlap between triangle and box
@@ -327,11 +266,16 @@ static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 tri
     return t >= d ? 1 : 0;
 }
 
-static void tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int depth, TIE_3 min, TIE_3 max)
+static void
+tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int depth, TIE_3 min, TIE_3 max)
 {
     struct tie_geom_s *child[2], *node_gd = (struct tie_geom_s *)(node->data);
     TIE_3 cmin[2], cmax[2], center[2], half_size[2];
     unsigned int i, j, n, split = 0, cnt[2];
+
+    /* initialize cmax to make the compiler happy */
+    VSETALL(cmax, max);
+    VSETALL(cmin, min);
 
 #if 0
 /*  if (depth >= 26) */
@@ -777,7 +721,8 @@ static void tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsig
  **************** EXPORTED FUNCTIONS *************************
  *************************************************************/
 
-void TIE_VAL(tie_kdtree_free)(struct tie_s *tie)
+void
+TIE_VAL(tie_kdtree_free)(struct tie_s *tie)
 {
 /* Free KDTREE Nodes */
 /* prevent tie from crashing when a tie_free() is called right after a tie_init() */
@@ -786,127 +731,8 @@ void TIE_VAL(tie_kdtree_free)(struct tie_s *tie)
     bu_free(tie->kdtree, "kdtree");
 }
 
-uint32_t TIE_VAL(tie_kdtree_cache_free)(struct tie_s *tie, void **cache)
-{
-    uint32_t size, mem;
-
-/*
- * Free KDTREE Node
- * Prevent tie from crashing when a tie_free() is called right after a tie_init()
- */
-    if (!tie->kdtree)
-	return 0;
-
-    *cache = NULL;
-    size = 0;
-    mem = 0;
-
-/* Build the cache */
-    tie_kdtree_cache_free_node(tie, tie->kdtree, cache, &size, &mem);
-
-/* Resize the array back to its real value */
-	/* TODO: examine if this is correct. A 0 re-alloc is probably a very bad
-	 * thing. */
-    if( size == 0 ) {
-	bu_free (*cache, "freeing unused cache");
-	*cache = NULL;
-    } else
-	*cache = bu_realloc(*cache, size, "cache");
-
-    bu_free(tie->kdtree, "kdtree");
-    tie->kdtree = NULL;
-
-    return size;
-}
-
-void TIE_VAL(tie_kdtree_cache_load)(struct tie_s *tie, void *cache, uint32_t size)
-{
-    struct tie_kdtree_s *node = 0, *temp_node = 0, *stack[64];
-    struct tie_geom_s *geom = 0;
-    TIE_3 min, max;
-    uint32_t i, idx = 0, tri_ind = 0, stack_ind = 0;
-    uint8_t type = 0, split;
-
-
-    if (!cache)
-	return;
-
-    while (idx < size) {
-	TCOPY(uint8_t, cache, idx, &type, 0);
-	idx += 1;
-
-	if (type) {
-/* Geometry Node - Allocate a struct tie_geom_s and assign to node->data. */
-	    node->data = bu_malloc(sizeof(struct tie_geom_s), "cache node data");
-	    geom = (struct tie_geom_s *)node->data;
-
-	    TCOPY(uint32_t, cache, idx, &(geom->tri_num), 0);
-	    idx += sizeof(uint32_t);
-
-	    if(geom->tri_num <= 0)
-		geom->tri_list = NULL;
-	    else
-		geom->tri_list = (struct tie_tri_s **)bu_malloc(geom->tri_num * sizeof(struct tie_tri_s *), "cache geom tri_list");
-
-	    for (i = 0; i < geom->tri_num; i++) {
-		TCOPY(uint32_t, cache, idx, &tri_ind, 0);
-		idx += sizeof(uint32_t);
-
-/* Translate the numerical index to a pointer index into tie->tri_list. */
-		geom->tri_list[i] = &tie->tri_list[0] + tri_ind;
-	    }
-
-	    if (stack_ind) {
-		stack_ind--;
-		node = stack[stack_ind];
-	    }
-	} else {
-/* KD-Tree Node */
-	    if (!tie->kdtree) {
-		tie->kdtree = (struct tie_kdtree_s *)bu_malloc(sizeof(struct tie_kdtree_s), "cache kdtree");
-		node = tie->kdtree;
-	    }
-
-/* Assign splitting axis value */
-	    TCOPY(tfloat, cache, idx, &node->axis, 0);
-	    idx += sizeof(tfloat);
-
-/* Get splitting plane */
-	    TCOPY(uint8_t, cache, idx, &split, 0);
-	    idx += 1;
-
-/* Allocate memory for 2 child nodes */
-	    node->data = bu_malloc(2 * sizeof(struct tie_kdtree_s), "kdtree node data");
-
-/* Push B on the stack and Process A */
-	    stack[stack_ind] = &((struct tie_kdtree_s *)node->data)[1];
-	    stack_ind++;
-
-/* Set the new current node */
-	    temp_node = node;
-	    node = &((struct tie_kdtree_s *)node->data)[0];
-
-/*
- * Mask the splitting plane and mark it as a kdtree node
- * using the lower bits of the ptr.
- */
-	    temp_node->data = (void *)((intptr_t)(temp_node->data) + split + 4);
-	}
-    }
-
-/* form bounding box of scene */
-    MATH_BBOX(tie->min, tie->max, tie->tri_list[0].data[0], tie->tri_list[0].data[1], tie->tri_list[0].data[2]);
-    for (i = 0; i < tie->tri_num; i++) {
-/* Get Bounding Box of Triangle */
-	MATH_BBOX(min, max, tie->tri_list[i].data[0], tie->tri_list[i].data[1], tie->tri_list[i].data[2]);
-
-/* Check to see if defines a new Max or Min point */
-	MATH_VEC_MIN(tie->min, min);
-	MATH_VEC_MAX(tie->max, max);
-    }
-}
-
-void TIE_VAL(tie_kdtree_prep)(struct tie_s *tie)
+void
+TIE_VAL(tie_kdtree_prep)(struct tie_s *tie)
 {
     TIE_3 delta;
     int already_built;
@@ -935,6 +761,8 @@ void TIE_VAL(tie_kdtree_prep)(struct tie_s *tie)
  * Compute Floating Fuzz Precision Value
  * For now, take largest dimension as basis for TIE_PREC
  */
+    VMOVE(tie->amin, tie->min.v);
+    VMOVE(tie->amax, tie->max.v);
     VSUB2(delta.v,  tie->max.v,  tie->min.v);
     MATH_MAX3(TIE_PREC, delta.v[0], delta.v[1], delta.v[2]);
 #if defined(TIE_PRECISION) && defined(TIE_PRECISION_SINGLE) && TIE_PRECISION == TIE_PRECISION_SINGLE

@@ -235,8 +235,10 @@ int
 track_prep(void)
 {
     int i;
-    fastf_t phi, costheta, link_angle, arc_angle;
+    fastf_t phi, costheta, arc_angle;
+    fastf_t link_angle = 0.0;
     vect_t difference, link_cent;
+    VSETALL(link_cent, 0.0);
 
     /* first loop - get inter axle slopes and start/end angles */
     for (i=0;i<NW;i++) {

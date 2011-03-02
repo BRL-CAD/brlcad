@@ -128,15 +128,11 @@ struct tie_s {
 };
 
 TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_free), (struct tie_s *tie));
-TIE_EXPORT BU_EXTERN(uint32_t TIE_VAL(tie_kdtree_cache_free), (struct tie_s *tie, void **cache));
-TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_cache_load), (struct tie_s *tie, void *cache, uint32_t size));
 TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_prep), (struct tie_s *tie));
 TIE_EXPORT extern fastf_t TIE_PREC;
 
 /* compatability macros */
 #define tie_kdtree_free TIE_VAL(tie_kdtree_free)
-#define tie_kdtree_cache_free TIE_VAL(tie_kdtree_cache_free)
-#define tie_kdtree_cache_load TIE_VAL(tie_kdtree_cache_load)
 #define tie_kdtree_prep TIE_VAL(tie_kdtree_prep)
 
 TIE_EXPORT extern int tie_check_degenerate;

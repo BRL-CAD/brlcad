@@ -998,7 +998,7 @@ do_ae(double azim, double elev)
      * bounding box is empty, otherwise bn_mat_int() will bomb.
      */
     if (viewsize < 0 || ZERO(viewsize)) {
-	viewsize = 2.0; /* arbitrary so Viewrotscale is normal
+	viewsize = 2.0; /* arbitrary so Viewrotscale is normal */
     }
 
     Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */

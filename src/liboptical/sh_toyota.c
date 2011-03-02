@@ -2165,6 +2165,9 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	Xaxis, Yaxis,
 	work;
 
+     /* initialize Sky_elmnt for compiler */
+     VSETALL(Sky_elmnt, 0.0);
+
 /* Angular spread between vectors used in solid angle integration. */
 #define SPREAD (10*M_PI/180)
 

@@ -527,6 +527,9 @@ convert_cs(struct coord_sys *cs)
 {
     struct coord_sys *cs2;
     point_t tmp_orig, tmp_pt1, tmp_pt2;
+    VSETALL(tmp_orig, 0.0);
+    VSETALL(tmp_pt1, 0.0);
+    VSETALL(tmp_pt2, 0.0);
 
     if (!cs->rid)
 	return 0;
@@ -615,6 +618,8 @@ convert_grid(int idx)
 {
     struct coord_sys *cs;
     point_t tmp_pt;
+    VSETALL(tmp_pt, 0.0);
+
 
     if (!g_pts[idx].cid)
 	return 0;

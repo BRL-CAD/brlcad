@@ -1481,7 +1481,7 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 {
     struct faceuse *fu;
     struct bu_ptbl verts;
-    plane_t old_pl;
+    plane_t old_pl = {0.0, 0.0, 0.0, 0.0};
     struct face *f;
     struct face_g_plane *fg;
     struct loopuse *lu;
@@ -7071,7 +7071,7 @@ nmg_bad_face_normals(const struct shell *s, const struct bn_tol *tol)
     struct faceuse *fu;
     struct loopuse *lu;
     vect_t old_normal;
-    plane_t new_plane;
+    plane_t new_plane = {0.0, 0.0, 0.0, 0.0};
 
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
