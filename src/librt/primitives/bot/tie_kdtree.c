@@ -761,6 +761,8 @@ TIE_VAL(tie_kdtree_prep)(struct tie_s *tie)
  * Compute Floating Fuzz Precision Value
  * For now, take largest dimension as basis for TIE_PREC
  */
+    VMOVE(tie->amin, tie->min.v);
+    VMOVE(tie->amax, tie->max.v);
     VSUB2(delta.v,  tie->max.v,  tie->min.v);
     MATH_MAX3(TIE_PREC, delta.v[0], delta.v[1], delta.v[2]);
 #if defined(TIE_PRECISION) && defined(TIE_PRECISION_SINGLE) && TIE_PRECISION == TIE_PRECISION_SINGLE

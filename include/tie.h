@@ -133,8 +133,6 @@ TIE_EXPORT extern fastf_t TIE_PREC;
 
 /* compatability macros */
 #define tie_kdtree_free TIE_VAL(tie_kdtree_free)
-#define tie_kdtree_cache_free TIE_VAL(tie_kdtree_cache_free)
-#define tie_kdtree_cache_load TIE_VAL(tie_kdtree_cache_load)
 #define tie_kdtree_prep TIE_VAL(tie_kdtree_prep)
 
 TIE_EXPORT extern int tie_check_degenerate;
