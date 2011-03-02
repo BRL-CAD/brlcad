@@ -4,6 +4,10 @@
 #       flex/byacc/bsd m4 working and rewrite boost
 #       parsing
 
+# No point in warnings here, we can't do anything about
+# it until the boost issue is handled
+SET(CMAKE_CXX_FLAGS "-w")
+
 include_directories(
 	${CMAKE_SOURCE_DIR}/src/other
 	${OPENNURBS_INCLUDE_DIR}
