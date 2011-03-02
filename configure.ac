@@ -2938,7 +2938,7 @@ int main() {
     int argl = 1, cow = 0;
     interp = Tcl_CreateInterp();
 #define ATTEMPT(try,fail) if(try) { fprintf(stderr, fail": %s\n", \
-	interp->result); return -1; }
+	Tcl_GetStringResult(interp)); return -1; }
     ATTEMPT(Tcl_Init(interp) == TCL_ERROR,"Tcl_Init returned error");
     ATTEMPT(Tk_ParseArgv(interp, NULL, &argl, arg, argtbl,
  	TK_ARGV_DONT_SKIP_FIRST_ARG) != TCL_OK, "Tk_ParseArgv");
@@ -3183,19 +3183,19 @@ int main() {
     char *b = NULL;
     interp = Tcl_CreateInterp();
     if (Tcl_Init(interp) == TCL_ERROR) {
-	printf("TCL interpreter failed to init: %s\n", interp->result);
+	printf("TCL interpreter failed to init: %s\n", Tcl_GetStringResult(interp));
 	return 1;
     }
     if (Itcl_Init(interp) == TCL_ERROR) {
-	printf("ITCL interp failed to initaliaze: %s\n", interp->result);
+	printf("ITCL interp failed to initaliaze: %s\n", Tcl_GetStringResult(interp));
 	return 1;
     }
     res = Tcl_Eval(interp, cmd);
     if ( res != TCL_OK) {
-	printf("Failed to load Iwidgets: %s\n", interp->result);
+	printf("Failed to load Iwidgets: %s\n", Tcl_GetStringResult(interp));
 	if(Tcl_Eval(interp, "package names") == TCL_ERROR)
 	    return 1;
-	while(b=strtok(b?NULL:interp->result," "))
+	while(b=strtok(b?NULL:Tcl_GetStringResult(interp)," "))
 	  if(!strncmp(b,"Iwidgets",8))
 	    return 0;
         return 1;
