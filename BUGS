@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* infinite loop in rt_find_backing_dist() raytracing a BoT (without
+  pieces) for bot_smooth (i.e., rt_bot_smooth()).  encountered inf
+  loop on a jetski fastgen model that was solid but unoriented, with
+  about 8k faces.  NOTE: possibly already have a fix for this bug
+  pending review and testing.  --CSM
+
 * run make to create all primitives at the origin.  there are raytrace
   differences, crashes, and overall bad behavior between default
   ungrouped "e *" view and adding all of those primitives to a single
