@@ -1497,6 +1497,10 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
     int failed=0;
     int loop_count=0;
 
+    /* initializations to make compiler happy */
+    VSETALL(old_pl, 0.0);
+    old_pl[3] = 0.0; 
+
     fu = fu_in;
     NMG_CK_FACEUSE(fu);
 
@@ -7071,7 +7075,7 @@ nmg_bad_face_normals(const struct shell *s, const struct bn_tol *tol)
     struct faceuse *fu;
     struct loopuse *lu;
     vect_t old_normal;
-    plane_t new_plane;
+    plane_t new_plane = {0.0, 0.0, 0.0, 0.0};
 
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
