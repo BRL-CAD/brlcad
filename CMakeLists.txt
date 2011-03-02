@@ -974,18 +974,8 @@ BRLCAD_TYPE_SIZE("uint64_t" UINT64 "")
 BRLCAD_TYPE_SIZE("uintptr_t" UINTPTR "")
 BRLCAD_TYPE_SIZE("sig_t" SIG "signal.h")
 
-
-
 # *******************************************************************
-# ***       Check for Compile Characteristics - Stage 6 of 9      ***
-# *******************************************************************
-
-SET(CMAKE_C_FLAGS "" CACHE STRING "compiler flags" FORCE)
-SET(CMAKE_CXX_FLAGS "" CACHE STRING "cxx compiler flags" FORCE)
-INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
-
-# *******************************************************************
-# ***             Check for Functions - Stage 7 of 9              ***
+# ***             Check for Functions - Stage 6 of 9              ***
 # *******************************************************************
 
 # ALLOCA test - based on AC_FUNC_ALLOCA
@@ -1029,6 +1019,15 @@ BRLCAD_FUNCTION_EXISTS(sysmp HAVE_SYSMP)
 BRLCAD_FUNCTION_EXISTS(vfork HAVE_VFORK)
 BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
 
+# *******************************************************************
+# ***       Check for Compile Characteristics - Stage 7 of 9      ***
+# *******************************************************************
+
+SET(CMAKE_C_FLAGS "" CACHE STRING "compiler flags" FORCE)
+SET(CMAKE_CXX_FLAGS "" CACHE STRING "cxx compiler flags" FORCE)
+INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
+
+
 
 # *******************************************************************
 # ***          Check for System Services - Stage 8 of 9           ***
@@ -1039,6 +1038,17 @@ BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
 IF(MSVC)
 	INCLUDE(InstallRequiredSystemLibraries)
 ENDIF(MSVC)
+
+# Before we finalize, set some specific global compiler flags
+IF(MSVC)
+	#SET(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -nologo -D_CRT_SECURE_NO_WARNINGS)
+	SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -nologo -D_CRT_SECURE_NO_WARNINGS)
+	SET(CMAKE_EXE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
+	SET(CMAKE_SHARED_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
+	SET(CMAKE_MODULE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
+ENDIF(MSVC)
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${${CMAKE_PROJECT_NAME}_C_FLAGS}")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${${CMAKE_PROJECT_NAME}_CXX_FLAGS}")
 
 # We've done the toplevel configure steps, now add the subdirectories
 ADD_SUBDIRECTORY(src)
@@ -1055,16 +1065,6 @@ ADD_SUBDIRECTORY(regress)
 FILE(APPEND ${CONFIG_H_FILE} "#endif /* __CONFIG_H__ */\n")
 configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
 
-# Before we finalize, set some specific global compiler flags
-IF(MSVC)
-	#SET(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -nologo -D_CRT_SECURE_NO_WARNINGS)
-	SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -nologo -D_CRT_SECURE_NO_WARNINGS)
-	SET(CMAKE_EXE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
-	SET(CMAKE_SHARED_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
-	SET(CMAKE_MODULE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
-ENDIF(MSVC)
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${${CMAKE_PROJECT_NAME}_C_FLAGS}")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${${CMAKE_PROJECT_NAME}_CXX_FLAGS}")
 
 # *******************************************************************
 # ***              Summarize Results - Stage 9 of 9               ***
@@ -1239,9 +1239,6 @@ configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/builddelta_start.c.in
 	${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c)
 configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/builddelta_end.c.in
 	${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
-SET_SOURCE_FILES_PROPERTIES(${BRLCAD_CMAKE_DIR}/test_srcs/print_timestamp.c PROPERTIES COMPILE_FLAGS "-w")
-SET_SOURCE_FILES_PROPERTIES(${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c PROPERTIES COMPILE_FLAGS "-w")
-SET_SOURCE_FILES_PROPERTIES(${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c PROPERTIES COMPILE_FLAGS "-w")
 ADD_EXECUTABLE(printtimestamp ${BRLCAD_CMAKE_DIR}/test_srcs/print_timestamp.c)
 ADD_EXECUTABLE(buildtimestart ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_start.c)
 ADD_EXECUTABLE(buildtimeend ${CMAKE_BINARY_DIR}/CMakeTmp/builddelta_end.c)
@@ -1375,6 +1372,7 @@ file(READ ${CONFIG_TIMESTAMP_FILE} DATESTAMP)
 STRING(STRIP ${DATESTAMP} DATESTAMP)
 file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/DATE "\"${DATESTAMP}\"")
 FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/DATE "\n") 
+
 
 # Rules for the toplevel documentation files
 SET(toplevel_DOCFILES
