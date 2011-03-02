@@ -4980,6 +4980,10 @@ dsp_pos(point_t out, /* return value */
 
     struct dsp_rpp dsp_rpp;
 
+    /* init points */
+    VSET(pt, 0, 0, 0);
+    VSET(tri_pt, 0, 0, 0);
+
     RT_CK_SOLTAB(stp);
 
     if (stp->st_id != ID_DSP) return 1;
