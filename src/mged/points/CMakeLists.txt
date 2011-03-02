@@ -1,3 +1,10 @@
+# Something in the standard build flags doesn't interact well with
+# the lex output here, and even -w doesn't avoid the issue (??) 
+# so for this one directory, go vanilla until we can get a lex/yacc 
+# setup that reliably produces code that will work in strict 
+# environments
+SET(CMAKE_C_FLAGS "")
+
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
