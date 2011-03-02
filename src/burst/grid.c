@@ -396,7 +396,7 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 {
     struct partition *pp;
     struct partition *bp = PT_NULL;
-    fastf_t burstnorm[3]; /* normal at burst point */
+    vect_t burstnorm = {0.0, 0.0, 0.0}; /* normal at burst point */
 #if DEBUG_GRID
     brst_log("f_ShotHit\n");
     for (pp = pt_headp->pt_forw; pp != pt_headp; pp = pp->pt_forw)
