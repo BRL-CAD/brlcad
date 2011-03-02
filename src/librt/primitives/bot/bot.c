@@ -2830,25 +2830,13 @@ rt_bot_propget(struct rt_bot_internal *bot, const char *property)
 int
 rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 {
-    size_t i, j, k;
-    long slot;
-    size_t count=0;
-    size_t total = 0;
-    long *bin[256];
-    size_t bin_capacity[256];
-    size_t bin_todonext[256];
-    const int DEFAULT_CAPACITY = 32;
-    fastf_t min_xval = (fastf_t)LONG_MAX;
-    fastf_t max_xval = (fastf_t)LONG_MIN;
-    fastf_t delta = (fastf_t)0.0;
+#if 1
+    /* THE OLD WAY .. possibly O(n^3) with the vertex shifting */
 
-    vect_t deleted;
-    VSETALL(deleted, INFINITY);
+    size_t i, j, k;
+    size_t count=0;
 
     RT_BOT_CK_MAGIC(bot);
-
-#if 0
-    /* THE OLD WAY .. possibly O(n^3) with the vertex shifting */
 
     for (i=0; i<bot->num_vertices; i++) {
 	j = i + 1;
@@ -2866,9 +2854,9 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 
 		/* update face references */
 		for (k=0; k<bot->num_faces*3; k++) {
-		    if (bot->faces[k] == j) {
+		    if ((size_t)bot->faces[k] == j) {
 			bot->faces[k] = i;
-		    } else if (bot->faces[k] > j)
+		    } else if ((size_t)bot->faces[k] > j)
 			bot->faces[k]--;
 		}
 	    } else {
@@ -2877,7 +2865,26 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 	}
     }
 #else
+
     /* THE NEW WAY .. possibly O(n) with basic bin sorting */
+
+    size_t i, j, k;
+    size_t count=0;
+
+    long slot;
+    size_t total = 0;
+    long *bin[256];
+    size_t bin_capacity[256];
+    size_t bin_todonext[256];
+    const int DEFAULT_CAPACITY = 32;
+    fastf_t min_xval = (fastf_t)LONG_MAX;
+    fastf_t max_xval = (fastf_t)LONG_MIN;
+    fastf_t delta = (fastf_t)0.0;
+
+    vect_t deleted;
+    VSETALL(deleted, INFINITY);
+
+    RT_BOT_CK_MAGIC(bot);
 
     /* initialize a simple 256-slot integer bin space partitioning */
     for (slot=0; slot<256; slot++) {

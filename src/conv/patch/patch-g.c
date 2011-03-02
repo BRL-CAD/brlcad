@@ -1376,7 +1376,6 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
 void
 proc_plate(int cnt)
 {
-    int thick_no;
     int idx;
     static int count=0;
     static int mir_count=0;
@@ -1390,6 +1389,7 @@ proc_plate(int cnt)
 
     /* static due to bu exception handling */
     static int k, l;
+    static int thick_no;
 
     k = l = 0;
 
