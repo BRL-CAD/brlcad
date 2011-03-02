@@ -610,7 +610,7 @@ read_spec(REMAPID_FILE *sfp, char *sf_name)
     int ch;
     int i;
     int num1, num2;
-    int newid;
+    int newid = 0;
     struct bu_list cids;
     struct curr_id *cip;
 
