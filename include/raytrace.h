@@ -1358,7 +1358,7 @@ struct rt_piecelist  {
 /* Used to set globals declared in bot.c */
 #define RT_DEFAULT_MINPIECES		32
 #define RT_DEFAULT_TRIS_PER_PIECE	4
-#define RT_DEFAULT_MINTIE		0xffffffff
+#define RT_DEFAULT_MINTIE		0	/* disabled by default */
 
 /**
  * R E S O U R C E
