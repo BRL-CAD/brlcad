@@ -60,6 +60,9 @@
 #ifndef YY_MAIN
 #  define YY_MAIN 0
 #endif
+#ifndef YY_NO_INPUT
+#  define YY_NO_INPUT 1
+#endif
 
 /* flex is being stupid.  need to check fwrite() return value to quell warning. */
 #ifndef ECHO
