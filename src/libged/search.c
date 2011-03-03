@@ -93,28 +93,8 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		}
 	}
 
-	if (BU_LIST_IS_EMPTY(&(path_list->l))) {
-		/* We found a plan, but have nothing to search - in that case, search all top level objects */
-		for (i = 0; i < RT_DBNHASH; i++) {
-			for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-				if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
-					db_string_to_path(&dfp, gedp->ged_wdbp->dbip, dp->d_namep);
-					BU_GETSTRUCT(new_entry, db_full_path_list);
-					new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
-					db_full_path_init(new_entry->path);
-					db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
-					BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
-				}
-			}
-		}
-	}
-
-	if (BU_LIST_IS_EMPTY(&(path_list->l))) {
-		/* If list is STILL empty, we have nothing to search - just return empty */
-		return TCL_OK;
-	} else {
-	    dbplan = db_search_formplan(&argv[plan_argv], gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-	    if (!dbplan) {
+	dbplan = db_search_formplan(&argv[plan_argv], gedp->ged_wdbp->dbip, gedp->ged_wdbp);
+	if (!dbplan) {
 		bu_vls_printf(&gedp->ged_result_str,  "Failed to build find plan.\n");
 		db_free_full_path(&dfp);
 		bu_free_argv(argc, argv);
@@ -125,13 +105,12 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		}
 		bu_free(path_list, "free path_list");
 		return GED_ERROR;
-	    } else {
-		    if (build_uniq_list) {
-			    uniq_db_objs = db_search_unique_objects(dbplan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-		    } else {
-	    		    search_results = db_search_full_paths(dbplan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-		    }
-	    }
+	} else {
+		if (build_uniq_list) {
+			uniq_db_objs = db_search_unique_objects(dbplan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
+		} else {
+			search_results = db_search_full_paths(dbplan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
+		}
 	}
 
 	/* Assign results to string - if we're doing a list, process the results for unique objects - otherwise
