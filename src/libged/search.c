@@ -19,70 +19,8 @@
  */
 /** @file search.c
  *
- * Brief description
+ * GED wrapper around librt search functions
  *
- */
-
-/* OpenBSD:
- *
- * Copyright (c) 1990, 1993
- *      The Regents of the University of California.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * NetBSD:
- *
- * Copyright (c) 1990, 1993, 1994
- * The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Cimarron D. Taylor of the University of California, Berkeley.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 #include "common.h"
@@ -111,7 +49,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     struct db_full_path_list *new_entry;
     struct db_full_path_list *path_list;
     struct db_full_path_list *search_results = NULL;
-    struct bu_ptbl uniq_db_objs;
+    struct bu_ptbl *uniq_db_objs;
     /* COPY argv_orig to argv; */
     char **argv = bu_dup_argv(argc, argv_orig);
 
@@ -175,7 +113,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		/* If list is STILL empty, we have nothing to search - just return empty */
 		return TCL_OK;
 	} else {
-	    dbplan = db_search_formplan(&argv[plan_argv], gedp->ged_wdbp->dbip, gedp->ged_wdbp, search_results);
+	    dbplan = db_search_formplan(&argv[plan_argv], gedp->ged_wdbp->dbip, gedp->ged_wdbp);
 	    if (!dbplan) {
 		bu_vls_printf(&gedp->ged_result_str,  "Failed to build find plan.\n");
 		db_free_full_path(&dfp);
@@ -188,25 +126,22 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		bu_free(path_list, "free path_list");
 		return GED_ERROR;
 	    } else {
-		search_results = db_search_execute(dbplan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
+		    if (build_uniq_list) {
+			    uniq_db_objs = db_search_unique_objects(dbplan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
+		    } else {
+	    		    search_results = db_search_full_paths(dbplan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
+		    }
 	    }
 	}
 
 	/* Assign results to string - if we're doing a list, process the results for unique objects - otherwise
 	 * just assemble the full path list and return it */
 	if (build_uniq_list) {
-		bu_ptbl_init(&uniq_db_objs, 8, "initialize ptr table");
-		while (BU_LIST_WHILE(entry, db_full_path_list, &(search_results->l))) {
-			bu_ptbl_ins_unique(&uniq_db_objs, (long *)entry->path->fp_names[entry->path->fp_len - 1]);
-			BU_LIST_DEQUEUE(&(entry->l));
-			db_free_full_path(entry->path);
-			bu_free(entry, "free db_full_path_list entry");
-		}
-		for (i=0; i < (int)BU_PTBL_LEN(&uniq_db_objs); i++) {
-			dp = (struct directory *)BU_PTBL_GET(&uniq_db_objs, i);
+		for (i=0; i < (int)BU_PTBL_LEN(uniq_db_objs); i++) {
+			dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, i);
 			bu_vls_printf(&gedp->ged_result_str, "%s\n", dp->d_namep);
 		}
-		bu_ptbl_free(&uniq_db_objs);
+		bu_ptbl_free(uniq_db_objs);
 	} else {
 		while (BU_LIST_WHILE(entry, db_full_path_list, &(search_results->l))) {
 			bu_vls_printf(&gedp->ged_result_str, "%s\n", db_path_to_string(entry->path));
@@ -214,11 +149,11 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			db_free_full_path(entry->path);
 			bu_free(entry, "free db_full_path_list entry");
 		}
-		db_free_full_path(&dfp);
-		bu_free_argv(argc, argv);	
 		bu_free(search_results, "free search_results");
 	}
     }
+    db_free_full_path(&dfp);
+    bu_free_argv(argc, argv);	
     return TCL_OK;
 }
 
