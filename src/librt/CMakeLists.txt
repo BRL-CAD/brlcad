@@ -213,8 +213,6 @@ set(LIBRT_SOURCES
     wdb.c
 )
 
-SET_SOURCE_FILES_PROPERTIES(primitives/extrude/extrude.c PROPERTIES COMPILE_FLAGS "-fPIC")
-
 set(librt_ignored_files
 	brep_test.cpp
 	columnparse.c
