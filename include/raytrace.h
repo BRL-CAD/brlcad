@@ -2751,11 +2751,11 @@ RT_EXPORT BU_EXTERN(int db_full_path_search,
  *
  * would, if searched from the top level for s1,  return both
  *
- *  r1/s1
+ *  /r1/s1
  *
  * and
  *  
- *  r2/s1
+ *  /r2/s1
  *
  * instead of just s1.  To iterate over the results, see examples of 
  * iterating over bu_list structures.  (Bear in mind the db_full_path 
