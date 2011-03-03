@@ -594,6 +594,8 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     point2d_t *intercept;
     point2d_t *normal = NULL;
     point2d_t ray_perp;
+    vect_t ra = V2INIT_ZERO;
+    vect_t rb = V2INIT_ZERO;
 
     crv = &extr->crv;
 
@@ -679,7 +681,6 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		 */
 		csg = (struct carc_seg *)lng;
 		{
-		    vect_t ra, rb;
 		    fastf_t radius;
 
 		    if (csg->radius <= 0.0) {
@@ -1030,12 +1031,13 @@ void
 rt_extrude_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
-    struct carc_seg *csg;
+    struct carc_seg *csg = NULL;
     fastf_t radius, a, b, a_sq, b_sq;
     fastf_t curvature, tmp, dota, dotb;
-    fastf_t der;
-    vect_t diff;
-    vect_t ra, rb;
+    fastf_t der = 0.0;
+    vect_t diff = VINIT_ZERO;
+    vect_t ra = VINIT_ZERO;
+    vect_t rb = VINIT_ZERO;
 
     switch (hitp->hit_surfno) {
 	case LINE_SEG:
@@ -1380,6 +1382,9 @@ static void
 isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loop_inter **root,
 		  int which_loop, struct rt_sketch_internal *ip, struct bn_tol *tol)
 {
+    point2d_t ra = V2INIT_ZERO;
+    point2d_t rb = V2INIT_ZERO;
+
     int i, j;
     int code;
     point2d_t norm;
@@ -1480,8 +1485,6 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		csg = (struct carc_seg *)lng;
 		radius = csg->radius;
 		if (csg->radius <= 0.0) {
-		    point2d_t ra, rb;
-
 		    V2SUB2(diff, ip->verts[csg->start], ip->verts[csg->end]);
 		    radius = sqrt(MAG2SQ(diff));
 		    ra[X] = radius;
@@ -1509,7 +1512,6 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    }
 
 		} else {
-		    point2d_t ra, rb;
 		    vect_t s2m, tmp_dir;
 		    fastf_t s2m_len_sq, len_sq, tmp_len, cross_z;
 		    point2d_t start2d = V2INIT_ZERO;
