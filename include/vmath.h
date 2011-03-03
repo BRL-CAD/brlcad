@@ -1673,7 +1673,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 /*** Macros suitable for declaration statement initialization. ***/
 
 /**
- * vector macro suitable for declaration statement initialization.
+ * 3D vector macro suitable for declaration statement initialization.
  * this sets all vector elements to the specified value similar to
  * VSETALL() but as an initializer array declaration instead of as a
  * statement.
@@ -1681,15 +1681,15 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define VINITALL(_v) {(_v), (_v), (_v)}
 
 /**
- * vector macro suitable for declaration statement initialization.
- * this sets all vector elements to zero similar to calling
- * VSETALL(0.0) but as an initializer array declaration instead of as
- * a statement.
+ * 2D vector macro suitable for declaration statement initialization.
+ * this sets all vector elements to the specified value similar to
+ * VSETALLN(hvect_t,val,2) but as an initializer array declaration
+ * instead of as a statement.
  */
-#define VINIT_ZERO {0.0, 0.0, 0.0}
+#define V2INITALL(_v) {(_v), (_v), (_v)}
 
 /**
- * homogeneous vector macro suitable for declaration statement
+ * 4D homogeneous vector macro suitable for declaration statement
  * initialization.  this sets all vector elements to the specified
  * value similar to VSETALLN(hvect_t,val,4) but as an initializer
  * array declaration instead of as a statement.
@@ -1697,7 +1697,23 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define HINITALL(_v) {(_v), (_v), (_v), (_v)}
 
 /**
- * homogenous vector macro suitable for declaration statement
+ * 3D vector macro suitable for declaration statement initialization.
+ * this sets all vector elements to zero similar to calling
+ * VSETALL(0.0) but as an initializer array declaration instead of as
+ * a statement.
+ */
+#define VINIT_ZERO {0.0, 0.0, 0.0}
+
+/**
+ * 2D vector macro suitable for declaration statement initialization.
+ * this sets all vector elements to zero similar to calling
+ * V2SETALL(0.0) but as an initializer array declaration instead of as
+ * a statement.
+ */
+#define V2INIT_ZERO {0.0, 0.0}
+
+/**
+ * 4D homogenous vector macro suitable for declaration statement
  * initialization.  this sets all vector elements to zero similar to
  * calling VSETALLN(hvect_t,0.0,4) but as an initializer array
  * declaration instead of as a statement.
