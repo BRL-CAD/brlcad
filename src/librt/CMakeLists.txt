@@ -201,6 +201,7 @@ set(LIBRT_SOURCES
     primitives/vol/vol_mirror.c
     regionfix.c
     roots.c
+	 search.c
     shoot.c
     spectrum.c
     tcl.c
