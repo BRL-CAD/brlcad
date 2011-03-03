@@ -303,6 +303,8 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
     struct tie_geom_s *node_gd = (struct tie_geom_s *)(node->data);
     TIE_3 min, max;
     TIE_3 center[2], half_size[2]; 
+    VSETALL(min.v, 0.0);
+    VSETALL(max.v, 0.0);
 
     /*
      * Calculate number of slices to use as a function of triangle density.
