@@ -351,7 +351,7 @@ rt_extrude_print(const struct soltab *stp)
 }
 
 
-int
+static int
 get_quadrant(fastf_t *v, fastf_t *local_x, fastf_t *local_y, fastf_t *vx, fastf_t *vy)
 {
 
@@ -372,7 +372,7 @@ get_quadrant(fastf_t *v, fastf_t *local_x, fastf_t *local_y, fastf_t *vx, fastf_
 }
 
 
-int
+static int
 isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *center, fastf_t *ra, fastf_t *rb)
 {
     fastf_t a, b, c;
@@ -418,7 +418,7 @@ isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t
 }
 
 
-int
+static int
 isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *center, fastf_t *ra, fastf_t *rb, fastf_t *norm, fastf_t *start, fastf_t *end, int orientation)
 
 
@@ -1195,7 +1195,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 }
 
 
-void
+static void
 get_indices(genptr_t seg, int *start, int *end)
 {
     struct carc_seg *csg;
@@ -1232,7 +1232,7 @@ get_indices(genptr_t seg, int *start, int *end)
 }
 
 
-void
+static void
 get_seg_midpoint(genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt)
 {
     struct edge_g_cnurb eg;
@@ -1376,7 +1376,7 @@ struct loop_inter {
 };
 
 
-void
+static void
 isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loop_inter **root,
 		  int which_loop, struct rt_sketch_internal *ip, struct bn_tol *tol)
 {
@@ -1667,7 +1667,7 @@ sort_intersections(struct loop_inter **root, struct bn_tol *tol)
 }
 
 
-int
+static int
 classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sketch_internal *ip)
 {
     struct loop_inter *inter_root=NULL, *ptr, *tmp;
