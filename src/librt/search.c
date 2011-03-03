@@ -102,6 +102,23 @@
 
 int db_search_isoutput = 0;
 
+/*
+ * D B _ F R E E _ F U L L  _ P A T H _ L I S T
+ *
+ * Free all entries and the list of a db_full_path_list
+ */
+void
+db_free_full_path_list(struct db_full_path_list *path_list)
+{
+    struct db_full_path_list *currentpath;
+    while (BU_LIST_WHILE(currentpath, db_full_path_list, &(path_list->l))) {
+	db_free_full_path(currentpath->path);
+	BU_LIST_DEQUEUE((struct bu_list *)currentpath);
+	bu_free(currentpath, "free db_full_path_list entry");
+    }
+    bu_free(path_list, "free path_list");
+}
+
 
 /*
  * D B _ F U L L P A T H _ T R A V E R S E _ S U B T R E E
@@ -2045,13 +2062,9 @@ db_search_full_paths(void *searchplan,        /* search plan */
 	    }
 	    db_free_full_path(&dfp);
     }
-    while (BU_LIST_WHILE(currentpath, db_full_path_list, &(pathnames->l))) {
+    for(BU_LIST_FOR(currentpath, db_full_path_list, &(pathnames->l))){
 	    db_fullpath_traverse(dbip, wdbp, searchresults, currentpath->path, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)searchplan);
-	    db_free_full_path(currentpath->path);
-	    BU_LIST_DEQUEUE((struct bu_list *)currentpath);
-	    bu_free(currentpath, "free db_full_path_list entry");
     }
-    bu_free(pathnames, "free pathnames");
     return searchresults;
 }
 
@@ -2067,13 +2080,10 @@ db_search_unique_objects(void *searchplan,        /* search plan */
 	struct db_full_path_list *search_results = NULL;
 	search_results = db_search_full_paths(searchplan, pathnames, dbip, wdbp);
 	bu_ptbl_init(uniq_db_objs, 8, "initialize ptr table");
-	while (BU_LIST_WHILE(entry, db_full_path_list, &(search_results->l))) {
+	for(BU_LIST_FOR(entry, db_full_path_list, &(search_results->l))) {
 		bu_ptbl_ins_unique(uniq_db_objs, (long *)entry->path->fp_names[entry->path->fp_len - 1]);
-		BU_LIST_DEQUEUE(&(entry->l));
-		db_free_full_path(entry->path);
-		bu_free(entry, "free db_full_path_list entry");
 	}
-	bu_free(search_results, "free search_results");
+	db_free_full_path_list(search_results);
 	return uniq_db_objs;
 }
 
