@@ -1293,14 +1293,12 @@ nmg_loop_plane_newell(const struct loopuse *lu, fastf_t *pl)
 {
     struct edgeuse *eu;
     double hmin, hmax;
-    double pl_tmp[3];
+    plane_t pl_tmp;
 
     NMG_CK_LOOPUSE(lu);
 
-    VSETALL(pl, 0.0);
-    pl[H] = 0.0;
-
-    VSETALL(pl_tmp, 0.0);
+    HSETALL(pl, 0.0);
+    HSETALL(pl_tmp, 0.0);
 
     /* make sure we have a loop of edges */
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
@@ -1396,7 +1394,7 @@ nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
     NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
     VMOVE(trans, eu->vu_p->v_p->vg_p->coord);
 
-    VSET(plane, 0.0, 0.0, 0.0);
+    HSETALL(plane, 0.0);
 
     /* Calculate area and plane normal.
      * Cross product of each pair of vertices gives twice
@@ -1640,6 +1638,9 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 		break;
 	}
 
+	/* FIXME: VSET on an plane_t?  what about [H] (which we add to
+	 * later below)?
+	 */
 	if (x_same) {
 	    VSET(pl, 1.0, 0.0, 0.0);
 	} else if (y_same) {
