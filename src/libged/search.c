@@ -47,7 +47,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     struct db_full_path dfp;
     struct db_full_path_list *entry;
     struct db_full_path_list *new_entry;
-    struct db_full_path_list *path_list;
+    struct db_full_path_list *path_list = NULL;
     struct db_full_path_list *search_results = NULL;
     struct bu_ptbl *uniq_db_objs;
     /* COPY argv_orig to argv; */
@@ -98,12 +98,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		bu_vls_printf(&gedp->ged_result_str,  "Failed to build find plan.\n");
 		db_free_full_path(&dfp);
 		bu_free_argv(argc, argv);
-		while (BU_LIST_WHILE(entry, db_full_path_list, &(path_list->l))) {
-			BU_LIST_DEQUEUE(&(entry->l));
-			db_free_full_path(entry->path);
-			bu_free(entry, "free db_full_path_list entry");
-		}
-		bu_free(path_list, "free path_list");
+		db_free_full_path_list(path_list);
 		return GED_ERROR;
 	} else {
 		if (build_uniq_list) {
@@ -122,15 +117,13 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		}
 		bu_ptbl_free(uniq_db_objs);
 	} else {
-		while (BU_LIST_WHILE(entry, db_full_path_list, &(search_results->l))) {
+		for(BU_LIST_FOR(entry, db_full_path_list, &(search_results->l))) {
 			bu_vls_printf(&gedp->ged_result_str, "%s\n", db_path_to_string(entry->path));
-			BU_LIST_DEQUEUE(&(entry->l));
-			db_free_full_path(entry->path);
-			bu_free(entry, "free db_full_path_list entry");
 		}
-		bu_free(search_results, "free search_results");
+		db_free_full_path_list(search_results);
 	}
     }
+    db_free_full_path_list(path_list);
     db_free_full_path(&dfp);
     bu_free_argv(argc, argv);	
     return TCL_OK;

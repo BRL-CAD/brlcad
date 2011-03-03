@@ -2780,6 +2780,9 @@ struct db_full_path_list {
 	struct db_full_path *path;
 };
 
+RT_EXPORT BU_EXTERN(void db_free_full_path_list,
+                (struct db_full_path_list *path_list));
+
 RT_EXPORT BU_EXTERN(void *db_search_formplan,
 		(char **argv,
 		 struct db_i *dbip,
