@@ -560,9 +560,11 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	fastf_t tx, ty, tz;
 	fastf_t sa, sx, sy, sz;
 	fastf_t kx, ky, kz;
-	vect_t aetvec, tvec;
+	vect_t aetvec = VINIT_ZERO;
+	vect_t tvec = VINIT_ZERO;
 	point_t key_pt;
 	hvect_t svec;
+	VSETALLN(svec, 0.0, ELEMENTS_PER_HVECT);
 
 	COMBMEM_SET_PART_II(gedp, argv, op, i, rt_tree_array, tree_index, mat);
 
