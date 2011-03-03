@@ -6,7 +6,6 @@ set(LIBGCV_SOURCES
 include_directories(
     ../../include
     ../other
-    ../other/libregex
     ../other/tcl/generic
 )
 
