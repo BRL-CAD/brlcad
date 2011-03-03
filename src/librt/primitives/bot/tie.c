@@ -168,7 +168,6 @@ void TIE_VAL(tie_prep)(struct tie_s *tie)
 
 /* Prep all the triangles */
     TIE_VAL(tie_tri_prep) (tie);
-    bu_log("total tri: %ld\n", tie->tri_num);
 }
 
 
@@ -444,6 +443,8 @@ void TIE_VAL(tie_push)(struct tie_s *tie, TIE_3 **tlist, unsigned int tnum, void
 
 /* ??? this looks like it might cause fragmentation? use a memory pool? */
 	tie->tri_list[tie->tri_num].v = (tfloat *)malloc(2*sizeof(tfloat));
+	if(tie->tri_list[tie->tri_num].v == NULL)
+	    bu_log("Bad malloc! %s:%s:%d\n", __FILE__, __FUNCTION__, __LINE__);
 	tie->tri_num++;
     }
     return;

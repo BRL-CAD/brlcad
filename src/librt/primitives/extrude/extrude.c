@@ -351,7 +351,7 @@ rt_extrude_print(const struct soltab *stp)
 }
 
 
-int
+static int
 get_quadrant(fastf_t *v, fastf_t *local_x, fastf_t *local_y, fastf_t *vx, fastf_t *vy)
 {
 
@@ -372,7 +372,7 @@ get_quadrant(fastf_t *v, fastf_t *local_x, fastf_t *local_y, fastf_t *vx, fastf_
 }
 
 
-int
+static int
 isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *center, fastf_t *ra, fastf_t *rb)
 {
     fastf_t a, b, c;
@@ -418,7 +418,7 @@ isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t
 }
 
 
-int
+static int
 isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *center, fastf_t *ra, fastf_t *rb, fastf_t *norm, fastf_t *start, fastf_t *end, int orientation)
 
 
@@ -594,6 +594,8 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     point2d_t *intercept;
     point2d_t *normal = NULL;
     point2d_t ray_perp;
+    vect_t ra = V2INIT_ZERO;
+    vect_t rb = V2INIT_ZERO;
 
     crv = &extr->crv;
 
@@ -679,7 +681,6 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		 */
 		csg = (struct carc_seg *)lng;
 		{
-		    vect_t ra, rb;
 		    fastf_t radius;
 
 		    if (csg->radius <= 0.0) {
@@ -1030,12 +1031,13 @@ void
 rt_extrude_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
-    struct carc_seg *csg;
+    struct carc_seg *csg = NULL;
     fastf_t radius, a, b, a_sq, b_sq;
     fastf_t curvature, tmp, dota, dotb;
-    fastf_t der;
-    vect_t diff;
-    vect_t ra, rb;
+    fastf_t der = 0.0;
+    vect_t diff = VINIT_ZERO;
+    vect_t ra = VINIT_ZERO;
+    vect_t rb = VINIT_ZERO;
 
     switch (hitp->hit_surfno) {
 	case LINE_SEG:
@@ -1232,7 +1234,7 @@ get_indices(genptr_t seg, int *start, int *end)
 }
 
 
-void
+static void
 get_seg_midpoint(genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt)
 {
     struct edge_g_cnurb eg;
@@ -1260,7 +1262,12 @@ get_seg_midpoint(genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt)
 	    if (csg->radius < 0.0) {
 		VMOVE_2D(pt, skt->verts[csg->start]);
 	    } else {
-		point2d_t start2d, end2d, mid_pt, s2m, dir, center2d;
+		point2d_t start2d = V2INIT_ZERO;
+		point2d_t end2d = V2INIT_ZERO;
+		point2d_t mid_pt = V2INIT_ZERO;
+		point2d_t s2m = V2INIT_ZERO;
+		point2d_t dir = V2INIT_ZERO;
+		point2d_t center2d = V2INIT_ZERO;
 		fastf_t tmp_len, len_sq, mid_ang, s2m_len_sq, cross_z;
 		fastf_t start_ang, end_ang;
 
@@ -1371,10 +1378,13 @@ struct loop_inter {
 };
 
 
-void
+static void
 isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loop_inter **root,
 		  int which_loop, struct rt_sketch_internal *ip, struct bn_tol *tol)
 {
+    point2d_t ra = V2INIT_ZERO;
+    point2d_t rb = V2INIT_ZERO;
+
     int i, j;
     int code;
     point2d_t norm;
@@ -1475,8 +1485,6 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		csg = (struct carc_seg *)lng;
 		radius = csg->radius;
 		if (csg->radius <= 0.0) {
-		    point2d_t ra, rb;
-
 		    V2SUB2(diff, ip->verts[csg->start], ip->verts[csg->end]);
 		    radius = sqrt(MAG2SQ(diff));
 		    ra[X] = radius;
@@ -1504,10 +1512,12 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    }
 
 		} else {
-		    point2d_t ra, rb;
 		    vect_t s2m, tmp_dir;
-		    point2d_t start2d, end2d, mid_pt, center2d;
 		    fastf_t s2m_len_sq, len_sq, tmp_len, cross_z;
+		    point2d_t start2d = V2INIT_ZERO;
+		    point2d_t end2d = V2INIT_ZERO;
+		    point2d_t mid_pt = V2INIT_ZERO;
+		    point2d_t center2d = V2INIT_ZERO;
 
 		    V2MOVE(start2d, ip->verts[csg->start]);
 		    V2MOVE(end2d, ip->verts[csg->end]);
@@ -1659,7 +1669,7 @@ sort_intersections(struct loop_inter **root, struct bn_tol *tol)
 }
 
 
-int
+static int
 classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sketch_internal *ip)
 {
     struct loop_inter *inter_root=NULL, *ptr, *tmp;
