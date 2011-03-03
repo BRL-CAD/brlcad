@@ -68,6 +68,7 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
     struct tie_s *tie;
     struct bot_specific *bot;
     unsigned int i;
+    TIE_3 *tribuf = NULL, **tribufp = NULL;
 
     RT_BOT_CK_MAGIC(bot_ip);
 
@@ -77,18 +78,25 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
     bot->bot_orientation = bot_ip->orientation;
     bot->bot_flags = bot_ip->bot_flags;
 
-    tie = bot_ip->tie = bot->tie = bottie_allocn_double(bot_ip->num_faces);
-
-    for(i=0;i< bot_ip->num_faces; i++) {
-	TIE_3 v, *vp;
-
-	vp = &v;
-
-	v.v[0] = bot_ip->vertices[bot_ip->faces[i*3+0]*3];
-	v.v[1] = bot_ip->vertices[bot_ip->faces[i*3+1]*3];
-	v.v[2] = bot_ip->vertices[bot_ip->faces[i*3+2]*3];
-	bottie_push_double((struct tie_s *)tie, &vp, 1, &i, 0);
+    if((tie = bot_ip->tie = bot->tie = bottie_allocn_double(bot_ip->num_faces)) == NULL)
+	return -1;
+    if((tribuf = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3 * bot_ip->num_faces, "triangle tribuffer")) == NULL) {
+	tie_free(tie);
+	return -1;
     }
+    if((tribufp = (TIE_3 **)bu_malloc(sizeof(TIE_3*) * 3 * bot_ip->num_faces, "triangle tribuffer pointer")) == NULL) {
+	tie_free(tie);
+	bu_free(tribuf, "tribuf");
+	return -1;
+    }
+
+    for(i=0;i<bot_ip->num_faces*3;i++) {   
+	tribufp[i] = &tribuf[i];
+	VMOVE(tribuf[i].v, (bot_ip->vertices+3*bot_ip->faces[i]));
+    }
+    tie_push1(bot_ip->tie, tribufp, bot_ip->num_faces, bot, 0);
+    bu_free(tribuf, "tribuffer");
+    bu_free(tribufp, "tribufp");
 
     tie_prep1((struct tie_s *)bot->tie);
 
@@ -98,7 +106,7 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
     stp->st_aradius = tie->radius;
     stp->st_bradius = tie->radius;
 
-    return 0;	/* always returning OK seems... bad. */
+    return 0;
 }
 
 #define MAXHITS 128

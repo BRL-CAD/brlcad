@@ -560,9 +560,11 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	fastf_t tx, ty, tz;
 	fastf_t sa, sx, sy, sz;
 	fastf_t kx, ky, kz;
-	vect_t aetvec, tvec;
+	vect_t aetvec = VINIT_ZERO;
+	vect_t tvec = VINIT_ZERO;
 	point_t key_pt;
 	hvect_t svec;
+	VSETALLN(svec, 0.0, ELEMENTS_PER_HVECT);
 
 	COMBMEM_SET_PART_II(gedp, argv, op, i, rt_tree_array, tree_index, mat);
 
@@ -687,7 +689,9 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
 	    fastf_t tx, ty, tz;
 	    fastf_t sa, sx, sy, sz;
-	    vect_t aetvec, tvec, svec;
+	    vect_t aetvec = VINIT_ZERO;
+	    vect_t tvec = VINIT_ZERO;
+	    vect_t svec;
 
 	    COMBMEM_CHECK_MAT(tp, tree_index, old_rt_tree_array, mat, aetvec, tvec, svec, key_pt, az, el, tw, tx, ty, tz, sa, sx, sy, sz);
 	} else {
@@ -763,7 +767,9 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
 	    fastf_t az, el, tw;
 	    fastf_t tx, ty, tz;
 	    fastf_t sa, sx, sy, sz;
-	    vect_t aetvec, tvec, svec;
+	    vect_t aetvec = VINIT_ZERO;
+	    vect_t tvec = VINIT_ZERO;
+	    vect_t svec;
 	    point_t key_pt;
 
 	    COMBMEM_CHECK_MAT(tp, tree_index, old_rt_tree_array, mat, aetvec, tvec, svec, key_pt, az, el, tw, tx, ty, tz, sa, sx, sy, sz);
@@ -809,7 +815,7 @@ combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
     for (i = 2; i < (size_t)argc; i += 5) {
 	mat_t mat;
 	fastf_t tx, ty, tz;
-	vect_t tvec;
+	vect_t tvec = VINIT_ZERO;
 
 	COMBMEM_SET_PART_II(gedp, argv, op, i, rt_tree_array, tree_index, mat);
 
@@ -872,7 +878,8 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	mat_t mat;
 	fastf_t sa, sx, sy, sz;
 	fastf_t kx, ky, kz;
-	vect_t aetvec, tvec;
+	vect_t aetvec = VINIT_ZERO;
+	vect_t tvec = VINIT_ZERO;
 	point_t key_pt;
 	hvect_t svec;
 
