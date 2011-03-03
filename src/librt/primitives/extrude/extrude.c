@@ -1260,7 +1260,12 @@ get_seg_midpoint(genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt)
 	    if (csg->radius < 0.0) {
 		VMOVE_2D(pt, skt->verts[csg->start]);
 	    } else {
-		point2d_t start2d, end2d, mid_pt, s2m, dir, center2d;
+		point2d_t start2d = V2INIT_ZERO;
+		point2d_t end2d = V2INIT_ZERO;
+		point2d_t mid_pt = V2INIT_ZERO;
+		point2d_t s2m = V2INIT_ZERO;
+		point2d_t dir = V2INIT_ZERO;
+		point2d_t center2d = V2INIT_ZERO;
 		fastf_t tmp_len, len_sq, mid_ang, s2m_len_sq, cross_z;
 		fastf_t start_ang, end_ang;
 
@@ -1506,8 +1511,11 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		} else {
 		    point2d_t ra, rb;
 		    vect_t s2m, tmp_dir;
-		    point2d_t start2d, end2d, mid_pt, center2d;
 		    fastf_t s2m_len_sq, len_sq, tmp_len, cross_z;
+		    point2d_t start2d = V2INIT_ZERO;
+		    point2d_t end2d = V2INIT_ZERO;
+		    point2d_t mid_pt = V2INIT_ZERO;
+		    point2d_t center2d = V2INIT_ZERO;
 
 		    V2MOVE(start2d, ip->verts[csg->start]);
 		    V2MOVE(end2d, ip->verts[csg->end]);
