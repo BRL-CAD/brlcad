@@ -1917,9 +1917,10 @@ or_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)           /* pl
  * command arguments.
  */
 void *
-db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results) {
+db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
     struct db_plan_t *plan, *tail;
     struct db_plan_t *new = NULL;
+    struct db_full_path_list *results = NULL;
 
     /*
      * for each argument in the command line, determine what kind of node
@@ -2014,7 +2015,7 @@ find_execute_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_l
 
 
 struct db_full_path_list *
-db_search_execute(void *searchplan,        /* search plan */
+db_search_full_paths(void *searchplan,        /* search plan */
 	     struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
 	     struct db_i *dbip,
 	     struct rt_wdb *wdbp)
@@ -2032,6 +2033,29 @@ db_search_execute(void *searchplan,        /* search plan */
     bu_free(pathnames, "free pathnames");
     return searchresults;
 }
+
+
+struct bu_ptbl *
+db_search_unique_objects(void *searchplan,        /* search plan */
+	     struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
+	     struct db_i *dbip,
+	     struct rt_wdb *wdbp)
+{
+	struct bu_ptbl *uniq_db_objs = (struct bu_ptbl *) bu_malloc(sizeof(struct bu_ptbl), "new pointer table");
+	struct db_full_path_list *entry = NULL;
+	struct db_full_path_list *search_results = NULL;
+	search_results = db_search_full_paths(searchplan, pathnames, dbip, wdbp);
+	bu_ptbl_init(uniq_db_objs, 8, "initialize ptr table");
+	while (BU_LIST_WHILE(entry, db_full_path_list, &(search_results->l))) {
+		bu_ptbl_ins_unique(uniq_db_objs, (long *)entry->path->fp_names[entry->path->fp_len - 1]);
+		BU_LIST_DEQUEUE(&(entry->l));
+		db_free_full_path(entry->path);
+		bu_free(entry, "free db_full_path_list entry");
+	}
+	bu_free(search_results, "free search_results");
+	return uniq_db_objs;
+}
+
 
 /*
  * Local Variables:

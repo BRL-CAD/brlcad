@@ -2738,10 +2738,10 @@ RT_EXPORT BU_EXTERN(int db_full_path_search,
 		     const struct directory *dp));
 
 /**
- * search the database using a supplied list of filter criteria,
- * returning a bu_list of db_full_path structs to instances of
- * objects matching the filter criteria.  Note that this is a
- * full path tree search of the entire database, not just the toplevel
+ * search the database using a supplied list of filter criteria.
+ * db_search_full_paths returns a bu_list of db_full_path structs to 
+ * instances of objects matching the filter criteria.  Note that this is
+ * a full path tree search of the entire database, not just the toplevel
  * objects that would be reported by the ls command.  E.g., a
  * database with the following objects:
  *
@@ -2757,11 +2757,19 @@ RT_EXPORT BU_EXTERN(int db_full_path_search,
  *  
  *  r2/s1
  *
- * instead of just s1.
+ * instead of just s1.  To iterate over the results, see examples of 
+ * iterating over bu_list structures.  (Bear in mind the db_full_path 
+ * structures in the list are indiviually malloced.)
  *
- * If a command wishes to return only unique objects and not
- * all instances of an object matching the criteria, post-processing
- * will be needed.
+ * To return only unique objects, use
+ * db_search_unique_objects, which would return just 
+ *
+ * s1
+ *
+ * in the above example.  db_search_unique_objects returns a bu_ptbl of 
+ * (struct directory *) pointers.  To iterate over this list use 
+ * BU_PTBL_LEN to get the size of the table and BU_PTBL_GET in a for
+ * loop to access each element.
  *
  */
 
@@ -2775,13 +2783,17 @@ struct db_full_path_list {
 RT_EXPORT BU_EXTERN(void *db_search_formplan,
 		(char **argv,
 		 struct db_i *dbip,
-		 struct rt_wdb *wdbp,
-		 struct db_full_path_list *results));
+		 struct rt_wdb *wdbp));
 
-
-RT_EXPORT BU_EXTERN(struct db_full_path_list *db_search_execute,
+RT_EXPORT BU_EXTERN(struct db_full_path_list *db_search_full_paths,
 		(void *searchplan,
-		 struct db_full_path_list *searchresults,
+		 struct db_full_path_list *path_list,
+		 struct db_i *dbip,
+		 struct rt_wdb *wdbp));
+
+RT_EXPORT BU_EXTERN(struct bu_ptbl *db_search_unique_objects,
+		(void *searchplan,
+		 struct db_full_path_list *path_list,
 		 struct db_i *dbip,
 		 struct rt_wdb *wdbp));
 
