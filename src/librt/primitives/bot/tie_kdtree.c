@@ -120,7 +120,7 @@ tie_kdtree_free_node(struct tie_kdtree_s *node)
 {
     struct tie_kdtree_s *node_aligned = (struct tie_kdtree_s *)((intptr_t)node & ~0x7L);
 
-    if (((intptr_t)(node_aligned->data)) & 0x4) {
+    if (TIE_HAS_CHILDREN(node_aligned->data)) {
 	/* Node Data is KDTREE Children, Recurse */
 	tie_kdtree_free_node(&((struct tie_kdtree_s *)(((intptr_t)(node_aligned->data)) & ~0x7L))[0]);
 	tie_kdtree_free_node(&((struct tie_kdtree_s *)(((intptr_t)(node_aligned->data)) & ~0x7L))[1]);
@@ -630,8 +630,8 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	find_split_fast(node, &cmin[0], &cmax[0], &split);
     else if (tie->kdmethod == TIE_KDTREE_OPTIMAL) 
 	find_split_optimal(tie, node, &cmin[0], &cmax[0], &split);
-    
-     else
+
+    else
 	bu_bomb("Illegal tie kdtree method\n");
 
 
@@ -714,7 +714,7 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 
     /* Assign the splitting dimension to the node */
     /* If we've come this far then YES, this node DOES have child nodes, MARK it as so. */
-    node->data = (void *)((intptr_t)(node->data) + split + 4);
+    node->data = (void *)(TIE_SET_HAS_CHILDREN(node->data) + split);
 }
 
 /*************************************************************
