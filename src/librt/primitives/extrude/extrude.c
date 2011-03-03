@@ -1197,7 +1197,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 }
 
 
-static void
+void
 get_indices(genptr_t seg, int *start, int *end)
 {
     struct carc_seg *csg;
