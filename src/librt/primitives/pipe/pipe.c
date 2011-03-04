@@ -3621,26 +3621,10 @@ rt_pipe_ck(const struct bu_list *headp)
         }
         
         VSUB2(v1, prev->pp_coord, cur->pp_coord);
-        v1_len = MAGNITUDE(v1);
-        if (v1_len > VDIVIDE_TOL) {
-            fastf_t inv_len;
-            
-            inv_len = 1.0/v1_len;
-            VSCALE(v1, v1, inv_len);
-        } else {
-            VSETALL(v1, 0.0);
-	}
+	VUNITIZE(v1);
                     
 	VSUB2(v2, next->pp_coord, cur->pp_coord);
-        v2_len = MAGNITUDE(v2);
-        if (v2_len > VDIVIDE_TOL) {
-            fastf_t inv_len;
-            
-            inv_len = 1.0/v2_len;
-            VSCALE(v2, v2, inv_len);
-        } else {
-            VSETALL(v2, 0.0);
-	}
+	VUNITIZE(v2);
                     
 	VCROSS(norm, v1, v2);
         if (VNEAR_ZERO(norm, SQRT_SMALL_FASTF)) {
@@ -3649,8 +3633,12 @@ rt_pipe_ck(const struct bu_list *headp)
         }
         
 	local_vdot = VDOT(v1, v2);
-	if (NEAR_ZERO(local_vdot + 1.0, VUNITIZE_TOL)) local_vdot = -1.0;
-	if (NEAR_ZERO(local_vdot - 1.0, VUNITIZE_TOL)) local_vdot = 1.0;
+	/* protect against fuzzy overflow/underflow */
+	if (local_vdot > 1.0 && local_vdot < 1.0+VUNITIZE_TOL)
+	    local_vdot = 1.0;
+	if (local_vdot < -1.0 && local_vdot > -1.0-VUNITIZE_TOL)
+	    local_vdot = -1.0;
+
         angle = bn_pi - acos(local_vdot);
         new_bend_dist = cur->pp_bendradius * tan(angle/2.0);
         
