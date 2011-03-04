@@ -84,13 +84,15 @@
 	
 	
 	<para>
-	  Go to the menu bar and select Edit and then Set H. Place the mouse pointer
-	  in the lower half of the Graphics Window and click on the middle mouse
-	  button several times. The cylinder will become shorter as you click. (Note
-	  that the closer your pointer is to the midpoint of the Graphics Window,
-	  the smaller the change will be. As you click farther away from the middle,
-	  the changes will be greater.) Continue clicking until the cylinder looks
-	  like a flat disk, as shown in the following figure. Click on Accept when
+	  Go to the menu bar and select Edit and then Set H. Place the
+	  mouse pointer in the lower half of the Graphics Window and
+	  click on the middle mouse button several times. The cylinder
+	  will become shorter as you click. (Note that the closer your
+	  pointer is to the midpoint of the Graphics Window, the
+	  smaller the change will be. As you click farther away from
+	  the middle, the changes will be greater.) Continue clicking
+	  until the cylinder looks like a flat disk, as shown in the
+	  following figure. Click on Accept on the Edit menu when
 	  done.
 
       <informalfigure>
@@ -141,13 +143,14 @@
 	</para>
 
 	<para>
-	  To move the ball on top of the goblet base, press the SHIFT key and left
-	  mouse button to drag the sphere into place. You can check your placement
-	  by going to the View option of the menu bar and selecting a Front view. In
-	  this view, you can align the center line of the sphere with the center
-	  line of the rcc. Repeat this process from a Left view. When you believe
-	  the sphere is correctly aligned with the rcc, go back to the Edit option
-	  and click on Accept.
+	  To move the ball on top of the goblet base, press the SHIFT
+	  key and left mouse button to drag the sphere into place. You
+	  can check your placement by going to the View option of the
+	  menu bar and selecting a Front view. In this view, you can
+	  align the center line of the sphere with the center line of
+	  the rcc. Repeat this process from a Left view. When you
+	  believe the sphere is correctly aligned with the rcc, go
+	  back to the Edit menu and select Accept.
 	</para>
       </section>
       
@@ -194,7 +197,7 @@
 	  first ball. (Note that this alignment is even easier if you drag using the
 	  SHIFT and ALT keys and the right mouse button, which will constrain the
 	  movement of the ball to the Z direction.) Click on Accept under the Edit
-	  option when finished.
+	  menu when finished.
 	</para>
 	
 	<para>
