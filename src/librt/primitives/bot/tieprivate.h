@@ -49,8 +49,8 @@ struct tie_geom_s {
 
 struct tie_stack_s {
     struct tie_kdtree_s *node;
-    fastf_t near;
-    fastf_t far;
+    tfloat near;
+    tfloat far;
 };
 
 #ifdef __cplusplus

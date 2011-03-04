@@ -199,7 +199,7 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
     struct tie_tri_s *hit_list[256], *tri;
     struct tie_geom_s *data;
     struct tie_kdtree_s *node_aligned, *temp[2];
-    fastf_t near, far, dirinv[3], dist;
+    tfloat near, far, dirinv[3], dist;
     unsigned int i, n, hit_count;
     int ab[3], split, stack_ind;
     void *result;
@@ -225,9 +225,9 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 
     /* Initialize ray segment */
     if (ray->dir[split] < 0.0)
-	far = (tie->min[split] - ray->pos[split]) * dirinv[split];
+	far = (tie->min.v[split] - ray->pos[split]) * dirinv[split];
     else
-	far = (tie->max[split] - ray->pos[split]) * dirinv[split];
+	far = (tie->max.v[split] - ray->pos[split]) * dirinv[split];
 
     stack_ind = 0;
     stack[0].node = tie->kdtree;
@@ -296,8 +296,7 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	    /*
 	     * Triangle Intersection Code
 	     */
-	    fastf_t u0, v0;
-	    tfloat *v;
+	    tfloat u0, v0, *v;
 	    int i1, i2;
 
 	    tri = data->tri_list[i];

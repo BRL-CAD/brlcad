@@ -61,8 +61,8 @@ bottie_prep_float(struct soltab *stp,struct rt_bot_internal *bot, struct rt_i *U
     struct tie_s *tie = (struct tie_s *)bot->tie;
 
     tie_prep(tie);
-    VMOVE(stp->st_min, tie->min);
-    VMOVE(stp->st_max, tie->max);
+    VMOVE(stp->st_min, tie->min.v);
+    VMOVE(stp->st_max, tie->max.v);
     VMOVE(stp->st_center, tie->mid);
     stp->st_bradius = stp->st_aradius = tie->radius;
     stp->st_specific = bot;
