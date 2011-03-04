@@ -1382,13 +1382,20 @@ static void
 isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loop_inter **root,
 		  int which_loop, struct rt_sketch_internal *ip, struct bn_tol *tol)
 {
-    point2d_t ra = V2INIT_ZERO;
-    point2d_t rb = V2INIT_ZERO;
-
     int i, j;
     int code;
     point2d_t norm;
     fastf_t dist[2];
+
+    vect_t s2m, tmp_dir;
+    fastf_t s2m_len_sq, len_sq, tmp_len, cross_z;
+
+    point2d_t ra = V2INIT_ZERO;
+    point2d_t rb = V2INIT_ZERO;
+    point2d_t start2d = V2INIT_ZERO;
+    point2d_t end2d = V2INIT_ZERO;
+    point2d_t mid_pt = V2INIT_ZERO;
+    point2d_t center2d = V2INIT_ZERO;
 
     norm[0] = -dir[1];
     norm[1] = dir[0];
@@ -1512,13 +1519,6 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    }
 
 		} else {
-		    vect_t s2m, tmp_dir;
-		    fastf_t s2m_len_sq, len_sq, tmp_len, cross_z;
-		    point2d_t start2d = V2INIT_ZERO;
-		    point2d_t end2d = V2INIT_ZERO;
-		    point2d_t mid_pt = V2INIT_ZERO;
-		    point2d_t center2d = V2INIT_ZERO;
-
 		    V2MOVE(start2d, ip->verts[csg->start]);
 		    V2MOVE(end2d, ip->verts[csg->end]);
 		    mid_pt[0] = (start2d[0] + end2d[0]) * 0.5;
@@ -1540,11 +1540,10 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    tmp_dir[0] = tmp_dir[0] / tmp_len;
 		    tmp_dir[1] = tmp_dir[1] / tmp_len;
 		    tmp_len = sqrt(len_sq);
-		    V2JOIN1(center2d, mid_pt, tmp_len, tmp_dir)
+		    V2JOIN1(center2d, mid_pt, tmp_len, tmp_dir);
 
-			/* check center location */
-			cross_z = (end2d[X] - start2d[X])*(center2d[Y] - start2d[Y]) -
-			(end2d[Y] - start2d[Y])*(center2d[X] - start2d[X]);
+		    /* check center location */
+		    cross_z = (end2d[X] - start2d[X])*(center2d[Y] - start2d[Y]) - (end2d[Y] - start2d[Y])*(center2d[X] - start2d[X]);
 		    if (!(cross_z > 0.0 && csg->center_is_left))
 			V2JOIN1(center2d, mid_pt, -tmp_len, tmp_dir);
 
