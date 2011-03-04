@@ -326,7 +326,7 @@
       <para>
 	Go back to the Name text box and change the 1 to a 2 and click on OK.
 	Change to Front under the View menu. Go to Edit/Primitive Selection and
-	click on well2.s. Use the SHIFT and left mouse button to drag the new
+	select well2.s. Use the SHIFT and left mouse button to drag the new
 	wheel well into position, as shown in the following illustration. Check
 	your alignment in Multipane mode and then select Accept when you are
 	finished.
@@ -775,7 +775,7 @@
 	brightness of the scene. We can adjust the amount of ambient light, which
 	is light that does not come from a particular light source but is a
 	measure of the light generally present in the scene. To adjust the amount
-	of ambient light, click on the Advanced Settings  button in the Raytrace
+	of ambient light, click on the Advanced Settings button in the Raytrace
 	Control Panel. Next to Other Options, type -A .9 and click Dismiss. Now
 	when you raytrace, you will get a much lighter image.
       </para>

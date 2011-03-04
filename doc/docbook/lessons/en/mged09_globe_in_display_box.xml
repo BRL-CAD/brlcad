@@ -66,7 +66,7 @@
       
       <para>
 	Repeat the first part of this process to produce another arb8, this time
-	calling this shape cube2.s. Go to the Edit menu and click on Scale. Place
+	calling this shape cube2.s. Go to the Edit menu and select Scale. Place
 	the mouse pointer in the lower half of the Graphics Window screen and
 	click the middle mouse button until the second cube is slightly smaller
 	than the first cube, as follows:
@@ -88,7 +88,7 @@
       
       <para>
 	Go to the View menu and change view to Front. Go to the Edit menu and
-	click on Translate (move). Hold down the SHIFT key and drag the inside
+	select Translate (move). Hold down the SHIFT key and drag the inside
 	cube into position in the center of the outside cube. Repeat this process
 	from the Top view and Left view until the smaller cube is placed in the
 	center of the outside cube when viewed from all perspectives. When you are
@@ -100,7 +100,7 @@
       
       <para>
 	Go to the Create menu and select sph from the list of Ellipsoids. Name the
-	shape globe1.s and click on Apply.
+	shape globe1.s and select Apply.
       </para>
       
       <para>
@@ -284,7 +284,7 @@
       </para>
       
       <para>
-	Go to Edit and Primitive Selection and click on
+	Go to Edit and Primitive Selection and select
 	globe1.r/globe1.s. As you did with the trc shapes, use the
 	Shift Grips to drag the globe down until it is in place on the
 	base. Go back to the Edit menu and select Accept. Your design

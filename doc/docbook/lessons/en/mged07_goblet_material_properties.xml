@@ -64,8 +64,8 @@
       <para>
 	Alternatively, you could start the <application>MGED</application> program, and select File from the
 	menu bar and then Open. A dialog box will appear and ask you to enter an
-	existing database name. Type in goblet.g (or click on it in the directory
-	listing) and then click on Open. The program should tell you that the
+	existing database name. Type in goblet.g (or select it in the directory
+	listing) and then select Open. The program should tell you that the
 	database was successfully opened and it is using millimeters for its unit
 	of measure. Click on OK.
       </para>
@@ -90,28 +90,30 @@
     <section xml:id="goblet_assign_colors"><info><title>Assigning Colors and the Plastic Shader to Regions of the Goblet</title></info>
       
       <para>
-	Go to the Edit menu and click on Combination Editor. To select the various
+	Go to the Edit menu and select Combination Editor. To select the various
 	regions of the goblet you made in the last lesson, go back to the Name box
-	and click on the button  to the right of the entry box. A submenu will
+	and click the button to the right of the entry box. A submenu will
 	appear. Double click on Select From All Regions. A list of regions created
 	for this database will appear, including base1.r, basin1.r, and stem1.r.
-	Double click on base1.r to select that region.
+	double click on base1.r to select that region.
       </para>
       
       <para>
-	Click on the button to the right of Color  in the Combination Editor, and
-	a drop-down menu will appear with a list of available colors along with a
-	color tool that will let you create more colors. Click on blue. Next,
-	click on the button to the right of the shader box. A list of available
-	shaders will appear. Click on plastic. A new set of options will appear.
-	You will use two of these options in this lesson. Click on Apply to assign
-	the color blue and the plastic shader to the goblet base.
+	Click on the button to the right of Color in the Combination
+	Editor, and a drop-down menu will appear with a list of
+	available colors along with a color tool that will let you
+	create more colors. Click on blue. Next, click the button to
+	the right of the shader box. A list of available shaders will
+	appear. Click on plastic. A new set of options will appear.
+	You will use two of these options in this lesson. Click on
+	Apply to assign the color blue and the plastic shader to the
+	goblet base.
       </para>
       
       <para>
 	Repeat this process to assign the color green and plastic shader to the
 	stem1.r region and the color yellow and plastic shader to the basin1.r
-	region. When you are finished, click on OK to dismiss the Combination
+	region. When you are finished, select OK to dismiss the Combination
 	Editor box.
       </para>
       
@@ -131,12 +133,12 @@
       <section><info><title>Raytracing the Goblet</title></info>
 	
 	<para>
-	  To raytrace the goblet, go to the File menu and click on Raytrace. The
+	  To raytrace the goblet, go to the File menu and select Raytrace. The
 	  Raytrace Control Panel will appear. Move your mouse pointer to the button
-	  to the right of Background Color and click on the white option. To make
+	  to the right of Background Color and select the white option. To make
 	  the raytracing go faster, you can resize the Graphics Window to make it
 	  smaller before you open the raytrace panel. When the window is resized,
-	  click on Raytrace to start the raytrace process.
+	  select Raytrace to start the raytrace process.
 	</para>
 	
 	<note>
@@ -150,7 +152,7 @@
 	
 	<para>
 	  While the goblet is raytracing, move your mouse cursor to the Framebuffer
-	  option of the Raytrace Control Panel menu bar and click on Overlay. When
+	  option of the Raytrace Control Panel menu bar and select Overlay. When
 	  the raytrace process is finished, you should have a goblet similar to the
 	  following example:
 
@@ -190,7 +192,7 @@
       </para>
       
       <para>
-	For this lesson, open the Combination Editor, click on the button to the
+	For this lesson, open the Combination Editor, click the button to the
 	right of the Name box, choose Select From All Regions in the drop-down
 	menu, and then choose the base1.r region. Make sure plastic is the shader
 	selected and type in .5 to make your region semi-transparent. Click on
