@@ -80,6 +80,12 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     while (!plan_found) {
 	    if (BU_STR_EQUAL(argv[plan_argv], "/") || BU_STR_EQUAL(argv[plan_argv], ".")) {
 		    plan_argv++;
+		    if (plan_argv == argc) {
+			    bu_vls_printf(&gedp->ged_result_str, " [path] [expressions...]\n");
+			    db_free_full_path(&dfp);
+			    bu_free_argv(argc, argv);	
+			    return TCL_OK;
+		    }
 	    } else {
 		    if (!((argv[plan_argv][0] == '-') || (argv[plan_argv][0] == '!')  || (argv[plan_argv][0] == '(')) ) {
 			    /* We seem to have a path - make sure it's valid */
@@ -95,7 +101,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 				    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
 				    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
 				    plan_argv++;
-				    if (plan_argv > argc) {
+				    if (plan_argv == argc) {
 					    bu_vls_printf(&gedp->ged_result_str, " [path] [expressions...]\n");
 					    db_free_full_path(&dfp);
 					    bu_free_argv(argc, argv);	
