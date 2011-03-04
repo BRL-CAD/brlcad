@@ -5267,7 +5267,6 @@ go_mouse_rect(struct ged *gedp,
     char *av[5];
     int x, y;
     int dx, dy;
-    int half_wMh;
     struct bu_vls dx_vls, dy_vls;
     struct ged_dm_view *gdvp;
 
@@ -5301,9 +5300,8 @@ go_mouse_rect(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    half_wMh = (gdvp->gdv_dmp->dm_width - gdvp->gdv_dmp->dm_height) * 0.5;
     dx = x - gdvp->gdv_view->gv_prevMouseX;
-    dy = gdvp->gdv_dmp->dm_height - y + half_wMh - gdvp->gdv_view->gv_prevMouseY;
+    dy = gdvp->gdv_dmp->dm_height - y - gdvp->gdv_view->gv_prevMouseY;
 
     bu_vls_init(&dx_vls);
     bu_vls_init(&dy_vls);
@@ -6707,7 +6705,6 @@ go_rect_mode(struct ged *gedp,
     int ac;
     char *av[5];
     int x, y;
-    int half_wMh;
     struct bu_vls bindings;
     struct bu_vls x_vls, y_vls;
     struct ged_dm_view *gdvp;
@@ -6744,9 +6741,8 @@ go_rect_mode(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    half_wMh = (gdvp->gdv_dmp->dm_width - gdvp->gdv_dmp->dm_height) * 0.5;
     gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = gdvp->gdv_dmp->dm_height - y + half_wMh;
+    gdvp->gdv_view->gv_prevMouseY = gdvp->gdv_dmp->dm_height - y;
     gdvp->gdv_view->gv_mode = GED_RECTANGLE_MODE;
 
     ac = 4;
