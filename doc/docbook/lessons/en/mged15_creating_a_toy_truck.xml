@@ -239,10 +239,11 @@
 	
 	<command>p 90 0 0[Enter]</command>
 	
-	After doing so, you may still have to use the Set H and Scale editing
-	options to resize and the SHIFT key and left mouse button to position your
-	wheel well. When satisfied, select Accept. Your design should look similar
-	to the following in Multipane mode:
+	After doing so, you may still have to use the Set H and Scale
+	editing options to resize and the SHIFT key and left mouse
+	button to position your wheel well. When satisfied, select
+	Accept on the Edit menu. Your design should look similar to
+	the following in Multipane mode:
 	
       <informalfigure>
 	<mediaobject>
@@ -263,29 +264,36 @@
     <section xml:id="ok_accept_apply_reset_cancel_dismiss"><info><title>The Difference Between OK, Accept, Apply, Reset, Cancel, and Dismiss</title></info>
       
       <para>
-	The GUI environment of <application>MGED</application> offers users several options for applying,
-	accepting, or rejecting changes made through buttons at the bottom of
-	dialog pop-up windows. To use any of these options, just place the mouse
-	cursor over the desired button and click the left mouse button.
+	The GUI environment of <application>MGED</application> offers
+	users several options for applying, accepting, or rejecting
+	changes made through buttons at the bottom of dialog pop-up
+	windows. To use any of these options, just place the mouse
+	cursor over the desired button and click the left mouse
+	button.
       </para>
       <para>
-	Selecting the Accept or OK button will tell <application>MGED</application> to record the changes you
-	have made to a shape, region, or combination. <application>MGED</application> uses the Accept and OK
-	buttons interchangeably. When you click on Accept or OK, the window you
-	are using will automatically close.
+	Selecting the Accept or OK button will
+	tell <application>MGED</application> to record the changes you
+	have made to a shape, region, or
+	combination. <application>MGED</application> uses the Accept
+	and OK buttons interchangeably. When you select Accept or OK,
+	the window you are using will automatically close.
       </para>
       <para>
-	The Apply button tells <application>MGED</application> to apply a change you have made and wait for
-	further instructions. The window does not automatically close. This
-	enables you to make changes to several things without having to reopen the
-	window for each change.
+	The Apply button tells <application>MGED</application> to
+	apply a change you have made and wait for further
+	instructions. The window does not automatically close. This
+	enables you to make changes to several things without having
+	to reopen the window for each change.
       </para>
       <para>
-	The Reset button tells <application>MGED</application> to reset values you have changed in a dialog
-	box to the last values you applied or accepted. The Reset button does not
-	close the dialog box. The Cancel or Dismiss buttons discard any changes
-	made in the dialog box and leave values unchanged from their last stored
-	settings. These two buttons close the dialog box.
+	The Reset button tells <application>MGED</application> to
+	reset values you have changed in a dialog box to the last
+	values you applied or accepted. The Reset button does not
+	close the dialog box. The Cancel or Dismiss buttons discard
+	any changes made in the dialog box and leave values unchanged
+	from their last stored settings. These two buttons close the
+	dialog box.
       </para>
     </section>
 
@@ -320,7 +328,7 @@
 	Change to Front under the View menu. Go to Edit/Primitive Selection and
 	click on well2.s. Use the SHIFT and left mouse button to drag the new
 	wheel well into position, as shown in the following illustration. Check
-	your alignment in Multipane mode and then click on Accept when you are
+	your alignment in Multipane mode and then select Accept when you are
 	finished.
 
       <informalfigure>
