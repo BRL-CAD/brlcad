@@ -3606,6 +3606,7 @@ rt_pipe_ck(const struct bu_list *headp)
         vect_t v1, v2, norm;
         fastf_t v1_len;
         fastf_t angle;
+	fastf_t local_vdot;
 
         if (cur->pp_id >= cur->pp_od) {
             bu_log("Inner diameter (%gmm) has to be less than outer diameter (%gmm)\n",
@@ -3647,17 +3648,26 @@ rt_pipe_ck(const struct bu_list *headp)
             goto next_pt;
         }
         
-        angle = bn_pi - acos(VDOT(v1, v2));
+	local_vdot = VDOT(v1, v2);
+	if (NEAR_ZERO(local_vdot + 1.0, VUNITIZE_TOL)) local_vdot = -1.0;
+	if (NEAR_ZERO(local_vdot - 1.0, VUNITIZE_TOL)) local_vdot = 1.0;
+        angle = bn_pi - acos(local_vdot);
         new_bend_dist = cur->pp_bendradius * tan(angle/2.0);
         
         if (new_bend_dist + old_bend_dist > v1_len) {
+	    fastf_t vdot;
             error_count++;
             bu_log("Bend radii (%gmm) at (%g %g %g) and (%gmm) at (%g %g %g) are too large\n",
 		   prev->pp_bendradius, V3ARGS(prev->pp_coord),
 		   cur->pp_bendradius, V3ARGS(cur->pp_coord));
             bu_log("for pipe segment between (%g %g %g) and (%g %g %g)\n",
 		   V3ARGS(prev->pp_coord), V3ARGS(cur->pp_coord));
-        }
+	    bu_log("failed test: %g + %g > %g\n", new_bend_dist, old_bend_dist, v1_len);
+	    vdot = VDOT(v1, v2);
+	    bu_log("angle(%g) = bn_pi(%g) - acos(VDOT(v1, v2)(%g))(%g)\n", angle, bn_pi, vdot, acos(vdot));
+	    bu_log("v1: %g,%g,%g\n", v1[0], v1[1], v1[2]);
+	    bu_log("v2: %g,%g,%g\n", v2[0], v2[1], v2[2]);
+        } 
     next_pt:
 	old_bend_dist = new_bend_dist;
 	prev = cur;
