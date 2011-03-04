@@ -3606,6 +3606,7 @@ rt_pipe_ck(const struct bu_list *headp)
         vect_t v1, v2, norm;
         fastf_t v1_len;
         fastf_t angle;
+	fastf_t local_vdot;
 
         if (cur->pp_id >= cur->pp_od) {
             bu_log("Inner diameter (%gmm) has to be less than outer diameter (%gmm)\n",
@@ -3620,26 +3621,12 @@ rt_pipe_ck(const struct bu_list *headp)
         }
         
         VSUB2(v1, prev->pp_coord, cur->pp_coord);
-        v1_len = MAGNITUDE(v1);
-        if (v1_len > VDIVIDE_TOL) {
-            fastf_t inv_len;
-            
-            inv_len = 1.0/v1_len;
-            VSCALE(v1, v1, inv_len);
-        } else {
-            VSETALL(v1, 0.0);
-	}
+	v1_len = MAGNITUDE(v1);
+	VUNITIZE(v1);
                     
 	VSUB2(v2, next->pp_coord, cur->pp_coord);
-        v2_len = MAGNITUDE(v2);
-        if (v2_len > VDIVIDE_TOL) {
-            fastf_t inv_len;
-            
-            inv_len = 1.0/v2_len;
-            VSCALE(v2, v2, inv_len);
-        } else {
-            VSETALL(v2, 0.0);
-	}
+	v2_len = MAGNITUDE(v2);
+	VUNITIZE(v2);
                     
 	VCROSS(norm, v1, v2);
         if (VNEAR_ZERO(norm, SQRT_SMALL_FASTF)) {
@@ -3647,17 +3634,30 @@ rt_pipe_ck(const struct bu_list *headp)
             goto next_pt;
         }
         
-        angle = bn_pi - acos(VDOT(v1, v2));
+	local_vdot = VDOT(v1, v2);
+	/* protect against fuzzy overflow/underflow, clamp unitized
+	 * vectors in order to prevent acos() from throwing an
+	 * exception (or crashing).
+	 */
+	CLAMP(local_vdot, -1.0, 1.0);
+
+        angle = bn_pi - acos(local_vdot);
         new_bend_dist = cur->pp_bendradius * tan(angle/2.0);
         
         if (new_bend_dist + old_bend_dist > v1_len) {
+	    fastf_t vdot;
             error_count++;
             bu_log("Bend radii (%gmm) at (%g %g %g) and (%gmm) at (%g %g %g) are too large\n",
 		   prev->pp_bendradius, V3ARGS(prev->pp_coord),
 		   cur->pp_bendradius, V3ARGS(cur->pp_coord));
             bu_log("for pipe segment between (%g %g %g) and (%g %g %g)\n",
 		   V3ARGS(prev->pp_coord), V3ARGS(cur->pp_coord));
-        }
+	    bu_log("failed test: %g + %g > %g\n", new_bend_dist, old_bend_dist, v1_len);
+	    vdot = VDOT(v1, v2);
+	    bu_log("angle(%g) = bn_pi(%g) - acos(VDOT(v1, v2)(%g))(%g)\n", angle, bn_pi, vdot, acos(vdot));
+	    bu_log("v1: %g,%g,%g\n", v1[0], v1[1], v1[2]);
+	    bu_log("v2: %g,%g,%g\n", v2[0], v2[1], v2[2]);
+        } 
     next_pt:
 	old_bend_dist = new_bend_dist;
 	prev = cur;

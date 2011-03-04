@@ -158,7 +158,7 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     hitdata.nhits = 0;
     hitdata.rp = &ap->a_ray;
 
-    VMOVE(ray.pos, rp->r_pt);
+    VCOMB2(ray.pos, 1.0, rp->r_pt, -1.01, rp->r_dir);
     VMOVE(ray.dir, rp->r_dir);
     ray.depth = ray.kdtree_depth = 0;
 

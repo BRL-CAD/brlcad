@@ -205,17 +205,12 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
-    /* FIXME: bu_log code is only temporary, otherwise it needs to be properly tied to the output summary */
-    if ( rt_bot_mintie > 0 && bot_ip->num_faces >= rt_bot_mintie && (bot_ip->face_normals != NULL || bot_ip->orientation != RT_BOT_UNORIENTED) ) {
-	bu_log("BoT Render mode (%s): TIE double-precision\n", stp->st_dp->d_namep);
+    if ( rt_bot_mintie > 0 && bot_ip->num_faces >= rt_bot_mintie && (bot_ip->face_normals != NULL || bot_ip->orientation != RT_BOT_UNORIENTED) )
 	return bottie_prep_double(stp, bot_ip, rtip);
-    } else if (bot_ip->bot_flags & RT_BOT_USE_FLOATS) {
-	bu_log("Render mode: RT single-precision\n");
+    else if (bot_ip->bot_flags & RT_BOT_USE_FLOATS)
 	return rt_bot_prep_float(stp, bot_ip, rtip);
-    } else {
-	bu_log("Render mode: RT double-precision\n");
+    else
 	return rt_bot_prep_double(stp, bot_ip, rtip);
-    }
 }
 
 

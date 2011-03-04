@@ -23,6 +23,11 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * test search . vs search /
 
+* test / fix mged combination editor
+
+* mged init on Mac OS X, DISPLAY
+
+* fix nirt on Windows 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
@@ -61,6 +66,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* make mged not have a garbled display manager window if the
+  framebuffer is enabled and the window is resized.  initialize and
+  refresh the new memory and zap the framebuffer.
+
+* mater command should prompt for more/missing parameters, not fail.
 
 * merge sed and oed commands
 

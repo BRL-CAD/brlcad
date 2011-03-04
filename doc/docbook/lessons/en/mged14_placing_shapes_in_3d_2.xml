@@ -70,7 +70,7 @@
       <para>
 	Drag the sphere into position on the rcc, as shown in the previous
 	illustration. To make this task a little easier, you can go to the Modes
-	menu and click on Draw Grid. This will create a grid overlay in the
+	menu and select Draw Grid. This will create a grid overlay in the
 	Graphics Window, which can help you position your spheres on the candle
 	base.
       </para>
@@ -104,7 +104,7 @@
 	In the default mode, the top left pane shows the top view, the top right
 	pane shows the current view, the bottom left pane shows the front view,
 	and the bottom right pane shows the left view. To turn off either the grid
-	or the multipane functions, go back to Modes and click on the feature you
+	or the multipane functions, go back to Modes and select the feature you
 	want to disable.
       </para>
     </section>

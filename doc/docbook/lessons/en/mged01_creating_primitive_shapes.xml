@@ -371,7 +371,7 @@
 	Another way to create a sphere is to use the GUI menu system duplicated at
 	the top of the Command and Graphics windows. Clear your Graphics Window by
 	using the previously described Z command. Then, in the Graphics Window,
-	click on Create, and a drop-down menu will appear with the various
+	select Create, and a drop-down menu will appear with the various
 	primitive shape types available. Select sph (for sphere) under the
 	Ellipsoids category. This will bring up a dialog box. Click in the empty
 	text box and type sph2.s. Click on Apply  or press ENTER. A new sphere

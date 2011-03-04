@@ -120,7 +120,7 @@ tie_kdtree_free_node(struct tie_kdtree_s *node)
 {
     struct tie_kdtree_s *node_aligned = (struct tie_kdtree_s *)((intptr_t)node & ~0x7L);
 
-    if (((intptr_t)(node_aligned->data)) & 0x4) {
+    if (TIE_HAS_CHILDREN(node_aligned->data)) {
 	/* Node Data is KDTREE Children, Recurse */
 	tie_kdtree_free_node(&((struct tie_kdtree_s *)(((intptr_t)(node_aligned->data)) & ~0x7L))[0]);
 	tie_kdtree_free_node(&((struct tie_kdtree_s *)(((intptr_t)(node_aligned->data)) & ~0x7L))[1]);
@@ -630,15 +630,24 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	find_split_fast(node, &cmin[0], &cmax[0], &split);
     else if (tie->kdmethod == TIE_KDTREE_OPTIMAL) 
 	find_split_optimal(tie, node, &cmin[0], &cmax[0], &split);
-    
-     else
+
+    else
 	bu_bomb("Illegal tie kdtree method\n");
 
 
     /* Allocate 2 children nodes for the parent node */
     node->data = (void *)bu_malloc(2 * sizeof(struct tie_kdtree_s), __FUNCTION__);
+    if(node->data == NULL || ((size_t)node->data & 7L))
+	bu_log("node->data 0x%X is not aligned! %x\n", node->data, (size_t)node->data & 7L);
+
     ((struct tie_kdtree_s *)(node->data))[0].data = bu_malloc(sizeof(struct tie_geom_s), __FUNCTION__);
+    if(((struct tie_kdtree_s *)(node->data))[0].data == NULL || ((size_t)((struct tie_kdtree_s *)(node->data))[0].data & 7L))
+	bu_log("node->data[0].data 0x%X is not aligned!\n", ((struct tie_kdtree_s *)(node->data))[0].data);
+
     ((struct tie_kdtree_s *)(node->data))[1].data = bu_malloc(sizeof(struct tie_geom_s), __FUNCTION__);
+    if(((struct tie_kdtree_s *)(node->data))[1].data == NULL || ((size_t)((struct tie_kdtree_s *)(node->data))[1].data & 7L))
+	bu_log("node->data[1].data 0x%X is not aligned!\n", ((struct tie_kdtree_s *)(node->data))[1].data);
+
 
     /* Initialize Triangle List */
     child[0] = ((struct tie_geom_s *)(((struct tie_kdtree_s *)(node->data))[0].data));
@@ -714,7 +723,7 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 
     /* Assign the splitting dimension to the node */
     /* If we've come this far then YES, this node DOES have child nodes, MARK it as so. */
-    node->data = (void *)((intptr_t)(node->data) + split + 4);
+    node->data = (void *)(TIE_SET_HAS_CHILDREN(node->data) + split);
 }
 
 /*************************************************************

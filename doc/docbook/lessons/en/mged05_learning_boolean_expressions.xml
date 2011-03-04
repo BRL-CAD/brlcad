@@ -276,13 +276,14 @@
       </note>
       
       <para>
-	In the previous lesson, we applied material properties to objects from the
-	Command Line. Now we are going to use the graphical interface to do the
-	same thing. From the Edit menu, choose Combination Editor. This will pop
-	up a dialog box. Click the button to the right of the Name entry box and
-	then click on Select from All. A drop-down menu will appear with the
-	regions you have created. Select part1.r. The result should look like the
-	following:
+	In the previous lesson, we applied material properties to
+	objects from the Command Line. Now we are going to use the
+	graphical interface to do the same thing. From the Edit menu,
+	choose Combination Editor. This will pop up a dialog
+	box. Select the button to the right of the Name entry box and
+	then Select from All. A drop-down menu will appear with the
+	regions you have created. Select part1.r. The result should
+	look like the following:
       </para>
 
 	<informalfigure>
