@@ -1942,6 +1942,7 @@ db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
     struct db_plan_t *plan, *tail;
     struct db_plan_t *new = NULL;
     struct db_full_path_list *results = NULL;
+    db_search_isoutput = 0;
 
     /*
      * for each argument in the command line, determine what kind of node
