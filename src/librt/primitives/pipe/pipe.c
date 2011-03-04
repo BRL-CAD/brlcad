@@ -3635,10 +3635,13 @@ rt_pipe_ck(const struct bu_list *headp)
         }
         
 	local_vdot = VDOT(v1, v2);
-	/* protect against fuzzy overflow/underflow */
-	if (local_vdot > 1.0 && local_vdot < 1.0+VUNITIZE_TOL)
+	/* protect against fuzzy overflow/underflow, clamp unitized
+	 * vectors in order to prevent acos() from throwing an
+	 * exception (or crashing).
+	 */
+	if (local_vdot > 1.0)
 	    local_vdot = 1.0;
-	if (local_vdot < -1.0 && local_vdot > -1.0-VUNITIZE_TOL)
+	if (local_vdot < -1.0)
 	    local_vdot = -1.0;
 
         angle = bn_pi - acos(local_vdot);
