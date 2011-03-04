@@ -13,7 +13,8 @@ int main(void) {
   outfp = fopen("${DELTA_END}", "w");
 /*  starttime.tm_zone = currenttime->tm_zone;
   starttime.tm_gmtoff = currenttime->tm_gmtoff;*/
-  fscanf(infp, "%d/%d/%d/%d/%d/%d/%d/%d/%d", &(starttime.tm_sec), &(starttime.tm_min), &(starttime.tm_hour), &(starttime.tm_mday), &(starttime.tm_mon), &(starttime.tm_year), &(starttime.tm_wday), &(starttime.tm_yday), &(starttime.tm_isdst));
+  if(!fscanf(infp, "%d/%d/%d/%d/%d/%d/%d/%d/%d", &(starttime.tm_sec), &(starttime.tm_min), &(starttime.tm_hour), &(starttime.tm_mday), &(starttime.tm_mon), &(starttime.tm_year), &(starttime.tm_wday), &(starttime.tm_yday), &(starttime.tm_isdst)))
+    printf("scan error\n");
   fclose(infp);
   
   ts = mktime(&starttime); 
