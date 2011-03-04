@@ -110,13 +110,17 @@ int db_search_isoutput = 0;
 void
 db_free_full_path_list(struct db_full_path_list *path_list)
 {
-    struct db_full_path_list *currentpath;
-    while (BU_LIST_WHILE(currentpath, db_full_path_list, &(path_list->l))) {
-	db_free_full_path(currentpath->path);
-	BU_LIST_DEQUEUE((struct bu_list *)currentpath);
-	bu_free(currentpath, "free db_full_path_list entry");
-    }
-    bu_free(path_list, "free path_list");
+	struct db_full_path_list *currentpath;
+	if (path_list) {
+		if (!BU_LIST_IS_EMPTY(&(path_list->l))) {
+			while (BU_LIST_WHILE(currentpath, db_full_path_list, &(path_list->l))) {
+				db_free_full_path(currentpath->path);
+				BU_LIST_DEQUEUE((struct bu_list *)currentpath);
+				bu_free(currentpath, "free db_full_path_list entry");
+			}
+		}
+		bu_free(path_list, "free path_list");
+	}
 }
 
 
