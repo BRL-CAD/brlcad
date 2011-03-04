@@ -27,6 +27,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * mged init on Mac OS X, DISPLAY
 
+* fix nirt on Windows 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
