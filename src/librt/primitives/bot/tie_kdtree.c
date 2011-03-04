@@ -147,8 +147,8 @@ tie_kdtree_prep_head(struct tie_s *tie, struct tie_tri_s *tri_list, unsigned int
     tie->kdtree->data = (void *)bu_malloc(sizeof(struct tie_geom_s), __FUNCTION__);
     g = ((struct tie_geom_s *)(tie->kdtree->data));
     g->tri_num = 0;
-    VSETALL(tie->min.v, +INFINITY);
-    VSETALL(tie->max.v, -INFINITY);
+    VSETALL(tie->min, +INFINITY);
+    VSETALL(tie->max, -INFINITY);
 
     g->tri_list = (struct tie_tri_s **)bu_malloc(sizeof(struct tie_tri_s *) * tri_num, __FUNCTION__);
 
@@ -159,11 +159,11 @@ tie_kdtree_prep_head(struct tie_s *tie, struct tie_tri_s *tri_list, unsigned int
 	/* Get Bounding Box of Triangle */
 	MATH_BBOX(min, max, tri_list[i].data[0], tri_list[i].data[1], tri_list[i].data[2]);
 	/* Check to see if defines a new Max or Min point */
-	MATH_VEC_MIN(tie->min, min);
-	MATH_VEC_MAX(tie->max, max);
+	VMIN(tie->min, min.v);
+	VMAX(tie->max, max.v);
     }
-    VADD2SCALE(tie->mid, tie->min.v, tie->max.v, 0.5);
-    tie->radius = DIST_PT_PT(tie->max.v, tie->mid);
+    VADD2SCALE(tie->mid, tie->min, tie->max, 0.5);
+    tie->radius = DIST_PT_PT(tie->max, tie->mid);
     g->tri_num = tri_num;
 }
 
@@ -584,7 +584,7 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 }
 
 static void
-tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int depth, TIE_3 min, TIE_3 max)
+tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int depth, point_t min, point_t max)
 {
     struct tie_geom_s *child[2], *node_gd = (struct tie_geom_s *)(node->data);
     TIE_3 cmin[2], cmax[2], center[2], half_size[2];
@@ -597,10 +597,10 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 
 
     /* initialize cmax to make the compiler happy */
-    VMOVE(cmax[0].v, max.v);
-    VMOVE(cmin[0].v, min.v);
-    VMOVE(cmax[1].v, max.v);
-    VMOVE(cmin[1].v, min.v);
+    VMOVE(cmax[0].v, max);
+    VMOVE(cmin[0].v, min);
+    VMOVE(cmax[1].v, max);
+    VMOVE(cmin[1].v, min);
 
 #if 0
     /*  if (depth >= 26) */
@@ -718,8 +718,15 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
     bu_free(node_gd, __FUNCTION__);
 
     /* Push each child through the same process. */
-    tie_kdtree_build(tie, &((struct tie_kdtree_s *)(node->data))[0], depth+1, cmin[0], cmax[0]);
-    tie_kdtree_build(tie, &((struct tie_kdtree_s *)(node->data))[1], depth+1, cmin[1], cmax[1]);
+    {
+	    point_t lmin[2], lmax[2];
+	    VMOVE(lmin[0], cmin[0].v);
+	    VMOVE(lmin[1], cmin[1].v);
+	    VMOVE(lmax[0], cmax[0].v);
+	    VMOVE(lmax[1], cmax[1].v);
+    tie_kdtree_build(tie, &((struct tie_kdtree_s *)(node->data))[0], depth+1, lmin[0], lmax[0]);
+    tie_kdtree_build(tie, &((struct tie_kdtree_s *)(node->data))[1], depth+1, lmin[1], lmax[1]);
+    }
 
     /* Assign the splitting dimension to the node */
     /* If we've come this far then YES, this node DOES have child nodes, MARK it as so. */
@@ -772,9 +779,9 @@ TIE_VAL(tie_kdtree_prep)(struct tie_s *tie)
      * Compute Floating Fuzz Precision Value
      * For now, take largest dimension as basis for TIE_PREC
      */
-    VMOVE(tie->amin, tie->min.v);
-    VMOVE(tie->amax, tie->max.v);
-    VSUB2(delta.v,  tie->max.v,  tie->min.v);
+    VMOVE(tie->amin, tie->min);
+    VMOVE(tie->amax, tie->max);
+    VSUB2(delta.v,  tie->max,  tie->min);
     MATH_MAX3(TIE_PREC, delta.v[0], delta.v[1], delta.v[2]);
 #if defined(TIE_PRECISION) && defined(TIE_PRECISION_SINGLE) && TIE_PRECISION == TIE_PRECISION_SINGLE
     TIE_PREC *= 0.000000001;
@@ -784,8 +791,8 @@ TIE_VAL(tie_kdtree_prep)(struct tie_s *tie)
 
     /* Grow the head node to avoid floating point fuzz in the building process with edges */
     VSCALE(delta.v,  delta.v,  1.0);
-    VSUB2(tie->min.v,  tie->min.v,  delta.v);
-    VADD2(tie->max.v,  tie->max.v,  delta.v);
+    VSUB2(tie->min,  tie->min,  delta.v);
+    VADD2(tie->max,  tie->max,  delta.v);
 
     /* Compute Max Depth to allow the KD-Tree to grow to */
     tie->max_depth = (int)(TIE_KDTREE_DEPTH_K1 * (log(tie->tri_num) / log(2)) + TIE_KDTREE_DEPTH_K2);
