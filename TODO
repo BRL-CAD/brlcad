@@ -64,6 +64,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* mater command should prompt for more/missing parameters, not fail.
+
 * merge sed and oed commands
 
 * make the right-hand path to oed optional
