@@ -3621,9 +3621,11 @@ rt_pipe_ck(const struct bu_list *headp)
         }
         
         VSUB2(v1, prev->pp_coord, cur->pp_coord);
+	v1_len = MAGNITUDE(v1);
 	VUNITIZE(v1);
                     
 	VSUB2(v2, next->pp_coord, cur->pp_coord);
+	v2_len = MAGNITUDE(v2);
 	VUNITIZE(v2);
                     
 	VCROSS(norm, v1, v2);
