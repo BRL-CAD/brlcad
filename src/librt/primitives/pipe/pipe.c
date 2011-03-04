@@ -3639,10 +3639,7 @@ rt_pipe_ck(const struct bu_list *headp)
 	 * vectors in order to prevent acos() from throwing an
 	 * exception (or crashing).
 	 */
-	if (local_vdot > 1.0)
-	    local_vdot = 1.0;
-	if (local_vdot < -1.0)
-	    local_vdot = -1.0;
+	CLAMP(local_vdot, -1.0, 1.0);
 
         angle = bn_pi - acos(local_vdot);
         new_bend_dist = cur->pp_bendradius * tan(angle/2.0);
