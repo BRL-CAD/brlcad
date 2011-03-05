@@ -32,7 +32,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "region_name shader r g b inherit";
     static const char *prompt[] = {
 	"Name of combination to edit: ",
-	"Shader (may enclose within quotes, e.g.: \"light invisible=1\"): ",
+	"Shader (enclose spaces within quotes, e.g.: \"light invisible=1\"): ",
 	"R, G, B color values (0 to 255): ",
 	"G component color value: ",
 	"B component color value: ",
@@ -57,7 +57,31 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
+    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, GED_ERROR);
+    GED_CHECK_COMB(gedp, dp, GED_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    RT_CK_COMB(comb);
+
+    /* need more arguments */
     if (argc < 7) {
+
+	/* help, let them know the old value */
+	if (argc == 2) {
+	    bu_vls_printf(&gedp->ged_result_str, "Shader = %V\n", &comb->shader);
+	} else if (argc == 3 || argc == 4 || argc == 5) {
+	    if (!comb->rgb_valid)
+		bu_vls_printf(&gedp->ged_result_str, "Color = (No color specified)\n");
+	    else
+		bu_vls_printf(&gedp->ged_result_str, "Color = %d %d %d\n", V3ARGS(comb->rgb));
+	} else if (argc == 6) {
+	    if (comb->inherit)
+		bu_vls_printf(&gedp->ged_result_str, "Inherit = 1: this node overrides lower nodes\n");
+	    else
+		bu_vls_printf(&gedp->ged_result_str, "Inherit = 0: lower nodes (towards leaves) override\n");
+	}
+
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc-1]);
 	return GED_MORE;
     }
@@ -66,13 +90,6 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
-
-    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, GED_ERROR);
-    GED_CHECK_COMB(gedp, dp, GED_ERROR);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
-
-    comb = (struct rt_comb_internal *)intern.idb_ptr;
-    RT_CK_COMB(comb);
 
     /* Material */
     bu_vls_trunc(&comb->shader, 0);
