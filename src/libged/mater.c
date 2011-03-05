@@ -29,12 +29,20 @@
 int
 ged_mater(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory *dp;
-    int r=0, g=0, b=0;
-    char inherit;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
     static const char *usage = "region_name shader r g b inherit";
+    static const char *prompt[] = {
+	"Name of combination to edit: ",
+	"Shader (may enclose within quotes, e.g.: \"light invisible=1\"): ",
+	"R, G, B color values (0 to 255): ",
+	"G component color value: ",
+	"B component color value: ",
+	"Should this object's shader override lower nodes? "
+    };
+
+    struct directory *dp = NULL;
+    int r=0, g=0, b=0;
+    struct rt_comb_internal *comb = NULL;
+    struct rt_db_internal intern;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -47,6 +55,11 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
+    }
+
+    if (argc < 7) {
+	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc-1]);
+	return GED_MORE;
     }
 
     if (argc != 7) {
@@ -93,19 +106,12 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     comb->rgb[2] = b;
     comb->rgb_valid = 1;
 
-    inherit = *argv[6];
+    comb->inherit = bu_str_true(argv[6]);
 
-    switch (inherit) {
-	case '1':
-	    comb->inherit = 1;
-	    break;
-	case '0':
-	    comb->inherit = 0;
-	    break;
-	default:
-	    bu_vls_printf(&gedp->ged_result_str, "Inherit value must be 0 or 1");
-	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
+    if (comb->inherit > 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Inherit value should be 0 or 1");
+	rt_db_free_internal(&intern);
+	return GED_ERROR;
     }
 
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
