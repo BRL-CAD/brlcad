@@ -17,17 +17,19 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* combination editor is broken, unbreak
+
 * unbust nmg (host/net conversion bug)
 
 * test mintie optimization, test performance for release notes
 
 * test search . vs search /
 
-* test / fix mged combination editor
-
-* mged init on Mac OS X, DISPLAY
-
 * fix nirt on Windows 
+
+* gqa regression is bombing out with malloc(0) in
+  allocate_per_region_data()
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------

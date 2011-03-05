@@ -121,8 +121,7 @@ struct tie_s {
     struct tie_tri_s *tri_list;
     int stat;		/* used for testing various statistics */
     unsigned int kdmethod;		/* Optimal or Fast */
-    /* all tfloat altered stuff should be at the end. */
-    TIE_3 min, max;
+    point_t min, max;
     vect_t amin, amax, mid;
     fastf_t radius;
 };

@@ -225,9 +225,9 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 
     /* Initialize ray segment */
     if (ray->dir[split] < 0.0)
-	far = (tie->min.v[split] - ray->pos[split]) * dirinv[split];
+	far = (tie->min[split] - ray->pos[split]) * dirinv[split];
     else
-	far = (tie->max.v[split] - ray->pos[split]) * dirinv[split];
+	far = (tie->max[split] - ray->pos[split]) * dirinv[split];
 
     stack_ind = 0;
     stack[0].node = tie->kdtree;
