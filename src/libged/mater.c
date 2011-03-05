@@ -73,7 +73,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
      */
     if (argc > 3) {
 	if (strncmp(argv[3], "del", 3) == 0) {
-	    offset=1;
+	    offset=2;
 	}
     }
 
@@ -100,7 +100,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(&gedp->ged_result_str, "Current inheritance = 0: lower nodes (towards leaves) override\n");
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc-1]);
+	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc-offset-1]);
 	return GED_MORE;
     }
 
