@@ -100,7 +100,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(&gedp->ged_result_str, "Current inheritance = 0: lower nodes (towards leaves) override\n");
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc-offset-1]);
+	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc+offset-1]);
 	return GED_MORE;
     }
 
@@ -137,7 +137,13 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 	comb->rgb_valid = 0;
 	comb->rgb[0] = comb->rgb[1] = comb->rgb[2] = 0;
     } else {
-	if (!BU_STR_EQUAL(argv[3], ".")) {
+	if (BU_STR_EQUAL(argv[3], ".")) {
+	    if (!comb->rgb_valid) {
+		bu_vls_printf(&gedp->ged_result_str, "Color is not set, cannot skip by using existing color");
+		rt_db_free_internal(&intern);
+		return GED_ERROR;
+	    }
+	} else {
 	    if (sscanf(argv[3], "%d", &r) != 1 || r < 0 || 255 < r) {
 		bu_vls_printf(&gedp->ged_result_str, "Bad color value - %s", argv[3]);
 		rt_db_free_internal(&intern);
@@ -146,7 +152,13 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 	    comb->rgb[0] = r;
 	}
 
-	if (!BU_STR_EQUAL(argv[4], ".")) {
+	if (BU_STR_EQUAL(argv[4], ".")) {
+	    if (!comb->rgb_valid) {
+		bu_vls_printf(&gedp->ged_result_str, "Color is not set, cannot skip by using existing color");
+		rt_db_free_internal(&intern);
+		return GED_ERROR;
+	    }
+	} else {
 	    if (sscanf(argv[4], "%d", &g) != 1 || g < 0 || 255 < g) {
 		bu_vls_printf(&gedp->ged_result_str, "Bad color value - %s", argv[4]);
 		rt_db_free_internal(&intern);
@@ -155,7 +167,13 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 	    comb->rgb[1] = g;
 	}
 
-	if (!BU_STR_EQUAL(argv[5], ".")) {
+	if (BU_STR_EQUAL(argv[5], ".")) {
+	    if (!comb->rgb_valid) {
+		bu_vls_printf(&gedp->ged_result_str, "Color is not set, cannot skip by using existing color");
+		rt_db_free_internal(&intern);
+		return GED_ERROR;
+	    }
+	} else {
 	    if (sscanf(argv[5], "%d", &b) != 1 || b < 0 || 255 < b) {
 		bu_vls_printf(&gedp->ged_result_str, "Bad color value - %s", argv[5]);
 		rt_db_free_internal(&intern);
