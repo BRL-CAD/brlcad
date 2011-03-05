@@ -434,8 +434,7 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 		    /* In the case of regions, values like Yes and 1 are causing trouble
 		     * somewhere in the code.  Do "R" for all affirmative cases and
 		     * strip any non-affirmative cases out of the avs */
-		    if (BU_STR_EQUAL(avpp->value, "Yes") || BU_STR_EQUAL(avpp->value, "R") || BU_STR_EQUAL(avpp->value, "1") ||
-			BU_STR_EQUAL(avpp->value, "Y") || BU_STR_EQUAL(avpp->value, "y")) {
+		if (bu_str_true(avpp->value)) {
 			(void)bu_avs_add(&avstmp, "region", "R");
 			has_standard[ATTR_REGION] = 1;
 		    }
@@ -527,8 +526,7 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 
 	/* region flag */
 	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "region"));
-	if (BU_STR_EQUAL(bu_vls_addr(&newval), "Yes") || BU_STR_EQUAL(bu_vls_addr(&newval), "R") || BU_STR_EQUAL(bu_vls_addr(&newval), "1") ||
-	    BU_STR_EQUAL(bu_vls_addr(&newval), "Y") || BU_STR_EQUAL(bu_vls_addr(&newval), "y")) {
+	if (bu_str_true(bu_vls_addr(&newval))) {
 	    comb->region_flag = 1;
 	    dp->d_flags |= RT_DIR_REGION;
 	} else {
@@ -589,8 +587,7 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 
 	/* inherit */
 	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "inherit"));
-	if (BU_STR_EQUAL(bu_vls_addr(&newval), "Yes") || BU_STR_EQUAL(bu_vls_addr(&newval), "1") ||
-	    BU_STR_EQUAL(bu_vls_addr(&newval), "Y") || BU_STR_EQUAL(bu_vls_addr(&newval), "y")) {
+	if (bu_str_true(bu_vls_addr(&newval))) {
 	    comb->inherit = 1;
 	} else {
 	    comb->inherit = 0;
