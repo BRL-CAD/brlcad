@@ -69,17 +69,23 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 
 	/* help, let them know the old value */
 	if (argc == 2) {
-	    bu_vls_printf(&gedp->ged_result_str, "Shader = %V\n", &comb->shader);
-	} else if (argc == 3 || argc == 4 || argc == 5) {
+	    bu_vls_printf(&gedp->ged_result_str, "Current shader string= %V\n", &comb->shader);
+	} else if (argc == 3) {
 	    if (!comb->rgb_valid)
-		bu_vls_printf(&gedp->ged_result_str, "Color = (No color specified)\n");
+		bu_vls_printf(&gedp->ged_result_str, "Current color = (No color specified)\n");
 	    else
-		bu_vls_printf(&gedp->ged_result_str, "Color = %d %d %d\n", V3ARGS(comb->rgb));
+		bu_vls_printf(&gedp->ged_result_str, "Current color = %d %d %d\n", V3ARGS(comb->rgb));
+	} else if (argc == 4) {
+	    if (comb->rgb_valid)
+		bu_vls_printf(&gedp->ged_result_str, "Current green color value = %d\n", comb->rgb[1]);
+	} else if (argc == 5) {
+	    if (comb->rgb_valid)
+		bu_vls_printf(&gedp->ged_result_str, "Current blue color value = %d\n", comb->rgb[2]);
 	} else if (argc == 6) {
 	    if (comb->inherit)
-		bu_vls_printf(&gedp->ged_result_str, "Inherit = 1: this node overrides lower nodes\n");
+		bu_vls_printf(&gedp->ged_result_str, "Current inheritance = 1: this node overrides lower nodes\n");
 	    else
-		bu_vls_printf(&gedp->ged_result_str, "Inherit = 0: lower nodes (towards leaves) override\n");
+		bu_vls_printf(&gedp->ged_result_str, "Current inheritance = 0: lower nodes (towards leaves) override\n");
 	}
 
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc-1]);
