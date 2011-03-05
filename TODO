@@ -25,8 +25,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * test search . vs search /
 
-* fix nirt on Windows 
-
 * gqa regression is bombing out with malloc(0) in
   allocate_per_region_data()
 

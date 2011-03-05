@@ -30,6 +30,7 @@ information systems (GIS) software.  Shapefiles may be imported as 2D
 sketch geometry that can be extruded to a 3D representation.
 
 * mged 'mater' command interactive prompting restored - Sean Morrison
+* fixed bug running nirt on a Windows command terminal - Bob Parker
 * improved wireframe updating when editing within mged - Sean Morrison
 * added -T bot_mintie BoT optimization options to nirt - Sean Morrison
 * mged command-click zoom binding for one button mice - Sean Morrison
