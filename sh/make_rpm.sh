@@ -2,7 +2,7 @@
 #                     M A K E _ R P M . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2010 United States Government as represented by
+# Copyright (c) 2005-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -201,7 +201,7 @@ License: LGPL, BSD
 URL: http://brlcad.org
 Packager: Jordi Sayol <g.sayol@yahoo.es>
 
-ExclusiveArch: '$ARCH' 
+ExclusiveArch: '$ARCH'
 Provides: brlcad = '$BVERSION'-'$RELEASE', brlcad('$FARCH') = '$BVERSION'-'$RELEASE'
 
 %description
