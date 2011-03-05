@@ -73,8 +73,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   framebuffer is enabled and the window is resized.  initialize and
   refresh the new memory and zap the framebuffer.
 
-* mater command should prompt for more/missing parameters, not fail.
-
 * merge sed and oed commands
 
 * make the right-hand path to oed optional
