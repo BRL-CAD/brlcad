@@ -500,6 +500,8 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 	return TCL_OK;
 
     ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
+    if (ret & GED_MORE)
+	Tcl_AppendResult(interpreter, MORE_ARGS_STR, NULL);
     Tcl_AppendResult(interpreter, bu_vls_addr(&gedp->ged_result_str), NULL);
 
     if (ret & GED_HELP || ret == GED_OK)
