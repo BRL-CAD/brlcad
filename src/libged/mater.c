@@ -34,7 +34,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "object_name shader r [g b] inherit";
     static const char *prompt[] = {
 	"Name of combination to edit? ", /* unused */
-	"Specify shader.  Enclose spaces within quotes. E.g., \"light invisible=1\"\nShader? ('del' to delete, '.' to skip) ",
+	"Specify shader.  Enclose spaces within quotes.  E.g., \"light invisible=1\"\nShader? ('del' to delete, '.' to skip) ",
 	"R, G, B color values (0 to 255)? ('del' to delete, '.' to skip) ",
 	"G component color value? ('.' to skip) ",
 	"B component color value? ('.' to skip) ",
@@ -139,7 +139,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     } else {
 	if (BU_STR_EQUAL(argv[3], ".")) {
 	    if (!comb->rgb_valid) {
-		bu_vls_printf(&gedp->ged_result_str, "Color is not set, cannot skip by using existing color");
+		bu_vls_printf(&gedp->ged_result_str, "Color is not set, cannot skip by using existing RED color value");
 		rt_db_free_internal(&intern);
 		return GED_ERROR;
 	    }
@@ -154,7 +154,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 
 	if (BU_STR_EQUAL(argv[4], ".")) {
 	    if (!comb->rgb_valid) {
-		bu_vls_printf(&gedp->ged_result_str, "Color is not set, cannot skip by using existing color");
+		bu_vls_printf(&gedp->ged_result_str, "Color is not set, cannot skip by using existing GREEN color value");
 		rt_db_free_internal(&intern);
 		return GED_ERROR;
 	    }
@@ -169,7 +169,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 
 	if (BU_STR_EQUAL(argv[5], ".")) {
 	    if (!comb->rgb_valid) {
-		bu_vls_printf(&gedp->ged_result_str, "Color is not set, cannot skip by using existing color");
+		bu_vls_printf(&gedp->ged_result_str, "Color is not set, cannot skip by using existing BLUE color value");
 		rt_db_free_internal(&intern);
 		return GED_ERROR;
 	    }
