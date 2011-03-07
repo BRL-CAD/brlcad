@@ -21,8 +21,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * test mintie optimization, test performance for release notes
 
-* test search . vs search /
-
 * gqa regression is bombing out with malloc(0) in
   allocate_per_region_data()
 
@@ -64,6 +62,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* search usage consistency:
+  - path and expression are optional: "search ." && "search /"
+  - curious behavior if you "e havoc" then "search /" (prints havoc)
+  - relative searching: "search ./havoc -type r"
+  - simplifable paths should work: "search /havoc/. -type r"
 
 * make mged not have a garbled display manager window if the
   framebuffer is enabled and the window is resized.  initialize and
