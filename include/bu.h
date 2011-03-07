@@ -3909,7 +3909,8 @@ BU_EXPORT BU_EXTERN(int bu_structparse_argv,
  *
  * Input values that are null, empty, begin with the letter 'n', or
  * are 0-valued return as false.  Any other input value returns as
- * true.
+ * true.  Strings that strongly indicate true return as 1, other
+ * values still return as true but may be a value greater than 1.
  */
 BU_EXPORT BU_EXTERN(int bu_str_true, (const char *str));
 

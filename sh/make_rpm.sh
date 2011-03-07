@@ -2,7 +2,7 @@
 #                     M A K E _ R P M . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2010 United States Government as represented by
+# Copyright (c) 2005-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -88,7 +88,6 @@ if test "$DNAME" = "fedora" ;then
     fcheck libxslt
     fcheck mesa-libGL-devel
     fcheck pango-devel
-    #fcheck ncurses-devel
 fi
 
 if test "$DNAME" = "openSUSE" ;then
@@ -102,7 +101,6 @@ if test "$DNAME" = "openSUSE" ;then
     fcheck libxslt
     fcheck Mesa-devel
     fcheck pango-devel
-    #fcheck ncurses-devel
 fi
 
 if [ $E -eq 1 ]; then
@@ -185,7 +183,8 @@ cp -f $TMPDIR/brlcad-db.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 cp -f $TMPDIR/brlcad-doc.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 
 mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
-cp -f $TMPDIR/application-x-brlcad.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
+cp -f $TMPDIR/application-x-brlcad-v4.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
+cp -f $TMPDIR/application-x-brlcad-v5.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
 
 mkdir -p $TMPDIR/tmp/usr/share/mime/packages
 cp -f $TMPDIR/application-x-brlcad.xml $TMPDIR/tmp/usr/share/mime/packages
@@ -201,7 +200,7 @@ License: LGPL, BSD
 URL: http://brlcad.org
 Packager: Jordi Sayol <g.sayol@yahoo.es>
 
-ExclusiveArch: '$ARCH' 
+ExclusiveArch: '$ARCH'
 Provides: brlcad = '$BVERSION'-'$RELEASE', brlcad('$FARCH') = '$BVERSION'-'$RELEASE'
 
 %description

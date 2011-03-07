@@ -49,19 +49,13 @@
       </para>
       
       <literallayout class="normal">
-   Shader =
-
-   Shader? ('del' to delete, CR to skip) plastic[Enter]
-
-   Color = (No color specified)
-
-   Color R G B (0..255)? ('del' to delete, CR to skip)
-
-   32 128 32[Enter]
-
-   Inherit = 0: lower nodes (towards leaves) override
-
-   Inheritance (0|1)? (CR to skip) 0[Enter]
+   Current shader string =
+   Specify shader.  Enclose spaces within quotes.  E.g., "light invisible=1"
+   Shader? ('del' to delete, '.' to skip) plastic[Enter]
+   Current color = (No color specified)
+   R, G, B color values (0 to 255)? ('del' to delete, '.' to skip) 32 128 32[Enter]
+   Current inheritance = 0: lower nodes (towards leaves) override
+   Should this object's shader override lower nodes? ('.' to skip) 0[Enter]
       </literallayout>
       
       <para>

@@ -131,9 +131,6 @@ Recent Bugs
   Tcl_AppendResult would have been better, but it is not clear whether
   changing this result setting approach would cause other breakage.
 
-* kill command in archer deletes object but then reports a failure and
-  mouse is stuck in a busy state.
-
 * mged rotation halts after a few events and after zooming in/out at
   least once (Mac OS X 10.5)
   More info:  This problem appears to be specific to a particular

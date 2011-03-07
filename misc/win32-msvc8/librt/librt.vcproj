@@ -980,6 +980,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\search.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\shoot.c"
 				>
 			</File>

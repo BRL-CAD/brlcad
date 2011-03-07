@@ -53,8 +53,6 @@
 #define _MAX(a, b) (a)>(b)?(a):(b)
 #define	MATH_MIN3(_a, _b, _c, _d) _a = _MIN((_b), _MIN((_c), (_d)))
 #define MATH_MAX3(_a, _b, _c, _d) _a = _MAX((_b), _MAX((_c), (_d)))
-#define MATH_VEC_MIN(_a, _b) VMIN(_a.v, _b.v)
-#define MATH_VEC_MAX(_a, _b) VMAX(_a.v, _b.v)
 
 #define MATH_BBOX(_a, _b, _c, _d, _e) { \
 	MATH_MIN3(_a.v[0], _c.v[0], _d.v[0], _e.v[0]); \
@@ -124,12 +122,11 @@ tie_kdtree_free_node(struct tie_kdtree_s *node)
 	/* Node Data is KDTREE Children, Recurse */
 	tie_kdtree_free_node(&((struct tie_kdtree_s *)(((intptr_t)(node_aligned->data)) & ~0x7L))[0]);
 	tie_kdtree_free_node(&((struct tie_kdtree_s *)(((intptr_t)(node_aligned->data)) & ~0x7L))[1]);
-	bu_free((void*)((intptr_t)(node_aligned->data) & ~0x7L), "node data");
     } else {
 	/* This node points to a geometry node, free it */
-	bu_free(((struct tie_geom_s *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_list, "node data list");
-	bu_free((void *)((intptr_t)(node_aligned->data) & ~0x7L), "node data");
+	free(((struct tie_geom_s *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_list);
     }
+    free((void*)((intptr_t)(node_aligned->data) & ~0x7L));
 }
 
 static void
@@ -291,7 +288,7 @@ find_split_fast(struct tie_kdtree_s *node, TIE_3 *cmin, TIE_3 *cmax, unsigned in
 }
 
 static void
-find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TIE_3 *cmax, unsigned int *split) 
+find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TIE_3 *cmax, unsigned int *split)
 {
     /****************************************
      * Justin's Aggressive KD-Tree Algorithm *
@@ -302,7 +299,7 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
     struct tie_tri_s *tri;
     struct tie_geom_s *node_gd = (struct tie_geom_s *)(node->data);
     TIE_3 min, max;
-    TIE_3 center[2], half_size[2]; 
+    TIE_3 center[2], half_size[2];
     VSETALL(min.v, 0.0);
     VSETALL(max.v, 0.0);
 
@@ -436,7 +433,6 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 	active = 0;
 
 	for (k = 0; k < slice_num; k++) {
-	    /*      printf("slice[%d][%d]: %d < %d\n", d, k, slice[d][k], (int)(MIN_DENSITY * (tfloat)smax[d])); */
 	    if (slice[d][k] < (unsigned int)(MIN_DENSITY * (tfloat)smax[d])) {
 		if (!active) {
 		    active = 1;
@@ -461,12 +457,6 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 	    }
     }
 
-#if 0
-    printf("gap_x: %d->%d = %d\n", gap[0][0], gap[0][1], gap[0][1]-gap[0][0]);
-    printf("gap_y: %d->%d = %d\n", gap[1][0], gap[1][1], gap[1][1]-gap[1][0]);
-    printf("gap_z: %d->%d = %d\n", gap[2][0], gap[2][1], gap[2][1]-gap[2][0]);
-#endif
-
     /*
      * If there is a gap atleast MIN_SPAN in side wrt the nodes dimension size
      * then use the nearest edge of the gap to 0.5 as the splitting plane,
@@ -489,7 +479,6 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
      * triangles lack any sort of coherent structure.
      */
     if ((tfloat)(gap[d][1] - gap[d][0]) / (tfloat)slice_num > MIN_SPAN && node_gd->tri_num > 500) {
-	/*  printf("choosing slice[%d]: %d->%d :: %d tris\n", d, gap[d][0], gap[d][1], node_gd->tri_num); */
 	*split = d;
 	if (abs(gap[d][0] - slice_num/2) < abs(gap[d][1] - slice_num/2)) {
 	    /* choose gap[d][0] as splitting plane */
@@ -512,7 +501,6 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 	for (d = 0; d < 3; d++)
 	    for (k = 0; k < slice_num; k++)
 		slice[d][k] += fabs(coef[d][k]-0.5) * SCALE_COEF * smax[d];
-	/*        printf("%.3f %d\n", coef[d][k], slice[d][k]); */
 
 	/* Choose the slice with the graphs minima as the splitting plane. */
 	split = 0;
@@ -554,29 +542,12 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 	return;
     }
 
-#if 0
-    if (side[split][split_slice][0] == node_a && side[split][split_slice][1] == node_b) {
-	if (node_gd->tri_num < 10)
-	    return;
-	/*      printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]); */
-	/*      printf("moo: %d - %d\n", depth, node_gd->tri_num); */
-    }
-#endif
-
-
-#if 0
-    printf("winner: depth: %d, dim = %d, smin = %d, coef: %.3f\n", depth, split, smin, split_coef);
-    printf("winner: min: %.3f %.3f %.3f, max: %.3f %.3f %.3f, tris: %d\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2], node_gd->tri_num);
-#endif
-
     /* Based on the winner, construct the two child nodes */
-    /* Left Child */
-    cmin[0] = min;
-    cmax[0] = max;
+    VMOVE(cmin[0].v, min.v);
+    VMOVE(cmax[0].v, max.v);
 
-    /* Right Child */
-    cmin[1] = min;
-    cmax[1] = max;
+    VMOVE(cmin[1].v, min.v);
+    VMOVE(cmax[1].v, max.v);
 
     cmax[0].v[*split] = min.v[*split]*(1.0-split_coef) + max.v[*split]*split_coef;
     cmin[1].v[*split] = cmax[0].v[*split];
@@ -595,45 +566,24 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	return;
     }
 
-
     /* initialize cmax to make the compiler happy */
     VMOVE(cmax[0].v, max);
     VMOVE(cmin[0].v, min);
     VMOVE(cmax[1].v, max);
     VMOVE(cmin[1].v, min);
 
-#if 0
-    /*  if (depth >= 26) */
-    printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
-    fflush (stdout);
-#endif
     /* Terminating criteria for KDTREE subdivision */
     if (node_gd->tri_num <= TIE_KDTREE_NODE_MAX || depth > tie->max_depth) {
-	/*    tie->stat++; */
 	tie->stat += node_gd->tri_num;
-#if 0
-	if (node_gd->tri_num > tie->stat)
-	    tie->stat = node_gd->tri_num;
-
-	if (node_gd->tri_num > tie->stat)
-	{
-	    tie->stat = node_gd->tri_num;
-	    printf("depth: %d, tris: %d\n", depth, node_gd->tri_num);
-	    printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
-	}
-	exit(0);
-#endif
 	return;
     }
 
-    if (tie->kdmethod == TIE_KDTREE_FAST)  
+    if (tie->kdmethod == TIE_KDTREE_FAST)
 	find_split_fast(node, &cmin[0], &cmax[0], &split);
-    else if (tie->kdmethod == TIE_KDTREE_OPTIMAL) 
+    else if (tie->kdmethod == TIE_KDTREE_OPTIMAL)
 	find_split_optimal(tie, node, &cmin[0], &cmax[0], &split);
-
     else
 	bu_bomb("Illegal tie kdtree method\n");
-
 
     /* Allocate 2 children nodes for the parent node */
     node->data = (void *)bu_malloc(2 * sizeof(struct tie_kdtree_s), __FUNCTION__);
@@ -648,15 +598,14 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
     if(((struct tie_kdtree_s *)(node->data))[1].data == NULL || ((size_t)((struct tie_kdtree_s *)(node->data))[1].data & 7L))
 	bu_log("node->data[1].data 0x%X is not aligned!\n", ((struct tie_kdtree_s *)(node->data))[1].data);
 
-
     /* Initialize Triangle List */
     child[0] = ((struct tie_geom_s *)(((struct tie_kdtree_s *)(node->data))[0].data));
     child[1] = ((struct tie_geom_s *)(((struct tie_kdtree_s *)(node->data))[1].data));
 
-    child[0]->tri_list = (struct tie_tri_s **)bu_malloc(sizeof(struct tie_tri_s *) * node_gd->tri_num, __FUNCTION__);
+    child[0]->tri_list = (struct tie_tri_s **)malloc(sizeof(struct tie_tri_s *) * node_gd->tri_num);
     child[0]->tri_num = 0;
 
-    child[1]->tri_list = (struct tie_tri_s **)bu_malloc(sizeof(struct tie_tri_s *) * node_gd->tri_num, __FUNCTION__);
+    child[1]->tri_list = (struct tie_tri_s **)malloc(sizeof(struct tie_tri_s *) * node_gd->tri_num);
     child[1]->tri_num = 0;
 
 
@@ -702,7 +651,7 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	 * thing. */
 	if( child[n]->tri_num == 0 ) {
 	    if( child[n]->tri_list ) {
-		bu_free( child[n]->tri_list, "child[n]->tri_list" );
+		free( child[n]->tri_list);
 		child[n]->tri_list = NULL;
 	    }
 	} else
@@ -714,8 +663,8 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
      * free the triangle list on this node.
      */
     node_gd->tri_num = 0;
-    bu_free(node_gd->tri_list, __FUNCTION__);
-    bu_free(node_gd, __FUNCTION__);
+    free(node_gd->tri_list);
+    free(node_gd);
 
     /* Push each child through the same process. */
     {
@@ -744,7 +693,7 @@ TIE_VAL(tie_kdtree_free)(struct tie_s *tie)
     /* prevent tie from crashing when a tie_free() is called right after a tie_init() */
     if (tie->kdtree)
 	tie_kdtree_free_node(tie->kdtree);
-    bu_free(tie->kdtree, "kdtree");
+    free(tie->kdtree);
 }
 
 void
@@ -773,7 +722,7 @@ TIE_VAL(tie_kdtree_prep)(struct tie_s *tie)
 	if (g->tri_num)
 	    g->tri_list = (struct tie_tri_s **)bu_realloc(g->tri_list, sizeof(struct tie_tri_s *) * g->tri_num, "prep tri_list");
     } else
-	bu_free (g->tri_list, "freeing tri list");
+	free (g->tri_list);
 
     /*
      * Compute Floating Fuzz Precision Value
@@ -796,15 +745,12 @@ TIE_VAL(tie_kdtree_prep)(struct tie_s *tie)
 
     /* Compute Max Depth to allow the KD-Tree to grow to */
     tie->max_depth = (int)(TIE_KDTREE_DEPTH_K1 * (log(tie->tri_num) / log(2)) + TIE_KDTREE_DEPTH_K2);
-    /* printf("max_depth: %d\n", tie->max_depth); */
 
     /* Build the KDTREE */
     if (!already_built)
 	tie_kdtree_build(tie, tie->kdtree, 0, tie->min, tie->max);
 
-    /*  printf("stat: %d\n", tie->stat); */
     tie->stat = 0;
-    /*  exit(0); */ /* uncomment to profile prep phase only */
 }
 
 /*

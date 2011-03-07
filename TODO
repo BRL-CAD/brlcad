@@ -17,15 +17,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* combination editor is broken, unbreak
-
 * unbust nmg (host/net conversion bug)
 
 * test mintie optimization, test performance for release notes
-
-* test search . vs search /
-
-* fix nirt on Windows 
 
 * gqa regression is bombing out with malloc(0) in
   allocate_per_region_data()
@@ -69,11 +63,15 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* search usage consistency:
+  - path and expression are optional: "search ." && "search /"
+  - curious behavior if you "e havoc" then "search /" (prints havoc)
+  - relative searching: "search ./havoc -type r"
+  - simplifable paths should work: "search /havoc/. -type r"
+
 * make mged not have a garbled display manager window if the
   framebuffer is enabled and the window is resized.  initialize and
   refresh the new memory and zap the framebuffer.
-
-* mater command should prompt for more/missing parameters, not fail.
 
 * merge sed and oed commands
 
@@ -968,6 +966,67 @@ constraints
 * Implement Hypergraph representation system
 
 * Explore analytic and symbolic solution system
+
+
+ARCHER
+------
+
+* need to write a manual page at least for basic usage
+
+* "archer -h" causes archer to halt with a Tk_Init error.  should
+  display usage/help.
+
+* reports "ArcherCore::getTreeMembers: faulty tree - " on some .g
+  files, valid ones
+
+* numerous warnings on exit on Mac OS X (10.6):
+   <Error>: kCGErrorIllegalArgument: CGSGetSurfaceBounds
+   <Error>: kCGErrorFailure: Set a breakpoint @ CGErrorBreakpoint() to catch errors as they are logged.
+   <Error>: kCGErrorIllegalArgument: CGSBindSurface: Invalid window 0x492c
+   ...
+
+* diversion from mged philosophy, prompts whether to save file on exit
+  (file not always in a saved state).  to prevent data loss on crash,
+  data should at least always be written out to the main file, a
+  secondary file, recorded as saved transactions, or some other
+  mechanism.
+
+* numerous core commands missing that have not gone through
+  deprecation (e, d, ...) -- suggest we first release with at least
+  all current commands included (at least those documented in
+  tutorials, quick ref card, html docs), but marked as deprecated
+  then.
+
+* user should fully own ~/.archerrc and be able to specify settings
+  and overrides there (current says do not edit)
+
+* user-manageable scripts and settings (similar to ~/.subversion)
+
+* some usability-related icon issues (only a few of the more egregious)
+  - torus tree-view icon has major aliasing/truncation
+  - framebuffer image buttons need replacement (nuclear, mode?)
+  - halfspace icon needs darkening
+  - no part icon (needs one otherwise misleading label)
+
+* Create menu should list primitive name, not our shorthand
+
+* major GUI components (tree-view, command window, and graphics
+  window) should be dockable and have their layout/docking preference
+  be saved across sessions (so they can restore and retain similar mged
+  appearance if they so choose)
+
+* menu needs rework
+
+* mouse behavior changed, rotates around view origin instead of model
+  origin.  should provide for mouse behavior settings so classic mged
+  defaults are available.
+
+* double-clicking the tree view show-list to display/undisplay
+
+* About Archer is out-of-date, references brlcad.com, survice logo,
+  wrong BRL-CAD logo image, says archer is trademarked,
+  acknowledgements is out of date (should remove or just put AUTHORS
+  file).
 
 
 ODDITIES

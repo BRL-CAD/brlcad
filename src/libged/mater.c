@@ -25,16 +25,28 @@
 
 #include "ged.h"
 
+#include <string.h>
+
 
 int
 ged_mater(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory *dp;
+    static const char *usage = "object_name shader r [g b] inherit";
+    static const char *prompt[] = {
+	"Name of combination to edit? ", /* unused */
+	"Specify shader.  Enclose spaces within quotes.  E.g., \"light invisible=1\"\nShader? ('del' to delete, '.' to skip) ",
+	"R, G, B color values (0 to 255)? ('del' to delete, '.' to skip) ",
+	"G component color value? ('.' to skip) ",
+	"B component color value? ('.' to skip) ",
+	"Should this object's shader override lower nodes? ('.' to skip) "
+    };
+
+    struct directory *dp = NULL;
     int r=0, g=0, b=0;
-    char inherit;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
-    static const char *usage = "region_name shader r g b inherit";
+    struct rt_comb_internal *comb = NULL;
+    struct rt_db_internal intern;
+    struct bu_vls vls;
+    int offset = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -49,11 +61,6 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc != 7) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
     GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, GED_ERROR);
     GED_CHECK_COMB(gedp, dp, GED_ERROR);
     GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
@@ -61,51 +68,130 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
 
-    /* Material */
-    bu_vls_trunc(&comb->shader, 0);
-    if (bu_shader_to_tcl_list(argv[2], &comb->shader)) {
-	bu_vls_printf(&gedp->ged_result_str, "Problem with shader string: %s", argv[2]);
-	rt_db_free_internal(&intern);
+    /* deleting the color means we don't need to prompt for the green
+     * and blue color channels, so offset our argument indices.
+     */
+    if (argc > 3) {
+	if (strncmp(argv[3], "del", 3) == 0) {
+	    offset=2;
+	}
+    }
+
+    /* need more arguments */
+    if ((!offset && argc < 7) || (offset && argc < 5)) {
+	/* help, let them know the old value */
+	if (argc == 2) {
+	    bu_vls_printf(&gedp->ged_result_str, "Current shader string = %V\n", &comb->shader);
+	} else if (argc == 3) {
+	    if (!comb->rgb_valid)
+		bu_vls_printf(&gedp->ged_result_str, "Current color = (No color specified)\n");
+	    else
+		bu_vls_printf(&gedp->ged_result_str, "Current color = %d %d %d\n", V3ARGS(comb->rgb));
+	} else if (!offset && argc == 4) {
+	    if (comb->rgb_valid)
+		bu_vls_printf(&gedp->ged_result_str, "Current green color value = %d\n", comb->rgb[1]);
+	} else if (!offset && argc == 5) {
+	    if (comb->rgb_valid)
+		bu_vls_printf(&gedp->ged_result_str, "Current blue color value = %d\n", comb->rgb[2]);
+	} else if ((!offset && argc == 6) || (offset && argc == 4)) {
+	    if (comb->inherit)
+		bu_vls_printf(&gedp->ged_result_str, "Current inheritance = 1: this node overrides lower nodes\n");
+	    else
+		bu_vls_printf(&gedp->ged_result_str, "Current inheritance = 0: lower nodes (towards leaves) override\n");
+	}
+
+	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc+offset-1]);
+	return GED_MORE;
+    }
+
+
+    /* too much */
+    if ((!offset && argc > 7) || (offset && argc > 5)) {
+	bu_vls_printf(&gedp->ged_result_str, "Too many arguments.\nUsage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
+
+    /* Material */
+    bu_vls_init(&vls);
+    bu_vls_strcat(&vls, argv[2]);
+    bu_vls_trimspace(&vls);
+    if (bu_vls_strlen(&vls) == 0 || strncmp(bu_vls_addr(&vls), "del", 3) == 0) {
+	/* delete the current shader string */
+	bu_vls_free(&comb->shader);
+    } else {
+	if (!BU_STR_EQUAL(bu_vls_addr(&vls), ".")) {
+	    bu_vls_trunc(&comb->shader, 0);
+	    if (bu_shader_to_tcl_list(bu_vls_addr(&vls), &comb->shader)) {
+		bu_vls_printf(&gedp->ged_result_str, "Problem with shader string [%s]", argv[2]);
+		rt_db_free_internal(&intern);
+		bu_vls_free(&vls);
+		return GED_ERROR;
+	    }
+	}
+    }
+    bu_vls_free(&vls);
 
     /* Color */
-    if (sscanf(argv[3], "%d", &r) != 1 || r < 0 || 255 < r) {
-	bu_vls_printf(&gedp->ged_result_str, "Bad color value - %s", argv[3]);
-	rt_db_free_internal(&intern);
-	return GED_ERROR;
+    if (offset) {  /* means strncmp(argv[3], "del", 3) is 0 */
+	/* remove the color */
+	comb->rgb_valid = 0;
+	comb->rgb[0] = comb->rgb[1] = comb->rgb[2] = 0;
+    } else {
+	if (BU_STR_EQUAL(argv[3], ".")) {
+	    if (!comb->rgb_valid) {
+		bu_vls_printf(&gedp->ged_result_str, "Color is not set, cannot skip by using existing RED color value");
+		rt_db_free_internal(&intern);
+		return GED_ERROR;
+	    }
+	} else {
+	    if (sscanf(argv[3], "%d", &r) != 1 || r < 0 || 255 < r) {
+		bu_vls_printf(&gedp->ged_result_str, "Bad color value - %s", argv[3]);
+		rt_db_free_internal(&intern);
+		return GED_ERROR;
+	    }
+	    comb->rgb[0] = r;
+	}
+
+	if (BU_STR_EQUAL(argv[4], ".")) {
+	    if (!comb->rgb_valid) {
+		bu_vls_printf(&gedp->ged_result_str, "Color is not set, cannot skip by using existing GREEN color value");
+		rt_db_free_internal(&intern);
+		return GED_ERROR;
+	    }
+	} else {
+	    if (sscanf(argv[4], "%d", &g) != 1 || g < 0 || 255 < g) {
+		bu_vls_printf(&gedp->ged_result_str, "Bad color value - %s", argv[4]);
+		rt_db_free_internal(&intern);
+		return GED_ERROR;
+	    }
+	    comb->rgb[1] = g;
+	}
+
+	if (BU_STR_EQUAL(argv[5], ".")) {
+	    if (!comb->rgb_valid) {
+		bu_vls_printf(&gedp->ged_result_str, "Color is not set, cannot skip by using existing BLUE color value");
+		rt_db_free_internal(&intern);
+		return GED_ERROR;
+	    }
+	} else {
+	    if (sscanf(argv[5], "%d", &b) != 1 || b < 0 || 255 < b) {
+		bu_vls_printf(&gedp->ged_result_str, "Bad color value - %s", argv[5]);
+		rt_db_free_internal(&intern);
+		return GED_ERROR;
+	    }
+	    comb->rgb[2] = b;
+	}
+
+	comb->rgb_valid = 1;
     }
 
-    if (sscanf(argv[4], "%d", &g) != 1 || g < 0 || 255 < g) {
-	bu_vls_printf(&gedp->ged_result_str, "Bad color value - %s", argv[4]);
-	rt_db_free_internal(&intern);
-	return GED_ERROR;
-    }
-
-    if (sscanf(argv[5], "%d", &b) != 1 || b < 0 || 255 < b) {
-	bu_vls_printf(&gedp->ged_result_str, "Bad color value - %s", argv[5]);
-	rt_db_free_internal(&intern);
-	return GED_ERROR;
-    }
-
-    comb->rgb[0] = r;
-    comb->rgb[1] = g;
-    comb->rgb[2] = b;
-    comb->rgb_valid = 1;
-
-    inherit = *argv[6];
-
-    switch (inherit) {
-	case '1':
-	    comb->inherit = 1;
-	    break;
-	case '0':
-	    comb->inherit = 0;
-	    break;
-	default:
-	    bu_vls_printf(&gedp->ged_result_str, "Inherit value must be 0 or 1");
+    if (!BU_STR_EQUAL(argv[6], ".")) {
+	comb->inherit = bu_str_true(argv[6]);
+	if (comb->inherit > 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "Inherit value should be 0 or 1");
 	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
+	}
     }
 
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
