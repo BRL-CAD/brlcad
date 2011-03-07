@@ -29,6 +29,7 @@ format for storing geospatial vector data commonly used by geographic
 information systems (GIS) software.  Shapefiles may be imported as 2D
 sketch geometry that can be extruded to a 3D representation.
 
+* fixed archer and rtwizard startup failure bug on Mac - Sean Morrison
 * fixed bug starting up the Combination Editor in mged - Sean Morrison
 * mged 'mater' command interactive prompting restored - Sean Morrison
 * fixed bug running nirt on a Windows command terminal - Bob Parker
