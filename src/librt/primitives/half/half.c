@@ -501,7 +501,22 @@ rt_hlf_xform(
     hip = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(hip);
     RT_CK_DB_INTERNAL(op);
-    hop = (struct rt_half_internal *)op->idb_ptr;
+
+    if (op != ip) {
+	RT_INIT_DB_INTERNAL(op);
+	hop = (struct rt_half_internal *)bu_malloc(sizeof(struct rt_half_internal), "hop");
+	hop->magic = RT_HALF_INTERNAL_MAGIC;
+	op->idb_ptr = (genptr_t)hop;
+	op->idb_meth = &rt_functab[ID_HALF];
+	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	op->idb_type = ID_HALF;
+	if (ip->idb_avs.magic == BU_AVS_MAGIC) {
+	    bu_avs_init(&op->idb_avs, ip->idb_avs.count, "avs");
+	    bu_avs_merge(&op->idb_avs, &ip->idb_avs);
+	}
+    } else {
+	hop = (struct rt_extrude_internal *)ip->idb_ptr;
+    }
     RT_HALF_CK_MAGIC(hop);
 
     /* Pick a point on the original halfspace */
