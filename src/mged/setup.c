@@ -28,7 +28,6 @@
 /* system headers */
 #include <stdlib.h>
 #include <tcl.h>
-#include <itcl.h>
 #include <string.h>
 
 /* common headers */
@@ -506,12 +505,7 @@ mged_setup(Tcl_Interp **interpreter)
 
 	/* Initialize [incr Tcl] */
 	Tcl_ResetResult(*interpreter);
-	/* NOTE: Calling "package require Itcl" here is apparently
-	 * insufficient without other changes elsewhere.  The
-	 * Combination Editor in mged fails with an iwidgets class
-	 * already loaded error if we don't perform Itcl_Init() here.
-	 */
-	if (init_itcl && Itcl_Init(*interpreter) == TCL_ERROR) {
+	if (init_itcl && Tcl_Eval(*interpreter, "package require Itcl") != TCL_OK) {
 	    if (!try_auto_path) {
 		Tcl_Namespace *nsp;
 
