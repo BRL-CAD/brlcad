@@ -2634,7 +2634,7 @@ rt_nmg_export5(
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = tot_size;
     ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "nmg external5");
-    dp = (unsigned char *)ep->ext_buf;
+    dp = ep->ext_buf;
     *(uint32_t *)dp = htonl(DISK_MODEL_VERSION);
     dp+=SIZEOF_NETWORK_LONG;
 
