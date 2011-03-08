@@ -1,3 +1,18 @@
+# Minimum required version of CMake
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+IF(COMMAND CMAKE_POLICY)
+	CMAKE_POLICY(SET CMP0003 NEW)
+ENDIF(COMMAND CMAKE_POLICY)
+
+# set CMake project name
+PROJECT(TKPNG)
+
+SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
+
+find_package(ZLIB)
+find_package(TCL)
+find_package(X11)
+
 include_directories(
 		  ${CMAKE_CURRENT_SOURCE_DIR}/src
 		  ${CMAKE_CURRENT_BINARY_DIR}

@@ -7,6 +7,11 @@ ENDIF(COMMAND CMAKE_POLICY)
 # set CMake project name
 PROJECT(TKHTML)
 
+SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
+
+find_package(TCL)
+find_package(X11)
+
 include_directories(
 		  ${CMAKE_CURRENT_SOURCE_DIR}/src
 		  ${CMAKE_CURRENT_BINARY_DIR}
