@@ -610,15 +610,21 @@ IF(NOT BRLCAD-ENABLE_RUNTIME_DEBUG)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define NO_DEBUG_CHECKING 1\n")
 ENDIF(NOT BRLCAD-ENABLE_RUNTIME_DEBUG)
 
+# Build with compiler warning flags 
+OPTION(BRLCAD-ENABLE_COMPILER_WARNINGS "Use compiler warning flags" ON)
+IF(BRLCAD-ENABLE_COMPILER_WARNINGS)
+	FILE(APPEND  ${CONFIG_H_FILE} "#define WARNING_FLAGS 1\n")
+ENDIF(BRLCAD-ENABLE_COMPILER_WARNINGS)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_COMPILER_WARNINGS)
+
 # Enable/disable strict compiler settings - these are limited to libraries that
 # specifically inform the BRLCAD_ADDLIB macro they can be built with STRICT flags.
 OPTION(BRLCAD-ENABLE_STRICT "Use strict compiler settings on libraries that support them" ON)
 OPTION(BRLCAD-ENABLE_CXX_STRICT "Use strict compiler settings on cxx files in libraries that build with strict" OFF)
-if (BRLCAD-ENABLE_STRICT)
-MARK_AS_ADVANCED(BRLCAD-ENABLE_STRICT)
-MARK_AS_ADVANCED(BRLCAD-ENABLE_CXX_STRICT)
-	FILE(APPEND  ${CONFIG_H_FILE} "#define STRICT_FLAGS 1\n")
-endif (BRLCAD-ENABLE_STRICT)
+IF(BRLCAD-ENABLE_STRICT)
+	MARK_AS_ADVANCED(BRLCAD-ENABLE_STRICT)
+	MARK_AS_ADVANCED(BRLCAD-ENABLE_CXX_STRICT)
+ENDIF(BRLCAD-ENABLE_STRICT)
 
 # Build with O3 compiler optimization.  This should be on for release builds
 IF("${CMAKE_BUILD_TYPE}" MATCHES "Release")
@@ -630,10 +636,6 @@ MARK_AS_ADVANCED(BRLCAD-ENABLE_OPTIMIZED_BUILD)
 IF("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT BRLCAD-ENABLE_OPTIMIZED_BUILD)
 	MESSAGE("Warning - build type is Release but optimization has been disabled")
 ENDIF("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT BRLCAD-ENABLE_OPTIMIZED_BUILD)
-
-# Build with compiler warning flags 
-OPTION(BRLCAD-ENABLE_COMPILER_WARNINGS "Use compiler warning flags" ON)
-MARK_AS_ADVANCED(BRLCAD-ENABLE_COMPILER_WARNINGS)
 
 # By default, we don't want any error reports at all from src/other
 OPTION(BRLCAD-DISABLE_SRC_OTHER_WARN "Disable warnings for src/other" ON)
@@ -1023,11 +1025,7 @@ BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
 # ***       Check for Compile Characteristics - Stage 7 of 9      ***
 # *******************************************************************
 
-SET(CMAKE_C_FLAGS "" CACHE STRING "compiler flags" FORCE)
-SET(CMAKE_CXX_FLAGS "" CACHE STRING "cxx compiler flags" FORCE)
 INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
-
-
 
 # *******************************************************************
 # ***          Check for System Services - Stage 8 of 9           ***
@@ -1041,14 +1039,10 @@ ENDIF(MSVC)
 
 # Before we finalize, set some specific global compiler flags
 IF(MSVC)
-	#SET(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -nologo -D_CRT_SECURE_NO_WARNINGS)
-	SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -nologo -D_CRT_SECURE_NO_WARNINGS)
 	SET(CMAKE_EXE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
 	SET(CMAKE_SHARED_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
 	SET(CMAKE_MODULE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
 ENDIF(MSVC)
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${${CMAKE_PROJECT_NAME}_C_FLAGS}")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${${CMAKE_PROJECT_NAME}_CXX_FLAGS}")
 
 # We've done the toplevel configure steps, now add the subdirectories
 ADD_SUBDIRECTORY(src)
@@ -1119,8 +1113,8 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 		SET(CMAKE_ALL_C_FLAGS "${CMAKE_C_FLAGS}")
 		SET(CMAKE_ALL_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 	ELSE(NOT BUILD_TYPE)
-		SET(CMAKE_ALL_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_${BUILD_TYPE}}")
-		SET(CMAKE_ALL_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${BUILD_TYPE}}")
+		SET(CMAKE_ALL_C_FLAGS "${CMAKE_C_FLAGS_${BUILD_TYPE}}")
+		SET(CMAKE_ALL_CXX_FLAGS "${CMAKE_CXX_FLAGS_${BUILD_TYPE}}")
 	ENDIF(NOT BUILD_TYPE)
 
 	# Compiler settings - in this case there are additional "special case" flags that get

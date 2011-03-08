@@ -152,12 +152,12 @@ __BEGIN_DECLS
 #define __BU_ATTR_NORETURN __attribute__ ((__noreturn__))
 
 /**
- *  If we're compiling strict, turn off "format string vs arguments"
+ *  If we're compiling with extran warnings, turn off "format string vs arguments"
  *  checks - BRL-CAD customizes the arguments to some of these
  *  function types (adding bu_vls support) and that is a problem with
  *  strict checking.
  */
-#if defined(STRICT_FLAGS)
+#if defined(WARNING_FLAGS)
 #  undef __BU_ATTR_FORMAT12
 #  undef __BU_ATTR_FORMAT23
 #  undef __BU_ATTR_NORETURN

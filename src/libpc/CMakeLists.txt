@@ -6,7 +6,12 @@
 
 # No point in warnings here, we can't do anything about
 # it until the boost issue is handled
-SET(CMAKE_CXX_FLAGS "-w")
+STRING(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
+IF(BUILD_TYPE)
+	SET(CMAKE_CXX_FLAGS_${BUILD_TYPE} "-w")
+ELSE(BUILD_TYPE)
+	SET(CMAKE_CXX_FLAGS "-w")
+ENDIF(BUILD_TYPE)
 
 include_directories(
 	${CMAKE_SOURCE_DIR}/src/other
