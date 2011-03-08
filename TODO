@@ -17,8 +17,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* unbust nmg (host/net conversion bug)
-
 * test mintie optimization, test performance for release notes
 
 * gqa regression is bombing out with malloc(0) in
