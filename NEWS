@@ -11,17 +11,21 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2011-03-XX  Release 7.18.4                                     ---
+--- 2011-03-08  Release 7.18.4                                     ---
 ----------------------------------------------------------------------
 
-After considerable development, this release marks the integration of
-our high-performance Triangle Intersection Engine (TIE) with BRL-CAD's
-LIBRT raytrace library.  TIE uses specialized acceleration techniques
-for faster raytracing of triangle mesh models.  TIE was experimentally
-developed as part of our Advanced Distributed Ray Tracer (ADRT) tool
-suite, but is now also configurably Integrated with LIBRT (BoT) mesh
-raytracing.  Particularly for BoT models with high polygon counts, the
-optimization is providing performance improvements from 2x-10x faster.
+After considerable development, this release includes the preliminary
+integration of our high-performance Triangle Intersection Engine (TIE)
+with BRL-CAD's LIBRT raytrace library.  TIE uses specialized
+acceleration techniques for faster raytracing of triangle mesh models.
+TIE was experimentally developed over several years as part of
+BRL-CAD's Advanced Distributed Ray Tracer (ADRT) tool suite.  As this
+is the initial integration, TIE is available but presently disabled by
+default.  The engine optimiation is configurably integrated with LIBRT
+mesh (BoT) raytracing and optionally enabled via settings available in
+RT and MGED.  Inital testing of "real-world" models shows average
+improvements around 20-60% while individual meshes with high (1M+)
+face counts are rendering more than 2000% faster than before.
 
 Also included in this release is the development of a new "shp-g"
 geometry importer for Shapefile data.  Shapefiles are a common file
