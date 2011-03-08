@@ -515,7 +515,7 @@ rt_hlf_xform(
 	    bu_avs_merge(&op->idb_avs, &ip->idb_avs);
 	}
     } else {
-	hop = (struct rt_extrude_internal *)ip->idb_ptr;
+	hop = (struct rt_half_internal *)ip->idb_ptr;
     }
     RT_HALF_CK_MAGIC(hop);
 
