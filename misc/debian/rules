@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-# Author: Jordi Sayol <g.sayol@yahoo.es> 
+# Author: Jordi Sayol <g.sayol@yahoo.es>
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
@@ -18,7 +18,7 @@ ifneq (,$(findstring parallel,$(DEB_BUILD_OPTIONS)))
     PARALLEL_OPTIONS = -j$(PARALLEL_JOBS)
 else
 	ifneq (,$(shell getconf _NPROCESSORS_ONLN))
-		PARALLEL_OPTIONS = -j$(shell getconf _NPROCESSORS_ONLN)
+		PARALLEL_OPTIONS = -j$(shell getconf _NPROCESSORS_ONLN | sed "s/.*/&*2-1/" | bc)
 	endif
 endif
 # DEB_BUILD_OPTIONS
@@ -44,7 +44,7 @@ install-stamp: build-stamp
 	dh_testdir
 	dh_testroot
 	dh_prep
-	dh_installdirs 
+	dh_installdirs
 
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
 
@@ -66,4 +66,4 @@ binary-arch: build install
 	dh_builddeb -a
 
 binary: binary-arch
-.PHONY: build clean binary-arch binary install 
+.PHONY: build clean binary-arch binary install

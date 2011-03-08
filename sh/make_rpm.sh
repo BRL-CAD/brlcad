@@ -153,7 +153,7 @@ fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/Anim_Tutorial/ind
 
 # compile and install in tmp dir
 ./configure --enable-optimized --enable-almost-everything --with-ogl --disable-debug
-make -j`getconf _NPROCESSORS_ONLN`
+make -j`getconf _NPROCESSORS_ONLN | sed "s/.*/&*2-1/" | bc`
 fakeroot make install DESTDIR=`pwd`"/$TMPDIR/tmp"
 
 # copy menu files
