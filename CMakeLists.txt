@@ -1037,7 +1037,7 @@ IF(MSVC)
 	INCLUDE(InstallRequiredSystemLibraries)
 ENDIF(MSVC)
 
-# Before we finalize, set some specific global compiler flags
+# Before we finalize, set some specific global linker flags
 IF(MSVC)
 	SET(CMAKE_EXE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
 	SET(CMAKE_SHARED_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
