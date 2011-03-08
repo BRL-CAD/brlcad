@@ -223,41 +223,37 @@ F="/usr/share/applications/defaults.list"
 
 if [ ! -f $F ]; then
 	echo "[Default Applications]" > $F
+else
+	sed -i "/application\/x-brlcad-/d" $F
 fi
-
-sed -i "/application\/x-brlcad-/d" $F
 
 echo "application/x-brlcad-v4=brlcad-mged.desktop" >> $F
 echo "application/x-brlcad-v5=brlcad-mged.desktop" >> $F
 
 source /etc/profile.d/brlcad.sh
 
-if [ -x "`which update-desktop-database 2>/dev/null`" ]; then
-	update-desktop-database &> /dev/null
-fi
+update-desktop-database &> /dev/null || :
 
-if [ -x "`which update-mime-database 2>/dev/null`" ]; then
-	update-mime-database /usr/share/mime
-fi
+update-mime-database /usr/share/mime &>/dev/null || :
 
-if [ -x "`which SuSEconfig 2>/dev/null`" ]; then
-	SuSEconfig
-fi
+touch -c /usr/share/icons/hicolor &>/dev/null || :
+
+gtk-update-icon-cache /usr/share/icons/hicolor &>/dev/null || :
+
+SuSEconfig &>/dev/null || :
 
 %postun
 set -e
 
-if [ -x "`which update-desktop-database 2>/dev/null`" ]; then
-	update-desktop-database &> /dev/null
-fi
+update-desktop-database &> /dev/null || :
 
-if [ -x "`which update-mime-database 2>/dev/null`" ]; then
-	update-mime-database /usr/share/mime
-fi
+update-mime-database /usr/share/mime &>/dev/null || :
 
-if [ -x "`which SuSEconfig 2>/dev/null`" ]; then
-	SuSEconfig
-fi
+touch -c /usr/share/icons/hicolor &>/dev/null || :
+
+gtk-update-icon-cache /usr/share/icons/hicolor &>/dev/null || :
+
+SuSEconfig &>/dev/null || :
 
 %files' > $TMPDIR/brlcad.spec
 
