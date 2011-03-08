@@ -2204,7 +2204,7 @@ if test "x$bc_build_strict" = "xyes" ; then
        # do not include -w as that was just to suppress any test warnings
        STRICT_FLAGS="-pedantic -W -Wall -Wundef -Wfloat-equal -Wshadow -Winline -Wno-long-long  -Werror"
        AC_SUBST(STRICT_FLAGS)
-       AC_DEFINE([STRICT_FLAGS], [1], [Define to 1 if strict standards compliance compilation is enabled.])
+       AC_DEFINE([WARNING_FLAGS], [1], [Define to 1 if strict standards compliance compilation is enabled.])
    fi
 fi
 

@@ -157,7 +157,7 @@ __BEGIN_DECLS
  *  function types (adding bu_vls support) and that is a problem with
  *  strict checking.
  */
-#if defined(STRICT_FLAGS)
+#if defined(WARNING_FLAGS)
 #  undef __BU_ATTR_FORMAT12
 #  undef __BU_ATTR_FORMAT23
 #  undef __BU_ATTR_NORETURN
