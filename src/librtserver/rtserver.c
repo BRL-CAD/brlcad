@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include "bin.h"
 
 #include "vmath.h"
 #include "nmg.h"
@@ -570,7 +571,7 @@ rts_miss( struct application *ap )
     vlb = (struct bu_vlb *)ap->a_uptr;
     if(vlb != NULL) {
 	unsigned char buffer[SIZEOF_NETWORK_LONG];
-	bu_plong(buffer, numPartitions);
+	*(uint32_t *)buffer = htonl(numPartitions);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
     }
     if ( verbose ) {
@@ -606,7 +607,7 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 	numPartitions++;
     };
     /* write the number of partitiions to the byte array */
-    bu_plong(buffer, numPartitions);
+    *(uint32_t *)buffer = htonl(numPartitions);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
     VREVERSE(reverse_ray_dir, ap->a_ray.r_dir);
@@ -684,15 +685,15 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 	regionIndex = (CLIENTDATA_INT)Tcl_GetHashValue( entry );
 
 	/* write region index to buffer */
-	bu_plong(buffer, regionIndex);
+	*(uint32_t *)buffer = htonl(regionIndex);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
 	/* write the ident number to the buffer */
-	bu_plong(buffer, rp->reg_regionid);
+	*(uint32_t *)buffer = htonl(rp->reg_regionid);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
 	/* write the aircode number to the buffer */
-	bu_plong(buffer, rp->reg_aircode);
+	*(uint32_t *)buffer = htonl(rp->reg_aircode);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
 	if ( verbose ) {
@@ -783,7 +784,7 @@ rts_shootray( struct application *ap )
     int i = 1;
 
     /* write the number of rays to the byte array */
-    bu_plong(buffer, i);
+    *(uint32_t *)buffer = htonl(i);
     bu_vlb_write(ap->a_uptr, buffer, SIZEOF_NETWORK_LONG);
 
     /* actually shoot the ray */
@@ -1285,7 +1286,7 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, j
     vlb = ap->a_uptr;
 
     /* write the number of rays to the byte array (one in this case) */
-    bu_plong(buffer, rayCount);
+    *(uint32_t *)buffer = htonl(rayCount);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
     /* write this ray info to the byte array */
@@ -1433,7 +1434,7 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
 
     /* write the number of rays to the byte array */
     vlb = ap->a_uptr;
-    bu_plong(buffer, rayCount);
+    *(uint32_t *)buffer = htonl(rayCount);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
     for(rayIndex=0 ; rayIndex<rayCount ; rayIndex++) {
@@ -1441,7 +1442,7 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
 
 	ray = (*env)->GetObjectArrayElement(env, aRays, rayIndex);
 	if ( (*env)->ExceptionOccurred(env) ) {
-	    fprintf( stderr, "Exception thrown while getting ray #%d from array\n", rayIndex );
+	    fprintf( stderr, "Exception thrown while getting ray #%d from array\n", (int)rayIndex );
 	    (*env)->ExceptionDescribe(env);
 	    return (jobject)NULL;
 	}
@@ -1734,7 +1735,7 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
 
     /* write the number of rays to the byte array */
     vlb = ap->a_uptr;
-    bu_plong(buffer, rayCount);
+    *(uint32_t *)buffer = htonl(rayCount);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
     for ( row=0; row < num_rows; row++ ) {

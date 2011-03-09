@@ -110,7 +110,6 @@ EXTRA_DIST= \
 	libsysv/libsysv.vcproj \
 	libtcl/libtcl.vcproj \
 	libtclcad/libtclcad.vcproj \
-	libtie/libtie.vcproj \
 	libtk/libtk.vcproj \
 	libutahrle/libutahrle.vcproj \
 	libwdb/libwdb.vcproj \

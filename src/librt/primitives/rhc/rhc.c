@@ -370,7 +370,7 @@ rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
     x = rhc->rhc_cprime;
 
-    if (NEAR_ZERO(dprime[Y], SMALL) && NEAR_ZERO(dprime[Z], SMALL))
+    if (ZERO(dprime[Y]) && ZERO(dprime[Z]))
 	goto check_plates;
 
     /* Find roots of the equation, using formula for quadratic */
@@ -438,7 +438,7 @@ rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
      */
  check_plates:
     /* check front and back plates */
-    if (hitp < &hits[2]  &&  !NEAR_ZERO(dprime[X], SMALL)) {
+    if (hitp < &hits[2]  &&  !ZERO(dprime[X])) {
 	/* 0 or 1 hits so far, this is worthwhile */
 	k1 = -pprime[X] / dprime[X];		/* front plate */
 	k2 = (-1.0 - pprime[X]) / dprime[X];	/* back plate */
@@ -471,7 +471,7 @@ rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     }
 
     /* check top plate */
-    if (hitp == &hits[1]  &&  !NEAR_ZERO(dprime[Z], SMALL)) {
+    if (hitp == &hits[1]  &&  !ZERO(dprime[Z])) {
 	/* 0 or 1 hits so far, this is worthwhile */
 	k1 = -pprime[Z] / dprime[Z];		/* top plate */
 
@@ -1196,9 +1196,9 @@ rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (mat == NULL) mat = bn_mat_identity;
 
     if (dbip->dbi_version < 0) {
-	rt_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
-	rt_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
-	rt_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
+	flip_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
+	flip_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
+	flip_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
     } else {
 	VMOVE(v1, &rp->s.s_values[0*3]);
 	VMOVE(v2, &rp->s.s_values[1*3]);
@@ -1468,9 +1468,8 @@ rt_rhc_ifree(struct rt_db_internal *ip)
  *
  */
 int
-rt_rhc_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_rhc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

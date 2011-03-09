@@ -216,7 +216,7 @@ label(double x, double y, char *str)
      * without a move command in between.  We
      * really need a better solution. - XXX
      */
-    if (NEAR_ZERO(lastx - x, SMALL_FASTF) && NEAR_ZERO(lasty - y, SMALL_FASTF)) { /* lastx == x && lasty == y */
+    if (ZERO(lastx - x) && ZERO(lasty - y)) { /* lastx == x && lasty == y */
 	printf("DFntM (%s) show\n", str);
 
     } else {

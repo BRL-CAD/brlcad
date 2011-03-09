@@ -1324,7 +1324,7 @@ vo_units_cmd(struct view_obj	*vop,
 	double uval;
 
 	uval = bu_units_conversion(argv[1]);
-	if (NEAR_ZERO(uval, SMALL_FASTF)) {
+	if (ZERO(uval)) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "unrecognized unit type - %s\n", argv[1]);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);

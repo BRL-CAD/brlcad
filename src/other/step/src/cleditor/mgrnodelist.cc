@@ -32,7 +32,7 @@ void MgrNodeList::Remove(GenericNode *node)
 //	cout << "MgrNodeList::Remove()\n";
     GenNodeList::Remove(node);
 // DON'T DO THIS    ((MgrNode *)node)->currState = noStateSE;
-};
+}
 
 	// deletes node from its previous list & appends...
 	// actually it puts it at the front of the list.

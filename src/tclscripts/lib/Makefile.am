@@ -7,6 +7,7 @@ scripties = \
 	ColorEntry.tcl \
 	ComboBox.tcl \
 	Command.tcl \
+	cursor.tcl \
 	Database.tcl \
 	Db.tcl \
 	Display.tcl \

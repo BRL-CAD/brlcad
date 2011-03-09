@@ -1358,6 +1358,7 @@ struct rt_piecelist  {
 /* Used to set globals declared in bot.c */
 #define RT_DEFAULT_MINPIECES		32
 #define RT_DEFAULT_TRIS_PER_PIECE	4
+#define RT_DEFAULT_MINTIE		0	/* disabled by default */
 
 /**
  * R E S O U R C E
@@ -2484,11 +2485,11 @@ RT_EXPORT BU_EXTERN(int rt_boolfinal,
 RT_EXPORT BU_EXTERN(void rt_grow_boolstack,
 		    (struct resource *res));
 
-/* DEPRECATED: Approx Floating compare (use NEAR_ZERO) */
-RT_EXPORT BU_EXTERN(int rt_fdiff,
+/* DEPRECATED: Approx Floating compare (use NEAR_EQUAL(a,b,0.001)) */
+DEPRECATED RT_EXPORT BU_EXTERN(int rt_fdiff,
 		    (double a, double b));
-/* DEPRECATED: Relative Difference (use NEAR_ZERO) */
-RT_EXPORT BU_EXTERN(double rt_reldiff,
+/* DEPRECATED: Relative Difference (use EQUAL(a,b)) */
+DEPRECATED RT_EXPORT BU_EXTERN(double rt_reldiff,
 		    (double a, double b));
 
 /* Print a soltab */
@@ -2736,6 +2737,68 @@ RT_EXPORT BU_EXTERN(int db_full_path_search,
 		    (const struct db_full_path *a,
 		     const struct directory *dp));
 
+/**
+ * search the database using a supplied list of filter criteria.
+ * db_search_full_paths returns a bu_list of db_full_path structs to 
+ * instances of objects matching the filter criteria.  Note that this is
+ * a full path tree search of the entire database, not just the toplevel
+ * objects that would be reported by the ls command.  E.g., a
+ * database with the following objects:
+ *
+ *       r1            r2
+ *       |             |
+ *       s1            s1
+ *
+ * would, if searched from the top level for s1,  return both
+ *
+ *  /r1/s1
+ *
+ * and
+ *  
+ *  /r2/s1
+ *
+ * instead of just s1.  To iterate over the results, see examples of 
+ * iterating over bu_list structures.  (Bear in mind the db_full_path 
+ * structures in the list are indiviually malloced.)
+ *
+ * To return only unique objects, use
+ * db_search_unique_objects, which would return just 
+ *
+ * s1
+ *
+ * in the above example.  db_search_unique_objects returns a bu_ptbl of 
+ * (struct directory *) pointers.  To iterate over this list use 
+ * BU_PTBL_LEN to get the size of the table and BU_PTBL_GET in a for
+ * loop to access each element.
+ *
+ */
+
+/* search.c */
+
+struct db_full_path_list {
+	struct bu_list l;
+	struct db_full_path *path;
+};
+
+RT_EXPORT BU_EXTERN(void db_free_full_path_list,
+                (struct db_full_path_list *path_list));
+
+RT_EXPORT BU_EXTERN(void *db_search_formplan,
+		(char **argv,
+		 struct db_i *dbip,
+		 struct rt_wdb *wdbp));
+
+RT_EXPORT BU_EXTERN(struct db_full_path_list *db_search_full_paths,
+		(void *searchplan,
+		 struct db_full_path_list *path_list,
+		 struct db_i *dbip,
+		 struct rt_wdb *wdbp));
+
+RT_EXPORT BU_EXTERN(struct bu_ptbl *db_search_unique_objects,
+		(void *searchplan,
+		 struct db_full_path_list *path_list,
+		 struct db_i *dbip,
+		 struct rt_wdb *wdbp));
 
 /* db_open.c */
 RT_EXPORT BU_EXTERN(void db_sync,
@@ -5955,6 +6018,7 @@ RT_EXPORT extern fastf_t rt_cline_radius;
 /* defined in bot.c */
 RT_EXPORT extern size_t rt_bot_minpieces;
 RT_EXPORT extern size_t rt_bot_tri_per_piece;
+RT_EXPORT extern size_t rt_bot_mintie;
 RT_EXPORT BU_EXTERN(int rt_bot_sort_faces,
 		    (struct rt_bot_internal *bot,
 		     size_t tris_per_piece));

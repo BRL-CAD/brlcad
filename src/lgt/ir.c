@@ -275,7 +275,7 @@ temp_To_RGB(unsigned char *rgb, int temp)
     int	h = (int) hue;	/* integral part	*/
     int	f = (int)(256.0 * (hue - (fastf_t)h));
     /* fractional part * 256	*/
-    if ( NEAR_ZERO(t - ABSOLUTE_ZERO, SMALL_FASTF) )
+    if ( ZERO(t - ABSOLUTE_ZERO) )
 	rgb[RED] = rgb[GRN] = rgb[BLU] = 0;
     else
 	switch ( h )
@@ -378,48 +378,48 @@ same_Hue(RGBpixel (*pixel1p), RGBpixel (*pixel2p))
     rval2 = (*pixel2p)[RED];
     gval2 = (*pixel2p)[GRN];
     bval2 = (*pixel2p)[BLU];
-    if ( NEAR_ZERO(rval1, SMALL_FASTF) )
+    if ( ZERO(rval1) )
     {
-	if ( !NEAR_ZERO(rval2, SMALL_FASTF) )
+	if ( !ZERO(rval2) )
 	    return	0;
 	else /* Both red values are zero. */
 	    rratio = 0.0;
     }
     else
-	if ( NEAR_ZERO(rval2, SMALL_FASTF) )
+	if ( ZERO(rval2) )
 	    return	0;
 	else /* Neither red value is zero. */
 	    rratio = rval1/rval2;
-    if ( NEAR_ZERO(gval1, SMALL_FASTF) )
+    if ( ZERO(gval1) )
     {
-	if ( !NEAR_ZERO(gval2, SMALL_FASTF) )
+	if ( !ZERO(gval2) )
 	    return	0;
 	else /* Both green values are zero. */
 	    gratio = 0.0;
     }
     else
-	if ( NEAR_ZERO(gval2, SMALL_FASTF) )
+	if ( ZERO(gval2) )
 	    return	0;
 	else /* Neither green value is zero. */
 	    gratio = gval1/gval2;
-    if ( NEAR_ZERO(bval1, SMALL_FASTF) )
+    if ( ZERO(bval1) )
     {
-	if ( !NEAR_ZERO(bval2, SMALL_FASTF) )
+	if ( !ZERO(bval2) )
 	    return	0;
 	else /* Both blue values are zero. */
 	    bratio = 0.0;
     }
     else
-	if ( NEAR_ZERO(bval2, SMALL_FASTF) )
+	if ( ZERO(bval2) )
 	    return	0;
 	else /* Neither blue value is zero. */
 	    bratio = bval1/bval2;
-    if ( NEAR_ZERO(rratio, SMALL_FASTF) )
+    if ( ZERO(rratio) )
     {
-	if ( NEAR_ZERO(gratio, SMALL_FASTF) )
+	if ( ZERO(gratio) )
 	    return	1;
 	else
-	    if ( NEAR_ZERO(bratio, SMALL_FASTF) )
+	    if ( ZERO(bratio) )
 		return	1;
 	    else
 		if ( AproxEq( gratio, bratio, HUE_TOL ) )
@@ -428,9 +428,9 @@ same_Hue(RGBpixel (*pixel1p), RGBpixel (*pixel2p))
 		    return	0;
     }
     else
-	if ( NEAR_ZERO(gratio, SMALL_FASTF) )
+	if ( ZERO(gratio) )
 	{
-	    if ( NEAR_ZERO(bratio, SMALL_FASTF) )
+	    if ( ZERO(bratio) )
 		return	1;
 	    else
 		if ( AproxEq( bratio, rratio, HUE_TOL ) )
@@ -439,7 +439,7 @@ same_Hue(RGBpixel (*pixel1p), RGBpixel (*pixel2p))
 		    return	0;
 	}
 	else
-	    if ( NEAR_ZERO(bratio, SMALL_FASTF) )
+	    if ( ZERO(bratio) )
 	    {
 		if ( AproxEq( rratio, gratio, HUE_TOL ) )
 		    return	1;
@@ -480,8 +480,8 @@ f_IR_Model(struct application *ap, Octree *op)
 {
     fastf_t		octnt_min[3], octnt_max[3];
     fastf_t		delta = modl_radius / pow_Of_2( ap->a_level );
-    fastf_t		point[3]; /* Intersection point.	*/
-    fastf_t		norml[3]; /* Unit normal at point.	*/
+    fastf_t		point[3] = VINIT_ZERO; /* Intersection point.	*/
+    fastf_t		norml[3] = VINIT_ZERO; /* Unit normal at point.	*/
     /* Push ray origin along ray direction to intersection point.	*/
     VJOIN1( point, ap->a_ray.r_pt, ap->a_uvec[0], ap->a_ray.r_dir );
 

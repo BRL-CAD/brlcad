@@ -11,6 +11,10 @@
 */
 
 /* $Id: ExpDict.cc,v 3.0.1.7 1998/02/17 19:19:15 sauderd DP3.1 $  */ 
+#ifdef HAVE_CONFIG_H
+# include <scl_cf.h>
+#endif
+
 #include <memory.h>
 #include <math.h>
 #include <stdio.h>

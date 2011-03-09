@@ -35,6 +35,7 @@
 #include <math.h>
 #include <string.h>
 #include "bio.h"
+#include "bin.h"
 
 /* interface headers */
 #include "vmath.h"
@@ -278,7 +279,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	    lseek(bfd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
-	    bu_plong(tot_buffer, (unsigned long)region_polys);
+	    *(uint32_t *)tot_buffer = htonl((unsigned long)region_polys);
 	    lswap((unsigned int *)tot_buffer);
 	    ret = write(bfd, tot_buffer, 4);
 	    if (ret < 0)
@@ -508,7 +509,7 @@ main(int argc, char *argv[])
 	    lseek(bfd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
-	    bu_plong(tot_buffer, (unsigned long)tot_polygons);
+	    *(uint32_t *)tot_buffer = htonl((unsigned long)tot_polygons);
 	    lswap((unsigned int *)tot_buffer);
 	    ret = write(bfd, tot_buffer, 4);
 	    if (ret < 0)

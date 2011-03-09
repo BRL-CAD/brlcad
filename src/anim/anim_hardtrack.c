@@ -235,8 +235,10 @@ int
 track_prep(void)
 {
     int i;
-    fastf_t phi, costheta, link_angle, arc_angle;
+    fastf_t phi, costheta, arc_angle;
+    fastf_t link_angle = 0.0;
     vect_t difference, link_cent;
+    VSETALL(link_cent, 0.0);
 
     /* first loop - get inter axle slopes and start/end angles */
     for (i=0;i<NW;i++) {
@@ -344,7 +346,7 @@ main(int argc, char *argv[])
 	return 0;
     }
     num_wheels = -1;
-    if (!NEAR_ZERO(radius, SMALL_FASTF)) {
+    if (!ZERO(radius)) {
 	while (!feof(stream)) {
 	    count = fscanf(stream, "%*f %*f %*f");
 	    if (count != 3)
@@ -368,7 +370,7 @@ main(int argc, char *argv[])
 	count = fscanf(stream, "%lf %lf %lf", temp, temp+1, temp+2);
 	if (count != 3)
 	    break;
-	if (!NEAR_ZERO(radius, SMALL_FASTF))
+	if (!ZERO(radius))
 	    x[i].w.rad = radius;
 	else {
 	    count = fscanf(stream, "%lf", & x[i].w.rad);

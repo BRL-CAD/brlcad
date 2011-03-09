@@ -411,7 +411,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
     /* Check that we don't have a singular matrix */
     det = bn_mat_determinant(matrix);
 
-    if (!NEAR_ZERO(det, SMALL_FASTF)) {
+    if (!ZERO(det)) {
 	fastf_t inv_len_pl;
 
 	/* invert matrix */
@@ -439,11 +439,11 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 	 * component.
 	 */
 	for (i=1; i<srf->s_size[0]*srf->s_size[1]; i++) {
-	    if (!NEAR_ZERO(srf->ctl_points[i*coords+X] - srf->ctl_points[X], SMALL_FASTF))
+	    if (!ZERO(srf->ctl_points[i*coords+X] - srf->ctl_points[X]))
 		x_same = 0;
-	    if (!NEAR_ZERO(srf->ctl_points[i*coords+Y] - srf->ctl_points[Y], SMALL_FASTF))
+	    if (!ZERO(srf->ctl_points[i*coords+Y] - srf->ctl_points[Y]))
 		y_same = 0;
-	    if (!NEAR_ZERO(srf->ctl_points[i*coords+Z] - srf->ctl_points[Z], SMALL_FASTF))
+	    if (!ZERO(srf->ctl_points[i*coords+Z] - srf->ctl_points[Z]))
 		z_same = 0;
 
 	    if (!x_same && !y_same && !z_same)
@@ -1880,7 +1880,7 @@ nmg_insure_radial_list_is_increasing(struct bu_list *hd, fastf_t amin, fastf_t a
 	}
 
 	/* angle decreases, is it going from max to min?? */
-	if (NEAR_ZERO(rad->ang - amin, SMALL_FASTF) && NEAR_ZERO(cur_value - amax, SMALL_FASTF)) {
+	if (ZERO(rad->ang - amin) && ZERO(cur_value - amax)) {
 	    /* O.K., just went from max to min */
 	    cur_value = rad->ang;
 	    continue;
@@ -2793,7 +2793,7 @@ nmg_do_radial_flips(struct bu_list *hd)
 	}
 
 	end_same = BU_LIST_PNEXT_CIRC(nmg_radial, &start_same->l);
-	while ((NEAR_ZERO(end_same->ang - start_same->ang, SMALL_FASTF) && !NEAR_ZERO(end_same - start_same, SMALL_FASTF))
+	while ((ZERO(end_same->ang - start_same->ang) && !ZERO(end_same - start_same))
 	       || !end_same->fu)
 	    end_same = BU_LIST_PNEXT_CIRC(nmg_radial, &end_same->l);
 	end_same = BU_LIST_PPREV_CIRC(nmg_radial, &end_same->l);

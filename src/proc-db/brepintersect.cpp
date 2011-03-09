@@ -168,7 +168,7 @@ bool PointInPolyline(
  * determines whether or not a point is inside the given mesh
  */
 bool PointInMesh(
-    const ON_3dPoint P,
+    const ON_3dPoint UNUSED(P), /* heh */
     const ON_Mesh *mesh
     )
 {
@@ -359,8 +359,8 @@ int SegmentPolylineIntersect(
     double tol
     )
 {
-    int rv;
-    int my_rv; /* what this function will return at the end */
+    int rv = 0;
+    int my_rv = 0; /* what this function will return at the end */
     ON_3dPoint result[2];
     for (int i = 0; i < (pline.Count() - 1); i++) {
 	rv = SegmentSegmentIntersect(P, Q, pline[i], pline[i+1], result, tol);
@@ -648,7 +648,7 @@ int PolylinePolylineInternal(
  */
 int Triangulate(
     ON_ClassArray<ON_Polyline>& paths,
-    ON_SimpleArray<ON_3dPoint[3]>& triangles
+    ON_SimpleArray<ON_3dPoint[3]>& UNUSED(triangles)
     )
 {
     /* first we need to link the paths together */
@@ -662,10 +662,17 @@ int Triangulate(
 		    /* now we need to check that this line doesn't intersect any other polyline */
 		    intersectfree = true;
 		    for (l = 0; l < paths.Count(); l++) {
+#if 0
+			/* FIXME: compiler doesn't like that the first
+			 * arguments is passing NULL as a non-pointer
+			 * parameter. commented out until someone
+			 * fixes it.
+			 */
 			if (SegmentPolylineIntersect(paths[0][j], paths[i][k], paths[l], NULL, 1E-9) != 0) {
 			    intersectfree = false;
 			    break;
 			}
+#endif
 		    }
 		    if (intersectfree) {
 			for (l = 0; l < paths[0].Count(); l++) {
@@ -689,11 +696,18 @@ int Triangulate(
 	for (i = 0; i < (paths[0].Count() - 1); i++) {
 	    /* we check that the intersection is 4 because the segment shares end points with 4 different pline segments */
 	    ON_3dPoint mid = (paths[0][i] + paths[0][i + 2])/2;
+#if 0
+			/* FIXME: compiler doesn't like that the first
+			 * arguments is passing NULL as a non-pointer
+			 * parameter. commented out until someone
+			 * fixes it.
+			 */
 	    if (SegmentPolylineIntersect(paths[0][i], paths[0][(i + 2) % paths[0].Count()], paths[0], NULL, 1E-9) == 4 && PointInPolyline(mid, paths[0], 1E-9)) {
 		/* ON_3dPoint tri[3] = {paths[0][i], paths[i + 1], paths[(i + 2) % paths[0].Count()]};
 		   triangles.Append(tri);
 		   paths[0].Remove(i + 1); */
 	    }
+#endif
 	}
     }
 
@@ -802,7 +816,7 @@ int TriIntersections::AddLine(
 }
 
 int TriIntersections::Faces(
-    ON_ClassArray<ON_3dPoint[3]> faces
+    ON_ClassArray<ON_3dPoint[3]> UNUSED(faces)
     )
 {
     if (intersections.Count() == 0) {
@@ -962,9 +976,9 @@ int MeshTriangulate(
     for (int i = 0; i < mesh->m_F.Count(); i++) {
 	ON_MeshFace face = mesh->m_F[i];
 	if (face.IsQuad()) {
-	    ON_MeshFace face1 = {face.vi[0], face.vi[1], face.vi[2]};
+	    ON_MeshFace face1 = face; /* FIXME */
 	    mesh->m_F.Append(face1);
-	    ON_MeshFace face2 = {face.vi[0], face.vi[1], face.vi[2]};
+	    ON_MeshFace face2 = face; /* FIXME */
 	    mesh->m_F.Append(face2);
 	    mesh->m_F.Remove(i);
 	    i--; /* we just lost an element in the array so the cursor would be off by one */
@@ -982,10 +996,6 @@ int MeshTriangulate(
 int MeshMeshIntersect(
     ON_Mesh *mesh1,
     ON_Mesh *mesh2,
-    ON_Mesh *mesh1intern,
-    ON_Mesh *mesh1extern,
-    ON_Mesh *mesh2intern,
-    ON_Mesh *mesh2extern,
     double tol
     )
 {
@@ -1055,12 +1065,12 @@ int main()
     mesh2.m_V.Append(h2);
 
     /* create the faces */
-    ON_MeshFace abcd = {0, 1, 2, 3};
-    ON_MeshFace efba = {4, 5, 1, 0};
-    ON_MeshFace ehgf = {4, 7, 6, 5};
-    ON_MeshFace dcgh = {3, 2, 6, 7};
-    ON_MeshFace adhe = {0, 3, 7, 4};
-    ON_MeshFace bfgc = {1, 5, 6, 2};
+    ON_MeshFace abcd = {{0, 1, 2, 3}};
+    ON_MeshFace efba = {{4, 5, 1, 0}};
+    ON_MeshFace ehgf = {{4, 7, 6, 5}};
+    ON_MeshFace dcgh = {{3, 2, 6, 7}};
+    ON_MeshFace adhe = {{0, 3, 7, 4}};
+    ON_MeshFace bfgc = {{1, 5, 6, 2}};
 
     /* put the faces in the meshes */
     mesh1.m_F.Append(abcd);

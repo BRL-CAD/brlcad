@@ -591,7 +591,7 @@ main(int argc, char **argv)
 	    case 'u':
 		units = bu_strdup( bu_optarg );
 		scale_factor = bu_units_conversion( units );
-		if ( NEAR_ZERO(scale_factor, SMALL_FASTF) )
+		if ( ZERO(scale_factor) )
 		{
 		    bu_exit(1, "Unrecognized units (%s)\n", units );
 		}
@@ -1127,7 +1127,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 	mat.lt_angle = 180.0;
 	VSETALL( mat.lt_dir, 0.0 );
 
-	if ( !NEAR_ZERO(mat.lt_dir[X], SMALL_FASTF) || !NEAR_ZERO(mat.lt_dir[Y], SMALL_FASTF) || !NEAR_ZERO(mat.lt_dir[Z], SMALL_FASTF) )
+	if ( !ZERO(mat.lt_dir[X]) || !ZERO(mat.lt_dir[Y]) || !ZERO(mat.lt_dir[Z]) )
 	{
 	    fprintf( fp, "\t\tSpotLight {\n" );
 	    fprintf( fp, "\t\t\ton \tTRUE\n" );

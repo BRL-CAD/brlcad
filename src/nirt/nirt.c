@@ -44,25 +44,6 @@
 /* bleh */
 int need_prep = 1;
 
-
-const char usage[] = "\
-Usage: 'nirt [options] model.g objects...'\n\
-Options:\n\
- -b         back out of geometry before first shot\n\
- -B n       set rt_bot_minpieces=n\n\
- -e script  run script before interacting\n\
- -f sfile   run script sfile before interacting\n\
- -L         list output formatting options\n\
- -M         read matrix, cmds on stdin\n\
- -O action  handle overlap claims via action\n\
- -s         run in silent (non-verbose) mode\n\
- -u n       set use_air=n (default 0)\n\
- -v         run in verbose mode\n\
- -x v       set librt(3) diagnostic flag=v\n\
- -X v       set nirt diagnostic flag=v\n\
-";
-
-
 const com_table ComTab[] = {
     { "attr", cm_attr, "select attributes", "<-f(flush) | -p(print) | attribute_name>" },
     { "ae", az_el, "set/query azimuth and elevation", "azimuth elevation" },
@@ -81,6 +62,7 @@ const com_table ComTab[] = {
     { "load", load_state, "read new state for NIRT from the state file", NULL },
     { "print", print_item, "query an output item", "item" },
     { "bot_minpieces", bot_minpieces, "Get/Set value for rt_bot_minpieces (0 means do not use pieces, default is 32)", "min_pieces" },
+    { "bot_mintie", bot_mintie, "Get/Set value for rt_bot_mintie (0 means do not use pieces, default is 4294967295)", "min_tie" },
     { "libdebug", cm_libdebug, "set/query librt debug flags", "hex_flag_value" },
     { "debug", cm_debug, "set/query nirt debug flags", "hex_flag_value" },
     { "!", sh_esc, "escape to the shell", NULL },
@@ -109,7 +91,6 @@ int nirt_debug = 0;			/* Control of diagnostics */
 
 /* Parallel structures needed for operation w/ and w/o air */
 struct rt_i *rti_tab[2];
-struct rt_i *rtip;
 struct resource res_tab;
 
 struct application ap;
@@ -122,7 +103,21 @@ char *db_name;
 
 void printusage(void)
 {
-    bu_log("%s", usage);
+    bu_log("Usage: 'nirt [options] model.g objects...'\n");
+    bu_log("Options:\n");
+    bu_log(" -b         back out of geometry before first shot\n");
+    bu_log(" -B n       set rt_bot_minpieces=n\n");
+    bu_log(" -T n       set rt_bot_mintie=n\n");
+    bu_log(" -e script  run script before interacting\n");
+    bu_log(" -f sfile   run script sfile before interacting\n");
+    bu_log(" -L         list output formatting options\n");
+    bu_log(" -M         read matrix, cmds on stdin\n");
+    bu_log(" -O action  handle overlap claims via action\n");
+    bu_log(" -s         run in silent (non-verbose) mode\n ");
+    bu_log(" -u n       set use_air=n (default 0)\n");
+    bu_log(" -v         run in verbose mode\n");
+    bu_log(" -x v       set librt(3) diagnostic flag=v\n");
+    bu_log(" -X v       set nirt diagnostic flag=v\n");
 }
 
 /**
@@ -310,7 +305,7 @@ free_script(struct script_rec *srp)
 
 
 static void
-run_scripts(struct bu_list *sl)
+run_scripts(struct bu_list *sl, struct rt_i *rtip)
 {
     struct script_rec *srp;
     char *cp;
@@ -333,13 +328,13 @@ run_scripts(struct bu_list *sl)
 
 	switch (srp->sr_type) {
 	    case READING_STRING:
-		interact(READING_STRING, cp);
+		interact(READING_STRING, cp, rtip);
 		break;
 	    case READING_FILE:
 		if ((fPtr = fopen(cp, "rb")) == NULL) {
 		    bu_log("Cannot open script file '%s'\n", cp);
 		} else {
-		    interact(READING_FILE, fPtr);
+		    interact(READING_FILE, fPtr, rtip);
 		    fclose(fPtr);
 		}
 		break;
@@ -357,6 +352,8 @@ run_scripts(struct bu_list *sl)
 int
 main(int argc, char *argv[])
 {
+    struct rt_i *rtip = NULL;
+
     char db_title[TITLE_LEN+1];/* title from MGED file */
     const char *tmp_str;
     extern char local_u_name[65];
@@ -394,6 +391,9 @@ main(int argc, char *argv[])
 		break;
 	    case 'B':
 		rt_bot_minpieces = atoi(bu_optarg);
+		break;
+	    case 'T':
+		rt_bot_mintie = atoi(bu_optarg);
 		break;
 	    case 'b':
 		do_backout = 1;
@@ -589,19 +589,19 @@ main(int argc, char *argv[])
 
     /* Run the run-time configuration file, if it exists */
     if ((fPtr = fopenrc()) != NULL) {
-	interact(READING_FILE, fPtr);
+	interact(READING_FILE, fPtr, rtip);
 	fclose(fPtr);
     }
 
     /* Run all scripts specified on the command line */
-    run_scripts(&script_list);
+    run_scripts(&script_list, rtip);
 
     /* Perform the user interface */
     if (mat_flag) {
-	read_mat();
+	read_mat(rtip);
 	return 0;
     } else {
-	interact(READING_FILE, stdin);
+	interact(READING_FILE, stdin, rtip);
     }
 
     return 0;

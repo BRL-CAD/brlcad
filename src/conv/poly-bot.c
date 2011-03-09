@@ -31,6 +31,7 @@
 #include <math.h>
 #include <string.h>
 #include "bio.h"
+#include "bin.h"
 
 #include "vmath.h"
 #include "nmg.h"
@@ -111,7 +112,7 @@ main(int argc, char **argv)
 		continue;
 
 	    case DBID_SKETCH:
-		num_rec = bu_glong( (const unsigned char *)&record.skt.skt_count );
+		num_rec = ntohl(*(uint32_t *)&record.skt.skt_count);
 		others += num_rec + 1;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
@@ -124,7 +125,7 @@ main(int argc, char **argv)
 		}
 		break;
 	    case DBID_EXTR:
-		num_rec = bu_glong( (const unsigned char *)&record.extr.ex_count );
+		num_rec = ntohl(*(uint32_t *)&record.extr.ex_count);
 		others += num_rec + 1;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
@@ -137,7 +138,7 @@ main(int argc, char **argv)
 		}
 		break;
 	    case DBID_NMG:
-		num_rec = bu_glong( (const unsigned char *)&record.nmg.N_count );
+		num_rec = ntohl(*(uint32_t *)&record.nmg.N_count);
 		others += num_rec + 1;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
@@ -150,7 +151,7 @@ main(int argc, char **argv)
 		}
 		break;
 	    case DBID_PIPE:
-		num_rec = bu_glong( (const unsigned char *)&record.pwr.pwr_count );
+		num_rec = ntohl(*(uint32_t *)&record.pwr.pwr_count);
 		others += num_rec + 1;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
@@ -163,7 +164,7 @@ main(int argc, char **argv)
 		}
 		break;
 	    case DBID_ARBN:
-		num_rec = bu_glong( (const unsigned char *)&record.n.n_grans );
+		num_rec = ntohl(*(uint32_t *)&record.n.n_grans);
 		others += num_rec + 1;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
@@ -205,7 +206,7 @@ main(int argc, char **argv)
 		bots++;
 		if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 		    bu_exit(1, "Write failed!\n" );
-		num_rec = bu_glong( (const unsigned char *)&record.bot.bot_nrec );
+		num_rec = ntohl(*(uint32_t *)&record.bot.bot_nrec);
 		for ( i=0; i<num_rec; i++ )
 		{
 		    if ( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
@@ -237,7 +238,7 @@ main(int argc, char **argv)
 		}
 		BU_INIT_EXTERNAL( &ext );
 		ext.ext_nbytes = curr_poly * sizeof( union record );
-		ext.ext_buf = (char *)poly;
+		ext.ext_buf = (uint8_t *)poly;
 		if ( rt_functab[ID_POLY].ft_import4( &intern, &ext, bn_mat_identity, (struct db_i *)NULL, &rt_uniresource ) )
 		{
 		    bu_exit(1, "Import failed for polysolid %s\n", poly[0].p.p_name );

@@ -79,7 +79,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib libged.lib"
+				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib ws2_32.lib tcl85.lib libged.lib"
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)/asc2g.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

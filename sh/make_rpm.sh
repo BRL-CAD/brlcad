@@ -2,7 +2,7 @@
 #                     M A K E _ R P M . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2010 United States Government as represented by
+# Copyright (c) 2005-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
 #
 ###
 
-test -e
+set -e
 
 ferror(){
     echo "=========================================================="
@@ -88,7 +88,6 @@ if test "$DNAME" = "fedora" ;then
     fcheck libxslt
     fcheck mesa-libGL-devel
     fcheck pango-devel
-    fcheck ncurses-devel
 fi
 
 if test "$DNAME" = "openSUSE" ;then
@@ -102,7 +101,6 @@ if test "$DNAME" = "openSUSE" ;then
     fcheck libxslt
     fcheck Mesa-devel
     fcheck pango-devel
-    fcheck ncurses-devel
 fi
 
 if [ $E -eq 1 ]; then
@@ -154,8 +152,8 @@ fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/Anim_Tutorial/ind
  "$TMPDIR/brlcad-doc-animation.desktop"
 
 # compile and install in tmp dir
-./configure --enable-optimized --with-ogl --disable-debug
-make -j`getconf _NPROCESSORS_ONLN`
+./configure --enable-optimized --enable-almost-everything --with-ogl --disable-debug
+make -j`getconf _NPROCESSORS_ONLN | sed "s/.*/&*2-1/" | bc`
 fakeroot make install DESTDIR=`pwd`"/$TMPDIR/tmp"
 
 # copy menu files
@@ -179,16 +177,17 @@ cp -f $TMPDIR/brlcad.directory $TMPDIR/tmp/usr/share/desktop-directories
 cp -f $TMPDIR/brlcad-doc.directory $TMPDIR/tmp/usr/share/desktop-directories
 
 mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
-cp -f $TMPDIR/brlcad.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
+cp -f $TMPDIR/brlcad-mged.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 cp -f $TMPDIR/brlcad-archer.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 cp -f $TMPDIR/brlcad-db.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 cp -f $TMPDIR/brlcad-doc.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 
 mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
-cp -f $TMPDIR/application-x-brlcad-extension.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
+cp -f $TMPDIR/application-x-brlcad-v4.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
+cp -f $TMPDIR/application-x-brlcad-v5.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
 
 mkdir -p $TMPDIR/tmp/usr/share/mime/packages
-cp -f $TMPDIR/application-x-brlcad-extension.xml $TMPDIR/tmp/usr/share/mime/packages
+cp -f $TMPDIR/application-x-brlcad.xml $TMPDIR/tmp/usr/share/mime/packages
 
 #Create brlcad.spec file
 echo -e 'Name: brlcad
@@ -201,7 +200,7 @@ License: LGPL, BSD
 URL: http://brlcad.org
 Packager: Jordi Sayol <g.sayol@yahoo.es>
 
-ExclusiveArch: '$ARCH' 
+ExclusiveArch: '$ARCH'
 Provides: brlcad = '$BVERSION'-'$RELEASE', brlcad('$FARCH') = '$BVERSION'-'$RELEASE'
 
 %description
@@ -224,40 +223,37 @@ F="/usr/share/applications/defaults.list"
 
 if [ ! -f $F ]; then
 	echo "[Default Applications]" > $F
+else
+	sed -i "/application\/x-brlcad-/d" $F
 fi
 
-sed -i "/application\/x-brlcad-extension=/d" $F
-
-echo "application/x-brlcad-extension=brlcad-archer.desktop" >> $F
+echo "application/x-brlcad-v4=brlcad-mged.desktop" >> $F
+echo "application/x-brlcad-v5=brlcad-mged.desktop" >> $F
 
 source /etc/profile.d/brlcad.sh
 
-if [ -x "`which update-desktop-database 2>/dev/null`" ]; then
-	update-desktop-database &> /dev/null
-fi
+update-desktop-database &> /dev/null || :
 
-if [ -x "`which update-mime-database 2>/dev/null`" ]; then
-	update-mime-database /usr/share/mime
-fi
+update-mime-database /usr/share/mime &>/dev/null || :
 
-if [ -x "`which SuSEconfig 2>/dev/null`" ]; then
-	SuSEconfig
-fi
+touch -c /usr/share/icons/hicolor &>/dev/null || :
+
+gtk-update-icon-cache /usr/share/icons/hicolor &>/dev/null || :
+
+SuSEconfig &>/dev/null || :
 
 %postun
 set -e
 
-if [ -x "`which update-desktop-database 2>/dev/null`" ]; then
-	update-desktop-database &> /dev/null
-fi
+update-desktop-database &> /dev/null || :
 
-if [ -x "`which update-mime-database 2>/dev/null`" ]; then
-	update-mime-database /usr/share/mime
-fi
+update-mime-database /usr/share/mime &>/dev/null || :
 
-if [ -x "`which SuSEconfig 2>/dev/null`" ]; then
-	SuSEconfig
-fi
+touch -c /usr/share/icons/hicolor &>/dev/null || :
+
+gtk-update-icon-cache /usr/share/icons/hicolor &>/dev/null || :
+
+SuSEconfig &>/dev/null || :
 
 %files' > $TMPDIR/brlcad.spec
 

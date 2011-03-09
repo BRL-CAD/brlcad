@@ -12,7 +12,10 @@ bin_PROGRAMS = \
 	window_frame \
 	wire
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = \
+	${STRICT_FLAGS} \
+	${TCL_CPPFLAGS}
+
 LDADD = ${WDB}
 
 bolt_SOURCES = bolt.c

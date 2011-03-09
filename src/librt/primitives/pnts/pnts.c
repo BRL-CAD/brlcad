@@ -25,6 +25,10 @@
 
 #include "common.h"
 
+/* system headers */
+#include "bin.h"
+
+/* common headers */
 #include "bn.h"
 #include "bu.h"
 #include "raytrace.h"
@@ -83,8 +87,10 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 
     htond(buf, (unsigned char *)&pnts->scale, 1);
     buf += SIZEOF_NETWORK_DOUBLE;
-    buf = bu_pshort(buf, (unsigned short)pnts->type);
-    buf = bu_plong(buf, pnts->count);
+    *(uint16_t *)buf = htons((unsigned short)pnts->type);
+    buf += SIZEOF_NETWORK_SHORT;
+    *(uint32_t *)buf = htonl(pnts->count);
+    buf += SIZEOF_NETWORK_LONG;
 
     if (pnts->count <= 0) {
 	/* no points to stash, we're done */
@@ -319,9 +325,9 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     /* unpack the header */
     ntohd((unsigned char *)&pnts->scale, buf, 1);
     buf += SIZEOF_NETWORK_DOUBLE;
-    pnts->type = (unsigned short)bu_gshort(buf);
+    pnts->type = ntohs(*(uint16_t *)buf);
     buf += SIZEOF_NETWORK_SHORT;
-    pnts->count = (unsigned long)bu_glong(buf);
+    pnts->count = ntohl(*(uint32_t *)buf);
     buf += SIZEOF_NETWORK_LONG;
 
     if (pnts->count <= 0) {

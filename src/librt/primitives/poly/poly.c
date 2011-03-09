@@ -701,8 +701,8 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	    vect_t vec;
 
 	    if (dbip->dbi_version < 0) {
-		rt_fastf_float(pnt, rp[rno].q.q_verts[i], 1, 1);
-		rt_fastf_float(vec, rp[rno].q.q_norms[i], 1, 1);
+		flip_fastf_float(pnt, rp[rno].q.q_verts[i], 1, 1);
+		flip_fastf_float(vec, rp[rno].q.q_norms[i], 1, 1);
 	    } else {
 		VMOVE(pnt, rp[rno].q.q_verts[i]);
 		VMOVE(vec, rp[rno].q.q_norms[i]);
@@ -900,9 +900,8 @@ rt_pg_ifree(struct rt_db_internal *ip)
  *
  */
 int
-rt_pg_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_pg_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

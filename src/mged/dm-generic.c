@@ -319,7 +319,7 @@ common_dm(int argc, const char *argv[])
 		break;
 	    case 's':
 		if (STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-		    NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
+		    ZERO(acc_sc_sol))
 		    acc_sc_sol = 1.0;
 		else if (STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 		    edit_absolute_scale = acc_sc_obj - 1.0;
@@ -492,7 +492,7 @@ common_dm(int argc, const char *argv[])
 		switch (*argv[2]) {
 		    case 'x':
 			if (STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
+			    ZERO(acc_sc_sol))
 			    acc_sc_sol = 1.0;
 			else if (STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 			    edit_absolute_scale = acc_sc[0] - 1.0;
@@ -504,7 +504,7 @@ common_dm(int argc, const char *argv[])
 			break;
 		    case 'y':
 			if (STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
+			    ZERO(acc_sc_sol))
 			    acc_sc_sol = 1.0;
 			else if (STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 			    edit_absolute_scale = acc_sc[1] - 1.0;
@@ -516,7 +516,7 @@ common_dm(int argc, const char *argv[])
 			break;
 		    case 'z':
 			if (STATE == ST_S_EDIT && mged_variables->mv_transform == 'e' &&
-			    NEAR_ZERO(acc_sc_sol, (fastf_t)SMALL_FASTF))
+			    ZERO(acc_sc_sol))
 			    acc_sc_sol = 1.0;
 			else if (STATE == ST_O_EDIT && mged_variables->mv_transform == 'e') {
 			    edit_absolute_scale = acc_sc[2] - 1.0;

@@ -421,7 +421,7 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     VSUB2(xlated, rp->r_pt, rec->rec_V);
     MAT4X3VEC(pprime, rec->rec_SoR, xlated);
 
-    if (NEAR_ZERO(dprime[X], SMALL) && NEAR_ZERO(dprime[Y], SMALL))
+    if (ZERO(dprime[X]) && ZERO(dprime[Y]))
 	goto check_plates;
 
     /* Find roots of the equation, using forumla for quadratic w/ a=1 */
@@ -465,7 +465,7 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
      * Check for hitting the end plates.
      */
  check_plates:
-    if (nhits < 2  &&  !NEAR_ZERO(dprime[Z], SMALL)) {
+    if (nhits < 2  &&  !ZERO(dprime[Z])) {
 	/* 0 or 1 hits so far, this is worthwhile */
 	k1 = -pprime[Z] / dprime[Z];		/* bottom plate */
 	k2 = (1.0 - pprime[Z]) / dprime[Z];	/* top plate */
@@ -604,7 +604,7 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	VSUB2(xlated, rp[i]->r_pt, rec->rec_V);
 	MAT4X3VEC(pprime, rec->rec_SoR, xlated);
 
-	if (NEAR_ZERO(dprime[X], SMALL) && NEAR_ZERO(dprime[Y], SMALL))
+	if (ZERO(dprime[X]) && ZERO(dprime[Y]))
 	    goto check_plates;
 
 	/* Find roots of eqn, using forumla for quadratic w/ a=1 */
@@ -640,7 +640,7 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	 * Check for hitting the end plates.
 	 */
     check_plates:
-	if (hitp < &hits[2]  &&  !NEAR_ZERO(dprime[Z], SMALL)) {
+	if (hitp < &hits[2]  &&  !ZERO(dprime[Z])) {
 	    /* 0 or 1 hits so far, this is worthwhile */
 	    k1 = -pprime[Z] / dprime[Z];	/* bottom plate */
 	    k2 = (1.0 - pprime[Z]) / dprime[Z];	/* top plate */
@@ -845,9 +845,8 @@ rt_rec_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
  *
  */
 int
-rt_rec_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_rec_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

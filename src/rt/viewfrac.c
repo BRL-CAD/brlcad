@@ -46,21 +46,24 @@ int	depth;
  *  the command line, or from within an animation script.
  */
 struct bu_structparse view_parse[] = {
-    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 const char title[] = "RT Volume Fractions";
-const char usage[] = "\
-Usage:  rtfrac [options] model.g objects... >file.frac\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -a Az		Azimuth in degrees\n\
- -e Elev	Elevation in degrees\n\
- -M		Read matrix, cmds on stdin\n\
- -o file	Output file name, else stdout\n\
- -x #		Set librt debug flags\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects... >file.frac\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512\n");
+    bu_log(" -a Az		Azimuth in degrees\n");
+    bu_log(" -e Elev	Elevation in degrees\n");
+    bu_log(" -M		Read matrix, cmds on stdin\n");
+    bu_log(" -o file	Output file name, else stdout\n");
+    bu_log(" -x #		Set librt debug flags\n");
+}
 
 
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
@@ -74,7 +77,7 @@ int	raymiss(register struct application *ap);
  *  Returns 1 if framebuffer should be opened, else 0.
  */
 int
-view_init(struct application *ap, char *file, char *obj, int minus_o, int UNUSED(minus_F))
+view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
 {
     /* Handling of air in librt */
     use_air = 1;
@@ -173,7 +176,7 @@ view_cleanup(struct rt_i *UNUSED(rtip))
  *  Called via a_hit linkage from rt_shootray() when ray hits.
  */
 int
-rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
+rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     register struct partition *pp;
     int		d;		/* current depth cell # */
@@ -216,7 +219,7 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
  *  Called via a_miss linkage from rt_shootray() when ray misses.
  */
 int
-raymiss(register struct application *ap)
+raymiss(register struct application *UNUSED(ap))
 {
     return 0;
 }

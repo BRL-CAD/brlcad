@@ -1,5 +1,8 @@
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = \
+	${STRICT_FLAGS} \
+	${TCL_CPPFLAGS}
+
 AM_LDFLAGS = \
 	${OPTICAL} \
 	${RT} ${FB}
@@ -33,7 +36,6 @@ bin_PROGRAMS = \
 	rtxray
 
 noinst_PROGRAMS = \
-	hurt \
 	rtexample
 
 endif
@@ -82,12 +84,6 @@ rtexample_SOURCES = rtexample.c
 reshoot_SOURCES = reshoot.c
 rtwalk_SOURCES = rtwalk.c
 rtshot_SOURCES = rtshot.c
-
-hurt_SOURCES = hurt.c
-hurt_LDADD = \
-	${OPTICAL} \
-	${RT} \
-	${FB}
 
 rtmlt_SOURCES = \
 	$(COMMON) \

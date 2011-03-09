@@ -35,6 +35,8 @@
 #include "bio.h"
 
 #include "bu.h"
+#include "vmath.h"
+
 
 double	ibuf[512];
 unsigned char	obuf[512];
@@ -46,6 +48,7 @@ int main(int argc, char **argv)
     double	scale;
     double	value;
     int	clip_high, clip_low;
+    size_t ret;
 
     scale = 1.0;
 
@@ -57,7 +60,7 @@ int main(int argc, char **argv)
 	argc--;
     }
 
-    if ( argc > 1 || scale == 0 || isatty(fileno(stdin)) ) {
+    if ( argc > 1 || ZERO(scale) || isatty(fileno(stdin)) ) {
 	bu_exit(1, "Usage: d-bw [-n || scale] < doubles > unsigned_chars\n" );
     }
 
@@ -76,7 +79,9 @@ int main(int argc, char **argv)
 		obuf[i] = (int)value;
 	}
 
-	fwrite( &obuf[0], sizeof( obuf[0] ), num, stdout );
+	ret = fwrite( &obuf[0], sizeof( obuf[0] ), num, stdout );
+	if (ret != (size_t)num)
+	    perror("fwrite");
     }
 
     if ( clip_low != 0 || clip_high != 0 )

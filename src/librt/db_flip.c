@@ -69,13 +69,9 @@ flip_dbfloat(dbfloat_t d)
 }
 
 
-/**
- * R T _ F A S T F _ F L O A T
- *
- * Convert TO fastf_t FROM 3xfloats (for database)
- */
+/* private */
 void
-rt_fastf_float(fastf_t *ff, const dbfloat_t *fp, int n, int flip)
+flip_fastf_float(fastf_t *ff, const dbfloat_t *fp, int n, int flip)
 {
     if (!flip) {
 	while (n--) {
@@ -96,12 +92,21 @@ rt_fastf_float(fastf_t *ff, const dbfloat_t *fp, int n, int flip)
 
 
 /**
- * R T _ M A T _ D B M A T
+ * R T _ F A S T F _ F L O A T
  *
- * Convert TO fastf_t matrix FROM dbfloats (for database)
+ * Convert TO fastf_t FROM 3xfloats (for database)
+ *
+ * DEPRECATED.
  */
 void
-rt_mat_dbmat(fastf_t *ff, const dbfloat_t *dbp, int flip)
+rt_fastf_float(fastf_t *ff, const dbfloat_t *fp, int n, int flip)
+{
+    flip_fastf_float(ff, fp, n, flip);
+}
+
+
+void
+flip_mat_dbmat(fastf_t *ff, const dbfloat_t *dbp, int flip)
 {
     if (!flip) {
 	*ff++ = *dbp++;
@@ -148,33 +153,55 @@ rt_mat_dbmat(fastf_t *ff, const dbfloat_t *dbp, int flip)
 
 
 /**
+ * R T _ M A T _ D B M A T
+ *
+ * Convert TO fastf_t matrix FROM dbfloats (for database)
+ *
+ * DEPRECATED.
+ */
+void
+rt_mat_dbmat(fastf_t *ff, const dbfloat_t *dbp, int flip)
+{
+    flip_mat_dbmat(ff, dbp, flip);
+}
+
+
+void
+flip_dbmat_mat(dbfloat_t *dbp, const fastf_t *ff)
+{
+    *dbp++ = (dbfloat_t) *ff++;
+    *dbp++ = (dbfloat_t) *ff++;
+    *dbp++ = (dbfloat_t) *ff++;
+    *dbp++ = (dbfloat_t) *ff++;
+
+    *dbp++ = (dbfloat_t) *ff++;
+    *dbp++ = (dbfloat_t) *ff++;
+    *dbp++ = (dbfloat_t) *ff++;
+    *dbp++ = (dbfloat_t) *ff++;
+
+    *dbp++ = (dbfloat_t) *ff++;
+    *dbp++ = (dbfloat_t) *ff++;
+    *dbp++ = (dbfloat_t) *ff++;
+    *dbp++ = (dbfloat_t) *ff++;
+
+    *dbp++ = (dbfloat_t) *ff++;
+    *dbp++ = (dbfloat_t) *ff++;
+    *dbp++ = (dbfloat_t) *ff++;
+    *dbp++ = (dbfloat_t) *ff++;
+}
+
+
+/**
  * R T _ D B M A T _ M A T
  *
  * Convert FROM fastf_t matrix TO dbfloats (for updating database)
+ *
+ * DEPRECATED.
  */
 void
 rt_dbmat_mat(dbfloat_t *dbp, const fastf_t *ff)
 {
-
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
-    *dbp++ = (dbfloat_t) *ff++;
+    flip_dbmat_mat(dbp, ff);
 }
 
 

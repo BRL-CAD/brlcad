@@ -17,7 +17,8 @@ brlcadinclude_required = \
 	rtfunc.h \
 	rtgeom.h \
 	rtserver.h \
-	tclcad.h
+	tclcad.h \
+	tie.h
 
 brlcadinclude_wanted = \
 	analyze.h \
@@ -77,6 +78,7 @@ brlcadinclude_wanted = \
 # public headers should NOT include these headers.
 noinst_HEADERS = \
 	brlcad_version.h \
+	bin.h \
 	bio.h \
 	conf.h \
 	fbmsg.h \

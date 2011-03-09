@@ -429,7 +429,7 @@ main(int argc, char **argv)
 	    case 'u':
 		units = bu_strdup( bu_optarg );
 		scale_factor = bu_units_conversion( units );
-		if ( NEAR_ZERO(scale_factor, SMALL_FASTF) )
+		if ( ZERO(scale_factor) )
 		{
 		    bu_exit(1, "Unrecognized units (%s)\n", units );
 		}

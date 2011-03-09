@@ -473,8 +473,8 @@ promote_ints(struct bu_list *head,
 		    continue;
 		}
 
-		if (NEAR_ZERO(a->seg_in.hit_dist - b->seg_in.hit_dist, SMALL_FASTF)
-		    && NEAR_ZERO(a->seg_out.hit_dist - b->seg_out.hit_dist, SMALL_FASTF))
+		if (ZERO(a->seg_in.hit_dist - b->seg_in.hit_dist)
+		    && ZERO(a->seg_out.hit_dist - b->seg_out.hit_dist))
 		{
 		    a->seg_stp = ON_SURF;
 		    tmp = b;
@@ -484,7 +484,7 @@ promote_ints(struct bu_list *head,
 			continue;;
 		}
 
-		if (NEAR_ZERO(a->seg_out.hit_dist - b->seg_out.hit_dist, SMALL_FASTF))
+		if (ZERO(a->seg_out.hit_dist - b->seg_out.hit_dist))
 		    a->seg_out.hit_dist = b->seg_in.hit_dist;
 		else if (a->seg_out.hit_dist < b->seg_out.hit_dist) {
 		    if (b->seg_in.hit_dist > a->seg_in.hit_dist)
@@ -496,7 +496,7 @@ promote_ints(struct bu_list *head,
 			RT_FREE_SEG(tmp, dgcdp->ap->a_resource);
 			break;
 		    }
-		} else if (NEAR_ZERO(a->seg_in.hit_dist - b->seg_in.hit_dist, SMALL_FASTF)) {
+		} else if (ZERO(a->seg_in.hit_dist - b->seg_in.hit_dist)) {
 		    fastf_t tmp_dist;
 
 		    tmp_dist = a->seg_out.hit_dist;
@@ -518,8 +518,8 @@ promote_ints(struct bu_list *head,
 		    continue;
 		}
 
-		if (NEAR_ZERO(b->seg_in.hit_dist - a->seg_in.hit_dist, SMALL_FASTF)
-		    && NEAR_ZERO(b->seg_out.hit_dist - a->seg_out.hit_dist, SMALL_FASTF))
+		if (ZERO(b->seg_in.hit_dist - a->seg_in.hit_dist)
+		    && ZERO(b->seg_out.hit_dist - a->seg_out.hit_dist))
 		{
 		    b->seg_stp = ON_SURF;
 		    tmp = a;
@@ -529,7 +529,7 @@ promote_ints(struct bu_list *head,
 		    break;
 		}
 
-		if (NEAR_ZERO(b->seg_out.hit_dist - a->seg_out.hit_dist, SMALL_FASTF)) {
+		if (ZERO(b->seg_out.hit_dist - a->seg_out.hit_dist)) {
 		    tmp = b;
 		    b = BU_LIST_PNEXT(seg, &b->l);
 		    BU_LIST_DEQUEUE(&tmp->l);
@@ -544,7 +544,7 @@ promote_ints(struct bu_list *head,
 			RT_FREE_SEG(tmp, dgcdp->ap->a_resource);
 			continue;
 		    }
-		} else if (NEAR_ZERO(b->seg_in.hit_dist - a->seg_in.hit_dist, SMALL_FASTF)) {
+		} else if (ZERO(b->seg_in.hit_dist - a->seg_in.hit_dist)) {
 		    b->seg_in.hit_dist = a->seg_out.hit_dist;
 		} else {
 		    RT_GET_SEG(tmp, dgcdp->ap->a_resource);
@@ -569,8 +569,8 @@ promote_ints(struct bu_list *head,
 	    bu_log("\tfound overlapping ON_INT segs:\n");
 #endif
 
-	    if (NEAR_ZERO(a->seg_in.hit_dist - b->seg_in.hit_dist, SMALL_FASTF)
-		&& NEAR_ZERO(a->seg_out.hit_dist - b->seg_out.hit_dist, SMALL_FASTF))
+	    if (ZERO(a->seg_in.hit_dist - b->seg_in.hit_dist)
+		&& ZERO(a->seg_out.hit_dist - b->seg_out.hit_dist))
 	    {
 #ifdef debug
 		bu_log("Promoting A, eliminating B\n");
@@ -582,7 +582,7 @@ promote_ints(struct bu_list *head,
 		break;
 	    }
 
-	    if (NEAR_ZERO(a->seg_out.hit_dist - b->seg_out.hit_dist, SMALL_FASTF)) {
+	    if (ZERO(a->seg_out.hit_dist - b->seg_out.hit_dist)) {
 		b->seg_stp = ON_SURF;
 		a->seg_out.hit_dist = b->seg_in.hit_dist;
 
@@ -611,7 +611,7 @@ promote_ints(struct bu_list *head,
 #endif
 		}
 	    } else {
-		if (NEAR_ZERO(a->seg_in.hit_dist - b->seg_in.hit_dist, SMALL_FASTF)) {
+		if (ZERO(a->seg_in.hit_dist - b->seg_in.hit_dist)) {
 		    fastf_t tmp_dist;
 
 		    tmp_dist = a->seg_out.hit_dist;
@@ -1010,19 +1010,19 @@ HIDDEN void
 inverse_dir(vect_t dir, vect_t inv_dir)
 {
     /* Compute the inverse of the direction cosines */
-    if (!NEAR_ZERO(dir[X], SQRT_SMALL_FASTF)) {
+    if (!ZERO(dir[X])) {
 	inv_dir[X]=1.0/dir[X];
     } else {
 	inv_dir[X] = INFINITY;
 	dir[X] = 0.0;
     }
-    if (!NEAR_ZERO(dir[Y], SQRT_SMALL_FASTF)) {
+    if (!ZERO(dir[Y])) {
 	inv_dir[Y]=1.0/dir[Y];
     } else {
 	inv_dir[Y] = INFINITY;
 	dir[Y] = 0.0;
     }
-    if (!NEAR_ZERO(dir[Z], SQRT_SMALL_FASTF)) {
+    if (!ZERO(dir[Z])) {
 	inv_dir[Z]=1.0/dir[Z];
     } else {
 	inv_dir[Z] = INFINITY;
@@ -1148,19 +1148,19 @@ shoot_and_plot(point_t start_pt,
     VMOVE(rp.r_pt, start_pt);
     VMOVE(rp.r_dir, dir);
     /* Compute the inverse of the direction cosines */
-    if (!NEAR_ZERO(rp.r_dir[X], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp.r_dir[X])) {
 	rd.rd_invdir[X]=1.0/rp.r_dir[X];
     } else {
 	rd.rd_invdir[X] = INFINITY;
 	rp.r_dir[X] = 0.0;
     }
-    if (!NEAR_ZERO(rp.r_dir[Y], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp.r_dir[Y])) {
 	rd.rd_invdir[Y]=1.0/rp.r_dir[Y];
     } else {
 	rd.rd_invdir[Y] = INFINITY;
 	rp.r_dir[Y] = 0.0;
     }
-    if (!NEAR_ZERO(rp.r_dir[Z], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp.r_dir[Z])) {
 	rd.rd_invdir[Z]=1.0/rp.r_dir[Z];
     } else {
 	rd.rd_invdir[Z] = INFINITY;

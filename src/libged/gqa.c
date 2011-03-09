@@ -1498,8 +1498,29 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
     int i;
     int m;
 
-    if (start > ac) /* what? */
+    if (start > ac) {
+	/* what? */
+	bu_log("WARNING: Internal error (start:%d > ac:%d).\n", start, ac);
 	return;
+    }
+
+    if (num_objects < 1) {
+	/* what?? */
+	bu_log("WARNING: No objects remaining.\n");
+	return;
+    }
+
+    if (num_views == 0) {
+	/* crap. */
+	bu_log("WARNING: No views specified.\n");
+	return;
+    }
+
+    if (rtip->nregions == 0) {
+	/* dammit! */
+	bu_log("WARNING: No regions remaining.\n");
+	return;
+    }
 
     state->m_lenDensity = bu_calloc(num_views, sizeof(double), "densityLen");
     state->m_len = bu_calloc(num_views, sizeof(double), "volume");
@@ -1617,7 +1638,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	}
     }
 
-    if (!NEAR_ZERO(newGridSpacing - gridSpacing, SMALL_FASTF)) {
+    if (!ZERO(newGridSpacing - gridSpacing)) {
 	bu_vls_printf(&_ged_current_gedp->ged_result_str, "Grid spacing %g %s is does not allow %g samples per axis\n",
 		      gridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis - 1);
 
@@ -1630,7 +1651,7 @@ options_prep(struct rt_i *rtip, vect_t span)
     /* if the vol/weight tolerances are not set, pick something */
     if (analysis_flags & ANALYSIS_VOLUME) {
 	char *name = "volume.pl";
-	if (NEAR_ZERO(volume_tolerance - 1.0, SMALL_FASTF)) {
+	if (ZERO(volume_tolerance - 1.0)) {
 	    volume_tolerance = span[X] * span[Y] * span[Z] * 0.001;
 	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "setting volume tolerance to %g %s\n",
 			  volume_tolerance / units[VOL]->val, units[VOL]->name);
@@ -1642,7 +1663,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	    }
     }
     if (analysis_flags & ANALYSIS_WEIGHT) {
-	if (NEAR_ZERO(weight_tolerance - 1.0, SMALL_FASTF)) {
+	if (ZERO(weight_tolerance - 1.0)) {
 	    double max_den = 0.0;
 	    int i;
 	    for (i=0; i < num_densities; i++) {
@@ -1666,7 +1687,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	    }
     }
     if (analysis_flags & ANALYSIS_OVERLAPS) {
-	if (!NEAR_ZERO(overlap_tolerance, SMALL_FASTF))
+	if (!ZERO(overlap_tolerance))
 	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "overlap tolerance to %g\n", overlap_tolerance);
 	if (plot_files) {
 	    char *name = "overlaps.pl";
@@ -2044,7 +2065,7 @@ summary_reports(struct cstate *state)
 			  avg_mass / units[WGT]->val, units[WGT]->name);
 
 	    if (analysis_flags & ANALYSIS_CENTROIDS &&
-		!NEAR_ZERO(avg_mass, SQRT_SMALL_FASTF)) {
+		!ZERO(avg_mass)) {
 		vect_t centroid;
 		fastf_t Dx_sq, Dy_sq, Dz_sq;
 		fastf_t inv_total_mass = 1.0/avg_mass;
@@ -2159,7 +2180,7 @@ summary_reports(struct cstate *state)
 	bu_vls_printf(&_ged_current_gedp->ged_result_str, "  Average total weight: %g %s\n", avg_mass / units[WGT]->val, units[WGT]->name);
 
 	if (analysis_flags & ANALYSIS_CENTROIDS &&
-	    !NEAR_ZERO(avg_mass, SQRT_SMALL_FASTF)) {
+	    !ZERO(avg_mass)) {
 	    vect_t centroid;
 	    fastf_t Dx_sq, Dy_sq, Dz_sq;
 	    fastf_t inv_total_mass = 1.0/avg_mass;
@@ -2428,7 +2449,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     /* if the user did not specify the initial grid spacing limit, we
      * need to compute a reasonable one for them.
      */
-    if (NEAR_ZERO(gridSpacing, SMALL_FASTF)) {
+    if (ZERO(gridSpacing)) {
 	double min_span = MAX_FASTF;
 	VPRINT("span", state.span);
 

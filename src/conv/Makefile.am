@@ -4,6 +4,9 @@ else !BUILD_STEP
 STEPDIR=
 endif
 
+IGESDIR=iges
+INTAVALDIR=intaval
+
 EXTRA_DIST = \
 	CMakeLists.txt \
 	Formats.csv \
@@ -17,6 +20,9 @@ EXTRA_DIST = \
 	patch/pull_comp.sh \
 	patch/pull_solidsub.sh \
 	patch/rpatch.f \
+	shp/README \
+	shp/shapelib/LICENSE.LGPL \
+	shp/shapelib/license.html \
 	walk_example.c
 
 if ONLY_BENCHMARK
@@ -32,9 +38,9 @@ bin_PROGRAMS = \
 else !ONLY_BENCHMARK
 
 SUBDIRS = \
-	${STEPDIR} \
-	iges \
-	intaval
+	${IGESDIR} \
+	${INTAVALDIR}
+	${STEPDIR}
 
 DIST_SUBDIRS = \
 	iges \
@@ -90,6 +96,7 @@ bin_PROGRAMS = \
 	poly-bot \
 	proe-g \
 	rpatch \
+	shp-g \
 	stl-g \
 	tankill-g \
 	viewpoint-g
@@ -347,6 +354,10 @@ rpatch_LDADD = \
 	${BU_LIBS} \
 	${SYSV}
 
+shp_g_SOURCES = shp/shp-g.c shp/shapelib/safileio.c shp/shapelib/shpopen.c
+shp_g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
+shp_g_LDADD = ${WDB}
+
 stl_g_SOURCES = stl/stl-g.c
 stl_g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
 stl_g_LDADD = ${WDB}
@@ -368,7 +379,8 @@ dist_bin_SCRIPTS = intaval-g.py
 noinst_HEADERS = \
 	comgeom/3d.h \
 	dxf/dxf.h \
-	patch/patch-g.h
+	patch/patch-g.h \
+	shp/shapelib/shapefil.h
 
 dist_man_MANS = \
 	asc/g2asc.1 \

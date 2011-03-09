@@ -53,9 +53,9 @@ static	int	upper[HSCREEN], lower[HSCREEN];
 FBIO	*fbp;	/* XXX - debug */
 
 void	Efill(void);
-void	Horizon(int x1, int y1, int x2, int y2);
-void	Intersect(int x1, int y1, int x2, int y2, int *hor, int *xi, int *yi);
-void	Draw(int x1, int y1, int x2, int y2);
+void	Horizon(int sx1, int sy1, int sx2, int sy2);
+void	Intersect(int sx1, int sy1, int x2, int y2, int *hor, int *xi, int *yi);
+void	Draw(int sx1, int sy1, int x2, int y2);
 int	fhvis(int x, int y);
 int	sign(int i);
 
@@ -82,7 +82,7 @@ fhnewz(int *f, int num)
     int	Previously, Currently;
 
     /* Init previous X and Y values */
-    Xprev = 0;
+    Xprev = Yi = Xi = y = x = 0;
     Yprev = f[ 0 ];
     /* VIEWING XFORM */
 
@@ -200,24 +200,24 @@ Efill(void)
 }
 
 /*
- * Fill the upper and lower horizon arrays from x1 to x2
- *  with a line spanning (x1, y1) to (x2, y2).
+ * Fill the upper and lower horizon arrays from x_1 to x_2
+ * with a line spanning (x_1, y_1) to (x_2, y_2).
  */
 void
-Horizon(int x1, int y1, int x2, int y2)
+Horizon(int x_1, int y_1, int x_2, int y_2)
 {
     int	xinc, x, y;
     double	slope;
 
-    xinc = sign( x2 - x1 );
+    xinc = sign( x_2 - x_1 );
     if ( xinc == 0 ) {
 	/* Vertical line */
-	upper[x2] = MAX( upper[x2], y2 );
-	lower[x2] = MIN( lower[x2], y2 );
+	upper[x_2] = MAX( upper[x_2], y_2 );
+	lower[x_2] = MIN( lower[x_2], y_2 );
     } else {
-	slope = (y2 - y1) / (x2 - x1);
-	for ( x = x1; x <= x2; x += xinc ) {
-	    y = slope * (x - x1) + y1;
+	slope = (y_2 - y_1) / (x_2 - x_1);
+	for ( x = x_1; x <= x_2; x += xinc ) {
+	    y = slope * (x - x_1) + y_1;
 	    upper[x] = MAX( upper[x], y );
 	    lower[x] = MIN( lower[x], y );
 	}
@@ -225,53 +225,53 @@ Horizon(int x1, int y1, int x2, int y2)
 }
 
 /*
- * Find the intersection (xi, yi) between the line (x1, y1)->(x2, y2)
+ * Find the intersection (xi, yi) between the line (x_1, y_1)->(x_2, y_2)
  *  and the horizon hor[].
  */
 void
-Intersect(int x1, int y1, int x2, int y2, int *hor, int *xi, int *yi)
+Intersect(int x_1, int y_1, int x_2, int y_2, int *hor, int *xi, int *yi)
 {
     int	xinc, ysign;
     int	slope;
 
 /*
-  printf("Intersect( (%3d,%3d)->(%3d,%3d) & (%3d,%3d)->(%3d,%3d) ) = ", x1, y1, x2, y2, x1, hor[x1], x2, hor[x2] );
+  printf("Intersect( (%3d,%3d)->(%3d,%3d) & (%3d,%3d)->(%3d,%3d) ) = ", x_1, y_1, x_2, y_2, x_1, hor[x_1], x_2, hor[x_2] );
   fflush( stdout );
 */
-    xinc = sign( x2 - x1 );
+    xinc = sign( x_2 - x_1 );
     if ( xinc == 0 ) {
 	/* Vertical line */
-	*xi = x2;
-	*yi = hor[x2];
-/*printf("(vert x2=%d) ", x2);*/
+	*xi = x_2;
+	*yi = hor[x_2];
+/*printf("(vert x_2=%d) ", x_2);*/
     } else {
 #ifdef FOOBARBAZ
-	denom = (hor[x2]-hor[x1])-(y2-y1);
+	denom = (hor[x_2]-hor[x_1])-(y_2-y_1);
 	if ( denom == 0 ) {
 	    /* same line! */
-	    *xi = x1;
+	    *xi = x_1;
 	} else
-	    *xi = x1 + ((x2-x1)*(hor[x1]-y1))/denom;
-	*yi = y1 + (*xi-x1)*((y2-y1)/(x2-x1)) + 0.5;
+	    *xi = x_1 + ((x_2-x_1)*(hor[x_1]-y_1))/denom;
+	*yi = y_1 + (*xi-x_1)*((y_2-y_1)/(x_2-x_1)) + 0.5;
 /*printf("(%3d,%3d)\n", *xi, *yi );*/
 	return;
 #endif /* FOOBARBAZ */
 
-	slope = (y2 - y1) / (x2 - x1);
-	ysign = sign( y1 - hor[x1 + xinc] );
+	slope = (y_2 - y_1) / (x_2 - x_1);
+	ysign = sign( y_1 - hor[x_1 + xinc] );
 #ifdef MYMETHOD
-	for ( *xi = x1; *xi <= x2; *xi += xinc ) {
-	    *yi = y1 + (*xi-x1)*slope;	/* XXX */
+	for ( *xi = x_1; *xi <= x_2; *xi += xinc ) {
+	    *yi = y_1 + (*xi-x_1)*slope;	/* XXX */
 	    if ( sign( *yi - hor[*xi + xinc] ) != ysign )
 		break;
 	}
-	if ( xinc == 1 && *xi > x2 ) *xi = x2;
-	if ( xinc == -1 && *xi < x2 ) *xi = x2;
+	if ( xinc == 1 && *xi > x_2 ) *xi = x_2;
+	if ( xinc == -1 && *xi < x_2 ) *xi = x_2;
 #else
-	*yi = y1;
-	*xi = x1;
+	*yi = y_1;
+	*xi = x_1;
 	while ( sign( *yi - hor[*xi + xinc] ) == ysign ) {
-	    for ( *xi = x1; *xi <= x2; *xi += xinc )
+	    for ( *xi = x_1; *xi <= x_2; *xi += xinc )
 		*yi = *yi + slope;	/* XXX */
 /*printf("[%3d,%3d]", *xi, *yi );*/
 	}
@@ -293,23 +293,23 @@ sign(int i)
 }
 
 /*
- * DRAW - plot a line from (x1, y1) to (x2, y2)
+ * DRAW - plot a line from (x_1, y_1) to (x_2, y_2)
  *  An integer Bresenham algorithm for any quadrant.
  */
 void
-Draw(int x1, int y1, int x2, int y2)
+Draw(int x_1, int y_1, int x_2, int y_2)
 {
     int	x, y, deltx, delty, error, i;
     int	temp, s1, s2, interchange;
     static	RGBpixel white = { 255, 255, 255 };	/* XXX - debug */
 
-/*printf("Draw (%d %d) -> (%d %d)\n", x1, y1, x2, y2 );*/
-    x = x1;
-    y = y1;
-    deltx = (x2 > x1 ? x2 - x1 : x1 - x2);
-    delty = (y2 > y1 ? y2 - y1 : y1 - y2);
-    s1 = sign(x2 - x1);
-    s2 = sign(y2 - y1);
+/*printf("Draw (%d %d) -> (%d %d)\n", x_1, y_1, x_2, y_2 );*/
+    x = x_1;
+    y = y_1;
+    deltx = (x_2 > x_1 ? x_2 - x_1 : x_1 - x_2);
+    delty = (y_2 > y_1 ? y_2 - y_1 : y_1 - y_2);
+    s1 = sign(x_2 - x_1);
+    s2 = sign(y_2 - y_1);
 
     /* check for swap of deltx and delty */
     if ( delty > deltx ) {

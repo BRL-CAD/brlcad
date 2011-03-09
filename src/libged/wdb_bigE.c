@@ -1029,19 +1029,19 @@ HIDDEN void
 wdb_inverse_dir(vect_t dir, vect_t inv_dir)
 {
     /* Compute the inverse of the direction cosines */
-    if (!NEAR_ZERO(dir[X], SQRT_SMALL_FASTF)) {
+    if (!ZERO(dir[X])) {
 	inv_dir[X]=1.0/dir[X];
     } else {
 	inv_dir[X] = INFINITY;
 	dir[X] = 0.0;
     }
-    if (!NEAR_ZERO(dir[Y], SQRT_SMALL_FASTF)) {
+    if (!ZERO(dir[Y])) {
 	inv_dir[Y]=1.0/dir[Y];
     } else {
 	inv_dir[Y] = INFINITY;
 	dir[Y] = 0.0;
     }
-    if (!NEAR_ZERO(dir[Z], SQRT_SMALL_FASTF)) {
+    if (!ZERO(dir[Z])) {
 	inv_dir[Z]=1.0/dir[Z];
     } else {
 	inv_dir[Z] = INFINITY;
@@ -1169,19 +1169,19 @@ wdb_shoot_and_plot(point_t start_pt,
     VMOVE(rp.r_pt, start_pt)
 	VMOVE(rp.r_dir, dir)
 	/* Compute the inverse of the direction cosines */
-	if (!NEAR_ZERO(rp.r_dir[X], SQRT_SMALL_FASTF)) {
+	if (!ZERO(rp.r_dir[X])) {
 	    rd.rd_invdir[X]=1.0/rp.r_dir[X];
 	} else {
 	    rd.rd_invdir[X] = INFINITY;
 	    rp.r_dir[X] = 0.0;
 	}
-    if (!NEAR_ZERO(rp.r_dir[Y], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp.r_dir[Y])) {
 	rd.rd_invdir[Y]=1.0/rp.r_dir[Y];
     } else {
 	rd.rd_invdir[Y] = INFINITY;
 	rp.r_dir[Y] = 0.0;
     }
-    if (!NEAR_ZERO(rp.r_dir[Z], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp.r_dir[Z])) {
 	rd.rd_invdir[Z]=1.0/rp.r_dir[Z];
     } else {
 	rd.rd_invdir[Z] = INFINITY;

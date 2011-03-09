@@ -433,7 +433,7 @@ int Domain<T>::mergeIntervals (typename std::list<Interval<T> >::iterator i)
 {
     if (i!=Interv.end()) {
 	typename std::list<Interval<T> >::iterator j = i;j++;
-	if (NEAR_ZERO(j->getStep() - i->getStep(), SMALL_FASTF)) {
+	if (ZERO(j->getStep() - i->getStep())) {
 	    /* If interval is not inside the present one */
 	    if (j->getHigh() > i->getHigh())
 		i->setHigh(j->getHigh());
@@ -678,13 +678,13 @@ void Solution<T>::cdisplay()
 	std::cout << std::endl;
 
 	for (l = 0; l < minmax.size()/2; ++l) {
-	    if (!NEAR_ZERO(minmax[2*l] - minmax[2*l+1], SMALL_FASTF)) /* TODO: needs proper tolerancing */
+	    if (!ZERO(minmax[2*l] - minmax[2*l+1])) /* TODO: needs proper tolerancing */
 		std::cout << "to" << "\t";
 	}
 	std::cout << std::endl;
     
 	for (l = 0; l < minmax.size()/2; ++l) {
-	    if (!NEAR_ZERO(minmax[2*l] - minmax[2*l+1], SMALL_FASTF)) /* TODO: needs proper tolerancing */
+	    if (!ZERO(minmax[2*l] - minmax[2*l+1])) /* TODO: needs proper tolerancing */
 		std::cout << minmax[2*l+1] << "\t";
 	}
     

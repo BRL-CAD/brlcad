@@ -30,8 +30,9 @@ EXTRA_DIST = \
 	brlcad-config.in \
 	brlcad.spec \
 	brlcad.spec.in \
-	debian/application-x-brlcad-extension.png \
-	debian/application-x-brlcad-extension.xml \
+	debian/application-x-brlcad-v4.png \
+	debian/application-x-brlcad-v5.png \
+	debian/application-x-brlcad.xml \
 	debian/brlcad-archer.desktop \
 	debian/brlcad-archer.png \
 	debian/brlcad-db.desktop \
@@ -46,7 +47,7 @@ EXTRA_DIST = \
 	debian/brlcad.install \
 	debian/brlcad.menu \
 	debian/brlcad-mged.desktop \
-	debian/brlcad.png \
+	debian/brlcad-mged.png \
 	debian/brlcad.postinst \
 	debian/brlcad.postrm \
 	debian/brlcad-rtwizard.desktop \

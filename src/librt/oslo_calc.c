@@ -105,7 +105,7 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 
 	i = j + 1;
 
-	while (NEAR_ZERO(t_p[i] - tau_p[muprim], SMALL_FASTF) && i < (j + order)) {
+	while (ZERO(t_p[i] - tau_p[muprim]) && i < (j + order)) {
 	    i++;
 	    muprim--;
 	}
@@ -113,7 +113,7 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 	ih = muprim + 1;
 
 	for (v = 0, p = 1; p < order; p++) {
-	    if (NEAR_ZERO(t_p[j + p] - tau_p[ih], SMALL_FASTF))
+	    if (ZERO(t_p[j + p] - tau_p[ih]))
 		ih++;
 	    else
 		newknots[++v - 1] = t_p[j + p];

@@ -30,6 +30,9 @@
 #include <fcntl.h>
 #include <math.h>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "bu.h"
 #include "fb.h"
@@ -1955,7 +1958,7 @@ f_Movie()
 	    ret = -1;
 	    goto	error_exit;
 	}
-	if ( NEAR_ZERO(movie.m_pers_beg, SMALL_FASTF) && NEAR_ZERO(movie.m_pers_end, SMALL_FASTF) )
+	if ( ZERO(movie.m_pers_beg) && ZERO(movie.m_pers_end) )
 	{
 	    (void) sprintf( prompt,
 			    "Starting and ending grid distance ? (%g %g) ",
@@ -3269,7 +3272,7 @@ setup_Lgts(int frame)
 	/* Eye location specified by saved view, grid location
 	   depends on whether we want perspective or not.
 	*/
-	if ( !NEAR_ZERO(rel_perspective, SMALL_FASTF) )
+	if ( !ZERO(rel_perspective) )
 	{ 
 	    /* Perspective used in animation. */
 	    fastf_t	grid_delta[3], f;
@@ -3374,7 +3377,7 @@ setup_Lgts(int frame)
 			     grid_hor, grid_ver );
 		/* Unit vector from center of model toward eye. */
 		cons_Vector( lgts[0].dir, lgts[0].azim, lgts[0].elev );
-		if ( NEAR_ZERO(rel_perspective, SMALL_FASTF) )
+		if ( ZERO(rel_perspective) )
 		{
 		    VJOIN1( grid_loc, modl_cntr, grid_dist, lgts[0].dir );
 		    VMOVE( lgts[0].loc, grid_loc );
@@ -3592,7 +3595,7 @@ make_Script(char *file)
 			x_fb_origin, y_fb_origin );
     if ( max_bounce )
 	(void) fprintf( run_fp,	" -K%d", max_bounce );
-    if ( !NEAR_ZERO(grid_roll, SMALL_FASTF) )
+    if ( !ZERO(grid_roll) )
 	(void) fprintf( run_fp,	" -a%g", grid_roll*RAD2DEG );
     if ( background[0] || background[1] || background[2] )
 	(void) fprintf( run_fp,
@@ -3616,7 +3619,7 @@ make_Script(char *file)
     if ( force_fbsz )
 	(void) fprintf( run_fp, " -T%d", fb_size );
 
-    if ( !NEAR_ZERO(x_grid_offset, SMALL_FASTF) || !NEAR_ZERO(y_grid_offset, SMALL_FASTF) )
+    if ( !ZERO(x_grid_offset) || !ZERO(y_grid_offset) )
 	(void) fprintf( run_fp,	" -t\"%g %g\"", x_grid_offset, y_grid_offset );
     if ( mat_db_file[0] != '\0' )
 	(void) fprintf( run_fp,	" -w%s", mat_db_file );
@@ -3626,7 +3629,7 @@ make_Script(char *file)
 	(void) fprintf( run_fp,	" -o%s", fb_file );
     if ( ir_offset )
 	(void) fprintf( run_fp, " -d\"%d %d\"", ir_mapx, ir_mapy );
-    if ( !NEAR_ZERO(rel_perspective - 0.25, SMALL_FASTF) )
+    if ( !ZERO(rel_perspective - 0.25) )
 	(void) fprintf( run_fp, " -p%g", rel_perspective );
     if ( ir_mapping ) /* MUST precede -I option. */
 	(void) fprintf( run_fp, " -s%d", ir_mapping );

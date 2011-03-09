@@ -59,7 +59,7 @@
       <para>
 	First, start <application>MGED</application> from the shell prompt. Select File from the menu bar and
 	then New. A dialog box will appear, and it will ask you for a new database
-	name. Type in goblet.g at the end of the path name and click on OK to
+	name. Type in goblet.g at the end of the path name and select OK to
 	create the new database. The program should tell you that the database was
 	successfully created and it is using millimeters for its unit of measure.
       </para>
@@ -74,7 +74,7 @@
 	<para>
 	  Go to the menu bar, select the Cones and Cylinders category, and then select
 	  rcc for right circular cylinder. A dialog box will appear asking you to
-	  name the rcc. Type in base1.s and then click on Apply (or press ENTER). A
+	  name the rcc. Type in base1.s and then select Apply (or press ENTER). A
 	  tall cylinder will appear in the Graphics Window that is ready for you to
 	  edit.
 	</para>
@@ -84,13 +84,15 @@
 	
 	
 	<para>
-	  Go to the menu bar and select Edit and then Set H. Place the mouse pointer
-	  in the lower half of the Graphics Window and click on the middle mouse
-	  button several times. The cylinder will become shorter as you click. (Note
-	  that the closer your pointer is to the midpoint of the Graphics Window,
-	  the smaller the change will be. As you click farther away from the middle,
-	  the changes will be greater.) Continue clicking until the cylinder looks
-	  like a flat disk, as shown in the following figure. Click on Accept when
+	  Go to the menu bar and select Edit and then Set H. Place the
+	  mouse pointer in the lower half of the Graphics Window and
+	  click on the middle mouse button several times. The cylinder
+	  will become shorter as you click. (Note that the closer your
+	  pointer is to the midpoint of the Graphics Window, the
+	  smaller the change will be. As you click farther away from
+	  the middle, the changes will be greater.) Continue clicking
+	  until the cylinder looks like a flat disk, as shown in the
+	  following figure. Click on Accept on the Edit menu when
 	  done.
 
       <informalfigure>
@@ -113,14 +115,14 @@
 	
    
 	<para>
-	  Go to the menu bar, select Create, select Ellipsoids, and then click on
-	  sph to select a sphere. You will be asked to provide a name for the
-	  sphere. Type ball1.s in the name box and then click on Apply. A large
+	  Go to the menu bar, select Create, select Ellipsoids, and then select
+	  sph to create a sphere. You will be asked to provide a name for the
+	  sphere. Type ball1.s in the name box and then select Apply. A large
 	  sphere will appear in your Graphics Window.
 	</para>
 
 	<para>
-	  Go to the Edit menu and click on Scale. Place the mouse cursor/pointer in
+	  Go to the Edit menu and select Scale. Place the mouse cursor/pointer in
 	  the lower half of the Graphics Window and click the middle mouse button
 	  until your sphere is about one-quarter the diameter of the base, as shown
 	  in the illustration that follows.
@@ -141,13 +143,14 @@
 	</para>
 
 	<para>
-	  To move the ball on top of the goblet base, press the SHIFT key and left
-	  mouse button to drag the sphere into place. You can check your placement
-	  by going to the View option of the menu bar and selecting a Front view. In
-	  this view, you can align the center line of the sphere with the center
-	  line of the rcc. Repeat this process from a Left view. When you believe
-	  the sphere is correctly aligned with the rcc, go back to the Edit option
-	  and click on Accept.
+	  To move the ball on top of the goblet base, press the SHIFT
+	  key and left mouse button to drag the sphere into place. You
+	  can check your placement by going to the View option of the
+	  menu bar and selecting a Front view. In this view, you can
+	  align the center line of the sphere with the center line of
+	  the rcc. Repeat this process from a Left view. When you
+	  believe the sphere is correctly aligned with the rcc, go
+	  back to the Edit menu and select Accept.
 	</para>
       </section>
       
@@ -158,14 +161,14 @@
 	  The next step is to add more spheres to your goblet stem. An easy way to
 	  do this is to go to the Edit menu and select Primitive Editor. A dialog
 	  box will appear. Enter the name for the first sphere you created, ball1.s.
-	  Next, click on Reset (to reset the values of the dialog box to those of
+	  Next, select Reset (to reset the values of the dialog box to those of
 	  ball1.s) or hit return in the Name box. Again in the Name box, change
 	  ball1.s to ball2.s by using the BACKSPACE key to erase the 1. Type in a 2
-	  and then click on Apply.
+	  and then select Apply.
 	</para>
 	
 	<para>
-	  Repeat this process with an sph named ball3.s. When you are done, click on
+	  Repeat this process with an sph named ball3.s. When you are done, select
 	  OK to close the Primitive Editor box. You now have three balls for your
 	  stem, but you won't be able to see them until you edit them because they
 	  are in the same place.
@@ -185,7 +188,7 @@
 	
 	
 	<para>
-	  To edit the new balls you have created, go to the Edit menu and click on
+	  To edit the new balls you have created, go to the Edit menu and select
 	  Primitive Selection. A box will appear with the names of your base and
 	  balls. Double click on ball2.s to select it. You will see the first ball
 	  change color to white. Use the SHIFT key and any mouse button to drag this
@@ -194,7 +197,7 @@
 	  first ball. (Note that this alignment is even easier if you drag using the
 	  SHIFT and ALT keys and the right mouse button, which will constrain the
 	  movement of the ball to the Z direction.) Click on Accept under the Edit
-	  option when finished.
+	  menu when finished.
 	</para>
 	
 	<para>
@@ -227,7 +230,7 @@
 	
 	<para>
 	  The next step is to make the goblet's basin. Go to the Create menu and
-	  click on eto to select an elliptical torus. Name the torus basin1.s. Click
+	  select eto to create an elliptical torus. Name the torus basin1.s. Click
 	  on Apply. A large eto will appear in your Graphics Window.
 	</para>
 	
@@ -413,17 +416,17 @@
       
       <para>
 	To raytrace the goblet using the default material properties of gray
-	plastic, go to the File menu and click on Raytrace. When the Raytrace
+	plastic, go to the File menu and select Raytrace. When the Raytrace
 	Control Panel appears, change the color of the background  by clicking on
 	the button to the right of the Background Color box and then clicking on
-	the white option  in the drop-down menu. Next, click on Raytrace.
+	the white option  in the drop-down menu. Next, select Raytrace.
       </para>
  
       <para>
 	When you have finished viewing the goblet from the front view, go to the
 	View option of the menu bar and select az35, el25 and then raytrace. If
 	you want to view the goblet without the wireframe, go to the Framebuffer
-	option of the Raytrace Control Panel and click on Overlay. The goblet
+	option of the Raytrace Control Panel and select Overlay. The goblet
 	should look similar to the following illustration:
 	
       <informalfigure>

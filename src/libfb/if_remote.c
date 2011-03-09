@@ -27,7 +27,7 @@
  * server (fbserv).
  *
  * Note that internal errors are returned as -2 and below, because
- * most remote errors (unpacked by bu_glong) will be -1 (although they
+ * most remote errors (unpacked by ntohl) will be -1 (although they
  * could be anything).
  *
  */
@@ -261,8 +261,8 @@ rem_open(register FBIO *ifp, register char *file, int width, int height)
     }
 #endif
     
-    (void)bu_plong((unsigned char *)&buf[0*NET_LONG_LEN], width);
-    (void)bu_plong((unsigned char *)&buf[1*NET_LONG_LEN], height);
+    *(uint32_t *)&buf[0*NET_LONG_LEN] = htonl(width);
+    *(uint32_t *)&buf[1*NET_LONG_LEN] = htonl(height);
     bu_strlcpy(&buf[2*NET_LONG_LEN], device, 128-2*NET_LONG_LEN);
 
     i = strlen(device)+2*NET_LONG_LEN;
@@ -273,12 +273,12 @@ rem_open(register FBIO *ifp, register char *file, int width, int height)
     if (pkg_waitfor (MSG_RETURN, buf, sizeof(buf), pc) < 5*NET_LONG_LEN)
 	return -6;
 
-    ifp->if_max_width = bu_glong((unsigned char *)&buf[1*NET_LONG_LEN]);
-    ifp->if_max_height = bu_glong((unsigned char *)&buf[2*NET_LONG_LEN]);
-    ifp->if_width = bu_glong((unsigned char *)&buf[3*NET_LONG_LEN]);
-    ifp->if_height = bu_glong((unsigned char *)&buf[4*NET_LONG_LEN]);
+    ifp->if_max_width = ntohl(*(uint32_t *)&buf[1*NET_LONG_LEN]);
+    ifp->if_max_height = ntohl(*(uint32_t *)&buf[2*NET_LONG_LEN]);
+    ifp->if_width = ntohl(*(uint32_t *)&buf[3*NET_LONG_LEN]);
+    ifp->if_height = ntohl(*(uint32_t *)&buf[4*NET_LONG_LEN]);
 
-    if (bu_glong((unsigned char *)&buf[0*NET_LONG_LEN]) != 0)
+    if (ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]) != 0)
 	return -7;		/* fail */
 
     return 0;		/* OK */
@@ -306,7 +306,7 @@ rem_close(FBIO *ifp)
 	return 0;
     }
     pkg_close(PCP(ifp));
-    return bu_glong(&buf[0*NET_LONG_LEN]);
+    return ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]);
 }
 
 
@@ -321,7 +321,7 @@ rem_free(FBIO *ifp)
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -3;
     pkg_close(PCP(ifp));
-    return bu_glong(&buf[0*NET_LONG_LEN]);
+    return ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]);
 }
 
 
@@ -342,7 +342,7 @@ rem_clear(FBIO *ifp, unsigned char *bgpp)
 	return -2;
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -3;
-    return bu_glong(buf);
+    return ntohl(*(uint32_t *)buf);
 }
 
 
@@ -358,9 +358,9 @@ rem_read(register FBIO *ifp, int x, int y, unsigned char *pixelp, size_t num)
     if (num == 0)
 	return 0;
     /* Send Read Command */
-    (void)bu_plong(&buf[0*NET_LONG_LEN], x);
-    (void)bu_plong(&buf[1*NET_LONG_LEN], y);
-    (void)bu_plong(&buf[2*NET_LONG_LEN], (long)num);
+    *(uint32_t *)&buf[0*NET_LONG_LEN] = htonl(x);
+    *(uint32_t *)&buf[1*NET_LONG_LEN] = htonl(y);
+    *(uint32_t *)&buf[2*NET_LONG_LEN] = htonl((long)num);
     if (pkg_send(MSG_FBREAD, (const char *)buf, 3*NET_LONG_LEN, PCP(ifp)) < 3*NET_LONG_LEN)
 	return -2;
 
@@ -387,9 +387,9 @@ rem_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t 
     if (num <= 0) return num;
 
     /* Send Write Command */
-    (void)bu_plong(&buf[0*NET_LONG_LEN], x);
-    (void)bu_plong(&buf[1*NET_LONG_LEN], y);
-    (void)bu_plong(&buf[2*NET_LONG_LEN], (long)num);
+    *(uint32_t *)&buf[0*NET_LONG_LEN] = htonl(x);
+    *(uint32_t *)&buf[1*NET_LONG_LEN] = htonl(y);
+    *(uint32_t *)&buf[2*NET_LONG_LEN] = htonl((long)num);
     ret = pkg_2send(MSG_FBWRITE+MSG_NORETURN,
 		    (const char *)buf, 3*NET_LONG_LEN,
 		    (const char *)pixelp, num*sizeof(RGBpixel),
@@ -416,10 +416,10 @@ rem_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char
     if (num <= 0)
 	return 0;
     /* Send Read Command */
-    (void)bu_plong(&buf[0*NET_LONG_LEN] , xmin);
-    (void)bu_plong(&buf[1*NET_LONG_LEN] , ymin);
-    (void)bu_plong(&buf[2*NET_LONG_LEN] , width);
-    (void)bu_plong(&buf[3*NET_LONG_LEN] , height);
+    *(uint32_t *)&buf[0*NET_LONG_LEN] = htonl(xmin);
+    *(uint32_t *)&buf[1*NET_LONG_LEN] = htonl(ymin);
+    *(uint32_t *)&buf[2*NET_LONG_LEN] = htonl(width);
+    *(uint32_t *)&buf[3*NET_LONG_LEN] = htonl(height);
     if (pkg_send(MSG_FBREADRECT, (const char *)buf, 4*NET_LONG_LEN, PCP(ifp)) < 4*NET_LONG_LEN)
 	return -2;
 
@@ -450,10 +450,10 @@ rem_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 	return 0;
 
     /* Send Write Command */
-    (void)bu_plong(&buf[0*NET_LONG_LEN] , xmin);
-    (void)bu_plong(&buf[1*NET_LONG_LEN] , ymin);
-    (void)bu_plong(&buf[2*NET_LONG_LEN] , width);
-    (void)bu_plong(&buf[3*NET_LONG_LEN] , height);
+    *(uint32_t *)&buf[0*NET_LONG_LEN] = htonl(xmin);
+    *(uint32_t *)&buf[1*NET_LONG_LEN] = htonl(ymin);
+    *(uint32_t *)&buf[2*NET_LONG_LEN] = htonl(width);
+    *(uint32_t *)&buf[3*NET_LONG_LEN] = htonl(height);
     ret = pkg_2send(MSG_FBWRITERECT+MSG_NORETURN,
 		    (const char *)buf, 4*NET_LONG_LEN,
 		    (const char *)pp, num*sizeof(RGBpixel),
@@ -482,10 +482,10 @@ rem_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned ch
     if (num <= 0)
 	return 0;
     /* Send Read Command */
-    (void)bu_plong(&buf[0*NET_LONG_LEN] , xmin);
-    (void)bu_plong(&buf[1*NET_LONG_LEN] , ymin);
-    (void)bu_plong(&buf[2*NET_LONG_LEN] , width);
-    (void)bu_plong(&buf[3*NET_LONG_LEN] , height);
+    *(uint32_t *)&buf[0*NET_LONG_LEN] = htonl(xmin);
+    *(uint32_t *)&buf[1*NET_LONG_LEN] = htonl(ymin);
+    *(uint32_t *)&buf[2*NET_LONG_LEN] = htonl(width);
+    *(uint32_t *)&buf[3*NET_LONG_LEN] = htonl(height);
     if (pkg_send(MSG_FBBWREADRECT, (const char *)buf, 4*NET_LONG_LEN, PCP(ifp)) < 4*NET_LONG_LEN)
 	return -2;
 
@@ -515,10 +515,10 @@ rem_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 	return 0;
 
     /* Send Write Command */
-    (void)bu_plong(&buf[0*NET_LONG_LEN] , xmin);
-    (void)bu_plong(&buf[1*NET_LONG_LEN] , ymin);
-    (void)bu_plong(&buf[2*NET_LONG_LEN] , width);
-    (void)bu_plong(&buf[3*NET_LONG_LEN] , height);
+    *(uint32_t *)&buf[0*NET_LONG_LEN] = htonl(xmin);
+    *(uint32_t *)&buf[1*NET_LONG_LEN] = htonl(ymin);
+    *(uint32_t *)&buf[2*NET_LONG_LEN] = htonl(width);
+    *(uint32_t *)&buf[3*NET_LONG_LEN] = htonl(height);
     ret = pkg_2send(MSG_FBBWWRITERECT+MSG_NORETURN,
 		    (const char *)buf, 4*NET_LONG_LEN,
 		    (const char *)pp, num,
@@ -540,14 +540,14 @@ rem_cursor(FBIO *ifp, int mode, int x, int y)
     unsigned char buf[3*NET_LONG_LEN+1];
 
     /* Send Command */
-    (void)bu_plong(&buf[0*NET_LONG_LEN] , mode);
-    (void)bu_plong(&buf[1*NET_LONG_LEN] , x);
-    (void)bu_plong(&buf[2*NET_LONG_LEN] , y);
+    *(uint32_t *)&buf[0*NET_LONG_LEN] = htonl(mode);
+    *(uint32_t *)&buf[1*NET_LONG_LEN] = htonl(x);
+    *(uint32_t *)&buf[2*NET_LONG_LEN] = htonl(y);
     if (pkg_send(MSG_FBCURSOR, (const char *)buf, 3*NET_LONG_LEN, PCP(ifp)) < 3*NET_LONG_LEN)
 	return -2;
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -3;
-    return bu_glong(buf);
+    return ntohl(*(uint32_t *)buf);
 }
 
 
@@ -565,10 +565,10 @@ rem_getcursor(FBIO *ifp, int *mode, int *x, int *y)
     /* return code, xcenter, ycenter, xzoom, yzoom as longs */
     if (pkg_waitfor (MSG_RETURN, (char *)buf, sizeof(buf), PCP(ifp)) < 4*NET_LONG_LEN)
 	return -3;
-    *mode = bu_glong(&buf[1*NET_LONG_LEN]);
-    *x = bu_glong(&buf[2*NET_LONG_LEN]);
-    *y = bu_glong(&buf[3*NET_LONG_LEN]);
-    if (bu_glong(&buf[0*NET_LONG_LEN]) != 0)
+    *mode = ntohl(*(uint32_t *)&buf[1*NET_LONG_LEN]);
+    *x = ntohl(*(uint32_t *)&buf[2*NET_LONG_LEN]);
+    *y = ntohl(*(uint32_t *)&buf[3*NET_LONG_LEN]);
+    if (ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]) != 0)
 	return -4;		/* fail */
     return 0;			/* OK */
 }
@@ -589,10 +589,10 @@ rem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xo
     unsigned char buf[4*NET_LONG_LEN+1];
     int ret;
 
-    (void)bu_plong(&buf[0*NET_LONG_LEN] , xbits);
-    (void)bu_plong(&buf[1*NET_LONG_LEN] , ybits);
-    (void)bu_plong(&buf[2*NET_LONG_LEN] , xorig);
-    (void)bu_plong(&buf[3*NET_LONG_LEN] , yorig);
+    *(uint32_t *)&buf[0*NET_LONG_LEN] = htonl(xbits);
+    *(uint32_t *)&buf[1*NET_LONG_LEN] = htonl(ybits);
+    *(uint32_t *)&buf[2*NET_LONG_LEN] = htonl(xorig);
+    *(uint32_t *)&buf[3*NET_LONG_LEN] = htonl(yorig);
 
     ret = pkg_2send(MSG_FBSETCURSOR+MSG_NORETURN,
 		    (const char *)buf, 4*NET_LONG_LEN,
@@ -605,7 +605,7 @@ rem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xo
 #if 0
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -2;
-    return bu_glong(buf);
+    return ntohl(*(uint32_t *)buf);
 #else
     /* Since this call got somehow overlooked until Release 4.3, older
      * 'fbserv' programs won't have support for this request.  Rather
@@ -626,15 +626,15 @@ rem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     unsigned char buf[4*NET_LONG_LEN+1];
 
     /* Send Command */
-    (void)bu_plong(&buf[0*NET_LONG_LEN] , xcenter);
-    (void)bu_plong(&buf[1*NET_LONG_LEN] , ycenter);
-    (void)bu_plong(&buf[2*NET_LONG_LEN] , xzoom);
-    (void)bu_plong(&buf[3*NET_LONG_LEN] , yzoom);
+    *(uint32_t *)&buf[0*NET_LONG_LEN] = htonl(xcenter);
+    *(uint32_t *)&buf[1*NET_LONG_LEN] = htonl(ycenter);
+    *(uint32_t *)&buf[2*NET_LONG_LEN] = htonl(xzoom);
+    *(uint32_t *)&buf[3*NET_LONG_LEN] = htonl(yzoom);
     if (pkg_send(MSG_FBVIEW, (const char *)buf, 4*NET_LONG_LEN, PCP(ifp)) < 4*NET_LONG_LEN)
 	return -2;
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -3;
-    return bu_glong(buf);
+    return ntohl(*(uint32_t *)buf);
 }
 
 
@@ -652,11 +652,11 @@ rem_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
     /* return code, xcenter, ycenter, xzoom, yzoom as longs */
     if (pkg_waitfor (MSG_RETURN, (char *)buf, sizeof(buf), PCP(ifp)) < 5*NET_LONG_LEN)
 	return -3;
-    *xcenter = bu_glong(&buf[1*NET_LONG_LEN]);
-    *ycenter = bu_glong(&buf[2*NET_LONG_LEN]);
-    *xzoom = bu_glong(&buf[3*NET_LONG_LEN]);
-    *yzoom = bu_glong(&buf[4*NET_LONG_LEN]);
-    if (bu_glong(&buf[0*NET_LONG_LEN]) != 0)
+    *xcenter = ntohl(*(uint32_t *)&buf[1*NET_LONG_LEN]);
+    *ycenter = ntohl(*(uint32_t *)&buf[2*NET_LONG_LEN]);
+    *xzoom = ntohl(*(uint32_t *)&buf[3*NET_LONG_LEN]);
+    *yzoom = ntohl(*(uint32_t *)&buf[4*NET_LONG_LEN]);
+    if (ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]) != 0)
 	return -4;		/* fail */
     return 0;			/* OK */
 }
@@ -676,13 +676,13 @@ rem_rmap(register FBIO *ifp, register ColorMap *cmap)
     if (pkg_waitfor (MSG_DATA, (char *)cm, REM_CMAP_BYTES, PCP(ifp)) < REM_CMAP_BYTES)
 	return -3;
     for (i = 0; i < 256; i++) {
-	cmap->cm_red[i] = bu_gshort(cm+2*(0+i));
-	cmap->cm_green[i] = bu_gshort(cm+2*(256+i));
-	cmap->cm_blue[i] = bu_gshort(cm+2*(512+i));
+	cmap->cm_red[i] = ntohs(*(uint32_t *)(cm+2*(0+i)));
+	cmap->cm_green[i] = ntohs(*(uint32_t *)(cm+2*(256+i)));
+	cmap->cm_blue[i] = ntohs(*(uint16_t *)(cm+2*(512+i)));
     }
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -4;
-    return bu_glong(&buf[0*NET_LONG_LEN]);
+    return ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]);
 }
 
 
@@ -698,16 +698,16 @@ rem_wmap(register FBIO *ifp, const ColorMap *cmap)
 	    return -2;
     } else {
 	for (i = 0; i < 256; i++) {
-	    (void)bu_pshort(cm+2*(0+i), cmap->cm_red[i]);
-	    (void)bu_pshort(cm+2*(256+i), cmap->cm_green[i]);
-	    (void)bu_pshort(cm+2*(512+i), cmap->cm_blue[i]);
+	    *(uint16_t *)(cm+2*(0+i)) = htons(cmap->cm_red[i]);
+	    *(uint16_t *)(cm+2*(256+i)) = htons(cmap->cm_green[i]);
+	    *(uint16_t *)(cm+2*(512+i)) = htons(cmap->cm_blue[i]);
 	}
 	if (pkg_send(MSG_FBWMAP, (const char *)cm, REM_CMAP_BYTES, PCP(ifp)) < REM_CMAP_BYTES)
 	    return -3;
     }
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -4;
-    return bu_glong(&buf[0*NET_LONG_LEN]);
+    return ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]);
 }
 
 
@@ -736,7 +736,7 @@ rem_flush(FBIO *ifp)
 	return -2;
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -3;
-    return bu_glong(&buf[0*NET_LONG_LEN]);
+    return ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]);
 }
 
 
@@ -751,12 +751,12 @@ rem_help(FBIO *ifp)
     fb_log("Remote Interface:\n");
 
     /* Send Command */
-    (void)bu_plong(&buf[0*NET_LONG_LEN] , 0L);
+    *(uint32_t *)&buf[0*NET_LONG_LEN] = htonl(0L);
     if (pkg_send(MSG_FBHELP, (const char *)buf, 1*NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -2;
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -3;
-    return bu_glong(&buf[0*NET_LONG_LEN]);
+    return ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]);
 }
 
 

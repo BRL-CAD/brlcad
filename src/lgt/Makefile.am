@@ -1,7 +1,9 @@
 
 bin_PROGRAMS = lgt
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = \
+	${STRICT_FLAGS} \
+	${TCL_CPPFLAGS}
 
 lgt_SOURCES = \
 	char.c \

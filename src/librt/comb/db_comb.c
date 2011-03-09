@@ -69,28 +69,28 @@ db_comb_mat_categorize(const fastf_t *matp)
 
     if (!matp) return 0;
 
-    if (!NEAR_ZERO(matp[0] - 1.0, SMALL_FASTF)
-	|| !NEAR_ZERO(matp[5] - 1.0, SMALL_FASTF)
-	|| !NEAR_ZERO(matp[10] - 1.0, SMALL_FASTF))
+    if (!ZERO(matp[0] - 1.0)
+	|| !ZERO(matp[5] - 1.0)
+	|| !ZERO(matp[10] - 1.0))
     {
 	status |= STAT_ROT;
     }
 
-    if (!NEAR_ZERO(matp[MDX], SMALL_FASTF)
-	|| !NEAR_ZERO(matp[MDY], SMALL_FASTF)
-	|| !NEAR_ZERO(matp[MDZ], SMALL_FASTF))
+    if (!ZERO(matp[MDX])
+	|| !ZERO(matp[MDY])
+	|| !ZERO(matp[MDZ]))
     {
 	status |= STAT_XLATE;
     }
 
-    if (!NEAR_ZERO(matp[12], SMALL_FASTF)
-	|| !NEAR_ZERO(matp[13], SMALL_FASTF)
-	|| !NEAR_ZERO(matp[14], SMALL_FASTF))
+    if (!ZERO(matp[12])
+	|| !ZERO(matp[13])
+	|| !ZERO(matp[14]))
     {
 	status |= STAT_PERSP;
     }
 
-    if (!NEAR_ZERO(matp[15], SMALL_FASTF))
+    if (!ZERO(matp[15]))
 	status |= STAT_SCALE;
 
     return status;
@@ -273,7 +273,7 @@ rt_comb_import4(
 
 	    tp->tr_l.tl_name = bu_strdup(namebuf);
 
-	    rt_mat_dbmat(diskmat, rp[j+1].M.m_mat, dbip->dbi_version < 0 ? 1 : 0);
+	    flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, dbip->dbi_version < 0 ? 1 : 0);
 
 	    /* Verify that rotation part is pure rotation */
 	    if (fabs(diskmat[0]) > 1 || fabs(diskmat[1]) > 1 ||
@@ -288,9 +288,9 @@ rt_comb_import4(
 	    }
 
 	    /* Verify that perspective isn't used as a modeling transform */
-	    if (!NEAR_ZERO(diskmat[12], SMALL_FASTF)
-		|| !NEAR_ZERO(diskmat[13], SMALL_FASTF)
-		|| !NEAR_ZERO(diskmat[14], SMALL_FASTF))
+	    if (!ZERO(diskmat[12])
+		|| !ZERO(diskmat[13])
+		|| !ZERO(diskmat[14]))
 	    {
 		bu_log("ERROR: %s/%s has perspective transform\n", rp[0].c.c_name, namebuf);
 	    }
@@ -498,9 +498,9 @@ rt_comb_export4(
 	NAMEMOVE(tp->tr_l.tl_name, rp[j+1].M.m_instname);
 
 	if (tp->tr_l.tl_mat) {
-	    rt_dbmat_mat(rp[j+1].M.m_mat, tp->tr_l.tl_mat);
+	    flip_dbmat_mat(rp[j+1].M.m_mat, tp->tr_l.tl_mat);
 	} else {
-	    rt_dbmat_mat(rp[j+1].M.m_mat, bn_mat_identity);
+	    flip_dbmat_mat(rp[j+1].M.m_mat, bn_mat_identity);
 	}
 	db_free_tree(tp, resp);
     }

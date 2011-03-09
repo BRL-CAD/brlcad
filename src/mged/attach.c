@@ -23,21 +23,19 @@
 
 #include "common.h"
 
-#ifdef _WIN32
-#  include <winsock2.h>
-#endif
+#include <stdlib.h>
+#include <string.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* for struct timeval */
 #endif
-
-#include <stdlib.h>
-#include <string.h>
-#include "bio.h"
 
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"
 #endif
+
+#include "bio.h"
+#include "bin.h"
 
 #include "bu.h"
 #include "vmath.h"
@@ -371,8 +369,9 @@ f_attach(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 int
 gui_setup(const char *dstr)
 {
+#ifdef HAVE_TK
     Tk_GenericProc *handler = doEvent;
-
+#endif
     /* initialize only once */
     if (tkwin != NULL)
 	return TCL_OK;

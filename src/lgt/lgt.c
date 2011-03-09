@@ -57,16 +57,6 @@ static void	init_Lgts(void);
 void		exit_Neatly(int status);
 int		key_Frame(void);
 
-static int
-substr(char *str, char *pattern)
-{
-    if ( *str == '\0' )
-	return	0;
-    if ( *str != *pattern || strncmp( str, pattern, strlen( pattern ) ) )
-	return	substr( str+1, pattern );
-    return	1;
-}
-
 /*	m a i n ( )							*/
 int
 main(int argc, char **argv)
@@ -179,7 +169,7 @@ interpolate_Frame(int frame)
     else
     {
 	lgts[0].over = 0;
-	if ( NEAR_ZERO(movie.m_pers_beg, SMALL_FASTF) && NEAR_ZERO(movie.m_pers_end, SMALL_FASTF) )
+	if ( ZERO(movie.m_pers_beg) && ZERO(movie.m_pers_end) )
 	{
 	    rel_perspective = 0.0;
 	    grid_dist = movie.m_grid_beg +

@@ -866,7 +866,7 @@ rt_fdiff(double a, double b)
 	goto out;
     }
     if (d >= INFINITY) {
-	if (NEAR_ZERO(a - b, SMALL_FASTF)) {
+	if (ZERO(a - b)) {
 	    ret = 0;
 	    goto out;
 	}
@@ -932,7 +932,8 @@ rt_fastgen_plate_vol_overlap(struct region **fr1, struct region **fr2, struct pa
 	return;
     }
 
-    if (rt_fdiff(prev->pt_outhit->hit_dist, pp->pt_inhit->hit_dist) != 0) {
+    /* arbitrary tolerance is the dominant absolute tolerance from f_diff() */
+    if (!NEAR_EQUAL(prev->pt_outhit->hit_dist, pp->pt_inhit->hit_dist, 0.001)) {
 	/* There is a gap between previous partition and this one.  So
 	 * both plate and vol start at same place, d=0, plate wins.
 	 */
@@ -1208,12 +1209,11 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
  * just set ap->a_logoverlap = rt_silent_logoverlap.
  */
 void
-rt_silent_logoverlap(struct application *ap, const struct partition *pp, const struct bu_ptbl *regiontable, const struct partition *InputHdp)
+rt_silent_logoverlap(struct application *ap, const struct partition *pp, const struct bu_ptbl *regiontable, const struct partition *UNUSED(InputHdp))
 {
     RT_CK_AP(ap);
     RT_CK_PT(pp);
     BU_CK_PTBL(regiontable);
-    InputHdp = InputHdp; /* quell */
     return;
 }
 
@@ -1227,7 +1227,7 @@ rt_silent_logoverlap(struct application *ap, const struct partition *pp, const s
  * replaced by an application setting a_logoverlap().
  */
 void
-rt_default_logoverlap(struct application *ap, const struct partition *pp, const struct bu_ptbl *regiontable, const struct partition *InputHdp)
+rt_default_logoverlap(struct application *ap, const struct partition *pp, const struct bu_ptbl *regiontable, const struct partition *UNUSED(InputHdp))
 {
     point_t pt;
     static long count = 0; /* Not PARALLEL, shouldn't hurt */
@@ -1238,7 +1238,6 @@ rt_default_logoverlap(struct application *ap, const struct partition *pp, const 
     RT_CK_AP(ap);
     RT_CK_PT(pp);
     BU_CK_PTBL(regiontable);
-    InputHdp = InputHdp; /* quell */
 
     /* Attempt to control tremendous error outputs */
     if (++count > 100) {
@@ -1791,7 +1790,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	}
 	if (pp->pt_forw != InputHdp) {
 	    diff = pp->pt_outhit->hit_dist - pp->pt_forw->pt_inhit->hit_dist;
-	    if (!NEAR_ZERO(diff, SMALL_FASTF)) {
+	    if (!ZERO(diff)) {
 		if (NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
 		    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("rt_boolfinal:  fusing 2 partitions %p %p\n",
 							   (void *)pp, (void *)pp->pt_forw);
@@ -2126,7 +2125,7 @@ rt_reldiff(double a, double b)
     } else {
 	if ((-b) > d) d = (-b);
     }
-    if (NEAR_ZERO(d, SMALL_FASTF))
+    if (ZERO(d))
 	return 0.0;
     if ((diff = a - b) < 0.0) diff = -diff;
     return diff / d;

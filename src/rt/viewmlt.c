@@ -62,16 +62,20 @@ struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
 extern FBIO* fbp;
 
 const char title[] = "Metropolis Light Transport renderer";
-const char usage[] = "\
-Usage:  rtmlt [options] model.g objects... > file.pix\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -a Az		Azimuth in degrees\n\
- -e Elev	Elevation in degrees\n\
- -M		Read matrix, cmds on stdin\n\
- -o file.pix	Output file name\n\
- -x #		Set librt debug flags\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects... > file.pix\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512\n");
+    bu_log(" -a Az		Azimuth in degrees\n");
+    bu_log(" -e Elev	Elevation in degrees\n");
+    bu_log(" -M		Read matrix, cmds on stdin\n");
+    bu_log(" -o file.pix	Output file name\n");
+    bu_log(" -x #		Set librt debug flags\n");
+}
+
 
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int	secondary_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
@@ -83,7 +87,7 @@ void free_scanlines(int, struct scanline*);
 struct scanline* alloc_scanlines(int);
 
 struct bu_structparse view_parse[] = {
-    "",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 struct point_list {
@@ -122,6 +126,7 @@ struct mlt_app {
  *  Called by main() at the start of a run.
  *  Returns 1 if framebuffer should be opened, else 0.
  */
+int
 view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
 {
      return 1;		/* framebuffer needed */
@@ -171,7 +176,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	    buf_mode = BUFMODE_INCR;
     } else if (width <= 96)  {
 	    buf_mode = BUFMODE_UNBUF;
-    } else if (npsw <= height/4)  {
+    } else if ((size_t)npsw <= height/4)  {
 	    /* Have each CPU do a whole scanline.
 	     * Saves lots of semaphore overhead.
 	     * For load balancing make sure each CPU has several lines to do.
@@ -263,11 +268,11 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	    }
 
 	    if (sub_grid_mode)  {
-		    for (i = sub_ymin; i <= sub_ymax; i++)
-		        scanline[i].sl_left = sub_xmax-sub_xmin + 1;
+		for (i = sub_ymin; i <= sub_ymax; i++)
+		    scanline[i].sl_left = sub_xmax-sub_xmin + 1;
 	    } else {
-		    for (i = 0; i < height; i++)
-		        scanline[i].sl_left = width;
+		for (i = 0; (size_t)i < height; i++)
+		    scanline[i].sl_left = width;
 	    }
     
 	    break;
@@ -311,8 +316,8 @@ void
 view_pixel(register struct application *ap) 
 {
     register int	r, g, b, do_eol = 0;
-    register char	*pixelp;
-    register struct scanline	*slp;
+    register unsigned char *pixelp;
+    register struct scanline *slp;
     unsigned char	dist[8];	/* pixel distance (in IEEE format) */
 
     if (ap->a_user == 0) {
@@ -396,7 +401,7 @@ view_pixel(register struct application *ap)
 	     *  and hit a different region than this pixel,
 	     *  then recompute it too.
 	     */
-	    if ( ap->a_x >= width-1 )  return;
+	    if ( (size_t)ap->a_x >= width-1 )  return;
 	    if ( fp[1].ff_frame <= 0 )  return;	/* not valid, will be recomputed. */
 	    if ( fp[1].ff_regp == fp->ff_regp )
 		return;				/* OK */
@@ -470,7 +475,7 @@ view_pixel(register struct application *ap)
 	case BUFMODE_DYNAMIC:
 	    slp = &scanline[ap->a_y];
 	    bu_semaphore_acquire(RT_SEM_RESULTS);
-	    if (slp->sl_buf == (char *) 0)  {
+	    if (slp->sl_buf == (unsigned char *)0)  {
 		    slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
 	    }
 
@@ -501,7 +506,7 @@ view_pixel(register struct application *ap)
 	     */
 	case BUFMODE_SCANLINE:
 	    slp = &scanline[ap->a_y];
-	    if (slp->sl_buf == (char *) 0)  {
+	    if (slp->sl_buf == (unsigned char *) 0)  {
 		    slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
 	    }
 	    pixelp = slp->sl_buf+(ap->a_x*pwidth);
@@ -532,9 +537,9 @@ view_pixel(register struct application *ap)
 
 	    bu_semaphore_acquire( RT_SEM_RESULTS );
 	    for ( dy=0; dy<spread; dy++ )  {
-		if ( ap->a_y+dy >= height )  break;
+		if ( (size_t)ap->a_y+dy >= height )  break;
 		slp = &scanline[ap->a_y+dy];
-		if ( slp->sl_buf == (char *)0 )
+		if ( slp->sl_buf == (unsigned char *)0 )
 		    slp->sl_buf = bu_calloc( width+32,
 					     pwidth, "sl_buf scanline buffer" );
 
@@ -606,7 +611,7 @@ view_pixel(register struct application *ap)
 	    {
 		register int dy, yy;
 		register int spread;
-		int		npix = 0;
+		size_t npix = 0;
 
 		spread = (1<<(incr_nlevel-incr_level))-1;
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
@@ -618,7 +623,7 @@ view_pixel(register struct application *ap)
 			npix = fb_write( fbp, sub_xmin, yy,
 					 (unsigned char *)scanline[yy].sl_buf+3*sub_xmin,
 					 sub_xmax-sub_xmin+1 );
-			if ( npix != sub_xmax-sub_xmin+1 )  break;
+			if ( npix != (size_t)sub_xmax-sub_xmin+1 )  break;
 		    } else {
 			npix = fb_write( fbp, 0, yy,
 					 (unsigned char *)scanline[yy].sl_buf,
@@ -667,7 +672,7 @@ view_pixel(register struct application *ap)
 	    scanline[ap->a_y].sl_buf = (char *)0;*/
 
     if (fbp != FBIO_NULL) {
-        int npix;
+        size_t npix;
 
         bu_semaphore_acquire(BU_SEM_SYSCALL);
         if (sub_grid_mode) {
@@ -681,7 +686,7 @@ view_pixel(register struct application *ap)
         bu_semaphore_release(BU_SEM_SYSCALL);
 
         if (sub_grid_mode) {
-            if (npix < sub_xmax - sub_xmin - 1)
+            if (npix < (size_t)sub_xmax - sub_xmin - 1)
                 bu_exit(EXIT_FAILURE, "scanline fb_write error");
         } else {
             if (npix < width)
@@ -694,7 +699,7 @@ view_pixel(register struct application *ap)
             bu_semaphore_release(BU_SEM_SYSCALL);
     }
     bu_free(scanline[ap->a_y].sl_buf, "sl_buf scanline buffer");
-    scanline[ap->a_y].sl_buf = (char *) 0;
+    scanline[ap->a_y].sl_buf = (unsigned char *) 0;
     
     }   /* End of case */
 }
@@ -1001,8 +1006,6 @@ mlt_build_path(register struct application *ap, struct partition *PartHeadp, str
     struct path_list* p_path;
 
     vect_t normal, new_dir;
-    fastf_t	diffuse0 = 0;
-    fastf_t	cosI0 = 0;
 
     /*  The application uses a generic pointer (genptr_t)
      *  to point to a struct mlt_app
@@ -1106,14 +1109,10 @@ mlt_build_path(register struct application *ap, struct partition *PartHeadp, str
  *  it hit or not.
  */
 int
-secondary_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
+secondary_hit(register struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     struct hit *hitp;
     struct partition *pp;
-
-    vect_t normal;
-    fastf_t	diffuse0 = 0;
-    fastf_t	cosI0 = 0;    
   
     /*bu_log("hit: 0x%x\n", ap->a_resource);*/
 
@@ -1201,7 +1200,7 @@ reproject_splat(int ix, int iy, register struct floatpixel *ip, const fastf_t *n
  *			R E P R O J E C T _ W O R K E R
  */
 void
-reproject_worker(int cpu, genptr_t arg)
+reproject_worker(int UNUSED(cpu), genptr_t UNUSED(arg))
 {
     int	pixel_start;
     int	pixelnum;
@@ -1219,8 +1218,8 @@ reproject_worker(int cpu, genptr_t arg)
 	bu_semaphore_release( RT_SEM_WORKER );
 
 	for ( pixelnum = pixel_start; pixelnum < pixel_start+per_processor_chunk; pixelnum++ )  {
-	    point_t	new_view_pt;
-	    int	ix, iy;
+	    point_t new_view_pt;
+	    int ix, iy;
 
 	    if ( pixelnum > last_pixel )
 		goto out;
@@ -1260,19 +1259,19 @@ reproject_worker(int cpu, genptr_t arg)
 	    }
 
 	    /* 4-way splat.  See if reprojects off of screen */
-	    if ( ix >= 0 && ix < width && iy >= 0 && iy < height )
+	    if ( ix >= 0 && ix < (int)width && iy >= 0 && iy < (int)height )
 		count += reproject_splat( ix, iy, ip, new_view_pt );
 
 	    ix++;
-	    if ( ix >= 0 && ix < width && iy >= 0 && iy < height )
+	    if ( ix >= 0 && ix < (int)width && iy >= 0 && iy < (int)height )
 		count += reproject_splat( ix, iy, ip, new_view_pt );
 
 	    iy++;
-	    if ( ix >= 0 && ix < width && iy >= 0 && iy < height )
+	    if ( ix >= 0 && ix < (int)width && iy >= 0 && iy < (int)height )
 		count += reproject_splat( ix, iy, ip, new_view_pt );
 
 	    ix--;
-	    if ( ix >= 0 && ix < width && iy >= 0 && iy < height )
+	    if ( ix >= 0 && ix < (int)width && iy >= 0 && iy < (int)height )
 		count += reproject_splat( ix, iy, ip, new_view_pt );
 	}
     }

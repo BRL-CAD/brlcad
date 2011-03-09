@@ -23,7 +23,33 @@
 # rtwizard wrapper script to make things seem normal
 #
 # The trailing backslash forces tcl to skip the next line \
-exec bwish "$0" "$@"
+STARTUP_HOME=`dirname $0`/../..
+#\
+export STARTUP_HOME
+# restart using bwish \
+WISH="bwish"
+#\
+for ish in bwish bwish_d ; do
+# see if we're installed \
+    if test -f ${STARTUP_HOME}/bin/$ish ; then
+#\
+	WISH="${STARTUP_HOME}/bin/$ish"
+#\
+	break;
+#\
+    fi
+# see if we're not installed yet \
+    if test -f ${STARTUP_HOME}/bwish/$ish ; then
+#\
+	WISH="${STARTUP_HOME}/bwish/$ish"
+#\
+	break;
+#\
+    fi
+#\
+done
+#\
+exec "$WISH" "$0" "$@"
 
 #
 # Begin Tcl here!

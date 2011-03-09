@@ -703,7 +703,7 @@ f_FillRegion()
     static int xoff1[] = { 0, 1,  0, -1 };
     static int yoff1[] = { 1, 0, -1,  0 };
     static char buffer[CLR_LEN];
-    RGBpixel borderpix;
+    RGBpixel borderpix = {0, 0, 0};
     Point pivot;
     PtStack *regionsp = NULL;
     
@@ -1221,6 +1221,12 @@ f_DrawLine()
     int de;
     int xmajor;
 
+    /* initializations for compiler */
+    lineseg.r_origin.p_x = 0;
+    lineseg.r_origin.p_y = 0;
+    lineseg.r_corner.p_x = 0;
+    lineseg.r_corner.p_y = 0;
+
     get_Point( "Pick starting point of line", &lineseg.r_origin );
     get_Point( "Pick ending point of line", &lineseg.r_corner );
 
@@ -1558,7 +1564,8 @@ HIDDEN int
 /*ARGSUSED*/
 f_Transliterate() /* Transliterate pixels of color1 to target color2.*/
 {
-    RGBpixel old, new, cur;
+    RGBpixel new, cur;
+    RGBpixel old = {0,0,0};
     static char oldbuf[CLR_LEN];
     static char newbuf[CLR_LEN];
     int x, y;

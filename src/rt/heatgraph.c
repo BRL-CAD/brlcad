@@ -173,7 +173,6 @@ void
 timeTable_free(fastf_t **timeTable)
 {
     /* Temporarily assigned variables, until real ones are found */
-    int x = width;
     int y = height;
     int i = 0;
     
@@ -191,7 +190,7 @@ timeTable_free(fastf_t **timeTable)
  * heat graph light model.
  */
 void 
-timeTable_input(int x, int y, fastf_t time, fastf_t **timeTable)
+timeTable_input(int x, int y, fastf_t timeval, fastf_t **timeTable)
 {
     /* bu_log("Enter timeTable input\n"); */
     if (x < 0)
@@ -202,8 +201,8 @@ timeTable_input(int x, int y, fastf_t time, fastf_t **timeTable)
 	bu_log("Error, putting in values greater than height!\n");
     if ((size_t)x > width)
 	bu_log("Error, putting in values greater than width!\n");
-    timeTable[x][y] = time;
-    /* bu_log("Input %lf into timeTable %d %d\n", time, x, y); */
+    timeTable[x][y] = timeval;
+    /* bu_log("Input %lf into timeTable %d %d\n", timeval, x, y); */
 }
 
 
@@ -215,17 +214,17 @@ timeTable_input(int x, int y, fastf_t time, fastf_t **timeTable)
  * bracketed to certain values, instead of normalized.
  */
 fastf_t *
-timeTable_singleProcess(struct application *ap, fastf_t **timeTable, fastf_t *timeColor)
+timeTable_singleProcess(struct application *app, fastf_t **timeTable, fastf_t *timeColor)
 {
     /* Process will take current X Y and time from timeTable, and apply
      * color to that pixel inside the framebuffer.
      */
-    fastf_t time = timeTable[ap->a_x][ap->a_y];
+    fastf_t timeval = timeTable[app->a_x][app->a_y];
     fastf_t Rcolor = 0;	/* 1-255 value of color */
     fastf_t Gcolor = 0;	/* 1-255 value of color */
     fastf_t Bcolor = 0;	/* 1-255 value of color */
     
-    /* bu_log("Time is %lf :", time); */
+    /* bu_log("Time is %lf :", timeval); */
     
     /* Eventually the time taken will also span the entire color spectrum (0-255!)
      * For now, the darkest color (1,1,1) will be set to any time slower or equal
@@ -233,17 +232,17 @@ timeTable_singleProcess(struct application *ap, fastf_t **timeTable, fastf_t *ti
      * making a gradient of black-white in between.
      */
     
-    if (time <= 0.00001) {
+    if (timeval < 0.00001 || EQUAL(timeval, 0.00001)) {
 	Rcolor = 1;
 	Gcolor = 1;
 	Bcolor = 1;
-    } else if (time > 0.00001 && time < 0.01) {
-	Rcolor = Gcolor = Bcolor = (time*1000)*255;
+    } else if (timeval > 0.00001 && timeval < 0.01) {
+	Rcolor = Gcolor = Bcolor = (timeval*1000)*255;
 	if (Rcolor >= 255)
 	    Rcolor = Gcolor = Bcolor = 254;
 	if (Rcolor <= 1)
 	    Rcolor = Gcolor = Bcolor = 2;
-    } else if (time > 0.01) {
+    } else if (timeval > 0.01) {
 	Rcolor = Gcolor = Bcolor = 255;
     } else {     /* Error occured with time, color pixel Green */
 	Rcolor = Bcolor = 0;
@@ -264,7 +263,7 @@ timeTable_singleProcess(struct application *ap, fastf_t **timeTable, fastf_t *ti
  * heat graph based on time taken for each pixel.
  */
 void 
-timeTable_process(fastf_t **timeTable, struct application *ap, FBIO *fbp)
+timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *fbp)
 {
     fastf_t maxTime = -MAX_FASTF;		/* The 255 value */
     fastf_t minTime = MAX_FASTF; 		/* The 1 value */
@@ -275,7 +274,13 @@ timeTable_process(fastf_t **timeTable, struct application *ap, FBIO *fbp)
     RGBpixel p;					/* Pixel colors for particular pixel */
     int maxX = width;
     int maxY = height; 	/* Maximum render size, uses evil globals */
-    
+    int Rcolor = 0;
+    int Gcolor = 0;
+    int Bcolor = 0;
+    int npix = 0;
+    int zoomH = 0;
+    int zoomW = 0;
+
     /* The following loop will work as follows, it will loop through
      * timeTable and search for pixels which have a non-negative value.
      * Once a value is found, it will assign a color value from 1-255,
@@ -286,7 +291,7 @@ timeTable_process(fastf_t **timeTable, struct application *ap, FBIO *fbp)
     bu_log("MaxX =%d MaxY =%d\n", maxX, maxY);
     for (x = 0; x < maxX; x++) {
 	for (y = 0; y < maxY; y++) {
-	    if (timeTable[x][y] != -1) {
+	    if (!(timeTable[x][y] < 0.0)) {
 		/* Semaphore acquire goes here */
 		if (timeTable[x][y] > maxTime)
 		    maxTime = timeTable[x][y];
@@ -301,12 +306,7 @@ timeTable_process(fastf_t **timeTable, struct application *ap, FBIO *fbp)
     meanTime = totalTime / pixels;
     range = maxTime - minTime;
     bu_log("Time:%lf Max = %lf Min = %lf Mean = %lf Range = %lf\n", totalTime, maxTime, minTime, meanTime, range);
-    
-    int Rcolor = 0;
-    int Gcolor = 0;
-    int Bcolor = 0;
-    int npix = 0;
-    
+
     /* Now fill out the framebuffer with the Heat Graph information */
 
     for (x = 0; x < maxX; x++) {
@@ -317,10 +317,11 @@ timeTable_process(fastf_t **timeTable, struct application *ap, FBIO *fbp)
 		Gcolor = 255;
 		Bcolor = 0;
 	    }
-	    if (timeTable[x][y] == minTime) {
+	    if (timeTable[x][y] < minTime || EQUAL(timeTable[x][y], minTime)) {
 		Rcolor = Gcolor = Bcolor = 1;
 	    }
-	    if (timeTable[x][y] > minTime && timeTable[x][y] <= maxTime) {
+	    if (timeTable[x][y] > minTime
+		&& (timeTable[x][y] < maxTime || EQUAL(timeTable[x][y], maxTime))) {
 		Rcolor = Gcolor = Bcolor = (255/range)*timeTable[x][y];
 	    }
 	    if (timeTable[x][y] > maxTime)
@@ -339,8 +340,6 @@ timeTable_process(fastf_t **timeTable, struct application *ap, FBIO *fbp)
 	    }
  	}
     }
-    int zoomH = 0;
-    int zoomW = 0;
     zoomH = fb_getheight(fbp) / height;
     zoomW = fb_getwidth(fbp) / width;
     (void)fb_view(fbp, width/2, height/2, zoomH, zoomW);

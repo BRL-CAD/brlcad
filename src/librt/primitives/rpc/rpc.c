@@ -1183,9 +1183,9 @@ rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (mat == NULL) mat = bn_mat_identity;
 
     if (dbip->dbi_version < 0) {
-	rt_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
-	rt_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
-	rt_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
+	flip_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
+	flip_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
+	flip_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
     } else {
 	VMOVE(v1, &rp->s.s_values[0*3]);
 	VMOVE(v2, &rp->s.s_values[1*3]);
@@ -1434,9 +1434,8 @@ rt_rpc_ifree(struct rt_db_internal *ip)
  *
  */
 int
-rt_rpc_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_rpc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

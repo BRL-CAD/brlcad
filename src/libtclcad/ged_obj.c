@@ -762,6 +762,7 @@ static struct go_cmdtab go_cmds[] = {
     {"eye_pos",	"[x y z]", 5, go_view_func_plus, ged_eye_pos},
     {"faceplate",	"center_dot|prim_labels|view_params|view_scale color|draw [val(s)]", GO_UNLIMITED, go_faceplate, GED_FUNC_PTR_NULL},
     {"facetize",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_facetize},
+    {"fb2pix",  	"[-h -i -c] [-s squaresize] [-w width] [-n height] [file.pix]", GO_UNLIMITED, go_view_func, ged_fb2pix},
     {"fontsize",	"[fontsize]", 3, go_fontsize, GED_FUNC_PTR_NULL},
     {"form",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_form},
     {"fracture",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_fracture},
@@ -856,6 +857,7 @@ static struct go_cmdtab go_cmds[] = {
     {"pathlist",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_pathlist},
     {"paths",	(char *)0, GO_UNLIMITED, go_pass_through_func, ged_pathsum},
     {"perspective",	"[angle]", 3, go_view_func_plus, ged_perspective},
+    {"pix2fb",  	"[options] [file.pix]", GO_UNLIMITED, go_view_func, ged_pix2fb},
     {"plot",	"[options] file.pl", 16, go_view_func, ged_plot},
     {"pmat",	"[mat]", 3, go_view_func, ged_pmat},
     {"pmodel2view",	"vname", 2, go_view_func, ged_pmodel2view},
@@ -5265,7 +5267,6 @@ go_mouse_rect(struct ged *gedp,
     char *av[5];
     int x, y;
     int dx, dy;
-    int half_wMh;
     struct bu_vls dx_vls, dy_vls;
     struct ged_dm_view *gdvp;
 
@@ -5299,9 +5300,8 @@ go_mouse_rect(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    half_wMh = (gdvp->gdv_dmp->dm_width - gdvp->gdv_dmp->dm_height) * 0.5;
     dx = x - gdvp->gdv_view->gv_prevMouseX;
-    dy = gdvp->gdv_dmp->dm_height - y + half_wMh - gdvp->gdv_view->gv_prevMouseY;
+    dy = gdvp->gdv_dmp->dm_height - y - gdvp->gdv_view->gv_prevMouseY;
 
     bu_vls_init(&dx_vls);
     bu_vls_init(&dy_vls);
@@ -6705,7 +6705,6 @@ go_rect_mode(struct ged *gedp,
     int ac;
     char *av[5];
     int x, y;
-    int half_wMh;
     struct bu_vls bindings;
     struct bu_vls x_vls, y_vls;
     struct ged_dm_view *gdvp;
@@ -6742,9 +6741,8 @@ go_rect_mode(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    half_wMh = (gdvp->gdv_dmp->dm_width - gdvp->gdv_dmp->dm_height) * 0.5;
     gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = gdvp->gdv_dmp->dm_height - y + half_wMh;
+    gdvp->gdv_view->gv_prevMouseY = gdvp->gdv_dmp->dm_height - y;
     gdvp->gdv_view->gv_mode = GED_RECTANGLE_MODE;
 
     ac = 4;
@@ -8460,6 +8458,7 @@ go_view_func_common(struct ged *gedp,
 
     /* Copy argv into av while skipping argv[1] (i.e. the view name) */
     gedp->ged_gvp = gdvp->gdv_view;
+    gedp->ged_fbsp = &gdvp->gdv_fbs;
     gedp->ged_refresh_clientdata = (void *)gdvp;
     av[0] = (char *)argv[0];
     ac = argc-1;
@@ -8619,7 +8618,7 @@ go_drawDList(struct dm *dmp, struct bu_list *hdlp)
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 		/* already drawn above */
-		if (NEAR_ZERO(sp->s_transparency - 1.0, SMALL_FASTF))
+		if (ZERO(sp->s_transparency - 1.0))
 		    continue;
 
 		if (line_style != sp->s_soldash) {
@@ -8816,7 +8815,7 @@ go_draw(struct ged_dm_view *gdvp)
 	VSET(l, -1.0, -1.0, -1.0);
 	VSET(h, 1.0, 1.0, 200.0);
 
-	if (NEAR_ZERO(gdvp->gdv_view->gv_eye_pos[Z] - 1.0, SMALL_FASTF)) {
+	if (ZERO(gdvp->gdv_view->gv_eye_pos[Z] - 1.0)) {
 	    /* This way works, with reasonable Z-clipping */
 	    ged_persp_mat(perspective_mat, gdvp->gdv_view->gv_perspective,
 			  (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
@@ -9009,7 +9008,9 @@ go_refresh_view(struct ged_dm_view *gdvp)
 	    fb_refresh(gdvp->gdv_fbs.fbs_fbp,
 		       gdvp->gdv_view->gv_rect.grs_pos[X], gdvp->gdv_view->gv_rect.grs_pos[Y],
 		       gdvp->gdv_view->gv_rect.grs_dim[X], gdvp->gdv_view->gv_rect.grs_dim[Y]);
-	    dm_draw_rect(gdvp->gdv_dmp, &gdvp->gdv_view->gv_rect);
+
+	    if (gdvp->gdv_view->gv_rect.grs_line_width)
+		dm_draw_rect(gdvp->gdv_dmp, &gdvp->gdv_view->gv_rect);
 	} else
 	    fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
 		       gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);

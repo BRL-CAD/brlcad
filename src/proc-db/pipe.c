@@ -667,7 +667,7 @@ main(int argc, char **argv)
     printf("append %s to your target description using 'concat' in mged\n", argv[bu_optind]);
 
     k = 0.0;
-    while (k == 0.0) {
+    while (ZERO(k)) {
 	printf("UNITS? (ft, in, m, cm, default is millimeters) ");
 	bu_fgets(units, sizeof(units), stdin);
 	switch (units[0]) {

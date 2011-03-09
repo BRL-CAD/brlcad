@@ -29,7 +29,7 @@
 #include "common.h"
 
 #include <stdio.h>
-#include <math.h>
+#include "vmath.h"
 
 
 /*  Subroutine to rotate a point, given a point (3 coordinates)  */

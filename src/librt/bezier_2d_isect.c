@@ -286,7 +286,7 @@ ComputeXIntercept(
     denom = (V[degree][X] - V[0][X]) * ray_dir[Y] -
 	(V[degree][Y] - V[0][Y]) * ray_dir[X];
 
-    if ( NEAR_ZERO( denom, SMALL_FASTF ) )
+    if ( ZERO(denom) )
 	return 0;
 
     beta = (V[0][Y] * ray_dir[X] - V[0][X] * ray_dir[Y] +

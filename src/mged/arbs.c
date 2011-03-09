@@ -139,7 +139,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 	switch (argv[7+3*i][0]) {
 	    case 'x':
-		if (NEAR_ZERO(norm[0], SMALL_FASTF)) {
+		if (ZERO(norm[0])) {
 		    Tcl_AppendResult(interp, "X not unique in this face\n", (char *)NULL);
 		    return TCL_ERROR;
 		}
@@ -160,7 +160,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		break;
 
 	    case 'y':
-		if (NEAR_ZERO(norm[1], SMALL_FASTF)) {
+		if (ZERO(norm[1])) {
 		    Tcl_AppendResult(interp, "Y not unique in this face\n", (char *)NULL);
 		    return TCL_ERROR;
 		}
@@ -181,7 +181,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		break;
 
 	    case 'z':
-		if (NEAR_ZERO(norm[2], SMALL_FASTF)) {
+		if (ZERO(norm[2])) {
 		    Tcl_AppendResult(interp, "Z not unique in this face\n", (char *)NULL);
 		    return TCL_ERROR;
 		}
@@ -213,7 +213,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
     thick = atof(argv[7+3*3]);
-    if (NEAR_ZERO(thick, SMALL_FASTF)) {
+    if (ZERO(thick)) {
 	Tcl_AppendResult(interp, "thickness = 0.0\n", (char *)NULL);
 	return TCL_ERROR;
     }

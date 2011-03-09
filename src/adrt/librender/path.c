@@ -119,7 +119,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 		VUNITIZE(T);
 
 		/* Form Basis X */
-		bax[0] = NEAR_ZERO(T[0],SMALL_FASTF) || NEAR_ZERO(T[1],SMALL_FASTF) ? -T[1] : 1.0;
+		bax[0] = ZERO(T[0]) || ZERO(T[1]) ? -T[1] : 1.0;
 		bax[1] = T[0];
 		bax[2] = 0;
 		VUNITIZE(bax);

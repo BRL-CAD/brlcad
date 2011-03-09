@@ -124,43 +124,42 @@ typedef struct attributes {
 
 extern attr_table a_tab;
 
-extern struct rt_i *rtip;
-
 extern void ae2dir(void);
 extern void attrib_add(char *a, int *prep);
 extern void attrib_flush(void);
 extern void attrib_print(void);
-extern void az_el(char *buffer, com_table *ctp);
-extern void backout(char *buffer, com_table *ctp);
-extern void bot_minpieces();
+extern void az_el(char *buffer, com_table *ctp, struct rt_i *rtip);
+extern void backout(char *buffer, com_table *ctp, struct rt_i *rtip);
+extern void bot_minpieces(char *buffer, com_table *ctp, struct rt_i *rtip);
+extern void bot_mintie(char *buffer, com_table *ctp, struct rt_i *rtip);
 extern int check_conv_spec(outitem *oip);
 extern void default_ospec(void);
 extern void dir2ae(void);
-extern void dir_vect(char *buffer, com_table *ctp);
-extern void direct_output(const char* buffer, com_table* ctp);
+extern void dir_vect(char *buffer, com_table *ctp, struct rt_i *rtip);
+extern void direct_output(const char* buffer, com_table* ctp, struct rt_i *rtip);
 extern void do_overlap_claims();
 extern void do_rt_gettrees(struct rt_i *, char **object_name, int nm_objects, int *do_prep);
-extern void dump_state(const char* buffer, com_table* ctp);
-extern void format_output(const char* buffer, com_table* ctp);
+extern void dump_state(const char* buffer, com_table* ctp, struct rt_i *rtip);
+extern void format_output(const char* buffer, com_table* ctp, struct rt_i *rtip);
 extern com_table *get_comtab_ent(char *pattern, int pat_len);
 extern void grid2targ(void);
-extern void grid_coor(char *buffer, com_table *ctp);
-extern void interact(int input_source, void *sPtr);
-extern void load_state(char *buffer, com_table *ctp);
+extern void grid_coor(char *buffer, com_table *ctp, struct rt_i *rtip);
+extern void interact(int input_source, void *sPtr, struct rt_i *rtip);
+extern void load_state(char *buffer, com_table *ctp, struct rt_i *rtip);
 extern void nirt_units();
-extern void print_item(char *buffer, com_table *ctp);
+extern void print_item(char *buffer, com_table *ctp, struct rt_i *rtip);
 extern void printusage(void);
 extern void quit();
-extern void read_mat(void);
+extern void read_mat(struct rt_i *rtip);
 extern void report(int outcom_type);
 extern void set_diameter(struct rt_i *);
 extern void sh_esc(char *buffer);
-extern void shoot(char *buffer, com_table *ctp);
+extern void shoot(char *buffer, com_table *ctp, struct rt_i *rtip);
 extern void show_menu();
-extern void state_file(const char* buffer, com_table* ctp);
+extern void state_file(const char* buffer, com_table* ctp, struct rt_i *rtip);
 extern void targ2grid(void);
-extern void target_coor(char *buffer, com_table *ctp);
-extern void use_air(char *buffer, com_table *ctp);
+extern void target_coor(char *buffer, com_table *ctp, struct rt_i *rtip);
+extern void use_air(char *buffer, com_table *ctp, struct rt_i *rtip);
 
 /* main driver needs to get at these, even though they're command-specific */
 extern void cm_libdebug();

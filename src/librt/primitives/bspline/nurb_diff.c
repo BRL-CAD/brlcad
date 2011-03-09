@@ -172,7 +172,7 @@ rt_nurb_mesh_diff(int order, const fastf_t *o_pts, fastf_t *n_pts, const fastf_t
     for (i = 1; i < o_size; i++) {
 	denom = knots[ i + order - 1] - knots[i];
 	for (k = 0; k < coords; k++) {
-	    if (NEAR_ZERO(denom, SMALL_FASTF))
+	    if (ZERO(denom))
 		n_pts[k] = 0.0;
 	    else
 		n_pts[k] = (order - 1) *

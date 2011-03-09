@@ -48,6 +48,21 @@ extern short flip_short(short s);
  */
 extern fastf_t flip_dbfloat(dbfloat_t d);
 
+/**
+ * function that flips a dbfloat_t[3] vector into fastf_t[3]
+ */
+extern void flip_fastf_float(fastf_t *ff, const dbfloat_t *fp, int n, int flip);
+
+/**
+ * function that flips a dbfloat_t[16] matrix into fastf_t[16]
+ */
+extern void flip_mat_dbmat(fastf_t *ff, const dbfloat_t *dbp, int flip);
+
+/**
+ * function that flips a fastf_t[16] matrix into dbfloat_t[16]
+ */
+extern void flip_dbmat_mat(dbfloat_t *dbp, const fastf_t *ff);
+
 
 __END_DECLS
 

@@ -411,7 +411,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		if (fabs(D) < SMALL)
 		    D = 0.0;
 
-		if (NEAR_ZERO(B, SMALL_FASTF) && NEAR_ZERO(D, SMALL_FASTF) && NEAR_ZERO(E, SMALL_FASTF))
+		if (ZERO(B) && ZERO(D) && ZERO(E))
 		    type = 1;
 		else
 		    bu_log("Entity #%d is an incorrectly formatted ellipse\n", curve);
@@ -421,7 +421,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 	    a = A*C - B*B/4.0;
 	    if (fabs(a) < 1.0  && fabs(a) > TOL) {
 		a = fabs(A);
-		if (fabs(B)<a && !NEAR_ZERO(B, SMALL_FASTF))
+		if (fabs(B)<a && !ZERO(B))
 		    a = fabs(B);
 		if (fabs(C)<a)
 		    a = fabs(C);
@@ -438,7 +438,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		/* check for type of conic */
 		del = A*(C*F-E*E/4.0)-0.5*B*(B*F/2.0-D*E/4.0)+0.5*D*(B*E/4.0-C*D/2.0);
 		I = A+C;
-		if (NEAR_ZERO(del, SMALL_FASTF)) {
+		if (ZERO(del)) {
 		    /* not a conic */
 		    bu_log("Entity #%d, claims to be conic arc, but isn't\n", curve);
 		    break;
@@ -446,7 +446,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		    type = 1; /* ellipse */
 		else if (a < 0.0)
 		    type = 2; /* hyperbola */
-		else if (NEAR_ZERO(a, SMALL_FASTF))
+		else if (ZERO(a))
 		    type = 3; /* parabola */
 		else {
 		    /* imaginary ellipse */
@@ -566,7 +566,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 
 		    /* theta is angle that the curve axis is rotated about
 		       the origin from the x-axis */
-		    if (!NEAR_ZERO(B, SMALL_FASTF))
+		    if (!ZERO(B))
 			theta = 0.5*atan2(B, A-C);
 		    else
 			theta = 0.0;
@@ -619,7 +619,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		    if (type == 1) {
 			/* ellipse */
 			alpha = atan2(a*v1[1], b*v1[0]);
-			if (NEAR_ZERO(beta, SMALL_FASTF)) {
+			if (ZERO(beta)) {
 			    beta = atan2(a*v2[1], b*v2[0]);
 			    beta = beta - alpha;
 			}

@@ -1525,10 +1525,10 @@ BC_CONFIGURE_STAGE([headers], [4 of 9])
 
 # make our minimum compliance goal explicit (needs to be tested here
 # so header files and types are tested properly)
-BC_COMPILER_AND_LINKER_RECOGNIZES([-std=c99], [cstd], [no])
+BC_COMPILER_AND_LINKER_RECOGNIZES([-std=gnu99], [cstd], [no])
 STD_C99_FLAGS=""
 if test "x$bc_cstd_works" = "xyes" ; then
-   STD_C99_FLAGS="-std=c99"
+   STD_C99_FLAGS="-std=gnu99"
 fi
 AC_SUBST(STD_C99_FLAGS)
 
@@ -2307,10 +2307,12 @@ AC_CHECK_FUNCS(\
 	getloadavg \
 	getopt_long \
 	getprogname \
+	htonll \
 	kill \
 	lrand48 \
 	memset \
 	mkstemp \
+	ntohll \
 	pipe \
 	popen \
 	realpath \
@@ -2936,7 +2938,7 @@ int main() {
     int argl = 1, cow = 0;
     interp = Tcl_CreateInterp();
 #define ATTEMPT(try,fail) if(try) { fprintf(stderr, fail": %s\n", \
-	interp->result); return -1; }
+	Tcl_GetStringResult(interp)); return -1; }
     ATTEMPT(Tcl_Init(interp) == TCL_ERROR,"Tcl_Init returned error");
     ATTEMPT(Tk_ParseArgv(interp, NULL, &argl, arg, argtbl,
  	TK_ARGV_DONT_SKIP_FIRST_ARG) != TCL_OK, "Tk_ParseArgv");
@@ -3181,19 +3183,19 @@ int main() {
     char *b = NULL;
     interp = Tcl_CreateInterp();
     if (Tcl_Init(interp) == TCL_ERROR) {
-	printf("TCL interpreter failed to init: %s\n", interp->result);
+	printf("TCL interpreter failed to init: %s\n", Tcl_GetStringResult(interp));
 	return 1;
     }
     if (Itcl_Init(interp) == TCL_ERROR) {
-	printf("ITCL interp failed to initaliaze: %s\n", interp->result);
+	printf("ITCL interp failed to initaliaze: %s\n", Tcl_GetStringResult(interp));
 	return 1;
     }
     res = Tcl_Eval(interp, cmd);
     if ( res != TCL_OK) {
-	printf("Failed to load Iwidgets: %s\n", interp->result);
+	printf("Failed to load Iwidgets: %s\n", Tcl_GetStringResult(interp));
 	if(Tcl_Eval(interp, "package names") == TCL_ERROR)
 	    return 1;
-	while(b=strtok(b?NULL:interp->result," "))
+	while(b=strtok(b?NULL:Tcl_GetStringResult(interp)," "))
 	  if(!strncmp(b,"Iwidgets",8))
 	    return 0;
         return 1;
@@ -3881,6 +3883,10 @@ if test "x$host_os" = "xirix6.5" ; then
 	CFLAGS="$CFLAGS -DIRIX=6"
     fi
 fi
+
+# XXX want to include strict flags pervasively throughout if strict
+# building is enabled.  alas, can't enable this until src/other has
+# NOWARN (-w) added to the build: CFLAGS="$CFLAGS \${STRICT_FLAGS}"
 
 dnl search the BRL-CAD include directory (required for non-srcdir builds).
 dnl should come after the system services checks otherwise or our headers

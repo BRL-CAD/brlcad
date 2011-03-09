@@ -1733,7 +1733,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
     goal -= 4 + 2 * (xip->w + xip->n);
 
     /* Apply relative tolerance, if specified */
-    if (!NEAR_ZERO(ttol->rel, SMALL_FASTF)) {
+    if (!ZERO(ttol->rel)) {
 	size_t rstep;
 	rstep = xip->w;
 	V_MAX(rstep, xip->n);
@@ -2166,9 +2166,8 @@ rt_hf_ifree(struct rt_db_internal *ip)
  *
  */
 int
-rt_hf_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_hf_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

@@ -158,4 +158,4 @@ typedef int celt;		/* Type to hold chr, or NOCELT */
  * And pick up the standard header.
  */
 
-#include "regex.h"
+#include "regextcl.h"

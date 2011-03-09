@@ -26,15 +26,13 @@
 
 #include "common.h"
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  include <winsock2.h>
-#endif
+#include "bin.h"
 #include "bio.h"
 
-#include "tcl.h"
+#include "itcl.h"
 
 #ifdef BWISH
-#  include "tk.h"
+#  include "itk.h"
 #  include "dm.h"
 #  include "fb.h"
 #endif
@@ -59,14 +57,19 @@ Cad_AppInit(Tcl_Interp *interp)
     tclcad_auto_path(interp);
 
 /* Initialize [incr Tcl] */
-    if (Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
+    /* NOTE: Calling "package require Itcl" here is apparently
+     * insufficient without other changes elsewhere.  The Combination
+     * Editor in mged fails with an iwidgets class already loaded
+     * error if we don't perform Itcl_Init() here.
+     */
+    if (Itcl_Init(interp) == TCL_ERROR) {
 	bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 
 #ifdef BWISH
 /* Initialize [incr Tk] */
-    if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
+    if (Itk_Init(interp) == TCL_ERROR) {
 	bu_log("Itk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }

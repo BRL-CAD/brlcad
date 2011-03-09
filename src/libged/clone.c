@@ -307,15 +307,15 @@ copy_v4_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 		    rp->s.s_values[j] = -rp->s.s_values[j];
 	    }
 	    /* translate */
-	    if (!NEAR_ZERO(state->trans[W], SMALL_FASTF))
+	    if (!ZERO(state->trans[W]))
 		/* assumes primitive's first parameter is its position */
 		VADD2(rp->s.s_values, rp->s.s_values, state->trans);
 	    /* rotate */
-	    if (!NEAR_ZERO(state->rot[W], SMALL_FASTF)) {
+	    if (!ZERO(state->rot[W])) {
 		mat_t r;
 		vect_t vec, ovec;
 
-		if (!NEAR_ZERO(state->rpnt[W], SMALL_FASTF))
+		if (!ZERO(state->rpnt[W]))
 		    VSUB2(rp->s.s_values, rp->s.s_values, state->rpnt);
 		MAT_IDN(r);
 		bn_mat_angles(r, state->rot[X], state->rot[Y], state->rot[Z]);
@@ -324,7 +324,7 @@ copy_v4_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 		    MAT4X3VEC(ovec, r, vec);
 		    VMOVE(rp->s.s_values+j, ovec);
 		}
-		if (!NEAR_ZERO(state->rpnt[W], SMALL_FASTF))
+		if (!ZERO(state->rpnt[W]))
 		    VADD2(rp->s.s_values, rp->s.s_values, state->rpnt);
 	    }
 	} else
@@ -361,15 +361,15 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
     }
 
     /* translate */
-    if (!NEAR_ZERO(state->trans[W], SMALL_FASTF))
+    if (!ZERO(state->trans[W]))
 	MAT_DELTAS_ADD_VEC(matrix, state->trans);
 
     /* rotation */
-    if (!NEAR_ZERO(state->rot[W], SMALL_FASTF)) {
+    if (!ZERO(state->rot[W])) {
     	mat_t m2, t;
 
 	bn_mat_angles(m2, state->rot[X], state->rot[Y], state->rot[Z]);
-	if (!NEAR_ZERO(state->rpnt[W], SMALL_FASTF)) {
+	if (!ZERO(state->rpnt[W])) {
 	    mat_t m3;
 
 	    bn_mat_xform_about_pt(m3, m2, state->rpnt);

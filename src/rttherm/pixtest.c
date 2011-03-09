@@ -38,6 +38,14 @@
 #include "spectrum.h"
 
 
+extern void make_ntsc_xyz2rgb(mat_t xyz2rgb);
+extern void
+spect_curve_to_xyz(point_t xyz,
+		   const struct bn_tabdata *tabp,
+		   const struct bn_tabdata *cie_x,
+		   const struct bn_tabdata *cie_y,
+		   const struct bn_tabdata *cie_z);
+
 extern struct bn_table *spectrum;
 struct bn_tabdata *curve;
 
@@ -65,12 +73,16 @@ main(int ac, char **av)
     float src[3];
     point_t dest;
     point_t xyz;
+    size_t ret;
+
+    if (ac > 1)
+	bu_log("Usage: %s\n", av[0]);
 
     spectrum = bn_table_make_uniform(nsamp, min_nm, max_nm);
     BN_GET_TABDATA(curve, spectrum);
 
     rt_spect_make_CIE_XYZ(&cie_x, &cie_y, &cie_z, spectrum);
-    rt_make_ntsc_xyz2rgb(xyz2rgb);
+    make_ntsc_xyz2rgb(xyz2rgb);
 
     for (;;) {
 	if (fread(rgb, 1, 3, stdin) != 3) break;
@@ -80,7 +92,7 @@ main(int ac, char **av)
 
 	rt_spect_reflectance_rgb(curve, src);
 
-	rt_spect_curve_to_xyz(xyz, curve, cie_x, cie_y, cie_z);
+	spect_curve_to_xyz(xyz, curve, cie_x, cie_y, cie_z);
 
 	MAT3X3VEC(dest, xyz2rgb, xyz);
 
@@ -99,8 +111,12 @@ main(int ac, char **av)
 
 	VSCALE(rgb, dest, 255.0);
 
-	fwrite(rgb, 1, 3, stdout);
+	ret = fwrite(rgb, 1, 3, stdout);
+	if (ret != 3)
+	    perror("fwrite");
     }
+
+    return 0;
 }
 
 

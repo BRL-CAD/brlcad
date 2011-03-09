@@ -3139,12 +3139,12 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	error_increment = 0;
 	angle_increment = 0;
     } else {
-	if (NEAR_ZERO((max_error - min_error), SMALL_FASTF))
+	if (ZERO((max_error - min_error)))
 	    error_increment = 0;
 	else
 	    error_increment = (max_error - min_error) / (double)max_to_min_steps;
 
-	if (NEAR_ZERO((max_angle_cntrl - min_angle_cntrl), SMALL_FASTF))
+	if (ZERO((max_angle_cntrl - min_angle_cntrl)))
 	    angle_increment = 0;
 	else
 	    angle_increment = (max_angle_cntrl - min_angle_cntrl) / (double)max_to_min_steps;

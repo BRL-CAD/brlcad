@@ -180,7 +180,7 @@ db5_type_tag_from_codes(char **tag, const int major, const int minor)
 
 
 int
-db5_type_descrip_from_codes(char **descrip, const int major,const int minor)
+db5_type_descrip_from_codes(char **descrip, const int major, const int minor)
 {
     register struct db5_type *tp;
     register int found_minors = 0;
@@ -431,19 +431,18 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 	attr_type = db5_standardize_attribute(avpp->name);
 	switch (attr_type) {
 	    case ATTR_REGION:
-		    /* In the case of regions, values like Yes and 1 are causing trouble
-		     * somewhere in the code.  Do "R" for all affirmative cases and
-		     * strip any non-affirmative cases out of the avs */
-		    if (BU_STR_EQUAL(avpp->value, "Yes") || BU_STR_EQUAL(avpp->value, "R") || BU_STR_EQUAL(avpp->value, "1") ||
-			BU_STR_EQUAL(avpp->value, "Y") || BU_STR_EQUAL(avpp->value, "y")) {
-			(void)bu_avs_add(&avstmp, "region", "R");
-			has_standard[ATTR_REGION] = 1;
-		    }
+		/* In the case of regions, values like Yes and 1 are causing trouble
+		 * somewhere in the code.  Do "R" for all affirmative cases and
+		 * strip any non-affirmative cases out of the avs */
+		if (bu_str_true(avpp->value)) {
+		    (void)bu_avs_add(&avstmp, "region", "R");
+		    has_standard[ATTR_REGION] = 1;
+		}
 		break;
 	    case ATTR_REGION_ID:
 		if (has_standard[ATTR_REGION_ID] != 1) {
-			(void)bu_avs_add(&avstmp, "region_id", bu_strdup(avpp->value));
-			has_standard[ATTR_REGION_ID] = 1;
+		    (void)bu_avs_add(&avstmp, "region_id", bu_strdup(avpp->value));
+		    has_standard[ATTR_REGION_ID] = 1;
 		} else {
 		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
 		}
@@ -457,40 +456,40 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 		}
 		break;
 	    case ATTR_AIR:
-		    if (has_standard[ATTR_AIR] != 1) {
-			(void)bu_avs_add(&avstmp, "air", bu_strdup(avpp->value));
-			has_standard[ATTR_AIR] = 1;
+		if (has_standard[ATTR_AIR] != 1) {
+		    (void)bu_avs_add(&avstmp, "air", bu_strdup(avpp->value));
+		    has_standard[ATTR_AIR] = 1;
 		} else {
 		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
 		}
 		break;
 	    case ATTR_LOS:
-		    if (has_standard[ATTR_LOS] != 1) {
-			(void)bu_avs_add(&avstmp, "los", bu_strdup(avpp->value));
+		if (has_standard[ATTR_LOS] != 1) {
+		    (void)bu_avs_add(&avstmp, "los", bu_strdup(avpp->value));
 		    has_standard[ATTR_LOS] = 1;
 		} else {
 		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
 		}
 		break;
 	    case ATTR_COLOR:
-		    if (has_standard[ATTR_COLOR] != 1) {
-			(void)bu_avs_add(&avstmp, "color", bu_strdup(avpp->value));
-			has_standard[ATTR_COLOR] = 1;
+		if (has_standard[ATTR_COLOR] != 1) {
+		    (void)bu_avs_add(&avstmp, "color", bu_strdup(avpp->value));
+		    has_standard[ATTR_COLOR] = 1;
 		} else {
 		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
 		}
 		break;
 	    case ATTR_SHADER:
-		    if (has_standard[ATTR_SHADER] != 1) {
-			(void)bu_avs_add(&avstmp, "oshader", bu_strdup(avpp->value));
-			has_standard[ATTR_SHADER] = 1;
+		if (has_standard[ATTR_SHADER] != 1) {
+		    (void)bu_avs_add(&avstmp, "oshader", bu_strdup(avpp->value));
+		    has_standard[ATTR_SHADER] = 1;
 		} else {
 		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
 		}
 		break;
 	    case ATTR_INHERIT:
-		    if (has_standard[ATTR_INHERIT] != 1) {
-			(void)bu_avs_add(&avstmp, "inherit", bu_strdup(avpp->value));
+		if (has_standard[ATTR_INHERIT] != 1) {
+		    (void)bu_avs_add(&avstmp, "inherit", bu_strdup(avpp->value));
 		    has_standard[ATTR_INHERIT] = 1;
 		} else {
 		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
@@ -498,12 +497,12 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 		break;
 	    default:
 		/* not a standard attribute, just copy it*/
-		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
+		(void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
 		break;
 	}
     }
     bu_avs_free(avs);
-    bu_avs_merge(avs,&avstmp);
+    bu_avs_merge(avs, &avstmp);
     bu_avs_free(&avstmp);
 }
 
@@ -527,8 +526,7 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 
 	/* region flag */
 	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "region"));
-	if (BU_STR_EQUAL(bu_vls_addr(&newval), "Yes") || BU_STR_EQUAL(bu_vls_addr(&newval), "R") || BU_STR_EQUAL(bu_vls_addr(&newval), "1") ||
-	    BU_STR_EQUAL(bu_vls_addr(&newval), "Y") || BU_STR_EQUAL(bu_vls_addr(&newval), "y")) {
+	if (bu_str_true(bu_vls_addr(&newval))) {
 	    comb->region_flag = 1;
 	    dp->d_flags |= RT_DIR_REGION;
 	} else {
@@ -589,8 +587,7 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 
 	/* inherit */
 	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "inherit"));
-	if (BU_STR_EQUAL(bu_vls_addr(&newval), "Yes") || BU_STR_EQUAL(bu_vls_addr(&newval), "1") ||
-	    BU_STR_EQUAL(bu_vls_addr(&newval), "Y") || BU_STR_EQUAL(bu_vls_addr(&newval), "y")) {
+	if (bu_str_true(bu_vls_addr(&newval))) {
 	    comb->inherit = 1;
 	} else {
 	    comb->inherit = 0;

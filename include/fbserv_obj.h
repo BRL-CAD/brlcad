@@ -32,6 +32,7 @@
 #define MAX_CLIENTS 32
 #define MAX_PORT_TRIES 100
 #define FBS_CALLBACK_NULL (void (*)())NULL
+#define FBSERV_OBJ_NULL (struct fbserv_obj *)NULL
 
 struct fbserv_listener {
     int fbsl_fd;			/**< @brief socket to listen for connections */

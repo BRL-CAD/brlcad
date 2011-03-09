@@ -34,6 +34,7 @@
 #include "bio.h"
 
 #include "bu.h"
+#include "vmath.h"
 
 
 char	*file_name = NULL;
@@ -75,7 +76,7 @@ get_args(int argc, char **argv)
 	    case 'd':
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
-		if ( d == 0.0 ) {
+		if (ZERO(d)) {
 		    bu_exit(2, "dmod: divide by zero!\n" );
 		}
 		val[ numop++ ] = 1.0 / d;
@@ -91,7 +92,7 @@ get_args(int argc, char **argv)
 	    case 'r':
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
-		if ( d == 0.0 ) {
+		if (ZERO(d)) {
 		    bu_exit(2, "dmod: zero root!\n" );
 		}
 		val[ numop++ ] = 1.0 / d;
@@ -133,6 +134,7 @@ int main(int argc, char **argv)
 #endif
     double	arg;
     int j;
+    size_t ret;
 
     if ( !get_args( argc, argv ) || isatty(fileno(infp))
 	 || isatty(fileno(stdout)) ) {
@@ -143,6 +145,8 @@ int main(int argc, char **argv)
 	for ( i = 0; i < numop; i++ ) {
 	    arg = val[ i ];
 	    switch ( op[i] ) {
+		double d;
+
 		case ADD:
 		    bp = &buf[0];
 		    for ( j = n; j > 0; j-- ) {
@@ -158,7 +162,8 @@ int main(int argc, char **argv)
 		case POW:
 		    bp = &buf[0];
 		    for ( j = n; j > 0; j-- ) {
-			*bp++ = pow( *bp, arg );
+			d = pow( *bp, arg );
+			*bp++ = d;
 		    }
 		    break;
 		case ABS:
@@ -173,7 +178,9 @@ int main(int argc, char **argv)
 		    break;
 	    }
 	}
-	fwrite( buf, sizeof(*buf), n, stdout );
+	ret = fwrite( buf, sizeof(*buf), n, stdout );
+	if (ret != (size_t)n)
+	    perror("fwrite");
     }
 
     return 0;

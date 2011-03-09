@@ -130,10 +130,10 @@ struct bn_tabdata *rt_NTSC_b_tabdata;
  * to NTSC RGB values.
  */
 void
-rt_spect_make_NTSC_RGB(struct bn_tabdata **rp,
-		       struct bn_tabdata **gp,
-		       struct bn_tabdata **bp,
-		       const struct bn_table *tabp)
+spect_make_NTSC_RGB(struct bn_tabdata **rp,
+		    struct bn_tabdata **gp,
+		    struct bn_tabdata **bp,
+		    const struct bn_table *tabp)
 {
     BN_CK_TABLE(tabp);
 
@@ -172,7 +172,7 @@ rt_spect_make_NTSC_RGB(struct bn_tabdata **rp,
  * Gives the XYZ coordinates of the NTSC primaries and D6500 white.
  * Note:  X+Y+Z=1 for primaries (cf. equations of pg.54)
  */
-const static point_t rgb_NTSC[4] = {
+static const point_t rgb_NTSC[4] = {
     {0.670,     0.330,      0.000},     /* red */
     {0.210,     0.710,      0.080},     /* green */
     {0.140,     0.080,      0.780},     /* blue */
@@ -235,7 +235,7 @@ rt_clr__cspace_to_xyz (const point_t cspace[4],
 		ind[ii]=tmp_i;
 	    }
 	}
-	if (tmat(ind[ii], ii) == 0.0) return 0;
+	if (ZERO(tmat(ind[ii], ii))) return 0;
 
 	for (jj=ii+1; jj<=2; jj++) {
 	    mult = tmat(ind[jj], ii) / tmat(ind[ii], ii);
@@ -244,7 +244,7 @@ rt_clr__cspace_to_xyz (const point_t cspace[4],
 	    white[ind[jj]] -= white[ind[ii]] * mult;
 	}
     }
-    if (tmat(ind[2], 2) == 0.0) return 0;
+    if (ZERO(tmat(ind[2], 2))) return 0;
 
     /* back substitution to solve for scale */
     scale[ind[2]] = white[ind[2]] / tmat(ind[2], 2);
@@ -269,7 +269,7 @@ rt_clr__cspace_to_xyz (const point_t cspace[4],
 
 
 /*
- * R T _ M A K E _ N T S C _ X Y Z 2 R G B
+ * M A K E _ N T S C _ X Y Z 2 R G B
  *
  * Create the map from
  * CIE XYZ perceptual space into
@@ -277,13 +277,13 @@ rt_clr__cspace_to_xyz (const point_t cspace[4],
  * Only high-quality television-studio monitors are like this, but...
  */
 void
-rt_make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
+make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
 {
     mat_t rgb2xyz;
     point_t tst, new;
 
     if (rt_clr__cspace_to_xyz(rgb_NTSC, rgb2xyz) == 0)
-	bu_exit(EXIT_FAILURE, "rt_make_ntsc_xyz2rgb() can't initialize color space\n");
+	bu_exit(EXIT_FAILURE, "make_ntsc_xyz2rgb() can't initialize color space\n");
     bn_mat_inv(xyz2rgb, rgb2xyz);
 
 #if 1
@@ -337,15 +337,14 @@ rt_make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
  * Convenience routine.
  * Serves same function as Roy Hall's CLR_spect_to_xyz(), pg 233.
  * The normalization xyz_scale = 1.0 / bn_tabdata_area2(cie_y);
- * has been folded into rt_spect_make_CIE_XYZ();
+ * has been folded into spect_make_CIE_XYZ();
  */
 void
-rt_spect_curve_to_xyz(
-    point_t xyz,
-    const struct bn_tabdata *tabp,
-    const struct bn_tabdata *cie_x,
-    const struct bn_tabdata *cie_y,
-    const struct bn_tabdata *cie_z)
+spect_curve_to_xyz(point_t xyz,
+		   const struct bn_tabdata *tabp,
+		   const struct bn_tabdata *cie_x,
+		   const struct bn_tabdata *cie_y,
+		   const struct bn_tabdata *cie_z)
 {
     fastf_t tab_area;
 
@@ -355,7 +354,7 @@ rt_spect_curve_to_xyz(
     tab_area = bn_tabdata_area2(tabp);
     bu_log(" tab_area = %g\n", tab_area);
     if (fabs(tab_area) < VDIVIDE_TOL) {
-	bu_log("rt_spect_curve_to_xyz(): Area = 0 (no luminance) in this part of the spectrum\n");
+	bu_log("spect_curve_to_xyz(): Area = 0 (no luminance) in this part of the spectrum\n");
 	VSETALL(xyz, 0);
 	return;
     }
@@ -382,7 +381,7 @@ rt_spect_curve_to_xyz(
  * XXX This is completely wrong, don't do this.
  */
 void
-rt_spect_rgb_to_curve(struct bn_tabdata *tabp, const fastf_t *rgb, const struct bn_tabdata *ntsc_r, const struct bn_tabdata *ntsc_g, const struct bn_tabdata *ntsc_b)
+spect_rgb_to_curve(struct bn_tabdata *tabp, const fastf_t *rgb, const struct bn_tabdata *ntsc_r, const struct bn_tabdata *ntsc_g, const struct bn_tabdata *ntsc_b)
 {
     bn_tabdata_blend3(tabp,
 		      rgb[0], ntsc_r,
@@ -402,7 +401,7 @@ rt_spect_rgb_to_curve(struct bn_tabdata *tabp, const fastf_t *rgb, const struct 
  XXX Converting rgb to a curve, directly, should be easy.
 */
 void
-rt_spect_xyz_to_curve(struct bn_tabdata *tabp, const fastf_t *xyz, const struct bn_tabdata *cie_x, const struct bn_tabdata *cie_y, const struct bn_tabdata *cie_z)
+spect_xyz_to_curve(struct bn_tabdata *tabp, const fastf_t *xyz, const struct bn_tabdata *cie_x, const struct bn_tabdata *cie_y, const struct bn_tabdata *cie_z)
 {
     bn_tabdata_blend3(tabp,
 		      xyz[X], cie_x,
@@ -436,38 +435,6 @@ bn_table_make_visible_and_uniform(int num, double first, double last, int vis_ns
     return new;
 }
 
-
-#if 0
-main()
-{
-    struct bn_tabdata *x, *y, *z;
-    struct bn_table *tabp;
-
-#if 0
-    tabp = bn_table_make_uniform(200, 360.0, 800.0);
-
-    rt_spect_make_CIE_XYZ(&x, &y, &z, tabp);
-
-    bn_print_table_and_tabdata("/tmp/x", x);
-    bn_print_table_and_tabdata("/tmp/y", y);
-    bn_print_table_and_tabdata("/tmp/z", z);
-#endif
-
-    tabp = bn_table_make_uniform(100, 3.0, 3000.0);
-
-    BN_GET_TABDATA(x, tabp);
-    rt_spect_black_body_points(x, 10000.0);
-    bn_print_table_and_tabdata("/tmp/x", x);
-
-    BN_GET_TABDATA(y, tabp);
-    rt_spect_black_body(y, 10000.0, 3);
-    bn_print_table_and_tabdata("/tmp/y", y);
-
-    BN_GET_TABDATA(z, tabp);
-    rt_spect_black_body_fast(z, 10000.0);
-    bn_print_table_and_tabdata("/tmp/z", z);
-}
-#endif
 
 /*
  * Local Variables:

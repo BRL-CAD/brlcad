@@ -145,7 +145,7 @@ editarb(vect_t pos_model)
 	    /* must calculate edge direction */
 	    VSUB2(edge_dir, arb->pt[pt2], arb->pt[pt1]);
 	}
-	if (NEAR_ZERO(MAGNITUDE(edge_dir), SMALL_FASTF))
+	if (ZERO(MAGNITUDE(edge_dir)))
 	    goto err;
 	/* bounding planes bp1, bp2 */
 	bp1 = *edptr++;
@@ -748,7 +748,7 @@ f_edgedir(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	}
     }
 
-    if (NEAR_ZERO(MAGNITUDE(slope), SMALL_FASTF)) {
+    if (ZERO(MAGNITUDE(slope))) {
 	Tcl_AppendResult(interp, "BAD slope\n", (char *)NULL);
 	return TCL_ERROR;
     }

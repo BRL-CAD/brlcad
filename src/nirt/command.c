@@ -56,9 +56,9 @@ extern int need_prep;
 
 
 void
-bot_minpieces(char *buffer, com_table *ctp)
+bot_minpieces(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
-    int new_value;
+    long new_lvalue;
     int i=0;
 
     ctp = ctp; /* quell warning */
@@ -71,21 +71,50 @@ bot_minpieces(char *buffer, com_table *ctp)
 	return;
     }
 
-    new_value = atoi(buffer);
+    new_lvalue = atol(buffer);
 
-    if (new_value < 0) {
+    if (new_lvalue < 0) {
 	bu_log("Error: rt_bot_minpieces cannot be less than 0\n");
 	return;
     }
 
-    if (new_value != rt_bot_minpieces) {
-	rt_bot_minpieces = new_value;
+    if ((size_t)new_lvalue != rt_bot_minpieces) {
+	rt_bot_minpieces = (size_t)new_lvalue;
 	need_prep = 1;
     }
 }
 
 void
-az_el(char *buffer, com_table *ctp)
+bot_mintie(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+{
+    long new_lvalue;
+    int i=0;
+
+    ctp = ctp; /* quell warning */
+
+    while (isspace(*(buffer+i)))
+	++i;
+    if (*(buffer+i) == '\0') {
+	/* display current rt_bot_mintie */
+	bu_log("rt_bot_mintie = %d\n", rt_bot_mintie);
+	return;
+    }
+
+    new_lvalue = atol(buffer);
+
+    if (new_lvalue < 0) {
+	bu_log("Error: rt_bot_mintie cannot be less than 0\n");
+	return;
+    }
+
+    if ((size_t)new_lvalue != rt_bot_mintie) {
+	rt_bot_mintie = (size_t)new_lvalue;
+	need_prep = 1;
+    }
+}
+
+void
+az_el(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     extern int str_dbl();  /* function to convert string to double */
     int i = 0;      /* current position on the *buffer */
@@ -139,6 +168,7 @@ az_el(char *buffer, com_table *ctp)
 void
 sh_esc(char *buffer)
 {
+    int ret;
     static char *shell = "";
     static char *last_cmd = "";
 
@@ -147,9 +177,13 @@ sh_esc(char *buffer)
     }
 
     if (*buffer == '!') {
-	(void) system(last_cmd);
+	ret = system(last_cmd);
+	if (ret == -1)
+	    perror("system");
     } else if (*buffer) {
-	(void) system(buffer);
+	ret = system(buffer);
+	if (ret == -1)
+	    perror("system");
 	last_cmd = buffer;
     } else {
 	if ((*shell == '\0') && (shell = getenv("SHELL")) == 0) {
@@ -159,12 +193,14 @@ sh_esc(char *buffer)
 	    shell = "cmd.exe";
 #endif
 	}
-	(void) system(shell);
+	ret = system(shell);
+	if (ret == -1)
+	    perror("system");
     }
 }
 
 void
-grid_coor(char *buffer, com_table *ctp)
+grid_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     extern int str_dbl();  /* function to convert string to double */
     int i = 0;
@@ -222,7 +258,7 @@ grid_coor(char *buffer, com_table *ctp)
 }
 
 void
-target_coor(char *buffer, com_table *ctp)
+target_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     extern int str_dbl();  /* function to convert string to double */
     int i = 0;
@@ -273,7 +309,7 @@ target_coor(char *buffer, com_table *ctp)
 }
 
 void
-dir_vect(char *buffer, com_table *ctp)
+dir_vect(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     extern int str_dbl();  /* function to convert string to double */
     int i = 0;
@@ -340,7 +376,7 @@ show_menu()
 }
 
 void
-shoot(char *buffer, com_table *ctp)
+shoot(char *buffer, com_table *ctp, struct rt_i *rtip)
 {
     int i;
     double bov = 0.0;	/* back out value */
@@ -418,7 +454,7 @@ shoot(char *buffer, com_table *ctp)
 }
 
 void
-use_air(char *buffer, com_table *ctp)
+use_air(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     int new_use = 0;      /* current position on the *buffer */
     char response[128];
@@ -481,11 +517,10 @@ use_air(char *buffer, com_table *ctp)
 }
 
 void
-nirt_units(char *buffer, com_table *ctp)
+nirt_units(char *buffer, com_table *ctp, struct rt_i *rtip)
 {
     double tmp_dbl;
     int i = 0;      /* current position on the *buffer */
-    extern struct rt_i *rtip;
 
     double mk_cvt_factor();
 
@@ -517,7 +552,7 @@ nirt_units(char *buffer, com_table *ctp)
 }
 
 void
-do_overlap_claims(char *buffer, com_table *ctp)
+do_overlap_claims(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     int i = 0;      /* current position on the *buffer */
     int j;
@@ -554,7 +589,7 @@ do_overlap_claims(char *buffer, com_table *ctp)
 }
 
 void
-cm_attr(char *buffer, com_table *ctp)
+cm_attr(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     while (isascii(*buffer) && isspace(*buffer)) buffer++;
 
@@ -577,7 +612,7 @@ cm_attr(char *buffer, com_table *ctp)
 }
 
 void
-cm_debug(char *buffer, com_table *ctp)
+cm_debug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     char *cp = buffer;
 
@@ -600,7 +635,7 @@ cm_debug(char *buffer, com_table *ctp)
 }
 
 void
-cm_libdebug(char *buffer, com_table *ctp)
+cm_libdebug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     char *cp = buffer;
 
@@ -626,7 +661,7 @@ cm_libdebug(char *buffer, com_table *ctp)
 }
 
 void
-backout(char *buffer, com_table *ctp)
+backout(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     /* quellage */
     ctp = ctp;

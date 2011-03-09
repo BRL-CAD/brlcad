@@ -198,7 +198,7 @@ rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
     rt_nurb_free_cnurb(d2);
 
     for (j=0; j<num_coords; j++) {
-	if (NEAR_ZERO(der2[j], SMALL_FASTF))
+	if (ZERO(der2[j]))
 	    continue;
 
 	t = sqrt(2.0 * epsilon / (num_coord_factor * der2[j]));
@@ -206,7 +206,7 @@ rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
 	    final_t = t;
     }
 
-    if (NEAR_ZERO(final_t - MAX_FASTF, SMALL_FASTF))
+    if (ZERO(final_t - MAX_FASTF))
 	return -1.0;
     else
 	return final_t/2.0;

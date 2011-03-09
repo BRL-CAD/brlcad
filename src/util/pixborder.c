@@ -96,7 +96,7 @@ static int read_hsv (fastf_t *hsvp, char *buf)
 	|| (tmp[SAT] < 0.0) || (tmp[SAT] > 1.0)
 	|| (tmp[VAL] < 0.0) || (tmp[VAL] > 1.0))
 	return 0;
-    if (NEAR_ZERO(tmp[SAT], SMALL_FASTF))
+    if (ZERO(tmp[SAT]))
 	tmp[HUE] = ACHROMATIC;
     VMOVE(hsvp, tmp);
     return 1;
@@ -176,14 +176,14 @@ static void rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
     /*
      * Compute hue
      */
-    if (NEAR_ZERO(*sat, SMALL_FASTF))
+    if (ZERO(*sat))
 	*hue = ACHROMATIC;
     else {
-	if (NEAR_ZERO(red - max, SMALL_FASTF)) /* red == max */
+	if (ZERO(red - max)) /* red == max */
 	    *hue = (grn - blu) / delta;
-	else if (NEAR_ZERO(grn - max, SMALL_FASTF)) /* grn == max */
+	else if (ZERO(grn - max)) /* grn == max */
 	    *hue = 2.0 + (blu - red) / delta;
-	else if (NEAR_ZERO(blu - max, SMALL_FASTF)) /* blu == max */
+	else if (ZERO(blu - max)) /* blu == max */
 	    *hue = 4.0 + (red - grn) / delta;
 
 	/*
@@ -213,8 +213,8 @@ int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
     sat = hsv[SAT];
     val = hsv[VAL];
 
-    if (NEAR_ZERO(sat, SMALL_FASTF)) {
-	if (NEAR_ZERO(hue - ACHROMATIC, SMALL_FASTF)) { /* hue == ACHROMATIC */
+    if (ZERO(sat)) {
+	if (ZERO(hue - ACHROMATIC)) { /* hue == ACHROMATIC */
 	    VSETALL(float_rgb, val);
 	} else {
 	    (void) fprintf(stderr, "Illegal HSV (%g, %g, %g)\n",
@@ -222,7 +222,7 @@ int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 	    return 0;
 	}
     } else {
-	if (NEAR_ZERO(hue - 360.0, SMALL_FASTF)) /* hue == 360.0 */
+	if (ZERO(hue - 360.0)) /* hue == 360.0 */
 	    hue = 0.0;
 	hue /= 60.0;
 	hue_int = floor((double) hue);
@@ -284,7 +284,7 @@ static int is_interior (unsigned char *pix_rgb)
 		(! same_rgb(pix_rgb, exterior_rgb))	:
 		same_rgb(pix_rgb, interior_rgb));
     else {
-	fastf_t pix_hsv[3];
+	vect_t pix_hsv = {0.0, 0.0, 0.0};
 
 	rgb_to_hsv(pix_rgb, pix_hsv);
 	return ((colors_specified == COLORS_EXTERIOR)	?
@@ -304,7 +304,7 @@ static int is_exterior (unsigned char *pix_rgb)
 		(! same_rgb(pix_rgb, interior_rgb))	:
 		same_rgb(pix_rgb, exterior_rgb));
     else {
-	fastf_t pix_hsv[3];
+	vect_t pix_hsv = {0.0, 0.0, 0.0};
 
 	rgb_to_hsv(pix_rgb, pix_hsv);
 	return ((colors_specified == COLORS_INTERIOR)	?

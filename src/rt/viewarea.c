@@ -64,35 +64,39 @@ int rtarea_compute_centers = 0;
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"%d", 1, "compute_centers", bu_byteoffset(rtarea_compute_centers), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "cc", bu_byteoffset(rtarea_compute_centers), BU_STRUCTPARSE_FUNC_NULL},
-    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
+    {"%d", 1, "compute_centers", bu_byteoffset(rtarea_compute_centers), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "cc", bu_byteoffset(rtarea_compute_centers), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 
 const char title[] = "RT Area";
-const char usage[] = "\
-Usage:  rtarea [options] model.g objects...\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -a Az		Azimuth in degrees	(conflicts with -M)\n\
- -e Elev	Elevation in degrees	(conflicts with -M)\n\
- -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -g #		Grid cell width in millimeters (conflicts with -s)\n\
- -G #		Grid cell height in millimeters (conflicts with -s)\n\
- -J #		Jitter.  Default is off.  Any non-zero number is on\n\
- -U #		Set use_air boolean to # (default=1)\n\
- -u units	Set the display units (default=mm)\n\
- -x #		Set librt debug flags\n\
- -c             Auxillary commands (see man page)\n\
-\n\
-WARNING: rtarea may not correctly report area or center when instancing is\n\
-done at the group level. Using 'xpush' can be a workaround for this problem.\n\
-\n\
-WARNING: rtarea presently outputs in storage units (mm) by default but will\n\
-be changed to output in local units in the near future.\n\
-\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects...\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512\n");
+    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
+    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
+    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
+    bu_log(" -g #		Grid cell width in millimeters (conflicts with -s)\n");
+    bu_log(" -G #		Grid cell height in millimeters (conflicts with -s)\n");
+    bu_log(" -J #		Jitter.  Default is off.  Any non-zero number is on\n");
+    bu_log(" -U #		Set use_air boolean to # (default=1)\n");
+    bu_log(" -u units	Set the display units (default=mm)\n");
+    bu_log(" -x #		Set librt debug flags\n");
+    bu_log(" -c             Auxillary commands (see man page)\n");
+    bu_log("\n");
+    bu_log("WARNING: rtarea may not correctly report area or center when instancing is\n");
+    bu_log("done at the group level. Using 'xpush' can be a workaround for this problem.\n");
+    bu_log("\n");
+    bu_log("WARNING: rtarea presently outputs in storage units (mm) by default but will\n");
+    bu_log("be changed to output in local units in the near future.\n");
+    bu_log("\n");
+}
+
 
 struct point_list {
     struct point_list *   next;
@@ -138,7 +142,7 @@ int area_center(struct point_list *ptlist, int number, point_t *center);
  *  			V I E W _ I N I T
  */
 int
-view_init(struct application *ap, char *file, char *obj, int UNUSED(minus_o), int UNUSED(minus_F))
+view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
 {
     ap->a_hit = rayhit;
     ap->a_miss = raymiss;
@@ -452,7 +456,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
  *
  */
 int
-rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp)
+rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segHeadp))
 {
     struct point_list * temp_point_list;           /* to contain exposed points */
     struct point_list * temp_presented_point_list; /* to contain presented points */
@@ -781,17 +785,17 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
 	double factor = 1.0; /* show mm in parens by default */
 
 	/* show some common larger units in parens otherwise default to mm^2*/
-	if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
+	if (ZERO(units - 1.0)) {
 	    factor = bu_units_conversion("m");
-	} else if (NEAR_ZERO(units - 10.0, SMALL_FASTF)) {
+	} else if (ZERO(units - 10.0)) {
 	    factor = bu_units_conversion("m");
-	} else if (NEAR_ZERO(units - 100.0, SMALL_FASTF)) {
+	} else if (ZERO(units - 100.0)) {
 	    factor = bu_units_conversion("m");
-	} else if (NEAR_ZERO(units - 1000.0, SMALL_FASTF)) {
+	} else if (ZERO(units - 1000.0)) {
 	    factor = bu_units_conversion("km");
-	} else if (NEAR_ZERO(units - 25.4, SMALL_FASTF)) {
+	} else if (ZERO(units - 25.4)) {
 	    factor = bu_units_conversion("ft");
-	} else if (NEAR_ZERO(units - 304.8, SMALL_FASTF)) {
+	} else if (ZERO(units - 304.8)) {
 	    factor = bu_units_conversion("yd");
 	} else {
 		factor = bu_units_conversion("mm");
@@ -878,7 +882,7 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
     cell = (struct area *)rp->reg_udata;
 
     for (BU_LIST_FOR(cellp, area, &(cell->assembly->l)))  {
-	int counted_items;
+	int counted_items = 0;
 	listp = listHead;
 
 	if (type == PRESENTED_AREA) {
@@ -932,17 +936,17 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 	double factor = 1.0; /* show mm in parens by default */
 
 	/* show some common larger units in parens otherwise default to mm^2*/
-	if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
+	if (ZERO(units - 1.0)) {
 	    factor = bu_units_conversion("m");
-	} else if (NEAR_ZERO(units - 10.0, SMALL_FASTF)) {
+	} else if (ZERO(units - 10.0)) {
 	    factor = bu_units_conversion("m");
-	} else if (NEAR_ZERO(units - 100.0, SMALL_FASTF)) {
+	} else if (ZERO(units - 100.0)) {
 	    factor = bu_units_conversion("m");
-	} else if (NEAR_ZERO(units - 1000.0, SMALL_FASTF)) {
+	} else if (ZERO(units - 1000.0)) {
 	    factor = bu_units_conversion("km");
-	} else if (NEAR_ZERO(units - 25.4, SMALL_FASTF)) {
+	} else if (ZERO(units - 25.4)) {
 	    factor = bu_units_conversion("ft");
-	} else if (NEAR_ZERO(units - 304.8, SMALL_FASTF)) {
+	} else if (ZERO(units - 304.8)) {
 	    factor = bu_units_conversion("yd");
 	} else {
 		factor = bu_units_conversion("mm");
@@ -1039,17 +1043,17 @@ view_end(struct application *ap)
     }
 
     /* show some common larger units in parens otherwise default to mm^2*/
-    if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
+    if (ZERO(units - 1.0)) {
 	factor = bu_units_conversion("m");
-    } else if (NEAR_ZERO(units - 10.0, SMALL_FASTF)) {
+    } else if (ZERO(units - 10.0)) {
 	factor = bu_units_conversion("m");
-    } else if (NEAR_ZERO(units - 100.0, SMALL_FASTF)) {
+    } else if (ZERO(units - 100.0)) {
 	factor = bu_units_conversion("m");
-    } else if (NEAR_ZERO(units - 1000.0, SMALL_FASTF)) {
+    } else if (ZERO(units - 1000.0)) {
 	factor = bu_units_conversion("km");
-    } else if (NEAR_ZERO(units - 25.4, SMALL_FASTF)) {
+    } else if (ZERO(units - 25.4)) {
 	factor = bu_units_conversion("ft");
-    } else if (NEAR_ZERO(units - 304.8, SMALL_FASTF)) {
+    } else if (ZERO(units - 304.8)) {
 	factor = bu_units_conversion("yd");
     } else {
 	factor = bu_units_conversion("mm");
@@ -1128,7 +1132,6 @@ view_end(struct application *ap)
     /* free the assembly areas */
     cell = (struct area *)rp->reg_udata;
     if (cell) {
-	struct area *cellp;
         while (BU_LIST_WHILE(cellp, area, &(cell->assembly->l))) {
 	    if (cellp->name) {
 		bu_free((char *)cellp->name, "view_end assembly name free");

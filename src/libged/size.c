@@ -57,7 +57,7 @@ ged_size(struct ged *gedp, int argc, const char *argv[])
     if (argc == 2) {
 	if (sscanf(argv[1], "%lf", &size) != 1 ||
 	    size <= 0 ||
-	    NEAR_ZERO(size, SMALL_FASTF)) {
+	    ZERO(size)) {
 	    bu_vls_printf(&gedp->ged_result_str, "bad size - %s", argv[1]);
 	    return GED_ERROR;
 	}

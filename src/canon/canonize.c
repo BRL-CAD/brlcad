@@ -33,9 +33,8 @@
 #  include <unistd.h>
 #endif
 
-#include "./canon.h"
-
 #include "fb.h"
+#include "./canon.h"
 
 char cmdbuf[64]="/usr/mdqs/bin/qpr -q "; /* queue name filled in by main() */
 

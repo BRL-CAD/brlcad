@@ -287,7 +287,7 @@ ged_draw_png_body(struct ged *gedp, unsigned char **image)
 	VSET(l, -1.0, -1.0, -1.0);
 	VSET(h, 1.0, 1.0, 200.0);
 
-	if (NEAR_ZERO(gedp->ged_gvp->gv_eye_pos[Z] - 1.0, SMALL_FASTF)) {
+	if (ZERO(gedp->ged_gvp->gv_eye_pos[Z] - 1.0)) {
 	    /* This way works, with reasonable Z-clipping */
 	    ged_persp_mat(perspective_mat, gedp->ged_gvp->gv_perspective,
 			  (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);

@@ -214,7 +214,7 @@ db5_diradd(struct db_i *dbip,
     }
 
     bu_vls_init(&local);
-    bu_vls_strcpy(&local, rip->name.ext_buf);
+    bu_vls_strcpy(&local, (const char *)rip->name.ext_buf);
     if (db_dircheck(dbip, &local, 0, &headp) < 0) {
 	bu_vls_free(&local);
 	return RT_DIR_NULL;

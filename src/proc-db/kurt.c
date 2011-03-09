@@ -61,6 +61,9 @@ main(int argc, char **argv)
     double base;
     int quant;
 
+    if (argc > 0)
+	bu_log("Usage: %s\n", argv[0]);
+
     outfp = wdb_fopen("kurt.g");
     mk_id(outfp, "Kurt's multi-valued function");
 
@@ -223,8 +226,8 @@ draw_rect(struct val *a, struct val *b, struct val *c, struct val *d)
     if (ndiff == 0 || ndiff == 1)  return;
     /* Harder case:  handle different depths on corners */
     if (ndiff == 2 &&
-	vp[0]->v_x != vp[1]->v_x &&
-	vp[0]->v_y != vp[1]->v_y) {
+	!EQUAL(vp[0]->v_x, vp[1]->v_x) &&
+	!EQUAL(vp[0]->v_y, vp[1]->v_y)) {
 	fprintf(stderr, "2 corners on diagonal differ?\n");
 	return;
     }
@@ -234,8 +237,8 @@ draw_rect(struct val *a, struct val *b, struct val *c, struct val *d)
 	for (i=0; i<ndiff-1; i++) {
 	    for (j=i; j<ndiff; j++) {
 		/* Reject diagonals */
-		if (vp[i]->v_x != vp[j]->v_x &&
-		    vp[i]->v_y != vp[j]->v_y)
+		if (!EQUAL(vp[i]->v_x, vp[j]->v_x) &&
+		    !EQUAL(vp[i]->v_y, vp[j]->v_y))
 		    continue;
 
 #if 0

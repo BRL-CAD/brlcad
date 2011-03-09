@@ -286,7 +286,7 @@ int parse_args(int ac, char **av)
 		obj_name = bu_optarg;
 		break;
 	    case 'o':
-		if (ol_hd.ex == 0.0) {
+		if (ZERO(ol_hd.ex)) {
 		    usage("set wall dim before openings\n");
 		} else if (sscanf(bu_optarg, "%lf, %lf, %lf, %lf", &dx, &dy, &width, &height) == 4) {
 		    op = (struct opening *)bu_calloc(1, sizeof(struct opening), "calloc opening");
@@ -319,7 +319,8 @@ int parse_args(int ac, char **av)
 		if (units_lock)
 		    bu_log("Warning: attempting to change units in mid-parse\n");
 
-		if ((dx=bu_units_conversion(bu_optarg)) != 0.0) {
+		dx=bu_units_conversion(bu_optarg);
+		if (!ZERO(dx)) {
 		    unit_conv = dx;
 		    units = bu_optarg;
 		} else {
@@ -842,7 +843,7 @@ sheetrock(struct rt_wdb *fd)
 }
 
 void
-mortar_brick(struct rt_wdb *fd)
+mortar_brick(struct rt_wdb *UNUSED(fd))
 {
     struct wmember wm_hd;
 #if 0
@@ -942,7 +943,7 @@ mortar_brick(struct rt_wdb *fd)
 
 
 void
-brick(struct rt_wdb *fd)
+brick(struct rt_wdb *UNUSED(fd))
 {
     struct wmember wm_hd;
 #if 0

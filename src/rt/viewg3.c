@@ -73,7 +73,7 @@ static long     line_num;               /* count of lines output to shotline fil
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 static mat_t	model2hv;		/* model coords to GIFT h, v in inches */
@@ -82,23 +82,26 @@ static FILE	*plotfp;		/* optional plotting file */
 static long	line_num;		/* count of lines output to shotline file */
 
 const char title[] = "RTG3";
-const char usage[] = "\
-Usage:  rtg3 [options] model.g objects... >file.ray\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -a Az		Azimuth in degrees	(conflicts with -M)\n\
- -e Elev	Elevation in degrees	(conflicts with -M)\n\
- -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -g #		Grid cell width in millimeters (conflicts with -s)\n\
- -G #		Grid cell height in millimeters (conflicts with -s)\n\
- -J #		Jitter.  Default is off.  Any non-zero number is on\n\
- -o model.g3	Specify output file, GIFT-3 format (default=stdout)\n\
- -U #		Set use_air boolean to # (default=1)\n\
- -c \"set ray_data_file=ray_file_name\"         Specify ray data output file (az el x_start y_start z_start x_dir y_dir z_dir line_number_in_shotline_file ray_first_hit_x ray_first_hit_y ray_first_hit_z)\n\
- -c \"set save_overlaps=1\"     Reproduce FASTGEN behavior for regions flagged as FASTGEN regions\n\
- -c \"set rt_cline_radius=radius\"      Additional radius to be added to CLINE solids\n\
- -x #		Set librt debug flags\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects... >file.ray\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512\n");
+    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
+    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
+    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
+    bu_log(" -g #		Grid cell width in millimeters (conflicts with -s)\n");
+    bu_log(" -G #		Grid cell height in millimeters (conflicts with -s)\n");
+    bu_log(" -J #		Jitter.  Default is off.  Any non-zero number is on\n");
+    bu_log(" -o model.g3	Specify output file, GIFT-3 format (default=stdout)\n");
+    bu_log(" -U #		Set use_air boolean to # (default=1)\n");
+    bu_log(" -c \"set ray_data_file=ray_file_name\"         Specify ray data output file (az el x_start y_start z_start x_dir y_dir z_dir line_number_in_shotline_file ray_first_hit_x ray_first_hit_y ray_first_hit_z)\n");
+    bu_log(" -c \"set save_overlaps=1\"     Reproduce FASTGEN behavior for regions flagged as FASTGEN regions\n");
+    bu_log(" -c \"set rt_cline_radius=radius\"      Additional radius to be added to CLINE solids\n");
+    bu_log(" -x #		Set librt debug flags\n");
+}
 
 
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
@@ -177,7 +180,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o, i
  *
  */
 void
-view_2init(struct application *ap, char *UNUSED(framename))
+view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
 {
     if ( outfp == NULL )
 	bu_exit(EXIT_FAILURE, "outfp is NULL\n");
@@ -232,7 +235,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
  *  do_frame().
  */
 int
-raymiss(register struct application *ap)
+raymiss(register struct application *UNUSED(ap))
 {
     return 0;
 }
@@ -270,24 +273,24 @@ view_pixel(struct application *UNUSED(ap))
  *  color vector display of ray-model intersections.
  */
 int
-rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *segp)
+rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     register struct partition *pp = PartHeadp->pt_forw;
-    int 			comp_count;	/* component count */
-    fastf_t			dfirst, dlast;	/* ray distances */
-    static fastf_t		dcorrection = 0; /* RT to GIFT dist corr */
-    int			card_count;	/* # comp. on this card */
-    const char		*fmt;		/* printf() format string */
-    struct bu_vls		str;
-    char			buf[128];	/* temp. sprintf() buffer */
-    point_t			hv;		/* GIFT h, v coords, in inches */
-    point_t			hvcen;
-    int			prev_id=-1;
-    point_t			first_hit;
-    int			first;
+    int comp_count;			/* component count */
+    fastf_t dfirst, dlast;		/* ray distances */
+    static fastf_t dcorrection = 0;	/* RT to GIFT dist corr */
+    int card_count;			/* # comp. on this card */
+    const char *fmt;			/* printf() format string */
+    struct bu_vls str;
+    char buf[128];			/* temp. sprintf() buffer */
+    point_t hv;				/* GIFT h, v coords, in inches */
+    point_t hvcen;
+    int prev_id=-1;
+    point_t first_hit = VINIT_ZERO;
+    int first;
 
     if ( pp == PartHeadp )
-	return 0;		/* nothing was actually hit?? */
+	return 0;			/* nothing was actually hit?? */
 
     if ( ap->a_rt_i->rti_save_overlaps )
 	rt_rebuild_overlaps( PartHeadp, ap, 1 );

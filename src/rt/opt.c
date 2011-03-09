@@ -545,7 +545,7 @@ get_args(int argc, const char *argv[])
 		 * This actually gets stored as the delta-t per frame.
 		 */
 		frame_delta_t = atof(bu_optarg);
-		if (NEAR_ZERO(frame_delta_t, SMALL_FASTF)) {
+		if (ZERO(frame_delta_t)) {
 		    fprintf(stderr, "Invalid frames/sec (%s) == 0.0\n",
 			    bu_optarg);
 		    frame_delta_t = 30.0;
@@ -564,7 +564,7 @@ get_args(int argc, const char *argv[])
 			|| *cp == '.' )  cp++;
 		while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
 		yy = atof(cp);
-		if ( NEAR_ZERO(yy, SMALL_FASTF) )
+		if ( ZERO(yy) )
 		    aspect = xx;
 		else
 		    aspect = xx/yy;

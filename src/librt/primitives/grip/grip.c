@@ -46,6 +46,8 @@
 #include "nmg.h"
 #include "db.h"
 
+#include "../../librt_private.h"
+
 
 struct grip_specific {
     long grip_magic;
@@ -304,7 +306,7 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     gip->magic = RT_GRIP_INTERNAL_MAGIC;
 
-    rt_fastf_float(orig_eqn, rp->s.s_values, 3, dbip->dbi_version < 0 ? 1 : 0);	/* 2 floats to many */
+    flip_fastf_float(orig_eqn, rp->s.s_values, 3, dbip->dbi_version < 0 ? 1 : 0);	/* 2 floats to many */
 
     /* Transform the point, and the normal */
     if (mat == NULL) mat = bn_mat_identity;
@@ -518,9 +520,8 @@ rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  *
  */
 int
-rt_grp_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_grp_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

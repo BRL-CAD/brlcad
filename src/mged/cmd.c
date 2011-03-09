@@ -500,8 +500,47 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 	return TCL_OK;
 
     ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
+    if (ret & GED_MORE)
+	Tcl_AppendResult(interpreter, MORE_ARGS_STR, NULL);
     Tcl_AppendResult(interpreter, bu_vls_addr(&gedp->ged_result_str), NULL);
 
+    /* redraw any objects specified that are already drawn */
+    if (argc > 1) {
+	int who_ret;
+	const char *who_cmd[2] = {"who", NULL};
+
+	who_ret = ged_who(gedp, 1, who_cmd);
+	if (who_ret == GED_OK) {
+	    /* worst possible is a bunch of 1-char names, allocate and
+	     * split into an argv accordingly.
+	     */
+
+	    int i, j;
+	    char *str = bu_strdup(bu_vls_addr(&gedp->ged_result_str));
+	    size_t who_argc = (bu_vls_strlen(&gedp->ged_result_str) / 2) + 1;
+	    char **who_argv = (char **)bu_calloc(who_argc, sizeof(char *), "who_argv");
+
+	    who_ret = bu_argv_from_string(who_argv, who_argc, str);
+	    for (i=0; i < who_ret; i++) {
+		for (j=1; j < argc; j++) {
+		    /* compare all displayed to all argv items, see if
+		     * we find any matches...
+		     */
+		    if (BU_STR_EQUAL(who_argv[i], argv[j])) {
+			/* FOUND A MATCH! */
+
+			const char *draw_cmd[3] = {"draw", NULL, NULL};
+			draw_cmd[1] = who_argv[i];
+			(void)cmd_draw(clientData, interpreter, 2, draw_cmd);
+		    }
+		}
+	    }
+
+	    bu_free(who_argv, "who_argv");
+	    bu_free(str, "result strdup");
+	}
+    }
+    
     if (ret & GED_HELP || ret == GED_OK)
 	return TCL_OK;
 

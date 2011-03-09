@@ -32,6 +32,8 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu.h"
+
 
 #define	BSIZE	2048		/* Must be AT LEAST 2*Points in spectrum */
 double	data[BSIZE];		/* Input buffer */
@@ -45,6 +47,7 @@ int main(int argc, char **argv)
     int	i, j, n, L;
     double *dp1, *dp2;
     double	d;
+    size_t ret;
 
     if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
 	bu_exit(1, "%s", usage );
@@ -74,7 +77,9 @@ int main(int argc, char **argv)
 	for ( i = 0; i < L; i++ ) {
 	    r[i] = 1024 - r[i];
 	}
-	fwrite( r, sizeof(*r), L, stdout );
+	ret = fwrite( r, sizeof(*r), L, stdout );
+	if (ret != (size_t)L)
+	    perror("fwrite");
     }
 
     return 0;

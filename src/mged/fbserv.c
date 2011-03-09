@@ -49,8 +49,6 @@
 
 #include "./fbserv.h"
 
-HIDDEN struct pkg_conn *fbserv_makeconn(int fd, const struct pkg_switch *switchp);
-
 #define NET_LONG_LEN 4 /* # bytes to network long */
 
 
@@ -181,6 +179,8 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
+HIDDEN struct pkg_conn *fbserv_makeconn(int fd, const struct pkg_switch *switchp);
+
 HIDDEN void
 fbserv_new_client(struct pkg_conn *pcp,
 		  Tcl_Channel chan)

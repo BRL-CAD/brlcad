@@ -30,11 +30,12 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include "bio.h"
+#include "bin.h"
 
 #include "vmath.h"
 #include "nmg.h"
@@ -429,7 +430,7 @@ Convert_part_binary()
     lswap((unsigned int *)buf);
 
     /* now use our network to native host format conversion tools */
-    num_facets = bu_glong(buf);
+    num_facets = ntohl(*(uint32_t *)buf);
 
     bu_log("\t%d facets\n", num_facets);
     while (fread(buf, 48, 1, fd_in)) {
@@ -619,7 +620,7 @@ main(int argc, char *argv[])
 		break;
 	    case 'c':	/* convert from units */
 		conv_factor = bu_units_conversion(bu_optarg);
-		if (NEAR_ZERO(conv_factor, SMALL_FASTF)) {
+		if (ZERO(conv_factor)) {
 		    bu_log("Illegal units: (%s)\n", bu_optarg);
 		    bu_exit(EXIT_FAILURE, "Illegal units!\n");
 		}

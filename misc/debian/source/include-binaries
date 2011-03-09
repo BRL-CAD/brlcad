@@ -1,6 +1,7 @@
-debian/application-x-brlcad-extension.png
+debian/application-x-brlcad-v4.png
+debian/application-x-brlcad-v5.png
 debian/brlcad-archer.png
 debian/brlcad-db.png
 debian/brlcad-doc.png
-debian/brlcad.png
+debian/brlcad-mged.png
 

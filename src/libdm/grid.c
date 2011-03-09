@@ -52,8 +52,8 @@ dm_draw_grid(struct dm *dmp, struct ged_grid_state *ggsp, struct ged_view *gvp, 
     fastf_t 		inv_grid_res_v;
     fastf_t 		inv_aspect;
 
-    if (NEAR_ZERO(ggsp->ggs_res_h, (fastf_t)SMALL_FASTF) ||
-	NEAR_ZERO(ggsp->ggs_res_v, (fastf_t)SMALL_FASTF))
+    if (ZERO(ggsp->ggs_res_h) ||
+	ZERO(ggsp->ggs_res_v))
 	return;
 
     inv_grid_res_h= 1.0 / (ggsp->ggs_res_h * base2local);

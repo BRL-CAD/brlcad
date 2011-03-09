@@ -2,7 +2,7 @@
 #                     M A K E _ D E B . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2010 United States Government as represented by
+# Copyright (c) 2005-2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
 #
 ###
 
-test -e
+set -e
 
 ferror(){
     echo "=========================================================="
@@ -102,13 +102,13 @@ fcheck fakeroot
 
 if test "$1" = "-b" ;then
     fcheck build-essential
+    fcheck make
     fcheck bison
     fcheck flex
     fcheck libxi-dev
     fcheck xsltproc
     fcheck libgl1-mesa-dev
     fcheck libpango1.0-dev
-    fcheck libncurses5-dev
     #fcheck fop # allows pdf creation
 fi
 

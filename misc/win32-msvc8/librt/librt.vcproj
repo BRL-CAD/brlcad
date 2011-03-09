@@ -84,7 +84,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib opennurbs.lib"
+				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib opennurbs.lib ws2_32.lib"
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)/librt.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -312,6 +312,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\bot\btg.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\bot\btg.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\bot\btgf.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\bundle.c"
 				>
 			</File>
@@ -368,11 +380,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\db_corrupt.c"
+				RelativePath="..\..\..\src\librt\comb\db_comb.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\comb\db_comb.c"
+				RelativePath="..\..\..\src\librt\db_corrupt.c"
 				>
 			</File>
 			<File
@@ -968,6 +980,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\search.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\shoot.c"
 				>
 			</File>
@@ -1021,6 +1037,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\primitives\tgc\tgc_mirror.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\bot\tieprivate.h"
 				>
 			</File>
 			<File

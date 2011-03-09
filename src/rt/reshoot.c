@@ -105,9 +105,9 @@ struct shot {
  * The parse table for a struct shot
  */
 static const struct bu_structparse shot_sp[] = {
-    { "%f", 3, "Pnt", bu_offsetofarray(struct shot, pt), BU_STRUCTPARSE_FUNC_NULL},
-    { "%f", 3, "Dir", bu_offsetofarray(struct shot, dir), BU_STRUCTPARSE_FUNC_NULL},
-    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { "%f", 3, "Pnt", bu_offsetofarray(struct shot, pt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    { "%f", 3, "Dir", bu_offsetofarray(struct shot, dir), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 /**
@@ -125,12 +125,12 @@ struct reg_hit {
 };
 
 static const struct bu_structparse reg_sp[] = {
-    {"%V", 1, "region", bu_offsetof(struct reg_hit, regname), BU_STRUCTPARSE_FUNC_NULL },
-    {"%V", 1, "in", bu_offsetof(struct reg_hit, in_primitive), BU_STRUCTPARSE_FUNC_NULL},
-    {"%V", 1, "out", bu_offsetof(struct reg_hit, out_primitive), BU_STRUCTPARSE_FUNC_NULL},
-    {"%f", 1, "indist", bu_offsetof(struct reg_hit, indist), BU_STRUCTPARSE_FUNC_NULL},
-    {"%f", 1, "outdist", bu_offsetof(struct reg_hit, outdist), BU_STRUCTPARSE_FUNC_NULL},
-    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
+    {"%V", 1, "region", bu_offsetof(struct reg_hit, regname), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%V", 1, "in", bu_offsetof(struct reg_hit, in_primitive), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%V", 1, "out", bu_offsetof(struct reg_hit, out_primitive), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "indist", bu_offsetof(struct reg_hit, indist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "outdist", bu_offsetof(struct reg_hit, outdist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -156,7 +156,7 @@ usage(char *s)
  *	integer value, typically 1.  This value becomes the return value to rtshootray()
  */
 int
-hit(register struct application *ap, struct partition *PartHeadp, struct seg *segs)
+hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     /* see raytrace.h for all of these guys */
     register struct partition *pp;
@@ -169,7 +169,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	double val;
     } vs;
     static struct bu_structparse val_sp[] = {
-	{"%f", 1, "val", bu_offsetof(struct valstruct, val)},
+	{"%f", 1, "val", bu_offsetof(struct valstruct, val), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     };
 
     bu_vls_init(&v);
@@ -188,7 +188,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	bu_vls_printf(&v, "val=%g", pp->pt_inhit->hit_dist);
 	bu_struct_parse(&v, val_sp, (const char *)&vs);
 
-	if (vs.val != rh->indist) {
+	if (!EQUAL(vs.val, rh->indist)) {
 	    bu_vls_printf(&result, "\tinhit mismatch %g %g\n", pp->pt_inhit->hit_dist, rh->indist);
 	    status = 1;
 	}
@@ -198,7 +198,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	bu_struct_parse(&v, val_sp, (const char *)&vs);
 
 
-	if (vs.val != rh->outdist) {
+	if (!EQUAL(vs.val, rh->outdist)) {
 	    bu_vls_printf(&result, "\touthit mismatch %g %g\n", pp->pt_outhit->hit_dist, rh->outdist);
 	    status = 1;
 	}
@@ -245,7 +245,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
  *	Typically 0, and becomes the return value from rt_shootray()
  */
 int
-miss(register struct application *ap)
+miss(register struct application *UNUSED(ap))
 {
     return 0;
 }
@@ -314,7 +314,6 @@ main(int argc, char **argv)
     static struct rt_i *rtip;	/* rt_dirbuild returns this */
     char idbuf[2048] = {0};	/* First ID record info */
 
-    int arg_count;
     int status = 0;
     struct bu_vls buf;
     struct shot sh;
@@ -322,7 +321,7 @@ main(int argc, char **argv)
 
     progname = argv[0];
 
-    if ( argc < 3 )  {
+    if (argc < 3) {
 	usage("insufficient args\n");
     }
 
@@ -346,7 +345,7 @@ main(int argc, char **argv)
      * Here you identify any object trees in the database that you
      * want included in the ray trace.
      */
-    while ( argc > 2 )  {
+    while (argc > 2) {
 	if ( rt_gettree(rtip, argv[2]) < 0 )
 	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[0]);
 	argc--;

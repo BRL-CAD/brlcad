@@ -37,24 +37,27 @@
 #include "vmath.h"
 #include "raytrace.h"
 
+#include "./ext.h"
+
 
 const char title[] = "RT Pretty Picture";
-const char usage[] = "\
-Usage:  rtpp [options] model.g objects... >file.pp\n\
-Options:\n\
- -s #		Grid size in pixels, default 512, max 1024\n\
- -a Az		Azimuth in degrees	(conflicts with -M)\n\
- -e Elev	Elevation in degrees	(conflicts with -M)\n\
- -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -x #		Set librt debug flags\n\
-";
 
-extern int width;
-extern int height;
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects... >file.pp\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512, max 1024\n");
+    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
+    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
+    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
+    bu_log(" -x #		Set librt debug flags\n");
+}
+
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 /* Stuff for pretty-picture output format */
@@ -88,7 +91,7 @@ pknum(int arg)
 
 /* Support for pretty-picture files */
 int
-pphit(register struct application *ap, struct partition *PartHeadp, struct seg *segHeadp)
+pphit(register struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segHeadp))
 {
     register struct partition *pp;
     register struct hit *hitp;
@@ -140,7 +143,7 @@ pphit(register struct application *ap, struct partition *PartHeadp, struct seg *
 }
 
 int
-ppmiss(struct application *ap)
+ppmiss(struct application *UNUSED(ap))
 {
     last_solidp = SOLTAB_NULL;
     ntomiss++;
@@ -182,7 +185,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 
     fprintf(stdout, "%s: %s (RT)\n", file, obj);
     fprintf(stdout, "%10d%10d", (int)azimuth, (int)elevation);
-    fprintf(stdout, "%10d%10d\n", width, height);
+    fprintf(stdout, "%10lu%10lu\n", (unsigned long int)width, (unsigned long int)height);
     return 0;		/* no framebuffer needed */
 }
 

@@ -1654,7 +1654,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_revolve_ifree,
 	rt_revolve_describe,
-	NULL,
+	NULL, /* rt_generic_xform is NOT sufficient (wireframe and trace get screwed up) */
 	rt_revolve_parse,
 	sizeof(struct rt_revolve_internal),
 	RT_REVOLVE_INTERNAL_MAGIC,

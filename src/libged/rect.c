@@ -402,8 +402,8 @@ ged_rect_rt(struct ged *gedp, int port)
     /* initialize result in case we need to report something here */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
-    if (NEAR_ZERO(gedp->ged_gvp->gv_rect.grs_width, (fastf_t)SMALL_FASTF) &&
-	NEAR_ZERO(gedp->ged_gvp->gv_rect.grs_height, (fastf_t)SMALL_FASTF))
+    if (ZERO(gedp->ged_gvp->gv_rect.grs_width) &&
+	ZERO(gedp->ged_gvp->gv_rect.grs_height))
 	return GED_OK;
 
     if (port < 0) {
@@ -499,8 +499,8 @@ ged_rect_zoom(struct ged *gedp)
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
-    if (NEAR_ZERO(gedp->ged_gvp->gv_rect.grs_width, (fastf_t)SMALL_FASTF) &&
-	NEAR_ZERO(gedp->ged_gvp->gv_rect.grs_height, (fastf_t)SMALL_FASTF))
+    if (ZERO(gedp->ged_gvp->gv_rect.grs_width) &&
+	ZERO(gedp->ged_gvp->gv_rect.grs_height))
 	return GED_OK;
 
     ged_rect_adjust_for_zoom(&gedp->ged_gvp->gv_rect);

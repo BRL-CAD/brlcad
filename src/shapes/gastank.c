@@ -68,6 +68,7 @@ main(int argc, char **argv)
     struct wmember comb1;	/* Used to make groups. */
 
     int i, j, k;		/* Loop counters. */
+    int ret;
 
     /* Set up solid, region, and group names. */
     solnam[0] = 's';
@@ -105,22 +106,29 @@ main(int argc, char **argv)
 	/* Find name of mged file to be created. */
 	(void)printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%26s", filemged);
+	ret = scanf("%26s", filemged);
+	if (ret == 0)
+	    perror("scanf");
 
 	/* Find the number of gas tanks to create. */
 	(void)printf("Enter the number of gas tanks to create (26 max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%d", &numtnk);
+	ret = scanf("%d", &numtnk);
+	if (ret == 0)
+	    perror("scanf");
 	if (numtnk > 26) numtnk = 26;
 
 	/* Find the dimensions of the gas tanks. */
 	(void)printf("Enter the height, width, and depth of the gas tank.\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%lf %lf %lf", &hgt, &wid, &dpt);
+	ret = scanf("%lf %lf %lf", &hgt, &wid, &dpt);
+	if (ret == 0)
+	    perror("scanf");
 	(void)printf("Enter the radius of the corners.\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%lf", &rds);
-
+	ret = scanf("%lf", &rds);
+	if (ret == 0)
+	    perror("scanf");
     }							/* END # 3 */
 
     /* If there are arguments get answers from arguments. */

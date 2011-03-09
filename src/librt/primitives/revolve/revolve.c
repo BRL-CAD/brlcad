@@ -166,9 +166,9 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 	if (endcount[i] % 2 != 0) {
 	    /* add 'i' to list, insertion sort by vert[i][Y] */
 	    for (k=j; k>0; k--) {
-		if ((NEAR_ZERO(rip->sk->verts[i][Y] - rip->sk->verts[endcount[k-1]][Y], SMALL_FASTF)
+		if ((ZERO(rip->sk->verts[i][Y] - rip->sk->verts[endcount[k-1]][Y])
 		     && rip->sk->verts[i][X] > rip->sk->verts[endcount[k-1]][X])
-		    || (!NEAR_ZERO(rip->sk->verts[i][Y] - rip->sk->verts[endcount[k-1]][Y], SMALL_FASTF)
+		    || (!ZERO(rip->sk->verts[i][Y] - rip->sk->verts[endcount[k-1]][Y])
 			&& rip->sk->verts[i][Y] < rip->sk->verts[endcount[k-1]][Y])) {
 		    endcount[k] = endcount[k-1];
 		} else {
@@ -433,7 +433,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		V2MOVE(pt1, rev->sk->verts[lsg->start]);
 		V2MOVE(pt2, rev->sk->verts[lsg->end]);
 		V2SUB2(dir, pt2, pt1);
-		if (NEAR_ZERO(dir[X], SMALL_FASTF)) {
+		if (ZERO(dir[X])) {
 		    m = 1.0;
 		} else {
 		    m = dir[Y] / dir[X];
@@ -460,7 +460,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			    hitp->hit_point[Y] = hit2d[Y];
 			    hitp->hit_point[Z] = 0;
 			    VMOVE(hitp->hit_vpriv, hit1);
-			    if (NEAR_ZERO(m, SMALL_FASTF)) {
+			    if (ZERO(m)) {
 				hitp->hit_vpriv[Z] = 0.0;
 			    } else {
 				hitp->hit_vpriv[Z] = -1.0/m;
@@ -489,7 +489,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			    hitp->hit_point[Y] = hit2d[Y];
 			    hitp->hit_point[Z] = 0;
 			    VMOVE(hitp->hit_vpriv, hit1);
-			    if (NEAR_ZERO(m, SMALL_FASTF)) {
+			    if (ZERO(m)) {
 				hitp->hit_vpriv[Z] = 0.0;
 			    } else {
 				hitp->hit_vpriv[Z] = 1.0/m;
@@ -502,7 +502,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		} else if (NEAR_ZERO(ur[Z], RT_DOT_TOL)) {
 		    /* ray is horizontal line at y = h; hit2d[X] > aa */
 		    if (FMIN(pt1[Y], pt2[Y]) < h && h < FMAX(pt1[Y], pt2[Y])) {
-			if (NEAR_ZERO(m, SMALL_FASTF)) {
+			if (ZERO(m)) {
 			    hit2d[X] = pt1[X];
 			} else {
 			    hit2d[X] = pt1[X] + (h-pt1[Y])/m;
@@ -529,7 +529,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 				hitp->hit_point[Y] = hit2d[Y];
 				hitp->hit_point[Z] = 0;
 				VMOVE(hitp->hit_vpriv, hit1);
-				if (NEAR_ZERO(m, SMALL_FASTF)) {
+				if (ZERO(m)) {
 				    hitp->hit_vpriv[Z] = 0.0;
 				} else {
 				    hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;
@@ -555,7 +555,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 				hitp->hit_point[Y] = hit2d[Y];
 				hitp->hit_point[Z] = 0;
 				VMOVE(hitp->hit_vpriv, hit2);
-				if (NEAR_ZERO(m, SMALL_FASTF)) {
+				if (ZERO(m)) {
 				    hitp->hit_vpriv[Z] = 0.0;
 				} else {
 				    hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;
@@ -601,7 +601,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 					hitp->hit_point[Y] = hit2d[Y];
 					hitp->hit_point[Z] = 0;
 					VMOVE(hitp->hit_vpriv, hit1);
-					if (NEAR_ZERO(m, SMALL_FASTF)) {
+					if (ZERO(m)) {
 					    hitp->hit_vpriv[Z] = 0.0;
 					} else {
 					    hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;
@@ -633,7 +633,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 					hitp->hit_point[Y] = hit2d[Y];
 					hitp->hit_point[Z] = 0;
 					VMOVE(hitp->hit_vpriv, hit2);
-					if (NEAR_ZERO(m, SMALL_FASTF)) {
+					if (ZERO(m)) {
 					    hitp->hit_vpriv[Z] = 0.0;
 					} else {
 					    hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;
@@ -670,7 +670,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 				    hitp->hit_point[Y] = hit2d[Y];
 				    hitp->hit_point[Z] = 0;
 				    VMOVE(hitp->hit_vpriv, hit1);
-				    if (NEAR_ZERO(m, SMALL_FASTF)) {
+				    if (ZERO(m)) {
 					hitp->hit_vpriv[Z] = 0.0;
 				    } else {
 					hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;;
@@ -853,7 +853,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    break;
 	}
 
-	if (NEAR_ZERO(hits[in]->hit_dist - hits[out]->hit_dist, SMALL_FASTF)) {
+	if (ZERO(hits[in]->hit_dist - hits[out]->hit_dist)) {
 	    hits[in] = NULL;
 	    hits[out] = NULL;
 	    continue;
@@ -1020,7 +1020,7 @@ rt_revolve_uv(struct application *ap, struct soltab *stp, struct hit *hitp, stru
 	    switch (*lng) {
 		case CURVE_LSEG_MAGIC:
 		    lsg = (struct line_seg *)lng;
-		    if (NEAR_ZERO(1.0/hitp->hit_vpriv[Z], SMALL_FASTF)) {
+		    if (ZERO(1.0/hitp->hit_vpriv[Z])) {
 			/* use hitpoint radius and sketch's X values */
 			hitpoint[Z] = 0;
 			uvp->uv_v = (MAGNITUDE(hitpoint) - rev->sk->verts[lsg->end][X]) /
@@ -1233,9 +1233,9 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	if (endcount[i] % 2 != 0) {
 	    /* add 'i' to list, insertion sort by vert[i][Y] */
 	    for (k=j; k>0; k--) {
-		if ((NEAR_ZERO(verts[i][Y] - verts[endcount[k-1]][Y], SMALL_FASTF)
+		if ((ZERO(verts[i][Y] - verts[endcount[k-1]][Y])
 		     && verts[i][X] > verts[endcount[k-1]][X])
-		    || (!NEAR_ZERO(verts[i][Y] - verts[endcount[k-1]][Y], SMALL_FASTF)
+		    || (!ZERO(verts[i][Y] - verts[endcount[k-1]][Y])
 			&& verts[i][Y] < verts[endcount[k-1]][Y])) {
 		    endcount[k] = endcount[k-1];
 		} else {
@@ -1254,7 +1254,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	curve_to_vlist(vhead, ttol, rip->v3d, ucir[i], uz, rip->sk, crv);
 	for (j=0; j<nadd; j++) {
 	    if (j+1 < nadd &&
-		NEAR_ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y], SMALL_FASTF)) {
+		ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y])) {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, add, verts[endcount[j]][X], ucir[i]);
 		VJOIN1(add3, add, verts[endcount[j+1]][X], ucir[i]);
@@ -1273,7 +1273,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	curve_to_vlist(vhead, ttol, rip->v3d, rEnd, uz, rip->sk, crv);
 	for (j=0; j<nadd; j++) {
 	    if (j+1 < nadd &&
-		NEAR_ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y], SMALL_FASTF)) {
+		ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y])) {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, add, verts[endcount[j]][X], rEnd);
 		VJOIN1(add3, add, verts[endcount[j+1]][X], rEnd);
@@ -1288,7 +1288,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	    }
 	}
 	for (j=0; j<nadd; j+=2) {
-	    if (!NEAR_ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y], SMALL_FASTF)) {
+	    if (!ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y])) {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, rip->v3d, verts[endcount[j+1]][Y], rip->axis3d);
 		RT_ADD_VLIST(vhead, add, BN_VLIST_LINE_MOVE);

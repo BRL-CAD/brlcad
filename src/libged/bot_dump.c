@@ -31,6 +31,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "bio.h"
+#include "bin.h"
 
 #include "vmath.h"
 #include "nmg.h"
@@ -120,7 +121,7 @@ ged_get_obj_material(int red, int green, int blue, fastf_t transparency)
 	if (gomp->r == red &&
 	    gomp->g == green &&
 	    gomp->b == blue &&
-	    NEAR_ZERO(gomp->a - transparency, SMALL_FASTF)) {
+	    ZERO(gomp->a - transparency)) {
 	    return gomp;
 	}
     }
@@ -639,7 +640,7 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 	    lseek(fd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
-	    bu_plong(tot_buffer, (unsigned long)total_faces);
+	    *(uint32_t *)tot_buffer = htonl((unsigned long)total_faces);
 	    lswap((unsigned int *)tot_buffer);
 	    ret = write(fd, tot_buffer, 4);
 	    if (ret < 0) {
@@ -814,7 +815,7 @@ ged_bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 'u':
 		cfactor = bu_units_conversion(bu_optarg);
-		if (NEAR_ZERO(cfactor, SMALL_FASTF))
+		if (ZERO(cfactor))
 		    cfactor = 1.0;
 		else
 		    cfactor = 1.0 / cfactor;
@@ -1026,7 +1027,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	    lseek(fd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
-	    bu_plong(tot_buffer, (unsigned long)total_faces);
+	    *(uint32_t *)tot_buffer = htonl((unsigned long)total_faces);
 	    lswap((unsigned int *)tot_buffer);
 	    ret = write(fd, tot_buffer, 4);
 	    if (ret < 0) {
@@ -1554,7 +1555,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	    lseek(fd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
-	    bu_plong(tot_buffer, (unsigned long)total_faces);
+	    *(uint32_t *)tot_buffer = htonl((unsigned long)total_faces);
 	    lswap((unsigned int *)tot_buffer);
 	    ret = write(fd, tot_buffer, 4);
 	    if (ret < 0) {

@@ -183,6 +183,7 @@ package provide cadwidgets::Ged 1.0
 	method eye_pos {args}
 	method faceplate {args}
 	method facetize {args}
+	method fb2pix {args}
 	method fontsize {args}
 	method form {args}
 	method fracture {args}
@@ -284,6 +285,8 @@ package provide cadwidgets::Ged 1.0
 	method pane_constrain_tmode {_pane args}
 	method pane_eye {_pane args}
 	method pane_eye_pos {_pane args}
+	method pane_fb2pix {_pane args}
+	method pane_fontsize {_pane args}
 	method pane_get_eyemodel {_pane args}
 	method pane_grid {_pane args}
 	method pane_idle_mode {_pane args}
@@ -319,6 +322,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_otranslate_mode {_pane args}
 	method pane_paint_rect_area {_pane args}
 	method pane_perspective {_pane args}
+	method pane_pix2fb {_pane args}
 	method pane_plot {_pane args}
 	method pane_pmat {_pane args}
 	method pane_pmodel2view {_pane args}
@@ -378,6 +382,7 @@ package provide cadwidgets::Ged 1.0
 	method pathlist {args}
 	method paths {args}
 	method perspective {args}
+	method pix2fb {args}
 	method plot {args}
 	method pmat {args}
 	method pmodel2view {args}
@@ -1259,6 +1264,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed facetize $args
 }
 
+::itcl::body cadwidgets::Ged::fb2pix {args} {
+    eval $mGed fb2pix $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::fontsize {args} {
     eval $mGed fontsize $itk_component($itk_option(-pane)) $args
 }
@@ -1671,6 +1680,14 @@ package provide cadwidgets::Ged 1.0
     eval $mGed eye_pos $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_fb2pix {_pane args} {
+    eval $mGed fb2pix $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_fontsize {_pane args} {
+    eval $mGed fontsize $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_get_eyemodel {_pane args} {
     eval $mGed get_eyemodel $itk_component($_pane) $args
 }
@@ -1809,6 +1826,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_perspective {_pane args} {
     eval $mGed perspective $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_pix2fb {_pane args} {
+    eval $mGed pix2fb $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_plot {_pane args} {
@@ -2066,6 +2087,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::perspective {args} {
     eval $mGed perspective $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::pix2fb {args} {
+    eval $mGed pix2fb $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::plot {args} {

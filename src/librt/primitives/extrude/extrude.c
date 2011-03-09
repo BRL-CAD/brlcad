@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
+#include "bin.h"
 
 #include "tcl.h"
 #include "vmath.h"
@@ -351,7 +351,7 @@ rt_extrude_print(const struct soltab *stp)
 }
 
 
-int
+static int
 get_quadrant(fastf_t *v, fastf_t *local_x, fastf_t *local_y, fastf_t *vx, fastf_t *vy)
 {
 
@@ -372,7 +372,7 @@ get_quadrant(fastf_t *v, fastf_t *local_x, fastf_t *local_y, fastf_t *vx, fastf_
 }
 
 
-int
+static int
 isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *center, fastf_t *ra, fastf_t *rb)
 {
     fastf_t a, b, c;
@@ -418,7 +418,7 @@ isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t
 }
 
 
-int
+static int
 isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *center, fastf_t *ra, fastf_t *rb, fastf_t *norm, fastf_t *start, fastf_t *end, int orientation)
 
 
@@ -594,12 +594,14 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     point2d_t *intercept;
     point2d_t *normal = NULL;
     point2d_t ray_perp;
+    vect_t ra = V2INIT_ZERO;
+    vect_t rb = V2INIT_ZERO;
 
     crv = &extr->crv;
 
     /* intersect with top and bottom planes */
     dot_pl1 = VDOT(rp->r_dir, extr->pl1);
-    if (NEAR_ZERO(dot_pl1, SMALL_FASTF)) {
+    if (ZERO(dot_pl1)) {
 	/* ray is parallel to top and bottom faces */
 	dist_bottom = DIST_PT_PLANE(rp->r_pt, extr->pl1);
 	dist_top = DIST_PT_PLANE(rp->r_pt, extr->pl2);
@@ -632,7 +634,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     if (dir_dot_z < 0.0)
 	dir_dot_z = -dir_dot_z;
 
-    if (NEAR_ZERO(dir_dot_z - 1.0, SMALL_FASTF)) {
+    if (ZERO(dir_dot_z - 1.0)) {
 	/* ray is parallel to extrusion vector set mode to just count
 	 * intersections for Jordan Theorem
 	 */
@@ -679,7 +681,6 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		 */
 		csg = (struct carc_seg *)lng;
 		{
-		    vect_t ra, rb;
 		    fastf_t radius;
 
 		    if (csg->radius <= 0.0) {
@@ -1030,12 +1031,13 @@ void
 rt_extrude_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
-    struct carc_seg *csg;
+    struct carc_seg *csg = NULL;
     fastf_t radius, a, b, a_sq, b_sq;
     fastf_t curvature, tmp, dota, dotb;
-    fastf_t der;
-    vect_t diff;
-    vect_t ra, rb;
+    fastf_t der = 0.0;
+    vect_t diff = VINIT_ZERO;
+    vect_t ra = VINIT_ZERO;
+    vect_t rb = VINIT_ZERO;
 
     switch (hitp->hit_surfno) {
 	case LINE_SEG:
@@ -1232,7 +1234,7 @@ get_indices(genptr_t seg, int *start, int *end)
 }
 
 
-void
+static void
 get_seg_midpoint(genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt)
 {
     struct edge_g_cnurb eg;
@@ -1260,7 +1262,12 @@ get_seg_midpoint(genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt)
 	    if (csg->radius < 0.0) {
 		VMOVE_2D(pt, skt->verts[csg->start]);
 	    } else {
-		point2d_t start2d, end2d, mid_pt, s2m, dir, center2d;
+		point2d_t start2d = V2INIT_ZERO;
+		point2d_t end2d = V2INIT_ZERO;
+		point2d_t mid_pt = V2INIT_ZERO;
+		point2d_t s2m = V2INIT_ZERO;
+		point2d_t dir = V2INIT_ZERO;
+		point2d_t center2d = V2INIT_ZERO;
 		fastf_t tmp_len, len_sq, mid_ang, s2m_len_sq, cross_z;
 		fastf_t start_ang, end_ang;
 
@@ -1371,7 +1378,7 @@ struct loop_inter {
 };
 
 
-void
+static void
 isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loop_inter **root,
 		  int which_loop, struct rt_sketch_internal *ip, struct bn_tol *tol)
 {
@@ -1379,6 +1386,16 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
     int code;
     point2d_t norm;
     fastf_t dist[2];
+
+    vect_t s2m, tmp_dir;
+    fastf_t s2m_len_sq, len_sq, tmp_len, cross_z;
+
+    point2d_t ra = V2INIT_ZERO;
+    point2d_t rb = V2INIT_ZERO;
+    point2d_t start2d = V2INIT_ZERO;
+    point2d_t end2d = V2INIT_ZERO;
+    point2d_t mid_pt = V2INIT_ZERO;
+    point2d_t center2d = V2INIT_ZERO;
 
     norm[0] = -dir[1];
     norm[1] = dir[0];
@@ -1475,8 +1492,6 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		csg = (struct carc_seg *)lng;
 		radius = csg->radius;
 		if (csg->radius <= 0.0) {
-		    point2d_t ra, rb;
-
 		    V2SUB2(diff, ip->verts[csg->start], ip->verts[csg->end]);
 		    radius = sqrt(MAG2SQ(diff));
 		    ra[X] = radius;
@@ -1504,11 +1519,6 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    }
 
 		} else {
-		    point2d_t ra, rb;
-		    vect_t s2m, tmp_dir;
-		    point2d_t start2d, end2d, mid_pt, center2d;
-		    fastf_t s2m_len_sq, len_sq, tmp_len, cross_z;
-
 		    V2MOVE(start2d, ip->verts[csg->start]);
 		    V2MOVE(end2d, ip->verts[csg->end]);
 		    mid_pt[0] = (start2d[0] + end2d[0]) * 0.5;
@@ -1530,11 +1540,10 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    tmp_dir[0] = tmp_dir[0] / tmp_len;
 		    tmp_dir[1] = tmp_dir[1] / tmp_len;
 		    tmp_len = sqrt(len_sq);
-		    V2JOIN1(center2d, mid_pt, tmp_len, tmp_dir)
+		    V2JOIN1(center2d, mid_pt, tmp_len, tmp_dir);
 
-			/* check center location */
-			cross_z = (end2d[X] - start2d[X])*(center2d[Y] - start2d[Y]) -
-			(end2d[Y] - start2d[Y])*(center2d[X] - start2d[X]);
+		    /* check center location */
+		    cross_z = (end2d[X] - start2d[X])*(center2d[Y] - start2d[Y]) - (end2d[Y] - start2d[Y])*(center2d[X] - start2d[X]);
 		    if (!(cross_z > 0.0 && csg->center_is_left))
 			V2JOIN1(center2d, mid_pt, -tmp_len, tmp_dir);
 
@@ -1659,7 +1668,7 @@ sort_intersections(struct loop_inter **root, struct bn_tol *tol)
 }
 
 
-int
+static int
 classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sketch_internal *ip)
 {
     struct loop_inter *inter_root=NULL, *ptr, *tmp;
@@ -2097,7 +2106,7 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
     MAT4X3VEC(extrude_ip->u_vec, mat, tmp_vec);
     ntohd((unsigned char *)tmp_vec, rp->extr.ex_vvec, ELEMENTS_PER_VECT);
     MAT4X3VEC(extrude_ip->v_vec, mat, tmp_vec);
-    extrude_ip->keypoint = bu_glong(rp->extr.ex_key);
+    extrude_ip->keypoint = ntohl(*(uint32_t *)&rp->extr.ex_key[0]);
 
     ptr = (char *)rp;
     ptr += sizeof(struct extr_rec);
@@ -2143,8 +2152,8 @@ rt_extrude_export4(struct bu_external *ep, const struct rt_db_internal *ip, doub
     htond(rec->extr.ex_uvec, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
     VSCALE(tmp_vec, extrude_ip->v_vec, local2mm);
     htond(rec->extr.ex_vvec, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
-    bu_plong(rec->extr.ex_key, extrude_ip->keypoint);
-    bu_plong(rec->extr.ex_count, 1);
+    *(uint32_t *)rec->extr.ex_key = htonl(extrude_ip->keypoint);
+    *(uint32_t *)rec->extr.ex_count = htonl(1);
 
     ptr = (unsigned char *)rec;
     ptr += sizeof(struct extr_rec);
@@ -2192,7 +2201,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     ptr += ELEMENTS_PER_VECT * 4 * SIZEOF_NETWORK_DOUBLE;
     rem -= ELEMENTS_PER_VECT * 4 * SIZEOF_NETWORK_DOUBLE;
 
-    bu_plong(ptr, extrude_ip->keypoint);
+    *(uint32_t *)ptr = htonl(extrude_ip->keypoint);
 
     ptr += SIZEOF_NETWORK_LONG;
     rem -= SIZEOF_NETWORK_LONG;
@@ -2255,7 +2264,7 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     MAT4X3VEC(extrude_ip->u_vec, mat, tmp_vec[2]);
     MAT4X3VEC(extrude_ip->v_vec, mat, tmp_vec[3]);
     ptr += ELEMENTS_PER_VECT * 4 * SIZEOF_NETWORK_DOUBLE;
-    extrude_ip->keypoint = bu_glong(ptr);
+    extrude_ip->keypoint = ntohl(*(uint32_t *)ptr);
     ptr += SIZEOF_NETWORK_LONG;
     extrude_ip->sketch_name = bu_strdup((const char *)ptr);
 

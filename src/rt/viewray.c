@@ -46,23 +46,26 @@
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 extern FILE	*outfp;			/* optional output file */
 
 const char title[] = "RT Ray";
-const char usage[] = "\
-Usage:  rtray [options] model.g objects... >file.ray\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -a Az		Azimuth in degrees	(conflicts with -M)\n\
- -e Elev	Elevation in degrees	(conflicts with -M)\n\
- -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -o model.ray	Specify output file, ray(5V) format (default=stdout)\n\
- -U #		Set use_air boolean to # (default=1)\n\
- -x #		Set librt debug flags\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects... >file.ray\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512\n");
+    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
+    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
+    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
+    bu_log(" -o model.ray	Specify output file, ray(5V) format (default=stdout)\n");
+    bu_log(" -U #		Set use_air boolean to # (default=1)\n");
+    bu_log(" -x #		Set librt debug flags\n");
+}
 
 
 void	view_pixel(struct application *UNUSED(ap)) {}
@@ -79,7 +82,7 @@ void	view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 /* Handle a miss */
 int
-raymiss(struct application *ap)
+raymiss(struct application *UNUSED(ap))
 {
     return 0;
 }
@@ -91,7 +94,7 @@ raymiss(struct application *ap)
  *  Also generate various forms of "paint".
  */
 int
-rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *segHeadp)
+rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *UNUSED(segHeadp))
 {
     register struct partition *pp = PartHeadp->pt_forw;
     struct partition	*np;	/* next partition */
@@ -128,8 +131,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	/* Obtain next inhit normals & hit point, for code below */
 	RT_HIT_NORMAL( inormal2, np->pt_inhit, np->pt_inseg->seg_stp, &(ap->a_ray), np->pt_inflip );
 
-	if ( rt_fdiff( pp->pt_outhit->hit_dist,
-		       np->pt_inhit->hit_dist) >= 0 )  {
+	if (NEAR_EQUAL(pp->pt_outhit->hit_dist, np->pt_inhit->hit_dist, 0.001)) {
 	    /*
 	     *  The two partitions touch (or overlap!).
 	     *  If both are air, or both are solid, then don't
@@ -190,7 +192,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
  *  			V I E W _ I N I T
  */
 int
-view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int (minus_o), int UNUSED(minus_F))
+view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
 {
     /* Handling of air in librt */
     use_air = 1;

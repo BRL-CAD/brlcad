@@ -51,20 +51,23 @@ static	unsigned char *scanbuf;
  *  the command line, or from within an animation script.
  */
 struct bu_structparse view_parse[] = {
-    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL}
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 const char title[] = "RT Simple Intersection Lightmap";
-const char usage[] = "\
-Usage:  rtsil [options] model.g objects... [> file.pix]\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -a Az		Azimuth in degrees\n\
- -e Elev	Elevation in degrees\n\
- -M		Read matrix, cmds on stdin\n\
- -o file.pix	Output file name, else stdout\n\
- -x #		Set librt debug flags\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects... [> file.pix]\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512\n");
+    bu_log(" -a Az		Azimuth in degrees\n");
+    bu_log(" -e Elev	Elevation in degrees\n");
+    bu_log(" -M		Read matrix, cmds on stdin\n");
+    bu_log(" -o file.pix	Output file name, else stdout\n");
+    bu_log(" -x #		Set librt debug flags\n");
+}
 
 
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
@@ -120,11 +123,15 @@ view_pixel(struct application *UNUSED(ap))
  *  Any end-of-line processing should be done in view_pixel().
  */
 void
-view_eol(struct application *ap)
+view_eol(struct application *UNUSED(ap))
 {
+    size_t ret;
     bu_semaphore_acquire( BU_SEM_SYSCALL );
-    if ( outfp != NULL )
-	fwrite( scanbuf, 1, width, outfp );
+    if ( outfp != NULL ) {
+	ret = fwrite( scanbuf, 1, width, outfp );
+	if (ret < (size_t)width)
+	    perror("fwrite");
+    }
 #if 0
     else if ( fbp != FBIO_NULL )
 	fb_write( fbp, 0, ap->a_y, scanbuf, width );
@@ -171,7 +178,7 @@ view_cleanup(struct rt_i *UNUSED(rtip))
  *  Called via a_hit linkage from rt_shootray() when ray hits.
  */
 int
-rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
+rayhit(register struct application *ap, struct partition *UNUSED(PartHeadp), struct seg *UNUSED(segp))
 {
     bu_semaphore_acquire( RT_SEM_RESULTS );
     scanbuf[ap->a_x] = 1;

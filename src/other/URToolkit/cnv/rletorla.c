@@ -202,7 +202,7 @@ int	minx, maxx, miny, maxy, frame_number;
    rlb_head.name[29] = '\0';
    strcpy(rlb_head.desc, "A Wavefront file converted from an rle file.");
    strcpy(rlb_head.program, progname);
-#if NO_GETHOSTNAME
+#if defined(NO_GETHOSTNAME) && NO_GETHOSTNAME
    /* from the Solaris2 Porting FAQ */
    if (sysinfo(SI_HOSTNAME, rlb_head.machine,32) <0) {
      perror("SI_HOSTNAME");

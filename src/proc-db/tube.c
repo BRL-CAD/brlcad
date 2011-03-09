@@ -121,6 +121,10 @@ main(int argc, char **argv)
     mat_t rot1, rot2, rot3;
     vect_t from, to;
     vect_t offset;
+    int ret;
+
+    if (argc > 0)
+	bu_log("Usage: %s\n", argv[0]);
 
     BU_LIST_INIT(&head.l);
     BU_LIST_INIT(&ghead.l);
@@ -226,7 +230,9 @@ main(int argc, char **argv)
     }
     wdb_close(outfp);
     fflush(stderr);
-    system("cat ke.g");	/* XXX need library routine */
+    ret = system("cat ke.g");	/* XXX need library routine */
+    if (ret < 0)
+	perror("system");
 
     return 0;
 }
@@ -391,8 +397,9 @@ read_frame(FILE *fp)
     }
 
     for (nsamples=0;;nsamples++) {
-	int nmass;
+	size_t nmass;
 	float kx, ky, kz;
+	int nmassval;
 	
 	buf[0] = '\0';
 	if (bu_fgets(buf, sizeof(buf), fp) == NULL)  return -1;
@@ -400,14 +407,15 @@ read_frame(FILE *fp)
 	if (buf[0] == '\0' || buf[0] == '\n')
 	    break;		/* stop at a blank line */
 	i = sscanf(buf, "%d %f %f %f",
-		   &nmass, &kx, &ky, &kz);
+		   &nmassval, &kx, &ky, &kz);
 	if (i != 4) {
 	    fprintf(stderr, "input line in error: %s\n", buf);
 	    return -1;
 	}
+	nmass = (size_t)nmassval;
 	if (nmass-1 != nsamples) {
-	    fprintf(stderr, "nmass %d / nsamples %d mismatch\n",
-		    nmass, nsamples);
+	    fprintf(stderr, "nmass %lu / nsamples %lu mismatch\n",
+		    (unsigned long)nmass, (unsigned long)nsamples);
 	    return -1;
 	}
 #define EXAGERATION (4 * oradius)
@@ -438,12 +446,16 @@ read_pos(FILE *fp)
 {
     static float last_read_time = -5;
     static float pos = 0;
+    int ret;
 
 /* Skip over needless intermediate time steps */
     while (last_read_time < cur_time) {
 	if (feof(fp))
 	    break;
-	fscanf(fp, "%f %f", &last_read_time, &pos);
+	ret = fscanf(fp, "%f %f", &last_read_time, &pos);
+	if (ret == -1)
+	    perror("fscanf");
+
 	/* HACK:  tmax[kathy]=6.155ms, tmax[kurt]=9.17 */
 	/* we just read a Kurt number, make it a Kathy number */
 	last_read_time = last_read_time / 9.17 * 6.155;
@@ -483,7 +495,7 @@ build_cyl(char *cname, int npts, double radius)
 void
 xfinddir(fastf_t *dir, double x, fastf_t *loc)
 {
-    int i;
+    size_t i;
     fastf_t ratio;
 
     for (i=0; i<nsamples-1; i++) {

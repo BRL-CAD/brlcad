@@ -861,7 +861,7 @@ int process_manual_scale_factor(
  */
 int process_manual_dem_max_raw_elevation(
     double *out_raw_dem_2_raw_dsp_scale_factor_ptr,
-    double *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr,
+    double *UNUSED(in_raw_dem_2_raw_dsp_auto_scale_factor_ptr),
     long int *in_manual_dem_max_raw_elevation_ptr,
     double *in_derived_dem_max_raw_elevation_ptr,
     double *in_z_spatial_resolution_ptr,
@@ -870,9 +870,6 @@ int process_manual_dem_max_raw_elevation(
     double dem_max_real_clipped_elevation = 0;
     long int manual_dem_max_raw_elevation_lowerlimit = 1;
     long int manual_dem_max_raw_elevation_upperlimit = 999999;
-
-    /* unused variable quelling */
-    in_raw_dem_2_raw_dsp_auto_scale_factor_ptr = in_raw_dem_2_raw_dsp_auto_scale_factor_ptr;
 
     /* compute raw_dem_2_raw_dsp_scale_factor based on the user entered */
     /* dem max raw elevation */
@@ -957,9 +954,9 @@ int process_manual_dem_max_raw_elevation(
  */
 int process_manual_dem_max_real_elevation(
     double *out_raw_dem_2_raw_dsp_scale_factor_ptr,
-    double *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr,
+    double *UNUSED(in_raw_dem_2_raw_dsp_auto_scale_factor_ptr),
     double *in_manual_dem_max_real_elevation_ptr,
-    double *in_derived_dem_max_raw_elevation_ptr,
+    double *UNUSED(in_derived_dem_max_raw_elevation_ptr),
     double *in_z_spatial_resolution_ptr,
     double *in_datum_elevation_in_curr_b_record_ptr)
 {
@@ -968,10 +965,6 @@ int process_manual_dem_max_real_elevation(
     double dem_max_raw_elevation = 0;
     double adjusted_manual_dem_max_real_elevation = 0; /* value adjusted to multiple of z_spatial */
     /* resolution then add datum elevation */ 
-
-    /* unused variable quelling */
-    in_raw_dem_2_raw_dsp_auto_scale_factor_ptr = in_raw_dem_2_raw_dsp_auto_scale_factor_ptr;
-    in_derived_dem_max_raw_elevation_ptr = in_derived_dem_max_raw_elevation_ptr;
 
     /* makes sure *in_manual_dem_max_real_elevation_ptr >= *in_datum_elevation_in_curr_b_record_ptr */
     manual_dem_max_real_elevation_lowerlimit = *in_z_spatial_resolution_ptr + *in_datum_elevation_in_curr_b_record_ptr;
@@ -1292,7 +1285,7 @@ read_dem(
             }
 
             /* test for zero to avoid divide by 0 math error */
-            if (!NEAR_ZERO(derived_dem_max_raw_elevation, SMALL_FASTF)) {
+            if (!ZERO(derived_dem_max_raw_elevation)) {
                 raw_dem_2_raw_dsp_auto_scale_factor = DSP_MAX_RAW_ELEVATION / (double)derived_dem_max_raw_elevation;
             } else {
                 raw_dem_2_raw_dsp_auto_scale_factor = 1;

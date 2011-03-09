@@ -145,19 +145,19 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     rp = &ideal_ray;	/* XXX */
 
     /* Compute the inverse of the direction cosines */
-    if (!NEAR_ZERO(rp->r_dir[X], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp->r_dir[X])) {
 	invdir[X]=1.0/rp->r_dir[X];
     } else {
 	invdir[X] = INFINITY;
 	rp->r_dir[X] = 0.0;
     }
-    if (!NEAR_ZERO(rp->r_dir[Y], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp->r_dir[Y])) {
 	invdir[Y]=1.0/rp->r_dir[Y];
     } else {
 	invdir[Y] = INFINITY;
 	rp->r_dir[Y] = 0.0;
     }
-    if (!NEAR_ZERO(rp->r_dir[Z], SQRT_SMALL_FASTF)) {
+    if (!ZERO(rp->r_dir[Z])) {
 	invdir[Z]=1.0/rp->r_dir[Z];
     } else {
 	invdir[Z] = INFINITY;
@@ -200,7 +200,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     if (RT_G_DEBUG&DEBUG_VOL)bu_log("igrid=(%d, %d, %d)\n", igrid[X], igrid[Y], igrid[Z]);
 
     /* X setup */
-    if (NEAR_ZERO(rp->r_dir[X], SMALL_FASTF)) {
+    if (ZERO(rp->r_dir[X])) {
 	t[X] = INFINITY;
 	delta[X] = 0;
     } else {
@@ -211,7 +211,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	delta[X] = volp->vol_i.cellsize[X] * fabs(invdir[X]);
     }
     /* Y setup */
-    if (NEAR_ZERO(rp->r_dir[Y], SMALL_FASTF)) {
+    if (ZERO(rp->r_dir[Y])) {
 	t[Y] = INFINITY;
 	delta[Y] = 0;
     } else {
@@ -222,7 +222,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	delta[Y] = volp->vol_i.cellsize[Y] * fabs(invdir[Y]);
     }
     /* Z setup */
-    if (NEAR_ZERO(rp->r_dir[Z], SMALL_FASTF)) {
+    if (ZERO(rp->r_dir[Z])) {
 	t[Z] = INFINITY;
 	delta[Z] = 0;
     } else {
@@ -581,7 +581,7 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     VSETALL(vip->cellsize, 1);
 
     bu_vls_init(&str);
-    bu_vls_strncpy(&str, ep->ext_buf, ep->ext_nbytes);
+    bu_vls_strncpy(&str, (const char *)ep->ext_buf, ep->ext_nbytes);
     if (bu_struct_parse(&str, rt_vol_parse, (char *)vip) < 0) {
 	bu_vls_free(&str);
 	return -2;
@@ -669,7 +669,7 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     ep->ext_nbytes = bu_vls_strlen(&str);
     ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "vol external");
 
-    bu_strlcpy(ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
+    bu_strlcpy((char *)ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
     bu_vls_free(&str);
 
     return 0;
@@ -1316,9 +1316,8 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  *
  */
 int
-rt_vol_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_vol_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

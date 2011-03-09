@@ -260,7 +260,7 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
     {
 	t_in = -INFINITY;
 	for (i = 0; i < 6; ++i) {
-	    if (NEAR_ZERO(ray_dir[i%3], SMALL_FASTF))
+	    if (ZERO(ray_dir[i%3]))
 		continue;
 	    t = (extremum[i/3][i%3] - ray_orig[i%3]) /
 		ray_dir[i%3];

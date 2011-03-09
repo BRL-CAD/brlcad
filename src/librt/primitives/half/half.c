@@ -50,6 +50,8 @@
 #include "nmg.h"
 #include "db.h"
 
+#include "../../librt_private.h"
+
 
 struct half_specific {
     plane_t half_eqn;	/* Plane equation, outward normal */
@@ -499,7 +501,22 @@ rt_hlf_xform(
     hip = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(hip);
     RT_CK_DB_INTERNAL(op);
-    hop = (struct rt_half_internal *)op->idb_ptr;
+
+    if (op != ip) {
+	RT_INIT_DB_INTERNAL(op);
+	hop = (struct rt_half_internal *)bu_malloc(sizeof(struct rt_half_internal), "hop");
+	hop->magic = RT_HALF_INTERNAL_MAGIC;
+	op->idb_ptr = (genptr_t)hop;
+	op->idb_meth = &rt_functab[ID_HALF];
+	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	op->idb_type = ID_HALF;
+	if (ip->idb_avs.magic == BU_AVS_MAGIC) {
+	    bu_avs_init(&op->idb_avs, ip->idb_avs.count, "avs");
+	    bu_avs_merge(&op->idb_avs, &ip->idb_avs);
+	}
+    } else {
+	hop = (struct rt_half_internal *)ip->idb_ptr;
+    }
     RT_HALF_CK_MAGIC(hop);
 
     /* Pick a point on the original halfspace */
@@ -572,7 +589,7 @@ rt_hlf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     hip = (struct rt_half_internal *)ip->idb_ptr;
     hip->magic = RT_HALF_INTERNAL_MAGIC;
 
-    rt_fastf_float(orig_eqn, rp->s.s_values, 2, dbip->dbi_version < 0 ? 1 : 0);	/* 2 floats too many */
+    flip_fastf_float(orig_eqn, rp->s.s_values, 2, dbip->dbi_version < 0 ? 1 : 0);	/* 2 floats too many */
 
     /* Pick a point on the original halfspace */
     VSCALE(orig_pt, orig_eqn, orig_eqn[1*ELEMENTS_PER_VECT]);
@@ -797,9 +814,8 @@ rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  *
  */
 int
-rt_hlf_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_hlf_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

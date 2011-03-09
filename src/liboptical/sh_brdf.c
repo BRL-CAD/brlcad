@@ -272,7 +272,7 @@ brdf_render(register struct application *ap, struct partition *pp, struct shadew
 		   refl, cprod);
 
 	    /* Calculate specular reflectance. */
-	    if (NEAR_ZERO(ps->rms_sq, SMALL_FASTF))
+	    if (ZERO(ps->rms_sq))
 		continue;
 	    VADD2(h_dir, to_eye, to_light)
 		VUNITIZE(h_dir);
@@ -280,7 +280,7 @@ brdf_render(register struct application *ap, struct partition *pp, struct shadew
 	    if (cos_tmp <= 0.0)
 		continue;
 	    cos_tmp *= cos_tmp;
-	    if (NEAR_ZERO(cos_tmp, SMALL_FASTF))
+	    if (ZERO(cos_tmp))
 		continue;
 
 	    tan_sq = (1.0-cos_tmp)/cos_tmp;

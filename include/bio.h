@@ -20,14 +20,14 @@
 /** @file bio.h
  *
  * BRL-CAD private system compatibility wrapper header that provides
- * declarations for native and standard input/output system routines.
+ * declarations for native and standard system INPUT/OUTPUT routines.
  *
- * This header does not belong to any BRL-CAD library but is used by
- * all of them.  Consider this header private and subject to change,
- * not to be used by third parties.
+ * This header is commonly used in leu of including the following:
+ * stdio.h, io.h, fcntl, unistd.h, and windows.h
  *
- * BRL-CAD libraries and applications should include this library in
- * place of including existing native and standard headers.
+ * This header does not belong to any BRL-CAD library but may used by
+ * all of them.  Consider this header PRIVATE and subject to change,
+ * NOT TO BE USED BY THIRD PARTIES.
  *
  */
 

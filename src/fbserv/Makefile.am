@@ -1,7 +1,9 @@
 
 bin_PROGRAMS = fbserv
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = \
+	${STRICT_FLAGS} \
+	${TCL_CPPFLAGS}
 
 fbserv_LDADD = ${FB}
 

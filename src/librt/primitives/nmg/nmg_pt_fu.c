@@ -692,7 +692,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	 * Insert edge_info struct here in list
 	 */
 	if (ved->dist < ei_p->ved_p->dist
-	    || (NEAR_ZERO(ved->dist - ei_p->ved_p->dist, SMALL_FASTF)
+	    || (ZERO(ved->dist - ei_p->ved_p->dist)
 		&& ei_p->ved_p->magic_p == ved->magic_p))
 	{
 	    break;
@@ -772,7 +772,7 @@ HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1)
     for (BU_LIST_FOR(ei, edge_info, &edge_list->l)) {
 	NMG_CK_EI(ei);
 	NMG_CK_VED(ei->ved_p);
-	if (NEAR_ZERO(ei->ved_p->dist - dist, SMALL_FASTF)) {
+	if (ZERO(ei->ved_p->dist - dist)) {
 	    ei_p = BU_LIST_PLAST(edge_info, &ei->l);
 	    BU_LIST_DEQUEUE(&ei->l);
 	    BU_LIST_APPEND(near1, &ei->l);

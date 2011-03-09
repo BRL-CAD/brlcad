@@ -353,7 +353,7 @@ nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse
 	/* skip this checking until we get by the first edgeuse */
 	if (edges) {
 	    /* Are we back to the begining? */
-	    if ((eu->vu_p->v_p == start_eu->vu_p->v_p)) {
+	    if (eu->vu_p->v_p == start_eu->vu_p->v_p) {
 		/* done with this loop */
 		done = 1;
 		break;
@@ -564,9 +564,9 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 			dist[1]>=0.0 && dist[1]<=1.0) {
 			point_t pt;
 
-			if (NEAR_ZERO(dist[1], SMALL_FASTF))
+			if (ZERO(dist[1]))
 			    v = eu2->vu_p->v_p;
-			else if (NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) /* i.e., == 1.0 */
+			else if (ZERO(dist[1] - 1.0)) /* i.e., == 1.0 */
 			    v = eu2->eumate_p->vu_p->v_p;
 			else {
 			    VJOIN1(pt, eu1->vu_p->v_p->vg_p->coord, dist[0], v1);
@@ -582,9 +582,9 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 		    if (dist[1]>0.0 && dist[1]<1.0 && dist[0]>=0.0 && dist[0]<=1.0) {
 			point_t pt;
 
-			if (NEAR_ZERO(dist[0], SMALL_FASTF))
+			if (ZERO(dist[0]))
 			    v = eu1->vu_p->v_p;
-			else if (NEAR_ZERO(dist[0] - 1.0, SMALL_FASTF)) /* i.e., == 1.0 */
+			else if (ZERO(dist[0] - 1.0)) /* i.e., == 1.0 */
 			    v = eu2->eumate_p->vu_p->v_p;
 			else {
 			    VJOIN1(pt, eu2->vu_p->v_p->vg_p->coord, dist[1], v2);
@@ -763,9 +763,9 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 
 			if (dist[0]>0.0 && dist[0]<1.0 &&
 			    dist[1]>=0.0 && dist[1]<=1.0) {
-			    if (NEAR_ZERO(dist[1], SMALL_FASTF))
+			    if (ZERO(dist[1]))
 				v = eu2->vu_p->v_p;
-			    else if (NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) /* i.e., == 1.0 */
+			    else if (ZERO(dist[1] - 1.0)) /* i.e., == 1.0 */
 				v = eu2->eumate_p->vu_p->v_p;
 			    else {
 				VJOIN1(pt, eu1->vu_p->v_p->vg_p->coord ,
@@ -784,9 +784,9 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 			if (dist[1] > 0.0 && dist[1] < 1.0 &&
 			    dist[0]>=0.0 && dist[0]<=1.0)
 			{
-			    if (NEAR_ZERO(dist[0], SMALL_FASTF))
+			    if (ZERO(dist[0]))
 				v = eu1->vu_p->v_p;
-			    else if (NEAR_ZERO(dist[0] - 1.0, SMALL_FASTF)) /* i.e., == 1.0 */
+			    else if (ZERO(dist[0] - 1.0)) /* i.e., == 1.0 */
 				v = eu1->eumate_p->vu_p->v_p;
 			    else {
 				VJOIN1(pt, eu2->vu_p->v_p->vg_p->coord, dist[1], v2);

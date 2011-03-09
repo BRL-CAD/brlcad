@@ -800,7 +800,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		VMOVE(p2, pos_a->next->p);
 		/* either X or Y will be zero; so adding handles either case */
 		mm = (p2[Z] - p0[Z]) / ((p2[X]+p2[Y]) - (p0[X]+p0[Y]));
-		if (!NEAR_ZERO(p0[X], SMALL_FASTF)) {
+		if (!ZERO(p0[X])) {
 		    p1[X] = fabs(mm*c*r1) / sqrt(mm*mm*c*c - 1.0);
 		    p1[Y] = 0.0;
 		    p1[Z] = sqrt(p1[X]*p1[X] - r1*r1) / c;
@@ -1204,7 +1204,7 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     MAT4X3VEC(hyp_ip->hyp_Hi, mat, &vec[1*3]);
     MAT4X3VEC(hyp_ip->hyp_A, mat, &vec[2*3]);
 
-    if (!NEAR_ZERO(mat[15], SMALL_FASTF))
+    if (!ZERO(mat[15]))
 	hyp_ip->hyp_b = vec[ 9] / mat[15];
     else
 	hyp_ip->hyp_b = INFINITY;
@@ -1333,9 +1333,8 @@ rt_hyp_ifree(struct rt_db_internal *ip)
  * R T _ H Y P _ P A R A M S
  */
 int
-rt_hyp_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_hyp_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

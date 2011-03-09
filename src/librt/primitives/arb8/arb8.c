@@ -62,6 +62,8 @@
 #include "raytrace.h"
 #include "nurb.h"
 
+#include "../../librt_private.h"
+
 
 #define RT_SLOPPY_DOT_TOL 0.0087 /* inspired by RT_DOT_TOL, but less tight (.5 deg) */
 
@@ -384,7 +386,7 @@ rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, 
 	case 1:
 	    VSUB2(ofp->arb_U, point, afp->A);	/* B-A */
 	    f = MAGNITUDE(ofp->arb_U);
-	    if (NEAR_ZERO(f, SQRT_SMALL_FASTF)) {
+	    if (ZERO(f)) {
 		return -1;			/* BAD */
 	    }
 	    ofp->arb_Ulen = f;
@@ -1191,7 +1193,7 @@ rt_arb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    rt_fastf_float(vec, rp->s.s_values, 8, dbip->dbi_version < 0 ? 1 : 0);
+    flip_fastf_float(vec, rp->s.s_values, 8, dbip->dbi_version < 0 ? 1 : 0);
 
     /*
      * Convert from vector notation (in database) to point notation.
@@ -2027,7 +2029,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 	/* calculate edge direction */
 	VSUB2(edge_dir, arb->pt[pt2], arb->pt[pt1]);
 
-	if (NEAR_ZERO(MAGNITUDE(edge_dir), SMALL_FASTF))
+	if (ZERO(MAGNITUDE(edge_dir)))
 	    goto err;
 
 	/* bounding planes bp1, bp2 */
@@ -2142,9 +2144,8 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
  *
  */
 int
-rt_arb_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_arb_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

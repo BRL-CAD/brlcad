@@ -55,13 +55,13 @@ extern int report_progress;		/* !0 = user wants progress report */
 extern int save_overlaps;		/* flag for setting rti_save_overlaps */
 extern mat_t model2view;
 extern mat_t view2model;
-extern struct application ap;
+extern struct application APP;
 extern struct bu_image_file *bif;
 extern vect_t left_eye_delta;
 extern vect_t left_eye_delta;
 
 /***** variables shared with worker() ******/
-extern char *scanbuf;			/* pixels for REMRT */
+extern unsigned char *scanbuf;		/* pixels for REMRT */
 extern fastf_t aspect;			/* view aspect ratio X/Y */
 extern fastf_t cell_height;		/* model space grid cell height */
 extern fastf_t cell_width;		/* model space grid cell width */
@@ -119,14 +119,17 @@ extern int pix_start;			/* pixel to start at */
 
 /*** do.c ***/
 extern void def_tree(struct rt_i *rtip);
+extern void do_prep(struct rt_i *rtip);
 extern void do_run(int a, int b);
 extern void do_ae(double azim, double elev);
-extern int do_frame(int framenumber);
 extern int old_way(FILE *fp);
+extern int do_frame(int framenumber);
 
 /* opt.c */
 extern int get_args(int argc, const char *argv[]);
 
+/* view.c */
+extern void usage(const char *argv0);
 /*
  * Local Variables:
  * mode: C

@@ -66,22 +66,25 @@ struct bu_structparse view_parse[] = {
 
 
 const char title[] = "RT BoT Faces";
-const char usage[] = "\
-Usage:  rt_bot_faces [options] model.g objects... >file.ray\n\
-Options:\n\
- -s #		Grid size in pixels, default 512\n\
- -a Az		Azimuth in degrees	(conflicts with -M)\n\
- -e Elev	Elevation in degrees	(conflicts with -M)\n\
- -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -g #		Grid cell width in millimeters (conflicts with -s)\n\
- -G #		Grid cell height in millimeters (conflicts with -s)\n\
- -J #		Jitter.  Default is off.  Any non-zero number is on\n\
- -o bot_faces_file	Specify output file, list of bot_faces hit (default=stdout)\n\
- -U #		Set use_air boolean to # (default=1)\n\
- -c \"set save_overlaps=1\"     Reproduce FASTGEN behavior for regions flagged as FASTGEN regions\n\
- -c \"set rt_cline_radius=radius\"      Additional radius to be added to CLINE solids\n\
- -x #		Set librt debug flags\n\
-";
+
+void
+usage(const char *argv0)
+{
+    bu_log("Usage:  %s [options] model.g objects... >file.ray\n", argv0);
+    bu_log("Options:\n");
+    bu_log(" -s #		Grid size in pixels, default 512\n");
+    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
+    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
+    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
+    bu_log(" -g #		Grid cell width in millimeters (conflicts with -s)\n");
+    bu_log(" -G #		Grid cell height in millimeters (conflicts with -s)\n");
+    bu_log(" -J #		Jitter.  Default is off.  Any non-zero number is on\n");
+    bu_log(" -o bot_faces_file	Specify output file, list of bot_faces hit (default=stdout)\n");
+    bu_log(" -U #		Set use_air boolean to # (default=1)\n");
+    bu_log(" -c \"set save_overlaps=1\"     Reproduce FASTGEN behavior for regions flagged as FASTGEN regions\n");
+    bu_log(" -c \"set rt_cline_radius=radius\"      Additional radius to be added to CLINE solids\n");
+    bu_log(" -x #		Set librt debug flags\n");
+}
 
 
 /*
@@ -148,7 +151,7 @@ raymiss(struct application *UNUSED(ap))
  */
 
 int
-view_init(struct application *ap, char *file, char *obj, int minus_o, int UNUSED(minus_F))
+view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
 {
     /* report air regions */
     use_air = 1;
@@ -288,12 +291,12 @@ view_end(struct application *UNUSED(ap))
     entry = Tcl_FirstHashEntry(&bots, &search);
 
     while (entry) {
-	int i;
+	size_t i;
 
 	fprintf(outfp, "BOT: %s\n", Tcl_GetHashKey(&bots, entry));
 	faces = (struct bu_ptbl *)Tcl_GetHashValue(entry);
 	for (i=0; i<BU_PTBL_LEN(faces); i++) {
-	    fprintf(outfp, "\t%llu\n", (long)BU_PTBL_GET(faces, i));
+	    fprintf(outfp, "\t%lu\n", (unsigned long)BU_PTBL_GET(faces, i));
 	}
 	entry = Tcl_NextHashEntry(&search);
     }

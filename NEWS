@@ -9,6 +9,44 @@ first and are grouped by release.  Each release also includes optional
 descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
+
+----------------------------------------------------------------------
+--- 2011-03-08  Release 7.18.4                                     ---
+----------------------------------------------------------------------
+
+After considerable development, this release includes the preliminary
+integration of our high-performance Triangle Intersection Engine (TIE)
+with BRL-CAD's LIBRT raytrace library.  TIE uses specialized
+acceleration techniques for faster raytracing of triangle mesh models.
+TIE was experimentally developed over several years as part of
+BRL-CAD's Advanced Distributed Ray Tracer (ADRT) tool suite.  As this
+is the initial integration, TIE is available but presently disabled by
+default.  The engine optimiation is configurably integrated with LIBRT
+mesh (BoT) raytracing and optionally enabled via settings available in
+RT and MGED.  Inital testing of "real-world" models shows average
+improvements around 20-60% while individual meshes with high (1M+)
+face counts are rendering more than 2000% faster than before.
+
+Also included in this release is the development of a new "shp-g"
+geometry importer for Shapefile data.  Shapefiles are a common file
+format for storing geospatial vector data commonly used by geographic
+information systems (GIS) software.  Shapefiles may be imported as 2D
+sketch geometry that can be extruded to a 3D representation.
+
+* support matrices over halfspaces within combinations - Sean Morrison
+* fixed archer and rtwizard startup failure bug on Mac - Sean Morrison
+* fixed bug starting up the Combination Editor in mged - Sean Morrison
+* mged 'mater' command interactive prompting restored - Sean Morrison
+* fixed bug running nirt on a Windows command terminal - Bob Parker
+* improved wireframe updating when editing within mged - Sean Morrison
+* added -T bot_mintie BoT optimization options to nirt - Sean Morrison
+* mged command-click zoom binding for one button mice - Sean Morrison
+* removed 'txyz-pl' utility tool in favor of 'xyz-pl' - Sean Morrison
+* new shp-g importer for Esri Shapefile geometry files - Sean Morrison
+* new 'rt_bot_mintie' option for triggering TIE BoTs  - Erik Greenwald
+* integrated optimized TIE BoT raytracing with LIBRT - Erik Greenwald
+
+
 ----------------------------------------------------------------------
 --- 2011-02-09  Release 7.18.2                                     ---
 ----------------------------------------------------------------------
@@ -51,6 +89,7 @@ desktop icons, new menu items, mime-type association, and more.
 * upgraded libpng to version 1.4.5 - Cliff Yapp
 * upgraded zlib to version 1.2.5 - Cliff Yapp
 * removed shell execution ! command from vdeck - Cliff Yapp
+
 
 ----------------------------------------------------------------------
 --- 2010-12-07  Release 7.18.0                                     ---

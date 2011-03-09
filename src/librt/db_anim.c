@@ -364,7 +364,7 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 		goto bad;
 	    }
 	    scale = atof(argv[5]);
-	    if (NEAR_ZERO(scale, SMALL)) {
+	    if (ZERO(scale)) {
 		bu_log("db_parse_1anim:  matrix %s scale factor is zero\n",
 		       argv[3]);
 		goto bad;

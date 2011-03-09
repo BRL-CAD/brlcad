@@ -88,12 +88,9 @@ cho_deleteProc(ClientData clientData)
 
 
 HIDDEN struct bu_cmdhist_obj *
-cho_open(ClientData clientData, Tcl_Interp *interp, char *name)
+cho_open(ClientData UNUSED(clientData), Tcl_Interp *interp, char *name)
 {
     struct bu_cmdhist_obj *chop;
-
-    /* quell compilation warning */
-    clientData = clientData;
 
     /* check to see if command history object exists */
     for (BU_LIST_FOR(chop, bu_cmdhist_obj, &HeadCmdHistObj.l)) {

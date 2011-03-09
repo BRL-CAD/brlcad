@@ -27,7 +27,7 @@
 
 struct scanline {
     int	sl_left;		/* # pixels left on this scanline */
-    char *sl_buf;		/* ptr to buffer for scanline */
+    unsigned char *sl_buf;	/* ptr to buffer for scanline */
 };
 
 void free_scanlines(int, struct scanline*);

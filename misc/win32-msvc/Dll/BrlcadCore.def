@@ -277,6 +277,7 @@ rt_arc2d_to_cnurb
 rt_bot_condense
 rt_bot_face_fuse
 rt_bot_minpieces
+rt_bot_mintie
 rt_bot_smooth
 rt_bot_vertex_fuse
 rt_clean

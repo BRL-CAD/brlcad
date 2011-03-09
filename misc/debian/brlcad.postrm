@@ -4,12 +4,14 @@ set -e
 
 F='/usr/share/applications/defaults.list'
 
-sed -i '/application\/x-brlcad-extension=brlcad-archer.desktop/d' $F
-
-if [ -x "`which update-desktop-database 2>/dev/null`" ]; then
-	update-desktop-database &> /dev/null
+if [ -f $F ]; then
+	sed -i '/application\/x-brlcad-/d' $F
 fi
 
-if [ -x "`which update-mime-database 2>/dev/null`" ]; then
-	update-mime-database /usr/share/mime
-fi
+update-desktop-database &> /dev/null || :
+
+update-mime-database /usr/share/mime &> /dev/null || :
+
+touch -c /usr/share/icons/hicolor &>/dev/null || :
+
+gtk-update-icon-cache /usr/share/icons/hicolor &>/dev/null || :

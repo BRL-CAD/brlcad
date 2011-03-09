@@ -74,7 +74,7 @@ rt_nurb_s_bound(struct face_g_snurb *srf, fastf_t *bmin, fastf_t *bmax)
 	    VMINMAX(bmin, bmax, p_ptr);
 	} else if (rat) {
 	    point_t tmp_pt;
-	    if (NEAR_ZERO(p_ptr[H], SMALL)) {
+	    if (ZERO(p_ptr[H])) {
 		HPRINT("mesh point", p_ptr);
 		bu_log("nurb_s_bound:  H too small\n");
 	    } else {
@@ -114,7 +114,7 @@ rt_nurb_c_bound(struct edge_g_cnurb *crv, fastf_t *bmin, fastf_t *bmax)
 	    VMINMAX(bmin, bmax, p_ptr);
 	} else if (rat) {
 	    point_t tmp_pt;
-	    if (NEAR_ZERO(p_ptr[H], SMALL)) {
+	    if (ZERO(p_ptr[H])) {
 		HPRINT("mesh point", p_ptr);
 		bu_log("nurb_c_bound:  H too small\n");
 	    } else {

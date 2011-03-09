@@ -36,7 +36,7 @@
 /* for isnan() function */
 #include <float.h>
 #include <math.h>
-#include "bio.h"
+#include "bin.h"
 
 #include "tcl.h"
 #include "vmath.h"
@@ -529,7 +529,7 @@ discont_radius_shot(struct xray *rp, point_t center, vect_t norm, fastf_t or1_sq
     dist_to_plane = VDOT(norm, center);
     norm_dist = dist_to_plane - VDOT(norm, rp->r_pt);
     slant_factor = VDOT(norm, rp->r_dir);
-    if (!NEAR_ZERO(slant_factor, SMALL_FASTF)) {
+    if (!ZERO(slant_factor)) {
         vect_t to_center;
         struct hit *hitp;
         
@@ -1060,7 +1060,7 @@ pipe_start_shot(struct soltab *stp, struct xray *rp, struct id_pipe *id_p, struc
         dist_to_plane = VDOT(lin->pipe_H, lin->pipe_V);
         norm_dist = dist_to_plane - VDOT(lin->pipe_H, rp->r_pt);
         slant_factor = VDOT(lin->pipe_H, rp->r_dir);
-        if (!NEAR_ZERO(slant_factor, SMALL_FASTF)) {
+        if (!ZERO(slant_factor)) {
             vect_t to_center;
             
             t_tmp = norm_dist/slant_factor;
@@ -1089,7 +1089,7 @@ pipe_start_shot(struct soltab *stp, struct xray *rp, struct id_pipe *id_p, struc
         norm_dist = dist_to_plane - VDOT(bend->bend_rb, rp->r_pt);
         slant_factor = VDOT(bend->bend_rb, rp->r_dir);
         
-        if (!NEAR_ZERO(slant_factor, SMALL_FASTF)) {
+        if (!ZERO(slant_factor)) {
             vect_t to_center;
             
             t_tmp = norm_dist/slant_factor;
@@ -1131,7 +1131,7 @@ pipe_end_shot(struct soltab *stp, struct xray *rp, struct id_pipe *id_p, struct 
         dist_to_plane = VDOT(lin->pipe_H, top);
         norm_dist = dist_to_plane - VDOT(lin->pipe_H, rp->r_pt);
         slant_factor = VDOT(lin->pipe_H, rp->r_dir);
-        if (!NEAR_ZERO(slant_factor, SMALL_FASTF)) {
+        if (!ZERO(slant_factor)) {
             vect_t to_center;
             
             t_tmp = norm_dist/slant_factor;
@@ -1166,7 +1166,7 @@ pipe_end_shot(struct soltab *stp, struct xray *rp, struct id_pipe *id_p, struct 
         norm_dist = dist_to_plane - VDOT(plane_norm, rp->r_pt);
         slant_factor = VDOT(plane_norm, rp->r_dir);
         
-        if (!NEAR_ZERO(slant_factor, SMALL_FASTF)) {
+        if (!ZERO(slant_factor)) {
             vect_t to_center;
             
             t_tmp = norm_dist/slant_factor;
@@ -3271,7 +3271,7 @@ rt_pipe_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
     ip->idb_ptr = bu_malloc(sizeof(struct rt_pipe_internal), "rt_pipe_internal");
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     pip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
-    pip->pipe_count = bu_glong(rp->pwr.pwr_pt_count);
+    pip->pipe_count = ntohl(*(uint32_t *)rp->pwr.pwr_pt_count);
     
     /*
      * Walk the array of segments in reverse order, allocating a
@@ -3346,8 +3346,8 @@ rt_pipe_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     rec = (union record *)ep->ext_buf;
     
     rec->pwr.pwr_id = DBID_PIPE;
-    (void)bu_plong(rec->pwr.pwr_count, ngran-1);	/* # EXTRA grans */
-    (void)bu_plong(rec->pwr.pwr_pt_count, count);
+    *(uint32_t *)rec->pwr.pwr_count = htonl(ngran-1);	/* # EXTRA grans */
+    *(uint32_t *)rec->pwr.pwr_pt_count = htonl(count);
     
     /* Convert the pipe segments to external form */
     epp = &rec->pwr.pwr_data[0];
@@ -3385,7 +3385,7 @@ rt_pipe_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
     
-    pipe_count = bu_glong((unsigned char *)ep->ext_buf);
+    pipe_count = ntohl(*(uint32_t *)ep->ext_buf);
     double_count = pipe_count * 6;
     byte_count = double_count * SIZEOF_NETWORK_DOUBLE;
     total_count = 4 + byte_count;
@@ -3472,7 +3472,7 @@ rt_pipe_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     ep->ext_nbytes = total_count;
     ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "pipe external");
     
-    (void)bu_plong((unsigned char *)ep->ext_buf, pipe_count);
+    *(uint32_t *)ep->ext_buf = htonl(pipe_count);
     
     /* Convert the pipe segments to external form */
     for (BU_LIST_FOR(ppt, wdb_pipept, headp), i += 6) {
@@ -3606,6 +3606,7 @@ rt_pipe_ck(const struct bu_list *headp)
         vect_t v1, v2, norm;
         fastf_t v1_len;
         fastf_t angle;
+	fastf_t local_vdot;
 
         if (cur->pp_id >= cur->pp_od) {
             bu_log("Inner diameter (%gmm) has to be less than outer diameter (%gmm)\n",
@@ -3620,26 +3621,12 @@ rt_pipe_ck(const struct bu_list *headp)
         }
         
         VSUB2(v1, prev->pp_coord, cur->pp_coord);
-        v1_len = MAGNITUDE(v1);
-        if (v1_len > VDIVIDE_TOL) {
-            fastf_t inv_len;
-            
-            inv_len = 1.0/v1_len;
-            VSCALE(v1, v1, inv_len);
-        } else {
-            VSETALL(v1, 0.0);
-	}
+	v1_len = MAGNITUDE(v1);
+	VUNITIZE(v1);
                     
 	VSUB2(v2, next->pp_coord, cur->pp_coord);
-        v2_len = MAGNITUDE(v2);
-        if (v2_len > VDIVIDE_TOL) {
-            fastf_t inv_len;
-            
-            inv_len = 1.0/v2_len;
-            VSCALE(v2, v2, inv_len);
-        } else {
-            VSETALL(v2, 0.0);
-	}
+	v2_len = MAGNITUDE(v2);
+	VUNITIZE(v2);
                     
 	VCROSS(norm, v1, v2);
         if (VNEAR_ZERO(norm, SQRT_SMALL_FASTF)) {
@@ -3647,17 +3634,30 @@ rt_pipe_ck(const struct bu_list *headp)
             goto next_pt;
         }
         
-        angle = bn_pi - acos(VDOT(v1, v2));
+	local_vdot = VDOT(v1, v2);
+	/* protect against fuzzy overflow/underflow, clamp unitized
+	 * vectors in order to prevent acos() from throwing an
+	 * exception (or crashing).
+	 */
+	CLAMP(local_vdot, -1.0, 1.0);
+
+        angle = bn_pi - acos(local_vdot);
         new_bend_dist = cur->pp_bendradius * tan(angle/2.0);
         
         if (new_bend_dist + old_bend_dist > v1_len) {
+	    fastf_t vdot;
             error_count++;
             bu_log("Bend radii (%gmm) at (%g %g %g) and (%gmm) at (%g %g %g) are too large\n",
 		   prev->pp_bendradius, V3ARGS(prev->pp_coord),
 		   cur->pp_bendradius, V3ARGS(cur->pp_coord));
             bu_log("for pipe segment between (%g %g %g) and (%g %g %g)\n",
 		   V3ARGS(prev->pp_coord), V3ARGS(cur->pp_coord));
-        }
+	    bu_log("failed test: %g + %g > %g\n", new_bend_dist, old_bend_dist, v1_len);
+	    vdot = VDOT(v1, v2);
+	    bu_log("angle(%g) = bn_pi(%g) - acos(VDOT(v1, v2)(%g))(%g)\n", angle, bn_pi, vdot, acos(vdot));
+	    bu_log("v1: %g,%g,%g\n", v1[0], v1[1], v1[2]);
+	    bu_log("v2: %g,%g,%g\n", v2[0], v2[1], v2[2]);
+        } 
     next_pt:
 	old_bend_dist = new_bend_dist;
 	prev = cur;
@@ -3894,9 +3894,8 @@ rt_pipe_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
  *
  */
 int
-rt_pipe_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_pipe_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

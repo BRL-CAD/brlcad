@@ -41,15 +41,16 @@
 int
 main(void)
 {
-    int ichoice;			/*  Choice.  */
+    int ichoice;		/*  Choice.  */
     char *irX = "ir-X";		/*  Calls ir-X program.  */
     char *irsgi = "ir-sgi";	/*  Calls ir-sgi program.  */
-    char *X_or_SGI;		/*  will be set to one of the above */
-    char showtherm[125];		/*  Calls showtherm program.  */
+    char *X_or_SGI = NULL;	/*  will be set to one of the above */
+    char showtherm[125];	/*  Calls showtherm program.  */
     char gfile[16];		/*  .g file.  */
     char group[26];		/*  Group names.  */
     int ngrp;			/*  Number of groups.  */
-    int i, j, k;			/*  Loop counters.  */
+    int i, j, k;		/*  Loop counters.  */
+    int ret;
 
     /*  Find option.  */
     (void)printf("This takes a BRL-CAD mged model with a PRISM\n");
@@ -59,13 +60,20 @@ main(void)
     (void)printf("\t1 - raytrace, store, & showtherm file\n");
     (void)printf("\t2 - showtherm file\n");
     (void)fflush(stdout);
-    (void)scanf("%d", &ichoice);
+    ret = scanf("%d", &ichoice);
+    if (ret == 0)
+	perror("scanf");
 
     while ( (ichoice !=0 ) && (ichoice != 1) &&(ichoice != 2) )
     {
 	(void)printf("Your choice was not 0, 1, or 2, enter again!!\n");
 	(void)fflush(stdout);
-	(void)scanf("%d", &ichoice);
+	ret = scanf("%d", &ichoice);
+	if (ret == 0) {
+	    perror("scanf");
+	    ichoice = 0;
+	    break;
+	}
     }
 
     if ( (ichoice == 0) || (ichoice == 1) )
@@ -85,11 +93,17 @@ main(void)
 	/*  Find name of .g file to be used.  */
 	(void)printf("Enter .g file to be raytraced (15 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%15s", gfile);
+	ret = scanf("%15s", gfile);
+	if (ret == 0)
+	    perror("scanf");
+
 	/*  Find number of groups to be raytraced.  */
 	(void)printf("Enter the number of groups to be raytraced.\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%d", &ngrp);
+	ret = scanf("%d", &ngrp);
+	if (ret == 0)
+	    perror("scanf");
+
 	/*  Read each group & put it in the variable showtherm.  */
 	j = 0;
 	while ( (gfile[j] != '\0') && (i < 123) )
@@ -102,7 +116,9 @@ main(void)
 	{
 	    (void)printf("Enter group %d (25 char max).\n\t", j);
 	    (void)fflush(stdout);
-	    (void)scanf("%25s", group);
+	    ret = scanf("%25s", group);
+	    if (ret == 0)
+		perror("scanf");
 	    showtherm[i] = ' ';
 	    i++;
 	    k = 0;
@@ -126,7 +142,9 @@ main(void)
 	/*  temperature for each region.  */
 	(void)printf("\nThe program showtherm is now being run.\n\t%s\n\n", showtherm);
 	(void)fflush(stdout);
-	system(showtherm);
+	ret = system(showtherm);
+	if (ret == -1)
+	    perror("system");
     }
 
     if ( (ichoice == 1) || (ichoice == 2) )
@@ -140,7 +158,12 @@ main(void)
 	{
 	    (void)printf("\nSelect display ('X' or 'sgi') -> " );
 	    (void)fflush(stdout);
-	    (void)scanf( "%80s", choice );
+	    ret = scanf( "%80s", choice );
+	    if (ret == 0) {
+		perror("scanf");
+		bu_strlcat(choice, "X", 81);
+		break;
+	    }
 	}
 	if ( BU_STR_EQUAL( choice, "X" ) || BU_STR_EQUAL( choice, "x" ) )
 	    X_or_SGI = irX;
@@ -155,7 +178,9 @@ main(void)
 	(void)printf("for enter the name of the file that was just\n");
 	(void)printf("stored.\n\n");
 	(void)fflush(stdout);
-	system(X_or_SGI);
+	ret = system(X_or_SGI);
+	if (ret == -1)
+	    perror("system");
     }
     return 0;
 }

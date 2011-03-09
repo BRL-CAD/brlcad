@@ -69,7 +69,7 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 	value = srf->u.knots[(srf->u.k_size -1)/2];
 
 	for (i = 0; i < srf->u.k_size; i++)
-	    if (NEAR_ZERO(value - srf->u.knots[i], SMALL_FASTF)) {
+	    if (ZERO(value - srf->u.knots[i])) {
 		k_index = i;
 		break;
 	    }
@@ -150,7 +150,7 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 	value = srf->v.knots[(srf->v.k_size -1)/2];
 
 	for (i = 0; i < srf->v.k_size; i++)
-	    if (NEAR_ZERO(value - srf->v.knots[i], SMALL_FASTF)) {
+	    if (ZERO(value - srf->v.knots[i])) {
 		k_index = i;
 		break;
 	    }
@@ -275,7 +275,7 @@ rt_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
 	value = crv->k.knots[(crv->k.k_size -1)/2];
 
     for (i = 0; i < crv->k.k_size; i++)
-	if (NEAR_ZERO(value - crv->k.knots[i], SMALL_FASTF)) {
+	if (ZERO(value - crv->k.knots[i])) {
 	    k_index = i;
 	    break;
 	}

@@ -67,24 +67,24 @@ cone(int entityno)
     if (scale_height <= 0.0 || rad1 < rad2 || rad2 < 0.0) {
 	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
 	       dir[entityno]->direct, dir[entityno]->name);
-	if (NEAR_ZERO(scale_height, SMALL_FASTF)) {
+	if (ZERO(scale_height)) {
 	    bu_log("\tCone height is zero!!\n");
 	    return 0;
 	}
-	if (NEAR_ZERO(rad1, SMALL_FASTF) && NEAR_ZERO(rad2, SMALL_FASTF)) {
+	if (ZERO(rad1) && ZERO(rad2)) {
 	    bu_log("\tBoth radii for cone are zero!!!\n");
 	    return 0;
 	}
 	if (rad1 < 0.0) {
 	    bu_log("\tUsing absloute value of a negative face radius (%f)\n", rad1);
 	    rad1 = (-rad1);
-	} else if (NEAR_ZERO(rad1, SMALL_FASTF))
+	} else if (ZERO(rad1))
 	    rad1 = SMALL_FASTF;
 
 	if (rad2 < 0.0) {
 	    bu_log("\tUsing absloute value of a negative face radius (%f)\n", rad2);
 	    rad2 = (-rad2);
-	} else if (NEAR_ZERO(rad2, SMALL_FASTF))
+	} else if (ZERO(rad2))
 	    rad2 = SMALL_FASTF;
 
 	if (scale_height < 0.0) {

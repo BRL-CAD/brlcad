@@ -85,7 +85,7 @@ rt_nurb_basis_eval(register struct knot_vector *knts, int interval, int order, f
 
     den = (*(kk + order - 1) - k1);
 
-    if (NEAR_ZERO(den, SMALL_FASTF))
+    if (ZERO(den))
 	b1 = 0.0;
     else
 	b1 = ((mu - k1) *
@@ -93,7 +93,7 @@ rt_nurb_basis_eval(register struct knot_vector *knts, int interval, int order, f
 
     den = (k3 - k2);
 
-    if (NEAR_ZERO(den, SMALL_FASTF))
+    if (ZERO(den))
 	b2 = 0.0;
     else
 	b2 = ((k3 - mu) *

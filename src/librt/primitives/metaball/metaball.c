@@ -51,7 +51,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "bio.h"
+#include "bin.h"
 
 #include "vmath.h"
 #include "db.h"
@@ -117,7 +117,7 @@ rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_me
 		max[i] = mbpt->coord[i];
 	}
     /* return -1 if no points are defined. */
-    if (NEAR_ZERO(min[X] - INFINITY, SMALL_FASTF) || min[X] > INFINITY)
+    if (ZERO(min[X] - INFINITY) || min[X] > INFINITY)
 	return -1;
 
     /* compute the center of the generated box, call that the center */
@@ -698,7 +698,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
-    metaball_count = bu_glong((unsigned char *)ep->ext_buf);
+    metaball_count = ntohl(*(uint32_t *)ep->ext_buf);
     buf = (fastf_t *)bu_malloc((metaball_count*5+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_import5: buf");
     ntohd((unsigned char *)buf, (unsigned char *)ep->ext_buf+2*SIZEOF_NETWORK_LONG, metaball_count*5+1);
 
@@ -709,7 +709,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
     ip->idb_ptr = bu_malloc(sizeof(struct rt_metaball_internal), "rt_metaball_internal");
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     mb->magic = RT_METABALL_INTERNAL_MAGIC;
-    mb->method = bu_glong((unsigned char *)ep->ext_buf + SIZEOF_NETWORK_LONG);
+    mb->method = ntohl(*(uint32_t *)(ep->ext_buf + SIZEOF_NETWORK_LONG));
     mb->threshold = buf[0];
     BU_LIST_INIT(&mb->metaball_ctrl_head);
     if (mat == NULL) mat = bn_mat_identity;
@@ -768,8 +768,8 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "metaball external");
     if (ep->ext_buf == NULL)
 	bu_bomb("Failed to allocate DB space!\n");
-    bu_plong((unsigned char *)ep->ext_buf, metaball_count);
-    bu_plong((unsigned char *)ep->ext_buf + SIZEOF_NETWORK_LONG, mb->method);
+    *(uint32_t *)ep->ext_buf = htonl(metaball_count);
+    *(uint32_t *)(ep->ext_buf + SIZEOF_NETWORK_LONG) = htonl(mb->method);
 
     /* pack the point data */
     buf = (fastf_t *)bu_malloc((metaball_count*5+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_export5: buf");
@@ -885,9 +885,8 @@ rt_metaball_add_point (struct rt_metaball_internal *mb, const point_t *loc, cons
  *
  */
 int
-rt_metaball_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
+rt_metaball_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */

@@ -526,7 +526,7 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
 	 * we left.
 	 */
 	for (i=0; i<nhits; i++) {
-	    if (NEAR_ZERO(hits[i].hit_dist - rm_dist, SMALL_FASTF)) {
+	    if (ZERO(hits[i].hit_dist - rm_dist)) {
 		for (j=i; j<nhits-1; j++)
 		    hits[j] = hits[j+1];
 		nhits--;

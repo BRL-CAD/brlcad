@@ -13,10 +13,12 @@ bin_PROGRAMS = \
 	$(SS_BIN) \
 	script-tab \
 	tabinterp \
-	tabsub \
-	txyz-pl
+	tabsub
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = \
+	${STRICT_FLAGS} \
+	${TCL_CPPFLAGS}
+
 LDADD = ${RT}
 
 scriptsort_SOURCES = $(SS_SRC)
@@ -43,7 +45,6 @@ include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
 	$(tabinterp_OBJECTS) \
-	$(txyz_pl_OBJECTS) \
 	$(tabsub_OBJECTS) \
 	$(scriptsort_OBJECTS) \
 	$(script_tab_OBJECTS) \

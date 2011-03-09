@@ -651,6 +651,17 @@ typedef enum {
 BU_EXPORT BU_EXTERN(bu_endian_t bu_byteorder, (void));
 
 
+/* provide for 64-bit network/host conversions using ntohl() */
+#ifndef HAVE_NTOHLL
+#  define ntohll(_val) ((bu_byteorder() == BU_LITTLE_ENDIAN) ?				\
+			((((uint64_t)ntohl((_val))) << 32) + ntohl((_val) >> 32)) : \
+			(_val)) /* sorry pdp-endian */
+#endif
+#ifndef HAVE_HTONLL
+#  define htonll(_val) ntohll(_val)
+#endif
+
+
 /**@}*/
 
 /*----------------------------------------------------------------------*/
@@ -1891,10 +1902,9 @@ struct bu_structparse {
 struct bu_external  {
     unsigned long ext_magic;
     size_t ext_nbytes;
-    genptr_t ext_buf;
+    uint8_t *ext_buf;
 };
-#define BU_INIT_EXTERNAL(_p) {(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
-	(_p)->ext_buf = (genptr_t)NULL; (_p)->ext_nbytes = 0;}
+#define BU_INIT_EXTERNAL(_p) { (_p)->ext_magic = BU_EXTERNAL_MAGIC; (_p)->ext_buf = NULL; (_p)->ext_nbytes = 0; }
 #define BU_CK_EXTERNAL(_p)	BU_CKMAG(_p, BU_EXTERNAL_MAGIC, "bu_external")
 
 /** @} */
@@ -3899,7 +3909,8 @@ BU_EXPORT BU_EXTERN(int bu_structparse_argv,
  *
  * Input values that are null, empty, begin with the letter 'n', or
  * are 0-valued return as false.  Any other input value returns as
- * true.
+ * true.  Strings that strongly indicate true return as 1, other
+ * values still return as true but may be a value greater than 1.
  */
 BU_EXPORT BU_EXTERN(int bu_str_true, (const char *str));
 
@@ -5238,7 +5249,7 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 /**
  * DEPRECATED: use ntohll()
  * Macro version of library routine bu_glonglong()
- * The argument is expected to be of type "unsigned char"
+ * The argument is expected to be of type "unsigned char *"
  */
 #define BU_GLONGLONG(_cp)	\
 	    ((((uint64_t)((_cp)[0])) << 56) |	\
@@ -5252,7 +5263,7 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 /**
  * DEPRECATED: use ntohl()
  * Macro version of library routine bu_glong()
- * The argument is expected to be of type "unsigned char"
+ * The argument is expected to be of type "unsigned char *"
  */
 #define BU_GLONG(_cp)	\
 	    ((((uint32_t)((_cp)[0])) << 24) |	\
@@ -5262,7 +5273,7 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 /**
  * DEPRECATED: use ntohs()
  * Macro version of library routine bu_gshort()
- * The argument is expected to be of type "unsigned char"
+ * The argument is expected to be of type "unsigned char *"
  */
 #define BU_GSHORT(_cp)	\
 	    ((((uint16_t)((_cp)[0])) << 8) | \
@@ -5271,27 +5282,27 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 /**
  * DEPRECATED: use ntohs()
  */
-BU_EXPORT BU_EXTERN(uint16_t bu_gshort, (const unsigned char *msgp));
+DEPRECATED BU_EXPORT BU_EXTERN(uint16_t bu_gshort, (const unsigned char *msgp));
 
 /**
  * DEPRECATED: use ntohl()
  */
-BU_EXPORT BU_EXTERN(uint32_t bu_glong, (const unsigned char *msgp));
+DEPRECATED BU_EXPORT BU_EXTERN(uint32_t bu_glong, (const unsigned char *msgp));
 
 /**
  * DEPRECATED: use htons()
  */
-BU_EXPORT BU_EXTERN(unsigned char *bu_pshort, (unsigned char *msgp, uint16_t s));
+DEPRECATED BU_EXPORT BU_EXTERN(unsigned char *bu_pshort, (unsigned char *msgp, uint16_t s));
 
 /**
  * DEPRECATED: use htonl()
  */
-BU_EXPORT BU_EXTERN(unsigned char *bu_plong, (unsigned char *msgp, uint32_t l));
+DEPRECATED BU_EXPORT BU_EXTERN(unsigned char *bu_plong, (unsigned char *msgp, uint32_t l));
 
 /**
  * DEPRECATED: use htonll()
  */
-BU_EXPORT BU_EXTERN(unsigned char *bu_plonglong, (unsigned char *msgp, uint64_t l));
+DEPRECATED BU_EXPORT BU_EXTERN(unsigned char *bu_plonglong, (unsigned char *msgp, uint64_t l));
 
 /** @} */
 

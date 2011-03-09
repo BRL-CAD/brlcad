@@ -70,7 +70,7 @@ void usage(void)
     bu_exit(-1, NULL);
 }
 
-void computeScanline(int pid, genptr_t arg) {
+void computeScanline(int UNUSED(pid), genptr_t UNUSED(arg)) {
     int i=0;
     /* working pixel component value */
     unsigned char *value = image->buf;
@@ -199,9 +199,9 @@ main(int ac, char *av[])
     }
 
     bu_log("Loading image %s from file...", imageFileName);
-    if (image->buflen < width * height * 3) {
+    if (image->buflen < (size_t)width * (size_t)height * 3) {
 	bu_log("\nWARNING: %s needs %d bytes, file only contains %ld bytes\n", imageFileName, width*height*3, image->buflen);
-    } else if (image->buflen > width* height * 3) {
+    } else if (image->buflen > (size_t)width* (size_t)height * 3) {
 	bu_log("\nWarning: Image file size is larger than specified texture size\n");
     }
     bu_log("...done loading image\n");

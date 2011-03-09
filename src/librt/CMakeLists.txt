@@ -55,6 +55,8 @@ set(LIBRT_SOURCES
     primitives/bot/bot.c
     primitives/bot/bot_brep.cpp
     primitives/bot/bot_mirror.c
+    primitives/bot/btg.c
+    primitives/bot/btgf.c
     primitives/brep/brep.cpp
     primitives/brep/brep_debug.cpp
     primitives/bspline/bspline.cpp
@@ -199,6 +201,7 @@ set(LIBRT_SOURCES
     primitives/vol/vol_mirror.c
     regionfix.c
     roots.c
+	 search.c
     shoot.c
     spectrum.c
     tcl.c
@@ -248,3 +251,9 @@ add_definitions(
 )
 
 add_library(librt ${LIBRT_SOURCES})
+
+if(MSVC)
+    target_link_libraries(librt
+	Ws2_32
+    )
+endif(MSVC)

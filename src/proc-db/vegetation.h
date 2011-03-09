@@ -71,12 +71,12 @@ typedef struct segmentList {
 
 
 typedef struct structure {
-    int subStructureCapacity;
-    int subStructureCount;
+    size_t subStructureCapacity;
+    size_t subStructureCount;
     struct structure **subStructure;
     unsigned int age;
-    int segmentCapacity;
-    int segmentCount;
+    size_t segmentCapacity;
+    size_t segmentCount;
     growthSegment_t **segment;
 } structure_t;
 #define INIT_STRUCTURE_T(_i) { (_i)->subStructureCapacity = 0; (_i)->subStructureCount = 0; (_i)->subStructure=NULL; (_i)->age=0; (_i)->segmentCapacity=0; (_i)->segmentCount=0; (_i)->segment=NULL; }
@@ -161,7 +161,7 @@ typedef struct plant {
     structure_t *structure;
     growthPointList_t *growth;
 
-    unsigned long segmentCount;
+    size_t segmentCount;
 } plant_t;
 #define INIT_PLANT_T(_i) { VSETALL((_i)->position, 0.0); (_i)->radius=0.0; VSET((_i)->direction, 0.0, 0.0, 1.0); (_i)->characteristic = NULL; (_i)->age=0; (_i)->structure = NULL; (_i)->growth = NULL; (_i)->segmentCount = 0; }
 

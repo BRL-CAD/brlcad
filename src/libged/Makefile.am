@@ -73,6 +73,7 @@ libged_nil_la_SOURCES = \
 	eye.c \
 	eye_pos.c \
 	facetize.c \
+	fb2pix.c \
 	find.c \
 	form.c \
 	fracture.c \
@@ -143,6 +144,7 @@ libged_nil_la_SOURCES = \
 	pathlist.c \
 	pathsum.c \
 	perspective.c \
+	pix2fb.c \
 	plot.c \
 	pmat.c \
 	pmodel2view.c \
@@ -271,7 +273,6 @@ AM_CPPFLAGS = \
 	${TCL_CPPFLAGS}
 
 noinst_HEADERS = \
-	search.h \
 	ged_private.h \
 	qray.h \
 	wdb_qray.h
@@ -280,13 +281,14 @@ libged_la_SOURCES =
 libged_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
 libged_la_LIBADD = \
 	libged_nil.la \
+	${FB} \
 	${GED_LIBS}
 
 EXTRA_DIST = \
 	subtype.c \
         CMakeLists.txt
 
-DEPENDS = src/librt src/libwdb src/libanalyze
+DEPENDS = src/librt src/libwdb src/libanalyze src/libfb
 
 include $(top_srcdir)/misc/Makefile.defs
 

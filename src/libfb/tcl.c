@@ -76,38 +76,38 @@ extern int Fbo_Init(Tcl_Interp *interp);
 
 /* XXX -- At some point these routines should be moved to FBIO */
 #ifdef IF_WGL
-extern int wgl_open_existing();
 extern FBIO wgl_interface;
-extern void wgl_configureWindow();
-extern int wgl_refresh();
 static const char *wgl_device_name = "/dev/wgl";
+extern void wgl_configureWindow(FBIO *ifp, int width, int height);
+extern int wgl_open_existing(FBIO *ifp, int argc, char **argv);
+extern int wgl_refresh(FBIO *ifp, int x, int y, int w, int h);
 #endif
 
 #ifdef IF_OGL
-extern int ogl_open_existing();
 extern FBIO ogl_interface;
-extern void ogl_configureWindow();
-extern int ogl_refresh();
 static const char *ogl_device_name = "/dev/ogl";
+extern void ogl_configureWindow(FBIO *ifp, int width, int height);
+extern int ogl_open_existing(FBIO *ifp, int argc, char **argv);
+extern int ogl_refresh(FBIO *ifp, int x, int y, int w, int h);
 #endif
 
 #ifdef IF_X
-extern void X24_configureWindow();
-extern int X24_refresh();
-extern int X24_open_existing();
 extern FBIO X24_interface;
 static const char *X_device_name = "/dev/X";
+extern void X24_configureWindow(FBIO *ifp, int width, int height);
+extern int X24_open_existing(FBIO *ifp, int argc, char **argv);
+extern int X24_refresh(FBIO *ifp, int x, int y, int w, int h);
 #endif
 
 #ifdef IF_TK
+extern FBIO tk_interface;
+static const char *tk_device_name = "/dev/tk";
 #if 0
 /*XXX TJM implement this interface */
-extern void tk_configureWindow();
-extern int tk_refresh();
-extern int tk_open_existing();
-extern FBIO tk_interface;
+extern void tk_configureWindow(FBIO *ifp, int width, int height);
+extern int tk_open_existing(FBIO *ifp, int argc, char **argv);
+extern int tk_refresh(FBIO *ifp, int x, int y, int w, int h);
 #endif
-static const char *tk_device_name = "/dev/tk";
 #endif
 
 int fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);

@@ -17,11 +17,19 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* NADA!
+* NA-DA!
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* fix bottie crash on 32b builds
+
+* resolve bot bin sort optimization crash, disabled during release
+
+* implement new makesegs for tie
+
+* png support in rtwizard
 
 * upgrade source repository back-end to the latest SVN 1.5 so we can
   benefit from proper merge tracking.
@@ -48,14 +56,38 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   objects, have some means to determine that something is "large and
   complex" or at a minimum, provide an option to not draw on copy.
 
-* plate mode NURBS/BREP objects.  Similar, if not identical, to plate
-  mode BoTs, 'brep' objects need the ability to have a thickness
-  described so you could automatically handle non-solid NURBS and
-  sheet-metal style geometry without requiring surface solidity.
-
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* offset surfaces.  provide feature edit operation to create a solid
+  "level set" style object so you can represent degraded geometry
+  states (e.g., damage around a hole in a plate of metal might be
+  represented by the toroidal intersection with a cylinder some radius
+  larger than the hole, providing a separate region that can have
+  different material properties).
+
+  geometrically, this is simply a means to separate a given object
+  into multiple objects without changing the cumulative volume.  a
+  linear offset from a given surface or set of surfaces is usually
+  desired.
+
+* provide libdm mechanism for drawing spline curves (to help visualize
+  flight paths, show object trajectories, etc).
+
+* provide option for displaying object bounding boxes while rotating.
+  visualization feature to help with rotation operations, showing
+  global object alignment with respect to its own coordinate space.
+
+* search usage consistency:
+  - path and expression are optional: "search ." && "search /"
+  - curious behavior if you "e havoc" then "search /" (prints havoc)
+  - relative searching: "search ./havoc -type r"
+  - simplifable paths should work: "search /havoc/. -type r"
+
+* make mged not have a garbled display manager window if the
+  framebuffer is enabled and the window is resized.  initialize and
+  refresh the new memory and zap the framebuffer.
 
 * merge sed and oed commands
 
@@ -95,9 +127,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * let the cp command take multiple arguments for simultaneously
   creating multiple named copies
 
-* add support to the attr command for listing keys in a user-specified
-  alphabetical (possibly case-insensitive) order in addition to or
-  instead of generated order.
+* add support for user-specified sorting for the attr command (case,
+  case-insensitive, creation, value, etc)
 
 * investigate why solids.sh fails on three pixels on some 64-bit
   platforms. it grazingly hits/misses a tgc causing a regression
@@ -295,9 +326,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   obtain a bu_log()-style callback function returned from a
   logger registration function.
 
-* finish obj-g importer.  need to test more inputs and make sure all
-  geometry is preserved on import in some form.
-
 * deprecate dbfind - ensure functionality is fully captured by the
   search command, make it report a deprecation statement on use and
   utilize search under the hood.
@@ -328,11 +356,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * MINOR: add tolerance parameters to the bn_*() functions that have
   near-zero tests.
 
-* verify/improve kicking off an EDITOR in mged so that we don't lock
-  up mged in vim/emacs/jove/whatever without a controlling terminal,
-  without breaking the ability to set a GUI editor like TextEdit,
-  Wordpad, etc.
-
 * complete conversion of existing manual pages into docbook format
 
 * add an option to bot_dump for outputting surface normals.  Make sure
@@ -348,8 +371,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   command may have a bug in its calculations.  This needs to be
   investigated along with a review of the taxonomy used by rtarea for
   describing presented/projected areas.
-
-* obliterate verbose compilation warnings
 
 * modify g_qa to search for >1 region flag in a tree path.
 
@@ -472,6 +493,13 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   material object name.  material object encompasses hierarchical
   material traits.
 
+* parametric material properties.  support the ability to define
+  material properties based on parametric values such as distance from
+  surface, distance from medial axis, distance from centroid, distance
+  from plane, etc.  this supports parametric descriptions of materials
+  that have highly variable densities (e.g., bone, certain alloys and
+  plastics, etc).
+
 * shader objects (non-geometric attribute-only objects) for v5
   geometry files.  allow shader string to refer to said objects for
   shader parameters.
@@ -538,8 +566,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * readd support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901 
-
-* X3D/VRML importer
 
 * make Mac OS X universal binaries actually work.
 
@@ -792,10 +818,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   of these primitives, provided their continuity at the ends ensures
   continuity all along "seams" - something to consider.
 
-* implement a g-gcode exporter.  ideally this converts geometry to
-  NURBS format, trims surfaces, evaluates boolean expressions, and
-  then generates tool paths on resulting surfaces and interior paths.
-
 * incorporate some variety of spatial partitioning into the facetize command
   (may involve just rewriting it) to try and realize MUCH faster tessellation
   of CSG geometry.  Current routines are doing a lot of unnecessary work that
@@ -803,6 +825,46 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   try to get closer to the "only do the work we need to" ideal.  Once a new
   idea is proven in that command, it should be made into a libgcv routine
   and convertors/other commands retargted to use it.
+
+
+CONVERTERS
+----------
+
+* finish obj-g importer.  need to test more inputs and make sure all
+  geometry is preserved on import in some form.  make sure new libobj
+  parser works and is integrated with new front-end.
+
+* implement a g-step exporter (with NURBS, implicit CSG, and NMG/BoT options)
+
+* implement a g-dae (Collada) exporter and dae-g importer
+  http://en.wikipedia.org/wiki/Collada
+
+* implement an x3d-g (Web3D, VRML successor) importer
+  http://en.wikipedia.org/wiki/X3D
+
+* implement a g-nc (g-code) exporter.  ideally this converts geometry
+  to NURBS format, trims surfaces, evaluates boolean expressions, and
+  then generates tool paths on resulting surfaces and interior paths.
+  http://en.wikipedia.org/wiki/G-code
+
+* implement a u3d-g importer
+  http://en.wikipedia.org/wiki/Universal_3D
+  http://libharu.org/wiki/Main_Page
+
+* implement a g-pdf exporter and/or open source 3D PDF library
+  http://developer.techsoft3d.com/adobePDF/index.html
+
+* implement a g-sat (Solidworks) exporter and sat-g importer
+  http://local.wasp.uwa.edu.au/~pbourke/dataformats/sat/sat.pdf
+
+* implement a g-ply exporter
+  http://en.wikipedia.org/wiki/PLY_(file_format)
+
+* implement a g-json exporter
+  http://www.json.org/
+
+* implement a g-xml exporter
+  http://en.wikipedia.org/wiki/XML
 
 
 STEP
@@ -814,7 +876,7 @@ STEP
 
 * document step-g
 
-* implement g-step exporter
+* implement g-step exporter (see above)
 
 
 BREP/NURBS
@@ -827,11 +889,14 @@ BREP/NURBS
   present in openNURBS, and port that code to openNURBS data structures
   and routines.  This will eventually allow us to remove the old NURBS code.
 
-* improve min/max bounding box routines for BREP/NURBS
-
 * document the new NURBS/BREP primitive, capabilities and limitations
 
 * implement boolean evaluation of nurbs surfaces
+
+* plate mode NURBS/BREP objects.  Similar, if not identical, to plate
+  mode BoTs, 'brep' objects need the ability to have a thickness
+  described so you could automatically handle non-solid NURBS and
+  sheet-metal style geometry without requiring surface solidity.
 
 
 NMG/BoT
@@ -924,6 +989,67 @@ constraints
 * Implement Hypergraph representation system
 
 * Explore analytic and symbolic solution system
+
+
+ARCHER
+------
+
+* need to write a manual page at least for basic usage
+
+* "archer -h" causes archer to halt with a Tk_Init error.  should
+  display usage/help.
+
+* reports "ArcherCore::getTreeMembers: faulty tree - " on some .g
+  files, valid ones
+
+* numerous warnings on exit on Mac OS X (10.6):
+   <Error>: kCGErrorIllegalArgument: CGSGetSurfaceBounds
+   <Error>: kCGErrorFailure: Set a breakpoint @ CGErrorBreakpoint() to catch errors as they are logged.
+   <Error>: kCGErrorIllegalArgument: CGSBindSurface: Invalid window 0x492c
+   ...
+
+* diversion from mged philosophy, prompts whether to save file on exit
+  (file not always in a saved state).  to prevent data loss on crash,
+  data should at least always be written out to the main file, a
+  secondary file, recorded as saved transactions, or some other
+  mechanism.
+
+* numerous core commands missing that have not gone through
+  deprecation (e, d, ...) -- suggest we first release with at least
+  all current commands included (at least those documented in
+  tutorials, quick ref card, html docs), but marked as deprecated
+  then.
+
+* user should fully own ~/.archerrc and be able to specify settings
+  and overrides there (current says do not edit)
+
+* user-manageable scripts and settings (similar to ~/.subversion)
+
+* some usability-related icon issues (only a few of the more egregious)
+  - torus tree-view icon has major aliasing/truncation
+  - framebuffer image buttons need replacement (nuclear, mode?)
+  - halfspace icon needs darkening
+  - no part icon (needs one otherwise misleading label)
+
+* Create menu should list primitive name, not our shorthand
+
+* major GUI components (tree-view, command window, and graphics
+  window) should be dockable and have their layout/docking preference
+  be saved across sessions (so they can restore and retain similar mged
+  appearance if they so choose)
+
+* menu needs rework
+
+* mouse behavior changed, rotates around view origin instead of model
+  origin.  should provide for mouse behavior settings so classic mged
+  defaults are available.
+
+* double-clicking the tree view show-list to display/undisplay
+
+* About Archer is out-of-date, references brlcad.com, survice logo,
+  wrong BRL-CAD logo image, says archer is trademarked,
+  acknowledgements is out of date (should remove or just put AUTHORS
+  file).
 
 
 ODDITIES

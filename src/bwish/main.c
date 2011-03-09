@@ -31,7 +31,9 @@
 #include "tcl.h"
 
 #ifdef BWISH
-#  include "tk.h"
+#  include "itk.h"
+#else
+#  include "itcl.h"
 #endif
 
 #include "bu.h"
@@ -116,7 +118,12 @@ Cad_AppInit(Tcl_Interp *interp)
 
 	/* Initialize [incr Tcl] */
 	Tcl_ResetResult(interp);
-	if (init_itcl && Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
+	/* NOTE: Calling "package require Itcl" here is apparently
+	 * insufficient without other changes elsewhere.  The
+	 * Combination Editor in mged fails with an iwidgets class
+	 * already loaded error if we don't perform Itcl_Init() here.
+	 */
+	if (init_itcl && Itcl_Init(interp) == TCL_ERROR) {
 	    if (!try_auto_path) {
 		Tcl_Namespace *nsp;
 
@@ -138,7 +145,7 @@ Cad_AppInit(Tcl_Interp *interp)
 #ifdef BWISH
 	/* Initialize [incr Tk] */
 	Tcl_ResetResult(interp);
-	if (init_itk && Tcl_Eval(interp, "package require Itk") != TCL_OK) {
+	if (init_itk && Itk_Init(interp) == TCL_ERROR) {
 	    if (!try_auto_path) {
 		try_auto_path=1;
 		continue;

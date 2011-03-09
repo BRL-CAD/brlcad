@@ -31,8 +31,8 @@
 int
 bu_str_true(const char *str)
 {
-    size_t len;
     long val;
+    size_t len;
     struct bu_vls vls;
     const char *newstr;
     char *endptr;
@@ -67,14 +67,40 @@ bu_str_true(const char *str)
 
     /* variant of "0" (e.g., 000) */
     val = strtol(newstr, &endptr, 10);
-    if (val == 0 && errno != EINVAL && endptr == '\0')
+    if (val == 0 && errno != EINVAL && endptr == '\0') {
+	bu_vls_free(&vls);
 	return 0;
+    }
+
+    /* true value from here on out */
+
+    /* starts with 'y', [yY]* looks like 'yes' */
+    if (newstr[0] == 'y' || newstr[0] == 'Y') {
+	bu_vls_free(&vls);
+	return 1;
+    }
+
+    /* exactly "1" */
+    if (BU_STR_EQUAL(newstr, "1")) {
+	bu_vls_free(&vls);
+	return 1;
+    }
+
+    /* variant of "1" (e.g., 001) */
+    val = strtol(newstr, &endptr, 10);
+    if (val == 1 && errno != EINVAL && endptr == '\0') {
+	bu_vls_free(&vls);
+	return 1;
+    }
 
     /* done with our string */
+    val = bu_vls_addr(&vls)[0];
     bu_vls_free(&vls);
 
     /* anything else */
-    return 1;
+    if ((int)val > 1)
+	return (int)val;
+    return 2;
 }
 
 
