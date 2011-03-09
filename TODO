@@ -60,6 +60,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* provide libdm mechanism for drawing spline curves (to help visualize
+  flight paths, show object trajectories, etc).
+
+* provide option for displaying object bounding boxes while rotating.
+  visualization feature to help with rotation operations, showing
+  global object alignment with respect to its own coordinate space.
+
 * search usage consistency:
   - path and expression are optional: "search ." && "search /"
   - curious behavior if you "e havoc" then "search /" (prints havoc)
