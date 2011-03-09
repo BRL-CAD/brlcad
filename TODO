@@ -60,6 +60,18 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* offset surfaces.  provide feature edit operation to create a solid
+  "level set" style object so you can represent degraded geometry
+  states (e.g., damage around a hole in a plate of metal might be
+  represented by the toroidal intersection with a cylinder some radius
+  larger than the hole, providing a separate region that can have
+  different material properties).
+
+  geometrically, this is simply a means to separate a given object
+  into multiple objects without changing the cumulative volume.  a
+  linear offset from a given surface or set of surfaces is usually
+  desired.
+
 * provide libdm mechanism for drawing spline curves (to help visualize
   flight paths, show object trajectories, etc).
 
