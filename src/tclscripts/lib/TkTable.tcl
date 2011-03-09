@@ -37,6 +37,7 @@
 
     public {
 	method handlePaste {}
+	method see {_index}
 	method setDataEntry {_index _val}
 	method setTableCol {_col _val}
 	method setTableVal {_index _val}
@@ -254,6 +255,10 @@
     }
 
 #    focus $itk_component(table)
+}
+
+::itcl::body cadwidgets::TkTable::see {_index} {
+    $itk_component(table) see $_index
 }
 
 ::itcl::body cadwidgets::TkTable::setDataEntry {_index _val} {

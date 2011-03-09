@@ -1498,8 +1498,29 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
     int i;
     int m;
 
-    if (start > ac) /* what? */
+    if (start > ac) {
+	/* what? */
+	bu_log("WARNING: Internal error (start:%d > ac:%d).\n", start, ac);
 	return;
+    }
+
+    if (num_objects < 1) {
+	/* what?? */
+	bu_log("WARNING: No objects remaining.\n");
+	return;
+    }
+
+    if (num_views == 0) {
+	/* crap. */
+	bu_log("WARNING: No views specified.\n");
+	return;
+    }
+
+    if (rtip->nregions == 0) {
+	/* dammit! */
+	bu_log("WARNING: No regions remaining.\n");
+	return;
+    }
 
     state->m_lenDensity = bu_calloc(num_views, sizeof(double), "densityLen");
     state->m_len = bu_calloc(num_views, sizeof(double), "volume");

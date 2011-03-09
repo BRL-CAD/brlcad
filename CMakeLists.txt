@@ -612,9 +612,6 @@ ENDIF(NOT BRLCAD-ENABLE_RUNTIME_DEBUG)
 
 # Build with compiler warning flags 
 OPTION(BRLCAD-ENABLE_COMPILER_WARNINGS "Use compiler warning flags" ON)
-IF(BRLCAD-ENABLE_COMPILER_WARNINGS)
-	FILE(APPEND  ${CONFIG_H_FILE} "#define WARNING_FLAGS 1\n")
-ENDIF(BRLCAD-ENABLE_COMPILER_WARNINGS)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_COMPILER_WARNINGS)
 
 # Enable/disable strict compiler settings - these are limited to libraries that
@@ -624,6 +621,7 @@ OPTION(BRLCAD-ENABLE_CXX_STRICT "Use strict compiler settings on cxx files in li
 IF(BRLCAD-ENABLE_STRICT)
 	MARK_AS_ADVANCED(BRLCAD-ENABLE_STRICT)
 	MARK_AS_ADVANCED(BRLCAD-ENABLE_CXX_STRICT)
+	FILE(APPEND  ${CONFIG_H_FILE} "#define STRICT_FLAGS 1\n")
 ENDIF(BRLCAD-ENABLE_STRICT)
 
 # Build with O3 compiler optimization.  This should be on for release builds

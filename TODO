@@ -60,6 +60,25 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* offset surfaces.  provide feature edit operation to create a solid
+  "level set" style object so you can represent degraded geometry
+  states (e.g., damage around a hole in a plate of metal might be
+  represented by the toroidal intersection with a cylinder some radius
+  larger than the hole, providing a separate region that can have
+  different material properties).
+
+  geometrically, this is simply a means to separate a given object
+  into multiple objects without changing the cumulative volume.  a
+  linear offset from a given surface or set of surfaces is usually
+  desired.
+
+* provide libdm mechanism for drawing spline curves (to help visualize
+  flight paths, show object trajectories, etc).
+
+* provide option for displaying object bounding boxes while rotating.
+  visualization feature to help with rotation operations, showing
+  global object alignment with respect to its own coordinate space.
+
 * search usage consistency:
   - path and expression are optional: "search ." && "search /"
   - curious behavior if you "e havoc" then "search /" (prints havoc)
@@ -473,6 +492,13 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   geometry files.  instead of material attribute value becomes
   material object name.  material object encompasses hierarchical
   material traits.
+
+* parametric material properties.  support the ability to define
+  material properties based on parametric values such as distance from
+  surface, distance from medial axis, distance from centroid, distance
+  from plane, etc.  this supports parametric descriptions of materials
+  that have highly variable densities (e.g., bone, certain alloys and
+  plastics, etc).
 
 * shader objects (non-geometric attribute-only objects) for v5
   geometry files.  allow shader string to refer to said objects for
