@@ -493,6 +493,13 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   material object name.  material object encompasses hierarchical
   material traits.
 
+* parametric material properties.  support the ability to define
+  material properties based on parametric values such as distance from
+  surface, distance from medial axis, distance from centroid, distance
+  from plane, etc.  this supports parametric descriptions of materials
+  that have highly variable densities (e.g., bone, certain alloys and
+  plastics, etc).
+
 * shader objects (non-geometric attribute-only objects) for v5
   geometry files.  allow shader string to refer to said objects for
   shader parameters.
