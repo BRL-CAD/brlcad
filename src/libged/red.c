@@ -105,11 +105,11 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
     const char *floatptr; 
     const char *float_string = "[+-]?[0-9]*[.]?[0-9]+([eE][+-]?[0-9]+)?";
     bu_vls_init(&current_substring);
-    bu_vls_sprintf(&current_substring, "(%s[[:blank:]\r\n]+)", float_string);
+    bu_vls_sprintf(&current_substring, "(%s[[:space:]]+)", float_string);
     regcomp(&matrix_entry, bu_vls_addr(&current_substring), REG_EXTENDED);
-    bu_vls_sprintf(&current_substring, "[[:blank:]\r\n][\r\n]+(%s[[:blank:]\r?\n]+){15}(%s)", float_string, float_string);
+    bu_vls_sprintf(&current_substring, "[[:space:]]+(%s[[:space:]]+){15}(%s)", float_string, float_string);
     regcomp(&full_matrix, bu_vls_addr(&current_substring), REG_EXTENDED);
-    regcomp(&whitespace_regex, "([^[:blank:]\r\n])", REG_EXTENDED);
+    regcomp(&whitespace_regex, "([^[:space:]])", REG_EXTENDED);
     
     float_locations = (regmatch_t *)bu_calloc(full_matrix.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
  
@@ -246,11 +246,11 @@ build_comb(struct ged *gedp, struct directory *dp)
     }
 
     /* Set up the regular expressions */
-    regcomp(&whitespace_regex, "([^[:blank:]\r\n])", REG_EXTENDED);
-    regcomp(&attr_regex, "(.+[[:blank:]]+=[[:blank:]]+.*)", REG_EXTENDED|REG_NEWLINE);
+    regcomp(&whitespace_regex, "([^[:space:]])", REG_EXTENDED);
+    regcomp(&attr_regex, "(.+[[:space:]]+=[[:space:]]+.*)", REG_EXTENDED|REG_NEWLINE);
     bu_vls_sprintf(&current_substring, "(%s)", combtree_header);
     regcomp(&combtree_regex, bu_vls_addr(&current_substring), REG_EXTENDED);
-    regcomp(&combtree_op_regex, "([[:blank:]]+[[.-.][.+.]u][[:blank:]]+)", REG_EXTENDED);
+    regcomp(&combtree_op_regex, "([[:space:]]+[[.-.][.+.]u][[:space:]]+)", REG_EXTENDED);
     
 
     /* Need somewhere to hold the results - initially, size according to attribute regex */
