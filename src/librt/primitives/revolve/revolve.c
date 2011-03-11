@@ -1443,6 +1443,71 @@ rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     return 0;
 }
 
+int
+rt_revolve_xform(
+    struct rt_db_internal *op,
+    const mat_t mat,
+    struct rt_db_internal *ip,
+    int release,
+    struct db_i *dbip,
+    struct resource *resp)
+{
+    struct rt_revolve_internal *eip, *eop;
+    point_t tmp_vec;
+
+    if (dbip) RT_CK_DBI(dbip);
+    RT_CK_DB_INTERNAL(ip);
+    RT_CK_RESOURCE(resp)
+	eip = (struct rt_revolve_internal *)ip->idb_ptr;
+    RT_REVOLVE_CK_MAGIC(eip);
+
+    if (bu_debug&BU_DEBUG_MEM_CHECK) {
+	bu_log("Barrier check at start of revolve_xform():\n");
+	bu_mem_barriercheck();
+    }
+
+    if (op != ip) {
+	RT_INIT_DB_INTERNAL(op);
+	eop = (struct rt_revolve_internal *)bu_malloc(sizeof(struct rt_revolve_internal), "eop");
+	eop->magic = RT_REVOLVE_INTERNAL_MAGIC;
+	eop->sketch_name = bu_strdup(eip->sketch_name);
+	op->idb_ptr = (genptr_t)eop;
+	op->idb_meth = &rt_functab[ID_REVOLVE];
+	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	op->idb_type = ID_REVOLVE;
+	if (ip->idb_avs.magic == BU_AVS_MAGIC) {
+	    bu_avs_init(&op->idb_avs, ip->idb_avs.count, "avs");
+	    bu_avs_merge(&op->idb_avs, &ip->idb_avs);
+	}
+    } else {
+	eop = (struct rt_revolve_internal *)ip->idb_ptr;
+    }
+    MAT4X3PNT(tmp_vec, mat, eip->v3d);
+    VMOVE(eop->v3d, tmp_vec);
+    MAT4X3PNT(tmp_vec, mat, eip->axis3d);
+    VMOVE(eop->axis3d, tmp_vec);
+    V2MOVE(eop->v2d,eip->v2d);
+    V2MOVE(eop->axis2d,eip->axis2d);
+
+    if (release && ip != op) {
+	eop->sk = eip->sk;
+	eip->sk = (struct rt_sketch_internal *)NULL;
+	rt_db_free_internal(ip);
+    } else if (eip->skt) {
+	eop->sk = rt_copy_sketch(eip->sk);
+    } else {
+	eop->sk = (struct rt_sketch_internal *)NULL;
+    }
+
+    if (bu_debug&BU_DEBUG_MEM_CHECK) {
+	bu_log("Barrier check at end of revolve_xform():\n");
+	bu_mem_barriercheck();
+    }
+
+    return 0;
+}
+
+
 
 /**
  * R T _ R E V O L V E _ D E S C R I B E
