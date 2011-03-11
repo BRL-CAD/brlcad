@@ -103,6 +103,9 @@ fcheck fakeroot
 if test "$1" = "-b" ;then
     fcheck build-essential
     fcheck make
+    fcheck libtool
+    fcheck bc
+    fcheck sed
     fcheck bison
     fcheck flex
     fcheck libxi-dev

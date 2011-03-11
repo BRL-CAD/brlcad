@@ -82,6 +82,9 @@ if test "$DNAME" = "fedora" ;then
     fcheck fakeroot
     fcheck gcc-c++
     fcheck make
+    fcheck libtool
+    fcheck bc
+    fcheck sed
     fcheck bison
     fcheck flex
     fcheck libXi-devel
@@ -95,6 +98,9 @@ if test "$DNAME" = "openSUSE" ;then
     fcheck fakeroot
     fcheck gcc-c++
     fcheck make
+    fcheck libtool
+    fcheck bc
+    fcheck sed
     fcheck bison
     fcheck flex
     fcheck libXi6-devel
