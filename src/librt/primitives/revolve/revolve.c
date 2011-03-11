@@ -1413,14 +1413,14 @@ rt_revolve_xform(
     struct db_i *dbip,
     struct resource *resp)
 {
-    struct rt_revolve_internal *eip, *eop;
+    struct rt_revolve_internal *rip, *rop;
     point_t tmp_vec;
 
     if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
     RT_CK_RESOURCE(resp);
-    eip = (struct rt_revolve_internal *)ip->idb_ptr;
-    RT_REVOLVE_CK_MAGIC(eip);
+    rip = (struct rt_revolve_internal *)ip->idb_ptr;
+    RT_REVOLVE_CK_MAGIC(rip);
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
 	bu_log("Barrier check at start of revolve_xform():\n");
@@ -1429,11 +1429,11 @@ rt_revolve_xform(
 
     if (op != ip) {
 	RT_INIT_DB_INTERNAL(op);
-	eop = (struct rt_revolve_internal *)bu_malloc(sizeof(struct rt_revolve_internal), "eop");
-	eop->magic = RT_REVOLVE_INTERNAL_MAGIC;
-	bu_vls_init(&eop->sketch_name);
-	bu_vls_vlscat(&eop->sketch_name, &eip->sketch_name);
-	op->idb_ptr = (genptr_t)eop;
+	rop = (struct rt_revolve_internal *)bu_malloc(sizeof(struct rt_revolve_internal), "rop");
+	rop->magic = RT_REVOLVE_INTERNAL_MAGIC;
+	bu_vls_init(&rop->sketch_name);
+	bu_vls_vlscat(&rop->sketch_name, &rip->sketch_name);
+	op->idb_ptr = (genptr_t)rop;
 	op->idb_meth = &rt_functab[ID_REVOLVE];
 	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	op->idb_type = ID_REVOLVE;
@@ -1442,23 +1442,23 @@ rt_revolve_xform(
 	    bu_avs_merge(&op->idb_avs, &ip->idb_avs);
 	}
     } else {
-	eop = (struct rt_revolve_internal *)ip->idb_ptr;
+	rop = (struct rt_revolve_internal *)ip->idb_ptr;
     }
-    MAT4X3PNT(tmp_vec, mat, eip->v3d);
-    VMOVE(eop->v3d, tmp_vec);
-    MAT4X3VEC(tmp_vec, mat, eip->axis3d);
-    VMOVE(eop->axis3d, tmp_vec);
-    V2MOVE(eop->v2d, eip->v2d);
-    V2MOVE(eop->axis2d, eip->axis2d);
+    MAT4X3PNT(tmp_vec, mat, rip->v3d);
+    VMOVE(rop->v3d, tmp_vec);
+    MAT4X3VEC(tmp_vec, mat, rip->axis3d);
+    VMOVE(rop->axis3d, tmp_vec);
+    V2MOVE(rop->v2d, rip->v2d);
+    V2MOVE(rop->axis2d, rip->axis2d);
 
     if (release && ip != op) {
-	eop->sk = eip->sk;
-	eip->sk = (struct rt_sketch_internal *)NULL;
+	rop->sk = rip->sk;
+	rip->sk = (struct rt_sketch_internal *)NULL;
 	rt_db_free_internal(ip);
-    } else if (eip->sk) {
-	eop->sk = rt_copy_sketch(eip->sk);
+    } else if (rip->sk) {
+	rop->sk = rt_copy_sketch(rip->sk);
     } else {
-	eop->sk = (struct rt_sketch_internal *)NULL;
+	rop->sk = (struct rt_sketch_internal *)NULL;
     }
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
