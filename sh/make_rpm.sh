@@ -130,6 +130,11 @@ else
     ferror "Unknown architecture. \"`gcc -dumpmachine`\"" "Exiting..."
 fi
 
+NJOBS=`getconf _NPROCESSORS_ONLN | sed "s/.*/&*2-1/" | bc`
+if test ! $NJOBS -gt 0 2>/dev/null ;then
+    NJOBS=1
+fi
+
 # #
 rm -Rf $TMPDIR
 mkdir -p $TMPDIR/tmp
@@ -158,8 +163,8 @@ fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/Anim_Tutorial/ind
  "$TMPDIR/brlcad-doc-animation.desktop"
 
 # compile and install in tmp dir
-./configure --enable-optimized --enable-almost-everything --with-ogl --disable-debug
-make -j`getconf _NPROCESSORS_ONLN | sed "s/.*/&*2-1/" | bc`
+./configure --enable-optimized --enable-almost-everything --with-ogl --disable-debug && \
+make -j$NJOBS && \
 fakeroot make install DESTDIR=`pwd`"/$TMPDIR/tmp"
 
 # copy menu files
