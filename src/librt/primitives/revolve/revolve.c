@@ -1397,6 +1397,13 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 }
 
 
+/**
+ * R T _ R E V O L V E _ X F O R M
+ *
+ * Apply a transformation matrix to the specified 'ip' input revolve
+ * object, storing the results in the specified 'op' out pointer or
+ * creating a copy if NULL.
+ */
 int
 rt_revolve_xform(
     struct rt_db_internal *op,
@@ -1441,8 +1448,8 @@ rt_revolve_xform(
     VMOVE(eop->v3d, tmp_vec);
     MAT4X3VEC(tmp_vec, mat, eip->axis3d);
     VMOVE(eop->axis3d, tmp_vec);
-    V2MOVE(eop->v2d,eip->v2d);
-    V2MOVE(eop->axis2d,eip->axis2d);
+    V2MOVE(eop->v2d, eip->v2d);
+    V2MOVE(eop->axis2d, eip->axis2d);
 
     if (release && ip != op) {
 	eop->sk = eip->sk;
@@ -1461,7 +1468,6 @@ rt_revolve_xform(
 
     return 0;
 }
-
 
 
 /**
@@ -1509,7 +1515,6 @@ rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
 
     return 0;
 }
-
 
 
 /**
