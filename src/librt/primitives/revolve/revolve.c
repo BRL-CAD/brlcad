@@ -1411,8 +1411,8 @@ rt_revolve_xform(
 
     if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(resp)
-	eip = (struct rt_revolve_internal *)ip->idb_ptr;
+    RT_CK_RESOURCE(resp);
+    eip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(eip);
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
@@ -1424,7 +1424,8 @@ rt_revolve_xform(
 	RT_INIT_DB_INTERNAL(op);
 	eop = (struct rt_revolve_internal *)bu_malloc(sizeof(struct rt_revolve_internal), "eop");
 	eop->magic = RT_REVOLVE_INTERNAL_MAGIC;
-	eop->sketch_name = bu_strdup(eip->sketch_name);
+	bu_vls_init(&eop->sketch_name);
+	bu_vls_vlscat(&eop->sketch_name, &eip->sketch_name);
 	op->idb_ptr = (genptr_t)eop;
 	op->idb_meth = &rt_functab[ID_REVOLVE];
 	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1438,7 +1439,7 @@ rt_revolve_xform(
     }
     MAT4X3PNT(tmp_vec, mat, eip->v3d);
     VMOVE(eop->v3d, tmp_vec);
-    MAT4X3PNT(tmp_vec, mat, eip->axis3d);
+    MAT4X3VEC(tmp_vec, mat, eip->axis3d);
     VMOVE(eop->axis3d, tmp_vec);
     V2MOVE(eop->v2d,eip->v2d);
     V2MOVE(eop->axis2d,eip->axis2d);
@@ -1447,7 +1448,7 @@ rt_revolve_xform(
 	eop->sk = eip->sk;
 	eip->sk = (struct rt_sketch_internal *)NULL;
 	rt_db_free_internal(ip);
-    } else if (eip->skt) {
+    } else if (eip->sk) {
 	eop->sk = rt_copy_sketch(eip->sk);
     } else {
 	eop->sk = (struct rt_sketch_internal *)NULL;
@@ -1460,6 +1461,7 @@ rt_revolve_xform(
 
     return 0;
 }
+
 
 
 /**
