@@ -1397,52 +1397,6 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 }
 
 
-/**
- * R T _ R E V O L V E _ E X P O R T 5
- *
- * Export an REVOLVE from internal form to external format.  Note that
- * this means converting all integers to Big-Endian format and
- * floating point data to IEEE double.
- *
- * Apply the transformation to mm units as well.
- */
-int
-rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
-{
-    struct rt_revolve_internal *rip;
-    fastf_t vec[ELEMENTS_PER_VECT*3 + 1];
-    unsigned char *ptr;
-
-    if (dbip) RT_CK_DBI(dbip);
-
-    RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_REVOLVE) return -1;
-    rip = (struct rt_revolve_internal *)ip->idb_ptr;
-    RT_REVOLVE_CK_MAGIC(rip);
-
-    BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*3 + 1) + bu_vls_strlen(&rip->sketch_name) + 1;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "revolve external");
-
-    ptr = (unsigned char *)ep->ext_buf;
-
-    /* Since libwdb users may want to operate in units other than mm,
-     * we offer the opportunity to scale the solid (to get it into mm)
-     * on the way out.
-     */
-    VSCALE(&vec[0*3], rip->v3d, local2mm);
-    VSCALE(&vec[1*3], rip->axis3d, local2mm);
-    VSCALE(&vec[2*3], rip->r, local2mm);
-    vec[9] = rip->ang;
-
-    htond(ptr, (unsigned char *)vec, ELEMENTS_PER_VECT*3 + 1);
-    ptr += (ELEMENTS_PER_VECT*3 + 1) * SIZEOF_NETWORK_DOUBLE;
-
-    bu_strlcpy((char *)ptr, bu_vls_addr(&rip->sketch_name), bu_vls_strlen(&rip->sketch_name) + 1);
-
-    return 0;
-}
-
 int
 rt_revolve_xform(
     struct rt_db_internal *op,
@@ -1503,6 +1457,53 @@ rt_revolve_xform(
 	bu_log("Barrier check at end of revolve_xform():\n");
 	bu_mem_barriercheck();
     }
+
+    return 0;
+}
+
+
+/**
+ * R T _ R E V O L V E _ E X P O R T 5
+ *
+ * Export an REVOLVE from internal form to external format.  Note that
+ * this means converting all integers to Big-Endian format and
+ * floating point data to IEEE double.
+ *
+ * Apply the transformation to mm units as well.
+ */
+int
+rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+{
+    struct rt_revolve_internal *rip;
+    fastf_t vec[ELEMENTS_PER_VECT*3 + 1];
+    unsigned char *ptr;
+
+    if (dbip) RT_CK_DBI(dbip);
+
+    RT_CK_DB_INTERNAL(ip);
+    if (ip->idb_type != ID_REVOLVE) return -1;
+    rip = (struct rt_revolve_internal *)ip->idb_ptr;
+    RT_REVOLVE_CK_MAGIC(rip);
+
+    BU_CK_EXTERNAL(ep);
+    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*3 + 1) + bu_vls_strlen(&rip->sketch_name) + 1;
+    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "revolve external");
+
+    ptr = (unsigned char *)ep->ext_buf;
+
+    /* Since libwdb users may want to operate in units other than mm,
+     * we offer the opportunity to scale the solid (to get it into mm)
+     * on the way out.
+     */
+    VSCALE(&vec[0*3], rip->v3d, local2mm);
+    VSCALE(&vec[1*3], rip->axis3d, local2mm);
+    VSCALE(&vec[2*3], rip->r, local2mm);
+    vec[9] = rip->ang;
+
+    htond(ptr, (unsigned char *)vec, ELEMENTS_PER_VECT*3 + 1);
+    ptr += (ELEMENTS_PER_VECT*3 + 1) * SIZEOF_NETWORK_DOUBLE;
+
+    bu_strlcpy((char *)ptr, bu_vls_addr(&rip->sketch_name), bu_vls_strlen(&rip->sketch_name) + 1);
 
     return 0;
 }
