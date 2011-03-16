@@ -162,8 +162,7 @@ _ged_run_rt(struct ged *gedp)
     STARTUPINFO si = {0};
     PROCESS_INFORMATION pi = {0};
     SECURITY_ATTRIBUTES sa = {0};
-    char line[2048];
-    char name[256];
+    struct bu_vls line;
 #endif
     vect_t eye_model;
     struct ged_run_rt *run_rtp;
@@ -271,15 +270,15 @@ _ged_run_rt(struct ged *gedp)
     si.hStdOutput  = pipe_err[1];
     si.hStdError   = pipe_err[1];
 
-    snprintf(line, sizeof(line), "%s ", gedp->ged_gdp->gd_rt_cmd[0]);
-    for (i=1; i<gedp->ged_gdp->gd_rt_cmd_len; i++) {
-	snprintf(name, sizeof(name), "%s ", gedp->ged_gdp->gd_rt_cmd[i]);
-	bu_strlcat(line, name, sizeof(line));
+    bu_vls_init(&line);
+    for (i=0; i<gedp->ged_gdp->gd_rt_cmd_len; i++) {
+	bu_vls_printf(&line, "%s ", gedp->ged_gdp->gd_rt_cmd[i]);
     }
 
-    CreateProcess(NULL, line, NULL, NULL, TRUE,
+    CreateProcess(NULL, bu_vls_addr(&line), NULL, NULL, TRUE,
 		  DETACHED_PROCESS, NULL, NULL,
 		  &si, &pi);
+    bu_vls_free(&line);
 
     CloseHandle(pipe_in[0]);
     CloseHandle(pipe_err[1]);
