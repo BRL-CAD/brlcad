@@ -54,7 +54,6 @@ itcl::class iwidgets::Scrolledwidget {
     constructor {args} {}
     destructor {}
 
-    itk_option define -sbwidth sbWidth Width 15
     itk_option define -scrollmargin scrollMargin ScrollMargin 3 
     itk_option define -vscrollmode vscrollMode VScrollMode static 
     itk_option define -hscrollmode hscrollMode HScrollMode static 
@@ -120,22 +119,16 @@ itcl::body iwidgets::Scrolledwidget::constructor {args} {
     # Create the vertical scroll bar
     #
     itk_component add vertsb {
-	scrollbar $itk_interior.vertsb -orient vertical 
+	::ttk::scrollbar $itk_interior.vertsb -orient vertical 
     } {
-	usual
-	keep -borderwidth -elementborderwidth -jump -relief 
-	rename -highlightbackground -background background Background
     }
 
     #
     # Create the horizontal scrollbar
     #
     itk_component add horizsb {
-	scrollbar $itk_interior.horizsb -orient horizontal 
+	::ttk::scrollbar $itk_interior.horizsb -orient horizontal 
     } {
-	usual
-	keep -borderwidth -elementborderwidth -jump -relief 
-	rename -highlightbackground -background background Background
     }
     
     #
@@ -153,16 +146,6 @@ itcl::body iwidgets::Scrolledwidget::destructor {} {
 # ------------------------------------------------------------------
 #                             OPTIONS
 # ------------------------------------------------------------------
-
-# ------------------------------------------------------------------
-# OPTION: -sbwidth
-#
-# Set the width of the scrollbars.
-# ------------------------------------------------------------------
-itcl::configbody iwidgets::Scrolledwidget::sbwidth {
-    $itk_component(vertsb) configure -width $itk_option(-sbwidth)
-    $itk_component(horizsb) configure -width $itk_option(-sbwidth)
-}
 
 # ------------------------------------------------------------------
 # OPTION: -scrollmargin
