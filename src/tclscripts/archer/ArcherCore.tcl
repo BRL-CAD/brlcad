@@ -217,6 +217,7 @@ namespace eval ArcherCore {
 	method put_comb            {args}
 	method putmat              {args}
 	method pwd                 {}
+	method q                   {args}
 	method r                   {args}
 	method rcodes              {args}
 	method red                 {args}
@@ -444,7 +445,7 @@ namespace eval ArcherCore {
 					   in inside item kill killall killrefs killtree ls \
 					   make make_bb make_pnts mater mirror move move_arb_edge move_arb_face \
 					   mv mvall nmg_collapse nmg_simplify \
-					   ocenter opendb orotate oscale otranslate p packTree prefix protate pscale ptranslate \
+					   ocenter opendb orotate oscale otranslate p q packTree prefix protate pscale ptranslate \
 					   push put put_comb putmat pwd r rcodes red rfarb rm rmater \
 					   rotate_arb_face search sed shader shells tire title track \
 					   unhide units unpackTree \
@@ -5347,6 +5348,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::pwd {} {
     ::pwd
+}
+
+::itcl::body ArcherCore::q {args} {
+    Close
 }
 
 ::itcl::body ArcherCore::r {args} {
