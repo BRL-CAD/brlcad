@@ -123,6 +123,37 @@ bu_vlb_print(struct bu_vlb *vlb, FILE *fd)
 }
 
 
+void
+bu_pr_vlb(const char *title, const struct bu_vlb *vlb)
+{
+    size_t i;
+    unsigned char *c;
+    struct bu_vls v;
+
+    BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
+
+    bu_vls_init(&v);
+
+    /* optional title */
+    if (title) {
+	bu_vls_strcat(&v, title);
+	bu_vls_strcat(&v, ": ");
+    }
+
+    /* print each byte to string buffer */
+    c = vlb->buf;
+    for (i=0; i<vlb->nextByte; i++) {
+	bu_vls_printf(&v, "%02x ", *c);
+	c++;
+    }
+
+    /* print as one call */
+    bu_log("%V", &v);
+
+    bu_vls_free(&v);
+}
+
+
 /*
  * Local Variables:
  * mode: C
