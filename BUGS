@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* report that keep sometimes results in a .g file with unknown units
+  dbconcat also is reported to set the units to unknown if concating
+  a file with unknown units.
+
 * infinite loop in rt_find_backing_dist() raytracing a BoT (without
   pieces) for bot_smooth (i.e., rt_bot_smooth()).  encountered inf
   loop on a jetski fastgen model that was solid but unoriented, with
