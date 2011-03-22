@@ -72,6 +72,12 @@ bu_str_true(const char *str)
 	return 0;
     }
 
+    /* exactly "(null)" */
+    if (BU_STR_EQUAL(newstr, "(null)")) {
+	bu_vls_free(&vls);
+	return 0;
+    }
+
     /* true value from here on out */
 
     /* starts with 'y', [yY]* looks like 'yes' */
