@@ -74,6 +74,7 @@ get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val)
     return 1;
 }
 
+
 void
 _ged_print_matrix(FILE *fp, matp_t matrix)
 {
@@ -95,21 +96,24 @@ _ged_print_matrix(FILE *fp, matp_t matrix)
     }
 }
 
+
 int
-_ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *matrix, int *name_end) {
- 
+_ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *matrix, int *name_end)
+{
+    int ret = 0;
     regex_t matrix_entry, full_matrix, whitespace_regex;
     regmatch_t *float_locations;
     struct bu_vls current_substring, matrix_substring;
     int floatcnt, tail_start;
     const char *floatptr; 
     const char *float_string = "[+-]?[0-9]*[.]?[0-9]+([eE][+-]?[0-9]+)?";
+
     bu_vls_init(&current_substring);
-    bu_vls_sprintf(&current_substring, "(%s[[:blank:]\n]+)", float_string);
+    bu_vls_sprintf(&current_substring, "(%s[[:space:]]+)", float_string);
     regcomp(&matrix_entry, bu_vls_addr(&current_substring), REG_EXTENDED);
-    bu_vls_sprintf(&current_substring, "[[:blank:]\n](%s[[:blank:]\n]+){15}(%s)", float_string, float_string);
+    bu_vls_sprintf(&current_substring, "[[:space:]]+(%s[[:space:]]+) {15}(%s)", float_string, float_string);
     regcomp(&full_matrix, bu_vls_addr(&current_substring), REG_EXTENDED);
-    regcomp(&whitespace_regex, "([^[:blank:]\n])", REG_EXTENDED);
+    regcomp(&whitespace_regex, "([^[:space:]])", REG_EXTENDED);
     
     float_locations = (regmatch_t *)bu_calloc(full_matrix.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
  
@@ -117,7 +121,7 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
     float_locations[0].rm_so = 0;
     float_locations[0].rm_eo = strlength;
     while (floatcnt < 16 && floatcnt >= 0) {
-	if (!regexec(&matrix_entry, currptr, matrix_entry.re_nsub, float_locations, REG_STARTEND))  {
+	if (!regexec(&matrix_entry, currptr, matrix_entry.re_nsub, float_locations, REG_STARTEND)) {
 	    floatcnt++;
 	    float_locations[0].rm_so = float_locations[0].rm_eo;
 	    float_locations[0].rm_eo = strlength;
@@ -129,7 +133,7 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 	/* Possible matrix - use matrix regex to locate it */
 	float_locations[0].rm_so = 0;
 	float_locations[0].rm_eo = strlength;
-	if (!regexec(&full_matrix, currptr, full_matrix.re_nsub, float_locations, REG_STARTEND))  {
+	if (!regexec(&full_matrix, currptr, full_matrix.re_nsub, float_locations, REG_STARTEND)) {
 	    bu_vls_init(&matrix_substring);
 	    bu_vls_trunc(&matrix_substring, 0);
 	    bu_vls_strncpy(&matrix_substring, currptr + float_locations[0].rm_so, float_locations[0].rm_eo - float_locations[0].rm_so);
@@ -141,7 +145,7 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 	    float_locations[0].rm_so = 0;
 	    float_locations[0].rm_eo = bu_vls_strlen(&matrix_substring);
 	    while (floatcnt < 16) {
-		if (!regexec(&matrix_entry, floatptr, matrix_entry.re_nsub, float_locations, REG_STARTEND))  {
+		if (!regexec(&matrix_entry, floatptr, matrix_entry.re_nsub, float_locations, REG_STARTEND)) {
 		    bu_vls_trunc(&current_substring, 0);
 		    bu_vls_strncpy(&current_substring, currptr + float_locations[0].rm_so, float_locations[0].rm_eo - float_locations[0].rm_so);
 		    (*matrix)[floatcnt] = atof(floatptr); 
@@ -159,48 +163,35 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 	    bu_vls_trunc(&current_substring, 0);
 	    bu_vls_strncpy(&current_substring, currptr + tail_start, strlength - tail_start - 1);
 	    /* Need to check for non-whitespace in the distance-from-end zone */
-	    if (regexec(&whitespace_regex, bu_vls_addr(&current_substring), whitespace_regex.re_nsub, float_locations, 0) == 0)  {
-	        bu_vls_printf(&gedp->ged_result_str, "Saw something other than whitespace after matrix - error!\n");
-		bu_free(float_locations, "free float_locations");
-		bu_vls_free(&current_substring);
-		regfree(&matrix_entry);
-		regfree(&full_matrix);
-		regfree(&whitespace_regex);
-		return -1;
+	    if (regexec(&whitespace_regex, bu_vls_addr(&current_substring), whitespace_regex.re_nsub, float_locations, 0) != 0) {
+		ret = 0;
 	    } else {
-		bu_free(float_locations, "free float_locations");
-		bu_vls_free(&current_substring);
-		regfree(&matrix_entry);
-		regfree(&full_matrix);
-		regfree(&whitespace_regex);
-		return 0;
+	        bu_vls_printf(&gedp->ged_result_str, "Saw something other than whitespace after matrix - error!\n");
+		ret = -1;
 	    }
 	} else {
-	    bu_free(float_locations, "free float_locations");
-	    bu_vls_free(&current_substring);
 	    bu_vls_printf(&gedp->ged_result_str, "Yikes!  Found 16 or more float matches in a comb string but no valid matrix!!\n");
-	    regfree(&matrix_entry);
-	    regfree(&full_matrix);
-	    regfree(&whitespace_regex);
-	    return -1;
+	    ret = -1;
 	}
     }
+
     if (floatcnt < -1 && (floatcnt + 1) < -4) {
-	bu_free(float_locations, "free float_locations");
-	bu_vls_free(&current_substring);
 	bu_vls_printf(&gedp->ged_result_str, "More than 4 floats found without a matrix present - possible invalid matrix?\n");
-	regfree(&matrix_entry);
-	regfree(&full_matrix);
-	regfree(&whitespace_regex);
-	return -1;
+	ret = -1;
     }
+
+    /* cleanup */
     bu_free(float_locations, "free float_locations");
     bu_vls_free(&current_substring);
     regfree(&matrix_entry);
     regfree(&full_matrix);
     regfree(&whitespace_regex);
+
+    if (ret < 1)
+	return ret;
     return 1;	
 }
+
 
 HIDDEN int
 build_comb(struct ged *gedp, struct directory *dp)
@@ -221,7 +212,7 @@ build_comb(struct ged *gedp, struct directory *dp)
     int ret, gedret, combtagstart, combtagend;
     struct bu_attribute_value_set avs;
     matp_t matrix;
-    const char *combtree_header = "-------------Combination Tree------------:\n";
+    const char *combtree_header = "-------------Combination Tree------------:\r?\n";
  
     rt_tree_array = (struct rt_tree_array *)NULL;
  
@@ -246,11 +237,11 @@ build_comb(struct ged *gedp, struct directory *dp)
     }
 
     /* Set up the regular expressions */
-    regcomp(&whitespace_regex, "([^[:blank:]\n])", REG_EXTENDED);
-    regcomp(&attr_regex, "(.+[[:blank:]]+=[[:blank:]]+.*)", REG_EXTENDED|REG_NEWLINE);
+    regcomp(&whitespace_regex, "([^[:space:]])", REG_EXTENDED);
+    regcomp(&attr_regex, "(.+[[:space:]]+=[[:space:]]+.*)", REG_EXTENDED|REG_NEWLINE);
     bu_vls_sprintf(&current_substring, "(%s)", combtree_header);
     regcomp(&combtree_regex, bu_vls_addr(&current_substring), REG_EXTENDED);
-    regcomp(&combtree_op_regex, "([[:blank:]]+[[.-.][.+.]u][[:blank:]]+)", REG_EXTENDED);
+    regcomp(&combtree_op_regex, "([[:space:]]+[[.-.][.+.]u][[:space:]]+)", REG_EXTENDED);
     
 
     /* Need somewhere to hold the results - initially, size according to attribute regex */
@@ -367,7 +358,7 @@ build_comb(struct ged *gedp, struct directory *dp)
         /* Check for non-whitespace garbage between first operator and start of comb tree definition */
 	result_locations[0].rm_eo = result_locations[0].rm_so;
 	result_locations[0].rm_so = 0;
-	if (regexec(&whitespace_regex, currptr, whitespace_regex.re_nsub, result_locations, REG_STARTEND) == 0)  {
+	if (regexec(&whitespace_regex, currptr, whitespace_regex.re_nsub, result_locations, REG_STARTEND) == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "Saw something other than comb tree entries after comb tree tag - error!\n");
 	    bu_vls_free(&current_substring);
 	    bu_vls_free(&curr_op_vls);
@@ -470,7 +461,7 @@ build_comb(struct ged *gedp, struct directory *dp)
     } else {
 	/* Empty tree, ok as long as there is no garbage after the comb tree indicator */
 	bu_vls_sprintf(&current_substring, "%s", currptr);
-	if (regexec(&whitespace_regex, bu_vls_addr(&current_substring), whitespace_regex.re_nsub, result_locations, 0) == 0)  {
+	if (regexec(&whitespace_regex, bu_vls_addr(&current_substring), whitespace_regex.re_nsub, result_locations, 0) == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "Saw something other than comb tree entries after comb tree tag - error!\n");
 	    bu_vls_free(&current_substring);
 	    bu_vls_free(&curr_op_vls);
@@ -500,7 +491,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 /*
   bu_avs_print(&avs, "Regex based avs build\n");
   printf("\n");
-  int i,m;
+  int i, m;
   fastf_t tmp; 
   for (i=0; i<tree_index; i++) {
   char op;
@@ -540,7 +531,7 @@ build_comb(struct ged *gedp, struct directory *dp)
     }
     comb->tree = tp;
 
-    if(rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "build_comb: Cannot apply tree\n", dp->d_namep);
 	bu_avs_free(&avs);
 	return -1;
@@ -717,7 +708,6 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 }
 
 
-
 int
 ged_red(struct ged *gedp, int argc, const char *argv[])
 {
@@ -865,8 +855,8 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_free(&temp_name);
 		    return GED_ERROR;
 		}
-	    
- 
+
+
 		if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
 		    bu_vls_printf(&gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
 		    bu_vls_free(&comb_name);
@@ -898,7 +888,6 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		GED_DB_PUT_INTERNAL(gedp, tmp_dp, &intern, &rt_uniresource, 0);
 	    }
 
- 
 
 	    if (build_comb(gedp, tmp_dp) < 0) {
 		/* Something went wrong - kill the temporary comb */

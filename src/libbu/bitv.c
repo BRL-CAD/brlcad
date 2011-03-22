@@ -198,8 +198,10 @@ bu_pr_bitv(const char *str, register const struct bu_bitv *bv)
 
     BU_CK_BITV(bv);
     bu_vls_init(&v);
-    bu_vls_strcat(&v, str);
-    bu_vls_strcat(&v, ": ");
+    if (str) {
+	bu_vls_strcat(&v, str);
+	bu_vls_strcat(&v, ": ");
+    }
     bu_bitv_vls(&v, bv);
     bu_log("%s", bu_vls_addr(&v));
     bu_vls_free(&v);

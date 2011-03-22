@@ -16,12 +16,7 @@ ifneq (,$(findstring parallel,$(DEB_BUILD_OPTIONS)))
     PARALLEL_JOBS = $(shell echo $(DEB_BUILD_OPTIONS) | \
         sed -e 's/.*parallel=\([0-9]\+\).*/\1/')
     PARALLEL_OPTIONS = -j$(PARALLEL_JOBS)
-else
-	ifneq (,$(shell getconf _NPROCESSORS_ONLN))
-		PARALLEL_OPTIONS = -j$(shell getconf _NPROCESSORS_ONLN | sed "s/.*/&*2-1/" | bc)
-	endif
 endif
-# DEB_BUILD_OPTIONS
 
 build: build-stamp
 

@@ -82,6 +82,9 @@ if test "$DNAME" = "fedora" ;then
     fcheck fakeroot
     fcheck gcc-c++
     fcheck make
+    fcheck libtool
+    fcheck bc
+    fcheck sed
     fcheck bison
     fcheck flex
     fcheck libXi-devel
@@ -95,6 +98,9 @@ if test "$DNAME" = "openSUSE" ;then
     fcheck fakeroot
     fcheck gcc-c++
     fcheck make
+    fcheck libtool
+    fcheck bc
+    fcheck sed
     fcheck bison
     fcheck flex
     fcheck libXi6-devel
@@ -122,6 +128,11 @@ elif test `gcc -dumpmachine | grep -iE "x86_64" | wc -l` -eq 1 ;then
     FARCH="x86-64"
 else
     ferror "Unknown architecture. \"`gcc -dumpmachine`\"" "Exiting..."
+fi
+
+NJOBS=`getconf _NPROCESSORS_ONLN | sed "s/.*/&*2-1/" | bc`
+if test ! $NJOBS -gt 0 2>/dev/null ;then
+    NJOBS=1
 fi
 
 # #
@@ -152,8 +163,8 @@ fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/Anim_Tutorial/ind
  "$TMPDIR/brlcad-doc-animation.desktop"
 
 # compile and install in tmp dir
-./configure --enable-optimized --enable-almost-everything --with-ogl --disable-debug
-make -j`getconf _NPROCESSORS_ONLN | sed "s/.*/&*2-1/" | bc`
+./configure --enable-optimized --enable-almost-everything --with-ogl --disable-debug && \
+make -j$NJOBS && \
 fakeroot make install DESTDIR=`pwd`"/$TMPDIR/tmp"
 
 # copy menu files

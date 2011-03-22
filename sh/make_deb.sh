@@ -80,13 +80,6 @@ if test ! -e /etc/debian_version ; then
     ferror "Refusing to build on a non-debian system."
 fi
 
-# set variables
-BVERSION=`cat include/conf/MAJOR`"."`cat include/conf/MINOR`"."`cat include/conf/PATCH`
-BVERSION=`echo $BVERSION | sed 's/[^0-9.]//g'`
-CDATE=`date -R`
-CFILE="debian/changelog"
-RELEASE="0"
-
 # check needed packages
 E=0
 fcheck(){
@@ -103,6 +96,9 @@ fcheck fakeroot
 if test "$1" = "-b" ;then
     fcheck build-essential
     fcheck make
+    fcheck libtool
+    fcheck bc
+    fcheck sed
     fcheck bison
     fcheck flex
     fcheck libxi-dev
@@ -114,6 +110,17 @@ fi
 
 if [ $E -eq 1 ]; then
     ferror "Mandatory to install these packages first:" "$LLIST"
+fi
+
+# set variables
+BVERSION=`cat include/conf/MAJOR | sed 's/[^0-9]//g'`"."`cat include/conf/MINOR | sed 's/[^0-9]//g'`"."`cat include/conf/PATCH | sed 's/[^0-9]//g'`
+CDATE=`date -R`
+CFILE="debian/changelog"
+RELEASE="0"
+
+NJOBS=`getconf _NPROCESSORS_ONLN | sed "s/.*/&*2-1/" | bc`
+if test ! $NJOBS -gt 0 2>/dev/null ;then
+    NJOBS=1
 fi
 
 # if building sources, create *orig.tar.gz
@@ -160,7 +167,7 @@ fi
 # create deb or source packages
 case "$1" in
 -b) fakeroot debian/rules clean && \
-    fakeroot debian/rules binary
+    DEB_BUILD_OPTIONS=parallel=$NJOBS fakeroot debian/rules binary
     ;;
 -s) fakeroot dpkg-buildpackage -S -us -uc
     ;;

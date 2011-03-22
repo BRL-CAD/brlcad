@@ -23,6 +23,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* dem-g looks like it is broken again - test files available from here:
+  http://dds.cr.usgs.gov/pub/data/DEM/250/
+  Should probably set up a regression test on this...
+
 * fix bottie crash on 32b builds
 
 * resolve bot bin sort optimization crash, disabled during release
@@ -881,6 +885,8 @@ STEP
 
 BREP/NURBS
 ----------
+
+* update to openNURBS 5.0 (2011-02-02)
 
 * implement conversion of implicit CSG to NURBS CSG.  partially
   complete, but primitives are still fixed at origin.

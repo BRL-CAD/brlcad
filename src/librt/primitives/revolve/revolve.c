@@ -1398,6 +1398,79 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 
 
 /**
+ * R T _ R E V O L V E _ X F O R M
+ *
+ * Apply a transformation matrix to the specified 'ip' input revolve
+ * object, storing the results in the specified 'op' out pointer or
+ * creating a copy if NULL.
+ */
+int
+rt_revolve_xform(
+    struct rt_db_internal *op,
+    const mat_t mat,
+    struct rt_db_internal *ip,
+    int release,
+    struct db_i *dbip,
+    struct resource *resp)
+{
+    struct rt_revolve_internal *rip, *rop;
+    point_t tmp_vec;
+
+    if (dbip) RT_CK_DBI(dbip);
+    RT_CK_DB_INTERNAL(ip);
+    RT_CK_RESOURCE(resp);
+    rip = (struct rt_revolve_internal *)ip->idb_ptr;
+    RT_REVOLVE_CK_MAGIC(rip);
+
+    if (bu_debug&BU_DEBUG_MEM_CHECK) {
+	bu_log("Barrier check at start of revolve_xform():\n");
+	bu_mem_barriercheck();
+    }
+
+    if (op != ip) {
+	RT_INIT_DB_INTERNAL(op);
+	rop = (struct rt_revolve_internal *)bu_malloc(sizeof(struct rt_revolve_internal), "rop");
+	rop->magic = RT_REVOLVE_INTERNAL_MAGIC;
+	bu_vls_init(&rop->sketch_name);
+	bu_vls_vlscat(&rop->sketch_name, &rip->sketch_name);
+	op->idb_ptr = (genptr_t)rop;
+	op->idb_meth = &rt_functab[ID_REVOLVE];
+	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	op->idb_type = ID_REVOLVE;
+	if (ip->idb_avs.magic == BU_AVS_MAGIC) {
+	    bu_avs_init(&op->idb_avs, ip->idb_avs.count, "avs");
+	    bu_avs_merge(&op->idb_avs, &ip->idb_avs);
+	}
+    } else {
+	rop = (struct rt_revolve_internal *)ip->idb_ptr;
+    }
+    MAT4X3PNT(tmp_vec, mat, rip->v3d);
+    VMOVE(rop->v3d, tmp_vec);
+    MAT4X3VEC(tmp_vec, mat, rip->axis3d);
+    VMOVE(rop->axis3d, tmp_vec);
+    V2MOVE(rop->v2d, rip->v2d);
+    V2MOVE(rop->axis2d, rip->axis2d);
+
+    if (release && ip != op) {
+	rop->sk = rip->sk;
+	rip->sk = (struct rt_sketch_internal *)NULL;
+	rt_db_free_internal(ip);
+    } else if (rip->sk) {
+	rop->sk = rt_copy_sketch(rip->sk);
+    } else {
+	rop->sk = (struct rt_sketch_internal *)NULL;
+    }
+
+    if (bu_debug&BU_DEBUG_MEM_CHECK) {
+	bu_log("Barrier check at end of revolve_xform():\n");
+	bu_mem_barriercheck();
+    }
+
+    return 0;
+}
+
+
+/**
  * R T _ R E V O L V E _ E X P O R T 5
  *
  * Export an REVOLVE from internal form to external format.  Note that

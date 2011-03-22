@@ -162,8 +162,10 @@ bu_open_mapped_file(const char *name, const char *appl)
     } else
 #  endif /* HAVE_SYS_MMAN_H */
     {
-	/* Allocate a local buffer, and slurp it in */
-	mp->buf = bu_malloc((size_t)sb.st_size, name);
+	/* Allocate a local zero'd buffer, and slurp it in always
+	 * leaving space for a trailing zero.
+	 */
+	mp->buf = bu_calloc(1, (size_t)sb.st_size+1, name);
 
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	ret = read(fd, mp->buf, (size_t)sb.st_size);
@@ -207,8 +209,8 @@ bu_open_mapped_file(const char *name, const char *appl)
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
     }
-    /* Malloc the necessary buffer */
-    mp->buf = bu_malloc(mp->buflen, name);
+    /* Allocate the necessary buffer */
+    mp->buf = bu_calloc(1, mp->buflen+1, name);
 
     /* Read it again into the buffer */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
