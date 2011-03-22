@@ -153,7 +153,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 			 &low, &hi, &r, &g, &b);
 
 	    /* check to see if line is reasonable */
-	    if (cnt != 9) {
+	    if (cnt != 5) {
 		bu_vls_printf(&gedp->ged_result_str, "%s: Discarding %s\n", argv[0], line);
 		continue;
 	    }
