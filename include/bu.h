@@ -5067,6 +5067,14 @@ BU_EXPORT BU_EXTERN(void bu_vlb_print,
 		    (struct bu_vlb *vlb,
 		     FILE *fd));
 
+/**
+ * B U _ P R _ V L B
+ * @brief
+ * Print the bytes set in a variable-length byte array.
+ */
+BU_EXPORT BU_EXTERN(void bu_pr_vlb, (const char *title, const struct bu_vlb *vlb));
+
+
 /** @file str.c
  *
  * Compatibility routines to various string processing functions
