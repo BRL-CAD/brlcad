@@ -238,7 +238,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 
     /* Set up the regular expressions */
     regcomp(&whitespace_regex, "([^[:space:]])", REG_EXTENDED);
-    regcomp(&attr_regex, "(.+[[:space:]]+=[[:space:]]+.*)", REG_EXTENDED|REG_NEWLINE);
+    regcomp(&attr_regex, "(.+[[:space:]]+=[[:blank:]]+.*)", REG_EXTENDED|REG_NEWLINE);
     bu_vls_sprintf(&current_substring, "(%s)", combtree_header);
     regcomp(&combtree_regex, bu_vls_addr(&current_substring), REG_EXTENDED);
     regcomp(&combtree_op_regex, "([[:space:]]+[[.-.][.+.]u][[:space:]]+)", REG_EXTENDED);
