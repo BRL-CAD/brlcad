@@ -40,6 +40,7 @@ sketch geometry that can be extruded to a 3D representation.
 * fixed archer and rtwizard startup failure bug on Mac - Sean Morrison
 * fixed bug starting up the Combination Editor in mged - Sean Morrison
 * mged 'mater' command interactive prompting restored - Sean Morrison
+* added pix2fb and fb2pix screenshot commands to archer - Bob Parker
 * fixed bug running nirt on a Windows command terminal - Bob Parker
 * improved wireframe updating when editing within mged - Sean Morrison
 * added -T bot_mintie BoT optimization options to nirt - Sean Morrison
