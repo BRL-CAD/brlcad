@@ -2788,6 +2788,12 @@ RT_EXPORT BU_EXTERN(void *db_search_formplan,
 		 struct db_i *dbip,
 		 struct rt_wdb *wdbp));
 
+/**
+ * release memory for the formulated plan returned by
+ * db_search_formplan().
+ */
+RT_EXPORT BU_EXTERN(void db_search_freeplan, (void **plan));
+
 RT_EXPORT BU_EXTERN(struct db_full_path_list *db_search_full_paths,
 		(void *searchplan,
 		 struct db_full_path_list *path_list,
