@@ -43,6 +43,7 @@ sketch geometry that can be extruded to a 3D representation.
 * fixed bug running nirt on a Windows command terminal - Bob Parker
 * improved wireframe updating when editing within mged - Sean Morrison
 * added -T bot_mintie BoT optimization options to nirt - Sean Morrison
+* fixed Windows display manager bug when drawing strings - Bob Parker
 * mged command-click zoom binding for one button mice - Sean Morrison
 * removed 'txyz-pl' utility tool in favor of 'xyz-pl' - Sean Morrison
 * new shp-g importer for Esri Shapefile geometry files - Sean Morrison
