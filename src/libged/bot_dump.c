@@ -736,7 +736,6 @@ ged_bot_dump_leaf(struct db_tree_state	*tsp,
 
     /* Indicate success by returning something other than TREE_NULL */
     RT_GET_TREE(curtree, tsp->ts_resp);
-    curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;
 
     dp = pathp->fp_names[pathp->fp_len-1];

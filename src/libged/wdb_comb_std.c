@@ -190,7 +190,6 @@ wdb_add_operand(Tcl_Interp *interp, struct bu_list *hp, char *name)
     ptr_rparen = strchr(name, ')');
 
     RT_GET_TREE(node, &rt_uniresource);
-    node->magic = RT_TREE_MAGIC;
     node->tr_op = OP_DB_LEAF;
     node->tr_l.tl_mat = (matp_t)NULL;
     if (ptr_lparen || ptr_rparen) {
