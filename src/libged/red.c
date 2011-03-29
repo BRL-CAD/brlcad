@@ -98,15 +98,16 @@ _ged_print_matrix(FILE *fp, matp_t matrix)
 
 
 int
-_ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *matrix, int *name_end) {
- 
+_ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *matrix, int *name_end)
+{
+    int ret = 1;
     regex_t matrix_entry, full_matrix, whitespace_regex;
     regmatch_t *float_locations;
     struct bu_vls current_substring, matrix_substring;
     int floatcnt, tail_start;
     const char *floatptr; 
     const char *float_string = "[+-]?[0-9]*[.]?[0-9]+([eE][+-]?[0-9]+)?";
-    int ret = 1;
+
     bu_vls_init(&current_substring);
     bu_vls_init(&matrix_substring);
     bu_vls_sprintf(&current_substring, "(%s[[:space:]]+)", float_string);
@@ -173,16 +174,20 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 	    ret = -1;
 	}
     }
+
     if (floatcnt < -1 && (floatcnt + 1) < -4) {
 	bu_vls_printf(&gedp->ged_result_str, "More than 4 floats found without a matrix present - possible invalid matrix?\n");
 	ret = -1;
     }
+
+    /* cleanup */
     bu_free(float_locations, "free float_locations");
     bu_vls_free(&current_substring);
     regfree(&matrix_entry);
     regfree(&full_matrix);
     regfree(&whitespace_regex);
-    return 1;	
+
+    return ret;
 }
 
 
