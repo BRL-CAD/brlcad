@@ -1259,7 +1259,6 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	} else {
 	    /* No subtrees in this combination, invent a NOP */
 	    RT_GET_TREE(curtree, tsp->ts_resp);
-	    curtree->magic = RT_TREE_MAGIC;
 	    curtree->tr_op = OP_NOP;
 	    if (curtree) RT_CK_TREE(curtree);
 	}
@@ -1766,7 +1765,6 @@ db_non_union_push(union tree *tp, struct resource *resp)
 	    tp->tr_op = OP_UNION;
 	    RT_GET_TREE(tmp, resp);
 	    tmp->tr_regionp = tp->tr_regionp;
-	    tmp->magic = RT_TREE_MAGIC;
 	    tmp->tr_op = OP_INTERSECT;
 	    tmp->tr_b.tb_left = C;
 	    tmp->tr_b.tb_right = A;
@@ -2025,7 +2023,6 @@ _db_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     RT_CK_RESOURCE(tsp->ts_resp);
 
     RT_GET_TREE(curtree, tsp->ts_resp);
-    curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_REGION;
     curtree->tr_c.tc_ctsp = db_new_combined_tree_state(tsp, pathp);
 
@@ -2045,7 +2042,6 @@ _db_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
     RT_CK_RESOURCE(tsp->ts_resp);
 
     RT_GET_TREE(curtree, tsp->ts_resp);
-    curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_REGION;
     curtree->tr_c.tc_ctsp = db_new_combined_tree_state(tsp, pathp);
 
@@ -2388,7 +2384,6 @@ db_walk_tree(struct db_i *dbip,
 	    union tree *new_tp;
 
 	    RT_GET_TREE(new_tp, ts.ts_resp);
-	    new_tp->magic = RT_TREE_MAGIC;
 	    new_tp->tr_op = OP_UNION;
 	    new_tp->tr_b.tb_left = whole_tree;
 	    new_tp->tr_b.tb_right = curtree;
@@ -2987,7 +2982,6 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 	case 'l':
 	    /* Leaf node: {l name {mat}} */
 	    RT_GET_TREE(tp, resp);
-	    tp->tr_l.magic = RT_TREE_MAGIC;
 	    tp->tr_op = OP_DB_LEAF;
 	    tp->tr_l.tl_name = bu_strdup(argv[1]);
 	    /* If matrix not specified, NULL pointer ==> identity matrix */
@@ -3034,7 +3028,6 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 	    tp->tr_b.tb_op = OP_XOR;
 	    goto binary;
 	binary:
-	    tp->tr_b.magic = RT_TREE_MAGIC;
 	    if (argv[1] == (char *)NULL || argv[2] == (char *)NULL) {
 		bu_vls_printf(vls,
 			      "db_tree_parse: binary operator %s has insufficient operands in %s",
@@ -3075,7 +3068,6 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 	    tp->tr_b.tb_op = OP_XNOP;
 	    goto unary;
 	unary:
-	    tp->tr_b.magic = RT_TREE_MAGIC;
 	    if (argv[1] == (char *)NULL) {
 		bu_vls_printf(vls,
 			      "db_tree_parse: unary operator %s has insufficient operands in %s\n",
@@ -3096,7 +3088,6 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 	    /* NOP: no args.  {N} */
 	    RT_GET_TREE(tp, resp);
 	    tp->tr_b.tb_op = OP_XNOP;
-	    tp->tr_b.magic = RT_TREE_MAGIC;
 	    break;
 
 	default:

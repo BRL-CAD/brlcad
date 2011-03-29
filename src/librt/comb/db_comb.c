@@ -263,8 +263,8 @@ rt_comb_import4(
 	    char namebuf[NAMESIZE+1];
 
 	    RT_GET_TREE(tp, resp);
+	    RT_INIT_TREE(tp);
 	    rt_tree_array[j].tl_tree = tp;
-	    tp->tr_l.magic = RT_TREE_MAGIC;
 	    tp->tr_l.tl_op = OP_DB_LEAF;
 
 	    /* bu_strlcpy not safe here, buffer size mismatch */
