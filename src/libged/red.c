@@ -112,9 +112,9 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
     bu_vls_init(&matrix_substring);
     bu_vls_sprintf(&current_substring, "(%s[[:space:]]+)", float_string);
     regcomp(&matrix_entry, bu_vls_addr(&current_substring), REG_EXTENDED);
-    bu_vls_sprintf(&current_substring, "[[:space:]]+(%s[[:space:]]+) {15}(%s)", float_string, float_string);
+    bu_vls_sprintf(&current_substring, "[[:space:]]+(%s[[:space:]]+){15}(%s)", float_string, float_string);
     regcomp(&full_matrix, bu_vls_addr(&current_substring), REG_EXTENDED);
-    regcomp(&whitespace_regex, "([^[:space:]])", REG_EXTENDED);
+    regcomp(&whitespace_regex, "([^[:blank:]])", REG_EXTENDED);
     
     float_locations = (regmatch_t *)bu_calloc(full_matrix.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
  
@@ -163,7 +163,7 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 	    bu_vls_trunc(&current_substring, 0);
 	    bu_vls_strncpy(&current_substring, currptr + tail_start, strlength - tail_start - 1);
 	    /* Need to check for non-whitespace in the distance-from-end zone */
-	    if (regexec(&whitespace_regex, bu_vls_addr(&current_substring), whitespace_regex.re_nsub, float_locations, 0) != 0) {
+	    if (!regexec(&whitespace_regex, bu_vls_addr(&current_substring), whitespace_regex.re_nsub, float_locations, 0)) {
 	        bu_vls_printf(&gedp->ged_result_str, "Saw something other than whitespace after matrix - error!\n");
 		ret = -1;
 	    } else {
