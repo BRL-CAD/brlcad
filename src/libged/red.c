@@ -98,20 +98,23 @@ _ged_print_matrix(FILE *fp, matp_t matrix)
 
 
 int
-_ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *matrix, int *name_end) {
- 
+_ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *matrix, int *name_end)
+{
+    int ret = 1;
     regex_t matrix_entry, full_matrix, whitespace_regex;
     regmatch_t *float_locations;
     struct bu_vls current_substring, matrix_substring;
     int floatcnt, tail_start;
     const char *floatptr; 
     const char *float_string = "[+-]?[0-9]*[.]?[0-9]+([eE][+-]?[0-9]+)?";
+
     bu_vls_init(&current_substring);
+    bu_vls_init(&matrix_substring);
     bu_vls_sprintf(&current_substring, "(%s[[:space:]]+)", float_string);
     regcomp(&matrix_entry, bu_vls_addr(&current_substring), REG_EXTENDED);
-    bu_vls_sprintf(&current_substring, "[[:space:]]+(%s[[:space:]]+) {15}(%s)", float_string, float_string);
+    bu_vls_sprintf(&current_substring, "[[:space:]]+(%s[[:space:]]+){15}(%s)", float_string, float_string);
     regcomp(&full_matrix, bu_vls_addr(&current_substring), REG_EXTENDED);
-    regcomp(&whitespace_regex, "([^[:space:]])", REG_EXTENDED);
+    regcomp(&whitespace_regex, "([^[:blank:]])", REG_EXTENDED);
     
     float_locations = (regmatch_t *)bu_calloc(full_matrix.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
  
@@ -132,7 +135,6 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 	float_locations[0].rm_so = 0;
 	float_locations[0].rm_eo = strlength;
 	if (!regexec(&full_matrix, currptr, full_matrix.re_nsub, float_locations, REG_STARTEND)) {
-	    bu_vls_init(&matrix_substring);
 	    bu_vls_trunc(&matrix_substring, 0);
 	    bu_vls_strncpy(&matrix_substring, currptr + float_locations[0].rm_so, float_locations[0].rm_eo - float_locations[0].rm_so);
 	    *name_end = float_locations[0].rm_so;
@@ -161,47 +163,31 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 	    bu_vls_trunc(&current_substring, 0);
 	    bu_vls_strncpy(&current_substring, currptr + tail_start, strlength - tail_start - 1);
 	    /* Need to check for non-whitespace in the distance-from-end zone */
-	    if (regexec(&whitespace_regex, bu_vls_addr(&current_substring), whitespace_regex.re_nsub, float_locations, 0) != 0) {
+	    if (!regexec(&whitespace_regex, bu_vls_addr(&current_substring), whitespace_regex.re_nsub, float_locations, 0)) {
 	        bu_vls_printf(&gedp->ged_result_str, "Saw something other than whitespace after matrix - error!\n");
-		bu_free(float_locations, "free float_locations");
-		bu_vls_free(&current_substring);
-		regfree(&matrix_entry);
-		regfree(&full_matrix);
-		regfree(&whitespace_regex);
-		return -1;
+		ret = -1;
 	    } else {
-		bu_free(float_locations, "free float_locations");
-		bu_vls_free(&current_substring);
-		regfree(&matrix_entry);
-		regfree(&full_matrix);
-		regfree(&whitespace_regex);
-		return 0;
+		ret = 0;
 	    }
 	} else {
-	    bu_free(float_locations, "free float_locations");
-	    bu_vls_free(&current_substring);
 	    bu_vls_printf(&gedp->ged_result_str, "Yikes!  Found 16 or more float matches in a comb string but no valid matrix!!\n");
-	    regfree(&matrix_entry);
-	    regfree(&full_matrix);
-	    regfree(&whitespace_regex);
-	    return -1;
+	    ret = -1;
 	}
     }
+
     if (floatcnt < -1 && (floatcnt + 1) < -4) {
-	bu_free(float_locations, "free float_locations");
-	bu_vls_free(&current_substring);
 	bu_vls_printf(&gedp->ged_result_str, "More than 4 floats found without a matrix present - possible invalid matrix?\n");
-	regfree(&matrix_entry);
-	regfree(&full_matrix);
-	regfree(&whitespace_regex);
-	return -1;
+	ret = -1;
     }
+
+    /* cleanup */
     bu_free(float_locations, "free float_locations");
     bu_vls_free(&current_substring);
     regfree(&matrix_entry);
     regfree(&full_matrix);
     regfree(&whitespace_regex);
-    return 1;	
+
+    return ret;
 }
 
 
