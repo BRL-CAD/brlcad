@@ -520,7 +520,7 @@ db5_export_object3(
     need += 8;	/* pad and magic2 */
 
     /* Allocate the buffer for the combined external representation */
-    out->ext_magic = BU_EXTERNAL_MAGIC;
+    BU_INIT_EXTERNAL(out);
     out->ext_buf = bu_malloc(need, "external object3");
     out->ext_nbytes = need;		/* will be trimmed, below */
 
@@ -906,9 +906,9 @@ rt_db_put_internal5(
     RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
     RT_CK_RESOURCE(resp);
-
     BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
 
+    BU_INIT_EXTERNAL(&ext);
     if (rt_db_cvt_to_external5(&ext, dp->d_namep, ip, 1.0, dbip, resp, major) < 0) {
 	bu_log("rt_db_put_internal5(%s):  export failure\n",
 	       dp->d_namep);
