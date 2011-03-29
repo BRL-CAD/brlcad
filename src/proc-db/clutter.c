@@ -206,16 +206,15 @@ crystal_stack(char *cname, double xc, double yc, double size)
     VUNITIZE(min);
 
     for (i=0; i<3; i++) {
+	double rand1 = rand_num(rbuf);
+	double rand2 = rand_num(rbuf);
+
 	snprintf(name, STRSIZ, "%sL%c", cname, 'a'+i);
 	(void)mk_addmember(name, &head.l, NULL, WMOP_UNION);
 	VSET(center, xc, yc, size/2*i);
 	nsolids = 3 + (rand() & 7);
 
-	high = crystal_layer(name, center, size/2,
-			     maj, min,
-			     rand_num(rbuf) * 90.0,
-			     rand_num(rbuf) * 8.0 + 2.0,
-			     nsolids);
+	high = crystal_layer(name, center, size/2, maj, min, rand1 * 90.0, rand2 * 8.0 + 2.0, nsolids);
 	if (high > height)  height = high;
     }
 

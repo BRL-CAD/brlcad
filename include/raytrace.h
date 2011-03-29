@@ -956,10 +956,10 @@ struct rt_comb_internal  {
     char		region_flag;	/**< @brief !0 ==> this COMB is a REGION */
     char		is_fastgen;	/**< @brief REGION_NON_FASTGEN/_PLATE/_VOLUME */
     /* Begin GIFT compatability */
-    long		region_id;
-    long		aircode;
-    long		GIFTmater;
-    long		los;
+    long		region_id;      /* DEPRECATED, use attribute */
+    long		aircode;        /* DEPRECATED, use attribute */
+    long		GIFTmater;      /* DEPRECATED, use attribute */
+    long		los;            /* DEPRECATED, use attribute */
     /* End GIFT compatability */
     char		rgb_valid;	/**< @brief !0 ==> rgb[] has valid color */
     unsigned char	rgb[3];
@@ -2787,6 +2787,12 @@ RT_EXPORT BU_EXTERN(void *db_search_formplan,
 		(char **argv,
 		 struct db_i *dbip,
 		 struct rt_wdb *wdbp));
+
+/**
+ * release memory for the formulated plan returned by
+ * db_search_formplan().
+ */
+RT_EXPORT BU_EXTERN(void db_search_freeplan, (void **plan));
 
 RT_EXPORT BU_EXTERN(struct db_full_path_list *db_search_full_paths,
 		(void *searchplan,

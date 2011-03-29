@@ -47,6 +47,12 @@ new names should be listed for reference.
 
 7.18
 ----
+
+raytrace.h rt_comb_internal members
+        region_id -> region_id attribute [deprecated 7.18]
+        aircode -> air attribute [deprecated 7.18]
+        GIFTmater -> material_id attribute [deprecated 7.18]
+        los -> los attribute [deprecated 7.18]
 bu.h xdr API
         BU_GLONGLONG() -> ntohll() [deprecated 7.18]
         BU_GLONG() -> ntohl() [deprecated 7.18]

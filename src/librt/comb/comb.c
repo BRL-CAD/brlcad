@@ -404,28 +404,28 @@ rt_comb_export5(
     /* GIFT compatability */
     if (comb->region_id != 0) {
 	bu_vls_trunc(&value, 0);
-	bu_vls_printf(&value, "%d", comb->region_id);
+	bu_vls_printf(&value, "%ld", comb->region_id);
 	bu_avs_add_vls(avsp, "region_id", &value);
     } else
 	bu_avs_remove(avsp, "region_id");
 
     if (comb->aircode != 0) {
 	bu_vls_trunc(&value, 0);
-	bu_vls_printf(&value, "%d", comb->aircode);
+	bu_vls_printf(&value, "%ld", comb->aircode);
 	bu_avs_add_vls(avsp, "aircode", &value);
     } else
 	bu_avs_remove(avsp, "aircode");
 
     if (comb->GIFTmater != 0) {
 	bu_vls_trunc(&value, 0);
-	bu_vls_printf(&value, "%d", comb->GIFTmater);
+	bu_vls_printf(&value, "%ld", comb->GIFTmater);
 	bu_avs_add_vls(avsp, "material_id", &value);
     } else
 	bu_avs_remove(avsp, "material_id");
 
     if (comb->los != 0) {
 	bu_vls_trunc(&value, 0);
-	bu_vls_printf(&value, "%d", comb->los);
+	bu_vls_printf(&value, "%ld", comb->los);
 	bu_avs_add_vls(avsp, "los", &value);
     } else
 	bu_avs_remove(avsp, "los");
@@ -760,16 +760,16 @@ finish:
 
 	/* get the other GIFT "region" attributes */
 	if ((ap = bu_avs_get(&ip->idb_avs, "region_id")) != NULL) {
-	    comb->region_id = atoi(ap);
+	    comb->region_id = atol(ap);
 	}
 	if ((ap = bu_avs_get(&ip->idb_avs, "aircode")) != NULL) {
-	    comb->aircode = atoi(ap);
+	    comb->aircode = atol(ap);
 	}
 	if ((ap = bu_avs_get(&ip->idb_avs, "material_id")) != NULL) {
-	    comb->GIFTmater = atoi(ap);
+	    comb->GIFTmater = atol(ap);
 	}
 	if ((ap = bu_avs_get(&ip->idb_avs, "los")) != NULL) {
-	    comb->los = atoi(ap);
+	    comb->los = atol(ap);
 	}
     }
     if ((ap = bu_avs_get(&ip->idb_avs, "oshader")) != NULL) {
@@ -801,17 +801,17 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 
 	bu_vls_printf(logstr, "comb region ");
 	if (comb->region_flag) {
-	    bu_vls_printf(logstr, "yes id %d ", comb->region_id);
+	    bu_vls_printf(logstr, "yes id %ld ", comb->region_id);
 
 	    if (comb->aircode) {
-		bu_vls_printf(logstr, "air %d ", comb->aircode);
+		bu_vls_printf(logstr, "air %ld ", comb->aircode);
 	    }
 	    if (comb->los) {
-		bu_vls_printf(logstr, "los %d ", comb->los);
+		bu_vls_printf(logstr, "los %ld ", comb->los);
 	    }
 
 	    if (comb->GIFTmater) {
-		bu_vls_printf(logstr, "GIFTmater %d ", comb->GIFTmater);
+		bu_vls_printf(logstr, "GIFTmater %ld ", comb->GIFTmater);
 	    }
 	} else {
 	    bu_vls_printf(logstr, "no ");

@@ -1573,7 +1573,7 @@ convert_load_order(
     unsigned short int buf4 = 0;
     size_t ret;
 
-    buf3 = bu_calloc(1, *in_ydim, "buf3");
+    buf3 = bu_calloc(*in_ydim, sizeof(unsigned short int), "buf3");
 
     if ((fp4=fopen(in_dsp_output_filename, "wb")) == NULL) {
         bu_log("Could not open '%s' for write.\n", in_dsp_output_filename);
@@ -2169,10 +2169,7 @@ main(int ac, char *av[])
     bu_free(temp_filename, "temp_filename");
     bu_free(dsp_output_filename, "dsp_output_filename");
     bu_free(model_output_filename, "model_output_filename");
-    bu_free(temp_filename, "temp_filename");
-    bu_free(input_filename, "input_filename");
-    bu_free(dsp_output_filename, "dsp_output_filename");
-    bu_free(model_output_filename, "model_output_filename");
+
     temp_filename = NULL;
     input_filename = NULL;
     dsp_output_filename = NULL;

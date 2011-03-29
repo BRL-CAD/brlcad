@@ -17,7 +17,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* NA-DA!
+* red on a combinatino
+
+* keep of computer in ktank.g
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -118,11 +120,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * release dm X get_color() memory
 
 * update g-xxx_facets to use libgcv
-
-* bu_basename() says it'll return things that it probably won't
-  return.  like /path/to/file/ should return file and //// returning /
-  instead of empty.  probably should portably handle path separators
-  too, otherwise it's kind of meaningless in bu.
 
 * add distribution test for making sure the source code conventions
   for function replacements are being respected (e.g., bu_strcmp()
