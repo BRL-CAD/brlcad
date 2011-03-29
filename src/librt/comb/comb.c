@@ -265,10 +265,12 @@ rt_comb_export5(
     struct bu_attribute_value_set *avsp;
     struct bu_vls value;
 
+    /* check inputs */
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(resp);
     if (dbip) RT_CK_DBI(dbip);
+    RT_CK_RESOURCE(resp);
 
+    /* validate it's a comb */
     if (ip->idb_type != ID_COMBINATION) bu_bomb("rt_comb_export5() type not ID_COMBINATION");
     comb = (struct rt_comb_internal *)ip->idb_ptr;
     RT_CK_COMB(comb);
