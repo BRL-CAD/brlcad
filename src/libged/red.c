@@ -112,7 +112,12 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
     bu_vls_init(&matrix_substring);
     bu_vls_sprintf(&current_substring, "(%s[[:space:]]+)", float_string);
     regcomp(&matrix_entry, bu_vls_addr(&current_substring), REG_EXTENDED);
-    bu_vls_sprintf(&current_substring, "[[:space:]]+(%s[[:space:]]+){15}(%s)", float_string, float_string);
+    bu_vls_sprintf(&current_substring,
+		   /* broken into two strings so auto-formatting
+		    * doesn't inject space between ')' and '{'
+		    */
+		   "[[:space:]]+(%s[[:space:]]+)"
+		   "{15}(%s)", float_string, float_string);
     regcomp(&full_matrix, bu_vls_addr(&current_substring), REG_EXTENDED);
     regcomp(&whitespace_regex, "([^[:blank:]])", REG_EXTENDED);
     
