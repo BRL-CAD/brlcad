@@ -932,12 +932,12 @@ rt_db_put_internal5(
     if (db_write(dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr) < 0) {
 	goto fail;
     }
- ok:
+ok:
     bu_free_external(&ext);
     rt_db_free_internal(ip);
     return 0;			/* OK */
 
- fail:
+fail:
     bu_free_external(&ext);
     rt_db_free_internal(ip);
     return -2;		/* FAIL */
