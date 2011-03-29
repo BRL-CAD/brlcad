@@ -717,10 +717,19 @@ rt_db_cvt_to_external5(
     int minor;
     int ret;
 
+    /* check inputs */
+    if (!name) {
+	bu_log("rt_db_cvt_to_external5 expecting non-NULL name parameter\n");
+	return -1;
+    }
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);	/* may be null */
     RT_CK_RESOURCE(resp);
+    
+    /* prepare output */
+    BU_INIT_EXTERNAL(ext);
     BU_INIT_EXTERNAL(&body);
+    BU_INIT_EXTERNAL(&attributes);
 
     minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
 
@@ -733,7 +742,6 @@ rt_db_cvt_to_external5(
 	bu_log("rt_db_cvt_to_external5(%s):  ft_export5 failure\n",
 	       name);
 	bu_free_external(&body);
-	BU_INIT_EXTERNAL(ext);
 	return -1;		/* FAIL */
     }
     BU_CK_EXTERNAL(&body);
@@ -742,15 +750,16 @@ rt_db_cvt_to_external5(
     if (ip->idb_avs.magic == BU_AVS_MAGIC) {
 	db5_export_attributes(&attributes, &ip->idb_avs);
 	BU_CK_EXTERNAL(&attributes);
-    } else {
-	BU_INIT_EXTERNAL(&attributes);
     }
 
+    /* serialize the object with attributes */
     db5_export_object3(ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 		       name, 0, &attributes, &body,
 		       major, minor,
 		       DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
     BU_CK_EXTERNAL(ext);
+
+    /* cleanup */
     bu_free_external(&body);
     bu_free_external(&attributes);
 
