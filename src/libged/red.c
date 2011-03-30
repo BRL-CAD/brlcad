@@ -740,6 +740,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
     int c, counter;
+    int ret = GED_ERROR; /* needs to be error */
     int have_tmp_name = 0;
     struct directory *dp, *tmp_dp;
     struct rt_db_internal intern;
@@ -782,15 +783,15 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-
     dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
 
     bu_vls_init(&comb_name);
     bu_vls_init(&temp_name);
 
-
-    /* Now, sanity check to make sure a comb is in instead of a solid, and either write out existing contents
-     * for an existing comb or a blank template for a new comb */
+    /* Now, sanity check to make sure a comb is listed instead of a
+     * primitive, and either write out existing contents for an
+     * existing comb or a blank template for a new comb.
+     */
     if (dp != RT_DIR_NULL) {
 
 	/* Stash original primitive name and find appropriate temp name */
@@ -799,6 +800,9 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	counter = 0;
 	have_tmp_name = 0;
 	while (!have_tmp_name) {
+	    /* FIXME: need a general routine for selecting temporary
+	     * object names.
+	     */
 	    bu_vls_sprintf(&temp_name, "%s_red%d", dp->d_namep, counter);
 	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), LOOKUP_QUIET) == RT_DIR_NULL)
 		have_tmp_name = 1;
@@ -815,141 +819,125 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-	/* Make a file for the text editor */
-	fp = bu_temp_file(_ged_tmpfil, MAXPATHLEN);
-
-	if (fp == (FILE *)0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
-	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to create %s\n", argv[0], _ged_tmpfil);
-	    bu_vls_free(&comb_name);
-	    bu_vls_free(&temp_name);
-	    return GED_ERROR;
-	}
-
-	/* Write the combination components to the file */
-	if (write_comb(gedp, comb, dp->d_namep)) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
-	    unlink(_ged_tmpfil);
-	    bu_vls_free(&comb_name);
-	    bu_vls_free(&temp_name);
-	    return GED_ERROR;
-	}
     } else {
 	bu_vls_sprintf(&comb_name, "%s", argv[1]);
 	bu_vls_sprintf(&temp_name, "%s", argv[1]);
+
 	comb = (struct rt_comb_internal *)NULL;
+    }
 
-	/* Make a file for the text editor */
-	fp = bu_temp_file(_ged_tmpfil, MAXPATHLEN);
+    /* Make a file for the text editor, stash name in _ged_tmpfil */
+    fp = bu_temp_file(_ged_tmpfil, MAXPATHLEN);
+    if (fp == (FILE *)0) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
+	bu_vls_printf(&gedp->ged_result_str, "%s: unable to create %s\n", argv[0], _ged_tmpfil);
+	bu_vls_free(&comb_name);
+	bu_vls_free(&temp_name);
+	return GED_ERROR;
+    }
 
-	if (fp == (FILE *)0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
-	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to create %s\n", argv[0], _ged_tmpfil);
-	    bu_vls_free(&comb_name);
-	    bu_vls_free(&temp_name);
-	    return GED_ERROR;
-	}
-
-	/* Write the combination components to the file */
-	if (write_comb(gedp, comb, argv[1])) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
-	    unlink(_ged_tmpfil);
-	    bu_vls_free(&comb_name);
-	    bu_vls_free(&temp_name);
-	    return GED_ERROR;
-	}
+    /* Write the combination components to the file */
+    if (write_comb(gedp, comb, argv[1])) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
+	goto cleanup;
     }
 
     (void)fclose(fp);
 
     /* Edit the file */
     if (_ged_editit(editstring, _ged_tmpfil)) {
-	/* specifically avoid CHECK_READ_ONLY; above so that
-	 * we can delay checking if the geometry is read-only
-	 * until here so that red may be used to view objects.
+
+	/* specifically avoid CHECK_READ_ONLY; above so that we can
+	 * delay checking if the geometry is read-only until here so
+	 * that red may be used to view objects.
 	 */
-	if (!gedp->ged_wdbp->dbip->dbi_read_only) {
-	    /* comb is to be changed.  All changes will first be made to
-	     * the temporary copy of the comb - if that succeeds, the
-	     * result will be copied over the original comb.  If we have an
-	     * existing comb copy its contents to the temporary, else create
-	     * a new empty comb from scratch. */
 
-	    if (dp) {
-		if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-		    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
-		    bu_vls_free(&comb_name);
-		    bu_vls_free(&temp_name);
-		    return GED_ERROR;
-		}
+	if (gedp->ged_wdbp->dbip->dbi_read_only) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s:  Database is READ-ONLY.\nNo changes were made.\n", *argv);
+	    goto cleanup;
+	}
 
+	/* comb is to be changed.  All changes will first be made to
+	 * the temporary copy of the comb - if that succeeds, the
+	 * result will be copied over the original comb.  If we have
+	 * an existing comb copy its contents to the temporary, else
+	 * create a new empty comb from scratch.
+	 */
 
-		if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
-		    bu_vls_printf(&gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
-		    bu_vls_free(&comb_name);
-		    bu_vls_free(&temp_name);
-		    return GED_ERROR;
-		}
-
-		if (rt_db_put_internal(tmp_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-		    bu_vls_printf(&gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
-		    bu_vls_free(&comb_name);
-		    bu_vls_free(&temp_name);
-		    return GED_ERROR;
-		}
-	    } else {
-		RT_INIT_DB_INTERNAL(&intern);
-		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-		intern.idb_type = ID_COMBINATION;
-		intern.idb_meth = &rt_functab[ID_COMBINATION];
-
-		GED_DB_DIRADD(gedp, tmp_dp, bu_vls_addr(&temp_name), -1, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type, 0);
-
-		BU_GETSTRUCT(comb, rt_comb_internal);
-		intern.idb_ptr = (genptr_t)comb;
-		comb->magic = RT_COMB_MAGIC;
-		bu_vls_init(&comb->shader);
-		bu_vls_init(&comb->material);
-		comb->region_id = 0;  /* This makes a comb/group by default */
-		comb->tree = TREE_NULL;
-		GED_DB_PUT_INTERNAL(gedp, tmp_dp, &intern, &rt_uniresource, 0);
+	if (dp) {
+	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
+		goto cleanup;
 	    }
 
+	    if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+		bu_vls_printf(&gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
+		goto cleanup;
+	    }
 
-	    if (build_comb(gedp, tmp_dp) < 0) {
-		/* Something went wrong - kill the temporary comb */
-		bu_vls_printf(&gedp->ged_result_str, "%s: Error in edited region, no changes made\n", *argv);
-
-		av[0] = "kill";
-		av[1] = bu_vls_addr(&temp_name);
-		av[2] = NULL;
-		(void)ged_kill(gedp, 2, (const char **)av);
-		(void)unlink(_ged_tmpfil);
-		return GED_ERROR;
-	    } else {
-		/* it worked - kill the original and put the updated copy in its place if a pre-existing
-		 * comb was being edited - otherwise everything is already fine.*/
-		if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(&temp_name))) {
-		    av[0] = "kill";
-		    av[1] = bu_vls_addr(&comb_name);
-		    av[2] = NULL;
-		    (void)ged_kill(gedp, 2, (const char **)av);
-		    av[0] = "mv";
-		    av[1] = bu_vls_addr(&temp_name);
-		    av[2] = bu_vls_addr(&comb_name);
-		    (void)ged_move(gedp, 3, (const char **)av);
-		} 
+	    if (rt_db_put_internal(tmp_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+		bu_vls_printf(&gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
+		goto cleanup;
 	    }
 	} else {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Because the database is READ-ONLY no changes were made.\n", *argv);
+	    RT_INIT_DB_INTERNAL(&intern);
+	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	    intern.idb_type = ID_COMBINATION;
+	    intern.idb_meth = &rt_functab[ID_COMBINATION];
+
+	    GED_DB_DIRADD(gedp, tmp_dp, bu_vls_addr(&temp_name), -1, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type, 0);
+
+	    BU_GETSTRUCT(comb, rt_comb_internal);
+	    intern.idb_ptr = (genptr_t)comb;
+	    comb->magic = RT_COMB_MAGIC;
+	    bu_vls_init(&comb->shader);
+	    bu_vls_init(&comb->material);
+	    comb->region_id = 0;  /* This makes a comb/group by default */
+	    comb->tree = TREE_NULL;
+	    GED_DB_PUT_INTERNAL(gedp, tmp_dp, &intern, &rt_uniresource, 0);
+	}
+
+	/* reconstitute the new combination */
+	if (build_comb(gedp, tmp_dp) < 0) {
+
+	    /* Something went wrong - kill the temporary comb */
+
+	    bu_vls_printf(&gedp->ged_result_str, "%s: Error in edited region, no changes made\n", *argv);
+
+	    av[0] = "kill";
+	    av[1] = bu_vls_addr(&temp_name);
+	    av[2] = NULL;
+	    (void)ged_kill(gedp, 2, (const char **)av);
+
+	    goto cleanup;
+	}
+
+	/* it worked - kill the original and put the updated copy in
+	 * its place if a pre-existing comb was being edited -
+	 * otherwise everything is already fine.
+	 */
+	if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(&temp_name))) {
+	    av[0] = "kill";
+	    av[1] = bu_vls_addr(&comb_name);
+	    av[2] = NULL;
+	    (void)ged_kill(gedp, 2, (const char **)av);
+	    av[0] = "mv";
+	    av[1] = bu_vls_addr(&temp_name);
+	    av[2] = bu_vls_addr(&comb_name);
+	    (void)ged_move(gedp, 3, (const char **)av);
 	}
     }
+    /* if we have jumpted to cleanup by now, everything was fine */
+    ret = GED_OK;
+
+cleanup:
+    if (bu_file_exists(_ged_tmpfil))
+	unlink(_ged_tmpfil);
 
     bu_vls_free(&comb_name);
     bu_vls_free(&temp_name);
 
-    unlink(_ged_tmpfil);
-    return GED_OK;
+    return ret;
 }
 
 
