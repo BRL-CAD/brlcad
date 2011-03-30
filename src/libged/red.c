@@ -252,7 +252,7 @@ build_comb(struct ged *gedp, struct directory *dp)
     regcomp(&attr_regex, "(.+[[:space:]]+=[[:blank:]]+.*)", REG_EXTENDED|REG_NEWLINE);
     bu_vls_sprintf(&current_substring, "(%s)", combtree_header);
     regcomp(&combtree_regex, bu_vls_addr(&current_substring), REG_EXTENDED);
-    regcomp(&combtree_op_regex, "([[:space:]]+[[.-.][.+.]u][[:space:]]+)", REG_EXTENDED);
+    regcomp(&combtree_op_regex, "([[:blank:]]+[[.-.][.+.]u][[:blank:]]+)", REG_EXTENDED);
     
 
     /* Need somewhere to hold the results - initially, size according to attribute regex */
