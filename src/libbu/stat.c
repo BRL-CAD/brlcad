@@ -59,7 +59,7 @@ bu_file_exists(const char *path)
 	bu_log("Does [%s] exist? ", path);
     }
 
-    if (!path) {
+    if (!path || path[0] == '\0') {
 	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("NO\n");
 	}
@@ -90,6 +90,10 @@ bu_same_file(const char *fn1, const char *fn2)
     struct stat sb1, sb2;
 
     if (UNLIKELY(!fn1 || !fn2)) {
+	return 0;
+    }
+
+    if (UNLIKELY(fn1[0] == '\0' || fn2[0] == '\0')) {
 	return 0;
     }
 

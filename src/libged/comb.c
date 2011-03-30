@@ -171,7 +171,6 @@ _ged_combadd(struct ged			*gedp,
 	    comb->region_flag = 0;
 	}
 	RT_GET_TREE( tp, &rt_uniresource );
-	tp->magic = RT_TREE_MAGIC;
 	tp->tr_l.tl_op = OP_DB_LEAF;
 	tp->tr_l.tl_name = bu_strdup( objp->d_namep );
 	tp->tr_l.tl_mat = (matp_t)NULL;
@@ -233,7 +232,6 @@ _ged_combadd(struct ged			*gedp,
     /* make new leaf node, and insert at end of list */
     RT_GET_TREE( tp, &rt_uniresource );
     tree_list[node_count-1].tl_tree = tp;
-    tp->tr_l.magic = RT_TREE_MAGIC;
     tp->tr_l.tl_op = OP_DB_LEAF;
     tp->tr_l.tl_name = bu_strdup( objp->d_namep );
     tp->tr_l.tl_mat = (matp_t)NULL;

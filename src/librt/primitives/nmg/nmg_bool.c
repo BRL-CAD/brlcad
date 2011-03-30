@@ -1031,7 +1031,6 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pat
     }
 
     RT_GET_TREE(curtree, tsp->ts_resp);
-    curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NMG_TESS;
     curtree->tr_d.td_name = bu_strdup(dp->d_namep);
     curtree->tr_d.td_r = r1;
@@ -1090,7 +1089,6 @@ nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pa
     }
 
     RT_GET_TREE(curtree, tsp->ts_resp);
-    curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NMG_TESS;
     curtree->tr_d.td_name = bu_strdup(dp->d_namep);
     curtree->tr_d.td_r = r1;

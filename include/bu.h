@@ -2482,9 +2482,13 @@ BU_EXPORT BU_EXTERN(int bu_color_to_rgb_floats, (struct bu_color *cp, fastf_t *r
  */
 
 /**
- * B U _ F I L E _ E X I S T S
+ * b u _ f i l e _ e x i s t s
  *
- * @return 1 The given filename exists.
+ * Returns truthfully whether the given file path exists or not.  An
+ * empty or NULL path name is treated as a non-existent file and, as
+ * such, will return false.
+ *
+ * @return >0 The given filename exists.
  * @return 0 The given filename does not exist.
  */
 BU_EXPORT BU_EXTERN(int bu_file_exists, (const char *path));
@@ -2492,9 +2496,10 @@ BU_EXPORT BU_EXTERN(int bu_file_exists, (const char *path));
 /**
  * b u _ s a m e _ f i l e
  *
- * returns truthfully as to whether or not the two provided filenames
- * are the same file.  if either file does not exist, the result is
- * false.
+ * Returns truthfully as to whether the two provided filenames are the
+ * same file.  If either file does not exist, the result is false.  If
+ * either filename is empty or NULL, it is treated as non-existent
+ * and, as such, will also return false.
  */
 BU_EXPORT BU_EXTERN(int bu_same_file, (const char *fn1, const char *fn2));
 
