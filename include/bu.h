@@ -1582,6 +1582,27 @@ struct bu_attribute_value_set {
 };
 #define BU_CK_AVS(_avp)		BU_CKMAG(_avp, BU_AVS_MAGIC, "bu_attribute_value_set")
 
+/**
+ * for loop iterator for avs structures.
+ *
+ * Provide an attribute value pair struct pointer and an attribute
+ * value set, and this will iterate over all entries.  iteration order
+ * is not defined but should iterate over each AVS entry once.
+ *
+ * Example Use:
+@code
+void
+print_avs(struct bu_attribute_value_set *avs)
+{
+  struct bu_attribute_value_pair *avpp;
+
+  for (BU_AVS_FOR(avpp, avs)) {
+    bu_log("key=%s, value=%s\n", avpp->name, avpp->value);
+  }
+}
+@endcode
+ * 
+ */
 #define BU_AVS_FOR(_pp, _avp)	\
     (_pp) = ((_avp) != NULL) ? ((_avp)->count > 0 ? &(_avp)->avp[(_avp)->count-1] : NULL) : NULL; (_pp) && (_avp) && (_avp)->avp && (_pp) >= (_avp)->avp; (_pp)--
 
