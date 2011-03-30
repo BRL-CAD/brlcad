@@ -1583,7 +1583,7 @@ struct bu_attribute_value_set {
 #define BU_CK_AVS(_avp)		BU_CKMAG(_avp, BU_AVS_MAGIC, "bu_attribute_value_set")
 
 #define BU_AVS_FOR(_pp, _avp)	\
-    (_pp) = (_avp)->count > 0 ? &(_avp)->avp[(_avp)->count-1] : NULL; (_pp) >= (_avp)->avp; (_pp)--
+    (_pp) = (_avp)->count > 0 ? &(_avp)->avp[(_avp)->count-1] : NULL; (_pp) && (_avp)->avp && (_pp) >= (_avp)->avp; (_pp)--
 
 /**
  * Some (but not all) attribute name and value string pointers are
