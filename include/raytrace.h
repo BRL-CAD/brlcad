@@ -6029,11 +6029,67 @@ RT_EXPORT BU_EXTERN(size_t db5_type_sizeof_h_binu,
 RT_EXPORT BU_EXTERN(size_t db5_type_sizeof_n_binu,
 		    (const int minor));
 
-/* these two functions may not be appropriate to export, but windows requires the export notation. */
-RT_EXPORT BU_EXTERN(size_t db5_is_standard_attribute,
-		    (const char *attrname));
-RT_EXPORT BU_EXTERN(void db5_standardize_avs,
-		    (struct bu_attribute_value_set *avs));
+
+/**
+ * D B 5 _ S T A N D A R D _ A T T R I B U T E
+ *
+ * Function returns the string name for a given standard attribute
+ * index.  Index values returned from db5_standardize_attribute()
+ * correspond to the names returned from this function, returning the
+ * "standard" name.  Callers may also iterate over all names starting
+ * with an index of zero until a NULL is returned.
+ *
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT BU_EXTERN(const char *db5_standard_attribute, (int idx));
+
+/**
+ * D B 5 _ I S _ S T A N D A R D _ A T T R I B U T E
+ *
+ * Function for recognizing various versions of the DB5 standard
+ * attribute names that have been used - returns the attribute type
+ * of the supplied attribute name, or -1 if it is not a recognized
+ * variation of the standard attributes.
+ *
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT BU_EXTERN(int db5_is_standard_attribute, (const char *attrname));
+
+/**
+ * D B 5 _ S T A N D A R D I Z E _ A V S
+ *
+ * Ensures that an attribute set containing standard attributes with
+ * non-standard/old/deprecated names gets the standard name added.  It
+ * will update the first non-standard name encountered, but will leave
+ * any subsequent matching attributes found unmodified if they have
+ * different values.  Such "conflict" attributes must be resolved
+ * manually.
+ *
+ * Returns the number of conflicting attributes.
+ *
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT BU_EXTERN(size_t db5_standardize_avs, (struct bu_attribute_value_set *avs));
+
+/**
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT BU_EXTERN(int db5_standardize_attribute, (const char *attr));
+/**
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT BU_EXTERN(void db5_apply_std_attributes, (struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb));
+/**
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT BU_EXTERN(void db5_update_std_attributes, (struct db_i *dbip, struct directory *dp, const struct rt_comb_internal *comb));
+
 
 #endif
 
