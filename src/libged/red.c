@@ -32,6 +32,7 @@
 #include "bio.h"
 
 #include "db.h"
+#include "raytrace.h"
 
 #include "./ged_private.h"
 
@@ -41,7 +42,6 @@
  * calls to these functions.
  */
 extern int db5_is_standard_attribute(const char *attr_want);
-extern void db5_standardize_avs(struct bu_attribute_value_set *avs);
 
 
 /* also accessed by put_comb.c */
