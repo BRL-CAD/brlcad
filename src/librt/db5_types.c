@@ -343,77 +343,66 @@ db5_is_standard_attribute(const char *attr_want)
  * variation of the standard attributes.
  *
  */
-size_t
+int
 db5_standardize_attribute(const char *attrname)
 {
-    size_t i;
-    char *region_flag_names[2];
-    char *region_id_names[4];
-    char *material_id_names[5];
-    char *air_names[3];
-    char *los_names[2];
-    char *color_names[4];
-    char *shader_names[2];
-    char *inherit_names[2];
-    region_flag_names[0] = "region";
-    region_flag_names[1] = "REGION";
-    region_id_names[0] = "region_id";
-    region_id_names[1] = "REGION_ID";
-    region_id_names[2] = "id";
-    region_id_names[3] = "ID";
-    material_id_names[0] = "material_id";
-    material_id_names[1] = "MATERIAL_ID";
-    material_id_names[2] = "GIFTmater";
-    material_id_names[3] = "GIFT_MATERIAL";
-    material_id_names[4] = "mat";
-    los_names[0] = "los";
-    los_names[1] = "LOS";
-    air_names[0] = "air";
-    air_names[1] = "AIR";
-    air_names[2] = "AIRCODE";
-    color_names[0] = "color";
-    color_names[1] = "rgb";
-    color_names[2] = "RGB";
-    color_names[3] = "COLOR";
-    shader_names[0] = "oshader";
-    shader_names[1] = "SHADER";
-    inherit_names[0] = "inherit";
-    inherit_names[1] = "INHERIT";
+    if (BU_STR_EQUAL(attrname, "region"))
+	return ATTR_REGION;
+    if (BU_STR_EQUAL(attrname, "REGION"))
+	return ATTR_REGION;
 
-    for (i = 0; i < sizeof(region_flag_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, region_flag_names[i])) return ATTR_REGION;
-    }
+    if (BU_STR_EQUAL(attrname, "region_id"))
+	return ATTR_REGION_ID;
+    if (BU_STR_EQUAL(attrname, "REGION_ID"))
+	return ATTR_REGION_ID;
+    if (BU_STR_EQUAL(attrname, "id"))
+	return ATTR_REGION_ID;
+    if (BU_STR_EQUAL(attrname, "ID"))
+	return ATTR_REGION_ID;
 
-    for (i = 0; i < sizeof(region_id_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, region_id_names[i])) return ATTR_REGION_ID;
-    }
+    if (BU_STR_EQUAL(attrname, "material_id"))
+	return ATTR_MATERIAL_ID;
+    if (BU_STR_EQUAL(attrname, "MATERIAL_ID"))
+	return ATTR_MATERIAL_ID;
+    if (BU_STR_EQUAL(attrname, "GIFTmater"))
+	return ATTR_MATERIAL_ID;
+    if (BU_STR_EQUAL(attrname, "GIFT_MATERIAL"))
+	return ATTR_MATERIAL_ID;
+    if (BU_STR_EQUAL(attrname, "mat"))
+	return ATTR_MATERIAL_ID;
 
-    for (i = 0; i < sizeof(material_id_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, material_id_names[i])) return ATTR_MATERIAL_ID;
-    }
+    if (BU_STR_EQUAL(attrname, "air"))
+	return ATTR_AIR;
+    if (BU_STR_EQUAL(attrname, "AIR"))
+	return ATTR_AIR;
+    if (BU_STR_EQUAL(attrname, "AIRCODE"))
+	return ATTR_AIR;
 
-    for (i = 0; i < sizeof(air_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, air_names[i])) return ATTR_AIR;
-    }
+    if (BU_STR_EQUAL(attrname, "los"))
+	return ATTR_LOS;
+    if (BU_STR_EQUAL(attrname, "LOS"))
+	return ATTR_LOS;
 
-    for (i = 0; i < sizeof(los_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, los_names[i])) return ATTR_LOS;
-    }
+    if (BU_STR_EQUAL(attrname, "color"))
+	return ATTR_COLOR;
+    if (BU_STR_EQUAL(attrname, "COLOR"))
+	return ATTR_COLOR;
+    if (BU_STR_EQUAL(attrname, "rgb"))
+	return ATTR_COLOR;
+    if (BU_STR_EQUAL(attrname, "RGB"))
+	return ATTR_COLOR;
 
-    for (i = 0; i < sizeof(color_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, color_names[i])) return ATTR_COLOR;
-    }
+    if (BU_STR_EQUAL(attrname, "oshader"))
+	return ATTR_SHADER;
+    if (BU_STR_EQUAL(attrname, "SHADER"))
+	return ATTR_SHADER;
 
-    for (i = 0; i < sizeof(shader_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, shader_names[i])) return ATTR_SHADER;
-    }
+    if (BU_STR_EQUAL(attrname, "inherit"))
+	return ATTR_INHERIT;
+    if (BU_STR_EQUAL(attrname, "INHERIT"))
+	return ATTR_INHERIT;
 
-    for (i = 0; i < sizeof(inherit_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, inherit_names[i])) return ATTR_INHERIT;
-    }
-
-    return -1;
-
+    return ATTR_NULL;
 }
 
 
