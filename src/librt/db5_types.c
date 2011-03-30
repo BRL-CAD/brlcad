@@ -413,6 +413,11 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
     struct bu_attribute_value_set newavs;
     struct bu_attribute_value_pair *avpp;
 
+    /* check our inputs */
+    BU_CK_AVS(avs);
+    if (avs->count <= 0)
+	return 0;
+
     bu_avs_init_empty(&newavs);
 
     /* FIRST PASS: identify any attributes that are already in
@@ -494,7 +499,7 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	db5_standardize_avs(&avs);
 
 	/* region flag */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "region"));
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_REGION)));
 	if (bu_str_true(bu_vls_addr(&newval))) {
 	    comb->region_flag = 1;
 	    dp->d_flags |= RT_DIR_REGION;
@@ -504,7 +509,7 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	}
 
 	/* region_id */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "region_id"));
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_REGION_ID)));
 	attr_num_val = atoi(bu_vls_addr(&newval));
 	if (attr_num_val >= 0 || attr_num_val == -1) {
 	    comb->region_id = attr_num_val;
@@ -513,7 +518,7 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	}
 
 	/* material_id */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "material_id"));
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_MATERIAL_ID)));
 	attr_num_val = atoi(bu_vls_addr(&newval));
 	if (attr_num_val >= 0) {
 	    comb->GIFTmater = attr_num_val;
@@ -522,7 +527,7 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	}
 
 	/* air */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "air"));
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_AIR)));
 	attr_num_val = atoi(bu_vls_addr(&newval));
 	if (attr_num_val == 0 || attr_num_val == 1) {
 	    comb->aircode = attr_num_val;
@@ -531,12 +536,12 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	}
 
 	/* los */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "los"));
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_LOS)));
 	attr_num_val = atoi(bu_vls_addr(&newval)); /* Is LOS really limited to integer values?? - also, need some sanity checking */
 	comb->los = attr_num_val;
 
 	/* color */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "color"));
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_COLOR)));
 	if (bu_avs_get(&avs, "color")) {
 	    if (sscanf(bu_vls_addr(&newval), "%i/%i/%i", color+0, color+1, color+2) == 3) {
 		for (i = 0; i < 3; i++) {
@@ -552,10 +557,10 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	}
 
 	/* oshader */
-	bu_vls_strcpy(&comb->shader, bu_avs_get(&avs, "oshader"));
+	bu_vls_strcpy(&comb->shader, bu_avs_get(&avs, db5_standard_attribute(ATTR_SHADER)));
 
 	/* inherit */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "inherit"));
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_INHERIT)));
 	if (bu_str_true(bu_vls_addr(&newval))) {
 	    comb->inherit = 1;
 	} else {
