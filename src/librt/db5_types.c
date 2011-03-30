@@ -346,6 +346,10 @@ db5_is_standard_attribute(const char *attr_want)
 int
 db5_standardize_attribute(const char *attr)
 {
+    /* FIXME: these should all be converted to case-insensitive
+     * comparisions for the standard attribute names.
+     */
+
     if (BU_STR_EQUAL(attr, "region"))
 	return ATTR_REGION;
     if (BU_STR_EQUAL(attr, "REGION"))
@@ -409,12 +413,11 @@ db5_standardize_attribute(const char *attr)
 /**
  * D B 5 _ S T A N D A R D I Z E _ A V S
  *
- * Ensures that an attribute set containing one or more standard
- * attributes, for every attribute type present one of the AV
- * pairs conforms to modern naming conventions.  It will not remove
- * other attributes of the same type, but will warn if they are found.
- *
- * @file: db5_types.c
+ * Ensures that an attribute set containing standard attributes with
+ * non-standard/old/deprecated names gets the standard name added.  It
+ * will not remove the non-standard names, but will warn if they are
+ * found.  Use db5_apply_std_attributes() to remove the non-standard
+ * names.
  */
 void
 db5_standardize_avs(struct bu_attribute_value_set *avs)
