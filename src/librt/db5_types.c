@@ -38,19 +38,23 @@
 #include "raytrace.h"
 
 /**
- * Define standard attribute types in BRL-CAD
- * geometry. (See the gattributes manual page)
- *
+ * Define standard attribute types in BRL-CAD geometry. (See the
+ * gattributes manual page) these should be a collective enumeration
+ * starting from 0 and increasing without any gaps in the numbers so
+ * db5_standard_attribute() can be used as an index-based iterator.
  */
 
-#define ATTR_REGION 0
-#define ATTR_REGION_ID 1
-#define ATTR_MATERIAL_ID 2
-#define ATTR_AIR 3
-#define ATTR_LOS 4
-#define ATTR_COLOR 5
-#define ATTR_SHADER 6
-#define ATTR_INHERIT 7
+enum {
+    ATTR_REGION = 0,
+    ATTR_REGION_ID,
+    ATTR_MATERIAL_ID,
+    ATTR_AIR,
+    ATTR_LOS,
+    ATTR_COLOR,
+    ATTR_SHADER,
+    ATTR_INHERIT,
+    ATTR_NULL
+};
 
 
 struct db5_type {
@@ -288,22 +292,42 @@ db5_type_sizeof_n_binu(const int minor)
 }
 
 
-size_t
-db5_is_standard_attribute(const char *attrname)
+const char *
+db5_standard_attribute(int idx)
 {
-    size_t i;
-    char *standard_attributes[8];
-    standard_attributes[0] = "region";
-    standard_attributes[1] = "region_id";
-    standard_attributes[2] = "material_id";
-    standard_attributes[3] = "los";
-    standard_attributes[4] = "air";
-    standard_attributes[5] = "color";
-    standard_attributes[6] = "oshader";
-    standard_attributes[7] = "inherit";
+    switch (idx) {
+	case ATTR_REGION:
+	    return "region";
+	case ATTR_REGION_ID:
+	    return "region_id";
+	case ATTR_MATERIAL_ID:
+	    return "material_id";
+	case ATTR_AIR:
+	    return "air";
+	case ATTR_LOS:
+	    return "los";
+	case ATTR_COLOR:
+	    return "color";
+	case ATTR_SHADER:
+	    return "shader";
+	case ATTR_INHERIT:
+	    return "inherit";
+	case ATTR_NULL:
+	    return NULL;
+    }
+    /* no match */
+    return NULL;
+}
 
-    for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, standard_attributes[i])) return 1;
+
+int
+db5_is_standard_attribute(const char *attr_want)
+{
+    int i = 0;
+    const char *attr_have = NULL;
+
+    for (i=0; (attr_have = db5_standard_attribute(i)) != NULL; i++) {
+	if (BU_STR_EQUAL(attr_want, attr_have)) return 1;
     }
 
     return 0;
@@ -319,77 +343,66 @@ db5_is_standard_attribute(const char *attrname)
  * variation of the standard attributes.
  *
  */
-size_t
-db5_standardize_attribute(const char *attrname)
+int
+db5_standardize_attribute(const char *attr)
 {
-    size_t i;
-    char *region_flag_names[2];
-    char *region_id_names[4];
-    char *material_id_names[5];
-    char *air_names[3];
-    char *los_names[2];
-    char *color_names[4];
-    char *shader_names[2];
-    char *inherit_names[2];
-    region_flag_names[0] = "region";
-    region_flag_names[1] = "REGION";
-    region_id_names[0] = "region_id";
-    region_id_names[1] = "REGION_ID";
-    region_id_names[2] = "id";
-    region_id_names[3] = "ID";
-    material_id_names[0] = "material_id";
-    material_id_names[1] = "MATERIAL_ID";
-    material_id_names[2] = "GIFTmater";
-    material_id_names[3] = "GIFT_MATERIAL";
-    material_id_names[4] = "mat";
-    los_names[0] = "los";
-    los_names[1] = "LOS";
-    air_names[0] = "air";
-    air_names[1] = "AIR";
-    air_names[2] = "AIRCODE";
-    color_names[0] = "color";
-    color_names[1] = "rgb";
-    color_names[2] = "RGB";
-    color_names[3] = "COLOR";
-    shader_names[0] = "oshader";
-    shader_names[1] = "SHADER";
-    inherit_names[0] = "inherit";
-    inherit_names[1] = "INHERIT";
+    if (BU_STR_EQUAL(attr, "region"))
+	return ATTR_REGION;
+    if (BU_STR_EQUAL(attr, "REGION"))
+	return ATTR_REGION;
 
-    for (i = 0; i < sizeof(region_flag_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, region_flag_names[i])) return ATTR_REGION;
-    }
+    if (BU_STR_EQUAL(attr, "region_id"))
+	return ATTR_REGION_ID;
+    if (BU_STR_EQUAL(attr, "REGION_ID"))
+	return ATTR_REGION_ID;
+    if (BU_STR_EQUAL(attr, "id"))
+	return ATTR_REGION_ID;
+    if (BU_STR_EQUAL(attr, "ID"))
+	return ATTR_REGION_ID;
 
-    for (i = 0; i < sizeof(region_id_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, region_id_names[i])) return ATTR_REGION_ID;
-    }
+    if (BU_STR_EQUAL(attr, "material_id"))
+	return ATTR_MATERIAL_ID;
+    if (BU_STR_EQUAL(attr, "MATERIAL_ID"))
+	return ATTR_MATERIAL_ID;
+    if (BU_STR_EQUAL(attr, "GIFTmater"))
+	return ATTR_MATERIAL_ID;
+    if (BU_STR_EQUAL(attr, "GIFT_MATERIAL"))
+	return ATTR_MATERIAL_ID;
+    if (BU_STR_EQUAL(attr, "mat"))
+	return ATTR_MATERIAL_ID;
 
-    for (i = 0; i < sizeof(material_id_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, material_id_names[i])) return ATTR_MATERIAL_ID;
-    }
+    if (BU_STR_EQUAL(attr, "air"))
+	return ATTR_AIR;
+    if (BU_STR_EQUAL(attr, "AIR"))
+	return ATTR_AIR;
+    if (BU_STR_EQUAL(attr, "AIRCODE"))
+	return ATTR_AIR;
 
-    for (i = 0; i < sizeof(air_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, air_names[i])) return ATTR_AIR;
-    }
+    if (BU_STR_EQUAL(attr, "los"))
+	return ATTR_LOS;
+    if (BU_STR_EQUAL(attr, "LOS"))
+	return ATTR_LOS;
 
-    for (i = 0; i < sizeof(los_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, los_names[i])) return ATTR_LOS;
-    }
+    if (BU_STR_EQUAL(attr, "color"))
+	return ATTR_COLOR;
+    if (BU_STR_EQUAL(attr, "COLOR"))
+	return ATTR_COLOR;
+    if (BU_STR_EQUAL(attr, "rgb"))
+	return ATTR_COLOR;
+    if (BU_STR_EQUAL(attr, "RGB"))
+	return ATTR_COLOR;
 
-    for (i = 0; i < sizeof(color_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, color_names[i])) return ATTR_COLOR;
-    }
+    if (BU_STR_EQUAL(attr, "oshader"))
+	return ATTR_SHADER;
+    if (BU_STR_EQUAL(attr, "SHADER"))
+	return ATTR_SHADER;
 
-    for (i = 0; i < sizeof(shader_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, shader_names[i])) return ATTR_SHADER;
-    }
+    if (BU_STR_EQUAL(attr, "inherit"))
+	return ATTR_INHERIT;
+    if (BU_STR_EQUAL(attr, "INHERIT"))
+	return ATTR_INHERIT;
 
-    for (i = 0; i < sizeof(inherit_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, inherit_names[i])) return ATTR_INHERIT;
-    }
-
-    return -1;
-
+    return ATTR_NULL;
 }
 
 

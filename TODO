@@ -19,6 +19,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * red matrix edit
 
+* red lists standard attributes multiple times if stored non-standard
+
+* red doesn't preserve name changes
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------

@@ -44,8 +44,13 @@ extern size_t db5_is_standard_attribute(const char *attrname);
 extern void db5_standardize_avs(struct bu_attribute_value_set *avs);
 
 
+/* also accessed by put_comb.c */
 char _ged_tmpfil[MAXPATHLEN] = {0};
-char _delims[] = " \t/";	/* allowable delimiters */
+
+
+static const char combseparator[] = "---------- Combination Tree ----------\n";
+static const char *combtree_header = "---*[[:space:]]*Combination Tree[[:space:]]*---*\r?\n";
+
 
 static int
 get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val) 
@@ -219,7 +224,6 @@ build_comb(struct ged *gedp, struct directory *dp)
     int ret, gedret, combtagstart, combtagend;
     struct bu_attribute_value_set avs;
     matp_t matrix;
-    const char *combtree_header = "-------------Combination Tree------------:\r?\n";
  
     rt_tree_array = (struct rt_tree_array *)NULL;
  
@@ -578,6 +582,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 }
 
 
+/* !!! FIXME: this routine edits the dbip and comb but should not */
 HIDDEN int
 write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 {
@@ -614,7 +619,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     /* open the file */
     if ((fp=fopen(_ged_tmpfil, "w")) == NULL) {
 	perror("fopen");
-	bu_vls_printf(&gedp->ged_result_str, "write_comb: Cannot open temporary file for writing\n");
+	bu_vls_printf(&gedp->ged_result_str, "ERROR: Cannot open temporary file [%s] for writing\n", _ged_tmpfil);
 	return GED_ERROR;
     }
 
@@ -637,7 +642,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	    }
 	    fprintf(fp, "%s%s = \n", standard_attributes[i], bu_vls_addr(&spacer));
 	}
-	fprintf(fp, "-------------Combination Tree------------:\n");
+	fprintf(fp, "%s", combseparator);
 	fclose(fp);
 	return GED_OK;
     }
@@ -645,7 +650,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
 	db_non_union_push(comb->tree, &rt_uniresource);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "write_comb: Cannot flatten tree for editing\n");
+	    bu_vls_printf(&gedp->ged_result_str, "ERROR: Cannot prepare tree for editing\n");
 	    return GED_ERROR;
 	}
     }
@@ -660,8 +665,19 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     }
 
     db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp);
+
+    /* !!! FIXME: this modifies the comb but red shouldn't be
+     * modifying the comb in here ... we're just writing out.  may
+     * need to make a copy.
+     */
     db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
+
+    /* !!! FIXME: this modifies the dbip but red shouldn't be
+     * modifying anything in here ... we're just writing out.  may
+     * need to make a copy.
+     */
     db5_update_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
+
     if (!db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
 	db5_standardize_avs(&avs);
 	avpp = avs.avp;
@@ -698,7 +714,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     }
     bu_vls_free(&spacer);
 
-    fprintf(fp, "-------------Combination Tree------------:\n");
+    fprintf(fp, "%s", combseparator);
 
     for (i=0; i<actual_count; i++) {
 	char op;
@@ -714,13 +730,13 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 		op = '-';
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "write_comb: Illegal op code in tree\n");
+		bu_vls_printf(&gedp->ged_result_str, "ERROR: Encountered illegal op code in tree\n");
 		fclose(fp);
 		bu_avs_free(&avs);
 		return GED_ERROR;
 	}
 	if (fprintf(fp, " %c %s", op, rt_tree_array[i].tl_tree->tr_l.tl_name) <= 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "write_comb: Cannot write to temporary file (%s). Aborting edit\n",
+	    bu_vls_printf(&gedp->ged_result_str, "ERROR: Cannot write to temporary file [%s].\nAborting edit.\n",
 			  _ged_tmpfil);
 	    fclose(fp);
 	    bu_avs_free(&avs);
