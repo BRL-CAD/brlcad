@@ -43,14 +43,17 @@
  *
  */
 
-#define ATTR_REGION 0
-#define ATTR_REGION_ID 1
-#define ATTR_MATERIAL_ID 2
-#define ATTR_AIR 3
-#define ATTR_LOS 4
-#define ATTR_COLOR 5
-#define ATTR_SHADER 6
-#define ATTR_INHERIT 7
+enum {
+    ATTR_REGION = 0,
+    ATTR_REGION_ID = 1,
+    ATTR_MATERIAL_ID = 2,
+    ATTR_AIR = 3,
+    ATTR_LOS = 4,
+    ATTR_COLOR = 5,
+    ATTR_SHADER = 6,
+    ATTR_INHERIT = 7,
+    ATTR_NULL = 8
+};
 
 
 struct db5_type {
@@ -291,22 +294,26 @@ db5_type_sizeof_n_binu(const int minor)
 const char *
 db5_standard_attribute(int idx)
 {
-    static const char *standard_attributes[9] = {
-	"region", /* ATTR_REGION */
-	"region_id", /* ATTR_REGION_ID */
-	"material_id", /* ATTR_MATERIAL_ID */
-	"air", /* ATTR_AIR */
-	"los", /* ATTR_LOS */
-	"color", /* ATTR_COLOR */
-	"oshader", /* ATTR_SHADER */
-	"inherit", /* ATTR_INHERIT */
-	NULL
-    };
-
-    if (idx < 0 || (size_t)idx > sizeof(standard_attributes) / sizeof(char *)) {
-	return NULL;
+    switch (idx) {
+	case ATTR_REGION:
+	    return "region";
+	case ATTR_REGION_ID:
+	    return "region_id";
+	case ATTR_MATERIAL_ID:
+	    return "material_id";
+	case ATTR_AIR:
+	    return "air";
+	case ATTR_LOS:
+	    return "los";
+	case ATTR_COLOR:
+	    return "color";
+	case ATTR_SHADER:
+	    return "shader";
+	case ATTR_INHERIT:
+	    return "inherit";
     }
-    return standard_attributes[idx];
+    /* no match */
+    return NULL;
 }
 
 
