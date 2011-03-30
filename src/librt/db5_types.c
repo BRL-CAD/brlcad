@@ -292,14 +292,14 @@ const char *
 db5_standard_attribute(int idx)
 {
     static const char *standard_attributes[9] = {
-	"region",
-	"region_id",
-	"material_id",
-	"los",
-	"air",
-	"color",
-	"oshader",
-	"inherit",
+	"region", /* ATTR_REGION */
+	"region_id", /* ATTR_REGION_ID */
+	"material_id", /* ATTR_MATERIAL_ID */
+	"air", /* ATTR_AIR */
+	"los", /* ATTR_LOS */
+	"color", /* ATTR_COLOR */
+	"oshader", /* ATTR_SHADER */
+	"inherit", /* ATTR_INHERIT */
 	NULL
     };
 
