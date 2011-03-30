@@ -6045,7 +6045,7 @@ RT_EXPORT BU_EXTERN(size_t db5_type_sizeof_n_binu,
 RT_EXPORT BU_EXTERN(const char *db5_standard_attribute, (int idx));
 
 /**
- * D B 5 _ S T A N D A R D I Z E _ A T T R I B U T E
+ * D B 5 _ I S _ S T A N D A R D _ A T T R I B U T E
  *
  * Function for recognizing various versions of the DB5 standard
  * attribute names that have been used - returns the attribute type
@@ -6073,6 +6073,11 @@ RT_EXPORT BU_EXTERN(int db5_is_standard_attribute, (const char *attrname));
  * time being.
  */
 RT_EXPORT BU_EXTERN(size_t db5_standardize_avs, (struct bu_attribute_value_set *avs));
+
+RT_EXPORT BU_EXTERN(int db5_standardize_attribute, (const char *attr));
+RT_EXPORT BU_EXTERN(void db5_apply_std_attributes, (struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb));
+RT_EXPORT BU_EXTERN(void db5_update_std_attributes, (struct db_i *dbip, struct directory *dp, const struct rt_comb_internal *comb));
+
 
 #endif
 
