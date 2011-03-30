@@ -206,7 +206,7 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 
 
 HIDDEN int
-build_comb(struct ged *gedp, struct directory *dp)
+build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
 {
     struct rt_comb_internal *comb;
     size_t node_count=0;
@@ -224,6 +224,8 @@ build_comb(struct ged *gedp, struct directory *dp)
     int ret, gedret, combtagstart, combtagend;
     struct bu_attribute_value_set avs;
     matp_t matrix;
+    struct bu_vls *target_name = bu_malloc(sizeof(struct bu_vls), "target vls");
+    bu_vls_init(target_name);
  
     rt_tree_array = (struct rt_tree_array *)NULL;
  
@@ -346,6 +348,10 @@ build_comb(struct ged *gedp, struct directory *dp)
 	    bu_vls_trunc(&current_substring, 0);
 	    bu_vls_strncpy(&current_substring, currptr + attrstart, attrend - attrstart);
 	    if (get_attr_val_pair(bu_vls_addr(&current_substring), &attr_vls, &val_vls)) {
+		if (!BU_STR_EQUAL(bu_vls_addr(&val_vls), "") && BU_STR_EQUAL(bu_vls_addr(&attr_vls), "name")) {
+		    bu_vls_sprintf(target_name, "%s", bu_vls_addr(&val_vls));
+		    (*final_name) = target_name;
+		}
 		if (!BU_STR_EQUAL(bu_vls_addr(&val_vls), "") && !BU_STR_EQUAL(bu_vls_addr(&attr_vls), "name"))
 		    (void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls)); 
 	    }
@@ -563,7 +569,7 @@ build_comb(struct ged *gedp, struct directory *dp)
     comb->tree = tp;
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "build_comb: Cannot apply tree\n", dp->d_namep);
+	bu_vls_printf(&gedp->ged_result_str, "build_comb %s: Cannot apply tree\n", dp->d_namep);
 	bu_avs_free(&avs);
 	return -1;
     }
@@ -609,7 +615,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     bu_avs_init_empty(&avs);
 
     bu_vls_init(&spacer);
-    bu_vls_sprintf(&spacer, "");
+    bu_vls_trunc(&spacer, 0);
 
     dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET);
 
@@ -766,6 +772,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     const char *av[3];
     struct bu_vls comb_name;
     struct bu_vls temp_name;
+    struct bu_vls *final_name;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -914,7 +921,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* reconstitute the new combination */
-	if (build_comb(gedp, tmp_dp) < 0) {
+	if (build_comb(gedp, tmp_dp, &final_name) < 0) {
 
 	    /* Something went wrong - kill the temporary comb */
 
@@ -928,20 +935,38 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	    goto cleanup;
 	}
 
+	/* if we got a final_name from build_comb and it isn't identical to comb_name, check to ensure
+	 * an object with the new name doesn't already exist - red will not overwrite a pre-existing comb. 
+	 * If we don't have a name, assume we're working on comb_name */
+	if (final_name) {
+		if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(final_name))) {
+			if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(final_name), LOOKUP_QUIET) != RT_DIR_NULL) {
+				bu_vls_printf(&gedp->ged_result_str, "%s: Error - %s already exists\n", *argv, bu_vls_addr(final_name));
+				goto cleanup;
+			}
+		}
+	} else {
+		final_name = bu_malloc(sizeof(struct bu_vls), "target vls");
+		bu_vls_init(final_name);
+		bu_vls_sprintf(final_name, "%s", bu_vls_addr(&comb_name));
+	}
+
+
 	/* it worked - kill the original and put the updated copy in
 	 * its place if a pre-existing comb was being edited -
-	 * otherwise everything is already fine.
+	 * otherwise just move temp_name to final_name.
 	 */
 	if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(&temp_name))) {
 	    av[0] = "kill";
 	    av[1] = bu_vls_addr(&comb_name);
 	    av[2] = NULL;
 	    (void)ged_kill(gedp, 2, (const char **)av);
-	    av[0] = "mv";
-	    av[1] = bu_vls_addr(&temp_name);
-	    av[2] = bu_vls_addr(&comb_name);
-	    (void)ged_move(gedp, 3, (const char **)av);
-	}
+	} 
+	av[0] = "mv";
+	av[1] = bu_vls_addr(&temp_name);
+	av[2] = bu_vls_addr(final_name);
+	(void)ged_move(gedp, 3, (const char **)av);
+    
     }
     /* if we have jumpted to cleanup by now, everything was fine */
     ret = GED_OK;
@@ -950,6 +975,8 @@ cleanup:
     if (bu_file_exists(_ged_tmpfil))
 	unlink(_ged_tmpfil);
 
+    bu_vls_free(final_name);
+    bu_free(final_name, "final_name");
     bu_vls_free(&comb_name);
     bu_vls_free(&temp_name);
 
