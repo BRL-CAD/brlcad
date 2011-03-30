@@ -38,21 +38,22 @@
 #include "raytrace.h"
 
 /**
- * Define standard attribute types in BRL-CAD
- * geometry. (See the gattributes manual page)
- *
+ * Define standard attribute types in BRL-CAD geometry. (See the
+ * gattributes manual page) these should be a collective enumeration
+ * starting from 0 and increasing without any gaps in the numbers so
+ * db5_standard_attribute() can be used as an index-based iterator.
  */
 
 enum {
     ATTR_REGION = 0,
-    ATTR_REGION_ID = 1,
-    ATTR_MATERIAL_ID = 2,
-    ATTR_AIR = 3,
-    ATTR_LOS = 4,
-    ATTR_COLOR = 5,
-    ATTR_SHADER = 6,
-    ATTR_INHERIT = 7,
-    ATTR_NULL = 8
+    ATTR_REGION_ID,
+    ATTR_MATERIAL_ID,
+    ATTR_AIR,
+    ATTR_LOS,
+    ATTR_COLOR,
+    ATTR_SHADER,
+    ATTR_INHERIT,
+    ATTR_NULL
 };
 
 
@@ -311,6 +312,8 @@ db5_standard_attribute(int idx)
 	    return "shader";
 	case ATTR_INHERIT:
 	    return "inherit";
+	case ATTR_NULL:
+	    return NULL;
     }
     /* no match */
     return NULL;
