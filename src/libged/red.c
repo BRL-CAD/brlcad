@@ -44,8 +44,13 @@ extern size_t db5_is_standard_attribute(const char *attrname);
 extern void db5_standardize_avs(struct bu_attribute_value_set *avs);
 
 
+/* also accessed by put_comb.c */
 char _ged_tmpfil[MAXPATHLEN] = {0};
-char _delims[] = " \t/";	/* allowable delimiters */
+
+
+static const char combseparator[] = "---------- Combination Tree ----------";
+static const char *combtree_header = "---*[[:space:]]*Combination Tree[[:space:]]*---*\r?\n";
+
 
 static int
 get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val) 
@@ -219,7 +224,6 @@ build_comb(struct ged *gedp, struct directory *dp)
     int ret, gedret, combtagstart, combtagend;
     struct bu_attribute_value_set avs;
     matp_t matrix;
-    const char *combtree_header = "-------------Combination Tree------------:\r?\n";
  
     rt_tree_array = (struct rt_tree_array *)NULL;
  
@@ -637,7 +641,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	    }
 	    fprintf(fp, "%s%s = \n", standard_attributes[i], bu_vls_addr(&spacer));
 	}
-	fprintf(fp, "-------------Combination Tree------------:\n");
+	fprintf(fp, "%s\n", combseparator);
 	fclose(fp);
 	return GED_OK;
     }
@@ -698,7 +702,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     }
     bu_vls_free(&spacer);
 
-    fprintf(fp, "-------------Combination Tree------------:\n");
+    fprintf(fp, "%s\n", combseparator);
 
     for (i=0; i<actual_count; i++) {
 	char op;
