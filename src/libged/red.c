@@ -40,7 +40,7 @@
  * behind the scenes, not be an API function. should eliminate direct
  * calls to these functions.
  */
-extern size_t db5_is_standard_attribute(const char *attrname);
+extern int db5_is_standard_attribute(const char *attr_want);
 extern void db5_standardize_avs(struct bu_attribute_value_set *avs);
 
 
