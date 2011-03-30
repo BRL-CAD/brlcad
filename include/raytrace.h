@@ -6074,8 +6074,20 @@ RT_EXPORT BU_EXTERN(int db5_is_standard_attribute, (const char *attrname));
  */
 RT_EXPORT BU_EXTERN(size_t db5_standardize_avs, (struct bu_attribute_value_set *avs));
 
+/**
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
 RT_EXPORT BU_EXTERN(int db5_standardize_attribute, (const char *attr));
+/**
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
 RT_EXPORT BU_EXTERN(void db5_apply_std_attributes, (struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb));
+/**
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
 RT_EXPORT BU_EXTERN(void db5_update_std_attributes, (struct db_i *dbip, struct directory *dp, const struct rt_comb_internal *comb));
 
 
