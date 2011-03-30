@@ -49,7 +49,7 @@ _gcv_cleanup(int state, union tree *tp)
     db_free_tree(tp, &rt_uniresource); /* Does an nmg_kr() */
 
     BU_GETUNION(tp, tree);
-    tp->magic = RT_TREE_MAGIC;
+    RT_INIT_TREE(tp);
     tp->tr_op = OP_NOP;
     return tp;
 }

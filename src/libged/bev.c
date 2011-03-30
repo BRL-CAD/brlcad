@@ -63,8 +63,8 @@ ged_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_
     bu_semaphore_acquire( RT_SEM_MODEL );
     if ( ged_facetize_tree )  {
 	union tree	*tr;
-	tr = (union tree *)bu_calloc(1, sizeof(union tree), "union tree");
-	tr->magic = RT_TREE_MAGIC;
+	BU_GETUNION(tr, tree);
+	RT_INIT_TREE(tr);
 	tr->tr_op = OP_UNION;
 	tr->tr_b.tb_regionp = REGION_NULL;
 	tr->tr_b.tb_left = ged_facetize_tree;
@@ -202,8 +202,8 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	    union tree *new_tree;
 
 	    BU_GETUNION( new_tree, tree );
+	    RT_INIT_TREE(new_tree);
 
-	    new_tree->magic = RT_TREE_MAGIC;
 	    new_tree->tr_b.tb_regionp = REGION_NULL;
 	    new_tree->tr_b.tb_left = tmp_tree;
 	    new_tree->tr_b.tb_right = ged_facetize_tree;

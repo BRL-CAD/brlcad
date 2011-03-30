@@ -421,8 +421,8 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
 	    }
 
 	    BU_GETUNION(tp, tree);
+	    RT_INIT_TREE(tp);
 	    rt_tree_array[tree_index].tl_tree = tp;
-	    tp->tr_l.magic = RT_TREE_MAGIC;
 	    tp->tr_l.tl_op = OP_DB_LEAF;
 	    tp->tr_l.tl_name = bu_strdup(name);
 	    tp->tr_l.tl_mat = matrix;

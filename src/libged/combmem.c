@@ -463,7 +463,6 @@ MAT_IDN((_mat));				\
 
 #define COMBMEM_SET_PART_III(_tp,_tree,_rt_tree_array,_tree_index,_name) \
 (_rt_tree_array)[(_tree_index)].tl_tree = (_tp); \
-(_tp)->tr_l.magic = RT_TREE_MAGIC; \
 (_tp)->tr_l.tl_op = OP_DB_LEAF; \
 (_tp)->tr_l.tl_name = bu_strdup(_name); \
 (_tp)->tr_l.tl_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "combmem_set: mat");
@@ -601,6 +600,7 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	}
 
 	BU_GETUNION(tp, tree);
+	RT_INIT_TREE(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (etype == ETYPES_REL && tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
@@ -683,6 +683,7 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	}
 
 	BU_GETUNION(tp, tree);
+	RT_INIT_TREE(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
@@ -760,6 +761,7 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
 	}
 
 	BU_GETUNION(tp, tree);
+	RT_INIT_TREE(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
@@ -829,6 +831,7 @@ combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	}
 
 	BU_GETUNION(tp, tree);
+	RT_INIT_TREE(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
@@ -903,6 +906,7 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	}
 
 	BU_GETUNION(tp, tree);
+	RT_INIT_TREE(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&

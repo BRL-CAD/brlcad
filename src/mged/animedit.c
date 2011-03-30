@@ -3474,8 +3474,8 @@ mesh_leaf(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, s
     }
 
     BU_GETUNION(curtree, tree);
+    RT_INIT_TREE(curtree);
     curtree->tr_op = OP_SOLID;
-    curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;
     dp = pathp->fp_names[pathp->fp_len-1];
 /*

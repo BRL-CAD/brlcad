@@ -4407,8 +4407,8 @@ facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path
 
     if (*facetize_tree) {
 	union tree *tr;
-	tr = (union tree *)bu_calloc(1, sizeof(union tree), "union tree");
-	tr->magic = RT_TREE_MAGIC;
+	BU_GETUNION(tr, tree);
+	RT_INIT_TREE(tr);
 	tr->tr_op = OP_UNION;
 	tr->tr_b.tb_regionp = REGION_NULL;
 	tr->tr_b.tb_left = *facetize_tree;

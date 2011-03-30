@@ -938,7 +938,7 @@ track_mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	WDB_CK_WMEMBER(wp);
 
 	BU_GETUNION(leafp, tree);
-	leafp->tr_l.magic = RT_TREE_MAGIC;
+	RT_INIT_TREE(leafp);
 	leafp->tr_l.tl_op = OP_DB_LEAF;
 	leafp->tr_l.tl_name = bu_strdup(wp->wm_name);
 	if (!bn_mat_is_identity(wp->wm_mat)) {
@@ -951,7 +951,7 @@ track_mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	}
 	/* Build a left-heavy tree */
 	BU_GETUNION(nodep, tree);
-	nodep->tr_b.magic = RT_TREE_MAGIC;
+	RT_INIT_TREE(nodep);
 	switch (wp->wm_op) {
 	    case WMOP_UNION:
 		nodep->tr_b.tb_op = OP_UNION;
@@ -1041,8 +1041,8 @@ track_mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 	/* make new leaf node, and insert at end of array */
 	BU_GETUNION(tp, tree);
+	RT_INIT_TREE(tp);
 	tree_list[node_count++].tl_tree = tp;
-	tp->tr_l.magic = RT_TREE_MAGIC;
 	tp->tr_l.tl_op = OP_DB_LEAF;
 	tp->tr_l.tl_name = bu_strdup(wp->wm_name);
 	if (!bn_mat_is_identity(wp->wm_mat)) {

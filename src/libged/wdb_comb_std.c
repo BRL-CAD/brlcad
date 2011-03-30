@@ -251,8 +251,8 @@ wdb_do_inter(struct bu_list *hp)
 	    continue;
 
 	/* this is an eligible intersection operation */
-	tp = (union tree *)bu_malloc(sizeof(union tree), "tp");
-	tp->magic = RT_TREE_MAGIC;
+	BU_GETUNION(tp, tree);
+	RT_INIT_TREE(tp);
 	tp->tr_b.tb_op = OP_INTERSECT;
 	tp->tr_b.tb_regionp = (struct region *)NULL;
 	tp->tr_b.tb_left = prev->tp;
@@ -286,8 +286,8 @@ wdb_do_union_subtr(struct bu_list *hp)
 	    continue;
 
 	/* this is an eligible operation */
-	tp = (union tree *)bu_malloc(sizeof(union tree), "tp");
-	tp->magic = RT_TREE_MAGIC;
+	BU_GETUNION(tp, tree);
+	RT_INIT_TREE(tp);
 	if (tok->type == WDB_TOK_UNION)
 	    tp->tr_b.tb_op = OP_UNION;
 	else
