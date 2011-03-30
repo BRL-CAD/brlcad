@@ -48,7 +48,7 @@ extern void db5_standardize_avs(struct bu_attribute_value_set *avs);
 char _ged_tmpfil[MAXPATHLEN] = {0};
 
 
-static const char combseparator[] = "---------- Combination Tree ----------";
+static const char combseparator[] = "---------- Combination Tree ----------\n";
 static const char *combtree_header = "---*[[:space:]]*Combination Tree[[:space:]]*---*\r?\n";
 
 
@@ -641,7 +641,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	    }
 	    fprintf(fp, "%s%s = \n", standard_attributes[i], bu_vls_addr(&spacer));
 	}
-	fprintf(fp, "%s\n", combseparator);
+	fprintf(fp, "%s", combseparator);
 	fclose(fp);
 	return GED_OK;
     }
@@ -702,7 +702,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     }
     bu_vls_free(&spacer);
 
-    fprintf(fp, "%s\n", combseparator);
+    fprintf(fp, "%s", combseparator);
 
     for (i=0; i<actual_count; i++) {
 	char op;
