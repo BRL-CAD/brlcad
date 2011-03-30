@@ -344,62 +344,62 @@ db5_is_standard_attribute(const char *attr_want)
  *
  */
 int
-db5_standardize_attribute(const char *attrname)
+db5_standardize_attribute(const char *attr)
 {
-    if (BU_STR_EQUAL(attrname, "region"))
+    if (BU_STR_EQUAL(attr, "region"))
 	return ATTR_REGION;
-    if (BU_STR_EQUAL(attrname, "REGION"))
+    if (BU_STR_EQUAL(attr, "REGION"))
 	return ATTR_REGION;
 
-    if (BU_STR_EQUAL(attrname, "region_id"))
+    if (BU_STR_EQUAL(attr, "region_id"))
 	return ATTR_REGION_ID;
-    if (BU_STR_EQUAL(attrname, "REGION_ID"))
+    if (BU_STR_EQUAL(attr, "REGION_ID"))
 	return ATTR_REGION_ID;
-    if (BU_STR_EQUAL(attrname, "id"))
+    if (BU_STR_EQUAL(attr, "id"))
 	return ATTR_REGION_ID;
-    if (BU_STR_EQUAL(attrname, "ID"))
+    if (BU_STR_EQUAL(attr, "ID"))
 	return ATTR_REGION_ID;
 
-    if (BU_STR_EQUAL(attrname, "material_id"))
+    if (BU_STR_EQUAL(attr, "material_id"))
 	return ATTR_MATERIAL_ID;
-    if (BU_STR_EQUAL(attrname, "MATERIAL_ID"))
+    if (BU_STR_EQUAL(attr, "MATERIAL_ID"))
 	return ATTR_MATERIAL_ID;
-    if (BU_STR_EQUAL(attrname, "GIFTmater"))
+    if (BU_STR_EQUAL(attr, "GIFTmater"))
 	return ATTR_MATERIAL_ID;
-    if (BU_STR_EQUAL(attrname, "GIFT_MATERIAL"))
+    if (BU_STR_EQUAL(attr, "GIFT_MATERIAL"))
 	return ATTR_MATERIAL_ID;
-    if (BU_STR_EQUAL(attrname, "mat"))
+    if (BU_STR_EQUAL(attr, "mat"))
 	return ATTR_MATERIAL_ID;
 
-    if (BU_STR_EQUAL(attrname, "air"))
+    if (BU_STR_EQUAL(attr, "air"))
 	return ATTR_AIR;
-    if (BU_STR_EQUAL(attrname, "AIR"))
+    if (BU_STR_EQUAL(attr, "AIR"))
 	return ATTR_AIR;
-    if (BU_STR_EQUAL(attrname, "AIRCODE"))
+    if (BU_STR_EQUAL(attr, "AIRCODE"))
 	return ATTR_AIR;
 
-    if (BU_STR_EQUAL(attrname, "los"))
+    if (BU_STR_EQUAL(attr, "los"))
 	return ATTR_LOS;
-    if (BU_STR_EQUAL(attrname, "LOS"))
+    if (BU_STR_EQUAL(attr, "LOS"))
 	return ATTR_LOS;
 
-    if (BU_STR_EQUAL(attrname, "color"))
+    if (BU_STR_EQUAL(attr, "color"))
 	return ATTR_COLOR;
-    if (BU_STR_EQUAL(attrname, "COLOR"))
+    if (BU_STR_EQUAL(attr, "COLOR"))
 	return ATTR_COLOR;
-    if (BU_STR_EQUAL(attrname, "rgb"))
+    if (BU_STR_EQUAL(attr, "rgb"))
 	return ATTR_COLOR;
-    if (BU_STR_EQUAL(attrname, "RGB"))
+    if (BU_STR_EQUAL(attr, "RGB"))
 	return ATTR_COLOR;
 
-    if (BU_STR_EQUAL(attrname, "oshader"))
+    if (BU_STR_EQUAL(attr, "oshader"))
 	return ATTR_SHADER;
-    if (BU_STR_EQUAL(attrname, "SHADER"))
+    if (BU_STR_EQUAL(attr, "SHADER"))
 	return ATTR_SHADER;
 
-    if (BU_STR_EQUAL(attrname, "inherit"))
+    if (BU_STR_EQUAL(attr, "inherit"))
 	return ATTR_INHERIT;
-    if (BU_STR_EQUAL(attrname, "INHERIT"))
+    if (BU_STR_EQUAL(attr, "INHERIT"))
 	return ATTR_INHERIT;
 
     return ATTR_NULL;
