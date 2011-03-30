@@ -288,22 +288,36 @@ db5_type_sizeof_n_binu(const int minor)
 }
 
 
-size_t
-db5_is_standard_attribute(const char *attrname)
+const char *
+db5_standard_attribute(int idx)
 {
-    size_t i;
-    char *standard_attributes[8];
-    standard_attributes[0] = "region";
-    standard_attributes[1] = "region_id";
-    standard_attributes[2] = "material_id";
-    standard_attributes[3] = "los";
-    standard_attributes[4] = "air";
-    standard_attributes[5] = "color";
-    standard_attributes[6] = "oshader";
-    standard_attributes[7] = "inherit";
+    static const char *standard_attributes[9] = {
+	"region",
+	"region_id",
+	"material_id",
+	"los",
+	"air",
+	"color",
+	"oshader",
+	"inherit",
+	NULL
+    };
 
-    for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, standard_attributes[i])) return 1;
+    if (idx < 0 || (size_t)idx > sizeof(standard_attributes) / sizeof(char *)) {
+	return NULL;
+    }
+    return standard_attributes[idx];
+}
+
+
+int
+db5_is_standard_attribute(const char *attr_want)
+{
+    int i = 0;
+    const char *attr_have = NULL;
+
+    for (i=0; (attr_have = db5_standard_attribute(i)) != NULL; i++) {
+	if (BU_STR_EQUAL(attr_want, attr_have)) return 1;
     }
 
     return 0;
