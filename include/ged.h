@@ -35,6 +35,7 @@
 #endif
 
 #include "raytrace.h"
+#include "fbserv_obj.h"
 
 
 __BEGIN_DECLS
@@ -73,6 +74,7 @@ __BEGIN_DECLS
 #define GED_DISPLAY_LIST_NULL (struct ged_display_list *)0
 #define GED_DRAWABLE_NULL (struct ged_drawable *)0
 #define GED_VIEW_NULL (struct ged_view *)0
+#define GED_OBJ_NULL (struct ged_obj *)0
 
 #define GED_VIEW_OBJ_NULL ((struct view_obj *)0)
 #define GED_RESULT_NULL ((void *)0)
@@ -96,6 +98,11 @@ __BEGIN_DECLS
 #define GED_PSCALE_MODE 13
 #define GED_PTRANSLATE_MODE 14
 #define GED_RECTANGLE_MODE 15
+
+#define GED_OBJ_FB_MODE_OFF 0
+#define GED_OBJ_FB_MODE_UNDERLAY 1
+#define GED_OBJ_FB_MODE_INTERLAY 2
+#define GED_OBJ_FB_MODE_OVERLAY  3
 
 /**
  * S E M A P H O R E S
@@ -451,7 +458,6 @@ struct ged_drawable {
 #endif
 };
 
-
 struct ged_view {
     struct bu_list		l;
     fastf_t			gv_scale;
@@ -500,7 +506,6 @@ struct ged_view {
     struct ged_other_state 	gv_view_scale;
     struct ged_rect_state 	gv_rect;
 };
-
 
 struct ged {
     struct bu_list		l;
@@ -560,6 +565,27 @@ struct view_obj {
     int			vo_zclip;
 };
 
+struct ged_dm_view {
+    struct bu_list		l;
+    struct bu_vls		gdv_callback;
+    struct bu_vls		gdv_name;
+    struct ged_view		*gdv_view;
+    struct dm			*gdv_dmp;
+    struct fbserv_obj		gdv_fbs;
+    struct ged_obj		*gdv_gop; /* Pointer back to its ged object */
+};
+
+struct ged_obj {
+    struct ged		*go_gedp;
+    struct ged_dm_view	go_head_views;
+    struct bu_vls	go_name;
+    struct bu_observer	go_observers;
+    struct bu_vls	go_more_args_callback;
+    struct bu_vls	go_rt_end_callback;
+    struct bu_vls	*go_prim_label_list;
+    int			go_prim_label_list_size;
+    int			go_refresh_on;
+};
 
 /* defined in adc.c */
 GED_EXPORT BU_EXTERN(void ged_calc_adc_pos,
@@ -619,6 +645,14 @@ GED_EXPORT BU_EXTERN(struct ged *ged_open,
 		      int existing_only));
 GED_EXPORT BU_EXTERN(void ged_view_init,
 		     (struct ged_view *gvp));
+
+/* defined in go_refresh.c */
+GED_EXPORT BU_EXTERN(void go_refresh,
+		     (struct ged_obj *gop,
+		      struct ged_dm_view *gdvp));
+GED_EXPORT BU_EXTERN(void go_refresh_draw,
+		     (struct ged_obj *gop,
+		      struct ged_dm_view *gdvp));
 
 /* defined in grid.c */
 GED_EXPORT BU_EXTERN(void ged_snap_to_grid,

@@ -15,6 +15,7 @@ libged_nil_la_SOURCES = \
 	arot.c \
 	attr.c \
 	autoview.c \
+	axes.c \
 	bb.c \
 	bev.c \
 	bigE.c \
@@ -87,6 +88,7 @@ libged_nil_la_SOURCES = \
 	get_type.c \
 	glob.c \
 	globals.c \
+	go_refresh.c \
 	gqa.c \
 	grid.c \
 	grid2model_lu.c \

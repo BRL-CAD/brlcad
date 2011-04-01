@@ -37,8 +37,6 @@ endif
 
 
 libdm_la_SOURCES = \
-	adc.c \
-	axes.c \
 	clip.c \
 	color.c \
 	dm-Null.c \
@@ -52,13 +50,9 @@ libdm_la_SOURCES = \
 	dm-wgl.c \
 	dm_obj.c \
 	focus.c \
-	grid.c \
 	knob.c \
-	labels.c \
 	options.c \
 	query.c \
-	rect.c \
-	scale.c \
 	tcl.c \
 	vers.c
 
