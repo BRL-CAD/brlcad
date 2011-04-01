@@ -1,4 +1,4 @@
-/*                       G E D _ O B J . C
+/*                       T C L C A D _ O B J . C
  * BRL-CAD
  *
  * Copyright (c) 2000-2011 United States Government as represented by
