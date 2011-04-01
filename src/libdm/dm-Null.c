@@ -129,6 +129,7 @@ struct dm dm_Null = {
     Nu_int0,
     Nu_int0,
     Nu_getDisplayImage, /* display to image function */
+    Nu_void,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */

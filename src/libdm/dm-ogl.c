@@ -128,10 +128,12 @@ HIDDEN int ogl_endDList(struct dm *dmp);
 HIDDEN int ogl_drawDList(struct dm *dmp, unsigned int list);
 HIDDEN int ogl_freeDLists(struct dm *dmp, unsigned int list, int range);
 HIDDEN int ogl_getDisplayImage(struct dm *dmp, unsigned char **image);
+HIDDEN void ogl_reshape(struct dm *dmp, int width, int height);
 
 HIDDEN int ogl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 HIDDEN int ogl_setLight(struct dm *dmp, int lighting_on);
 HIDDEN int ogl_setZBuffer(struct dm *dmp, int zbuffer_on);
+
 
 struct dm dm_ogl = {
     ogl_close,
@@ -162,6 +164,7 @@ struct dm dm_ogl = {
     ogl_drawDList,
     ogl_freeDLists,
     ogl_getDisplayImage, /* display to image function */
+    ogl_reshape,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */
@@ -271,7 +274,6 @@ ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
 HIDDEN int
 ogl_configureWin_guts(struct dm *dmp, int force)
 {
-    GLint mm;
     XWindowAttributes xwa;
     XFontStruct *newfontstruct;
 
@@ -294,38 +296,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 	dmp->dm_width == xwa.width)
 	return TCL_OK;
 
-    dmp->dm_height = xwa.height;
-    dmp->dm_width = xwa.width;
-    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
-
-    if (dmp->dm_debugLevel) {
-	bu_log("ogl_configureWin_guts()\n");
-	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
-    }
-
-    glViewport(0, 0, dmp->dm_width, dmp->dm_height);
-#if 0
-    glScissor(0,  0, (dmp->dm_width)+1,
-	      (dmp->dm_height)+1);
-#endif
-
-    if (dmp->dm_zbuffer)
-	ogl_setZBuffer(dmp, dmp->dm_zbuffer);
-
-    ogl_setLight(dmp, dmp->dm_light);
-
-    glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
-		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
-		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
-		 0.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    /*CJXX this might cause problems in perspective mode? */
-    glGetIntegerv(GL_MATRIX_MODE, &mm);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
-    glMatrixMode(mm);
+    ogl_reshape(dmp, xwa.width, xwa.height);
 
     /* First time through, load a font or quit */
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL) {
@@ -440,6 +411,48 @@ ogl_configureWin_guts(struct dm *dmp, int force)
     }
 
     return TCL_OK;
+}
+
+
+HIDDEN void
+ogl_reshape(struct dm *dmp, int width, int height)
+{
+    GLint mm;
+
+    dmp->dm_height = height;
+    dmp->dm_width = width;
+    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("ogl_configureWin_guts()\n");
+	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
+    }
+
+    glViewport(0, 0, dmp->dm_width, dmp->dm_height);
+#if 0
+    glScissor(0,  0, (dmp->dm_width)+1,
+	      (dmp->dm_height)+1);
+#endif
+
+#if 0
+    if (dmp->dm_zbuffer)
+	ogl_setZBuffer(dmp, dmp->dm_zbuffer);
+
+    ogl_setLight(dmp, dmp->dm_light);
+#endif
+
+    glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
+		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
+		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
+		 0.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    /*CJXX this might cause problems in perspective mode? */
+    glGetIntegerv(GL_MATRIX_MODE, &mm);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
+    glMatrixMode(mm);
 }
 
 
