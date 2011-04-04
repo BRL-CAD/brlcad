@@ -37,7 +37,6 @@ SET(LIBTCLCAD_SRCS
 	tclcad.c
 	tclcadAutoPath.c
 	tkImgFmtPIX.c
-	ged_obj.c
 	)
 BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "libged libdm ${TCLCAD_XLIBS} ${X11_Xi_LIB}")
 SET_TARGET_PROPERTIES(libtclcad PROPERTIES VERSION 19.0.1 SOVERSION 19)
