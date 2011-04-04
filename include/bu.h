@@ -157,7 +157,7 @@ __BEGIN_DECLS
  *  function types (adding bu_vls support) and that is a problem with
  *  strict checking.
  */
-#if defined(WARNING_FLAGS)
+#if defined(STRICT_FLAGS)
 #  undef __BU_ATTR_FORMAT12
 #  undef __BU_ATTR_FORMAT23
 #  undef __BU_ATTR_NORETURN
@@ -1605,7 +1605,7 @@ print_avs(struct bu_attribute_value_set *avs)
 @endcode
  */
 #define BU_AVS_FOR(_pp, _avp) \
-    (_pp) = ((_avp) != NULL) ? ((_avp)->count > 0 ? &(_avp)->avp[(_avp)->count-1] : NULL) : NULL; (_pp) && (_avp) && (_avp)->avp && (_pp) >= (_avp)->avp; (_pp)--
+    (_pp) = ((_avp) != NULL) ? ((_avp)->count > 0 ? &(_avp)->avp[(_avp)->count-1] : NULL) : NULL; ((_pp) != NULL) && ((_avp) != NULL) && (_avp)->avp && (_pp) >= (_avp)->avp; (_pp)--
 
 /**
  * Some (but not all) attribute name and value string pointers are

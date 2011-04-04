@@ -134,6 +134,15 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 }
 
 
+HIDDEN void
+X_reshape(struct dm *dmp, int width, int height)
+{
+    dmp->dm_height = height;
+    dmp->dm_width = width;
+    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+}
+
+
 HIDDEN int
 X_configureWin_guts(struct dm *dmp, int force)
 {
@@ -152,9 +161,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 	dmp->dm_width == xwa.width)
 	return TCL_OK;
 
-    dmp->dm_height = xwa.height;
-    dmp->dm_width = xwa.width;
-    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+    X_reshape(dmp, xwa.width, xwa.height);
 
     if (dmp->dm_debugLevel) {
 	bu_log("X_configureWin_guts()\n");
@@ -1617,6 +1624,7 @@ X_getDisplayImage(struct dm *dmp, unsigned char **image)
     return TCL_OK;
 }
 
+
 /* Display Manager package interface */
 struct dm dm_X = {
     X_close,
@@ -1647,6 +1655,7 @@ struct dm dm_X = {
     Nu_int0,
     Nu_int0,
     X_getDisplayImage, /* display to image function */
+    X_reshape,
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */

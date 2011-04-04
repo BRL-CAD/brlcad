@@ -772,7 +772,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     const char *av[3];
     struct bu_vls comb_name;
     struct bu_vls temp_name;
-    struct bu_vls *final_name;
+    struct bu_vls *final_name = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);

@@ -326,6 +326,9 @@ db5_is_standard_attribute(const char *attr_want)
     int i = 0;
     const char *attr_have = NULL;
 
+    if (!attr_want)
+	return 0;
+
     for (i=0; (attr_have = db5_standard_attribute(i)) != NULL; i++) {
 	if (BU_STR_EQUAL(attr_want, attr_have)) return 1;
     }
@@ -340,6 +343,9 @@ db5_standardize_attribute(const char *attr)
     /* FIXME: these should all be converted to case-insensitive
      * comparisions for the standard attribute names.
      */
+
+    if (!attr)
+	return ATTR_NULL;
 
     if (BU_STR_EQUAL(attr, "region"))
 	return ATTR_REGION;
@@ -413,7 +419,7 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
     struct bu_attribute_value_set newavs;
     struct bu_attribute_value_pair *avpp;
 
-    /* check our inputs */
+    /* check inputs */
     BU_CK_AVS(avs);
     if (avs->count <= 0)
 	return 0;
@@ -491,7 +497,11 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
     struct bu_vls newval;
     bu_vls_init(&newval);
 
+    /* check inputs */
+    RT_CK_DBI(dbip);
+    RT_CK_DIR(dp);
     RT_CK_COMB(comb);
+
     bu_avs_init_empty(&avs);
 
     if (!db5_get_attributes(dbip, &avs, dp)) {
@@ -579,7 +589,11 @@ db5_update_std_attributes(struct db_i *dbip, struct directory *dp, const struct 
     struct bu_attribute_value_set avs;
     struct bu_vls newval;
 
+    /* check inputs */
+    RT_CK_DBI(dbip);
+    RT_CK_DIR(dp);
     RT_CK_COMB(comb);
+
     bu_avs_init_empty(&avs);
     bu_vls_init(&newval);
 
