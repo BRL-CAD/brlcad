@@ -281,6 +281,10 @@ noinst_HEADERS = \
 
 libged_la_SOURCES =
 libged_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
+
+
+# !!! FIXME: LIBGED should not be directly utilizing LIBDM or LIBFB as
+# this breaks library encapsulation.
 libged_la_LIBADD = \
 	libged_nil.la \
 	${FB} \
