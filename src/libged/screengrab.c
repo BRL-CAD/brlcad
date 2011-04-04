@@ -34,6 +34,12 @@
 
 #include "./ged_private.h"
 
+
+/* !!! FIXME: this command should not be directly utilizing LIBDM or
+ * LIBFB as this breaks library encapsulation.  Generic functionality
+ * should be moved out of LIBDM into LIBICV, or be handled by the
+ * application logic calling this routine.
+ */
 int
 ged_screen_grab(struct ged *gedp,int argc, const char *argv[])
 {
