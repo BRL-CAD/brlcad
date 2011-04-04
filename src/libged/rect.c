@@ -546,48 +546,6 @@ ged_rect_zoom(struct ged *gedp)
 }
 
 
-void
-dm_draw_rect(struct dm *dmp, struct ged_rect_state *grsp)
-{
-    if (ZERO(grsp->grs_width) &&
-	ZERO(grsp->grs_height))
-	return;
-
-#if 0
-    if (grsp->grs_active && mged_variables->mv_mouse_behavior == 'z')
-	ged_adjust_rect_for_zoom();
-#endif
-
-    /* draw rectangle */
-    DM_SET_FGCOLOR(dmp,
-		   (unsigned char)grsp->grs_color[0],
-		   (unsigned char)grsp->grs_color[1],
-		   (unsigned char)grsp->grs_color[2], 1, 1.0);
-    DM_SET_LINE_ATTR(dmp, grsp->grs_line_width, grsp->grs_line_style);
-
-    DM_DRAW_LINE_2D(dmp,
-		    grsp->grs_x,
-		    grsp->grs_y * dmp->dm_aspect,
-		    grsp->grs_x,
-		    (grsp->grs_y + grsp->grs_height) * dmp->dm_aspect);
-    DM_DRAW_LINE_2D(dmp,
-		    grsp->grs_x,
-		    (grsp->grs_y + grsp->grs_height) * dmp->dm_aspect,
-		    grsp->grs_x + grsp->grs_width,
-		    (grsp->grs_y + grsp->grs_height) * dmp->dm_aspect);
-    DM_DRAW_LINE_2D(dmp,
-		    grsp->grs_x + grsp->grs_width,
-		    (grsp->grs_y + grsp->grs_height) * dmp->dm_aspect,
-		    grsp->grs_x + grsp->grs_width,
-		    grsp->grs_y * dmp->dm_aspect);
-    DM_DRAW_LINE_2D(dmp,
-		    grsp->grs_x + grsp->grs_width,
-		    grsp->grs_y * dmp->dm_aspect,
-		    grsp->grs_x,
-		    grsp->grs_y * dmp->dm_aspect);
-}
-
-
 /*
  * Local Variables:
  * mode: C

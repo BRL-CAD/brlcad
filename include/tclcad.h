@@ -61,13 +61,38 @@ __BEGIN_DECLS
 #define TCLCAD_EXTERN(type_and_name, args) extern type_and_name args
 #define TCLCAD_ARGS(args) args
 
-struct tclcad_obj {
-    struct bu_list	l;
-    struct ged_obj	*to_gop;
-    Tcl_Interp		*to_interp;
+#define GED_OBJ_NUM_VIEWS 4
+#define GED_OBJ_FB_MODE_OFF 0
+#define GED_OBJ_FB_MODE_UNDERLAY 1
+#define GED_OBJ_FB_MODE_INTERLAY 2
+#define GED_OBJ_FB_MODE_OVERLAY  3
+
+struct ged_dm_view {
+    struct bu_list		l;
+    struct bu_vls		gdv_callback;
+    struct bu_vls		gdv_name;
+    struct ged_view		*gdv_view;
+    struct dm			*gdv_dmp;
+    struct fbserv_obj		gdv_fbs;
+    struct ged_obj		*gdv_gop; /* Pointer back to its ged object */
 };
 
-#define TCLCAD_OBJ_NULL (struct tclcad_obj *)0
+struct ged_obj {
+    struct bu_list	l;
+    struct ged		*go_gedp;
+    struct ged_dm_view	go_head_views;
+    struct bu_vls	go_name;
+    struct bu_observer	go_observers;
+    struct bu_vls	go_more_args_callback;
+    struct bu_vls	go_rt_end_callback;
+    struct bu_vls	*go_prim_label_list;
+    int			go_prim_label_list_size;
+    int			go_refresh_on;
+    Tcl_Interp		*go_interp;
+};
+
+#define GED_OBJ_NULL (struct ged_obj *)0
+
 
 TCLCAD_EXPORT TCLCAD_EXTERN(int tclcad_tk_setup, (Tcl_Interp *interp));
 TCLCAD_EXPORT TCLCAD_EXTERN(void tclcad_auto_path, (Tcl_Interp *interp));
