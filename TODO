@@ -66,7 +66,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * group public library headers into subdirs, e.g. include/bu/bu.h, so
   it's clear when you're using headers from another library and
-  breaking encapsulation.
+  breaking encapsulation.  this should wait until after cmake merge.
 
 * offset surfaces.  provide feature edit operation to create a solid
   "level set" style object so you can represent degraded geometry
