@@ -17,7 +17,7 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* red lists standard attributes multiple times if stored non-standard
+* red removes shader attribute (and region id if -1)
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
