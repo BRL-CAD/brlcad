@@ -181,7 +181,7 @@ main(int argc, char *argv[])
 {
     char usage[] = "Usage: %s [-bviM] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.egg] brlcad_db.g object(s)\n";
 
-    int verbose;
+    int verbose = 0;
     int NMG_debug;			/* saved arg of -X, for longjmp handling */
     int ncpu = 1;			/* Number of processors */
     char *output_file = NULL;	/* output filename */
