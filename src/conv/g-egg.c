@@ -46,25 +46,14 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-static char usage[] = "Usage: %s [-bviM] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.egg] brlcad_db.g object(s)\n";
+struct gcv_data {
+    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
+    FILE *fp;
+    unsigned int tot_polygons;
+    struct bn_tol tol;
+};
 
-static int verbose;
-static int NMG_debug;			/* saved arg of -X, for longjmp handling */
-static int ncpu = 1;			/* Number of processors */
-static char *output_file = NULL;	/* output filename */
-static FILE *fp;			/* Output file pointer */
-static struct db_i *dbip;
-static struct model *the_model;
-static struct rt_tess_tol ttol;		/* tesselation tolerance in mm */
-static struct bn_tol tol;		/* calculation tolerance */
-static struct db_tree_state tree_state;	/* includes tol & model */
-
-static int regions_tried = 0;
-static int regions_converted = 0;
-static int regions_written = 0;
-static int inches = 0;
-static unsigned int tot_polygons = 0;
-
+static struct gcv_data gcvwriter;
 
 static void
 nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]))
@@ -85,20 +74,18 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     NMG_CK_MODEL(m);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &tol);
+    nmg_triangulate_model(m, &gcvwriter.tol);
 
     /* Write pertinent info for this region */
-    fprintf(fp, "  <VertexPool> %s {\n", (region_name+1));
+    fprintf(gcvwriter.fp, "  <VertexPool> %s {\n", (region_name+1));
 
     /* Build the VertexPool */
-    for (BU_LIST_FOR (s, shell, &r->s_hd))
-    {
+    for (BU_LIST_FOR (s, shell, &r->s_hd)) {
 	struct faceuse *fu;
 
 	NMG_CK_SHELL(s);
 
-	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd))
-	{
+	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
 	    struct loopuse *lu;
 	    vect_t facet_normal;
 
@@ -110,8 +97,7 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	    /* Grab the face normal and save it for all the vertex loops */
 	    NMG_GET_FU_NORMAL(facet_normal, fu);
 
-	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd))
-	    {
+	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
 		struct edgeuse *eu;
 
 		NMG_CK_LOOPUSE(lu);
@@ -120,15 +106,14 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		    continue;
 
 		/* check vertex numbers for each triangle */
-		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd))
-		{
+		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
 		    NMG_CK_EDGEUSE(eu);
 
 		    vert_count++;
 
 		    v = eu->vu_p->v_p;
 		    NMG_CK_VERTEX(v);
-		    fprintf(fp, "    <Vertex> %d {\n      %f %f %f\n      <Normal> { %f %f %f }\n    }\n",
+		    fprintf(gcvwriter.fp, "    <Vertex> %d {\n      %f %f %f\n      <Normal> { %f %f %f }\n    }\n",
 			    vert_count,
 			    V3ARGS(v->vg_p->coord),
 			    V3ARGS(facet_normal));
@@ -136,17 +121,15 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	    }
 	}
     }
-    fprintf(fp, "  }\n");
+    fprintf(gcvwriter.fp, "  }\n");
     vert_count = 0;
 
-    for (BU_LIST_FOR (s, shell, &r->s_hd))
-    {
+    for (BU_LIST_FOR (s, shell, &r->s_hd)) {
 	struct faceuse *fu;
 
 	NMG_CK_SHELL(s);
 
-	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd))
-	{
+	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
 	    struct loopuse *lu;
 	    vect_t facet_normal;
 
@@ -158,8 +141,7 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	    /* Grab the face normal and save it for all the vertex loops */
 	    NMG_GET_FU_NORMAL(facet_normal, fu);
 
-	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd))
-	    {
+	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
 		struct edgeuse *eu;
 
 		NMG_CK_LOOPUSE(lu);
@@ -167,35 +149,28 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		    continue;
 
-	        fprintf(fp, "  <Polygon> { \n    <RGBA> { 1 1 1 1 } \n    <VertexRef> { ");
+	        fprintf(gcvwriter.fp, "  <Polygon> { \n    <RGBA> { 1 1 1 1 } \n    <VertexRef> { ");
 		/* check vertex numbers for each triangle */
-		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd))
-		{
+		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
 		    NMG_CK_EDGEUSE(eu);
 
 		    vert_count++;
 
 		    v = eu->vu_p->v_p;
 		    NMG_CK_VERTEX(v);
-		    fprintf(fp, " %d", vert_count);
+		    fprintf(gcvwriter.fp, " %d", vert_count);
 		}
-	        fprintf(fp, " <Ref> { \"%s\" } }\n  }\n", region_name+1);
+	        fprintf(gcvwriter.fp, " <Ref> { \"%s\" } }\n  }\n", region_name+1);
 
 		region_polys++;
 	    }
 	}
     }
 
-    tot_polygons += region_polys;
+    gcvwriter.tot_polygons += region_polys;
     bu_free(region_name, "region name");
 }
 
-
-/* FIXME: this be a dumb hack to avoid void* conversion */
-struct gcv_data {
-    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
-};
-static struct gcv_data gcvwriter = {nmg_to_egg};
 
 
 /*
@@ -204,13 +179,30 @@ static struct gcv_data gcvwriter = {nmg_to_egg};
 int
 main(int argc, char *argv[])
 {
+    char usage[] = "Usage: %s [-bviM] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.egg] brlcad_db.g object(s)\n";
+
+    int verbose;
+    int NMG_debug;			/* saved arg of -X, for longjmp handling */
+    int ncpu = 1;			/* Number of processors */
+    char *output_file = NULL;	/* output filename */
+    struct db_i *dbip;
+    struct model *the_model;
+    struct rt_tess_tol ttol;		/* tesselation tolerance in mm */
+    struct db_tree_state tree_state;	/* includes tol & model */
+
+    int regions_tried = 0;
+    int regions_converted = 0;
+    int regions_written = 0;
+    int inches = 0;
+
+
     double percent;
     int i, use_mc=0;
 
     bu_setlinebuf(stderr);
 
     tree_state = rt_initial_tree_state;	/* struct copy */
-    tree_state.ts_tol = &tol;
+    tree_state.ts_tol = &gcvwriter.tol;
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
 
@@ -223,11 +215,13 @@ main(int argc, char *argv[])
 
     /* Set up calculation tolerance defaults */
     /* FIXME: These need to be improved */
-    tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
-    tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-5;
-    tol.para = 1 - tol.perp;
+    gcvwriter.tol.magic = BN_TOL_MAGIC;
+    gcvwriter.tol.dist = 0.0005;
+    gcvwriter.tol.dist_sq = gcvwriter.tol.dist * gcvwriter.tol.dist;
+    gcvwriter.tol.perp = 1e-5;
+    gcvwriter.tol.para = 1 - gcvwriter.tol.perp;
+
+    gcvwriter.tot_polygons = 0;
 
     /* init resources we might need */
     rt_init_resource(&rt_uniresource, 0, NULL);
@@ -264,9 +258,9 @@ main(int argc, char *argv[])
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
 		break;
 	    case 'D':
-		tol.dist = atof(bu_optarg);
-		tol.dist_sq = tol.dist * tol.dist;
-		rt_pr_tol(&tol);
+		gcvwriter.tol.dist = atof(bu_optarg);
+		gcvwriter.tol.dist_sq = gcvwriter.tol.dist * gcvwriter.tol.dist;
+		rt_pr_tol(&gcvwriter.tol);
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
@@ -291,10 +285,9 @@ main(int argc, char *argv[])
 	bu_exit(1, usage, argv[0]);
     }
 
-    fp = stdout;
+    gcvwriter.fp = stdout;
     if (output_file) {
-	if ((fp=fopen(output_file, "wb+")) == NULL)
-	{
+	if ((gcvwriter.fp=fopen(output_file, "wb+")) == NULL) {
 	    perror(argv[0]);
 	    bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", output_file);
 	}
@@ -303,6 +296,8 @@ main(int argc, char *argv[])
     /* Open brl-cad database */
     argc -= bu_optind;
     argv += bu_optind;
+
+    gcvwriter.func = nmg_to_egg;
 
     if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
 	perror(argv[0]);
@@ -327,15 +322,15 @@ main(int argc, char *argv[])
     }
 
     /* print the egg header shtuff, including the command line to execute it */
-    fprintf(fp, "<CoordinateSystem> { Z-Up }\n\n");
-    fprintf(fp, "<Comment> {\n  \"%s", *argv);
+    fprintf(gcvwriter.fp, "<CoordinateSystem> { Z-Up }\n\n");
+    fprintf(gcvwriter.fp, "<Comment> {\n  \"%s", *argv);
     for (i=1; i<argc; i++)
-	fprintf(fp, " %s", argv[i]);
-    fprintf(fp, "\"\n}\n");
+	fprintf(gcvwriter.fp, " %s", argv[i]);
+    fprintf(gcvwriter.fp, "\"\n}\n");
 
     /* Walk indicated tree(s).  Each region will be output separately */
     while (--argc) {
-	fprintf(fp, "<Group> %s {\n", *(argv+1));
+	fprintf(gcvwriter.fp, "<Group> %s {\n", *(argv+1));
 	(void) db_walk_tree(dbip,		/* db_i */
 			    1,		/* argc */
 			    (const char **)(++argv), /* argv */
@@ -345,7 +340,7 @@ main(int argc, char *argv[])
 			    use_mc?gcv_region_end_mc:gcv_region_end,	/* end func */
 			    use_mc?NULL:nmg_booltree_leaf_tess, /* leaf func */
 			    (genptr_t)&gcvwriter);  /* client_data */
-	fprintf(fp, "}\n");
+	fprintf(gcvwriter.fp, "}\n");
     }
 
     percent = 0;
@@ -364,10 +359,10 @@ main(int argc, char *argv[])
 		   regions_written, percent);
     }
 
-    bu_log("%ld triangles written\n", tot_polygons);
+    bu_log("%ld triangles written\n", gcvwriter.tot_polygons);
 
     if (output_file)
-	fclose(fp);
+	fclose(gcvwriter.fp);
 
     /* Release dynamic storage */
     nmg_km(the_model);
