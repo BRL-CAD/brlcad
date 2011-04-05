@@ -33,6 +33,7 @@ format for storing geospatial vector data commonly used by geographic
 information systems (GIS) software.  Shapefiles may be imported as 2D
 sketch geometry that can be extruded to a 3D representation.
 
+* fixed units conversion bug with mged 'title' command - Bob Parker
 * fixed memory management crash in the dem-g importer - Richard Weiss
 * fixed edcolors so it retains and accepts colors again  - Cliff Yapp
 * support for applying matrix edits to revolve primitives - Dongxu Li
