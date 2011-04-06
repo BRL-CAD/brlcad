@@ -1942,7 +1942,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     .$id.menubar.tools add separator
 
     .$id.menubar.tools add command -label "Upgrade Database..." -underline 1\
-	-command "dbupgrade"
+	-command "call_dbupgrade $id"
     hoc_register_menu_data "Tools" "Upgrade Database..." "Upgrade Database..."\
 	{ { summary "Upgrade to the current database format." }
 	    { see_also dbupgrade } }
@@ -3178,6 +3178,16 @@ proc mged_draw_grid {id} {
     # Note - the internal grid_draw cannot be set to 1 if a database
     #				 is not currently open (i.e. dbip == DBI_NULL).
     set mged_gui($id,grid_draw) [rset grid draw]
+}
+
+proc call_dbupgrade {id} {
+    catch {dbupgrade} msg
+
+    if {$msg != ""} {
+	# Calling with .$id instead of .$id.t to fool it into
+	# adding the msg text
+	distribute_text .$id dbupgrade $msg
+    }
 }
 
 # Local Variables:
