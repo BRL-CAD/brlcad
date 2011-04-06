@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file wdb_obj.c
+/** @file ged.c
  *
  * A quasi-object-oriented database interface.
  *
@@ -46,6 +46,8 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "plot3.h"
+#include "mater.h"
+#include "solid.h"
 
 #include "./ged_private.h"
 
@@ -99,6 +101,10 @@ ged_drawable_init(struct ged_drawable *gdp)
 {
     if (gdp == GED_DRAWABLE_NULL)
 	return;
+
+    if (BU_LIST_UNINITIALIZED(&_FreeSolid.l)) {
+	BU_LIST_INIT(&_FreeSolid.l);
+    }
 
     BU_LIST_INIT(&gdp->gd_headDisplay);
     BU_LIST_INIT(&gdp->gd_headVDraw);

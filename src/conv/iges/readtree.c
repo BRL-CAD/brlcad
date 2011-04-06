@@ -40,9 +40,8 @@ Readtree(mat_t *matp)
 	Readint(&op, "");
 	if (op < 0) {
 	    /* This is an operand */
-	    ptr = (union tree *)bu_malloc(sizeof(union tree),
-					  "Readtree: ptr");
-	    ptr->magic = RT_TREE_MAGIC;
+	    BU_GETUNION(ptr, tree);
+	    RT_INIT_TREE(ptr);
 	    ptr->tr_l.tl_op = OP_DB_LEAF;
 	    k = ((-op)-1)/2;
 	    if (k < 0 || k >= totentities) {
@@ -67,9 +66,8 @@ Readtree(mat_t *matp)
 	    Push(ptr);
 	} else {
 	    /* This is an operator */
-	    ptr = (union tree *)bu_malloc(sizeof(union tree),
-					  "Readtree: ptr");
-	    ptr->magic = RT_TREE_MAGIC;
+	    BU_GETUNION(ptr, tree);
+	    RT_INIT_TREE(ptr);
 	    switch (op) {
 		case 1:
 		    ptr->tr_b.tb_op = OP_UNION;

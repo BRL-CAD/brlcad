@@ -38,19 +38,23 @@
 #include "raytrace.h"
 
 /**
- * Define standard attribute types in BRL-CAD
- * geometry. (See the gattributes manual page)
- *
+ * Define standard attribute types in BRL-CAD geometry. (See the
+ * gattributes manual page) these should be a collective enumeration
+ * starting from 0 and increasing without any gaps in the numbers so
+ * db5_standard_attribute() can be used as an index-based iterator.
  */
 
-#define ATTR_REGION 0
-#define ATTR_REGION_ID 1
-#define ATTR_MATERIAL_ID 2
-#define ATTR_AIR 3
-#define ATTR_LOS 4
-#define ATTR_COLOR 5
-#define ATTR_SHADER 6
-#define ATTR_INHERIT 7
+enum {
+    ATTR_REGION = 0,
+    ATTR_REGION_ID,
+    ATTR_MATERIAL_ID,
+    ATTR_AIR,
+    ATTR_LOS,
+    ATTR_COLOR,
+    ATTR_SHADER,
+    ATTR_INHERIT,
+    ATTR_NULL
+};
 
 
 struct db5_type {
@@ -288,222 +292,198 @@ db5_type_sizeof_n_binu(const int minor)
 }
 
 
-size_t
-db5_is_standard_attribute(const char *attrname)
+const char *
+db5_standard_attribute(int idx)
 {
-    size_t i;
-    char *standard_attributes[8];
-    standard_attributes[0] = "region";
-    standard_attributes[1] = "region_id";
-    standard_attributes[2] = "material_id";
-    standard_attributes[3] = "los";
-    standard_attributes[4] = "air";
-    standard_attributes[5] = "color";
-    standard_attributes[6] = "oshader";
-    standard_attributes[7] = "inherit";
+    switch (idx) {
+	case ATTR_REGION:
+	    return "region";
+	case ATTR_REGION_ID:
+	    return "region_id";
+	case ATTR_MATERIAL_ID:
+	    return "material_id";
+	case ATTR_AIR:
+	    return "air";
+	case ATTR_LOS:
+	    return "los";
+	case ATTR_COLOR:
+	    return "color";
+	case ATTR_SHADER:
+	    return "shader";
+	case ATTR_INHERIT:
+	    return "inherit";
+	case ATTR_NULL:
+	    return NULL;
+    }
+    /* no match */
+    return NULL;
+}
 
-    for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, standard_attributes[i])) return 1;
+
+int
+db5_is_standard_attribute(const char *attr_want)
+{
+    int i = 0;
+    const char *attr_have = NULL;
+
+    if (!attr_want)
+	return 0;
+
+    for (i=0; (attr_have = db5_standard_attribute(i)) != NULL; i++) {
+	if (BU_STR_EQUAL(attr_want, attr_have)) return 1;
     }
 
     return 0;
 }
 
 
-/**
- * D B 5 _ S T A N D A R D I Z E _ A T T R I B U T E
- *
- * Function for recognizing various versions of the DB5 standard
- * attribute names that have been used - returns the attribute type
- * of the supplied attribute name, or -1 if it is not a recognized
- * variation of the standard attributes.
- *
- */
-size_t
-db5_standardize_attribute(const char *attrname)
+int
+db5_standardize_attribute(const char *attr)
 {
-    size_t i;
-    char *region_flag_names[2];
-    char *region_id_names[4];
-    char *material_id_names[5];
-    char *air_names[3];
-    char *los_names[2];
-    char *color_names[4];
-    char *shader_names[2];
-    char *inherit_names[2];
-    region_flag_names[0] = "region";
-    region_flag_names[1] = "REGION";
-    region_id_names[0] = "region_id";
-    region_id_names[1] = "REGION_ID";
-    region_id_names[2] = "id";
-    region_id_names[3] = "ID";
-    material_id_names[0] = "material_id";
-    material_id_names[1] = "MATERIAL_ID";
-    material_id_names[2] = "GIFTmater";
-    material_id_names[3] = "GIFT_MATERIAL";
-    material_id_names[4] = "mat";
-    los_names[0] = "los";
-    los_names[1] = "LOS";
-    air_names[0] = "air";
-    air_names[1] = "AIR";
-    air_names[2] = "AIRCODE";
-    color_names[0] = "color";
-    color_names[1] = "rgb";
-    color_names[2] = "RGB";
-    color_names[3] = "COLOR";
-    shader_names[0] = "oshader";
-    shader_names[1] = "SHADER";
-    inherit_names[0] = "inherit";
-    inherit_names[1] = "INHERIT";
+    /* FIXME: these should all be converted to case-insensitive
+     * comparisions for the standard attribute names.
+     */
 
-    for (i = 0; i < sizeof(region_flag_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, region_flag_names[i])) return ATTR_REGION;
-    }
+    if (!attr)
+	return ATTR_NULL;
 
-    for (i = 0; i < sizeof(region_id_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, region_id_names[i])) return ATTR_REGION_ID;
-    }
+    if (BU_STR_EQUAL(attr, "region"))
+	return ATTR_REGION;
+    if (BU_STR_EQUAL(attr, "REGION"))
+	return ATTR_REGION;
 
-    for (i = 0; i < sizeof(material_id_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, material_id_names[i])) return ATTR_MATERIAL_ID;
-    }
+    if (BU_STR_EQUAL(attr, "region_id"))
+	return ATTR_REGION_ID;
+    if (BU_STR_EQUAL(attr, "REGION_ID"))
+	return ATTR_REGION_ID;
+    if (BU_STR_EQUAL(attr, "id"))
+	return ATTR_REGION_ID;
+    if (BU_STR_EQUAL(attr, "ID"))
+	return ATTR_REGION_ID;
 
-    for (i = 0; i < sizeof(air_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, air_names[i])) return ATTR_AIR;
-    }
+    if (BU_STR_EQUAL(attr, "material_id"))
+	return ATTR_MATERIAL_ID;
+    if (BU_STR_EQUAL(attr, "MATERIAL_ID"))
+	return ATTR_MATERIAL_ID;
+    if (BU_STR_EQUAL(attr, "GIFTmater"))
+	return ATTR_MATERIAL_ID;
+    if (BU_STR_EQUAL(attr, "GIFT_MATERIAL"))
+	return ATTR_MATERIAL_ID;
+    if (BU_STR_EQUAL(attr, "mat"))
+	return ATTR_MATERIAL_ID;
 
-    for (i = 0; i < sizeof(los_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, los_names[i])) return ATTR_LOS;
-    }
+    if (BU_STR_EQUAL(attr, "air"))
+	return ATTR_AIR;
+    if (BU_STR_EQUAL(attr, "AIR"))
+	return ATTR_AIR;
+    if (BU_STR_EQUAL(attr, "AIRCODE"))
+	return ATTR_AIR;
 
-    for (i = 0; i < sizeof(color_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, color_names[i])) return ATTR_COLOR;
-    }
+    if (BU_STR_EQUAL(attr, "los"))
+	return ATTR_LOS;
+    if (BU_STR_EQUAL(attr, "LOS"))
+	return ATTR_LOS;
 
-    for (i = 0; i < sizeof(shader_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, shader_names[i])) return ATTR_SHADER;
-    }
+    if (BU_STR_EQUAL(attr, "color"))
+	return ATTR_COLOR;
+    if (BU_STR_EQUAL(attr, "COLOR"))
+	return ATTR_COLOR;
+    if (BU_STR_EQUAL(attr, "rgb"))
+	return ATTR_COLOR;
+    if (BU_STR_EQUAL(attr, "RGB"))
+	return ATTR_COLOR;
 
-    for (i = 0; i < sizeof(inherit_names)/sizeof(char *); i++) {
-	if (BU_STR_EQUAL(attrname, inherit_names[i])) return ATTR_INHERIT;
-    }
+    if (BU_STR_EQUAL(attr, "oshader"))
+	return ATTR_SHADER;
+    if (BU_STR_EQUAL(attr, "SHADER"))
+	return ATTR_SHADER;
 
-    return -1;
+    if (BU_STR_EQUAL(attr, "inherit"))
+	return ATTR_INHERIT;
+    if (BU_STR_EQUAL(attr, "INHERIT"))
+	return ATTR_INHERIT;
 
+    return ATTR_NULL;
 }
 
 
-/**
- * D B 5 _ S T A N D A R D I Z E _ A V S
- *
- * Ensures that an attribute set containing one or more standard
- * attributes, for every attribute type present one of the AV
- * pairs conforms to modern naming conventions.  It will not remove
- * other attributes of the same type, but will warn if they are found.
- *
- * @file: db5_types.c
- */
-void
+size_t
 db5_standardize_avs(struct bu_attribute_value_set *avs)
 {
-    size_t i, attr_type;
-    struct bu_attribute_value_set avstmp;
+    size_t conflict = 0;
+    int attr_type;
+
+    const char *stdattr;
+    const char *added;
+
+    struct bu_attribute_value_set newavs;
     struct bu_attribute_value_pair *avpp;
-    int has_standard[8];
-    bu_avs_init_empty(&avstmp);
-    avpp = avs->avp;
-    for (i=0; i < 8; i++) {
-	has_standard[i] = 0;
-    }
-    for (i=0; i < avs->count; i++, avpp++) {
-	if (BU_STR_EQUAL(avpp->name, "region")) has_standard[ATTR_REGION] = 1;
-	if (BU_STR_EQUAL(avpp->name, "region_id")) has_standard[ATTR_REGION_ID] = 1;
-	if (BU_STR_EQUAL(avpp->name, "material_id")) has_standard[ATTR_MATERIAL_ID] = 1;
-	if (BU_STR_EQUAL(avpp->name, "air")) has_standard[ATTR_AIR] = 1;
-	if (BU_STR_EQUAL(avpp->name, "los")) has_standard[ATTR_LOS] = 1;
-	if (BU_STR_EQUAL(avpp->name, "color")) has_standard[ATTR_COLOR] = 1;
-	if (BU_STR_EQUAL(avpp->name, "oshader")) has_standard[ATTR_SHADER] = 1;
-	if (BU_STR_EQUAL(avpp->name, "inherit")) has_standard[ATTR_INHERIT] = 1;
+
+    /* check inputs */
+    BU_CK_AVS(avs);
+    if (avs->count <= 0)
+	return 0;
+
+    bu_avs_init_empty(&newavs);
+
+    /* FIRST PASS: identify any attributes that are already in
+     * standard form since they take priority if there are duplicates
+     * with different values.
+     */
+    for (BU_AVS_FOR(avpp, avs)) {
+	/* see if this is a standarizable attribute name */
+	attr_type = db5_standardize_attribute(avpp->name);
+
+	/* get the standard name for this type */
+	stdattr = db5_standard_attribute(attr_type);
+
+	/* name is already in standard form, add it */
+	if (attr_type != ATTR_NULL && BU_STR_EQUAL(stdattr, avpp->name))
+	    (void)bu_avs_add(&newavs, stdattr, avpp->value);
     }
 
-    avpp = avs->avp;
-    for (i=0; i < avs->count; i++, avpp++) {
+    /* SECOND PASS: check for duplicates and non-standard
+     * attributes.
+     */
+    for (BU_AVS_FOR(avpp, avs)) {
+	/* see if this is a standarizable attribute name */
 	attr_type = db5_standardize_attribute(avpp->name);
-	switch (attr_type) {
-	    case ATTR_REGION:
-		/* In the case of regions, values like Yes and 1 are causing trouble
-		 * somewhere in the code.  Do "R" for all affirmative cases and
-		 * strip any non-affirmative cases out of the avs */
-		if (bu_str_true(avpp->value)) {
-		    (void)bu_avs_add(&avstmp, "region", "R");
-		    has_standard[ATTR_REGION] = 1;
-		}
-		break;
-	    case ATTR_REGION_ID:
-		if (has_standard[ATTR_REGION_ID] != 1) {
-		    (void)bu_avs_add(&avstmp, "region_id", bu_strdup(avpp->value));
-		    has_standard[ATTR_REGION_ID] = 1;
-		} else {
-		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
-		}
-		break;
-	    case ATTR_MATERIAL_ID:
-		if (has_standard[ATTR_MATERIAL_ID] != 1) {
-		    (void)bu_avs_add(&avstmp, "material_id", bu_strdup(avpp->value));
-		    has_standard[ATTR_MATERIAL_ID] = 1;
-		} else {
-		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
-		}
-		break;
-	    case ATTR_AIR:
-		if (has_standard[ATTR_AIR] != 1) {
-		    (void)bu_avs_add(&avstmp, "air", bu_strdup(avpp->value));
-		    has_standard[ATTR_AIR] = 1;
-		} else {
-		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
-		}
-		break;
-	    case ATTR_LOS:
-		if (has_standard[ATTR_LOS] != 1) {
-		    (void)bu_avs_add(&avstmp, "los", bu_strdup(avpp->value));
-		    has_standard[ATTR_LOS] = 1;
-		} else {
-		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
-		}
-		break;
-	    case ATTR_COLOR:
-		if (has_standard[ATTR_COLOR] != 1) {
-		    (void)bu_avs_add(&avstmp, "color", bu_strdup(avpp->value));
-		    has_standard[ATTR_COLOR] = 1;
-		} else {
-		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
-		}
-		break;
-	    case ATTR_SHADER:
-		if (has_standard[ATTR_SHADER] != 1) {
-		    (void)bu_avs_add(&avstmp, "oshader", bu_strdup(avpp->value));
-		    has_standard[ATTR_SHADER] = 1;
-		} else {
-		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
-		}
-		break;
-	    case ATTR_INHERIT:
-		if (has_standard[ATTR_INHERIT] != 1) {
-		    (void)bu_avs_add(&avstmp, "inherit", bu_strdup(avpp->value));
-		    has_standard[ATTR_INHERIT] = 1;
-		} else {
-		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
-		}
-		break;
-	    default:
-		/* not a standard attribute, just copy it*/
-		(void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
-		break;
+
+	/* get the standard name for this type */
+	stdattr = db5_standard_attribute(attr_type);
+
+	/* see if we already added this attribute */
+	added = bu_avs_get(&newavs, stdattr);
+
+	if (attr_type != ATTR_NULL && added == NULL) {
+
+	    /* case 1: name is "standardizable" and not added */
+
+	    (void)bu_avs_add(&newavs, stdattr, avpp->value);
+	} else if (attr_type != ATTR_NULL && BU_STR_EQUAL(added, avpp->value)) {
+
+	    /* case 2: name is "standardizable", but we already added the same value */
+
+	    /* ignore/skip it (because it's the same value) */
+	} else if (attr_type != ATTR_NULL && !BU_STR_EQUAL(added, avpp->value)) {
+
+	    /* case 3: name is "standardizable", but we already added something else */
+
+	    /* preserve the conflict, keep the old value too */
+	    (void)bu_avs_add(&newavs, avpp->name, avpp->value);
+	    conflict++;
+	} else {
+
+	    /* everything else: add it */
+
+	    (void)bu_avs_add(&newavs, avpp->name, avpp->value);
 	}
     }
     bu_avs_free(avs);
-    bu_avs_merge(avs, &avstmp);
-    bu_avs_free(&avstmp);
+    bu_avs_merge(avs, &newavs);
+    bu_avs_free(&newavs);
+
+    return conflict;
 }
 
 
@@ -517,7 +497,11 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
     struct bu_vls newval;
     bu_vls_init(&newval);
 
+    /* check inputs */
+    RT_CK_DBI(dbip);
+    RT_CK_DIR(dp);
     RT_CK_COMB(comb);
+
     bu_avs_init_empty(&avs);
 
     if (!db5_get_attributes(dbip, &avs, dp)) {
@@ -525,7 +509,7 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	db5_standardize_avs(&avs);
 
 	/* region flag */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "region"));
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_REGION)));
 	if (bu_str_true(bu_vls_addr(&newval))) {
 	    comb->region_flag = 1;
 	    dp->d_flags |= RT_DIR_REGION;
@@ -535,7 +519,7 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	}
 
 	/* region_id */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "region_id"));
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_REGION_ID)));
 	attr_num_val = atoi(bu_vls_addr(&newval));
 	if (attr_num_val >= 0 || attr_num_val == -1) {
 	    comb->region_id = attr_num_val;
@@ -544,7 +528,7 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	}
 
 	/* material_id */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "material_id"));
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_MATERIAL_ID)));
 	attr_num_val = atoi(bu_vls_addr(&newval));
 	if (attr_num_val >= 0) {
 	    comb->GIFTmater = attr_num_val;
@@ -553,7 +537,7 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	}
 
 	/* air */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "air"));
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_AIR)));
 	attr_num_val = atoi(bu_vls_addr(&newval));
 	if (attr_num_val == 0 || attr_num_val == 1) {
 	    comb->aircode = attr_num_val;
@@ -562,12 +546,12 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	}
 
 	/* los */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "los"));
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_LOS)));
 	attr_num_val = atoi(bu_vls_addr(&newval)); /* Is LOS really limited to integer values?? - also, need some sanity checking */
 	comb->los = attr_num_val;
 
 	/* color */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "color"));
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_COLOR)));
 	if (bu_avs_get(&avs, "color")) {
 	    if (sscanf(bu_vls_addr(&newval), "%i/%i/%i", color+0, color+1, color+2) == 3) {
 		for (i = 0; i < 3; i++) {
@@ -583,10 +567,10 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	}
 
 	/* oshader */
-	bu_vls_strcpy(&comb->shader, bu_avs_get(&avs, "oshader"));
+	bu_vls_strcpy(&comb->shader, bu_avs_get(&avs, db5_standard_attribute(ATTR_SHADER)));
 
 	/* inherit */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "inherit"));
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_INHERIT)));
 	if (bu_str_true(bu_vls_addr(&newval))) {
 	    comb->inherit = 1;
 	} else {
@@ -605,7 +589,11 @@ db5_update_std_attributes(struct db_i *dbip, struct directory *dp, const struct 
     struct bu_attribute_value_set avs;
     struct bu_vls newval;
 
+    /* check inputs */
+    RT_CK_DBI(dbip);
+    RT_CK_DIR(dp);
     RT_CK_COMB(comb);
+
     bu_avs_init_empty(&avs);
     bu_vls_init(&newval);
 

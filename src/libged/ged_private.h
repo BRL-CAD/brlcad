@@ -293,8 +293,7 @@ BU_EXTERN (void _ged_setup_rt,
 /* defined in red.c */
 
 extern char _ged_tmpfil[MAXPATHLEN];
-extern const char _ged_tmpcomb[16];
-extern char _delims[];
+
 
 BU_EXTERN(int _ged_make_tree,
 	  (struct ged *gedp,

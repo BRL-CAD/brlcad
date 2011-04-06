@@ -600,7 +600,6 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
 
 found_it:
     RT_GET_TREE(curtree, tsp->ts_resp);
-    curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_SOLID;
     curtree->tr_a.tu_stp = stp;
     /* regionp will be filled in later by _rt_tree_region_assign() */

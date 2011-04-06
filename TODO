@@ -17,15 +17,13 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* NA-DA!
+* red removes shader attribute (and region id if -1)
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
-* dem-g looks like it is broken again - test files available from here:
-  http://dds.cr.usgs.gov/pub/data/DEM/250/
-  Should probably set up a regression test on this...
+* implement support for the other file entity types to libbu
 
 * fix bottie crash on 32b builds
 
@@ -63,6 +61,19 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* restore libged axis/grid commands code made in r44153 but with
+  libged decoupled from libdm/libfb.
+
+* migrate / update screengrab command in libged (libfb/libdm dep)
+
+* group public library headers into subdirs, e.g. include/bu/bu.h, so
+  it's clear when you're using headers from another library and
+  breaking encapsulation.  this should wait until after cmake merge.
+
+* add code regression that makes sure none of our code cheats by
+  including bu/bu.h -- e.g., make sure BU_CPPFLAGS et al are used so
+  new dependencies are obvious and intentional.
 
 * offset surfaces.  provide feature edit operation to create a solid
   "level set" style object so you can represent degraded geometry
@@ -118,11 +129,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * release dm X get_color() memory
 
 * update g-xxx_facets to use libgcv
-
-* bu_basename() says it'll return things that it probably won't
-  return.  like /path/to/file/ should return file and //// returning /
-  instead of empty.  probably should portably handle path separators
-  too, otherwise it's kind of meaningless in bu.
 
 * add distribution test for making sure the source code conventions
   for function replacements are being respected (e.g., bu_strcmp()

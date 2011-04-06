@@ -33,6 +33,8 @@ format for storing geospatial vector data commonly used by geographic
 information systems (GIS) software.  Shapefiles may be imported as 2D
 sketch geometry that can be extruded to a 3D representation.
 
+* fixed units conversion bug with mged 'title' command - Bob Parker
+* fixed memory management crash in the dem-g importer - Richard Weiss
 * fixed edcolors so it retains and accepts colors again  - Cliff Yapp
 * support for applying matrix edits to revolve primitives - Dongxu Li
 * fixed mged 'red' command bug on Windows - Sean Morrison, Cliff Yapp
@@ -40,9 +42,11 @@ sketch geometry that can be extruded to a 3D representation.
 * fixed archer and rtwizard startup failure bug on Mac - Sean Morrison
 * fixed bug starting up the Combination Editor in mged - Sean Morrison
 * mged 'mater' command interactive prompting restored - Sean Morrison
+* added pix2fb and fb2pix screenshot commands to archer - Bob Parker
 * fixed bug running nirt on a Windows command terminal - Bob Parker
 * improved wireframe updating when editing within mged - Sean Morrison
 * added -T bot_mintie BoT optimization options to nirt - Sean Morrison
+* fixed Windows display manager bug when drawing strings - Bob Parker
 * mged command-click zoom binding for one button mice - Sean Morrison
 * removed 'txyz-pl' utility tool in favor of 'xyz-pl' - Sean Morrison
 * new shp-g importer for Esri Shapefile geometry files - Sean Morrison

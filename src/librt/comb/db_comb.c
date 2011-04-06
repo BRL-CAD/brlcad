@@ -264,7 +264,6 @@ rt_comb_import4(
 
 	    RT_GET_TREE(tp, resp);
 	    rt_tree_array[j].tl_tree = tp;
-	    tp->tr_l.magic = RT_TREE_MAGIC;
 	    tp->tr_l.tl_op = OP_DB_LEAF;
 
 	    /* bu_strlcpy not safe here, buffer size mismatch */
@@ -1095,7 +1094,6 @@ db_mkbool_tree(
 	    continue;
 
 	RT_GET_TREE(xtp, resp);
-	xtp->magic = RT_TREE_MAGIC;
 	xtp->tr_b.tb_left = curtree;
 	xtp->tr_b.tb_right = tlp->tl_tree;
 	xtp->tr_b.tb_regionp = (struct region *)0;

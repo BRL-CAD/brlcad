@@ -520,7 +520,7 @@ db5_export_object3(
     need += 8;	/* pad and magic2 */
 
     /* Allocate the buffer for the combined external representation */
-    out->ext_magic = BU_EXTERNAL_MAGIC;
+    BU_INIT_EXTERNAL(out);
     out->ext_buf = bu_malloc(need, "external object3");
     out->ext_nbytes = need;		/* will be trimmed, below */
 
@@ -717,10 +717,19 @@ rt_db_cvt_to_external5(
     int minor;
     int ret;
 
+    /* check inputs */
+    if (!name) {
+	bu_log("rt_db_cvt_to_external5 expecting non-NULL name parameter\n");
+	return -1;
+    }
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);	/* may be null */
     RT_CK_RESOURCE(resp);
+    
+    /* prepare output */
+    BU_INIT_EXTERNAL(ext);
     BU_INIT_EXTERNAL(&body);
+    BU_INIT_EXTERNAL(&attributes);
 
     minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
 
@@ -733,7 +742,6 @@ rt_db_cvt_to_external5(
 	bu_log("rt_db_cvt_to_external5(%s):  ft_export5 failure\n",
 	       name);
 	bu_free_external(&body);
-	BU_INIT_EXTERNAL(ext);
 	return -1;		/* FAIL */
     }
     BU_CK_EXTERNAL(&body);
@@ -742,15 +750,16 @@ rt_db_cvt_to_external5(
     if (ip->idb_avs.magic == BU_AVS_MAGIC) {
 	db5_export_attributes(&attributes, &ip->idb_avs);
 	BU_CK_EXTERNAL(&attributes);
-    } else {
-	BU_INIT_EXTERNAL(&attributes);
     }
 
+    /* serialize the object with attributes */
     db5_export_object3(ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 		       name, 0, &attributes, &body,
 		       major, minor,
 		       DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
     BU_CK_EXTERNAL(ext);
+
+    /* cleanup */
     bu_free_external(&body);
     bu_free_external(&attributes);
 
@@ -906,9 +915,9 @@ rt_db_put_internal5(
     RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
     RT_CK_RESOURCE(resp);
-
     BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
 
+    BU_INIT_EXTERNAL(&ext);
     if (rt_db_cvt_to_external5(&ext, dp->d_namep, ip, 1.0, dbip, resp, major) < 0) {
 	bu_log("rt_db_put_internal5(%s):  export failure\n",
 	       dp->d_namep);
@@ -932,12 +941,12 @@ rt_db_put_internal5(
     if (db_write(dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr) < 0) {
 	goto fail;
     }
- ok:
+ok:
     bu_free_external(&ext);
     rt_db_free_internal(ip);
     return 0;			/* OK */
 
- fail:
+fail:
     bu_free_external(&ext);
     rt_db_free_internal(ip);
     return -2;		/* FAIL */

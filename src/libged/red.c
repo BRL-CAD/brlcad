@@ -32,6 +32,7 @@
 #include "bio.h"
 
 #include "db.h"
+#include "raytrace.h"
 
 #include "./ged_private.h"
 
@@ -40,12 +41,16 @@
  * behind the scenes, not be an API function. should eliminate direct
  * calls to these functions.
  */
-extern size_t db5_is_standard_attribute(const char *attrname);
-extern void db5_standardize_avs(struct bu_attribute_value_set *avs);
+extern int db5_is_standard_attribute(const char *attr_want);
 
 
+/* also accessed by put_comb.c */
 char _ged_tmpfil[MAXPATHLEN] = {0};
-char _delims[] = " \t/";	/* allowable delimiters */
+
+
+static const char combseparator[] = "---------- Combination Tree ----------\n";
+static const char *combtree_header = "---*[[:space:]]*Combination Tree[[:space:]]*---*\r?\n";
+
 
 static int
 get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val) 
@@ -100,8 +105,8 @@ _ged_print_matrix(FILE *fp, matp_t matrix)
 int
 _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *matrix, int *name_end)
 {
-    int ret = 0;
-    regex_t matrix_entry, full_matrix, whitespace_regex;
+    int ret = 1;
+    regex_t matrix_entry, full_matrix, nonwhitespace_regex;
     regmatch_t *float_locations;
     struct bu_vls current_substring, matrix_substring;
     int floatcnt, tail_start;
@@ -109,11 +114,17 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
     const char *float_string = "[+-]?[0-9]*[.]?[0-9]+([eE][+-]?[0-9]+)?";
 
     bu_vls_init(&current_substring);
+    bu_vls_init(&matrix_substring);
     bu_vls_sprintf(&current_substring, "(%s[[:space:]]+)", float_string);
     regcomp(&matrix_entry, bu_vls_addr(&current_substring), REG_EXTENDED);
-    bu_vls_sprintf(&current_substring, "[[:space:]]+(%s[[:space:]]+) {15}(%s)", float_string, float_string);
+    bu_vls_sprintf(&current_substring,
+		   /* broken into two strings so auto-formatting
+		    * doesn't inject space between ')' and '{'
+		    */
+		   "[[:space:]]+(%s[[:space:]]+)"
+		   "{15}(%s)", float_string, float_string);
     regcomp(&full_matrix, bu_vls_addr(&current_substring), REG_EXTENDED);
-    regcomp(&whitespace_regex, "([^[:space:]])", REG_EXTENDED);
+    regcomp(&nonwhitespace_regex, "([^[:blank:]])", REG_EXTENDED);
     
     float_locations = (regmatch_t *)bu_calloc(full_matrix.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
  
@@ -121,7 +132,8 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
     float_locations[0].rm_so = 0;
     float_locations[0].rm_eo = strlength;
     while (floatcnt < 16 && floatcnt >= 0) {
-	if (!regexec(&matrix_entry, currptr, matrix_entry.re_nsub, float_locations, REG_STARTEND)) {
+	if (regexec(&matrix_entry, currptr, matrix_entry.re_nsub, float_locations, REG_STARTEND) == 0) {
+	    /* matched */
 	    floatcnt++;
 	    float_locations[0].rm_so = float_locations[0].rm_eo;
 	    float_locations[0].rm_eo = strlength;
@@ -133,8 +145,8 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 	/* Possible matrix - use matrix regex to locate it */
 	float_locations[0].rm_so = 0;
 	float_locations[0].rm_eo = strlength;
-	if (!regexec(&full_matrix, currptr, full_matrix.re_nsub, float_locations, REG_STARTEND)) {
-	    bu_vls_init(&matrix_substring);
+	if (regexec(&full_matrix, currptr, full_matrix.re_nsub, float_locations, REG_STARTEND) == 0) {
+	    /* matched */
 	    bu_vls_trunc(&matrix_substring, 0);
 	    bu_vls_strncpy(&matrix_substring, currptr + float_locations[0].rm_so, float_locations[0].rm_eo - float_locations[0].rm_so);
 	    *name_end = float_locations[0].rm_so;
@@ -145,7 +157,8 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 	    float_locations[0].rm_so = 0;
 	    float_locations[0].rm_eo = bu_vls_strlen(&matrix_substring);
 	    while (floatcnt < 16) {
-		if (!regexec(&matrix_entry, floatptr, matrix_entry.re_nsub, float_locations, REG_STARTEND)) {
+		if (regexec(&matrix_entry, floatptr, matrix_entry.re_nsub, float_locations, REG_STARTEND) == 0) {
+		    /* matched */
 		    bu_vls_trunc(&current_substring, 0);
 		    bu_vls_strncpy(&current_substring, currptr + float_locations[0].rm_so, float_locations[0].rm_eo - float_locations[0].rm_so);
 		    (*matrix)[floatcnt] = atof(floatptr); 
@@ -163,11 +176,12 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 	    bu_vls_trunc(&current_substring, 0);
 	    bu_vls_strncpy(&current_substring, currptr + tail_start, strlength - tail_start - 1);
 	    /* Need to check for non-whitespace in the distance-from-end zone */
-	    if (regexec(&whitespace_regex, bu_vls_addr(&current_substring), whitespace_regex.re_nsub, float_locations, 0) != 0) {
-		ret = 0;
-	    } else {
+	    if (regexec(&nonwhitespace_regex, bu_vls_addr(&current_substring), nonwhitespace_regex.re_nsub, float_locations, 0) == 0) {
+		/* matched */
 	        bu_vls_printf(&gedp->ged_result_str, "Saw something other than whitespace after matrix - error!\n");
 		ret = -1;
+	    } else {
+		ret = 0;
 	    }
 	} else {
 	    bu_vls_printf(&gedp->ged_result_str, "Yikes!  Found 16 or more float matches in a comb string but no valid matrix!!\n");
@@ -185,16 +199,14 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
     bu_vls_free(&current_substring);
     regfree(&matrix_entry);
     regfree(&full_matrix);
-    regfree(&whitespace_regex);
+    regfree(&nonwhitespace_regex);
 
-    if (ret < 1)
-	return ret;
-    return 1;	
+    return ret;
 }
 
 
 HIDDEN int
-build_comb(struct ged *gedp, struct directory *dp)
+build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
 {
     struct rt_comb_internal *comb;
     size_t node_count=0;
@@ -204,7 +216,7 @@ build_comb(struct ged *gedp, struct directory *dp)
     struct rt_db_internal intern, localintern;
     struct rt_tree_array *rt_tree_array;
     const char *currptr; 
-    regex_t whitespace_regex, attr_regex, combtree_regex, combtree_op_regex;
+    regex_t nonwhitespace_regex, attr_regex, combtree_regex, combtree_op_regex;
     regmatch_t *result_locations;
     struct bu_vls current_substring, attr_vls, val_vls, curr_op_vls, next_op_vls;
     struct bu_mapped_file *redtmpfile;
@@ -212,7 +224,8 @@ build_comb(struct ged *gedp, struct directory *dp)
     int ret, gedret, combtagstart, combtagend;
     struct bu_attribute_value_set avs;
     matp_t matrix;
-    const char *combtree_header = "-------------Combination Tree------------:\r?\n";
+    struct bu_vls *target_name = bu_malloc(sizeof(struct bu_vls), "target vls");
+    bu_vls_init(target_name);
  
     rt_tree_array = (struct rt_tree_array *)NULL;
  
@@ -237,11 +250,11 @@ build_comb(struct ged *gedp, struct directory *dp)
     }
 
     /* Set up the regular expressions */
-    regcomp(&whitespace_regex, "([^[:space:]])", REG_EXTENDED);
+    regcomp(&nonwhitespace_regex, "([^[:space:]])", REG_EXTENDED);
     regcomp(&attr_regex, "(.+[[:space:]]+=[[:blank:]]+.*)", REG_EXTENDED|REG_NEWLINE);
     bu_vls_sprintf(&current_substring, "(%s)", combtree_header);
     regcomp(&combtree_regex, bu_vls_addr(&current_substring), REG_EXTENDED);
-    regcomp(&combtree_op_regex, "([[:space:]]+[[.-.][.+.]u][[:space:]]+)", REG_EXTENDED);
+    regcomp(&combtree_op_regex, "([[:blank:]]+[[.-.][.+.]u][[:blank:]]+)", REG_EXTENDED);
     
 
     /* Need somewhere to hold the results - initially, size according to attribute regex */
@@ -252,31 +265,37 @@ build_comb(struct ged *gedp, struct directory *dp)
      */
     currptr = (const char *)(redtmpfile->buf);
     ret = regexec(&combtree_regex, currptr, combtree_regex.re_nsub , result_locations, 0);
-    if (!ret) {
+    if (ret == 0) {
+	/* matched */
+
 	combtagstart = result_locations[0].rm_so;
 	combtagend = result_locations[0].rm_eo;
 	attrcumulative = 0;
-	if (!regexec(&combtree_regex, currptr + combtagend, combtree_regex.re_nsub, result_locations, 0)) {
+	if (regexec(&combtree_regex, currptr + combtagend, combtree_regex.re_nsub, result_locations, 0) == 0) {
+	    /* matched */
+
 	    bu_vls_printf(&gedp->ged_result_str, "ERROR - multiple instances of comb tree header \"%s\" in temp file!", combtree_header);
 	    bu_vls_printf(&gedp->ged_result_str, "cannot locate comb tree, aborting\n");
 	    bu_vls_free(&current_substring);
-	    regfree(&whitespace_regex);
+	    regfree(&nonwhitespace_regex);
 	    regfree(&attr_regex);
 	    regfree(&combtree_regex);
 	    regfree(&combtree_op_regex);
 	    bu_free(result_locations, "free regex results array\n");
 	    bu_close_mapped_file(redtmpfile);
+
 	    return -1;
 	}
     } else {
 	bu_vls_printf(&gedp->ged_result_str, "cannot locate comb tree, aborting\n");
 	bu_vls_free(&current_substring);
-	regfree(&whitespace_regex);
+	regfree(&nonwhitespace_regex);
 	regfree(&attr_regex);
 	regfree(&combtree_regex);
 	regfree(&combtree_op_regex);
 	bu_free(result_locations, "free regex results array\n");
 	bu_close_mapped_file(redtmpfile);
+
 	return -1;
     }
 
@@ -286,20 +305,25 @@ build_comb(struct ged *gedp, struct directory *dp)
     bu_avs_init_empty(&avs);
     while (attrcumulative < combtagstart - 1) {
 	/* If attributes are present, the first line must match the attr regex - mult-line attribute names are not supported. */
-	if (regexec(&attr_regex, currptr, attr_regex.re_nsub , result_locations, 0)) {
+	if (regexec(&attr_regex, currptr, attr_regex.re_nsub , result_locations, 0) != 0) {
+	    /* did NOT match */
+
 	    bu_vls_printf(&gedp->ged_result_str, "invalid attribute line\n");
 	    bu_vls_free(&current_substring);
 	    bu_vls_free(&attr_vls);
 	    bu_vls_free(&val_vls);
-	    regfree(&whitespace_regex);
+	    regfree(&nonwhitespace_regex);
 	    regfree(&attr_regex);
 	    regfree(&combtree_regex);
 	    regfree(&combtree_op_regex);
 	    bu_avs_free(&avs);
 	    bu_free(result_locations, "free regex results array\n");
 	    bu_close_mapped_file(redtmpfile);
+
 	    return -1;
 	} else {
+	    /* matched */
+
 	    /* If an attribute line is found, set the attr pointers and look for the next attribute, if any.  Multi-line attribute values 
 	     * are supported, but only if the line does not itself match the format for an attribute (i.e. no equal sign 
 	     * surrounded by spaces or tabs. 
@@ -307,7 +331,9 @@ build_comb(struct ged *gedp, struct directory *dp)
 	    attrstart = result_locations[0].rm_so;
 	    attrend = result_locations[0].rm_eo;
 	    attrcumulative += attrend;
-	    if (!regexec(&attr_regex, (const char *)(redtmpfile->buf) + attrcumulative, attr_regex.re_nsub , result_locations, 0)) {
+	    if (regexec(&attr_regex, (const char *)(redtmpfile->buf) + attrcumulative, attr_regex.re_nsub , result_locations, 0) == 0) {
+		/* matched */
+
 		if (attrcumulative + result_locations[0].rm_eo < combtagstart) {
 		    attrend += result_locations[0].rm_so - 1; 
 		    attrcumulative += result_locations[0].rm_so - 1;
@@ -322,6 +348,10 @@ build_comb(struct ged *gedp, struct directory *dp)
 	    bu_vls_trunc(&current_substring, 0);
 	    bu_vls_strncpy(&current_substring, currptr + attrstart, attrend - attrstart);
 	    if (get_attr_val_pair(bu_vls_addr(&current_substring), &attr_vls, &val_vls)) {
+		if (!BU_STR_EQUAL(bu_vls_addr(&val_vls), "") && BU_STR_EQUAL(bu_vls_addr(&attr_vls), "name")) {
+		    bu_vls_sprintf(target_name, "%s", bu_vls_addr(&val_vls));
+		    (*final_name) = target_name;
+		}
 		if (!BU_STR_EQUAL(bu_vls_addr(&val_vls), "") && !BU_STR_EQUAL(bu_vls_addr(&attr_vls), "name"))
 		    (void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls)); 
 	    }
@@ -339,13 +369,11 @@ build_comb(struct ged *gedp, struct directory *dp)
     currptr = (const char *)(redtmpfile->buf) + combtagend;
     node_count = 0;
     ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub , result_locations, 0);
-    if (!ret) {
-	while (!ret) {
-	    currptr = currptr + result_locations[0].rm_eo;
-	    ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub , result_locations, 0);
-	    node_count++;
-	}
-    }    
+    while (ret == 0) {
+	currptr = currptr + result_locations[0].rm_eo;
+	ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub , result_locations, 0);
+	node_count++;
+    }
     currptr = (const char *)(redtmpfile->buf) + combtagend;
     treecumulative = 0;
     name_start = 0;
@@ -354,22 +382,27 @@ build_comb(struct ged *gedp, struct directory *dp)
     bu_vls_init(&next_op_vls);
 
     ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub , result_locations, 0);
-    if (!ret) {
+    if (ret == 0) {
+	/* matched */
+
         /* Check for non-whitespace garbage between first operator and start of comb tree definition */
 	result_locations[0].rm_eo = result_locations[0].rm_so;
 	result_locations[0].rm_so = 0;
-	if (regexec(&whitespace_regex, currptr, whitespace_regex.re_nsub, result_locations, REG_STARTEND) == 0) {
+	if (regexec(&nonwhitespace_regex, currptr, nonwhitespace_regex.re_nsub, result_locations, REG_STARTEND) == 0) {
+	    /* matched */
+
 	    bu_vls_printf(&gedp->ged_result_str, "Saw something other than comb tree entries after comb tree tag - error!\n");
 	    bu_vls_free(&current_substring);
 	    bu_vls_free(&curr_op_vls);
 	    bu_vls_free(&next_op_vls);
-	    regfree(&whitespace_regex);
+	    regfree(&nonwhitespace_regex);
 	    regfree(&attr_regex);
 	    regfree(&combtree_regex);
 	    regfree(&combtree_op_regex);
 	    bu_avs_free(&avs);
 	    bu_free(result_locations, "free regex results array\n");
 	    bu_close_mapped_file(redtmpfile);
+
 	    return GED_ERROR;
 	}
         ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub , result_locations, 0);
@@ -379,10 +412,11 @@ build_comb(struct ged *gedp, struct directory *dp)
 	currptr = currptr + result_locations[0].rm_eo;
 	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
 	/* As long as we have operators ahead of us in the tree, we have comb entries to handle */
-	while (!ret) {
+	while (ret == 0) {
 	    ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub , result_locations, 0);
 	    bu_vls_sprintf(&curr_op_vls, "%s", bu_vls_addr(&next_op_vls));
-	    if (!ret) {
+	    if (ret == 0) {
+		/* matched */
 		bu_vls_trunc(&next_op_vls, 0);
 		bu_vls_strncpy(&next_op_vls, currptr + result_locations[0].rm_so, result_locations[0].rm_eo - result_locations[0].rm_so);
 		bu_vls_trimspace(&next_op_vls);
@@ -397,7 +431,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 		bu_vls_free(&current_substring);
 		bu_vls_free(&curr_op_vls);
 		bu_vls_free(&next_op_vls);
-		regfree(&whitespace_regex);
+		regfree(&nonwhitespace_regex);
 		regfree(&attr_regex);
 		regfree(&combtree_regex);
 		regfree(&combtree_op_regex);
@@ -418,7 +452,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 		    bu_vls_free(&current_substring);
 		    bu_vls_free(&curr_op_vls);
 		    bu_vls_free(&next_op_vls);
-		    regfree(&whitespace_regex);
+		    regfree(&nonwhitespace_regex);
 		    regfree(&attr_regex);
 		    regfree(&combtree_regex);
 		    regfree(&combtree_op_regex);
@@ -450,8 +484,8 @@ build_comb(struct ged *gedp, struct directory *dp)
 		    break;
 	    }
 	    BU_GETUNION(tp, tree);
+	    RT_INIT_TREE(tp);
 	    rt_tree_array[tree_index].tl_tree = tp;
-	    tp->tr_l.magic = RT_TREE_MAGIC;
 	    tp->tr_l.tl_op = OP_DB_LEAF;
 	    tp->tr_l.tl_name = bu_strdup(bu_vls_addr(&current_substring));
 	    tp->tr_l.tl_mat = matrix;
@@ -461,25 +495,28 @@ build_comb(struct ged *gedp, struct directory *dp)
     } else {
 	/* Empty tree, ok as long as there is no garbage after the comb tree indicator */
 	bu_vls_sprintf(&current_substring, "%s", currptr);
-	if (regexec(&whitespace_regex, bu_vls_addr(&current_substring), whitespace_regex.re_nsub, result_locations, 0) == 0) {
+	if (regexec(&nonwhitespace_regex, bu_vls_addr(&current_substring), nonwhitespace_regex.re_nsub, result_locations, 0) == 0) {
+	    /* matched */
+
 	    bu_vls_printf(&gedp->ged_result_str, "Saw something other than comb tree entries after comb tree tag - error!\n");
 	    bu_vls_free(&current_substring);
 	    bu_vls_free(&curr_op_vls);
 	    bu_vls_free(&next_op_vls);
-	    regfree(&whitespace_regex);
+	    regfree(&nonwhitespace_regex);
 	    regfree(&attr_regex);
 	    regfree(&combtree_regex);
 	    regfree(&combtree_op_regex);
 	    bu_avs_free(&avs);
 	    bu_free(result_locations, "free regex results array\n");
 	    bu_close_mapped_file(redtmpfile);
+
 	    return GED_ERROR;
 	}
     }
     bu_vls_free(&current_substring);
     bu_vls_free(&curr_op_vls);
     bu_vls_free(&next_op_vls);
-    regfree(&whitespace_regex);
+    regfree(&nonwhitespace_regex);
     regfree(&attr_regex);
     regfree(&combtree_regex);
     regfree(&combtree_op_regex);
@@ -532,7 +569,7 @@ build_comb(struct ged *gedp, struct directory *dp)
     comb->tree = tp;
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "build_comb: Cannot apply tree\n", dp->d_namep);
+	bu_vls_printf(&gedp->ged_result_str, "build_comb %s: Cannot apply tree\n", dp->d_namep);
 	bu_avs_free(&avs);
 	return -1;
     }
@@ -551,6 +588,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 }
 
 
+/* !!! FIXME: this routine edits the dbip and comb but should not */
 HIDDEN int
 write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 {
@@ -577,7 +615,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     bu_avs_init_empty(&avs);
 
     bu_vls_init(&spacer);
-    bu_vls_sprintf(&spacer, "");
+    bu_vls_trunc(&spacer, 0);
 
     dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET);
 
@@ -587,7 +625,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     /* open the file */
     if ((fp=fopen(_ged_tmpfil, "w")) == NULL) {
 	perror("fopen");
-	bu_vls_printf(&gedp->ged_result_str, "write_comb: Cannot open temporary file for writing\n");
+	bu_vls_printf(&gedp->ged_result_str, "ERROR: Cannot open temporary file [%s] for writing\n", _ged_tmpfil);
 	return GED_ERROR;
     }
 
@@ -610,7 +648,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	    }
 	    fprintf(fp, "%s%s = \n", standard_attributes[i], bu_vls_addr(&spacer));
 	}
-	fprintf(fp, "-------------Combination Tree------------:\n");
+	fprintf(fp, "%s", combseparator);
 	fclose(fp);
 	return GED_OK;
     }
@@ -618,7 +656,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
 	db_non_union_push(comb->tree, &rt_uniresource);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "write_comb: Cannot flatten tree for editing\n");
+	    bu_vls_printf(&gedp->ged_result_str, "ERROR: Cannot prepare tree for editing\n");
 	    return GED_ERROR;
 	}
     }
@@ -633,8 +671,19 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     }
 
     db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp);
+
+    /* !!! FIXME: this modifies the comb but red shouldn't be
+     * modifying the comb in here ... we're just writing out.  may
+     * need to make a copy.
+     */
     db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
+
+    /* !!! FIXME: this modifies the dbip but red shouldn't be
+     * modifying anything in here ... we're just writing out.  may
+     * need to make a copy.
+     */
     db5_update_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
+
     if (!db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
 	db5_standardize_avs(&avs);
 	avpp = avs.avp;
@@ -671,7 +720,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     }
     bu_vls_free(&spacer);
 
-    fprintf(fp, "-------------Combination Tree------------:\n");
+    fprintf(fp, "%s", combseparator);
 
     for (i=0; i<actual_count; i++) {
 	char op;
@@ -687,13 +736,13 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 		op = '-';
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "write_comb: Illegal op code in tree\n");
+		bu_vls_printf(&gedp->ged_result_str, "ERROR: Encountered illegal op code in tree\n");
 		fclose(fp);
 		bu_avs_free(&avs);
 		return GED_ERROR;
 	}
 	if (fprintf(fp, " %c %s", op, rt_tree_array[i].tl_tree->tr_l.tl_name) <= 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "write_comb: Cannot write to temporary file (%s). Aborting edit\n",
+	    bu_vls_printf(&gedp->ged_result_str, "ERROR: Cannot write to temporary file [%s].\nAborting edit.\n",
 			  _ged_tmpfil);
 	    fclose(fp);
 	    bu_avs_free(&avs);
@@ -713,6 +762,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
     int c, counter;
+    int ret = GED_ERROR; /* needs to be error */
     int have_tmp_name = 0;
     struct directory *dp, *tmp_dp;
     struct rt_db_internal intern;
@@ -722,6 +772,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     const char *av[3];
     struct bu_vls comb_name;
     struct bu_vls temp_name;
+    struct bu_vls *final_name = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -755,15 +806,15 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-
     dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
 
     bu_vls_init(&comb_name);
     bu_vls_init(&temp_name);
 
-
-    /* Now, sanity check to make sure a comb is in instead of a solid, and either write out existing contents
-     * for an existing comb or a blank template for a new comb */
+    /* Now, sanity check to make sure a comb is listed instead of a
+     * primitive, and either write out existing contents for an
+     * existing comb or a blank template for a new comb.
+     */
     if (dp != RT_DIR_NULL) {
 
 	/* Stash original primitive name and find appropriate temp name */
@@ -772,6 +823,9 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	counter = 0;
 	have_tmp_name = 0;
 	while (!have_tmp_name) {
+	    /* FIXME: need a general routine for selecting temporary
+	     * object names.
+	     */
 	    bu_vls_sprintf(&temp_name, "%s_red%d", dp->d_namep, counter);
 	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), LOOKUP_QUIET) == RT_DIR_NULL)
 		have_tmp_name = 1;
@@ -788,141 +842,145 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-	/* Make a file for the text editor */
-	fp = bu_temp_file(_ged_tmpfil, MAXPATHLEN);
-
-	if (fp == (FILE *)0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
-	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to create %s\n", argv[0], _ged_tmpfil);
-	    bu_vls_free(&comb_name);
-	    bu_vls_free(&temp_name);
-	    return GED_ERROR;
-	}
-
-	/* Write the combination components to the file */
-	if (write_comb(gedp, comb, dp->d_namep)) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
-	    unlink(_ged_tmpfil);
-	    bu_vls_free(&comb_name);
-	    bu_vls_free(&temp_name);
-	    return GED_ERROR;
-	}
     } else {
 	bu_vls_sprintf(&comb_name, "%s", argv[1]);
 	bu_vls_sprintf(&temp_name, "%s", argv[1]);
+
 	comb = (struct rt_comb_internal *)NULL;
+    }
 
-	/* Make a file for the text editor */
-	fp = bu_temp_file(_ged_tmpfil, MAXPATHLEN);
+    /* Make a file for the text editor, stash name in _ged_tmpfil */
+    fp = bu_temp_file(_ged_tmpfil, MAXPATHLEN);
+    if (fp == (FILE *)0) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
+	bu_vls_printf(&gedp->ged_result_str, "%s: unable to create %s\n", argv[0], _ged_tmpfil);
+	bu_vls_free(&comb_name);
+	bu_vls_free(&temp_name);
+	return GED_ERROR;
+    }
 
-	if (fp == (FILE *)0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
-	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to create %s\n", argv[0], _ged_tmpfil);
-	    bu_vls_free(&comb_name);
-	    bu_vls_free(&temp_name);
-	    return GED_ERROR;
-	}
-
-	/* Write the combination components to the file */
-	if (write_comb(gedp, comb, argv[1])) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
-	    unlink(_ged_tmpfil);
-	    bu_vls_free(&comb_name);
-	    bu_vls_free(&temp_name);
-	    return GED_ERROR;
-	}
+    /* Write the combination components to the file */
+    if (write_comb(gedp, comb, argv[1])) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
+	goto cleanup;
     }
 
     (void)fclose(fp);
 
     /* Edit the file */
     if (_ged_editit(editstring, _ged_tmpfil)) {
-	/* specifically avoid CHECK_READ_ONLY; above so that
-	 * we can delay checking if the geometry is read-only
-	 * until here so that red may be used to view objects.
+
+	/* specifically avoid CHECK_READ_ONLY; above so that we can
+	 * delay checking if the geometry is read-only until here so
+	 * that red may be used to view objects.
 	 */
-	if (!gedp->ged_wdbp->dbip->dbi_read_only) {
-	    /* comb is to be changed.  All changes will first be made to
-	     * the temporary copy of the comb - if that succeeds, the
-	     * result will be copied over the original comb.  If we have an
-	     * existing comb copy its contents to the temporary, else create
-	     * a new empty comb from scratch. */
 
-	    if (dp) {
-		if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-		    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
-		    bu_vls_free(&comb_name);
-		    bu_vls_free(&temp_name);
-		    return GED_ERROR;
-		}
+	if (gedp->ged_wdbp->dbip->dbi_read_only) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s:  Database is READ-ONLY.\nNo changes were made.\n", *argv);
+	    goto cleanup;
+	}
 
+	/* comb is to be changed.  All changes will first be made to
+	 * the temporary copy of the comb - if that succeeds, the
+	 * result will be copied over the original comb.  If we have
+	 * an existing comb copy its contents to the temporary, else
+	 * create a new empty comb from scratch.
+	 */
 
-		if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
-		    bu_vls_printf(&gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
-		    bu_vls_free(&comb_name);
-		    bu_vls_free(&temp_name);
-		    return GED_ERROR;
-		}
-
-		if (rt_db_put_internal(tmp_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-		    bu_vls_printf(&gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
-		    bu_vls_free(&comb_name);
-		    bu_vls_free(&temp_name);
-		    return GED_ERROR;
-		}
-	    } else {
-		RT_INIT_DB_INTERNAL(&intern);
-		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-		intern.idb_type = ID_COMBINATION;
-		intern.idb_meth = &rt_functab[ID_COMBINATION];
-
-		GED_DB_DIRADD(gedp, tmp_dp, bu_vls_addr(&temp_name), -1, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type, 0);
-
-		BU_GETSTRUCT(comb, rt_comb_internal);
-		intern.idb_ptr = (genptr_t)comb;
-		comb->magic = RT_COMB_MAGIC;
-		bu_vls_init(&comb->shader);
-		bu_vls_init(&comb->material);
-		comb->region_id = 0;  /* This makes a comb/group by default */
-		comb->tree = TREE_NULL;
-		GED_DB_PUT_INTERNAL(gedp, tmp_dp, &intern, &rt_uniresource, 0);
+	if (dp) {
+	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
+		goto cleanup;
 	    }
 
+	    if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+		bu_vls_printf(&gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
+		goto cleanup;
+	    }
 
-	    if (build_comb(gedp, tmp_dp) < 0) {
-		/* Something went wrong - kill the temporary comb */
-		bu_vls_printf(&gedp->ged_result_str, "%s: Error in edited region, no changes made\n", *argv);
-
-		av[0] = "kill";
-		av[1] = bu_vls_addr(&temp_name);
-		av[2] = NULL;
-		(void)ged_kill(gedp, 2, (const char **)av);
-		(void)unlink(_ged_tmpfil);
-		return GED_ERROR;
-	    } else {
-		/* it worked - kill the original and put the updated copy in its place if a pre-existing
-		 * comb was being edited - otherwise everything is already fine.*/
-		if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(&temp_name))) {
-		    av[0] = "kill";
-		    av[1] = bu_vls_addr(&comb_name);
-		    av[2] = NULL;
-		    (void)ged_kill(gedp, 2, (const char **)av);
-		    av[0] = "mv";
-		    av[1] = bu_vls_addr(&temp_name);
-		    av[2] = bu_vls_addr(&comb_name);
-		    (void)ged_move(gedp, 3, (const char **)av);
-		} 
+	    if (rt_db_put_internal(tmp_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+		bu_vls_printf(&gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
+		goto cleanup;
 	    }
 	} else {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Because the database is READ-ONLY no changes were made.\n", *argv);
-	}
-    }
+	    RT_INIT_DB_INTERNAL(&intern);
+	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	    intern.idb_type = ID_COMBINATION;
+	    intern.idb_meth = &rt_functab[ID_COMBINATION];
 
+	    GED_DB_DIRADD(gedp, tmp_dp, bu_vls_addr(&temp_name), -1, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type, 0);
+
+	    BU_GETSTRUCT(comb, rt_comb_internal);
+	    intern.idb_ptr = (genptr_t)comb;
+	    comb->magic = RT_COMB_MAGIC;
+	    bu_vls_init(&comb->shader);
+	    bu_vls_init(&comb->material);
+	    comb->region_id = 0;  /* This makes a comb/group by default */
+	    comb->tree = TREE_NULL;
+	    GED_DB_PUT_INTERNAL(gedp, tmp_dp, &intern, &rt_uniresource, 0);
+	}
+
+	/* reconstitute the new combination */
+	if (build_comb(gedp, tmp_dp, &final_name) < 0) {
+
+	    /* Something went wrong - kill the temporary comb */
+
+	    bu_vls_printf(&gedp->ged_result_str, "%s: Error in edited region, no changes made\n", *argv);
+
+	    av[0] = "kill";
+	    av[1] = bu_vls_addr(&temp_name);
+	    av[2] = NULL;
+	    (void)ged_kill(gedp, 2, (const char **)av);
+
+	    goto cleanup;
+	}
+
+	/* if we got a final_name from build_comb and it isn't identical to comb_name, check to ensure
+	 * an object with the new name doesn't already exist - red will not overwrite a pre-existing comb. 
+	 * If we don't have a name, assume we're working on comb_name */
+	if (final_name) {
+		if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(final_name))) {
+			if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(final_name), LOOKUP_QUIET) != RT_DIR_NULL) {
+				bu_vls_printf(&gedp->ged_result_str, "%s: Error - %s already exists\n", *argv, bu_vls_addr(final_name));
+				goto cleanup;
+			}
+		}
+	} else {
+		final_name = bu_malloc(sizeof(struct bu_vls), "target vls");
+		bu_vls_init(final_name);
+		bu_vls_sprintf(final_name, "%s", bu_vls_addr(&comb_name));
+	}
+
+
+	/* it worked - kill the original and put the updated copy in
+	 * its place if a pre-existing comb was being edited -
+	 * otherwise just move temp_name to final_name.
+	 */
+	if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(&temp_name))) {
+	    av[0] = "kill";
+	    av[1] = bu_vls_addr(&comb_name);
+	    av[2] = NULL;
+	    (void)ged_kill(gedp, 2, (const char **)av);
+	} 
+	av[0] = "mv";
+	av[1] = bu_vls_addr(&temp_name);
+	av[2] = bu_vls_addr(final_name);
+	(void)ged_move(gedp, 3, (const char **)av);
+    
+    }
+    /* if we have jumpted to cleanup by now, everything was fine */
+    ret = GED_OK;
+
+cleanup:
+    if (bu_file_exists(_ged_tmpfil))
+	unlink(_ged_tmpfil);
+
+    bu_vls_free(final_name);
+    bu_free(final_name, "final_name");
     bu_vls_free(&comb_name);
     bu_vls_free(&temp_name);
 
-    unlink(_ged_tmpfil);
-    return GED_OK;
+    return ret;
 }
 
 

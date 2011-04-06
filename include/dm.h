@@ -247,6 +247,7 @@ struct dm {
     int (*dm_drawDList)();
     int (*dm_freeDLists)();
     int (*dm_getDisplayImage)(struct dm *dmp, unsigned char **image);
+    void (*dm_reshape)();
     unsigned long dm_id;          /**< @brief window id */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */

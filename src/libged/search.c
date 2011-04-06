@@ -127,6 +127,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	    } else {
 		    search_results = db_search_full_paths(dbplan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
 	    }
+	    db_search_freeplan(&dbplan);
     }
 
     /* Assign results to string - if we're doing a list, process the results for unique objects - otherwise

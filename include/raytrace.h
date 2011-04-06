@@ -956,10 +956,10 @@ struct rt_comb_internal  {
     char		region_flag;	/**< @brief !0 ==> this COMB is a REGION */
     char		is_fastgen;	/**< @brief REGION_NON_FASTGEN/_PLATE/_VOLUME */
     /* Begin GIFT compatability */
-    long		region_id;
-    long		aircode;
-    long		GIFTmater;
-    long		los;
+    long		region_id;      /* DEPRECATED, use attribute */
+    long		aircode;        /* DEPRECATED, use attribute */
+    long		GIFTmater;      /* DEPRECATED, use attribute */
+    long		los;            /* DEPRECATED, use attribute */
     /* End GIFT compatability */
     char		rgb_valid;	/**< @brief !0 ==> rgb[] has valid color */
     unsigned char	rgb[3];
@@ -1133,38 +1133,38 @@ struct combined_tree_state {
 #define OP_FREE		MKOP(13)	/**< @brief  Unary:  L has free chain */
 
 union tree {
-    unsigned long magic;				/**< @brief  First word: magic number */
+    unsigned long magic;		/**< @brief  First word: magic number */
     /* Second word is always OP code */
     struct tree_node {
-	unsigned long	magic;
-	int		tb_op;		/**< @brief  non-leaf */
-	struct region	*tb_regionp;	/**< @brief  ptr to containing region */
-	union tree	*tb_left;
-	union tree	*tb_right;
+	unsigned long magic;
+	int tb_op;			/**< @brief  non-leaf */
+	struct region *tb_regionp;	/**< @brief  ptr to containing region */
+	union tree *tb_left;
+	union tree *tb_right;
     } tr_b;
     struct tree_leaf {
-	unsigned long	magic;
-	int		tu_op;		/**< @brief  leaf, OP_SOLID */
-	struct region	*tu_regionp;	/**< @brief  ptr to containing region */
-	struct soltab	*tu_stp;
+	unsigned long magic;
+	int tu_op;			/**< @brief  leaf, OP_SOLID */
+	struct region *tu_regionp;	/**< @brief  ptr to containing region */
+	struct soltab *tu_stp;
     } tr_a;
     struct tree_cts {
-	unsigned long	magic;
-	int		tc_op;		/**< @brief  leaf, OP_REGION */
-	struct region	*tc_pad;	/**< @brief  unused */
-	struct combined_tree_state	*tc_ctsp;
+	unsigned long magic;
+	int tc_op;			/**< @brief  leaf, OP_REGION */
+	struct region *tc_pad;		/**< @brief  unused */
+	struct combined_tree_state *tc_ctsp;
     } tr_c;
     struct tree_nmgregion {
-	unsigned long	magic;
-	int		td_op;		/**< @brief  leaf, OP_NMG_TESS */
-	const char	*td_name;	/**< @brief  If non-null, dynamic string describing heritage of this region */
+	unsigned long magic;
+	int td_op;			/**< @brief  leaf, OP_NMG_TESS */
+	const char *td_name;		/**< @brief  If non-null, dynamic string describing heritage of this region */
 	struct nmgregion *td_r;		/**< @brief  ptr to NMG region */
     } tr_d;
     struct tree_db_leaf  {
-	unsigned long	magic;
-	int		tl_op;		/**< @brief  leaf, OP_DB_LEAF */
-	matp_t		tl_mat;		/**< @brief  xform matp, NULL ==> identity */
-	char		*tl_name;	/**< @brief  Name of this leaf (bu_strdup'ed) */
+	unsigned long magic;
+	int tl_op;			/**< @brief  leaf, OP_DB_LEAF */
+	matp_t tl_mat;			/**< @brief  xform matp, NULL ==> identity */
+	char *tl_name;			/**< @brief  Name of this leaf (bu_strdup'ed) */
     } tr_l;
 };
 /* Things which are in the same place in both A & B structures */
@@ -1173,6 +1173,58 @@ union tree {
 
 #define TREE_NULL	((union tree *)0)
 #define RT_CK_TREE(_p)	BU_CKMAG(_p, RT_TREE_MAGIC, "union tree")
+
+/**
+ * initialize a union tree to zero without a node operation set.  Use
+ * the largest union so all values are effectively zero except for the
+ * magic number.
+ */
+#define RT_INIT_TREE(_p) {		   \
+	(_p)->magic = RT_TREE_MAGIC;	   \
+	(_p)->tr_b.tb_op = 0;		   \
+	(_p)->tr_b.tb_regionp = NULL;	   \
+	(_p)->tr_b.tb_left = NULL;	   \
+	(_p)->tr_b.tb_right = NULL;	   \
+    }
+
+/**
+ * RT_GET_TREE returns a new initialized tree union pointer.  The
+ * magic number is set to RT_TREE_MAGIC and all other members are
+ * zero-initialized.
+ *
+ * This is a malloc-efficient replacement for BU_GETUNION(tp, tree).
+ * Previously used tree nodes are stored in the provided resource
+ * pointer (during RT_FREE_TREE) as a single-linked list using the
+ * tb_left field.  Requests for new nodes are pulled first from that
+ * list or allocated fresh if needed.
+ */
+#define RT_GET_TREE(_tp, _res) { \
+	if (((_tp) = (_res)->re_tree_hd) != TREE_NULL) { \
+	    (_res)->re_tree_hd = (_tp)->tr_b.tb_left;	 \
+	    (_tp)->tr_b.tb_left = TREE_NULL;		 \
+	    (_res)->re_tree_get++;			 \
+	} else {					 \
+	    BU_GETUNION(_tp, tree);			 \
+	    (_res)->re_tree_malloc++;			 \
+	}						 \
+	RT_INIT_TREE((_tp));				 \
+    }
+
+/**
+ * RT_FREE_TREE releases a tree union pointer.
+ *
+ * This is a malloc-efficient replacement for bu_free(tp).  Instead of
+ * actually freeing the nodes, they are added to a single-linked list
+ * in rt_tree_hd down the tb_left field.  Requests for new nodes (via
+ * RT_GET_TREE()) pull from this list instead of allocating new nodes.
+ */
+#define RT_FREE_TREE(_tp, _res) { \
+	(_tp)->tr_b.tb_left = (_res)->re_tree_hd; \
+	(_tp)->tr_b.tb_right = TREE_NULL;	  \
+	(_res)->re_tree_hd = (_tp);		  \
+	(_tp)->tr_b.tb_op = OP_FREE;		  \
+	(_res)->re_tree_free++;			  \
+    }
 
 
 /**
@@ -1431,25 +1483,6 @@ struct resource {
 RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined in librt/globals.c */
 #define RESOURCE_NULL	((struct resource *)0)
 #define RT_CK_RESOURCE(_p)	BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
-
-/** More malloc-efficient replacement for BU_GETUNION(tp, tree) */
-#define RT_GET_TREE(_tp, _res) { \
-	if (((_tp) = (_res)->re_tree_hd) != TREE_NULL) { \
-		(_res)->re_tree_hd = (_tp)->tr_b.tb_left; \
-		(_tp)->tr_b.tb_left = TREE_NULL; \
-		(_res)->re_tree_get++; \
-	} else { \
-		BU_GETUNION(_tp, tree); \
-		(_res)->re_tree_malloc++; \
-	}\
-	}
-#define RT_FREE_TREE(_tp, _res) { \
-		(_tp)->tr_b.tb_left = (_res)->re_tree_hd; \
-		(_tp)->tr_b.tb_right = TREE_NULL; \
-		(_res)->re_tree_hd = (_tp); \
-		(_tp)->tr_b.tb_op = OP_FREE; \
-		(_res)->re_tree_free++; \
-	}
 
 
 /**
@@ -2787,6 +2820,12 @@ RT_EXPORT BU_EXTERN(void *db_search_formplan,
 		(char **argv,
 		 struct db_i *dbip,
 		 struct rt_wdb *wdbp));
+
+/**
+ * release memory for the formulated plan returned by
+ * db_search_formplan().
+ */
+RT_EXPORT BU_EXTERN(void db_search_freeplan, (void **plan));
 
 RT_EXPORT BU_EXTERN(struct db_full_path_list *db_search_full_paths,
 		(void *searchplan,
@@ -5990,11 +6029,67 @@ RT_EXPORT BU_EXTERN(size_t db5_type_sizeof_h_binu,
 RT_EXPORT BU_EXTERN(size_t db5_type_sizeof_n_binu,
 		    (const int minor));
 
-/* these two functions may not be appropriate to export, but windows requires the export notation. */
-RT_EXPORT BU_EXTERN(size_t db5_is_standard_attribute,
-		    (const char *attrname));
-RT_EXPORT BU_EXTERN(void db5_standardize_avs,
-		    (struct bu_attribute_value_set *avs));
+
+/**
+ * D B 5 _ S T A N D A R D _ A T T R I B U T E
+ *
+ * Function returns the string name for a given standard attribute
+ * index.  Index values returned from db5_standardize_attribute()
+ * correspond to the names returned from this function, returning the
+ * "standard" name.  Callers may also iterate over all names starting
+ * with an index of zero until a NULL is returned.
+ *
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT BU_EXTERN(const char *db5_standard_attribute, (int idx));
+
+/**
+ * D B 5 _ I S _ S T A N D A R D _ A T T R I B U T E
+ *
+ * Function for recognizing various versions of the DB5 standard
+ * attribute names that have been used - returns the attribute type
+ * of the supplied attribute name, or -1 if it is not a recognized
+ * variation of the standard attributes.
+ *
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT BU_EXTERN(int db5_is_standard_attribute, (const char *attrname));
+
+/**
+ * D B 5 _ S T A N D A R D I Z E _ A V S
+ *
+ * Ensures that an attribute set containing standard attributes with
+ * non-standard/old/deprecated names gets the standard name added.  It
+ * will update the first non-standard name encountered, but will leave
+ * any subsequent matching attributes found unmodified if they have
+ * different values.  Such "conflict" attributes must be resolved
+ * manually.
+ *
+ * Returns the number of conflicting attributes.
+ *
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT BU_EXTERN(size_t db5_standardize_avs, (struct bu_attribute_value_set *avs));
+
+/**
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT BU_EXTERN(int db5_standardize_attribute, (const char *attr));
+/**
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT BU_EXTERN(void db5_apply_std_attributes, (struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb));
+/**
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT BU_EXTERN(void db5_update_std_attributes, (struct db_i *dbip, struct directory *dp, const struct rt_comb_internal *comb));
+
 
 #endif
 

@@ -117,7 +117,6 @@ ged_push_leaf(struct db_tree_state	*tsp,
 
 	    bu_semaphore_release(RT_SEM_WORKER);
 	    RT_GET_TREE(curtree, tsp->ts_resp);
-	    curtree->magic = RT_TREE_MAGIC;
 	    curtree->tr_op = OP_NOP;
 	    return curtree;
 	}
@@ -135,7 +134,6 @@ ged_push_leaf(struct db_tree_state	*tsp,
     gpip->back->forw = gpip;
     bu_semaphore_release(RT_SEM_WORKER);
     RT_GET_TREE( curtree, tsp->ts_resp );
-    curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;
     return curtree;
 }

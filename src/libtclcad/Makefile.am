@@ -32,7 +32,7 @@ libtclcad_la_SOURCES = \
 	tclcad.c \
 	tclcadAutoPath.c \
 	tkImgFmtPIX.c \
-	ged_obj.c
+	tclcad_obj.c
 
 libtclcad_la_CFLAGS = \
 	${STD_C99_FLAGS} \

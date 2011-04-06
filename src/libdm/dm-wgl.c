@@ -68,6 +68,7 @@ HIDDEN int	wgl_drawString2D();
 HIDDEN int	wgl_configureWin_guts();
 HIDDEN int	wgl_setLight();
 HIDDEN int	wgl_setZBuffer();
+HIDDEN void	wgl_reshape(struct dm *dmp, int width, int height);
 
 static fastf_t default_viewscale = 1000.0;
 static double	xlim_view = 1.0;	/* args for glOrtho*/
@@ -1512,7 +1513,6 @@ HIDDEN int
 wgl_configureWin_guts(struct dm *dmp,
 		      int force)
 {
-    GLint mm;
     HFONT newfontstruct, oldfont;
     LOGFONT logfont;
     HWND hwnd;
@@ -1536,34 +1536,7 @@ wgl_configureWin_guts(struct dm *dmp,
 	dmp->dm_width == (xwa.right-xwa.left))
 	return TCL_OK;
 
-    dmp->dm_height = xwa.bottom-xwa.top;
-    dmp->dm_width = xwa.right-xwa.left;
-    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
-
-    if (dmp->dm_debugLevel) {
-	bu_log("wgl_configureWin_guts()\n");
-	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
-    }
-
-    glViewport(0, 0, dmp->dm_width, dmp->dm_height);
-
-    if (dmp->dm_zbuffer)
-	wgl_setZBuffer(dmp, dmp->dm_zbuffer);
-
-    wgl_setLight(dmp, dmp->dm_light);
-
-    glClearColor(((struct wgl_vars *)dmp->dm_vars.priv_vars)->r,
-		 ((struct wgl_vars *)dmp->dm_vars.priv_vars)->g,
-		 ((struct wgl_vars *)dmp->dm_vars.priv_vars)->b,
-		 0.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    /*CJXX this might cause problems in perspective mode? */
-    glGetIntegerv(GL_MATRIX_MODE, &mm);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
-    glMatrixMode(mm);
+    wgl_reshape(dmp, xwa.width, xwa.height);
 
     /* First time through, load a font or quit */
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL) {
@@ -1865,11 +1838,50 @@ wgl_configureWin_guts(struct dm *dmp,
 }
 
 
+HIDDEN void
+wgl_reshape(struct dm *dmp, int width, int height)
+{
+    GLint mm;
+
+    dmp->dm_height = height;
+    dmp->dm_width = width;
+    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("wgl_configureWin_guts()\n");
+	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
+    }
+
+    glViewport(0, 0, dmp->dm_width, dmp->dm_height);
+
+#if 0
+    if (dmp->dm_zbuffer)
+	wgl_setZBuffer(dmp, dmp->dm_zbuffer);
+
+    wgl_setLight(dmp, dmp->dm_light);
+#endif
+
+    glClearColor(((struct wgl_vars *)dmp->dm_vars.priv_vars)->r,
+		 ((struct wgl_vars *)dmp->dm_vars.priv_vars)->g,
+		 ((struct wgl_vars *)dmp->dm_vars.priv_vars)->b,
+		 0.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    /*CJXX this might cause problems in perspective mode? */
+    glGetIntegerv(GL_MATRIX_MODE, &mm);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
+    glMatrixMode(mm);
+}
+
+
 HIDDEN int
 wgl_configureWin(struct dm *dmp, int force)
 {
     return wgl_configureWin_guts(dmp, force);
 }
+
 
 HIDDEN int
 wgl_setLight(struct dm *dmp, int lighting_on)
@@ -2069,6 +2081,7 @@ struct dm dm_wgl = {
     wgl_drawDList,
     wgl_freeDLists,
     Nu_int0, /* display to image function */
+    wgl_reshape,
     0,
     1,				/* has displaylist */
     0,                            /* no stereo by default */

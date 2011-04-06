@@ -587,7 +587,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
     BU_GETUNION(curtree, tree);
-    curtree->magic = RT_TREE_MAGIC;
+    RT_INIT_TREE(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;
 }

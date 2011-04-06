@@ -265,10 +265,12 @@ rt_comb_export5(
     struct bu_attribute_value_set *avsp;
     struct bu_vls value;
 
+    /* check inputs */
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(resp);
     if (dbip) RT_CK_DBI(dbip);
+    RT_CK_RESOURCE(resp);
 
+    /* validate it's a comb */
     if (ip->idb_type != ID_COMBINATION) bu_bomb("rt_comb_export5() type not ID_COMBINATION");
     comb = (struct rt_comb_internal *)ip->idb_ptr;
     RT_CK_COMB(comb);
@@ -404,28 +406,28 @@ rt_comb_export5(
     /* GIFT compatability */
     if (comb->region_id != 0) {
 	bu_vls_trunc(&value, 0);
-	bu_vls_printf(&value, "%d", comb->region_id);
+	bu_vls_printf(&value, "%ld", comb->region_id);
 	bu_avs_add_vls(avsp, "region_id", &value);
     } else
 	bu_avs_remove(avsp, "region_id");
 
     if (comb->aircode != 0) {
 	bu_vls_trunc(&value, 0);
-	bu_vls_printf(&value, "%d", comb->aircode);
+	bu_vls_printf(&value, "%ld", comb->aircode);
 	bu_avs_add_vls(avsp, "aircode", &value);
     } else
 	bu_avs_remove(avsp, "aircode");
 
     if (comb->GIFTmater != 0) {
 	bu_vls_trunc(&value, 0);
-	bu_vls_printf(&value, "%d", comb->GIFTmater);
+	bu_vls_printf(&value, "%ld", comb->GIFTmater);
 	bu_avs_add_vls(avsp, "material_id", &value);
     } else
 	bu_avs_remove(avsp, "material_id");
 
     if (comb->los != 0) {
 	bu_vls_trunc(&value, 0);
-	bu_vls_printf(&value, "%d", comb->los);
+	bu_vls_printf(&value, "%ld", comb->los);
 	bu_avs_add_vls(avsp, "los", &value);
     } else
 	bu_avs_remove(avsp, "los");
@@ -511,7 +513,6 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 	    size_t mi;
 
 	    RT_GET_TREE(tp, resp);
-	    tp->tr_l.magic = RT_TREE_MAGIC;
 	    tp->tr_l.tl_op = OP_DB_LEAF;
 	    tp->tr_l.tl_name = bu_strdup((const char *)leafp);
 	    leafp += strlen((const char *)leafp) + 1;
@@ -576,7 +577,6 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 
 		if (tp2) {
 		    RT_GET_TREE(unionp, resp);
-		    unionp->tr_b.magic = RT_TREE_MAGIC;
 		    unionp->tr_b.tb_op = OP_UNION;
 		    unionp->tr_b.tb_left = tp1;
 		    unionp->tr_b.tb_right = tp2;
@@ -628,7 +628,6 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 	size_t mi;
 
 	RT_GET_TREE(tp, resp);
-	tp->tr_b.magic = RT_TREE_MAGIC;
 
 	switch (*exprp) {
 	    case DB5COMB_TOKEN_LEAF:
@@ -760,16 +759,16 @@ finish:
 
 	/* get the other GIFT "region" attributes */
 	if ((ap = bu_avs_get(&ip->idb_avs, "region_id")) != NULL) {
-	    comb->region_id = atoi(ap);
+	    comb->region_id = atol(ap);
 	}
 	if ((ap = bu_avs_get(&ip->idb_avs, "aircode")) != NULL) {
-	    comb->aircode = atoi(ap);
+	    comb->aircode = atol(ap);
 	}
 	if ((ap = bu_avs_get(&ip->idb_avs, "material_id")) != NULL) {
-	    comb->GIFTmater = atoi(ap);
+	    comb->GIFTmater = atol(ap);
 	}
 	if ((ap = bu_avs_get(&ip->idb_avs, "los")) != NULL) {
-	    comb->los = atoi(ap);
+	    comb->los = atol(ap);
 	}
     }
     if ((ap = bu_avs_get(&ip->idb_avs, "oshader")) != NULL) {
@@ -801,17 +800,17 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 
 	bu_vls_printf(logstr, "comb region ");
 	if (comb->region_flag) {
-	    bu_vls_printf(logstr, "yes id %d ", comb->region_id);
+	    bu_vls_printf(logstr, "yes id %ld ", comb->region_id);
 
 	    if (comb->aircode) {
-		bu_vls_printf(logstr, "air %d ", comb->aircode);
+		bu_vls_printf(logstr, "air %ld ", comb->aircode);
 	    }
 	    if (comb->los) {
-		bu_vls_printf(logstr, "los %d ", comb->los);
+		bu_vls_printf(logstr, "los %ld ", comb->los);
 	    }
 
 	    if (comb->GIFTmater) {
-		bu_vls_printf(logstr, "GIFTmater %d ", comb->GIFTmater);
+		bu_vls_printf(logstr, "GIFTmater %ld ", comb->GIFTmater);
 	    }
 	} else {
 	    bu_vls_printf(logstr, "no ");

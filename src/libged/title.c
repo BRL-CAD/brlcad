@@ -56,7 +56,7 @@ ged_title(struct ged *gedp, int argc, const char *argv[])
     bu_vls_init(&title);
     bu_vls_from_argv(&title, argc-1, (const char **)argv+1);
 
-    if (db_update_ident(gedp->ged_wdbp->dbip, bu_vls_addr(&title), gedp->ged_wdbp->dbip->dbi_base2local) < 0) {
+    if (db_update_ident(gedp->ged_wdbp->dbip, bu_vls_addr(&title), gedp->ged_wdbp->dbip->dbi_local2base) < 0) {
 	bu_vls_free(&title);
 	bu_vls_printf(&gedp->ged_result_str, "Error: unable to change database title");
 	return GED_ERROR;

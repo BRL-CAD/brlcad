@@ -531,6 +531,7 @@ struct dm dm_plot = {
     Nu_int0,
     Nu_int0,
     Nu_int0, /* display to image function */
+    Nu_void,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */

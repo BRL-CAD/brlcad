@@ -2033,6 +2033,20 @@ find_execute_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_l
 }
 
 
+void
+db_search_freeplan(void **vplan) {
+    struct db_plan_t *p;
+    struct db_plan_t *plan = (struct db_plan_t *)*vplan;
+    for (p = plan; p;) {
+	plan = p->next;
+	bu_free(p, "Deallocate struct db_plan_t structure");
+	p = plan;
+    }
+    /* sanity */
+    *vplan = NULL;
+}
+
+
 struct db_full_path_list *
 db_search_full_paths(void *searchplan,        /* search plan */
 	     struct db_full_path_list *pathnames,      /* list of pathnames to traverse */

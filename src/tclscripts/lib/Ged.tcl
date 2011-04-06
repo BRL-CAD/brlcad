@@ -3053,12 +3053,20 @@ package provide cadwidgets::Ged 1.0
 	set labels [$mGed $_dtype $itk_component($_pane) labels]
 
 	foreach dm {ur ul ll lr} {
+	    if {$dm == $_pane} {
+		continue
+	    }
+
 	    $mGed $_dtype $itk_component($dm) labels $labels
 	}
     } else {
 	set points [$mGed $_dtype $itk_component($_pane) points]
 
 	foreach dm {ur ul ll lr} {
+	    if {$dm == $_pane} {
+		continue
+	    }
+
 	    $mGed $_dtype $itk_component($dm) points $points
 	}
     }

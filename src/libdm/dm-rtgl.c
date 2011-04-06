@@ -116,6 +116,7 @@ struct dm dm_rtgl = {
     rtgl_drawDList,
     rtgl_freeDLists,
     Nu_int0, /* display to image function */
+    Nu_void,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */
