@@ -216,6 +216,8 @@ inline
 BANode<BA>::BANode() { }
 
 template<class BA>
+inline
+__BU_ATTR_ALWAYS_INLINE
 BANode<BA>::BANode(const ON_Curve* curve, int adj_face_index, const BA& node,
 		   const ON_BrepFace* face, const ON_Interval& t,
 		   bool innerTrim, bool checkTrim, bool trimmed)
@@ -258,6 +260,8 @@ BANode<BA>::BANode(const ON_Curve* curve, int adj_face_index, const BA& node,
 
 
 template<class BA>
+inline
+__BU_ATTR_ALWAYS_INLINE
 BANode<BA>::BANode(const BA& node) : m_node(node)
 {
     for (int i = 0; i < 3; i++) {
@@ -336,8 +340,8 @@ BANode<BA>::isLeaf()
 */
 
 template<class BA>
-void
-//__attribute__((always_inline))
+inline void
+__BU_ATTR_ALWAYS_INLINE
 BANode<BA>::GetBBox(double* min, double* max) const
 {
     VSETALL(min, MAX_FASTF);
@@ -874,6 +878,8 @@ BVNode<BV>::BVNode(CurveTree* ct, const BV& node) : m_ctree(ct), m_node(node)
 
 
 template<class BV>
+inline
+__BU_ATTR_ALWAYS_INLINE
 BVNode<BV>::BVNode(CurveTree* ct, const BV& node, const ON_BrepFace* face,
 		   const ON_Interval& u, const ON_Interval& v, bool checkTrim, bool trimmed)
     : m_ctree(ct), m_node(node), m_face(face), m_u(u), m_v(v), m_checkTrim(checkTrim), 
