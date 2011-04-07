@@ -1618,6 +1618,25 @@ pick_pt2d_for_cutjoin(struct bu_list *tbl2d, struct pt2d **p1, struct pt2d **p2,
     NMG_CK_VERTEX(cut_vu2->v_p);
     NMG_CK_VERTEX_G(cut_vu2->v_p->vg_p);
 
+#ifdef TRI_PROTOTYPE
+    /* If the 'from' and 'to' cut vertexuse are in the same loopuse,
+     * it should be safe to assume the current pt2d records for these
+     * vertexuse are correct for the cut. Therefore, do not search for
+     * other pt2d vertexuse records, just exit this function using the
+     * vertexuse pt2d records passed into this function. If we allow
+     * this function to continue and search for alternate vertexuse,
+     * sometimes, depending on the number of vertexuse at the cut
+     * points, and the complexity of the angles between the edges at
+     * the cuts, an incorrect vertexuse is often chosen. This change
+     * avoids the error prone logic when we can assume the vertexuse
+     * passed into this function are the correct vertexuse for the
+     * cut, i.e. when the two vertexuse are in the same loopuse.
+     */
+    if ((*p1)->vu_p->up.eu_p->up.lu_p == (*p2)->vu_p->up.eu_p->up.lu_p) {
+        return;
+    }
+#endif
+
     /* form direction vector for the cut we want to make */
     VSUB2(dir, cut_vu2->v_p->vg_p->coord,
 	  cut_vu1->v_p->vg_p->coord);
