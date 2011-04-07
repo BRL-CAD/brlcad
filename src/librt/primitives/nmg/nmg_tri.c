@@ -2466,6 +2466,697 @@ nmg_plot_flat_face(struct faceuse *fu, struct bu_list *tbl2d)
  */
 
 
+/* This is the ifdef to enable the prototype functions nmg_plot_fu,
+ * nmg_triangulate_rm_holes, nmg_triangulate_rm_degen_loopuse,
+ * nmg_dump_model.
+ */
+#ifdef TRI_PROTOTYPE
+void
+nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *tol)
+{
+    struct loopuse *lu;
+    struct edgeuse *eu;
+    int vert_count;
+#if 0
+    int loopuse_count_tmp = 0;
+    struct loopuse *lu1;
+#endif
+
+    int edgeuse_vert_count = 0;
+    int non_consec_edgeuse_vert_count = 0;
+    int faceuse_loopuse_count = 0;
+    fastf_t dist_btw_prev_curr = 0.0;
+    fastf_t temp;
+    struct vertex *prev_v_p = (struct vertex *)NULL;
+    struct vertex *curr_v_p = (struct vertex *)NULL;
+    struct vertex *first_v_p = (struct vertex *)NULL;
+    struct edgeuse *curr_eu = (struct edgeuse *)NULL;
+    struct edgeuse *prev_eu = (struct edgeuse *)NULL;
+    struct edgeuse *first_eu = (struct edgeuse *)NULL;
+    FILE *plotfp;
+    struct bu_vls plot_file_name;
+
+    temp = tol->dist; /* used to quiet compiler until this variable is used */
+
+#if 0
+    /* loop to remove loopuse with < 3 vertices */
+    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+        edgeuse_vert_count = 0;
+	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+            edgeuse_vert_count++;
+        }
+        if (edgeuse_vert_count < 3) {
+            bu_log("killed loopuse 0x%lx with < 3 vertices\n", (unsigned long)lu);
+            nmg_klu(lu);
+            loopuse_count_tmp = 0;
+            for (BU_LIST_FOR(lu1, loopuse, &fu->lu_hd)) {
+                loopuse_count_tmp++;
+            }
+            bu_log("loopuse_count_tmp = %d\n", loopuse_count_tmp);
+            if (loopuse_count_tmp < 1) {
+                bu_bomb("stopped after 'nmg_klu' within nmg_triangulate_fu\n");
+            }
+            lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+            continue;
+        }
+        edgeuse_vert_count = 0;
+    }
+#endif
+
+    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+
+        non_consec_edgeuse_vert_count = 0;
+        edgeuse_vert_count = 0;
+        prev_v_p = (struct vertex *)NULL;
+        curr_v_p = (struct vertex *)NULL;
+        first_v_p = (struct vertex *)NULL;
+        curr_eu = (struct edgeuse *)NULL;
+        prev_eu = (struct edgeuse *)NULL;
+        first_eu = (struct edgeuse *)NULL;
+        dist_btw_prev_curr = 0.0;
+
+        faceuse_loopuse_count++;
+
+        bu_vls_init(&plot_file_name);
+        bu_vls_sprintf(&plot_file_name, "%s_faceuse_%x_loopuse_%x.pl", prefix, fu, lu);
+        plotfp = fopen(bu_vls_addr(&plot_file_name), "wb");
+
+#if 0
+	if (!((lu->orientation == OT_SAME) || (lu->orientation == OT_OPPOSITE))) {
+   	    bu_bomb("nmg_plot_fu(): loopuse orientation not OT_SAME or OT_OPPOSITE\n");
+	}
+#endif
+	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+            curr_v_p = eu->vu_p->v_p; 
+            curr_eu = eu;
+            if (edgeuse_vert_count == 0) {
+                first_v_p = curr_v_p;
+                first_eu = eu;
+            }
+            if (edgeuse_vert_count <= 1) {
+                if (first_eu->e_p->is_real) {
+                    /* if 1st edgeuse is real set start edge plot color to hot pink */
+                    pl_color(plotfp, 255,105,180);
+                } else {
+                    /* set first segment red */
+                    pl_color(plotfp, 255,0,0);
+                }
+            } else {
+                if (prev_eu->e_p->is_real) {
+                    /* set middle segments shades of yellow */
+                    pl_color(plotfp, ((edgeuse_vert_count * 30) % 155) + 100,
+                                     ((edgeuse_vert_count * 30) % 155) + 100, 0);
+                } else {
+                    /* set middle segments shades of green */
+                    pl_color(plotfp, 0, ((edgeuse_vert_count * 30) % 155) + 100, 0);
+                }
+            }
+            vert_count++;
+            edgeuse_vert_count++;
+            if (curr_v_p != prev_v_p) {
+                non_consec_edgeuse_vert_count++;
+            }
+            if (edgeuse_vert_count == 1) {
+#if 0
+                bu_log("curr loopuse (%x) first edgeuse (%x) edge is_real (%ld) first coord (%lf) (%lf) (%lf) \n", lu, eu, eu->e_p->is_real, curr_v_p->vg_p->coord[0], curr_v_p->vg_p->coord[1], curr_v_p->vg_p->coord[2]);
+#endif
+            }
+            if (edgeuse_vert_count > 1) {
+                dist_btw_prev_curr = bn_dist_pt3_pt3(prev_v_p->vg_p->coord,curr_v_p->vg_p->coord);
+#if 0
+                bu_log("curr loopuse (%x) curr edgeuse (%x) edge is_real (%ld) dist btw prev curr (%lf) curr coord (%lf) (%lf) (%lf) \n", lu, eu, eu->e_p->is_real, dist_btw_prev_curr, curr_v_p->vg_p->coord[0], curr_v_p->vg_p->coord[1], curr_v_p->vg_p->coord[2]);
+#endif
+                pdv_3line(plotfp, prev_v_p->vg_p->coord, curr_v_p->vg_p->coord);
+            }
+            prev_v_p = curr_v_p;
+            prev_eu = curr_eu;
+        }
+
+#if 0
+        bu_log("faceuse (%x) loopuse (%x) loopuse# (%d) loopuse ori (%d) edgeuse cnt (%d) non consec edgeuse cnt (%d) \n", 
+            fu, lu, faceuse_loopuse_count, lu->orientation, edgeuse_vert_count, non_consec_edgeuse_vert_count);
+#endif
+
+#if 0
+        if (edgeuse_vert_count < 3) {
+   	    bu_bomb("nmg_plot_fu(): found loopuse with fewer than 3 edgeuse\n");
+        }
+#endif
+        if (curr_v_p && first_v_p) {
+            dist_btw_prev_curr = bn_dist_pt3_pt3(first_v_p->vg_p->coord,curr_v_p->vg_p->coord);
+#if 0
+            bu_log("curr loopuse (%x) dist btw last first (%lf) \n\n", lu, dist_btw_prev_curr);
+#endif
+            if (curr_eu->e_p->is_real) {
+                /* set last segment if is_real to cyan */
+                pl_color(plotfp, 0, 255, 255);
+            } else {
+                /* set last segment blue */
+                pl_color(plotfp, 0,0,255);
+            }
+            pdv_3line(plotfp, curr_v_p->vg_p->coord, first_v_p->vg_p->coord);
+        }
+        (void)fclose(plotfp);
+        bu_vls_free(&plot_file_name);
+    }
+}
+
+
+void
+nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, const struct bn_tol *tol)
+{
+    vect_t N;
+    point_t p1, p2, q1, q2;
+    vect_t  pdir, qdir;
+    fastf_t dist1[2];
+    int status1, hit;
+    struct loopuse *lu1, *lu2, *lu3, *lu_tmp;
+    struct edgeuse *eu1, *eu2, *eu3, *eu_tmp;
+    struct vertexuse *vu1, *vu2;
+    struct pt2d *pt2d_cut_to = (struct pt2d *)NULL;
+    struct pt2d *pt2d_cut_from = (struct pt2d *)NULL;
+    static const int cut_color[3] = { 90, 255, 90};
+    int fast_exit = 0;
+    int holes = 0;
+
+
+    VSETALL(N, 0);
+
+    BN_CK_TOL(tol);
+    NMG_CK_FACEUSE(fu);
+
+    if (rt_g.NMG_debug & DEBUG_TRI) {
+	NMG_GET_FU_NORMAL(N, fu);
+	bu_log("---------------- Triangulate face fu_p = 0x%lx fu Normal = %g %g %g\n",
+	       (unsigned long)fu, V3ARGS(N));
+    }
+
+    /* 'p' and 'pdir' is pot-cut */
+    /* 'q' and 'qdir' is edgeuse */
+
+    fast_exit = 0;
+    holes = 0;
+
+    for (BU_LIST_FOR(lu_tmp, loopuse, &fu->lu_hd)) {
+        if (lu_tmp->orientation == OT_OPPOSITE) {
+            holes = 1;
+            lu1 = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+            break;
+        }
+    }
+
+    while (holes) {
+        NMG_CK_LOOPUSE(lu1);
+        fast_exit = 0;
+        if (lu1->orientation == OT_OPPOSITE) {
+#if 0
+            bu_log("nmg_triangulate_rm_holes(): lu1 for-loop start: lu1 = 0x%lx lu1_orient = %d fu_p = 0x%lx\n",
+                    (unsigned long)lu1, lu1->orientation, (unsigned long)lu1->up.fu_p);
+#endif
+
+            /* test lu1 to determine if any of the vertex is shared with a outer loopuse */
+            vu2 = NULL;
+            for (BU_LIST_FOR(eu1, edgeuse, &lu1->down_hd)) {  /* loop thru each eu of lu1 hole loopuse */
+                for (BU_LIST_FOR(vu1, vertexuse, &eu1->vu_p->v_p->vu_hd)) { 
+                    if (lu1->up.fu_p == vu1->up.eu_p->up.lu_p->up.fu_p) {   /* ensure same faceuse */
+                        if (vu1->up.eu_p->up.lu_p->orientation == OT_SAME) {
+
+                            pt2d_cut_from = find_pt2d(tbl2d, vu1);      /* non-hole edgeuse */
+                            pt2d_cut_to = find_pt2d(tbl2d, eu1->vu_p);  /* hole edgeuse */
+
+                            if ( !pt2d_cut_from || !pt2d_cut_to ) {
+                                bu_bomb("nmg_triangulate_rm_holes(): failed to find vu in tbl2d table\n");
+                            }
+
+                            NMG_CK_PT2D(pt2d_cut_from);
+                            NMG_CK_PT2D(pt2d_cut_to);
+                            join_mapped_loops(tbl2d, pt2d_cut_from, pt2d_cut_to, cut_color, tol);
+                            fast_exit = 1;
+                            break;
+                        }
+                    }
+                }
+                if (fast_exit) {
+                    break;
+                }
+            }
+
+            if (!fast_exit) {
+
+            for (BU_LIST_FOR(eu1, edgeuse, &lu1->down_hd)) {  /* loop thru each eu of hole loopuse,
+                                                                   * vu2 of pot-cut */
+                for (BU_LIST_FOR(lu2, loopuse, &fu->lu_hd)) { /* loop thru each non-hole loopuse to create pot-cut */
+                    NMG_CK_LOOPUSE(lu2);
+                    if (lu2->orientation != OT_OPPOSITE) {
+
+                        NMG_CK_EDGEUSE(eu1);
+                        for (BU_LIST_FOR(eu2, edgeuse, &lu2->down_hd)) {  /* loop thru each eu of non-hole loopuse,
+                                                                           * vu1 of pot-cut */
+                            NMG_CK_EDGEUSE(eu2);
+                            /* the pot-cut should be from non-hole loopuse to a hole-loopuse
+                             * it is assumed that vertices are fused
+                             */
+
+                            /* test if edge is zero length, if so skip this edge */
+                            if (eu2->vu_p->v_p->vg_p->coord == eu1->vu_p->v_p->vg_p->coord) {
+                                continue;
+                            }
+
+                            hit = 0;
+                            for (BU_LIST_FOR(lu3, loopuse, &fu->lu_hd)) {  /* loop thru all loopuse, looking for
+                                                                            * intersections */
+                                NMG_CK_LOOPUSE(lu3);
+
+                                /* At the beginning of testing each loopuse for intersection with pot-cut,
+                                 * set boolean hit = false. 'hit' becomes true when an intersection is
+                                 * encountered between pot-cut and any edgeuse in the current faceuse. The
+                                 * exceptions for intersection are the start/end vertexuse of pot-cut. When
+                                 * an intersection occurs, this indicates this pot-cut is no good and we need
+                                 * to skip to the next pot-cut to test for an intersection.
+                                 */
+                                /* hit = 0; */
+
+                                for (BU_LIST_FOR(eu3, edgeuse, &lu3->down_hd)) {  
+                                    NMG_CK_EDGEUSE(eu3);
+
+                                    NMG_CK_VERTEXUSE(eu2->vu_p);
+                                    NMG_CK_VERTEXUSE(eu1->vu_p);
+                                    NMG_CK_VERTEXUSE(eu3->vu_p);
+                                    NMG_CK_VERTEXUSE(eu3->eumate_p->vu_p);
+
+                                    NMG_CK_VERTEX(eu2->vu_p->v_p);
+                                    NMG_CK_VERTEX(eu1->vu_p->v_p);
+                                    NMG_CK_VERTEX(eu3->vu_p->v_p);
+                                    NMG_CK_VERTEX(eu3->eumate_p->vu_p->v_p);
+
+                                    NMG_CK_VERTEX_G(eu2->vu_p->v_p->vg_p);
+                                    NMG_CK_VERTEX_G(eu1->vu_p->v_p->vg_p);
+                                    NMG_CK_VERTEX_G(eu3->vu_p->v_p->vg_p);
+                                    NMG_CK_VERTEX_G(eu3->eumate_p->vu_p->v_p->vg_p);
+
+                                    /* test if edge is zero length, if so skip this edge */
+                                    if (eu3->vu_p->v_p->vg_p->coord == eu3->eumate_p->vu_p->v_p->vg_p->coord) {
+                                        bu_bomb("found eu3 eu3-mate zero length edge\n");
+                                        continue;
+                                    }
+
+                                    VMOVE(p1, eu2->vu_p->v_p->vg_p->coord);
+                                    VMOVE(p2, eu1->vu_p->v_p->vg_p->coord);
+                                    VSUB2(pdir, p2, p1);
+                                    VMOVE(q1, eu3->vu_p->v_p->vg_p->coord);
+                                    VMOVE(q2, eu3->eumate_p->vu_p->v_p->vg_p->coord);
+                                    VSUB2(qdir, q2, q1); 
+#if 0
+                                if ((fp = fopen("/home/rweiss/results/results_nmg_triangulate_rm_holes.txt", "a")) == NULL) {
+                                    bu_bomb("capture file, open failed\n");
+                                }
+
+                                    (void)fprintf(fp, "nmg_triangulate_rm_holes(): pot-cut p1: lu_p = 0x%lx lu_orient = %d fu_p = 0x%lx vu_p = 0x%lx eu_p = 0x%lx v_p = 0x%lx vg_p = 0x%lx 3D coord = %g %g %g\n",
+                                        (unsigned long)eu2->up.lu_p, eu2->up.lu_p->orientation,
+                                        (unsigned long)eu2->up.lu_p->up.fu_p, (unsigned long)eu2->vu_p,
+                                        (unsigned long)eu2, (unsigned long)eu2->vu_p->v_p, 
+                                        (unsigned long)eu2->vu_p->v_p->vg_p,
+                                        V3ARGS(eu2->vu_p->v_p->vg_p->coord));
+                                    (void)fprintf(fp, "nmg_triangulate_rm_holes(): pot-cut p2: lu_p = 0x%lx lu_orient = %d fu_p = 0x%lx vu_p = 0x%lx eu_p = 0x%lx v_p = 0x%lx vg_p = 0x%lx 3D coord = %g %g %g\n",
+                                        (unsigned long)eu1->up.lu_p, eu1->up.lu_p->orientation, 
+                                        (unsigned long)eu1->up.lu_p->up.fu_p, (unsigned long)eu1->vu_p,
+                                        (unsigned long)eu1, (unsigned long)eu1->vu_p->v_p,
+                                        (unsigned long)eu1->vu_p->v_p->vg_p, V3ARGS(eu1->vu_p->v_p->vg_p->coord));
+                                    (void)fprintf(fp, "nmg_triangulate_rm_holes(): pot-cut q1: lu_p = 0x%lx lu_orient = %d fu_p = 0x%lx vu_p = 0x%lx eu_p = 0x%lx v_p = 0x%lx vg_p = 0x%lx 3D coord = %g %g %g\n",
+                                        (unsigned long)eu3->up.lu_p, eu3->up.lu_p->orientation,
+                                        (unsigned long)eu3->up.lu_p->up.fu_p, (unsigned long)eu3->vu_p, 
+                                        (unsigned long)eu3, (unsigned long)eu3->vu_p->v_p, 
+                                        (unsigned long)eu3->vu_p->v_p->vg_p,
+                                        V3ARGS(eu3->vu_p->v_p->vg_p->coord));
+                                    (void)fprintf(fp, "nmg_triangulate_rm_holes(): pot-cut q2: v_p = 0x%lx vg_p = 0x%lx 3D coord = %g %g %g\n",
+                                        (unsigned long)eu3->eumate_p->vu_p->v_p,
+                                        (unsigned long)eu3->eumate_p->vu_p->v_p->vg_p,
+                                        V3ARGS(eu3->eumate_p->vu_p->v_p->vg_p->coord));
+#endif
+
+                                    status1 = bn_isect_lseg3_lseg3_new(dist1, p1, pdir, q1, qdir, tol);
+
+#if 0
+                                    (void)fprintf(fp, "status = %d\n", status1);
+
+                                fclose(fp);
+#endif
+                                    
+                                    if (status1 == 0) {         /* colinear and overlapping */
+                                        /* hit because, can only skip if hit on end point only and
+                                         * overlapping indicates more than an end point was hit
+                                         */
+#if 0
+                                        bu_log("nmg_triangulate_rm_holes(): status1 = 0  hit = 1\n");
+#endif
+                                        hit = 1;
+                                    } else if (status1 == 1) {  /* normal intersection */
+
+                                        /* when either (p1 = q1) or (p2 = q1) meaning either the start or end
+                                         * vertex of pot-cut (potential cut between hole-loopuse and non-hole-loopuse)
+                                         * is the same as the 1st vertex of the current edgeuse being tested then the
+                                         * corresponding vertex pointers should also be equal, verify this is true, 
+                                         * if not, bomb so problem can be investigated.
+                                         */
+
+                                        if (((NEAR_ZERO(dist1[0], SMALL_FASTF) && NEAR_ZERO(dist1[1], SMALL_FASTF))
+                                            != (eu2->vu_p->v_p == eu3->vu_p->v_p)) ||
+                                            ((NEAR_ZERO(dist1[0] - 1.0, SMALL_FASTF) && NEAR_ZERO(dist1[1], SMALL_FASTF))
+                                            != (eu1->vu_p->v_p == eu3->vu_p->v_p))) {
+                                            bu_bomb("nmg_triangulate_rm_holes(): logic error possibly in 'bn_isect_lseg3_lseg3_new'\n");
+                                        }
+
+                                        /* true when either (p1 = q1) or (p2 = q1) or (p1 = q2) or (p2 = q2)
+                                         * meaning either
+                                         * the start or end vertex of pot-cut (potential cut between hole-loopuse
+                                         * and non-hole-loopuse)
+                                         * is the same as the 1st vertex of the current edgeuse being tested. when
+                                         * this is true this is ok because we already know of these intersections,
+                                         * we are testing everywhere else for intersections
+                                         */
+                                        if ((NEAR_ZERO(dist1[0], SMALL_FASTF) && NEAR_ZERO(dist1[1], SMALL_FASTF)) || 
+                                            (NEAR_ZERO(dist1[0] - 1.0, SMALL_FASTF) && NEAR_ZERO(dist1[1], SMALL_FASTF)) ||
+                                            (NEAR_ZERO(dist1[0], SMALL_FASTF) && NEAR_ZERO(dist1[1] - 1.0, SMALL_FASTF)) ||
+                                            (NEAR_ZERO(dist1[0] - 1.0, SMALL_FASTF) && NEAR_ZERO(dist1[1] - 1.0, SMALL_FASTF))) {
+#if 0
+                                            bu_log("nmg_triangulate_rm_holes(): status1 = 1  hit = 0\n");
+#endif
+                                        } else {
+                                            /* set hit true so elsewhere logic can skip this pot-cut
+                                             * and try the next one
+                                             */
+#if 0
+                                            bu_log("nmg_triangulate_rm_holes(): status1 = 1  hit = 1\n");
+#endif
+                                            hit = 1;
+                                        }
+                                    }
+
+                                    if (hit) {
+                                        /* break from eu3 for-loop since a hit was found and we need to
+                                         * stop testing the current pot-cut and start testing the next.
+                                         */
+#if 0
+                                        bu_log("break from eu3 for-loop\n");
+#endif
+                                        break;  /* break from eu3 for-loop */
+                                    }
+                                } /* end of eu3 for-loop */
+
+                                if (hit) {
+                                    /* break from lu3 for-loop since a hit was found and we need to
+                                     * stop testing the current pot-cut and start testing the next.
+                                     */
+#if 0
+                                    bu_log("break from lu3 for-loop\n");
+#endif
+                                    break;  /* break from lu3 for-loop */
+                                }
+
+                            } /* end of lu3 for-loop */
+
+                            if (!hit) {
+                                /* perform cut */
+
+#if 0
+                                if ((fp = fopen("/home/rweiss/results/results_nmg_triangulate_rm_holes.txt", "a")) == NULL) {
+                                    bu_bomb("capture file, open failed\n");
+                                }
+#endif
+                                fast_exit = 1;
+
+                                pt2d_cut_from = find_pt2d(tbl2d, eu2->vu_p); /* p1, non-hole edgeuse */
+                                pt2d_cut_to = find_pt2d(tbl2d, eu1->vu_p);   /* p2, hole edgeuse */
+
+                                if ( !pt2d_cut_from || !pt2d_cut_to ) {
+                                    bu_bomb("nmg_triangulate_rm_holes(): failed to find vu in tbl2d table\n");
+                                }
+
+                                NMG_CK_PT2D(pt2d_cut_from);
+                                NMG_CK_PT2D(pt2d_cut_to);
+                                join_mapped_loops(tbl2d, pt2d_cut_from, pt2d_cut_to, cut_color, tol);
+
+#if 0
+                                (void)fprintf(fp, "status = %d pt2d_cut_from = 2D %g %g %g 3D %g %g %g pt2d_cut_to = 2D %g %g %g 3D %g %g %g \n",
+                                              status1,
+                                              pt2d_cut_from->coord[X],
+                                              pt2d_cut_from->coord[Y],
+                                              pt2d_cut_from->coord[Z],
+                                              pt2d_cut_from->vu_p->v_p->vg_p->coord[X], 
+                                              pt2d_cut_from->vu_p->v_p->vg_p->coord[Y], 
+                                              pt2d_cut_from->vu_p->v_p->vg_p->coord[Z], 
+                                              pt2d_cut_to->coord[X],
+                                              pt2d_cut_to->coord[Y],
+                                              pt2d_cut_to->coord[Z],
+                                              pt2d_cut_to->vu_p->v_p->vg_p->coord[X], 
+                                              pt2d_cut_to->vu_p->v_p->vg_p->coord[Y], 
+                                              pt2d_cut_to->vu_p->v_p->vg_p->coord[Z]);
+                                fclose(fp);
+#endif
+
+#if 0
+                                bu_log("break from eu2 for-loop\n");
+#endif
+
+                                if (fast_exit) break; /* break from eu2 */
+                            }
+
+#if 0
+                            bu_log("end of for-loop eu2\n");
+#endif
+                        } /* (for eu2) for-loop eu2 traversing all possible pot-cut v1 of current non-hole-loopuse */
+
+                    } /* (if) CHNAGE for-loop eu1 traversing all possible pot-cut v2 of current hole-loopuse */ 
+
+                    if (fast_exit) break;
+#if 0
+                    bu_log("end of for-loop lu2\n");
+#endif
+                } /* (for lu2) CHABGE end of if-statement making sure lu2 is NOT a hole-loopuse, makes sure the
+                   * start vertex of pot-cut is on a non-hole-loopuse
+                   */
+
+                if (fast_exit) {
+                    break;
+                }
+#if 0
+                bu_log("end of for-loop eu1\n");
+#endif
+
+            } /* (for eu1) end of lu2 for-loop */
+
+            } /* (if) end of if-statement allowing by-pass when vertex was found on
+               * on the hole loopuse which is shared with an outer loopuse and a
+               * cut was performed without needing to search for intersects
+               */
+
+        } /* (if) end of if-statement where inside will be when loopuse is a hole */
+
+        if (fast_exit) {
+            lu1 = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+        } else {
+            lu1 = BU_LIST_PNEXT_CIRC(loopuse, lu1);
+        }
+
+        holes = 0;
+        for (BU_LIST_FOR(lu_tmp, loopuse, &fu->lu_hd)) {
+            if (lu_tmp->orientation == OT_OPPOSITE) {
+                holes = 1;
+                break;
+            }
+        }
+    } /* (for lu1) end of lu1 for-loop going thru all hole-loopuse */
+
+    /* when we get to this point, all hole-loopuse should be removed by joining them with
+     * a non-hole-loopuse, which converts them to a non-hole-loopuse
+     */
+    
+    /* this is at the end of processing of the current hole-loopuse, if a cut
+     * was not made for this hole-loopuse then bomb. maybe enhance process to create
+     * a vertex to cut into since could not find an existing vertex.
+     */
+     if (0) {
+        bu_log("nmg_triangulate_rm_holes(): hole-loopuse lu1 0x%lx no cut found\n", (unsigned long)lu1);
+        for (BU_LIST_FOR(lu_tmp, loopuse, &fu->lu_hd)) {
+            for (BU_LIST_FOR(eu_tmp, edgeuse, &lu_tmp->down_hd)) {  
+                bu_log("nmg_triangulate_rm_holes(): lu_p = 0x%lx lu_orient = %d fu_p = 0x%lx vu_p = 0x%lx eu_p = 0x%lx v_p = 0x%lx vg_p = 0x%lx 3D coord = %g %g %g\n",
+                    (unsigned long)lu_tmp, lu_tmp->orientation, (unsigned long)lu_tmp->up.fu_p,
+                    (unsigned long)eu_tmp->vu_p, (unsigned long)eu_tmp, (unsigned long)eu_tmp->vu_p->v_p,
+                    (unsigned long)eu_tmp->vu_p->v_p->vg_p, V3ARGS(eu_tmp->vu_p->v_p->vg_p->coord));
+
+            }
+        } 
+        bu_bomb("nmg_triangulate_rm_holes(): could not find cut for current hole-loopuse\n");
+    }
+
+#if 0
+    for (BU_LIST_FOR(lu_tmp, loopuse, &fu->lu_hd)) {
+        for (BU_LIST_FOR(eu_tmp, edgeuse, &lu_tmp->down_hd)) {  
+            bu_log("nmg_triangulate_rm_holes(): exit-remove-holes lu_p = 0x%lx lu_orient = %d fu_p = 0x%lx vu_p = 0x%lx eu_p = 0x%lx v_p = 0x%lx vg_p = 0x%lx 3D coord = %g %g %g\n",
+                (unsigned long)lu_tmp, lu_tmp->orientation, (unsigned long)lu_tmp->up.fu_p,
+                (unsigned long)eu_tmp->vu_p, (unsigned long)eu_tmp, (unsigned long)eu_tmp->vu_p->v_p,
+                (unsigned long)eu_tmp->vu_p->v_p->vg_p, V3ARGS(eu_tmp->vu_p->v_p->vg_p->coord));
+        }
+    }
+#endif
+
+#ifdef DEBUG_TRI_P
+    {
+       struct model *my_m2;
+       struct edgeuse *myeu2; 
+       lu_tmp = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+       myeu2 = BU_LIST_FIRST(edgeuse, &(lu_tmp->down_hd));
+       nmg_plot_lu_around_eu("holes_removed", myeu2, tol);
+
+       my_m2 = nmg_find_model(lu_tmp->up.magic_p);
+       NMG_CK_MODEL(my_m2);
+       nmg_stash_model_to_file("holes_removed.g", my_m2, "holes_removed");
+    }
+#endif
+
+#if 0
+    /* code to open/close a junk file */
+    {
+        FILE *plotfp;
+        struct bu_vls plot_file_name;
+        bu_vls_init(&plot_file_name);
+        bu_vls_sprintf(&plot_file_name, "junk_file_faceuse.pl");
+        plotfp = fopen("junk_file_faceuse.pl", "wb");
+        (void)fclose(plotfp);
+        bu_vls_free(&plot_file_name);
+#if 0
+        bu_vls_sprintf(&plot_file_name, "junk_file_faceuse_%x.pl", fu);
+        plotfp = fopen(bu_vls_addr(&plot_file_name), "wb");
+#endif
+    }
+    /* code to open/close a junk file */
+#endif
+
+    return;
+}
+
+
+void
+nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
+{
+    struct loopuse *lu;
+    struct edgeuse *eu;
+    int loopuse_count_tmp = 0;
+    int edgeuse_vert_count = 0;
+    struct loopuse *lu1;
+    int lu_done = 0;
+
+    BN_CK_TOL(tol);
+    NMG_CK_FACEUSE(fu);
+
+    /* remove loopuse with < 3 vertices */
+    lu_done = 0;
+    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+    while (!lu_done) {
+
+        if (BU_LIST_IS_HEAD(lu, &fu->lu_hd)) {
+            lu_done = 1;
+        } else {
+            NMG_CK_LOOPUSE(lu);
+
+            edgeuse_vert_count = 0;
+            for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+                edgeuse_vert_count++;
+            }
+
+            if (edgeuse_vert_count < 3) {
+                bu_log("killed loopuse 0x%lx with %d vertices (i.e. < 3 vertices)\n", 
+                        (unsigned long)lu, edgeuse_vert_count);
+                nmg_klu(lu);
+
+                loopuse_count_tmp = 0;
+                for (BU_LIST_FOR(lu1, loopuse, &fu->lu_hd)) {
+                    loopuse_count_tmp++;
+                }
+
+                bu_log("nmg_triangulate_rm_degen_loopuse(): remaining loopuse in faceuse after killing loopuse %d\n", loopuse_count_tmp);
+                if (loopuse_count_tmp < 1) {
+                    lu_done = 1;
+                    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse contains no loopuse\n");
+                }
+
+                lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+            } else {
+                lu = BU_LIST_PNEXT(loopuse, lu);
+            }
+        }
+    }
+    return;
+}
+
+
+void
+nmg_dump_model(struct model *m)
+{
+    struct nmgregion *r;
+    struct shell *s;
+    struct faceuse *fu;
+    struct loopuse *lu;
+    struct edgeuse *eu;
+    struct vertex_g *vg;
+    FILE *fp;
+    size_t r_cnt = 0;
+    size_t s_cnt = 0;
+    size_t fu_cnt = 0;
+    size_t lu_cnt = 0;
+    size_t eu_cnt = 0;
+
+    if ((fp = fopen("nmg_vertex_dump.txt", "a")) == NULL) {
+        bu_bomb("nmg_vertex_dump, open failed\n");
+    }
+
+    r_cnt = 0;
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+        r_cnt++;
+        NMG_CK_REGION(r);
+        s_cnt = 0;
+        for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+            s_cnt++;
+            NMG_CK_SHELL(s);
+            fu_cnt = 0;
+            for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
+                fu_cnt++;
+                NMG_CK_FACEUSE(fu);
+                lu_cnt = 0;
+                for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
+                    lu_cnt++;
+                    NMG_CK_LOOPUSE(lu);
+                    eu_cnt = 0;
+                    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
+                        eu_cnt++;
+                        NMG_CK_EDGEUSE(eu);
+                        NMG_CK_VERTEXUSE(eu->vu_p);
+                        NMG_CK_VERTEX(eu->vu_p->v_p);
+                        NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p); 
+                        vg = eu->vu_p->v_p->vg_p;
+                        (void)fprintf(fp, "%ld %ld %ld %ld %ld %g %g %g\n", 
+                              (unsigned long)r_cnt, 
+                              (unsigned long)s_cnt, 
+                              (unsigned long)fu_cnt, 
+                              (unsigned long)lu_cnt,
+                              (unsigned long) eu_cnt,
+                              V3ARGS(vg->coord));
+                    }
+                }
+            }
+        }
+    }
+
+    fclose(fp);
+    return;
+}
+#endif
+/* This is the endif to enable the prototype functions nmg_plot_fu,
+ * nmg_triangulate_rm_holes, nmg_triangulate_rm_degen_loopuse,
+ * nmg_dump_model.
+ */
+
+
 /* This is the ifdef to enable the prototype nmg_triangulate_fu
  * function and disable the original version of this function.
  */
@@ -3209,4 +3900,6 @@ nmg_triangulate_model(struct model *m, const struct bn_tol *tol)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
+
 
