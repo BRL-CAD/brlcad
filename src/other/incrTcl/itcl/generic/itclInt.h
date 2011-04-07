@@ -55,7 +55,6 @@
 #  include <fcntl.h> 	 
 #  include <io.h> 	 
 #endif 	 
-#include "common.h"
 
 #include "tclInt.h"
 #include "itcl.h"
