@@ -2,6 +2,5 @@
 /.libs
 /Makefile
 /Makefile.in
-/pc_test
-/vm_test
-/solver_test
+/bntester
+/libbn.plg
