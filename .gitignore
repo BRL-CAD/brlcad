@@ -2,6 +2,6 @@
 /.libs
 /Makefile
 /Makefile.in
-/htester
-/libbu.plg
-/timetester
+/pc_test
+/vm_test
+/solver_test
