@@ -2258,7 +2258,11 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 		if (lu2->orientation == OT_OPPOSITE)
 		    VREVERSE(inward2, inward2);
 
+#ifdef TRI_PROTOTYPE
+		if (VDOT(inward1, inward2) < -SMALL_FASTF)
+#else
 		if (VDOT(inward1, inward2) < 0.0)
+#endif
 		    return NMG_CLASS_AoutB;
 		else
 		    return NMG_CLASS_AinB;
