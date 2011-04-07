@@ -3854,7 +3854,11 @@ nmg_lu_reorient(struct loopuse *lu)
     if (lu->orientation == OT_OPPOSITE)
 	HREVERSE(lu_pl, lu_pl);
 
+#ifdef TRI_PROTOTYPE
+    if (VDOT(lu_pl, norm) < -SMALL_FASTF)
+#else
     if (VDOT(lu_pl, norm) < 0.0)
+#endif
 	geom_orient = OT_OPPOSITE;
     else
 	geom_orient = OT_SAME;
