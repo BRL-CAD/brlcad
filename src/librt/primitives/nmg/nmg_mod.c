@@ -2389,7 +2389,18 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 
     if (vu1->v_p == vu2->v_p) {
 	/* The loops touch, use a different routine */
+#ifdef TRI_PROTOTYPE
+        /* The 2nd parameter passed into 'nmg_split_lu_at_vu' is added
+         * to the new loopuse created by 'nmg_split_lu_at_vu'. Because
+         * of this, the 2nd parameter should be vu2 because when
+         * 'nmg_cut_loop' is called and returns, it is expected that
+         * vu1 remain within the same loopuse as when 'nmg_cut_loop'
+         * was called.
+         */
+	lu = nmg_split_lu_at_vu(oldlu, vu2);
+#else
 	lu = nmg_split_lu_at_vu(oldlu, vu1);
+#endif
 	goto out;
     }
 
