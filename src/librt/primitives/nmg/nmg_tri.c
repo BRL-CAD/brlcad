@@ -112,6 +112,11 @@ int PvsV(struct trap *p, struct trap *v)
 static struct pt2d *find_pt2d(struct bu_list *tbl2d, struct vertexuse *vu);
 static FILE *plot_fp;
 
+
+/* This is the ifndef to disable the functions print_2d_eu,
+ * print_trap, print_tlist.
+ */
+#ifndef TRI_PROTOTYPE
 static void
 print_2d_eu(char *s, struct edgeuse *eu, struct bu_list *tbl2d)
 {
@@ -152,6 +157,8 @@ print_trap(struct trap *tp, struct bu_list *tbl2d)
     if (tp->e_right)
 	print_2d_eu("\t\t e_right", tp->e_right, tbl2d);
 }
+
+
 static void
 print_tlist(struct bu_list *tbl2d, struct bu_list *tlist)
 {
@@ -165,6 +172,10 @@ print_tlist(struct bu_list *tbl2d, struct bu_list *tlist)
     }
     bu_log("Trapezoid list end ----------\n");
 }
+#endif
+/* This is the endif to disable the functions print_2d_eu,
+ * print_trap, print_tlist.
+ */
 
 
 static int flatten_debug=1;
@@ -535,6 +546,11 @@ is_convex(struct pt2d *a, struct pt2d *b, struct pt2d *c, const struct bn_tol *t
 #define POLY_POINT 7
 
 
+/* This is the ifndef to disable the functions vtype2d,
+ * poly_start_vertex, poly_side_vertex, poly_end_vertex,
+ * hole_start_vertex, hole_end_vertex, nmg_trap_face.
+ */
+#ifndef TRI_PROTOTYPE
 /**
  *
  * characterize the edges which meet at this vertex.
@@ -1097,6 +1113,11 @@ nmg_trap_face(struct bu_list *tbl2d, struct bu_list *tlist, const struct bn_tol 
     }
 
 }
+#endif
+/* This is the endif to disable the functions vtype2d,
+ * poly_start_vertex, poly_side_vertex, poly_end_vertex,
+ * hole_start_vertex, hole_end_vertex, nmg_trap_face.
+ */
 
 
 static void
@@ -1963,6 +1984,12 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
 	    map_new_vertexuse(tbl2d, eu->vu_p);
     }
 }
+
+
+/* This is the ifndef to disable the functions skip_cut,
+ * cut_diagonals, cut_unimonotone, nmg_plot_flat_face.
+ */
+#ifndef TRI_PROTOTYPE
 /**
  * Check to see if the edge between the top/bottom of the trapezoid
  * already exists.
@@ -2433,7 +2460,10 @@ nmg_plot_flat_face(struct faceuse *fu, struct bu_list *tbl2d)
 	}
     }
 }
-
+#endif
+/* This is the endif to disable the functions skip_cut,
+ * cut_diagonals, cut_unimonotone, nmg_plot_flat_face.
+ */
 
 void
 nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
