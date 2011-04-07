@@ -533,7 +533,22 @@ is_convex(struct pt2d *a, struct pt2d *b, struct pt2d *c, const struct bn_tol *t
     if (rt_g.NMG_debug & DEBUG_TRI)
 	bu_log("\tangle == %g tol angle: %g\n", angle, tol->perp);
 
+#ifdef TRI_PROTOTYPE
+    /* Since during loopuse triangulation, sometimes it is necessary
+     * to allow degenerate triangles (i.e. zero area). Because of
+     * this, we need to allow the definition of convex to include 0
+     * and 180 degree angles.
+     */
+    return (angle >= -SMALL_FASTF) && (angle <= (M_PI + SMALL_FASTF));
+#else
+    /* This original code contains a bug since the units of 'angle'
+     * is radians but the units of 'tol->perp' is not. Since changing
+     * any tolerances related to nmg triangulation seem to have both
+     * a negative and positive impact, I decided not to arbitrarily
+     * correct this bug.
+     */
     return angle > tol->perp && angle <= M_PI-tol->perp;
+#endif
 }
 
 
