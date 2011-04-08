@@ -61,6 +61,12 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     if ((BU_STR_EQUAL(argv[plan_argv], "."))) {
 	    build_uniq_list = 1;
 	    plan_argv++;
+	    /* TODO: This is a workaround for a lower level bug. Should be removed
+	     * when that is fixed. sh/conversion.sh will need to be fixed, as
+	     * well (removing the
+	     * if test "x$OBJECTS" = "x" ] ; then OBJECTS="-print"; fi
+	     * line).
+	     */
 	    if (argc < 3) {
 		    bu_vls_printf(&gedp->ged_result_str, " [path] [expressions...]\n");
 		    return TCL_OK;
