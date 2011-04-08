@@ -4905,6 +4905,10 @@ RT_EXPORT BU_EXTERN(void nmg_triangulate_model,
 RT_EXPORT BU_EXTERN(void nmg_triangulate_fu,
 		    (struct faceuse *fu,
 		     const struct bn_tol *tol));
+#ifdef TRI_PROTOTYPE
+RT_EXPORT BU_EXTERN(void nmg_dump_model,
+                    (struct model *m));
+#endif
 
 /*  nmg_tri_mc.c */
 RT_EXPORT BU_EXTERN(void nmg_triangulate_model_mc,
