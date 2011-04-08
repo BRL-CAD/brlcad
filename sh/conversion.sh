@@ -391,6 +391,7 @@ while test $# -gt 0 ; do
     eval "$cmd"
 
     # execute in a coprocess
+    if test "x$OBJECTS" = "x" ; then OBJECTS='-print' ; fi
     cmd="$SEARCH -c \"$work\" search . $OBJECTS"
     objects=`eval "$cmd" 2>&1 | grep -v Using`
     $VERBOSE_ECHO "\$ $cmd"
