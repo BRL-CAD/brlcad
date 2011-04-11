@@ -163,8 +163,8 @@ fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/Anim_Tutorial/ind
  "$TMPDIR/brlcad-doc-animation.desktop"
 
 # compile and install in tmp dir
-./configure --enable-optimized --enable-almost-everything --with-ogl --disable-debug && \
-make -j$NJOBS && \
+./configure --enable-optimized --enable-almost-everything --with-ogl --disable-debug
+make -j$NJOBS
 fakeroot make install DESTDIR=`pwd`"/$TMPDIR/tmp"
 
 # copy menu files
