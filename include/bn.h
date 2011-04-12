@@ -873,11 +873,27 @@ BN_EXPORT BU_EXTERN(int bn_dist_pt2_lseg2,
 		     const point_t b,
 		     const point_t p,
 		     const struct bn_tol *tol));
+#ifdef TRI_PROTOTYPE
+BN_EXPORT BU_EXTERN(int bn_isect_lseg3_lseg3_new,
+                    (fastf_t *dist,
+                     const point_t p, const vect_t pdir,
+                     const point_t q, const vect_t qdir,
+                     const struct bn_tol *tol));
+#endif
 BN_EXPORT BU_EXTERN(int bn_isect_lseg3_lseg3,
 		    (fastf_t *dist,
 		     const point_t p, const vect_t pdir,
 		     const point_t q, const vect_t qdir,
 		     const struct bn_tol *tol));
+#ifdef TRI_PROTOTYPE
+BN_EXPORT BU_EXTERN(int bn_isect_line3_line3_new,
+                    (fastf_t *s, fastf_t *t,
+                     const point_t p0,
+                     const vect_t u,
+                     const point_t q0,
+                     const vect_t v,
+                     const struct bn_tol *tol));
+#endif
 BN_EXPORT BU_EXTERN(int bn_isect_line3_line3,
 		    (fastf_t *t, fastf_t *u,
 		     const point_t p,

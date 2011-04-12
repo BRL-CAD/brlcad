@@ -187,6 +187,13 @@ typedef ptrdiff_t ssize_t;
 #  endif
 #endif
 
+/* gcc 3.4 doesn't seem to support always_inline with -O0 (yet -Os
+ * reportedly works), so turn it off.
+ */
+#if !GCC_PREREQ(3, 5)
+#  define always_inline noinline
+#endif
+
 /**
  * UNUSED provides a common mechanism for declaring unused parameters.
  * Use it like this:

@@ -17,11 +17,14 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* red removes shader attribute (and region id if -1)
+* TBD
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* red removes shader attribute (and region id if -1) and has a variety
+  of other bugs that need to be fixed
 
 * implement support for the other file entity types to libbu
 

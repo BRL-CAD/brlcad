@@ -166,7 +166,7 @@ fi
 
 # create deb or source packages
 case "$1" in
--b) fakeroot debian/rules clean && \
+-b) fakeroot debian/rules clean
     DEB_BUILD_OPTIONS=parallel=$NJOBS fakeroot debian/rules binary
     ;;
 -s) fakeroot dpkg-buildpackage -S -us -uc
