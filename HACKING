@@ -1145,7 +1145,7 @@ previous sync are included and that STABLE matches trunk.
     svn co https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE brlcad.STABLE && cd brlcad.STABLE
     svn merge https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@$PREV https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@HEAD .
     sh autogen.sh && ./configure --enable-all && make distcheck
-    export CURR=`svn log --xml -rHEAD https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk | grep 'revision=' | sed 's/.*="\([0-9][0-9]*\)".*/\1/g'`
+    export CURR=`svn log --xml https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk | grep 'revision=' | head -n 1 | sed 's/.*="\([0-9][0-9]*\)".*/\1/g'`
     svn commit -m "merge trunk to STABLE from r$PREV to HEAD r$CURR"
 
 7) Tag the release using "rel-MAJOR-MINOR-PATCH" format:
