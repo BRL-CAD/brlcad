@@ -1,4 +1,4 @@
-.PHONY : regression regress test mged moss lights solids shaders spdi iges weight gqa fastgen bots flawfinder repository
+.PHONY : regression regress test mged red moss lights solids shaders spdi iges weight gqa fastgen bots flawfinder repository
 
 SUBDIRS = mged
 
@@ -12,6 +12,10 @@ test: regression
 
 mged: $(top_srcdir)/regress/mged.sh
 	-${SH} $(top_srcdir)/regress/mged.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
+
+red: $(top_srcdir)/regress/red.sh
+	-${SH} $(top_srcdir)/regress/red.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
 moss: $(top_srcdir)/regress/moss.sh
@@ -81,6 +85,7 @@ EXTRA_DIST = \
 	moss.sh \
 	mosspix.asc \
 	nightly.sh \
+	red.sh \
 	repository.sh \
 	shaders.sh \
 	shaderspix.asc \
@@ -142,6 +147,7 @@ CLEANFILES = \
 	moss_png.diff \
 	moss_ref.pix \
 	overlaps.pl \
+	red.log \
 	repository.log \
 	shaders.dat \
 	shaders.g \
@@ -185,6 +191,7 @@ MOSTLYCLEANFILES = \
 	moss-png.log \
 	moss.asc \
 	moss.log \
+	red.log \
 	shaders.log \
 	solids.log \
 	spdi.log \
