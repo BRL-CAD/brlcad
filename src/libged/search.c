@@ -46,8 +46,10 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     struct directory *dp;
     struct db_full_path dfp;
     struct db_full_path_list *entry;
+    struct db_full_path_list *result;
     struct db_full_path_list *new_entry;
     struct db_full_path_list *path_list = NULL;
+    struct db_full_path_list *dispatch_list = NULL;
     struct db_full_path_list *search_results = NULL;
     struct bu_ptbl *uniq_db_objs;
     /* COPY argv_orig to argv; */
@@ -60,22 +62,14 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     /* Check if we're doing a unique object list */
     if ((BU_STR_EQUAL(argv[plan_argv], "."))) {
 	    build_uniq_list = 1;
-	    plan_argv++;
-	    /* TODO: This is a workaround for a lower level bug. Should be removed
-	     * when that is fixed. sh/conversion.sh will need to be fixed, as
-	     * well (removing the
-	     * if test "x$OBJECTS" = "x" ] ; then OBJECTS="-print"; fi
-	     * line).
-	     */
-	    if (argc < 3) {
-		    bu_vls_printf(&gedp->ged_result_str, " [path] [expressions...]\n");
-		    return TCL_OK;
-	    }
     }
 
     /* initialize list of search paths */
     BU_GETSTRUCT(path_list, db_full_path_list);
     BU_LIST_INIT(&(path_list->l));
+    BU_GETSTRUCT(dispatch_list, db_full_path_list);
+    BU_LIST_INIT(&(dispatch_list->l));
+
 
     db_full_path_init(&dfp);
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
@@ -84,18 +78,47 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     while (!plan_found) {
-	    if (BU_STR_EQUAL(argv[plan_argv], "/") || BU_STR_EQUAL(argv[plan_argv], ".")) {
-		    plan_argv++;
-		    if (plan_argv == argc) {
-			    bu_vls_printf(&gedp->ged_result_str, " [path] [expressions...]\n");
-			    db_free_full_path(&dfp);
-			    bu_free_argv(argc, argv);	
-			    return TCL_OK;
-		    }
+	    if (!argv[plan_argv]) {
+		    /* OK, no plan - will use default behavior */
+		    plan_found = 1;
 	    } else {
 		    if (!((argv[plan_argv][0] == '-') || (argv[plan_argv][0] == '!')  || (argv[plan_argv][0] == '(')) ) {
 			    /* We seem to have a path - make sure it's valid */
-			    if (db_string_to_path(&dfp, gedp->ged_wdbp->dbip, argv[plan_argv]) == -1) {
+			    if (BU_STR_EQUAL(argv[plan_argv], "/")) {
+				    /* if we have nothing but a slash, add all toplevel objects to the list as
+				     * full path searches */
+				    for (i = 0; i < RT_DBNHASH; i++) {
+					    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+						    if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
+							    db_string_to_path(&dfp, gedp->ged_wdbp->dbip, dp->d_namep);
+							    BU_GETSTRUCT(new_entry, db_full_path_list);
+							    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
+							    db_full_path_init(new_entry->path);
+							    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
+							    new_entry->local = 0;
+							    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
+						    }
+					    }
+				    }
+				    plan_argv++;
+			    } else if (BU_STR_EQUAL(argv[plan_argv], ".")) {
+				    /* if we have nothing but a dot, add all toplevel objects to the list as
+				     * local searches */
+				    for (i = 0; i < RT_DBNHASH; i++) {
+					    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+						    if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
+							    db_string_to_path(&dfp, gedp->ged_wdbp->dbip, dp->d_namep);
+							    BU_GETSTRUCT(new_entry, db_full_path_list);
+							    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
+							    db_full_path_init(new_entry->path);
+							    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
+							    new_entry->local = 1;
+							    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
+						    }
+					    }
+				    }
+				    plan_argv++;
+			    } else if (db_string_to_path(&dfp, gedp->ged_wdbp->dbip, argv[plan_argv]) == -1) {
 				    bu_vls_printf(&gedp->ged_result_str,  " Search path not found in database.\n");
 				    db_free_full_path(&dfp);
 				    bu_free_argv(argc, argv);	
@@ -105,14 +128,13 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 				    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
 				    db_full_path_init(new_entry->path);
 				    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
+				    if (argv[plan_argv][0] == '/') {
+					    new_entry->local = 0;
+				    } else {
+					    new_entry->local = 1;
+				    }
 				    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
 				    plan_argv++;
-				    if (plan_argv == argc) {
-					    bu_vls_printf(&gedp->ged_result_str, " [path] [expressions...]\n");
-					    db_free_full_path(&dfp);
-					    bu_free_argv(argc, argv);	
-					    return TCL_OK;
-				    }
 			    }
 		    } else {
 			    plan_found = 1;
@@ -128,28 +150,35 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	    db_free_full_path_list(path_list);
 	    return GED_ERROR;
     } else {
-	    if (build_uniq_list) {
-		    uniq_db_objs = db_search_unique_objects(dbplan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-	    } else {
-		    search_results = db_search_full_paths(dbplan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
+	    for(BU_LIST_FOR_BACKWARDS(entry, db_full_path_list, &(path_list->l))) {
+		    BU_GETSTRUCT(new_entry, db_full_path_list);
+		    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
+		    db_full_path_init(new_entry->path);
+		    db_dup_full_path(new_entry->path, entry->path);
+		    BU_LIST_PUSH(&(dispatch_list->l), &(new_entry->l));
+		    if (entry->local) {
+			    uniq_db_objs = db_search_unique_objects(dbplan, dispatch_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
+			    for (i=(int)BU_PTBL_LEN(uniq_db_objs) - 1; i >=0 ; i--) {
+				    dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, i);
+				    bu_vls_printf(&gedp->ged_result_str, "%s\n", dp->d_namep);
+			    }
+			    bu_ptbl_free(uniq_db_objs);
+		    } else {
+			    search_results = db_search_full_paths(dbplan, dispatch_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
+			    for(BU_LIST_FOR_BACKWARDS(result, db_full_path_list, &(search_results->l))) {
+				    bu_vls_printf(&gedp->ged_result_str, "%s\n", db_path_to_string(result->path));
+			    }
+			    db_free_full_path_list(search_results);
+		    }
+		    db_free_full_path(new_entry->path);
+		    BU_LIST_DEQUEUE(&(new_entry->l));
+		    bu_free(new_entry, "free new_entry");
 	    }
 	    db_search_freeplan(&dbplan);
     }
 
     /* Assign results to string - if we're doing a list, process the results for unique objects - otherwise
      * just assemble the full path list and return it */
-    if (build_uniq_list) {
-	    for (i=0; i < (int)BU_PTBL_LEN(uniq_db_objs); i++) {
-		    dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, i);
-		    bu_vls_printf(&gedp->ged_result_str, "%s\n", dp->d_namep);
-	    }
-	    bu_ptbl_free(uniq_db_objs);
-    } else {
-	    for(BU_LIST_FOR(entry, db_full_path_list, &(search_results->l))) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s\n", db_path_to_string(entry->path));
-	    }
-	    db_free_full_path_list(search_results);
-    }
     db_free_full_path(&dfp);
     db_free_full_path_list(path_list);
     bu_free_argv(argc, argv);	
