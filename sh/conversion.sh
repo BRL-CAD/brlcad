@@ -391,6 +391,7 @@ while test $# -gt 0 ; do
     eval "$cmd"
 
     # execute in a coprocess
+    if test "x$OBJECTS" = "x" ; then OBJECTS='-print' ; fi
     cmd="$SEARCH -c \"$work\" search . $OBJECTS"
     objects=`eval "$cmd" 2>&1 | grep -v Using`
     $VERBOSE_ECHO "\$ $cmd"
@@ -427,7 +428,7 @@ EOF
 	nmg=fail
 	cmd="$GED -c "$work" facetize -n \"${obj}.nmg\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
-	output=`eval time "$cmd" 2>&1 | grep -v Using`
+	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
 
 	# stop the limit timer.  when we get here, see if there is a
 	# sleep process still running.  if any found, the sleep
@@ -466,7 +467,7 @@ EOF
 	bot=fail
 	cmd="$GED -c "$work" facetize \"${obj}.bot\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
-	output=`eval time "$cmd" 2>&1 | grep -v Using`
+	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
 
 	# stop the limit timer, same as above.
 	for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do

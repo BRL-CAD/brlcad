@@ -74,7 +74,6 @@ kitchensink_dirs = \
 	gtools \
 	halftone \
 	irprep \
-	java \
 	lgt \
 	mged \
 	nirt \

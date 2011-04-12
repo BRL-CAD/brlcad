@@ -152,6 +152,11 @@ __BEGIN_DECLS
 #define __BU_ATTR_NORETURN __attribute__ ((__noreturn__))
 
 /**
+ * shorthand declaration of a function that should always be inline
+ */
+#define __BU_ATTR_ALWAYS_INLINE __attribute__ ((always_inline))
+
+/**
  *  If we're compiling strict, turn off "format string vs arguments"
  *  checks - BRL-CAD customizes the arguments to some of these
  *  function types (adding bu_vls support) and that is a problem with

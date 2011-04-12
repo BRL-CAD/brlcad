@@ -11,7 +11,7 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2011-03-08  Release 7.18.4                                     ---
+--- 2011-04-12  Release 7.18.4                                     ---
 ----------------------------------------------------------------------
 
 After considerable development, this release includes the preliminary
@@ -21,11 +21,11 @@ acceleration techniques for faster raytracing of triangle mesh models.
 TIE was experimentally developed over several years as part of
 BRL-CAD's Advanced Distributed Ray Tracer (ADRT) tool suite.  As this
 is the initial integration, TIE is available but presently disabled by
-default.  The engine optimiation is configurably integrated with LIBRT
-mesh (BoT) raytracing and optionally enabled via settings available in
-RT and MGED.  Inital testing of "real-world" models shows average
-improvements around 20-60% while individual meshes with high (1M+)
-face counts are rendering more than 2000% faster than before.
+default.  The engine optimization is configurably integrated with
+LIBRT mesh (BoT) raytracing and optionally enabled via settings
+available in RT and MGED.  Inital testing of "real-world" models shows
+average improvements around 20-60% while individual meshes with high
+(1M+) face counts are rendering more than 2000% faster than before.
 
 Also included in this release is the development of a new "shp-g"
 geometry importer for Shapefile data.  Shapefiles are a common file
@@ -33,6 +33,7 @@ format for storing geospatial vector data commonly used by geographic
 information systems (GIS) software.  Shapefiles may be imported as 2D
 sketch geometry that can be extruded to a 3D representation.
 
+* fixed units conversion bug with mged 'title' command - Bob Parker
 * fixed memory management crash in the dem-g importer - Richard Weiss
 * fixed edcolors so it retains and accepts colors again  - Cliff Yapp
 * support for applying matrix edits to revolve primitives - Dongxu Li

@@ -47,7 +47,6 @@ extern int db5_is_standard_attribute(const char *attr_want);
 /* also accessed by put_comb.c */
 char _ged_tmpfil[MAXPATHLEN] = {0};
 
-
 static const char combseparator[] = "---------- Combination Tree ----------\n";
 static const char *combtree_header = "---*[[:space:]]*Combination Tree[[:space:]]*---*\r?\n";
 
@@ -773,9 +772,15 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls comb_name;
     struct bu_vls temp_name;
     struct bu_vls *final_name = NULL;
+    int force_flag = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* FIXME: temporary blather until fixed (see regress/red.sh) */
+    bu_log("WARNING: The 'red' command is incomplete and may inadvertently change model data.\n");
+    bu_log("         Make backups of your data.  Consider alternative edit methods.\n");
+    sleep(1);
 
     bu_optind = 1;
     /* First, grab the editstring off of the argv list */
@@ -784,6 +789,8 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	    case 'E' :
 		editstring = bu_optarg;
 		break;
+	    case 'f' :
+		force_flag = 1;
 	    default :
 		break;
 	}
@@ -935,22 +942,32 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	    goto cleanup;
 	}
 
-	/* if we got a final_name from build_comb and it isn't identical to comb_name, check to ensure
-	 * an object with the new name doesn't already exist - red will not overwrite a pre-existing comb. 
-	 * If we don't have a name, assume we're working on comb_name */
+	/* if we got a final_name from build_comb and it isn't
+	 * identical to comb_name, check to ensure an object with the
+	 * new name doesn't already exist - red will not overwrite a
+	 * pre-existing comb (unless the -f force flag is set).  If we
+	 * don't have a name, assume we're working on comb_name
+	 */
 	if (final_name) {
-		if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(final_name))) {
-			if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(final_name), LOOKUP_QUIET) != RT_DIR_NULL) {
-				bu_vls_printf(&gedp->ged_result_str, "%s: Error - %s already exists\n", *argv, bu_vls_addr(final_name));
-				goto cleanup;
-			}
+	    if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(final_name))) {
+		if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(final_name), LOOKUP_QUIET) != RT_DIR_NULL) {
+		    if (force_flag) {
+			av[0] = "kill";
+			av[1] = bu_vls_addr(final_name);
+			av[2] = NULL;
+			(void)ged_kill(gedp, 2, (const char **)av);
+		    } else {
+			/* not forced, can't overwrite destination, can't proceed */
+			bu_vls_printf(&gedp->ged_result_str, "%s: Error - %s already exists\n", *argv, bu_vls_addr(final_name));
+			goto cleanup;
+		    }
 		}
+	    }
 	} else {
 		final_name = bu_malloc(sizeof(struct bu_vls), "target vls");
 		bu_vls_init(final_name);
 		bu_vls_sprintf(final_name, "%s", bu_vls_addr(&comb_name));
 	}
-
 
 	/* it worked - kill the original and put the updated copy in
 	 * its place if a pre-existing comb was being edited -
@@ -968,15 +985,17 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	(void)ged_move(gedp, 3, (const char **)av);
     
     }
-    /* if we have jumpted to cleanup by now, everything was fine */
+    /* if we have reached cleanup by now, everything was fine */
     ret = GED_OK;
 
 cleanup:
     if (bu_file_exists(_ged_tmpfil))
 	unlink(_ged_tmpfil);
 
-    bu_vls_free(final_name);
-    bu_free(final_name, "final_name");
+    if (final_name) {
+	bu_vls_free(final_name);
+	bu_free(final_name, "final_name");
+    }
     bu_vls_free(&comb_name);
     bu_vls_free(&temp_name);
 

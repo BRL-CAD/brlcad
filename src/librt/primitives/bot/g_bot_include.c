@@ -580,7 +580,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
     register struct seg *segp;
-    register size_t i;
+    register ssize_t i;
     static const int IN = 0;
     static const int OUT = 1;
 
@@ -620,7 +620,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 
     /* Remove duplicate hits */
     {
-	register size_t j, k, l;
+	register ssize_t j, k, l;
 
 	for (i=0; i<nhits-1; i++) {
 	    fastf_t dist;
@@ -651,8 +651,8 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 		i--;
 		continue;
 	    } else if ((k - i) > 2) {
-		size_t keep1=(size_t)-1, keep2=(size_t)-1;
-		size_t enters=0, exits=0;
+		ssize_t keep1=-1, keep2=-1;
+		ssize_t enters=0, exits=0;
 		int reorder=0;
 		int reorder_failed=0;
 
@@ -752,10 +752,10 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 			else
 			    enters++;
 			if (dn * hits[j].hit_vpriv[X] < 0) {
-			    if (keep1 == (size_t)-1) {
+			    if (keep1 == -1) {
 				keep1 = j;
 				dn = hits[j].hit_vpriv[X];
-			    } else if (keep2 == (size_t)-1) {
+			    } else if (keep2 == -1) {
 				keep2 = j;
 				dn = hits[j].hit_vpriv[X];
 				break;
@@ -763,7 +763,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 			}
 		    }
 
-		    if (keep2 == (size_t)-1) {
+		    if (keep2 == -1) {
 			/* did not find two keepers, perhaps they were
 			 * all entrances or all exits.
 			 */

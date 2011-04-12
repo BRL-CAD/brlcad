@@ -5134,7 +5134,7 @@ wdb_title_cmd(struct rt_wdb *wdbp,
     bu_vls_init(&title);
     bu_vls_from_argv(&title, argc-1, (const char **)argv+1);
 
-    if (db_update_ident(wdbp->dbip, bu_vls_addr(&title), wdbp->dbip->dbi_base2local) < 0) {
+    if (db_update_ident(wdbp->dbip, bu_vls_addr(&title), wdbp->dbip->dbi_local2base) < 0) {
 	Tcl_AppendResult(interp, "Error: unable to change database title");
 	bad = 1;
     }
