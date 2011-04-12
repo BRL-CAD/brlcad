@@ -21,11 +21,11 @@ acceleration techniques for faster raytracing of triangle mesh models.
 TIE was experimentally developed over several years as part of
 BRL-CAD's Advanced Distributed Ray Tracer (ADRT) tool suite.  As this
 is the initial integration, TIE is available but presently disabled by
-default.  The engine optimiation is configurably integrated with LIBRT
-mesh (BoT) raytracing and optionally enabled via settings available in
-RT and MGED.  Inital testing of "real-world" models shows average
-improvements around 20-60% while individual meshes with high (1M+)
-face counts are rendering more than 2000% faster than before.
+default.  The engine optimization is configurably integrated with
+LIBRT mesh (BoT) raytracing and optionally enabled via settings
+available in RT and MGED.  Inital testing of "real-world" models shows
+average improvements around 20-60% while individual meshes with high
+(1M+) face counts are rendering more than 2000% faster than before.
 
 Also included in this release is the development of a new "shp-g"
 geometry importer for Shapefile data.  Shapefiles are a common file

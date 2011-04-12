@@ -32,23 +32,3 @@
 /Makefile.in
 /mged
 
-/.deps
-/.libs
-/Makefile
-/Makefile.in
-/bntester
-/libbn.plg
-/.deps
-/.libs
-/Makefile
-/Makefile.in
-/htester
-/libbu.plg
-/timetester
-/.deps
-/.libs
-/Makefile
-/Makefile.in
-/pc_test
-/vm_test
-/solver_test
