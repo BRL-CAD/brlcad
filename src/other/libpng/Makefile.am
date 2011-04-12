@@ -134,3 +134,5 @@ uninstall-hook:
 	cd $(DESTDIR)$(includedir); rm -f png.h pngconf.h
 	rm -f $(DESTDIR)$(pkgconfigdir)/libpng.pc
 	rm -f $(DESTDIR)$(bindir)/libpng-config
+
+depends:
