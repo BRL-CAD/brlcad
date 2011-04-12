@@ -743,6 +743,20 @@ bu_vls_trimspace(struct bu_vls *vp)
 	bu_vls_nibble(vp, 1);
 }
 
+void
+bu_vls_trimchar(struct bu_vls *vp, const char ch)
+{
+    BU_CK_VLS(vp);
+
+    /* Remove trailing characters */
+    while ((vp->vls_len > 0) && (bu_vls_addr(vp)[bu_vls_strlen(vp)-1] == ch))
+	bu_vls_trunc(vp, -1);
+
+    /* Remove leading characters */
+    while ((vp->vls_len > 0) && (*bu_vls_addr(vp) == ch))
+	bu_vls_nibble(vp, 1);
+}
+
 
 void
 bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)

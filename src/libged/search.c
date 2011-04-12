@@ -29,20 +29,47 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <time.h>
+
+#ifdef HAVE_SYS_PARAM_H
+#  include <sys/param.h>
+#endif
+
 #include "bio.h"
 
 #include "cmd.h"
 
 #include "./ged_private.h"
 
+int _path_scrub(struct bu_vls *path) {
+	int islocal = 0;
+	int newlen = 0;
+	int currlen = bu_vls_strlen(path);
+	if (bu_vls_addr(path)[0] == '.') islocal = 1;
+	if (bu_vls_addr(path)[0] == '/') islocal = 0;
+	bu_vls_trimchar(path, '.');
+	bu_vls_trimchar(path, '/');
+	newlen = bu_vls_strlen(path);
+	while (newlen < currlen) {
+		currlen = newlen;
+		bu_vls_trimchar(path, '.');
+		bu_vls_trimchar(path, '/');
+		newlen = bu_vls_strlen(path);
+	}
+	bu_vls_sprintf(path, "%s", bu_basename(bu_vls_addr(path)));
+	return islocal;
+}
+
+
+
 int
 ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 {
     void *dbplan;
-    int i;
+    int i, islocal;
     int plan_argv = 1;
     int plan_found = 0;
     int build_uniq_list = 0;
+    struct bu_vls argvls;
     struct directory *dp;
     struct db_full_path dfp;
     struct db_full_path_list *entry;
@@ -52,6 +79,9 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     struct db_full_path_list *dispatch_list = NULL;
     struct db_full_path_list *search_results = NULL;
     struct bu_ptbl *uniq_db_objs;
+
+    bu_vls_init(&argvls);
+
     /* COPY argv_orig to argv; */
     char **argv = bu_dup_argv(argc, argv_orig);
 
@@ -76,7 +106,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-
+    
     while (!plan_found) {
 	    if (!argv[plan_argv]) {
 		    /* OK, no plan - will use default behavior */
@@ -118,23 +148,35 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 					    }
 				    }
 				    plan_argv++;
-			    } else if (db_string_to_path(&dfp, gedp->ged_wdbp->dbip, argv[plan_argv]) == -1) {
-				    bu_vls_printf(&gedp->ged_result_str,  " Search path not found in database.\n");
-				    db_free_full_path(&dfp);
-				    bu_free_argv(argc, argv);	
-				    return GED_ERROR;
 			    } else {
-				    BU_GETSTRUCT(new_entry, db_full_path_list);
-				    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
-				    db_full_path_init(new_entry->path);
-				    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
-				    if (argv[plan_argv][0] == '/') {
-					    new_entry->local = 0;
-				    } else {
-					    new_entry->local = 1;
+				    bu_vls_sprintf(&argvls, "%s", argv[plan_argv]);
+				    islocal = _path_scrub(&argvls);
+				    if (!bu_vls_strlen(&argvls)) {
+					    bu_vls_printf(&gedp->ged_result_str,  "Search path %s not found in database.\n", argv[plan_argv]);
+					    db_free_full_path(&dfp);
+					    bu_vls_free(&argvls);
+					    bu_free_argv(argc, argv);	
+					    return GED_ERROR;
 				    }
-				    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
-				    plan_argv++;
+				    if (db_string_to_path(&dfp, gedp->ged_wdbp->dbip, bu_vls_addr(&argvls)) == -1) {
+					    bu_vls_printf(&gedp->ged_result_str,  "Search path %s not found in database.\n", bu_vls_addr(&argvls));
+					    db_free_full_path(&dfp);
+					    bu_vls_free(&argvls);
+					    bu_free_argv(argc, argv);	
+					    return GED_ERROR;
+				    } else {
+					    BU_GETSTRUCT(new_entry, db_full_path_list);
+					    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
+					    db_full_path_init(new_entry->path);
+					    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
+					    if (argv[plan_argv][0] == '/' && !islocal) {
+						    new_entry->local = 0;
+					    } else {
+						    new_entry->local = 1;
+					    }
+					    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
+					    plan_argv++;
+				    }
 			    }
 		    } else {
 			    plan_found = 1;
@@ -146,6 +188,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     if (!dbplan) {
 	    bu_vls_printf(&gedp->ged_result_str,  "Failed to build find plan.\n");
 	    db_free_full_path(&dfp);
+	    bu_vls_free(&argvls);
 	    bu_free_argv(argc, argv);
 	    db_free_full_path_list(path_list);
 	    return GED_ERROR;
@@ -181,6 +224,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
      * just assemble the full path list and return it */
     db_free_full_path(&dfp);
     db_free_full_path_list(path_list);
+    bu_vls_free(&argvls);
     bu_free_argv(argc, argv);	
     return TCL_OK;
 }
