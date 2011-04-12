@@ -60,17 +60,6 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     /* Check if we're doing a unique object list */
     if ((BU_STR_EQUAL(argv[plan_argv], "."))) {
 	    build_uniq_list = 1;
-	    plan_argv++;
-	    /* TODO: This is a workaround for a lower level bug. Should be removed
-	     * when that is fixed. sh/conversion.sh will need to be fixed, as
-	     * well (removing the
-	     * if test "x$OBJECTS" = "x" ] ; then OBJECTS="-print"; fi
-	     * line).
-	     */
-	    if (argc < 3) {
-		    bu_vls_printf(&gedp->ged_result_str, " [path] [expressions...]\n");
-		    return TCL_OK;
-	    }
     }
 
     /* initialize list of search paths */
@@ -84,38 +73,31 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     while (!plan_found) {
-	    if (BU_STR_EQUAL(argv[plan_argv], "/") || BU_STR_EQUAL(argv[plan_argv], ".")) {
-		    plan_argv++;
-		    if (plan_argv == argc) {
-			    bu_vls_printf(&gedp->ged_result_str, " [path] [expressions...]\n");
-			    db_free_full_path(&dfp);
-			    bu_free_argv(argc, argv);	
-			    return TCL_OK;
-		    }
+	    if (!argv[plan_argv]) {
+		    /* OK, no plan - will use default behavior */
+		    plan_found = 1;
 	    } else {
-		    if (!((argv[plan_argv][0] == '-') || (argv[plan_argv][0] == '!')  || (argv[plan_argv][0] == '(')) ) {
-			    /* We seem to have a path - make sure it's valid */
-			    if (db_string_to_path(&dfp, gedp->ged_wdbp->dbip, argv[plan_argv]) == -1) {
-				    bu_vls_printf(&gedp->ged_result_str,  " Search path not found in database.\n");
-				    db_free_full_path(&dfp);
-				    bu_free_argv(argc, argv);	
-				    return GED_ERROR;
-			    } else {
-				    BU_GETSTRUCT(new_entry, db_full_path_list);
-				    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
-				    db_full_path_init(new_entry->path);
-				    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
-				    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
-				    plan_argv++;
-				    if (plan_argv == argc) {
-					    bu_vls_printf(&gedp->ged_result_str, " [path] [expressions...]\n");
+		    if (BU_STR_EQUAL(argv[plan_argv], "/") || BU_STR_EQUAL(argv[plan_argv], ".")) {
+			    plan_argv++;
+		    } else {
+			    if (!((argv[plan_argv][0] == '-') || (argv[plan_argv][0] == '!')  || (argv[plan_argv][0] == '(')) ) {
+				    /* We seem to have a path - make sure it's valid */
+				    if (db_string_to_path(&dfp, gedp->ged_wdbp->dbip, argv[plan_argv]) == -1) {
+					    bu_vls_printf(&gedp->ged_result_str,  " Search path not found in database.\n");
 					    db_free_full_path(&dfp);
 					    bu_free_argv(argc, argv);	
-					    return TCL_OK;
+					    return GED_ERROR;
+				    } else {
+					    BU_GETSTRUCT(new_entry, db_full_path_list);
+					    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
+					    db_full_path_init(new_entry->path);
+					    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
+					    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
+					    plan_argv++;
 				    }
+			    } else {
+				    plan_found = 1;
 			    }
-		    } else {
-			    plan_found = 1;
 		    }
 	    }
     }
