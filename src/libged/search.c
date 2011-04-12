@@ -158,14 +158,14 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		    BU_LIST_PUSH(&(dispatch_list->l), &(new_entry->l));
 		    if (entry->local) {
 			    uniq_db_objs = db_search_unique_objects(dbplan, dispatch_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-			    for (i=0; i < (int)BU_PTBL_LEN(uniq_db_objs); i++) {
+			    for (i=(int)BU_PTBL_LEN(uniq_db_objs) - 1; i >=0 ; i--) {
 				    dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, i);
 				    bu_vls_printf(&gedp->ged_result_str, "%s\n", dp->d_namep);
 			    }
 			    bu_ptbl_free(uniq_db_objs);
 		    } else {
 			    search_results = db_search_full_paths(dbplan, dispatch_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-			    for(BU_LIST_FOR(result, db_full_path_list, &(search_results->l))) {
+			    for(BU_LIST_FOR_BACKWARDS(result, db_full_path_list, &(search_results->l))) {
 				    bu_vls_printf(&gedp->ged_result_str, "%s\n", db_path_to_string(result->path));
 			    }
 			    db_free_full_path_list(search_results);
