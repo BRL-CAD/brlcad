@@ -72,7 +72,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     int i, islocal;
     int plan_argv = 1;
     int plan_found = 0;
-    int build_uniq_list = 0;
+    int path_found = 0;
     struct bu_vls argvls;
     struct directory *dp;
     struct db_full_path dfp;
@@ -92,10 +92,6 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	bu_vls_printf(&gedp->ged_result_str, " [path] [expressions...]\n");
 	return TCL_OK;
     } 
-    /* Check if we're doing a unique object list */
-    if ((BU_STR_EQUAL(argv[plan_argv], "."))) {
-	    build_uniq_list = 1;
-    }
 
     /* initialize list of search paths */
     BU_GETSTRUCT(path_list, db_full_path_list);
@@ -117,6 +113,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	    } else {
 		    if (!((argv[plan_argv][0] == '-') || (argv[plan_argv][0] == '!')  || (argv[plan_argv][0] == '(')) ) {
 			    /* We seem to have a path - make sure it's valid */
+			    path_found = 1;
 			    if (BU_STR_EQUAL(argv[plan_argv], "/")) {
 				    /* if we have nothing but a slash, add all toplevel objects to the list as
 				     * full path searches */
@@ -183,6 +180,22 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			    }
 		    } else {
 			    plan_found = 1;
+			    if (!path_found) {
+				    /* We have a plan but not path - in that case, do a non-full-path tops search */
+				    for (i = 0; i < RT_DBNHASH; i++) {
+					    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+						    if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
+							    db_string_to_path(&dfp, gedp->ged_wdbp->dbip, dp->d_namep);
+							    BU_GETSTRUCT(new_entry, db_full_path_list);
+							    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
+							    db_full_path_init(new_entry->path);
+							    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
+							    new_entry->local = 1;
+							    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
+						    }
+					    }
+				    }
+			    }
 		    }
 	    }
     }
