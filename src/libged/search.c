@@ -42,26 +42,41 @@
 
 int _path_scrub(struct bu_vls *path) {
         struct bu_vls tmp;
+	const char *normalized;
 	int islocal = 1;
-	int newlen = 0;
-	int currlen = bu_vls_strlen(path);
-
 	bu_vls_init(&tmp);
 	if (bu_vls_addr(path)[0] == '/') islocal = 0;
-	bu_vls_trimchar(path, '.');
-	bu_vls_trimchar(path, '/');
-	newlen = bu_vls_strlen(path);
-	while (newlen < currlen) {
-		currlen = newlen;
-		bu_vls_trimchar(path, '.');
-		bu_vls_trimchar(path, '/');
-		newlen = bu_vls_strlen(path);
+	normalized = bu_normalize(bu_vls_addr(path));
+	printf("normalized: %s\n", normalized);
+	if (normalized && !BU_STR_EQUAL(normalized, "/")) {
+		bu_vls_sprintf(&tmp, "%s", bu_basename(normalized));
+		bu_vls_sprintf(path, "%s", bu_vls_addr(&tmp));
+	} else {
+		bu_vls_sprintf(path, "%s", "/");
 	}
-	bu_vls_sprintf(&tmp, "%s", bu_basename(bu_vls_addr(path)));
-	bu_vls_sprintf(path, "%s", bu_vls_addr(&tmp));
 	bu_vls_free(&tmp);
 	return islocal;
 }
+
+void _add_toplevel(struct db_i *dbip, struct db_full_path_list *path_list, struct db_full_path *dfp, int local) {
+       int i;
+       struct directory *dp;
+       struct db_full_path_list *new_entry;
+       for (i = 0; i < RT_DBNHASH; i++) {
+	       for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		       if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
+			       db_string_to_path(dfp, dbip, dp->d_namep);
+			       BU_GETSTRUCT(new_entry, db_full_path_list);
+			       new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
+			       db_full_path_init(new_entry->path);
+			       db_dup_full_path(new_entry->path, (const struct db_full_path *)dfp);
+			       new_entry->local = local;
+			       BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
+		       }
+	       }
+       }
+}
+
 
 
 
@@ -117,84 +132,55 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			    if (BU_STR_EQUAL(argv[plan_argv], "/")) {
 				    /* if we have nothing but a slash, add all toplevel objects to the list as
 				     * full path searches */
-				    for (i = 0; i < RT_DBNHASH; i++) {
-					    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-						    if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
-							    db_string_to_path(&dfp, gedp->ged_wdbp->dbip, dp->d_namep);
-							    BU_GETSTRUCT(new_entry, db_full_path_list);
-							    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
-							    db_full_path_init(new_entry->path);
-							    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
-							    new_entry->local = 0;
-							    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
-						    }
-					    }
-				    }
+				    _add_toplevel(gedp->ged_wdbp->dbip, path_list, &dfp, 0);
 				    plan_argv++;
 			    } else if (BU_STR_EQUAL(argv[plan_argv], ".")) {
 				    /* if we have nothing but a dot, add all toplevel objects to the list as
 				     * local searches */
-				    for (i = 0; i < RT_DBNHASH; i++) {
-					    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-						    if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
-							    db_string_to_path(&dfp, gedp->ged_wdbp->dbip, dp->d_namep);
-							    BU_GETSTRUCT(new_entry, db_full_path_list);
-							    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
-							    db_full_path_init(new_entry->path);
-							    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
-							    new_entry->local = 1;
-							    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
-						    }
-					    }
-				    }
+				    _add_toplevel(gedp->ged_wdbp->dbip, path_list, &dfp, 1);
 				    plan_argv++;
 			    } else {
 				    bu_vls_sprintf(&argvls, "%s", argv[plan_argv]);
 				    islocal = _path_scrub(&argvls);
-				    if (!bu_vls_strlen(&argvls)) {
-					    bu_vls_printf(&gedp->ged_result_str,  "Search path %s not found in database.\n", argv[plan_argv]);
-					    db_free_full_path(&dfp);
-					    bu_vls_free(&argvls);
-					    bu_free_argv(argc, argv);	
-					    return GED_ERROR;
-				    }
-				    if (db_string_to_path(&dfp, gedp->ged_wdbp->dbip, bu_vls_addr(&argvls)) == -1) {
-					    bu_vls_printf(&gedp->ged_result_str,  "Search path %s not found in database.\n", bu_vls_addr(&argvls));
-					    db_free_full_path(&dfp);
-					    bu_vls_free(&argvls);
-					    bu_free_argv(argc, argv);	
-					    return GED_ERROR;
-				    } else {
-					    BU_GETSTRUCT(new_entry, db_full_path_list);
-					    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
-					    db_full_path_init(new_entry->path);
-					    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
-					    if (argv[plan_argv][0] == '/' && !islocal) {
-						    new_entry->local = 0;
-					    } else {
-						    new_entry->local = 1;
-					    }
-					    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
+				    if (BU_STR_EQUAL(bu_vls_addr(&argvls), "/")) {
+					    /* if we have nothing but a slash, normalize resolved to the toplevel. Add
+					     * a toplevel search with the islocal flag */
+					    _add_toplevel(gedp->ged_wdbp->dbip, path_list, &dfp, islocal);
 					    plan_argv++;
+				    } else {
+					    if (!bu_vls_strlen(&argvls)) {
+						    bu_vls_printf(&gedp->ged_result_str,  "Search path %s not found in database.\n", argv[plan_argv]);
+						    db_free_full_path(&dfp);
+						    bu_vls_free(&argvls);
+						    bu_free_argv(argc, argv);	
+						    return GED_ERROR;
+					    }
+					    if (db_string_to_path(&dfp, gedp->ged_wdbp->dbip, bu_vls_addr(&argvls)) == -1) {
+						    bu_vls_printf(&gedp->ged_result_str,  "Search path %s not found in database.\n", bu_vls_addr(&argvls));
+						    db_free_full_path(&dfp);
+						    bu_vls_free(&argvls);
+						    bu_free_argv(argc, argv);	
+						    return GED_ERROR;
+					    } else {
+						    BU_GETSTRUCT(new_entry, db_full_path_list);
+						    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
+						    db_full_path_init(new_entry->path);
+						    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
+						    if (argv[plan_argv][0] == '/' && !islocal) {
+							    new_entry->local = 0;
+						    } else {
+							    new_entry->local = 1;
+						    }
+						    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
+						    plan_argv++;
+					    }
 				    }
 			    }
 		    } else {
 			    plan_found = 1;
 			    if (!path_found) {
 				    /* We have a plan but not path - in that case, do a non-full-path tops search */
-				    for (i = 0; i < RT_DBNHASH; i++) {
-					    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-						    if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
-							    db_string_to_path(&dfp, gedp->ged_wdbp->dbip, dp->d_namep);
-							    BU_GETSTRUCT(new_entry, db_full_path_list);
-							    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
-							    db_full_path_init(new_entry->path);
-							    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
-							    new_entry->local = 1;
-							    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
-						    }
-					    }
-				    }
+				    _add_toplevel(gedp->ged_wdbp->dbip, path_list, &dfp, 1);
 			    }
 		    }
 	    }

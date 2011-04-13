@@ -2688,6 +2688,19 @@ BU_EXPORT BU_EXTERN(const char *bu_brlcad_root, (const char *rhs, int fail_quiet
 BU_EXPORT BU_EXTERN(const char *bu_brlcad_data, (const char *rhs, int fail_quietly));
 
 /**
+ * b u _ n o r m a l i z e
+ *
+ * Normalize a BRL-CAD path according to rules used for realpath, but
+ * without filesystem (or database object) validation.
+ *
+ * @return
+ * A STATIC buffer is returned.  It is the caller's responsibility to
+ * call bu_strdup() or make other provisions to save the returned
+ * string, before calling again.
+ */
+BU_EXPORT BU_EXTERN(const char *bu_normalize, (const char *path));
+
+/**
  * b u _ w h i c h
  *
  * returns the first USER path match to a given executable name.
@@ -4903,14 +4916,6 @@ BU_EXPORT BU_EXTERN(void bu_vls_putc,
 BU_EXPORT BU_EXTERN(void bu_vls_trimspace,
 		    (struct bu_vls *vp));
 
-/**
- * b u _ v l s _ t r i m c h a r
- *
- * Remove leading and trailing user specified character from a vls string.
- */
-BU_EXPORT BU_EXTERN(void bu_vls_trimchar,
-		    (struct bu_vls *vp, 
-		    const char ch));
 
 /**
  * b u _ v l s _ v p r i n t f

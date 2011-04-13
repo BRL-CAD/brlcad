@@ -1089,12 +1089,19 @@ bn_isect_lseg2_lseg2(fastf_t *dist,
  *	intercept.  If within distance tolerance of the endpoints,
  *	these will be exactly 0.0 or 1.0, to ease the job of caller.
  *
+ *      CLARIFICATION: This function 'bn_isect_lseg3_lseg3_new'
+ *      returns distance values scaled where an intersect at the start
+ *      point of the line segement (within tol->dist) results in 0.0
+ *      and when the intersect is at the end point of the line
+ *      segement (within tol->dist), the result is 1.0.  Intersects
+ *      before the start point return a negative distance.  Intersects
+ *      after the end point result in a return value > 1.0.
+ *
  * Special note: when return code is "0" for co-linearity, dist[1] has
  * an alternate interpretation: it's the parameter along p (not q)
  * which takes you from point p to the point (q + qdir), i.e., it's
  * the endpoint of the q linesegment, since in this case there may be
  * *two* intersections, if q is contained within span p to (p + pdir).
- * And either may be -10 if the point is outside the span.
  *
  * @param p	point 1
  * @param pdir	direction-1
@@ -1116,23 +1123,39 @@ bn_isect_lseg3_lseg3_new(fastf_t *dist,
 
     BN_CK_TOL(tol);
     if (bu_debug & BU_DEBUG_MATH) {
-	bu_log("bn_isect_lseg3_lseg3_new() p=(%g, %g), pdir=(%g, %g)\n\t\tq=(%g, %g), qdir=(%g, %g)\n",
-	       V2ARGS(p), V2ARGS(pdir), V2ARGS(q), V2ARGS(qdir));
+	bu_log("bn_isect_lseg3_lseg3_new() p=(%g, %g, %g), pdir=(%g, %g, %g)\n\t\tq=(%g, %g, %g), qdir=(%g, %g, %g)\n",
+	       V3ARGS(p), V3ARGS(pdir), V3ARGS(q), V3ARGS(qdir));
     }
 
     status = bn_isect_line3_line3_new(&dist[0], &dist[1], p, pdir, q, qdir, tol);
 
+    /* It is expected that dist[0] and dist[1] returned from
+     * 'bn_isect_line3_line3_new' are the actual distance to the
+     * intersect, i.e. not scaled. Distances in the opposite
+     * of the line direction vector result in a negative distance.
+     */
+
+    /* sanity check */
     if (status < -2 || status > 1) {
-        bu_bomb("bn_isect_lseg3_lseg3_new() function bn_isect_line3_line3 returned an invalid status\n");
+        bu_bomb("bn_isect_lseg3_lseg3_new() function 'bn_isect_line3_line3_new' returned an invalid status\n");
     }
 
     if (status == -1) {
-        /* infinite lines do not intersect and are not parallel */
+        /* Infinite lines do not intersect and are not parallel
+         * therefore line segments do not intersect and are not
+         * parallel.
+         */
+	if (bu_debug & BU_DEBUG_MATH) {
+	    bu_log("bn_isect_lseg3_lseg3_new(): MISS, line segments do not intersect and are not parallel\n");
+	}
 	return -3; /* missed */
     }
 
     if (status == -2) {
         /* infinite lines do not intersect, they are parallel */
+	if (bu_debug & BU_DEBUG_MATH) {
+	    bu_log("bn_isect_lseg3_lseg3_new(): MISS, line segments are parallel, i.e. do not intersect\n");
+	}
 	return -2; /* missed (line segments are parallel) */
     }
 
@@ -1140,22 +1163,36 @@ bn_isect_lseg3_lseg3_new(fastf_t *dist,
     qmag = MAGNITUDE(qdir);
 
     if (pmag < SMALL_FASTF)
-	bu_bomb("bn_isect_lseg3_lseg3_new: |p|=0\n");
+	bu_bomb("bn_isect_lseg3_lseg3_new(): |p|=0\n");
 
     if (qmag < SMALL_FASTF)
-	bu_bomb("bn_isect_lseg3_lseg3_new: |q|=0\n");
+	bu_bomb("bn_isect_lseg3_lseg3_new(): |q|=0\n");
 
     ptol = tol->dist / pmag;
     qtol = tol->dist / qmag;
     dist[0] = dist[0] / pmag;
-    dist[1] = dist[1] / qmag;
+    if (status == 0) {  /* infinite lines are colinear */
+        /* When line segments are colinear, dist[1] has an alternate
+         * interpretation: it's the parameter along p (not q)
+         * therefore dist[1] must be scaled by pmag not qmag.
+         */
+        dist[1] = dist[1] / pmag;
+    } else {
+        dist[1] = dist[1] / qmag;
+    }
 
+    if (bu_debug & BU_DEBUG_MATH) {
+	bu_log("ptol=%g, qtol=%g\n", ptol, qtol);
+    }
+
+    /* If 'p' within tol of either endpoint (0.0, 1.0), make exact. */
     if (dist[0] > -ptol && dist[0] < ptol) {
         dist[0] = 0.0;
     } else if (dist[0] > 1.0-ptol && dist[0] < 1.0+ptol) {
         dist[0] = 1.0;
     }
 
+    /* If 'q' within tol of either endpoint (0.0, 1.0), make exact. */
     if (dist[1] > -qtol && dist[1] < qtol) {
         dist[1] = 0.0;
     } else if (dist[1] > 1.0-qtol && dist[1] < 1.0+qtol) {
@@ -1163,64 +1200,40 @@ bn_isect_lseg3_lseg3_new(fastf_t *dist,
     }
 
     if (status == 0) {  /* infinite lines are colinear */
-#if 0
-	int nogood = 0;
-#endif
 	/* Lines are colinear */
-	/* If P within tol of either endpoint (0, 1), make exact. */
-	if (bu_debug & BU_DEBUG_MATH) {
-	    bu_log("ptol=%g\n", ptol);
-	}
-
-#if 0
-	if (dist[0] <= -ptol || dist[0] >= 1+ptol) nogood = 1;
-	if (dist[1] <= -qtol || dist[1] >= 1+qtol) nogood++;
-	if (nogood >= 2) {
-	    return -1;	/* line segments are colinear but not overlapping */
-        }
-#endif
-
-        if ((dist[0] > 1+ptol && dist[1] > 1+ptol) || (dist[0] < -ptol && dist[1] < -ptol)) {
+        if ((dist[0] > 1.0+ptol && dist[1] > 1.0+ptol) || (dist[0] < -ptol && dist[1] < -ptol)) {
+	    if (bu_debug & BU_DEBUG_MATH) {
+	        bu_log("bn_isect_lseg3_lseg3_new(): MISS, line segments are colinear but not overlapping!\n");
+	    }
             return -1;   /* line segments are colinear but not overlapping */
         }
 
-
 	if (bu_debug & BU_DEBUG_MATH) {
-	    bu_log("  HIT colinear!\n");
+	    bu_log("bn_isect_lseg3_lseg3_new(): HIT, line segments are colinear and overlapping!\n");
 	}
 
-/*
- * Special note: when return code is "0" for co-linearity, dist[1] has
- * an alternate interpretation: it's the parameter along p (not q)
- * which takes you from point p to the point (q + qdir), i.e., it's
- * the endpoint of the q linesegment, since in this case there may be
- * *two* intersections, if q is contained within span p to (p + pdir).
- * And either may be -10 if the point is outside the span.
- */
 	return 0; /* line segments are colinear and overlapping */
     }
 
-    /* infinite lines intersect and are not colinear */
+    /* At this point we know the infinite lines intersect and are not colinear */
 
-    if (dist[0] <= -ptol || dist[0] >= 1+ptol || dist[1] <= -qtol || dist[1] >= 1+qtol) {
+
+    if (dist[0] <= -ptol || dist[0] >= 1.0+ptol || dist[1] <= -qtol || dist[1] >= 1.0+qtol) {
+        if (bu_debug & BU_DEBUG_MATH) {
+	    bu_log("bn_isect_lseg3_lseg3_new(): MISS, infinite lines intersect but line segments do not!\n");
+        }
         return -3;  /* missed, infinite lines intersect but line segments do not */
     }
 
     if (bu_debug & BU_DEBUG_MATH) {
-	bu_log("ptol=%g, qtol=%g\n", ptol, qtol);
+	bu_log("bn_isect_lseg3_lseg3_new(): HIT, line segments intersect!\n");
     }
-    if (bu_debug & BU_DEBUG_MATH) {
-	bu_log("  HIT!\n");
-    }
-#if 0
-    bu_log("p = %g %g %g pdir = %g %g %g dist[0] = %g ptol = %g pmag = %g q = %g %g %g qdir = %g %g %g dist[1] = %g qtol = %g qmag = %g\n",
-          V3ARGS(p), V3ARGS(pdir), dist[0], ptol, pmag,
-          V3ARGS(q), V3ARGS(qdir), dist[1], qtol, qmag);
-#endif
+
     /* sanity check */
     if (dist[0] < 0.0 || dist[0] > 1.0 || dist[1] < 0.0 || dist[1] > 1.0) {
-        bu_bomb("bn_isect_lseg3_lseg3_new() internal error, intersect distance values must be in the range 0-1\n");
+        bu_bomb("bn_isect_lseg3_lseg3_new(): INTERNAL ERROR, intersect distance values must be in the range 0-1\n");
     }
+
     return 1; /* hit, line segments intersect */
 }
 #endif
