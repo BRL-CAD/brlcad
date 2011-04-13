@@ -18,6 +18,13 @@
  * information.
  */
 
+#include "common.h" 
+#include <string.h>
+
+#ifdef HAVE_SYS_PARAM_H
+#  include <sys/param.h>
+#endif
+
 
 /* Most of db_normalize is a subset of NetBSD's realpath function:
  *
