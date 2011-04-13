@@ -2811,6 +2811,7 @@ RT_EXPORT BU_EXTERN(int db_full_path_search,
 struct db_full_path_list {
 	struct bu_list l;
 	struct db_full_path *path;
+	int local;
 };
 
 RT_EXPORT BU_EXTERN(void db_free_full_path_list,
