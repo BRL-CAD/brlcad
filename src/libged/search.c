@@ -41,25 +41,10 @@
 #include "./ged_private.h"
 
 int _path_scrub(struct bu_vls *path) {
-        struct bu_vls tmp;
 	int islocal = 1;
 	int newlen = 0;
-	int currlen = bu_vls_strlen(path);
-
-	bu_vls_init(&tmp);
 	if (bu_vls_addr(path)[0] == '/') islocal = 0;
-	bu_vls_trimchar(path, '.');
-	bu_vls_trimchar(path, '/');
-	newlen = bu_vls_strlen(path);
-	while (newlen < currlen) {
-		currlen = newlen;
-		bu_vls_trimchar(path, '.');
-		bu_vls_trimchar(path, '/');
-		newlen = bu_vls_strlen(path);
-	}
-	bu_vls_sprintf(&tmp, "%s", bu_basename(bu_vls_addr(path)));
-	bu_vls_sprintf(path, "%s", bu_vls_addr(&tmp));
-	bu_vls_free(&tmp);
+	/*bu_vls_sprintf(&tmp, "%s", bu_basename(bu_vls_addr(path)));*/
 	return islocal;
 }
 
