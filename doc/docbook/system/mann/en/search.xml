@@ -20,7 +20,8 @@
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>search</command>    
-    <arg choice="opt" rep="norepeat"><replaceable>path</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>path1</replaceable></arg>
+    <arg choice="opt" rep="repeat"><replaceable>path2</replaceable></arg>
     <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
@@ -31,13 +32,25 @@
     <command>search</command> works in a fashion similar to Unix-style 
     find commands (internally it is based on OpenBSD's and NetBSD's find 
     code) but searches <emphasis remap="I">objects</emphasis> in the 
-    current open database in MGED rather than files in a file system.  By
-    default, the output is a list of matches printed in the MGED command 
-    window, but other output options are available. Matching of objects 
-    is done according to boolean expressions formed using the
+    current open database in MGED rather than files in a file system.  There
+    are two modes of search output.  The default mode returns a list of all objects
+    found matching the criteria.  A second mode returns a list of full paths
+    containing all instances of all matching objects in the database.  The mode of search
+    is determined by each path argument - a path starting with the "/" character
+    will produce a full path instance list, while all other paths will produce the
+    unique object list.  One search command may use paths indicating both modes - such
+    a "mixed mode" search will return a list of full paths and objects in the order
+    paths were supplied to search.  Matching of objects is done according to boolean 
+    expressions formed using the
     <link linkend="primitives">PRIMITIVES</link> and
     <link linkend="operators">OPERATORS</link>
     described below.
+  </para>
+  <para>
+    Something to bear in mind is that all search routines perform a full path tree
+    search "under the hood."  A prefix "/" character changes the <emphasis remap="I">way</emphasis> the output is
+    reported, but does not change the underlying search <emphasis remap="I">method</emphasis> - for example, depth
+    and patch search criteria will still match even if no "/" character is appended to the input path.
   </para>
 </refsection>
 
@@ -132,15 +145,6 @@
       <listitem>
 	<para>
 	  Evaluates to TRUE - used to print out the path and name of the object.
-	</para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term><emphasis remap="B" role="bold">-print0</emphasis></term>
-      <listitem>
-	<para>
-	  Evaluates to TRUE - prints the pathname of the object to standard output, 
-	  followed by an ASCII NUL character.
 	</para>
       </listitem>
     </varlistentry>
@@ -357,18 +361,53 @@
       <userinput>search -name *.s</userinput>
     </para>
     <para>
+      Find all objects in the database with names ending in ".s".
+    </para>
+  </example>
+
+  <example><info><title>Full Path Instance Reporting of Search Results</title></info>
+    
+    <para>
+      <userinput>search / -name *.s</userinput>
+    </para>
+    <para>
       Find all instances of objects in the database with names ending in ".s".
     </para>
   </example>
 
+
   <example><info><title>Name Pattern Matching at Depth &gt;= 3</title></info>
     
     <para>
-      <userinput>search -name *.s -mindepth 3</userinput>
+      <userinput>search / -name *.s -mindepth 3</userinput>
     </para>
     <para>
       Find all instances of objects in the database with names ending in ".s"
       that are 3 or more levels deep in their tree.
+    </para>
+  </example>
+
+  <example><info><title>Finding all Objects in a Subtree</title></info>
+    
+    <para>
+      <userinput>search group1 -name *.r</userinput>
+    </para>
+    <para>
+	    Find all objects below group1 in the database that have names ending in ".r"
+	    Note that this will return a list of objects, not the full path information
+	    associated with each instance of the objects matched.
+    </para>
+  </example>
+
+  <example><info><title>Finding all Instances of Objects in a Subtree</title></info>
+    
+    <para>
+      <userinput>search /group1 -name *.r</userinput>
+    </para>
+    <para>
+	    Find all instances of objects below group1 in the database that have names ending in ".r"
+	    Note that, unlike the previous example,  this will return the full path information 
+	    associated with each instance of the objects matched.
     </para>
   </example>
 
@@ -378,28 +417,26 @@
       <userinput>search . -type eto</userinput>
     </para>
     <para>
-      Find all objects in the database that are elliptical tori.  Notice the
-      use of "." for the path, which means to find the objects themselves in
-      a flat search rather than all instances in the tree hierarchy.
+	    Find all objects in the database that are elliptical tori.  Note that a path of "."
+	    produces the same search behavior as the default behavior for an unspecified path.
     </para>
   </example>
 
- <example><info><title>Finding all Nested Regions</title></info>
+ <example><info><title>Finding all Instances of Nested Regions</title></info>
     
     <para>
-      <userinput>search -type region -above -type region</userinput>
+      <userinput>search / -type region -above -type region</userinput>
     </para>
     <para>
-      Find all instances of objects of type region that contain a region in the
-      subtree.  This searches for regions being used within the subtrees of other regions, which
-      is considered bad practice in BRL-CAD.
+      Find all instances of objects of type region that contain a region.  This searches for 
+      regions being used within the subtrees of other regions, which is considered bad practice in BRL-CAD.
     </para>
   </example>
 
   <example><info><title>Finding all Assemblies</title></info>
     
     <para>
-      <userinput>search -below -type region ! -type region</userinput>
+      <userinput>search / -below -type region ! -type region</userinput>
     </para>
     <para>
       Find all instances of objects of type combination that contain regions but are
@@ -410,7 +447,7 @@
   <example><info><title>Finding all Combinations below Regions</title></info>
     
     <para>
-      <userinput>search ! ( -below -type region ) ! -type region -type comb</userinput>
+      <userinput>search / ! ( -below -type region ) ! -type region -type comb</userinput>
     </para>
     <para>
       Find all instances of combinations that are not regions and do not contain regions.
@@ -423,7 +460,7 @@
       <userinput>search -nnodes 0</userinput>
     </para>
     <para>
-      Find all instances of combinations containing zero nodes.
+      Find all combinations containing zero nodes.
     </para>
   </example>
 
@@ -433,7 +470,7 @@
       <userinput>search -nnodes &gt;=10</userinput>
     </para>
     <para>
-      Find all instances of combinations with 10 or more nodes.
+      Find all combinations with 10 or more nodes.
     </para>
   </example>
 
