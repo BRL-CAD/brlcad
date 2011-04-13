@@ -65,6 +65,7 @@ librt_nil_la_SOURCES = \
 	db_lookup.c \
 	db_match.c \
 	db_open.c \
+	db_path.c \
 	db_scan.c \
 	db_tree.c \
 	db_walk.c \

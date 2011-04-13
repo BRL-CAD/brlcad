@@ -1,4 +1,4 @@
-/*                       D B _ P A T H . C
+/*                   D B _ F U L L P A T H . C
  * BRL-CAD
  *
  * Copyright (c) 1990-2011 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file db_path.c
+/** @file db_fullpath.c
  *
  * Routines to manipulate "db_full_path" structures
  *
