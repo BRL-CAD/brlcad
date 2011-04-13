@@ -42,10 +42,11 @@
 
 int _path_scrub(struct bu_vls *path) {
         struct bu_vls tmp;
-	bu_vls_init(&tmp);
 	int islocal = 1;
 	int newlen = 0;
 	int currlen = bu_vls_strlen(path);
+
+	bu_vls_init(&tmp);
 	if (bu_vls_addr(path)[0] == '/') islocal = 0;
 	bu_vls_trimchar(path, '.');
 	bu_vls_trimchar(path, '/');
@@ -82,11 +83,10 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     struct db_full_path_list *dispatch_list = NULL;
     struct db_full_path_list *search_results = NULL;
     struct bu_ptbl *uniq_db_objs;
-
-    bu_vls_init(&argvls);
-
     /* COPY argv_orig to argv; */
     char **argv = bu_dup_argv(argc, argv_orig);
+
+    bu_vls_init(&argvls);
 
     if (argc < 2) {
 	bu_vls_printf(&gedp->ged_result_str, " [path] [expressions...]\n");
