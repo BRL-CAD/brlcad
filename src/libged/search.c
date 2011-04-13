@@ -46,7 +46,7 @@ int _path_scrub(struct bu_vls *path) {
 	int islocal = 1;
 	bu_vls_init(&tmp);
 	if (bu_vls_addr(path)[0] == '/') islocal = 0;
-	normalized = bu_normalize(bu_vls_addr(path));
+	normalized = db_normalize(bu_vls_addr(path));
 	printf("normalized: %s\n", normalized);
 	if (normalized && !BU_STR_EQUAL(normalized, "/")) {
 		bu_vls_sprintf(&tmp, "%s", bu_basename(normalized));
