@@ -59,12 +59,12 @@ librt_nil_la_SOURCES = \
 	db_corrupt.c \
 	db_flags.c \
 	db_flip.c \
+	db_fullpath.c \
 	db_inmem.c \
 	db_io.c \
 	db_lookup.c \
 	db_match.c \
 	db_open.c \
-	db_path.c \
 	db_scan.c \
 	db_tree.c \
 	db_walk.c \

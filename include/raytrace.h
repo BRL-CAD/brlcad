@@ -2718,7 +2718,7 @@ RT_EXPORT BU_EXTERN(struct animate *db_parse_1anim,
 RT_EXPORT BU_EXTERN(void db_free_1anim,
 		    (struct animate *anp));
 
-/* db_path.c */
+/* db_fullpath.c */
 RT_EXPORT BU_EXTERN(void db_full_path_init,
 		    (struct db_full_path *pathp));
 RT_EXPORT BU_EXTERN(void db_add_node_to_full_path,
