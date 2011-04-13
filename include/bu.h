@@ -4904,6 +4904,15 @@ BU_EXPORT BU_EXTERN(void bu_vls_trimspace,
 		    (struct bu_vls *vp));
 
 /**
+ * b u _ v l s _ t r i m c h a r
+ *
+ * Remove leading and trailing user specified character from a vls string.
+ */
+BU_EXPORT BU_EXTERN(void bu_vls_trimchar,
+		    (struct bu_vls *vp, 
+		    const char ch));
+
+/**
  * b u _ v l s _ v p r i n t f
  *
  * Format a string into a vls.  This version should work on
