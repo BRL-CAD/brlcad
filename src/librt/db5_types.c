@@ -410,8 +410,6 @@ int
 db5_is_boolean_attribute(int attr) {
 	if (attr == ATTR_REGION) 
 		return 1;
-	if (attr == ATTR_AIR)
-		return 1;
 	if (attr == ATTR_INHERIT)
 		return 1;
 	return 0;
