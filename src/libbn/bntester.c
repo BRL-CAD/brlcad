@@ -145,7 +145,7 @@ main(int argc, char **argv)
     static unsigned long success_cnt = 0;
     static int string_length;
     static int argv_idx;
-    static char c;
+    static int c;
     static char dt_fmt[50];  /* data type format string */
     static char *buf_p1;
     static char *buf_p;
