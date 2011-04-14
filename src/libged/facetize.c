@@ -126,7 +126,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
     /* Parse options. */
     bu_optind = 1;		/* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, (char * const *)argv, "mntT")) != EOF) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "mntT")) != -1) {
 	switch (c) {
 	    case 'm':
 		marching_cube = triangulate = 1;

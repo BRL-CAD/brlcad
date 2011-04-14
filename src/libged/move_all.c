@@ -287,7 +287,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "fn")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "fn")) != -1) {
 	switch (c) {
 	    case 'f':
 		fflag = 1;

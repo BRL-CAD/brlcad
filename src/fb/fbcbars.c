@@ -166,7 +166,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "efshF:S:W:N:" )) != EOF )  {
+    while ( (c = bu_getopt( argc, argv, "efshF:S:W:N:" )) != -1 )  {
 	switch ( c )  {
 	    case 'e':
 		mode = M_EIA;

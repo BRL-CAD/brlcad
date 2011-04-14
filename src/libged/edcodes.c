@@ -159,7 +159,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     
     bu_optind = 1;
     /* First, grab the editstring off of the argv list */
-    while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != -1) {
 	switch (c) {
 	    case 'E' :
 	    	editstring = bu_optarg;
@@ -182,7 +182,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "inr")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "inr")) != -1) {
 	switch(c) {
 	    case 'i':
 		sort_by_ident = 1;

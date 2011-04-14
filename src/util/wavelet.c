@@ -112,7 +112,7 @@ parse_args(int ac, char **av)
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != EOF)
+    while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    case '1': img_space=1; break;
 	    case '2': img_space=2; break;

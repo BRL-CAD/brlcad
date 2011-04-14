@@ -990,7 +990,7 @@ ged_combmem(struct ged *gedp, int argc, const char *argv[])
     bu_optind = 1;
 
     /* Get command line options. */
-    while ((c = bu_getopt(argc, (char * const *)argv, "i:r:")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "i:r:")) != -1) {
        switch (c) {
 	  case 'i':
 	  {

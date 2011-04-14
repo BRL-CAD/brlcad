@@ -131,7 +131,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 
     /* Parse options. */
     bu_optind = 1;		/* re-init bu_getopt() */
-    while ( (c=bu_getopt(argc, (char * const *)argv, "tP:")) != EOF )  {
+    while ( (c=bu_getopt(argc, (char * const *)argv, "tP:")) != -1 )  {
 	switch (c)  {
 	    case 'P':
 #if 0

@@ -721,7 +721,7 @@ drawtrees(int argc, const char *argv[], int kind)
 
     /* Parse options. */
     bu_optind = 1;		/* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, (char * const *)argv, "dfnqrstuvwSTP:C:")) != EOF) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "dfnqrstuvwSTP:C:")) != -1) {
 	switch (c) {
 	    case 'u':
 		mged_draw_edge_uses = 1;

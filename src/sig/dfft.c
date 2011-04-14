@@ -77,7 +77,7 @@ int main(int argc, char **argv)
 	bu_exit(1, "%s", usage);
     }
 
-    while ((c = bu_getopt(argc, argv, "d:clpLANh")) != EOF)
+    while ((c = bu_getopt(argc, argv, "d:clpLANh")) != -1)
 	switch (c) {
 	    case 'd': mindB = -atof(bu_optarg); break;
 	    case 'c': cflag++; break;

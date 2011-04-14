@@ -63,7 +63,7 @@ get_args(int argc, char **argv)
     rotate = translate = 1; /* defaults */
     quaternion = permute = 0;
     bu_strlcpy(mat_cmd, "lmul", sizeof(mat_cmd));
-    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != -1) {
 	i=0;
 	switch (c) {
 	    case 'a':

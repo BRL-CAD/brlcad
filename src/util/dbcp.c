@@ -80,7 +80,7 @@ main(int argc, char **argv)
     int c;
     int deprecated = 1;
 
-    while ((c = bu_getopt(argc, argv, "v")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "v")) != -1) {
 	switch (c) {
 	    case 'v':
 		verbose++;

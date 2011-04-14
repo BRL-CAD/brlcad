@@ -160,7 +160,7 @@ parsArgv(int argc, char **argv)
     int	c;
 
     /* Parse options.						*/
-    while ( (c = bu_getopt( argc, argv, "CF:Scdhl:p:vw" )) != EOF )
+    while ( (c = bu_getopt( argc, argv, "CF:Scdhl:p:vw" )) != -1 )
     {
 	switch ( c )
 	{

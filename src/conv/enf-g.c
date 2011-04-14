@@ -616,7 +616,7 @@ main( int argc, char *argv[] )
     local_tol_sq = local_tol * local_tol;
     ident = 1000;
 
-    while ( (c=bu_getopt( argc, argv, "vi:t:n:l:" ) ) != EOF ) {
+    while ( (c=bu_getopt( argc, argv, "vi:t:n:l:" ) ) != -1 ) {
 	switch ( c ) {
 	    case 'v':	/* verbose */
 		verbose = 1;

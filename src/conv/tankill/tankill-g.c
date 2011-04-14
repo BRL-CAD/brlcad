@@ -175,7 +175,7 @@ main(int argc, char **argv)
     bu_ptbl_init( &faces, 64, " &faces ");
 
     /* get command line arguments */
-    while ((c = bu_getopt(argc, argv, "vknt:i:o:x:X:")) != EOF)
+    while ((c = bu_getopt(argc, argv, "vknt:i:o:x:X:")) != -1)
     {
 	switch ( c )
 	{

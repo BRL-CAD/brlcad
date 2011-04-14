@@ -837,7 +837,7 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
     state->miraxis = W;
     state->updpos = 0;
 
-    while ((k = bu_getopt(argc, argv, "a:b:chgi:m:n:p:r:t:v")) != EOF) {
+    while ((k = bu_getopt(argc, argv, "a:b:chgi:m:n:p:r:t:v")) != -1) {
 	switch (k) {
 	    case 'a':
 		state->n_copies = atoi(bu_optarg);

@@ -55,7 +55,7 @@ main(int argc, char **argv)
     static RGBpixel blue = { 0, 0, 255 };
 
     xsize = ysize = 0;
-    while ( (c = bu_getopt( argc, argv, "ahF:s:w:n:S:W:N:" )) != EOF )  {
+    while ( (c = bu_getopt( argc, argv, "ahF:s:w:n:S:W:N:" )) != -1 )  {
 	switch ( c )  {
 	    case 'h':
 		/* high-res */

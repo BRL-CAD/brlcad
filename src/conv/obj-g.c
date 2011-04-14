@@ -237,7 +237,7 @@ main(int argc, char *argv[])
     if (argc < 2)
 	bu_exit(1, usage, argv[0]);
 
-    while ((c = bu_getopt(argc, argv, "dxv")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "dxv")) != -1) {
 	switch (c) {
 	    case 'd':
 		debug = 1;

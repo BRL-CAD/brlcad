@@ -75,7 +75,7 @@ get_args(int argc, char **argv)
     mode = QUATERNION; /* default */
     units = DEGREES;
 
-    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != -1) {
 	switch (c) {
 	    case 'y':
 		mode = YPR;

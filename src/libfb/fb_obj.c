@@ -199,7 +199,7 @@ fbo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     /* process args */
     bu_optind = 3;
     bu_opterr = 0;
-    while ((c = bu_getopt(argc, argv, "w:W:s:S:n:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "w:W:s:S:n:N:")) != -1) {
 	switch (c) {
 	    case 'W':
 	    case 'w':

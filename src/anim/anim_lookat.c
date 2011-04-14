@@ -55,7 +55,7 @@ int
 get_args(int argc, char **argv)
 {
     int c;
-    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != -1) {
 	switch (c) {
 	    case 'f':
 		sscanf(bu_optarg, "%d", &frame);

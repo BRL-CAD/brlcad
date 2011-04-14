@@ -73,7 +73,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "cdhHs:S:w:W:n:N:C:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "cdhHs:S:w:W:n:N:C:")) != -1) {
 	switch (c) {
 	    case 'd':
 		r_debug = 1;

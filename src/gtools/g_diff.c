@@ -905,7 +905,7 @@ main(int argc, char **argv)
 
     invoked_as = argv[0];
 
-    while ((c = bu_getopt(argc, argv, "emfv")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "emfv")) != -1) {
 	switch (c) {
 	    case 'e':
 		evolutionary = 1;

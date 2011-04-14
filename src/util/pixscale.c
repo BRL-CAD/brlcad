@@ -339,7 +339,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "rhs:w:n:S:W:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "rhs:w:n:S:W:N:")) != -1) {
 	switch (c) {
 	    case 'r':
 		/* pixel replication */

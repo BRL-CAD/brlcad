@@ -3163,7 +3163,7 @@ main(int argc, char **argv)
         bu_exit(1, usage, argv[0]);
     }
 
-    while ((c = bu_getopt(argc, argv, "cpidx:X:vt:h:m:u:g:o:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "cpidx:X:vt:h:m:u:g:o:")) != -1) {
         switch (c) {
             case 'c': /* continue processing on nmg bomb */
                 cont_on_nmg_bomb_flag = 1;

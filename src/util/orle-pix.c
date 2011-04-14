@@ -156,7 +156,7 @@ pars_Argv(int argc, char **argv)
     int c;
 
     /* Parse options.						*/
-    while ((c = bu_getopt(argc, argv, "b:dv")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "b:dv")) != -1) {
 	switch (c) {
 	    case 'b' : /* User-specified background.		*/
 		bgflag = bu_optarg[0];

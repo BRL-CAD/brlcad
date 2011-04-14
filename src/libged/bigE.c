@@ -2066,7 +2066,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 
     /* Parse options. */
     bu_optind = 1;          /* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, (char * const *)argv, "sC:")) != EOF) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "sC:")) != -1) {
 	switch (c) {
 	    case 'C':
 		{

@@ -72,7 +72,7 @@ int get_args(int argc, char **argv)
     output_mode = CASCADE_A;
     cmd_fcen = cmd_fypr = cmd_rcen = cmd_rypr = cmd_acen = cmd_aypr = 0;
     print_time = 1;
-    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != -1) {
 	switch (c) {
 	    case 'f':
 		d = *(bu_optarg);

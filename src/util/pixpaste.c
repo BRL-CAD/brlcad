@@ -76,7 +76,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vahHs:w:n:S:W:N:x:y:#:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "vahHs:w:n:S:W:N:x:y:#:")) != -1) {
 	switch (c) {
 	    case 'v':
 		Verbose = 1;

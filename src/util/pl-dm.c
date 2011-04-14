@@ -135,7 +135,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "t:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "t:")) != -1) {
 	switch (c) {
 	    case 't':
 		switch (*bu_optarg) {

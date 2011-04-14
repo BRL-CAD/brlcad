@@ -133,7 +133,7 @@ main(int argc, char *argv[])
     long int bytes = 0;
 
     /* process opts */
-    while ((c = bu_getopt(argc, argv, "lbi:s")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "lbi:s")) != -1) {
 	switch (c) {
 	    case 'l':
 		list_pixel_values = 1;

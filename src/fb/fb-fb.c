@@ -51,7 +51,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vF:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "vF:")) != -1) {
 	switch (c) {
 	    case 'F':
 		out_fb_name = bu_optarg;

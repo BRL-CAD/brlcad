@@ -67,7 +67,7 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
 
     /* Parse options */
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "d:i:o:ca")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "d:i:o:ca")) != -1) {
 	switch (c) {
 	    case 'i':
 		indentSize = atoi(bu_optarg);

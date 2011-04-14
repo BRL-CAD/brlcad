@@ -60,7 +60,7 @@ get_args(int argc, char **argv)
     int c;
     double	d;
 
-    while ( (c = bu_getopt( argc, argv, "a:s:m:d:Ae:r:" )) != EOF )  {
+    while ( (c = bu_getopt( argc, argv, "a:s:m:d:Ae:r:" )) != -1 )  {
 	switch ( c )  {
 	    case 'a':
 		op[ numop ] = ADD;

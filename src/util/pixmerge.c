@@ -73,7 +73,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "glenw:C:c:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "glenw:C:c:")) != -1) {
 	switch (c) {
 	    case 'g':
 		wanted |= GT;

@@ -122,7 +122,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 
     /* check for options */
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "R")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "R")) != -1) {
 	switch (c) {
 	    case 'R':
 		/* not recursively */

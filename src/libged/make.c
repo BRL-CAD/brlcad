@@ -86,7 +86,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     bu_optind = 1;
 
     /* Process arguments */
-    while ((k = bu_getopt(argc, (char * const *)argv, "hHo:O:s:S:tT")) != EOF) {
+    while ((k = bu_getopt(argc, (char * const *)argv, "hHo:O:s:S:tT")) != -1) {
 	switch (k) {
 	    case 'o':
 	    case 'O':

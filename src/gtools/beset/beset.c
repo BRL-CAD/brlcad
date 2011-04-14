@@ -73,7 +73,7 @@ parse_args (int ac, char *av[], struct beset_options *opts)
     bu_optind = 0;
     av++; ac--;
 
-    while ((c=bu_getopt(ac, av, OPTIONS)) != EOF) {
+    while ((c=bu_getopt(ac, av, OPTIONS)) != -1) {
 	switch (c) {
 	    case 'm':
 		opts->mut_rate = atoi(bu_optarg);

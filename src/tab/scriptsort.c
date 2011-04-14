@@ -284,7 +284,7 @@ get_args(int argc, char **argv)
     verbose = 1;
     specify_base = force_shell = suppress_shell = 0;
     frame_offset = 0;
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ( (c=bu_getopt(argc, argv, OPT_STR)) != -1) {
 	switch (c) {
 	    case 'q':
 		verbose = 0;

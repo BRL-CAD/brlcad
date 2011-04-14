@@ -117,7 +117,7 @@ main(int argc, char **argv)
     FBIO *fbp;
     FILE *fp;
 
-    while ((code = bu_getopt(argc, argv, "vFh")) != EOF) {
+    while ((code = bu_getopt(argc, argv, "vFh")) != -1) {
 	switch (code) {
 	    case 'h':
 		headers=1;

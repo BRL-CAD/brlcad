@@ -69,7 +69,7 @@ main(int argc, char **argv)
     grp_name = reg_name = NULL;
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "g:r:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "g:r:")) != -1) {
 	switch (c) {
 	    case 'g':
 		grp_name = bu_optarg;

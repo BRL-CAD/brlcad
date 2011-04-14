@@ -142,7 +142,7 @@ main (int argc, char **argv)
     int i;                  /* Dummy variable for loop indexing */
 
     /* Handle command-line options */
-    while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
 	switch (Ch) {
 	    case 'a':
 		if (sscanf(bu_optarg, "%lf", &Azim) != 1) {

@@ -145,7 +145,7 @@ main(int argc, char **argv)
 
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "d:vi:o:nx:X:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "d:vi:o:nx:X:")) != -1) {
 	switch (c) {
 	    case 'd':
 		tol.dist = atof( bu_optarg );

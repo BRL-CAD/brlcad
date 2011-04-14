@@ -267,7 +267,7 @@ int
 pars_Argv(int argc, char **argv)
 {
     int	c;
-    while ( (c = bu_getopt( argc, argv, "F:s:S:w:W:n:N:h" )) != EOF )  {
+    while ( (c = bu_getopt( argc, argv, "F:s:S:w:W:n:N:h" )) != -1 )  {
 	switch ( c )  {
 	    case 'F':
 		framebuffer = bu_optarg;

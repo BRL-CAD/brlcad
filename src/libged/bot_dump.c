@@ -784,7 +784,7 @@ ged_bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
     bu_optind = 1;
 
     /* Get command line options. */
-    while ((c = bu_getopt(argc, (char * const *)argv, "bno:m:t:u:")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "bno:m:t:u:")) != -1) {
 	switch (c) {
 	    case 'b':		/* Binary output file */
 		binary=1;

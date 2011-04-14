@@ -136,7 +136,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
     gktd.av[1] = (char *)0;
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "an")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "an")) != -1) {
 	switch(c) {
 	    case 'a':
 		gktd.killrefs = 1;

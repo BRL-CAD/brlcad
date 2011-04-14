@@ -151,7 +151,7 @@ main(int ac, char **av)
 
     /* get all the option flags from the command line
      */
-    while ((c=bu_getopt(ac, av, options)) != EOF)
+    while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    case 'w' : x = atoi(bu_optarg); break;
 	    case 'n' : y = atoi(bu_optarg); break;

@@ -188,7 +188,7 @@ main(int argc, char **argv)
         bu_exit(EXIT_FAILURE, usage);
     }
 
-    while ((c = bu_getopt(argc, argv, "l:f:i:o:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "l:f:i:o:")) != -1) {
         switch (c) {
             case 'l': /* test case line number */
                 errno = 0;

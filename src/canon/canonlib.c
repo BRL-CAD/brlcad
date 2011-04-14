@@ -1228,7 +1228,7 @@ int parse_args(ac, av)
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != EOF) {
+    while ((c=bu_getopt(ac, av, options)) != -1) {
 	/* slup off a printer queue name */
 	if (c == 'q' ||  c == 'p') {
 	    print_queue = bu_optarg;

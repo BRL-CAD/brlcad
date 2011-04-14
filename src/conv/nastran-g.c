@@ -1121,7 +1121,7 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:m")) != EOF) {
+    while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:m")) != -1) {
 	switch (c) {
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);

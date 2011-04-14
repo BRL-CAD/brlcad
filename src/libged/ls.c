@@ -372,7 +372,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     bu_vls_init(&vls);
 
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "acrslopA")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "acrslopA")) != -1) {
 	switch (c) {
 	    case 'A':
 		attr_flag = 1;
