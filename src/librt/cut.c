@@ -1549,8 +1549,7 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, size_t depth)
 	axis = AXIS(depth);
 #if 1
 	did_a_cut = 0;
-	for (i=0; i<3; i++) {
-	    axis += 1;
+	for (i=0; i<3; i++, axis += 1) {
 	    if (axis > Z) {
 		axis = X;
 	    }

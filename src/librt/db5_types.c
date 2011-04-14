@@ -406,6 +406,33 @@ db5_standardize_attribute(const char *attr)
     return ATTR_NULL;
 }
 
+int
+db5_is_boolean_attribute(int attr) {
+	if (attr == ATTR_REGION) 
+		return 1;
+	if (attr == ATTR_INHERIT)
+		return 1;
+	return 0;
+}
+
+void
+db_attr_add(struct bu_attribute_value_set *newavs, int attr_type, const char *stdattr, const char *value)
+{   
+    if (db5_is_boolean_attribute(attr_type)){
+	    if (bu_str_true(value)) {
+		    /* Use R for region, otherwise go with 1 */
+		    if (attr_type == ATTR_REGION) {
+			    (void)bu_avs_add(newavs, stdattr, "R\0");
+		    } else {
+			    (void)bu_avs_add(newavs, stdattr, "1\0");
+		    }
+	    } else {
+		    (void)bu_avs_remove(newavs, stdattr);
+	    }
+    } else {
+	    (void)bu_avs_add(newavs, stdattr, value);
+    }
+}
 
 size_t
 db5_standardize_avs(struct bu_attribute_value_set *avs)
@@ -439,7 +466,7 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 
 	/* name is already in standard form, add it */
 	if (attr_type != ATTR_NULL && BU_STR_EQUAL(stdattr, avpp->name))
-	    (void)bu_avs_add(&newavs, stdattr, avpp->value);
+	    (void)db_attr_add(&newavs, attr_type, stdattr, avpp->value);
     }
 
     /* SECOND PASS: check for duplicates and non-standard
@@ -459,7 +486,7 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 
 	    /* case 1: name is "standardizable" and not added */
 
-	    (void)bu_avs_add(&newavs, stdattr, avpp->value);
+	    (void)db_attr_add(&newavs, attr_type, stdattr, avpp->value);
 	} else if (attr_type != ATTR_NULL && BU_STR_EQUAL(added, avpp->value)) {
 
 	    /* case 2: name is "standardizable", but we already added the same value */
@@ -470,13 +497,13 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 	    /* case 3: name is "standardizable", but we already added something else */
 
 	    /* preserve the conflict, keep the old value too */
-	    (void)bu_avs_add(&newavs, avpp->name, avpp->value);
+	    (void)db_attr_add(&newavs, attr_type, avpp->name, avpp->value);
 	    conflict++;
 	} else {
 
 	    /* everything else: add it */
 
-	    (void)bu_avs_add(&newavs, avpp->name, avpp->value);
+	    (void)db_attr_add(&newavs, attr_type, avpp->name, avpp->value);
 	}
     }
     bu_avs_free(avs);

@@ -1536,7 +1536,7 @@ wgl_configureWin_guts(struct dm *dmp,
 	dmp->dm_width == (xwa.right-xwa.left))
 	return TCL_OK;
 
-    wgl_reshape(dmp, xwa.width, xwa.height);
+    wgl_reshape(dmp, xwa.right-xwa.left, xwa.bottom-xwa.top);
 
     /* First time through, load a font or quit */
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL) {
