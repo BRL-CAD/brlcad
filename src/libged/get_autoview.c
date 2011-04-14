@@ -63,7 +63,7 @@ ged_get_autoview(struct ged *gedp, int argc, const char *argv[])
 
     /* Parse options. */
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "p")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "p")) != -1) {
 	switch (c) {
 	    case 'p':
 		pflag = 1;

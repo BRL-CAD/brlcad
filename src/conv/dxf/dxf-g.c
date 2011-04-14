@@ -3131,7 +3131,7 @@ main( int argc, char *argv[] )
 
     /* get command line arguments */
     scale_factor = 1.0;
-    while ((c = bu_getopt(argc, argv, "cdvt:s:")) != EOF)
+    while ((c = bu_getopt(argc, argv, "cdvt:s:")) != -1)
     {
 	switch ( c )
 	{

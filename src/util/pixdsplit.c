@@ -79,7 +79,7 @@ main (int argc, char *argv[])
 
     c_per_p = 3; cf_name = "-";
     d_per_p = 1; df_name = "";
-    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
 	switch (ch) {
 	    case 'd':
 		df_name = (char *) bu_malloc(strlen(bu_optarg)+1, "df_name");

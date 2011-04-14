@@ -151,7 +151,7 @@ get_args(int argc, char **argv)
     int seen_formula = 0;
     int i;
 
-    while ((c = bu_getopt(argc, argv, "glenaw:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "glenaw:")) != -1) {
 	switch (c) {
 	    case 'g':
 		wanted |= GT;

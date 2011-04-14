@@ -905,7 +905,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     }
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, nargv, "i:n")) != EOF) {
+    while ((c = bu_getopt(argc, nargv, "i:n")) != -1) {
 	switch (c) {
 	    case 'n':
 		illum_only = 1;
@@ -1368,7 +1368,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	int c;
 
 	bu_optind = 1;
-	while ((c = bu_getopt(argc, (char * const *)argv, "eimo:v")) != EOF) {
+	while ((c = bu_getopt(argc, (char * const *)argv, "eimo:v")) != -1) {
 	    switch (c) {
 		case 'e':
 		    edit_flag = 1;

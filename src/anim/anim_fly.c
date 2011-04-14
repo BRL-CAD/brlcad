@@ -181,7 +181,7 @@ get_args(int argc, char **argv)
     int c;
 
     estimate_f = 0;
-    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != -1) {
 	switch (c) {
 	    case 'b':
 		sscanf(bu_optarg, "%lf", &max_bank);

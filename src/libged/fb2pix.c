@@ -60,7 +60,7 @@ get_args(int argc, char **argv)
     int c;
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "chiF:s:w:n:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "chiF:s:w:n:")) != -1) {
 	switch (c) {
 	    case 'c':
 		crunch = 1;

@@ -1898,7 +1898,7 @@ f_jload(int argc, const char *argv[])
     CHECK_DBI_NULL;
 
     bu_optind = 1;
-    while ((c=bu_getopt(argc, (char * const *)argv, "uam")) != EOF) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "uam")) != -1) {
 	switch (c) {
 	    case 'u': no_unload = 1;break;
 	    case 'a': no_apply = 1; break;
@@ -2129,7 +2129,7 @@ f_jaccept(int argc, const char *argv[])
     int no_mesh = 0;
 
     bu_optind=1;
-    while ((c=bu_getopt(argc, (char * const *)argv, "m")) != EOF) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "m")) != -1) {
 	switch (c) {
 	    case 'm': no_mesh=1;break;
 	    default:
@@ -2164,7 +2164,7 @@ f_jreject(int argc, const char *argv[])
     int no_mesh = 0;
 
     bu_optind=1;
-    while ((c=bu_getopt(argc, (char * const *)argv, "m")) != EOF) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "m")) != -1) {
 	switch (c) {
 	    case 'm': no_mesh=1;break;
 	    default:
@@ -2923,7 +2923,7 @@ f_jsolve(int argc, char *argv[])
      * reset bu_getopt.
      */
     bu_optind=1;
-    while ((count=bu_getopt(argc, (char * const *)argv, "l:e:d:m")) != EOF) {
+    while ((count=bu_getopt(argc, (char * const *)argv, "l:e:d:m")) != -1) {
 	switch (count) {
 	    case 'l': loops = atoi(bu_optarg);break;
 	    case 'e': epsilon = atof(bu_optarg);break;

@@ -58,7 +58,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "dhs:w:n:vC:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "dhs:w:n:vC:")) != -1) {
 	switch (c) {
 	    case 'd':
 		/* For debugging RLE library */

@@ -54,7 +54,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vw:n:s:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "vw:n:s:")) != -1) {
 	switch (c) {
 	    case 'v':
 		verbose++;

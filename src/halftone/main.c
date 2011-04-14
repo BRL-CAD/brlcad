@@ -138,7 +138,7 @@ setup(int argc, char **argv)
     int *Xlist, *Ylist;
     int	autosize = 0;
 
-    while ((c = bu_getopt(argc, argv, "D:hsa:n:w:B:M:RSI:T:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "D:hsa:n:w:B:M:RSI:T:")) != -1) {
 	switch (c) {
 	    case 's':
 		width = height = atol(bu_optarg);

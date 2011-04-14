@@ -384,7 +384,7 @@ main(int argc, char *argv[])
     bu_optind = 1;		/* restart */
 
     /* Handle command-line options */
-    while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != EOF) {
+    while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != -1) {
 	switch (Ch) {
 	    case 'A':
 		attrib_add(bu_optarg, &need_prep);

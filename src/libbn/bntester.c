@@ -46,7 +46,7 @@ parse_case(char *buf_p, int *i, long *l, double *d, unsigned long *u, char *fmt_
     fmt_str_len = strlen(fmt_str);
 
     for (idx = 0 ; idx < fmt_str_len ; idx++) {
-        buf_p = strtok(NULL, ",");
+        buf_p = strtok(NULL, ", ");
 
         /* The variable buf_p should never become NULL since the for loop
          * will exit just before we run out of data if all the required
@@ -63,12 +63,12 @@ parse_case(char *buf_p, int *i, long *l, double *d, unsigned long *u, char *fmt_
                 d[d_idx] = strtod(buf_p, &endp);
                 if (errno) {
                     (void)fprintf(stream, "Convert to double failed, function %lu test case on line %lu parameter %d error msg: '%s' string '%s'\n",
-                           u[0], line_num, idx+2, strerror(errno), buf_p);
+				  u[0], line_num, idx+2, strerror(errno), buf_p);
                     return EXIT_FAILURE;
                 }
                 if ((*endp != '\0') || (buf_p == endp)) {
                     (void)fprintf(stream, "Convert to double failed, function %lu test case on line %lu parameter %d string '%s'\n",
-                           u[0], line_num, idx+2, buf_p);
+				  u[0], line_num, idx+2, buf_p);
                     return EXIT_FAILURE;
                 }
                 d_idx++;
@@ -77,12 +77,12 @@ parse_case(char *buf_p, int *i, long *l, double *d, unsigned long *u, char *fmt_
                 l[l_idx] = strtol(buf_p, &endp, 10);
                 if (errno) {
                     (void)fprintf(stream, "Convert to long int failed, function %lu test case on line %lu parameter %d error msg: '%s' string '%s'\n",
-                           u[0], line_num, idx+2, strerror(errno), buf_p);
+				  u[0], line_num, idx+2, strerror(errno), buf_p);
                     return EXIT_FAILURE;
                 }
                 if ((*endp != '\0') || (buf_p == endp)) {
                     (void)fprintf(stream, "Convert to long int failed, function %lu test case on line %lu parameter %d string '%s'\n",
-                           u[0], line_num, idx+2, buf_p);
+				  u[0], line_num, idx+2, buf_p);
                     return EXIT_FAILURE;
                 }
                 l_idx++;
@@ -91,17 +91,17 @@ parse_case(char *buf_p, int *i, long *l, double *d, unsigned long *u, char *fmt_
                 l_tmp = strtol(buf_p, &endp, 10);
                 if (errno) {
                     (void)fprintf(stream, "Convert to int failed, function %lu test case on line %lu parameter %d error msg: '%s' string '%s'\n",
-                           u[0], line_num, idx+2, strerror(errno), buf_p);
+				  u[0], line_num, idx+2, strerror(errno), buf_p);
                     return EXIT_FAILURE;
                 }
                 if ((*endp != '\0') || (buf_p == endp)) {
                     (void)fprintf(stream, "Convert to int failed, function %lu test case on line %lu parameter %d string '%s'\n",
-                           u[0], line_num, idx+2, buf_p);
+				  u[0], line_num, idx+2, buf_p);
                     return EXIT_FAILURE;
                 }
                 if (l_tmp > INT_MAX || l_tmp < INT_MIN) {
                     (void)fprintf(stream, "Convert to int failed (under/over flow), function %lu test case on line %lu parameter %d string '%s'\n",
-                           u[0], line_num, idx+2, buf_p);
+				  u[0], line_num, idx+2, buf_p);
                     return EXIT_FAILURE;
                 }
                 i[i_idx] = (int)l_tmp;
@@ -111,19 +111,19 @@ parse_case(char *buf_p, int *i, long *l, double *d, unsigned long *u, char *fmt_
                 u[u_idx] = strtoul(buf_p, &endp, 10);
                 if (errno) {
                     (void)fprintf(stream, "Convert to unsigned long int failed, function %lu test case on line %lu parameter %d error msg: '%s' string '%s'\n",
-                           u[0], line_num, idx+2, strerror(errno), buf_p);
+				  u[0], line_num, idx+2, strerror(errno), buf_p);
                     return EXIT_FAILURE;
                 }
                 if ((*endp != '\0') || (buf_p == endp) || (strchr(buf_p, '-') != '\0')) {
                     (void)fprintf(stream, "Convert to unsigned long int failed, function %lu test case on line %lu parameter %d string '%s'\n",
-                           u[0], line_num, idx+2, buf_p);
+				  u[0], line_num, idx+2, buf_p);
                     return EXIT_FAILURE;
                 }
                 u_idx++;
                 break;
             default:
                 (void)fprintf(stream, "INTERNAL ERROR: Unknown data type '%c' for function %lu test case on line %lu, skipping test case.\n",
-                       fmt_str[idx], u[0], line_num);
+			      fmt_str[idx], u[0], line_num);
                 return EXIT_FAILURE;
                 break;
         } /* End of data format switch */
@@ -132,47 +132,48 @@ parse_case(char *buf_p, int *i, long *l, double *d, unsigned long *u, char *fmt_
     return 0;
 }
 
+
 int
 main(int argc, char **argv)
 {
-    static char buf[BUFSIZ];
-    static FILE *fp_in = NULL; 
-    static FILE *stream = NULL;
-    static char *endp = NULL;
-    static unsigned long line_num = 0; 
-    static unsigned long failed_cnt = 0;
-    static unsigned long bomb_cnt = 0;
-    static unsigned long success_cnt = 0;
-    static int string_length;
-    static int argv_idx;
-    static char c;
-    static char dt_fmt[50];  /* data type format string */
-    static char *buf_p1;
-    static char *buf_p;
-    static struct bn_tol tol;
-    static int ret = 0;
+    char buf[BUFSIZ];
+    FILE *fp_in = NULL; 
+    FILE *stream = NULL;
+    char *endp = NULL;
+    unsigned long line_num = 0; 
+    unsigned long failed_cnt = 0;
+    unsigned long bomb_cnt = 0;
+    unsigned long success_cnt = 0;
+    int string_length;
+    int argv_idx;
+    int c;
+    char dt_fmt[50];  /* data type format string */
+    char *buf_p1;
+    char *buf_p;
+    struct bn_tol tol;
+    int ret = 0;
 
     /* command line parameters */
-    static char input_file_name[BUFSIZ] = {0};
-    static char output_file_name[BUFSIZ] = {0};
-    static unsigned long test_case_line_num = 0;
-    static unsigned long function_num = 0;
+    char input_file_name[BUFSIZ] = {0};
+    char output_file_name[BUFSIZ] = {0};
+    unsigned long test_case_line_num = 0;
+    unsigned long function_num = 0;
 
     /* function parameter arrays */
-    static int i[50] = {0};
-    static long l[50] = {0};
-    static double d[50] = {0.0};
-    static unsigned long u[50] = {0};
+    int i[50] = {0};
+    long l[50] = {0};
+    double d[50] = {0.0};
+    unsigned long u[50] = {0};
 
     /* boolean variables */
-    static int input_file_name_defined = 0;
-    static int output_file_name_defined = 0;
-    static int process_single_test_case = 0;
-    static int process_single_function = 0;
-    static int valid_function_number = 0;
-    static int process_test_case = 0;
-    static int early_exit = 0;
-    static int found_eof = 0;
+    int input_file_name_defined = 0;
+    int output_file_name_defined = 0;
+    int process_single_test_case = 0;
+    int process_single_function = 0;
+    int valid_function_number = 0;
+    int process_test_case = 0;
+    int early_exit = 0;
+    int found_eof = 0;
 
     /* set initial values in tol structure */
     tol.magic = BN_TOL_MAGIC;
@@ -187,7 +188,7 @@ main(int argc, char **argv)
         bu_exit(EXIT_FAILURE, usage);
     }
 
-    while ((c = bu_getopt(argc, argv, "l:f:i:o:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "l:f:i:o:")) != -1) {
         switch (c) {
             case 'l': /* test case line number */
                 errno = 0;
@@ -219,7 +220,7 @@ main(int argc, char **argv)
                 string_length = strlen(bu_optarg);
                 if (string_length >= BUFSIZ) {
                     bu_log("Input file name too long, length was %d but must be less than %d\n",
-                            string_length, BUFSIZ);
+			   string_length, BUFSIZ);
                     bu_exit(EXIT_FAILURE, usage);
                 }
                 (void)strcpy(input_file_name, bu_optarg);
@@ -229,7 +230,7 @@ main(int argc, char **argv)
                 string_length = strlen(bu_optarg);
                 if (string_length >= BUFSIZ) {
                     bu_log("Output file name too long, length was %d but must be less than %d\n",
-                            string_length, BUFSIZ);
+			   string_length, BUFSIZ);
                     bu_exit(EXIT_FAILURE, usage);
                 }
                 (void)strcpy(output_file_name, bu_optarg);
@@ -309,26 +310,26 @@ main(int argc, char **argv)
             return EXIT_FAILURE;
         }
         line_num++;
-		if (fgets(buf, BUFSIZ, fp_in) == NULL) {
-			if (feof(fp_in)) {
-				found_eof = 1;
-			} else if (ferror(fp_in)) {
-				perror("ERROR: Problem reading file, system error message");
-				if (fclose(fp_in) != 0) {
-					(void)fprintf(stream, "Unable to close input file.\n");
-				}
-				return EXIT_FAILURE;
-			} else {
-				perror("Oddness reading input file");
-				return EXIT_FAILURE;
-			}
-		} else {
+	if (fgets(buf, BUFSIZ, fp_in) == NULL) {
+	    if (feof(fp_in)) {
+		found_eof = 1;
+	    } else if (ferror(fp_in)) {
+		perror("ERROR: Problem reading file, system error message");
+		if (fclose(fp_in) != 0) {
+		    (void)fprintf(stream, "Unable to close input file.\n");
+		}
+		return EXIT_FAILURE;
+	    } else {
+		perror("Oddness reading input file");
+		return EXIT_FAILURE;
+	    }
+	} else {
             /* Skip input data file lines which start with a '#' character
              * or a new line character.
              */
             if ((buf[0] != '#') && (buf[0] != '\n')) {
                 buf_p1 = strtok(buf, "\n");
-                buf_p = strtok(buf_p1, ",");
+                buf_p = strtok(buf_p1, ", ");
 
                 /* The 1st parameter of the test case is alway an unsigned
                  * long int which represents the function number. This logic
@@ -340,7 +341,7 @@ main(int argc, char **argv)
                 u[0] = strtoul(buf_p, &endp, 10);
                 if (errno) {
                     (void)fprintf(stream, "Read function number failed, line %lu error msg: '%s' string '%s'\n",
-                           line_num, strerror(errno), buf_p);
+				  line_num, strerror(errno), buf_p);
                     valid_function_number = 0;
                 } else if ((*endp != '\0') || (buf_p == endp) || (strchr(buf_p, '-') != '\0')) {
                     (void)fprintf(stream, "Read function number failed, line %lu string '%s'\n", line_num, buf_p);
@@ -378,7 +379,7 @@ main(int argc, char **argv)
                                         ret = 1;
                                         failed_cnt++;
                                         (void)fprintf(stream, "Failed function %lu test case on line %lu expected = %.15f result = %.15f\n",
-                                               u[0], line_num, d[9], result); 
+						      u[0], line_num, d[9], result); 
                                     } else {
                                         success_cnt++;
                                     }
@@ -410,7 +411,7 @@ main(int argc, char **argv)
                                         ret = 1;
                                         failed_cnt++;
                                         (void)fprintf(stream, "Failed function %lu test case on line %lu expected = %d result = %d\n",
-                                               u[0], line_num, i[0], result); 
+						      u[0], line_num, i[0], result); 
                                     } else {
                                         success_cnt++;
                                     }
@@ -447,13 +448,13 @@ main(int argc, char **argv)
                                         ret = 1;
                                         failed_cnt++;
                                         (void)fprintf(stream, "Failed function %lu test case on line %lu expected = %d result = %d\n",
-                                               u[0], line_num, i[0], result); 
+						      u[0], line_num, i[0], result); 
                                     } else if (result == 0) {
                                         if (!NEAR_ZERO(t_out - d[0], tol.dist)) {
                                             ret = 1;
                                             failed_cnt++;
                                             (void)fprintf(stream, "Failed function %lu test case on line %lu result = %d expected t = %.15f result t = %.15f\n",
-                                                   u[0], line_num, result, d[0], t_out); 
+							  u[0], line_num, result, d[0], t_out); 
                                         } else {
                                             success_cnt++;
                                         }
@@ -462,11 +463,11 @@ main(int argc, char **argv)
                                         u_fail = !NEAR_ZERO(u_out - d[1], tol.dist);
                                         if (t_fail) {
                                             (void)fprintf(stream, "Failed function %lu test case on line %lu result = %d expected t = %.15f result t = %.15f\n",
-                                                   u[0], line_num, result, d[0], t_out); 
+							  u[0], line_num, result, d[0], t_out); 
                                         }
                                         if (u_fail) {
                                             (void)fprintf(stream, "Failed function %lu test case on line %lu result = %d expected u = %.15f result u = %.15f\n",
-                                                   u[0], line_num, result, d[1], u_out); 
+							  u[0], line_num, result, d[1], u_out); 
                                         }
                                         if (t_fail || u_fail) {
                                             ret = 1;
@@ -512,17 +513,17 @@ main(int argc, char **argv)
                                         ret = 1;
                                         failed_cnt++;
                                         (void)fprintf(stream, "Failed function %lu test case on line %lu expected = %d result = %d\n",
-                                               u[0], line_num, i[0], result); 
+						      u[0], line_num, i[0], result); 
                                     } else if (result == 0 || result == 1) {
                                         d0_fail = !NEAR_ZERO(dist[0] - d[0], VUNITIZE_TOL);
                                         d1_fail = !NEAR_ZERO(dist[1] - d[1], VUNITIZE_TOL);
                                         if (d0_fail) {
                                             (void)fprintf(stream, "Failed function %lu test case on line %lu result = %d expected dist[0] = %.15f result dist[0] = %.15f\n",
-                                                   u[0], line_num, result, d[0], dist[0]); 
+							  u[0], line_num, result, d[0], dist[0]); 
                                         }
                                         if (d1_fail) {
                                             (void)fprintf(stream, "Failed function %lu test case on line %lu result = %d expected dist[1] = %.15f result dist[1] = %.15f\n",
-                                                   u[0], line_num, result, d[1], dist[1]); 
+							  u[0], line_num, result, d[1], dist[1]); 
                                         }
                                         if (d0_fail || d1_fail) {
                                             ret = 1;
@@ -583,6 +584,7 @@ main(int argc, char **argv)
 
     exit(ret);
 }
+
 
 /** @} */
 /*

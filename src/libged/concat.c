@@ -102,7 +102,7 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     /* process args */
     bu_optind = 1;
     bu_opterr = 0;
-    while ( (c=bu_getopt(argc, (char * const *)argv, "utcsp")) != EOF )  {
+    while ( (c=bu_getopt(argc, (char * const *)argv, "utcsp")) != -1 )  {
 	switch (c) {
 	    case 'u':
                 importUnits = 1;

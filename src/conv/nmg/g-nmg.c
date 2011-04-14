@@ -448,7 +448,7 @@ main(int argc, char **argv)
     rt_init_resource( &rt_uniresource, 0, NULL );
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "t:a:n:o:r:bvx:P:X:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "t:a:n:o:r:bvx:P:X:")) != -1) {
 	switch (c) {
 	    case 'b':		/* make BOT's instead of NMG's */
 		do_bots = 1;

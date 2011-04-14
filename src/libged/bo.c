@@ -69,7 +69,7 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 
     bu_optind = 1;		/* re-init bu_getopt() */
     bu_opterr = 0;          /* suppress bu_getopt()'s error message */
-    while ((c=bu_getopt(argc, (char * const *)argv, "iou:")) != EOF) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "iou:")) != -1) {
 	switch (c) {
 	    case 'i':
 		input_mode = 1;

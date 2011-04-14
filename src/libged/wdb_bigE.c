@@ -2073,7 +2073,7 @@ dgo_E_cmd(struct dg_obj *dgop,
 
     /* Parse options. */
     bu_optind = 1;          /* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, argv, "sC:")) != EOF) {
+    while ((c=bu_getopt(argc, argv, "sC:")) != -1) {
 	switch (c) {
 	    case 'C':
 		{

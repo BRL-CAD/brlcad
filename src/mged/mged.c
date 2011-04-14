@@ -1077,7 +1077,7 @@ main(int argc, char *argv[])
     }
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "a:d:hbicnorx:X:v?")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "a:d:hbicnorx:X:v?")) != -1) {
 	switch (c) {
 	    case 'a':
 		attach = bu_optarg;
@@ -2614,7 +2614,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
     /* handle getopt arguments */
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "f")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "f")) != -1) {
 	switch (c) {
 	    case 'f':
 		flip_v4=1;

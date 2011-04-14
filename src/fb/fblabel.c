@@ -290,7 +290,7 @@ get_args(int argc, char **argv)
     pixcolor[GRN]  = 255;
     pixcolor[BLU]  = 255;
 
-    while ((c = bu_getopt(argc, argv, "adhcF:f:r:g:b:C:s:S:w:W:n:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "adhcF:f:r:g:b:C:s:S:w:W:n:N:")) != -1) {
 	switch (c) {
 	    case 'a':
 		alias_off = 1;

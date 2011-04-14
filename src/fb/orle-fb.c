@@ -268,7 +268,7 @@ pars_Argv(int argc, char **argv)
 {
     int	c;
     /* Parse options.						*/
-    while ( (c = bu_getopt( argc, argv, "tOF:b:dp:v" )) != EOF )
+    while ( (c = bu_getopt( argc, argv, "tOF:b:dp:v" )) != -1 )
     {
 	switch ( c )
 	{

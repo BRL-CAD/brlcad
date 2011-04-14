@@ -149,7 +149,7 @@ main (int argc, char **argv)
     struct site *sp;
 
     BU_LIST_INIT(&site_list);
-    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
 	switch (ch) {
 	    case 'n':
 		normalize = 1;

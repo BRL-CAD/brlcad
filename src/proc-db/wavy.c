@@ -73,7 +73,7 @@ main(int argc, char **argv)
 
     hscale = 2.5;
 
-    while ((i=bu_getopt(argc, argv, "dh:")) != EOF) {
+    while ((i=bu_getopt(argc, argv, "dh:")) != -1) {
 	switch (i) {
 	    case 'd':
 		rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL;

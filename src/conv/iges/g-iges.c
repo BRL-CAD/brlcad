@@ -227,7 +227,7 @@ main(int argc, char *argv[])
     prog_name = argv[0];
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "ftsmd:a:n:o:p:r:vx:P:X:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "ftsmd:a:n:o:p:r:vx:P:X:")) != -1) {
 	switch (c) {
 	    case 'f':		/* Select facetized output */
 		mode = FACET_MODE;

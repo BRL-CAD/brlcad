@@ -60,7 +60,7 @@ get_args(int argc, char **argv)
     int ret;
 
     /* Get info from command line arguments */
-    while ((c = bu_getopt(argc, argv, "s:w:n:x:y:X:Y:S:W:N:#:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "s:w:n:x:y:X:Y:S:W:N:#:")) != -1) {
 	switch (c) {
 	    case 's':
 		linelen   = atoi(bu_optarg);

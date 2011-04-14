@@ -42,7 +42,7 @@ parsArg(int argc, char **argv)
 {
     int	i, c, arg_cnt;
 
-    while ( (c = bu_getopt( argc, argv, "d" )) != EOF )
+    while ( (c = bu_getopt( argc, argv, "d" )) != -1 )
     {
 	switch ( c )
 	{

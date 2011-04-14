@@ -295,7 +295,7 @@ cmd_ged_in(ClientData clientData, Tcl_Interp *interpreter, int argc, const char 
     /* Parse options. */
     bu_optind = 1; /* re-init bu_getopt() */
     bu_opterr = 0; /* suppress bu_getopt()'s error message */
-    while ((c=bu_getopt(argc, (char * const *)argv, "sf")) != EOF) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "sf")) != -1) {
 	switch (c) {
 	    case 's':
 		do_solid_edit = 1;

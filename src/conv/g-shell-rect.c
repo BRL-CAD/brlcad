@@ -1771,7 +1771,7 @@ main(int argc, char **argv)
     BU_LIST_INIT( &subtract_rpp_head );
 
     /* Get command line arguments. */
-    while ( (c=bu_getopt( argc, argv, "bi:a:s:nR:g:o:d:p:X:")) != EOF)
+    while ( (c=bu_getopt( argc, argv, "bi:a:s:nR:g:o:d:p:X:")) != -1)
     {
 	switch ( c )
 	{

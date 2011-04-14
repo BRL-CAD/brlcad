@@ -51,7 +51,7 @@ get_args(int argc, char *argv[], long *width, long *height)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "a#:s:w:n:o:h?")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "a#:s:w:n:o:h?")) != -1) {
 	switch (c) {
 	    case '#':
 		pixbytes = atoi(bu_optarg);

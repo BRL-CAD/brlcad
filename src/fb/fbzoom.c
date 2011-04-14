@@ -298,7 +298,7 @@ pars_Argv(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hTF:s:S:w:W:n:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "hTF:s:S:w:W:n:N:")) != -1) {
 	switch (c) {
 	    case 'h':
 		/* high-res */

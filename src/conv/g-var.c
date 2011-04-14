@@ -404,7 +404,7 @@ int main(int argc, char *argv[])
     rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* process command line arguments */
-    while ((c = bu_getopt(argc, argv, "vo:ys:f")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "vo:ys:f")) != -1) {
 	switch (c) {
 	    case 'v':
 		verbose++;

@@ -67,7 +67,7 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
     /* process args */
     bu_optind = 1;
     bu_opterr = 0;
-    while ( (c=bu_getopt(argc, (char * const *)argv, "c:n:e:")) != EOF )  {
+    while ( (c=bu_getopt(argc, (char * const *)argv, "c:n:e:")) != -1 )  {
 	switch (c) {
 	    case 'c':
 		max_chord_error = atof( bu_optarg );

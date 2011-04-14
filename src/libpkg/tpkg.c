@@ -324,7 +324,7 @@ main(int argc, char *argv[]) {
     }
 
     /* process the command-line arguments after the application name */
-    while ((c = bu_getopt(argc, argv, "tTrRp:P:hH")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "tTrRp:P:hH")) != -1) {
 	switch (c) {
 	    case 't':
 	    case 'T':

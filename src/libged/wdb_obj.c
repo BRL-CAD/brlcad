@@ -1391,7 +1391,7 @@ wdb_tops_cmd(struct rt_wdb *wdbp,
     /* process any options */
     bu_optind = 1;	/* re-init bu_getopt() */
 
-    while ((c = bu_getopt(argc, argv, "ahnp")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "ahnp")) != -1) {
 	switch (c) {
 	    case 'a':
 		aflag = 1;
@@ -2069,7 +2069,7 @@ wdb_ls_cmd(struct rt_wdb *wdbp,
     }
 
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, argv, "acrslopA")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "acrslopA")) != -1) {
 	switch (c) {
 	    case 'A':
 		attr_flag = 1;
@@ -4473,7 +4473,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 
     /* Parse options. */
     bu_optind = 1;		/* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, argv, "ntT")) != EOF) {
+    while ((c=bu_getopt(argc, argv, "ntT")) != -1) {
 	switch (c) {
 	    case 'n':
 		make_bot = 0;
@@ -4683,7 +4683,7 @@ wdb_find_cmd(struct rt_wdb *wdbp,
     }
 
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, argv, "a")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "a")) != -1) {
 	switch (c) {
 	    case 'a':
 		aflag = 1;
@@ -5955,7 +5955,7 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 
     /* Parse options */
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, argv, "P:d")) != EOF) {
+    while ((c=bu_getopt(argc, argv, "P:d")) != -1) {
 	switch (c) {
 	    case 'P':
 		ncpu = atoi(bu_optarg);
@@ -8561,7 +8561,7 @@ wdb_bo_cmd(struct rt_wdb *wdbp,
 
     bu_optind = 1;		/* re-init bu_getopt() */
     bu_opterr = 0;          /* suppress bu_getopt()'s error message */
-    while ((c=bu_getopt(argc, argv, "iou:")) != EOF) {
+    while ((c=bu_getopt(argc, argv, "iou:")) != -1) {
 	switch (c) {
 	    case 'i':
 		input_mode = 1;
@@ -9740,7 +9740,7 @@ wdb_bot_decimate_cmd(struct rt_wdb *wdbp,
     /* process args */
     bu_optind = 1;
     bu_opterr = 0;
-    while ((c=bu_getopt(argc, argv, "c:n:e:")) != EOF) {
+    while ((c=bu_getopt(argc, argv, "c:n:e:")) != -1) {
 	switch (c) {
 	    case 'c':
 		max_chord_error = atof(bu_optarg);

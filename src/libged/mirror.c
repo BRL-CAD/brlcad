@@ -58,7 +58,7 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_optind = 1;
-    while ((k = bu_getopt(argc, (char * const *)argv, (const char *)"d:D:hHo:O:p:P:xXyYzZ")) != EOF) {
+    while ((k = bu_getopt(argc, (char * const *)argv, (const char *)"d:D:hHo:O:p:P:xXyYzZ")) != -1) {
 	switch (k) {
 	    case 'p':
 	    case 'P':

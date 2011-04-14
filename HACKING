@@ -1133,20 +1133,23 @@ previous sync are included and that STABLE matches trunk.
     export PREV=[[last_trunk_rev]]
 	*** OR ***
     export PREV=`svn log --xml --stop-on-copy https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE | grep 'revision=' | head -n 1 | sed 's/.*revision="\([0-9][0-9]*\)".*/\1/g'`
+    echo "PREV=$PREV"
+
+    # NOTE: if using a copy of the subversion repository checked out
+    # using the abbreviation "sf" for sourceforge, the svn merge
+    # command below also needs to use "sf" - subversion will not
+    # automatically make the substitution.  The error corresponding
+    # to this is:
+    #   svn: 'https://brlcad.svn.sf.net/...' isn't in the same repository 
+    #     as 'https://brlcad.svn.sourceforge.net/...'
 
     # merge that range of changes into STABLE and make sure it works
-    # NOTE: if using a copy of the subversion repository checked 
-    #       out using the abbreviation "sf" for sourceforge, the svn merge
-    #       command below also needs to use "sf" - subversion will not
-    #       automatically make the substitution.  The error corresponding
-    #       to this is:  
-    #       svn: 'https://brlcad.svn.sf.net/...' isn't in the same repository 
-    #       as 'https://brlcad.svn.sourceforge.net/...'
     svn co https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE brlcad.STABLE && cd brlcad.STABLE
     svn merge https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@$PREV https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@HEAD .
     sh autogen.sh && ./configure --enable-all && make distcheck
     export CURR=`svn log --xml https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk | grep 'revision=' | head -n 1 | sed 's/.*="\([0-9][0-9]*\)".*/\1/g'`
-    svn commit -m "merge trunk to STABLE from r$PREV to HEAD r$CURR"
+    echo "CURR=$CURR"
+    svn commit -m "merging trunk to STABLE from r$PREV to HEAD r$CURR"
 
 7) Tag the release using "rel-MAJOR-MINOR-PATCH" format:
 
@@ -1155,7 +1158,7 @@ previous sync are included and that STABLE matches trunk.
 8) Obtain a tagged version of the sources from the repository
 (required to ensure the tagging and source distribution is correct):
 
-    svn checkout https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH brlcad
+    svn checkout https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH brlcad-MAJOR.MINOR.PATCH
 
 9) Perform another "make distcheck" on the exported/updated sources on
 a system with the latest GNU Autotools installed to generate the

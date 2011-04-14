@@ -191,7 +191,7 @@ main(int argc, char **argv)
 
     rt_g.debug |= DEBUG_ALLRAYS;	/* Cause core dumps on bu_bomb(), but no extra messages */
 
-    while ((i=bu_getopt(argc, argv, "d")) != EOF) {
+    while ((i=bu_getopt(argc, argv, "d")) != -1) {
 	switch (i) {
 	    case 'd' : rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
 	    default	:

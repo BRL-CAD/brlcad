@@ -743,7 +743,6 @@ bu_vls_trimspace(struct bu_vls *vp)
 	bu_vls_nibble(vp, 1);
 }
 
-
 void
 bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 {

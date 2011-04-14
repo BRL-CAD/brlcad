@@ -618,7 +618,7 @@ main(int argc, char **argv)
     rt_init_resource( &rt_uniresource, 0, NULL );
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:n:r:s:vx:P:X:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "a:n:r:s:vx:P:X:")) != -1) {
 	switch (c) {
 	    case 's':
 		alarm_secs = atoi( bu_optarg );

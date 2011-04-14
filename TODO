@@ -23,6 +23,9 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* environment variable (LIBRT_BOT_MINTIE) override so any librt
+  application can attempt tie evaluation.
+
 * red removes shader attribute (and region id if -1) and has a variety
   of other bugs that need to be fixed
 

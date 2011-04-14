@@ -59,7 +59,7 @@ main(int argc, char **argv)
     unsigned char **rows;
     size_t ret;
 
-    while ((c=bu_getopt(argc, argv, "v")) != EOF) {
+    while ((c=bu_getopt(argc, argv, "v")) != -1) {
 	switch (c) {
 	    case 'v':
 		verbose = 1;

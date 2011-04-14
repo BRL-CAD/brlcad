@@ -66,7 +66,7 @@ get_args(int argc, char **argv)
     int c;
     char *file_name;
 
-    while ((c = bu_getopt(argc, argv, "chiF:s:w:n:g:#:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "chiF:s:w:n:g:#:")) != -1) {
 	switch (c) {
 	    case 'c':
 		crunch = 1;

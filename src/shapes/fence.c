@@ -277,7 +277,7 @@ int parseArguments(int argc, char **argv)
 
     bu_opterr = 0;
 
-    while ((c=bu_getopt(argc, argv, options)) != EOF) {
+    while ((c=bu_getopt(argc, argv, options)) != -1) {
 	switch (c) {
 	    case 'I' :
 		interactive=(DEFAULT_INTERACTIVE) ? 0 : 1;

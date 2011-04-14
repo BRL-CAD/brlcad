@@ -1950,7 +1950,7 @@ pars_Argv(int argc, char **argv)
     int c;
 
     /* Parse options. */
-    while ( (c = bu_getopt( argc, argv, "hp" )) != EOF )
+    while ( (c = bu_getopt( argc, argv, "hp" )) != -1 )
     {
 	switch ( c )
 	{

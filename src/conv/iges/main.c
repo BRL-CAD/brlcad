@@ -141,7 +141,7 @@ main(int argc, char *argv [])
     char *output_file=(char *)NULL;
 
 
-    while ((c=bu_getopt(argc, argv, "3dntpo:x:X:N:")) != EOF) {
+    while ((c=bu_getopt(argc, argv, "3dntpo:x:X:N:")) != -1) {
 	switch (c) {
 	    case '3':
 		do_drawings = 1;

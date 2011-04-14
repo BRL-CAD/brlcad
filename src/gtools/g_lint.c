@@ -839,7 +839,7 @@ main(int argc, char **argv)
     control.glc_color = (unsigned char *) dflt_plot_rgb;
 
     /* Handle command-line options */
-    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
 	switch (ch) {
 	    case 'a':
 		if (sscanf(bu_optarg, "%lf", &azimuth) != 1) {

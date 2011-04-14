@@ -89,7 +89,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "cF:hds:w:n:S:W:N:X:Y:C:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "cF:hds:w:n:S:W:N:X:Y:C:")) != -1) {
 	switch (c) {
 	    case 'c':
 		crunch = 1;

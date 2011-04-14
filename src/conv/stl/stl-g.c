@@ -601,7 +601,7 @@ main(int argc, char *argv[])
     }
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "bt:i:I:m:dx:N:c:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "bt:i:I:m:dx:N:c:")) != -1) {
 	double tmp;
 
 	switch (c) {

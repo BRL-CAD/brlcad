@@ -66,7 +66,7 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ag:s:w:n:o:h?")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "ag:s:w:n:o:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;

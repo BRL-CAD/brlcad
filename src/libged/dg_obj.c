@@ -1259,7 +1259,7 @@ dgo_get_autoview_cmd(struct dg_obj	*dgop,
 
     /* Parse options. */
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "p")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "p")) != -1) {
 	switch (c) {
 	    case 'p':
 		pflag = 1;
@@ -3184,7 +3184,7 @@ dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], i
 
 	/* Parse options. */
 	bu_optind = 0;		/* re-init bu_getopt() */
-	while ((c = bu_getopt(argc, argv, "dfm:nqstuvwx:C:STP:")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "dfm:nqstuvwx:C:STP:")) != -1) {
 	    switch (c) {
 		case 'u':
 		    dgcdp->draw_edge_uses = 1;
@@ -4842,7 +4842,7 @@ dgo_tree_cmd(struct dg_obj	*dgop,
 
     /* Parse options */
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, argv, "d:i:o:c")) != EOF) {
+    while ((c=bu_getopt(argc, argv, "d:i:o:c")) != -1) {
 	switch (c) {
 	    case 'i':
 		indentSize = atoi(bu_optarg);

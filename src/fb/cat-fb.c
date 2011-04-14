@@ -383,7 +383,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "odhcOF:s:S:w:W:n:N:C:" )) != EOF )  {
+    while ( (c = bu_getopt( argc, argv, "odhcOF:s:S:w:W:n:N:C:" )) != -1 )  {
 	switch ( c )  {
 	    case 'o':
 		output_pix = 1;

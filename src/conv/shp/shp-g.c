@@ -157,7 +157,7 @@ main(int argc, char *argv[])
 	bu_exit(1, NULL);
     }
 
-    while ((opt = bu_getopt(argc, argv, "dxv")) != EOF) {
+    while ((opt = bu_getopt(argc, argv, "dxv")) != -1) {
 	switch (opt) {
 	    case 'd':
 		opt_debug = 1;

@@ -394,7 +394,7 @@ main(int argc, char *argv[])
     /* Get command line arguments. */
     memset(&ap, 0, sizeof( struct application ));
     ap.a_onehit = 1;
-    while ( (c=bu_getopt( argc, argv, "nmd:g:o:")) != EOF)
+    while ( (c=bu_getopt( argc, argv, "nmd:g:o:")) != -1)
     {
 	switch ( c )
 	{

@@ -71,7 +71,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "cOdhs:S:w:W:n:N:C:F:X:Y:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "cOdhs:S:w:W:n:N:C:F:X:Y:")) != -1) {
 	switch (c) {
 	    case 'O':
 		overlay = 1;

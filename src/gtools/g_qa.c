@@ -52,7 +52,7 @@ main(int argc, char *argv[])
     bu_optind = 1;
 
     /* Get past command line options. */
-    while ((c=bu_getopt(argc, argv, "A:a:de:f:g:Gn:N:pP:rS:s:t:U:u:vV:W:")) != EOF) {
+    while ((c=bu_getopt(argc, argv, "A:a:de:f:g:Gn:N:pP:rS:s:t:U:u:vV:W:")) != -1) {
 	switch (c) {
 	    case 'A':
 	    case 'a':

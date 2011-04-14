@@ -75,7 +75,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "r:i:Ss:g:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "r:i:Ss:g:")) != -1) {
 	switch (c) {
 	    case 'r':
 		if (iflg)
