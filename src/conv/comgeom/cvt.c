@@ -87,7 +87,7 @@ get_args(int argc, char **argv)
     int	c;
     char		*file_name;
 
-    while ( (c = bu_getopt( argc, argv, "d:v:s:" )) != EOF )  {
+    while ( (c = bu_getopt( argc, argv, "d:v:s:" )) != -1 )  {
 	switch ( c )  {
 	    case 'd':
 		verbose = atoi(bu_optarg);

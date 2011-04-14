@@ -177,7 +177,7 @@ get_args(int argc, const char *argv[])
 #define GETOPT_STR	\
 	".:,:@:a:b:c:d:e:f:g:h:ij:k:l:n:o:p:q:rs:tu:v:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:"
 
-    while ( (c=bu_getopt( argc, (char * const *)argv, GETOPT_STR )) != EOF )  {
+    while ( (c=bu_getopt( argc, (char * const *)argv, GETOPT_STR )) != -1 )  {
 	switch ( c )  {
 	    case 'q':
 		i = atoi(bu_optarg);

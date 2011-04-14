@@ -463,7 +463,7 @@ main(int argc, char **argv)
 	int c;
 	bool_t errors = 0;
 
-	while ((c = bu_getopt(argc, argv, OPTSTR)) != EOF)
+	while ((c = bu_getopt(argc, argv, OPTSTR)) != -1)
 	    switch (c) {
 		default:	/* '?': invalid option */
 		    errors = 1;

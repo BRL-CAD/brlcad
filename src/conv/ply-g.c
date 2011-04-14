@@ -784,7 +784,7 @@ main( int argc, char *argv[] )
     int c;
 
     /* get command line arguments */
-    while ((c = bu_getopt(argc, argv, "dvs:")) != EOF)
+    while ((c = bu_getopt(argc, argv, "dvs:")) != -1)
     {
 	switch ( c )
 	{

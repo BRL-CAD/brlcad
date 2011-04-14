@@ -125,7 +125,7 @@ main(int argc, char **argv)
 
     /* check for flags */
     bu_opterr = 0;
-    while ((i=bu_getopt(argc, argv, options)) != EOF) {
+    while ((i=bu_getopt(argc, argv, options)) != -1) {
 	switch (i) {
 	    case 'v':
 		verbose++;

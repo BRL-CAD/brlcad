@@ -97,7 +97,7 @@ get_args(int argc, const char *argv[])
 {
     register int c;
 
-    while ( (c=bu_getopt( argc, (char * const *)argv, "x:X:n:v:" )) != EOF )  {
+    while ( (c=bu_getopt( argc, (char * const *)argv, "x:X:n:v:" )) != -1 )  {
 	switch ( c )  {
 	    case 'x':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );

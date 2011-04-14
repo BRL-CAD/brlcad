@@ -152,7 +152,7 @@ get_args(int argc, char **argv)
     print_mode = TRACK_ANIM;
     bu_strlcpy(link_cmd, "rarc", sizeof(link_cmd));
     bu_strlcpy(wheel_cmd, "lmul", sizeof(wheel_cmd));
-    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != -1) {
 	i=0;
 	switch (c) {
 	    case 'b':

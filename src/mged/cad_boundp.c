@@ -137,7 +137,7 @@ GetArgs(int argc, const char *argv[])	/* process command arguments */
     fprintf(stderr, "\n\t\tGetArgs\n");
 #endif
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "i:o:t:v")) != EOF)
+    while ((c = bu_getopt(argc, (char * const *)argv, "i:o:t:v")) != -1)
 	switch (c) {
 	    case 'i':
 		if (iflag) {

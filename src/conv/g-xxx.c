@@ -96,7 +96,7 @@ main(int argc, char *argv[])
     tol.para = 1 - tol.perp;
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "t:a:n:o:r:vx:X:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "t:a:n:o:r:vx:X:")) != -1) {
 	switch (c) {
 	    case 't':		/* calculational tolerance */
 		tol.dist = atof(bu_optarg);

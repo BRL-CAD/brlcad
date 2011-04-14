@@ -183,7 +183,7 @@ get_args(int argc, char **argv)
     MAT_IDN(rmat);
     scale = 1.0;
 
-    while ((c = bu_getopt(argc, argv, "S:m:vMga:e:x:y:z:X:Y:Z:s:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "S:m:vMga:e:x:y:z:X:Y:Z:s:")) != -1) {
 	switch (c) {
 	    case 'M':
 		/* take model RPP from space() command */

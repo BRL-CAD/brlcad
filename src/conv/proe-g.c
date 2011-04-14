@@ -1059,7 +1059,7 @@ main(int argc, char **argv)
     }
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "St:i:I:m:rsdax:u:N:c:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "St:i:I:m:rsdax:u:N:c:")) != -1) {
 	double tmp;
 
 	switch (c) {

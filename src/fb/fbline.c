@@ -187,7 +187,7 @@ get_args(int argc, char **argv)
 
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hW:w:N:n:cF:r:g:b:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "hW:w:N:n:cF:r:g:b:")) != -1) {
 	switch (c) {
 	    case 'h':
 		/* high-res */

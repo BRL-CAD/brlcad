@@ -65,7 +65,7 @@ get_args(int argc, char **argv)
 {
     int ch;
 
-    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF) {
+    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1) {
 	switch (ch) {
 	    /*
 	     * BRL-CAD image-size options

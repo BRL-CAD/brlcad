@@ -190,7 +190,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 
     /* Parse options */
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, (char * const *)argv, "P:d")) != EOF) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "P:d")) != -1) {
 	switch (c) {
 	    case 'P':
 		ncpu = atoi(bu_optarg);

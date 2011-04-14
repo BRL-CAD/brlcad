@@ -61,7 +61,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ahs:w:n:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "ahs:w:n:")) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;

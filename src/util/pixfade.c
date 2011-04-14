@@ -60,7 +60,7 @@ get_args(int argc, char **argv, FILE **inpp, int *max, double *multiplier)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "m:p:f:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "m:p:f:")) != -1) {
 	switch (c) {
 	    case 'm':
 		*max = atoi(bu_optarg);

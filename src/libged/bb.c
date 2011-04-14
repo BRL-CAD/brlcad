@@ -71,7 +71,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_optind = 1;      /* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "c:dequv")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "c:dequv")) != -1) {
 	switch (c) {
 	    case 'c':
 		make_bb = 1;

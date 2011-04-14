@@ -109,7 +109,7 @@ main (int argc, char **argv)
     /*
      * Process the command line
      */
-    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
 	switch (ch) {
 	    case 'n':
 		how = BELIEVE_NAME;

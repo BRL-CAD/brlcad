@@ -50,13 +50,13 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 	if (bu_optind >= nargc || *(place = nargv[bu_optind]) != '-' ||
 	    !*++place) {
 	    place = EMSG;
-	    return EOF;
+	    return -1;
 	}
 	if (*place == '-') {
 	    /* found "--" */
 	    place = EMSG;
 	    ++bu_optind;
-	    return EOF;
+	    return -1;
 	}
     } /* option letter okay? */
 

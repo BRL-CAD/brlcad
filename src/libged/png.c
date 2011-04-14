@@ -414,7 +414,7 @@ ged_png(struct ged *gedp, int argc, const char *argv[])
 
     /* Process options */
     bu_optind = 1;
-    while ((k = bu_getopt(argc, (char * const *)argv, "c:s:")) != EOF) {
+    while ((k = bu_getopt(argc, (char * const *)argv, "c:s:")) != -1) {
 	switch (k) {
 	    case 'c':
 		/* parse out a delimited rgb color value */

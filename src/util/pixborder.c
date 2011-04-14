@@ -370,7 +370,7 @@ get_args (int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, OPT_STRING)) != EOF) {
+    while ((c = bu_getopt(argc, argv, OPT_STRING)) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;

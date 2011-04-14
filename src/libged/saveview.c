@@ -67,7 +67,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "e:i:l:o:")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "e:i:l:o:")) != -1) {
 	switch (c) {
 	    case 'e':
 		snprintf(rtcmd, 255, "%s", bu_optarg);

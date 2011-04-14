@@ -139,7 +139,7 @@ get_args(int argc, char **argv)
     len_mode = TRACK_MIN;
     anti_strobe = 0;
 
-    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != -1) {
 	i=0;
 	switch (c) {
 	    case 's':

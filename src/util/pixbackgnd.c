@@ -171,7 +171,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "his:w:n:t:a:b:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "his:w:n:t:a:b:")) != -1) {
 	switch (c) {
 	    case 'i':
 		invert = 1;

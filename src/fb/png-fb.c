@@ -81,7 +81,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "1m:g:HhicvzF:s:x:y:X:Y:S:W:N:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "1m:g:HhicvzF:s:x:y:X:Y:S:W:N:")) != -1) {
 	switch (c) {
 	    case '1':
 		one_line_only = 1;

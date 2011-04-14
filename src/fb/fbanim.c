@@ -69,7 +69,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "s:w:n:hirvp:S:W:N:" )) != EOF )  {
+    while ( (c = bu_getopt( argc, argv, "s:w:n:hirvp:S:W:N:" )) != -1 )  {
 	switch ( c )  {
 	    case 's':
 		subimage_width = subimage_height = atoi(bu_optarg);

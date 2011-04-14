@@ -51,7 +51,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ds:w:#:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "ds:w:#:")) != -1) {
 	switch (c) {
 	    case 'd':
 		doubleit = 1;

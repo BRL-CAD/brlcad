@@ -101,7 +101,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hDs:n:w:t:X:Y:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "hDs:n:w:t:X:Y:")) != -1) {
 	switch (c) {
 	    case 'h':
 		/* high-res */

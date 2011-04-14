@@ -41,7 +41,7 @@ dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, char *
 
     bu_optind = 0;	 /* re-init bu_getopt */
     bu_opterr = 0;
-    while ((c = bu_getopt(argc, argv, "N:S:W:s:d:i:n:t:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "N:S:W:s:d:i:n:t:")) != -1) {
 	switch (c) {
 	    case 'N':
 		dmp->dm_height = atoi(bu_optarg);

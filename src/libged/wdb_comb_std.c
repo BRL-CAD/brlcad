@@ -482,7 +482,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 
     /* Parse options */
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((ch = bu_getopt(argc, argv, "cgr?")) != EOF) {
+    while ((ch = bu_getopt(argc, argv, "cgr?")) != -1) {
 	switch (ch) {
 	    case 'c':
 	    case 'g':

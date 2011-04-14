@@ -115,7 +115,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "bhiPvC")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "bhiPvC")) != -1) {
 	switch (c) {
 	    case 'b':
 		pixout = 0;	/* bw(5) */

@@ -121,7 +121,7 @@ parsArgv(int argc, char **argv)
 {
     int c;
 /* Parse options.						*/
-    while ((c = bu_getopt(argc, argv, "b")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "b")) != -1) {
 	switch (c) {
 	    case 'b' :
 		tty = 0;

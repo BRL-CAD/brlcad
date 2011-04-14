@@ -202,7 +202,7 @@ int main(int argc, char** argv) {
     ON_TextLog* dump = &dump_to_stdout;
 
     int c;
-    while ((c = bu_getopt(argc, argv, "o:dv:t:s:ru")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "o:dv:t:s:ru")) != -1) {
 	switch ( c ) {
 	    case 's':	/* scale factor */
 		break;

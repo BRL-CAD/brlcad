@@ -73,7 +73,7 @@ main(int argc, char *argv[])
     // process command line arguments
     int c;
     char *output_file=(char *)NULL;
-    while ((c=bu_getopt(argc, argv, "o:")) != EOF)
+    while ((c=bu_getopt(argc, argv, "o:")) != -1)
     {
 	switch (c)
 	{

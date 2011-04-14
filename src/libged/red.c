@@ -784,7 +784,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 
     bu_optind = 1;
     /* First, grab the editstring off of the argv list */
-    while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != -1) {
 	switch (c) {
 	    case 'E' :
 		editstring = bu_optarg;

@@ -106,7 +106,7 @@ main(int argc, char **argv)
 	bu_exit(EXIT_FAILURE,  usage);
 
     /* get command line arguments */
-    while ((c = bu_getopt(argc, argv, "t:c:e:o:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "t:c:e:o:")) != -1) {
 	switch (c) {
 	    case 't': /* tolerance */
 		tol.dist = atof(bu_optarg);

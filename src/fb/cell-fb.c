@@ -620,7 +620,7 @@ pars_Argv(int argc, char **argv)
     int c;
 
     /* Parse options. */
-    while ((c = bu_getopt(argc, argv, OPT_STRING)) != EOF) {
+    while ((c = bu_getopt(argc, argv, OPT_STRING)) != -1) {
 	switch (c) {
 	    case 'C':
 		color_flag = 1;

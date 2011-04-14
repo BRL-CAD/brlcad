@@ -460,7 +460,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 
     /* Parse options */
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((ch = bu_getopt(argc, (char * const *)argv, "cgr?")) != EOF) {
+    while ((ch = bu_getopt(argc, (char * const *)argv, "cgr?")) != -1) {
 	switch (ch) {
 	    case 'c':
 	    case 'g':

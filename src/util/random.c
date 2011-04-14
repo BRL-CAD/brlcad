@@ -52,7 +52,7 @@ main(int argc, char *argv[])
     int c;
     const char *usage = "[-u] [-g [-c center]] [-s seed] [-v] low high";
 
-    while ((c = bu_getopt(argc, argv, "vugs:c:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "vugs:c:")) != -1) {
 	switch (c) {
 	    case 's':
 		seed = atoi(bu_optarg);

@@ -57,7 +57,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "cvhorW:F:" )) != EOF ) {
+    while ( (c = bu_getopt( argc, argv, "cvhorW:F:" )) != -1 ) {
 	switch ( c )  {
 	    case 'c':
 		cmap_crunch++;

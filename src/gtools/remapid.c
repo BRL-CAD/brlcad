@@ -841,7 +841,7 @@ main(int argc, char **argv)
 
     bu_stdin->file_ptr = stdin;		/* LINUX-required init */
 
-    while ((ch = bu_getopt(argc, argv, "gt?")) != EOF)
+    while ((ch = bu_getopt(argc, argv, "gt?")) != -1)
 	switch (ch) {
 	    case 'g':
 		tankill = 0;

@@ -62,7 +62,7 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
 
     /* process any options */
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "ahnpgu")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "ahnpgu")) != -1) {
 	switch (c) {
 	    case 'a':
 		aflag = 1;
