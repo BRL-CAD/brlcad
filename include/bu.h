@@ -2841,7 +2841,15 @@ BU_EXPORT extern char *bu_optarg;
 /**
  * B U _ G E T O P T
  *
- * get option letter from argument vector
+ * get option letter from argument vector.
+ *
+ * returns the next known option character in ostr.  If bu_getopt()
+ * encounters a character not found in ostr or if it detects a missing
+ * option argument, it returns `?' (question mark).  If ostr has a
+ * leading `:' then a missing option argument causes `:' to be
+ * returned instead of `?'.  In either case, the variable bu_optopt is
+ * set to the character that caused the error.  The bu_getopt()
+ * function returns -1 when the argument list is exhausted.
  */
 BU_EXPORT BU_EXTERN(int bu_getopt, (int nargc, char * const nargv[], const char *ostr));
 
