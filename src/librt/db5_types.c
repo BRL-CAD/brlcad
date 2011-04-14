@@ -580,7 +580,7 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	/* color */
 	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_COLOR)));
 	if (bu_avs_get(&avs, "color")) {
-	    if (sscanf(bu_vls_addr(&newval), "%i/%i/%i", color+0, color+1, color+2) == 3) {
+	    if (sscanf(bu_vls_addr(&newval), "%i%*c%i%*c%i", color+0, color+1, color+2) == 3) {
 		for (i = 0; i < 3; i++) {
 		    if (color[i] > 255) color[i] = 255;
 		    if (color[i] < 0) color[i] = 0;
